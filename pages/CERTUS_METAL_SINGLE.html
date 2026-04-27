@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERTUS-METAL SINGLE | Scientific Technical Report</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="assets/certus_report_init.js"></script>
+    <link rel="stylesheet" href="assets/certus_report.css">
+</head>
+
+<nav class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo">
+            <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(120, 90)">
+                    <path
+                        d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50"
+                        fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
+                    <path
+                        d="M -90,0 C -80,-90 -70,-50 -60,0 S -40,90 -30,0 S -10,-90 0,0 S 20,90 30,0 S 50,-90 60,0 S 80,90 90,0"
+                        fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <g transform="translate(220, 25)">
+                    <text x="0" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80"
+                        fill="#05103b" letter-spacing="2">CERTUS</text>
+                    <text x="0" y="110" font-family="Arial, Helvetica, sans-serif" font-weight="300" font-size="18"
+                        fill="#000000" letter-spacing="1.2">THIN FILM OPTIMAL STRATEGY FINDER</text>
+                    <text x="-10" y="135" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#333333"
+                        letter-spacing="0.5">Calculated Error Reduction Through Unbiased Simulation</text>
+                </g>
+            </svg>
+        </a>
+        <div class="nav-links">
+            <a href="CERTUS_HUB.html">HUB</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_INDEX.html">INDEX</a>
+            <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html" class="active">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>CERTUS-METAL SINGLE</h1>
+            <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Single Layer Extraction on Transparent
+                Substrate</p>
+            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific Revision 2026.03</p>
+        </header>
+
+        <div class="abstract">
+            <strong>Executive Summary:</strong> CERTUS-METAL SINGLE determines the complex refractive index of a single
+            metallic or absorbing layer deposited directly onto a transparent substrate (Silica or BK7).
+            It leverages <strong>multiple optical signatures</strong> (Reflectance, Transmission, and Back-side
+            Reflectance)
+            to uniquely constrain the solution, allowing for the simultaneous extraction of thickness ($d_M$) and
+            spline-based optical constants ($n, k$) without physical model assumptions.
+        </div>
+
+        <!-- ================================================================ -->
+        <!--  1. THE SINGLE LAYER CHALLENGE                                    -->
+        <!-- ================================================================ -->
+        <h2>1. Context: The "Single Layer" Challenge</h2>
+        <p>
+            Characterizing a single absorbing layer on a transparent substrate provides more information channels than
+            an opaque bilayer stack. Since the substrate is transparent:
+        </p>
+        <ul>
+            <li><strong>Transmission ($T$):</strong> Light passes through the substrate, offering powerful absorption
+                constraints ($k$).</li>
+            <li><strong>Back-Reflectance ($R_{back}$):</strong> Measured through the substrate, probing the
+                substrate-film interface.</li>
+            <li><strong>Front-Reflectance ($R$):</strong> Probes the air-film interface.</li>
+        </ul>
+        <p>
+            Combining $\{R, T, R_{back}\}$ creates a highly constrained optimization landscape, reducing degeneracy
+            compared to $R$-only measurements.
+        </p>
+
+        <!-- ================================================================ -->
+        <!--  2. THEORETICAL MODEL                                             -->
+        <!-- ================================================================ -->
+        <h2>2. Theoretical Model</h2>
+
+        <h3>2.1. Layer Structure</h3>
+        <p>The physical model is:</p>
+        <p><strong>Air | Metal ($d_M$, Spline $n,k$) | Transparent Substrate (Incoherent)</strong></p>
+
+        <div class="highlight-box">
+            <strong>Incoherent Substrate Modeling:</strong> The substrate (typically ~0.5–1 mm thick) is much thicker
+            than the coherence length of light.
+            Interference fringes inside the substrate are therefore averaged out. The model analytically sums
+            intensities rather than amplitudes for the substrate traversing paths.
+        </div>
+
+        <ul>
+            <li><strong>Substrate:</strong> Selectable Fused Silica or BK7 (Sellmeier dispersion).</li>
+            <li><strong>Metal Film:</strong> Modeled with free-form cubic splines for $n(\lambda)$ and $k(\lambda)$.
+            </li>
+        </ul>
+
+        <h3>2.2. Transfer Matrix Method (Macleod Convention)</h3>
+        <p>
+            The characteristic matrix for the single metal layer uses the <strong>Macleod convention</strong>
+            ($\hat{n} = n - ik$, factor <code>+1j</code>):
+        </p>
+        <div
+            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
+            $$ \mathbf{M}_{metal} = \begin{pmatrix} \cos\phi & \frac{+i\sin\phi}{\hat{n}} \\
+            +i\hat{n}\sin\phi & \cos\phi \end{pmatrix},
+            \qquad \phi = \frac{2\pi}{\lambda}\hat{n}\, d_M $$
+        </div>
+
+        <h3>2.3. Incoherent Substrate Combination</h3>
+        <p>
+            The front-surface TMM gives coherent $R_{front}$, $T_{front}$. The substrate back-surface reflects
+            with Fresnel intensity coefficient:
+        </p>
+        <div
+            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
+            $$ R_{ext} = \left(\frac{n_{sub} - 1}{n_{sub} + 1}\right)^2, \qquad T_{ext} = 1 - R_{ext} $$
+        </div>
+        <p>The total observables are computed by the exact incoherent sum (geometric series):</p>
+        <div
+            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
+            $$ T_{total} = \frac{T_{front} \cdot T_{ext}}{1 - R_{back} \cdot R_{ext}}, \qquad
+            R_{total} = R_{front} + \frac{T_{front}^2 \cdot R_{ext}}{1 - R_{back} \cdot R_{ext}} $$
+        </div>
+        <p>
+            $R_{back}$ is computed from a <strong>reverse matrix</strong> (Sub→Air), ensuring correct treatment
+            even for absorbing films where $R_{front} \neq R_{back}$.
+        </p>
+
+        <h3>2.4. Spline-Based Material Model</h3>
+        <p>The optical constants are reconstructed as free-form curves:</p>
+        <ul>
+            <li><strong>Knots:</strong> Adaptive control points $(n_i, k_i)$ at wavelengths $\lambda_i$.</li>
+            <li><strong>Natural Cubic Splines:</strong> $C^2$-continuous interpolation between knots.</li>
+            <li><strong>Physics Constraints:</strong> $n > 0$, $k \ge 0$.</li>
+            <li><strong>Knot Distance Constraint:</strong> Minimum spacing $\Delta\lambda_{min}$ prevents over-fitting.
+            </li>
+        </ul>
+
+        <!-- ================================================================ -->
+        <!--  3. OPTIMIZATION WORKFLOW                                         -->
+        <!-- ================================================================ -->
+        <h2>3. Detailed Algorithmic Flowchart</h2>
+
+        <div class="mermaid">
+            flowchart TD
+            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
+            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
+            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
+            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
+
+            START(["User Input:<br>R(λ), T(λ), Rback(λ),<br>Substrate, Knot count N"]):::terminal --> LOAD["1. Load spectral data<br>Auto-detect channels (R, T, Rback)<br>Auto-detect units (%, abs)"]:::process
+            LOAD --> SUB["2. Configure substrate<br>Fused Silica or BK7<br>(Sellmeier dispersion)"]:::process
+            SUB --> BOUNDS["3. Define parameter bounds<br>d_M: [d_min, d_max]<br>n_i, k_i: physical range<br>λ_i: spectral range"]:::process
+
+            BOUNDS --> DE_INIT["4. Initialize DE population<br>50 random vectors x ∈ bounds"]:::highlight
+
+            subgraph DE ["Differential Evolution — Global Search"]
+            DE_INIT --> DE_LOOP["For each generation g:"]:::process
+            DE_LOOP --> DE_MUT["5. Mutate: v = x_r1 + F·(x_r2 − x_r3)<br>F ∈ [0.5, 1.0]"]:::process
+            DE_MUT --> DE_CROSS["6. Crossover: mix trial/target<br>with probability CR = 0.7"]:::process
+            DE_CROSS --> DE_SPLINE["7. Interpolate n(λ), k(λ)<br>Natural Cubic Splines from knots"]:::process
+            DE_SPLINE --> DE_TMM["8. TMM (Macleod +1j, Complex128)<br>Forward matrix → R_calc, T_calc<br>Reverse matrix → Rback_calc"]:::process
+            DE_TMM --> DE_INCOH["9. Incoherent backside combination<br>T_total = T_fwd·T_ext / (1 − R_back·R_ext)"]:::process
+            DE_INCOH --> DE_MSE["10. Multi-channel MSE<br>= (MSE_R + MSE_T + MSE_Rback) / N_ch"]:::process
+            DE_MSE --> DE_SEL["11. Selection: keep better<br>of trial vs target"]:::process
+            DE_SEL --> DE_CONV{"Converged<br>or max gen?"}:::decision
+            DE_CONV -->|"No"| DE_LOOP
+            DE_CONV -->|"Yes"| DE_BEST["Best solution from DE"]:::highlight
+            end
+
+            DE_BEST --> BEAM_CHK{"Beam Analysis<br>requested?"}:::decision
+
+            subgraph BEAM ["Beam Analysis — Uncertainty Mapping"]
+            BEAM_CHK -->|"Yes"| BA_REF["12. Reference: d_opt from DE"]:::process
+            BA_REF --> BA_SCAN["13. Scan d = d_opt ± Δd<br>(steps of 0.5–1 nm)"]:::highlight
+            BA_SCAN --> BA_REOPT["14. For each fixed d:<br>re-optimize spline n,k only<br>(Nelder-Mead, warm start)"]:::process
+            BA_REOPT --> BA_FILT["15. Keep solutions where<br>MSE ≤ MSE_opt × (1 + τ)"]:::process
+            BA_FILT --> BA_ENV["16. Compute envelope:<br>Δn(λ) = max − min over beam<br>Δk(λ) = max − min over beam"]:::highlight
+            end
+
+            BEAM_CHK -->|"No"| EXPORT
+            BA_ENV --> EXPORT(["17. Export:<br>d_M, n(λ), k(λ),<br>uncertainty envelope,<br>Excel + HTML report"]):::terminal
+        </div>
+
+        <div class="algo-step">
+            <span class="algo-title">Algorithm Step-by-Step Summary</span>
+            <strong>Steps 1–3:</strong> Load up to 3 spectral channels (R, T, Rback), configure substrate dispersion,
+            and define the bounded search space for thickness, spline knot values, and knot positions.<br>
+            <strong>Steps 4–11 (DE loop):</strong> Differential Evolution explores the parameter space. Each candidate
+            is decoded into spline optical constants, evaluated through the full TMM with incoherent backside
+            correction,
+            and scored by the multi-channel MSE. The population evolves over ~1500 generations.<br>
+            <strong>Steps 12–16 (Beam):</strong> Systematic thickness scan with Nelder-Mead re-optimization at each $d$
+            maps
+            the $n$-$k$-$d$ degeneracy. The uncertainty envelope defines rigorous process windows.<br>
+            <strong>Step 17:</strong> Export comprehensive report with spectra, optical constants, and beam envelope.
+        </div>
+
+        <h3>3.1. Optimization Vector</h3>
+        <p>The algorithm searches for:</p>
+        <ul>
+            <li>$d_M$: Metal thickness (e.g., 20 nm)</li>
+            <li>$\{n_i, k_i\}$: Optical constants at $N$ knot positions.</li>
+            <li>$\{\lambda_i\}_{i=2}^{N-1}$: Spectral position of internal knots (adaptive to features).</li>
+        </ul>
+
+        <h3>3.2. Multi-Channel Cost Function</h3>
+        <p>The total error is the average of errors from all available data channels:</p>
+        <div
+            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
+            $$ \text{MSE}_{total} = \frac{1}{N_{ch}} \sum_{c \in \{R,T,R_{back}\}} \frac{1}{M}
+            \sum_{j=1}^{M} \left(S_c^{calc}(\lambda_j) - S_c^{meas}(\lambda_j)\right)^2 $$
+        </div>
+        <p>This "triangulation" forces the solution to satisfy physical reality at both interfaces and the bulk
+            absorption simultaneously. Missing channels are automatically excluded.</p>
+
+        <h3>3.3. Differential Evolution</h3>
+        <p>
+            The global search uses <strong>Differential Evolution (DE)</strong> — a population-based stochastic
+            optimizer ideal for high-dimensional, non-convex problems:
+        </p>
+        <ol>
+            <li><strong>Initialize:</strong> Population of random parameter vectors within bounds.</li>
+            <li><strong>Mutate:</strong> Trial vectors via weighted differences:
+                $\mathbf{v} = \mathbf{x}_{r1} + F(\mathbf{x}_{r2} - \mathbf{x}_{r3})$</li>
+            <li><strong>Crossover:</strong> Mix trial and target vectors with probability CR.</li>
+            <li><strong>Select:</strong> Keep the better of trial and target based on MSE.</li>
+        </ol>
+        <p>Typical parameters: Population = 50, $F \in [0.5, 1.0]$, CR = 0.7, Max iterations = 1500.</p>
+
+        <!-- ================================================================ -->
+        <!--  4. BEAM ANALYSIS                                                 -->
+        <!-- ================================================================ -->
+        <h2>4. Beam Analysis: Uncertainty Quantification</h2>
+
+        <h3>4.1. The Uniqueness Check</h3>
+        <p>
+            While the combination of $R, T, R_{back}$ highly constrains the solution, experimental noise can still
+            create ambiguity between thickness and refractive index.
+            The <strong>Beam Analysis</strong> post-processing step systematically maps this uncertainty.
+        </p>
+
+        <h3>4.2. Scan Methodology</h3>
+        <ol>
+            <li><strong>Reference:</strong> Starts from the optimal thickness $d_{opt}$ found by the main solver.</li>
+            <li><strong>Constraint Scan:</strong> Step thickness in both directions ($\pm 1$ nm steps). At each step,
+                fix $d$ and re-optimize the spline optical constants to find the best possible match.</li>
+            <li><strong>Valley Mapping:</strong> Plot $\text{MSE}_{min}$ vs. Thickness.</li>
+        </ol>
+
+        <h3>4.3. Interpretation</h3>
+        <div class="highlight-box">
+            <ul>
+                <li><strong>V-Shape:</strong> A sharp V confirms a unique solution.</li>
+                <li><strong>Flat Bottom:</strong> Indicates parameter correlation (uncertainty in $d$ vs $n$).</li>
+                <li><strong>Beam Envelope:</strong> The software exports the bundle of all $n(\lambda)$ and $k(\lambda)$
+                    curves whose MSE is within a tolerance (e.g., 2%) of the global minimum. This provides
+                    <strong>process windows</strong> technically rigorous for production control.
+                </li>
+            </ul>
+        </div>
+
+        <h3>4.4. Uncertainty Formula</h3>
+        <p>
+            The spectral uncertainty envelope is computed as:
+        </p>
+        <div
+            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
+            $$ \Delta n(\lambda) = \max_d n_{sol}(\lambda) - \min_d n_{sol}(\lambda), \qquad
+            \text{for all } d \text{ where } \text{MSE}(d) \le \text{MSE}_{opt} \cdot (1 + \tau) $$
+        </div>
+
+        <!-- ================================================================ -->
+        <!--  5. USAGE GUIDE                                                   -->
+        <!-- ================================================================ -->
+        <h2>5. Usage Guide</h2>
+
+        <h3>5.1. Input Data Format</h3>
+        <p>CSV or Excel file with up to 4 columns (auto-detected):</p>
+        <table>
+            <tr>
+                <th>Column</th>
+                <th>Content</th>
+                <th>Unit</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Wavelength ($\lambda$)</td>
+                <td>nm</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Reflectance ($R$)</td>
+                <td>0–1 or %</td>
+            </tr>
+            <tr>
+                <td>3 (Optional)</td>
+                <td>Transmission ($T$)</td>
+                <td>0–1 or %</td>
+            </tr>
+            <tr>
+                <td>4 (Optional)</td>
+                <td>Back-Reflectance ($R_{back}$)</td>
+                <td>0–1 or %</td>
+            </tr>
+        </table>
+
+        <h3>5.2. Configuration Guidelines</h3>
+        <ul>
+            <li><strong>Knots:</strong> Start with 2–3 for simple metals. Increase only if fit is poor.</li>
+            <li><strong>Thickness Range:</strong> Constrain $d_M$ (min/max) to ±20% of target deposition.</li>
+            <li><strong>Substrate:</strong> Correct substrate selection (Silica vs BK7) is critical as it affects
+                $R_{back}$ and $T$ baselines significantly.</li>
+        </ul>
+
+        <!-- ================================================================ -->
+        <!--  6. OUTPUT                                                        -->
+        <!-- ================================================================ -->
+        <h2>6. Output & Reporting</h2>
+        <ul>
+            <li><strong>Rich Excel Report:</strong> Fit summary, calculated spectra, and derived $n,k$ tables.</li>
+            <li><strong>Visualization Tabs:</strong>
+                <ul>
+                    <li><em>Spectra:</em> Target vs Calculated $R$, $T$, $R_{back}$.</li>
+                    <li><em>n & k:</em> Resulting optical constants with knots visualization.</li>
+                    <li><em>Convergence:</em> Log-scale RMSE trace.</li>
+                    <li><em>Beam:</em> Uncertainty envelope from thickness scan.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <!-- ================================================================ -->
+        <!--  7. IMPLEMENTATION                                                -->
+        <!-- ================================================================ -->
+        <h2>7. Technical Implementation</h2>
+        <table>
+            <tr>
+                <th>Component</th>
+                <th>Details</th>
+            </tr>
+            <tr>
+                <td><strong>TMM Convention</strong></td>
+                <td>Macleod ($\hat{n}=n-ik$, <code>+1j</code>). Float64 / Complex128 throughout.</td>
+            </tr>
+            <tr>
+                <td><strong>Global Search</strong></td>
+                <td>Differential Evolution (SciPy) with Numba-JIT cost function.</td>
+            </tr>
+            <tr>
+                <td><strong>Local Polish (Beam)</strong></td>
+                <td>Nelder-Mead robust derivative-free optimization on spline parameters.</td>
+            </tr>
+            <tr>
+                <td><strong>Backside</strong></td>
+                <td>Dual-matrix: forward (Air→Sub) + reverse (Sub→Air) for exact incoherent sum.</td>
+            </tr>
+            <tr>
+                <td><strong>Shared UX</strong></td>
+                <td><code>certus_ui.py</code> — <code>CertusBaseApp</code> base class providing <code>CertusLogPanel</code>,
+                    <code>WelcomeGuideWidget</code>, 5-level undo stack (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</td>
+            </tr>
+            <tr>
+                <td><strong>Export</strong></td>
+                <td>Excel + HTML reports with embedded plots and metadata.</td>
+            </tr>
+        </table>
+
+
+        <!-- ================================================================ -->
+        <!--  PRO 2026 ERGONOMICS & UX                                         -->
+        <!-- ================================================================ -->
+        <h2>8. Pro 2026 Ergonomics & UI Upgrades</h2>
+        <p>
+            The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific workflows.
+            All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
+            <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
+            maximum numerical stability (15 significant digits).
+        </p>
+        <h3>Global Keyboard Shortcuts</h3>
+        <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
+        <ul>
+            <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
+            <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
+            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Instantly launch the primary optimization or fitting
+                Step (Step 2).</li>
+            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack via <code>CertusBaseApp</code>).</li>
+            <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.</li>
+        </ul>
+        <h3>Dynamic Processing Feedback</h3>
+        <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
+            thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
+            Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
+
+        <div class="footer">
+            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code>, <code>certus_ui.py</code> &mdash; Revision 2026.03</p>
+            <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report</p>
+        </div>
+    </div>
+
+</body>
+</html>

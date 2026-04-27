@@ -1,0 +1,1774 @@
+def _execute_robustness_simulation_batch(
+    all_strategies: list[dict[str, Any]],
+    max_workers: int,
+    noise_levels: list[float],
+    num_runs: int,
+    p_thick_nominal: list[float],
+    clues_at_wl: dict[float, dict[str, complex]],
+    params: dict[str, Any],
+    params_safe: dict[str, Any],
+    wl_arr: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_nom: np.ndarray,
+    full_dyn_grid: dict[int, dict[float, float]],
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Execute robustness simulations for a batch of strategies, optionally in parallel."""
+    strategies_results = []
+
+    if max_workers <= 1:
+        for idx, strat in enumerate(all_strategies):
+            try:
+                res = _test_strategy_robustness_task(
+                    strat, idx, noise_levels, num_runs, p_thick_nominal, clues_at_wl,
+                    params_safe, wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid
+                )
+                min_res, bad_layer = _calculate_strategy_spectral_resolution(res["strategy"], p_thick_nominal, params)
+                res["min_resolution"] = min_res
+                res["limiting_layer"] = bad_layer
+                strategies_results.append(res)
+            except Exception as e:
+                import traceback
+                logger.error(f"Strategy simulation failed: {e}")
+                traceback.print_exc()
+    else:
+        results_by_idx = [None] * len(all_strategies)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(
+                    _test_strategy_robustness_task, strat, idx, noise_levels, num_runs,
+                    p_thick_nominal, clues_at_wl, params_safe, wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid
+                ): idx
+                for idx, strat in enumerate(all_strategies)
+            }
+            for f in concurrent.futures.as_completed(futures):
+                idx = futures[f]
+                try:
+                    res = f.result()
+                    min_res, bad_layer = _calculate_strategy_spectral_resolution(res["strategy"], p_thick_nominal, params)
+                    res["min_resolution"] = min_res
+                    res["limiting_layer"] = bad_layer
+                    results_by_idx[idx] = res
+                except Exception as e:
+                    import traceback
+                    logger.error(f"Strategy simulation failed: {e}")
+                    traceback.print_exc()
+        strategies_results = [r for r in results_by_idx if r is not None]
+
+    return strategies_results
+
+
+
+def _apply_strategy_ranking(
+    strategies_results: list[dict[str, Any]],
+    params: dict[str, Any],
+    origin_priority_map: dict[str, int],
+) -> list[dict[str, Any]]:
+    """Rank and sort strategies based on robustness, resolution, and origin priority."""
+
+    def _advanced_key(item: dict[str, Any]) -> tuple:
+        strategy = item.get("strategy", {})
+        origin = str(strategy.get("origin", "UNKNOWN"))
+        same_wl_kept = int(strategy.get("same_wl_kept", 0))
+        try:
+            n_blocks_val = int(strategy.get("n_blocks", len(strategy.get("blocks", []))))
+        except (TypeError, ValueError):
+            n_blocks_val = len(strategy.get("blocks", []))
+        min_res = float(item.get("min_resolution", 999.0))
+        return (
+            float(item.get("robustness_score", np.inf)),
+            min_res,
+            -same_wl_kept,
+            n_blocks_val,
+            _origin_priority_from_map(origin, origin_priority_map),
+            _strategy_id_sort_token(strategy.get("strategy_id", "")),
+        )
+
+    strategies_results.sort(key=_advanced_key)
+
+    sym_prefer_on_tie = bool(params.get("sym_prefer_on_tie", True))
+    sym_tie_epsilon = max(float(params.get("sym_tie_epsilon", SYM_DEFAULT_TIE_EPS_ABS)), 1e-12)
+    sym_tie_epsilon_rel = max(float(params.get("sym_tie_epsilon_rel", SYM_DEFAULT_TIE_EPS_REL)), 0.0)
+
+    def _is_tie(s_a: float, s_b: float) -> bool:
+        tol = sym_tie_epsilon + sym_tie_epsilon_rel * max(abs(s_a), abs(s_b))
+        return abs(s_a - s_b) <= tol
+
+    if sym_prefer_on_tie and len(strategies_results) > 1:
+        reordered = []
+        i = 0
+        while i < len(strategies_results):
+            base_score = float(strategies_results[i]["robustness_score"])
+            j = i + 1
+            while j < len(strategies_results):
+                current_score = float(strategies_results[j]["robustness_score"])
+                if _is_tie(base_score, current_score):
+                    j += 1
+                else:
+                    break
+            tie_group = strategies_results[i:j]
+            tie_group.sort(
+                key=lambda item: (
+                    0 if "SYM" in str(item.get("strategy", {}).get("origin", "")).upper() else 1,
+                    *_advanced_key(item),
+                )
+            )
+            reordered.extend(tie_group)
+            i = j
+        return reordered
+
+    return strategies_results
+
+
+
+def _apply_consensus_ranking_inplace(
+    results_in: list[dict[str, Any]],
+    params: dict[str, Any],
+    noise_levels: list[float],
+    num_runs: int,
+    p_thick_nominal: list[float],
+    clues_at_wl: dict[float, dict[str, complex]],
+    wl_arr: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_nom: np.ndarray,
+    full_dyn_grid: dict[int, dict[float, float]],
+    params_safe: dict[str, Any],
+    logger: logging.Logger,
+    stage_tag: str,
+    robustness_score_cache: dict[tuple, float],
+) -> None:
+    """Optional premium consensus ranking: re-score top candidates across multiple seeds."""
+    consensus_enabled = bool(params.get("enable_consensus_ranking", False))
+    if not (consensus_enabled and results_in):
+        return
+
+    consensus_num_seeds = max(1, int(params.get("consensus_num_seeds", 1)))
+    if consensus_num_seeds <= 1:
+        return
+
+    consensus_top_k = max(1, int(params.get("consensus_top_k", 12)))
+    consensus_seed_stride = max(1, int(params.get("consensus_seed_stride", 1)))
+    consensus_mode = str(params.get("consensus_score_mode", "mean_std")).strip().lower()
+    if consensus_mode not in {"mean", "worst", "mean_std"}:
+        consensus_mode = "mean_std"
+
+    consensus_std_weight = max(0.0, float(params.get("consensus_std_weight", 0.35)))
+    consensus_num_runs = max(1, int(params.get("consensus_num_runs", num_runs)))
+    base_seed = int(params.get("robustness_seed", 42))
+
+    consensus_seeds = []
+    raw_seed_list = params.get("consensus_seed_list", None)
+    if isinstance(raw_seed_list, list):
+        for x in raw_seed_list:
+            try:
+                consensus_seeds.append(int(x))
+            except (TypeError, ValueError):
+                continue
+    elif isinstance(raw_seed_list, str) and raw_seed_list.strip():
+        for token in raw_seed_list.split(","):
+            token = token.strip()
+            if not token:
+                continue
+            try:
+                consensus_seeds.append(int(token))
+            except (TypeError, ValueError):
+                continue
+
+    if consensus_seeds:
+        deduped = []
+        seen = set()
+        for s in consensus_seeds:
+            if s not in seen:
+                seen.add(s)
+                deduped.append(s)
+        consensus_seeds = deduped[: max(1, consensus_num_seeds)]
+    else:
+        consensus_seeds = [base_seed + i * consensus_seed_stride for i in range(consensus_num_seeds)]
+
+    noise_signature = tuple(round(float(v), 12) for v in (noise_levels or []))
+
+    def _consensus_prefilter_key(item: dict[str, Any]) -> tuple:
+        strategy = item.get("strategy", {})
+        sid_token = _strategy_id_sort_token(strategy.get("strategy_id", ""))
+        return (
+            float(item.get("robustness_score", np.inf)),
+            float(item.get("min_resolution", 999.0)),
+            -int(strategy.get("same_wl_kept", 0)),
+            sid_token,
+        )
+
+    top_k_eval = min(consensus_top_k, len(results_in))
+    candidates = sorted(results_in, key=_consensus_prefilter_key)[:top_k_eval]
+
+    logger.info(
+        f"[ROBUSTNESS] Consensus ranking enabled ({stage_tag}, top_k={top_k_eval}, seeds={consensus_seeds}, "
+        f"mode={consensus_mode}, runs={consensus_num_runs})"
+    )
+
+    consensus_map: dict[str, dict[str, Any]] = {}
+    for local_idx, item in enumerate(candidates):
+        strat = item.get("strategy", {})
+        sid = str(strat.get("strategy_id", ""))
+        strat_sig = _strategy_signature(strat)
+        seed_scores: list[float] = []
+
+        for seed in consensus_seeds:
+            params_consensus = dict(params_safe)
+            params_consensus["robustness_seed"] = int(seed)
+            cache_key = (strat_sig, int(seed), int(consensus_num_runs), noise_signature)
+            if cache_key in robustness_score_cache:
+                score_c = robustness_score_cache[cache_key]
+                if np.isfinite(score_c):
+                    seed_scores.append(score_c)
+                continue
+
+            try:
+                res_consensus = _test_strategy_robustness_task(
+                    strat, local_idx, noise_levels, consensus_num_runs,
+                    p_thick_nominal, clues_at_wl, params_consensus, wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid
+                )
+                score_c = float(res_consensus.get("robustness_score", np.inf))
+                robustness_score_cache[cache_key] = score_c
+                if np.isfinite(score_c):
+                    seed_scores.append(score_c)
+            except Exception as e:
+                logger.warning(f"[ROBUSTNESS] Consensus re-score failed for strategy {sid} seed={seed}: {e}")
+
+        if not seed_scores:
+            continue
+
+        mean_score = float(np.mean(seed_scores))
+        std_score = float(np.std(seed_scores))
+        worst_score = float(np.max(seed_scores))
+        if consensus_mode == "mean":
+            consensus_score = mean_score
+        elif consensus_mode == "worst":
+            consensus_score = worst_score
+        else:
+            consensus_score = mean_score + consensus_std_weight * std_score
+
+        consensus_map[sid] = {
+            "score": float(consensus_score),
+            "mean": mean_score,
+            "std": std_score,
+            "worst": worst_score,
+            "seeds": list(consensus_seeds),
+            "n_samples": int(len(seed_scores)),
+        }
+
+    for item in results_in:
+        sid = str(item.get("strategy", {}).get("strategy_id", ""))
+        meta = consensus_map.get(sid)
+        if not meta:
+            continue
+
+        item["robustness_score_base"] = float(item.get("robustness_score", np.inf))
+        item["robustness_score_consensus"] = float(meta["score"])
+        item["robustness_consensus_meta"] = {
+            "mode": consensus_mode,
+            "mean": float(meta["mean"]),
+            "std": float(meta["std"]),
+            "worst": float(meta["worst"]),
+            "seeds": meta["seeds"],
+            "n_samples": int(meta["n_samples"]),
+        }
+        item["robustness_score"] = float(meta["score"])
+
+    if consensus_map:
+        logger.info(f"[ROBUSTNESS] Consensus re-scored strategies: {len(consensus_map)}/{len(results_in)} ({stage_tag}).")
+
+
+
+def _apply_elite_refinement(
+    strategies_results: list[dict[str, Any]],
+    params: dict[str, Any],
+    noise_levels: list[float],
+    num_runs: int,
+    p_thick_nominal: list[float],
+    clues_at_wl: dict[float, dict[str, complex]],
+    wl_arr: np.ndarray,
+    nH_arr: np.ndarray,
+    nL_arr: np.ndarray,
+    nSub_arr: np.ndarray,
+    T_nom: np.ndarray,
+    full_dyn_grid: dict[int, dict[float, float]],
+    params_safe: dict[str, Any],
+    logger: logging.Logger,
+    robustness_score_cache: dict[tuple, float],
+) -> list[dict[str, Any]]:
+    """Optional ELITE refinement (multi-round): local neighborhood search around top-ranked solutions."""
+    elite_parent_top_k = max(1, int(params.get("elite_parent_top_k", 10)))
+    elite_max_candidates = max(1, int(params.get("elite_max_candidates", 120)))
+    elite_wl_neighbor_span = max(1, int(params.get("elite_wl_neighbor_span", 1)))
+    elite_num_runs = max(10, int(params.get("elite_num_runs", min(num_runs, 80))))
+    elite_rounds = max(1, int(params.get("elite_rounds", 2)))
+    elite_min_improvement = max(0.0, float(params.get("elite_min_improvement", 0.0)))
+    elite_stop_on_no_gain = bool(params.get("elite_stop_on_no_gain", True))
+    elite_max_full_evals = max(1, int(params.get("elite_max_full_evals", 36)))
+
+    if not (strategies_results and noise_levels):
+        return strategies_results
+
+    num_layers = len(p_thick_nominal)
+    raw_factors = params.get("robustness_noise_factors", [0.5, 1.0, 2.0])
+    nominal_idx = 0
+    parsed_factors = []
+    if isinstance(raw_factors, (list, tuple)):
+        for x in raw_factors:
+            try:
+                parsed_factors.append(float(x))
+            except (TypeError, ValueError):
+                continue
+    if parsed_factors:
+        nominal_idx = int(np.argmin(np.abs(np.array(parsed_factors, dtype=np.float64) - 1.0)))
+
+    if nominal_idx < len(noise_levels):
+        nominal_noise_level = float(noise_levels[nominal_idx])
+    else:
+        nominal_noise_level = float(noise_levels[min(len(noise_levels) // 2, len(noise_levels) - 1)])
+
+    available_wls = []
+    if hasattr(clues_at_wl, "keys"):
+        for k in clues_at_wl.keys():
+            try:
+                available_wls.append(float(k))
+            except (TypeError, ValueError):
+                continue
+    if not available_wls:
+        available_wls = [float(w) for w in wl_arr.tolist()]
+
+    total_elite_added = 0
+    for elite_round in range(1, elite_rounds + 1):
+        top10_idx = min(9, len(strategies_results) - 1)
+        nominal_threshold = _extract_rmse_p95_for_noise(strategies_results[top10_idx], nominal_noise_level)
+        if not np.isfinite(nominal_threshold):
+            logger.info(f"[ELITE] Round {elite_round}: skipped (non-finite nominal threshold).")
+            break
+
+        target_threshold = nominal_threshold - elite_min_improvement
+        max_sid = 0
+        for item in strategies_results:
+            try:
+                max_sid = max(max_sid, int(item.get("strategy", {}).get("strategy_id", 0)))
+            except (TypeError, ValueError):
+                continue
+
+        existing_signatures = {
+            _blocks_signature(item.get("strategy", {}).get("blocks", [])) for item in strategies_results
+        }
+        elite_candidates, _next_sid = _generate_elite_candidate_strategies(
+            parent_results=strategies_results[: min(elite_parent_top_k, len(strategies_results))],
+            available_wls=available_wls,
+            num_layers=num_layers,
+            start_strategy_id=max_sid + 1,
+            max_candidates=elite_max_candidates,
+            wl_neighbor_span=elite_wl_neighbor_span,
+            existing_signatures=existing_signatures,
+        )
+
+        logger.info(
+            f"[ELITE] Round {elite_round}/{elite_rounds}: generated={len(elite_candidates)} "
+            f"parents={min(elite_parent_top_k, len(strategies_results))} "
+            f"rank10_nominal={nominal_threshold:.6f} target={target_threshold:.6f}"
+        )
+
+        quick_pass = []
+        for e_idx, elite_strat in enumerate(elite_candidates):
+            try:
+                quick_res = _test_strategy_robustness_task(
+                    elite_strat, e_idx, [nominal_noise_level], elite_num_runs,
+                    p_thick_nominal, clues_at_wl, params_safe, wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid
+                )
+                quick_nominal = _extract_rmse_p95_for_noise(quick_res, nominal_noise_level)
+                if np.isfinite(quick_nominal) and quick_nominal < target_threshold:
+                    quick_pass.append((float(quick_nominal), int(e_idx), elite_strat))
+            except Exception as e:
+                logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+
+        if not quick_pass:
+            logger.info(f"[ELITE] Round {elite_round}: no candidate passed quick nominal gate.")
+            if elite_stop_on_no_gain:
+                break
+            continue
+
+        quick_pass.sort(key=lambda x: x[0])
+        full_eval_candidates = quick_pass[: min(elite_max_full_evals, len(quick_pass))]
+        logger.info(f"[ELITE] Round {elite_round}: quick_pass={len(quick_pass)}, full_eval={len(full_eval_candidates)}.")
+
+        elite_added = []
+        for _quick_nominal, e_idx, elite_strat in full_eval_candidates:
+            try:
+                full_res = _test_strategy_robustness_task(
+                    elite_strat, e_idx, noise_levels, num_runs,
+                    p_thick_nominal, clues_at_wl, params_safe, wl_arr, nH_arr, nL_arr, nSub_arr, T_nom, full_dyn_grid
+                )
+                full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
+                if np.isfinite(full_nominal) and full_nominal < target_threshold:
+                    full_score = float(full_res.get("robustness_score", np.inf))
+                    if np.isfinite(full_score):
+                        min_res, bad_layer = _calculate_strategy_spectral_resolution(full_res["strategy"], p_thick_nominal, params)
+                        full_res["min_resolution"] = min_res
+                        full_res["limiting_layer"] = bad_layer
+                        full_res["elite_round"] = int(elite_round)
+                        full_res["elite_nominal_score"] = float(full_nominal)
+                        elite_added.append(full_res)
+            except Exception as e:
+                logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+
+        if not elite_added:
+            logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")
+            if elite_stop_on_no_gain:
+                break
+            continue
+
+        total_elite_added += len(elite_added)
+        logger.info(f"[ELITE] Round {elite_round}: added {len(elite_added)} strategy(ies) above threshold.")
+        strategies_results.extend(elite_added)
+
+        _apply_consensus_ranking_inplace(
+            results_in=strategies_results,
+            params=params,
+            noise_levels=noise_levels,
+            num_runs=num_runs,
+            p_thick_nominal=p_thick_nominal,
+            clues_at_wl=clues_at_wl,
+            wl_arr=wl_arr,
+            nH_arr=nH_arr,
+            nL_arr=nL_arr,
+            nSub_arr=nSub_arr,
+            T_nom=T_nom,
+            full_dyn_grid=full_dyn_grid,
+            params_safe=params_safe,
+            logger=logger,
+            stage_tag=f"post-elite-r{elite_round}",
+            robustness_score_cache=robustness_score_cache,
+        )
+        origin_priority_map = _parse_origin_priority_map(params.get("origin_priority_map", None))
+        strategies_results = _apply_strategy_ranking(strategies_results, params, origin_priority_map)
+
+        enable_family_diversity = bool(params.get("enable_family_diversity", True))
+        if enable_family_diversity and len(strategies_results) > 1:
+            diversity_top_k = int(params.get("diversity_top_k", 12))
+            diversity_max_per_family = int(params.get("diversity_max_per_family", 4))
+            strategies_results = _apply_family_diversity(strategies_results, diversity_top_k, diversity_max_per_family)
+
+    if total_elite_added <= 0:
+        logger.info("[ELITE] No candidate added across all rounds.")
+
+    return strategies_results
+
+
+
+def _test_strategy_robustness_task(
+
+    strategy,
+
+    _strat_idx,
+
+    noise_levels,
+
+    num_runs,
+
+    p_thick_nominal,
+
+    clues_at_wl,
+
+    params,
+
+    wl_arr,
+
+    nH_arr,
+
+    nL_arr,
+
+    nSub_arr,
+
+    T_nom,
+
+    full_dyn_grid,
+
+
+):
+
+    import logging
+
+    logger = logging.getLogger("certus_strat")
+
+    blocks = strategy["blocks"]
+
+    p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
+
+    num_layers = len(p_thick_nominal)
+
+    offset_val = compute_probe_offset_nm_from_ratio(params)
+
+    factor_val = float(params.get("non_monotonic_error_factor", 2.0))
+
+    penalty_factor = float(params.get("wavelength_change_penalty", 1.2))
+
+    penalty_vector = np.ones(num_layers, dtype=np.float64)
+
+    sorted_blocks = sorted(blocks, key=lambda b: b["start"])
+
+    prev_wl = -1.0
+
+    for i, blk in enumerate(sorted_blocks):
+
+        current_wl = float(blk["wavelength"])
+
+        if i > 0 and abs(current_wl - prev_wl) > 1e-3:
+
+            start_layer_idx = blk["start"]
+
+            if start_layer_idx < num_layers:
+
+                penalty_vector[start_layer_idx] = penalty_factor
+
+        prev_wl = current_wl
+
+    results_per_noise = []
+
+    unique_wls = len(set(b["wavelength"] for b in blocks))
+
+    complexity = unique_wls / len(blocks) if blocks else 0
+
+    # Recalculate true nominal transmission with exactly the same kernel as simulated batches
+
+    _, T_clean_batch = calculate_RT_batch_kernel(
+
+        wl_arr,
+
+        nH_arr.astype(np.complex128),
+
+        nL_arr.astype(np.complex128),
+
+        nSub_arr.astype(np.complex128),
+
+        p_thick_nom_arr.reshape(1, -1),
+
+    )
+
+    T_nom_aligned = T_clean_batch[0].astype(np.float64)
+
+    # --- Build per-layer properties once (invariant over noise level) ---
+
+    n_wls = len(wl_arr)
+
+    layer_wavelengths = np.zeros(num_layers, dtype=np.float64)
+
+    n_H_vals = np.zeros(num_layers, dtype=np.complex128)
+
+    n_L_vals = np.zeros(num_layers, dtype=np.complex128)
+
+    n_Sub_vals = np.zeros(num_layers, dtype=np.complex128)
+
+    n_layers_matrix = np.zeros((n_wls, num_layers), dtype=np.complex128)
+
+    class _IdxWrapper:
+
+        def __init__(self, obj):
+
+            self.obj = obj
+
+        def __getitem__(self, k):
+
+            return self.obj.get(k) if hasattr(self.obj, "get") else self.obj[k]
+
+    idx_dict = _IdxWrapper(clues_at_wl)
+
+    for block in blocks:
+
+        b_wl = float(block["wavelength"])
+
+        idx_data = idx_dict[b_wl]
+
+        b_nH = idx_data["H"]
+
+        b_nL = idx_data["L"]
+
+        b_nSub = idx_data.get("substrate", 1.0)
+
+        for i in range(block["start"], block["end"]):
+
+            layer_wavelengths[i] = b_wl
+
+            n_H_vals[i] = b_nH
+
+            n_L_vals[i] = b_nL
+
+            n_Sub_vals[i] = b_nSub
+
+            if i % 2 == 0:
+
+                n_layers_matrix[:, i] = nH_arr.astype(np.complex128)
+
+            else:
+
+                n_layers_matrix[:, i] = nL_arr.astype(np.complex128)
+
+    is_absolute = params.get("thickness_tolerance_nm") is not None
+
+    dT_dd = None
+
+    if is_absolute:
+
+        dT_dd = _compute_dT_dd_per_layer(
+
+            layer_wavelengths, n_H_vals, n_L_vals, n_Sub_vals, p_thick_nominal
+
+        )
+
+    base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
+
+    for noise_idx, noise_val in enumerate(noise_levels):
+
+        # Reproducibility without global RNG side-effects (thread-safe).
+
+        local_seed = base_seed + _strat_idx * 100000 + noise_idx
+
+        rng = np.random.default_rng(local_seed)
+
+        raw_noise = np.clip(rng.normal(0.0, 1.0 / 3.0, (num_runs, num_layers)), -1.0, 1.0).astype(
+
+            np.float64
+
+        )
+
+        if is_absolute:
+
+            # Noise domain: thickness (nm). Convert to transmission offset via dT/dd.
+
+            noise_matrix = (
+
+                dT_dd * raw_noise * noise_val * penalty_vector
+
+            )
+
+        else:
+
+            # Noise domain: transmission (relative fraction). noise_val in %.
+
+            noise_matrix = raw_noise * (noise_val / 100.0) * penalty_vector
+
+        # --- VECTORIZED BATCH SIMULATION ---
+
+        nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
+
+        sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
+
+            p_thick_nom_arr,
+
+            layer_wavelengths,
+
+            n_H_vals,
+
+            n_L_vals,
+
+            n_Sub_vals,
+
+            noise_matrix,
+
+            offset_val,
+
+            factor_val,
+
+            nm_mode,
+
+        )
+
+        # [DYNAMICS VALIDATION] compare Phase B (simulated) vs Phase A (theoretical grid)
+
+        for i_layer in range(num_layers):
+
+            wl_sel = float(layer_wavelengths[i_layer])
+
+            if wl_sel > 0.1:
+
+                theory_dyn = full_dyn_grid.get(i_layer, {}).get(wl_sel, -1.0)
+
+                sim_dyn = avg_dyns_batch[i_layer]
+
+                diff = abs(theory_dyn - sim_dyn)
+
+                # Significant discrepancy check: absolute threshold 0.02 (2%)
+
+                if theory_dyn >= 0.0 and diff > 0.02:
+
+                    logger.warning(
+
+                        f"   [DYN-ALERT] Discrepancy L{i_layer+1} @ {wl_sel:.0f}nm | Phase A (Grid): {theory_dyn*100:.2f}% | Phase B (Sim): {sim_dyn*100:.2f}% | DIFF: {diff*100:.2f}%"
+
+                    )
+
+                else:
+
+                    if theory_dyn >= 0.0:
+
+                        logger.info(
+
+                            f"   [DYN-OK] L{i_layer+1} @ {wl_sel:.0f}nm | A={theory_dyn*100:.2f}% | B={sim_dyn*100:.2f}%"
+
+                        )
+
+        # Store for result object (convert to list of lists)
+
+        run_thicknesses = sim_thick_batch.tolist()
+
+        # 3. Compute Batch RMSE
+
+        # We use the full spectral clues (nH_arr, etc.)
+
+        run_rmses = compute_batch_rmse(
+
+            sim_thick_batch,
+
+            wl_arr.astype(np.float64),
+
+            np.empty(0),  # nH_arr unused
+
+            np.empty(0),  # nL_arr unused
+
+            nSub_arr.astype(np.complex128),
+
+            T_nom_aligned,
+
+            n_layers_matrix,
+
+        )
+
+        rmse_p95 = float(np.percentile(run_rmses, 95))
+
+        rmse_p99 = float(np.percentile(run_rmses, 99))
+
+        results_per_noise.append(
+
+            {
+
+                "noise_level": noise_val,
+
+                "rmse_mean": float(np.mean(run_rmses)),
+
+                "rmse_std": float(np.std(run_rmses)),
+
+                "rmse_p95": rmse_p95,
+
+                "rmse_p99": rmse_p99,
+
+                "rmse_all": run_rmses.tolist(),
+
+                "thicknesses_all": run_thicknesses,
+
+                "avg_dynamics": avg_dyns_batch.tolist(),
+
+            }
+
+        )
+
+    total_mc_sims = num_runs * len(noise_levels)
+
+    _emit_stat("MCS", total_mc_sims)
+
+    # Coherent worst-case policy across all tested noise levels.
+
+    final_score = max(
+
+        r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise
+
+    )
+
+    # 4. Compute Extrema Distances for Reporting
+
+    extrema_dist_info = []
+
+    theoretical_layer_profile = []
+
+    # We need to construct the matrix cache exactly as the nominal stack would
+
+    for i_layer in range(num_layers):
+
+        wl_sel = float(layer_wavelengths[i_layer])
+
+        if i_layer == 0:
+
+            M_before = np.array([
+
+                [1.0 + 0j, 0.0 + 0j],
+
+                [0.0 + 0j, 1.0 + 0j]
+
+            ], dtype=np.complex128)
+
+        else:
+
+            layer_matrix_cache = precompute_matrix_cache_kernel(
+
+                np.array([wl_sel], dtype=np.float64),
+
+                np.array([n_H_vals[i_layer]], dtype=np.complex128),
+
+                np.array([n_L_vals[i_layer]], dtype=np.complex128),
+
+                np.array(p_thick_nominal[:i_layer], dtype=np.float64),
+
+                i_layer,
+
+            )
+
+            M_before = layer_matrix_cache[-1, 0, :, :]
+
+        n_current = n_H_vals[i_layer] if i_layer % 2 == 0 else n_L_vals[i_layer]
+
+        layer_profile = _compute_theoretical_layer_profile(
+
+            wl_sel,
+
+            n_current,
+
+            n_Sub_vals[i_layer],
+
+            float(p_thick_nominal[i_layer]),
+
+            M_before,
+
+        )
+
+        dist_ps = float(layer_profile["dist_prev_start"])
+
+        dist_ns = float(layer_profile["dist_next_start"])
+
+        dist_pe = float(layer_profile["dist_prev_end"])
+
+        dist_ne = float(layer_profile["dist_next_end"])
+
+        extrema_dist_info.append({
+
+            "prev_start": dist_ps,
+
+            "next_start": dist_ns,
+
+            "prev_end": dist_pe,
+
+            "next_end": dist_ne,
+
+        })
+
+        theoretical_layer_profile.append(layer_profile)
+
+    strategy["extrema_distances"] = extrema_dist_info
+
+    strategy["theoretical_layer_profile"] = theoretical_layer_profile
+
+    strategy["symmetry_score_pct"] = _compute_strategy_symmetry_score_percent(
+
+        theoretical_layer_profile,
+
+        float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT)),
+
+    )
+
+    return {
+
+        "strategy_id": strategy["strategy_id"],
+
+        "strategy": strategy,
+
+        "results_per_noise": results_per_noise,
+
+        "robustness_score": final_score,
+
+        "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
+
+        "num_unique_wavelengths": unique_wls,
+
+        "complexity_score": complexity,
+
+    }
+
+
+
+def _compute_dT_dd_per_layer(
+    layer_wavelengths: np.ndarray,
+    n_H_vals: np.ndarray,
+    n_L_vals: np.ndarray,
+    n_Sub_vals: np.ndarray,
+    p_thick_nominal: list[float],
+    h_nm: float = 0.5,
+) -> np.ndarray:
+
+    """
+
+    Compute dT/dd at nominal thickness for each layer (transmission sensitivity).
+
+    Used when noise_domain is thickness_nm to convert thickness noise to transmission noise.
+
+    """
+
+    num_layers = len(p_thick_nominal)
+
+    p_thick_arr = np.array(p_thick_nominal, dtype=np.float64)
+
+    dT_dd = np.zeros(num_layers, dtype=np.float64)
+
+    for i in range(num_layers):
+
+        wl_i = float(layer_wavelengths[i])
+
+        if wl_i < 0.1:
+
+            dT_dd[i] = 1e-6
+
+            continue
+
+        n_current = n_H_vals[i] if (i % 2) == 0 else n_L_vals[i]
+
+        n_Sub = n_Sub_vals[i]
+
+        d_nom = p_thick_arr[i]
+
+        if i == 0:
+
+            M00, M01, M10, M11 = 1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j
+
+        else:
+
+            thick_prev = p_thick_arr[:i]
+
+            wl_arr = np.array([wl_i], dtype=np.float64)
+
+            n_H_arr = np.array([n_H_vals[i]], dtype=np.complex128)
+
+            n_L_arr = np.array([n_L_vals[i]], dtype=np.complex128)
+
+            cache = precompute_matrix_cache_kernel(
+
+                wl_arr, n_H_arr, n_L_arr, thick_prev, i
+
+            )
+
+            M_before = cache[i - 1, 0, :, :]
+
+            M00, M01, M10, M11 = (
+
+                M_before[0, 0], M_before[0, 1], M_before[1, 0], M_before[1, 1]
+
+            )
+
+        d_plus = d_nom + h_nm
+
+        d_minus = max(0.1, d_nom - h_nm)
+
+        T_plus = compute_T_front_at_layer(
+
+            wl_i, n_current, n_Sub, M00, M01, M10, M11, d_plus
+
+        )
+
+        T_minus = compute_T_front_at_layer(
+
+            wl_i, n_current, n_Sub, M00, M01, M10, M11, d_minus
+
+        )
+
+        denom = d_plus - d_minus
+
+        dT_dd[i] = (T_plus - T_minus) / denom if denom > 1e-9 else 1e-6
+
+    return dT_dd
+
+
+
+def _origin_priority_from_map(origin: str, priority_map: dict[str, int]) -> int:
+
+    fam = _origin_family(origin)
+
+    if fam in priority_map:
+
+        return int(priority_map[fam])
+
+    for key, val in priority_map.items():
+
+        if key and key in fam:
+
+            return int(val)
+
+    return 999
+
+
+
+def _strategy_id_sort_token(strategy_id: Any) -> tuple:
+
+    """Deterministic strategy-id token (numeric first when possible)."""
+
+    text = str(strategy_id)
+
+    try:
+
+        return (0, int(text))
+
+    except (TypeError, ValueError):
+
+        return (1, text)
+
+
+
+def _extract_rmse_p95_for_noise(result_item: dict[str, Any], target_noise: float) -> float:
+
+    """Return RMSE P95 for the nearest noise level to target_noise."""
+
+    try:
+
+        results = result_item.get("results_per_noise", [])
+
+        if not results:
+
+            return float("inf")
+
+        best = min(results, key=lambda r: abs(float(r.get("noise_level", 0.0)) - float(target_noise)))
+
+        return float(best.get("rmse_p95", best.get("rmse_mean", np.inf)))
+
+    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+
+        return float("inf")
+
+
+
+def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params):
+
+    blocks = strategy["blocks"]
+
+    nH_id, nL_id, nSub_id = params["nH_id"], params["nL_id"], params["nSub_id"]
+
+    db_local = params.get("materials_db_instance")
+
+    test_bw = 1.0
+
+    half_bw = test_bw / 2.0
+
+    try:
+
+        T_tolerance = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
+
+    except (KeyError, ValueError, TypeError):
+
+        T_tolerance = 0.001
+
+    min_resolution = 999.0
+
+    worst_layer = -1
+
+    layer_to_wl = {}
+
+    for block in blocks:
+
+        for l in range(block["start"], block["end"]):
+
+            layer_to_wl[l] = float(block["wavelength"])
+
+    num_layers = len(p_thick_nominal)
+
+    for i_layer in range(num_layers):
+
+        wl_mon = layer_to_wl.get(i_layer, float(params["l0"]))
+
+        current_stack_thick = p_thick_nominal[: i_layer + 1]
+
+        wls_check = [max(0.1, wl_mon - half_bw), wl_mon, wl_mon + half_bw]
+
+        # calculate_RT_normal_real returns 2D array (n_wls, 2) with R col 0, T col 1
+
+        RT = calculate_RT_normal_real(
+
+            wls_check, nH_id, nL_id, nSub_id, current_stack_thick, db_instance=db_local
+
+        )
+
+        T_vals = RT[:, 1]
+
+        if len(T_vals) == 3:
+
+            curvature = abs((T_vals[0] + T_vals[2]) / 2.0 - T_vals[1])
+
+            # Adjusted tolerance for calculationation?
+
+            # If we have absolute tolerance, we might want to check it differently?
+
+            # Keeping T_tolerance (trigger tolerance) for now as it relates to T change, not thickness.
+
+            if curvature > 1e-9:
+
+                res_limit = test_bw * np.sqrt(T_tolerance / curvature)
+
+            else:
+
+                res_limit = 100.0
+
+            if res_limit < min_resolution:
+
+                min_resolution = res_limit
+
+                worst_layer = i_layer + 1
+
+    return min_resolution, worst_layer
+
+
+
+def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
+
+    """Deterministic signature for block layout/wavelength de-duplication."""
+
+    sig = []
+
+    for blk in blocks:
+
+        try:
+
+            start = int(blk.get("start", 0))
+
+            end = int(blk.get("end", 0))
+
+            wl = round(float(blk.get("wavelength", 0.0)), 6)
+
+            sig.append((start, end, wl))
+
+        except (TypeError, ValueError):
+
+            continue
+
+    return tuple(sig)
+
+
+
+def _strategy_signature(strategy: dict[str, Any]) -> tuple:
+
+    """Stable strategy signature for memoization across re-evaluations."""
+
+    if not isinstance(strategy, dict):
+
+        return tuple()
+
+    try:
+
+        n_blocks = int(strategy.get("n_blocks", len(strategy.get("blocks", []))))
+
+    except (TypeError, ValueError):
+
+        n_blocks = len(strategy.get("blocks", []))
+
+    return (n_blocks, _blocks_signature(strategy.get("blocks", [])))
+
+
+
+def _generate_elite_candidate_strategies(
+
+    parent_results: list[dict[str, Any]],
+
+    available_wls: list[float],
+
+    num_layers: int,
+
+    start_strategy_id: int,
+
+    max_candidates: int = 120,
+
+    wl_neighbor_span: int = 1,
+
+    existing_signatures: set | None = None,
+
+
+) -> tuple[list[dict[str, Any]], int]:
+
+    """
+
+    Build local-neighborhood variants around top-ranked strategies.
+
+    Preserves contract constraints (same n_blocks, contiguous coverage).
+
+    """
+
+    if not parent_results or not available_wls:
+
+        return [], start_strategy_id
+
+    wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
+
+    if wl_arr.size == 0:
+
+        return [], start_strategy_id
+
+    seen = set(existing_signatures or set())
+
+    out: list[dict[str, Any]] = []
+
+    next_id = int(start_strategy_id)
+
+    span = max(1, int(wl_neighbor_span))
+
+    max_keep = max(1, int(max_candidates))
+
+    def _push_candidate(base_blocks: list[dict[str, Any]], parent_sid: Any) -> None:
+
+        nonlocal next_id
+
+        if len(out) >= max_keep:
+
+            return
+
+        sig = _blocks_signature(base_blocks)
+
+        if not sig or sig in seen:
+
+            return
+
+        n_blocks_local = len(base_blocks)
+
+        same_wl_kept = 0
+
+        for i in range(1, n_blocks_local):
+
+            if abs(float(base_blocks[i]["wavelength"]) - float(base_blocks[i - 1]["wavelength"])) < 1e-12:
+
+                same_wl_kept += 1
+
+        candidate = {
+
+            "strategy_id": int(next_id),
+
+            "n_blocks": int(n_blocks_local),
+
+            "avg_cost": float("inf"),
+
+            "total_cost": float("inf"),
+
+            "blocks": base_blocks,
+
+            "origin": "ELITE",
+
+            "origin_details": f"ELITE(parent={parent_sid})",
+
+            "same_wl_kept": int(same_wl_kept),
+
+            "parent_strategy_id": parent_sid,
+
+        }
+
+        ok, _reason = _validate_strategy_blocks_contract(
+
+            candidate,
+
+            num_layers,
+
+            expected_n_blocks=n_blocks_local,
+
+        )
+
+        if not ok:
+
+            return
+
+        out.append(candidate)
+
+        seen.add(sig)
+
+        next_id += 1
+
+    for parent in parent_results:
+
+        strat = parent.get("strategy", {})
+
+        parent_sid = strat.get("strategy_id", "?")
+
+        base_blocks = [
+
+            {
+
+                "start": int(b["start"]),
+
+                "end": int(b["end"]),
+
+                "wavelength": float(b["wavelength"]),
+
+            }
+
+            for b in strat.get("blocks", [])
+
+        ]
+
+        if not base_blocks:
+
+            continue
+
+        # 1) Wavelength local mutations (neighbor wavelengths around each block lambda)
+
+        for b_idx, blk in enumerate(base_blocks):
+
+            cur_wl = float(blk["wavelength"])
+
+            nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+
+            for delta in range(-span, span + 1):
+
+                if delta == 0:
+
+                    continue
+
+                idx_wl = nearest + delta
+
+                if idx_wl < 0 or idx_wl >= wl_arr.size:
+
+                    continue
+
+                new_wl = float(wl_arr[idx_wl])
+
+                if abs(new_wl - cur_wl) < 1e-12:
+
+                    continue
+
+                mutated = [dict(b) for b in base_blocks]
+
+                mutated[b_idx]["wavelength"] = new_wl
+
+                _push_candidate(mutated, parent_sid)
+
+                if len(out) >= max_keep:
+
+                    return out, next_id
+
+        # 2) Boundary local shifts (+/- 1 layer between adjacent blocks)
+
+        for b_idx in range(len(base_blocks) - 1):
+
+            left = base_blocks[b_idx]
+
+            right = base_blocks[b_idx + 1]
+
+            left_len = int(left["end"]) - int(left["start"])
+
+            right_len = int(right["end"]) - int(right["start"])
+
+            # Shift boundary left by 1 (give one layer from left to right)
+
+            if left_len > 1:
+
+                mutated = [dict(b) for b in base_blocks]
+
+                new_boundary = int(mutated[b_idx]["end"]) - 1
+
+                mutated[b_idx]["end"] = new_boundary
+
+                mutated[b_idx + 1]["start"] = new_boundary
+
+                _push_candidate(mutated, parent_sid)
+
+                if len(out) >= max_keep:
+
+                    return out, next_id
+
+            # Shift boundary right by 1 (give one layer from right to left)
+
+            if right_len > 1:
+
+                mutated = [dict(b) for b in base_blocks]
+
+                new_boundary = int(mutated[b_idx]["end"]) + 1
+
+                mutated[b_idx]["end"] = new_boundary
+
+                mutated[b_idx + 1]["start"] = new_boundary
+
+                _push_candidate(mutated, parent_sid)
+
+                if len(out) >= max_keep:
+
+                    return out, next_id
+
+    return out, next_id
+
+
+
+def _compute_theoretical_layer_profile(
+
+    wl_nm: float,
+
+    n_current: complex,
+
+    n_sub: complex,
+
+    nominal_thickness: float,
+
+    M_before: np.ndarray,
+
+
+) -> dict[str, Any]:
+
+    """Theoretical no-noise profile for one layer: Tinit/Textrema/Tfinal + distances."""
+
+    M00, M01, M10, M11 = (
+
+        M_before[0, 0],
+
+        M_before[0, 1],
+
+        M_before[1, 0],
+
+        M_before[1, 1],
+
+    )
+
+    d_nom = float(max(0.0, nominal_thickness))
+
+    n_steps = max(3, int(np.ceil(d_nom / 1.0)) + 1)
+
+    d_grid = np.linspace(0.0, d_nom, n_steps, dtype=np.float64)
+
+    t_grid = np.empty(n_steps, dtype=np.float64)
+
+    for idx, d in enumerate(d_grid):
+
+        t_grid[idx] = float(
+
+            compute_T_front_at_layer(
+
+                float(wl_nm), complex(n_current), complex(n_sub), M00, M01, M10, M11, float(d)
+
+            )
+
+        )
+
+    t_init = float(t_grid[0])
+
+    t_final = float(t_grid[-1])
+
+    extrema = _extract_local_extrema_points(d_grid, t_grid)
+
+    dist_ps, dist_ns, dist_pe, dist_ne = calculate_extrema_distances(
+
+        float(wl_nm), complex(n_current), complex(n_sub), d_nom, M_before
+
+    )
+
+    d_end_nearest = float(min(dist_pe, dist_ne))
+
+    nearest_end_type = "between"
+
+    nearest_curve_dist = d_end_nearest
+
+    if extrema:
+
+        nearest_ext = min(extrema, key=lambda e: abs(float(e.get("d_nm", 0.0)) - d_nom))
+
+        nearest_curve_dist = float(abs(float(nearest_ext.get("d_nm", 0.0)) - d_nom))
+
+        nearest_end_type = str(nearest_ext.get("type", "between")).lower()
+
+    if nearest_end_type in {"min", "max"} and nearest_curve_dist <= 2.0:
+
+        tfinal_class = f"near {nearest_end_type}"
+
+    else:
+
+        tfinal_class = "between"
+
+    return {
+
+        "Tinit": t_init,
+
+        "Tfinal": t_final,
+
+        "Textrema": extrema,
+
+        "d_nom_nm": d_nom,
+
+        "dist_prev_start": float(dist_ps),
+
+        "dist_next_start": float(dist_ns),
+
+        "dist_prev_end": float(dist_pe),
+
+        "dist_next_end": float(dist_ne),
+
+        "dist_end_nearest": d_end_nearest,
+
+        "nearest_end_type": nearest_end_type,
+
+        "nearest_end_dist_nm": nearest_curve_dist,
+
+        "tfinal_class": tfinal_class,
+
+        "extrema_count": int(len(extrema)),
+
+    }
+
+
+
+def _compute_local_extrema_symmetry_score(
+
+    dist_prev: float,
+
+    dist_next: float,
+
+    window_ot: float,
+
+
+) -> float:
+
+    """
+
+    Local symmetry score in [0, 1] around an extremum.
+
+    - proximity term: closer to the nearest extremum is better.
+
+    - balance term: symmetric distances left/right are better.
+
+    """
+
+    window = max(1e-6, float(window_ot))
+
+    d_prev = float(dist_prev)
+
+    d_next = float(dist_next)
+
+    if d_prev >= SYM_MISSING_DISTANCE and d_next >= SYM_MISSING_DISTANCE:
+
+        return 0.0
+
+    nearest = min(d_prev, d_next)
+
+    proximity = _clamp01(1.0 - min(nearest, window) / window)
+
+    if d_prev >= SYM_MISSING_DISTANCE or d_next >= SYM_MISSING_DISTANCE:
+
+        balance = 0.0
+
+    else:
+
+        denom = max(d_prev + d_next, 1e-9)
+
+        balance = _clamp01(1.0 - abs(d_prev - d_next) / denom)
+
+    return 0.65 * proximity + 0.35 * balance
+
+
+
+def _compute_strategy_symmetry_score_percent(
+
+    theoretical_layer_profile: list[dict[str, Any]],
+
+    window_ot: float,
+
+
+) -> float:
+
+    """
+
+    Strategy-level symmetry score on [0, 100].
+
+    Per layer, evaluate start/end local symmetry around extrema and keep the best
+
+    (pseudo-symmetry included via the local score balance term), then average.
+
+    """
+
+    if not theoretical_layer_profile:
+
+        return 0.0
+
+    layer_scores: list[float] = []
+
+    for prof in theoretical_layer_profile:
+
+        try:
+
+            s_start = _compute_local_extrema_symmetry_score(
+
+                float(prof.get("dist_prev_start", SYM_MISSING_DISTANCE)),
+
+                float(prof.get("dist_next_start", SYM_MISSING_DISTANCE)),
+
+                float(window_ot),
+
+            )
+
+            s_end = _compute_local_extrema_symmetry_score(
+
+                float(prof.get("dist_prev_end", SYM_MISSING_DISTANCE)),
+
+                float(prof.get("dist_next_end", SYM_MISSING_DISTANCE)),
+
+                float(window_ot),
+
+            )
+
+            layer_scores.append(max(float(s_start), float(s_end)))
+
+        except (TypeError, ValueError):
+
+            layer_scores.append(0.0)
+
+    if not layer_scores:
+
+        return 0.0
+
+    return float(100.0 * _clamp01(float(np.mean(np.array(layer_scores, dtype=np.float64)))))
+
+
+
+def _clamp01(val: float) -> float:
+
+    return max(0.0, min(1.0, float(val)))
+
+
+
+def _origin_family(origin_raw: Any) -> str:
+
+    """Return normalized origin family token for ranking/diversity."""
+
+    origin = str(origin_raw or "").upper().strip()
+
+    if not origin:
+
+        return "UNKNOWN"
+
+    return origin.split("(")[0].strip()
+
+
+
+def _apply_family_diversity(
+
+    ordered_results: list[dict[str, Any]],
+
+    top_k: int,
+
+    max_per_family: int,
+
+
+) -> list[dict[str, Any]]:
+
+    """Reorder top segment to avoid one-family monoculture."""
+
+    if top_k <= 0 or max_per_family <= 0 or not ordered_results:
+
+        return ordered_results
+
+    k = min(int(top_k), len(ordered_results))
+
+    selected: list[tuple[int, dict[str, Any]]] = []
+
+    deferred: list[tuple[int, dict[str, Any]]] = []
+
+    used_clues = set()
+
+    counts: dict[str, int] = {}
+
+    for idx, item in enumerate(ordered_results):
+
+        fam = _origin_family(item.get("strategy", {}).get("origin", "UNKNOWN"))
+
+        used = counts.get(fam, 0)
+
+        if len(selected) < k and used < max_per_family:
+
+            selected.append((idx, item))
+
+            used_clues.add(idx)
+
+            counts[fam] = used + 1
+
+        else:
+
+            deferred.append((idx, item))
+
+    for idx, item in deferred:
+
+        if len(selected) >= k:
+
+            break
+
+        selected.append((idx, item))
+
+        used_clues.add(idx)
+
+    diversified_head = [item for _idx, item in selected]
+
+    tail = [item for idx, item in enumerate(ordered_results) if idx not in used_clues]
+
+    return diversified_head + tail
+
+
+
+def _parse_origin_priority_map(
+
+    raw_value: Any,
+
+
+) -> dict[str, int]:
+
+    """Parse optional origin priority map from dict or 'A:0,B:1' string."""
+
+    default_map = {
+
+        "SYM": 0,
+
+        "SMART_MERGE_SYM": 1,
+
+        "THICKNESS²": 2,
+
+        "THICKNESS2": 2,
+
+        "THICKNESS": 3,
+
+        "SMART_MERGE_THICKNESS2": 4,
+
+        "SMART_MERGE_THICKNESS": 5,
+
+        "SMART_MERGE_MIXED": 6,
+
+    }
+
+    if isinstance(raw_value, dict):
+
+        out = {}
+
+        for k, v in raw_value.items():
+
+            try:
+
+                out[str(k).upper().strip()] = int(v)
+
+            except (TypeError, ValueError):
+
+                continue
+
+        return out if out else default_map
+
+    if isinstance(raw_value, str) and ":" in raw_value:
+
+        out = {}
+
+        for part in raw_value.split(","):
+
+            token = part.strip()
+
+            if ":" not in token:
+
+                continue
+
+            k, v = token.split(":", 1)
+
+            try:
+
+                out[str(k).upper().strip()] = int(v.strip())
+
+            except (TypeError, ValueError):
+
+                continue
+
+        return out if out else default_map
+
+    return default_map
+
+

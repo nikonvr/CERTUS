@@ -1,0 +1,219 @@
+=== CERTUS_INDEX_SPLINE.py ===
+   52 class SmartInitPayload:
+  551 def _plot_spectrum_raw_scatter(
+  599 def _spectral_display_align(
+  671 def _mergesort_order_lambda(lam_nm: np.ndarray) -> np.ndarray:
+  680 def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame | None:
+  745 class SplineState:
+  760 class CorridorRMSEProfileWindow(QDialog):
+  922 class LiveIndexMonitor(QDialog):
+ 1199 def _interp_t_at_lam_knots(lam_grid: np.ndarray, t_grid: np.ndarray, cur_sk: np.ndarray) -> np.ndarray:
+ 1211 def _d_from_slider_int(
+ 1221 def _slider_int_from_d_nm(
+ 1232 def _get_xv_spectral_coord(sx: float, mode: str) -> float:
+ 1242 def _stretch_sig_to_px(delta: float, span_sig2: float) -> int:
+ 1247 def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: "SplineOptConfig") -> tuple[float, float]:
+ 1267 def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: float) -> np.ndarray:
+ 1288 def _filter_rmse_peaks_iteratively(
+ 1322 def _safe_int_from_mapping(m: Mapping[str, Any], key: str, default: int = -1) -> int:
+ 1332 def _worker_corridor_rmse_regular_grid(
+ 1393 def _worker_corridor_rmse_healer(
+ 1423 def _worker_curve_minimum_deep_refit(
+ 1447 def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float, best_rmse: float) -> str:
+ 1458 class _RMSEPlotContext:
+ 1482 class _SmartInitState:
+ 1505 class _ExcelExportMixin:
+ 2461 class _MeshOptimizationMixin:
+ 3349 class _ConfigBuilderMixin:
+ 3769 class _SmartInitDialogMixin:
+ 5883 class _CorridorWorkerMixin:
+ 7449 class _PlotMixin:
+ 8086 class _UIBuilderMixin:
+ 9121 class _CorridorExportMixin:
+ 9630 class _RunMixin:
+10433 class _DataMixin:
+10939 class _CorridorGenMixin:
+11656 class _SettingsMixin:
+12379 class _CorridorControlMixin:
+13116 class _UIMixin:
+13120 class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMixin, _DataMixin, _RunMixin, _CorridorExportMixin, _UIBuilderMixin, _PlotMixin, _CorridorWorkerMixin, _SmartInitDialogMixin, _ConfigBuilderMixin, _MeshOptimizationMixin, _ExcelExportMixin, _UIMixin, CertusBaseApp):
+16023 def main() -> None:
+16055 class SplineReportContext:
+16065 class SplineReportBuilder:
+=== certus_index_spline_core.py ===
+  224 def _enforce_sigma_min_sep(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarray:
+  241 def enforce_k_floor_on_nodes(
+  375 def default_n_mono_band_nm_from_spectrum(
+  411 def _mono_sigmoid(z: float | np.ndarray) -> np.ndarray:
+  418 def _mono_logit(p: float) -> float:
+  425 def n_mono_segment_flags(
+  475 def n_lambda_rising_with_wavelength_penalty(
+  561 def n_mono_knot_chains(seg_mono: np.ndarray) -> list[tuple[int, int]]:
+  584 def decode_xi_n_to_physical_n(
+  634 def project_n_pwl_monotone_chains(n: np.ndarray, chains: list[tuple[int, int]]) -> np.ndarray:
+  647 def encode_physical_n_to_xi_n(
+  705 def x_slice_n_to_physical_nodes(
+  735 def physical_nodes_to_x_slice_n(
+  779 def _reflectance_absolute_backside_from_nk(
+  881 def merge_spline_preset(
+  903 def sigma_segment_indices(sig: np.ndarray, sigma_knots: np.ndarray) -> np.ndarray:
+  920 def gui_perf_preset_only(preset_name: str) -> dict[str, float | int]:
+  931 def export_spline_result_jsonable(
+ 1251 def min_relative_lambda_spacing_ratio(
+ 1289 def build_sigma_knots_log_uniform(lam_min_nm: float, lam_max_nm: float, n_seg: int) -> np.ndarray:
+ 1308 def _canonical_knots_min_lambda_kw(cfg: SplineOptConfig | None) -> dict[str, float]:
+ 1333 def _insert_two_equi_lambda_in_last_sigma_segment(sk_base: np.ndarray) -> np.ndarray:
+ 1402 def canonical_spline_sigma_knots(
+ 1584 def bridge_sigma_knots_preserve_manual(
+ 1758 def build_sigma_knots(lam_min_nm: float, lam_max_nm: float, n_seg: int) -> np.ndarray:
+ 1791 def _to_fraction_T(y: np.ndarray) -> np.ndarray:
+ 1802 def ensure_lam_nm_array(lam: np.ndarray) -> np.ndarray:
+ 1815 def prepare_exp_TR_for_fit(
+ 1889 def _find_lambda_column(df: pd.DataFrame) -> str | None:
+ 1908 def _find_transmission_column(df: pd.DataFrame, lam_col: str) -> str | None:
+ 1941 def normalize_spectrum_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+ 1976 class DataType(Enum):
+ 1985 def substrate_id_from_name(name: str) -> int:
+ 1990 def allowed_substrate_names() -> list[str]:
+ 1997 class SplinePGlobalConfig:
+ 2018 class SplineSmartInitConfig:
+ 2032 class SplineCorridorConfig:
+ 2080 class SplineBootstrapConfig:
+ 2095 class SplineNonlinearAlphaConfig:
+ 2107 class SplineOptConfig:
+ 2668 def sol3_phase1_maxfun_effective_from_view(view: SplinePGlobalConfig) -> int:
+ 2688 def sol3_phase1_maxfun_effective(cfg: SplineOptConfig) -> int:
+ 2695 def corridor_profile_refit_maxfun_from_views(
+ 2721 def corridor_profile_refit_maxfun(cfg: SplineOptConfig, override: int | None = None) -> int:
+ 2736 class SmartInitPreviewCancelled(Exception):
+ 2741 def reset_smart_init_preview_guard(cfg: SplineOptConfig | None = None) -> None:
+ 2750 def _flog_spectral_rmse_field(x: Any) -> str:
+ 2767 def _log_smart_coaching_advice(logger: logging.Logger, r: dict) -> None:
+ 2840 def _log_spectral_mesh_polish_rmse_block(logger: logging.Logger, r: dict) -> None:
+ 2877 def _log_index_spline_best_config(
+ 3005 def _log_spline_pipeline_json(
+ 3017 def reconcile_spline_x_warm_for_config(
+ 3063 def warm_start_interpolate_nodes(
+ 3115 def _rmse_fit_lambda_inside_mask(
+ 3139 def nan_nk_outside_rmse_lambda_window(
+ 3177 def apply_rmse_fit_window_nk_nan_to_result(
+ 3277 def snapshot_result_with_rmse_fit_meta(
+ 3295 def _bounds_x0_for_sigma_knots(
+ 3353 def build_x0_smart_preview_exact(
+ 3407 def make_bounds_and_x0(
+ 3948 def warm_start_sigma_regrid(
+ 3996 def rmse_at_spline_stage_x0_init(
+ 4058 def log_rmse_mesh_bridge_diagnosis(
+=== spline_pipeline.py ===
+  131 def enforce_local_optimization_policy(cfg: SplineOptConfig) -> None:
+  138 class _WorkerProgressCoordinator:
+  191 def _spl_rmse_improves_meaningfully(rmse_ref: float, rmse_cand: float) -> bool:
+  203 def _select_corridor_base_result_for_profile(
+  341 def _resolve_corridor_mode(cfg: SplineOptConfig) -> tuple[str, str, float]:
+  358 def _build_profile_corridor_config(
+  419 def _run_corridor_profile_block(
+  603 def worker_run_corridor_profile_after_nl_choice(
+  627 def worker_spline_optimization(
+=== spline_objective.py ===
+   29 def _cached_spectral_rmse_weights_inner(key: bytes) -> np.ndarray:
+   33 def _cached_spectral_rmse_weights(lam_f: np.ndarray) -> np.ndarray:
+   77 def sigma_knots_encode(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarray:
+   92 def sigma_knots_decode(
+  128 def _interpolate_along_sigma(
+  174 def nk_from_x_pwlnk(
+  254 def build_segment_optimizer_x_vector(
+  314 def _spline_objective_lam_mask(cfg: SplineOptConfig) -> np.ndarray:
+  345 def objective_lam_mask_on_target_grid(
+  399 def build_spline_objective_masked_grid(
+  474 def spline_objective_mse_on_masked_grid(
+  588 def spectral_mse_rmse_masked_from_nk(
+  677 def spline_spectral_mse_from_xy_nk(
+  753 def decompose_spline_pwl_objective(
+  883 class SplinePWLObjective:
+ 1066 def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
+ 1083 def _lambda_rising_penalty_grad_nn(
+ 1161 def _spectral_wsum_and_channels(
+ 1209 def compute_spline_pwl_objective_analytic_gradient(
+=== spline_finalize.py ===
+   81 def _log_skipped_knot_insertion_fixed_mesh(
+  157 def _spectral_polish_node_mesh_profile(
+  579 def _finalize_spectral_rmse_mesh_polish_and_best(out: dict[str, Any]) -> None:
+  724 def extract_nominal_best_polished_corridor_reference(out: dict[str, Any]) -> dict[str, Any] | None:
+=== spline_nonlinear_alpha.py ===
+   58 def clear_nl_result_fields(out: dict[str, Any]) -> None:
+   63 def _cfg_get_first(cfg: Any, *names: str, default: Any) -> Any:
+   71 def _interp_on_sigma_knots(lam_nm: np.ndarray, y_lam: np.ndarray, sk: np.ndarray) -> np.ndarray:
+   82 def _pick_nl_start_x_and_mode(
+  136 def nl_alpha_grid_values() -> np.ndarray:
+  141 def nl_alpha_scan_order_values() -> np.ndarray:
+  164 def nonlinear_alpha_lbfgs_maxfun_per_step_from_views(
+  177 def nonlinear_alpha_lbfgs_maxfun_per_step(cfg: Any) -> tuple[int, str]:
+  194 def nonlinear_alpha_second_pass_maxfun_effective_from_views(
+  207 def nonlinear_alpha_second_pass_maxfun_effective(cfg: Any, mf_per: int) -> int:
+  219 def _lbfgsb_exit_kind(success: bool, msg: str) -> str:
+  232 class _NLJointObjective:
+  304 def apply_nonlinear_alpha_refinement(
+=== spline_smart_init.py ===
+   72 def _build_smart_preview_grids(cfg: SplineOptConfig) -> dict[str, Any] | None:
+  137 def smart_preview_append_sigma_mid_between_two_longest_lambda(sk: np.ndarray) -> np.ndarray:
+  172 def build_smart_manual_sigma_knots_from_preview_grid(
+  214 def interp_n_L_pwlnk_to_sigmas(
+  550 def _finalize_smart_preview_from_nodes(
+  866 def compute_smart_init_spectral_preview(
+  938 def recalc_smart_init_spectral_preview(
+  986 def guess_smart_x0_from_extrema(
+ 1136 def smart_init_sweep_node_thickness_rmse(
+ 1417 def tune_d_and_rmse_for_manual_material_preset(
+ 1491 def pick_best_manual_material_preset(
+=== spline_presets.py ===
+  241 def _clip_n_L_physical(n: np.ndarray, L: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+  250 def _interp_n_L_linear_on_sigma(
+  309 def _project_nb2o5_preset_to_sigma_knots(
+  336 def _project_sio2_preset_to_sigma_knots(
+  377 def _project_tabulated_nk_lam_preset_to_sigma_knots(
+  438 def _ta2o5_tabulation_extended() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+  459 def project_manual_material_preset(
+=== spline_workers.py ===
+  116 def _pglobal_bounds_trust_region(
+  216 def _build_live_dict(
+  354 def _polish_lbfgsb_chunked(
+  562 def _pack_spline_stage_result(
+  746 def _run_free_knot_stage(
+ 2376 def worker_auto_best_split_knot_refinement(
+ 2436 def _run_split_free_knot_stage(
+ 2472 def _run_single_spline_stage(
+=== spline_visual_utils.py ===
+   13 def snap_spline_visual_dict(r: dict) -> dict:
+   54 def live_monitor_nk_clipboard_tsv_2nm(
+=== spline_profile_corridors.py ===
+  176 def _expand_corridor_envelope_with_reported_nk(
+  235 def _fit_local_quadratic_rmse_profile(
+  382 def _robust_sigma_from_mad(values: np.ndarray) -> float:
+  399 def _estimate_adaptive_rmse_abs_tolerance(
+  623 class ProfileCorridorConfig:
+  829 def widen_corridor_envelope_to_include_nk_in_result(
+  889 def enforce_min_k_corridor_half_width(
+  985 def log_coaching_uncertainty_parameter_guide() -> None:
+ 1128 def log_coaching_corridor_pipeline_skip_empty() -> None:
+ 1145 def _log_coaching_corridor_outcome(
+ 1357 def _log_coaching_corridor_failure(
+ 1427 def _log_coaching_bootstrap_outcome(
+ 1513 def _log_coaching_reg_sensitivity_outcome(
+ 1625 def _pick_rmse_reference_for_profile(
+ 1697 def _extract_knots_and_nodes_from_result(
+ 1807 def _spectral_rmse_at_packed_nodes(
+ 1867 def _x_nodes0_from_mesh_x_if_consistent(
+ 1934 def _log_corridor_base_geometry(
+ 2096 def _bounds_for_nodes_only(
+ 2163 def _fit_nodes_at_fixed_d(
+ 2644 def _hetero_sigma_masked_from_base(
+ 2732 def _chi2_masked_constant_sigma(
+ 2846 def _best_fit_at_d(
+ 3153 def _corridor_profile_walk_side(
+ 3818 def compute_reg_sensitivity_scan(
+ 4054 def quick_pwlnk_refit_result_dict(
+ 4230 def _bootstrap_single_replicate(
+ 4338 def _bootstrap_pool_entry(payload: tuple[Any, ...]) -> tuple[int, dict[str, Any]]:
+ 4363 def compute_bootstrap_corridors_by_d(
+ 5049 def compute_regular_grid_rmse_profile(
+ 6662 def compute_profiled_corridors_by_d(

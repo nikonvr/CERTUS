@@ -1,0 +1,33 @@
+# Pre-commit hooks for the CERTUS optical thin-film suite.
+# See action #2 of reports/CERTUS_MASTER_TODO_OPTIMIZATION.md.
+#
+# Install once:    pip install pre-commit
+# Wire to git:     pre-commit install
+# Run manually:    pre-commit run --all-files
+#
+# CI runs the same set via .github/workflows/lint.yml.
+# `ruff check` and `ruff-format --check` only surface diffs; no auto-fix.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '^(pages/.*\.html|.*\.md)$'
+      - id: end-of-file-fixer
+        exclude: '^(pages/.*\.html)$'
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        name: ruff check (no autofix)
+        args: ["--no-fix"]
+      - id: ruff-format
+        name: ruff format (check only)
+        args: ["--check"]

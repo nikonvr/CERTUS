@@ -1,0 +1,181 @@
+[
+  {
+    "label": "NBrel sur sapphire",
+    "file": "C:\\Users\\Lemarchand\\Mon Drive\\couches minces 2026\\CERTUS\\2303\\example\\IR\\tosmo\\NBrel sur sapphire .xlsx",
+    "data_quality_Trel": {
+      "n_points": 2266,
+      "Trel_gt_1_count": 11,
+      "Trel_lt_0_count": 0,
+      "Trel_max": 1.0127420591685998,
+      "Trel_min": 0.12136941338116865,
+      "warning": true
+    },
+    "lambda_min_cut_nm": null,
+    "clip_trel_0_1": false,
+    "phase1_rmse_reported_moteur": 0.013220492438184007,
+    "phase1_diagnostic_sur_fichier": {
+      "rmse_Trel_global_sur_fichier": 0.021120559752538876,
+      "mean_abs_err": 0.013175802960210087,
+      "max_abs_err": 0.11085257901653744,
+      "lambda_max_fit_phase1": 2200.0,
+      "bands_nm": [
+        {
+          "name": "bande_TLU_phase1",
+          "nm": [
+            350.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.013220492438184007,
+          "n_pts": 1921,
+          "note": "coût PGLOBAL phase 1 si deux étages (λ≤2200)"
+        },
+        {
+          "name": "IR_seulement_gt_2200",
+          "nm": [
+            2200.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.044234478646289446,
+          "n_pts": 345,
+          "note": "surtout modèle Sellmeier+k phase 2"
+        },
+        {
+          "name": "IR_long_gt_2500",
+          "nm": [
+            2500.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.04497075221284457,
+          "n_pts": 330
+        },
+        {
+          "name": "troncon_commun_1000_2200_si_disponible",
+          "nm": [
+            1000.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.008587854533685428,
+          "n_pts": 821,
+          "note": "compare H800 et NBrel sur la même plage"
+        }
+      ],
+      "pire_point": {
+        "lambda_nm": 378.25,
+        "abs_err": 0.110853,
+        "T_meas": 0.856255,
+        "T_pred": 0.967107
+      }
+    },
+    "phase1_thickness_nm": 2988.1905151431492,
+    "phase1_seconds": 13.5,
+    "phase2_rmse_reported_moteur": 0.017418098366789626,
+    "phase2_diagnostic_sur_fichier": {
+      "rmse_Trel_global_sur_fichier": 0.022393583685938245,
+      "mean_abs_err": 0.015086489858776655,
+      "max_abs_err": 0.10243297010626806,
+      "lambda_max_fit_phase1": null,
+      "bands_nm": [
+        {
+          "name": "bande_TLU_phase1",
+          "nm": [
+            350.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.013961894527608291,
+          "n_pts": 1921,
+          "note": "coût PGLOBAL phase 1 si deux étages (λ≤2200)"
+        },
+        {
+          "name": "IR_seulement_gt_2200",
+          "nm": [
+            2200.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.046992682668838784,
+          "n_pts": 345,
+          "note": "surtout modèle Sellmeier+k phase 2"
+        },
+        {
+          "name": "IR_long_gt_2500",
+          "nm": [
+            2500.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.04772050286373735,
+          "n_pts": 330
+        },
+        {
+          "name": "troncon_commun_1000_2200_si_disponible",
+          "nm": [
+            1000.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.013374490260504239,
+          "n_pts": 821,
+          "note": "compare H800 et NBrel sur la même plage"
+        }
+      ],
+      "pire_point": {
+        "lambda_nm": 382.25,
+        "abs_err": 0.102433,
+        "T_meas": 0.852871,
+        "T_pred": 0.750438
+      }
+    },
+    "phase2_thickness_nm": 2988.1905151431492,
+    "phase2_seconds": 24.7,
+    "final_diagnostic_sur_fichier": {
+      "rmse_Trel_global_sur_fichier": 0.022393583685938245,
+      "mean_abs_err": 0.015086489858776655,
+      "max_abs_err": 0.10243297010626806,
+      "lambda_max_fit_phase1": null,
+      "bands_nm": [
+        {
+          "name": "bande_TLU_phase1",
+          "nm": [
+            350.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.013961894527608291,
+          "n_pts": 1921,
+          "note": "coût PGLOBAL phase 1 si deux étages (λ≤2200)"
+        },
+        {
+          "name": "IR_seulement_gt_2200",
+          "nm": [
+            2200.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.046992682668838784,
+          "n_pts": 345,
+          "note": "surtout modèle Sellmeier+k phase 2"
+        },
+        {
+          "name": "IR_long_gt_2500",
+          "nm": [
+            2500.0,
+            5200.0
+          ],
+          "rmse_Trel": 0.04772050286373735,
+          "n_pts": 330
+        },
+        {
+          "name": "troncon_commun_1000_2200_si_disponible",
+          "nm": [
+            1000.0,
+            2200.0
+          ],
+          "rmse_Trel": 0.013374490260504239,
+          "n_pts": 821,
+          "note": "compare H800 et NBrel sur la même plage"
+        }
+      ],
+      "pire_point": {
+        "lambda_nm": 382.25,
+        "abs_err": 0.102433,
+        "T_meas": 0.852871,
+        "T_pred": 0.750438
+      }
+    }
+  }
+]

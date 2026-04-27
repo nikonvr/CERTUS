@@ -1,0 +1,248 @@
+{
+  "config": "C:\\driveFL\\couches minces 2026\\CERTUS\\1403\\example\\JSON-strat-example.json",
+  "sweep": [
+    {
+      "case": "compact",
+      "iter_divider_start": 20.0,
+      "iter_divider_end": 12.0,
+      "contractual_n_blocks_range": [
+        48,
+        4,
+        2,
+        1
+      ],
+      "runs": [
+        {
+          "name": "premium",
+          "elapsed_s": 56.25646379999853,
+          "strategies_count": 94,
+          "best_score": 0.020653147625884334,
+          "best_id": 48203,
+          "best_origin": "SYM",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 48,
+              "score": 0.020653147625884334,
+              "id": 48203,
+              "origin": "SYM"
+            }
+          ]
+        },
+        {
+          "name": "fast",
+          "elapsed_s": 9.986065999999482,
+          "strategies_count": 38,
+          "best_score": 0.018998911302579108,
+          "best_id": 48216,
+          "best_origin": "ELITE",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 48,
+              "score": 0.018998911302579108,
+              "id": 48216,
+              "origin": "ELITE"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "balanced",
+      "iter_divider_start": 12.0,
+      "iter_divider_end": 6.0,
+      "contractual_n_blocks_range": [
+        48,
+        8,
+        4,
+        2,
+        1
+      ],
+      "runs": [
+        {
+          "name": "premium",
+          "elapsed_s": 43.07104900000013,
+          "strategies_count": 84,
+          "best_score": 0.020710508565631905,
+          "best_id": 48322,
+          "best_origin": "ELITE",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 8,
+              "score": 0.020837796114241133,
+              "id": 8201,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.020710508565631905,
+              "id": 48322,
+              "origin": "ELITE"
+            }
+          ]
+        },
+        {
+          "name": "fast",
+          "elapsed_s": 11.686727399999654,
+          "strategies_count": 65,
+          "best_score": 0.01900005092505443,
+          "best_id": 48200,
+          "best_origin": "SYM",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 8,
+              "score": 0.019664282638846693,
+              "id": 8201,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.01900005092505443,
+              "id": 48200,
+              "origin": "SYM"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "extended",
+      "iter_divider_start": 8.0,
+      "iter_divider_end": 4.0,
+      "contractual_n_blocks_range": [
+        48,
+        12,
+        6,
+        2,
+        1
+      ],
+      "runs": [
+        {
+          "name": "premium",
+          "elapsed_s": 61.46326429999863,
+          "strategies_count": 139,
+          "best_score": 0.020292829830607494,
+          "best_id": 48420,
+          "best_origin": "ELITE",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 6,
+              "score": 0.020292829830607494,
+              "id": 48420,
+              "origin": "ELITE"
+            },
+            {
+              "n_blocks": 12,
+              "score": 0.02110068315773563,
+              "id": 12200,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.02154728509218463,
+              "id": 48202,
+              "origin": "SYM"
+            }
+          ]
+        },
+        {
+          "name": "fast",
+          "elapsed_s": 17.35596059999989,
+          "strategies_count": 93,
+          "best_score": 0.01899910280039787,
+          "best_id": 48205,
+          "best_origin": "SYM",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 6,
+              "score": 0.019611570720732222,
+              "id": 6200,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 12,
+              "score": 0.01912282959381132,
+              "id": 12107,
+              "origin": "THICKNESS²"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.01899910280039787,
+              "id": 48205,
+              "origin": "SYM"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case": "very_extended",
+      "iter_divider_start": 6.0,
+      "iter_divider_end": 2.5,
+      "contractual_n_blocks_range": [
+        48,
+        19,
+        8,
+        2,
+        1
+      ],
+      "runs": [
+        {
+          "name": "premium",
+          "elapsed_s": 31.88922249999996,
+          "strategies_count": 90,
+          "best_score": 0.02070377245580472,
+          "best_id": 48207,
+          "best_origin": "SYM",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 8,
+              "score": 0.020894559277537608,
+              "id": 8204,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 19,
+              "score": 0.020707418339017045,
+              "id": 19004,
+              "origin": "THICKNESS"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.02070377245580472,
+              "id": 48207,
+              "origin": "SYM"
+            }
+          ]
+        },
+        {
+          "name": "fast",
+          "elapsed_s": 17.53341829999954,
+          "strategies_count": 106,
+          "best_score": 0.018997981834520426,
+          "best_id": 8203,
+          "best_origin": "SYM",
+          "best_by_n_blocks": [
+            {
+              "n_blocks": 8,
+              "score": 0.018997981834520426,
+              "id": 8203,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 19,
+              "score": 0.019457508842276972,
+              "id": 19203,
+              "origin": "SYM"
+            },
+            {
+              "n_blocks": 48,
+              "score": 0.01965504200552805,
+              "id": 48202,
+              "origin": "SYM"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Generic glass n,k table - 1.53 at 400 nm, slowly decreasing toward 1100 nm.

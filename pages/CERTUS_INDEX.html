@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERTUS-INDEX | Scientific Technical Report</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="assets/certus_report_init.js"></script>
+    <link rel="stylesheet" href="assets/certus_report.css">
+</head>
+
+<nav class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo">
+            <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(120, 90)">
+                    <path
+                        d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50"
+                        fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
+                    <path
+                        d="M -90,0 C -80,-90 -70,-50 -60,0 S -40,90 -30,0 S -10,-90 0,0 S 20,90 30,0 S 50,-90 60,0 S 80,90 90,0"
+                        fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <g transform="translate(220, 25)">
+                    <text x="0" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80"
+                        fill="#05103b" letter-spacing="2">CERTUS</text>
+                    <text x="0" y="110" font-family="Arial, Helvetica, sans-serif" font-weight="300" font-size="18"
+                        fill="#000000" letter-spacing="1.2">THIN FILM OPTIMAL STRATEGY FINDER</text>
+                    <text x="-10" y="135" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#333333"
+                        letter-spacing="0.5">Calculated Error Reduction Through Unbiased Simulation</text>
+                </g>
+            </svg>
+        </a>
+        <div class="nav-links">
+            <a href="CERTUS_HUB.html">HUB</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_INDEX.html" class="active">INDEX</a>
+            <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>CERTUS-INDEX</h1>
+            <p style="font-size: 1.3em; color: #6a1b9a; font-weight: 300;">Advanced Tauc-Lorentz-Urbach Characterization
+                Engine</p>
+            <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Scientific Revision Pro 2026 — Updated Mar 2026</p>
+        </header>
+
+        <div class="abstract">
+            <strong>Executive Summary:</strong> CERTUS-INDEX is a high-level scientific tool for extracting the optical
+            constants ($n, k$) of semiconductors and dielectrics over the full VIS–IR spectral range (300–5000 nm).
+            It combines a rigorous <strong>Tauc-Lorentz-Urbach (TLU) global fit</strong> (Kramers-Kronig consistent)
+            with an optional <strong>Spline Refinement pipeline</strong> that achieves RMSE &lt; 0.005 on real-world
+            data.
+            When the spectrum extends beyond 2500 nm, a <strong>two-stage pipeline</strong> runs automatically: TLU is
+            fitted on 1000–2200 nm only, then <strong>IR Global Model (Phase 2)</strong> refines $n$, $k$ over the full
+            range: <strong>Stage 0–2</strong> (Sellmeier 5p + empirical k 8p with PGlobal + L-BFGS-B), then
+            <strong>Phase 2.3</strong> (spline $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
+            reduction 8→4), then <strong>Phase 2.1</strong> (90% T / 10% R refinement from the spline result).
+            The optional Spline stage (spectrum ≤2500 nm) uses pointwise IR inversion, L-BFGS-B knot optimization,
+            and a final joint re-optimization of thickness, knot positions, and $n$/$k$ values.
+        </div>
+
+        <h2>1. The Scientific Problem: Absorption & Physical Causality</h2>
+        <p>
+            Standard "transparent" models fail near the bandgap of materials (e.g., TiO2, ZnO). Empirical fitting of $k$
+            often violates the <strong>Kramers-Kronig (KK) relations</strong>.
+        </p>
+        <p>
+            <strong>CERTUS-INDEX</strong> solves this by fitting the parameters of the dielectric function where
+            $\epsilon_1$ is derived analytically from $\epsilon_2$ via KK integration. This allows accurate modeling of
+            Interband Transitions ($E_g$) and the exponential "Urbach Tail" ($E_u$) representing defect states.
+        </p>
+
+        <h2>2. Theoretical Foundation: The TLU Model</h2>
+        <p>The Tauc-Lorentz-Urbach model combines Tauc-Lorentz oscillator physics above the band gap with an Urbach
+            exponential tail below, ensuring smooth transitions and physical causality.</p>
+
+        <h3>2.1 Imaginary Dielectric Function $\epsilon_2(E)$</h3>
+        <p>The imaginary part of the dielectric function describes optical absorption. The TLU model uses a
+            <strong>piecewise definition</strong>:
+        </p>
+        <div class="eq-box">
+            $$ \epsilon_2(E) = \begin{cases}
+            \frac{A \, E_0 \, C \, (E - E_g)^2}{E \left[(E^2 - E_0^2)^2 + C^2 E^2\right]} & \text{for } E > E_g \quad
+            \text{(Tauc-Lorentz)} \\
+            A_{\text{urb}} \cdot \exp\left(\frac{E - E_g}{E_u}\right) & \text{for } E \le E_g \quad \text{(Urbach Tail)}
+            \end{cases} $$
+        </div>
+
+        <div class="highlight-box">
+            <strong>Physical Origin:</strong>
+            <ul>
+                <li><strong>Tauc-Lorentz regime ($E > E_g$):</strong> Interband transitions. The $(E - E_g)^2$ term
+                    reflects the parabolic joint density of states (JDOS) near the band edge in amorphous
+                    semiconductors.</li>
+                <li><strong>Urbach regime ($E \le E_g$):</strong> Sub-bandgap absorption due to localized tail states
+                    from structural disorder, dangling bonds, or thermal fluctuations. The exponential shape is
+                    universal across disordered materials.</li>
+            </ul>
+        </div>
+
+        <h3>2.2 Continuity Condition at $E = E_g$</h3>
+        <p>The Tauc-Lorentz function and its first derivative both vanish exactly at $E = E_g$ (since the
+            numerator contains $(E - E_g)^2$). Therefore, direct function or slope matching yields $A_{\text{urb}} = 0$,
+            which is physically undesirable.</p>
+        <p>In practice, CERTUS-INDEX evaluates $\epsilon_2^{TL}$ at a slight offset $E_g + \delta$
+            (with $\delta = 0.01$ eV) and uses this finite value as the Urbach matching amplitude:</p>
+        <div class="eq-box">
+            $$ A_{\text{urb}} = \epsilon_2^{TL}(E_g + \delta) = \frac{A \, E_0 \, C \, \delta^2}
+            {(E_g + \delta)\left[((E_g+\delta)^2 - E_0^2)^2 + C^2 (E_g+\delta)^2\right]} $$
+        </div>
+        <p>The Urbach tail then reads $\epsilon_2^{Urb}(E) = A_{\text{urb}} \cdot \exp\!\left(\frac{E - E_g -
+            \delta}{E_u}\right)$
+            for $E \leq E_g$, ensuring a smooth, non-zero sub-gap tail.
+            This approach preserves the 6 independent parameters ($A, E_0, C, E_g, E_u, \epsilon_\infty$).</p>
+
+        <h3>2.3 Real Dielectric Function $\epsilon_1(E)$ — Kramers-Kronig Transform</h3>
+        <p>Causality (the response cannot precede the excitation) imposes a strict mathematical relationship between
+            $\epsilon_1$ and $\epsilon_2$:</p>
+        <div class="eq-box">
+            $$ \epsilon_1(E) = \epsilon_\infty + \frac{2}{\pi} \, \mathcal{P} \int_0^\infty \frac{\xi \,
+            \epsilon_2(\xi)}{\xi^2 - E^2} \, d\xi $$
+        </div>
+        <p>For the Tauc-Lorentz model, <strong>Jellison & Modine (1996)</strong> derived a closed-form analytic
+            solution, avoiding numerical integration entirely. The full expression is:</p>
+
+        <div class="eq-box" style="font-size: 0.9em; overflow-x: auto;">
+            $$ \epsilon_1^{TL}(E) = \epsilon_\infty + \frac{A E_0 C}{\pi \zeta^4} \left\{
+            - \frac{E^2 + E_g^2}{E} \ln\left| \frac{E_g - E}{E_g + E} \right|
+            + 2E_g \ln\left( \frac{|E_g^2 - E^2|}{\sqrt{(E_0^2 - E_g^2)^2 + C^2 E_g^2}} \right)
+            + \frac{a_{\ln}}{2\alpha E_0} \ln\left( \frac{E_0^2 + E_g^2 + \alpha E_g}{E_0^2 + E_g^2 - \alpha E_g}
+            \right)
+            - \frac{a_{\tan}}{C E_0^2} \left[ \pi - \arctan\left(\frac{2E_g + \alpha}{C}\right) -
+            \arctan\left(\frac{2E_g
+            - \alpha}{C}\right) \right]
+            + \frac{4E_g}{\alpha C} (E^2 - \gamma^2) \left[ \frac{\pi}{2} - \arctan\left(\frac{2(E_g^2 -
+            \gamma^2)}{\alpha C}\right) \right]
+            \right\} $$
+            <p style="margin-top: 10px; font-size: 0.85em;"><strong>where the auxiliary parameters are defined
+                    as:</strong></p>
+            $$ \alpha = \sqrt{4 E_0^2 - C^2}, \quad \gamma = \sqrt{E_0^2 - \frac{C^2}{2}}, \quad \zeta^4 = (E^2 -
+            E_0^2)^2 + C^2 E^2 $$
+            $$ a_{\ln} = (E_g^2 - E_0^2)E^2 + E_g^2 C^2 - E_0^2(E_0^2 + 3E_g^2) $$
+            $$ a_{\tan} = (E^2 - E_0^2)(E_0^2 + E_g^2) + E_g^2 C^2 $$
+        </div>
+
+        <p><strong>Implementation note:</strong> CERTUS uses a Numba JIT-compiled implementation
+            (<code>epsilon1_TL_analytic</code>) ensuring evaluation in $\sim$10 µs per wavelength point.</p>
+
+        <h3>2.4 Urbach Tail Contribution to $\epsilon_1$</h3>
+        <p>For the sub-bandgap Urbach region, the KK integral yields an additional term:</p>
+        <div class="eq-box">
+            $$ \epsilon_1^{Urb}(E) = \frac{2 A_{\text{urb}} E_u}{\pi} \cdot \text{Re}\left[ e^{(E_g - i E)/E_u} \cdot
+            E_1\left(\frac{E_g - i E}{E_u}\right) \right] $$
+        </div>
+        <p>where $E_1(z)$ is the exponential integral function. The total real dielectric function is:</p>
+        <div class="eq-box">
+            $$ \epsilon_1(E) = \epsilon_1^{TL}(E) + \epsilon_1^{Urb}(E) $$
+        </div>
+
+        <h3>2.5 Conversion to Optical Constants $(n, k)$</h3>
+        <p>From the complex dielectric function $\tilde{\epsilon} = \epsilon_1 + i\epsilon_2$, the refractive index and
+            extinction coefficient are:</p>
+        <div class="eq-box">
+            $$ n = \sqrt{\frac{\sqrt{\epsilon_1^2 + \epsilon_2^2} + \epsilon_1}{2}}, \quad k =
+            \sqrt{\frac{\sqrt{\epsilon_1^2 + \epsilon_2^2} - \epsilon_1}{2}} $$
+        </div>
+
+        <h3>2.6 Parameter Interpretation</h3>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Unit</th>
+                <th>Physical Meaning</th>
+            </tr>
+            <tr>
+                <td>$E_g$</td>
+                <td>eV</td>
+                <td><strong>Band gap</strong>: Energy threshold for direct optical transitions</td>
+            </tr>
+            <tr>
+                <td>$A$</td>
+                <td>eV</td>
+                <td><strong>Oscillator Strength</strong>: Amplitude of interband absorption</td>
+            </tr>
+            <tr>
+                <td>$E_0$</td>
+                <td>eV</td>
+                <td><strong>Peak Energy</strong>: Center of the Lorentzian resonance</td>
+            </tr>
+            <tr>
+                <td>$C$</td>
+                <td>eV</td>
+                <td><strong>Broadening</strong>: FWHM of absorption feature (scattering lifetime)</td>
+            </tr>
+            <tr>
+                <td>$E_u$</td>
+                <td>eV</td>
+                <td><strong>Urbach Energy</strong>: Disorder parameter (tail states)</td>
+            </tr>
+            <tr>
+                <td>$\epsilon_\infty$</td>
+                <td>—</td>
+                <td><strong>High-Frequency Dielectric Constant</strong>: Electronic background polarizability</td>
+            </tr>
+        </table>
+
+        <h3>2.7 Micro-Macro Connection: Polarizability and Optical Constants</h3>
+        <p>The TLU model fundamentally connects the microscopic response of the material to its macroscopic optical
+            properties. Under the action of an external electric field $E(\omega)$, the electrons of the material
+            oscillate, creating a macroscopic polarization $P(\omega)$:</p>
+        <div class="eq-box">
+            $$ P(\omega) = \epsilon_0 \chi(\omega) E(\omega) $$
+        </div>
+        <p>Where $\chi(\omega)$ is the electric susceptibility, directly related to the complex dielectric function
+            $\tilde{\epsilon}(\omega) = 1 + \chi(\omega) = \epsilon_1(\omega) + i\epsilon_2(\omega)$.
+            The optical constants $(n, k)$ that the model aims to extract are simply the expression of light
+            propagation modified by this dipolar response: the refractive index $n$ captures the phase delay
+            caused by polarization, while the extinction coefficient $k$ reflects energy dissipation (absorption)
+            due to the phase lag between the field and the electronic response.</p>
+
+        <h2>3. Alternative Dispersion Models and Metallic Extensions</h2>
+        <p>
+            Although the TLU model is optimal for amorphous semiconductors and dielectrics with a band gap,
+            CERTUS recognizes the mathematical need for other formalisms to handle additional material
+            classes, notably metals and phononic crystals.
+        </p>
+
+        <h3>3.1 The Drude Model (Free Electrons)</h3>
+        <p>Essential for modeling the infrared (IR) and near-infrared (NIR) response of noble metals (Gold, Silver,
+            Copper) or transparent conductors (ITO, ZnO:Al). Unlike dielectrics, conduction-band electrons
+            are not bound to a specific atom.</p>
+        <div class="eq-box">
+            $$ \tilde{\epsilon}_{Drude}(E) = \epsilon_\infty - \frac{E_p^2}{E^2 + i\Gamma_D E} $$
+        </div>
+        <ul>
+            <li><strong>$E_p$ (Plasma frequency):</strong> Proportional to the free-electron density. Determines
+                the cut-off frequency below which the metal becomes highly reflective.</li>
+            <li><strong>$\Gamma_D$ (Damping / Collision rate):</strong> Inverse of the electronic relaxation
+                time ($\tau$). Represents energy dissipation via collisions (phonons, impurities).</li>
+        </ul>
+
+        <h3>3.2 The Lorentz Model (Harmonic Oscillators)</h3>
+        <p>Used to model discrete high-energy interband transitions or phononic resonances in the far infrared.
+            It assumes electrons are bound to their nucleus by a restoring (spring-like) force.</p>
+        <div class="eq-box">
+            $$ \tilde{\epsilon}_{Lorentz}(E) = \frac{A_L E_{0L}^2}{E_{0L}^2 - E^2 - i\Gamma_L E} $$
+        </div>
+
+        <h3>3.3 The Drude-Lorentz Model (Real Metals in the Visible)</h3>
+        <p>In the visible range, metals such as Gold and Copper exhibit strong coloration caused by interband
+            absorption (typically from d-bands to the Fermi level). The complete response requires combining
+            the Drude free-electron conductivity (dominant at low energy) with Lorentz oscillators:</p>
+        <div class="eq-box">
+            $$ \tilde{\epsilon}(E) = \tilde{\epsilon}_{Drude}(E) + \sum_{j} \tilde{\epsilon}_{Lorentz, j}(E) $$
+        </div>
+
+        <h3>3.4 Classical Reference Models</h3>
+        <ul>
+            <li><strong>Cauchy:</strong> Empirical model ($n(\lambda) = A + B/\lambda^2 + C/\lambda^4$) strictly
+                reserved for transparent dielectrics far from any absorption edge ($k=0$). Not causal.</li>
+            <li><strong>Sellmeier:</strong> Physical model ($n^2(\lambda) = 1 + \sum \frac{B_i \lambda^2}{\lambda^2 -
+                C_i}$) based on undamped Lorentz oscillators ($\Gamma=0$). Excellent for glass substrates
+                in their transparency window.</li>
+        </ul>
+
+        <h3>3.5 The Modified Forouhi-Bloomer Model (mFB)</h3>
+        <p>
+            The <strong>Forouhi-Bloomer (FB)</strong> model, introduced in two seminal papers
+            (<em>Forouhi &amp; Bloomer, Phys. Rev. B, 34(10):7018, 1986</em> for amorphous materials;
+            <em>Phys. Rev. B, 38(3):1865, 1988</em> for crystalline semiconductors), provides an analytical
+            expression for the complex refractive index $\tilde{n}(E) = n(E) - ik(E)$ directly in terms of
+            physically meaningful band-structure parameters.
+        </p>
+
+        <h4>Original Formulation</h4>
+        <p>
+            The imaginary part of the refractive index $k(E)$ is modeled as a sum of $q$ oscillator terms,
+            each representing an optical transition:
+        </p>
+        <div class="eq-box">
+            $$ k(E) = \begin{cases}
+            \displaystyle\sum_{i=1}^{q} \frac{A_i \left(E - E_{g}\right)^2}{E^2 - B_i E + C_i} & E > E_g \\
+            0 & E \leq E_g
+            \end{cases} $$
+        </div>
+        <p>The real part $n(E)$ is obtained analytically via the Kramers-Kronig (KK) principal value integral:</p>
+        <div class="eq-box">
+            $$ n(E) = n(\infty) + \sum_{i=1}^{q} \frac{B_{0,i}\, E + C_{0,i}}{E^2 - B_i E + C_i} $$
+        </div>
+        <p>where the auxiliary coefficients $B_{0,i}$ and $C_{0,i}$ are derived from the Kramers-Kronig
+            integration over the full energy axis ($0$ to $\infty$), yielding the closed-form expressions
+            (Forouhi &amp; Bloomer, Phys. Rev. B 34, 7018, 1986, Eqs. 4–5):</p>
+        <div class="eq-box">
+            $$ B_{0,i} = \frac{A_i}{Q_i} \left( -\frac{B_i^2}{2} + E_g B_i - E_g^2 + C_i \right), \quad
+            C_{0,i} = \frac{A_i}{Q_i} \left( (E_g^2 + C_i)\frac{B_i}{2} - 2 E_g C_i \right) $$
+        </div>
+        <p>where $Q_i = \sqrt{4C_i - B_i^2}$. The constraint $B_i^2 - 4C_i
+            &lt; 0$ ensures complex poles (damped oscillators with finite lifetime).</p>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Physical Meaning</th>
+            </tr>
+            <tr>
+                <td>$E_g$ (eV)</td>
+                <td>Optical band gap: onset energy for interband transitions</td>
+            </tr>
+            <tr>
+                <td>$A_i$ (—)</td>
+                <td>Oscillator strength of transition $i$ (dimensionless factor)</td>
+            </tr>
+            <tr>
+                <td>$B_i$ (eV)</td>
+                <td>Twice the real part of the complex pole energy: $B_i = 2\,\text{Re}(E_{pole})$</td>
+            </tr>
+            <tr>
+                <td>$C_i$ (eV²)</td>
+                <td>Squared modulus of the complex pole: $C_i = |E_{pole}|^2$</td>
+            </tr>
+            <tr>
+                <td>$n(\infty)$</td>
+                <td>High-frequency refractive index (contributions from transitions above the modeled range)</td>
+            </tr>
+        </table>
+
+        <h4>Limitations of the Original Model and Key Modifications</h4>
+        <p>Subsequent analyses (<em>Jellison &amp; Modine, Appl. Phys. Lett. 69(3):371, 1996</em>) identified
+            several shortcomings of the original FB formulation:</p>
+        <ul>
+            <li><strong>KK non-compliance at $E_g$:</strong> The piecewise definition of $k(E)$ with a hard
+                cutoff at $E_g$ introduces a discontinuity in the first derivative, making the strict KK
+                relationship only approximately satisfied. This was the primary motivation for the
+                Tauc-Lorentz (TL) model, which uses a smoother Tauc joint-density-of-states factor
+                $(E - E_g)^2 / E$ rather than $(E - E_g)^2$ alone.</li>
+            <li><strong>Sum-rule violation:</strong> The original FB model does not rigorously satisfy the
+                oscillator-strength sum rule $\int_0^\infty \epsilon_2(\omega)\,d\omega = \text{const}$,
+                which is a consequence of causality.</li>
+            <li><strong>Non-negative $k$ constraint:</strong> In multi-oscillator configurations, the sum of
+                terms can produce negative values of $k(E)$ in spectral windows between oscillators.</li>
+        </ul>
+        <p>
+            The <strong>Modified Forouhi-Bloomer (mFB)</strong> model addresses these issues through
+            several refinements documented in a series of publications by Likhachev
+            (<em>J. Appl. Phys. 118:195107, 2015</em>; <em>Thin Solid Films 589:712, 2015</em>;
+            <em>J. Appl. Phys. 119:085706, 2016</em>):
+        </p>
+        <ul>
+            <li>
+                <strong>1. The Divergence Problem and KK Correction</strong>
+                <p>Because the original FB model scales as $k(E) \sim A_i$ as $E \to \infty$ (it does not vanish), its
+                    rigorous KK integral from $E_g$ to $\infty$ actually diverges logarithmically. To restore strict
+                    causality, the model either requires a high-energy decay term or an exact analytical formulation
+                    limited to a finite bandwidth, avoiding the mathematical inconsistency natively present in the 1986
+                    derivation.</p>
+            </li>
+
+            <li>
+                <strong>2. Urbach Tail Extension</strong>
+                <p>The sub-bandgap region $E \leq E_g$ is modeled by an exponential Urbach tail
+                    appended to each oscillator's $k(E)$:</p>
+                <div class="eq-box">
+                    $$ k_{mFB}(E) = \begin{cases}
+                    \displaystyle\sum_{i=1}^{q} \frac{A_i (E - E_g)^2}{E^2 - B_i E + C_i}
+                    & E > E_g \\[6pt]
+                    k_0 \exp\!\left(\dfrac{E - E_g}{E_u}\right) & E \leq E_g
+                    \end{cases} $$
+                </div>
+                <p>Mathematically, the derivative of $(E - E_g)^2$ at exactly $E = E_g$ is $0$. Therefore, to ensure a
+                    physically meaningful non-zero slope for the exponential tail (C¹ continuity), the Urbach transition
+                    is evaluated at a slight offset $E = E_g + \delta$ (similarly to the CERTUS implementation of the
+                    TLU model), ensuring a smooth gradient crossover controlled by $E_u$.</p>
+            </li>
+
+            <li>
+                <strong>3. Non-negativity Enforcement — Smooth Positivity Clamp</strong>
+                <p>With multiple oscillators, the total $k_{total}(E) = \sum_i k_i(E)$ can
+                    become negative in spectral gaps between resonances. The mFB model applies a
+                    differentiable positivity clamp using a softplus function
+                    (Likhachev 2015, Eq. 10):</p>
+                <div class="eq-box">
+                    $$ k_{clamped}(E) = \frac{1}{\beta}\ln\!\left(1 + e^{\,\beta\, k_{total}(E)}\right) $$
+                </div>
+                <p>where $\beta \gg 1$ (typically $\beta = 100\text{ eV}^{-1}$) controls the sharpness
+                    of the clamp. In the limit $\beta \to \infty$ this reduces to
+                    $\max(0, k_{total}(E))$, but the smooth form preserves differentiability
+                    everywhere for gradient-based fitting. After clamping, the corresponding
+                    $n(E)$ is recomputed by KK to maintain causality.</p>
+            </li>
+
+            <li>
+                <strong>4. Tauc-like Onset — Modified mFB Formulation</strong>
+                <p>Likhachev (2016) proposed replacing the bare quadratic onset $(E - E_g)^2$
+                    with a Tauc joint-density-of-states factor $(E - E_g)^2 / E$, exactly as
+                    in the Tauc-Lorentz model, but retaining the Lorentzian denominator of FB:</p>
+                <div class="eq-box">
+                    $$ k_i^{mFB}(E) = \frac{A_i \,(E - E_g)^2 / E}{E^2 - B_i E + C_i}
+                    \quad \text{for } E > E_g $$
+                </div>
+                <p>The corresponding mathematically exact mapping transforms this via partial fraction decomposition
+                    into a zero-frequency pole and a standard Lorentzian:</p>
+                <div class="eq-box">
+                    $$ \frac{(E-E_g)^2/E}{E^2-B_iE+C_i} = \frac{E_g^2/C_i}{E} + \frac{\left(1 -
+                    \frac{E_g^2}{C_i}\right)E + \left(\frac{B_i E_g^2}{C_i} - 2E_g\right)}{E^2 - B_iE + C_i} $$
+                </div>
+                <p>This rigorous separation yields a perfectly convergent KK integral that scales properly at high
+                    energies. The analytical integration generates exact arctangent and logarithmic sums that guarantee
+                    robust causality. This modified onset substantially improves the fit quality for disordered
+                    amorphous materials ($\text{a-C}$, $\text{a-Si:H}$) where the parabolic JDOS $\propto (E-E_g)^2/E$
+                    is physically grounded, avoiding the asymptotic divergence of the canonical FB square-law.</p>
+            </li>
+        </ul>
+
+        <h4>Comparison with TLU and VB Models</h4>
+        <div class="highlight-box">
+            <strong>When to prefer mFB over TLU:</strong>
+            <ul>
+                <li><strong>Crystalline semiconductors:</strong> The multi-oscillator capability of mFB
+                    allows it to capture multiple distinct critical-point transitions (e.g., $E_1$, $E_2$,
+                    $E_1 + \Delta_1$ in GaAs, InP) unavailable to single-oscillator TLU.</li>
+                <li><strong>Nitrides and wide-gap oxides (VIS/NIR):</strong> Materials such as
+                    $\text{TiO}_2$, $\text{Ta}_2\text{O}_5$, or $\text{SiN}_x$ with complex absorption
+                    edges benefit from the 2–3 oscillator mFB fit
+                    (<em>Vogt et al., Thin Solid Films 519:3836, 2011</em>).</li>
+                <li><strong>Hybrid organic/inorganic films:</strong> Where separate electronic and
+                    vibrational oscillator bands are present in the same spectral window.</li>
+            </ul>
+            <strong>TLU remains preferred for:</strong> single-absorption-peak amorphous dielectrics
+            (SiO₂, Al₂O₃, HfO₂) where the simpler parametrization and guaranteed KK compliance offer
+            faster convergence with fewer degrees of freedom.
+        </div>
+
+        <h3>3.6 The Cody-Lorentz Model (CL)</h3>
+        <p>
+            The <strong>Cody-Lorentz (CL)</strong> model replaces the Tauc JDOS factor $(E-E_g)^2/E$ with a
+            <strong>Cody gap function</strong> that saturates at high energies, and natively includes an
+            Urbach tail with a smooth crossover:
+        </p>
+        <div class="eq-box">
+            $$ \epsilon_2^{CL}(E) = \begin{cases}
+            \displaystyle \frac{(E - E_g)^2}{(E - E_g)^2 + E_p^2} \cdot
+            \frac{A \, E_0 \, C \, E}{(E^2 - E_0^2)^2 + C^2 E^2}
+            & E \geq E_t \\[8pt]
+            \displaystyle \frac{E_t}{E} \, \epsilon_2^{CL}(E_t) \cdot
+            \exp\!\left(\frac{E - E_t}{E_u}\right) & E &lt; E_t
+            \end{cases} $$
+</div>
+<p>where $E_p$ is the Cody transition width, $E_t$ is the demarcation energy between band-to-band
+    and Urbach regions, and $E_u$ is the Urbach energy.
+    The CL model adds one parameter ($E_p$) versus TLU but converges naturally to $\epsilon_2 = 0$ at
+    high energies (unlike the original FB model) and is Kramers-Kronig consistent.
+    It is particularly suited for <strong>amorphous organic films</strong> and <strong>a-Si:H</strong>
+    where the Cody gap function better describes the absorption onset.</p>
+
+<h3>3.7 The Brendel-Bormann Model (Gaussian Broadened Oscillators)</h3>
+<p>
+    The <strong>Brendel-Bormann (BB)</strong> model generates non-Lorentzian (Gaussian-shaped)
+    absorption
+    lines by convolving a Gaussian distribution of resonance frequencies with a standard Lorentz
+    oscillator:
+</p>
+<div class="eq-box">
+    $$ \tilde{\epsilon}_{BB}(E) = \sum_{j=1}^{q} \frac{1}{\sigma_j \sqrt{2\pi}}
+    \int_{-\infty}^{+\infty}
+    \frac{A_j \, E_{0j}^2}{E_{0j}^2 - (E + x)^2 - i\Gamma_j (E + x)}
+    \; e^{-x^2/(2\sigma_j^2)} \, dx $$
+</div>
+<p>where $\sigma_j$ controls the Gaussian inhomogeneous broadening width and $\Gamma_j$ is the
+    Lorentzian homogeneous (lifetime) broadening. This convolution can be evaluated analytically via
+    the Faddeeva function $w(z)$. The BB model is the standard choice for
+    <strong>amorphous SiO₂ and Si₃N₄ in the mid-infrared</strong> (phonon absorption bands)
+    where lineshapes are inherently non-Lorentzian due to structural disorder.
+</p>
+
+<h4>Key Scientific References</h4>
+<ul>
+    <li>Forouhi, A.R. &amp; Bloomer, I. (1986). <em>Optical dispersion relations for amorphous
+            semiconductors and amorphous dielectrics.</em> Physical Review B, 34(10), 7018–7026.
+        DOI: 10.1103/PhysRevB.34.7018</li>
+    <li>Forouhi, A.R. &amp; Bloomer, I. (1988). <em>Optical properties of crystalline semiconductors
+            and dielectrics.</em> Physical Review B, 38(3), 1865–1874.
+        DOI: 10.1103/PhysRevB.38.1865</li>
+    <li>Jellison, G.E. &amp; Modine, F.A. (1996). <em>Parameterization of the optical functions of
+            amorphous materials in the interband region.</em> Applied Physics Letters, 69(3), 371–373.
+        DOI: 10.1063/1.118064</li>
+    <li>Jellison, G.E. &amp; Modine, F.A. (1996). <em>Parameterization of the optical functions of
+            amorphous materials in the interband region.</em> Journal of Applied Physics, 79(10),
+        7148–7156.
+        DOI: 10.1063/1.361534 — <strong>Full analytic $\epsilon_1$ expression (5-term closed
+            form)</strong></li>
+    <li>Ferlauto, A.S. et al. (2002). <em>Analytical model for the optical functions of amorphous
+            semiconductors from the near-infrared to ultraviolet: Applications in thin film
+            photovoltaics.</em>
+        Journal of Applied Physics, 92(5), 2424–2436.
+        DOI: 10.1063/1.1497462 — <strong>Cody-Lorentz (CL) model</strong></li>
+    <li>Brendel, R. &amp; Bormann, D. (1992). <em>An infrared dielectric function model for amorphous
+            solids.</em> Journal of Applied Physics, 71, 1–6.
+        DOI: 10.1063/1.350737 — <strong>Brendel-Bormann (BB) model</strong></li>
+    <li>Likhachev, I.A. (2015). <em>Modified Forouhi-Bloomer model for the optical constants of
+            amorphous carbon thin films.</em> Journal of Applied Physics, 118, 195107.
+        DOI: 10.1063/1.4935951</li>
+    <li>Likhachev, I.A. (2015). <em>Optical constants of reactively sputtered silicon nitride films
+            using a modified Forouhi-Bloomer model.</em> Thin Solid Films, 589, 712–716.
+        DOI: 10.1016/j.tsf.2015.06.054</li>
+    <li>Likhachev, I.A. (2016). <em>Generalized Forouhi-Bloomer model for the optical constants
+            of semiconductors and dielectrics.</em> Journal of Applied Physics, 119, 085706.
+        DOI: 10.1063/1.4942216</li>
+    <li>Vogt, M.R. et al. (2011). <em>Optical constants of UV-transparent TiO₂ using Forouhi-Bloomer
+            dispersion.</em> Thin Solid Films, 519, 3836–3840.</li>
+    <li>Foldyna, M. et al. (2020). <em>Tauc-Lorentz parameterization in spectroscopic ellipsometry
+            — sub-bandgap absorption and beyond.</em> Thin Solid Films, 706, 138070.
+        DOI: 10.1016/j.tsf.2020.138070</li>
+    <li>Xu, C., Min, B. &amp; Reineke-Koch, R. (2022). <em>Extended Tauc-Lorentz model (XTL) with
+            log-normal distributed bandgap energies for optical permittivity in polycrystalline
+            semiconductors.</em> AIP Advances, 12, 065226.
+        DOI: 10.1063/5.0096053</li>
+    <li>Ballester, M. et al. (2022). <em>Application of the holomorphic Tauc-Lorentz-Urbach function
+            to extract the optical constants of amorphous semiconductor thin films.</em>
+        Coatings, 12(10), 1549. DOI: 10.3390/coatings12101549 — <strong>Analytic self-consistent
+            TLU</strong></li>
+</ul>
+
+<h3>3.8 Data Pre-processing: Dynamic IR Noise Filtering</h3>
+<p>
+    Spectral data often suffers from high-frequency noise in the deep infrared band (typically above
+    4000 nm)
+    due to atmospheric absorption (e.g., CO₂, H₂O) and reduced detector sensitivity. To prevent this
+    noise from
+    interfering with the optimization algorithms without artificially flattening the relevant
+    interference
+    fringes, CERTUS-INDEX implements a <strong>Progressive Blended Savitzky-Golay</strong> filter upon
+    data
+    loading.
+</p>
+<p>
+    When noise is detected in the 4000–5200 nm band, the software applies two parallel Savitzky-Golay
+    filters
+    (polynomial order 2 to preserve extrema amplitudes) with specific, carefully chosen window lengths
+    (which
+    must be odd numbers to maintain symmetry):
+</p>
+<ul>
+    <li><strong>11 points (Light Filtering):</strong> Applied to the onset of noise around 4000 nm. With
+        a
+        typical spectrometer step of 1-2 nm, an 11-point window covers a narrow $\sim$10-20 nm range.
+        This
+        gently removes micro-noise while perfectly preserving the tighter interference fringes found in
+        the
+        near-infrared region.</li>
+    <li><strong>51 points (Heavy Filtering):</strong> Applied to the heavily degraded signal beyond 5200
+        nm. A
+        51-point window (covering $\sim$50-100 nm) aggressively crushes the high-frequency "snow".
+        Because
+        physical interference fringes naturally broaden significantly in the far-infrared, this wide
+        window
+        safely tracks the macro-curvature of the signal without clipping the genuine physical extrema.
+    </li>
+</ul>
+<div class="highlight-box">
+    <strong>Cross-fading (Linear Blending):</strong> To prevent abrupt mathematical discontinuities, the
+    algorithm does not suddenly switch from the 11-point to the 51-point filtered signal. Instead, in
+    the
+    transition zone between 4000 nm and 5200 nm, it computes a dynamic linear blend (cross-fade) of both
+    curves.
+    At 4600 nm, for example, the resulting plotted point is exactly 50% of the 11-point curve plus 50%
+    of the
+    51-point curve. This guarantees a mathematically smooth $C^0$ / $C^1$ continuity as the filtering
+    strength
+    scales proportionally with the increasing severity of the noise.
+</div>
+
+<h2>4. Computational Architecture</h2>
+
+<h3>4.1 Core Components</h3>
+<table>
+    <tr>
+        <th>Component</th>
+        <th>Function</th>
+    </tr>
+    <tr>
+        <td><strong>TLU Physics Kernel</strong></td>
+        <td><code>epsilon2_TLU_array</code> + <code>epsilon1_TL_analytic</code>: Numba JIT-compiled
+            $\epsilon_2$
+            and analytic KK integral for $\epsilon_1$.</td>
+    </tr>
+    <tr>
+        <td><strong>TMM Engine</strong></td>
+        <td><code>calculate_RT_single_layer_backside_array</code>: Macleod convention (+1j,
+            $\hat{n}=n-ik$),
+            incoherent backside correction.</td>
+    </tr>
+    <tr>
+        <td><strong>PGLOBAL Optimizer</strong></td>
+        <td><code>PGlobalOptimizerINDEX</code>: Hybrid stochastic/deterministic global search with
+            single-linkage clustering and L-BFGS-B local refinement.</td>
+    </tr>
+    <tr>
+        <td><strong>Analytic Gradient</strong></td>
+        <td><code>_compute_index_cost_gradient_kernel</code> +
+            <code>_compute_tlu_derivatives_kernel</code>:
+            Full chain rule $\partial\text{MSE}/\partial p_i$ in a single Numba pass.
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Phase 3 Local Polish (TLU)</strong></td>
+        <td>L-BFGS-B local polish (±5% bounds, 500 iters). Replaces former coordinate descent.
+    </tr>
+    <tr>
+        <td><strong>Spline Refinement Worker</strong></td>
+        <td><code>SplineOptimizationWorker</code>: Post-TLU cubic spline pipeline. Knots placed by
+            curvature
+            analysis (15 n-knots + 15 k-knots independently) plus 6 IR extension knots.</td>
+    </tr>
+    <tr>
+        <td><strong>Pointwise IR Solver</strong></td>
+        <td><code>PointwiseIRSolver</code> (<code>certus_pointwise_ir.py</code>):
+            Wavelength-by-wavelength
+            $(n,k)$ inversion in the IR at fixed TLU thickness. Seeds the spline knots.</td>
+    </tr>
+    <tr>
+        <td><strong>Frosted Glass Mode</strong></td>
+        <td><code>calculate_reflection_infinite_substrate_array</code>: Removes back-reflections for
+            roughened
+            substrates (reflection-only fitting).</td>
+    </tr>
+</table>
+
+<h3>4.2 Parameter Bounds and Constraints</h3>
+<p>The 7-dimensional optimization respects physical constraints:</p>
+<table>
+    <tr>
+        <th>Parameter</th>
+        <th>Bounds</th>
+        <th>Hard Constraint</th>
+    </tr>
+    <tr>
+        <td>$d$ (thickness)</td>
+        <td>User-defined (10 - 2000 nm)</td>
+        <td>$d \geq 10$ nm</td>
+    </tr>
+    <tr>
+        <td>$E_g$</td>
+        <td>0.5 - 10.0 eV</td>
+        <td>$E_g > 0.1$ eV</td>
+    </tr>
+    <tr>
+        <td>$A$</td>
+        <td>10 - 2000 eV</td>
+        <td>$A > 0.1$ eV</td>
+    </tr>
+    <tr>
+        <td>$E_0$</td>
+        <td>1.5 - 10.0 eV</td>
+        <td>$E_0 > E_g$ (causality)</td>
+    </tr>
+    <tr>
+        <td>$C$</td>
+        <td>0.1 - 10.0 eV</td>
+        <td>$C > 0.01$ eV</td>
+    </tr>
+    <tr>
+        <td>$E_u$</td>
+        <td>0.01 - 3.0 eV</td>
+        <td>$E_u > 0.001$ eV</td>
+    </tr>
+    <tr>
+        <td>$\epsilon_\infty$</td>
+        <td>1.4 - 10.0</td>
+        <td>$\epsilon_\infty \geq 0.5$ ($n > 1.2$)</td>
+    </tr>
+</table>
+
+<div class="highlight-box">
+    <strong>Critical Constraint:</strong> $E_0 > E_g$ ensures the Lorentzian peak lies above the
+    bandgap,
+    respecting causality. If violated during optimization, $E_0$ is reset to $E_g + 0.5$ eV.
+</div>
+
+<h3>4.3 Objective Function (MSE)</h3>
+<p>The fitting minimizes a weighted Mean Squared Error combining R and/or T data:</p>
+<div class="eq-box">
+    $$ MSE = \frac{w_T \cdot MSE_T + w_R \cdot MSE_R}{w_T + w_R} $$
+</div>
+<p>where:</p>
+<div class="eq-box">
+    $$ MSE_T = \frac{1}{N} \sum_{j=1}^{N} \left( T_{calc}(\lambda_j) - T_{meas}(\lambda_j) \right)^2 $$
+</div>
+<p>Normalized mode divides calculated spectra by substrate reference values.</p>
+
+<h3>4.4 Analytic Gradient Acceleration (New in v26-01)</h3>
+<p>
+    Traditional optical fitters rely on <strong>Finite Difference</strong> approximations to estimate
+    parameter
+    sensitivity.
+    This approach is slow ($N_{params}+1$ evaluations per step) and prone to numerical noise (rounding
+    or
+    truncation errors), especially for complex and non-linear functions like Tauc-Lorentz.
+</p>
+<p>
+    <strong>CERTUS-INDEX</strong> implements a <strong>Fully Analytic Gradient</strong> ($\nabla
+    \text{MSE}$),
+    calculated via the strict formulation of the Chain Rule:
+</p>
+<div class="eq-box">
+    $$ \frac{\partial \text{MSE}}{\partial p_i} = \sum_{\lambda} \left[
+    \underbrace{\frac{\partial \text{MSE}}{\partial T} \cdot \frac{\partial T}{\partial n}}_{\text{TMM
+    Sensitivity}} \cdot
+    \underbrace{\frac{\partial n}{\partial \epsilon_1} \cdot \frac{\partial \epsilon_1}{\partial p_i} +
+    \frac{\partial n}{\partial \epsilon_2} \cdot \frac{\partial \epsilon_2}{\partial p_i}
+    }_{\text{Material
+    Physics}}
+    \right] $$
+</div>
+<p>
+    This novel implementation, powered by Numba-jitted kernels, allows the Quasi-Newton optimizer
+    (L-BFGS-B)
+    to "see" the exact vector slope of the error landscape at each iteration.
+    This provides:
+</p>
+<ul>
+    <li><strong>Absolute Precision:</strong> Elimination of artifacts tied to differential step size
+        ($\Delta p$). The algorithm no longer gets "stuck" in numerical noise.</li>
+    <li><strong>Massive Speed:</strong> The full gradient vector (all 7 derivatives) is calculated in a
+        single
+        algorithmic pass (vs 7+ for numeric).</li>
+    <li><strong>Robustness:</strong> Guaranteed convergence toward the exact bottom of the well, even in
+        very
+        "flat" valleys of the parameter space.</li>
+</ul>
+
+<h2>5. Optimization Pipeline — Two-Stage Architecture</h2>
+
+<div class="mermaid">
+    flowchart TD
+    classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+    classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
+    classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
+    classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
+    classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
+
+    START(["User Input:<br>R(λ) and/or T(λ),<br>Substrate, Thickness range"]):::terminal --> LOAD["Load &amp; validate spectral data<br>Auto-detect format (%, abs)<br>Wavelength range &amp; NaN filtering"]:::process
+    LOAD --> SUB["Substrate model<br>Sellmeier / Frosted Glass"]:::process
+    SUB --> OBJ["Build TLUObjective<br>p = (d, Eg, A, E₀, C, Eu, ε∞)<br>Normalized or absolute mode"]:::process
+
+    OBJ --> P1
+
+    subgraph P1 ["Stage 1 — TLU Global Fit"]
+    PG_INIT["Phase 1: PGLOBAL<br>Uniform sampling in 7D<br>+ single-linkage clustering<br>+ L-BFGS-B (analytic grad)"]:::highlight --> LB_OPT["Phase 2: L-BFGS-B Polish<br>ftol=1e-12, gtol=1e-12<br>maxiter=2000"]:::process
+    LB_OPT --> CD_LOOP["Phase 3: L-BFGS-B Local Polish<br>±5% bounds, 500 iters<br>(replaces Coord. Descent)"]:::process
+    CD_LOOP --> GS_SPLIT["Phase 4: 3-way Grid Shift<br>Residual uncertainty Δn, Δk"]:::process
+    GS_SPLIT --> ULT_LBFGSB["Phase 5: Ultimate Refinement<br>L-BFGS-B (ftol=1e-14) + Nelder-Mead"]:::process
+    ULT_LBFGSB --> TLU_DONE["TLU solution: d, n(λ), k(λ)"]:::highlight
+    end
+
+    TLU_DONE --> SPLINE_Q{"Spline mode<br>requested?"}:::decision
+    SPLINE_Q -->|"No"| BEAM
+    SPLINE_Q -->|"Yes"| P2
+
+    subgraph P2 ["Stage 2 — Spline Refinement"]
+    KNOTS["Knot placement:<br>15 n-curvature + 15 k-curvature knots<br>+ 6 IR extension knots (2500-5000nm)"]:::process --> PW["Phase 2a: Pointwise IR Inversion<br>L-BFGS-B per wavelength at fixed d_TLU<br>80% most-informative lambda selected"]:::process
+    PW --> LBFGSB2["Phase 2b: Spline L-BFGS-B<br>VIS bounds +/-0.05/+/-0.01<br>IR bounds +/-0.03/+/-0.01"]:::process
+    LBFGSB2 --> REOPT["Phase 2c: Final Joint Re-opt<br>d +/-1%, IR knot pos +/-400nm,<br>n +/-0.03, k +/-0.01"]:::highlight
+    REOPT --> SPLINE_DONE["Spline solution: d, n(λ), k(λ)<br>RMSE &lt; 0.005 typical"]:::highlight
+    end
+
+    TLU_DONE --> EXPORT
+    SPLINE_DONE --> EXPORT
+    EXPORT(["Export:<br>n(λ), k(λ), α(λ), TLU params,<br>Data Tables & Clipboard"]):::terminal
+</div>
+
+<div class="highlight-box">
+    <strong>Spectrum &gt; 2500 nm:</strong> When the wavelength range extends beyond 2500 nm, the software
+    automatically runs a <strong>two-stage pipeline</strong>: Stage 1 TLU is restricted to 1000–2200 nm
+    (<code>lambda_max_fit = 2200</code>), then <strong>IR Global Model (Phase 2)</strong> runs on the full range
+    (Section 6): Stages 0–2 (Sellmeier + k_8p), Phase 2.3 (spline $k$ in $\log k$, knot reduction), then Phase 2.1
+    (90% T / 10% R). The optional Spline Refinement (Section 7) is a separate path for spectra ≤2500 nm.
+</div>
+
+<h3>Stage 1 — TLU Global Fit</h3>
+<h4>Phase 1: PGLOBAL Global Search</h4>
+<p>
+    The 7-dimensional parameter space contains many local minima due to interference fringes.
+    CERTUS-INDEX uses the <strong>PGLOBAL</strong> algorithm — a hybrid stochastic/deterministic global
+    optimizer:
+</p>
+<ol>
+    <li><strong>Uniform Sampling:</strong> Random points generated in the full 7D space. Parameters $A$
+        and
+        $E_u$ are sampled on a logarithmic scale.</li>
+    <li><strong>Single-Linkage Clustering:</strong> The clustering algorithm groups evaluated points
+        based
+        on their relative Euclidean distance and objective function value. Points with similar costs
+        that are
+        geometrically close in the 7D hyper-space are merged into a common "basin" of attraction. This
+        avoids
+        launching multiple costly local optimizations toward the same minimum (redundancy).
+        <em>Reference:
+            Global
+            optimization by multilevel single-linkage clustering (A.H.G. Rinnooy Kan, C.G.E. Boender,
+            1987).</em>
+    </li>
+    <li><strong>Local Refinement:</strong> L-BFGS-B with <strong>analytic gradient</strong> is launched
+        from
+        each cluster center (budget: 1500 evals per cluster).</li>
+    <li><strong>Selection:</strong> The best solution across all clusters is retained.</li>
+</ol>
+<div class="highlight-box">
+    <strong>Precision Modes:</strong>
+    <ul>
+        <li><strong>Standard:</strong> 20,000 evaluations (fast, ~15-30s)</li>
+        <li><strong>High Precision:</strong> 80,000 evaluations (thorough, ~60-120s)</li>
+    </ul>
+</div>
+
+<h4>Phase 2: L-BFGS-B Polish (Quasi-Newton)</h4>
+<p>
+    The PGLOBAL result is refined using the <strong>L-BFGS-B (Limited-memory
+        Broyden-Fletcher-Goldfarb-Shanno
+        with Bounds)</strong> algorithm.
+    It is a Quasi-Newton method that does not directly evaluate the second-derivative matrix (the
+    Hessian, $H$),
+    which would be numerically exorbitant for 7 dimensions.
+</p>
+<p>
+    Instead, L-BFGS-B maintains a history of position and gradient vectors (the "L" memory for
+    "Limited",
+    typically the last 10 to 20 iterations) to dynamically <strong>approximate</strong> the inverse
+    Hessian
+    matrix
+    ($H^{-1}$).
+    Coupled with the exact analytic gradient, the optimizer determines a near-perfect descent direction
+    and
+    rigorously handles boundaries (e.g., $E_g > 0.1$) via projection onto active constraints.
+</p>
+
+<h4>Phase 3: L-BFGS-B Local Polish</h4>
+<p>A fast L-BFGS-B local polish replaces the former multi-start coordinate descent:</p>
+<ul>
+    <li><strong>Bounds:</strong> ±5% around the Phase 2 solution for all 7 TLU parameters.</li>
+    <li><strong>Budget:</strong> 500 iterations, <code>ftol=1e-14</code>, <code>gtol=1e-10</code>.</li>
+    <li><strong>Speed gain:</strong> ~2.6× faster than the previous 10-start coordinate descent.</li>
+</ul>
+
+<h4>Phase 4: Residual Uncertainty (3-way Grid Shift)</h4>
+<p>
+    To quantify fitting stability, CERTUS-INDEX performs a <strong>3-way split test</strong>:
+</p>
+<ol>
+    <li><strong>Data Decimation:</strong> Spectral data split into 3 interleaved subsets (indices
+        $0,3,6\ldots$, $1,4,7\ldots$, $2,5,8\ldots$).</li>
+    <li><strong>Independent Fits:</strong> Each subset is optimized independently (L-BFGS-B +
+        Nelder-Mead
+        polish).</li>
+    <li><strong>Stability Envelope:</strong> $\Delta n_{res}(\lambda) = \max_{\text{pairs}}
+        |n_i(\lambda) -
+        n_j(\lambda)|$ — the maximum deviation across all 3 pair combinations.</li>
+</ol>
+
+<h4>Phase 5: Ultimate Refinement</h4>
+<p>
+    The robust average of the 3 subset results seeds a final optimization on the full dataset:
+</p>
+<ol>
+    <li><strong>L-BFGS-B</strong> with extreme tolerances (<code>ftol=1e-14</code>,
+        <code>gtol=1e-14</code>).
+    </li>
+    <li><strong>Nelder-Mead</strong> derivative-free verification — catches gradient blind spots.</li>
+    <li>The better of the two results becomes the final solution.</li>
+</ol>
+
+<h2>6. IR Pipeline (Spectrum &gt; 2500 nm) — Workflow and Implementation</h2>
+
+<p>
+    When the spectral range extends beyond 2500 nm, CERTUS-INDEX runs a <strong>two-stage pipeline</strong>.
+    <strong>Stage 1 (TLU)</strong> is executed with <code>lambda_max_fit = 2200</code> nm, so the TLU model is fitted
+    only on 1000–2200 nm. The thickness and TLU solution from Stage 1 are then fixed; the second stage,
+    implemented by <code>IRGlobalModelWorker</code>, refines $n(\lambda)$ and $k(\lambda)$ over the
+    <strong>full wavelength range</strong> using a global parametric model, then a spline representation of $k$
+    in $\log k$, and finally an optional 90% T / 10% R refinement. The following describes the exact code flow
+    so a reader can understand everything that was implemented.
+</p>
+
+<h3>6.1 Trigger and Data Preparation</h3>
+<ul>
+    <li><strong>Trigger:</strong> <code>config.lambda_max &gt; 2500.0</code>. The UI logs: &quot;Spectrum &gt; 2500 nm
+        detected: launching automatic two-stage TLU + Spline pipeline.&quot; (The word &quot;Spline&quot; in the message
+        is legacy; the actual second stage is the IR Global Model + Phase 2.3 spline $k$ + Phase 2.1.)</li>
+    <li><strong>Stage 1 TLU:</strong> Runs on data restricted to <code>lambda_min</code>–2200 nm. Phase 5 yields optimal
+        thickness $d$ and TLU $n$, $k$ (extrapolated beyond 2200 nm for display).</li>
+    <li><strong>Phase 2 input:</strong> Full-range wavelengths <code>l_full</code> (e.g. 1000–5200 nm), same target T/R
+        (<code>target_T</code>, <code>target_R</code> from <code>c.target_data["T"]</code>, <code>["R"]</code>), substrate
+        index, and optional absorbing-substrate data (<code>k_sub_data</code>, <code>substrate_thickness_nm</code>) for
+        correct R/T when $\lambda \geq 2500$ nm. Thickness $d$ is <strong>fixed</strong> to the Stage 1 result.</li>
+    <li><strong>Target data convention:</strong> Target values must be in the same convention as
+        <code>use_normalized</code>: if <code>use_normalized</code> is True, targets are expected as $T/T_{sub}$ and
+        $R/T_{sub}$ (relative); otherwise as absolute $T$, $R$. The cost and all live curves use this convention
+        consistently (<code>_compute_RT_from_config</code> returns physical R, T, $T_{sub}$; then
+        <code>R_val = Rc/T_sub</code>, <code>T_val = Tc/T_sub</code> when normalized).</li>
+</ul>
+
+<h3>6.2 Global Model: Sellmeier 2-Poles + Empirical k (8 Parameters)</h3>
+<p>
+    The IR global model has <strong>13 parameters</strong>: 5 for $n$ (Sellmeier 2-pole) and 8 for $k$ (empirical law).
+    This model is used in Stages 0–2; Phase 2.3 replaces the k part by a spline in $\log k$.
+</p>
+
+<h4>Sellmeier 2-pole (5 parameters)</h4>
+<p>
+    $n^2(\lambda) = A + \frac{B_1 \lambda^2}{\lambda^2 - L_1^2} + \frac{B_2 \lambda^2}{\lambda^2 - L_2^2}$ with
+    $\lambda$ in µm. Poles $L_1$, $L_2$ are kept outside the fitted spectral range (e.g. 2.5–5.2 µm) to avoid
+    singularities. Implemented in <code>sellmeier_2poles_eval_nj</code>.
+</p>
+
+<h4>Empirical k law — 8 parameters</h4>
+<p>
+    $k(L) = 10^{-6} + \exp(s_1 L + p_1) + \exp(s_2 L + p_2) + A_k \exp\bigl(-|\frac{L - c}{w}|^\beta\bigr)$ with $L$ in µm.
+    The two exponentials model rising/falling absorption edges; the last term is a super-Gaussian peak (center $c$,
+    width $w$, exponent $\beta$). To avoid overflow and keep $k(L)$ smooth (no discontinuity at clip boundaries),
+    the arguments of the exponentials are <strong>soft-saturated</strong> with $\tanh$ in $[-25, 5]$ instead of
+    hard clipping. Implemented in <code>k_law_8p_eval</code>. Parameter <code>beta</code> is clipped to $[1, 8]$.
+</p>
+
+<h3>6.3 Bounds and Log-Space Sampling (Stages 0–2)</h3>
+<table>
+    <tr><th>Index</th><th>Parameter</th><th>Bounds (linear)</th><th>PGlobal sampling</th></tr>
+    <tr><td>0</td><td>$A$</td><td>[1, 16]</td><td>Log</td></tr>
+    <tr><td>1,2</td><td>$B_1$, $L_1$ (µm)</td><td>[0, 20], [0.001, 1]</td><td>Log</td></tr>
+    <tr><td>3,4</td><td>$B_2$, $L_2$ (µm)</td><td>[0, 20], [0.01, 20]</td><td>Log</td></tr>
+    <tr><td>5–8</td><td>slope1, pos1, slope2, pos2</td><td>[-40, 40], [-100, 80] (×2)</td><td>Linear</td></tr>
+    <tr><td>9</td><td>$A_k$ (amp)</td><td>[1e-10, 0.1]</td><td>Log</td></tr>
+    <tr><td>10,11</td><td>center (µm), width (µm)</td><td>[0.5, 12], [0.005, 5]</td><td>Log</td></tr>
+    <tr><td>12</td><td>$\beta$</td><td>[1, 8]</td><td>Linear</td></tr>
+</table>
+<p>
+    <code>log_indices = [0, 1, 2, 3, 4, 9, 10, 11]</code>: Sobol/uniform sampling is done in log-space for these
+    indices, then converted to linear for evaluation. L-BFGS-B (all stages) uses linear bounds.
+</p>
+
+<h3>6.4 Objective and Guards (<code>IRGlobalObjective</code>)</h3>
+<ul>
+    <li><strong>Cost:</strong> Weighted MSE on full range: $\text{MSE} = (w_T \cdot \text{MSE}_T + w_R \cdot \text{MSE}_R)/(w_T + w_R)$.
+        Normalized mode: $T_{val} = T_{calc}/T_{sub}$, $R_{val} = R_{calc}/T_{sub}$. Spectral weight $1/\lambda$ (normalized)
+        to balance fit across wavelength.</li>
+    <li><strong>Substrate:</strong> If <code>k_sub_data</code> and <code>substrate_thickness_nm</code> are set (e.g. Sapphire),
+        R and T use <code>calculationate_RT_single_layer_absorbing_substrate_array</code> (Beer-Lambert in substrate).</li>
+    <li><strong>Guards (return $10^{12}$ if violated):</strong>
+        <br/>1) Sellmeier poles: $L_1$ or $L_2$ must not lie inside $[\lambda_{min}, \lambda_{max}]$ (µm).
+        <br/>2) VIS continuity: On $\lambda \leq 2500$ nm, $|n_{Sellmeier} - n_{TLU ref}| \leq 0.20$.
+        <br/>3) Physical: $n \in [1.2, 4.0]$, $k \leq k_{max}$ (0.02 if $\lambda_{max} \geq 2500$ nm, else 0.15), and
+        <code>np.isfinite(n)</code>.
+        <br/>4) Optional: if <code>n_ref_global</code> is set (e.g. for 90% T sub-fit), $|n - n_{ref}| \leq 0.05$.
+    </li>
+</ul>
+
+<h3>6.5 Optimization Sequence — Exact Code Flow</h3>
+
+<div class="mermaid">
+    flowchart TD
+    IR_START(["Phase 2 input"]) --> WARM["Warm start: Sellmeier on n_TLU, k_8p on k_TLU"] --> S0["Stage 0: L-BFGS-B polish, 13 params"]
+    S0 --> S1["Stage 1: PGlobal 13D"]
+    S1 --> S2["Stage 2: L-BFGS-B polish"]
+    S2 --> P23["Phase 2.3: Spline k in log k"]
+    P23 --> KNOTS["_deduce_knots_from_k8p: curvature log k"]
+    KNOTS --> P1["Pass 1: p_sell + log_k values, 2-10 s"]
+    P1 --> P2["Pass 2: knot positions + values"]
+    P2 --> RED["Knot reduction 8 to 4"]
+    RED --> P21["Phase 2.1: 90% T / 10% R"]
+    P21 --> PKG["_package_results"]
+    PKG --> IR_END(["Results"])
+</div>
+
+<ol>
+    <li><strong>Warm start:</strong> Fit Sellmeier on Stage 1 $n_{TLU}$ over full range; fit k_8p on Stage 1 $k_{TLU}$
+        if <code>k_calc</code> exists. If no $k$ from Stage 1, try 5 candidate k-shapes and keep the one with lowest RMSE.</li>
+    <li><strong>Stage 0 — L-BFGS-B polish:</strong> From warm start (or cold if fit failed), <code>maxiter=3000</code>,
+        <code>ftol=1e-15</code>, <code>gtol=1e-10</code>. Result is <code>x0_polished</code> / <code>y0_polished</code> or
+        &quot;PGlobal starts cold&quot;.</li>
+    <li><strong>Stage 1 — PGlobal:</strong> <code>PGlobalOptimizerINDEX</code> with full 13D bounds, Sobol + single-linkage
+        clustering, L-BFGS-B from cluster centers. If PGlobal does not improve on Stage 0, Stage 0 result is kept.</li>
+    <li><strong>Stage 2 — L-BFGS-B polish:</strong> From PGlobal result, <code>maxiter=5000</code>, <code>ftol=1e-16</code>,
+        <code>gtol=1e-11</code>. If improvement, replace PGlobal result with this solution. At this point the &quot;PHASE 2 SUCCESSFUL&quot;
+        log is emitted and <code>best_mse</code> is set to this MSE.</li>
+    <li><strong>Phase 2.3 — Spline $k$ in $\log k$:</strong>
+        <ul>
+            <li><strong>Knot deduction:</strong> <code>_deduce_knots_from_k8p(wl_um, p_k8, num_knots=8, min_knot_dist_um=0.05)</code>
+                computes the curvature $|d^2(\log k)/d\lambda^2|$ of the k_8p curve (finite differences), then builds a
+                cumulative curvature sum and places <code>num_knots</code> positions by equidistribution of this cumulative
+                (borders = $\lambda_{min}$, $\lambda_{max}$). Knots are sorted and spaced at least <code>min_knot_dist_um</code>
+                apart via <code>_ensure_strictly_increasing</code> (required for <code>CubicSpline</code>).</li>
+            <li><strong>Pass 1:</strong> Optimize $x = [p_{sell}(5), \log k_{knots}]$ with knot positions fixed. Sellmeier
+                bounds ±10% around Stage 2 result; $\log k$ bounds from $\log(10^{-9})$ to $\log(k_{max})$. L-BFGS-B runs
+                at least 2 s and at most 10 s; best solution is kept. Cost: same weighted MSE; $k = \exp(\mathrm{clip}(B
+                \cdot \log k_{knots}))$ with $B$ from <code>SplineBasisCache.get(knot_lam, wl_um)</code>. Gradient uses
+                $\partial k/\partial p = k \cdot B^T$ and the existing T/R kernel.</li>
+            <li><strong>Pass 2 (mandatory):</strong> Optimize internal knot positions (µm) in addition to $p_{sell}$ and
+                $\log k$ values. <code>Phase23Pass2SplineObjective</code> maps $x$ to knot positions via
+                <code>_knot_lam_from_x</code> with strict monotonicity enforced. L-BFGS-B, <code>maxiter=2000</code>. If Pass 2
+                does not improve RMSE or fails, Pass 1 result is kept.</li>
+            <li><strong>Knot reduction:</strong> <code>RMSE_RATIO_MAX = 1.10</code>, <code>MIN_KNOTS = 4</code>. While
+                current number of knots &gt; 4: merge the closest consecutive knot pair via <code>_merge_closest_knot_pair</code>
+                (new position = midpoint, new $\log k$ = average of the two). Re-run Pass 1 (2–10 s) then Pass 2. If
+                $\mathrm{RMSE}_{new} \leq 1.10^2 \times \mathrm{best\_mse}$, accept and continue; otherwise reject and stop.
+                This yields a parsimonious spline (4–8 knots) with controlled RMSE loss.</li>
+        </ul>
+        If Phase 2.3 does not improve over the Stage 2 (k_8p) result, the k_8p solution is kept and
+        <code>k_spline_knots_*</code> remain <code>None</code>.</li>
+    <li><strong>Phase 2.1 (last) — 90% T / 10% R:</strong> If not frosted glass, T target exists, and Phase 2.3 produced a
+        spline result, set <code>weight_T=0.9</code>, <code>weight_R=0.1</code>. Using the same spline knot positions and
+        <code>Phase23SplineObjective</code>, run L-BFGS-B with Sellmeier bounds ±5% around the Phase 2.3 result,
+        <code>maxiter=1500</code>. This yields <code>n_T</code>, <code>k_T</code>, <code>p_opt_T</code> for the
+        &quot;transmission-weighted&quot; solution. Weights are then restored to 50–50.</li>
+    <li><strong>No separate 90% R / 10% T path:</strong> Only the 50–50 (main) and 90% T / 10% R (Phase 2.1) paths exist.</li>
+</ol>
+
+<h3>6.6 Outputs and Post-Processing</h3>
+<ul>
+    <li><strong>Final solution:</strong> <code>n_final</code>, <code>k_final</code> come from the best result after Stage 2
+        and (if successful) Phase 2.3 (spline) or fallback k_8p. <code>p_opt_final</code> holds Sellmeier (5) + k_8p (8) for
+        compatibility; spline is stored separately in <code>k_spline_knots_lambda_um</code>, <code>k_spline_knots_values</code>.</li>
+    <li><strong>DataFrame:</strong> <code>lambda</code>, <code>n_calc</code>, <code>k_calc</code>, <code>T_calc (%)</code>,
+        <code>T_norm_calc (%)</code>, <code>R_calc (%)</code>, <code>R_norm_calc (%)</code>, <code>T_target</code> / <code>R_target</code>
+        if present. If Phase 2.1 ran: <code>n_fit_T_only</code>, <code>k_fit_T_only</code>. No <code>n_fit_R_only</code> /
+        <code>k_fit_R_only</code>. <code>delta_n = 2|n_50 - n_T|</code>, <code>delta_k = 2|k_50 - k_T|</code> (gap between
+        50–50 and 90% T curves).</li>
+    <li><strong>Normalization:</strong> When substrate is absorbing, $T_{sub}$ and $R_{sub}$ are computed (Beer-Lambert);
+        display uses $R_{norm} = R_{calc}/T_{sub}$ (and $T_{norm} = T_{calc}/T_{sub}$) when <code>use_normalized</code> is True.</li>
+    <li><strong>Phase 5 (TLU) overwrite skipped:</strong> When the result comes from IR Global Model
+        (<code>optimization_stats.method</code> contains &quot;PGLOBAL&quot; or &quot;Sellmeier+k&quot>), the optional Phase 5
+        overwrite (global Sellmeier fit on $n$, k re-optimization) is <strong>skipped</strong> so that the Phase 2
+        $n$/k are kept as-is.</li>
+</ul>
+
+<h3>6.7 Component Reference</h3>
+<table>
+    <tr><th>Component</th><th>Role</th></tr>
+    <tr><td><code>IRGlobalModelWorker</code></td><td>Runs Phase 2 in a QThread; emits progress, finished, error.</td></tr>
+    <tr><td><code>IRGlobalObjective</code></td><td>13D objective: Sellmeier + k_8p, guards, weighted MSE, absorbing substrate.</td></tr>
+    <tr><td><code>Phase23SplineObjective</code></td><td>Cost and gradient for $x = [p_{sell}(5), \log k_{knots}]$; $k = \exp(\mathrm{clip}(B \cdot \log k))$; gradient via T/R kernel and $dk/dp = k \cdot B^T$.</td></tr>
+    <tr><td><code>Phase23Pass2SplineObjective</code></td><td>Same with internal knot positions in $x$; <code>_knot_lam_from_x</code> enforces strictly increasing knots.</td></tr>
+    <tr><td><code>_deduce_knots_from_k8p</code></td><td>Knot positions from curvature of $\log k_{8p}$ and cumulative equidistribution; <code>_ensure_strictly_increasing</code> for CubicSpline.</td></tr>
+    <tr><td><code>_merge_closest_knot_pair</code></td><td>Reduces knots by one: merge closest consecutive pair (position = midpoint, $\log k$ = average).</td></tr>
+    <tr><td><code>SplineBasisCache</code></td><td>Cache of cubic spline basis matrices $B$ for (knot_lam, wl_um).</td></tr>
+    <tr><td><code>sellmeier_2poles_eval_nj</code></td><td>Numba: $n(\lambda)$ from 5 params.</td></tr>
+    <tr><td><code>k_law_8p_eval</code></td><td>Numba: $k(\lambda)$ from 8 params (soft-saturated exponentials).</td></tr>
+    <tr><td><code>fit_sellmeier_global</code> / <code>fit_k_global_8p</code></td><td>Warm start: fit Stage 1 n/k to Sellmeier / k_8p.</td></tr>
+    <tr><td><code>_compute_RT_from_config</code></td><td>Single source of truth: returns (Rc, Tc, Ts) physical; normalized form for cost/display is Rc/Ts, Tc/Ts when <code>use_normalized</code>.</td></tr>
+    <tr><td><code>_package_results</code></td><td>Builds DataFrame, delta_n/delta_k, OptimizationResults (tlu_params=None), k_spline_* in results.</td></tr>
+</table>
+
+<h2>7. Stage 2 — Spline Refinement Pipeline</h2>
+
+<p>
+    When the spectrum is <strong>≤ 2500 nm</strong>, the optional second stage is this Spline Refinement.
+    When the spectrum <strong>&gt; 2500 nm</strong>, the automatic second stage is the <strong>IR Global Model</strong>
+    (Section 6); the Spline pipeline below is a separate optional path, not used in the default &gt;2500 nm flow.
+</p>
+<p>
+    After the TLU global fit converges, the optional <strong>Spline Refinement</strong> stage
+    (<code>SplineOptimizationWorker</code>) replaces the TLU analytical model with a free-form
+    <strong>cubic spline</strong> $n(\lambda)$, $k(\lambda)$, enabling accurate representation
+    of materials whose dispersion deviates from the TLU shape (e.g., strong IR absorption bands,
+    phonon resonances).
+</p>
+
+<h3>7.1 Knot Placement Strategy</h3>
+<p>
+    Spline knots are placed at positions of maximum curvature of the TLU solution, computed
+    <strong>independently</strong> for $n$ and $k$:
+</p>
+<div class="eq-box">
+    $$ \kappa_n(\lambda) = \left|\frac{d^2 n_{TLU}}{d\lambda^2}\right|, \quad
+    \kappa_k(\lambda) = \left|\frac{d^2 k_{TLU}}{d\lambda^2}\right| $$
+</div>
+<p>The wavelength range is divided into $N_{knots}$ equal bins; within each bin the position
+    of maximum curvature is selected (stratified sampling). This concentrates knots where
+    dispersion varies most rapidly while ensuring uniform spectral coverage.</p>
+<table>
+    <tr>
+        <th>Knot type</th>
+        <th>Count</th>
+        <th>Placement</th>
+    </tr>
+    <tr>
+        <td>VIS/NIR curvature (n)</td>
+        <td>15</td>
+        <td>Max $\kappa_n$ per bin</td>
+    </tr>
+    <tr>
+        <td>VIS/NIR curvature (k)</td>
+        <td>15</td>
+        <td>Max $\kappa_k$ per bin</td>
+    </tr>
+    <tr>
+        <td>IR extension</td>
+        <td>6</td>
+        <td>Fixed: 2500, 3000, 3500, 4000, 4500, 5000 nm</td>
+    </tr>
+    <tr>
+        <td>Boundary</td>
+        <td>2</td>
+        <td>$\lambda_{min}$, $\lambda_{max}$ (mandatory)</td>
+    </tr>
+</table>
+<p>After merging and deduplication (minimum spacing 15 nm), gaps &gt;400 nm are automatically
+    filled with intermediate knots to prevent spline ringing.</p>
+
+<h3>7.2 Phase 2a — Pointwise IR Inversion (<code>certus_pointwise_ir.py</code>)</h3>
+<p>
+    Before spline optimization, a <strong>wavelength-by-wavelength inversion</strong> is
+    performed in the IR region ($\lambda \geq 2200$ nm) to produce a high-quality seed
+    for the spline knots.
+</p>
+
+<h4>Wavelength Selection Mask</h4>
+<p>Wavelengths where $T_{rel} \approx 1$ (film nearly transparent) carry no information
+    about the film and are excluded. The mask retains the <strong>80% of wavelengths most
+        distant from $T_{rel} = 100\%$</strong>:</p>
+<div class="eq-box">
+    $$ T_{rel}(\lambda) = \frac{T_{meas}(\lambda)}{T_{substrate}(\lambda)}, \quad
+    \text{keep } \lambda \text{ where } |1 - T_{rel}| \geq P_{20}(|1 - T_{rel}|) $$
+</div>
+
+<h4>Per-wavelength Optimization</h4>
+<p>For each retained $\lambda_i$, a 2D L-BFGS-B minimization finds $(n_i, k_i)$
+    at the fixed TLU thickness $d_{TLU}$:</p>
+<div class="eq-box">
+    $$ \min_{n_i,\, k_i} \left[
+    \left(\frac{T_{calc}(\lambda_i)}{T_{sub}(\lambda_i)} - T_{meas}(\lambda_i)\right)^2
+    + \left(\frac{R_{calc}(\lambda_i)}{T_{sub}(\lambda_i)} - R_{meas}(\lambda_i)\right)^2
+    \right] $$
+</div>
+<p>Outliers (deviation &gt;3σ from the median using the MAD estimator) are replaced by the
+    TLU seed. A 5-point sliding median filter smooths the VIS/IR boundary transition.</p>
+
+<h3>7.3 Phase 2b — Spline L-BFGS-B Optimization (with Tikhonov Regularization)</h3>
+<p>The spline knots (piecewise parametric models) are optimized by L-BFGS-B. Each knot is a
+    free parameter, but the spline itself connects cubic polynomials, guaranteeing the
+    continuity of the functions ($C^0$), their first derivatives ($C^1$), and their second derivatives
+    ($C^2$).
+</p>
+<p>To avoid "overfitting" optical noise, which would result in non-physical ripples in the index
+    profile, a <strong>Tikhonov smoothing penalty (Regularization)</strong> is added to the global
+    objective function.</p>
+<table>
+    <tr>
+        <th>Region</th>
+        <th>$\Delta n$ bound</th>
+        <th>$\Delta k$ bound</th>
+    </tr>
+    <tr>
+        <td>VIS ($\lambda \leq 2200$ nm)</td>
+        <td>±0.05</td>
+        <td>±0.01</td>
+    </tr>
+    <tr>
+        <td>IR ($\lambda &gt; 2200$ nm)</td>
+        <td>±0.03</td>
+        <td>±0.01</td>
+    </tr>
+</table>
+<p>The Loss function minimized with the smoothing constraint (penalizing curvature via 2nd-order finite
+    differences) is:</p>
+<div class="eq-box">
+    $$ \mathcal{L}_{spline} = \text{MSE}_{optical} + \alpha_{smooth} \sum_{i=1}^{N_{knots}-2}
+    \left[ (n_{i+2} - 2n_{i+1} + n_i)^2 + (k_{i+2} - 2k_{i+1} + k_i)^2 \right], \quad \alpha_{smooth} =
+    10^{-4}
+    $$
+</div>
+<p>A weight $\alpha_{smooth}$ of 1e-4 drastically suppresses pseudo-periodic harmonics without erasing
+    genuine
+    singularities like IR phononic resonances.</p>
+
+<h3>7.4 Phase 2c — Final Joint Re-optimization</h3>
+<p>A final L-BFGS-B pass jointly optimizes all degrees of freedom simultaneously
+    (500 iterations, <code>ftol=1e-14</code>):</p>
+<table>
+    <tr>
+        <th>Variable</th>
+        <th>Bounds</th>
+    </tr>
+    <tr>
+        <td>Thickness $d$</td>
+        <td>±1% of Phase 2b result</td>
+    </tr>
+    <tr>
+        <td>IR knot positions $\lambda_i^{IR}$</td>
+        <td>±400 nm (min. 150 nm spacing)</td>
+    </tr>
+    <tr>
+        <td>$n$ knot values (VIS)</td>
+        <td>±0.05</td>
+    </tr>
+    <tr>
+        <td>$n$ knot values (IR)</td>
+        <td>±0.03</td>
+    </tr>
+    <tr>
+        <td>$k$ knot values (all)</td>
+        <td>±0.01</td>
+    </tr>
+</table>
+<div class="highlight-box">
+    <strong>Benchmark — RTNBrel-sapphire.xlsx (reference dataset):</strong>
+    <ul>
+        <li>Stage 1 TLU: 14.5 s — RMSE ≈ 0.086</li>
+        <li>Phase 2b Spline L-BFGS-B: RMSE ≈ 0.034</li>
+        <li>Phase 2c Final re-opt: <strong>RMSE = 0.0050</strong> ✓ (&lt;0.01 target)</li>
+        <li>Total pipeline: ~25 s</li>
+    </ul>
+</div>
+
+<h2>8. Frosted Glass Mode</h2>
+
+<h3>8.1 Physical Problem</h3>
+<p>For single-side polished wafers or intentionally roughened substrates, the back surface scatters
+    light
+    instead of reflecting it coherently. Standard TMM equations are invalid.</p>
+
+<h3>8.2 Mathematical Treatment</h3>
+<p>CERTUS-INDEX models this as an <strong>infinite substrate</strong> where back-reflections are
+    eliminated:</p>
+<div class="eq-box">
+    $$ R_{frosted} = \left| \frac{n_{film} - n_0}{n_{film} + n_0} \right|^2 + \text{(thin-film
+    interference
+    terms)} $$
+</div>
+<p>The code uses <code>calculate_reflection_infinite_substrate_array</code> which:</p>
+<ul>
+    <li>Computes front-surface reflection via TMM.</li>
+    <li>Adds incoherent substrate absorption (no interference).</li>
+    <li>Ignores back-surface Fresnel contribution.</li>
+</ul>
+
+<h3>8.3 Reference Calculation</h3>
+<p>The frosted substrate reference is computed via:</p>
+<div class="eq-box">
+    $$ R_{substrate}^{frosted} = \left| \frac{n_{sub} - 1}{n_{sub} + 1} \right|^2 $$
+</div>
+<p>Unlike polished substrates where back-reflection creates interference fringes.</p>
+
+
+
+<h2>9. Supported Substrates</h2>
+<p>CERTUS-INDEX includes built-in Sellmeier dispersion models:</p>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Sellmeier Formula</th>
+    </tr>
+    <tr>
+        <td>0</td>
+        <td>SiO₂ (Fused Silica)</td>
+        <td>$n^2 = 1 + \frac{B_1 \lambda^2}{\lambda^2 - C_1} + \frac{B_2 \lambda^2}{\lambda^2 - C_2} +
+            \frac{B_3
+            \lambda^2}{\lambda^2 - C_3}$</td>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>N-BK7</td>
+        <td>Sellmeier (optical crown glass)</td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>D263T eco</td>
+        <td>Sellmeier (Schott thin glass)</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>Sapphire</td>
+        <td>Sellmeier (Al₂O₃ crystal)</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>B270i</td>
+        <td>Sellmeier (crown glass)</td>
+    </tr>
+</table>
+
+<h2>10. Key Features</h2>
+
+<h3>10.1. Urbach Tail Analysis</h3>
+<p>
+    Crucial for analyzing the quality of deposited films. A high $E_u$ indicates high disorder or
+    impurities. CERTUS-INDEX quantifies this explicitly via the <code>TLUParameters</code> structure,
+    allowing process engineers to optimize deposition energy.
+</p>
+
+<h3>10.2. Frosted Glass Mode</h3>
+<p>
+    Specifically designed for measurements on roughened (frosted) back-side substrates. The code
+    mathematically removes back-side reflections to isolate the thin-film signal, essential for
+    single-side polished wafers.
+</p>
+
+<h3>10.3. Precision Modes</h3>
+<p>
+    CERTUS-INDEX offers two precision levels, both running the full 5-phase pipeline:
+</p>
+
+<table>
+    <tr>
+        <th>Mode</th>
+        <th>PGLOBAL Budget</th>
+        <th>Typical Time</th>
+        <th>Use Case</th>
+    </tr>
+    <tr>
+        <td><strong>Standard</strong></td>
+        <td>20,000 evals</td>
+        <td>15-30s</td>
+        <td>Routine characterization, well-behaved materials</td>
+    </tr>
+    <tr>
+        <td><strong>High Precision</strong></td>
+        <td>80,000 evals</td>
+        <td>60-120s</td>
+        <td>Complex spectra, weak absorption, thick films</td>
+    </tr>
+</table>
+
+<p>Both modes run identical Phase 2-5 pipelines. The difference is only in the Phase 1 PGLOBAL
+    exploration
+    budget.</p>
+
+<h3>10.4. Production-Ready Implementation</h3>
+<table>
+    <tr>
+        <th>Feature</th>
+        <th>Description</th>
+    </tr>
+    <tr>
+        <td><strong>TMM Convention</strong></td>
+        <td>Macleod ($\hat{n}=n-ik$, <code>+1j</code>). Float64 / Complex128 throughout (since
+            v2026.02).</td>
+    </tr>
+    <tr>
+        <td><strong>Numba JIT</strong></td>
+        <td>All physics kernels compiled with <code>parallel=True</code> for ~10 µs/point evaluation.
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Analytic Gradient</strong></td>
+        <td>Full chain rule: TMM sensitivity × dielectric-to-index × TLU parameter derivatives.</td>
+    </tr>
+    <tr>
+        <td><strong>Multi-threaded</strong></td>
+        <td>Multi-start evaluations parallelized via Numba workqueue threading layer.</td>
+    </tr>
+    <tr>
+        <td><strong>Spline Refinement</strong></td>
+        <td>Post-TLU stage (optional). For spectrum &gt;2500 nm the default second stage is
+            <strong>IR Global Model</strong> (Phase 2/2, Section 6). Spline remains available as an alternative path.
+        </td>
+    </tr>
+    <tr>
+        <td><strong>Live Visualization</strong></td>
+        <td>Real-time plots of <strong>R, T, n, and k</strong> updated dynamically during all stages,
+            including
+            live spline curve visualization natively embedded in PyQtGraph.</td>
+    </tr>
+    <tr>
+        <td><strong>Backside Correction</strong></td>
+        <td>Incoherent substrate via dual-matrix approach (forward + reverse TMM).</td>
+    </tr>
+    <tr>
+        <td><strong>Export</strong></td>
+        <td>Excel + HTML reports with embedded plots, TLU parameters, and uncertainty envelopes.</td>
+    </tr>
+    <tr>
+        <td><strong>Shared UX Engine</strong></td>
+        <td><code>certus_ui.py</code> — <code>CertusIndexApp</code> extends <code>CertusBaseApp</code>:
+            5-level undo stack (<kbd>Ctrl</kbd>+<kbd>Z</kbd>), <code>CertusLogPanel</code>,
+            <code>WelcomeGuideWidget</code>, <code>KLogAxisItem</code> (log-scale k-axis),
+            interactive cursor on n/k plots with detach-plot support.</td>
+    </tr>
+    <tr>
+        <td><strong>Exclude-Range Filter</strong></td>
+        <td>User-defined wavelength exclusion ranges applied consistently across all optimization phases
+            (TLU + Spline + IR Global Model) via <code>exclude_range</code> mask.</td>
+    </tr>
+</table>
+
+
+<!-- ================================================================ -->
+<!--  PRO 2026 ERGONOMICS & UX                                         -->
+<!-- ================================================================ -->
+<h2>11. Pro 2026 Ergonomics & UI Upgrades</h2>
+<p>
+    The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific
+    workflows.
+    All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
+    <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code>
+    datatypes for
+    maximum numerical stability (15 significant digits).
+</p>
+<h3>Global Keyboard Shortcuts</h3>
+<p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:
+</p>
+<ul>
+    <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
+    <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
+    <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Instantly launch the primary optimization or
+        fitting Step (Step 2).</li>
+    <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack via <code>CertusBaseApp</code>).</li>
+    <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.
+    </li>
+</ul>
+<h3>Dynamic Processing Feedback</h3>
+<p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are
+    completely
+    thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich
+    button
+    Tooltips to provide absolute real-time state awareness without locking the application's event loop.
+</p>
+
+<div class="footer">
+    <p>Generated from source analysis of <code>CERTUS_INDEX.py</code>, <code>certus_ui.py</code>,
+        <code>certus_pointwise_ir.py</code> &mdash; Revision 2026.03</p>
+    <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report &bull; Updated Mar 2026
+    </p>
+</div>
+    </div>
+
+</body>
+</html>

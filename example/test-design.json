@@ -1,0 +1,57 @@
+{
+    "version": "CERTUS_SUITE_26_01",
+    "l0": 500.0,
+    "materials": {
+        "H": {
+            "n4": 2.35,
+            "n7": 2.3,
+            "preset": "TiO2 (H)"
+        },
+        "L": {
+            "n4": 1.46,
+            "n7": 1.46,
+            "preset": "SiO2 (L)"
+        },
+        "Substrate": {
+            "n4": 1.52,
+            "n7": 1.51,
+            "preset": "N-BK7 (Sub)"
+        }
+    },
+    "front": [
+        {
+            "mat": "H",
+            "qw": 1.0,
+            "var": true
+        },
+        {
+            "mat": "L",
+            "qw": 1.0,
+            "var": true
+        }
+    ],
+    "back_en": false,
+    "back_coat": false,
+    "back": [],
+    "targets": [
+        {
+            "on": true,
+            "lmin": 400.0,
+            "lmax": 800.0,
+            "tmin": 0.5,
+            "tmax": 0.5,
+            "w": 1.0
+        }
+    ],
+    "oblique_mode": false,
+    "optim": {
+        "n100": 100,
+        "max_clusters": 2,
+        "max_iter": 2,
+        "mc_n": 10,
+        "mc_sigma": 0.1,
+        "pre_polish": false,
+        "allow_growth": false,
+        "auto_scale_y": true
+    }
+}

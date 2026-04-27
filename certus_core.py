@@ -187,6 +187,8 @@ from datetime import datetime
 
 from typing import Any, Optional
 
+from certus_logging import attach_jsonl_handler, get_structured_logger
+
 
 import numpy as np
 
@@ -614,6 +616,13 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "_logging.L
                 f"Unexpected error creating log file '{log_file}': {type(e).__name__}: {e}"
             )
             logger.warning("Continuing with console logging only")
+
+    # Structured JSONL stream for cross-run correlation and machine parsing.
+    try:
+        jsonl_path = Path(get_resource_path("logs")) / "CERTUS.jsonl"
+        attach_jsonl_handler(logger, jsonl_path)
+    except (PermissionError, OSError, ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        logger.warning(f"Structured JSONL handler unavailable: {type(e).__name__}: {e}")
 
     return logger
 
@@ -1352,7 +1361,10 @@ class CertusConfigError(CertusError):
 # =============================================================================
 
 
-def setup_module_logging(module_name: str, log_file: Optional[str] = None) -> logging.Logger:
+def setup_module_logging(
+    module_name: str,
+    log_file: Optional[str] = None,
+) -> logging.LoggerAdapter:
 
     """
 
@@ -1366,7 +1378,7 @@ def setup_module_logging(module_name: str, log_file: Optional[str] = None) -> lo
 
     Returns:
 
-        Logger instance
+        Logger adapter with run_id and app_id context
 
     Example:
 
@@ -1380,7 +1392,9 @@ def setup_module_logging(module_name: str, log_file: Optional[str] = None) -> lo
 
         log_file = f"certus_{module_name.lower()}.log"
 
-    logger = setup_logging(log_file=log_file)
+    run_id = f"{module_name.lower()}-{certus_timestamp_file()}"
+    base_logger = setup_logging(log_file=log_file)
+    logger = get_structured_logger(base_logger, run_id=run_id, app_id=module_name)
 
     logger.info(f"{module_name} initialized")
 
@@ -1409,7 +1423,8 @@ def create_module_environment(module_file: str, module_name: str) -> dict[str, A
 
     script_dir, runtime = bootstrap_app(module_file, _log_name=log_file, return_runtime=True)
 
-    logger = runtime.logger
+    run_id = f"{module_name.lower()}-{certus_timestamp_file()}"
+    logger = get_structured_logger(runtime.logger, run_id=run_id, app_id=module_name)
 
     return {
 
@@ -1418,6 +1433,8 @@ def create_module_environment(module_file: str, module_name: str) -> dict[str, A
         "logger": logger,
 
         "runtime": runtime,
+
+        "run_id": run_id,
 
         "module_name": module_name,
 

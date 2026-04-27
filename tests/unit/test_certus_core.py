@@ -17,8 +17,10 @@ from certus_core import (
     get_complex_dtype,
     get_precision_config,
     setup_logging,
+    setup_module_logging,
     get_logger,
     bootstrap_app,
+    create_module_environment,
     ConfigManager,
     GlobalConfig,
     load_export_config,
@@ -329,6 +331,30 @@ class TestBootstrapApp:
             log_name = "test_log"
             result = bootstrap_app(tmp_path, log_name)
             assert isinstance(result, str)
+        finally:
+            os.unlink(tmp_path)
+
+    def test_setup_module_logging_injects_structured_context(self):
+        """setup_module_logging should include run_id and app_id context."""
+        logger = setup_module_logging("TEST_MODULE")
+        assert hasattr(logger, "extra")
+        assert logger.extra["app_id"] == "TEST_MODULE"
+        assert logger.extra["run_id"].startswith("test_module-")
+
+    def test_create_module_environment_injects_structured_logger(self):
+        """create_module_environment should return a logger adapter with run context."""
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as tmp:
+            tmp.write(b"# Test app file")
+            tmp_path = tmp.name
+
+        try:
+            env = create_module_environment(tmp_path, "TEST_MODULE")
+            assert "logger" in env
+            assert "run_id" in env
+            assert env["run_id"].startswith("test_module-")
+            assert hasattr(env["logger"], "extra")
+            assert env["logger"].extra["run_id"] == env["run_id"]
+            assert env["logger"].extra["app_id"] == "TEST_MODULE"
         finally:
             os.unlink(tmp_path)
 

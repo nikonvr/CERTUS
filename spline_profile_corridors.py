@@ -4335,6 +4335,244 @@ def _profile_manual_grid_coverage_audit(
         )
     return coverage_complete
 
+
+def _package_profile_grid_result(
+    *,
+    d_list: list[float],
+    r_list: list[float],
+    n_list: list[np.ndarray],
+    k_list: list[np.ndarray],
+    nit_list: list[float],
+    nfev_list: list[float],
+    point_kind_list: list[int],
+    point_status_code_list: list[int],
+    x_nodes_best_list: list[np.ndarray],
+    t0: float,
+    d_arr: np.ndarray,
+    d0: float,
+    i_center: int,
+    nom_pack_present: bool,
+    n_branch_trigger: int,
+    n_branch_extra_points: int,
+    n_global_opt_runs: int,
+    n_global_opt_improved: int,
+    branch_events: list[dict],
+    global_opt_events: list[dict],
+    best_global_rmse: float,
+    best_global_result: dict | None,
+    rmse_nominal_baseline_for_grid: float,
+    rmse_abs_ref: float,
+    sk: np.ndarray,
+    cfg: "SplineOptConfig",
+    base_eff: dict,
+    k: int,
+    coverage_complete: bool,
+) -> dict[str, Any]:
+    """Package accumulated RMSE(d) profile data into the final result dict."""
+
+    if not d_list:
+        return {"profile_d_status": "manual_grid_empty", "profile_d_manual_grid_note": "all refits failed"}
+
+    order = np.argsort(np.asarray(d_list, dtype=np.float64))
+
+    d_out = np.asarray([d_list[i] for i in order], dtype=np.float64)
+
+    r_out = np.asarray([r_list[i] for i in order], dtype=np.float64)
+
+    n_stack = np.vstack([n_list[i] for i in order])
+
+    k_stack = np.vstack([k_list[i] for i in order])
+
+    nit_out = np.asarray([nit_list[i] for i in order], dtype=np.float64)
+
+    nfev_out = np.asarray([nfev_list[i] for i in order], dtype=np.float64)
+
+    point_kind_out = np.asarray([point_kind_list[i] for i in order], dtype=np.int32)
+    point_status_out = np.asarray([point_status_code_list[i] for i in order], dtype=np.int32)
+
+    chi_out = np.full(d_out.shape, float("nan"), dtype=np.float64)
+
+    dt_ms = (time.perf_counter() - t0) * 1000.0
+
+    log.info(
+        "%s manual RMSE(d) grid | n_ok=%d | d in [%.4f, %.4f] nm | breakpoints=%d | extra_points=%d | global_opt_runs=%d | global_opt_improved=%d | elapsed=%.1f ms",
+        _LOG_PREFIX,
+        int(d_out.size),
+        float(np.min(d_out)),
+        float(np.max(d_out)),
+        int(n_branch_trigger),
+        int(n_branch_extra_points),
+        int(n_global_opt_runs),
+        int(n_global_opt_improved),
+        float(dt_ms),
+    )
+    n_nan_d_out = int(np.sum(~np.isfinite(d_out)))
+    n_nan_r_out = int(np.sum(~np.isfinite(r_out)))
+    n_fb_seed = int(np.sum(point_status_out == 1))
+    n_fb_obj = int(np.sum(point_status_out == 2))
+    n_fb_emg = int(np.sum(point_status_out == 3))
+    requested_base_points = int(d_arr.size)
+    returned_base_points = int(np.sum(point_kind_out == 0))
+    missing_after_emergency = int(max(0, requested_base_points - returned_base_points))
+    coverage_complete = bool(missing_after_emergency == 0)
+    log.info(
+        "%s manual RMSE(d) grid diagnostics | nan(d/rmse)=%d/%d | fallback(seed/objective/emergency)=%d/%d/%d | coverage requested/returned/missing=%d/%d/%d",
+        _LOG_PREFIX,
+        int(n_nan_d_out),
+        int(n_nan_r_out),
+        int(n_fb_seed),
+        int(n_fb_obj),
+        int(n_fb_emg),
+        int(requested_base_points),
+        int(returned_base_points),
+        int(missing_after_emergency),
+    )
+    fg_curve = np.isfinite(d_out) & np.isfinite(r_out)
+    if np.any(fg_curve):
+        dc = d_out[fg_curve]
+        rc = r_out[fg_curve]
+        jm = int(np.argmin(rc))
+        jM = int(np.argmax(rc))
+        log.info(
+            "%s manual RMSE(d) grid curve summary | rmse_min=%.8f @ d=%.6f nm | rmse_max=%.8f @ d=%.6f nm",
+            _LOG_PREFIX,
+            float(rc[jm]),
+            float(dc[jm]),
+            float(rc[jM]),
+            float(dc[jM]),
+        )
+
+    curve_minimum_result: dict[str, Any] | None = None
+    curve_beats_nominal = False
+    curve_vs_nominal_delta_rmse = float("nan")
+    fg_min = np.isfinite(d_out) & np.isfinite(r_out)
+    if np.any(fg_min):
+        j_curve = int(np.argmin(np.where(fg_min, r_out, np.inf)))
+        r_cb = float(r_out[j_curve])
+        d_cb = float(d_out[j_curve])
+        nom_b = float(rmse_nominal_baseline_for_grid)
+        delta_nom = float(nom_b - r_cb)
+        rel_gate = max(1e-12, 1e-7 * max(abs(nom_b), abs(r_cb), 1e-30))
+        if np.isfinite(nom_b) and np.isfinite(r_cb) and (r_cb + rel_gate < nom_b) and (abs(d_cb - float(d0)) > 1e-3):
+            orig_i = int(order[j_curve])
+            x_nodes_cb = np.asarray(x_nodes_best_list[orig_i], dtype=np.float64).ravel().copy()
+            if int(x_nodes_cb.size) == 2 * int(k):
+                n_slice_cb = x_nodes_cb[: int(k)]
+                L_slice_cb = x_nodes_cb[int(k) :]
+                if cfg.n_mono_band_nm is None:
+                    n_phys_cb = np.asarray(n_slice_cb, dtype=np.float64).copy()
+                else:
+                    n_phys_cb = x_slice_n_to_physical_nodes(
+                        np.asarray(n_slice_cb, dtype=np.float64),
+                        sk,
+                        cfg.n_mono_band_nm,
+                    )
+                x_full_cb = np.concatenate((np.asarray([d_cb], dtype=np.float64), x_nodes_cb))
+                curve_minimum_result = dict(base_eff)
+                curve_minimum_result.update(
+                    {
+                        "d_nm": float(d_cb),
+                        "x": x_full_cb.copy(),
+                        "x_seg_spline_sigma": x_full_cb.copy(),
+                        "sigma_knots": np.asarray(sk, dtype=np.float64).ravel().copy(),
+                        "sigma_knots_L": np.asarray(sk, dtype=np.float64).ravel().copy(),
+                        "n_nodes_physical": np.asarray(n_phys_cb, dtype=np.float64).ravel().copy(),
+                        "L_nodes": np.asarray(L_slice_cb, dtype=np.float64).ravel().copy(),
+                        "n_lam": np.asarray(n_stack[j_curve], dtype=np.float64).ravel().copy(),
+                        "k_lam": np.asarray(k_stack[j_curve], dtype=np.float64).ravel().copy(),
+                        "rmse": float(r_cb),
+                        "mse": float(r_cb * r_cb),
+                        "x_encoding": "corridor_refit_fixed_d",
+                        "profile_d_manual_grid_curve_minimum": True,
+                    }
+                )
+                curve_beats_nominal = True
+                curve_vs_nominal_delta_rmse = float(delta_nom)
+                log.info(
+                    "%s manual RMSE(d) grid | curve min beats nominal (refit@fixed d) | d_nom=%.6f rmse_nom=%.8f "
+                    "-> d_curve=%.6f rmse_curve=%.8f | Delta_rmse=%.3e",
+                    _LOG_PREFIX,
+                    float(d0),
+                    float(nom_b),
+                    float(d_cb),
+                    float(r_cb),
+                    float(delta_nom),
+                )
+
+    curve_min_rmse_syn = float("nan")
+    curve_min_d_syn = float("nan")
+    if np.any(fg_min):
+        j_syn = int(np.argmin(np.where(fg_min, r_out, np.inf)))
+        curve_min_rmse_syn = float(r_out[j_syn])
+        curve_min_d_syn = float(d_out[j_syn])
+    if (
+        int(n_global_opt_improved) > 0
+        and np.isfinite(best_global_rmse)
+        and np.isfinite(curve_min_rmse_syn)
+        and float(curve_min_rmse_syn) + 1e-15 < float(best_global_rmse)
+    ):
+        d_glob_syn = float("nan")
+        if isinstance(best_global_result, dict):
+            dg0 = best_global_result.get("d_nm")
+            if isinstance(dg0, (int, float)) and np.isfinite(float(dg0)):
+                d_glob_syn = float(dg0)
+        log.info(
+            "%s manual RMSE(d) grid | Synthesis: discrete curve minimum RMSE=%.8f @ d=%.6f nm < RMSE adoption "
+            "global_opt=%.8f @ d=%.6f nm \u2014 le flux GUI peut fusionner le global (cassure) ; un polish profond "
+            "depuis le minimum courbe reste possible.",
+            _LOG_PREFIX,
+            float(curve_min_rmse_syn),
+            float(curve_min_d_syn),
+            float(best_global_rmse),
+            float(d_glob_syn),
+        )
+
+    return {
+        "profile_d_values_nm": d_out,
+        "profile_d_rmse_values": r_out,
+        "profile_d_manual_grid_point_kind": point_kind_out,
+        "profile_d_manual_grid_point_status_code": point_status_out,
+        "profile_d_chi2_values": chi_out,
+        "profile_d_n_curves": n_stack,
+        "profile_d_k_curves": k_stack,
+        "profile_d_fit_nit_values": nit_out,
+        "profile_d_fit_nfev_values": nfev_out,
+        "profile_d_status": "manual_grid",
+        "profile_d_manual_grid_elapsed_ms": float(dt_ms),
+        "profile_d_manual_grid_d0_seed_nm": float(d_arr[i_center]),
+        "profile_d_manual_grid_nominal_pack_d_nm": float(d0),
+        "profile_d_manual_grid_nominal_pack": bool(nom_pack_present),
+        "profile_d_manual_grid_total_points": int(d_arr.size),
+        "profile_d_manual_grid_done_points": int(d_out.size),
+        "profile_d_manual_grid_base_done_points": int(np.sum(point_kind_out == 0)),
+        "profile_d_manual_grid_extra_done_points": int(np.sum(point_kind_out == 1)),
+        "profile_d_manual_grid_fallback_seed_points": int(np.sum(point_status_out == 1)),
+        "profile_d_manual_grid_fallback_objective_points": int(np.sum(point_status_out == 2)),
+        "profile_d_manual_grid_fallback_emergency_points": int(np.sum(point_status_out == 3)),
+        "profile_d_manual_grid_requested_base_points": int(requested_base_points),
+        "profile_d_manual_grid_returned_base_points": int(returned_base_points),
+        "profile_d_manual_grid_missing_after_emergency": int(missing_after_emergency),
+        "profile_d_manual_grid_coverage_complete": bool(coverage_complete),
+        "profile_d_manual_grid_breakpoint_count": int(n_branch_trigger),
+        "profile_d_manual_grid_extra_points": int(n_branch_extra_points),
+        "profile_d_manual_grid_breakpoint_events": branch_events,
+        "profile_d_manual_grid_global_opt_runs": int(n_global_opt_runs),
+        "profile_d_manual_grid_global_opt_improved": int(n_global_opt_improved),
+        "profile_d_manual_grid_global_opt_events": global_opt_events,
+        "profile_d_manual_grid_best_global_rmse": float(best_global_rmse)
+        if np.isfinite(best_global_rmse)
+        else float("nan"),
+        "profile_d_manual_grid_best_global_result": dict(best_global_result)
+        if isinstance(best_global_result, dict)
+        else None,
+        "profile_d_manual_grid_curve_beats_nominal": bool(curve_beats_nominal),
+        "profile_d_manual_grid_curve_vs_nominal_delta_rmse": float(curve_vs_nominal_delta_rmse),
+        "profile_d_manual_grid_curve_minimum_result": (
+            dict(curve_minimum_result) if isinstance(curve_minimum_result, dict) else None
+        ),
+    }
+
+
 def compute_regular_grid_rmse_profile(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -5256,209 +5494,39 @@ def compute_regular_grid_rmse_profile(
         _emit_live,
     )
 
-    if not d_list:
-        return {"profile_d_status": "manual_grid_empty", "profile_d_manual_grid_note": "all refits failed"}
-
-    order = np.argsort(np.asarray(d_list, dtype=np.float64))
-
-    d_out = np.asarray([d_list[i] for i in order], dtype=np.float64)
-
-    r_out = np.asarray([r_list[i] for i in order], dtype=np.float64)
-
-    n_stack = np.vstack([n_list[i] for i in order])
-
-    k_stack = np.vstack([k_list[i] for i in order])
-
-    nit_out = np.asarray([nit_list[i] for i in order], dtype=np.float64)
-
-    nfev_out = np.asarray([nfev_list[i] for i in order], dtype=np.float64)
-
-    point_kind_out = np.asarray([point_kind_list[i] for i in order], dtype=np.int32)
-    point_status_out = np.asarray([point_status_code_list[i] for i in order], dtype=np.int32)
-
-    chi_out = np.full(d_out.shape, float("nan"), dtype=np.float64)
-
-    dt_ms = (time.perf_counter() - t0) * 1000.0
-
-    log.info(
-        "%s manual RMSE(d) grid | n_ok=%d | d in [%.4f, %.4f] nm | breakpoints=%d | extra_points=%d | global_opt_runs=%d | global_opt_improved=%d | elapsed=%.1f ms",
-        _LOG_PREFIX,
-        int(d_out.size),
-        float(np.min(d_out)),
-        float(np.max(d_out)),
-        int(n_branch_trigger),
-        int(n_branch_extra_points),
-        int(n_global_opt_runs),
-        int(n_global_opt_improved),
-        float(dt_ms),
+    return _package_profile_grid_result(
+        d_list=d_list,
+        r_list=r_list,
+        n_list=n_list,
+        k_list=k_list,
+        nit_list=nit_list,
+        nfev_list=nfev_list,
+        point_kind_list=point_kind_list,
+        point_status_code_list=point_status_code_list,
+        x_nodes_best_list=x_nodes_best_list,
+        t0=t0,
+        d_arr=d_arr,
+        d0=d0,
+        i_center=i_center,
+        nom_pack_present=bool(nom_pack is not None),
+        n_branch_trigger=n_branch_trigger,
+        n_branch_extra_points=n_branch_extra_points,
+        n_global_opt_runs=n_global_opt_runs,
+        n_global_opt_improved=n_global_opt_improved,
+        branch_events=branch_events,
+        global_opt_events=global_opt_events,
+        best_global_rmse=best_global_rmse,
+        best_global_result=best_global_result,
+        rmse_nominal_baseline_for_grid=rmse_nominal_baseline_for_grid,
+        rmse_abs_ref=rmse_abs_ref,
+        sk=sk,
+        cfg=cfg,
+        base_eff=base_eff,
+        k=k,
+        coverage_complete=coverage_complete,
     )
-    n_nan_d_out = int(np.sum(~np.isfinite(d_out)))
-    n_nan_r_out = int(np.sum(~np.isfinite(r_out)))
-    n_fb_seed = int(np.sum(point_status_out == 1))
-    n_fb_obj = int(np.sum(point_status_out == 2))
-    n_fb_emg = int(np.sum(point_status_out == 3))
-    requested_base_points = int(d_arr.size)
-    returned_base_points = int(np.sum(point_kind_out == 0))
-    missing_after_emergency = int(max(0, requested_base_points - returned_base_points))
-    coverage_complete = bool(missing_after_emergency == 0)
-    log.info(
-        "%s manual RMSE(d) grid diagnostics | nan(d/rmse)=%d/%d | fallback(seed/objective/emergency)=%d/%d/%d | coverage requested/returned/missing=%d/%d/%d",
-        _LOG_PREFIX,
-        int(n_nan_d_out),
-        int(n_nan_r_out),
-        int(n_fb_seed),
-        int(n_fb_obj),
-        int(n_fb_emg),
-        int(requested_base_points),
-        int(returned_base_points),
-        int(missing_after_emergency),
-    )
-    fg_curve = np.isfinite(d_out) & np.isfinite(r_out)
-    if np.any(fg_curve):
-        dc = d_out[fg_curve]
-        rc = r_out[fg_curve]
-        jm = int(np.argmin(rc))
-        jM = int(np.argmax(rc))
-        log.info(
-            "%s manual RMSE(d) grid curve summary | rmse_min=%.8f @ d=%.6f nm | rmse_max=%.8f @ d=%.6f nm",
-            _LOG_PREFIX,
-            float(rc[jm]),
-            float(dc[jm]),
-            float(rc[jM]),
-            float(dc[jM]),
-        )
-
-    curve_minimum_result: dict[str, Any] | None = None
-    curve_beats_nominal = False
-    curve_vs_nominal_delta_rmse = float("nan")
-    fg_min = np.isfinite(d_out) & np.isfinite(r_out)
-    if np.any(fg_min):
-        j_curve = int(np.argmin(np.where(fg_min, r_out, np.inf)))
-        r_cb = float(r_out[j_curve])
-        d_cb = float(d_out[j_curve])
-        nom_b = float(rmse_nominal_baseline_for_grid)
-        delta_nom = float(nom_b - r_cb)
-        rel_gate = max(1e-12, 1e-7 * max(abs(nom_b), abs(r_cb), 1e-30))
-        if np.isfinite(nom_b) and np.isfinite(r_cb) and (r_cb + rel_gate < nom_b) and (abs(d_cb - float(d0)) > 1e-3):
-            orig_i = int(order[j_curve])
-            x_nodes_cb = np.asarray(x_nodes_best_list[orig_i], dtype=np.float64).ravel().copy()
-            if int(x_nodes_cb.size) == 2 * int(k):
-                n_slice_cb = x_nodes_cb[: int(k)]
-                L_slice_cb = x_nodes_cb[int(k) :]
-                if cfg.n_mono_band_nm is None:
-                    n_phys_cb = np.asarray(n_slice_cb, dtype=np.float64).copy()
-                else:
-                    n_phys_cb = x_slice_n_to_physical_nodes(
-                        np.asarray(n_slice_cb, dtype=np.float64),
-                        sk,
-                        cfg.n_mono_band_nm,
-                    )
-                x_full_cb = np.concatenate((np.asarray([d_cb], dtype=np.float64), x_nodes_cb))
-                curve_minimum_result = dict(base_eff)
-                curve_minimum_result.update(
-                    {
-                        "d_nm": float(d_cb),
-                        "x": x_full_cb.copy(),
-                        "x_seg_spline_sigma": x_full_cb.copy(),
-                        "sigma_knots": np.asarray(sk, dtype=np.float64).ravel().copy(),
-                        "sigma_knots_L": np.asarray(sk, dtype=np.float64).ravel().copy(),
-                        "n_nodes_physical": np.asarray(n_phys_cb, dtype=np.float64).ravel().copy(),
-                        "L_nodes": np.asarray(L_slice_cb, dtype=np.float64).ravel().copy(),
-                        "n_lam": np.asarray(n_stack[j_curve], dtype=np.float64).ravel().copy(),
-                        "k_lam": np.asarray(k_stack[j_curve], dtype=np.float64).ravel().copy(),
-                        "rmse": float(r_cb),
-                        "mse": float(r_cb * r_cb),
-                        "x_encoding": "corridor_refit_fixed_d",
-                        "profile_d_manual_grid_curve_minimum": True,
-                    }
-                )
-                curve_beats_nominal = True
-                curve_vs_nominal_delta_rmse = float(delta_nom)
-                log.info(
-                    "%s manual RMSE(d) grid | curve min beats nominal (refit@fixed d) | d_nom=%.6f rmse_nom=%.8f "
-                    "-> d_curve=%.6f rmse_curve=%.8f | Delta_rmse=%.3e",
-                    _LOG_PREFIX,
-                    float(d0),
-                    float(nom_b),
-                    float(d_cb),
-                    float(r_cb),
-                    float(delta_nom),
-                )
-
-    curve_min_rmse_syn = float("nan")
-    curve_min_d_syn = float("nan")
-    if np.any(fg_min):
-        j_syn = int(np.argmin(np.where(fg_min, r_out, np.inf)))
-        curve_min_rmse_syn = float(r_out[j_syn])
-        curve_min_d_syn = float(d_out[j_syn])
-    if (
-        int(n_global_opt_improved) > 0
-        and np.isfinite(best_global_rmse)
-        and np.isfinite(curve_min_rmse_syn)
-        and float(curve_min_rmse_syn) + 1e-15 < float(best_global_rmse)
-    ):
-        d_glob_syn = float("nan")
-        if isinstance(best_global_result, dict):
-            dg0 = best_global_result.get("d_nm")
-            if isinstance(dg0, (int, float)) and np.isfinite(float(dg0)):
-                d_glob_syn = float(dg0)
-        log.info(
-            "%s manual RMSE(d) grid | Synthesis: discrete curve minimum RMSE=%.8f @ d=%.6f nm < RMSE adoption "
-            "global_opt=%.8f @ d=%.6f nm — le flux GUI peut fusionner le global (cassure) ; un polish profond "
-            "depuis le minimum courbe reste possible.",
-            _LOG_PREFIX,
-            float(curve_min_rmse_syn),
-            float(curve_min_d_syn),
-            float(best_global_rmse),
-            float(d_glob_syn),
-        )
-
-    return {
-        "profile_d_values_nm": d_out,
-        "profile_d_rmse_values": r_out,
-        "profile_d_manual_grid_point_kind": point_kind_out,
-        "profile_d_manual_grid_point_status_code": point_status_out,
-        "profile_d_chi2_values": chi_out,
-        "profile_d_n_curves": n_stack,
-        "profile_d_k_curves": k_stack,
-        "profile_d_fit_nit_values": nit_out,
-        "profile_d_fit_nfev_values": nfev_out,
-        "profile_d_status": "manual_grid",
-        "profile_d_manual_grid_elapsed_ms": float(dt_ms),
-        "profile_d_manual_grid_d0_seed_nm": float(d_arr[i_center]),
-        "profile_d_manual_grid_nominal_pack_d_nm": float(d0),
-        "profile_d_manual_grid_nominal_pack": bool(nom_pack is not None),
-        "profile_d_manual_grid_total_points": int(d_arr.size),
-        "profile_d_manual_grid_done_points": int(d_out.size),
-        "profile_d_manual_grid_base_done_points": int(np.sum(point_kind_out == 0)),
-        "profile_d_manual_grid_extra_done_points": int(np.sum(point_kind_out == 1)),
-        "profile_d_manual_grid_fallback_seed_points": int(np.sum(point_status_out == 1)),
-        "profile_d_manual_grid_fallback_objective_points": int(np.sum(point_status_out == 2)),
-        "profile_d_manual_grid_fallback_emergency_points": int(np.sum(point_status_out == 3)),
-        "profile_d_manual_grid_requested_base_points": int(requested_base_points),
-        "profile_d_manual_grid_returned_base_points": int(returned_base_points),
-        "profile_d_manual_grid_missing_after_emergency": int(missing_after_emergency),
-        "profile_d_manual_grid_coverage_complete": bool(coverage_complete),
-        "profile_d_manual_grid_breakpoint_count": int(n_branch_trigger),
-        "profile_d_manual_grid_extra_points": int(n_branch_extra_points),
-        "profile_d_manual_grid_breakpoint_events": branch_events,
-        "profile_d_manual_grid_global_opt_runs": int(n_global_opt_runs),
-        "profile_d_manual_grid_global_opt_improved": int(n_global_opt_improved),
-        "profile_d_manual_grid_global_opt_events": global_opt_events,
-        "profile_d_manual_grid_best_global_rmse": float(best_global_rmse)
-        if np.isfinite(best_global_rmse)
-        else float("nan"),
-        "profile_d_manual_grid_best_global_result": dict(best_global_result)
-        if isinstance(best_global_result, dict)
-        else None,
-        "profile_d_manual_grid_curve_beats_nominal": bool(curve_beats_nominal),
-        "profile_d_manual_grid_curve_vs_nominal_delta_rmse": float(curve_vs_nominal_delta_rmse),
-        "profile_d_manual_grid_curve_minimum_result": (
-            dict(curve_minimum_result) if isinstance(curve_minimum_result, dict) else None
-        ),
-    }
-
-
+
+
 @dataclass
 class CorridorProfileContext:
     _use_hetero: Any

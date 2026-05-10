@@ -3588,7 +3588,7 @@ class EnhancedProgressWidget(QWidget):
         return f"{h:d}:{m:02d}:{s:02d}"
 
 
-from certus_plot import get_plot_style_config, apply_certus_plot_style, apply_theme_to_plots
+# certus_plot re-exports (lazy: resolved via __getattr__ to break import cycle)
 
 
 # QueueHandler and setup_gui_logger moved to certus_core.py (Single Source of Truth)
@@ -3921,13 +3921,7 @@ def copy_app_logs_to_clipboard(app) -> bool:
     return False
 
 
-from certus_export import (
-    iter_plot_data_series,
-    build_wide_dataframe_for_export,
-    plot_dataframe_from_widget,
-    copy_plot_to_clipboard_excel,
-    attach_excel_clipboard_context_menu,
-)
+# certus_export re-exports (lazy: resolved via __getattr__ to break import cycle)
 
 from certus_plot import (
     sanitize_xy_for_plot,
@@ -6737,3 +6731,31 @@ class CertusDashboardCard(QFrame):
             fade_in(self, duration_ms=180)
         except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
             return
+
+
+# ---------------------------------------------------------------------------
+# Lazy re-exports (break certus_ui <-> certus_export / certus_plot cycles)
+# ---------------------------------------------------------------------------
+
+_LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
+    # name -> (module, attribute)
+    "get_plot_style_config": ("certus_plot", "get_plot_style_config"),
+    "apply_certus_plot_style": ("certus_plot", "apply_certus_plot_style"),
+    "apply_theme_to_plots": ("certus_plot", "apply_theme_to_plots"),
+    "iter_plot_data_series": ("certus_export", "iter_plot_data_series"),
+    "build_wide_dataframe_for_export": ("certus_export", "build_wide_dataframe_for_export"),
+    "plot_dataframe_from_widget": ("certus_export", "plot_dataframe_from_widget"),
+    "copy_plot_to_clipboard_excel": ("certus_export", "copy_plot_to_clipboard_excel"),
+    "attach_excel_clipboard_context_menu": ("certus_export", "attach_excel_clipboard_context_menu"),
+}
+
+
+def __getattr__(name: str):
+    entry = _LAZY_REEXPORTS.get(name)
+    if entry is not None:
+        import importlib
+        mod = importlib.import_module(entry[0])
+        attr = getattr(mod, entry[1])
+        globals()[name] = attr  # cache for subsequent access
+        return attr
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -4256,7 +4256,7 @@ def _test_strategy_robustness_task(
 
     # --- Build per-layer properties once (invariant over noise level) ---
 
-    len(wl_arr)
+
 
     layer_wavelengths = np.zeros(num_layers, dtype=np.float64)
 

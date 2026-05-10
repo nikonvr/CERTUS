@@ -447,7 +447,7 @@ def _pack_spline_stage_result(
     d_nm = float(x_best[0])
 
     if cfg.t_is_ratio:
-        np.asarray(calculate_bare_substrate_RT(lam, n_sub_full), dtype=np.float64)
+
 
         t_th = _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
 

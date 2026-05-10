@@ -3048,7 +3048,6 @@ class _ConfigBuilderMixin:
 
         d_lo_ui, d_hi_ui = self._get_thickness_bounds_nm()
 
-        isinstance(getattr(self, "_last_result", None), dict)
 
         cfg = SplineOptConfig(
             lam_nm=lam,

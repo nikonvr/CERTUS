@@ -4749,7 +4749,6 @@ def compute_regular_grid_rmse_profile(
 
     side_last_rmse: dict[int, float] = {+1: float("nan"), -1: float("nan")}
 
-    side_last_index: dict[int, int] = {+1: i_center, -1: i_center}
 
     side_recent_rmse: dict[int, list[float]] = {+1: [], -1: []}
 
@@ -5261,7 +5260,6 @@ def compute_regular_grid_rmse_profile(
 
             side_last_rmse[side] = rm_now
 
-            side_last_index[side] = int(ji)
 
             side_recent_rmse.setdefault(side, []).append(float(rm_now))
 

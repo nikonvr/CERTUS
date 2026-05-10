@@ -310,8 +310,6 @@ def interp_n_L_pwlnk_to_sigmas(
     cnt_interp = int(np.sum(mode_arr == "interp"))
     cnt_exlo = int(np.sum(mode_arr == "extrap_lo"))
     cnt_exhi = int(np.sum(mode_arr == "extrap_hi"))
-    int(np.sum(mode_arr == "extrap_lo_flat"))
-    int(np.sum(mode_arr == "extrap_hi_flat"))
 
     if diag_log is not None:
         for i in range(int(sig_t.size)):

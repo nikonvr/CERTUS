@@ -740,13 +740,7 @@ class SplineReportBuilder:
 
             cfg_ex = self.ctx.opt_config
 
-            k_clip_lo = float(getattr(cfg_ex, "k_clip_lo", 1e-5)) if cfg_ex is not None else 1e-5
 
-            k_clip_hi = (
-                float(getattr(cfg_ex, "k_clip_hi", min(0.99, float(K_MAX_LIMIT))))
-                if cfg_ex is not None
-                else min(0.99, float(K_MAX_LIMIT))
-            )
 
 
 

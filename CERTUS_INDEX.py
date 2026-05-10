@@ -2174,7 +2174,7 @@ try:
 
     _SAPPHIRE_FILE_HAS_K_COLUMN = _k_col is not None
 
-except NUMERICAL_FAULT_EXCEPTIONS as _e_sap:
+except (FileNotFoundError, OSError, *NUMERICAL_FAULT_EXCEPTIONS) as _e_sap:
     _SAPPHIRE_FILE_HAS_K_COLUMN = False
 
     import warnings

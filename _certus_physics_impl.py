@@ -605,23 +605,20 @@ def get_n_substrate_array_by_id_kernel(
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
 
-    # Sapphire/Al2O3 (id=3): authoritative tabulated n from example/sapphire fresnel.xlsx
-
-    if substrate_id == 3:
-        sap_wl, sap_n = _get_sapphire_n_dataset()
-
-        if sap_wl is not None and sap_n is not None:
-            wavelengths_nm = np.asarray(wavelengths_nm, dtype=np.float64)
-
-            return np.interp(
-                wavelengths_nm,
-                sap_wl,
-                sap_n,
-                left=float(sap_n[0]),
-                right=float(sap_n[-1]),
-            ).astype(np.float64)
-
-        raise ValueError("Sapphire/Al2O3 requires example/sapphire fresnel.xlsx (authoritative source).")
+    # ── PARE-FEU ──────────────────────────────────────────────────────────────
+    # Sapphire/Al2O3 (id=3) utilise la LOI ANALYTIQUE Sellmeier 3 termes,
+    # identique à tous les autres substrats.
+    #
+    # HISTORIQUE : jusqu'en mai 2026, id=3 utilisait une interpolation tabulée
+    # depuis  example/sapphire fresnel.xlsx.  Cette approche a été abandonnée
+    # car :
+    #   1. Elle créait une dépendance externe (xlsx) pour un calcul physique.
+    #   2. Elle n'était pas cohérente avec CERTUS_INDEX / CERTUS_INDEX_SPLINE
+    #      qui forçaient déjà le Sellmeier analytique.
+    #   3. La loi Sellmeier est plus stable aux bords de la plage spectrale.
+    #
+    # NE PAS réintroduire de branchement tabulé ici.
+    # ──────────────────────────────────────────────────────────────────────────
 
     if substrate_id not in SELLMEIER_COEFFS_BY_ID:
         raise KeyError(f"Unknown substrate ID: {substrate_id}")
@@ -635,55 +632,8 @@ def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -
     return get_n_substrate_array_by_id_kernel(wavelengths_nm, *coeffs, min_lambda)
 
 
-@lru_cache(maxsize=1)
-def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
 
-    xlsx_path = get_resource_path(str(Path("example") / "sapphire fresnel.xlsx"))
 
-    try:
-        import pandas as pd
-
-        df = pd.read_excel(xlsx_path, header=0, engine="openpyxl")
-
-        df.columns = df.columns.astype(str).str.strip().str.lower()
-
-        wl_col = next((c for c in df.columns if ("wl" in c) or ("wave" in c) or ("lambda" in c)), df.columns[0])
-
-        n_col = next((c for c in df.columns if c == "n" or c.startswith("n_") or c == "n_sub"), None)
-
-        rnu_col = next((c for c in df.columns if ("r nu" in c) or ("rnu" in c)), None)
-
-        df = df.sort_values(by=wl_col)
-
-        if n_col is None and rnu_col is not None:
-            df = df.dropna(subset=[wl_col, rnu_col])
-
-        else:
-            n_col = n_col or df.columns[1]
-
-            df = df.dropna(subset=[wl_col, n_col])
-
-        wl = np.asarray(df[wl_col].to_numpy(), dtype=np.float64)
-
-        if n_col is None and rnu_col is not None:
-            r2f = np.asarray(df[rnu_col].to_numpy(), dtype=np.float64)
-
-            rfrac = np.clip(r2f / 100.0 if np.nanmax(r2f) > 2.0 else r2f, 1.0e-6, 0.999999)
-
-            disc = np.maximum(2.0 * rfrac - rfrac * rfrac, 0.0)
-
-            n = (1.0 + np.sqrt(disc)) / np.maximum(1.0 - rfrac, 1.0e-9)
-
-        else:
-            n = np.asarray(df[n_col].to_numpy(), dtype=np.float64)
-
-        if wl.size >= 2 and np.all(np.isfinite(wl)) and np.all(np.isfinite(n)):
-            return wl, n
-
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-        pass
-
-    return None, None
 
 
 # =========================================================================================

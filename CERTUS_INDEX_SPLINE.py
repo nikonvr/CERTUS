@@ -36,7 +36,7 @@ from PyQt6.QtCore import (
     pyqtSignal,
     pyqtSlot,
 )
-from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,

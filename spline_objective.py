@@ -744,8 +744,6 @@ class SplinePWLObjective:
 
         self.w_t = self._cached_weights
 
-        self.w_r = self._cached_weights  # Sharing spectral weights (same lam_f grid)
-
         self.sigma_k = np.asarray(sigma_knots, dtype=np.float64).ravel()
 
         self.cfg = cfg

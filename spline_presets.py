@@ -58,8 +58,6 @@ NB2O5_PRESET_KNOTS = {
 }
 
 
-DEFAULT_PRESET_KNOTS = NB2O5_PRESET_KNOTS
-
 
 # SiO₂ - nodes (sigma, n, ln k) extracted from CERTUS logs (INDEX_SPLINE [CORRIDORS d] geometry base,
 

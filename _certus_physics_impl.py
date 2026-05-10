@@ -1940,98 +1940,6 @@ def calculate_RT_single_layer_absorbing_substrate_array(
     return R_arr, T_arr
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True)
-def calculate_bare_substrate_R_absorbing(
-    wavelengths: np.ndarray,
-    n_substrate: np.ndarray,
-    k_substrate: np.ndarray,
-    D_nm: float,
-) -> np.ndarray:
-    """
-
-    Reference reflectance of a bare absorbing substrate - double face, with absorption.
-
-    R_sub = R_f + T_f²·R_f·att2 / (1 - R_f²·att2). Used for R/Tnu when k_sub ≠ 0.
-
-    """
-
-    n_pts = len(wavelengths)
-
-    R = np.empty(n_pts, dtype=wavelengths.dtype)
-
-    for i in prange(n_pts):
-        ns = n_substrate[i]
-
-        k_s = k_substrate[i]
-
-        r = (1.0 - ns) / (1.0 + ns)
-
-        R_f = r * r
-
-        T_f = 1.0 - R_f
-
-        alpha = 4.0 * math.pi * k_s / wavelengths[i]
-
-        att2 = math.exp(-2.0 * alpha * D_nm)
-
-        denom = 1.0 - R_f * R_f * att2
-
-        if abs(denom) < 1e-12:
-            denom = 1e-12
-
-        R[i] = R_f + T_f * T_f * R_f * att2 / denom
-
-    return R
-
-
-@njit(cache=True, fastmath=True, parallel=True, nogil=True)
-def calculate_bare_substrate_T_absorbing(
-    wavelengths: np.ndarray,
-    n_substrate: np.ndarray,
-    k_substrate: np.ndarray,
-    D_nm: float,
-) -> np.ndarray:
-    """
-
-    Reference transmittance of a bare absorbing substrate - double face, with absorption.
-
-    T_sub = T_f² · att1 / (1 - R_f² · att2)
-
-    Double face: two interfaces (air|substrate|air), att1 = exp(-alpha·D), att2 = att1².
-
-    Used for T/Tnu normalization when substrate has k_sub ≠ 0.
-
-    """
-
-    n_pts = len(wavelengths)
-
-    T = np.empty(n_pts, dtype=wavelengths.dtype)
-
-    for i in prange(n_pts):
-        ns = n_substrate[i]
-
-        k_s = k_substrate[i]
-
-        r = (1.0 - ns) / (1.0 + ns)
-
-        R_f = r * r
-
-        T_f = 1.0 - R_f
-
-        alpha = 4.0 * math.pi * k_s / wavelengths[i]
-
-        att1 = math.exp(-alpha * D_nm)
-
-        att2 = att1 * att1
-
-        denom = 1.0 - R_f * R_f * att2
-
-        if abs(denom) < 1e-12:
-            denom = 1e-12
-
-        T[i] = T_f * T_f * att1 / denom
-
-    return T
 
 
 # =============================================================================
@@ -6783,26 +6691,7 @@ def calculate_reflection_infinite_substrate_single(
     return max(0.0, min(1.0, R))
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True)
-def calculate_reflection_infinite_substrate_array(
-    wavelengths: np.ndarray,
-    n_array: np.ndarray,
-    k_array: np.ndarray,
-    thickness: float,
-    n_substrate: np.ndarray,
-) -> np.ndarray:
-    """Vectorized reflection for infinite substrate."""
 
-    n_pts = len(wavelengths)
-
-    R_array = np.empty(n_pts, dtype=np.float64)
-
-    for i in prange(n_pts):
-        R_array[i] = calculate_reflection_infinite_substrate_single(
-            wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i]
-        )
-
-    return R_array
 
 
 # --- LOCKED --- Validated by test_tmm_coherence.py ───

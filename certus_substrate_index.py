@@ -1637,723 +1637,803 @@ class IndexCore:
         w_fit = 1.0 / np.maximum(wl_fit_nm, 1.0)
 
         if model_kind == "sellmeier3poles":
-            from scipy.optimize import least_squares, minimize
-
-            import time
-
-            log_l1l2 = bool(SELLMEIER_DEFAULT_LOG_L1L2 if sellmeier_log_l1l2 is None else sellmeier_log_l1l2)
-
-            lam_min_um = float(np.min(wl_fit_um))
-
-            bounds = _sellmeier_2poles_param_bounds(lam_min_um)
-
-            logger.info(
-                "Sellmeier 3-poles: math domain A[%.1f,%.1f] B[%.0f,%.0f] L[%.1e,%.4f] m "
-                "(lambda_min fit=%.4f m; L_max=min(40,%.2f×lambda_min) for lambda2-L2>0 in window).",
-                bounds[0][0],
-                bounds[0][1],
-                bounds[1][0],
-                bounds[1][1],
-                bounds[2][0],
-                bounds[2][1],
-                lam_min_um,
-                float(SELLMEIER_2POLES_LAM_FRAC_MAX),
+            res_n, res_src, res_coeffs, res_extra = IndexCore._fit_model_sellmeier3poles(
+                n_vals=n_vals, wl=wl, mask=mask, n_fit=n_fit, wl_fit_nm=wl_fit_nm, wl_fit_um=wl_fit_um,
+                progress_cb=progress_cb, sellmeier_timeout_s=sellmeier_timeout_s,
+                sellmeier_de_maxiter=sellmeier_de_maxiter, sellmeier_de_popsize=sellmeier_de_popsize,
+                sellmeier_ls_max_nfev=sellmeier_ls_max_nfev, sellmeier_log_l1l2=sellmeier_log_l1l2,
+            )
+        elif model_kind == "spline_adaptive":
+            res_n, res_src, res_coeffs, res_extra = IndexCore._fit_model_spline_adaptive(
+                wl=wl, mask=mask, n_fit=n_fit, wl_fit_nm=wl_fit_nm, w_fit=w_fit, progress_cb=progress_cb
+            )
+        else:
+            res_n, res_src, res_coeffs, res_extra = IndexCore._fit_model_polynomial(
+                wl=wl, wl_min_fit=wl_min_fit, wl_max_fit=wl_max_fit, mask=mask, n_fit=n_fit, wl_fit_nm=wl_fit_nm, w_fit=w_fit
             )
 
-            logger.info(
-                "Sellmeier: optimization on %s.",
-                "ui=ln(Li) (Li=exp(ui), L1/L2/L3 reparam.)" if log_l1l2 else "native parameters Li (linear)",
-            )
+        if res_n is None:
+            return _ret_fallback_raw(res_src)
+        return _ret(res_n, res_src, res_coeffs, **res_extra)
 
-            logger.info(
-                "Sellmeier: weights=%s | seed_points=%d | multistart=%d",
-                str(SELLMEIER_WEIGHT_MODE),
-                int(max(7, SELLMEIER_SEED_POINTS)),
-                int(max(1, SELLMEIER_MULTISTART_TRIALS)),
-            )
 
-            ls_max_nfev = int(max(100, sellmeier_ls_max_nfev))
+    @staticmethod
+    def _fit_model_sellmeier3poles(
+        n_vals: np.ndarray,
+        wl: np.ndarray,
+        mask: np.ndarray,
+        n_fit: np.ndarray,
+        wl_fit_nm: np.ndarray,
+        wl_fit_um: np.ndarray,
+        progress_cb,
+        sellmeier_timeout_s: float | None,
+        sellmeier_de_maxiter: int,
+        sellmeier_de_popsize: int,
+        sellmeier_ls_max_nfev: int,
+        sellmeier_log_l1l2: bool | None,
+    ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
+        from scipy.optimize import least_squares, minimize
 
-            timeout_s = None if sellmeier_timeout_s is None else float(max(0.0, sellmeier_timeout_s))
+        import time
 
-            t0 = time.monotonic()
+        log_l1l2 = bool(SELLMEIER_DEFAULT_LOG_L1L2 if sellmeier_log_l1l2 is None else sellmeier_log_l1l2)
 
-            lbfgs_maxiter = int(max(80, sellmeier_de_maxiter * 4 + sellmeier_de_popsize * 8))
+        lam_min_um = float(np.min(wl_fit_um))
 
-            w_fit_sell = _sellmeier_weights_from_nm(wl_fit_nm, SELLMEIER_WEIGHT_MODE)
+        bounds = _sellmeier_2poles_param_bounds(lam_min_um)
 
-            def _p_from_q(q: np.ndarray) -> np.ndarray:
+        logger.info(
+            "Sellmeier 3-poles: math domain A[%.1f,%.1f] B[%.0f,%.0f] L[%.1e,%.4f] m "
+            "(lambda_min fit=%.4f m; L_max=min(40,%.2f×lambda_min) for lambda2-L2>0 in window).",
+            bounds[0][0],
+            bounds[0][1],
+            bounds[1][0],
+            bounds[1][1],
+            bounds[2][0],
+            bounds[2][1],
+            lam_min_um,
+            float(SELLMEIER_2POLES_LAM_FRAC_MAX),
+        )
 
-                q = np.asarray(q, dtype=np.float64).ravel()
+        logger.info(
+            "Sellmeier: optimization on %s.",
+            "ui=ln(Li) (Li=exp(ui), L1/L2/L3 reparam.)" if log_l1l2 else "native parameters Li (linear)",
+        )
 
-                if not log_l1l2:
-                    return q.copy()
+        logger.info(
+            "Sellmeier: weights=%s | seed_points=%d | multistart=%d",
+            str(SELLMEIER_WEIGHT_MODE),
+            int(max(7, SELLMEIER_SEED_POINTS)),
+            int(max(1, SELLMEIER_MULTISTART_TRIALS)),
+        )
 
-                p = q.copy()
+        ls_max_nfev = int(max(100, sellmeier_ls_max_nfev))
 
-                p[2] = float(np.exp(np.minimum(q[2], 700.0)))
+        timeout_s = None if sellmeier_timeout_s is None else float(max(0.0, sellmeier_timeout_s))
 
-                p[4] = float(np.exp(np.minimum(q[4], 700.0)))
+        t0 = time.monotonic()
 
-                p[6] = float(np.exp(np.minimum(q[6], 700.0)))
+        lbfgs_maxiter = int(max(80, sellmeier_de_maxiter * 4 + sellmeier_de_popsize * 8))
 
-                return p
+        w_fit_sell = _sellmeier_weights_from_nm(wl_fit_nm, SELLMEIER_WEIGHT_MODE)
 
-            def _q_from_p(p: np.ndarray) -> np.ndarray:
+        def _p_from_q(q: np.ndarray) -> np.ndarray:
 
-                p = np.asarray(p, dtype=np.float64).ravel()
+            q = np.asarray(q, dtype=np.float64).ravel()
 
-                if not log_l1l2:
-                    return p.copy()
+            if not log_l1l2:
+                return q.copy()
 
-                q = p.copy()
+            p = q.copy()
 
-                q[2] = float(np.log(max(float(p[2]), 1.0e-300)))
+            p[2] = float(np.exp(np.minimum(q[2], 700.0)))
 
-                q[4] = float(np.log(max(float(p[4]), 1.0e-300)))
+            p[4] = float(np.exp(np.minimum(q[4], 700.0)))
 
-                q[6] = float(np.log(max(float(p[6]), 1.0e-300)))
+            p[6] = float(np.exp(np.minimum(q[6], 700.0)))
 
-                return q
+            return p
 
-            bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
+        def _q_from_p(p: np.ndarray) -> np.ndarray:
 
-            if log_l1l2:
-                _ll0 = float(max(bounds[2][0], 1.0e-30))
+            p = np.asarray(p, dtype=np.float64).ravel()
 
-                _ll1 = float(bounds[2][1])
+            if not log_l1l2:
+                return p.copy()
 
-                _ln_lo = float(np.log(_ll0))
+            q = p.copy()
 
-                _ln_hi = float(np.log(_ll1))
+            q[2] = float(np.log(max(float(p[2]), 1.0e-300)))
 
-                bounds_q[2] = (_ln_lo, _ln_hi)
+            q[4] = float(np.log(max(float(p[4]), 1.0e-300)))
 
-                bounds_q[4] = (_ln_lo, _ln_hi)
+            q[6] = float(np.log(max(float(p[6]), 1.0e-300)))
 
-                bounds_q[6] = (_ln_lo, _ln_hi)
+            return q
 
-            def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
+        bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
 
-                pred = IndexCore.sellmeier_2poles_const_eval(p, x_um)
+        if log_l1l2:
+            _ll0 = float(max(bounds[2][0], 1.0e-30))
 
-                return (pred - y_n) * w_nm_inv * 1000.0
+            _ll1 = float(bounds[2][1])
 
-            n_lo_acc, n_hi_acc = float(SELLMEIER_N_ACCEPT_LO), float(SELLMEIER_N_ACCEPT_HI)
+            _ln_lo = float(np.log(_ll0))
 
-            def _mse_full_q(q: np.ndarray) -> float:
+            _ln_hi = float(np.log(_ll1))
 
-                p = _p_from_q(q)
+            bounds_q[2] = (_ln_lo, _ln_hi)
 
-                pred = IndexCore.sellmeier_2poles_const_eval(p, wl_fit_um)
+            bounds_q[4] = (_ln_lo, _ln_hi)
 
-                if not np.all(np.isfinite(pred)):
-                    return 1.0e30
+            bounds_q[6] = (_ln_lo, _ln_hi)
 
-                if np.any((pred < n_lo_acc) | (pred > n_hi_acc)):
-                    vio = float(np.mean(np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2))
+        def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
 
-                    return 1.0e12 + 1.0e9 * vio
+            pred = IndexCore.sellmeier_2poles_const_eval(p, x_um)
 
-                r = _residuals(p, wl_fit_um, n_fit, w_fit_sell)
+            return (pred - y_n) * w_nm_inv * 1000.0
 
-                mse = float(np.dot(r, r))
+        n_lo_acc, n_hi_acc = float(SELLMEIER_N_ACCEPT_LO), float(SELLMEIER_N_ACCEPT_HI)
 
-                g = _sellmeier_l_separation_gap_um(p)
+        def _mse_full_q(q: np.ndarray) -> float:
 
-                if g > 0.0:
-                    mse += 5.0e7 * (g * g)
+            p = _p_from_q(q)
 
-                return mse
+            pred = IndexCore.sellmeier_2poles_const_eval(p, wl_fit_um)
 
-            ls_bounds_lin = ([b[0] for b in bounds], [b[1] for b in bounds])
+            if not np.all(np.isfinite(pred)):
+                return 1.0e30
 
-            ls_bounds_q = ([b[0] for b in bounds_q], [b[1] for b in bounds_q])
+            if np.any((pred < n_lo_acc) | (pred > n_hi_acc)):
+                vio = float(np.mean(np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2))
 
-            p_mid = np.array(
-                [
-                    0.5 * (bounds[0][0] + bounds[0][1]),
-                    0.5 * (bounds[1][0] + bounds[1][1]),
-                    0.5 * (bounds[2][0] + bounds[2][1]),
-                    0.5 * (bounds[3][0] + bounds[3][1]),
-                    0.5 * (bounds[4][0] + bounds[4][1]),
-                    0.5 * (bounds[5][0] + bounds[5][1]),
-                    0.5 * (bounds[6][0] + bounds[6][1]),
-                ],
-                dtype=np.float64,
-            )
+                return 1.0e12 + 1.0e9 * vio
 
-            _l_lo1, _l_hi1 = float(bounds[2][0]), float(bounds[2][1])
+            r = _residuals(p, wl_fit_um, n_fit, w_fit_sell)
 
-            _span1 = max(_l_hi1 - _l_lo1, 1.0e-15)
+            mse = float(np.dot(r, r))
 
-            p_mid[2] = float(_l_lo1 + 0.35 * _span1)
+            g = _sellmeier_l_separation_gap_um(p)
 
-            _l_lo2, _l_hi2 = float(bounds[4][0]), float(bounds[4][1])
+            if g > 0.0:
+                mse += 5.0e7 * (g * g)
 
-            _l_lo3, _l_hi3 = float(bounds[6][0]), float(bounds[6][1])
+            return mse
+
+        ls_bounds_lin = ([b[0] for b in bounds], [b[1] for b in bounds])
+
+        ls_bounds_q = ([b[0] for b in bounds_q], [b[1] for b in bounds_q])
+
+        p_mid = np.array(
+            [
+                0.5 * (bounds[0][0] + bounds[0][1]),
+                0.5 * (bounds[1][0] + bounds[1][1]),
+                0.5 * (bounds[2][0] + bounds[2][1]),
+                0.5 * (bounds[3][0] + bounds[3][1]),
+                0.5 * (bounds[4][0] + bounds[4][1]),
+                0.5 * (bounds[5][0] + bounds[5][1]),
+                0.5 * (bounds[6][0] + bounds[6][1]),
+            ],
+            dtype=np.float64,
+        )
+
+        _l_lo1, _l_hi1 = float(bounds[2][0]), float(bounds[2][1])
+
+        _span1 = max(_l_hi1 - _l_lo1, 1.0e-15)
+
+        p_mid[2] = float(_l_lo1 + 0.35 * _span1)
+
+        _l_lo2, _l_hi2 = float(bounds[4][0]), float(bounds[4][1])
+
+        _l_lo3, _l_hi3 = float(bounds[6][0]), float(bounds[6][1])
+
+        p_mid[4] = float(np.clip(max(0.35, 1.6 * lam_min_um), _l_lo2, _l_hi2))
+
+        p_mid[6] = float(np.clip(max(1.2, 4.0 * lam_min_um), _l_lo3, _l_hi3))
+
+        _sep_need = float(SELLMEIER_MIN_L_SEP_UM)
+
+        _ls = np.sort(np.asarray([p_mid[2], p_mid[4], p_mid[6]], dtype=np.float64))
+
+        if float(np.min(np.diff(_ls))) < _sep_need:
+            _mid = 0.5 * (_l_lo1 + _l_hi1)
+
+            p_mid[2] = float(max(_l_lo1, _mid - 1.1 * _sep_need))
 
             p_mid[4] = float(np.clip(max(0.35, 1.6 * lam_min_um), _l_lo2, _l_hi2))
 
             p_mid[6] = float(np.clip(max(1.2, 4.0 * lam_min_um), _l_lo3, _l_hi3))
 
-            _sep_need = float(SELLMEIER_MIN_L_SEP_UM)
+        p_mid = np.clip(p_mid, ls_bounds_lin[0], ls_bounds_lin[1])
 
-            _ls = np.sort(np.asarray([p_mid[2], p_mid[4], p_mid[6]], dtype=np.float64))
+        q_mid = _q_from_p(p_mid)
 
-            if float(np.min(np.diff(_ls))) < _sep_need:
-                _mid = 0.5 * (_l_lo1 + _l_hi1)
+        q_mid = np.clip(q_mid, ls_bounds_q[0], ls_bounds_q[1])
 
-                p_mid[2] = float(max(_l_lo1, _mid - 1.1 * _sep_need))
+        q0 = np.asarray(q_mid, dtype=np.float64, order="C")
 
-                p_mid[4] = float(np.clip(max(0.35, 1.6 * lam_min_um), _l_lo2, _l_hi2))
+        try:
+            if callable(progress_cb):
+                progress_cb(1, 2)
 
-                p_mid[6] = float(np.clip(max(1.2, 4.0 * lam_min_um), _l_lo3, _l_hi3))
+            seed_desc = "centre box (q)"
 
-            p_mid = np.clip(p_mid, ls_bounds_lin[0], ls_bounds_lin[1])
+            poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
 
-            q_mid = _q_from_p(p_mid)
+            if poly_seed is not None:
+                active_terms, p_poly, _ = poly_seed
 
-            q_mid = np.clip(q_mid, ls_bounds_q[0], ls_bounds_q[1])
+                lo_nm = float(np.min(wl_fit_nm))
 
-            q0 = np.asarray(q_mid, dtype=np.float64, order="C")
+                hi_nm = float(np.max(wl_fit_nm))
 
-            try:
-                if callable(progress_cb):
-                    progress_cb(1, 2)
+                n_seed_pts = int(max(7, SELLMEIER_SEED_POINTS))
 
-                seed_desc = "centre box (q)"
+                seed_nm = np.linspace(lo_nm, hi_nm, n_seed_pts, dtype=np.float64)
 
-                poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
+                seed_um = seed_nm / 1000.0
 
-                if poly_seed is not None:
-                    active_terms, p_poly, _ = poly_seed
+                feat_s = IndexCore._poly_compact_feature_dict(seed_um)
 
-                    lo_nm = float(np.min(wl_fit_nm))
+                phi_s = np.column_stack([feat_s[t] for t in active_terms])
 
-                    hi_nm = float(np.max(wl_fit_nm))
+                n_tar = (phi_s @ p_poly).astype(np.float64, copy=False)
 
-                    n_seed_pts = int(max(7, SELLMEIER_SEED_POINTS))
+                def _res5_q(qv: np.ndarray) -> np.ndarray:
 
-                    seed_nm = np.linspace(lo_nm, hi_nm, n_seed_pts, dtype=np.float64)
+                    pv = _p_from_q(qv)
 
-                    seed_um = seed_nm / 1000.0
+                    r = IndexCore.sellmeier_2poles_const_eval(pv, seed_um) - n_tar
 
-                    feat_s = IndexCore._poly_compact_feature_dict(seed_um)
+                    g = _sellmeier_l_separation_gap_um(pv)
 
-                    phi_s = np.column_stack([feat_s[t] for t in active_terms])
-
-                    n_tar = (phi_s @ p_poly).astype(np.float64, copy=False)
-
-                    def _res5_q(qv: np.ndarray) -> np.ndarray:
-
-                        pv = _p_from_q(qv)
-
-                        r = IndexCore.sellmeier_2poles_const_eval(pv, seed_um) - n_tar
-
-                        g = _sellmeier_l_separation_gap_um(pv)
-
-                        return np.append(
-                            r,
-                            float(SELLMEIER_L_SEP_SOFT_WEIGHT) * 0.02 * g,
-                        )
-
-                    r5 = least_squares(
-                        _res5_q,
-                        q_mid,
-                        bounds=ls_bounds_q,
-                        loss="linear",
-                        max_nfev=2500,
-                        ftol=1.0e-12,
-                        xtol=1.0e-12,
-                        gtol=1.0e-12,
+                    return np.append(
+                        r,
+                        float(SELLMEIER_L_SEP_SOFT_WEIGHT) * 0.02 * g,
                     )
 
-                    q0 = np.clip(np.asarray(r5.x, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
+                r5 = least_squares(
+                    _res5_q,
+                    q_mid,
+                    bounds=ls_bounds_q,
+                    loss="linear",
+                    max_nfev=2500,
+                    ftol=1.0e-12,
+                    xtol=1.0e-12,
+                    gtol=1.0e-12,
+                )
 
-                    seed_desc = (
-                        "compact polynomial + LS "
-                        f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
+                q0 = np.clip(np.asarray(r5.x, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
+
+                seed_desc = (
+                    "compact polynomial + LS "
+                    f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
+                )
+
+            logger.info("Sellmeier 3-poles: seed %s.", seed_desc)
+
+            run_lbfgs = timeout_s is None or timeout_s <= 0.0 or (time.monotonic() - t0) < max(0.5, timeout_s - 0.3)
+
+            if run_lbfgs:
+                rng = np.random.default_rng(12345)
+
+                q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
+
+                # Reduced L3 structured grid (IR pole): 4 values covering UV-short/IR.
+
+                p_base = _p_from_q(q0)
+
+                l3_grid = (0.1, 0.5, 2.0, 8.0)  # was 9 values ; 4 enough with physical bounds
+
+                for l3_try in l3_grid:
+                    p_try = np.asarray(p_base, dtype=np.float64).copy()
+
+                    p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
+
+                    q_try = _q_from_p(p_try)
+
+                    q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
+
+                    q_candidates.append(np.asarray(q_try, dtype=np.float64))
+
+                n_trials = int(max(1, SELLMEIER_MULTISTART_TRIALS))
+
+                for _ in range(n_trials - 1):
+                    # Jitter plus large (0.15 vs 0.08 ancien) car espace q est plus petit
+
+                    jit = rng.uniform(-0.15, 0.15, size=q0.shape)
+
+                    jit[6] = float(rng.uniform(-0.5, 0.5))
+
+                    qj = np.asarray(q0 + jit, dtype=np.float64)
+
+                    qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
+
+                    q_candidates.append(qj)
+
+                best_q = np.asarray(q0, dtype=np.float64)
+
+                best_f = float("inf")
+
+                for qi in q_candidates:
+                    if timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s:
+                        break
+
+                    rb = minimize(
+                        _mse_full_q,
+                        qi,
+                        method="L-BFGS-B",
+                        bounds=bounds_q,
+                        options={"maxiter": int(lbfgs_maxiter), "ftol": 1.0e-14, "gtol": 1.0e-10},
                     )
 
-                logger.info("Sellmeier 3-poles: seed %s.", seed_desc)
+                    q_try = np.asarray(rb.x, dtype=np.float64)
 
-                run_lbfgs = timeout_s is None or timeout_s <= 0.0 or (time.monotonic() - t0) < max(0.5, timeout_s - 0.3)
+                    f_try = float(_mse_full_q(q_try))
 
-                if run_lbfgs:
-                    rng = np.random.default_rng(12345)
+                    if f_try < best_f:
+                        best_f = f_try
 
-                    q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
+                        best_q = q_try
 
-                    # Reduced L3 structured grid (IR pole): 4 values covering UV-short/IR.
+                q_lbfgs = np.asarray(best_q, dtype=np.float64)
 
-                    p_base = _p_from_q(q0)
+            else:
+                logger.warning("Sellmeier 3-poles: timeout before L-BFGS-B - seed alone.")
 
-                    l3_grid = (0.1, 0.5, 2.0, 8.0)  # was 9 values ; 4 enough with physical bounds
+                q_lbfgs = np.asarray(q0, dtype=np.float64)
 
-                    for l3_try in l3_grid:
-                        p_try = np.asarray(p_base, dtype=np.float64).copy()
+            skip_polish = timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s
 
-                        p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
+            if skip_polish:
+                logger.warning("Sellmeier 3-poles: least_squares polish skipped (timeout).")
 
-                        q_try = _q_from_p(p_try)
+                q_sell = np.asarray(q_lbfgs, dtype=np.float64)
 
-                        q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
+            else:
+                # Single polish with analytical Jacobian eliminates redundant passes.
 
-                        q_candidates.append(np.asarray(q_try, dtype=np.float64))
+                # r/p Jacobian provided analytically -> ~5x faster convergence.
 
-                    n_trials = int(max(1, SELLMEIER_MULTISTART_TRIALS))
+                def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
 
-                    for _ in range(n_trials - 1):
-                        # Jitter plus large (0.15 vs 0.08 ancien) car espace q est plus petit
+                    pv = _p_from_q(qv)
 
-                        jit = rng.uniform(-0.15, 0.15, size=q0.shape)
+                    r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
 
-                        jit[6] = float(rng.uniform(-0.5, 0.5))
+                    g = _sellmeier_l_separation_gap_um(pv)
 
-                        qj = np.asarray(q0 + jit, dtype=np.float64)
+                    return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
 
-                        qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
+                def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
+                    """Analytical Jacobian of polish residual (extended with separation constraint)."""
 
-                        q_candidates.append(qj)
+                    pv = _p_from_q(qv)
 
-                    best_q = np.asarray(q0, dtype=np.float64)
+                    J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
 
-                    best_f = float("inf")
+                    # Separation constraint line: numerical gradient (< 7 params -> 7 evals)
 
-                    for qi in q_candidates:
-                        if timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s:
-                            break
+                    g0 = _sellmeier_l_separation_gap_um(pv)
 
-                        rb = minimize(
-                            _mse_full_q,
-                            qi,
-                            method="L-BFGS-B",
-                            bounds=bounds_q,
-                            options={"maxiter": int(lbfgs_maxiter), "ftol": 1.0e-14, "gtol": 1.0e-10},
-                        )
+                    J_sep = np.zeros((1, 7), dtype=np.float64)
 
-                        q_try = np.asarray(rb.x, dtype=np.float64)
+                    eps = 1.0e-6
 
-                        f_try = float(_mse_full_q(q_try))
+                    for j in range(7):
+                        pv2 = np.asarray(pv, dtype=np.float64).copy()
 
-                        if f_try < best_f:
-                            best_f = f_try
+                        pv2[j] += eps
 
-                            best_q = q_try
+                        g2 = _sellmeier_l_separation_gap_um(pv2)
 
-                    q_lbfgs = np.asarray(best_q, dtype=np.float64)
+                        J_sep[0, j] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * (g2 - g0) / eps
 
-                else:
-                    logger.warning("Sellmeier 3-poles: timeout before L-BFGS-B - seed alone.")
+                    return np.vstack([J_main, J_sep])
 
-                    q_lbfgs = np.asarray(q0, dtype=np.float64)
+                res_pol = least_squares(
+                    _residuals_polish_q,
+                    q_lbfgs,
+                    jac=_jac_polish_q,
+                    bounds=ls_bounds_q,
+                    loss="linear",
+                    f_scale=1.0,
+                    max_nfev=ls_max_nfev,
+                )
 
-                skip_polish = timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s
+                q_sell = np.asarray(res_pol.x, dtype=np.float64)
 
-                if skip_polish:
-                    logger.warning("Sellmeier 3-poles: least_squares polish skipped (timeout).")
+            p_sell = _p_from_q(q_sell)
 
-                    q_sell = np.asarray(q_lbfgs, dtype=np.float64)
+            p_lbfgs = _p_from_q(q_lbfgs)
 
-                else:
-                    # Single polish with analytical Jacobian eliminates redundant passes.
+            # Removal of redundant unweighted polish (canceled pass 1 corrections).
 
-                    # r/p Jacobian provided analytically -> ~5x faster convergence.
+            # The weighted pass with analytical Jacobian is sufficient.
 
-                    def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
+            if callable(progress_cb):
+                progress_cb(2, 2)
 
-                        pv = _p_from_q(qv)
+            wl_full_um = np.asarray(wl / 1000.0, dtype=np.float64)
 
-                        r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
+            def _sellmeier_n_in_accept_band(p: np.ndarray) -> bool:
 
-                        g = _sellmeier_l_separation_gap_um(pv)
+                n_line = IndexCore.sellmeier_2poles_const_eval(p, wl_full_um)
 
-                        return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
+                if not np.all(np.isfinite(n_line)):
+                    return False
 
-                    def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
-                        """Analytical Jacobian of polish residual (extended with separation constraint)."""
+                ne = np.asarray(n_line[mask], dtype=np.float64)
 
-                        pv = _p_from_q(qv)
+                return bool(np.all(ne >= n_lo_acc) and np.all(ne <= n_hi_acc))
 
-                        J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
-
-                        # Separation constraint line: numerical gradient (< 7 params -> 7 evals)
-
-                        g0 = _sellmeier_l_separation_gap_um(pv)
-
-                        J_sep = np.zeros((1, 7), dtype=np.float64)
-
-                        eps = 1.0e-6
-
-                        for j in range(7):
-                            pv2 = np.asarray(pv, dtype=np.float64).copy()
-
-                            pv2[j] += eps
-
-                            g2 = _sellmeier_l_separation_gap_um(pv2)
-
-                            J_sep[0, j] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * (g2 - g0) / eps
-
-                        return np.vstack([J_main, J_sep])
-
-                    res_pol = least_squares(
-                        _residuals_polish_q,
-                        q_lbfgs,
-                        jac=_jac_polish_q,
-                        bounds=ls_bounds_q,
-                        loss="linear",
-                        f_scale=1.0,
-                        max_nfev=ls_max_nfev,
-                    )
-
-                    q_sell = np.asarray(res_pol.x, dtype=np.float64)
-
-                p_sell = _p_from_q(q_sell)
-
-                p_lbfgs = _p_from_q(q_lbfgs)
-
-                # Removal of redundant unweighted polish (canceled pass 1 corrections).
-
-                # The weighted pass with analytical Jacobian is sufficient.
-
-                if callable(progress_cb):
-                    progress_cb(2, 2)
-
-                wl_full_um = np.asarray(wl / 1000.0, dtype=np.float64)
-
-                def _sellmeier_n_in_accept_band(p: np.ndarray) -> bool:
-
-                    n_line = IndexCore.sellmeier_2poles_const_eval(p, wl_full_um)
-
-                    if not np.all(np.isfinite(n_line)):
-                        return False
-
-                    ne = np.asarray(n_line[mask], dtype=np.float64)
-
-                    return bool(np.all(ne >= n_lo_acc) and np.all(ne <= n_hi_acc))
-
-                if not _sellmeier_n_in_accept_band(p_sell) and _sellmeier_n_in_accept_band(p_lbfgs):
-                    logger.info(
-                        "Sellmeier 3-poles: polish candidate out of band n[%.2f,%.2f]; keeping L-BFGS-B.",
-                        n_lo_acc,
-                        n_hi_acc,
-                    )
-
-                    p_sell = np.asarray(p_lbfgs, dtype=np.float64)
-
-                n_out_sell = IndexCore.sellmeier_2poles_const_eval(p_sell, wl_full_um)
-
-                if not np.all(np.isfinite(n_out_sell)):
-                    raise ValueError("non-finite output")
-
-                n_eval = np.asarray(n_out_sell[mask], dtype=np.float64)
-
-                if np.any((n_eval < n_lo_acc) | (n_eval > n_hi_acc)):
-                    logger.warning(
-                        "Sellmeier 3-poles fit rejected: n(lambda) hors [%.2f, %.2f] sur la fenetre de fit -> fallback monotonic raw.",
-                        n_lo_acc,
-                        n_hi_acc,
-                    )
-
-                    return _ret_fallback_raw("fallback-raw-sell2p-bounds")
-
-                rmse_unweighted = float(np.sqrt(np.mean((n_eval - n_fit) ** 2)))
-
-                wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit_sell) ** 2)))
-
+            if not _sellmeier_n_in_accept_band(p_sell) and _sellmeier_n_in_accept_band(p_lbfgs):
                 logger.info(
-                    "Sellmeier 3-poles fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
-                    wrmse,
-                    rmse_unweighted,
-                    float(np.min(n_eval)),
-                    float(np.max(n_eval)),
-                    float(n_eval[0]),
-                    float(n_eval[-1]),
+                    "Sellmeier 3-poles: polish candidate out of band n[%.2f,%.2f]; keeping L-BFGS-B.",
+                    n_lo_acc,
+                    n_hi_acc,
                 )
 
-                logger.info(
-                    "Sellmeier coefficients accepted: A=%.9g | B1=%.9g | L1=%.9g m | B2=%.9g | L2=%.9g m | B3=%.9g | L3=%.9g m",
-                    float(p_sell[0]),
-                    float(p_sell[1]),
-                    float(p_sell[2]),
-                    float(p_sell[3]),
-                    float(p_sell[4]),
-                    float(p_sell[5]),
-                    float(p_sell[6]),
+                p_sell = np.asarray(p_lbfgs, dtype=np.float64)
+
+            n_out_sell = IndexCore.sellmeier_2poles_const_eval(p_sell, wl_full_um)
+
+            if not np.all(np.isfinite(n_out_sell)):
+                raise ValueError("non-finite output")
+
+            n_eval = np.asarray(n_out_sell[mask], dtype=np.float64)
+
+            if np.any((n_eval < n_lo_acc) | (n_eval > n_hi_acc)):
+                logger.warning(
+                    "Sellmeier 3-poles fit rejected: n(lambda) hors [%.2f, %.2f] sur la fenetre de fit -> fallback monotonic raw.",
+                    n_lo_acc,
+                    n_hi_acc,
                 )
 
-                if log_l1l2:
-                    _ln1 = float(np.log(max(float(p_sell[2]), 1.0e-300)))
+                return None, "fallback-raw-sell2p-bounds", None, {}
 
-                    _ln2 = float(np.log(max(float(p_sell[4]), 1.0e-300)))
+            rmse_unweighted = float(np.sqrt(np.mean((n_eval - n_fit) ** 2)))
 
-                    _ln3 = float(np.log(max(float(p_sell[6]), 1.0e-300)))
+            wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit_sell) ** 2)))
 
-                    _lg10 = float(np.log(10.0))
-
-                    logger.info(
-                        "Sellmeier (reparam. ln L): u1=ln(L1)=%.9g | u2=ln(L2)=%.9g | u3=ln(L3)=%.9g "
-                        "| log10(L1)=%.9g | log10(L2)=%.9g | log10(L3)=%.9g",
-                        _ln1,
-                        _ln2,
-                        _ln3,
-                        _ln1 / _lg10,
-                        _ln2 / _lg10,
-                        _ln3 / _lg10,
-                    )
-
-                # 3-term standard variant (n2=1+Bi*\u03bb2/(\u03bb2-Ci)) for literature/catalog compatibility.
-
-                c_hi = max(1.0e-15, (lam_min_um * float(SELLMEIER_3TERM_C_FRAC_MAX)) ** 2)
-
-                b_bounds = (-200.0, 200.0)
-
-                c_bounds = (1.0e-15, c_hi)
-
-                std_bounds = (
-                    [b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0]],
-                    [b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1]],
-                )
-
-                def _std_seed_from_2p(p2: np.ndarray) -> np.ndarray:
-
-                    p2 = np.asarray(p2, dtype=np.float64)
-
-                    seed = np.asarray(
-                        [
-                            p2[1],
-                            min(c_hi, max(1.0e-15, p2[2] ** 2)),
-                            p2[3],
-                            min(c_hi, max(1.0e-15, p2[4] ** 2)),
-                            p2[5],
-                            min(c_hi, max(1.0e-15, p2[6] ** 2)),
-                        ],
-                        dtype=np.float64,
-                    )
-
-                    return np.clip(seed, std_bounds[0], std_bounds[1])
-
-                def _std_residuals(p_std: np.ndarray) -> np.ndarray:
-
-                    pred = _sellmeier_3term_standard_eval(p_std, wl_fit_um)
-
-                    r = (pred - n_fit) * w_fit_sell * 1000.0
-
-                    return np.asarray(r, dtype=np.float64)
-
-                candidates: list[tuple[str, np.ndarray, np.ndarray, float, dict]] = []
-
-                candidates.append(
-                    (
-                        "analytic-sellmeier-3poles-A",
-                        np.asarray(p_sell, dtype=np.float64),
-                        np.asarray(n_out_sell, dtype=np.float64),
-                        float(wrmse),
-                        {"sellmeier_optim_log_l1l2": log_l1l2},
-                    )
-                )
-
-                try:
-                    p0_std = _std_seed_from_2p(p_sell)
-
-                    res_std = least_squares(
-                        _std_residuals,
-                        p0_std,
-                        bounds=std_bounds,
-                        loss="linear",
-                        f_scale=1.0,
-                        max_nfev=max(1200, int(ls_max_nfev)),
-                    )
-
-                    p_std = np.asarray(res_std.x, dtype=np.float64)
-
-                    n_out_std = _sellmeier_3term_standard_eval(p_std, wl_full_um)
-
-                    n_std_fit = np.asarray(n_out_std[mask], dtype=np.float64)
-
-                    if np.all(np.isfinite(n_std_fit)) and np.all((n_std_fit >= n_lo_acc) & (n_std_fit <= n_hi_acc)):
-                        wrmse_std = float(np.sqrt(np.mean(((n_std_fit - n_fit) * w_fit_sell) ** 2)))
-
-                        candidates.append(
-                            (
-                                "analytic-sellmeier-3term-standard",
-                                p_std,
-                                np.asarray(n_out_std, dtype=np.float64),
-                                wrmse_std,
-                                {},
-                            )
-                        )
-
-                        logger.info(
-                            "Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g",
-                            wrmse_std,
-                            float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
-                        )
-
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-                    logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
-
-                best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
-                    candidates,
-                    key=lambda t: float(t[3]),
-                )
-
-                if best_src != "analytic-sellmeier-3poles-A":
-                    logger.info(
-                        "Sellmeier selection: variante standard 3-termes retenue (plus proche, wrmse=%.6g).",
-                        float(_best_wrmse),
-                    )
-
-                return _ret(
-                    np.asarray(best_curve, dtype=np.float64),
-                    best_src,
-                    np.asarray(best_coeffs, dtype=np.float64),
-                    **best_extra,
-                )
-
-            except (ValueError, RuntimeError, ArithmeticError) as ex:
-                logger.warning("Sellmeier 3-poles fit failed: %s -> fallback to Polynomial.", str(ex))
-
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-                logger.exception("Sellmeier 3-poles fit unexpected failure -> fallback to Polynomial.")
-
-        if model_kind == "spline_adaptive":
-            from scipy.interpolate import make_lsq_spline
-
-            from scipy.optimize import minimize
-
-            # Cubic B-spline = piecewise polynomials; weighted least squares on the fit grid.
-
-            # Grid of \u03bb sites (fixed edges) + interior knot optimization + merge if RMSE OK.
-
-            RMSE_RATIO_MAX = float(SPLINE_INDEX_MERGE_RMSE_RATIO_MAX)
-
-            MIN_KNOT_DIST_UM = 0.05
-
-            N_BOUND_LO, N_BOUND_HI = 1.35, 5.0
-
-            BSPLINE_K = 3
-
-            xf = np.asarray(wl_fit_nm, dtype=np.float64).copy()
-
-            yf = np.asarray(n_fit, dtype=np.float64).copy()
-
-            wf = np.asarray(w_fit, dtype=np.float64).copy()
-
-            o = np.argsort(xf)
-
-            xf, yf, wf = xf[o], yf[o], wf[o]
-
-            if np.any(np.diff(xf) <= 0.0):
-                ux, inv = np.unique(xf, return_inverse=True)
-
-                sum_w = np.bincount(inv, weights=wf)
-
-                sum_yw = np.bincount(inv, weights=yf * wf)
-
-                xf = ux
-
-                yf = sum_yw / np.maximum(sum_w, 1.0e-30)
-
-                wf = sum_w
-
-            npts = int(xf.size)
-
-            wl_fit_um = xf / 1000.0
-
-            lo_um = float(wl_fit_um[0])
-
-            hi_um = float(wl_fit_um[-1])
-
-            span_um = max(hi_um - lo_um, 1.0e-9)
-
-            max_knots_by_gap = max(2, int(span_um / MIN_KNOT_DIST_UM) + 1)
-
-            k_min_stop = min(int(SPLINE_INDEX_MIN_KNOT_SITES), int(max_knots_by_gap))
-
-            k_min_stop = max(2, k_min_stop)
-
-            num_knots = min(
-                SPLINE_INDEX_MAX_KNOTS,
-                max_knots_by_gap,
-                max(3, npts // 24),
+            logger.info(
+                "Sellmeier 3-poles fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
+                wrmse,
+                rmse_unweighted,
+                float(np.min(n_eval)),
+                float(np.max(n_eval)),
+                float(n_eval[0]),
+                float(n_eval[-1]),
             )
 
-            num_knots = max(num_knots, min(3, max_knots_by_gap))
+            logger.info(
+                "Sellmeier coefficients accepted: A=%.9g | B1=%.9g | L1=%.9g m | B2=%.9g | L2=%.9g m | B3=%.9g | L3=%.9g m",
+                float(p_sell[0]),
+                float(p_sell[1]),
+                float(p_sell[2]),
+                float(p_sell[3]),
+                float(p_sell[4]),
+                float(p_sell[5]),
+                float(p_sell[6]),
+            )
 
-            num_knots = min(num_knots, max_knots_by_gap)
+            if log_l1l2:
+                _ln1 = float(np.log(max(float(p_sell[2]), 1.0e-300)))
 
-            num_knots = min(num_knots, SPLINE_INDEX_MAX_KNOTS)
+                _ln2 = float(np.log(max(float(p_sell[4]), 1.0e-300)))
+
+                _ln3 = float(np.log(max(float(p_sell[6]), 1.0e-300)))
+
+                _lg10 = float(np.log(10.0))
+
+                logger.info(
+                    "Sellmeier (reparam. ln L): u1=ln(L1)=%.9g | u2=ln(L2)=%.9g | u3=ln(L3)=%.9g "
+                    "| log10(L1)=%.9g | log10(L2)=%.9g | log10(L3)=%.9g",
+                    _ln1,
+                    _ln2,
+                    _ln3,
+                    _ln1 / _lg10,
+                    _ln2 / _lg10,
+                    _ln3 / _lg10,
+                )
+
+            # 3-term standard variant (n2=1+Bi*\u03bb2/(\u03bb2-Ci)) for literature/catalog compatibility.
+
+            c_hi = max(1.0e-15, (lam_min_um * float(SELLMEIER_3TERM_C_FRAC_MAX)) ** 2)
+
+            b_bounds = (-200.0, 200.0)
+
+            c_bounds = (1.0e-15, c_hi)
+
+            std_bounds = (
+                [b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0]],
+                [b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1]],
+            )
+
+            def _std_seed_from_2p(p2: np.ndarray) -> np.ndarray:
+
+                p2 = np.asarray(p2, dtype=np.float64)
+
+                seed = np.asarray(
+                    [
+                        p2[1],
+                        min(c_hi, max(1.0e-15, p2[2] ** 2)),
+                        p2[3],
+                        min(c_hi, max(1.0e-15, p2[4] ** 2)),
+                        p2[5],
+                        min(c_hi, max(1.0e-15, p2[6] ** 2)),
+                    ],
+                    dtype=np.float64,
+                )
+
+                return np.clip(seed, std_bounds[0], std_bounds[1])
+
+            def _std_residuals(p_std: np.ndarray) -> np.ndarray:
+
+                pred = _sellmeier_3term_standard_eval(p_std, wl_fit_um)
+
+                r = (pred - n_fit) * w_fit_sell * 1000.0
+
+                return np.asarray(r, dtype=np.float64)
+
+            candidates: list[tuple[str, np.ndarray, np.ndarray, float, dict]] = []
+
+            candidates.append(
+                (
+                    "analytic-sellmeier-3poles-A",
+                    np.asarray(p_sell, dtype=np.float64),
+                    np.asarray(n_out_sell, dtype=np.float64),
+                    float(wrmse),
+                    {"sellmeier_optim_log_l1l2": log_l1l2},
+                )
+            )
 
             try:
-                if callable(progress_cb):
-                    progress_cb(1, 2)
+                p0_std = _std_seed_from_2p(p_sell)
 
-                def _fit_bspline_lsq_wls(interior_um: np.ndarray):
-                    """Interior knots strictly in ]lo,hi[; cubic clamped at edges."""
+                res_std = least_squares(
+                    _std_residuals,
+                    p0_std,
+                    bounds=std_bounds,
+                    loss="linear",
+                    f_scale=1.0,
+                    max_nfev=max(1200, int(ls_max_nfev)),
+                )
 
-                    inter = np.asarray(interior_um, dtype=np.float64).ravel()
+                p_std = np.asarray(res_std.x, dtype=np.float64)
+
+                n_out_std = _sellmeier_3term_standard_eval(p_std, wl_full_um)
+
+                n_std_fit = np.asarray(n_out_std[mask], dtype=np.float64)
+
+                if np.all(np.isfinite(n_std_fit)) and np.all((n_std_fit >= n_lo_acc) & (n_std_fit <= n_hi_acc)):
+                    wrmse_std = float(np.sqrt(np.mean(((n_std_fit - n_fit) * w_fit_sell) ** 2)))
+
+                    candidates.append(
+                        (
+                            "analytic-sellmeier-3term-standard",
+                            p_std,
+                            np.asarray(n_out_std, dtype=np.float64),
+                            wrmse_std,
+                            {},
+                        )
+                    )
+
+                    logger.info(
+                        "Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g",
+                        wrmse_std,
+                        float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
+                    )
+
+            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
+
+            best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
+                candidates,
+                key=lambda t: float(t[3]),
+            )
+
+            if best_src != "analytic-sellmeier-3poles-A":
+                logger.info(
+                    "Sellmeier selection: variante standard 3-termes retenue (plus proche, wrmse=%.6g).",
+                    float(_best_wrmse),
+                )
+            return (
+                np.asarray(best_curve, dtype=np.float64),
+                best_src,
+                np.asarray(best_coeffs, dtype=np.float64),
+                best_extra,
+            )
+
+        except (ValueError, RuntimeError, ArithmeticError) as ex:
+            logger.warning("Sellmeier 3-poles fit failed: %s -> fallback to Polynomial.", str(ex))
+
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            logger.exception("Sellmeier 3-poles fit unexpected failure -> fallback to Polynomial.")
+
+    @staticmethod
+    def _fit_model_spline_adaptive(
+        wl: np.ndarray,
+        mask: np.ndarray,
+        n_fit: np.ndarray,
+        wl_fit_nm: np.ndarray,
+        w_fit: np.ndarray,
+        progress_cb,
+    ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
+        from scipy.interpolate import make_lsq_spline
+
+        from scipy.optimize import minimize
+
+        # Cubic B-spline = piecewise polynomials; weighted least squares on the fit grid.
+
+        # Grid of \u03bb sites (fixed edges) + interior knot optimization + merge if RMSE OK.
+
+        RMSE_RATIO_MAX = float(SPLINE_INDEX_MERGE_RMSE_RATIO_MAX)
+
+        MIN_KNOT_DIST_UM = 0.05
+
+        N_BOUND_LO, N_BOUND_HI = 1.35, 5.0
+
+        BSPLINE_K = 3
+
+        xf = np.asarray(wl_fit_nm, dtype=np.float64).copy()
+
+        yf = np.asarray(n_fit, dtype=np.float64).copy()
+
+        wf = np.asarray(w_fit, dtype=np.float64).copy()
+
+        o = np.argsort(xf)
+
+        xf, yf, wf = xf[o], yf[o], wf[o]
+
+        if np.any(np.diff(xf) <= 0.0):
+            ux, inv = np.unique(xf, return_inverse=True)
+
+            sum_w = np.bincount(inv, weights=wf)
+
+            sum_yw = np.bincount(inv, weights=yf * wf)
+
+            xf = ux
+
+            yf = sum_yw / np.maximum(sum_w, 1.0e-30)
+
+            wf = sum_w
+
+        npts = int(xf.size)
+
+        wl_fit_um = xf / 1000.0
+
+        lo_um = float(wl_fit_um[0])
+
+        hi_um = float(wl_fit_um[-1])
+
+        span_um = max(hi_um - lo_um, 1.0e-9)
+
+        max_knots_by_gap = max(2, int(span_um / MIN_KNOT_DIST_UM) + 1)
+
+        k_min_stop = min(int(SPLINE_INDEX_MIN_KNOT_SITES), int(max_knots_by_gap))
+
+        k_min_stop = max(2, k_min_stop)
+
+        num_knots = min(
+            SPLINE_INDEX_MAX_KNOTS,
+            max_knots_by_gap,
+            max(3, npts // 24),
+        )
+
+        num_knots = max(num_knots, min(3, max_knots_by_gap))
+
+        num_knots = min(num_knots, max_knots_by_gap)
+
+        num_knots = min(num_knots, SPLINE_INDEX_MAX_KNOTS)
+
+        try:
+            if callable(progress_cb):
+                progress_cb(1, 2)
+
+            def _fit_bspline_lsq_wls(interior_um: np.ndarray):
+                """Interior knots strictly in ]lo,hi[; cubic clamped at edges."""
+
+                inter = np.asarray(interior_um, dtype=np.float64).ravel()
+
+                inter = inter[(inter > lo_um) & (inter < hi_um)]
+
+                inter = np.sort(inter)
+
+                margin = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
+
+                if inter.size > 0:
+                    inter = np.clip(inter, lo_um + margin, hi_um - margin)
+
+                    inter = _index_spline_ensure_strictly_increasing(
+                        inter, min_gap=max(1e-9, 0.25 * MIN_KNOT_DIST_UM)
+                    )
 
                     inter = inter[(inter > lo_um) & (inter < hi_um)]
 
-                    inter = np.sort(inter)
+                t_full = np.concatenate(
+                    ([lo_um] * (BSPLINE_K + 1), inter, [hi_um] * (BSPLINE_K + 1)),
+                    dtype=np.float64,
+                )
 
-                    margin = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
+                try:
+                    spl = make_lsq_spline(wl_fit_um, yf, t_full, k=BSPLINE_K, w=wf, check_finite=True)
 
-                    if inter.size > 0:
-                        inter = np.clip(inter, lo_um + margin, hi_um - margin)
+                except (ValueError, TypeError):
+                    return None, float("nan")
 
-                        inter = _index_spline_ensure_strictly_increasing(
-                            inter, min_gap=max(1e-9, 0.25 * MIN_KNOT_DIST_UM)
-                        )
+                pred = spl(wl_fit_um)
 
-                        inter = inter[(inter > lo_um) & (inter < hi_um)]
+                rmse_u = float(np.sqrt(np.mean((pred - yf) ** 2)))
 
-                    t_full = np.concatenate(
-                        ([lo_um] * (BSPLINE_K + 1), inter, [hi_um] * (BSPLINE_K + 1)),
-                        dtype=np.float64,
+                return spl, rmse_u
+
+            def _optimize_bspline_interior_knots(
+                knot_lam_um: np.ndarray,
+                rmse_cur: float,
+            ) -> tuple[np.ndarray, float]:
+                """With fixed K sites, optimizes interior \u03bb to minimize B-spline LSQ RMSE."""
+
+                k_loc = int(knot_lam_um.size)
+
+                if k_loc <= 2:
+                    return knot_lam_um.copy(), rmse_cur
+
+                margin_i = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
+
+                lo_b = lo_um + margin_i
+
+                hi_b = hi_um - margin_i
+
+                if hi_b <= lo_b + 1.0e-12:
+                    return knot_lam_um.copy(), rmse_cur
+
+                n_int = k_loc - 2
+
+                x0 = np.clip(knot_lam_um[1:-1].copy(), lo_b, hi_b)
+
+                def _obj(tv: np.ndarray) -> float:
+
+                    ts = np.sort(np.clip(np.asarray(tv, dtype=np.float64), lo_b, hi_b))
+
+                    knot_t = np.empty(k_loc, dtype=np.float64)
+
+                    knot_t[0] = lo_um
+
+                    knot_t[-1] = hi_um
+
+                    knot_t[1:-1] = ts
+
+                    knot_t = _index_spline_ensure_strictly_increasing(
+                        knot_t, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
                     )
 
-                    try:
-                        spl = make_lsq_spline(wl_fit_um, yf, t_full, k=BSPLINE_K, w=wf, check_finite=True)
+                    knot_t[0] = lo_um
 
-                    except (ValueError, TypeError):
-                        return None, float("nan")
+                    knot_t[-1] = hi_um
 
-                    pred = spl(wl_fit_um)
+                    if np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
+                        return 1e6
 
-                    rmse_u = float(np.sqrt(np.mean((pred - yf) ** 2)))
+                    _spl, rm = _fit_bspline_lsq_wls(knot_t[1:-1])
 
-                    return spl, rmse_u
+                    if _spl is None or not np.isfinite(rm):
+                        return 1e6
 
-                def _optimize_bspline_interior_knots(
-                    knot_lam_um: np.ndarray,
-                    rmse_cur: float,
-                ) -> tuple[np.ndarray, float]:
-                    """With fixed K sites, optimizes interior \u03bb to minimize B-spline LSQ RMSE."""
+                    return float(rm)
 
-                    k_loc = int(knot_lam_um.size)
+                try:
+                    res = minimize(
+                        _obj,
+                        x0,
+                        method="L-BFGS-B",
+                        bounds=[(lo_b, hi_b)] * n_int,
+                        options={"maxiter": 120, "ftol": 1e-14},
+                    )
 
-                    if k_loc <= 2:
-                        return knot_lam_um.copy(), rmse_cur
-
-                    margin_i = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
-
-                    lo_b = lo_um + margin_i
-
-                    hi_b = hi_um - margin_i
-
-                    if hi_b <= lo_b + 1.0e-12:
-                        return knot_lam_um.copy(), rmse_cur
-
-                    n_int = k_loc - 2
-
-                    x0 = np.clip(knot_lam_um[1:-1].copy(), lo_b, hi_b)
-
-                    def _obj(tv: np.ndarray) -> float:
-
-                        ts = np.sort(np.clip(np.asarray(tv, dtype=np.float64), lo_b, hi_b))
+                    if np.isfinite(res.fun):
+                        tv = np.sort(np.clip(np.asarray(res.x, dtype=np.float64), lo_b, hi_b))
 
                         knot_t = np.empty(k_loc, dtype=np.float64)
 
@@ -2361,7 +2441,7 @@ class IndexCore:
 
                         knot_t[-1] = hi_um
 
-                        knot_t[1:-1] = ts
+                        knot_t[1:-1] = tv
 
                         knot_t = _index_spline_ensure_strictly_increasing(
                             knot_t, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
@@ -2371,205 +2451,177 @@ class IndexCore:
 
                         knot_t[-1] = hi_um
 
-                        if np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
-                            return 1e6
+                        if not np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
+                            _spl2, rm2 = _fit_bspline_lsq_wls(knot_t[1:-1])
 
-                        _spl, rm = _fit_bspline_lsq_wls(knot_t[1:-1])
+                            if _spl2 is not None and np.isfinite(rm2) and rm2 < rmse_cur - 1.0e-15:
+                                logger.info(
+                                    "B-spline spline: knot optimization \u2192 rmse_fit=%.6g (was %.6g).",
+                                    rm2,
+                                    rmse_cur,
+                                )
 
-                        if _spl is None or not np.isfinite(rm):
-                            return 1e6
+                                return knot_t, rm2
 
-                        return float(rm)
+                except (
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    AttributeError,
+                    KeyError,
+                    IndexError,
+                    FileNotFoundError,
+                ):
+                    pass
 
-                    try:
-                        res = minimize(
-                            _obj,
-                            x0,
-                            method="L-BFGS-B",
-                            bounds=[(lo_b, hi_b)] * n_int,
-                            options={"maxiter": 120, "ftol": 1e-14},
-                        )
+                return knot_lam_um.copy(), rmse_cur
 
-                        if np.isfinite(res.fun):
-                            tv = np.sort(np.clip(np.asarray(res.x, dtype=np.float64), lo_b, hi_b))
+            knot_lam = np.linspace(lo_um, hi_um, num_knots, dtype=np.float64)
 
-                            knot_t = np.empty(k_loc, dtype=np.float64)
+            knot_lam = _index_spline_ensure_strictly_increasing(knot_lam, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM))
 
-                            knot_t[0] = lo_um
+            knot_lam[0] = lo_um
 
-                            knot_t[-1] = hi_um
+            knot_lam[-1] = hi_um
 
-                            knot_t[1:-1] = tv
+            spl_best, best_rmse = _fit_bspline_lsq_wls(knot_lam[1:-1])
 
-                            knot_t = _index_spline_ensure_strictly_increasing(
-                                knot_t, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
-                            )
+            if spl_best is None or not np.isfinite(best_rmse):
+                raise ValueError("B-spline LSQ: echec fit initial")
 
-                            knot_t[0] = lo_um
+            best_knot_lam = knot_lam.copy()
 
-                            knot_t[-1] = hi_um
+            best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
-                            if not np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
-                                _spl2, rm2 = _fit_bspline_lsq_wls(knot_t[1:-1])
+            best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
 
-                                if _spl2 is not None and np.isfinite(rm2) and rm2 < rmse_cur - 1.0e-15:
-                                    logger.info(
-                                        "B-spline spline: knot optimization \u2192 rmse_fit=%.6g (was %.6g).",
-                                        rm2,
-                                        rmse_cur,
-                                    )
+            best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
-                                    return knot_t, rm2
+            baseline_mse = float(best_rmse**2)
 
-                    except (
-                        ValueError,
-                        TypeError,
-                        RuntimeError,
-                        AttributeError,
-                        KeyError,
-                        IndexError,
-                        FileNotFoundError,
-                    ):
-                        pass
+            while len(best_knot_lam) > k_min_stop:
+                lam_try, n_try = _index_spline_merge_closest_knot_pair(best_knot_lam, best_n_knot)
 
-                    return knot_lam_um.copy(), rmse_cur
+                lam_try = _index_spline_ensure_strictly_increasing(lam_try, min_gap=1e-9)
 
-                knot_lam = np.linspace(lo_um, hi_um, num_knots, dtype=np.float64)
+                lam_try[0] = lo_um
 
-                knot_lam = _index_spline_ensure_strictly_increasing(knot_lam, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM))
+                lam_try[-1] = hi_um
 
-                knot_lam[0] = lo_um
+                if np.any(np.diff(lam_try) < 0.5 * MIN_KNOT_DIST_UM):
+                    logger.info(
+                        "B-spline spline: reduction stop (knot spacing < %.3f m).",
+                        0.5 * MIN_KNOT_DIST_UM,
+                    )
 
-                knot_lam[-1] = hi_um
+                    break
 
-                spl_best, best_rmse = _fit_bspline_lsq_wls(knot_lam[1:-1])
+                spl_new, rmse_new = _fit_bspline_lsq_wls(lam_try[1:-1])
 
-                if spl_best is None or not np.isfinite(best_rmse):
-                    raise ValueError("B-spline LSQ: echec fit initial")
+                if spl_new is None or not np.isfinite(rmse_new):
+                    logger.info("B-spline spline: merge impossible (LSQ).")
 
-                best_knot_lam = knot_lam.copy()
+                    break
 
-                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
+                if (rmse_new**2) > (RMSE_RATIO_MAX**2) * baseline_mse:
+                    logger.info(
+                        "B-spline spline: merge rejected (RMSE %.6g, ref %.6g, max ratio %.2f). Keeping K=%d.",
+                        rmse_new,
+                        float(np.sqrt(baseline_mse)),
+                        RMSE_RATIO_MAX,
+                        len(best_knot_lam),
+                    )
 
-                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
+                    break
 
-                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
+                best_knot_lam = lam_try
+
+                best_n_knot = n_try
+
+                best_rmse = rmse_new
 
                 baseline_mse = float(best_rmse**2)
 
-                while len(best_knot_lam) > k_min_stop:
-                    lam_try, n_try = _index_spline_merge_closest_knot_pair(best_knot_lam, best_n_knot)
-
-                    lam_try = _index_spline_ensure_strictly_increasing(lam_try, min_gap=1e-9)
-
-                    lam_try[0] = lo_um
-
-                    lam_try[-1] = hi_um
-
-                    if np.any(np.diff(lam_try) < 0.5 * MIN_KNOT_DIST_UM):
-                        logger.info(
-                            "B-spline spline: reduction stop (knot spacing < %.3f m).",
-                            0.5 * MIN_KNOT_DIST_UM,
-                        )
-
-                        break
-
-                    spl_new, rmse_new = _fit_bspline_lsq_wls(lam_try[1:-1])
-
-                    if spl_new is None or not np.isfinite(rmse_new):
-                        logger.info("B-spline spline: merge impossible (LSQ).")
-
-                        break
-
-                    if (rmse_new**2) > (RMSE_RATIO_MAX**2) * baseline_mse:
-                        logger.info(
-                            "B-spline spline: merge rejected (RMSE %.6g, ref %.6g, max ratio %.2f). Keeping K=%d.",
-                            rmse_new,
-                            float(np.sqrt(baseline_mse)),
-                            RMSE_RATIO_MAX,
-                            len(best_knot_lam),
-                        )
-
-                        break
-
-                    best_knot_lam = lam_try
-
-                    best_n_knot = n_try
-
-                    best_rmse = rmse_new
-
-                    baseline_mse = float(best_rmse**2)
-
-                    logger.info(
-                        "B-spline spline: reduction accepted \u2192 K=%d sites | rmse_fit=%.6g.",
-                        len(best_knot_lam),
-                        best_rmse,
-                    )
-
-                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
-
-                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
-
-                spl_final, best_rmse = _fit_bspline_lsq_wls(best_knot_lam[1:-1])
-
-                if spl_final is None or not np.isfinite(best_rmse):
-                    raise ValueError("B-spline LSQ: echec fit final")
-
-                wl_full_um = np.asarray(wl, dtype=np.float64) / 1000.0
-
-                n_out_sp = _index_eval_bspline_linear_extrap(spl_final, lo_um, hi_um, wl_full_um)
-
-                if callable(progress_cb):
-                    progress_cb(2, 2)
-
-                if not np.all(np.isfinite(n_out_sp)):
-                    raise ValueError("non-finite B-spline output")
-
-                n_coef = int(spl_final.c.size)
-
-                k_sites = int(best_knot_lam.size)
-
-                packed = _index_pack_bspline_lsq(spl_final, lo_um, hi_um)
-
                 logger.info(
-                    "Spline n (B-spline LSQ): n_coef=%d | K_sites=%d | rmse_fit=%.6g | n_pts_fit=%d | lambda_fit=[%.4f,%.4f] m",
-                    n_coef,
-                    k_sites,
+                    "B-spline spline: reduction accepted \u2192 K=%d sites | rmse_fit=%.6g.",
+                    len(best_knot_lam),
                     best_rmse,
-                    npts,
-                    lo_um,
-                    hi_um,
                 )
 
-                n_eval = np.asarray(n_out_sp[mask], dtype=np.float64)
+            best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
 
-                if np.any((n_eval < 1.35) | (n_eval > 5.0)):
-                    logger.warning(
-                        "Spline fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw."
-                    )
+            best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
-                    return _ret_fallback_raw("fallback-raw-spline-bounds")
+            spl_final, best_rmse = _fit_bspline_lsq_wls(best_knot_lam[1:-1])
 
-                wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit) ** 2)))
+            if spl_final is None or not np.isfinite(best_rmse):
+                raise ValueError("B-spline LSQ: echec fit final")
 
-                logger.info(
-                    "Spline fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
-                    wrmse,
-                    float(best_rmse),
-                    float(np.min(n_eval)),
-                    float(np.max(n_eval)),
-                    float(n_eval[0]),
-                    float(n_eval[-1]),
+            wl_full_um = np.asarray(wl, dtype=np.float64) / 1000.0
+
+            n_out_sp = _index_eval_bspline_linear_extrap(spl_final, lo_um, hi_um, wl_full_um)
+
+            if callable(progress_cb):
+                progress_cb(2, 2)
+
+            if not np.all(np.isfinite(n_out_sp)):
+                raise ValueError("non-finite B-spline output")
+
+            n_coef = int(spl_final.c.size)
+
+            k_sites = int(best_knot_lam.size)
+
+            packed = _index_pack_bspline_lsq(spl_final, lo_um, hi_um)
+
+            logger.info(
+                "Spline n (B-spline LSQ): n_coef=%d | K_sites=%d | rmse_fit=%.6g | n_pts_fit=%d | lambda_fit=[%.4f,%.4f] m",
+                n_coef,
+                k_sites,
+                best_rmse,
+                npts,
+                lo_um,
+                hi_um,
+            )
+
+            n_eval = np.asarray(n_out_sp[mask], dtype=np.float64)
+
+            if np.any((n_eval < 1.35) | (n_eval > 5.0)):
+                logger.warning(
+                    "Spline fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw."
                 )
 
-                return _ret(n_out_sp, f"analytic-bspline-lsq-nc{n_coef}", packed)
+                return None, "fallback-raw-spline-bounds", None, {}
 
-            except (ValueError, RuntimeError, ArithmeticError) as ex:
-                logger.warning("Spline fit failed: %s -> fallback to Polynomial.", str(ex))
+            wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit) ** 2)))
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-                logger.exception("Spline fit unexpected failure -> fallback to Polynomial.")
+            logger.info(
+                "Spline fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
+                wrmse,
+                float(best_rmse),
+                float(np.min(n_eval)),
+                float(np.max(n_eval)),
+                float(n_eval[0]),
+                float(n_eval[-1]),
+            )
 
+            return n_out_sp, f"analytic-bspline-lsq-nc{n_coef}", packed, {}
+
+        except (ValueError, RuntimeError, ArithmeticError) as ex:
+            logger.warning("Spline fit failed: %s -> fallback to Polynomial.", str(ex))
+
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            logger.exception("Spline fit unexpected failure -> fallback to Polynomial.")
+
+    @staticmethod
+    def _fit_model_polynomial(
+        wl: np.ndarray,
+        wl_min_fit: float,
+        wl_max_fit: float,
+        mask: np.ndarray,
+        n_fit: np.ndarray,
+        wl_fit_nm: np.ndarray,
+        w_fit: np.ndarray,
+    ) -> tuple[np.ndarray | None, str, np.ndarray | None, dict]:
         # Polynomial fit (requested): deterministic weighted IRLS + physical checks.
 
         rmse_target_compact = 1.5e-3
@@ -2584,7 +2636,7 @@ class IndexCore:
         if fitted is None:
             logger.warning("Polynomial fit failed: no candidate solution -> fallback monotonic raw.")
 
-            return _ret_fallback_raw("fallback-raw-poly-no-candidate")
+            return None, "fallback-raw-poly-no-candidate", None, {}
 
         active_terms, p, n_out, rmse_compact = fitted
 
@@ -2599,7 +2651,7 @@ class IndexCore:
         if not np.all(np.isfinite(n_out)):
             logger.warning("Polynomial output invalid: non-finite values, fallback monotonic raw.")
 
-            return _ret_fallback_raw("fallback-raw-poly-nonfinite")
+            return None, "fallback-raw-poly-nonfinite", None, {}
 
         fit_range_mask = IndexCore._fit_mask(wl, wl_min_fit, wl_max_fit)
 
@@ -2617,14 +2669,14 @@ class IndexCore:
                     float(pos_frac),
                 )
 
-                return _ret_fallback_raw("fallback-raw-poly-nonmonotonic")
+                return None, "fallback-raw-poly-nonmonotonic", None, {}
 
         n_eval = np.asarray(n_out[mask], dtype=np.float64)
 
         if np.any((n_eval < 1.35) | (n_eval > 5.0)):
             logger.warning("Polynomial fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw.")
 
-            return _ret_fallback_raw("fallback-raw-poly-bounds")
+            return None, "fallback-raw-poly-bounds", None, {}
 
         rmse_unweighted = float(np.sqrt(np.mean((n_eval - n_fit) ** 2)))
 
@@ -2638,7 +2690,7 @@ class IndexCore:
                 float(wrmse),
             )
 
-            return _ret_fallback_raw("fallback-raw-poly-rmse")
+            return None, "fallback-raw-poly-rmse", None, {}
 
         r_fit = n_eval - n_fit
 
@@ -2676,7 +2728,7 @@ class IndexCore:
             *p_full.tolist(),
         )
 
-        return _ret(n_out, f"analytic-polynomial-{len(active_terms)}", p_full)
+        return n_out, f"analytic-polynomial-{len(active_terms)}", p_full, {}
 
     @staticmethod
     def get_smoothed_and_fits(

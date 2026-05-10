@@ -667,6 +667,82 @@ def _lbfgsb_phase_with_progress(
     _emit(force=True)
     return res
 
+
+# ---------------------------------------------------------------------------
+# Helpers extracted from _run_free_knot_stage (module-level, no closure state)
+# ---------------------------------------------------------------------------
+
+def _sk_max_abs_delta(a: np.ndarray, b: np.ndarray) -> float:
+    """Max absolute element-wise difference between two sigma-knot arrays."""
+    aa = np.asarray(a, dtype=np.float64).ravel()
+    bb = np.asarray(b, dtype=np.float64).ravel()
+    if aa.size != bb.size:
+        return float("inf")
+    return float(np.max(np.abs(aa - bb)))
+
+
+def _snap_nk_mesh_sol3_split(
+    skn_a: np.ndarray,
+    skL_a: np.ndarray,
+    nn_a: np.ndarray,
+    LL_v: np.ndarray,
+    sk0: np.ndarray,
+    sigma_snap_atol: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Snap decoded sigma knots to SOL2 reference mesh when drift is within tolerance.
+
+    If both skn_a and skL_a are close enough to sk0 (within *sigma_snap_atol*),
+    reuse sk0 as canonical mesh (avoids cumulative encode/decode drift).
+    Otherwise interpolate n/L onto the decoded skn mesh.
+    """
+    skn_a = np.asarray(skn_a, dtype=np.float64).ravel()
+    skL_a = np.asarray(skL_a, dtype=np.float64).ravel()
+    nn_a = np.asarray(nn_a, dtype=np.float64).ravel()
+    LL_v = np.asarray(LL_v, dtype=np.float64).ravel()
+
+    if (
+        int(sk0.size) == int(skn_a.size)
+        and _sk_max_abs_delta(skn_a, sk0) <= sigma_snap_atol
+        and _sk_max_abs_delta(skL_a, sk0) <= sigma_snap_atol
+    ):
+        sk_ref = np.asarray(sk0, dtype=np.float64).ravel()
+        nn_at = np.asarray(nn_a, dtype=np.float64).ravel().copy()
+        LL_at = np.asarray(LL_v, dtype=np.float64).ravel().copy()
+    else:
+        sk_ref = skn_a
+        nn_at = np.interp(sk_ref, skn_a, nn_a)
+        LL_at = np.interp(sk_ref, skL_a, LL_v)
+
+    return sk_ref, nn_at, LL_at
+
+
+def _snap_nk_mesh_sol3b(
+    skL_a: np.ndarray,
+    LL_v: np.ndarray,
+    skL0: np.ndarray,
+    skn0: np.ndarray,
+    nn0: np.ndarray,
+    sigma_snap_atol: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Snap decoded sigma-L knots to SOL2 reference (SOL3b variant, fixed n)."""
+    skL_a = np.asarray(skL_a, dtype=np.float64).ravel()
+    LL_v = np.asarray(LL_v, dtype=np.float64).ravel()
+
+    if int(skL0.size) == int(skL_a.size) and _sk_max_abs_delta(skL_a, skL0) <= sigma_snap_atol:
+        sk_ref = np.asarray(skL0, dtype=np.float64).ravel()
+        LL_at = np.asarray(LL_v, dtype=np.float64).ravel().copy()
+    else:
+        sk_ref = skL_a
+        LL_at = np.interp(sk_ref, skL_a, LL_v)
+
+    if int(skn0.size) == int(sk_ref.size) and _sk_max_abs_delta(sk_ref, skn0) <= sigma_snap_atol:
+        n_at = np.asarray(nn0, dtype=np.float64).ravel().copy()
+    else:
+        n_at = np.interp(sk_ref, skn0, nn0)
+
+    return sk_ref, n_at, LL_at
+
+
 def _run_free_knot_stage(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -855,76 +931,6 @@ def _run_free_knot_stage(
 
     _nk_prof_sol3 = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth")
 
-    def _sk_max_abs_delta(a: np.ndarray, b: np.ndarray) -> float:
-
-        aa = np.asarray(a, dtype=np.float64).ravel()
-
-        bb = np.asarray(b, dtype=np.float64).ravel()
-
-        if aa.size != bb.size:
-            return float("inf")
-
-        return float(np.max(np.abs(aa - bb)))
-
-    def _snap_nk_mesh_sol3_split(
-        skn_a: np.ndarray,
-        skL_a: np.ndarray,
-        nn_a: np.ndarray,
-        LL_v: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-
-        skn_a = np.asarray(skn_a, dtype=np.float64).ravel()
-
-        skL_a = np.asarray(skL_a, dtype=np.float64).ravel()
-
-        nn_a = np.asarray(nn_a, dtype=np.float64).ravel()
-
-        LL_v = np.asarray(LL_v, dtype=np.float64).ravel()
-
-        if (
-            int(sk0.size) == int(skn_a.size)
-            and _sk_max_abs_delta(skn_a, sk0) <= _sigma_snap_atol
-            and _sk_max_abs_delta(skL_a, sk0) <= _sigma_snap_atol
-        ):
-            sk_ref = np.asarray(sk0, dtype=np.float64).ravel()
-
-            nn_at = np.asarray(nn_a, dtype=np.float64).ravel().copy()
-
-            LL_at = np.asarray(LL_v, dtype=np.float64).ravel().copy()
-
-        else:
-            sk_ref = skn_a
-
-            nn_at = np.interp(sk_ref, skn_a, nn_a)
-
-            LL_at = np.interp(sk_ref, skL_a, LL_v)
-
-        return sk_ref, nn_at, LL_at
-
-    def _snap_nk_mesh_sol3b(skL_a: np.ndarray, LL_v: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-
-        skL_a = np.asarray(skL_a, dtype=np.float64).ravel()
-
-        LL_v = np.asarray(LL_v, dtype=np.float64).ravel()
-
-        if int(skL0.size) == int(skL_a.size) and _sk_max_abs_delta(skL_a, skL0) <= _sigma_snap_atol:
-            sk_ref = np.asarray(skL0, dtype=np.float64).ravel()
-
-            LL_at = np.asarray(LL_v, dtype=np.float64).ravel().copy()
-
-        else:
-            sk_ref = skL_a
-
-            LL_at = np.interp(sk_ref, skL_a, LL_v)
-
-        if int(skn0.size) == int(sk_ref.size) and _sk_max_abs_delta(sk_ref, skn0) <= _sigma_snap_atol:
-            n_at = np.asarray(nn0, dtype=np.float64).ravel().copy()
-
-        else:
-            n_at = np.interp(sk_ref, skn0, nn0)
-
-        return sk_ref, n_at, LL_at
-
     def _sol3_split_to_nk_masked(z: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, np.ndarray, np.ndarray]:
 
         d, skn, skL, nn, LL = _unpack(z)
@@ -937,7 +943,7 @@ def _run_free_knot_stage(
 
         LL_v = np.asarray(LL, dtype=np.float64).ravel()
 
-        sk_ref, nn_at, LL_at = _snap_nk_mesh_sol3_split(skn_a, skL_a, nn_a, LL_v)
+        sk_ref, nn_at, LL_at = _snap_nk_mesh_sol3_split(skn_a, skL_a, nn_a, LL_v, sk0, _sigma_snap_atol)
 
         xi_n = physical_nodes_to_x_slice_n(nn_at, sk_ref, cfg.n_mono_band_nm)
 
@@ -970,7 +976,7 @@ def _run_free_knot_stage(
 
         LL_a = np.asarray(LL, dtype=np.float64).ravel()
 
-        sk_ref, n_at, LL_at = _snap_nk_mesh_sol3b(skL_a, LL_a)
+        sk_ref, n_at, LL_at = _snap_nk_mesh_sol3b(skL_a, LL_a, skL0, skn0, nn0, _sigma_snap_atol)
 
         xi = physical_nodes_to_x_slice_n(n_at, sk_ref, cfg.n_mono_band_nm)
 
@@ -1423,7 +1429,7 @@ def _run_free_knot_stage(
 
         LL_ff = np.asarray(LL_f, dtype=np.float64).ravel()
 
-        sk_rf, nn_rf, LL_rf = _snap_nk_mesh_sol3_split(skn_ff, skL_ff, nn_ff, LL_ff)
+        sk_rf, nn_rf, LL_rf = _snap_nk_mesh_sol3_split(skn_ff, skL_ff, nn_ff, LL_ff, sk0, _sigma_snap_atol)
 
         xi_ff = physical_nodes_to_x_slice_n(nn_rf, sk_rf, cfg.n_mono_band_nm)
 
@@ -1531,7 +1537,7 @@ def _run_free_knot_stage(
 
         LL_fb = np.asarray(LL_f, dtype=np.float64).ravel()
 
-        sk_rfb, n_at_f, LL_rfb = _snap_nk_mesh_sol3b(skL_fb, LL_fb)
+        sk_rfb, n_at_f, LL_rfb = _snap_nk_mesh_sol3b(skL_fb, LL_fb, skL0, skn0, nn0, _sigma_snap_atol)
 
         xi_fb = physical_nodes_to_x_slice_n(n_at_f, sk_rfb, cfg.n_mono_band_nm)
 

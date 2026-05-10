@@ -3253,6 +3253,103 @@ def _apply_k_floor_to_result(
     )
 
 
+def _run_sigma_mesh_polish(
+    cfg: "SplineOptConfig",
+    out: dict,
+    log: logging.Logger,
+    coord: "_WorkerProgressCoordinator",
+    stop_event: "Event | None",
+) -> None:
+    """Run sigma-mesh cubic spline polish (step 07c) on the result dict in-place."""
+    # Clear stale polish keys
+    for _k in (
+        "spectral_rmse_seg_spline_sigma", "n_lam_seg_spline_sigma",
+        "k_lam_seg_spline_sigma", "d_nm_seg_spline_sigma", "x_seg_spline_sigma",
+        "spectral_rmse_seg_pwl", "n_lam_seg_pwl", "k_lam_seg_pwl",
+        "d_nm_seg_pwl", "x_seg_pwl",
+    ):
+        out.pop(_k, None)
+
+    log.info("PIPELINE [07c] sigma-mesh polish - single cubic sigma-spline pass (same x0 as segmented solver).")
+
+    if not bool(getattr(cfg, "node_mesh_spectral_polish_enabled", True)):
+        log.info(
+            "PIPELINE [07c] SKIP: node_mesh_spectral_polish_enabled=False. "
+            "SMART COACHING: The final mesh polish (L-BFGS-B cubic smoothing) was skipped. "
+            "If your final metric (RMSE) is poor but intermediate models were good, enable 'node_mesh_spectral_polish_enabled' for a final holistic optimization."
+        )
+        coord.emit(82, "sigma mesh polish disabled - continuing.")
+        return
+
+    xb_sk = build_segment_optimizer_x_vector(out, cfg)
+    if xb_sk is None:
+        log.warning(
+            "PIPELINE [07c] POLISH FAILED: Unable to build [d, n nodes, ln k nodes] optimization vector. "
+            "SMART COACHING: Your intermediate spline failed to resolve physically valid 'n_nodes_physical'. "
+            "Check for extremely restrictive d bounds or divergent thickness targets."
+        )
+        coord.emit(82, "Mesh polish impossible (x vector) - continuing.")
+        return
+
+    if stop_event is not None and stop_event.is_set():
+        log.info("PIPELINE [07c] SKIP: mesh polish aborted because UI cancel event was triggered.")
+        coord.emit(82, "Stop before mesh polish - continuing.")
+        return
+
+    xb, sk_pol = xb_sk
+    xa_dbg = out.get("x")
+    if xa_dbg is not None:
+        xa_a = np.asarray(xa_dbg, dtype=np.float64).ravel()
+        if xa_a.size == 1 + 2 * int(sk_pol.size):
+            _src_x0 = "x vector from segmental solver (direct reuse)"
+        else:
+            _src_x0 = "reconstruction from d_nm, n_nodes_physical, L_nodes (x solver size != 1+2K)"
+    else:
+        _src_x0 = "reconstruction from d_nm, n_nodes_physical, L_nodes (no x output)"
+
+    bounds_b, _, _, _ = _bounds_x0_for_sigma_knots(cfg, sk_pol)
+    x0c = clip_to_bounds(
+        np.asarray(xb, dtype=np.float64).copy(), bounds_b[:, 0], bounds_b[:, 1],
+    )
+    nm_mf = getattr(cfg, "node_model_spectral_polish_maxfun", None)
+    mf_pol = int(nm_mf) if nm_mf is not None else int(cfg.polish_maxfun)
+    mf_pol = max(300, mf_pol)
+
+    log.info(
+        "PIPELINE [07c] Common start | K=%d sigma knots | source=%s | d(started)=%.6f nm | "
+        "node_model_spectral_polish_maxfun->effective maxfun=%d (floor 300) | stop_event=%s",
+        int(sk_pol.size), _src_x0, float(x0c[0]), mf_pol,
+        "active" if (stop_event is not None and stop_event.is_set()) else "inactive",
+    )
+    coord.emit(76, "Spectral mesh polish: cubic spline sigma...")
+    suf = "seg_spline_sigma"
+    x_polish = np.asarray(x0c, dtype=np.float64).copy()
+
+    pack = _spectral_polish_node_mesh_profile(
+        cfg, out, x_polish, sk_pol, bounds_b,
+        stop_event=stop_event, maxfun=mf_pol, progress_cb=coord.scoped(76, 92),
+    )
+    if pack is not None:
+        out[f"n_lam_{suf}"] = pack["n_lam"]
+        out[f"k_lam_{suf}"] = pack["k_lam"]
+        out[f"d_nm_{suf}"] = float(pack["d_nm"])
+        out[f"x_{suf}"] = pack["x_best"]
+        out[f"spectral_rmse_{suf}"] = pack["spectral_rmse"]
+        log.info(
+            "PIPELINE [07c] Storing result %s | spectral_rmse_%s=%s | d_nm_%s=%.6f nm",
+            suf, suf,
+            f"{float(pack['spectral_rmse']):.8f}"
+            if pack.get("spectral_rmse") is not None and np.isfinite(float(pack["spectral_rmse"]))
+            else "n/a",
+            suf, float(pack["d_nm"]),
+        )
+    else:
+        log.info(
+            "PIPELINE [07c] Spline sigma pass: no packets returned (empty mask, stop or internal error).",
+        )
+    coord.emit(92, "sigma mesh polish completed - RMSE synthesis.")
+
+
 def worker_spline_optimization(cfg: SplineOptConfig, stop_event: Event, progress_cb, live_cb=None) -> dict | None:
     """Orchestrates the full spline pipeline (SOL2 -> post-processing).
 
@@ -3501,137 +3598,7 @@ def worker_spline_optimization(cfg: SplineOptConfig, stop_event: Event, progress
 
     _apply_k_floor_to_result(cfg, out, log)
 
-    # --- 07c Spectral polish on sigma mesh: cubic spline only ---
-
-    for _k in (
-        "spectral_rmse_seg_spline_sigma",
-        "n_lam_seg_spline_sigma",
-        "k_lam_seg_spline_sigma",
-        "d_nm_seg_spline_sigma",
-        "x_seg_spline_sigma",
-        # States saved before rework: remove to avoid mixing with current output.
-        "spectral_rmse_seg_pwl",
-        "n_lam_seg_pwl",
-        "k_lam_seg_pwl",
-        "d_nm_seg_pwl",
-        "x_seg_pwl",
-    ):
-        out.pop(_k, None)
-
-    log.info("PIPELINE [07c] sigma-mesh polish - single cubic sigma-spline pass (same x0 as segmented solver).")
-
-    if not bool(getattr(cfg, "node_mesh_spectral_polish_enabled", True)):
-        log.info(
-            "PIPELINE [07c] SKIP: node_mesh_spectral_polish_enabled=False. "
-            "SMART COACHING: The final mesh polish (L-BFGS-B cubic smoothing) was skipped. "
-            "If your final metric (RMSE) is poor but intermediate models were good, enable 'node_mesh_spectral_polish_enabled' for a final holistic optimization."
-        )
-
-        coord.emit(82, "sigma mesh polish disabled - continuing.")
-
-    else:
-        xb_sk = build_segment_optimizer_x_vector(out, cfg)
-
-        if xb_sk is None:
-            log.warning(
-                "PIPELINE [07c] POLISH FAILED: Unable to build [d, n nodes, ln k nodes] optimization vector. "
-                "SMART COACHING: Your intermediate spline failed to resolve physically valid 'n_nodes_physical'. "
-                "Check for extremely restrictive d bounds or divergent thickness targets."
-            )
-
-            coord.emit(82, "Mesh polish impossible (x vector) - continuing.")
-
-        elif stop_event is not None and stop_event.is_set():
-            log.info("PIPELINE [07c] SKIP: mesh polish aborted because UI cancel event was triggered.")
-
-            coord.emit(82, "Stop before mesh polish - continuing.")
-
-        else:
-            xb, sk_pol = xb_sk
-
-            xa_dbg = out.get("x")
-
-            if xa_dbg is not None:
-                xa_a = np.asarray(xa_dbg, dtype=np.float64).ravel()
-
-                if xa_a.size == 1 + 2 * int(sk_pol.size):
-                    _src_x0 = "x vector from segmental solver (direct reuse)"
-
-                else:
-                    _src_x0 = "reconstruction from d_nm, n_nodes_physical, L_nodes (x solver size != 1+2K)"
-
-            else:
-                _src_x0 = "reconstruction from d_nm, n_nodes_physical, L_nodes (no x output)"
-
-            bounds_b, _, _, _ = _bounds_x0_for_sigma_knots(cfg, sk_pol)
-
-            x0c = clip_to_bounds(
-                np.asarray(xb, dtype=np.float64).copy(),
-                bounds_b[:, 0],
-                bounds_b[:, 1],
-            )
-
-            nm_mf = getattr(cfg, "node_model_spectral_polish_maxfun", None)
-
-            mf_pol = int(nm_mf) if nm_mf is not None else int(cfg.polish_maxfun)
-
-            mf_pol = max(300, mf_pol)
-
-            log.info(
-                "PIPELINE [07c] Common start | K=%d sigma knots | source=%s | d(started)=%.6f nm | "
-                "node_model_spectral_polish_maxfun->effective maxfun=%d (floor 300) | stop_event=%s",
-                int(sk_pol.size),
-                _src_x0,
-                float(x0c[0]),
-                mf_pol,
-                "active" if (stop_event is not None and stop_event.is_set()) else "inactive",
-            )
-
-            coord.emit(76, "Spectral mesh polish: cubic spline sigma...")
-
-            suf = "seg_spline_sigma"
-
-            x_polish = np.asarray(x0c, dtype=np.float64).copy()
-
-            pack = _spectral_polish_node_mesh_profile(
-                cfg,
-                out,
-                x_polish,
-                sk_pol,
-                bounds_b,
-                stop_event=stop_event,
-                maxfun=mf_pol,
-                progress_cb=coord.scoped(76, 92),
-            )
-
-            if pack is not None:
-                out[f"n_lam_{suf}"] = pack["n_lam"]
-
-                out[f"k_lam_{suf}"] = pack["k_lam"]
-
-                out[f"d_nm_{suf}"] = float(pack["d_nm"])
-
-                out[f"x_{suf}"] = pack["x_best"]
-
-                out[f"spectral_rmse_{suf}"] = pack["spectral_rmse"]
-
-                log.info(
-                    "PIPELINE [07c] Storing result %s | spectral_rmse_%s=%s | d_nm_%s=%.6f nm",
-                    suf,
-                    suf,
-                    f"{float(pack['spectral_rmse']):.8f}"
-                    if pack.get("spectral_rmse") is not None and np.isfinite(float(pack["spectral_rmse"]))
-                    else "n/a",
-                    suf,
-                    float(pack["d_nm"]),
-                )
-
-            else:
-                log.info(
-                    "PIPELINE [07c] Spline sigma pass: no packets returned (empty mask, stop or internal error).",
-                )
-
-            coord.emit(92, "sigma mesh polish completed - RMSE synthesis.")
+    _run_sigma_mesh_polish(cfg, out, log, coord, stop_event)
 
     lam_seg = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
 

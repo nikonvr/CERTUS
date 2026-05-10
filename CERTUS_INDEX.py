@@ -191,7 +191,10 @@ from certus_physics import (
     _compute_phase2_derivatives_kernel,
     _compute_ir_global_cost_gradient_kernel,
     calculate_single_interface_R,
+    calculate_bare_substrate_R,
+    calculate_bare_substrate_R_absorbing,
     calculate_bare_substrate_RT,
+    calculate_bare_substrate_T_absorbing,
     calculate_RT_single_layer_absorbing_substrate_array,
     calculate_RT_single_layer_backside_array,
     calculate_transmission_single,
@@ -4070,14 +4073,14 @@ class IRGlobalModelWorker(QObject):
             R_sub_full = calculate_single_interface_R(l_full, n_sub_full)
 
         elif c.has_absorbing_substrate:
-            T_sub_full = calculate_bare_substrate_RT(l_full, n_sub_full, _k_sub_full, _D_sub)
+            T_sub_full = calculate_bare_substrate_T_absorbing(l_full, n_sub_full, _k_sub_full, _D_sub)
 
-            R_sub_full = calculate_bare_substrate_RT(l_full, n_sub_full, _k_sub_full, _D_sub)
+            R_sub_full = calculate_bare_substrate_R_absorbing(l_full, n_sub_full, _k_sub_full, _D_sub)
 
         else:
             T_sub_full = calculate_bare_substrate_RT(l_full, n_sub_full)
 
-            R_sub_full = calculate_bare_substrate_RT, calculate_single_interface_R(l_full, n_sub_full)
+            R_sub_full = calculate_bare_substrate_R(l_full, n_sub_full)
 
         target_T = c.target_data["T"].to_numpy(dtype=np.float64) if "T" in c.target_data.columns else None
 
@@ -5090,7 +5093,7 @@ def _compute_RT_from_config(c, l_full, n, k, thickness, n_sub) -> tuple:
     elif getattr(c, "has_absorbing_substrate", False):
         Rc, Tc = calculate_RT_single_layer_absorbing_substrate_array(l_full, n, k, thickness, n_sub, _k_sub, _D_sub)
 
-        Ts = calculate_bare_substrate_RT(l_full, n_sub, _k_sub, _D_sub)
+        Ts = calculate_bare_substrate_T_absorbing(l_full, n_sub, _k_sub, _D_sub)
 
         return Rc, Tc, Ts
 
@@ -6740,9 +6743,9 @@ class CertusIndexApp(CertusBaseApp):
 
             k_sub_test = np.array([1e-4, 1e-4])
 
-            calculate_bare_substrate_RT(wls, n_test, k_sub_test, 1.0e6)
+            calculate_bare_substrate_T_absorbing(wls, n_test, k_sub_test, 1.0e6)
 
-            calculate_bare_substrate_RT(wls, n_test, k_sub_test, 1.0e6)
+            calculate_bare_substrate_R_absorbing(wls, n_test, k_sub_test, 1.0e6)
 
             calculate_RT_single_layer_absorbing_substrate_array(wls, n_test, k_test, 100.0, n_test, k_sub_test, 1.0e6)
 

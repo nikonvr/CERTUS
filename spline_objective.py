@@ -783,6 +783,18 @@ class SplinePWLObjective:
         )
         self._n_mono_band_nm = cfg.n_mono_band_nm
 
+        # ── Pre-resolved penalty config (avoid 7x getattr per gradient call) ──
+        self._pen_weight = float(getattr(cfg, "n_lambda_rising_penalty_weight", 0.0) or 0.0)
+        _pen_band = getattr(cfg, "n_lambda_rising_penalty_band_nm", None)
+        self._pen_band = _pen_band
+        self._pen_slack = max(float(getattr(cfg, "n_lambda_rising_penalty_slack", 0.0) or 0.0), 0.0)
+        if self._pen_weight > 0.0 and _pen_band is not None:
+            self._pen_lam_lo = float(min(float(_pen_band[0]), float(_pen_band[1])))
+            self._pen_lam_hi = float(max(float(_pen_band[0]), float(_pen_band[1])))
+        else:
+            self._pen_lam_lo = 0.0
+            self._pen_lam_hi = 0.0
+
         # Thread-local cache: each thread gets its own entry, preventing
         # race conditions when PGlobalOptimizer evaluates in parallel.
         self._tls = threading.local()
@@ -791,7 +803,7 @@ class SplinePWLObjective:
 
         c = getattr(self._tls, "_cache", None)
 
-        if c is None or c["x"].shape != x.shape or not np.array_equal(c["x"], x):
+        if c is None or c["_xbytes"] != x.data.tobytes():
             return None
 
         return c
@@ -851,7 +863,7 @@ class SplinePWLObjective:
         final_cost = float(mse_sp) + float(pen)
 
         # Cache cost + (n_l, k_l) for reuse by analytic_gradient on same x
-        self._tls._cache = {"x": x.copy(), "cost": final_cost, "n_l": n_l, "k_l": k_l}
+        self._tls._cache = {"_xbytes": x.data.tobytes(), "cost": final_cost, "n_l": n_l, "k_l": k_l}
 
         return final_cost
 
@@ -1057,43 +1069,32 @@ def _lambda_rising_penalty_grad_nn(sk: np.ndarray, nn: np.ndarray, cfg: SplineOp
         return g
 
     lam_lo = float(min(float(band[0]), float(band[1])))
-
     lam_hi = float(max(float(band[0]), float(band[1])))
 
     eps = 1e-12
 
-    for j in range(ksz - 1):
-        s0, s1 = float(sk[j]), float(sk[j + 1])
+    # Vectorized segment geometry
+    s0 = sk[:-1]
+    s1 = sk[1:]
+    valid = s1 > (s0 + eps)
 
-        if s1 <= s0 + eps:
-            continue
+    lam_min_seg = 1.0 / np.maximum(s1, 1e-30)
+    lam_max_seg = 1.0 / np.maximum(s0, 1e-30)
+    seg_lo = np.minimum(lam_min_seg, lam_max_seg)
+    seg_hi = np.maximum(lam_min_seg, lam_max_seg)
 
-        lam_min_seg = 1.0 / s1
+    in_band = valid & (seg_hi >= lam_lo) & (seg_lo <= lam_hi)
 
-        lam_max_seg = 1.0 / s0
+    viol = nn[:-1] - nn[1:]
+    ve = np.maximum(viol - slack, 0.0)
+    active = in_band & (viol > eps) & (ve > 0.0)
 
-        seg_lo = min(lam_min_seg, lam_max_seg)
+    if not np.any(active):
+        return g
 
-        seg_hi = max(lam_min_seg, lam_max_seg)
-
-        if seg_hi < lam_lo or seg_lo > lam_hi:
-            continue
-
-        viol = float(nn[j]) - float(nn[j + 1])
-
-        if viol <= eps:
-            continue
-
-        ve = max(0.0, viol - slack)
-
-        if ve <= 0.0:
-            continue
-
-        dv = 2.0 * wpen * ve
-
-        g[j] += dv
-
-        g[j + 1] -= dv
+    dv = 2.0 * wpen * ve * active
+    g[:-1] += dv
+    g[1:] -= dv
 
     return g
 

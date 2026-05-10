@@ -30,7 +30,6 @@ log = logging.getLogger("CERTUS")
 ALPHA_NL_LO: float = 0.995
 ALPHA_NL_HI: float = 1.005
 ALPHA_NL_STEP: float = 0.0005
-ALPHA_NL_SIGMA_PRIOR: float = 0.0015
 
 _NL_KEYS_CLEAR: tuple[str, ...] = (
     "nl_alpha_opt",

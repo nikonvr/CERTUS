@@ -408,7 +408,6 @@ from certus_core import (
     TWO_PI,
     WL_DECIMALS,
     get_complex_dtype,
-    get_resource_path,
 )
 
 

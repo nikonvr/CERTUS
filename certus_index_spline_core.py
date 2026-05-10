@@ -543,10 +543,6 @@ def _reflectance_absolute_backside_from_nk(
 # Adaptive mesh + needle: mandatory local descent (seed / after probe)
 
 
-NEEDLE_POST_POLISH_MIN_MAXFUN: int = 800
-
-
-ADAPTIVE_STAGE_LOCAL_DEFAULT_MAXFUN: int = 900
 
 
 # Automation / perf presets (overridden by explicit fields if provided)
@@ -2347,20 +2343,12 @@ class SplineOptConfig:
         self.nonlinear_alpha.nl_alpha_bisection_max_iter = value
 
     # --- Legacy Composition & View Methods (P4 Scaffold Compatibility) ---
-    def compose(self):
-        return self
 
     def pglobal_view(self):
         return self.pglobal
 
-    def smart_init_view(self):
-        return self.smart_init
-
     def corridor_view(self):
         return self.corridor
-
-    def bootstrap_view(self):
-        return self.bootstrap
 
     def nonlinear_alpha_view(self):
         return self.nonlinear_alpha
@@ -3445,7 +3433,7 @@ def log_rmse_mesh_bridge_diagnosis(
 
             x_cr = np.concatenate((x_c[0:1], n_phys_c, L_blk))
 
-            msp_cr, pen_cr, tot_cr = decompose_spline_pwl_objective(cfg_canon_relax, sk_c, x_cr)
+            msp_cr, _, tot_cr = decompose_spline_pwl_objective(cfg_canon_relax, sk_c, x_cr)
 
         else:
             _, _, tot_cr = float("nan"), float("nan"), float("nan")
@@ -3528,7 +3516,3 @@ def log_rmse_mesh_bridge_diagnosis(
 
     except NUMERICAL_FAULT_EXCEPTIONS as exc:
         log.warning("%s | diagnostic failed: %s", tag, exc, exc_info=True)
-
-
-# Backward compatibility alias for the P4 scaffold
-SplineComposedConfig = SplineOptConfig

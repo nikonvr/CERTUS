@@ -162,3 +162,35 @@ def spectral_rmse_weights(lam, weight_space="log"):
         w = np.ones_like(lam)
 
     return w
+
+
+def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:
+    """Generate a uniform wavelength grid in [lo_h, hi_h] at the given step (nm)."""
+
+    if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
+        return np.array([], dtype=np.float64)
+
+    st = float(np.ceil(lo_h / step) * step)
+
+    en = float(np.floor(hi_h / step) * step)
+
+    if en < st - 1e-9:
+        return np.array([0.5 * (lo_h + hi_h)], dtype=np.float64)
+
+    if abs(en - st) < 1e-9:
+        return np.array([st], dtype=np.float64)
+
+    return np.arange(st, en + 1e-9, step, dtype=np.float64)
+
+
+def _sorted_finite_sigma_knots(sigma_knots) -> np.ndarray:
+    """Return sorted, unique, strictly positive finite sigma knots."""
+
+    arr = np.asarray(sigma_knots if sigma_knots is not None else [], dtype=np.float64).ravel()
+
+    arr = arr[np.isfinite(arr) & (arr > 0.0)]
+
+    if arr.size == 0:
+        return np.empty(0, dtype=np.float64)
+
+    return np.unique(np.sort(arr))

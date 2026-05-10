@@ -77,6 +77,8 @@ from certus_physics import (
     get_n_substrate_array_by_id,
 )
 from certus_index_utils import (
+    _lam_uniform_grid,
+    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_impl,
     log_structured_json_event,
 )
 from certus_ui import (
@@ -12480,15 +12482,7 @@ class CertusIndexSplineApp(
 
     @staticmethod
     def _sorted_finite_sigma_knots(sigma_knots: Any) -> np.ndarray:
-
-        arr = np.asarray(sigma_knots if sigma_knots is not None else [], dtype=np.float64).ravel()
-
-        arr = arr[np.isfinite(arr) & (arr > 0.0)]
-
-        if arr.size == 0:
-            return np.empty(0, dtype=np.float64)
-
-        return np.unique(np.sort(arr))
+        return _sorted_finite_sigma_knots_impl(sigma_knots)
 
     @staticmethod
     def _sigma_knots_to_lambda_nm(sigma_knots: Any) -> np.ndarray:
@@ -15171,21 +15165,7 @@ class CertusIndexSplineApp(
 
     @staticmethod
     def _lam_uniform_grid_nm(lo_h: float, hi_h: float, step: float) -> np.ndarray:
-
-        if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
-            return np.array([], dtype=np.float64)
-
-        st = float(np.ceil(lo_h / step) * step)
-
-        en = float(np.floor(hi_h / step) * step)
-
-        if en < st - 1e-9:
-            return np.array([0.5 * (lo_h + hi_h)], dtype=np.float64)
-
-        if abs(en - st) < 1e-9:
-            return np.array([st], dtype=np.float64)
-
-        return np.arange(st, en + 1e-9, step, dtype=np.float64)
+        return _lam_uniform_grid(lo_h, hi_h, step)
 
     @staticmethod
     def _lam_piecewise_report_grid_nm(lo: float, hi: float) -> np.ndarray:

@@ -49,6 +49,7 @@ from certus_index_spline_core import (
 from certus_index_utils import (
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,
+    _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_for_log,
     _transmittance_absolute_from_nk,
 )
 
@@ -336,12 +337,7 @@ def _should_skip_manual_insert_for_equal_mesh(
     return bool(sk_new.size == sk.size and np.allclose(sk_new, sk, rtol=1e-10, atol=1e-12))
 
 
-def _sorted_finite_sigma_knots_for_log(sigma_knots: np.ndarray | None) -> np.ndarray:
-    arr = np.asarray(sigma_knots if sigma_knots is not None else [], dtype=np.float64).ravel()
-    arr = arr[np.isfinite(arr) & (arr > 0.0)]
-    if arr.size == 0:
-        return np.empty(0, dtype=np.float64)
-    return np.unique(np.sort(arr))
+
 
 
 def _sigma_knot_difference_for_log(

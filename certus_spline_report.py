@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from certus_core import NUMERICAL_FAULT_EXCEPTIONS, K_MAX_LIMIT
+from certus_index_utils import _lam_uniform_grid
 from certus_physics import calculate_bare_substrate_RT
 from certus_index_spline_core import (
     _to_fraction_T,
@@ -859,22 +860,7 @@ class SplineReportBuilder:
                     else float("nan")
                 )
 
-                def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:
 
-                    if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
-                        return np.array([], dtype=np.float64)
-
-                    st = float(np.ceil(lo_h / step) * step)
-
-                    en = float(np.floor(hi_h / step) * step)
-
-                    if en < st - 1e-9:
-                        return np.array([0.5 * (lo_h + hi_h)], dtype=np.float64)
-
-                    if abs(en - st) < 1e-9:
-                        return np.array([st], dtype=np.float64)
-
-                    return np.arange(st, en + 1e-9, step, dtype=np.float64)
 
                 ls_src = np.asarray(lam_src_full, dtype=np.float64).ravel()
 

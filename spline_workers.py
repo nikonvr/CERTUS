@@ -995,31 +995,9 @@ def _run_free_knot_stage(
 
         return n_l, k_l, float(d), LL_a
 
-    def _spectral_mse_sol3(z: np.ndarray) -> float:
-
-        if stop_event.is_set():
-            return 1e30
-
-        if optimize_n:
-            n_l, k_l, d, _, _ = _sol3_split_to_nk_masked(z)
-
-        else:
-            n_l, k_l, d, _ = _sol3b_to_nk_masked(z)
-
-        return float(
-            spline_objective_mse_on_masked_grid(
-                cfg,
-                lam_f=lam_f,
-                n_sub_f=n_sub_f_mg,
-                w=w_f,
-                inv_npix=inv_npix,
-                t_exp_f=t_exp_f,
-                r_exp_f=r_exp_f,
-                n_l=n_l,
-                k_l=k_l,
-                d=d,
-            )
-        )
+    # _spectral_mse_sol3 is functionally identical to _obj (same body).
+    # Kept as alias for semantic clarity: _obj feeds the optimizer,
+    # _spectral_mse_sol3 is used for diagnostic RMSE evaluations.
 
     def _obj(z: np.ndarray) -> float:
 
@@ -1044,8 +1022,10 @@ def _run_free_knot_stage(
                 n_l=n_l,
                 k_l=k_l,
                 d=d,
-            )
         )
+        )
+
+    _spectral_mse_sol3 = _obj
 
     if optimize_n and x_sol2_for_check is not None:
         try:

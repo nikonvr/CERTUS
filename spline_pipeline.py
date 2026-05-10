@@ -1262,6 +1262,147 @@ def _sensitivity_rank_inner_indices(
     return result
 
 
+def _build_local_pull_variants(
+    knots: np.ndarray,
+    removed_idx: int,
+    pull_enabled: bool,
+    pull_ratios: list[float],
+) -> list[tuple[str, np.ndarray]]:
+    """Build candidate knot sets after removal, optionally pulling local neighbors inward.
+
+    Extreme knots are never moved; only non-extreme neighbors around the removed knot
+    can be shifted toward the removed position.
+    """
+    base = np.delete(np.asarray(knots, dtype=np.float64).ravel(), int(removed_idx))
+    variants: list[tuple[str, np.ndarray]] = [("baseline", base)]
+    if (not pull_enabled) or (not pull_ratios):
+        return variants
+
+    K0 = int(knots.size)
+    if removed_idx <= 0 or removed_idx >= (K0 - 1):
+        return variants
+
+    left = float(knots[removed_idx - 1])
+    rem = float(knots[removed_idx])
+    right = float(knots[removed_idx + 1])
+    can_move_left = (removed_idx - 1) > 0
+    can_move_right = (removed_idx + 1) < (K0 - 1)
+    if (not can_move_left) and (not can_move_right):
+        return variants
+
+    span = max(float(knots[-1] - knots[0]), 1e-12)
+    eps = max(1e-12, 1e-6 * span)
+
+    def _apply_pull(base_knots: np.ndarray, r_left: float, r_right: float, tag: str) -> None:
+        cand = base_knots.copy()
+        l_idx = removed_idx - 1
+        r_idx = removed_idx
+
+        if can_move_left and r_left > 0.0:
+            left_new = left + float(r_left) * (rem - left)
+            left_prev = float(knots[removed_idx - 2]) if (removed_idx - 2) >= 0 else -float("inf")
+            left_upper = float(cand[r_idx]) - eps
+            left_new = max(left_new, left_prev + eps)
+            left_new = min(left_new, left_upper)
+            cand[l_idx] = left_new
+
+        if can_move_right and r_right > 0.0:
+            right_new = right - float(r_right) * (right - rem)
+            right_next = float(knots[removed_idx + 2]) if (removed_idx + 2) < K0 else float("inf")
+            right_lower = float(cand[l_idx]) + eps
+            right_new = min(right_new, right_next - eps)
+            right_new = max(right_new, right_lower)
+            cand[r_idx] = right_new
+
+        if not np.all(np.isfinite(cand)):
+            return
+        if np.any(np.diff(cand) <= 0.0):
+            return
+
+        is_dup = any(np.allclose(prev_knots, cand, rtol=0.0, atol=eps) for _, prev_knots in variants)
+        if is_dup:
+            return
+        variants.append((tag, cand.copy()))
+
+    for ratio in pull_ratios:
+        _apply_pull(base, float(ratio), float(ratio), f"neighbor_pull_sym_r{ratio:.2f}")
+        if can_move_left:
+            _apply_pull(base, float(ratio), 0.0, f"neighbor_pull_left_r{ratio:.2f}")
+        if can_move_right:
+            _apply_pull(base, 0.0, float(ratio), f"neighbor_pull_right_r{ratio:.2f}")
+
+    return variants
+
+
+def _build_local_refine_variants(
+    knots: np.ndarray,
+    removed_idx: int,
+    seed_knots: np.ndarray,
+    pull_enabled: bool,
+    local_refine_enabled: bool,
+    local_refine_rel_step: float,
+) -> list[tuple[str, np.ndarray]]:
+    """Small 2D local grid around removed-gap neighbors (conditional, low-cost)."""
+    if not (pull_enabled and local_refine_enabled):
+        return []
+
+    K0 = int(knots.size)
+    if removed_idx <= 0 or removed_idx >= (K0 - 1):
+        return []
+
+    can_move_left = (removed_idx - 1) > 0
+    can_move_right = (removed_idx + 1) < (K0 - 1)
+    if (not can_move_left) and (not can_move_right):
+        return []
+
+    base = np.asarray(seed_knots, dtype=np.float64).ravel().copy()
+    l_idx = removed_idx - 1
+    r_idx = removed_idx
+    if base.size <= r_idx:
+        return []
+
+    left_prev = float(knots[removed_idx - 2]) if (removed_idx - 2) >= 0 else -float("inf")
+    right_next = float(knots[removed_idx + 2]) if (removed_idx + 2) < K0 else float("inf")
+    span = max(float(knots[-1] - knots[0]), 1e-12)
+    eps = max(1e-12, 1e-6 * span)
+
+    local_gap = float(base[r_idx] - base[l_idx])
+    if not np.isfinite(local_gap) or local_gap <= 0.0:
+        return []
+    step = float(np.clip(local_refine_rel_step * local_gap, eps, 0.25 * local_gap))
+
+    deltas = (-step, 0.0, step)
+    out: list[tuple[str, np.ndarray]] = []
+    for d_left in deltas:
+        for d_right in deltas:
+            if abs(d_left) < 0.5 * eps and abs(d_right) < 0.5 * eps:
+                continue
+            cand = base.copy()
+            if can_move_left:
+                cand[l_idx] = float(cand[l_idx] + d_left)
+            if can_move_right:
+                cand[r_idx] = float(cand[r_idx] + d_right)
+
+            if can_move_left:
+                cand[l_idx] = max(cand[l_idx], left_prev + eps)
+            if can_move_right:
+                cand[r_idx] = min(cand[r_idx], right_next - eps)
+            cand[l_idx] = min(cand[l_idx], cand[r_idx] - eps)
+            cand[r_idx] = max(cand[r_idx], cand[l_idx] + eps)
+
+            if not np.all(np.isfinite(cand)):
+                continue
+            if np.any(np.diff(cand) <= 0.0):
+                continue
+
+            dup = any(np.allclose(prev, cand, rtol=0.0, atol=eps) for _, prev in out)
+            if dup:
+                continue
+            out.append((f"neighbor_pull_refine_dl{d_left:+.3e}_dr{d_right:+.3e}", cand.copy()))
+
+    return out
+
+
 def worker_spline_auto_clean_knots(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -1325,139 +1466,9 @@ def worker_spline_auto_clean_knots(
         int(candidate_polish_maxfun),
     )
 
-    def _build_local_pull_variants(knots: np.ndarray, removed_idx: int) -> list[tuple[str, np.ndarray]]:
-        """Build candidate knot sets after removal, optionally pulling local neighbors inward.
 
-        Extreme knots are never moved; only non-extreme neighbors around the removed knot
-        can be shifted toward the removed position.
-        """
-        base = np.delete(np.asarray(knots, dtype=np.float64).ravel(), int(removed_idx))
-        variants: list[tuple[str, np.ndarray]] = [("baseline", base)]
-        if (not pull_enabled) or (not pull_ratios):
-            return variants
 
-        K0 = int(knots.size)
-        if removed_idx <= 0 or removed_idx >= (K0 - 1):
-            return variants
 
-        left = float(knots[removed_idx - 1])
-        rem = float(knots[removed_idx])
-        right = float(knots[removed_idx + 1])
-        can_move_left = (removed_idx - 1) > 0
-        can_move_right = (removed_idx + 1) < (K0 - 1)
-        if (not can_move_left) and (not can_move_right):
-            return variants
-
-        span = max(float(knots[-1] - knots[0]), 1e-12)
-        eps = max(1e-12, 1e-6 * span)
-
-        def _apply_pull(base_knots: np.ndarray, r_left: float, r_right: float, tag: str) -> None:
-            cand = base_knots.copy()
-
-            # After deleting removed_idx, left neighbor is at removed_idx-1 and right at removed_idx.
-            l_idx = removed_idx - 1
-            r_idx = removed_idx
-
-            if can_move_left and r_left > 0.0:
-                left_new = left + float(r_left) * (rem - left)
-                left_prev = float(knots[removed_idx - 2]) if (removed_idx - 2) >= 0 else -float("inf")
-                left_upper = float(cand[r_idx]) - eps
-                left_new = max(left_new, left_prev + eps)
-                left_new = min(left_new, left_upper)
-                cand[l_idx] = left_new
-
-            if can_move_right and r_right > 0.0:
-                right_new = right - float(r_right) * (right - rem)
-                right_next = float(knots[removed_idx + 2]) if (removed_idx + 2) < K0 else float("inf")
-                right_lower = float(cand[l_idx]) + eps
-                right_new = min(right_new, right_next - eps)
-                right_new = max(right_new, right_lower)
-                cand[r_idx] = right_new
-
-            if not np.all(np.isfinite(cand)):
-                return
-            if np.any(np.diff(cand) <= 0.0):
-                return
-
-            is_dup = any(np.allclose(prev_knots, cand, rtol=0.0, atol=eps) for _, prev_knots in variants)
-            if is_dup:
-                return
-            variants.append((tag, cand.copy()))
-
-        for ratio in pull_ratios:
-            # Symmetric inward pull.
-            _apply_pull(base, float(ratio), float(ratio), f"neighbor_pull_sym_r{ratio:.2f}")
-            # Asymmetric pulls (one side only) to capture skewed local optima.
-            if can_move_left:
-                _apply_pull(base, float(ratio), 0.0, f"neighbor_pull_left_r{ratio:.2f}")
-            if can_move_right:
-                _apply_pull(base, 0.0, float(ratio), f"neighbor_pull_right_r{ratio:.2f}")
-
-        return variants
-
-    def _build_local_refine_variants(
-        knots: np.ndarray, removed_idx: int, seed_knots: np.ndarray
-    ) -> list[tuple[str, np.ndarray]]:
-        """Small 2D local grid around removed-gap neighbors (conditional, low-cost)."""
-        if not (pull_enabled and local_refine_enabled):
-            return []
-
-        K0 = int(knots.size)
-        if removed_idx <= 0 or removed_idx >= (K0 - 1):
-            return []
-
-        can_move_left = (removed_idx - 1) > 0
-        can_move_right = (removed_idx + 1) < (K0 - 1)
-        if (not can_move_left) and (not can_move_right):
-            return []
-
-        base = np.asarray(seed_knots, dtype=np.float64).ravel().copy()
-        l_idx = removed_idx - 1
-        r_idx = removed_idx
-        if base.size <= r_idx:
-            return []
-
-        left_prev = float(knots[removed_idx - 2]) if (removed_idx - 2) >= 0 else -float("inf")
-        right_next = float(knots[removed_idx + 2]) if (removed_idx + 2) < K0 else float("inf")
-        span = max(float(knots[-1] - knots[0]), 1e-12)
-        eps = max(1e-12, 1e-6 * span)
-
-        local_gap = float(base[r_idx] - base[l_idx])
-        if not np.isfinite(local_gap) or local_gap <= 0.0:
-            return []
-        step = float(np.clip(local_refine_rel_step * local_gap, eps, 0.25 * local_gap))
-
-        deltas = (-step, 0.0, step)
-        out: list[tuple[str, np.ndarray]] = []
-        for d_left in deltas:
-            for d_right in deltas:
-                if abs(d_left) < 0.5 * eps and abs(d_right) < 0.5 * eps:
-                    continue
-                cand = base.copy()
-                if can_move_left:
-                    cand[l_idx] = float(cand[l_idx] + d_left)
-                if can_move_right:
-                    cand[r_idx] = float(cand[r_idx] + d_right)
-
-                if can_move_left:
-                    cand[l_idx] = max(cand[l_idx], left_prev + eps)
-                if can_move_right:
-                    cand[r_idx] = min(cand[r_idx], right_next - eps)
-                # Keep strict ordering locally.
-                cand[l_idx] = min(cand[l_idx], cand[r_idx] - eps)
-                cand[r_idx] = max(cand[r_idx], cand[l_idx] + eps)
-
-                if not np.all(np.isfinite(cand)):
-                    continue
-                if np.any(np.diff(cand) <= 0.0):
-                    continue
-
-                dup = any(np.allclose(prev, cand, rtol=0.0, atol=eps) for _, prev in out)
-                if dup:
-                    continue
-                out.append((f"neighbor_pull_refine_dl{d_left:+.3e}_dr{d_right:+.3e}", cand.copy()))
-
-        return out
 
     current_result = _copy.deepcopy(base_result)
     current_knots = np.sort(target_sigma_knots)
@@ -1688,7 +1699,7 @@ def worker_spline_auto_clean_knots(
             if stop_event.is_set():
                 break
 
-            variants = _build_local_pull_variants(active_knots, i)
+            variants = _build_local_pull_variants(active_knots, i, pull_enabled, pull_ratios)
             log.debug(
                 "INDEX_SPLINE [AUTO_CLEAN] step=%d evaluating removal idx=%d/%d | variants=%d",
                 int(step + 1),
@@ -1799,7 +1810,10 @@ def worker_spline_auto_clean_knots(
                 and not stop_event.is_set()
                 and not _have_decisive_local_candidate(local_best_rmse)
             ):
-                refine_variants = _build_local_refine_variants(active_knots, i, local_best_knots)
+                refine_variants = _build_local_refine_variants(
+                    active_knots, i, local_best_knots,
+                    pull_enabled, local_refine_enabled, local_refine_rel_step,
+                )
                 if refine_variants:
                     for vname, tk in refine_variants:
                         if stop_event.is_set() or _have_decisive_local_candidate(local_best_rmse):

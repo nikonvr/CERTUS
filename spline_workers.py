@@ -258,14 +258,14 @@ def _polish_lbfgsb_chunked(
     _best_fun_seen = [float(obj(x_cur))]
 
     _tracker_last_x = [x_cur.copy()]
-    _tracker_last_f = [_best_fun_seen[0]]
+
 
     _orig_obj = obj
 
     def _tracking_obj(xv):
         f = float(_orig_obj(xv))
         _tracker_last_x[0] = np.asarray(xv, dtype=np.float64).ravel().copy()
-        _tracker_last_f[0] = f
+
         if f < float(_best_fun_seen[0]) - 1e-18:
             _best_fun_seen[0] = f
             _best_x_seen[0] = _tracker_last_x[0].copy()
@@ -1743,10 +1743,10 @@ def _log_factual_sol2_analysis(
         )
 
     try:
-        _mr, rmse_like_dialog = rmse_at_spline_stage_x0_init(
+        _, rmse_like_dialog = rmse_at_spline_stage_x0_init(
             cfg, sigma_knots, n_inj, L_inj, float(x0_init[0]), relax_n_mono=True,
         )
-        _ms, rmse_strict_mono = rmse_at_spline_stage_x0_init(
+        _, rmse_strict_mono = rmse_at_spline_stage_x0_init(
             cfg, sigma_knots, n_inj, L_inj, float(x0_init[0]), relax_n_mono=False,
         )
         lgr.info(

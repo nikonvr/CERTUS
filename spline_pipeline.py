@@ -3276,7 +3276,7 @@ def _apply_k_floor_to_result(
                         lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
             mgf = build_spline_objective_masked_grid(cfg)
             if mgf is not None:
-                lam_f, _sf, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mgf
+                lam_f, _, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mgf
                 n_sub_eff_mg = np.asarray(n_sub_f_mg, dtype=np.float64)
                 nlf = np.interp(lam_f, lam_out, n_lam_out)
                 klf = np.interp(lam_f, lam_out, k_lam_out)

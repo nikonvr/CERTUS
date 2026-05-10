@@ -4744,190 +4744,17 @@ class _SmartInitDialogMixin:
         autofind_prog.setFormat("Autofind 0% (0.0/30.0s)")
 
         def on_autofind() -> None:
+            _cbs = {
+                "rebuild_knot_ui": rebuild_knot_ui,
+                "update_hint_text": update_hint_text,
+                "set_slider_from_preview_d": set_slider_from_preview_d,
+                "do_recalc": do_recalc,
+                "refresh_stats": refresh_stats,
+            }
+            self._run_smart_init_autofind(
+                state, cfg, sk_arr, dlg, btn_autofind, autofind_prog, _cbs,
+            )
 
-            cur_sk = np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel()
-
-            if cur_sk.size < 2:
-                QMessageBox.warning(dlg, "Autofind", "Invalid knot grid.")
-
-                return
-
-            if state.n_phys.size != cur_sk.size or state.L_nodes.size != cur_sk.size:
-                QMessageBox.warning(
-                    dlg,
-                    "Autofind",
-                    "Current n / ln k vectors are inconsistent with knot count.",
-                )
-
-                return
-
-            try:
-                auto_cfg, sk_canon, k_loc = self._prepare_smart_init_autofind_config(
-                    cfg, cur_sk, state.n_phys, state.L_nodes, state.preview_d_nm
-                )
-
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
-                QMessageBox.warning(dlg, "Autofind", f"Preparation failed: {exc}")
-
-                return
-
-            btn_autofind.setEnabled(False)
-
-            autofind_prog.setValue(0)
-
-            autofind_prog.setFormat("Autofind 0% (0.0/30.0s)")
-
-            prev_txt = btn_autofind.text()
-
-            btn_autofind.setText("Autofind...")
-
-            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-
-            import threading
-
-            timeout_s = 30.0
-            stop_ev = Event()
-            done_ev = threading.Event()
-            result_box: dict[str, Any] = {"best": None, "error": None}
-            state.best_live: dict[str, Any] | None = None
-            t0 = time.perf_counter()
-            timer = QTimer(dlg)
-            timer.setInterval(50)
-
-            def _live_capture(payload: dict[str, Any]) -> None:
-
-                if not isinstance(payload, dict):
-                    return
-                try:
-                    rm = float(payload.get("rmse", float("inf")))
-                except (TypeError, ValueError):
-                    rm = float("inf")
-                if not np.isfinite(rm):
-                    return
-                if state.best_live is None or rm < float(state.best_live.get("rmse", float("inf"))):
-                    state.best_live = dict(payload)
-
-            def _run_autofind() -> None:
-
-                try:
-                    # Single SOL2 stage (fixed sigma): not the complete pipeline (free nodes /
-                    # spectral polish), which could greatly exceed UI budget and change K.
-                    res_sol2, _ = _run_single_spline_stage(
-                        auto_cfg,
-                        stop_ev,
-                        lambda _pc, _msg: None,
-                        live_cb=_live_capture,
-                        pipeline_seq="AUTOFIND_SOL2",
-                        fatal_finish=None,
-                    )
-                    result_box["best"] = res_sol2
-                except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                    result_box["error"] = exc
-                finally:
-                    done_ev.set()
-
-            def _apply_autofind_result(best: dict[str, Any]) -> None:
-
-                nonlocal state
-
-                _prev = state
-                state = _SmartInitState(
-                    sk=_prev.sk,
-                    n_phys=_prev.n_phys,
-                    L_nodes=_prev.L_nodes,
-                    preview_d_nm=_prev.preview_d_nm,
-                    best_rmse=_prev.best_rmse,
-                    best_n=_prev.best_n,
-                    best_L=_prev.best_L,
-                    current_rmse=_prev.current_rmse,
-                    current_t_th=_prev.current_t_th,
-                )
-
-                size_match = self._apply_smart_init_autofind_result(best, k_loc, sk_canon, state)
-                if not size_match:
-                    QMessageBox.warning(
-                        dlg,
-                        "Autofind",
-                        f"SOL2 result ignored for n/L sizes expected {k_loc} - keeping current profile, only d updated.",
-                    )
-
-                # Sync back to closure
-                state.sk = state.sk
-                state.n_phys = state.n_phys
-                state.L_nodes = state.L_nodes
-                state.preview_d_nm = state.preview_d_nm
-                state.current_rmse = state.current_rmse
-                state.best_rmse = state.best_rmse
-                state.best_n = state.best_n
-                state.best_L = state.best_L
-
-                if size_match:
-                    self.smart_preview_sk_arr = np.asarray(sk_canon, dtype=np.float64).copy()
-                    self.smart_preview_n_phys = np.asarray(state.n_phys, dtype=np.float64).ravel().copy()
-                    self.smart_preview_L_nodes = np.asarray(state.L_nodes, dtype=np.float64).ravel().copy()
-                    self._si_mesh_sk_snap = self.smart_preview_sk_arr.copy()
-                    rebuild_knot_ui(k_loc)
-                    update_hint_text()
-
-                set_slider_from_preview_d()
-                do_recalc()
-                refresh_stats(state.preview_d_nm, state.current_rmse)
-                btn_autofind.setText("Autofind completed")
-                QTimer.singleShot(1500, lambda: btn_autofind.setText("Autofind"))
-
-            def _finish_autofind(timeout_hit: bool) -> None:
-                timer.stop()
-                QApplication.restoreOverrideCursor()
-                btn_autofind.setEnabled(True)
-                btn_autofind.setText(prev_txt)
-
-                if timeout_hit:
-                    stop_ev.set()
-                    if not isinstance(result_box.get("best"), dict):
-                        result_box["best"] = state.best_live if isinstance(state.best_live, dict) else None
-
-                if result_box.get("error") is not None and result_box.get("best") is None:
-                    QMessageBox.warning(dlg, "Autofind", f"SOL2 local search failed: {result_box['error']}")
-                    return
-
-                best = result_box.get("best")
-                if not isinstance(best, dict):
-                    if isinstance(state.best_live, dict):
-                        best = state.best_live
-                    else:
-                        QMessageBox.warning(
-                            dlg,
-                            "Autofind",
-                            "SOL2 local search failed: timeout without any useful RMSE snapshot.",
-                        )
-                        return
-
-                autofind_prog.setValue(100)
-                autofind_prog.setFormat(f"Autofind 100% ({timeout_s:.1f}/{timeout_s:.1f}s)")
-
-                try:
-                    _apply_autofind_result(best)
-                except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                    QMessageBox.warning(dlg, "Autofind", f"Error when applying Autofind result: {exc}")
-
-            def _tick_autofind() -> None:
-                elapsed = max(0.0, time.perf_counter() - t0)
-                elapsed_clamped = min(elapsed, timeout_s)
-                pct = int(min(99, max(0, round(100.0 * elapsed_clamped / max(timeout_s, 1e-9)))))
-                autofind_prog.setValue(pct)
-                autofind_prog.setFormat(f"Autofind {pct}% ({elapsed_clamped:.1f}/{timeout_s:.1f}s)")
-
-                if done_ev.is_set():
-                    _finish_autofind(timeout_hit=False)
-                    return
-
-                if elapsed >= timeout_s:
-                    _finish_autofind(timeout_hit=True)
-
-            th = threading.Thread(target=_run_autofind, daemon=True)
-            th.start()
-            timer.timeout.connect(_tick_autofind)
-            timer.start()
 
         btn_autofind.clicked.connect(on_autofind)
 
@@ -12341,6 +12168,148 @@ class CertusIndexSplineApp(
                 d_w,
             )
         return winner, rm_w, d_w
+
+    def _run_smart_init_autofind(
+        self,
+        state: "_SmartInitState",
+        cfg: "SplineOptConfig",
+        sk_arr: np.ndarray,
+        dlg,
+        btn_autofind,
+        autofind_prog,
+        ui_callbacks: dict,
+    ) -> None:
+        """Launch SOL2 autofind in a background thread with progress tracking.
+
+        Parameters
+        ----------
+        ui_callbacks : dict
+            Must contain keys: 'rebuild_knot_ui', 'update_hint_text',
+            'set_slider_from_preview_d', 'do_recalc', 'refresh_stats'.
+        """
+        from PyQt6.QtCore import QTimer
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+        import threading
+
+        cur_sk = np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel()
+        if cur_sk.size < 2:
+            QMessageBox.warning(dlg, "Autofind", "Invalid knot grid.")
+            return
+        if state.n_phys.size != cur_sk.size or state.L_nodes.size != cur_sk.size:
+            QMessageBox.warning(dlg, "Autofind", "Current n / ln k vectors are inconsistent with knot count.")
+            return
+
+        try:
+            auto_cfg, sk_canon, k_loc = self._prepare_smart_init_autofind_config(
+                cfg, cur_sk, state.n_phys, state.L_nodes, state.preview_d_nm
+            )
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            QMessageBox.warning(dlg, "Autofind", f"Preparation failed: {exc}")
+            return
+
+        btn_autofind.setEnabled(False)
+        autofind_prog.setValue(0)
+        autofind_prog.setFormat("Autofind 0% (0.0/30.0s)")
+        prev_txt = btn_autofind.text()
+        btn_autofind.setText("Autofind...")
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+
+        timeout_s = 30.0
+        stop_ev = Event()
+        done_ev = threading.Event()
+        result_box: dict[str, Any] = {"best": None, "error": None}
+        state.best_live = None
+        t0 = time.perf_counter()
+        timer = QTimer(dlg)
+        timer.setInterval(50)
+
+        def _live_capture(payload: dict[str, Any]) -> None:
+            if not isinstance(payload, dict):
+                return
+            try:
+                rm = float(payload.get("rmse", float("inf")))
+            except (TypeError, ValueError):
+                rm = float("inf")
+            if not np.isfinite(rm):
+                return
+            if state.best_live is None or rm < float(state.best_live.get("rmse", float("inf"))):
+                state.best_live = dict(payload)
+
+        def _run_autofind() -> None:
+            try:
+                res_sol2, _ = _run_single_spline_stage(
+                    auto_cfg, stop_ev, lambda _pc, _msg: None,
+                    live_cb=_live_capture, pipeline_seq="AUTOFIND_SOL2", fatal_finish=None,
+                )
+                result_box["best"] = res_sol2
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
+                result_box["error"] = exc
+            finally:
+                done_ev.set()
+
+        def _apply_result(best: dict[str, Any]) -> None:
+            size_match = self._apply_smart_init_autofind_result(best, k_loc, sk_canon, state)
+            if not size_match:
+                QMessageBox.warning(
+                    dlg, "Autofind",
+                    f"SOL2 result ignored for n/L sizes expected {k_loc} - keeping current profile, only d updated.",
+                )
+            if size_match:
+                self.smart_preview_sk_arr = np.asarray(sk_canon, dtype=np.float64).copy()
+                self.smart_preview_n_phys = np.asarray(state.n_phys, dtype=np.float64).ravel().copy()
+                self.smart_preview_L_nodes = np.asarray(state.L_nodes, dtype=np.float64).ravel().copy()
+                self._si_mesh_sk_snap = self.smart_preview_sk_arr.copy()
+                ui_callbacks["rebuild_knot_ui"](k_loc)
+                ui_callbacks["update_hint_text"]()
+
+            ui_callbacks["set_slider_from_preview_d"]()
+            ui_callbacks["do_recalc"]()
+            ui_callbacks["refresh_stats"](state.preview_d_nm, state.current_rmse)
+            btn_autofind.setText("Autofind completed")
+            QTimer.singleShot(1500, lambda: btn_autofind.setText("Autofind"))
+
+        def _finish(timeout_hit: bool) -> None:
+            timer.stop()
+            QApplication.restoreOverrideCursor()
+            btn_autofind.setEnabled(True)
+            btn_autofind.setText(prev_txt)
+            if timeout_hit:
+                stop_ev.set()
+                if not isinstance(result_box.get("best"), dict):
+                    result_box["best"] = state.best_live if isinstance(state.best_live, dict) else None
+            if result_box.get("error") is not None and result_box.get("best") is None:
+                QMessageBox.warning(dlg, "Autofind", f"SOL2 local search failed: {result_box['error']}")
+                return
+            best = result_box.get("best")
+            if not isinstance(best, dict):
+                if isinstance(state.best_live, dict):
+                    best = state.best_live
+                else:
+                    QMessageBox.warning(dlg, "Autofind", "SOL2 local search failed: timeout without any useful RMSE snapshot.")
+                    return
+            autofind_prog.setValue(100)
+            autofind_prog.setFormat(f"Autofind 100% ({timeout_s:.1f}/{timeout_s:.1f}s)")
+            try:
+                _apply_result(best)
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
+                QMessageBox.warning(dlg, "Autofind", f"Error when applying Autofind result: {exc}")
+
+        def _tick() -> None:
+            elapsed = max(0.0, time.perf_counter() - t0)
+            elapsed_clamped = min(elapsed, timeout_s)
+            pct = int(min(99, max(0, round(100.0 * elapsed_clamped / max(timeout_s, 1e-9)))))
+            autofind_prog.setValue(pct)
+            autofind_prog.setFormat(f"Autofind {pct}% ({elapsed_clamped:.1f}/{timeout_s:.1f}s)")
+            if done_ev.is_set():
+                _finish(timeout_hit=False)
+                return
+            if elapsed >= timeout_s:
+                _finish(timeout_hit=True)
+
+        th = threading.Thread(target=_run_autofind, daemon=True)
+        th.start()
+        timer.timeout.connect(_tick)
+        timer.start()
 
     def _prog_reset_bar(self) -> None:
 

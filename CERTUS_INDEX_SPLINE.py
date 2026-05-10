@@ -4497,63 +4497,11 @@ class _SmartInitDialogMixin:
             QTimer.singleShot(1200, lambda: btn_save_cfg.setText("Save As"))
 
         def on_load_index_config() -> None:
-            path, _ = QFileDialog.getOpenFileName(
-                dlg,
-                "Load index config (Smart Init)",
-                "",
-                "JSON Files (*.json);;All Files (*.*)",
+            self._load_smart_init_index_config(
+                state, dlg, L_lo_g, L_hi_g, d_lo_nm, d_hi_nm,
+                _refresh_knot_lines_and_ui, btn_load_cfg,
             )
-            if not path:
-                return
 
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except (OSError, json.JSONDecodeError, ValueError) as exc:
-                QMessageBox.warning(dlg, "Load index config", f"Load failed: {exc}")
-                return
-
-            loaded_sk = np.asarray(data.get("sigma_knots", []), dtype=np.float64).ravel()
-            loaded_n = np.asarray(data.get("n_nodes_physical", []), dtype=np.float64).ravel()
-            loaded_L = np.asarray(data.get("L_nodes", []), dtype=np.float64).ravel()
-            loaded_d = float(data.get("d_nm", state.preview_d_nm))
-
-            if loaded_sk.size < 2:
-                QMessageBox.warning(dlg, "Load index config", "Invalid config: need at least 2 sigma knots.")
-                return
-            if loaded_n.size != loaded_sk.size or loaded_L.size != loaded_sk.size:
-                QMessageBox.warning(dlg, "Load index config", "Invalid config: knot vector sizes are inconsistent.")
-                return
-            if not (
-                np.all(np.isfinite(loaded_sk))
-                and np.all(np.isfinite(loaded_n))
-                and np.all(np.isfinite(loaded_L))
-                and np.isfinite(loaded_d)
-            ):
-                QMessageBox.warning(dlg, "Load index config", "Invalid config: contains non-finite values.")
-                return
-
-            order = np.argsort(loaded_sk, kind="mergesort")
-            loaded_sk = loaded_sk[order]
-            loaded_n = np.clip(loaded_n[order], N_MIN_LIMIT, N_MAX_LIMIT)
-            loaded_L = np.clip(loaded_L[order], L_lo_g, L_hi_g)
-            loaded_d = float(np.clip(loaded_d, d_lo_nm, d_hi_nm))
-
-            state.sk = loaded_sk.copy()
-            state.n_phys = loaded_n.copy()
-            state.L_nodes = loaded_L.copy()
-            state.preview_d_nm = loaded_d
-
-            self.smart_preview_sk_arr = state.sk.copy()
-            self.smart_preview_n_phys = state.n_phys.copy()
-            self.smart_preview_L_nodes = state.L_nodes.copy()
-            self.smart_preview_d_nm = float(state.preview_d_nm)
-            self.smart_preview_sig2 = self.smart_preview_sk_arr**2
-
-            _refresh_knot_lines_and_ui()
-
-            btn_load_cfg.setText("Loaded")
-            QTimer.singleShot(1200, lambda: btn_load_cfg.setText("Load"))
 
         btn_save_cfg = QPushButton("Save As")
         btn_save_cfg.setToolTip("Save current Smart Init index configuration (sigma, n, ln k, d) to JSON.")
@@ -4566,40 +4514,12 @@ class _SmartInitDialogMixin:
         row_hint.addWidget(btn_save_cfg)
         row_hint.addWidget(btn_load_cfg)
 
-        def apply_manual_preset_from_projector(
-            projector: Callable[[np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray, float]],
-            feedback_btn: QPushButton | None,
-            idle_label: str,
-        ) -> None:
-
-            nonlocal state
-
-            _prev = state
-            state = _SmartInitState(
-                sk=_prev.sk,
-                n_phys=_prev.n_phys,
-                L_nodes=_prev.L_nodes,
-                preview_d_nm=_prev.preview_d_nm,
-                best_rmse=_prev.best_rmse,
-                best_n=_prev.best_n,
-                best_L=_prev.best_L,
-                current_rmse=_prev.current_rmse,
-                current_t_th=_prev.current_t_th,
+        def apply_manual_preset_from_projector(projector, feedback_btn, idle_label) -> None:
+            self._apply_smart_init_preset(
+                state, cfg, projector, _relax_si_mono,
+                _refresh_knot_lines_and_ui, feedback_btn, idle_label,
             )
 
-            self._execute_smart_init_preset_logic(cfg, projector, _relax_si_mono, state)
-
-            state.sk = self.smart_preview_sk_arr = state.sk.copy()
-            state.n_phys = self.smart_preview_n_phys = state.n_phys.copy()
-            state.L_nodes = self.smart_preview_L_nodes = state.L_nodes.copy()
-            state.preview_d_nm = self.smart_preview_d_nm = state.preview_d_nm
-            self.smart_preview_sig2 = self.smart_preview_sk_arr**2
-
-            _refresh_knot_lines_and_ui()
-
-            if feedback_btn is not None:
-                feedback_btn.setText(f"OK - {len(state.sk)} nodes")
-                QTimer.singleShot(1500, lambda b=feedback_btn, t=idle_label: b.setText(t))
 
         cb_material_preset = QComboBox()
 
@@ -12106,6 +12026,96 @@ class CertusIndexSplineApp(
                 d_w,
             )
         return winner, rm_w, d_w
+
+    def _load_smart_init_index_config(
+        self,
+        state: "_SmartInitState",
+        dlg,
+        L_lo_g: float,
+        L_hi_g: float,
+        d_lo_nm: float,
+        d_hi_nm: float,
+        refresh_knot_lines_and_ui_fn: "Callable[[], None]",
+        btn_load_cfg,
+    ) -> None:
+        """Load a Smart Init index configuration from JSON file and update state."""
+        from PyQt6.QtWidgets import QFileDialog, QMessageBox
+
+        path, _ = QFileDialog.getOpenFileName(
+            dlg, "Load index config (Smart Init)", "", "JSON Files (*.json);;All Files (*.*)",
+        )
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError, ValueError) as exc:
+            QMessageBox.warning(dlg, "Load index config", f"Load failed: {exc}")
+            return
+
+        loaded_sk = np.asarray(data.get("sigma_knots", []), dtype=np.float64).ravel()
+        loaded_n = np.asarray(data.get("n_nodes_physical", []), dtype=np.float64).ravel()
+        loaded_L = np.asarray(data.get("L_nodes", []), dtype=np.float64).ravel()
+        loaded_d = float(data.get("d_nm", state.preview_d_nm))
+
+        if loaded_sk.size < 2:
+            QMessageBox.warning(dlg, "Load index config", "Invalid config: need at least 2 sigma knots.")
+            return
+        if loaded_n.size != loaded_sk.size or loaded_L.size != loaded_sk.size:
+            QMessageBox.warning(dlg, "Load index config", "Invalid config: knot vector sizes are inconsistent.")
+            return
+        if not (np.all(np.isfinite(loaded_sk)) and np.all(np.isfinite(loaded_n))
+                and np.all(np.isfinite(loaded_L)) and np.isfinite(loaded_d)):
+            QMessageBox.warning(dlg, "Load index config", "Invalid config: contains non-finite values.")
+            return
+
+        order = np.argsort(loaded_sk, kind="mergesort")
+        loaded_sk = loaded_sk[order]
+        loaded_n = np.clip(loaded_n[order], N_MIN_LIMIT, N_MAX_LIMIT)
+        loaded_L = np.clip(loaded_L[order], L_lo_g, L_hi_g)
+        loaded_d = float(np.clip(loaded_d, d_lo_nm, d_hi_nm))
+
+        state.sk = loaded_sk.copy()
+        state.n_phys = loaded_n.copy()
+        state.L_nodes = loaded_L.copy()
+        state.preview_d_nm = loaded_d
+
+        self.smart_preview_sk_arr = state.sk.copy()
+        self.smart_preview_n_phys = state.n_phys.copy()
+        self.smart_preview_L_nodes = state.L_nodes.copy()
+        self.smart_preview_d_nm = float(state.preview_d_nm)
+        self.smart_preview_sig2 = self.smart_preview_sk_arr ** 2
+
+        refresh_knot_lines_and_ui_fn()
+        from PyQt6.QtCore import QTimer
+        btn_load_cfg.setText("Loaded")
+        QTimer.singleShot(1200, lambda: btn_load_cfg.setText("Load"))
+
+    def _apply_smart_init_preset(
+        self,
+        state: "_SmartInitState",
+        cfg: "SplineOptConfig",
+        projector: "Callable",
+        relax_si_mono: bool,
+        refresh_knot_lines_and_ui_fn: "Callable[[], None]",
+        feedback_btn=None,
+        idle_label: str = "",
+    ) -> None:
+        """Apply a material preset projector and refresh the dialog UI."""
+        self._execute_smart_init_preset_logic(cfg, projector, relax_si_mono, state)
+
+        state.sk = self.smart_preview_sk_arr = state.sk.copy()
+        state.n_phys = self.smart_preview_n_phys = state.n_phys.copy()
+        state.L_nodes = self.smart_preview_L_nodes = state.L_nodes.copy()
+        state.preview_d_nm = self.smart_preview_d_nm = state.preview_d_nm
+        self.smart_preview_sig2 = self.smart_preview_sk_arr ** 2
+
+        refresh_knot_lines_and_ui_fn()
+
+        if feedback_btn is not None:
+            from PyQt6.QtCore import QTimer
+            feedback_btn.setText(f"OK - {len(state.sk)} nodes")
+            QTimer.singleShot(1500, lambda b=feedback_btn, t=idle_label: b.setText(t))
 
     def _execute_smart_init_do_recalc(
         self,

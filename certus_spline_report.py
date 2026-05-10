@@ -224,6 +224,106 @@ class SplineReportBuilder:
         }
         pd.DataFrame(substrate_data).to_excel(writer, sheet_name="Substrate_Indices", index=False)
 
+    def _write_analysis_sheets(
+        self,
+        writer: Any,
+        *,
+        result: dict,
+        _result_float,
+    ) -> None:
+        """Write Profile_d_RMSE, Profile_d_CHI2, Reg_Sensitivity, Bootstrap_* and Manifest sheets."""
+        logger = self.logger
+
+        # RMSE(d) profile
+        d_prof = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
+        r_prof = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
+        if d_prof.size and r_prof.size == d_prof.size:
+            od = np.argsort(d_prof, kind="mergesort")
+            pd.DataFrame({"d_nm": d_prof[od], "rmse": r_prof[od]}).to_excel(
+                writer, sheet_name="Profile_d_RMSE", index=False
+            )
+        c_prof = np.asarray(result.get("profile_d_chi2_values", []), dtype=np.float64).ravel()
+        if d_prof.size and c_prof.size == d_prof.size:
+            od = np.argsort(d_prof, kind="mergesort")
+            pd.DataFrame({"d_nm": d_prof[od], "chi2": c_prof[od]}).to_excel(
+                writer, sheet_name="Profile_d_CHI2", index=False
+            )
+
+        # Regularization sensitivity
+        w_reg = np.asarray(result.get("reg_sens_weights", []), dtype=np.float64).ravel()
+        d_lo = np.asarray(result.get("reg_sens_d_lo_nm", []), dtype=np.float64).ravel()
+        d_hi = np.asarray(result.get("reg_sens_d_hi_nm", []), dtype=np.float64).ravel()
+        w_n = np.asarray(result.get("reg_sens_mean_width_n", []), dtype=np.float64).ravel()
+        w_k = np.asarray(result.get("reg_sens_mean_width_k", []), dtype=np.float64).ravel()
+        n_v = np.asarray(result.get("reg_sens_n_valid", []), dtype=np.int64).ravel()
+        if w_reg.size and d_lo.size == w_reg.size and d_hi.size == w_reg.size:
+            pd.DataFrame(
+                {
+                    "reg_weight_lnk": w_reg,
+                    "d_lo_nm": d_lo,
+                    "d_hi_nm": d_hi,
+                    "mean_width_n": w_n if w_n.size == w_reg.size else np.full_like(w_reg, np.nan),
+                    "mean_width_k": w_k if w_k.size == w_reg.size else np.full_like(w_reg, np.nan),
+                    "n_valid": n_v if n_v.size == w_reg.size else np.zeros_like(w_reg, dtype=np.int64),
+                }
+            ).to_excel(writer, sheet_name="Reg_Sensitivity", index=False)
+
+        # Bootstrap
+        _boot_meta_present = (
+            result.get("boot_n") is not None
+            or np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).size > 0
+            or np.asarray(result.get("boot_runs_b", []), dtype=np.int64).size > 0
+        )
+        if _boot_meta_present:
+            try:
+                df_boot = pd.DataFrame(
+                    {
+                        "boot_n": [int(result.get("boot_n", 0))],
+                        "boot_n_ok": [int(result.get("boot_n_ok", 0))],
+                        "boot_seed": [int(result.get("boot_seed", 0))],
+                        "boot_mode": [str(result.get("boot_mode", "-"))],
+                        "boot_block_len": [int(result.get("boot_block_len", 1))],
+                        "boot_percentile": [_result_float("boot_percentile")],
+                        "boot_sigma_t": [_result_float("boot_sigma_t")],
+                        "boot_sigma_r": [_result_float("boot_sigma_r")],
+                        "boot_d_lo_q_nm": [_result_float("boot_d_lo_q_nm")],
+                        "boot_d_hi_q_nm": [_result_float("boot_d_hi_q_nm")],
+                    }
+                )
+                df_boot.to_excel(writer, sheet_name="Bootstrap_summary", index=False)
+
+                dls = np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).ravel()
+                dhs = np.asarray(result.get("boot_d_hi_samples_nm", []), dtype=np.float64).ravel()
+                if dls.size and dhs.size == dls.size:
+                    pd.DataFrame({"d_lo_nm": dls, "d_hi_nm": dhs}).to_excel(
+                        writer, sheet_name="Bootstrap_d_samples", index=False
+                    )
+
+                rb = np.asarray(result.get("boot_runs_b", []), dtype=np.int64).ravel()
+                rok = np.asarray(result.get("boot_runs_ok", []), dtype=np.int64).ravel()
+                rd0 = np.asarray(result.get("boot_runs_d_lo_nm", []), dtype=np.float64).ravel()
+                rd1 = np.asarray(result.get("boot_runs_d_hi_nm", []), dtype=np.float64).ravel()
+                rnv = np.asarray(result.get("boot_runs_n_valid", []), dtype=np.int64).ravel()
+                if rb.size and rok.size == rb.size and rd0.size == rb.size and rd1.size == rb.size:
+                    pd.DataFrame(
+                        {
+                            "b": rb,
+                            "ok": rok,
+                            "d_lo_nm": rd0,
+                            "d_hi_nm": rd1,
+                            "n_valid": rnv if rnv.size == rb.size else np.zeros_like(rb),
+                        }
+                    ).to_excel(writer, sheet_name="Bootstrap_runs", index=False)
+
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                logger.exception("Export Excel: bootstrap")
+
+        # Manifest
+        run_manifest = result.get("run_manifest")
+        if isinstance(run_manifest, dict) and run_manifest:
+            manifest_rows = [{"Key": str(k), "Value": str(v)} for k, v in run_manifest.items()]
+            pd.DataFrame(manifest_rows).to_excel(writer, sheet_name="Manifest", index=False)
+
     def _write_corridor_nk_sheets(
         self,
         writer: Any,
@@ -1042,119 +1142,11 @@ class SplineReportBuilder:
                     corr_grid_ok=corr_grid_ok,
                 )
 
-                # RMSE(d) profile (if available)
-
-                d_prof = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-
-                r_prof = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
-
-                if d_prof.size and r_prof.size == d_prof.size:
-                    od = np.argsort(d_prof, kind="mergesort")
-
-                    pd.DataFrame({"d_nm": d_prof[od], "rmse": r_prof[od]}).to_excel(
-                        writer, sheet_name="Profile_d_RMSE", index=False
-                    )
-
-                c_prof = np.asarray(result.get("profile_d_chi2_values", []), dtype=np.float64).ravel()
-
-                if d_prof.size and c_prof.size == d_prof.size:
-                    od = np.argsort(d_prof, kind="mergesort")
-
-                    pd.DataFrame({"d_nm": d_prof[od], "chi2": c_prof[od]}).to_excel(
-                        writer, sheet_name="Profile_d_CHI2", index=False
-                    )
-
-                # V2.3: regularization sensitivity (if available)
-
-                w_reg = np.asarray(result.get("reg_sens_weights", []), dtype=np.float64).ravel()
-
-                d_lo = np.asarray(result.get("reg_sens_d_lo_nm", []), dtype=np.float64).ravel()
-
-                d_hi = np.asarray(result.get("reg_sens_d_hi_nm", []), dtype=np.float64).ravel()
-
-                w_n = np.asarray(result.get("reg_sens_mean_width_n", []), dtype=np.float64).ravel()
-
-                w_k = np.asarray(result.get("reg_sens_mean_width_k", []), dtype=np.float64).ravel()
-
-                n_v = np.asarray(result.get("reg_sens_n_valid", []), dtype=np.int64).ravel()
-
-                if w_reg.size and d_lo.size == w_reg.size and d_hi.size == w_reg.size:
-                    pd.DataFrame(
-                        {
-                            "reg_weight_lnk": w_reg,
-                            "d_lo_nm": d_lo,
-                            "d_hi_nm": d_hi,
-                            "mean_width_n": w_n if w_n.size == w_reg.size else np.full_like(w_reg, np.nan),
-                            "mean_width_k": w_k if w_k.size == w_reg.size else np.full_like(w_reg, np.nan),
-                            "n_valid": n_v if n_v.size == w_reg.size else np.zeros_like(w_reg, dtype=np.int64),
-                        }
-                    ).to_excel(writer, sheet_name="Reg_Sensitivity", index=False)
-
-                # V2.4: bootstrap - only if metadata or samples present (avoids empty rows after live strip).
-
-                _boot_meta_present = (
-                    result.get("boot_n") is not None
-                    or np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).size > 0
-                    or np.asarray(result.get("boot_runs_b", []), dtype=np.int64).size > 0
+                self._write_analysis_sheets(
+                    writer,
+                    result=result,
+                    _result_float=_result_float,
                 )
-
-                if _boot_meta_present:
-                    try:
-                        df_boot = pd.DataFrame(
-                            {
-                                "boot_n": [int(result.get("boot_n", 0))],
-                                "boot_n_ok": [int(result.get("boot_n_ok", 0))],
-                                "boot_seed": [int(result.get("boot_seed", 0))],
-                                "boot_mode": [str(result.get("boot_mode", "-"))],
-                                "boot_block_len": [int(result.get("boot_block_len", 1))],
-                                "boot_percentile": [_result_float("boot_percentile")],
-                                "boot_sigma_t": [_result_float("boot_sigma_t")],
-                                "boot_sigma_r": [_result_float("boot_sigma_r")],
-                                "boot_d_lo_q_nm": [_result_float("boot_d_lo_q_nm")],
-                                "boot_d_hi_q_nm": [_result_float("boot_d_hi_q_nm")],
-                            }
-                        )
-
-                        df_boot.to_excel(writer, sheet_name="Bootstrap_summary", index=False)
-
-                        dls = np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).ravel()
-
-                        dhs = np.asarray(result.get("boot_d_hi_samples_nm", []), dtype=np.float64).ravel()
-
-                        if dls.size and dhs.size == dls.size:
-                            pd.DataFrame({"d_lo_nm": dls, "d_hi_nm": dhs}).to_excel(
-                                writer, sheet_name="Bootstrap_d_samples", index=False
-                            )
-
-                        # Table d'audit par run
-
-                        rb = np.asarray(result.get("boot_runs_b", []), dtype=np.int64).ravel()
-
-                        rok = np.asarray(result.get("boot_runs_ok", []), dtype=np.int64).ravel()
-
-                        rd0 = np.asarray(result.get("boot_runs_d_lo_nm", []), dtype=np.float64).ravel()
-
-                        rd1 = np.asarray(result.get("boot_runs_d_hi_nm", []), dtype=np.float64).ravel()
-
-                        rnv = np.asarray(result.get("boot_runs_n_valid", []), dtype=np.int64).ravel()
-
-                        if rb.size and rok.size == rb.size and rd0.size == rb.size and rd1.size == rb.size:
-                            pd.DataFrame(
-                                {
-                                    "b": rb,
-                                    "ok": rok,
-                                    "d_lo_nm": rd0,
-                                    "d_hi_nm": rd1,
-                                    "n_valid": rnv if rnv.size == rb.size else np.zeros_like(rb),
-                                }
-                            ).to_excel(writer, sheet_name="Bootstrap_runs", index=False)
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-                        logger.exception("Export Excel: bootstrap")
-                run_manifest = result.get("run_manifest")
-                if isinstance(run_manifest, dict) and run_manifest:
-                    manifest_rows = [{"Key": str(k), "Value": str(v)} for k, v in run_manifest.items()]
-                    pd.DataFrame(manifest_rows).to_excel(writer, sheet_name="Manifest", index=False)
 
             self.logger.info("Results exported -> %s", fname)
 

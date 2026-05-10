@@ -1683,6 +1683,138 @@ def worker_auto_best_split_knot_refinement(
     return out
 
 
+def _log_factual_sol2_analysis(
+    cfg: "SplineOptConfig",
+    sigma_knots: np.ndarray,
+    x0_init: np.ndarray,
+    x0_pre_clip: np.ndarray,
+    mse_init: float,
+    worker_rmse: float,
+    manual_rmse: float,
+) -> dict:
+    """FACTUAL SOL 2: recompute and log worker-side diagnostics for Smart Init manual injection.
+
+    Returns dict with keys: factuel_mse_sp, factuel_pen, factuel_tot, factuel_n_pix,
+    factuel_rmse_pwl_contrast.
+    """
+    lgr = logging.getLogger("CERTUS")
+
+    factuel_n_pix: int | None = None
+    try:
+        factuel_n_pix = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
+    except (TypeError, ValueError, AttributeError, KeyError):
+        lgr.debug("_spline_objective_lam_mask failed in FACTUAL", exc_info=True)
+        factuel_n_pix = -1
+
+    msp_d, pen_d, tot_d = decompose_spline_pwl_objective(cfg, sigma_knots, x0_init)
+    factuel_mse_sp, factuel_pen, factuel_tot = float(msp_d), float(pen_d), float(tot_d)
+
+    if not np.isfinite(tot_d) or abs(float(tot_d) - float(mse_init)) > max(1e-9, 1e-9 * abs(float(mse_init))):
+        lgr.warning(
+            "FACTUAL - decompose vs obj mismatch: total_decompose=%.6e vs mse_obj=%.6e",
+            float(tot_d),
+            float(mse_init),
+        )
+
+    nk_mode = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth").strip().lower()
+
+    lgr.info("FACTUAL - SOL 2: RECALCUL IMMÉDIAT CÔTÉ WORKER (objectif spline)")
+
+    lgr.info(
+        " -> Objective context: nk_profile_interp=%s | lambda pixels (MSE mask)=%s | wT=%.4g wR=%.4g | "
+        "t_is_ratio=%s | rmse_fit_lambda_nm=%s | n_mono_band_nm=%s",
+        nk_mode,
+        str(factuel_n_pix),
+        float(getattr(cfg, "weight_t", 0.0)),
+        float(getattr(cfg, "weight_r", 0.0)),
+        str(bool(getattr(cfg, "t_is_ratio", False))),
+        str(getattr(cfg, "rmse_fit_lambda_nm", None)),
+        str(getattr(cfg, "n_mono_band_nm", None)),
+    )
+
+    lgr.info(
+        " -> \u221aMSE decomposition (same clipped x0): MSE_spectral=%.6e | penalties=%.6e | total=%.6e",
+        factuel_mse_sp,
+        factuel_pen,
+        factuel_tot,
+    )
+
+    lgr.info(
+        " -> Dialog RMSE (stored): \u221aMSE_decl=%.8f | MSE_decl=%.6e vs worker total=%.6e (Delta=%.6e)",
+        float(manual_rmse),
+        float(manual_rmse) ** 2,
+        factuel_tot,
+        float(factuel_tot) - float(manual_rmse) ** 2,
+    )
+
+    lgr.info(" -> RMSE recomputed (worker, SplinePWLObjective on clipped x0) = %.8f", worker_rmse)
+
+    k_nodes = int(sigma_knots.size)
+    n_inj = x_slice_n_to_physical_nodes(x0_init[1 : 1 + k_nodes], sigma_knots, cfg.n_mono_band_nm)
+    L_inj = np.asarray(x0_init[1 + k_nodes : 1 + 2 * k_nodes], dtype=np.float64).ravel()
+
+    if abs(float(x0_pre_clip[0]) - float(x0_init[0])) > 1e-9:
+        lgr.info(
+            " -> Note: d before clip=%.6f nm -> after clip=%.6f nm",
+            float(x0_pre_clip[0]),
+            float(x0_init[0]),
+        )
+
+    try:
+        _mr, rmse_like_dialog = rmse_at_spline_stage_x0_init(
+            cfg, sigma_knots, n_inj, L_inj, float(x0_init[0]), relax_n_mono=True,
+        )
+        _ms, rmse_strict_mono = rmse_at_spline_stage_x0_init(
+            cfg, sigma_knots, n_inj, L_inj, float(x0_init[0]), relax_n_mono=False,
+        )
+        lgr.info(
+            " -> RMSE same (n,L,d) as post-clip, recomputed **like preview** (relax_n_mono=True) = %.8f",
+            float(rmse_like_dialog),
+        )
+        lgr.info(
+            " -> RMSE same (n,L,d), **strict worker** objective (relax_n_mono=False / \u03be mono) = %.8f",
+            float(rmse_strict_mono),
+        )
+        if cfg.n_mono_band_nm is not None and abs(rmse_like_dialog - rmse_strict_mono) > 1e-6:
+            lgr.warning(
+                " => Preview vs strict gap: dialog may show RMSE without penalties / mono "
+                "parametrization identical to worker (see rmse_at_spline_stage_x0_init + cfg n_mono_band_nm)."
+            )
+    except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
+        lgr.warning("FACTUAL: rmse_at_spline_stage_x0_init recompute failed: %s", exc)
+
+    abs_rmse_diff = float(abs(worker_rmse - manual_rmse))
+    diff_rel = 100.0 * abs_rmse_diff / max(manual_rmse, 1e-9)
+
+    if diff_rel > 1.0:
+        lgr.warning("!!! SIGNIFICANT GAP (worker vs dialog declared RMSE): %.1f%%", diff_rel)
+        lgr.warning(
+            " => Leads: dialog vs canonical K sigma (regrid); x0 clip; rmse_fit_lambda_nm; wT/wR; "
+            "t_is_ratio; stale stored RMSE (config/spectrum changed between Keep and SOL2); relax_n_mono preview."
+        )
+    elif diff_rel > 0.25 or abs_rmse_diff > 2e-4:
+        lgr.info(
+            "  Residual dialog vs first worker cost: %.2f%% rel. (|Delta|=%.2e) - typ. x0 clip or rounding.",
+            diff_rel,
+            abs_rmse_diff,
+        )
+    else:
+        lgr.info("  SOLUTION VALIDATED: dialog and worker in close agreement.")
+
+    lgr.info(
+        "FACTUAL - La ligne suivante ``INDEX_SPLINE stage ... RMSE start`` doit coïncider avec le RMSE SOL2 ici (± bruit clip)."
+    )
+    lgr.info("=" * 60)
+
+    return {
+        "factuel_mse_sp": factuel_mse_sp,
+        "factuel_pen": factuel_pen,
+        "factuel_tot": factuel_tot,
+        "factuel_n_pix": factuel_n_pix,
+        "factuel_rmse_pwl_contrast": None,
+    }
+
+
 def _run_single_spline_stage(
     cfg: SplineOptConfig,
     stop_event: Event,
@@ -1828,148 +1960,20 @@ def _run_single_spline_stage(
     worker_rmse = float(np.sqrt(max(mse_init, 0.0)))
 
     factuel_mse_sp: float | None = None
-
     factuel_pen: float | None = None
-
     factuel_tot: float | None = None
-
     factuel_n_pix: int | None = None
-
     factuel_rmse_pwl_contrast: float | None = None
 
     if is_manual:
-        try:
-            factuel_n_pix = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
-
-        except (TypeError, ValueError, AttributeError, KeyError):
-            lgr.debug("_spline_objective_lam_mask failed in FACTUAL", exc_info=True)
-
-            factuel_n_pix = -1
-
-        msp_d, pen_d, tot_d = decompose_spline_pwl_objective(cfg, sigma_knots, x0_init)
-
-        factuel_mse_sp, factuel_pen, factuel_tot = float(msp_d), float(pen_d), float(tot_d)
-
-        if not np.isfinite(tot_d) or abs(float(tot_d) - float(mse_init)) > max(1e-9, 1e-9 * abs(float(mse_init))):
-            lgr.warning(
-                "FACTUAL - decompose vs obj mismatch: total_decompose=%.6e vs mse_obj=%.6e",
-                float(tot_d),
-                float(mse_init),
-            )
-
-        nk_mode = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth").strip().lower()
-
-        lgr.info("FACTUAL - SOL 2: RECALCUL IMMÉDIAT CÔTÉ WORKER (objectif spline)")
-
-        lgr.info(
-            " -> Objective context: nk_profile_interp=%s | lambda pixels (MSE mask)=%s | wT=%.4g wR=%.4g | "
-            "t_is_ratio=%s | rmse_fit_lambda_nm=%s | n_mono_band_nm=%s",
-            nk_mode,
-            str(factuel_n_pix),
-            float(getattr(cfg, "weight_t", 0.0)),
-            float(getattr(cfg, "weight_r", 0.0)),
-            str(bool(getattr(cfg, "t_is_ratio", False))),
-            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
-            str(getattr(cfg, "n_mono_band_nm", None)),
+        _fac = _log_factual_sol2_analysis(
+            cfg, sigma_knots, x0_init, x0_pre_clip, mse_init, worker_rmse, manual_rmse,
         )
-
-        lgr.info(
-            " -> √MSE decomposition (same clipped x0): MSE_spectral=%.6e | penalties=%.6e | total=%.6e",
-            factuel_mse_sp,
-            factuel_pen,
-            factuel_tot,
-        )
-
-        lgr.info(
-            " -> Dialog RMSE (stored): √MSE_decl=%.8f | MSE_decl=%.6e vs worker total=%.6e (Delta=%.6e)",
-            float(manual_rmse),
-            float(manual_rmse) ** 2,
-            factuel_tot,
-            float(factuel_tot) - float(manual_rmse) ** 2,
-        )
-
-        lgr.info(" -> RMSE recomputed (worker, SplinePWLObjective on clipped x0) = %.8f", worker_rmse)
-
-        k_nodes = int(sigma_knots.size)
-
-        n_inj = x_slice_n_to_physical_nodes(x0_init[1 : 1 + k_nodes], sigma_knots, cfg.n_mono_band_nm)
-
-        L_inj = np.asarray(x0_init[1 + k_nodes : 1 + 2 * k_nodes], dtype=np.float64).ravel()
-
-        if abs(float(x0_pre_clip[0]) - float(x0_init[0])) > 1e-9:
-            lgr.info(
-                " -> Note: d before clip=%.6f nm -> after clip=%.6f nm",
-                float(x0_pre_clip[0]),
-                float(x0_init[0]),
-            )
-
-        try:
-            _mr, rmse_like_dialog = rmse_at_spline_stage_x0_init(
-                cfg,
-                sigma_knots,
-                n_inj,
-                L_inj,
-                float(x0_init[0]),
-                relax_n_mono=True,
-            )
-
-            _ms, rmse_strict_mono = rmse_at_spline_stage_x0_init(
-                cfg,
-                sigma_knots,
-                n_inj,
-                L_inj,
-                float(x0_init[0]),
-                relax_n_mono=False,
-            )
-
-            lgr.info(
-                " -> RMSE same (n,L,d) as post-clip, recomputed **like preview** (relax_n_mono=True) = %.8f",
-                float(rmse_like_dialog),
-            )
-
-            lgr.info(
-                " -> RMSE same (n,L,d), **strict worker** objective (relax_n_mono=False / ξ mono) = %.8f",
-                float(rmse_strict_mono),
-            )
-
-            if cfg.n_mono_band_nm is not None and abs(rmse_like_dialog - rmse_strict_mono) > 1e-6:
-                lgr.warning(
-                    " => Preview vs strict gap: dialog may show RMSE without penalties / mono "
-                    "parametrization identical to worker (see rmse_at_spline_stage_x0_init + cfg n_mono_band_nm)."
-                )
-
-        except (TypeError, ValueError, AttributeError, RuntimeError) as exc:
-            lgr.warning("FACTUAL: rmse_at_spline_stage_x0_init recompute failed: %s", exc)
-
-        abs_rmse_diff = float(abs(worker_rmse - manual_rmse))
-
-        diff_rel = 100.0 * abs_rmse_diff / max(manual_rmse, 1e-9)
-
-        # Warning threshold: >1% rel. (old 0.1% fired on clip/float noise alone, e.g. 0.04 vs 0.0413).
-
-        if diff_rel > 1.0:
-            lgr.warning("!!! SIGNIFICANT GAP (worker vs dialog declared RMSE): %.1f%%", diff_rel)
-
-            lgr.warning(
-                " => Leads: dialog vs canonical K sigma (regrid); x0 clip; rmse_fit_lambda_nm; wT/wR; "
-                "t_is_ratio; stale stored RMSE (config/spectrum changed between Keep and SOL2); relax_n_mono preview."
-            )
-
-        elif diff_rel > 0.25 or abs_rmse_diff > 2e-4:
-            lgr.info(
-                "  Residual dialog vs first worker cost: %.2f%% rel. (|Delta|=%.2e) - typ. x0 clip or rounding.",
-                diff_rel,
-                abs_rmse_diff,
-            )
-
-        else:
-            lgr.info("  SOLUTION VALIDATED: dialog and worker in close agreement.")
-
-        lgr.info(
-            "FACTUAL - La ligne suivante ``INDEX_SPLINE stage ... RMSE start`` doit coïncider avec le RMSE SOL2 ici (± bruit clip)."
-        )
-
-        lgr.info("=" * 60)
+        factuel_mse_sp = _fac["factuel_mse_sp"]
+        factuel_pen = _fac["factuel_pen"]
+        factuel_tot = _fac["factuel_tot"]
+        factuel_n_pix = _fac["factuel_n_pix"]
+        factuel_rmse_pwl_contrast = _fac["factuel_rmse_pwl_contrast"]
 
     if progress_k_ref is not None:
         if len(progress_k_ref) < 1:

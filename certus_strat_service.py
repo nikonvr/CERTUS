@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Any
 import json
 import logging
 import pathlib
-import threading
-import concurrent.futures
-import queue
-import time
 import numpy as np
 
 from certus_services import BaseHeadlessService
@@ -26,14 +22,13 @@ from certus_physics import (
     compute_batch_rmse,
     validate_wavelengths_batch,
     update_run_states_kernel,
-    precompute_matrix_cache_kernel,
 )
 from certus_strat_context import StratContext
 from certus_core import WL_DECIMALS
 
 NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"
-WL_INDEX_SCALE = 10 ** WL_DECIMALS
+WL_INDEX_SCALE = 10**WL_DECIMALS
 
 
 def wavelength_to_index(wavelength_nm: float) -> int:
@@ -86,6 +81,7 @@ class StratStrategyService(BaseHeadlessService):
             return cls._schema
         try:
             import jsonschema  # noqa: F401 – optional dependency check
+
             with open(cls._SCHEMA_PATH, encoding="utf-8") as f:
                 cls._schema = json.load(f)
         except (ImportError, FileNotFoundError):
@@ -99,6 +95,7 @@ class StratStrategyService(BaseHeadlessService):
             return []  # jsonschema not available or schema missing — skip silently
         try:
             import jsonschema
+
             validator = jsonschema.Draft202012Validator(schema)
             errors = [
                 f"{'.'.join(str(p) for p in e.absolute_path) or 'root'}: {e.message}"
@@ -156,7 +153,7 @@ class StratStrategyService(BaseHeadlessService):
             nH_id = params["nH_id"]
             nL_id = params["nL_id"]
             nSub_id = params["nSub_id"]
-        except (KeyError, TypeError, ValueError) as e:
+        except (KeyError, TypeError, ValueError):
             # If params are missing, we can't validate coverage, but we don't necessarily fail here
             # as other parts of the system might handle it.
             return
@@ -224,9 +221,7 @@ def calculate_RT_normal_real(
     _emit_stat("SP", 1)
 
     # wrapper returns (R, T)
-    R_arr, T_arr = calculate_RT_vectorized_real_HL(
-        wavelengths, nH_array, nL_array, nSub_array, p_thick_arr
-    )
+    R_arr, T_arr = calculate_RT_vectorized_real_HL(wavelengths, nH_array, nL_array, nSub_array, p_thick_arr)
 
     # Return as 2D array for backward compatibility
     return np.column_stack((R_arr, T_arr))
@@ -267,8 +262,7 @@ def calculate_nominal_properties(
         logger.warning(f"⚠️ Low Index Material ({nL_id}) appears to be AIR (n=1.0). Missing file?")
 
     p_thick_nominal = [
-        (m * l0) / (4.0 * np.real(nH_at_l0 if (i % 2) == 0 else nL_at_l0))
-        for i, m in enumerate(multipliers)
+        (m * l0) / (4.0 * np.real(nH_at_l0 if (i % 2) == 0 else nL_at_l0)) for i, m in enumerate(multipliers)
     ]
 
     wavelengths = arange_inclusive(float(wl_range[0]), float(wl_range[1]), wl_step)
@@ -289,9 +283,7 @@ def calculate_nominal_properties(
     }, multipliers
 
 
-def calculate_sensitivity_matrix(
-    params: dict[str, Any], nominal_results: dict[str, Any]
-) -> dict[str, Any]:
+def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[str, Any]) -> dict[str, Any]:
     """Generating Sensitivity Landscape (0 -> 3nm)."""
     logger = params.get("logger", logging.getLogger("ThinFilm"))
     logger.info("Generating Sensitivity Landscape (0 -> 3nm)...")
@@ -304,15 +296,11 @@ def calculate_sensitivity_matrix(
     # Decouple from APP_CONTEXT: prefer params['materials_db'] if present
     local_db = params.get("materials_db")
 
-    nH_arr = get_refractive_clues_vectorized(
-        params["nH_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
-    nL_arr = get_refractive_clues_vectorized(
-        params["nL_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(
-        params["nSub_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
+    nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(
+        np.complex128
+    )
 
     # Recalculate exact nominal transmission to ensure perfect alignment with batch kernel
     _, T_clean_batch = calculate_RT_batch_kernel(
@@ -325,19 +313,20 @@ def calculate_sensitivity_matrix(
     T_clean = T_clean_batch[0]
     sensitivity_grid = np.zeros((len(sigma_steps), len(wavelengths)), dtype=np.float64)
 
-    # ... simplified/ported version of the loop ...
-    # (I'll need to make sure I have all dependencies like simulate_stack_robustness_batch)
-    # Wait, simulate_stack_robustness_batch is in certus_physics!
-    from certus_physics import simulate_stack_robustness_batch
 
     for i, sigma in enumerate(sigma_steps):
         if sigma < 1e-9:
             sensitivity_grid[i, :] = 0.0
             continue
         _, T_noise_batch = simulate_stack_robustness_batch(
-            wavelengths, nH_arr, nL_arr, nSub_arr,
+            wavelengths,
+            nH_arr,
+            nL_arr,
+            nSub_arr,
             np.array(p_thick_nominal, dtype=np.float64),
-            sigma, runs_per_step, seed=42
+            sigma,
+            runs_per_step,
+            seed=42,
         )
         # RMS error per wavelength
         diff = T_noise_batch - T_clean
@@ -350,9 +339,7 @@ def calculate_sensitivity_matrix(
     }
 
 
-def calculate_seel_analysis(
-    params: dict[str, Any], nominal_results: dict[str, Any]
-) -> dict[str, Any]:
+def calculate_seel_analysis(params: dict[str, Any], nominal_results: dict[str, Any]) -> dict[str, Any]:
     """Parallel SEEL Analysis (3x50 runs per sigma)."""
     logger = params.get("logger", logging.getLogger("ThinFilm"))
     logger.info("Running Parallel SEEL Analysis (3x50 runs per sigma)...")
@@ -363,31 +350,29 @@ def calculate_seel_analysis(
 
     batches_per_sigma = 3
     runs_per_batch = 50
-    p_thick_nominal = np.array(
-        nominal_results["physical_thicknesses_nominal"], dtype=np.float64
-    )
+    p_thick_nominal = np.array(nominal_results["physical_thicknesses_nominal"], dtype=np.float64)
     wavelengths = np.array(nominal_results["wavelengths"], dtype=np.float64)
     local_db = params.get("materials_db")
 
-    nH_arr = get_refractive_clues_vectorized(
-        params["nH_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
-    nL_arr = get_refractive_clues_vectorized(
-        params["nL_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(
-        params["nSub_id"], wavelengths, db_instance=local_db
-    ).astype(np.complex128)
+    nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(
+        np.complex128
+    )
 
-    from certus_physics import simulate_stack_robustness_batch, compute_batch_rmse
 
     results = []
     for sigma in target_sigmas:
         for _ in range(batches_per_sigma):
             _, T_noise_batch = simulate_stack_robustness_batch(
-                wavelengths, nH_arr, nL_arr, nSub_arr,
-                p_thick_nominal, sigma, runs_per_batch,
-                seed=int(rng.integers(0, 1e9))
+                wavelengths,
+                nH_arr,
+                nL_arr,
+                nSub_arr,
+                p_thick_nominal,
+                sigma,
+                runs_per_batch,
+                seed=int(rng.integers(0, 1e9)),
             )
             # Compute RMSE vs nominal
             T_nom = np.array(nominal_results["T_spectral_nominal"], dtype=np.float64)
@@ -456,7 +441,6 @@ def calculate_dynamics_ULTIMATE(
     ]
 
 
-
 def _select_candidates_phase_a(
     scan_wl_range: np.ndarray,
     i_layer: int,
@@ -497,7 +481,7 @@ def _select_candidates_phase_a(
         pre_candidates = [d for d in pre_candidates if d["t_min"] >= min_t_floor]
         if n_before > len(pre_candidates):
             logger.info(
-                f"   [MIN-T] Layer {i_layer+1}: {n_before - len(pre_candidates)} candidate(s) dropped (T_min < {min_t_floor*100:.0f}%)"
+                f"   [MIN-T] Layer {i_layer + 1}: {n_before - len(pre_candidates)} candidate(s) dropped (T_min < {min_t_floor * 100:.0f}%)"
             )
 
     # strict_min_transmission_floor: raise hard error if no candidate survives T floor
@@ -507,7 +491,7 @@ def _select_candidates_phase_a(
         l0_t_min_check = full_t_min_map.get(float(l0), 0.0)
         if l0_t_min_check < min_t_floor:
             raise RuntimeError(
-                f"Layer {i_layer+1}: no candidate satisfies T_min >= {min_t_floor:.2f} "
+                f"Layer {i_layer + 1}: no candidate satisfies T_min >= {min_t_floor:.2f} "
                 f"(strict_min_transmission_floor=True). Cannot proceed."
             )
 
@@ -525,29 +509,20 @@ def _select_candidates_phase_a(
                 l0_t_init, l0_t_final = d["t_init"], d["t_final"]
                 break
         if min_t_floor <= 0.0 or l0_t_min >= min_t_floor:
-            check_list.append({
-                "wl": l0,
-                "dynamics": l0_dyn,
-                "t_init": l0_t_init,
-                "t_final": l0_t_final,
-                "t_min": l0_t_min,
-            })
+            check_list.append(
+                {
+                    "wl": l0,
+                    "dynamics": l0_dyn,
+                    "t_init": l0_t_init,
+                    "t_final": l0_t_final,
+                    "t_min": l0_t_min,
+                }
+            )
 
     # Extrema Safety Check & Resolution Filtering
     valid_candidates_data = []
-    if current_avg_stack is not None and i_layer > 0 and len(current_avg_stack) == i_layer:
-        current_stack_for_res = current_avg_stack + [p_thick_nominal[i_layer]]
-    elif current_avg_stack is not None and i_layer == 0:
-        current_stack_for_res = [p_thick_nominal[0]]
-    else:
-        current_stack_for_res = p_thick_nominal[: i_layer + 1]
-
     exclusion_ratio = float(params.get("extrema_exclusion_ratio", 60.0))
-    res_limit_nm = float(params.get("min_spectral_resolution", 1.0))
-    noise_val_pct = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
-    resolution_curvature_tolerance = float(
-        params.get("resolution_curvature_tolerance", noise_val_pct / 2.0)
-    )
+
 
     # Vectorized Extrema Check
     n_check = len(check_list)
@@ -605,7 +580,7 @@ def compute_probe_offset_nm_from_ratio(params: dict[str, Any]) -> float:
         return 0.0
     l0 = float(params["l0"])
     nH_at_l0 = float(np.real(get_refractive_index(params["nH_id"], l0)))
-    # For H layers (0, 2, ...), next is L (idx 1). 
+    # For H layers (0, 2, ...), next is L (idx 1).
     # This is a bit simplified vs legacy but usually fine.
     return offset_ratio * (l0 / (4.0 * nH_at_l0))
 
@@ -630,7 +605,9 @@ def _validate_candidates_phase_a(
 
     n_H_arr = np.array([clues_by_wl_idx[wavelength_to_index(w)]["H"] for w in candidate_wls], dtype=np.complex128)
     n_L_arr = np.array([clues_by_wl_idx[wavelength_to_index(w)]["L"] for w in candidate_wls], dtype=np.complex128)
-    n_Sub_arr = np.array([clues_by_wl_idx[wavelength_to_index(w)]["substrate"] for w in candidate_wls], dtype=np.complex128)
+    n_Sub_arr = np.array(
+        [clues_by_wl_idx[wavelength_to_index(w)]["substrate"] for w in candidate_wls], dtype=np.complex128
+    )
     p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
 
     runs_history_matrix = np.zeros((num_runs, len(p_thick_nominal)), dtype=np.float64)
@@ -671,7 +648,6 @@ def _validate_candidates_phase_a(
     p_thick_sim_updates = [[] for _ in range(len(candidate_wls))]
 
     # Build results with extrema metadata pass-through from candidates
-    _SYM_MISSING = float(1e18)
     _EXT_KEYS = ("ext_prev_start", "ext_next_start", "ext_prev_end", "ext_next_end", "dynamics")
     idx_dict = {wavelength_to_index(w): clues_by_wl_idx[wavelength_to_index(w)] for w in candidate_wls}
 

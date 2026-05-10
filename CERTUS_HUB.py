@@ -21,7 +21,7 @@ Fixed: Header generation and Config loading robustness.
 
 """
 
-
+from typing import Any
 import logging
 
 import functools
@@ -30,7 +30,6 @@ import functools
 import multiprocessing
 
 
-import os
 from pathlib import Path
 
 
@@ -38,16 +37,11 @@ import sys
 
 
 from certus_core import (
-
+    NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
-
     create_module_environment,
-
     setup_module_logging,
-
     certus_timestamp_display,
-
-
 )
 
 
@@ -79,50 +73,27 @@ script_dir = bootstrap_env["script_dir"]
 
 
 from certus_qt_widgets import (
-
     QApplication,
-
     QCheckBox,
-
     QColor,
-
     QFont,
-
     QFrame,
-
     QGraphicsDropShadowEffect,
-
     QGridLayout,
-
     QHBoxLayout,
-
     QIcon,
-
     QKeySequence,
-
     QLabel,
-
     QMainWindow,
-
     QMessageBox,
-
     QProcess,
-
     QPushButton,
-
     QShortcut,
-
     QTextEdit,
-
     QTimer,
-
     Qt,
-
     QVBoxLayout,
-
     QWidget,
-
-
 )
 
 
@@ -133,12 +104,10 @@ from certus_core import SVG_AVAILABLE
 
 
 if SVG_AVAILABLE:
-
     from PyQt6.QtSvgWidgets import QSvgWidget
 
 
 else:
-
     QSvgWidget = None
 
 
@@ -155,28 +124,15 @@ from certus_core import get_export_config, get_resource_path, save_export_config
 
 
 from certus_ui import (
-
     SVG_AVAILABLE,
-
     CertusTheme,
-
     CertusThemeToggle,
-
     create_colored_label,
-
     create_header_logo_widget,
-
-    create_styled_button,
-
     create_styled_label,
-
     init_certus_app,
-
     open_documentation,
-
     set_certus_window_icon,
-
-
 )
 
 
@@ -199,10 +155,9 @@ from certus_ui import (
 
 
 class ModuleBadge(QLabel):
-
     """Professional Badge (CERTUS 2026)"""
 
-    def __init__(self, text, color, parent=None):
+    def __init__(self, text, color, parent=None) -> None:
 
         super().__init__(text, parent)
 
@@ -211,15 +166,10 @@ class ModuleBadge(QLabel):
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.setContentsMargins(
-
             CertusTheme.SPACING_MD,
-
             CertusTheme.SPACING_XS,
-
             CertusTheme.SPACING_MD,
-
             CertusTheme.SPACING_XS,
-
         )
 
         self.setStyleSheet(f"""
@@ -242,7 +192,6 @@ class ModuleBadge(QLabel):
 
 
 class ApplicationCard(QFrame):
-
     """
 
     Professional Application Card (CERTUS 2026).
@@ -252,26 +201,16 @@ class ApplicationCard(QFrame):
     """
 
     def __init__(
-
         self,
-
         title: str,
-
         subtitle: str,
-
         description: str,
-
         script_name: str,
-
         icon_text: str,
-
         accent_color: str,
-
         badge_text: str | None = None,
-
         parent: QWidget | None = None,
-
-    ):
+    ) -> None:
 
         super().__init__(parent)
 
@@ -394,15 +333,10 @@ class ApplicationCard(QFrame):
         c_layout = QVBoxLayout(content)
 
         c_layout.setContentsMargins(
-
             CertusTheme.SPACING_XL,
-
             CertusTheme.SPACING_XL,
-
             CertusTheme.SPACING_XL,
-
             CertusTheme.SPACING_XL,
-
         )
 
         c_layout.setSpacing(CertusTheme.SPACING_MD)
@@ -422,7 +356,6 @@ class ApplicationCard(QFrame):
         top_row.addStretch()
 
         if badge_text:
-
             badge = ModuleBadge(badge_text.upper(), accent_color)
 
             top_row.addWidget(badge)
@@ -509,12 +442,10 @@ class ApplicationCard(QFrame):
 
         layout.addWidget(content)
 
-    def enterEvent(self, event):
-
+    def enterEvent(self, event) -> None:
         """Hover effect improvement with micro-animation"""
 
         if not hasattr(self, "_anim"):
-
             from PyQt6.QtCore import QVariantAnimation
 
             self._anim = QVariantAnimation(self)
@@ -534,17 +465,14 @@ class ApplicationCard(QFrame):
         self._anim.start()
 
         if hasattr(self, "_hover_style"):
-
             self.setStyleSheet(self._hover_style)
 
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
-
+    def leaveEvent(self, event) -> None:
         """Return to normal state with micro-animation"""
 
         if hasattr(self, "_anim"):
-
             self._anim.stop()
 
             self._anim.setStartValue(self._current_progress)
@@ -554,19 +482,16 @@ class ApplicationCard(QFrame):
             self._anim.start()
 
         if hasattr(self, "_normal_style"):
-
             self.setStyleSheet(self._normal_style)
 
         super().leaveEvent(event)
 
-    def _animate_hover(self, progress: float):
+    def _animate_hover(self, progress: float) -> None:
 
         self._current_progress = progress
 
         if hasattr(self, "_shadow") and self._shadow:
-
             try:
-
                 blur = self._normal_blur + (self._hover_blur - self._normal_blur) * progress
 
                 opac = self._normal_opacity + (self._hover_opacity - self._normal_opacity) * progress
@@ -582,7 +507,6 @@ class ApplicationCard(QFrame):
                 self._shadow.setOffset(0, off_y)
 
             except RuntimeError:
-
                 # Shadow might have been deleted on C++ side (e.g. by effect replacement)
 
                 pass
@@ -598,7 +522,6 @@ class ApplicationCard(QFrame):
 
 
 class GroupedApplicationCard(ApplicationCard):
-
     """
 
     Card containing multiple sub-modules (Stacked vertically).
@@ -606,22 +529,14 @@ class GroupedApplicationCard(ApplicationCard):
     """
 
     def __init__(
-
         self,
-
         title: str,
-
         icon_text: str,
-
         accent_color: str,
-
         sub_apps: list[dict[str, str]],
-
         badge_text: str | None = None,
-
         parent: QWidget | None = None,
-
-    ):
+    ) -> None:
 
         # Explicit call to QFrame init to skip ApplicationCard setup but keep inheritance if needed
 
@@ -740,15 +655,10 @@ class GroupedApplicationCard(ApplicationCard):
         c_layout = QVBoxLayout(content)
 
         c_layout.setContentsMargins(
-
             CertusTheme.SPACING_MD,
-
             CertusTheme.SPACING_MD,
-
             CertusTheme.SPACING_MD,
-
             CertusTheme.SPACING_MD,
-
         )
 
         c_layout.setSpacing(CertusTheme.SPACING_SM)
@@ -774,7 +684,6 @@ class GroupedApplicationCard(ApplicationCard):
         top_row.addStretch()
 
         if badge_text:
-
             badge = ModuleBadge(badge_text.upper(), accent_color)
 
             top_row.addWidget(badge)
@@ -802,7 +711,6 @@ class GroupedApplicationCard(ApplicationCard):
         self.launch_callback = None  # Set after init
 
         for i, app in enumerate(sub_apps):
-
             # Sub-App Block
 
             sa_layout = QVBoxLayout()
@@ -820,7 +728,6 @@ class GroupedApplicationCard(ApplicationCard):
             sa_header.addWidget(sa_title)
 
             if app.get("badge"):
-
                 b = create_colored_label(app["badge"], CertusTheme.SUCCESS, 9, QFont.Weight.Bold)
 
                 # b.setStyleSheet(f"background: {CertusTheme.SUCCESS_BG}; padding: 2px 4px; border-radius: 4px;")
@@ -886,7 +793,6 @@ class GroupedApplicationCard(ApplicationCard):
             # Divider between apps
 
             if i < len(sub_apps) - 1:
-
                 div = QFrame()
 
                 div.setFixedHeight(1)
@@ -901,13 +807,12 @@ class GroupedApplicationCard(ApplicationCard):
 
         layout.addWidget(content)
 
-    def _on_launch(self, script):
+    def _on_launch(self, script) -> None:
 
         if self.launch_callback:
-
             self.launch_callback(script)
 
-    def _on_launch_button_clicked(self, script, *_args):
+    def _on_launch_button_clicked(self, script, *_args) -> None:
 
         self._on_launch(script)
 
@@ -922,9 +827,129 @@ class GroupedApplicationCard(ApplicationCard):
 
 
 class CertusHub(QMainWindow):
+    @staticmethod
+    def _build_hub_apps_catalog() -> list[dict[str, str]]:
+        """Return HUB application cards configuration."""
+        return [
+            {
+                "title": "DESIGN",
+                "sub": "Synthesis",
+                "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
+                "script": "CERTUS_DESIGN.py",
+                "icon": "🧩",
+                "color": CertusTheme.BRAND_DESIGN,
+                "badge": "Concept",
+                "type": "single",
+            },
+            {
+                "title": "RE",
+                "sub": "Reverse Engineering",
+                "desc": "Extraction of refractive clues from experimental curves using spline networks.",
+                "script": "CERTUS_RE.py",
+                "icon": "🕵️",
+                "color": CertusTheme.BRAND_STRAT,
+                "badge": "Analysis",
+                "type": "single",
+            },
+            {
+                "title": "STRAT",
+                "sub": "Manufacturing",
+                "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
+                "script": "CERTUS_STRAT.py",
+                "icon": "🏭",
+                "color": CertusTheme.BRAND_STRAT,
+                "badge": "Production",
+                "type": "single",
+            },
+            {
+                "title": "INDEX",
+                "sub": "Dielectrics",
+                "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
+                "script": "CERTUS_INDEX.py",
+                "icon": "🧪",
+                "color": CertusTheme.BRAND_INDEX,
+                "badge": "Material",
+                "type": "single",
+            },
+            {
+                "title": "INDEX SPLINE",
+                "sub": "Spline Model",
+                "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
+                "script": "CERTUS_INDEX_SPLINE.py",
+                "icon": "〰️",
+                "color": CertusTheme.BRAND_INDEX,
+                "badge": "Material",
+                "type": "single",
+            },
+            {
+                "title": "SMOOTHER",
+                "sub": "Processing",
+                "desc": "Parametric smoothing of spectral measurement data.",
+                "script": "certus_curve_smoother.py",
+                "icon": "🫧",
+                "color": CertusTheme.SUCCESS,
+                "badge": "Utility",
+                "type": "single",
+            },
+            {
+                "title": "SUBSTRATE INDEX",
+                "sub": "Characterization",
+                "desc": "Substrate refractive index determination from spectral measurements.",
+                "script": "certus_substrate_index.py",
+                "icon": "📏",
+                "color": CertusTheme.BRAND_INDEX,
+                "badge": "Material",
+                "type": "single",
+            },
+            {
+                "title": "METAL BILAYER",
+                "sub": "Opaque Substrate",
+                "desc": "Opaque substrate strategy (Legacy).",
+                "script": "CERTUS_METAL_BILAYER.py",
+                "icon": "🛡️",
+                "color": CertusTheme.BRAND_METAL,
+                "badge": "Std",
+                "type": "single",
+            },
+            {
+                "title": "METAL SINGLE",
+                "sub": "Transparent Substrate",
+                "desc": "Transparent substrate strategy (R/T/Rb).",
+                "script": "CERTUS_METAL_SINGLE.py",
+                "icon": "🛡️",
+                "color": CertusTheme.BRAND_METAL,
+                "badge": "New",
+                "type": "single",
+            },
+        ]
 
-    def __init__(self):
+    @staticmethod
+    def _hub_export_checkbox_stylesheet() -> str:
+        """Return shared style for HUB export toggle."""
+        return f"""
+            QCheckBox {{ 
+                color: {CertusTheme.TEXT_MAIN}; 
+                spacing: {CertusTheme.SPACING_MD}px; 
+                font-weight: {CertusTheme.FONT_WEIGHT_MEDIUM};
+                font-family: {CertusTheme.FONT_FAMILY};
+            }}
+            QCheckBox::indicator {{ 
+                width: 18px; 
+                height: 18px; 
+                border-radius: {CertusTheme.RADIUS_SM}px; 
+                border: 1.5px solid {CertusTheme.BORDER}; 
+                background: {CertusTheme.BACKGROUND}; 
+            }}
+            QCheckBox::indicator:checked {{ 
+                background-color: {CertusTheme.PRIMARY}; 
+                border-color: {CertusTheme.PRIMARY}; 
+            }}
+            QCheckBox::indicator:hover {{
+                border-color: {CertusTheme.PRIMARY};
+            }}
+        """
 
+    def __init__(self) -> None:
         """
 
         Initialize the CERTUS Hub main window.
@@ -973,6 +998,7 @@ class CertusHub(QMainWindow):
 
         try:
             from certus_ux import build_premium_overrides
+
             premium_css = build_premium_overrides()
         except ImportError:
             premium_css = ""
@@ -1002,9 +1028,7 @@ class CertusHub(QMainWindow):
         # Use create_header_logo_widget for consistency
 
         header_widget = create_header_logo_widget(
-
             "CERTUS HUB", "Unified Optical Suite", logo_width=200, module_name="HUB"
-
         )
 
         # Theme toggle injected into the header (right side) for consistency across CERTUS suite
@@ -1024,15 +1048,10 @@ class CertusHub(QMainWindow):
         # Spacing Style 2026
 
         content_layout.setContentsMargins(
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
         )
 
         grid_layout = QGridLayout()
@@ -1048,232 +1067,31 @@ class CertusHub(QMainWindow):
         grid_wrapper.addStretch()
 
         # Module definitions
-
-        self.apps = [
-
-            {
-
-                "title": "DESIGN",
-
-                "sub": "Synthesis",
-
-                "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
-
-                "script": "CERTUS_DESIGN.py",
-
-                "icon": "🧩",
-
-                "color": CertusTheme.BRAND_DESIGN,
-
-                "badge": "Concept",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "RE",
-
-                "sub": "Reverse Engineering",
-
-                "desc": "Extraction of refractive clues from experimental curves using spline networks.",
-
-                "script": "CERTUS_RE.py",
-
-                "icon": "🕵️",
-
-                "color": CertusTheme.BRAND_STRAT,
-
-                "badge": "Analysis",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "STRAT",
-
-                "sub": "Manufacturing",
-
-                "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
-
-                "script": "CERTUS_STRAT.py",
-
-                "icon": "🏭",
-
-                "color": CertusTheme.BRAND_STRAT,
-
-                "badge": "Production",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "INDEX",
-
-                "sub": "Dielectrics",
-
-                "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
-
-                "script": "CERTUS_INDEX.py",
-
-                "icon": "🧪",
-
-                "color": CertusTheme.BRAND_INDEX,
-
-                "badge": "Material",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "INDEX SPLINE",
-
-                "sub": "Spline Model",
-
-                "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
-
-                "script": "CERTUS_INDEX_SPLINE.py",
-
-                "icon": "〰️",
-
-                "color": CertusTheme.BRAND_INDEX,
-
-                "badge": "Material",
-
-                "type": "single",
-
-            },
-
-
-            {
-
-                "title": "SMOOTHER",
-
-                "sub": "Processing",
-
-                "desc": "Parametric smoothing of spectral measurement data.",
-
-                "script": "certus_curve_smoother.py",
-
-                "icon": "🫧",
-
-                "color": CertusTheme.SUCCESS,
-
-                "badge": "Utility",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "SUBSTRATE INDEX",
-
-                "sub": "Characterization",
-
-                "desc": "Substrate refractive index determination from spectral measurements.",
-
-                "script": "certus_substrate_index.py",
-
-                "icon": "📏",
-
-                "color": CertusTheme.BRAND_INDEX,
-
-                "badge": "Material",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "METAL BILAYER",
-
-                "sub": "Opaque Substrate",
-
-                "desc": "Opaque substrate strategy (Legacy).",
-
-                "script": "CERTUS_METAL_BILAYER.py",
-
-                "icon": "🛡️",
-
-                "color": CertusTheme.BRAND_METAL,
-
-                "badge": "Std",
-
-                "type": "single",
-
-            },
-
-            {
-
-                "title": "METAL SINGLE",
-
-                "sub": "Transparent Substrate",
-
-                "desc": "Transparent substrate strategy (R/T/Rb).",
-
-                "script": "CERTUS_METAL_SINGLE.py",
-
-                "icon": "🛡️",
-
-                "color": CertusTheme.BRAND_METAL,
-
-                "badge": "New",
-
-                "type": "single",
-
-            },
-
-        ]
+        self.apps = self._build_hub_apps_catalog()
 
         MAX_COLS = 3  # 3x3 Grid (9 modules)
 
         for idx, app in enumerate(self.apps):
-
             if app.get("type") == "group":
-
                 card = GroupedApplicationCard(
-
                     app["title"],
-
                     app["icon"],
-
                     app["color"],
-
                     app["sub_apps"],
-
                     app["badge"],
-
                 )
 
                 card.launch_callback = self.launch_module
 
             else:
-
                 card = ApplicationCard(
-
                     app["title"],
-
                     app["sub"],
-
                     app["desc"],
-
                     app["script"],
-
                     app["icon"],
-
                     app["color"],
-
                     app["badge"],
-
                 )
 
                 card.mousePressEvent = lambda e, s=app["script"]: self.launch_module(s)
@@ -1306,15 +1124,10 @@ class CertusHub(QMainWindow):
         bb_layout = QHBoxLayout(bottom_bar)
 
         bb_layout.setContentsMargins(
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_LG,
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_LG,
-
         )
 
         # Config Group
@@ -1327,49 +1140,7 @@ class CertusHub(QMainWindow):
 
         # --- Auto Export Toggle ---
 
-        _chk_style = f"""
-
-            QCheckBox {{ 
-
-                color: {CertusTheme.TEXT_MAIN}; 
-
-                spacing: {CertusTheme.SPACING_MD}px; 
-
-                font-weight: {CertusTheme.FONT_WEIGHT_MEDIUM};
-
-                font-family: {CertusTheme.FONT_FAMILY};
-
-            }}
-
-            QCheckBox::indicator {{ 
-
-                width: 18px; 
-
-                height: 18px; 
-
-                border-radius: {CertusTheme.RADIUS_SM}px; 
-
-                border: 1.5px solid {CertusTheme.BORDER}; 
-
-                background: {CertusTheme.BACKGROUND}; 
-
-            }}
-
-            QCheckBox::indicator:checked {{ 
-
-                background-color: {CertusTheme.PRIMARY}; 
-
-                border-color: {CertusTheme.PRIMARY}; 
-
-            }}
-
-            QCheckBox::indicator:hover {{
-
-                border-color: {CertusTheme.PRIMARY};
-
-            }}
-
-        """
+        _chk_style = self._hub_export_checkbox_stylesheet()
 
         auto_export_val = get_export_config()
 
@@ -1377,11 +1148,7 @@ class CertusHub(QMainWindow):
 
         self.chk_export.setChecked(auto_export_val)
 
-        self.chk_export.setToolTip(
-
-            "Automatically generate Excel/HTML reports after calculationation."
-
-        )
+        self.chk_export.setToolTip("Automatically generate Excel/HTML reports after calculationation.")
 
         self.chk_export.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE))
 
@@ -1400,22 +1167,18 @@ class CertusHub(QMainWindow):
         self.btn_docs = QPushButton(" Scientific Documentation")
         try:
             from certus_ux import OBJ
+
             self.btn_docs.setObjectName(OBJ.PRIMARY_BUTTON)
         except ImportError:
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        self.btn_docs.setToolTip(
-
-            "Open the full scientific documentation for the CERTUS suite (HTML reference)."
-
-        )
+        self.btn_docs.setToolTip("Open the full scientific documentation for the CERTUS suite (HTML reference).")
 
         # Try loading icon
 
         icon_path = get_resource_path("icons/book.svg")
 
         if Path(icon_path).exists():
-
             self.btn_docs.setIcon(QIcon(icon_path))
 
         self.btn_docs.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -1480,11 +1243,7 @@ class CertusHub(QMainWindow):
 
         self.btn_details.clicked.connect(self.on_toggle_details)
 
-        bb_layout.insertWidget(
-
-            bb_layout.count() - 2, self.btn_details
-
-        )  # Insert before stretch/docs
+        bb_layout.insertWidget(bb_layout.count() - 2, self.btn_details)  # Insert before stretch/docs
 
         # Active modules indicator
 
@@ -1520,8 +1279,7 @@ class CertusHub(QMainWindow):
 
         self._apply_theme()
 
-    def _apply_theme(self):
-
+    def _apply_theme(self) -> None:
         """Apply global theme styles"""
 
         self.setStyleSheet(f"""
@@ -1567,15 +1325,11 @@ class CertusHub(QMainWindow):
         base_name = Path(app_name).stem
 
         if getattr(sys, "frozen", False):
-
-            program = str(
-                Path(base_dir) / (base_name + (".exe" if sys.platform == "win32" else ""))
-            )
+            program = str(Path(base_dir) / (base_name + (".exe" if sys.platform == "win32" else "")))
 
             args = []
 
         else:
-
             program = sys.executable
 
             script_path = Path(base_dir) / app_name
@@ -1583,7 +1337,6 @@ class CertusHub(QMainWindow):
             args = [str(script_path)]
 
             if not script_path.exists():
-
                 QMessageBox.critical(self, "Error", f"Script not found: {script_path}")
 
                 return
@@ -1598,11 +1351,7 @@ class CertusHub(QMainWindow):
 
         process.setWorkingDirectory(base_dir)
 
-        process.finished.connect(
-
-            lambda c, s, p=process, n=app_name: self.on_process_finished(p, n, c)
-
-        )
+        process.finished.connect(lambda c, s, p=process, n=app_name: self.on_process_finished(p, n, c))
 
         # Log launch info
 
@@ -1613,17 +1362,12 @@ class CertusHub(QMainWindow):
         process.start()
 
         if not process.waitForStarted(3000):
-
             self._log_message(f"ERROR: Failed to start {module_name}")
 
             QMessageBox.warning(
-
                 self,
-
                 "Launch Error",
-
                 f"Could not start {module_name}.\nPlease check that the module exists.",
-
             )
 
             return
@@ -1632,102 +1376,81 @@ class CertusHub(QMainWindow):
 
         self._update_active_indicator()
 
-    def open_documentation(self):
-
+    def open_documentation(self) -> None:
         """Opens CERTUS_HUB documentation"""
 
         open_documentation("CERTUS_HUB")
 
-    def on_export_changed(self, state):
+    def on_export_changed(self, state) -> None:
 
         enabled = state == Qt.CheckState.Checked.value
 
         try:
-
             save_export_config(enabled)
 
         except (OSError, IOError, PermissionError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-            pass
-
-    def on_process_finished(self, process, app_name, exit_code):
+    def on_process_finished(self, process, app_name, exit_code) -> None:
 
         module_name = Path(app_name).stem
 
         if process in self.active_processes:
-
             self.active_processes.remove(process)
 
         self._update_active_indicator()
 
         if exit_code == 0:
-
             self._log_message(f"{module_name} exited normally.")
 
         elif exit_code not in (1, 15, -1):  # Ignore common force-close codes
-
             err = process.readAllStandardError().data().decode("utf-8", errors="replace")
 
             self._log_message(f"{module_name} exited with code {exit_code}")
 
             if err:
-
                 self._log_message(f"Error: {err[:200]}")
 
-    def on_toggle_details(self, checked):
+    def on_toggle_details(self, checked) -> None:
 
         self.log_container.setVisible(checked)
 
-    def _update_active_indicator(self):
-
+    def _update_active_indicator(self) -> None:
         """Update the active modules indicator in the status bar."""
 
         n = len(self.active_processes)
 
         if n > 0:
-
             self.lbl_active.setText(f"● {n} module{'s' if n > 1 else ''} running")
 
             self.lbl_active.setVisible(True)
 
         else:
-
             self.lbl_active.setVisible(False)
 
-    def _log_message(self, msg):
-
+    def _log_message(self, msg) -> None:
         """Add a timestamped message to the log panel."""
 
         self.log_text.append(f"[{certus_timestamp_display()}] {msg}")
 
-    def _setup_shortcuts(self):
-
+    def _setup_shortcuts(self) -> None:
         """Setup keyboard shortcuts for quick module launch."""
 
         shortcuts = [
-
             ("Ctrl+D", "CERTUS_DESIGN.py", "Launch DESIGN"),
-
             ("Ctrl+Shift+S", "CERTUS_STRAT.py", "Launch STRAT"),
-
             ("Ctrl+I", "CERTUS_INDEX.py", "Launch INDEX"),
-
             ("Ctrl+M", "CERTUS_METAL_SINGLE.py", "Launch METAL"),
-
             ("F1", None, "Open Documentation"),
-
         ]
 
         for key, script, desc in shortcuts:
-
             shortcut = QShortcut(QKeySequence(key), self)
 
             if script:
-
                 shortcut.activated.connect(functools.partial(self.launch_module, script))
 
             else:
-
                 shortcut.activated.connect(self.open_documentation)
 
             shortcut.setWhatsThis(desc)
@@ -1738,8 +1461,7 @@ class CertusHub(QMainWindow):
 
     # =========================================================================
 
-    def attach_recent_files_strip(self, parent_layout=None, *, limit: int = 5):
-
+    def attach_recent_files_strip(self, parent_layout=None, *, limit: int = 5) -> Any:
         """Instantiate and return a recent-configs strip.
 
         This is an **opt-in** helper: calling code passes the layout where
@@ -1757,43 +1479,32 @@ class CertusHub(QMainWindow):
         """
 
         try:
-
             from certus_recent_strip import build_recent_files_strip
 
         except ImportError as e:  # pragma: no cover - defensive
-
             self._log_message(f"Recent strip unavailable: {e}")
 
             return None
 
         strip = build_recent_files_strip(
-
             self,
-
             limit=limit,
-
             on_open=self._on_recent_config_selected,
-
         )
 
         if strip is None:
-
             return None
 
         if parent_layout is not None:
-
             try:
-
                 parent_layout.addWidget(strip)
 
             except (AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
-
                 self._log_message(f"Recent strip insert failed: {e}")
 
         return strip
 
     def _on_recent_config_selected(self, path: str) -> None:
-
         """Callback when the user clicks a recent-file pill."""
 
         self._log_message(f"Recent file selected: {path}")
@@ -1805,11 +1516,9 @@ class CertusHub(QMainWindow):
     # =========================================================================
 
     def _install_help_menu(self) -> None:
-
         """Create the standard Help menu: Shortcuts, Docs, About."""
 
         try:
-
             mb = self.menuBar()
 
             help_menu = mb.addMenu("&Help")
@@ -1833,47 +1542,34 @@ class CertusHub(QMainWindow):
             act_about.triggered.connect(self._show_about_dialog)
 
         except (AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
-
             self._log_message(f"Help menu install failed: {e}")
 
     def _open_shortcuts_overlay(self) -> None:
-
         """Delegate to certus_shortcuts_overlay if available."""
 
         try:
-
             from certus_shortcuts_overlay import open_shortcuts_overlay
 
             open_shortcuts_overlay(self)
 
         except (ImportError, AttributeError, RuntimeError, TypeError) as e:
-
             self._log_message(f"Shortcuts overlay unavailable: {e}")
 
     def _show_about_dialog(self) -> None:
-
         """Minimal About dialog."""
 
         try:
-
             from PyQt6.QtWidgets import QMessageBox
 
             QMessageBox.about(
-
                 self,
-
                 "About CERTUS",
-
                 "<b>CERTUS HUB</b><br>Unified Optical Suite<br><br>"
-
                 "Version 2026 - All suite apps accessible from a single dashboard.<br>"
-
                 "Press <code>F1</code> for keyboard shortcuts.",
-
             )
 
         except (ImportError, AttributeError, RuntimeError, TypeError) as e:  # pragma: no cover - defensive
-
             self._log_message(f"About dialog failed: {e}")
 
     # =========================================================================
@@ -1883,29 +1579,23 @@ class CertusHub(QMainWindow):
     # =========================================================================
 
     def _apply_card_animations(self, card, *, index: int) -> None:
-
         """Attach hover-lift and a staggered fade-in on an HUB card."""
 
         try:
-
             from certus_animations import fade_in, hover_lift
 
         except ImportError:
-
             return
 
         try:
-
             hover_lift(card, lift_px=3)
 
         except (AttributeError, RuntimeError, TypeError):
-
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # Stagger the fade-in so cards appear sequentially (~60 ms apart).
 
         try:
-
             from PyQt6.QtCore import QTimer
 
             delay_ms = 60 * int(index)
@@ -1917,8 +1607,7 @@ class CertusHub(QMainWindow):
             QTimer.singleShot(delay_ms, lambda: fade_in(target, duration_ms=220))
 
         except (ImportError, AttributeError, RuntimeError, TypeError):
-
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
 # =============================================================================
@@ -1931,10 +1620,9 @@ class CertusHub(QMainWindow):
 
 
 class SplashScreen(QWidget):
-
     """Splash screen (CERTUS 2026)"""
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         super().__init__()
 
@@ -1975,15 +1663,10 @@ class SplashScreen(QWidget):
         l = QVBoxLayout(container)
 
         l.setContentsMargins(
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
             CertusTheme.SPACING_XL * 2,
-
         )
 
         l.setSpacing(CertusTheme.SPACING_LG)
@@ -1993,27 +1676,15 @@ class SplashScreen(QWidget):
         logo_widget = None
 
         logo_paths = [
-
-            get_resource_path(
-
-                "certus.svg"
-
-            ),  # Horizontal format (priority, used by create_header_logo_widget)
-
+            get_resource_path("certus.svg"),  # Horizontal format (priority, used by create_header_logo_widget)
             get_resource_path("certus_logo.svg"),
-
             get_resource_path("images/certus_logo.svg"),
-
             get_resource_path("images/certus.svg"),
-
         ]
 
         for logo_path in logo_paths:
-
             if SVG_AVAILABLE and QSvgWidget and Path(logo_path).exists():
-
                 try:
-
                     logo_widget = QSvgWidget(logo_path)
 
                     logo_widget.setFixedSize(400, 85)  # Ratio adapted for splash
@@ -2022,8 +1693,7 @@ class SplashScreen(QWidget):
 
                     break
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     logging.debug(f"Error loading SVG logo {logo_path}: {e}")
 
                     logo_widget = None
@@ -2031,7 +1701,6 @@ class SplashScreen(QWidget):
         # Fallback if SVG logo unavailable
 
         if logo_widget is None:
-
             icon_label = QLabel("💠")
 
             icon_label.setFont(CertusTheme.get_font(50))
@@ -2070,40 +1739,30 @@ class SplashScreen(QWidget):
 
 
 class CertusApp:
-
-    def __init__(self):
+    def __init__(self) -> None:
 
         # High DPI scaling (Must be set BEFORE creating QApplication)
 
         if hasattr(Qt, "HighDpiScaleFactorRoundingPolicy"):
-
             if not QApplication.instance():
-
-                QApplication.setHighDpiScaleFactorRoundingPolicy(
-
-                    Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-
-                )
+                QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
         self.app = QApplication(sys.argv)
 
         # Init theme via COMMON if available (silent mode)
 
         try:
-
             if "init_certus_app" in globals():
-
                 init_certus_app("CERTUS Hub", app=self.app)
 
         except (RuntimeError, AttributeError):
-
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self.splash = SplashScreen()
 
         self.hub = None
 
-    def start(self):
+    def start(self) -> Any:
 
         self.splash.show()
 
@@ -2112,7 +1771,6 @@ class CertusApp:
         geo = self.splash.frameGeometry()
 
         try:
-
             cp = self.app.primaryScreen().availableGeometry().center()
 
             geo.moveCenter(cp)
@@ -2120,7 +1778,6 @@ class CertusApp:
             self.splash.move(geo.topLeft())
 
         except (AttributeError, RuntimeError):
-
             # Screen geometry may not be available in some environments
 
             pass
@@ -2129,7 +1786,7 @@ class CertusApp:
 
         return self.app.exec()
 
-    def show_hub(self):
+    def show_hub(self) -> None:
 
         self.hub = CertusHub()
 
@@ -2139,7 +1796,6 @@ class CertusApp:
 
 
 if __name__ == "__main__":
-
     multiprocessing.freeze_support()
 
     manager = CertusApp()

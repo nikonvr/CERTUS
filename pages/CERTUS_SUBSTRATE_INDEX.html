@@ -39,16 +39,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html" class="active">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
         </div>
     </nav>
 
@@ -58,7 +55,7 @@
             <p style="font-size: 1.3em; color: #37474f; font-weight: 300;">Bare-substrate spectra → $n(\lambda)$
                 (polynomial, Sellmeier, spline)</p>
             <p style="font-size: 1.0em; color: #546e7a; font-weight: 300;">Module <code>certus_substrate_index.py</code>
-                · Scientific Revision 2026.04</p>
+                · Scientific Revision 2026.04.17</p>
         </header>
 
         <div class="abstract">
@@ -110,43 +107,49 @@
             as the rest of CERTUS (see <a href="CERTUS_Optical_Theory_Guide.html">Optical Theory Guide</a> and <a
                 href="metrology.html">Metrology</a> for propagation of uncertainties on $T$).
         </p>
+        <div class="eq-box">
+            $$ T = \frac{(1-R)^2}{1-R^2} = \frac{2n}{n^2+1} \quad \implies \quad n = \frac{1}{T} + \sqrt{\frac{1}{T^2} - 1} $$
+        </div>
         <p>
+            This exact algebraic inversion assumes $k \approx 0$ (transparent regime) and normal incidence. The resulting $n(\lambda)$ is used as the target vector for the subsequent dispersion fits.
             You set <strong>λ min / λ max</strong> for the fit window; points outside can be greyed in previews so that
             edge noise does not dominate the Sellmeier fit.
         </p>
 
         <h2>4. Three Laws &amp; Sellmeier Auto Mode</h2>
-        <div class="mermaid">
+        <div class="mermaid" style="background: transparent;">
             flowchart TD
-            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
-            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
-            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
-            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
-            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
+            classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
+            classDef process fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e40af
+            classDef decision fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
+            classDef output fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
 
-            START(["Load T_sub(λ)"]):::terminal --> PREP["1. Pre-process Data<br>Wavelength clipping &amp; NaN filtering"]:::process
+            START(["Load T_sub(λ)"]):::node --> PREP["1. Pre-process Data<br>Wavelength clipping & NaN filtering"]:::process
             PREP --> SG{"Auto SG Filter?"}:::decision
-            SG -->|"Yes"| SFILTER["2. Dynamic Savitzky-Golay<br>Smooth high-freq noise"]:::process
-            SG -->|"No"| INV
-            SFILTER --> INV["3. Reverse Incoherent Model<br>Invert T → n(λ) pointwise"]:::highlight
+            SG -->|Yes| SFILTER["2. Dynamic Savitzky-Golay<br>Smooth high-freq noise"]:::process
+            SG -->|No| INV
+            SFILTER --> INV["3. Reverse Incoherent Model<br>Invert T → n(λ) pointwise"]:::process
             INV --> FIT{"Fit 3 Dispersion Laws<br>(Parallel Execution)"}:::decision
             
             FIT --> POL["4a. Polynomial Fit<br>Linear least squares"]:::process
-            FIT --> SEL["4b. Sellmeier 3-Pole Fit<br>Multistart DE + L-BFGS-B"]:::highlight
+            FIT --> SEL["4b. Sellmeier 3-Pole Fit<br>Multistart DE + L-BFGS-B"]:::process
             FIT --> SPL["4c. Spline Fit<br>Bounded cubic formulation"]:::process
 
-            POL --> RANK["5. Score &amp; Rank<br>Evaluate RMSE against n_raw"]:::process
+            POL --> RANK["5. Score & Rank<br>Evaluate RMSE against n_raw"]:::node
             SEL --> RANK
             SPL --> RANK
 
-            RANK --> EXPORT(["Export Best Substrate Model"]):::terminal
+            RANK --> EXPORT(["Export Best Substrate Model"]):::output
         </div>
         <ul>
             <li><strong>Polynomial:</strong> flexible baseline in powers of $1/\lambda$ and $\lambda$ (mixed terms as
                 implemented in code)—useful when no oscillator model is assumed.</li>
-            <li><strong>Sellmeier:</strong> physical three-pole form with <strong>bounded</strong> coefficients;
-                multistart / L-BFGS-B / <code>least_squares</code> polish; optional log-reparametrization of pole
-                positions ($L_i$). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
+            <li><strong>Sellmeier (3-pole):</strong> physical dispersion form with <strong>bounded</strong> coefficients:
+                <div class="eq-box" style="margin: 10px 0;">
+                    $$ n^2(\lambda) - 1 = \frac{B_1 \lambda^2}{\lambda^2 - C_1} + \frac{B_2 \lambda^2}{\lambda^2 - C_2} + \frac{B_3 \lambda^2}{\lambda^2 - C_3} $$
+                </div>
+                Optimized via multistart Differential Evolution + L-BFGS-B polish. Includes optional log-reparametrization of pole
+                positions ($C_i$). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
                 the material name hints a known glass.</li>
             <li><strong>Spline:</strong> non-parametric smooth representation for comparison RMSE.</li>
             <li><strong>Sellmeier full auto:</strong> hides advanced time/iteration budgets; uncheck to tune DE/L-BFGS-B
@@ -174,8 +177,8 @@
         <footer style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 0.9em;">
             <p><em>CERTUS-SUBSTRATE-INDEX — launched via <code>python certus_substrate_index.py</code> (standalone). Not
                     listed on the HUB launcher card grid by default; keep this HTML beside other <code>pages/</code>
-                    assets for packaging.</em></p>
+                    assets for packaging. Revision 2026.04.17</em></p>
         </footer>
     </div>
-
+</body>
 </html>

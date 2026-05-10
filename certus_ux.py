@@ -158,7 +158,7 @@ OBJ: Final[Objects] = Objects()
 
 
 # =============================================================================
-# Premium QSS overrides (theme-aware, additive)
+# Premium QSS overrides (_theme-aware, additive)
 # =============================================================================
 
 
@@ -172,15 +172,15 @@ def _hex_with_alpha(hex_color: str, alpha_pct: int) -> str:
     return f"#{c}{aa}"
 
 
-def build_premium_overrides(theme: str | None = None) -> str:
+def build_premium_overrides(_theme: str | None = None) -> str:
     """Build the premium QSS overrides string.
 
     Parameters
     ----------
-    theme:
-        Unused argument kept for API symmetry with a future multi-theme
+    _theme:
+        Unused argument kept for API symmetry with a future multi-_theme
         dispatcher. Today the overrides read colors live from
-        :class:`CertusTheme`, so they stay correct after a theme switch.
+        :class:`CertusTheme`, so they stay correct after a _theme switch.
 
     Returns
     -------
@@ -189,7 +189,7 @@ def build_premium_overrides(theme: str | None = None) -> str:
         legacy stylesheet returned by ``certus_ui.get_standard_stylesheet``.
     """
     # Lazy import to avoid a circular dep at module load time and to read
-    # the *current* theme palette at call time.
+    # the *current* _theme palette at call time.
     from certus_ui import CertusTheme as T
 
     primary = T.PRIMARY
@@ -211,7 +211,7 @@ def build_premium_overrides(theme: str | None = None) -> str:
 
     return f"""
 /* ═══════════════════════════════════════════════════════════════════════
- * CERTUS UX premium overrides (U1) — additive, opt-in, theme-aware.
+ * CERTUS UX premium overrides (U1) — additive, opt-in, _theme-aware.
  * ═══════════════════════════════════════════════════════════════════════ */
 
 /* -- Focus ring (keyboard accessibility) ------------------------------- */

@@ -19,7 +19,7 @@ from CERTUS_INDEX import (
     OptimizationWorker,
     calculate_relative_R_normalization,
     calculate_RT_single_layer_backside_array,
-    calculate_T_substrate_array,
+    calculate_bare_substrate_RT,
     epsilon1_TL_analytic,
     epsilon2_TLU_array,
     epsilon_to_nk,
@@ -82,7 +82,7 @@ def _tlu_reference_rt_norm(wls, n_sub, params):
     R_calc, T_calc = calculate_RT_single_layer_backside_array(
         wls, n_calc, k_calc, thickness, n_sub
     )
-    T_sub = calculate_T_substrate_array(wls, n_sub)
+    T_sub = calculate_bare_substrate_RT(wls, n_sub)
     with np.errstate(divide="ignore", invalid="ignore"):
         T_sub_safe = np.where(T_sub > SMALL_EPSILON, T_sub, 1.0)
         T_norm = np.where(T_sub > SMALL_EPSILON, T_calc / T_sub_safe, np.nan)

@@ -217,9 +217,7 @@ class REResultsBuilder:
     ) -> dict[str, str]:
         """Build all final RE log/progress messages in one place."""
         rank_line = (
-            ranking_log_suffix(top_result, alpha_rank_ref)
-            if top_result is not None and len(results) > 0
-            else ""
+            ranking_log_suffix(top_result, alpha_rank_ref) if top_result is not None and len(results) > 0 else ""
         )
         return {
             "rank_line": rank_line,

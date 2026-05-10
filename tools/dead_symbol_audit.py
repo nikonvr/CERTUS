@@ -9,7 +9,6 @@ from __future__ import annotations
 import argparse
 import ast
 import re
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
@@ -46,10 +45,7 @@ def _iter_python_files(root: Path) -> list[Path]:
 
     Tests and tooling scripts are intentionally excluded from candidates.
     """
-    files: list[Path] = []
-
-    for path in root.glob("*.py"):
-        files.append(path)
+    files: list[Path] = list(root.glob("*.py"))
 
     physics_dir = root / "certus_physics"
     if physics_dir.exists():

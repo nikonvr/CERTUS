@@ -35,22 +35,16 @@ def spectrum_eval_substrate_key(variant: SpectrumEvalVariant) -> str:
 def spectrum_eval_n_vis_points(app: Any, variant: SpectrumEvalVariant) -> int:
 
     if variant == "re" and getattr(app, "_re_loaded", False) and app.oblique_mode:
-
         return 1000
 
     return 2000
 
 
 def spectrum_eval_on_finished_prepare_display(
-
     app: Any,
-
     data: Dict[str, Any],
-
     generation_id: int | None,
-
 ) -> Dict[str, Any] | None:
-
     """
 
     Controle de generation (stale), snapshot RMSE, politique d'affichage monotone.
@@ -61,21 +55,12 @@ def spectrum_eval_on_finished_prepare_display(
 
     """
 
-    logging.info(
-
-        f"[EVAL] === _on_eval_finished called (oblique={data.get('oblique_mode', False)}) ==="
-
-    )
+    logging.info(f"[EVAL] === _on_eval_finished called (oblique={data.get('oblique_mode', False)}) ===")
 
     result_generation = data.get("eval_generation_id", generation_id)
 
     if result_generation != app._current_eval_generation:
-
-        logging.debug(
-
-            f"[EVAL] Ignored stale callback: gen={result_generation}, current={app._current_eval_generation}"
-
-        )
+        logging.debug(f"[EVAL] Ignored stale callback: gen={result_generation}, current={app._current_eval_generation}")
 
         app._set_busy(False)
 
@@ -86,41 +71,29 @@ def spectrum_eval_on_finished_prepare_display(
     incoming_rmse_valid = app._is_valid_rmse_value(incoming_rmse)
 
     if incoming_rmse_valid:
-
         app._store_best_eval_snapshot(data)
 
     data_for_display = data
 
     if (
-
         app._monotonic_visual_mode_enabled()
-
         and incoming_rmse_valid
-
         and app._best_eval_result is not None
-
         and incoming_rmse > app._best_eval_rmse + 1e-12
-
     ):
-
         data_for_display = copy.deepcopy(app._best_eval_result)
 
         data_for_display["eval_generation_id"] = result_generation
 
         logging.info(
-
             "[EVAL] Keeping best visual spectrum "
-
             f"(incoming RMSE={incoming_rmse:.6f} > best RMSE={app._best_eval_rmse:.6f})"
-
         )
 
         try:
-
             ep_best = np.asarray(data_for_display.get("ep", []), dtype=float).flatten()
 
             if ep_best.size > 0:
-
                 app._update_qwot_from_ep(ep_best)
 
                 app._update_thickness_display()
@@ -129,15 +102,21 @@ def spectrum_eval_on_finished_prepare_display(
 
                 app._use_exact_ep = True
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as _e_best_sync:
-
+        except (
+            ValueError,
+            TypeError,
+            RuntimeError,
+            AttributeError,
+            KeyError,
+            IndexError,
+            FileNotFoundError,
+        ) as _e_best_sync:
             logging.debug(f"[EVAL] Best spectrum/table sync skipped: {_e_best_sync}")
 
     return data_for_display
 
 
 def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
-
     """
 
     Warmup gate + viz_stack. Returns False if caller must return (possibly rescheduled).
@@ -145,11 +124,9 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
     """
 
     if not app._warmup_done:
-
         # Evite un double message si plusieurs eval sont planifies avant fin warmup.
 
         if not getattr(app, "_spectrum_eval_jit_wait_logged", False):
-
             app.log("Waiting for JIT compilation...", "WARNING")
 
             app._spectrum_eval_jit_wait_logged = True
@@ -161,20 +138,15 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
         return False
 
     if app.viz_stack.currentIndex() == 0:
-
         app.viz_stack.setCurrentIndex(1)
 
     return True
 
 
 def spectrum_eval_build_worker_cfg(
-
     app: Any,
-
     variant: SpectrumEvalVariant,
-
 ) -> Dict[str, Any] | None:
-
     """
 
     Prepare le dict cfg pour EvalWorker. Retourne None si abandon (materiaux / cibles).
@@ -188,49 +160,33 @@ def spectrum_eval_build_worker_cfg(
     sk = spectrum_eval_substrate_key(variant)
 
     if not mats:
-
         return None
 
     if sk not in mats:
-
         sk = "Substrate" if sk == "substrate" else "substrate"
 
     if sk not in mats:
-
         return None
 
     stack = app._get_front_stack()
 
     if app.oblique_mode:
-
         tgts = app._get_oblique_tgts()
 
     else:
-
         tgts = app._get_tgts()
 
     active = [t for t in tgts if t.valid()]
 
     if not active:
-
         return None
 
-    if (
-
-        getattr(app, "_use_exact_ep", False)
-
-        and app.ep_current is not None
-
-        and len(app.ep_current) == len(stack)
-
-    ):
-
+    if getattr(app, "_use_exact_ep", False) and app.ep_current is not None and len(app.ep_current) == len(stack):
         ep = app.ep_current
 
         app._use_exact_ep = False
 
     else:
-
         ep = init_thickness(stack, app.l0_spin.value(), mats)
 
     lmin_display = app._calculate_wls_min_with_margin(active)
@@ -244,41 +200,25 @@ def spectrum_eval_build_worker_cfg(
     wls_optim = app._get_optim_wls()
 
     app.log(
-
         f"Spectral evaluation: display {n_vis} lambda pts in [{lmin_display:.0f},{lmax_display:.0f}] nm, "
-
         f"calc/RMSE grid {len(wls_optim)} pts, {len(active)} active target(s).",
-
         "INFO",
-
     )
 
     cfg: Dict[str, Any] = {
-
         "mats": mats,
-
         "stack": stack,
-
         "ep": ep,
-
         "tgts": tgts if not app.oblique_mode else [],
-
         "oblique_mode": app.oblique_mode,
-
         "oblique_tgts": tgts if app.oblique_mode else [],
-
         "wls_vis": wls_vis,
-
         "wls_optim": wls_optim,
-
         "back": app.back_check.isChecked(),
-
         "l0": app.l0_spin.value(),
-
     }
 
     if variant == "design":
-
         from certus_physics import calc_spectrum_oblique_vectorized
 
         sb = app._get_back_stack()
@@ -291,14 +231,9 @@ def spectrum_eval_build_worker_cfg(
 
         cfg["use_back_coat"] = app.back_coat_check.isChecked()
 
-        cfg["calc_oblique_func"] = (
-
-            calc_spectrum_oblique_vectorized if app.oblique_mode else None
-
-        )
+        cfg["calc_oblique_func"] = calc_spectrum_oblique_vectorized if app.oblique_mode else None
 
     else:
-
         cfg["re_loaded"] = getattr(app, "_re_loaded", False)
 
         cfg["a_pct"] = getattr(app, "_re_opt_a_pct", 0.0)
@@ -322,13 +257,11 @@ def spectrum_eval_build_worker_cfg(
         cfg["re_sub_cauchy_a2"] = getattr(app, "_re_sub_cauchy_a2", None)
 
         if getattr(app, "_re_p4_display_beam_active", False):
-
             ak = getattr(app, "_re_p4_display_ap_knots_deg", None)
 
             al = getattr(app, "_re_p4_display_ap_knots_nm", None)
 
             if ak is not None and al is not None:
-
                 cfg["re_p4_display_beam"] = True
 
                 cfg["re_p4_ap_knots_deg"] = np.asarray(ak, dtype=np.float64)
@@ -350,27 +283,15 @@ def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float)
 
     cfg["eval_generation_id"] = eval_generation_id
 
-    logging.info(
-
-        f"[EVAL] Creating EvalWorker (setup took {(time.time() - eval_start) * 1000:.1f}ms)"
-
-    )
+    logging.info(f"[EVAL] Creating EvalWorker (setup took {(time.time() - eval_start) * 1000:.1f}ms)")
 
     app._set_busy(True)
 
     app.eval_worker = EvalWorker(cfg)
 
-    app.eval_worker.signals.finished.connect(
+    app.eval_worker.signals.finished.connect(lambda data, gen=eval_generation_id: app._on_eval_finished(data, gen))
 
-        lambda data, gen=eval_generation_id: app._on_eval_finished(data, gen)
-
-    )
-
-    app.eval_worker.signals.error.connect(
-
-        lambda e, gen=eval_generation_id: app._on_error(e, gen)
-
-    )
+    app.eval_worker.signals.error.connect(lambda e, gen=eval_generation_id: app._on_error(e, gen))
 
     logging.info("[EVAL] Starting EvalWorker thread...")
 
@@ -380,55 +301,34 @@ def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float)
 
 
 def spectrum_eval_plot_curves(
-
     app: Any,
-
     *,
-
     data_for_display: Dict[str, Any],
-
     plot_targets: list,
-
     res_vis: dict,
-
     res_optim: dict,
-
     oblique_mode: bool,
-
 ) -> None:
-
     """Nettoie les widgets spectrum et trace courbes oblique ou transmission + points d'optimization."""
 
     for plot_widget in plot_targets:
-
         items_to_keep = [
-
-            getattr(plot_widget, attr)
-
-            for attr in ["vLine", "hLine", "info_label"]
-
-            if hasattr(plot_widget, attr)
-
+            getattr(plot_widget, attr) for attr in ["vLine", "hLine", "info_label"] if hasattr(plot_widget, attr)
         ]
 
         for item in plot_widget.plotItem.items[:]:
-
             if item not in items_to_keep:
-
                 plot_widget.removeItem(item)
 
     if oblique_mode:
-
         spectra_vis = data_for_display.get("spectra_vis", {})
 
         oblique_tgts = app._get_oblique_tgts()
 
         if not hasattr(app, "_oblique_spectrum_colors"):
-
             app._oblique_spectrum_colors = {}
 
         else:
-
             app._oblique_spectrum_colors.clear()
 
         _seen_spec = set()
@@ -436,37 +336,27 @@ def spectrum_eval_plot_curves(
         _tgts_for_curves = []
 
         for _t in oblique_tgts:
-
             if not _t.valid():
-
                 continue
 
             _k = (round(_t.angle, 3), _t.pol, _t.target_type)
 
             if _k not in _seen_spec:
-
                 _seen_spec.add(_k)
 
                 _tgts_for_curves.append(_t)
 
         for tgt in _tgts_for_curves:
-
             if not tgt.valid():
-
                 continue
 
             spec_key = (tgt.angle, tgt.pol, bool(getattr(tgt, "include_backside", True)))
 
             if spec_key in spectra_vis:
-
                 if tgt.target_type not in spectra_vis[spec_key]:
-
                     app.log(
-
                         f"Error: Target type {tgt.target_type} not found in spectrum for angle={tgt.angle}, pol={tgt.pol}",
-
                         "ERROR",
-
                     )
 
                     continue
@@ -474,11 +364,9 @@ def spectrum_eval_plot_curves(
                 spectrum = spectra_vis[spec_key][tgt.target_type]
 
                 if tgt.target_type == "R":
-
                     color = "#dc2626"
 
                 else:
-
                     color = "#2563eb"
 
                 tgt_id = (tgt.angle, tgt.pol, tgt.target_type, tgt.lmin, tgt.lmax)
@@ -494,47 +382,29 @@ def spectrum_eval_plot_curves(
                 assert 0 <= tgt.angle <= 90, f"Invalid angle: {tgt.angle}"
 
                 for plot_widget in plot_targets:
-
                     plot_widget.plot(
-
                         res_vis["l"],
-
                         spectrum,
-
                         pen=pg.mkPen(color, width=2.5),
-
                         name=label,
-
                     )
 
             else:
-
                 app.log(
-
                     f"Error: No spectrum calculated for angle={tgt.angle}, pol={tgt.pol}. Target: {tgt.target_type}{tgt.pol}. Cannot display.",
-
                     "ERROR",
-
                 )
 
     else:
-
         for plot_widget in plot_targets:
-
             plot_widget.plot(
-
                 res_vis["l"],
-
                 res_vis["Ts"],
-
                 pen=pg.mkPen(CertusTheme.PRIMARY, width=2.5),
-
                 name="Transmission",
-
             )
 
         if len(res_optim["l"]) > 0 and not oblique_mode:
-
             wls_optim = res_optim["l"]
 
             Ts_optim = res_optim["Ts"]
@@ -542,11 +412,9 @@ def spectrum_eval_plot_curves(
             active_tgts = [t for t in app._get_tgts() if t.valid()]
 
             if active_tgts:
-
                 mask = np.zeros(len(wls_optim), dtype=bool)
 
                 for t in active_tgts:
-
                     mask |= (wls_optim >= t.lmin) & (wls_optim <= t.lmax)
 
                 wls_filtered = wls_optim[mask]
@@ -554,25 +422,15 @@ def spectrum_eval_plot_curves(
                 Ts_filtered = Ts_optim[mask]
 
                 if len(wls_filtered) > 0:
-
                     for plot_widget in plot_targets:
-
                         plot_widget.plot(
-
                             wls_filtered,
-
                             Ts_filtered,
-
                             pen=None,
-
                             symbol="o",
-
                             symbolSize=5,
-
                             symbolBrush=CertusTheme.ERROR,
-
                             name="Optim Points",
-
                         )
 
     wls_for_targets = res_optim["l"] if len(res_optim["l"]) > 0 else res_vis["l"]
@@ -581,37 +439,26 @@ def spectrum_eval_plot_curves(
 
 
 def spectrum_eval_apply_axes_legend_scale(
-
     app: Any,
-
     *,
-
     res_vis: dict,
-
     oblique_mode: bool,
-
 ) -> None:
-
     """Legende, echelles Y/X du plot spectrum principal."""
 
     if oblique_mode:
-
         app.spectrum_plot.plotItem.setLabel("left", "R / T", color="black", size="12pt")
 
     else:
-
         app.spectrum_plot.plotItem.setLabel("left", "Transmission", color="black", size="12pt")
 
     if not hasattr(app.spectrum_plot.plotItem, "_legend"):
-
         app.spectrum_plot.plotItem.addLegend(offset=(10, 10))
 
     elif not app.spectrum_plot.plotItem._legend.isVisible():
-
         app.spectrum_plot.plotItem._legend.setVisible(True)
 
     app._update_spectrum_y_scale()
 
     if len(res_vis.get("l", [])) == 0:
-
         app.spectrum_plot.setXRange(200, 3000, 0)

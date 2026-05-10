@@ -28,8 +28,8 @@ automatically.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Iterable
+from dataclasses import dataclass
+from typing import Any, Iterable
 
 
 # =============================================================================
@@ -104,12 +104,14 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
         if key in seen:
             continue
         seen.add(key)
-        entries.append(ShortcutEntry(
-            sequence=seq,
-            label=cmd.title,
-            category=cmd.category or "General",
-            source="command",
-        ))
+        entries.append(
+            ShortcutEntry(
+                sequence=seq,
+                label=cmd.title,
+                category=cmd.category or "General",
+                source="command",
+            )
+        )
 
     # 2) Bare QShortcut children of the window.
     try:
@@ -124,12 +126,14 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
             if key in seen:
                 continue
             seen.add(key)
-            entries.append(ShortcutEntry(
-                sequence=seq,
-                label=label,
-                category=_guess_category(seq, label),
-                source="shortcut",
-            ))
+            entries.append(
+                ShortcutEntry(
+                    sequence=seq,
+                    label=label,
+                    category=_guess_category(seq, label),
+                    source="shortcut",
+                )
+            )
     except (ImportError, AttributeError, RuntimeError, TypeError):
         # No Qt / no children: skip.
         pass
@@ -183,7 +187,7 @@ def group_entries(entries: Iterable[ShortcutEntry]) -> dict[str, list[ShortcutEn
 _DIALOG_CLS = None
 
 
-def _build_dialog_class():
+def _build_dialog_class() -> Any:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (
         QDialog,
@@ -197,14 +201,12 @@ def _build_dialog_class():
     )
 
     class CertusShortcutsOverlay(QDialog):
-        def __init__(self, parent, entries: list[ShortcutEntry]):
+        def __init__(self, parent, entries: list[ShortcutEntry]) -> None:
             super().__init__(parent)
             self._entries = list(entries)
             self.setWindowTitle("Keyboard shortcuts")
             self.setModal(True)
-            self.setWindowFlags(
-                Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint
-            )
+            self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
             self.setMinimumSize(560, 480)
 
             self._build_ui()
@@ -217,7 +219,7 @@ def _build_dialog_class():
                     geo.center().y() - self.height() // 2,
                 )
 
-        def _build_ui(self):
+        def _build_ui(self) -> None:
             from certus_ux import OBJ
 
             root = QVBoxLayout(self)
@@ -295,7 +297,7 @@ def _build_dialog_class():
                 lay.addWidget(chip)
             return row
 
-        def _apply_style(self):
+        def _apply_style(self) -> None:
             from certus_ui import CertusTheme as T
             from certus_ux import Radius
 
@@ -309,7 +311,7 @@ def _build_dialog_class():
                 """
             )
 
-        def keyPressEvent(self, e):  # noqa: N802 - Qt naming
+        def keyPressEvent(self, e) -> None:  # noqa: N802 - Qt naming
             if e.key() == Qt.Key.Key_Escape:
                 self.reject()
                 return
@@ -326,7 +328,7 @@ def _split_sequence(sequence: str) -> list[str]:
     return [p for p in parts if p]
 
 
-def open_shortcuts_overlay(window):
+def open_shortcuts_overlay(window) -> Any:
     """Open the shortcut overlay for ``window``. Returns the dialog result."""
     global _DIALOG_CLS
     if _DIALOG_CLS is None:

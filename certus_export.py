@@ -1,14 +1,17 @@
+from certus_core import NUMERICAL_FAULT_EXCEPTIONS
+
 import logging
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from typing import Any, Optional
+from typing import Any
 
 from PyQt6.QtWidgets import QApplication, QMenu, QMessageBox
 from PyQt6.QtCore import Qt
 
 # Import shared strings from certus_ui to avoid duplication
 from certus_ui import CERTUS_UI_STRINGS
+
 
 def _export_series_label(item: Any, idx: int) -> str:
     """Extracts a human-readable label from a plot item."""
@@ -21,6 +24,7 @@ def _export_series_label(item: Any, idx: int) -> str:
         name = getattr(item, "objectName", lambda: "")()
     return str(name).strip() if name else f"Series {idx + 1}"
 
+
 def _export_y_values_for_item(item: Any, y: np.ndarray) -> np.ndarray:
     """If the curve stores ln(k) for display, export k = exp(y), not ln k."""
     y = np.asarray(y, dtype=float).reshape(-1)
@@ -30,6 +34,7 @@ def _export_y_values_for_item(item: Any, y: np.ndarray) -> np.ndarray:
     m = np.isfinite(y)
     out[m] = np.exp(np.minimum(y[m], 700.0))
     return out
+
 
 def iter_plot_data_series(plot_item: pg.PlotItem | None) -> list[tuple[str, np.ndarray, np.ndarray]]:
     """
@@ -41,7 +46,7 @@ def iter_plot_data_series(plot_item: pg.PlotItem | None) -> list[tuple[str, np.n
         return out
     try:
         items = plot_item.listDataItems()
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
         return out
 
     for idx, item in enumerate(items):
@@ -79,10 +84,11 @@ def iter_plot_data_series(plot_item: pg.PlotItem | None) -> list[tuple[str, np.n
                 name = _export_series_label(item, idx)
                 out.append((name, x, y))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.debug("iter_plot_data_series skip %s: %s", type(item).__name__, e)
             continue
     return out
+
 
 def build_wide_dataframe_for_export(series: list[tuple[str, np.ndarray, np.ndarray]]) -> pd.DataFrame | None:
     """Columns {stem}_x / {stem}_y, NaN padding if lengths differ."""
@@ -106,17 +112,19 @@ def build_wide_dataframe_for_export(series: list[tuple[str, np.ndarray, np.ndarr
             data[k] = np.pad(v, (0, max_len - len(v)), constant_values=np.nan)
     return pd.DataFrame(data)
 
-def plot_item_to_wide_dataframe(plot_item: pg.PlotItem | None) -> pd.DataFrame | None:
-    return build_wide_dataframe_for_export(iter_plot_data_series(plot_item))
 
-def _extra_scene_plot_series(plot_widget: Any, plot_item: pg.PlotItem | None) -> list[tuple[str, np.ndarray, np.ndarray]]:
+
+
+def _extra_scene_plot_series(
+    plot_widget: Any, plot_item: pg.PlotItem | None
+) -> list[tuple[str, np.ndarray, np.ndarray]]:
     """Curves on linked ViewBoxes (secondary axis) are missing from the primary PlotItem.listDataItems()."""
     extra: list[tuple[str, np.ndarray, np.ndarray]] = []
     if plot_item is None:
         return extra
     try:
         known = {id(x) for x in plot_item.listDataItems()}
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
         known = set()
 
     scene = plot_widget.scene() if hasattr(plot_widget, "scene") else None
@@ -165,10 +173,11 @@ def _extra_scene_plot_series(plot_widget: Any, plot_item: pg.PlotItem | None) ->
                 known.add(id(item))
                 idx += 1
                 continue
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.debug("_extra_scene_plot_series skip %s: %s", type(item).__name__, e)
             continue
     return extra
+
 
 def plot_dataframe_from_widget(plot_widget: Any) -> pd.DataFrame | None:
     """DataFrame: _certus_clipboard_df_provider if defined, else listDataItems + linked ViewBoxes + _curves."""
@@ -178,7 +187,7 @@ def plot_dataframe_from_widget(plot_widget: Any) -> pd.DataFrame | None:
             df = prov()
             if df is not None and not getattr(df, "empty", True):
                 return df
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.debug("plot_dataframe_from_widget provider: %s", e)
 
     pi = getattr(plot_widget, "plotItem", None)
@@ -209,9 +218,10 @@ def plot_dataframe_from_widget(plot_widget: Any) -> pd.DataFrame | None:
             if x_data.size == 0:
                 continue
             series.append((str(name), x_data, y_data))
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
             continue
     return build_wide_dataframe_for_export(series)
+
 
 def copy_plot_to_clipboard_excel(plot_widget: Any) -> bool:
     """Copies TSV (tab separator) for Excel pasting."""
@@ -221,6 +231,23 @@ def copy_plot_to_clipboard_excel(plot_widget: Any) -> bool:
     tsv = df.to_csv(sep="\t", index=False, lineterminator="\n")
     QApplication.clipboard().setText(tsv)
     return True
+
+
+def show_copy_excel_feedback(parent: Any, ok: bool) -> None:
+    """Display standardized user feedback after clipboard export."""
+    if ok:
+        QMessageBox.information(
+            parent,
+            CERTUS_UI_STRINGS["export"],
+            CERTUS_UI_STRINGS["copy_excel_ok"],
+        )
+    else:
+        QMessageBox.warning(
+            parent,
+            CERTUS_UI_STRINGS["export"],
+            CERTUS_UI_STRINGS["copy_excel_failed"],
+        )
+
 
 def attach_excel_clipboard_context_menu(plot_widget: pg.PlotWidget) -> None:
     """Context menu: Copy data for Excel (single connection).

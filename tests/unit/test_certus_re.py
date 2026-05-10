@@ -171,9 +171,11 @@ class TestREsubstrateCauchy3:
     """Model n = a0 + a1(lambdaref/lambda)² + a2(lambdaref/lambda)⁴ and tube barrier."""
 
     def test_phi_and_eval_consistency(self):
-        from CERTUS_RE import (
-            re_substrate_cauchy_phi_matrix,
-            re_substrate_cauchy_n_re_from_theta,
+        from certus_re_helpers import (
+            re_substrate_cauchy_phi_matrix,
+        )
+        from CERTUS_RE import (
+            re_substrate_cauchy_n_re_from_theta,
         )
 
         wls = np.array([500.0, 1000.0], dtype=np.float64)
@@ -187,10 +189,12 @@ class TestREsubstrateCauchy3:
         assert np.allclose(n1, n2)
 
     def test_feasible_theta_matches_tab(self):
-        from CERTUS_RE import (
-            re_substrate_cauchy_initial_theta,
-            re_substrate_cauchy_phi_matrix,
-            RE_SUB_CAUCHY_TUBE_DELTA,
+        from certus_re_helpers import (
+            re_substrate_cauchy_initial_theta,
+            re_substrate_cauchy_phi_matrix,
+        )
+        from CERTUS_RE import (
+            RE_SUB_CAUCHY_TUBE_DELTA,
         )
 
         wls = np.linspace(400.0, 800.0, 12, dtype=np.float64)
@@ -204,7 +208,7 @@ class TestREsubstrateCauchy3:
         assert np.max(np.abs(pred - n_tab)) <= RE_SUB_CAUCHY_TUBE_DELTA + 1e-7
 
     def test_barrier_jacobian_active_upper(self):
-        from CERTUS_RE import re_substrate_cauchy_barrier_residuals_jac
+        from certus_re_helpers import re_substrate_cauchy_barrier_residuals_jac
 
         Phi = np.ones((1, 3), dtype=np.float64)
         Phi[0, 1] = 0.25
@@ -234,21 +238,21 @@ class TestREDeadzoneExcess:
     """Bandes mortes DeltaRe / DeltaQ (RE)."""
 
     def test_excess_zero_inside_band(self):
-        from CERTUS_RE import _re_deadzone_excess_abs
+        from certus_re_helpers import _re_deadzone_excess_abs
 
         v = np.array([-0.005, 0.008, 0.0], dtype=np.float64)
         ex = _re_deadzone_excess_abs(v, 0.01)
         assert np.allclose(ex, 0.0)
 
     def test_excess_outside_band(self):
-        from CERTUS_RE import _re_deadzone_excess_abs
+        from certus_re_helpers import _re_deadzone_excess_abs
 
         v = np.array([-0.02, 0.015], dtype=np.float64)
         ex = _re_deadzone_excess_abs(v, 0.01)
         assert np.allclose(ex, [0.01, 0.005])
 
     def test_eps_zero_falls_back_to_abs(self):
-        from CERTUS_RE import _re_deadzone_excess_abs
+        from certus_re_helpers import _re_deadzone_excess_abs
 
         v = np.array([-0.3, 0.2], dtype=np.float64)
         ex = _re_deadzone_excess_abs(v, 0.0)
@@ -261,10 +265,12 @@ class TestREHLDeltaReKnotRegularization:
     """Residue √(w)·(DeltaRe/env)²: ~quartic growth in amplitude of DeltaRe."""
 
     def test_residual_scales_quartic_in_delta(self):
-        from CERTUS_RE import (
-            RE_SPLINE_NODE2_DEFAULT_NM,
-            re_envelope_max_delta_n,
-            re_knots_wavelengths,
+        from CERTUS_RE import (
+            RE_SPLINE_NODE2_DEFAULT_NM,
+            re_knots_wavelengths,
+        )
+        from certus_re_helpers import (
+            re_envelope_max_delta_n,
         )
 
         kn = re_knots_wavelengths(RE_SPLINE_NODE2_DEFAULT_NM)
@@ -283,7 +289,8 @@ class TestREPhase4BeamKnots:
     """Phase-4 chromatic beam helpers and spectrum path (no full REWorker)."""
 
     def test_sort_knot_pairs_permutes_ap_with_lam(self):
-        from CERTUS_RE import _re_p4_sort_knot_pairs, _re_p4_band_ap_deg
+        from CERTUS_RE import _re_p4_sort_knot_pairs
+        from certus_re_helpers import _re_p4_band_ap_deg
 
         lam = np.array([800.0, 400.0, 600.0], dtype=np.float64)
         ap = np.array([1.0, 2.0, 3.0], dtype=np.float64)
@@ -294,7 +301,8 @@ class TestREPhase4BeamKnots:
         assert abs(_re_p4_band_ap_deg(lam, ap, 800.0) - 1.0) < 1e-9
 
     def test_chromatic_band_masks_do_not_mutate_knots(self):
-        from CERTUS_RE import RE_P4_BEAM_N_KNOTS, _re_p4_chromatic_band_masks
+        from CERTUS_RE import RE_P4_BEAM_N_KNOTS
+        from certus_re_helpers import _re_p4_chromatic_band_masks
 
         knots = np.array([700.0, 500.0, 600.0], dtype=np.float64)
         ref = knots.copy()
@@ -355,7 +363,8 @@ assert np.allclose(Ta, Tb)
 
     def test_ap_staircase_polyline_matches_band_model(self):
         """Polyline du plot ap(lambda) : chaque palier horizontal = _re_p4_band_ap_deg (même physique que P4)."""
-        from CERTUS_RE import _re_p4_ap_staircase_polyline, _re_p4_band_ap_deg
+        from CERTUS_RE import _re_p4_ap_staircase_polyline
+        from certus_re_helpers import _re_p4_band_ap_deg
 
         rng = np.random.default_rng(42)
         for n in (2, 3, 4, 6):
@@ -376,7 +385,7 @@ assert np.allclose(Ta, Tb)
                     assert abs(ref - float(sy[i])) < 1e-9
 
     def test_four_knot_stair_non_monotone(self):
-        from CERTUS_RE import _re_p4_band_ap_deg
+        from certus_re_helpers import _re_p4_band_ap_deg
 
         lam_k = np.array([400.0, 600.0, 800.0, 1000.0], dtype=np.float64)
         ap_k = np.array([2.0, 1.0, 2.5, 1.2], dtype=np.float64)

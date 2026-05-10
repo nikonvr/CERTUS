@@ -25,7 +25,7 @@ Integration (done in ``CertusBaseApp``)
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable
 
 
@@ -211,9 +211,7 @@ def _build_palette_class():
 
             self.setWindowTitle("Command palette")
             self.setModal(True)
-            self.setWindowFlags(
-                Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint
-            )
+            self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.FramelessWindowHint)
             self.setMinimumWidth(560)
             self.setMinimumHeight(360)
 
@@ -354,9 +352,8 @@ def _build_palette_class():
                     action.callback()
                 except (RuntimeError, AttributeError, TypeError, ValueError):  # pragma: no cover - defensive
                     import logging
-                    logging.getLogger("CERTUS").exception(
-                        "Command %r failed", action.id
-                    )
+
+                    logging.getLogger("CERTUS").exception("Command %r failed", action.id)
 
         def _on_item_activated(self, *_args):
             self._accept_current()

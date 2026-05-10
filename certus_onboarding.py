@@ -183,7 +183,7 @@ def filter_resolvable_steps(parent, steps: list[TourStep]) -> list[tuple[TourSte
 
 
 def _build_overlay_class():
-    from PyQt6.QtCore import QEvent, QPointF, QRect, Qt, pyqtSignal
+    from PyQt6.QtCore import QEvent, QRect, Qt, pyqtSignal
     from PyQt6.QtGui import QColor, QPainter, QPainterPath
     from PyQt6.QtWidgets import (
         QCheckBox,
@@ -209,26 +209,20 @@ def _build_overlay_class():
             # Title
             t = QLabel(step.title, self)
             t.setObjectName("coach-title")
-            t.setStyleSheet(
-                "#coach-title { font-size: 11pt; font-weight: 700; color: palette(text); }"
-            )
+            t.setStyleSheet("#coach-title { font-size: 11pt; font-weight: 700; color: palette(text); }")
             v.addWidget(t)
 
             # Body
             b = QLabel(step.body, self)
             b.setObjectName("coach-body")
             b.setWordWrap(True)
-            b.setStyleSheet(
-                "#coach-body { font-size: 9pt; color: palette(mid); }"
-            )
+            b.setStyleSheet("#coach-body { font-size: 9pt; color: palette(mid); }")
             v.addWidget(b)
 
             # Progress
             prog = QLabel(f"Step {index + 1} / {total}", self)
             prog.setObjectName("coach-progress")
-            prog.setStyleSheet(
-                "#coach-progress { font-size: 8pt; color: palette(mid); font-style: italic; }"
-            )
+            prog.setStyleSheet("#coach-progress { font-size: 8pt; color: palette(mid); font-style: italic; }")
             v.addWidget(prog)
 
             # Buttons
@@ -244,8 +238,7 @@ def _build_overlay_class():
             v.addLayout(row)
 
             self.setStyleSheet(
-                "#CertusCoachMark { background: palette(base); "
-                "border: 1px solid palette(mid); border-radius: 8px; }"
+                "#CertusCoachMark { background: palette(base); border: 1px solid palette(mid); border-radius: 8px; }"
             )
 
     class _OnboardingOverlay(QWidget):

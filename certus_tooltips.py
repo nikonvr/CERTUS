@@ -39,7 +39,7 @@ Public API
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Final, Optional
+from typing import Any, Final, Optional
 
 
 HOVER_DELAY_MS: Final[int] = 400
@@ -70,7 +70,7 @@ _POPUP_CLS = None
 _SHARED_POPUP = None
 
 
-def _build_popup_class():
+def _build_popup_class() -> Any:
     from PyQt6.QtCore import Qt
     from PyQt6.QtGui import QCursor, QDesktopServices
     from PyQt6.QtWidgets import (
@@ -83,12 +83,10 @@ def _build_popup_class():
     class _RichTooltipPopup(QFrame):
         """Floating borderless popup rendered on top of every window."""
 
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(None)
             self.setObjectName("CertusRichTooltip")
-            self.setWindowFlags(
-                Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint
-            )
+            self.setWindowFlags(Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint)
             self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
             self.setMaximumWidth(MAX_WIDTH_PX)
 
@@ -110,9 +108,7 @@ def _build_popup_class():
             self._body_lbl = QLabel(self)
             self._body_lbl.setObjectName("tip-body")
             self._body_lbl.setWordWrap(True)
-            self._body_lbl.setTextInteractionFlags(
-                Qt.TextInteractionFlag.TextBrowserInteraction
-            )
+            self._body_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
             root.addWidget(self._body_lbl)
 
             self._link_lbl = QLabel(self)
@@ -125,7 +121,7 @@ def _build_popup_class():
 
             self._apply_style()
 
-        def _apply_style(self):
+        def _apply_style(self) -> None:
             try:
                 from certus_ui import CertusTheme as T
 
@@ -180,6 +176,7 @@ def _build_popup_class():
         def _on_link(self, url: str) -> None:
             try:
                 from PyQt6.QtCore import QUrl
+
                 QDesktopServices.openUrl(QUrl(url))
             except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
                 pass
@@ -187,7 +184,7 @@ def _build_popup_class():
     return _RichTooltipPopup
 
 
-def _get_popup():
+def _get_popup() -> Any:
     global _POPUP_CLS, _SHARED_POPUP
     if _POPUP_CLS is None:
         _POPUP_CLS = _build_popup_class()
@@ -196,11 +193,11 @@ def _get_popup():
     return _SHARED_POPUP
 
 
-def _build_event_filter(widget, spec: TooltipSpec):
+def _build_event_filter(widget, spec: TooltipSpec) -> Any:
     from PyQt6.QtCore import QEvent, QObject, QTimer
 
     class _Filter(QObject):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(widget)
             self._widget = widget
             self._spec = spec
@@ -213,7 +210,7 @@ def _build_event_filter(widget, spec: TooltipSpec):
             self._hide_timer.setInterval(HIDE_DELAY_MS)
             self._hide_timer.timeout.connect(self._hide)
 
-        def eventFilter(self, obj, event):
+        def eventFilter(self, obj, event) -> bool:
             if obj is not self._widget:
                 return False
             et = event.type()
@@ -227,7 +224,7 @@ def _build_event_filter(widget, spec: TooltipSpec):
                 self._hide()
             return False
 
-        def _show(self):
+        def _show(self) -> None:
             popup = _get_popup()
             popup.apply_spec(self._spec)
             # Position below the widget's bottom-left corner.
@@ -236,7 +233,7 @@ def _build_event_filter(widget, spec: TooltipSpec):
             popup.show()
             popup.raise_()
 
-        def _hide(self):
+        def _hide(self) -> None:
             popup = _get_popup()
             popup.hide()
 
@@ -283,7 +280,8 @@ def attach_rich_tooltip(
         return spec
 
     _REGISTRY[id(widget)] = (spec, flt)
-    def _drop_tooltip_spec(*_args, key=id(widget)):
+
+    def _drop_tooltip_spec(*_args, key=id(widget)) -> None:
         _REGISTRY.pop(key, None)
 
     try:

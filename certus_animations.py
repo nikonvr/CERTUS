@@ -319,6 +319,7 @@ def hover_lift(
     except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
         return None
     _HOVER_FILTERS[id(widget)] = flt
+
     def _drop_hover_filter(*_args, key=id(widget)):
         _HOVER_FILTERS.pop(key, None)
 

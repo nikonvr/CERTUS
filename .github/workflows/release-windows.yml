@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.14" ]
 
     steps:
       - name: Checkout
@@ -93,12 +93,12 @@ jobs:
           python tools/release_checks.py
 
       - name: Generate KPI snapshot
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         run: |
           python tools/kpi_snapshot.py --write-report
 
       - name: Generate KPI-5 runtime baseline (best effort)
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         continue-on-error: true
         timeout-minutes: 4
         run: |
@@ -110,34 +110,34 @@ jobs:
           ./tools/smoke_release.ps1
 
       - name: Frozen build (spec)
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         shell: pwsh
         run: |
           ./tools/build_frozen.ps1
 
       - name: Frozen artifact checks
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         run: |
           python tools/release_checks.py --check-frozen
 
       - name: Frozen functional startup check
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         run: |
           python tools/release_checks.py --check-frozen-run --startup-timeout-sec 12
 
       - name: Upload frozen artifact
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         uses: actions/upload-artifact@v4
         with:
-          name: certus-hub-frozen-py311
+          name: certus-hub-frozen-py314
           path: |
             dist/CERTUS_HUB.exe
             build/**
 
       - name: Upload KPI snapshot artifact
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.14'
         uses: actions/upload-artifact@v4
         with:
-          name: certus-kpi-snapshot-py311
+          name: certus-kpi-snapshot-py314
           path: |
             reports/KPI_SNAPSHOT_*.md

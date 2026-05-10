@@ -39,16 +39,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html" class="active">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
         </div>
     </nav>
 
@@ -57,7 +54,7 @@
             <h1>CERTUS-INDEX</h1>
             <p style="font-size: 1.3em; color: #6a1b9a; font-weight: 300;">Advanced Tauc-Lorentz-Urbach Characterization
                 Engine</p>
-            <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Scientific Revision Pro 2026 — Updated Mar 2026</p>
+            <p style="font-size: 1.0em; color: #ab47bc; font-weight: 300;">Scientific Revision Pro 2026.04.17 — Complete Algorithm Documentation</p>
         </header>
 
         <div class="abstract">
@@ -577,6 +574,10 @@
     the
     transition zone between 4000 nm and 5200 nm, it computes a dynamic linear blend (cross-fade) of both
     curves.
+    <div class="eq-box" style="margin: 15px 0;">
+        $$ S_{blend}(\lambda) = [1 - \alpha(\lambda)] \cdot S_{11}(\lambda) + \alpha(\lambda) \cdot S_{51}(\lambda) $$
+        $$ \text{where } \alpha(\lambda) = \max\left(0, \min\left(1, \frac{\lambda - 4000}{5200 - 4000}\right)\right) $$
+    </div>
     At 4600 nm, for example, the resulting plotted point is exactly 50% of the 11-point curve plus 50%
     of the
     51-point curve. This guarantees a mathematically smooth $C^0$ / $C^1$ continuity as the filtering
@@ -791,7 +792,7 @@
     (90% T / 10% R). The optional Spline Refinement (Section 7) is a separate path for spectra ≤2500 nm.
 </div>
 
-<h3>Stage 1 — TLU Global Fit</h3>
+<h3>5.1 Stage 1 — TLU Global Fit</h3>
 <h4>Phase 1: PGLOBAL Global Search</h4>
 <p>
     The 7-dimensional parameter space contains many local minima due to interference fringes.
@@ -866,9 +867,13 @@
     <li><strong>Independent Fits:</strong> Each subset is optimized independently (L-BFGS-B +
         Nelder-Mead
         polish).</li>
-    <li><strong>Stability Envelope:</strong> $\Delta n_{res}(\lambda) = \max_{\text{pairs}}
-        |n_i(\lambda) -
-        n_j(\lambda)|$ — the maximum deviation across all 3 pair combinations.</li>
+    <li><strong>Stability Envelope:</strong>
+        <div class="eq-box" style="margin: 10px 0;">
+            $$ \Delta n_{res}(\lambda) = \max_{1 \le i < j \le 3} |n_i(\lambda) - n_j(\lambda)| $$
+            $$ \Delta k_{res}(\lambda) = \max_{1 \le i < j \le 3} |k_i(\lambda) - k_j(\lambda)| $$
+        </div>
+        This defines the maximum absolute deviation across all 3 independent decimations, rigorously quantifying the structural instability of the fit.
+    </li>
 </ol>
 
 <h4>Phase 5: Ultimate Refinement</h4>
@@ -1294,21 +1299,21 @@
 
 <h2>10. Key Features</h2>
 
-<h3>10.1. Urbach Tail Analysis</h3>
+<h3>10.1 Urbach Tail Analysis</h3>
 <p>
     Crucial for analyzing the quality of deposited films. A high $E_u$ indicates high disorder or
     impurities. CERTUS-INDEX quantifies this explicitly via the <code>TLUParameters</code> structure,
     allowing process engineers to optimize deposition energy.
 </p>
 
-<h3>10.2. Frosted Glass Mode</h3>
+<h3>10.2 Frosted Glass Mode</h3>
 <p>
     Specifically designed for measurements on roughened (frosted) back-side substrates. The code
     mathematically removes back-side reflections to isolate the thin-film signal, essential for
     single-side polished wafers.
 </p>
 
-<h3>10.3. Precision Modes</h3>
+<h3>10.3 Precision Modes</h3>
 <p>
     CERTUS-INDEX offers two precision levels, both running the full 5-phase pipeline:
 </p>
@@ -1338,7 +1343,7 @@
     exploration
     budget.</p>
 
-<h3>10.4. Production-Ready Implementation</h3>
+<h3>10.4 Production-Ready Implementation</h3>
 <table>
     <tr>
         <th>Feature</th>
@@ -1409,7 +1414,7 @@
     datatypes for
     maximum numerical stability (15 significant digits).
 </p>
-<h3>Global Keyboard Shortcuts</h3>
+<h3>11.1 Global Keyboard Shortcuts</h3>
 <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:
 </p>
 <ul>
@@ -1421,7 +1426,7 @@
     <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.
     </li>
 </ul>
-<h3>Dynamic Processing Feedback</h3>
+<h3>11.2 Dynamic Processing Feedback</h3>
 <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are
     completely
     thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich
@@ -1431,9 +1436,8 @@
 
 <div class="footer">
     <p>Generated from source analysis of <code>CERTUS_INDEX.py</code>, <code>certus_ui.py</code>,
-        <code>certus_pointwise_ir.py</code> &mdash; Revision 2026.03</p>
-    <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report &bull; Updated Mar 2026
-    </p>
+        <code>certus_pointwise_ir.py</code> &mdash; Revision 2026.04.17</p>
+    <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
 </div>
     </div>
 

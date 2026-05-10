@@ -382,6 +382,7 @@ def build_pdf_report(
     """
     try:
         import matplotlib
+
         matplotlib.use("Agg", force=False)
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_pdf import PdfPages
@@ -396,20 +397,26 @@ def build_pdf_report(
         fig, ax = plt.subplots(figsize=(8.27, 11.69))  # A4 portrait
         ax.axis("off")
         # Brand band
-        band = plt.Rectangle((0, 0.90), 1, 0.10, transform=ax.transAxes,
-                              color=BRAND_COLORS["primary"], zorder=1)
+        band = plt.Rectangle((0, 0.90), 1, 0.10, transform=ax.transAxes, color=BRAND_COLORS["primary"], zorder=1)
         ax.add_patch(band)
         # Title
-        ax.text(0.05, 0.78, ctx.title, fontsize=22, fontweight="bold",
-                color=BRAND_COLORS["primary"], transform=ax.transAxes)
+        ax.text(
+            0.05, 0.78, ctx.title, fontsize=22, fontweight="bold", color=BRAND_COLORS["primary"], transform=ax.transAxes
+        )
         if ctx.subtitle:
-            ax.text(0.05, 0.74, ctx.subtitle, fontsize=13,
-                    color=BRAND_COLORS["muted"], style="italic", transform=ax.transAxes)
+            ax.text(
+                0.05,
+                0.74,
+                ctx.subtitle,
+                fontsize=13,
+                color=BRAND_COLORS["muted"],
+                style="italic",
+                transform=ax.transAxes,
+            )
         # Meta
         y = 0.60
         for line in ctx.header_lines()[1:]:
-            ax.text(0.05, y, line, fontsize=10, color=BRAND_COLORS["text"],
-                    transform=ax.transAxes)
+            ax.text(0.05, y, line, fontsize=10, color=BRAND_COLORS["text"], transform=ax.transAxes)
             y -= 0.025
         if ctx.run_manifest is not None:
             raw_manifest = ctx.run_manifest
@@ -436,24 +443,43 @@ def build_pdf_report(
         n_tables = sum(1 for s in sections if s.is_table())
         n_charts = sum(1 for s in sections if s.is_chart())
         n_text = sum(1 for s in sections if s.is_text())
-        ax.text(0.05, 0.40, "Contents", fontsize=14, fontweight="bold",
-                color=BRAND_COLORS["primary"], transform=ax.transAxes)
-        ax.text(0.05, 0.36,
-                f"- {n_tables} table(s)\n- {n_charts} chart(s)\n- {n_text} text block(s)",
-                fontsize=10, color=BRAND_COLORS["text"], transform=ax.transAxes)
+        ax.text(
+            0.05,
+            0.40,
+            "Contents",
+            fontsize=14,
+            fontweight="bold",
+            color=BRAND_COLORS["primary"],
+            transform=ax.transAxes,
+        )
+        ax.text(
+            0.05,
+            0.36,
+            f"- {n_tables} table(s)\n- {n_charts} chart(s)\n- {n_text} text block(s)",
+            fontsize=10,
+            color=BRAND_COLORS["text"],
+            transform=ax.transAxes,
+        )
         # Footer
-        ax.text(0.5, 0.05, f"CERTUS {ctx.app_name} - Premium Report",
-                fontsize=9, ha="center", color="white", transform=ax.transAxes,
-                bbox=dict(facecolor=BRAND_COLORS["primary"], edgecolor="none",
-                          boxstyle="round,pad=0.4"))
+        ax.text(
+            0.5,
+            0.05,
+            f"CERTUS {ctx.app_name} - Premium Report",
+            fontsize=9,
+            ha="center",
+            color="white",
+            transform=ax.transAxes,
+            bbox=dict(facecolor=BRAND_COLORS["primary"], edgecolor="none", boxstyle="round,pad=0.4"),
+        )
         pdf.savefig(fig, bbox_inches="tight")
         plt.close(fig)
 
         if not sections:
             fig, ax = plt.subplots(figsize=(8.27, 11.69))
             ax.axis("off")
-            ax.text(0.5, 0.5, "(no content)", fontsize=14, ha="center",
-                    color=BRAND_COLORS["muted"], transform=ax.transAxes)
+            ax.text(
+                0.5, 0.5, "(no content)", fontsize=14, ha="center", color=BRAND_COLORS["muted"], transform=ax.transAxes
+            )
             pdf.savefig(fig, bbox_inches="tight")
             plt.close(fig)
 
@@ -462,13 +488,22 @@ def build_pdf_report(
             fig, ax = plt.subplots(figsize=(8.27, 11.69))
             ax.axis("off")
             # Page header strip
-            strip = plt.Rectangle((0, 0.94), 1, 0.06, transform=ax.transAxes,
-                                  color=BRAND_COLORS["primary_soft"], zorder=1)
+            strip = plt.Rectangle(
+                (0, 0.94), 1, 0.06, transform=ax.transAxes, color=BRAND_COLORS["primary_soft"], zorder=1
+            )
             ax.add_patch(strip)
-            ax.text(0.02, 0.965, sec.title, fontsize=12, fontweight="bold",
-                    color=BRAND_COLORS["primary"], transform=ax.transAxes)
-            ax.text(0.98, 0.965, ctx.app_name, fontsize=9, ha="right",
-                    color=BRAND_COLORS["muted"], transform=ax.transAxes)
+            ax.text(
+                0.02,
+                0.965,
+                sec.title,
+                fontsize=12,
+                fontweight="bold",
+                color=BRAND_COLORS["primary"],
+                transform=ax.transAxes,
+            )
+            ax.text(
+                0.98, 0.965, ctx.app_name, fontsize=9, ha="right", color=BRAND_COLORS["muted"], transform=ax.transAxes
+            )
 
             if sec.is_table():
                 _render_pdf_table(ax, sec)
@@ -478,9 +513,16 @@ def build_pdf_report(
                 _render_pdf_text(ax, sec)
 
             if sec.notes:
-                ax.text(0.5, 0.03, f"Notes: {sec.notes}", fontsize=8,
-                        ha="center", color=BRAND_COLORS["muted"], style="italic",
-                        transform=ax.transAxes)
+                ax.text(
+                    0.5,
+                    0.03,
+                    f"Notes: {sec.notes}",
+                    fontsize=8,
+                    ha="center",
+                    color=BRAND_COLORS["muted"],
+                    style="italic",
+                    transform=ax.transAxes,
+                )
             pdf.savefig(fig, bbox_inches="tight")
             plt.close(fig)
 
@@ -495,8 +537,7 @@ def _render_pdf_table(ax, sec: Section) -> None:
     rows = sec.rows or []
     header = sec.header or []
     if not rows and not header:
-        ax.text(0.5, 0.5, "(no rows)", fontsize=11, ha="center",
-                color=BRAND_COLORS["muted"])
+        ax.text(0.5, 0.5, "(no rows)", fontsize=11, ha="center", color=BRAND_COLORS["muted"])
         return
     # Build the table-like cells for matplotlib
     cell_text = [[str(c) for c in r] for r in rows]
@@ -538,16 +579,14 @@ def _render_pdf_text(ax, sec: Section) -> None:
             paragraphs = [str(txt)]
     y = 0.88
     for p in paragraphs:
-        ax.text(0.05, y, str(p), fontsize=10, va="top", wrap=True,
-                color=BRAND_COLORS["text"])
+        ax.text(0.05, y, str(p), fontsize=10, va="top", wrap=True, color=BRAND_COLORS["text"])
         y -= 0.06
 
 
 def _render_pdf_chart(ax, sec: Section) -> None:
     fig_obj = sec.figure
     if fig_obj is None or not hasattr(fig_obj, "savefig"):
-        ax.text(0.5, 0.5, "(chart unavailable)", fontsize=11, ha="center",
-                color=BRAND_COLORS["muted"])
+        ax.text(0.5, 0.5, "(chart unavailable)", fontsize=11, ha="center", color=BRAND_COLORS["muted"])
         return
     try:
         import io
@@ -557,12 +596,10 @@ def _render_pdf_chart(ax, sec: Section) -> None:
         fig_obj.savefig(buf, format="png", dpi=150, bbox_inches="tight")
         buf.seek(0)
         img = mpimg.imread(buf, format="png")
-        ax.imshow(img, extent=[0.05, 0.95, 0.05, 0.92], aspect="auto",
-                  transform=ax.transAxes)
+        ax.imshow(img, extent=[0.05, 0.95, 0.05, 0.92], aspect="auto", transform=ax.transAxes)
     except (ImportError, OSError, RuntimeError, ValueError, TypeError) as exc:
         logger.debug("PDF chart rendering failed, using placeholder: %s", exc)
-        ax.text(0.5, 0.5, "(chart unavailable)", fontsize=11, ha="center",
-                color=BRAND_COLORS["muted"])
+        ax.text(0.5, 0.5, "(chart unavailable)", fontsize=11, ha="center", color=BRAND_COLORS["muted"])
 
 
 __all__ = [

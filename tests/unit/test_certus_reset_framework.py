@@ -217,7 +217,6 @@ class TestResetIntegration:
         app._request_stop = Mock()
         m = CertusResetManager(app)
         m._stop_all_workers()
-        call_order = [app._request_stop.call_count, app._cleanup_worker.call_count]
         assert app._request_stop.called
         assert app._cleanup_worker.called
         assert app._request_stop.call_count >= 1 and app._cleanup_worker.call_count >= 1

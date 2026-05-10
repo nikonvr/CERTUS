@@ -53,18 +53,14 @@ def _variant_colors(variant: str) -> tuple[str, str, str]:
     from certus_ui import CertusTheme as T
 
     base = {
-        "info": (T.INFO_BG if hasattr(T, "INFO_BG") else T.SURFACE,
-                 T.INFO_TEXT if hasattr(T, "INFO_TEXT") else T.TEXT_MAIN,
-                 T.INFO),
-        "success": (getattr(T, "SUCCESS_BG", T.SURFACE),
-                    getattr(T, "SUCCESS_TEXT", T.TEXT_MAIN),
-                    T.SUCCESS),
-        "warning": (getattr(T, "WARNING_BG", T.SURFACE),
-                    getattr(T, "WARNING_TEXT", T.TEXT_MAIN),
-                    T.WARNING),
-        "error": (getattr(T, "DANGER_BG", T.SURFACE),
-                  getattr(T, "DANGER_TEXT", T.TEXT_MAIN),
-                  T.DANGER),
+        "info": (
+            T.INFO_BG if hasattr(T, "INFO_BG") else T.SURFACE,
+            T.INFO_TEXT if hasattr(T, "INFO_TEXT") else T.TEXT_MAIN,
+            T.INFO,
+        ),
+        "success": (getattr(T, "SUCCESS_BG", T.SURFACE), getattr(T, "SUCCESS_TEXT", T.TEXT_MAIN), T.SUCCESS),
+        "warning": (getattr(T, "WARNING_BG", T.SURFACE), getattr(T, "WARNING_TEXT", T.TEXT_MAIN), T.WARNING),
+        "error": (getattr(T, "DANGER_BG", T.SURFACE), getattr(T, "DANGER_TEXT", T.TEXT_MAIN), T.DANGER),
     }
     return base.get(variant, base["info"])
 
@@ -82,9 +78,7 @@ _STACKS: dict[int, object] = {}  # parent id -> CertusToastStack
 def _build_toast_class():
     from PyQt6.QtCore import (
         QEasingCurve,
-        QEvent,
         QPropertyAnimation,
-        QRect,
         Qt,
         QTimer,
         pyqtSignal,

@@ -4,7 +4,9 @@ from __future__ import annotations
 import numpy as np
 
 from certus_index_spline_core import DataType, SplineOptConfig
-from certus_physics import calculate_transmission_array
+
+from certus_index_utils import _transmittance_absolute_from_nk
+
 from spline_smart_init import MANUAL_MATERIAL_PRESET_IDS, pick_best_manual_material_preset
 
 
@@ -16,7 +18,7 @@ def _cfg_and_sk_for_pick() -> tuple[SplineOptConfig, np.ndarray]:
     d_nm = 800.0
     n_l = np.full_like(lam, n_film)
     k_l = np.full_like(lam, k_film)
-    t_exp = calculate_transmission_array(lam, n_l, k_l, d_nm, n_sub)
+    t_exp = _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub)
     cfg = SplineOptConfig(
         lam_nm=lam,
         t_exp=t_exp,

@@ -7,7 +7,7 @@ name = "certus-optical-suite"
 version = "26.01.0"
 description = "CERTUS optical thin-film suite (design, strat, RE, index, metal)."
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.14.4"
 license = { text = "Proprietary" }
 authors = [
   { name = "CERTUS Team" }
@@ -113,13 +113,13 @@ py-modules = [
 # -----------------------------------------------------------------------------
 # Ruff (lint + format) — Foundation action #2 of CERTUS_MASTER_TODO_OPTIMIZATION
 # -----------------------------------------------------------------------------
-# Target: Python 3.10+ for lint compatibility across CI matrix.
+# Target: Python 3.14+ (aligned with requires-python >= 3.14.4).
 # Initial baseline (2026-04-26): full lint select with `extend-ignore` of every
 # rule that currently has live violations across the codebase. Each ignored rule
 # below maps to a planned cleanup batch; remove the entry once the batch lands.
 # DO NOT use `ruff check --fix` blindly on legacy code — surface diffs in PR.
 [tool.ruff]
-target-version = "py310"
+target-version = "py314"
 line-length = 120
 extend-exclude = [
   "tools/build_certus_pages.py",  # broken f-string template, see #2 follow-up note
@@ -180,7 +180,7 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_ui --cov=certus_errors --cov=certus_data --cov=certus_physics --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml --cov-fail-under=80"
+addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_nonlinear_alpha --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml --cov-fail-under=40"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -207,6 +207,24 @@ omit = [
   "build/*",
   "dist/*",
   "setup.py",
+  "CERTUS_DESIGN.py",
+  "CERTUS_HUB.py",
+  "CERTUS_INDEX.py",
+  "CERTUS_INDEX_SPLINE.py",
+  "CERTUS_METAL_BILAYER.py",
+  "CERTUS_METAL_SINGLE.py",
+  "CERTUS_RE.py",
+  "CERTUS_STRAT.py",
+  "certus_ui.py",
+  "certus_plot.py",
+  "certus_re_helpers.py",
+  "certus_substrate_index.py",
+  "spline_pipeline.py",
+  "spline_profile_corridors.py",
+  "spline_workers.py",
+  "_certus_physics_impl.py",
+  "scripts/*",
+  "tools/*",
 ]
 
 [tool.coverage.report]

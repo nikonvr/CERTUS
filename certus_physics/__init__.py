@@ -7,7 +7,7 @@ This package re-exports them plus auxiliary data modules:
 - structures.py: Dataclasses (Layer, Target, Sample, PGlobalConfig)
 - materials_data.py: Silicon optical constants (loaded from clues.xlsx -> Si-substrate)"""
 
-import os
+
 import sys
 from pathlib import Path
 
@@ -19,7 +19,7 @@ if _parent_dir not in sys.path:
 # =============================================================================
 # CORE ENGINE (Single Source of Truth)
 # =============================================================================
-from _certus_physics_impl import (
+from _certus_physics_impl import (  # noqa: F401
     # Data Structures
     Layer,
     Target,
@@ -41,30 +41,23 @@ from _certus_physics_impl import (
     get_n_frosted_glass_array,
     # TMM
     compute_TMM_generic,
-    calculate_transmission_single,
-    calculate_transmission_array,
-    calculate_reflection_single,
-    calculate_reflection_array,
-    calculate_RT_single_layer_single,
     calculate_RT_single_layer_backside_array,
-    calculate_R_substrate_array,
-    calculate_T_substrate_array,
-    calculate_R_substrate_absorbing_array,
-    calculate_T_substrate_absorbing_array,
+    batch_single_layer_T_mse,
+    batch_single_layer_RT_mse,
+    calculate_bare_substrate_RT,
+    calculate_single_interface_R,
     calculate_RT_single_layer_absorbing_substrate_array,
+    calculate_transmission_single,
     calculate_RT_vectorized_real,
     calculate_RT_vectorized_real_HL,
     calculate_RTRback_incoherent_vectorized,
     apply_exact_backside_combination,
-    calculate_R_frosted_glass_reference,
-    calculate_reflection_infinite_substrate_array,
-    calculate_reflection_infinite_substrate_single,
     calculate_reflectance_bilayer_vectorized,
     calc_spectrum_front,
-    calc_spectrum_front_wrapper,
     calc_spectrum_full,
-    calc_spectrum_full_wrapper,
     calc_spectrum_full_exact,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_wrapper,
     calc_spectrum_full_exact_wrapper,
     calc_spectrum_oblique_vectorized,
     calc_spectrum_oblique_backside_vectorized,
@@ -140,6 +133,7 @@ from _certus_physics_impl import (
     _compute_gradient_analytic_kernel,
     _compute_index_cost_gradient_kernel,
     _compute_single_layer_sensitivity_kernel,
+    _compute_single_layer_sensitivity_array,
     _compute_tlu_derivatives_kernel,
     _compute_phase2_derivatives_kernel,
     _compute_ir_global_cost_gradient_kernel,
@@ -154,7 +148,7 @@ from _certus_physics_impl import (
 
 
 # Silicon optical constants - loaded from clues.xlsx -> Si-substrate (Single Source of Truth)
-from .materials_data import (
+from .materials_data import (  # noqa: F401
     get_nk_si,
     SI_WAVELENGTH_NM,
     SI_N_DATA,

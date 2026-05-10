@@ -68,12 +68,12 @@ def variant_color(variant: str) -> tuple[str, str, str]:
     palette otherwise so the function remains pure-python.
     """
     fallback = {
-        "idle":    ("#F3F4F6", "#6B7280", "#D1D5DB"),
+        "idle": ("#F3F4F6", "#6B7280", "#D1D5DB"),
         "running": ("#DBEAFE", "#1E40AF", "#93C5FD"),
         "success": ("#D1FAE5", "#065F46", "#6EE7B7"),
-        "error":   ("#FEE2E2", "#991B1B", "#FCA5A5"),
+        "error": ("#FEE2E2", "#991B1B", "#FCA5A5"),
         "warning": ("#FEF3C7", "#92400E", "#FCD34D"),
-        "info":    ("#E0F2FE", "#075985", "#7DD3FC"),
+        "info": ("#E0F2FE", "#075985", "#7DD3FC"),
         "neutral": ("#F9FAFB", "#374151", "#E5E7EB"),
     }
     base = fallback.get(variant, fallback["neutral"])

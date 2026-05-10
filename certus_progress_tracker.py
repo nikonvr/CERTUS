@@ -34,9 +34,9 @@ Public API
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Final, Optional
+from typing import Final
 
 
 SPINNER_PERIOD_MS: Final[int] = 900
@@ -260,9 +260,7 @@ def _build_tracker_class():
                 from certus_icons import certus_icon
 
                 name = step_icon_name(state)
-                pix = certus_icon(name, color=color, size=ICON_SIZE_PX).pixmap(
-                    ICON_SIZE_PX, ICON_SIZE_PX
-                )
+                pix = certus_icon(name, color=color, size=ICON_SIZE_PX).pixmap(ICON_SIZE_PX, ICON_SIZE_PX)
             except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
                 pix = None
             self._icon.set_base_pixmap(pix)
@@ -295,15 +293,11 @@ def _build_tracker_class():
             header = QHBoxLayout()
             self._title_lbl = QLabel(title, self)
             self._title_lbl.setObjectName("tracker-title")
-            self._title_lbl.setStyleSheet(
-                "#tracker-title { font-weight: 700; font-size: 11pt; color: palette(text); }"
-            )
+            self._title_lbl.setStyleSheet("#tracker-title { font-weight: 700; font-size: 11pt; color: palette(text); }")
             header.addWidget(self._title_lbl, 1)
             self._eta_lbl = QLabel("", self)
             self._eta_lbl.setObjectName("tracker-eta")
-            self._eta_lbl.setStyleSheet(
-                "#tracker-eta { color: palette(mid); font-size: 9pt; font-style: italic; }"
-            )
+            self._eta_lbl.setStyleSheet("#tracker-eta { color: palette(mid); font-size: 9pt; font-style: italic; }")
             header.addWidget(self._eta_lbl, 0, Qt.AlignmentFlag.AlignRight)
             outer.addLayout(header)
 

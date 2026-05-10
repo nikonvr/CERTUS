@@ -13,7 +13,6 @@ from certus_core import SELLMEIER_COEFFS_BY_ID, SUBSTRATES
 
 
 def _build_sellmeier_by_name() -> dict:
-
     """Build a name-keyed Sellmeier dict from certus_core's ID-keyed dict (module-level helper)."""
 
     id_to_name = {v["id"]: k for k, v in SUBSTRATES.items()}
@@ -35,7 +34,6 @@ _SELLMEIER_COEFFS_BY_NAME = _build_sellmeier_by_name()
 
 
 class RobustMaterialDatabase:
-
     """
 
     A robust replacement for MaterialDatabase that handles:
@@ -81,7 +79,6 @@ class RobustMaterialDatabase:
     def _load_database(self):
 
         if not Path(self.filepath).exists():
-
             self.logger.error(f"Material DB file not found: {self.filepath}")
 
             return
@@ -89,45 +86,43 @@ class RobustMaterialDatabase:
         self.logger.info(f"Loading Material DB (Robust): {self.filepath}")
 
         try:
-
             # Read all sheets
 
             xls = pd.read_excel(self.filepath, sheet_name=None)
 
             for sheet_name, df in xls.items():
-
                 try:
-
                     clean_df = self._standardize_dataframe(df, sheet_name)
 
                     if clean_df is not None:
-
                         # Store as (wl, n, k) numpy arrays sorted by wl
 
                         clean_df.sort_values(by="wl", inplace=True)
 
                         self.materials[sheet_name] = {
-
                             "wl": clean_df["wl"].to_numpy(dtype=np.float64),
-
                             "n": clean_df["n"].to_numpy(dtype=np.float64),
-
                             "k": clean_df["k"].to_numpy(dtype=np.float64),
-
                         }
 
                         # Self-test
 
                         # self.logger.info(f"Loaded '{sheet_name}': {len(clean_df)} points.")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+                except (
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    AttributeError,
+                    KeyError,
+                    IndexError,
+                    FileNotFoundError,
+                ) as e:
                     self.logger.warning(f"Skipping sheet '{sheet_name}': {e}")
 
             self.logger.info(f"Robust DB Loaded {len(self.materials)} materials.")
 
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
             self.logger.error(f"Failed to load Excel DB: {e}")
 
     def _standardize_dataframe(self, df, sheet_name):
@@ -135,7 +130,6 @@ class RobustMaterialDatabase:
         # 1. Check if empty
 
         if df.empty:
-
             return None
 
         # 2. Check header strategy
@@ -147,7 +141,6 @@ class RobustMaterialDatabase:
         is_headerless = isinstance(first_col, (int, float))
 
         if is_headerless:
-
             # Reload? No, just push columns to row 0
 
             # Create a new df including the 'header' as the first row
@@ -171,21 +164,17 @@ class RobustMaterialDatabase:
             # Now we have data. Expect 3 cols: wl, n, k (or 2: wl, n)
 
             if df.shape[1] >= 3:
-
                 df.columns = ["wl", "n", "k"] + list(range(3, df.shape[1]))
 
             elif df.shape[1] == 2:
-
                 df.columns = ["wl", "n"]
 
                 df["k"] = 0.0
 
             else:
-
                 return None
 
         else:
-
             # Has headers? Try to map them
 
             # normalize cols
@@ -199,21 +188,16 @@ class RobustMaterialDatabase:
             wl_col = next((c for c in cols if "wave" in c or "lam" in c or "wl" in c), None)
 
             if not wl_col:
-
                 wl_col = cols[0]  # Fallback col 0
 
             # Map N
 
             n_col = next(
-
                 (c for c in cols if c == "n" or "n_" in c or "ref" in c or c.startswith("n")),
-
                 None,
-
             )
 
             if not n_col:
-
                 # Fallback: col 1 if it's not wl
 
                 n_col = cols[1] if len(cols) > 1 else None
@@ -221,25 +205,19 @@ class RobustMaterialDatabase:
             # Map K
 
             k_col = next(
-
                 (c for c in cols if c == "k" or "ext" in c or "k_" in c or c.startswith("k")),
-
                 None,
-
             )
 
             if not k_col:
-
                 # Fallback: col 2
 
                 k_col = cols[2] if len(cols) > 2 else None
 
             if not wl_col or not n_col:
-
                 # Fallback purely position based if mapping failed
 
                 if df.shape[1] >= 2:
-
                     wl_col = df.columns[0]
 
                     n_col = df.columns[1]
@@ -247,7 +225,6 @@ class RobustMaterialDatabase:
                     k_col = df.columns[2] if df.shape[1] > 2 else None
 
                 else:
-
                     return None
 
             # Rename
@@ -255,13 +232,11 @@ class RobustMaterialDatabase:
             rename_map = {wl_col: "wl", n_col: "n"}
 
             if k_col:
-
                 rename_map[k_col] = "k"
 
             df.rename(columns=rename_map, inplace=True)
 
             if "k" not in df.columns:
-
                 df["k"] = 0.0
 
         # Ensure types
@@ -277,7 +252,6 @@ class RobustMaterialDatabase:
         return df[["wl", "n", "k"]]
 
     def _sellmeier_n(self, wl_um, B1, C1, B2, C2, B3, C3):
-
         """Calculate n from Sellmeier coefficients. wl in µm."""
 
         wl2 = wl_um**2
@@ -293,7 +267,6 @@ class RobustMaterialDatabase:
         # Check Excel sheets first
 
         if mat_id in self.materials:
-
             mat_data = self.materials[mat_id]
 
             n_val = np.interp(wl, mat_data["wl"], mat_data["n"])
@@ -305,7 +278,6 @@ class RobustMaterialDatabase:
         # Fallback: Standard substrates via Sellmeier
 
         if mat_id in self.SELLMEIER_COEFFS:
-
             coeffs = self.SELLMEIER_COEFFS[mat_id]
 
             wl_um = wl / 1000.0  # nm -> µm
@@ -323,7 +295,6 @@ class RobustMaterialDatabase:
         # Check Excel sheets first
 
         if mat_id in self.materials:
-
             mat_data = self.materials[mat_id]
 
             n_vals = np.interp(wls, mat_data["wl"], mat_data["n"])
@@ -335,7 +306,6 @@ class RobustMaterialDatabase:
         # Fallback: Standard substrates via Sellmeier (vectorized)
 
         if mat_id in self.SELLMEIER_COEFFS:
-
             B1, C1, B2, C2, B3, C3 = self.SELLMEIER_COEFFS[mat_id]
 
             wl_um = np.asarray(wls) / 1000.0

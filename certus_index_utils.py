@@ -12,50 +12,37 @@ from typing import Any
 
 import numpy as np
 
-from certus_physics import calculate_RT_vectorized_real, calculate_T_substrate_array
+from certus_physics import calculate_RT_vectorized_real, calculate_bare_substrate_RT
 
 
 def log_structured_json_event(
-
     log: logging.Logger | None,
-
     channel: str,
-
     event: str,
-
     *,
-
     seq: str | None = None,
-
     **fields: Any,
-
 ) -> None:
-
     """Une ligne ``<channel> {...}`` pour grep / scripts (AUTO_BEST_JSON, CONT_JSON, SPLINE_PIPELINE_JSON, …)."""
 
     if log is None:
-
         return
 
     payload: dict[str, Any] = {"event": str(event), "ts_epoch_s": float(time.time())}
 
     if seq is not None:
-
         payload["seq"] = str(seq)
 
     payload.update(fields)
 
     try:
-
         log.info("%s %s", channel, json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
     except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
         pass
 
 
-def _ratio_theoretical_from_nk(lam, n_l, k_l, n_sub, d_nm):
-
+def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
     """
 
     Calcule le ratio theorique exact T = T_film_total / T_substrat_nu.
@@ -72,21 +59,38 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, n_sub, d_nm):
 
     # Calcul exact R et T (avec backside)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(
-
-        thicknesses, n_layers_all, n_sub, lam, with_backside=True
-
-    )
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
 
     # T du substrate nu (avec backside) - Securite 1e-7 pour eviter NaN
 
-    t_sub_nu = np.maximum(calculate_T_substrate_array(lam, n_sub), 1e-7)
+    t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 
     return t_film_tot / t_sub_nu
 
 
-def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, n_sub, d_nm):
+def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
+    """
 
+    Calcule la transmittance absolue T_film_total (avec correction face arriere).
+
+    Identique a _ratio_theoretical_from_nk mais sans normaliser par T_substrat_nu.
+
+    """
+
+    n_pts = len(lam)
+
+    thicknesses = np.array([float(d_nm)], dtype=np.float64)
+
+    n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
+
+    # Calcul exact R et T (avec backside)
+
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
+
+    return t_film_tot
+
+
+def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
     """
 
     Calcule le ratio theorique exact R_rel = R_total / T_substrat_nu.
@@ -101,19 +105,14 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, n_sub, d_nm):
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
 
-        thicknesses, n_layers_all, n_sub, lam, with_backside=True
-
-    )
-
-    t_sub_nu = np.maximum(calculate_T_substrate_array(lam, n_sub), 1e-7)
+    t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 
     return r_film_tot / t_sub_nu
 
 
 def spectral_rmse_weights(lam, weight_space="log"):
-
     """
 
     Genere les weights pour le calcul de la RMSE en echelle Log-Lambda.
@@ -129,7 +128,6 @@ def spectral_rmse_weights(lam, weight_space="log"):
     n = lam.size
 
     if n < 2:
-
         return np.ones_like(lam)
 
     # Calcul des inter-distances en log(lambda)
@@ -157,11 +155,9 @@ def spectral_rmse_weights(lam, weight_space="log"):
     sw = np.sum(w)
 
     if sw > 0:
-
         w = w * (float(n) / sw)
 
     else:
-
         w = np.ones_like(lam)
 
     return w

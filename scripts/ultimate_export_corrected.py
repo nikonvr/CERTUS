@@ -1,6 +1,5 @@
 """ULTIMATE EXCEL EXPORT (Fixing µm -> nm and Physics).
 """
-import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -21,7 +20,6 @@ sys.modules["certus_reset_framework"] = m_ui
 
 import numpy as np
 import pandas as pd
-import logging
 from threading import Event
 
 # Root path
@@ -32,11 +30,10 @@ from certus_core import setup_logging
 from certus_data import read_data_file_robust
 from certus_physics import (
     get_n_substrate_array_by_id,
-    calculate_T_substrate_array,
+    calculate_bare_substrate_RT,
     warmup_physics,
 )
 from certus_index_spline_core import (
-    substrate_id_from_name,
     normalize_spectrum_dataframe,
     run_spline_adaptive_mesh_loop,
     SplineOptConfig,
@@ -79,7 +76,7 @@ def run():
     best = run_spline_adaptive_mesh_loop(cfg, knots_start=4, knots_max=10, stop_event=stop)
 
     if best:
-        t_sub_theo = calculate_T_substrate_array(lam_nm, n_sub)
+        t_sub_theo = calculate_bare_substrate_RT(lam_nm, n_sub)
         t_ratio_exp = t_raw / np.maximum(t_sub_theo, 1e-6)
         
         # On exporte l'Excel avec les bons labels et les bonnes valeurs

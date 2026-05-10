@@ -59,7 +59,7 @@ import numpy as np
 import pandas as pd
 
 # Import Core
-from certus_core import OPENPYXL_AVAILABLE, certus_timestamp_file
+from certus_core import NUMERICAL_FAULT_EXCEPTIONS, OPENPYXL_AVAILABLE, certus_timestamp_file
 
 # =============================================================================
 # CONSTANTS
@@ -74,7 +74,7 @@ WL_TOLERANCE: float = 1e-5  # Wavelength matching tolerance
 # =============================================================================
 
 
-def numpy_encoder(obj):
+def numpy_encoder(obj) -> Any:
     """
     JSON encoder for numpy types.
 
@@ -211,7 +211,7 @@ def read_data_file_robust(filepath: str, **kwargs) -> pd.DataFrame:
     return read_csv_robust(filepath, **kwargs)
 
 
-def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str = None, **kwargs):
+def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str = None, **kwargs) -> None:
     """
     Writes a DataFrame to a CSV file with configurable format.
 
@@ -240,7 +240,7 @@ def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str = None
     df.to_csv(filepath, **kwargs)
 
 
-def to_excel_robust(df: pd.DataFrame, filepath: str, **kwargs):
+def to_excel_robust(df: pd.DataFrame, filepath: str, **kwargs) -> None:
     """
     Writes a DataFrame to an Excel file.
 
@@ -314,9 +314,7 @@ def export_optimization_report(
 
     try:
         # Create Summary DataFrame
-        df_summary = pd.DataFrame(
-            [{"Parameter": k, "Value": str(v)} for k, v in summary_dict.items()]
-        )
+        df_summary = pd.DataFrame([{"Parameter": k, "Value": str(v)} for k, v in summary_dict.items()])
 
         # Excel Export
         if OPENPYXL_AVAILABLE:
@@ -358,7 +356,7 @@ def export_optimization_report(
 
         return str(excel_path), str(html_path)
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         if logger:
             logger.error(f"Error exporting reports: {e}")
         return None, None
@@ -393,16 +391,16 @@ class SharedIndicesManager:
         >>> ctx = manager.get_context_info()
         >>> manager.close() # Do not forget to close!"""
 
-    def __init__(self, clues_at_wl: dict[float, dict[str, float]]):
+    def __init__(self, clues_at_wl: dict[float, dict[str, float]]) -> None:
         self.shm = None
         self.dtype = np.float32
         self._serialize(clues_at_wl)
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, exc_type, _exc_val, _exc_tb) -> bool:
         """Context manager exit - automatically closes shared memory."""
         self.close()
         return False  # Don't suppress exceptions
@@ -439,7 +437,7 @@ class SharedIndicesManager:
         """
         return {"shm_name": self.shm_name, "shape": self.shape, "dtype": self.dtype}
 
-    def close(self):
+    def close(self) -> None:
         """
         Closes and releases shared memory.
 
@@ -455,7 +453,7 @@ class SharedIndicesManager:
                 pass
             self.shm = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -480,31 +478,31 @@ class SharedIndicesWorker:
         >>> clues = worker.get(500.0)
         >>> worker.close()"""
 
-    def __init__(self, ctx: dict[str, Any]):
+    def __init__(self, ctx: dict[str, Any]) -> None:
         self.shm = shared_memory.SharedMemory(name=ctx["shm_name"])
         self.arr = np.ndarray(ctx["shape"], dtype=ctx["dtype"], buffer=self.shm.buf)
         self.wls = self.arr[:, 0]
         self.vals = self.arr[:, 1:]
         self._cache = {}
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, exc_type, _exc_val, _exc_tb) -> bool:
         """Context manager exit - automatically closes shared memory."""
         self.close()
         return False
 
-    def close(self):
+    def close(self) -> None:
         if hasattr(self, "shm") and self.shm:
             try:
                 self.shm.close()
             except (OSError, FileNotFoundError):
-                pass
+                logging.getLogger("CERTUS").debug("SharedMemory.close() failed (non-critical)", exc_info=True)
             self.shm = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
     def get(self, wl: float) -> dict[str, float]:
@@ -547,16 +545,16 @@ class SharedArrayManager:
     Supports context manager protocol.
     """
 
-    def __init__(self, arr: np.ndarray):
+    def __init__(self, arr: np.ndarray) -> None:
         self.shm = None
         self.shape = arr.shape
         self.dtype = arr.dtype
         self._serialize(arr)
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, exc_type, _exc_val, _exc_tb) -> bool:
         self.close()
         return False
 
@@ -573,16 +571,16 @@ class SharedArrayManager:
             "dtype": str(self.dtype),
         }
 
-    def close(self):
+    def close(self) -> None:
         if self.shm:
             try:
                 self.shm.close()
                 self.shm.unlink()
             except (OSError, FileNotFoundError):
-                pass
+                logging.getLogger("CERTUS").debug("SharedMemory.unlink() failed (non-critical)", exc_info=True)
             self.shm = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -593,30 +591,30 @@ class SharedArrayWorker:
     Supports context manager protocol.
     """
 
-    def __init__(self, ctx: dict[str, Any]):
+    def __init__(self, ctx: dict[str, Any]) -> None:
         self.shm = shared_memory.SharedMemory(name=ctx["shm_name"])
         self.dtype = np.dtype(ctx["dtype"])
         self.arr = np.ndarray(ctx["shape"], dtype=self.dtype, buffer=self.shm.buf)
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         return self
 
-    def __exit__(self, exc_type, _exc_val, _exc_tb):
+    def __exit__(self, exc_type, _exc_val, _exc_tb) -> bool:
         self.close()
         return False
 
     def get_array(self) -> np.ndarray:
         return self.arr
 
-    def close(self):
+    def close(self) -> None:
         if self.shm:
             try:
                 self.shm.close()
             except (OSError, FileNotFoundError):
-                pass
+                logging.getLogger("CERTUS").debug("SharedMemory.close() failed on read (non-critical)", exc_info=True)
             self.shm = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
 
@@ -638,7 +636,7 @@ class TimingLogger:
         >>> timing.end("calculation")  # Log: "Finished calculation in 123.45ms"
     """
 
-    def __init__(self, logger: logging.Logger | None = None):
+    def __init__(self, logger: logging.Logger | None = None) -> None:
         """
         Args:
             logger: Custom logger (defaults to "CERTUS.Timing")
@@ -664,14 +662,14 @@ class TimingLogger:
         """
         if name in self.start_times:
             dt = time.perf_counter() - self.start_times.pop(name)
-            self.logger.info(f"Finished {name} in {dt*1000:.2f}ms")
+            self.logger.info(f"Finished {name} in {dt * 1000:.2f}ms")
 
-    def start_global(self, name):
+    def start_global(self, name) -> None:
         """Starts a global timing section with emphasized logging."""
         self.logger.info(f"▶️ START GLOBAL: {name}")
         self.start(name)
 
-    def end_global(self, name):
+    def end_global(self, name) -> None:
         """Ends a global timing section."""
         self.end(name)
 
@@ -689,12 +687,12 @@ class PerformanceMonitor:
         >>> print(monitor.report())  # Average statistics
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics: dict[str, list[float]] = defaultdict(list)
         self._lock = RLock()
 
     @contextmanager
-    def measure(self, name: str):
+    def measure(self, name: str) -> None:
         """
         Context manager to measure a code section.
 
@@ -721,7 +719,7 @@ class PerformanceMonitor:
             return "No data"
         lines = ["Perf Report:"]
         for k, v in self.metrics.items():
-            lines.append(f"{k}: {np.mean(v)*1000:.2f}ms (n={len(v)})")
+            lines.append(f"{k}: {np.mean(v) * 1000:.2f}ms (n={len(v)})")
         return "\n".join(lines)
 
 
@@ -732,9 +730,7 @@ PERF_MONITOR = PerformanceMonitor()
 # =============================================================================
 
 
-def generate_html_report(
-    filename: str, title: str, sections: list[dict], figures: list = None
-) -> bool:
+def generate_html_report(filename: str, title: str, sections: list[dict], figures: list = None) -> bool:
     """
     Generates an HTML report with sections and figures.
 
@@ -778,9 +774,7 @@ def generate_html_report(
             "img { max-width: 100%; height: auto; }"
         )
 
-        html = [
-            f"<html><head><title>{title}</title><style>{css}</style></head><body><div class='container'>"
-        ]
+        html = [f"<html><head><title>{title}</title><style>{css}</style></head><body><div class='container'>"]
         html.append(f"<h1>{title}</h1>")
 
         for sec in sections:
@@ -801,24 +795,16 @@ def generate_html_report(
                 if isinstance(cnt, pd.DataFrame):
                     html.append(cnt.to_html(border=0, classes="dataframe", index=False))
                 elif isinstance(cnt, list) and cnt and isinstance(cnt[0], dict):
-                    html.append(
-                        pd.DataFrame(cnt).to_html(border=0, classes="dataframe", index=False)
-                    )
+                    html.append(pd.DataFrame(cnt).to_html(border=0, classes="dataframe", index=False))
                 elif isinstance(cnt, dict):
-                    html.append(
-                        pd.DataFrame([cnt]).to_html(border=0, classes="dataframe", index=False)
-                    )
+                    html.append(pd.DataFrame([cnt]).to_html(border=0, classes="dataframe", index=False))
                 else:
                     try:
-                        html.append(
-                            pd.DataFrame(cnt).to_html(border=0, classes="dataframe", index=False)
-                        )
-                    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                        html.append(pd.DataFrame(cnt).to_html(border=0, classes="dataframe", index=False))
+                    except NUMERICAL_FAULT_EXCEPTIONS:
                         html.append("<p>Table content could not be rendered.</p>")
             elif typ == "image":
-                html.append(
-                    f"<div class='img-container'><img src='data:image/png;base64,{cnt}'></div>"
-                )
+                html.append(f"<div class='img-container'><img src='data:image/png;base64,{cnt}'></div>")
 
         if figures:
             html.append("<h2>Visual Analysis</h2>")
@@ -834,16 +820,14 @@ def generate_html_report(
                     b64 = base64.b64encode(b.data()).decode()
 
                 if b64:
-                    html.append(
-                        f"<div class='img-container'><img src='data:image/png;base64,{b64}'></div>"
-                    )
+                    html.append(f"<div class='img-container'><img src='data:image/png;base64,{b64}'></div>")
 
         html.append("</div></body></html>")
 
         with open(filename, "w", encoding="utf-8") as f:
             f.write("".join(html))
         return True
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.error(f"Report Error: {e}")
         return False
 
@@ -1018,7 +1002,7 @@ def build_standard_report(
                         base = name
                         k = 2
                         while name in used_names:
-                            name = f"{base[:EXCEL_SHEET_NAME_MAX_LENGTH - 2]}_{k}"
+                            name = f"{base[: EXCEL_SHEET_NAME_MAX_LENGTH - 2]}_{k}"
                             k += 1
                         used_names.add(name)
                         df.to_excel(writer, sheet_name=name, index=False)
@@ -1030,7 +1014,7 @@ def build_standard_report(
                         base = name
                         k = 2
                         while name in used_names:
-                            name = f"{base[:EXCEL_SHEET_NAME_MAX_LENGTH - 2]}_{k}"
+                            name = f"{base[: EXCEL_SHEET_NAME_MAX_LENGTH - 2]}_{k}"
                             k += 1
                         used_names.add(name)
                         df = pd.DataFrame(
@@ -1039,14 +1023,10 @@ def build_standard_report(
                         )
                         df.to_excel(writer, sheet_name=name, index=False)
                     elif sec.kind == "text":
-                        summary_rows.append(
-                            {"Section": sec.title, "Content": str(sec.content)}
-                        )
+                        summary_rows.append({"Section": sec.title, "Content": str(sec.content)})
                     # "image" sections are HTML-only
                 if summary_rows and "Summary" not in used_names:
-                    pd.DataFrame(summary_rows).to_excel(
-                        writer, sheet_name="Summary", index=False
-                    )
+                    pd.DataFrame(summary_rows).to_excel(writer, sheet_name="Summary", index=False)
             result["excel"] = True
         except (ValueError, TypeError, RuntimeError, OSError, PermissionError) as e:
             logging.error(f"Standard report Excel error: {e}")
@@ -1070,6 +1050,7 @@ MANIFEST_REQUIRED_FIELDS: tuple[str, ...] = (
     "app_version",
     "status",
     "params_hash",
+    "materials_db_hash",
 )
 
 
@@ -1225,9 +1206,7 @@ def load_spectrum_columns(
     # Rename columns
     roles = column_roles if column_roles is not None else {0: "lambda", 1: "T", 2: "R"}
     if roles:
-        new_names = [
-            roles.get(i, str(df.columns[i])) for i in range(len(df.columns))
-        ]
+        new_names = [roles.get(i, str(df.columns[i])) for i in range(len(df.columns))]
         df.columns = new_names
 
     # Extract x
@@ -1267,7 +1246,7 @@ def load_spectrum_columns(
         x_unit=result_unit,
         normalised_to_fraction=normalised,
         n_rows=int(len(df)),
-        source_path=abs_path,
+        source_path=str(abs_path),
     )
 
 

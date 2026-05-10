@@ -1,7 +1,7 @@
 """Direct TMM smoke tests on `_certus_physics_impl` (P1-12).
 
 Aligned with `tests/test_tmm_coherence.py`:
-- TEST 1: single QW — `compute_TMM_generic` vs analytique ; `calculate_RT_single_layer_single` (dos incohérent).
+- TEST 1: single QW — `compute_TMM_generic` vs analytique ; `` (dos incohérent).
 - TEST 2 (HLH) : `compute_TMM_single_point_k0` et `compute_TMM_single_point_k0_exact` (Rf, Tf) vs `compute_TMM_generic`, plusieurs λ.
 """
 
@@ -13,10 +13,10 @@ import pytest
 
 from _certus_physics_impl import (
     TWO_PI,
-    calculate_RT_single_layer_single,
     compute_TMM_generic,
     compute_TMM_single_point_k0,
     compute_TMM_single_point_k0_exact,
+    calculate_transmission_single,
 )
 
 
@@ -88,7 +88,7 @@ def test_calculate_RT_single_layer_single_quarter_wave_matches_incoherent_analyt
     l0 = 550.0
     d_qw = l0 / (4.0 * n_h)
 
-    r_sl, t_sl = calculate_RT_single_layer_single(l0, n_h, 0.0, d_qw, n_sub)
+    r_sl, t_sl = calculate_transmission_single(l0, n_h, 0.0, d_qw, complex(n_sub, 0.0))
 
     y_eff = n_h**2 / n_sub
     r_ana = ((1.0 - y_eff) / (1.0 + y_eff)) ** 2

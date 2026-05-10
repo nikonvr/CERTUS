@@ -28,7 +28,7 @@ get a default experience.
 
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Callable, Iterable
 
 
 def _steps_design() -> list:
@@ -229,7 +229,7 @@ def _default_steps() -> list:
     ]
 
 
-_TOURS_BY_APP_NAME: dict[str, "function"] = {
+_TOURS_BY_APP_NAME: dict[str, Callable] = {
     "CERTUS-DESIGN": _steps_design,
     "CERTUS-INDEX": _steps_index,
     "CERTUS-STRAT": _steps_strat,

@@ -70,10 +70,10 @@
             <p style="font-size: 1.0em; color: #16a34a; font-weight: 300;">Differential Measurement &amp; Uncertainty Budget</p>
         </header>
 
-    <h2>1. Prior determination of substrate index ($n_{s}$): choosing transmission vs. reflection</h2>
+    <h2>1 Prior determination of substrate index ($n_{s}$): choosing transmission vs. reflection</h2>
     <p>The envelope method relies on accurate knowledge of the bare-substrate refractive index ($n_{s}$). Experimentally it can be obtained from transmission ($T_{sub}$) or reflection ($R_{sub}$). Each path has a distinct trade-off against instrumental (non-linearity) and physical (absorption) limits.</p>
 
-    <h3>1.1. Transmission (T): photometric linearity and vulnerability</h3>
+    <h3>1.1 Transmission (T): photometric linearity and vulnerability</h3>
     <p>In a strictly transparent region ($k = 0$), with incoherent multiple reflections between front and back faces of a double-sided sapphire slab, transmission is:</p>
     <div class="eq-box">$$ T_{sub} = \frac{2 n_{s}}{n_{s}^2 + 1} $$</div>
     <p>Inverting yields the substrate index:</p>
@@ -93,7 +93,7 @@
 
     <p><strong>Physical drawback (absorption trap):</strong> inversion assumes perfect transparency. Residual absorption (&alpha; &gt; 0, UV/IR tails) lowers <i>T<sub>sub</sub></i>; the model may misinterpret this as higher reflectance and overestimate <i>n<sub>s</sub></i>.</p>
 
-    <h2>1.2. Reflection (R): robustness to absorption and instrumental penalty</h2>
+    <h3>1.2 Reflection (R): robustness to absorption and instrumental penalty</h3>
     <p>To bound the transparent window and extract the real part of <i>n</i> without absorption bias, <strong>double-sided reflection (<i>R<sub>sub</sub></i>)</strong> is recommended.</p>
 
     <p><strong>Physical advantage:</strong> first-order analysis shows <i>R</i> is structurally less sensitive to bulk absorption than <i>T</i>. With internal attenuation <i>x = e<sup>-&alpha;d</sup> &approx; 1 - &alpha;d</i> and per-face Fresnel reflectance <i>R<sub>0</sub></i>:</p>
@@ -112,11 +112,11 @@
     <h1>2. Experimental context and acquisition strategy</h1>
     <p>The goal is residual absorption (<i>k</i> &lt; 10<sup>-3</sup>) and refractive index <i>n</i> of dielectric films on sapphire (Al<sub>2</sub>O<sub>3</sub>). Following <strong>H.A. Macleod</strong>, thick films (~3 &mu;m) make weak absorption visible in the spectrum.</p>
 
-    <h2>2.1. Deposition: Helios 800 (PARMS)</h2>
+    <h3>2.1 Deposition: Helios 800 (PARMS)</h3>
     <p>Films are produced by plasma-assisted reactive magnetron sputtering (PARMS) on <strong>Helios 800</strong> equipment. Compared with classic e-beam evaporation (low adatom energy, columnar porosity), PARMS ion bombardment (10–100 eV) increases packing density toward unity and reduces index inhomogeneity even at 3 &mu;m, consistent with P.J. Martin and Macleod on ion assist.</p>
     <p>This structural stability supports ideal Swanepoel envelope formulas and reduces envelope “pinching” from index gradients (Section 8.1).</p>
 
-    <h2>2.2. Spectral ranges and adaptive resolution</h2>
+    <h3>2.2 Spectral ranges and adaptive resolution</h3>
     <p>Spectra are acquired on a <strong>Photon RT 5200</strong>. Analysis relies on Fabry–Pérot fringe visibility:</p>
     <ul>
         <li><strong>SiO<sub>2</sub>:</strong> 250–5200 nm (transparent over the band).</li>
@@ -124,7 +124,7 @@
     </ul>
     <p>UV–vis: fine sampling (&lt;1 nm) and small spot. IR: coarser resolution and larger spot for SNR where fringes are sparse.</p>
 
-    <h2>2.3. Relative measurement: compensating double-sided substrate absorption</h2>
+    <h3>2.3 Relative measurement: compensating double-sided substrate absorption</h3>
     <p>Major error source: sapphire absorption (UV/IR tails). Use differential transmission ratio <i>R<sub>raw</sub></i> = <i>T<sub>sample</sub></i> / <i>T<sub>bare</sub></i>.</p>
     <p>On <strong>double-sided polished</strong> substrates, <i>T<sub>bare</sub></i> already includes back-side Fresnel and bulk attenuation, so the ratio largely cancels sapphire absorption. Moderate index (~7.6% per interface) keeps second-order errors from the coated front small.</p>
 
@@ -153,17 +153,17 @@
     <div class="equation"><i>k</i>(&lambda;) = - [ &lambda; / (4&pi; <i>d</i>) ] ln(<i>x</i>)<span class="eq-num">(6)</span></div>
 
     <h1>5. Analytical uncertainty propagation (full case)</h1>
-    <h2>5.1. Photometric non-linearity and n<sub>s</sub></h2>
+    <h3>5.1 Photometric non-linearity and n<sub>s</sub></h3>
     <p>&Delta;<i>T</i> depends on detector non-linearity; it is smallest (~0.05%) when measured flux is near reference (~100%).</p>
     <p><i>n<sub>s</sub></i> is derived from bare sapphire <i>T<sub>n</sub></i> &approx; 86%, so &Delta;<i>T<sub>n</sub></i> &approx; 0.1–0.2%. Propagation:</p>
     <div class="equation">&Delta;<i>n<sub>s</sub></i> = [ (<i>n<sub>s</sub></i><sup>2</sup> + 1)<sup>2</sup> / (2|<i>n<sub>s</sub></i><sup>2</sup> - 1|) ] &times; &Delta;<i>T<sub>n</sub></i><span class="eq-num">(7)</span></div>
 
-    <h2>5.2. Film index uncertainty &Delta;<i>n</i></h2>
+    <h3>5.2 Film index uncertainty &Delta;<i>n</i></h3>
     <p>With contrast <i>C</i> = | 1/<i>T<sub>1/4</sub></i> - 1/<i>T<sub>1/2</sub></i> |:</p>
     <div class="equation">&Delta;<i>N</i> = (2<i>n<sub>s</sub></i> / <i>T<sub>1/4</sub></i><sup>2</sup>)&Delta;<i>T<sub>1/4</sub></i> + (2<i>n<sub>s</sub></i> / <i>T<sub>1/2</sub></i><sup>2</sup>)&Delta;<i>T<sub>1/2</sub></i> + ( <i>n<sub>s</sub></i> + 2<i>C</i> ) &Delta;<i>n<sub>s</sub></i><span class="eq-num">(8)</span></div>
     <div class="equation">&Delta;<i>n</i> = [ 1 / | <i>n</i> - <i>n<sub>s</sub></i><sup>2</sup>/<i>n</i><sup>3</sup> | ] &times; [ &Delta;<i>N</i> + (<i>n<sub>s</sub></i> / <i>n</i><sup>2</sup>) &Delta;<i>n<sub>s</sub></i> ]<span class="eq-num">(9)</span></div>
 
-    <h2>5.3. Extinction coefficient &Delta;<i>k</i></h2>
+    <h3>5.3 Extinction coefficient &Delta;<i>k</i></h3>
     <p>Let <i>A</i> = (<i>n</i><sup>2</sup>-1)<sup>3</sup>(<i>n</i><sup>2</sup>-<i>n<sub>s</sub></i><sup>4</sup>), <i>B</i> = (<i>n</i>-1)<sup>3</sup>(<i>n</i>-<i>n<sub>s</sub></i><sup>2</sup>).</p>
     <div class="equation">&Delta;<i>A</i> = | 6<i>n</i>(<i>n</i><sup>2</sup>-1)<sup>2</sup>(<i>n</i><sup>2</sup>-<i>n<sub>s</sub></i><sup>4</sup>) + 2<i>n</i>(<i>n</i><sup>2</sup>-1)<sup>3</sup> | &Delta;<i>n</i> + | 4<i>n<sub>s</sub></i><sup>3</sup>(<i>n</i><sup>2</sup>-1)<sup>3</sup> | &Delta;<i>n<sub>s</sub></i><span class="eq-num">(10)</span></div>
     <div class="equation">&Delta;<i>B</i> = | 3(<i>n</i>-1)<sup>2</sup>(<i>n</i>-<i>n<sub>s</sub></i><sup>2</sup>) + (<i>n</i>-1)<sup>3</sup> | &Delta;<i>n</i> + | 2<i>n<sub>s</sub></i>(<i>n</i>-1)<sup>3</sup> | &Delta;<i>n<sub>s</sub></i><span class="eq-num">(11)</span></div>
@@ -174,9 +174,9 @@
 
     <h1>6. Relative vs. absolute measurement</h1>
     <p>Absolute measurement (sample vs. air, no bare reference) is compared to the differential ratio method.</p>
-    <h2>6.1. Swanepoel in absolute mode</h2>
+    <h3>6.1 Swanepoel in absolute mode</h3>
     <p>Treating substrate attenuation as a simple Beer–Lambert factor is not rigorous. In Swanepoel’s stack model the substrate is an active element: internal transmittance <i>x<sub>s</sub></i> couples with incoherent multiple reflections between film/substrate and substrate/air. Uncertainty &Delta;<i>x<sub>s</sub></i> propagates nonlinearly into layer <i>x</i>.</p>
-    <h2>6.2. Numerical example</h2>
+    <h3>6.2 Numerical example</h3>
     <p>Take &Delta;<i>x<sub>s</sub></i> = 0.005 (&pm;0.5% transparency knowledge).</p>
     <div class="table-caption">Table 1: &Delta;k comparison (Nb<sub>2</sub>O<sub>5</sub> on sapphire, d = 3000 nm)</div>
     <table>
@@ -207,32 +207,32 @@
 
     <h1>8. Method limits and experimental artifacts</h1>
     <p>Algebra uses ideal Swanepoel formulas; Macleod notes that thick films expose measurements to artifacts that distort <i>T<sub>1/4</sub></i> and <i>T<sub>1/2</sub></i>.</p>
-    <h2>8.1. Perfect homogeneity assumption</h2>
+    <h3>8.1 Perfect homogeneity assumption</h3>
     <p>PVD often yields columnar growth and index gradients; inhomogeneity pinches fringes and can mimic higher <i>k</i>.</p>
-    <h2>8.2. Thickness non-uniformity over the beam</h2>
+    <h3>8.2 Thickness non-uniformity over the beam</h3>
     <p>Small &Delta;<i>d</i> across the spot dephases rays and smooths fringes, appearing as spurious <i>k</i>.</p>
-    <h2>8.3. Spectral resolution</h2>
+    <h3>8.3 Spectral resolution</h3>
     <p>At 3 &mu;m and short &lambda;, fringe spacing can be a few nm; finite bandwidth averages fringes and looks like absorption.</p>
-    <h2>8.4. Surface scattering</h2>
+    <h3>8.4 Surface scattering</h3>
     <p>Loss on <i>T<sub>1/2</sub></i> is attributed to absorption; rough thick films scatter light out of the detector acceptance, inflating apparent <i>k</i>.</p>
 
     <h1>9. Global numerical refinement on continuous spectrum</h1>
     <p>Envelope algebra is discrete at extrema. For smooth dispersion and noise averaging, a <strong>global optimization</strong> step is used.</p>
-    <h2>9.1. Envelopes as initial guess (seed)</h2>
+    <h3>9.1 Envelopes as initial guess (seed)</h3>
     <p>Thick-film spectra have many fringes; random starts trap in wrong interference orders. Discrete <i>n(&lambda;)</i>, <i>k(&lambda;)</i>, <i>d</i> from envelopes provide a physically anchored starting point.</p>
-    <h2>9.2. B-splines and RMSE on differential ratio</h2>
+    <h3>9.2 B-splines and RMSE on differential ratio</h3>
     <p>Dispersion is parameterized with <strong>B-splines</strong> for <i>n</i> and <i>k</i>. The merit function must <strong>not</strong> fit absolute sample transmission (Section 6). Minimize RMSE between theoretical <i>T<sub>calc,sample</sub>/T<sub>calc,bare</sub></i> and measured <i>R<sub>raw</sub></i> over all wavelengths.</p>
     <div class="equation"><i>RMSE</i> = [ (1/<i>N</i>) &sum; ( <i>Ratio<sub>calc</sub></i> - <i>R<sub>raw</sub></i> )<sup>2</sup> ]<sup>1/2</sup></div>
-    <h2>9.3. Phase coupling and constrained relaxation</h2>
+    <h3>9.3 Phase coupling and constrained relaxation</h3>
     <p>Fixing <i>n<sub>s</sub></i> with small systematic error forces non-physical twists in <i>n(&lambda;)</i> over ~100 fringes. Use <strong>bounded relaxation</strong>: film via free B-splines and &plusmn;2% on <i>d</i>; substrate via rigid Sellmeier plus vertical offset &Delta;<i>n<sub>s</sub></i> capped at &plusmn;0.005 (Section 1). Thick Fabry–Pérot fringes can self-calibrate <i>n<sub>s</sub></i> better than bare-substrate measurement alone.</p>
-    <h2>9.4. Global fit benefits</h2>
+    <h3>9.4 Global fit benefits</h3>
     <ul>
         <li>Statistical averaging over thousands of spectral points.</li>
         <li>Fine <i>d</i> adjustment for fringe alignment.</li>
         <li>Smooth <i>n,k</i> from B-splines with physical Sellmeier substrate.</li>
     </ul>
 
-    <h2>10. Step-by-step algorithmic implementation (Python)</h2>
+    <h2>10 Step-by-step algorithmic implementation (Python)</h2>
     <p>The robust Swanepoel extraction framework follows a strict automated pipeline utilizing <code>numpy</code>, <code>scipy.signal</code>, and <code>scipy.optimize</code>.</p>
     
     <div class="mermaid">

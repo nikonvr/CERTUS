@@ -6,8 +6,10 @@
 
 """Spline spectral objective (masked grid, PWL nk, sigma codecs)."""
 
-
 from __future__ import annotations
+
+
+import threading
 
 
 from typing import Any
@@ -21,16 +23,18 @@ from scipy.interpolate import CubicSpline
 from certus_core import N_MIN_LIMIT, N_MAX_LIMIT
 
 
-from certus_index_utils import _ratio_theoretical_from_nk, spectral_rmse_weights
+from certus_index_utils import _ratio_theoretical_from_nk, _transmittance_absolute_from_nk, spectral_rmse_weights
 
 
 import functools
+
 
 # Thread-safe LRU cache for weights, avoiding global thrashing
 @functools.lru_cache(maxsize=16)
 def _cached_spectral_rmse_weights_inner(key: bytes) -> np.ndarray:
     lam_f = np.frombuffer(key, dtype=np.float64)
     return spectral_rmse_weights(lam_f).astype(np.float64, copy=False)
+
 
 def _cached_spectral_rmse_weights(lam_f: np.ndarray) -> np.ndarray:
     """Trapezoidal ln lambda weights for ``lam_f``; avoids ~N identical calls."""
@@ -55,45 +59,27 @@ def _cached_cubic_interp_matrix(sk: np.ndarray, sig: np.ndarray) -> np.ndarray:
 
 
 from certus_physics import (
-
-    calculate_reflection_array,
-
-    calculate_reflection_single,
-
-    calculate_transmission_array,
-
-    calculate_T_substrate_array,
-
-
+    calculate_RT_single_layer_backside_array,
+    calculate_bare_substrate_RT,
+    batch_single_layer_T_mse,
+    batch_single_layer_RT_mse,
 )
 
 
 from certus_index_spline_core import (
-
     DataType,
-
     SplineOptConfig,
-
     K_MIN_PHYS,
-
     SIGMA_KNOTS_MIN_SEP_REL,
-
     _reflectance_absolute_backside_from_nk,
-
     _to_fraction_T,
-
     n_lambda_rising_with_wavelength_penalty,
-
     physical_nodes_to_x_slice_n,
-
     x_slice_n_to_physical_nodes,
-
-
 )
 
 
 def sigma_knots_encode(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarray:
-
     """Encodes sigma knots as log-proportions (M = K-1 components) for free optimization."""
 
     sks = np.sort(np.asarray(sk, dtype=np.float64).ravel())
@@ -108,7 +94,6 @@ def sigma_knots_encode(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarray:
 
 
 def sigma_knots_decode(
-
     raw: np.ndarray,
     s_lo: float,
     s_hi: float,
@@ -116,10 +101,7 @@ def sigma_knots_decode(
     *,
     work: dict[str, np.ndarray] | None = None,
     reuse_output: bool = False,
-
-
 ) -> np.ndarray:
-
     """Decodes log-proportions -> sorted sigma knots in [s_lo, s_hi]."""
 
     raw_f = np.asarray(raw, dtype=np.float64).ravel()
@@ -155,18 +137,16 @@ def sigma_knots_decode(
     sw = float(np.sum(ww))
 
     if not np.isfinite(sw) or sw <= 0.0:
-
         ww.fill(1.0)
 
         sw = float(m)
 
     if eps_s is None:
-
         eps_s = max(1e-10, SIGMA_KNOTS_MIN_SEP_REL * max(s_hi - s_lo, 1e-12))
 
     np.divide(ww, sw, out=ds)
 
-    ds *= (s_hi - s_lo)
+    ds *= s_hi - s_lo
 
     np.cumsum(ds, out=c)
 
@@ -185,18 +165,11 @@ def sigma_knots_decode(
 
 
 def _interpolate_along_sigma(
-
     sig: np.ndarray,
-
     sigma_knots: np.ndarray,
-
     values_at_knots: np.ndarray,
-
     profile_interp: str,
-
-
 ) -> np.ndarray:
-
     """Interpolates values at sigma nodes along sigma: PWL or cubic spline (not-a-knot, >=4 nodes)."""
 
     sk = np.asarray(sigma_knots, dtype=np.float64).ravel()
@@ -208,13 +181,11 @@ def _interpolate_along_sigma(
     k = int(sk.size)
 
     if k < 2:
-
         raise ValueError("_interpolate_along_sigma: at least 2 nodes required")
 
     mode = str(profile_interp or "smooth").strip().lower()
 
     if mode not in ("pwl", "smooth"):
-
         mode = "smooth"
 
     if mode == "smooth" and k >= 4:
@@ -227,28 +198,16 @@ def _interpolate_along_sigma(
 
 
 def nk_from_x_pwlnk(
-
     x: np.ndarray,
-
     lam_nm: np.ndarray,
-
     sigma_knots: np.ndarray,
-
     k_clip_lo: float,
-
     k_clip_hi: float,
-
     sig_pre: np.ndarray | None = None,
-
     *,
-
     n_mono_band_nm: tuple[float, float] | None = None,
-
     profile_interp: str = "smooth",
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """x = [d, n_0..n_{K-1}, L_0..L_{K-1}] with L = ln k at knots. ``sig_pre`` = 1/lambda precomputed.
 
     If ``n_mono_band_nm`` = (lambda_lo, lambda_hi) nm: n components of the vector are reparameterized
@@ -274,19 +233,16 @@ def nk_from_x_pwlnk(
     L_n = x[1 + k : 1 + 2 * k]
 
     if sig_pre is None:
-
         lam = np.asarray(lam_nm, dtype=np.float64).ravel()
 
         sig = 1.0 / np.maximum(lam, 1e-9)
 
     else:
-
         sig = sig_pre
 
     mode = str(profile_interp or "smooth").strip().lower()
 
     if mode not in ("pwl", "smooth"):
-
         mode = "smooth"
 
     n_lam = _interpolate_along_sigma(sig, sigma_knots, n_n, mode)
@@ -306,13 +262,7 @@ def nk_from_x_pwlnk(
     return n_lam, k_lam
 
 
-def build_segment_optimizer_x_vector(
-
-    out: dict[str, Any], cfg: SplineOptConfig
-
-
-) -> tuple[np.ndarray, np.ndarray] | None:
-
+def build_segment_optimizer_x_vector(out: dict[str, Any], cfg: SplineOptConfig) -> tuple[np.ndarray, np.ndarray] | None:
     """Optimization vector [d, n..., L...] and sigma knots from segmental result."""
 
     sk = np.asarray(out.get("sigma_knots"), dtype=np.float64).ravel()
@@ -320,17 +270,14 @@ def build_segment_optimizer_x_vector(
     k = int(sk.size)
 
     if k < 2:
-
         return None
 
     xa = out.get("x")
 
     if xa is not None:
-
         xa = np.asarray(xa, dtype=np.float64).ravel()
 
         if xa.size == 1 + 2 * k:
-
             return xa.copy(), sk.copy()
 
     n_phys = np.asarray(out.get("n_nodes_physical"), dtype=np.float64).ravel()
@@ -338,36 +285,27 @@ def build_segment_optimizer_x_vector(
     L_n = np.asarray(out.get("L_nodes"), dtype=np.float64).ravel()
 
     if n_phys.size != k or L_n.size != k:
-
         return None
 
     d_nm = float(out.get("d_nm", float("nan")))
 
     if not np.isfinite(d_nm):
-
         return None
 
     xi = physical_nodes_to_x_slice_n(n_phys, sk, cfg.n_mono_band_nm)
 
     xb = np.concatenate(
-
         (
-
             np.asarray([d_nm], dtype=np.float64),
-
             np.asarray(xi, dtype=np.float64).ravel(),
-
             np.asarray(L_n, dtype=np.float64).ravel(),
-
         )
-
     )
 
     return xb, sk
 
 
 def _spline_objective_lam_mask(cfg: SplineOptConfig) -> np.ndarray:
-
     """Same lambda mask as ``SplinePWLObjective`` (points used in the loss).
 
     Stages SOL3 / SOL3b / Deltan_sub refinement: ``build_spline_objective_masked_grid`` and
@@ -379,15 +317,12 @@ def _spline_objective_lam_mask(cfg: SplineOptConfig) -> np.ndarray:
     mask = np.isfinite(lam) & np.isfinite(np.asarray(cfg.n_sub, dtype=np.float64).ravel())
 
     if cfg.t_exp is not None:
-
         mask &= np.isfinite(np.asarray(cfg.t_exp, dtype=np.float64).ravel())
 
     if cfg.r_exp is not None and cfg.data_type != DataType.TRANSMISSION:
-
         mask &= np.isfinite(np.asarray(cfg.r_exp, dtype=np.float64).ravel())
 
     if cfg.rmse_fit_lambda_nm is not None:
-
         lo = float(min(cfg.rmse_fit_lambda_nm[0], cfg.rmse_fit_lambda_nm[1]))
 
         hi = float(max(cfg.rmse_fit_lambda_nm[0], cfg.rmse_fit_lambda_nm[1]))
@@ -398,14 +333,9 @@ def _spline_objective_lam_mask(cfg: SplineOptConfig) -> np.ndarray:
 
 
 def objective_lam_mask_on_target_grid(
-
     cfg: SplineOptConfig,
-
     lam_target: np.ndarray,
-
-
 ) -> np.ndarray:
-
     """
 
     Same definition as ``_spline_objective_lam_mask(cfg)``, sampled on ``lam_target``.
@@ -423,15 +353,12 @@ def objective_lam_mask_on_target_grid(
     m_src = _spline_objective_lam_mask(cfg)
 
     if lam_tgt.size == 0:
-
         return np.zeros(0, dtype=bool)
 
     if lam_src.size == 0:
-
         return np.zeros(lam_tgt.size, dtype=bool)
 
     if lam_tgt.shape == lam_src.shape and np.allclose(lam_tgt, lam_src, rtol=0.0, atol=1e-3):
-
         return m_src.astype(bool, copy=False)
 
     order = np.argsort(lam_src, kind="mergesort")
@@ -441,7 +368,6 @@ def objective_lam_mask_on_target_grid(
     ms = m_src[order].astype(np.float64)
 
     if ls.size < 2:
-
         v = float(ms[0]) if ls.size == 1 else 0.0
 
         return np.full(lam_tgt.size, v >= 0.5, dtype=bool)
@@ -452,29 +378,19 @@ def objective_lam_mask_on_target_grid(
 
 
 def build_spline_objective_masked_grid(
-
     cfg: SplineOptConfig,
-
-
-) -> tuple[
-
-    np.ndarray,
-
-    np.ndarray,
-
-    np.ndarray,
-
-    np.ndarray,
-
-    float,
-
-    np.ndarray | None,
-
-    np.ndarray | None,
-
-
-] | None:
-
+) -> (
+    tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        float,
+        np.ndarray | None,
+        np.ndarray | None,
+    ]
+    | None
+):
     """
 
     Same spectral reduction as ``SplinePWLObjective``: ``lam_f``, ``sig_f``, weights, exp, ``inv_npix``.
@@ -490,30 +406,13 @@ def build_spline_objective_masked_grid(
     lam_f = lam[mask]
 
     if lam_f.size == 0:
-
         return None
 
     n_sub_f = np.asarray(cfg.n_sub, dtype=np.float64).ravel()[mask]
 
-    t_exp_f = (
+    t_exp_f = _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask]) if cfg.t_exp is not None else None
 
-        _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask])
-
-        if cfg.t_exp is not None
-
-        else None
-
-    )
-
-    r_exp_f = (
-
-        _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask])
-
-        if cfg.r_exp is not None
-
-        else None
-
-    )
+    r_exp_f = _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask]) if cfg.r_exp is not None else None
 
     sig_f = 1.0 / np.maximum(lam_f, 1e-9)
 
@@ -527,32 +426,18 @@ def build_spline_objective_masked_grid(
 
 
 def spline_objective_mse_on_masked_grid(
-
     cfg: SplineOptConfig,
-
     *,
-
     lam_f: np.ndarray,
-
     n_sub_f: np.ndarray,
-
     w: np.ndarray,
-
     inv_npix: float,
-
     t_exp_f: np.ndarray | None,
-
     r_exp_f: np.ndarray | None,
-
     n_l: np.ndarray,
-
     k_l: np.ndarray,
-
     d: float,
-
-
 ) -> float:
-
     """
 
     Weighted average MSE identical to ``SplinePWLObjective.__call__`` (same T/R formulas).
@@ -572,44 +457,31 @@ def spline_objective_mse_on_masked_grid(
     t_sub_cache = None
 
     if cfg.t_is_ratio:
+        use_t = cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH) and t_exp_f is not None and wt > 0.0
 
-        use_t = (
-
-            cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH)
-
-            and t_exp_f is not None
-
-            and wt > 0.0
-
-        )
-
-        use_r = (
-
-            cfg.data_type in (DataType.REFLECTION, DataType.BOTH)
-
-            and r_exp_f is not None
-
-            and wr > 0.0
-
-        )
+        use_r = cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and r_exp_f is not None and wr > 0.0
 
         if use_t or use_r:
+            t_sub_cache = np.asarray(calculate_bare_substrate_RT(lam_f, n_sub_f), dtype=np.float64)
 
-            t_sub_cache = np.asarray(
+    need_t = cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH) and t_exp_f is not None and wt > 0
 
-                calculate_T_substrate_array(lam_f, n_sub_f), dtype=np.float64
+    need_r = cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and r_exp_f is not None and wr > 0
 
-            )
+    t_th = r_th = None
 
-    if cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH) and t_exp_f is not None and wt > 0:
+    # Fast path: fused R+T kernel (single TMM pass instead of 2) when both
+    # channels are active and not in ratio mode.
+    if need_t and need_r and not cfg.t_is_ratio:
+        r_th, t_th = calculate_RT_single_layer_backside_array(lam_f, n_l, k_l, d, n_sub_f)
 
-        if cfg.t_is_ratio and t_sub_cache is not None:
+    if need_t:
+        if t_th is None:
+            if cfg.t_is_ratio and t_sub_cache is not None:
+                t_th = _ratio_theoretical_from_nk(lam_f, n_l, k_l, d, n_sub_f)
 
-            t_th = _ratio_theoretical_from_nk(lam_f, n_l, k_l, n_sub_f, d)
-
-        else:
-
-            t_th = calculate_transmission_array(lam_f, n_l, k_l, d, n_sub_f)
+            else:
+                t_th = _transmittance_absolute_from_nk(lam_f, n_l, k_l, d, n_sub_f)
 
         e = t_exp_f - t_th
 
@@ -617,15 +489,13 @@ def spline_objective_mse_on_masked_grid(
 
         wsum += wt
 
-    if cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and r_exp_f is not None and wr > 0:
+    if need_r:
+        if r_th is None:
+            if cfg.t_is_ratio and t_sub_cache is not None:
+                r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d, n_sub_f)
 
-        if cfg.t_is_ratio and t_sub_cache is not None:
-
-            r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d, n_sub_f)
-
-        else:
-
-            r_th = calculate_reflection_array(lam_f, n_l, k_l, d, n_sub_f)
+            else:
+                r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d, n_sub_f)
 
         e = r_exp_f - r_th
 
@@ -634,29 +504,19 @@ def spline_objective_mse_on_masked_grid(
         wsum += wr
 
     if wsum <= 0.0:
-
         return 1e30
 
     return float(loss / wsum)
 
 
 def spectral_mse_rmse_masked_from_nk(
-
     cfg: SplineOptConfig,
-
     out_meta: dict[str, Any],
-
     lam_full: np.ndarray,
-
     n_lam: np.ndarray,
-
     k_lam: np.ndarray,
-
     d_nm: float,
-
-
 ) -> tuple[float, float]:
-
     """
 
     MSE / RMSE on the same spectral mask as the spline objective (RMSE window, T/R, weights),
@@ -668,7 +528,6 @@ def spectral_mse_rmse_masked_from_nk(
     mgf = build_spline_objective_masked_grid(cfg)
 
     if mgf is None:
-
         return float("nan"), float("nan")
 
     lam_f, _sig_f, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mgf
@@ -682,7 +541,6 @@ def spectral_mse_rmse_masked_from_nk(
     k_l = np.asarray(k_lam, dtype=np.float64).ravel()
 
     if lam_full.size < 2 or n_l.size != lam_full.size or k_l.size != lam_full.size:
-
         return float("nan"), float("nan")
 
     # O(1) Mask extraction if the incoming lam_full matches the configuration (no binary search overhead)
@@ -699,57 +557,36 @@ def spectral_mse_rmse_masked_from_nk(
         klf = np.interp(lam_f, lam_full, k_l)
 
     m = spline_objective_mse_on_masked_grid(
-
         cfg,
-
         lam_f=lam_f,
-
         n_sub_f=n_sub_eff_f,
-
         w=w_f,
-
         inv_npix=inv_npix,
-
         t_exp_f=t_exp_f,
-
         r_exp_f=r_exp_f,
-
         n_l=nlf,
-
         k_l=klf,
-
         d=float(d_nm),
-
     )
 
     if not np.isfinite(m) or m >= 1e29:
-
         return float("nan"), float("nan")
 
     return float(m), float(np.sqrt(max(m, 0.0)))
 
 
 def spline_spectral_mse_from_xy_nk(
-
     cfg: "SplineOptConfig",
-
     lam_full: np.ndarray,
-
     n_lam_full: np.ndarray,
-
     k_lam_full: np.ndarray,
-
     d_nm: float,
-
-
 ) -> float | None:
-
     """Spectral MSE only (without auxiliary penalties), on the objective mask."""
 
     mg = build_spline_objective_masked_grid(cfg)
 
     if mg is None:
-
         return None
 
     lam_f, _sf, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = mg
@@ -761,7 +598,6 @@ def spline_spectral_mse_from_xy_nk(
     k0 = np.asarray(k_lam_full, dtype=np.float64).ravel()
 
     if n0.size != lam0.size or k0.size != lam0.size:
-
         return None
 
     o = np.argsort(lam0, kind="mergesort")
@@ -773,49 +609,29 @@ def spline_spectral_mse_from_xy_nk(
     klf = np.interp(lam_f, ls, k0[o])
 
     if not np.all(np.isfinite(nlf) & np.isfinite(klf)):
-
         return None
 
     return float(
-
         spline_objective_mse_on_masked_grid(
-
             cfg,
-
             lam_f=lam_f,
-
             n_sub_f=n_sub_f,
-
             w=w,
-
             inv_npix=inv_npix,
-
             t_exp_f=t_exp_f,
-
             r_exp_f=r_exp_f,
-
             n_l=nlf,
-
             k_l=klf,
-
             d=float(d_nm),
-
         )
-
     )
 
 
 def decompose_spline_pwl_objective(
-
     cfg: SplineOptConfig,
-
     sigma_knots: np.ndarray,
-
     x: np.ndarray,
-
-
 ) -> tuple[float, float, float]:
-
     """Decomposes the cost like ``SplinePWLObjective.__call__``: (mse_spectral, penalties, total).
 
     Useful to explain a RMSE jump between two sigma meshes (e.g. K=12 in dialog vs K=14 canonical):
@@ -833,7 +649,6 @@ def decompose_spline_pwl_objective(
     k_nodes = int(sk.size)
 
     if x.size != 1 + 2 * k_nodes:
-
         return float("nan"), float("nan"), float("nan")
 
     lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
@@ -843,22 +658,13 @@ def decompose_spline_pwl_objective(
     lam_f = lam[mask]
 
     if lam_f.size == 0:
-
         return 1e30, 0.0, 1e30
 
     n_sub_f = np.asarray(cfg.n_sub, dtype=np.float64).ravel()[mask]
 
-    t_exp_f = (
+    t_exp_f = _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask]) if cfg.t_exp is not None else None
 
-        _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask]) if cfg.t_exp is not None else None
-
-    )
-
-    r_exp_f = (
-
-        _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask]) if cfg.r_exp is not None else None
-
-    )
+    r_exp_f = _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask]) if cfg.r_exp is not None else None
 
     sig_f = 1.0 / np.maximum(lam_f, 1e-9)
 
@@ -869,65 +675,40 @@ def decompose_spline_pwl_objective(
     d = float(x[0])
 
     n_l, k_l = nk_from_x_pwlnk(
-
         x,
-
         lam_f,
-
         sk,
-
         float(cfg.k_clip_lo),
-
         float(cfg.k_clip_hi),
-
         sig_pre=sig_f,
-
         n_mono_band_nm=cfg.n_mono_band_nm,
-
         profile_interp=cfg.nk_profile_interp,
-
     )
 
     n_n = x_slice_n_to_physical_nodes(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
 
     if bool(getattr(cfg, "spline_pure_spectral_objective", False)):
-
         pen = 0.0
 
     else:
-
         pen = float(n_lambda_rising_with_wavelength_penalty(cfg, sk, n_n))
 
     mse_sp = float(
-
         spline_objective_mse_on_masked_grid(
-
             cfg,
-
             lam_f=lam_f,
-
             n_sub_f=n_sub_f,
-
             w=w,
-
             inv_npix=inv_npix,
-
             t_exp_f=t_exp_f,
-
             r_exp_f=r_exp_f,
-
             n_l=n_l,
-
             k_l=k_l,
-
             d=d,
-
         )
-
     )
 
     if not np.isfinite(mse_sp):
-
         mse_sp = 1e30
 
     tot = float(mse_sp + pen)
@@ -936,7 +717,6 @@ def decompose_spline_pwl_objective(
 
 
 class SplinePWLObjective:
-
     """Pre-allocated objective for PWL spline (state-of-the-art, avoids closure allocations)."""
 
     def __init__(self, cfg: SplineOptConfig, sigma_knots: np.ndarray):
@@ -949,17 +729,9 @@ class SplinePWLObjective:
 
         self.n_sub_f = np.asarray(cfg.n_sub, dtype=np.float64).ravel()[mask]
 
-        self.t_exp_f = (
+        self.t_exp_f = _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask]) if cfg.t_exp is not None else None
 
-            _to_fraction_T(np.asarray(cfg.t_exp, float).ravel()[mask]) if cfg.t_exp is not None else None
-
-        )
-
-        self.r_exp_f = (
-
-            _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask]) if cfg.r_exp is not None else None
-
-        )
+        self.r_exp_f = _to_fraction_T(np.asarray(cfg.r_exp, float).ravel()[mask]) if cfg.r_exp is not None else None
 
         self.sig_f = 1.0 / np.maximum(self.lam_f, 1e-9)
 
@@ -985,17 +757,64 @@ class SplinePWLObjective:
 
         self.k_hi = float(cfg.k_clip_hi)
 
-        self._cache = None
+        self.k_lo_eff = max(self.k_lo, K_MIN_PHYS)
+
+        self._K = int(self.sigma_k.size)
+
+        # Pre-cache interpolation mode + matrix (avoids per-eval string
+        # parsing, np.asarray, and LRU lookup overhead)
+        _mode = str(cfg.nk_profile_interp or "smooth").strip().lower()
+        if _mode == "smooth" and self._K >= 4:
+            self._interp_mat = _cached_cubic_interp_matrix(self.sigma_k, self.sig_f)
+            self._interp_mode = "smooth"
+        else:
+            self._interp_mat = None
+            self._interp_mode = "pwl"
+
+        self._has_n_mono = cfg.n_mono_band_nm is not None
+
+        # ── Pre-resolved flags (avoid per-eval getattr / enum checks) ──
+        self._pure_spectral = bool(getattr(cfg, "spline_pure_spectral_objective", False))
+        self._need_t = (
+            cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH) and self.t_exp_f is not None and self.wt > 0.0
+        )
+        self._need_r = (
+            cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and self.r_exp_f is not None and self.wr > 0.0
+        )
+        self._n_mono_band_nm = cfg.n_mono_band_nm
+
+        # Thread-local cache: each thread gets its own entry, preventing
+        # race conditions when PGlobalOptimizer evaluates in parallel.
+        self._tls = threading.local()
 
     def _get_cached(self, x: np.ndarray):
 
-        c = self._cache
+        c = getattr(self._tls, "_cache", None)
 
         if c is None or c["x"].shape != x.shape or not np.array_equal(c["x"], x):
-
             return None
 
         return c
+
+    def _fast_nk(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Interpolate (n_lam, k_lam, n_nodes) from x using pre-cached matrix.
+
+        Returns n_nodes alongside (n_lam, k_lam) so the caller can reuse them
+        for the penalty without a redundant ``x_slice_n_to_physical_nodes`` call.
+        """
+        K = self._K
+        n_n = x_slice_n_to_physical_nodes(x[1 : 1 + K], self.sigma_k, self._n_mono_band_nm)
+        L_n = x[1 + K : 1 + 2 * K]
+        if self._interp_mat is not None:
+            n_lam = self._interp_mat @ n_n
+            L_lam = self._interp_mat @ L_n
+        else:
+            n_lam = np.interp(self.sig_f, self.sigma_k, n_n)
+            L_lam = np.interp(self.sig_f, self.sigma_k, L_n)
+        k_lam = np.exp(L_lam)
+        np.clip(k_lam, self.k_lo_eff, self.k_hi, out=k_lam)
+        np.clip(n_lam, N_MIN_LIMIT, N_MAX_LIMIT, out=n_lam)
+        return n_lam, k_lam, n_n
 
     def __call__(self, xv: np.ndarray) -> float:
 
@@ -1004,144 +823,217 @@ class SplinePWLObjective:
         cached = self._get_cached(x)
 
         if cached is not None and cached["cost"] is not None:
-
             return cached["cost"]
 
         d = float(x[0])
 
-        n_l, k_l = nk_from_x_pwlnk(
+        # _fast_nk returns (n_lam, k_lam, n_nodes) — reuse n_nodes for penalty
+        n_l, k_l, n_n = self._fast_nk(x)
 
-            x,
-
-            self.lam_f,
-
-            self.sigma_k,
-
-            self.k_lo,
-
-            self.k_hi,
-
-            sig_pre=self.sig_f,
-
-            n_mono_band_nm=self.cfg.n_mono_band_nm,
-
-            profile_interp=self.cfg.nk_profile_interp,
-
-        )
-
-        k_nodes = int(self.sigma_k.size)
-
-        n_n = x_slice_n_to_physical_nodes(
-
-            x[1 : 1 + k_nodes], self.sigma_k, self.cfg.n_mono_band_nm
-
-        )
-
-        if bool(getattr(self.cfg, "spline_pure_spectral_objective", False)):
-
-            pen = 0.0
-
-        else:
-
-            pen = n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_n)
+        pen = 0.0 if self._pure_spectral else n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_n)
 
         mse_sp = spline_objective_mse_on_masked_grid(
-
             self.cfg,
-
             lam_f=self.lam_f,
-
             n_sub_f=self.n_sub_f,
-
             w=self.w_t,
-
             inv_npix=self.inv_npix,
-
             t_exp_f=self.t_exp_f,
-
             r_exp_f=self.r_exp_f,
-
             n_l=n_l,
-
             k_l=k_l,
-
             d=d,
-
         )
 
         if not np.isfinite(mse_sp):
-
             mse_sp = 1e30
 
         final_cost = float(mse_sp) + float(pen)
 
-        self._cache = {"x": x.copy(), "cost": final_cost}
+        # Cache cost + (n_l, k_l) for reuse by analytic_gradient on same x
+        self._tls._cache = {"x": x.copy(), "cost": final_cost, "n_l": n_l, "k_l": k_l}
 
         return final_cost
 
-    def analytic_gradient(self, xv: np.ndarray) -> np.ndarray | None:
+    def cost_and_grad(self, xv: np.ndarray) -> tuple[float, np.ndarray]:
+        """Return ``(cost, gradient)`` in one call, for ``minimize(..., jac=True)``.
 
+        Shares the ``(n_l, k_l)`` computation between the objective and gradient
+        via the thread-local cache, halving physics evaluations per L-BFGS-B step.
+        """
+        cost = self.__call__(xv)
+        grad = self.analytic_gradient(xv)
+        if grad is None:
+            grad = np.zeros(np.asarray(xv).ravel().size, dtype=np.float64)
+        return cost, grad
+
+    def evaluate_batch(self, X_batch: np.ndarray) -> np.ndarray:
+        """Evaluate N points in one pass, exploiting shared interpolation matrix.
+
+        Key optimization: replaces N separate ``mat @ v_i`` (dgemv) with a single
+        ``mat @ V.T`` (dgemm) which BLAS parallelizes across all CPU cores.
+
+        Parameters
+        ----------
+        X_batch : (N, 1 + 2*K) array
+            N parameter vectors [d, n_0..n_{K-1}, L_0..L_{K-1}].
+
+        Returns
+        -------
+        Y : (N,) array of objective values.
+        """
+        X = np.asarray(X_batch, dtype=np.float64)
+        N = X.shape[0]
+        K = int(self.sigma_k.size)
+
+        if N == 0:
+            return np.empty(0, dtype=np.float64)
+
+        d_all = X[:, 0]
+
+        # Decode n nodes — vectorized when no monotonicity reparametrization
+        if self.cfg.n_mono_band_nm is None:
+            n_nodes_all = np.clip(X[:, 1 : 1 + K], N_MIN_LIMIT, N_MAX_LIMIT)
+        else:
+            n_nodes_all = np.empty((N, K), dtype=np.float64)
+            for i in range(N):
+                n_nodes_all[i] = x_slice_n_to_physical_nodes(X[i, 1 : 1 + K], self.sigma_k, self.cfg.n_mono_band_nm)
+
+        L_nodes_all = X[:, 1 + K : 1 + 2 * K]
+
+        # Batch interpolation: one dgemm instead of N dgemv
+        # Uses pre-cached matrix from __init__ (no string parsing / LRU lookup)
+        if self._interp_mat is not None:
+            n_lam_all = (self._interp_mat @ n_nodes_all.T).T  # (N, n_pix)
+            L_lam_all = (self._interp_mat @ L_nodes_all.T).T  # (N, n_pix)
+        else:
+            n_lam_all = np.empty((N, self.n_pix), dtype=np.float64)
+            L_lam_all = np.empty((N, self.n_pix), dtype=np.float64)
+            for i in range(N):
+                n_lam_all[i] = np.interp(self.sig_f, self.sigma_k, n_nodes_all[i])
+                L_lam_all[i] = np.interp(self.sig_f, self.sigma_k, L_nodes_all[i])
+
+        # k from L (vectorized)
+        k_lam_all = np.exp(L_lam_all)
+        np.clip(k_lam_all, self.k_lo_eff, self.k_hi, out=k_lam_all)
+        np.clip(n_lam_all, N_MIN_LIMIT, N_MAX_LIMIT, out=n_lam_all)
+
+        # ── Fused batch TMM path (non-ratio, non-absorbing) ──
+        # Uses single prange(N) kernel instead of N separate Python→Numba dispatches.
+        pure_spec = self._pure_spectral
+        need_t = self._need_t
+        need_r = self._need_r
+        use_fused = not bool(self.cfg.t_is_ratio)
+
+        Y = np.empty(N, dtype=np.float64)
+
+        if use_fused and need_t and not need_r:
+            # T-only fast path: one prange(N) kernel
+            mse_batch = batch_single_layer_T_mse(
+                self.lam_f,
+                self.n_sub_f,
+                self.w_t,
+                self.inv_npix,
+                self.t_exp_f,
+                n_lam_all,
+                k_lam_all,
+                d_all,
+            )
+            if pure_spec:
+                Y[:] = mse_batch
+            else:
+                for i in range(N):
+                    pen = n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_nodes_all[i])
+                    Y[i] = float(mse_batch[i]) + float(pen)
+        elif use_fused and need_t and need_r:
+            # R+T fused fast path: one prange(N) kernel
+            mse_batch = batch_single_layer_RT_mse(
+                self.lam_f,
+                self.n_sub_f,
+                self.w_t,
+                self.inv_npix,
+                self.t_exp_f,
+                self.r_exp_f,
+                n_lam_all,
+                k_lam_all,
+                d_all,
+                self.wt,
+                self.wr,
+            )
+            if pure_spec:
+                Y[:] = mse_batch
+            else:
+                for i in range(N):
+                    pen = n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_nodes_all[i])
+                    Y[i] = float(mse_batch[i]) + float(pen)
+        else:
+            # Fallback: ratio mode or R-only (rare)
+            for i in range(N):
+                mse_sp = spline_objective_mse_on_masked_grid(
+                    self.cfg,
+                    lam_f=self.lam_f,
+                    n_sub_f=self.n_sub_f,
+                    w=self.w_t,
+                    inv_npix=self.inv_npix,
+                    t_exp_f=self.t_exp_f,
+                    r_exp_f=self.r_exp_f,
+                    n_l=n_lam_all[i],
+                    k_l=k_lam_all[i],
+                    d=float(d_all[i]),
+                )
+                if not np.isfinite(mse_sp):
+                    mse_sp = 1e30
+                pen = (
+                    0.0
+                    if pure_spec
+                    else n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_nodes_all[i])
+                )
+                Y[i] = float(mse_sp) + float(pen)
+
+        return Y
+
+    def analytic_gradient(self, xv: np.ndarray) -> np.ndarray | None:
         """Gradient of ``__call__`` when ``spline_pwl_analytic_grad_supported(self.cfg)``."""
 
         x = np.asarray(xv, dtype=np.float64, order="C").ravel()
 
+        # Reuse (n_l, k_l) from thread-local cache if __call__ was just
+        # invoked on the same x (typical in _combined_fun_and_grad).
+        cached = self._get_cached(x)
+        nk_pre = None
+        if cached is not None and "n_l" in cached:
+            nk_pre = (cached["n_l"], cached["k_l"])
+
         return compute_spline_pwl_objective_analytic_gradient(
-
             self.cfg,
-
             self.sigma_k,
-
             self.lam_f,
-
             self.sig_f,
-
             self.n_sub_f,
-
             self.w_t,
-
             self.inv_npix,
-
             self.t_exp_f,
-
             self.r_exp_f,
-
             x,
-
             nk_profile_interp=str(self.cfg.nk_profile_interp or "smooth"),
-
-            include_n_lambda_rising_penalty=not bool(
-
-                getattr(self.cfg, "spline_pure_spectral_objective", False)
-
-            ),
-
+            include_n_lambda_rising_penalty=not self._pure_spectral,
+            nk_precomputed=nk_pre,
         )
 
 
 def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
-
     """True if the analytic gradient (T + penalties; R by FD/lambda) is consistent with the objective."""
 
     if cfg.n_mono_band_nm is not None:
-
         return False
 
     if bool(cfg.t_is_ratio):
-
         return False
-
-
 
     return True
 
 
-def _lambda_rising_penalty_grad_nn(
-
-    sk: np.ndarray, nn: np.ndarray, cfg: SplineOptConfig
-
-
-) -> np.ndarray:
-
+def _lambda_rising_penalty_grad_nn(sk: np.ndarray, nn: np.ndarray, cfg: SplineOptConfig) -> np.ndarray:
     """∂pen/∂n_aux_nodes (physical n at knots), aligned with ``n_lambda_rising_with_wavelength_penalty``."""
 
     wpen = float(getattr(cfg, "n_lambda_rising_penalty_weight", 0.0) or 0.0)
@@ -1151,7 +1043,6 @@ def _lambda_rising_penalty_grad_nn(
     slack = float(getattr(cfg, "n_lambda_rising_penalty_slack", 0.0) or 0.0)
 
     if slack < 0.0:
-
         slack = 0.0
 
     sk = np.asarray(sk, dtype=np.float64).ravel()
@@ -1163,7 +1054,6 @@ def _lambda_rising_penalty_grad_nn(
     g = np.zeros(ksz, dtype=np.float64)
 
     if wpen <= 0.0 or band is None or ksz < 2 or nn.size != ksz:
-
         return g
 
     lam_lo = float(min(float(band[0]), float(band[1])))
@@ -1173,11 +1063,9 @@ def _lambda_rising_penalty_grad_nn(
     eps = 1e-12
 
     for j in range(ksz - 1):
-
         s0, s1 = float(sk[j]), float(sk[j + 1])
 
         if s1 <= s0 + eps:
-
             continue
 
         lam_min_seg = 1.0 / s1
@@ -1189,19 +1077,16 @@ def _lambda_rising_penalty_grad_nn(
         seg_hi = max(lam_min_seg, lam_max_seg)
 
         if seg_hi < lam_lo or seg_lo > lam_hi:
-
             continue
 
         viol = float(nn[j]) - float(nn[j + 1])
 
         if viol <= eps:
-
             continue
 
         ve = max(0.0, viol - slack)
 
         if ve <= 0.0:
-
             continue
 
         dv = 2.0 * wpen * ve
@@ -1214,103 +1099,64 @@ def _lambda_rising_penalty_grad_nn(
 
 
 def _spectral_wsum_and_channels(
-
     cfg: SplineOptConfig,
-
     t_exp_f: np.ndarray | None,
-
     r_exp_f: np.ndarray | None,
-
-
 ) -> tuple[float, bool, bool]:
 
     wt = float(cfg.weight_t)
 
     wr = float(cfg.weight_r)
 
-    use_t = (
+    use_t = cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH) and t_exp_f is not None and wt > 0.0
 
-        cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH)
-
-        and t_exp_f is not None
-
-        and wt > 0.0
-
-    )
-
-    use_r = (
-
-        cfg.data_type in (DataType.REFLECTION, DataType.BOTH)
-
-        and r_exp_f is not None
-
-        and wr > 0.0
-
-    )
+    use_r = cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and r_exp_f is not None and wr > 0.0
 
     wsum = 0.0
 
     if use_t:
-
         wsum += wt
 
     if use_r:
-
         wsum += wr
 
     return wsum, use_t, use_r
 
 
 def compute_spline_pwl_objective_analytic_gradient(
-
     cfg: SplineOptConfig,
-
     sigma_k: np.ndarray,
-
     lam_f: np.ndarray,
-
     sig_f: np.ndarray,
-
     n_sub_f: np.ndarray,
-
     w: np.ndarray,
-
     inv_npix: float,
-
     t_exp_f: np.ndarray | None,
-
     r_exp_f: np.ndarray | None,
-
     x: np.ndarray,
-
     *,
-
     nk_profile_interp: str = "pwl",
-
     include_n_lambda_rising_penalty: bool = True,
-
-
+    nk_precomputed: tuple[np.ndarray, np.ndarray] | None = None,
 ) -> np.ndarray | None:
-
     """
 
     Gradient of (masked spectral MSE + n↗lambda penalty) / wsum with respect to x = [d, n₀…, L₀…].
 
     - T: ``_compute_single_layer_sensitivity_kernel`` (consistent with ``calculate_transmission_*``).
 
-    - R: ``calculate_reflection_single`` (front side only, like ``calculate_reflection_array``);
+    - R: ```` (front side only, like ````);
 
       ∂R/∂n, ∂R/∂k, ∂R/∂d derivatives by central differences **per spectral point** (fast vs FD on full x).
+
+    If *nk_precomputed* is ``(n_l, k_l)`` from a prior ``__call__`` on the same ``x``,
+    skip the redundant ``nk_from_x_pwlnk`` interpolation.
 
     """
 
     if not spline_pwl_analytic_grad_supported(cfg):
-
         return None
 
-
-
-    from certus_physics import _compute_single_layer_sensitivity_kernel
 
     x = np.asarray(x, dtype=np.float64, order="C").ravel()
 
@@ -1321,7 +1167,6 @@ def compute_spline_pwl_objective_analytic_gradient(
     dim = 1 + 2 * k_nodes
 
     if x.size != dim or k_nodes < 2:
-
         return None
 
     lam_f = np.asarray(lam_f, dtype=np.float64).ravel()
@@ -1335,66 +1180,46 @@ def compute_spline_pwl_objective_analytic_gradient(
     n_pix = int(lam_f.size)
 
     if n_pix == 0 or sig_f.size != n_pix or n_sub_f.size != n_pix or w.size != n_pix:
-
         return None
 
     wsum, use_t, use_r = _spectral_wsum_and_channels(cfg, t_exp_f, r_exp_f)
-    
+
     mode = str(nk_profile_interp or "smooth").strip().lower()
     if mode == "smooth" and k_nodes >= 4:
         S_mat = _cached_cubic_interp_matrix(sk, sig_f)
     else:
         mode = "pwl"
         S_mat = None
-        
+
     grad_n_lam = np.zeros(n_pix, dtype=np.float64)
     grad_k_lam = np.zeros(n_pix, dtype=np.float64)
 
     if wsum <= 0.0:
-
         return None
 
     d_nm = float(x[0])
 
-    n_l, k_l = nk_from_x_pwlnk(
+    # Reuse pre-computed (n_l, k_l) when available (from __call__ cache)
+    if nk_precomputed is not None:
+        n_l, k_l = nk_precomputed
+    else:
+        n_l, k_l = nk_from_x_pwlnk(
+            x,
+            lam_f,
+            sk,
+            float(cfg.k_clip_lo),
+            float(cfg.k_clip_hi),
+            sig_pre=sig_f,
+            n_mono_band_nm=cfg.n_mono_band_nm,
+            profile_interp=nk_profile_interp,
+        )
 
-        x,
-
-        lam_f,
-
-        sk,
-
-        float(cfg.k_clip_lo),
-
-        float(cfg.k_clip_hi),
-
-        sig_pre=sig_f,
-
-        n_mono_band_nm=cfg.n_mono_band_nm,
-
-        profile_interp=nk_profile_interp,
-
-    )
-
-    t_th = (
-
-        calculate_transmission_array(lam_f, n_l, k_l, d_nm, n_sub_f)
-
-        if use_t
-
-        else None
-
-    )
-
-    r_th = (
-
-        calculate_reflection_array(lam_f, n_l, k_l, d_nm, n_sub_f)
-
-        if use_r
-
-        else None
-
-    )
+    # Fused R+T kernel when both channels active (single TMM pass)
+    if use_t and use_r:
+        r_th, t_th = calculate_RT_single_layer_backside_array(lam_f, n_l, k_l, d_nm, n_sub_f)
+    else:
+        t_th = _transmittance_absolute_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_t else None
+        r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_r else None
 
     grad = np.zeros(dim, dtype=np.float64)
 
@@ -1405,167 +1230,100 @@ def compute_spline_pwl_objective_analytic_gradient(
     n_n = x_slice_n_to_physical_nodes(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
 
     if include_n_lambda_rising_penalty:
-
         grad[1 : 1 + k_nodes] += _lambda_rising_penalty_grad_nn(sk, n_n, cfg)
 
+    # ── Pre-compute R finite-differences vectorized (Numba prange) ──
+    # 5 calls to  replace 5×n_pix scalar calls,
+    # eliminating CPython→Numba dispatch overhead and enabling Numba parallel.
+    _dRdn_arr = _dRdk_arr = _dRdd_arr = None
+    if use_r:
+        _rp_n = _reflectance_absolute_backside_from_nk(lam_f, n_l + fd_eps, k_l, d_nm, n_sub_f)
+        _rm_n = _reflectance_absolute_backside_from_nk(lam_f, n_l - fd_eps, k_l, d_nm, n_sub_f)
+        _dRdn_arr = (_rp_n - _rm_n) / (2.0 * fd_eps)
+
+        _rp_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l + fd_eps, d_nm, n_sub_f)
+        _rm_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l - fd_eps, d_nm, n_sub_f)
+        # Forward FD for near-zero k, central FD otherwise
+        _dRdk_arr = np.where(
+            k_l < fd_eps,
+            (_rp_k - r_th) / fd_eps,
+            (_rp_k - _rm_k) / (2.0 * fd_eps),
+        )
+
+        _rp_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm + fd_eps, n_sub_f)
+        _rm_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm - fd_eps, n_sub_f)
+        _dRdd_arr = (_rp_d - _rm_d) / (2.0 * fd_eps)
+
+    L_n = x[1 + k_nodes : 1 + 2 * k_nodes]
+    k_lo = float(max(float(cfg.k_clip_lo), float(K_MIN_PHYS)))
+    k_hi = float(cfg.k_clip_hi)
+
+    # ── Vectorized T-sensitivity (single Numba prange call) ──
+    from certus_physics import _compute_single_layer_sensitivity_array
+
+    _dTdn_arr = _dTdk_arr = _dTdd_arr = None
+    if use_t:
+        _dTdn_arr, _dTdk_arr, _, _, _dTdd_arr, _ = _compute_single_layer_sensitivity_array(
+            lam_f, n_l, k_l, d_nm, n_sub_f
+        )
+
+    # ── Vectorized residuals & per-pixel gradient contributions ──
+    # Compute per-pixel gn, gk, grad_d contributions as arrays (no Python loop).
+    gn_arr = np.zeros(n_pix, dtype=np.float64)
+    gk_arr = np.zeros(n_pix, dtype=np.float64)
+    grad_d = 0.0
+
+    if use_t and t_exp_f is not None and t_th is not None:
+        clip_t = np.where((t_th <= 1e-14) | (t_th >= 1.0 - 1e-14), 0.0, 1.0)
+        e_t = t_exp_f - t_th
+        fac_t = float(cfg.weight_t) * inv_npix * scale * (-2.0)
+        gn_arr += fac_t * w * e_t * _dTdn_arr * clip_t
+        gk_arr += fac_t * w * e_t * _dTdk_arr * clip_t
+        grad_d += fac_t * float(np.dot(w, e_t * _dTdd_arr * clip_t))
+
+    if use_r and r_exp_f is not None and r_th is not None:
+        clip_r = np.where((r_th <= 1e-14) | (r_th >= 1.0 - 1e-14), 0.0, 1.0)
+        e_r = r_exp_f - r_th
+        fac_r = float(cfg.weight_r) * inv_npix * scale * (-2.0)
+        gn_arr += fac_r * w * e_r * _dRdn_arr * clip_r
+        gk_arr += fac_r * w * e_r * _dRdk_arr * clip_r
+        grad_d += fac_r * float(np.dot(w, e_r * _dRdd_arr * clip_r))
+
+    grad[0] += grad_d
+
+    # ── Scatter per-pixel gradients into knot gradients ──
+    # This is the only remaining Python loop, but it's pure arithmetic
+    # (no Numba/TMM calls) — negligible cost vs the vectorized TMM above.
+    n_n = x_slice_n_to_physical_nodes(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
+
     for i in range(n_pix):
-
-        wl = float(lam_f[i])
-
-        ns = float(n_sub_f[i])
-
-        wi = float(w[i])
-
-        nr = float(n_l[i])
-
-        ni = float(k_l[i])
-
         s = float(sig_f[i])
-
         if s <= float(sk[0]):
-
             j = 0
-
             w0, w1 = 1.0, 0.0
-
         elif s >= float(sk[-1]):
-
             j = k_nodes - 2
-
             w0, w1 = 0.0, 1.0
-
         else:
-
             j = int(np.searchsorted(sk, s, side="right") - 1)
-
             j = max(0, min(j, k_nodes - 2))
-
             denom = float(sk[j + 1] - sk[j])
-
             if denom <= 1e-18:
-
                 w1 = 0.0
-
                 w0 = 1.0
-
             else:
-
                 w1 = (s - float(sk[j])) / denom
-
                 w0 = 1.0 - w1
 
-        L_n = x[1 + k_nodes : 1 + 2 * k_nodes]
-
         n_unc = float(w0 * float(n_n[j]) + w1 * float(n_n[j + 1]))
-
-        L_lam = float(w0 * float(L_n[j]) + w1 * float(L_n[j + 1]))
-
-        k_unc = float(np.exp(L_lam))
-
-        k_lo = float(max(float(cfg.k_clip_lo), float(K_MIN_PHYS)))
-
-        k_hi = float(cfg.k_clip_hi)
+        L_lam_val = float(w0 * float(L_n[j]) + w1 * float(L_n[j + 1]))
+        k_unc = float(np.exp(L_lam_val))
 
         dn_dnk = 0.0 if (n_unc <= float(N_MIN_LIMIT) or n_unc >= float(N_MAX_LIMIT)) else 1.0
-
         dk_dkunc = 0.0 if (k_unc <= k_lo or k_unc >= k_hi) else 1.0
 
-        dTdn = dTdk = dTdd = 0.0
-
-        dRdn = dRdk = dRdd = 0.0
-
-        if use_t:
-
-            dTdn, dTdk, _dRdn_s, _dRdk_s, dTdd, _dRdd_s = _compute_single_layer_sensitivity_kernel(
-
-                wl, nr, ni, d_nm, ns
-
-            )
-
-        if use_r:
-
-            rp = calculate_reflection_single(wl, nr + fd_eps, ni, d_nm, ns)
-
-            rm = calculate_reflection_single(wl, nr - fd_eps, ni, d_nm, ns)
-
-            dRdn = (rp - rm) / (2.0 * fd_eps)
-
-            rp2 = calculate_reflection_single(wl, nr, ni + fd_eps, d_nm, ns)
-
-            rm2 = calculate_reflection_single(wl, nr, ni - fd_eps, d_nm, ns)
-
-            if ni < fd_eps:
-
-                dRdk = (rp2 - float(r_th[i])) / fd_eps
-
-            else:
-
-                dRdk = (rp2 - rm2) / (2.0 * fd_eps)
-
-            rp3 = calculate_reflection_single(wl, nr, ni, d_nm + fd_eps, ns)
-
-            rm3 = calculate_reflection_single(wl, nr, ni, d_nm - fd_eps, ns)
-
-            dRdd = (rp3 - rm3) / (2.0 * fd_eps)
-
-        clip_t = 0.0 if (use_t and t_th is not None and (t_th[i] <= 1e-14 or t_th[i] >= 1.0 - 1e-14)) else 1.0
-
-        clip_r = 0.0 if (use_r and r_th is not None and (r_th[i] <= 1e-14 or r_th[i] >= 1.0 - 1e-14)) else 1.0
-
-        gn_i = 0.0
-
-        gk_i = 0.0
-
-        if use_t and t_exp_f is not None and t_th is not None:
-
-            e_t = float(t_exp_f[i]) - float(t_th[i])
-
-            gn_i += float(cfg.weight_t) * inv_npix * wi * (-2.0 * e_t * dTdn) * clip_t
-
-            gk_i += float(cfg.weight_t) * inv_npix * wi * (-2.0 * e_t * dTdk) * clip_t
-
-        if use_r and r_exp_f is not None and r_th is not None:
-
-            e_r = float(r_exp_f[i]) - float(r_th[i])
-
-            gn_i += float(cfg.weight_r) * inv_npix * wi * (-2.0 * e_r * dRdn) * clip_r
-
-            gk_i += float(cfg.weight_r) * inv_npix * wi * (-2.0 * e_r * dRdk) * clip_r
-
-        gn_i *= scale
-
-        gk_i *= scale
-
-        grad[0] += scale * (
-
-            (
-
-                float(cfg.weight_t) * inv_npix * wi * (-2.0 * (float(t_exp_f[i]) - float(t_th[i])) * dTdd) * clip_t
-
-            )
-
-            if (use_t and t_exp_f is not None and t_th is not None)
-
-            else 0.0
-
-        )
-
-        grad[0] += scale * (
-
-            (
-
-                float(cfg.weight_r) * inv_npix * wi * (-2.0 * (float(r_exp_f[i]) - float(r_th[i])) * dRdd) * clip_r
-
-            )
-
-            if (use_r and r_exp_f is not None and r_th is not None)
-
-            else 0.0
-
-        )
-
-        chain_n = gn_i * dn_dnk
-        chain_k = gk_i * dk_dkunc * k_unc
+        chain_n = float(gn_arr[i]) * dn_dnk
+        chain_k = float(gk_arr[i]) * dk_dkunc * k_unc
 
         if mode == "pwl":
             grad[1 + j] += chain_n * w0

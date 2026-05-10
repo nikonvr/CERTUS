@@ -1,7 +1,0 @@
-============================= test session starts =============================
-platform win32 -- Python 3.14.3, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\driveFL\couches minces 2026\CERTUS\2003
-configfile: pytest.ini
-collected 71 items
-
-tests\unit\test_certus_design.py .........................

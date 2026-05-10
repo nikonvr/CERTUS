@@ -8,10 +8,8 @@ Shared base classes and utilities for CERTUS-METAL and CERTUS-METAL SINGLE.
 
 """
 
-
 import functools
 
-import json
 
 import logging
 
@@ -28,112 +26,70 @@ from typing import Any, Callable
 
 
 import numpy as np
+import pyqtgraph as pg
 
 import scipy.optimize
 
-from PyQt6.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 
 from PyQt6.QtWidgets import (
-
     QComboBox,
-
-    QFileDialog,
-
     QGridLayout,
-
     QHBoxLayout,
-
     QLabel,
-
     QLineEdit,
-
     QMessageBox,
-
     QPushButton,
-
     QScrollArea,
-
     QSplitter,
-
     QStatusBar,
-
     QStyle,
-
     QTabWidget,
-
     QVBoxLayout,
-
     QWidget,
-
 )
 
 
 from certus_data import (
-
     ReportSection,
-
     build_standard_report,
-
     read_data_file_robust,
-
+)
+from certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
 )
 
 from certus_ux import build_premium_overrides, OBJ
 from certus_metrology import ValidationStatus
 from certus_services import IndexFitRequest, IndexFitService
+from certus_plot import CertusScientificPlot
 from certus_ui import (
-
     CertusBaseApp,
-
     CertusTheme,
-
     CertusThemeToggle,
-
     CertusCard,
-
     CertusActionBar,
-
     CertusStatusPill,
-
     create_styled_button,
-
     DATA_FILES_FILTER_EXTENDED,
-
     DetachedPlotWindow,
-
     EnhancedProgressWidget,
-
     apply_certus_theme,
-
     confirm_stop_with_timeout,
-
     format_count_kmg,
-
     stop_worker_and_thread,
-
     clone_plot_widget,
-
     create_header_logo_widget,
-
     create_log_widget,
-
-    get_certus_last_dir,
-
     open_data_file_and_read,
-
-    set_certus_last_dir,
-
     install_standard_shortcuts,
-
     enable_file_drop,
-
     show_toast,
-
     open_documentation,
-
 )
 
 from certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+
 
 
 # =============================================================================
@@ -174,8 +130,8 @@ DEFAULT_UPDATING = "deferred"
 DEFAULT_WORKERS = -1
 
 
-def normalize_percent_column(values: np.ndarray) -> np.ndarray:
 
+def normalize_percent_column(values: np.ndarray) -> np.ndarray:
     """Normalize a reflectance/transmittance column to the [0, 1] range.
 
     Values > 1 are assumed to be percent (0-100) and divided by 100.
@@ -193,7 +149,6 @@ def normalize_percent_column(values: np.ndarray) -> np.ndarray:
 
 
 def setup_beam_analysis_thread(app, worker) -> "QThread":
-
     """Move a BeamAnalysisWorker onto a fresh QThread and wire standard signals.
 
     Factors the identical thread wiring used by both METAL apps
@@ -212,11 +167,9 @@ def setup_beam_analysis_thread(app, worker) -> "QThread":
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
 
-    def _on_progress(cur, tot, best):
+    def _on_progress(cur, tot, best) -> None:
         rmse = float(np.sqrt(best)) if best >= 0 else 0.0
-        app.status_label.setText(
-            f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}"
-        )
+        app.status_label.setText(f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}")
 
     worker.progress.connect(_on_progress)
     worker.finished.connect(app.on_beam_finished)
@@ -230,7 +183,6 @@ def setup_beam_analysis_thread(app, worker) -> "QThread":
 
 
 def teardown_beam_thread(app, stats) -> None:
-
     """Stop the beam-analysis worker thread and reset METAL buttons.
 
     Shared first block of ``CERTUS_METAL_SINGLE.on_beam_finished`` and
@@ -254,78 +206,88 @@ def teardown_beam_thread(app, stats) -> None:
     app.beam_stats = stats
 
 
-def _metal_substrate_display(app) -> str:
-
-    """Best-effort substrate label for METAL load/config summaries."""
-
-    explicit = getattr(app, "SUMMARY_SUBSTRATE_LABEL", None)
-
-    if isinstance(explicit, str) and explicit.strip():
-
-        return explicit.strip()
-
-    try:
-
-        if hasattr(app, "combo_substrate") and app.combo_substrate is not None:
-
-            txt = str(app.combo_substrate.currentText() or "").strip()
-
-            if txt:
-
-                return txt
-
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
-        pass
-
-    try:
-
-        w = getattr(app, "widgets", {})
-
-        if isinstance(w, dict) and "substrate" in w and hasattr(w["substrate"], "currentText"):
-
-            txt = str(w["substrate"].currentText() or "").strip()
-
-            if txt:
-
-                return txt
-
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
-        pass
-
-    name = app.__class__.__module__.upper()
-
-    if "BILAYER" in name:
-
-        return "SILICON (SI)"
-
-    return "UNKNOWN"
 
 
-def _metal_faces_display(app, data: np.ndarray) -> str:
 
-    """Resolve one-face/two-faces mode (explicit first, then inference)."""
 
-    explicit = getattr(app, "SUMMARY_FACES_MODE", None)
 
-    if isinstance(explicit, str) and explicit.strip():
+    """Create the common METAL `n & k` tab widgets and wiring."""
 
-        return explicit.strip()
+    app.clues_plot = CertusScientificPlot(
+        app,
+        "Optimized Metal Optical Constants (n, k)",
+        "Refractive Index (n)",
+        "Wavelength (nm)",
+    )
 
-    cols = int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0
+    app.p1 = app.clues_plot.getPlotItem()
 
-    # R, T, Rback => explicit backside channel.
+    app.p2 = pg.ViewBox()
 
-    if cols >= 4:
+    app.p1.showAxis("right")
 
-        return "TWO FACES (WITH BACKSIDE)"
+    app.p1.scene().addItem(app.p2)
 
-    return "ONE FACE (NO BACKSIDE)"
+    app.p1.getAxis("right").linkToView(app.p2)
+
+    app.p2.setXLink(app.p1)
+
+    app.p1.getAxis("left").setLabel(
+        "Refractive Index (n)",
+        color=CertusTheme.CHART_PRIMARY,
+    )
+
+    app.p1.getAxis("right").setLabel(
+        "Extinction Coefficient (k)",
+        color=CertusTheme.CHART_DANGER,
+    )
+
+    app.n_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2))
+
+    app.k_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2, style=Qt.PenStyle.DashLine))
+
+    app.p1.addItem(app.n_curve)
+
+    app.p2.addItem(app.k_curve)
+
+    def _sync_p2_geometry(*_args) -> None:
+
+        app.p2.setGeometry(app.p1.vb.sceneBoundingRect())
+
+    app.p1.vb.sigResized.connect(_sync_p2_geometry)
+
+    app.tabs.addTab(app.clues_plot, "n & k")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class MetalOptimizationWorker(QObject):
-
     """Base Optimization Worker for METAL applications"""
 
     finished = pyqtSignal(dict)
@@ -336,7 +298,7 @@ class MetalOptimizationWorker(QObject):
 
     stats_update = pyqtSignal(str, int)
 
-    def __init__(self, params):
+    def __init__(self, params) -> None:
 
         super().__init__()
 
@@ -353,42 +315,32 @@ class MetalOptimizationWorker(QObject):
         self._last_progress_time = 0.0
 
     @pyqtSlot()
-
-    def stop(self):
-
+    def stop(self) -> None:
         """Request stop"""
 
         self.is_running = False
+
+
 def metal_optimization_worker_run_differential_evolution(
-
     worker: MetalOptimizationWorker,
-
     global_objective_function: Callable[..., Any],
-
     args_for_objective: tuple,
-
 ) -> None:
-
     """
-
-    Execute ``scipy.optimize.differential_evolution`` avec le callback partage
-
-    (progress, best candidate, arret utilisateur). Emet ``finished`` ou ``error``.
-
+    Run ``scipy.optimize.differential_evolution`` with shared callback
+    (progress, best candidate, user stop). Emits ``finished`` or ``error``.
     """
 
     p = worker.params
 
     try:
-
         worker.best_candidate = {"x": None, "fun": float("inf")}
 
         worker._last_live_emit_time = 0.0
 
-        def callback(xk, _convergence):
+        def callback(xk, _convergence) -> None:
 
             if not worker.is_running:
-
                 raise StopIteration("User requested stop.")
 
             worker.iteration_count += 1
@@ -402,51 +354,30 @@ def metal_optimization_worker_run_differential_evolution(
             current_mse = global_objective_function(xk, *args_for_objective)
 
             if current_mse < worker.best_candidate["fun"]:
-
                 worker.best_candidate["fun"] = current_mse
 
                 worker.best_candidate["x"] = xk.copy()
 
             if worker.iteration_count % 5 == 0:
-
                 worker.progress.emit(
-
                     {
-
                         "params": xk,
-
                         "mse": current_mse,
-
                         "iteration": worker.iteration_count,
-
                     }
-
                 )
 
             now = time.time()
 
-            if (
-
-                now - worker._last_live_emit_time >= 2.0
-
-                and worker.best_candidate["x"] is not None
-
-            ):
-
+            if now - worker._last_live_emit_time >= 2.0 and worker.best_candidate["x"] is not None:
                 worker._last_live_emit_time = now
 
                 worker.progress.emit(
-
                     {
-
                         "params": worker.best_candidate["x"].copy(),
-
                         "mse": worker.best_candidate["fun"],
-
                         "iteration": worker.iteration_count,
-
                     }
-
                 )
 
         bounds = p["bounds"]
@@ -454,123 +385,80 @@ def metal_optimization_worker_run_differential_evolution(
         max_workers = p.get("workers", 1)
 
         if max_workers > 1:
-
             from concurrent.futures import ThreadPoolExecutor
 
             class ThreadMap:
-
-                def __init__(self, ex):
+                def __init__(self, ex) -> None:
 
                     self.ex = ex
 
-                def __call__(self, func, iterabl):
+                def __call__(self, func, iterabl) -> list:
 
                     return list(self.ex.map(func, iterabl))
 
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-
                 result = scipy.optimize.differential_evolution(
-
                     global_objective_function,
-
                     bounds,
-
                     args=args_for_objective,
-
                     popsize=p["popsize"],
-
                     maxiter=p["maxiter"],
-
                     tol=p["tol"],
-
                     mutation=(p["mutation_min"], p["mutation_max"]),
-
                     recombination=p["recombination"],
-
                     updating="deferred",
-
                     workers=ThreadMap(executor),
-
                     callback=callback,
-
                     disp=False,
-
                 )
 
         else:
-
             result = scipy.optimize.differential_evolution(
-
                 global_objective_function,
-
                 bounds,
-
                 args=args_for_objective,
-
                 popsize=p["popsize"],
-
                 maxiter=p["maxiter"],
-
                 tol=p["tol"],
-
                 mutation=(p["mutation_min"], p["mutation_max"]),
-
                 recombination=p["recombination"],
-
                 updating=p["updating"],
-
                 workers=1,
-
                 callback=callback,
-
                 disp=False,
-
             )
 
         if hasattr(result, "nfev") and result.nfev > 0:
-
             batches = result.nfev // 100
 
             if batches > 0:
-
                 worker.stats_update.emit("SP", batches * 100)
 
             remaining = result.nfev % 100
 
             if remaining > 0:
-
                 worker.stats_update.emit("SP", remaining)
 
         worker.finished.emit({"result": result, "params": p})
 
     except StopIteration as e:
-
         if worker.best_candidate["x"] is not None:
-
             from scipy.optimize import OptimizeResult
 
             dummy_res = OptimizeResult(
-
                 x=worker.best_candidate["x"],
-
                 fun=worker.best_candidate["fun"],
-
                 nfev=worker.evaluation_count,
-
                 message="Stopped by user",
-
                 success=True,
-
             )
 
             worker.finished.emit({"result": dummy_res, "params": p})
 
         else:
-
             worker.error.emit(str(e))
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.error(f"Optimization worker error: {e}", exc_info=True)
 
         worker.error.emit(f"Error in optimization worker:\n{traceback.format_exc()}")
@@ -591,7 +479,7 @@ class MetalJobSpec:
 
     For now this dataclass documents the axis of variation; actual fusion is
     deferred until METAL GUI tests can validate behaviour on real datasets
-    (bandes gaussiennes SINGLE vs DBSCAN multi-vallées BILAYER).
+    (Gaussian bands SINGLE vs DBSCAN multi-valley BILAYER).
 
     Attributes
     ----------
@@ -635,7 +523,6 @@ METAL_BILAYER_SPEC = MetalJobSpec(
 
 
 class MetalBaseApp(CertusBaseApp):
-
     """Base Class for Metal Characterization Apps (Single & Bilayer).
 
     Provides shared UI layout, file loading, and export logic."""
@@ -644,7 +531,7 @@ class MetalBaseApp(CertusBaseApp):
 
     MODULE_ID = "METAL"
 
-    def __init__(self, app_name="CERTUS-METAL", app_title="Metal Characterization"):
+    def __init__(self, app_name="CERTUS-METAL", app_title="Metal Characterization") -> None:
 
         super().__init__()
 
@@ -682,8 +569,7 @@ class MetalBaseApp(CertusBaseApp):
 
         self.detached_plot_windows = {}
 
-    def _load_defaults(self):
-
+    def _load_defaults(self) -> None:
         """Load default values for METAL applications"""
 
         # Reset file selection
@@ -702,38 +588,23 @@ class MetalBaseApp(CertusBaseApp):
 
         # Reset UI elements
 
-        if hasattr(self, 'btn_load'):
-
+        if hasattr(self, "btn_load"):
             # Reset file selection display
 
             pass  # File button doesn't show filename
 
         # Reset parameter fields to defaults
 
-        if hasattr(self, 'widgets'):
-
+        if hasattr(self, "widgets"):
             # Common metal defaults
 
-            default_params = {
-
-                'eM_min': '5.0',
-
-                'eM_max': '50.0', 
-
-                'eL_nominal': '100.0',
-
-                'eL_variation': '20.0'
-
-            }
+            default_params = {"eM_min": "5.0", "eM_max": "50.0", "eL_nominal": "100.0", "eL_variation": "20.0"}
 
             for param, default_value in default_params.items():
-
                 if param in self.widgets:
-
                     self.widgets[param].setText(default_value)
 
-    def _create_labeled_input(self, label_text, widget, tooltip_text=None):
-
+    def _create_labeled_input(self, label_text, widget, tooltip_text=None) -> Any:
         """Creates a horizontal layout with Label [Info] Widget (Shared)"""
 
         layout = QHBoxLayout()
@@ -745,7 +616,6 @@ class MetalBaseApp(CertusBaseApp):
         lbl = QLabel(label_text)
 
         if tooltip_text:
-
             lbl.setToolTip(tooltip_text)
 
             widget.setToolTip(tooltip_text)
@@ -753,7 +623,6 @@ class MetalBaseApp(CertusBaseApp):
         layout.addWidget(lbl)
 
         if tooltip_text:
-
             # Simple info icon
 
             info_btn = QPushButton("?")
@@ -763,9 +632,7 @@ class MetalBaseApp(CertusBaseApp):
             info_btn.setToolTip(tooltip_text)
 
             info_btn.setStyleSheet(
-
                 f"border-radius: 8px; background: {CertusTheme.SECONDARY}; color: white; font-weight: bold; border: none;"
-
             )
 
             layout.addWidget(info_btn)
@@ -776,12 +643,10 @@ class MetalBaseApp(CertusBaseApp):
 
         return layout
 
-    def update_lambda_filters(self):
-
+    def update_lambda_filters(self) -> None:
         """Updates wavelength filters (Shared)"""
 
         if self.target_data is not None:
-
             # handle both dict (SINGLE) and array (BILAYER potentially)
 
             # MetalBaseApp.load_target_file stores numpy array in self.target_data usually?
@@ -811,29 +676,23 @@ class MetalBaseApp(CertusBaseApp):
             l_data = None
 
             if isinstance(self.target_data, dict) and "lambda" in self.target_data:
-
                 l_data = self.target_data["lambda"]
 
             elif isinstance(self.target_data, np.ndarray) and len(self.target_data.shape) > 1:
-
                 l_data = self.target_data[:, 0]
 
             if l_data is not None:
-
                 min_l = l_data.min()
 
                 max_l = l_data.max()
 
                 if "lmin_filter" in self.widgets:
-
                     self.widgets["lmin_filter"].setText(f"{min_l:.1f}")
 
                 if "lmax_filter" in self.widgets:
-
                     self.widgets["lmax_filter"].setText(f"{max_l:.1f}")
 
-    def _get_param_bounds(self, name):
-
+    def _get_param_bounds(self, name) -> tuple:
         """Gets parameter bounds (Shared)"""
 
         # Assumes self.widgets[name_min] and self.widgets[name_max] exist
@@ -843,19 +702,16 @@ class MetalBaseApp(CertusBaseApp):
         p_max = float(self.widgets[f"{name}_max"].text())
 
         if p_min == p_max:
-
             p_max += 1e-9
 
         return (p_min, p_max)
 
-    def detach_current_plot(self):
-
+    def detach_current_plot(self) -> None:
         """Detaches current plot (Shared)"""
 
         current_widget = self.tabs.currentWidget()
 
         if current_widget is None:
-
             return
 
         current_index = self.tabs.currentIndex()
@@ -865,21 +721,17 @@ class MetalBaseApp(CertusBaseApp):
         plot_title = self.tabs.tabText(current_index)
 
         if plot_name in self.detached_plot_windows:
-
             if self.detached_plot_windows[plot_name].isVisible():
-
                 self.detached_plot_windows[plot_name].raise_()
 
                 return
 
         try:
-
             # Shared helper for cloning
 
             detached_plot_copy = clone_plot_widget(current_widget, title_override=plot_title)
 
             if detached_plot_copy is None:
-
                 return  # Or log error
 
             detached_window = DetachedPlotWindow(detached_plot_copy, parent=self, title=plot_title)
@@ -890,36 +742,27 @@ class MetalBaseApp(CertusBaseApp):
 
             detached_window.show()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error creating detached window: {e}", exc_info=True)
 
-    def reattach_plot(self, plot_name: str):
-
+    def reattach_plot(self, plot_name: str) -> None:
         """Reattaches detached plot (Shared)"""
 
         if plot_name in self.detached_plot_windows:
-
             detached_window = self.detached_plot_windows[plot_name]
 
             detached_window.deleteLater()
 
             del self.detached_plot_windows[plot_name]
 
-    def _apply_theme(self):
-
+    def _apply_theme(self) -> None:
         """Applies Certus theme with shared overrides"""
 
         plots = [
-
             getattr(self, "reflectance_plot", None),
-
             getattr(self, "mse_plot", None),
-
             getattr(self, "diel_plot", None),
-
             getattr(self, "clues_plot", None),
-
         ]
 
         # Filter None
@@ -927,11 +770,8 @@ class MetalBaseApp(CertusBaseApp):
         plots = [p for p in plots if p is not None]
 
         apply_certus_theme(
-
             self,
-
             plots=plots,
-
             overrides=f"""
             {build_premium_overrides()}
 
@@ -954,19 +794,16 @@ class MetalBaseApp(CertusBaseApp):
                 }}
 
             """,
-
         )
 
         # Update extra widgets if they exist
 
         if hasattr(self, "progress_widget"):
-
             self.progress_widget.style().unpolish(self.progress_widget)
 
             self.progress_widget.style().polish(self.progress_widget)
 
-    def setup_ui(self):
-
+    def setup_ui(self) -> None:
         """Builds standard METAL layout (Splitter: Control | Results)"""
 
         # Main Splitter
@@ -1015,11 +852,7 @@ class MetalBaseApp(CertusBaseApp):
 
         workflow_card = CertusCard("Workflow")
 
-        workflow_hint = QLabel(
-
-            "1 Load measurement  2 Configure metal model  3 Run optimization  4 Inspect plots"
-
-        )
+        workflow_hint = QLabel("1 Load measurement  2 Configure metal model  3 Run optimization  4 Inspect plots")
 
         workflow_hint.setWordWrap(True)
 
@@ -1069,11 +902,7 @@ class MetalBaseApp(CertusBaseApp):
 
         plot_header = QWidget()
 
-        plot_header.setStyleSheet(
-
-            f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};"
-
-        )
+        plot_header.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
 
         ph_layout = QHBoxLayout(plot_header)
 
@@ -1137,33 +966,27 @@ class MetalBaseApp(CertusBaseApp):
             toggle_logs=lambda: self.btn_details.setChecked(not self.btn_details.isChecked()),
         )
 
-        def _on_data_drop(paths):
+        def _on_data_drop(paths) -> None:
             if paths and hasattr(self, "load_target_file"):
                 self.load_target_file(paths[0])
                 show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
 
         enable_file_drop(self, _on_data_drop, extensions=("csv", "xlsx", "xls", "txt"))
 
-    def _get_log_widget(self):
-
+    def _get_log_widget(self) -> Any:
         """Override to return the log text widget."""
 
         return getattr(self, "log_text", None)
 
-    def _create_header(self, layout):
-
+    def _create_header(self, layout) -> None:
         """Shared header with Logo & Help using standardized widget"""
 
         # Pass self.APP_TITLE as subtitle if desired, or a generic one
 
         header = create_header_logo_widget(
-
             title_text=self.APP_NAME.replace("CERTUS_", "").replace("_", " "),
-
             subtitle_text=self.APP_TITLE,
-
             module_name=self.MODULE_ID,
-
         )
 
         self.btn_theme = CertusThemeToggle(header)
@@ -1172,20 +995,17 @@ class MetalBaseApp(CertusBaseApp):
 
         layout.addWidget(header)
 
-    def _setup_parameter_grid(self, layout):
-
+    def _setup_parameter_grid(self, layout) -> None:
         """Override to add param groups"""
 
         pass
 
-    def _setup_plots(self):
-
+    def _setup_plots(self) -> None:
         """Override to add tabs"""
 
         pass
 
-    def _create_action_buttons(self, layout):
-
+    def _create_action_buttons(self, layout) -> None:
         """Start/Stop/Details"""
 
         container = QVBoxLayout()
@@ -1200,11 +1020,7 @@ class MetalBaseApp(CertusBaseApp):
 
         self.btn_run.setToolTip("Start the differential evolution optimization to extract metal optical constants.")
 
-        self.btn_run.clicked.connect(
-
-            self.start_optimization
-
-        )  # Subclass must implement start_optimization
+        self.btn_run.clicked.connect(self.start_optimization)  # Subclass must implement start_optimization
 
         r1.addWidget(self.btn_run)
 
@@ -1227,7 +1043,6 @@ class MetalBaseApp(CertusBaseApp):
         # Beam Analysis Button (Subclasses enable it)
 
         try:
-
             self.btn_beam = QPushButton("Beam Analysis")
 
             beam_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
@@ -1235,7 +1050,6 @@ class MetalBaseApp(CertusBaseApp):
             self.btn_beam.setIcon(beam_icon)
 
         except (ImportError, AttributeError):
-
             self.btn_beam = QPushButton("Beam Analysis")
 
         self.btn_beam.setFixedHeight(30)
@@ -1243,22 +1057,17 @@ class MetalBaseApp(CertusBaseApp):
         self.btn_beam.setEnabled(False)  # Disabled until optimization finishes
 
         self.btn_beam.setToolTip(
-
             "Run Beam Analysis: scan thickness (eM) around the optimum to map the\n"
-
             "MSE valley and assess solution uniqueness."
-
         )
 
         self.btn_beam.setStyleSheet(
-
             f"background: {CertusTheme.BACKGROUND}; color: {CertusTheme.TEXT_MAIN}; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px;"
-
         )
 
         # Connect to hypothetical handler (subclass must implement or crash/noop)
 
-        def _start_beam_analysis_if_available(*_args):
+        def _start_beam_analysis_if_available(*_args) -> None:
             getattr(self, "start_beam_analysis", lambda: None)()
 
         self.btn_beam.clicked.connect(_start_beam_analysis_if_available)
@@ -1289,23 +1098,21 @@ class MetalBaseApp(CertusBaseApp):
 
         layout.addLayout(container)
 
-    def on_toggle_details(self, checked):
+    def on_toggle_details(self, checked) -> None:
 
         self.log_container.setVisible(checked)
 
         h = self.right_splitter.height()
 
         if checked:
-
             self.right_splitter.setSizes([int(h * 0.8), int(h * 0.2)])
 
         else:
-
             self.right_splitter.setSizes([h, 0])
 
     # === SHARED UI COMPONENT FACTORIES ===
 
-    def _create_group_box(self, title):
+    def _create_group_box(self, title) -> tuple:
 
         c = CertusCard(title)
 
@@ -1317,18 +1124,15 @@ class MetalBaseApp(CertusBaseApp):
 
         return c, l
 
-    def _create_input_group(self):
+    def _create_input_group(self) -> Any:
 
         c, l = self._create_group_box("Input Data")
 
         self.btn_load = QPushButton(" Load File...")
 
         self.btn_load.setToolTip(
-
             "Load a data file (CSV or Excel) containing columns:\n"
-
             "lambda (nm), R, [T], [Rback]  percentage or 01 scale accepted."
-
         )
 
         self.btn_load.clicked.connect(self.load_target_file)
@@ -1347,7 +1151,9 @@ class MetalBaseApp(CertusBaseApp):
 
         self.widgets["lmin_filter"] = QLineEdit()
 
-        self.widgets["lmin_filter"].setToolTip("Minimum wavelength (nm) used for fitting. Rows below this value are excluded.")
+        self.widgets["lmin_filter"].setToolTip(
+            "Minimum wavelength (nm) used for fitting. Rows below this value are excluded."
+        )
 
         fl.addWidget(self.widgets["lmin_filter"], 0, 1)
 
@@ -1355,7 +1161,9 @@ class MetalBaseApp(CertusBaseApp):
 
         self.widgets["lmax_filter"] = QLineEdit()
 
-        self.widgets["lmax_filter"].setToolTip("Maximum wavelength (nm) used for fitting. Rows above this value are excluded.")
+        self.widgets["lmax_filter"].setToolTip(
+            "Maximum wavelength (nm) used for fitting. Rows above this value are excluded."
+        )
 
         fl.addWidget(self.widgets["lmax_filter"], 1, 1)
 
@@ -1363,7 +1171,7 @@ class MetalBaseApp(CertusBaseApp):
 
         return c
 
-    def _create_output_group(self):
+    def _create_output_group(self) -> Any:
 
         c = CertusCard("Output")
 
@@ -1383,12 +1191,7 @@ class MetalBaseApp(CertusBaseApp):
 
         return c
 
-    def _create_physical_params_group(
-
-        self, show_el: bool = False, el_defaults: tuple = ("900", "20")
-
-    ) -> CertusCard:
-
+    def _create_physical_params_group(self, show_el: bool = False, el_defaults: tuple = ("900", "20")) -> CertusCard:
         """
 
         Creates standardized Physical Parameters group.
@@ -1428,7 +1231,6 @@ class MetalBaseApp(CertusBaseApp):
         # Optional eL (Dielectric layer - for BILAYER)
 
         if show_el:
-
             self.widgets["eL_nominal"] = QLineEdit(el_defaults[0])
 
             self.widgets["eL_variation"] = QLineEdit(el_defaults[1])
@@ -1448,11 +1250,8 @@ class MetalBaseApp(CertusBaseApp):
         return c
 
     def _create_material_params_group(
-
         self, show_diel_model: bool = False, substrate_options: list = None
-
     ) -> CertusCard:
-
         """
 
         Creates standardized Material Parameters group (Spline knots).
@@ -1520,7 +1319,6 @@ class MetalBaseApp(CertusBaseApp):
         # Optional Dielectric model (for BILAYER)
 
         if show_diel_model:
-
             row3 = QHBoxLayout()
 
             row3.addWidget(QLabel("n∞:"))
@@ -1546,7 +1344,6 @@ class MetalBaseApp(CertusBaseApp):
         # Optional substrate selector
 
         if substrate_options:
-
             row4 = QHBoxLayout()
 
             row4.addWidget(QLabel("substrate:"))
@@ -1564,7 +1361,6 @@ class MetalBaseApp(CertusBaseApp):
         return c
 
     def _create_live_params_group(self) -> CertusCard:
-
         """
 
         Creates standardized Live Parameters display group (updated during optimization).
@@ -1627,7 +1423,7 @@ class MetalBaseApp(CertusBaseApp):
 
         return c
 
-    def _create_status_bar(self):
+    def _create_status_bar(self) -> None:
 
         self.status_bar = QStatusBar()
 
@@ -1644,9 +1440,7 @@ class MetalBaseApp(CertusBaseApp):
         self.stats_label = QLabel(" 0  |  0  |   0")
 
         self.stats_label.setToolTip(
-
             " Objective function evaluations  |   Monte Carlo / iterations  |   Spectral points processed"
-
         )
 
         self.status_bar.addPermanentWidget(self.stats_label)
@@ -1659,40 +1453,29 @@ class MetalBaseApp(CertusBaseApp):
 
         self.status_bar.addPermanentWidget(self.btn_theme)
 
-    def load_target_file(self, filepath=None):
-
+    def load_target_file(self, filepath=None) -> None:
         """robust loading logic (Shared)"""
 
         if filepath is None or isinstance(filepath, bool):
-
             filepath, df = open_data_file_and_read(
-
                 self,
-
                 "Open Reflectance File",
-
                 DATA_FILES_FILTER_EXTENDED,
-
             )
 
             if filepath is None:
-
                 return
 
         else:
-
             df = read_data_file_robust(filepath)
 
         if not filepath:
-
             return
 
         try:
-
             # Basic validation
 
             if len(df.columns) < 2:
-
                 raise ValueError("Files needs >= 2 cols")
 
             # Store raw data (subclass processes it)
@@ -1712,45 +1495,38 @@ class MetalBaseApp(CertusBaseApp):
             self.logger.info(f"Loaded {filepath}: {len(data)} points")
 
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
-
                 n_rows = int(data.shape[0]) if isinstance(data, np.ndarray) else 0
 
                 lmin = float(np.nanmin(data[:, 0])) if n_rows > 0 else float("nan")
 
                 lmax = float(np.nanmax(data[:, 0])) if n_rows > 0 else float("nan")
 
-                substrate_txt = _metal_substrate_display(self).upper()
+                _sub_w = self.widgets.get("substrate")
+                substrate_txt = (_sub_w.currentText() if _sub_w is not None else "(unknown)").upper()
 
-                faces_txt = _metal_faces_display(self, data)
+                _ncols = int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0
+                faces_txt = f"{_ncols - 1} column(s)" if _ncols > 1 else "(unknown)"
 
                 summary = build_summary_plain_text(
-
                     "CERTUS METAL - Load Summary",
-
                     [
-
                         f"File: {Path(filepath).resolve(strict=False)}",
-
                         "",
-
                         "General",
-
                         f"SUBSTRATE: {substrate_txt}",
-
                         f"FACES: {faces_txt}",
-
                         (f"Rows: {n_rows}", n_rows <= 0),
-
                         "",
-
                         "Data",
-
-                        (f"Columns: {int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0}", False),
-
-                        (f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm", not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin)),
-
+                        (
+                            f"Columns: {int(data.shape[1]) if isinstance(data, np.ndarray) and data.ndim == 2 else 0}",
+                            False,
+                        ),
+                        (
+                            f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm",
+                            not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin),
+                        ),
                     ],
-
                 )
 
                 show_load_summary_dialog(self, "METAL Load Summary", summary)
@@ -1758,37 +1534,32 @@ class MetalBaseApp(CertusBaseApp):
             # Subclass hook
 
             if hasattr(self, "on_file_loaded"):
-
                 self.on_file_loaded(data)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.warning(self, "Load Error", str(e))
 
-    def update_stats_display(self):
+    def update_stats_display(self) -> None:
 
         self.stats_label.setText(
-
             f" {format_count_kmg(self.stat_counters['MS'])}  |  {format_count_kmg(self.stat_counters['MCS'])}  |   {format_count_kmg(self.stat_counters['SP'])}"
-
         )
 
-    def on_stats_update(self, ctype, inc):
+    def on_stats_update(self, ctype, inc) -> None:
 
         if ctype in self.stat_counters:
-
             self.stat_counters[ctype] += inc
 
             self.update_stats_display()
 
-    def on_optimization_error(self, error_message):
+    def on_optimization_error(self, error_message) -> None:
         """Handles optimization error"""
         self.progress_widget.stop("Error")
         QMessageBox.critical(self, "Optimization Error", error_message)
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
 
-    def _on_beam_error(self, error_message):
+    def _on_beam_error(self, error_message) -> None:
         """Handles beam analysis error"""
         self.progress_widget.stop("Beam Error")
         QMessageBox.critical(self, "Beam Analysis Error", error_message)
@@ -1796,41 +1567,30 @@ class MetalBaseApp(CertusBaseApp):
         self.btn_beam.setEnabled(True)
         self.btn_stop.setEnabled(False)
 
-    def closeEvent(self, event):
-
+    def closeEvent(self, event) -> None:
         """Clean up all worker threads on close."""
 
         for attr in ("worker", "beam_worker"):
-
             w = getattr(self, attr, None)
 
             if w and hasattr(w, "stop"):
-
                 w.stop()
 
         for attr in ("optimization_thread", "beam_thread"):
-
             t = getattr(self, attr, None)
 
             if t is not None:
-
                 try:
-
                     if t.isRunning():
-
                         t.quit()
 
                         if not t.wait(2000):
-
                             logging.critical(
-
                                 f"{attr} did not stop within 2s in closeEvent - skipping terminate() to avoid unsafe thread kill."
-
                             )
 
                 except RuntimeError:
-
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         super().closeEvent(event)
 
@@ -1843,20 +1603,17 @@ class MetalBaseApp(CertusBaseApp):
     # override the legacy names keep working while new code can rely on the
     # unified contract.
 
-    def _get_config_dict(self):
-
+    def _get_config_dict(self) -> dict:
         """Legacy alias for :meth:`_collect_config` (kept for METAL subclasses)."""
 
         return {}
 
-    def _apply_config_dict(self, config):
-
+    def _apply_config_dict(self, config) -> None:
         """Legacy alias for :meth:`_apply_config` (kept for METAL subclasses)."""
 
         pass
 
-    def _collect_config(self):
-
+    def _collect_config(self) -> Any:
         """Unified config collector. Defaults to :meth:`_get_config_dict` so
 
         subclasses overriding the legacy hook keep working transparently."""
@@ -1864,142 +1621,98 @@ class MetalBaseApp(CertusBaseApp):
         config = self._get_config_dict()
 
         if getattr(self, "target_data", None) is not None:
-
             config["target_file"] = getattr(self, "_last_target_file", "")
 
         if hasattr(self, "final_results") and self.final_results is not None:
-
             result = self.final_results["result"]
 
             config["optimization_result"] = {
-
                 "mse": float(result.fun),
-
                 "params": result.x.tolist(),
-
                 "nfev": int(result.nfev) if hasattr(result, "nfev") else 0,
-
             }
 
         return config
 
-
-    def _apply_config(self, config):
-
+    def _apply_config(self, config) -> None:
         """Unified config applier. Defaults to :meth:`_apply_config_dict` so
 
         subclasses overriding the legacy hook keep working transparently."""
 
         if "physical_params" not in config:
-
             raise ValueError("Invalid configuration file format.")
 
         if "excel_filename" in self.widgets:
-
-            self.widgets["excel_filename"].setText(
-
-                config.get("excel_filename", DEFAULT_EXCEL_FILENAME)
-
-            )
+            self.widgets["excel_filename"].setText(config.get("excel_filename", DEFAULT_EXCEL_FILENAME))
 
         self._apply_config_dict(config)
-
-        
 
         filt = config.get("filters", {})
 
         if "lmin_filter" in self.widgets:
-
             self.widgets["lmin_filter"].setText(str(filt.get("lmin_filter", 400)))
 
         if "lmax_filter" in self.widgets:
-
             self.widgets["lmax_filter"].setText(str(filt.get("lmax_filter", 1000)))
 
         self.update_lambda_filters()
 
-        
-
         target_file = config.get("target_file", "")
 
         if target_file and Path(target_file).exists():
-
             self.load_target_file(target_file)
 
         elif target_file:
-
             self.logger.warning(f"Target file from config not found: {target_file}")
 
-
-    def _post_save_config(self, filename: str):
+    def _post_save_config(self, filename: str) -> None:
 
         QMessageBox.information(self, "Save Successful", f"Configuration saved to\n{filename}")
 
-
-    def _post_load_config(self, filename: str, config: dict):
+    def _post_load_config(self, filename: str, config: dict) -> None:
 
         if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
-
             p = config.get("physical_params", {}) if isinstance(config, dict) else {}
 
-            substrate_txt = _metal_substrate_display(self).upper()
+            _sub_w = self.widgets.get("substrate")
+            substrate_txt = (_sub_w.currentText() if _sub_w is not None else "(unknown)").upper()
 
             target_file = config.get("target_file", "")
 
             summary = build_summary_plain_text(
-
                 "CERTUS METAL - Config Summary",
-
                 [
-
                     f"File: {Path(filename).resolve(strict=False)}",
-
                     "",
-
                     "General",
-
                     f"SUBSTRATE: {substrate_txt}",
-
                     f"Target file from config: {target_file or '(none)'}",
-
                     (
-
                         f"Target file exists: {'yes' if (target_file and Path(target_file).exists()) else 'no'}",
-
                         bool(target_file) and not Path(target_file).exists(),
-
                     ),
-
                     "",
-
                     "Compatibility checks",
-
                     f"Physical params keys: {len(p)}",
-
-                    (f"Optimization params present: {'yes' if 'optimization_params' in config else 'no'}", "optimization_params" not in config),
-
+                    (
+                        f"Optimization params present: {'yes' if 'optimization_params' in config else 'no'}",
+                        "optimization_params" not in config,
+                    ),
                     (f"Filter params present: {'yes' if 'filters' in config else 'no'}", "filters" not in config),
-
                 ],
-
             )
 
             show_load_summary_dialog(self, "METAL Config Summary", summary)
 
-        QMessageBox.information(
-
-            self, "Load Successful", f"Configuration loaded from\n{filename}"
-
-        )
+        QMessageBox.information(self, "Load Successful", f"Configuration loaded from\n{filename}")
 
     # Abstract methods
 
-    def start_optimization(self):
+    def start_optimization(self) -> None:
 
         raise NotImplementedError
 
-    def stop_optimization(self):
-
+    def stop_optimization(self) -> None:
         """Confirm-then-stop for optimization and beam analysis workers.
 
         Shared implementation used by both METAL_SINGLE and METAL_BILAYER.
@@ -2063,7 +1776,7 @@ class MetalBaseApp(CertusBaseApp):
         try:
             self.set_validation_status("OK")
         except (RuntimeError, AttributeError, TypeError, ValueError):
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         run_manifest = None
         try:
             seed_val = None
@@ -2150,6 +1863,7 @@ class MetalBaseApp(CertusBaseApp):
         try:
             from PyQt6.QtCore import QBuffer, QIODevice
             import base64
+
             img = widget.grab().toImage()
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)

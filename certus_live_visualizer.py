@@ -286,12 +286,8 @@ class LiveOptimizationVisualizer(QObject):
 
             # Clear and update spectral fit plot
             self.ax_spectral.clear()
-            self.ax_spectral.plot(
-                data.wavelengths, data.target_T, "b-", alpha=0.7, label="Target T"
-            )
-            self.ax_spectral.plot(
-                data.wavelengths, data.target_R, "r-", alpha=0.7, label="Target R"
-            )
+            self.ax_spectral.plot(data.wavelengths, data.target_T, "b-", alpha=0.7, label="Target T")
+            self.ax_spectral.plot(data.wavelengths, data.target_R, "r-", alpha=0.7, label="Target R")
             self.ax_spectral.plot(
                 data.wavelengths,
                 data.calculated_T,
@@ -333,9 +329,7 @@ class LiveOptimizationVisualizer(QObject):
             self.convergence_rmse.append(data.best_rmse)
 
             self.ax_convergence.clear()
-            self.ax_convergence.plot(
-                self.convergence_evals, self.convergence_rmse, "k-", linewidth=2
-            )
+            self.ax_convergence.plot(self.convergence_evals, self.convergence_rmse, "k-", linewidth=2)
             self.ax_convergence.set_xlabel("Evaluations")
             self.ax_convergence.set_ylabel("RMSE")
             self.ax_convergence.set_title("Convergence")

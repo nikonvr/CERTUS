@@ -1,6 +1,4 @@
 {
-    "certus_strat_config_format": "gui_session_v1",
-    "certus_note": "Session CERTUS STRAT (équivalent Fichier > Enregistrer la config) : matériaux, empilement, options. Pas de strategy_id/blocks ici. Pour importer des stratégies minées, utiliser l'import JSON dédié aux stratégies.",
     "h_type_custom": false,
     "l_type_custom": false,
     "nH_r": "",

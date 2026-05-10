@@ -244,7 +244,7 @@ def export_spectrum_to_svg(
         if y_max <= y_min:
             y_max = y_min + 1
 
-        def to_svg_coords(x, y):
+        def to_svg_coords(x, y) -> tuple:
             sx = margin + (x - x_min) / (x_max - x_min) * plot_width if x_max > x_min else margin
             sy = height - margin - (y - y_min) / (y_max - y_min) * plot_height
             return sx, sy
@@ -255,16 +255,22 @@ def export_spectrum_to_svg(
                 x = i
                 dwg.add(
                     dwg.line(
-                        start=(x, 0), end=(x, height),
-                        stroke=grid_color, stroke_width=0.5, opacity=0.3,
+                        start=(x, 0),
+                        end=(x, height),
+                        stroke=grid_color,
+                        stroke_width=0.5,
+                        opacity=0.3,
                     )
                 )
             for i in range(0, height, 50):
                 y = i
                 dwg.add(
                     dwg.line(
-                        start=(0, y), end=(width, y),
-                        stroke=grid_color, stroke_width=0.5, opacity=0.3,
+                        start=(0, y),
+                        end=(width, y),
+                        stroke=grid_color,
+                        stroke_width=0.5,
+                        opacity=0.3,
                     )
                 )
 

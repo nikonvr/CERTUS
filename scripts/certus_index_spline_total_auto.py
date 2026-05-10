@@ -27,11 +27,10 @@ from certus_core import setup_logging
 from certus_data import read_data_file_robust
 from certus_physics import (
     get_n_substrate_array_by_id,
-    calculate_T_substrate_array,
+    calculate_bare_substrate_RT,
     warmup_physics,
 )
 from certus_index_spline_core import (
-    substrate_id_from_name,
     normalize_spectrum_dataframe,
     worker_spline_optimization,
     SplineOptConfig,
@@ -96,7 +95,7 @@ def run_ultimate_validation():
 
     # --- EXPORT FINAL MULTI-SHEETS ---
     try:
-        t_sub_theo = calculate_T_substrate_array(np.asarray(lam), np.asarray(n_sub))
+        t_sub_theo = calculate_bare_substrate_RT(np.asarray(lam), np.asarray(n_sub))
         t_ratio_exp = t_raw / np.maximum(t_sub_theo, 1e-6)
         
         # Feuille Spectre

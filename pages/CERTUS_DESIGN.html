@@ -39,16 +39,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html" class="active">DESIGN</a>
-            <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_DESIGN.html" class="active">DESIGN</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
         </div>
     </nav>
 
@@ -57,7 +54,7 @@
             <h1>CERTUS-DESIGN</h1>
             <p style="font-size: 1.3em; color: #7f8c8d; font-weight: 300;">Stochastic Global Synthesis & Density
                 Clustering Engine</p>
-            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Scientific Revision 2026.03</p>
+            <p style="font-size: 1.0em; color: #95a5a6; font-weight: 300;">Scientific Revision Pro 2026.04.17</p>
         </header>
 
         <div class="abstract">
@@ -193,29 +190,45 @@
         <!-- ================================================================ -->
         <h2>3. PGLOBAL: Mathematical Formulation</h2>
         <p>
-            The core algorithm fits into the class of "Multi-Start with Single-Linkage Clustering" methods.
+            The core algorithm fits into the class of "Multi-Start with Single-Linkage Clustering" methods, enhanced
+            with stochastic exploration reminiscent of Simulated Annealing (SA) during boundary escapes.
         </p>
 
-        <div class="mermaid">
-            flowchart TD
-            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
-            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
-            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
-            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
-            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
-
-            A["Stochastic Sampling<br>(Latin Hypercube)"] --> B["Filter: Keep top σ%<br>lowest-error points"]
-            B --> C["Single-Linkage Clustering<br>distance < d_c"]
-
-            C --> D{"New Basin<br>Detected?"}
-
-                D -->|"Yes"| E["Dispatch L-BFGS-B<br>(Analytic Gradient)"]
-                D -->|"No"| F["Discard<br>(already explored)"]
-                E --> G["Update Global Best"]
-                G --> A
+        <div class="eq-box">
+            $$ P_{accept}(\Delta E, T) = \exp\left( - \frac{\Delta E}{k \cdot T_n} \right) \quad \text{with} \quad T_n = T_0 \cdot \gamma^n $$
         </div>
+        <p>
+            Where $\Delta E$ is the variation in Merit Function (RMSE), $T_0$ is the initial temperature, and $\gamma \in (0, 1)$ is the exponential cooling rate across $n$ iterations. This mechanism prevents the stochastic sampling from getting trapped in shallow local minima.
+        </p>
 
-        <h3>3.1. Critical Clustering Distance</h3>
+        <div class="mermaid" style="background: transparent;">
+            flowchart TD
+            classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
+            classDef stochastic fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
+            classDef local fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e40af
+            classDef topology fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
+
+            START((Population N)):::node --> SAMP["Stochastic Sampling &<br>Simulated Annealing Accept"]:::stochastic
+            SAMP --> CLUST["Single-Linkage Clustering<br>dist < d_c"]:::node
+            
+            CLUST --> BASIN{"New Basin?"}
+            BASIN -->|No| DISCARD["Discard"]:::node
+            BASIN -->|Yes| LBFGS["L-BFGS-B Polish<br>Analytic Gradient ∇MSE"]:::local
+            
+            LBFGS --> COMP{"Best vs Global?"}
+            COMP -->|Improvement| UPDATE["Update Global Best"]:::node
+            
+            UPDATE --> NEEDLE{"Topological<br>Derivative P(z) < 0?"}
+            NEEDLE -->|Yes| SPLIT["Insert Needle<br>Mutate Topology"]:::topology
+            SPLIT --> LBFGS
+            
+            NEEDLE -->|No| SAMP
+        </div>
+        <p style="font-size: 0.9em; text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
+            <em>Arbre stochastique PGLOBAL : Compétition entre l'exploration, la descente locale L-BFGS-B, et la mutation topologique par méthode de l'aiguille (Needle).</em>
+        </p>
+
+        <h3>3.1 Critical Clustering Distance</h3>
         <p>
             The algorithm groups sample points into "basins of attraction" to avoid redundant local optimizations.
             The critical distance threshold $d_c$ is derived from the statistical theory of closest points
@@ -234,7 +247,7 @@
             <li>$\Gamma$: The Gamma function, extending factorial to real numbers.</li>
         </ul>
 
-        <h3>3.2. Clustering Kernel</h3>
+        <h3>3.2 Clustering Kernel</h3>
         <p>
             A point $\mathbf{x}$ is absorbed into a cluster with seed $\mathbf{x}_{seed}$ if and only if:
         </p>
@@ -253,7 +266,7 @@
         <!-- ================================================================ -->
         <h2>4. Transfer Matrix Method (TMM)</h2>
 
-        <h3>4.1. Characteristic Matrix (Macleod Convention)</h3>
+        <h3>4.1 Characteristic Matrix (Macleod Convention)</h3>
         <p>
             CERTUS uses the <strong>Macleod convention</strong> with complex refractive index
             $\hat{n} = n - ik$ (k &gt; 0 for absorbing materials) and factor <code>+1j</code>
@@ -265,7 +278,7 @@
             \qquad \phi_j = \frac{2\pi}{\lambda}\hat{n}_j d_j $$
         </div>
 
-        <h3>4.2. System Matrix and Observables</h3>
+        <h3>4.2 System Matrix and Observables</h3>
         <p>
             The total system matrix is built by <strong>pre-multiplication</strong> in Air→Substrate order:
         </p>
@@ -279,7 +292,7 @@
             $$ T = \frac{4\,\text{Re}(n_{sub})}{|m_{00} + n_{sub}\,m_{01} + m_{10} + n_{sub}\,m_{11}|^2} $$
         </div>
 
-        <h3>4.3. Incoherent Backside Correction</h3>
+        <h3>4.3 Incoherent Backside Correction</h3>
         <p>
             For glass substrates (~1 mm), the back surface reflects incoherently. CERTUS uses a
             <strong>dual-matrix approach</strong>:
@@ -305,7 +318,7 @@
             CERTUS implements an <strong>Analytic Gradient</strong> ($O(N)$) using the Adjoint Matrix method.
         </p>
 
-        <h3>5.1. Forward-Backward Propagation</h3>
+        <h3>5.1 Forward-Backward Propagation</h3>
         <p>
             We decompose the total transfer matrix $\mathbf{M}_{total}$ for a stack of $N$ layers. For any
             layer $j$, we define:
@@ -316,7 +329,7 @@
         </div>
         <p>Both products are computed in a single $O(N)$ scan and cached.</p>
 
-        <h3>5.2. Exact Derivative</h3>
+        <h3>5.2 Exact Derivative</h3>
         <p>
             The derivative of the total matrix with respect to thickness $d_j$ uses the matrix chain rule:
         </p>
@@ -324,6 +337,12 @@
             $$ \frac{\partial \mathbf{M}_{total}}{\partial d_j} = \mathbf{M}_{after}[j] \cdot
             \frac{d\mathbf{M}_j}{d d_j} \cdot \mathbf{M}_{before}[j] $$
         </div>
+        <div class="eq-box">
+            $$ \frac{\partial \text{MSE}}{\partial d_j} = \frac{1}{M} \sum_{k=1}^{M} w_k \left(S_{calc}(\lambda_k) - S_{target}(\lambda_k)\right) \frac{\partial S_{calc}}{\partial d_j} $$
+        </div>
+        <p>
+            Where $\frac{\partial S_{calc}}{\partial d_j}$ is extracted directly from the components of $\frac{\partial \mathbf{M}_{total}}{\partial d_j}$. This explicit Jacobian $\nabla_{\mathbf{d}} \text{MSE}$ is what feeds the L-BFGS-B quasi-Newton step.
+        </p>
         <p>
             The derivative of a single layer matrix $\mathbf{M}_j$ is analytically simple:
         </p>
@@ -348,7 +367,7 @@
                 This topology change alters the design space, potentially trapping the solution in a suboptimal basin.
         </p>
 
-        <h3>6.1. Smart Cleanup</h3>
+        <h3>6.1 Smart Cleanup</h3>
         <div class="algo-step">
             <span class="algo-title">smart_cleanup(update_target=False)</span>
             1. Remove all layers with $d < 1.0$ nm (conservative threshold).<br>
@@ -357,7 +376,7 @@
                 &emsp;&nbsp;so the Needle can grow back any removed layers.
         </div>
 
-        <h3>6.2. Two-Phase Healing</h3>
+        <h3>6.2 Two-Phase Healing</h3>
         <p>
             If cleanup removed layers, the design is healed in <strong>two guaranteed phases</strong>.
             The local descent is <em>never skipped</em>, even if the restricted global finds a good solution.
@@ -408,7 +427,7 @@
             will decrease the merit function.
         </p>
 
-        <h3>7.1. Needle Insertion Cycle (3 Steps)</h3>
+        <h3>7.1 Needle Insertion Cycle (3 Steps)</h3>
         <div class="algo-step">
             <span class="algo-title">Per-insertion cycle</span>
             <strong>Step 1 (Optim):</strong> Insert needle at $z^*$ by splitting the host layer.
@@ -419,7 +438,7 @@
             Require > 1% improvement to count as "successful." If stagnation detected 3× consecutively → abort.
         </div>
 
-        <h3>7.2. Overshoot & Prune Strategy</h3>
+        <h3>7.2 Overshoot & Prune Strategy</h3>
         <p>
             On first layer deficit, the system does not grow exactly to the target. Instead, it temporarily
             <strong>overshoots by +20%</strong> to enrich the design space, then prunes back:
@@ -451,14 +470,14 @@
         <!-- ================================================================ -->
         <h2>8. Cost Function & Merit</h2>
 
-        <h3>8.1. Spectral RMSE</h3>
+        <h3>8.1 Spectral RMSE</h3>
         <div class="eq-box">
             $$ \text{RMSE} = \sqrt{\frac{1}{M}\sum_{j=1}^{M} w_j \left(S_{calc}(\lambda_j) -
             S_{target}(\lambda_j)\right)^2} $$
         </div>
         <p>where $S$ is reflectance or transmittance and $w_j$ are spectral weights (uniform or user-defined).</p>
 
-        <h3>8.2. Colorimetric Target (Optional)</h3>
+        <h3>8.2 Colorimetric Target (Optional)</h3>
         <p>
             For decorative coatings, CERTUS supports simultaneous color optimization using the CIE 1976 $\Delta E_{00}$
             metric. The perceived color difference between the designed and target coating is computed from the
@@ -531,14 +550,14 @@
             </tr>
         </table>
 
-        <h3>9.1. Numerical Precision</h3>
+        <h3>9.1 Numerical Precision</h3>
         <p>
             All TMM evaluations use <code>float64</code> / <code>complex128</code> exclusively (since v2026.02).
             The analytic gradient is computed at machine precision ($\sim 10^{-12}$), validated against
             finite-difference reference in <code>test_gradient_vs_fd.py</code> (7/7 tests pass).
         </p>
 
-        <h3>9.2. Key Source Files</h3>
+        <h3>9.2 Key Source Files</h3>
         <table>
             <tr>
                 <th>File</th>
@@ -578,7 +597,7 @@
             <code>CertusLogPanel</code> (scrollable log with copy-to-clipboard), and
             <code>WelcomeGuideWidget</code> (first-launch guide auto-shown).
         </p>
-        <h3>Global Keyboard Shortcuts</h3>
+        <h3>10.1 Global Keyboard Shortcuts</h3>
         <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
         <ul>
             <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration.</li>
@@ -587,16 +606,16 @@
             <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack).</li>
             <li><kbd>Esc</kbd> : Dismiss detached windows and auxiliary charts.</li>
         </ul>
-        <h3>Dynamic Processing Feedback</h3>
+        <h3>10.2 Dynamic Processing Feedback</h3>
         <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
             thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
             Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
 
         <div class="footer">
             <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code>, <code>_certus_physics_impl.py</code>,
-                <code>certus_ui.py</code> &mdash; Revision 2026.03
+                <code>certus_ui.py</code> &mdash; Revision 2026.04.17
             </p>
-            <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report</p>
+            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>
     </div>
 

@@ -145,7 +145,7 @@ flowchart TD
                 </figcaption>
             </figure>
 
-            <h2>4.1. Numerical framework and coordinate scaling</h2>
+            <h2>4.1 Numerical framework and coordinate scaling</h2>
             <p>
                 The inversion is not performed directly in linear wavelength coordinates. Over a broad spectral range, uniform sampling in $\lambda$ is poorly matched to the actual optical complexity of thin-film dispersion: the ultraviolet region usually contains the steepest refractive and absorptive variations, whereas the long-wavelength region is comparatively smoother. To better distribute model flexibility across the physically relevant structures, the computational domain is expressed in reciprocal wavelength,
             </p>
@@ -169,7 +169,7 @@ flowchart TD
                 In this representation, the optimizer acts on the unconstrained field $L(\sigma)$, whereas the forward optical model always receives a strictly non-negative extinction coefficient. Extremely weak absorption is thus represented smoothly through large negative values of $L$ rather than through discontinuous clipping of $k$ at zero. The pair $(\sigma, L)$ therefore defines a numerically stable coordinate system for broadband spline inversion.
             </p>
 
-            <h2>4.2. Log-proportion spatial encoding</h2>
+            <h2>4.2 Log-proportion spatial encoding</h2>
             <p>
                 Once knot positions are allowed to move, a central numerical difficulty is to preserve their monotonic ordering. Direct optimization of the physical coordinates $\sigma_i$ can lead to node crossing, i.e., configurations for which $\sigma_{i+1} < \sigma_i$, which invalidates the interpolation geometry. To remove this failure mode at the parametrization level, the knot distribution is encoded through normalized positive proportions rather than through direct coordinates.
             </p>
@@ -191,7 +191,7 @@ flowchart TD
                 The practical role of this encoding is not merely numerical convenience: it makes free-knot optimization feasible without imposing a large number of explicit inequality constraints on the optimizer.
             </div>
 
-            <h2>4.3. Sequence-gated optimization pipeline</h2>
+            <h2>4.3 Sequence-gated optimization pipeline</h2>
             <p>
                 The inverse problem is highly correlated because thickness and refractive index can partially compensate each other through the optical phase product. For this reason, all degrees of freedom are not released simultaneously. Instead, the algorithm uses a sequence-gated pipeline in which progressively richer parameterizations are activated only after a lower-dimensional subproblem has been stabilized.
             </p>
@@ -242,7 +242,7 @@ flowchart TD
                 After the piecewise-linear exploratory stages, the final solution is re-optimized on the chosen mesh using a smooth spline representation in reciprocal wavelength. This last refinement removes residual staircase effects inherited from intermediate parameterizations and produces the final nominal curves used for reporting thickness, refractive index, extinction coefficient, and profiled uncertainty bounds.
             </p>
 
-            <h2>4.4. Density-corrected objective and analytic Jacobian</h2>
+            <h2>4.4 Density-corrected objective and analytic Jacobian</h2>
             <p>
                 The merit function compares the experimental relative transmittance $T_{rel,exp}(\lambda)$ to the transfer-matrix prediction $T_{rel,th}(\lambda; d,n,k)$. Because experimental spectra are commonly sampled on irregular wavelength grids, the residual sum cannot be interpreted as a physically fair broadband misfit unless the sampling density is corrected. For this reason, the objective function uses quadrature weights $w_{pix}(\lambda_m)$ defined on the masked wavelength grid,
             </p>
@@ -281,7 +281,7 @@ flowchart LR
                 Local optimization is accelerated by analytic sensitivities of the optical model. Instead of relying exclusively on finite-difference perturbations, the implementation evaluates explicit derivatives of the transfer-matrix response with respect to thickness and spline parameters. This substantially improves efficiency and numerical robustness in the high-dimensional local stages, especially once free-knot relocation has been activated.
             </p>
 
-            <h2>4.5. Profile likelihood and uncertainty corridors</h2>
+            <h2>4.5 Profile likelihood and uncertainty corridors</h2>
             <p>
                 The uncertainty analysis is based on profile likelihood with thickness as the profiled parameter. This choice is motivated by the strong coupling between thickness and the oscillatory structure of the relative transmittance spectrum. Rather than estimating uncertainty only from local curvature at the optimum, the algorithm explicitly measures how far the thickness can be displaced while the remaining spline degrees of freedom are allowed to re-accommodate the spectral fit.
             </p>

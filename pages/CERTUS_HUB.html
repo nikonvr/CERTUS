@@ -111,11 +111,13 @@
             HUB["<b>CERTUS-HUB</b><br>Environment Guard<br>License · Threads · Material DB"]:::terminal --> DESIGN
             HUB --> STRAT
             HUB --> INDEX
+            HUB --> IS["INDEX SPLINE"]
             HUB --> MS["METAL SINGLE"]
             HUB --> MB["METAL BILAYER"]
             DESIGN["<b>DESIGN</b><br>PGLOBAL Synthesis<br>Analytic Gradient"]:::highlight --> PHYSICS
             STRAT["<b>STRAT</b><br>Monitoring Strategy<br>Monte Carlo Validation"]:::highlight --> PHYSICS
             INDEX["<b>INDEX</b><br>TLU n,k Extraction<br>Kramers-Kronig"]:::highlight --> PHYSICS
+            IS["<b>INDEX SPLINE</b><br>High-fidelity metrology<br>L-BFGS-B & knots"]:::highlight --> PHYSICS
             MS["<b>METAL SINGLE</b><br>Spline n,k on<br>Transparent Substrate"]:::highlight --> PHYSICS
             MB["<b>METAL BILAYER</b><br>Spline n,k on<br>Si/SiO₂ Stack"]:::highlight --> PHYSICS
             PHYSICS["<b>_certus_physics_impl</b><br>TMM Kernels · Numba JIT<br>Float64 / Complex128"]:::terminal
@@ -197,6 +199,7 @@
             DISPATCH -->|"DESIGN"| MOD1["Launch CERTUS_DESIGN<br>init_certus_app()"]:::terminal
             DISPATCH -->|"STRAT"| MOD2["Launch CERTUS_STRAT<br>init_certus_app()"]:::terminal
             DISPATCH -->|"INDEX"| MOD3["Launch CERTUS_INDEX<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"SPLINE"| MOD_S["Launch CERTUS_INDEX_SPLINE<br>init_certus_app()"]:::terminal
             DISPATCH -->|"METAL"| MOD4["Launch CERTUS_METAL<br>init_certus_app()"]:::terminal
         </div>
 
@@ -279,7 +282,7 @@
 
         <div style="display: flex; gap: 40px;">
             <div style="flex: 1;">
-                <h3>Inputs (System Configuration)</h3>
+                <h3>5.1 Inputs (System Configuration)</h3>
                 <ul>
                     <li><strong>Hardware Fingerprint:</strong> UUID and MAC Address used for license validation.</li>
                     <li><strong>Configuration Flags:</strong> <code>auto_export_reports</code> boolean.</li>
@@ -290,7 +293,7 @@
                 </ul>
             </div>
             <div style="flex: 1;">
-                <h3>Outputs (Runtime Context)</h3>
+                <h3>5.2 Outputs (Runtime Context)</h3>
                 <ul>
                     <li><strong>Sanitized Process:</strong> A child process guaranteed to be thread-safe (GIL-released).
                     </li>
@@ -438,6 +441,11 @@
                 <td>Physical n,k extraction with analytic KK integral</td>
             </tr>
             <tr>
+                <td><strong><a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a></strong></td>
+                <td>L-BFGS-B + Spline PWL</td>
+                <td>Deterministic knot control and exact analytic gradients via Fused Cost & Grad</td>
+            </tr>
+            <tr>
                 <td><strong><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a></strong></td>
                 <td>Differential Evolution + Splines</td>
                 <td>Model-free n,k from R+T+Rback on transparent substrate</td>
@@ -460,7 +468,7 @@
             <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
             maximum numerical stability (15 significant digits).
         </p>
-        <h3>Global Keyboard Shortcuts</h3>
+        <h3>9.1 Global Keyboard Shortcuts</h3>
         <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
         <ul>
             <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
@@ -471,13 +479,13 @@
                 active in all modules via <code>CertusBaseApp</code>).</li>
             <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.</li>
         </ul>
-        <h3>Theme Toggle &amp; Live Footer</h3>
+        <h3>9.2 Theme Toggle &amp; Live Footer</h3>
         <p>A <code>CertusThemeToggle</code> action (&#x2600;/&#x1F319;) switches between light and dark themes
             system-wide at runtime without restart. The window footer dynamically displays the
             <code>__version__</code> string from <code>certus_core.py</code>, Python version,
             and Qt version.
         </p>
-        <h3>Dynamic Processing Feedback</h3>
+        <h3>9.3 Dynamic Processing Feedback</h3>
         <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
             thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
             Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>

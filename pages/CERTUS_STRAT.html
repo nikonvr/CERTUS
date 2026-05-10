@@ -39,16 +39,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html" class="active">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html" class="active">STRAT</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
         </div>
     </nav>
 
@@ -56,7 +53,7 @@
         <header>
             <h1>CERTUS-STRAT</h1>
             <p style="font-size: 1.2em; color: #555;">Advanced Optical Monitoring &amp; Error Compensation Logic</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026 — Complete
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026.04.17 — Complete
                 Algorithm Documentation</p>
         </header>
 
@@ -155,7 +152,7 @@
             LLVM code via Numba with full AVX2 vectorization and parallel threading.
         </p>
 
-        <h3>1.1. Conventions</h3>
+        <h3>1.1 Conventions</h3>
         <div class="note">
             <ul>
                 <li><strong>Complex refractive index:</strong> $\hat{n} = n - ik$ with $k > 0$ for absorption
@@ -171,7 +168,7 @@
             </ul>
         </div>
 
-        <h3>1.2. Characteristic Matrix of a Single Layer</h3>
+        <h3>1.2 Characteristic Matrix of a Single Layer</h3>
         <p>For layer $j$ with complex index $\hat{n}_j$ and physical thickness $d_j$ at normal incidence:</p>
 
         <div class="eq-box">
@@ -180,7 +177,7 @@
             +i\,\hat{n}_j \sin \delta_j & \cos \delta_j \end{pmatrix} $$
         </div>
 
-        <h3>1.3. System Matrix and Transmittance</h3>
+        <h3>1.3 System Matrix and Transmittance</h3>
         <p>The total system matrix for a stack of $N$ layers (pre-multiply Air→Sub):</p>
         <div class="eq-box">
             $$ M = \prod_{j=1}^{N} L_j = L_1 \cdot L_2 \cdots L_N $$
@@ -189,7 +186,7 @@
         </div>
         <p>where $n_{inc} = 1$ (air).</p>
 
-        <h3>1.4. Incoherent Backside Correction</h3>
+        <h3>1.4 Incoherent Backside Correction</h3>
         <p>
             The substrate back face reflects incoherently. CERTUS uses a <strong>dual-matrix</strong> approach
             in <code>calculationate_detailed_growth</code>:
@@ -213,7 +210,7 @@
             </ul>
         </div>
 
-        <h3>1.5. Growth Dynamics Kernel</h3>
+        <h3>1.5 Growth Dynamics Kernel</h3>
         <p>
             <code>compute_dynamics_kernel</code> evaluates $T(d)$ continuously as a layer grows from $d=0$ to
             $d=d_{nom}$ in 1 nm steps. The <strong>dynamics</strong> metric is the <strong>peak-to-peak</strong> range:
@@ -235,7 +232,7 @@
         <!-- ================================================================ -->
         <h2>2. Optical Monitoring Simulation (Monte Carlo)</h2>
 
-        <h3>2.1. Noise Model — Gaussian (Production Mode)</h3>
+        <h3>2.1 Noise Model — Gaussian (Production Mode)</h3>
         <p>
             <code>generate_noise_array</code> generates <strong>gaussian noise</strong> for all Monte Carlo
             simulations. This is the exclusive production mode in STRAT (the legacy uniform distribution is no
@@ -260,7 +257,7 @@
             </ul>
         </div>
 
-        <h3>2.2. Non-Monotonic Error Model</h3>
+        <h3>2.2 Non-Monotonic Error Model</h3>
         <p>
             Beyond pure trigger noise, the simulation optionally adds a systematic offset via
             <code>compute_probe_offset_nm_from_ratio</code>. The effective measured thickness incorporates:
@@ -274,14 +271,17 @@
             <code>NON_MONOTONIC_MODE_ATTENUATE</code> (default) vs <code>NON_MONOTONIC_MODE_REJECT</code>.
         </div>
 
-        <h3>2.3. Cumulative Error Propagation</h3>
+        <h3>2.3 Cumulative Error Propagation</h3>
         <p>
             The key innovation of CERTUS is that thickness errors are <strong>physically propagated</strong>
             through the TMM. If layer $i$ was deposited with an error $\delta d_i$:
         </p>
         <div class="algo-step">
             <span class="algo-title">Error Propagation Mechanism:</span>
-            1. Layer $i$ is deposited with actual thickness $d_i + \delta d_i$.<br>
+            <div class="eq-box" style="margin: 10px 0;">
+                $$ \delta d_i^{(r)} = d_{nom,i} \cdot \epsilon^{(r)} + \delta_{probe} $$
+            </div>
+            1. Layer $i$ is deposited with actual thickness $d_i + \delta d_i^{(r)}$ in run $r$.<br>
             2. The TMM matrix is updated with this <em>real</em> thickness.<br>
             3. The monitoring signal for layer $i+1$ is computed from this <em>perturbed</em> matrix.<br>
             4. The cut-off for layer $i+1$ is triggered based on the perturbed signal — which may itself
@@ -293,7 +293,7 @@
             independent realisations in parallel using Numba <code>prange</code>.
         </p>
 
-        <h3>2.4. Reality-Feedback Loop in Phase A</h3>
+        <h3>2.4 Reality-Feedback Loop in Phase A</h3>
         <p>
             Before evaluating layer $i$, the TMM matrix cache is <strong>rebuilt</strong> from the
             <em>average</em> simulated thicknesses of layers $0 \ldots i{-}1$. A
@@ -322,12 +322,12 @@
             end
         </div>
 
-        <h3>3.1. Step A.1 — Dynamics Ranking</h3>
+        <h3>3.1 Step A.1 — Dynamics Ranking</h3>
         <p><code>calculationate_dynamics_ULTIMATE</code> computes the peak-to-peak $\Delta T(\lambda_k) = T_{max} - T_{min}$
             for every candidate $\lambda_k$ in the scan range. Candidates are sorted by $\Delta T$ descending.
             The function also returns $T_{init}$, $T_{final}$, and $T_{min}$ per candidate for downstream filters.</p>
 
-        <h3>3.2. Step A.2 — Safety Filters</h3>
+        <h3>3.2 Step A.2 — Safety Filters</h3>
         <ul>
             <li><strong>Dynamics threshold:</strong> Reject candidates with $|\Delta T| < \text{dynamics\_threshold}$ (default 2.5%, configurable).</li>
             <li><strong>Strict T_min floor:</strong> Reject any $\lambda$ for which $T_{min}$ drops below <code>min_transmission_floor</code>
@@ -351,7 +351,7 @@
             full pipeline traceability.
         </div>
 
-        <h3>3.3. Step A.3 — Monte Carlo Validation</h3>
+        <h3>3.3 Step A.3 — Monte Carlo Validation</h3>
         <p>For each surviving candidate $\lambda_k$:</p>
         <div class="algo-step">
             <span class="algo-title">Vectorized Monte Carlo (Numba <code>validate_wavelengths_batch</code>):</span>
@@ -362,7 +362,7 @@
             $$ \text{Cost}(\lambda_k) = Q_{0.95}\left(\Delta d_r\right) $$
         </div>
 
-        <h3>3.4. Step A.4 — Error Propagation + Normalization</h3>
+        <h3>3.4 Step A.4 — Error Propagation + Normalization</h3>
         <p>
             The best wavelength is selected for this layer. <code>update_run_states_kernel</code>
             saves the simulated thickness for each of the $N_{runs}$ realisations, so that
@@ -371,7 +371,7 @@
             and squared to produce <code>raw_results_sq</code> for balanced DP input in Phase B.
         </p>
 
-        <h3>3.5. Layer 1 Attenuation (optional)</h3>
+        <h3>3.5 Layer 1 Attenuation (optional)</h3>
         <p>
             When Smart Nucleation is inactive, the cost of Layer 1 can be attenuated by
             <code>layer1_cost_attenuation_factor</code> (default 1.0, i.e. no attenuation). Values
@@ -384,7 +384,7 @@
         <!-- ================================================================ -->
         <h2>4. Phase B: Block Grouping &amp; Robustness Screening</h2>
 
-        <h3>4.1. Dynamic Programming Segmentation</h3>
+        <h3>4.1 Dynamic Programming Segmentation</h3>
         <p>
             Minimizing monochromator movements is crucial for process speed and reproducibility. CERTUS groups
             layers into <strong>monochromatic blocks</strong> (contiguous layers monitored at the same wavelength)
@@ -393,16 +393,44 @@
         </p>
 
         <div class="eq-box">
-            $$ DP[k][i] = \min_{j < i} \left( DP[k-1][j] + \text{BlockCost}(j, i) \right) $$ </div>
+            $$ V_k(i) = \min_{0 \le j < i} \left\{ V_{k-1}(j) + \min_{\lambda \in \Lambda} \sum_{m=j+1}^{i} \text{Cost}(m, \lambda) \right\} $$ 
+        </div>
 
-                <ul>
-                    <li>$DP[k][i]$: Minimal cost to cover layers $1 \dots i$ using exactly $k$ blocks.</li>
-                    <li>$\text{BlockCost}(j, i)$: The sum of squared per-layer costs when all layers $j \dots i$
-                        are monitored at the wavelength $\lambda_{opt}$ that minimises the mean cost in that range.</li>
-                </ul>
+        <div class="note">
+            <p><strong>Équation d'état de Bellman :</strong></p>
+            <ul>
+                <li>$V_k(i)$ : Coût minimal cumulé (correspond au <code>DP[k][i]</code>) pour couvrir les couches $1 \dots i$ avec exactement $k$ blocs.</li>
+                <li>$j$ : Le point de coupure optimal (fin du bloc $k-1$).</li>
+                <li>$\text{Cost}(m, \lambda)$ : Le coût d'erreur P95 de la couche $m$ monitorée à $\lambda$.</li>
+                <li>La boucle de minimisation interne correspond à $\text{BlockCost}(j, i)$.</li>
+            </ul>
+        </div>
+        
+        <div class="mermaid" style="background: transparent;">
+            graph LR
+            classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
+            classDef block fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e40af
+            classDef highlight fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
 
-                <p>
-                    The algorithm explores block counts from a <strong>contractual range</strong> controlled by
+            START((Start<br>L0)):::node -->|Block 1, λA| L1((L1)):::block
+            START -->|Block 1, λB| L2((L2)):::block
+            START -->|Block 1, λC| L3((L3)):::highlight
+
+            L1 -->|Block 2, λD| L2
+            L1 -->|Block 2, λE| L3
+            L2 -->|Block 2, λF| L3
+            L2 -->|Block 2, λG| L4((L4)):::node
+            L3 -->|Block 2, λH| L4
+            L3 -->|Block 2, λI| L5((L5)):::block
+            
+            style START fill:#f1f5f9,stroke:#94a3b8,stroke-dasharray: 5 5
+        </div>
+        <p style="font-size: 0.9em; text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
+            <em>DAG des transitions de la Programmation Dynamique : Le graphe montre l'exploration exhaustive de tous les découpages possibles en blocs monochromatiques.</em>
+        </p>
+
+        <p>
+            The algorithm explores block counts from a <strong>contractual range</strong> controlled by
                     <code>iter_divider_start</code> / <code>iter_divider_end</code> parameters, plus fixed counts
                     {1, 2, N}. In <strong>Fast Auto mode</strong> (<code>fast_auto_blocks=True</code>),
                     four preset divider pairs are swept in union for maximum coverage:
@@ -427,7 +455,7 @@
                 <code>_validate_strategy_blocks_contract</code> schema (contiguous coverage, correct n_blocks,
                 valid wavelengths).</p>
 
-                <h3>4.2. Elite Candidate Generation</h3>
+                <h3>4.2 Elite Candidate Generation</h3>
                 <div class="new-badge">
                     <code>_generate_elite_candidate_strategies</code> creates local-neighborhood variants around the
                     top-ranked initial strategies before the final robustness evaluation:
@@ -442,7 +470,7 @@
                     additional strategies per run.
                 </div>
 
-                <h3>4.3. SYM — Symmetry-Based Scoring</h3>
+                <h3>4.3 SYM — Symmetry-Based Scoring</h3>
                 <div class="new-badge">
                     <p>The SYM system rewards monitoring wavelengths that position T-triggers near extrema
                     (where the error propagation is most symmetric), and penalizes unnecessary wavelength changes
@@ -461,7 +489,7 @@
                     get a larger continuity reward, focusing wavelength stability where it matters most.</p>
                 </div>
 
-                <h3>4.4. Full Monte Carlo Robustness Screening</h3>
+                <h3>4.4 Full Monte Carlo Robustness Screening</h3>
                 <p>
                     <code>run_final_simulation_block</code> evaluates each candidate strategy under realistic
                     conditions:
@@ -480,7 +508,7 @@
                     4. Non-finite robustness scores are filtered before final ranking.
                 </div>
 
-                <h3>4.5. Consensus Multi-Seed Ranking (optional)</h3>
+                <h3>4.5 Consensus Multi-Seed Ranking (optional)</h3>
                 <div class="new-badge">
                     When <code>enable_consensus_ranking=True</code>, the top-k strategies
                     (<code>consensus_top_k</code>, default 12) are re-evaluated across multiple seeds
@@ -495,7 +523,7 @@
                     re-evaluations within a session. Consensus is applied both pre-elite and post-elite.
                 </div>
 
-                <h3>4.6. Post-Check: T_min Floor on Best Strategy</h3>
+                <h3>4.6 Post-Check: T_min Floor on Best Strategy</h3>
                 <p>
                     After ranking, the best strategy undergoes a final validation via
                     <code>_validate_strategy_min_transmission_floor</code>:
@@ -533,7 +561,7 @@
                 <!-- ================================================================ -->
                 <h2>6. Architecture &amp; Dependency Injection</h2>
 
-                <h3>6.1. StratContext — Dependency Container</h3>
+                <h3>6.1 StratContext — Dependency Container</h3>
                 <div class="new-badge">
                     <code>StratContext</code> (in <code>certus_strat_context.py</code>) is the central
                     dependency-injection container, replacing legacy global variables:
@@ -549,7 +577,7 @@
                     the migration.
                 </div>
 
-                <h3>6.2. RobustMaterialDatabase</h3>
+                <h3>6.2 RobustMaterialDatabase</h3>
                 <div class="new-badge">
                     <code>RobustMaterialDatabase</code> (in <code>certus_strat_db.py</code>) wraps the standard
                     <code>MaterialDatabase</code> with a 3-tier fallback strategy for index retrieval:
@@ -561,7 +589,7 @@
                     </ol>
                 </div>
 
-                <h3>6.3. Smart Index Retrieval</h3>
+                <h3>6.3 Smart Index Retrieval</h3>
                 <p>
                     <code>smart_get_refractive_index</code> and <code>smart_get_refractive_indices_vectorized</code>
                     shadow the physics module counterparts and implement the same 4-tier fallback:
@@ -575,7 +603,7 @@
                 <!-- ================================================================ -->
                 <h2>7. Post-Optimisation Analysis</h2>
 
-                <h3>7.1. Spectral Resolution Check</h3>
+                <h3>7.1 Spectral Resolution Check</h3>
                 <p>
                     <code>_calculationate_strategy_spectral_resolution</code> sweeps every
                     (layer, monitoring wavelength) pair and computes the curvature-based resolution limit:
@@ -584,7 +612,7 @@
                     $T_{tol}$ the trigger tolerance. The worst layer is reported in the output.
                 </p>
 
-                <h3>7.2. Phase A Observability JSON Export</h3>
+                <h3>7.2 Phase A Observability JSON Export</h3>
                 <div class="new-badge">
                     <code>_export_phase_a_observability_json</code> saves a lightweight JSON report to
                     <code>reports/STRAT_observability_{timestamp}.json</code> after every run (unless
@@ -592,7 +620,7 @@
                     best wavelength, best P95 cost, MC run count, scan wavelength count.
                 </div>
 
-                <h3>7.3. Sensitivity Matrix (Legacy)</h3>
+                <h3>7.3 Sensitivity Matrix (Legacy)</h3>
                 <p>
                     <code>calculate_sensitivity_matrix</code> sweeps $\sigma$ from 0 to 3 nm and computes
                     the mean $|T_{noisy} - T_{nominal}|$ at each wavelength. This produces a 2D heat-map
@@ -601,7 +629,7 @@
                         sensitivity is now intrinsically evaluated during Phase B screening.</em>
                 </p>
 
-                <h3>7.4. SEEL Analysis (Legacy)</h3>
+                <h3>7.4 SEEL Analysis (Legacy)</h3>
                 <p>
                     <code>calculate_seel_analysis</code> runs 3×50 Monte Carlo batches at 6 different $\sigma$
                     levels and computes the RMSE for each. The resulting SEEL curve indicates the "equivalent
@@ -610,7 +638,7 @@
                         Monte-Carlo ranking rather than running as a standalone post-process.</em>
                 </p>
 
-                <h3>7.5. Detailed Growth Visualisation</h3>
+                <h3>7.5 Detailed Growth Visualisation</h3>
                 <p>
                     <code>calculationate_detailed_growth</code> simulates the exact transmittance curve during
                     layer-by-layer deposition, including the dual-matrix backside correction. This produces
@@ -622,7 +650,7 @@
                 <!-- ================================================================ -->
                 <h2>8. Implementation &amp; Performance</h2>
 
-                <h3>8.1. Numerical Precision</h3>
+                <h3>8.1 Numerical Precision</h3>
                 <table style="width:100%; border-collapse:collapse; margin:15px 0;">
                     <tr style="background:#f0f4f8; font-weight:600;">
                         <td style="padding:8px; border:1px solid #ddd;">Data Type</td>
@@ -647,7 +675,7 @@
                     within the limit.
                 </div>
 
-                <h3>8.2. Parallelism</h3>
+                <h3>8.2 Parallelism</h3>
                 <ul>
                     <li><strong>Numba <code>@njit(parallel=True)</code>:</strong> All physics kernels use
                         <code>prange</code>
@@ -660,7 +688,7 @@
                         (Core i9 reference).</li>
                 </ul>
 
-                <h3>8.3. Key Source Files</h3>
+                <h3>8.3 Key Source Files</h3>
                 <table style="width:100%; border-collapse:collapse; margin:15px 0;">
                     <tr style="background:#f0f4f8; font-weight:600;">
                         <td style="padding:8px; border:1px solid #ddd;">File</td>
@@ -696,7 +724,7 @@
                 <!-- ================================================================ -->
                 <!--  PRO 2026 ERGONOMICS & UX                                         -->
                 <!-- ================================================================ -->
-                <h2>Pro 2026 Ergonomics &amp; UI Upgrades</h2>
+                <h2>9. Pro 2026 Ergonomics &amp; UI Upgrades</h2>
                 <p>
                     The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific
                     workflows.
@@ -705,7 +733,7 @@
                     datatypes for maximum numerical stability (15 significant digits).
                 </p>
 
-                <h3>Application Layout</h3>
+                <h3>9.1 Application Layout</h3>
                 <p><code>CertusStratApp</code> inherits from <code>CertusBaseApp</code> and uses a horizontal
                     splitter layout with:</p>
                 <ul>
@@ -717,7 +745,7 @@
                         (♟ MS | 🎲 MCS | 🌈 SP), progress bar, theme toggle.</li>
                 </ul>
 
-                <h3>Global Keyboard Shortcuts</h3>
+                <h3>9.2 Global Keyboard Shortcuts</h3>
                 <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:
                 </p>
                 <ul>
@@ -730,7 +758,7 @@
                         visualizer, strategies table, live monitor).
                     </li>
                 </ul>
-                <h3>Dynamic Processing Feedback</h3>
+                <h3>9.3 Dynamic Processing Feedback</h3>
                 <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are
                     completely thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors
                         (Spinners)</strong> and rich button Tooltips to provide absolute real-time state awareness
@@ -740,7 +768,7 @@
                     (<code>_on_numba_ready_ui</code> re-enables them via <code>QMetaObject.invokeMethod</code>
                     on the Qt main thread).</p>
 
-                <h3>Window Management</h3>
+                <h3>9.4 Window Management</h3>
                 <ul>
                     <li><strong>Plot Cache:</strong> <code>PlotCache</code> uses SHA256 hashing of data content
                         (LRU, 20 items max) to prevent re-rendering identical Plotly figures.</li>
@@ -751,9 +779,9 @@
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> &amp;
-                        <code>_certus_physics_impl.py</code> — Revision 2026.03
+                        <code>_certus_physics_impl.py</code> — Revision 2026.04.17
                     </p>
-                    <p>&copy; CERTUS Scientific Suite v26-03 • Scientific Analysis Report</p>
+                    <p>&copy; CERTUS Scientific Suite v26-04 • Scientific Analysis Report</p>
                 </div>
         </div>
 

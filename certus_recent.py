@@ -98,9 +98,7 @@ class RecentFilesRegistry:
         self.cap = int(cap)
 
     # -- Read -------------------------------------------------------------
-    def list_recent(
-        self, category: str, *, limit: int | None = None, drop_missing: bool = True
-    ) -> list[str]:
+    def list_recent(self, category: str, *, limit: int | None = None, drop_missing: bool = True) -> list[str]:
         """Return MRU-sorted paths for ``category``.
 
         Parameters
@@ -204,13 +202,9 @@ def record_recent(category: str, path: str) -> None:
     _default_registry.record(category, path)
 
 
-def list_recent(
-    category: str, limit: int | None = None, *, drop_missing: bool = True
-) -> list[str]:
+def list_recent(category: str, limit: int | None = None, *, drop_missing: bool = True) -> list[str]:
     """Return MRU paths for ``category`` (default filters missing files)."""
-    return _default_registry.list_recent(
-        category, limit=limit, drop_missing=drop_missing
-    )
+    return _default_registry.list_recent(category, limit=limit, drop_missing=drop_missing)
 
 
 def forget_recent(category: str, path: str) -> None:

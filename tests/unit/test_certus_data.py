@@ -1,150 +1,337 @@
-"""
-Unit tests for certus_data.py
-Covers read_data_file_robust, read_csv_robust, constants.
-"""
+"""Tests unitaires : certus_data — I/O, timing, shared memory, reporting."""
 
-import sys
-import tempfile
+from __future__ import annotations
+
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
 from certus_data import (
+    ReportSection,
+    build_standard_report,
+    load_spectrum_columns,
+    get_missing_manifest_fields,
+    WL_TOLERANCE,
+    CSV_SAMPLE_SIZE,
+    MANIFEST_REQUIRED_FIELDS,
+    EXCEL_SHEET_NAME_MAX_LENGTH,
+    numpy_encoder,
     read_csv_robust,
     read_data_file_robust,
-    generate_html_report,
-    OPENPYXL_AVAILABLE,
+    to_csv_robust,
+    TimingLogger,
+    PerformanceMonitor,
+    PERF_MONITOR,
+    SharedIndicesManager,
+    SharedIndicesWorker,
+    SharedArrayManager,
+    SharedArrayWorker,
+    SpectrumLoadResult,
 )
 
 
-class TestReadDataFileRobust:
-    """Tests for read_data_file_robust dispatch and validation."""
-
-    def test_invalid_filepath_none_raises(self):
-        with pytest.raises(ValueError, match="Invalid filepath"):
-            read_data_file_robust(None)
-
-    def test_invalid_filepath_empty_raises(self):
-        with pytest.raises(ValueError, match="Invalid filepath"):
-            read_data_file_robust("")
-
-    def test_invalid_filepath_not_string_raises(self):
-        with pytest.raises(ValueError, match="Invalid filepath"):
-            read_data_file_robust(123)
-
-    def test_dispatches_to_csv_for_csv_extension(self):
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
-            f.write(b"wl,R,T\n400,0.1,0.9\n500,0.2,0.8\n")
-            f.flush()
-            path = f.name
-        try:
-            df = read_data_file_robust(path)
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) >= 1
-            assert "wl" in df.columns or df.shape[1] >= 2
-        finally:
-            os.unlink(path)
-
-    def test_dispatches_to_csv_for_txt_extension(self):
-        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
-            f.write(b"lambda,value\n400,0.5\n500,0.6\n")
-            f.flush()
-            path = f.name
-        try:
-            df = read_data_file_robust(path)
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) >= 1
-        finally:
-            os.unlink(path)
-
-    @pytest.mark.skipif(not OPENPYXL_AVAILABLE, reason="openpyxl not available")
-    def test_dispatches_to_excel_for_xlsx_extension(self):
-        with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as f:
-            path = f.name
-        try:
-            pd.DataFrame({"A": [1, 2], "B": [3, 4]}).to_excel(path, index=False)
-            df = read_data_file_robust(path)
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) == 2
-        finally:
-            p = Path(path)
-            if p.exists():
-                p.unlink()
+# ── ReportSection ──
 
 
-class TestGenerateHtmlReport:
-    """Tests for generate_html_report sections and table content types."""
+class TestReportSection:
+    def test_creates_with_required_args(self) -> None:
+        s = ReportSection(title="Test", content="Hello", kind="text")
+        assert s.title == "Test"
+        assert s.content == "Hello"
 
-    def test_report_with_table_dataframe(self):
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
-            path = f.name
-        try:
-            df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
-            ok = generate_html_report(
-                path, "Report", [{"title": "Table", "type": "table", "content": df}]
-            )
-            assert ok is True
-            html = Path(path).read_text(encoding="utf-8")
-            assert "Report" in html
-            assert "<table" in html
-            assert "1" in html and "2" in html
-        finally:
-            p = Path(path)
-            if p.exists():
-                p.unlink()
 
-    def test_report_with_table_list_of_dict(self):
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
-            path = f.name
-        try:
-            rows = [{"x": 1, "y": 2}, {"x": 3, "y": 4}]
-            ok = generate_html_report(
-                path, "Report", [{"title": "Data", "type": "table", "content": rows}]
-            )
-            assert ok is True
-            html = Path(path).read_text(encoding="utf-8")
-            assert "<table" in html
-            assert "1" in html and "3" in html
-        finally:
-            p = Path(path)
-            if p.exists():
-                p.unlink()
+# ── numpy_encoder ──
 
-    def test_report_with_table_single_dict(self):
-        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
-            path = f.name
-        try:
-            row = {"param": "value", "n": 42}
-            ok = generate_html_report(
-                path, "Report", [{"title": "KV", "type": "table", "content": row}]
-            )
-            assert ok is True
-            html = Path(path).read_text(encoding="utf-8")
-            assert "<table" in html
-            assert "value" in html and "42" in html
-        finally:
-            p = Path(path)
-            if p.exists():
-                p.unlink()
+
+class TestNumpyEncoder:
+    def test_encodes_int64(self) -> None:
+        result = numpy_encoder(np.int64(42))
+        assert isinstance(result, int)
+        assert result == 42
+
+    def test_encodes_float64(self) -> None:
+        result = numpy_encoder(np.float64(3.14))
+        assert isinstance(result, float)
+
+    def test_encodes_array(self) -> None:
+        result = numpy_encoder(np.array([1.0, 2.0]))
+        assert isinstance(result, list)
+        assert len(result) == 2
+
+    def test_encodes_string_fallback(self) -> None:
+        result = numpy_encoder({"key": "val"})
+        assert isinstance(result, str)
+
+
+# ── read_csv_robust ──
 
 
 class TestReadCsvRobust:
-    """Basic tests for read_csv_robust."""
+    def test_read_comma_separated(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.csv"
+        f.write_text("a,b\n1.0,2.0\n3.0,4.0\n", encoding="utf-8")
+        df = read_csv_robust(str(f))
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (2, 2)
 
-    def test_read_simple_csv(self):
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
-            f.write(b"x,y\n1,2\n3,4\n")
-            f.flush()
-            path = f.name
-        try:
-            df = read_csv_robust(path)
-            assert isinstance(df, pd.DataFrame)
-            assert len(df) == 2
-            assert list(df.columns) == ["x", "y"]
-        finally:
-            os.unlink(path)
+    def test_read_semicolon_separated(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.csv"
+        f.write_text("a;b\n1,0;2,0\n3,0;4,0\n", encoding="utf-8")
+        df = read_csv_robust(str(f))
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (2, 2)
+
+    def test_missing_file_raises(self) -> None:
+        with pytest.raises(FileNotFoundError):
+            read_csv_robust("/nonexistent/path.csv")
+
+    def test_invalid_path_raises(self) -> None:
+        with pytest.raises(ValueError):
+            read_csv_robust("")
+
+
+# ── read_data_file_robust ──
+
+
+class TestReadDataFileRobust:
+    def test_dispatches_csv(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.csv"
+        f.write_text("a,b\n1,2\n3,4\n", encoding="utf-8")
+        df = read_data_file_robust(str(f))
+        assert isinstance(df, pd.DataFrame)
+
+    def test_invalid_path_raises(self) -> None:
+        with pytest.raises(ValueError):
+            read_data_file_robust("")
+
+
+# ── to_csv_robust ──
+
+
+class TestToCsvRobust:
+    def test_writes_csv(self, tmp_path: Path) -> None:
+        df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+        f = tmp_path / "output.csv"
+        to_csv_robust(df, str(f), index=False)
+        assert f.exists()
+        content = f.read_text(encoding="utf-8")
+        assert "1.0" in content
+
+    def test_european_format(self, tmp_path: Path) -> None:
+        df = pd.DataFrame({"a": [1.5], "b": [2.5]})
+        f = tmp_path / "euro.csv"
+        to_csv_robust(df, str(f), decimal_separator=",", index=False)
+        content = f.read_text(encoding="utf-8")
+        assert ";" in content  # semicolon separator for EU format
+
+    def test_empty_df_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(ValueError):
+            to_csv_robust(pd.DataFrame(), str(tmp_path / "empty.csv"))
+
+
+# ── TimingLogger ──
+
+
+class TestTimingLogger:
+    def test_start_and_end(self) -> None:
+        t = TimingLogger()
+        t.start("test")
+        t.end("test")
+        assert "test" not in t.start_times
+
+    def test_end_without_start_noop(self) -> None:
+        t = TimingLogger()
+        t.end("nonexistent")  # should not raise
+
+    def test_global_timing(self) -> None:
+        t = TimingLogger()
+        t.start_global("global_test")
+        t.end_global("global_test")
+        assert "global_test" not in t.start_times
+
+
+# ── PerformanceMonitor ──
+
+
+class TestPerformanceMonitor:
+    def test_measure_context(self) -> None:
+        mon = PerformanceMonitor()
+        with mon.measure("test_op"):
+            _ = sum(range(100))
+        assert "test_op" in mon.metrics
+        assert len(mon.metrics["test_op"]) == 1
+
+    def test_report_empty(self) -> None:
+        mon = PerformanceMonitor()
+        assert "No data" in mon.report()
+
+    def test_report_with_data(self) -> None:
+        mon = PerformanceMonitor()
+        with mon.measure("calc"):
+            pass
+        report = mon.report()
+        assert "calc" in report
+        assert "ms" in report
+
+
+# ── SharedIndicesManager / Worker ──
+
+
+class TestSharedIndicesRoundtrip:
+    def test_manager_worker_roundtrip(self) -> None:
+        clues = {
+            400.0: {"H": 2.3, "L": 1.45, "substrate": 1.52},
+            500.0: {"H": 2.28, "L": 1.44, "substrate": 1.51},
+        }
+        with SharedIndicesManager(clues) as mgr:
+            ctx = mgr.get_context_info()
+            assert "shm_name" in ctx
+            with SharedIndicesWorker(ctx) as worker:
+                result = worker.get(400.0)
+                assert abs(result["H"] - 2.3) < 0.01
+                assert abs(result["L"] - 1.45) < 0.01
+
+
+# ── SharedArrayManager / Worker ──
+
+
+class TestSharedArrayRoundtrip:
+    def test_manager_worker_roundtrip(self) -> None:
+        arr = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float64)
+        with SharedArrayManager(arr) as mgr:
+            ctx = mgr.get_context_info()
+            with SharedArrayWorker(ctx) as worker:
+                retrieved = worker.get_array()
+                np.testing.assert_allclose(retrieved, arr)
+
+
+# ── ManifestFields ──
+
+
+class TestManifestFields:
+    def test_required_fields_is_list(self) -> None:
+        assert isinstance(MANIFEST_REQUIRED_FIELDS, (list, tuple))
+        assert len(MANIFEST_REQUIRED_FIELDS) > 0
+
+    def test_get_missing_fields_full_manifest(self) -> None:
+        full = {k: "value" for k in MANIFEST_REQUIRED_FIELDS}
+        missing = get_missing_manifest_fields(full)
+        assert len(missing) == 0
+
+    def test_get_missing_fields_empty_manifest(self) -> None:
+        missing = get_missing_manifest_fields({})
+        assert len(missing) == len(MANIFEST_REQUIRED_FIELDS)
+
+
+# ── Constants ──
+
+
+class TestConstants:
+    def test_wl_tolerance_positive(self) -> None:
+        assert WL_TOLERANCE > 0
+
+    def test_csv_sample_size_positive(self) -> None:
+        assert CSV_SAMPLE_SIZE > 0
+
+    def test_excel_sheet_name_limit(self) -> None:
+        assert EXCEL_SHEET_NAME_MAX_LENGTH == 31
+
+
+# ── LoadSpectrumColumns ──
+
+
+class TestLoadSpectrumColumns:
+    def test_load_csv_file(self, tmp_path: Path) -> None:
+        csv_path = tmp_path / "test_spectrum.csv"
+        csv_path.write_text(
+            "wavelength,T,R\n400,0.5,0.3\n500,0.6,0.2\n600,0.7,0.1\n",
+            encoding="utf-8",
+        )
+        result = load_spectrum_columns(str(csv_path))
+        assert result is not None
+
+
+# ── PERF_MONITOR singleton ──
+
+
+class TestPerfMonitorSingleton:
+    def test_global_instance(self) -> None:
+        assert isinstance(PERF_MONITOR, PerformanceMonitor)
+
+
+# ── ReportSection helpers ──
+
+
+class TestReportSectionHelpers:
+    def test_to_html_dict(self) -> None:
+        s = ReportSection(title="Test", kind="text", content="Hello")
+        d = s.to_html_dict()
+        assert d["title"] == "Test"
+        assert d["type"] == "text"
+        assert d["content"] == "Hello"
+
+    def test_excel_sheet_name_truncates(self) -> None:
+        s = ReportSection(title="A" * 50, kind="text", content="x")
+        name = s.excel_sheet_name()
+        assert len(name) <= EXCEL_SHEET_NAME_MAX_LENGTH
+
+    def test_excel_sheet_name_cleans_illegal_chars(self) -> None:
+        s = ReportSection(title="Test/Sheet:1[2]", kind="text", content="x")
+        name = s.excel_sheet_name()
+        assert "/" not in name
+        assert ":" not in name
+        assert "[" not in name
+        assert "]" not in name
+
+    def test_excel_sheet_name_override(self) -> None:
+        s = ReportSection(title="Title", kind="text", content="x", sheet_name="Custom")
+        assert s.excel_sheet_name() == "Custom"
+
+
+# ── build_standard_report ──
+
+
+class TestBuildStandardReport:
+    def test_excel_output(self, tmp_path: Path) -> None:
+        sections = [
+            ReportSection(title="Summary", kind="kv", content={"key": "value"}),
+            ReportSection(
+                title="Data",
+                kind="table",
+                content=pd.DataFrame({"x": [1, 2], "y": [3, 4]}),
+            ),
+            ReportSection(title="Note", kind="text", content="Some text"),
+        ]
+        xlsx = str(tmp_path / "report.xlsx")
+        result = build_standard_report(sections, excel_path=xlsx)
+        assert result.get("excel") is True
+        assert Path(xlsx).exists()
+
+    def test_no_output_requested(self) -> None:
+        sections = [ReportSection(title="T", kind="text", content="x")]
+        result = build_standard_report(sections)
+        assert "excel" not in result
+        assert "html" not in result
+
+    def test_manifest_dict(self, tmp_path: Path) -> None:
+        sections = [
+            ReportSection(title="Data", kind="kv", content={"a": 1}),
+        ]
+        xlsx = str(tmp_path / "report_m.xlsx")
+        manifest = {"run_id": "r1", "app_id": "test"}
+        result = build_standard_report(sections, excel_path=xlsx, run_manifest=manifest)
+        assert result.get("excel") is True
+
+    def test_require_complete_manifest_fails(self, tmp_path: Path) -> None:
+        sections = [ReportSection(title="T", kind="text", content="x")]
+        xlsx = str(tmp_path / "report_f.xlsx")
+        result = build_standard_report(
+            sections,
+            excel_path=xlsx,
+            run_manifest={"incomplete": True},
+            require_complete_manifest=True,
+        )
+        assert result.get("excel") is False
+

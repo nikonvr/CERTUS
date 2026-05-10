@@ -304,3 +304,147 @@ def test_nl_clear_result_fields_removes_new_decision_keys() -> None:
     assert "nl_alpha_identifiability_thr_budget_hits" not in out
     assert out.get("unrelated_key") == 42
 
+
+# ── _interp_on_sigma_knots ──
+
+from spline_nonlinear_alpha import (
+    _interp_on_sigma_knots,
+    _lbfgsb_exit_kind,
+    _NLJointObjective,
+    _cfg_get_first,
+    nonlinear_alpha_lbfgs_maxfun_per_step_from_views,
+    nonlinear_alpha_second_pass_maxfun_effective_from_views,
+)
+
+
+def test_interp_on_sigma_knots_basic() -> None:
+    lam = np.linspace(400.0, 1000.0, 50)
+    y = np.sin(lam / 100)
+    sk = canonical_spline_sigma_knots(400, 1000)
+    result = _interp_on_sigma_knots(lam, y, sk)
+    assert result.shape == sk.shape
+    assert np.all(np.isfinite(result))
+
+
+def test_interp_on_sigma_knots_empty() -> None:
+    result = _interp_on_sigma_knots(np.array([]), np.array([]), np.array([0.001, 0.002]))
+    assert result.size == 0
+
+
+# ── _lbfgsb_exit_kind ──
+
+
+def test_lbfgsb_exit_kind_maxfun() -> None:
+    assert _lbfgsb_exit_kind(False, "TOTAL NO. OF F AND G") == "budget_maxfun"
+
+
+def test_lbfgsb_exit_kind_converged() -> None:
+    assert _lbfgsb_exit_kind(True, "CONVERGED") == "converged"
+
+
+def test_lbfgsb_exit_kind_other() -> None:
+    assert _lbfgsb_exit_kind(False, "some random error") == "other_error"
+
+
+# ── _cfg_get_first ──
+
+
+def test_cfg_get_first_finds_first_match() -> None:
+    ns = SimpleNamespace(a=10, b=20)
+    assert _cfg_get_first(ns, "a", "b", default=0) == 10
+
+
+def test_cfg_get_first_falls_to_default() -> None:
+    ns = SimpleNamespace()
+    assert _cfg_get_first(ns, "missing", default=42) == 42
+
+
+# ── _NLJointObjective ──
+
+from spline_objective import build_spline_objective_masked_grid
+
+
+def test_nl_joint_objective_call() -> None:
+    lam = np.linspace(400.0, 1000.0, 50)
+    cfg = _nl_cfg_min(lam)
+    sk = canonical_spline_sigma_knots(400.0, 1000.0)
+    k = int(sk.size)
+
+    grid = build_spline_objective_masked_grid(cfg)
+    assert grid is not None
+    lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = grid
+
+    obj = _NLJointObjective(
+        cfg, sk, lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f,
+        "smooth", None,
+        alpha_sigma_prior=0.0015,
+        alpha_prior_weight=1.0,
+    )
+
+    x0 = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+    z = np.concatenate(([1.0], x0))
+    cost = obj(z)
+    assert np.isfinite(cost)
+    assert cost >= 0
+
+
+def test_nl_joint_objective_unpack() -> None:
+    lam = np.linspace(400.0, 1000.0, 50)
+    cfg = _nl_cfg_min(lam)
+    sk = canonical_spline_sigma_knots(400.0, 1000.0)
+    k = int(sk.size)
+
+    grid = build_spline_objective_masked_grid(cfg)
+    lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = grid
+
+    obj = _NLJointObjective(
+        cfg, sk, lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f,
+        "smooth", None,
+        alpha_sigma_prior=0.0015,
+        alpha_prior_weight=1.0,
+    )
+
+    x0 = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+    z = np.concatenate(([1.002], x0))
+    alpha, x_part = obj.unpack(z)
+    assert abs(alpha - 1.002) < 1e-9
+    assert x_part.size == x0.size
+
+
+# ── view-based functions ──
+
+
+def test_lbfgs_maxfun_per_step_from_views() -> None:
+    from certus_index_spline_core import SplineNonlinearAlphaConfig, SplinePGlobalConfig
+    alpha_v = SplineNonlinearAlphaConfig(nonlinear_alpha_budget_mode="slow")
+    pg_v = SplinePGlobalConfig(polish_maxfun=5000)
+    mf, mode = nonlinear_alpha_lbfgs_maxfun_per_step_from_views(alpha_v, pg_v)
+    assert mode == "slow"
+    assert mf >= 800
+
+
+def test_second_pass_maxfun_effective_from_views() -> None:
+    from certus_index_spline_core import SplineNonlinearAlphaConfig, SplinePGlobalConfig
+    alpha_v = SplineNonlinearAlphaConfig()
+    pg_v = SplinePGlobalConfig(polish_maxfun=5000)
+    mf = nonlinear_alpha_second_pass_maxfun_effective_from_views(alpha_v, pg_v, 500)
+    assert mf >= 5000
+
+
+# ── _pick_nl_start_x_and_mode: edge cases ──
+
+
+def test_pick_nl_start_x_returns_none_for_tiny_lam() -> None:
+    lam = np.array([400.0])  # < 2 points
+    cfg = _nl_cfg_min(np.linspace(400, 1000, 20))
+    cfg2 = cfg.replace(lam_nm=lam)
+    assert _pick_nl_start_x_and_mode(cfg2, {}) is None
+
+
+def test_pick_nl_start_x_returns_none_missing_data() -> None:
+    lam = np.linspace(400, 1000, 20)
+    cfg = _nl_cfg_min(lam)
+    out = {"sigma_knots": np.array([0.001, 0.002])}
+    assert _pick_nl_start_x_and_mode(cfg, out) is None
+
+

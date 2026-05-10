@@ -4,7 +4,7 @@ A suite of applications for thin-film analysis and design (refractive index, tra
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.14+
 - Dependencies: PyQt6, NumPy, SciPy, pandas, Numba, pyqtgraph, openpyxl (optional for Excel)
 
 ## Installation

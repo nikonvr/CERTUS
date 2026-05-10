@@ -51,194 +51,89 @@ Contains:
 
 """
 
-
 __all__ = [
-
     # Data Structures
-
     "Layer",
-
     "Target",
-
     "ObliqueTarget",
-
     "TLUParameters",
-
     "Sample",
-
     "PGlobalConfig",
-
     "SELLMEIER_COEFFS_BY_ID",
-
     "SUBSTRATE_MIN_LAMBDA_BY_ID",
-
     # Optical Models
-
     "sellmeier_n_array",
-
     "get_nk_cauchy",
-
     "get_nk_cauchy_wrapper",
-
     "epsilon2_TLU_array",
-
     "epsilon1_TL_analytic",
-
     "epsilon_to_nk",
-
     "get_n_substrate_array_by_id",
-
     "get_n_frosted_glass_array",
-
     # TMM
-
-    "calculate_transmission_single",
-
-    "calculate_transmission_array",
-
-    "calculate_reflection_single",
-
-    "calculate_reflection_array",
-
-    "calculate_RT_single_layer_single",
-
     "calculate_RT_single_layer_backside_array",
-
-    "calculate_R_substrate_array",
-
-    "calculate_T_substrate_array",
-
+    "calculate_bare_substrate_RT",
+    "calculate_single_interface_R",
     "calculate_RT_vectorized_real",
-
     "calculate_RT_vectorized_real_HL",
-
-    "calculate_R_frosted_glass_reference",
-
-    "calculate_reflection_infinite_substrate_array",
-
     "calc_spectrum_front",
-
-    "calc_spectrum_front_wrapper",
-
     "calc_spectrum_full",
-
-    "calc_spectrum_full_wrapper",
-
     "calc_spectrum_full_exact",
-
-    "calc_spectrum_full_exact_wrapper",
-
     "calc_spectrum_oblique_vectorized",
-
     "calc_spectrum_oblique_backside_vectorized",
-
     "calc_spectrum_full_oblique_exact",
-
     "oblique_front_char_matrix_single",
-
     "oblique_front_rt_from_char_matrix_nsub_real",
-
     "compute_oblique_rt_and_grads_analytic",
-
     "compute_TMM_generic",
-
     "calculate_RTRback_incoherent_vectorized",
-
     "apply_exact_backside_combination",
-
     # Cost Functions
-
     "cost_numba_fast",
-
     "make_cost_function",
-
     "calc_rmse",
-
     "prepare_targets_vectorized",
-
     # Gradients
-
     "compute_gradient_all_layers_analytic",
-
     "compute_oblique_gradient_contrib_analytic",
-
     # Optimization
-
     "PGlobalOptimizer",
-
     "SingleLinkageClusterer",
-
     "clip_to_bounds",
-
     "compute_mse_vectorized",
-
     # Colorimetry
-
     "xyz_from_spectrum",
-
     "xyz_to_lab",
-
     "lab_to_rgb",
-
     "delta_e_2000",
-
     # STRAT Kernels
-
     "simulate_growth_kernel",
-
     "compute_dynamics_kernel",
-
     "calculate_detailed_growth",
-
     "check_extrema_proximity",
-
     "validate_wavelengths_batch",
-
     "trim_worst_only",
-
     "simulate_stack_robustness_batch",
-
     "compute_batch_rmse",
-
     "compute_T_front_at_layer",
-
     # Non-monotonic handling modes
-
     "NON_MONOTONIC_MODE_ATTENUATE",
-
     "NON_MONOTONIC_MODE_REJECT",
-
     # Backside Validation
-
     "validate_backside_real_clues",
-
     "K_MAX_LAYER_BACKSIDE",
-
     "K_MAX_SUBSTRATE_BACKSIDE",
-
     # Material Database
-
     "Material",
-
     "MaterialDatabase",
-
     "NKCache",
-
     # Utilities
-
     "init_thickness",
-
     "calc_qwot",
-
     "arange_inclusive",
-
     "warmup_physics",
-
     "get_refractive_index",
-
     "get_refractive_clues_vectorized",
-
-
 ]
 
 
@@ -320,7 +215,7 @@ import logging
 #    - Note: R_prime = reflectance seen from substrate side, NOT R_front!
 
 
-#    - Kernels: calculate_R_substrate_array, calculate_RT_single_layer_backside_array
+#    - Kernels: calculate_bare_substrate_RT, calculate_single_interface_R, calculate_RT_single_layer_backside_array
 
 
 #
@@ -335,7 +230,7 @@ import logging
 #    - R_measured = R_front (Single Interface).
 
 
-#    - Kernels: calculate_R_frosted_glass_reference, calculate_reflection_infinite_substrate_array
+#    - Kernels: calculate_single_interface_R, calculate_single_interface_R
 
 
 #
@@ -502,32 +397,18 @@ from functools import lru_cache
 
 
 from certus_core import (
-
     FROSTED_GLASS_CAUCHY_A,
-
     FROSTED_GLASS_CAUCHY_B,
-
     HC_EV_NM,
-
     N_SUPERSTRATE,
-
     OPENPYXL_AVAILABLE,
-
     PI,
-
     SMALL_EPSILON,
-
     SUBSTRATE_MIN_LAMBDA,
-
     TWO_PI,
-
     WL_DECIMALS,
-
     get_complex_dtype,
-
     get_resource_path,
-
-
 )
 
 
@@ -580,12 +461,10 @@ import importlib
 
 
 try:
-
     _structures_module = importlib.import_module("certus_physics.structures")
 
 
 except (ImportError, ModuleNotFoundError):
-
     # Fallback: load from file path (dev mode or if import fails in frozen mode)
 
     _base_path = Path(__file__).resolve().parent
@@ -595,9 +474,7 @@ except (ImportError, ModuleNotFoundError):
     _possible_bases = [_base_path]
 
     if getattr(sys, "frozen", False):
-
         if hasattr(sys, "_MEIPASS"):
-
             _possible_bases.append(Path(sys._MEIPASS))
 
         # Also try _internal directory (where PyInstaller puts bundled modules)
@@ -606,7 +483,6 @@ except (ImportError, ModuleNotFoundError):
         _internal_path = _executable_dir / "_internal"
 
         if _internal_path.exists():
-
             _possible_bases.append(_internal_path)
 
         # Try directory of executable
@@ -618,45 +494,30 @@ except (ImportError, ModuleNotFoundError):
     _possible_paths = []
 
     for base in _possible_bases:
-
         _possible_paths.extend(
-
             [
-
                 base / "certus_physics" / "structures.py",
-
                 base.parent / "certus_physics" / "structures.py",
-
             ]
-
         )
 
     _structures_path = None
 
     for path in _possible_paths:
-
         abs_path = path.resolve(strict=False)
 
         if abs_path.exists():
-
             _structures_path = str(abs_path)
 
             break
 
     if _structures_path is None:
-
         raise ImportError(
-
             f"Cannot find certus_physics/structures.py. "
-
             f"Tried: {_possible_paths[:5]}. "
-
             f"Frozen: {getattr(sys, 'frozen', False)}, "
-
             f"MEIPASS: {getattr(sys, '_MEIPASS', 'N/A')}, "
-
             f"__file__: {__file__}"
-
         )
 
     # Load from file path
@@ -664,7 +525,6 @@ except (ImportError, ModuleNotFoundError):
     _spec = importlib.util.spec_from_file_location("_certus_structures", _structures_path)
 
     if _spec is None or _spec.loader is None:
-
         raise ImportError(f"Cannot create spec for {_structures_path}")
 
     _structures_module = importlib.util.module_from_spec(_spec)
@@ -703,7 +563,6 @@ SUBSTRATE_MIN_LAMBDA_BY_ID = _structures_module.SUBSTRATE_MIN_LAMBDA_BY_ID
 
 
 if "_spec" in locals():
-
     del _spec
 
 
@@ -711,27 +570,15 @@ del _structures_module
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def get_n_substrate_array_by_id_kernel(
-
     wavelengths_nm: np.ndarray,
-
     B1: float,
-
     C1: float,
-
     B2: float,
-
     C2: float,
-
     B3: float,
-
     C3: float,
-
     min_lambda: float,
-
-
 ) -> np.ndarray:
 
     n = len(wavelengths_nm)
@@ -739,30 +586,17 @@ def get_n_substrate_array_by_id_kernel(
     results = np.empty(n, dtype=wavelengths_nm.dtype)
 
     for i in prange(n):
-
         wl = wavelengths_nm[i]
 
         if wl < min_lambda:
-
             results[i] = np.nan
 
         else:
-
             l_um = wl / 1000.0
 
             l_sq = l_um * l_um
 
-            n_sq = (
-
-                1.0
-
-                + (B1 * l_sq / (l_sq - C1))
-
-                + (B2 * l_sq / (l_sq - C2))
-
-                + (B3 * l_sq / (l_sq - C3))
-
-            )
+            n_sq = 1.0 + (B1 * l_sq / (l_sq - C1)) + (B2 * l_sq / (l_sq - C2)) + (B3 * l_sq / (l_sq - C3))
 
             results[i] = np.sqrt(max(n_sq, 1e-6))
 
@@ -774,35 +608,22 @@ def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -
     # Sapphire/Al2O3 (id=3): authoritative tabulated n from example/sapphire fresnel.xlsx
 
     if substrate_id == 3:
-
         sap_wl, sap_n = _get_sapphire_n_dataset()
 
         if sap_wl is not None and sap_n is not None:
-
             wavelengths_nm = np.asarray(wavelengths_nm, dtype=np.float64)
 
             return np.interp(
-
                 wavelengths_nm,
-
                 sap_wl,
-
                 sap_n,
-
                 left=float(sap_n[0]),
-
                 right=float(sap_n[-1]),
-
             ).astype(np.float64)
 
-        raise ValueError(
-
-            "Sapphire/Al2O3 requires example/sapphire fresnel.xlsx (authoritative source)."
-
-        )
+        raise ValueError("Sapphire/Al2O3 requires example/sapphire fresnel.xlsx (authoritative source).")
 
     if substrate_id not in SELLMEIER_COEFFS_BY_ID:
-
         raise KeyError(f"Unknown substrate ID: {substrate_id}")
 
     coeffs = SELLMEIER_COEFFS_BY_ID[substrate_id]
@@ -820,7 +641,6 @@ def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
     xlsx_path = get_resource_path(str(Path("example") / "sapphire fresnel.xlsx"))
 
     try:
-
         import pandas as pd
 
         df = pd.read_excel(xlsx_path, header=0, engine="openpyxl")
@@ -836,11 +656,9 @@ def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
         df = df.sort_values(by=wl_col)
 
         if n_col is None and rnu_col is not None:
-
             df = df.dropna(subset=[wl_col, rnu_col])
 
         else:
-
             n_col = n_col or df.columns[1]
 
             df = df.dropna(subset=[wl_col, n_col])
@@ -848,7 +666,6 @@ def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
         wl = np.asarray(df[wl_col].to_numpy(), dtype=np.float64)
 
         if n_col is None and rnu_col is not None:
-
             r2f = np.asarray(df[rnu_col].to_numpy(), dtype=np.float64)
 
             rfrac = np.clip(r2f / 100.0 if np.nanmax(r2f) > 2.0 else r2f, 1.0e-6, 0.999999)
@@ -858,15 +675,12 @@ def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
             n = (1.0 + np.sqrt(disc)) / np.maximum(1.0 - rfrac, 1.0e-9)
 
         else:
-
             n = np.asarray(df[n_col].to_numpy(), dtype=np.float64)
 
         if wl.size >= 2 and np.all(np.isfinite(wl)) and np.all(np.isfinite(n)):
-
             return wl, n
 
     except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
         pass
 
     return None, None
@@ -894,27 +708,15 @@ def _get_sapphire_n_dataset() -> tuple[np.ndarray | None, np.ndarray | None]:
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def sellmeier_n_array(
-
     wls: np.ndarray,
-
     B1: float,
-
     C1: float,
-
     B2: float,
-
     C2: float,
-
     B3: float,
-
     C3: float,
-
     min_wl: float,
-
-
 ) -> np.ndarray:
 
     n = len(wls)
@@ -922,15 +724,12 @@ def sellmeier_n_array(
     res = np.empty(n, dtype=np.float64)
 
     for i in prange(n):
-
         wl = wls[i]
 
         if wl < min_wl:
-
             res[i] = 1.0
 
         else:
-
             w = wl / 1000.0
 
             w2 = w * w
@@ -943,8 +742,6 @@ def sellmeier_n_array(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def get_nk_cauchy(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
 
     n_pts = len(wls)
@@ -962,46 +759,32 @@ def get_nk_cauchy(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
     A = n4 - B * inv_wl1sq
 
     for i in prange(n_pts):
-
         wl = wls[i]
 
         if wl < 1.0:
-
             res[i] = A
 
         else:
-
             res[i] = A + B / (wl * wl)
 
     return res
 
 
 def get_nk_cauchy_wrapper(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
-
     """Cauchy index wrapper. Returns f64 (double precision)."""
 
     return get_nk_cauchy(float(n4), float(n7), wls.astype(np.float64))
 
 
-@njit(cache=True)
-
-
+@njit(cache=True, fastmath=True, nogil=True)
 def get_nk_cauchy_simple(wavelength_nm, n_infini, A):
-
     """Cauchy dielectric model: n = n_inf + A/lambda^2 (Used in Metal Bilayer)"""
 
     return n_infini + A / (wavelength_nm**2)
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def epsilon2_TLU_array(
-
-    E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, Eu: float
-
-
-) -> np.ndarray:
+def epsilon2_TLU_array(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, Eu: float) -> np.ndarray:
 
     n = len(E_array)
 
@@ -1028,11 +811,9 @@ def epsilon2_TLU_array(
     Eu_safe = max(Eu, 1e-6)
 
     for i in prange(n):
-
         E = E_array[i]
 
         if E > Eg:
-
             E_sq = E * E
 
             diff = E - Eg
@@ -1044,27 +825,17 @@ def epsilon2_TLU_array(
             result[i] = num / den if den > SMALL_EPSILON else 0.0
 
         else:
-
             if eps2_at_edge < SMALL_EPSILON:
-
                 result[i] = 0.0
 
             else:
-
                 result[i] = eps2_at_edge * np.exp((E - Eg - delta) / Eu_safe)
 
     return result
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def epsilon1_TL_analytic(
-
-    E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float
-
-
-) -> np.ndarray:
+def epsilon1_TL_analytic(E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float) -> np.ndarray:
 
     n = len(E_array)
 
@@ -1089,7 +860,6 @@ def epsilon1_TL_analytic(
     inv_PI = 1.0 / PI
 
     for i in prange(n):
-
         E = E_array[i]
 
         E_sq = E * E
@@ -1097,7 +867,6 @@ def epsilon1_TL_analytic(
         zeta4 = (E_sq - E0_sq) ** 2 + C_sq * E_sq
 
         if zeta4 < SMALL_EPSILON:
-
             zeta4 = SMALL_EPSILON
 
         inv_zeta4 = 1.0 / zeta4
@@ -1109,7 +878,6 @@ def epsilon1_TL_analytic(
         term1 = 0.0
 
         if E > SMALL_EPSILON:
-
             val_log1 = np.log(np.abs((Eg - E) / (Eg + E)))
 
             term1 = -A_E0_C * (E_sq + Eg_sq) * inv_PI * inv_zeta4 / E * val_log1
@@ -1125,38 +893,20 @@ def epsilon1_TL_analytic(
         term3 = 0.0
 
         if arg_log3_den > SMALL_EPSILON and alpha > SMALL_EPSILON:
-
-            term3 = (
-
-                (A * C * al) / (2.0 * PI * zeta4 * alpha * E0) * np.log(arg_log3_num / arg_log3_den)
-
-            )
+            term3 = (A * C * al) / (2.0 * PI * zeta4 * alpha * E0) * np.log(arg_log3_num / arg_log3_den)
 
         atan_arg1 = (2.0 * Eg + alpha) / C
 
         atan_arg2 = (2.0 * Eg - alpha) / C
 
-        term4 = (
-
-            -(A * aa) * inv_PI * inv_zeta4 / E0 * (PI - np.arctan(atan_arg1) - np.arctan(atan_arg2))
-
-        )
+        term4 = -(A * aa) * inv_PI * inv_zeta4 / E0 * (PI - np.arctan(atan_arg1) - np.arctan(atan_arg2))
 
         term5 = 0.0
 
         atan_arg3 = 2.0 * (Eg_sq - gamma_sq) / max(alpha * C, SMALL_EPSILON)
 
         if alpha > SMALL_EPSILON:
-
-            term5 = (
-
-                (4.0 * A * E0 * Eg * (E_sq - gamma_sq))
-
-                / (PI * zeta4 * alpha)
-
-                * (PI / 2.0 - np.arctan(atan_arg3))
-
-            )
+            term5 = (4.0 * A * E0 * Eg * (E_sq - gamma_sq)) / (PI * zeta4 * alpha) * (PI / 2.0 - np.arctan(atan_arg3))
 
         val = eps_inf + term1 + term2 + term3 + term4 + term5
 
@@ -1166,13 +916,8 @@ def epsilon1_TL_analytic(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def epsilon_to_nk(
-
     eps1: np.ndarray, eps2: np.ndarray, n_min: float, n_max: float, k_max: float
-
-
 ) -> tuple[np.ndarray, np.ndarray, bool]:
 
     n_pts = len(eps1)
@@ -1184,7 +929,6 @@ def epsilon_to_nk(
     is_valid = True
 
     for i in prange(n_pts):
-
         e1 = eps1[i]
 
         e2 = eps2[i]
@@ -1196,7 +940,6 @@ def epsilon_to_nk(
         k_val = np.sqrt(max((eps_mag - e1) / 2.0, 0.0))
 
         if n_val < n_min or n_val > n_max or k_val > k_max:
-
             is_valid = False
 
         n_arr[i] = n_val
@@ -1216,7 +959,6 @@ def epsilon_to_nk(
 
 
 class SplineCache:
-
     """
 
     Cache for CubicSpline objects to avoid recreation on each call.
@@ -1232,13 +974,11 @@ class SplineCache:
     def __new__(cls):
 
         if cls._instance is None:
-
             cls._instance = super(SplineCache, cls).__new__(cls)
 
         return cls._instance
 
     @lru_cache(maxsize=512)
-
     def _get_splines(self, knot_wl_tuple, n_values_tuple, k_values_tuple):
 
         knot_wl = np.array(knot_wl_tuple)
@@ -1256,13 +996,9 @@ class SplineCache:
     def get_splines(self, knot_wavelengths, n_knot_values, k_knot_values):
 
         return self._get_splines(
-
             tuple(knot_wavelengths.round(6)),
-
             tuple(n_knot_values.round(6)),
-
             tuple(k_knot_values.round(6)),
-
         )
 
     def clear(self):
@@ -1274,7 +1010,6 @@ _spline_cache = SplineCache()
 
 
 class SplineBasisCache:
-
     """
 
     High-performance spline evaluator using pre-computed basis matrices.
@@ -1306,11 +1041,9 @@ class SplineBasisCache:
     _lock = None  # Initialized lazily to avoid import-time threading overhead
 
     @classmethod
-
     def _get_lock(cls):
 
         if cls._lock is None:
-
             from threading import Lock
 
             cls._lock = Lock()
@@ -1318,9 +1051,7 @@ class SplineBasisCache:
         return cls._lock
 
     @classmethod
-
     def get(cls, knot_wavelengths: np.ndarray, target_wavelengths: np.ndarray) -> np.ndarray:
-
         """
 
         Returns the pre-computed basis matrix B (n_targets x n_knots).
@@ -1330,23 +1061,17 @@ class SplineBasisCache:
         """
 
         key = (
-
             tuple(np.round(knot_wavelengths, 6)),
-
             tuple(np.round(target_wavelengths, 4)),
-
         )
 
         if key in cls._cache:
-
             return cls._cache[key]
 
         with cls._get_lock():
-
             # Double-checked locking
 
             if key in cls._cache:
-
                 return cls._cache[key]
 
             n_knots = len(knot_wavelengths)
@@ -1362,16 +1087,11 @@ class SplineBasisCache:
             unit_vals = np.zeros(n_knots, dtype=np.float64)
 
             for j in range(n_knots):
-
                 unit_vals[:] = 0.0
 
                 unit_vals[j] = 1.0
 
-                basis_spline = CubicSpline(
-
-                    knot_wavelengths, unit_vals, bc_type="natural", extrapolate=True
-
-                )
+                basis_spline = CubicSpline(knot_wavelengths, unit_vals, bc_type="natural", extrapolate=True)
 
                 col = basis_spline(target_wavelengths)
 
@@ -1384,27 +1104,18 @@ class SplineBasisCache:
             return B
 
     @classmethod
-
     def clear(cls):
 
         with cls._get_lock():
-
             cls._cache.clear()
 
 
 def get_nk_from_spline(
-
     p_spline_nk_values: np.ndarray,
-
     knot_wavelengths: np.ndarray,
-
     target_lambda_array: np.ndarray,
-
     use_cache: bool = True,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Interpolates n, k from spline knots using cubic spline.
@@ -1424,7 +1135,6 @@ def get_nk_from_spline(
     k_knot_values = p_spline_nk_values[num_knots:]
 
     if use_cache:
-
         B = SplineBasisCache.get(knot_wavelengths, target_lambda_array)
 
         n_values = B @ n_knot_values
@@ -1432,7 +1142,6 @@ def get_nk_from_spline(
         k_values = B @ k_knot_values
 
     else:
-
         spline_n = CubicSpline(knot_wavelengths, n_knot_values, bc_type="natural", extrapolate=True)
 
         spline_k = CubicSpline(knot_wavelengths, k_knot_values, bc_type="natural", extrapolate=True)
@@ -1466,14 +1175,7 @@ def get_nk_from_spline(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def calculate_R_substrate_array(
-
-    wavelengths: np.ndarray, n_substrate: np.ndarray
-
-
-) -> np.ndarray:
+def calculate_bare_substrate_R(wavelengths: np.ndarray, n_substrate: np.ndarray) -> np.ndarray:
 
     # --- CRITICAL PHYSICS NOTE: ANTI-HALLUCINATION LOCK ---
 
@@ -1492,11 +1194,9 @@ def calculate_R_substrate_array(
     n0 = 1.0  # Air
 
     for i in prange(n_pts):
-
         ns = n_substrate[i]
 
         if ns.real < 0:
-
             ns = complex(1.5, ns.imag)
 
         r = (n0 - ns) / (n0 + ns)
@@ -1523,14 +1223,7 @@ def calculate_R_substrate_array(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def calculate_T_substrate_array(
-
-    wavelengths: np.ndarray, n_substrate: np.ndarray
-
-
-) -> np.ndarray:
+def calculate_bare_substrate_RT(wavelengths: np.ndarray, n_substrate: np.ndarray) -> np.ndarray:
 
     n_pts = len(wavelengths)
 
@@ -1539,7 +1232,6 @@ def calculate_T_substrate_array(
     n0 = 1.0  # Air
 
     for i in prange(n_pts):
-
         ns = n_substrate[i]
 
         r = (n0 - ns) / (n0 + ns)
@@ -1558,14 +1250,7 @@ def calculate_T_substrate_array(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def calculate_R_frosted_glass_reference(
-
-    wavelengths: np.ndarray, n_substrate: np.ndarray
-
-
-) -> np.ndarray:
+def calculate_single_interface_R(wavelengths: np.ndarray, n_substrate: np.ndarray) -> np.ndarray:
 
     # --- CRITICAL PHYSICS NOTE: ANTI-HALLUCINATION LOCK ---
 
@@ -1586,11 +1271,9 @@ def calculate_R_frosted_glass_reference(
     n0 = 1.0  # Air
 
     for i in prange(n_pts):
-
         ns = n_substrate[i]
 
         if ns < 0:
-
             ns = 1.5
 
         r = (n0 - ns) / (n0 + ns)
@@ -1607,14 +1290,7 @@ def calculate_R_frosted_glass_reference(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
-def compute_complex_phase_components(
-
-    phi_r: float, phi_i: float
-
-
-) -> tuple[float, float, float, float]:
+def compute_complex_phase_components(phi_r: float, phi_i: float) -> tuple[float, float, float, float]:
 
     # Receives phi_r=k0*n*d, phi_i=k0*k*d (k>=0).
 
@@ -1645,28 +1321,17 @@ def compute_complex_phase_components(
 # Macleod convention (+1j, n-ik). DO NOT MODIFY without re-running the tests.
 
 
-@njit(cache=True, fastmath=True)
-
-
-def calculate_reflection_single(
-
+@njit(cache=True, fastmath=True, nogil=True)
+def calculate_RT_single_layer_single(
     wavelength: float,
-
     n_film_real: float,
-
     n_film_imag: float,
-
     thickness_nm: float,
-
     n_sub: float,
-
-
 ) -> float:
-
     """Calculates front-surface reflectance for a single layer on substrate."""
 
     if not np.isfinite(n_sub) or n_sub < 1.0:
-
         return np.nan
 
     n0 = 1.0  # Air
@@ -1677,16 +1342,11 @@ def calculate_reflection_single(
 
     phi_i = k * n_film_imag * thickness_nm
 
-    cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(
-
-        phi_r, phi_i
-
-    )
+    cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
 
     n_mag_sq = n_film_real * n_film_real + n_film_imag * n_film_imag
 
     if n_mag_sq < SMALL_EPSILON:
-
         return np.nan
 
     inv_n_r = n_film_real / n_mag_sq
@@ -1726,7 +1386,6 @@ def calculate_reflection_single(
     denom_mag_sq = denom_real * denom_real + denom_imag * denom_imag
 
     if denom_mag_sq < SMALL_EPSILON:
-
         return np.nan
 
     inv_denom = 1.0 / denom_mag_sq
@@ -1741,23 +1400,13 @@ def calculate_reflection_single(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_reflection_array(
-
     wavelengths: np.ndarray,
-
     n_array: np.ndarray,
-
     k_array: np.ndarray,
-
     thickness: float,
-
     n_substrate: np.ndarray,
-
-
 ) -> np.ndarray:
-
     """Calculates front-surface reflectance array for a single layer on substrate."""
 
     n = len(wavelengths)
@@ -1765,12 +1414,7 @@ def calculate_reflection_array(
     res = np.empty(n, dtype=wavelengths.dtype)
 
     for i in prange(n):
-
-        res[i] = calculate_reflection_single(
-
-            wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i]
-
-        )
+        res[i] = calculate_reflection_single(wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i])
 
     return res
 
@@ -1791,23 +1435,13 @@ def calculate_reflection_array(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
-def calculate_RT_single_layer_single(
-
+def calculate_transmission_single(
     wavelength: float,
-
     n_film_real: float,
-
     n_film_imag: float,
-
     thickness_nm: float,
-
     n_sub: complex,
-
-
 ) -> tuple[float, float]:
-
     """
 
     R_front + T_total (exact incoherent backside) for a single layer.
@@ -1829,7 +1463,6 @@ def calculate_RT_single_layer_single(
     """
 
     if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
-
         return np.nan, np.nan
 
     n_film = complex(n_film_real, -n_film_imag)  # Macleod: n̂ = n - ik
@@ -1845,7 +1478,6 @@ def calculate_RT_single_layer_single(
     # Layer matrix elements
 
     if abs(n_film) < 1e-12:
-
         return np.nan, np.nan
 
     M01 = +1j * sp / n_film
@@ -1869,7 +1501,6 @@ def calculate_RT_single_layer_single(
     Y_mag_sq = Y.real * Y.real + Y.imag * Y.imag
 
     if Y_mag_sq < 1e-25:
-
         return 0.0, 0.0
 
     # r = (n0*B - C) / (n0*B + C)
@@ -1907,11 +1538,9 @@ def calculate_RT_single_layer_single(
     Yp_mag_sq = Yp.real * Yp.real + Yp.imag * Yp.imag
 
     if Yp_mag_sq < 1e-25:
-
         R_prime = 0.0
 
     else:
-
         # r' = (ns*B' - C') / (ns*B' + C')
 
         rp_num = ns * Bp - Cp
@@ -1949,7 +1578,6 @@ def calculate_RT_single_layer_single(
     denom_incoh = 1.0 - R_prime * R_sub
 
     if abs(denom_incoh) < 1e-12:
-
         denom_incoh = 1e-12
 
     # T_total = (T_front * T_sub) / (1 - R' * R_sub)
@@ -1989,66 +1617,42 @@ def calculate_RT_single_layer_single(
     return R_total, T_total
 
 
-# ─── LOCKED ─── Delegates to calculate_RT_single_layer_single (R′ at denominator) ───
+# ─── LOCKED ─── Delegates to calculate_transmission_single (R′ at denominator) ───
 
 
 # Former version erroneously used 1 - R_front·R_back instead of 1 - R′·R_sub (see file header).
 
 
-@njit(cache=True, fastmath=True)
-
-
-def calculate_transmission_single(
-
+@njit(cache=True, fastmath=True, nogil=True)
+def calculate_reflection_single(
     wavelength: float,
-
     n_film_real: float,
-
     n_film_imag: float,
-
     thickness_nm: float,
-
     n_sub: float,
-
-
 ) -> float:
 
     if not np.isfinite(n_sub) or n_sub < 1.0:
-
         return np.nan
 
-    _rf, t_tot = calculate_RT_single_layer_single(
+    _rf, _t_tot = calculate_transmission_single(wavelength, n_film_real, n_film_imag, thickness_nm, complex(n_sub, 0.0))
 
-        wavelength, n_film_real, n_film_imag, thickness_nm, complex(n_sub, 0.0)
-
-    )
-
-    if not np.isfinite(t_tot):
-
+    if not np.isfinite(_rf):
         return np.nan
 
-    return max(0.0, min(1.0, t_tot))
+    return max(0.0, min(1.0, _rf))
 
 
 # ─── LOCKED ─── Vectorized wrapper of calculate_transmission_single ───
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_transmission_array(
-
     wavelengths: np.ndarray,
-
     n_array: np.ndarray,
-
     k_array: np.ndarray,
-
     thickness: float,
-
     n_substrate: np.ndarray,
-
-
 ) -> np.ndarray:
 
     n_pts = len(wavelengths)
@@ -2056,45 +1660,32 @@ def calculate_transmission_array(
     T_array = np.empty(n_pts, dtype=wavelengths.dtype)
 
     for i in prange(n_pts):
-
-        T_array[i] = calculate_transmission_single(
-
-            wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i]
-
+        _r, T_array[i] = calculate_transmission_single(
+            wavelengths[i], n_array[i], k_array[i], thickness, complex(n_substrate[i], 0.0)
         )
 
     return T_array
 
 
-# ─── LOCKED ─── Vectorized wrapper of calculate_RT_single_layer_single ───
+# ─── LOCKED ─── Vectorized wrapper of calculate_transmission_single ───
 
 
 # Macleod convention (+1j, n-ik) + backside. DO NOT MODIFY without re-running the tests.
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_RT_single_layer_backside_array(
-
     wavelengths: np.ndarray,
-
     n_array: np.ndarray,
-
     k_array: np.ndarray,
-
     thickness: float,
-
     n_substrate: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Fused R_front + T_with_backside for monolayer over full spectrum.
 
-    2x faster than separate calculate_transmission_array + calculate_reflection_array.
+    2x faster than separate  + .
 
     CRITICAL PHYSICS NOTE:
 
@@ -2111,14 +1702,85 @@ def calculate_RT_single_layer_backside_array(
     T_arr = np.empty(n_pts, dtype=wavelengths.dtype)
 
     for i in prange(n_pts):
-
-        R_arr[i], T_arr[i] = calculate_RT_single_layer_single(
-
-            wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i]
-
+        R_arr[i], T_arr[i] = calculate_transmission_single(
+            wavelengths[i], n_array[i], k_array[i], thickness, complex(n_substrate[i], 0.0)
         )
 
     return R_arr, T_arr
+
+
+# =============================================================================
+
+
+# Batch single-layer TMM kernels for PGlobal evaluate_batch optimization.
+# Fuses N spectra × n_pix TMM + MSE into one prange, eliminating N separate
+# Python→Numba dispatches. ~20-30% faster than N sequential array calls.
+
+
+# =============================================================================
+
+
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+def batch_single_layer_T_mse(
+    wavelengths,
+    n_sub,
+    w,
+    inv_npix,
+    t_exp,
+    n_batch,
+    k_batch,
+    d_batch,
+):
+    """N spectra T-MSE in one prange(N). Each thread computes a full spectrum."""
+    N = n_batch.shape[0]
+    n_pix = wavelengths.shape[0]
+    mse_out = np.empty(N, dtype=np.float64)
+    for i in prange(N):
+        acc = 0.0
+        d_i = d_batch[i]
+        for j in range(n_pix):
+            _r, t_th = calculate_transmission_single(
+                wavelengths[j], n_batch[i, j], k_batch[i, j], d_i, complex(n_sub[j], 0.0)
+            )
+            e = t_exp[j] - t_th
+            acc += w[j] * e * e
+        mse_out[i] = acc * inv_npix
+    return mse_out
+
+
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+def batch_single_layer_RT_mse(
+    wavelengths,
+    n_sub,
+    w,
+    inv_npix,
+    t_exp,
+    r_exp,
+    n_batch,
+    k_batch,
+    d_batch,
+    wt,
+    wr,
+):
+    """N spectra fused R+T MSE in one prange(N)."""
+    N = n_batch.shape[0]
+    n_pix = wavelengths.shape[0]
+    wsum = wt + wr
+    mse_out = np.empty(N, dtype=np.float64)
+    for i in prange(N):
+        acc_t = 0.0
+        acc_r = 0.0
+        d_i = d_batch[i]
+        for j in range(n_pix):
+            r_th, t_th = calculate_transmission_single(
+                wavelengths[j], n_batch[i, j], k_batch[i, j], d_i, complex(n_sub[j], 0.0)
+            )
+            e_t = t_exp[j] - t_th
+            acc_t += w[j] * e_t * e_t
+            e_r = r_exp[j] - r_th
+            acc_r += w[j] * e_r * e_r
+        mse_out[i] = (wt * acc_t + wr * acc_r) * inv_npix / wsum
+    return mse_out
 
 
 # =============================================================================
@@ -2166,38 +1828,25 @@ def calculate_RT_single_layer_backside_array(
 # For film+substrate: R_front/T_front/R_prime come from the coherent TMM
 
 
-# (same as calculate_RT_single_layer_single); backside is bare Fresnel.
+# (same as ); backside is bare Fresnel.
 
 
 # =============================================================================
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _calculate_RT_absorbing_sub_single(
-
     wavelength: float,
-
     n_film_real: float,
-
     n_film_imag: float,
-
     thickness_nm: float,
-
     n_sub_real: float,
-
     k_sub: float,
-
     D_sub_nm: float,
-
-
 ) -> tuple[float, float]:
-
     """Scalar: R+T for one layer on absorbing substrate (Beer-Lambert incoherent)."""
 
     if not np.isfinite(n_sub_real) or n_sub_real < 1.0:
-
         return np.nan, np.nan
 
     ns = complex(n_sub_real, 0.0)  # substrate optical index (real part only for TMM)
@@ -2211,7 +1860,6 @@ def _calculate_RT_absorbing_sub_single(
     sp = np.sin(phi)
 
     if abs(n_film) < 1e-12:
-
         return np.nan, np.nan
 
     M01 = +1j * sp / n_film
@@ -2229,7 +1877,6 @@ def _calculate_RT_absorbing_sub_single(
     Y_mag_sq = Y.real * Y.real + Y.imag * Y.imag
 
     if Y_mag_sq < 1e-25:
-
         return 0.0, 0.0
 
     r_num = B - C
@@ -2249,13 +1896,11 @@ def _calculate_RT_absorbing_sub_single(
     Yp_mag_sq = Yp.real * Yp.real + Yp.imag * Yp.imag
 
     if Yp_mag_sq < 1e-25:
-
         R_prime = 0.0
 
         T_prime = 0.0
 
     else:
-
         rp_num = ns * Bp - Cp
 
         R_prime = (rp_num.real * rp_num.real + rp_num.imag * rp_num.imag) / Yp_mag_sq
@@ -2274,14 +1919,13 @@ def _calculate_RT_absorbing_sub_single(
 
     alpha = 4.0 * math.pi * k_sub / wavelength  # nm⁻¹
 
-    att1 = math.exp(-alpha * D_sub_nm)           # single-pass
+    att1 = math.exp(-alpha * D_sub_nm)  # single-pass
 
-    att2 = att1 * att1                           # double-pass
+    att2 = att1 * att1  # double-pass
 
     denom = 1.0 - R_prime * R_back * att2
 
     if abs(denom) < 1e-12:
-
         denom = 1e-12
 
     R_total = R_front + (T_front * T_prime * R_back * att2) / denom
@@ -2296,27 +1940,15 @@ def _calculate_RT_absorbing_sub_single(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_RT_single_layer_absorbing_substrate_array(
-
     wavelengths: np.ndarray,
-
     n_array: np.ndarray,
-
     k_array: np.ndarray,
-
     thickness: float,
-
     n_substrate: np.ndarray,
-
     k_substrate: np.ndarray,
-
     D_sub_nm: float,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     R + T for a single film on an absorbing substrate (Beer-Lambert incoherent backside).
@@ -2346,34 +1978,26 @@ def calculate_RT_single_layer_absorbing_substrate_array(
     T_arr = np.empty(n_pts, dtype=wavelengths.dtype)
 
     for i in prange(n_pts):
-
         R_arr[i], T_arr[i] = _calculate_RT_absorbing_sub_single(
-
-            wavelengths[i], n_array[i], k_array[i], thickness,
-
-            n_substrate[i], k_substrate[i], D_sub_nm,
-
+            wavelengths[i],
+            n_array[i],
+            k_array[i],
+            thickness,
+            n_substrate[i],
+            k_substrate[i],
+            D_sub_nm,
         )
 
     return R_arr, T_arr
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def calculate_R_substrate_absorbing_array(
-
+def calculate_bare_substrate_R_absorbing(
     wavelengths: np.ndarray,
-
     n_substrate: np.ndarray,
-
     k_substrate: np.ndarray,
-
     D_nm: float,
-
-
 ) -> np.ndarray:
-
     """
 
     Reference reflectance of a bare absorbing substrate - double face, with absorption.
@@ -2387,7 +2011,6 @@ def calculate_R_substrate_absorbing_array(
     R = np.empty(n_pts, dtype=wavelengths.dtype)
 
     for i in prange(n_pts):
-
         ns = n_substrate[i]
 
         k_s = k_substrate[i]
@@ -2405,7 +2028,6 @@ def calculate_R_substrate_absorbing_array(
         denom = 1.0 - R_f * R_f * att2
 
         if abs(denom) < 1e-12:
-
             denom = 1e-12
 
         R[i] = R_f + T_f * T_f * R_f * att2 / denom
@@ -2414,21 +2036,12 @@ def calculate_R_substrate_absorbing_array(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
-def calculate_T_substrate_absorbing_array(
-
+def calculate_bare_substrate_T_absorbing(
     wavelengths: np.ndarray,
-
     n_substrate: np.ndarray,
-
     k_substrate: np.ndarray,
-
     D_nm: float,
-
-
 ) -> np.ndarray:
-
     """
 
     Reference transmittance of a bare absorbing substrate - double face, with absorption.
@@ -2446,7 +2059,6 @@ def calculate_T_substrate_absorbing_array(
     T = np.empty(n_pts, dtype=wavelengths.dtype)
 
     for i in prange(n_pts):
-
         ns = n_substrate[i]
 
         k_s = k_substrate[i]
@@ -2466,7 +2078,6 @@ def calculate_T_substrate_absorbing_array(
         denom = 1.0 - R_f * R_f * att2
 
         if abs(denom) < 1e-12:
-
             denom = 1e-12
 
         T[i] = T_f * T_f * att1 / denom
@@ -2490,15 +2101,9 @@ def calculate_T_substrate_absorbing_array(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def compute_TMM_single_point_k0(
-
     k0: float, thicknesses: np.ndarray, n_layers_complex: np.ndarray, n_sub: complex
-
-
 ) -> tuple[float, float]:
-
     """Computes R and T for a multilayer stack (k0 pre-computed variant).
 
     CAPITAL CONVENTION: index 0 = layer 1 = layer closest to the substrate.
@@ -2520,13 +2125,11 @@ def compute_TMM_single_point_k0(
     I_VAL = +1j
 
     for i in range(n_layers):
-
         n_c = n_layers_complex[i]
 
         # ── GARDE-FOU n-ik ──
 
         if n_c.imag > 0.0:
-
             n_c = n_c.real - 1j * n_c.imag
 
         phi = k0 * n_c * thicknesses[i]
@@ -2539,7 +2142,7 @@ def compute_TMM_single_point_k0(
 
         m10 = isp * n_c
 
-            # Pre-multiplication: M_new = L @ M_old (index 0 = substrate side)
+        # Pre-multiplication: M_new = L @ M_old (index 0 = substrate side)
 
         t00 = cp * M00 + m01 * M10
 
@@ -2563,15 +2166,9 @@ def compute_TMM_single_point_k0(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def compute_TMM_single_point_k0_exact(
-
     k0: float, thicknesses: np.ndarray, n_layers_complex: np.ndarray, n_sub: complex
-
-
 ) -> tuple[float, float, float]:
-
     """
 
     Computes Rf (Air->Sub), Tf, and Rb (Sub->Air) for a multilayer stack.
@@ -2609,13 +2206,11 @@ def compute_TMM_single_point_k0_exact(
     Mb11 = complex(1, 0)
 
     for i in range(n_layers):
-
         nc = n_layers_complex[i]
 
         # ── GARDE-FOU n-ik ──
 
         if nc.imag > 0.0:
-
             nc = nc.real - 1j * nc.imag
 
         phi = k0 * nc * thicknesses[i]
@@ -2672,25 +2267,14 @@ def compute_TMM_single_point_k0_exact(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _apply_exact_backside_generic(
-
     R_front: np.ndarray,
-
     T_front: np.ndarray,
-
     thicknesses: np.ndarray,
-
     n_layers_all_wls: np.ndarray,
-
     n_sub_all_wls: np.ndarray,
-
     wls: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Exact incoherent backside for generic multilayer (no back coating).
@@ -2710,7 +2294,6 @@ def _apply_exact_backside_generic(
     d_rev = thicknesses[::-1].copy()
 
     for i in prange(n):
-
         k0 = TWO_PI / wls[i]
 
         n_s = n_sub_all_wls[i]
@@ -2718,7 +2301,6 @@ def _apply_exact_backside_generic(
         # Check for absorbing substrate (infinite thickness assumption)
 
         if abs(n_s.imag) > 1e-8:
-
             # Absorbing substrate: Light doesn't reach back interface / doesn't return
 
             R_total[i] = R_front[i]
@@ -2731,15 +2313,7 @@ def _apply_exact_backside_generic(
 
         # R' = Sub -> Stack -> Air (reversed arrays, swapped media)
 
-        n_rev_i = (
-
-            n_layers_all_wls[i, ::-1].copy()
-
-            if n_layers_all_wls.ndim > 1
-
-            else n_layers_all_wls[i : i + 1]
-
-        )
+        n_rev_i = n_layers_all_wls[i, ::-1].copy() if n_layers_all_wls.ndim > 1 else n_layers_all_wls[i : i + 1]
 
         R_prime, _ = compute_TMM_generic(k0, d_rev, n_rev_i, n_s, n_air)
 
@@ -2758,7 +2332,6 @@ def _apply_exact_backside_generic(
         D = 1.0 - R_prime * R_sub
 
         if D < 1e-12:
-
             D = 1e-12
 
         T_total[i] = (T_front[i] * T_sub) / D
@@ -2768,19 +2341,15 @@ def _apply_exact_backside_generic(
         # Clamp
 
         if T_total[i] < 0.0:
-
             T_total[i] = 0.0
 
         elif T_total[i] > 1.0:
-
             T_total[i] = 1.0
 
         if R_total[i] < 0.0:
-
             R_total[i] = 0.0
 
         elif R_total[i] > 1.0:
-
             R_total[i] = 1.0
 
     return R_total, T_total
@@ -2792,58 +2361,93 @@ def _apply_exact_backside_generic(
 # Macleod convention (+1j). Generic multilayer wrapper with backside. DO NOT MODIFY without re-running the tests.
 
 
-def calculate_RT_vectorized_real(
-
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+def calculate_RT_with_backside_fused(
     thicknesses: np.ndarray,
-
-    n_layers_all_wls: np.ndarray,  # (n_wls, n_layers) complex
-
-    n_substrate_all_wls: np.ndarray,  # (n_wls,) complex
-
+    n_layers_all_wls: np.ndarray,
+    n_sub_all_wls: np.ndarray,
     wls: np.ndarray,
-
-    with_backside: bool = True,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Calculate R/T for multilayer stack WITH EXACT backside correction in a single pass."""
+    n_wls = len(wls)
+    k0_arr = TWO_PI / wls
+    R_total = np.empty(n_wls, dtype=wls.dtype)
+    T_total = np.empty(n_wls, dtype=wls.dtype)
+    d_rev = thicknesses[::-1].copy()
 
+    for i in prange(n_wls):
+        k0 = k0_arr[i]
+        n_s = n_sub_all_wls[i]
+        n_air = complex(1.0)
+
+        # 1. Front calculation (Air -> Stack -> Sub)
+        Rf, Tf = compute_TMM_single_point_k0(k0, thicknesses, n_layers_all_wls[i], n_s)
+
+        # 2. Backside correction
+        if abs(n_s.imag) > 1e-8:
+            # Absorbing substrate: Light doesn't reach back interface / doesn't return
+            R_total[i] = Rf
+            T_total[i] = 0.0
+            continue
+
+        # R' = Sub -> Stack -> Air (reversed arrays, swapped media)
+        n_rev_i = n_layers_all_wls[i, ::-1].copy() if n_layers_all_wls.ndim > 1 else n_layers_all_wls[i : i + 1]
+        R_prime, _ = compute_TMM_generic(k0, d_rev, n_rev_i, n_s, n_air)
+
+        # Uncoated back: substrate/Air interface
+        n_s_real = np.real(n_s)
+        r_b = (n_s_real - 1.0) / (n_s_real + 1.0)
+        R_sub = r_b * r_b
+        T_sub = 1.0 - R_sub
+
+        # Exact incoherent combination
+        D = 1.0 - R_prime * R_sub
+        if D < 1e-12:
+            D = 1e-12
+
+        T_tot = (Tf * T_sub) / D
+        R_tot = Rf + (Tf * Tf * R_sub) / D
+
+        # Clamp
+        if T_tot < 0.0:
+            T_tot = 0.0
+        elif T_tot > 1.0:
+            T_tot = 1.0
+
+        if R_tot < 0.0:
+            R_tot = 0.0
+        elif R_tot > 1.0:
+            R_tot = 1.0
+
+        T_total[i] = T_tot
+        R_total[i] = R_tot
+
+    return R_total, T_total
+
+
+def calculate_RT_vectorized_real(
+    thicknesses: np.ndarray,
+    n_layers_all_wls: np.ndarray,  # (n_wls, n_layers) complex
+    n_substrate_all_wls: np.ndarray,  # (n_wls,) complex
+    wls: np.ndarray,
+    with_backside: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
     """Calculate R/T for multilayer stack with optional EXACT backside correction.
 
     Args:
-
         thicknesses: Layer thicknesses array (index 0 = substrate-side)
-
         n_layers_all_wls: Complex refractive clues (n_wls, n_layers)
-
         n_substrate_all_wls: substrate complex refractive clues (n_wls,)
-
         wls: Wavelength array
-
         with_backside: Apply incoherent backside correction (default True)
 
     Returns:
-
         R, T arrays"""
 
-    # Front surface TMM calculate
-
-    R_front, T_front = calculate_RT_no_backside(
-
-        thicknesses, n_layers_all_wls, n_substrate_all_wls, wls
-
-    )
-
     if with_backside:
-
-        return _apply_exact_backside_generic(
-
-            R_front, T_front, thicknesses, n_layers_all_wls, n_substrate_all_wls, wls
-
-        )
-
+        return calculate_RT_with_backside_fused(thicknesses, n_layers_all_wls, n_substrate_all_wls, wls)
     else:
-
-        return R_front, T_front
+        return calculate_RT_no_backside(thicknesses, n_layers_all_wls, n_substrate_all_wls, wls)
 
 
 # --- LOCKED --- Validated by test_tmm_coherence.py ───
@@ -2853,21 +2457,12 @@ def calculate_RT_vectorized_real(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_RT_no_backside(
-
     thicknesses: np.ndarray,
-
     n_layers_all_wls: np.ndarray,
-
     n_substrate_all_wls: np.ndarray,
-
     wls: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Calculate R/T WITHOUT backside correction.
@@ -2885,12 +2480,7 @@ def calculate_RT_no_backside(
     T_arr = np.empty(n_wls, dtype=wls.dtype)
 
     for i in prange(n_wls):
-
-        R, T = compute_TMM_single_point_k0(
-
-            k0_arr[i], thicknesses, n_layers_all_wls[i], n_substrate_all_wls[i]
-
-        )
+        R, T = compute_TMM_single_point_k0(k0_arr[i], thicknesses, n_layers_all_wls[i], n_substrate_all_wls[i])
 
         R_arr[i] = R
 
@@ -2906,15 +2496,9 @@ def calculate_RT_no_backside(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def calc_spectrum_front(
-
     wls: np.ndarray, d_layers: np.ndarray, n_layers: np.ndarray, n_sub: np.ndarray
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Calculates front R/T (vectorized) - NO backside correction.
@@ -2951,25 +2535,14 @@ def calc_spectrum_front(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def calc_spectrum_full(
-
     wls: np.ndarray,
-
     d_front: np.ndarray,
-
     n_front: np.ndarray,
-
     d_back: np.ndarray,
-
     n_back: np.ndarray,
-
     n_sub: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """
 
     Calculates Front/Back R/T WITHOUT backside correction.
@@ -2996,25 +2569,14 @@ def calc_spectrum_full(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calc_spectrum_full_exact(
-
     wls: np.ndarray,
-
     d_front: np.ndarray,
-
     n_front: np.ndarray,
-
     d_back: np.ndarray,
-
     n_back: np.ndarray,
-
     n_sub: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """Exact inconsistent backside calculation for Front + Back stacks.
 
     CRITICAL PHYSICS NOTE:
@@ -3078,7 +2640,6 @@ def calc_spectrum_full_exact(
     Tb = np.empty(n_wls, dtype=np.float64)
 
     for i in prange(n_wls):
-
         k0 = TWO_PI / wls[i]
 
         n_s = n_sub[i]
@@ -3113,14 +2674,12 @@ def calc_spectrum_full_exact(
 
 
 def calc_spectrum_front_wrapper(wls, n, d, ns):
-
     """Refactored wrapper: accepts (wls, n, d, ns) -> calls kernel (wls, d, n, ns)"""
 
     return calc_spectrum_front(wls, d, n, ns)
 
 
 def calc_spectrum_full_wrapper(wls, nf, df, ns, nb, db):
-
     """Refactored wrapper: accepts (wls, n_f, d_f, n_sub, n_b, d_b) -> calls kernel"""
 
     # Kernel expects: (wls, d_front, n_front, d_back, n_back, n_sub)
@@ -3129,7 +2688,6 @@ def calc_spectrum_full_wrapper(wls, nf, df, ns, nb, db):
 
 
 def calc_spectrum_full_exact_wrapper(wls, nf, df, ns, nb, db):
-
     """Exact wrapper: accepts (wls, n_f, d_f, n_sub, n_b, d_b) -> calls exact kernel"""
 
     # Kernel expects: (wls, d_front, n_front, d_back, n_back, n_sub)
@@ -3153,25 +2711,14 @@ def calc_spectrum_full_exact_wrapper(wls, nf, df, ns, nb, db):
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _calc_spectrum_oblique_parallel(
-
     wls: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     d_layers: np.ndarray,
-
     n_sub: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Numba-parallelized oblique incidence calculation.
@@ -3197,13 +2744,11 @@ def _calc_spectrum_oblique_parallel(
     cos_theta0 = np.cos(theta0_rad)
 
     for i in prange(n_wl):
-
         wl = wls[i]
 
         n_sub_val = n_sub[i]
 
         if n_layers_count == 0:
-
             # No layers - direct Fresnel
 
             n_sub_real = n_sub_val.real
@@ -3211,7 +2756,6 @@ def _calc_spectrum_oblique_parallel(
             sin_theta_sub = (n0 / n_sub_real) * sin_theta0
 
             if sin_theta_sub > 1.0:
-
                 R[i] = 1.0
 
                 T[i] = 0.0
@@ -3221,13 +2765,11 @@ def _calc_spectrum_oblique_parallel(
             cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
 
             if is_s_pol:
-
                 eta_inc = n0 * cos_theta0
 
                 eta_sub = n_sub_real * cos_theta_sub
 
             else:
-
                 eta_inc = n0 / cos_theta0
 
                 eta_sub = n_sub_real / cos_theta_sub
@@ -3255,13 +2797,11 @@ def _calc_spectrum_oblique_parallel(
         k = TWO_PI / wl
 
         for j in range(n_layers_count):
-
             n_layer = n_layers_T[i, j]
 
             d = d_layers[j]
 
             if abs(n_layer) < SMALL_EPSILON:
-
                 R[i] = 1.0
 
                 T[i] = 0.0
@@ -3279,13 +2819,10 @@ def _calc_spectrum_oblique_parallel(
             # Optical admittance
 
             if is_s_pol:
-
                 eta_layer = n_layer * cos_theta_layer
 
             else:
-
                 if abs(cos_theta_layer) < SMALL_EPSILON:
-
                     R[i] = 1.0
 
                     T[i] = 0.0
@@ -3304,18 +2841,13 @@ def _calc_spectrum_oblique_parallel(
 
             # Stable complex trig
 
-            cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = (
-
-                compute_complex_phase_components(phi_r, phi_i)
-
-            )
+            cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
 
             cp = complex(cos_phi_real, cos_phi_imag)
 
             sp = complex(sin_phi_real, sin_phi_imag)
 
             if abs(eta_layer) < SMALL_EPSILON:
-
                 R[i] = 1.0
 
                 T[i] = 0.0
@@ -3353,7 +2885,6 @@ def _calc_spectrum_oblique_parallel(
             M00, M01, M10, M11 = t00, t01, t10, t11
 
         else:
-
             # Completed layer loop - compute R, T
 
             n_sub_real = n_sub_val.real
@@ -3361,7 +2892,6 @@ def _calc_spectrum_oblique_parallel(
             sin_theta_sub = (n0 / n_sub_real) * sin_theta0
 
             if sin_theta_sub > 1.0:
-
                 R[i] = 1.0
 
                 T[i] = 0.0
@@ -3371,13 +2901,11 @@ def _calc_spectrum_oblique_parallel(
             cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
 
             if is_s_pol:
-
                 eta_sub = n_sub_real * cos_theta_sub
 
                 eta_inc = n0 * cos_theta0
 
             else:
-
                 eta_sub = n_sub_real / cos_theta_sub
 
                 eta_inc = n0 / cos_theta0
@@ -3399,7 +2927,6 @@ def _calc_spectrum_oblique_parallel(
             denom_mag_sq = denom.real**2 + denom.imag**2
 
             if denom_mag_sq < SMALL_EPSILON:
-
                 R[i] = 1.0
 
                 T[i] = 0.0
@@ -3438,22 +2965,13 @@ def _calc_spectrum_oblique_parallel(
 
 
 def calc_spectrum_oblique_vectorized(
-
     wls: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     d_layers: np.ndarray,
-
     n_sub: np.ndarray,
-
     angle_deg: float,
-
     polarization: str,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Calculates R & T for wavelength array at oblique incidence.
@@ -3465,7 +2983,6 @@ def calc_spectrum_oblique_vectorized(
     # For normal incidence, use calc_spectrum_front
 
     if abs(angle_deg) < 1e-6:
-
         # calc_spectrum_front returns (T, R), but we need (R, T)
 
         T, R = calc_spectrum_front(wls, d_layers, n_layers_T, n_sub)
@@ -3486,32 +3003,17 @@ def calc_spectrum_oblique_vectorized(
 
     n_sub_c128 = np.ascontiguousarray(n_sub, dtype=np.complex128)
 
-    return _calc_spectrum_oblique_parallel(
-
-        wls_f64, n_layers_T_c128, d_layers_f64, n_sub_c128, angle_deg, is_s_pol
-
-    )
-
-
+    return _calc_spectrum_oblique_parallel(wls_f64, n_layers_T_c128, d_layers_f64, n_sub_c128, angle_deg, is_s_pol)
 
 
 def calc_spectrum_oblique_backside_vectorized(
-
     wls: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     d_layers: np.ndarray,
-
     n_sub: np.ndarray,
-
     angle_deg: float,
-
     polarization: str,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Oblique wrapper with incoherent backside (bare substrate).
@@ -3525,50 +3027,28 @@ def calc_spectrum_oblique_backside_vectorized(
     wls_f64 = np.ascontiguousarray(wls, dtype=np.float64)
 
     return calc_spectrum_full_oblique_exact(
-
         wls_f64,
-
         np.ascontiguousarray(d_layers, dtype=np.float64),
-
         np.ascontiguousarray(n_layers_T, dtype=np.complex128),
-
         np.zeros(0, dtype=np.float64),
-
         np.zeros((len(wls_f64), 0), dtype=np.complex128),
-
         np.ascontiguousarray(n_sub, dtype=np.complex128),
-
         float(angle_deg),
-
         is_s_pol,
-
     )
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _oblique_stack_rt_single(
-
     wl: float,
-
     n_layers_row: np.ndarray,
-
     d_layers: np.ndarray,
-
     sin_theta_air: float,
-
     cos_theta_air: float,
-
     n_inc_real: float,
-
     n_exit_real: float,
-
     is_s_pol: bool,
-
-
 ) -> tuple[float, float]:
-
     """Single-wavelength oblique R/T for one stack and fixed incident/exit media."""
 
     n_layers_count = len(d_layers)
@@ -3584,11 +3064,9 @@ def _oblique_stack_rt_single(
     k = TWO_PI / wl
 
     for j in range(n_layers_count):
-
         n_layer = n_layers_row[j]
 
         if abs(n_layer) < SMALL_EPSILON:
-
             return 1.0, 0.0
 
         sin_theta_layer = sin_theta_air / n_layer
@@ -3596,19 +3074,15 @@ def _oblique_stack_rt_single(
         cos_theta_layer = np.sqrt(1.0 - sin_theta_layer * sin_theta_layer)
 
         if is_s_pol:
-
             eta_layer = n_layer * cos_theta_layer
 
         else:
-
             if abs(cos_theta_layer) < SMALL_EPSILON:
-
                 return 1.0, 0.0
 
             eta_layer = n_layer / cos_theta_layer
 
         if abs(eta_layer) < SMALL_EPSILON:
-
             return 1.0, 0.0
 
         phi = k * n_layer * d_layers[j] * cos_theta_layer
@@ -3634,31 +3108,27 @@ def _oblique_stack_rt_single(
     sin_exit = sin_theta_air / max(n_exit_real, SMALL_EPSILON)
 
     if sin_exit > 1.0:
-
         return 1.0, 0.0
 
     cos_exit = np.sqrt(1.0 - sin_exit * sin_exit)
 
     if is_s_pol:
-
-        eta_inc = n_inc_real * cos_theta_air if n_inc_real == 1.0 else n_inc_real * np.sqrt(
-
-            max(0.0, 1.0 - (sin_theta_air / max(n_inc_real, SMALL_EPSILON)) ** 2)
-
+        eta_inc = (
+            n_inc_real * cos_theta_air
+            if n_inc_real == 1.0
+            else n_inc_real * np.sqrt(max(0.0, 1.0 - (sin_theta_air / max(n_inc_real, SMALL_EPSILON)) ** 2))
         )
 
         eta_exit = n_exit_real * cos_exit
 
     else:
-
-        cos_inc = cos_theta_air if n_inc_real == 1.0 else np.sqrt(
-
-            max(0.0, 1.0 - (sin_theta_air / max(n_inc_real, SMALL_EPSILON)) ** 2)
-
+        cos_inc = (
+            cos_theta_air
+            if n_inc_real == 1.0
+            else np.sqrt(max(0.0, 1.0 - (sin_theta_air / max(n_inc_real, SMALL_EPSILON)) ** 2))
         )
 
         if abs(cos_inc) < SMALL_EPSILON or abs(cos_exit) < SMALL_EPSILON:
-
             return 1.0, 0.0
 
         eta_inc = n_inc_real / cos_inc
@@ -3674,7 +3144,6 @@ def _oblique_stack_rt_single(
     den2 = denom.real * denom.real + denom.imag * denom.imag
 
     if den2 < SMALL_EPSILON:
-
         return 1.0, 0.0
 
     num = eta_inc * B - C
@@ -3688,44 +3157,29 @@ def _oblique_stack_rt_single(
     T = (eta_exit / eta_inc) * (t * t.conjugate()).real
 
     if R < 0.0:
-
         R = 0.0
 
     elif R > 1.0:
-
         R = 1.0
 
     if T < 0.0:
-
         T = 0.0
 
     elif T > 1.0:
-
         T = 1.0
 
     return R, T
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def oblique_front_char_matrix_single(
-
     wl: float,
-
     n_layers_row: np.ndarray,
-
     d_layers: np.ndarray,
-
     sin_theta_air: float,
-
     cos_theta_air: float,
-
     is_s_pol: bool,
-
-
 ):
-
     """2×2 characteristic matrix (Macleod) of the battery alone, air interface -> last film.
 
     Same convention as `_calc_spectrum_oblique_parallel` / `_oblique_stack_rt_single`.
@@ -3743,17 +3197,14 @@ def oblique_front_char_matrix_single(
     M11 = complex(1.0, 0.0)
 
     if n_layers_count == 0:
-
         return M00, M01, M10, M11
 
     k = TWO_PI / wl
 
     for j in range(n_layers_count):
-
         n_layer = n_layers_row[j]
 
         if abs(n_layer) < SMALL_EPSILON:
-
             return complex(1.0, 0.0), complex(0.0, 0.0), complex(0.0, 0.0), complex(1.0, 0.0)
 
         sin_theta_layer = sin_theta_air / n_layer
@@ -3763,19 +3214,15 @@ def oblique_front_char_matrix_single(
         cos_theta_layer = np.sqrt(cos_theta_layer_sq)
 
         if is_s_pol:
-
             eta_layer = n_layer * cos_theta_layer
 
         else:
-
             if abs(cos_theta_layer) < SMALL_EPSILON:
-
                 return complex(1.0, 0.0), complex(0.0, 0.0), complex(0.0, 0.0), complex(1.0, 0.0)
 
             eta_layer = n_layer / cos_theta_layer
 
         if abs(eta_layer) < SMALL_EPSILON:
-
             return complex(1.0, 0.0), complex(0.0, 0.0), complex(0.0, 0.0), complex(1.0, 0.0)
 
         phi = k * n_layer * d_layers[j] * cos_theta_layer
@@ -3784,11 +3231,7 @@ def oblique_front_char_matrix_single(
 
         phi_i = phi.imag
 
-        cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = (
-
-            compute_complex_phase_components(phi_r, phi_i)
-
-        )
+        cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
 
         cp = complex(cos_phi_real, cos_phi_imag)
 
@@ -3812,55 +3255,37 @@ def oblique_front_char_matrix_single(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def oblique_front_rt_from_char_matrix_nsub_real(
-
     M00,
-
     M01,
-
     M10,
-
     M11,
-
     n_sub_real: float,
-
     sin_theta_air: float,
-
     cos_theta_air: float,
-
     is_s_pol: bool,
-
-
 ):
-
     """R, T in air incidence -> substrate from M (stack) and real n_sub (η_sub via Snell)."""
 
     n0 = 1.0
 
     if n_sub_real < SMALL_EPSILON:
-
         return 1.0, 0.0
 
     sin_theta_sub = (n0 / n_sub_real) * sin_theta_air
 
     if sin_theta_sub > 1.0:
-
         return 1.0, 0.0
 
     cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
 
     if is_s_pol:
-
         eta_sub = n_sub_real * cos_theta_sub
 
         eta_inc = n0 * cos_theta_air
 
     else:
-
         if abs(cos_theta_sub) < SMALL_EPSILON:
-
             return 1.0, 0.0
 
         eta_sub = n_sub_real / cos_theta_sub
@@ -3876,7 +3301,6 @@ def oblique_front_rt_from_char_matrix_nsub_real(
     denom_mag_sq = denom.real * denom.real + denom.imag * denom.imag
 
     if denom_mag_sq < SMALL_EPSILON:
-
         return 1.0, 0.0
 
     num = eta_inc * B - C
@@ -3897,29 +3321,16 @@ def oblique_front_rt_from_char_matrix_nsub_real(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calc_spectrum_full_oblique_exact(
-
     wls: np.ndarray,
-
     d_front: np.ndarray,
-
     n_front: np.ndarray,
-
     d_back: np.ndarray,
-
     n_back: np.ndarray,
-
     n_sub: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Oblique exact incoherent combination for Front + Back stacks.
@@ -3943,13 +3354,11 @@ def calc_spectrum_full_oblique_exact(
     d_back_rev = d_back[::-1].copy()
 
     for i in prange(n_wls):
-
         wl = wls[i]
 
         n_sub_real = n_sub[i].real
 
         if n_sub_real < 1e-12:
-
             R_total[i] = 1.0
 
             T_total[i] = 0.0
@@ -3959,23 +3368,14 @@ def calc_spectrum_full_oblique_exact(
         # Forward: Air -> Front -> Sub
 
         Rf, Tf = _oblique_stack_rt_single(
-
             wl,
-
             n_front[i],
-
             d_front,
-
             sin_theta_air,
-
             cos_theta_air,
-
             1.0,
-
             n_sub_real,
-
             is_s_pol,
-
         )
 
         # Reverse front: Sub -> Front -> Air (for Rf' and T_front_rev)
@@ -3983,77 +3383,52 @@ def calc_spectrum_full_oblique_exact(
         n_front_rev_i = n_front[i, ::-1].copy()
 
         Rf_prime, T_front_rev = _oblique_stack_rt_single(
-
             wl,
-
             n_front_rev_i,
-
             d_front_rev,
-
             sin_theta_air,
-
             cos_theta_air,
-
             n_sub_real,
-
             1.0,
-
             is_s_pol,
-
         )
 
         # Reverse back: Sub -> Back -> Air
 
         if len(d_back) > 0:
-
             n_back_rev_i = n_back[i, ::-1].copy()
 
             Rb_prime, Tb = _oblique_stack_rt_single(
-
                 wl,
-
                 n_back_rev_i,
-
                 d_back_rev,
-
                 sin_theta_air,
-
                 cos_theta_air,
-
                 n_sub_real,
-
                 1.0,
-
                 is_s_pol,
-
             )
 
         else:
-
             # Bare substrate interface as "back stack"
 
             sin_sub = sin_theta_air / n_sub_real
 
             if sin_sub > 1.0:
-
                 Rb_prime = 1.0
 
                 Tb = 0.0
 
             else:
-
                 cos_sub = np.sqrt(1.0 - sin_sub * sin_sub)
 
                 if is_s_pol:
-
                     eta_sub = n_sub_real * cos_sub
 
                     eta_air = 1.0 * cos_theta_air
 
                 else:
-
                     if abs(cos_sub) < SMALL_EPSILON or abs(cos_theta_air) < SMALL_EPSILON:
-
                         Rb_prime = 1.0
 
                         Tb = 0.0
@@ -4065,7 +3440,6 @@ def calc_spectrum_full_oblique_exact(
                         eta_air = 0.0
 
                     else:
-
                         eta_sub = n_sub_real / cos_sub
 
                         eta_air = 1.0 / cos_theta_air
@@ -4073,13 +3447,11 @@ def calc_spectrum_full_oblique_exact(
                 denom = eta_sub + eta_air
 
                 if abs(denom) < SMALL_EPSILON:
-
                     Rb_prime = 1.0
 
                     Tb = 0.0
 
                 else:
-
                     rb = (eta_sub - eta_air) / denom
 
                     tb = 2.0 * eta_sub / denom
@@ -4089,25 +3461,20 @@ def calc_spectrum_full_oblique_exact(
                     Tb = (eta_air / eta_sub) * (tb * tb.conjugate()).real
 
                     if Rb_prime < 0.0:
-
                         Rb_prime = 0.0
 
                     elif Rb_prime > 1.0:
-
                         Rb_prime = 1.0
 
                     if Tb < 0.0:
-
                         Tb = 0.0
 
                     elif Tb > 1.0:
-
                         Tb = 1.0
 
         denom = 1.0 - Rf_prime * Rb_prime
 
         if denom < 1e-12:
-
             denom = 1e-12
 
         Ttot = (Tf * Tb) / denom
@@ -4115,19 +3482,15 @@ def calc_spectrum_full_oblique_exact(
         Rtot = Rf + (Tf * T_front_rev * Rb_prime) / denom
 
         if Ttot < 0.0:
-
             Ttot = 0.0
 
         elif Ttot > 1.0:
-
             Ttot = 1.0
 
         if Rtot < 0.0:
-
             Rtot = 0.0
 
         elif Rtot > 1.0:
-
             Rtot = 1.0
 
         T_total[i] = Ttot
@@ -4144,15 +3507,9 @@ def calc_spectrum_full_oblique_exact(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def apply_exact_backside_combination(
-
     Rf: np.ndarray, Tf: np.ndarray, Rb_stack: np.ndarray, n_sub: np.ndarray
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Combines Front Stack properties with Backside Interface (Air) using EXACT incoherent formula.
@@ -4192,7 +3549,6 @@ def apply_exact_backside_combination(
     T_total = np.empty(n, dtype=Tf.dtype)
 
     for i in prange(n):
-
         n_s = np.real(n_sub[i])
 
         # 1. Back Interface (substrate | Air) Reflection
@@ -4218,7 +3574,6 @@ def apply_exact_backside_combination(
         denom = 1.0 - R_sub_air * Rb_stack[i]
 
         if denom < 1e-12:
-
             denom = 1e-12
 
         # T_total = T_front_stack * T_back_interface / denom
@@ -4232,19 +3587,15 @@ def apply_exact_backside_combination(
         # Clamp
 
         if T_total[i] < 0.0:
-
             T_total[i] = 0.0
 
         elif T_total[i] > 1.0:
-
             T_total[i] = 1.0
 
         if R_total[i] < 0.0:
-
             R_total[i] = 0.0
 
         elif R_total[i] > 1.0:
-
             R_total[i] = 1.0
 
     return R_total, T_total
@@ -4257,23 +3608,13 @@ def apply_exact_backside_combination(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _calculate_RT_HL_core(
-
     wls: np.ndarray,
-
     nH: np.ndarray,
-
     nL: np.ndarray,
-
     nSub: np.ndarray,
-
     thicknesses: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """Core TMM calculationation for alternating H/L stacks (front surface only).
 
     Index array dtype matches input nH dtype (f32 -> c64, f64 -> c128)."""
@@ -4289,19 +3630,15 @@ def _calculate_RT_HL_core(
     # Parallel index array construction
 
     for i in prange(n_wls):
-
         valH = nH[i]
 
         valL = nL[i]
 
         for j in range(n_layers):
-
             if j % 2 == 0:
-
                 n_layers_complex[i, j] = valH
 
             else:
-
                 n_layers_complex[i, j] = valL
 
     return calculate_RT_no_backside(thicknesses, n_layers_complex, nSub, wls)
@@ -4314,22 +3651,13 @@ def _calculate_RT_HL_core(
 
 
 def calculate_RT_vectorized_real_HL(
-
     wls: np.ndarray,
-
     nH: np.ndarray,
-
     nL: np.ndarray,
-
     nSub: np.ndarray,
-
     thicknesses: np.ndarray,
-
     with_backside: bool = True,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Wrapper for alternating H/L stacks with optional backside correction.
@@ -4371,7 +3699,6 @@ def calculate_RT_vectorized_real_HL(
     """
 
     if with_backside:
-
         # Delegate to batch kernel (single run) for parity with calculate_RT_batch_kernel
 
         thick_2d = np.asarray(thicknesses, dtype=np.float64).reshape(1, -1)
@@ -4379,23 +3706,15 @@ def calculate_RT_vectorized_real_HL(
         wls_f = np.asarray(wls, dtype=np.float64)
 
         nH_f = (
-
             np.asarray(nH, dtype=np.complex128)
-
             if np.issubdtype(nH.dtype, np.floating)
-
             else np.asarray(nH, dtype=np.complex128)
-
         )
 
         nL_f = (
-
             np.asarray(nL, dtype=np.complex128)
-
             if np.issubdtype(nL.dtype, np.floating)
-
             else np.asarray(nL, dtype=np.complex128)
-
         )
 
         nSub_f = np.asarray(nSub, dtype=np.complex128)
@@ -4405,7 +3724,6 @@ def calculate_RT_vectorized_real_HL(
         return R_batch[0], T_batch[0]
 
     else:
-
         # Front surface calculationation only
 
         Rf, Tf = _calculate_RT_HL_core(wls, nH, nL, nSub, thicknesses)
@@ -4419,14 +3737,10 @@ def calculate_RT_vectorized_real_HL(
 # Incoherent HL backside. DO NOT MODIFY without running tests.
 
 
-
-
 # --- LOCKED --- Validated by test_tmm_coherence.py ───
 
 
 # Macleod convention (+1j). index 0 = substrate. DO NOT MODIFY without running tests.
-
-
 
 
 # =============================================================================
@@ -4451,13 +3765,8 @@ def calculate_RT_vectorized_real_HL(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def compute_mse_vectorized(
-
     calc_values: np.ndarray, target_values: np.ndarray, weights: np.ndarray
-
-
 ) -> tuple[float, int]:
 
     n = len(calc_values)
@@ -4471,9 +3780,7 @@ def compute_mse_vectorized(
     partial_wsum = np.empty(n, dtype=np.float64)
 
     for i in prange(n):
-
         if weights[i] > 0 and np.isfinite(calc_values[i]) and np.isfinite(target_values[i]):
-
             diff = calc_values[i] - target_values[i]
 
             partial_sq[i] = diff * diff * weights[i]
@@ -4483,7 +3790,6 @@ def compute_mse_vectorized(
             partial_wsum[i] = weights[i]
 
         else:
-
             partial_sq[i] = 0.0
 
             partial_valid[i] = 0.0
@@ -4497,7 +3803,6 @@ def compute_mse_vectorized(
     count = 0
 
     for i in range(n):
-
         sum_sq += partial_sq[i]
 
         sum_w += partial_wsum[i]
@@ -4505,7 +3810,6 @@ def compute_mse_vectorized(
         count += int(partial_valid[i])
 
     if count < 5 or sum_w <= 1e-18:
-
         return 1e12, count
 
     # Strict weighted average: makes the metric consistent with Deltaln(lambda)
@@ -4515,9 +3819,7 @@ def compute_mse_vectorized(
     return sum_sq / sum_w, count
 
 
-@njit(cache=True, fastmath=True)
-
-
+@njit(cache=True, fastmath=True, nogil=True)
 def clip_to_bounds(x: np.ndarray, lb: np.ndarray, ub: np.ndarray) -> np.ndarray:
 
     return np.minimum(np.maximum(x, lb), ub)
@@ -4530,31 +3832,17 @@ def clip_to_bounds(x: np.ndarray, lb: np.ndarray, ub: np.ndarray) -> np.ndarray:
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def cost_numba_fast(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     min_d: float,
-
     has_back: bool,
-
     n_back_T: np.ndarray,
-
     d_back: np.ndarray,
-
-
 ) -> float:
 
     # --- CRITICAL PHYSICS NOTE ---
@@ -4574,12 +3862,7 @@ def cost_numba_fast(
     # 1. Calc Optical Properties (T)
 
     if has_back:
-
-        Rf, Tf, Rf_prime, Rb_prime, Tb = calc_spectrum_full_exact(
-
-            wls, ep, n_layers_T, d_back, n_back_T, n_sub
-
-        )
+        Rf, Tf, Rf_prime, Rb_prime, Tb = calc_spectrum_full_exact(wls, ep, n_layers_T, d_back, n_back_T, n_sub)
 
         # Exact incoherent: T = (Tf * Tb) / (1 - Rf' * Rb')
 
@@ -4588,17 +3871,14 @@ def cost_numba_fast(
         T = np.empty(n_wls, dtype=wls.dtype)
 
         for i in prange(n_wls):
-
             d_val = 1.0 - Rf_prime[i] * Rb_prime[i]
 
             if d_val < 1e-12:
-
                 d_val = 1e-12
 
             T[i] = (Tf[i] * Tb[i]) / d_val
 
     else:
-
         R, T = calculate_RT_no_backside(ep, n_layers_T, n_sub, wls)
 
     # 2. MSE
@@ -4606,7 +3886,6 @@ def cost_numba_fast(
     mse, count = compute_mse_vectorized(T, tgt_vals, tgt_weights)
 
     if count == 0:
-
         return 1e12
 
     # 3. Vectorized penalty via parallel reduction
@@ -4616,23 +3895,19 @@ def cost_numba_fast(
     penalty_arr = np.empty(n_ep, dtype=np.float64)
 
     for i in prange(n_ep):
-
         d_val = ep[i]
 
         if 1e-12 < d_val < min_d:
-
             gap = min_d - d_val
 
             penalty_arr[i] = gap * gap * 1e6
 
         else:
-
             penalty_arr[i] = 0.0
 
     penalty = 0.0
 
     for i in range(n_ep):
-
         penalty += penalty_arr[i]
 
     return mse + penalty
@@ -4669,33 +3944,18 @@ def cost_numba_fast(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def needle_scan_cached(
-
     wls: np.ndarray,  # (W,) float64
-
     n_layers_T: np.ndarray,  # (W, N) complex128 - layer clues
-
     n_needle_T: np.ndarray,  # (W, N) complex128  - needle material per layer
-
     n_sub: np.ndarray,  # (W,) complex128     - substrate
-
     ep: np.ndarray,  # (N,) float64        - current thicknesses
-
     tgt_vals: np.ndarray,  # (W,) float64        - target T values
-
     tgt_weights: np.ndarray,  # (W,) float64        - target weights
-
     step_nm: float,  # scan step (nm)
-
     probe_thickness: float,  # needle probe thickness (nm)
-
     scan_mask: np.ndarray,  # (N,) int64  - 1 = scan, 0 = skip
-
-
 ) -> tuple:
-
     """
 
     Optimized Needle position scan with forward/backward matrix caching.
@@ -4749,7 +4009,6 @@ def needle_scan_cached(
     L11 = np.empty((N + 1, W), dtype=np.complex128)
 
     for w in range(W):
-
         L00[0, w] = 1.0 + 0j
 
         L01[0, w] = 0.0 + 0j
@@ -4759,11 +4018,9 @@ def needle_scan_cached(
         L11[0, w] = 1.0 + 0j
 
     for j in range(N):
-
         d_j = ep[j]
 
         for w in range(W):
-
             n_j = n_layers_T[w, j]
 
             phi = k0[w] * n_j * d_j
@@ -4813,7 +4070,6 @@ def needle_scan_cached(
     R11 = np.empty((N, W), dtype=np.complex128)
 
     for w in range(W):
-
         R00[N - 1, w] = 1.0 + 0j
 
         R01[N - 1, w] = 0.0 + 0j
@@ -4823,11 +4079,9 @@ def needle_scan_cached(
         R11[N - 1, w] = 1.0 + 0j
 
     for j in range(N - 2, -1, -1):
-
         d_jp1 = ep[j + 1]
 
         for w in range(W):
-
             n_jp1 = n_layers_T[w, j + 1]
 
             phi = k0[w] * n_jp1 * d_jp1
@@ -4867,27 +4121,22 @@ def needle_scan_cached(
     total = 0
 
     for j in range(N):
-
         if scan_mask[j] == 0:
-
             continue
 
         d_j = ep[j]
 
         if d_j < step_nm + 0.1:
-
             continue
 
         z = step_nm
 
         while z < d_j - 0.1:
-
             total += 1
 
             z += step_nm
 
     if total == 0:
-
         return np.int64(-1), 0.0, 1e30
 
     cand_layer = np.empty(total, dtype=np.int64)
@@ -4897,21 +4146,17 @@ def needle_scan_cached(
     idx = 0
 
     for j in range(N):
-
         if scan_mask[j] == 0:
-
             continue
 
         d_j = ep[j]
 
         if d_j < step_nm + 0.1:
-
             continue
 
         z = step_nm
 
         while z < d_j - 0.1:
-
             cand_layer[idx] = j
 
             cand_z[idx] = z
@@ -4939,7 +4184,6 @@ def needle_scan_cached(
     costs = np.full(total, 1e30, dtype=np.float64)
 
     for c in prange(total):
-
         j = cand_layer[c]
 
         z = cand_z[c]
@@ -4953,11 +4197,9 @@ def needle_scan_cached(
         count = 0
 
         for w in range(W):
-
             w_tgt = tgt_weights[w]
 
             if w_tgt <= 0.0:
-
                 continue
 
             kk = k0[w]
@@ -5069,17 +4311,14 @@ def needle_scan_cached(
             Y = B + C  # n_inc * B + C  with n_inc = 1
 
             if abs(Y) < 1e-14:
-
                 T_val = 0.0
 
             else:
-
                 t_coeff = 2.0 / Y  # 2·n_inc / Y
 
                 T_val = ns.real * (t_coeff.real * t_coeff.real + t_coeff.imag * t_coeff.imag)
 
                 if T_val < 0.0:
-
                     T_val = 0.0
 
                 r_coeff = (B - C) / Y
@@ -5087,17 +4326,14 @@ def needle_scan_cached(
                 R_val = r_coeff.real * r_coeff.real + r_coeff.imag * r_coeff.imag
 
                 if R_val + T_val > 1.0:
-
                     T_val = 1.0 - R_val
 
                     if T_val < 0.0:
-
                         T_val = 0.0
 
             # ── Accumulate weighted MSE ──
 
             if np.isfinite(T_val) and np.isfinite(tgt_vals[w]):
-
                 diff = T_val - tgt_vals[w]
 
                 mse_sum += diff * diff * w_tgt
@@ -5105,7 +4341,6 @@ def needle_scan_cached(
                 count += 1
 
         if count >= 5:
-
             costs[c] = mse_sum / count
 
     # ================================================================
@@ -5119,9 +4354,7 @@ def needle_scan_cached(
     best_cost = costs[0]
 
     for c in range(1, total):
-
         if costs[c] < best_cost:
-
             best_cost = costs[c]
 
             best_idx = c
@@ -5151,33 +4384,33 @@ def needle_scan_cached(
 
 
 def get_lbfgsb_params(dim: int) -> dict:
-
     """L-BFGS-B tolerances - always tight (gradient computed in f64)."""
 
     return {"ftol": 1e-12, "gtol": 1e-12, "maxcor": min(50, max(20, dim + 5))}
 
 
 class LBFGSBSearcher:
+    """Local Search via L-BFGS-B (direct Fortran setulb for 2× less overhead)."""
 
-    """Local Search via L-BFGS-B"""
+    # Try to import the Fortran kernel once at class definition time.
+    # Falls back to scipy.optimize.minimize if unavailable.
+    try:
+        from scipy.optimize._lbfgsb import setulb as _setulb
+    except ImportError:
+        _setulb = None
 
     def __init__(
-
         self,
-
         func: Callable,
-
         bounds: np.ndarray,
-
         config: PGlobalConfig | None = None,
-
         gradient_func: Callable | None = None,
-
     ):
 
         self.func = func
 
-        self.bounds = list(zip(bounds[:, 0], bounds[:, 1]))
+        # Pre-compute bounds list once (avoid O(dim) list creation per search)
+        self._bounds_list = list(zip(bounds[:, 0], bounds[:, 1]))
 
         self.dim = len(bounds)
 
@@ -5185,51 +4418,154 @@ class LBFGSBSearcher:
 
         self.gradient_func = gradient_func
 
-    def search(
+        # Pre-compute L-BFGS-B parameters (dimension-dependent, constant per searcher)
+        self._lbfgsb_params = get_lbfgsb_params(self.dim)
 
-        self, x0: np.ndarray, max_feval: int = 1000, callback: Callable = None
+        # Pre-compute Fortran-format bounds arrays (used by direct setulb path)
+        self._low_bnd = np.ascontiguousarray(bounds[:, 0], dtype=np.float64)
+        self._upper_bnd = np.ascontiguousarray(bounds[:, 1], dtype=np.float64)
+        self._nbd = np.full(self.dim, 2, dtype=np.int32)  # 2 = both bounds
 
+        # Pre-build combined fun+grad closure (probed once in __init__,
+        # not per search call). Saves ~2 TMM evals per local search.
+        self._objective_fn = func
+        self._jac_arg = None
+
+        if gradient_func is not None:
+            _func = func
+            _grad = gradient_func
+
+            def _fun_and_grad(x):
+                f = _func(x)
+                g = _grad(x)
+                if isinstance(g, tuple):
+                    g = g[1]
+                if g is None:
+                    return f
+                return f, g
+
+            self._fun_and_grad = _fun_and_grad
+            # Probe deferred to first search() call where x0 is available
+            self._grad_probed = False
+        else:
+            self._fun_and_grad = None
+            self._grad_probed = True  # nothing to probe
+
+    def _probe_gradient(self, x0: np.ndarray):
+        """One-time probe: does gradient_func work for the given x0?"""
+        if self._grad_probed:
+            return
+        self._grad_probed = True
+        if self._fun_and_grad is None:
+            return
+        try:
+            _probe = self._fun_and_grad(x0)
+            if isinstance(_probe, tuple) and len(_probe) == 2:
+                self._objective_fn = self._fun_and_grad
+                self._jac_arg = True
+        except (ValueError, RuntimeError, TypeError):
+            pass
+
+    def _search_direct(
+        self,
+        x0: np.ndarray,
+        max_feval: int,
+        fun_and_grad: Callable,
     ) -> tuple[np.ndarray, float, int]:
+        """Direct Fortran setulb call — bypasses scipy.optimize.minimize wrapper.
+
+        Eliminates ScalarFunction, _prepare_bounds, and OptimizeResult overhead
+        (~35us per function evaluation, measured 2× speedup vs minimize).
+        """
+        n = self.dim
+        m = self._lbfgsb_params["maxcor"]
+        ftol = self._lbfgsb_params["ftol"]
+        gtol = self._lbfgsb_params["gtol"]
+
+        x = np.array(x0, dtype=np.float64)
+        f = np.float64(0.0)
+        g = np.zeros(n, dtype=np.float64)
+
+        factr = ftol / np.finfo(np.float64).eps
+
+        wa = np.zeros(2 * m * n + 5 * n + 11 * m * m + 8 * m, dtype=np.float64)
+        iwa = np.zeros(3 * n, dtype=np.int32)
+        task = np.zeros(2, dtype=np.int32)
+        ln_task = np.zeros(2, dtype=np.int32)
+        lsave = np.zeros(4, dtype=np.int32)
+        isave = np.zeros(44, dtype=np.int32)
+        dsave = np.zeros(29, dtype=np.float64)
+
+        nfev = 0
+        maxiter = max(100, max_feval // (n + 1))
+        maxls = 20
+
+        _setulb = self._setulb
+        while True:
+            _setulb(
+                m,
+                x,
+                self._low_bnd,
+                self._upper_bnd,
+                self._nbd,
+                f,
+                g,
+                factr,
+                gtol,
+                wa,
+                iwa,
+                task,
+                lsave,
+                isave,
+                dsave,
+                maxls,
+                ln_task,
+            )
+            if task[0] == 3:  # FG request — evaluate objective + gradient
+                result = fun_and_grad(x)
+                if isinstance(result, tuple):
+                    fv, gv = result
+                    f = np.float64(fv)
+                    g[:] = np.asarray(gv, dtype=np.float64)
+                else:
+                    f = np.float64(result)
+                    # FD gradient will be handled by setulb internally
+                nfev += 1
+                if nfev >= max_feval:
+                    task[0] = 5
+                    task[1] = 502
+            elif task[0] == 1:  # NEW_X — new iteration completed
+                if isave[29] >= maxiter:
+                    task[0] = 5
+                    task[1] = 504
+            else:
+                break
+
+        return x.copy(), float(f), nfev
+
+    def search(self, x0: np.ndarray, max_feval: int = 1000, callback: Callable = None) -> tuple[np.ndarray, float, int]:
 
         try:
+            # Probe gradient on first call (needs x0 to test)
+            self._probe_gradient(x0)
 
-            params = get_lbfgsb_params(self.dim)
+            # Fast path: direct Fortran setulb (bypasses scipy wrapper overhead).
+            # Used when: gradient is available (jac=True) and no callback needed
+            # (PGlobal never uses callback on local searches).
+            if self._setulb is not None and self._jac_arg is True and callback is None:
+                return self._search_direct(x0, max_feval, self._objective_fn)
 
+            # Fallback: scipy.optimize.minimize (handles FD gradient, callbacks, etc.)
             options = {
-
-                "ftol": params["ftol"],
-
-                "gtol": params["gtol"],
-
-                "maxcor": params["maxcor"],
-
+                "ftol": self._lbfgsb_params["ftol"],
+                "gtol": self._lbfgsb_params["gtol"],
+                "maxcor": self._lbfgsb_params["maxcor"],
                 "maxfun": max_feval,
-
                 "maxiter": max(100, max_feval // (self.dim + 1)),
-
             }
 
-            if "eps" in params:
-
-                options["eps"] = params["eps"]
-
-            jac = None
-
-            if self.gradient_func:
-
-                def jac_wrapper(x):
-
-                    res = self.gradient_func(x)
-
-                    return res[1] if isinstance(res, tuple) else res
-
-                jac = jac_wrapper
-
-            # Wrap callback to match minimize signature (xk) -> callback(xk, current_f?)
-
-            # SciPy callback only receives xk. We can't easily get fk without re-evaluating.
-
-            # But we can just use it to signal "alive".
+            if "eps" in self._lbfgsb_params:
+                options["eps"] = self._lbfgsb_params["eps"]
 
             min_callback = None
 
@@ -5237,46 +4573,25 @@ class LBFGSBSearcher:
 
                 def min_callback(xk):
 
-                    # Pass dummy sample or just signal
-
-                    # Since we don't have yk cheaply, we rely on the optimizer to check best_ever
-
-                    # externally or we re-eval? Re-eval is expensive.
-
-                    # Actually PGlobal callback expects (sample).
-
-                    # Let's just signal the optimizer that an iteration happened.
-
                     callback(xk)
 
             res = minimize(
-
-                self.func,
-
+                self._objective_fn,
                 x0,
-
                 method="L-BFGS-B",
-
-                bounds=self.bounds,
-
+                bounds=self._bounds_list,
                 options=options,
-
-                jac=jac,
-
+                jac=self._jac_arg,
                 callback=min_callback,
-
             )
 
             return res.x, float(res.fun), int(res.nfev)
 
         except (ValueError, RuntimeError, np.linalg.LinAlgError):
-
             return x0.copy(), float(self.func(x0)), 1
 
 
-@njit(cache=True, fastmath=True)
-
-
+@njit(cache=True, fastmath=True, nogil=True)
 def compute_critical_distance(n: int, dim: int, alpha: float) -> float:
 
     # Exact MLSL / Csendes Critical Distance:
@@ -5294,7 +4609,6 @@ def compute_critical_distance(n: int, dim: int, alpha: float) -> float:
     # Taking the (1/d) power becomes division by dim in log space
 
     if n <= 1:
-
         n = 2  # prevent log(log(1)) error
 
     log_val = log_gamma + math.log(alpha) + math.log(max(1e-12, math.log(float(n)))) - math.log(float(n))
@@ -5308,32 +4622,20 @@ def compute_critical_distance(n: int, dim: int, alpha: float) -> float:
     max_rk = math.sqrt(float(dim)) * 0.5
 
     if rk > max_rk:
-
         rk = max_rk
 
     return float(rk)
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def fast_clustering_kernel(
-
     x_batch: np.ndarray,
-
     y_batch: np.ndarray,
-
     seeds_x: np.ndarray,
-
     seeds_y: np.ndarray,
-
     dc: float,
-
     bounds_min: np.ndarray,
-
     bounds_ptp: np.ndarray,
-
-
 ) -> np.ndarray:
 
     # Note: x_batch MUST be sorted by y_batch ascending before calling!
@@ -5347,12 +4649,11 @@ def fast_clustering_kernel(
     dc_sq = dc * dc
 
     for i in prange(n_batch):
+        # Strict MLSL condition: x_i launches local search UNLESS there is a
 
-        # Strict MLSL condition: x_i launches local search UNLESS there is a 
+        # point x_j (seed or intra-batch point) such that f(x_j) < f(x_i) AND
 
-        # point x_j (seed or intra-batch point) such that f(x_j) < f(x_i) AND 
-
-        # normalized_distance(x_i, x_j) < d_c. 
+        # normalized_distance(x_i, x_j) < d_c.
 
         min_dist_sq = 1e30
 
@@ -5361,19 +4662,15 @@ def fast_clustering_kernel(
         # 1. Compare against PREVIOUS iterations' local minima / seeds
 
         for j in range(n_seeds):
-
             if seeds_y[j] < y_batch[i]:  # Gradient condition (f_j < f_i)
-
                 dist_sq = 0.0
 
                 for k in range(x_batch.shape[1]):
-
                     d = (x_batch[i, k] - seeds_x[j, k]) / bounds_ptp[k]
 
                     dist_sq += d * d
 
                 if dist_sq < dc_sq and dist_sq < min_dist_sq:
-
                     min_dist_sq = dist_sq
 
                     best_seed = j
@@ -5385,17 +4682,14 @@ def fast_clustering_kernel(
         # This prevents redundant local searches from the same batch mapping to the same basin!
 
         for j in range(i):
-
             dist_sq = 0.0
 
             for k in range(x_batch.shape[1]):
-
                 d = (x_batch[i, k] - x_batch[j, k]) / bounds_ptp[k]
 
                 dist_sq += d * d
 
             if dist_sq < dc_sq and dist_sq < min_dist_sq:
-
                 min_dist_sq = dist_sq
 
                 best_seed = -2  # -2 means "clustered within same batch"
@@ -5406,8 +4700,9 @@ def fast_clustering_kernel(
 
 
 class SingleLinkageClusterer:
-
     """Strict MLSL / Single-linkage clustering for PGLOBAL"""
+
+    _INITIAL_BUF_CAP = 256
 
     def __init__(self, bounds: np.ndarray, config: PGlobalConfig):
 
@@ -5427,28 +4722,43 @@ class SingleLinkageClusterer:
 
         self.clusters: list[dict] = []
 
-        # New for Bayesian rules: track unique basins (distinct L-BFGS-B endpoints)
+        # Pre-allocated doubling buffers for seeds (amortized O(1) append)
+        self._seeds_x_buf = np.empty((self._INITIAL_BUF_CAP, self.dim), dtype=np.float64)
+        self._seeds_y_buf = np.empty(self._INITIAL_BUF_CAP, dtype=np.float64)
+        self._seeds_count = 0
 
-        self.unique_basins_x = np.zeros((0, self.dim), dtype=np.float64)
-
-        self.unique_basins_y = np.zeros(0, dtype=np.float64)
+        # Pre-allocated doubling buffers for unique basins
+        self._basins_x_buf = np.empty((64, self.dim), dtype=np.float64)
+        self._basins_y_buf = np.empty(64, dtype=np.float64)
+        self._basins_count = 0
 
         self.total_local_searches_started = 0
 
-        self.x_seeds_cache = np.zeros((0, self.dim), dtype=np.float64)
-
-        self.y_seeds_cache = np.zeros(0, dtype=np.float64)
-
         self._lock = RLock()
 
+    # ── Property views into pre-allocated buffers (zero-copy) ──────────
+
+    @property
+    def x_seeds_cache(self) -> np.ndarray:
+        return self._seeds_x_buf[: self._seeds_count]
+
+    @property
+    def y_seeds_cache(self) -> np.ndarray:
+        return self._seeds_y_buf[: self._seeds_count]
+
+    @property
+    def unique_basins_x(self) -> np.ndarray:
+        return self._basins_x_buf[: self._basins_count]
+
+    @property
+    def unique_basins_y(self) -> np.ndarray:
+        return self._basins_y_buf[: self._basins_count]
+
     def process_batch(
-
         self, x_batch: np.ndarray, y_batch: np.ndarray, n_total_samples: int
-
     ) -> tuple[np.ndarray, np.ndarray]:
 
         if len(x_batch) == 0:
-
             return np.zeros((0, self.dim)), np.zeros(0)
 
         # Standard MLSL: points must be processed sequentially in ascending order of objective!
@@ -5462,7 +4772,6 @@ class SingleLinkageClusterer:
         s_y_batch = y_batch[sort_idx]
 
         with self._lock:
-
             dc = compute_critical_distance(max(n_total_samples, 2), self.dim, self.config.alpha)
 
             # cluster_ids returns -1 if point should launch local search
@@ -5470,11 +4779,7 @@ class SingleLinkageClusterer:
             # >=0 if it clustered to a previous seed, -2 if it clustered to a better point in THIS batch
 
             cluster_ids = fast_clustering_kernel(
-
-                s_x_batch, s_y_batch, self.x_seeds_cache, self.y_seeds_cache, dc,
-
-                self.bounds_min, self.bounds_ptp
-
+                s_x_batch, s_y_batch, self.x_seeds_cache, self.y_seeds_cache, dc, self.bounds_min, self.bounds_ptp
             )
 
             mask_unclustered = cluster_ids == -1
@@ -5486,13 +4791,11 @@ class SingleLinkageClusterer:
             unclustered_y = s_y_batch[mask_unclustered]
 
             if len(unclustered_x) > 0:
-
                 self._append_to_seeds(unclustered_x, unclustered_y)
 
             return unclustered_x, unclustered_y
 
     def add_cluster_result(self, x_local: np.ndarray, y_local: float):
-
         """
 
         Registers a completed L-BFGS-B local search.
@@ -5502,7 +4805,6 @@ class SingleLinkageClusterer:
         """
 
         with self._lock:
-
             self.total_local_searches_started += 1
 
             # 1. Add as a seed point so that future batches map to this minimum
@@ -5511,44 +4813,24 @@ class SingleLinkageClusterer:
 
             self.clusters.append({"x": x_local.copy(), "y": y_local})
 
-            # 2. Add to unique basins if it's new (tolerance: 1e-4 normalized distance and similar y)
+            # 2. Add to unique basins if it's new (vectorized distance check)
 
             is_new_basin = True
 
-            for i in range(len(self.unique_basins_y)):
-
-                if abs(self.unique_basins_y[i] - y_local) < 1e-6 * max(abs(y_local), 1e-8):
-
-                    dist_sq = 0.0
-
-                    for k in range(self.dim):
-
-                        d = (x_local[k] - self.unique_basins_x[i, k]) / self.bounds_ptp[k]
-
-                        dist_sq += d * d
-
-                    if dist_sq < 1e-4:  # Very tight radius for 'identical' minimum
-
+            if self._basins_count > 0:
+                by = self._basins_y_buf[: self._basins_count]
+                y_tol = 1e-6 * max(abs(y_local), 1e-8)
+                y_close = np.abs(by - y_local) < y_tol
+                if np.any(y_close):
+                    bx = self._basins_x_buf[: self._basins_count][y_close]
+                    dx = (x_local - bx) / self.bounds_ptp
+                    if np.any(np.sum(dx * dx, axis=1) < 1e-4):
                         is_new_basin = False
 
-                        break
-
             if is_new_basin:
-
-                if len(self.unique_basins_y) > 0:
-
-                    self.unique_basins_x = np.vstack([self.unique_basins_x, x_local])
-
-                    self.unique_basins_y = np.append(self.unique_basins_y, y_local)
-
-                else:
-
-                    self.unique_basins_x = np.atleast_2d(x_local)
-
-                    self.unique_basins_y = np.array([y_local])
+                self._append_to_basins(np.atleast_1d(x_local), float(y_local))
 
     def get_bayesian_estimate(self) -> tuple[float, float]:
-
         """
 
         Returns (Expected_Total_Minima, Expected_Undiscovered_Minima)
@@ -5560,14 +4842,12 @@ class SingleLinkageClusterer:
         """
 
         with self._lock:
-
             w = float(len(self.unique_basins_y))
 
             N = float(self.total_local_searches_started)
 
             if N <= w + 2 or w == 0:
-
-                return float('inf'), float('inf')
+                return float("inf"), float("inf")
 
             expected_total = (w * (N - 1)) / (N - w - 2)
 
@@ -5576,50 +4856,65 @@ class SingleLinkageClusterer:
             return expected_total, expected_undiscovered
 
     def _append_to_seeds(self, x_array: np.ndarray, y_array: np.ndarray):
+        """Amortized O(1) append into pre-allocated doubling buffer."""
+        x_new = np.atleast_2d(x_array)
+        y_new = np.asarray(y_array, dtype=np.float64).ravel()
+        n_new = x_new.shape[0]
+        needed = self._seeds_count + n_new
+        if needed > self._seeds_x_buf.shape[0]:
+            new_cap = max(needed, self._seeds_x_buf.shape[0] * 2)
+            new_xb = np.empty((new_cap, self.dim), dtype=np.float64)
+            new_yb = np.empty(new_cap, dtype=np.float64)
+            new_xb[: self._seeds_count] = self._seeds_x_buf[: self._seeds_count]
+            new_yb[: self._seeds_count] = self._seeds_y_buf[: self._seeds_count]
+            self._seeds_x_buf = new_xb
+            self._seeds_y_buf = new_yb
+        self._seeds_x_buf[self._seeds_count : self._seeds_count + n_new] = x_new
+        self._seeds_y_buf[self._seeds_count : self._seeds_count + n_new] = y_new
+        self._seeds_count += n_new
 
-        if len(self.x_seeds_cache) > 0:
-
-            self.x_seeds_cache = np.vstack([self.x_seeds_cache, x_array])
-
-            self.y_seeds_cache = np.append(self.y_seeds_cache, y_array)
-
-        else:
-
-            self.x_seeds_cache = x_array
-
-            self.y_seeds_cache = y_array
+    def _append_to_basins(self, x_local: np.ndarray, y_local: float):
+        """Amortized O(1) append into pre-allocated doubling buffer."""
+        needed = self._basins_count + 1
+        if needed > self._basins_x_buf.shape[0]:
+            new_cap = max(needed, self._basins_x_buf.shape[0] * 2)
+            new_xb = np.empty((new_cap, self.dim), dtype=np.float64)
+            new_yb = np.empty(new_cap, dtype=np.float64)
+            new_xb[: self._basins_count] = self._basins_x_buf[: self._basins_count]
+            new_yb[: self._basins_count] = self._basins_y_buf[: self._basins_count]
+            self._basins_x_buf = new_xb
+            self._basins_y_buf = new_yb
+        self._basins_x_buf[self._basins_count] = x_local
+        self._basins_y_buf[self._basins_count] = y_local
+        self._basins_count += 1
 
     def get_best_minimum(self):
 
         with self._lock:
-
-            if len(self.unique_basins_y) == 0:
-
+            if self._basins_count == 0:
                 return None
 
-            idx = np.argmin(self.unique_basins_y)
+            idx = int(np.argmin(self._basins_y_buf[: self._basins_count]))
 
-            return self.unique_basins_x[idx], self.unique_basins_y[idx]
+            return self._basins_x_buf[idx].copy(), float(self._basins_y_buf[idx])
 
     def clear(self):
 
         with self._lock:
-
             self.clusters.clear()
 
-            self.unique_basins_x = np.zeros((0, self.dim))
+            self._seeds_count = 0
+            self._seeds_x_buf = np.empty((self._INITIAL_BUF_CAP, self.dim), dtype=np.float64)
+            self._seeds_y_buf = np.empty(self._INITIAL_BUF_CAP, dtype=np.float64)
 
-            self.unique_basins_y = np.zeros(0)
+            self._basins_count = 0
+            self._basins_x_buf = np.empty((64, self.dim), dtype=np.float64)
+            self._basins_y_buf = np.empty(64, dtype=np.float64)
 
             self.total_local_searches_started = 0
 
-            self.x_seeds_cache = np.zeros((0, self.dim))
-
-            self.y_seeds_cache = np.zeros(0)
-
 
 class PGlobalOptimizer:
-
     """
 
     PGLOBAL Global Optimizer - Multi-start stochastic global optimization.
@@ -5657,23 +4952,14 @@ class PGlobalOptimizer:
     _HIGH_DIM_THRESHOLD: int = 15  # Dimension above which we tighten reduction
 
     def __init__(
-
         self,
-
         objective: Callable,
-
         bounds: np.ndarray,
-
         config: PGlobalConfig | None = None,
-
         stop_event: Event | None = None,
-
         log_clues: list[int] | None = None,
-
         x0: np.ndarray | None = None,
-
         gradient_func: Callable | None = None,
-
     ):
 
         self.objective = objective
@@ -5696,7 +4982,6 @@ class PGlobalOptimizer:
         # Phase 2: Quasi-Random Sequence (Sobol)
 
         try:
-
             from scipy.stats import qmc
 
             # Scramble prevents identical grids across restarts while keeping low-discrepancy
@@ -5704,7 +4989,6 @@ class PGlobalOptimizer:
             self.qmc_engine = qmc.Sobol(d=self.dim, scramble=True, seed=self.rng)
 
         except ImportError:
-
             self.qmc_engine = None
 
         self.x0 = x0
@@ -5714,6 +4998,9 @@ class PGlobalOptimizer:
         self._best_ever: Sample | None = None
 
         self.gradient_func = gradient_func
+
+        # Cached searcher — created once, reused across all local searches
+        self._searcher: LBFGSBSearcher | None = None
 
         # Worker count - computed once, reused across iterations
 
@@ -5726,23 +5013,18 @@ class PGlobalOptimizer:
     # ── Helpers ────────────────────────────────────────────────────────
 
     @staticmethod
-
     def _resolve_worker_count() -> int:
-
         """Determine thread-pool size (safe for frozen executables)."""
 
         import sys
 
         if getattr(sys, "frozen", False):
-
             try:
-
                 from certus_core import get_safe_worker_count
 
                 return get_safe_worker_count()
 
             except ImportError:
-
                 return 1
 
         return max(1, (os.cpu_count() or 4) - 2)
@@ -5752,11 +5034,9 @@ class PGlobalOptimizer:
         return bool(self._stop_event and self._stop_event.is_set())
 
     def _generate_samples(self, n: int) -> np.ndarray:
-
         """Draw *n* samples within bounds using Sobol Quasi-Random Sequences."""
 
         if self.qmc_engine is not None:
-
             # Generate low-discrepancy samples in [0, 1)^d
 
             # Scipy QMC Sobol expects n to be a power of 2 for perfect balance properties.
@@ -5769,7 +5049,7 @@ class PGlobalOptimizer:
 
             unit_samples = self.qmc_engine.random(n_pow2)[:n]
 
-            # Scale to physical bounds manually to avoid extra scipy calls overhead if needed, 
+            # Scale to physical bounds manually to avoid extra scipy calls overhead if needed,
 
             # though scipy.stats.qmc.scale is also fine. Manual scaling is fast and numba-friendly if extracted.
 
@@ -5780,7 +5060,6 @@ class PGlobalOptimizer:
             return unit_samples * bounds_ptp + bounds_min
 
         else:
-
             # Fallback to pseudo-random uniform
 
             return self.rng.uniform(self.bounds[:, 0], self.bounds[:, 1], (n, self.dim))
@@ -5788,33 +5067,36 @@ class PGlobalOptimizer:
     # ── Step 2: Batch Evaluation ──────────────────────────────────────
 
     def _evaluate_batch(self, X: np.ndarray) -> np.ndarray:
-
         """
 
         Evaluate objective on *X* (n_points × dim).
 
-        Uses ThreadPoolExecutor when beneficial (n > _SEQUENTIAL_THRESHOLD
+        Prefers the objective's own ``evaluate_batch`` (BLAS-batched interpolation),
 
-        and multiple workers available).  Falls back to a simple loop otherwise.
+        then ThreadPoolExecutor, then sequential loop.
 
         """
 
         n = len(X)
 
+        # Fast path: batched evaluation (shared interpolation matrix → dgemm)
+        _eb = getattr(self.objective, "evaluate_batch", None)
+        if _eb is not None:
+            try:
+                return np.asarray(_eb(X), dtype=np.float64)
+            except (ValueError, TypeError, RuntimeError):
+                pass  # Fallback to per-point
+
         Y = np.empty(n, dtype=np.float64)
 
         if n <= self._SEQUENTIAL_THRESHOLD or self._n_workers <= 1:
-
             for i in range(n):
-
                 Y[i] = self.objective(X[i])
 
         else:
-
             pool = self._get_pool()
 
             for i, val in enumerate(pool.map(self.objective, X)):
-
                 Y[i] = val
 
         return Y
@@ -5822,11 +5104,8 @@ class PGlobalOptimizer:
     # ── Step 5: Local Search Dispatch ─────────────────────────────────
 
     def _build_dispatch_tasks(
-
         self, cand_x: np.ndarray, cand_y: np.ndarray, iteration: int
-
     ) -> list[tuple[np.ndarray, int]]:
-
         """
 
         Select unclustered candidates and pair each with a L-BFGS-B budget.
@@ -5850,76 +5129,58 @@ class PGlobalOptimizer:
         tasks: list[tuple[np.ndarray, int]] = []
 
         for k in range(n_dispatch):
-
             if self._is_stopped():
-
                 break
 
             x_k = cand_x[idx_sorted[k]]
 
-            budget_factor = 1.0 + 0.3 * (1.0 - k / n_dispatch)
+            # Top candidates (k=0) get 130% budget; bottom get 70%
+            budget_factor = 0.7 + 0.6 * (1.0 - k / max(n_dispatch, 1))
 
-            budget = min(
-
-                int(self.config.local_search_budget * budget_factor),
-
-                self.config.local_search_budget,
-
-            )
+            budget = int(self.config.local_search_budget * budget_factor)
 
             if budget >= self._MIN_LOCAL_BUDGET:
-
                 tasks.append((x_k, budget))
 
         return tasks
 
-    def _run_local_search(
+    def _get_searcher(self) -> LBFGSBSearcher:
+        """Return cached LBFGSBSearcher (bounds list + lbfgsb params computed once)."""
+        if self._searcher is None:
+            self._searcher = LBFGSBSearcher(self.objective, self.bounds, self.config, self.gradient_func)
+        return self._searcher
 
-        self, task: tuple[np.ndarray, int]
-
-    ) -> tuple[np.ndarray, float, int] | None:
-
+    def _run_local_search(self, task: tuple[np.ndarray, int]) -> tuple[np.ndarray, float, int] | None:
         """Execute a single L-BFGS-B local search (designed to run in a thread)."""
 
         if self._is_stopped():
-
             return None
 
         x_start, budget = task
 
         try:
-
-            searcher = LBFGSBSearcher(self.objective, self.bounds, self.config, self.gradient_func)
-
-            x_opt, f_opt, n_ev = searcher.search(x_start, budget)
+            x_opt, f_opt, n_ev = self._get_searcher().search(x_start, budget)
 
             return (x_opt, f_opt, n_ev)
 
         except (ValueError, RuntimeError):
-
             return None
 
     def _dispatch_and_collect(
-
         self,
-
         tasks: list[tuple[np.ndarray, int]],
-
         iteration: int,
-
         best_ever_y: float,
-
         stagnation_counter: int,
-
         callback: Callable | None,
-
     ) -> tuple[float, int]:
-
         """
 
-        Run all local-search tasks in parallel, then merge results
+        Run all local-search tasks in parallel, process results as they
 
-        into global state (n_evals, clusterer, _best_ever).
+        complete (as_completed) for better load balancing and earlier
+
+        best-ever updates.
 
         Returns:
 
@@ -5927,14 +5188,22 @@ class PGlobalOptimizer:
 
         """
 
+        from concurrent.futures import as_completed
+
         pool = self._get_pool()
 
-        results = list(pool.map(self._run_local_search, tasks))
+        futures = {pool.submit(self._run_local_search, t): t for t in tasks}
 
-        for res in results:
+        for future in as_completed(futures):
+            if self._is_stopped():
+                break
+
+            try:
+                res = future.result()
+            except (ValueError, RuntimeError, TypeError, ArithmeticError):
+                continue
 
             if res is None:
-
                 continue
 
             x_opt, f_opt, local_evals = res
@@ -5944,7 +5213,6 @@ class PGlobalOptimizer:
             self.clusterer.add_cluster_result(x_opt, f_opt)
 
             if self._best_ever is None or f_opt < self._best_ever.y:
-
                 self._best_ever = Sample(x_opt.copy(), f_opt, iteration)
 
                 best_ever_y = f_opt
@@ -5952,7 +5220,6 @@ class PGlobalOptimizer:
                 stagnation_counter = 0
 
                 if callback:
-
                     callback(self._best_ever)
 
         return best_ever_y, stagnation_counter
@@ -5960,11 +5227,9 @@ class PGlobalOptimizer:
     # ── Main Loop ─────────────────────────────────────────────────────
 
     def _get_pool(self):
-
         """Return persistent thread pool, creating it lazily on first use."""
 
         if self._pool is None:
-
             from concurrent.futures import ThreadPoolExecutor
 
             self._pool = ThreadPoolExecutor(max_workers=self._n_workers)
@@ -5972,17 +5237,14 @@ class PGlobalOptimizer:
         return self._pool
 
     def _shutdown_pool(self):
-
         """Shutdown the persistent thread pool if it exists."""
 
         if self._pool is not None:
-
             self._pool.shutdown(wait=False)
 
             self._pool = None
 
     def optimize(self, max_iter: int = 50, callback: Callable | None = None) -> Sample | None:
-
         """
 
         Run the PGLOBAL optimization loop.
@@ -6012,19 +5274,15 @@ class PGlobalOptimizer:
         start_time = time.time()
 
         for iteration in range(max_iter):
-
             # ── Termination checks ────────────────────────────────
 
             if self._is_stopped():
-
                 break
 
             if self.n_evals >= self.config.max_feval:
-
                 break
 
             if time.time() - start_time > self.config.max_time:
-
                 break
 
             # ── 1. Adaptive Sampling ──────────────────────────────
@@ -6034,7 +5292,6 @@ class PGlobalOptimizer:
             current_n = int(n_samples_iter * adaptive_factor)
 
             if iteration == 0:
-
                 current_n *= 2  # Bootstrap: double first batch
 
             # ── 2. Generation & Evaluation ────────────────────────
@@ -6050,17 +5307,14 @@ class PGlobalOptimizer:
             ratio = self.config.reduction_ratio
 
             if self.dim > self._HIGH_DIM_THRESHOLD:
-
                 ratio = min(0.25, ratio * 1.5)
 
             n_keep = max(int(current_n * ratio), 10)
 
             if n_keep < len(Y_batch):
-
                 idx_best = np.argpartition(Y_batch, n_keep)[:n_keep]
 
             else:
-
                 idx_best = np.arange(len(Y_batch))
 
             X_reduced = X_batch[idx_best]
@@ -6078,21 +5332,16 @@ class PGlobalOptimizer:
             f_best = Y_batch[best_idx]
 
             if f_best < best_ever_y and callback and iteration % 2 == 0:
-
                 callback(Sample(X_batch[best_idx], f_best, iteration))
 
             # ── 5. Parallel Local Searches ────────────────────────
 
             if len(cand_y) > 0 and not self._is_stopped() and self.n_evals < self.config.max_feval:
-
                 tasks = self._build_dispatch_tasks(cand_x, cand_y, iteration)
 
                 if tasks:
-
                     best_ever_y, stagnation_counter = self._dispatch_and_collect(
-
                         tasks, iteration, best_ever_y, stagnation_counter, callback
-
                     )
 
             # ── 6. Bayesian Stopping Rule ─────────────────────────
@@ -6100,7 +5349,6 @@ class PGlobalOptimizer:
             _exp_tot, expected_undiscovered = self.clusterer.get_bayesian_estimate()
 
             if expected_undiscovered <= 0.5:
-
                 # We expect less than 0.5 unobserved local minima left! We can safely terminate global search.
 
                 # In standard Bayesian statistics this equates to high confidence that all minima have been found.
@@ -6110,15 +5358,12 @@ class PGlobalOptimizer:
             # ── 7. Stagnation Detection ───────────────────────────
 
             if self._best_ever:
-
                 curr_best = self._best_ever.y
 
                 if abs(curr_best - last_best_y) < 1e-8 * max(abs(curr_best), 1e-10):
-
                     stagnation_counter += 1
 
                 else:
-
                     stagnation_counter = 0
 
                 last_best_y = curr_best
@@ -6126,7 +5371,6 @@ class PGlobalOptimizer:
                 # Heuristic fallback if Bayesian stopping doesn't trigger
 
                 if stagnation_counter >= 8:
-
                     break
 
         self._shutdown_pool()
@@ -6147,698 +5391,354 @@ CIE_LAMBDA = np.arange(380, 781, 5, dtype=np.float64)
 
 
 CIE_X = np.array(
-
     [
-
         0.0014,
-
         0.0022,
-
         0.0042,
-
         0.0076,
-
         0.0143,
-
         0.0232,
-
         0.0435,
-
         0.0776,
-
         0.1344,
-
         0.2148,
-
         0.3230,
-
         0.4479,
-
         0.5970,
-
         0.7621,
-
         0.9163,
-
         1.0263,
-
         1.0622,
-
         1.0456,
-
         1.0026,
-
         0.9564,
-
         0.9154,
-
         0.8634,
-
         0.7889,
-
         0.6954,
-
         0.5945,
-
         0.4900,
-
         0.3856,
-
         0.2899,
-
         0.2091,
-
         0.1484,
-
         0.1041,
-
         0.0734,
-
         0.0514,
-
         0.0358,
-
         0.0249,
-
         0.0172,
-
         0.0117,
-
         0.0081,
-
         0.0058,
-
         0.0045,
-
         0.0036,
-
         0.0029,
-
         0.0024,
-
         0.0020,
-
         0.0017,
-
         0.0014,
-
         0.0011,
-
         0.0009,
-
         0.0007,
-
         0.0005,
-
         0.0004,
-
         0.0003,
-
         0.0002,
-
         0.0002,
-
         0.0001,
-
         0.0001,
-
         0.0001,
-
         0.0001,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
     ],
-
     dtype=np.float64,
-
-
 )
 
 
 CIE_Y = np.array(
-
     [
-
         0.0000,
-
         0.0001,
-
         0.0001,
-
         0.0002,
-
         0.0004,
-
         0.0006,
-
         0.0012,
-
         0.0022,
-
         0.0040,
-
         0.0073,
-
         0.0129,
-
         0.0230,
-
         0.0380,
-
         0.0600,
-
         0.0910,
-
         0.1390,
-
         0.2080,
-
         0.3230,
-
         0.5030,
-
         0.7100,
-
         0.8620,
-
         0.9540,
-
         0.9950,
-
         0.9950,
-
         0.9520,
-
         0.8700,
-
         0.7570,
-
         0.6310,
-
         0.5030,
-
         0.3810,
-
         0.2650,
-
         0.1750,
-
         0.1170,
-
         0.0782,
-
         0.0526,
-
         0.0353,
-
         0.0231,
-
         0.0154,
-
         0.0106,
-
         0.0074,
-
         0.0053,
-
         0.0039,
-
         0.0029,
-
         0.0021,
-
         0.0016,
-
         0.0012,
-
         0.0008,
-
         0.0006,
-
         0.0004,
-
         0.0003,
-
         0.0002,
-
         0.0001,
-
         0.0001,
-
         0.0001,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
     ],
-
     dtype=np.float64,
-
-
 )
 
 
 CIE_Z = np.array(
-
     [
-
         0.0065,
-
         0.0105,
-
         0.0201,
-
         0.0362,
-
         0.0679,
-
         0.1102,
-
         0.2074,
-
         0.3713,
-
         0.6456,
-
         1.0391,
-
         1.5281,
-
         2.0561,
-
         2.5861,
-
         3.0781,
-
         3.4828,
-
         3.7008,
-
         3.6551,
-
         3.4481,
-
         3.1870,
-
         2.9080,
-
         2.6480,
-
         2.3481,
-
         1.9961,
-
         1.6361,
-
         1.2880,
-
         0.9693,
-
         0.6934,
-
         0.4692,
-
         0.3162,
-
         0.2120,
-
         0.1419,
-
         0.0954,
-
         0.0640,
-
         0.0426,
-
         0.0283,
-
         0.0188,
-
         0.0125,
-
         0.0084,
-
         0.0057,
-
         0.0041,
-
         0.0031,
-
         0.0023,
-
         0.0018,
-
         0.0014,
-
         0.0011,
-
         0.0009,
-
         0.0006,
-
         0.0005,
-
         0.0003,
-
         0.0002,
-
         0.0002,
-
         0.0001,
-
         0.0001,
-
         0.0001,
-
         0.0001,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
         0.0000,
-
     ],
-
     dtype=np.float64,
-
-
 )
 
 
 D65 = np.array(
-
     [
-
         49.9755,
-
         52.3118,
-
         54.6482,
-
         68.7015,
-
         82.7549,
-
         87.1204,
-
         91.486,
-
         92.4589,
-
         93.4318,
-
         90.057,
-
         86.6823,
-
         95.7736,
-
         104.865,
-
         110.936,
-
         117.008,
-
         117.41,
-
         117.812,
-
         116.336,
-
         114.861,
-
         115.392,
-
         115.923,
-
         112.367,
-
         108.811,
-
         109.082,
-
         109.354,
-
         108.578,
-
         107.802,
-
         106.296,
-
         104.79,
-
         106.239,
-
         107.689,
-
         106.047,
-
         104.405,
-
         104.225,
-
         104.046,
-
         102.023,
-
         100.0,
-
         98.1671,
-
         96.3342,
-
         96.0611,
-
         95.788,
-
         92.2368,
-
         88.6856,
-
         89.3459,
-
         90.0062,
-
         89.8026,
-
         89.5991,
-
         88.6489,
-
         87.6987,
-
         85.4936,
-
         83.2886,
-
         83.4939,
-
         83.6992,
-
         81.863,
-
         80.0268,
-
         80.1207,
-
         80.2146,
-
         81.2462,
-
         82.2778,
-
         80.281,
-
         78.2842,
-
         74.0027,
-
         69.7213,
-
         70.6652,
-
         71.6091,
-
         72.979,
-
         74.349,
-
         67.9765,
-
         61.604,
-
         65.7448,
-
         69.8856,
-
         72.4863,
-
         75.087,
-
         69.3398,
-
         63.5927,
-
         55.0054,
-
         46.4182,
-
         56.6118,
-
         66.8054,
-
         65.0941,
-
         63.3828,
-
     ],
-
     dtype=np.float64,
-
-
 )
 
 
@@ -6846,20 +5746,12 @@ XYZ_N = np.array([95.047, 100.0, 108.883], dtype=np.float64)
 
 
 XYZ_TO_RGB = np.array(
-
     [
-
         [3.2404542, -1.5371385, -0.4985314],
-
         [-0.9692660, 1.8760108, 0.0415560],
-
         [0.0556434, -0.2040259, 1.0572252],
-
     ],
-
     dtype=np.float64,
-
-
 )
 
 
@@ -6879,23 +5771,13 @@ K_COLOR = 100.0 / _denom_y if _denom_y != 0 else 0.0
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _xyz_from_spectrum_kernel(
-
     R_interp: np.ndarray,
-
     D65_X: np.ndarray,
-
     D65_Y: np.ndarray,
-
     D65_Z: np.ndarray,
-
     k_color: float,
-
-
 ) -> tuple[float, float, float]:
-
     """JIT kernel for XYZ tristimulus computation."""
 
     X = 0.0
@@ -6905,7 +5787,6 @@ def _xyz_from_spectrum_kernel(
     Z = 0.0
 
     for i in range(len(R_interp)):
-
         X += R_interp[i] * D65_X[i]
 
         Y += R_interp[i] * D65_Y[i]
@@ -6925,32 +5806,24 @@ def xyz_from_spectrum(wls: np.ndarray, R: np.ndarray) -> np.ndarray:
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _lab_f(t: float) -> float:
-
     """CIE Lab f() function - JIT scalar."""
 
     delta = 6.0 / 29.0
 
     if t > delta * delta * delta:
-
         return t ** (1.0 / 3.0)
 
     return t / (3.0 * delta * delta) + 4.0 / 29.0
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _lab_f_inv(t: float) -> float:
-
     """CIE Lab f_inv() function - JIT scalar."""
 
     delta = 6.0 / 29.0
 
     if t > delta:
-
         return t * t * t
 
     return 3.0 * delta * delta * (t - 4.0 / 29.0)
@@ -6991,16 +5864,12 @@ def lab_to_xyz(lab_val: np.ndarray) -> np.ndarray:
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _gamma_correct_scalar(c: float) -> float:
-
     """sRGB gamma correction - JIT scalar."""
 
     c_safe = max(c, 0.0)
 
     if c_safe <= 0.0031308:
-
         return 12.92 * c_safe
 
     return 1.055 * (c_safe ** (1.0 / 2.4)) - 0.055
@@ -7013,27 +5882,18 @@ def lab_to_rgb(lab_val: np.ndarray) -> np.ndarray:
     rgb_linear = XYZ_TO_RGB @ (xyz / 100.0)
 
     rgb_gamma = np.array(
-
         [
-
             _gamma_correct_scalar(rgb_linear[0]),
-
             _gamma_correct_scalar(rgb_linear[1]),
-
             _gamma_correct_scalar(rgb_linear[2]),
-
         ]
-
     )
 
     return np.clip(rgb_gamma * 255.0, 0.0, 255.0).astype(np.int32)
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def delta_e_2000(lab1: np.ndarray, lab2: np.ndarray) -> float:
-
     """CIE DeltaE 2000 - fully JIT-compiled."""
 
     L1 = lab1[0]
@@ -7077,23 +5937,18 @@ def delta_e_2000(lab1: np.ndarray, lab2: np.ndarray) -> float:
     dC = C2p - C1p
 
     if C1p * C2p == 0.0:
-
         dh = 0.0
 
     else:
-
         diff = h2p - h1p
 
         if abs(diff) <= np.pi:
-
             dh = diff
 
         elif diff > np.pi:
-
             dh = diff - TWO_PI_VAL
 
         else:
-
             dh = diff + TWO_PI_VAL
 
     dH = 2.0 * np.sqrt(C1p * C2p) * np.sin(dh / 2.0)
@@ -7103,35 +5958,24 @@ def delta_e_2000(lab1: np.ndarray, lab2: np.ndarray) -> float:
     C_avgp = (C1p + C2p) / 2.0
 
     if C1p * C2p == 0.0:
-
         h_avgp = h1p + h2p
 
     else:
-
         if abs(h1p - h2p) <= np.pi:
-
             h_avgp = (h1p + h2p) / 2.0
 
         elif h1p + h2p < TWO_PI_VAL:
-
             h_avgp = (h1p + h2p + TWO_PI_VAL) / 2.0
 
         else:
-
             h_avgp = (h1p + h2p - TWO_PI_VAL) / 2.0
 
     T = (
-
         1.0
-
         - 0.17 * np.cos(h_avgp - np.pi / 6.0)
-
         + 0.24 * np.cos(2.0 * h_avgp)
-
         + 0.32 * np.cos(3.0 * h_avgp + np.pi / 30.0)
-
         - 0.20 * np.cos(4.0 * h_avgp - 63.0 * np.pi / 180.0)
-
     )
 
     L_avg_m50 = L_avg - 50.0
@@ -7181,30 +6025,23 @@ CACHE_SIZE_MATERIAL_INDEX = 1000
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def numba_interp_scalar(x: float, xp: np.ndarray, fp: np.ndarray) -> float:
-
     """Optimized scalar linear interpolation."""
 
     n = len(xp)
 
     if n == 0:
-
         return np.nan
 
     if n == 1:
-
         return fp[0]
 
     if x <= xp[0]:
-
         slope = (fp[1] - fp[0]) / (xp[1] - xp[0])
 
         return fp[0] + slope * (x - xp[0])
 
     if x >= xp[-1]:
-
         slope = (fp[-1] - fp[-2]) / (xp[-1] - xp[-2])
 
         return fp[-1] + slope * (x - xp[-1])
@@ -7212,7 +6049,6 @@ def numba_interp_scalar(x: float, xp: np.ndarray, fp: np.ndarray) -> float:
     idx = np.searchsorted(xp, x)
 
     if idx == 0:
-
         return fp[0]
 
     x0, x1 = xp[idx - 1], xp[idx]
@@ -7225,10 +6061,7 @@ def numba_interp_scalar(x: float, xp: np.ndarray, fp: np.ndarray) -> float:
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def numba_interp_vectorized(x_arr: np.ndarray, xp: np.ndarray, fp: np.ndarray) -> np.ndarray:
-
     """Parallel vectorized linear interpolation"""
 
     n = len(x_arr)
@@ -7236,36 +6069,24 @@ def numba_interp_vectorized(x_arr: np.ndarray, xp: np.ndarray, fp: np.ndarray) -
     result = np.empty(n, dtype=np.float64)
 
     for i in prange(n):
-
         result[i] = numba_interp_scalar(x_arr[i], xp, fp)
 
     return result
 
 
 class MaterialDatabase:
-
     """Thread-safe material DB with smart cache"""
 
     __slots__ = (
-
         "filepath",
-
         "_data",
-
         "_interpolation_cache",
-
         "_logger",
-
         "_cache_lock",
-
         "_substrate_cache",
-
         "_computation_cache",
-
         "_cache_hits",
-
         "_cache_misses",
-
     )
 
     def __init__(self, filepath: str = "clues.xlsx"):
@@ -7289,31 +6110,24 @@ class MaterialDatabase:
         self._cache_misses = 0
 
     @property
-
     def data(self) -> dict[str, dict[str, Any]]:
-
         """Lazy loading of data"""
 
         if self._data is None:
-
             self._data = self._load_materials()
 
         return self._data
 
     def _load_materials(self) -> dict[str, dict[str, Any]]:
-
         """Loads materials from Excel"""
 
         if not Path(self.filepath).is_file():
-
             self._logger.warning(f"Material database not found: {self.filepath}")
 
             return {}
 
         try:
-
             if not OPENPYXL_AVAILABLE:
-
                 self._logger.error("openpyxl not available for Excel reading")
 
                 return {}
@@ -7327,9 +6141,7 @@ class MaterialDatabase:
             material_data = {}
 
             for sheet_name in xls.sheet_names:
-
                 try:
-
                     df = pd.read_excel(xls, sheet_name=sheet_name, header=0)
 
                     df.columns = df.columns.astype(str).str.strip()
@@ -7337,27 +6149,18 @@ class MaterialDatabase:
                     # Detect columns
 
                     wl_col = next(
-
                         (c for c in df.columns if "wavelength" in c.lower() or "lambda" in c.lower()),
-
                         df.columns[0],
-
                     )
 
                     n_col = next(
-
                         (c for c in df.columns if c.lower().startswith("n")),
-
                         df.columns[1] if len(df.columns) > 1 else df.columns[0],
-
                     )
 
                     k_col = next(
-
                         (c for c in df.columns if c.lower() == "k" or c.lower().startswith("k")),
-
                         None,
-
                     )
 
                     cols_to_keep = [wl_col, n_col] + ([k_col] if k_col else [])
@@ -7365,7 +6168,6 @@ class MaterialDatabase:
                     rename_map = {wl_col: "wl", n_col: "n"}
 
                     if k_col:
-
                         rename_map[k_col] = "k"
 
                     df = df[cols_to_keep].rename(columns=rename_map)
@@ -7373,7 +6175,6 @@ class MaterialDatabase:
                     df = df.sort_values(by="wl").dropna(subset=["wl", "n"])
 
                     if df.empty or len(df) < 2:
-
                         continue
 
                     wl_arr = np.ascontiguousarray(df["wl"].to_numpy(), dtype=np.float64)
@@ -7381,19 +6182,13 @@ class MaterialDatabase:
                     n_arr = np.ascontiguousarray(df["n"].to_numpy(), dtype=np.float64)
 
                     entry = {
-
                         "wl": wl_arr,
-
                         "n": n_arr,
-
                         "min_wl_valid": float(wl_arr[0]),
-
                         "max_wl_valid": float(wl_arr[-1]),
-
                     }
 
                     if k_col and "k" in df.columns:
-
                         k_arr = df["k"].to_numpy(dtype=np.float64)
 
                         k_arr = np.nan_to_num(k_arr, nan=0.0)
@@ -7402,8 +6197,15 @@ class MaterialDatabase:
 
                     material_data[sheet_name] = entry
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
+                except (
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    AttributeError,
+                    KeyError,
+                    IndexError,
+                    FileNotFoundError,
+                ) as e:
                     self._logger.warning(f"Skipping sheet '{sheet_name}': {e}")
 
             self._logger.info(f"Loaded {len(material_data)} materials from database")
@@ -7411,13 +6213,11 @@ class MaterialDatabase:
             return material_data
 
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
             self._logger.error(f"Failed to load materials: {e}")
 
             return {}
 
     def get_index(self, material_name: str, wavelength_nm: float) -> float:
-
         """Gets index at wavelength (cached)"""
 
         wl_rounded = round(wavelength_nm, 2)  # Constant decimals
@@ -7425,79 +6225,58 @@ class MaterialDatabase:
         cache_key = (material_name, wl_rounded)
 
         with self._cache_lock:
-
             if cache_key in self._interpolation_cache:
-
                 self._interpolation_cache.move_to_end(cache_key)
 
                 return self._interpolation_cache[cache_key]
 
             if material_name not in self.data:
-
                 raise ValueError(f"Material '{material_name}' not found in database")
 
             mat_data = self.data[material_name]
 
             n_val = float(
-
                 numba_interp_scalar(
-
                     float(wl_rounded),
-
                     mat_data["wl"],
-
                     mat_data["n"],
-
                 )
-
             )
 
             self._interpolation_cache[cache_key] = n_val
 
             if len(self._interpolation_cache) > CACHE_SIZE_MATERIAL_INDEX:
-
                 self._interpolation_cache.popitem(last=False)
 
             return n_val
 
     def get_clues_vectorized(self, material_name: str, wavelengths: np.ndarray) -> np.ndarray:
-
         """Gets clues for wavelength array"""
 
         if material_name not in self.data:
-
             raise ValueError(f"Material '{material_name}' not found in database")
 
         mat_data = self.data[material_name]
 
         wls_f64 = np.asarray(wavelengths, dtype=np.float64)
 
-        return numba_interp_vectorized(
-
-            wls_f64, mat_data["wl"], mat_data["n"]
-
-        )
+        return numba_interp_vectorized(wls_f64, mat_data["wl"], mat_data["n"])
 
     def clear_cache(self):
-
         """Clears interpolation cache"""
 
         with self._cache_lock:
-
             self._interpolation_cache.clear()
 
     def get_material_list(self) -> list[str]:
-
         """Available materials list"""
 
         return list(self.data.keys())
 
     def get_wavelength_range(self, material_name: str) -> tuple[float, float]:
-
         """Returns valid wavelength range for material"""
 
         if material_name not in self.data:
-
             raise ValueError(f"Material '{material_name}' not found")
 
         mat = self.data[material_name]
@@ -7505,23 +6284,18 @@ class MaterialDatabase:
         return mat["min_wl_valid"], mat["max_wl_valid"]
 
     @property
-
     def substrate_cache(self) -> dict:
-
         """Cache for substrate calculationations"""
 
         if not hasattr(self, "_substrate_cache"):
-
             self._substrate_cache = {}
 
         return self._substrate_cache
 
     def get_cached_computation(self, key: str, compute_func: Callable, *args, **kwargs):
-
         """Generic computation cache with statistics"""
 
         if not hasattr(self, "_computation_cache"):
-
             self._computation_cache = {}
 
             self._cache_hits = 0
@@ -7529,7 +6303,6 @@ class MaterialDatabase:
             self._cache_misses = 0
 
         if key in self._computation_cache:
-
             self._cache_hits += 1
 
             return self._computation_cache[key]
@@ -7543,11 +6316,9 @@ class MaterialDatabase:
         return result
 
     def get_cache_stats(self) -> dict:
-
         """Get cache performance statistics"""
 
         if not hasattr(self, "_computation_cache"):
-
             return {"hits": 0, "misses": 0, "hit_rate": 0.0, "cache_size": 0}
 
         total = self._cache_hits + self._cache_misses
@@ -7555,15 +6326,10 @@ class MaterialDatabase:
         hit_rate = self._cache_hits / total if total > 0 else 0
 
         return {
-
             "hits": self._cache_hits,
-
             "misses": self._cache_misses,
-
             "hit_rate": hit_rate,
-
             "cache_size": len(self._computation_cache),
-
         }
 
 
@@ -7586,23 +6352,13 @@ class MaterialDatabase:
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def compute_TMM_generic(
-
     k0: float,
-
     thicknesses: np.ndarray,
-
     n_layers_complex: np.ndarray,
-
     n_inc: complex,
-
     n_sub: complex,
-
-
 ) -> tuple[float, float]:
-
     """Generic TMM for n_inc -> layers -> n_sub.
 
     Returns (R, T) where T is power transmission into n_sub.
@@ -7630,7 +6386,6 @@ def compute_TMM_generic(
     I_VAL = +1j
 
     for i in range(len(thicknesses)):
-
         n_c = n_layers_complex[i]
 
         # -- SAFEGUARD n-ik: force Macleod convention --
@@ -7638,7 +6393,6 @@ def compute_TMM_generic(
         # If imag > 0 (non-physical gain), we silently correct.
 
         if n_c.imag > 0.0:
-
             n_c = n_c.real - 1j * n_c.imag  # n+ik -> n-ik
 
         phi = k0 * n_c * thicknesses[i]
@@ -7648,11 +6402,9 @@ def compute_TMM_generic(
         isp = I_VAL * np.sin(phi)  # factor i*sin(phi) once
 
         if abs(n_c) > 1e-12:
-
             m01 = isp / n_c
 
         else:
-
             m01 = 0.0 + 0.0j
 
         m10 = isp * n_c
@@ -7717,25 +6469,14 @@ def compute_TMM_generic(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def compute_RT_from_matrix(
-
     M00: complex,
-
     M01: complex,
-
     M10: complex,
-
     M11: complex,
-
     n_inc: complex,
-
     n_exit: complex,
-
-
 ) -> tuple[float, float]:
-
     """Computes (R, T) from a 2x2 transfer matrix M and boundary media.
 
     REFERENCE: Macleod 4th ed., eq. 2.96 (semi-infinite substrate).
@@ -7775,7 +6516,6 @@ def compute_RT_from_matrix(
     Y_sys = n_inc * B + C
 
     if abs(Y_sys) < 1e-14:
-
         return 0.0, 0.0
 
     r = (n_inc * B - C) / Y_sys
@@ -7785,11 +6525,9 @@ def compute_RT_from_matrix(
     n_inc_real = n_inc.real
 
     if n_inc_real < 1e-9:
-
         T = 0.0
 
     else:
-
         # T = Re(η_exit) / Re(η_inc) · |t|²
 
         # |t|² = 4·|η_inc|² / |η_inc·B + C|²
@@ -7812,21 +6550,12 @@ def compute_RT_from_matrix(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_RTRback_incoherent_vectorized(
-
     thicknesses: np.ndarray,
-
     n_layers_all_wls: np.ndarray,
-
     n_substrate_all_wls: np.ndarray,
-
     wls: np.ndarray,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-
     """
 
     Calculates R (Front), T, and Rback (Back) for a film on a THICK INCOHERENT substrate.
@@ -7844,7 +6573,6 @@ def calculate_RTRback_incoherent_vectorized(
     k0_arr = TWO_PI / wls
 
     for i in prange(n):
-
         ns = n_substrate_all_wls[i]  # Complex substrate index
 
         n_inc_front = 1.0 + 0j
@@ -7856,7 +6584,6 @@ def calculate_RTRback_incoherent_vectorized(
         Rf_coh, Tf_coh = compute_TMM_generic(k0_arr[i], thicknesses, n_layers, n_inc_front, ns)
 
         if abs(ns.imag) > 1e-8:
-
             # Absorbing substrate (Infinite): No Backside Reflection
 
             T_total[i] = 0.0
@@ -7895,11 +6622,7 @@ def calculate_RTRback_incoherent_vectorized(
 
         thicknesses_rev = thicknesses[::-1]
 
-        Rb_coh, Tb_coh = compute_TMM_generic(
-
-            k0_arr[i], thicknesses_rev, n_layers_rev, ns, n_inc_front
-
-        )
+        Rb_coh, Tb_coh = compute_TMM_generic(k0_arr[i], thicknesses_rev, n_layers_rev, ns, n_inc_front)
 
         # 3. substrate Backside Reflection (substrate -> Air)
 
@@ -7908,13 +6631,11 @@ def calculate_RTRback_incoherent_vectorized(
         # r = (ns - 1)/(ns + 1)
 
         if abs(ns + 1.0) > 1e-12:
-
             r_sub = (ns - 1.0) / (ns + 1.0)
 
             R_sub = abs(r_sub) ** 2
 
         else:
-
             R_sub = 0.0
 
         # 4. Incoherent Combination
@@ -7924,7 +6645,6 @@ def calculate_RTRback_incoherent_vectorized(
         denom = 1.0 - Rb_coh * R_sub
 
         if denom < 1e-9:
-
             denom = 1e-9
 
         # T_total = (Tf_coh * (1 - R_sub)) / D
@@ -7968,24 +6688,14 @@ def calculate_RTRback_incoherent_vectorized(
 # Macleod convention (+1j, n-ik). DO NOT MODIFY without running tests.
 
 
-@njit(cache=True, fastmath=True)
-
-
+@njit(cache=True, fastmath=True, nogil=True)
 def calculate_reflection_infinite_substrate_single(
-
     wavelength: float,
-
     n_film_real: float,
-
     n_film_imag: float,
-
     thickness_nm: float,
-
     n_sub: complex,
-
-
 ) -> float:
-
     """
 
     Calculate reflection for a thin film on INFINITE substrate (Frosted Glass).
@@ -8003,7 +6713,6 @@ def calculate_reflection_infinite_substrate_single(
     """
 
     if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
-
         return np.nan
 
     n0 = N_SUPERSTRATE  # Air
@@ -8039,7 +6748,6 @@ def calculate_reflection_infinite_substrate_single(
     n_mag_sq = n_film_real * n_film_real + n_film_imag * n_film_imag
 
     if n_mag_sq < SMALL_EPSILON:
-
         return np.nan
 
     inv_n_r = n_film_real / n_mag_sq
@@ -8105,7 +6813,6 @@ def calculate_reflection_infinite_substrate_single(
     denom_mag_sq = denom_real * denom_real + denom_imag * denom_imag
 
     if denom_mag_sq < SMALL_EPSILON:
-
         return np.nan
 
     # Numerator: n0*B - C (standard Macleod)
@@ -8128,23 +6835,13 @@ def calculate_reflection_infinite_substrate_single(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_reflection_infinite_substrate_array(
-
     wavelengths: np.ndarray,
-
     n_array: np.ndarray,
-
     k_array: np.ndarray,
-
     thickness: float,
-
     n_substrate: np.ndarray,
-
-
 ) -> np.ndarray:
-
     """Vectorized reflection for infinite substrate."""
 
     n_pts = len(wavelengths)
@@ -8152,11 +6849,8 @@ def calculate_reflection_infinite_substrate_array(
     R_array = np.empty(n_pts, dtype=np.float64)
 
     for i in prange(n_pts):
-
         R_array[i] = calculate_reflection_infinite_substrate_single(
-
             wavelengths[i], n_array[i], k_array[i], thickness, n_substrate[i]
-
         )
 
     return R_array
@@ -8169,15 +6863,9 @@ def calculate_reflection_infinite_substrate_array(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_reflectance_bilayer_vectorized(
-
     l_array, nM_complex_array, eM_phys, eL_phys, nL_complex_array, nSub_complex_array
-
-
 ):
-
     """
 
     Calculate reflectance for Metal|SiO2|Si structure using scalarized TMM.
@@ -8199,7 +6887,6 @@ def calculate_reflectance_bilayer_vectorized(
     R_out = np.empty(n_pts, dtype=np.float64)
 
     for i in prange(n_pts):
-
         wl = l_array[i]
 
         k0 = TWO_PI / wl
@@ -8211,7 +6898,6 @@ def calculate_reflectance_bilayer_vectorized(
         # ── SAFEGUARD n-ik ──
 
         if nM.imag > 0.0:
-
             nM = nM.real - 1j * nM.imag
 
         phiM = k0 * nM * eM_phys
@@ -8231,7 +6917,6 @@ def calculate_reflectance_bilayer_vectorized(
         # ── SAFEGUARD n-ik ──
 
         if nL.imag > 0.0:
-
             nL = nL.real - 1j * nL.imag
 
         phiL = k0 * nL * eL_phys
@@ -8261,7 +6946,6 @@ def calculate_reflectance_bilayer_vectorized(
         # ── SAFEGUARD n-ik ──
 
         if nS.imag > 0.0:
-
             nS = nS.real - 1j * nS.imag
 
         term1 = n0 * (Mt00 + nS * Mt01)
@@ -8277,11 +6961,9 @@ def calculate_reflectance_bilayer_vectorized(
         R = (r.real * r.real) + (r.imag * r.imag)  # |r|^2
 
         if R < 0.0:
-
             R = 0.0
 
         elif R > 1.0:
-
             R = 1.0
 
         R_out[i] = R
@@ -8290,10 +6972,7 @@ def calculate_reflectance_bilayer_vectorized(
 
 
 @dataclass(slots=True)
-
-
 class Material:
-
     """Material with Cauchy model (slots=True for reduced RAM)"""
 
     n4: float  # n @ 400nm
@@ -8301,7 +6980,6 @@ class Material:
     n7: float  # n @ 700nm
 
     def get_nk(self, wls: np.ndarray) -> np.ndarray:
-
         """Calculates n(lambda) via Cauchy model with precision support"""
 
         wls_arr = np.asarray(wls, dtype=np.float64)
@@ -8317,7 +6995,6 @@ class Material:
         return n_real.astype(complex_dtype)
 
     def get_n_at_wavelength(self, wl: float) -> float:
-
         """Returns n at specific wavelength"""
 
         result = self.get_nk(np.array([wl], dtype=np.float64))
@@ -8326,10 +7003,7 @@ class Material:
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
-
     """Calculate frosted glass refractive index for an array of wavelengths."""
 
     n = len(wavelengths_nm)
@@ -8337,12 +7011,7 @@ def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
     result = np.empty(n, dtype=wavelengths_nm.dtype)
 
     for i in prange(n):
-
-        result[i] = FROSTED_GLASS_CAUCHY_A + FROSTED_GLASS_CAUCHY_B / (
-
-            wavelengths_nm[i] * wavelengths_nm[i]
-
-        )
+        result[i] = FROSTED_GLASS_CAUCHY_A + FROSTED_GLASS_CAUCHY_B / (wavelengths_nm[i] * wavelengths_nm[i])
 
     return result
 
@@ -8357,15 +7026,9 @@ def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_epsilon2_gradient_kernel(
-
     E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, Eu: float
-
-
 ) -> np.ndarray:
-
     """Computes [eps2, d/dEg, d/dA, d/dE0, d/dC, d/dEu, d/deps_inf]"""
 
     n = len(E_array)
@@ -8401,7 +7064,6 @@ def _compute_epsilon2_gradient_kernel(
     dDedge_dC = 2.0 * C * E_edge_sq
 
     if eps2_edge > 1e-12:
-
         d_eps2_edge_dEg = eps2_edge * (-dDedge_dEg * inv_D_edge - 1.0 / E_edge)
 
         d_eps2_edge_dA = eps2_edge * (1.0 / A)
@@ -8411,7 +7073,6 @@ def _compute_epsilon2_gradient_kernel(
         d_eps2_edge_dC = eps2_edge * (1.0 / C - dDedge_dC * inv_D_edge)
 
     else:
-
         d_eps2_edge_dEg = 0.0
 
         d_eps2_edge_dA = 0.0
@@ -8425,11 +7086,9 @@ def _compute_epsilon2_gradient_kernel(
     inv_Eu = 1.0 / Eu_safe
 
     for i in prange(n):
-
         E = E_array[i]
 
         if E > Eg:
-
             E_sq = E * E
 
             diff = E - Eg
@@ -8447,7 +7106,6 @@ def _compute_epsilon2_gradient_kernel(
             result[0, i] = val
 
             if val > 1e-12:
-
                 result[1, i] = val * (-2.0 / diff)
 
                 result[2, i] = val / A
@@ -8461,13 +7119,10 @@ def _compute_epsilon2_gradient_kernel(
                 result[4, i] = val * (1.0 / C - dD_dC * inv_D)
 
         else:
-
             if eps2_edge < 1e-12:
-
                 result[0, i] = 0.0
 
             else:
-
                 arg = (E - Eg - delta) * inv_Eu
 
                 exp_val = np.exp(arg)
@@ -8496,15 +7151,9 @@ def _compute_epsilon2_gradient_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_epsilon1_gradient_kernel(
-
     E_array: np.ndarray, Eg: float, A: float, E0: float, C: float, eps_inf: float
-
-
 ) -> np.ndarray:
-
     """Computes [eps1, d/dEg, d/dA, d/dE0, d/dC, d/dEu, d/deps_inf]"""
 
     n = len(E_array)
@@ -8560,7 +7209,6 @@ def _compute_epsilon1_gradient_kernel(
     inv_PI = 1.0 / PI
 
     for i in prange(n):
-
         E = E_array[i]
 
         E_sq = E * E
@@ -8588,17 +7236,14 @@ def _compute_epsilon1_gradient_kernel(
         d_log1_dEg = 0.0
 
         if E != Eg:
-
             arg_log1 = np.abs((Eg - E) / (Eg + E))
 
             val_log1 = np.log(arg_log1) if arg_log1 > 0 else -100.0
 
             if np.abs(diff_sq) > _diff_eps:
-
                 d_log1_dEg = 2.0 * E / diff_sq
 
             else:
-
                 d_log1_dEg = 0.0
 
         # Log2
@@ -8610,11 +7255,9 @@ def _compute_epsilon1_gradient_kernel(
         val_log2 = val_log2_part - np.log(denom_log_norm)
 
         if np.abs(diff_sq) > _diff_eps:
-
             d_log2_dEg = 2.0 * Eg / diff_sq - d_DLN_dEg * inv_denom_log_norm
 
         else:
-
             d_log2_dEg = -d_DLN_dEg * inv_denom_log_norm
 
         d_log2_dE0 = -d_DLN_dE0 * inv_denom_log_norm
@@ -8652,15 +7295,11 @@ def _compute_epsilon1_gradient_kernel(
         dT1_dEg = K1 * (2.0 * Eg * inv_zeta4 * val_log1 + (E_sq + Eg_sq) * inv_zeta4 * d_log1_dEg)
 
         dT1_dE0 = (K1 / E0) * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
-
             -(inv_zeta4**2) * d_zeta4_dE0
-
         ) * val_log1
 
         dT1_dC = (K1 / C) * (E_sq + Eg_sq) * inv_zeta4 * val_log1 + K1 * (E_sq + Eg_sq) * (
-
             -(inv_zeta4**2) * d_zeta4_dC
-
         ) * val_log1
 
         # Term 2
@@ -8674,23 +7313,15 @@ def _compute_epsilon1_gradient_kernel(
         dT2_dEg = (K2 / Eg) * inv_zeta4 * val_log2 + K2 * inv_zeta4 * d_log2_dEg
 
         dT2_dE0 = (
-
             (K2 / E0) * inv_zeta4 * val_log2
-
             + K2 * (-(inv_zeta4**2) * d_zeta4_dE0) * val_log2
-
             + K2 * inv_zeta4 * d_log2_dE0
-
         )
 
         dT2_dC = (
-
             (K2 / C) * inv_zeta4 * val_log2
-
             + K2 * (-(inv_zeta4**2) * d_zeta4_dC) * val_log2
-
             + K2 * inv_zeta4 * d_log2_dC
-
         )
 
         # Term 3
@@ -8706,7 +7337,6 @@ def _compute_epsilon1_gradient_kernel(
         dT3_dC = 0.0
 
         if alpha > 1e-12:
-
             arg3 = (E0_sq + Eg_sq + alpha * Eg) / (E0_sq + Eg_sq - alpha * Eg)
 
             val_log3 = np.log(arg3)
@@ -8805,11 +7435,7 @@ def _compute_epsilon1_gradient_kernel(
 
         d_frac4_dE0 = d_aa_dE0 * inv_zeta4 + aa * (-(inv_zeta4**2) * d_zeta4_dE0)
 
-        dT4_dE0 = (
-
-            dK4_dE0 * frac4 * sum_atan + K4 * d_frac4_dE0 * sum_atan + K4 * frac4 * d_sum_atan_dE0
-
-        )
+        dT4_dE0 = dK4_dE0 * frac4 * sum_atan + K4 * d_frac4_dE0 * sum_atan + K4 * frac4 * d_sum_atan_dE0
 
         d_frac4_dC = d_aa_dC * inv_zeta4 + aa * (-(inv_zeta4**2) * d_zeta4_dC)
 
@@ -8828,7 +7454,6 @@ def _compute_epsilon1_gradient_kernel(
         dT5_dC = 0.0
 
         if alpha > 1e-12:
-
             arg5 = 2.0 * (Eg_sq - gamma_sq) / max(alpha * C, 1e-12)
 
             atan3 = np.arctan(arg5)
@@ -8875,39 +7500,15 @@ def _compute_epsilon1_gradient_kernel(
 
             d_K5_dE0 = K5 / E0 - K5 / alpha * d_alpha_dE0
 
-            d_term5_mid_dE0 = (-d_gamma2_dE0 * inv_zeta4) + (E_sq - gamma_sq) * (
+            d_term5_mid_dE0 = (-d_gamma2_dE0 * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dE0)
 
-                -(inv_zeta4**2) * d_zeta4_dE0
-
-            )
-
-            dT5_dE0 = (
-
-                d_K5_dE0 * term5_mid * brack5
-
-                + K5 * d_term5_mid_dE0 * brack5
-
-                + K5 * term5_mid * d_brack5_dE0
-
-            )
+            dT5_dE0 = d_K5_dE0 * term5_mid * brack5 + K5 * d_term5_mid_dE0 * brack5 + K5 * term5_mid * d_brack5_dE0
 
             d_K5_dC = -K5 / alpha * d_alpha_dC
 
-            d_term5_mid_dC = (-d_gamma2_dC * inv_zeta4) + (E_sq - gamma_sq) * (
+            d_term5_mid_dC = (-d_gamma2_dC * inv_zeta4) + (E_sq - gamma_sq) * (-(inv_zeta4**2) * d_zeta4_dC)
 
-                -(inv_zeta4**2) * d_zeta4_dC
-
-            )
-
-            dT5_dC = (
-
-                d_K5_dC * term5_mid * brack5
-
-                + K5 * d_term5_mid_dC * brack5
-
-                + K5 * term5_mid * d_brack5_dC
-
-            )
+            dT5_dC = d_K5_dC * term5_mid * brack5 + K5 * d_term5_mid_dC * brack5 + K5 * term5_mid * d_brack5_dC
 
         result[0, i] = eps_inf + T1 + T2 + T3 + T4 + T5
 
@@ -8931,27 +7532,15 @@ def _compute_epsilon1_gradient_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_tlu_derivatives_kernel(
-
     E_array: np.ndarray,
-
     Eg: float,
-
     A: float,
-
     E0: float,
-
     C: float,
-
     Eu: float,
-
     eps_inf: float,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """Computes n, k and their derivatives w.r.t parameters"""
 
     n_pts = len(E_array)
@@ -8969,7 +7558,6 @@ def _compute_tlu_derivatives_kernel(
     dk_dp = np.zeros((6, n_pts), dtype=np.float64)
 
     for i in prange(n_pts):
-
         e1 = res1[0, i]
 
         e2 = res2[0, i]
@@ -8989,7 +7577,6 @@ def _compute_tlu_derivatives_kernel(
         inv_denom = 1.0 / denom
 
         for p in range(6):
-
             de1 = res1[p + 1, i]
 
             de2 = res2[p + 1, i]
@@ -9012,15 +7599,9 @@ def _compute_tlu_derivatives_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _compute_single_layer_sensitivity_kernel(
-
     wavelength: float, nr: float, ni: float, d: float, ns: float
-
-
 ) -> tuple[float, float, float, float, float, float]:
-
     """Computes derivatives of T and R w.r.t film index (nr, ni=k>=0) and d.
 
     Internal convention: (-1j, n+ik) baked-in - self-consistent, R/T/gradients invariant.
@@ -9113,11 +7694,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     dM11_dnr_r, dM11_dnr_i = dc_dnr_r, dc_dnr_i
 
-    dM01_dnr_r, dM01_dnr_i = get_dM01(
-
-        ds_dnr_r, ds_dnr_i, s_real, s_imag, inv_n_r, inv_n_i, dninv_dnr_r, dninv_dnr_i
-
-    )
+    dM01_dnr_r, dM01_dnr_i = get_dM01(ds_dnr_r, ds_dnr_i, s_real, s_imag, inv_n_r, inv_n_i, dninv_dnr_r, dninv_dnr_i)
 
     dM10_dnr_r, dM10_dnr_i = get_dM10(ds_dnr_r, ds_dnr_i, s_real, s_imag, nr, ni, 1.0, 0.0)
 
@@ -9125,11 +7702,7 @@ def _compute_single_layer_sensitivity_kernel(
 
     dM11_dni_r, dM11_dni_i = dc_dni_r, dc_dni_i
 
-    dM01_dni_r, dM01_dni_i = get_dM01(
-
-        ds_dni_r, ds_dni_i, s_real, s_imag, inv_n_r, inv_n_i, dninv_dni_r, dninv_dni_i
-
-    )
+    dM01_dni_r, dM01_dni_i = get_dM01(ds_dni_r, ds_dni_i, s_real, s_imag, inv_n_r, inv_n_i, dninv_dni_r, dninv_dni_i)
 
     dM10_dni_r, dM10_dni_i = get_dM10(ds_dni_r, ds_dni_i, s_real, s_imag, nr, ni, 0.0, 1.0)
 
@@ -9150,43 +7723,25 @@ def _compute_single_layer_sensitivity_kernel(
         return pr, pi
 
     dD_dnr_r, dD_dnr_i = compute_denom_deriv(
-
         dM00_dnr_r,
-
         dM00_dnr_i,
-
         dM01_dnr_r,
-
         dM01_dnr_i,
-
         dM10_dnr_r,
-
         dM10_dnr_i,
-
         dM11_dnr_r,
-
         dM11_dnr_i,
-
     )
 
     dD_dni_r, dD_dni_i = compute_denom_deriv(
-
         dM00_dni_r,
-
         dM00_dni_i,
-
         dM01_dni_r,
-
         dM01_dni_i,
-
         dM10_dni_r,
-
         dM10_dni_i,
-
         dM11_dni_r,
-
         dM11_dni_i,
-
     )
 
     Dr = n0 * M00r + n0 * ns * M01r + M10r + ns * M11r
@@ -9226,43 +7781,25 @@ def _compute_single_layer_sensitivity_kernel(
         return qr, qi
 
     dN_dnr_r, dN_dnr_i = compute_num_deriv(
-
         dM00_dnr_r,
-
         dM00_dnr_i,
-
         dM01_dnr_r,
-
         dM01_dnr_i,
-
         dM10_dnr_r,
-
         dM10_dnr_i,
-
         dM11_dnr_r,
-
         dM11_dnr_i,
-
     )
 
     dN_dni_r, dN_dni_i = compute_num_deriv(
-
         dM00_dni_r,
-
         dM00_dni_i,
-
         dM01_dni_r,
-
         dM01_dni_i,
-
         dM10_dni_r,
-
         dM10_dni_i,
-
         dM11_dni_r,
-
         dM11_dni_i,
-
     )
 
     def calc_dR(dNr, dNi, dDr, dDi):
@@ -9286,43 +7823,25 @@ def _compute_single_layer_sensitivity_kernel(
     dm10_dd_r, dm10_dd_i = mul_c(dsin_dd_i, -dsin_dd_r, nr, ni)
 
     dD_dd_r, dD_dd_i = compute_denom_deriv(
-
         dcos_dd_r,
-
         dcos_dd_i,
-
         dm01_dd_r,
-
         dm01_dd_i,
-
         dm10_dd_r,
-
         dm10_dd_i,
-
         dcos_dd_r,
-
         dcos_dd_i,
-
     )
 
     dN_dd_r, dN_dd_i = compute_num_deriv(
-
         dcos_dd_r,
-
         dcos_dd_i,
-
         dm01_dd_r,
-
         dm01_dd_i,
-
         dm10_dd_r,
-
         dm10_dd_i,
-
         dcos_dd_r,
-
         dcos_dd_i,
-
     )
 
     dT_dd = calc_dT(dD_dd_r, dD_dd_i)
@@ -9356,63 +7875,36 @@ def _compute_single_layer_sensitivity_kernel(
         return (2.0 * re_NPN - R_prime * 2.0 * re_DD) * inv_magD2
 
     dR_p_dnr = calc_dR_prime(
-
         dM00_dnr_r,
-
         dM00_dnr_i,
-
         dM01_dnr_r,
-
         dM01_dnr_i,
-
         dM10_dnr_r,
-
         dM10_dnr_i,
-
         dM11_dnr_r,
-
         dM11_dnr_i,
-
     )
 
     dR_p_dni = calc_dR_prime(
-
         dM00_dni_r,
-
         dM00_dni_i,
-
         dM01_dni_r,
-
         dM01_dni_i,
-
         dM10_dni_r,
-
         dM10_dni_i,
-
         dM11_dni_r,
-
         dM11_dni_i,
-
     )
 
     dR_p_dd = calc_dR_prime(
-
         dcos_dd_r,
-
         dcos_dd_i,
-
         dm01_dd_r,
-
         dm01_dd_i,
-
         dm10_dd_r,
-
         dm10_dd_i,
-
         dcos_dd_r,
-
         dcos_dd_i,
-
     )
 
     denom_corr = 1.0 - R_prime * R_b
@@ -9442,54 +7934,60 @@ def _compute_single_layer_sensitivity_kernel(
     return dT_dnr_corr, dT_dni_corr, dR_dnr_corr, dR_dni_corr, dT_dd_corr, dR_dd_corr
 
 
-# --- LOCKED --- Validated by test_tmm_inline.py (tests 6a, 6b) ───
+@njit(cache=True, fastmath=True, parallel=True, nogil=True)
+def _compute_single_layer_sensitivity_array(
+    wavelengths: np.ndarray,
+    n_arr: np.ndarray,
+    k_arr: np.ndarray,
+    d: float,
+    n_sub: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Vectorized wrapper: calls _compute_single_layer_sensitivity_kernel via prange.
+
+    Returns six (n_pix,) arrays: dT_dn, dT_dk, dR_dn, dR_dk, dT_dd, dR_dd.
+    Eliminates CPython→Numba dispatch overhead (one JIT entry instead of n_pix).
+    """
+    n = len(wavelengths)
+    dTdn = np.empty(n, dtype=np.float64)
+    dTdk = np.empty(n, dtype=np.float64)
+    dRdn = np.empty(n, dtype=np.float64)
+    dRdk = np.empty(n, dtype=np.float64)
+    dTdd = np.empty(n, dtype=np.float64)
+    dRdd = np.empty(n, dtype=np.float64)
+    for i in prange(n):
+        a, b, c, e, f, g = _compute_single_layer_sensitivity_kernel(wavelengths[i], n_arr[i], k_arr[i], d, n_sub[i])
+        dTdn[i] = a
+        dTdk[i] = b
+        dRdn[i] = c
+        dRdk[i] = e
+        dTdd[i] = f
+        dRdd[i] = g
+    return dTdn, dTdk, dRdn, dRdk, dTdd, dRdd
 
 
 # Macleod convention (+1j). DO NOT MODIFY without running tests.
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_index_cost_gradient_kernel(
-
     wls: np.ndarray,
-
     n_arr: np.ndarray,
-
     k_arr: np.ndarray,
-
     d: float,
-
     n_sub: np.ndarray,
-
     target_T: np.ndarray,
-
     target_R: np.ndarray,
-
     weights: np.ndarray,
-
     use_T: bool,
-
     use_R: bool,
-
     dn_dp: np.ndarray,
-
     dk_dp: np.ndarray,
-
     T_substrate: np.ndarray,
-
     _R_substrate: np.ndarray,
-
     use_normalized: bool,
-
     weight_T: float,
-
     weight_R: float,
-
-
 ) -> np.ndarray:
-
     """Computes gradient of MSE w.r.t parameters (race-free parallel reduction).
 
     Normalization: T_nu = T/T_sub, R_nu = R/T_sub. Guards: T_sub >= 1e-6 (T), >= 0.05 (R)
@@ -9507,23 +8005,17 @@ def _compute_index_cost_gradient_kernel(
     count_R = 0
 
     for i in range(n_pts):
-
         if weights[i] > 1e-12:
-
             if use_T:
-
                 count_T += 1
 
             if use_R:
-
                 count_R += 1
 
     if count_T > 0:
-
         n_valid_T = count_T
 
     if count_R > 0:
-
         n_valid_R = count_R
 
     # Per-wavelength gradient (avoid race condition on shared grad)
@@ -9531,11 +8023,9 @@ def _compute_index_cost_gradient_kernel(
     grad_per_wl = np.zeros((n_pts, 7), dtype=np.float64)
 
     for i in prange(n_pts):
-
         wl = wls[i]
 
         if weights[i] < 1e-12:
-
             continue
 
         nr = n_arr[i]
@@ -9544,11 +8034,7 @@ def _compute_index_cost_gradient_kernel(
 
         ns = n_sub[i]
 
-        dTdn, dTdk, dRdn, dRdk, dTdd, dRdd = _compute_single_layer_sensitivity_kernel(
-
-            wl, nr, ni, d, ns
-
-        )
+        dTdn, dTdk, dRdn, dRdk, dTdd, dRdd = _compute_single_layer_sensitivity_kernel(wl, nr, ni, d, ns)
 
         w = weights[i]
 
@@ -9558,18 +8044,15 @@ def _compute_index_cost_gradient_kernel(
 
         # Fused R+T single call (same values as cost)
 
-        val_R, val_T = calculate_RT_single_layer_single(wl, nr, ni, d, ns)
+        val_R, val_T = calculate_transmission_single(wl, nr, ni, d, ns)
 
         if use_T:
-
             if use_normalized:
-
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
 
                 diff_T = (val_T * scale_T) - target_T[i]
 
             else:
-
                 scale_T = 1.0
 
                 diff_T = val_T - target_T[i]
@@ -9577,23 +8060,18 @@ def _compute_index_cost_gradient_kernel(
             fac_T = (2.0 * w * diff_T * weight_T / n_valid_T) * scale_T
 
         if use_R:
-
             if use_normalized:
-
                 # Physics Guard: Avoid explosion when T -> 0
 
                 if T_substrate[i] >= 0.05:
-
                     scale_R = 1.0 / T_substrate[i]
 
                 else:
-
                     scale_R = 0.0  # Effectively ignore this point in gradient
 
                 diff_R = (val_R * scale_R) - target_R[i]
 
             else:
-
                 scale_R = 1.0
 
                 diff_R = val_R - target_R[i]
@@ -9603,7 +8081,6 @@ def _compute_index_cost_gradient_kernel(
         grad_per_wl[i, 0] = (fac_T * dTdd + fac_R * dRdd) if use_T or use_R else 0.0
 
         for p in range(6):
-
             dnp = dn_dp[p, i]
 
             dkp = dk_dp[p, i]
@@ -9611,11 +8088,9 @@ def _compute_index_cost_gradient_kernel(
             term = 0.0
 
             if use_T:
-
                 term += fac_T * (dTdn * dnp + dTdk * dkp)
 
             if use_R:
-
                 term += fac_R * (dRdn * dnp + dRdk * dkp)
 
             grad_per_wl[i, p + 1] = term
@@ -9625,11 +8100,9 @@ def _compute_index_cost_gradient_kernel(
     grad = np.zeros(7, dtype=np.float64)
 
     for p in range(7):
-
         s = 0.0
 
         for i in range(n_pts):
-
             s += grad_per_wl[i, p]
 
         grad[p] = s
@@ -9637,13 +8110,7 @@ def _compute_index_cost_gradient_kernel(
     return grad
 
 
-def arange_inclusive(
-
-    start: float, stop: float, step: float, decimals: int = WL_DECIMALS
-
-
-) -> np.ndarray:
-
+def arange_inclusive(start: float, stop: float, step: float, decimals: int = WL_DECIMALS) -> np.ndarray:
     """
 
     Generates array with stop INCLUDED (unlike np.arange).
@@ -9651,7 +8118,6 @@ def arange_inclusive(
     """
 
     if step <= 0:
-
         raise ValueError("Step must be positive")
 
     n = int(np.floor((stop - start) / step + 1e-9)) + 1
@@ -9668,7 +8134,6 @@ def arange_inclusive(
 
 
 def trim_worst_only(data: np.ndarray, trim_percent: int = 10) -> np.ndarray:
-
     """
 
     Removes X% worst values (for robust stats).
@@ -9676,7 +8141,6 @@ def trim_worst_only(data: np.ndarray, trim_percent: int = 10) -> np.ndarray:
     """
 
     if len(data) == 0:
-
         return data
 
     sorted_data = np.sort(data)
@@ -9686,19 +8150,12 @@ def trim_worst_only(data: np.ndarray, trim_percent: int = 10) -> np.ndarray:
     trim_count = int(n * trim_percent / 100)
 
     if trim_count > 0 and trim_count < n:
-
         return sorted_data[:-trim_count]
 
     return sorted_data
 
 
-def prepare_targets_vectorized(
-
-    wls: np.ndarray, targets: list[Target]
-
-
-) -> tuple[np.ndarray, np.ndarray]:
-
+def prepare_targets_vectorized(wls: np.ndarray, targets: list[Target]) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Prepares target values and weights for optimization.
@@ -9718,15 +8175,12 @@ def prepare_targets_vectorized(
     spec_w = spectral_rmse_weights(np.asarray(wls, dtype=np.float64))
 
     for t in targets:
-
         if not t.valid():
-
             continue
 
         mask = (wls >= t.lmin) & (wls <= t.lmax)
 
         if not np.any(mask):
-
             continue
 
         # Target linear interpolation
@@ -9734,7 +8188,6 @@ def prepare_targets_vectorized(
         denom = t.lmax - t.lmin
 
         if denom < 1e-9:
-
             denom = 1e-9
 
         slope = (t.tmax - t.tmin) / denom
@@ -9747,28 +8200,16 @@ def prepare_targets_vectorized(
 
 
 def make_cost_function(
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     min_d: float,
-
     has_back: bool,
-
     n_back_T: np.ndarray,
-
     d_back: np.ndarray,
-
-
 ) -> Callable[[np.ndarray], float]:
-
     """
 
     Factory that creates an optimized cost function with pre-converted arrays.
@@ -9792,13 +8233,11 @@ def make_cost_function(
     tgt_weights_f64 = np.ascontiguousarray(tgt_weights, dtype=np.float64)
 
     if has_back:
-
         n_back_T_c128 = np.ascontiguousarray(n_back_T, dtype=np.complex128)
 
         d_back_f64 = np.ascontiguousarray(d_back, dtype=np.float64)
 
     else:
-
         n_back_T_c128 = np.zeros((len(wls), 0), dtype=np.complex128)
 
         d_back_f64 = np.zeros(0, dtype=np.float64)
@@ -9808,30 +8247,20 @@ def make_cost_function(
         ep_f64 = np.ascontiguousarray(ep, dtype=np.float64)
 
         return cost_numba_fast(
-
             ep_f64,
-
             n_layers_T_c128,
-
             n_sub_c128,
-
             wls_f64,
-
             tgt_vals_f64,
-
             tgt_weights_f64,
-
             min_d,
-
             has_back,
-
             n_back_T_c128,
-
             d_back_f64,
-
         )
 
     return cost_func
+
 
 # --- LOCKED --- Validated by test_gradient_vs_fd.py (dispersive + absorbent + mixed) ───
 
@@ -9840,27 +8269,15 @@ def make_cost_function(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_gradient_analytic_kernel(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     var_idx: np.ndarray,
-
-
 ) -> tuple[float, np.ndarray, np.ndarray]:
-
     """
 
     Analytic gradient kernel for TMM (Opus 4.6 - parallelized over wavelengths).
@@ -9890,7 +8307,6 @@ def _compute_gradient_analytic_kernel(
     weight_per_wl = np.zeros(n_wls, dtype=np.float64)
 
     for i_wl in prange(n_wls):
-
         # Thread-local M_before / M_after (stack-allocated per iteration)
 
         M_before = np.zeros((n_layers + 1, 8), dtype=np.float64)
@@ -9934,7 +8350,6 @@ def _compute_gradient_analytic_kernel(
         Dr, Di = 1.0, 0.0
 
         for k in range(n_layers):
-
             n_k = n_layers_T[i_wl, k]
 
             nr = n_k.real
@@ -9946,7 +8361,6 @@ def _compute_gradient_analytic_kernel(
             phi_base = TWO_PI * d_k * inv_wl
 
             if abs(ni) < 1e-14:
-
                 phi = phi_base * nr
 
                 cp = np.cos(phi)
@@ -9978,7 +8392,6 @@ def _compute_gradient_analytic_kernel(
                 NDi = -Cr * m01i + Di * cp
 
             else:
-
                 phr = phi_base * nr
 
                 phi_img = phi_base * ni
@@ -9994,7 +8407,6 @@ def _compute_gradient_analytic_kernel(
                 eta2 = nr * nr + ni * ni
 
                 if eta2 < 1e-24:
-
                     eta2 = 1e-24
 
                 inv_eta = 1.0 / eta2
@@ -10082,7 +8494,6 @@ def _compute_gradient_analytic_kernel(
         Dr, Di = 1.0, 0.0
 
         for k in range(n_layers - 1, -1, -1):
-
             M_after[k, 0] = Ar
 
             M_after[k, 1] = Ai
@@ -10110,7 +8521,6 @@ def _compute_gradient_analytic_kernel(
             phi_base = TWO_PI * d_k * inv_wl
 
             if abs(ni) < 1e-14:
-
                 phi = phi_base * nr
 
                 cp = np.cos(phi)
@@ -10144,7 +8554,6 @@ def _compute_gradient_analytic_kernel(
                 NDi = -m10i * Br + cp * Di
 
             else:
-
                 phr = phi_base * nr
 
                 phi_img = phi_base * ni
@@ -10160,7 +8569,6 @@ def _compute_gradient_analytic_kernel(
                 eta2 = nr * nr + ni * ni
 
                 if eta2 < 1e-24:
-
                     eta2 = 1e-24
 
                 inv_eta = 1.0 / eta2
@@ -10206,7 +8614,6 @@ def _compute_gradient_analytic_kernel(
         denom = dr * dr + di * di
 
         if denom < 1e-30:
-
             denom = 1e-30
 
         inv_den = 1.0 / denom
@@ -10222,7 +8629,6 @@ def _compute_gradient_analytic_kernel(
         w = tgt_weights[i_wl]
 
         if w > 1e-12:
-
             diff = T_val - tgt_vals[i_wl]
 
             err_per_wl[i_wl] = diff * diff * w
@@ -10232,7 +8638,6 @@ def _compute_gradient_analytic_kernel(
             # Compute gradients (per-wavelength accumulation)
 
             for i_var in range(n_vars):
-
                 k = var_idx[i_var]
 
                 idx_b = k + 1
@@ -10278,7 +8683,6 @@ def _compute_gradient_analytic_kernel(
                 d_k = ep[k]
 
                 if abs(ni) < 1e-14:
-
                     phi = TWO_PI * nr * d_k * inv_wl
 
                     factor = TWO_PI * nr * inv_wl
@@ -10306,7 +8710,6 @@ def _compute_gradient_analytic_kernel(
                     dm11i = 0.0
 
                 else:
-
                     # Closed-form derivative for absorbing media (no finite differences).
 
                     phi_base = TWO_PI * d_k * inv_wl
@@ -10326,7 +8729,6 @@ def _compute_gradient_analytic_kernel(
                     eta2 = nr * nr + ni * ni
 
                     if eta2 < 1e-24:
-
                         eta2 = 1e-24
 
                     inv_eta = 1.0 / eta2
@@ -10426,7 +8828,6 @@ def _compute_gradient_analytic_kernel(
     weight_sum = 0.0
 
     for i in range(n_wls):
-
         err_sum += err_per_wl[i]
 
         weight_sum += weight_per_wl[i]
@@ -10434,23 +8835,19 @@ def _compute_gradient_analytic_kernel(
     grad = np.zeros(n_vars, dtype=np.float64)
 
     for v in range(n_vars):
-
         s = 0.0
 
         for i in range(n_wls):
-
             s += grad_per_wl[i, v]
 
         grad[v] = s
 
     if weight_sum < 1e-12:
-
         cost = 1e30
 
         grad[:] = 0.0
 
     else:
-
         cost = err_sum / weight_sum
 
         grad *= 2.0 / weight_sum
@@ -10459,33 +8856,18 @@ def _compute_gradient_analytic_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_oblique_gradient_contrib_kernel(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     var_idx: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
     target_is_reflectance: bool,
-
-
 ) -> tuple[float, np.ndarray, float]:
-
     """
 
     Analytic oblique contribution kernel (front-only).
@@ -10523,7 +8905,6 @@ def _compute_oblique_gradient_contrib_kernel(
     cos_theta0 = np.cos(theta0_rad)
 
     for i_wl in prange(n_wls):
-
         wl = wls[i_wl]
 
         n_sub_real = n_sub[i_wl].real
@@ -10531,13 +8912,11 @@ def _compute_oblique_gradient_contrib_kernel(
         w = tgt_weights[i_wl]
 
         if w <= 1e-12:
-
             continue
 
         sin_theta_sub = (n0 / max(n_sub_real, SMALL_EPSILON)) * sin_theta0
 
         if sin_theta_sub > 1.0:
-
             y_val = 1.0 if target_is_reflectance else 0.0
 
             diff = y_val - tgt_vals[i_wl]
@@ -10551,15 +8930,12 @@ def _compute_oblique_gradient_contrib_kernel(
         cos_theta_sub = np.sqrt(1.0 - sin_theta_sub * sin_theta_sub)
 
         if is_s_pol:
-
             eta_inc = n0 * cos_theta0
 
             eta_sub = n_sub_real * cos_theta_sub
 
         else:
-
             if abs(cos_theta0) < SMALL_EPSILON or abs(cos_theta_sub) < SMALL_EPSILON:
-
                 y_val = 1.0 if target_is_reflectance else 0.0
 
                 diff = y_val - tgt_vals[i_wl]
@@ -10595,11 +8971,9 @@ def _compute_oblique_gradient_contrib_kernel(
         k0 = TWO_PI / max(wl, SMALL_EPSILON)
 
         for k in range(n_layers):
-
             n_layer = n_layers_T[i_wl, k]
 
             if abs(n_layer) < SMALL_EPSILON:
-
                 valid = False
 
                 break
@@ -10609,13 +8983,10 @@ def _compute_oblique_gradient_contrib_kernel(
             cos_theta_layer = np.sqrt(1.0 - sin_theta_layer * sin_theta_layer)
 
             if is_s_pol:
-
                 eta_layer = n_layer * cos_theta_layer
 
             else:
-
                 if abs(cos_theta_layer) < SMALL_EPSILON:
-
                     valid = False
 
                     break
@@ -10623,7 +8994,6 @@ def _compute_oblique_gradient_contrib_kernel(
                 eta_layer = n_layer / cos_theta_layer
 
             if abs(eta_layer) < SMALL_EPSILON:
-
                 valid = False
 
                 break
@@ -10669,7 +9039,6 @@ def _compute_oblique_gradient_contrib_kernel(
             prefix[k + 1, 3] = l10 * p01 + cp * p11
 
         if not valid:
-
             y_val = 1.0 if target_is_reflectance else 0.0
 
             diff = y_val - tgt_vals[i_wl]
@@ -10685,13 +9054,11 @@ def _compute_oblique_gradient_contrib_kernel(
         suffix = np.zeros((n_layers, 4), dtype=np.complex128)
 
         if n_layers > 0:
-
             suffix[n_layers - 1, 0] = 1.0 + 0.0j
 
             suffix[n_layers - 1, 3] = 1.0 + 0.0j
 
             for k in range(n_layers - 2, -1, -1):
-
                 s00 = suffix[k + 1, 0]
 
                 s01 = suffix[k + 1, 1]
@@ -10735,7 +9102,6 @@ def _compute_oblique_gradient_contrib_kernel(
         den_mag_sq = (denom.real * denom.real) + (denom.imag * denom.imag)
 
         if den_mag_sq < SMALL_EPSILON:
-
             y_val = 1.0 if target_is_reflectance else 0.0
 
             diff = y_val - tgt_vals[i_wl]
@@ -10771,15 +9137,11 @@ def _compute_oblique_gradient_contrib_kernel(
         # If clamped, keep stable behavior and null derivative at this point.
 
         if (target_is_reflectance and (R_val != R_unclipped)) or (
-
             (not target_is_reflectance) and (T_val != T_unclipped)
-
         ):
-
             continue
 
         for i_var in range(n_vars):
-
             k = var_idx[i_var]
 
             p00 = prefix[k, 0]
@@ -10791,7 +9153,6 @@ def _compute_oblique_gradient_contrib_kernel(
             p11 = prefix[k, 3]
 
             if k == n_layers - 1:
-
                 s00 = 1.0 + 0.0j
 
                 s01 = 0.0 + 0.0j
@@ -10801,7 +9162,6 @@ def _compute_oblique_gradient_contrib_kernel(
                 s11 = 1.0 + 0.0j
 
             else:
-
                 s00 = suffix[k, 0]
 
                 s01 = suffix[k, 1]
@@ -10855,7 +9215,6 @@ def _compute_oblique_gradient_contrib_kernel(
             dden = eta_inc * dB + dC
 
             if target_is_reflectance:
-
                 dnum = eta_inc * dB - dC
 
                 dr = (dnum * denom - num * dden) / den2
@@ -10863,7 +9222,6 @@ def _compute_oblique_gradient_contrib_kernel(
                 dy = 2.0 * (r.conjugate() * dr).real
 
             else:
-
                 dt = -(2.0 * eta_inc) * dden / den2
 
                 dy = (eta_sub / eta_inc) * 2.0 * (t.conjugate() * dt).real
@@ -10875,7 +9233,6 @@ def _compute_oblique_gradient_contrib_kernel(
     weight_sum = 0.0
 
     for i in range(n_wls):
-
         err_sum += err_per_wl[i]
 
         weight_sum += weight_per_wl[i]
@@ -10883,11 +9240,9 @@ def _compute_oblique_gradient_contrib_kernel(
     grad_raw = np.zeros(n_vars, dtype=np.float64)
 
     for v in range(n_vars):
-
         s = 0.0
 
         for i in range(n_wls):
-
             s += grad_per_wl[i, v]
 
         grad_raw[v] = s
@@ -10896,30 +9251,17 @@ def _compute_oblique_gradient_contrib_kernel(
 
 
 def compute_oblique_gradient_contrib_analytic(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
     target_is_reflectance: bool,
-
     var_idx: np.ndarray | None = None,
-
-
 ) -> tuple[float, np.ndarray, float]:
-
     """
 
     Wrapper for oblique analytic gradient contribution (front-only).
@@ -10929,11 +9271,9 @@ def compute_oblique_gradient_contrib_analytic(
     """
 
     if var_idx is None:
-
         var_idx_arr = np.arange(len(ep), dtype=np.int64)
 
     else:
-
         var_idx_arr = np.asarray(var_idx, dtype=np.int64)
 
     ep_f64 = np.asarray(ep, dtype=np.float64)
@@ -10949,54 +9289,30 @@ def compute_oblique_gradient_contrib_analytic(
     n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
     return _compute_oblique_gradient_contrib_kernel(
-
         ep_f64,
-
         n_layers_T_c128,
-
         n_sub_c128,
-
         wls_f64,
-
         tgt_vals_f64,
-
         tgt_weights_f64,
-
         var_idx_arr,
-
         float(angle_deg),
-
         bool(is_s_pol),
-
         bool(target_is_reflectance),
-
     )
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_oblique_rt_and_grads_kernel(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     var_idx: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
     reverse: bool,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """
 
     Compute oblique R/T and analytic dR,dT wrt selected thickness variables.
@@ -11027,16 +9343,14 @@ def _compute_oblique_rt_and_grads_kernel(
 
     sin_theta_air = np.sin(theta0)
 
-    cos_theta_air = np.cos(theta0)
+    np.cos(theta0)
 
     for i_wl in prange(n_wls):
-
         wl = wls[i_wl]
 
         n_sub_real = n_sub[i_wl].real
 
         if n_sub_real < 1e-12:
-
             R_arr[i_wl] = 1.0
 
             T_arr[i_wl] = 0.0
@@ -11044,13 +9358,11 @@ def _compute_oblique_rt_and_grads_kernel(
             continue
 
         if reverse:
-
             n_inc = n_sub_real
 
             n_exit = n_air
 
         else:
-
             n_inc = n_air
 
             n_exit = n_sub_real
@@ -11076,17 +9388,13 @@ def _compute_oblique_rt_and_grads_kernel(
         k0 = TWO_PI / max(wl, SMALL_EPSILON)
 
         for j in range(n_layers):
-
             if reverse:
-
                 n_layer = n_layers_T[i_wl, n_layers - 1 - j]
 
             else:
-
                 n_layer = n_layers_T[i_wl, j]
 
             if abs(n_layer) < SMALL_EPSILON:
-
                 valid = False
 
                 break
@@ -11096,13 +9404,10 @@ def _compute_oblique_rt_and_grads_kernel(
             cos_l = np.sqrt(1.0 - sin_l * sin_l)
 
             if is_s_pol:
-
                 eta_l = n_layer * cos_l
 
             else:
-
                 if abs(cos_l) < SMALL_EPSILON:
-
                     valid = False
 
                     break
@@ -11110,7 +9415,6 @@ def _compute_oblique_rt_and_grads_kernel(
                 eta_l = n_layer / cos_l
 
             if abs(eta_l) < SMALL_EPSILON:
-
                 valid = False
 
                 break
@@ -11160,7 +9464,6 @@ def _compute_oblique_rt_and_grads_kernel(
             prefix[j + 1, 3] = l10 * p01 + cp * p11
 
         if not valid:
-
             R_arr[i_wl] = 1.0
 
             T_arr[i_wl] = 0.0
@@ -11172,13 +9475,11 @@ def _compute_oblique_rt_and_grads_kernel(
         suffix = np.zeros((n_layers, 4), dtype=np.complex128)
 
         if n_layers > 0:
-
             suffix[n_layers - 1, 0] = 1.0 + 0.0j
 
             suffix[n_layers - 1, 3] = 1.0 + 0.0j
 
             for k in range(n_layers - 2, -1, -1):
-
                 s00 = suffix[k + 1, 0]
 
                 s01 = suffix[k + 1, 1]
@@ -11208,7 +9509,6 @@ def _compute_oblique_rt_and_grads_kernel(
         sin_inc = sin_theta_air / max(n_inc, SMALL_EPSILON)
 
         if sin_inc > 1.0:
-
             R_arr[i_wl] = 1.0
 
             T_arr[i_wl] = 0.0
@@ -11220,7 +9520,6 @@ def _compute_oblique_rt_and_grads_kernel(
         sin_exit = sin_theta_air / max(n_exit, SMALL_EPSILON)
 
         if sin_exit > 1.0:
-
             R_arr[i_wl] = 1.0
 
             T_arr[i_wl] = 0.0
@@ -11230,15 +9529,12 @@ def _compute_oblique_rt_and_grads_kernel(
         cos_exit = np.sqrt(max(0.0, 1.0 - sin_exit * sin_exit))
 
         if is_s_pol:
-
             eta_inc = n_inc * cos_inc
 
             eta_exit = n_exit * cos_exit
 
         else:
-
             if abs(cos_inc) < SMALL_EPSILON or abs(cos_exit) < SMALL_EPSILON:
-
                 R_arr[i_wl] = 1.0
 
                 T_arr[i_wl] = 0.0
@@ -11268,7 +9564,6 @@ def _compute_oblique_rt_and_grads_kernel(
         Dmag2 = D.real * D.real + D.imag * D.imag
 
         if Dmag2 < SMALL_EPSILON:
-
             R_arr[i_wl] = 1.0
 
             T_arr[i_wl] = 0.0
@@ -11286,19 +9581,15 @@ def _compute_oblique_rt_and_grads_kernel(
         Tv = (eta_exit / eta_inc) * (t * t.conjugate()).real
 
         if Rv < 0.0:
-
             Rv = 0.0
 
         elif Rv > 1.0:
-
             Rv = 1.0
 
         if Tv < 0.0:
-
             Tv = 0.0
 
         elif Tv > 1.0:
-
             Tv = 1.0
 
         R_arr[i_wl] = Rv
@@ -11308,11 +9599,9 @@ def _compute_oblique_rt_and_grads_kernel(
         # Derivatives for selected vars
 
         for iv in range(n_vars):
-
             k_orig = var_idx[iv]
 
             if k_orig < 0 or k_orig >= n_layers:
-
                 continue
 
             k = (n_layers - 1 - k_orig) if reverse else k_orig
@@ -11326,7 +9615,6 @@ def _compute_oblique_rt_and_grads_kernel(
             p11 = prefix[k, 3]
 
             if k == n_layers - 1:
-
                 s00 = 1.0 + 0.0j
 
                 s01 = 0.0 + 0.0j
@@ -11336,7 +9624,6 @@ def _compute_oblique_rt_and_grads_kernel(
                 s11 = 1.0 + 0.0j
 
             else:
-
                 s00 = suffix[k, 0]
 
                 s01 = suffix[k, 1]
@@ -11399,26 +9686,15 @@ def _compute_oblique_rt_and_grads_kernel(
 
 
 def compute_oblique_rt_and_grads_analytic(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     var_idx: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
     reverse: bool = False,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """Python wrapper for oblique R/T + analytic dR,dT kernel."""
 
     ep_f64 = np.asarray(ep, dtype=np.float64)
@@ -11432,52 +9708,29 @@ def compute_oblique_rt_and_grads_analytic(
     var_idx_i64 = np.asarray(var_idx, dtype=np.int64)
 
     return _compute_oblique_rt_and_grads_kernel(
-
         ep_f64,
-
         n_layers_c128,
-
         n_sub_c128,
-
         wls_f64,
-
         var_idx_i64,
-
         float(angle_deg),
-
         bool(is_s_pol),
-
         bool(reverse),
-
     )
 
 
 def compute_oblique_rt_pair_and_grads_analytic(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     var_idx: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
-
 ) -> tuple[
-
     tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-
     tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-
-
 ]:
-
     """
 
     Compute oblique front and reverse responses in one wrapper.
@@ -11497,71 +9750,41 @@ def compute_oblique_rt_pair_and_grads_analytic(
     var_idx_i64 = np.asarray(var_idx, dtype=np.int64)
 
     front = _compute_oblique_rt_and_grads_kernel(
-
         ep_f64,
-
         n_layers_c128,
-
         n_sub_c128,
-
         wls_f64,
-
         var_idx_i64,
-
         float(angle_deg),
-
         bool(is_s_pol),
-
         False,
-
     )
 
     reverse = _compute_oblique_rt_and_grads_kernel(
-
         ep_f64,
-
         n_layers_c128,
-
         n_sub_c128,
-
         wls_f64,
-
         var_idx_i64,
-
         float(angle_deg),
-
         bool(is_s_pol),
-
         True,
-
     )
 
     return front, reverse
 
 
 def compute_oblique_backside_bundle_analytic(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     var_idx: np.ndarray,
-
     angle_deg: float,
-
     is_s_pol: bool,
-
     n_back_T: np.ndarray | None = None,
-
     d_back: np.ndarray | None = None,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """
 
     Backside oblique bundle for one polarization.
@@ -11580,62 +9803,36 @@ def compute_oblique_backside_bundle_analytic(
 
     var_idx_i64 = np.asarray(var_idx, dtype=np.int64)
 
-    (Rf, Tf, dRf, dTf), (Rf_prime, T_front_rev, dRf_prime, dT_front_rev) = (
-
-        compute_oblique_rt_pair_and_grads_analytic(
-
-            ep_f64, n_layers_c128, n_sub_c128, wls_f64, var_idx_i64, angle_deg, is_s_pol
-
-        )
-
+    (Rf, Tf, dRf, dTf), (Rf_prime, T_front_rev, dRf_prime, dT_front_rev) = compute_oblique_rt_pair_and_grads_analytic(
+        ep_f64, n_layers_c128, n_sub_c128, wls_f64, var_idx_i64, angle_deg, is_s_pol
     )
 
     if n_back_T is not None and d_back is not None and np.asarray(d_back).size > 0:
-
         n_back_c128 = np.asarray(n_back_T, dtype=np.complex128)
 
         d_back_f64 = np.asarray(d_back, dtype=np.float64)
 
         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(
-
             d_back_f64,
-
             n_back_c128,
-
             n_sub_c128,
-
             wls_f64,
-
             np.zeros(0, dtype=np.int64),
-
             angle_deg,
-
             is_s_pol,
-
             True,
-
         )
 
     else:
-
         Rb_prime, Tb, _, _ = compute_oblique_rt_and_grads_analytic(
-
             np.zeros(0, dtype=np.float64),
-
             np.zeros((len(wls_f64), 0), dtype=np.complex128),
-
             n_sub_c128,
-
             wls_f64,
-
             np.zeros(0, dtype=np.int64),
-
             angle_deg,
-
             is_s_pol,
-
             True,
-
         )
 
     D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
@@ -11645,20 +9842,13 @@ def compute_oblique_backside_bundle_analytic(
     y_R = Rf + (Tf * T_front_rev * Rb_prime) / D
 
     dy_R = dRf + (
-
         (Rb_prime[:, None] * (dTf * T_front_rev[:, None] + Tf[:, None] * dT_front_rev)) / D[:, None]
-
         + ((Tf * T_front_rev * (Rb_prime * Rb_prime))[:, None] * dRf_prime / D2[:, None])
-
     )
 
     y_T = (Tf * Tb) / D
 
-    dy_T = Tb[:, None] * (
-
-        dTf / D[:, None] + (Tf[:, None] * Rb_prime[:, None] * dRf_prime) / D2[:, None]
-
-    )
+    dy_T = Tb[:, None] * (dTf / D[:, None] + (Tf[:, None] * Rb_prime[:, None] * dRf_prime) / D2[:, None])
 
     return y_R, dy_R, y_T, dy_T
 
@@ -11670,32 +9860,18 @@ def compute_oblique_backside_bundle_analytic(
 
 
 def compute_gradient_all_layers_analytic(
-
     ep: np.ndarray,
-
     n_layers_T: np.ndarray,
-
     n_sub: np.ndarray,
-
     wls: np.ndarray,
-
     tgt_vals: np.ndarray,
-
     tgt_weights: np.ndarray,
-
     min_d: float,
-
     has_back: bool,
-
     n_back_T: np.ndarray,
-
     d_back: np.ndarray,
-
     var_idx: np.ndarray | None = None,
-
-
 ) -> tuple[float, np.ndarray]:
-
     """
 
     Calculates cost and analytic gradient for multilayer stack.
@@ -11705,11 +9881,9 @@ def compute_gradient_all_layers_analytic(
     # Determines variable clues
 
     if var_idx is None:
-
         var_idx_arr = np.arange(len(ep), dtype=np.int64)
 
     else:
-
         var_idx_arr = np.asarray(var_idx, dtype=np.int64)
 
     # Backside (normal incidence): full analytic chain using oblique kernel at 0 deg.
@@ -11717,7 +9891,6 @@ def compute_gradient_all_layers_analytic(
     # This keeps one derivative source of truth with the oblique implementation.
 
     if has_back and len(d_back) > 0:
-
         ep_f64 = np.asarray(ep, dtype=np.float64)
 
         wls_f64 = np.asarray(wls, dtype=np.float64)
@@ -11737,23 +9910,17 @@ def compute_gradient_all_layers_analytic(
         # Front stack (air->sub) and reverse front stack (sub->air = Rf_prime path).
 
         _Rf, Tf, _dRf, dTf = compute_oblique_rt_and_grads_analytic(
-
             ep_f64, n_layers_T_c128, n_sub_c128, wls_f64, var_idx_arr, 0.0, True, False
-
         )
 
         Rf_prime, _T_front_rev, dRf_prime, _dT_front_rev = compute_oblique_rt_and_grads_analytic(
-
             ep_f64, n_layers_T_c128, n_sub_c128, wls_f64, var_idx_arr, 0.0, True, True
-
         )
 
         # Back stack response is fixed for this optimization variable set.
 
         _Rf0, _Tf0, _Rf_p0, Rb_prime, Tb = calc_spectrum_full_exact(
-
             wls_f64, ep_f64, n_layers_T_c128, d_back_f64, n_back_T_c128, n_sub_c128
-
         )
 
         D = np.maximum(1.0 - Rf_prime * Rb_prime, 1e-12)
@@ -11765,26 +9932,11 @@ def compute_gradient_all_layers_analytic(
         mse, count = compute_mse_vectorized(T_total, tgt_vals_f64, tgt_weights_f64)
 
         if count == 0:
-
             return 1e12, np.zeros(len(var_idx_arr), dtype=np.float64)
 
-        dy = Tb[:, None] * (
+        dy = Tb[:, None] * (dTf / D[:, None] + (Tf[:, None] * Rb_prime[:, None] * dRf_prime) / D2[:, None])
 
-            dTf / D[:, None]
-
-            + (Tf[:, None] * Rb_prime[:, None] * dRf_prime) / D2[:, None]
-
-        )
-
-        valid = (
-
-            (tgt_weights_f64 > 0.0)
-
-            & np.isfinite(T_total)
-
-            & np.isfinite(tgt_vals_f64)
-
-        )
+        valid = (tgt_weights_f64 > 0.0) & np.isfinite(T_total) & np.isfinite(tgt_vals_f64)
 
         diff_w = (T_total - tgt_vals_f64) * tgt_weights_f64
 
@@ -11799,9 +9951,7 @@ def compute_gradient_all_layers_analytic(
         penalty = 0.0
 
         for d_val in ep_f64:
-
             if 1e-12 < d_val < min_d_f:
-
                 gap = min_d_f - d_val
 
                 penalty += gap * gap * 1e6
@@ -11809,11 +9959,9 @@ def compute_gradient_all_layers_analytic(
         grad_penalty = np.zeros(len(var_idx_arr), dtype=np.float64)
 
         for i, v_idx in enumerate(var_idx_arr):
-
             d_val = ep_f64[v_idx]
 
             if 1e-12 < d_val < min_d_f:
-
                 grad_penalty[i] = -2e6 * (min_d_f - d_val)
 
         return mse + penalty, grad + grad_penalty
@@ -11833,21 +9981,13 @@ def compute_gradient_all_layers_analytic(
     n_sub_c128 = np.asarray(n_sub, dtype=np.complex128)
 
     cost, grad, _ = _compute_gradient_analytic_kernel(
-
         ep_f64,
-
         n_layers_T_c128,
-
         n_sub_c128,
-
         wls_f64,
-
         tgt_vals_f64,
-
         tgt_weights_f64,
-
         var_idx_arr,
-
     )
 
     # Add penalty for min thickness violation
@@ -11855,9 +9995,7 @@ def compute_gradient_all_layers_analytic(
     penalty = 0.0
 
     for i in range(len(ep)):
-
         if ep[i] > 1e-12 and ep[i] < min_d:
-
             diff = min_d - ep[i]
 
             penalty += diff * diff * 1e6
@@ -11874,34 +10012,21 @@ def compute_gradient_all_layers_analytic(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_metal_tmm_gradient_kernel(
-
     l_array: np.ndarray,
-
     nM_complex_array: np.ndarray,
-
     eM: float,
-
     eL: float,
-
     nL_complex_array: np.ndarray,
-
     nSub_complex_array: np.ndarray,
-
     r_tgt_array: np.ndarray,
-
-
 ):
-
     """Computes Cost and Gradients w.r.t physical params and optical clues for Bilayer."""
 
     n_pts = len(l_array)
 
     n_pts_inv = 1.0 / n_pts
 
-    grad_dM = 0.0
 
     grad_eM = 0.0
 
@@ -11918,7 +10043,6 @@ def _compute_metal_tmm_gradient_kernel(
     mse = 0.0
 
     for i in prange(n_pts):
-
         wl = l_array[i]
 
         inv_wl = 1.0 / wl
@@ -11934,7 +10058,6 @@ def _compute_metal_tmm_gradient_kernel(
         # ── SAFEGUARD n-ik ──
 
         if nM.imag > 0.0:
-
             nM = nM.real - 1j * nM.imag
 
         phiM_base = k0 * eM
@@ -11960,7 +10083,6 @@ def _compute_metal_tmm_gradient_kernel(
         # ── SAFEGUARD n-ik ──
 
         if nL.imag > 0.0:
-
             nL = nL.real - 1j * nL.imag
 
         phiL_base = k0 * eL
@@ -11986,7 +10108,6 @@ def _compute_metal_tmm_gradient_kernel(
         # ── SAFEGUARD n-ik ──
 
         if nS.imag > 0.0:
-
             nS = nS.real - 1j * nS.imag
 
         # Total Matrix M_tot = M_M * M_L
@@ -12057,11 +10178,7 @@ def _compute_metal_tmm_gradient_kernel(
 
         dmM11_de = -sM * dphi_deM
 
-        grad_eM += np.real(
-
-            C_mM00 * dmM00_de + C_mM01 * dmM01_de + C_mM10 * dmM10_de + C_mM11 * dmM11_de
-
-        )
+        grad_eM += np.real(C_mM00 * dmM00_de + C_mM01 * dmM01_de + C_mM10 * dmM10_de + C_mM11 * dmM11_de)
 
         dphi_dn = k0 * eM
 
@@ -12097,11 +10214,7 @@ def _compute_metal_tmm_gradient_kernel(
 
         dmL11_de = -sL * dphi_deL
 
-        grad_eL += np.real(
-
-            C_mL00 * dmL00_de + C_mL01 * dmL01_de + C_mL10 * dmL10_de + C_mL11 * dmL11_de
-
-        )
+        grad_eL += np.real(C_mL00 * dmL00_de + C_mL01 * dmL01_de + C_mL10 * dmL10_de + C_mL11 * dmL11_de)
 
         dphi_dnL = k0 * eL
 
@@ -12127,12 +10240,8 @@ def _compute_metal_tmm_gradient_kernel(
 
 
 def compute_metal_bilayer_gradient_analytic(
-
     x, num_knots, l_array, r_tgt_array, _min_knot_dist, nSub_complex_array=None
-
-
 ):
-
     """
 
     Wrapper calculating full gradient using Analytic TMM + FD Spline for Bilayer Metal.
@@ -12160,7 +10269,6 @@ def compute_metal_bilayer_gradient_analytic(
     nL_calc = get_nk_cauchy_simple(l_array, n_infini, A)
 
     if nSub_complex_array is None:
-
         # Note: Need get_nk_si available or passed. Assuming passed or available in scope.
 
         # Fallback to a default if not found? This should be passed.
@@ -12176,9 +10284,7 @@ def compute_metal_bilayer_gradient_analytic(
     nL_complex = nL_calc + 0j
 
     mse, g_eM, g_eL, sens_nM_r, sens_nM_i, sens_nL_r = _compute_metal_tmm_gradient_kernel(
-
         l_array, nM_complex, eM, eL, nL_complex, nSub_complex_array, r_tgt_array
-
     )
 
     grad[0] = g_eM
@@ -12196,7 +10302,6 @@ def compute_metal_bilayer_gradient_analytic(
     basis = np.zeros((num_knots, len(l_array)), dtype=np.float64)
 
     for i in range(num_knots):
-
         unit_vals = np.zeros(num_knots)
 
         unit_vals[i] = 1.0
@@ -12212,11 +10317,9 @@ def compute_metal_bilayer_gradient_analytic(
     basis_k = basis
 
     for i in range(num_knots):
-
         grad[offset + i] = np.dot(dJ_dn, basis_n[i, :])
 
     for i in range(num_knots):
-
         grad[offset + num_knots + i] = np.dot(dJ_dk, basis_k[i, :])
 
     h_val = 1e-5
@@ -12224,7 +10327,6 @@ def compute_metal_bilayer_gradient_analytic(
     curr_l_int = lambda_internes.copy()
 
     for i in range(len(lambda_internes)):
-
         orig = curr_l_int[i]
 
         curr_l_int[i] += h_val
@@ -12242,11 +10344,9 @@ def compute_metal_bilayer_gradient_analytic(
         grad[offset + 2 * num_knots + i] = np.dot(dJ_dn, dn_dp) + np.dot(dJ_dk, dk_dp)
 
     if eM < 1.0:
-
         grad[0] -= 1000.0 * (1.0 - eM)
 
     if eL < 1.0:
-
         grad[1] -= 1000.0 * (1.0 - eL)
 
     return mse, grad
@@ -12265,7 +10365,6 @@ def compute_metal_bilayer_gradient_analytic(
 
 
 class NKCache:
-
     """Global thread-safe LRU cache for Cauchy clues (Opus 4.6)"""
 
     _cache: OrderedDict = OrderedDict()
@@ -12275,11 +10374,9 @@ class NKCache:
     _max_size = 100
 
     @classmethod
-
     def get(cls, mat_key, n4, n7, wls):
 
         if len(wls) == 0:
-
             return np.array([], dtype=np.complex128)
 
         step = float(wls[1] - wls[0]) if len(wls) > 1 else 0.0
@@ -12287,9 +10384,7 @@ class NKCache:
         cache_key = (mat_key, n4, n7, len(wls), float(wls[0]), float(wls[-1]), step)
 
         with cls._lock:
-
             if cache_key in cls._cache:
-
                 cls._cache.move_to_end(cache_key)
 
                 return cls._cache[cache_key]
@@ -12305,7 +10400,6 @@ class NKCache:
             # LRU eviction: remove oldest entry (not clear-all)
 
             while len(cls._cache) > cls._max_size:
-
                 cls._cache.popitem(last=False)
 
             return val_c
@@ -12314,89 +10408,67 @@ class NKCache:
 def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=None) -> float:
 
     if not isinstance(material_id, str):
-
         return float(material_id)
 
     # Try Database
 
     if db_instance is not None:
-
         try:
-
             if hasattr(db_instance, "get_refractive_index"):
-
                 return float(db_instance.get_refractive_index(material_id, wavelength_nm))
 
             else:
-
                 return float(db_instance.get_index(material_id, wavelength_nm))
 
         except (KeyError, ValueError, AttributeError):
-
             pass
 
     try:
-
         return float(material_id)
 
     except (ValueError, TypeError):
-
         # Fallback to default refractive index
 
         return 1.5
 
 
-def get_refractive_clues_vectorized(
-
-    material_id: Any, wavelengths: np.ndarray, db_instance=None
-
-
-) -> np.ndarray:
+def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance=None) -> np.ndarray:
 
     n = len(wavelengths)
 
     if not isinstance(material_id, str):
-
         return np.full(n, float(material_id), dtype=np.float64)
 
     # Try Database
 
     if db_instance is not None:
-
         try:
-
             # Use complex128 to assume ge@njit(cache=True, fastmath=True)
 
             res = np.empty(n, dtype=np.complex128)
 
             for i in range(n):
-
                 # RobustMaterialDatabase uses get_refractive_index, standard might use get_index
 
                 if hasattr(db_instance, "get_refractive_index"):
-
                     res[i] = db_instance.get_refractive_index(material_id, wavelengths[i])
 
                 else:
-
                     res[i] = db_instance.get_index(material_id, wavelengths[i])
 
             return res
 
         except (KeyError, ValueError, AttributeError):
-
             pass  # Fallback
 
     # Simple Parse for constants "1.45" passed as string
 
     try:
-
         val = float(material_id)
 
         return np.full(n, val, dtype=np.float64)
 
     except (ValueError, TypeError):
-
         # Fallback to default if conversion fails
 
         pass
@@ -12438,31 +10510,17 @@ def get_refractive_clues_vectorized(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def check_extrema_proximity(
-
     wl,
-
     n_current,
-
     n_previous,
-
     n_Sub,
-
     thickness_nominal,
-
     M_before,
-
     exclusion_width,
-
     check_start,
-
     wl_changed=False,
-
-
 ) -> bool:
-
     """
 
     Checks if wavelength is too close to a transmission extremum.
@@ -12488,7 +10546,6 @@ def check_extrema_proximity(
     m10, m11 = M_before[1, 0], M_before[1, 1]
 
     if wl < 0.1:
-
         return False
 
     # Constants and Tolerance - always double precision
@@ -12498,13 +10555,11 @@ def check_extrema_proximity(
     TOL = 1e-9
 
     if check_start:
-
         denom_pres = m00 + n_Sub * m11 + n_Sub * m01 + m10
 
         T_pres = 0.0
 
         if abs(denom_pres) > 1e-9:
-
             t_pres = 2.0 / denom_pres
 
             T_pres = n_Sub.real * (t_pres.real**2 + t_pres.imag**2)
@@ -12532,7 +10587,6 @@ def check_extrema_proximity(
         T_fut = 0.0
 
         if abs(denom_fut) > 1e-9:
-
             t_fut = 2.0 / denom_fut
 
             T_fut = n_Sub.real * (t_fut.real**2 + t_fut.imag**2)
@@ -12562,7 +10616,6 @@ def check_extrema_proximity(
         T_past = 0.0
 
         if abs(denom_past) > 1e-9:
-
             t_past = 2.0 / denom_past
 
             T_past = n_Sub.real * (t_past.real**2 + t_past.imag**2)
@@ -12572,7 +10625,6 @@ def check_extrema_proximity(
         diff1, diff2 = T_pres - T_past, T_fut - T_pres
 
         if (diff1 > TOL and diff2 < -TOL) or (diff1 < -TOL and diff2 > TOL):
-
             return False
 
         # Case 2 (asymmetric, only when wl changed): TP is AHEAD within [δe, 3δe]
@@ -12580,7 +10632,6 @@ def check_extrema_proximity(
         # i.e., starting this layer on the new lambda would place us just before a TP
 
         if wl_changed:
-
             phi_ff = (TWO_PI_VAL / wl) * n_current * (3.0 * exclusion_width)
 
             cp_ff, sp_ff = np.cos(phi_ff), np.sin(phi_ff)
@@ -12604,7 +10655,6 @@ def check_extrema_proximity(
             T_far = 0.0
 
             if abs(denom_far) > 1e-9:
-
                 t_far = 2.0 / denom_far
 
                 T_far = n_Sub.real * (t_far.real**2 + t_far.imag**2)
@@ -12618,11 +10668,9 @@ def check_extrema_proximity(
             s_right_s = (T_far - T_fut) / 2.0
 
             if (s_mid_s > TOL and s_right_s < -TOL) or (s_mid_s < -TOL and s_right_s > TOL):
-
                 return False
 
     if thickness_nominal > exclusion_width:
-
         # --- ASYMMETRIC ARRIVAL CHECK (Opus 4.7) ---
 
         # Physical rationale: stopping just BEFORE a turning point is forbidden
@@ -12658,25 +10706,17 @@ def check_extrema_proximity(
         #   Case 2 - TP ahead of d within [d+δe, d+3δe]:  sign(s_mid)  != sign(s_right)
 
         points = np.array(
-
             [
-
                 thickness_nominal - exclusion_width,
-
                 thickness_nominal,
-
                 thickness_nominal + exclusion_width,
-
                 thickness_nominal + 3.0 * exclusion_width,
-
             ]
-
         )
 
         T_end = np.zeros(4)
 
         for k in range(4):
-
             d = points[k]
 
             phi = (TWO_PI_VAL / wl) * n_current * d
@@ -12700,14 +10740,13 @@ def check_extrema_proximity(
             denom = mt00 + n_Sub * mt11 + n_Sub * mt01 + mt10
 
             if abs(denom) > 1e-9:
-
                 t = 2.0 / denom
 
                 T_end[k] = n_Sub.real * (t.real**2 + t.imag**2)
 
-        s_left  = T_end[1] - T_end[0]
+        s_left = T_end[1] - T_end[0]
 
-        s_mid   = T_end[2] - T_end[1]
+        s_mid = T_end[2] - T_end[1]
 
         s_right = (T_end[3] - T_end[2]) / 2.0
 
@@ -12716,13 +10755,11 @@ def check_extrema_proximity(
         # Case 1: d is near an extremum (symmetric δe margin - preserves original behaviour)
 
         if (s_left > TOL_E and s_mid < -TOL_E) or (s_left < -TOL_E and s_mid > TOL_E):
-
             return False
 
         # Case 2: TP is AHEAD of d within [d+δe, d+3δe] -> d is approaching it -> reject
 
         if (s_mid > TOL_E and s_right < -TOL_E) or (s_mid < -TOL_E and s_right > TOL_E):
-
             return False
 
     return True
@@ -12732,23 +10769,13 @@ def check_extrema_proximity(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def calculate_extrema_distances(
-
     wl: float,
-
     n_current: complex,
-
     n_Sub: complex,
-
     thickness_nominal: float,
-
     M_before: np.ndarray,
-
-
 ) -> tuple[float, float, float, float]:
-
     """
 
     Performs a mini-scan to find the exact distance (in nm) to the nearest
@@ -12770,7 +10797,6 @@ def calculate_extrema_distances(
     m10, m11 = M_before[1, 0], M_before[1, 1]
 
     if wl < 0.1:
-
         return 999.0, 999.0, 999.0, 999.0
 
     TWO_PI_VAL = TWO_PI
@@ -12781,7 +10807,7 @@ def calculate_extrema_distances(
 
     # We will scan physically wide enough, then convert distance to OT.
 
-    scan_ot = 16.0 
+    scan_ot = 16.0
 
     physical_scan_radius = scan_ot / float(abs(n_current)) if abs(n_current) > 1e-9 else 16.0
 
@@ -12802,7 +10828,6 @@ def calculate_extrema_distances(
         T_arr = np.zeros(pts)
 
         for i in range(pts):
-
             d = start_w + i * step
 
             d_arr[i] = d
@@ -12828,7 +10853,6 @@ def calculate_extrema_distances(
             denom = mt00 + n_Sub * mt11 + n_Sub * mt01 + mt10
 
             if abs(denom) > 1e-9:
-
                 t = 2.0 / denom
 
                 T_arr[i] = n_Sub.real * (t.real**2 + t.imag**2)
@@ -12844,13 +10868,11 @@ def calculate_extrema_distances(
     d_scan1, T_scan1 = scan_window(0.0)
 
     for i in range(1, len(d_scan1) - 1):
+        s_left = T_scan1[i] - T_scan1[i - 1]
 
-        s_left = T_scan1[i] - T_scan1[i-1]
-
-        s_right = T_scan1[i+1] - T_scan1[i]
+        s_right = T_scan1[i + 1] - T_scan1[i]
 
         if (s_left > TOL and s_right < -TOL) or (s_left < -TOL and s_right > TOL):
-
             extrema_d.append(d_scan1[i])
 
     # Window 2: End (d=thickness_nominal)
@@ -12858,13 +10880,11 @@ def calculate_extrema_distances(
     d_scan2, T_scan2 = scan_window(thickness_nominal)
 
     for i in range(1, len(d_scan2) - 1):
+        s_left = T_scan2[i] - T_scan2[i - 1]
 
-        s_left = T_scan2[i] - T_scan2[i-1]
-
-        s_right = T_scan2[i+1] - T_scan2[i]
+        s_right = T_scan2[i + 1] - T_scan2[i]
 
         if (s_left > TOL and s_right < -TOL) or (s_left < -TOL and s_right > TOL):
-
             extrema_d.append(d_scan2[i])
 
     # Now find distances to 0.0 and to thickness_nominal IN OPTICAL THICKNESS
@@ -12876,17 +10896,14 @@ def calculate_extrema_distances(
     dist_prev_end, dist_next_end = 999.0, 999.0
 
     for ed in extrema_d:
-
         # Convert physical diff to OT diff
 
         diff_start_ot = (ed - 0.0) * n_real
 
         if diff_start_ot <= 0:
-
             dist_prev_start = min(dist_prev_start, abs(diff_start_ot))
 
         if diff_start_ot >= 0:
-
             dist_next_start = min(dist_next_start, abs(diff_start_ot))
 
         # For End (d=thickness_nominal)
@@ -12894,19 +10911,15 @@ def calculate_extrema_distances(
         diff_end_ot = (ed - thickness_nominal) * n_real
 
         if diff_end_ot <= 0:
-
             dist_prev_end = min(dist_prev_end, abs(diff_end_ot))
 
         if diff_end_ot >= 0:
-
             dist_next_end = min(dist_next_end, abs(diff_end_ot))
 
     return dist_prev_start, dist_next_start, dist_prev_end, dist_next_end
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def fit_parabola_vertex_3points(x: np.ndarray, y: np.ndarray) -> tuple[float, float, float]:
 
     x1, x2, x3 = x[0], x[1], x[2]
@@ -12916,7 +10929,6 @@ def fit_parabola_vertex_3points(x: np.ndarray, y: np.ndarray) -> tuple[float, fl
     denom = (x1 - x2) * (x1 - x3) * (x2 - x3)
 
     if abs(denom) < 1e-12:
-
         return 0.0, 0.0, y1
 
     a = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom
@@ -12932,23 +10944,13 @@ def fit_parabola_vertex_3points(x: np.ndarray, y: np.ndarray) -> tuple[float, fl
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _compute_valid_blocks_kernel(
-
     layer_wls: np.ndarray,
-
     layer_costs: np.ndarray,
-
     valid_mask: np.ndarray,
-
     num_layers: int,
-
     top_k: int,
-
     max_W: int,
-
-
 ):
 
     block_costs = np.full((num_layers + 1, num_layers + 1, top_k), np.inf, dtype=np.float64)
@@ -12958,31 +10960,24 @@ def _compute_valid_blocks_kernel(
     block_counts = np.zeros((num_layers + 1, num_layers + 1), dtype=np.int32)
 
     for i in range(num_layers):
-
         for j in range(i + 1, num_layers + 1):
-
             bl_ok = True
 
             for l in range(i, j):
-
                 has_any = False
 
                 for w in range(max_W):
-
                     if valid_mask[l, w]:
-
                         has_any = True
 
                         break
 
                 if not has_any:
-
                     bl_ok = False
 
                     break
 
             if not bl_ok:
-
                 continue
 
             base_l = i
@@ -12990,17 +10985,13 @@ def _compute_valid_blocks_kernel(
             min_count = 999999
 
             for l in range(i, j):
-
                 c = 0
 
                 for w in range(max_W):
-
                     if valid_mask[l, w]:
-
                         c += 1
 
                 if c < min_count:
-
                     min_count = c
 
                     base_l = l
@@ -13012,9 +11003,7 @@ def _compute_valid_blocks_kernel(
             temp_count = 0
 
             for base_w_idx in range(max_W):
-
                 if not valid_mask[base_l, base_w_idx]:
-
                     continue
 
                 wl = layer_wls[base_l, base_w_idx]
@@ -13024,17 +11013,13 @@ def _compute_valid_blocks_kernel(
                 is_valid = True
 
                 for l in range(i, j):
-
                     if l == base_l:
-
                         continue
 
                     found = False
 
                     for w in range(max_W):
-
                         if valid_mask[l, w] and abs(layer_wls[l, w] - wl) < 1e-5:
-
                             total_cost += layer_costs[l, w]
 
                             found = True
@@ -13042,13 +11027,11 @@ def _compute_valid_blocks_kernel(
                             break
 
                     if not found:
-
                         is_valid = False
 
                         break
 
                 if is_valid:
-
                     temp_costs[temp_count] = total_cost
 
                     temp_wls[temp_count] = wl
@@ -13056,13 +11039,9 @@ def _compute_valid_blocks_kernel(
                     temp_count += 1
 
             if temp_count > 0:
-
                 for x in range(temp_count):
-
                     for y in range(x + 1, temp_count):
-
                         if temp_costs[y] < temp_costs[x]:
-
                             tc = temp_costs[x]
 
                             temp_costs[x] = temp_costs[y]
@@ -13078,7 +11057,6 @@ def _compute_valid_blocks_kernel(
                 take = min(temp_count, top_k)
 
                 for k in range(take):
-
                     block_costs[i, j, k] = temp_costs[k]
 
                     block_wls[i, j, k] = temp_wls[k]
@@ -13089,40 +11067,22 @@ def _compute_valid_blocks_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _dp_kernel(
-
     block_costs: np.ndarray,
-
     block_wls: np.ndarray,
-
     block_counts: np.ndarray,
-
     n_blocks: int,
-
     num_layers: int,
-
     top_k: int,
-
-
 ):
 
     dp_costs = np.full((n_blocks + 1, num_layers + 1, top_k * 2), np.inf, dtype=np.float64)
 
-    dp_paths_start = np.full(
-
-        (n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32
-
-    )
+    dp_paths_start = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)
 
     dp_paths_end = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)
 
-    dp_paths_wl = np.full(
-
-        (n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1.0, dtype=np.float64
-
-    )
+    dp_paths_wl = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1.0, dtype=np.float64)
 
     dp_counts = np.zeros((n_blocks + 1, num_layers + 1), dtype=np.int32)
 
@@ -13141,49 +11101,38 @@ def _dp_kernel(
     temp_paths_wl = np.full((max_cands, n_blocks), -1.0, dtype=np.float64)
 
     for k in range(1, n_blocks + 1):
-
         for i in range(k, num_layers + 1):
-
             c_count = 0
 
             for j in range(k - 1, i):
-
                 prev_count = dp_counts[k - 1, j]
 
                 if prev_count == 0:
-
                     continue
 
                 bl_count = block_counts[j, i]
 
                 if bl_count == 0:
-
                     continue
 
                 for p in range(prev_count):
-
                     prev_cost = dp_costs[k - 1, j, p]
 
                     for b in range(min(10, bl_count)):
-
                         total_cost = prev_cost + block_costs[j, i, b]
 
                         wl = block_wls[j, i, b]
 
                         if c_count == max_cands and total_cost >= temp_costs[max_cands - 1]:
-
                             continue
 
                         idx = c_count if c_count < max_cands else max_cands - 1
 
                         while idx > 0 and temp_costs[idx - 1] > total_cost:
-
                             if idx < max_cands:
-
                                 temp_costs[idx] = temp_costs[idx - 1]
 
                                 for _b in range(n_blocks):
-
                                     temp_paths_start[idx, _b] = temp_paths_start[idx - 1, _b]
 
                                     temp_paths_end[idx, _b] = temp_paths_end[idx - 1, _b]
@@ -13195,7 +11144,6 @@ def _dp_kernel(
                         temp_costs[idx] = total_cost
 
                         for old_h in range(k - 1):
-
                             temp_paths_start[idx, old_h] = dp_paths_start[k - 1, j, p, old_h]
 
                             temp_paths_end[idx, old_h] = dp_paths_end[k - 1, j, p, old_h]
@@ -13209,17 +11157,13 @@ def _dp_kernel(
                         temp_paths_wl[idx, k - 1] = wl
 
                         if c_count < max_cands:
-
                             c_count += 1
 
             if c_count > 0:
-
                 for t in range(c_count):
-
                     dp_costs[k, i, t] = temp_costs[t]
 
                     for _b in range(n_blocks):
-
                         dp_paths_start[k, i, t, _b] = temp_paths_start[t, _b]
 
                         dp_paths_end[k, i, t, _b] = temp_paths_end[t, _b]
@@ -13232,21 +11176,12 @@ def _dp_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
-def _solve_quadratic_target(
-
-    a: float, b: float, c: float, target_y: float, current_x: float
-
-
-) -> float:
+def _solve_quadratic_target(a: float, b: float, c: float, target_y: float, current_x: float) -> float:
 
     c_prime = c - target_y
 
     if abs(a) < 1e-9:
-
         if abs(b) > 1e-9:
-
             return -c_prime / b
 
         return current_x
@@ -13254,7 +11189,6 @@ def _solve_quadratic_target(
     discriminant = b * b - 4.0 * a * c_prime
 
     if discriminant >= 0.0:
-
         sqrt_disc = np.sqrt(discriminant)
 
         sol1 = (-b + sqrt_disc) / (2.0 * a)
@@ -13262,13 +11196,11 @@ def _solve_quadratic_target(
         sol2 = (-b - sqrt_disc) / (2.0 * a)
 
         if abs(sol1 - current_x) < abs(sol2 - current_x):
-
             return sol1
 
         return sol2
 
     else:
-
         return -b / (2.0 * a)
 
 
@@ -13287,39 +11219,23 @@ def _solve_quadratic_target(
 NON_MONOTONIC_MODE_ATTENUATE = 0  # Divide error by factor (legacy behavior)
 
 
-NON_MONOTONIC_MODE_REJECT = 1     # Reject candidate (return large error)
+NON_MONOTONIC_MODE_REJECT = 1  # Reject candidate (return large error)
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def simulate_growth_kernel(
-
     p_thick_nominal: np.ndarray,
-
     i_layer: int,
-
     prev_thicknesses_sim: np.ndarray,
-
     wl: float,
-
     n_H,
-
     n_L,
-
     n_Sub,  # float or complex (Numba multi-dispatch)
-
     probe_offset: float,
-
     noise_val_precalc: float,
-
     non_monotonic_factor: float,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-
-
 ) -> tuple[float, float]:
-
     """
 
     Fast TMM Simulation for robustness heuristics.
@@ -13347,7 +11263,6 @@ def simulate_growth_kernel(
     """
 
     if wl < 0.1:
-
         return float(p_thick_nominal[i_layer]), 0.0
 
     # Numba infers precision from input dtypes automatically.
@@ -13363,7 +11278,6 @@ def simulate_growth_kernel(
     M_before_11 = 1.0 + 0j
 
     for j in range(i_layer):
-
         n_prev = n_H if (j % 2) == 0 else n_L
 
         th_prev = prev_thicknesses_sim[j]
@@ -13405,9 +11319,7 @@ def simulate_growth_kernel(
     T_vals_for_dyn = np.zeros(n_dyn_steps)
 
     if nominal_th > 1e-4:
-
         for k in range(n_dyn_steps):
-
             th_frac = (k / (n_dyn_steps - 1)) * nominal_th
 
             phi_c = (TWO_PI_VAL / wl) * n_current * th_frac
@@ -13435,7 +11347,6 @@ def simulate_growth_kernel(
             denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
 
             if abs(denom) > 1e-9:
-
                 T_vals_for_dyn[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
 
         # Monotonicity check logic using 5 equispaced sampling points
@@ -13453,51 +11364,38 @@ def simulate_growth_kernel(
         current_sign = 0.0
 
         if diffs[0] > 1e-9:
-
             current_sign = 1.0
 
         elif diffs[0] < -1e-9:
-
             current_sign = -1.0
 
         for k in range(1, len(diffs)):
-
             next_sign = 0.0
 
             if diffs[k] > 1e-9:
-
                 next_sign = 1.0
 
             elif diffs[k] < -1e-9:
-
                 next_sign = -1.0
 
             if next_sign != 0.0:
-
                 if current_sign != 0.0 and next_sign != current_sign:
-
                     flips += 1
 
                 current_sign = next_sign
 
         if flips > 0:
-
             is_non_monotonic = True
 
     target_T_noisy = T_vals_for_dyn[n_dyn_steps - 1] + noise_val_precalc
 
     # Numerical solve via parabolic probe
 
-    th_points = np.array(
-
-        [max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset]
-
-    )
+    th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
 
     T_points = np.zeros(3)
 
     for k in range(3):
-
         d = th_points[k]
 
         phi = (TWO_PI_VAL / wl) * n_current * d
@@ -13521,7 +11419,6 @@ def simulate_growth_kernel(
         denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
 
         if abs(denom) > 1e-9:
-
             T_points[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
 
     a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
@@ -13533,15 +11430,12 @@ def simulate_growth_kernel(
     dyn_encounter = 0.0
 
     if nominal_th > 1e-4:
-
         dyn_encounter = np.max(T_vals_for_dyn) - np.min(T_vals_for_dyn)
 
     # Non-monotonic handling
 
     if is_non_monotonic:
-
         if non_monotonic_mode == NON_MONOTONIC_MODE_REJECT:
-
             # Return nominal thickness with a large penalty error signal
 
             # The caller will see a very large error for this candidate
@@ -13549,7 +11443,6 @@ def simulate_growth_kernel(
             return nominal_th + 1e6, dyn_encounter
 
         else:
-
             # Legacy: attenuate error by dividing
 
             gain = non_monotonic_factor
@@ -13563,29 +11456,16 @@ def simulate_growth_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def compute_T_front_at_layer(
-
     wl: float,
-
     n_layer,
-
     n_Sub,
-
     M_before_00,
-
     M_before_01,
-
     M_before_10,
-
     M_before_11,
-
     d: float,
-
-
 ) -> float:
-
     """
 
     Compute front-side T at end of a single layer (same convention as simulate_growth_kernel).
@@ -13595,7 +11475,6 @@ def compute_T_front_at_layer(
     """
 
     if wl < 0.1:
-
         return 0.0
 
     TWO_PI_VAL = TWO_PI
@@ -13621,7 +11500,6 @@ def compute_T_front_at_layer(
     denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
 
     if abs(denom) > 1e-9:
-
         return float(4.0 * np.real(n_Sub) / (denom.real**2 + denom.imag**2))
 
     return 0.0
@@ -13630,34 +11508,19 @@ def compute_T_front_at_layer(
 # --- 6.3 Validation Batch ---
 
 
-@njit(parallel=True, cache=True, fastmath=True)
-
-
+@njit(parallel=True, cache=True, fastmath=True, nogil=True)
 def validate_wavelengths_batch(
-
     candidate_wls,
-
     n_H_arr,
-
     n_L_arr,
-
     n_Sub_arr,
-
     runs_history,
-
     p_thick_nominal,
-
     i_layer,
-
     probe_offset,
-
     noise_values,
-
     non_monotonic_factor,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-
-
 ):
 
     n_cands = len(candidate_wls)
@@ -13667,39 +11530,25 @@ def validate_wavelengths_batch(
     results = np.zeros((n_cands, 2))
 
     for c_idx in prange(n_cands):
-
         wl = candidate_wls[c_idx]
 
         errors = np.empty(n_runs)
 
         for r_idx in range(n_runs):
-
             prev_th = runs_history[r_idx, :i_layer]
 
             val, _ = simulate_growth_kernel(
-
                 p_thick_nominal,
-
                 i_layer,
-
                 prev_th,
-
                 wl,
-
                 n_H_arr[c_idx],
-
                 n_L_arr[c_idx],
-
                 n_Sub_arr[c_idx],
-
                 probe_offset,
-
                 noise_values[r_idx],
-
                 non_monotonic_factor,
-
                 non_monotonic_mode,
-
             )
 
             errors[r_idx] = val - p_thick_nominal[i_layer]
@@ -13722,32 +11571,18 @@ def validate_wavelengths_batch(
 # --- 6.3b Full Stack Robustness Simulation Batch (New Phase B Kernel) ---
 
 
-@njit(parallel=True, cache=True, fastmath=True)
-
-
+@njit(parallel=True, cache=True, fastmath=True, nogil=True)
 def simulate_stack_robustness_batch(
-
     p_thick_nominal: np.ndarray,
-
     layer_wavelengths: np.ndarray,
-
     n_H_vals: np.ndarray,
-
     n_L_vals: np.ndarray,
-
     n_Sub_vals: np.ndarray,
-
     noise_matrix: np.ndarray,  # (n_runs, n_layers)
-
     probe_offset: float,
-
     non_monotonic_factor: float,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """
 
     Simulates growth for the entire stack for multiple MCS runs in parallel.
@@ -13765,11 +11600,9 @@ def simulate_stack_robustness_batch(
     all_dyns = np.empty((n_runs, n_layers), dtype=np.float64)
 
     for r in prange(n_runs):
-
         current_run_th = np.empty(n_layers, dtype=np.float64)
 
         for i_layer in range(n_layers):
-
             wl = layer_wavelengths[i_layer]
 
             n_H, n_L, n_Sub = n_H_vals[i_layer], n_L_vals[i_layer], n_Sub_vals[i_layer]
@@ -13777,29 +11610,17 @@ def simulate_stack_robustness_batch(
             noise_val = noise_matrix[r, i_layer]
 
             val, dyn = simulate_growth_kernel(
-
                 p_thick_nominal,
-
                 i_layer,
-
                 current_run_th,
-
                 wl,
-
                 n_H,
-
                 n_L,
-
                 n_Sub,
-
                 probe_offset,
-
                 noise_val,
-
                 non_monotonic_factor,
-
                 non_monotonic_mode,
-
             )
 
             current_run_th[i_layer] = val
@@ -13811,11 +11632,9 @@ def simulate_stack_robustness_batch(
     avg_dyns = np.zeros(n_layers, dtype=np.float64)
 
     for l in range(n_layers):
-
         sum_dyn = 0.0
 
         for r in range(n_runs):
-
             sum_dyn += all_dyns[r, l]
 
         avg_dyns[l] = sum_dyn / n_runs
@@ -13823,28 +11642,16 @@ def simulate_stack_robustness_batch(
     return results, avg_dyns
 
 
-@njit(parallel=True, cache=True, fastmath=True)
-
-
+@njit(parallel=True, cache=True, fastmath=True, nogil=True)
 def compute_batch_rmse(
-
     sim_thick_batch: np.ndarray,
-
     wls: np.ndarray,
-
     nH_arr: np.ndarray,  # (n_wls, n_layers) or (n_wls,) depending on implementation needed
-
     nL_arr: np.ndarray,  # We probably need n_layers_all_wls structure or similar
-
     nSub_arr: np.ndarray,  # (n_wls,)
-
     T_target: np.ndarray,
-
     n_layers_flattened: np.ndarray,  # (n_wls, n_layers) - pre-computed n complex for all layers
-
-
 ) -> np.ndarray:
-
     """Computes RMSE for a batch of simulated thicknesses against a target T spectrum.
 
     Args:
@@ -13876,7 +11683,6 @@ def compute_batch_rmse(
     k0_arr = TWO_PI / wls
 
     for r in prange(n_runs):
-
         thicknesses = sim_thick_batch[r]
 
         mse_sum = 0.0
@@ -13884,11 +11690,8 @@ def compute_batch_rmse(
         # Inner loop over wavelengths
 
         for i_wl in range(n_wls):
-
             Rf, Tf, Rb = compute_TMM_single_point_k0_exact(
-
                 k0_arr[i_wl], thicknesses, n_layers_flattened[i_wl], nSub_arr[i_wl]
-
             )
 
             # Backside correction (exact incoherent combination) - Float64 logic
@@ -13904,7 +11707,6 @@ def compute_batch_rmse(
             denom = 1.0 - Rb * R_sub_air
 
             if denom < 1e-12:
-
                 denom = 1e-12
 
             T_total = (Tf * T_sub_air) / denom
@@ -13928,23 +11730,13 @@ def compute_batch_rmse(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def precompute_matrix_cache_kernel(
-
     all_wls: np.ndarray,
-
     n_H_arr: np.ndarray,
-
     n_L_arr: np.ndarray,
-
     p_thick_nominal: np.ndarray,
-
     num_layers: int,
-
-
 ) -> np.ndarray:
-
     """Parallel computation of nominal transfer matrix cache.
 
     Supports complex refractive clues for nH and nL."""
@@ -13956,7 +11748,6 @@ def precompute_matrix_cache_kernel(
     cache = np.zeros((num_layers, n_wls, 2, 2), dtype=np.complex128)
 
     for wl_idx in prange(n_wls):
-
         wl = all_wls[wl_idx]
 
         inv_wl = TWO_PI_LOCAL / wl
@@ -13972,7 +11763,6 @@ def precompute_matrix_cache_kernel(
         M11 = complex(1.0, 0.0)
 
         for i_layer in range(num_layers):
-
             n_layer = n_H_arr[wl_idx] if (i_layer % 2) == 0 else n_L_arr[wl_idx]
 
             thickness = p_thick_nominal[i_layer]
@@ -13984,11 +11774,9 @@ def precompute_matrix_cache_kernel(
             isp = +1j * np.sin(phi)
 
             if abs(n_layer) > 1e-12:
-
                 m01 = isp / n_layer
 
             else:
-
                 m01 = 0.0j
 
             m10 = isp * n_layer
@@ -14019,27 +11807,15 @@ def precompute_matrix_cache_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def prepare_dynamics_data_kernel(
-
     wls_array: np.ndarray,
-
     all_wls: np.ndarray,
-
     nominal_matrix_cache: np.ndarray,
-
     n_H_arr: np.ndarray,
-
     n_L_arr: np.ndarray,
-
     n_Sub_arr: np.ndarray,
-
     i_layer: int,
-
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-
     """
 
     Parallel preparation of data for dynamics calculation.
@@ -14055,17 +11831,14 @@ def prepare_dynamics_data_kernel(
     M_before_stack = np.empty((n, 2, 2), dtype=np.complex128)
 
     for i in prange(n):
-
         wl = wls_array[i]
 
         # 1. Clues
 
         if (i_layer % 2) == 0:
-
             n_layer_array[i] = n_H_arr[i]
 
         else:
-
             n_layer_array[i] = n_L_arr[i]
 
         n_sub_array[i] = n_Sub_arr[i]
@@ -14081,23 +11854,19 @@ def prepare_dynamics_data_kernel(
         M_before_stack[i, 1, 1] = 1.0
 
         if i_layer > 0:
-
             # Fast Nearest Search
 
             idx = np.searchsorted(all_wls, wl)
 
             if idx >= len(all_wls):
-
                 idx = len(all_wls) - 1
 
             elif idx > 0:
-
                 diff_curr = abs(wl - all_wls[idx])
 
                 diff_prev = abs(wl - all_wls[idx - 1])
 
                 if diff_prev < diff_curr:
-
                     idx = idx - 1
 
             # Using complex matrix (Single Precision optimized)
@@ -14122,31 +11891,17 @@ def prepare_dynamics_data_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def check_extrema_proximity_batch(
-
     wls: np.ndarray,
-
     n_currents: np.ndarray,
-
     n_previouss: np.ndarray,
-
     n_Subs: np.ndarray,
-
     thickness_nominal: float,
-
     M_befores: np.ndarray,
-
     exclusion_width: float,
-
     check_start: bool,
-
     wl_changed_arr: np.ndarray,
-
-
 ) -> np.ndarray:
-
     """
 
     Parallel batch version of check_extrema_proximity.
@@ -14164,27 +11919,16 @@ def check_extrema_proximity_batch(
     results = np.empty(n, dtype=np.bool_)
 
     for i in prange(n):
-
         results[i] = check_extrema_proximity(
-
             wls[i],
-
             n_currents[i],
-
             n_previouss[i],
-
             n_Subs[i],
-
             thickness_nominal,
-
             M_befores[i],
-
             exclusion_width,
-
             check_start,
-
             wl_changed_arr[i],
-
         )
 
     return results
@@ -14197,10 +11941,7 @@ def check_extrema_proximity_batch(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
-
     """
 
     Compute TMM dynamics: peak-to-peak range of T(d) over layer growth.
@@ -14230,7 +11971,6 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
     I_VAL = +1j
 
     for wl_idx in prange(n_wls):
-
         wl = wls[wl_idx]
 
         n_layer = n_layers[wl_idx]
@@ -14254,15 +11994,12 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
         T_end = 0.0
 
         for step_idx in range(n_steps):
-
             thickness = thicknesses[step_idx]
 
             if wl < 0.1:
-
                 T_current = 0.0
 
             else:
-
                 phi = (TWO_PI / wl) * n_layer * thickness
 
                 cp, sp = np.cos(phi), np.sin(phi)
@@ -14288,27 +12025,21 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
                 denom = a00 + n_sub * a01 + a10 + n_sub * a11
 
                 if abs(denom) > 1e-9:
-
                     T_current = 4.0 * np.real(n_sub) / (denom.real**2 + denom.imag**2)
 
                 else:
-
                     T_current = 0.0
 
             if step_idx == 0:
-
                 T_start = T_current
 
             if step_idx == n_steps - 1:
-
                 T_end = T_current
 
             if T_current < T_min_val:
-
                 T_min_val = T_current
 
             if T_current > T_max:
-
                 T_max = T_current
 
         dynamics[wl_idx] = T_max - T_min_val
@@ -14329,10 +12060,7 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
-
     """Single wavelength, single run TMM for HL stacks.
 
     CONVENTION: index 0 = layer 1 = substrate side (aligned with compute_TMM_single_point_k0_exact).
@@ -14356,7 +12084,6 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
     M11 = 1.0 + 0j
 
     for j in range(n_layers):
-
         d = thicknesses[j]
 
         n_l = nH if j % 2 == 0 else nL
@@ -14404,7 +12131,6 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
     Mp11 = 1.0 + 0j
 
     for j in range(n_layers):
-
         d = thicknesses[j]
 
         n_l = nH if j % 2 == 0 else nL
@@ -14452,7 +12178,6 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
     denom = 1.0 - R_prime * R_sub
 
     if denom < 1e-12:
-
         denom = 1e-12
 
     T_total = (T_front * T_sub) / denom
@@ -14469,10 +12194,7 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
-
     """
 
     Parallel loop over 'num_runs', where each run is a full TMM spectral calculation.
@@ -14490,23 +12212,15 @@ def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
     T_batch = np.empty((n_runs, n_wls), dtype=np.float64)
 
     for r in prange(n_runs):
-
         thicknesses = thicknesses_batch[r]
 
         for wl_idx in range(n_wls):
-
             r_val, t_val = _calculate_RT_HL_single_point(
-
                 wls[wl_idx],
-
                 nH_arr[wl_idx],
-
                 nL_arr[wl_idx],
-
                 nSub_arr[wl_idx],
-
                 thicknesses,
-
             )
 
             R_batch[r, wl_idx] = r_val
@@ -14517,38 +12231,21 @@ def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def rank_nucleation_candidates_kernel(
-
     candidates: np.ndarray,
-
     p_thick_nominal: np.ndarray,
-
     nH_vals: np.ndarray,  # (n_cand,) complex
-
     nL_vals: np.ndarray,  # (n_cand,) complex
-
     nSub_vals: np.ndarray,  # (n_cand,) complex
-
     noise_pct: float,
-
     offset_val: float,
-
     factor_val: float,
-
     min_size: int,
-
     mc_runs: int,
-
     use_gaussian: bool = True,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     seed_base: int = 0,
-
-
 ):
-
     """
 
     Parallel kernel to rank candidate wavelengths for nucleation search.
@@ -14570,7 +12267,6 @@ def rank_nucleation_candidates_kernel(
     scores = np.zeros(n_cand, dtype=np.float64)
 
     for i in prange(n_cand):
-
         wl = candidates[i]
 
         nH = nH_vals[i]
@@ -14582,7 +12278,6 @@ def rank_nucleation_candidates_kernel(
         cumulative_sq_error = 0.0
 
         for run_idx in range(mc_runs):
-
             # Configurable noise distribution (STRAT uses gaussian-only).
 
             noise_vec = np.zeros(min_size, dtype=np.float64)
@@ -14599,31 +12294,18 @@ def rank_nucleation_candidates_kernel(
             current_stack = np.zeros(min_size, dtype=np.float64)
 
             for j in range(min_size):
-
                 th, _ = simulate_growth_kernel(
-
                     p_thick_nominal,
-
                     j,
-
                     current_stack[:j],
-
                     wl,
-
                     nH,
-
                     nL,
-
                     nSub,
-
                     offset_val,
-
                     noise_vec[j],
-
                     factor_val,
-
                     non_monotonic_mode,
-
                 )
 
                 current_stack[j] = th
@@ -14636,9 +12318,7 @@ def rank_nucleation_candidates_kernel(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-def _seeded_noise_sample(
-    seed_base: int, group_idx: int, run_idx: int, elem_idx: int, gaussian: bool
-) -> np.float64:
+def _seeded_noise_sample(seed_base: int, group_idx: int, run_idx: int, elem_idx: int, gaussian: bool) -> np.float64:
     s = (
         np.uint64(seed_base)
         + np.uint64(0x9E3779B97F4A7C15) * np.uint64(group_idx + 1)
@@ -14671,44 +12351,24 @@ def _seeded_noise_sample(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def find_nucleation_adaptive_kernel(
-
     valid_candidates: np.ndarray,
-
     p_thick_nominal: np.ndarray,
-
     nH_arr: np.ndarray,
-
     nL_arr: np.ndarray,
-
     nSub_arr: np.ndarray,
-
     noise_pct: float,
-
     offset_val: float,
-
     factor_val: float,
-
     min_size: int,
-
     max_size: int,
-
     mc_runs: int,
-
     degradation_threshold: float,
-
     max_rmse_per_layer: float,
-
     use_gaussian: bool = True,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     seed_base: int = 0,
-
-
 ):
-
     """
 
     Parallel kernel for adaptive nucleation Search.
@@ -14730,7 +12390,6 @@ def find_nucleation_adaptive_kernel(
     results_rmse = np.zeros(n_cand, dtype=np.float64)
 
     for i_cand in prange(n_cand):
-
         nH = nH_arr[i_cand]
 
         nL = nL_arr[i_cand]
@@ -14748,11 +12407,9 @@ def find_nucleation_adaptive_kernel(
         rmse_floor = 0.05
 
         for size in range(min_size, max_size + 1):
-
             cumulative_sq_error = 0.0
 
             for run_idx in range(mc_runs):
-
                 # Configurable noise distribution (STRAT uses gaussian-only).
 
                 noise_vec = np.zeros(size, dtype=np.float64)
@@ -14769,31 +12426,18 @@ def find_nucleation_adaptive_kernel(
                 current_stack = np.zeros(size, dtype=np.float64)
 
                 for i in range(size):
-
                     th, _ = simulate_growth_kernel(
-
                         p_thick_nominal,
-
                         i,
-
                         current_stack[:i],
-
                         wl,
-
                         nH,
-
                         nL,
-
                         nSub,
-
                         offset_val,
-
                         noise_vec[i],
-
                         factor_val,
-
                         non_monotonic_mode,
-
                     )
 
                     current_stack[i] = th
@@ -14803,15 +12447,12 @@ def find_nucleation_adaptive_kernel(
             rmse_total = np.sqrt(cumulative_sq_error / (mc_runs * size))
 
             if rmse_total > max_rmse_per_layer:
-
                 break
 
             if size > min_size:
-
                 ratio = rmse_total / max(prev_rmse_metric, rmse_floor)
 
                 if ratio > degradation_threshold:
-
                     break
 
             last_valid_size = size
@@ -14828,35 +12469,19 @@ def find_nucleation_adaptive_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def update_run_states_kernel(
-
     p_thick_nom_arr: np.ndarray,
-
     i_layer: int,
-
     prev_stacks: np.ndarray,  # (num_runs, i_layer)
-
     best_wl: float,
-
     nH,  # float or complex (Numba multi-dispatch)
-
     nL,  # float or complex
-
     nSub,  # float or complex
-
     offset_val: float,
-
     noise_values: np.ndarray,  # (num_runs,)
-
     factor_val: float,
-
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
-
-
 ):
-
     """Parallel update of simulation states for next layer."""
 
     num_runs = prev_stacks.shape[0]
@@ -14864,31 +12489,18 @@ def update_run_states_kernel(
     updates = np.empty(num_runs, dtype=np.float64)
 
     for r in prange(num_runs):
-
         updates[r], _ = simulate_growth_kernel(
-
             p_thick_nom_arr,
-
             i_layer,
-
             prev_stacks[r],
-
             best_wl,
-
             nH,
-
             nL,
-
             nSub,
-
             offset_val,
-
             noise_values[r],
-
             factor_val,
-
             non_monotonic_mode,
-
         )
 
     return updates
@@ -14928,15 +12540,7 @@ K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
-def validate_backside_real_clues(
-
-    n_H_imag: float, n_L_imag: float, n_Sub_imag: float
-
-
-) -> tuple[bool, bool, bool]:
-
+def validate_backside_real_clues(n_H_imag: float, n_L_imag: float, n_Sub_imag: float) -> tuple[bool, bool, bool]:
     """Validates that refractive clues are real enough for incoherent
 
     backside correction to be physically valid.
@@ -14962,8 +12566,6 @@ def validate_backside_real_clues(
     return H_ok, L_ok, Sub_ok
 
 
-
-
 # --- LOCKED --- Validated by test_tmm_inline.py (test 3) ───
 
 
@@ -14971,27 +12573,15 @@ def validate_backside_real_clues(
 
 
 @njit(cache=True, fastmath=True, nogil=True)
-
-
 def calculate_detailed_growth(
-
     num_layers,
-
     p_thick_nominal,
-
     layer_wavelengths,
-
     n_H_arr,
-
     n_L_arr,
-
     n_Sub_arr,
-
     steps_per_layer_arr,
-
-
 ):
-
     """
 
     Detailed growth simulation with exact physics.
@@ -15011,7 +12601,6 @@ def calculate_detailed_growth(
     """
 
     if num_layers == 0:
-
         return np.zeros(1), np.zeros(1), np.zeros(1)
 
     total_steps = np.sum(steps_per_layer_arr)
@@ -15055,13 +12644,11 @@ def calculate_detailed_growth(
     prev_wl = -1.0
 
     for i_layer in range(num_layers):
-
         target_th = p_thick_nominal[i_layer]
 
         current_wl = layer_wavelengths[i_layer]
 
         if current_wl < 0.1:
-
             current_wl = 1500.0
 
         n_l_target = n_H_arr[i_layer] if (i_layer % 2) == 0 else n_L_arr[i_layer]
@@ -15079,7 +12666,6 @@ def calculate_detailed_growth(
         # Sync before starting layer (wavelength change -> rebuild both matrices)
 
         if i_layer > 0 and abs(current_wl - prev_wl) > 1e-3:
-
             F00 = 1.0 + 0j
 
             F01 = 0.0 + 0j
@@ -15099,7 +12685,6 @@ def calculate_detailed_growth(
             k0 = TWO_PI / current_wl
 
             for j in range(i_layer):
-
                 dj = p_thick_nominal[j]
 
                 # [FIX 2026] Use n at CURRENT monitoring wl, not layer j's block wl
@@ -15155,7 +12740,6 @@ def calculate_detailed_growth(
         denom_r = n_s * R00 + n_s * R01 + R10 + R11  # Sub->Air: n_sub*(M00+M01)+(M10+M11)
 
         if abs(denom_f) > 1e-12 and abs(denom_r) > 1e-12:
-
             Tf = (4.0 * nsr) / (denom_f.real**2 + denom_f.imag**2)
 
             num_r = n_s * R00 + n_s * R01 - R10 - R11
@@ -15165,7 +12749,6 @@ def calculate_detailed_growth(
             T_val = (Tf * T_ext) / (1.0 - Rf * R_ext)
 
         else:
-
             T_val = 0.0
 
         x_points[current_idx] = cumulative_thick
@@ -15179,7 +12762,6 @@ def calculate_detailed_growth(
         step_sz = target_th / steps
 
         for s in range(1, steps + 1):
-
             d_partial = step_sz * s
 
             phi = k0_curr * n_l_target * d_partial
@@ -15219,7 +12801,6 @@ def calculate_detailed_growth(
             denom_r = n_s * rt00 + n_s * rt01 + rt10 + rt11
 
             if abs(denom_f) > 1e-12 and abs(denom_r) > 1e-12:
-
                 Tf = (4.0 * nsr) / (denom_f.real**2 + denom_f.imag**2)
 
                 num_r = n_s * rt00 + n_s * rt01 - rt10 - rt11
@@ -15229,7 +12810,6 @@ def calculate_detailed_growth(
                 val = (Tf * T_ext) / (1.0 - Rf * R_ext)
 
             else:
-
                 val = 0.0
 
             x_points[current_idx] = cumulative_thick + d_partial
@@ -15302,19 +12882,16 @@ def calculate_detailed_growth(
 
 
 def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
-
     """Calculate physical thickness (Scalar or List)"""
 
     # 1. Scalar Mode (n4, l0, qw)
 
     if isinstance(n4_or_stack, (float, int)):
-
         n4 = float(n4_or_stack)
 
         qw = float(qw_or_mats)
 
         if abs(n4) < 1e-9:
-
             return 0.0
 
         return (qw * l0) / (4.0 * n4)
@@ -15322,7 +12899,6 @@ def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
     # 2. Stack Mode (stack_list, l0, mats_dict)
 
     elif isinstance(n4_or_stack, list):
-
         stack = n4_or_stack
 
         mats = qw_or_mats
@@ -15330,7 +12906,6 @@ def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
         ep = []
 
         for lay in stack:
-
             # Duck-type access to Layer object
 
             mat_key = getattr(lay, "mat", None)
@@ -15342,23 +12917,18 @@ def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
             n_val = 1.5
 
             if mat_key and hasattr(mats, "get"):
-
                 m_obj = mats.get(mat_key)
 
                 if hasattr(m_obj, "n4"):
-
                     n_val = m_obj.n4
 
                 elif isinstance(m_obj, dict):
-
                     n_val = m_obj.get("n4", 1.5)
 
             if abs(n_val) < 1e-9:
-
                 d = 0.0
 
             else:
-
                 d = (qw_val * l0) / (4.0 * n_val)
 
             ep.append(d)
@@ -15369,18 +12939,15 @@ def init_thickness(n4_or_stack, l0: float, qw_or_mats) -> any:
 
 
 def calc_qwot(n4: float, l0: float, d: float) -> float:
-
     """Calculate QWOT from physical thickness"""
 
     if abs(l0) < 1e-9:
-
         return 0.0
 
     return (4.0 * n4 * d) / l0
 
 
 def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Target]) -> tuple[float, float]:
-
     """Calculate RMSE against targets (spectral quadrature Delta ln lambda)."""
 
     from certus_index_utils import spectral_rmse_weights
@@ -15392,15 +12959,12 @@ def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Target]) -> tuple[f
     spec_w = spectral_rmse_weights(np.asarray(wls, dtype=np.float64))
 
     for t in targets:
-
         if not t.valid():
-
             continue
 
         mask = (wls >= t.lmin) & (wls <= t.lmax)
 
         if not np.any(mask):
-
             continue
 
         segment_T = Ts[mask]
@@ -15416,7 +12980,6 @@ def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Target]) -> tuple[f
         total_weights += np.sum(sw) * t.w
 
     if total_weights < 1e-12:
-
         return 0.0, 0.0
 
     mse = total_sse / total_weights
@@ -15434,17 +12997,9 @@ def calc_rmse(Ts: np.ndarray, wls: np.ndarray, targets: list[Target]) -> tuple[f
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_phase2_derivatives_kernel(
-
-    wl_um_array: np.ndarray,
-
-    p: np.ndarray
-
-
+    wl_um_array: np.ndarray, p: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-
     """Computes analytical gradients for Sellmeier and empirical k law w.r.t parameters."""
 
     n_pts = len(wl_um_array)
@@ -15474,14 +13029,13 @@ def _compute_phase2_derivatives_kernel(
     beta = max(min(exponent, 8.0), 1.0)
 
     for i in prange(n_pts):
-
         wl = wl_um_array[i]
 
         wl_sq = wl * wl
 
-        denom1 = wl_sq - L1*L1
+        denom1 = wl_sq - L1 * L1
 
-        denom2 = wl_sq - L2*L2
+        denom2 = wl_sq - L2 * L2
 
         term1 = (B1 * wl_sq) / denom1
 
@@ -15535,13 +13089,13 @@ def _compute_phase2_derivatives_kernel(
 
         k_arr[i] = k_val
 
-        d_e1_dx1 = half_diff * (1.0 - t1*t1) / _scale
+        d_e1_dx1 = half_diff * (1.0 - t1 * t1) / _scale
 
         dk_dp[0, i] = base1 * d_e1_dx1 * wl
 
         dk_dp[1, i] = base1 * d_e1_dx1 * 1.0
 
-        d_e2_dx2 = half_diff * (1.0 - t2*t2) / _scale
+        d_e2_dx2 = half_diff * (1.0 - t2 * t2) / _scale
 
         dk_dp[2, i] = base2 * d_e2_dx2 * wl
 
@@ -15550,29 +13104,26 @@ def _compute_phase2_derivatives_kernel(
         dk_dp[4, i] = np.exp(-arg_beta)
 
         if arg > 0:
-
             sgn = -1.0 if wl > center else 1.0
 
-            if wl == center: sgn = 0.0
+            if wl == center:
+                sgn = 0.0
 
             d_arg_dc = sgn / w_safe
 
-            dk_dp[5, i] = -gauss * beta * (arg**(beta-1.0)) * d_arg_dc
+            dk_dp[5, i] = -gauss * beta * (arg ** (beta - 1.0)) * d_arg_dc
 
             d_arg_dw = -arg / w_safe
 
-            dk_dp[6, i] = -gauss * beta * (arg**(beta-1.0)) * d_arg_dw
+            dk_dp[6, i] = -gauss * beta * (arg ** (beta - 1.0)) * d_arg_dw
 
             if arg > 1e-12:
-
                 dk_dp[7, i] = -gauss * arg_beta * np.log(arg)
 
             else:
-
                 dk_dp[7, i] = 0.0
 
         else:
-
             dk_dp[5, i] = 0.0
 
             dk_dp[6, i] = 0.0
@@ -15583,53 +13134,28 @@ def _compute_phase2_derivatives_kernel(
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True)
-
-
 def _compute_ir_global_cost_gradient_kernel(
-
     wls: np.ndarray,
-
     n_arr: np.ndarray,
-
     k_arr: np.ndarray,
-
     d: float,
-
     n_sub: np.ndarray,
-
     target_T: np.ndarray,
-
     target_R: np.ndarray,
-
     weights: np.ndarray,
-
     use_T: bool,
-
     use_R: bool,
-
     dn_dp: np.ndarray,
-
     dk_dp: np.ndarray,
-
     T_substrate: np.ndarray,
-
     use_normalized: bool,
-
     weight_T: float,
-
     weight_R: float,
-
     is_frosted_glass: bool,
-
     has_absorbing_substrate: bool,
-
     k_sub_full: np.ndarray,
-
     D_sub_nm: float,
-
-
 ) -> np.ndarray:
-
     """Gradient of IR global cost w.r.t. (Sellmeier 5p + k params).
 
     Uses dn_dp/dk_dp from caller (Sellmeier analytic, k in FD). Sensitivities dT/dn, dR/dk:
@@ -15651,29 +13177,29 @@ def _compute_ir_global_cost_gradient_kernel(
     count_R = 0
 
     for i in range(n_pts):
-
         if weights[i] > 1e-12:
+            if use_T:
+                count_T += 1
 
-            if use_T: count_T += 1
+            if use_R:
+                count_R += 1
 
-            if use_R: count_R += 1
+    if count_T > 0:
+        n_valid_T = count_T
 
-    if count_T > 0: n_valid_T = count_T
-
-    if count_R > 0: n_valid_R = count_R
+    if count_R > 0:
+        n_valid_R = count_R
 
     grad_per_wl = np.zeros((n_pts, 5 + dk_dp.shape[0]), dtype=np.float64)
 
     DELTA = 1e-7
 
     for i in prange(n_pts):
-
         wl = wls[i]
 
         w = weights[i]
 
         if w < 1e-12:
-
             continue
 
         nr = n_arr[i]
@@ -15685,7 +13211,6 @@ def _compute_ir_global_cost_gradient_kernel(
         dTdn, dTdk, dRdn, dRdk = 0.0, 0.0, 0.0, 0.0
 
         if is_frosted_glass:
-
             ns_cmplx = ns + 0j
 
             val_R = calculate_reflection_infinite_substrate_single(wl, nr, ni, d, ns_cmplx)
@@ -15701,17 +13226,14 @@ def _compute_ir_global_cost_gradient_kernel(
             vR_up_k = calculate_reflection_infinite_substrate_single(wl, nr, ni + DELTA, d, ns_cmplx)
 
             if ni < DELTA:
-
                 dRdk = (vR_up_k - val_R) / DELTA
 
             else:
-
                 vR_dn_k = calculate_reflection_infinite_substrate_single(wl, nr, ni - DELTA, d, ns_cmplx)
 
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
 
         elif has_absorbing_substrate:
-
             ks = k_sub_full[i]
 
             val_R, val_T = _calculate_RT_absorbing_sub_single(wl, nr, ni, d, ns, ks, D_sub_nm)
@@ -15727,13 +13249,11 @@ def _compute_ir_global_cost_gradient_kernel(
             vR_up_k, vT_up_k = _calculate_RT_absorbing_sub_single(wl, nr, ni + DELTA, d, ns, ks, D_sub_nm)
 
             if ni < DELTA:
-
                 dRdk = (vR_up_k - val_R) / DELTA
 
                 dTdk = (vT_up_k - val_T) / DELTA
 
             else:
-
                 vR_dn_k, vT_dn_k = _calculate_RT_absorbing_sub_single(wl, nr, ni - DELTA, d, ns, ks, D_sub_nm)
 
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
@@ -15741,12 +13261,13 @@ def _compute_ir_global_cost_gradient_kernel(
                 dTdk = (vT_up_k - vT_dn_k) / (2.0 * DELTA)
 
         else:
-
             ns_cmplx = ns + 0j
 
-            val_R, val_T = calculate_RT_single_layer_single(wl, nr, ni, d, ns_cmplx)
+            val_R, val_T = calculate_transmission_single(wl, nr, ni, d, ns_cmplx)
 
-            dTdn_corr, dTdk_corr, dRdn_corr, dRdk_corr, _, _ = _compute_single_layer_sensitivity_kernel(wl, nr, ni, d, ns)
+            dTdn_corr, dTdk_corr, dRdn_corr, dRdk_corr, _, _ = _compute_single_layer_sensitivity_kernel(
+                wl, nr, ni, d, ns
+            )
 
             dTdn = dTdn_corr
 
@@ -15761,15 +13282,12 @@ def _compute_ir_global_cost_gradient_kernel(
         fac_R = 0.0
 
         if use_T:
-
             if use_normalized:
-
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
 
                 diff_T = (val_T * scale_T) - target_T[i]
 
             else:
-
                 scale_T = 1.0
 
                 diff_T = val_T - target_T[i]
@@ -15777,21 +13295,16 @@ def _compute_ir_global_cost_gradient_kernel(
             fac_T = (2.0 * w * diff_T * weight_T / n_valid_T) * scale_T
 
         if use_R:
-
             if use_normalized:
-
                 if T_substrate[i] >= 0.05:
-
                     scale_R = 1.0 / T_substrate[i]
 
                 else:
-
                     scale_R = 0.0
 
                 diff_R = (val_R * scale_R) - target_R[i]
 
             else:
-
                 scale_R = 1.0
 
                 diff_R = val_R - target_R[i]
@@ -15799,28 +13312,30 @@ def _compute_ir_global_cost_gradient_kernel(
             fac_R = (2.0 * w * diff_R * weight_R / n_valid_R) * scale_R
 
         for p in range(5):
-
             dnp = dn_dp[p, i]
 
             term = 0.0
 
-            if use_T: term += fac_T * dTdn * dnp
+            if use_T:
+                term += fac_T * dTdn * dnp
 
-            if use_R: term += fac_R * dRdn * dnp
+            if use_R:
+                term += fac_R * dRdn * dnp
 
             grad_per_wl[i, p] = term
 
         n_k = dk_dp.shape[0]
 
         for p in range(n_k):
-
             dkp = dk_dp[p, i]
 
             term = 0.0
 
-            if use_T: term += fac_T * dTdk * dkp
+            if use_T:
+                term += fac_T * dTdk * dkp
 
-            if use_R: term += fac_R * dRdk * dkp
+            if use_R:
+                term += fac_R * dRdk * dkp
 
             grad_per_wl[i, p + 5] = term
 
@@ -15829,11 +13344,9 @@ def _compute_ir_global_cost_gradient_kernel(
     grad = np.zeros(n_total, dtype=np.float64)
 
     for p in range(n_total):
-
         s = 0.0
 
         for i in range(n_pts):
-
             s += grad_per_wl[i, p]
 
         grad[p] = s
@@ -15842,7 +13355,6 @@ def _compute_ir_global_cost_gradient_kernel(
 
 
 def warmup_physics(silent: bool = True) -> None:
-
     """
 
     Pre-compiles critical Numba kernels to eliminate first-call JIT latency.
@@ -15858,7 +13370,6 @@ def warmup_physics(silent: bool = True) -> None:
     import warnings
 
     with warnings.catch_warnings():
-
         warnings.simplefilter("ignore")
 
         # Minimal test arrays (10 points, single layer)
@@ -15874,35 +13385,30 @@ def warmup_physics(silent: bool = True) -> None:
         # Warm TMM core
 
         try:
-
             calculate_RT_vectorized_real(thicknesses, n_complex, n_sub, wls)
 
         except (RuntimeError, ValueError):
-
             pass
 
         # Warm single-layer T/R and fused R+T (INDEX hot path)
 
         try:
-
             n_real = np.full(10, 1.5, dtype=np.float64)
 
             k_real = np.full(10, 0.001, dtype=np.float64)
 
             n_sub_real = np.full(10, 1.52, dtype=np.float64)
 
-            calculate_transmission_array(wls, n_real, k_real, 100.0, n_sub_real)
+
 
             calculate_RT_single_layer_backside_array(wls, n_real, k_real, 100.0, n_sub_real)
 
         except (RuntimeError, ValueError):
-
             pass
 
         # Warm TLU epsilon
 
         try:
-
             E_arr = HC_EV_NM / wls
 
             epsilon2_TLU_array(E_arr, 3.5, 200.0, 4.5, 1.5, 0.05)
@@ -15910,23 +13416,19 @@ def warmup_physics(silent: bool = True) -> None:
             epsilon1_TL_analytic(E_arr, 3.5, 200.0, 4.5, 1.5, 2.0)
 
         except (RuntimeError, ValueError):
-
             pass
 
         # Warm Cauchy
 
         try:
-
             get_nk_cauchy(2.35, 2.29, wls)
 
         except (RuntimeError, ValueError):
-
             pass
 
         # Warm MSE
 
         try:
-
             target = np.full(10, 0.9, dtype=np.float64)
 
             weights = np.ones(10, dtype=np.float64)
@@ -15934,13 +13436,11 @@ def warmup_physics(silent: bool = True) -> None:
             compute_mse_vectorized(n_real, target, weights)
 
         except (RuntimeError, ValueError):
-
             pass
 
         # Warm colorimetry JIT kernels
 
         try:
-
             _lab_f(0.5)
 
             _lab_f_inv(0.5)
@@ -15960,9 +13460,7 @@ def warmup_physics(silent: bool = True) -> None:
             delta_e_2000(lab1, lab2)
 
         except (RuntimeError, ValueError):
-
             pass
 
     if not silent:
-
         logging.getLogger("CERTUS").debug("Physics JIT warmup complete")

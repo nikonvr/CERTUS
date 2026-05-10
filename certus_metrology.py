@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
+import locale
 import platform
-from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -18,8 +18,11 @@ from typing import Any
 
 try:
     from certus_core import __version__ as CERTUS_VERSION
+    from certus_core import get_materials_db_hash
 except ImportError:
     CERTUS_VERSION = "unknown"
+    def get_materials_db_hash():
+        return ""
 
 
 class ValidationStatus(str, Enum):
@@ -33,9 +36,10 @@ class ValidationStatus(str, Enum):
     ERROR_INVALID_INPUT = "ERROR_INVALID_INPUT"
 
 
-@dataclass(frozen=True)
-class InputFingerprint:
+class InputFingerprint(BaseModel):
     """Stable fingerprint for one input file."""
+
+    model_config = ConfigDict(frozen=True)
 
     path: str
     sha256: str
@@ -55,9 +59,10 @@ class InputFingerprint:
         )
 
 
-@dataclass(frozen=True)
-class SoftwareEnv:
+class SoftwareEnv(BaseModel):
     """Software/runtime environment captured for reproducibility."""
+
+    model_config = ConfigDict(frozen=True)
 
     python: str
     numpy: str = "unknown"
@@ -84,9 +89,10 @@ class SoftwareEnv:
         )
 
 
-@dataclass(frozen=True)
-class RunContext:
+class RunContext(BaseModel):
     """Common context for one scientific run."""
+
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     run_id: str
     started_at_utc: str
@@ -94,9 +100,17 @@ class RunContext:
     app_version: str
     seed: int | None
     software_env: SoftwareEnv
-    input_fingerprints: list[InputFingerprint] = field(default_factory=list)
+    numba_version: str = "unknown"
+    numpy_version: str = "unknown"
+    threading_layer: str = "unknown"
+    env_locale: str = ""
+    cpu_brand: str = ""
+    os_release: str = ""
+    input_fingerprints: list[InputFingerprint] = Field(default_factory=list)
     params_hash: str = ""
-    warnings: list[str] = field(default_factory=list)
+    materials_db_hash: str = ""
+    db_version: str = ""
+    warnings: list[str] = Field(default_factory=list)
     status: ValidationStatus = ValidationStatus.OK
 
     @staticmethod
@@ -127,21 +141,30 @@ class RunContext:
             app_version=app_version,
             seed=seed,
             software_env=SoftwareEnv.detect(),
+            numba_version=_get_version("numba"),
+            numpy_version=_get_version("numpy"),
+            threading_layer=_detect_threading_layer(),
+            env_locale=_detect_locale(),
+            cpu_brand=_detect_cpu_brand(),
+            os_release=platform.release(),
             input_fingerprints=fps,
             params_hash=compute_params_hash(params) if params is not None else "",
+            materials_db_hash=(_db_hash := str(get_materials_db_hash() or "")),
+            db_version=_db_hash[:12],
             warnings=list(warnings or []),
             status=status,
         )
 
 
-@dataclass(frozen=True)
-class RunManifest:
+class RunManifest(BaseModel):
     """Serializable export manifest for one run."""
+
+    model_config = ConfigDict(frozen=True)
 
     run_context: RunContext
 
     def to_dict(self) -> dict[str, Any]:
-        data = asdict(self.run_context)
+        data = self.run_context.model_dump(mode="json")
         data["status"] = self.run_context.status.value
         return data
 
@@ -195,3 +218,32 @@ def _detect_pyqt_version() -> str:
         return str(QT_VERSION_STR)
     except ImportError:
         return "unknown"
+
+
+def _detect_threading_layer() -> str:
+    try:
+        import numba
+
+        return str(numba.threading_layer())
+    except (RuntimeError, ValueError, AttributeError):
+        return "unknown"
+
+
+def _detect_locale() -> str:
+    try:
+        loc = locale.getlocale()
+        lang = str((loc[0] if loc else "") or "")
+        enc = str(locale.getencoding() or "")
+        return f"{lang}.{enc}" if enc else lang
+    except (ValueError, OSError):
+        return ""
+
+
+def _detect_cpu_brand() -> str:
+    try:
+        brand = platform.processor()
+        if brand:
+            return str(brand)
+        return str(platform.machine())
+    except (OSError, ValueError):
+        return ""

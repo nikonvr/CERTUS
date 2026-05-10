@@ -13,8 +13,6 @@ CERTUS Substrate Index - Substrate refractive index determination only
 """
 
 
-import os
-
 import functools
 from pathlib import Path
 
@@ -47,40 +45,21 @@ from PyQt6.QtGui import QFont, QColor, QBrush
 
 
 from PyQt6.QtWidgets import (
-
     QApplication,
-
     QMainWindow,
-
     QVBoxLayout,
-
     QHBoxLayout,
-
     QWidget,
-
     QLabel,
-
     QFrame,
-
     QMessageBox,
-
     QCheckBox,
-
     QDialog,
-
-    QTableWidget,
-
     QTableWidgetItem,
-
     QHeaderView,
-
     QDoubleSpinBox,
-
     QSpinBox,
-
     QTextEdit,
-
-
 )
 
 
@@ -96,31 +75,18 @@ from certus_spectral_preproc import dynamic_savgol_blend
 
 
 from certus_ui import (
-
     CertusTheme,
-
     CertusLogPanel,
-
     EnhancedProgressWidget,
-
     attach_excel_clipboard_context_menu,
-
     CertusScientificPlot,
-
     wrap_scientific_plot_with_toolbar,
-
     init_certus_app,
-
     create_styled_button,
-
     create_styled_label,
-
     set_certus_window_icon,
-
     create_header_logo_widget,
-
     ExcelTableWidget,
-
 )
 
 
@@ -131,15 +97,7 @@ def _substrate_index_norm_header(raw) -> str:
 
     s = str(raw).strip().lower()
 
-    s = "".join(
-
-        c
-
-        for c in unicodedata.normalize("NFD", s)
-
-        if unicodedata.category(c) != "Mn"
-
-    )
+    s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
 
     s = s.replace("œ", "oe").replace("æ", "ae")
 
@@ -153,63 +111,38 @@ def _substrate_index_norm_header(raw) -> str:
 
 
 def _substrate_index_expand_substrate_abbrevs(s: str) -> str:
-
     """Replaces common FR/EN abbreviations with canonical forms for the bare test."""
 
     # Order: long / specific forms first
 
     repl: tuple[tuple[str, str], ...] = (
-
         (r"\bsubstrate\b", "substrate"),
-
         (r"\bsubstrat\b", "substrate"),
-
         (r"\bsubstn\b", "substrate nu"),  # substn, subst-n
-
         (r"\bsbstn\b", "substrate nu"),
-
         (r"\bsubstnu\b", "substrate nu"),
-
         (r"\bsbstnu\b", "substrate nu"),
-
-        (r"\bsnu\b", "substrate nu"),  # acronyme  substrate nu 
-
+        (r"\bsnu\b", "substrate nu"),  # acronyme  substrate nu
         (r"\bsubst\b", "substrate"),
-
         (r"\bsbst\b", "substrate"),
-
         (r"\bsubstr\b", "substrate"),
-
         (r"\bsubs\b", "substrate"),  # subs = substrate (lab usage)
-
         (r"\bsub\b", "sub"),  # keep short; combines with nu elsewhere
-
         (r"\buncoated\b", "uncoated"),
-
         (r"\buncoat\b", "uncoated"),
-
         (r"\bnocoat\b", "no coating"),
-
         (r"\bno\s*coat\b", "no coating"),
-
         (r"\bwo\s*coat\b", "no coating"),
-
         (r"\bw/o\s*coat\b", "no coating"),
-
         (r"\btemoin\b", "witness"),
-
         (r"\bwitness\b", "witness"),
-
         (r"\bblk\b", "blank"),
-
         (r"\bref\b", "ref"),
-
     )
 
     out = s
 
     for pat, to in repl:
-
         out = re.sub(pat, to, out, flags=re.IGNORECASE)
 
     out = re.sub(r"\s+", " ", out).strip()
@@ -218,33 +151,22 @@ def _substrate_index_expand_substrate_abbrevs(s: str) -> str:
 
 
 def _substrate_index_unglue_substrate_nu(s: str) -> str:
-
     """Unglues concatenated variants like substratnu, subnu, baresub, etc."""
 
     out = s
 
     out = re.sub(
-
         r"(substrate|sub|sbst|subst|substr|bare|blank|uncoated)(nu|nus|nue)\b",
-
         r"\1 \2",
-
         out,
-
         flags=re.IGNORECASE,
-
     )
 
     out = re.sub(
-
         r"\b(bare|blank|ref|raw|empty|void)(sub|substrate|substrate)\b",
-
         r"\1 \2",
-
         out,
-
         flags=re.IGNORECASE,
-
     )
 
     out = re.sub(r"\s+", " ", out).strip()
@@ -256,28 +178,16 @@ def _substrate_index_unglue_substrate_nu(s: str) -> str:
 
 
 _RE_SUBSTRATE_INDEX_EXCLUDE = re.compile(
-
     r"\b("
-
     r"filt|flt|filter|"
-
     r"multilayer|ml|hl|hlstack|stack|stk|layering|pile|"
-
     r"tgt|target|obj|objective|"
-
     r"design|dsg|qwot|qw\b|"
-
     r"theor|theoretical|theo\b|optimis|opti\b|reconst|simu|simulation|"
-
     r"sample|spc\b|specimen|lot\b|batch|"
-
     r"final|mes\s*filt"
-
     r")\b",
-
     re.IGNORECASE,
-
-
 )
 
 
@@ -285,77 +195,44 @@ _RE_SUBSTRATE_INDEX_EXCLUDE = re.compile(
 
 
 _RE_SUBSTRATE_INDEX_INCLUDE = re.compile(
-
     r"("
-
     # Usual spectroscopic tags for bare substrate
-
     r"\brnu(?:\b|[\s\-_]*\d+[fsp]?|\d+[fsp]?)|"
-
     r"\btnu(?:\b|[\s\-_]*\d+[fsp]?|\d+[fsp]?)|"
-
     # substrate / sub ... nu
-
     r"substrate\s+nu\b|nu\s+substrate\b|nu\s+sub\b|"
-
     r"substrate\s+bare|sub\s+bare|sub\s+only|substrate\s+only|only\s+substrate|only\s+substrate|only\s+sub\b|"
-
     r"\bsub\s+nu\b|\bsub\s+nus\b|"
-
     # Concatenated still present or already unfolded
-
     r"substratnu\b|subnu\b|sbstnu\b|substnu\b|"
-
     # English
-
     r"\bbare\s+sub(strate)?\b|\bbaresub\b|"
-
     r"\b(blank|empty|void)\s+sub(strate)?\b|\bsub(strate)?\s+blank\b|"
-
     r"\buncoated\b|\bno\s*coating\b|"
-
     r"\bpolished\s+substrate\b|"
-
     # Without deposit / layer
-
     r"without\s*(layer|deposit|coat|coating|stack|layering)|"
-
     r"without[\s\-_/]*dep\b|"
-
     # Witness / reference substrate
-
     r"\b(ref|raw|empty|void)\s+sub(strate|strat)?\b|\bsub(strate)?\s+ref\b|"
-
     r"\b(witness|blank|empty|unstacked)\b|"
-
     # Explicit bare materials in some exports (including French synonyms for parsing compatibility)
-
     r"\b(sapphire|saphir)\b|"
-
     # Acronyms / short tags
-
     r"\bsnu\b|\bsbn\b|\bbsub\b|"
-
     # bare isolated (not in tnu/rnu: non-alnum delimited)
-
     r"(?:^|[^a-z0-9])nu(?:s|es|e)?(?:[^a-z0-9]|$)"
-
     r")",
-
     re.IGNORECASE,
-
-
 )
 
 
 def _is_bare_substrate_spectrum_column(name) -> bool:
-
     """True if header indicates a bare substrate measurement (not a filter / stack)."""
 
     s0 = _substrate_index_norm_header(name)
 
     if not s0:
-
         return False
 
     s1 = _substrate_index_unglue_substrate_nu(s0)
@@ -367,18 +244,15 @@ def _is_bare_substrate_spectrum_column(name) -> bool:
     # Stack / target priority
 
     if _RE_SUBSTRATE_INDEX_EXCLUDE.search(s3):
-
         return False
 
     return bool(_RE_SUBSTRATE_INDEX_INCLUDE.search(s3))
 
 
 def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], list[str]]:
-
     """Keeps lambda + spectral columns marked bare substrate; returns (df, kept, ignoreds)."""
 
     if df is None or df.empty or len(df.columns) < 2:
-
         return df, [], []
 
     col_names = list(df.columns)
@@ -388,17 +262,14 @@ def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataF
     # Lab exports: 1st column may be "Unnamed", with lambda in another column.
 
     for c in col_names:
-
         s = _substrate_index_norm_header(c)
 
         if not re.search(r"\b(wavelength|lambda|longueur\s*d\s*onde|wl)\b", s):
-
             continue
 
         vals = pd.to_numeric(df[c], errors="coerce")
 
         if int(np.count_nonzero(np.isfinite(vals.values))) >= 3:
-
             wl = c
 
             break
@@ -410,52 +281,38 @@ def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataF
     dropped: list[str] = []
 
     for col in col_names:
-
         if col == wl:
-
             continue
 
         cstr = str(col)
 
         if _is_bare_substrate_spectrum_column(col):
-
             kept_cols.append(col)
 
             kept_spec.append(cstr)
 
         else:
-
             dropped.append(cstr)
 
     return df[kept_cols].copy(), kept_spec, dropped
 
 
 def _classify_substrate_index_columns(columns) -> dict[str, list]:
-
     """Classifies measurement columns by n(lambda) calculation type."""
 
     groups = {
-
         "t_2f": [],
-
         "r_2f": [],
-
         "r45s_1f": [],
-
         "r45p_1f": [],
-
         "r45s_2f": [],
-
         "r45p_2f": [],
-
     }
 
     for col in columns:
-
         s = _substrate_index_norm_header(col)
 
         if not s:
-
             continue
 
         has_45s = "45s" in s or "45 s" in s
@@ -472,22 +329,14 @@ def _classify_substrate_index_columns(columns) -> dict[str, list]:
 
         starts_t = bool(re.match(r"^\s*t\b", s))
 
-        is_2f = bool(
-
-            re.search(r"\b2\s*f\b|\b2\s*faces?\b|\b2faces?\b", s)
-
-            or "2f" in s
-
-        )
+        is_2f = bool(re.search(r"\b2\s*f\b|\b2\s*faces?\b|\b2faces?\b", s) or "2f" in s)
 
         if has_rnu and has_45s:
-
             groups["r45s_2f" if is_2f else "r45s_1f"].append(col)
 
             continue
 
         if has_rnu and has_45p:
-
             groups["r45p_2f" if is_2f else "r45p_1f"].append(col)
 
             continue
@@ -495,17 +344,14 @@ def _classify_substrate_index_columns(columns) -> dict[str, list]:
         # Other "45" columns are out of scope for this module.
 
         if "45" in s:
-
             continue
 
         if has_tnu and is_2f:
-
             groups["t_2f"].append(col)
 
             continue
 
         if has_rnu and is_2f:
-
             groups["r_2f"].append(col)
 
             continue
@@ -515,15 +361,12 @@ def _classify_substrate_index_columns(columns) -> dict[str, list]:
         # (bare substrate columns without explicit nu/rnu/tnu tag).
 
         if is_sapphire and not (has_45s or has_45p):
-
             if starts_t:
-
                 groups["t_2f"].append(col)
 
                 continue
 
             if starts_r:
-
                 groups["r_2f"].append(col)
 
     return groups
@@ -533,14 +376,9 @@ def _classify_substrate_index_columns(columns) -> dict[str, list]:
 
 
 SUBSTRATE_INDEX_MODELS: tuple[tuple[str, str], ...] = (
-
     ("polynomial", "Polynomial"),
-
     ("sellmeier3poles", "Sellmeier 3-poles"),
-
     ("spline_adaptive", "Spline n (B-spline LSQ)"),
-
-
 )
 
 
@@ -551,36 +389,21 @@ _POLY_COEFF_KEYS: tuple[str, ...] = ("a0", "a1", "a2", "a3", "a4", "a5", "a6")
 
 
 _POLY_CANDIDATE_TERMS: tuple[tuple[str, ...], ...] = (
-
     ("a0", "a1", "a2", "a5"),
-
     ("a0", "a1", "a2", "a3", "a5"),
-
     ("a0", "a1", "a2", "a3", "a4", "a5"),
-
     ("a0", "a1", "a2", "a3", "a5", "a6"),
-
     ("a0", "a1", "a2", "a3", "a4", "a5", "a6"),
-
-
 )
 
 
 def _fit_compact_polynomial_model(
-
     wl_fit_nm: np.ndarray,
-
     n_fit: np.ndarray,
-
     wl_eval_nm: np.ndarray,
-
     *,
-
     rmse_target_compact: float = 1.5e-3,
-
-
 ) -> tuple[list[str], np.ndarray, np.ndarray, float] | None:
-
     """Fit polynomial compact via IRLS and return best candidate on wl_eval_nm."""
 
     wl_fit_nm = np.asarray(wl_fit_nm, dtype=np.float64)
@@ -606,7 +429,6 @@ def _fit_compact_polynomial_model(
         p_loc = np.zeros(len(term_names), dtype=np.float64)
 
         for _ in range(4):
-
             A = phi * w[:, None]
 
             b = n_fit * w
@@ -634,46 +456,38 @@ def _fit_compact_polynomial_model(
     best_rmse = float("inf")
 
     for terms in _POLY_CANDIDATE_TERMS:
-
         p_try, n_try, rmse_try = _fit_terms(terms)
 
         if rmse_try < best_rmse:
-
             best_rmse = rmse_try
 
             best_choice = (list(terms), p_try, n_try, rmse_try)
 
         if rmse_try <= float(rmse_target_compact):
-
             best_choice = (list(terms), p_try, n_try, rmse_try)
 
             break
 
     if best_choice is None:
-
         return None
 
     active_terms, p, n_out, rmse_c = best_choice
 
     if not np.all(np.isfinite(n_out)):
-
         return None
 
     return active_terms, np.asarray(p, dtype=np.float64), np.asarray(n_out, dtype=np.float64), float(rmse_c)
 
 
 def _substrate_fit_engine_log_label(model_kind: str) -> str:
-
     """Short label for fit_sellmeier / get_smoothed_and_fits logs (ASCII, no UI accent)."""
 
     mk = str(model_kind).strip().lower()
 
     if mk == "sellmeier3poles":
-
         return "Sellmeier 3-poles (A free)"
 
     if mk == "spline_adaptive":
-
         return "Spline n (B-spline LSQ)"
 
     return "Polynomial"
@@ -733,7 +547,7 @@ SELLMEIER_N_ACCEPT_LO = 1.05
 SELLMEIER_N_ACCEPT_HI = 6.5
 
 
-SELLMEIER_MIN_L_SEP_UM = 0.01    # m minimal spacing between Li poles (was 0.004)
+SELLMEIER_MIN_L_SEP_UM = 0.01  # m minimal spacing between Li poles (was 0.004)
 
 
 SELLMEIER_L_SEP_SOFT_WEIGHT = 2.0e5  # soft residue weight on minimal Li separation
@@ -749,22 +563,13 @@ SELLMEIER_DEFAULT_LOG_L1L2 = False  # log-reparam disabled  bounds sufficiently 
 
 
 SELLMEIER_2POLES_PARAM_BOUNDS: tuple[tuple[float, float], ...] = (
-
-    (0.0, 4.0),     # A constant term >= 0 ; standard substrates: A < 3
-
-    (0.0, 12.0),    # B1 UV oscillator; positive for transparents
-
+    (0.0, 4.0),  # A constant term >= 0 ; standard substrates: A < 3
+    (0.0, 12.0),  # B1 UV oscillator; positive for transparents
     (1.0e-3, 1.0),  # L1 m UV pole; effective ceiling via _sellmeier_2poles_param_bounds
-
-    (0.0, 12.0),    # B2
-
-    (1.0e-3, 30.0), # L2 m can be UV or short IR
-
-    (0.0, 12.0),    # B3
-
-    (1.0e-3, 30.0), # L3 m typically IR pole
-
-
+    (0.0, 12.0),  # B2
+    (1.0e-3, 30.0),  # L2 m can be UV or short IR
+    (0.0, 12.0),  # B3
+    (1.0e-3, 30.0),  # L3 m typically IR pole
 )
 
 
@@ -777,7 +582,7 @@ SELLMEIER_3TERM_C_FRAC_MAX = 0.995
 # Light multistart: with physical bounds and good seeding, 2 candidates are enough.
 
 
-SELLMEIER_SEED_POINTS = 5        # grid points for polynomial seed (was 9)
+SELLMEIER_SEED_POINTS = 5  # grid points for polynomial seed (was 9)
 
 
 SELLMEIER_MULTISTART_TRIALS = 2  # additional random jitters (was 8)
@@ -802,23 +607,15 @@ MODEL_SELECT_PRIOR_WEIGHT = 0.35
 
 
 _SUBSTRATE_PRIOR_HINTS: tuple[tuple[re.Pattern[str], int], ...] = (
-
     (re.compile(r"\b(sapphire|saphir|al2o3)\b", re.IGNORECASE), 3),
-
     (re.compile(r"\b(n[\s\-_]*bk7|bk7)\b", re.IGNORECASE), 1),
-
     (re.compile(r"\b(sio2|silice|silica|quartz)\b", re.IGNORECASE), 0),
-
     (re.compile(r"\b(d263t|d263)\b", re.IGNORECASE), 2),
-
     (re.compile(r"\b(b270i|b270)\b", re.IGNORECASE), 4),
-
-
 )
 
 
 def _sellmeier_2poles_param_bounds(lam_min_um: float) -> list[tuple[float, float]]:
-
     """Box (A, B1, L1, B2, L2, B3, L3).
 
     L1 remains UV side (below lambda_min) for stability; L2/L3 are free (up to 40 m)
@@ -840,26 +637,17 @@ def _sellmeier_2poles_param_bounds(lam_min_um: float) -> list[tuple[float, float
     l_lo = float(SELLMEIER_2POLES_PARAM_BOUNDS[2][0])
 
     return [
-
         (a_lo, a_hi),
-
         (b_lo, b_hi),
-
         (l_lo, float(l_hi_uv)),
-
         (b_lo, b_hi),
-
         (l_lo, float(l_hi_ir)),
-
         (b_lo, b_hi),
-
         (l_lo, float(l_hi_ir)),
-
     ]
 
 
 def _sellmeier_l_separation_gap_um(p: np.ndarray) -> float:
-
     """Missing part for min(|LiLj|) >= SELLMEIER_MIN_L_SEP_UM (m)."""
 
     pp = np.asarray(p, dtype=np.float64).ravel()
@@ -867,13 +655,10 @@ def _sellmeier_l_separation_gap_um(p: np.ndarray) -> float:
     lvals = []
 
     for i in (2, 4, 6):
-
         if i < pp.size:
-
             lvals.append(float(pp[i]))
 
     if len(lvals) < 2:
-
         return 0.0
 
     larr = np.sort(np.asarray(lvals, dtype=np.float64))
@@ -890,11 +675,9 @@ def _sellmeier_weights_from_nm(wl_nm: np.ndarray, mode: str) -> np.ndarray:
     m = str(mode or "").strip().lower()
 
     if m == "uniform":
-
         return np.ones_like(wl, dtype=np.float64)
 
     if m == "inv_lambda":
-
         return 1.0 / wl
 
     # default robust compromise: less UV domination than 1/lambda
@@ -903,18 +686,11 @@ def _sellmeier_weights_from_nm(wl_nm: np.ndarray, mode: str) -> np.ndarray:
 
 
 def _sellmeier_2poles_jac(
-
     p: np.ndarray,
-
     x_um: np.ndarray,
-
     w: np.ndarray,
-
     scale: float = 1000.0,
-
-
 ) -> np.ndarray:
-
     """Analytical Jacobian of _residuals(p, x_um, n_data, w) with respect to p.
 
     Residue : r_i = (n_pred_i - n_data_i) * w_i * scale
@@ -971,25 +747,24 @@ def _sellmeier_2poles_jac(
 
     J = np.empty((len(x), 7), dtype=np.float64)
 
-    J[:, 0] = c * 1.0                          # r/A
+    J[:, 0] = c * 1.0  # r/A
 
-    J[:, 1] = c * t1                            # r/B1
+    J[:, 1] = c * t1  # r/B1
 
-    J[:, 2] = c * (2.0 * B1 * L1 * lam2 / (d1 * d1))   # r/L1
+    J[:, 2] = c * (2.0 * B1 * L1 * lam2 / (d1 * d1))  # r/L1
 
-    J[:, 3] = c * t2                            # r/B2
+    J[:, 3] = c * t2  # r/B2
 
-    J[:, 4] = c * (2.0 * B2 * L2 * lam2 / (d2 * d2))   # r/L2
+    J[:, 4] = c * (2.0 * B2 * L2 * lam2 / (d2 * d2))  # r/L2
 
-    J[:, 5] = c * t3                            # r/B3
+    J[:, 5] = c * t3  # r/B3
 
-    J[:, 6] = c * (2.0 * B3 * L3 * lam2 / (d3 * d3))   # r/L3
+    J[:, 6] = c * (2.0 * B3 * L3 * lam2 / (d3 * d3))  # r/L3
 
     return J
 
 
 def _sellmeier_3term_standard_eval(coeffs: np.ndarray, wl_um: np.ndarray) -> np.ndarray:
-
     """Sellmeier standard: n2 = 1 + (Bi*lambda2/(lambda2-Ci)), lambda in m."""
 
     p = np.asarray(coeffs, dtype=np.float64).ravel()
@@ -1022,39 +797,26 @@ def _sellmeier_prior_coeffs_for_column(col_name: str | None) -> tuple[float, ...
     s = _substrate_index_norm_header(col_name or "")
 
     for pat, mat_id in _SUBSTRATE_PRIOR_HINTS:
-
         if pat.search(s):
-
             c = SELLMEIER_COEFFS_BY_ID.get(int(mat_id))
 
             if c is not None and len(c) == 6:
-
                 return tuple(float(v) for v in c)
 
     return None
 
 
 def _model_selection_score(
-
     *,
-
     rmse_fit: float,
-
     n_fit: np.ndarray,
-
     wl_nm: np.ndarray,
-
     fit_mask: np.ndarray,
-
     fit_meta: dict,
-
     col_name: str | None,
-
-
 ) -> float:
 
     if not np.isfinite(rmse_fit):
-
         return float("inf")
 
     score = float(rmse_fit)
@@ -1070,7 +832,6 @@ def _model_selection_score(
     is_sellmeier = "sellmeier" in src
 
     if int(np.count_nonzero(m)) >= 3 and not is_sellmeier:
-
         n_seg = n_line[m]
 
         _cnt, frac = IndexCore._monotonic_violation_stats(n_seg)
@@ -1078,15 +839,12 @@ def _model_selection_score(
         score += float(MODEL_SELECT_MONO_WEIGHT) * float(max(0.0, frac))
 
     else:
-
         n_seg = n_line[m]
 
     if "sellmeier" in src:
-
         prior = _sellmeier_prior_coeffs_for_column(col_name)
 
         if prior is not None and int(np.count_nonzero(m)) >= 8:
-
             wl_um = np.asarray(wl_nm[m], dtype=np.float64) / 1000.0
 
             n_prior = _sellmeier_3term_standard_eval(np.asarray(prior, dtype=np.float64), wl_um)
@@ -1100,36 +858,24 @@ def _model_selection_score(
 
 def _rmse_is_best_fit(v: float, best_v: float) -> bool:
 
-    return bool(
-
-        np.isfinite(v)
-
-        and np.isfinite(best_v)
-
-        and abs(v - best_v) <= 1.0e-9 * max(1.0, abs(best_v))
-
-    )
+    return bool(np.isfinite(v) and np.isfinite(best_v) and abs(v - best_v) <= 1.0e-9 * max(1.0, abs(best_v)))
 
 
 def _rmse_is_bad_vs_best(v: float, best_v: float) -> bool:
 
     if not np.isfinite(v):
-
         return True
 
     if not np.isfinite(best_v):
-
         return False
 
     if _rmse_is_best_fit(v, best_v):
-
         return False
 
     return bool(v > float(best_v) * SUBSTRATE_INDEX_RMSE_BAD_RATIO)
 
 
 def _substrate_index_models_ordered_by_rmse(rms_by_label: dict[str, float]) -> list[tuple[str, str]]:
-
     """For a substrate column: order of laws by increasing RMSE (non-finite last; ties -> SUBSTRATE_INDEX_MODELS order)."""
 
     items = list(SUBSTRATE_INDEX_MODELS)
@@ -1141,7 +887,6 @@ def _substrate_index_models_ordered_by_rmse(rms_by_label: dict[str, float]) -> l
         v = float(rms_by_label.get(mlabel, float("nan")))
 
         if np.isfinite(v):
-
             return (0, v, idx)
 
         return (1, 0.0, idx)
@@ -1173,38 +918,19 @@ def _bad_model_labels(rms_by_label: dict[str, float]) -> set[str]:
 
     best = _best_finite_rmse_from_triplet(mv)
 
-    return {
-
-        SUBSTRATE_INDEX_MODELS[j][1]
-
-        for j in range(_N_SUBSTRATE_MODELS)
-
-        if _rmse_is_bad_vs_best(mv[j], best)
-
-    }
+    return {SUBSTRATE_INDEX_MODELS[j][1] for j in range(_N_SUBSTRATE_MODELS) if _rmse_is_bad_vs_best(mv[j], best)}
 
 
 def _linear_extrap_exterior(
-
     out: np.ndarray,
-
     x: np.ndarray,
-
     lo: float,
-
     hi: float,
-
     y_lo: float,
-
     slope_lo: float,
-
     y_hi: float,
-
     slope_hi: float,
-
-
 ) -> None:
-
     """Completes `out` outside [lo,hi] by tangents at the edges (x already filtered internally by the caller)."""
 
     m_l = x < lo
@@ -1212,13 +938,11 @@ def _linear_extrap_exterior(
     m_r = x > hi
 
     if np.any(m_l):
-
         xl = x[m_l]
 
         out[m_l] = y_lo + slope_lo * (xl - lo)
 
     if np.any(m_r):
-
         xr = x[m_r]
 
         out[m_r] = y_hi + slope_hi * (xr - hi)
@@ -1229,27 +953,18 @@ def _index_spline_ensure_strictly_increasing(knot_lam_um: np.ndarray, min_gap: f
     out = np.asarray(knot_lam_um, dtype=np.float64).copy()
 
     for i in range(1, len(out)):
-
         if out[i] <= out[i - 1]:
-
             out[i] = out[i - 1] + min_gap
 
     return out
 
 
-def _index_spline_merge_closest_knot_pair(
-
-    knot_lam_um: np.ndarray, n_knot: np.ndarray
-
-
-) -> tuple[np.ndarray, np.ndarray]:
-
+def _index_spline_merge_closest_knot_pair(knot_lam_um: np.ndarray, n_knot: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Reduces a knot by merging the closest consecutive pair in lambda (like IR / Phase 2.3)."""
 
     n = len(knot_lam_um)
 
     if n <= 2:
-
         return knot_lam_um.copy(), n_knot.copy()
 
     gaps = np.diff(knot_lam_um)
@@ -1257,47 +972,30 @@ def _index_spline_merge_closest_knot_pair(
     i_merge = int(np.argmin(gaps))
 
     lam_new = np.concatenate(
-
         [
-
             knot_lam_um[:i_merge],
-
             [(knot_lam_um[i_merge] + knot_lam_um[i_merge + 1]) * 0.5],
-
             knot_lam_um[i_merge + 2 :],
-
         ]
-
     )
 
     n_new = np.concatenate(
-
         [
-
             n_knot[:i_merge],
-
             [(n_knot[i_merge] + n_knot[i_merge + 1]) * 0.5],
-
             n_knot[i_merge + 2 :],
-
         ]
-
     )
 
     return lam_new, n_new
 
 
-
-
-
 def _index_eval_bspline_linear_extrap(spl, lo_um: float, hi_um: float, x_um: np.ndarray) -> np.ndarray:
-
     """Evaluates a scipy B-spline on [lo, hi]; outside range: tangents at edges (affine extension)."""
 
     from scipy.interpolate import BSpline
 
     if not isinstance(spl, BSpline):
-
         raise TypeError("expected scipy.interpolate.BSpline")
 
     x = np.asarray(x_um, dtype=np.float64)
@@ -1313,34 +1011,23 @@ def _index_eval_bspline_linear_extrap(spl, lo_um: float, hi_um: float, x_um: np.
     m = (x >= lo) & (x <= hi)
 
     if np.any(m):
-
         out[m] = spl(x[m])
 
     _linear_extrap_exterior(
-
         out,
-
         x,
-
         lo,
-
         hi,
-
         float(spl(lo)),
-
         float(d1(lo)),
-
         float(spl(hi)),
-
         float(d1(hi)),
-
     )
 
     return out
 
 
 def _index_pack_bspline_lsq(spl, lo_um: float, hi_um: float) -> np.ndarray:
-
     """Serializes least squares B-spline: [4, k, lambdamin_nm, lambdamax_nm, nt, t_nm..., nc, c...]."""
 
     t_um = np.asarray(spl.t, dtype=np.float64).ravel()
@@ -1352,23 +1039,14 @@ def _index_pack_bspline_lsq(spl, lo_um: float, hi_um: float) -> np.ndarray:
     t_nm = t_um * 1000.0
 
     head = np.asarray(
-
         [
-
             4.0,
-
             float(k),
-
             float(min(lo_um, hi_um) * 1000.0),
-
             float(max(lo_um, hi_um) * 1000.0),
-
             float(t_nm.size),
-
         ],
-
         dtype=np.float64,
-
     )
 
     nc_hdr = np.asarray([float(c.size)], dtype=np.float64)
@@ -1376,13 +1054,7 @@ def _index_pack_bspline_lsq(spl, lo_um: float, hi_um: float) -> np.ndarray:
     return np.concatenate([head, t_nm, nc_hdr, c], dtype=np.float64)
 
 
-def _substrate_index_geom_fit_mask(
-
-    wl_nm: np.ndarray, wl_min_fit: float, wl_max_fit: float
-
-
-) -> np.ndarray:
-
+def _substrate_index_geom_fit_mask(wl_nm: np.ndarray, wl_min_fit: float, wl_max_fit: float) -> np.ndarray:
     """lambda in geometric interval [min,max] of fit spins (for UI: out-of-band graying)."""
 
     wl = np.asarray(wl_nm, dtype=np.float64)
@@ -1395,20 +1067,12 @@ def _substrate_index_geom_fit_mask(
 
 
 def _add_pg_fit_band_outside_shading(
-
     plot_widget: pg.PlotWidget,
-
     fit_lo_nm: float,
-
     fit_hi_nm: float,
-
     x_min_nm: float,
-
     x_max_nm: float,
-
-
 ) -> None:
-
     """Semi-opaque vertical bands for lambda outside [fit_lo, fit_hi] (data between x_min and x_max)."""
 
     lo = float(min(fit_lo_nm, fit_hi_nm))
@@ -1420,7 +1084,6 @@ def _add_pg_fit_band_outside_shading(
     w1 = float(max(x_min_nm, x_max_nm))
 
     if not np.isfinite([lo, hi, w0, w1]).all() or w1 <= w0:
-
         return
 
     plot_item = plot_widget.plotItem
@@ -1430,11 +1093,9 @@ def _add_pg_fit_band_outside_shading(
     z_back = -40
 
     if w0 < lo:
-
         e = min(lo, w1)
 
         if e > w0:
-
             r = pg.LinearRegionItem([w0, e], movable=False, brush=brush, pen=pg.mkPen(None))
 
             r.setZValue(z_back)
@@ -1442,11 +1103,9 @@ def _add_pg_fit_band_outside_shading(
             plot_item.addItem(r)
 
     if hi < w1:
-
         s = max(hi, w0)
 
         if w1 > s:
-
             r = pg.LinearRegionItem([s, w1], movable=False, brush=brush, pen=pg.mkPen(None))
 
             r.setZValue(z_back)
@@ -1455,50 +1114,33 @@ def _add_pg_fit_band_outside_shading(
 
 
 def _nan_split_band_y(
-
     y,
-
     fit_mask: np.ndarray | None,
-
-
 ) -> tuple[np.ndarray | None, np.ndarray]:
-
     """If mask: (y out-of-band with internal NaN, y in-band). Otherwise: (None, y)."""
 
     y_arr = np.asarray(y, dtype=np.float64)
 
     if fit_mask is None:
-
         return None, y_arr
 
     return np.where(~fit_mask, y_arr, np.nan), np.where(fit_mask, y_arr, np.nan)
 
 
 def _pg_plot_xy_split_band(
-
     plot_widget: pg.PlotWidget,
-
     wl,
-
     y,
-
     fit_mask: np.ndarray | None,
-
     pen_inside,
-
     pen_outside,
-
     **plot_kw,
-
-
 ):
-
     """Plot y(lambda); if fit_mask provided, out-of-band segment in gray then in-band segment."""
 
     y_out, y_in = _nan_split_band_y(y, fit_mask)
 
     if y_out is None:
-
         return plot_widget.plot(wl, y_in, pen=pen_inside, **plot_kw)
 
     plot_widget.plot(wl, y_out, pen=pen_outside)
@@ -1507,30 +1149,17 @@ def _pg_plot_xy_split_band(
 
 
 def _pg_plot_scatter_split_band(
-
     plot_widget: pg.PlotWidget,
-
     wl,
-
     y,
-
     fit_mask: np.ndarray | None,
-
     symbol_pen_inside,
-
     symbol_pen_outside,
-
     *,
-
     symbol: str = "x",
-
     symbol_size: float = 5.0,
-
     name: str | None = None,
-
-
 ):
-
     """Scatter y(lambda) with symbols; fit out-of-band in gray if mask provided."""
 
     y_out, y_in = _nan_split_band_y(y, fit_mask)
@@ -1538,7 +1167,6 @@ def _pg_plot_scatter_split_band(
     kw = {"pen": None, "symbol": symbol, "symbolSize": symbol_size}
 
     if y_out is None:
-
         return plot_widget.plot(wl, y_in, symbolPen=symbol_pen_inside, name=name, **kw)
 
     plot_widget.plot(wl, y_out, symbolPen=symbol_pen_outside, **kw)
@@ -1547,27 +1175,18 @@ def _pg_plot_scatter_split_band(
 
 
 class IndexCore:
-
     @staticmethod
-
     def apply_dynamic_filtering(
-
         x: np.ndarray,
-
         y: np.ndarray,
-
         base_window: int,
-
         poly: int,
-
         heavy_window: int = 0,
-
     ) -> np.ndarray:
 
         return dynamic_savgol_blend(x, y, base_window, poly, heavy_window)
 
     @staticmethod
-
     def _fit_mask(wl_nm: np.ndarray, wl_min_fit: float, wl_max_fit: float) -> np.ndarray:
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -1579,23 +1198,16 @@ class IndexCore:
         m = (wl >= lo) & (wl <= hi)
 
         if int(np.count_nonzero(m)) < 5:
-
             return np.ones_like(wl, dtype=bool)
 
         return m
 
     @staticmethod
-
     def _fallback_monotonic_raw(
-
         wl_nm: np.ndarray,
-
         n_vals: np.ndarray,
-
         wl_min_fit: float,
-
         wl_max_fit: float,
-
     ) -> np.ndarray:
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -1605,7 +1217,6 @@ class IndexCore:
         fit_range_mask = IndexCore._fit_mask(wl, wl_min_fit, wl_max_fit)
 
         if int(np.count_nonzero(fit_range_mask)) >= 3:
-
             idx = np.where(fit_range_mask)[0]
 
             n_fb[idx] = np.minimum.accumulate(n_fb[idx])
@@ -1613,7 +1224,6 @@ class IndexCore:
         return n_fb
 
     @staticmethod
-
     def _monotonic_violation_stats(n_fit_range: np.ndarray) -> tuple[int, float]:
 
         dn = np.diff(np.asarray(n_fit_range, dtype=np.float64))
@@ -1625,9 +1235,7 @@ class IndexCore:
         return pos_count, pos_frac
 
     @staticmethod
-
     def _clipboard_law_line_from_source(source: str, requested_model_kind: str) -> str:
-
         """Short text for clipboard: law actually used after fit."""
 
         s = str(source or "")
@@ -1635,75 +1243,44 @@ class IndexCore:
         req = str(requested_model_kind or "").strip().lower()
 
         if s == "skipped-insufficient-points":
-
             return "Law: fit not executed (less than 8 valid points in fit window)."
 
         if s.startswith("analytic-polynomial"):
-
             return (
-
                 "Law (adjustment): n(lambda) = a0 + a1/lambda + a2/lambda2 + a3/lambda3 + a4/lambda4 + a5lambda + a6√lambda "
-
                 "(lambda in m for evaluation; wavelengths in nm)."
-
             )
 
         if s == "analytic-sellmeier-3poles-A":
-
             return (
-
                 "Law (adjustment): n2 = A + B1lambda2/(lambda2-L12) + B2lambda2/(lambda2-L22) + B3lambda2/(lambda2-L32) "
-
                 "(lambda and Li in m; lambda_nm/1000 = lambda_m)."
-
             )
 
         if s == "analytic-sellmeier-3term-standard":
-
             return (
-
                 "Law (adjustment): Standard Sellmeier n2 = 1 + (Bilambda2/(lambda2-Ci)) "
-
                 "(lambda in m, Ci in m2; compatible with literature/catalogs)."
-
             )
 
         if str(source or "").startswith("analytic-bspline-lsq"):
-
             return (
-
                 "Law (adjustment): Piecewise polynomial regression (cubic B-spline, 1/lambda weighted "
-
                 f"least squares in nm); at most {SPLINE_INDEX_MAX_KNOTS} lambda sites (m), adaptive knots then "
-
                 "reduction by merge; outside fit window: affine extension (edge slope)."
-
             )
 
-        return (
-
-            f"Law: non-analytical output or rejection (source={s!r}); "
-
-            f"model requested in UI={req!r}."
-
-        )
+        return f"Law: non-analytical output or rejection (source={s!r}); model requested in UI={req!r}."
 
     @staticmethod
-
     def _clipboard_coeffs_line_from_source(
-
         source: str,
-
         coeffs: np.ndarray | list | None,
-
         *,
-
         meta: dict | None = None,
-
     ) -> str:
 
         if coeffs is None:
-
             return "Coefficients: (unavailable - raw curve / analytical fit rejection)"
 
         c = np.asarray(coeffs, dtype=np.float64).ravel()
@@ -1711,19 +1288,13 @@ class IndexCore:
         s = str(source or "")
 
         if s == "analytic-sellmeier-3poles-A" and c.size >= 7:
-
             base = (
-
                 f"Coefficients: A={c[0]:.9g} ; B1={c[1]:.9g} ; L1={c[2]:.9g} m ; "
-
                 f"B2={c[3]:.9g} ; L2={c[4]:.9g} m ; "
-
                 f"B3={c[5]:.9g} ; L3={c[6]:.9g} m"
-
             )
 
             if meta is not None and bool(meta.get("sellmeier_optim_log_l1l2")):
-
                 ln1 = float(np.log(max(float(c[2]), 1.0e-300)))
 
                 ln2 = float(np.log(max(float(c[4]), 1.0e-300)))
@@ -1731,29 +1302,20 @@ class IndexCore:
                 ln3 = float(np.log(max(float(c[6]), 1.0e-300)))
 
                 base += (
-
                     f"\n  (optimization. ui=ln(Li), nat.) ln(L1)={ln1:.9g} ; ln(L2)={ln2:.9g} ; ln(L3)={ln3:.9g} "
-
                     f"(equivalent log10: log10(L1)={ln1 / np.log(10.0):.9g} ; log10(L2)={ln2 / np.log(10.0):.9g} ; log10(L3)={ln3 / np.log(10.0):.9g})"
-
                 )
 
             return base
 
         if s == "analytic-sellmeier-3term-standard" and c.size >= 6:
-
             return (
-
                 f"Coefficients standard: B1={c[0]:.9g} ; C1={c[1]:.9g} m2 ; "
-
                 f"B2={c[2]:.9g} ; C2={c[3]:.9g} m2 ; "
-
                 f"B3={c[4]:.9g} ; C3={c[5]:.9g} m2"
-
             )
 
         if s.startswith("analytic-polynomial") and c.size >= 1:
-
             c7 = np.zeros(7, dtype=np.float64)
 
             c7[: min(7, c.size)] = c[: min(7, c.size)]
@@ -1763,7 +1325,6 @@ class IndexCore:
             return "Coefficients: " + " ; ".join(parts)
 
         if str(source or "").startswith("analytic-bspline-lsq") and c.size >= 6:
-
             kdeg = int(round(float(c[1])))
 
             lo_nm, hi_nm = float(c[2]), float(c[3])
@@ -1773,13 +1334,11 @@ class IndexCore:
             min_nt = 2 * (kdeg + 1)  # minimal valid knot vector for a B-spline of degree k
 
             if nt < min_nt or kdeg < 0 or c.size < 5 + nt + 1:
-
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
 
             nc_hdr = int(round(float(c[5 + nt])))
 
             if nc_hdr < 1 or c.size < 6 + nt + nc_hdr:
-
                 return f"Coefficients (B-spline LSQ, raw): {np.array2string(c, precision=9, separator=', ')}"
 
             t_nm = c[5 : 5 + nt]
@@ -1791,23 +1350,16 @@ class IndexCore:
             cc = np.array2string(coef_b, precision=9, separator=", ", max_line_width=220)
 
             return (
-
                 "B-spline coefficients (LSQ, scipy):\n"
-
                 f"   degree k = {kdeg}\n"
-
                 f"   fit window lambda (nm): [{lo_nm:.4f}, {hi_nm:.4f}]\n"
-
                 f"   knot vector t (nm), n_t = {nt}: [{tk}]\n"
-
                 f"   B-spline coefficients c, n_c = {nc_hdr}: [{cc}]"
-
             )
 
         return f"Coefficients (raw): {np.array2string(c, precision=9, separator=', ')}"
 
     @staticmethod
-
     def _poly_compact_feature_dict(wl_um: np.ndarray) -> dict[str, np.ndarray]:
 
         u = np.asarray(wl_um, dtype=np.float64)
@@ -1815,35 +1367,21 @@ class IndexCore:
         inv = 1.0 / np.maximum(u, 1.0e-9)
 
         return {
-
             "a0": np.ones_like(u, dtype=np.float64),
-
             "a1": inv,
-
             "a2": inv**2,
-
             "a3": inv**3,
-
             "a4": inv**4,
-
             "a5": u,
-
             "a6": np.sqrt(u),
-
         }
 
     @staticmethod
-
     def _sellmeier_compact_polynomial_seed(
-
         wl: np.ndarray,
-
         n_vals: np.ndarray,
-
         mask: np.ndarray,
-
     ) -> tuple[list[str], np.ndarray, np.ndarray] | None:
-
         """
 
         Same compact polynomial model selection as the main branch (weighted IRLS).
@@ -1857,19 +1395,13 @@ class IndexCore:
         n_fit = np.asarray(n_vals[mask], dtype=np.float64)
 
         fitted = _fit_compact_polynomial_model(
-
             wl_fit_nm,
-
             n_fit,
-
             np.asarray(wl, dtype=np.float64),
-
             rmse_target_compact=1.5e-3,
-
         )
 
         if fitted is None:
-
             return None
 
         active_terms, p, n_out, _rmse_c = fitted
@@ -1877,16 +1409,14 @@ class IndexCore:
         return active_terms, np.asarray(p, dtype=np.float64), np.asarray(n_out, dtype=np.float64)
 
     @staticmethod
-
     def sellmeier_2poles_const_eval(params: np.ndarray, wl_um: np.ndarray) -> np.ndarray:
-
         """n2 = A + (Bi*lambda2/(lambda2-Li2)) (i=1..3), with lambda in m."""
 
         p = np.asarray(params, dtype=np.float64).ravel()
 
         wl = np.maximum(np.asarray(wl_um, dtype=np.float64), 1.0e-9)
 
-        lam2 = wl ** 2
+        lam2 = wl**2
 
         A, B1, L1, B2, L2, B3, L3 = p
 
@@ -1894,11 +1424,11 @@ class IndexCore:
 
         # produced ~1e9 terms when lambda2-L2<0 with L out of UV).
 
-        den1 = np.maximum(lam2 - (L1 ** 2), 1.0e-15)
+        den1 = np.maximum(lam2 - (L1**2), 1.0e-15)
 
-        den2 = np.maximum(lam2 - (L2 ** 2), 1.0e-15)
+        den2 = np.maximum(lam2 - (L2**2), 1.0e-15)
 
-        den3 = np.maximum(lam2 - (L3 ** 2), 1.0e-15)
+        den3 = np.maximum(lam2 - (L3**2), 1.0e-15)
 
         n2 = A + (B1 * lam2) / den1 + (B2 * lam2) / den2 + (B3 * lam2) / den3
 
@@ -1969,37 +1499,21 @@ class IndexCore:
         return lo, hi, changed
 
     @staticmethod
-
     def fit_sellmeier(
-
         n_data: np.ndarray,
-
         wl_nm: np.ndarray,
-
         wl_min_fit: float,
-
         wl_max_fit: float,
-
         valid_mask: np.ndarray | None = None,
-
         progress_cb=None,
-
         model_kind: str = "polynomial",
-
         *,
-
         return_meta: bool = False,
-
         sellmeier_timeout_s: float | None = None,
-
         sellmeier_de_maxiter: int = 300,
-
         sellmeier_de_popsize: int = 12,
-
         sellmeier_ls_max_nfev: int = 3000,
-
         sellmeier_log_l1l2: bool | None = None,
-
     ) -> np.ndarray | tuple[np.ndarray, dict]:
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -2009,7 +1523,6 @@ class IndexCore:
         mask = IndexCore._fit_mask(wl, wl_min_fit, wl_max_fit)
 
         if valid_mask is not None:
-
             mask &= np.asarray(valid_mask, dtype=bool)
 
         mask &= np.isfinite(wl) & np.isfinite(n_vals)
@@ -2023,111 +1536,74 @@ class IndexCore:
         wl_eval_max = float(np.nanmax(wl)) if wl.size else float("nan")
 
         logger.info(
-
             "%s fit start: wl_fit=[%.1f, %.1f]nm | points=%d/%d | eval_full=[%.1f, %.1f]nm",
-
             model_label,
-
             float(min(wl_min_fit, wl_max_fit)),
-
             float(max(wl_min_fit, wl_max_fit)),
-
             int(np.count_nonzero(mask)),
-
             int(wl.size),
-
             wl_eval_min,
-
             wl_eval_max,
-
         )
 
         logger.info(
-
             "%s input stats: n_fit[min,max]=[%.6f, %.6f] | lambda[min,max]=[%.1f, %.1f]nm",
-
             model_label,
-
             float(np.nanmin(n_vals[mask])) if np.any(mask) else float("nan"),
-
             float(np.nanmax(n_vals[mask])) if np.any(mask) else float("nan"),
-
             float(np.nanmin(wl[mask])) if np.any(mask) else float("nan"),
-
             float(np.nanmax(wl[mask])) if np.any(mask) else float("nan"),
-
         )
 
         if model_kind == "sellmeier3poles":
-
             logger.info(
-
                 "Sellmeier model active: n2=A + B1*lambda2/(lambda2-L12) + B2*lambda2/(lambda2-L22) + B3*lambda2/(lambda2-L32), lambda in m."
-
             )
 
         elif model_kind == "spline_adaptive":
-
             logger.info(
-
                 "Spline n (cubic B-spline, least squares): <=%d lambda sites in m, interior knots "
-
                 "optimized then reduction by merge (RMSE); weights 1/lambda (nm).",
-
                 SPLINE_INDEX_MAX_KNOTS,
-
             )
 
         else:
-
-            logger.info("Polynomial model active: n(lambda)=a0+a1/lambda+a2/lambda2+a3/lambda3+a4/lambda4+a5*lambda+a6*sqrt(lambda), lambda in m.")
+            logger.info(
+                "Polynomial model active: n(lambda)=a0+a1/lambda+a2/lambda2+a3/lambda3+a4/lambda4+a5*lambda+a6*sqrt(lambda), lambda in m."
+            )
 
         if model_kind != "spline_adaptive":
-
-            logger.info("%s units: lambda input/display in nm; model evaluation in m (lambda_um = lambda_nm / 1000).", model_label)
+            logger.info(
+                "%s units: lambda input/display in nm; model evaluation in m (lambda_um = lambda_nm / 1000).",
+                model_label,
+            )
 
         else:
-
             logger.info(
-
                 "%s units: lambda in nm everywhere; extension outside knots = affine (edge slope).",
-
                 model_label,
-
             )
 
         def _fit_meta(
-
             source: str,
-
             coeffs: np.ndarray | None,
-
             requested_model_kind: str,
-
             **extra,
-
         ) -> dict:
 
             coeffs_list = None
 
             if coeffs is not None:
-
                 coeffs_list = np.asarray(coeffs, dtype=np.float64).ravel().tolist()
 
             d = {
-
                 "source": str(source),
-
                 "coeffs": coeffs_list,
-
                 "requested_model_kind": str(requested_model_kind),
-
             }
 
             for k, v in extra.items():
-
                 if v is not None:
-
                     d[k] = v
 
             return d
@@ -2137,7 +1613,6 @@ class IndexCore:
             out = np.asarray(n_out, dtype=np.float64)
 
             if return_meta:
-
                 return out, _fit_meta(source, coeffs, model_kind, **meta_extra)
 
             return out
@@ -2149,7 +1624,6 @@ class IndexCore:
             return _ret(n_fb, source, None)
 
         if int(np.count_nonzero(mask)) < 8:
-
             logger.warning("%s fit skipped: not enough valid points (%d).", model_label, int(np.count_nonzero(mask)))
 
             return _ret(n_vals.copy(), "skipped-insufficient-points", None)
@@ -2163,63 +1637,39 @@ class IndexCore:
         w_fit = 1.0 / np.maximum(wl_fit_nm, 1.0)
 
         if model_kind == "sellmeier3poles":
-
             from scipy.optimize import least_squares, minimize
 
             import time
 
-            log_l1l2 = bool(
-
-                SELLMEIER_DEFAULT_LOG_L1L2 if sellmeier_log_l1l2 is None else sellmeier_log_l1l2
-
-            )
+            log_l1l2 = bool(SELLMEIER_DEFAULT_LOG_L1L2 if sellmeier_log_l1l2 is None else sellmeier_log_l1l2)
 
             lam_min_um = float(np.min(wl_fit_um))
 
             bounds = _sellmeier_2poles_param_bounds(lam_min_um)
 
             logger.info(
-
                 "Sellmeier 3-poles: math domain A[%.1f,%.1f] B[%.0f,%.0f] L[%.1e,%.4f] m "
-
                 "(lambda_min fit=%.4f m; L_max=min(40,%.2f×lambda_min) for lambda2-L2>0 in window).",
-
                 bounds[0][0],
-
                 bounds[0][1],
-
                 bounds[1][0],
-
                 bounds[1][1],
-
                 bounds[2][0],
-
                 bounds[2][1],
-
                 lam_min_um,
-
                 float(SELLMEIER_2POLES_LAM_FRAC_MAX),
-
             )
 
             logger.info(
-
                 "Sellmeier: optimization on %s.",
-
                 "ui=ln(Li) (Li=exp(ui), L1/L2/L3 reparam.)" if log_l1l2 else "native parameters Li (linear)",
-
             )
 
             logger.info(
-
                 "Sellmeier: weights=%s | seed_points=%d | multistart=%d",
-
                 str(SELLMEIER_WEIGHT_MODE),
-
                 int(max(7, SELLMEIER_SEED_POINTS)),
-
                 int(max(1, SELLMEIER_MULTISTART_TRIALS)),
-
             )
 
             ls_max_nfev = int(max(100, sellmeier_ls_max_nfev))
@@ -2237,7 +1687,6 @@ class IndexCore:
                 q = np.asarray(q, dtype=np.float64).ravel()
 
                 if not log_l1l2:
-
                     return q.copy()
 
                 p = q.copy()
@@ -2255,7 +1704,6 @@ class IndexCore:
                 p = np.asarray(p, dtype=np.float64).ravel()
 
                 if not log_l1l2:
-
                     return p.copy()
 
                 q = p.copy()
@@ -2271,7 +1719,6 @@ class IndexCore:
             bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
 
             if log_l1l2:
-
                 _ll0 = float(max(bounds[2][0], 1.0e-30))
 
                 _ll1 = float(bounds[2][1])
@@ -2301,20 +1748,10 @@ class IndexCore:
                 pred = IndexCore.sellmeier_2poles_const_eval(p, wl_fit_um)
 
                 if not np.all(np.isfinite(pred)):
-
                     return 1.0e30
 
                 if np.any((pred < n_lo_acc) | (pred > n_hi_acc)):
-
-                    vio = float(
-
-                        np.mean(
-
-                            np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2
-
-                        )
-
-                    )
+                    vio = float(np.mean(np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2))
 
                     return 1.0e12 + 1.0e9 * vio
 
@@ -2325,7 +1762,6 @@ class IndexCore:
                 g = _sellmeier_l_separation_gap_um(p)
 
                 if g > 0.0:
-
                     mse += 5.0e7 * (g * g)
 
                 return mse
@@ -2335,27 +1771,16 @@ class IndexCore:
             ls_bounds_q = ([b[0] for b in bounds_q], [b[1] for b in bounds_q])
 
             p_mid = np.array(
-
                 [
-
                     0.5 * (bounds[0][0] + bounds[0][1]),
-
                     0.5 * (bounds[1][0] + bounds[1][1]),
-
                     0.5 * (bounds[2][0] + bounds[2][1]),
-
                     0.5 * (bounds[3][0] + bounds[3][1]),
-
                     0.5 * (bounds[4][0] + bounds[4][1]),
-
                     0.5 * (bounds[5][0] + bounds[5][1]),
-
                     0.5 * (bounds[6][0] + bounds[6][1]),
-
                 ],
-
                 dtype=np.float64,
-
             )
 
             _l_lo1, _l_hi1 = float(bounds[2][0]), float(bounds[2][1])
@@ -2377,7 +1802,6 @@ class IndexCore:
             _ls = np.sort(np.asarray([p_mid[2], p_mid[4], p_mid[6]], dtype=np.float64))
 
             if float(np.min(np.diff(_ls))) < _sep_need:
-
                 _mid = 0.5 * (_l_lo1 + _l_hi1)
 
                 p_mid[2] = float(max(_l_lo1, _mid - 1.1 * _sep_need))
@@ -2395,9 +1819,7 @@ class IndexCore:
             q0 = np.asarray(q_mid, dtype=np.float64, order="C")
 
             try:
-
                 if callable(progress_cb):
-
                     progress_cb(1, 2)
 
                 seed_desc = "centre box (q)"
@@ -2405,7 +1827,6 @@ class IndexCore:
                 poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
 
                 if poly_seed is not None:
-
                     active_terms, p_poly, _n_poly_full = poly_seed
 
                     lo_nm = float(np.min(wl_fit_nm))
@@ -2433,41 +1854,26 @@ class IndexCore:
                         g = _sellmeier_l_separation_gap_um(pv)
 
                         return np.append(
-
                             r,
-
                             float(SELLMEIER_L_SEP_SOFT_WEIGHT) * 0.02 * g,
-
                         )
 
                     r5 = least_squares(
-
                         _res5_q,
-
                         q_mid,
-
                         bounds=ls_bounds_q,
-
                         loss="linear",
-
                         max_nfev=2500,
-
                         ftol=1.0e-12,
-
                         xtol=1.0e-12,
-
                         gtol=1.0e-12,
-
                     )
 
                     q0 = np.clip(np.asarray(r5.x, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
 
                     seed_desc = (
-
                         "compact polynomial + LS "
-
                         f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
-
                     )
 
                 logger.info("Sellmeier 3-poles: seed %s.", seed_desc)
@@ -2475,7 +1881,6 @@ class IndexCore:
                 run_lbfgs = timeout_s is None or timeout_s <= 0.0 or (time.monotonic() - t0) < max(0.5, timeout_s - 0.3)
 
                 if run_lbfgs:
-
                     rng = np.random.default_rng(12345)
 
                     q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
@@ -2487,7 +1892,6 @@ class IndexCore:
                     l3_grid = (0.1, 0.5, 2.0, 8.0)  # was 9 values ; 4 enough with physical bounds
 
                     for l3_try in l3_grid:
-
                         p_try = np.asarray(p_base, dtype=np.float64).copy()
 
                         p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
@@ -2501,7 +1905,6 @@ class IndexCore:
                     n_trials = int(max(1, SELLMEIER_MULTISTART_TRIALS))
 
                     for _ in range(n_trials - 1):
-
                         # Jitter plus large (0.15 vs 0.08 ancien) car espace q est plus petit
 
                         jit = rng.uniform(-0.15, 0.15, size=q0.shape)
@@ -2519,23 +1922,15 @@ class IndexCore:
                     best_f = float("inf")
 
                     for qi in q_candidates:
-
                         if timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s:
-
                             break
 
                         rb = minimize(
-
                             _mse_full_q,
-
                             qi,
-
                             method="L-BFGS-B",
-
                             bounds=bounds_q,
-
                             options={"maxiter": int(lbfgs_maxiter), "ftol": 1.0e-14, "gtol": 1.0e-10},
-
                         )
 
                         q_try = np.asarray(rb.x, dtype=np.float64)
@@ -2543,7 +1938,6 @@ class IndexCore:
                         f_try = float(_mse_full_q(q_try))
 
                         if f_try < best_f:
-
                             best_f = f_try
 
                             best_q = q_try
@@ -2551,7 +1945,6 @@ class IndexCore:
                     q_lbfgs = np.asarray(best_q, dtype=np.float64)
 
                 else:
-
                     logger.warning("Sellmeier 3-poles: timeout before L-BFGS-B - seed alone.")
 
                     q_lbfgs = np.asarray(q0, dtype=np.float64)
@@ -2559,13 +1952,11 @@ class IndexCore:
                 skip_polish = timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s
 
                 if skip_polish:
-
                     logger.warning("Sellmeier 3-poles: least_squares polish skipped (timeout).")
 
                     q_sell = np.asarray(q_lbfgs, dtype=np.float64)
 
                 else:
-
                     # Single polish with analytical Jacobian eliminates redundant passes.
 
                     # r/p Jacobian provided analytically -> ~5x faster convergence.
@@ -2581,7 +1972,6 @@ class IndexCore:
                         return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
 
                     def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
-
                         """Analytical Jacobian of polish residual (extended with separation constraint)."""
 
                         pv = _p_from_q(qv)
@@ -2597,7 +1987,6 @@ class IndexCore:
                         eps = 1.0e-6
 
                         for j in range(7):
-
                             pv2 = np.asarray(pv, dtype=np.float64).copy()
 
                             pv2[j] += eps
@@ -2609,21 +1998,13 @@ class IndexCore:
                         return np.vstack([J_main, J_sep])
 
                     res_pol = least_squares(
-
                         _residuals_polish_q,
-
                         q_lbfgs,
-
                         jac=_jac_polish_q,
-
                         bounds=ls_bounds_q,
-
                         loss="linear",
-
                         f_scale=1.0,
-
                         max_nfev=ls_max_nfev,
-
                     )
 
                     q_sell = np.asarray(res_pol.x, dtype=np.float64)
@@ -2637,7 +2018,6 @@ class IndexCore:
                 # The weighted pass with analytical Jacobian is sufficient.
 
                 if callable(progress_cb):
-
                     progress_cb(2, 2)
 
                 wl_full_um = np.asarray(wl / 1000.0, dtype=np.float64)
@@ -2647,29 +2027,17 @@ class IndexCore:
                     n_line = IndexCore.sellmeier_2poles_const_eval(p, wl_full_um)
 
                     if not np.all(np.isfinite(n_line)):
-
                         return False
 
                     ne = np.asarray(n_line[mask], dtype=np.float64)
 
-                    return bool(
-
-                        np.all(ne >= n_lo_acc)
-
-                        and np.all(ne <= n_hi_acc)
-
-                    )
+                    return bool(np.all(ne >= n_lo_acc) and np.all(ne <= n_hi_acc))
 
                 if not _sellmeier_n_in_accept_band(p_sell) and _sellmeier_n_in_accept_band(p_lbfgs):
-
                     logger.info(
-
                         "Sellmeier 3-poles: polish candidate out of band n[%.2f,%.2f]; keeping L-BFGS-B.",
-
                         n_lo_acc,
-
                         n_hi_acc,
-
                     )
 
                     p_sell = np.asarray(p_lbfgs, dtype=np.float64)
@@ -2677,21 +2045,15 @@ class IndexCore:
                 n_out_sell = IndexCore.sellmeier_2poles_const_eval(p_sell, wl_full_um)
 
                 if not np.all(np.isfinite(n_out_sell)):
-
                     raise ValueError("non-finite output")
 
                 n_eval = np.asarray(n_out_sell[mask], dtype=np.float64)
 
                 if np.any((n_eval < n_lo_acc) | (n_eval > n_hi_acc)):
-
                     logger.warning(
-
                         "Sellmeier 3-poles fit rejected: n(lambda) hors [%.2f, %.2f] sur la fenetre de fit -> fallback monotonic raw.",
-
                         n_lo_acc,
-
                         n_hi_acc,
-
                     )
 
                     return _ret_fallback_raw("fallback-raw-sell2p-bounds")
@@ -2701,45 +2063,27 @@ class IndexCore:
                 wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit_sell) ** 2)))
 
                 logger.info(
-
                     "Sellmeier 3-poles fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
-
                     wrmse,
-
                     rmse_unweighted,
-
                     float(np.min(n_eval)),
-
                     float(np.max(n_eval)),
-
                     float(n_eval[0]),
-
                     float(n_eval[-1]),
-
                 )
 
                 logger.info(
-
                     "Sellmeier coefficients accepted: A=%.9g | B1=%.9g | L1=%.9g m | B2=%.9g | L2=%.9g m | B3=%.9g | L3=%.9g m",
-
                     float(p_sell[0]),
-
                     float(p_sell[1]),
-
                     float(p_sell[2]),
-
                     float(p_sell[3]),
-
                     float(p_sell[4]),
-
                     float(p_sell[5]),
-
                     float(p_sell[6]),
-
                 )
 
                 if log_l1l2:
-
                     _ln1 = float(np.log(max(float(p_sell[2]), 1.0e-300)))
 
                     _ln2 = float(np.log(max(float(p_sell[4]), 1.0e-300)))
@@ -2749,23 +2093,14 @@ class IndexCore:
                     _lg10 = float(np.log(10.0))
 
                     logger.info(
-
                         "Sellmeier (reparam. ln L): u1=ln(L1)=%.9g | u2=ln(L2)=%.9g | u3=ln(L3)=%.9g "
-
                         "| log10(L1)=%.9g | log10(L2)=%.9g | log10(L3)=%.9g",
-
                         _ln1,
-
                         _ln2,
-
                         _ln3,
-
                         _ln1 / _lg10,
-
                         _ln2 / _lg10,
-
                         _ln3 / _lg10,
-
                     )
 
                 # 3-term standard variant (n2=1+Bi*\u03bb2/(\u03bb2-Ci)) for literature/catalog compatibility.
@@ -2777,11 +2112,8 @@ class IndexCore:
                 c_bounds = (1.0e-15, c_hi)
 
                 std_bounds = (
-
                     [b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0]],
-
                     [b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1]],
-
                 )
 
                 def _std_seed_from_2p(p2: np.ndarray) -> np.ndarray:
@@ -2789,25 +2121,15 @@ class IndexCore:
                     p2 = np.asarray(p2, dtype=np.float64)
 
                     seed = np.asarray(
-
                         [
-
                             p2[1],
-
                             min(c_hi, max(1.0e-15, p2[2] ** 2)),
-
                             p2[3],
-
                             min(c_hi, max(1.0e-15, p2[4] ** 2)),
-
                             p2[5],
-
                             min(c_hi, max(1.0e-15, p2[6] ** 2)),
-
                         ],
-
                         dtype=np.float64,
-
                     )
 
                     return np.clip(seed, std_bounds[0], std_bounds[1])
@@ -2823,41 +2145,25 @@ class IndexCore:
                 candidates: list[tuple[str, np.ndarray, np.ndarray, float, dict]] = []
 
                 candidates.append(
-
                     (
-
                         "analytic-sellmeier-3poles-A",
-
                         np.asarray(p_sell, dtype=np.float64),
-
                         np.asarray(n_out_sell, dtype=np.float64),
-
                         float(wrmse),
-
                         {"sellmeier_optim_log_l1l2": log_l1l2},
-
                     )
-
                 )
 
                 try:
-
                     p0_std = _std_seed_from_2p(p_sell)
 
                     res_std = least_squares(
-
                         _std_residuals,
-
                         p0_std,
-
                         bounds=std_bounds,
-
                         loss="linear",
-
                         f_scale=1.0,
-
                         max_nfev=max(1200, int(ls_max_nfev)),
-
                     )
 
                     p_std = np.asarray(res_std.x, dtype=np.float64)
@@ -2867,81 +2173,52 @@ class IndexCore:
                     n_std_fit = np.asarray(n_out_std[mask], dtype=np.float64)
 
                     if np.all(np.isfinite(n_std_fit)) and np.all((n_std_fit >= n_lo_acc) & (n_std_fit <= n_hi_acc)):
-
                         wrmse_std = float(np.sqrt(np.mean(((n_std_fit - n_fit) * w_fit_sell) ** 2)))
 
                         candidates.append(
-
                             (
-
                                 "analytic-sellmeier-3term-standard",
-
                                 p_std,
-
                                 np.asarray(n_out_std, dtype=np.float64),
-
                                 wrmse_std,
-
                                 {},
-
                             )
-
                         )
 
                         logger.info(
-
                             "Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g",
-
                             wrmse_std,
-
                             float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
-
                         )
 
                 except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
                     logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
 
                 best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
-
                     candidates,
-
                     key=lambda t: float(t[3]),
-
                 )
 
                 if best_src != "analytic-sellmeier-3poles-A":
-
                     logger.info(
-
                         "Sellmeier selection: variante standard 3-termes retenue (plus proche, wrmse=%.6g).",
-
                         float(_best_wrmse),
-
                     )
 
                 return _ret(
-
                     np.asarray(best_curve, dtype=np.float64),
-
                     best_src,
-
                     np.asarray(best_coeffs, dtype=np.float64),
-
                     **best_extra,
-
                 )
 
             except (ValueError, RuntimeError, ArithmeticError) as ex:
-
                 logger.warning("Sellmeier 3-poles fit failed: %s -> fallback to Polynomial.", str(ex))
 
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
                 logger.exception("Sellmeier 3-poles fit unexpected failure -> fallback to Polynomial.")
 
         if model_kind == "spline_adaptive":
-
             from scipy.interpolate import make_lsq_spline
 
             from scipy.optimize import minimize
@@ -2969,7 +2246,6 @@ class IndexCore:
             xf, yf, wf = xf[o], yf[o], wf[o]
 
             if np.any(np.diff(xf) <= 0.0):
-
                 ux, inv = np.unique(xf, return_inverse=True)
 
                 sum_w = np.bincount(inv, weights=wf)
@@ -2999,13 +2275,9 @@ class IndexCore:
             k_min_stop = max(2, k_min_stop)
 
             num_knots = min(
-
                 SPLINE_INDEX_MAX_KNOTS,
-
                 max_knots_by_gap,
-
                 max(3, npts // 24),
-
             )
 
             num_knots = max(num_knots, min(3, max_knots_by_gap))
@@ -3015,13 +2287,10 @@ class IndexCore:
             num_knots = min(num_knots, SPLINE_INDEX_MAX_KNOTS)
 
             try:
-
                 if callable(progress_cb):
-
                     progress_cb(1, 2)
 
                 def _fit_bspline_lsq_wls(interior_um: np.ndarray):
-
                     """Interior knots strictly in ]lo,hi[; cubic clamped at edges."""
 
                     inter = np.asarray(interior_um, dtype=np.float64).ravel()
@@ -3033,35 +2302,23 @@ class IndexCore:
                     margin = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
 
                     if inter.size > 0:
-
                         inter = np.clip(inter, lo_um + margin, hi_um - margin)
 
                         inter = _index_spline_ensure_strictly_increasing(
-
                             inter, min_gap=max(1e-9, 0.25 * MIN_KNOT_DIST_UM)
-
                         )
 
                         inter = inter[(inter > lo_um) & (inter < hi_um)]
 
                     t_full = np.concatenate(
-
                         ([lo_um] * (BSPLINE_K + 1), inter, [hi_um] * (BSPLINE_K + 1)),
-
                         dtype=np.float64,
-
                     )
 
                     try:
-
-                        spl = make_lsq_spline(
-
-                            wl_fit_um, yf, t_full, k=BSPLINE_K, w=wf, check_finite=True
-
-                        )
+                        spl = make_lsq_spline(wl_fit_um, yf, t_full, k=BSPLINE_K, w=wf, check_finite=True)
 
                     except (ValueError, TypeError):
-
                         return None, float("nan")
 
                     pred = spl(wl_fit_um)
@@ -3071,19 +2328,14 @@ class IndexCore:
                     return spl, rmse_u
 
                 def _optimize_bspline_interior_knots(
-
                     knot_lam_um: np.ndarray,
-
                     rmse_cur: float,
-
                 ) -> tuple[np.ndarray, float]:
-
                     """With fixed K sites, optimizes interior \u03bb to minimize B-spline LSQ RMSE."""
 
                     k_loc = int(knot_lam_um.size)
 
                     if k_loc <= 2:
-
                         return knot_lam_um.copy(), rmse_cur
 
                     margin_i = max(0.5 * MIN_KNOT_DIST_UM, 1.0e-9)
@@ -3093,7 +2345,6 @@ class IndexCore:
                     hi_b = hi_um - margin_i
 
                     if hi_b <= lo_b + 1.0e-12:
-
                         return knot_lam_um.copy(), rmse_cur
 
                     n_int = k_loc - 2
@@ -3113,9 +2364,7 @@ class IndexCore:
                         knot_t[1:-1] = ts
 
                         knot_t = _index_spline_ensure_strictly_increasing(
-
                             knot_t, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
-
                         )
 
                         knot_t[0] = lo_um
@@ -3123,35 +2372,25 @@ class IndexCore:
                         knot_t[-1] = hi_um
 
                         if np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
-
                             return 1e6
 
                         _spl, rm = _fit_bspline_lsq_wls(knot_t[1:-1])
 
                         if _spl is None or not np.isfinite(rm):
-
                             return 1e6
 
                         return float(rm)
 
                     try:
-
                         res = minimize(
-
                             _obj,
-
                             x0,
-
                             method="L-BFGS-B",
-
                             bounds=[(lo_b, hi_b)] * n_int,
-
                             options={"maxiter": 120, "ftol": 1e-14},
-
                         )
 
                         if np.isfinite(res.fun):
-
                             tv = np.sort(np.clip(np.asarray(res.x, dtype=np.float64), lo_b, hi_b))
 
                             knot_t = np.empty(k_loc, dtype=np.float64)
@@ -3163,9 +2402,7 @@ class IndexCore:
                             knot_t[1:-1] = tv
 
                             knot_t = _index_spline_ensure_strictly_increasing(
-
                                 knot_t, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
-
                             )
 
                             knot_t[0] = lo_um
@@ -3173,44 +2410,33 @@ class IndexCore:
                             knot_t[-1] = hi_um
 
                             if not np.any(np.diff(knot_t) < 0.5 * MIN_KNOT_DIST_UM):
-
                                 _spl2, rm2 = _fit_bspline_lsq_wls(knot_t[1:-1])
 
-                                if (
-
-                                    _spl2 is not None
-
-                                    and np.isfinite(rm2)
-
-                                    and rm2 < rmse_cur - 1.0e-15
-
-                                ):
-
+                                if _spl2 is not None and np.isfinite(rm2) and rm2 < rmse_cur - 1.0e-15:
                                     logger.info(
-
                                         "B-spline spline: knot optimization \u2192 rmse_fit=%.6g (was %.6g).",
-
                                         rm2,
-
                                         rmse_cur,
-
                                     )
 
                                     return knot_t, rm2
 
-                    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
+                    except (
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        AttributeError,
+                        KeyError,
+                        IndexError,
+                        FileNotFoundError,
+                    ):
                         pass
 
                     return knot_lam_um.copy(), rmse_cur
 
                 knot_lam = np.linspace(lo_um, hi_um, num_knots, dtype=np.float64)
 
-                knot_lam = _index_spline_ensure_strictly_increasing(
-
-                    knot_lam, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM)
-
-                )
+                knot_lam = _index_spline_ensure_strictly_increasing(knot_lam, min_gap=max(1e-9, 0.1 * MIN_KNOT_DIST_UM))
 
                 knot_lam[0] = lo_um
 
@@ -3219,38 +2445,20 @@ class IndexCore:
                 spl_best, best_rmse = _fit_bspline_lsq_wls(knot_lam[1:-1])
 
                 if spl_best is None or not np.isfinite(best_rmse):
-
                     raise ValueError("B-spline LSQ: echec fit initial")
 
                 best_knot_lam = knot_lam.copy()
 
-                best_n_knot = np.clip(
+                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
-                    np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI
+                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
 
-                )
-
-                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(
-
-                    best_knot_lam, best_rmse
-
-                )
-
-                best_n_knot = np.clip(
-
-                    np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI
-
-                )
+                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
                 baseline_mse = float(best_rmse**2)
 
                 while len(best_knot_lam) > k_min_stop:
-
-                    lam_try, n_try = _index_spline_merge_closest_knot_pair(
-
-                        best_knot_lam, best_n_knot
-
-                    )
+                    lam_try, n_try = _index_spline_merge_closest_knot_pair(best_knot_lam, best_n_knot)
 
                     lam_try = _index_spline_ensure_strictly_increasing(lam_try, min_gap=1e-9)
 
@@ -3259,13 +2467,9 @@ class IndexCore:
                     lam_try[-1] = hi_um
 
                     if np.any(np.diff(lam_try) < 0.5 * MIN_KNOT_DIST_UM):
-
                         logger.info(
-
                             "B-spline spline: reduction stop (knot spacing < %.3f m).",
-
                             0.5 * MIN_KNOT_DIST_UM,
-
                         )
 
                         break
@@ -3273,25 +2477,17 @@ class IndexCore:
                     spl_new, rmse_new = _fit_bspline_lsq_wls(lam_try[1:-1])
 
                     if spl_new is None or not np.isfinite(rmse_new):
-
                         logger.info("B-spline spline: merge impossible (LSQ).")
 
                         break
 
                     if (rmse_new**2) > (RMSE_RATIO_MAX**2) * baseline_mse:
-
                         logger.info(
-
                             "B-spline spline: merge rejected (RMSE %.6g, ref %.6g, max ratio %.2f). Keeping K=%d.",
-
                             rmse_new,
-
                             float(np.sqrt(baseline_mse)),
-
                             RMSE_RATIO_MAX,
-
                             len(best_knot_lam),
-
                         )
 
                         break
@@ -3305,31 +2501,18 @@ class IndexCore:
                     baseline_mse = float(best_rmse**2)
 
                     logger.info(
-
                         "B-spline spline: reduction accepted \u2192 K=%d sites | rmse_fit=%.6g.",
-
                         len(best_knot_lam),
-
                         best_rmse,
-
                     )
 
-                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(
+                best_knot_lam, best_rmse = _optimize_bspline_interior_knots(best_knot_lam, best_rmse)
 
-                    best_knot_lam, best_rmse
-
-                )
-
-                best_n_knot = np.clip(
-
-                    np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI
-
-                )
+                best_n_knot = np.clip(np.interp(best_knot_lam, wl_fit_um, yf), N_BOUND_LO, N_BOUND_HI)
 
                 spl_final, best_rmse = _fit_bspline_lsq_wls(best_knot_lam[1:-1])
 
                 if spl_final is None or not np.isfinite(best_rmse):
-
                     raise ValueError("B-spline LSQ: echec fit final")
 
                 wl_full_um = np.asarray(wl, dtype=np.float64) / 1000.0
@@ -3337,11 +2520,9 @@ class IndexCore:
                 n_out_sp = _index_eval_bspline_linear_extrap(spl_final, lo_um, hi_um, wl_full_um)
 
                 if callable(progress_cb):
-
                     progress_cb(2, 2)
 
                 if not np.all(np.isfinite(n_out_sp)):
-
                     raise ValueError("non-finite B-spline output")
 
                 n_coef = int(spl_final.c.size)
@@ -3351,59 +2532,42 @@ class IndexCore:
                 packed = _index_pack_bspline_lsq(spl_final, lo_um, hi_um)
 
                 logger.info(
-
                     "Spline n (B-spline LSQ): n_coef=%d | K_sites=%d | rmse_fit=%.6g | n_pts_fit=%d | lambda_fit=[%.4f,%.4f] m",
-
                     n_coef,
-
                     k_sites,
-
                     best_rmse,
-
                     npts,
-
                     lo_um,
-
                     hi_um,
-
                 )
 
                 n_eval = np.asarray(n_out_sp[mask], dtype=np.float64)
 
                 if np.any((n_eval < 1.35) | (n_eval > 5.0)):
-
-                    logger.warning("Spline fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw.")
+                    logger.warning(
+                        "Spline fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw."
+                    )
 
                     return _ret_fallback_raw("fallback-raw-spline-bounds")
 
                 wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit) ** 2)))
 
                 logger.info(
-
                     "Spline fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
-
                     wrmse,
-
                     float(best_rmse),
-
                     float(np.min(n_eval)),
-
                     float(np.max(n_eval)),
-
                     float(n_eval[0]),
-
                     float(n_eval[-1]),
-
                 )
 
                 return _ret(n_out_sp, f"analytic-bspline-lsq-nc{n_coef}", packed)
 
             except (ValueError, RuntimeError, ArithmeticError) as ex:
-
                 logger.warning("Spline fit failed: %s -> fallback to Polynomial.", str(ex))
 
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
                 logger.exception("Spline fit unexpected failure -> fallback to Polynomial.")
 
         # Polynomial fit (requested): deterministic weighted IRLS + physical checks.
@@ -3411,19 +2575,13 @@ class IndexCore:
         rmse_target_compact = 1.5e-3
 
         fitted = _fit_compact_polynomial_model(
-
             wl_fit_nm,
-
             n_fit,
-
             wl,
-
             rmse_target_compact=rmse_target_compact,
-
         )
 
         if fitted is None:
-
             logger.warning("Polynomial fit failed: no candidate solution -> fallback monotonic raw.")
 
             return _ret_fallback_raw("fallback-raw-poly-no-candidate")
@@ -3431,21 +2589,14 @@ class IndexCore:
         active_terms, p, n_out, rmse_compact = fitted
 
         logger.info(
-
             "Polynomial model selection: terms=%s | n_vars=%d | rmse_fit=%.6g | target<=%.6g",
-
             ",".join(active_terms),
-
             int(len(active_terms)),
-
             float(rmse_compact),
-
             float(rmse_target_compact),
-
         )
 
         if not np.all(np.isfinite(n_out)):
-
             logger.warning("Polynomial output invalid: non-finite values, fallback monotonic raw.")
 
             return _ret_fallback_raw("fallback-raw-poly-nonfinite")
@@ -3453,7 +2604,6 @@ class IndexCore:
         fit_range_mask = IndexCore._fit_mask(wl, wl_min_fit, wl_max_fit)
 
         if int(np.count_nonzero(fit_range_mask)) >= 3:
-
             idx = np.where(fit_range_mask)[0]
 
             n_sub = np.asarray(n_out[idx], dtype=np.float64)
@@ -3461,15 +2611,10 @@ class IndexCore:
             pos_count, pos_frac = IndexCore._monotonic_violation_stats(n_sub)
 
             if (pos_count > 8) and (pos_frac > 0.03):
-
                 logger.warning(
-
                     "Polynomial fit rejected: monotonic tolerance exceeded (count=%d frac=%.3f) -> fallback monotonic raw.",
-
                     int(pos_count),
-
                     float(pos_frac),
-
                 )
 
                 return _ret_fallback_raw("fallback-raw-poly-nonmonotonic")
@@ -3477,7 +2622,6 @@ class IndexCore:
         n_eval = np.asarray(n_out[mask], dtype=np.float64)
 
         if np.any((n_eval < 1.35) | (n_eval > 5.0)):
-
             logger.warning("Polynomial fit rejected: out-of-bounds n(lambda) in fit range -> fallback monotonic raw.")
 
             return _ret_fallback_raw("fallback-raw-poly-bounds")
@@ -3487,109 +2631,67 @@ class IndexCore:
         wrmse = float(np.sqrt(np.mean(((n_eval - n_fit) * w_fit) ** 2)))
 
         if rmse_unweighted > 0.06:
-
             logger.warning(
-
                 "Polynomial fit rejected: rmse %.6g > acceptance %.6g (wrmse=%.6g) -> fallback monotonic raw.",
-
                 float(rmse_unweighted),
-
                 float(0.06),
-
                 float(wrmse),
-
             )
 
             return _ret_fallback_raw("fallback-raw-poly-rmse")
 
-        r_fit = (n_eval - n_fit)
+        r_fit = n_eval - n_fit
 
         i_worst = int(np.argmax(np.abs(r_fit)))
 
         logger.info(
-
             "Polynomial fit stats: wrmse=%.6g | rmse=%.6g | n_range_fit=[%.6f, %.6f] | n@edges=[%.6f, %.6f]",
-
             wrmse,
-
             rmse_unweighted,
-
             float(np.min(n_eval)),
-
             float(np.max(n_eval)),
-
             float(n_eval[0]),
-
             float(n_eval[-1]),
-
         )
 
         logger.info(
-
             "Residual stats: rmse=%.6g | mae=%.6g | maxabs=%.6g @ lambda=%.1fnm (pred=%.6f raw=%.6f)",
-
             rmse_unweighted,
-
             float(np.mean(np.abs(r_fit))),
-
             float(np.max(np.abs(r_fit))),
-
             float(wl_fit_nm[i_worst]),
-
             float(n_eval[i_worst]),
-
             float(n_fit[i_worst]),
-
         )
 
         coeff_map = {k: v for k, v in zip(active_terms, p)}
 
         p_full = np.asarray(
-
             [float(coeff_map.get(k, 0.0)) for k in _POLY_COEFF_KEYS],
-
             dtype=np.float64,
-
         )
 
         logger.info(
-
             "Polynomial coefficients accepted: a0=%.9g | a1=%.9g | a2=%.9g | a3=%.9g | a4=%.9g | a5=%.9g | a6=%.9g",
-
             *p_full.tolist(),
-
         )
 
         return _ret(n_out, f"analytic-polynomial-{len(active_terms)}", p_full)
 
     @staticmethod
-
     def get_smoothed_and_fits(
-
         n_raw: np.ndarray,
-
         wl_nm: np.ndarray,
-
         wl_min_fit: float,
-
         wl_max_fit: float,
-
         model_kind: str = "polynomial",
-
         progress_cb=None,
-
         *,
-
         log_preprocess: bool = True,
-
         sellmeier_timeout_s: float | None = None,
-
         sellmeier_de_maxiter: int = 300,
-
         sellmeier_ls_max_nfev: int = 3000,
-
         sellmeier_log_l1l2: bool | None = None,
-
     ):
 
         n_raw = np.asarray(n_raw, dtype=np.float64)
@@ -3603,91 +2705,57 @@ class IndexCore:
         fit_mask = IndexCore._fit_mask(wl, lo, hi) & np.isfinite(wl) & np.isfinite(n_raw)
 
         if log_preprocess:
-
             logger.info(
-
                 "Curve preprocess: range=[%.1f, %.1f]nm | kept=%d/%d",
-
                 lo,
-
                 hi,
-
                 int(np.count_nonzero(fit_mask)),
-
                 int(wl.size),
-
             )
 
             if int(np.count_nonzero(fit_mask)) >= 2:
-
                 wl_kept = wl[fit_mask]
 
                 logger.info(
-
                     "Strict fit mask effective bounds: [%.1f, %.1f]nm",
-
                     float(np.min(wl_kept)),
-
                     float(np.max(wl_kept)),
-
                 )
 
         fit_label = _substrate_fit_engine_log_label(model_kind)
 
         if log_preprocess:
-
             logger.info("Curve smoothing disabled: using raw n(lambda) directly before %s fit.", fit_label)
 
             logger.info(
-
                 "Fit/eval policy: fit_only=[%.1f, %.1f]nm | index_eval_full=[%.1f, %.1f]nm",
-
                 lo,
-
                 hi,
-
                 float(np.nanmin(wl)) if wl.size else float("nan"),
-
                 float(np.nanmax(wl)) if wl.size else float("nan"),
-
             )
 
         else:
-
             logger.info("Additional model fit (%s) on same column / same mask.", fit_label)
 
         n_sell, fit_meta = IndexCore.fit_sellmeier(
-
             n_raw,
-
             wl,
-
             lo,
-
             hi,
-
             valid_mask=fit_mask,
-
             progress_cb=progress_cb,
-
             model_kind=model_kind,
-
             return_meta=True,
-
             sellmeier_timeout_s=sellmeier_timeout_s,
-
             sellmeier_de_maxiter=sellmeier_de_maxiter,
-
             sellmeier_ls_max_nfev=sellmeier_ls_max_nfev,
-
             sellmeier_log_l1l2=sellmeier_log_l1l2,
-
         )
 
         return n_raw, n_sell, fit_meta
 
     @staticmethod
-
     def to_fraction(y_clean: np.ndarray) -> np.ndarray:
 
         frac = y_clean / 100.0 if np.max(y_clean) > 2.0 else y_clean.copy()
@@ -3695,29 +2763,24 @@ class IndexCore:
         return np.clip(frac, 0.0001, 0.9999)
 
     @staticmethod
-
     def single_face_from_two_face(r_2f: np.ndarray) -> np.ndarray:
 
         return np.clip(r_2f / (2.0 - r_2f), 0.0001, 0.9999)
 
     @staticmethod
-
     def n_from_tnu2f(t_frac: np.ndarray) -> np.ndarray:
 
-        return (1.0 + np.sqrt(1.0 - t_frac ** 2)) / t_frac
+        return (1.0 + np.sqrt(1.0 - t_frac**2)) / t_frac
 
     @staticmethod
-
     def n_from_rnu2f(r_frac: np.ndarray) -> np.ndarray:
 
-        disc = np.maximum(2.0 * r_frac - r_frac ** 2, 0.0)
+        disc = np.maximum(2.0 * r_frac - r_frac**2, 0.0)
 
         return (1.0 + np.sqrt(disc)) / (1.0 - r_frac)
 
     @staticmethod
-
     def enforce_normal_dispersion(wl_nm: np.ndarray, n_vals: np.ndarray) -> np.ndarray:
-
         """Enforce a physically plausible normal dispersion: n decreases with lambda."""
 
         wl = np.asarray(wl_nm, dtype=np.float64)
@@ -3727,7 +2790,6 @@ class IndexCore:
         m = np.isfinite(wl) & np.isfinite(n)
 
         if int(np.count_nonzero(m)) < 3:
-
             return n
 
         idx = np.where(m)[0]
@@ -3741,50 +2803,35 @@ class IndexCore:
         return n
 
     @staticmethod
-
     def n_from_r45s_single_face(r_frac: np.ndarray) -> np.ndarray:
 
         term = (1.0 + np.sqrt(r_frac)) / (1.0 - np.sqrt(r_frac))
 
-        return np.sqrt(0.5 * (1.0 + term ** 2))
+        return np.sqrt(0.5 * (1.0 + term**2))
 
     @staticmethod
-
     def n_from_r45p_single_face(r_frac: np.ndarray) -> np.ndarray:
 
         k = (1.0 - np.sqrt(r_frac)) / (1.0 + np.sqrt(r_frac))
 
-        n2 = (1.0 + np.sqrt(np.maximum(0.0, 1.0 - k ** 2))) / (k ** 2 + 1e-9)
+        n2 = (1.0 + np.sqrt(np.maximum(0.0, 1.0 - k**2))) / (k**2 + 1e-9)
 
         return np.sqrt(np.maximum(1.0, n2))
 
 
 class IndexTableDialog(QDialog):
-
     def __init__(
-
         self,
-
         wl,
-
         n_results_raw,
-
         n_results_by_model: dict[str, dict[str, np.ndarray]],
-
         rmse_row: dict[str, dict[str, float]],
-
         *,
-
         fit_meta_by_key: dict[str, dict[str, dict]] | None = None,
-
         fit_wl_lo: float | None = None,
-
         fit_wl_hi: float | None = None,
-
         spectral_wl_lo: float | None = None,
-
         spectral_wl_hi: float | None = None,
-
     ):
 
         super().__init__()
@@ -3798,17 +2845,11 @@ class IndexTableDialog(QDialog):
         layout = QVBoxLayout(self)
 
         layout.addWidget(
-
             create_styled_label(
-
                 "Refractive index: 3 laws compared (RMSE on 1st row; "
-
                 "by series, law columns sorted by increasing RMSE, left \u2192 right)",
-
                 style="subtitle",
-
             )
-
         )
 
         self.chk_only_cauchy = QCheckBox("Hide Raw points")
@@ -3820,17 +2861,13 @@ class IndexTableDialog(QDialog):
         layout.addWidget(self.chk_only_cauchy)
 
         if fit_wl_lo is not None and fit_wl_hi is not None:
-
             _lo_d = float(min(fit_wl_lo, fit_wl_hi))
 
             _hi_d = float(max(fit_wl_lo, fit_wl_hi))
 
             _hint = QLabel(
-
                 f"Table rows and plot bands: grayed if \u03bb out of fit window "
-
                 f"[{_lo_d:.1f}, {_hi_d:.1f}] nm (extrapolation / out-of-fit)."
-
             )
 
             _hint.setWordWrap(True)
@@ -3841,11 +2878,7 @@ class IndexTableDialog(QDialog):
 
         self.raw_items = []
 
-        bad_model: dict[str, set[str]] = {
-
-            bk: _bad_model_labels(rmse_row.get(bk, {})) for bk in n_results_raw.keys()
-
-        }
+        bad_model: dict[str, set[str]] = {bk: _bad_model_labels(rmse_row.get(bk, {})) for bk in n_results_raw.keys()}
 
         self.plot = CertusScientificPlot(title="Refractive index vs Wavelength")
 
@@ -3864,27 +2897,17 @@ class IndexTableDialog(QDialog):
         fit_mask_plot = None
 
         if fit_wl_lo is not None and fit_wl_hi is not None:
-
-            fit_mask_plot = _substrate_index_geom_fit_mask(
-
-                wl_plot, float(fit_wl_lo), float(fit_wl_hi)
-
-            )
+            fit_mask_plot = _substrate_index_geom_fit_mask(wl_plot, float(fit_wl_lo), float(fit_wl_hi))
 
         colors = [CertusTheme.BRAND_DESIGN, CertusTheme.WARNING, "#9b59b6", "#34495e"]
 
         _fit_pen_styles = [
-
             (2.4, Qt.PenStyle.SolidLine),
-
             (2.0, Qt.PenStyle.DashLine),
-
             (2.0, Qt.PenStyle.DotLine),
-
         ]
 
         for i, key in enumerate(n_results_raw.keys()):
-
             y_raw = n_results_raw[key]
 
             c = pg.mkColor(colors[i % len(colors)])
@@ -3894,21 +2917,13 @@ class IndexTableDialog(QDialog):
             c_raw.setAlpha(150)
 
             raw_item = _pg_plot_scatter_split_band(
-
                 self.plot,
-
                 wl,
-
                 y_raw,
-
                 fit_mask_plot,
-
                 pg.mkPen(color=c_raw, width=1.5),
-
                 pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.2),
-
                 name=f"{key} (Raw)",
-
             )
 
             self.raw_items.append(raw_item)
@@ -3916,21 +2931,17 @@ class IndexTableDialog(QDialog):
             bym = n_results_by_model.get(key, {})
 
             for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
-
                 arr = bym.get(mlabel)
 
                 if arr is None:
-
                     continue
 
                 if mlabel in bad_model.get(key, set()):
-
                     pc = pg.mkColor(CertusTheme.TEXT_SUB)
 
                     pc.setAlpha(160)
 
                 else:
-
                     pc = pg.mkColor(c)
 
                     pc.setAlpha(220)
@@ -3938,44 +2949,26 @@ class IndexTableDialog(QDialog):
                 pw, pst = _fit_pen_styles[pi % 3]
 
                 _pg_plot_xy_split_band(
-
                     self.plot,
-
                     wl,
-
                     arr,
-
                     fit_mask_plot,
-
                     pg.mkPen(color=pc, width=pw, style=pst),
-
                     pg.mkPen(
-
                         color=CertusTheme.TEXT_SUB,
-
                         width=max(1.2, pw - 0.5),
-
                         style=pst,
-
                     ),
-
                     name=f"{key} ({mlabel})",
-
                 )
 
         if fit_wl_lo is not None and fit_wl_hi is not None and wl_plot.size:
-
             _wmn = float(np.nanmin(wl_plot))
 
             _wmx = float(np.nanmax(wl_plot))
 
             if np.isfinite(_wmn) and np.isfinite(_wmx) and _wmx > _wmn:
-
-                _add_pg_fit_band_outside_shading(
-
-                    self.plot, float(fit_wl_lo), float(fit_wl_hi), _wmn, _wmx
-
-                )
+                _add_pg_fit_band_outside_shading(self.plot, float(fit_wl_lo), float(fit_wl_hi), _wmn, _wmx)
 
         vb = self.plot.getViewBox()
 
@@ -4006,21 +2999,15 @@ class IndexTableDialog(QDialog):
         self.spectral_wl_hi = spectral_wl_hi
 
         self._models_order_by_bk: dict[str, list[tuple[str, str]]] = {
-
-            bk: _substrate_index_models_ordered_by_rmse(rmse_row.get(bk, {}))
-
-            for bk in n_results_raw.keys()
-
+            bk: _substrate_index_models_ordered_by_rmse(rmse_row.get(bk, {})) for bk in n_results_raw.keys()
         }
 
         col_names = ["lambda (nm)"]
 
         for bk in self.n_results_raw.keys():
-
             col_names.append(f"{bk} (Raw)")
 
             for _mk, mlabel in self._models_order_by_bk[bk]:
-
                 col_names.append(f"{bk} ({mlabel})")
 
         bad_column = [False] * len(col_names)
@@ -4028,7 +3015,6 @@ class IndexTableDialog(QDialog):
         _ci = 1
 
         for _bk in self.n_results_raw.keys():
-
             bad_column[_ci] = False
 
             _ci += 1
@@ -4040,7 +3026,6 @@ class IndexTableDialog(QDialog):
             _best = _best_finite_rmse_from_triplet(_mv)
 
             for _mk, mlabel in self._models_order_by_bk[_bk]:
-
                 _j = _MODEL_LABEL_TO_INDEX[mlabel]
 
                 bad_column[_ci] = _rmse_is_bad_vs_best(_mv[_j], _best)
@@ -4060,7 +3045,6 @@ class IndexTableDialog(QDialog):
         _hh = table.horizontalHeader()
 
         for _c in range(len(col_names)):
-
             _hh.setSectionResizeMode(_c, QHeaderView.ResizeMode.Interactive)
 
         _hh.setMinimumSectionSize(52)
@@ -4080,7 +3064,6 @@ class IndexTableDialog(QDialog):
         _ix_hdr = 1
 
         for _bk in self.n_results_raw.keys():
-
             _col_base_raw[_bk] = _ix_hdr
 
             _ix_hdr += 1 + _N_SUBSTRATE_MODELS
@@ -4096,7 +3079,6 @@ class IndexTableDialog(QDialog):
         table.setItem(0, 0, it0)
 
         for bk in self.n_results_raw.keys():
-
             base = _col_base_raw[bk]
 
             rms = self.rmse_row.get(bk, {})
@@ -4116,7 +3098,6 @@ class IndexTableDialog(QDialog):
             table.setItem(0, base, ir)
 
             for j, (_mk, mlabel) in enumerate(self._models_order_by_bk[bk]):
-
                 v = float(rms.get(mlabel, float("nan")))
 
                 txt = f"{v:.6f}" if np.isfinite(v) else ""
@@ -4130,15 +3111,12 @@ class IndexTableDialog(QDialog):
                 cell.setBackground(QBrush(QColor(CertusTheme.SURFACE)))
 
                 if _rmse_is_best_fit(v, best_v):
-
                     cell.setForeground(QBrush(QColor(CertusTheme.SUCCESS)))
 
                 elif _rmse_is_bad_vs_best(v, best_v):
-
                     cell.setForeground(QBrush(QColor(CertusTheme.TEXT_SUB)))
 
                 else:
-
                     cell.setForeground(QBrush(QColor(CertusTheme.TEXT_MAIN)))
 
                 table.setItem(0, base + 1 + j, cell)
@@ -4148,17 +3126,11 @@ class IndexTableDialog(QDialog):
         row_outside_fit_brush = QBrush(QColor(CertusTheme.BORDER))
 
         if self.fit_wl_lo is not None and self.fit_wl_hi is not None:
-
-            m_band_geom = _substrate_index_geom_fit_mask(
-
-                wl_arr, float(self.fit_wl_lo), float(self.fit_wl_hi)
-
-            )
+            m_band_geom = _substrate_index_geom_fit_mask(wl_arr, float(self.fit_wl_lo), float(self.fit_wl_hi))
 
             finite_n_any = np.zeros(len(wl_arr), dtype=bool)
 
             for arr in self.n_results_raw.values():
-
                 finite_n_any |= np.isfinite(np.asarray(arr, dtype=np.float64))
 
             bold_wl_row = m_band_geom & np.isfinite(wl_arr) & finite_n_any
@@ -4166,47 +3138,39 @@ class IndexTableDialog(QDialog):
             outside_fit_row = (~m_band_geom) & np.isfinite(wl_arr) & finite_n_any
 
         else:
-
             bold_wl_row = np.zeros(len(wl), dtype=bool)
 
             outside_fit_row = np.zeros(len(wl), dtype=bool)
 
         for i in range(n_data_rows):
-
             r = 1 + i
 
             row_vals = [f"{wl[i]:.1f}"]
 
             for bk in self.n_results_raw.keys():
-
                 row_vals.append(f"{self.n_results_raw[bk][i]:.4f}")
 
                 bym = self.n_results_by_model.get(bk, {})
 
                 for _mk, mlabel in self._models_order_by_bk[bk]:
-
                     arr = bym.get(mlabel)
 
                     row_vals.append(f"{arr[i]:.4f}" if arr is not None else "")
 
             for j, txt in enumerate(row_vals):
-
                 it = QTableWidgetItem(txt)
 
                 it.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
                 if bool(outside_fit_row[i]):
-
                     it.setBackground(row_outside_fit_brush)
 
                     it.setForeground(QBrush(QColor(CertusTheme.TEXT_SUB)))
 
                 elif j > 0 and j < len(bad_column) and bad_column[j]:
-
                     it.setForeground(QBrush(QColor(CertusTheme.TEXT_SUB)))
 
                 if j == 0 and bool(bold_wl_row[i]):
-
                     fnt = QFont(it.font())
 
                     fnt.setBold(True)
@@ -4240,45 +3204,33 @@ class IndexTableDialog(QDialog):
         visible = state == Qt.CheckState.Unchecked.value
 
         for item in self.raw_items:
-
             item.setVisible(visible)
 
     def copy_to_clipboard(self, col_names):
 
         header_lines: list[str] = [
-
             "CERTUS Substrate Index: 3 laws comparison (Polynomial, Sellmeier 3-poles, Spline n B-spline LSQ).",
-
             "RMSE (unweighted) calculated on fit window, vs raw n.",
-
         ]
 
         if self.fit_wl_lo is not None and self.fit_wl_hi is not None:
-
             header_lines.append(
-
                 f"Fit zone (data): \u03bb = [{float(self.fit_wl_lo):.1f}, {float(self.fit_wl_hi):.1f}] nm"
-
             )
 
         if self.spectral_wl_lo is not None and self.spectral_wl_hi is not None:
-
             header_lines.append(
-
                 f"n(\u03bb) evaluated on full measured band: \u03bb = [{float(self.spectral_wl_lo):.1f}, {float(self.spectral_wl_hi):.1f}] nm"
-
             )
 
         header_lines.append("")
 
         for bk in self.n_results_raw.keys():
-
             header_lines.append(f"=== {bk} ===")
 
             rms = self.rmse_row.get(bk, {})
 
             for _mk, mlabel in self._models_order_by_bk[bk]:
-
                 v = rms.get(mlabel, float("nan"))
 
                 header_lines.append(f"RMSE {mlabel}: {v:.6g}" if np.isfinite(v) else f"RMSE {mlabel}: ")
@@ -4286,7 +3238,6 @@ class IndexTableDialog(QDialog):
             meta_block = self.fit_meta_by_key.get(bk, {})
 
             for _mk, mlabel in self._models_order_by_bk[bk]:
-
                 meta = meta_block.get(mlabel, {})
 
                 src = str(meta.get("source", "unknown"))
@@ -4295,11 +3246,7 @@ class IndexTableDialog(QDialog):
 
                 header_lines.append(IndexCore._clipboard_law_line_from_source(src, _mk))
 
-                header_lines.append(
-
-                    IndexCore._clipboard_coeffs_line_from_source(src, meta.get("coeffs"), meta=meta)
-
-                )
+                header_lines.append(IndexCore._clipboard_coeffs_line_from_source(src, meta.get("coeffs"), meta=meta))
 
                 header_lines.append(f"internal source: {src}")
 
@@ -4314,13 +3261,11 @@ class IndexTableDialog(QDialog):
         row0 = [col_names[0]]
 
         for bk in self.n_results_raw.keys():
-
             row0.append("")
 
             rms = self.rmse_row.get(bk, {})
 
             for _mk, mlabel in self._models_order_by_bk[bk]:
-
                 v = rms.get(mlabel, float("nan"))
 
                 row0.append(f"{v:.6f}" if np.isfinite(v) else "")
@@ -4328,17 +3273,14 @@ class IndexTableDialog(QDialog):
         text += "\t".join(row0) + "\n"
 
         for i in range(len(self.wl)):
-
             row = [f"{self.wl[i]:.1f}"]
 
             for bk in self.n_results_raw.keys():
-
                 row.append(f"{self.n_results_raw[bk][i]:.4f}")
 
                 bym = self.n_results_by_model.get(bk, {})
 
                 for _mk, mlabel in self._models_order_by_bk[bk]:
-
                     arr = bym.get(mlabel)
 
                     row.append(f"{arr[i]:.4f}" if arr is not None else "")
@@ -4352,11 +3294,8 @@ class IndexTableDialog(QDialog):
     def show_model_params_dialog(self):
 
         lines: list[str] = [
-
             "CERTUS Substrate Index: analytical law parameters",
-
             "",
-
         ]
 
         def _bk_best_rmse_sort_key(bk: str) -> tuple:
@@ -4364,7 +3303,6 @@ class IndexTableDialog(QDialog):
             best = _best_finite_rmse_from_triplet(_rms_triplet(self.rmse_row.get(bk, {})))
 
             if not np.isfinite(best):
-
                 return (1, float("inf"), str(bk))
 
             return (0, best, str(bk))
@@ -4372,7 +3310,6 @@ class IndexTableDialog(QDialog):
         bks_dialog_order = sorted(self.n_results_raw.keys(), key=_bk_best_rmse_sort_key)
 
         for bk in bks_dialog_order:
-
             lines.append(f"=== {bk} ===")
 
             meta_block = self.fit_meta_by_key.get(bk, {})
@@ -4380,7 +3317,6 @@ class IndexTableDialog(QDialog):
             rms_b = self.rmse_row.get(bk, {})
 
             for rank, (_mk, mlabel) in enumerate(self._models_order_by_bk[bk]):
-
                 meta = meta_block.get(mlabel, {})
 
                 src = str(meta.get("source", "unknown"))
@@ -4391,26 +3327,14 @@ class IndexTableDialog(QDialog):
 
                 rmse_v = rms_b.get(mlabel, float("nan"))
 
-                best_tag = (
-
-                    "  best RMSE (this series)"
-
-                    if rank == 0 and np.isfinite(rmse_v)
-
-                    else ""
-
-                )
+                best_tag = "  best RMSE (this series)" if rank == 0 and np.isfinite(rmse_v) else ""
 
                 lines.append(f"[{mlabel}]{best_tag}")
 
                 lines.append(
-
                     f"RMSE (fit vs raw n, fit window): {float(rmse_v):.6g}"
-
                     if np.isfinite(rmse_v)
-
                     else "RMSE (fit vs raw n, fit window): "
-
                 )
 
                 lines.append(IndexCore._clipboard_law_line_from_source(src, req_mk))
@@ -4431,24 +3355,15 @@ class IndexTableDialog(QDialog):
 
         dlg.resize(980, 620)
 
-        dlg.setStyleSheet(
-
-            f"background-color: {CertusTheme.BACKGROUND}; color: {CertusTheme.TEXT_MAIN};"
-
-        )
+        dlg.setStyleSheet(f"background-color: {CertusTheme.BACKGROUND}; color: {CertusTheme.TEXT_MAIN};")
 
         layout = QVBoxLayout(dlg)
 
         info = QLabel(
-
             f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
-
             "RMSE (unweighted, vs raw n on fit window), description and coefficients. "
-
             "Series (blocks === ... ===): from minimal best RMSE to worst, top of window. "
-
             "In each series: laws from best to worst RMSE (like table columns).</span>"
-
         )
 
         info.setWordWrap(True)
@@ -4485,7 +3400,6 @@ class IndexTableDialog(QDialog):
 
 
 class SubstrateIndexGUI(QMainWindow):
-
     def __init__(self):
 
         super().__init__()
@@ -4545,19 +3459,18 @@ class SubstrateIndexGUI(QMainWindow):
                 "sellmeier_coeffs": self.last_run_manifest.get("sellmeier_coeffs"),
                 "fit_rmse": self.last_run_manifest.get("rmse"),
                 "lambda_range_nm": self.last_run_manifest.get("lambda_range_nm"),
-            }
+            },
         }
 
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=4)
             self.log(f"Datasheet exported to {Path(path).name}", "SUCCESS")
-        except Exception as e:
+        except (OSError, TypeError, ValueError) as e:
             self.log(f"Export failed: {e}", "ERROR")
             QMessageBox.critical(self, "Export Error", str(e))
 
     class _UILogHandler(logging.Handler):
-
         def __init__(self, append_fn):
 
             super().__init__(level=logging.INFO)
@@ -4569,23 +3482,18 @@ class SubstrateIndexGUI(QMainWindow):
         def emit(self, record: logging.LogRecord) -> None:
 
             try:
-
                 self._append_fn(self.format(record))
 
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
                 pass
 
     def _attach_ui_log_handler(self) -> None:
 
         if not hasattr(self, "log_panel") or self.log_panel is None:
-
             return
 
         for h in logger.handlers:
-
             if isinstance(h, SubstrateIndexGUI._UILogHandler):
-
                 return
 
         h = SubstrateIndexGUI._UILogHandler(self.log_panel.log_text.append)
@@ -4601,17 +3509,11 @@ class SubstrateIndexGUI(QMainWindow):
         level_u = str(level).upper().strip()
 
         _map = {
-
             "DEBUG": logger.debug,
-
             "INFO": logger.info,
-
             "WARNING": logger.warning,
-
             "ERROR": logger.error,
-
             "SUCCESS": logger.info,
-
         }
 
         _map.get(level_u, logger.info)(message)
@@ -4619,7 +3521,6 @@ class SubstrateIndexGUI(QMainWindow):
     def _set_busy(self, busy: bool) -> None:
 
         if hasattr(self, "btn_load"):
-
             self.btn_load.setEnabled(not busy)
 
         if hasattr(self, "btn_calc_n"):
@@ -4636,19 +3537,14 @@ class SubstrateIndexGUI(QMainWindow):
         lo, hi = (min(lo, hi), max(lo, hi))
 
         if self.df is not None and not self.df.empty:
-
             wl = np.asarray(
-
                 pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values,
-
                 dtype=np.float64,
-
             )
 
             m = np.isfinite(wl)
 
             if int(np.count_nonzero(m)) >= 2:
-
                 wmin = float(np.min(wl[m]))
 
                 wmax = float(np.max(wl[m]))
@@ -4658,7 +3554,6 @@ class SubstrateIndexGUI(QMainWindow):
                 hi = min(hi, wmax)
 
         if hi < lo:
-
             lo, hi = hi, lo
 
         return lo, hi
@@ -4666,7 +3561,6 @@ class SubstrateIndexGUI(QMainWindow):
     def _on_fit_range_changed(self):
 
         if self.df is None:
-
             return
 
         # Immediately redraws preview to update out-of-fit shading.
@@ -4678,31 +3572,21 @@ class SubstrateIndexGUI(QMainWindow):
         self._on_fit_range_changed()
 
     def _apply_full_auto_sellmeier_mode(self) -> None:
-
         """Full auto mode: hides/disables manual Sellmeier settings."""
 
         auto_on = bool(self.sell_auto_chk.isChecked()) if hasattr(self, "sell_auto_chk") else True
 
         controls = [
-
             getattr(self, "sell_timeout_lbl", None),
-
             getattr(self, "sell_timeout_spin", None),
-
             getattr(self, "sell_de_lbl", None),
-
             getattr(self, "sell_de_iter_spin", None),
-
             getattr(self, "sell_ls_lbl", None),
-
             getattr(self, "sell_ls_nfev_spin", None),
-
         ]
 
         for w in controls:
-
             if w is None:
-
                 continue
 
             w.setVisible(not auto_on)
@@ -4724,15 +3608,10 @@ class SubstrateIndexGUI(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
 
         header = create_header_logo_widget(
-
             "CERTUS SUBSTRATE INDEX",
-
             "Index from spectral measurements",
-
             logo_width=200,
-
             module_name="CERTUS_SUBSTRATE_INDEX",
-
         )
 
         layout.addWidget(header)
@@ -4741,15 +3620,21 @@ class SubstrateIndexGUI(QMainWindow):
 
         c_layout = QVBoxLayout(content)
 
-        c_layout.setContentsMargins(CertusTheme.SPACING_XL, CertusTheme.SPACING_XL, CertusTheme.SPACING_XL, CertusTheme.SPACING_XL)
+        c_layout.setContentsMargins(
+            CertusTheme.SPACING_XL, CertusTheme.SPACING_XL, CertusTheme.SPACING_XL, CertusTheme.SPACING_XL
+        )
 
         tools = QFrame()
 
-        tools.setStyleSheet(f"background-color: {CertusTheme.SURFACE}; border-radius: {CertusTheme.RADIUS_LG}px; border: 1px solid {CertusTheme.BORDER};")
+        tools.setStyleSheet(
+            f"background-color: {CertusTheme.SURFACE}; border-radius: {CertusTheme.RADIUS_LG}px; border: 1px solid {CertusTheme.BORDER};"
+        )
 
         row = QHBoxLayout(tools)
 
-        row.setContentsMargins(CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD)
+        row.setContentsMargins(
+            CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD
+        )
 
         self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
 
@@ -4853,11 +3738,7 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.sell_ls_nfev_spin.setValue(3000)
 
-        self.sell_ls_nfev_spin.setToolTip(
-
-            "Max evaluations for least_squares (polish after L-BFGS-B, Sellmeier)."
-
-        )
+        self.sell_ls_nfev_spin.setToolTip("Max evaluations for least_squares (polish after L-BFGS-B, Sellmeier).")
 
         row.addWidget(self.sell_ls_nfev_spin)
 
@@ -4868,9 +3749,7 @@ class SubstrateIndexGUI(QMainWindow):
         self.sell_log_l_chk.setChecked(bool(SELLMEIER_DEFAULT_LOG_L1L2))
 
         self.sell_log_l_chk.setToolTip(
-
             "If checked: optimization on ui=ln(Li) then Li=exp(ui) (log bounds). Otherwise: Li directly."
-
         )
 
         row.addWidget(self.sell_log_l_chk)
@@ -4878,15 +3757,10 @@ class SubstrateIndexGUI(QMainWindow):
         row.addSpacing(12)
 
         row.addWidget(
-
             QLabel(
-
                 f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
-
                 "Systematic calculation of <b>3</b> laws (Polynomial, Sellmeier, Spline) to compare RMSE (1st row).</span>"
-
             )
-
         )
 
         self.btn_calc_n = create_styled_button("Calc Substrate Index (3 laws)", variant="secondary")
@@ -4912,19 +3786,12 @@ class SubstrateIndexGUI(QMainWindow):
         c_layout.addWidget(tools)
 
         hint = QLabel(
-
             f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
-
             "Only spectral columns whose <b>name</b> indicates a <b>bare substrate</b> "
-
             "(e.g. <i>substrate nu</i>, <i>sbst nu</i>, <i>SNU</i>, <i>BSUB</i>, <i>bare sub</i>, "
-
             "<i>no-coat</i>, <i>sans_dep</i>, <i>nu</i> isolated...) are loaded; "
-
             "filter / stack / target / design (including abbreviations) are ignored."
-
             "</span>"
-
         )
 
         hint.setWordWrap(True)
@@ -4954,12 +3821,7 @@ class SubstrateIndexGUI(QMainWindow):
         self.progress_widget = EnhancedProgressWidget()
 
         if hasattr(self.progress_widget, "canceled"):
-
-            self.progress_widget.canceled.connect(
-
-                lambda: self.log("Cancellation requested by user...", "WARNING")
-
-            )
+            self.progress_widget.canceled.connect(lambda: self.log("Cancellation requested by user...", "WARNING"))
 
         self.statusBar().addPermanentWidget(self.progress_widget)
 
@@ -4968,13 +3830,9 @@ class SubstrateIndexGUI(QMainWindow):
     def _is_cancel_requested(self) -> bool:
 
         return bool(
-
             hasattr(self, "progress_widget")
-
             and hasattr(self.progress_widget, "is_canceled")
-
             and self.progress_widget.is_canceled()
-
         )
 
     def load_file(self):
@@ -4988,21 +3846,14 @@ class SubstrateIndexGUI(QMainWindow):
         self.log("Loading measurement workbook...", "INFO")
 
         try:
-
             result = open_measurement_excel_interactive(
-
                 self,
-
                 start_dir=self.last_dir or "",
-
                 caption="Open Data",
-
                 round_wavelength_decimals=None,
-
             )
 
             if result is None:
-
                 self.progress_widget.stop("Cancelled")
 
                 return
@@ -5012,48 +3863,28 @@ class SubstrateIndexGUI(QMainWindow):
 
             self.settings.setValue("last_dir", self.last_dir)
 
-            self.df, kept_spec, dropped_spec = _filter_dataframe_bare_substrate_columns(
-
-                raw_df
-
-            )
+            self.df, kept_spec, dropped_spec = _filter_dataframe_bare_substrate_columns(raw_df)
 
             if dropped_spec:
-
                 logger.info(
-
                     "Substrate index: ignored columns (no bare substrate indicator in the name): %s",
-
-                    "; ".join(dropped_spec[:40])
-
-                    + ("; ..." if len(dropped_spec) > 40 else ""),
-
+                    "; ".join(dropped_spec[:40]) + ("; ..." if len(dropped_spec) > 40 else ""),
                 )
 
             if not kept_spec:
-
                 self.df = None
 
                 self.btn_calc_n.setEnabled(False)
 
                 QMessageBox.warning(
-
                     self,
-
                     "Bare substrate: no columns retained",
-
                     "No spectral column name indicates a **bare substrate** "
-
                     "(e.g. substrate nu, sbst nu, SNU, BSUB, bare sub, nocoat, sans_dep, "
-
                     "nu sub, empty sub, isolated word 'nu', etc.).\n\n"
-
                     "Filter or stack measurements are intentionally ignored.\n\n"
-
                     f"Columns present but excluded ({len(dropped_spec)}): "
-
                     + (", ".join(dropped_spec[:12]) + ("..." if len(dropped_spec) > 12 else "")),
-
                 )
 
                 self.progress_widget.stop("No bare-substrate columns")
@@ -5064,16 +3895,11 @@ class SubstrateIndexGUI(QMainWindow):
 
             # Measurement sheet imposes absolute lambda bounds; UI window stays inside these limits.
 
-            wl_all = np.asarray(
-
-                pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64
-
-            )
+            wl_all = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
 
             m_w = np.isfinite(wl_all)
 
             if int(np.count_nonzero(m_w)) >= 2:
-
                 wmin = float(np.min(wl_all[m_w]))
 
                 wmax = float(np.max(wl_all[m_w]))
@@ -5087,25 +3913,16 @@ class SubstrateIndexGUI(QMainWindow):
                 self.fit_lmax_spin.setValue(wmax)
 
             self.log(
-
                 f"Substrate index: {Path(path).name}  "
-
                 f"{len(kept_spec)} bare substrate column(s), {len(dropped_spec)} ignored.",
-
                 "INFO",
-
             )
 
             logger.info(
-
                 "Substrate index: loading %s  %d bare substrate column(s), %d ignored.",
-
                 Path(path).name,
-
                 len(kept_spec),
-
                 len(dropped_spec),
-
             )
 
             self.progress_widget.update(1, 1, phase="Preview")
@@ -5115,7 +3932,6 @@ class SubstrateIndexGUI(QMainWindow):
             self.progress_widget.stop("Loaded")
 
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-
             logger.error("Failed to load measurement sheet: %s", e)
 
             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
@@ -5127,7 +3943,6 @@ class SubstrateIndexGUI(QMainWindow):
     def preview_plot(self):
 
         if self.df is None:
-
             return
 
         self.plot_widget.clear()
@@ -5137,7 +3952,6 @@ class SubstrateIndexGUI(QMainWindow):
         m_x = np.isfinite(x)
 
         if int(np.count_nonzero(m_x)) < 5:
-
             logger.warning("Substrate index preview: wavelength column has insufficient finite points.")
 
             return
@@ -5149,7 +3963,6 @@ class SubstrateIndexGUI(QMainWindow):
         lo_f, hi_f = self._get_fit_range_from_ui()
 
         if wmax > wmin:
-
             _add_pg_fit_band_outside_shading(self.plot_widget, lo_f, hi_f, wmin, wmax)
 
         fit_mask = _substrate_index_geom_fit_mask(x, lo_f, hi_f)
@@ -5157,31 +3970,20 @@ class SubstrateIndexGUI(QMainWindow):
         y_raw = np.asarray(self.df.iloc[:, 1:].values, dtype=np.float64).T[:, m_x]
 
         y_clean = IndexCore.apply_dynamic_filtering(
-
             x, y_raw, self.current_window, self.current_poly, self.current_heavy
-
         )
 
         for i, col in enumerate(self.df.columns[1:]):
-
             color = [CertusTheme.BRAND_DESIGN, CertusTheme.BRAND_INDEX, CertusTheme.SUCCESS, CertusTheme.WARNING][i % 4]
 
             _pg_plot_xy_split_band(
-
                 self.plot_widget,
-
                 x,
-
                 y_clean[i],
-
                 fit_mask,
-
                 pg.mkPen(color=color, width=2),
-
                 pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.6),
-
                 name=str(col),
-
             )
 
         self.plot_widget.getViewBox().enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
@@ -5195,53 +3997,33 @@ class SubstrateIndexGUI(QMainWindow):
         m = np.isfinite(x) & np.isfinite(y_raw)
 
         if int(np.count_nonzero(m)) < 5:
-
             raise ValueError(f"Not enough finite points in column: {col_name}")
 
         if not np.all(m):
-
             y_raw = np.interp(x, x[m], y_raw[m])
 
         y_clean = IndexCore.apply_dynamic_filtering(
-
             x, y_raw, self.current_window, self.current_poly, self.current_heavy
-
         )
 
         return IndexCore.to_fraction(y_clean)
 
     def _compute_n_results(
-
         self,
-
         x: np.ndarray,
-
         groups: dict[str, list],
-
         wl_min_fit: float,
-
         wl_max_fit: float,
-
         *,
-
         sellmeier_timeout_s: float | None = None,
-
         sellmeier_de_maxiter: int = 300,
-
         sellmeier_ls_max_nfev: int = 3000,
-
         sellmeier_log_l1l2: bool | None = None,
-
     ) -> tuple[
-
         dict[str, np.ndarray],
-
         dict[str, dict[str, np.ndarray]],
-
         dict[str, dict[str, float]],
-
         dict[str, dict[str, dict]],
-
     ]:
 
         n_results_raw: dict[str, np.ndarray] = {}
@@ -5269,41 +4051,27 @@ class SubstrateIndexGUI(QMainWindow):
             nonlocal done_steps, col_idx
 
             if self._is_cancel_requested():
-
                 raise RuntimeError("Calculation cancelled by user.")
 
             col_idx += 1
 
             if hasattr(self, "progress_widget"):
-
                 self.progress_widget.update(
-
                     done_steps,
-
                     total_steps,
-
                     phase=f"Columns {col_idx}/{max(total_cols, 1)}",
-
                     extra_info=str(col_name),
-
                 )
 
             n_raw_base = np.asarray(n_vals, dtype=np.float64)
 
             logger.info(
-
                 "Fit column %d/%d: %s | n_raw_range=[%.6f, %.6f]",
-
                 col_idx,
-
                 max(total_cols, 1),
-
                 str(col_name),
-
                 float(np.nanmin(n_raw_base)),
-
                 float(np.nanmax(n_raw_base)),
-
             )
 
             _i_min = int(np.argmin(n_raw_base))
@@ -5311,13 +4079,9 @@ class SubstrateIndexGUI(QMainWindow):
             _i_max = int(np.argmax(n_raw_base))
 
             logger.info(
-
                 "Column anchors: lambda@n_min=%.1fnm lambda@n_max=%.1fnm",
-
                 float(xa[_i_min]),
-
                 float(xa[_i_max]),
-
             )
 
             out_key = f"n ({col_name})"
@@ -5333,53 +4097,33 @@ class SubstrateIndexGUI(QMainWindow):
             m_rmse_mask = m_rmse_geom & np.isfinite(n_raw_base)
 
             for mk, mlabel in SUBSTRATE_INDEX_MODELS:
-
                 if self._is_cancel_requested():
-
                     raise RuntimeError("Calculation cancelled by user.")
 
                 done_steps += 1
 
                 if hasattr(self, "progress_widget"):
-
                     self.progress_widget.update(
-
                         done_steps,
-
                         total_steps,
-
                         phase=f"Fit {done_steps}/{total_steps}",
-
                         extra_info=f"{col_name}  {mlabel}",
-
                     )
 
                 log_pre = mk == SUBSTRATE_INDEX_MODELS[0][0]
 
                 _, n_fit, fit_meta = IndexCore.get_smoothed_and_fits(
-
                     n_raw_base,
-
                     xa,
-
                     wl_min_fit,
-
                     wl_max_fit,
-
                     model_kind=mk,
-
                     log_preprocess=log_pre,
-
                     sellmeier_timeout_s=sellmeier_timeout_s,
-
                     sellmeier_de_maxiter=sellmeier_de_maxiter,
-
                     sellmeier_ls_max_nfev=sellmeier_ls_max_nfev,
-
                     sellmeier_log_l1l2=sellmeier_log_l1l2,
-
                     progress_cb=None,
-
                 )
 
                 n_fit = np.asarray(n_fit, dtype=np.float64)
@@ -5387,13 +4131,11 @@ class SubstrateIndexGUI(QMainWindow):
                 by_model[mlabel] = n_fit
 
                 if np.any(m_rmse_mask):
-
                     d = n_fit[m_rmse_mask] - n_raw_base[m_rmse_mask]
 
                     rmse_vs_raw = float(np.sqrt(np.mean(d * d)))
 
                 else:
-
                     rmse_vs_raw = float("nan")
 
                 meta_m[mlabel] = dict(fit_meta)
@@ -5405,37 +4147,24 @@ class SubstrateIndexGUI(QMainWindow):
                 # enforce_normal_dispersion), hence RMSE=0; this score is not used to elect the best.
 
                 if src.startswith("fallback-raw") or src == "skipped-insufficient-points":
-
                     rms_m[mlabel] = float("inf")
 
                     logger.info(
-
                         "Model %s | %s | RMSE(vs raw)=%.6g | source=%s - not eligible for best RMSE",
-
                         str(col_name),
-
                         mlabel,
-
                         rmse_vs_raw if np.isfinite(rmse_vs_raw) else float("nan"),
-
                         src,
-
                     )
 
                 else:
-
                     rms_m[mlabel] = rmse_vs_raw if np.isfinite(rmse_vs_raw) else float("nan")
 
                     logger.info(
-
                         "Model %s | %s | RMSE(fit)=%.6g",
-
                         str(col_name),
-
                         mlabel,
-
                         float(rms_m[mlabel]) if np.isfinite(rms_m[mlabel]) else float("nan"),
-
                     )
 
             n_results_by_model[out_key] = by_model
@@ -5449,37 +4178,25 @@ class SubstrateIndexGUI(QMainWindow):
             score_m: dict[str, float] = {}
 
             for _mk, _ml in SUBSTRATE_INDEX_MODELS:
-
                 arr = by_model.get(_ml)
 
                 if arr is None:
-
                     score_m[_ml] = float("inf")
 
                     continue
 
                 score_m[_ml] = _model_selection_score(
-
                     rmse_fit=float(rms_m.get(_ml, float("nan"))),
-
                     n_fit=np.asarray(arr, dtype=np.float64),
-
                     wl_nm=xa,
-
                     fit_mask=m_rmse_mask,
-
                     fit_meta=meta_m.get(_ml, {}),
-
                     col_name=str(col_name),
-
                 )
 
             best_lab = min(
-
                 SUBSTRATE_INDEX_MODELS,
-
                 key=lambda t: float(score_m.get(t[1], float("inf"))),
-
             )[1]
 
             n_best = by_model.get(best_lab, n_raw_base)
@@ -5487,31 +4204,18 @@ class SubstrateIndexGUI(QMainWindow):
             _r = np.asarray(n_best, dtype=np.float64) - np.asarray(n_raw_base, dtype=np.float64)
 
             logger.info(
-
                 "Fit column done: %s | best score=%s | score=%.6g | n@4500%.6f | rmse_fit(best)=%.6g",
-
                 str(col_name),
-
                 best_lab,
-
                 float(score_m.get(best_lab, float("nan"))),
-
                 float(n_best[i_edge]) if i_edge < len(n_best) else float("nan"),
-
-                float(np.sqrt(np.mean((_r[m_rmse_mask]) ** 2)))
-
-                if np.any(m_rmse_mask)
-
-                else float("nan"),
-
+                float(np.sqrt(np.mean((_r[m_rmse_mask]) ** 2))) if np.any(m_rmse_mask) else float("nan"),
             )
 
         for c in groups["t_2f"]:
-
             add_result(c, IndexCore.n_from_tnu2f(self._get_clean_fraction_column(x, c)))
 
         for c in groups["r_2f"]:
-
             n_r2f = IndexCore.n_from_rnu2f(self._get_clean_fraction_column(x, c))
 
             # R2f can exhibit high-lambda branch artifacts; stabilize before analytic fitting.
@@ -5521,47 +4225,25 @@ class SubstrateIndexGUI(QMainWindow):
             add_result(c, n_r2f)
 
         for c in groups["r45s_1f"]:
-
             add_result(c, IndexCore.n_from_r45s_single_face(self._get_clean_fraction_column(x, c)))
 
         for c in groups["r45s_2f"]:
-
             add_result(
-
                 c,
-
                 IndexCore.n_from_r45s_single_face(
-
-                    IndexCore.single_face_from_two_face(
-
-                        self._get_clean_fraction_column(x, c)
-
-                    )
-
+                    IndexCore.single_face_from_two_face(self._get_clean_fraction_column(x, c))
                 ),
-
             )
 
         for c in groups["r45p_1f"]:
-
             add_result(c, IndexCore.n_from_r45p_single_face(self._get_clean_fraction_column(x, c)))
 
         for c in groups["r45p_2f"]:
-
             add_result(
-
                 c,
-
                 IndexCore.n_from_r45p_single_face(
-
-                    IndexCore.single_face_from_two_face(
-
-                        self._get_clean_fraction_column(x, c)
-
-                    )
-
+                    IndexCore.single_face_from_two_face(self._get_clean_fraction_column(x, c))
                 ),
-
             )
 
         return n_results_raw, n_results_by_model, rmse_row, n_fit_meta
@@ -5569,7 +4251,6 @@ class SubstrateIndexGUI(QMainWindow):
     def calculate_index(self):
 
         if self.df is None:
-
             return
 
         self._set_busy(True)
@@ -5577,7 +4258,6 @@ class SubstrateIndexGUI(QMainWindow):
         self.progress_widget.start()
 
         if hasattr(self.progress_widget, "enable_cancel"):
-
             self.progress_widget.enable_cancel(True)
 
         self.progress_widget.set_time_budget(25.0)
@@ -5587,13 +4267,11 @@ class SubstrateIndexGUI(QMainWindow):
         self.log("Substrate index calculation started.", "INFO")
 
         try:
-
             x = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
 
             m_x = np.isfinite(x)
 
             if int(np.count_nonzero(m_x)) < 5:
-
                 QMessageBox.warning(self, "Wavelength column", "Invalid \u03bb column (not enough numerical points).")
 
                 self.progress_widget.stop("Invalid wavelength column")
@@ -5601,7 +4279,6 @@ class SubstrateIndexGUI(QMainWindow):
                 return
 
             if not np.all(m_x):
-
                 self.df = self.df.loc[m_x].reset_index(drop=True)
 
                 x = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
@@ -5609,7 +4286,6 @@ class SubstrateIndexGUI(QMainWindow):
             wl_min_fit, wl_max_fit = self._get_fit_range_from_ui()
 
             if wl_min_fit >= wl_max_fit:
-
                 QMessageBox.warning(self, "Fit range", "\u03bb min fit must be strictly less than \u03bb max fit.")
 
                 self.progress_widget.stop("Invalid fit range")
@@ -5619,7 +4295,6 @@ class SubstrateIndexGUI(QMainWindow):
             groups = _classify_substrate_index_columns(self.df.columns[1:])
 
             if not any(groups.values()):
-
                 QMessageBox.warning(self, "Column Not Found", "Could not locate expected columns.")
 
                 self.progress_widget.stop("No matching columns")
@@ -5627,7 +4302,6 @@ class SubstrateIndexGUI(QMainWindow):
                 return
 
             if bool(self.sell_auto_chk.isChecked()):
-
                 sell_timeout_cfg = 8.0
 
                 sell_de_maxiter = 300
@@ -5635,19 +4309,13 @@ class SubstrateIndexGUI(QMainWindow):
                 sell_ls_max_nfev = 3000
 
                 logger.info(
-
                     "Sellmeier full auto: budget=%.1fs | max iters L-BFGS-B=%d | polish LS nfev=%d",
-
                     float(sell_timeout_cfg),
-
                     int(sell_de_maxiter),
-
                     int(sell_ls_max_nfev),
-
                 )
 
             else:
-
                 sell_timeout_s = float(self.sell_timeout_spin.value())
 
                 sell_timeout_cfg = None if sell_timeout_s <= 0.0 else sell_timeout_s
@@ -5656,36 +4324,26 @@ class SubstrateIndexGUI(QMainWindow):
 
                 sell_ls_max_nfev = int(self.sell_ls_nfev_spin.value())
 
-            sell_log_l1l2 = bool(self.sell_log_l_chk.isChecked()) if hasattr(self, "sell_log_l_chk") else SELLMEIER_DEFAULT_LOG_L1L2
+            sell_log_l1l2 = (
+                bool(self.sell_log_l_chk.isChecked()) if hasattr(self, "sell_log_l_chk") else SELLMEIER_DEFAULT_LOG_L1L2
+            )
 
             logger.info(
-
                 "Sellmeier reparam. L1/L2/L3: %s",
-
                 "ui=ln(Li) (optimization.)" if sell_log_l1l2 else "Li lineaire (natif)",
-
             )
 
             self.progress_widget.update(1, 1, phase="Fit 3 laws (toutes colonnes)")
 
             n_results_raw, n_results_by_model, rmse_row, n_fit_meta = self._compute_n_results(
-
                 x,
-
                 groups,
-
                 wl_min_fit,
-
                 wl_max_fit,
-
                 sellmeier_timeout_s=sell_timeout_cfg,
-
                 sellmeier_de_maxiter=sell_de_maxiter,
-
                 sellmeier_ls_max_nfev=sell_ls_max_nfev,
-
                 sellmeier_log_l1l2=sell_log_l1l2,
-
             )
             try:
                 warn_list: list[str] = []
@@ -5693,9 +4351,7 @@ class SubstrateIndexGUI(QMainWindow):
                     for _model_name, _meta in _by_model.items():
                         _src = str((_meta or {}).get("source") or "")
                         if _src.startswith("skipped-"):
-                            warn_list.append(
-                                f"{_model_name}: fit skipped ({_src})"
-                            )
+                            warn_list.append(f"{_model_name}: fit skipped ({_src})")
                 self.validation_warnings = warn_list
                 self.validation_status = "WARNING_UNCERTAINTY_NOT_COMPUTED" if warn_list else "OK"
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
@@ -5720,11 +4376,7 @@ class SubstrateIndexGUI(QMainWindow):
                         "sellmeier_log_l1l2": bool(sell_log_l1l2),
                     },
                     source_paths=[
-                        p
-                        for p in (
-                            str(getattr(self, "_last_loaded_measurement_path", "") or "").strip(),
-                        )
-                        if p
+                        p for p in (str(getattr(self, "_last_loaded_measurement_path", "") or "").strip(),) if p
                     ],
                     seed=12345,
                     app_id="CERTUS_SUBSTRATE_INDEX",
@@ -5742,25 +4394,15 @@ class SubstrateIndexGUI(QMainWindow):
             spec_hi = float(np.nanmax(x)) if x.size else float("nan")
 
             dialog = IndexTableDialog(
-
                 x,
-
                 n_results_raw,
-
                 n_results_by_model,
-
                 rmse_row,
-
                 fit_meta_by_key=n_fit_meta,
-
                 fit_wl_lo=float(wl_min_fit),
-
                 fit_wl_hi=float(wl_max_fit),
-
                 spectral_wl_lo=spec_lo,
-
                 spectral_wl_hi=spec_hi,
-
             )
 
             self.progress_widget.update(1, 1, phase="Results")
@@ -5768,19 +4410,14 @@ class SubstrateIndexGUI(QMainWindow):
             dialog.exec()
 
             self.log(
-
                 f"Substrate index done on \u03bb=[{wl_min_fit:.0f},{wl_max_fit:.0f}] nm.",
-
                 "SUCCESS",
-
             )
 
             self.progress_widget.stop("Done")
 
         except RuntimeError as ex:
-
             if "cancelled" in str(ex).lower():
-
                 self.log("Calculation cancelled by user.", "WARNING")
 
                 self.progress_widget.stop("Stopped by user")
@@ -5790,7 +4427,6 @@ class SubstrateIndexGUI(QMainWindow):
             raise
 
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as ex:
-
             self.log(f"Calculation error: {ex}", "ERROR")
 
             self.progress_widget.stop("Failed")
@@ -5798,9 +4434,7 @@ class SubstrateIndexGUI(QMainWindow):
             raise
 
         finally:
-
             if hasattr(self.progress_widget, "enable_cancel"):
-
                 self.progress_widget.enable_cancel(False)
 
             self._set_busy(False)
@@ -5818,5 +4452,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

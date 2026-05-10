@@ -434,11 +434,51 @@
             <strong>Scientific nominal mode</strong> (when enabled): $\mathrm{RMSE}_{\mathrm{ref}}$ is tied to <code>spectral_rmse_best_value</code> on the polished nominal $n(\lambda),k(\lambda)$; the nominal curves are included as the first family member without widening the envelope toward a separate solver export. After that, the pipeline runs a <strong>center refit</strong> at $d_{\mathrm{opt}}$ as a <strong>best-of-$N$</strong> multi-start (label <code>Center</code> in logs). With adaptive absolute tolerance, auxiliary probes (<code>AdaptiveTol ±i</code>) sample nearby thicknesses to stabilize an effective $\Delta$ before the walks.
         </p>
         <p>
-            <strong>Default absolute slack (code defaults, 2026.04.17):</strong> for <code>rmse_threshold_mode = abs_delta_adaptive</code> (INDEX-SPLINE default), the nominal additive slack <code>rmse_abs_tolerance</code> / <code>corridor_profile_d_rmse_abs_tolerance</code> is <strong>$2.5\times 10^{-4}$</strong> on the masked spectral RMSE scale (about four times tighter than the legacy $10^{-3}$). The adaptive floor <code>adaptive_rmse_abs_min</code> / <code>corridor_profile_d_adaptive_rmse_min</code> is <strong>$2.5\times 10^{-5}$</strong>, so the effective increment used in $\Delta_{\mathrm{eff}}=\max(\Delta_{\mathrm{geom}},\Delta_{\mathrm{noise}},\Delta_{\min})$ cannot fall below that value unless the user overrides it in Advanced. Existing installs pick up the new numbers when the GUI uncertainty defaults revision advances (QSettings).
+            <strong>Default absolute slack (code defaults, 2026.05.08):</strong> for <code>rmse_threshold_mode = abs_delta_adaptive</code> (INDEX-SPLINE default), the nominal additive slack <code>rmse_abs_tolerance</code> / <code>corridor_profile_d_rmse_abs_tolerance</code> is <strong>$2.5\times 10^{-4}$</strong> on the masked spectral RMSE scale. The adaptive floor <code>adaptive_rmse_abs_min</code> is <strong>$2.5\times 10^{-5}$</strong>. Crucially, the algorithm determines the active tolerance $\Delta_{\mathrm{eff}}$ dynamically by fitting a local quadratic $\text{RMSE}(d)$ valley using a probing step of <strong>0.5 nm</strong>. It then multiplies the residual noise (MAD) of this parabola by a <strong>noise factor of 2.0</strong>. This physically meaningful "Profile Likelihood" approach ties the corridor width directly to the physical rigidity of the index/thickness coupling and the experimental noise floor, rejecting arbitrary hardcoded thresholds.
         </p>
+        <div class="eq-box">
+            $$ \text{RMSE}(d) \approx c_2 (d - d_{opt})^2 + c_1 (d - d_{opt}) + c_0 $$
+            $$ \sigma_{prof} = 1.4826 \times \text{median} \left| \text{RMSE}_{obs}(d) - \text{RMSE}_{fit}(d) \right| $$
+            $$ \Delta_{\mathrm{eff}} = \max(2.0 \times \sigma_{prof},\, \Delta_{\min}) $$
+        </div>
+        <div class="eq-box">
+            $$ \Delta n(\lambda) = \max_{d \in D_{\text{accept}}} n_{sol}(\lambda, d) - \min_{d \in D_{\text{accept}}} n_{sol}(\lambda, d) $$
+            $$ \Delta k(\lambda) = \max_{d \in D_{\text{accept}}} k_{sol}(\lambda, d) - \min_{d \in D_{\text{accept}}} k_{sol}(\lambda, d) $$
+            $$ \text{with } D_{\text{accept}} = \{ d \mid \text{RMSE}(d) \le \text{RMSE}_{\text{ref}} + \Delta_{\text{eff}} \} $$
+        </div>
         <p>
             <strong>Walk phase:</strong> two thickness marches proceed from the center seed, typically <strong>in parallel</strong> ($+d$ and $-d$, configurable). Each step applies the same fixed-$d$ refit budget; continuation may <strong>auto-extend the span</strong> when the RMSE slope toward the threshold implies a longer excursion. When a trial crosses the active threshold, the code can <strong>bisection-refine</strong> the admissible boundary. The outcome is a reported $d$ interval plus $n(\lambda),k(\lambda)$ envelopes over accepted refits.
         </p>
+        <div class="mermaid">
+        flowchart TD
+            classDef start fill:#f1f5f9,stroke:#475569,stroke-width:2px,font-weight:bold
+            classDef process fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px
+            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px
+            classDef terminal fill:#1e293b,stroke:none,color:#fff,font-weight:bold
+
+            A(["Nominal Solution: d_opt, RMSE_ref"]):::start --> B
+            B["Center Refit (Best-of-N)"]:::process --> C{"Adaptive Δ?"}:::decision
+            C -- Yes --> D["Sample Adaptive Probes"]:::process
+            C -- No --> E
+            D --> E["Initialize Acceptance Threshold:<br>RMSE_max = RMSE_ref + Δ_eff"]:::process
+            E --> F1["Parallel Walk: +Δd"]:::process
+            E --> F2["Parallel Walk: -Δd"]:::process
+            
+            F1 --> G1{"RMSE(d) <= RMSE_max?"}:::decision
+            F2 --> G2{"RMSE(d) <= RMSE_max?"}:::decision
+            
+            G1 -- Yes --> H1["Accept (d, n, k)<br>Store to Envelope"]:::process
+            G1 -- No --> I1["Bisection Boundary Refinement"]:::process
+            
+            G2 -- Yes --> H2["Accept (d, n, k)<br>Store to Envelope"]:::process
+            G2 -- No --> I2["Bisection Boundary Refinement"]:::process
+            
+            H1 --> F1
+            H2 --> F2
+            
+            I1 --> J(["Merge Envelopes:<br>Δn(λ), Δk(λ), d_min, d_max"]):::terminal
+            I2 --> J
+        </div>
         <p>
             <strong>Minimum half-width on $k$ (method floor):</strong> after the algorithmic $k(\lambda)$ envelope is assembled, the implementation widens it whenever it would be narrower than a fixed <strong>linear-$k$ half-width of $10^{-4}$</strong> about the spectral reference $k_{\mathrm{ref}}(\lambda)$ (<code>enforce_min_k_corridor_half_width</code> with <code>min_half_width=1e-4</code> in <code>spline_profile_corridors.py</code>; the same rule is mirrored for manual GUI corridor payloads, Excel export, and corridor plots in <code>CERTUS_INDEX_SPLINE.py</code>). Lower $k$ bounds are also kept on a small numerical floor ($10^{-6}$). This step runs <strong>before</strong> envelope-span diagnostics (e.g. <code>k_span</code>, <code>logk_span</code>) so reported corridor widths match the final merged envelope.
         </p>
@@ -562,7 +602,46 @@
         <p>
             Corridor refit budgets are deliberately staged rather than maximal at each point: a first local fixed-$d$ pass and a second polish pass are applied with bounded evaluation counts derived from the corridor refit configuration. This bounded two-pass strategy is designed to keep the corridor as a local profiled sensitivity analysis while still allowing enough relaxation to avoid false failures. In manuscript language, this should be described as a <strong>budgeted local profiled refit with robustness fallbacks</strong>, not as a full global re-optimization at every tested thickness.
         </p>
-        <h2 style="margin-top:40px;">Section 14: Manuscript-Ready Operational Narrative of the Full Pipeline</h2>
+        <h2 style="margin-top:40px;">Section 14: UI-to-Engine Bridges (Autoshift, Auto-clean & Dichotomy)</h2>
+        <p>
+            The CERTUS GUI provides direct interaction with the spline algorithms. Key UI features map directly to specific optimization strategies:
+        </p>
+        <h3>14.1 Autoshift & Zoom Dichotomique (Substrate Index Tuning)</h3>
+        <p>
+            The <strong>Autoshift</strong> action initiates a 4-pass bounded dichotomy search (zoom) to find optimal substrate index shifts. It tests controlled substrate deviations against a local L-BFGS-B polish, identifying the shift that minimizes the global RMSE. This ensures the physical substrate model is perfectly aligned before full free-knot deployment.
+        </p>
+        <h3>14.2 Auto-clean (Nettoyage Avancé)</h3>
+        <p>
+            The <strong>Auto-clean</strong> button activates a sophisticated sparsity-enforcing algorithm. Rather than running a full $O(N)$ solver pass for each knot, it uses a zero-cost <strong>PCHIP interpolation</strong> to pre-screen and rank the sensitivity of all nodes. It only promotes the top candidates to a full L-BFGS-B polish. Furthermore, it employs a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine automatically tests symmetrical and asymmetrical inward micro-shifts of adjacent nodes to mathematically compensate for the lost degree of freedom, preventing artificial RMSE spikes.
+        </p>
+        <div class="mermaid">
+        flowchart LR
+            classDef start fill:#f1f5f9,stroke:#475569,stroke-width:2px,font-weight:bold
+            classDef process fill:#e0f2fe,stroke:#0ea5e9,stroke-width:2px
+            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px
+            classDef terminal fill:#1e293b,stroke:none,color:#fff,font-weight:bold
+
+            A(["Mesh with K nodes"]):::start --> B["Simulate removal of node i"]:::process
+            B --> C["PCHIP interpolation (Zero L-BFGS-B cost)"]:::process
+            C --> D{"Rank candidates by ΔRMSE"}:::decision
+            D -->|Top-N Candidates| E["Apply 2D Neighbor Pull (Shift i-1 & i+1 inward)"]:::process
+            E --> F["Full L-BFGS-B Polish"]:::process
+            F --> G(["Accept best K-1 mesh"]):::terminal
+        </div>
+        <h3>14.3 Apply (Polish) & Recall Best RMSE</h3>
+        <p>
+            The <strong>Apply (Polish)</strong> action triggers a high-fidelity joint optimization. Importantly, when manual knots are added or deleted, the solver utilizes <strong>PCHIP warm starts</strong>. This shape-preserving hermite polynomial projects the previous $n(\lambda)$ and $k(\lambda)$ onto the new topology, preventing Runge oscillations (which a standard CubicSpline would cause) and ensuring the new initial guess remains strictly within physical bounds:
+        </p>
+        <div class="eq-box">
+            $$ \min(n_i, n_{i+1}) \le P(x) \le \max(n_i, n_{i+1}) \quad \forall x \in [x_i, x_{i+1}] $$
+            <br>
+            <i>Equation: PCHIP strictly preserves monotonicity, avoiding unphysical index excursions ($n \to \infty$ or $n \lt 1$) during node resampling.</i>
+        </div>
+        <p>
+            If the optimization degrades due to local minima traps, the <strong>Recall Best RMSE</strong> feature reverts to the absolute best-performing deterministic state.
+        </p>
+        
+        <h2 style="margin-top:40px;">Section 15: Manuscript-Ready Operational Narrative of the Full Pipeline</h2>
         <p>
             The following description is intentionally written in a form close to a publishable Methods narrative and can be translated almost directly into a manuscript subsection.
         </p>
@@ -581,20 +660,20 @@
         <p>
             This sequence is not merely computational convenience. Each phase exists because the full problem is massively correlated: thickness, refractive dispersion, absorptive structure, and photometric scale can partly compensate each other. CERTUS therefore solves the inverse problem through a controlled release of degrees of freedom, using phase-specific parameterizations to keep the search inside physically interpretable basins.
         </p>
-        <h3>14.1 Why Phase Ordering Matters Scientifically</h3>
+        <h3>15.1 Why Phase Ordering Matters Scientifically</h3>
         <p>
             The phase order is one of the most publication-worthy design choices in the codebase. If all variables were released from the start, the optimizer would face immediate identifiability degeneracies: optical thickness can be preserved by trading $d$ against $n$, transparent-band absorption can oscillate at nearly no spectral cost, and local calibration drift can be confused with mild global index reshaping. The staged architecture is therefore better understood as an <strong>identifiability management strategy</strong> rather than a mere software-engineering pipeline.
         </p>
-        <h3>14.2 What the Returned Solution Actually Represents</h3>
+        <h3>15.2 What the Returned Solution Actually Represents</h3>
         <p>
             The final dictionary returned by the worker is not just a pair of curves. It contains the nominal solution, spectral RMSE diagnostics, best-polished references, optional NL-alpha alternative curves, the active fitting window metadata, and corridor products when enabled. In publication terms, CERTUS returns both a point estimate and a structured uncertainty object. This makes it particularly suitable for reporting not only best-fit $d$, $n(\lambda)$, and $k(\lambda)$, but also the robustness of those quantities under constrained refits.
         </p>
-        <h3>14.3 Step-by-Step Reproducibility Checklist for the Article</h3>
+        <h3>15.3 Step-by-Step Reproducibility Checklist for the Article</h3>
         <p>
             To make a publication reproducible, the following implementation details should be stated explicitly: spectral range actually fitted after masking; whether transmission only or transmission-plus-reflection was optimized; the values of $W_T$ and $W_R$; whether the 12-node or 14-node topology was active; whether monotonic-dispersion penalties were enabled in extraction phases; whether corridor estimation used alpha-threshold or LR-threshold acceptance; for RMSE_ref+$\Delta$ / adaptive-$\Delta$ modes, the numeric values of <code>rmse_abs_tolerance</code> (default $2.5\times 10^{-4}$) and <code>adaptive_rmse_abs_min</code> (default $2.5\times 10^{-5}$) if not left at defaults; whether the reported RMSE(d) comes from continuation acceptance or regular-grid diagnostics; corridor seed hierarchy; and regular-grid coverage diagnostics (<code>coverage_complete</code> and fallback counters). These details are not secondary settings—they define the effective inverse problem solved by the code.
         </p>
         
-        <h2 style="margin-top:40px;">Section 15: Scientific References & Algorithmic Foundations</h2>
+        <h2 style="margin-top:40px;">Section 16: Scientific References & Algorithmic Foundations</h2>
         <p>
             The CERTUS-INDEX-SPLINE architecture is built upon the following peer-reviewed theoretical constructs and numerical optimization methods:
         </p>
@@ -605,7 +684,7 @@
             <li><strong>[4] Likelihood-Ratio Corridors (Profile Likelihood):</strong> <br> Murphy, S.A., & Van der Vaart, A.W. (2000). <i>On profile likelihood.</i> Journal of the American Statistical Association, 95(450), 449-465. (Foundation for Phase 09 $\Delta\chi^2$ confidence envelopes).</li>
         </ul>
 
-        <h2 style="margin-top: 40px; margin-bottom: 20px;">Section 16: Summary Analytical Architectural Chart</h2>
+        <h2 style="margin-top: 40px; margin-bottom: 20px;">Section 17: Summary Analytical Architectural Chart</h2>
 
         <table class="var-table">
             <thead>
@@ -665,7 +744,7 @@
         </table>
         <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.9em; padding-bottom: 20px;">
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
-            <i>Report Generated via CERTUS Scientific Internal Code Audit Routine • Core System Module Data Integrity Version 2026.04.16</i>
+            <i>Report Generated via CERTUS Scientific Internal Code Audit Routine • Core System Module Data Integrity Version 2026.04.17</i>
         </div>
     </div>
 </body>

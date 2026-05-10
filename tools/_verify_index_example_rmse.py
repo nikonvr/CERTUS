@@ -26,7 +26,7 @@ def main() -> int:
     from PyQt6.QtCore import QEventLoop, QTimer
     from PyQt6.QtWidgets import QApplication
 
-    app = QApplication(sys.argv)
+    QApplication(sys.argv)
 
     from certus_core import SUBSTRATE_LIST, wait_warmup
 

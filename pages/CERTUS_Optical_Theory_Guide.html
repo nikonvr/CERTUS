@@ -209,11 +209,13 @@
 <body>
     <p style="text-align:center;font-size:13px;margin:0 0 16px 0;font-family:var(--sans);">
         <a href="CERTUS_HUB.html">HUB</a> ·
+        <a href="CERTUS_Optical_Theory_Guide.html">Theory</a> ·
         <a href="metrology.html">Metrology</a> ·
-        <a href="CERTUS_RE.html">RE</a> ·
         <a href="CERTUS_INDEX.html">INDEX</a> ·
         <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a> ·
-        <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+        <a href="CERTUS_STRAT.html">STRAT</a> ·
+        <a href="CERTUS_DESIGN.html">DESIGN</a> ·
+        <a href="CERTUS_METAL_SINGLE.html">METAL</a>
     </p>
     <div class="doc-header">
         <h1>Theory Guide — Thin-Film Optics</h1>
@@ -232,9 +234,9 @@
         <a href="#coeffs">4. Fresnel coefficients and power (R, T)</a>
         <a href="#finite_sub">5. Front surface, back surface, and finite substrate</a>
         <a href="#efield">6. [Advanced] Absorption and electric-field profile</a>
-        <a href="#simple_example">7. Simple example: antireflection quarter-wave layer ($\lambda/4$)</a>
-        <a href="#ref_example">8. Reference numerical example (5 layers)</a>
-        <a href="#code_example">9. Complete generalized Python code</a>
+        <a href="#simple_example">6. Simple example: antireflection quarter-wave layer ($\lambda/4$)</a>
+        <a href="#ref_example">7. Reference numerical example (5 layers)</a>
+        <a href="#code_example">8. Complete generalized Python code</a>
         <a href="#workflow">10. CERTUS software architecture and workflow</a>
     </div>
 
@@ -551,7 +553,7 @@
     </details>
 
     <!-- 7. EXEMPLE SIMPLE AR -->
-    <h2 id="simple_example">7. Simple example: quarter-wave antireflection layer</h2>
+    <h2 id="simple_example">6. Simple example: quarter-wave antireflection layer</h2>
     
     <div class="pedagogy-box">
         <span class="box-title">Goal: cancel reflection (R=0)</span>
@@ -567,7 +569,7 @@
     <p>Reflectance vanishes if $n_{layer} = \sqrt{n_{air} \cdot n_{glass}}$. For glass one would need $n \approx 1.23$. Magnesium fluoride (MgF₂, $n=1.38$) is close—that is the typical purple tint on eyeglasses.</p>
 
     <!-- 8. EXEMPLE 5 COUCHES -->
-    <h2 id="ref_example">8. Reference numerical example (5 layers)</h2>
+    <h2 id="ref_example">7. Reference numerical example (5 layers)</h2>
     <p>Full validation case including absorbing metal and oblique angles.</p>
 
     <div style="background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
@@ -598,7 +600,7 @@
     </div>
 
     <!-- 9. CODE GENERALISE -->
-    <h2 id="code_example">9. Complete generalized Python code</h2>
+    <h2 id="code_example">8. Complete generalized Python code</h2>
     <p>This robust snippet covers absorption, oblique incidence, polarization, field profile, and incoherent back reflections.</p>
 
     <details class="advanced-box" open>
@@ -694,7 +696,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
     </details>
 
     <!-- 10. ARCHITECTURE CERTUS -->
-    <h2 id="workflow">10. CERTUS architecture and workflow</h2>
+    <h2 id="workflow">9. CERTUS architecture and workflow</h2>
     <p>The CERTUS suite embeds these relations in its physics core (<strong>Numba JIT</strong> optimized to evaluate millions of stacks per second).</p>
 
     <details class="advanced-box">
@@ -820,9 +822,9 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
                 <line x1="500" y1="100" x2="560" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
                 <line x1="550" y1="100" x2="780" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
                 <rect x="30" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-blue)" stroke="#1565c0" stroke-width="2" filter="url(#shadow)" />
-                <text x="120" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">CERTUS_INDEX</text>
-                <text x="120" y="195" text-anchor="middle" font-size="10" fill="#1565c0">R/T synthesis</text>
-                <text x="120" y="240" text-anchor="middle" font-size="9" fill="#78909c">Index optimization</text>
+                <text x="120" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">INDEX & SPLINE</text>
+                <text x="120" y="195" text-anchor="middle" font-size="10" fill="#1565c0">Metrology & Synthesis</text>
+                <text x="120" y="240" text-anchor="middle" font-size="9" fill="#78909c">L-BFGS-B / Spline knots</text>
                 <rect x="250" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-green)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)" />
                 <text x="340" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#1b5e20">CERTUS_DESIGN</text>
                 <text x="340" y="195" text-anchor="middle" font-size="10" fill="#2e7d32">QWOT synthesis</text>
@@ -852,7 +854,7 @@ def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.
             <h4>Per-module computation flow</h4>
             <table style="font-size: 13px;">
                 <tr><th>Module</th><th>Purpose</th><th>TMM kernel</th><th>Optimizer</th></tr>
-                <tr><td><strong>INDEX</strong></td><td>Continuous refractive-index synthesis</td><td><code>calculate_RT_vectorized_real</code></td><td>Coordinate descent (parallel Numba)</td></tr>
+                <tr><td><strong>INDEX / SPLINE</strong></td><td>Metrology & index fitting</td><td><code>cost_and_grad</code> (Fused gradients)</td><td>L-BFGS-B (SciPy/Fortran bindings)</td></tr>
                 <tr><td><strong>DESIGN</strong></td><td>H/L QWOT thickness synthesis</td><td><code>calculate_RT_vectorized_real_HL</code></td><td>PGLOBAL + needle insertion</td></tr>
                 <tr><td><strong>STRAT</strong></td><td>Optical monitoring strategy</td><td><code>compute_dynamics_kernel</code></td><td>Monte Carlo + adaptive nucleation</td></tr>
                 <tr><td><strong>METAL</strong></td><td>Metallic stack (low-E, filters)</td><td><code>compute_TMM_generic</code></td><td>Differential evolution (SciPy)</td></tr>

@@ -12,93 +12,49 @@ from certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
 
 
 NB2O5_PRESET_KNOTS = {
-
     "sk": [
-
         2.00000000e-04,
-
         2.80697979e-04,
-
         3.93956777e-04,
-
         5.52914357e-04,
-
         7.76009713e-04,
-
         1.08912179e-03,
-
         1.52857143e-03,
-
         1.87133042e-03,
-
         2.16037601e-03,
-
         2.41507172e-03,
-
         2.64535789e-03,
-
         2.85714286e-03,
-
     ],
-
     "n": [
-
-        2.070900,
-
-        2.149915,
-
-        2.188031,
-
-        2.203944,
-
-        2.226152,
-
-        2.247231,
-
-        2.293594,
-
-        2.346785,
-
-        2.407568,
-
-        2.482088,
-
-        2.579767,
-
-        2.721708,
-
+        2.088937,
+        2.169167,
+        2.205069,
+        2.227367,
+        2.246464,
+        2.269717,
+        2.317580,
+        2.374467,
+        2.437140,
+        2.513521,
+        2.613011,
+        2.769120,
     ],
-
     "L": [
-
-        -6.657662,
-
-        -6.885560,
-
-        -8.118986,
-
-        -9.373942,
-
-        -10.033118,
-
-        -9.510166,
-
-        -9.976305,
-
-        -10.144896,
-
-        -10.881380,
-
-        -10.802027,
-
-        -7.053710,
-
-        -3.974699,
-
+        -6.703264,
+        -7.152820,
+        -7.960887,
+        -9.278301,
+        -9.809617,
+        -9.623061,
+        -10.058708,
+        -10.260035,
+        -10.849293,
+        -10.097427,
+        -7.047266,
+        -4.038027,
     ],
-
-    "d_nm": 2999.859792,
-
+    "d_nm": 1715.956871,
 }
 
 
@@ -110,131 +66,72 @@ DEFAULT_PRESET_KNOTS = NB2O5_PRESET_KNOTS
 # certus_index_spline.log 2026-04-10): n visible/IR ~1.40-1.52, not a high-index oxide.
 
 _SIO2_PRESET_SK = np.array(
-
     [
-
         1.923121e-04,
-
         4.400282e-04,
-
         7.351814e-04,
-
         1.006826e-03,
-
         1.278051e-03,
-
         1.797176e-03,
-
         2.196878e-03,
-
         2.534305e-03,
-
         2.831807e-03,
-
         3.100897e-03,
-
         3.348431e-03,
-
         3.578885e-03,
-
         3.795372e-03,
-
         4.000160e-03,
-
     ],
-
     dtype=np.float64,
-
 )
 
 _SIO2_PRESET_N = np.array(
-
     [
-
         1.401188,
-
         1.445316,
-
         1.457400,
-
         1.460256,
-
         1.463356,
-
         1.469598,
-
         1.475180,
-
         1.480329,
-
         1.486439,
-
         1.493496,
-
         1.499712,
-
         1.506259,
-
         1.511942,
-
         1.522015,
-
     ],
-
     dtype=np.float64,
-
 )
 
 _SIO2_PRESET_L = np.array(
-
     [
-
         -6.9875353,
-
         -8.0468854,
-
         -8.7255874,
-
         -9.8175088,
-
         -9.7072566,
-
         -9.9238170,
-
         -10.3392233,
-
         -10.6639135,
-
         -10.7415710,
-
         -9.5932497,
-
         -8.7760910,
-
         -7.6154403,
-
         -6.6359352,
-
         -6.6566466,
-
     ],
-
     dtype=np.float64,
-
 )
 
 SIO2_PRESET_D_NM: float = 1699.745274
 
 SIO2_PRESET_KNOTS: dict[str, np.ndarray | float] = {
-
     "sk": _SIO2_PRESET_SK.copy(),
-
     "n": _SIO2_PRESET_N.copy(),
-
     "L": _SIO2_PRESET_L.copy(),
-
     "d_nm": SIO2_PRESET_D_NM,
-
 }
 
 
@@ -248,17 +145,11 @@ def _clip_n_L_physical(n: np.ndarray, L: np.ndarray) -> tuple[np.ndarray, np.nda
 
 
 def _interp_n_L_linear_on_sigma(
-
     sk_ref: np.ndarray,
-
     n_ref: np.ndarray,
-
     L_ref: np.ndarray,
-
     sk_target: np.ndarray,
-
 ) -> tuple[np.ndarray, np.ndarray]:
-
     """PWL interpolation of *n* and *L* = ln *k* in sigma (nm⁻¹), linear in sigma.
 
     ``sk_ref`` and ``sk_target`` can be in any order; the result
@@ -276,11 +167,9 @@ def _interp_n_L_linear_on_sigma(
     L_ref = np.asarray(L_ref, dtype=np.float64).ravel()
 
     if sk_target.size == 0:
-
         return np.zeros(0, dtype=np.float64), np.zeros(0, dtype=np.float64)
 
     if sk_ref.size < 2 or n_ref.size != sk_ref.size or L_ref.size != sk_ref.size:
-
         raise ValueError("_interp_n_L_linear_on_sigma: inconsistent sk_ref, n_ref, L_ref.")
 
     o = np.argsort(sk_ref)
@@ -307,11 +196,8 @@ def _interp_n_L_linear_on_sigma(
 
 
 def _project_nb2o5_preset_to_sigma_knots(
-
     target_sigma_knots: np.ndarray,
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-
     """Nb₂O₅ reference: n and L (ln k) on the current sigma mesh; *d* from preset."""
 
     sk_target = np.asarray(target_sigma_knots, dtype=np.float64).ravel().copy()
@@ -325,7 +211,6 @@ def _project_nb2o5_preset_to_sigma_knots(
     d_ref = float(NB2O5_PRESET_KNOTS["d_nm"])
 
     if sk_ref.size < 2 or sk_target.size == 0:
-
         return sk_target, np.zeros_like(sk_target), np.zeros_like(sk_target), d_ref
 
     n_out, L_out = _interp_n_L_linear_on_sigma(sk_ref, n_ref, L_ref, sk_target)
@@ -334,15 +219,10 @@ def _project_nb2o5_preset_to_sigma_knots(
 
 
 def _project_sio2_preset_to_sigma_knots(
-
     target_sigma_knots: np.ndarray,
-
     *,
-
     d_nm_hint: float | None = None,
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-
     """SiO₂ reference: tabulated n and L (ln k) (Smart Init) projected onto current sigma mesh."""
 
     sk_target = np.asarray(target_sigma_knots, dtype=np.float64).ravel().copy()
@@ -356,40 +236,27 @@ def _project_sio2_preset_to_sigma_knots(
     d_ref = float(SIO2_PRESET_KNOTS["d_nm"])
 
     if sk_ref.size < 2 or sk_target.size == 0:
-
         return sk_target, np.zeros_like(sk_target), np.zeros_like(sk_target), d_ref
 
     n_out, L_out = _interp_n_L_linear_on_sigma(sk_ref, n_ref, L_ref, sk_target)
 
     d_out = (
-
         float(d_nm_hint)
-
         if d_nm_hint is not None and np.isfinite(float(d_nm_hint)) and float(d_nm_hint) > 0.0
-
         else d_ref
-
     )
 
     return sk_target, n_out, L_out, d_out
 
 
 def _project_tabulated_nk_lam_preset_to_sigma_knots(
-
     lam_nm_ref: np.ndarray,
-
     n_ref: np.ndarray,
-
     k_ref: np.ndarray,
-
     target_sigma_knots: np.ndarray,
-
     *,
-
     d_nm_hint: float | None = None,
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-
     """Tabulation (lambda, n, k) -> linear interpolation of *n* and ln *k* in sigma = 1/lambda."""
 
     sk_target = np.asarray(target_sigma_knots, dtype=np.float64).ravel().copy()
@@ -401,13 +268,11 @@ def _project_tabulated_nk_lam_preset_to_sigma_knots(
     k_ref = np.asarray(k_ref, dtype=np.float64).ravel()
 
     if sk_target.size == 0:
-
         z = np.zeros(0, dtype=np.float64)
 
         return sk_target, z, z, 3000.0
 
     if lam_nm_ref.size < 2 or n_ref.size != lam_nm_ref.size or k_ref.size != lam_nm_ref.size:
-
         raise ValueError("preset (lambda,n,k): inconsistent lengths (>= 2 points).")
 
     sk_ref = 1.0 / np.maximum(lam_nm_ref, 1e-30)
@@ -419,17 +284,9 @@ def _project_tabulated_nk_lam_preset_to_sigma_knots(
     n_out, L_out = _interp_n_L_linear_on_sigma(sk_ref[o], n_ref[o], L_ref, sk_target)
 
     d_out = (
-
         float(d_nm_hint)
-
-        if d_nm_hint is not None
-
-        and np.isfinite(float(d_nm_hint))
-
-        and float(d_nm_hint) > 0.0
-
+        if d_nm_hint is not None and np.isfinite(float(d_nm_hint)) and float(d_nm_hint) > 0.0
         else 3000.0
-
     )
 
     return sk_target, n_out, L_out, d_out
@@ -457,43 +314,28 @@ TA2O5_PRESET_LAM_NM, TA2O5_PRESET_N, TA2O5_PRESET_K = _ta2o5_tabulation_extended
 
 
 def project_manual_material_preset(
-
     preset_id: str,
-
     target_sigma_knots: np.ndarray,
-
     *,
-
     d_nm_hint: float | None = None,
-
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-
     """Single entry point: ``nb2o5`` | ``sio2`` | ``ta2o5``."""
 
     key = str(preset_id).strip().lower().replace("₂", "2").replace("₅", "5")
 
     if key in ("nb2o5", "nb205"):
-
         return _project_nb2o5_preset_to_sigma_knots(target_sigma_knots)
 
     if key in ("sio2", "si2o2"):
-
         return _project_sio2_preset_to_sigma_knots(target_sigma_knots, d_nm_hint=d_nm_hint)
 
     if key in ("ta2o5", "ta205"):
-
         return _project_tabulated_nk_lam_preset_to_sigma_knots(
-
             TA2O5_PRESET_LAM_NM,
-
             TA2O5_PRESET_N,
-
             TA2O5_PRESET_K,
-
             target_sigma_knots,
-
             d_nm_hint=d_nm_hint,
-
         )
 
     raise ValueError(f"unknown material preset: {preset_id!r} (expected nb2o5, sio2, ta2o5).")

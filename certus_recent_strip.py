@@ -85,10 +85,7 @@ def _build_strip_class():
             if title:
                 cap = QLabel(title, self)
                 cap.setObjectName("recent-strip-title")
-                cap.setStyleSheet(
-                    "#recent-strip-title { color: palette(mid); "
-                    "font-weight: 600; font-size: 9pt; }"
-                )
+                cap.setStyleSheet("#recent-strip-title { color: palette(mid); font-weight: 600; font-size: 9pt; }")
                 root.addWidget(cap, 0, Qt.AlignmentFlag.AlignVCenter)
 
             self._pill_container = QHBoxLayout()
@@ -154,6 +151,7 @@ def _build_strip_class():
                 "QPushButton#recent-pill:hover { "
                 " background: palette(highlight); color: palette(highlighted-text); }"
             )
+
             def _emit_path(*_args, current_path=path):
                 self._emit(current_path)
 

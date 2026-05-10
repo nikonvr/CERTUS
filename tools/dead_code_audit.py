@@ -148,7 +148,7 @@ def _hash_body(node: ast.AST) -> tuple[str, int]:
         return ("", 0)
     try:
         dump = "\n".join(ast.unparse(b) for b in body)
-    except Exception:
+    except (ValueError, TypeError):
         return ("", 0)
     loc = dump.count("\n") + 1
     h = hashlib.sha256(dump.encode("utf-8")).hexdigest()[:16]

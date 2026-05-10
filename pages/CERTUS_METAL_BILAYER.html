@@ -39,16 +39,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html">RE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html" class="active">METAL BILAYER</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_METAL_BILAYER.html" class="active">METAL</a>
         </div>
     </nav>
 
@@ -57,7 +54,7 @@
             <h1>CERTUS-METAL BILAYER</h1>
             <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Non-Parametric Spline Fitting & Beam Analysis
                 Engine</p>
-            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific Revision 2026.03</p>
+            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific Revision Pro 2026.04.17</p>
         </header>
 
         <div class="abstract">
@@ -89,18 +86,21 @@
         <!-- ================================================================ -->
         <h2>2. Theoretical Model</h2>
 
-        <h3>2.1. Layer Structure</h3>
+        <h3>2.1 Layer Structure</h3>
         <p>The model assumes a standardized test structure for characterization:</p>
         <p><strong>Air | Metal (Unknown) | SiO₂ (Cauchy) | Si (Tabulated)</strong></p>
         <ul>
             <li><strong>Silicon Substrate:</strong> Uses tabulated $n,k$ data (200–1000 nm) with interpolation.</li>
-            <li><strong>SiO₂ Buffer:</strong> Modeled with Cauchy dispersion: $n_{SiO_2}(\lambda) = n_\infty +
-                \frac{A}{\lambda^2}$, constrained to $1.44 \leq n \leq 1.475$.</li>
+            <li><strong>SiO₂ Buffer:</strong> Modeled with Cauchy dispersion: 
+                <div class="eq-box" style="margin: 10px 0;">
+                    $$ n_{SiO_2}(\lambda) = n_\infty + \frac{A}{\lambda^2} + \frac{B}{\lambda^4} $$
+                </div>
+                constrained to physically valid bounds (e.g. $1.44 \leq n \leq 1.475$).</li>
             <li><strong>Metal Film:</strong> Modeled with free-form cubic splines for $n(\lambda)$ and $k(\lambda)$.
             </li>
         </ul>
 
-        <h3>2.2. Transfer Matrix Method (Macleod Convention)</h3>
+        <h3>2.2 Transfer Matrix Method (Macleod Convention)</h3>
         <p>For each layer at wavelength $\lambda$, the characteristic matrix uses the <strong>Macleod
                 convention</strong>
             with complex refractive index $\hat{n} = n - ik$ (k &gt; 0) and factor <code>+1j</code> in off-diagonal
@@ -132,7 +132,7 @@
             strongly correlated with thickness $d$ — the Beam Analysis (§5) is essential to quantify this degeneracy.
         </div>
 
-        <h3>2.3. Cubic Spline Interpolation</h3>
+        <h3>2.3 Cubic Spline Interpolation</h3>
         <p>The optical constants $n(\lambda)$ and $k(\lambda)$ are constructed from <strong>natural cubic
                 splines</strong>:</p>
         <ul>
@@ -153,7 +153,7 @@
         <!-- ================================================================ -->
         <h2>3. Optimization Architecture</h2>
 
-        <h3>3.1. Parameter Vector</h3>
+        <h3>3.1 Parameter Vector</h3>
         <p>The optimization searches over a vector $\mathbf{x}$ containing:</p>
         <table>
             <tr>
@@ -193,7 +193,7 @@
             </tr>
         </table>
 
-        <h3>3.2. Objective Function</h3>
+        <h3>3.2 Objective Function</h3>
         <div
             style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
             $$ \text{MSE} = \frac{1}{M} \sum_{j=1}^{M} \left( R_{calc}(\lambda_j) - R_{meas}(\lambda_j) \right)^2 $$
@@ -201,7 +201,7 @@
         <p>The optimization minimizes this MSE subject to physical constraints (positive thicknesses, valid Cauchy
             indices).</p>
 
-        <h3>3.3. Hybrid Optimization Strategy</h3>
+        <h3>3.3 Hybrid Optimization Strategy</h3>
 
         <h4>Stage 1: Differential Evolution (Global Search)</h4>
         <p><strong>Differential Evolution (DE)</strong> is a population-based stochastic optimizer:</p>
@@ -299,13 +299,13 @@
         <!-- ================================================================ -->
         <h2>5. Beam Analysis: Uncertainty Quantification</h2>
 
-        <h3>5.1. The Thickness-Index Degeneracy</h3>
+        <h3>5.1 The Thickness-Index Degeneracy</h3>
         <p>
             For absorbing layers, multiple $(d, n, k)$ combinations can produce nearly identical spectra.
             The <strong>Beam Analysis</strong> systematically explores this degeneracy.
         </p>
 
-        <h3>5.2. Bi-Directional Scan Algorithm</h3>
+        <h3>5.2 Bi-Directional Scan Algorithm</h3>
         <ol>
             <li><strong>Reference solution:</strong> Start from optimal thickness $d_{opt}$.</li>
             <li><strong>Outward scan:</strong> Step thickness in both directions: $d_{opt} \pm 0.5$ nm, $\pm 1.0$ nm, …
@@ -325,15 +325,15 @@
             </ul>
         </div>
 
-        <h3>5.3. Uncertainty Formula</h3>
-        <div
-            style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
-            $$ \Delta n(\lambda) = \max_d n_{sol}(\lambda) - \min_d n_{sol}(\lambda), \qquad
-            \Delta k(\lambda) = \max_d k_{sol}(\lambda) - \min_d k_{sol}(\lambda) $$
+        <h3>5.3 Uncertainty Formula</h3>
+        <p>The spectral uncertainty envelope is strictly defined by the valid perturbation domain:</p>
+        <div class="eq-box">
+            $$ \Delta n(\lambda) = \max_{d \in D_\tau} n_{sol}(\lambda, d) - \min_{d \in D_\tau} n_{sol}(\lambda, d) $$
+            $$ \Delta k(\lambda) = \max_{d \in D_\tau} k_{sol}(\lambda, d) - \min_{d \in D_\tau} k_{sol}(\lambda, d) $$
+            $$ \text{with } D_\tau = \{ d \mid \text{MSE}(d) \le \text{MSE}_{opt} \cdot (1 + \tau) \} $$
         </div>
-        <p>computed over all thickness values $d$ where $\text{MSE}(d) \le \text{MSE}_{opt} \cdot (1 + \tau)$.</p>
 
-        <h3>5.4. Multi-Valley Detection (EnsembleWorkerPGlobal)</h3>
+        <h3>5.4 Multi-Valley Detection (EnsembleWorkerPGlobal)</h3>
         <p>For complex solution landscapes, an ensemble of independent PGLOBAL runs identifies distinct valleys:</p>
         <ul>
             <li>8 parallel runs from different starting points.</li>
@@ -361,19 +361,19 @@
         <!-- ================================================================ -->
         <h2>7. Key Advantages</h2>
 
-        <h3>7.1. Model-Agnostic Fitting</h3>
+        <h3>7.1 Model-Agnostic Fitting</h3>
         <p>
             Perfect for novel alloys or oxidized surfaces where standard literature values do not apply. The spline
             approach fits <em>what is there</em>, not what theory says <em>should be there</em>.
         </p>
 
-        <h3>7.2. Rigorous Uncertainty Quantification</h3>
+        <h3>7.2 Rigorous Uncertainty Quantification</h3>
         <p>
             By exporting the "Beam" (the envelope of all mathematically valid solutions), researchers can put error bars
             on their refractive index data, a critical feature for high-precision optical design.
         </p>
 
-        <h3>7.3. Production-Ready Implementation</h3>
+        <h3>7.3 Production-Ready Implementation</h3>
         <table>
             <tr>
                 <th>Feature</th>
@@ -421,7 +421,7 @@
             <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
             maximum numerical stability (15 significant digits).
         </p>
-        <h3>Global Keyboard Shortcuts</h3>
+        <h3>8.1 Global Keyboard Shortcuts</h3>
         <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
         <ul>
             <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
@@ -431,15 +431,15 @@
             <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack via <code>CertusBaseApp</code>).</li>
             <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.</li>
         </ul>
-        <h3>Dynamic Processing Feedback</h3>
+        <h3>8.2 Dynamic Processing Feedback</h3>
         <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
             thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
             Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
 
         <div class="footer">
             <p>Generated from source analysis of <code>CERTUS_METAL_BILAYER.py</code>, shared libraries
-                &mdash; Revision 2026.03</p>
-            <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report</p>
+                &mdash; Revision 2026.04.17</p>
+            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>
     </div>
 

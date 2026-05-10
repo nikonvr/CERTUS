@@ -792,7 +792,7 @@ class TestStratSymmetryContractAndStability:
             }
 
         # Wrap to preserve positional signature and inject params in kwargs for fake.
-        def fake_task(strategy, idx, noise_levels, num_runs, p_thick_nominal, clues_at_wl, params, wl_arr, nH, nL, nSub, T_nom, full_dyn_grid):
+        def fake_task(strategy, idx, noise_levels, num_runs, p_thick_nominal, clues_at_wl, params, wl_arr, nH, nL, nSub, T_nom, full_dyn_grid, **kwargs):
             return fake_test(strategy, idx, noise_levels, num_runs, params=params)
 
         monkeypatch.setattr(STRAT, "_test_strategy_robustness_task", fake_task)
@@ -864,6 +864,7 @@ class TestStratSymmetryContractAndStability:
             _nSub,
             _T_nom,
             _full_dyn_grid,
+            **kwargs,
         ):
             sid = strategy["strategy_id"]
             seed = int(params_local.get("robustness_seed", 42))
@@ -969,6 +970,7 @@ class TestStratSymmetryContractAndStability:
             _nSub,
             _T_nom,
             _full_dyn_grid,
+            **kwargs,
         ):
             sid = str(strategy["strategy_id"])
             seed = int(params_local.get("robustness_seed", 42))

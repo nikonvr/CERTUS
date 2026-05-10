@@ -41,16 +41,13 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_RE.html" class="active">RE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="metrology.html">Metrology</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
-            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
-            <a href="metrology.html">Metrology</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
         </div>
     </nav>
 
@@ -58,7 +55,7 @@
         <header>
             <h1>CERTUS-RE</h1>
             <p style="font-size: 1.2em; color: #555;">Reverse Engineering from Measured Spectra</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026 — RE Worker &amp;
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026.04.17 — RE Worker &amp;
                 Batch Tooling</p>
         </header>
 
@@ -234,8 +231,13 @@
         <p>
             There are <strong>five</strong> wavelength knots per polarisation branch: fixed anchors at 1100, 2600, 3600,
             4800 nm and an <strong>interior knot</strong> \(\lambda_2\) optimised in \([1500, 2100]\) nm by default.
+        </p>
+        <div class="eq-box">
+            $$ S(\lambda) = \sum_{k=1}^{5} c_k \cdot B_k(\lambda) \quad \text{s.t.} \quad |S(\lambda)| \le E_\text{scale} \cdot \text{PCHIP}_{\text{env}}(\lambda) $$
+        </div>
+        <p>
             Amplitudes are bounded by a monotone <strong>PCHIP envelope</strong> on \(|\Delta\mathrm{Re}|(\lambda)\) scaled
-            by <code>re_envelope_scale</code> (×0.5 tightens the corridor, ×1 uses the full tabulated envelope shape).
+            by <code>re_envelope_scale</code> ($E_\text{scale}$). Setting $E_\text{scale} = 0.5$ tightens the corridor, while 1.0 uses the full tabulated physical dispersion variance.
             Applying splines rebuilds corrected indices via <code>re_apply_re_index_model</code> before each spectrum call.
         </p>
         <h3>6.2 Substrate Cauchy extension (optional)</h3>
@@ -261,21 +263,42 @@
         </p>
 
         <h2>7. REWorker Pipeline — Numerical Steps</h2>
+        <div class="eq-box">
+            $$ \min_{\Delta x} \frac{1}{2} \| J \Delta x + r \|^2 \quad \text{s.t.} \quad \| D \Delta x \| \le \Delta, \quad l \le x_k + \Delta x \le u $$
+        </div>
         <p>
-            Solver: <strong>Trust Region Reflective</strong> (<code>scipy.optimize.least_squares</code> with TRF) with
-            tight <code>RE_TRF_FTOL</code> / <code>RE_TRF_GTOL</code>. Thickness bounds in phase 1 derive from
-            <code>RE_THICKNESS_SEARCH_RADIUS_PCT</code> (default ±5%) around the workbook seed.
+            Solver: <strong>Trust-Region Reflective (TRF)</strong> (<code>scipy.optimize.least_squares</code>).
+            The subproblem minimizes the linearised least-squares residual $r$ (spectral + QWOT + Tikhonov + HL)
+            within a trust-region radius $\Delta$, scaled by the diagonal matrix $D$, strictly respecting the bound constraints $l, u$.
+            Tolerances are strictly bounded by <code>RE_TRF_FTOL</code> / <code>RE_TRF_GTOL</code>.
+            Thickness bounds in phase 1 derive from <code>RE_THICKNESS_SEARCH_RADIUS_PCT</code> (default ±5%) around the workbook seed.
         </p>
-        <div class="mermaid">
-            flowchart TB
-            S[Seed ep0 from workbook] --> P1[Phase 1: TRF on thicknesses only]
-            P1 --> M{Top-K merge if RMSE sum within rel tol}
-            M --> P2a[Phase 2a: TRF on splines plus lambda2 — thicknesses fixed]
-            P2a --> P2b[Phase 2b: joint TRF — ep plus splines plus lambda2 plus optional Cauchy theta]
-            P2b --> P3{re_phase3_shake_rounds greater than 0?}
-            P3 -->|yes| SH[Adaptive Gaussian shake on ep and splines then local TRF polish]
-            P3 -->|no| OUT[Emit results plus RMSE star]
-            SH --> OUT
+        <div class="mermaid" style="background: transparent;">
+            flowchart TD
+            classDef node fill:#f8fafc,stroke:#94a3b8,stroke-width:2px,color:#333
+            classDef solver fill:#e0f2fe,stroke:#2563eb,stroke-width:2px,color:#1e40af
+            classDef decision fill:#fef08a,stroke:#eab308,stroke-width:2px,color:#854d0e
+            classDef output fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#166534
+
+            S([Seed $d^{(0)}$ from workbook]):::node --> P1
+            
+            subgraph TRF_CORE ["Trust-Region Reflective Core (scipy.optimize)"]
+                P1["<b>Phase 1: TRF</b><br>Thicknesses only"]:::solver --> M
+                M{"Merge Top-K<br>if ΔRMSE < tol"}:::decision --> P2a
+                P2a["<b>Phase 2a: TRF Prefit</b><br>Splines + λ₂ (Fixed $d$)"]:::solver --> P2b
+                P2b["<b>Phase 2b: Joint TRF</b><br>$d$ + Splines + Cauchy"]:::solver
+            end
+            
+            P2b --> P3
+            
+            P3{"Shake rounds > 0?"}:::decision
+            P3 -->|Yes| SH["Adaptive Gaussian Shake<br>+ Local TRF Polish"]:::node
+            SH --> P3_CHECK{"Improved?"}:::decision
+            P3_CHECK -->|Yes| SH
+            P3_CHECK -->|No| OUT
+            P3 -->|No| OUT
+            
+            OUT(["Emit final RMSE*<br>& Export Data"]):::output
         </div>
         <div class="algo-step">
             <span class="algo-title">Phase 1 — thickness multistart</span>
@@ -486,7 +509,7 @@
 
         <div class="footer">
             <p>CERTUS Optical Framework — RE Module Technical Datasheet</p>
-            <p>Revision 2026.04 (expanded scientific spec) | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py</p>
+            <p>Revision 2026.04.17 (expanded scientific spec) | CERTUS_RE.py · certus_re_workers.py · certus_re_helpers.py · certus_re_worker_utils.py</p>
         </div>
     </div>
 

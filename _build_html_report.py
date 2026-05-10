@@ -28,7 +28,6 @@ def _extract_extrema_table():
     nums = b_ext.LAMBDA_EXTREMA_REF_NM
 
     if nums is None or len(nums) == 0:
-
         return "<tr><td colspan='6'>Extrema not found</td></tr>"
 
     tbody_lines = []
@@ -38,26 +37,19 @@ def _extract_extrema_table():
     rows = (n + 2) // 3
 
     for row in range(rows):
-
         tds = []
 
         for col in range(3):
-
             i = row + col * rows
 
             if i < n:
-
                 tds.append(
-
                     f'<td class="px-2 py-1 text-slate-400 font-mono text-[10px]">{i + 1}</td>'
-
                     f'<td class="px-2 py-1 text-right font-mono text-xs text-slate-600">{float(nums[i]):.2f}</td>'
-
                 )
 
             else:
-
-                tds.append('<td></td><td></td>')
+                tds.append("<td></td><td></td>")
 
         tbody_lines.append('<tr class="border-b border-slate-50">' + "".join(tds) + "</tr>")
 
@@ -69,56 +61,59 @@ def _html_results_from_latest_jsonl(root: Path) -> tuple[str, dict]:
     candidates = list(root.glob("benchmark_dTds_extrema_results*.jsonl"))
 
     if not candidates:
-
-        return "<div class='p-8 text-center text-slate-400 italic bg-slate-50 rounded-2xl'>No run data detected.</div>", {}
+        return (
+            "<div class='p-8 text-center text-slate-400 italic bg-slate-50 rounded-2xl'>No run data detected.</div>",
+            {},
+        )
 
     latest = max(candidates, key=lambda p: p.stat().st_mtime)
 
     records: list[dict] = []
 
     with latest.open(encoding="utf-8") as f:
-
         for line in f:
-
             line = line.strip()
 
-            if line: records.append(json.loads(line))
+            if line:
+                records.append(json.loads(line))
 
     if not records:
-
         return "<div class='p-8 text-center text-slate-400 italic bg-slate-50 rounded-2xl'>Empty log file.</div>", {}
 
     rows_html = []
 
     for rec in records:
-
         ip = rec.get("index_probe_6p") or {}
 
-        status_color = "text-green-600 bg-green-50 shadow-[0_0_10px_rgba(16,185,129,0.1)]" if rec.get('success_quality') else "text-rose-600 bg-rose-50"
+        status_color = (
+            "text-green-600 bg-green-50 shadow-[0_0_10px_rgba(16,185,129,0.1)]"
+            if rec.get("success_quality")
+            else "text-rose-600 bg-rose-50"
+        )
 
         rows_html.append(f"""
 
             <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition-colors animate-fade-in">
 
-                <td class="py-4 px-4 font-bold text-slate-700">{rec.get('sigma_lambda_nm', '0')}</td>
+                <td class="py-4 px-4 font-bold text-slate-700">{rec.get("sigma_lambda_nm", "0")}</td>
 
                 <td class="py-4 px-4 text-center">
 
                     <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase {status_color}">
 
-                        {rec.get('success_quality', 'False')}
+                        {rec.get("success_quality", "False")}
 
                     </span>
 
                 </td>
 
-                <td class="py-4 px-4 font-mono text-xs text-slate-500">{float(rec.get('mse_residual', 0)):.2e}</td>
+                <td class="py-4 px-4 font-mono text-xs text-slate-500">{float(rec.get("mse_residual", 0)):.2e}</td>
 
-                <td class="py-4 px-4 font-mono text-xs font-bold text-primary-600">{float(ip.get('rmse_delta_n', 0)):.2e}</td>
+                <td class="py-4 px-4 font-mono text-xs font-bold text-primary-600">{float(ip.get("rmse_delta_n", 0)):.2e}</td>
 
-                <td class="py-4 px-4 font-mono text-xs text-slate-500">{float(rec.get('d_um', 0)):.4f}</td>
+                <td class="py-4 px-4 font-mono text-xs text-slate-500">{float(rec.get("d_um", 0)):.4f}</td>
 
-                <td class="py-4 px-4 text-xs font-medium text-slate-300">{rec.get('nfev', '-')}</td>
+                <td class="py-4 px-4 text-xs font-medium text-slate-300">{rec.get("nfev", "-")}</td>
 
             </tr>
 
@@ -163,25 +158,28 @@ def _html_results_from_latest_jsonl(root: Path) -> tuple[str, dict]:
 
 def _generate_smart_graphs(records: list[dict]) -> str:
 
-    if not records: return ""
+    if not records:
+        return ""
 
     traces_n = []
 
     zone_analysis = []
 
     for rec in records:
-
         sig = float(rec.get("sigma_lambda_nm", 0))
 
         ip = rec.get("index_probe_6p")
 
-        if not ip: continue
+        if not ip:
+            continue
 
         lam, dn = ip.get("lambda_nm", []), ip.get("delta_n", [])
 
         abs_dn = [abs(x) for x in dn]
 
-        traces_n.append(f"{{ x: {json.dumps(lam)}, y: {json.dumps(abs_dn)}, mode: 'lines', name: 'sigma = {sig}nm', line: {{ width: 2.5 }} }}")
+        traces_n.append(
+            f"{{ x: {json.dumps(lam)}, y: {json.dumps(abs_dn)}, mode: 'lines', name: 'sigma = {sig}nm', line: {{ width: 2.5 }} }}"
+        )
 
         v_errs = [abs(dn[i]) for i, l in enumerate(lam) if 400 <= l <= 700]
 
@@ -191,7 +189,7 @@ def _generate_smart_graphs(records: list[dict]) -> str:
 
         target = 0.05
 
-        def status_ui(v): 
+        def status_ui(v, target=target):
 
             return f'<span class="flex items-center gap-1.5 {"text-emerald-600" if v <= target else "text-rose-500"} font-bold">{"●" if v <= target else "×"} <span class="text-[10px] text-slate-400 font-normal">({v:.3f})</span></span>'
 
@@ -235,7 +233,7 @@ def _generate_smart_graphs(records: list[dict]) -> str:
 
                 </thead>
 
-                <tbody>{''.join(zone_analysis)}</tbody>
+                <tbody>{"".join(zone_analysis)}</tbody>
 
             </table>
 
@@ -245,11 +243,11 @@ def _generate_smart_graphs(records: list[dict]) -> str:
 
         <script>
 
-            var tracesN = [{','.join(traces_n)}];
+            var tracesN = [{",".join(traces_n)}];
 
             var layoutN = {{
 
-                xaxis: { title: 'Wavelength lambda (nm)', gridcolor: '#f1f5f9' },
+                xaxis: {{ title: 'Wavelength lambda (nm)', gridcolor: '#f1f5f9' }},
 
                 yaxis: {{ title: '|Deltan|', type: 'log', gridcolor: '#f1f5f9' }},
 
@@ -279,9 +277,9 @@ n_nodes = len(b_ext.LAMBDA_EXTREMA_REF_NM)
 
 n_sub = b_ext.N_SUB
 
-d_val = last_rec.get('d_um', 3.0)
+d_val = last_rec.get("d_um", 3.0)
 
-n_probe = len(last_rec.get('index_probe_6p', {}).get('lambda_nm', []))
+n_probe = len(last_rec.get("index_probe_6p", {}).get("lambda_nm", []))
 
 
 HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
@@ -391,19 +389,12 @@ HTML_TEMPLATE = Template(r"""<!DOCTYPE html>
 
 
 html_content = HTML_TEMPLATE.substitute(
-
     N_NODES=str(n_nodes),
-
     N_SUB=str(n_sub),
-
     D_LO=f"{d_val:.2f}",
-
     TBODY=tbody,
-
     RUN_TABLE=run_table_html,
-
     INDEX_LOG_N=str(n_probe),
-
 )
 
 

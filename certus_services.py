@@ -10,6 +10,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Generic, TypeVar
 
+from certus_dto import (
+    BaseHeadlessRequestModel,
+    IndexFitRequestModel,
+    REFitRequestModel,
+    SubstrateIndexRequestModel,
+)
 from certus_metrology import RunContext, RunManifest, ValidationStatus
 
 
@@ -41,8 +47,38 @@ ResT = TypeVar("ResT", bound=BaseHeadlessResponse)
 class BaseHeadlessService(Generic[ReqT, ResT]):
     """Shared wrapper for headless services with manifest injection."""
 
-    def __init__(self, runner: Callable[[Any], Any]):
+    def __init__(self, runner: Callable[[Any], Any]) -> None:
         self._runner = runner
+
+    @staticmethod
+    def _to_dataclass_request(
+        request: BaseHeadlessRequest | dict[str, Any],
+        model_cls: type[BaseHeadlessRequestModel],
+        dc_cls: type[ReqT],
+    ) -> ReqT:
+        """Validate payload via Pydantic then materialize legacy dataclass request."""
+        if isinstance(request, dc_cls):
+            payload = request.__dict__
+        elif isinstance(request, dict):
+            payload = dict(request)
+        else:
+            raise TypeError(f"Unsupported request type: {type(request).__name__}")
+
+        dto = model_cls.model_validate(payload)
+        status_raw = str(dto.status)
+        try:
+            status = ValidationStatus(status_raw)
+        except ValueError:
+            status = ValidationStatus.OK
+        return dc_cls(
+            config=dto.config,
+            source_paths=list(dto.source_paths),
+            seed=dto.seed,
+            app_id=dto.app_id,
+            app_version=dto.app_version,
+            warnings=list(dto.warnings),
+            status=status,
+        )
 
     @staticmethod
     def _normalize_source_paths(source_paths: list[str]) -> list[str]:
@@ -90,12 +126,13 @@ class IndexFitService(BaseHeadlessService[IndexFitRequest, IndexFitResponse]):
     reproducibility manifest, and returns a typed response.
     """
 
-    def __init__(self, runner: Callable[[Any], Any]):
+    def __init__(self, runner: Callable[[Any], Any]) -> None:
         super().__init__(runner)
 
-    def fit(self, request: IndexFitRequest) -> IndexFitResponse:
-        result = self._runner(request.config)
-        return IndexFitResponse(result=result, manifest=self._build_manifest(request))
+    def fit(self, request: IndexFitRequest | dict[str, Any]) -> IndexFitResponse:
+        req = self._to_dataclass_request(request, IndexFitRequestModel, IndexFitRequest)
+        result = self._runner(req.config)
+        return IndexFitResponse(result=result, manifest=self._build_manifest(req))
 
 
 @dataclass(frozen=True)
@@ -113,12 +150,13 @@ class SubstrateIndexResponse(BaseHeadlessResponse):
 class SubstrateIndexService(BaseHeadlessService[SubstrateIndexRequest, SubstrateIndexResponse]):
     """Headless wrapper for substrate index computation entry points."""
 
-    def __init__(self, runner: Callable[[Any], Any]):
+    def __init__(self, runner: Callable[[Any], Any]) -> None:
         super().__init__(runner)
 
-    def fit(self, request: SubstrateIndexRequest) -> SubstrateIndexResponse:
-        result = self._runner(request.config)
-        return SubstrateIndexResponse(result=result, manifest=self._build_manifest(request))
+    def fit(self, request: SubstrateIndexRequest | dict[str, Any]) -> SubstrateIndexResponse:
+        req = self._to_dataclass_request(request, SubstrateIndexRequestModel, SubstrateIndexRequest)
+        result = self._runner(req.config)
+        return SubstrateIndexResponse(result=result, manifest=self._build_manifest(req))
 
 
 @dataclass(frozen=True)
@@ -136,10 +174,10 @@ class REFitResponse(BaseHeadlessResponse):
 class REFitService(BaseHeadlessService[REFitRequest, REFitResponse]):
     """Headless wrapper for RE computation entry points."""
 
-    def __init__(self, runner: Callable[[Any], Any]):
+    def __init__(self, runner: Callable[[Any], Any]) -> None:
         super().__init__(runner)
 
-    def fit(self, request: REFitRequest) -> REFitResponse:
-        result = self._runner(request.config)
-        return REFitResponse(result=result, manifest=self._build_manifest(request))
-
+    def fit(self, request: REFitRequest | dict[str, Any]) -> REFitResponse:
+        req = self._to_dataclass_request(request, REFitRequestModel, REFitRequest)
+        result = self._runner(req.config)
+        return REFitResponse(result=result, manifest=self._build_manifest(req))

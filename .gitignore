@@ -1,4 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# ─────────────────────────────────────────────
+# CERTUS — .gitignore
+# ─────────────────────────────────────────────
+
+# Python bytecode
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,34 +22,52 @@ venv/
 env/
 ENV/
 
-# Testing / coverage
+# ─────────────── Testing ───────────────
 .pytest_cache/
+.hypothesis/
 .coverage
 .coverage.*
 coverage.xml
 coverage_*.xml
 htmlcov/
 _test_out.txt
+test_results*.txt
 
-# Type checkers / linters
+# ─────────────── Linters / Type checkers ───────────────
 .mypy_cache/
 .pyre/
 .ruff_cache/
 
-# IDE / editor
+# ─────────────── IDE / Editor ───────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS files
+# ─────────────── OS files ───────────────
 .DS_Store
 Thumbs.db
+~$*
 
-# Project runtime artifacts
+# ─────────────── Profiling ───────────────
+*.prof
+
+# ─────────────── App runtime outputs ───────────────
 logs/
-_metal_cache/
+*.log
+IndexSpline_Result_*.xlsx
+reports/exports/
 
-# Build / release artifacts
+# ─────────────── Debug / scratch ───────────────
+scratch/
+artifacts/
+bottleneck_*.txt
+.benchmarks/
+
+# ─────────────── Legacy / dead code ───────────────
+_DEAD_SCRIPTS_BACKUP/
+
+# ─────────────── Build / release ───────────────
 artifacts/root_cleanup_*/
 reports/release_dossier_*.zip
+_metal_cache/

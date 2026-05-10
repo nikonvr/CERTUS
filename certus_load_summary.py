@@ -7,9 +7,7 @@ import html
 from typing import Iterable
 
 
-def build_summary_plain_text(
-    title: str, lines: Iterable[tuple[str, bool] | str]
-) -> str:
+def build_summary_plain_text(title: str, lines: Iterable[tuple[str, bool] | str]) -> str:
     normalized: list[tuple[str, bool]] = []
     substrate_txt: str | None = None
     faces_txt: str | None = None
@@ -65,11 +63,7 @@ def show_load_summary_dialog(parent, title: str, plain_text: str) -> None:
 
     box = QTextEdit()
     box.setReadOnly(True)
-    box.setHtml(
-        "<pre style='font-family: Consolas, monospace;'>"
-        + "\n".join(html_lines)
-        + "</pre>"
-    )
+    box.setHtml("<pre style='font-family: Consolas, monospace;'>" + "\n".join(html_lines) + "</pre>")
     lay.addWidget(box, 1)
 
     row = QHBoxLayout()

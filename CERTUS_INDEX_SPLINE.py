@@ -1,56 +1,119 @@
 #!/usr/bin/env python3
 
-
 # -*- coding: utf-8 -*-
 
-
 """
-
 
 CERTUS-INDEX-SPLINE  Global fit of n(lambda), k(lambda) as piecewise-linear in sigma=1/lambda (ln k at nodes).
 
-
 Standalone: no imports from CERTUS_INDEX nor certus_swanepool. Local optimization only.
-
 
 """
 
-
 from __future__ import annotations
 
-
-import argparse
-
-
+import json
 import logging
-
-
 import multiprocessing
-
-
 import os
 from pathlib import Path
-
-
 import sys
-
-
 import time
-
-
 from dataclasses import dataclass, replace, field
-
-
+from enum import auto
+from threading import Event
 from typing import Any, Callable, Mapping
 
+import numpy as np
+import pandas as pd
+import pyqtgraph as pg
+from PyQt6.QtCore import (
+    QAbstractAnimation,
+    QSettings,
+    QThread,
+    Qt,
+    QTimer,
+    pyqtSignal,
+    pyqtSlot,
+)
+from PyQt6.QtGui import QAction, QFont
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    QSplitter,
+    QStackedWidget,
+    QTabWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
-from enum import Enum, auto
+from certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    N_MAX_LIMIT,
+    N_MIN_LIMIT,
+    SELLMEIER_COEFFS_BY_ID,
+    __version__,
+    create_module_environment,
+    setup_module_logging,
+)
+from certus_data import read_data_file_robust
+from certus_physics import (
+    get_n_substrate_array_by_id,
+)
+from certus_index_utils import (
+    log_structured_json_event,
+)
+from certus_ui import (
+    CertusBaseApp,
+    EnhancedProgressWidget,
+    CertusLogPanel,
+    CertusScientificPlot,
+    CertusTheme,
+    CertusThemeToggle,
+    install_standard_shortcuts,
+    enable_file_drop,
+    show_toast,
+    ExcelTableWidget,
+    FlashyCard,
+    GenericWorker,
+    apply_certus_theme,
+    attach_excel_clipboard_context_menu,
+    create_header_logo_widget,
+    create_styled_button,
+    get_certus_last_dir,
+    init_certus_app,
+    open_documentation,
+    plot_widget_plot_finite,
+    sanitize_xy_for_plot,
+    set_certus_last_dir,
+    setup_pyqtgraph_defaults,
+    wrap_scientific_plot_with_toolbar,
+    CertusCard,
+    CertusStepper,
+    CertusCollapsible,
+    CertusStatusPill,
+)
 
+from pydantic import BaseModel, ConfigDict
 
-from threading import Event
-
-@dataclass
-class SmartInitPayload:
+class SmartInitPayload(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     cfg: Any
     sigma_knots: np.ndarray
     preview_grids: dict[str, Any]
@@ -64,548 +127,311 @@ class SmartInitPayload:
 
     @classmethod
     def from_dict(cls: type["SmartInitPayload"], d: dict[str, Any]) -> "SmartInitPayload":
-        return cls(
-            cfg=d.get("cfg"),
-            sigma_knots=np.asarray(d.get("sigma_knots", []), dtype=np.float64).ravel(),
-            preview_grids=d.get("preview_grids", {}),
-            n_nodes_physical=np.asarray(d.get("n_nodes_physical", []), dtype=np.float64).ravel().copy(),
-            L_nodes=np.asarray(d.get("L_nodes", []), dtype=np.float64).ravel().copy(),
-            d_best_nm=float(d.get("d_best_nm", 0.0)),
-            t_exp=np.asarray(d.get("t_exp", []), dtype=np.float64),
-            t_theo=np.asarray(d.get("t_theo", []), dtype=np.float64),
-            t_is_ratio=bool(d.get("t_is_ratio", False)),
-            lam_nm=np.asarray(d.get("lam_nm"), dtype=np.float64).ravel() if d.get("lam_nm") is not None else None,
+        clean_d = {}
+        clean_d["cfg"] = d.get("cfg")
+        clean_d["sigma_knots"] = np.asarray(d.get("sigma_knots", []), dtype=np.float64).ravel()
+        clean_d["preview_grids"] = d.get("preview_grids", {})
+        clean_d["n_nodes_physical"] = np.asarray(d.get("n_nodes_physical", []), dtype=np.float64).ravel().copy()
+        clean_d["L_nodes"] = np.asarray(d.get("L_nodes", []), dtype=np.float64).ravel().copy()
+        clean_d["d_best_nm"] = float(d.get("d_best_nm", 0.0))
+        clean_d["t_exp"] = np.asarray(d.get("t_exp", []), dtype=np.float64)
+        clean_d["t_theo"] = np.asarray(d.get("t_theo", []), dtype=np.float64)
+        clean_d["t_is_ratio"] = bool(d.get("t_is_ratio", False))
+        clean_d["lam_nm"] = (
+            np.asarray(d.get("lam_nm"), dtype=np.float64).ravel() if d.get("lam_nm") is not None else None
         )
 
+        return cls(**clean_d)
 
-
-import numpy as np
-
-
-import pandas as pd
-
-
-from PyQt6.QtCore import (
-    QAbstractAnimation,
-    QEasingCurve,
-    QMetaObject,
-    QObject,
-    QPropertyAnimation,
-    QSettings,
-    QThread,
-    Qt,
-    QTimer,
-    pyqtSignal,
-    pyqtSlot,
-)
-
-
-from PyQt6.QtGui import QAction, QFont, QIcon, QKeySequence, QShortcut, QPalette, QColor, QPainter
-
-
-from PyQt6.QtWidgets import (
-
-    QApplication,
-
-    QCheckBox,
-
-    QComboBox,
-
-    QDialog,
-
-    QDialogButtonBox,
-
-    QDoubleSpinBox,
-
-    QFileDialog,
-
-    QFrame,
-
-    QGridLayout,
-
-    QHBoxLayout,
-
-    QLabel,
-
-    QMessageBox,
-
-    QPlainTextEdit,
-
-    QProgressBar,
-
-    QPushButton,
-
-    QScrollArea,
-
-    QSlider,
-
-    QSpinBox,
-
-    QSplitter,
-
-    QStackedWidget,
-
-    QTabWidget,
-
-    QTableWidget,
-
-    QTableWidgetItem,
-
-    QAbstractItemView,
-
-    QVBoxLayout,
-
-    QWidget,
-
-
-)
-
-
-import pyqtgraph as pg
-
-
-from certus_core import (
-
-    K_MAX_LIMIT,
-
-    N_MAX_LIMIT,
-
-    N_MIN_LIMIT,
-
-    SUBSTRATES,
-
-    SUBSTRATE_LIST,
-
-    create_module_environment,
-
-    setup_logging,
-
-
-)
-
-
-from certus_data import read_data_file_robust
-
-
-from certus_physics import (
-    calculate_T_substrate_array,
-
-    clip_to_bounds,
-
-    get_n_substrate_array_by_id,
-
-
-)
-
-
-from certus_index_utils import (
-
-    _ratio_theoretical_from_nk,
-
-    _reflectance_ratio_theoretical_from_nk,
-
-    log_structured_json_event,
-
-
-)
-
-
-from certus_ui import (
-
-    CertusBaseApp,
-    EnhancedProgressWidget,
-
-    CertusLogPanel,
-
-    CertusScientificPlot,
-
-    CertusTheme,
-
-    CertusThemeToggle,
-
-    install_standard_shortcuts,
-
-    enable_file_drop,
-
-    show_toast,
-
-    ExcelTableWidget,
-
-    FlashyCard,
-
-    GenericWorker,
-
-    apply_certus_theme,
-
-    attach_excel_clipboard_context_menu,
-
-    create_header_logo_widget,
-
-    create_info_icon,
-
-    create_styled_button,
-
-    get_certus_last_dir,
-
-    init_certus_app,
-
-    open_documentation,
-
-    plot_widget_plot_finite,
-
-    sanitize_xy_for_plot,
-
-    set_certus_last_dir,
-
-    setup_pyqtgraph_defaults,
-
-    wrap_scientific_plot_with_toolbar,
-
-    CertusCard,
-
-    CertusSectionHeader,
-
-    CertusStepper,
-
-    CertusCollapsible,
-
-    CertusStatusPill,
-
-    CertusActionBar,
-
-
-)
+from certus_design_tokens import slider_corridor_half_stylesheet
 from certus_skeleton import install_skeleton, uninstall_skeleton
 from certus_metrology import ValidationStatus
 from certus_services import IndexFitRequest, IndexFitService
 
-
 from certus_reset_framework import create_reset_button
-
 
 from certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus_ux import build_premium_overrides, OBJ
 
-
 from certus_smart_init_curve_editor import SmartInitNKCurveEditorDialog
-
 
 # Bootstrap
 
-
 _env = create_module_environment(__file__, "CERTUS_INDEX_SPLINE")
-
 
 _SCRIPT_DIR = _env["script_dir"]
 
-
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
+def _get_substrate_n_array_spline(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
+    """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
+
+    sid = int(substrate_id)
+
+    wl_nm = np.asarray(wavelengths_nm, dtype=np.float64)
+
+    if sid != 3:
+        return get_n_substrate_array_by_id(sid, wl_nm)
+
+    coeffs = SELLMEIER_COEFFS_BY_ID.get(3)
+
+    if coeffs is None or len(coeffs) != 6:
+        raise KeyError("Missing Sellmeier coefficients for Sapphire (id=3).")
+
+    B1, C1, B2, C2, B3, C3 = (float(v) for v in coeffs)
+
+    wl_um = wl_nm / 1000.0
+
+    wl_sq = wl_um * wl_um
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        n_sq = 1.0 + (B1 * wl_sq) / (wl_sq - C1) + (B2 * wl_sq) / (wl_sq - C2) + (B3 * wl_sq) / (wl_sq - C3)
+
+    n = np.sqrt(np.maximum(n_sq, 1.0e-6))
+
+    n = np.where(wl_nm < 230.0, np.nan, n)
+
+    return n.astype(np.float64)
 
 _QS_SPLINE_ORG = "CERTUS"
 
-
 _QS_SPLINE_APP = "INDEX_SPLINE"
-
 
 _QS_LAST_SPECTRUM = "last_spectrum_path"
 
-
 _QS_SPECTRUM_FIT_T = "spectrum_fit_t"
-
 
 _QS_SPECTRUM_FIT_TREL = "spectrum_fit_trel"
 
-
 _QS_SPECTRUM_FIT_R = "spectrum_fit_r"
-
 
 _QS_SPECTRUM_WT = "spectrum_weight_t"
 
-
 _QS_SPECTRUM_WR = "spectrum_weight_r"
-
 
 _QS_NK_PROFILE_INTERP = "nk_profile_interp"
 
-
 _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY = "spline_simple_auto_uncertainty"
-
 
 _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV = "spline_uncertainty_defaults_rev"
 
-
-_QS_NL_ALPHA_BUDGET = "nl_alpha_budget_mode"
-
-
-_QS_NL_ALPHA_SECOND_PASS = "nl_alpha_second_pass_enabled"
-
-
-_QS_NL_ALPHA_ADAPTIVE = "nl_alpha_adaptive_early_stop"
-
-
 _QS_SMART_INIT_DEEP = "smart_init_deep_pglobal_after_manual"
-
 
 _QS_SMART_INIT_TWO_PHASE = "smart_init_deep_two_phase_enabled"
 
+_QS_MAIN_SPLITTER_STATE = "main_splitter_state"
 
-_QS_SOL3_PHASE1_MAXFUN = "sol3_phase1_maxfun"
+_QS_MAIN_SPLITTER_LAYOUT_REV = "main_splitter_layout_rev"
 
+_QS_RIGHT_SPLITTER_STATE = "right_splitter_state"
 
-# Increment to reapply corridor / bootstrap / SiO2 / NL alpha defaults on existing workstations once.
+_MAIN_SPLITTER_LAYOUT_REV: int = 4
 
+# Increment to reapply corridor / bootstrap / SiO2 defaults on existing workstations once.
 
 _UNCERTAINTY_DEFAULTS_REV: int = 12
 
-
 # Corridor d (abs / adaptive): defaults tightened ~4? vs legacy (1e-3 / 1e-4).
-
 
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 
-
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
-
 
 # Demi-largeur minimale (k lin?aire) appliqu?e ? l'affichage onglet Corridors n/k (coh?rent enveloppe + infobulle).
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
-
 # INDEX-SPLINE defaults for thin SiO2 layers (~1.6-1.8 ?m) on sapphire, TSIO2-type spectra (UV-IR, T/Tsub).
-
 
 # Aligned on a validated session (Fast profile, mesh K=14 if lambda_max > 4000 nm, RMSE window 250-5000 nm).
 
-
 SIO2_DEFAULT_D_LO_NM: float = 1600.0
-
 
 SIO2_DEFAULT_D_HI_NM: float = 1800.0
 
-
 SIO2_DEFAULT_NK_PROFILE_INTERP: str = "smooth"
-
 
 SIO2_DEFAULT_RMSE_FIT_LAMBDA_LO_NM: float = 250.0
 
-
 SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM: float = 5000.0
-
 
 SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED: bool = True
 
-
 # Auto-Best uses manual mode with a uniform sigma mesh and 12 anchor nodes
-
 
 # (N_seg=11 -> K=12), quality preset, without adaptive/auto-K stages.
 
-
 AUTO_BEST_MANUAL_N_SEG: int = 11  # K = N_seg + 1 = 12 wavelengths via sigma=1/lambda
-
 
 # Adaptive mesh worker defaults (outside Auto-Best), aligned with core behavior.
 
-
 from certus_index_spline_core import (
-
-    NUMERICAL_FAULT_EXCEPTIONS,
-
     SPLINE_PWL_K_NODES,
-
     SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
-
     SPLINE_PERF_PRESETS,
-
     DataType,
-
     SplineOptConfig,
-
     default_n_mono_band_nm_from_spectrum,
-
-    sigma_segment_indices,
-
     gui_perf_preset_only,
-
-    export_spline_result_jsonable,
-
-    build_sigma_knots,
-
-    warm_start_interpolate_nodes,
-
     _to_fraction_T,
-
     ensure_lam_nm_array,
-
     prepare_exp_TR_for_fit,
-
-    _find_lambda_column,
-
-    _find_transmission_column,
-
     normalize_spectrum_dataframe,
-
     substrate_id_from_name,
-
     allowed_substrate_names,
-
-    make_bounds_and_x0,
-
-    warm_start_sigma_regrid,
-
-    merge_spline_preset,
-
     reset_smart_init_preview_guard,
-
     rmse_at_spline_stage_x0_init,
-
-    sol3_phase1_maxfun_effective,
-
     _canonical_knots_min_lambda_kw,
-
     canonical_spline_sigma_knots,
-
     bridge_sigma_knots_preserve_manual,
-
     log_rmse_mesh_bridge_diagnosis,
-
     _log_index_spline_best_config,
-
-
+    log_index_spline_d_trace,
 )
-
 
 from spline_smart_init import (
-
     build_smart_manual_sigma_knots_from_preview_grid,
-
     interp_n_L_pwlnk_to_sigmas,
-
     pick_best_manual_material_preset,
-
     recalc_smart_init_spectral_preview,
-
     smart_init_sweep_node_thickness_rmse,
-
-
 )
-
 
 from spline_objective import (
-
     _spline_objective_lam_mask,
-
-    build_spline_objective_masked_grid,
-
-    nk_from_x_pwlnk,
-
     objective_lam_mask_on_target_grid,
-
-    spline_objective_mse_on_masked_grid,
-
-    spectral_rmse_weights,
-
-
+    spectral_mse_rmse_masked_from_nk,
 )
 
-
 from spline_pipeline import (
+    _sync_theoretical_tr_from_nk_dict,
     enforce_local_optimization_policy,
+    worker_spline_manual_sigma_insert,
+    worker_spline_autoshift_delta_ns,
+    worker_spline_auto_clean_knots,
+    worker_spline_auto_add_one_knot,
     worker_run_corridor_profile_after_nl_choice,
+    worker_spline_mwir_insert_node,
     worker_spline_optimization,
 )
 
+from certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 
 from spline_workers import _run_single_spline_stage
 
-
 from spline_profile_corridors import (
-
     _expand_corridor_envelope_with_reported_nk,
-
     enforce_min_k_corridor_half_width,
-
     _fit_local_quadratic_rmse_profile,
-
     compute_regular_grid_rmse_profile,
-
     quick_pwlnk_refit_result_dict,
-
 )
-
 
 from spline_presets import _project_nb2o5_preset_to_sigma_knots, project_manual_material_preset
 
-
 from spline_visual_utils import (
-
     live_monitor_nk_clipboard_tsv_2nm as _live_monitor_nk_clipboard_tsv_2nm,
-
     snap_spline_visual_dict as _snap_spline_visual_dict,
-
-
 )
-
 
 from spline_workers import worker_auto_best_split_knot_refinement
 
-
 def _plot_spectrum_raw_scatter(
-
     plot_w: pg.PlotWidget,
-
     x: np.ndarray,
-
     y: np.ndarray,
-
     *,
-
     color: str,
-
     name: str,
-
     symbol_size: int = 5,
-
-
 ) -> None:
-
     """Raw spectral data: always in points (no line), CERTUS convention."""
 
     xf, yf = sanitize_xy_for_plot(x, y)
 
     if xf.size == 0:
-
         return
 
     plot_w.plot(
-
         xf,
-
         yf,
-
         pen=None,
-
         symbol="o",
-
         symbolSize=int(symbol_size),
-
         symbolBrush=pg.mkBrush(color),
-
         symbolPen=pg.mkPen(color, width=0.6),
-
         name=name,
-
     )
 
+_K_PLOT_YMIN: float = 1e-6
+_K_PLOT_YMAX: float = 1e-2
 
-def _spectral_display_align(
+def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
+    """Force the CERTUS k-plot convention on every k graph."""
+    if plot_w is None:
+        return
+    try:
+        # 1. On force d'abord le mode Log interne
+        plot_w.setLogMode(False, True)
 
-    lam_nm: np.ndarray, *series: np.ndarray
+        # 2. Sync the control menu (pyqtgraph 'A' button)
+        # to prevent _apply_sensible_empty_range from breaking things
+        try:
+            plot_w.plotItem.ctrl.logYCheck.setChecked(True)
+        except (AttributeError, RuntimeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
+        # 3. Set the Y range using log10 exponents
+        # This is the most stable method when Log mode is active
+        ymin_log = np.log10(_K_PLOT_YMIN)
+        ymax_log = np.log10(_K_PLOT_YMAX)
+        plot_w.setYRange(ymin_log, ymax_log, padding=0)
 
-) -> tuple[np.ndarray, list[np.ndarray], np.ndarray]:
+    except (AttributeError, RuntimeError, TypeError):
+        logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
+def _add_spectrum_thickness_badge(
+    plot_w: Any | None, x_vals: np.ndarray, y_vals: np.ndarray, d_nm: float
+) -> Any | None:
+    """Add a visible thickness badge inside the spectral response plot."""
+    if plot_w is None or not np.isfinite(float(d_nm)):
+        return None
+
+    x_arr = np.asarray(x_vals, dtype=np.float64).ravel()
+    y_arr = np.asarray(y_vals, dtype=np.float64).ravel()
+    m = np.isfinite(x_arr) & np.isfinite(y_arr)
+    if not np.any(m):
+        return None
+
+    x_arr = x_arr[m]
+    y_arr = y_arr[m]
+    x_lo = float(np.min(x_arr))
+    x_hi = float(np.max(x_arr))
+    y_lo = float(np.min(y_arr))
+    y_hi = float(np.max(y_arr))
+    dx = float(max(x_hi - x_lo, 1e-9))
+    dy = float(max(y_hi - y_lo, 1e-9))
+
+    badge = pg.TextItem(
+        html=(
+            '<div style="background-color: rgba(15, 23, 42, 180); '
+            'padding: 4px 8px; border: 1px solid rgba(255,255,255,0.18); border-radius: 6px;">'
+            f'<span style="color: {CertusTheme.PRIMARY}; font-size: 12px;"><b>d = {float(d_nm):.2f} nm</b></span>'
+            "</div>"
+        ),
+        anchor=(0.0, 1.0),
+    )
+    try:
+        badge.setZValue(1000)
+    except (AttributeError, RuntimeError):
+        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+    badge.setPos(x_lo + 0.03 * dx, y_hi - 0.04 * dy)
+    try:
+        plot_w.addItem(badge, ignoreBounds=True)
+    except TypeError:
+        plot_w.addItem(badge)
+    return badge
+
+def _spectral_display_align(lam_nm: np.ndarray, *series: np.ndarray) -> tuple[np.ndarray, list[np.ndarray], np.ndarray]:
     """
 
     Truncates all series to the same length as lam_nm, then sorts by increasing lambda.
@@ -621,7 +447,6 @@ def _spectral_display_align(
     lam = np.asarray(lam_nm, dtype=np.float64).ravel()
 
     if lam.size == 0:
-
         z = np.array([], dtype=np.int64)
 
         return lam, [np.asarray(s, dtype=np.float64).ravel()[:0] for s in series], z
@@ -631,7 +456,6 @@ def _spectral_display_align(
     arrs: list[np.ndarray] = []
 
     for s in series:
-
         a = np.asarray(s, dtype=np.float64).ravel()
 
         n_use = min(n_use, a.size)
@@ -639,7 +463,6 @@ def _spectral_display_align(
         arrs.append(a)
 
     if n_use <= 0:
-
         zf = np.array([], dtype=np.float64)
 
         zi = np.array([], dtype=np.int64)
@@ -647,15 +470,10 @@ def _spectral_display_align(
         return zf, [zf.copy() for _ in series], zi
 
     if n_use != lam.size:
-
         logger.warning(
-
             "Spectral display: inconsistent lengths (lambda=%d, truncation to %d).",
-
             lam.size,
-
             n_use,
-
         )
 
     lam_u = lam[:n_use]
@@ -671,17 +489,8 @@ def _spectral_display_align(
     return lam_s, out, order
 
 
-def _mergesort_order_lambda(lam_nm: np.ndarray) -> np.ndarray:
-
-    """Indices to permute spectral columns by increasing lambda (stable sort, same logic as UI)."""
-
-    lam = np.asarray(lam_nm, dtype=np.float64).ravel()
-
-    return np.argsort(lam, kind="mergesort") if lam.size else np.arange(0, dtype=np.intp)
-
 
 def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame | None:
-
     """Build a DataFrame for Excel export from n(lambda) and ln k(lambda) plot items (k = exp(ln k), capped)."""
 
     xn, yn = curve_n.getData()
@@ -705,7 +514,6 @@ def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame 
     n = int(max(xn.size, yn.size, xk.size, yk_k.size))
 
     if n == 0:
-
         return None
 
     def _pad(a: np.ndarray) -> np.ndarray:
@@ -713,40 +521,26 @@ def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame 
         a = np.asarray(a, dtype=float).ravel()
 
         if a.size >= n:
-
             return a[:n].copy()
 
         return np.pad(a, (0, n - a.size), constant_values=np.nan)
 
     if xn.size == xk.size and xn.size > 0 and np.allclose(xn, xk, equal_nan=True):
-
         return pd.DataFrame({"lambda_nm": _pad(xn), "n": _pad(yn), "k": _pad(yk_k)})
 
     return pd.DataFrame(
-
         {
-
             "lambda_nm_n": _pad(xn),
-
             "n": _pad(yn),
-
             "lambda_nm_k": _pad(xk),
-
             "k": _pad(yk_k),
-
         }
-
     )
-
 
 # --- GUI --------------------------------------------------------------------------
 
-
 @dataclass
-
-
 class SplineState:
-
     result: dict | None
 
     d_lo: float
@@ -756,9 +550,6 @@ class SplineState:
     wt: float
 
     wr: float
-
-
-
 
 class CorridorRMSEProfileWindow(QDialog):
     """Window displaying the RMSE = f(thickness) curve from corridor profiling."""
@@ -786,8 +577,8 @@ class CorridorRMSEProfileWindow(QDialog):
 
         # Plot widget
         self.plot_rmse = CertusScientificPlot(title="RMSE vs Thickness d")
-        self.plot_rmse.setLabel('bottom', 'd (nm)')
-        self.plot_rmse.setLabel('left', 'RMSE')
+        self.plot_rmse.setLabel("bottom", "d (nm)")
+        self.plot_rmse.setLabel("left", "RMSE")
         layout.addWidget(self.plot_rmse)
 
         # Button bar
@@ -831,14 +622,12 @@ class CorridorRMSEProfileWindow(QDialog):
             self._rmse_data = None
             self._d_data_raw = None
             self._rmse_data_raw = None
-            return
 
         self._d_data_raw = d_arr
         self._rmse_data_raw = r_arr
         self._rmse_thresh = rmse_thresh
 
-        # Trier par ?paisseur
-        order = np.argsort(d_arr)
+        order = np.argsort(d_arr, kind="mergesort")
         d_sorted = d_arr[order]
         r_sorted = r_arr[order]
 
@@ -872,7 +661,7 @@ class CorridorRMSEProfileWindow(QDialog):
                 f"Threshold = {rmse_thresh:.6f}",
                 color=CertusTheme.DANGER,
                 width=1,
-                style=Qt.PenStyle.DashLine
+                style=Qt.PenStyle.DashLine,
             )
 
         # Info
@@ -920,10 +709,7 @@ class CorridorRMSEProfileWindow(QDialog):
         self.btn_copy.setText("Copied!")
         QTimer.singleShot(1500, lambda t=prev: self.btn_copy.setText(t))
 
-
-
 class LiveIndexMonitor(QDialog):
-
     def __init__(self, parent: QWidget | None = None) -> None:
 
         super().__init__(parent)
@@ -945,25 +731,16 @@ class LiveIndexMonitor(QDialog):
         def on_unit_change() -> None:
 
             if hasattr(self, "_last_data"):
-
                 self.update_indices(*self._last_data)
 
         self.cb.currentIndexChanged.connect(on_unit_change)
 
         h.addWidget(self.cb)
 
-        self._btn_copy_nk_2nm = create_styled_button(
-
-            "Copy lambda, n, k (2 nm step)", "secondary", parent=self
-
-        )
+        self._btn_copy_nk_2nm = create_styled_button("Copy lambda, n, k (2 nm step)", "secondary", parent=self)
 
         self._btn_copy_nk_2nm.setToolTip(
-
-            "Clipboard: lambda (integer nm), n, k sorted by increasing lambda, "
-
-            "interpolated on a 2 nm grid (TSV)."
-
+            "Clipboard: lambda (integer nm), n, k sorted by increasing lambda, interpolated on a 2 nm grid (TSV)."
         )
 
         self._btn_copy_nk_2nm.clicked.connect(self._copy_nk_clipboard_2nm)
@@ -984,7 +761,7 @@ class LiveIndexMonitor(QDialog):
 
         self.p_k = CertusScientificPlot(title="Index k  Log Scale")
 
-        self.p_k.setLogMode(False, True) 
+        _apply_fixed_log_k_axis(self.p_k)
 
         l.addWidget(self.p_n)
 
@@ -995,15 +772,10 @@ class LiveIndexMonitor(QDialog):
     def _copy_nk_clipboard_2nm(self) -> None:
 
         if not hasattr(self, "_last_data") or self._last_data is None:
-
             QMessageBox.information(
-
                 self,
-
                 "Clipboard",
-
                 "No n, k data (wait for live update).",
-
             )
 
             return
@@ -1013,15 +785,10 @@ class LiveIndexMonitor(QDialog):
         txt = _live_monitor_nk_clipboard_tsv_2nm(lam_arr, n_arr, k_arr)
 
         if not txt:
-
             QMessageBox.information(
-
                 self,
-
                 "Clipboard",
-
                 "No valid points for export.",
-
             )
 
             return
@@ -1029,7 +796,6 @@ class LiveIndexMonitor(QDialog):
         cb = QApplication.clipboard()
 
         if cb is None:
-
             QMessageBox.warning(self, "Clipboard", "Clipboard unavailable.")
 
             return
@@ -1041,82 +807,69 @@ class LiveIndexMonitor(QDialog):
         self._btn_copy_nk_2nm.setText("Copied!")
 
         QTimer.singleShot(
-
             1500,
-
             lambda t=prev: self._btn_copy_nk_2nm.setText(t),
-
         )
 
-    def update_indices(self, lam_arr: np.ndarray, n_arr: np.ndarray, k_arr: np.ndarray, d_nm: float | None = None) -> None:
+    def update_indices(
+        self, lam_arr: np.ndarray, n_arr: np.ndarray, k_arr: np.ndarray, d_nm: float | None = None
+    ) -> None:
 
         self._last_data = (lam_arr, n_arr, k_arr, d_nm)
 
         mode = self.cb.currentIndex()
 
         if mode == 0:
-
             x, lbl = lam_arr, "lambda (nm)"
 
         elif mode == 1:
-
             x, lbl = 1.0 / lam_arr, "sigma (nm?1)"
 
         else:
-
-            x, lbl = (1.0 / lam_arr)**2, "sigma2 (nm?2)"
+            x, lbl = (1.0 / lam_arr) ** 2, "sigma2 (nm?2)"
 
         if d_nm is not None and np.isfinite(float(d_nm)):
-
             self.lbl_d.setText(f"d = {float(d_nm):.1f} nm")
 
-        self.p_n.setLabel('bottom', lbl)
+        self.p_n.setLabel("bottom", lbl)
 
-        self.p_k.setLabel('bottom', lbl)
+        self.p_k.setLabel("bottom", lbl)
 
         if "n" not in self.p_n._curves:
-
             self.p_n.add_curve(x, n_arr, "n", color=CertusTheme.PRIMARY, width=2)
 
         else:
-
             self.p_n.update_curve("n", x, n_arr)
 
         if "k" not in self.p_k._curves:
-
             self.p_k.add_curve(x, k_arr, "k", color=CertusTheme.DANGER, width=2)
 
         else:
-
             self.p_k.update_curve("k", x, k_arr)
 
         study_fn = getattr(self, "_study_lam_window_fn", None)
 
         if not callable(study_fn):
-
             self.p_n.autoRange()
 
-            self.p_k.autoRange()
+            _apply_fixed_log_k_axis(self.p_k)
 
             return
 
         try:
-
             lo_s, hi_s = study_fn()
 
         except (TypeError, ValueError, RuntimeError):
-
             self.p_n.autoRange()
 
-            self.p_k.autoRange()
+            _apply_fixed_log_k_axis(self.p_k)
 
             return
 
         if not (hi_s > lo_s and np.isfinite(lo_s) and np.isfinite(hi_s)):
-
             self.p_n.autoRange()
 
-            self.p_k.autoRange()
+            _apply_fixed_log_k_axis(self.p_k)
 
             return
 
@@ -1131,10 +884,9 @@ class LiveIndexMonitor(QDialog):
         npt = min(lam_f.size, n_f.size, k_f.size)
 
         if npt <= 0:
-
             self.p_n.autoRange()
 
-            self.p_k.autoRange()
+            _apply_fixed_log_k_axis(self.p_k)
 
             return
 
@@ -1143,27 +895,22 @@ class LiveIndexMonitor(QDialog):
         mwin = np.isfinite(lam_f) & (lam_f >= lo_s) & (lam_f <= hi_s)
 
         if not np.any(mwin):
-
             mwin = np.isfinite(lam_f)
 
         if mode == 0:
-
             x_lo, x_hi = float(lo_s - pad_l), float(hi_s + pad_l)
 
         elif mode == 1:
-
             x_lo = 1.0 / float(hi_s + pad_l)
 
             x_hi = 1.0 / float(max(lo_s - pad_l, 1e-30))
 
         else:
-
             x_lo = (1.0 / float(hi_s + pad_l)) ** 2
 
             x_hi = (1.0 / float(max(lo_s - pad_l, 1e-30))) ** 2
 
         if x_hi < x_lo:
-
             x_lo, x_hi = x_hi, x_lo
 
         pad_x = max((x_hi - x_lo) * 0.02, 1e-24)
@@ -1179,51 +926,56 @@ class LiveIndexMonitor(QDialog):
         nn = nn[np.isfinite(nn)]
 
         if nn.size > 0:
-
             n_lo, n_hi = float(np.min(nn)), float(np.max(nn))
 
             pr = max((n_hi - n_lo) * 0.07, 1e-6)
 
             self.p_n.plotItem.setYRange(n_lo - pr, n_hi + pr, padding=0)
 
-        kk = k_f[mwin]
-
-        kk = kk[np.isfinite(kk) & (kk > 0)]
-
-        if kk.size > 0:
-
-            k_lo = max(float(np.min(kk)), 1e-30)
-
-            k_hi = max(float(np.max(kk)), k_lo * 1.0001)
-
-            self.p_k.plotItem.setYRange(k_lo * 0.85, k_hi * 1.15, padding=0)
-
+        _apply_fixed_log_k_axis(self.p_k)
 
 def _interp_t_at_lam_knots(lam_grid: np.ndarray, t_grid: np.ndarray, cur_sk: np.ndarray) -> np.ndarray:
     """Interpolate theoretical T at knot lambda positions (sigma -> lambda conversion)."""
-    lam_g = np.asarray(lam_grid, dtype=np.float64).ravel()
-    t_g = np.asarray(t_grid, dtype=np.float64).ravel()
-    lam_k = 1.0 / np.maximum(np.asarray(cur_sk, dtype=np.float64).ravel(), 1e-30)
-    o = np.argsort(lam_g)
-    return np.interp(lam_k, lam_g[o], t_g[o], left=t_g[o[0]], right=t_g[o[-1]])
+    return _interp_series_at_sigma_knots(lam_grid, t_grid, cur_sk)[1]
 
+def _interp_series_at_sigma_knots(
+    lam_grid: np.ndarray, y_grid: np.ndarray, sigma_knots: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Interpolate a spectral series at sigma-knot wavelengths and return points sorted by lambda."""
+    lam_g = np.asarray(lam_grid, dtype=np.float64).ravel()
+    y_g = np.asarray(y_grid, dtype=np.float64).ravel()
+    sig_k = np.asarray(sigma_knots, dtype=np.float64).ravel()
+
+    m = np.isfinite(lam_g) & np.isfinite(y_g)
+    if not np.any(m):
+        return np.array([], dtype=np.float64), np.array([], dtype=np.float64)
+
+    lam_f = lam_g[m]
+    y_f = y_g[m]
+    order_grid = np.argsort(lam_f, kind="mergesort")
+    lam_f = lam_f[order_grid]
+    y_f = y_f[order_grid]
+
+    lam_k = 1.0 / np.maximum(sig_k, 1e-30)
+    mk = np.isfinite(lam_k)
+    if not np.any(mk):
+        return np.array([], dtype=np.float64), np.array([], dtype=np.float64)
+
+    lam_k = lam_k[mk]
+    y_k = np.interp(lam_k, lam_f, y_f, left=y_f[0], right=y_f[-1])
+    order_k = np.argsort(lam_k, kind="mergesort")
+    return lam_k[order_k], y_k[order_k]
 
 _D_SLIDER_STEPS_DEFAULT = 5000
 
-
-def _d_from_slider_int(
-    iv: int, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT
-) -> float:
+def _d_from_slider_int(iv: int, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> float:
     """Convert slider integer position to thickness (nm)."""
     if d_hi_nm <= d_lo_nm + 1e-30:
         return float(d_lo_nm)
     t = float(iv) / float(steps)
     return float(d_lo_nm + t * (d_hi_nm - d_lo_nm))
 
-
-def _slider_int_from_d_nm(
-    dv: float, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT
-) -> int:
+def _slider_int_from_d_nm(dv: float, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> int:
     """Convert thickness (nm) to slider integer position."""
     if d_hi_nm <= d_lo_nm + 1e-30:
         return 0
@@ -1231,21 +983,18 @@ def _slider_int_from_d_nm(
     t = (dv - d_lo_nm) / (d_hi_nm - d_lo_nm)
     return int(round(t * steps))
 
-
 def _get_xv_spectral_coord(sx: float, mode: str) -> float:
     """Utility for spectral coordinate conversion (lambda / sigma / sigma2)."""
     if mode == "Sigma (nm?1)":
         return float(sx)
     elif mode == "Sigma2 (nm?2)":
-        return float(sx)**2
+        return float(sx) ** 2
     else:
-        return 1.0/float(sx) if sx != 0 else 0.0
-
+        return 1.0 / float(sx) if sx != 0 else 0.0
 
 def _stretch_sig_to_px(delta: float, span_sig2: float) -> int:
     """Calculate pixel stretch for sigma-based UI elements."""
     return max(1, int(max(0.0, float(delta)) / max(span_sig2, 1e-30) * 28000.0))
-
 
 def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: "SplineOptConfig") -> tuple[float, float]:
     """Calculate the useful lambda band for display and RMSE calculation."""
@@ -1266,7 +1015,6 @@ def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: "SplineOptConfig") -
         return lo_d, hi_d
     return lo, hi
 
-
 def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: float) -> np.ndarray:
     """Masque bool?en : point sur l enveloppe inf?rieure locale en ?paisseur (d +/- tol)."""
     d_a = np.asarray(d_nm, dtype=np.float64).ravel()
@@ -1286,7 +1034,6 @@ def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: floa
         m = np.abs(d_a - d_a[i]) <= tol_nm
         keep[i] = float(r_a[i]) <= float(np.min(r_a[m])) + 1e-15
     return keep
-
 
 def _filter_rmse_peaks_iteratively(
     d: np.ndarray,
@@ -1321,7 +1068,6 @@ def _filter_rmse_peaks_iteratively(
         return (d_curr, r_curr) + tuple(sc)
     return d_curr, r_curr
 
-
 def _safe_int_from_mapping(m: Mapping[str, Any], key: str, default: int = -1) -> int:
     v = m.get(key, None)
     if v is None:
@@ -1331,22 +1077,14 @@ def _safe_int_from_mapping(m: Mapping[str, Any], key: str, default: int = -1) ->
     except (TypeError, ValueError):
         return int(default)
 
-
 def _worker_corridor_rmse_regular_grid(
-
     cfg: SplineOptConfig,
-
     base_snapshot: dict,
-
     d_grid_nm: np.ndarray,
-
     stop_event: Event,
     breakpoint_lookback_points: int = 5,
-
     **kwargs: Any,
-
 ) -> dict[str, Any]:
-
     """Worker: refit n,L ? d fix? sur une grille (m?me objectif spectral masqu? que le corridor)."""
 
     progress_cb = kwargs.get("progress_cb")
@@ -1356,11 +1094,9 @@ def _worker_corridor_rmse_regular_grid(
     def _stop() -> bool:
 
         try:
-
             return stop_event is not None and stop_event.is_set()
 
         except (AttributeError, TypeError):
-
             return False
 
     visit_anchor = kwargs.get("visit_anchor_nm")
@@ -1368,30 +1104,19 @@ def _worker_corridor_rmse_regular_grid(
     visit_anchor_kw: float | None = None
 
     if visit_anchor is not None and np.isfinite(float(visit_anchor)):
-
         visit_anchor_kw = float(visit_anchor)
 
     return compute_regular_grid_rmse_profile(
-
         cfg,
-
         base_snapshot,
-
         d_grid_nm,
-
         profile_polish_maxfun=None,
         breakpoint_lookback_points=int(max(2, breakpoint_lookback_points)),
-
         visit_anchor_nm=visit_anchor_kw,
-
         progress_cb=progress_cb,
-
         stop_check=_stop,
-
         live_cb=live_cb,
-
     )
-
 
 def _worker_corridor_rmse_healer(
     cfg: SplineOptConfig,
@@ -1406,22 +1131,21 @@ def _worker_corridor_rmse_healer(
     for i, (d_target, seed) in enumerate(tasks):
         if stop_event is not None and stop_event.is_set():
             break
-        
+
         # Prepare a specific config/seed for this point
         point_seed = dict(seed)
         point_seed["d_nm"] = float(d_target)
-        
+
         # Standard polish at fixed d
         res = quick_pwlnk_refit_result_dict(cfg, point_seed, maxfun=1200)
         if isinstance(res, dict):
             res["profile_d_val_nm"] = float(d_target)
             results.append(res)
-        
+
         if progress_cb:
-            progress_cb(float(i + 1) / n, f"Heal {i+1}/{n} @ d={d_target:.2f}")
+            progress_cb(float(i + 1) / n, f"Heal {i + 1}/{n} @ d={d_target:.2f}")
 
     return results
-
 
 def _worker_curve_minimum_deep_refit(
     cfg: SplineOptConfig,
@@ -1446,7 +1170,6 @@ def _worker_curve_minimum_deep_refit(
     out["gui_curve_minimum_deep_refit"] = True
     return out
 
-
 def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float, best_rmse: float) -> str:
     """Format the summary text for the smart init preview dialog."""
     return (
@@ -1456,34 +1179,50 @@ def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float
         f"| best reached {best_rmse:.6f}"
     )
 
-
 @dataclass
 class _RMSEPlotContext:
-    d_plot: np.ndarray; r_plot: np.ndarray; kind_plot: np.ndarray; status_plot: np.ndarray
-    d_vis: np.ndarray; r_vis: np.ndarray; kind_vis: np.ndarray; status_vis: np.ndarray
-    d_s: np.ndarray; r_s: np.ndarray; m_rev: np.ndarray; m_main: np.ndarray
-    envelope_display: bool; is_live_grid: bool; i_best: int
-    parab_fit: dict = field(default_factory=dict); curvature_label_spec: Any = None
-    live_parab: bool = False; d_best: float = 0.0; rmse_best: float = 0.0
-    rmse_thr: Any = None; d_parab_arr: np.ndarray = field(default_factory=lambda: np.array([]))
+    d_plot: np.ndarray
+    r_plot: np.ndarray
+    kind_plot: np.ndarray
+    status_plot: np.ndarray
+    d_vis: np.ndarray
+    r_vis: np.ndarray
+    kind_vis: np.ndarray
+    status_vis: np.ndarray
+    d_s: np.ndarray
+    r_s: np.ndarray
+    m_rev: np.ndarray
+    m_main: np.ndarray
+    envelope_display: bool
+    is_live_grid: bool
+    i_best: int
+    parab_fit: dict = field(default_factory=dict)
+    curvature_label_spec: Any = None
+    live_parab: bool = False
+    d_best: float = 0.0
+    rmse_best: float = 0.0
+    rmse_thr: Any = None
+    d_parab_arr: np.ndarray = field(default_factory=lambda: np.array([]))
     r_parab_arr: np.ndarray = field(default_factory=lambda: np.array([]))
-    win_rb: float = 0.0; delta_rb: float = 0.0; i_parab_best: int = -1
-    rb_ok: bool = False; d_lo_rb: float = float("nan"); d_hi_rb: float = float("nan")
-    slope_b: float = float("nan"); curv_b: float = float("nan"); d_center: float = float("nan")
-    bp_events: list = field(default_factory=list); bp_dir_left: int = 0; bp_dir_right: int = 0
-
-
-
-
-
-
-
-
+    win_rb: float = 0.0
+    delta_rb: float = 0.0
+    i_parab_best: int = -1
+    rb_ok: bool = False
+    d_lo_rb: float = float("nan")
+    d_hi_rb: float = float("nan")
+    slope_b: float = float("nan")
+    curv_b: float = float("nan")
+    d_center: float = float("nan")
+    bp_events: list = field(default_factory=list)
+    bp_dir_left: int = 0
+    bp_dir_right: int = 0
 
 import dataclasses
+
 @dataclasses.dataclass
 class _SmartInitState:
     """State object to hold mutable UI references and mathematical parameters of the Smart Init dialog."""
+
     sk: np.ndarray
     n_phys: np.ndarray
     L_nodes: np.ndarray
@@ -1493,8 +1232,25 @@ class _SmartInitState:
     best_L: np.ndarray
     current_rmse: float
     current_t_th: np.ndarray
+    k_n: int = 0
+    best_live: dict | None = dataclasses.field(default=None, repr=False)
 
-    def update(self, sk: np.ndarray, n_phys: np.ndarray, L_nodes: np.ndarray, preview_d_nm: float, best_rmse: float, best_n: np.ndarray, best_L: np.ndarray, current_rmse: float, current_t_th: np.ndarray) -> None:
+    def __post_init__(self):
+        if self.k_n == 0:
+            self.k_n = int(np.asarray(self.sk).size)
+
+    def update(
+        self,
+        sk: np.ndarray,
+        n_phys: np.ndarray,
+        L_nodes: np.ndarray,
+        preview_d_nm: float,
+        best_rmse: float,
+        best_n: np.ndarray,
+        best_L: np.ndarray,
+        current_rmse: float,
+        current_t_th: np.ndarray,
+    ) -> None:
         self.sk = sk
         self.n_phys = n_phys
         self.L_nodes = L_nodes
@@ -1507,11 +1263,14 @@ class _SmartInitState:
 
 class _ExcelExportMixin:
     """Excel Export Area."""
-    def export_excel(self, auto: bool = False) -> None:
+
+    def export_excel(self, auto_export: bool = False) -> None:
         """Delegates Excel export to SplineReportBuilder."""
         if self._last_result is None:
-            if auto: return
+            if auto_export:
+                return
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Error", "No result to export.")
             return
         try:
@@ -1519,7 +1278,9 @@ class _ExcelExportMixin:
             corr_enabled = bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked())
             boot_enabled = bool(getattr(self, "chk_corr_boot", None) and self.chk_corr_boot.isChecked())
             corr_seed = int(getattr(self, "sp_corr_seed", None).value()) if hasattr(self, "sp_corr_seed") else 0
-            boot_seed = int(getattr(self, "sp_corr_boot_seed", None).value()) if hasattr(self, "sp_corr_boot_seed") else 0
+            boot_seed = (
+                int(getattr(self, "sp_corr_boot_seed", None).value()) if hasattr(self, "sp_corr_boot_seed") else 0
+            )
             if corr_enabled and corr_seed == 0:
                 warnings_local.append("Spline corridor profiling enabled without explicit RNG seed.")
             if boot_enabled and boot_seed == 0:
@@ -1543,11 +1304,7 @@ class _ExcelExportMixin:
             req = IndexFitRequest(
                 config=self._build_opt_config(notify=False),
                 source_paths=[str(getattr(self, "_last_spectrum_path", "") or "")],
-                seed=(
-                    int(getattr(self, "sp_corr_seed", None).value())
-                    if hasattr(self, "sp_corr_seed")
-                    else None
-                ),
+                seed=(int(getattr(self, "sp_corr_seed", None).value()) if hasattr(self, "sp_corr_seed") else None),
                 app_id="CERTUS_INDEX_SPLINE",
                 app_version=__version__,
                 warnings=warnings_for_manifest,
@@ -1559,6 +1316,7 @@ class _ExcelExportMixin:
             self.logger.warning("INDEX_SPLINE manifest generation skipped: %s", exc)
 
         from certus_data import get_missing_manifest_fields
+
         manifest_dict = self._last_result.get("run_manifest") if isinstance(self._last_result, dict) else None
         missing_manifest_fields = get_missing_manifest_fields(
             manifest_dict if isinstance(manifest_dict, dict) else None
@@ -1569,7 +1327,6 @@ class _ExcelExportMixin:
                 ", ".join(missing_manifest_fields),
             )
             if not auto:
-                from PyQt6.QtWidgets import QMessageBox
 
                 QMessageBox.warning(
                     self,
@@ -1586,25 +1343,21 @@ class _ExcelExportMixin:
             sub_name=str(self.cb_sub.currentData() or self.cb_sub.currentText()),
             rmse_fit_lambda_tuple=self._rmse_fit_lambda_tuple_for_report(),
             lam_mask_callable=self._smart_mesh_objective_lam_mask_float,
-            opt_config=self._build_opt_config(notify=False)
+            opt_config=self._build_opt_config(notify=False),
         )
         builder = SplineReportBuilder(ctx, logger=self.logger)
         builder.build_report(auto=auto)
 
     def _prep_rmse_plot_data(self, src: dict) -> "_RMSEPlotContext | None":
-
         """Tab  Corridor RMSE(d) : profile points + best sampled thickness marker."""
 
         if not hasattr(self, "plot_corridor_rmse_d"):
-
             return None
 
         try:
-
             self.plot_corridor_rmse_d.clear()
 
         except (AttributeError, RuntimeError):
-
             self._corridor_rmse_parab_export = None
 
             self._corridor_rmse_robust_export = None
@@ -1621,7 +1374,6 @@ class _ExcelExportMixin:
         ).ravel()
 
         if (d_prof.size == 0 or rmse_prof.size != d_prof.size) and self._corridor_profile_source_result() is not None:
-
             src = self._corridor_profile_source_result() or src
 
             d_prof = np.asarray(src.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -1634,19 +1386,16 @@ class _ExcelExportMixin:
             ).ravel()
 
         if d_prof.size == 0 or rmse_prof.size != d_prof.size:
-
             if hasattr(self, "lbl_corridor_rmse_summary"):
-
                 self.lbl_corridor_rmse_summary.setText("No corridor RMSE profile available for this run.")
             if hasattr(self, "lbl_corridor_rmse_robust_compact"):
-                self.lbl_corridor_rmse_robust_compact.setText("Intervalle robuste: -")
+                self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
 
             self._corridor_rmse_parab_export = None
 
             self._corridor_rmse_robust_export = None
 
             if hasattr(self, "btn_corridor_generate_from_grid"):
-
                 self.btn_corridor_generate_from_grid.setEnabled(False)
             if hasattr(self, "btn_corridor_generate_from_partial_grid"):
                 self.btn_corridor_generate_from_partial_grid.setEnabled(False)
@@ -1674,19 +1423,16 @@ class _ExcelExportMixin:
             point_status_prof = np.zeros(d_prof.size, dtype=np.int32)
 
         if d_prof.size == 0:
-
             if hasattr(self, "lbl_corridor_rmse_summary"):
-
                 self.lbl_corridor_rmse_summary.setText("No finite corridor RMSE profile points.")
             if hasattr(self, "lbl_corridor_rmse_robust_compact"):
-                self.lbl_corridor_rmse_robust_compact.setText("Intervalle robuste: -")
+                self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
 
             self._corridor_rmse_parab_export = None
 
             self._corridor_rmse_robust_export = None
 
             if hasattr(self, "btn_corridor_generate_from_grid"):
-
                 self.btn_corridor_generate_from_grid.setEnabled(False)
             if hasattr(self, "btn_corridor_generate_from_partial_grid"):
                 self.btn_corridor_generate_from_partial_grid.setEnabled(False)
@@ -1707,37 +1453,39 @@ class _ExcelExportMixin:
         kind_s = point_kind_prof[order]
         status_s = point_status_prof[order]
 
-        # Donn?es compl?tes + filtre it?ratif des pics RMSE (m?me logique que _finish_corridor_rmse_d_grid_worker_done)
-        d_plot, r_plot, k_plot, s_plot = _filter_rmse_peaks_iteratively(
-            d_s.copy(), r_s.copy(), kind_s.copy(), status_s.copy()
-        )
-
-        kind_plot = k_plot
-        status_plot = s_plot
+        is_live_grid = str(src.get("profile_d_status", "")) == "manual_grid_live"
+        if is_live_grid:
+            # In live mode, display raw points as they arrive.
+            d_plot = d_s.copy()
+            r_plot = r_s.copy()
+            kind_plot = kind_s.copy()
+            status_plot = status_s.copy()
+        else:
+            # Finalized data: iterative RMSE peak filtering.
+            d_plot, r_plot, k_plot, s_plot = _filter_rmse_peaks_iteratively(
+                d_s.copy(), r_s.copy(), kind_s.copy(), status_s.copy()
+            )
+            kind_plot = k_plot
+            status_plot = s_plot
 
         self._corridor_rmse_d_vals = d_plot.copy()
         self._corridor_rmse_vals = r_plot.copy()
 
-        is_live_grid = str(src.get("profile_d_status", "") or "") == "manual_grid_live"
-
         env_pref = bool(
-
-            hasattr(self, "chk_corridor_rmse_envelope_only")
-
-            and self.chk_corridor_rmse_envelope_only.isChecked()
-
+            hasattr(self, "chk_corridor_rmse_envelope_only") and self.chk_corridor_rmse_envelope_only.isChecked()
         )
 
         # The lower envelope filter is often too aggressive for local parabolic wings.
         # We only apply it if explicitly requested AND we have finished a run.
         envelope_display = bool(env_pref and not is_live_grid and d_plot.size > 0)
-        
-        # Reduced tolerance to avoid masking the wings of the parabola (max 0.1nm)
-        raw_step = float(self.sp_corridor_grid_d_step_nm.value()) if hasattr(self, "sp_corridor_grid_d_step_nm") else 0.5
-        tol_nm = min(0.1, 0.2 * raw_step) 
-        
-        if envelope_display:
 
+        # Reduced tolerance to avoid masking the wings of the parabola (max 0.1nm)
+        raw_step = (
+            float(self.sp_corridor_grid_d_step_nm.value()) if hasattr(self, "sp_corridor_grid_d_step_nm") else 0.5
+        )
+        tol_nm = min(0.1, 0.2 * raw_step)
+
+        if envelope_display:
             env_m = _rmse_d_lower_envelope_mask(d_plot, r_plot, tol_nm)
 
             d_vis = d_plot[env_m]
@@ -1757,7 +1505,6 @@ class _ExcelExportMixin:
             status_vis = status_vis[o2]
 
         else:
-
             d_vis = d_plot
 
             r_vis = r_plot
@@ -1766,11 +1513,8 @@ class _ExcelExportMixin:
             status_vis = status_plot
 
         if hasattr(self, "btn_corridor_generate_from_grid"):
-
             self.btn_corridor_generate_from_grid.setEnabled(
-
                 bool(d_plot.size > 0) and str(getattr(self, "_worker_role", "") or "") != "rmse_grid"
-
             )
         if hasattr(self, "btn_corridor_generate_from_partial_grid"):
             self.btn_corridor_generate_from_partial_grid.setEnabled(
@@ -1785,16 +1529,34 @@ class _ExcelExportMixin:
         m_main = ~m_rev
         i_best = int(np.argmin(r_plot)) if r_plot.size > 0 else 0
 
-        return _RMSEPlotContext(d_plot=d_plot, r_plot=r_plot, kind_plot=kind_plot, status_plot=status_plot,
-            d_vis=d_vis, r_vis=r_vis, kind_vis=kind_vis, status_vis=status_vis,
-            d_s=d_s, r_s=r_s, m_rev=m_rev, m_main=m_main,
-            envelope_display=envelope_display, is_live_grid=is_live_grid, i_best=i_best)
+        return _RMSEPlotContext(
+            d_plot=d_plot,
+            r_plot=r_plot,
+            kind_plot=kind_plot,
+            status_plot=status_plot,
+            d_vis=d_vis,
+            r_vis=r_vis,
+            kind_vis=kind_vis,
+            status_vis=status_vis,
+            d_s=d_s,
+            r_s=r_s,
+            m_rev=m_rev,
+            m_main=m_main,
+            envelope_display=envelope_display,
+            is_live_grid=is_live_grid,
+            i_best=i_best,
+        )
 
     def _plot_rmse_data_scatter(self, src: dict, ctx: "_RMSEPlotContext") -> None:
-        d_plot = ctx.d_plot; r_plot = ctx.r_plot; kind_plot = ctx.kind_plot; status_plot = ctx.status_plot
-        d_vis = ctx.d_vis; r_vis = ctx.r_vis; kind_vis = ctx.kind_vis; status_vis = ctx.status_vis
-        m_rev = ctx.m_rev; m_main = ctx.m_main
-        envelope_display = ctx.envelope_display; is_live_grid = ctx.is_live_grid; i_best = ctx.i_best
+        d_plot = ctx.d_plot
+        r_plot = ctx.r_plot
+        d_vis = ctx.d_vis
+        r_vis = ctx.r_vis
+        kind_vis = ctx.kind_vis
+        status_vis = ctx.status_vis
+        m_rev = ctx.m_rev
+        m_main = ctx.m_main
+        i_best = ctx.i_best
         m_rev = np.asarray(kind_vis == 1, dtype=bool)
         m_main = ~m_rev
 
@@ -1908,7 +1670,7 @@ class _ExcelExportMixin:
                     brush=pg.mkBrush(255, 236, 139, 180),
                     size=13,
                     symbol="o",
-                    name="Cassures",
+                    name="Breakpoints",
                 )
             )
         if bp_d_prevn:
@@ -1920,7 +1682,7 @@ class _ExcelExportMixin:
                     brush=pg.mkBrush(255, 255, 255, 0),
                     size=11,
                     symbol="d",
-                    name="Cassure prevN",
+                    name="Breakpoint prevN",
                 )
             )
         if bp_d_parab:
@@ -1932,7 +1694,7 @@ class _ExcelExportMixin:
                     brush=pg.mkBrush(255, 255, 255, 0),
                     size=12,
                     symbol="t",
-                    name="Cassure parabole",
+                    name="Breakpoint parabola",
                 )
             )
 
@@ -1944,29 +1706,12 @@ class _ExcelExportMixin:
 
         rmse_best = float(r_plot[i_best])
 
-        delta_rb = (
+        delta_rb = float(self.sp_corridor_rmse_delta.value()) if hasattr(self, "sp_corridor_rmse_delta") else 2e-4
 
-            float(self.sp_corridor_rmse_delta.value())
-
-            if hasattr(self, "sp_corridor_rmse_delta")
-
-            else 2e-4
-
-        )
-
-        win_rb = (
-
-            int(self.sp_corridor_rmse_win.value())
-
-            if hasattr(self, "sp_corridor_rmse_win")
-
-            else 3
-
-        )
+        win_rb = int(self.sp_corridor_rmse_win.value()) if hasattr(self, "sp_corridor_rmse_win") else 3
 
         live_parab = (
-            not hasattr(self, "chk_corridor_rmse_live_parabola")
-            or self.chk_corridor_rmse_live_parabola.isChecked()
+            not hasattr(self, "chk_corridor_rmse_live_parabola") or self.chk_corridor_rmse_live_parabola.isChecked()
         )
         curvature_label_spec: tuple[float, float, float] | None = None
 
@@ -2004,82 +1749,53 @@ class _ExcelExportMixin:
         self._corridor_rmse_center_nm = float(d_center)
 
         self.plot_corridor_rmse_d.addItem(
-
             pg.InfiniteLine(
-
                 pos=d_best,
-
                 angle=90,
-
                 movable=False,
-
                 pen=pg.mkPen("#17a673", width=2, style=Qt.PenStyle.DashLine),
-
             )
-
         )
 
         self.plot_corridor_rmse_d.addItem(
-
             pg.ScatterPlotItem(
-
                 [d_best],
-
                 [rmse_best],
-
                 pen=pg.mkPen("#0a5f42", width=1),
-
                 brush=pg.mkBrush("#20c997"),
-
                 size=10,
-
                 symbol="o",
-
             )
-
         )
 
         rmse_thr = src.get("profile_d_rmse_thresh")
 
         if rmse_thr is not None and np.isfinite(float(rmse_thr)):
-
             thr = float(rmse_thr)
 
             self.plot_corridor_rmse_d.addItem(
-
                 pg.InfiniteLine(
-
                     pos=thr,
-
                     angle=0,
-
                     movable=False,
-
                     pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DashLine),
-
                 )
-
             )
 
         if live_parab:
-
             rb_ok, d_lo_rb, d_hi_rb, slope_b, _curv_b = self._robust_interval_from_local_quadratic(
                 d_parab_arr,
                 r_parab_arr,
                 i_parab_best,
                 delta_rb,
                 parab_half_window_pts,
-
             )
 
         else:
-
             rb_ok, d_lo_rb, d_hi_rb, slope_b, _curv_b = False, float("nan"), float("nan"), float("nan"), float("nan")
 
         if bool(parab_fit.get("ok", False)):
-            win_lo, win_hi = parab_fit.get(
-                "window_nm", (float(np.min(d_parab_arr)), float(np.max(d_parab_arr)))
-            )
+            win_lo, win_hi = parab_fit.get("window_nm", (float(np.min(d_parab_arr)), float(np.max(d_parab_arr))))
             d_center_fit = float(parab_fit.get("d_center", d_center))
             lo_w = float(win_lo)
             hi_w = float(win_hi)
@@ -2087,7 +1803,7 @@ class _ExcelExportMixin:
             if np.isfinite(d_center_fit) and np.isfinite(lo_w) and np.isfinite(hi_w) and hi_w > lo_w:
                 left = float(d_center_fit - lo_w)
                 right = float(hi_w - d_center_fit)
-                # Affichage sym?trique autour du centre de parabole (quasi-sym?trie visuelle garantie).
+                # Symmetric display around the parabola center (visual quasi-symmetry guaranteed).
                 if left > 0.0 and right > 0.0:
                     half_span = float(min(left, right))
                 else:
@@ -2108,19 +1824,12 @@ class _ExcelExportMixin:
             r_par = float(c2) * x_par * x_par + float(c1) * x_par + float(c0)
 
             self._add_curve(
-
                 self.plot_corridor_rmse_d,
-
                 d_par,
-
                 r_par,
-
                 "#7a3cff",
-
                 "Local parabolic fit",
-
                 pen=pg.mkPen("#7a3cff", width=2, style=Qt.PenStyle.DashLine),
-
             )
 
             # c2 = coefficient quadratique (RMSE = c2x^2+c1x+c0, x = d ? anchor) ; sommet en d_center.
@@ -2131,46 +1840,70 @@ class _ExcelExportMixin:
                     curvature_label_spec = (float(c2), d_v, r_v)
 
             self.plot_corridor_rmse_d.addItem(
-
                 pg.InfiniteLine(
-
                     pos=float(d_center),
-
                     angle=90,
-
                     movable=False,
-
                     pen=pg.mkPen("#7a3cff", width=1, style=Qt.PenStyle.DotLine),
-
                 )
-
             )
 
-        ctx.parab_fit = parab_fit; ctx.curvature_label_spec = curvature_label_spec
-        ctx.live_parab = live_parab; ctx.d_best = d_best; ctx.rmse_best = rmse_best
-        ctx.rmse_thr = rmse_thr; ctx.d_parab_arr = d_parab_arr; ctx.r_parab_arr = r_parab_arr
-        ctx.win_rb = win_rb; ctx.delta_rb = delta_rb; ctx.i_parab_best = i_parab_best
-        ctx.rb_ok = bool(rb_ok); ctx.d_lo_rb = float(d_lo_rb); ctx.d_hi_rb = float(d_hi_rb)
-        ctx.slope_b = float(slope_b); ctx.curv_b = float(_curv_b)
+        ctx.parab_fit = parab_fit
+        ctx.curvature_label_spec = curvature_label_spec
+        ctx.live_parab = live_parab
+        ctx.d_best = d_best
+        ctx.rmse_best = rmse_best
+        ctx.rmse_thr = rmse_thr
+        ctx.d_parab_arr = d_parab_arr
+        ctx.r_parab_arr = r_parab_arr
+        ctx.win_rb = win_rb
+        ctx.delta_rb = delta_rb
+        ctx.i_parab_best = i_parab_best
+        ctx.rb_ok = bool(rb_ok)
+        ctx.d_lo_rb = float(d_lo_rb)
+        ctx.d_hi_rb = float(d_hi_rb)
+        ctx.slope_b = float(slope_b)
+        ctx.curv_b = float(_curv_b)
         ctx.d_center = float(d_center) if bool(parab_fit.get("ok", False)) else float(d_best)
         ctx.bp_events = bp_events if isinstance(bp_events, list) else []
-        ctx.bp_dir_left = int(bp_dir_left); ctx.bp_dir_right = int(bp_dir_right)
+        ctx.bp_dir_left = int(bp_dir_left)
+        ctx.bp_dir_right = int(bp_dir_right)
 
     def _plot_corridor_rmse_tab(self, src: dict) -> None:
         """Tab corridor RMSE(d). Orchestrator."""
-        if not hasattr(self, "plot_corridor_rmse_d"): return
+        if not hasattr(self, "plot_corridor_rmse_d"):
+            return
         ctx = self._prep_rmse_plot_data(src)
-        if ctx is None: return
+        if ctx is None:
+            return
         self._plot_rmse_data_scatter(src, ctx)
-        d_plot = ctx.d_plot; r_plot = ctx.r_plot; status_plot = ctx.status_plot
-        i_best = ctx.i_best; parab_fit = ctx.parab_fit; curvature_label_spec = ctx.curvature_label_spec
-        live_parab = ctx.live_parab; d_best = ctx.d_best; rmse_best = ctx.rmse_best; rmse_thr = ctx.rmse_thr
-        d_parab_arr = ctx.d_parab_arr; r_parab_arr = ctx.r_parab_arr; win_rb = ctx.win_rb
-        delta_rb = ctx.delta_rb; i_parab_best = ctx.i_parab_best
+        d_plot = ctx.d_plot
+        r_plot = ctx.r_plot
+        d_vis = ctx.d_vis
+        r_vis = ctx.r_vis
+        i_best = ctx.i_best
+        parab_fit = ctx.parab_fit
+        curvature_label_spec = ctx.curvature_label_spec
+        envelope_display = ctx.envelope_display
+        is_live_grid = ctx.is_live_grid
+        live_parab = ctx.live_parab
+        d_best = ctx.d_best
+        rmse_best = ctx.rmse_best
+        rmse_thr = ctx.rmse_thr
+        d_parab_arr = ctx.d_parab_arr
+        r_parab_arr = ctx.r_parab_arr
+        win_rb = ctx.win_rb
+        delta_rb = ctx.delta_rb
 
-        rb_ok = ctx.rb_ok; d_lo_rb = ctx.d_lo_rb; d_hi_rb = ctx.d_hi_rb
-        slope_b = ctx.slope_b; _curv_b = ctx.curv_b; d_center = ctx.d_center
-        bp_events = ctx.bp_events; bp_dir_left = ctx.bp_dir_left; bp_dir_right = ctx.bp_dir_right
+        rb_ok = ctx.rb_ok
+        d_lo_rb = ctx.d_lo_rb
+        d_hi_rb = ctx.d_hi_rb
+        slope_b = ctx.slope_b
+        _curv_b = ctx.curv_b
+        d_center = ctx.d_center
+        bp_events = ctx.bp_events
+        bp_dir_left = ctx.bp_dir_left
+        bp_dir_right = ctx.bp_dir_right
 
         self._corridor_rmse_robust_ok = bool(rb_ok)
 
@@ -2178,7 +1911,7 @@ class _ExcelExportMixin:
 
         self._corridor_rmse_robust_hi = float(d_hi_rb)
 
-        # --- Deltad intelligent : intervalle auto du code de profilage (profile_d_interval_nm) ---
+        # --- Smart Deltad: automatic interval from code de profilage (profile_d_interval_nm) ---
         _int_nm = src.get("profile_d_interval_nm", None)
         _int_ok = (
             isinstance(_int_nm, (tuple, list))
@@ -2201,7 +1934,7 @@ class _ExcelExportMixin:
                         _int_nm = (float(np.min(_d_below)), float(np.max(_d_below)))
                         _int_ok = True
                 except (ValueError, TypeError, AttributeError):
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         if _int_ok:
             _d_int_lo = float(_int_nm[0])
@@ -2239,35 +1972,22 @@ class _ExcelExportMixin:
         else:
             self._corridor_rmse_smart_interval = None
 
-
-        # --- Intervalle robuste local (param?trable par l'utilisateur) ---
+        # --- Local robust interval (user-configurable) ---
         if rb_ok:
             pen_rb = pg.mkPen("#7a3cff", width=1, style=Qt.PenStyle.DashLine)
-            self.plot_corridor_rmse_d.addItem(
-                pg.InfiniteLine(pos=float(d_lo_rb), angle=90, movable=False, pen=pen_rb)
-            )
-            self.plot_corridor_rmse_d.addItem(
-                pg.InfiniteLine(pos=float(d_hi_rb), angle=90, movable=False, pen=pen_rb)
-            )
+            self.plot_corridor_rmse_d.addItem(pg.InfiniteLine(pos=float(d_lo_rb), angle=90, movable=False, pen=pen_rb))
+            self.plot_corridor_rmse_d.addItem(pg.InfiniteLine(pos=float(d_hi_rb), angle=90, movable=False, pen=pen_rb))
 
         self._corridor_rmse_parab_export = dict(parab_fit)
 
         self._corridor_rmse_robust_export = {
-
             "ok": bool(rb_ok),
-
             "d_lo": float(d_lo_rb),
-
             "d_hi": float(d_hi_rb),
-
             "slope": float(slope_b),
-
             "curvature": float(_curv_b),
-
             "delta_rmse_setting": float(delta_rb),
-
             "half_window_pts": int(win_rb),
-
         }
 
         self._sync_corridor_manual_controls(d_plot, i_best)
@@ -2277,46 +1997,45 @@ class _ExcelExportMixin:
         d_hi_man = float(getattr(self, "_corridor_rmse_manual_hi", float("nan")))
 
         if np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
-
             pen_man = pg.mkPen("#ff4d4f", width=1, style=Qt.PenStyle.DashLine)
 
             self.plot_corridor_rmse_d.addItem(
-
                 pg.InfiniteLine(pos=float(d_lo_man), angle=90, movable=False, pen=pen_man)
-
             )
 
             self.plot_corridor_rmse_d.addItem(
-
                 pg.InfiniteLine(pos=float(d_hi_man), angle=90, movable=False, pen=pen_man)
-
             )
 
         if hasattr(self, "lbl_corridor_rmse_summary"):
-
             _grid_note = ""
 
-            if str(src.get("profile_d_status", "") or "") == "manual_grid":
-
+            if str(src.get("profile_d_status", "")) == "manual_grid":
                 _grid_note = " | manual grid (re-run)"
 
-                n_bp = int(src.get("profile_d_manual_grid_breakpoint_count", 0) or 0)
+                n_bp = int(src.get("profile_d_manual_grid_breakpoint_count", 0))
 
-                n_extra = int(src.get("profile_d_manual_grid_extra_points", 0) or 0)
+                n_extra = int(src.get("profile_d_manual_grid_extra_points", 0))
 
                 if n_bp > 0 or n_extra > 0:
-
-                    _grid_note += f" | cassures d?tect?es={n_bp} | points extra={n_extra}"
+                    _grid_note += f" | breakpoints detected={n_bp} | points extra={n_extra}"
                 if isinstance(bp_events, list) and bp_events:
-                    n_prevn = int(sum(1 for ev in bp_events if isinstance(ev, dict) and float(ev.get("trigger_prevN", 0.0)) > 0.5))
-                    n_parab = int(sum(1 for ev in bp_events if isinstance(ev, dict) and float(ev.get("trigger_parabola", 0.0)) > 0.5))
-                    _grid_note += f" | causes(prevN={n_prevn}, parabole={n_parab})"
-                    _grid_note += f" | sens(chosen left={int(bp_dir_left)}, right={int(bp_dir_right)})"
+                    n_prevn = int(
+                        sum(1 for ev in bp_events if isinstance(ev, dict) and float(ev.get("trigger_prevN", 0.0)) > 0.5)
+                    )
+                    n_parab = int(
+                        sum(
+                            1
+                            for ev in bp_events
+                            if isinstance(ev, dict) and float(ev.get("trigger_parabola", 0.0)) > 0.5
+                        )
+                    )
+                    _grid_note += f" | causes(prevN={n_prevn}, parabola={n_parab})"
+                    _grid_note += f" | direction(chosen left={int(bp_dir_left)}, right={int(bp_dir_right)})"
 
             _env_note = ""
 
             if envelope_display:
-
                 _env_note = f" | plot: lower envelope ({int(d_vis.size)}/{int(d_plot.size)} pts)"
 
             _smart_note = ""
@@ -2325,61 +2044,46 @@ class _ExcelExportMixin:
                 _smart_note = f" | Deltad code ? [{_s_lo:.3f}, {_s_hi:.3f}] nm"
 
             txt = (
-                f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {rmse_best:.6f} | "
-                f"samples = {int(d_plot.size)}"
-            ) + _env_note + _grid_note + _smart_note
-
+                (
+                    f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {rmse_best:.6f} | "
+                    f"samples = {int(d_plot.size)}"
+                )
+                + _env_note
+                + _grid_note
+                + _smart_note
+            )
 
             if rb_ok:
-
                 txt += (
-
                     f" | robust Delta={delta_rb:.6f} -> interval ? [{float(d_lo_rb):.3f}, {float(d_hi_rb):.3f}] nm"
-
                     f" | slope@d*?{float(slope_b):+.2e} /nm"
-
                 )
 
                 if bool(parab_fit.get("ok", False)):
-
                     txt += f" | parabola center?{float(d_center):.3f} nm"
 
             else:
-
                 txt += " | robust interval unavailable (insufficient local convex fit)"
 
             if np.isfinite(d_lo_man) and np.isfinite(d_hi_man):
-
                 man_state = "active" if bool(getattr(self, "_corridor_rmse_manual_active", False)) else "preview"
 
-                txt += (
-
-                    f" | manual {man_state} ? [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
-
-                )
+                txt += f" | manual {man_state} ? [{float(d_lo_man):.3f}, {float(d_hi_man):.3f}] nm"
 
                 if bool(src.get("manual_corridor_active", False)):
-
                     txt += f" ({int(src.get('manual_corridor_selected_count', 0))} profiled points)"
 
                     d_sel_rng = src.get("manual_corridor_selected_d_range_nm", (float("nan"), float("nan")))
 
                     if (
-
                         isinstance(d_sel_rng, (tuple, list))
-
                         and len(d_sel_rng) >= 2
-
                         and np.isfinite(float(d_sel_rng[0]))
-
                         and np.isfinite(float(d_sel_rng[1]))
-
                     ):
-
                         txt += f" | sampled in [{float(d_sel_rng[0]):.3f}, {float(d_sel_rng[1]):.3f}] nm"
 
             if is_live_grid and not live_parab:
-
                 txt += " | live preview: points only (parabola/robust fit paused)"
 
             self.lbl_corridor_rmse_summary.setText(txt)
@@ -2388,52 +2092,42 @@ class _ExcelExportMixin:
                 d_mid_rb = 0.5 * float(d_lo_rb + d_hi_rb)
                 d_half_rb = 0.5 * float(max(0.0, d_hi_rb - d_lo_rb))
                 self.lbl_corridor_rmse_robust_compact.setText(
-                    f"Intervalle robuste: {d_mid_rb:.2f}nm +/- {d_half_rb:.1f}nm"
+                    f"Robust interval: {d_mid_rb:.2f}nm +/- {d_half_rb:.1f}nm"
                 )
             else:
-                self.lbl_corridor_rmse_robust_compact.setText("Intervalle robuste: -")
+                self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
 
         try:
-
             self.plot_corridor_rmse_d.plotItem.setTitle(
-
                 f"Corridor profile RMSE(d) ? best d* = {d_best:.3f} nm (RMSE {rmse_best:.6f})",
-
                 color=CertusTheme.PRIMARY,
-
                 size="10pt",
-
             )
 
         except (AttributeError, RuntimeError):
-
             logger.debug("Corridor RMSE(d) title set failed", exc_info=True)
 
         lock_scale = bool(
-            hasattr(self, "chk_corridor_rmse_lock_scale")
-            and self.chk_corridor_rmse_lock_scale.isChecked()
+            hasattr(self, "chk_corridor_rmse_lock_scale") and self.chk_corridor_rmse_lock_scale.isChecked()
         )
 
-        if lock_scale:
-
+        if is_live_grid:
+            # Live mode must always remain visible even if a stale/locked viewport
+            # exists from a previous run. Force bounds on current finite data.
             self._set_corridor_rmse_view_data_bounds(
-
+                d_plot,
+                r_plot,
+            )
+        elif lock_scale:
+            self._set_corridor_rmse_view_data_bounds(
                 d_vis if envelope_display else d_plot,
-
                 r_vis if envelope_display else r_plot,
-
             )
 
         elif np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
-
-            self._set_corridor_rmse_view_centered(
-
-                float(d_center), 0.5 * float(max(0.0, d_hi_man - d_lo_man))
-
-            )
+            self._set_corridor_rmse_view_centered(float(d_center), 0.5 * float(max(0.0, d_hi_man - d_lo_man)))
 
         else:
-
             self.plot_corridor_rmse_d.autoRange()
 
         if curvature_label_spec is not None:
@@ -2463,82 +2157,24 @@ class _ExcelExportMixin:
 
 class _MeshOptimizationMixin:
     """Mixin extracting _build_basic_step4_mesh_optimizer logic."""
+
     def _build_basic_step4_mesh_optimizer(self, parent_layout: "QVBoxLayout", style: str) -> None:
-        box4 = CertusCard("4  Sigma mesh, spectral weights and local budget")
+        box4 = CertusCard("Advanced settings")
 
         box4.setStyleSheet(style)
+        box4.body.setContentsMargins(6, 4, 6, 4)
+        box4.body.setSpacing(4)
 
-        box4.setToolTip(
-
-            "Step 4 (manual mode without auto-K): segment count in sigma=1/lambda, spectral RMSE setup, "
-
-            "and global optimization budgets. If auto-K is enabled (Advanced), K min/max control knot growth."
-
-        )
+        box4.setToolTip("Advanced optimization budgets and uncertainty/corridor controls.")
 
         g4 = QGridLayout()
+        g4.setContentsMargins(0, 0, 0, 0)
+        g4.setHorizontalSpacing(6)
+        g4.setVerticalSpacing(4)
 
         box4.body.addLayout(g4)
 
-        parent_layout.addWidget(box4)
-
         r4 = 0
-
-        # First row of group 4: control visible immediately (scroll / legacy screenshots).
-
-        lb_prof = QLabel("n, ln k between sigma nodes:")
-
-        lb_prof.setToolTip(
-
-            "Fixed interpolation: cubic spline in sigma between nodes (not-a-knot if K>=4, otherwise internal linear fallback). "
-
-            "The solver optimizes values at the nodes; the forward model is this spline. "
-
-            "The final spectral polish recalculates d, n, L on the same mesh with the same masked objective."
-
-        )
-
-        g4.addWidget(lb_prof, r4, 0)
-
-        self.lbl_nk_profile_fixed = QLabel("Spline cubique en sigma (unique)")
-
-        self.lbl_nk_profile_fixed.setMinimumWidth(200)
-
-        self.lbl_nk_profile_fixed.setToolTip(lb_prof.toolTip())
-
-        g4.addWidget(self.lbl_nk_profile_fixed, r4, 1)
-
-        r4 += 1
-
-        self.lbl_spline_model_banner = QLabel(
-            "Spline model transparency: PWL nodes in sigma=1/lambda for n and L=ln(k), "
-            "k=exp(L), cubic interpolation between nodes."
-        )
-        self.lbl_spline_model_banner.setWordWrap(True)
-        self.lbl_spline_model_banner.setStyleSheet(
-            f"background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; "
-            f"border-radius: 6px; padding: 6px; color: {CertusTheme.TEXT_MAIN}; font-size: 10px; font-weight: 600;"
-        )
-        self.lbl_spline_model_banner.setToolTip(
-            "P0-8 transparency contract: explicit mathematical model used by INDEX_SPLINE.\n"
-            "Reports/export must repeat this model statement (sigma nodes + ln(k) + cubic sigma interpolation)."
-        )
-        g4.addWidget(self.lbl_spline_model_banner, r4, 0, 1, 2)
-
-        r4 += 1
-
-        lbl_mod = QLabel(
-            "Model detail: n and L = ln k at sigma = 1/lambda nodes (k = e^L). Between nodes: cubic spline in sigma only."
-        )
-        lbl_mod.setWordWrap(True)
-        lbl_mod.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
-        lbl_mod.setToolTip(
-            "The optimizer adjusts values at the nodes; the theoretical spectrum uses the cubic sigma-spline.\n"
-            "Logs / Excel: sigma-mesh polish RMSE (sigma-spline) vs solver reference before polish."
-        )
-        g4.addWidget(lbl_mod, r4, 0, 1, 2)
-
-        r4 += 1
 
         # --- Local budget + uncertainty: full panel (hidden in simplified interface) ---
 
@@ -2548,7 +2184,7 @@ class _MeshOptimizationMixin:
 
         v_adv.setContentsMargins(0, 0, 0, 0)
 
-        v_adv.setSpacing(6)
+        v_adv.setSpacing(4)
 
         lb_pg = QLabel("Local iterations hint (max):")
 
@@ -2558,15 +2194,9 @@ class _MeshOptimizationMixin:
 
         self.sp_pg_iter.setRange(5, 120)
 
-        self.sp_pg_iter.setValue(
-            int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35) or 35)
-        )
+        self.sp_pg_iter.setValue(int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35)))
 
-        self.sp_pg_iter.setToolTip(
-
-            "Inactive in local-only mode; kept only for preset/config compatibility."
-
-        )
+        self.sp_pg_iter.setToolTip("Inactive in local-only mode; kept only for preset/config compatibility.")
 
         self.sp_pg_iter.setEnabled(False)
 
@@ -2578,68 +2208,26 @@ class _MeshOptimizationMixin:
 
         v_adv.addLayout(row_pg)
 
-        lb_s3p1 = QLabel("SOL3 ? L-BFGS-B phase 1 maxfun:")
-
-        lb_s3p1.setToolTip(
-
-            "Evaluation budget (maxfun) for the primary L-BFGS-B descent with free sigma knots "
-
-            "(SOL3 stage). Increase if logs indicate 'STOP: TOTAL NO. OF F.G EVALUATIONS EXCEEDS LIMIT' "
-
-            "in phase 1. Stored in Qt preferences. Effective solver floor: 300; legacy default 10000."
-
-        )
-
-        self.sp_sol3_p1_maxfun = QSpinBox()
-
-        self.sp_sol3_p1_maxfun.setRange(500, 500000)
-
-        self.sp_sol3_p1_maxfun.setSingleStep(500)
-
-        self.sp_sol3_p1_maxfun.setValue(10000)
-
-        self.sp_sol3_p1_maxfun.setToolTip(lb_s3p1.toolTip())
-
-        row_s3p1 = QHBoxLayout()
-
-        row_s3p1.addWidget(lb_s3p1)
-
-        row_s3p1.addWidget(self.sp_sol3_p1_maxfun, 1)
-
-        v_adv.addLayout(row_s3p1)
-
         lb_pr = QLabel("Performance profile:")
 
         lb_pr.setToolTip(
-
-            "Budget preset: polish budget and local searches. "
-
-            "\"Maximal\" gives best quality at the expense of runtime."
-
+            'Budget preset: polish budget and local searches. "Maximal" gives best quality at the expense of runtime.'
         )
 
         self.cb_profilee = QComboBox()
 
         for lab, key in [
-
             ("Fast", "fast"),
-
             ("Standard", "standard"),
-
             ("Quality", "quality"),
-
             ("Maximal", "max"),
-
         ]:
-
             self.cb_profilee.addItem(lab, key)
 
         self.cb_profilee.setCurrentIndex(0)
 
         self.cb_profilee.setToolTip(
-
             "When the profile changes, a recommended local budget may be applied automatically to the spin."
-
         )
 
         self.cb_profilee.currentIndexChanged.connect(self._on_profilee_changed)
@@ -2652,18 +2240,13 @@ class _MeshOptimizationMixin:
 
         v_adv.addLayout(row_pf)
 
-        lb_mesh_dlam = QLabel("Pas min. Deltalambda/lambda? (maillage sigma) :")
+        lb_mesh_dlam = QLabel("Min. Deltalambda/lambda step (sigma mesh) :")
 
         lb_mesh_dlam.setToolTip(
-
-            "Contrainte sur le maillage canonique : min(Deltalambda entre n?uds) / lambda? >= cette valeur, "
-
+            "Canonical mesh constraint: min(Deltalambda between nodes) / lambda >= this value, "
             "with lambda? = (lambda_min + lambda_max) / 2 from file. Number of segments is reduced if needed; "
-
             "IR extension (+2 knots) is omitted if it violates threshold.\n"
-
             "0 = disabled (nominal behavior without this constraint)."
-
         )
 
         self.sp_mesh_min_dlam = QDoubleSpinBox()
@@ -2688,22 +2271,112 @@ class _MeshOptimizationMixin:
 
         v_adv.addLayout(row_mesh_dlam)
 
+        lb_auto_clean_v2 = QLabel("Auto-clean V2 (neighbor pull):")
+        lb_auto_clean_v2.setToolTip(
+            "After removing an internal knot, optionally adjusts the two local neighboring knots\n"
+            "(extremes never moved), then re-optimizes RMSE.\n\n"
+            "V2 explores symmetric/asymmetric pulls and a small local 2D refinement."
+        )
+        self.chk_auto_clean_neighbor_pull = QCheckBox("Enable local neighbor pull")
+        self.chk_auto_clean_neighbor_pull.setChecked(bool(getattr(self, "_auto_clean_neighbor_pull_enabled", True)))
+        self.chk_auto_clean_neighbor_pull.setToolTip(lb_auto_clean_v2.toolTip())
+        row_ac0 = QHBoxLayout()
+        row_ac0.addWidget(lb_auto_clean_v2)
+        row_ac0.addWidget(self.chk_auto_clean_neighbor_pull)
+        row_ac0.addStretch(1)
+        v_adv.addLayout(row_ac0)
+
+        row_ac1 = QHBoxLayout()
+        row_ac1.addWidget(QLabel("pull ratios"))
+        self.sp_auto_clean_pull_r1 = QDoubleSpinBox()
+        self.sp_auto_clean_pull_r1.setDecimals(3)
+        self.sp_auto_clean_pull_r1.setRange(0.01, 0.45)
+        self.sp_auto_clean_pull_r1.setSingleStep(0.01)
+        self.sp_auto_clean_pull_r1.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r1", 0.10)))
+        self.sp_auto_clean_pull_r1.setToolTip("First inward pull ratio (recommended: 0.10).")
+        row_ac1.addWidget(self.sp_auto_clean_pull_r1)
+        self.sp_auto_clean_pull_r2 = QDoubleSpinBox()
+        self.sp_auto_clean_pull_r2.setDecimals(3)
+        self.sp_auto_clean_pull_r2.setRange(0.01, 0.45)
+        self.sp_auto_clean_pull_r2.setSingleStep(0.01)
+        self.sp_auto_clean_pull_r2.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r2", 0.20)))
+        self.sp_auto_clean_pull_r2.setToolTip("Second inward pull ratio (recommended: 0.20).")
+        row_ac1.addWidget(self.sp_auto_clean_pull_r2)
+        self.sp_auto_clean_pull_r3 = QDoubleSpinBox()
+        self.sp_auto_clean_pull_r3.setDecimals(3)
+        self.sp_auto_clean_pull_r3.setRange(0.01, 0.45)
+        self.sp_auto_clean_pull_r3.setSingleStep(0.01)
+        self.sp_auto_clean_pull_r3.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r3", 0.30)))
+        self.sp_auto_clean_pull_r3.setToolTip("Third inward pull ratio (recommended: 0.30).")
+        row_ac1.addWidget(self.sp_auto_clean_pull_r3)
+        row_ac1.addStretch(1)
+        v_adv.addLayout(row_ac1)
+
+        row_ac2 = QHBoxLayout()
+        self.chk_auto_clean_neighbor_pull_local_refine = QCheckBox("Enable local 2D refine")
+        self.chk_auto_clean_neighbor_pull_local_refine.setChecked(
+            bool(getattr(self, "_auto_clean_neighbor_pull_local_refine_enabled", False))
+        )
+        self.chk_auto_clean_neighbor_pull_local_refine.setToolTip(
+            "After selecting the best pull variant for one removed knot, run a tiny 2D local\n"
+            "search on the two adjacent knots to further reduce RMSE."
+        )
+        row_ac2.addWidget(self.chk_auto_clean_neighbor_pull_local_refine)
+        row_ac2.addWidget(QLabel("refine rel. step"))
+        self.sp_auto_clean_neighbor_pull_local_refine_step = QDoubleSpinBox()
+        self.sp_auto_clean_neighbor_pull_local_refine_step.setDecimals(3)
+        self.sp_auto_clean_neighbor_pull_local_refine_step.setRange(0.005, 0.20)
+        self.sp_auto_clean_neighbor_pull_local_refine_step.setSingleStep(0.005)
+        self.sp_auto_clean_neighbor_pull_local_refine_step.setValue(
+            float(getattr(self, "_auto_clean_neighbor_pull_local_refine_rel_step", 0.05))
+        )
+        self.sp_auto_clean_neighbor_pull_local_refine_step.setToolTip(
+            "Relative step used by the local 2D refine around neighboring knots (recommended: 0.05)."
+        )
+        row_ac2.addWidget(self.sp_auto_clean_neighbor_pull_local_refine_step)
+        row_ac2.addStretch(1)
+        v_adv.addLayout(row_ac2)
+
+        # --- Profondeur de recherche (LOT E) ---
+        row_ac3 = QHBoxLayout()
+        row_ac3.addWidget(QLabel("Top-N candidats (auto-clean):"))
+        self.sp_auto_clean_top_n = QSpinBox()
+        self.sp_auto_clean_top_n.setRange(1, 12)
+        self.sp_auto_clean_top_n.setValue(int(getattr(self, "_auto_clean_top_n_sensitivity", 4)))
+        self.sp_auto_clean_top_n.setToolTip(
+            "Number of removal candidates per step passed to full polish "
+            "(plus haut = recherche plus profonde, plus lent). Recommandé : 4."
+        )
+        row_ac3.addWidget(self.sp_auto_clean_top_n)
+
+        row_ac3.addWidget(QLabel("Polish maxfun candidat:"))
+        self.sp_auto_clean_cand_maxfun = QSpinBox()
+        self.sp_auto_clean_cand_maxfun.setRange(120, 4000)
+        self.sp_auto_clean_cand_maxfun.setSingleStep(100)
+        self.sp_auto_clean_cand_maxfun.setValue(int(getattr(self, "_auto_clean_candidate_polish_maxfun", 700)))
+        self.sp_auto_clean_cand_maxfun.setToolTip("Budget L-BFGS-B par candidat de retrait (recommandé : 700-1500).")
+        row_ac3.addWidget(self.sp_auto_clean_cand_maxfun)
+
+        row_ac3.addWidget(QLabel("Tolerance RMSE:"))
+        self.sp_auto_clean_tol = QDoubleSpinBox()
+        self.sp_auto_clean_tol.setDecimals(6)
+        self.sp_auto_clean_tol.setRange(0.0, 1.0e-2)
+        self.sp_auto_clean_tol.setSingleStep(1.0e-5)
+        self.sp_auto_clean_tol.setValue(float(getattr(self, "_auto_clean_ui_tolerance", 5.0e-5)))
+        self.sp_auto_clean_tol.setToolTip("Absolute RMSE regression tolerated per removal. 0 = strict mode.")
+        row_ac3.addWidget(self.sp_auto_clean_tol)
+        row_ac3.addStretch(1)
+        v_adv.addLayout(row_ac3)
+
         lb_cor = QLabel("Corridors n/k (d profiling):")
 
         lb_cor.setToolTip(
-
             "Calculates a plausible thickness interval and n(lambda), k(lambda) corridors by fixing d, then re-optimizing\n"
-
             "the n and ln k nodes (same penalties and masked RMSE as the fit).\n\n"
-
             "RMSE_ref+Delta mode (default): acceptance RMSE <= best polished spectral RMSE + Delta; the nominal 'best' curve\n"
-
             "is a native member of the envelope (not a pseudo-CI centered on a heuristic refit).\n"
-
-            "Mode alpha : RMSE(d) <= alpha ? RMSE_opt (heuristique).\n\n"
-
+            "Mode alpha : RMSE(d) <= alpha * RMSE_opt (heuristic).\n\n"
             "Enabled by default at end of optimization; results in 'Corridors n/k' tab."
-
         )
 
         self.chk_corridor_d = QCheckBox("Enable")
@@ -2723,9 +2396,7 @@ class _MeshOptimizationMixin:
         self.lbl_corridors_state_adv.setTextFormat(Qt.TextFormat.RichText)
 
         self.lbl_corridors_state_adv.setToolTip(
-
             "Read-only: same state as the 'Corridors' button under Run (Yes = computation at end of optimization)."
-
         )
 
         row_cd.addWidget(self.lbl_corridors_state_adv)
@@ -2751,17 +2422,11 @@ class _MeshOptimizationMixin:
         self.cb_corr_mode.setCurrentIndex(int(_iad) if _iad >= 0 else 0)
 
         self.cb_corr_mode.setToolTip(
-
             "alpha : RMSE(d) <= alpha?RMSE_opt (heuristic).\n"
-
             "RMSE_ref+Delta: RMSE(d) <= RMSE_ref + Delta (same spectral mask). With 'best RMSE' checked, RMSE_ref = "
-
             "spectral_rmse_best_value (best polish) ; otherwise base curves from dict.\n"
-
             "RMSE_ref+Delta_adaptatif: Delta is estimated locally from the profiled RMSE(d) parabola and local roughness.\n"
-
             "LR: Delta?^2 <= ?^2(1,conf); constant sigma or sigma_i(lambda) ? |residual| if 'sigma(lambda) residual'."
-
         )
 
         row_cor.addWidget(QLabel("mode"))
@@ -2801,13 +2466,9 @@ class _MeshOptimizationMixin:
         self.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
 
         self.sp_corr_rmse_delta.setToolTip(
-
             "Absolute margin on masked spectral RMSE: a refit at fixed d is accepted if "
-
             "RMSE <= RMSE_ref + Delta (default 2.5e-4; adaptive Delta_eff floor 2.5e-5). "
-
             "With best polished RMSE, RMSE_ref is the one of the exported model."
-
         )
 
         row_cor.addWidget(self.lbl_corr_rmse_delta)
@@ -2819,27 +2480,19 @@ class _MeshOptimizationMixin:
         self.chk_corr_scientific_nominal.setChecked(True)
 
         self.chk_corr_scientific_nominal.setToolTip(
-
-            "Mode corridor scientifique (uniquement si mode = RMSE_ref+Delta) : RMSE_ref = spectral_rmse_best_value ; "
-
+            "Scientific corridor mode (only if mode = RMSE_ref+Delta): RMSE_ref = spectral_rmse_best_value; "
             "nominal curves and nodes aligned on best polished model; no envelope widening toward "
-
             "main solver curve. Uncheck for legacy abs_delta behavior on 'base' curves only."
-
         )
 
         row_cor.addWidget(self.chk_corr_scientific_nominal)
 
-        self.btn_corr_preset_auto_robust = create_styled_button("Auto robuste", "secondary", parent=self)
+        self.btn_corr_preset_auto_robust = create_styled_button("Auto robust", "secondary", parent=self)
 
         self.btn_corr_preset_auto_robust.setToolTip(
-
             "R?glages recommand?s pour le corridor en d : mode RMSE_ref + Delta adaptatif (local), "
-
             "expanded parabolic window, thickness interval symmetrized on the parabola peak, "
-
             "sondes lat?rales et plancher Delta renforc?s. Comportement par d?faut apr?s migration."
-
         )
 
         self.btn_corr_preset_auto_robust.clicked.connect(self._apply_corridor_preset_auto_robust)
@@ -2875,9 +2528,7 @@ class _MeshOptimizationMixin:
         self.sp_corr_sigma.setValue(0.0)
 
         self.sp_corr_sigma.setToolTip(
-
             "Constant sigma (T and R) in fraction units (not %). 0 = auto (sigma := RMSE_opt)."
-
         )
 
         row_cor.addSpacing(8)
@@ -2915,11 +2566,8 @@ class _MeshOptimizationMixin:
         self.sp_corr_span.setValue(15.0)
 
         self.sp_corr_span.setToolTip(
-
             "Maximum offset |d - d_opt| explored in each direction (+d and -d), in nm (not the sum). "
-
             "Default 15 nm ~ local neighborhood around the optimal thickness."
-
         )
 
         row_cor.addSpacing(8)
@@ -2937,11 +2585,8 @@ class _MeshOptimizationMixin:
         self.sp_corr_starts.setValue(1)
 
         self.sp_corr_starts.setToolTip(
-
             "Number of initializations (multi-start) per d value. 1 = continuation only (fast). "
-
             ">1 increases robustness (best solution kept), at the cost of computation time."
-
         )
 
         row_cor.addSpacing(10)
@@ -2988,7 +2633,7 @@ class _MeshOptimizationMixin:
 
         self.sp_corr_seed = QSpinBox()
 
-        self.sp_corr_seed.setRange(-2**31, 2**31 - 1)
+        self.sp_corr_seed.setRange(-(2**31), 2**31 - 1)
 
         self.sp_corr_seed.setValue(0)
 
@@ -3007,11 +2652,8 @@ class _MeshOptimizationMixin:
         self.chk_corr_reg_sens.setChecked(False)
 
         self.chk_corr_reg_sens.setToolTip(
-
             "Runs a scan (log grid) of the ln(k) regularization weight and re-launches d profiling for each value.\n"
-
             "Goal: verify the robustness of the d interval and n/k corridors to regularization choices."
-
         )
 
         row_cor.addSpacing(10)
@@ -3053,13 +2695,9 @@ class _MeshOptimizationMixin:
         self.chk_corr_boot.setChecked(False)
 
         self.chk_corr_boot.setToolTip(
-
             "Parametric bootstrap: generates B T/R datasets by adding Gaussian noise (sigma_T, sigma_R),\n"
-
             "re-launches d profiling for each replication, then computes percentile bands on n(lambda), k(lambda)\n"
-
             "and a distribution of the d interval."
-
         )
 
         row_cor.addSpacing(10)
@@ -3100,7 +2738,7 @@ class _MeshOptimizationMixin:
 
         self.sp_corr_boot_seed = QSpinBox()
 
-        self.sp_corr_boot_seed.setRange(-2**31, 2**31 - 1)
+        self.sp_corr_boot_seed.setRange(-(2**31), 2**31 - 1)
 
         self.sp_corr_boot_seed.setValue(0)
 
@@ -3121,11 +2759,8 @@ class _MeshOptimizationMixin:
         self.cb_corr_boot_mode.setCurrentIndex(0)
 
         self.cb_corr_boot_mode.setToolTip(
-
             "parametric: adds Gaussian noise to measurements.\n"
-
             "residual: non-parametric bootstrap on residuals (more realistic if noise is non-Gaussian / correlated)."
-
         )
 
         row_cor.addSpacing(8)
@@ -3165,13 +2800,9 @@ class _MeshOptimizationMixin:
         self.sp_corr_prof_maxfun.setValue(2500)
 
         self.sp_corr_prof_maxfun.setToolTip(
-
             "L-BFGS-B budget (maxfun) for each refit of n, ln k nodes at fixed d during corridor profiling.\n"
-
             "0 = reuse the main run polish_maxfun (often 8000+, very slow per step).\n"
-
             "Typ. 1500-4000 for a local scan; increase if 'EXCEEDS LIMIT' messages or poor refits."
-
         )
 
         row_cor_prof.addWidget(QLabel("d profiling: maxfun / refit"))
@@ -3193,11 +2824,8 @@ class _MeshOptimizationMixin:
         self.chk_corr_sigma_hetero.setChecked(False)
 
         self.chk_corr_sigma_hetero.setToolTip(
-
             "In LR mode: ?^2 with sigma_i = max(floor, scale?|y_exp-y_th|) on the objective grid.\n"
-
             "Parametric bootstrap: same sigma_i for Gaussian noise on T/R (objective points only)."
-
         )
 
         row_cor_v25.addWidget(self.chk_corr_sigma_hetero)
@@ -3220,18 +2848,14 @@ class _MeshOptimizationMixin:
 
         row_cor_v25.addWidget(self.sp_corr_hetero_scale)
 
-        self.chk_corr_boot_refit = QCheckBox("refit rapide par tirage (bootstrap)")
+        self.chk_corr_boot_refit = QCheckBox("fast bootstrap refit (parametric)")
 
         self.chk_corr_boot_refit.setChecked(False)
 
         self.chk_corr_boot_refit.setToolTip(
-
             "After each bootstrap trial: a short L-BFGS-B on (d + nodes) using noisy T/R, "
-
             "same spectral objective as main run (n,L interp. in sigma = cubic spline), "
-
             "then profiling in d from this refit (often more consistent than freezing initial mesh)."
-
         )
 
         row_cor_v25.addSpacing(12)
@@ -3244,7 +2868,9 @@ class _MeshOptimizationMixin:
 
         self.sp_corr_boot_maxfun.setValue(4000)
 
-        self.sp_corr_boot_maxfun.setToolTip("L-BFGS-B maxfun budget per bootstrap refit (0 = disabled even if box is checked).")
+        self.sp_corr_boot_maxfun.setToolTip(
+            "L-BFGS-B maxfun budget per bootstrap refit (0 = disabled even if box is checked)."
+        )
 
         row_cor_v25.addSpacing(6)
 
@@ -3259,15 +2885,10 @@ class _MeshOptimizationMixin:
         self.sp_corr_boot_workers.setValue(1)
 
         self.sp_corr_boot_workers.setToolTip(
-
             "Number of parallel processes for bootstrap replications (1 = sequential). "
-
-            f"Typ. 2-{max(2, min(8, (multiprocessing.cpu_count() or 4)))} on this machine "
-
+            f"Typ. 2-{max(2, multiprocessing.cpu_count() or 4)} on this machine "
             f"({multiprocessing.cpu_count() or '?'} cores). "
-
             "Pickle or worker failure -> automatic fallback to sequential."
-
         )
 
         row_cor_v25.addSpacing(10)
@@ -3296,31 +2917,7 @@ class _MeshOptimizationMixin:
 
         lay_ep = QVBoxLayout(page_epure)
 
-        lay_ep.setContentsMargins(0, 4, 0, 0)
-
-        lbl_ep = QLabel(
-
-            "<b>Robustness</b> - Default: 'Fast' profile and <b>n/k corridors</b> (d profiling) "
-
-            "<b>enabled</b> after the fit. <b>Bootstrap</b> and regularization scan remain optional "
-
-            "(advanced settings).<br><br>"
-
-            "<span style='color:#888;font-size:10px;'>Local budget, profiling / bootstrap details: advanced settings.</span>"
-
-        )
-
-        lbl_ep.setWordWrap(True)
-
-        lbl_ep.setToolTip(
-
-            "Corridors: n/k envelopes and d interval after optimization (enabled by default). "
-
-            "Bootstrap and heavy options: advanced settings."
-
-        )
-
-        lay_ep.addWidget(lbl_ep)
+        lay_ep.setContentsMargins(0, 0, 0, 0)
 
         btn_open_adv = create_styled_button("Advanced settings...", "secondary")
 
@@ -3330,15 +2927,25 @@ class _MeshOptimizationMixin:
 
         lay_ep.addWidget(btn_open_adv)
 
-        # Keep the "epure" block compact: avoid consuming extra vertical space
-        # that visually separates Step 4 and Step 5 too much on tall windows.
-        lay_ep.addSpacing(2)
-
         self._stack_box4_adv = QStackedWidget()
 
         self._stack_box4_adv.addWidget(page_epure)
 
         self._stack_box4_adv.addWidget(page_full_adv)
+
+        def _sync_adv_stack_height(_index: int = -1) -> None:
+            try:
+                current = self._stack_box4_adv.currentWidget()
+                if current is None:
+                    return
+                h = max(1, int(current.sizeHint().height()))
+                self._stack_box4_adv.setMinimumHeight(h)
+                self._stack_box4_adv.setMaximumHeight(h)
+            except (RuntimeError, ValueError):
+                self.logger.debug("advanced_settings_stack_height_sync_failed", exc_info=True)
+
+        self._stack_box4_adv.currentChanged.connect(_sync_adv_stack_height)
+        QTimer.singleShot(0, _sync_adv_stack_height)
 
         g4.addWidget(self._stack_box4_adv, r4, 0, 1, 2)
 
@@ -3347,16 +2954,14 @@ class _MeshOptimizationMixin:
         g4.setColumnStretch(1, 1)
 
         parent_layout.addWidget(box4)
-        parent_layout.addStretch(1)
 
 class _ConfigBuilderMixin:
     """Mixin extracting _build_opt_config logic."""
+
     def _build_opt_config(self, *, notify: bool = True) -> SplineOptConfig | None:
 
         if self.df is None:
-
             if notify:
-
                 QMessageBox.warning(self, "Data", "Load a file first.")
 
             return None
@@ -3371,42 +2976,22 @@ class _ConfigBuilderMixin:
 
         # same rule as ``make_bounds_and_x0`` (IR extension if max(lambda) > 4000 nm), plus optional Deltalambda/lambda? min (Advanced).
 
-        _mesh_mdl = (
-
-            float(self.sp_mesh_min_dlam.value())
-
-            if hasattr(self, "sp_mesh_min_dlam")
-
-            else 0.02
-
-        )
+        _mesh_mdl = float(self.sp_mesh_min_dlam.value()) if hasattr(self, "sp_mesh_min_dlam") else 0.02
 
         _kmd_mesh: dict[str, float] = {}
 
         if _mesh_mdl > 0.0:
-
             _kmd_mesh["min_delta_lambda_over_lambda_mean"] = _mesh_mdl
 
-        k_mesh_sigma = int(
-
-            canonical_spline_sigma_knots(
-
-                float(np.min(lam)), float(np.max(lam)), **_kmd_mesh
-
-            ).size
-
-        )
+        k_mesh_sigma = int(canonical_spline_sigma_knots(float(np.min(lam)), float(np.max(lam)), **_kmd_mesh).size)
 
         n_seg_mesh = max(1, k_mesh_sigma - 1)
 
         try:
-
-            n_sub = get_n_substrate_array_by_id(sid, lam)
+            n_sub = _get_substrate_n_array_spline(sid, lam)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-
             if notify:
-
                 QMessageBox.critical(self, "Substrate", str(e))
 
             return None
@@ -3420,23 +3005,18 @@ class _ConfigBuilderMixin:
         use_r = self.chk_r.isChecked() and has_r
 
         if not use_t and not use_r:
-
             if notify:
-
                 QMessageBox.warning(self, "Fit", "Enable at least T or R according to available columns.")
 
             return None
 
         if use_t and use_r:
-
             dt = DataType.BOTH
 
         elif use_r:
-
             dt = DataType.REFLECTION
 
         else:
-
             dt = DataType.TRANSMISSION
 
         t_raw = self.df["T"].to_numpy(dtype=np.float64) if has_t else None
@@ -3449,10 +3029,13 @@ class _ConfigBuilderMixin:
 
         overlay = gui_perf_preset_only(str(self.cb_profilee.currentData() or "fast"))
 
+        # Build config is used outside the manual auto-clean dialog context,
+        # so no dialog-scoped tolerance variable is guaranteed here.
+        auto_clean_tol_ui = float(getattr(self, "_auto_clean_ui_tolerance", 5e-5) or 5e-5)
+
         rmse_fit_lambda_nm: tuple[float, float] | None = None
 
         if getattr(self, "_rmse_fit_lambda_enabled", False):
-
             rl0 = float(self._rmse_fit_lambda_lo)
 
             rl1 = float(self._rmse_fit_lambda_hi)
@@ -3463,50 +3046,67 @@ class _ConfigBuilderMixin:
 
         d_lo_ui, d_hi_ui = self._get_thickness_bounds_nm()
 
+        isinstance(getattr(self, "_last_result", None), dict)
+
         cfg = SplineOptConfig(
-
             lam_nm=lam,
-
             t_exp=t_exp,
-
             r_exp=r_exp,
-
             n_sub=n_sub,
-
             data_type=dt,
-
             n_seg=int(n_seg_mesh),
-
             d_lo=float(d_lo_ui),
-
             d_hi=float(d_hi_ui),
-
             weight_t=float(self.w_t.value()) if use_t else 0.0,
-
             weight_r=float(self.w_r.value()) if use_r else 0.0,
-
             substrate_name=sub_name,
-
             t_is_ratio=t_is_ratio,
-
             pglobal_max_iter=0,
-
             polish_maxfun=int(overlay.get("polish_maxfun", 8000)),
-
-            sol3_phase1_maxfun=(
-
-                int(self.sp_sol3_p1_maxfun.value())
-
-                if hasattr(self, "sp_sol3_p1_maxfun")
-
-                else None
-
+            auto_clean_neighbor_pull_enabled=(
+                bool(self.chk_auto_clean_neighbor_pull.isChecked())
+                if hasattr(self, "chk_auto_clean_neighbor_pull")
+                else True
             ),
-
+            auto_clean_neighbor_pull_ratios=(
+                tuple(
+                    sorted(
+                        {
+                            float(self.sp_auto_clean_pull_r1.value()),
+                            float(self.sp_auto_clean_pull_r2.value()),
+                            float(self.sp_auto_clean_pull_r3.value()),
+                        }
+                    )
+                )
+                if (
+                    hasattr(self, "sp_auto_clean_pull_r1")
+                    and hasattr(self, "sp_auto_clean_pull_r2")
+                    and hasattr(self, "sp_auto_clean_pull_r3")
+                )
+                else (0.10, 0.20, 0.30)
+            ),
+            auto_clean_neighbor_pull_local_refine_enabled=(
+                bool(self.chk_auto_clean_neighbor_pull_local_refine.isChecked())
+                if hasattr(self, "chk_auto_clean_neighbor_pull_local_refine")
+                else False
+            ),
+            auto_clean_neighbor_pull_local_refine_rel_step=(
+                float(self.sp_auto_clean_neighbor_pull_local_refine_step.value())
+                if hasattr(self, "sp_auto_clean_neighbor_pull_local_refine_step")
+                else 0.05
+            ),
+            # Fast-by-default advanced clean profile.
+            auto_clean_top_n_sensitivity=(
+                int(self.sp_auto_clean_top_n.value()) if hasattr(self, "sp_auto_clean_top_n") else 4
+            ),
+            auto_clean_candidate_prescreen_enabled=True,
+            auto_clean_candidate_prescreen_maxfun=80,
+            auto_clean_candidate_prescreen_margin_abs=max(5e-5, float(auto_clean_tol_ui) * 0.5),
+            auto_clean_candidate_polish_maxfun=(
+                int(self.sp_auto_clean_cand_maxfun.value()) if hasattr(self, "sp_auto_clean_cand_maxfun") else 700
+            ),
             pglobal_max_feval=None,
-
             pglobal_max_time=None,
-
             pglobal_local_search_budget=None,
             pglobal_random_seed=(
                 int(getattr(self, "sp_corr_seed", None).value())
@@ -3517,265 +3117,183 @@ class _ConfigBuilderMixin:
                     else None
                 )
             ),
-
             spline_local_only=True,
-
             n_mono_band_nm=_n_mono_band,
-
             n_mono_continuous_penalty=0.008,
-
             n_lambda_rising_penalty_band_nm=_n_mono_band,
-
             n_lambda_rising_penalty_weight=3000.0,
-
             rmse_fit_lambda_nm=rmse_fit_lambda_nm,
-
             nk_profile_interp="smooth",
-
-            nonlinear_alpha_refinement_enabled=bool(
-
-                getattr(self, "btn_nl_toggle", None) and self.btn_nl_toggle.isChecked()
-
-            ),
-
-            nonlinear_alpha_budget_mode=str(
-
-                getattr(self, "cb_nl_alpha_budget", None).currentData() or "slow"
-
-            )
-
-            if hasattr(self, "cb_nl_alpha_budget")
-
-            else "slow",
-
-            nonlinear_alpha_second_pass_enabled=bool(
-
-                getattr(self, "chk_nl_second_pass", None) and self.chk_nl_second_pass.isChecked()
-
-            )
-
-            if hasattr(self, "chk_nl_second_pass")
-
-            else True,
-
-            nl_alpha_adaptive_early_stop=bool(
-
-                getattr(self, "chk_nl_adaptive_scan", None) and self.chk_nl_adaptive_scan.isChecked()
-
-            )
-
-            if hasattr(self, "chk_nl_adaptive_scan")
-
-            else True,
-
-            corridor_profile_d_enabled=bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()),
-
-            corridor_profile_d_mode=str(self.cb_corr_mode.currentData() or "abs_delta_adaptive") if hasattr(self, "cb_corr_mode") else "abs_delta_adaptive",
-
-            corridor_profile_d_rmse_alpha=float(getattr(self, "sp_corr_alpha", None).value()) if hasattr(self, "sp_corr_alpha") else 1.05,
-
+            corridor_profile_d_enabled=False,
+            corridor_profile_d_mode=str(self.cb_corr_mode.currentData() or "abs_delta_adaptive")
+            if hasattr(self, "cb_corr_mode")
+            else "abs_delta_adaptive",
+            corridor_profile_d_rmse_alpha=float(getattr(self, "sp_corr_alpha", None).value())
+            if hasattr(self, "sp_corr_alpha")
+            else 1.05,
             corridor_profile_d_rmse_abs_tolerance=float(getattr(self, "sp_corr_rmse_delta", None).value())
-
             if hasattr(self, "sp_corr_rmse_delta")
-
             else float(_DEFAULT_CORRIDOR_RMSE_DELTA),
-
             corridor_scientific_nominal_enabled=(
-
-                not hasattr(self, "chk_corr_scientific_nominal")
-
-                or bool(self.chk_corr_scientific_nominal.isChecked())
-
+                not hasattr(self, "chk_corr_scientific_nominal") or bool(self.chk_corr_scientific_nominal.isChecked())
             ),
-
             corridor_profile_d_parabola_half_window_pts=int(
-
                 getattr(self, "_corridor_parabola_half_window_pts", 4) or 4
-
             ),
-
             corridor_profile_d_symmetric_center_mode=str(
-
                 getattr(self, "_corridor_symmetric_center_mode", "parabola") or "parabola"
-
             ),
-
             corridor_profile_d_adaptive_rmse_ref_half_width_nm=float(
-
                 getattr(self, "_corridor_adaptive_rmse_ref_half_width_nm", 1.5) or 1.5
-
             ),
-
             corridor_profile_d_adaptive_rmse_probe_steps_each_side=int(
-
                 getattr(self, "_corridor_adaptive_rmse_probe_steps_each_side", 3) or 3
-
             ),
-
             corridor_profile_d_adaptive_rmse_noise_factor=float(
-
                 getattr(self, "_corridor_adaptive_rmse_noise_factor", 3.0) or 3.0
-
             ),
-
             corridor_profile_d_adaptive_rmse_min=float(
                 getattr(self, "_corridor_adaptive_rmse_min", _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN)
                 or _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN
             ),
-
-            corridor_profile_d_step_nm=float(getattr(self, "sp_corr_step", None).value()) if hasattr(self, "sp_corr_step") else 1.0,
-
-            corridor_profile_d_max_span_nm=float(getattr(self, "sp_corr_span", None).value()) if hasattr(self, "sp_corr_span") else 15.0,
-
-            corridor_profile_d_polish_maxfun=(
-
-                None
-
-                if (
-
-                    hasattr(self, "sp_corr_prof_maxfun")
-
-                    and int(self.sp_corr_prof_maxfun.value()) <= 0
-
-                )
-
-                else int(self.sp_corr_prof_maxfun.value())
-
-            )
-
-            if hasattr(self, "sp_corr_prof_maxfun")
-
-            else None,
-
-            corridor_profile_d_lr_conf_level=float(getattr(self, "sp_corr_conf", None).value()) if hasattr(self, "sp_corr_conf") else 0.95,
-
-            corridor_profile_d_sigma_t=(
-
-                None
-
-                if (hasattr(self, "sp_corr_sigma") and float(self.sp_corr_sigma.value()) <= 0.0)
-
-                else float(self.sp_corr_sigma.value())
-
-            )
-
-            if hasattr(self, "sp_corr_sigma")
-
-            else None,
-
-            corridor_profile_d_sigma_r=(
-
-                None
-
-                if (hasattr(self, "sp_corr_sigma") and float(self.sp_corr_sigma.value()) <= 0.0)
-
-                else float(self.sp_corr_sigma.value())
-
-            )
-
-            if hasattr(self, "sp_corr_sigma")
-
-            else None,
-
-            corridor_profile_d_n_starts=int(getattr(self, "sp_corr_starts", None).value()) if hasattr(self, "sp_corr_starts") else 1,
-
-            corridor_profile_d_jitter_n=float(getattr(self, "sp_corr_jn", None).value()) if hasattr(self, "sp_corr_jn") else 0.02,
-
-            corridor_profile_d_jitter_L=float(getattr(self, "sp_corr_jL", None).value()) if hasattr(self, "sp_corr_jL") else 0.15,
-
-            corridor_profile_d_rng_seed=int(getattr(self, "sp_corr_seed", None).value()) if hasattr(self, "sp_corr_seed") else 0,
-
-            corridor_profile_d_sigma_hetero=bool(
-
-                getattr(self, "chk_corr_sigma_hetero", None) and self.chk_corr_sigma_hetero.isChecked()
-
-            )
-
-            if hasattr(self, "chk_corr_sigma_hetero")
-
-            else False,
-
-            corridor_profile_d_sigma_hetero_scale=float(getattr(self, "sp_corr_hetero_scale", None).value())
-
-            if hasattr(self, "sp_corr_hetero_scale")
-
+            corridor_profile_d_step_nm=float(getattr(self, "sp_corr_step", None).value())
+            if hasattr(self, "sp_corr_step")
             else 1.0,
-
-            corridor_reg_sensitivity_enabled=bool(getattr(self, "chk_corr_reg_sens", None) and self.chk_corr_reg_sens.isChecked()),
-
-            corridor_reg_sensitivity_points=int(getattr(self, "sp_corr_reg_pts", None).value()) if hasattr(self, "sp_corr_reg_pts") else 5,
-
-            corridor_reg_sensitivity_decades=int(getattr(self, "sp_corr_reg_dec", None).value()) if hasattr(self, "sp_corr_reg_dec") else 2,
-
-            corridor_bootstrap_enabled=bool(getattr(self, "chk_corr_boot", None) and self.chk_corr_boot.isChecked()),
-
-            corridor_bootstrap_n=int(getattr(self, "sp_corr_boot_n", None).value()) if hasattr(self, "sp_corr_boot_n") else 40,
-
-            corridor_bootstrap_seed=int(getattr(self, "sp_corr_boot_seed", None).value()) if hasattr(self, "sp_corr_boot_seed") else 0,
-
-            corridor_bootstrap_percentile=float(getattr(self, "sp_corr_boot_p", None).value()) if hasattr(self, "sp_corr_boot_p") else 0.95,
-
-            corridor_bootstrap_mode=str(getattr(self, "cb_corr_boot_mode", None).currentData() or "parametric") if hasattr(self, "cb_corr_boot_mode") else "parametric",
-
-            corridor_bootstrap_block_len=int(getattr(self, "sp_corr_boot_block", None).value()) if hasattr(self, "sp_corr_boot_block") else 1,
-
-            corridor_bootstrap_quick_refit=bool(
-
-                getattr(self, "chk_corr_boot_refit", None) and self.chk_corr_boot_refit.isChecked()
-
+            corridor_profile_d_max_span_nm=float(getattr(self, "sp_corr_span", None).value())
+            if hasattr(self, "sp_corr_span")
+            else 15.0,
+            corridor_profile_d_polish_maxfun=(
+                None
+                if (hasattr(self, "sp_corr_prof_maxfun") and int(self.sp_corr_prof_maxfun.value()) <= 0)
+                else int(self.sp_corr_prof_maxfun.value())
             )
-
-            if hasattr(self, "chk_corr_boot_refit")
-
-            else False,
-
-            corridor_bootstrap_quick_refit_maxfun=int(getattr(self, "sp_corr_boot_maxfun", None).value())
-
-            if hasattr(self, "sp_corr_boot_maxfun")
-
-            else 4000,
-
-            corridor_bootstrap_n_workers=int(getattr(self, "sp_corr_boot_workers", None).value())
-
-            if hasattr(self, "sp_corr_boot_workers")
-
+            if hasattr(self, "sp_corr_prof_maxfun")
+            else None,
+            corridor_profile_d_lr_conf_level=float(getattr(self, "sp_corr_conf", None).value())
+            if hasattr(self, "sp_corr_conf")
+            else 0.95,
+            corridor_profile_d_sigma_t=(
+                None
+                if (hasattr(self, "sp_corr_sigma") and float(self.sp_corr_sigma.value()) <= 0.0)
+                else float(self.sp_corr_sigma.value())
+            )
+            if hasattr(self, "sp_corr_sigma")
+            else None,
+            corridor_profile_d_sigma_r=(
+                None
+                if (hasattr(self, "sp_corr_sigma") and float(self.sp_corr_sigma.value()) <= 0.0)
+                else float(self.sp_corr_sigma.value())
+            )
+            if hasattr(self, "sp_corr_sigma")
+            else None,
+            corridor_profile_d_n_starts=int(getattr(self, "sp_corr_starts", None).value())
+            if hasattr(self, "sp_corr_starts")
             else 1,
-
+            corridor_profile_d_jitter_n=float(getattr(self, "sp_corr_jn", None).value())
+            if hasattr(self, "sp_corr_jn")
+            else 0.02,
+            corridor_profile_d_jitter_L=float(getattr(self, "sp_corr_jL", None).value())
+            if hasattr(self, "sp_corr_jL")
+            else 0.15,
+            corridor_profile_d_rng_seed=int(getattr(self, "sp_corr_seed", None).value())
+            if hasattr(self, "sp_corr_seed")
+            else 0,
+            corridor_profile_d_sigma_hetero=bool(
+                getattr(self, "chk_corr_sigma_hetero", None) and self.chk_corr_sigma_hetero.isChecked()
+            )
+            if hasattr(self, "chk_corr_sigma_hetero")
+            else False,
+            corridor_profile_d_sigma_hetero_scale=float(getattr(self, "sp_corr_hetero_scale", None).value())
+            if hasattr(self, "sp_corr_hetero_scale")
+            else 1.0,
+            corridor_reg_sensitivity_enabled=bool(
+                getattr(self, "chk_corr_reg_sens", None) and self.chk_corr_reg_sens.isChecked()
+            ),
+            corridor_reg_sensitivity_points=int(getattr(self, "sp_corr_reg_pts", None).value())
+            if hasattr(self, "sp_corr_reg_pts")
+            else 5,
+            corridor_reg_sensitivity_decades=int(getattr(self, "sp_corr_reg_dec", None).value())
+            if hasattr(self, "sp_corr_reg_dec")
+            else 2,
+            corridor_bootstrap_enabled=bool(getattr(self, "chk_corr_boot", None) and self.chk_corr_boot.isChecked()),
+            corridor_bootstrap_n=int(getattr(self, "sp_corr_boot_n", None).value())
+            if hasattr(self, "sp_corr_boot_n")
+            else 40,
+            corridor_bootstrap_seed=int(getattr(self, "sp_corr_boot_seed", None).value())
+            if hasattr(self, "sp_corr_boot_seed")
+            else 0,
+            corridor_bootstrap_percentile=float(getattr(self, "sp_corr_boot_p", None).value())
+            if hasattr(self, "sp_corr_boot_p")
+            else 0.95,
+            corridor_bootstrap_mode=str(getattr(self, "cb_corr_boot_mode", None).currentData() or "parametric")
+            if hasattr(self, "cb_corr_boot_mode")
+            else "parametric",
+            corridor_bootstrap_block_len=int(getattr(self, "sp_corr_boot_block", None).value())
+            if hasattr(self, "sp_corr_boot_block")
+            else 1,
+            corridor_bootstrap_quick_refit=bool(
+                getattr(self, "chk_corr_boot_refit", None) and self.chk_corr_boot_refit.isChecked()
+            )
+            if hasattr(self, "chk_corr_boot_refit")
+            else False,
+            corridor_bootstrap_quick_refit_maxfun=int(getattr(self, "sp_corr_boot_maxfun", None).value())
+            if hasattr(self, "sp_corr_boot_maxfun")
+            else 4000,
+            corridor_bootstrap_n_workers=int(getattr(self, "sp_corr_boot_workers", None).value())
+            if hasattr(self, "sp_corr_boot_workers")
+            else 1,
             spline_min_delta_lambda_over_lambda_mean=float(_mesh_mdl),
-
         )
 
         if rmse_fit_lambda_nm is not None:
-
             n_ok = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
 
             if n_ok < SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS:
-
                 if notify:
-
                     QMessageBox.warning(
-
                         self,
-
                         "RMSE window",
-
                         f"Too few spectral points in the band ({n_ok} < {SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS}). "
-
                         "Widen the window or disable the limit.",
-
                     )
 
                 return None
 
         return cfg
 
+
+@dataclass
+class SmartInitState:
+    sk: np.ndarray
+    k_n: int
+    n_phys: np.ndarray
+    L_nodes: np.ndarray
+    preview_d_nm: float
+    best_rmse: float
+    best_n: np.ndarray
+    best_L: np.ndarray
+    current_rmse: float
+    current_t_th: Any
+    best_live: Any
+
 class _SmartInitDialogMixin:
     """Mixin extracting _show_smart_init_preview_dialog logic."""
+
     def _show_smart_init_preview_dialog(self, payload: SmartInitPayload) -> bool:
+        """Manual Smart Init: PWL n and ln k on K sigma knots.
 
-        """Manual Smart Init: PWL n and ln k on K sigma knots (K=12 or 14 from spectrum / RMSE window);
+        If RMSE window is on: uniform sigma^2 mesh on the objective
+        (often K=12) then bridge to worker K on Continue.
 
-        if RMSE window is on: uniform sigma^2 mesh on the objective (often K=12) then bridge to worker K on Continue."""
+        Structure (kept monolithic - 29 inner defs share closure state):
+          §A  L+0     Config extraction + sigma knot preparation
+          §B  L+100   QDialog construction (layouts, widgets, plots)
+          §C  L+370   Inner defs: redraw_knot_lines, apply_range, refresh_nk
+          §D  L+640   Inner defs: update_axes, rebuild_knot_ui, sync_labels
+          §E  L+990   Inner defs: do_recalc, place_nk_editor, run_auto, bumps
+          §F  L+1210  Inner defs: recall_best, hint, copy, save/load config
+          §G  L+1550  Inner defs: presets, on_autofind, on_keep + init
+        """
 
         cfg = payload.cfg
 
@@ -3791,7 +3309,6 @@ class _SmartInitDialogMixin:
         )
 
         if cfg is None or grids is None or sk.size < 2:
-
             logger.warning(
                 "Smart Init dialog early return | cfg_present=%s | grids_present=%s | payload_K=%d",
                 bool(cfg is not None),
@@ -3800,13 +3317,9 @@ class _SmartInitDialogMixin:
             )
 
             QMessageBox.warning(
-
                 self,
-
                 "Smart Init",
-
                 "Incomplete preview data (cfg or grids). Continuing without adjustment.",
-
             )
 
             return True
@@ -3825,7 +3338,6 @@ class _SmartInitDialogMixin:
         )
 
         if n_phys.size != k_n or L_nodes.size != k_n:
-
             logger.warning(
                 "Smart Init dialog early return | inconsistent vectors len(n)=%d len(L)=%d K=%d",
                 int(np.asarray(n_phys, dtype=np.float64).size),
@@ -3856,24 +3368,24 @@ class _SmartInitDialogMixin:
         # apply Nb2O? via ?Apply preset? (interpolation on current sigma grid).
 
         if sk.size == SPLINE_PWL_K_NODES:
-
             sk, n_phys, L_nodes, d_total = _project_nb2o5_preset_to_sigma_knots(sk)
 
-            payload.d_best_nm = d_total
+            effective_d_best_nm = float(d_total)
+
+            open_preset_name = "nb2o5"
+
+        else:
+            effective_d_best_nm = float(payload.d_best_nm)
+
+            open_preset_name = "none"
 
         # Truncated RMSE lambda window: sigma mesh for +/- columns = uniform in sigma^2 on sig_f (objective), not full spectrum.
 
         if getattr(cfg, "rmse_fit_lambda_nm", None) is not None:
-
             sig_f_g = np.asarray(grids["sig_f"], dtype=np.float64).ravel()
 
             if int(sig_f_g.size) >= 2:
-
-                sk_win = build_smart_manual_sigma_knots_from_preview_grid(
-
-                    sig_f_g, n_uniform_in_sigma2=11
-
-                )
+                sk_win = build_smart_manual_sigma_knots_from_preview_grid(sig_f_g, n_uniform_in_sigma2=11)
 
                 n_phys, L_nodes = interp_n_L_pwlnk_to_sigmas(sk, n_phys, L_nodes, sk_win)
 
@@ -3894,35 +3406,42 @@ class _SmartInitDialogMixin:
         self._si_mesh_sk_snap = self.smart_preview_sk_arr.copy()
 
         logger.info(
-            "Smart Init dialog prepared mesh | dialog_K=%d | rmse_window=%s",
+            "Smart Init dialog mesh prepared | sigma_knots_count=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s",
             int(np.asarray(self.smart_preview_sk_arr, dtype=np.float64).size),
             str(getattr(cfg, "rmse_fit_lambda_nm", None)),
+            str(open_preset_name),
         )
 
-        _d0 = payload.d_best_nm
+        _d0 = effective_d_best_nm
 
         if _d0 is None or not np.isfinite(float(_d0)):
-
             preview_d_nm = float(0.5 * (float(cfg.d_lo) + float(cfg.d_hi)))
 
         else:
-
             preview_d_nm = float(_d0)
 
+        if str(open_preset_name) == "nb2o5":
+            logger.info(
+                "Smart Init dialog seed transformation | incoming_payload_d_best_nm=%.6f | nb2o5_preset_d_total_nm=%.6f | "
+                "preset_replaces_incoming_d_for_dialog_preview",
+                float(payload.d_best_nm),
+                float(preview_d_nm),
+            )
+        else:
+            logger.info(
+                "Smart Init dialog initial seed | incoming_d_best_nm=%.6f | effective_preview_d_nm=%.6f | preset=%s",
+                float(payload.d_best_nm),
+                float(preview_d_nm),
+                str(open_preset_name),
+            )
+
         _, rm0 = rmse_at_spline_stage_x0_init(
-
             cfg,
-
             sk,
-
             n_phys,
-
             L_nodes,
-
             preview_d_nm,
-
             relax_n_mono=_relax_si_mono,
-
         )
 
         best_rmse = float(rm0)
@@ -3934,7 +3453,7 @@ class _SmartInitDialogMixin:
         current_rmse = float(rm0)
 
         logger.info(
-            "Smart Init dialog initial RMSE | preview_d_nm=%.6f | rm0=%.8f",
+            "Smart Init dialog RMSE-at-seed | dialog_d_nm=%.6f | initial_rmse=%.8f",
             float(preview_d_nm),
             float(current_rmse),
         )
@@ -3943,11 +3462,7 @@ class _SmartInitDialogMixin:
 
         logger.info("Smart Init dialog QDialog created")
 
-        dlg.setWindowTitle(
-
-            f"Smart Init  PWL n and ln k ({k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)"
-
-        )
+        dlg.setWindowTitle(f"Smart Init  PWL n and ln k ({k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)")
 
         dlg.setMinimumWidth(1180)
 
@@ -3967,7 +3482,7 @@ class _SmartInitDialogMixin:
 
         cb_x_main = QComboBox()
 
-        cb_x_main.addItems(["Lambda (nm)", "Sigma (nm?1)", "Sigma2 (nm?2)"])
+        cb_x_main.addItems(["Lambda (nm)", "Sigma (nm⁻¹)", "Sigma² (nm⁻²)"])
 
         h_x_main.addWidget(cb_x_main)
 
@@ -3976,30 +3491,18 @@ class _SmartInitDialogMixin:
         lay.addLayout(h_x_main)
 
         if _relax_si_mono:
-
             lbl_mono_relax = QLabel(
-
                 "<b>Manual tuning</b>: <i>n</i> may be <b>non-monotone</b> in sigma between knots here "
-
                 "(sliders / editor). <b>After Continue</b>: optimization uses the "
-
                 "<b>? reparametrization</b> - <i>n</i> non-decreasing in sigma on the run?s lambda band "
-
                 "(so in practice <i>n</i> <b>decreasing or quasi-flat</b> as lambda increases on these segments), "
-
                 "plus a penalty (UV-VIS band) if <i>n</i> rises too much with lambda "
-
                 "(small slack on this penalty is configurable)."
-
             )
 
             lbl_mono_relax.setWordWrap(True)
 
-            lbl_mono_relax.setStyleSheet(
-
-                f"color: {CertusTheme.WARNING}; font-size: 11px; padding: 2px 0;"
-
-            )
+            lbl_mono_relax.setStyleSheet(f"color: {CertusTheme.WARNING}; font-size: 11px; padding: 2px 0;")
 
             lay.addWidget(lbl_mono_relax)
 
@@ -4014,7 +3517,6 @@ class _SmartInitDialogMixin:
         _d_from_slider = lambda iv: _d_from_slider_int(iv, d_lo_nm, d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
         _slider_from_d = lambda dv: _slider_int_from_d_nm(dv, d_lo_nm, d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
 
-
         row_d = QHBoxLayout()
 
         row_d.addWidget(QLabel("Thickness d:"))
@@ -4024,11 +3526,8 @@ class _SmartInitDialogMixin:
         slider_d.setRange(0, _D_SLIDER_STEPS)
 
         slider_d.setToolTip(
-
             "Slider between fit d min and d max. The +/- buttons on n and ln k do not change d; "
-
             "move this slider to try different thickness."
-
         )
 
         lbl_d_slider = QLabel()
@@ -4068,24 +3567,19 @@ class _SmartInitDialogMixin:
 
         pw, curve_exp, curve_theo, knot_markers = self._build_smart_init_main_plot(y_lab)
 
-
         # get_xv: extracted to module level
         get_xv = _get_xv_spectral_coord
-
 
         knot_lines = []
 
         def redraw_knot_lines() -> None:
 
             for line in knot_lines:
-
                 try:
-
                     pw.removeItem(line)
 
                 except (AttributeError, RuntimeError):
-
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             knot_lines.clear()
 
@@ -4093,14 +3587,9 @@ class _SmartInitDialogMixin:
 
             mode = cb_x_main.currentText()
 
-            sk_lines = np.asarray(
-
-                getattr(self, "smart_preview_sk_arr", sk), dtype=np.float64
-
-            ).ravel()
+            sk_lines = np.asarray(getattr(self, "smart_preview_sk_arr", sk), dtype=np.float64).ravel()
 
             for sx in sk_lines:
-
                 il = pg.InfiniteLine(get_xv(sx, mode), angle=90, pen=pen_k)
 
                 pw.addItem(il)
@@ -4112,13 +3601,24 @@ class _SmartInitDialogMixin:
         cb_x_main.currentIndexChanged.connect(redraw_knot_lines)
 
         current_t_th = y_th0.copy()
+        state = SmartInitState(
+            sk=sk,
+            k_n=k_n,
+            n_phys=n_phys,
+            L_nodes=L_nodes,
+            preview_d_nm=preview_d_nm,
+            best_rmse=best_rmse,
+            best_n=best_n,
+            best_L=best_L,
+            current_rmse=current_rmse,
+            current_t_th=current_t_th,
+            best_live=None,
+        )
 
         # _study_lambda_window_nm: extracted to module level
         _study_lambda_window_nm = lambda: _compute_study_lambda_window_nm(lam_m, cfg)  # noqa: E731
 
-
         def _apply_manual_spectrum_plot_range() -> None:
-
             """Auto scales centered on the study region (lambda or sigma / sigma^2), not the full axis span."""
 
             lo_s, hi_s = _study_lambda_window_nm()
@@ -4128,35 +3628,27 @@ class _SmartInitDialogMixin:
             mode = cb_x_main.currentIndex()
 
             if mode == 0:
-
                 x_lo, x_hi = float(lo_s - pad_l), float(hi_s + pad_l)
 
             elif mode == 1:
-
                 x_lo = 1.0 / float(hi_s + pad_l)
 
                 x_hi = 1.0 / float(max(lo_s - pad_l, 1e-30))
 
             else:
-
                 x_lo = (1.0 / float(hi_s + pad_l)) ** 2
 
                 x_hi = (1.0 / float(max(lo_s - pad_l, 1e-30))) ** 2
 
             if x_hi < x_lo:
-
                 x_lo, x_hi = x_hi, x_lo
 
             cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
             k_vals = (
-
                 1.0 / np.maximum(cur_sk, 1e-30),
-
                 np.asarray(cur_sk, dtype=np.float64),
-
                 np.asarray(cur_sk, dtype=np.float64) ** 2,
-
             )[mode]
 
             kv = np.asarray(k_vals, dtype=np.float64).ravel()
@@ -4164,13 +3656,11 @@ class _SmartInitDialogMixin:
             kv = kv[np.isfinite(kv)]
 
             if kv.size:
-
                 x_lo = min(float(x_lo), float(np.min(kv)))
 
                 x_hi = max(float(x_hi), float(np.max(kv)))
 
             if x_hi < x_lo:
-
                 x_lo, x_hi = x_hi, x_lo
 
             pad_x = max((x_hi - x_lo) * 0.015, 1e-24)
@@ -4179,12 +3669,11 @@ class _SmartInitDialogMixin:
 
             ye = np.asarray(y_exp, dtype=np.float64).ravel()
 
-            yt = np.asarray(current_t_th, dtype=np.float64).ravel()
+            yt = np.asarray(state.current_t_th, dtype=np.float64).ravel()
 
             n = int(min(lam.size, ye.size, yt.size))
 
             if n <= 0:
-
                 return
 
             lam, ye, yt = lam[:n], ye[:n], yt[:n]
@@ -4192,7 +3681,6 @@ class _SmartInitDialogMixin:
             m = np.isfinite(lam) & (lam >= lo_s) & (lam <= hi_s)
 
             if not np.any(m):
-
                 m = np.isfinite(lam)
 
             yy = np.concatenate([ye[m], yt[m]])
@@ -4201,24 +3689,21 @@ class _SmartInitDialogMixin:
 
             cur_sk2 = getattr(self, "smart_preview_sk_arr", sk_arr)
 
-            knot_t = _interp_t_at_lam_knots(lam_m, current_t_th, cur_sk2)
+            knot_t = _interp_t_at_lam_knots(lam_m, state.current_t_th, cur_sk2)
 
             kt = np.asarray(knot_t, dtype=np.float64).ravel()
 
             kt = kt[np.isfinite(kt)]
 
             if kt.size:
-
                 yy = np.concatenate([yy, kt]) if yy.size else kt
 
             if yy.size == 0:
-
                 yy = np.array([0.0, 1.0], dtype=np.float64)
 
             y_lo, y_hi = float(np.min(yy)), float(np.max(yy))
 
             if y_hi <= y_lo:
-
                 y_hi = y_lo + 1e-6
 
             pad_y = max((y_hi - y_lo) * 0.08, 1e-5)
@@ -4248,7 +3733,6 @@ class _SmartInitDialogMixin:
             n_pts = min(lam_a.size, n_a.size, ln_a.size)
 
             if n_pts <= 0:
-
                 return
 
             lam_a = lam_a[:n_pts]
@@ -4260,7 +3744,6 @@ class _SmartInitDialogMixin:
             m = np.isfinite(lam_a) & (lam_a >= lo_s) & (lam_a <= hi_s)
 
             if not np.any(m):
-
                 m = np.isfinite(lam_a)
 
             main_vb.setXRange(float(lo_s - pad_l), float(hi_s + pad_l), padding=0)
@@ -4270,7 +3753,6 @@ class _SmartInitDialogMixin:
             nn = nn[np.isfinite(nn)]
 
             if nn.size > 0:
-
                 n_lo, n_hi = float(np.min(nn)), float(np.max(nn))
 
                 pr = max((n_hi - n_lo) * 0.06, 1e-6)
@@ -4282,19 +3764,17 @@ class _SmartInitDialogMixin:
             lk = lk[np.isfinite(lk)]
 
             if lk.size > 0:
-
                 lk_lo, lk_hi = float(np.min(lk)), float(np.max(lk))
 
                 pr = max((lk_hi - lk_lo) * 0.08, 1e-6)
 
                 p_extra.setYRange(lk_lo - pr, lk_hi + pr, padding=0)
 
-        # --- NEW : MONITORING LIVE DES INDICES ---
+        # --- NEW : LIVE INDEX MONITORING ---
 
         mon = getattr(self, "_live_nk_monitor", None)
 
         if mon is None or not hasattr(mon, "update_indices"):
-
             mon = LiveIndexMonitor(self)
 
             self._live_nk_monitor = mon
@@ -4306,16 +3786,14 @@ class _SmartInitDialogMixin:
         # Positionner a droite du dialog de preview (si visible).
 
         try:
-
             mon.move(dlg.x() + dlg.width() + 10, dlg.y())
 
         except (AttributeError, RuntimeError):
-
-            pass
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         def refresh_nk_plots_mon(lam_u, n_lam_u, k_lam_u) -> None:
 
-            mon.update_indices(lam_u, n_lam_u, k_lam_u, preview_d_nm)
+            mon.update_indices(lam_u, n_lam_u, k_lam_u, state.preview_d_nm)
 
         lbl_stats = QLabel()
 
@@ -4323,39 +3801,28 @@ class _SmartInitDialogMixin:
 
         def refresh_stats(dv: float, rm: float) -> None:
 
-            nonlocal current_rmse
-
-            current_rmse = float(rm)
+            state.current_rmse = float(rm)
 
             rmse_lbl = "RMSE"
 
-            if (
+            if cfg.data_type == DataType.BOTH and float(cfg.weight_t) > 0.0 and float(cfg.weight_r) > 0.0:
+                rmse_lbl = "RMSE (sqrt(MSE) objective T+R, as in first optimization cost)"
 
-                cfg.data_type == DataType.BOTH
+            lbl_stats.setText(_format_smart_init_status_text(state.k_n, dv, rmse_lbl, rm, state.best_rmse))
 
-                and float(cfg.weight_t) > 0.0
-
-                and float(cfg.weight_r) > 0.0
-
-            ):
-
-                rmse_lbl = "RMSE (?MSE objectif T+R, comme au 1er cout optimization)"
-
-            lbl_stats.setText(_format_smart_init_status_text(k_n, dv, rmse_lbl, rm, best_rmse))
-
-        refresh_stats(preview_d_nm, rm0)
+        refresh_stats(state.preview_d_nm, rm0)
 
         # Colonnes alignees sous les sigma du plot (espacements  Deltasigma sur l'axe).
 
-        sk_arr = np.asarray(sk, dtype=np.float64).ravel()
+        sk_arr = np.asarray(state.sk, dtype=np.float64).ravel()
 
         sig2_arr = sk_arr**2
 
-        sig_sort_idx = np.argsort(sk_arr)
 
-        sk_sorted = sk_arr[sig_sort_idx]
 
-        sig2_sorted = sig2_arr[sig_sort_idx]
+
+
+
 
         sig_pts = (1.0 / np.maximum(lam_m, 1e-9)) ** 2 if lam_m.size > 0 else sig2_arr
 
@@ -4375,7 +3842,7 @@ class _SmartInitDialogMixin:
 
             x_s2 = x_s**2
 
-            cur_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
             k_L = 1.0 / np.maximum(cur_sk, 1e-30)
 
@@ -4395,16 +3862,14 @@ class _SmartInitDialogMixin:
 
             curve_exp.setData(x_vals[o], y_exp[o])
 
-            curve_theo.setData(x_vals[o], current_t_th[o])
+            curve_theo.setData(x_vals[o], state.current_t_th[o])
 
-            knot_t = _interp_t_at_lam_knots(lam_m, current_t_th, cur_sk)
+            knot_t = _interp_t_at_lam_knots(lam_m, state.current_t_th, cur_sk)
 
             knot_markers.setData(k_vals, knot_t)
 
             for j, il in enumerate(knot_lines):
-
                 if j < len(k_vals):
-
                     il.setPos(k_vals[j])
 
             _apply_manual_spectrum_plot_range()
@@ -4432,7 +3897,6 @@ class _SmartInitDialogMixin:
         # _stretch_sig: extracted to module level
         _stretch_sig = lambda delta: _stretch_sig_to_px(delta, span_sig2)  # noqa: E731
 
-
         n_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
 
         L_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
@@ -4445,18 +3909,14 @@ class _SmartInitDialogMixin:
 
         def rebuild_knot_ui(new_kn: int) -> None:
 
-            nonlocal k_n
-
-            k_n = new_kn
+            state.k_n = new_kn
 
             # Vidage du layout actuel
 
             while knot_h.count():
-
                 item = knot_h.takeAt(0)
 
                 if item.widget():
-
                     item.widget().deleteLater()
 
             lbl_lam_cols.clear()
@@ -4477,7 +3937,7 @@ class _SmartInitDialogMixin:
 
             # Reconstruction des colonnes
 
-            current_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            current_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
             sig2_sorted_loc = np.sort(current_sk**2)
 
@@ -4487,8 +3947,7 @@ class _SmartInitDialogMixin:
 
             knot_h.addStretch(_stretch_sig(float(sig2_sorted_loc[0] - s2_lo_f)))
 
-            for j in range(k_n):
-
+            for j in range(state.k_n):
                 # ... (creation widgets)
 
                 col_w = QWidget()
@@ -4623,13 +4082,12 @@ class _SmartInitDialogMixin:
 
                 knot_h.addWidget(col_w, 0)
 
-                if j + 1 < k_n:
-
+                if j + 1 < state.k_n:
                     knot_h.addStretch(_stretch_sig(float(sig2_sorted_loc[j + 1] - sig2_sorted_loc[j])))
 
             # Rewire +/- / auto buttons for the current k_n sigma knots
 
-            current_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            current_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
             sig2_sorted_loc = np.sort(current_sk**2)
 
@@ -4637,8 +4095,7 @@ class _SmartInitDialogMixin:
 
             # Rewire events
 
-            for j in range(k_n):
-
+            for j in range(state.k_n):
                 oi = int(sig_sort_idx_loc[j])
 
                 bm_n, bp_n = n_btn_pairs[j]
@@ -4653,12 +4110,12 @@ class _SmartInitDialogMixin:
 
                 wire_hold_button(bp_L, oi, +1, is_ln_k=True)
 
-                def _run_n_auto(*_args, row_index=oi):
+                def _run_n_auto(*_args, row_index=oi) -> None:
                     run_auto(row_index, False)
 
                 n_auto_btns[j].clicked.connect(_run_n_auto)
 
-                def _run_l_auto(*_args, row_index=oi):
+                def _run_l_auto(*_args, row_index=oi) -> None:
                     run_auto(row_index, True)
 
                 L_auto_btns[j].clicked.connect(_run_l_auto)
@@ -4666,27 +4123,23 @@ class _SmartInitDialogMixin:
             sync_knot_labels()
 
             for _ce in curve_editor_holder:
-
                 try:
-
                     _ce.refresh_plots()
 
                 except (AttributeError, RuntimeError):
-
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         knot_bar.setMinimumHeight(140)
 
         def sync_knot_labels() -> None:
 
-            cur_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
             cur_sort_idx = np.argsort(cur_sk)
 
             cur_kn = int(cur_sk.size)
 
             for j in range(cur_kn):
-
                 oi = int(cur_sort_idx[j])
 
                 lam_v = 1.0 / max(float(cur_sk[oi]), 1e-30)
@@ -4695,23 +4148,19 @@ class _SmartInitDialogMixin:
 
                 lbl_sig_cols[j].setText(f"{float(cur_sk[oi]):.5f}")
 
-                lbl_n_cols[j].setText(f"{float(n_phys[oi]):.4f}")
+                lbl_n_cols[j].setText(f"{float(state.n_phys[oi]):.4f}")
 
-                lbl_L_cols[j].setText(f"{float(L_nodes[oi]):.4f}")
+                lbl_L_cols[j].setText(f"{float(state.L_nodes[oi]):.4f}")
 
         def sync_d_slider_label() -> None:
 
-            lbl_d_slider.setText(
-
-                f"{preview_d_nm:.2f} nm   [d min={d_lo_nm:.1f}, d max={d_hi_nm:.1f}]"
-
-            )
+            lbl_d_slider.setText(f"{state.preview_d_nm:.2f} nm   [d min={d_lo_nm:.1f}, d max={d_hi_nm:.1f}]")
 
         def set_slider_from_preview_d() -> None:
 
             slider_d.blockSignals(True)
 
-            slider_d.setValue(_slider_from_d(preview_d_nm))
+            slider_d.setValue(_slider_from_d(state.preview_d_nm))
 
             slider_d.blockSignals(False)
 
@@ -4719,73 +4168,71 @@ class _SmartInitDialogMixin:
 
         def _set_n_knot_curve(i: int, v: float) -> None:
 
-            nonlocal n_phys
-
-            nn = np.asarray(n_phys, dtype=np.float64).copy()
+            nn = np.asarray(state.n_phys, dtype=np.float64).copy()
 
             nn[int(i)] = float(np.clip(v, N_MIN_LIMIT, N_MAX_LIMIT))
 
-            n_phys = nn
+            state.n_phys = nn
 
         def _set_L_knot_curve(i: int, v: float) -> None:
 
-            nonlocal L_nodes
-
-            LL = np.asarray(L_nodes, dtype=np.float64).copy()
+            LL = np.asarray(state.L_nodes, dtype=np.float64).copy()
 
             LL[int(i)] = float(np.clip(v, L_lo_g, L_hi_g))
 
-            L_nodes = LL
+            state.L_nodes = LL
 
         def do_recalc() -> None:
 
-            nonlocal n_phys, L_nodes, best_rmse, best_n, best_L, preview_d_nm, current_t_th, current_rmse
+            nonlocal state
 
-            cur_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
-            state = _SmartInitState(cur_sk, n_phys, L_nodes, preview_d_nm, best_rmse, best_n, best_L, current_rmse, current_t_th)
-
-            
+            _prev = state
+            state = _SmartInitState(
+                cur_sk,
+                _prev.n_phys,
+                _prev.L_nodes,
+                _prev.preview_d_nm,
+                _prev.best_rmse,
+                _prev.best_n,
+                _prev.best_L,
+                _prev.current_rmse,
+                _prev.current_t_th,
+            )
 
             out = self._execute_smart_init_recalc_logic(cfg, grids, _relax_si_mono, state)
 
-            if out is None: return
+            if out is None:
+                return
 
-            
+            state.n_phys = state.n_phys.copy()
 
-            n_phys = state.n_phys.copy()
+            state.L_nodes = state.L_nodes.copy()
 
-            L_nodes = state.L_nodes.copy()
+            state.preview_d_nm = state.preview_d_nm
 
-            preview_d_nm = state.preview_d_nm
+            state.best_rmse = state.best_rmse
 
-            best_rmse = state.best_rmse
+            state.best_n = state.best_n.copy()
 
-            best_n = state.best_n.copy()
+            state.best_L = state.best_L.copy()
 
-            best_L = state.best_L.copy()
+            state.current_t_th = state.current_t_th
 
-            current_t_th = state.current_t_th
-
-            current_rmse = state.current_rmse
-
-            
+            state.current_rmse = state.current_rmse
 
             lam_u_src = out.get("lam_nm")
 
             if lam_u_src is None:
-
                 lam_u_src = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
 
                 if self.logger:
-
                     self.logger.warning("Smart-init preview: out.lam_nm missing; fallback to cfg.lam_nm.")
 
             lam_u = np.asarray(lam_u_src, dtype=np.float64).ravel()
 
-            ou = np.argsort((1.0 / np.maximum(lam_u, 1e-9))**2)
-
-            
+            ou = np.argsort((1.0 / np.maximum(lam_u, 1e-9)) ** 2)
 
             update_main_x_axes()
 
@@ -4793,14 +4240,9 @@ class _SmartInitDialogMixin:
 
             sync_knot_labels()
 
-            
-
-            refresh_stats(preview_d_nm, current_rmse)
-
-            
+            refresh_stats(state.preview_d_nm, state.current_rmse)
 
             if "n_lam" in out and "k_lam" in out:
-
                 n_lam_u = np.asarray(out["n_lam"], dtype=np.float64).ravel()
 
                 k_lam_u = np.asarray(out["k_lam"], dtype=np.float64).ravel()
@@ -4809,50 +4251,27 @@ class _SmartInitDialogMixin:
 
                 refresh_nk_plots_mon(lam_uu[ou], n_lam_u[ou], k_lam_u[ou])
 
-                
-
             for _ce in curve_editor_holder:
-
                 try:
-
                     _ce.refresh_plots()
 
                 except (AttributeError, RuntimeError):
-
-                    pass
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         _nk_curve_editor = SmartInitNKCurveEditorDialog(
-
             dlg,
-
             n_lo=float(N_MIN_LIMIT),
-
             n_hi=float(N_MAX_LIMIT),
-
             L_lo=float(L_lo_g),
-
             L_hi=float(L_hi_g),
-
             k_clip_lo=float(getattr(cfg, "k_clip_lo", 1e-30) or 1e-30),
-
-            get_sk=lambda: np.asarray(
-
-                getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64
-
-            ).ravel(),
-
-            get_n_phys=lambda: n_phys,
-
-            get_L_nodes=lambda: L_nodes,
-
+            get_sk=lambda: np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel(),
+            get_n_phys=lambda: state.n_phys,
+            get_L_nodes=lambda: state.L_nodes,
             set_n_at=_set_n_knot_curve,
-
             set_L_at=_set_L_knot_curve,
-
             request_recalc=do_recalc,
-
             study_lambda_window=_study_lambda_window_nm,
-
         )
 
         curve_editor_holder.append(_nk_curve_editor)
@@ -4862,47 +4281,49 @@ class _SmartInitDialogMixin:
         def _place_nk_editor() -> None:
 
             try:
-
                 fr = dlg.frameGeometry()
 
                 _nk_curve_editor.move(
-
                     max(24, fr.left() - _nk_curve_editor.width() - 20),
-
                     fr.top() + 32,
-
                 )
 
             except (AttributeError, RuntimeError):
-
-                pass
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         QTimer.singleShot(0, _place_nk_editor)
 
         def run_auto(row: int, is_ln_k: bool) -> None:
-            nonlocal sk, n_phys, L_nodes, preview_d_nm
-            state = _SmartInitState(sk=getattr(self, "smart_preview_sk_arr", sk_arr), 
-                                    n_phys=n_phys, L_nodes=L_nodes, preview_d_nm=preview_d_nm, 
-                                    best_rmse=best_rmse, best_n=best_n, best_L=best_L, 
-                                    current_rmse=current_rmse, current_t_th=current_t_th)
-            
+            nonlocal state
+
+            _prev = state
+            state = _SmartInitState(
+                sk=getattr(self, "smart_preview_sk_arr", sk_arr),
+                n_phys=_prev.n_phys,
+                L_nodes=_prev.L_nodes,
+                preview_d_nm=_prev.preview_d_nm,
+                best_rmse=_prev.best_rmse,
+                best_n=_prev.best_n,
+                best_L=_prev.best_L,
+                current_rmse=_prev.current_rmse,
+                current_t_th=_prev.current_t_th,
+            )
+
             err = self._execute_smart_init_run_auto(cfg, row, is_ln_k, L_lo_g, L_hi_g, _relax_si_mono, state)
             if err:
                 QMessageBox.warning(dlg, "Smart Init  auto", f"run auto failed: {err}")
                 return
-            
-            n_phys = state.n_phys.copy()
-            L_nodes = state.L_nodes.copy()
-            preview_d_nm = state.preview_d_nm
-            
+
+            state.n_phys = state.n_phys.copy()
+            state.L_nodes = state.L_nodes.copy()
+            state.preview_d_nm = state.preview_d_nm
+
             set_slider_from_preview_d()
             do_recalc()
 
         def on_slider_d_changed(_iv: int) -> None:
 
-            nonlocal preview_d_nm
-
-            preview_d_nm = _d_from_slider(slider_d.value())
+            state.preview_d_nm = _d_from_slider(slider_d.value())
 
             sync_d_slider_label()
 
@@ -4918,7 +4339,7 @@ class _SmartInitDialogMixin:
 
             f = 1.0 + float(direction) * step
 
-            n_phys[row] = float(np.clip(n_phys[row] * f, N_MIN_LIMIT, N_MAX_LIMIT))
+            state.n_phys[row] = float(np.clip(state.n_phys[row] * f, N_MIN_LIMIT, N_MAX_LIMIT))
 
             do_recalc()
 
@@ -4928,22 +4349,16 @@ class _SmartInitDialogMixin:
 
             f = 1.0 + float(direction) * step
 
-            L_nodes[row] = float(np.clip(L_nodes[row] * f, L_lo_g, L_hi_g))
+            state.L_nodes[row] = float(np.clip(state.L_nodes[row] * f, L_lo_g, L_hi_g))
 
             do_recalc()
 
         def wire_hold_button(
-
             btn: QPushButton,
-
             row: int,
-
             direction: int,
-
             *,
-
             is_ln_k: bool,
-
         ) -> None:
 
             t = QTimer(dlg)
@@ -4959,11 +4374,9 @@ class _SmartInitDialogMixin:
                 mult = min(24.0, 1.0 + (ntick[0] - 1) * 0.85)
 
                 if is_ln_k:
-
                     bump_L_scaled(row, direction, mult)
 
                 else:
-
                     bump_n_scaled(row, direction, mult)
 
             t.timeout.connect(on_tick)
@@ -4973,11 +4386,9 @@ class _SmartInitDialogMixin:
                 ntick[0] = 1
 
                 if is_ln_k:
-
                     bump_L_scaled(row, direction, 1.0)
 
                 else:
-
                     bump_n_scaled(row, direction, 1.0)
 
                 t.stop()
@@ -4985,7 +4396,6 @@ class _SmartInitDialogMixin:
                 def maybe_start_repeat() -> None:
 
                     if btn.isDown():
-
                         t.start()
 
                 QTimer.singleShot(400, maybe_start_repeat)
@@ -5001,37 +4411,41 @@ class _SmartInitDialogMixin:
             btn.released.connect(on_release)
 
         def recall_best() -> None:
-            nonlocal n_phys, L_nodes
-            state = _SmartInitState(sk=getattr(self, "smart_preview_sk_arr", sk_arr), 
-                                    n_phys=n_phys, L_nodes=L_nodes, preview_d_nm=preview_d_nm, 
-                                    best_rmse=best_rmse, best_n=best_n, best_L=best_L, 
-                                    current_rmse=current_rmse, current_t_th=current_t_th)
-            
+            nonlocal state
+
+            _prev = state
+            state = _SmartInitState(
+                sk=getattr(self, "smart_preview_sk_arr", sk_arr),
+                n_phys=_prev.n_phys,
+                L_nodes=_prev.L_nodes,
+                preview_d_nm=_prev.preview_d_nm,
+                best_rmse=_prev.best_rmse,
+                best_n=_prev.best_n,
+                best_L=_prev.best_L,
+                current_rmse=_prev.current_rmse,
+                current_t_th=_prev.current_t_th,
+            )
+
             err = self._execute_smart_init_recall_best(state)
             if err:
                 QMessageBox.information(dlg, "Smart Init", err)
                 return
-                
-            n_phys = state.n_phys.copy()
-            L_nodes = state.L_nodes.copy()
+
+            state.n_phys = state.n_phys.copy()
+            state.L_nodes = state.L_nodes.copy()
             do_recalc()
 
-        rebuild_knot_ui(k_n)  # Appel initial  ici wire_hold_button est deja defini
+        rebuild_knot_ui(state.k_n)  # Appel initial  ici wire_hold_button est deja defini
 
         attach_excel_clipboard_context_menu(pw)
 
         lay.addWidget(wrap_scientific_plot_with_toolbar(dlg, pw), stretch=1)
 
         lbl_nodes = QLabel(
-
             f"<b>Knot adjustment (increasing sigma)</b> - <b>n &amp; k Editor</b> window on the left: drag points "
-
             f"(<i>k</i> in log); here: <b>- / +</b> +/-{100 * rel_step:.1f} % on <i>n</i> and <i>L</i> (= ln <i>k</i>), "
-
             f"<b>without</b> auto thickness recalculation (d slider above); "
-
             f"<b>hold down</b> to accelerate; <b>auto</b>: d + param sweep <=3 s."
-
         )
 
         lbl_nodes.setWordWrap(True)
@@ -5055,27 +4469,18 @@ class _SmartInitDialogMixin:
             lam_h = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
 
             k_h = int(
-
                 canonical_spline_sigma_knots(
-
                     float(np.nanmin(lam_h)),
-
                     float(np.nanmax(lam_h)),
-
                     **_canonical_knots_min_lambda_kw(cfg),
-
                 ).size
-
             )
 
             n_h = max(1, k_h - 1)
 
             lbl_row_hint.setText(
-
                 f" Continue: fixed mesh {k_h} sigma knots, {n_h} segments between knots "
-
                 "(canonical grid [lambda_min, lambda_max]); local refinement; knots and RMSE logged in CERTUS."
-
             )
 
         update_hint_text()
@@ -5092,21 +4497,12 @@ class _SmartInitDialogMixin:
 
         def on_copy() -> None:
 
-            cur_sk = getattr(self, 'smart_preview_sk_arr', sk_arr)
+            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
 
-            lines = [
-
-                f"RMSE: {current_rmse:.8f}",
-
-                f"d: {preview_d_nm:.6f} nm",
-
-                "Nodes (sigma, n, ln k):"
-
-            ]
+            lines = [f"RMSE: {state.current_rmse:.8f}", f"d: {state.preview_d_nm:.6f} nm", "Nodes (sigma, n, ln k):"]
 
             for idx in np.argsort(cur_sk):
-
-                lines.append(f"  {cur_sk[idx]:.8e} | {n_phys[idx]:.6f} | {L_nodes[idx]:.6f}")
+                lines.append(f"  {cur_sk[idx]:.8e} | {state.n_phys[idx]:.6f} | {state.L_nodes[idx]:.6f}")
 
             QApplication.clipboard().setText("\n".join(lines))
 
@@ -5120,44 +4516,167 @@ class _SmartInitDialogMixin:
 
         row_hint.addWidget(btn_recall)
 
+        def _refresh_knot_lines_and_ui() -> None:
+            for line in knot_lines:
+                try:
+                    pw.removeItem(line)
+                except (AttributeError, RuntimeError):
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+            knot_lines.clear()
+
+            pen_k = pg.mkPen("#1a9f3c", width=1.8)
+            mode = cb_x_main.currentText()
+            for sx in state.sk:
+                il = pg.InfiniteLine(get_xv(sx, mode), angle=90, pen=pen_k)
+                pw.addItem(il)
+                knot_lines.append(il)
+
+            rebuild_knot_ui(int(len(state.sk)))
+            set_slider_from_preview_d()
+            do_recalc()
+
+        def _serialize_smart_init_index_config() -> dict[str, Any]:
+            cur_sk = np.asarray(getattr(self, "smart_preview_sk_arr", state.sk), dtype=np.float64).ravel()
+            cur_n = np.asarray(state.n_phys, dtype=np.float64).ravel()
+            cur_L = np.asarray(state.L_nodes, dtype=np.float64).ravel()
+            return {
+                "schema": "certus.index_spline.smart_init.index_config.v1",
+                "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "x_axis_mode": str(cb_x_main.currentText()),
+                "d_nm": float(state.preview_d_nm),
+                "sigma_knots": [float(v) for v in cur_sk.tolist()],
+                "n_nodes_physical": [float(v) for v in cur_n.tolist()],
+                "L_nodes": [float(v) for v in cur_L.tolist()],
+            }
+
+        def on_save_index_config() -> None:
+            ts = time.strftime("%Y%m%d_%H%M%S")
+            default_path = str(Path.cwd() / f"smart_init_index_config_{ts}.json")
+            path, _ = QFileDialog.getSaveFileName(
+                dlg,
+                "Save index config (Smart Init)",
+                default_path,
+                "JSON Files (*.json);;All Files (*.*)",
+            )
+            if not path:
+                return
+            if not path.lower().endswith(".json"):
+                path += ".json"
+
+            payload_cfg = _serialize_smart_init_index_config()
+            try:
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(payload_cfg, f, indent=2)
+            except (OSError, TypeError, ValueError) as exc:
+                QMessageBox.warning(dlg, "Save index config", f"Save failed: {exc}")
+                return
+
+            btn_save_cfg.setText("Saved")
+            QTimer.singleShot(1200, lambda: btn_save_cfg.setText("Save As"))
+
+        def on_load_index_config() -> None:
+            path, _ = QFileDialog.getOpenFileName(
+                dlg,
+                "Load index config (Smart Init)",
+                "",
+                "JSON Files (*.json);;All Files (*.*)",
+            )
+            if not path:
+                return
+
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except (OSError, json.JSONDecodeError, ValueError) as exc:
+                QMessageBox.warning(dlg, "Load index config", f"Load failed: {exc}")
+                return
+
+            loaded_sk = np.asarray(data.get("sigma_knots", []), dtype=np.float64).ravel()
+            loaded_n = np.asarray(data.get("n_nodes_physical", []), dtype=np.float64).ravel()
+            loaded_L = np.asarray(data.get("L_nodes", []), dtype=np.float64).ravel()
+            loaded_d = float(data.get("d_nm", state.preview_d_nm))
+
+            if loaded_sk.size < 2:
+                QMessageBox.warning(dlg, "Load index config", "Invalid config: need at least 2 sigma knots.")
+                return
+            if loaded_n.size != loaded_sk.size or loaded_L.size != loaded_sk.size:
+                QMessageBox.warning(dlg, "Load index config", "Invalid config: knot vector sizes are inconsistent.")
+                return
+            if not (
+                np.all(np.isfinite(loaded_sk))
+                and np.all(np.isfinite(loaded_n))
+                and np.all(np.isfinite(loaded_L))
+                and np.isfinite(loaded_d)
+            ):
+                QMessageBox.warning(dlg, "Load index config", "Invalid config: contains non-finite values.")
+                return
+
+            order = np.argsort(loaded_sk, kind="mergesort")
+            loaded_sk = loaded_sk[order]
+            loaded_n = np.clip(loaded_n[order], N_MIN_LIMIT, N_MAX_LIMIT)
+            loaded_L = np.clip(loaded_L[order], L_lo_g, L_hi_g)
+            loaded_d = float(np.clip(loaded_d, d_lo_nm, d_hi_nm))
+
+            state.sk = loaded_sk.copy()
+            state.n_phys = loaded_n.copy()
+            state.L_nodes = loaded_L.copy()
+            state.preview_d_nm = loaded_d
+
+            self.smart_preview_sk_arr = state.sk.copy()
+            self.smart_preview_n_phys = state.n_phys.copy()
+            self.smart_preview_L_nodes = state.L_nodes.copy()
+            self.smart_preview_d_nm = float(state.preview_d_nm)
+            self.smart_preview_sig2 = self.smart_preview_sk_arr**2
+
+            _refresh_knot_lines_and_ui()
+
+            btn_load_cfg.setText("Loaded")
+            QTimer.singleShot(1200, lambda: btn_load_cfg.setText("Load"))
+
+        btn_save_cfg = QPushButton("Save As")
+        btn_save_cfg.setToolTip("Save current Smart Init index configuration (sigma, n, ln k, d) to JSON.")
+        btn_save_cfg.clicked.connect(on_save_index_config)
+
+        btn_load_cfg = QPushButton("Load")
+        btn_load_cfg.setToolTip("Load a Smart Init index configuration from JSON and apply it to the dialog.")
+        btn_load_cfg.clicked.connect(on_load_index_config)
+
+        row_hint.addWidget(btn_save_cfg)
+        row_hint.addWidget(btn_load_cfg)
+
         def apply_manual_preset_from_projector(
             projector: Callable[[np.ndarray], tuple[np.ndarray, np.ndarray, np.ndarray, float]],
             feedback_btn: QPushButton | None,
             idle_label: str,
         ) -> None:
-            nonlocal sk, n_phys, L_nodes, preview_d_nm
-            
-            state = _SmartInitState(sk=sk, n_phys=n_phys, L_nodes=L_nodes, preview_d_nm=preview_d_nm, 
-                                    best_rmse=best_rmse, best_n=best_n, best_L=best_L, 
-                                    current_rmse=current_rmse, current_t_th=current_t_th)
-            
+
+            nonlocal state
+
+            _prev = state
+            state = _SmartInitState(
+                sk=_prev.sk,
+                n_phys=_prev.n_phys,
+                L_nodes=_prev.L_nodes,
+                preview_d_nm=_prev.preview_d_nm,
+                best_rmse=_prev.best_rmse,
+                best_n=_prev.best_n,
+                best_L=_prev.best_L,
+                current_rmse=_prev.current_rmse,
+                current_t_th=_prev.current_t_th,
+            )
+
             self._execute_smart_init_preset_logic(cfg, projector, _relax_si_mono, state)
-            
-            sk = self.smart_preview_sk_arr = state.sk.copy()
-            n_phys = self.smart_preview_n_phys = state.n_phys.copy()
-            L_nodes = self.smart_preview_L_nodes = state.L_nodes.copy()
-            preview_d_nm = self.smart_preview_d_nm = state.preview_d_nm
+
+            state.sk = self.smart_preview_sk_arr = state.sk.copy()
+            state.n_phys = self.smart_preview_n_phys = state.n_phys.copy()
+            state.L_nodes = self.smart_preview_L_nodes = state.L_nodes.copy()
+            state.preview_d_nm = self.smart_preview_d_nm = state.preview_d_nm
             self.smart_preview_sig2 = self.smart_preview_sk_arr**2
 
-            for line in knot_lines:
-                try: pw.removeItem(line)
-                except (AttributeError, RuntimeError):
-                    pass
-            knot_lines.clear()
-            
-            pen_k = pg.mkPen("#1a9f3c", width=1.8)
-            for sx in sk:
-                mode = cb_x_main.currentText()
-                il = pg.InfiniteLine(get_xv(sx, mode), angle=90, pen=pen_k)
-                pw.addItem(il)
-                knot_lines.append(il)
-
-            rebuild_knot_ui(len(sk))
-            set_slider_from_preview_d()
-            do_recalc()
+            _refresh_knot_lines_and_ui()
 
             if feedback_btn is not None:
-                feedback_btn.setText(f"OK - {len(sk)} nodes")
+                feedback_btn.setText(f"OK - {len(state.sk)} nodes")
                 QTimer.singleShot(1500, lambda b=feedback_btn, t=idle_label: b.setText(t))
 
         cb_material_preset = QComboBox()
@@ -5165,27 +4684,17 @@ class _SmartInitDialogMixin:
         cb_material_preset.setMinimumWidth(168)
 
         cb_material_preset.setToolTip(
-
             "Choose a material: Nb2O? (reference 12 sigma + d), SiO2 or Ta2O? (lambda tabulation), "
-
             "then 'Apply preset' - PWL interpolation on current sigma grid, d mini-optimization.\n"
-
             "When opening the dialog, the **three** presets are automatically tested; the best RMSE "
-
             "(same criteria as preview) is applied."
-
         )
 
         for _label, _pid in (
-
             ("Nb2O? (ref.)", "nb2o5"),
-
             ("SiO2", "sio2"),
-
             ("Ta2O?", "ta2o5"),
-
         ):
-
             cb_material_preset.addItem(_label, _pid)
 
         btn_apply_material = QPushButton("Apply preset")
@@ -5194,7 +4703,7 @@ class _SmartInitDialogMixin:
 
             pid = str(cb_material_preset.currentData() or "nb2o5")
 
-            dh = float(preview_d_nm)
+            dh = float(state.preview_d_nm)
 
             def _run(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
 
@@ -5210,33 +4719,34 @@ class _SmartInitDialogMixin:
 
         def _auto_try_three_material_presets() -> None:
             """Compares Nb2O? / SiO2 / Ta2O? on the current sigma grid and applies the best one (mini-opt d)."""
-            nonlocal preview_d_nm
             target_sk = np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel()
-            if int(target_sk.size) < 2: return
-            
-            res = self._pick_best_smart_init_material_preset(cfg, target_sk, preview_d_nm, bool(_relax_si_mono))
-            if res is None: return
+            if int(target_sk.size) < 2:
+                return
+
+            res = self._pick_best_smart_init_material_preset(cfg, target_sk, state.preview_d_nm, bool(_relax_si_mono))
+            if res is None:
+                return
             winner, rm_w, d_w = res
-            
-            preview_d_nm = float(d_w)
+
+            state.preview_d_nm = float(d_w)
             iw = cb_material_preset.findData(winner)
             if iw >= 0:
                 cb_material_preset.blockSignals(True)
-                try: cb_material_preset.setCurrentIndex(int(iw))
-                finally: cb_material_preset.blockSignals(False)
+                try:
+                    cb_material_preset.setCurrentIndex(int(iw))
+                finally:
+                    cb_material_preset.blockSignals(False)
 
             def _proj(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-                return project_manual_material_preset(winner, ts, d_nm_hint=float(preview_d_nm))
+                return project_manual_material_preset(winner, ts, d_nm_hint=float(state.preview_d_nm))
+
             apply_manual_preset_from_projector(_proj, None, "")
 
         btn_autofind = QPushButton("Autofind")
 
         btn_autofind.setToolTip(
-
             "SOL2 only (~30 s): local L-BFGS-B polish on fixed sigma (canonical file mesh), "
-
-            "without SOL3 / free nodes or pipeline suite. Seed = current profile re-interpolated in PWL."
-
+            "without free-node stage or full pipeline suite. Seed = current profile re-interpolated in PWL."
         )
 
         autofind_prog = QProgressBar()
@@ -5251,36 +4761,28 @@ class _SmartInitDialogMixin:
 
         def on_autofind() -> None:
 
-            nonlocal n_phys, L_nodes, preview_d_nm, current_rmse, best_rmse, best_n, best_L
-
             cur_sk = np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel()
 
             if cur_sk.size < 2:
-
                 QMessageBox.warning(dlg, "Autofind", "Invalid knot grid.")
 
                 return
 
-            if n_phys.size != cur_sk.size or L_nodes.size != cur_sk.size:
-
+            if state.n_phys.size != cur_sk.size or state.L_nodes.size != cur_sk.size:
                 QMessageBox.warning(
-
                     dlg,
-
                     "Autofind",
-
                     "Current n / ln k vectors are inconsistent with knot count.",
-
                 )
 
                 return
 
             try:
-
-                auto_cfg, sk_canon, k_loc = self._prepare_smart_init_autofind_config(cfg, cur_sk, n_phys, L_nodes, preview_d_nm)
+                auto_cfg, sk_canon, k_loc = self._prepare_smart_init_autofind_config(
+                    cfg, cur_sk, state.n_phys, state.L_nodes, state.preview_d_nm
+                )
 
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
-
                 QMessageBox.warning(dlg, "Autofind", f"Preparation failed: {exc}")
 
                 return
@@ -5303,14 +4805,12 @@ class _SmartInitDialogMixin:
             stop_ev = Event()
             done_ev = threading.Event()
             result_box: dict[str, Any] = {"best": None, "error": None}
-            best_live: dict[str, Any] | None = None
+            state.best_live: dict[str, Any] | None = None
             t0 = time.perf_counter()
             timer = QTimer(dlg)
             timer.setInterval(50)
 
             def _live_capture(payload: dict[str, Any]) -> None:
-
-                nonlocal best_live
 
                 if not isinstance(payload, dict):
                     return
@@ -5320,13 +4820,13 @@ class _SmartInitDialogMixin:
                     rm = float("inf")
                 if not np.isfinite(rm):
                     return
-                if best_live is None or rm < float(best_live.get("rmse", float("inf"))):
-                    best_live = dict(payload)
+                if state.best_live is None or rm < float(state.best_live.get("rmse", float("inf"))):
+                    state.best_live = dict(payload)
 
             def _run_autofind() -> None:
 
                 try:
-                    # Single SOL2 stage (fixed sigma): not the complete pipeline (SOL3 / free nodes /
+                    # Single SOL2 stage (fixed sigma): not the complete pipeline (free nodes /
                     # spectral polish), which could greatly exceed UI budget and change K.
                     res_sol2, _ = _run_single_spline_stage(
                         auto_cfg,
@@ -5343,19 +4843,20 @@ class _SmartInitDialogMixin:
                     done_ev.set()
 
             def _apply_autofind_result(best: dict[str, Any]) -> None:
-                nonlocal sk, n_phys, L_nodes, preview_d_nm
-                nonlocal current_rmse, best_rmse, best_n, best_L
 
+                nonlocal state
+
+                _prev = state
                 state = _SmartInitState(
-                    sk=sk,
-                    n_phys=n_phys,
-                    L_nodes=L_nodes,
-                    preview_d_nm=preview_d_nm,
-                    best_rmse=best_rmse,
-                    best_n=best_n,
-                    best_L=best_L,
-                    current_rmse=current_rmse,
-                    current_t_th=current_t_th,
+                    sk=_prev.sk,
+                    n_phys=_prev.n_phys,
+                    L_nodes=_prev.L_nodes,
+                    preview_d_nm=_prev.preview_d_nm,
+                    best_rmse=_prev.best_rmse,
+                    best_n=_prev.best_n,
+                    best_L=_prev.best_L,
+                    current_rmse=_prev.current_rmse,
+                    current_t_th=_prev.current_t_th,
                 )
 
                 size_match = self._apply_smart_init_autofind_result(best, k_loc, sk_canon, state)
@@ -5367,26 +4868,26 @@ class _SmartInitDialogMixin:
                     )
 
                 # Sync back to closure
-                sk = state.sk
-                n_phys = state.n_phys
-                L_nodes = state.L_nodes
-                preview_d_nm = state.preview_d_nm
-                current_rmse = state.current_rmse
-                best_rmse = state.best_rmse
-                best_n = state.best_n
-                best_L = state.best_L
+                state.sk = state.sk
+                state.n_phys = state.n_phys
+                state.L_nodes = state.L_nodes
+                state.preview_d_nm = state.preview_d_nm
+                state.current_rmse = state.current_rmse
+                state.best_rmse = state.best_rmse
+                state.best_n = state.best_n
+                state.best_L = state.best_L
 
                 if size_match:
                     self.smart_preview_sk_arr = np.asarray(sk_canon, dtype=np.float64).copy()
-                    self.smart_preview_n_phys = np.asarray(n_phys, dtype=np.float64).ravel().copy()
-                    self.smart_preview_L_nodes = np.asarray(L_nodes, dtype=np.float64).ravel().copy()
+                    self.smart_preview_n_phys = np.asarray(state.n_phys, dtype=np.float64).ravel().copy()
+                    self.smart_preview_L_nodes = np.asarray(state.L_nodes, dtype=np.float64).ravel().copy()
                     self._si_mesh_sk_snap = self.smart_preview_sk_arr.copy()
                     rebuild_knot_ui(k_loc)
                     update_hint_text()
 
                 set_slider_from_preview_d()
                 do_recalc()
-                refresh_stats(preview_d_nm, current_rmse)
+                refresh_stats(state.preview_d_nm, state.current_rmse)
                 btn_autofind.setText("Autofind completed")
                 QTimer.singleShot(1500, lambda: btn_autofind.setText("Autofind"))
 
@@ -5399,7 +4900,7 @@ class _SmartInitDialogMixin:
                 if timeout_hit:
                     stop_ev.set()
                     if not isinstance(result_box.get("best"), dict):
-                        result_box["best"] = best_live if isinstance(best_live, dict) else None
+                        result_box["best"] = state.best_live if isinstance(state.best_live, dict) else None
 
                 if result_box.get("error") is not None and result_box.get("best") is None:
                     QMessageBox.warning(dlg, "Autofind", f"SOL2 local search failed: {result_box['error']}")
@@ -5407,8 +4908,8 @@ class _SmartInitDialogMixin:
 
                 best = result_box.get("best")
                 if not isinstance(best, dict):
-                    if isinstance(best_live, dict):
-                        best = best_live
+                    if isinstance(state.best_live, dict):
+                        best = state.best_live
                     else:
                         QMessageBox.warning(
                             dlg,
@@ -5452,49 +4953,32 @@ class _SmartInitDialogMixin:
 
         lay.addLayout(row_hint)
 
-        chk_si_deep = QCheckBox(
-
-            "Deep SOL2 after Smart Init (legacy option inactive in local-only mode)"
-
-        )
+        chk_si_deep = QCheckBox("Deep SOL2 after Smart Init (legacy option inactive in local-only mode)")
 
         chk_si_deep.setChecked(False)
 
         chk_si_deep.setToolTip(
-
             "Manual Smart Init is now always handed off to the worker in local L-BFGS-B mode. "
-
             "This legacy option is kept visible only for compatibility and has no effect."
-
         )
 
         chk_si_deep.setEnabled(False)
 
         lay.addWidget(chk_si_deep)
 
-        chk_si_two_phase = QCheckBox(
-
-            "Two-phase deep SOL2 (legacy option inactive in local-only mode)"
-
-        )
+        chk_si_two_phase = QCheckBox("Two-phase deep SOL2 (legacy option inactive in local-only mode)")
 
         chk_si_two_phase.setChecked(False)
 
         chk_si_two_phase.setToolTip(
-
             "Legacy compatibility flag only; no second global phase exists anymore in local-only mode."
-
         )
 
         chk_si_two_phase.setEnabled(False)
 
         lay.addWidget(chk_si_two_phase)
 
-        bb = QDialogButtonBox(
-
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-
-        )
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
         bb.button(QDialogButtonBox.StandardButton.Ok).setText("Continue optimization")
 
@@ -5509,20 +4993,32 @@ class _SmartInitDialogMixin:
             _on_keep_called[0] = True
             try:
                 ui_ctx = {
-                    "chk_si_deep": chk_si_deep, "chk_si_two_phase": chk_si_two_phase,
-                    "relax_si_mono": _relax_si_mono
+                    "chk_si_deep": chk_si_deep,
+                    "chk_si_two_phase": chk_si_two_phase,
+                    "relax_si_mono": _relax_si_mono,
                 }
-                state = _SmartInitState(sk=sk, n_phys=n_phys, L_nodes=L_nodes, preview_d_nm=preview_d_nm, 
-                                        best_rmse=best_rmse, best_n=best_n, best_L=best_L, 
-                                        current_rmse=current_rmse, current_t_th=current_t_th)
+                nonlocal state
+
+                _prev = state
+                state = _SmartInitState(
+                    sk=_prev.sk,
+                    n_phys=_prev.n_phys,
+                    L_nodes=_prev.L_nodes,
+                    preview_d_nm=_prev.preview_d_nm,
+                    best_rmse=_prev.best_rmse,
+                    best_n=_prev.best_n,
+                    best_L=_prev.best_L,
+                    current_rmse=_prev.current_rmse,
+                    current_t_th=_prev.current_t_th,
+                )
                 self._on_smart_init_keep(dlg, cfg, state, ui_ctx)
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
                 logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")
                 _on_keep_called[0] = False
 
         # --- INITIALISATION IMMEDIATE ---
 
-        rebuild_knot_ui(k_n)
+        rebuild_knot_ui(state.k_n)
 
         do_recalc()
 
@@ -5552,8 +5048,10 @@ class _SmartInitDialogMixin:
         )
 
         return _code == QDialog.DialogCode.Accepted
-    def _build_smart_init_aux_dialog(self, parent_dlg: QDialog) -> tuple[QDialog, pg.PlotCurveItem, pg.PlotCurveItem, Any, Any]:
 
+    def _build_smart_init_aux_dialog(
+        self, parent_dlg: QDialog
+    ) -> tuple[QDialog, pg.PlotCurveItem, pg.PlotCurveItem, Any, Any]:
         """Extracted from _show_smart_init_preview_dialog: builds the auxiliary n(lambda) / ln k(lambda) profile dialog."""
 
         aux_dlg = QDialog(parent_dlg)
@@ -5594,7 +5092,9 @@ class _SmartInitDialogMixin:
 
         p_extra.setXLink(main_vb)
 
-        curve_pk = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.ACCENT, width=2, style=Qt.PenStyle.DashLine), name="ln k(lambda)")
+        curve_pk = pg.PlotCurveItem(
+            pen=pg.mkPen(CertusTheme.ACCENT, width=2, style=Qt.PenStyle.DashLine), name="ln k(lambda)"
+        )
 
         # Clipboard / CSV export: always k, never ln k (see certus_ui _export_y_values_for_item).
 
@@ -5604,11 +5104,7 @@ class _SmartInitDialogMixin:
 
         p_extra.addItem(curve_pk)
 
-        pw_nk._certus_clipboard_df_provider = lambda: _smart_init_pw_nk_clipboard_df(
-
-            curve_n, curve_pk
-
-        )
+        pw_nk._certus_clipboard_df_provider = lambda: _smart_init_pw_nk_clipboard_df(curve_n, curve_pk)
 
         def update_aux_layout() -> None:
 
@@ -5618,8 +5114,9 @@ class _SmartInitDialogMixin:
 
         return aux_dlg, curve_n, curve_pk, main_vb, p_extra
 
-    def _build_smart_init_main_plot(self, y_lab: str) -> tuple[CertusScientificPlot, pg.PlotDataItem, pg.PlotDataItem, pg.PlotDataItem]:
-
+    def _build_smart_init_main_plot(
+        self, y_lab: str
+    ) -> tuple[CertusScientificPlot, pg.PlotDataItem, pg.PlotDataItem, pg.PlotDataItem]:
         """Extracted from _show_smart_init_preview_dialog: builds the main measurement vs theory plot."""
 
         pw = CertusScientificPlot()
@@ -5628,89 +5125,98 @@ class _SmartInitDialogMixin:
 
         pw.showGrid(x=True, y=True, alpha=0.35)
 
-
-
         pw.setLabel("bottom", "sigma2 = 1/lambda2 (nm?2)")
 
         pw.setLabel("left", y_lab)
 
         pw.addLegend()
 
-
-
         curve_exp = pw.plot(
-
-            [], [],
-
+            [],
+            [],
             pen=None,
-
             symbol="o",
-
             symbolSize=5,
-
             symbolBrush=pg.mkBrush(CertusTheme.ACCENT),
-
             name="Measurement",
-
         )
-
-
 
         curve_theo = pw.plot(
-
-            [], [],
-
+            [],
+            [],
             pen=pg.mkPen(CertusTheme.PRIMARY, width=2.5),
-
             name="Theoretical (PWL n, ln k | d = slider)",
-
         )
 
-
-
         knot_markers = pw.plot(
-
-            [], [],
-
+            [],
+            [],
             pen=None,
-
             symbol="s",
-
             symbolSize=9,
-
             symbolBrush=pg.mkBrush("#c97800"),
-
             name="T at knots",
-
         )
 
         return pw, curve_exp, curve_theo, knot_markers
 
     def _on_progress(self, v: int, msg: str) -> None:
         raw = int(v)
+        if raw < 0:
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                if msg:
+                    self._manual_knots_dialog.append_runtime_log(msg)
+            return
         if raw < self._prog_ui_last:
             return
         self._prog_ui_last = raw
 
         st = msg
+        # Surface a 0.1 nm thickness hint in live status without replacing
+        # the existing detailed values emitted by workers.
+        d_hint = float("nan")
+        live_best = getattr(self, "_best_live_result", None)
+        if isinstance(live_best, dict):
+            try:
+                d_hint = float(live_best.get("d_nm", float("nan")))
+            except (TypeError, ValueError):
+                d_hint = float("nan")
+        if not np.isfinite(d_hint):
+            last_res = getattr(self, "_last_result", None)
+            if isinstance(last_res, dict):
+                try:
+                    d_hint = float(last_res.get("d_nm", float("nan")))
+                except (TypeError, ValueError):
+                    d_hint = float("nan")
+        if np.isfinite(d_hint):
+            st = f"{st} | d(0.1nm)~{float(d_hint):.1f} nm"
         if np.isfinite(self._best_live_rmse) and self._best_live_rmse < 1e90:
             st = f"{msg} | best displayed RMSE={self._best_live_rmse:.6f}"
+            if np.isfinite(d_hint):
+                st = f"{st} | d(0.1nm)~{float(d_hint):.1f} nm"
         self.lbl_status.setText(st)
 
         # Update the main progress bar smoothly via EnhancedProgressWidget
         if hasattr(self, "progress_widget"):
-            self.progress_widget.update(raw, 10000, 0, msg, "")
+            self.progress_widget.update(
+                raw,
+                10000,
+                0,
+                msg,
+                "",
+                animate=(str(getattr(self, "_worker_role", "") or "") != "manual_auto_clean"),
+            )
 
-        if self.logger and (
-            raw <= 800
-            or raw >= 9800
-            or raw >= self._log_prog_last + 700
-            or self._log_prog_last < 0
-        ):
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            pct = float(raw) / 100.0
+            self._manual_knots_dialog.set_runtime_progress(pct, msg)
+            if msg:
+                self._manual_knots_dialog.append_runtime_log(msg)
+
+        if self.logger and (raw <= 800 or raw >= 9800 or raw >= self._log_prog_last + 700 or self._log_prog_last < 0):
             self._log_prog_last = raw
 
     def _display_result_prefer_best_live(self, result: dict) -> dict:
-
         """
 
         If a live snapshot recorded strictly better RMSE than the worker?s final dict,
@@ -5726,19 +5232,16 @@ class _SmartInitDialogMixin:
         live = self._best_live_result
 
         if live is None or not isinstance(live, dict):
-
             return result
 
         rmse_live = self._rmse_from_result_dict(live)
 
         if not (np.isfinite(rmse_live) and np.isfinite(rmse_fin)):
-
             return result
 
         tol = max(1e-12, 1e-10 * max(abs(rmse_fin), 1.0))
 
         if rmse_live + tol >= rmse_fin:
-
             return result
 
         snap = _snap_spline_visual_dict(live)
@@ -5746,7 +5249,6 @@ class _SmartInitDialogMixin:
         merged = dict(result)
 
         for k, v in snap.items():
-
             merged[k] = v
 
         self._strip_worker_final_fields_inconsistent_with_live_merge(merged)
@@ -5758,49 +5260,35 @@ class _SmartInitDialogMixin:
         merged["gui_best_live_rmse"] = float(rmse_live)
 
         if self.logger:
-
             self.logger.info(
-
                 "INDEX_SPLINE GUI: spectrum / indices / Data / export aligned on the **best** live "
-
                 "snapshot (RMSE=%.8f) - final worker dict had RMSE=%.8f. "
-
                 "Removing inconsistent keys (corridors, bootstrap, reg_sens, polish spline sigma variants, "
-
                 "spectral_rmse_*, residual ln_k_lam).",
-
                 rmse_live,
-
                 rmse_fin,
-
             )
 
         return merged
 
     def _smart_init_preview_hook(self, payload: dict | SmartInitPayload) -> bool:
 
-        if isinstance(payload, dict): payload = SmartInitPayload.from_dict(payload)
+        if isinstance(payload, dict):
+            payload = SmartInitPayload.from_dict(payload)
 
         """Called from the worker (QThread) after n_init/L_init logs; UI must run on the GUI thread."""
 
         app = QApplication.instance()
 
         logger.info(
-
             "Smart Init hook enter | payload_type=%s | app_present=%s | gui_thread=%s | current_is_gui=%s",
-
             type(payload).__name__,
-
             bool(app is not None),
-
             type(app.thread()).__name__ if app is not None else "n/a",
-
             bool(app is not None and QThread.currentThread() == app.thread()),
-
         )
 
         if app is None:
-
             logger.warning("Smart Init hook: QApplication missing, continuing without dialog.")
 
             return True
@@ -5808,7 +5296,6 @@ class _SmartInitDialogMixin:
         self._preview_ret = None
 
         if QThread.currentThread() == app.thread():
-
             logger.info("Smart Init hook: already on GUI thread -> direct dialog call")
 
             return self._show_smart_init_preview_dialog(payload)
@@ -5822,13 +5309,9 @@ class _SmartInitDialogMixin:
         self._preview_wait_event = Event()
 
         logger.info(
-
             "Smart Init hook: emitting smart_preview_requested | payload_type=%s | has_wait_event=%s",
-
             type(payload).__name__,
-
             self._preview_wait_event is not None,
-
         )
 
         self.smart_preview_requested.emit(payload)
@@ -5838,15 +5321,10 @@ class _SmartInitDialogMixin:
         ok = self._preview_wait_event.wait(timeout=600.0)
 
         logger.info(
-
             "Smart Init hook: wait finished | ok=%s | preview_result=%s | has_preview_ret=%s",
-
             bool(ok),
-
             bool(getattr(self, "_preview_result", True)),
-
             getattr(self, "_preview_ret", None) is not None,
-
         )
 
         # Securite PyQt : rapatrier l'etat mute depuis le thread principal via variable d'instance.
@@ -5854,13 +5332,11 @@ class _SmartInitDialogMixin:
         ret_tuple = getattr(self, "_preview_ret", None)
 
         if ret_tuple is not None:
-
             logger.info("Smart Init hook: preview returned manual values to worker")
 
             cfg = payload.cfg
 
             if cfg is not None:
-
                 sk, ne, Le, d_nm, rmse = ret_tuple
 
                 cfg.smart_preview_exact_sigma_knots = sk
@@ -5873,12 +5349,11 @@ class _SmartInitDialogMixin:
 
                 # Signal to the calculation engine that a manual injection is available
 
-                cfg.smart_init_manual_force_restart = True 
+                cfg.smart_init_manual_force_restart = True
 
             self._preview_ret = None
 
         if not ok:
-
             logger.warning("Smart Init preview: GUI timeout (600s), continuing optimization.")
 
             return True
@@ -5888,9 +5363,9 @@ class _SmartInitDialogMixin:
 
         return bool(getattr(self, "_preview_result", True))
 
-
 class _CorridorWorkerMixin:
     """Mixin containing corridor worker callbacks and plot tab."""
+
     def _finish_corridor_rmse_d_grid_worker_done(self, result: object) -> None:
         """Fin du worker grille RMSE(d): fusion profile_d*, UI, adoption du meilleur global. Pas pour un dict solveur."""
         self._worker_role = "idle"
@@ -5902,13 +5377,12 @@ class _CorridorWorkerMixin:
         self._set_corridor_grid_busy(False)
 
         self._corridor_rmse_grid_live_t0 = float("nan")
+        self._corridor_rmse_live_last_plot_ts = float("nan")
 
         if not isinstance(result, dict):
-
             self.lbl_status.setText("RMSE(d) grid: canceled or invalid result.")
 
             if self.logger:
-
                 self.logger.warning("RMSE(d) grid worker finished without dict result.")
 
             return
@@ -5941,11 +5415,7 @@ class _CorridorWorkerMixin:
                     j_max = int(np.argmax(rf))
                     d0_seed = result.get("profile_d_manual_grid_d0_seed_nm")
                     d_nom_pack = result.get("profile_d_manual_grid_nominal_pack_d_nm")
-                    d0_txt = (
-                        f"{float(d0_seed):.6f}"
-                        if d0_seed is not None and np.isfinite(float(d0_seed))
-                        else "n/a"
-                    )
+                    d0_txt = f"{float(d0_seed):.6f}" if d0_seed is not None and np.isfinite(float(d0_seed)) else "n/a"
                     d_nom_txt = (
                         f"{float(d_nom_pack):.6f}"
                         if d_nom_pack is not None and np.isfinite(float(d_nom_pack))
@@ -5972,12 +5442,12 @@ class _CorridorWorkerMixin:
         d_raw = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
         r_raw = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
         snapshots = result.get("profile_d_full_results", [])
-        
+
         # Filter peaks iteratively to find the "trustworthy" monotonic baseline
         order = np.argsort(d_raw)
         df, rf = d_raw[order], r_raw[order]
         snap_f = [snapshots[i] for i in order] if len(snapshots) == len(d_raw) else []
-        
+
         d_mono, r_mono = _filter_rmse_peaks_iteratively(df, rf)
         # Find indices of monotonic points in the sorted list
         mono_indices = []
@@ -5986,7 +5456,7 @@ class _CorridorWorkerMixin:
                 idx = np.where(np.abs(df - dm) < 1e-9)[0]
                 if idx.size > 0:
                     mono_indices.append(idx[0])
-        
+
         # 2. Check for GAPS relative to requested grid
         requested = getattr(self, "_corridor_rmse_requested_grid", np.array([]))
         tasks = []
@@ -5999,14 +5469,16 @@ class _CorridorWorkerMixin:
                     # We look for immediate neighbors (left/right)
                     # but actually any nearby monotonic point is a good seed.
                     # As requested: "best among left/right neighbors"
-                    side_indices = np.where(dist < 2.1 * (requested[1]-requested[0] if requested.size>1 else 1.0))[0]
+                    side_indices = np.where(dist < 2.1 * (requested[1] - requested[0] if requested.size > 1 else 1.0))[
+                        0
+                    ]
                     if side_indices.size > 0:
                         # Best among those nearby
                         best_side_sub_idx = side_indices[np.argmin(r_mono[side_indices])]
                         global_idx_in_snap_f = mono_indices[best_side_sub_idx]
                         seed_snap = snap_f[global_idx_in_snap_f]
                         tasks.append((float(d_req), seed_snap))
-        
+
         if tasks and str(getattr(self, "_worker_role", "") or "") != "rmse_heal":
             if self.logger:
                 self.logger.info("GUI RMSE(d) Grid Healing | Launching healer for %d gaps", len(tasks))
@@ -6018,9 +5490,7 @@ class _CorridorWorkerMixin:
         upd = dict(self._last_result) if isinstance(self._last_result, dict) else {}
 
         for k, v in result.items():
-
-            if str(k).startswith("profile_d"):
-
+            if str(k).startswith("profile_d") or str(k).startswith("corridor_"):
                 upd[k] = v
 
         self._last_result = upd
@@ -6032,18 +5502,18 @@ class _CorridorWorkerMixin:
         self._corridor_rmse_manual_hi = float("nan")
 
         try:
-
             self._plot_corridor_rmse_tab(upd)
 
-        except NUMERICAL_FAULT_EXCEPTIONS:
-
+        except (ValueError, TypeError, RuntimeError, AttributeError):
             logger.debug("Corridor RMSE tab refresh after manual grid failed", exc_info=True)
 
         n_ok = int(np.asarray(upd.get("profile_d_values_nm", [])).size)
 
-        n_tot = int(result.get("profile_d_manual_grid_total_points", n_ok) or n_ok)
+        n_tot = int(result.get("profile_d_manual_grid_total_points", n_ok))
         n_base_done = int(result.get("profile_d_manual_grid_base_done_points", min(n_ok, n_tot)) or min(n_ok, n_tot))
-        n_extra_done = int(result.get("profile_d_manual_grid_extra_done_points", max(0, n_ok - n_tot)) or max(0, n_ok - n_tot))
+        n_extra_done = int(
+            result.get("profile_d_manual_grid_extra_done_points", max(0, n_ok - n_tot)) or max(0, n_ok - n_tot)
+        )
 
         self._set_corridor_grid_progress_ui(
             done=n_ok,
@@ -6055,213 +5525,149 @@ class _CorridorWorkerMixin:
 
         self._set_corridor_grid_completed_badge()
 
-        n_bp = int(result.get("profile_d_manual_grid_breakpoint_count", 0) or 0)
+        n_bp = int(result.get("profile_d_manual_grid_breakpoint_count", 0))
 
-        n_extra = int(result.get("profile_d_manual_grid_extra_points", 0) or 0)
+        n_extra = int(result.get("profile_d_manual_grid_extra_points", 0))
 
-        n_glob_runs = int(result.get("profile_d_manual_grid_global_opt_runs", 0) or 0)
+        n_glob_runs = int(result.get("profile_d_manual_grid_global_opt_runs", 0))
 
-        n_glob_imp = int(result.get("profile_d_manual_grid_global_opt_improved", 0) or 0)
+        n_glob_imp = int(result.get("profile_d_manual_grid_global_opt_improved", 0))
 
         rmse_glob_best = float(result.get("profile_d_manual_grid_best_global_rmse", float("nan")))
 
         t_ms = float(result.get("profile_d_manual_grid_elapsed_ms", float("nan")))
 
         self.lbl_status.setText(
-
-            f"RMSE(d) grid termin? | {n_ok} points | cassures={n_bp} | extra={n_extra} | "
+            f"RMSE(d) grid finished | {n_ok} points | breakpoints={n_bp} | extra={n_extra} | "
             f"global_opt={n_glob_runs}/{n_glob_imp} | {t_ms:.0f} ms"
-
             if np.isfinite(t_ms)
-
-            else f"RMSE(d) grid termin? | {n_ok} points | cassures={n_bp} | extra={n_extra} | global_opt={n_glob_runs}/{n_glob_imp}"
-
+            else f"RMSE(d) grid finished | {n_ok} points | breakpoints={n_bp} | extra={n_extra} | global_opt={n_glob_runs}/{n_glob_imp}"
         )
 
         if self.logger:
-
             self.logger.info(
-
                 "GUI RMSE(d) regular grid done | n_points=%d | breakpoints=%d | extra_points=%d | global_opt_runs=%d | global_opt_improved=%d | best_global_rmse=%s | elapsed_ms=%s",
-
                 n_ok,
-
                 int(n_bp),
-
                 int(n_extra),
-
                 int(n_glob_runs),
-
                 int(n_glob_imp),
-
                 f"{rmse_glob_best:.8f}" if np.isfinite(rmse_glob_best) else "n/a",
-
                 f"{t_ms:.1f}" if np.isfinite(t_ms) else "n/a",
-
             )
 
         best_global_result = result.get("profile_d_manual_grid_best_global_result")
+        curve_minimum_result = result.get("profile_d_manual_grid_curve_minimum_result")
+        curve_beats = bool(result.get("profile_d_manual_grid_curve_beats_nominal", False))
         grid_cov_ok = bool(result.get("profile_d_manual_grid_coverage_complete", False))
-        if int(n_glob_imp) > 0 and isinstance(best_global_result, dict):
-            if self.logger and not grid_cov_ok:
-                self.logger.error(
-                    "GUI RMSE(d) regular grid [integrity] | global minimum adopted while base-grid coverage "
-                    "is INCOMPLETE (see profile_d_manual_grid_missing_after_emergency). "
-                    "Re-run Recalculate RMSE(d) after raising corridor refit budget if needed."
-                )
-            if self.logger:
-                rmse_prev_upd = self._rmse_from_result_dict(upd)
-                rmse_best_global_dict = self._rmse_from_result_dict(best_global_result)
-                n_lam_bg = np.asarray(best_global_result.get("n_lam", []), dtype=np.float64).ravel()
-                k_lam_bg = np.asarray(best_global_result.get("k_lam", []), dtype=np.float64).ravel()
-                x_bg = np.asarray(best_global_result.get("x", []), dtype=np.float64).ravel()
-                n_nan_n = int(np.sum(~np.isfinite(n_lam_bg))) if n_lam_bg.size else 0
-                n_nan_k = int(np.sum(~np.isfinite(k_lam_bg))) if k_lam_bg.size else 0
-                n_nan_x = int(np.sum(~np.isfinite(x_bg))) if x_bg.size else 0
-                d_bg_nm = best_global_result.get("d_nm")
-                d_bg_txt = (
-                    f"{float(d_bg_nm):.6f}"
-                    if isinstance(d_bg_nm, (int, float)) and np.isfinite(float(d_bg_nm))
-                    else "n/a"
-                )
-                self.logger.info(
-                    "GUI RMSE(d) regular grid [order B:best-global-detected] | rmse_upd=%s | rmse_best_global_dict=%s | "
-                    "best_global_d_nm=%s | best_global_nan(n/k/x)=%d/%d/%d",
-                    (f"{rmse_prev_upd:.8f}" if np.isfinite(rmse_prev_upd) else "n/a"),
-                    (f"{rmse_best_global_dict:.8f}" if np.isfinite(rmse_best_global_dict) else "n/a"),
-                    d_bg_txt,
-                    int(n_nan_n),
-                    int(n_nan_k),
-                    int(n_nan_x),
-                )
+        delta_curve = float(result.get("profile_d_manual_grid_curve_vs_nominal_delta_rmse", float("nan")))
 
-            # Update nominal reference in the Indices tab immediately so the user sees the improvement.
-            self._merge_rmse_grid_promotion_into_nominal(
-                dict(best_global_result),
-                adoption_log_tag="order C:nominal-replaced-global-opt",
-            )
+        rmse_best_global = (
+            self._rmse_from_result_dict(best_global_result) if isinstance(best_global_result, dict) else float("nan")
+        )
+        rmse_curve = (
+            self._rmse_from_result_dict(curve_minimum_result)
+            if isinstance(curve_minimum_result, dict)
+            else float("nan")
+        )
 
-            msg_txt = (
-                "A breakthrough identified a better general solution (free thickness) "
-                "significantly better than the local minimum explored so far.\n\n"
-                f"New global RMSE: {rmse_glob_best:.8f}\n\n"
-                "The nominal index and optimal thickness have been updated.\n"
-                "Do you want to re-run the full corridor calculation from this new solution now?"
-            )
-            reply = QMessageBox.question(
-                self,
-                "New optimal solution detected",
-                msg_txt,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.Yes,
-            )
-            if reply == QMessageBox.StandardButton.Yes:
-                seed_new = dict(best_global_result)
-                strict_snapshot = dict(seed_new)
-                # Preserve exact packed mesh-x seed.
-                if strict_snapshot.get("x_seg_spline_sigma") is None and strict_snapshot.get("x") is not None:
-                    strict_snapshot["x_seg_spline_sigma"] = np.asarray(strict_snapshot.get("x"), dtype=np.float64).ravel().copy()
-                if strict_snapshot.get("x") is None and strict_snapshot.get("x_seg_spline_sigma") is not None:
-                    strict_snapshot["x"] = np.asarray(strict_snapshot.get("x_seg_spline_sigma"), dtype=np.float64).ravel().copy()
-                seed_new["gui_solver_snapshot_for_corridors"] = dict(strict_snapshot)
+        cand_global_ok = bool(
+            int(n_glob_imp) > 0 and isinstance(best_global_result, dict) and np.isfinite(rmse_best_global)
+        )
+        cand_curve_ok = bool(curve_beats and isinstance(curve_minimum_result, dict) and np.isfinite(rmse_curve))
 
-                # Important: defer launch until current rmse_grid thread cleanup has completed.
-                self._pending_breakpoint_corridor_seed = dict(seed_new)
-                if self.logger:
-                    seed_x = np.asarray(seed_new.get("x", []), dtype=np.float64).ravel()
-                    seed_n = np.asarray(seed_new.get("n_lam", []), dtype=np.float64).ravel()
-                    seed_k = np.asarray(seed_new.get("k_lam", []), dtype=np.float64).ravel()
-                    seed_d = seed_new.get("d_nm")
-                    seed_d_txt = (
-                        f"{float(seed_d):.6f}"
-                        if isinstance(seed_d, (int, float)) and np.isfinite(float(seed_d))
-                        else "n/a"
-                    )
-                    seed_rmse = self._rmse_from_result_dict(seed_new)
-                    seed_rmse_txt = f"{seed_rmse:.8f}" if np.isfinite(seed_rmse) else "n/a"
-                    self.logger.info(
-                        "GUI RMSE(d) regular grid [order D:deferred-corridor-scheduled] | improved_nominal=yes | "
-                        "seed_d_nm=%s | seed_rmse_dict=%s | seed_nan(x/n/k)=%d/%d/%d",
-                        seed_d_txt,
-                        seed_rmse_txt,
-                        int(np.sum(~np.isfinite(seed_x))) if seed_x.size else 0,
-                        int(np.sum(~np.isfinite(seed_n))) if seed_n.size else 0,
-                        int(np.sum(~np.isfinite(seed_k))) if seed_k.size else 0,
-                    )
-                QTimer.singleShot(0, self._start_deferred_corridor_worker_from_breakpoint_pending)
-                return
-            elif self.logger:
-                self.logger.info("GUI RMSE(d) grid: user kept improved nominal but skipped corridor rerun.")
-        elif int(n_glob_imp) > 0 and self.logger:
+        if int(n_glob_imp) > 0 and (not cand_global_ok) and self.logger:
             self.logger.warning(
-                "GUI RMSE(d) regular grid | global_opt_improved=%d but best_global_result missing or invalid.",
+                "GUI RMSE(d) regular grid | global_opt_improved=%d but best_global_result missing/invalid rmse.",
                 int(n_glob_imp),
             )
 
-        curve_minimum_result = result.get("profile_d_manual_grid_curve_minimum_result")
-        curve_beats = bool(result.get("profile_d_manual_grid_curve_beats_nominal", False))
-        d_curve_nm = float("nan")
-        rmse_curve = float("nan")
-        if isinstance(curve_minimum_result, dict):
-            d_cv = curve_minimum_result.get("d_nm")
-            if isinstance(d_cv, (int, float)) and np.isfinite(float(d_cv)):
-                d_curve_nm = float(d_cv)
-            rmse_curve = float(curve_minimum_result.get("rmse", float("nan")))
-        delta_curve = float(result.get("profile_d_manual_grid_curve_vs_nominal_delta_rmse", float("nan")))
+        chosen_seed: dict[str, Any] | None = None
+        chosen_origin = ""
+        chosen_log_tag = ""
+        chosen_status = ""
+        if cand_global_ok and cand_curve_ok:
+            if rmse_curve < rmse_best_global:
+                chosen_seed = dict(curve_minimum_result)
+                chosen_origin = "corridor-profile-curve-minimum"
+                chosen_log_tag = "order C2:corridor-curve-min-promoted-over-global-opt"
+                chosen_status = (
+                    "RMSE(d): minimum de courbe corridor promu (meilleur que global-opt), auto-refine en cours..."
+                )
+            else:
+                chosen_seed = dict(best_global_result)
+                chosen_origin = "corridor-global-optimization-best"
+                chosen_log_tag = "order C:corridor-global-opt-best-promoted"
+                chosen_status = "Nouveau minimum corridor: global-opt découverte, auto-refine en cours..."
+        elif cand_global_ok:
+            chosen_seed = dict(best_global_result)
+            chosen_origin = "corridor-global-optimization-best"
+            chosen_log_tag = "order C:corridor-global-opt-best-promoted"
+            chosen_status = "Nouveau minimum corridor: global-opt découverte, auto-refine en cours..."
+        elif cand_curve_ok:
+            chosen_seed = dict(curve_minimum_result)
+            chosen_origin = "corridor-profile-curve-minimum"
+            chosen_log_tag = "order B2:corridor-curve-min-promoted"
+            chosen_status = "RMSE(d): minimum de courbe corridor promu comme nominal, auto-refine en cours..."
 
-        if (
-            int(n_glob_imp) == 0
-            and curve_beats
-            and isinstance(curve_minimum_result, dict)
-            and np.isfinite(d_curve_nm)
-            and np.isfinite(rmse_curve)
-        ):
-            rmse_nom_ui = self._rmse_from_result_dict(upd)
-            if not np.isfinite(rmse_nom_ui):
-                rmse_nom_ui = self._rmse_from_result_dict(
-                    self._last_result if isinstance(self._last_result, dict) else {}
-                )
-            cov_warn = ""
+        if isinstance(chosen_seed, dict):
             if not grid_cov_ok:
-                cov_warn = (
-                    "\n\nAttention : la grille de base est incompl?te (points manquants). "
-                    "Augmentez le budget refit corridor / compl?tez la grille avant de figer ce minimum."
-                )
-            q_txt = (
-                "Le **minimum discret** de la courbe RMSE(d) (refit n,L ? ?paisseur impos?e) est meilleur que "
-                "le nominal affich? issu du dernier run solveur.\n\n"
-                f"? RMSE nominal (r?f. grille) : {rmse_nom_ui:.8f}\n"
-                f"? Meilleur point grille       : d = {d_curve_nm:.6f} nm  |  RMSE ? {rmse_curve:.8f}\n"
-            )
-            if np.isfinite(delta_curve):
-                q_txt += f"? ?cart (nominal ? min grille) : {delta_curve:.3e}\n"
-            q_txt += (
-                "\nPour aligner le nominal sur ce creux **sans** seulement coller le refit ? d fix?, l'?tape "
-                "suivante lance une **optimisation L-BFGS-B approfondie** sur l'?paisseur **et** les n?uds "
-                "(m?me moteur que le ? quick global ? post-cassure, budget maxfun major?).\n"
-                "? la fin, si l'option corridor profil? en ?paisseur est coch?e, l'application encha?ne comme apr?s "
-                "a full run: prompt NL-alpha if available, then **n/k corridor recalculation**.\n\n"
-                "Lancer ce polish profond depuis le minimum de grille ?"
-            )
-            q_txt += cov_warn
-            reply_curve = QMessageBox.question(
-                self,
-                "RMSE(d) : minimum grille ? polish profond",
-                q_txt,
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No,
-            )
-            if reply_curve == QMessageBox.StandardButton.Yes:
                 if self.logger:
-                    self.logger.info(
-                        "GUI RMSE(d) regular grid [order B2:curve-min-user-accepted-deep] | d_nm=%.6f | rmse=%.8f",
-                        d_curve_nm,
-                        rmse_curve,
+                    self.logger.error(
+                        "GUI RMSE(d) regular grid [integrity] | adoption candidate rejected because base-grid coverage "
+                        "is INCOMPLETE (see profile_d_manual_grid_missing_after_emergency)."
                     )
-                if self._start_curve_minimum_deep_refit(dict(curve_minimum_result)):
+                chosen_seed = None
+            if self.logger:
+                rmse_prev_upd = self._rmse_from_result_dict(upd)
+                d_sel = chosen_seed.get("d_nm") if isinstance(chosen_seed, dict) else None
+                d_sel_txt = (
+                    f"{float(d_sel):.6f}" if isinstance(d_sel, (int, float)) and np.isfinite(float(d_sel)) else "n/a"
+                )
+                self.logger.info(
+                    "GUI RMSE(d) grid-profiling [adoption-decision] | candidate_origin=%s | d_selected_nm=%s | "
+                    "rmse_before_adoption=%s | rmse_global_opt=%s | rmse_curve=%s | delta_curve_vs_pre_adoption=%s | "
+                    "grid_coverage_complete=%s",
+                    chosen_origin,
+                    d_sel_txt,
+                    (f"{rmse_prev_upd:.8f}" if np.isfinite(rmse_prev_upd) else "n/a"),
+                    (f"{rmse_best_global:.8f}" if np.isfinite(rmse_best_global) else "n/a"),
+                    (f"{rmse_curve:.8f}" if np.isfinite(rmse_curve) else "n/a"),
+                    (f"{delta_curve:.3e}" if np.isfinite(delta_curve) else "n/a"),
+                    "yes" if grid_cov_ok else "no",
+                )
+
+            if isinstance(chosen_seed, dict):
+                self._merge_rmse_grid_promotion_into_nominal(
+                    dict(chosen_seed),
+                    adoption_log_tag=chosen_log_tag,
+                )
+                if isinstance(self._last_result, dict):
+                    self._last_worker_result = dict(self._last_result)
+
+                strict_snapshot = dict(chosen_seed)
+                if strict_snapshot.get("x_seg_spline_sigma") is None and strict_snapshot.get("x") is not None:
+                    strict_snapshot["x_seg_spline_sigma"] = (
+                        np.asarray(strict_snapshot.get("x"), dtype=np.float64).ravel().copy()
+                    )
+                if strict_snapshot.get("x") is None and strict_snapshot.get("x_seg_spline_sigma") is not None:
+                    strict_snapshot["x"] = (
+                        np.asarray(strict_snapshot.get("x_seg_spline_sigma"), dtype=np.float64).ravel().copy()
+                    )
+                chosen_seed["gui_solver_snapshot_for_corridors"] = dict(strict_snapshot)
+
+                self.lbl_status.setText(chosen_status)
+                if self._schedule_corridor_auto_refine(
+                    chosen_seed,
+                    rerun_corridor=True,
+                    origin=chosen_origin,
+                ):
                     return
-            elif self.logger:
-                self.logger.info("GUI RMSE(d) regular grid [order B2:curve-min-user-declined]")
+                if self.logger:
+                    self.logger.warning(
+                        "GUI RMSE(d) regular grid | auto-refine chain failed to start | chosen_origin=%s.",
+                        chosen_origin,
+                    )
 
         if self.logger:
             dv = np.asarray(upd.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -6297,10 +5703,21 @@ class _CorridorWorkerMixin:
     def _on_worker_done(self, result: object) -> None:
 
         role = str(getattr(self, "_worker_role", "main") or "main")
+        manual_pipeline_roles = (
+            "manual_sigma_insert",
+            "manual_autoshift",
+            "manual_auto_add_one",
+            "manual_auto_clean",
+            "manual_repartition_log",
+            "manual_repartition_sigma",
+        )
+        worker_obj = getattr(self, "_worker", None)
+        worker_func = getattr(worker_obj, "func", None)
+        worker_name = str(getattr(worker_func, "__name__", "?") or "?")
+        manual_dlg = getattr(self, "_manual_knots_dialog", None)
 
         uninstall_skeleton(self.tabs_main)
         if role == "curve_min_deep":
-
             self._finish_curve_minimum_deep_worker_done(result)
 
             return
@@ -6312,49 +5729,68 @@ class _CorridorWorkerMixin:
         grid_fin = self._is_rmse_d_grid_worker_finalize_dict(result)
 
         if grid_fin or role == "rmse_grid":
-
             if grid_fin and role != "rmse_grid" and self.logger:
+                op_id = result.get("op_id") if isinstance(result, dict) else None
 
                 self.logger.warning(
-                    "GUI worker_done: r?sultat grille RMSE(d) (profile_d_status=%s) avec _worker_role=%r ; traitement grille.",
+                    "GUI worker_done: resultat grille RMSE(d) (profile_d_status=%s) avec _worker_role=%r worker=%s op_id=%s ; traitement grille.",
                     (result.get("profile_d_status") if isinstance(result, dict) else None),
                     role,
+                    worker_name,
+                    str(op_id) if op_id is not None else "n/a",
                 )
 
             self._finish_corridor_rmse_d_grid_worker_done(result)
             return
 
         if not isinstance(result, dict):
+            if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
+                manual_dlg.set_runtime_busy(False)
+                manual_dlg.append_runtime_log("Re-optimisation terminee sans resultat exploitable.")
 
             self.lbl_status.setText("Canceled or no result (dict)")
+            self._worker_role = "idle"
+            self.btn_run.setEnabled(True)
+            self.btn_stop.setEnabled(False)
 
             if self.logger:
-
                 if result is None:
-
                     self.logger.warning(
-
                         "INDEX_SPLINE GUI: the worker finished without dict (None value). "
-
                         "Common causes: Stop button during calculation, thread closure/interruption, "
-
                         "or silent worker-side exception. Graphs are not updated since this signal."
-
                     )
 
                 else:
-
                     self.logger.warning(
-
                         "INDEX_SPLINE GUI: the worker returned a %s instead of a dict - result ignored.",
-
                         type(result).__name__,
-
                     )
 
+            self._refresh_post_optimization_option_controls()
             return
 
+        if role not in ("rmse_grid", "corridors"):
+            self._corridor_rmse_d_vals = np.array([], dtype=np.float64)
+            self._corridor_rmse_vals = np.array([], dtype=np.float64)
+            self._corridor_rmse_best_idx = -1
+            self._corridor_rmse_center_nm = float("nan")
+            self._corridor_rmse_robust_lo = float("nan")
+            self._corridor_rmse_robust_hi = float("nan")
+            self._corridor_rmse_robust_ok = False
+            if hasattr(self, "plot_corridor_rmse_d"):
+                self.plot_corridor_rmse_d.clear()
+            if hasattr(self, "lbl_corridor_rmse_summary"):
+                self.lbl_corridor_rmse_summary.setText("No corridor RMSE profile available yet.")
+            if hasattr(self, "lbl_corridor_rmse_robust_compact"):
+                self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
+
         if self.logger:
+            op_id = result.get("op_id")
+
+            role_ctx = role if worker_name == "?" else f"{role}|worker={worker_name}"
+
+            op_id_ctx = str(op_id) if op_id is not None else "n/a"
 
             _wm = result.get("pipeline_best_rmse_watermark")
 
@@ -6363,95 +5799,68 @@ class _CorridorWorkerMixin:
             _wm_hint = ""
 
             if _wm is not None and np.isfinite(float(_wm)):
-
-                _wm_hint = (
-
-                    f" | pipeline watermark (best RMSE seen during run): {_wm:.6f} "
-
-                    f"(@ {_wms!s})"
-
-                )
+                _wm_hint = f" | pipeline watermark (best RMSE seen during run): {_wm:.6f} (@ {_wms!s})"
 
             self.logger.info(
-
                 "INDEX_SPLINE GUI: result dict received - dict RMSE (current n/k curves) = %.6f | "
-
-                "d = %.4f nm | worker = %s%s",
-
+                "d = %.4f nm | role = %s | worker = %s | op_id = %s%s",
                 float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
-
                 float(result.get("d_nm", float("nan"))),
-
-                getattr(self._worker.func, "__name__", "?") if self._worker is not None else "?",
-
+                role,
+                worker_name,
+                op_id_ctx,
                 _wm_hint,
-
             )
 
+            log_index_spline_d_trace(
+                self.logger,
+                f"GUI: received worker result ({role_ctx}, op_id={op_id_ctx})",
+                result.get("d_nm"),
+                detail=("worker=" + worker_name),
+            )
+
+            split_mesh = CertusIndexSplineApp._result_uses_split_mesh(result)
+
             self.logger.info(
-
                 "INDEX_SPLINE GUI: worker detail | mse=%.6e | flags split=%s continuous=%s adaptive=%s",
-
                 float(result.get("mse", float("nan"))),
-
-                bool(result.get("split_knots_refine")),
-
+                bool(split_mesh),
                 bool(result.get("continuous_model")),
-
                 bool(result.get("adaptive_mesh")),
-
             )
 
             log_structured_json_event(
-
                 self.logger,
-
                 "AUTO_BEST_JSON",
-
                 "worker_done",
-
-                worker=str(getattr(self._worker.func, "__name__", "?") if self._worker is not None else "?"),
-
+                role=role,
+                worker=worker_name,
+                op_id=op_id_ctx,
                 mse=float(result.get("mse", float("nan"))),
-
                 rmse=float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
-
                 rmse_convention="sqrt(max(mse,0))",
-
                 d_nm=float(result.get("d_nm", float("nan"))),
-
-                split=bool(result.get("split_knots_refine")),
-
+                split=bool(split_mesh),
                 continuous=bool(result.get("continuous_model")),
-
                 adaptive=bool(result.get("adaptive_mesh")),
-
             )
 
         # Auto-Best: declencher une 2e passe locale (knots libres split n/logk) after la 1ere passe warm.
 
         if self._auto_best_two_stage_refine:
-
             cfg2 = self._build_opt_config()
 
             if cfg2 is not None:
-
                 self._auto_best_second_stage_pending = {
-
                     "seed": dict(result),
-
                     "cfg": cfg2,
-
                 }
 
                 self._auto_best_two_stage_refine = False
 
                 self.log(
-
                     "Auto-Best: launching local pass 2 (knots sigma separes pour n et ln k, puis polish).",
-
                     "INFO",
-
                 )
 
                 self.lbl_status.setText("Auto-Best pass 2: preparing...")
@@ -6474,114 +5883,213 @@ class _CorridorWorkerMixin:
 
         self._last_result = display
 
-        rmse_tag = (
-
-            "RMSE (bande lambda)"
-
-            if display.get("rmse_fit_lambda_nm") is not None
-
-            else "RMSE (plein spectre)"
-
-        )
-
-        mse_d = float(display.get("mse", 0.0))
-
-        d_nm_d = float(display.get("d_nm", float("nan")))
-
-        nfev_d = int(display.get("nit_polish", result.get("nit_polish", 0)) or 0)
-
-        st = (
-
-            f"{rmse_tag}  {np.sqrt(max(mse_d, 0.0)):.6f} | d={d_nm_d:.2f} nm | "
-
-            f"solver evals?{nfev_d}"
-
-        )
+        st = CertusIndexSplineApp._format_post_optimization_status(display, result)
 
         if display.get("adaptive_mesh"):
-
-            st = "Maillage adaptatif | " + st
+            st = "Adaptive mesh | " + st
 
         if display.get("auto_knot_stages") and "sigma_knots" in display:
-
             kfin = int(np.asarray(display["sigma_knots"], dtype=np.float64).size)
 
             kbest = display.get("auto_knots_K_best")
 
             if kbest is not None and int(kbest) != kfin:
-
                 st = f"K retained={int(kbest)} (last K={kfin}) stages={len(display['auto_knot_stages'])} | " + st
 
             else:
-
                 st = f"K={kfin} stages={len(display['auto_knot_stages'])} | " + st
 
         if display.get("gui_display_from_best_live"):
-
             st = "Meilleur RMSE (live) | " + st
 
         self.lbl_status.setText(st)
 
         if self.logger:
-
             self.logger.info("End optimization: %s", st)
 
             rmse_fin = float(
-
                 display.get(
-
                     "rmse",
-
                     float(np.sqrt(max(float(display.get("mse", 0.0)), 0.0))),
+                )
+            )
 
+            _log_index_spline_best_config(self.logger, display, rmse_fin, title="[FIN OPTIM  affichage / export]")
+
+        # === SAFE-GUARD: Wrap entire final completion path to prevent silent app termination ===
+        try:
+            plot_source = f"fin_worker:{role}"
+            if worker_name != "?":
+                plot_source = f"{plot_source}|{worker_name}"
+            self._plot_result(display, plot_source=plot_source)
+        except Exception as e:
+            import traceback
+
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] _plot_result failed: %s\n%s", type(e).__name__, __import__('traceback').format_exc()
+                )
+            else:
+                print(f"[CRASH GUARD] _plot_result failed: {e}", file=__import__("sys").stderr)
+
+        try:
+            self._refresh_data_table()
+        except Exception as e:
+
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] _refresh_data_table failed: %s\n%s",
+                    type(e).__name__,
+                    __import__('traceback').format_exc(),
                 )
 
+        if role in manual_pipeline_roles and self.logger:
+            self.logger.info(
+                "PIPELINE [05b/09] Manual pipeline stage completed (%s); proceeding to corridors only afterwards if requested.",
+                role,
             )
+        if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
+            try:
+                manual_dlg.set_runtime_busy(False)
+                d_fin, rmse_fin = CertusIndexSplineApp._runtime_metrics_from_result_dict(display)
+                rmse_txt = f"{float(rmse_fin):.6f}" if np.isfinite(rmse_fin) else "n/a"
+                self._refresh_manual_dialog_preview(manual_dlg, display)
+                # Important: for manual-local flows, keep the exact worker output mesh
+                # (result) instead of the display snapshot (which may be overridden by
+                # a stale best-live candidate at another K).
+                sigma_before = np.asarray(getattr(manual_dlg, "_base_sigma_knots", []), dtype=np.float64).ravel()
+                sigma_requested = manual_dlg.selected_sigma_knots()
+                sigma_fin = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
+                if sigma_fin.size == 0:
+                    sigma_fin = np.asarray(display.get("sigma_knots", []), dtype=np.float64).ravel()
+                requested_summary = CertusIndexSplineApp._summarize_manual_mesh_change(sigma_before, sigma_requested)
+                applied_summary = CertusIndexSplineApp._summarize_manual_mesh_change(sigma_before, sigma_fin)
+                manual_dlg.append_runtime_log(
+                    CertusIndexSplineApp._manual_mesh_change_log_line("Requested mesh", requested_summary)
+                )
+                same_requested_and_applied = requested_summary["after_sigma_knots"].size == applied_summary[
+                    "after_sigma_knots"
+                ].size and np.allclose(
+                    requested_summary["after_sigma_knots"],
+                    applied_summary["after_sigma_knots"],
+                    rtol=1e-10,
+                    atol=1e-12,
+                )
+                if not same_requested_and_applied:
+                    manual_dlg.append_runtime_log(
+                        "Worker returned a different mesh than requested; keeping the applied mesh below."
+                    )
+                manual_dlg.append_runtime_log(
+                    CertusIndexSplineApp._manual_mesh_change_log_line("Applied mesh", applied_summary)
+                )
+                if sigma_fin.size:
+                    manual_dlg.adopt_sigma_knots(sigma_fin)
+                opt_delta_ns = result.get("substrate_n_offset")
+                if opt_delta_ns is None:
+                    opt_delta_ns = display.get("substrate_n_offset")
+                if opt_delta_ns is not None:
+                    manual_dlg.adopt_delta_ns(float(opt_delta_ns))
+                manual_dlg.set_runtime_progress(100.0, "Re-optimisation terminee")
+                manual_dlg.set_runtime_metrics(d_fin, rmse_fin)
+                manual_dlg.append_runtime_log(f"Re-optimisation terminee | RMSE={rmse_txt}")
+                if self.logger:
+                    self.logger.info(
+                        "INDEX_SPLINE GUI: manual pipeline applied mesh | role=%s | %s",
+                        role,
+                        CertusIndexSplineApp._manual_mesh_change_log_line("applied", applied_summary),
+                    )
+                # Stores the absolute best config for the 'Recall best RMSE' button.
+                # We use `result` (raw from worker) and not `display`: `display` may be
+                # the best live snapshot (e.g. K=14 initial during auto_clean), which
+                # would point "Recall best" to an erroneous intermediate state.
+                raw_sk = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
+                raw_rmse = CertusIndexSplineApp._rmse_from_result_dict(result)
+                if raw_sk.size and np.isfinite(raw_rmse):
+                    manual_dlg.update_best_config(result, raw_sk)
+            except Exception as e:
 
-            _log_index_spline_best_config(
+                if self.logger:
+                    self.logger.exception(
+                        "INDEX_SPLINE [CRASH GUARD] manual dialog finalization failed: %s\n%s",
+                        type(e).__name__,
+                        __import__('traceback').format_exc(),
+                    )
 
-                self.logger, display, rmse_fin, title="[FIN OPTIM  affichage / export]"
-
-            )
-
-        self._plot_result(display)
-
-        self._refresh_data_table()
-
-        if role != "corridors" and self._result_needs_deferred_corridors(display):
-
-            use_nl_alpha = False
-
-            if self._result_can_offer_nl_alpha_for_corridors(display):
-
-                use_nl_alpha = self._prompt_use_nl_alpha_for_corridors()
-
-            elif self.logger:
-
+        # --- Manual extra-knot dialog (must occur before any deferred corridors) ---
+        if (
+            role not in ((*manual_pipeline_roles, "corridors"))
+            and self._can_offer_manual_extra_knots(result)
+            and getattr(self, "_corridor_auto_refine_plan", None) is None
+        ):
+            if self.logger:
                 self.logger.info(
-                    "Corridors after NL alpha: deferred run without NL-alpha prompt | NL result unavailable as corridor base"
+                    "PIPELINE [05b/09] Manual extra-knot stage available after optimization; this stage runs before deferred corridors."
                 )
 
-            if self._start_deferred_corridor_worker(display, use_nl_alpha=use_nl_alpha):
+            dlg_ref = getattr(self, "_manual_knots_dialog", None)
+            if not isinstance(dlg_ref, ManualSigmaKnotDialog):
+                open_manual_fn = getattr(self, "_open_manual_extra_knots_dialog", None)
+                if callable(open_manual_fn):
+                    open_manual_fn(result)
+                    if self.logger:
+                        self.logger.info(
+                            "PIPELINE [05b/09] Manual extra-knot stage opened in keep-open mode; user closes dialog explicitly."
+                        )
+                else:
+                    # Fallback for test doubles/legacy call paths without non-blocking dialog helper.
+                    lambdas = self._prompt_manual_extra_knots(result)
+                    if lambdas:
+                        if self.logger:
+                            self.logger.info(
+                                "Manual extra-knot stage accepted; deferred corridors are postponed until manual insertion completes."
+                            )
+                        self._start_manual_sigma_insert_worker(result, lambdas)
+                        return
+            elif self.logger:
+                self.logger.info(
+                    "PIPELINE [05b/09] Manual extra-knot dialog already open; keeping current session active."
+                )
 
-                return
+        self._worker_role = "idle"
 
-        self.export_excel(auto=True)
+        try:
+            self._refresh_post_optimization_option_controls()
+        except Exception as e:
+
+            import traceback as _tb
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] _refresh_post_optimization_option_controls failed: %s\n%s",
+                    type(e).__name__,
+                    _tb.format_exc(),
+                )
+
+        self.lbl_status.setText(CertusIndexSplineApp._post_optimization_ready_status(st))
+
+        try:
+            self.export_excel(auto_export=True)
+        except Exception as e:
+
+            import traceback as _tb
+            if self.logger:
+                self.logger.exception(
+                    "INDEX_SPLINE [CRASH GUARD] export_excel(auto_export=True) failed: %s\n%s",
+                    type(e).__name__,
+                    _tb.format_exc(),
+                )
+            else:
+                print(f"[CRASH GUARD] export_excel failed: {e}", file=__import__("sys").stderr)
 
     def _plot_corridor_tab(
-
         self,
-
         r: dict,
-
         lam_s: np.ndarray,
-
         n_s: np.ndarray,
         k_s: np.ndarray,
         *,
         spectral_sort_order: np.ndarray | None = None,
     ) -> None:
-        """ n/k Corridors  tab: central curves + envelopes; auto-focus if bands present."""
+        """n/k Corridors  tab: central curves + envelopes; auto-focus if bands present."""
         if r is None:
             return
 
@@ -6596,6 +6104,7 @@ class _CorridorWorkerMixin:
         except (AttributeError, RuntimeError):
             if self.logger:
                 import traceback as _tb
+
                 self.logger.warning("DIAG CORRIDOR PLOT: clear/logmode failed, returning early\n%s", _tb.format_exc())
             return
 
@@ -6637,7 +6146,7 @@ class _CorridorWorkerMixin:
                     _arr = np.asarray(_raw, dtype=np.float64).ravel()
                     _nfin = int(np.sum(np.isfinite(_arr)))
                     key_info.append(f"{_ck}:size={_arr.size}/fin={_nfin}")
-            self.logger.info(
+            self.logger.debug(
                 "DIAG CORRIDOR PLOT | nu=%d | spec_order_size=%d | %s",
                 nu,
                 int(spec_order.size),
@@ -6649,7 +6158,7 @@ class _CorridorWorkerMixin:
         n_hi = _get_aligned("corridor_n_hi")
         k_lo = _get_aligned("corridor_k_lo")
         k_hi = _get_aligned("corridor_k_hi")
-        
+
         has_profile = False
         if np.any(np.isfinite(n_lo)) and np.any(np.isfinite(n_hi)):
             has_profile = True
@@ -6658,13 +6167,13 @@ class _CorridorWorkerMixin:
             cln_f = pg.PlotCurveItem(lam_f, n_lo, pen=None)
             cun_f = pg.PlotCurveItem(lam_f, n_hi, pen=None)
             self.plot_n_corridor.addItem(pg.FillBetweenItem(cln_f, cun_f, brush=pg.mkBrush(0, 87, 255, 130)))
-            
+
             # n_min / n_max DashLine + Glow (matching k style)
             p_nlo_glow = pg.mkPen((180, 220, 255, 180), width=4.5)
             p_nhi_glow = pg.mkPen((160, 200, 255, 180), width=4.5)
             p_nlo = pg.mkPen((0, 140, 255, 255), width=2.2, style=Qt.PenStyle.DashLine)
             p_nhi = pg.mkPen((0, 70, 255, 255), width=2.2, style=Qt.PenStyle.DashLine)
-            
+
             self._add_curve(self.plot_n_corridor, lam_f, n_lo, None, "n_min_glow", pen=p_nlo_glow)
             self._add_curve(self.plot_n_corridor, lam_f, n_hi, None, "n_max_glow", pen=p_nhi_glow)
             self._add_curve(self.plot_n_corridor, lam_f, n_lo, None, "n_min", pen=p_nlo)
@@ -6692,18 +6201,10 @@ class _CorridorWorkerMixin:
             # M?me pipeline que k nominal (sanitize + coh?rence axe log du widget).
             lk_min = np.log10(np.maximum(klf, 1e-30))
             lk_max = np.log10(np.maximum(khf, 1e-30))
-            self._add_curve(
-                self.plot_k_corridor, lam_f, lk_min, "#ffe0b2", "k_min_glow", pen=pen_kmin_glow
-            )
-            self._add_curve(
-                self.plot_k_corridor, lam_f, lk_max, "#ffd7d1", "k_max_glow", pen=pen_kmax_glow
-            )
-            self._add_curve(
-                self.plot_k_corridor, lam_f, lk_min, "#ff8c00", "k_min", pen=pen_kmin
-            )
-            self._add_curve(
-                self.plot_k_corridor, lam_f, lk_max, "#ff3c00", "k_max", pen=pen_kmax
-            )
+            self._add_curve(self.plot_k_corridor, lam_f, lk_min, "#ffe0b2", "k_min_glow", pen=pen_kmin_glow)
+            self._add_curve(self.plot_k_corridor, lam_f, lk_max, "#ffd7d1", "k_max_glow", pen=pen_kmax_glow)
+            self._add_curve(self.plot_k_corridor, lam_f, lk_min, "#ff8c00", "k_min", pen=pen_kmin)
+            self._add_curve(self.plot_k_corridor, lam_f, lk_max, "#ff3c00", "k_max", pen=pen_kmax)
 
         # Donn?es pour label crosshair vertical: k_min / k_nominal / k_max au lambda curseur.
         self._corridor_k_crosshair_lam = np.asarray(lam_f, dtype=np.float64).copy()
@@ -6750,9 +6251,7 @@ class _CorridorWorkerMixin:
                 cl_bn = pg.PlotCurveItem(lam_s, bn_lo, pen=pen_bn)
                 self.plot_n_corridor.addItem(cu_bn)
                 self.plot_n_corridor.addItem(cl_bn)
-                self.plot_n_corridor.addItem(
-                    pg.FillBetweenItem(cl_bn, cu_bn, brush=pg.mkBrush(0, 160, 80, 28))
-                )
+                self.plot_n_corridor.addItem(pg.FillBetweenItem(cl_bn, cu_bn, brush=pg.mkBrush(0, 160, 80, 28)))
                 bk_lo_finite = np.where(np.isfinite(bk_lo) & (bk_lo > 1e-15), bk_lo, 1e-15)
                 bk_hi_finite = np.where(np.isfinite(bk_hi) & (bk_hi > 2e-15), bk_hi, 2e-15)
                 pen_bk = pg.mkPen((120, 0, 180, 120), width=1, style=Qt.PenStyle.DashLine)
@@ -6760,20 +6259,14 @@ class _CorridorWorkerMixin:
                 cl_bk = pg.PlotCurveItem(lam_s, bk_lo_finite, pen=pen_bk)
                 self.plot_k_corridor.addItem(cu_bk)
                 self.plot_k_corridor.addItem(cl_bk)
-                self.plot_k_corridor.addItem(
-                    pg.FillBetweenItem(cl_bk, cu_bk, brush=pg.mkBrush(120, 0, 180, 80))
-                )
-        except NUMERICAL_FAULT_EXCEPTIONS:
+                self.plot_k_corridor.addItem(pg.FillBetweenItem(cl_bk, cu_bk, brush=pg.mkBrush(120, 0, 180, 80)))
+        except (ValueError, TypeError, RuntimeError, AttributeError):
             logger.debug("Corridor bootstrap band plot failed", exc_info=True)
 
         # 4. Nominal curves (on top of bands / filigree)
         lk_f = np.log10(np.maximum(k_f, 1e-30))
-        self._add_curve(
-            self.plot_n_corridor, lam_f, n_f, "#0057ff", "n", pen=pg.mkPen("#0057ff", width=3)
-        )
-        self._add_curve(
-            self.plot_k_corridor, lam_f, lk_f, "#ff5a00", "k", pen=pg.mkPen("#ff5a00", width=3)
-        )
+        self._add_curve(self.plot_n_corridor, lam_f, n_f, "#0057ff", "n", pen=pg.mkPen("#0057ff", width=3))
+        self._add_curve(self.plot_k_corridor, lam_f, lk_f, "#ff5a00", "k", pen=pg.mkPen("#ff5a00", width=3))
 
         seed_gate_kept_rate = float(r.get("profile_d_seed_gate_kept_rate", float("nan")))
         seed_gate_eval_count = int(r.get("profile_d_seed_gate_eval_count", 0))
@@ -6784,41 +6277,25 @@ class _CorridorWorkerMixin:
         d_txt = f"d = {d_nm:.1f} nm" if np.isfinite(d_nm) else "d = "
 
         try:
-
             self.plot_n_corridor.plotItem.setTitle(
-
                 f"n(lambda) + corridors  {d_txt}", color=CertusTheme.PRIMARY, size="10pt"
-
             )
 
             self.plot_k_corridor.plotItem.setTitle(
-
                 f"log10 k(lambda) + corridors  {d_txt}", color=CertusTheme.PRIMARY, size="10pt"
-
             )
 
             if has_profile:
-
                 self.plot_k_corridor.setToolTip(
-
                     (
-
                         "Bold orange: k from the result dict (same as main tab). "
-
                         + "Shaded band: pointwise min/max in linear k over accepted d-refits, enlarged so the bold curve stays inside. "
-
                         + f"Filigree: {filigree_count} accepted refit curve(s) sampled from the corridor stack. "
-
                         + (
-
                             f"Seed gate: {100.0 * seed_gate_kept_rate:.1f}% of fixed-d refits kept the incoming seed ({seed_gate_eval_count} evaluations). A high value means the corridor, especially in k, may stay close to the nominal branch because alternative local refits did not beat the spectral seed. "
-
                             if np.isfinite(seed_gate_kept_rate) and seed_gate_eval_count > 0
-
                             else ""
-
                         )
-
                         + "Each accepted refit can still be spline-smooth; visible kinks in the shaded envelope simply mark where the active lower/upper branch switches between different accepted refits once viewed in log10(k). "
                         + (
                             f"A minimum linear-k corridor half-width of +/-{k_min_hw:.1e} is enforced around the reference k when needed "
@@ -6826,21 +6303,15 @@ class _CorridorWorkerMixin:
                             if np.isfinite(k_min_hw) and k_min_hw > 0.0
                             else ""
                         )
-
                         + "Dashed orange (if shown): center-d refit when it differs from the bold line. "
-
                         + "Crosshair y follows the bold curve at the cursor lambda when possible."
-
                     )
-
                 )
 
             else:
-
                 self.plot_k_corridor.setToolTip("")
 
         except (AttributeError, RuntimeError):
-
             logger.debug("Corridor plot title set failed", exc_info=True)
 
         # Dynamic Y-axis limits (user request: ymin=floor, ymax=ceil for n; ymax=1e-2 for k)
@@ -6858,48 +6329,35 @@ class _CorridorWorkerMixin:
             else:
                 self.plot_n_corridor.autoRange()
 
-            # k corridor scale (already in log mode via widget config)
-            yk_all_f = np.concatenate([np.asarray(arr).ravel() for arr in y_k_all])
-            yk_all_f = yk_all_f[np.isfinite(yk_all_f) & (yk_all_f > 0)]
-            if yk_all_f.size > 0:
-                yk_min = float(np.min(yk_all_f))
-                # k: ymin as floor, strictly capped at 1e-2
-                self.plot_k_corridor.setYRange(yk_min, 1e-2, padding=0)
-            else:
-                self.plot_k_corridor.autoRange()
-        except NUMERICAL_FAULT_EXCEPTIONS:
+            _apply_fixed_log_k_axis(self.plot_k_corridor)
+        except (ValueError, TypeError, RuntimeError, AttributeError):
             self.plot_n_corridor.autoRange()
-            self.plot_k_corridor.autoRange()
+            _apply_fixed_log_k_axis(self.plot_k_corridor)
 
         if lam_s.size > 0:
-
             span_lo = float(np.nanmin(lam_s))
 
             span_hi = float(np.nanmax(lam_s))
 
             if np.isfinite(span_lo) and np.isfinite(span_hi) and span_hi > span_lo:
-
                 pad = 0.02 * (span_hi - span_lo)
 
-                self.plot_n_corridor.plotItem.setXRange(
+                self.plot_n_corridor.plotItem.setXRange(span_lo - pad, span_hi + pad, padding=0.0)
 
-                    span_lo - pad, span_hi + pad, padding=0.0
-
-                )
-
-                self.plot_k_corridor.plotItem.setXRange(
-
-                    span_lo - pad, span_hi + pad, padding=0.0
-
-                )
+                self.plot_k_corridor.plotItem.setXRange(span_lo - pad, span_hi + pad, padding=0.0)
 
         if has_profile or has_boot:
-
             if hasattr(self, "tabs_main") and hasattr(self, "_idx_tab_corridor"):
-
                 self.tabs_main.setCurrentIndex(int(self._idx_tab_corridor))
 
     def _build_corridor_tab_rmse_controls(self, lay_rmse: "QVBoxLayout") -> None:
+        lay_rmse.setSpacing(6)
+
+        lbl_intro = QLabel("Step 1: recalculate the RMSE(d) grid, then generate the corridor from that result.")
+        lbl_intro.setWordWrap(True)
+        lbl_intro.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lay_rmse.addWidget(lbl_intro)
+
         row_rob = QHBoxLayout()
 
         row_rob.addWidget(QLabel("Robust DeltaRMSE:"))
@@ -6916,8 +6374,8 @@ class _CorridorWorkerMixin:
 
         self.sp_corridor_rmse_delta.setToolTip(
             "<b>Amplitude DeltaRMSE (Profilage Robuste)</b><br>"
-            "Incr?ment de RMSE cible au-dessus du minimum (d*) pour d?finir l'intervalle robuste (Violet).<br>"
-            "Une valeur plus faible resserre l'intervalle ; une valeur plus ?lev?e l'?largit."
+            "Target RMSE increment above minimum (d*) to define robust interval (Purple).<br>"
+            "A lower value narrows the interval; a higher value widens it."
         )
 
         row_rob.addWidget(self.sp_corridor_rmse_delta)
@@ -6932,7 +6390,7 @@ class _CorridorWorkerMixin:
 
         self.sp_corridor_rmse_win.setToolTip(
             "<b>Demi-fen?tre locale (points)</b><br>"
-            "Nombre de points de chaque c?t? de d* utilis?s pour ajuster la parabole locale.<br>"
+            "Number of points on each side of d* used to fit the local parabola.<br>"
             "Une fen?tre plus large lisse les bruits num?riques mais peut capturer des zones non-paraboliques."
         )
 
@@ -6953,9 +6411,9 @@ class _CorridorWorkerMixin:
         self.sp_corridor_grid_d_step_nm.setSingleStep(0.05)
 
         self.sp_corridor_grid_d_step_nm.setToolTip(
-            "<b>Pas d'?chantillonnage (nm)</b><br>"
-            "?cart fixe entre chaque ?paisseur d test?e lors du scan r?gulier.<br>"
-            "<i>Conseil :</i> Un pas de 0.1 ? 0.5 nm est g?n?ralement suffisant pour une bonne d?finition de la parabole."
+            "<b>Sampling step (nm)</b><br>"
+            "Fixed offset between each thickness d tested during regular scan.<br>"
+            "<i>Tip:</i> A step of 0.1 to 0.5 nm is generally sufficient for a good definition of the parabola."
         )
         self.sp_corridor_grid_d_step_nm.setValue(0.5)
 
@@ -6970,9 +6428,9 @@ class _CorridorWorkerMixin:
         self.sp_corridor_grid_n_points.setValue(11)
 
         self.sp_corridor_grid_n_points.setToolTip(
-            "<b>Nombre total de points (Scan)</b><br>"
-            "D?finit l'?tendue totale de la grille (2 ? N points autour de d*).<br>"
-            "Permet d'?largir la zone d'exploration du RMSE(d)."
+            "<b>Total points (Scan)</b><br>"
+            "Defines the total grid span (2 to N points around d*).<br>"
+            "Allows broadening the search area for RMSE(d)."
         )
 
         row_grid.addWidget(self.sp_corridor_grid_n_points)
@@ -6994,8 +6452,8 @@ class _CorridorWorkerMixin:
 
         self.btn_corridor_rmse_export_data.setToolTip(
             "<b>Export des donn?es (Presse-papiers)</b><br>"
-            "Copie toutes les colonnes num?riques (d, RMSE, Parabole, Intervalles, Cassures) au format TSV.<br>"
-            "Directement collable dans Excel ou OriginPro pour analyse externe."
+            "Copies all numeric columns (d, RMSE, Parabola, Intervals, Breakpoints) to TSV format.<br>"
+            "Directly pastable into Excel or OriginPro for external analysis."
         )
 
         self.btn_corridor_rmse_export_data.clicked.connect(self._export_corridor_rmse_profile_clipboard)
@@ -7016,21 +6474,33 @@ class _CorridorWorkerMixin:
 
         row_grid.addWidget(self.btn_corridor_rmse_export_envelope_nk)
 
-        self.btn_corridor_generate_from_grid = create_styled_button("Generate corridor from full grid", "primary", parent=self)
+        self.btn_corridor_generate_from_grid = create_styled_button(
+            "Generate corridor from full grid", "primary", parent=self
+        )
 
         self.btn_corridor_generate_from_grid.setEnabled(False)
 
         self.btn_corridor_generate_from_grid.setToolTip(
-
             "Build corridor n/k directly from the full RMSE(d) grid currently displayed."
-
         )
 
         self.btn_corridor_generate_from_grid.clicked.connect(self._generate_corridor_from_current_grid)
 
-        row_grid.addWidget(self.btn_corridor_generate_from_grid)
+        row_grid.addStretch(1)
 
-        row_grid.addWidget(QLabel("Corridor Deltad (+/- nm):"))
+        lay_rmse.addLayout(row_grid)
+
+        lbl_generate = QLabel(
+            "Step 2: generate the corridor from the full grid, a partial grid, or the automatic smart interval."
+        )
+        lbl_generate.setWordWrap(True)
+        lbl_generate.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lay_rmse.addWidget(lbl_generate)
+
+        row_generate_grid = QHBoxLayout()
+        row_generate_grid.addWidget(self.btn_corridor_generate_from_grid)
+
+        row_generate_grid.addWidget(QLabel("Corridor Deltad (+/- nm):"))
 
         self.sp_corridor_partial_delta_nm = QDoubleSpinBox()
         self.sp_corridor_partial_delta_nm.setDecimals(4)
@@ -7042,7 +6512,7 @@ class _CorridorWorkerMixin:
             "Interval = [d_center - Deltad, d_center + Deltad], where d_center is the current RMSE(d) center "
             "(parabolic center if available, else best sampled d*)."
         )
-        row_grid.addWidget(self.sp_corridor_partial_delta_nm)
+        row_generate_grid.addWidget(self.sp_corridor_partial_delta_nm)
 
         self.btn_corridor_generate_from_partial_grid = create_styled_button(
             "Generate corridor from partial grid", "primary", parent=self
@@ -7052,10 +6522,8 @@ class _CorridorWorkerMixin:
             "Build corridor n/k from a partial RMSE(d) grid centered on current d*.\n"
             "The width is controlled by Corridor Deltad (+/- nm)."
         )
-        self.btn_corridor_generate_from_partial_grid.clicked.connect(
-            self._generate_corridor_from_partial_grid
-        )
-        row_grid.addWidget(self.btn_corridor_generate_from_partial_grid)
+        self.btn_corridor_generate_from_partial_grid.clicked.connect(self._generate_corridor_from_partial_grid)
+        row_generate_grid.addWidget(self.btn_corridor_generate_from_partial_grid)
 
         self.btn_corridor_generate_auto_smart_grid = create_styled_button(
             "Calculate auto smart corridor from this grid", "primary", parent=self
@@ -7066,14 +6534,11 @@ class _CorridorWorkerMixin:
             "then generate and apply corridor n/k on that interval.\n"
             "Priority: Deltad code interval (orange lines), fallback: robust parabolic interval."
         )
-        self.btn_corridor_generate_auto_smart_grid.clicked.connect(
-            self._generate_corridor_auto_smart_from_current_grid
-        )
-        row_grid.addWidget(self.btn_corridor_generate_auto_smart_grid)
+        self.btn_corridor_generate_auto_smart_grid.clicked.connect(self._generate_corridor_auto_smart_from_current_grid)
+        row_generate_grid.addWidget(self.btn_corridor_generate_auto_smart_grid)
+        row_generate_grid.addStretch(1)
 
-        row_grid.addStretch(1)
-
-        lay_rmse.addLayout(row_grid)
+        lay_rmse.addLayout(row_generate_grid)
 
         row_grid_prog = QHBoxLayout()
 
@@ -7081,7 +6546,7 @@ class _CorridorWorkerMixin:
         self.pb_corridor_rmse_grid.setToolTip(
             "<b>Avancement du scan</b><br>"
             "Progression en temps r?el incluant les ?tapes de continuation, "
-            "de re-pass P0 et de d?tection de cassures."
+            "of P0 re-pass and breakpoint detection."
         )
         self.pb_corridor_rmse_grid.setRange(0, 1000)
 
@@ -7126,9 +6591,7 @@ class _CorridorWorkerMixin:
         self.sp_corridor_breakpoint_lookback.setValue(5)
 
         self.sp_corridor_breakpoint_lookback.setToolTip(
-
             "Declare a breakpoint if current RMSE is better than the best RMSE among the previous N points on the same side."
-
         )
 
         row_break.addWidget(self.sp_corridor_breakpoint_lookback)
@@ -7144,9 +6607,7 @@ class _CorridorWorkerMixin:
         self.chk_corridor_rmse_live_parabola.setChecked(True)
 
         self.chk_corridor_rmse_live_parabola.setToolTip(
-
             "If disabled during live grid calculation: update RMSE points only; parabola/robust interval are recomputed at completion."
-
         )
 
         row_adv_toggles.addWidget(self.chk_corridor_rmse_live_parabola)
@@ -7187,13 +6648,10 @@ class _CorridorWorkerMixin:
         lay_rmse.addWidget(self.w_corridor_rmse_advanced)
 
     def _start_corridor_rmse_grid_recalc(self) -> None:
-
         """Recalculate RMSE(d) on a regular grid (refit n,L with fixed d) in a thread."""
 
         if self._worker is not None and self._worker.isRunning():
-
             if self.logger:
-
                 self.logger.info("GUI RMSE(d) regular grid | request ignored: worker already running")
 
             QMessageBox.information(self, "Calculate", "A worker is already running (wait or Stop).")
@@ -7203,13 +6661,10 @@ class _CorridorWorkerMixin:
         cfg = self._last_run_cfg
 
         if cfg is None:
-
             cfg = self._build_opt_config(notify=False)
 
         if cfg is None:
-
             if self.logger:
-
                 self.logger.warning("GUI RMSE(d) regular grid | aborted: no optimization configuration available")
 
             QMessageBox.warning(self, "Calculate", "No optimization configuration available (run a fit first).")
@@ -7261,9 +6716,7 @@ class _CorridorWorkerMixin:
                     )
 
         if not isinstance(base, dict) or base.get("sigma_knots") is None:
-
             if self.logger:
-
                 self.logger.warning("GUI RMSE(d) regular grid | aborted: no corridor profile base in current result")
 
             # Keep the UX non-blocking: no popup for missing base, only status feedback.
@@ -7282,17 +6735,13 @@ class _CorridorWorkerMixin:
         i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
 
         if d_s.size > 0 and r_s.size == d_s.size and 0 <= i_best < int(d_s.size):
-
             d_center = float(d_s[i_best])
 
         else:
-
             d_center = float(base.get("d_nm", float("nan")))
 
         if not np.isfinite(d_center):
-
             if self.logger:
-
                 self.logger.warning("GUI RMSE(d) regular grid | aborted: cannot determine center d*")
 
             QMessageBox.warning(self, "Calculate", "Cannot determine center thickness d* for the grid.")
@@ -7304,27 +6753,15 @@ class _CorridorWorkerMixin:
         step = float(self.sp_corridor_grid_d_step_nm.value()) if hasattr(self, "sp_corridor_grid_d_step_nm") else 0.5
 
         break_lookback = (
-
-            int(self.sp_corridor_breakpoint_lookback.value())
-
-            if hasattr(self, "sp_corridor_breakpoint_lookback")
-
-            else 5
-
+            int(self.sp_corridor_breakpoint_lookback.value()) if hasattr(self, "sp_corridor_breakpoint_lookback") else 5
         )
 
         if n_pts < 2 or (not np.isfinite(step)) or step <= 0:
-
             if self.logger:
-
                 self.logger.warning(
-
                     "GUI RMSE(d) regular grid | aborted: invalid grid params n_pts=%s step=%s",
-
                     str(n_pts),
-
                     str(step),
-
                 )
 
             QMessageBox.warning(self, "Calculate", "Invalid grid: need ?2 points and Deltad > 0.")
@@ -7340,26 +6777,17 @@ class _CorridorWorkerMixin:
 
         d_hi_grid = float(np.max(d_grid)) if d_grid.size else float("nan")
 
-        self._stop_event = Event()
-
-        self._cleanup_thread()
+        CertusIndexSplineApp._prepare_worker_restart(self)
 
         snap = dict(base)
 
         self._worker = GenericWorker(
-
             _worker_corridor_rmse_regular_grid,
-
             cfg,
-
             snap,
-
             d_grid,
-
             self._stop_event,
-
             int(max(2, break_lookback)),
-
         )
 
         def _grid_progress(p: float | int, m: str) -> None:
@@ -7395,6 +6823,7 @@ class _CorridorWorkerMixin:
         self._set_corridor_grid_busy(True)
 
         self._corridor_rmse_grid_live_t0 = float(time.perf_counter())
+        self._corridor_rmse_live_last_plot_ts = float("nan")
 
         self._set_corridor_grid_progress_ui(done=0, total=int(max(1, d_grid.size)))
 
@@ -7408,21 +6837,14 @@ class _CorridorWorkerMixin:
         )
 
         if self.logger:
-
             bd_raw = base.get("d_nm")
             bd_txt = (
-                f"{float(bd_raw):.6f}"
-                if isinstance(bd_raw, (int, float)) and np.isfinite(float(bd_raw))
-                else "n/a"
+                f"{float(bd_raw):.6f}" if isinstance(bd_raw, (int, float)) and np.isfinite(float(bd_raw)) else "n/a"
             )
             br = self._rmse_from_result_dict(base)
             br_txt = f"{br:.8f}" if np.isfinite(br) else "n/a"
             sbv = base.get("spectral_rmse_best_value")
-            sbv_txt = (
-                f"{float(sbv):.8f}"
-                if sbv is not None and np.isfinite(float(sbv))
-                else "n/a"
-            )
+            sbv_txt = f"{float(sbv):.8f}" if sbv is not None and np.isfinite(float(sbv)) else "n/a"
             if (
                 d_s.size > 0
                 and r_s.size == d_s.size
@@ -7452,23 +6874,22 @@ class _CorridorWorkerMixin:
                 tab_r,
             )
 
-        self._worker.start()
+        # Auto-select the Corridor RMSE(d) tab to show live updates
+        if hasattr(self, "_idx_tab_corridor_rmse") and hasattr(self, "tabs_main"):
+            self.tabs_main.setCurrentIndex(int(self._idx_tab_corridor_rmse))
 
+        self._worker.start()
 
 class _PlotMixin:
     """Mixin containing plot methods for n/k tabs and data preview."""
+
     def _refresh_data_preview_plots(
-
         self,
-
         ser: tuple[np.ndarray, ...] | None = None,
-
     ) -> None:
-
         """Data mini-graphs: all n / all k, table grid, synchronized lambda."""
 
         if not hasattr(self, "plot_data_preview_n") or not hasattr(self, "plot_data_preview_k"):
-
             return
 
         pn = self.plot_data_preview_n
@@ -7490,7 +6911,6 @@ class _PlotMixin:
         self._data_preview_series = None
 
         if ser is None:
-
             pn._apply_sensible_empty_range()
 
             pk._apply_sensible_empty_range()
@@ -7498,25 +6918,15 @@ class _PlotMixin:
             return
 
         (
-
             lam_g,
-
             n_g,
-
             k_g,
-
             n_nl_g,
-
             k_nl_g,
-
             n_lo_g,
-
             n_hi_g,
-
             k_lo_g,
-
             k_hi_g,
-
         ) = ser
 
         lam = np.asarray(lam_g, dtype=np.float64).ravel()
@@ -7546,48 +6956,32 @@ class _PlotMixin:
         k_floor = float(np.nanmin(k_pos)) if k_pos.size > 0 else 1e-30
 
         self._data_preview_series = {
-
             "lam": lam.copy(),
-
             "n": nv.copy(),
-
             "n_nl": n_nl_v.copy(),
-
             "n_lo": n_lo_v.copy(),
-
             "n_hi": n_hi_v.copy(),
-
             "k": kv.copy(),
-
             "k_nl": k_nl_v.copy(),
-
             "k_lo": k_lo_v.copy(),
-
             "k_hi": k_hi_v.copy(),
-
             "k_floor": k_floor,
-
         }
 
         def _add_legend(plot: CertusScientificPlot) -> None:
 
             try:
-
                 plot.addLegend(offset=(8, 8))
 
-            except NUMERICAL_FAULT_EXCEPTIONS:
-
-                pass
+            except (ValueError, TypeError, RuntimeError, AttributeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # --- n preview : enveloppe puis courbes ---
         y_n_all = [nv]
-        if np.any(np.isfinite(n_nl_v)): y_n_all.append(n_nl_v)
+        if np.any(np.isfinite(n_nl_v)):
+            y_n_all.append(n_nl_v)
 
-        m_n_env = (
-            np.isfinite(n_lo_v)
-            & np.isfinite(n_hi_v)
-            & (n_hi_v >= n_lo_v)
-        )
+        m_n_env = np.isfinite(n_lo_v) & np.isfinite(n_hi_v) & (n_hi_v >= n_lo_v)
 
         if np.any(m_n_env):
             y_n_all.extend([n_lo_v, n_hi_v])
@@ -7601,7 +6995,7 @@ class _PlotMixin:
                 cl_f = pg.PlotCurveItem(le, ylo, pen=None)
                 cu_f = pg.PlotCurveItem(le, yhi, pen=None)
                 pn.addItem(pg.FillBetweenItem(cl_f, cu_f, brush=pg.mkBrush(0, 87, 255, 40)))
-                
+
                 # Dashed bounds + Glow (matching main corridor style)
                 p_lo_glow = pg.mkPen((180, 220, 255, 140), width=4.0)
                 p_hi_glow = pg.mkPen((160, 200, 255, 140), width=4.0)
@@ -7613,50 +7007,31 @@ class _PlotMixin:
                 pn.plot(le, yhi, pen=p_hi)
 
         if np.any(np.isfinite(n_nl_v)):
-
             xnl, ynl = sanitize_xy_for_plot(lam, n_nl_v)
 
             if xnl.size >= 2:
-
                 plot_widget_plot_finite(
-
                     pn,
-
                     xnl,
-
                     ynl,
-
                     pen=pg.mkPen("#0a8f5a", width=1.6),
-
                     name="n_alpha",
-
                 )
 
         xn, yn = sanitize_xy_for_plot(lam, nv)
 
         if xn.size >= 2:
-
-            c_n = plot_widget_plot_finite(
-
-                pn, xn, yn, pen=pg.mkPen("#0057ff", width=2.4), name="n"
-
-            )
+            c_n = plot_widget_plot_finite(pn, xn, yn, pen=pg.mkPen("#0057ff", width=2.4), name="n")
 
             if c_n is not None:
-
                 setattr(c_n, "_certus_crosshair_primary", True)
 
         # --- k preview : enveloppe (k>0) puis courbes ---
         y_k_all = [kv]
-        if np.any(np.isfinite(k_nl_v)): y_k_all.append(k_nl_v)
+        if np.any(np.isfinite(k_nl_v)):
+            y_k_all.append(k_nl_v)
 
-        m_k_env = (
-            np.isfinite(k_lo_v)
-            & np.isfinite(k_hi_v)
-            & (k_lo_v > 0.0)
-            & (k_hi_v > 0.0)
-            & (k_hi_v >= k_lo_v)
-        )
+        m_k_env = np.isfinite(k_lo_v) & np.isfinite(k_hi_v) & (k_lo_v > 0.0) & (k_hi_v > 0.0) & (k_hi_v >= k_lo_v)
 
         if np.any(m_k_env):
             y_k_all.extend([k_lo_v, k_hi_v])
@@ -7670,7 +7045,7 @@ class _PlotMixin:
                 clk_f = pg.PlotCurveItem(lek, ylok, pen=None)
                 cuk_f = pg.PlotCurveItem(lek, yhik, pen=None)
                 pk.addItem(pg.FillBetweenItem(clk_f, cuk_f, brush=pg.mkBrush(255, 160, 40, 35)))
-                
+
                 # Dashed bounds + Glow (matching main corridor style)
                 p_klo_glow = pg.mkPen((255, 235, 190, 180), width=4.0)
                 p_khi_glow = pg.mkPen((255, 210, 200, 180), width=4.0)
@@ -7682,25 +7057,17 @@ class _PlotMixin:
                 pk.plot(lek, yhik, pen=p_khi)
 
         if np.any(np.isfinite(k_nl_v) & (k_nl_v > 0.0)):
-
             knlp = np.where(np.isfinite(k_nl_v) & (k_nl_v > 0.0), k_nl_v, np.nan)
 
             xknl, yknl = sanitize_xy_for_plot(lam, knlp)
 
             if xknl.size >= 2:
-
                 plot_widget_plot_finite(
-
                     pk,
-
                     xknl,
-
                     yknl,
-
                     pen=pg.mkPen("#0a8f5a", width=1.6),
-
                     name="k_alpha",
-
                 )
 
         kk_plot = np.where(np.isfinite(kv) & (kv > 0.0), kv, np.nan)
@@ -7708,20 +7075,14 @@ class _PlotMixin:
         xk, yk = sanitize_xy_for_plot(lam, kk_plot)
 
         if xk.size >= 2:
-
-            c_k = plot_widget_plot_finite(
-
-                pk, xk, yk, pen=pg.mkPen("#f59e0b", width=2.4), name="k"
-
-            )
+            c_k = plot_widget_plot_finite(pk, xk, yk, pen=pg.mkPen("#f59e0b", width=2.4), name="k")
 
             if c_k is not None:
-
                 setattr(c_k, "_certus_crosshair_primary", True)
 
         pn.setLogMode(False, False)
 
-        pk.setLogMode(False, True)
+        _apply_fixed_log_k_axis(pk)
 
         _add_legend(pn)
 
@@ -7745,355 +7106,14 @@ class _PlotMixin:
             else:
                 pn.autoRange()
 
-            # k preview
-            yk_all_f = np.concatenate([np.asarray(arr).ravel() for arr in y_k_all])
-            yk_all_f = yk_all_f[np.isfinite(yk_all_f) & (yk_all_f > 0)]
-            if yk_all_f.size > 0:
-                yk_min = float(np.min(yk_all_f))
-                pk.setYRange(yk_min, 1e-2, padding=0)
-            else:
-                pk.autoRange()
+            _apply_fixed_log_k_axis(pk)
         except NUMERICAL_FAULT_EXCEPTIONS:
             pn.autoRange()
-            pk.autoRange()
-
-    def _plot_nl_tab(
-
-        self,
-
-        r: dict,
-
-        lam_m: np.ndarray,
-
-        n_base: np.ndarray,
-
-        k_base: np.ndarray,
-
-    ) -> None:
-
-        if not hasattr(self, "plot_n_nl") or not hasattr(self, "lbl_nl_summary"):
-
-            return
-
-        self.plot_n_nl.clear()
-
-        self.plot_k_nl.clear()
-
-        lam_m = np.asarray(lam_m, dtype=np.float64).ravel()
-
-        n_base = np.asarray(n_base, dtype=np.float64).ravel()
-
-        k_base = np.asarray(k_base, dtype=np.float64).ravel()
-
-        bits: list[str] = []
-
-        a = r.get("nl_alpha_opt")
-
-        if a is not None:
-
-            try:
-
-                af = float(a)
-
-            except (TypeError, ValueError):
-
-                af = float("nan")
-
-            if np.isfinite(af):
-
-                bits.append(f"alpha<sub>NL</sub> = {af:.6f}")
-
-            else:
-
-                bits.append("alpha<sub>NL</sub> : -")
-
-        else:
-
-            bits.append("alpha<sub>NL</sub> : -")
-
-        dnl = r.get("d_nm_nl")
-
-        if dnl is not None:
-
-            try:
-
-                df = float(dnl)
-
-                if np.isfinite(df):
-
-                    bits.append(f"d (NL) = {df:.2f} nm")
-
-            except (TypeError, ValueError):
-
-                pass
-
-        rref = r.get("nl_rmse_reference_best")
-
-        rmo = r.get("nl_rmse_vs_meas_orig")
-
-        rms = r.get("nl_rmse_vs_meas_scaled")
-
-        if rref is not None:
-
-            try:
-
-                rf = float(rref)
-
-                if np.isfinite(rf):
-
-                    bits.append(f"Ref. RMSE (best spectral, no post NL) = {rf:.6f}")
-
-            except (TypeError, ValueError):
-
-                pass
-
-        if rmo is not None:
-
-            try:
-
-                of = float(rmo)
-
-                if np.isfinite(of):
-
-                    bits.append(f"NL model RMSE vs raw measurements = {of:.6f}")
-
-            except (TypeError, ValueError):
-
-                pass
-
-        if rms is not None:
-
-            try:
-
-                sf = float(rms)
-
-                if np.isfinite(sf):
-
-                    bits.append(f"NL model RMSE vs alpha?measurements (adjusted criterion) = {sf:.6f}")
-
-            except (TypeError, ValueError):
-
-                pass
-
-        ok = r.get("nl_optim_ok")
-
-        msg = str(r.get("nl_optim_message") or "")
-
-        if ok is False and msg:
-
-            bits.append(f"<span style='color:#c44'>{msg}</span>")
-
-        gn = r.get("nl_alpha_grid_n")
-
-        gs = r.get("nl_alpha_grid_step")
-
-        sel_crit = str(r.get("nl_alpha_selection_criterion") or "")
-
-        if sel_crit == "joint_objective_alpha_plus_x":
-
-            bits.append(
-
-                "<span style='color:#666'>joint local polish: alpha optimized together with d and spline nodes under a strong prior alpha?1.</span>"
-
-            )
-
-        if gn is not None and gs is not None:
-
-            try:
-
-                bits.append(
-
-                    "<span style='color:#666'>alpha sweep: {:d} values (step {:g}) - at each alpha, L-BFGS-B on "
-
-                    "d and knots (masked MSE); best pair kept.</span>".format(int(gn), float(gs))
-
-                )
-
-            except (TypeError, ValueError):
-
-                pass
-
-        ne = r.get("nl_alpha_steps_evaluated")
-
-        if ne is not None and gn is not None:
-
-            try:
-
-                if int(ne) != int(gn):
-
-                    bits.append(
-
-                        "<span style='color:#666'>steps evaluated: {:d} / {:d}".format(int(ne), int(gn))
-
-                        + (" (early stop)</span>" if r.get("nl_alpha_scan_early_stopped") else "</span>")
-
-                    )
-
-            except (TypeError, ValueError):
-
-                pass
-
-        nid = r.get("nl_alpha_identifiability_note")
-
-        if nid:
-
-            bits.append(f"Identifiability: <span style='color:#666'>{nid}</span>")
-
-        if r.get("nl_alpha_identifiable") is False:
-
-            bits.append("<span style='color:#666'>No strong evidence for an alpha shift vs flat profile / alpha?1.</span>")
-
-        bh = r.get("nl_alpha_budget_maxfun_hits")
-
-        if bh is not None:
-
-            try:
-
-                bits.append(f"L-BFGS-B budget_maxfun hits (grid): {int(bh)}")
-
-            except (TypeError, ValueError):
-
-                pass
-
-        if (gn is None or gs is None) and r.get("nl_second_pass_applied"):
-
-            bits.append("<span style='color:#666'>NL optimization in 2 L-BFGS-B passes (refinement).</span>")
-
-        if r.get("n_lam_nl") is None and a is None:
-
-            bits.append(
-
-                "<span style='color:#888'>Run an optimization to compute alpha<sub>NL</sub> "
-
-                "(?Non-lin. alpha? is checked by default; uncheck to disable).</span>"
-
-            )
-
-        self.lbl_nl_summary.setText("<br/>".join(bits))
-
-        # lambda axis: keep strictly positive wavelengths (avoids sigma or abscissa artifacts).
-
-        nlam = min(lam_m.size, n_base.size, k_base.size)
-
-        if nlam < 2:
-
-            return
-
-        lam_u = lam_m[:nlam]
-
-        nb_u = n_base[:nlam]
-
-        kb_u = k_base[:nlam]
-
-        mpos = np.isfinite(lam_u) & (lam_u > 1e-6) & np.isfinite(nb_u) & np.isfinite(kb_u)
-
-        lam_p = lam_u[mpos]
-
-        nb_p = nb_u[mpos]
-
-        kb_p = kb_u[mpos]
-
-        if lam_p.size < 2:
-
-            return
-
-        lk_b = np.full(kb_p.shape, np.nan, dtype=np.float64)
-
-        mk = np.isfinite(kb_p) & (kb_p >= 0.0)
-
-        lk_b[mk] = np.log10(np.maximum(kb_p[mk], 1e-30))
-
-        self._add_curve(self.plot_n_nl, lam_p, nb_p, CertusTheme.TEXT_SUB, "n (no NL)")
-
-        self._add_curve(self.plot_k_nl, lam_p, lk_b, CertusTheme.TEXT_SUB, "k (no NL)")
-
-        n_nl = r.get("n_lam_nl")
-
-        k_nl = r.get("k_lam_nl")
-
-        lam_src = r.get("nl_lam_nm")
-
-        if lam_src is None:
-
-            lam_src = r.get("lam_nm")
-
-        lam_src = (
-
-            np.asarray(lam_src, dtype=np.float64).ravel()
-
-            if lam_src is not None
-
-            else np.array([], dtype=np.float64)
-
-        )
-
-        if n_nl is not None and k_nl is not None and lam_src.size >= 2:
-
-            n_nl = np.asarray(n_nl, dtype=np.float64).ravel()
-
-            k_nl = np.asarray(k_nl, dtype=np.float64).ravel()
-
-            nn = int(min(lam_src.size, n_nl.size, k_nl.size))
-
-            if nn >= 2:
-
-                lam_src = lam_src[:nn]
-
-                n_nl = n_nl[:nn]
-
-                k_nl = k_nl[:nn]
-
-                order = np.argsort(lam_src, kind="mergesort")
-
-                lam0s = lam_src[order]
-
-                n_nls = n_nl[order]
-
-                k_nls = k_nl[order]
-
-                msrc = np.isfinite(lam0s) & (lam0s > 1e-6)
-
-                lam0s = lam0s[msrc]
-
-                n_nls = n_nls[msrc]
-
-                k_nls = k_nls[msrc]
-
-                if lam0s.size >= 2:
-
-                    n_nli = np.interp(lam_p, lam0s, n_nls, left=np.nan, right=np.nan)
-
-                    k_nli = np.interp(lam_p, lam0s, k_nls, left=np.nan, right=np.nan)
-
-                    self._add_curve(self.plot_n_nl, lam_p, n_nli, "#00aa44", "n (alpha NL)")
-
-                    lk_nl = np.full(k_nli.shape, np.nan, dtype=np.float64)
-
-                    mk2 = np.isfinite(k_nli) & (k_nli >= 0.0)
-
-                    lk_nl[mk2] = np.log10(np.maximum(k_nli[mk2], 1e-30))
-
-                    self._add_curve(self.plot_k_nl, lam_p, lk_nl, "#00aa44", "k (alpha NL)")
-
-        self.plot_n_nl.autoRange()
-
-        self.plot_k_nl.autoRange()
-
-        span_lo = float(np.nanmin(lam_p))
-
-        span_hi = float(np.nanmax(lam_p))
-
-        if np.isfinite(span_lo) and np.isfinite(span_hi) and span_hi > span_lo:
-
-            pad = 0.02 * (span_hi - span_lo)
-
-            self.plot_n_nl.plotItem.setXRange(span_lo - pad, span_hi + pad, padding=0.0)
-
-            self.plot_k_nl.plotItem.setXRange(span_lo - pad, span_hi + pad, padding=0.0)
-
+            _apply_fixed_log_k_axis(pk)
 
 class _UIBuilderMixin:
     """Mixin containing UI-construction tab methods."""
+
     def _build_ui(self) -> None:
 
         setup_pyqtgraph_defaults()
@@ -8116,134 +7136,146 @@ class _UIBuilderMixin:
         outer.addWidget(hdr_w)
 
         root_layout = QHBoxLayout()
-        root_layout.setContentsMargins(6, 6, 6, 6)
+        root_layout.setContentsMargins(4, 4, 4, 4)
         root_layout.setSpacing(6)
         outer.addLayout(root_layout, 1)
 
         # ── Left sidebar ─────────────────────────────────────────────────────
         left_scroll = QScrollArea()
         left_scroll.setWidgetResizable(True)
-        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        left_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         left_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         left_scroll.setFrameShape(QFrame.Shape.NoFrame)
         left_scroll.setMinimumWidth(280)
-        left_scroll.setMaximumWidth(480)
+        self.left_scroll = left_scroll
 
         left_inner = QWidget()
         left_inner.setMinimumWidth(280)
         left_lay = QVBoxLayout(left_inner)
-        left_lay.setContentsMargins(0, 4, 4, 4)
-        left_lay.setSpacing(8)
+        left_lay.setContentsMargins(0, 2, 2, 2)
+        left_lay.setSpacing(2)
 
         # ── Stepper card ─────────────────────────────────────────────────────
-        stepper_card = CertusCard("Workflow")
-        self._stepper = CertusStepper([
-            "Load spectrum",
-            "Substrate & thickness",
-            "Fit targets (T / R)",
-            "Mesh & optimizer",
-            "Run",
-        ])
+        stepper_card = CertusCard("Workflow guide")
+        stepper_card.body.setContentsMargins(8, 4, 8, 6)
+        stepper_card.body.setSpacing(3)
+        self._stepper = CertusStepper(
+            [
+                "Load spectrum",
+                "Substrate (n) & layer thickness",
+                "Fit targets (T / R)",
+                "Mesh & optimizer",
+                "Run",
+                "Manual nodes",
+                "Corridors & RMSE(d)",
+            ],
+            columns=2,
+        )
+        self._stepper.step_activated.connect(self._on_stepper_activated)
+        self._stepper.set_step(0)
         stepper_card.body.addWidget(self._stepper)
+        self.stepper_card = stepper_card
         left_lay.addWidget(stepper_card)
 
         # ── File card ─────────────────────────────────────────────────────────
         file_card = CertusCard("1  Spectrum")
+        file_card.body.setContentsMargins(8, 4, 8, 6)
+        file_card.body.setSpacing(4)
         self.lbl_file = QLabel("(no file loaded)")
         self.lbl_file.setWordWrap(True)
-        self.lbl_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        self.lbl_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
         self.lbl_file.setToolTip("Path of the last loaded file.")
-        btn_load = create_styled_button("Load spectrum…", "secondary")
-        btn_load.setToolTip(
+        self.btn_load = create_styled_button("Load spectrum…", "secondary")
+        self.btn_load.setToolTip(
             "Step 1: open a file containing at least lambda and transmission T. "
             "In Basic, enable T/Tsub if T already is T_film/T_bare_sub ratio (often in %)."
         )
-        btn_load.clicked.connect(self._on_load)
-        file_card.body.addWidget(btn_load)
+        self.btn_load.clicked.connect(self._on_load)
+        file_card.body.addWidget(self.btn_load)
         file_card.body.addWidget(self.lbl_file)
+        self.file_card = file_card
         left_lay.addWidget(file_card)
 
         # ── Parameters card (collapsible) ─────────────────────────────────────
         # ctrl_tabs kept as QTabWidget for full backward compat with all mixins
         self.ctrl_tabs = QTabWidget()
+        self.ctrl_tabs.setDocumentMode(True)
         self.ctrl_tabs.setToolTip("Steps 2-4 in order: substrate, targets, mesh.")
         self.ctrl_tabs.addTab(self._build_controls_basic_panel(), "Basic (2 → 4)")
-        params_collapsible = CertusCollapsible(
-            "2-4  Parameters", self.ctrl_tabs, expanded=True
+        self.params_collapsible = CertusCollapsible("2-4  Parameters", self.ctrl_tabs, expanded=False)
+        self.params_collapsible._hdr.setStyleSheet(
+            f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: none; "
+            f"border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; "
+            f"color: {CertusTheme.TEXT_MAIN}; text-align: left; }}"
+            f"QPushButton:hover {{ background: {CertusTheme.BORDER}; }}"
         )
-        left_lay.addWidget(params_collapsible)
+        left_lay.addWidget(self.params_collapsible)
 
         # ── Action bar (Run / Stop / toggles) ────────────────────────────────
-        action_card = CertusCard("5  Run")
+        action_card = CertusCard("5  Run, manual nodes, corridors")
+        action_card.body.setContentsMargins(8, 4, 8, 6)
+        action_card.body.setSpacing(4)
 
         self.btn_run = QPushButton("▶  Run Optimization")
         self.btn_run.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_run.setMinimumHeight(26)
         self.btn_run.setToolTip("Start global optimization (Smart Init).")
         self.btn_run.clicked.connect(self._on_run)
 
         self.btn_stop = QPushButton("■  Stop")
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_stop.setMinimumHeight(26)
         self.btn_stop.setToolTip("Stop and keep best result found so far.")
         self.btn_stop.setEnabled(False)
         self.btn_stop.clicked.connect(self._on_stop)
 
         run_row = QHBoxLayout()
-        run_row.setSpacing(6)
+        run_row.setSpacing(4)
         run_row.addWidget(self.btn_run, 2)
         run_row.addWidget(self.btn_stop, 1)
         action_card.body.addLayout(run_row)
 
-        # Toggle row: Corridors / NL-alpha
-        action_bar = CertusActionBar()
+        # Post-run actions: Manual nodes first (dominant), then corridors.
+        post_row = QHBoxLayout()
+        post_row.setSpacing(4)
 
-        self.btn_corridor_toggle = QPushButton("Corridors")
-        self.btn_corridor_toggle.setCheckable(True)
-        self.btn_corridor_toggle.setChecked(True)
+        self.btn_manual_knots_toggle = QPushButton("◆  Manual knots")
+        self.btn_manual_knots_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.btn_manual_knots_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_manual_knots_toggle.setMinimumHeight(26)
+        self.btn_manual_knots_toggle.setToolTip(
+            "Priority action after optimization: automatic removal + manual knot insertion."
+        )
+        self.btn_manual_knots_toggle.clicked.connect(self._on_btn_manual_knots_clicked)
+
+        self.btn_corridor_toggle = QPushButton("◈  Corridors / RMSE(d)")
+        self.btn_corridor_toggle.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_corridor_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_corridor_toggle.setMinimumHeight(26)
         self.btn_corridor_toggle.setToolTip(
-            "Enable/disable n/k corridor calculation at end of optimization.\n"
-            "Acceptance envelope around the best polished spectral model."
+            "Priority action: launches corridors and RMSE(d) workflow from the latest optimized result."
         )
-        self.btn_corridor_toggle.toggled.connect(self._on_btn_corridor_toggled)
-        self.btn_corridor_toggle.setStyleSheet(
-            f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: 1px solid {CertusTheme.BORDER}; "
-            f"border-radius: 6px; padding: 4px 10px; font-size: 10px; color: {CertusTheme.TEXT_SUB}; }}"
-            f"QPushButton:checked {{ background: {CertusTheme.PRIMARY}; color: #fff; border-color: {CertusTheme.PRIMARY}; }}"
-            f"QPushButton:hover {{ border-color: {CertusTheme.PRIMARY}; }}"
-        )
+        self.btn_corridor_toggle.clicked.connect(self._on_btn_corridor_clicked)
 
         self.lbl_corridors_run_state = QLabel()
         self.lbl_corridors_run_state.setTextFormat(Qt.TextFormat.RichText)
+        self.lbl_corridors_run_state.setStyleSheet(f"color: {CertusTheme.TEXT_SUB};")
         self.lbl_corridors_run_state.setToolTip(
-            "Indicates if corridor profiling runs at end of optimization."
+            "Indicates if manual corridor calculation is available or already computed for the current result."
         )
 
-        self.btn_nl_toggle = QPushButton("NL alpha")
-        self.btn_nl_toggle.setCheckable(True)
-        self.btn_nl_toggle.setChecked(True)
-        self.btn_nl_toggle.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_nl_toggle.setToolTip(
-            "Non-linearity alpha correction. After fit: joint L-BFGS-B on alpha~1, "
-            "thickness and spline nodes. Best (alpha, mesh) retained."
-        )
-        self.btn_nl_toggle.setStyleSheet(
-            f"QPushButton {{ background: {CertusTheme.SURFACE_HOVER}; border: 1px solid {CertusTheme.BORDER}; "
-            f"border-radius: 6px; padding: 4px 10px; font-size: 10px; color: {CertusTheme.TEXT_SUB}; }}"
-            f"QPushButton:checked {{ background: {CertusTheme.PRIMARY}; color: #fff; border-color: {CertusTheme.PRIMARY}; }}"
-            f"QPushButton:hover {{ border-color: {CertusTheme.PRIMARY}; }}"
-        )
+        post_row.addWidget(self.btn_manual_knots_toggle, 2)
+        post_row.addWidget(self.btn_corridor_toggle, 1)
+        action_card.body.addLayout(post_row)
 
-        action_bar.add_widget(self.btn_corridor_toggle)
-        action_bar.add_widget(self.lbl_corridors_run_state)
-        action_bar.add_separator()
-        action_bar.add_widget(self.btn_nl_toggle)
-        action_bar.add_stretch()
-        action_card.body.addWidget(action_bar)
+        self.lbl_postprocess_hint = QLabel("Recommended flow: Run -> Manual knots -> Corridors / RMSE(d)")
+        self.lbl_postprocess_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        action_card.body.addWidget(self.lbl_postprocess_hint)
+        action_card.body.addWidget(self.lbl_corridors_run_state)
 
         if hasattr(self, "chk_corridor_d"):
-            self.btn_corridor_toggle.setChecked(self.chk_corridor_d.isChecked())
             self.chk_corridor_d.stateChanged.connect(self._on_corridor_chk_state_changed)
 
         # Progress + status
@@ -8256,11 +7288,10 @@ class _UIBuilderMixin:
         action_card.body.addWidget(self.lbl_status)
 
         reset_btn = create_reset_button(self, use_app_reset=True)
-        reset_btn.setToolTip(
-            "Clear all and return to first-launch state: no spectrum, no result, default controls."
-        )
+        reset_btn.setToolTip("Clear all and return to first-launch state: no spectrum, no result, default controls.")
         action_card.body.addWidget(reset_btn)
 
+        self.action_card = action_card
         left_lay.addWidget(action_card)
         left_lay.addStretch(1)
         left_scroll.setWidget(left_inner)
@@ -8279,50 +7310,155 @@ class _UIBuilderMixin:
         scroll_ctx.setWidget(self.context_stack)
         scroll_ctx.setStyleSheet("background: transparent;")
 
-        ctx_card = CertusCard("Tab settings")
-        ctx_card.body.setContentsMargins(0, 0, 0, 0)
-        ctx_card.body.addWidget(scroll_ctx)
+        aux_tabs = QTabWidget()
+        aux_tabs.setDocumentMode(True)
+        aux_tabs.addTab(scroll_ctx, "Context")
+        aux_tabs.addTab(self.log_panel, "Logs")
+        aux_tabs.setToolTip("Additional controls and runtime logs for the current workflow tab.")
 
-        # ── Right panel: sidebar stacked vertically ───────────────────────────
-        info_panel = QWidget()
-        info_lay = QVBoxLayout(info_panel)
-        info_lay.setContentsMargins(0, 0, 0, 0)
-        info_lay.setSpacing(6)
-        info_lay.addWidget(left_scroll, 3)
-        info_lay.addWidget(ctx_card, 2)
-        info_lay.addWidget(self.log_panel, 2)
+        # ── Right panel: resizable sidebar stack ──────────────────────────────
+        info_panel = QSplitter(Qt.Orientation.Vertical)
+        info_panel.setChildrenCollapsible(False)
+        info_panel.setHandleWidth(14)
+        info_panel.setObjectName("indexSplineInfoSplit")
+        info_panel.setStyleSheet(
+            "#indexSplineInfoSplit::handle { background-color: #7a8798; }"
+            "#indexSplineInfoSplit::handle:hover { background-color: #4f9cff; }"
+        )
+        info_panel.setMinimumWidth(left_scroll.minimumWidth())
+        info_panel.addWidget(left_scroll)
+        info_panel.addWidget(aux_tabs)
+        info_panel.setStretchFactor(0, 8)
+        info_panel.setStretchFactor(1, 2)
+        info_panel.setSizes([720, 180])
+        self.info_split = info_panel
 
         # ── Plots panel ───────────────────────────────────────────────────────
         plots_panel = self._build_plot_tabs_panel()
-        self.tabs_main.currentChanged.connect(self.context_stack.setCurrentIndex)
+        self.tabs_main.currentChanged.connect(self._sync_context_panel_to_current_tab)
 
         self.main_split = QSplitter(Qt.Orientation.Horizontal)
         self.main_split.setChildrenCollapsible(False)
-        self.main_split.addWidget(plots_panel)
+        self.main_split.setHandleWidth(14)
+        self.main_split.setObjectName("indexSplineMainSplit")
+        self.main_split.setStyleSheet(
+            "#indexSplineMainSplit::handle { background-color: #7a8798; }"
+            "#indexSplineMainSplit::handle:hover { background-color: #4f9cff; }"
+        )
+        # UX: keep inputs on the left and plots on the right for a natural flow.
         self.main_split.addWidget(info_panel)
-        self.main_split.setStretchFactor(0, 7)
-        self.main_split.setStretchFactor(1, 3)
+        self.main_split.addWidget(plots_panel)
+        # setCollapsible needs existing widget indices — never call before addWidget.
+        nc = int(self.main_split.count())
+        if nc >= 1:
+            self.main_split.setCollapsible(0, True)
+        if nc >= 2:
+            self.main_split.setCollapsible(1, True)
+        # Default with a visibly wider workflow pane so the RMSE(d) tab stays closer to a square plot.
+        self.main_split.setStretchFactor(0, 3)
+        self.main_split.setStretchFactor(1, 2)
+        self.main_split.setSizes([960, 640])
+        self._enforce_main_splitter_ratio_bounds(persist=False)
+        self.main_split.splitterMoved.connect(self._on_main_splitter_moved)
+        self.info_split.splitterMoved.connect(self._persist_splitter_states)
 
         root_layout.addWidget(self.main_split)
 
+        self._sync_context_panel_to_current_tab()
+
         self._refresh_corridors_gui_state_labels()
+        self._refresh_post_optimization_option_controls()
+
+    def _on_stepper_activated(self, step_index: int) -> None:
+
+        idx = int(max(0, min(step_index, 6)))
+        if hasattr(self, "_stepper"):
+            self._stepper.set_step(idx)
+
+        if idx == 0:
+            self._reveal_sidebar_widget(getattr(self, "file_card", None))
+            if hasattr(self, "tabs_main"):
+                self.tabs_main.setCurrentIndex(0)
+
+        if idx == 0 and hasattr(self, "btn_load"):
+            self.btn_load.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        if idx in (1, 2, 3) and hasattr(self, "params_collapsible"):
+            self.params_collapsible.set_expanded(True)
+            self._reveal_sidebar_widget(self.params_collapsible)
+
+        if idx == 1 and hasattr(self, "tabs_main"):
+            self.tabs_main.setCurrentIndex(0)
+
+        if idx == 1 and hasattr(self, "cb_sub"):
+            self.cb_sub.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        if idx == 2 and hasattr(self, "tabs_main"):
+            self.tabs_main.setCurrentIndex(0)
+
+        if idx == 2 and hasattr(self, "chk_t"):
+            self.chk_t.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        if idx == 3 and hasattr(self, "tabs_main") and hasattr(self, "_idx_tab_indices"):
+            self.tabs_main.setCurrentIndex(int(self._idx_tab_indices))
+
+        if idx == 3 and hasattr(self, "cb_profilee"):
+            self.cb_profilee.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        if idx == 4:
+            self._reveal_sidebar_widget(getattr(self, "action_card", None))
+
+        if idx == 4 and hasattr(self, "btn_run"):
+            self.btn_run.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        if idx == 5:
+            self._reveal_sidebar_widget(getattr(self, "action_card", None))
+            if hasattr(self, "tabs_main") and hasattr(self, "_idx_tab_indices"):
+                self.tabs_main.setCurrentIndex(int(self._idx_tab_indices))
+
+        if idx == 5 and hasattr(self, "btn_manual_knots_toggle"):
+            self.btn_manual_knots_toggle.setFocus(Qt.FocusReason.OtherFocusReason)
+            return
+
+        self._reveal_sidebar_widget(getattr(self, "action_card", None))
+        if hasattr(self, "tabs_main") and hasattr(self, "_idx_tab_corridor_rmse"):
+            try:
+                self.tabs_main.setCurrentIndex(int(self._idx_tab_corridor_rmse))
+            except (TypeError, ValueError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        if hasattr(self, "btn_corridor_toggle"):
+            self.btn_corridor_toggle.setFocus(Qt.FocusReason.OtherFocusReason)
+
+    def _reveal_sidebar_widget(self, widget: QWidget | None) -> None:
+
+        if not isinstance(widget, QWidget):
+            return
+        scroll = getattr(self, "left_scroll", None)
+        if isinstance(scroll, QScrollArea):
+            scroll.ensureWidgetVisible(widget, 0, 24)
 
     def _build_basic_step3_spectral_targets(self, parent_layout: "QVBoxLayout", style: str) -> None:
         box3 = CertusCard("3  What to fit on the spectrum (T, T/Tsub, R)")
 
         box3.setStyleSheet(style)
+        box3.body.setContentsMargins(6, 4, 6, 4)
+        box3.body.setSpacing(4)
 
         box3.setToolTip(
-
             "Step 3: define what the T column represents. Checked = T_film/T_bare_sub ratio "
-
             "(and R/T_bare_sub if R), often in % (100 = ratio 1). Unchecked = absolute T and R. "
-
             "wT / wR weight RMSE when both channels are active."
-
         )
 
         g3 = QGridLayout()
+        g3.setContentsMargins(0, 0, 0, 0)
+        g3.setHorizontalSpacing(6)
+        g3.setVerticalSpacing(4)
 
         box3.body.addLayout(g3)
 
@@ -8345,15 +7481,10 @@ class _UIBuilderMixin:
         self.chk_trel.setChecked(True)
 
         self.chk_trel.setToolTip(
-
             "Checked (usual case): T column is T_film / bare-substrate T ratio (backside included), same for R. "
-
             "Often provided in percent (100 = ratio 1). Fit compares against ratio model without dividing by T_sub again. "
-
             "Unchecked: columns are absolute transmission/reflection (or %). "
-
             "RMSE objective uses ln lambda weighting and optional mixed T/R loss."
-
         )
 
         self.chk_trel.toggled.connect(self._on_trel_plot_refresh)
@@ -8372,11 +7503,7 @@ class _UIBuilderMixin:
 
         lb_w = QLabel("Weights in MSE:")
 
-        lb_w.setToolTip(
-
-            "wT and wR weight T and R errors respectively (mixed mode). Use wR = 0 for T-only fitting."
-
-        )
+        lb_w.setToolTip("wT and wR weight T and R errors respectively (mixed mode). Use wR = 0 for T-only fitting.")
 
         g3.addWidget(lb_w, r3, 0)
 
@@ -8397,6 +7524,7 @@ class _UIBuilderMixin:
         self.w_r.setToolTip("Relative weight of R error. Set to 0 to ignore R in fitting.")
 
         h_w = QHBoxLayout()
+        h_w.setSpacing(4)
 
         h_w.addWidget(QLabel("wT"))
 
@@ -8412,16 +7540,13 @@ class _UIBuilderMixin:
 
         g3.addWidget(hw, r3, 1)
 
-        parent_layout.addWidget(box3); parent_layout.addWidget(box3)
+        parent_layout.addWidget(box3)
 
         btn_rmse_win = create_styled_button("Spectral RMSE window (lambda)...", "secondary")
 
         btn_rmse_win.setToolTip(
-
             "Limits the wavelengths used in the optimization MSE/RMSE. "
-
             "The displayed spectrum remains complete; only points in the band count for the adjustment."
-
         )
 
         btn_rmse_win.clicked.connect(self._on_rmse_fit_window_dialog)
@@ -8429,6 +7554,13 @@ class _UIBuilderMixin:
         parent_layout.addWidget(btn_rmse_win)
 
     def _build_corridor_tab_generate(self, lay_generate: "QVBoxLayout") -> None:
+        lay_generate.setSpacing(6)
+
+        lbl_manual = QLabel("Alternative path: define a manual interval around d* and generate a corridor directly.")
+        lbl_manual.setWordWrap(True)
+        lbl_manual.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lay_generate.addWidget(lbl_manual)
+
         row_manual = QHBoxLayout()
 
         row_manual.addWidget(QLabel("Manual centered corridor (+/- nm):"))
@@ -8448,22 +7580,12 @@ class _UIBuilderMixin:
         self.sl_corridor_manual_half.setEnabled(False)
 
         self.sl_corridor_manual_half.setToolTip(
-            "<b>Curseur : Largeur manuelle (+/-Deltad)</b><br>"
+            "<b>Cursor: Manual Width (±Δd)</b><br>"
             "D?finit arbitrairement la largeur du corridor pour g?n?rer les enveloppes n, k, L.<br>"
-            "Le corridor g?n?r? sera [d* - Deltad, d* + Deltad]."
+            "The generated corridor will be [d* - Deltad, d* + Deltad]."
         )
 
-        self.sl_corridor_manual_half.setStyleSheet(
-
-            "QSlider::groove:horizontal { height: 8px; background: #d7deea; border-radius: 4px; }"
-
-            "QSlider::sub-page:horizontal { background: #7a3cff; border-radius: 4px; }"
-
-            "QSlider::add-page:horizontal { background: #eef2f8; border-radius: 4px; }"
-
-            "QSlider::handle:horizontal { width: 14px; margin: -4px 0; border-radius: 7px; background: #ff4d4f; }"
-
-        )
+        self.sl_corridor_manual_half.setStyleSheet(slider_corridor_half_stylesheet())
 
         self.sl_corridor_manual_half.valueChanged.connect(self._on_corridor_manual_slider_changed)
 
@@ -8480,16 +7602,18 @@ class _UIBuilderMixin:
         self.btn_corridor_manual_robust.setEnabled(False)
 
         self.btn_corridor_manual_robust.setToolTip(
-            "<b>Synchroniser sur l'Intervalle Robuste</b><br>"
-            "Aligne automatiquement le curseur manuel sur la largeur calcul?e par la parabole (Violet/Orange).<br>"
-            "Permet de repartir de la suggestion intelligente avant un r?glage fin manuel."
+            "<b>Synchronize with Robust Interval</b><br>"
+            "Automatically aligns the manual slider to the width calculated by the parabola (Purple/Orange).<br>"
+            "Allows restarting from the smart suggestion before manual fine-tuning."
         )
 
         self.btn_corridor_manual_robust.clicked.connect(self._use_robust_corridor_interval)
 
         row_manual.addWidget(self.btn_corridor_manual_robust)
 
-        self.btn_generate_manual_corridor = create_styled_button("Generate corridor from selected interval", "primary", parent=self)
+        self.btn_generate_manual_corridor = create_styled_button(
+            "Generate corridor from selected interval", "primary", parent=self
+        )
 
         self.btn_generate_manual_corridor.setEnabled(False)
 
@@ -8516,17 +7640,11 @@ class _UIBuilderMixin:
         self.lbl_corridor_manual_interval = QLabel("Manual interval: -")
 
         for _lab in (
-
             self.lbl_corridor_manual_dmin,
-
             self.lbl_corridor_manual_dcenter,
-
             self.lbl_corridor_manual_dmax,
-
             self.lbl_corridor_manual_interval,
-
         ):
-
             _lab.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
 
         row_manual_meta.addWidget(self.lbl_corridor_manual_dmin)
@@ -8537,159 +7655,6 @@ class _UIBuilderMixin:
         row_manual_meta.addStretch(1)
         row_manual_meta.addWidget(self.lbl_corridor_manual_interval)
         lay_generate.addLayout(row_manual_meta)
-
-    def _build_tab_nl(self) -> QWidget:
-
-        # Contr?les d?plac?s ? droite
-        ctx_w = QWidget()
-        ctx_lay = QVBoxLayout(ctx_w)
-        ctx_lay.setContentsMargins(0, 0, 0, 0)
-
-        """Measurement non-linearity: n, log k with / without alpha_NL; RMSE metrics."""
-
-        panel = QWidget()
-
-        lay = QVBoxLayout(panel)
-
-        lay.setContentsMargins(0, 0, 0, 0)
-
-        hint = QLabel(
-
-            "<b>Non-linearity correction (alpha ? measurements)</b> - By default, <b>Non-lin. alpha</b> is enabled: the same alpha "
-
-            "from 0.995 to 1.005 (step 0.0005) are traversed starting from the closest to <b>1</b>, then by "
-
-            "<b>adjacent</b> steps (1 -> 0.9995 -> 1.0005 -> ?). Each L-BFGS-B restarts from the previous step solution. "
-
-            "The best MSE criterion is kept. Masked T (and R) are multiplied by alpha. "
-
-            "<b>Slow budget</b> ~ 1.35? the run polish (capped); <b>2nd pass</b> on alpha_opt with even "
-
-            "larger maxfun. Curves <i>without NL</i> = main model; <i>with NL</i> = after this post-processing."
-
-        )
-
-        hint.setWordWrap(True)
-
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
-
-        ctx_lay.addWidget(hint)
-
-        row_nl_b = QHBoxLayout()
-
-        row_nl_b.addWidget(QLabel("L-BFGS-B balance (joint NL alpha polish):"))
-
-        self.cb_nl_alpha_budget = QComboBox()
-
-        self.cb_nl_alpha_budget.addItem(
-
-            "Slow - maxfun ~ 1.35? run polish (default, 100k ceiling)", "slow"
-
-        )
-
-        self.cb_nl_alpha_budget.addItem(
-
-            "Fast - shared budget 2?polish / n_steps (20k/step ceiling)", "fast"
-
-        )
-
-        self.cb_nl_alpha_budget.setToolTip(
-
-            "Slow: larger maxfun budget for the joint local polish on alpha, thickness and spline nodes.\n"
-
-            "Fast: reduced maxfun budget for a quicker, less exhaustive joint polish."
-
-        )
-
-        self.cb_nl_alpha_budget.currentIndexChanged.connect(self._on_nl_alpha_budget_changed)
-
-        row_nl_b.addWidget(self.cb_nl_alpha_budget, 1)
-
-        ctx_lay.addLayout(row_nl_b)
-
-        self.chk_nl_second_pass = QCheckBox(
-
-            "Reinforced maxfun for joint NL alpha polish"
-
-        )
-
-        self.chk_nl_second_pass.setChecked(True)
-
-        self.chk_nl_second_pass.setToolTip(
-
-            "Controls the maxfun budget used by the final joint local polish on alpha, thickness and spline nodes "
-
-            "with alpha strongly constrained around 1. Disable or reduce if you want faster runs."
-
-        )
-
-        self.chk_nl_second_pass.stateChanged.connect(self._on_nl_second_pass_changed)
-
-        ctx_lay.addWidget(self.chk_nl_second_pass)
-
-        self.chk_nl_adaptive_scan = QCheckBox(
-
-            "Legacy alpha sweep option (unused by joint polish)"
-
-        )
-
-        self.chk_nl_adaptive_scan.setChecked(True)
-
-        self.chk_nl_adaptive_scan.setToolTip(
-
-            "This control is kept only for settings compatibility. The current NL alpha engine no longer uses an alpha sweep "
-
-            "and instead performs one constrained joint local polish with alpha?1."
-
-        )
-
-        self.chk_nl_adaptive_scan.setEnabled(False)
-
-        self.chk_nl_adaptive_scan.stateChanged.connect(self._on_nl_adaptive_scan_changed)
-
-        ctx_lay.addWidget(self.chk_nl_adaptive_scan)
-
-        self.lbl_nl_summary = QLabel("-")
-
-        self.lbl_nl_summary.setWordWrap(True)
-
-        self.lbl_nl_summary.setTextFormat(Qt.TextFormat.RichText)
-
-        ctx_lay.addWidget(self.lbl_nl_summary)
-
-        self.plot_n_nl = CertusScientificPlot(
-
-            title="n(lambda) - no NL vs with alpha NL", y_label="n", x_label="lambda (nm)"
-
-        )
-
-        self.plot_n_nl.showGrid(x=True, y=True, alpha=0.25)
-
-        self.plot_k_nl = CertusScientificPlot(
-
-            title="k(lambda) - no NL vs with alpha NL", y_label="k", x_label="lambda (nm)"
-
-        )
-
-        self.plot_k_nl.showGrid(x=True, y=True, alpha=0.25)
-        self.plot_k_nl.setLogMode(y=True)
-        self.plot_k_nl._certus_crosshair_label_fn = self._k_crosshair_formatter
-
-        spl = QSplitter(Qt.Orientation.Vertical)
-
-        spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_n_nl))
-
-        spl.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_k_nl))
-
-        spl.setStretchFactor(0, 1)
-
-        spl.setStretchFactor(1, 1)
-
-        lay.addWidget(spl, 1)
-        ctx_lay.addStretch(1)
-        self.context_stack.addWidget(ctx_w)
-
-        return panel
 
     def _build_tab_data(self) -> QWidget:
 
@@ -8710,7 +7675,7 @@ class _UIBuilderMixin:
 
         self.btn_copy_nk.setEnabled(False)
 
-        self.btn_copy_nk.setToolTip("Toutes les colonnes (lambda, n?, k?) - collage Excel")
+        self.btn_copy_nk.setToolTip("All columns (lambda, n?, k?) - Excel paste")
 
         self.btn_copy_nk.clicked.connect(self._copy_nk_to_clipboard)
 
@@ -8731,30 +7696,22 @@ class _UIBuilderMixin:
         spl_prev = QSplitter(Qt.Orientation.Horizontal)
 
         self.plot_data_preview_n = CertusScientificPlot(
-
             title="n preview",
-
             y_label="n",
-
             x_label="lambda (nm)",
-
         )
 
         self.plot_data_preview_n.showGrid(x=True, y=True, alpha=0.25)
 
         self.plot_data_preview_k = CertusScientificPlot(
-
             title="k preview",
-
             y_label="k",
-
             x_label="lambda (nm)",
-
         )
 
         self.plot_data_preview_k.showGrid(x=True, y=True, alpha=0.25)
 
-        self.plot_data_preview_k.setLogMode(False, True)
+        _apply_fixed_log_k_axis(self.plot_data_preview_k)
 
         spl_prev.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_data_preview_n))
 
@@ -8771,29 +7728,17 @@ class _UIBuilderMixin:
         self.table_nk.setColumnCount(9)
 
         self.table_nk.setHorizontalHeaderLabels(
-
             [
-
                 "lambda (nm)",
-
                 "n",
-
                 "n_alpha",
-
                 "n env min",
-
                 "n env max",
-
                 "k",
-
                 "k_alpha",
-
                 "k env min",
-
                 "k env max",
-
             ]
-
         )
 
         self.table_nk.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
@@ -8801,43 +7746,78 @@ class _UIBuilderMixin:
         self.table_nk.horizontalHeader().setStretchLastSection(True)
 
         self.table_nk.setToolTip(
-
             "lambda grid by spectral region: 2 nm step (<=400 nm), 5 nm (400-1200 nm), "
-
             "10 nm beyond; n, k and envelopes interpolated from result mesh. "
-
             "n_alpha / k_alpha: nonlinear indices if available. "
-
             "Enveloppes : bornes du corridor (profilage d). "
-
             "Previews: all n (or k) curves, envelope band if corridor; synchronized lambda cursor. "
-
             "Ctrl+C: copy selection (TSV) -> Excel."
-
         )
 
         lay.addWidget(self.table_nk, 2)
         ctx_lay.addStretch(1)
-        self.context_stack.addWidget(ctx_w)
+        self._add_context_page(ctx_w)
         # Sync for Log and CERTUS tabs
-        
-        
 
         return panel
+
+    def _build_tab_data_th(self) -> QWidget:
+        ctx_w = QWidget()
+        ctx_lay = QVBoxLayout(ctx_w)
+        ctx_lay.setContentsMargins(0, 0, 0, 0)
+
+        panel = QWidget()
+        lay = QVBoxLayout(panel)
+        lay.setContentsMargins(0, 0, 0, 0)
+
+        tb = QHBoxLayout()
+        self.btn_copy_data_th = create_styled_button("Copier tableau Data TH (TSV)", "secondary")
+        self.btn_copy_data_th.setEnabled(False)
+        self.btn_copy_data_th.setToolTip("Copie toutes les colonnes de Data TH (TSV) vers le clipboard.")
+        self.btn_copy_data_th.clicked.connect(self._copy_data_th_to_clipboard)
+        tb.addWidget(self.btn_copy_data_th)
+        tb.addStretch(1)
+        lay.addLayout(tb)
+
+        hint = QLabel(
+            "Table theorique sur grille lambda piecewise: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
+            "Colonnes: lambda, n, k, d, ns, Tth, Rth."
+        )
+        hint.setWordWrap(True)
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lay.addWidget(hint)
+
+        self.table_data_th = ExcelTableWidget()
+        self.table_data_th.setColumnCount(7)
+        self.table_data_th.setHorizontalHeaderLabels(["lambda (nm)", "n", "k", "d (nm)", "ns", "Tth", "Rth"])
+        self.table_data_th.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
+        self.table_data_th.horizontalHeader().setStretchLastSection(True)
+        self.table_data_th.setToolTip(
+            "Theoretical grid aligned on reporting lambda mesh. Refreshed from best-live snapshot during optimization."
+        )
+        lay.addWidget(self.table_data_th, 1)
+
+        ctx_lay.addStretch(1)
+        self._add_context_page(ctx_w)
+
+        return panel
+
     def _build_basic_step2_substrate_thickness(self, parent_layout: "QVBoxLayout", style: str) -> None:
-        box2 = CertusCard("2  Substrate & thickness d (nm)")
+        box2 = CertusCard("2  Substrate n(lambda) & layer thickness d (nm)")
 
         box2.setStyleSheet(style)
+        box2.body.setContentsMargins(6, 4, 6, 4)
+        box2.body.setSpacing(4)
 
         box2.setToolTip(
-
             "Step 2: set substrate optical index n_sub(lambda) and single-layer thickness bounds. "
-
             "This must be physically consistent before running the fit."
-
         )
 
         g2 = QGridLayout()
+        g2.setContentsMargins(0, 0, 0, 0)
+        g2.setHorizontalSpacing(6)
+        g2.setVerticalSpacing(4)
 
         box2.body.addLayout(g2)
 
@@ -8846,6 +7826,7 @@ class _UIBuilderMixin:
         r = 0
 
         row_d = QHBoxLayout()
+        row_d.setSpacing(6)
 
         lb_dnom = QLabel("d_nominal (nm) :")
 
@@ -8859,11 +7840,7 @@ class _UIBuilderMixin:
 
         self.d_lo.setValue(0.5 * float(SIO2_DEFAULT_D_LO_NM + SIO2_DEFAULT_D_HI_NM))
 
-        self.d_lo.setToolTip(
-
-            "Nominal thickness d0 (nm). Effective bounds are d0 +/- Delta."
-
-        )
+        self.d_lo.setToolTip("Nominal thickness d0 (nm). Effective bounds are d0 +/- Delta.")
 
         row_d.addWidget(self.d_lo)
 
@@ -8879,11 +7856,7 @@ class _UIBuilderMixin:
 
         self.d_hi.setValue(0.5 * float(SIO2_DEFAULT_D_HI_NM - SIO2_DEFAULT_D_LO_NM))
 
-        self.d_hi.setToolTip(
-
-            "Half-width Delta (nm): optimization bounds are [d_nominal - Delta, d_nominal + Delta]."
-
-        )
+        self.d_hi.setToolTip("Half-width Delta (nm): optimization bounds are [d_nominal - Delta, d_nominal + Delta].")
 
         row_d.addWidget(self.d_hi)
 
@@ -8895,18 +7868,13 @@ class _UIBuilderMixin:
 
         lb_sub = QLabel("Substrate :")
 
-        lb_sub.setToolTip(
-
-            "Bare substrate material used to compute T_sub and the multilayer model (CERTUS list)."
-
-        )
+        lb_sub.setToolTip("Bare substrate material used to compute T_sub and the multilayer model (CERTUS list).")
 
         g2.addWidget(lb_sub, r, 0)
 
         self.cb_sub = QComboBox()
 
         for name in allowed_substrate_names():
-
             self.cb_sub.addItem(name, name)
 
         # Default: Sapphire (Al2O3)
@@ -8914,7 +7882,6 @@ class _UIBuilderMixin:
         idx_sapphire = self.cb_sub.findText("Sapphire (Al2O3)", Qt.MatchFlag.MatchContains)
 
         if idx_sapphire >= 0:
-
             self.cb_sub.setCurrentIndex(idx_sapphire)
 
         self.cb_sub.setToolTip("Select the same substrate used for measurement (internal tabulated dispersion).")
@@ -8923,58 +7890,54 @@ class _UIBuilderMixin:
 
         g2.setColumnStretch(1, 1)
 
-        parent_layout.addWidget(box2); parent_layout.addWidget(box2)
+        parent_layout.addWidget(box2)
 
     def _build_plot_tabs_panel(self) -> QWidget:
-
-        """Panneau droit type Swanepoel : barre detachage + onglets graphiques."""
+        """Right panel (Swanepoel type): detach bar + graphical tabs."""
 
         self.tabs_main = QTabWidget()
+        self._tab_context_widgets: dict[QWidget, QWidget] = {}
+        self._pending_context_page: QWidget | None = None
 
-        self.tabs_main.addTab(self._build_tab_spectrum(), "Spectrum T / R")
+        self._add_plot_tab(self._build_tab_spectrum(), "Spectrum T / R")
 
-        self.tabs_main.addTab(self._build_tab_indices(), "n & k")
+        self._idx_tab_indices = self._add_plot_tab(self._build_tab_indices(), "n & k")
 
         self._tab_corridor_panel = self._build_tab_corridor()
 
-        self.tabs_main.addTab(self._tab_corridor_panel, "Corridors n/k")
-
-        self._idx_tab_corridor = self.tabs_main.indexOf(self._tab_corridor_panel)
+        self._idx_tab_corridor = self._add_plot_tab(self._tab_corridor_panel, "Corridors n/k")
 
         self._tab_corridor_rmse_panel = self._build_tab_corridor_rmse()
 
-        self.tabs_main.addTab(self._tab_corridor_rmse_panel, "Corridor RMSE(d)")
+        self._idx_tab_corridor_rmse = self._add_plot_tab(self._tab_corridor_rmse_panel, "Corridor RMSE(d)")
 
-        self._idx_tab_corridor_rmse = self.tabs_main.indexOf(self._tab_corridor_rmse_panel)
+        self._add_plot_tab(self._build_tab_data(), "Data")
+        self._add_plot_tab(self._build_tab_data_th(), "Data TH")
+        self._add_plot_tab(self._build_tab_data_corridor(), "Data Corridor")
 
-        self._tab_nl_panel = self._build_tab_nl()
+        self._add_plot_tab(
+            self._build_tab_log(),
+            "Log",
+            context_widget=self._add_context_page(
+                self._create_empty_context_widget("Optimization log and real-time computation diagnostics.")
+            ),
+        )
 
-        self.tabs_main.addTab(self._tab_nl_panel, "NL alpha")
-
-        self._idx_tab_nl = self.tabs_main.indexOf(self._tab_nl_panel)
-
-        self.tabs_main.addTab(self._build_tab_data(), "Data")
-        self.tabs_main.addTab(self._build_tab_data_corridor(), "Data Corridor")
-
-        self.tabs_main.addTab(self._build_tab_log(), "Log")
-
-        self.tabs_main.addTab(self._build_tab_why(), "CERTUS")
-        # Final sync pages for Log and CERTUS
-        self.context_stack.addWidget(self._create_empty_context_widget("Optimization log and real-time computation diagnostics."))
-        self.context_stack.addWidget(self._create_empty_context_widget("Scientific references and methodology for the Spline model."))
-
+        self._add_plot_tab(
+            self._build_tab_why(),
+            "CERTUS",
+            context_widget=self._add_context_page(
+                self._create_empty_context_widget("Scientific references and methodology for the Spline model.")
+            ),
+        )
 
         hdr = QWidget()
-        hdr.setStyleSheet(
-            f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};"
-        )
+        hdr.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
         hl = QHBoxLayout(hdr)
         hl.setContentsMargins(6, 2, 6, 2)
         detach_btn = create_styled_button("⬡  Detach plot", "secondary")
         detach_btn.setFixedHeight(24)
-        detach_btn.setToolTip(
-            "Clone the first plot of the active tab into a floating window (Ctrl+Shift+D on plot)."
-        )
+        detach_btn.setToolTip("Clone the first plot of the active tab into a floating window (Ctrl+Shift+D on plot).")
         detach_btn.clicked.connect(self._detach_current_plot)
         hl.addWidget(detach_btn)
         hl.addStretch(1)
@@ -8987,9 +7950,44 @@ class _UIBuilderMixin:
         vl.addWidget(self.tabs_main, 1)
         return out
 
+    def _add_context_page(self, widget: QWidget) -> QWidget:
+
+        self.context_stack.addWidget(widget)
+        self._pending_context_page = widget
+        return widget
+
+    def _consume_pending_context_page(self) -> QWidget | None:
+
+        page = getattr(self, "_pending_context_page", None)
+        self._pending_context_page = None
+        return page if isinstance(page, QWidget) else None
+
+    def _add_plot_tab(
+        self,
+        tab_widget: QWidget,
+        label: str,
+        *,
+        context_widget: QWidget | None = None,
+    ) -> int:
+
+        idx = self.tabs_main.addTab(tab_widget, label)
+        ctx = context_widget if context_widget is not None else self._consume_pending_context_page()
+        if isinstance(ctx, QWidget):
+            self._tab_context_widgets[tab_widget] = ctx
+        return idx
+
+    def _sync_context_panel_to_current_tab(self, *_args) -> None:
+
+        if not hasattr(self, "tabs_main") or not hasattr(self, "context_stack"):
+            return
+        current_tab = self.tabs_main.currentWidget()
+        if not isinstance(current_tab, QWidget):
+            return
+        ctx = getattr(self, "_tab_context_widgets", {}).get(current_tab)
+        if isinstance(ctx, QWidget):
+            self.context_stack.setCurrentWidget(ctx)
+
     def _build_corridor_labels(self, ctx_lay: "QVBoxLayout") -> None:
-
-
         """Tab for corridor profile RMSE as a function of thickness d."""
 
         panel = QWidget()
@@ -9018,13 +8016,11 @@ class _UIBuilderMixin:
         )
 
         hint = QLabel(
-
             "<b>RMSE(d) corridor profile</b> at all points calculated during profiling. "
-            "Scatter brut (sans liaison). La <b>parabole</b> est ajust?e sur l'enveloppe min-RMSE par ?paisseur.<br>"
-            "<span style='color:#ff8c00;'>&#9646;</span> = Deltad intelligent (intervalle auto du code) | "
-            "<span style='color:#7a3cff;'>&#9646;</span> = intervalle robuste local | "
-            "<span style='color:#ff4d4f;'>&#9646;</span> = s?lection manuelle."
-
+            "Raw scatter (unconnected). The <b>parabola</b> is fitted to the min-RMSE envelope by thickness.<br>"
+            "<span style='color:#ff8c00;'>&#9646;</span> = Smart Deltad (automatic interval) | "
+            "<span style='color:#7a3cff;'>&#9646;</span> = local robust interval | "
+            "<span style='color:#ff4d4f;'>&#9646;</span> = manual selection."
         )
 
         hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
@@ -9035,15 +8031,13 @@ class _UIBuilderMixin:
         self.lbl_corridor_rmse_summary.setToolTip(
             "<b>R?sum? de la qualit? (Final)</b><br>"
             "Affiche l'?paisseur optimale d* trouv?e globalement sur la grille "
-            "ainsi que le RMSE correspondant au minimum absolu."
+            "as well as the RMSE corresponding to the absolute minimum."
         )
         ctx_lay.addWidget(self.lbl_corridor_rmse_summary)
-        self.lbl_corridor_rmse_robust_compact = QLabel("Intervalle robuste: -")
-        self.lbl_corridor_rmse_robust_compact.setStyleSheet(
-            f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;"
-        )
+        self.lbl_corridor_rmse_robust_compact = QLabel("Robust interval: -")
+        self.lbl_corridor_rmse_robust_compact.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
         self.lbl_corridor_rmse_robust_compact.setToolTip(
-            "<b>Intervalle robuste (format compact)</b><br>"
+            "<b>Robust interval (compact format)</b><br>"
             "Affiche le centre et la demi-largeur sous la forme "
             "<code>xxx.xxnm +/- xxx.nm</code>."
         )
@@ -9088,26 +8082,20 @@ class _UIBuilderMixin:
         self.lbl_corridors_tab_state.setToolTip("Corridor option state in the UI for the next optimization run.")
         ctx_lay.addWidget(self.lbl_corridors_tab_state)
         ctx_lay.addStretch(1)
-        self.context_stack.addWidget(ctx_w)
+        self._add_context_page(ctx_w)
 
         panel = QWidget()
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(0, 0, 0, 0)
-        
-        self.plot_n_corridor = CertusScientificPlot(
-            title="n(lambda) + corridors", y_label="n", x_label="lambda (nm)"
-        )
+
+        self.plot_n_corridor = CertusScientificPlot(title="n(lambda) + corridors", y_label="n", x_label="lambda (nm)")
 
         self.plot_n_corridor.showGrid(x=True, y=True, alpha=0.25)
 
-        self.plot_k_corridor = CertusScientificPlot(
-
-            title="k(lambda) + corridors", y_label="k", x_label="lambda (nm)"
-
-        )
+        self.plot_k_corridor = CertusScientificPlot(title="k(lambda) + corridors", y_label="k", x_label="lambda (nm)")
 
         self.plot_k_corridor.showGrid(x=True, y=True, alpha=0.25)
-        self.plot_k_corridor.setLogMode(y=True)
+        _apply_fixed_log_k_axis(self.plot_k_corridor)
         self.plot_k_corridor._certus_crosshair_label_fn = self._k_corridor_crosshair_formatter
         self.plot_k_corridor._certus_crosshair_vertical_only = True
 
@@ -9125,11 +8113,11 @@ class _UIBuilderMixin:
 
         return panel
 
-
-
 class _CorridorExportMixin:
     """Mixin containing corridor and nk export methods."""
+
     def _ensure_complete_manifest_for_secondary_export(self) -> bool:
+
         from certus_data import get_missing_manifest_fields
 
         result = getattr(self, "_last_result", None)
@@ -9147,15 +8135,13 @@ class _CorridorExportMixin:
         return False
 
     def _export_corridor_rmse_profile_clipboard(self) -> None:
-
-        """Presse-papiers: donn?es RMSE(d), ajustement parabolique local, intervalle robuste."""
+        """Clipboard: RMSE(d) data, local parabolic fit, robust interval."""
 
         d_s = np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).ravel()
 
         r_s = np.asarray(getattr(self, "_corridor_rmse_vals", []), dtype=np.float64).ravel()
 
         if d_s.size == 0 or r_s.size != d_s.size:
-
             QMessageBox.information(self, "Export data", "No RMSE(d) curve in memory.")
 
             return
@@ -9169,13 +8155,11 @@ class _CorridorExportMixin:
         lines.append("d_nm\tRMSE")
 
         for di, ri in zip(d_s.tolist(), r_s.tolist()):
-
             lines.append(f"{float(di):.8f}\t{float(ri):.10f}")
 
         par = getattr(self, "_corridor_rmse_parab_export", None)
 
         if isinstance(par, dict) and bool(par.get("ok", False)):
-
             lines.append("# section: local_parabolic_fit (x = d - anchor_nm)")
 
             lines.append("anchor_nm\tc2\tc1\tc0\td_center_nm\td_lo_fit_nm\td_hi_fit_nm")
@@ -9185,15 +8169,11 @@ class _CorridorExportMixin:
             wlo, whi = par.get("window_nm", (float("nan"), float("nan")))
 
             lines.append(
-
                 f"{float(par.get('anchor_nm', float('nan'))):.8f}\t{float(c2):.10e}\t{float(c1):.10e}\t{float(c0):.10e}\t"
-
                 f"{float(par.get('d_center', float('nan'))):.8f}\t{float(wlo):.8f}\t{float(whi):.8f}"
-
             )
 
         else:
-
             lines.append("# section: local_parabolic_fit")
 
             lines.append("# (unavailable ? need ?5 local points for convex quadratic fit)")
@@ -9201,17 +8181,13 @@ class _CorridorExportMixin:
         rb = getattr(self, "_corridor_rmse_robust_export", None)
 
         if isinstance(rb, dict) and bool(rb.get("ok", False)):
-
             lines.append("# section: robust_interval (from local quadratic + Delta RMSE)")
 
             lines.append("d_lo_nm\td_hi_nm\tslope_at_dstar_per_nm\tcurvature_c2")
 
             lines.append(
-
                 f"{float(rb.get('d_lo', float('nan'))):.8f}\t{float(rb.get('d_hi', float('nan'))):.8f}\t"
-
                 f"{float(rb.get('slope', float('nan'))):.10e}\t{float(rb.get('curvature', float('nan'))):.10e}"
-
             )
 
         else:
@@ -9247,7 +8223,8 @@ class _CorridorExportMixin:
             lines.append("# section: breakpoint_events")
             lines.append("d_nm\ttrigger\tbranch_dir")
             for ev in bp_ev:
-                if not isinstance(ev, dict): continue
+                if not isinstance(ev, dict):
+                    continue
                 _db = float(ev.get("d_break_nm", float("nan")))
                 _tr = "parabola" if float(ev.get("trigger_parabola", 0)) > 0.5 else "prevN"
                 _dir = "right" if float(ev.get("branch_dir_sign", 0)) > 0 else "left"
@@ -9261,7 +8238,6 @@ class _CorridorExportMixin:
         cb = QApplication.clipboard()
 
         if cb is None:
-
             QMessageBox.warning(self, "Export data", "Clipboard unavailable.")
 
             return
@@ -9269,12 +8245,10 @@ class _CorridorExportMixin:
         cb.setText(txt)
 
         if hasattr(self, "lbl_status"):
-
             self.lbl_status.setText("RMSE(d) profile + parabola + robust interval copied to clipboard (TSV).")
 
     def _export_corridor_rmse_envelope_nk_excel(self) -> None:
-
-        """Export Excel: 2 feuilles (n, k) pour les points d enveloppe RMSE(d), sur grilles 2/5/10 nm."""
+        """Excel Export: 2 sheets (n, k) for RMSE(d) envelope points, on 2/5/10 nm grids."""
         if not self._ensure_complete_manifest_for_secondary_export():
             return
 
@@ -9283,7 +8257,6 @@ class _CorridorExportMixin:
         display = self._last_result if isinstance(self._last_result, dict) else {}
 
         if not isinstance(source, dict):
-
             QMessageBox.information(self, "Export enveloppe n/k", "No RMSE(d) source data available.")
 
             return
@@ -9297,7 +8270,6 @@ class _CorridorExportMixin:
         k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
 
         if d_vals.size == 0 or r_vals.size != d_vals.size or n_curves.ndim != 2 or k_curves.ndim != 2:
-
             QMessageBox.information(
                 self,
                 "Export enveloppe n/k",
@@ -9307,7 +8279,6 @@ class _CorridorExportMixin:
             return
 
         if n_curves.shape[0] != d_vals.size or k_curves.shape != n_curves.shape or n_curves.shape[1] == 0:
-
             QMessageBox.information(
                 self,
                 "Export enveloppe n/k",
@@ -9319,13 +8290,11 @@ class _CorridorExportMixin:
         lam_ref = np.asarray(source.get("lam_nm", display.get("lam_nm", [])), dtype=np.float64).ravel()
 
         if lam_ref.size != n_curves.shape[1]:
-
             alt_lam = np.asarray(display.get("lam_nm", []), dtype=np.float64).ravel()
 
             lam_ref = alt_lam if alt_lam.size == n_curves.shape[1] else lam_ref
 
         if lam_ref.size != n_curves.shape[1]:
-
             QMessageBox.information(
                 self,
                 "Export enveloppe n/k",
@@ -9337,7 +8306,6 @@ class _CorridorExportMixin:
         m = np.isfinite(d_vals) & np.isfinite(r_vals)
 
         if not np.any(m):
-
             QMessageBox.information(self, "Export enveloppe n/k", "No finite RMSE(d) points available.")
 
             return
@@ -9371,7 +8339,6 @@ class _CorridorExportMixin:
         env_mask = _rmse_d_lower_envelope_mask(d_work, r_work, tol_nm)
 
         if not np.any(env_mask):
-
             QMessageBox.information(self, "Export enveloppe n/k", "No envelope points selected.")
 
             return
@@ -9387,7 +8354,6 @@ class _CorridorExportMixin:
         ok_lam = np.isfinite(lam_ref)
 
         if int(np.sum(ok_lam)) < 2:
-
             QMessageBox.information(self, "Export enveloppe n/k", "Not enough finite wavelength points.")
 
             return
@@ -9411,7 +8377,6 @@ class _CorridorExportMixin:
         lam_max = float(np.nanmax(lam_use))
 
         if not np.isfinite(lam_min) or not np.isfinite(lam_max) or lam_max <= lam_min:
-
             QMessageBox.information(self, "Export enveloppe n/k", "Invalid wavelength interval.")
 
             return
@@ -9422,7 +8387,7 @@ class _CorridorExportMixin:
 
         out_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Export enveloppe n/k (Excel)",
+            "Export n/k envelope (Excel)",
             out_default,
             "Excel Workbook (*.xlsx);;All Files (*.*)",
         )
@@ -9485,7 +8450,6 @@ class _CorridorExportMixin:
         df_k = pd.DataFrame(cols_k)
 
         if df_n.empty or df_k.empty:
-
             QMessageBox.information(self, "Export enveloppe n/k", "No data to export.")
 
             return
@@ -9512,13 +8476,9 @@ class _CorridorExportMixin:
             return
 
         if hasattr(self, "lbl_status"):
-
-            self.lbl_status.setText(
-                f"RMSE(d) envelope n/k exported: {out_path}"
-            )
+            self.lbl_status.setText(f"RMSE(d) envelope n/k exported: {out_path}")
 
         if self.logger:
-
             self.logger.info(
                 "GUI RMSE(d) envelope n/k export (xlsx) | path=%s | envelope_points=%d | lambda_range=[%.6f, %.6f] nm | sheets=[n,k] | grids=[2,5,10] nm",
                 str(out_path),
@@ -9532,7 +8492,6 @@ class _CorridorExportMixin:
             return
 
         if self._last_result is None:
-
             QMessageBox.warning(self, "Export", "No result to export.")
 
             return
@@ -9540,73 +8499,46 @@ class _CorridorExportMixin:
         start_dir = get_certus_last_dir()
 
         if not start_dir or not Path(start_dir).is_dir():
-
             start_dir = str(_SCRIPT_DIR)
 
         suggested = str(Path(start_dir) / "certus_index_spline_nk.csv")
 
         path, _ = QFileDialog.getSaveFileName(
-
             self,
-
             "Export indices",
-
             suggested,
-
             "CSV (*.csv);;All (*.*)",
-
         )
 
         if not path:
-
             return
 
         ser = self._prepare_nk_data_tab_series(self._last_result)
 
         if ser is None:
-
             QMessageBox.warning(self, "Export", "Empty grid.")
 
             return
 
         (
-
             lam_g,
-
             n_g,
-
             k_g,
-
             n_nl_g,
-
             k_nl_g,
-
             n_lo_g,
-
             n_hi_g,
-
             k_lo_g,
-
             k_hi_g,
-
         ) = ser
 
         m = int(lam_g.size)
 
         try:
-
             with open(path, "w", encoding="utf-8") as fh:
-
-                fh.write(
-
-                    "lambda_nm,n,n_alpha,n_envelope_min,n_envelope_max,"
-
-                    "k,k_alpha,k_envelope_min,k_envelope_max\n"
-
-                )
+                fh.write("lambda_nm,n,n_alpha,n_envelope_min,n_envelope_max,k,k_alpha,k_envelope_min,k_envelope_max\n")
 
                 for i in range(m):
-
                     line = f"{float(lam_g[i]):.4f},"
 
                     line += self._fmt_n_data_tab(float(n_g[i])) + ","
@@ -9632,12 +8564,11 @@ class _CorridorExportMixin:
             self.lbl_status.setText(f"CSV saved: {path}")
 
         except OSError as e:
-
             QMessageBox.critical(self, "Export", str(e))
-
 
 class _RunMixin:
     """Mixin containing optimization run logic, live update and result plotting."""
+
     def _on_run(self) -> None:
 
         # Reinitialisation de la securite retour de dialog
@@ -9647,110 +8578,65 @@ class _RunMixin:
         cfg = self._build_opt_config()
 
         if cfg is None:
-
             return
 
         cfg.gui_run_pglobal_opt_in = False
 
         cfg.spline_local_only = True
 
-        if self.logger:
+        if hasattr(self, "_stepper"):
+            self._stepper.set_step(4)
 
+        if self.logger:
             self.logger.info("RUN local policy | spline_local_only=True")
 
         t_run_cfg = time.perf_counter()
 
         if self.logger:
-
             self.logger.info(
-
-                "RUN config | n_seg=%s d=[%.2f,%.2f] wt=%.3f wr=%.3f profile=%s nk_interp=%s local_only=%s polish=%s sol3_p1=%s mono=%s n_lambda_rise_slack=%.4f",
-
+                "RUN config | n_seg=%s d=[%.2f,%.2f] wt=%.3f wr=%.3f profile=%s nk_interp=%s local_only=%s polish=%s mono=%s n_lambda_rise_slack=%.4f",
                 int(cfg.n_seg),
-
                 float(cfg.d_lo),
-
                 float(cfg.d_hi),
-
                 float(cfg.weight_t),
-
                 float(cfg.weight_r),
-
                 str(self.cb_profilee.currentData() or "fast"),
-
                 str(cfg.nk_profile_interp),
-
                 bool(cfg.spline_local_only),
-
                 int(cfg.polish_maxfun),
-
-                int(sol3_phase1_maxfun_effective(cfg)),
-
                 cfg.n_mono_band_nm,
-
                 float(getattr(cfg, "n_lambda_rising_penalty_slack", 0.0) or 0.0),
-
             )
 
             log_structured_json_event(
-
                 self.logger,
-
                 "AUTO_BEST_JSON",
-
                 "run_config",
-
                 n_seg=int(cfg.n_seg),
-
                 d_lo=float(cfg.d_lo),
-
                 d_hi=float(cfg.d_hi),
-
                 wt=float(cfg.weight_t),
-
                 wr=float(cfg.weight_r),
-
                 profile=str(self.cb_profilee.currentData() or "fast"),
-
                 nk_profile_interp=str(cfg.nk_profile_interp),
-
                 pg_iter=int(cfg.pglobal_max_iter),
-
                 pg_feval=cfg.pglobal_max_feval,
-
                 pg_time=cfg.pglobal_max_time,
-
                 pg_local=cfg.pglobal_local_search_budget,
-
                 polish=int(cfg.polish_maxfun),
-
-                sol3_phase1_maxfun=int(sol3_phase1_maxfun_effective(cfg)),
-
-                sol3_phase1_maxfun_raw=cfg.sol3_phase1_maxfun,
-
                 n_mono_band=cfg.n_mono_band_nm,
-
-                n_lambda_rising_slack=float(
-
-                    getattr(cfg, "n_lambda_rising_penalty_slack", 0.0) or 0.0
-
-                ),
-
+                n_lambda_rising_slack=float(getattr(cfg, "n_lambda_rising_penalty_slack", 0.0) or 0.0),
             )
 
         # Toujours forcer le mode Smart Init en "Auto-Best"
 
         if getattr(self, "_auto_best_force_smart_init", True):
-
             if self.logger:
-
                 self.logger.info("Auto-Best: Smart Init dialog interception active.")
 
         self._save_undo_state()
 
-        self._stop_event = Event()
-
-        self._cleanup_thread()
+        CertusIndexSplineApp._prepare_worker_restart(self)
 
         reset_smart_init_preview_guard(cfg)
 
@@ -9777,30 +8663,18 @@ class _RunMixin:
         cfg_run = cfg.replace(smart_init_preview_hook=self._smart_init_preview_hook)
 
         if self.logger:
-
             self.logger.info(
-
                 "RUN SmartInit hook | cfg_run.smart_init_preview_hook=%s | preview_shown=%s | thread=%s",
-
                 "set" if getattr(cfg_run, "smart_init_preview_hook", None) is not None else "none",
-
                 bool(getattr(cfg_run, "smart_init_preview_shown", False)),
-
                 type(QThread.currentThread()).__name__,
-
             )
 
         setattr(
-
             cfg_run,
-
             "gui_defer_corridor_profile_after_nl",
-
             bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()),
-
         )
-
-        setattr(cfg_run, "gui_use_nl_alpha_for_corridors", False)
 
         self._last_run_cfg = cfg_run
 
@@ -9809,28 +8683,25 @@ class _RunMixin:
         # On les transfere manuallement pour que le worker voie l'injection manualle.
 
         for _attr in (
-
             "smart_preview_node_override",
-
             "smart_preview_exact_sigma_knots",
-
             "smart_preview_exact_n_L",
-
             "smart_preview_d_nm_override",
-
             "smart_preview_accepted_rmse",
-
             "spline_local_only",
-
             "smart_init_manual_force_restart",
-
             "gui_run_pglobal_opt_in",
-
         ):
-
             if hasattr(cfg, _attr):
-
                 setattr(cfg_run, _attr, getattr(cfg, _attr))
+
+        if self.logger:
+            log_index_spline_d_trace(
+                self.logger,
+                "GUI: launching main worker (before SOL2)",
+                None,
+                detail=f"d bornes exploration cfg [{float(cfg_run.d_lo):.4f}, {float(cfg_run.d_hi):.4f}] nm",
+            )
 
         self._worker = GenericWorker(worker_spline_optimization, cfg_run, self._stop_event)
 
@@ -9856,6 +8727,8 @@ class _RunMixin:
 
         self.btn_stop.setEnabled(True)
 
+        self._refresh_post_optimization_option_controls()
+
         self._prog_ui_last = 0
 
         self._prog_reset_bar()
@@ -9863,8 +8736,11 @@ class _RunMixin:
         # live_cb / _on_live_update : une seule connexion (?vite double _plot_result ? UI qui ? g?le ?).
 
         if self.logger:
-
-            self.logger.info("RUN dispatch worker=%s prep_elapsed=%.3fs", getattr(self._worker.func, "__name__", "?"), time.perf_counter() - t_run_cfg)
+            self.logger.info(
+                "RUN dispatch worker=%s prep_elapsed=%.3fs",
+                getattr(self._worker.func, "__name__", "?"),
+                time.perf_counter() - t_run_cfg,
+            )
 
         # one-shot gate: force smart init by default next time too (or rely on the fact it's permanent for auto-best)
 
@@ -9874,10 +8750,14 @@ class _RunMixin:
         install_skeleton(self.tabs_main, label="Optimizing Spline Model...")
 
     def _on_live_update(self, result: dict) -> None:
-
         """Refresh during calculation: graphs = always the best RMSE snapshot (copied arrays)."""
 
-        if not isinstance(result, dict) or "lam_nm" not in result:
+        if not isinstance(result, dict):
+            return
+
+        if "lam_nm" not in result:
+            if "profile_d_values_nm" in result:
+                self._on_corridor_rmse_grid_live_update(result)
 
             return
 
@@ -9889,82 +8769,51 @@ class _RunMixin:
 
         improved = False
 
-        if np.isfinite(current_rmse) and (
-
-            self._best_live_result is None or current_rmse < self._best_live_rmse
-
-        ):
-
+        if np.isfinite(current_rmse) and (self._best_live_result is None or current_rmse < self._best_live_rmse):
             self._best_live_rmse = current_rmse
 
             self._best_live_result = _snap_spline_visual_dict(result)
 
             improved = True
 
-        to_plot = (
-
-            self._best_live_result
-
-            if self._best_live_result is not None
-
-            else _snap_spline_visual_dict(result)
-
-        )
+        to_plot = self._best_live_result if self._best_live_result is not None else _snap_spline_visual_dict(result)
 
         now = time.monotonic()
 
         remind = (now - self._last_live_log_mono) >= self._LIVE_LOG_REMINDER_S
 
         if self.logger and self._best_live_result is not None and np.isfinite(self._best_live_rmse):
-
             if improved:
-
                 self._last_live_log_mono = now
 
                 abs_gain = float(prev_best_rmse - float(current_rmse))
 
                 if not had_prior_best_snapshot or not np.isfinite(prev_best_rmse):
-
                     log_best_detail = True
 
                 else:
-
                     min_step = max(
-
                         float(self._LIVE_BEST_DETAIL_MIN_ABS),
-
                         float(self._LIVE_BEST_DETAIL_MIN_REL) * max(float(prev_best_rmse), 1e-12),
-
                     )
 
                     log_best_detail = bool(
-
                         abs_gain >= min_step
-
                         or (now - float(self._live_best_detail_log_mono))
-
                         >= float(self._LIVE_BEST_DETAIL_MIN_INTERVAL_S)
-
                     )
 
                 if log_best_detail:
-
                     self._live_best_detail_log_mono = now
 
                     _log_index_spline_best_config(
-
                         self.logger,
-
                         self._best_live_result,
-
                         float(self._best_live_rmse),
-
-                        title="[BEST RMSE  new record]",
-
+                        title="[BEST RMSE  live run record]",
                     )
 
             elif remind:
-
                 self._last_live_log_mono = now
 
                 sk = self._best_live_result.get("sigma_knots")
@@ -9974,25 +8823,18 @@ class _RunMixin:
                 d_nm = float(self._best_live_result.get("d_nm", float("nan")))
 
                 self.logger.info(
-
                     "[BEST DISPLAYED] reminder (~%.0f s) RMSE=%.6f | d_nm=%.2f | K_sigma=%d (detail: last record above)",
-
                     float(self._LIVE_LOG_REMINDER_S),
-
                     float(self._best_live_rmse),
-
                     d_nm,
-
                     k_sigma,
-
                 )
 
-        self._plot_result(to_plot)
+        self._plot_result(to_plot, plot_source="live")
 
         self._refresh_data_table(result_override=to_plot)
 
         try:
-
             lam_u = np.asarray(to_plot.get("lam_nm", []), dtype=np.float64).ravel()
 
             n_u = np.asarray(to_plot.get("n_lam", []), dtype=np.float64).ravel()
@@ -10000,15 +8842,9 @@ class _RunMixin:
             k_u = np.asarray(to_plot.get("k_lam", []), dtype=np.float64).ravel()
 
             if lam_u.size and n_u.size == lam_u.size and k_u.size == lam_u.size:
-
-                self._update_persistent_nk_monitor(
-
-                    lam_u, n_u, k_u, float(to_plot.get("d_nm", float("nan")))
-
-                )
+                self._update_persistent_nk_monitor(lam_u, n_u, k_u, float(to_plot.get("d_nm", float("nan"))))
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             logger.debug("nk monitor update in _on_live_update failed", exc_info=True)
 
     def _start_auto_best_second_stage(self) -> None:
@@ -10018,7 +8854,6 @@ class _RunMixin:
         self._auto_best_second_stage_pending = None
 
         if not isinstance(pend, dict):
-
             return
 
         seed = pend.get("seed")
@@ -10026,24 +8861,16 @@ class _RunMixin:
         cfg2 = pend.get("cfg")
 
         if not isinstance(seed, dict) or cfg2 is None:
-
             return
 
         if self.logger:
-
             self.logger.info(
-
                 "AUTO_BEST stage2 start | seed_rmse=%.6f seed_d=%.4f",
-
                 float(np.sqrt(max(float(seed.get("mse", 0.0)), 0.0))),
-
                 float(seed.get("d_nm", float("nan"))),
-
             )
 
-        self._stop_event = Event()
-
-        self._cleanup_thread()
+        CertusIndexSplineApp._prepare_worker_restart(self)
 
         self._best_live_rmse = float("inf")
 
@@ -10056,15 +8883,10 @@ class _RunMixin:
         self._live_best_detail_log_mono = 0.0
 
         self._worker = GenericWorker(
-
             worker_auto_best_split_knot_refinement,
-
             seed,
-
             cfg2,
-
             self._stop_event,
-
         )
 
         _wsig_ab = self._worker.signals
@@ -10097,13 +8919,15 @@ class _RunMixin:
 
         self.btn_stop.setEnabled(True)
 
+        self._refresh_post_optimization_option_controls()
+
         self._prog_ui_last = 0
 
         self._prog_reset_bar()
 
         self._worker.start()
 
-    def _plot_result(self, r: dict) -> None:
+    def _plot_result(self, r: dict, *, plot_source: str = "maj") -> None:
 
         lam0_src = r.get("lam_nm")
         if lam0_src is None and self.df is not None and "lambda" in self.df.columns:
@@ -10112,9 +8936,10 @@ class _RunMixin:
                 self.logger.warning("_plot_result: missing lam_nm in result; fallback to experimental lambda grid.")
         lam0 = np.asarray(lam0_src if lam0_src is not None else [], dtype=np.float64).ravel()
         if lam0.size == 0:
-            self.lbl_status.setText("Aucun lambda disponible pour tracer le r?sultat.")
+            self.lbl_status.setText("Aucun lambda disponible pour tracer le resultat.")
             if self.logger:
                 self.logger.error("_plot_result aborted: lam_nm unavailable after fallback.")
+            self._spectrum_clear_theory_probe()
             return
 
         tt0 = np.asarray(r["t_theo"], dtype=np.float64).ravel()
@@ -10126,25 +8951,17 @@ class _RunMixin:
         lam_exp: np.ndarray | None = None
 
         if self.df is not None and "lambda" in self.df.columns:
-
             lam_exp = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
 
         plot_r_model = (
-
             r.get("r_theo") is not None
-
             and self.df is not None
-
             and "R" in self.df.columns
-
             and lam_exp is not None
-
             and lam_exp.size > 0
-
         )
 
         if plot_r_model:
-
             rt0 = np.asarray(r["r_theo"], dtype=np.float64).ravel()
 
             lam_s, pack, order = _spectral_display_align(lam0, tt0, n0, k0, rt0)
@@ -10152,7 +8969,6 @@ class _RunMixin:
             tt_s, n_s, k_s, rt_s = pack[0], pack[1], pack[2], pack[3]
 
         else:
-
             lam_s, pack, order = _spectral_display_align(lam0, tt0, n0, k0)
 
             tt_s, n_s, k_s = pack[0], pack[1], pack[2]
@@ -10160,6 +8976,13 @@ class _RunMixin:
             rt_s = None
 
         x_mod, x_lbl = self._transform_spectrum_x(lam_s)
+
+        self._spectrum_theory_probe_lam_nm = np.asarray(lam_s, dtype=np.float64).ravel().copy()
+        self._spectrum_theory_probe_n = np.asarray(n_s, dtype=np.float64).ravel().copy()
+        self._spectrum_theory_probe_k = np.asarray(k_s, dtype=np.float64).ravel().copy()
+        self._spectrum_theory_probe_tt = np.asarray(tt_s, dtype=np.float64).ravel().copy()
+        self._spectrum_theory_probe_rt = np.asarray(rt_s, dtype=np.float64).ravel().copy() if rt_s is not None else None
+        self._spectrum_theory_probe_d_nm = float(r.get("d_nm", float("nan")))
 
         self.plot_T.clear()
 
@@ -10170,13 +8993,9 @@ class _RunMixin:
         x_exp: np.ndarray | None = None
 
         if lam_exp is not None and lam_exp.size:
-
             x_exp, _ = self._transform_spectrum_x(lam_exp)
 
-        logger.debug("plot result: model_lambda=%d points d=%s", lam_s.size, r.get("d_nm"))
-
         if self.df is not None and "T" in self.df.columns and lam_exp is not None and lam_exp.size:
-
             ye_raw = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
 
             ye = ye_raw
@@ -10189,8 +9008,21 @@ class _RunMixin:
 
         self._add_curve(self.plot_T, x_mod, tt_s, CertusTheme.PRIMARY, nm)
 
-        if plot_r_model and rt_s is not None:
+        sigma_knots = np.asarray(r.get("sigma_knots", []), dtype=np.float64).ravel()
+        if sigma_knots.size:
+            lam_k_t, tt_k = _interp_series_at_sigma_knots(lam_s, tt_s, sigma_knots)
+            if lam_k_t.size:
+                x_k_t, _ = self._transform_spectrum_x(lam_k_t)
+                _plot_spectrum_raw_scatter(
+                    self.plot_T,
+                    x_k_t,
+                    tt_k,
+                    color=CertusTheme.PRIMARY,
+                    name="T model knots",
+                    symbol_size=11,
+                )
 
+        if plot_r_model and rt_s is not None:
             ye_raw = _to_fraction_T(self.df["R"].to_numpy(dtype=np.float64))
 
             ye = ye_raw
@@ -10202,6 +9034,19 @@ class _RunMixin:
             r_nm = "R/Tsub model" if bool(r.get("t_is_ratio", False)) else "R model"
 
             self._add_curve(self.plot_T, x_mod, rt_s, CertusTheme.SECONDARY, r_nm)
+
+            if sigma_knots.size:
+                lam_k_r, rt_k = _interp_series_at_sigma_knots(lam_s, rt_s, sigma_knots)
+                if lam_k_r.size:
+                    x_k_r, _ = self._transform_spectrum_x(lam_k_r)
+                    _plot_spectrum_raw_scatter(
+                        self.plot_T,
+                        x_k_r,
+                        rt_k,
+                        color=CertusTheme.SECONDARY,
+                        name="R model knots",
+                        symbol_size=11,
+                    )
 
         lk = np.full(k_s.shape, np.nan, dtype=np.float64)
 
@@ -10217,38 +9062,35 @@ class _RunMixin:
 
         self._plot_corridor_rmse_tab(r)
 
-        self._plot_nl_tab(r, lam_s, n_s, k_s)
-
         d_nm = float(r.get("d_nm", float("nan")))
 
         d_txt = f"d = {d_nm:.1f} nm" if np.isfinite(d_nm) else "d = "
 
         try:
-
             self.plot_n.plotItem.setTitle(f"n(lambda)  {d_txt}", color=CertusTheme.PRIMARY, size="10pt")
 
             self.plot_k.plotItem.setTitle(f"k(lambda)  {d_txt}", color=CertusTheme.PRIMARY, size="10pt")
 
         except (AttributeError, RuntimeError):
-
             logger.debug("Index plot title set failed", exc_info=True)
 
         self.plot_T.autoRange()
 
         self._apply_spectrum_x_axis_label(x_lbl)
 
+        y_spec = tt_s if rt_s is None else np.concatenate([tt_s, rt_s])
+        _add_spectrum_thickness_badge(self.plot_T, x_mod, y_spec, d_nm)
+
         self.plot_n.autoRange()
 
-        self.plot_k.autoRange()
+        _apply_fixed_log_k_axis(self.plot_k)
 
         if lam0.size > 0:
-
             span_lo = float(np.nanmin(lam0))
 
             span_hi = float(np.nanmax(lam0))
 
             if np.isfinite(span_lo) and np.isfinite(span_hi) and span_hi > span_lo:
-
                 pad = 0.02 * (span_hi - span_lo)
 
                 self.plot_n.plotItem.setXRange(span_lo - pad, span_hi + pad, padding=0.0)
@@ -10258,6 +9100,26 @@ class _RunMixin:
         self._apply_spectrum_plot_title(r)
 
         self._update_rmse_fit_region_overlay()
+
+        _log_tgt = self.logger if self.logger is not None else logger
+        try:
+            _rm_log = float(r.get("rmse", float("nan")))
+            if not np.isfinite(_rm_log):
+                _rm_log = float(np.sqrt(max(float(r.get("mse", 0.0)), 0.0)))
+        except (TypeError, ValueError):
+            _rm_log = float("nan")
+        _rm_s = f"{_rm_log:.8f}" if np.isfinite(_rm_log) else "n/a"
+        _d_log = float(d_nm)
+        _d_s = f"{_d_log:.4f}" if np.isfinite(_d_log) else "n/a"
+        _corridor_pts = int(np.asarray(r.get("profile_d_values_nm", []), dtype=np.float64).size)
+        _msg = (
+            f"INDEX_SPLINE [GRAPHIQUES] {plot_source} | spectral T/R+n,k (+ onglets corridor/NL selon données) "
+            f"| lam_pts={int(lam_s.size)} exp_pts={str(int(lam_exp.size)) if lam_exp is not None and lam_exp.size else '0'} abs={x_lbl} | d_nm={_d_s} rmse={_rm_s} | R_couche={bool(plot_r_model)} K_sigma={int(sigma_knots.size)} | profil_corridoir_d={_corridor_pts}pts"
+        )
+        if plot_source == "live":
+            _log_tgt.debug("%s", _msg)
+        else:
+            _log_tgt.info("%s", _msg)
 
         # Auto-refresh corridor RMSE profile window if open
         win = getattr(self, "_corridor_rmse_profile_win", None)
@@ -10269,11 +9131,9 @@ class _RunMixin:
                 win.update_profile(d_prof, r_prof, rmse_thresh)
 
     def _log_optimization_header(self, cfg: SplineOptConfig) -> None:
-
         """Startup INFO block (CERTUS_INDEX+ detail: context + displayed RMSE reminder)."""
 
         if not self.logger:
-
             return
 
         lam = np.asarray(cfg.lam_nm, dtype=np.float64)
@@ -10281,19 +9141,13 @@ class _RunMixin:
         npt = int(lam.size)
 
         if npt:
-
             l0, l1 = float(np.nanmin(lam)), float(np.nanmax(lam))
 
         else:
-
             l0 = l1 = float("nan")
 
-        path_hint = (
-
-            getattr(self, "_last_spectrum_path", "").strip()
-
-            or (str(self.lbl_file.text()).strip() if hasattr(self, "lbl_file") else "")
-
+        path_hint = getattr(self, "_last_spectrum_path", "").strip() or (
+            str(self.lbl_file.text()).strip() if hasattr(self, "lbl_file") else ""
         )
 
         dt_name = cfg.data_type.name if hasattr(cfg.data_type, "name") else str(cfg.data_type)
@@ -10303,63 +9157,39 @@ class _RunMixin:
         self.logger.info("Spectrum: %s", path_hint or "(unknown path)")
 
         self.logger.info(
-
             "substrate: %s | lambda [%g, %g] nm | %d points | substrate-normalized T: %s",
-
             cfg.substrate_name,
-
             l0,
-
             l1,
-
             npt,
-
             cfg.t_is_ratio,
-
         )
 
         self.logger.info(
-
             "Target: %s | weights wT=%.4g wR=%.4g | spectral quadrature: ln lambda (trapezoids, no cap)",
-
             dt_name,
-
             cfg.weight_t,
-
             cfg.weight_r,
-
         )
 
         self.logger.info(
-
-            "d  [%.2f, %.2f] nm | segments sur maillage sigma (n_seg)=%d",
-
+            "d  [%.2f, %.2f] nm | segments on sigma mesh (n_seg)=%d",
             cfg.d_lo,
-
             cfg.d_hi,
-
             cfg.n_seg,
-
         )
 
         if cfg.n_mono_band_nm is not None:
-
             a, b = float(cfg.n_mono_band_nm[0]), float(cfg.n_mono_band_nm[1])
 
             self.logger.info(
-
-            "n(sigma) monotonicity on segments intersecting lambda[%.0f, %.0f] nm | continuous-law penalty w=%.4g",
-
+                "n(sigma) monotonicity on segments intersecting lambda[%.0f, %.0f] nm | continuous-law penalty w=%.4g",
                 min(a, b),
-
                 max(a, b),
-
                 float(cfg.n_mono_continuous_penalty),
-
             )
 
         else:
-
             self.logger.info("n(sigma) monotonicity on fixed band: disabled")
 
         w_nlam = float(getattr(cfg, "n_lambda_rising_penalty_weight", 0.0) or 0.0)
@@ -10367,60 +9197,36 @@ class _RunMixin:
         band_nlam = getattr(cfg, "n_lambda_rising_penalty_band_nm", None)
 
         if w_nlam > 0.0 and band_nlam is not None:
-
             b0, b1 = float(band_nlam[0]), float(band_nlam[1])
 
             self.logger.info(
-
                 "n increasing with lambda forbidden (segments sigma ? lambda[%.0f, %.0f] nm) | penalty w=%.4g",
-
                 min(b0, b1),
-
                 max(b0, b1),
-
                 w_nlam,
-
             )
 
         else:
-
             self.logger.info("Penalty for increasing n(lambda): disabled (w=0 or band None)")
 
         n_fit = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
 
         if cfg.rmse_fit_lambda_nm is not None:
-
             rl0, rl1 = float(cfg.rmse_fit_lambda_nm[0]), float(cfg.rmse_fit_lambda_nm[1])
 
             self.logger.info(
-
                 "RMSE fit lambda: [%.4g, %.4g] nm (%d points)",
-
                 min(rl0, rl1),
-
                 max(rl0, rl1),
-
                 n_fit,
-
             )
 
         else:
-
             self.logger.info("RMSE fit lambda: full spectrum (%d objective points)", n_fit)
 
         self.logger.info("Local optimizer: polish maxfun=%d", cfg.polish_maxfun)
 
-        self.logger.info(
-
-            "SOL3: L-BFGS-B phase 1 maxfun=%d (effective; UI sol3_phase1_maxfun=%s)",
-
-            int(sol3_phase1_maxfun_effective(cfg)),
-
-            getattr(cfg, "sol3_phase1_maxfun", None),
-
-        )
-
-        self.logger.info("substrate: no Deltan_sub refinement (substrat nominal).")
+        self.logger.info("substrate: no Deltan_sub refinement (nominal substrate).")
 
         prof = str(self.cb_profilee.currentData() or "fast") if hasattr(self, "cb_profilee") else "fast"
 
@@ -10429,33 +9235,29 @@ class _RunMixin:
         self.logger.info("Auto-Ksigma: disabled (K fixed to n_seg+1 initial knots)")
 
         self.logger.info(
-
             "[Reminder] During optimization, live snapshots follow the best RMSE seen at that moment. "
-
             "At the end, rmse/mse in the dict may reflect final indices (cubic spline polish in sigma) "
-
             "- compare to pipeline_best_rmse_watermark if needed. Curves on screen = n_lam/k_lam from final dict."
-
         )
-
 
 class _DataMixin:
     """Mixin containing data table and nk data preparation methods."""
+
     def _prepare_nk_data_tab_series(
-
         self, r: dict[str, Any]
-
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None:
-
+    ) -> (
+        tuple[
+            np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+        ]
+        | None
+    ):
         """n/k series (and NL, envelopes) interpolated on piecewise lambda grid."""
 
         lam_src = r.get("lam_nm")
         if lam_src is None and self.df is not None and "lambda" in self.df.columns:
             lam_src = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
             if self.logger:
-                self.logger.warning(
-                    "Data tab n/k: missing lam_nm in result; fallback to experimental lambda grid."
-                )
+                self.logger.warning("Data tab n/k: missing lam_nm in result; fallback to experimental lambda grid.")
         lam = np.asarray(lam_src if lam_src is not None else [], dtype=np.float64).ravel()
 
         n_ = np.asarray(r["n_lam"], dtype=np.float64).ravel()
@@ -10465,7 +9267,6 @@ class _DataMixin:
         m0 = int(min(lam.size, n_.size, k_.size))
 
         if m0 <= 0:
-
             return None
 
         order = np.argsort(lam[:m0], kind="mergesort")
@@ -10479,7 +9280,6 @@ class _DataMixin:
         fg = np.isfinite(ls)
 
         if not np.any(fg):
-
             return None
 
         lo = float(np.nanmin(ls[fg]))
@@ -10489,7 +9289,6 @@ class _DataMixin:
         lam_g = self._lam_piecewise_report_grid_nm(lo, hi)
 
         if lam_g.size == 0:
-
             return None
 
         n_g = np.interp(lam_g, ls, ns, left=np.nan, right=np.nan)
@@ -10504,26 +9303,6 @@ class _DataMixin:
 
         k_nl_g = np.full_like(lam_g, np.nan)
 
-        n_nl = r.get("n_lam_nl")
-
-        k_nl = r.get("k_lam_nl")
-
-        if n_nl is not None and k_nl is not None:
-
-            nn = np.asarray(n_nl, dtype=np.float64).ravel()
-
-            kn = np.asarray(k_nl, dtype=np.float64).ravel()
-
-            if nn.size >= m and kn.size >= m:
-
-                nn_s = nn[:m][order]
-
-                kn_s = kn[:m][order]
-
-                n_nl_g = np.interp(lam_g, ls, nn_s, left=np.nan, right=np.nan)
-
-                k_nl_g = np.interp(lam_g, ls, kn_s, left=np.nan, right=np.nan)
-
         n_lo_g = np.full_like(lam_g, np.nan)
 
         n_hi_g = np.full_like(lam_g, np.nan)
@@ -10533,7 +9312,6 @@ class _DataMixin:
         k_hi_g = np.full_like(lam_g, np.nan)
 
         if bool(r.get("profile_d_enabled", False)) or bool(r.get("manual_corridor_active", False)):
-
             cn_lo = np.asarray(r.get("corridor_n_lo", []), dtype=np.float64).ravel()
 
             cn_hi = np.asarray(r.get("corridor_n_hi", []), dtype=np.float64).ravel()
@@ -10544,35 +9322,229 @@ class _DataMixin:
 
             lsz = lam_full.size
 
-            if (
-
-                cn_lo.size == lsz
-
-                and cn_hi.size == lsz
-
-                and ck_lo.size == lsz
-
-                and ck_hi.size == lsz
-
-            ):
-
+            if cn_lo.size == lsz and cn_hi.size == lsz and ck_lo.size == lsz and ck_hi.size == lsz:
                 n_lo_g = np.interp(lam_g, ls, cn_lo[:m][order], left=np.nan, right=np.nan)
 
                 n_hi_g = np.interp(lam_g, ls, cn_hi[:m][order], left=np.nan, right=np.nan)
                 k_lo_g = np.interp(lam_g, ls, ck_lo[:m][order], left=np.nan, right=np.nan)
                 k_hi_g = np.interp(lam_g, ls, ck_hi[:m][order], left=np.nan, right=np.nan)
-                
+
                 # ENFORCE CONSISTENCY with Plots and Detailed Corridor Tab
-                k_lo_g, k_hi_g, _ = enforce_min_k_corridor_half_width(
-                    k_lo_g, k_hi_g, k_g, min_half_width=1e-4
-                )
+                k_lo_g, k_hi_g, _ = enforce_min_k_corridor_half_width(k_lo_g, k_hi_g, k_g, min_half_width=1e-4)
 
         return (lam_g, n_g, k_g, n_nl_g, k_nl_g, n_lo_g, n_hi_g, k_lo_g, k_hi_g)
+
+    def _prepare_data_th_tab_series(
+        self, r: dict[str, Any]
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray] | None:
+
+        lam_src = r.get("lam_nm")
+        if lam_src is None and self.df is not None and "lambda" in self.df.columns:
+            lam_src = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+            if self.logger:
+                self.logger.warning("Data TH: missing lam_nm in result; fallback to experimental lambda grid.")
+
+        lam = np.asarray(lam_src if lam_src is not None else [], dtype=np.float64).ravel()
+        n_src = np.asarray(r.get("n_lam", []), dtype=np.float64).ravel()
+        k_src = np.asarray(r.get("k_lam", []), dtype=np.float64).ravel()
+        t_src = np.asarray(r.get("t_theo", []), dtype=np.float64).ravel()
+        r_src = np.asarray(r.get("r_theo", []), dtype=np.float64).ravel()
+
+        m0 = int(min(lam.size, n_src.size, k_src.size))
+        if m0 <= 0:
+            return None
+
+        order = np.argsort(lam[:m0], kind="mergesort")
+        ls = lam[:m0][order]
+        n_s = n_src[:m0][order]
+        k_s = k_src[:m0][order]
+
+        fg = np.isfinite(ls)
+        if not np.any(fg):
+            return None
+
+        lo = float(np.nanmin(ls[fg]))
+        hi = float(np.nanmax(ls[fg]))
+        lam_g = self._lam_piecewise_report_grid_nm(lo, hi)
+        if lam_g.size == 0:
+            return None
+
+        n_g = np.interp(lam_g, ls, n_s, left=np.nan, right=np.nan)
+        k_g = np.interp(lam_g, ls, k_s, left=np.nan, right=np.nan)
+
+        t_g = np.full_like(lam_g, np.nan)
+        if t_src.size >= m0:
+            t_s = t_src[:m0][order]
+            t_g = np.interp(lam_g, ls, t_s, left=np.nan, right=np.nan)
+
+        r_g = np.full_like(lam_g, np.nan)
+        if r_src.size >= m0:
+            r_s = r_src[:m0][order]
+            r_g = np.interp(lam_g, ls, r_s, left=np.nan, right=np.nan)
+
+        ns_g = np.full_like(lam_g, np.nan)
+        ns_src = np.asarray(r.get("n_sub_effective", []), dtype=np.float64).ravel()
+        if ns_src.size >= m0:
+            ns_s = ns_src[:m0][order]
+            ns_g = np.interp(lam_g, ls, ns_s, left=np.nan, right=np.nan)
+        else:
+            try:
+                sub_name = str(
+                    r.get("substrate_name")
+                    or getattr(self, "sub_name", "")
+                    or (
+                        self.cb_sub.currentData()
+                        if hasattr(self, "cb_sub") and callable(getattr(self.cb_sub, "currentData", None))
+                        else ""
+                    )
+                )
+                sid = substrate_id_from_name(sub_name)
+                ns_raw = np.asarray(_get_substrate_n_array_spline(sid, lam_g), dtype=np.float64).ravel()
+                if ns_raw.size == lam_g.size:
+                    ns_g = ns_raw
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                if self.logger:
+                    self.logger.debug("Data TH substrate ns build failed", exc_info=True)
+            except (TypeError, ValueError):
+                if self.logger:
+                    self.logger.debug("Data TH substrate lookup failed", exc_info=True)
+
+        d_nm = float(r.get("d_nm", float("nan")))
+        d_g = np.full_like(lam_g, d_nm, dtype=np.float64)
+
+        return (lam_g, n_g, k_g, d_g, ns_g, t_g, r_g)
+
+    def _baseline_substrate_n_for_result(
+        self,
+        result: dict,
+        *,
+        lam_override: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray] | None:
+
+        lam_src = lam_override if lam_override is not None else result.get("lam_nm")
+        if lam_src is None and self._last_run_cfg is not None:
+            lam_src = getattr(self._last_run_cfg, "lam_nm", None)
+        lam = np.asarray(lam_src if lam_src is not None else [], dtype=np.float64).ravel()
+        if lam.size == 0:
+            return None
+
+        sub_name = str(
+            result.get("substrate_name")
+            or getattr(self, "sub_name", "")
+            or (
+                self.cb_sub.currentData()
+                if hasattr(self, "cb_sub") and callable(getattr(self.cb_sub, "currentData", None))
+                else ""
+            )
+        )
+        sid = substrate_id_from_name(sub_name)
+        n_sub = np.asarray(_get_substrate_n_array_spline(sid, lam), dtype=np.float64).ravel()
+        if n_sub.size != lam.size:
+            return None
+        return lam.copy(), n_sub.copy()
+
+    @staticmethod
+    def _decorate_result_with_substrate_offset(
+        result: dict,
+        *,
+        n_sub_base: np.ndarray,
+        delta_ns: float,
+    ) -> dict:
+
+        out = dict(result)
+        base = np.asarray(n_sub_base, dtype=np.float64).ravel().copy()
+        out["n_sub_base"] = base
+        out["substrate_n_offset"] = float(delta_ns)
+        out["n_sub_effective"] = base + float(delta_ns)
+        return out
+
+    @staticmethod
+    def _cfg_with_result_substrate(cfg_base: SplineOptConfig, result: dict) -> SplineOptConfig:
+
+        n_eff = np.asarray(result.get("n_sub_effective", []), dtype=np.float64).ravel()
+        lam_cfg = np.asarray(getattr(cfg_base, "lam_nm", []), dtype=np.float64).ravel()
+        if lam_cfg.size and n_eff.size == lam_cfg.size:
+            n_base = np.asarray(result.get("n_sub_base", []), dtype=np.float64).ravel()
+            if n_base.size != lam_cfg.size:
+                n_base = n_eff.copy()
+            return cfg_base.replace(
+                n_sub=n_eff.copy(),
+                substrate_n_base=n_base.copy(),
+                substrate_n_offset=float(result.get("substrate_n_offset", 0.0)),
+            )
+        return cfg_base
+
+    def _apply_manual_substrate_offset_preview(self, seed_result: dict, delta_ns: float) -> bool:
+
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            return False
+
+        lam_preview = np.asarray(seed_result.get("lam_nm", getattr(cfg_base, "lam_nm", [])), dtype=np.float64).ravel()
+        baseline_payload = self._baseline_substrate_n_for_result(seed_result, lam_override=lam_preview)
+        if baseline_payload is None:
+            return False
+        _, n_sub_base = baseline_payload
+
+        preview = self._decorate_result_with_substrate_offset(
+            seed_result,
+            n_sub_base=n_sub_base,
+            delta_ns=float(delta_ns),
+        )
+        cfg_preview = cfg_base.replace(
+            n_sub=np.asarray(preview["n_sub_effective"], dtype=np.float64).ravel().copy(),
+            substrate_n_base=np.asarray(preview["n_sub_base"], dtype=np.float64).ravel().copy(),
+            substrate_n_offset=float(delta_ns),
+        )
+        _sync_theoretical_tr_from_nk_dict(
+            cfg_preview,
+            preview,
+            log=self.logger,
+            reason="manual_delta_ns_preview",
+        )
+        try:
+            mse_preview, rmse_preview = spectral_mse_rmse_masked_from_nk(
+                cfg_preview,
+                preview,
+                np.asarray(preview.get("lam_nm", []), dtype=np.float64).ravel(),
+                np.asarray(preview.get("n_lam", []), dtype=np.float64).ravel(),
+                np.asarray(preview.get("k_lam", []), dtype=np.float64).ravel(),
+                float(preview.get("d_nm", float("nan"))),
+            )
+            if np.isfinite(mse_preview):
+                preview["mse"] = float(mse_preview)
+            if np.isfinite(rmse_preview):
+                preview["rmse"] = float(rmse_preview)
+        except (TypeError, ValueError, RuntimeError):
+            if self.logger:
+                self.logger.debug("Manual delta-ns preview RMSE recompute failed", exc_info=True)
+
+        self._last_worker_result = dict(preview)
+        self._last_result = dict(preview)
+        self._plot_result(preview, plot_source="manual_delta_ns_preview")
+        self._refresh_data_table(result_override=preview)
+        self.lbl_status.setText(
+            CertusIndexSplineApp._post_optimization_ready_status(
+                CertusIndexSplineApp._format_post_optimization_status(preview, preview)
+            )
+        )
+        return True
+
+    def _refresh_manual_dialog_preview(self, dialog: ManualSigmaKnotDialog | None, preview_result: dict | None) -> None:
+
+        if not isinstance(dialog, ManualSigmaKnotDialog) or not isinstance(preview_result, dict):
+            return
+        lam_preview = np.asarray(preview_result.get("lam_nm", []), dtype=np.float64).ravel()
+        y_preview = np.asarray(preview_result.get("t_theo", []), dtype=np.float64).ravel()
+        dialog.update_model_preview(lam_preview, y_preview)
+        d_preview, rmse_preview = CertusIndexSplineApp._runtime_metrics_from_result_dict(preview_result)
+        dialog.set_runtime_metrics(d_preview, rmse_preview)
 
     def _copy_nk_to_clipboard(self) -> None:
 
         if self._last_result is None:
-
             QMessageBox.information(self, "Clipboard", "Run an optimization first.")
 
             return
@@ -10582,47 +9554,29 @@ class _DataMixin:
         ser = self._prepare_nk_data_tab_series(r)
 
         if ser is None:
-
-            QMessageBox.information(self, "Clipboard", "Grille vide.")
+            QMessageBox.information(self, "Clipboard", "Empty grid.")
 
             return
 
         (
-
             lam_g,
-
             n_g,
-
             k_g,
-
             n_nl_g,
-
             k_nl_g,
-
             n_lo_g,
-
             n_hi_g,
-
             k_lo_g,
-
             k_hi_g,
-
         ) = ser
 
-        hdr = (
-
-            "lambda_nm\tn\tn_alpha\tn_envelope_min\tn_envelope_max\t"
-
-            "k\tk_alpha\tk_envelope_min\tk_envelope_max"
-
-        )
+        hdr = "lambda_nm\tn\tn_alpha\tn_envelope_min\tn_envelope_max\tk\tk_alpha\tk_envelope_min\tk_envelope_max"
 
         lines = [hdr]
 
         m = int(lam_g.size)
 
         for i in range(m):
-
             row = f"{float(lam_g[i]):.4f}\t"
 
             row += self._fmt_n_data_tab(float(n_g[i])) + "\t"
@@ -10646,7 +9600,6 @@ class _DataMixin:
         cb = QApplication.clipboard()
 
         if cb is None:
-
             QMessageBox.warning(self, "Clipboard", "Clipboard unavailable.")
 
             return
@@ -10657,28 +9610,50 @@ class _DataMixin:
 
         self.btn_copy_nk.setText(" Copied!")
 
-        QTimer.singleShot(
+        QTimer.singleShot(1800, lambda: self.btn_copy_nk.setText("Copy full table (TSV)"))
 
-            1800, lambda: self.btn_copy_nk.setText("Copier tout le tableau (TSV)")
+    def _copy_data_th_to_clipboard(self) -> None:
 
-        )
+        if not hasattr(self, "table_data_th"):
+            return
+
+        t = self.table_data_th
+        if t.rowCount() <= 0 or t.columnCount() <= 0:
+            QMessageBox.information(self, "Clipboard", "Data TH empty.")
+            return
+
+        headers = [
+            t.horizontalHeaderItem(c).text() if t.horizontalHeaderItem(c) else "" for c in range(t.columnCount())
+        ]
+        lines = ["\t".join(headers)]
+
+        for r in range(t.rowCount()):
+            row = [t.item(r, c).text() if t.item(r, c) else "" for c in range(t.columnCount())]
+            lines.append("\t".join(row))
+
+        cb = QApplication.clipboard()
+        if cb is None:
+            QMessageBox.warning(self, "Clipboard", "Clipboard unavailable.")
+            return
+
+        cb.setText("\n".join(lines))
+        self.lbl_status.setText("Data TH copied (TSV).")
+
+        if hasattr(self, "btn_copy_data_th"):
+            self.btn_copy_data_th.setText(" Copied!")
+            QTimer.singleShot(
+                1800,
+                lambda: self.btn_copy_data_th.setText("Copier tableau Data TH (TSV)"),
+            )
 
     def _on_data_preview_plot_mouse_moved(
-
         self,
-
         src: CertusScientificPlot,
-
         pos: Any,
-
         x: float,
-
         y: float,
-
         y_show: Any,
-
     ) -> None:
-
         """Synchronizes both previews (lambda) and tooltip with all interpolated n and k."""
 
         del pos, y_show
@@ -10686,7 +9661,6 @@ class _DataMixin:
         s = getattr(self, "_data_preview_series", None)
 
         if not isinstance(s, dict):
-
             return
 
         pn = self.plot_data_preview_n
@@ -10696,7 +9670,6 @@ class _DataMixin:
         lam = s.get("lam")
 
         if lam is None:
-
             return
 
         lam_a = np.asarray(lam, dtype=np.float64).ravel()
@@ -10708,7 +9681,6 @@ class _DataMixin:
         def _fmt_kq(v: float) -> str:
 
             if not np.isfinite(v) or v < 0:
-
                 return "-"
 
             return self._fmt_k_data_tab(float(v))
@@ -10732,19 +9704,14 @@ class _DataMixin:
         lam_txt = float(x)
 
         txt = (
-
             f"lambda = {lam_txt:.2f} nm\n"
-
             f"n={_fmt_nq(n_at)}  n_alpha={_fmt_nq(nnl_at)}  n_min={_fmt_nq(nlo_at)}  n_max={_fmt_nq(nhi_at)}\n"
-
             f"k={_fmt_kq(k_at)}  k_alpha={_fmt_kq(knl_at)}  k_min={_fmt_kq(klo_at)}  k_max={_fmt_kq(khi_at)}"
-
         )
 
         k_floor = float(s.get("k_floor", 1e-30))
 
         if not (np.isfinite(k_floor) and k_floor > 0.0):
-
             k_floor = 1e-30
 
         pn.vLine.setPos(x)
@@ -10756,9 +9723,7 @@ class _DataMixin:
         pk.hLine.setVisible(False)
 
         for w in (pn, pk):
-
             try:
-
                 xr = w.plotItem.vb.viewRange()[0]
 
                 x_lo, x_hi = float(xr[0]), float(xr[1])
@@ -10766,15 +9731,12 @@ class _DataMixin:
                 span = x_hi - x_lo
 
                 if span > 0 and x > x_lo + 0.78 * span:
-
                     w.info_label.setAnchor((1, 1))
 
                 else:
-
                     w.info_label.setAnchor((0, 1))
 
             except NUMERICAL_FAULT_EXCEPTIONS:
-
                 w.info_label.setAnchor((0, 1))
 
         pn.info_label.setText(txt)
@@ -10782,23 +9744,18 @@ class _DataMixin:
         pk.info_label.setText(txt)
 
         if src is pn:
-
             pn_y = float(y)
 
             if np.isfinite(k_at) and float(k_at) > 0.0:
-
                 pk_y = float(k_at)
 
             elif np.isfinite(k_at) and float(k_at) == 0.0:
-
                 pk_y = k_floor
 
             else:
-
                 pk_y = self._vb_mid_y_plot(pk)
 
         else:
-
             pk_y = float(y)
 
             pn_y = float(n_at) if np.isfinite(n_at) else self._vb_mid_y_plot(pn)
@@ -10810,7 +9767,6 @@ class _DataMixin:
     def _refresh_data_table(self, result_override: dict | None = None) -> None:
 
         if not hasattr(self, "table_nk"):
-
             return
 
         t = self.table_nk
@@ -10820,47 +9776,39 @@ class _DataMixin:
         result_eff = result_override if isinstance(result_override, dict) else self._last_result
 
         if result_eff is None:
-
             self.btn_copy_nk.setEnabled(False)
 
             self.btn_export_nk.setEnabled(False)
 
             self._refresh_data_preview_plots(ser=None)
+
+            self._refresh_data_th_table(result_eff=None)
 
             return
 
         ser = self._prepare_nk_data_tab_series(result_eff)
 
         if ser is None:
-
             self.btn_copy_nk.setEnabled(False)
 
             self.btn_export_nk.setEnabled(False)
 
             self._refresh_data_preview_plots(ser=None)
 
+            self._refresh_data_th_table(result_eff=result_eff)
+
             return
 
         (
-
             lam_g,
-
             n_g,
-
             k_g,
-
             n_nl_g,
-
             k_nl_g,
-
             n_lo_g,
-
             n_hi_g,
-
             k_lo_g,
-
             k_hi_g,
-
         ) = ser
 
         m = int(lam_g.size)
@@ -10868,29 +9816,17 @@ class _DataMixin:
         t.setColumnCount(9)
 
         t.setHorizontalHeaderLabels(
-
             [
-
                 "lambda (nm)",
-
                 "n",
-
                 "n_alpha",
-
                 "n env min",
-
                 "n env max",
-
                 "k",
-
                 "k_alpha",
-
                 "k env min",
-
                 "k env max",
-
             ]
-
         )
 
         t.setRowCount(m)
@@ -10900,7 +9836,6 @@ class _DataMixin:
         def _cell_n(x: float) -> QTableWidgetItem:
 
             if not np.isfinite(x):
-
                 return QTableWidgetItem("-")
 
             return QTableWidgetItem(self._fmt_n_data_tab(float(x)))
@@ -10908,17 +9843,14 @@ class _DataMixin:
         def _cell_k(x: float) -> QTableWidgetItem:
 
             if not np.isfinite(x) or x < 0:
-
                 return QTableWidgetItem("-")
 
             return QTableWidgetItem(self._fmt_k_data_tab(float(x)))
 
         for i in range(m):
-
             t.setItem(i, 0, QTableWidgetItem(f"{float(lam_g[i]):.4f}"))
 
             if np.isfinite(n_g[i]) and np.isfinite(k_g[i]) and float(k_g[i]) >= 0.0:
-
                 n_valid += 1
 
             t.setItem(i, 1, _cell_n(float(n_g[i])))
@@ -10942,21 +9874,75 @@ class _DataMixin:
         self.btn_export_nk.setEnabled(m > 0 and n_valid > 0)
 
         self._refresh_data_preview_plots(ser=ser)
+        self._refresh_data_th_table(result_eff=result_eff)
         self._refresh_corridor_table(result_eff)
 
+    def _refresh_data_th_table(self, result_eff: dict | None) -> None:
+
+        if not hasattr(self, "table_data_th"):
+            return
+
+        t = self.table_data_th
+        t.setRowCount(0)
+
+        if hasattr(self, "btn_copy_data_th"):
+            self.btn_copy_data_th.setEnabled(False)
+
+        if not isinstance(result_eff, dict):
+            return
+
+        ser = self._prepare_data_th_tab_series(result_eff)
+        if ser is None:
+            return
+
+        lam_g, n_g, k_g, d_g, ns_g, t_g, r_g = ser
+
+        m = int(lam_g.size)
+        t.setColumnCount(7)
+        t.setHorizontalHeaderLabels(["lambda (nm)", "n", "k", "d (nm)", "ns", "Tth", "Rth"])
+        t.setRowCount(m)
+
+        def _cell_n(x: float) -> QTableWidgetItem:
+
+            if not np.isfinite(x):
+                return QTableWidgetItem("-")
+            return QTableWidgetItem(self._fmt_n_data_tab(float(x)))
+
+        def _cell_k(x: float) -> QTableWidgetItem:
+
+            if not np.isfinite(x) or x < 0:
+                return QTableWidgetItem("-")
+            return QTableWidgetItem(self._fmt_k_data_tab(float(x)))
+
+        def _cell_lin(x: float, fmt: str = ".6f") -> QTableWidgetItem:
+
+            if not np.isfinite(x):
+                return QTableWidgetItem("-")
+            return QTableWidgetItem(f"{float(x):{fmt}}")
+
+        for i in range(m):
+            t.setItem(i, 0, QTableWidgetItem(f"{float(lam_g[i]):.4f}"))
+            t.setItem(i, 1, _cell_n(float(n_g[i])))
+            t.setItem(i, 2, _cell_k(float(k_g[i])))
+            t.setItem(i, 3, _cell_lin(float(d_g[i]), ".4f"))
+            t.setItem(i, 4, _cell_n(float(ns_g[i])))
+            t.setItem(i, 5, _cell_lin(float(t_g[i])))
+            t.setItem(i, 6, _cell_lin(float(r_g[i])))
+
+        if hasattr(self, "btn_copy_data_th"):
+            self.btn_copy_data_th.setEnabled(m > 0)
 
 class _CorridorGenMixin:
     """Mixin containing corridor generation, application and table refresh methods."""
-    def _on_corridor_rmse_grid_live_update(self, payload: object) -> None:
 
+    def _on_corridor_rmse_grid_live_update(self, payload: object) -> None:
         """Affiche la courbe RMSE(d) au fil de l eau pendant le recalcul de grille."""
 
-        if str(getattr(self, "_worker_role", "") or "") != "rmse_grid":
-
+        worker_role = str(getattr(self, "_worker_role", "") or "")
+        if worker_role not in {"rmse_grid", "corridors"}:
             return
 
         if not isinstance(payload, dict):
-
             return
 
         d_live = np.asarray(payload.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -10964,7 +9950,6 @@ class _CorridorGenMixin:
         r_live = np.asarray(payload.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
 
         if d_live.size == 0 or r_live.size != d_live.size:
-
             return
 
         cur = dict(self._last_result) if isinstance(self._last_result, dict) else {}
@@ -10985,14 +9970,16 @@ class _CorridorGenMixin:
         if st_live.size == d_live.size:
             upd["profile_d_manual_grid_point_status_code"] = st_live
 
-        upd["profile_d_status"] = str(payload.get("profile_d_status", "manual_grid_live") or "manual_grid_live")
+        upd["profile_d_status"] = str(payload.get("profile_d_status", "manual_grid_live"))
 
         upd["profile_d_manual_grid_progress"] = float(payload.get("profile_d_manual_grid_progress", float("nan")))
 
         upd["profile_d_manual_grid_done_points"] = int(payload.get("profile_d_manual_grid_done_points", d_live.size))
 
         upd["profile_d_manual_grid_total_points"] = int(payload.get("profile_d_manual_grid_total_points", d_live.size))
-        upd["profile_d_manual_grid_base_done_points"] = int(payload.get("profile_d_manual_grid_base_done_points", upd["profile_d_manual_grid_done_points"]))
+        upd["profile_d_manual_grid_base_done_points"] = int(
+            payload.get("profile_d_manual_grid_base_done_points", upd["profile_d_manual_grid_done_points"])
+        )
         upd["profile_d_manual_grid_extra_done_points"] = int(payload.get("profile_d_manual_grid_extra_done_points", 0))
 
         if "profile_d_manual_grid_breakpoint_events" in payload:
@@ -11000,37 +9987,69 @@ class _CorridorGenMixin:
 
         self._last_result = upd
 
-        try:
-
-            self._plot_corridor_rmse_tab(upd)
-
-        except NUMERICAL_FAULT_EXCEPTIONS:
-
-            logger.debug("RMSE(d) live plot update failed", exc_info=True)
-
-        n_done = int(upd.get("profile_d_manual_grid_done_points", d_live.size))
-
+        n_done_payload = int(upd.get("profile_d_manual_grid_done_points", d_live.size))
         n_tot = int(upd.get("profile_d_manual_grid_total_points", d_live.size))
+        p_live = float(upd.get("profile_d_manual_grid_progress", float("nan")))
+        if np.isfinite(p_live):
+            n_done = int(max(0, min(n_tot, round(float(p_live) * float(max(1, n_tot))))))
+            n_done = max(n_done, min(1, n_done_payload))
+        else:
+            n_done = n_done_payload
         n_base_done = int(upd.get("profile_d_manual_grid_base_done_points", n_done))
         n_extra_done = int(upd.get("profile_d_manual_grid_extra_done_points", max(0, n_done - n_tot)))
 
         d_cur = float(payload.get("profile_d_manual_grid_current_d_nm", float("nan")))
 
-        self._set_corridor_grid_progress_ui(
+        if worker_role == "rmse_grid":
+            self._set_corridor_grid_progress_ui(
+                done=n_done,
+                total=n_tot,
+                base_done=n_base_done,
+                base_total=n_tot,
+                extra_done=n_extra_done,
+                current_d_nm=(d_cur if np.isfinite(d_cur) else None),
+            )
 
-            done=n_done,
-
-            total=n_tot,
-
-            base_done=n_base_done,
-
-            base_total=n_tot,
-
-            extra_done=n_extra_done,
-
-            current_d_nm=(d_cur if np.isfinite(d_cur) else None),
-
+        now_ts = float(time.perf_counter())
+        last_ts = float(getattr(self, "_corridor_rmse_live_last_plot_ts", float("nan")))
+        min_dt = float(getattr(self, "_corridor_rmse_live_plot_min_interval_s", 0.12) or 0.12)
+        should_plot = (
+            n_done <= 1 or n_done >= n_tot or (not np.isfinite(last_ts)) or ((now_ts - last_ts) >= max(0.02, min_dt))
         )
+        if should_plot:
+            try:
+                self._plot_corridor_rmse_tab(upd)
+                # Hard safety net: if live payload has finite points but plot pipeline
+                # produced no visible data items, draw a minimal scatter fallback.
+                if hasattr(self, "plot_corridor_rmse_d"):
+                    plot_item = getattr(self.plot_corridor_rmse_d, "plotItem", None)
+                    data_items = []
+                    if plot_item is not None and hasattr(plot_item, "listDataItems"):
+                        try:
+                            data_items = list(plot_item.listDataItems())
+                        except (TypeError, ValueError, RuntimeError, AttributeError):
+                            data_items = []
+                    if len(data_items) == 0:
+                        m_live = np.isfinite(d_live) & np.isfinite(r_live)
+                        if np.any(m_live):
+                            d_fb = np.asarray(d_live[m_live], dtype=np.float64).ravel()
+                            r_fb = np.asarray(r_live[m_live], dtype=np.float64).ravel()
+                            self.plot_corridor_rmse_d.addItem(
+                                pg.ScatterPlotItem(
+                                    d_fb,
+                                    r_fb,
+                                    pen=pg.mkPen(CertusTheme.PRIMARY, width=0),
+                                    brush=pg.mkBrush(0, 87, 255, 160),
+                                    size=5,
+                                    symbol="o",
+                                    name="RMSE(d) live",
+                                )
+                            )
+                            self._set_corridor_rmse_view_data_bounds(d_fb, r_fb)
+                self._corridor_rmse_live_last_plot_ts = now_ts
+
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                logger.debug("RMSE(d) live plot update failed", exc_info=True)
 
         if self.logger and (n_done <= 1 or n_done >= n_tot or (n_done % 5 == 0)):
             r_at_cur = float("nan")
@@ -11053,17 +10072,11 @@ class _CorridorGenMixin:
             )
 
     def _build_manual_corridor_payload(
-
         self,
-
         source: dict[str, Any],
-
         display: dict[str, Any],
-
         d_lo_nm: float,
-
         d_hi_nm: float,
-
     ) -> dict[str, Any] | None:
 
         d_vals = np.asarray(source.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -11073,15 +10086,12 @@ class _CorridorGenMixin:
         k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
 
         if d_vals.size == 0 or n_curves.ndim != 2 or k_curves.ndim != 2:
-
             return None
 
         if n_curves.shape[0] != d_vals.size or k_curves.shape[0] != d_vals.size:
-
             return None
 
         if n_curves.shape[1] == 0 or k_curves.shape[1] != n_curves.shape[1]:
-
             return None
 
         d_lo = float(min(d_lo_nm, d_hi_nm))
@@ -11091,7 +10101,6 @@ class _CorridorGenMixin:
         sel = np.isfinite(d_vals) & (d_vals >= d_lo - 1e-12) & (d_vals <= d_hi + 1e-12)
 
         if not np.any(sel):
-
             i_near = int(np.argmin(np.abs(d_vals - 0.5 * (d_lo + d_hi))))
 
             sel = np.zeros_like(d_vals, dtype=bool)
@@ -11103,7 +10112,6 @@ class _CorridorGenMixin:
         k_pick = np.asarray(k_curves[sel, :], dtype=np.float64)
 
         if n_pick.ndim != 2 or k_pick.ndim != 2 or n_pick.shape[0] == 0:
-
             return None
 
         n_lo = np.nanmin(n_pick, axis=0)
@@ -11119,21 +10127,13 @@ class _CorridorGenMixin:
         ref_k = np.asarray(source.get("corridor_reference_k_lam", display.get("k_lam", [])), dtype=np.float64).ravel()
 
         if ref_n.size == n_lo.size and ref_k.size == k_lo.size:
-
             n_lo, n_hi, k_lo, k_hi = _expand_corridor_envelope_with_reported_nk(
-
                 n_lo,
-
                 n_hi,
-
                 k_lo,
-
                 k_hi,
-
                 ref_n,
-
                 ref_k,
-
             )
             k_lo, k_hi, k_min_changed = enforce_min_k_corridor_half_width(
                 np.asarray(k_lo, dtype=np.float64),
@@ -11159,65 +10159,39 @@ class _CorridorGenMixin:
             )
 
         return {
-
             "profile_d_enabled": True,
-
             "corridor_n_lo": np.asarray(n_lo, dtype=np.float64),
-
             "corridor_n_hi": np.asarray(n_hi, dtype=np.float64),
-
             "corridor_k_lo": np.asarray(k_lo, dtype=np.float64),
-
             "corridor_k_hi": np.asarray(k_hi, dtype=np.float64),
             "corridor_k_min_half_width": float(1e-4),
             "corridor_k_min_half_width_enforced_points": int(k_min_changed),
-
             "corridor_reference_n_lam": np.asarray(ref_n, dtype=np.float64),
-
             "corridor_reference_k_lam": np.asarray(ref_k, dtype=np.float64),
-
             "manual_corridor_active": True,
-
             "manual_corridor_interval_nm": (float(d_lo), float(d_hi)),
-
             "manual_corridor_selected_d_range_nm": (float(np.nanmin(d_sel)), float(np.nanmax(d_sel))),
-
             "manual_corridor_selected_count": int(d_sel.size),
-
         }
 
     def _apply_corridor_payload_from_interval(
-
         self,
-
         *,
-
         source: dict[str, Any],
-
         display: dict[str, Any],
-
         d_lo: float,
-
         d_hi: float,
-
         status_prefix: str,
-
     ) -> bool:
 
         payload = self._build_manual_corridor_payload(source, display, d_lo, d_hi)
 
         if payload is None:
-
             if self.logger:
-
                 self.logger.warning(
-
                     "GUI corridor regenerate | failed payload build | requested_interval=[%.6f, %.6f] nm",
-
                     float(min(d_lo, d_hi)),
-
                     float(max(d_lo, d_hi)),
-
                 )
 
             return False
@@ -11225,9 +10199,7 @@ class _CorridorGenMixin:
         updated = dict(display)
 
         for k, v in source.items():
-
             if k.startswith("profile_d_") and k not in updated:
-
                 updated[k] = v
 
         updated.update(payload)
@@ -11240,36 +10212,25 @@ class _CorridorGenMixin:
 
         self._last_result = updated
 
-        self._plot_result(updated)
+        self._plot_result(updated, plot_source="corridor_rmse_manual")
 
         self._refresh_data_table()
 
         self._update_corridor_rmse_state_bar(updated)
 
         self.lbl_status.setText(
-
             f"{status_prefix} [{self._corridor_rmse_manual_lo:.2f}, {self._corridor_rmse_manual_hi:.2f}] nm"
-
         )
 
         if self.logger:
-
             self.logger.info(
-
                 "GUI corridor regenerated | status_prefix=%s | requested_interval=[%.6f, %.6f] nm | selected_points=%d | sampled_selected_range=[%.6f, %.6f] nm",
-
                 str(status_prefix),
-
                 float(self._corridor_rmse_manual_lo),
-
                 float(self._corridor_rmse_manual_hi),
-
                 int(payload.get("manual_corridor_selected_count", 0)),
-
                 float(payload.get("manual_corridor_selected_d_range_nm", (float("nan"), float("nan")))[0]),
-
                 float(payload.get("manual_corridor_selected_d_range_nm", (float("nan"), float("nan")))[1]),
-
             )
 
         return True
@@ -11285,6 +10246,33 @@ class _CorridorGenMixin:
                 self,
                 "Generate corridor (partial grid)",
                 "No RMSE(d) grid is available yet.",
+            )
+            return
+
+        d_all = np.asarray(source.get("profile_d_values_nm", []), dtype=np.float64).ravel()
+        # Guard against partial live updates while worker is still filling n/k curves.
+        n_curves = np.asarray(source.get("profile_d_n_curves", []), dtype=np.float64)
+        k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
+        curves_ready = (
+            n_curves.ndim == 2
+            and k_curves.ndim == 2
+            and n_curves.shape[0] == d_all.size
+            and k_curves.shape[0] == d_all.size
+            and n_curves.shape[1] > 0
+            and k_curves.shape[1] == n_curves.shape[1]
+        )
+        if not curves_ready:
+            if self.logger:
+                self.logger.warning(
+                    "GUI generate corridor(partial-grid) | aborted: profile curves not ready/coherent | d_points=%d | n_shape=%s | k_shape=%s",
+                    int(d_all.size),
+                    tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
+                    tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
+                )
+            QMessageBox.information(
+                self,
+                "Generate corridor (partial grid)",
+                "RMSE(d) grid is still updating. Please retry in a moment.",
             )
             return
 
@@ -11309,9 +10297,7 @@ class _CorridorGenMixin:
             d_center = d_best
 
         half = (
-            float(self.sp_corridor_partial_delta_nm.value())
-            if hasattr(self, "sp_corridor_partial_delta_nm")
-            else 2.0
+            float(self.sp_corridor_partial_delta_nm.value()) if hasattr(self, "sp_corridor_partial_delta_nm") else 2.0
         )
         if (not np.isfinite(half)) or half <= 0.0:
             QMessageBox.warning(
@@ -11377,6 +10363,33 @@ class _CorridorGenMixin:
                 self,
                 "Generate corridor (auto smart)",
                 "No RMSE(d) grid is available yet.",
+            )
+            return
+
+        d_all = np.asarray(source.get("profile_d_values_nm", []), dtype=np.float64).ravel()
+        # Guard against partial live updates while worker is still filling n/k curves.
+        n_curves = np.asarray(source.get("profile_d_n_curves", []), dtype=np.float64)
+        k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
+        curves_ready = (
+            n_curves.ndim == 2
+            and k_curves.ndim == 2
+            and n_curves.shape[0] == d_all.size
+            and k_curves.shape[0] == d_all.size
+            and n_curves.shape[1] > 0
+            and k_curves.shape[1] == n_curves.shape[1]
+        )
+        if not curves_ready:
+            if self.logger:
+                self.logger.warning(
+                    "GUI generate corridor(auto-smart) | aborted: profile curves not ready/coherent | d_points=%d | n_shape=%s | k_shape=%s",
+                    int(d_all.size),
+                    tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
+                    tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
+                )
+            QMessageBox.information(
+                self,
+                "Generate corridor (auto smart)",
+                "RMSE(d) grid is still updating. Please retry in a moment.",
             )
             return
 
@@ -11486,9 +10499,7 @@ class _CorridorGenMixin:
         display = self._last_result
 
         if not isinstance(source, dict) or not isinstance(display, dict):
-
             if self.logger:
-
                 self.logger.warning("GUI generate corridor(manual) | aborted: no corridor profile source/display")
 
             QMessageBox.information(self, "Generate corridor", "No corridor profile is available yet.")
@@ -11500,9 +10511,7 @@ class _CorridorGenMixin:
         i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
 
         if d_s.size == 0 or i_best < 0 or i_best >= int(d_s.size):
-
             if self.logger:
-
                 self.logger.warning("GUI generate corridor(manual) | aborted: invalid RMSE(d) profile or best index")
 
             QMessageBox.information(self, "Generate corridor", "No valid RMSE(d) profile is available.")
@@ -11514,7 +10523,6 @@ class _CorridorGenMixin:
         d_center = float(getattr(self, "_corridor_rmse_center_nm", float("nan")))
 
         if not np.isfinite(d_center):
-
             d_center = d_best
 
         half = self._corridor_manual_half_width_nm()
@@ -11524,62 +10532,44 @@ class _CorridorGenMixin:
         d_hi = float(d_center + half)
 
         if self.logger:
-
             self.logger.info(
-
                 "GUI generate corridor(manual) | request | center=%.6f nm | half=%.6f nm | interval=[%.6f, %.6f] nm",
-
                 float(d_center),
-
                 float(half),
-
                 float(d_lo),
-
                 float(d_hi),
-
             )
 
         ok = self._apply_corridor_payload_from_interval(
-
             source=source,
-
             display=display,
-
             d_lo=d_lo,
-
             d_hi=d_hi,
-
             status_prefix="Manual corridor regenerated on",
-
         )
 
         if not ok:
-
             if self.logger:
-
                 self.logger.warning(
-
                     "GUI generate corridor(manual) | failed for interval=[%.6f, %.6f] nm",
-
                     float(d_lo),
-
                     float(d_hi),
-
                 )
 
             QMessageBox.warning(self, "Generate corridor", "Unable to rebuild a manual corridor from this interval.")
 
     def _refresh_corridor_table(self, result: dict) -> None:
         """Populates the detailed data corridor table with smart interpolation."""
-        if not hasattr(self, "table_corridor"): return
-        
+        if not hasattr(self, "table_corridor"):
+            return
+
         t = self.table_corridor
         t.setRowCount(0)
-        
+
         lam_src = result.get("lam_nm")
         n_src = result.get("n_lam")
         k_src = result.get("k_lam")
-        
+
         if lam_src is None or n_src is None or k_src is None:
             self.btn_copy_corridor.setEnabled(False)
             self.btn_export_corridor.setEnabled(False)
@@ -11588,60 +10578,62 @@ class _CorridorGenMixin:
         lam = np.asarray(lam_src, dtype=np.float64).ravel()
         n_nom = np.asarray(n_src, dtype=np.float64).ravel()
         k_nom = np.asarray(k_src, dtype=np.float64).ravel()
-        
-        if not lam.size: return
-        
+
+        if not lam.size:
+            return
+
         # Smart grid generation
         lo, hi = float(np.nanmin(lam)), float(np.nanmax(lam))
         lam_g = self._lam_piecewise_report_grid_nm(lo, hi)
-        if not lam_g.size: return
-        
+        if not lam_g.size:
+            return
+
         # Nominal interpolation
         n_g = np.interp(lam_g, lam, n_nom, left=np.nan, right=np.nan)
         k_g = np.interp(lam_g, lam, k_nom, left=np.nan, right=np.nan)
-        
+
         # Corridor interpolation
         n_lo_g = np.full_like(lam_g, np.nan)
         n_hi_g = np.full_like(lam_g, np.nan)
         k_lo_g = np.full_like(lam_g, np.nan)
         k_hi_g = np.full_like(lam_g, np.nan)
-        
+
         if bool(result.get("profile_d_enabled", False)) or bool(result.get("manual_corridor_active", False)):
             cn_lo = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel()
             cn_hi = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel()
             ck_lo = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel()
             ck_hi = np.asarray(result.get("corridor_k_hi", []), dtype=np.float64).ravel()
-            
+
             if cn_lo.size == lam.size:
                 n_lo_g = np.interp(lam_g, lam, cn_lo, left=np.nan, right=np.nan)
                 n_hi_g = np.interp(lam_g, lam, cn_hi, left=np.nan, right=np.nan)
                 k_lo_g = np.interp(lam_g, lam, ck_lo, left=np.nan, right=np.nan)
                 k_hi_g = np.interp(lam_g, lam, ck_hi, left=np.nan, right=np.nan)
-                
+
                 # ENFORCE CONSISTENCY with Plots
-                k_lo_g, k_hi_g, _ = enforce_min_k_corridor_half_width(
-                    k_lo_g, k_hi_g, k_g, min_half_width=1e-4
-                )
+                k_lo_g, k_hi_g, _ = enforce_min_k_corridor_half_width(k_lo_g, k_hi_g, k_g, min_half_width=1e-4)
 
         # Center of corridor (midpoint)
         n_ctr_g = 0.5 * (n_lo_g + n_hi_g)
         k_ctr_g = 0.5 * (k_lo_g + k_hi_g)
-        
+
         m = int(lam_g.size)
         t.setRowCount(m)
-        
+
         from PyQt6.QtWidgets import QTableWidgetItem
         from PyQt6.QtCore import Qt
 
         def _cell(val: float, fmt: str = ".4f") -> QTableWidgetItem:
-            if not np.isfinite(val): return QTableWidgetItem("-")
+            if not np.isfinite(val):
+                return QTableWidgetItem("-")
             item = QTableWidgetItem(f"{float(val):{fmt}}")
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._apply_cell_style(item, val)
             return item
-            
+
         def _cell_sci(val: float) -> QTableWidgetItem:
-            if not np.isfinite(val): return QTableWidgetItem("-")
+            if not np.isfinite(val):
+                return QTableWidgetItem("-")
             item = QTableWidgetItem(f"{float(val):.2e}")
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._apply_cell_style(item, val)
@@ -11661,221 +10653,268 @@ class _CorridorGenMixin:
         self.btn_copy_corridor.setEnabled(True)
         self.btn_export_corridor.setEnabled(True)
 
-
 class _SettingsMixin:
     """Mixin containing defaults reset, loading and uncertainty settings methods."""
-    def _maybe_apply_uncertainty_defaults_migrated(self) -> None:
 
+    def _apply_default_square_plot_split(self) -> None:
+
+        spl = getattr(self, "main_split", None)
+        if spl is None:
+            return
+
+        sizes = spl.sizes()
+        if not isinstance(sizes, list) or len(sizes) < 2:
+            return
+
+        total = int(max(0, sizes[0]) + max(0, sizes[1]))
+        if total <= 0:
+            total = int(max(0, spl.width()))
+        if total <= 0:
+            return
+
+        panel_h = int(max(0, spl.height()))
+        if panel_h <= 0:
+            panel_h = int(round(0.58 * float(total)))
+
+        # Keep the right panel width near the visible height so the active plot
+        # starts close to a square aspect by default.
+        target_right = int(round(0.88 * float(panel_h)))
+        target_right = int(
+            min(
+                max(target_right, int(round(0.20 * float(total)))),
+                int(round(0.95 * float(total))),
+            )
+        )
+        target_left = int(max(1, total - target_right))
+
+        self._main_splitter_clamp_guard = True
+        try:
+            spl.setSizes([target_left, target_right])
+        finally:
+            self._main_splitter_clamp_guard = False
+
+        self._enforce_main_splitter_ratio_bounds(persist=False)
+
+    def _on_main_splitter_moved(self, *_args) -> None:
+
+        self._enforce_main_splitter_ratio_bounds(persist=True)
+
+    def _enforce_main_splitter_ratio_bounds(self, *, persist: bool = True) -> None:
+
+        spl = getattr(self, "main_split", None)
+        if spl is None:
+            if persist:
+                self._persist_splitter_states()
+            return
+
+        if bool(getattr(self, "_main_splitter_clamp_guard", False)):
+            if persist:
+                self._persist_splitter_states()
+            return
+
+        sizes = spl.sizes()
+        if not isinstance(sizes, list) or len(sizes) < 2:
+            if persist:
+                self._persist_splitter_states()
+            return
+
+        left = int(max(0, sizes[0]))
+        right = int(max(0, sizes[1]))
+        total = int(left + right)
+        if total <= 0:
+            if persist:
+                self._persist_splitter_states()
+            return
+
+        min_left = max(1, int(round(0.05 * total)))
+        max_left = max(min_left, int(round(0.95 * total)))
+        clamped_left = int(min(max(left, min_left), max_left))
+
+        if clamped_left != left:
+            self._main_splitter_clamp_guard = True
+            try:
+                spl.moveSplitter(int(clamped_left), 0)
+            finally:
+                self._main_splitter_clamp_guard = False
+
+        if persist:
+            self._persist_splitter_states()
+
+    def _restore_splitter_states(self) -> None:
+
+        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+
+        try:
+            v_rev_raw = s.value(_QS_MAIN_SPLITTER_LAYOUT_REV, 0)
+            v_rev = int(v_rev_raw or 0)
+        except (TypeError, ValueError):
+            v_rev = 0
+
+        try:
+            if hasattr(self, "main_split") and v_rev == int(_MAIN_SPLITTER_LAYOUT_REV):
+                v_main = s.value(_QS_MAIN_SPLITTER_STATE)
+                if v_main is not None:
+                    self.main_split.restoreState(v_main)
+                else:
+                    QTimer.singleShot(0, self._apply_default_square_plot_split)
+                self._enforce_main_splitter_ratio_bounds(persist=False)
+        except (AttributeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        try:
+            v_right = s.value(_QS_RIGHT_SPLITTER_STATE)
+            if v_right is not None and hasattr(self, "info_split"):
+                self.info_split.restoreState(v_right)
+        except (AttributeError, TypeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def _persist_splitter_states(self, *_args) -> None:
+
+        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
+
+        if hasattr(self, "main_split"):
+            s.setValue(_QS_MAIN_SPLITTER_STATE, self.main_split.saveState())
+            s.setValue(_QS_MAIN_SPLITTER_LAYOUT_REV, int(_MAIN_SPLITTER_LAYOUT_REV))
+
+        if hasattr(self, "info_split"):
+            s.setValue(_QS_RIGHT_SPLITTER_STATE, self.info_split.saveState())
+
+    def _maybe_apply_uncertainty_defaults_migrated(self) -> None:
         """Applies automatic uncertainty defaults once (migration / new install)."""
 
         s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         try:
-
             rev = int(s.value(_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV, 0) or 0)
 
         except (TypeError, ValueError):
-
             rev = 0
 
         if rev < _UNCERTAINTY_DEFAULTS_REV:
-
             if rev < 5:
-
                 self._apply_recommended_uncertainty_and_perf_defaults()
 
                 self._apply_sio2_default_fit_parameters()
 
                 if hasattr(self, "chk_trel"):
-
                     self.chk_trel.setChecked(True)
 
-            if rev < 6 and hasattr(self, "btn_nl_toggle"):
-
-                self.btn_nl_toggle.setChecked(True)
-
-            if rev < 7 and hasattr(self, "cb_nl_alpha_budget"):
-
-                self.cb_nl_alpha_budget.blockSignals(True)
-
-                try:
-
-                    iq = self.cb_nl_alpha_budget.findData("slow")
-
-                    if iq >= 0:
-
-                        self.cb_nl_alpha_budget.setCurrentIndex(int(iq))
-
-                finally:
-
-                    self.cb_nl_alpha_budget.blockSignals(False)
-
-                self._persist_nl_alpha_budget_pref()
-
-            if rev < 8 and hasattr(self, "chk_nl_second_pass"):
-
-                self.chk_nl_second_pass.setChecked(True)
-
-                self._persist_nl_alpha_second_pass_pref()
-
-            if rev < 10 and hasattr(self, "chk_nl_adaptive_scan"):
-
-                self.chk_nl_adaptive_scan.setChecked(True)
-
-                self._persist_nl_alpha_adaptive_pref()
-
             if rev < 9 and hasattr(self, "cb_corr_mode"):
-
                 self.cb_corr_mode.blockSignals(True)
 
                 try:
-
                     iq = self.cb_corr_mode.findData("abs_delta_adaptive")
 
                     if iq >= 0:
-
                         self.cb_corr_mode.setCurrentIndex(int(iq))
 
                 finally:
-
                     self.cb_corr_mode.blockSignals(False)
 
                 if hasattr(self, "sp_corr_rmse_delta"):
-
                     self.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
 
                 self._on_corr_mode_changed()
 
             if rev < 11 and hasattr(self, "cb_corr_mode"):
-
                 self._apply_corridor_preset_auto_robust()
 
             if rev < 12:
-
                 if hasattr(self, "sp_corr_rmse_delta"):
-
                     self.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
 
                 self._corridor_adaptive_rmse_min = float(_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN)
 
                 if hasattr(self, "_on_corr_mode_changed"):
-
                     self._on_corr_mode_changed()
 
                 if hasattr(self, "_refresh_corridors_gui_state_labels"):
-
                     self._refresh_corridors_gui_state_labels()
 
             s.setValue(_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV, int(_UNCERTAINTY_DEFAULTS_REV))
 
     def _apply_recommended_uncertainty_and_perf_defaults(self) -> None:
-
         """Speed-oriented defaults: Fast profile, n/k corridors enabled (accelerated refits); optional bootstrap / reg. scan."""
 
         if not hasattr(self, "cb_profilee"):
-
             return
 
         self.cb_profilee.blockSignals(True)
 
         try:
-
             iq = self.cb_profilee.findData("fast")
 
             if iq >= 0:
-
                 self.cb_profilee.setCurrentIndex(int(iq))
 
         finally:
-
             self.cb_profilee.blockSignals(False)
 
         self._on_profilee_changed()
 
         if hasattr(self, "chk_corridor_d"):
-
             self.chk_corridor_d.setChecked(True)
 
         if hasattr(self, "cb_corr_mode"):
-
             ia = self.cb_corr_mode.findData("abs_delta_adaptive")
 
             if ia >= 0:
-
                 self.cb_corr_mode.setCurrentIndex(int(ia))
 
         if hasattr(self, "chk_corr_scientific_nominal"):
-
             self.chk_corr_scientific_nominal.setChecked(True)
 
         if hasattr(self, "chk_corr_sigma_hetero"):
-
             self.chk_corr_sigma_hetero.setChecked(False)
 
         if hasattr(self, "sp_corr_hetero_scale"):
-
             self.sp_corr_hetero_scale.setValue(1.0)
 
         if hasattr(self, "sp_corr_sigma"):
-
             self.sp_corr_sigma.setValue(0.0)
 
         if hasattr(self, "sp_corr_starts"):
-
             self.sp_corr_starts.setValue(1)
 
         if hasattr(self, "chk_corr_reg_sens"):
-
             self.chk_corr_reg_sens.setChecked(False)
 
         if hasattr(self, "chk_corr_boot"):
-
             self.chk_corr_boot.setChecked(False)
 
         if hasattr(self, "sp_corr_boot_n"):
-
             self.sp_corr_boot_n.setValue(40)
 
         self._refresh_corridors_gui_state_labels()
 
         if hasattr(self, "sp_corr_boot_p"):
-
             self.sp_corr_boot_p.setValue(0.95)
 
         if hasattr(self, "chk_corr_boot_refit"):
-
             self.chk_corr_boot_refit.setChecked(False)
 
         if hasattr(self, "sp_corr_boot_maxfun"):
-
             self.sp_corr_boot_maxfun.setValue(4000)
 
         if hasattr(self, "sp_corr_boot_workers"):
-
             self.sp_corr_boot_workers.setValue(1)
 
         if hasattr(self, "sp_corr_span"):
-
             self.sp_corr_span.setValue(15.0)
 
         if hasattr(self, "sp_corr_prof_maxfun"):
-
             self.sp_corr_prof_maxfun.setValue(2500)
 
         if hasattr(self, "cb_corr_boot_mode"):
-
             ip = self.cb_corr_boot_mode.findData("parametric")
 
             if ip >= 0:
-
                 self.cb_corr_boot_mode.setCurrentIndex(int(ip))
 
         if hasattr(self, "cb_corr_mode"):
-
             self._apply_corridor_preset_auto_robust()
 
     def reset_to_defaults(self) -> None:
-
         """Reinitialisation complete (bouton Clear / Reset CERTUS)."""
 
         from certus_reset_framework import reset_app_to_defaults
@@ -11885,31 +10924,22 @@ class _SettingsMixin:
     def _on_load(self, path: str | None = None) -> None:
 
         if not path:
-
             path, _ = QFileDialog.getOpenFileName(
-
                 self,
-
                 "Spectrum",
-
                 self._spectrum_open_dialog_start_path(),
-
                 "Data (*.csv *.xlsx *.xls);;All (*.*)",
-
             )
 
         if not path:
-
             return
 
         try:
-
             raw = read_data_file_robust(path)
 
             self.df = normalize_spectrum_dataframe(raw)
 
             if self.df is None or "lambda" not in self.df.columns:
-
                 raise ValueError("Invalid wavelength or spectrum column after normalization.")
 
             self._persist_last_spectrum_path(path)
@@ -11917,7 +10947,6 @@ class _SettingsMixin:
             self.lbl_file.setText(path)
 
             if hasattr(self, "tabs_main"):
-
                 self.tabs_main.setCurrentIndex(0)
 
             self._sync_rmse_lambda_bounds_from_file()
@@ -11927,7 +10956,6 @@ class _SettingsMixin:
             self.lbl_status.setText(f"Loaded: {len(self.df)} points")
 
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
-
                 lam = np.asarray(self.df.get("lambda", []), dtype=np.float64).ravel()
 
                 lam_f = lam[np.isfinite(lam)]
@@ -11939,47 +10967,31 @@ class _SettingsMixin:
                 cols = [str(c) for c in self.df.columns]
 
                 summary = build_summary_plain_text(
-
                     "CERTUS INDEX SPLINE - Load Summary",
-
                     [
-
                         f"File: {Path(path).resolve(strict=False)}",
-
                         "",
-
                         "General",
-
                         (f"Rows: {int(len(self.df))}", int(len(self.df)) <= 0),
-
                         "",
-
                         "Data",
-
                         f"Columns: {', '.join(cols)}",
-
-                        (f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm", not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin)),
-
-                        "",
-
-                        "Compatibility checks",
-
                         (
-
-                            f"Transmission column present: {'yes' if any(c.lower().startswith('t') for c in cols) else 'no'}",
-
-                            not any(c.lower().startswith("t") for c in cols),
-
+                            f"Wavelength range: [{lmin:.1f}, {lmax:.1f}] nm",
+                            not (np.isfinite(lmin) and np.isfinite(lmax) and lmax > lmin),
                         ),
-
+                        "",
+                        "Compatibility checks",
+                        (
+                            f"Transmission column present: {'yes' if any(c.lower().startswith('t') for c in cols) else 'no'}",
+                            not any(c.lower().startswith("t") for c in cols),
+                        ),
                     ],
-
                 )
 
                 show_load_summary_dialog(self, "INDEX SPLINE Load Summary", summary)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-
             QMessageBox.critical(self, "Loading", str(e))
 
             logger.exception("load")
@@ -11989,23 +11001,19 @@ class _SettingsMixin:
         self._remove_rmse_fit_region_overlay()
 
         if not getattr(self, "_rmse_fit_lambda_enabled", False):
-
             return
 
         span = self._spectrum_plot_lambda_span_nm()
 
         if span is None:
-
             return
 
         lam_file_lo, lam_file_hi = span
 
         if not (np.isfinite(lam_file_lo) and np.isfinite(lam_file_hi)):
-
             return
 
         if lam_file_lo > lam_file_hi:
-
             lam_file_lo, lam_file_hi = lam_file_hi, lam_file_lo
 
         wlo = float(self._rmse_fit_lambda_lo)
@@ -12013,7 +11021,6 @@ class _SettingsMixin:
         whi = float(self._rmse_fit_lambda_hi)
 
         if not (np.isfinite(wlo) and np.isfinite(whi)):
-
             return
 
         lam_win_lo, lam_win_hi = min(wlo, whi), max(wlo, whi)
@@ -12021,23 +11028,18 @@ class _SettingsMixin:
         def _x_span_lam(la: float, lb: float) -> tuple[float, float] | None:
 
             if not (np.isfinite(la) and np.isfinite(lb)):
-
                 return None
 
             if la > lb:
-
                 la, lb = lb, la
 
             if lb - la <= 0.0:
-
                 return None
 
             try:
-
                 xv, _ = self._transform_spectrum_x(np.array([la, lb], dtype=np.float64))
 
             except (TypeError, ValueError, RuntimeError):
-
                 return None
 
             return float(np.min(xv)), float(np.max(xv))
@@ -12051,7 +11053,6 @@ class _SettingsMixin:
             lo_x, hi_x = (xa, xb) if xa <= xb else (xb, xa)
 
             if hi_x - lo_x <= eps_x:
-
                 return
 
             reg = pg.LinearRegionItem(values=(lo_x, hi_x), movable=False, brush=brush)
@@ -12067,47 +11068,35 @@ class _SettingsMixin:
         # Excludes lambda < window (within file envelope) - correct if sigma/sigma^2 (nonlinear in lambda on axis)
 
         if lam_win_lo > lam_file_lo + eps_lam:
-
             la, lb = lam_file_lo, min(lam_file_hi, lam_win_lo)
 
             if lb - la > eps_lam:
-
                 xs = _x_span_lam(la, lb)
 
                 if xs is not None:
-
                     _add_region(xs[0], xs[1], brush=gray_brush, z=-8.0)
 
         # Exclude lambda > window
 
         if lam_win_hi < lam_file_hi - eps_lam:
-
             la, lb = max(lam_file_lo, lam_win_hi), lam_file_hi
 
             if lb - la > eps_lam:
-
                 xs = _x_span_lam(la, lb)
 
                 if xs is not None:
-
                     _add_region(xs[0], xs[1], brush=gray_brush, z=-8.0)
 
         x_active = _x_span_lam(lam_win_lo, lam_win_hi)
 
         if x_active is not None:
-
             xa, xb = x_active
 
             if xb - xa > eps_x:
-
                 reg_active = pg.LinearRegionItem(
-
                     values=(xa, xb),
-
                     movable=False,
-
                     brush=pg.mkBrush(0, 120, 215, 40),
-
                 )
 
                 reg_active.setZValue(-5.0)
@@ -12129,11 +11118,8 @@ class _SettingsMixin:
         chk.setChecked(self._rmse_fit_lambda_enabled)
 
         chk.setToolTip(
-
             "If checked: only experimental points in [lambda_min, lambda_max] enter the spectral loss. "
-
             "Plots always use the full loaded file."
-
         )
 
         lay.addWidget(chk)
@@ -12149,7 +11135,6 @@ class _SettingsMixin:
         sp_hi = QDoubleSpinBox()
 
         for sp in (sp_lo, sp_hi):
-
             sp.setRange(200.0, 20000.0)
 
             sp.setDecimals(4)
@@ -12176,11 +11161,7 @@ class _SettingsMixin:
 
         btn_reset = QPushButton("Reset")
 
-        btn_reset.setToolTip(
-
-            "Reset lambda_min / lambda_max to [min file, max file] of the loaded spectrum."
-
-        )
+        btn_reset.setToolTip("Reset lambda_min / lambda_max to [min file, max file] of the loaded spectrum.")
 
         lay.addWidget(btn_reset)
 
@@ -12204,11 +11185,7 @@ class _SettingsMixin:
 
         btn_reset.clicked.connect(_do_reset)
 
-        bb = QDialogButtonBox(
-
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-
-        )
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
         bb.accepted.connect(dlg.accept)
 
@@ -12217,7 +11194,6 @@ class _SettingsMixin:
         lay.addWidget(bb)
 
         if dlg.exec() != QDialog.DialogCode.Accepted:
-
             return
 
         self._rmse_fit_lambda_enabled = chk.isChecked()
@@ -12227,80 +11203,61 @@ class _SettingsMixin:
         self._rmse_fit_lambda_hi = float(sp_hi.value())
 
         if self._last_result is not None:
-
-            self._plot_result(self._last_result)
+            self._plot_result(self._last_result, plot_source="fenetre_rmse_fit_lambda")
 
         elif self.df is not None:
-
             self._plot_data_raw()
 
         else:
-
             self._update_rmse_fit_region_overlay()
-    def _restore_spectrum_fit_settings(self) -> None:
 
+    def _restore_spectrum_fit_settings(self) -> None:
         """Reads step 3 from QSettings (T, T/Tsub ratio, R, wT, wR)."""
 
         if not hasattr(self, "chk_t"):
-
             return
 
         s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 
         widgets = (
-
             self.chk_t,
-
             self.chk_trel,
-
             self.chk_r,
-
             self.w_t,
-
             self.w_r,
-
         )
 
         for w in widgets:
-
             w.blockSignals(True)
 
         try:
-
             vt = s.value(_QS_SPECTRUM_FIT_T)
 
             if vt is not None:
-
                 self.chk_t.setChecked(bool(vt))
 
             vrel = s.value(_QS_SPECTRUM_FIT_TREL)
 
             if vrel is not None:
-
                 self.chk_trel.setChecked(bool(vrel))
 
             vr = s.value(_QS_SPECTRUM_FIT_R)
 
             if vr is not None:
-
                 self.chk_r.setChecked(bool(vr))
 
             wtv = s.value(_QS_SPECTRUM_WT)
 
             if wtv is not None:
-
                 self.w_t.setValue(float(wtv))
 
             wrv = s.value(_QS_SPECTRUM_WR)
 
             if wrv is not None:
-
                 self.w_r.setValue(float(wrv))
 
         finally:
-
             for w in widgets:
-
                 w.blockSignals(False)
 
     def _open_advanced_settings_dialog(self) -> None:
@@ -12308,7 +11265,6 @@ class _SettingsMixin:
         lay_page = getattr(self, "_box4_full_adv_layout", None)
 
         if not hasattr(self, "_w_full_adv") or lay_page is None:
-
             return
 
         dlg = QDialog(self)
@@ -12319,20 +11275,13 @@ class _SettingsMixin:
 
         outer = QVBoxLayout(dlg)
 
-        chk = QCheckBox(
-
-            "Simplified Basic panel (recommended): hide advanced budgets and uncertainty details"
-
-        )
+        chk = QCheckBox("Simplified Basic panel (recommended): hide advanced budgets and uncertainty details")
 
         chk.setChecked(bool(getattr(self, "_simple_auto_uncertainty", True)))
 
         chk.setToolTip(
-
             "Unchecked: after OK, controls stay visible in step 4. "
-
             "Checked: summary only in the panel; settings remain available here."
-
         )
 
         outer.addWidget(chk)
@@ -12355,11 +11304,7 @@ class _SettingsMixin:
 
         outer.addWidget(scroll, 1)
 
-        bb = QDialogButtonBox(
-
-            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
-
-        )
+        bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
         bb.accepted.connect(dlg.accept)
 
@@ -12376,118 +11321,26 @@ class _SettingsMixin:
         self._w_full_adv.show()
 
         if code == QDialog.DialogCode.Accepted:
-
             self._simple_auto_uncertainty = chk.isChecked()
 
             self._persist_simple_auto_uncertainty_pref()
 
         self._update_epured_visibility()
 
-
-
 class _CorridorControlMixin:
     """Mixin containing corridor RMSE grid control, display and worker management."""
-    def _prompt_use_nl_alpha_for_corridors(self) -> bool:
 
-        dlg = QDialog(self)
-
-        dlg.setWindowTitle("Corridors after NL alpha")
-
-        dlg.setModal(True)
-
-        lay = QVBoxLayout(dlg)
-
-        lab = QLabel(
-
-            "Use the NL alpha result as the base for the next corridor step?<br><br>"
-
-            "Default: <b>No</b>. This window closes automatically after 3 s."
-
-        )
-
-        lab.setWordWrap(True)
-
-        lay.addWidget(lab)
-
-        bb = QDialogButtonBox(dlg)
-
-        btn_yes = bb.addButton("Yes", QDialogButtonBox.ButtonRole.AcceptRole)
-
-        btn_no = bb.addButton("No", QDialogButtonBox.ButtonRole.RejectRole)
-
-        btn_no.setDefault(True)
-
-        choice = {"use_nl": False}
-
-        close_reason = {"kind": "timeout_default_no"}
-
-        if self.logger:
-
-            self.logger.info(
-                "Corridors after NL alpha: prompt opened | default=no | auto_close_s=3"
-            )
-
-        def _accept_yes() -> None:
-
-            choice["use_nl"] = True
-
-            close_reason["kind"] = "user_yes"
-
-            dlg.accept()
-
-        def _reject_no() -> None:
-
-            choice["use_nl"] = False
-
-            if close_reason["kind"] == "timeout_default_no":
-
-                close_reason["kind"] = "user_no"
-
-            dlg.reject()
-
-        def _timeout_reject_no() -> None:
-
-            choice["use_nl"] = False
-
-            close_reason["kind"] = "timeout_default_no"
-
-            dlg.reject()
-
-        btn_yes.clicked.connect(_accept_yes)
-
-        btn_no.clicked.connect(_reject_no)
-
-        lay.addWidget(bb)
-
-        QTimer.singleShot(3000, _timeout_reject_no)
-
-        dlg.exec()
-
-        if self.logger:
-
-            self.logger.info(
-                "Corridors after NL alpha: prompt closed | choice_use_nl=%s | reason=%s",
-                "yes" if bool(choice["use_nl"]) else "no",
-                str(close_reason["kind"]),
-            )
-
-        return bool(choice["use_nl"])
-
-    def _start_deferred_corridor_worker(self, result: dict, *, use_nl_alpha: bool) -> bool:
+    def _start_deferred_corridor_worker(self, result: dict) -> bool:
 
         cfg_base = self._last_run_cfg
 
         if cfg_base is None:
-
             cfg_base = self._build_opt_config(notify=False)
 
         if cfg_base is None:
-
             return False
 
-        self._stop_event = Event()
-
-        self._cleanup_thread()
+        CertusIndexSplineApp._prepare_worker_restart(self)
 
         self._best_live_rmse = float("inf")
 
@@ -12497,13 +11350,41 @@ class _CorridorControlMixin:
 
         self._live_best_detail_log_mono = 0.0
 
-        cfg_corr = cfg_base.replace()
+        cfg_corr = self._cfg_with_result_substrate(cfg_base, result).replace()
 
         setattr(cfg_corr, "gui_defer_corridor_profile_after_nl", False)
+        # Manual "Corridors" action must execute profiling now, regardless of the main run checkbox state.
+        setattr(cfg_corr, "corridor_profile_d_enabled", True)
 
-        setattr(cfg_corr, "gui_use_nl_alpha_for_corridors", bool(use_nl_alpha))
+        # --- Resync solver snapshot if manual dialog changed the mesh (K) ---
+        _snap = result.get("gui_solver_snapshot_for_corridors")
+        _snap_k = 0
+        if isinstance(_snap, dict):
+            _snap_sk = np.asarray(_snap.get("sigma_knots", []), dtype=np.float64).ravel()
+            _snap_k = int(_snap_sk.size)
+        _cur_sk = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
+        _cur_k = int(_cur_sk.size)
+        if _cur_k >= 2 and _cur_k != _snap_k:
+            fresh_snap = dict(result)
+            for _key in ("x", "x_seg_spline_sigma", "n_nodes_physical", "L_nodes",
+                         "sigma_knots", "d_nm", "n_lam", "k_lam", "rmse", "mse"):
+                if _key in result:
+                    val = result[_key]
+                    if isinstance(val, np.ndarray):
+                        fresh_snap[_key] = val.copy()
+                    else:
+                        fresh_snap[_key] = val
+            result["gui_solver_snapshot_for_corridors"] = fresh_snap
+            if self.logger:
+                self.logger.info(
+                    "Corridors: solver snapshot resynced to current mesh | K_snap=%d -> K_current=%d",
+                    _snap_k, _cur_k,
+                )
 
-        self._worker = GenericWorker(worker_run_corridor_profile_after_nl_choice, cfg_corr, dict(result), self._stop_event)
+
+        self._worker = GenericWorker(
+            worker_run_corridor_profile_after_nl_choice, cfg_corr, dict(result), self._stop_event
+        )
 
         def _corr_progress(p: float | int, m: str) -> None:
 
@@ -12512,8 +11393,10 @@ class _CorridorControlMixin:
             self._worker.signals.progress.emit(max(0, min(10000, pv)), m)
 
         self._worker.kwargs["progress_cb"] = _corr_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
 
         self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_corridor_rmse_grid_live_update)
 
         self._worker.signals.finished.connect(self._on_worker_done)
 
@@ -12523,47 +11406,54 @@ class _CorridorControlMixin:
 
         self._worker.signals.error.connect(self._cleanup_thread)
 
+        source_stage = str(getattr(self, "_worker_role", "main") or "main")
+
         self._worker_role = "corridors"
+
+        if hasattr(self, "_stepper"):
+            self._stepper.set_step(6)
 
         if self.logger:
             rd = result.get("d_nm")
-            rd_txt = (
-                f"{float(rd):.6f}"
-                if isinstance(rd, (int, float)) and np.isfinite(float(rd))
-                else "n/a"
-            )
+            rd_txt = f"{float(rd):.6f}" if isinstance(rd, (int, float)) and np.isfinite(float(rd)) else "n/a"
             rr = self._rmse_from_result_dict(result)
             rr_txt = f"{rr:.8f}" if np.isfinite(rr) else "n/a"
             self.logger.info(
-                "Corridors after NL alpha: launching deferred corridor worker | use_nl_alpha=%s | seed_d_nm=%s | seed_rmse_dict=%s",
-                "yes" if bool(use_nl_alpha) else "no",
+                "Corridors: launching deferred corridor worker | after_stage=%s | seed_d_nm=%s | seed_rmse_dict=%s",
+                source_stage,
                 rd_txt,
                 rr_txt,
+            )
+            log_index_spline_d_trace(
+                self.logger,
+                "GUI: lancement corridor différé (_last_result seed)",
+                result.get("d_nm"),
+                detail=f"après_stage={source_stage} rmse_dict={rr_txt}",
             )
 
         self.btn_run.setEnabled(False)
 
         self.btn_stop.setEnabled(True)
 
+        self._refresh_post_optimization_option_controls()
+
         self._prog_ui_last = 0
 
         self._prog_reset_bar()
 
-        self.lbl_status.setText(
-            f"Corridors: running post-NL profiling (base={'NL alpha' if use_nl_alpha else 'standard'})..."
-        )
+        self.lbl_status.setText("Corridors: calcul en cours...")
 
         self._worker.start()
 
         return True
 
     def _finish_curve_minimum_deep_worker_done(self, result: object) -> None:
-        """Fin du polish profond depuis le minimum RMSE(d) : nominal, puis corridors comme apr?s un run solveur."""
+        """Fin du polish profond depuis le minimum RMSE(d) : retour a l'etat post-optimisation sans lancement automatique."""
         self._worker_role = "idle"
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
         if not isinstance(result, dict):
-            self.lbl_status.setText("Polish profond (minimum grille) : annul? ou ?chec.")
+            self.lbl_status.setText("Polish profond (minimum grille) : annule ou echec.")
             if self.logger:
                 self.logger.warning(
                     "GUI curve-min deep refit | finished without dict (type=%s)",
@@ -12572,13 +11462,44 @@ class _CorridorControlMixin:
             QMessageBox.warning(
                 self,
                 "Polish profond",
-                "Le polish L-BFGS-B depuis le minimum de grille n'a pas renvoy? de r?sultat valide "
-                "(interruption ou ?chec num?rique). Le nominal n'a pas ?t? modifi?.",
+                "Le polish L-BFGS-B depuis le minimum de grille n'a pas renvoye de resultat valide "
+                "(interruption ou echec numerique). Le nominal n'a pas ete modifie.",
             )
+            self._refresh_post_optimization_option_controls()
             return
         for _rk in list(result.keys()):
             if str(_rk).startswith("profile_d"):
                 del result[_rk]
+
+        # Restore corridor and profile_d keys from the preceding corridor worker output.
+        # The deep polish (L-BFGS-B on d+nodes) does not recompute corridor envelopes;
+        # they were computed by the corridor worker and are stored in _last_result.
+        # Safety: _display_result_prefer_best_live (called below) will NOT strip them
+        # because _best_live_result is None during deep polish (no live callbacks).
+        prev = self._last_result if isinstance(self._last_result, dict) else {}
+        _lam_result = np.asarray(result.get("lam_nm", []), dtype=np.float64).ravel()
+        _lam_prev = np.asarray(prev.get("lam_nm", []), dtype=np.float64).ravel()
+        _lam_ok = _lam_result.size > 0 and _lam_result.size == _lam_prev.size
+        _n_restored = 0
+        if _lam_ok:
+            for _pk in list(prev.keys()):
+                if (
+                    str(_pk).startswith("corridor_")
+                    or str(_pk).startswith("profile_d_")
+                    or _pk == "profile_d_enabled"
+                ) and _pk not in result:
+                    val = prev[_pk]
+                    result[_pk] = val.copy() if isinstance(val, np.ndarray) else val
+                    _n_restored += 1
+        if self.logger:
+            self.logger.info(
+                "GUI curve-min deep refit | corridor data restoration from _last_result | "
+                "lam_ok=%s (result=%d, prev=%d) | keys_restored=%d",
+                "yes" if _lam_ok else "NO",
+                int(_lam_result.size),
+                int(_lam_prev.size),
+                int(_n_restored),
+            )
 
         self._last_worker_result = dict(result)
         self._corridor_rmse_manual_active = False
@@ -12588,19 +11509,9 @@ class _CorridorControlMixin:
         display = self._display_result_prefer_best_live(result)
         self._last_result = display
 
-        rmse_tag = (
-            "RMSE (bande lambda)"
-            if display.get("rmse_fit_lambda_nm") is not None
-            else "RMSE (plein spectre)"
-        )
-        mse_d = float(display.get("mse", 0.0))
-        d_nm_d = float(display.get("d_nm", float("nan")))
-        nfev_d = int(display.get("nit_polish", result.get("nit_polish", 0)) or 0)
-        st = (
-            f"{rmse_tag}  {np.sqrt(max(mse_d, 0.0)):.6f} | d={d_nm_d:.2f} nm | "
-            f"solver evals?{nfev_d}"
-        )
-        self.lbl_status.setText("Apr?s minimum grille (polish profond) | " + st)
+        st = CertusIndexSplineApp._format_post_optimization_status(display, result)
+        status_text = "Apres minimum grille (polish profond) | " + st
+        self.lbl_status.setText(status_text)
 
         if self.logger:
             rm_fin = float(
@@ -12610,29 +11521,23 @@ class _CorridorControlMixin:
                 )
             )
             self.logger.info(
-                "GUI curve-min deep refit | done | rmse?%.8f | d_nm=%.6f",
+                "GUI curve-min deep refit | done | rmse=%.8f | d_nm=%.6f",
                 rm_fin,
-                d_nm_d,
+                float(display.get("d_nm", float("nan"))),
             )
             if np.isfinite(rm_fin):
-                _log_index_spline_best_config(
-                    self.logger, display, rm_fin, title="[FIN polish min grille]"
-                )
+                _log_index_spline_best_config(self.logger, display, rm_fin, title="[FIN polish min grille]")
 
-        self._plot_result(display)
+        self._plot_result(display, plot_source="polish_grille_profond")
         self._refresh_data_table()
 
-        if self._result_needs_deferred_corridors(display):
-            use_nl_alpha = False
-            if self._result_can_offer_nl_alpha_for_corridors(display):
-                use_nl_alpha = self._prompt_use_nl_alpha_for_corridors()
-            elif self.logger:
-                self.logger.info(
-                    "Corridors after NL alpha: deferred run without NL-alpha prompt | NL result unavailable as corridor base"
-                )
-            if self._start_deferred_corridor_worker(display, use_nl_alpha=use_nl_alpha):
-                return
-        self.export_excel(auto=True)
+        _cont_after_deep = getattr(self, "_continue_corridor_auto_refine_after_deep", None)
+        if callable(_cont_after_deep) and bool(_cont_after_deep()):
+            return
+
+        self._refresh_post_optimization_option_controls()
+        self.lbl_status.setText(CertusIndexSplineApp._post_optimization_ready_status(status_text))
+        self.export_excel(auto_export=True)
 
     def _finish_rmse_heal_worker_done(self, healed_list: object) -> None:
         """Merge healed points into the main result and refresh."""
@@ -12640,32 +11545,34 @@ class _CorridorControlMixin:
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
         self._set_corridor_grid_busy(False)
-        
+
         if not isinstance(healed_list, list) or not healed_list:
             dr = self._last_result if isinstance(self._last_result, dict) else {}
             self._finish_corridor_rmse_d_grid_worker_done(dr)
             return
-             
+
         # Get baseline from last result
         base = dict(self._last_result) if isinstance(self._last_result, dict) else {}
-        
+
         d_main = list(np.asarray(base.get("profile_d_values_nm", []), dtype=np.float64).ravel())
         r_main = list(np.asarray(base.get("profile_d_rmse_values", []), dtype=np.float64).ravel())
         s_main = list(base.get("profile_d_full_results", []))
-        
+
         added = 0
         for item in healed_list:
-            if not isinstance(item, dict): continue
+            if not isinstance(item, dict):
+                continue
             dv = item.get("profile_d_val_nm")
-            if dv is None: continue
-            
+            if dv is None:
+                continue
+
             # Replace or add
             match = -1
             for i, d_ex in enumerate(d_main):
                 if np.abs(d_ex - dv) < 1e-4:
                     match = i
                     break
-            
+
             rm = float(np.sqrt(max(float(item.get("mse", 0.0)), 0.0)))
             if match >= 0:
                 # Only replace if better!
@@ -12678,52 +11585,43 @@ class _CorridorControlMixin:
                 r_main.append(rm)
                 s_main.append(item)
                 added += 1
-        
+
         if self.logger:
             self.logger.info("GUI RMSE(d) Grid Healing | Integrated %d improved/healed points", added)
-            
+
         base["profile_d_values_nm"] = np.array(d_main, dtype=np.float64)
         base["profile_d_rmse_values"] = np.array(r_main, dtype=np.float64)
         base["profile_d_full_results"] = s_main
-        base["profile_d_manual_grid_coverage_complete"] = True # We healed!
-        
+        base["profile_d_manual_grid_coverage_complete"] = True  # We healed!
+
         # Finally trigger the standard finalization
         self._finish_corridor_rmse_d_grid_worker_done(base)
 
     def _apply_corridor_preset_auto_robust(self) -> None:
-
-        """Preset ? corridor auto robuste ? : Delta adaptatif local, sym?trie sur la parabole, param?tres stables."""
+        """Preset 'Auto robust corridor': local adaptive Delta, symmetry on parabola, stable parameters."""
 
         if hasattr(self, "cb_corr_mode"):
-
             self.cb_corr_mode.blockSignals(True)
 
             try:
-
                 iq = self.cb_corr_mode.findData("abs_delta_adaptive")
 
                 if iq >= 0:
-
                     self.cb_corr_mode.setCurrentIndex(int(iq))
 
             finally:
-
                 self.cb_corr_mode.blockSignals(False)
 
         if hasattr(self, "sp_corr_rmse_delta"):
-
             self.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
 
         if hasattr(self, "chk_corr_scientific_nominal"):
-
             self.chk_corr_scientific_nominal.setChecked(True)
 
         if hasattr(self, "sp_corridor_rmse_win"):
-
             self.sp_corridor_rmse_win.setValue(4)
 
         if hasattr(self, "sp_corridor_rmse_delta"):
-
             self.sp_corridor_rmse_delta.setValue(2e-4)
 
         self._corridor_parabola_half_window_pts = 4
@@ -12739,128 +11637,97 @@ class _CorridorControlMixin:
         self._corridor_adaptive_rmse_min = float(_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN)
 
         if hasattr(self, "_on_corr_mode_changed"):
-
             self._on_corr_mode_changed()
 
         if hasattr(self, "_refresh_corridor_rmse_robust_view"):
-
             try:
-
                 self._refresh_corridor_rmse_robust_view()
 
             except NUMERICAL_FAULT_EXCEPTIONS:
-
                 logger.debug("Corridor RMSE robust refresh after preset failed", exc_info=True)
 
         if hasattr(self, "_refresh_corridors_gui_state_labels"):
-
             self._refresh_corridors_gui_state_labels()
 
     def _set_corridor_grid_busy(self, busy: bool) -> None:
 
         if hasattr(self, "btn_corridor_rmse_grid_calc"):
-
             self.btn_corridor_rmse_grid_calc.setEnabled(not busy)
 
         if hasattr(self, "sp_corridor_grid_d_step_nm"):
-
             self.sp_corridor_grid_d_step_nm.setEnabled(not busy)
 
         if hasattr(self, "sp_corridor_grid_n_points"):
-
             self.sp_corridor_grid_n_points.setEnabled(not busy)
 
         if hasattr(self, "sp_corridor_breakpoint_lookback"):
-
             self.sp_corridor_breakpoint_lookback.setEnabled(not busy)
 
         if hasattr(self, "chk_corridor_rmse_envelope_only"):
-
             self.chk_corridor_rmse_envelope_only.setEnabled(not busy)
 
         if hasattr(self, "btn_corridor_rmse_export_data"):
-
             self.btn_corridor_rmse_export_data.setEnabled(not busy)
 
         if hasattr(self, "btn_corridor_rmse_export_envelope_nk"):
-
             self.btn_corridor_rmse_export_envelope_nk.setEnabled(not busy)
 
         if hasattr(self, "btn_corridor_generate_from_grid"):
-
             has_curve = bool(np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).size > 0)
 
             self.btn_corridor_generate_from_grid.setEnabled((not busy) and has_curve)
 
         if hasattr(self, "sp_corridor_partial_delta_nm"):
-
             self.sp_corridor_partial_delta_nm.setEnabled(not busy)
 
         if hasattr(self, "btn_corridor_generate_from_partial_grid"):
-
             has_curve = bool(np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).size > 0)
 
             self.btn_corridor_generate_from_partial_grid.setEnabled((not busy) and has_curve)
 
         if hasattr(self, "btn_corridor_generate_auto_smart_grid"):
-
             has_curve = bool(np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).size > 0)
 
             self.btn_corridor_generate_auto_smart_grid.setEnabled((not busy) and has_curve)
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-
             self.pb_corridor_rmse_grid.setEnabled(bool(busy))
 
             if busy:
-
                 self.pb_corridor_rmse_grid.setStyleSheet(
-
                     f"QProgressBar::chunk {{ background-color: {CertusTheme.PRIMARY}; }}"
-
                 )
             else:
-
                 self.pb_corridor_rmse_grid.setStyleSheet("")
 
     def _set_corridor_grid_progress_ui(
-
         self,
-
         *,
-
         done: int,
-
         total: int,
-
         base_done: int | None = None,
-
         base_total: int | None = None,
-
         extra_done: int | None = None,
-
         current_d_nm: float | None = None,
-
     ) -> None:
 
         tot = max(1, int(total))
         dn = int(max(0, min(done, tot)))
         frac = float(dn) / float(tot)
-        
+
         # UX-8: Sub-progress injection
         if hasattr(self, "progress_widget"):
             self.progress_widget.update(
-                iteration=self._prog_ui_last, 
-                max_iter=10000, 
-                evals=0, 
-                phase=f"RMSE(d) Grid: {dn}/{tot}", 
-                extra_info="", 
-                sub_iteration=dn, 
-                max_sub_iter=tot
+                iteration=self._prog_ui_last,
+                max_iter=10000,
+                evals=0,
+                phase=f"RMSE(d) Grid: {dn}/{tot}",
+                extra_info="",
+                sub_iteration=dn,
+                max_sub_iter=tot,
             )
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-
             self.pb_corridor_rmse_grid.setValue(int(round(1000.0 * frac)))
 
         t0 = float(getattr(self, "_corridor_rmse_grid_live_t0", float("nan")))
@@ -12868,7 +11735,6 @@ class _CorridorControlMixin:
         eta_txt = ""
 
         if np.isfinite(t0) and dn > 0:
-
             dt = max(0.0, time.perf_counter() - t0)
 
             avg = dt / float(dn)
@@ -12880,7 +11746,6 @@ class _CorridorControlMixin:
         d_txt = ""
 
         if current_d_nm is not None and np.isfinite(float(current_d_nm)):
-
             d_txt = f" | d={float(current_d_nm):.3f} nm"
 
         if hasattr(self, "lbl_corridor_rmse_grid_progress"):
@@ -12893,26 +11758,17 @@ class _CorridorControlMixin:
                     f"Grid {bdn}/{btot} ({bfrac:.1f}%) + extra {xdn}{d_txt}{eta_txt}"
                 )
             else:
-                self.lbl_corridor_rmse_grid_progress.setText(
-                    f"Grid {dn}/{tot} ({100.0 * frac:.1f}%){d_txt}{eta_txt}"
-                )
+                self.lbl_corridor_rmse_grid_progress.setText(f"Grid {dn}/{tot} ({100.0 * frac:.1f}%){d_txt}{eta_txt}")
 
     def _sync_corridor_manual_controls(self, d_s: np.ndarray, i_best: int) -> None:
 
         if (
-
             not hasattr(self, "sl_corridor_manual_half")
-
             or not hasattr(self, "btn_generate_manual_corridor")
-
             or d_s.size == 0
-
             or i_best < 0
-
             or i_best >= int(d_s.size)
-
         ):
-
             self._reset_corridor_manual_controls()
 
             return
@@ -12922,8 +11778,16 @@ class _CorridorControlMixin:
         d_center = float(getattr(self, "_corridor_rmse_center_nm", float("nan")))
 
         if not np.isfinite(d_center):
-
             d_center = d_best
+
+        man_active = bool(getattr(self, "_corridor_rmse_manual_active", False))
+        man_lo = float(getattr(self, "_corridor_rmse_manual_lo", float("nan")))
+        man_hi = float(getattr(self, "_corridor_rmse_manual_hi", float("nan")))
+        has_manual_interval = man_active and np.isfinite(man_lo) and np.isfinite(man_hi) and man_hi >= man_lo
+        if has_manual_interval:
+            # Preserve the effective manual interval currently applied/generated,
+            # instead of recomputing preview solely from the previous slider state.
+            d_center = 0.5 * float(man_lo + man_hi)
 
         self._set_corridor_manual_bounds_labels(float(d_s[0]), d_best, float(d_s[-1]))
 
@@ -12934,19 +11798,17 @@ class _CorridorControlMixin:
         max_steps = max(1, int(round(max_half * scale)))
 
         cur_half = self._corridor_manual_half_width_nm()
+        if has_manual_interval:
+            cur_half = 0.5 * float(max(0.0, man_hi - man_lo))
 
         if not np.isfinite(cur_half) or cur_half <= 0.0:
-
             if np.isfinite(self._corridor_rmse_robust_lo) and np.isfinite(self._corridor_rmse_robust_hi):
-
                 cur_half = 0.5 * max(0.0, float(self._corridor_rmse_robust_hi - self._corridor_rmse_robust_lo))
 
             elif d_s.size >= 2:
-
                 cur_half = max(float(np.nanmedian(np.abs(np.diff(d_s)))), 0.0)
 
             else:
-
                 cur_half = 0.0
 
         cur_half = float(min(max(cur_half, 0.0), max_half))
@@ -12966,13 +11828,11 @@ class _CorridorControlMixin:
         self.btn_generate_manual_corridor.setEnabled(True)
 
         if hasattr(self, "btn_corridor_manual_robust"):
-
             self.btn_corridor_manual_robust.setEnabled(bool(self._corridor_rmse_robust_ok))
 
         self._set_corridor_manual_interval_preview(d_center, cur_half)
 
     def _generate_corridor_from_current_grid(self) -> None:
-
         """Generate n/k corridor from all currently available RMSE(d) grid points."""
 
         source = self._corridor_profile_source_result()
@@ -12980,9 +11840,7 @@ class _CorridorControlMixin:
         display = self._last_result
 
         if not isinstance(source, dict) or not isinstance(display, dict):
-
             if self.logger:
-
                 self.logger.warning("GUI generate corridor(grid) | aborted: no RMSE(d) grid in memory")
 
             QMessageBox.information(self, "Generate corridor (grid)", "No RMSE(d) grid is available yet.")
@@ -12992,13 +11850,38 @@ class _CorridorControlMixin:
         d_s = np.asarray(source.get("profile_d_values_nm", []), dtype=np.float64).ravel()
 
         if d_s.size == 0:
-
             if self.logger:
-
                 self.logger.warning("GUI generate corridor(grid) | aborted: RMSE(d) grid empty")
 
             QMessageBox.information(self, "Generate corridor (grid)", "No valid RMSE(d) points are available.")
 
+            return
+
+        # Guard against partial live updates: d-values can be present while
+        # n/k profile curves are still being filled by the worker.
+        n_curves = np.asarray(source.get("profile_d_n_curves", []), dtype=np.float64)
+        k_curves = np.asarray(source.get("profile_d_k_curves", []), dtype=np.float64)
+        curves_ready = (
+            n_curves.ndim == 2
+            and k_curves.ndim == 2
+            and n_curves.shape[0] == d_s.size
+            and k_curves.shape[0] == d_s.size
+            and n_curves.shape[1] > 0
+            and k_curves.shape[1] == n_curves.shape[1]
+        )
+        if not curves_ready:
+            if self.logger:
+                self.logger.warning(
+                    "GUI generate corridor(grid) | aborted: profile curves not ready/coherent | d_points=%d | n_shape=%s | k_shape=%s",
+                    int(d_s.size),
+                    tuple(int(v) for v in n_curves.shape) if n_curves.ndim >= 1 else (),
+                    tuple(int(v) for v in k_curves.shape) if k_curves.ndim >= 1 else (),
+                )
+            QMessageBox.information(
+                self,
+                "Generate corridor (grid)",
+                "RMSE(d) grid is still updating. Please retry in a moment.",
+            )
             return
 
         d_lo = float(np.nanmin(d_s))
@@ -13006,53 +11889,34 @@ class _CorridorControlMixin:
         d_hi = float(np.nanmax(d_s))
 
         if self.logger:
-
             self.logger.info(
-
                 "GUI generate corridor(grid) | request | grid_points=%d | d_range=[%.6f, %.6f] nm",
-
                 int(d_s.size),
-
                 float(d_lo),
-
                 float(d_hi),
-
             )
 
         ok = self._apply_corridor_payload_from_interval(
-
             source=source,
-
             display=display,
-
             d_lo=d_lo,
-
             d_hi=d_hi,
-
             status_prefix="n/k corridor generated from RMSE(d) grid on",
-
         )
 
         if not ok:
-
             if self.logger:
-
                 self.logger.warning("GUI generate corridor(grid) | failed for current RMSE(d) grid")
 
             QMessageBox.warning(
-
                 self,
-
                 "Generate corridor (grid)",
-
                 "Unable to generate n/k corridor from the current RMSE(d) grid.",
-
             )
 
     def _on_corridor_rmse_plot_clicked(self, ev: Any) -> None:
 
         if not hasattr(self, "plot_corridor_rmse_d"):
-
             return
 
         d_s = np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).ravel()
@@ -13060,11 +11924,9 @@ class _CorridorControlMixin:
         r_s = np.asarray(getattr(self, "_corridor_rmse_vals", []), dtype=np.float64).ravel()
 
         if d_s.size == 0 or r_s.size != d_s.size:
-
             return
 
         try:
-
             vb = self.plot_corridor_rmse_d.plotItem.vb
 
             p = vb.mapSceneToView(ev.scenePos())
@@ -13072,11 +11934,9 @@ class _CorridorControlMixin:
             x = float(p.x())
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             return
 
         if not np.isfinite(x):
-
             return
 
         i_sel = int(np.argmin(np.abs(d_s - x)))
@@ -13088,7 +11948,6 @@ class _CorridorControlMixin:
         i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
 
         if i_best < 0 or i_best >= d_s.size:
-
             i_best = int(np.argmin(r_s))
 
         d_best = float(d_s[i_best])
@@ -13102,32 +11961,40 @@ class _CorridorControlMixin:
         rb_ok = bool(getattr(self, "_corridor_rmse_robust_ok", False))
 
         if hasattr(self, "lbl_corridor_rmse_summary"):
-
             tail = (
-
                 f" | robust interval ? [{d_lo_rb:.3f}, {d_hi_rb:.3f}] nm"
-
                 if rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb)
-
                 else ""
-
             )
 
             self.lbl_corridor_rmse_summary.setText(
-
                 f"Best computed thickness: d* = {d_best:.3f} nm | RMSE(d*) = {r_best:.6f} | "
-
                 f"selected: d = {d_sel:.3f} nm, RMSE = {r_sel:.6f}, DeltaRMSE = {r_sel - r_best:+.6e}{tail}"
-
             )
-
 
 class _UIMixin:
     """UI Area."""
 
-
-class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMixin, _DataMixin, _RunMixin, _CorridorExportMixin, _UIBuilderMixin, _PlotMixin, _CorridorWorkerMixin, _SmartInitDialogMixin, _ConfigBuilderMixin, _MeshOptimizationMixin, _ExcelExportMixin, _UIMixin, CertusBaseApp):
-    def _on_smart_init_keep(self, dlg: QDialog, cfg: "SplineOptConfig", state: _SmartInitState, ui_ctx: dict[str, Any]) -> None:
+class CertusIndexSplineApp(
+    _CorridorControlMixin,
+    _SettingsMixin,
+    _CorridorGenMixin,
+    _DataMixin,
+    _RunMixin,
+    _CorridorExportMixin,
+    _UIBuilderMixin,
+    _PlotMixin,
+    _CorridorWorkerMixin,
+    _SmartInitDialogMixin,
+    _ConfigBuilderMixin,
+    _MeshOptimizationMixin,
+    _ExcelExportMixin,
+    _UIMixin,
+    CertusBaseApp,
+):
+    def _on_smart_init_keep(
+        self, dlg: QDialog, cfg: "SplineOptConfig", state: _SmartInitState, ui_ctx: dict[str, Any]
+    ) -> None:
         if cfg is None:
             dlg.accept()
             return
@@ -13135,9 +12002,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         d_final = float(state.preview_d_nm)
         n_phys_final = np.asarray(state.n_phys, dtype=np.float64).copy()
         L_nodes_final = np.asarray(state.L_nodes, dtype=np.float64).copy()
-        sk_final = np.asarray(
-            getattr(self, "smart_preview_sk_arr", state.sk), dtype=np.float64
-        ).ravel().copy()
+        sk_final = np.asarray(getattr(self, "smart_preview_sk_arr", state.sk), dtype=np.float64).ravel().copy()
 
         rmse_preview_mesh = float(state.current_rmse)
         rmse_worker_mesh = rmse_preview_mesh
@@ -13159,9 +12024,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
                 min_delta_lambda_over_lambda_mean=_mdl_ck if _mdl_ck > 0.0 else None,
             )
             sk_canon_keep = sk_canon
-            n_on_canon, L_on_canon = interp_n_L_pwlnk_to_sigmas(
-                sk_final, n_phys_final, L_nodes_final, sk_canon
-            )
+            n_on_canon, L_on_canon = interp_n_L_pwlnk_to_sigmas(sk_final, n_phys_final, L_nodes_final, sk_canon)
             _, rmse_worker_mesh = rmse_at_spline_stage_x0_init(
                 cfg,
                 sk_canon,
@@ -13235,19 +12098,21 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         n_xi = physical_nodes_to_x_slice_n(n_phys_final, sk_final, cfg.n_mono_band_nm)
         x_final = np.concatenate(([d_final], n_xi, L_nodes_final))
-        ui_snap = _pack_spline_stage_result(
-            cfg, sk_final, x_final, float(rmse_worker_mesh**2), 0, 0
-        )
-        self._plot_result(ui_snap)
+        ui_snap = _pack_spline_stage_result(cfg, sk_final, x_final, float(rmse_worker_mesh**2), 0, 0)
+        self._plot_result(ui_snap, plot_source="smart_init_retenir")
         dlg.accept()
 
-    def _prepare_smart_init_autofind_config(self, cfg: "SplineOptConfig", cur_sk: np.ndarray, n_phys: np.ndarray, L_nodes: np.ndarray, preview_d_nm: float) -> tuple["SplineOptConfig", np.ndarray, int]:
+    def _prepare_smart_init_autofind_config(
+        self, cfg: "SplineOptConfig", cur_sk: np.ndarray, n_phys: np.ndarray, L_nodes: np.ndarray, preview_d_nm: float
+    ) -> tuple["SplineOptConfig", np.ndarray, int]:
         lam_nm_af = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
         lam_min_af = float(np.nanmin(lam_nm_af))
         lam_max_af = float(np.nanmax(lam_nm_af))
         _mdl_br = float(getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.0) or 0.0)
         sk_canon = bridge_sigma_knots_preserve_manual(
-            cur_sk, lam_min_af, lam_max_af,
+            cur_sk,
+            lam_min_af,
+            lam_max_af,
             rmse_fit_lambda_nm=getattr(cfg, "rmse_fit_lambda_nm", None),
             min_delta_lambda_over_lambda_mean=_mdl_br if _mdl_br > 0.0 else None,
         )
@@ -13261,11 +12126,13 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         if int(np.asarray(n_on).size) != k_loc or int(np.asarray(L_on).size) != k_loc:
             raise ValueError(f"Inconsistent sizes after regridding (K={k_loc}, len(n)={np.asarray(n_on).size}).")
 
-        x0_loc = np.concatenate((
-            np.asarray([float(preview_d_nm)], dtype=np.float64),
-            np.asarray(n_on, dtype=np.float64).ravel(),
-            np.asarray(L_on, dtype=np.float64).ravel(),
-        ))
+        x0_loc = np.concatenate(
+            (
+                np.asarray([float(preview_d_nm)], dtype=np.float64),
+                np.asarray(n_on, dtype=np.float64).ravel(),
+                np.asarray(L_on, dtype=np.float64).ravel(),
+            )
+        )
 
         _polish_af = min(int(getattr(cfg, "polish_maxfun", 8000) or 8000), 3200)
         _smlf_af = min(max(int(getattr(cfg, "stage_mandatory_local_maxfun", 0) or 0), 400), 900)
@@ -13276,7 +12143,10 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             n_seg=int(max(1, k_loc - 1)),
             sigma_knots_override=None,
             smart_preview_exact_sigma_knots=np.asarray(sk_canon, dtype=np.float64).copy(),
-            smart_preview_exact_n_L=(np.asarray(n_on, dtype=np.float64).copy(), np.asarray(L_on, dtype=np.float64).copy()),
+            smart_preview_exact_n_L=(
+                np.asarray(n_on, dtype=np.float64).copy(),
+                np.asarray(L_on, dtype=np.float64).copy(),
+            ),
             smart_preview_d_nm_override=float(preview_d_nm),
             x0_warm=x0_loc.copy(),
             smart_init_manual_force_restart=False,
@@ -13292,10 +12162,12 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         )
         return auto_cfg, sk_canon, k_loc
 
-    def _apply_smart_init_autofind_result(self, best: dict, k_loc: int, sk_canon: np.ndarray, state: _SmartInitState) -> bool:
+    def _apply_smart_init_autofind_result(
+        self, best: dict, k_loc: int, sk_canon: np.ndarray, state: _SmartInitState
+    ) -> bool:
         n_new = np.asarray(best.get("n_nodes_physical", state.n_phys), dtype=np.float64).ravel()
         L_new = np.asarray(best.get("L_nodes", state.L_nodes), dtype=np.float64).ravel()
-        size_match = (n_new.size == k_loc and L_new.size == k_loc)
+        size_match = n_new.size == k_loc and L_new.size == k_loc
         if size_match:
             state.n_phys = n_new.copy()
             state.L_nodes = L_new.copy()
@@ -13320,36 +12192,44 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             state.best_L = state.L_nodes.copy()
         return size_match
 
-    def _execute_smart_init_preset_logic(self, cfg: "SplineOptConfig", projector: Any, relax_si_mono: bool, state: "_SmartInitState") -> None:
+    def _execute_smart_init_preset_logic(
+        self, cfg: "SplineOptConfig", projector: Any, relax_si_mono: bool, state: "_SmartInitState"
+    ) -> None:
         target_sk = np.asarray(state.sk, dtype=np.float64).ravel()
         new_sk, new_n, new_L, new_d = projector(target_sk)
         state.sk = np.asarray(new_sk, dtype=np.float64).ravel().copy()
         state.n_phys = new_n.copy()
         state.L_nodes = new_L.copy()
-        
+
         if getattr(self, "sk_sorted", None) is not None:
             try:
                 _ss = np.asarray(self.sk_sorted, dtype=np.float64).ravel()
                 if _ss.size == state.sk.size:
                     self.sk_sorted[:] = state.sk
             except (TypeError, ValueError, IndexError):
-                pass
-                
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
         from scipy.optimize import minimize_scalar
+
         def obj_d_only(dv: float) -> float:
             _, rm = rmse_at_spline_stage_x0_init(
                 cfg, state.sk, state.n_phys, state.L_nodes, float(dv), relax_n_mono=relax_si_mono
             )
             return float(rm)
-        
-        res_d = minimize_scalar(
-            obj_d_only, bounds=(cfg.d_lo, cfg.d_hi), method="bounded", options={"xatol": 0.01}
-        )
+
+        res_d = minimize_scalar(obj_d_only, bounds=(cfg.d_lo, cfg.d_hi), method="bounded", options={"xatol": 0.01})
         if res_d.success:
             state.preview_d_nm = float(res_d.x)
 
     def _execute_smart_init_run_auto(
-        self, cfg: "SplineOptConfig", row: int, is_ln_k: bool, L_lo_g: float, L_hi_g: float, relax_si_mono: bool, state: "_SmartInitState"
+        self,
+        cfg: "SplineOptConfig",
+        row: int,
+        is_ln_k: bool,
+        L_lo_g: float,
+        L_hi_g: float,
+        relax_si_mono: bool,
+        state: "_SmartInitState",
     ) -> str | None:
         cur_sk = np.asarray(state.sk, dtype=np.float64).ravel()
         n_loc = np.asarray(state.n_phys, dtype=np.float64).ravel()
@@ -13377,9 +12257,19 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         try:
             out = smart_init_sweep_node_thickness_rmse(
-                cfg, cur_sk, n_loc, L_loc, int(row), is_ln_k=bool(is_ln_k),
-                d_lo=float(cfg.d_lo), d_hi=float(cfg.d_hi), L_lo=L_lo_g, L_hi=L_hi_g,
-                time_budget_s=2.9, d_nm_current=float(state.preview_d_nm), relax_n_mono=relax_si_mono,
+                cfg,
+                cur_sk,
+                n_loc,
+                L_loc,
+                int(row),
+                is_ln_k=bool(is_ln_k),
+                d_lo=float(cfg.d_lo),
+                d_hi=float(cfg.d_hi),
+                L_lo=L_lo_g,
+                L_hi=L_hi_g,
+                time_budget_s=2.9,
+                d_nm_current=float(state.preview_d_nm),
+                relax_n_mono=relax_si_mono,
             )
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
             return str(exc)
@@ -13403,23 +12293,29 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self, cfg: "SplineOptConfig", grids: dict[str, Any], relax_si_mono: bool, state: "_SmartInitState"
     ) -> dict[str, Any] | None:
         out = recalc_smart_init_spectral_preview(
-            cfg, state.sk, state.n_phys, state.L_nodes, grids,
-            d_nm_fixed=float(state.preview_d_nm), relax_n_mono=relax_si_mono,
+            cfg,
+            state.sk,
+            state.n_phys,
+            state.L_nodes,
+            grids,
+            d_nm_fixed=float(state.preview_d_nm),
+            relax_n_mono=relax_si_mono,
         )
-        if out is None: return None
-        
+        if out is None:
+            return None
+
         state.n_phys = np.asarray(out["n_nodes_physical"], dtype=np.float64).ravel().copy()
         state.L_nodes = np.asarray(out["L_nodes"], dtype=np.float64).ravel().copy()
         state.preview_d_nm = float(out["d_best_nm"])
         state.sk = np.asarray(out.get("sigma_knots", state.sk), dtype=np.float64).ravel().copy()
-        
+
         self.smart_preview_sk_arr = state.sk.copy()
         self.smart_preview_n_phys = state.n_phys.copy()
         self.smart_preview_L_nodes = state.L_nodes.copy()
         self._si_mesh_sk_snap = state.sk.copy()
-        
+
         state.current_t_th = np.asarray(out["t_theo"], dtype=np.float64).ravel()
-        
+
         _, rm_depart = rmse_at_spline_stage_x0_init(
             cfg, state.sk, state.n_phys, state.L_nodes, state.preview_d_nm, relax_n_mono=relax_si_mono
         )
@@ -13428,10 +12324,12 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             state.best_rmse = state.current_rmse
             state.best_n = state.n_phys.copy()
             state.best_L = state.L_nodes.copy()
-            
+
         return out
-            
-    def _pick_best_smart_init_material_preset(self, cfg: "SplineOptConfig", target_sk: np.ndarray, preview_d_nm: float, relax_si_mono: bool) -> tuple[str, float, float] | None:
+
+    def _pick_best_smart_init_material_preset(
+        self, cfg: "SplineOptConfig", target_sk: np.ndarray, preview_d_nm: float, relax_si_mono: bool
+    ) -> tuple[str, float, float] | None:
         try:
             picked = pick_best_manual_material_preset(
                 cfg, target_sk, d_nm_hint=float(preview_d_nm), relax_n_mono=relax_si_mono
@@ -13440,82 +12338,281 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             if self.logger:
                 self.logger.warning("INDEX_SPLINE [Smart Init] Auto-selection of 3 material presets: %s", exc)
             return None
-            
+
         if picked is None:
             if self.logger:
-                self.logger.info("INDEX_SPLINE [Smart Init] Material presets: no valid RMSE score - keeping current profile.")
+                self.logger.info(
+                    "INDEX_SPLINE [Smart Init] Material presets: no valid RMSE score - keeping current profile."
+                )
             return None
-            
+
         winner, rm_w, d_w, _nw, _Lw, score_rows = picked
         if self.logger:
             parts = [f"{pid}->RMSE={rm:.6f}" for pid, rm in score_rows]
             self.logger.info(
                 "INDEX_SPLINE [Smart Init] Material presets (d mini-opt for each): %s | kept **%s** (RMSE=%.6f, d~%.2f nm)",
-                " ; ".join(parts), winner, rm_w, d_w
+                " ; ".join(parts),
+                winner,
+                rm_w,
+                d_w,
             )
         return winner, rm_w, d_w
-
-
-
-
-
-
-
-
-
 
     def _prog_reset_bar(self) -> None:
 
         anim = getattr(self, "_prog_anim", None)
 
         if anim is not None and anim.state() == QAbstractAnimation.State.Running:
-
             anim.stop()
 
         self.progress_widget.reset()
 
     def _cleanup_thread(self) -> None:
 
-        if self._worker is not None:
+        worker = getattr(self, "_worker", None)
 
-            if self._worker.isRunning():
+        if worker is None:
+            return
 
-                self._worker.stop()
+        if worker.isRunning():
+            try:
+                if hasattr(worker, "stop"):
+                    worker.stop()
 
-                self._worker.wait(100)
+            except (RuntimeError, AttributeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-            self._worker.deleteLater()
+            # Short cooperative window (heavy RMSE grids can exceed 100 ms).
+            for _ in range(80):
+                if not worker.isRunning():
+                    break
 
-            self._worker = None
+                worker.wait(50)
 
+            if worker.isRunning() and self.logger:
+                self.logger.warning("Worker thread still running after ~4s wait; queued deleteLater()")
 
-            # logger is already handled in backend spline_pipeline to avoid dual log.
+        try:
+            worker.deleteLater()
 
+        except RuntimeError:
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        self._worker = None
+
+    def closeEvent(self, event) -> None:
+        """Stop cooperative workers before teardown to avoid Qt ``QThread: Destroyed while still running``.
+
+        Mirrors CERTUS_DESIGN / METAL shutdown pattern: threading ``Event`` first, then QThread.wait.
+        """
+        prev_stop = getattr(self, "_stop_event", None)
+        if getattr(prev_stop, "set", None) is not None:
+            prev_stop.set()
+
+        try:
+            self._stop_all_workers()
+
+        except (RuntimeError, AttributeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        w = getattr(self, "_worker", None)
+
+        if w is not None and w.isRunning():
+            try:
+                if hasattr(w, "stop"):
+                    w.stop()
+
+            except (RuntimeError, AttributeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+            for _ in range(80):
+                if not w.isRunning():
+                    break
+
+                w.wait(50)
+
+        self._cleanup_thread()
+
+        super().closeEvent(event)
+
+    def _prepare_worker_restart(self) -> None:
+        """Stop current worker cooperatively before creating a new stop event."""
+        prev_stop = getattr(self, "_stop_event", None)
+        if isinstance(prev_stop, Event):
+            prev_stop.set()
+        self._cleanup_thread()
+        self._stop_event = Event()
 
     @staticmethod
-
     def _rmse_from_result_dict(d: dict) -> float:
-
         """RMSE displayable for comparison (priority to  rmse  key, else ?MSE)."""
 
         r = d.get("rmse")
 
         if r is not None and np.isfinite(float(r)):
-
             return float(r)
 
         m = float(d.get("mse", float("nan")))
 
         if np.isfinite(m):
-
             return float(np.sqrt(max(m, 0.0)))
 
         return float("inf")
 
     @staticmethod
+    def _runtime_metrics_from_result_dict(d: dict | None) -> tuple[float, float]:
 
+        if not isinstance(d, dict):
+            return float("nan"), float("nan")
+
+        try:
+            d_nm = float(d.get("d_nm", float("nan")))
+
+        except (TypeError, ValueError):
+            d_nm = float("nan")
+
+        rmse = CertusIndexSplineApp._rmse_from_result_dict(d)
+
+        if not np.isfinite(rmse):
+            rmse = float("nan")
+
+        return d_nm, rmse
+
+    @staticmethod
+    def _sorted_finite_sigma_knots(sigma_knots: Any) -> np.ndarray:
+
+        arr = np.asarray(sigma_knots if sigma_knots is not None else [], dtype=np.float64).ravel()
+
+        arr = arr[np.isfinite(arr) & (arr > 0.0)]
+
+        if arr.size == 0:
+            return np.empty(0, dtype=np.float64)
+
+        return np.unique(np.sort(arr))
+
+    @staticmethod
+    def _sigma_knots_to_lambda_nm(sigma_knots: Any) -> np.ndarray:
+
+        sig = CertusIndexSplineApp._sorted_finite_sigma_knots(sigma_knots)
+
+        if sig.size == 0:
+            return np.empty(0, dtype=np.float64)
+
+        return np.sort(1.0 / np.maximum(sig, 1e-30))
+
+    @staticmethod
+    def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 6) -> str:
+
+        lam = np.asarray(lambda_knots_nm if lambda_knots_nm is not None else [], dtype=np.float64).ravel()
+
+        lam = lam[np.isfinite(lam) & (lam > 0.0)]
+
+        if lam.size == 0:
+            return "[]"
+
+        lam = np.sort(lam)
+
+        if lam.size <= int(max_items):
+            return "[" + ", ".join(f"{float(v):.{precision}f}" for v in lam) + "]"
+
+        head = [f"{float(v):.{precision}f}" for v in lam[:3]]
+
+        tail = [f"{float(v):.{precision}f}" for v in lam[-2:]]
+
+        return "[" + ", ".join([*head, "...", *tail]) + "]"
+
+    @staticmethod
+    def _sigma_knot_difference_with_tolerance(source_sigma_knots: Any, reference_sigma_knots: Any) -> np.ndarray:
+
+        src = CertusIndexSplineApp._sorted_finite_sigma_knots(source_sigma_knots)
+
+        ref = CertusIndexSplineApp._sorted_finite_sigma_knots(reference_sigma_knots)
+
+        if src.size == 0:
+            return np.empty(0, dtype=np.float64)
+
+        if ref.size == 0:
+            return src.copy()
+
+        used = np.zeros(ref.size, dtype=bool)
+
+        missing: list[float] = []
+
+        for value in src:
+            tol = max(1e-12, 1e-8 * max(abs(float(value)), 1.0))
+
+            idx = np.where((~used) & (np.abs(ref - float(value)) <= tol))[0]
+
+            if idx.size:
+                used[int(idx[0])] = True
+
+            else:
+                missing.append(float(value))
+
+        return np.asarray(missing, dtype=np.float64)
+
+    @staticmethod
+    def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
+
+        before_sigma = CertusIndexSplineApp._sorted_finite_sigma_knots(before_sigma_knots)
+
+        after_sigma = CertusIndexSplineApp._sorted_finite_sigma_knots(after_sigma_knots)
+
+        removed_sigma = CertusIndexSplineApp._sigma_knot_difference_with_tolerance(before_sigma, after_sigma)
+
+        added_sigma = CertusIndexSplineApp._sigma_knot_difference_with_tolerance(after_sigma, before_sigma)
+
+        before_lambda = CertusIndexSplineApp._sigma_knots_to_lambda_nm(before_sigma)
+
+        after_lambda = CertusIndexSplineApp._sigma_knots_to_lambda_nm(after_sigma)
+
+        removed_lambda = CertusIndexSplineApp._sigma_knots_to_lambda_nm(removed_sigma)
+
+        added_lambda = CertusIndexSplineApp._sigma_knots_to_lambda_nm(added_sigma)
+
+        return {
+            "k_before": int(before_sigma.size),
+            "k_after": int(after_sigma.size),
+            "delta_k": int(after_sigma.size - before_sigma.size),
+            "before_sigma_knots": before_sigma,
+            "after_sigma_knots": after_sigma,
+            "removed_sigma_knots": removed_sigma,
+            "added_sigma_knots": added_sigma,
+            "before_lambda_knots_nm": before_lambda,
+            "after_lambda_knots_nm": after_lambda,
+            "removed_lambda_knots_nm": removed_lambda,
+            "added_lambda_knots_nm": added_lambda,
+        }
+
+    @staticmethod
+    def _manual_mesh_change_log_line(label: str, summary: dict[str, Any]) -> str:
+
+        k_before = int(summary.get("k_before", 0))
+
+        k_after = int(summary.get("k_after", 0))
+
+        delta_k = int(summary.get("delta_k", 0))
+
+        before_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("before_lambda_knots_nm"))
+
+        after_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("after_lambda_knots_nm"))
+
+        removed_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("removed_lambda_knots_nm"))
+
+        added_txt = CertusIndexSplineApp._format_lambda_knots_for_log(summary.get("added_lambda_knots_nm"))
+
+        removed_count = int(np.asarray(summary.get("removed_lambda_knots_nm", []), dtype=np.float64).size)
+
+        added_count = int(np.asarray(summary.get("added_lambda_knots_nm", []), dtype=np.float64).size)
+
+        return (
+            f"{str(label).strip()} | K {k_before}->{k_after} (Delta {delta_k:+d}) | "
+            f"before={before_txt} | after={after_txt} | removed={removed_count} {removed_txt} | "
+            f"added={added_count} {added_txt}"
+        )
+
+    @staticmethod
     def _strip_worker_final_fields_inconsistent_with_live_merge(merged: dict[str, Any]) -> None:
-
         """Removes fields from the **final** worker dict that no longer describe the displayed curves after merging
 
         with the best live snapshot (n_lam/k_lam/d/x come from the live one).
@@ -13525,37 +12622,27 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         and ln_k_lam would remain aligned with the final solution - resulting in wrong Excel export / metadata."""
 
         _variant_nk = (
-
             "n_lam_seg_spline_sigma",
-
             "k_lam_seg_spline_sigma",
-
         )
 
         for k in list(merged.keys()):
-
             if k.startswith("profile_d_"):
-
                 merged.pop(k, None)
 
             elif k.startswith("corridor_"):
-
                 merged.pop(k, None)
 
             elif k.startswith("boot_"):
-
                 merged.pop(k, None)
 
             elif k.startswith("reg_sens"):
-
                 merged.pop(k, None)
 
             elif k.startswith("spectral_rmse_"):
-
                 merged.pop(k, None)
 
         for k in _variant_nk:
-
             merged.pop(k, None)
 
         merged.pop("ln_k_lam", None)
@@ -13564,71 +12651,1120 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         merged.pop("d_nm_seg_spline_sigma", None)
 
-
     def _result_needs_deferred_corridors(self, result: dict) -> bool:
 
         if not isinstance(result, dict):
-
             return False
 
         if not bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()):
-
             return False
 
         if bool(result.get("profile_d_enabled", False)) or result.get("profile_d_values_nm") is not None:
-
             return False
 
         return True
 
-    def _result_can_offer_nl_alpha_for_corridors(self, result: dict) -> bool:
-
-        if not self._result_needs_deferred_corridors(result):
-
+    def _can_offer_mwir_extra_node(self, result: dict) -> bool:
+        """True if conditions allow proposing MWIR extra node insertion dialog."""
+        if not isinstance(result, dict):
             return False
+        sk = result.get("sigma_knots")
+        if sk is None:
+            return False
+        sk_a = np.asarray(sk, dtype=np.float64).ravel()
+        if sk_a.size < 2:
+            return False
+        # Standard mode only (no split sigma_knots_n / sigma_knots_L)
+        if "sigma_knots_n" in result or "sigma_knots_L" in result:
+            return False
+        # lambda_max > 2500 nm
+        lam_src = result.get("lam_nm")
+        if lam_src is None and self._last_run_cfg is not None:
+            lam_src = getattr(self._last_run_cfg, "lam_nm", None)
+        if lam_src is None:
+            return False
+        lam_a = np.asarray(lam_src, dtype=np.float64).ravel()
+        if lam_a.size == 0 or float(np.max(lam_a)) <= 2500.0:
+            return False
+        # Finite RMSE
+        return np.isfinite(float(result.get("rmse", float("inf"))))
 
-        try:
+    def _can_offer_manual_extra_knots(self, result: dict) -> bool:
+        """True if conditions allow proposing manual extra knot placement."""
+        if not isinstance(result, dict):
+            return False
+        sk = result.get("sigma_knots")
+        if sk is None:
+            if self.logger:
+                self.logger.info("Manual nodes: result missing 'sigma_knots'.")
+            return False
+        sk_a = np.asarray(sk, dtype=np.float64).ravel()
+        if sk_a.size < 2:
+            if self.logger:
+                self.logger.info(f"Manual nodes: sigma_knots size ({sk_a.size}) < 2.")
+            return False
+        if "sigma_knots_n" in result or "sigma_knots_L" in result:
+            if self.logger:
+                self.logger.info(
+                    "Manual nodes: result has split n/k meshes (sigma_knots_n/L present). "
+                    "Manual insertion is not supported in uncoupled mode (Auto-Best / split-knot mode)."
+                )
+            return False
+        lam_src = result.get("lam_nm")
+        if lam_src is None and self._last_run_cfg is not None:
+            lam_src = getattr(self._last_run_cfg, "lam_nm", None)
+        lam_a = np.asarray(lam_src if lam_src is not None else [], dtype=np.float64).ravel()
+        if lam_a.size == 0:
+            if self.logger:
+                self.logger.info("Manual nodes: lam_nm source is empty.")
+            return False
+        rmse = float(result.get("rmse", float("inf")))
+        if not np.isfinite(rmse):
+            if self.logger:
+                self.logger.info("Manual nodes: result RMSE is not finite.")
+            return False
+        return True
 
-            alpha_nl = result.get("nl_alpha_opt")
+    def _prompt_manual_extra_knots(self, result: dict) -> tuple[list[float], float] | None:
+        """Show the manual extra-knot placement dialog and return (lambda positions, delta_ns) on Go."""
+        lam_model = np.asarray(result.get("lam_nm", []), dtype=np.float64).ravel()
+        y_model = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
+        lam_measurement = np.empty(0, dtype=np.float64)
+        y_measurement = np.empty(0, dtype=np.float64)
+        if self.df is not None and "lambda" in self.df.columns and "T" in self.df.columns:
+            lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+            y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
 
-            x_nl = result.get("x_nl")
+        dlg = ManualSigmaKnotDialog(
+            sigma_knots=np.asarray(result.get("sigma_knots", []), dtype=np.float64),
+            lam_model_nm=lam_model,
+            y_model=y_model,
+            lam_measurement_nm=lam_measurement,
+            y_measurement=y_measurement,
+            y_label="T/Tsub" if bool(result.get("t_is_ratio", False)) else "T",
+            initial_delta_ns=0.0,
+            parent=self,
+        )
 
-            d_nl = result.get("d_nm_nl")
+        def _on_delta_preview(delta_ns: float) -> None:
+            if not self._apply_manual_substrate_offset_preview(result, float(delta_ns)):
+                QMessageBox.warning(
+                    self,
+                    "Delta ns",
+                    "Failed to apply delta ns to the current curve.",
+                )
+                return
+            self._refresh_manual_dialog_preview(dlg, self._manual_postprocess_seed_result())
 
-            return (
+        dlg.delta_preview_requested.connect(_on_delta_preview)
+        res_code = dlg.exec()
+        if res_code != int(QDialog.DialogCode.Accepted):
+            if self.logger:
+                self.logger.info("INDEX_SPLINE GUI: manual extra-knot dialog skipped.")
+            return None
 
-                alpha_nl is not None
+        selected_lambda_knots_nm = dlg.selected_lambda_knots()
+        delta_ns = dlg.substrate_delta_ns()
 
-                and np.isfinite(float(alpha_nl))
+        if self.logger:
+            self.logger.info(
+                "INDEX_SPLINE GUI: manual extra-knot dialog | count=%d | delta_ns=%+.6f",
+                len(selected_lambda_knots_nm),
+                float(delta_ns),
+            )
+        return selected_lambda_knots_nm, delta_ns
 
-                and x_nl is not None
+    def _open_manual_extra_knots_dialog(self, result: dict) -> None:
+        """Open a non-blocking manual-knot dialog that stays open on local apply."""
+        lam_model = np.asarray(result.get("lam_nm", []), dtype=np.float64).ravel()
+        y_model = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
+        lam_measurement = np.empty(0, dtype=np.float64)
+        y_measurement = np.empty(0, dtype=np.float64)
+        if self.df is not None and "lambda" in self.df.columns and "T" in self.df.columns:
+            lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+            y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
 
-                and d_nl is not None
+        dlg = ManualSigmaKnotDialog(
+            sigma_knots=np.asarray(result.get("sigma_knots", []), dtype=np.float64),
+            lam_model_nm=lam_model,
+            y_model=y_model,
+            lam_measurement_nm=lam_measurement,
+            y_measurement=y_measurement,
+            y_label="T/Tsub" if bool(result.get("t_is_ratio", False)) else "T",
+            initial_delta_ns=0.0,
+            keep_open_on_local_apply=True,
+            parent=self,
+        )
 
+        def _on_local_apply(selected_lambda_knots_nm: list[float], delta_ns: float) -> None:
+            if self._worker_role not in ("idle",):
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log("Launch refused: no usable current result.")
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "No usable current result to restart optimization.",
+                )
+                return
+            if selected_lambda_knots_nm:
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.clear_runtime_log()
+                    self._manual_knots_dialog.set_runtime_progress(0.0, "Starting local re-optimization")
+                    d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                    self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                    mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                        getattr(
+                            dlg,
+                            "_base_sigma_knots",
+                            np.asarray(seed_current.get("sigma_knots", []), dtype=np.float64).ravel(),
+                        ),
+                        np.sort(
+                            1.0 / np.maximum(np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel(), 1e-30)
+                        ),
+                    )
+                    self._manual_knots_dialog.append_runtime_log(
+                        f"Forced re-optimization (delta ns included) | delta ns={float(delta_ns):+.6f}"
+                    )
+                    self._manual_knots_dialog.append_runtime_log(
+                        CertusIndexSplineApp._manual_mesh_change_log_line("Requested mesh", mesh_summary)
+                    )
+                    self._manual_knots_dialog.append_runtime_log(
+                        f"Local re-optimization launched | active knots: {len(selected_lambda_knots_nm)} | delta ns={float(delta_ns):+.6f}"
+                    )
+                    if self.logger:
+                        self.logger.info(
+                            "INDEX_SPLINE GUI: manual local re-optimization request | %s | delta_ns=%+.6f",
+                            CertusIndexSplineApp._manual_mesh_change_log_line("requested", mesh_summary),
+                            float(delta_ns),
+                        )
+                self._start_manual_sigma_insert_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
+
+        def _on_autoshift() -> None:
+            if self._worker_role not in ("idle",):
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                QMessageBox.information(
+                    self,
+                    "Autoshift",
+                    "No usable current result to start autoshift.",
+                )
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                self._manual_knots_dialog.clear_runtime_log()
+                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting autoshift delta ns")
+                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                self._manual_knots_dialog.append_runtime_log(
+                    "Automatic Brent search for best substrate shift in [-0.01, 0.01]..."
+                )
+            selected_lambda_knots_nm = dlg.selected_lambda_knots()
+            self._start_manual_autoshift_worker(seed_current, selected_lambda_knots_nm)
+
+        def _on_auto_repartition(mode: str) -> None:
+            if self._worker_role not in ("idle",):
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "No usable current result to restart optimization.",
+                )
+                return
+            selected_lambda_knots_nm = dlg.selected_lambda_knots()
+            if len(selected_lambda_knots_nm) < 2:
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "At least two active knots are required for automatic repartition.",
+                )
+                return
+            delta_ns = dlg.substrate_delta_ns()
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                mode_label = "log(sigma)" if str(mode).strip().lower() == "log" else "sigma"
+                self._manual_knots_dialog.clear_runtime_log()
+                self._manual_knots_dialog.set_runtime_progress(0.0, f"Starting auto repartition {mode_label}")
+                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                target_sigma_knots = CertusIndexSplineApp._build_manual_repartition_target_sigma_knots(
+                    selected_lambda_knots_nm,
+                    mode=mode,
+                )
+                mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                    np.sort(1.0 / np.maximum(np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel(), 1e-30)),
+                    target_sigma_knots,
+                )
+                self._manual_knots_dialog.append_runtime_log(
+                    f"Automatic repartition {mode_label} launched | active knots: {len(selected_lambda_knots_nm)} | delta ns={float(delta_ns):+.6f}"
+                )
+                self._manual_knots_dialog.append_runtime_log(
+                    CertusIndexSplineApp._manual_mesh_change_log_line("Requested repartition", mesh_summary)
+                )
+                if self.logger:
+                    self.logger.info(
+                        "INDEX_SPLINE GUI: manual auto repartition request | mode=%s | %s | delta_ns=%+.6f",
+                        str(mode),
+                        CertusIndexSplineApp._manual_mesh_change_log_line("requested", mesh_summary),
+                        float(delta_ns),
+                    )
+            self._start_manual_sigma_repartition_worker(
+                seed_current, selected_lambda_knots_nm, float(delta_ns), mode=mode
             )
 
-        except (TypeError, ValueError):
+        def _on_delta_preview(delta_ns: float) -> None:
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                return
+            if not self._apply_manual_substrate_offset_preview(seed_current, float(delta_ns)):
+                return
+            self._refresh_manual_dialog_preview(dlg, self._manual_postprocess_seed_result())
 
-            return False
+        def _on_auto_clean(tolerance: float) -> None:
+            # NaN = signal "lire la valeur depuis le widget GUI".
+            try:
+                _tol_in = float(tolerance)
+            except (TypeError, ValueError):
+                _tol_in = float("nan")
+            if not np.isfinite(_tol_in):
+                if hasattr(self, "sp_auto_clean_tol"):
+                    tolerance = float(self.sp_auto_clean_tol.value())
+                else:
+                    tolerance = 5.0e-5
+            if self._worker_role not in ("idle",):
+                if self.logger:
+                    self.logger.warning(
+                        "INDEX_SPLINE GUI: auto_clean refused because worker busy | role=%s",
+                        str(self._worker_role),
+                    )
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                if self.logger:
+                    self.logger.warning("INDEX_SPLINE GUI: auto_clean refused because no usable seed result")
+                QMessageBox.information(
+                    self,
+                    "Advanced clean",
+                    "No usable current result to start cleaning.",
+                )
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                self._manual_knots_dialog.clear_runtime_log()
+                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting clean...")
+                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                self._manual_knots_dialog.append_runtime_log(f"Advanced iterative clean (tolerance: +{tolerance})...")
+            selected_lambda_knots_nm = dlg.selected_lambda_knots()
+            delta_ns = dlg.substrate_delta_ns()
+            if self.logger:
+                self.logger.info(
+                    "INDEX_SPLINE GUI: launching auto_clean | tolerance=+%.5f | seed_rmse=%.8f | seed_d=%.4f | K_selected=%d | delta_ns=%+.6f",
+                    float(tolerance),
+                    float(CertusIndexSplineApp._rmse_from_result_dict(seed_current)),
+                    float(seed_current.get("d_nm", float("nan"))),
+                    int(len(selected_lambda_knots_nm)),
+                    float(delta_ns),
+                )
+            self._start_manual_auto_clean_worker(seed_current, selected_lambda_knots_nm, float(delta_ns), tolerance)
 
+        def _on_auto_add_one() -> None:
+            if self._worker_role not in ("idle",):
+                if self.logger:
+                    self.logger.warning(
+                        "INDEX_SPLINE GUI: auto_add_one refused because worker busy | role=%s",
+                        str(self._worker_role),
+                    )
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                if self.logger:
+                    self.logger.warning("INDEX_SPLINE GUI: auto_add_one refused because no usable seed result")
+                QMessageBox.information(
+                    self,
+                    "Auto add one",
+                    "No usable current result to start auto insertion.",
+                )
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                self._manual_knots_dialog.clear_runtime_log()
+                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting auto add one...")
+                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                self._manual_knots_dialog.append_runtime_log(
+                    "Auto add one: testing all mid-gap insertion candidates..."
+                )
+            selected_lambda_knots_nm = dlg.selected_lambda_knots()
+            delta_ns = dlg.substrate_delta_ns()
+            self._start_manual_auto_add_one_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
 
+        def _on_recall_best() -> None:
+            if self._worker_role not in ("idle",):
+                if self.logger:
+                    self.logger.warning(
+                        "INDEX_SPLINE GUI: recall best refused because worker busy | role=%s",
+                        str(self._worker_role),
+                    )
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log("Launch refused: an optimization is already running.")
+                return
+            dlg_ref = getattr(self, "_manual_knots_dialog", None)
+            if not isinstance(dlg_ref, ManualSigmaKnotDialog):
+                if self.logger:
+                    self.logger.warning("INDEX_SPLINE GUI: recall best requested but no active manual dialog")
+                return
+            best = dlg_ref.get_best_config()
+            if best is None:
+                if self.logger:
+                    self.logger.info("INDEX_SPLINE GUI: recall best requested but no best snapshot available yet")
+                return
+            best_result, best_sk = best
+            rmse_best = float(best_result.get("rmse", float("nan")))
+            K_best = int(best_sk.size)
+            # Direct memory restoration — no re-polish to avoid contamination
+            # from _best_live_result or intermediate display snapshots.
+            dlg_ref.clear_runtime_log()
+            dlg_ref.append_runtime_log(f"Recall best config: RMSE={rmse_best:.8f} | K={K_best}")
+            dlg_ref.set_runtime_progress(100.0, f"Best config restored (K={K_best})")
+            d_best, r_best = CertusIndexSplineApp._runtime_metrics_from_result_dict(best_result)
+            dlg_ref.set_runtime_metrics(d_best, r_best)
+            dlg_ref.adopt_sigma_knots(best_sk)
+            opt_delta_ns = best_result.get("substrate_n_offset")
+            if opt_delta_ns is not None:
+                dlg_ref.adopt_delta_ns(float(opt_delta_ns))
+            # Update graphs and current GUI state (no worker needed)
+            self._last_result = best_result
+            self._last_worker_result = dict(best_result)
+            self._plot_result(best_result, plot_source="recall_best")
+            self._refresh_manual_dialog_preview(dlg_ref, best_result)
+            if self.logger:
+                self.logger.info(
+                    "INDEX_SPLINE GUI: recall best config | RMSE=%.8f | K=%d | d=%.4f nm",
+                    rmse_best,
+                    K_best,
+                    float(best_result.get("d_nm", float("nan"))),
+                )
+
+        def _on_dialog_finished(_result_code: int) -> None:
+            dlg_ref = getattr(self, "_manual_knots_dialog", None)
+            if dlg_ref is dlg:
+                self._manual_knots_dialog = None
+            if self.logger:
+                self.logger.info("INDEX_SPLINE GUI: manual knots dialog closed")
+
+        dlg.local_apply_requested.connect(_on_local_apply)
+        dlg.auto_shift_requested.connect(_on_autoshift)
+        dlg.auto_repartition_log_requested.connect(lambda: _on_auto_repartition("log"))
+        dlg.auto_repartition_sigma_requested.connect(lambda: _on_auto_repartition("sigma"))
+        dlg.auto_clean_requested.connect(_on_auto_clean)
+        dlg.auto_add_one_requested.connect(_on_auto_add_one)
+
+        def _on_recall_best_for_k(k: int) -> None:
+            """Recall the best config for a specific knot count K."""
+            if self._worker_role not in ("idle",):
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log("Launch refused: an optimization is already running.")
+                return
+            dlg_ref = getattr(self, "_manual_knots_dialog", None)
+            if not isinstance(dlg_ref, ManualSigmaKnotDialog):
+                return
+            best = dlg_ref.get_best_config_for_k(k)
+            if best is None:
+                if self.logger:
+                    self.logger.info("INDEX_SPLINE GUI: recall best for K=%d requested but no snapshot available", k)
+                return
+            best_result, best_sk = best
+            rmse_best = float(best_result.get("rmse", float("nan")))
+            K_best = int(best_sk.size)
+            dlg_ref.clear_runtime_log()
+            dlg_ref.append_runtime_log(f"Recall best config for K={K_best}: RMSE={rmse_best:.8f}")
+            dlg_ref.set_runtime_progress(100.0, f"Best config restored (K={K_best})")
+            d_best, r_best = CertusIndexSplineApp._runtime_metrics_from_result_dict(best_result)
+            dlg_ref.set_runtime_metrics(d_best, r_best)
+            dlg_ref.adopt_sigma_knots(best_sk)
+            opt_delta_ns = best_result.get("substrate_n_offset")
+            if opt_delta_ns is not None:
+                dlg_ref.adopt_delta_ns(float(opt_delta_ns))
+            self._last_result = best_result
+            self._last_worker_result = dict(best_result)
+            self._plot_result(best_result, plot_source=f"recall_best_k{K_best}")
+            self._refresh_manual_dialog_preview(dlg_ref, best_result)
+            if self.logger:
+                self.logger.info(
+                    "INDEX_SPLINE GUI: recall best config for K=%d | RMSE=%.8f | d=%.4f nm",
+                    K_best,
+                    rmse_best,
+                    float(best_result.get("d_nm", float("nan"))),
+                )
+
+        dlg.recall_best_requested.connect(_on_recall_best)
+        dlg.recall_best_for_k_requested.connect(_on_recall_best_for_k)
+        dlg.stop_requested.connect(self._on_stop)
+        dlg.delta_preview_requested.connect(_on_delta_preview)
+        dlg.finished.connect(_on_dialog_finished)
+        self._manual_knots_dialog = dlg
+        dlg.clear_runtime_log()
+        seed_d, seed_rmse = CertusIndexSplineApp._runtime_metrics_from_result_dict(result)
+        # Initialize per-K best tracking with the current solution at dialog open
+        seed_sk = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
+        dlg.update_best_config(result, seed_sk)
+        if self.logger:
+            self.logger.info(
+                "INDEX_SPLINE GUI: manual dialog opened with initial best snapshot | RMSE=%.8f | K=%d",
+                float(CertusIndexSplineApp._rmse_from_result_dict(result)),
+                int(seed_sk.size),
+            )
+        dlg.set_runtime_metrics(seed_d, seed_rmse)
+        dlg.set_runtime_progress(100.0, "Ready")
+        dlg.append_runtime_log("Ready. Current solution is ready for manual adjustment.")
+        dlg.show()
+
+    def _start_manual_sigma_insert_worker(
+        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float = 0.0
+    ) -> None:
+        """Launch manual sigma node tuning worker after user placement."""
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            if self.logger:
+                self.logger.warning("INDEX_SPLINE GUI: manual extra knots - no config available, abort.")
+            return
+
+        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+        if selected_lam.size == 0:
+            if self.logger:
+                self.logger.info("INDEX_SPLINE GUI: manual extra knots - empty selection, skip launch.")
+            return
+        target_sigma_knots = np.sort(1.0 / np.maximum(selected_lam, 1e-30))
+        baseline_payload = self._baseline_substrate_n_for_result(result, lam_override=getattr(cfg_base, "lam_nm", None))
+        seed_payload = dict(result)
+        cfg_manual = cfg_base
+        if baseline_payload is not None:
+            _, n_sub_base = baseline_payload
+            seed_payload = self._decorate_result_with_substrate_offset(
+                seed_payload,
+                n_sub_base=n_sub_base,
+                delta_ns=float(delta_ns),
+            )
+            cfg_manual = cfg_base.replace(
+                n_sub=np.asarray(seed_payload["n_sub_effective"], dtype=np.float64).ravel().copy(),
+                substrate_n_base=np.asarray(seed_payload["n_sub_base"], dtype=np.float64).ravel().copy(),
+                substrate_n_offset=float(delta_ns),
+            )
+
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        # Tighten the acceptance reference: if a polished RMSE (e.g. cubic-spline sigma)
+        # was computed for the current result and is better than the solver dict RMSE,
+        # inject it as the effective reference so that direct K→K+n insertion is only
+        # accepted when the new mesh does not degrade vs the polished baseline.
+        _gb_polished = seed_payload.get("spectral_rmse_global_best_value") or seed_payload.get(
+            "spectral_rmse_polished_value"
+        )
+        if _gb_polished is not None:
+            try:
+                _gb_f = float(_gb_polished)
+                _dict_rmse = float(seed_payload.get("rmse", float("inf")))
+                if np.isfinite(_gb_f) and _gb_f < _dict_rmse:
+                    seed_payload = dict(seed_payload)
+                    seed_payload["rmse"] = _gb_f
+                    if self.logger:
+                        self.logger.info(
+                            "INDEX_SPLINE GUI: manual insert: tightening RMSE reference to polished value %.8f (dict was %.8f)",
+                            _gb_f,
+                            _dict_rmse,
+                        )
+            except (TypeError, ValueError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        self._worker = GenericWorker(
+            worker_spline_manual_sigma_insert,
+            seed_payload,
+            cfg_manual,
+            self._stop_event,
+            target_sigma_knots=target_sigma_knots,
+            force_reopt=True,
+        )
+
+        def _manual_progress(p: float | int, m: str) -> None:
+            pv = int(round(float(p) * 100.0))
+            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+
+        self._worker.kwargs["progress_cb"] = _manual_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = "manual_sigma_insert"
+        if hasattr(self, "_stepper"):
+            self._stepper.set_step(5)
+        if self.logger:
+            K_cur = int(np.asarray(result.get("sigma_knots", []), dtype=np.float64).size)
+            rr = float(result.get("rmse", float("nan")))
+            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel(),
+                target_sigma_knots,
+            )
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching manual node tuning worker | K=%d | K_target=%d | rmse=%.8f",
+                K_cur,
+                int(target_sigma_knots.size),
+                rr if np.isfinite(rr) else float("nan"),
+            )
+            self.logger.info(
+                "INDEX_SPLINE GUI: manual node tuning worker mesh summary | %s",
+                CertusIndexSplineApp._manual_mesh_change_log_line("target", mesh_summary),
+            )
+            log_index_spline_d_trace(
+                self.logger,
+                "GUI: worker knot insertion (d seed)",
+                result.get("d_nm"),
+                detail=(
+                    f"K_sigma={K_cur} sigma_knots_added={int(target_sigma_knots.size)} delta_ns={float(delta_ns):+.6f}"
+                ),
+            )
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        self.lbl_status.setText("Manual knots: local re-optimization in progress...")
+        install_skeleton(self.tabs_main, label="Manual knots...")
+        self._worker.start()
+
+    @staticmethod
+    def _build_manual_repartition_target_sigma_knots(selected_lambda_knots_nm: list[float], *, mode: str) -> np.ndarray:
+        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+        selected_lam = selected_lam[np.isfinite(selected_lam) & (selected_lam > 0.0)]
+        if selected_lam.size < 2:
+            return np.empty(0, dtype=np.float64)
+        sigma_active = np.unique(np.sort(1.0 / np.maximum(selected_lam, 1e-30)))
+        if sigma_active.size < 2:
+            return np.empty(0, dtype=np.float64)
+        sigma_lo = float(np.min(sigma_active))
+        sigma_hi = float(np.max(sigma_active))
+        k_target = int(sigma_active.size)
+        if str(mode).strip().lower() == "log":
+            return np.exp(np.linspace(np.log(max(sigma_lo, 1e-30)), np.log(max(sigma_hi, 1e-30)), k_target)).astype(
+                np.float64
+            )
+        return np.linspace(sigma_lo, sigma_hi, k_target, dtype=np.float64)
+
+    def _start_manual_sigma_repartition_worker(
+        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float, *, mode: str
+    ) -> None:
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            return
+
+        target_sigma_knots = CertusIndexSplineApp._build_manual_repartition_target_sigma_knots(
+            selected_lambda_knots_nm,
+            mode=mode,
+        )
+        if target_sigma_knots.size < 2:
+            return
+
+        baseline_payload = self._baseline_substrate_n_for_result(result, lam_override=getattr(cfg_base, "lam_nm", None))
+        seed_payload = dict(result)
+        cfg_manual = cfg_base
+        if baseline_payload is not None:
+            _, n_sub_base = baseline_payload
+            seed_payload = self._decorate_result_with_substrate_offset(
+                seed_payload,
+                n_sub_base=n_sub_base,
+                delta_ns=float(delta_ns),
+            )
+            cfg_manual = cfg_base.replace(
+                n_sub=np.asarray(seed_payload["n_sub_effective"], dtype=np.float64).ravel().copy(),
+                substrate_n_base=np.asarray(seed_payload["n_sub_base"], dtype=np.float64).ravel().copy(),
+                substrate_n_offset=float(delta_ns),
+            )
+
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        self._worker = GenericWorker(
+            worker_spline_manual_sigma_insert,
+            seed_payload,
+            cfg_manual,
+            self._stop_event,
+            target_sigma_knots=target_sigma_knots,
+            force_reopt=True,
+        )
+
+        def _manual_progress(p: float | int, m: str) -> None:
+            pv = int(round(float(p) * 100.0))
+            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+
+        self._worker.kwargs["progress_cb"] = _manual_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = f"manual_repartition_{str(mode).strip().lower()}"
+        if self.logger:
+            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel(),
+                target_sigma_knots,
+            )
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching manual repartition worker | mode=%s | K_target=%d | delta_ns=%+.6f",
+                str(mode),
+                int(target_sigma_knots.size),
+                float(delta_ns),
+            )
+            self.logger.info(
+                "INDEX_SPLINE GUI: manual repartition worker mesh summary | mode=%s | %s",
+                str(mode),
+                CertusIndexSplineApp._manual_mesh_change_log_line("target", mesh_summary),
+            )
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        mode_label = "log(sigma)" if str(mode).strip().lower() == "log" else "sigma"
+        self.lbl_status.setText(f"Manual knots: auto repartition {mode_label} in progress...")
+        install_skeleton(self.tabs_main, label=f"Auto repartition {mode_label}...")
+        self._worker.start()
+
+    def _start_manual_autoshift_worker(self, result: dict, selected_lambda_knots_nm: list[float]) -> None:
+        """Launch autoshift worker to find optimal delta_ns."""
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            if self.logger:
+                self.logger.warning("INDEX_SPLINE GUI: autoshift - no config available, abort.")
+            return
+
+        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+        if selected_lam.size == 0:
+            if self.logger:
+                self.logger.info("INDEX_SPLINE GUI: autoshift - empty selection, skip launch.")
+            return
+        target_sigma_knots = np.sort(1.0 / np.maximum(selected_lam, 1e-30))
+
+        baseline_payload = self._baseline_substrate_n_for_result(result, lam_override=getattr(cfg_base, "lam_nm", None))
+        seed_payload = dict(result)
+        cfg_manual = cfg_base
+        if baseline_payload is not None:
+            _, n_sub_base = baseline_payload
+            seed_payload["n_sub_base"] = np.asarray(n_sub_base, dtype=np.float64).ravel().copy()
+
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        self._worker = GenericWorker(
+            worker_spline_autoshift_delta_ns,
+            seed_payload,
+            cfg_manual,
+            self._stop_event,
+            target_sigma_knots=target_sigma_knots,
+        )
+
+        def _manual_progress(p: float | int, m: str) -> None:
+            pv = int(round(float(p) * 100.0))
+            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+
+        self._worker.kwargs["progress_cb"] = _manual_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = "manual_autoshift"
+        if self.logger:
+            K_cur = int(np.asarray(result.get("sigma_knots", []), dtype=np.float64).size)
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching autoshift worker | K=%d | K_target=%d",
+                K_cur,
+                int(target_sigma_knots.size),
+            )
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        self.lbl_status.setText("Autoshift: searching for delta ns...")
+        install_skeleton(self.tabs_main, label="Autoshift delta ns...")
+        self._worker.start()
+
+    def _start_manual_auto_add_one_worker(
+        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float
+    ) -> None:
+        """Launch auto-add-one worker to test all mid-gap insertions and keep the best."""
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            return
+
+        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+        if selected_lam.size < 2:
+            return
+
+        target_sigma_knots = np.sort(1.0 / np.maximum(selected_lam, 1e-30))
+        baseline_payload = self._baseline_substrate_n_for_result(result, lam_override=getattr(cfg_base, "lam_nm", None))
+        seed_payload = dict(result)
+        cfg_manual = cfg_base
+        if baseline_payload is not None:
+            _, n_sub_base = baseline_payload
+            seed_payload = self._decorate_result_with_substrate_offset(
+                seed_payload,
+                n_sub_base=n_sub_base,
+                delta_ns=float(delta_ns),
+            )
+            cfg_manual = cfg_base.replace(
+                n_sub=np.asarray(seed_payload["n_sub_effective"], dtype=np.float64).ravel().copy(),
+                substrate_n_base=np.asarray(seed_payload["n_sub_base"], dtype=np.float64).ravel().copy(),
+                substrate_n_offset=float(delta_ns),
+                auto_add_one_candidate_maxfun=240,
+            )
+
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        self._worker = GenericWorker(
+            worker_spline_auto_add_one_knot,
+            seed_payload,
+            cfg_manual,
+            self._stop_event,
+            target_sigma_knots=target_sigma_knots,
+        )
+
+        def _manual_progress(p: float | int, m: str) -> None:
+            if p < 0:
+                self._worker.signals.progress.emit(-1, str(m))
+            else:
+                pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
+                self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
+
+        self._worker.kwargs["progress_cb"] = _manual_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = "manual_auto_add_one"
+
+        if self.logger:
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching auto_add_one worker | K_target=%d | delta_ns=%+.6f",
+                int(target_sigma_knots.size),
+                float(delta_ns),
+            )
+
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        self.lbl_status.setText("Auto add one: testing all mid-gap insertions...")
+        install_skeleton(self.tabs_main, label="Auto add one...")
+        self._worker.start()
+
+    def _start_manual_auto_clean_worker(
+        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float, tolerance: float
+    ) -> None:
+        """Launch auto-clean worker to iteratively remove least sensitive knots."""
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            return
+
+        selected_lam = np.asarray(selected_lambda_knots_nm, dtype=np.float64).ravel()
+        if selected_lam.size <= 2:
+            return
+
+        target_sigma_knots = np.sort(1.0 / np.maximum(selected_lam, 1e-30))
+
+        baseline_payload = self._baseline_substrate_n_for_result(result, lam_override=getattr(cfg_base, "lam_nm", None))
+        seed_payload = dict(result)
+        cfg_manual = cfg_base
+        if baseline_payload is not None:
+            _, n_sub_base = baseline_payload
+            seed_payload = self._decorate_result_with_substrate_offset(
+                seed_payload,
+                n_sub_base=n_sub_base,
+                delta_ns=float(delta_ns),
+            )
+            cfg_manual = cfg_base.replace(
+                n_sub=np.asarray(seed_payload["n_sub_effective"], dtype=np.float64).ravel().copy(),
+                substrate_n_base=np.asarray(seed_payload["n_sub_base"], dtype=np.float64).ravel().copy(),
+                substrate_n_offset=float(delta_ns),
+            )
+
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        self._worker = GenericWorker(
+            worker_spline_auto_clean_knots,
+            seed_payload,
+            cfg_manual,
+            self._stop_event,
+            target_sigma_knots=target_sigma_knots,
+            tolerance=tolerance,
+        )
+
+        def _manual_progress(p: float | int, m: str) -> None:
+            if p < 0:
+                self._worker.signals.progress.emit(-1, str(m))
+            else:
+                pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
+                self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
+
+        self._worker.kwargs["progress_cb"] = _manual_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = "manual_auto_clean"
+
+        if self.logger:
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching auto_clean worker | K_target=%d", int(target_sigma_knots.size)
+            )
+
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        self.lbl_status.setText("Advanced cleaning: iterative knot removal in progress...")
+        install_skeleton(self.tabs_main, label="Advanced cleaning...")
+        self._worker.start()
+
+    def _prompt_mwir_extra_node(self, result: dict) -> bool:
+        """Show Oui/Non dialog for MWIR extra sigma node insertion.  Returns True if user chose Oui."""
+        sk = result.get("sigma_knots") if isinstance(result, dict) else None
+        K_cur = int(np.asarray(sk, dtype=np.float64).size) if sk is not None else None
+        k_label = f"K : {K_cur} → {K_cur + 1}" if K_cur is not None else "K → K+1"
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Extra MWIR node")
+        dlg.setModal(True)
+        lay = QVBoxLayout(dlg)
+        lab = QLabel(
+            "Add an extra sigma node in the MWIR?<br>"
+            f"<b>σ<sub>mid</sub></b> = (σ₀ + σ₁) / 2 &nbsp;—&nbsp; {k_label}<br><br>"
+            "An L-BFGS-B re-optimization will be launched.<br>"
+            "The result is accepted only if the RMSE improves significantly."
+        )
+        lab.setWordWrap(True)
+        lay.addWidget(lab)
+        bb = QDialogButtonBox(dlg)
+        btn_yes = bb.addButton("Yes", QDialogButtonBox.ButtonRole.AcceptRole)
+        btn_no = bb.addButton("No", QDialogButtonBox.ButtonRole.RejectRole)
+        btn_no.setDefault(True)
+        choice = {"yes": False}
+
+        def _accept() -> None:
+            choice["yes"] = True
+            dlg.accept()
+
+        btn_yes.clicked.connect(_accept)
+        btn_no.clicked.connect(dlg.reject)
+        lay.addWidget(bb)
+        dlg.exec()
+        if self.logger:
+            self.logger.info(
+                "INDEX_SPLINE GUI: MWIR extra node prompt | choice=%s",
+                "Yes" if choice["yes"] else "No",
+            )
+        return bool(choice["yes"])
+
+    def _start_mwir_insert_worker(self, result: dict) -> None:
+        """Launch MWIR node insertion worker after user confirmation."""
+        cfg_base = self._last_run_cfg
+        if cfg_base is None:
+            cfg_base = self._build_opt_config(notify=False)
+        if cfg_base is None:
+            if self.logger:
+                self.logger.warning("INDEX_SPLINE GUI: MWIR extra node - no config available, abort.")
+            return
+        CertusIndexSplineApp._prepare_worker_restart(self)
+        self._best_live_rmse = float("inf")
+        self._best_live_result = None
+        self._last_live_log_mono = 0.0
+        self._live_best_detail_log_mono = 0.0
+        cfg_eff = self._cfg_with_result_substrate(cfg_base, result)
+        self._worker = GenericWorker(worker_spline_mwir_insert_node, dict(result), cfg_eff, self._stop_event)
+
+        def _mwir_progress(p: float | int, m: str) -> None:
+            pv = int(round(float(p) * 100.0))
+            self._worker.signals.progress.emit(max(0, min(10000, pv)), m)
+
+        self._worker.kwargs["progress_cb"] = _mwir_progress
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+        self._worker.signals.finished.connect(self._on_worker_done)
+        self._worker.signals.error.connect(self._on_worker_err)
+        self._worker.signals.finished.connect(self._cleanup_thread)
+        self._worker.signals.error.connect(self._cleanup_thread)
+        self._worker_role = "mwir_insert"
+        if self.logger:
+            K_cur = int(np.asarray(result.get("sigma_knots", []), dtype=np.float64).size)
+            rr = float(result.get("rmse", float("nan")))
+            self.logger.info(
+                "INDEX_SPLINE GUI: launching MWIR insert worker | K=%d | rmse=%.8f",
+                K_cur,
+                rr if np.isfinite(rr) else float("nan"),
+            )
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+        self._refresh_post_optimization_option_controls()
+        self._prog_ui_last = 0
+        self._prog_reset_bar()
+        self.lbl_status.setText("MWIR node: re-optimization in progress...")
+        install_skeleton(self.tabs_main, label="Extra MWIR node...")
+        self._worker.start()
 
     def _start_deferred_corridor_worker_from_breakpoint_pending(self) -> None:
 
         pending = getattr(self, "_pending_breakpoint_corridor_seed", None)
 
         if not isinstance(pending, dict):
-
             return
 
         if self.logger:
             p_rmse = self._rmse_from_result_dict(pending)
             p_d = pending.get("d_nm")
-            p_d_txt = (
-                f"{float(p_d):.6f}"
-                if isinstance(p_d, (int, float)) and np.isfinite(float(p_d))
-                else "n/a"
-            )
+            p_d_txt = f"{float(p_d):.6f}" if isinstance(p_d, (int, float)) and np.isfinite(float(p_d)) else "n/a"
             p_x = np.asarray(pending.get("x", []), dtype=np.float64).ravel()
             p_n = np.asarray(pending.get("n_lam", []), dtype=np.float64).ravel()
             p_k = np.asarray(pending.get("k_lam", []), dtype=np.float64).ravel()
@@ -13644,21 +13780,76 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._pending_breakpoint_corridor_seed = None
 
-        if not self._start_deferred_corridor_worker(pending, use_nl_alpha=False):
-
+        if not self._start_deferred_corridor_worker(pending):
             QMessageBox.warning(
                 self,
                 "Corridor",
                 "Impossible to automatically restart corridor calculation from the new solution.",
             )
 
+    def _schedule_corridor_auto_refine(
+        self,
+        seed: dict,
+        *,
+        rerun_corridor: bool,
+        origin: str,
+    ) -> bool:
+        """Schedule a strict refinement chain after corridor improvement."""
+        if not isinstance(seed, dict):
+            return False
+        self._corridor_auto_refine_plan = {
+            "stage": "deep",
+            "rerun_corridor": bool(rerun_corridor),
+            "origin": str(origin or "corridor"),
+        }
+        if self.logger:
+            self.logger.info(
+                "AUTO-REFINE [%s] scheduled | chain=deep-polish -> [conditional-corridor-rerun] | rerun_corridor=%s",
+                str(origin or "corridor"),
+                "yes" if bool(rerun_corridor) else "no",
+            )
+        if self._start_curve_minimum_deep_refit(dict(seed)):
+            return True
+        self._corridor_auto_refine_plan = None
+        return False
+
+    def _continue_corridor_auto_refine_after_deep(self) -> bool:
+        """Continue refinement chain when deep polish is done."""
+        plan = self._corridor_auto_refine_plan
+        if not isinstance(plan, dict) or str(plan.get("stage", "")) != "deep":
+            return False
+        seed_now = self._manual_postprocess_seed_result()
+        if not isinstance(seed_now, dict):
+            self._corridor_auto_refine_plan = None
+            return False
+        if bool(plan.get("rerun_corridor", False)):
+            if self.logger:
+                self.logger.info(
+                    "AUTO-REFINE [%s] deep-polish done | rerunning corridor profiling.",
+                    plan.get("origin", "corridor"),
+                )
+            self._corridor_auto_refine_plan = None
+            return bool(self._start_deferred_corridor_worker(dict(seed_now)))
+        self._corridor_auto_refine_plan = None
+        return False
+
     def _on_worker_err(self, msg: str) -> None:
+        role = str(getattr(self, "_worker_role", "") or "")
+        manual_pipeline_roles = (
+            "manual_sigma_insert",
+            "manual_autoshift",
+            "manual_auto_add_one",
+            "manual_auto_clean",
+            "manual_repartition_log",
+            "manual_repartition_sigma",
+        )
+        manual_dlg = getattr(self, "_manual_knots_dialog", None)
 
         if str(getattr(self, "_worker_role", "") or "") == "rmse_grid":
-
             self._set_corridor_grid_busy(False)
 
             self._corridor_rmse_grid_live_t0 = float("nan")
+            self._corridor_rmse_live_last_plot_ts = float("nan")
 
             self._worker_role = "idle"
 
@@ -13668,35 +13859,47 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self.btn_stop.setEnabled(False)
 
         if isinstance(msg, tuple) and len(msg) == 3:
-
             s_msg = str(msg[1])
 
             logger.error(msg[2])
 
             if self.logger:
-
                 self.logger.error("Optimization: %s", s_msg)
 
         else:
-
             s_msg = str(msg)
 
             logger.error(s_msg)
 
             if self.logger:
-
                 self.logger.error("Optimization: %s", s_msg)
 
+        if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
+            manual_dlg.set_runtime_busy(False)
+            manual_dlg.set_runtime_progress(100.0, "Error")
+            mesh_summary = CertusIndexSplineApp._summarize_manual_mesh_change(
+                getattr(manual_dlg, "_base_sigma_knots", np.asarray([], dtype=np.float64)),
+                manual_dlg.selected_sigma_knots(),
+            )
+            manual_dlg.append_runtime_log(
+                CertusIndexSplineApp._manual_mesh_change_log_line("Mesh at failure", mesh_summary)
+            )
+            manual_dlg.append_runtime_log(f"Re-optimization error: {s_msg}")
+
         QMessageBox.critical(self, "Optimization error", s_msg)
+
+        self._worker_role = "idle"
+        self._corridor_auto_refine_plan = None
+
+        self._refresh_post_optimization_option_controls()
 
     @staticmethod
     def _is_rmse_d_grid_worker_finalize_dict(r: object) -> bool:
         """True si ``r`` est le dict final du worker grille RMSE(d) (pas un r?sultat solveur complet)."""
         if not isinstance(r, dict):
             return False
-        st = str(r.get("profile_d_status", "") or "")
+        st = str(r.get("profile_d_status", ""))
         return st in {"manual_grid", "manual_grid_empty"}
-
 
     def _merge_rmse_grid_promotion_into_nominal(self, promoted: dict, *, adoption_log_tag: str) -> None:
         """Fusionne un dict promu (global-opt ou minimum grille) dans ``_last_result`` et rafra?chit l UI."""
@@ -13708,9 +13911,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             if lam_prev is not None:
                 merged_nominal["lam_nm"] = np.asarray(lam_prev, dtype=np.float64).ravel().copy()
             elif self.df is not None and "lambda" in self.df.columns:
-                merged_nominal["lam_nm"] = ensure_lam_nm_array(
-                    self.df["lambda"].to_numpy(dtype=np.float64)
-                )
+                merged_nominal["lam_nm"] = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
             if self.logger:
                 self.logger.warning(
                     "GUI RMSE(d) regular grid [%s] | promoted result missing lam_nm; fallback applied.",
@@ -13729,8 +13930,19 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
                     else "n/a"
                 ),
             )
+            log_index_spline_d_trace(
+                self.logger,
+                "GUI: adoption grille RMSE(d) → nominal _last_result",
+                self._last_result.get("d_nm"),
+                detail=(
+                    "tag="
+                    + str(adoption_log_tag)
+                    + " rmse="
+                    + (f"{rmse_after_replace:.8f}" if np.isfinite(rmse_after_replace) else "n/a")
+                ),
+            )
         try:
-            self._plot_result(self._last_result)
+            self._plot_result(self._last_result, plot_source="promotion_grille_rmse")
             self._refresh_data_table()
         except (ValueError, TypeError, AttributeError, RuntimeError):
             logger.debug("Failed to refresh plot after RMSE grid promotion", exc_info=True)
@@ -13746,14 +13958,14 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         if cfg is None:
             QMessageBox.warning(
                 self,
-                "Optimisation",
-                "Pas de configuration d'optimisation disponible (lance un fit d'abord).",
+                "Optimization",
+                "No optimization configuration available (run a fit first).",
             )
             return False
+        cfg = self._cfg_with_result_substrate(cfg, seed)
         polish = int(getattr(cfg, "polish_maxfun", 10000) or 10000)
         deep_maxfun = int(max(4000, min(24000, int(round(1.5 * float(polish))))))
-        self._stop_event = Event()
-        self._cleanup_thread()
+        CertusIndexSplineApp._prepare_worker_restart(self)
         self._worker = GenericWorker(
             _worker_curve_minimum_deep_refit,
             cfg,
@@ -13773,13 +13985,19 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._prog_reset_bar()
         sd = float(seed.get("d_nm", float("nan")))
         self.lbl_status.setText(
-            f"Minimum grille ? polish profond L-BFGS-B (d+n?uds, maxfun?{deep_maxfun}) depuis d?{sd:.3f} nm?"
+            f"Grid minimum? Deep L-BFGS-B polish (d+nodes, maxfun={deep_maxfun}) from d={sd:.3f} nm"
         )
         if self.logger:
             self.logger.info(
                 "GUI curve-min deep refit | start | deep_maxfun=%d | seed_d_nm=%s",
                 deep_maxfun,
                 (f"{sd:.6f}" if np.isfinite(sd) else "n/a"),
+            )
+            log_index_spline_d_trace(
+                self.logger,
+                "GUI: polish profond depuis minimum grille RMSE(d)",
+                seed.get("d_nm"),
+                detail=f"deep_maxfun={deep_maxfun}",
             )
         self._worker.start()
         return True
@@ -13812,16 +14030,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._set_corridor_grid_busy(True)
         self._worker.start()
 
-
-
-
-
-
-
-
-
-
-
     APP_NAME = "CERTUS-INDEX-SPLINE"
 
     APP_TITLE = "Indices PWL (sigma) - Local optimization"
@@ -13844,41 +14052,29 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     smart_preview_requested = pyqtSignal(object)
 
     @staticmethod
-
     def _control_group_box_style() -> str:
 
         return (
-
             f"QGroupBox {{ font-weight: bold; border: 1px solid {CertusTheme.BORDER}; "
-
             f"border-radius: 6px; margin-top: 12px; padding-top: 10px; }}"
-
             f"QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 4px; "
-
             f"color: {CertusTheme.TEXT_MAIN}; }}"
-
         )
 
     def _update_persistent_nk_monitor(
-
         self, lam_arr: np.ndarray, n_arr: np.ndarray, k_arr: np.ndarray, d_nm: float | None = None
-
     ) -> None:
 
         mon = getattr(self, "_live_nk_monitor", None)
 
         if mon is None:
-
             return
 
         try:
-
             if hasattr(mon, "update_indices"):
-
                 mon.update_indices(lam_arr, n_arr, k_arr, d_nm)
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             logger.debug("_update_persistent_nk_monitor failed", exc_info=True)
 
     def __init__(self) -> None:
@@ -13934,6 +14130,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._auto_best_two_stage_refine: bool = False
 
         self._auto_best_second_stage_pending: dict[str, Any] | None = None
+        self._corridor_auto_refine_plan: dict[str, Any] | None = None
 
         self._preview_wait_event: Event | None = None
 
@@ -13963,7 +14160,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             help=lambda: open_documentation("CERTUS_INDEX_SPLINE"),
         )
 
-        def _on_spectrum_drop(paths):
+        def _on_spectrum_drop(paths) -> None:
             if paths:
                 self._on_load(paths[0])
                 show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
@@ -13974,13 +14171,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._restore_spectrum_fit_settings()
 
-        self._restore_nl_alpha_budget_pref()
-
-        self._restore_nl_alpha_second_pass_pref()
-
-        self._restore_nl_alpha_adaptive_pref()
-
-        self._restore_sol3_phase1_maxfun_pref()
+        self._restore_splitter_states()
 
         self._maybe_apply_uncertainty_defaults_migrated()
 
@@ -13990,36 +14181,23 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._wire_spectrum_fit_settings_persistence()
 
-        self._wire_sol3_phase1_maxfun_persistence()
-
         self._persist_spectrum_fit_settings()
 
         self.smart_preview_requested.connect(self._on_smart_preview_requested)
 
         apply_certus_theme(
-
             self,
-
             overrides=f"""
             {build_premium_overrides()}
             """,
-
             plots=[
-
                 self.plot_T,
-
                 self.plot_n,
-
                 self.plot_k,
-
                 self.plot_n_corridor,
-
                 self.plot_k_corridor,
-
                 self.plot_corridor_rmse_d,
-
             ],
-
         )
 
         self._finalize_init()
@@ -14035,19 +14213,17 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._best_live_rmse = float("inf")
 
         self._best_live_result = None
+        self._corridor_auto_refine_plan = None
 
         self._live_best_detail_log_mono = 0.0
 
         if hasattr(self, "lbl_file"):
-
             self.lbl_file.setText("(no file)")
 
         if hasattr(self, "lbl_status"):
-
             self.lbl_status.setText("Ready")
 
         if hasattr(self, "table_nk"):
-
             self._refresh_data_table()
 
         self._rmse_fit_lambda_enabled = bool(SIO2_DEFAULT_RMSE_FIT_LAMBDA_ENABLED)
@@ -14068,22 +14244,13 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._corridor_rmse_manual_hi = float("nan")
 
-        self.sp_pg_iter.setValue(
-            int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35) or 35)
-        )
+        self.sp_pg_iter.setValue(int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35)))
 
         self.cb_profilee.setCurrentIndex(0)
 
         self._on_profilee_changed()
 
-        if hasattr(self, "sp_sol3_p1_maxfun"):
-
-            self.sp_sol3_p1_maxfun.setValue(10000)
-
-            self._persist_sol3_phase1_maxfun_pref()
-
         if hasattr(self, "sp_mesh_min_dlam"):
-
             self.sp_mesh_min_dlam.setValue(0.02)
 
         self._simple_auto_uncertainty = True
@@ -14091,9 +14258,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._persist_simple_auto_uncertainty_pref()
 
         QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
-
             _QS_SPLINE_UNCERTAINTY_DEFAULTS_REV, int(_UNCERTAINTY_DEFAULTS_REV)
-
         )
 
         self._apply_recommended_uncertainty_and_perf_defaults()
@@ -14102,30 +14267,31 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._update_epured_visibility()
 
-        if hasattr(self, "btn_nl_toggle"):
+        if hasattr(self, "chk_t"):
+            self.chk_t.setChecked(True)
 
-            self.btn_nl_toggle.setChecked(True)
+        if hasattr(self, "chk_trel"):
+            self.chk_trel.setChecked(True)
 
-        self.chk_t.setChecked(True)
+        if hasattr(self, "chk_r"):
+            self.chk_r.setChecked(False)
 
-        self.chk_trel.setChecked(True)
+        if hasattr(self, "w_t"):
+            self.w_t.setValue(1.0)
 
-        self.chk_r.setChecked(False)
+        if hasattr(self, "w_r"):
+            self.w_r.setValue(1.0)
 
-        self.w_t.setValue(1.0)
+        if hasattr(self, "cb_weight"):
+            self.cb_weight.setCurrentIndex(0)
 
-        self.w_r.setValue(1.0)
-
-        self.cb_weight.setCurrentIndex(0)
-
-        self.cb_sub.setCurrentIndex(0)
+        if hasattr(self, "cb_sub"):
+            self.cb_sub.setCurrentIndex(0)
 
         if hasattr(self, "ctrl_tabs"):
-
             self.ctrl_tabs.setCurrentIndex(0)
 
         if hasattr(self, "tabs_main"):
-
             self.tabs_main.setCurrentIndex(0)
 
         self._prog_reset_bar()
@@ -14133,6 +14299,8 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self.btn_run.setEnabled(True)
 
         self.btn_stop.setEnabled(False)
+
+        self._refresh_post_optimization_option_controls()
 
         self._corridor_rmse_d_vals = np.array([], dtype=np.float64)
 
@@ -14149,14 +14317,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._corridor_rmse_robust_ok = False
 
         if hasattr(self, "lbl_corridor_rmse_summary"):
-
             self.lbl_corridor_rmse_summary.setText("No corridor RMSE profile available yet.")
         if hasattr(self, "lbl_corridor_rmse_robust_compact"):
-            self.lbl_corridor_rmse_robust_compact.setText("Intervalle robuste: -")
-
-        if hasattr(self, "lbl_nl_summary"):
-
-            self.lbl_nl_summary.setText("-")
+            self.lbl_corridor_rmse_robust_compact.setText("Robust interval: -")
 
         self._refresh_data_table()
 
@@ -14164,13 +14327,10 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._refresh_corridors_gui_state_labels()
 
-
     def _persist_spectrum_fit_settings(self) -> None:
-
         """Saves step 3 to QSettings (read at next launch)."""
 
         if not hasattr(self, "chk_t"):
-
             return
 
         s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
@@ -14200,31 +14360,24 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self.w_r.valueChanged.connect(self._persist_spectrum_fit_settings)
 
     def _save_undo_state(self) -> None:
-
         """Store current state before computation in undo stack (Ctrl+Z via CertusBaseApp)."""
 
-        if not hasattr(self, "undo_stack"): return
+        if not hasattr(self, "undo_stack"):
+            return
 
         d_lo_ui, d_hi_ui = self._get_thickness_bounds_nm()
 
         state = SplineState(
-
             result=dict(self._last_result) if self._last_result is not None else None,
-
             d_lo=float(d_lo_ui),
-
             d_hi=float(d_hi_ui),
-
             wt=self.w_t.value(),
-
             wr=self.w_r.value(),
-
         )
 
         self.undo_stack.append(state)
 
         if hasattr(self, "undo_btn"):
-
             self.undo_btn.setEnabled(True)
 
     def _get_thickness_bounds_nm(self) -> tuple[float, float]:
@@ -14234,11 +14387,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         d_pm = float(self.d_hi.value()) if hasattr(self, "d_hi") else float("nan")
 
         if not np.isfinite(d_nom):
-
             d_nom = 0.5 * float(SIO2_DEFAULT_D_LO_NM + SIO2_DEFAULT_D_HI_NM)
 
         if not np.isfinite(d_pm):
-
             d_pm = 0.5 * float(abs(SIO2_DEFAULT_D_HI_NM - SIO2_DEFAULT_D_LO_NM))
 
         d_pm = max(0.1, float(abs(d_pm)))
@@ -14260,15 +14411,12 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         d_pm = max(0.1, 0.5 * (dhi - dlo))
 
         if hasattr(self, "d_lo"):
-
             self.d_lo.setValue(float(d_nom))
 
         if hasattr(self, "d_hi"):
-
             self.d_hi.setValue(float(d_pm))
 
     def _setup_logger(self, name: str) -> None:
-
         """Route core logs (CERTUS, CERTUS_INDEX_SPLINE) to the same GUI queue."""
 
         from certus_core import QueueHandler
@@ -14276,38 +14424,24 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         super()._setup_logger(name)
 
         qh = next(
-
             (h for h in (self.logger.handlers or []) if isinstance(h, QueueHandler)),
-
             None,
-
         )
 
         if qh is None:
-
             return
 
         for ln in ("CERTUS", "CERTUS_INDEX_SPLINE"):
-
             lg = logging.getLogger(ln)
 
             if any(
-
-                isinstance(h, QueueHandler)
-
-                and getattr(h, "log_queue", None) is self.log_queue
-
-                for h in lg.handlers
-
+                isinstance(h, QueueHandler) and getattr(h, "log_queue", None) is self.log_queue for h in lg.handlers
             ):
-
                 continue
 
             lg.setLevel(logging.INFO)
 
             lg.addHandler(qh)
-
-
 
     def _create_empty_context_widget(self, message: str) -> QWidget:
         """Cr?e une page d attente/info pour le panneau de r?glages contextuels."""
@@ -14330,7 +14464,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         if y_val is not None and np.isfinite(float(y_val)):
             y_num = float(y_val)
             # Compat: si une coordonn?e log10 est fournie (<=0), on reconvertit.
-            k_val = y_num if y_num > 0.0 else float(10.0 ** y_num)
+            k_val = y_num if y_num > 0.0 else float(10.0**y_num)
         if not np.isfinite(k_val):
             return f"x = {x:.2f}, k = n/a"
         return f"x = {x:.2f}, k = {k_val:.3e}"
@@ -14364,27 +14498,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         k1_txt = f"{k1:.3e}" if np.isfinite(k1) and k1 > 0.0 else "n/a"
         return f"lambda = {x:.2f} nm | k_min = {k0_txt} | k_nom = {kn_txt} | k_max = {k1_txt}"
 
-
-        menu_bar = self.menuBar()
-
-        # Menu View
-        menu_view = menu_bar.addMenu("View")
-
-        act_rmse_profile = QAction("Corridor RMSE Profile...", self)
-        act_rmse_profile.setShortcut("Ctrl+Shift+R")
-        act_rmse_profile.triggered.connect(self._show_corridor_rmse_profile_window)
-        menu_view.addAction(act_rmse_profile)
-
-        menu_view.addSeparator()
-
-        menu_param = menu_bar.addMenu("Settings")
-
-        act_adv = QAction("Advanced settings...", self)
-
-        act_adv.triggered.connect(self._open_advanced_settings_dialog)
-
-        menu_param.addAction(act_adv)
-
     def _get_log_widget(self) -> Any | None:
 
         return getattr(self.log_panel, "log_text", None) if hasattr(self, "log_panel") else None
@@ -14396,194 +14509,18 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         v = s.value(_QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY)
 
         if v is None:
-
             self._simple_auto_uncertainty = True
 
         else:
-
             self._simple_auto_uncertainty = bool(v)
 
     def _persist_simple_auto_uncertainty_pref(self) -> None:
 
         QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
-
             _QS_SPLINE_SIMPLE_AUTO_UNCERTAINTY, bool(getattr(self, "_simple_auto_uncertainty", True))
-
         )
-
-    def _restore_nl_alpha_budget_pref(self) -> None:
-
-        """NL alpha: L-BFGS-B budget per step (slow by default)."""
-
-        if not hasattr(self, "cb_nl_alpha_budget"):
-
-            return
-
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
-
-        v = s.value(_QS_NL_ALPHA_BUDGET, "slow")
-
-        mode = str(v or "slow").strip().lower()
-
-        if mode not in ("slow", "fast"):
-
-            mode = "slow"
-
-        self.cb_nl_alpha_budget.blockSignals(True)
-
-        try:
-
-            iq = self.cb_nl_alpha_budget.findData(mode)
-
-            if iq >= 0:
-
-                self.cb_nl_alpha_budget.setCurrentIndex(int(iq))
-
-        finally:
-
-            self.cb_nl_alpha_budget.blockSignals(False)
-
-    def _persist_nl_alpha_budget_pref(self) -> None:
-
-        if not hasattr(self, "cb_nl_alpha_budget"):
-
-            return
-
-        mode = str(self.cb_nl_alpha_budget.currentData() or "slow")
-
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(_QS_NL_ALPHA_BUDGET, mode)
-
-    def _on_nl_alpha_budget_changed(self, *_args) -> None:
-
-        self._persist_nl_alpha_budget_pref()
-
-    def _restore_nl_alpha_second_pass_pref(self) -> None:
-
-        if not hasattr(self, "chk_nl_second_pass"):
-
-            return
-
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
-
-        v = s.value(_QS_NL_ALPHA_SECOND_PASS)
-
-        on = True if v is None else bool(v)
-
-        self.chk_nl_second_pass.blockSignals(True)
-
-        try:
-
-            self.chk_nl_second_pass.setChecked(on)
-
-        finally:
-
-            self.chk_nl_second_pass.blockSignals(False)
-
-    def _persist_nl_alpha_second_pass_pref(self) -> None:
-
-        if not hasattr(self, "chk_nl_second_pass"):
-
-            return
-
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
-
-            _QS_NL_ALPHA_SECOND_PASS, bool(self.chk_nl_second_pass.isChecked())
-
-        )
-
-    def _on_nl_second_pass_changed(self, *_args) -> None:
-
-        self._persist_nl_alpha_second_pass_pref()
-
-    def _restore_nl_alpha_adaptive_pref(self) -> None:
-
-        if not hasattr(self, "chk_nl_adaptive_scan"):
-
-            return
-
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
-
-        v = s.value(_QS_NL_ALPHA_ADAPTIVE)
-
-        on = True if v is None else bool(v)
-
-        self.chk_nl_adaptive_scan.blockSignals(True)
-
-        try:
-
-            self.chk_nl_adaptive_scan.setChecked(on)
-
-        finally:
-
-            self.chk_nl_adaptive_scan.blockSignals(False)
-
-    def _persist_nl_alpha_adaptive_pref(self) -> None:
-
-        if not hasattr(self, "chk_nl_adaptive_scan"):
-
-            return
-
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
-            _QS_NL_ALPHA_ADAPTIVE, bool(self.chk_nl_adaptive_scan.isChecked())
-
-        )
-
-    def _on_nl_adaptive_scan_changed(self, *_args) -> None:
-
-        self._persist_nl_alpha_adaptive_pref()
-
-    def _restore_sol3_phase1_maxfun_pref(self) -> None:
-
-        if not hasattr(self, "sp_sol3_p1_maxfun"):
-
-            return
-
-        s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
-
-        v = s.value(_QS_SOL3_PHASE1_MAXFUN, 10000)
-
-        try:
-
-            vi = int(v)
-
-        except (TypeError, ValueError):
-
-            vi = 10000
-
-        vi = max(500, min(500000, vi))
-
-        self.sp_sol3_p1_maxfun.blockSignals(True)
-
-        try:
-
-            self.sp_sol3_p1_maxfun.setValue(vi)
-
-        finally:
-
-            self.sp_sol3_p1_maxfun.blockSignals(False)
-
-    def _persist_sol3_phase1_maxfun_pref(self) -> None:
-
-        if not hasattr(self, "sp_sol3_p1_maxfun"):
-
-            return
-
-        QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(
-
-            _QS_SOL3_PHASE1_MAXFUN, int(self.sp_sol3_p1_maxfun.value())
-
-        )
-
-    def _wire_sol3_phase1_maxfun_persistence(self) -> None:
-
-        if not hasattr(self, "sp_sol3_p1_maxfun"):
-
-            return
-
-        self.sp_sol3_p1_maxfun.valueChanged.connect(self._persist_sol3_phase1_maxfun_pref)
 
     def _apply_sio2_default_fit_parameters(self) -> None:
-
         """Thickness bounds, RMSE lambda window and nk interpolation for thin SiO2 layers (cf. TSIO2 / sapphire logs)."""
 
         self._set_thickness_bounds_ui(float(SIO2_DEFAULT_D_LO_NM), float(SIO2_DEFAULT_D_HI_NM))
@@ -14598,19 +14535,14 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._rmse_fit_lambda_hi_default = float(SIO2_DEFAULT_RMSE_FIT_LAMBDA_HI_NM)
 
-
-
-
     def _update_epured_visibility(self) -> None:
 
         if not hasattr(self, "_stack_box4_adv"):
-
             return
 
         epure = bool(getattr(self, "_simple_auto_uncertainty", True))
 
         self._stack_box4_adv.setCurrentIndex(0 if epure else 1)
-
 
     def _show_corridor_rmse_profile_window(self) -> None:
         """Displays the RMSE = f(thickness) window with corridor profiling data."""
@@ -14631,22 +14563,20 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         win.raise_()
         win.activateWindow()
 
-
-
-
-
-
     def _build_controls_basic_panel(self) -> QWidget:
         """Steps 2 to 4: substrate / thickness, spectral targets, mesh and optimizer."""
-        w = QWidget(); v = QVBoxLayout(w); v.setContentsMargins(4, 4, 4, 4)
+        w = QWidget()
+        v = QVBoxLayout(w)
+        v.setContentsMargins(2, 2, 2, 2)
+        v.setSpacing(6)
         gst = self._control_group_box_style()
-        hint = QLabel("Follow this order: 2 then 3 then 4..."); hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        hint = QLabel("Order: 2 → 3 → 4")
+        hint.setWordWrap(False)
+        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
         v.addWidget(hint)
         self._build_basic_step2_substrate_thickness(v, gst)
         self._build_basic_step3_spectral_targets(v, gst)
         self._build_basic_step4_mesh_optimizer(v, gst)
-        v.addStretch(1)
         return w
 
     def _build_tab_spectrum(self) -> QWidget:
@@ -14654,7 +14584,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         ctx_w = QWidget()
         ctx_lay = QVBoxLayout(ctx_w)
         ctx_lay.setContentsMargins(0, 0, 0, 0)
-        
+
         row_axis = QHBoxLayout()
         row_axis.addWidget(QLabel("X Axis:"))
         self.cb_spectrum_xmode = QComboBox()
@@ -14666,23 +14596,25 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         row_axis.addStretch(1)
         ctx_lay.addLayout(row_axis)
         ctx_lay.addStretch(1)
-        self.context_stack.addWidget(ctx_w)
+        self._add_context_page(ctx_w)
 
         panel = QWidget()
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(0, 0, 0, 0)
 
-        self.plot_T = CertusScientificPlot(
-            title="Spectrum", y_label="T, R or T/T_sub", x_label="lambda (nm)"
-        )
+        self.plot_T = CertusScientificPlot(title="Spectrum", y_label="T, R or T/T_sub", x_label="lambda (nm)")
         self.plot_T.showGrid(x=True, y=True, alpha=0.25)
+        self.plot_T._certus_context_menu_augment_fn = self._spectrum_plot_context_menu_augment
+        self.plot_T._certus_crosshair_label_fn = self._spectrum_T_crosshair_formatter
         lay.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_T), 1)
 
         return panel
 
     def _build_tab_indices(self) -> QWidget:
         # Page vide pour la synchro du context_stack
-        self.context_stack.addWidget(self._create_empty_context_widget("Standard refractive index plots.\nNo specific settings for this tab."))
+        self._add_context_page(
+            self._create_empty_context_widget("Standard refractive index plots.\nNo specific settings for this tab.")
+        )
 
         panel = QWidget()
         lay = QVBoxLayout(panel)
@@ -14693,15 +14625,11 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self.plot_n.showGrid(x=True, y=True, alpha=0.25)
 
-        self.plot_k = CertusScientificPlot(
-
-            title="k(lambda)", y_label="k", x_label="lambda (nm)"
-
-        )
+        self.plot_k = CertusScientificPlot(title="k(lambda)", y_label="k", x_label="lambda (nm)")
 
         self.plot_k.showGrid(x=True, y=True, alpha=0.25)
-        
-        self.plot_k.setLogMode(y=True)
+
+        _apply_fixed_log_k_axis(self.plot_k)
         self.plot_k._certus_crosshair_label_fn = self._k_crosshair_formatter
 
         spl = QSplitter(Qt.Orientation.Vertical)
@@ -14718,23 +14646,21 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         return panel
 
-
-
-
-
     def _build_tab_corridor_rmse(self) -> QWidget:
         """Tab Corridor RMSE(d). Orchestrator."""
-        ctx_w = QWidget(); ctx_lay = QVBoxLayout(ctx_w)
+        ctx_w = QWidget()
+        ctx_lay = QVBoxLayout(ctx_w)
+        ctx_lay.setContentsMargins(0, 0, 0, 0)
+        ctx_lay.setSpacing(6)
         self._build_corridor_labels(ctx_lay)
-        panel = QWidget(); lay = QVBoxLayout(panel)
-        tab_rmse = QWidget(); lay_rmse = QVBoxLayout(tab_rmse)
-        tab_generate = QWidget(); lay_generate = QVBoxLayout(tab_generate)
-        self.tabs_corridor_rmse_sub = QTabWidget()
-        self.tabs_corridor_rmse_sub.addTab(tab_rmse, "RMSE & Recalculate")
-        self.tabs_corridor_rmse_sub.addTab(tab_generate, "Generate Corridor n/k")
-        ctx_lay.addWidget(self.tabs_corridor_rmse_sub)
-        self._build_corridor_tab_rmse_controls(lay_rmse)
-        self._build_corridor_tab_generate(lay_generate)
+        panel = QWidget()
+        lay = QVBoxLayout(panel)
+        rmse_section = CertusCard("1  Recalculate RMSE(d)")
+        generate_section = CertusCard("2  Generate corridor n/k")
+        self._build_corridor_tab_rmse_controls(rmse_section.body)
+        self._build_corridor_tab_generate(generate_section.body)
+        ctx_lay.addWidget(rmse_section)
+        ctx_lay.addWidget(generate_section)
 
         self.plot_corridor_rmse_d = CertusScientificPlot(
             title="Corridor profile: RMSE(d)", y_label="RMSE", x_label="d (nm)"
@@ -14745,6 +14671,8 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._corridor_rmse_best_idx = -1
         self._corridor_rmse_center_nm = float("nan")
         self._corridor_rmse_grid_live_t0: float = float("nan")
+        self._corridor_rmse_live_last_plot_ts: float = float("nan")
+        self._corridor_rmse_live_plot_min_interval_s: float = 0.12
         self._corridor_rmse_robust_lo = float("nan")
         self._corridor_rmse_robust_hi = float("nan")
         self._corridor_rmse_robust_ok = False
@@ -14761,7 +14689,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         self._apply_corridor_preset_auto_robust()
         ctx_lay.addStretch(1)
-        self.context_stack.addWidget(ctx_w)
+        self._add_context_page(ctx_w)
 
         return panel
 
@@ -14770,53 +14698,40 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         src = self._corridor_profile_source_result()
 
         if src is None:
-
             return
 
         try:
-
             self._plot_corridor_rmse_tab(src)
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             logger.debug("Corridor RMSE robust refresh failed", exc_info=True)
-
-
 
     def _set_corridor_grid_completed_badge(self) -> None:
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-
             self.pb_corridor_rmse_grid.setValue(1000)
 
             self.pb_corridor_rmse_grid.setEnabled(True)
 
             self.pb_corridor_rmse_grid.setStyleSheet(
-
                 f"QProgressBar::chunk {{ background-color: {CertusTheme.SUCCESS}; }}"
-
             )
 
         if hasattr(self, "lbl_corridor_rmse_grid_progress"):
-
             base = str(self.lbl_corridor_rmse_grid_progress.text() or "").strip()
 
             if "Final fit updated" not in base:
-
                 self.lbl_corridor_rmse_grid_progress.setText(f"{base} | Final fit updated")
 
     def _update_corridor_rmse_state_bar(self, src: dict[str, Any] | None = None) -> None:
 
         if not hasattr(self, "lbl_corridor_rmse_state"):
-
             return
 
         if not isinstance(src, dict):
-
             src = self._corridor_profile_source_result()
 
         if not isinstance(src, dict):
-
             self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to start.")
 
             return
@@ -14824,7 +14739,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         d_s = np.asarray(src.get("profile_d_values_nm", []), dtype=np.float64).ravel()
 
         if d_s.size == 0:
-
             self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to start.")
 
             return
@@ -14836,27 +14750,19 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         d_max = float(np.nanmax(d_s)) if np.any(np.isfinite(d_s)) else float("nan")
 
         if has_manual:
-
             self.lbl_corridor_rmse_state.setText(
                 f"Step 3/3: Corridor generated | Grid {int(d_s.size)} pts | d-range [{d_min:.2f}, {d_max:.2f}] nm"
             )
 
         else:
-
             self.lbl_corridor_rmse_state.setText(
                 f"Step 2/3: Select interval then generate corridor | Grid {int(d_s.size)} pts | d-range [{d_min:.2f}, {d_max:.2f}] nm"
             )
 
-
-
-
-
     def _corridor_profile_source_result(self) -> dict[str, Any] | None:
 
         for cand in (self._last_result, self._last_worker_result):
-
             if not isinstance(cand, dict):
-
                 continue
 
             d_prof = np.asarray(cand.get("profile_d_values_nm", []), dtype=np.float64).ravel()
@@ -14864,7 +14770,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             r_prof = np.asarray(cand.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
 
             if d_prof.size > 0 and r_prof.size == d_prof.size:
-
                 return cand
 
         return self._last_result
@@ -14872,7 +14777,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     def _corridor_manual_half_width_nm(self) -> float:
 
         if not hasattr(self, "sl_corridor_manual_half"):
-
             return 0.0
 
         scale = max(1, int(getattr(self, "_corridor_rmse_manual_slider_scale", 100) or 100))
@@ -14888,49 +14792,29 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._corridor_rmse_manual_hi = float(d_best + hw)
 
         if hasattr(self, "lbl_corridor_manual_half"):
-
             self.lbl_corridor_manual_half.setText(f"+/-{hw:.2f} nm")
 
         if hasattr(self, "lbl_corridor_manual_interval"):
-
             self.lbl_corridor_manual_interval.setText(
-
                 f"Manual interval: [{self._corridor_rmse_manual_lo:.2f}, {self._corridor_rmse_manual_hi:.2f}] nm"
-
             )
 
     def _set_corridor_manual_bounds_labels(self, d_min: float, d_best: float, d_max: float) -> None:
 
         if hasattr(self, "lbl_corridor_manual_dmin"):
-
-            self.lbl_corridor_manual_dmin.setText(
-
-                f"d_min: {d_min:.2f} nm" if np.isfinite(d_min) else "d_min: -"
-
-            )
+            self.lbl_corridor_manual_dmin.setText(f"d_min: {d_min:.2f} nm" if np.isfinite(d_min) else "d_min: -")
 
         if hasattr(self, "lbl_corridor_manual_dcenter"):
-
-            self.lbl_corridor_manual_dcenter.setText(
-
-                f"d*: {d_best:.2f} nm" if np.isfinite(d_best) else "d*: -"
-
-            )
+            self.lbl_corridor_manual_dcenter.setText(f"d*: {d_best:.2f} nm" if np.isfinite(d_best) else "d*: -")
 
         if hasattr(self, "lbl_corridor_manual_dmax"):
-
-            self.lbl_corridor_manual_dmax.setText(
-
-                f"d_max: {d_max:.2f} nm" if np.isfinite(d_max) else "d_max: -"
-
-            )
+            self.lbl_corridor_manual_dmax.setText(f"d_max: {d_max:.2f} nm" if np.isfinite(d_max) else "d_max: -")
 
     def _corridor_manual_max_half_width_nm(self, d_s: np.ndarray) -> float:
 
         d_arr = np.asarray(d_s, dtype=np.float64).ravel()
 
         if d_arr.size == 0:
-
             return 0.0
 
         d_span = float(max(np.nanmax(d_arr) - np.nanmin(d_arr), 0.0)) if np.any(np.isfinite(d_arr)) else 0.0
@@ -14938,7 +14822,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         robust_half = 0.0
 
         if np.isfinite(self._corridor_rmse_robust_lo) and np.isfinite(self._corridor_rmse_robust_hi):
-
             robust_half = 0.5 * float(max(0.0, self._corridor_rmse_robust_hi - self._corridor_rmse_robust_lo))
 
         cur_half = self._corridor_manual_half_width_nm()
@@ -14950,17 +14833,14 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     def _set_corridor_rmse_view_centered(self, d_center: float, half_width_nm: float) -> None:
 
         if not hasattr(self, "plot_corridor_rmse_d"):
-
             return
 
         if not np.isfinite(d_center):
-
             return
 
         hw = float(max(0.0, half_width_nm))
 
         if not np.isfinite(hw):
-
             return
 
         hw_eff = float(max(hw, 0.5))
@@ -14968,17 +14848,13 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         pad = float(max(0.02 * (2.0 * hw_eff), 0.25))
 
         self.plot_corridor_rmse_d.plotItem.setXRange(
-
             float(d_center - hw_eff - pad), float(d_center + hw_eff + pad), padding=0.0
-
         )
 
     def _set_corridor_rmse_view_data_bounds(self, d_vals: np.ndarray, r_vals: np.ndarray) -> None:
-
         """Fixe l ?chelle du graphe RMSE(d) sur les bornes min/max des donn?es."""
 
         if not hasattr(self, "plot_corridor_rmse_d"):
-
             return
 
         xd = np.asarray(d_vals, dtype=np.float64).ravel()
@@ -14992,7 +14868,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         yd = yd[m]
 
         if xd.size == 0 or yd.size == 0:
-
             return
 
         x_lo = float(np.min(xd))
@@ -15020,21 +14895,17 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         src = self._corridor_profile_source_result()
 
         if src is None:
-
             return
 
         try:
-
             self._plot_corridor_rmse_tab(src)
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             logger.debug("Corridor RMSE lock-scale refresh failed", exc_info=True)
 
     def _reset_corridor_manual_controls(self) -> None:
 
         if hasattr(self, "sl_corridor_manual_half"):
-
             self.sl_corridor_manual_half.blockSignals(True)
 
             self.sl_corridor_manual_half.setRange(0, 1)
@@ -15046,23 +14917,18 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             self.sl_corridor_manual_half.blockSignals(False)
 
         if hasattr(self, "btn_generate_manual_corridor"):
-
             self.btn_generate_manual_corridor.setEnabled(False)
 
         if hasattr(self, "btn_corridor_manual_robust"):
-
             self.btn_corridor_manual_robust.setEnabled(False)
 
         if hasattr(self, "lbl_corridor_manual_half"):
-
             self.lbl_corridor_manual_half.setText("+/-0.00 nm")
 
         if hasattr(self, "lbl_corridor_manual_interval"):
-
             self.lbl_corridor_manual_interval.setText("Manual interval: -")
 
         self._set_corridor_manual_bounds_labels(float("nan"), float("nan"), float("nan"))
-
 
     def _on_corridor_manual_slider_changed(self, _value: int) -> None:
 
@@ -15071,13 +14937,11 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
 
         if d_s.size == 0 or i_best < 0 or i_best >= int(d_s.size):
-
             return
 
         d_center = float(getattr(self, "_corridor_rmse_center_nm", float("nan")))
 
         if not np.isfinite(d_center):
-
             d_center = float(d_s[i_best])
 
         self._set_corridor_manual_interval_preview(d_center, self._corridor_manual_half_width_nm())
@@ -15085,19 +14949,15 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         src = self._corridor_profile_source_result()
 
         if src is not None:
-
             try:
-
                 self._plot_corridor_rmse_tab(src)
 
             except NUMERICAL_FAULT_EXCEPTIONS:
-
                 logger.debug("Manual corridor slider refresh failed", exc_info=True)
 
     def _use_robust_corridor_interval(self) -> None:
 
         if not bool(getattr(self, "_corridor_rmse_robust_ok", False)):
-
             return
 
         d_s = np.asarray(getattr(self, "_corridor_rmse_d_vals", []), dtype=np.float64).ravel()
@@ -15105,17 +14965,15 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         i_best = int(getattr(self, "_corridor_rmse_best_idx", -1))
 
         if d_s.size == 0 or i_best < 0 or i_best >= int(d_s.size):
-
             return
 
-        d_best = float(d_s[i_best])
+        float(d_s[i_best])
 
         d_lo_rb = float(getattr(self, "_corridor_rmse_robust_lo", float("nan")))
 
         d_hi_rb = float(getattr(self, "_corridor_rmse_robust_hi", float("nan")))
 
         if not (np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb) and d_hi_rb >= d_lo_rb):
-
             return
 
         half = 0.5 * float(max(0.0, d_hi_rb - d_lo_rb))
@@ -15127,100 +14985,74 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         half = float(min(max(0.0, half), max_half))
 
         if hasattr(self, "sl_corridor_manual_half"):
-
             self.sl_corridor_manual_half.setValue(int(round(half * scale)))
-
-
-
-
-
-
+            # setValue does not emit valueChanged if unchanged: force visual sync
+            # so vertical interval bars always reflect current robust bounds.
+            self._on_corridor_manual_slider_changed(self.sl_corridor_manual_half.value())
 
     @staticmethod
-
     def _robust_interval_from_local_quadratic(
-
         d_s: np.ndarray,
-
         r_s: np.ndarray,
-
         i_best: int,
-
         delta_rmse: float,
-
         half_window_pts: int,
-
     ) -> tuple[bool, float, float, float, float]:
 
         fit = _fit_local_quadratic_rmse_profile(
-
             d_s,
-
             r_s,
-
             i_best,
-
             half_window_pts,
-
             delta_rmse,
-
         )
 
         if not bool(fit.get("ok", False)):
-
             return False, float("nan"), float("nan"), float("nan"), float("nan")
 
         return (
-
             True,
-
             float(fit.get("d_lo", float("nan"))),
-
             float(fit.get("d_hi", float("nan"))),
-
             float(fit.get("slope_at_anchor", float("nan"))),
-
             float(fit.get("curvature", float("nan"))),
-
         )
-
-
-
-
 
     def _build_tab_data_corridor(self) -> QWidget:
         """Tab dedicated to detailed corridor uncertainty data."""
         # Sync context stack
-        self.context_stack.addWidget(self._create_empty_context_widget("Detailed corridor uncertainty table.\nIncludes nominal, center, and min/max bounds."))
-        
+        self._add_context_page(
+            self._create_empty_context_widget(
+                "Detailed corridor uncertainty table.\nIncludes nominal, center, and min/max bounds."
+            )
+        )
+
         panel = QWidget()
         lay = QVBoxLayout(panel)
         lay.setContentsMargins(0, 0, 0, 0)
-        
+
         tb = QHBoxLayout()
         self.btn_copy_corridor = create_styled_button("Copier tableau Corridors", "secondary")
         self.btn_copy_corridor.setEnabled(False)
         self.btn_copy_corridor.clicked.connect(self._copy_corridor_to_clipboard)
         tb.addWidget(self.btn_copy_corridor)
-        
+
         self.btn_export_corridor = create_styled_button("Export CSV Corridors...", "primary")
         self.btn_export_corridor.setEnabled(False)
         self.btn_export_corridor.clicked.connect(self._export_corridor_csv)
         tb.addWidget(self.btn_export_corridor)
-        
+
         tb.addStretch(1)
         lay.addLayout(tb)
-        
+
         self.table_corridor = ExcelTableWidget()
         self.table_corridor.setColumnCount(9)
-        self.table_corridor.setHorizontalHeaderLabels([
-            "lambda (nm)", "n nominal", "k nominal", 
-            "n center", "k center",
-            "n min", "n max", "k min", "k max"
-        ])
+        self.table_corridor.setHorizontalHeaderLabels(
+            ["lambda (nm)", "n nominal", "k nominal", "n center", "k center", "n min", "n max", "k min", "k max"]
+        )
         self.table_corridor.setEditTriggers(ExcelTableWidget.EditTrigger.NoEditTriggers)
         lay.addWidget(self.table_corridor, 1)
-        
+
         return panel
 
     def _copy_corridor_to_clipboard(self) -> None:
@@ -15238,17 +15070,27 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     def _export_corridor_csv(self) -> None:
         if not self._ensure_complete_manifest_for_secondary_export():
             return
-        if not hasattr(self, "table_corridor"): return
+        if not hasattr(self, "table_corridor"):
+            return
         from PyQt6.QtWidgets import QFileDialog
+
         path, _ = QFileDialog.getSaveFileName(self, "Export Corridor CSV", "", "CSV Files (*.csv);;All Files (*)")
         if path:
             import csv
-            with open(path, 'w', newline='', encoding='utf-8') as f:
+
+            with open(path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
-                headers = [self.table_corridor.horizontalHeaderItem(i).text() for i in range(self.table_corridor.columnCount())]
+                headers = [
+                    self.table_corridor.horizontalHeaderItem(i).text() for i in range(self.table_corridor.columnCount())
+                ]
                 writer.writerow(headers)
                 for r in range(self.table_corridor.rowCount()):
-                    writer.writerow([self.table_corridor.item(r, c).text() if self.table_corridor.item(r, c) else "" for c in range(self.table_corridor.columnCount())])
+                    writer.writerow(
+                        [
+                            self.table_corridor.item(r, c).text() if self.table_corridor.item(r, c) else ""
+                            for c in range(self.table_corridor.columnCount())
+                        ]
+                    )
 
     def _build_tab_log(self) -> QWidget:
 
@@ -15259,13 +15101,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         lay.setContentsMargins(12, 12, 12, 12)
 
         info = QLabel(
-
             "The detailed stream (local stages, K stages, polish, continuous laws) appears in the "
-
             "<b>OPTIMIZATION LOG</b> panel under the plots. "
-
             "Use <b>Copy Logs</b> on that panel to copy all text."
-
         )
 
         info.setWordWrap(True)
@@ -15289,15 +15127,10 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         grid.setContentsMargins(24, 24, 24, 24)
 
         intro = QLabel(
-
             "<b>CERTUS-INDEX-SPLINE.</b> Global fit of "
-
             "<i>n(lambda)</i>, <i>k(lambda)</i> as piecewise-linear in sigma=1/lambda (ln k at knots), "
-
             "with <b>local L-BFGS-B</b> polish. Advanced mode: catalog of continuous laws "
-
             "on normalized <i>u</i> and 19-D re-optimization if spectral RMSE improves."
-
         )
 
         intro.setWordWrap(True)
@@ -15307,19 +15140,13 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         grid.addWidget(intro, 0, 0, 1, 2)
 
         cards = [
-
             ("Local L-BFGS-B", "Local optimization with tunable budgets.", ""),
-
             ("Spectral weights Deltaln lambda", "RMSE weighted trapezoidal rule on ln lambda grid (no cap).", ""),
-
             ("Auto-K and adaptive mesh", "K growth or SMART-style sigma insertions; warm start.", ""),
-
             ("Continuous laws (advanced)", "Rank n(u), ln k(u) families then optimize d + 18 parameters.", ""),
-
         ]
 
         for i, (title, desc, icon) in enumerate(cards):
-
             grid.addWidget(FlashyCard(title, desc, icon=icon), 1 + i // 2, i % 2)
 
         return panel
@@ -15329,31 +15156,23 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         w = self.tabs_main.currentWidget()
 
         if w is None:
-
             return
 
         plots = w.findChildren(CertusScientificPlot)
 
         if not plots:
-
             QMessageBox.information(self, "Detach", "No scientific plot in this tab.")
 
             return
 
         tab_name = self.tabs_main.tabText(self.tabs_main.currentIndex())
 
-        self.open_detached_certus_plot(
-
-            plots[0], title=f"{self.APP_NAME}  {tab_name}"
-
-        )
+        self.open_detached_certus_plot(plots[0], title=f"{self.APP_NAME}  {tab_name}")
 
     @staticmethod
-
     def _lam_uniform_grid_nm(lo_h: float, hi_h: float, step: float) -> np.ndarray:
 
         if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
-
             return np.array([], dtype=np.float64)
 
         st = float(np.ceil(lo_h / step) * step)
@@ -15361,23 +15180,18 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         en = float(np.floor(hi_h / step) * step)
 
         if en < st - 1e-9:
-
             return np.array([0.5 * (lo_h + hi_h)], dtype=np.float64)
 
         if abs(en - st) < 1e-9:
-
             return np.array([st], dtype=np.float64)
 
         return np.arange(st, en + 1e-9, step, dtype=np.float64)
 
     @staticmethod
-
     def _lam_piecewise_report_grid_nm(lo: float, hi: float) -> np.ndarray:
-
         """2 nm step on (lambda_min, 400), 5 nm on )400, 1200), 10 nm beyond (nm)."""
 
         if not (np.isfinite(lo) and np.isfinite(hi) and hi > lo):
-
             return np.array([], dtype=np.float64)
 
         parts: list[np.ndarray] = []
@@ -15385,58 +15199,45 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         a, b = float(lo), float(min(hi, 400.0))
 
         if b >= a - 1e-9:
-
             parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 2.0))
 
         a, b = float(max(lo, 400.0)), float(min(hi, 1200.0))
 
         if b >= a - 1e-9:
-
             parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 5.0))
 
         a, b = float(max(lo, 1200.0)), float(hi)
 
         if b >= a - 1e-9:
-
             parts.append(CertusIndexSplineApp._lam_uniform_grid_nm(a, b, 10.0))
 
         if not parts:
-
             return np.array([0.5 * (lo + hi)], dtype=np.float64)
 
         return np.unique(np.concatenate(parts))
 
     @staticmethod
-
     def _fmt_n_data_tab(nv: float) -> str:
 
         if not np.isfinite(nv):
-
             return ""
 
         return f"{float(nv):.4f}"
 
     @staticmethod
-
     def _fmt_k_data_tab(kv: float) -> str:
 
         if not np.isfinite(kv) or kv < 0:
-
             return ""
 
         v = float(kv)
 
         if v == 0.0:
-
             return "0"
 
         return f"{v:.2e}"
 
-
-
-
     @staticmethod
-
     def _interp_preview_axis(xs: np.ndarray, ys: np.ndarray, xq: float) -> float:
 
         xs = np.asarray(xs, dtype=np.float64).ravel()
@@ -15446,7 +15247,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         m = np.isfinite(xs) & np.isfinite(ys)
 
         if int(np.count_nonzero(m)) < 2:
-
             return float("nan")
 
         xv, yv = xs[m], ys[m]
@@ -15458,42 +15258,31 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         xf = float(xq)
 
         if xf < float(xv[0]) or xf > float(xv[-1]):
-
             return float("nan")
 
         return float(np.interp(xf, xv, yv))
 
     @staticmethod
-
     def _vb_mid_y_plot(w: CertusScientificPlot) -> float:
 
         try:
-
             y0, y1 = w.plotItem.vb.viewRange()[1]
 
             return 0.5 * (float(y0) + float(y1))
 
         except NUMERICAL_FAULT_EXCEPTIONS:
-
             return 0.0
-
-
-
-
 
     def _apply_cell_style(self, item: QTableWidgetItem, val: float) -> None:
         """Standard styling logic for table items."""
         pass  # Reserved for future color-coding or specific formatting
 
-
     def _on_trel_plot_refresh(self) -> None:
 
         if self.df is None:
-
             return
 
         if hasattr(self, "tabs_main"):
-
             self.tabs_main.setCurrentIndex(0)
 
         self._plot_data_raw()
@@ -15507,7 +15296,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         v = pr.get("pglobal_max_iter")
 
         if v is not None:
-
             self.sp_pg_iter.blockSignals(True)
 
             self.sp_pg_iter.setValue(int(v))
@@ -15515,7 +15303,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             self.sp_pg_iter.blockSignals(False)
 
     def _spectrum_open_dialog_start_path(self) -> str:
-
         """Dernier file spectrum (pre-selection Qt) sinon last dossier suite, sinon script."""
 
         s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
@@ -15523,13 +15310,11 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         last_file = str(s.value(_QS_LAST_SPECTRUM, "") or "").strip()
 
         if last_file and Path(last_file).is_file():
-
             return last_file
 
         d = get_certus_last_dir()
 
         if d and Path(d).is_dir():
-
             return d
 
         return str(_SCRIPT_DIR)
@@ -15544,76 +15329,358 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP).setValue(_QS_LAST_SPECTRUM, ap)
 
-
     def _add_curve(
-
         self,
-
         widget: "pg.PlotWidget",
-
         x: np.ndarray,
-
         y: np.ndarray,
-
         color: str,
-
         name: str,
-
         is_scatter: bool = False,
-
         *,
-
         crosshair_primary: bool = False,
-
         pen: Any | None = None,
-
     ) -> bool:
         # UX: Si on affiche k sur une ?chelle LOG, on lin?arise les donn?es log10 fournies
-        if widget in [getattr(self, "plot_k", None), getattr(self, "plot_k_corridor", None), getattr(self, "plot_k_nl", None)]:
+        if widget in [
+            getattr(self, "plot_k", None),
+            getattr(self, "plot_k_corridor", None),
+            getattr(self, "plot_k_nl", None),
+        ]:
             y = 10.0**y
 
         xf, yf = sanitize_xy_for_plot(x, y)
 
         if xf.size == 0:
-
             return False
 
         if is_scatter:
-
             _plot_spectrum_raw_scatter(widget, xf, yf, color=color, name=name)
 
         else:
-
             p = pen if pen is not None else pg.mkPen(color, width=2)
 
             curve = plot_widget_plot_finite(widget, xf, yf, pen=p, name=name)
 
             if curve is not None and crosshair_primary:
-
                 setattr(curve, "_certus_crosshair_primary", True)
 
         return True
 
+    def _spectrum_clear_theory_probe(self) -> None:
+        """Clears the n,k,T (R) grid aligned on the last model trace (spectrum context menu)."""
+        self._spectrum_theory_probe_lam_nm = None
+        self._spectrum_theory_probe_n = None
+        self._spectrum_theory_probe_k = None
+        self._spectrum_theory_probe_tt = None
+        self._spectrum_theory_probe_rt = None
+        self._spectrum_theory_probe_d_nm = None
+
+    def _spectrum_x_axis_mode_current(self) -> str:
+        cb = getattr(self, "cb_spectrum_xmode", None)
+        if cb is None:
+            return "lambda"
+        d = cb.currentData()
+        return str(d) if d is not None else "lambda"
+
+    def _spectrum_view_abscissa_to_lambda_nm(self, x_view: float) -> float | None:
+        """Inverse of _transform_spectrum_x: displayed abscissa -> lambda (nm)."""
+        if not np.isfinite(x_view):
+            return None
+        mode = self._spectrum_x_axis_mode_current()
+        xv = float(x_view)
+        if mode == "lambda":
+            return xv if xv > 0.0 else None
+        if mode == "sigma":
+            return (1.0 / xv) if xv > 0.0 else None
+        if mode == "sigma2":
+            return (1.0 / np.sqrt(xv)) if xv > 0.0 else None
+        return xv if xv > 0.0 else None
+
+    def _spectrum_theory_interp_at_lambda_nm(self, lam_nm_query: float) -> dict[str, Any]:
+        """Linear interpolation of model quantities on the grid used for theoretical T/R."""
+
+        lg0 = getattr(self, "_spectrum_theory_probe_lam_nm", None)
+
+        def _missing_why() -> dict[str, Any]:
+            return {"ok": False, "reason": "no_data"}
+
+        if lg0 is None:
+            return _missing_why()
+
+        n0 = getattr(self, "_spectrum_theory_probe_n", None)
+
+        k0 = getattr(self, "_spectrum_theory_probe_k", None)
+
+        t0 = getattr(self, "_spectrum_theory_probe_tt", None)
+
+        if n0 is None or k0 is None or t0 is None:
+            return _missing_why()
+
+        lg = np.asarray(lg0, dtype=np.float64).ravel()
+
+        nn = np.asarray(n0, dtype=np.float64).ravel()
+
+        kk = np.asarray(k0, dtype=np.float64).ravel()
+
+        tt = np.asarray(t0, dtype=np.float64).ravel()
+
+        rt_arr = getattr(self, "_spectrum_theory_probe_rt", None)
+
+        rr = np.asarray(rt_arr, dtype=np.float64).ravel() if rt_arr is not None else None
+
+        m = np.isfinite(lg) & np.isfinite(nn) & np.isfinite(kk) & np.isfinite(tt)
+
+        if rr is not None and rr.shape == lg.shape:
+            m = m & np.isfinite(rr)
+
+        elif rr is not None:
+            rr = None
+
+        if not np.any(m):
+            return {"ok": False, "reason": "no_finite_points"}
+
+        lam_use = lg[m]
+
+        order = np.argsort(lam_use, kind="mergesort")
+
+        xs = lam_use[order]
+
+        if xs.size < 1:
+            return {"ok": False, "reason": "no_finite_points"}
+
+        lo, hi = float(xs[0]), float(xs[-1])
+
+        lam_q = float(lam_nm_query)
+
+        span = hi - lo
+
+        tol = max(1e-9 * span, 1e-12)
+
+        if lam_q < lo - tol or lam_q > hi + tol:
+            out: dict[str, Any] = {
+                "ok": False,
+                "reason": "outside",
+                "lambda_lo_nm": lo,
+                "lambda_hi_nm": hi,
+                "lambda_nm": lam_q,
+                "d_nm": getattr(self, "_spectrum_theory_probe_d_nm", float("nan")),
+            }
+
+            return out
+
+        nn_s = nn[m][order]
+
+        kk_s = kk[m][order]
+
+        tt_s = tt[m][order]
+
+        out_ok: dict[str, Any] = {
+            "ok": True,
+            "lambda_nm": lam_q,
+            "n": float(np.interp(lam_q, xs, nn_s)),
+            "k": float(np.interp(lam_q, xs, kk_s)),
+            "t_model": float(np.interp(lam_q, xs, tt_s)),
+            "d_nm": getattr(self, "_spectrum_theory_probe_d_nm", float("nan")),
+        }
+
+        if rr is not None:
+            rr_use = rr[m][order]
+
+            out_ok["r_model"] = float(np.interp(lam_q, xs, rr_use))
+
+        else:
+            out_ok["r_model"] = None
+
+        return out_ok
+
+    def _spectrum_probe_d_nm_crosshair_txt(self) -> str:
+        d_nm = getattr(self, "_spectrum_theory_probe_d_nm", None)
+        if d_nm is not None and np.isfinite(float(d_nm)):
+            return f"{float(d_nm):.2f} nm"
+        return "—"
+
+    def _spectrum_T_crosshair_formatter(self, x_view: float, y_show: float | None, y_raw: float) -> str:
+        """Spectrum tooltip: lambda, n, k, d (model grid) + tracked ordinate on the curve."""
+        yt = (
+            float(y_show)
+            if y_show is not None and np.isfinite(float(y_show))
+            else float(y_raw if np.isfinite(float(y_raw)) else float("nan"))
+        )
+        y_bit = f"y ≈ {yt:.6g}" if np.isfinite(yt) else "y = —"
+        d_txt = self._spectrum_probe_d_nm_crosshair_txt()
+        lam_hint = self._spectrum_view_abscissa_to_lambda_nm(float(x_view))
+        if lam_hint is None:
+            return f"x = {float(x_view):.5g}  |  {y_bit}  |  λ n k —  |  d = {d_txt}"
+
+        lg0 = getattr(self, "_spectrum_theory_probe_lam_nm", None)
+        if lg0 is None:
+            return f"λ (indic.) = {float(lam_hint):.4f} nm  |  {y_bit}  |  n k : pas de modèle  |  d = {d_txt}"
+
+        res = self._spectrum_theory_interp_at_lambda_nm(float(lam_hint))
+        if not res.get("ok"):
+            if str(res.get("reason", "")) == "outside":
+                lq = float(res.get("lambda_nm", lam_hint))
+                lo = float(res.get("lambda_lo_nm", float("nan")))
+                hi = float(res.get("lambda_hi_nm", float("nan")))
+                return f"λ = {lq:.4f} nm  (hors grille [{lo:.1f}–{hi:.1f}] nm)\nn = —    k = —    d = {d_txt}\n{y_bit}"
+            return f"λ = {float(lam_hint):.4f} nm  |  n = —  k = —  |  d = {d_txt}  |  {y_bit}"
+
+        ln = float(res["lambda_nm"])
+        return f"λ = {ln:.4f} nm    n = {float(res['n']):.5f}    k = {float(res['k']):.4e}    d = {d_txt}\n{y_bit}"
+
+    def _spectrum_plot_context_menu_augment(
+        self,
+        plot: Any,
+        menu: Any,
+        widget_pos: Any,
+        view_x: float,
+        view_y: float,
+    ) -> None:
+        if plot is not getattr(self, "plot_T", None):
+            return
+
+        if getattr(self, "_spectrum_theory_probe_lam_nm", None) is None:
+            return
+
+        act_show = menu.addAction("Afficher n, k, T (modèle) au point du clic…")
+
+        act_show.triggered.connect(lambda *_, vx=view_x, vy=view_y: self._spectrum_show_theory_probe_dialog(vx, vy))
+
+        act_copy = menu.addAction("Copier λ, n, k, d, T (R) modèle au point — TSV")
+
+        act_copy.triggered.connect(lambda *_, vx=view_x, vy=view_y: self._spectrum_copy_theory_probe_tsv(vx, vy))
+
+    def _spectrum_show_theory_probe_dialog(self, view_x: float, view_y: float) -> None:
+
+        lam = self._spectrum_view_abscissa_to_lambda_nm(view_x)
+
+        if lam is None:
+            QMessageBox.information(
+                self,
+                "Spectrum",
+                "Invalid click abscissa (λ ≤ 0 or coordinate not convertible to wavelength).",
+            )
+
+            return
+
+        res = self._spectrum_theory_interp_at_lambda_nm(float(lam))
+
+        if not res.get("ok"):
+            rsn = str(res.get("reason", ""))
+
+            if rsn == "outside":
+                d_o = res.get("d_nm")
+
+                d_line = f"\nd affichée = {float(d_o):.4f} nm" if d_o is not None and np.isfinite(float(d_o)) else ""
+
+                QMessageBox.information(
+                    self,
+                    "Spectrum",
+                    (
+                        f"λ = {res.get('lambda_nm', float('nan')):.4f} nm is outside model grid "
+                        f"[{res.get('lambda_lo_nm', float('nan')):.4f} ; "
+                        f"{res.get('lambda_hi_nm', float('nan')):.4f}] nm.\n"
+                        "n, k, T values are interpolated only on this grid."
+                        f"{d_line}"
+                    ),
+                )
+
+            else:
+                QMessageBox.information(
+                    self,
+                    "Spectrum",
+                    "No n,k,T model grid available for this plot. Load a fit result or plot the model spectrum.",
+                )
+
+            return
+
+        lines = [
+            f"λ = {float(res['lambda_nm']):.6f} nm",
+            f"n = {float(res['n']):.8f}",
+            f"k = {float(res['k']):.6e}",
+        ]
+
+        d_nm = res.get("d_nm")
+
+        if d_nm is not None and np.isfinite(float(d_nm)):
+            lines.append(f"d = {float(d_nm):.4f} nm")
+
+        else:
+            lines.append("d = (undefined)")
+
+        lines.append(f"T (model) = {float(res['t_model']):.8f}")
+        rr = res.get("r_model")
+        if rr is not None and np.isfinite(float(rr)):
+            lines.append(f"R (model) = {float(rr):.8f}")
+
+        xm = self._spectrum_x_axis_mode_current()
+
+        lines.append("")
+
+        lines.append(f"Abscissa mode : {xm} | x_view = {view_x:.8g} | y_view ≈ {view_y:.8g}")
+
+        QMessageBox.information(self, "Model at point (spectrum)", "\n".join(lines))
+
+    def _spectrum_copy_theory_probe_tsv(self, view_x: float, view_y: float) -> None:
+
+        lam = self._spectrum_view_abscissa_to_lambda_nm(view_x)
+
+        if lam is None:
+            QMessageBox.information(
+                self,
+                "Spectrum",
+                "Invalid click abscissa; nothing to copy.",
+            )
+
+            return
+
+        res = self._spectrum_theory_interp_at_lambda_nm(float(lam))
+
+        if not res.get("ok"):
+            rsn = str(res.get("reason", ""))
+
+            if rsn == "outside":
+                QMessageBox.information(
+                    self,
+                    "Spectrum",
+                    'λ outside model grid: copy cancelled (see "Display n, k...").',
+                )
+
+            else:
+                QMessageBox.information(self, "Spectrum", "No model data to copy.")
+
+            return
+
+        d_cell = f"{float(res['d_nm']):.10g}" if res.get("d_nm") is not None and np.isfinite(float(res["d_nm"])) else ""
+
+        hdr = "lambda_nm\tn\tk\td_nm\tt_model"
+
+        row = f"{float(res['lambda_nm']):.10g}\t{float(res['n']):.10g}\t{float(res['k']):.10g}\t{d_cell}\t{float(res['t_model']):.10g}"
+
+        rr = res.get("r_model")
+
+        if rr is not None and np.isfinite(float(rr)):
+            row += f"\t{float(rr):.10g}"
+
+            hdr += "\tr_model"
+
+        QApplication.clipboard().setText(hdr + "\n" + row + "\n")
+
+        QMessageBox.information(self, "Spectrum", "A TSV line (header + values) was copied.")
+
     def _transform_spectrum_x(self, lam_nm: np.ndarray) -> tuple[np.ndarray, str]:
 
         mode = str(
-
-            getattr(self, "cb_spectrum_xmode", None).currentData()
-
-            if hasattr(self, "cb_spectrum_xmode")
-
-            else "lambda"
-
+            getattr(self, "cb_spectrum_xmode", None).currentData() if hasattr(self, "cb_spectrum_xmode") else "lambda"
         )
 
         lam = np.asarray(lam_nm, dtype=np.float64).ravel()
 
         if mode == "sigma":
-
             return 1.0 / np.maximum(lam, 1e-30), "sigma (nm?1)"
 
         if mode == "sigma2":
-
             s = 1.0 / np.maximum(lam, 1e-30)
 
             return s * s, "sigma2 (nm?2)"
@@ -15632,15 +15699,12 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     def _on_spectrum_x_mode_changed(self) -> None:
 
         if self._last_result is not None:
-
-            self._plot_result(self._last_result)
+            self._plot_result(self._last_result, plot_source="abscisse_spectral")
 
         elif self.df is not None:
-
             self._plot_data_raw()
 
     def _format_spectrum_plot_title(self, r: dict) -> str:
-
         """Spectrum plot title: RMSE and thickness of the displayed snapshot + config summary."""
 
         rmse = float(r.get("rmse", float("nan")))
@@ -15660,27 +15724,22 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         k_sig = int(np.asarray(sk, dtype=np.float64).size) if sk is not None else 0
 
         if k_sig > 0:
-
             bits.append(f"Ksigma={k_sig} ({k_sig - 1} seg.)")
 
         bits.append("interp sigma=cubic spline")
 
         if r.get("auto_knot_stages"):
-
             kb = r.get("auto_knots_K_best")
 
             if kb is not None:
-
                 bits.append(f"auto-K (K*={int(kb)})")
 
             else:
-
                 bits.append("auto-K")
 
         prof = str(self.cb_profilee.currentData() or "").strip() if hasattr(self, "cb_profilee") else ""
 
         if prof and prof != "fast":
-
             bits.append(f"profile={prof}")
 
         cfg_s = "  ".join(bits) if bits else ""
@@ -15698,7 +15757,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
     def _plot_data_raw(self) -> None:
 
         if self.df is None:
-
             return
 
         lam = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
@@ -15706,11 +15764,11 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         x_plot, x_lbl = self._transform_spectrum_x(lam)
 
         self.plot_T.clear()
+        self._spectrum_clear_theory_probe()
 
         any_curve = False
 
         if "T" in self.df.columns:
-
             y_raw = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
 
             y = y_raw
@@ -15718,11 +15776,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             tlabel = "T/Tsub exp" if self.chk_trel.isChecked() else "T exp"
 
             if self._add_curve(self.plot_T, x_plot, y, CertusTheme.PRIMARY, tlabel, True):
-
                 any_curve = True
 
         if "R" in self.df.columns:
-
             y_raw = _to_fraction_T(self.df["R"].to_numpy(dtype=np.float64))
 
             y = y_raw
@@ -15730,11 +15786,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             rlabel = "R/Tsub exp" if self.chk_trel.isChecked() else "R exp"
 
             if self._add_curve(self.plot_T, x_plot, y, CertusTheme.SECONDARY, rlabel, True):
-
                 any_curve = True
 
         if any_curve:
-
             self.plot_T.autoRange()
 
         self._apply_spectrum_x_axis_label(x_lbl)
@@ -15748,54 +15802,43 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         items = getattr(self, "_rmse_fit_overlay_items", None) or []
 
         for ri in items:
-
             if ri is None:
-
                 continue
 
             try:
-
                 self.plot_T.removeItem(ri)
 
             except (AttributeError, RuntimeError):
-
                 logger.debug("_remove_rmse_fit_region_overlay: removeItem failed", exc_info=True)
 
         self._rmse_fit_overlay_items = []
 
     def _spectrum_plot_lambda_span_nm(self) -> tuple[float, float] | None:
-
         """lambda span of displayed spectrum (file first, else last result grid)."""
 
         if self.df is not None and "lambda" in self.df.columns:
-
             lam = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
 
             lam = lam[np.isfinite(lam)]
 
             if lam.size:
-
                 return float(np.min(lam)), float(np.max(lam))
 
         lr = getattr(self, "_last_result", None)
 
         if lr is not None and lr.get("lam_nm") is not None:
-
             lam = np.asarray(lr["lam_nm"], dtype=np.float64).ravel()
 
             lam = lam[np.isfinite(lam)]
 
             if lam.size:
-
                 return float(np.min(lam)), float(np.max(lam))
 
         return None
 
-
     def _sync_rmse_lambda_bounds_from_file(self) -> None:
 
         if self.df is None or "lambda" not in self.df.columns:
-
             return
 
         lam = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
@@ -15803,7 +15846,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         lam = lam[np.isfinite(lam)]
 
         if lam.size == 0:
-
             return
 
         lo, hi = float(np.min(lam)), float(np.max(lam))
@@ -15813,11 +15855,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self._rmse_fit_lambda_hi_default = hi
 
         if not self._rmse_fit_lambda_enabled:
-
             self._rmse_fit_lambda_lo = lo
 
             self._rmse_fit_lambda_hi = hi
-
 
     def _on_stop(self) -> None:
 
@@ -15826,11 +15866,9 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         self.lbl_status.setText("Stop requested...")
 
     def _on_corr_mode_changed(self, _idx: int = 0) -> None:
-
         """Show alpha vs Delta RMSE spinboxes according to corridor mode (LR hides both thresholds)."""
 
         if not hasattr(self, "cb_corr_mode"):
-
             return
 
         m = str(self.cb_corr_mode.currentData() or "abs_delta_adaptive")
@@ -15840,101 +15878,206 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         show_delta = m in ("abs_delta", "abs_delta_adaptive")
 
         if hasattr(self, "sp_corr_alpha"):
-
             self.sp_corr_alpha.setVisible(show_alpha)
 
         if hasattr(self, "lbl_corr_alpha"):
-
             self.lbl_corr_alpha.setVisible(show_alpha)
 
         if hasattr(self, "sp_corr_rmse_delta"):
-
             self.sp_corr_rmse_delta.setVisible(show_delta)
 
         if hasattr(self, "lbl_corr_rmse_delta"):
-
             self.lbl_corr_rmse_delta.setVisible(show_delta)
 
         if hasattr(self, "chk_corr_scientific_nominal"):
-
             self.chk_corr_scientific_nominal.setVisible(show_delta)
 
     def _refresh_corridors_gui_state_labels(self) -> None:
+        """Refresh corridor state badges for the post-optimization controls."""
 
-        """Show Yes / No according to corridor enable state (quick button = Basic checkbox)."""
+        role = str(getattr(self, "_worker_role", "idle") or "idle")
+        unlocked = isinstance(getattr(self, "_last_result", None), dict)
 
-        on = bool(
-
-            getattr(self, "btn_corridor_toggle", None) is not None
-
-            and self.btn_corridor_toggle.isChecked()
-
-        )
-
-        if on:
-
+        if role == "rmse_grid":
+            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>calcul en cours...</b></span>'
+        elif not unlocked:
             rich = (
-
-                f'Corridors (next run): <span style="color:{CertusTheme.SUCCESS};"><b>Yes</b></span>'
-
+                f'Corridors: <span style="color:{CertusTheme.TEXT_SUB};"><b>disponibles apres optimisation</b></span>'
             )
+
+        elif bool(
+            self._last_result.get("profile_d_enabled", False)
+            or self._last_result.get("profile_d_values_nm") is not None
+        ):
+            rich = f'Corridors: <span style="color:{CertusTheme.SUCCESS};"><b>deja calcules</b></span>'
 
         else:
-
-            rich = (
-
-                f'Corridors (next run): <span style="color:{CertusTheme.TEXT_SUB};"><b>No</b></span>'
-
-            )
+            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>prets a lancer</b></span>'
 
         if hasattr(self, "lbl_corridors_run_state"):
-
             self.lbl_corridors_run_state.setText(rich)
 
         if hasattr(self, "lbl_corridors_state_adv"):
-
             self.lbl_corridors_state_adv.setText(rich)
 
         if hasattr(self, "lbl_corridors_tab_state"):
-
             self.lbl_corridors_tab_state.setText(rich)
 
-    def _on_btn_corridor_toggled(self, checked: bool) -> None:
+    def _refresh_post_optimization_option_controls(self, *_args) -> None:
 
-        if not hasattr(self, "chk_corridor_d"):
+        unlocked = isinstance(getattr(self, "_last_result", None), dict)
 
-            return
+        role = str(getattr(self, "_worker_role", "idle") or "idle")
 
-        self.chk_corridor_d.blockSignals(True)
+        controls_enabled = bool(unlocked and role == "idle")
 
-        self.chk_corridor_d.setChecked(bool(checked))
+        if hasattr(self, "btn_corridor_toggle"):
+            self.btn_corridor_toggle.setEnabled(controls_enabled)
 
-        self.chk_corridor_d.blockSignals(False)
+        if hasattr(self, "btn_manual_knots_toggle"):
+            self.btn_manual_knots_toggle.setEnabled(controls_enabled)
+
+        if hasattr(self, "chk_corridor_d"):
+            self.chk_corridor_d.setEnabled(False)
+
+        if hasattr(self, "_stepper"):
+            if controls_enabled:
+                self._stepper.set_step(6)
+            elif getattr(self, "df", None) is not None:
+                self._stepper.set_step(1)
+            else:
+                self._stepper.set_step(0)
 
         self._refresh_corridors_gui_state_labels()
+
+    @staticmethod
+    def _result_uses_split_mesh(result: dict | None) -> bool:
+
+        if not isinstance(result, dict):
+            return False
+        if bool(result.get("split_knots_refine")):
+            return True
+        if "sigma_knots_n" in result or "sigma_knots_L" in result:
+            return True
+        x_encoding = str(result.get("x_encoding", "")).strip().lower()
+        return x_encoding.startswith("split_")
+
+    @staticmethod
+    def _status_iteration_metric(
+        display_dict: dict,
+        fallback_dict: dict,
+    ) -> tuple[str, int]:
+
+        for key, label in (
+            ("nit_total", "evals [global optimizer]"),
+            ("nit_combined", "evals [global optimizer]"),
+            ("nfev_lbfgsb", "evals [L-BFGS-B local-polish]"),
+            ("nit_polish", "iters [cubic-spline-sigma-polish]"),
+        ):
+            raw = display_dict.get(key, fallback_dict.get(key, None))
+            if raw is None:
+                continue
+            try:
+                return label, max(0, int(raw))
+            except (TypeError, ValueError):
+                continue
+        return "iters [cubic-spline-sigma-polish]", 0
+
+    @staticmethod
+    def _format_post_optimization_status(display: dict, fallback_result: dict | None = None) -> str:
+
+        display_dict = display if isinstance(display, dict) else {}
+        fallback_dict = fallback_result if isinstance(fallback_result, dict) else display_dict
+        rmse_tag = (
+            "RMSE (lambda band)" if display_dict.get("rmse_fit_lambda_nm") is not None else "RMSE (full spectrum)"
+        )
+        mse_value = float(display_dict.get("mse", 0.0))
+        d_nm_value = float(display_dict.get("d_nm", float("nan")))
+        d_01_txt = f"{float(d_nm_value):.1f}" if np.isfinite(float(d_nm_value)) else "n/a"
+        iter_label, iter_value = CertusIndexSplineApp._status_iteration_metric(
+            display_dict,
+            fallback_dict,
+        )
+        return (
+            f"{rmse_tag}  {np.sqrt(max(mse_value, 0.0)):.6f} | d={d_nm_value:.2f} nm "
+            f"(d(0.1nm)={d_01_txt} nm) | "
+            f"{iter_label}={iter_value}"
+        )
+
+    @staticmethod
+    def _post_optimization_ready_status(base_status: str) -> str:
+
+        status = str(base_status or "").strip()
+        hint = "Actions disponibles: Noeuds manuels / Corridors"
+        if not status:
+            return hint
+        if hint in status:
+            return status
+        return f"{status} | {hint}"
+
+    def _manual_postprocess_seed_result(self) -> dict | None:
+
+        base = getattr(self, "_last_worker_result", None)
+        if isinstance(base, dict):
+            return base
+        base = getattr(self, "_last_result", None)
+        if isinstance(base, dict):
+            return base
+        return None
+
+    def _on_btn_corridor_clicked(self) -> None:
+
+        seed = self._manual_postprocess_seed_result()
+        if not isinstance(seed, dict):
+            QMessageBox.information(
+                self,
+                "Corridors",
+                "Run an optimization first to have a base result.",
+            )
+            return
+        if self.logger:
+            self.logger.info(
+                "Corridors manual trigger | base=%s",
+                "standard",
+            )
+        if not self._start_deferred_corridor_worker(seed):
+            QMessageBox.warning(
+                self,
+                "Corridors",
+                "Unable to start manual corridor calculation from the current result.",
+            )
+
+    def _on_btn_manual_knots_clicked(self) -> None:
+
+        seed = self._manual_postprocess_seed_result()
+        if not isinstance(seed, dict):
+            if self.logger:
+                self.logger.info("Manual nodes: action requested but no base result is available.")
+            QMessageBox.information(
+                self,
+                "Manual knots",
+                "Run an optimization first to have a base result.",
+            )
+            return
+        if not self._can_offer_manual_extra_knots(seed):
+            QMessageBox.information(
+                self,
+                "Manual knots",
+                "The current result does not allow adding more manual knots.",
+            )
+            return
+        self._open_manual_extra_knots_dialog(seed)
 
     def _sync_corridor_btn_from_chk(self) -> None:
 
         if not hasattr(self, "btn_corridor_toggle") or not hasattr(self, "chk_corridor_d"):
-
             return
-
-        self.btn_corridor_toggle.blockSignals(True)
-
-        self.btn_corridor_toggle.setChecked(self.chk_corridor_d.isChecked())
 
     def _on_corridor_chk_state_changed(self, *_args) -> None:
 
-        self._sync_corridor_btn_from_chk()
-
-        self.btn_corridor_toggle.blockSignals(False)
-
         self._refresh_corridors_gui_state_labels()
 
-
-
     def _smart_mesh_objective_lam_mask_float(self, lam_r: np.ndarray) -> np.ndarray:
-
         """Same lambda mask as the spline objective on grid ``lam_r`` (result / SMART)."""
 
         lam_r = np.asarray(lam_r, dtype=np.float64).ravel()
@@ -15942,7 +16085,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         cfg_opt = self._build_opt_config(notify=False)
 
         if cfg_opt is not None:
-
             return objective_lam_mask_on_target_grid(cfg_opt, lam_r).astype(np.float64, copy=False)
 
         rw = self._rmse_fit_lambda_tuple_for_report()
@@ -15950,7 +16092,6 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         m = np.isfinite(lam_r).astype(np.float64, copy=False)
 
         if rw is not None:
-
             lo = float(min(rw[0], rw[1]))
 
             hi = float(max(rw[0], rw[1]))
@@ -15960,17 +16101,14 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
         return m
 
     def _rmse_fit_lambda_tuple_for_report(self) -> tuple[float, float] | None:
-
         """lambda window for display/export (result first, else GUI)."""
 
         rw = None
 
         if self._last_result is not None:
-
             rw = self._last_result.get("rmse_fit_lambda_nm")
 
         if rw is None and getattr(self, "_rmse_fit_lambda_enabled", False):
-
             rl0 = float(self._rmse_fit_lambda_lo)
 
             rl1 = float(self._rmse_fit_lambda_hi)
@@ -15979,9 +16117,7 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
 
         return rw
 
-
     @pyqtSlot(object)
-
     def _on_smart_preview_requested(self, payload: object) -> None:
 
         # FIX: After dict->SmartInitPayload conversion, isinstance(payload, dict) was always False
@@ -15990,75 +16126,51 @@ class CertusIndexSplineApp(_CorridorControlMixin, _SettingsMixin, _CorridorGenMi
             payload = SmartInitPayload.from_dict(payload)
 
         logger.info(
-
             "Smart Init GUI slot enter | payload_type=%s | has_wait_event=%s",
-
             type(payload).__name__,
-
             getattr(self, "_preview_wait_event", None) is not None,
-
         )
 
         try:
-
             if isinstance(payload, SmartInitPayload):
-
                 logger.info(
-
-                    "Smart Init GUI slot: opening dialog | K_sigma=%d | d_best_nm=%.6f",
-
+                    "Smart Init GUI slot: opening dialog | K_sigma=%d | incoming_d_best_nm=%.6f",
                     int(np.asarray(payload.sigma_knots, dtype=np.float64).size),
-
                     float(payload.d_best_nm),
-
                 )
 
                 self._preview_result = self._show_smart_init_preview_dialog(payload)
 
                 logger.info(
-
                     "Smart Init GUI slot: dialog returned preview_result=%s | preview_ret=%s",
-
                     bool(self._preview_result),
-
                     getattr(self, "_preview_ret", None) is not None,
-
                 )
 
             else:
-
-                logger.warning("Smart Init preview: unexpected payload type %s, skipping dialog.", type(payload).__name__)
+                logger.warning(
+                    "Smart Init preview: unexpected payload type %s, skipping dialog.", type(payload).__name__
+                )
 
                 self._preview_result = True
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
-
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
             logger.exception("Smart Init preview: GUI error (full traceback)")
 
             self._preview_result = True
 
         finally:
-
             if self._preview_wait_event is not None:
-
                 self._preview_wait_event.set()
-
 
 def main() -> None:
 
-    import multiprocessing
-
     multiprocessing.freeze_support()
 
-    setup_logging(log_file="certus_index_spline.log")
+    setup_module_logging("CERTUS_INDEX_SPLINE", log_file="certus_index_spline.log")
 
     if hasattr(Qt, "HighDpiScaleFactorRoundingPolicy"):
-
-        QApplication.setHighDpiScaleFactorRoundingPolicy(
-
-            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
-
-        )
+        QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
     app = QApplication(sys.argv)
 
@@ -16070,1464 +16182,7 @@ def main() -> None:
 
     sys.exit(app.exec())
 
+from certus_spline_report import SplineReportContext, SplineReportBuilder  # noqa: E402
 
 if __name__ == "__main__":
     main()
-
-
-@dataclass
-class SplineReportContext:
-    result: dict[str, Any]
-    df: pd.DataFrame | None
-    spectrum_path: str
-    t_is_ratio: bool
-    sub_name: str
-    rmse_fit_lambda_tuple: tuple[float, float, float]
-    lam_mask_callable: Callable[[np.ndarray], np.ndarray]
-    opt_config: Any
-
-class SplineReportBuilder:
-    """UX-4 / P2: Standalone builder for Spline reports to decouple data preparation from GUI."""
-    def __init__(self, ctx: SplineReportContext, logger=None):
-        self.ctx = ctx
-        self.logger = logger
-        
-    def build_report(self, auto: bool = False) -> None:
-
-        """Automatic saving of results to Excel (like CERTUS_DESIGN).
-
-        Generates a timestamped file containing:
-
-        - Spectrum: mod?le final n/k ; colonnes polish spectral spline cubique sigma si ``n_lam_seg_spline_sigma``.
-
-          Lines sorted by increasing lambda. Corridors / boot in same order.
-
-        - Corridors_nk: sorted lambda grid - profiling ref, corridor bounds, log10 k; bootstrap if aligned.
-
-        - Comparaison_RMSE_indices: spectral RMSE (solver ref, sigma-spline polish) + best polished model.
-
-        - Parameters: exported x vector.
-
-        - Resume / Best indices: RMSE dict, sigma-spline polish, selected model.
-
-        """
-
-        result = self.ctx.result
-
-        if result is None:
-
-            if auto:
-
-                return  # Pas de result, rien a exporter
-
-            self.logger.warning( "Error", "No result to export.")
-
-            return
-
-        
-        # Determine the folder and filename (thickness in Angstrom in the name)
-
-        last_spectrum_path = str(getattr(self, "_last_spectrum_path", "") or "").strip()
-        base_dir = Path(last_spectrum_path).parent if last_spectrum_path else Path(_SCRIPT_DIR)
-
-        ts = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
-
-        d_nm_fn = result.get("d_nm")
-
-        if isinstance(d_nm_fn, (int, float)) and np.isfinite(float(d_nm_fn)):
-
-            d_ang_int = int(round(float(d_nm_fn) * 10.0))
-
-            fname = f"IndexSpline_Result_{ts}_d{d_ang_int}Ang.xlsx"
-
-        else:
-
-            fname = f"IndexSpline_Result_{ts}_dNA_Ang.xlsx"
-
-        out_path = str(base_dir / fname)
-
-        try:
-
-            lam_src_raw = result.get("lam_nm")
-            if lam_src_raw is None and self.ctx.df is not None and "lambda" in self.ctx.df.columns:
-                lam_src_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
-                if self.logger:
-                    self.logger.warning(
-                        "Export Excel: result missing lam_nm; fallback to experimental lambda grid."
-                    )
-            lam_src_full = np.asarray(lam_src_raw if lam_src_raw is not None else [], dtype=np.float64).ravel()
-            if lam_src_full.size == 0:
-                raise ValueError("lam_nm indisponible pour export Excel.")
-
-            n_res_full = np.asarray(result["n_lam"], dtype=np.float64).ravel()
-
-            k_res_full = np.asarray(result["k_lam"], dtype=np.float64).ravel()
-
-            t_theo_raw = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
-
-            if t_theo_raw.size == lam_src_full.size:
-
-                t_theo_full = t_theo_raw
-
-            else:
-
-                t_theo_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-                n_tt = int(min(t_theo_raw.size, lam_src_full.size))
-
-                if n_tt > 0:
-
-                    t_theo_full[:n_tt] = t_theo_raw[:n_tt]
-
-                if lam_src_full.size and t_theo_raw.size != lam_src_full.size:
-
-                    logger.warning(
-
-                        "Export Excel: len(t_theo)=%d ? len(lam_nm)=%d - padded with NaN.",
-
-                        int(t_theo_raw.size),
-
-                        int(lam_src_full.size),
-
-                    )
-
-            def _align_to_lam(a: np.ndarray, name: str) -> np.ndarray:
-
-                v = np.asarray(a, dtype=np.float64).ravel()
-
-                if v.size == lam_src_full.size:
-
-                    return v
-
-                out = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-                n_m = int(min(v.size, lam_src_full.size))
-
-                if n_m > 0:
-
-                    out[:n_m] = v[:n_m]
-
-                if lam_src_full.size and v.size != lam_src_full.size:
-
-                    logger.warning(
-
-                        "Export Excel: len(%s)=%d ? len(lam_nm)=%d - padded with NaN.",
-
-                        name,
-
-                        int(v.size),
-
-                        int(lam_src_full.size),
-
-                    )
-
-                return out
-
-            n_res_full = _align_to_lam(n_res_full, "n_lam")
-
-            k_res_full = _align_to_lam(k_res_full, "k_lam")
-
-            # Calculer le ratio experimental sur le mesh complet du result
-
-            ratio_exp_pct_full = np.full_like(lam_src_full, np.nan)
-
-            if self.ctx.df is not None and "T" in self.ctx.df.columns:
-
-                lam_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
-
-                t_raw_all = _to_fraction_T(self.ctx.df["T"].to_numpy(dtype=np.float64))
-
-                t_raw_interp = np.interp(lam_src_full, lam_raw, t_raw_all)
-
-                if result.get("t_is_ratio", self.ctx.t_is_ratio):
-
-                    ratio_exp_pct_full = t_raw_interp * 100.0
-
-                else:
-
-                    sub_name = str(self.ctx.sub_name)
-
-                    sub_id = substrate_id_from_name(sub_name)
-
-                    n_sub = get_n_substrate_array_by_id(sub_id, lam_src_full)
-
-                    t_sub = calculate_T_substrate_array(lam_src_full, n_sub)
-
-                    ratio_exp_pct_full = (t_raw_interp / np.maximum(t_sub, 1e-6)) * 100.0
-
-            ratio_theo_pct_full = t_theo_full * 100.0
-
-            rw_rep = self.ctx.rmse_fit_lambda_tuple
-
-            m_obj = self.ctx.lam_mask_callable(lam_src_full)
-
-            keep = m_obj > 0.5
-
-            spectre_filtre = bool(rw_rep is not None and np.any(~keep) and np.count_nonzero(keep) > 0)
-
-            export_fallback_lam = False
-
-            if np.count_nonzero(keep) == 0:
-
-                logger.warning(
-
-                    "Export Excel: aucun point dans le masque objectif - export de tous les lambda finis."
-
-                )
-
-                keep = np.isfinite(lam_src_full)
-
-                spectre_filtre = False
-
-                export_fallback_lam = True
-
-            cfg_ex = self.ctx.opt_config
-
-            k_clip_lo = float(getattr(cfg_ex, "k_clip_lo", 1e-5)) if cfg_ex is not None else 1e-5
-
-            k_clip_hi = (
-
-                float(getattr(cfg_ex, "k_clip_hi", min(0.99, float(K_MAX_LIMIT))))
-
-                if cfg_ex is not None
-
-                else min(0.99, float(K_MAX_LIMIT))
-
-            )
-
-            k_hi = float(min(max(k_clip_hi, k_clip_lo * 1.0001), float(K_MAX_LIMIT)))
-
-            x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
-
-            d_nm_c = float(result["d_nm"]) if isinstance(result.get("d_nm"), (int, float)) and np.isfinite(float(result["d_nm"])) else (
-
-                float(x_res[0]) if x_res.size >= 1 and np.isfinite(float(x_res[0])) else float("nan")
-
-            )
-
-            # sigma-spline mesh polish: only if curves present (same length as lambda).
-
-            n_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-            k_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-            n_sp = result.get("n_lam_seg_spline_sigma")
-
-            k_sp = result.get("k_lam_seg_spline_sigma")
-
-            if (
-
-                n_sp is not None
-
-                and k_sp is not None
-
-                and np.asarray(n_sp).size == lam_src_full.size
-
-                and np.asarray(k_sp).size == lam_src_full.size
-
-            ):
-
-                n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel()
-
-                k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
-
-            def _spectral_rmse_export(
-
-                n_arr: np.ndarray,
-
-                k_arr: np.ndarray,
-
-                *,
-
-                d_nm_use: float | None = None,
-
-            ) -> tuple[str, float]:
-
-                d_eff = (
-
-                    float(d_nm_use)
-
-                    if d_nm_use is not None and np.isfinite(float(d_nm_use))
-
-                    else float(d_nm_c)
-
-                )
-
-                if cfg_ex is None or not np.isfinite(d_eff):
-
-                    return "N/A", float("nan")
-
-                g = build_spline_objective_masked_grid(cfg_ex)
-
-                if g is None:
-
-                    return "N/A", float("nan")
-
-                lam_f, _sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = g
-
-                n_sub_eff = np.asarray(n_sub_f, dtype=np.float64)
-
-                ls = np.asarray(lam_src_full, dtype=np.float64).ravel()
-
-                na = np.asarray(n_arr, dtype=np.float64).ravel()
-
-                ka = np.asarray(k_arr, dtype=np.float64).ravel()
-
-                if na.size != ls.size or ka.size != ls.size:
-
-                    return "N/A", float("nan")
-
-                ord_i = np.argsort(ls, kind="mergesort")
-
-                ls_s = ls[ord_i]
-
-                n_f = np.interp(lam_f, ls_s, na[ord_i], left=np.nan, right=np.nan)
-
-                k_f = np.interp(lam_f, ls_s, ka[ord_i], left=np.nan, right=np.nan)
-
-                if not np.all(np.isfinite(n_f) & np.isfinite(k_f)):
-
-                    return "N/A", float("nan")
-
-                try:
-
-                    mse_v = spline_objective_mse_on_masked_grid(
-
-                        cfg_ex,
-
-                        lam_f=lam_f,
-
-                        n_sub_f=n_sub_eff,
-
-                        w=w,
-
-                        inv_npix=inv_npix,
-
-                        t_exp_f=t_exp_f,
-
-                        r_exp_f=r_exp_f,
-
-                        n_l=n_f,
-
-                        k_l=k_f,
-
-                        d=float(d_eff),
-
-                    )
-
-                    if np.isfinite(mse_v) and mse_v < 1e29:
-
-                        r = float(np.sqrt(mse_v))
-
-                        return f"{r:.6f}", r
-
-                except NUMERICAL_FAULT_EXCEPTIONS:
-
-                    logger.exception("Spectral RMSE Excel export (model comparison)")
-
-                return "N/A", float("nan")
-
-            d_spl_x = result.get("d_nm_seg_spline_sigma")
-
-            d_spl_f = (
-
-                float(d_spl_x)
-
-                if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x))
-
-                else float("nan")
-
-            )
-
-            def _rmse_pref_result(
-
-                key: str, n_a: np.ndarray, k_a: np.ndarray, d_alt: float
-
-            ) -> tuple[str, float]:
-
-                v = result.get(key)
-
-                if v is not None and np.isfinite(float(v)):
-
-                    fv = float(v)
-
-                    return f"{fv:.6f}", fv
-
-                d_use = d_alt if np.isfinite(d_alt) else None
-
-                return _spectral_rmse_export(n_a, k_a, d_nm_use=d_use)
-
-            rmse_spl_txt, _ = _rmse_pref_result(
-
-                "spectral_rmse_seg_spline_sigma", n_spl_full, k_spl_full, d_spl_f
-
-            )
-
-            rmse_solver_txt = "N/A"
-
-            srv = result.get("spectral_rmse_segments")
-
-            if srv is not None and np.isfinite(float(srv)):
-
-                rmse_solver_txt = f"{float(srv):.6f}"
-
-            has_spl_cols = bool(np.any(np.isfinite(n_spl_full)) and np.any(np.isfinite(k_spl_full)))
-
-            best_lbl = str(result.get("spectral_rmse_best_label") or "").strip()
-
-            best_v = result.get("spectral_rmse_best_value")
-
-            best_pretty = {
-
-                "Spline_cubique_sigma": "Polish maillage spline cubique sigma",
-
-            }.get(best_lbl, best_lbl or "-")
-
-            best_line = (
-
-                f"{best_pretty} - RMSE={float(best_v):.6f}"
-
-                if best_v is not None and np.isfinite(float(best_v)) and best_lbl
-
-                else "N/A (voir colonnes RMSE)"
-
-            )
-
-            if best_lbl == "Spline_cubique_sigma" and not has_spl_cols:
-
-                best_line = "N/A ('sigma spline' label without n_lam_seg_spline_sigma in dict)"
-
-            if best_lbl == "Spline_cubique_sigma" and has_spl_cols:
-
-                n_best_src = np.asarray(n_spl_full, dtype=np.float64).ravel().copy()
-
-                k_best_src = np.asarray(k_spl_full, dtype=np.float64).ravel().copy()
-
-                d_best_export = float(d_spl_f) if np.isfinite(d_spl_f) else float(d_nm_c)
-
-            else:
-
-                n_best_src = np.asarray(n_res_full, dtype=np.float64).ravel().copy()
-
-                k_best_src = np.asarray(k_res_full, dtype=np.float64).ravel().copy()
-
-                d_best_export = (
-
-                    float(d_nm_c)
-
-                    if isinstance(d_nm_c, (int, float)) and np.isfinite(float(d_nm_c))
-
-                    else float("nan")
-
-                )
-
-            rmse_best_recalc_txt, _ = _spectral_rmse_export(
-
-                n_best_src,
-
-                k_best_src,
-
-                d_nm_use=d_best_export if np.isfinite(d_best_export) else None,
-
-            )
-
-            compare_note = (
-
-                "L-BFGS-B spectral polish on sigma mesh (cubic spline between nodes, same objective mask). "
-
-                f"Solver reference (before mesh polish): RMSE={rmse_solver_txt}. "
-
-                f"Polished model: {best_line}."
-
-            )
-
-            if not has_spl_cols:
-
-                compare_note += (
-
-                    " 'Spectrum' sheet sigma-spline polish columns not filled "
-
-                    "(n_lam_seg_spline_sigma / k_lam_seg_spline_sigma absentes ou NaN)."
-
-                )
-
-            lam = lam_src_full[keep]
-
-            n_lam = n_res_full[keep]
-
-            k_lam = k_res_full[keep]
-
-            ratio_exp_pct = ratio_exp_pct_full[keep]
-
-            ratio_theo_pct = ratio_theo_pct_full[keep]
-
-            n_spl_spec = n_spl_full[keep]
-
-            k_spl_spec = k_spl_full[keep]
-
-            ord_ex = np.argsort(lam, kind="mergesort") if lam.size else np.arange(0, dtype=np.intp)
-
-            if lam.size:
-
-                lam = lam[ord_ex]
-
-                n_lam = n_lam[ord_ex]
-
-                k_lam = k_lam[ord_ex]
-
-                ratio_exp_pct = ratio_exp_pct[ord_ex]
-
-                ratio_theo_pct = ratio_theo_pct[ord_ex]
-
-                n_spl_spec = n_spl_spec[ord_ex]
-
-                k_spl_spec = k_spl_spec[ord_ex]
-
-            def _log10_k_safe(kv: np.ndarray) -> np.ndarray:
-
-                return np.log10(np.maximum(np.asarray(kv, dtype=np.float64).ravel(), 1e-300))
-
-            cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel()
-
-            cn_hi_f = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel()
-
-            ck_lo_f = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel()
-
-            ck_hi_f = np.asarray(result.get("corridor_k_hi", []), dtype=np.float64).ravel()
-
-            cn_ref_f = np.asarray(result.get("corridor_reference_n_lam", []), dtype=np.float64).ravel()
-
-            ck_ref_f = np.asarray(result.get("corridor_reference_k_lam", []), dtype=np.float64).ravel()
-
-            # Corridor sheets: tables aligned on lam_nm (not only profile_d_enabled bool).
-
-            corr_grid_ok = (
-
-                cn_lo_f.size == lam_src_full.size
-
-                and cn_hi_f.size == lam_src_full.size
-
-                and ck_lo_f.size == lam_src_full.size
-
-                and ck_hi_f.size == lam_src_full.size
-
-                and cn_lo_f.size > 0
-
-            )
-
-            if cn_ref_f.size != lam_src_full.size:
-
-                cn_ref_f = np.array([], dtype=np.float64)
-
-            if ck_ref_f.size != lam_src_full.size:
-
-                ck_ref_f = np.array([], dtype=np.float64)
-
-            if ck_lo_f.size == lam_src_full.size and ck_hi_f.size == lam_src_full.size and ck_lo_f.size > 0:
-                ck_ref_for_min = (
-                    np.asarray(ck_ref_f, dtype=np.float64)
-                    if ck_ref_f.size == ck_lo_f.size
-                    else np.asarray(result.get("k_lam", []), dtype=np.float64).ravel()
-                )
-                ck_lo_f, ck_hi_f, k_min_changed_export = enforce_min_k_corridor_half_width(
-                    np.asarray(ck_lo_f, dtype=np.float64),
-                    np.asarray(ck_hi_f, dtype=np.float64),
-                    np.asarray(ck_ref_for_min, dtype=np.float64),
-                    min_half_width=1e-4,
-                )
-                if int(k_min_changed_export) > 0:
-                    logger.info(
-                        "Export Excel corridor k-min-width enforced | half_width=1.0e-4 | adjusted_points=%d",
-                        int(k_min_changed_export),
-                    )
-
-            spec_rows: dict[str, Any] = {
-
-                "Wavelength (nm)": lam,
-
-                "n_film (final model)": n_lam,
-
-                "k_film (final model)": k_lam,
-
-                "n_cubic_spline_sigma_spectral_polish": n_spl_spec,
-
-                "k_cubic_spline_sigma_spectral_polish": k_spl_spec,
-
-                "Ratio_Exp (%)": ratio_exp_pct,
-
-                "Ratio_Theo (%)": ratio_theo_pct,
-
-            }
-
-            if corr_grid_ok:
-
-                cnk = cn_ref_f[keep][ord_ex] if cn_ref_f.size else np.full(lam.shape, np.nan)
-
-                ckk = ck_ref_f[keep][ord_ex] if ck_ref_f.size else np.full(lam.shape, np.nan)
-
-                spec_rows["n_corridor_ref (d profiling)"] = cnk
-
-                spec_rows["k_corridor_ref (d profiling)"] = ckk
-
-                if cn_ref_f.size and ck_ref_f.size:
-
-                    spec_rows["log10_k_corridor_ref"] = _log10_k_safe(ck_ref_f[keep][ord_ex])
-
-                else:
-
-                    spec_rows["log10_k_corridor_ref"] = np.full(lam.shape, np.nan)
-
-                spec_rows["n_corridor_lo"] = cn_lo_f[keep][ord_ex]
-
-                spec_rows["n_corridor_hi"] = cn_hi_f[keep][ord_ex]
-
-                spec_rows["k_corridor_lo"] = ck_lo_f[keep][ord_ex]
-
-                spec_rows["k_corridor_hi"] = ck_hi_f[keep][ord_ex]
-
-                spec_rows["log10_k_corridor_lo"] = _log10_k_safe(ck_lo_f[keep][ord_ex])
-
-                spec_rows["log10_k_corridor_hi"] = _log10_k_safe(ck_hi_f[keep][ord_ex])
-
-            bsn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
-
-            bsn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
-
-            bsk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
-
-            bsk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
-
-            boot_spec_ok = (
-
-                bsn_lo.size == lam_src_full.size
-
-                and bsn_hi.size == lam_src_full.size
-
-                and bsk_lo.size == lam_src_full.size
-
-                and bsk_hi.size == lam_src_full.size
-
-                and bsn_lo.size > 0
-
-            )
-
-            if boot_spec_ok:
-
-                spec_rows["boot_n_lo"] = bsn_lo[keep][ord_ex]
-
-                spec_rows["boot_n_hi"] = bsn_hi[keep][ord_ex]
-
-                spec_rows["boot_k_lo"] = bsk_lo[keep][ord_ex]
-
-                spec_rows["boot_k_hi"] = bsk_hi[keep][ord_ex]
-
-                spec_rows["boot_log10_k_lo"] = _log10_k_safe(bsk_lo[keep][ord_ex])
-
-                spec_rows["boot_log10_k_hi"] = _log10_k_safe(bsk_hi[keep][ord_ex])
-
-            # lambda order for ?full grid? sheets (same permutation everywhere).
-
-            ord_lam_full = _mergesort_order_lambda(lam_src_full)
-
-            with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-
-                # Spectrum sheet: final model + polish spectral spline cubique sigma (seg_spline_sigma) on same lambda
-
-                pd.DataFrame(spec_rows).to_excel(writer, sheet_name="Spectre", index=False)
-
-                # Parameters sheet (piecewise mesh x vector)
-
-                xb = np.asarray(result.get("x", np.zeros(1)), dtype=np.float64)
-
-                labels = ["Thickness d (nm)"]
-
-                labels += [f"Coeff_n_{i}" for i in range(1, 10)]
-
-                labels += [f"Coeff_logk_{i}" for i in range(1, 10)]
-
-                while len(labels) < len(xb):
-
-                    labels.append(f"Param_{len(labels)}")
-
-                pd.DataFrame({
-
-                    "Index": np.arange(len(xb)),
-
-                    "Meaning": labels[:len(xb)],
-
-                    "Value": xb,
-
-                }).to_excel(writer, sheet_name="Mesh_Parameters", index=False)
-
-                # Normalized variable
-
-                sig_knots = result.get("sigma_knots", np.array([0, 1]))
-
-                smin, smax = float(sig_knots[0]), float(sig_knots[-1])
-
-                if rw_rep is not None:
-
-                    lo_r, hi_r = float(rw_rep[0]), float(rw_rep[1])
-
-                    fen_txt = f"[{lo_r:.2f}, {hi_r:.2f}]"
-
-                    if export_fallback_lam:
-
-                        spec_txt = "Fallback: all finite lambda (empty objective mask)"
-
-                    elif spectre_filtre:
-
-                        spec_txt = "Only lambda in objective mask (RMSE window + valid data)"
-
-                    else:
-
-                        spec_txt = "All lambda from result (window covers grid or no excluded points)"
-
-                else:
-
-                    fen_txt = "- (full objective spectrum)"
-
-                    spec_txt = (
-
-                        "Fallback: all finite lambda (mask error)"
-
-                        if export_fallback_lam
-
-                        else "All lambda points from result"
-
-                    )
-
-                gui_live = bool(result.get("gui_display_from_best_live"))
-
-                rmse_w_fin = result.get("gui_worker_raw_rmse")
-
-                rmse_live_gui = result.get("gui_best_live_rmse")
-
-                live_note = (
-
-                    f"Yes - displayed RMSE={float(rmse_live_gui):.6f}, final worker dict RMSE={float(rmse_w_fin):.6f}"
-
-                    if gui_live
-
-                    and rmse_w_fin is not None
-
-                    and rmse_live_gui is not None
-
-                    and np.isfinite(float(rmse_w_fin))
-
-                    and np.isfinite(float(rmse_live_gui))
-
-                    else ("Yes (details: gui_best_live_rmse / gui_worker_raw_rmse)" if gui_live else "No")
-
-                )
-
-                spectre_ordre = "increasing lambda (mergesort, aligned with Data table / Spectrum tab)"
-
-                pd.DataFrame({
-
-                    "Indicateur": [
-
-                        "Final RMSE (result dict)",
-
-                        "Spectral RMSE - solver ref (mesh, before mesh polish)",
-
-                        "Spectral RMSE - cubic spline sigma mesh (spectral polish)",
-
-                        "Best model (mesh polish spline sigma)",
-
-                        "Thickness (nm) final model",
-
-                        "Display = best live snapshot (GUI)",
-
-                        "Spectrum sheet - Wavelength order",
-
-                        "RMSE lambda window (nm)",
-
-                        "Spectrum sheet (lambda lines)",
-
-                        "Variable u",
-
-                        "Model Type",
-
-                        "sigma_min (1/nm)",
-
-                        "sigma_max (1/nm)",
-
-                        "Export Date",
-
-                    ],
-
-                    "Valeur": [
-
-                        f"{result.get('rmse', 'N/A'):.6f}" if isinstance(result.get('rmse'), (int, float)) else "N/A",
-
-                        rmse_solver_txt,
-
-                        rmse_spl_txt,
-
-                        best_line,
-
-                        f"{result.get('d_nm', 'N/A'):.2f}" if isinstance(result.get('d_nm'), (int, float)) else "N/A",
-
-                        live_note,
-
-                        spectre_ordre,
-
-                        fen_txt,
-
-                        spec_txt,
-
-                        f"u = (sigma - {smin:.6e}) / ({smax:.6e} - {smin:.6e}), sigma = 1/lambda",
-
-                        "Spline in sigma (1/lambda): sigma nodes + ln(k) + cubic interpolation",
-
-                        f"{smin:.6e}",
-
-                        f"{smax:.6e}",
-
-                        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-
-                    ],
-
-                }).to_excel(writer, sheet_name="Resume", index=False)
-
-                pd.DataFrame({
-
-                    "Grandeur": [
-
-                        "Spectral RMSE - solver ref (before mesh polish)",
-
-                        "Spectral RMSE - cubic spline sigma (polish)",
-
-                        "Best (internal label)",
-
-                        "Criteria",
-
-                        "Note",
-
-                    ],
-
-                    "Valeur": [
-
-                        rmse_solver_txt,
-
-                        rmse_spl_txt,
-
-                        str(best_lbl) if best_lbl else "-",
-
-                        "Same mask and weights as spline objective (build_spline_objective_masked_grid).",
-
-                        compare_note,
-
-                    ],
-
-                }).to_excel(writer, sheet_name="Comparaison_RMSE_indices", index=False)
-
-                # Corridors n/k: full lambda grid (aligned on result lam_nm), same as GUI tab.
-
-                if corr_grid_ok:
-
-                    try:
-
-                        ord_cf = ord_lam_full
-
-                        lam_cf = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_cf]
-
-                        nref_c = (
-
-                            cn_ref_f[ord_cf].copy()
-
-                            if cn_ref_f.size == lam_src_full.size
-
-                            else np.full(lam_cf.shape, np.nan, dtype=np.float64)
-
-                        )
-
-                        kref_c = (
-
-                            ck_ref_f[ord_cf].copy()
-
-                            if ck_ref_f.size == lam_src_full.size
-
-                            else np.full(lam_cf.shape, np.nan, dtype=np.float64)
-
-                        )
-
-                        log10_k_ref_col = np.full(lam_cf.shape, np.nan, dtype=np.float64)
-
-                        if ck_ref_f.size == lam_src_full.size and np.any(np.isfinite(ck_ref_f)):
-
-                            log10_k_ref_col = _log10_k_safe(ck_ref_f[ord_cf])
-
-                        corr_full: dict[str, Any] = {
-
-                            "Wavelength (nm)": lam_cf,
-
-                            "n_corridor_ref (d profiling)": nref_c,
-
-                            "k_corridor_ref (d profiling)": kref_c,
-
-                            "log10_k_corridor_ref": log10_k_ref_col,
-
-                            "n_corridor_lo": cn_lo_f[ord_cf],
-
-                            "n_corridor_hi": cn_hi_f[ord_cf],
-
-                            "k_corridor_lo": ck_lo_f[ord_cf],
-
-                            "k_corridor_hi": ck_hi_f[ord_cf],
-
-                            "log10_k_corridor_lo": _log10_k_safe(ck_lo_f[ord_cf]),
-
-                            "log10_k_corridor_hi": _log10_k_safe(ck_hi_f[ord_cf]),
-
-                        }
-
-                        bn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
-
-                        bn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
-
-                        bk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
-
-                        bk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
-
-                        if (
-
-                            bn_lo.size == lam_src_full.size
-
-                            and bn_hi.size == lam_src_full.size
-
-                            and bk_lo.size == lam_src_full.size
-
-                            and bk_hi.size == lam_src_full.size
-
-                        ):
-
-                            corr_full["boot_n_lo"] = bn_lo[ord_cf]
-
-                            corr_full["boot_n_hi"] = bn_hi[ord_cf]
-
-                            corr_full["boot_k_lo"] = bk_lo[ord_cf]
-
-                            corr_full["boot_k_hi"] = bk_hi[ord_cf]
-
-                            corr_full["boot_log10_k_lo"] = _log10_k_safe(bk_lo[ord_cf])
-
-                            corr_full["boot_log10_k_hi"] = _log10_k_safe(bk_hi[ord_cf])
-
-                        pd.DataFrame(corr_full).to_excel(
-
-                            writer, sheet_name="Corridors_nk", index=False
-
-                        )
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-
-                        logger.exception("Export Excel: feuille Corridors_nk")
-
-                else:
-
-                    try:
-
-                        bn_lo2 = np.asarray(
-
-                            result.get("boot_corridor_n_lo", []), dtype=np.float64
-
-                        ).ravel()
-
-                        bn_hi2 = np.asarray(
-
-                            result.get("boot_corridor_n_hi", []), dtype=np.float64
-
-                        ).ravel()
-
-                        bk_lo2 = np.asarray(
-
-                            result.get("boot_corridor_k_lo", []), dtype=np.float64
-
-                        ).ravel()
-
-                        bk_hi2 = np.asarray(
-
-                            result.get("boot_corridor_k_hi", []), dtype=np.float64
-
-                        ).ravel()
-
-                        if (
-
-                            bn_lo2.size == lam_src_full.size
-
-                            and bn_hi2.size == lam_src_full.size
-
-                            and bk_lo2.size == lam_src_full.size
-
-                            and bk_hi2.size == lam_src_full.size
-
-                            and bn_lo2.size > 0
-
-                        ):
-
-                            ord_b = ord_lam_full
-
-                            lam_b = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_b]
-
-                            pd.DataFrame(
-
-                                {
-
-                                    "Wavelength (nm)": lam_b,
-
-                                    "boot_n_lo": bn_lo2[ord_b],
-
-                                    "boot_n_hi": bn_hi2[ord_b],
-
-                                    "boot_k_lo": bk_lo2[ord_b],
-
-                                    "boot_k_hi": bk_hi2[ord_b],
-
-                                    "boot_log10_k_lo": _log10_k_safe(bk_lo2[ord_b]),
-
-                                    "boot_log10_k_hi": _log10_k_safe(bk_hi2[ord_b]),
-
-                                }
-
-                            ).to_excel(
-
-                                writer, sheet_name="Corridors_bootstrap", index=False
-
-                            )
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-
-                        logger.exception("Export Excel: Corridors_bootstrap sheet")
-
-                # Best indices: n, k from the model with minimal spectral RMSE (sigma-mesh spline polish),
-
-                # interpolated on uniform 2 nm, 5 nm, 10 nm grids (same [lambda_min, lambda_max] range).
-
-                lo = float(np.nanmin(lam_src_full[np.isfinite(lam_src_full)])) if np.any(np.isfinite(lam_src_full)) else float("nan")
-
-                hi = float(np.nanmax(lam_src_full[np.isfinite(lam_src_full)])) if np.any(np.isfinite(lam_src_full)) else float("nan")
-
-                def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:
-
-                    if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
-
-                        return np.array([], dtype=np.float64)
-
-                    st = float(np.ceil(lo_h / step) * step)
-
-                    en = float(np.floor(hi_h / step) * step)
-
-                    if en < st - 1e-9:
-
-                        return np.array([0.5 * (lo_h + hi_h)], dtype=np.float64)
-
-                    if abs(en - st) < 1e-9:
-
-                        return np.array([st], dtype=np.float64)
-
-                    return np.arange(st, en + 1e-9, step, dtype=np.float64)
-
-                ls_src = np.asarray(lam_src_full, dtype=np.float64).ravel()
-
-                n_bs = np.asarray(n_best_src, dtype=np.float64).ravel()
-
-                k_bs = np.asarray(k_best_src, dtype=np.float64).ravel()
-
-                grid_parts: list[pd.DataFrame] = []
-
-                if n_bs.size == ls_src.size and k_bs.size == ls_src.size and ls_src.size > 0:
-
-                    ord_i = np.argsort(ls_src, kind="mergesort")
-
-                    ls_s = ls_src[ord_i]
-
-                    n_s = n_bs[ord_i]
-
-                    k_s = k_bs[ord_i]
-
-                    for step in (2.0, 5.0, 10.0):
-
-                        lam_g = _lam_uniform_grid(lo, hi, step)
-
-                        if lam_g.size == 0:
-
-                            continue
-
-                        n_g = np.interp(lam_g, ls_s, n_s, left=np.nan, right=np.nan)
-
-                        k_g = np.interp(lam_g, ls_s, k_s, left=np.nan, right=np.nan)
-
-                        grid_parts.append(
-
-                            pd.DataFrame(
-
-                                {
-
-                                    "Step (nm)": np.full(lam_g.size, step, dtype=np.float64),
-
-                                    "Wavelength (nm)": lam_g,
-
-                                    "n_best": n_g,
-
-                                    "k_best": k_g,
-
-                                }
-
-                            )
-
-                        )
-
-                df_grids = (
-
-                    pd.concat(grid_parts, ignore_index=True)
-
-                    if grid_parts
-
-                    else pd.DataFrame(columns=["Step (nm)", "Wavelength (nm)", "n_best", "k_best"])
-
-                )
-
-                desc_rows = [
-
-                    "Source / method",
-
-                    "Chosen model (spectral RMSE mesh polish - spline cubique sigma)",
-
-                    "Internal label",
-
-                    "Spectral RMSE (chosen value)",
-
-                    "Spectral RMSE (control, result mesh + objective mask)",
-
-                    "Thickness d associated with chosen model (nm)",
-
-                    "n/k Corridors (d profiling): active",
-
-                    "Corridors: d interval (nm)",
-
-                    "Corridors: mode",
-
-                    "Corridors: conf (LR)",
-
-                    "Corridors: Deltachi2 (LR)",
-
-                    "Corridors: sigma_T (LR)",
-
-                    "Corridors: sigma_R (LR)",
-
-                    "Corridors: alpha (RMSE <= alpha * RMSE_opt)",
-
-                    "Corridors: RMSE_opt (threshold reference)",
-
-                    "Corridors: ref RMSE source (spectral_rmse_segments | dict_rmse | recalc_objective)",
-
-                    "Corridors: RMSE_threshold",
-
-                    "Table: 2 nm then 5 nm then 10 nm grids",
-
-                    "Spectral RMSE - solver ref (before mesh polish)",
-
-                    "Spectral RMSE - cubic spline sigma (polish)",
-
-                ]
-
-                def _result_float(key: str) -> float:
-
-                    """float(result(key)) tolerating missing key or None (e.g. alpha mode -> LR N/A)."""
-
-                    v = result.get(key)
-
-                    if v is None:
-
-                        return float("nan")
-
-                    try:
-
-                        return float(v)
-
-                    except (TypeError, ValueError):
-
-                        return float("nan")
-
-                val_rows = [
-
-                    "numpy.interp on lambda (sorted result mesh) from n(lambda), k(lambda) "
-
-                    "curves of the best polish; uniform sub-sampling steps 2, 5 and 10 nm on [lambda_min, lambda_max].",
-
-                    best_pretty,
-
-                    str(best_lbl) if best_lbl else "-",
-
-                    f"{float(best_v):.6f}" if best_v is not None and np.isfinite(float(best_v)) else "N/A",
-
-                    rmse_best_recalc_txt,
-
-                    f"{d_best_export:.4f}" if np.isfinite(d_best_export) else "N/A",
-
-                    "Yes (corridor_* vectors present, aligned with lam_nm)" if corr_grid_ok else "No",
-
-                    (
-
-                        f"[{float(result.get('profile_d_interval_nm')[0]):.3f}, {float(result.get('profile_d_interval_nm')[1]):.3f}]"
-
-                        if corr_grid_ok
-
-                        and isinstance(result.get("profile_d_interval_nm"), (tuple, list))
-
-                        and len(result.get("profile_d_interval_nm")) == 2
-
-                        else "-"
-
-                    ),
-
-                    str(result.get("profile_d_mode", "-")),
-
-                    f"{_result_float('profile_d_lr_conf'):.3f}"
-
-                    if np.isfinite(_result_float("profile_d_lr_conf"))
-
-                    else "-",
-
-                    f"{_result_float('profile_d_lr_delta_chi2'):.6f}"
-
-                    if np.isfinite(_result_float("profile_d_lr_delta_chi2"))
-
-                    else "-",
-
-                    f"{_result_float('profile_d_sigma_t'):.6g}"
-
-                    if np.isfinite(_result_float("profile_d_sigma_t"))
-
-                    else "-",
-
-                    f"{_result_float('profile_d_sigma_r'):.6g}"
-
-                    if np.isfinite(_result_float("profile_d_sigma_r"))
-
-                    else "-",
-
-                    f"{_result_float('profile_d_rmse_alpha'):.3f}"
-
-                    if np.isfinite(_result_float("profile_d_rmse_alpha"))
-
-                    else "-",
-
-                    f"{_result_float('profile_d_rmse_opt'):.6f}"
-
-                    if np.isfinite(_result_float("profile_d_rmse_opt"))
-
-                    else "-",
-
-                    str(result.get("profile_d_rmse_ref_source", "-") or "-"),
-
-                    f"{_result_float('profile_d_rmse_thresh'):.6f}"
-
-                    if np.isfinite(_result_float("profile_d_rmse_thresh"))
-
-                    else "-",
-
-                    "Column ?Step (nm)? separates the three blocks; same spectral interval.",
-
-                    rmse_solver_txt,
-
-                    rmse_spl_txt,
-
-                ]
-
-                df_head = pd.DataFrame({"Description": desc_rows, "Value": val_rows})
-
-                sheet_best = "Best indices"
-
-                df_head.to_excel(writer, sheet_name=sheet_best, index=False)
-
-                if not df_grids.empty:
-
-                    df_grids.to_excel(
-
-                        writer,
-
-                        sheet_name=sheet_best,
-
-                        index=False,
-
-                        startrow=len(df_head) + 2,
-
-                    )
-
-                # RMSE(d) profile (if available)
-
-                d_prof = np.asarray(result.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-
-                r_prof = np.asarray(result.get("profile_d_rmse_values", []), dtype=np.float64).ravel()
-
-                if d_prof.size and r_prof.size == d_prof.size:
-
-                    od = np.argsort(d_prof, kind="mergesort")
-
-                    pd.DataFrame({"d_nm": d_prof[od], "rmse": r_prof[od]}).to_excel(
-
-                        writer, sheet_name="Profil_d_RMSE", index=False
-
-                    )
-
-                c_prof = np.asarray(result.get("profile_d_chi2_values", []), dtype=np.float64).ravel()
-
-                if d_prof.size and c_prof.size == d_prof.size:
-
-                    od = np.argsort(d_prof, kind="mergesort")
-
-                    pd.DataFrame({"d_nm": d_prof[od], "chi2": c_prof[od]}).to_excel(
-
-                        writer, sheet_name="Profil_d_CHI2", index=False
-
-                    )
-
-                # V2.3: regularization sensitivity (if available)
-
-                w_reg = np.asarray(result.get("reg_sens_weights", []), dtype=np.float64).ravel()
-
-                d_lo = np.asarray(result.get("reg_sens_d_lo_nm", []), dtype=np.float64).ravel()
-
-                d_hi = np.asarray(result.get("reg_sens_d_hi_nm", []), dtype=np.float64).ravel()
-
-                w_n = np.asarray(result.get("reg_sens_mean_width_n", []), dtype=np.float64).ravel()
-
-                w_k = np.asarray(result.get("reg_sens_mean_width_k", []), dtype=np.float64).ravel()
-
-                n_v = np.asarray(result.get("reg_sens_n_valid", []), dtype=np.int64).ravel()
-
-                if w_reg.size and d_lo.size == w_reg.size and d_hi.size == w_reg.size:
-
-                    pd.DataFrame(
-
-                        {
-
-                            "reg_weight_lnk": w_reg,
-
-                            "d_lo_nm": d_lo,
-
-                            "d_hi_nm": d_hi,
-
-                            "mean_width_n": w_n if w_n.size == w_reg.size else np.full_like(w_reg, np.nan),
-
-                            "mean_width_k": w_k if w_k.size == w_reg.size else np.full_like(w_reg, np.nan),
-
-                            "n_valid": n_v if n_v.size == w_reg.size else np.zeros_like(w_reg, dtype=np.int64),
-
-                        }
-
-                    ).to_excel(writer, sheet_name="Sensibilite_reg", index=False)
-
-                # V2.4: bootstrap - only if metadata or samples present (avoids empty rows after live strip).
-
-                _boot_meta_present = (
-
-                    result.get("boot_n") is not None
-
-                    or np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).size > 0
-
-                    or np.asarray(result.get("boot_runs_b", []), dtype=np.int64).size > 0
-
-                )
-
-                if _boot_meta_present:
-
-                    try:
-
-                        df_boot = pd.DataFrame(
-
-                            {
-
-                                "boot_n": [int(result.get("boot_n", 0) or 0)],
-
-                                "boot_n_ok": [int(result.get("boot_n_ok", 0) or 0)],
-
-                                "boot_seed": [int(result.get("boot_seed", 0) or 0)],
-
-                                "boot_mode": [str(result.get("boot_mode", "-"))],
-
-                                "boot_block_len": [int(result.get("boot_block_len", 1) or 1)],
-
-                                "boot_percentile": [_result_float("boot_percentile")],
-
-                                "boot_sigma_t": [_result_float("boot_sigma_t")],
-
-                                "boot_sigma_r": [_result_float("boot_sigma_r")],
-
-                                "boot_d_lo_q_nm": [_result_float("boot_d_lo_q_nm")],
-
-                                "boot_d_hi_q_nm": [_result_float("boot_d_hi_q_nm")],
-
-                            }
-
-                        )
-
-                        df_boot.to_excel(writer, sheet_name="Bootstrap_resume", index=False)
-
-                        dls = np.asarray(result.get("boot_d_lo_samples_nm", []), dtype=np.float64).ravel()
-
-                        dhs = np.asarray(result.get("boot_d_hi_samples_nm", []), dtype=np.float64).ravel()
-
-                        if dls.size and dhs.size == dls.size:
-
-                            pd.DataFrame({"d_lo_nm": dls, "d_hi_nm": dhs}).to_excel(
-
-                                writer, sheet_name="Bootstrap_d_samples", index=False
-
-                            )
-
-                        # Table d'audit par run
-
-                        rb = np.asarray(result.get("boot_runs_b", []), dtype=np.int64).ravel()
-
-                        rok = np.asarray(result.get("boot_runs_ok", []), dtype=np.int64).ravel()
-
-                        rd0 = np.asarray(result.get("boot_runs_d_lo_nm", []), dtype=np.float64).ravel()
-
-                        rd1 = np.asarray(result.get("boot_runs_d_hi_nm", []), dtype=np.float64).ravel()
-
-                        rnv = np.asarray(result.get("boot_runs_n_valid", []), dtype=np.int64).ravel()
-
-                        if rb.size and rok.size == rb.size and rd0.size == rb.size and rd1.size == rb.size:
-
-                            pd.DataFrame(
-
-                                {
-
-                                    "b": rb,
-
-                                    "ok": rok,
-
-                                    "d_lo_nm": rd0,
-
-                                    "d_hi_nm": rd1,
-
-                                    "n_valid": rnv if rnv.size == rb.size else np.zeros_like(rb),
-
-                                }
-
-                            ).to_excel(writer, sheet_name="Bootstrap_runs", index=False)
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-
-                        logger.exception("Export Excel: bootstrap")
-                run_manifest = result.get("run_manifest")
-                if isinstance(run_manifest, dict) and run_manifest:
-                    manifest_rows = [{"Key": str(k), "Value": str(v)} for k, v in run_manifest.items()]
-                    pd.DataFrame(manifest_rows).to_excel(
-                        writer, sheet_name="Manifest", index=False
-                    )
-
-            self.logger.info(f"Resultats exportes -> {fname}", "SUCCESS")
-
-            logger.info(f"Export Excel: {out_path}")
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-
-            self.logger.info(f"Error export Excel: {e}", "ERROR")
-
-            logger.exception("Export Excel failed")
-

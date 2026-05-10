@@ -15,8 +15,8 @@ UX: large points, wide lambda target, closest in value, hover feedback + live dr
 
 """
 
-
 from __future__ import annotations
+from certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 
 from typing import Callable
@@ -35,28 +35,24 @@ from PyQt6.QtGui import QMouseEvent
 
 
 from PyQt6.QtWidgets import (
-
     QDialog,
-
     QDoubleSpinBox,
-
     QHBoxLayout,
-
     QLabel,
-
     QPushButton,
-
     QSplitter,
-
     QVBoxLayout,
-
     QWidget,
-
-
 )
 
 
-from certus_ui import CertusTheme, apply_certus_theme, attach_excel_clipboard_context_menu, CertusScientificPlot, wrap_scientific_plot_with_toolbar
+from certus_ui import (
+    CertusTheme,
+    apply_certus_theme,
+    attach_excel_clipboard_context_menu,
+    CertusScientificPlot,
+    wrap_scientific_plot_with_toolbar,
+)
 
 
 # Symbol sizes (pxMode = screen size, easier to aim)
@@ -81,37 +77,22 @@ _PICK_PX_Y = 44
 
 
 class _PlotDragFilter(QObject):
-
     """Mouse: wide vertical band around lambda, closest in n or k; vertical drag only."""
 
     def __init__(
-
         self,
-
         plot_widget: CertusScientificPlot,
-
         scatter: pg.ScatterPlotItem,
-
         line_item: pg.PlotCurveItem,
-
         *,
-
         kind: str,
-
         set_value_at_physical: Callable[[int, float], None],
-
         y_clip: tuple[float, float],
-
-        request_recalc_throttled: Callable[[], None],
-
+        _request_recalc_throttled: Callable[[], None],
         request_recalc_now: Callable[[], None],
-
         refresh_cb: Callable[[], None],
-
         hover_callback: Callable[[str, int | None], None],
-
         sizes_callback: Callable[[str, int | None, int | None], None],
-
     ) -> None:
 
         super().__init__(plot_widget)
@@ -158,7 +139,7 @@ class _PlotDragFilter(QObject):
         self._vp.installEventFilter(self)
 
     def detach(self) -> None:
-        """Retire le filtre avant destruction du plot (évite RuntimeError sur QObject C++ supprimé)."""
+        """Detach the filter before plot destruction (prevents RuntimeError on deleted C++ QObject)."""
         self._debounce.stop()
         try:
             self._vp.removeEventFilter(self)
@@ -260,9 +241,7 @@ class _PlotDragFilter(QObject):
                 if self._drag_j is not None and (me.buttons() & Qt.MouseButton.LeftButton):
                     shift = bool(me.modifiers() & Qt.KeyboardModifier.ShiftModifier)
                     sens = 0.18 if shift else 1.0  # Shift = fine tuning
-                    y_new = float(
-                        np.clip(self._y_at_press + (my - self._my_press) * sens, self._y_lo, self._y_hi)
-                    )
+                    y_new = float(np.clip(self._y_at_press + (my - self._my_press) * sens, self._y_lo, self._y_hi))
                     pi = self._physical_index(self._drag_j)
                     self._set_val(pi, y_new)
                     self._refresh()
@@ -366,7 +345,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._pw_n.showGrid(x=True, y=True, alpha=0.25)
         self._pw_n.setLabel("bottom", "lambda (nm)")
         self._pw_n.setLabel("left", "n")
-        self._line_n = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.PRIMARY, width=1.8), connect='finite')
+        self._line_n = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.PRIMARY, width=1.8), connect="finite")
         self._pw_n.addItem(self._line_n)
         self._sc_n = pg.ScatterPlotItem(
             size=_SIZE_NORMAL,
@@ -384,7 +363,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._pw_k.setLabel("bottom", "lambda (nm)")
         self._pw_k.setLabel("left", "k (log)")
         self._pw_k.setLogMode(False, True)
-        self._line_k = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.PRIMARY, width=1.8), connect='finite')
+        self._line_k = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.PRIMARY, width=1.8), connect="finite")
         self._pw_k.addItem(self._line_k)
         self._sc_k = pg.ScatterPlotItem(
             size=_SIZE_NORMAL,
@@ -457,7 +436,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
             kind="n",
             set_value_at_physical=self._set_n_phys_wrapper,
             y_clip=(self._n_lo, self._n_hi),
-            request_recalc_throttled=_throttle,
+            _request_recalc_throttled=_throttle,
             request_recalc_now=_now,
             refresh_cb=self._refresh_curves_only,
             hover_callback=self._on_hover,
@@ -470,7 +449,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
             kind="k",
             set_value_at_physical=self._set_k_from_linear,
             y_clip=(self._k_lo, self._k_hi),
-            request_recalc_throttled=_throttle,
+            _request_recalc_throttled=_throttle,
             request_recalc_now=_now,
             refresh_cb=self._refresh_curves_only,
             hover_callback=self._on_hover,
@@ -518,7 +497,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
             self._hover_phys_k = phys_i
         self._update_live_label()
 
-    def _apply_sizes(self, kind: str, hover_phys: int | None, drag_phys: int | None) -> None:
+    def _apply_sizes(self, kind: str, _hover_phys: int | None, drag_phys: int | None) -> None:
         if kind == "n":
             self._drag_phys_n = drag_phys
         else:
@@ -573,9 +552,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
         n_v = float(np.asarray(self._get_n(), dtype=np.float64).ravel()[phys])
         L_v = float(np.asarray(self._get_L(), dtype=np.float64).ravel()[phys])
         k_v = float(np.exp(L_v))
-        self._lbl_live.setText(
-            f"lambda ~ {lam_v:.2f} nm   |   n = {n_v:.4f}   |   k = {k_v:.4g}   (ln k = {L_v:.4f})"
-        )
+        self._lbl_live.setText(f"lambda ~ {lam_v:.2f} nm   |   n = {n_v:.4f}   |   k = {k_v:.4g}   (ln k = {L_v:.4f})")
 
     def _lam_and_order(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         sk = np.asarray(self._get_sk(), dtype=np.float64).ravel()
@@ -588,7 +565,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
     def _apply_study_window_x(self, pw: CertusScientificPlot) -> None:
         try:
             lo_s, hi_s = self._study_lam()
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS:
             return
         if hi_s <= lo_s or not np.isfinite(lo_s):
             return
@@ -600,7 +577,6 @@ class SmartInitNKCurveEditorDialog(QDialog):
         sk, lam, oi = self._lam_and_order()
 
         if sk.size == 0:
-
             return
 
         n_phys = np.asarray(self._get_n(), dtype=np.float64).ravel()
@@ -608,7 +584,6 @@ class SmartInitNKCurveEditorDialog(QDialog):
         L = np.asarray(self._get_L(), dtype=np.float64).ravel()
 
         if n_phys.size != sk.size or L.size != sk.size:
-
             return
 
         lam_s = lam[oi]
@@ -628,7 +603,6 @@ class SmartInitNKCurveEditorDialog(QDialog):
         nn = n_s[np.isfinite(n_s)]
 
         if nn.size:
-
             pr = max(float(np.max(nn) - np.min(nn)) * 0.1, 8e-4)
 
             self._pw_n.setYRange(float(np.min(nn) - pr), float(np.max(nn) + pr), padding=0)
@@ -644,7 +618,6 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._update_live_label()
 
     def refresh_plots(self) -> None:
-
         """To be called after parent recalculation or grid change."""
 
         self._refresh_curves_only()

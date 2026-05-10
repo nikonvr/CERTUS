@@ -6,7 +6,9 @@ from dataclasses import replace
 import numpy as np
 
 from certus_index_spline_core import DataType, SplineOptConfig
-from certus_physics import calculate_transmission_array
+
+from certus_index_utils import _transmittance_absolute_from_nk
+
 from spline_objective import (
     SplinePWLObjective,
     decompose_spline_pwl_objective,
@@ -23,7 +25,7 @@ def _minimal_transmission_cfg() -> SplineOptConfig:
     d_nm = 150.0
     n_l = np.full_like(lam, n_film)
     k_l = np.full_like(lam, k_film)
-    t_exp = calculate_transmission_array(lam, n_l, k_l, d_nm, n_sub)
+    t_exp = _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub)
     return SplineOptConfig(
         lam_nm=lam,
         t_exp=t_exp,
@@ -66,7 +68,7 @@ def test_spline_pwl_objective_near_zero_on_matching_transmission() -> None:
         n_mono_band_nm=cfg.n_mono_band_nm,
         profile_interp=cfg.nk_profile_interp,
     )
-    t_th = calculate_transmission_array(lam, n_l2, k_l2, d, np.asarray(cfg.n_sub))
+    t_th = _transmittance_absolute_from_nk(lam, n_l2, k_l2, d, np.asarray(cfg.n_sub))
     rel = float(np.max(np.abs(t_th - np.asarray(cfg.t_exp))) / (np.max(np.abs(cfg.t_exp)) + 1e-12))
     assert rel < 5e-5
 

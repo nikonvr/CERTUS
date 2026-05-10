@@ -112,9 +112,7 @@ def _build_widget_class():
             title_lbl = QLabel(title, self)
             title_lbl.setObjectName("empty-title")
             title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            title_lbl.setStyleSheet(
-                "#empty-title { color: palette(text); font-size: 12pt; font-weight: 600; }"
-            )
+            title_lbl.setStyleSheet("#empty-title { color: palette(text); font-size: 12pt; font-weight: 600; }")
             outer.addWidget(title_lbl)
 
             # Description
@@ -122,9 +120,7 @@ def _build_widget_class():
             desc_lbl.setObjectName("empty-desc")
             desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             desc_lbl.setWordWrap(True)
-            desc_lbl.setStyleSheet(
-                "#empty-desc { color: palette(mid); font-size: 9pt; }"
-            )
+            desc_lbl.setStyleSheet("#empty-desc { color: palette(mid); font-size: 9pt; }")
             outer.addWidget(desc_lbl)
 
             # Action button
@@ -279,6 +275,7 @@ def attach_empty_state_to(
 
     watcher = _Watcher(view, overlay)
     _OVERLAYS[id(view)] = (overlay, watcher)
+
     def _drop_overlay(*_args, key=id(view)):
         _OVERLAYS.pop(key, None)
 

@@ -82,7 +82,7 @@ def _build_block_class():
         Qt,
         pyqtProperty,
     )
-    from PyQt6.QtGui import QColor, QLinearGradient, QPainter, QPalette
+    from PyQt6.QtGui import QColor, QLinearGradient, QPainter
     from PyQt6.QtWidgets import QFrame
 
     class CertusSkeletonBlock(QFrame):
@@ -92,7 +92,9 @@ def _build_block_class():
         driven by a :class:`QPropertyAnimation` on a Qt property.
         """
 
-        def __init__(self, parent=None, *, width: int = 120, height: int = DEFAULT_LINE_HEIGHT, radius: int = DEFAULT_RADIUS_PX):
+        def __init__(
+            self, parent=None, *, width: int = 120, height: int = DEFAULT_LINE_HEIGHT, radius: int = DEFAULT_RADIUS_PX
+        ):
             super().__init__(parent)
             self.setFixedSize(int(width), int(height))
             self._radius = int(radius)
@@ -194,8 +196,7 @@ def _build_group_class():
                 caption.setObjectName("skeleton-label")
                 caption.setAlignment(Qt.AlignmentFlag.AlignCenter)
                 caption.setStyleSheet(
-                    "#skeleton-label { color: palette(text); font-size: 9pt; "
-                    "font-weight: 600; opacity: 0.8; }"
+                    "#skeleton-label { color: palette(text); font-size: 9pt; font-weight: 600; opacity: 0.8; }"
                 )
                 v.addWidget(caption, 0, Qt.AlignmentFlag.AlignHCenter)
 
@@ -211,8 +212,7 @@ def _build_group_class():
         def _default_stylesheet(self) -> str:
             _, _, border = _theme_colors()
             return (
-                f"#CertusSkeletonGroup {{ background: transparent; "
-                f"border: 1px dashed {border}; border-radius: 10px; }}"
+                f"#CertusSkeletonGroup {{ background: transparent; border: 1px dashed {border}; border-radius: 10px; }}"
             )
 
         def start(self):
@@ -252,9 +252,7 @@ def _build_overlay_class():
             self._target = target
             self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
             self.setObjectName("CertusSkeletonOverlay")
-            self.setStyleSheet(
-                "#CertusSkeletonOverlay { background: rgba(255,255,255,170); }"
-            )
+            self.setStyleSheet("#CertusSkeletonOverlay { background: rgba(255,255,255,170); }")
             v = QVBoxLayout(self)
             v.setContentsMargins(0, 0, 0, 0)
             h = QHBoxLayout()
@@ -357,6 +355,7 @@ def install_skeleton(
     if overlay is None:
         overlay = skeleton_for(widget, lines=lines, label=label, line_height=line_height)
         _OVERLAYS[key] = overlay
+
         def _drop_overlay(*_args, overlay_key=key):
             _OVERLAYS.pop(overlay_key, None)
 

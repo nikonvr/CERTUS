@@ -6,26 +6,18 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from PyQt6.QtWidgets import (
-    QWidget, QMenu, QMessageBox, QToolBar, 
-    QVBoxLayout, QFileDialog, QMainWindow, QToolButton
-)
+from PyQt6.QtWidgets import QApplication, QWidget, QMenu, QMessageBox, QToolBar, QVBoxLayout, QFileDialog, QMainWindow, QToolButton
 from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt
 
-# Import from certus_export
-from certus_export import plot_dataframe_from_widget, copy_plot_to_clipboard_excel
+# Late imports from certus_export in methods to avoid circular dependency
 
 # Avoid circular dependencies by lazy loading if needed, but since CertusTheme is defined early in certus_ui, it should be safe.
-from certus_ui import (
-    CertusTheme, 
-    CERTUS_UI_STRINGS, 
-    get_certus_last_dir, 
-    set_certus_last_dir, 
-    get_export_settings
-)
+
 
 def get_plot_style_config() -> dict:
+    from certus_ui import CertusTheme
+
     """Return current theme-based config for plot styling (background, text color, grid)."""
     return {
         "background": getattr(CertusTheme, "SURFACE", "#ffffff"),
@@ -34,7 +26,9 @@ def get_plot_style_config() -> dict:
         "axis_width": 1,
     }
 
+
 def apply_certus_plot_style(plot) -> None:
+
     """
     Apply CERTUS theme to a single pyqtgraph PlotWidget or similar.
     Use for new plots and when theme changes.
@@ -57,6 +51,7 @@ def apply_certus_plot_style(plot) -> None:
         if hasattr(tl, "setColor"):
             tl.setColor(text_color)
 
+
 def apply_theme_to_plots(plots: list) -> None:
     """Apply current CertusTheme colors to pyqtgraph plots."""
     for plot in plots:
@@ -78,6 +73,7 @@ def sanitize_xy_for_plot(x, y) -> tuple[np.ndarray, np.ndarray]:
     y = y[:n].copy()
     m = np.isfinite(x) & np.isfinite(y)
     return x[m], y[m]
+
 
 def plot_widget_plot_finite(widget, x, y, **kwargs):
     """Equivalent to PlotWidget.plot after cleaning; returns None if no valid points."""
@@ -107,6 +103,10 @@ class CertusScientificPlot(pg.PlotWidget):
         axisItems: dict | None = None,
         **kwargs,
     ):
+        from certus_ui import (
+            CertusTheme,
+        )
+
         super().__init__(parent, axisItems=axisItems, **kwargs)
         self._certus_init_title: str = str(title or "")
         if "clear" in self.__dict__:
@@ -124,9 +124,7 @@ class CertusScientificPlot(pg.PlotWidget):
         self._certus_crosshair_vertical_only: bool = False
         self._certus_mouse_moved_hook: Optional[Callable[[Any, Any, float, float, Any], None]] = None
 
-        self.proxy = pg.SignalProxy(
-            self.scene().sigMouseMoved, rateLimit=60, slot=self._on_mouse_move
-        )
+        self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self._on_mouse_move)
         self._curves: dict[str, pg.PlotDataItem] = {}
 
         self._detach_shortcut = QShortcut(QKeySequence("Ctrl+Shift+D"), self)
@@ -151,6 +149,10 @@ class CertusScientificPlot(pg.PlotWidget):
         self._copy_publication_tsv(show_message=True)
 
     def _show_context_export_menu(self, pos) -> None:
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+        )
+
         menu = QMenu(self)
         act_copy = menu.addAction(CERTUS_UI_STRINGS["copy_excel_tsv"])
         act_copy.setToolTip("Ctrl+Shift+C - TSV for Excel")
@@ -174,6 +176,12 @@ class CertusScientificPlot(pg.PlotWidget):
             self._export_tsv_publication()
 
     def _copy_excel_tsv(self, show_message: bool = True) -> None:
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+        )
+
+        from certus_export import copy_plot_to_clipboard_excel
+
         ok = copy_plot_to_clipboard_excel(self)
         if not show_message:
             return
@@ -220,6 +228,12 @@ class CertusScientificPlot(pg.PlotWidget):
         return "\n".join(parts) + "\n"
 
     def _copy_publication_tsv(self, show_message: bool = True) -> None:
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+        )
+
+        from certus_export import plot_dataframe_from_widget
+
         df = plot_dataframe_from_widget(self)
         ok = bool(df is not None and not df.empty)
         if ok:
@@ -257,15 +271,31 @@ class CertusScientificPlot(pg.PlotWidget):
                         tl_cb = self.plotItem.titleLabel
                         if tl_cb is not None:
                             plot_title = str(getattr(tl_cb, "text", "") or "").strip()
-                    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                    except (
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        AttributeError,
+                        KeyError,
+                        IndexError,
+                        FileNotFoundError,
+                    ):
                         plot_title = ""
                 p.open_detached_certus_plot(self, title=(plot_title or None))
                 return
             p = p.parentWidget()
 
     def _install_crosshair_overlay(self) -> None:
-        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine))
-        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine))
+        from certus_ui import (
+            CertusTheme,
+        )
+
+        self.vLine = pg.InfiniteLine(
+            angle=90, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine)
+        )
+        self.hLine = pg.InfiniteLine(
+            angle=0, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine)
+        )
         self.addItem(self.vLine, ignoreBounds=True)
         self.addItem(self.hLine, ignoreBounds=True)
         self.info_label = pg.TextItem(anchor=(0, 1), color=CertusTheme.PRIMARY)
@@ -370,7 +400,15 @@ class CertusScientificPlot(pg.PlotWidget):
                             self.info_label.setAnchor((1, 1))
                         else:
                             self.info_label.setAnchor((0, 1))
-                    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                    except (
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        AttributeError,
+                        KeyError,
+                        IndexError,
+                        FileNotFoundError,
+                    ):
                         self.info_label.setAnchor((0, 1))
                 self.info_label.setText(fn(x, y_show, y))
             else:
@@ -390,8 +428,13 @@ class CertusScientificPlot(pg.PlotWidget):
             self.plotItem.setTitle(title)
 
     def add_curve(
-        self, x: np.ndarray, y: np.ndarray, name: str, 
-        color: str = "#1e3a8a", width: int = 2, style: Qt.PenStyle = Qt.PenStyle.SolidLine
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        name: str,
+        color: str = "#1e3a8a",
+        width: int = 2,
+        style: Qt.PenStyle = Qt.PenStyle.SolidLine,
     ) -> pg.PlotDataItem:
         try:
             x, y = sanitize_xy_for_plot(x, y)
@@ -437,6 +480,8 @@ class CertusScientificPlot(pg.PlotWidget):
         pass
 
     def get_toolbar(self, parent_widget: QWidget) -> QToolBar:
+        from certus_ui import CERTUS_UI_STRINGS
+
         toolbar = QToolBar(parent_widget)
         toolbar.setStyleSheet(
             "QToolBar { background: #f8f9fa; border-bottom: 1px solid #ddd; spacing: 5px; } QToolButton { padding: 4px; border-radius: 3px; } QToolButton:hover { background-color: #e2e6ea; }"
@@ -490,6 +535,13 @@ class CertusScientificPlot(pg.PlotWidget):
         return toolbar
 
     def _export_png(self):
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+            get_certus_last_dir,
+            set_certus_last_dir,
+            get_export_settings,
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
             None, "Export PNG", str(Path(get_certus_last_dir() or ".") / "plot.png"), "PNG (*.png)"
         )
@@ -516,6 +568,12 @@ class CertusScientificPlot(pg.PlotWidget):
                 )
 
     def _export_svg(self):
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+            get_certus_last_dir,
+            set_certus_last_dir,
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
             None, "SVG export", str(Path(get_certus_last_dir() or ".") / "plot.svg"), "SVG (*.svg)"
         )
@@ -538,6 +596,12 @@ class CertusScientificPlot(pg.PlotWidget):
                 )
 
     def _export_csv(self):
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+            get_certus_last_dir,
+            set_certus_last_dir,
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
             None, "CSV export", str(Path(get_certus_last_dir() or ".") / "plot_data.csv"), "CSV (*.csv)"
         )
@@ -545,6 +609,8 @@ class CertusScientificPlot(pg.PlotWidget):
             return
         set_certus_last_dir(filename)
         try:
+            from certus_export import plot_dataframe_from_widget
+
             df = plot_dataframe_from_widget(self)
             if df is None or df.empty:
                 QMessageBox.warning(
@@ -554,6 +620,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 )
                 return
             import datetime
+
             meta = f"# CERTUS export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
@@ -565,6 +632,7 @@ class CertusScientificPlot(pg.PlotWidget):
             )
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
             import traceback
+
             logging.error(f"CSV export failed:{e}\n{traceback.format_exc()}")
             QMessageBox.warning(
                 self.window() or None,
@@ -573,6 +641,12 @@ class CertusScientificPlot(pg.PlotWidget):
             )
 
     def _export_tsv(self):
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+            get_certus_last_dir,
+            set_certus_last_dir,
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
             None, "TSV export", str(Path(get_certus_last_dir() or ".") / "plot_data.tsv"), "TSV (*.tsv)"
         )
@@ -580,6 +654,8 @@ class CertusScientificPlot(pg.PlotWidget):
             return
         set_certus_last_dir(filename)
         try:
+            from certus_export import plot_dataframe_from_widget
+
             df = plot_dataframe_from_widget(self)
             if df is None or df.empty:
                 QMessageBox.warning(
@@ -589,6 +665,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 )
                 return
             import datetime
+
             meta = f"# CERTUS export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
@@ -600,6 +677,7 @@ class CertusScientificPlot(pg.PlotWidget):
             )
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
             import traceback
+
             logging.error(f"TSV export failed:{e}\n{traceback.format_exc()}")
             QMessageBox.warning(
                 self.window() or None,
@@ -608,13 +686,24 @@ class CertusScientificPlot(pg.PlotWidget):
             )
 
     def _export_tsv_publication(self):
+        from certus_ui import (
+            CERTUS_UI_STRINGS,
+            get_certus_last_dir,
+            set_certus_last_dir,
+        )
+
         filename, _ = QFileDialog.getSaveFileName(
-            None, "TSV export (Publication)", str(Path(get_certus_last_dir() or ".") / "plot_data_publication.tsv"), "TSV (*.tsv)"
+            None,
+            "TSV export (Publication)",
+            str(Path(get_certus_last_dir() or ".") / "plot_data_publication.tsv"),
+            "TSV (*.tsv)",
         )
         if not filename:
             return
         set_certus_last_dir(filename)
         try:
+            from certus_export import plot_dataframe_from_widget
+
             df = plot_dataframe_from_widget(self)
             if df is None or df.empty:
                 QMessageBox.warning(
@@ -624,6 +713,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 )
                 return
             import datetime
+
             meta = f"# CERTUS publication export {datetime.datetime.now().isoformat(timespec='seconds')}\n"
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(meta)
@@ -635,6 +725,7 @@ class CertusScientificPlot(pg.PlotWidget):
             )
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
             import traceback
+
             logging.error(f"TSV publication export failed:{e}\n{traceback.format_exc()}")
             QMessageBox.warning(
                 self.window() or None,

@@ -220,7 +220,6 @@ def apply_accessibility_defaults(
     fp_target = getattr(Qt.FocusPolicy, focus_policy, Qt.FocusPolicy.StrongFocus)
     touched = 0
     try:
-        children = root.findChildren(root.__class__.__bases__[0]) if False else None
         # Use QWidget as fallback so we walk everything in the tree.
         from PyQt6.QtWidgets import QWidget
 

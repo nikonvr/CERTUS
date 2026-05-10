@@ -186,6 +186,8 @@ class StratContext:
     def clear_cache(self):
         """Clear cached clues."""
         self.clues_cache.clear()
+
+
 class StratContextManager:
     """Context manager for StratContext activation."""
 
@@ -220,4 +222,3 @@ def get_context() -> StratContext:
         ctx = StratContext()
         StratContext.set_current(ctx)
     return ctx
-

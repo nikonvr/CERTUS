@@ -91,7 +91,7 @@ def test_sapphire_quality_run():
 
     # ═══════════════════════════════════════════════════════════
 
-    df_full = pd.read_excel(r"example/RTNBrel-sapphire.xlsx")
+    df_full = pd.read_excel(r"example/example_index/H400-RTNBrel-sapphire.xlsx")
 
     df_full.columns = ["lambda", "R", "T"]
 

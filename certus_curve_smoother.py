@@ -14,7 +14,6 @@ import pyqtgraph as pg
 
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
-    QApplication,
     QCheckBox,
     QComboBox,
     QFrame,
@@ -219,9 +218,7 @@ class CurveSmootherGUI(QMainWindow):
         layout.addWidget(content)
 
     def _smooth_y(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return dynamic_savgol_blend(
-            x, y, self.current_window, self.current_poly, self.current_heavy
-        )
+        return dynamic_savgol_blend(x, y, self.current_window, self.current_poly, self.current_heavy)
 
     @staticmethod
     def _chart_colors() -> list[str]:

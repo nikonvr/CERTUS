@@ -21,150 +21,84 @@ Contains:
 
 """
 
-
 __version__ = "26_01"
 
 
 __all__ = [
-
     # Version
-
     "__version__",
-
     # Constants
-
     "SMALL_EPSILON",
-
     "HC_EV_NM",
-
     "PI",
-
     "TWO_PI",
-
     "N_SUPERSTRATE",
-
     "N_MIN_LIMIT",
-
     "N_MAX_LIMIT",
-
     "K_MAX_LIMIT",
-
     "WL_DECIMALS",
-
     "T_SUB_MIN_T_NORM",
-
     "T_SUB_MIN_R_NORM",
-
     "FROSTED_GLASS_N",
-
     "FROSTED_GLASS_CAUCHY_A",
-
     "FROSTED_GLASS_CAUCHY_B",
-
     "OH_BAND_MIN",
-
     "OH_BAND_MAX",
-
     "SUBSTRATES",
-
     "SUBSTRATE_LIST",
-
     "SUBSTRATE_MAPPING",
-
     "SUBSTRATE_MIN_LAMBDA",
-
     "CAUCHY_PRESETS",
-
     # Config Classes
-
     "CFG",
-
     "GlobalConfig",
-
     "CertusRuntime",
-
     "SystemConfig",
-
     "ConfigManager",
-
     # Functions
-
     "get_resource_path",
-
     "is_frozen",
-
+    "get_materials_db_hash",
     "configure_numba_env",
-
     "get_safe_worker_count",
-
     "get_precision_config",
-
     "get_float_dtype",
-
     "get_complex_dtype",
-
     "load_export_config",
-
     "save_export_config",
-
     "get_export_config",
-
     "load_theme_config",
-
     "save_theme_config",
-
     "setup_logging",
-
     "get_logger",
-
     "handle_exception",
-
     "build_runtime",
-
     # GUI Logging
-
     "QueueHandler",
-
     "setup_gui_logger",
-
     # Dependencies
-
     "OPENPYXL_AVAILABLE",
-
     "SVG_AVAILABLE",
-
     # Bootstrap & Exceptions
-
     "bootstrap_app",
-
     "CertusError",
-
     "CertusOptimizationError",
-
     "CertusPhysicsError",
-
+    "NUMERICAL_FAULT_EXCEPTIONS",
     "CertusConfigError",
-
     "wait_warmup",
-
     # Internal utilities (for advanced use)
-
     "_get_cpu_count",
-
     # Timestamp formats (unified across CERTUS)
-
     "TIMESTAMP_FMT_FILE",
-
     "TIMESTAMP_FMT_DISPLAY",
-
     "certus_timestamp_file",
-
     "certus_timestamp_display",
-
 ]
 
 
 import json
+import hashlib
 
 import logging
 
@@ -196,28 +130,23 @@ import numpy as np
 # --- Dependencies Check ---
 
 try:
-
-    import openpyxl  # pylint: disable=unused-import
+    import openpyxl  # noqa: F401  # availability check
 
     OPENPYXL_AVAILABLE = True
 
 except ImportError:
-
     OPENPYXL_AVAILABLE = False
 
 
 def check_svg_availability() -> bool:
-
     """Check SVG widget availability"""
 
     try:
-
-        from PyQt6.QtSvgWidgets import QSvgWidget  # pylint: disable=unused-import
+        from PyQt6.QtSvgWidgets import QSvgWidget  # noqa: F401  # availability check
 
         return True
 
     except ImportError:
-
         return False
 
 
@@ -232,14 +161,12 @@ TIMESTAMP_FMT_DISPLAY = "%Y-%m-%d %H:%M:%S"  # e.g. 2026-03-10 18:33:49 for logs
 
 
 def certus_timestamp_file() -> str:
-
     """Current time formatted for filenames (YYYYMMDD_HHMMSS). Single source for all CERTUS."""
 
     return datetime.now().strftime(TIMESTAMP_FMT_FILE)
 
 
 def certus_timestamp_display() -> str:
-
     """Current time formatted for logs/reports (YYYY-MM-DD HH:MM:SS). Single source for all CERTUS."""
 
     return datetime.now().strftime(TIMESTAMP_FMT_DISPLAY)
@@ -276,7 +203,6 @@ DEFAULT_THREAD_TIMEOUT_MS: int = 3000  # 3 seconds
 
 
 def _get_cpu_count() -> int:
-
     """
 
     Get CPU count with fallback to default.
@@ -291,7 +217,6 @@ def _get_cpu_count() -> int:
 
 
 def get_resource_path(filename: str) -> str:
-
     """
 
     Returns absolute path to resource (PyInstaller/Dev compatible).
@@ -301,13 +226,11 @@ def get_resource_path(filename: str) -> str:
     """
 
     if getattr(sys, "frozen", False):
-
         # Exe: base path is executable dir
 
         base_path = Path(sys.executable).resolve().parent
 
     else:
-
         # Dev: base path is script dir (assuming this file is in root)
 
         base_path = Path(__file__).resolve().parent
@@ -316,14 +239,25 @@ def get_resource_path(filename: str) -> str:
 
 
 def is_frozen() -> bool:
-
     """Check if running in a frozen (compiled) environment."""
 
     return getattr(sys, "frozen", False)
 
 
-def configure_numba_env():
+def get_materials_db_hash() -> str | None:
+    """Returns SHA256 of the current materials DB if available."""
+    try:
+        db_path = Path(get_resource_path("data/materials_v1.json"))
+        if not db_path.exists():
+            db_path = Path("data/materials_v1.json")
+        if db_path.exists():
+            return hashlib.sha256(db_path.read_bytes()).hexdigest()
+    except OSError:
+        pass
+    return None
 
+
+def configure_numba_env():
     """
 
     Configure Numba environment variables for safe operation in frozen executables.
@@ -357,9 +291,7 @@ def configure_numba_env():
     # "Cannot set NUMBA_NUM_THREADS to a different value once threads have been launched".
 
     if "numba" in sys.modules:
-
         try:
-
             import numba  # local import to avoid hard dependency at module import time
 
             cur = str(int(numba.get_num_threads()))
@@ -367,19 +299,12 @@ def configure_numba_env():
             os.environ["NUMBA_NUM_THREADS"] = cur
 
             for env_var in [
-
                 "OMP_NUM_THREADS",
-
                 "OPENBLAS_NUM_THREADS",
-
                 "MKL_NUM_THREADS",
-
                 "VECLIB_MAXIMUM_THREADS",
-
                 "NUMEXPR_NUM_THREADS",
-
             ]:
-
                 os.environ.setdefault(env_var, cur)
 
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
@@ -387,7 +312,6 @@ def configure_numba_env():
             return
 
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
-
             # Fallback to standard path if runtime introspection fails.
 
             pass
@@ -395,7 +319,6 @@ def configure_numba_env():
     # Skip if already configured (prevents RuntimeError when threads are launched)
 
     if os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
-
         return
 
     # Setup cache directory
@@ -409,7 +332,6 @@ def configure_numba_env():
     os.environ["NUMBA_CACHE_DIR"] = cache_dir
 
     if is_frozen():
-
         # In frozen mode: force workqueue (standard python threading)
 
         # TBB is hard to bundle correctly with PyInstaller.
@@ -419,7 +341,6 @@ def configure_numba_env():
         os.environ["NUMBA_THREADING_LAYER"] = "workqueue"
 
     else:
-
         # Development mode: use optimal thread count
 
         n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
@@ -427,34 +348,23 @@ def configure_numba_env():
         s_cores = str(n_cores)
 
         if "NUMBA_THREADING_LAYER" not in os.environ:
-
             os.environ["NUMBA_THREADING_LAYER"] = "omp"
 
         for env_var in [
-
             "NUMBA_NUM_THREADS",
-
             "OMP_NUM_THREADS",
-
             "OPENBLAS_NUM_THREADS",
-
             "MKL_NUM_THREADS",
-
             "VECLIB_MAXIMUM_THREADS",
-
             "NUMEXPR_NUM_THREADS",
-
         ]:
-
             if env_var not in os.environ:
-
                 os.environ[env_var] = s_cores
 
     os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
 
 
 def get_safe_worker_count(default_workers: int | None = None) -> int:
-
     """
 
     Get safe number of workers for ThreadPoolExecutor.
@@ -486,13 +396,10 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
     """
 
     if is_frozen():
-
         # Optimization Python 3.14+: Free-threading allows safe parallelism even in frozen apps
 
         if sys.version_info >= (3, 14):
-
             if default_workers is not None:
-
                 return max(1, default_workers)
 
             return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
@@ -500,7 +407,6 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
         return 1
 
     if default_workers is not None:
-
         return max(1, default_workers)
 
     return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
@@ -512,10 +418,6 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
 
 # =============================================================================
 
-
-class SystemConfig:
-
-    """Centralized system configuration"""
 
 
 @dataclass(frozen=True)
@@ -556,7 +458,7 @@ def set_num_threads(n_cores: int | None = None) -> int:
     return n_cores
 
 
-def setup_logging(log_file: str | None = None, level: int = None) -> "_logging.Logger":
+def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Logger":
     """Configure enhanced logging with detailed context and error handling."""
 
     import logging as _logging
@@ -602,9 +504,7 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "_logging.L
             file_handler.setLevel(_logging.DEBUG)
             logger.addHandler(file_handler)
 
-            logger.info(
-                f"Logging initialized: file={log_path}, level={_logging.getLevelName(level)}"
-            )
+            logger.info(f"Logging initialized: file={log_path}, level={_logging.getLevelName(level)}")
         except PermissionError as e:
             _logging.error(f"Permission denied creating log file '{log_file}': {e}")
             logger.warning("Continuing with console logging only")
@@ -612,22 +512,30 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "_logging.L
             _logging.error(f"OS error creating log file '{log_file}': {e}")
             logger.warning("Continuing with console logging only")
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-            _logging.error(
-                f"Unexpected error creating log file '{log_file}': {type(e).__name__}: {e}"
-            )
+            _logging.error(f"Unexpected error creating log file '{log_file}': {type(e).__name__}: {e}")
             logger.warning("Continuing with console logging only")
 
     # Structured JSONL stream for cross-run correlation and machine parsing.
     try:
         jsonl_path = Path(get_resource_path("logs")) / "CERTUS.jsonl"
         attach_jsonl_handler(logger, jsonl_path)
-    except (PermissionError, OSError, ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+    except (
+        PermissionError,
+        OSError,
+        ValueError,
+        TypeError,
+        RuntimeError,
+        AttributeError,
+        KeyError,
+        IndexError,
+        FileNotFoundError,
+    ) as e:
         logger.warning(f"Structured JSONL handler unavailable: {type(e).__name__}: {e}")
 
     return logger
 
 
-def get_logger() -> "_logging.Logger":
+def get_logger() -> "logging.Logger":
     """Returns the configured logger or creates a default one."""
 
     logger = logging.getLogger("CERTUS")
@@ -679,11 +587,11 @@ class SystemConfig:
         return get_resource_path(relative_path)
 
     @staticmethod
-    def setup_logging(log_file: str | None = None, level: int = None) -> "_logging.Logger":
+    def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Logger":
         return setup_logging(log_file=log_file, level=level)
 
     @staticmethod
-    def get_logger() -> "_logging.Logger":
+    def get_logger() -> "logging.Logger":
         return get_logger()
 
     @staticmethod
@@ -711,11 +619,9 @@ class _WarmupRegistry:
 
 
 def wait_warmup(timeout: float = 30.0) -> None:
-
     """Wait for background JIT warmup to complete (called before first calculation)."""
 
     if _WarmupRegistry.thread is not None and _WarmupRegistry.thread.is_alive():
-
         _WarmupRegistry.thread.join(timeout=timeout)
 
     _WarmupRegistry.thread = None
@@ -755,21 +661,19 @@ WL_DECIMALS: int = 6
 
 # --- T/R normalization (T_substrate thresholds to avoid explosion 1/T) ---
 
-T_SUB_MIN_T_NORM: float = 1e-6   # threshold for T_nu = T/T_sub
+T_SUB_MIN_T_NORM: float = 1e-6  # threshold for T_nu = T/T_sub
 
-T_SUB_MIN_R_NORM: float = 0.05   # threshold for R_nu = R/T_sub (absorption band guard)
+T_SUB_MIN_R_NORM: float = 0.05  # threshold for R_nu = R/T_sub (absorption band guard)
 
 # =============================================================================
 
 
 class ConfigManager:
-
     """Generic JSON config manager.
 
     Factorizes repeated pattern for precision, export, theme configs."""
 
     def __init__(self, filename: str, default_value: Any, key_name: str):
-
         """
 
         Args:
@@ -793,17 +697,13 @@ class ConfigManager:
         self._load()
 
     def _load(self) -> Any:
-
         """Loads config from file."""
 
         try:
-
             config_path = get_resource_path(self.filename)
 
             if Path(config_path).exists():
-
                 with open(config_path, "r", encoding="utf-8") as f:
-
                     config = json.load(f)
 
                     self._value = config.get(self.key_name, self.default_value)
@@ -811,13 +711,11 @@ class ConfigManager:
                     return self._value
 
         except (IOError, json.JSONDecodeError, KeyError) as e:
-
             logging.debug(f"Could not load {self.filename}: {e}")
 
         return self.default_value
 
     def save(self, value: Any) -> bool:
-
         """
 
         Saves config to file.
@@ -833,13 +731,11 @@ class ConfigManager:
         """
 
         try:
-
             config_path = get_resource_path(self.filename)
 
             config = {self.key_name: value}
 
             with open(config_path, "w", encoding="utf-8") as f:
-
                 json.dump(config, f, indent=2)
 
             self._value = value
@@ -847,25 +743,21 @@ class ConfigManager:
             return True
 
         except (IOError, OSError, TypeError) as e:
-
             logging.warning(f"Could not save {self.filename}: {e}")
 
             return False
 
     def get(self) -> Any:
-
         """Returns curr config val."""
 
         return self._value
 
     def reload(self) -> Any:
-
         """Reload config from disk. Returns the loaded value."""
 
         return self._load()
 
     def set(self, value: Any) -> bool:
-
         """Sets and saves value."""
 
         return self.save(value)
@@ -885,21 +777,18 @@ class ConfigManager:
 
 
 def get_precision_config() -> bool:
-
     """Backward compatibility stub. Always returns False (mixed precision active)."""
 
     return False
 
 
 def get_float_dtype():
-
     """Default float dtype for non-gradient computation (f32 for SIMD throughput)."""
 
     return np.float32
 
 
 def get_complex_dtype():
-
     """Default complex dtype for non-gradient computation (c64 for SIMD throughput)."""
 
     return np.complex64
@@ -916,21 +805,18 @@ _export_manager = ConfigManager("certus_export.json", True, "auto_export_enabled
 
 
 def load_export_config() -> bool:
-
     """Loads auto export config."""
 
     return _export_manager._load()
 
 
 def save_export_config(enabled: bool):
-
     """Saves auto export config."""
 
     _export_manager.save(enabled)
 
 
 def get_export_config() -> bool:
-
     """Returns curr auto export config."""
 
     return _export_manager.get()
@@ -947,14 +833,12 @@ _theme_manager = ConfigManager("certus_theme.json", "light", "theme_mode")
 
 
 def load_theme_config() -> str:
-
     """Loads theme config."""
 
     return _theme_manager._load()
 
 
 def save_theme_config(mode: str):
-
     """Saves theme config."""
 
     _theme_manager.save(mode)
@@ -968,9 +852,7 @@ def save_theme_config(mode: str):
 
 
 @dataclass(frozen=True)
-
 class GlobalConfig:
-
     """Global immutable configuration"""
 
     # Layer constraints
@@ -1049,87 +931,46 @@ OH_BAND_MAX: float = 1460.0
 # Format: (B1, C1, B2, C2, B3, C3)
 
 SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
-
     0: (
-
         0.6961663,
-
         0.0684043**2,
-
         0.4079426,
-
         0.1162414**2,
-
         0.8974794,
-
         9.896161**2,
-
     ),  # SiO2/Silica
-
     1: (
-
         1.03961212,
-
         0.00600069867,
-
         0.231792344,
-
         0.0200179144,
-
         1.01046945,
-
         103.560653,
-
     ),  # N-BK7
-
     2: (
-
         0.90963095,
-
         0.0047563071,
-
         0.37290409,
-
         0.01621977,
-
         0.92110613,
-
         105.77911,
-
     ),  # D263T
-
     3: (
-
         1.4313493,
-
         0.0726631**2,
-
         0.65054713,
-
         0.1193242**2,
-
         5.3414021,
-
         18.028251**2,
-
     ),  # Sapphire
-
     4: (
-
         0.90110328,
-
         0.0045578115,
-
         0.39734436,
-
         0.016601149,
-
         0.94615601,
-
         111.88593,
-
     ),  # B270i
-
 }
 
 # Legacy alias
@@ -1140,32 +981,20 @@ SELLMEIER_COEFFS_TUPLE = SELLMEIER_COEFFS_BY_ID
 # Substrate Definitions
 
 SUBSTRATES: dict[str, dict[str, Any]] = {
-
     "SiO2": {"id": 0, "min_lambda": 230.0},
-
     "N-BK7": {"id": 1, "min_lambda": 400.0},
-
     "D263T eco": {"id": 2, "min_lambda": 360.0},
-
     "Sapphire (Al2O3)": {"id": 3, "min_lambda": 230.0},
-
     "B270i": {"id": 4, "min_lambda": 400.0},
-
     "Silicon (Si)": {"id": -1, "min_lambda": 200.0},  # Absorbing - tabulated n,k from clues.xlsx
-
 }
 
 
 SUBSTRATE_MAPPING: dict[str, str] = {
-
     "N-BK7": "N-BK7",
-
     "SiO2": "SiO2",
-
     "Sapphire": "Sapphire",
-
     "Si-substrate": "Si-substrate",
-
 }
 
 
@@ -1173,40 +1002,25 @@ SUBSTRATE_LIST = list(SUBSTRATES.keys())
 
 
 SUBSTRATE_MIN_LAMBDA: dict[int, float] = {
-
     0: 230.0,
-
     1: 400.0,
-
     2: 360.0,
-
     3: 230.0,
-
     4: 400.0,
-
 }
 
 
 # Cauchy Presets for Materials
 
 CAUCHY_PRESETS = {
-
     "Custom": (0.0, 0.0),  # User-defined (editable)
-
     "TiO2 (H)": (2.35, 2.30),
-
     "SiO2 (L)": (1.46, 1.46),
-
     "Ta2O5 (H)": (2.10, 2.05),
-
     "MgF2 (L)": (1.38, 1.37),
-
     "N-BK7 (Sub)": (1.52, 1.51),
-
     "Al2O3 (M)": (1.63, 1.62),
-
     "ZrO2 (H)": (2.15, 2.10),
-
 }
 
 
@@ -1218,7 +1032,6 @@ CAUCHY_PRESETS = {
 
 
 class QueueHandler(logging.Handler):
-
     """
 
     Logging handler sending messages to a queue for processing
@@ -1234,22 +1047,18 @@ class QueueHandler(logging.Handler):
         self.log_queue = log_queue
 
     def emit(self, record):
-
         """Emits message to queue"""
 
         try:
-
             msg = self.format(record)
 
             self.log_queue.put(msg)
 
         except (BrokenPipeError, OSError):
-
             self.handleError(record)
 
 
 def setup_gui_logger(log_queue: queue.Queue, logger_name: str = "CERTUS") -> logging.Logger:
-
     """
 
     Configures logger with QueueHandler for GUI integration ONLY.
@@ -1293,7 +1102,6 @@ def setup_gui_logger(log_queue: queue.Queue, logger_name: str = "CERTUS") -> log
 
 
 class CertusError(Exception):
-
     """Base exception for CERTUS suite.
 
     Attributes:
@@ -1317,41 +1125,46 @@ class CertusError(Exception):
         super().__init__(self.full_message)
 
     @property
-
     def full_message(self) -> str:
 
         parts = [self.message]
 
         if self.details:
-
             parts.append(f"\n\nDetails: {self.details}")
 
         if self.suggestion:
-
             parts.append(f"\n\n💡 Suggestion: {self.suggestion}")
 
         return "".join(parts)
 
 
 class CertusOptimizationError(CertusError):
-
     """Error during optimization process."""
 
     pass
 
 
 class CertusPhysicsError(CertusError):
-
     """Error in physics calculations."""
 
     pass
 
 
 class CertusConfigError(CertusError):
-
     """Error in configuration."""
 
     pass
+
+
+# Tuple of numerical exceptions commonly caught in solvers/physics
+NUMERICAL_FAULT_EXCEPTIONS = (
+    RuntimeError,
+    FloatingPointError,
+    ValueError,
+    ZeroDivisionError,
+    OverflowError,
+    np.linalg.LinAlgError,
+)
 
 
 # =============================================================================
@@ -1365,7 +1178,6 @@ def setup_module_logging(
     module_name: str,
     log_file: Optional[str] = None,
 ) -> logging.LoggerAdapter:
-
     """
 
     Setup logging for a specific CERTUS module.
@@ -1389,7 +1201,6 @@ def setup_module_logging(
     # Generate log file name if not provided
 
     if log_file is None:
-
         log_file = f"certus_{module_name.lower()}.log"
 
     run_id = f"{module_name.lower()}-{certus_timestamp_file()}"
@@ -1402,7 +1213,6 @@ def setup_module_logging(
 
 
 def create_module_environment(module_file: str, module_name: str) -> dict[str, Any]:
-
     """
 
     Create complete environment for a CERTUS module.
@@ -1427,21 +1237,13 @@ def create_module_environment(module_file: str, module_name: str) -> dict[str, A
     logger = get_structured_logger(runtime.logger, run_id=run_id, app_id=module_name)
 
     return {
-
         "script_dir": script_dir,
-
         "logger": logger,
-
         "runtime": runtime,
-
         "run_id": run_id,
-
         "module_name": module_name,
-
         "module_file": module_file,
-
         "log_file": log_file,
-
     }
 
 
@@ -1452,7 +1254,6 @@ def bootstrap_app(
     runtime: CertusRuntime | None = None,
     return_runtime: bool = False,
 ) -> str | tuple[str, CertusRuntime]:
-
     """
 
     Standard bootstrap for all CERTUS applications.
@@ -1484,17 +1285,14 @@ def bootstrap_app(
     # Determine base directory
 
     if getattr(sys, "frozen", False):
-
         script_dir = str(Path(sys.executable).resolve().parent)
 
     else:
-
         script_dir = str(Path(app_file).resolve(strict=False).parent)
 
     # Setup path (only if not already present)
 
     if script_dir not in sys.path:
-
         sys.path.insert(0, script_dir)
 
     # Launch JIT warmup in background thread (non-blocking startup)
@@ -1504,13 +1302,11 @@ def bootstrap_app(
     def _bg_warmup():
 
         try:
-
             from certus_physics import warmup_physics
 
             warmup_physics(silent=True)
 
         except ImportError:
-
             pass
 
     _warmup_thread = threading.Thread(target=_bg_warmup, daemon=True)
@@ -1537,7 +1333,6 @@ def bootstrap_app(
 
 
 def ensure_numpy_array(data: Any, dtype: Any = None) -> np.ndarray:
-
     """
 
     Convert data to numpy array if needed.
@@ -1545,18 +1340,15 @@ def ensure_numpy_array(data: Any, dtype: Any = None) -> np.ndarray:
     """
 
     if not isinstance(data, np.ndarray):
-
         return np.array(data, dtype=dtype)
 
     elif dtype is not None and data.dtype != dtype:
-
         return data.astype(dtype)
 
     return data
 
 
 def ensure_numpy_arrays(*arrays: Any) -> tuple[np.ndarray, ...]:
-
     """
 
     Convert multiple arrays to numpy arrays.

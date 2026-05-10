@@ -4267,32 +4267,14 @@ class _SmartInitDialogMixin:
         QTimer.singleShot(0, _place_nk_editor)
 
         def run_auto(row: int, is_ln_k: bool) -> None:
-            nonlocal state
-
-            _prev = state
-            state = _SmartInitState(
-                sk=getattr(self, "smart_preview_sk_arr", sk_arr),
-                n_phys=_prev.n_phys,
-                L_nodes=_prev.L_nodes,
-                preview_d_nm=_prev.preview_d_nm,
-                best_rmse=_prev.best_rmse,
-                best_n=_prev.best_n,
-                best_L=_prev.best_L,
-                current_rmse=_prev.current_rmse,
-                current_t_th=_prev.current_t_th,
-            )
-
+            state.sk = getattr(self, "smart_preview_sk_arr", sk_arr)
             err = self._execute_smart_init_run_auto(cfg, row, is_ln_k, L_lo_g, L_hi_g, _relax_si_mono, state)
             if err:
                 QMessageBox.warning(dlg, "Smart Init  auto", f"run auto failed: {err}")
                 return
-
-            state.n_phys = state.n_phys.copy()
-            state.L_nodes = state.L_nodes.copy()
-            state.preview_d_nm = state.preview_d_nm
-
             set_slider_from_preview_d()
             do_recalc()
+
 
         def on_slider_d_changed(_iv: int) -> None:
 
@@ -4333,29 +4315,13 @@ class _SmartInitDialogMixin:
             )
 
         def recall_best() -> None:
-            nonlocal state
-
-            _prev = state
-            state = _SmartInitState(
-                sk=getattr(self, "smart_preview_sk_arr", sk_arr),
-                n_phys=_prev.n_phys,
-                L_nodes=_prev.L_nodes,
-                preview_d_nm=_prev.preview_d_nm,
-                best_rmse=_prev.best_rmse,
-                best_n=_prev.best_n,
-                best_L=_prev.best_L,
-                current_rmse=_prev.current_rmse,
-                current_t_th=_prev.current_t_th,
-            )
-
+            state.sk = getattr(self, "smart_preview_sk_arr", sk_arr)
             err = self._execute_smart_init_recall_best(state)
             if err:
                 QMessageBox.information(dlg, "Smart Init", err)
                 return
-
-            state.n_phys = state.n_phys.copy()
-            state.L_nodes = state.L_nodes.copy()
             do_recalc()
+
 
         rebuild_knot_ui(state.k_n)  # Appel initial  ici wire_hold_button est deja defini
 
@@ -4666,20 +4632,6 @@ class _SmartInitDialogMixin:
                     "chk_si_two_phase": chk_si_two_phase,
                     "relax_si_mono": _relax_si_mono,
                 }
-                nonlocal state
-
-                _prev = state
-                state = _SmartInitState(
-                    sk=_prev.sk,
-                    n_phys=_prev.n_phys,
-                    L_nodes=_prev.L_nodes,
-                    preview_d_nm=_prev.preview_d_nm,
-                    best_rmse=_prev.best_rmse,
-                    best_n=_prev.best_n,
-                    best_L=_prev.best_L,
-                    current_rmse=_prev.current_rmse,
-                    current_t_th=_prev.current_t_th,
-                )
                 self._on_smart_init_keep(dlg, cfg, state, ui_ctx)
             except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
                 logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")

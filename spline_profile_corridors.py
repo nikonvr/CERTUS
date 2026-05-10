@@ -3333,6 +3333,68 @@ def _bootstrap_pool_entry(payload: tuple[Any, ...]) -> tuple[int, dict[str, Any]
 
     return int(b), r
 
+def _resample_residuals_block(e: np.ndarray, block_len: int, rng: np.random.Generator) -> np.ndarray:
+    """Moving-block bootstrap resample of residuals (wrap-around)."""
+
+    ee = np.asarray(e, dtype=np.float64).ravel()
+    n = int(ee.size)
+    if n == 0:
+        return ee.copy()
+    L = int(max(1, min(block_len, n)))
+    if L == 1:
+        idx = rng.integers(0, n, size=n, endpoint=False)
+        return ee[idx]
+    n_blocks = int(np.ceil(n / L))
+    starts = rng.integers(0, n, size=n_blocks, endpoint=False)
+    out = np.empty(n_blocks * L, dtype=np.float64)
+    pos = 0
+    for s in starts:
+        j = (s + np.arange(L)) % n
+        out[pos : pos + L] = ee[j]
+        pos += L
+    return out[:n]
+
+
+def _theoretical_TR_from_base_result(
+    cfg: "SplineOptConfig",
+    base_result: dict,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Compute theoretical T/R from the base result n/k model."""
+
+    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
+    n_lam = np.asarray(base_result.get("n_lam", []), dtype=np.float64).ravel()
+    k_lam = np.asarray(base_result.get("k_lam", []), dtype=np.float64).ravel()
+    d_nm = float(base_result.get("d_nm", float("nan")))
+
+    if lam.size == 0 or n_lam.size != lam.size or k_lam.size != lam.size or not np.isfinite(d_nm):
+        return None, None
+
+    n_sub = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
+    if n_sub.size != lam.size:
+        return None, None
+
+    t_th: np.ndarray | None = None
+    r_th: np.ndarray | None = None
+
+    if (
+        cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH)
+        and cfg.t_exp is not None
+        and float(cfg.weight_t) > 0
+    ):
+        if cfg.t_is_ratio:
+            t_th = _ratio_theoretical_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
+        else:
+            t_th = _transmittance_absolute_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
+
+    if cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and cfg.r_exp is not None and float(cfg.weight_r) > 0:
+        if cfg.t_is_ratio:
+            r_th = _reflectance_ratio_theoretical_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
+        else:
+            r_th = _reflectance_absolute_backside_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
+
+    return t_th, r_th
+
+
 def compute_bootstrap_corridors_by_d(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -3363,83 +3425,6 @@ def compute_bootstrap_corridors_by_d(
     On failure (pickle, worker), falls back to sequential.
 
     """
-
-    def _theoretical_TR_from_base() -> tuple[np.ndarray | None, np.ndarray | None]:
-
-        lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-        n_lam = np.asarray(base_result.get("n_lam", []), dtype=np.float64).ravel()
-
-        k_lam = np.asarray(base_result.get("k_lam", []), dtype=np.float64).ravel()
-
-        d_nm = float(base_result.get("d_nm", float("nan")))
-
-        if lam.size == 0 or n_lam.size != lam.size or k_lam.size != lam.size or not np.isfinite(d_nm):
-            return None, None
-
-        n_sub = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
-
-        if n_sub.size != lam.size:
-            return None, None
-
-        t_th: np.ndarray | None = None
-
-        r_th: np.ndarray | None = None
-
-        if (
-            cfg.data_type in (DataType.TRANSMISSION, DataType.BOTH)
-            and cfg.t_exp is not None
-            and float(cfg.weight_t) > 0
-        ):
-            if cfg.t_is_ratio:
-                t_th = _ratio_theoretical_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
-
-            else:
-                t_th = _transmittance_absolute_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
-
-        if cfg.data_type in (DataType.REFLECTION, DataType.BOTH) and cfg.r_exp is not None and float(cfg.weight_r) > 0:
-            if cfg.t_is_ratio:
-                r_th = _reflectance_ratio_theoretical_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
-
-            else:
-                r_th = _reflectance_absolute_backside_from_nk(lam, n_lam, k_lam, float(d_nm), n_sub)
-
-        return t_th, r_th
-
-    def _resample_residuals(e: np.ndarray, L: int, rng: np.random.Generator) -> np.ndarray:
-
-        ee = np.asarray(e, dtype=np.float64).ravel()
-
-        n = int(ee.size)
-
-        if n == 0:
-            return ee.copy()
-
-        L = int(max(1, min(L, n)))
-
-        if L == 1:
-            idx = rng.integers(0, n, size=n, endpoint=False)
-
-            return ee[idx]
-
-        # Moving block bootstrap (wrap-around).
-
-        n_blocks = int(np.ceil(n / L))
-
-        starts = rng.integers(0, n, size=n_blocks, endpoint=False)
-
-        out = np.empty(n_blocks * L, dtype=np.float64)
-
-        pos = 0
-
-        for s in starts:
-            j = (s + np.arange(L)) % n
-
-            out[pos : pos + L] = ee[j]
-
-            pos += L
-
-        return out[:n]
 
     B = int(max(0, n_boot))
 
@@ -3563,7 +3548,7 @@ def compute_bootstrap_corridors_by_d(
     eT0, eR0 = (None, None)
 
     if mode == "residual":
-        t_th0, r_th0 = _theoretical_TR_from_base()
+        t_th0, r_th0 = _theoretical_TR_from_base_result(cfg, base_result)
 
         if t0 is not None and t_th0 is not None:
             m = np.isfinite(t0) & np.isfinite(t_th0)
@@ -3645,7 +3630,7 @@ def compute_bootstrap_corridors_by_d(
 
                 m = np.isfinite(t_b) & np.isfinite(t_th0)
 
-                e_star = _resample_residuals(eT0, blk, rng)
+                e_star = _resample_residuals_block(eT0, blk, rng)
 
                 t_b[m] = t_th0[m] + e_star[: int(np.count_nonzero(m))]
 
@@ -3654,7 +3639,7 @@ def compute_bootstrap_corridors_by_d(
 
                 m = np.isfinite(r_b) & np.isfinite(r_th0)
 
-                e_star = _resample_residuals(eR0, blk, rng)
+                e_star = _resample_residuals_block(eR0, blk, rng)
 
                 r_b[m] = r_th0[m] + e_star[: int(np.count_nonzero(m))]
 

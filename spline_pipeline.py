@@ -1403,6 +1403,131 @@ def _build_local_refine_variants(
     return out
 
 
+def _knots_cache_key(knots: np.ndarray) -> tuple[float, ...]:
+    """Round knots to 15 decimals and return as hashable tuple."""
+    arr = np.asarray(knots, dtype=np.float64).ravel()
+    return tuple(float(v) for v in np.round(arr, decimals=15))
+
+
+def _fmt_d_nm(v) -> str:
+    """Format thickness value for log messages."""
+    try:
+        dv = float(v)
+    except (TypeError, ValueError):
+        return "n/a"
+    return f"{dv:.3f} nm" if np.isfinite(dv) else "n/a"
+
+
+def _meshes_match(a: np.ndarray, b: np.ndarray) -> bool:
+    """Check if two sigma meshes are numerically identical within floating-point tolerance."""
+    a1 = np.asarray(a, dtype=np.float64).ravel()
+    b1 = np.asarray(b, dtype=np.float64).ravel()
+    if a1.size != b1.size or a1.size == 0:
+        return False
+    span = max(abs(float(b1[-1] - b1[0])), 1.0)
+    atol = max(1e-12, 1e-9 * span)
+    return bool(np.allclose(a1, b1, rtol=0.0, atol=atol))
+
+
+def _candidate_mesh_matches_target(cand: dict | None, target_knots: np.ndarray) -> bool:
+    """Check if a candidate result dict has the expected sigma mesh."""
+    if not isinstance(cand, dict):
+        return False
+    return _meshes_match(np.asarray(cand.get("sigma_knots", []), dtype=np.float64), target_knots)
+
+
+def _eval_clean_variant(
+    test_knots: np.ndarray,
+    stop_event,
+    step_eval_cache: dict,
+    cfg_prescreen,
+    cfg_candidate,
+    best_result_out: dict,
+    nominal_rmse: float,
+    tolerance: float,
+    prescreen_enabled: bool,
+    prescreen_margin_abs: float,
+    candidate_polish_maxfun: int,
+    prescreen_maxfun: int,
+    log: "logging.Logger",
+) -> tuple[dict | None, float]:
+    """Evaluate a single knot-removal variant with optional prescreen + full polish.
+
+    Returns (result_dict_or_None, rmse).
+    """
+    if stop_event.is_set():
+        return None, float("inf")
+
+    cache_key = _knots_cache_key(test_knots)
+    cached = step_eval_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    # Fast pre-screen to avoid expensive deep polish on clearly non-promising variants.
+    warm_seed = best_result_out
+    if prescreen_enabled:
+        cand_fast = insert_manual_sigma_nodes(
+            cfg_prescreen, best_result_out, stop_event,
+            np.asarray([], dtype=np.float64),
+            target_sigma_knots=test_knots, force_reopt=True, live_cb=None,
+        )
+        rmse_fast = float(cand_fast.get("rmse", float("inf")))
+        if not np.isfinite(rmse_fast):
+            log.warning(
+                "INDEX_SPLINE [AUTO_CLEAN] prescreen produced non-finite RMSE | K=%d",
+                int(np.asarray(test_knots, dtype=np.float64).size),
+            )
+            step_eval_cache[cache_key] = (None, float("inf"))
+            return step_eval_cache[cache_key]
+        if not _candidate_mesh_matches_target(cand_fast, test_knots):
+            log.warning(
+                "INDEX_SPLINE [AUTO_CLEAN] prescreen returned inconsistent mesh | K_target=%d | rmse_fast=%.8f",
+                int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_fast),
+            )
+            step_eval_cache[cache_key] = (None, rmse_fast)
+            return step_eval_cache[cache_key]
+        gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
+        if rmse_fast > gate:
+            log.debug(
+                "INDEX_SPLINE [AUTO_CLEAN] prescreen rejected variant | K=%d | rmse_fast=%.8f | gate=%.8f",
+                int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_fast), float(gate),
+            )
+            step_eval_cache[cache_key] = (None, rmse_fast)
+            return step_eval_cache[cache_key]
+        # Prescreen → full polish promotion
+        if int(candidate_polish_maxfun) <= int(prescreen_maxfun):
+            step_eval_cache[cache_key] = (cand_fast, rmse_fast)
+            return step_eval_cache[cache_key]
+        warm_seed = cand_fast
+
+    cand = insert_manual_sigma_nodes(
+        cfg_candidate, warm_seed, stop_event,
+        np.asarray([], dtype=np.float64),
+        target_sigma_knots=test_knots, force_reopt=True, live_cb=None,
+    )
+    rmse_cand = float(cand.get("rmse", float("inf")))
+    if not np.isfinite(rmse_cand):
+        log.warning(
+            "INDEX_SPLINE [AUTO_CLEAN] candidate polish produced non-finite RMSE | K=%d",
+            int(np.asarray(test_knots, dtype=np.float64).size),
+        )
+    if not _candidate_mesh_matches_target(cand, test_knots):
+        log.warning(
+            "INDEX_SPLINE [AUTO_CLEAN] candidate polish returned inconsistent mesh | K_target=%d | rmse=%.8f",
+            int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_cand),
+        )
+        step_eval_cache[cache_key] = (None, rmse_cand)
+        return step_eval_cache[cache_key]
+    log.debug(
+        "INDEX_SPLINE [AUTO_CLEAN] candidate polish done | K=%d | rmse=%.8f | delta_nominal=%+.8f | within_tol=%s",
+        int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_cand),
+        float(rmse_cand - nominal_rmse) if np.isfinite(rmse_cand) else float("nan"),
+        str(rmse_cand <= nominal_rmse + tolerance) if np.isfinite(rmse_cand) else "n/a",
+    )
+    step_eval_cache[cache_key] = (cand, rmse_cand)
+    return step_eval_cache[cache_key]
+
+
 def worker_spline_auto_clean_knots(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -1543,9 +1668,7 @@ def worker_spline_auto_clean_knots(
         pct = 99.0 * (float(progress_units_done) / float(max(progress_units_total, 1)))
         progress_cb(float(np.clip(pct, 0.0, 99.0)), str(message))
 
-    def _knots_cache_key(knots: np.ndarray) -> tuple[float, ...]:
-        arr = np.asarray(knots, dtype=np.float64).ravel()
-        return tuple(float(v) for v in np.round(arr, decimals=15))
+
 
     def _decisive_improvement_margin() -> float:
         return float(max(5.0e-6, 0.25 * float(max(tolerance, 0.0))))
@@ -1553,117 +1676,13 @@ def worker_spline_auto_clean_knots(
     def _have_decisive_local_candidate(rmse_value: float) -> bool:
         return bool(np.isfinite(rmse_value) and rmse_value <= (nominal_rmse - _decisive_improvement_margin()))
 
-    def _fmt_d_nm(v: Any) -> str:
-        try:
-            dv = float(v)
-        except (TypeError, ValueError):
-            return "n/a"
-        return f"{dv:.3f} nm" if np.isfinite(dv) else "n/a"
 
-    def _meshes_match(a: np.ndarray, b: np.ndarray) -> bool:
-        a1 = np.asarray(a, dtype=np.float64).ravel()
-        b1 = np.asarray(b, dtype=np.float64).ravel()
-        if a1.size != b1.size or a1.size == 0:
-            return False
-        span = max(abs(float(b1[-1] - b1[0])), 1.0)
-        atol = max(1e-12, 1e-9 * span)
-        return bool(np.allclose(a1, b1, rtol=0.0, atol=atol))
 
-    def _candidate_mesh_matches_target(cand: dict[str, Any] | None, target_knots: np.ndarray) -> bool:
-        if not isinstance(cand, dict):
-            return False
-        return _meshes_match(np.asarray(cand.get("sigma_knots", []), dtype=np.float64), target_knots)
 
-    def _eval_variant(test_knots: np.ndarray) -> tuple[dict[str, Any] | None, float]:
-        if stop_event.is_set():
-            return None, float("inf")
 
-        cache_key = _knots_cache_key(test_knots)
-        cached = step_eval_cache.get(cache_key)
-        if cached is not None:
-            return cached
 
-        # Fast pre-screen to avoid expensive deep polish on clearly non-promising variants.
-        warm_seed = best_result_out
-        if prescreen_enabled:
-            cand_fast = insert_manual_sigma_nodes(
-                cfg_prescreen,
-                best_result_out,
-                stop_event,
-                np.asarray([], dtype=np.float64),
-                target_sigma_knots=test_knots,
-                force_reopt=True,
-                live_cb=None,
-            )
-            rmse_fast = float(cand_fast.get("rmse", float("inf")))
-            if not np.isfinite(rmse_fast):
-                log.warning(
-                    "INDEX_SPLINE [AUTO_CLEAN] prescreen produced non-finite RMSE | K=%d",
-                    int(np.asarray(test_knots, dtype=np.float64).size),
-                )
-                step_eval_cache[cache_key] = (None, float("inf"))
-                return step_eval_cache[cache_key]
-            if not _candidate_mesh_matches_target(cand_fast, test_knots):
-                log.warning(
-                    "INDEX_SPLINE [AUTO_CLEAN] prescreen returned inconsistent mesh | K_target=%d | rmse_fast=%.8f",
-                    int(np.asarray(test_knots, dtype=np.float64).size),
-                    float(rmse_fast),
-                )
-                step_eval_cache[cache_key] = (None, rmse_fast)
-                return step_eval_cache[cache_key]
-            gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
-            if rmse_fast > gate:
-                log.debug(
-                    "INDEX_SPLINE [AUTO_CLEAN] prescreen rejected variant | K=%d | rmse_fast=%.8f | gate=%.8f",
-                    int(np.asarray(test_knots, dtype=np.float64).size),
-                    float(rmse_fast),
-                    float(gate),
-                )
-                step_eval_cache[cache_key] = (None, rmse_fast)
-                return step_eval_cache[cache_key]
-            # ── PRESCREEN → FULL POLISH PROMOTION ────────────────────────────
-            # The prescreen (120 iter) only filters out clearly hopeless variants.
-            # If candidate_polish_maxfun > prescreen_maxfun, we MUST run a full
-            # polish to get a reliable RMSE for the acceptance decision.
-            # Skipping the full polish would accept/reject on under-converged RMSE.
-            # The prescreen result is kept as a warm start for the full polish.
-            if int(candidate_polish_maxfun) <= int(prescreen_maxfun):
-                step_eval_cache[cache_key] = (cand_fast, rmse_fast)
-                return step_eval_cache[cache_key]
-            warm_seed = cand_fast
 
-        cand = insert_manual_sigma_nodes(
-            cfg_candidate,
-            warm_seed,
-            stop_event,
-            np.asarray([], dtype=np.float64),
-            target_sigma_knots=test_knots,
-            force_reopt=True,
-            live_cb=None,
-        )
-        rmse_cand = float(cand.get("rmse", float("inf")))
-        if not np.isfinite(rmse_cand):
-            log.warning(
-                "INDEX_SPLINE [AUTO_CLEAN] candidate polish produced non-finite RMSE | K=%d",
-                int(np.asarray(test_knots, dtype=np.float64).size),
-            )
-        if not _candidate_mesh_matches_target(cand, test_knots):
-            log.warning(
-                "INDEX_SPLINE [AUTO_CLEAN] candidate polish returned inconsistent mesh | K_target=%d | rmse=%.8f",
-                int(np.asarray(test_knots, dtype=np.float64).size),
-                float(rmse_cand),
-            )
-            step_eval_cache[cache_key] = (None, rmse_cand)
-            return step_eval_cache[cache_key]
-        log.debug(
-            "INDEX_SPLINE [AUTO_CLEAN] candidate polish done | K=%d | rmse=%.8f | delta_nominal=%+.8f | within_tol=%s",
-            int(np.asarray(test_knots, dtype=np.float64).size),
-            float(rmse_cand),
-            float(rmse_cand - nominal_rmse) if np.isfinite(rmse_cand) else float("nan"),
-            str(rmse_cand <= nominal_rmse + tolerance) if np.isfinite(rmse_cand) else "n/a",
-        )
-        step_eval_cache[cache_key] = (cand, rmse_cand)
-        return step_eval_cache[cache_key]
+
 
     step = 0
     while True:
@@ -1714,7 +1733,13 @@ def worker_spline_auto_clean_knots(
             # 1. Evaluate baseline first (always variants[0])
             baseline_name, baseline_knots = variants[0]
             _emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{baseline_name}]...")
-            baseline_cand, baseline_rmse = _eval_variant(baseline_knots)
+            baseline_cand, baseline_rmse = _eval_clean_variant(
+                baseline_knots, stop_event, step_eval_cache,
+                cfg_prescreen, cfg_candidate, best_result_out,
+                nominal_rmse, tolerance, prescreen_enabled,
+                prescreen_margin_abs, candidate_polish_maxfun,
+                prescreen_maxfun, log,
+            )
             if baseline_cand is None:
                 gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
                 if np.isfinite(baseline_rmse):
@@ -1768,7 +1793,13 @@ def worker_spline_auto_clean_knots(
                             break
                         _emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{vname}]...")
                         try:
-                            cand, cand_rmse = _eval_variant(tk)
+                            cand, cand_rmse = _eval_clean_variant(
+                                tk, stop_event, step_eval_cache,
+                                cfg_prescreen, cfg_candidate, best_result_out,
+                                nominal_rmse, tolerance, prescreen_enabled,
+                                prescreen_margin_abs, candidate_polish_maxfun,
+                                prescreen_maxfun, log,
+                            )
                             if cand is not None:
                                 if cand_rmse < best_cand_rmse:
                                     best_cand_rmse = cand_rmse
@@ -1820,7 +1851,13 @@ def worker_spline_auto_clean_knots(
                             break
                         _emit_progress(1, f"Step {step + 1}: 2D refinement [{vname}]...")
                         try:
-                            cand, cand_rmse = _eval_variant(tk)
+                            cand, cand_rmse = _eval_clean_variant(
+                                tk, stop_event, step_eval_cache,
+                                cfg_prescreen, cfg_candidate, best_result_out,
+                                nominal_rmse, tolerance, prescreen_enabled,
+                                prescreen_margin_abs, candidate_polish_maxfun,
+                                prescreen_maxfun, log,
+                            )
                             if cand is not None:
                                 if cand_rmse < best_cand_rmse:
                                     best_cand_rmse = cand_rmse

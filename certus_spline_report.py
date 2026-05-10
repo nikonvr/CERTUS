@@ -748,7 +748,7 @@ class SplineReportBuilder:
                 else min(0.99, float(K_MAX_LIMIT))
             )
 
-            float(min(max(k_clip_hi, k_clip_lo * 1.0001), float(K_MAX_LIMIT)))
+
 
             x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
 
@@ -795,7 +795,7 @@ class SplineReportBuilder:
                 if g is None:
                     return "N/A", float("nan")
 
-                lam_f, _sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = g
+                lam_f, _, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = g
 
                 n_sub_eff = np.asarray(n_sub_f, dtype=np.float64)
 
@@ -912,17 +912,6 @@ class SplineReportBuilder:
                 d_nm_use=d_best_export if np.isfinite(d_best_export) else None,
             )
 
-            compare_note = (
-                "L-BFGS-B spectral polish on sigma mesh (cubic spline between nodes, same objective mask). "
-                f"Solver reference (before mesh polish): RMSE={rmse_solver_txt}. "
-                f"Polished model: {best_line}."
-            )
-
-            if not has_spl_cols:
-                compare_note += (
-                    " 'Spectrum' sheet sigma-spline polish columns not filled "
-                    "(n_lam_seg_spline_sigma / k_lam_seg_spline_sigma absentes ou NaN)."
-                )
 
             lam = lam_src_full[keep]
 

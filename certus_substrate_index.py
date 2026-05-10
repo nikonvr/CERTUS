@@ -1827,7 +1827,7 @@ class IndexCore:
                 poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
 
                 if poly_seed is not None:
-                    active_terms, p_poly, _n_poly_full = poly_seed
+                    active_terms, p_poly, _ = poly_seed
 
                     lo_nm = float(np.min(wl_fit_nm))
 

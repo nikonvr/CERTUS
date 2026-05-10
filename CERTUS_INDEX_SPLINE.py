@@ -4500,7 +4500,7 @@ class _SmartInitDialogMixin:
             res = self._pick_best_smart_init_material_preset(cfg, target_sk, state.preview_d_nm, bool(_relax_si_mono))
             if res is None:
                 return
-            winner, rm_w, d_w = res
+            winner, _, d_w = res
 
             state.preview_d_nm = float(d_w)
             iw = cb_material_preset.findData(winner)

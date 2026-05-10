@@ -1031,10 +1031,10 @@ def _run_free_knot_stage(
             return 1e30
 
         if optimize_n:
-            n_l, k_l, d, _skn_a, _nn_a = _sol3_split_to_nk_masked(z)
+            n_l, k_l, d, _, _ = _sol3_split_to_nk_masked(z)
 
         else:
-            n_l, k_l, d, _LL_a = _sol3b_to_nk_masked(z)
+            n_l, k_l, d, _ = _sol3b_to_nk_masked(z)
 
         return float(
             spline_objective_mse_on_masked_grid(
@@ -1961,7 +1961,7 @@ def _run_single_spline_stage(
 
     factuel_mse_sp: float | None = None
     factuel_pen: float | None = None
-    factuel_tot: float | None = None
+
     factuel_n_pix: int | None = None
     factuel_rmse_pwl_contrast: float | None = None
 
@@ -1971,7 +1971,7 @@ def _run_single_spline_stage(
         )
         factuel_mse_sp = _fac["factuel_mse_sp"]
         factuel_pen = _fac["factuel_pen"]
-        factuel_tot = _fac["factuel_tot"]
+
         factuel_n_pix = _fac["factuel_n_pix"]
         factuel_rmse_pwl_contrast = _fac["factuel_rmse_pwl_contrast"]
 

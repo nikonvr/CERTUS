@@ -2467,7 +2467,7 @@ def _corridor_profile_walk_side(
             m_d = a_d + frac * (b_d - a_d)
             m_x0 = a_x
 
-            fitm, _okm, metricm = _best_fit_at_d(
+            fitm, _, metricm = _best_fit_at_d(
                 cfg,
                 sk=sk,
                 d_nm=float(m_d),
@@ -2596,7 +2596,7 @@ def _corridor_profile_walk_side(
         # valley without forcing the optimizer to slide down the gradient, we project n.
         x_smart_seed = _generate_iso_phase_seed(x_prev, sk, d_prev, d_try, cfg)
 
-        fit, _okfit, metricv = _best_fit_at_d(
+        fit, _, metricv = _best_fit_at_d(
             cfg,
             sk=sk,
             d_nm=float(d_try),
@@ -2714,7 +2714,7 @@ def _corridor_profile_walk_side(
             )
             pconf_retry = pconf.replace(n_starts=max(3, int(pconf.n_starts) + 2))
 
-            fit_retry, _ok_retry, _metric_retry = _best_fit_at_d(
+            fit_retry, _, _ = _best_fit_at_d(
                 cfg,
                 sk=sk,
                 d_nm=float(d_try),
@@ -4627,7 +4627,7 @@ def compute_regular_grid_rmse_profile(
     else:
         base_eff = dict(base_result)
 
-    sk, _n_phys0, _L0, d0, _meta_geom = _extract_knots_and_nodes_from_result(base_eff)
+    sk, _n_phys0, _L0, d0, _ = _extract_knots_and_nodes_from_result(base_eff)
 
     k = int(sk.size)
 
@@ -4645,7 +4645,7 @@ def compute_regular_grid_rmse_profile(
         x_nodes0 = np.concatenate((n_slice0, np.asarray(_L0, dtype=np.float64).copy()))
 
     # P1.3 FIX: Pass k_hard_lower_bound to enforce physical k >= 0 constraint
-    bounds_nodes, _x0_default = _bounds_for_nodes_only(cfg, k, k_hard_lower_bound=0.0)
+    bounds_nodes, _ = _bounds_for_nodes_only(cfg, k, k_hard_lower_bound=0.0)
 
     x_nodes0 = clip_to_bounds(np.asarray(x_nodes0, dtype=np.float64).ravel(), bounds_nodes[:, 0], bounds_nodes[:, 1])
 
@@ -4798,11 +4798,11 @@ def compute_regular_grid_rmse_profile(
     best_global_rmse = float("nan")
 
     abs_best_seen_rmse = float("inf")
-    abs_best_seen_d_nm = float("nan")
+
 
     def _touch_absolute_best(d_nm: float, rmse: float, *, tag: str) -> None:
         """On each improvement of the best RMSE seen on this grid / global_opt / P0 -> log d and RMSE (float precision)."""
-        nonlocal abs_best_seen_rmse, abs_best_seen_d_nm
+        nonlocal abs_best_seen_rmse
         if not (np.isfinite(rmse) and np.isfinite(float(d_nm))):
             return
         rf = float(rmse)
@@ -4810,7 +4810,7 @@ def compute_regular_grid_rmse_profile(
         if rf + 1e-15 >= float(abs_best_seen_rmse):
             return
         abs_best_seen_rmse = rf
-        abs_best_seen_d_nm = df
+
         log.info(
             "%s manual RMSE(d) grid | ABSOLUTE BEST (new record) | d_nm=%s | rmse=%s | tag=%s",
             _LOG_PREFIX,
@@ -6392,7 +6392,7 @@ def _setup_corridor_context(
     rmse_spectral_curves = float("nan")
 
     if n_b.size == lam_full.size and k_b.size == lam_full.size:
-        _mse_bc, rmse_sc = spectral_mse_rmse_masked_from_nk(cfg, base_eff, lam_full, n_b, k_b, float(d0))
+        _, rmse_sc = spectral_mse_rmse_masked_from_nk(cfg, base_eff, lam_full, n_b, k_b, float(d0))
 
         rmse_spectral_curves = float(rmse_sc) if np.isfinite(float(rmse_sc)) else float("nan")
 
@@ -6759,7 +6759,7 @@ def _setup_corridor_context(
 
     # Center: best-of-N. In LR mode this sets chi2_min (reference) when successful.
 
-    fit0, _ok0, metric0 = _best_fit_at_d(
+    fit0, _, metric0 = _best_fit_at_d(
         cfg,
         sk=sk,
         d_nm=float(d0),

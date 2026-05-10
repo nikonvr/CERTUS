@@ -63,6 +63,7 @@ from certus_physics import (
     calculate_bare_substrate_RT,
     batch_single_layer_T_mse,
     batch_single_layer_RT_mse,
+    _compute_single_layer_sensitivity_array,
 )
 
 
@@ -795,6 +796,14 @@ class SplinePWLObjective:
             self._pen_lam_lo = 0.0
             self._pen_lam_hi = 0.0
 
+        # ── Pre-resolved gradient config (avoid per-call dispatch) ──
+        self._wsum, self._use_t, self._use_r = _spectral_wsum_and_channels(cfg, self.t_exp_f, self.r_exp_f)
+        self._k_lo_phys = float(max(float(cfg.k_clip_lo), float(K_MIN_PHYS)))
+        self._k_hi_phys = float(cfg.k_clip_hi)
+        self._interp_mode = str(cfg.nk_profile_interp or "smooth")
+        self._weight_t = float(cfg.weight_t)
+        self._weight_r = float(cfg.weight_r)
+
         # Thread-local cache: each thread gets its own entry, preventing
         # race conditions when PGlobalOptimizer evaluates in parallel.
         self._tls = threading.local()
@@ -807,6 +816,61 @@ class SplinePWLObjective:
             return None
 
         return c
+
+    def _fast_penalty(self, n_n: np.ndarray) -> float:
+        """Inlined n-lambda-rising penalty using pre-resolved config (no getattr/asarray overhead)."""
+        w = self._pen_weight
+        if w <= 0.0 or self._pen_band is None:
+            return 0.0
+        sk = self.sigma_k
+        eps = 1e-12
+        viol = n_n[:-1] - n_n[1:]
+        ve = np.maximum(viol - self._pen_slack, 0.0)
+        # Quick check before geometry
+        if not np.any(ve > 0.0):
+            return 0.0
+        s0 = sk[:-1]
+        s1 = sk[1:]
+        valid = s1 > (s0 + eps)
+        lam_min_seg = 1.0 / np.maximum(s1, 1e-30)
+        lam_max_seg = 1.0 / np.maximum(s0, 1e-30)
+        seg_lo = np.minimum(lam_min_seg, lam_max_seg)
+        seg_hi = np.maximum(lam_min_seg, lam_max_seg)
+        in_band = valid & (seg_hi >= self._pen_lam_lo) & (seg_lo <= self._pen_lam_hi)
+        active = in_band & (viol > eps) & (ve > 0.0)
+        if not np.any(active):
+            return 0.0
+        acc = float(np.dot(ve[active], ve[active]))
+        return w * acc
+
+    def _fast_penalty_grad(self, n_n: np.ndarray) -> np.ndarray:
+        """Inlined penalty gradient using pre-resolved config (no getattr/asarray overhead)."""
+        K = n_n.size
+        g = np.zeros(K, dtype=np.float64)
+        w = self._pen_weight
+        if w <= 0.0 or self._pen_band is None or K < 2:
+            return g
+        sk = self.sigma_k
+        eps = 1e-12
+        viol = n_n[:-1] - n_n[1:]
+        ve = np.maximum(viol - self._pen_slack, 0.0)
+        if not np.any(ve > 0.0):
+            return g
+        s0 = sk[:-1]
+        s1 = sk[1:]
+        valid = s1 > (s0 + eps)
+        lam_min_seg = 1.0 / np.maximum(s1, 1e-30)
+        lam_max_seg = 1.0 / np.maximum(s0, 1e-30)
+        seg_lo = np.minimum(lam_min_seg, lam_max_seg)
+        seg_hi = np.maximum(lam_min_seg, lam_max_seg)
+        in_band = valid & (seg_hi >= self._pen_lam_lo) & (seg_lo <= self._pen_lam_hi)
+        active = in_band & (viol > eps) & (ve > 0.0)
+        if not np.any(active):
+            return g
+        dv = 2.0 * w * ve * active
+        g[:-1] += dv
+        g[1:] -= dv
+        return g
 
     def _fast_nk(self, x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Interpolate (n_lam, k_lam, n_nodes) from x using pre-cached matrix.
@@ -842,7 +906,7 @@ class SplinePWLObjective:
         # _fast_nk returns (n_lam, k_lam, n_nodes) — reuse n_nodes for penalty
         n_l, k_l, n_n = self._fast_nk(x)
 
-        pen = 0.0 if self._pure_spectral else n_lambda_rising_with_wavelength_penalty(self.cfg, self.sigma_k, n_n)
+        pen = 0.0 if self._pure_spectral else self._fast_penalty(n_n)
 
         mse_sp = spline_objective_mse_on_masked_grid(
             self.cfg,
@@ -1016,21 +1080,169 @@ class SplinePWLObjective:
         if cached is not None and "n_l" in cached:
             nk_pre = (cached["n_l"], cached["k_l"])
 
-        return compute_spline_pwl_objective_analytic_gradient(
-            self.cfg,
-            self.sigma_k,
-            self.lam_f,
-            self.sig_f,
-            self.n_sub_f,
-            self.w_t,
-            self.inv_npix,
-            self.t_exp_f,
-            self.r_exp_f,
-            x,
-            nk_profile_interp=str(self.cfg.nk_profile_interp or "smooth"),
-            include_n_lambda_rising_penalty=not self._pure_spectral,
-            nk_precomputed=nk_pre,
+        return self._compute_analytic_gradient(
+            x, nk_precomputed=nk_pre,
         )
+
+    def _compute_analytic_gradient(
+        self,
+        x: np.ndarray,
+        *,
+        nk_precomputed: tuple[np.ndarray, np.ndarray] | None = None,
+    ) -> np.ndarray | None:
+        """Fast analytic gradient using pre-resolved config and inlined penalty."""
+
+        if not spline_pwl_analytic_grad_supported(self.cfg):
+            return None
+
+        sk = self.sigma_k
+        k_nodes = self._K
+        dim = 1 + 2 * k_nodes
+        if x.size != dim or k_nodes < 2:
+            return None
+
+        lam_f = self.lam_f
+        sig_f = self.sig_f
+        n_sub_f = self.n_sub_f
+        w = self.w_t
+        n_pix = self.n_pix
+        inv_npix = self.inv_npix
+        cfg = self.cfg
+
+        wsum = self._wsum
+        use_t = self._use_t
+        use_r = self._use_r
+
+        if wsum <= 0.0:
+            return None
+
+        mode = self._interp_mode
+        S_mat = self._interp_mat
+
+        grad_n_lam = np.zeros(n_pix, dtype=np.float64)
+        grad_k_lam = np.zeros(n_pix, dtype=np.float64)
+
+        d_nm = float(x[0])
+
+        # Reuse pre-computed (n_l, k_l) when available (from __call__ cache)
+        if nk_precomputed is not None:
+            n_l, k_l = nk_precomputed
+        else:
+            n_l, k_l = nk_from_x_pwlnk(
+                x, lam_f, sk,
+                float(cfg.k_clip_lo), float(cfg.k_clip_hi),
+                sig_pre=sig_f,
+                n_mono_band_nm=cfg.n_mono_band_nm,
+                profile_interp=cfg.nk_profile_interp,
+            )
+
+        # Fused R+T kernel when both channels active (single TMM pass)
+        if use_t and use_r:
+            r_th, t_th = calculate_RT_single_layer_backside_array(lam_f, n_l, k_l, d_nm, n_sub_f)
+        else:
+            t_th = _transmittance_absolute_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_t else None
+            r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_r else None
+
+        grad = np.zeros(dim, dtype=np.float64)
+        scale = 1.0 / wsum
+        fd_eps = 1e-7
+
+        n_n = x_slice_n_to_physical_nodes(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
+
+        # Inlined penalty gradient (no getattr/asarray)
+        if not self._pure_spectral:
+            grad[1 : 1 + k_nodes] += self._fast_penalty_grad(n_n)
+
+        # Pre-compute R finite-differences vectorized
+        _dRdn_arr = _dRdk_arr = _dRdd_arr = None
+        if use_r:
+            _rp_n = _reflectance_absolute_backside_from_nk(lam_f, n_l + fd_eps, k_l, d_nm, n_sub_f)
+            _rm_n = _reflectance_absolute_backside_from_nk(lam_f, n_l - fd_eps, k_l, d_nm, n_sub_f)
+            _dRdn_arr = (_rp_n - _rm_n) / (2.0 * fd_eps)
+            _rp_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l + fd_eps, d_nm, n_sub_f)
+            _rm_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l - fd_eps, d_nm, n_sub_f)
+            _dRdk_arr = np.where(
+                k_l < fd_eps,
+                (_rp_k - r_th) / fd_eps,
+                (_rp_k - _rm_k) / (2.0 * fd_eps),
+            )
+            _rp_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm + fd_eps, n_sub_f)
+            _rm_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm - fd_eps, n_sub_f)
+            _dRdd_arr = (_rp_d - _rm_d) / (2.0 * fd_eps)
+
+        L_n = x[1 + k_nodes : 1 + 2 * k_nodes]
+        k_lo = self._k_lo_phys
+        k_hi = self._k_hi_phys
+
+        # Vectorized T-sensitivity
+        # _compute_single_layer_sensitivity_array imported at module level
+        _dTdn_arr = _dTdk_arr = _dTdd_arr = None
+        if use_t:
+            _dTdn_arr, _dTdk_arr, _, _, _dTdd_arr, _ = _compute_single_layer_sensitivity_array(
+                lam_f, n_l, k_l, d_nm, n_sub_f
+            )
+
+        # Vectorized residuals & per-pixel gradient contributions
+        gn_arr = np.zeros(n_pix, dtype=np.float64)
+        gk_arr = np.zeros(n_pix, dtype=np.float64)
+        grad_d = 0.0
+
+        if use_t and self.t_exp_f is not None and t_th is not None:
+            clip_t = np.where((t_th <= 1e-14) | (t_th >= 1.0 - 1e-14), 0.0, 1.0)
+            e_t = self.t_exp_f - t_th
+            fac_t = self._weight_t * inv_npix * scale * (-2.0)
+            gn_arr += fac_t * w * e_t * _dTdn_arr * clip_t
+            gk_arr += fac_t * w * e_t * _dTdk_arr * clip_t
+            grad_d += fac_t * float(np.dot(w, e_t * _dTdd_arr * clip_t))
+
+        if use_r and self.r_exp_f is not None and r_th is not None:
+            clip_r = np.where((r_th <= 1e-14) | (r_th >= 1.0 - 1e-14), 0.0, 1.0)
+            e_r = self.r_exp_f - r_th
+            fac_r = self._weight_r * inv_npix * scale * (-2.0)
+            gn_arr += fac_r * w * e_r * _dRdn_arr * clip_r
+            gk_arr += fac_r * w * e_r * _dRdk_arr * clip_r
+            grad_d += fac_r * float(np.dot(w, e_r * _dRdd_arr * clip_r))
+
+        grad[0] += grad_d
+
+        # Scatter per-pixel gradients into knot gradients (VECTORIZED)
+        j_arr = np.searchsorted(sk, sig_f, side="right").astype(np.intp) - 1
+        np.clip(j_arr, 0, k_nodes - 2, out=j_arr)
+        denom = sk[j_arr + 1] - sk[j_arr]
+        safe_denom = np.where(denom > 1e-18, denom, 1.0)
+        w1 = np.where(denom > 1e-18, (sig_f - sk[j_arr]) / safe_denom, 0.0)
+        w1 = np.where(sig_f <= sk[0], 0.0, w1)
+        w1 = np.where(sig_f >= sk[-1], 1.0, w1)
+        w0 = 1.0 - w1
+
+        n_unc = w0 * n_n[j_arr] + w1 * n_n[j_arr + 1]
+        L_lam_v = w0 * L_n[j_arr] + w1 * L_n[j_arr + 1]
+        k_unc = np.exp(L_lam_v)
+
+        dn_mask = ((n_unc > N_MIN_LIMIT) & (n_unc < N_MAX_LIMIT)).astype(np.float64)
+        dk_mask = ((k_unc > k_lo) & (k_unc < k_hi)).astype(np.float64)
+
+        chain_n = gn_arr * dn_mask
+        chain_k = gk_arr * dk_mask * k_unc
+
+        if mode == "pwl":
+            cn_w0 = chain_n * w0
+            cn_w1 = chain_n * w1
+            ck_w0 = chain_k * w0
+            ck_w1 = chain_k * w1
+            np.add.at(grad, j_arr + 1, cn_w0)
+            np.add.at(grad, j_arr + 2, cn_w1)
+            np.add.at(grad, j_arr + 1 + k_nodes, ck_w0)
+            np.add.at(grad, j_arr + 2 + k_nodes, ck_w1)
+        else:
+            grad_n_lam[:] = chain_n
+            grad_k_lam[:] = chain_k
+
+        if mode == "smooth":
+            grad[1 : 1 + k_nodes] += S_mat.T @ grad_n_lam
+            grad[1 + k_nodes : 1 + 2 * k_nodes] += S_mat.T @ grad_k_lam
+
+        return grad
 
 
 def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
@@ -1260,7 +1472,7 @@ def compute_spline_pwl_objective_analytic_gradient(
     k_hi = float(cfg.k_clip_hi)
 
     # ── Vectorized T-sensitivity (single Numba prange call) ──
-    from certus_physics import _compute_single_layer_sensitivity_array
+    # _compute_single_layer_sensitivity_array imported at module level
 
     _dTdn_arr = _dTdk_arr = _dTdd_arr = None
     if use_t:

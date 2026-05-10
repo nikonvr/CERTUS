@@ -3158,6 +3158,108 @@ def worker_run_corridor_profile_after_nl_choice(
     return out
 
 
+def _apply_k_floor_to_result(
+    cfg: "SplineOptConfig",
+    out: dict,
+    log: logging.Logger,
+) -> None:
+    """Enforce k >= k_clip_lo on result dict, with optional knot insertion and RMSE recomputation."""
+    _rmse_before_kfloor = float(out.get("rmse", float("nan")))
+    _sk_out = np.asarray(out.get("sigma_knots_L", out.get("sigma_knots", [])), dtype=np.float64).ravel()
+    _LL_out = np.asarray(out.get("L_nodes", []), dtype=np.float64).ravel()
+
+    if _sk_out.size < 2 or _LL_out.size != _sk_out.size:
+        return
+
+    _sk_f, _LL_f, _kf_mod = enforce_k_floor_on_nodes(_sk_out, _LL_out, k_floor=float(cfg.k_clip_lo))
+    if not _kf_mod:
+        return
+
+    log.info(
+        "k_floor enforce (final): %d nodes -> %d nodes (k_floor=%.1e)",
+        int(_sk_out.size), int(_sk_f.size), float(cfg.k_clip_lo),
+    )
+    out["L_nodes"] = _LL_f
+    out["post_s3_k_floor_applied"] = True
+    out["post_s3_k_floor_nodes_before"] = int(_sk_out.size)
+    out["post_s3_k_floor_nodes_after"] = int(_sk_f.size)
+    out["post_s3_k_floor_rmse_before"] = (
+        float(_rmse_before_kfloor) if np.isfinite(_rmse_before_kfloor) else None
+    )
+
+    if _sk_f.size != _sk_out.size:
+        _n_phys_old = np.asarray(out.get("n_nodes_physical", []), dtype=np.float64).ravel()
+        _skn_src = np.asarray(
+            out.get("sigma_knots_n", out.get("sigma_knots", _sk_out)), dtype=np.float64,
+        ).ravel()
+        if _n_phys_old.size == _skn_src.size:
+            out["n_nodes_physical"] = np.interp(_sk_f, _skn_src, _n_phys_old)
+        else:
+            log.warning(
+                "k_floor insert: n_nodes_physical size (%d) != sigma_knots_n (%d) - n not re-sampled",
+                int(_n_phys_old.size), int(_skn_src.size),
+            )
+        if "sigma_knots_L" in out:
+            out["sigma_knots_L"] = _sk_f
+        else:
+            out["sigma_knots"] = _sk_f
+        out.pop("x", None)
+
+    # Recompute k_lam and spectra
+    lam_out = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
+    sig_out = 1.0 / np.maximum(lam_out, 1e-30)
+    L_lam_out = np.interp(sig_out, _sk_f, _LL_f)
+    k_lam_out = np.exp(L_lam_out)
+    lo_k = max(float(cfg.k_clip_lo), K_MIN_PHYS)
+    np.clip(k_lam_out, lo_k, float(cfg.k_clip_hi), out=k_lam_out)
+    out["k_lam"] = k_lam_out
+
+    n_lam_out = np.asarray(out.get("n_lam", []), dtype=np.float64).ravel()
+    if n_lam_out.size == lam_out.size:
+        d_o = float(out.get("d_nm", float("nan")))
+        n_sub_o = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
+        if n_sub_o.size == lam_out.size and np.isfinite(d_o):
+            if cfg.t_is_ratio:
+                out["t_theo"] = _ratio_theoretical_from_nk(lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
+            else:
+                out["t_theo"] = _transmittance_absolute_from_nk(lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
+            if cfg.r_exp is not None:
+                if cfg.t_is_ratio:
+                    out["r_theo"] = _reflectance_ratio_theoretical_from_nk(
+                        lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
+                else:
+                    out["r_theo"] = _reflectance_absolute_backside_from_nk(
+                        lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
+            mgf = build_spline_objective_masked_grid(cfg)
+            if mgf is not None:
+                lam_f, _sf, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mgf
+                n_sub_eff_mg = np.asarray(n_sub_f_mg, dtype=np.float64)
+                nlf = np.interp(lam_f, lam_out, n_lam_out)
+                klf = np.interp(lam_f, lam_out, k_lam_out)
+                m_new = spline_objective_mse_on_masked_grid(
+                    cfg, lam_f=lam_f, n_sub_f=n_sub_eff_mg, w=w_f,
+                    inv_npix=inv_npix, t_exp_f=t_exp_f, r_exp_f=r_exp_f,
+                    n_l=nlf, k_l=klf, d=d_o,
+                )
+                out["mse"] = float(m_new)
+                out["rmse"] = float(np.sqrt(max(m_new, 0.0)))
+
+    out["post_s3_k_floor_rmse_after"] = float(out.get("rmse", float("nan")))
+    _log_spline_pipeline_json(
+        log, "worker_k_floor_enforced", seq="07b",
+        K_nodes_before=int(_sk_out.size), K_nodes_after=int(_sk_f.size),
+        k_floor=float(cfg.k_clip_lo),
+        rmse_before_kfloor=_rmse_before_kfloor if np.isfinite(_rmse_before_kfloor) else None,
+        rmse_after=float(out["rmse"]),
+    )
+    log.info(
+        "PIPELINE [07b] k_floor enforce | nodes %d->%d | RMSE %.6f -> %.6f",
+        int(_sk_out.size), int(_sk_f.size),
+        _rmse_before_kfloor if np.isfinite(_rmse_before_kfloor) else float("nan"),
+        float(out["rmse"]),
+    )
+
+
 def worker_spline_optimization(cfg: SplineOptConfig, stop_event: Event, progress_cb, live_cb=None) -> dict | None:
     """Orchestrates the full spline pipeline (SOL2 -> post-processing).
 
@@ -3404,152 +3506,7 @@ def worker_spline_optimization(cfg: SplineOptConfig, stop_event: Event, progress
 
     coord.emit(76, "k floor and spectral polish...")
 
-    _rmse_before_kfloor = float(out.get("rmse", float("nan")))
-
-    # --- Enforce k >= k_clip_lo with optional knot insertion ---
-
-    _sk_out = np.asarray(out.get("sigma_knots_L", out.get("sigma_knots", [])), dtype=np.float64).ravel()
-
-    _LL_out = np.asarray(out.get("L_nodes", []), dtype=np.float64).ravel()
-
-    if _sk_out.size >= 2 and _LL_out.size == _sk_out.size:
-        _sk_f, _LL_f, _kf_mod = enforce_k_floor_on_nodes(_sk_out, _LL_out, k_floor=float(cfg.k_clip_lo))
-
-        if _kf_mod:
-            log.info(
-                "k_floor enforce (final): %d nodes -> %d nodes (k_floor=%.1e)",
-                int(_sk_out.size),
-                int(_sk_f.size),
-                float(cfg.k_clip_lo),
-            )
-
-            out["L_nodes"] = _LL_f
-            out["post_s3_k_floor_applied"] = True
-            out["post_s3_k_floor_nodes_before"] = int(_sk_out.size)
-            out["post_s3_k_floor_nodes_after"] = int(_sk_f.size)
-            out["post_s3_k_floor_rmse_before"] = (
-                float(_rmse_before_kfloor) if np.isfinite(_rmse_before_kfloor) else None
-            )
-
-            if _sk_f.size != _sk_out.size:
-                # Re-interpolate n(sigma) onto new sigma_L; source grid = sigma_knots_n if present
-
-                _n_phys_old = np.asarray(out.get("n_nodes_physical", []), dtype=np.float64).ravel()
-
-                _skn_src = np.asarray(
-                    out.get("sigma_knots_n", out.get("sigma_knots", _sk_out)),
-                    dtype=np.float64,
-                ).ravel()
-
-                if _n_phys_old.size == _skn_src.size:
-                    out["n_nodes_physical"] = np.interp(_sk_f, _skn_src, _n_phys_old)
-
-                else:
-                    log.warning(
-                        "k_floor insert: n_nodes_physical size (%d) != sigma_knots_n (%d) - n not re-sampled",
-                        int(_n_phys_old.size),
-                        int(_skn_src.size),
-                    )
-
-                if "sigma_knots_L" in out:
-                    out["sigma_knots_L"] = _sk_f
-
-                else:
-                    out["sigma_knots"] = _sk_f
-
-                # x vector invalid if knot count changed
-
-                out.pop("x", None)
-
-            # Recompute k_lam and spectra (any _kf_mod: clamp-only or insert)
-
-            lam_out = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
-
-            sig_out = 1.0 / np.maximum(lam_out, 1e-30)
-
-            L_lam_out = np.interp(sig_out, _sk_f, _LL_f)
-
-            k_lam_out = np.exp(L_lam_out)
-
-            lo_k = max(float(cfg.k_clip_lo), K_MIN_PHYS)
-
-            np.clip(k_lam_out, lo_k, float(cfg.k_clip_hi), out=k_lam_out)
-
-            out["k_lam"] = k_lam_out
-
-            n_lam_out = np.asarray(out.get("n_lam", []), dtype=np.float64).ravel()
-
-            if n_lam_out.size == lam_out.size:
-                d_o = float(out.get("d_nm", float("nan")))
-
-                n_sub_o = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
-
-                if n_sub_o.size == lam_out.size and np.isfinite(d_o):
-                    if cfg.t_is_ratio:
-                        out["t_theo"] = _ratio_theoretical_from_nk(lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
-
-                    else:
-                        out["t_theo"] = _transmittance_absolute_from_nk(lam_out, n_lam_out, k_lam_out, d_o, n_sub_o)
-
-                    if cfg.r_exp is not None:
-                        if cfg.t_is_ratio:
-                            out["r_theo"] = _reflectance_ratio_theoretical_from_nk(
-                                lam_out, n_lam_out, k_lam_out, d_o, n_sub_o
-                            )
-
-                        else:
-                            out["r_theo"] = _reflectance_absolute_backside_from_nk(
-                                lam_out, n_lam_out, k_lam_out, d_o, n_sub_o
-                            )
-
-                    mgf = build_spline_objective_masked_grid(cfg)
-
-                    if mgf is not None:
-                        lam_f, _sf, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mgf
-
-                        n_sub_eff_mg = np.asarray(n_sub_f_mg, dtype=np.float64)
-
-                        nlf = np.interp(lam_f, lam_out, n_lam_out)
-
-                        klf = np.interp(lam_f, lam_out, k_lam_out)
-
-                        m_new = spline_objective_mse_on_masked_grid(
-                            cfg,
-                            lam_f=lam_f,
-                            n_sub_f=n_sub_eff_mg,
-                            w=w_f,
-                            inv_npix=inv_npix,
-                            t_exp_f=t_exp_f,
-                            r_exp_f=r_exp_f,
-                            n_l=nlf,
-                            k_l=klf,
-                            d=d_o,
-                        )
-
-                        out["mse"] = float(m_new)
-
-                        out["rmse"] = float(np.sqrt(max(m_new, 0.0)))
-
-            out["post_s3_k_floor_rmse_after"] = float(out.get("rmse", float("nan")))
-
-            _log_spline_pipeline_json(
-                log,
-                "worker_k_floor_enforced",
-                seq="07b",
-                K_nodes_before=int(_sk_out.size),
-                K_nodes_after=int(_sk_f.size),
-                k_floor=float(cfg.k_clip_lo),
-                rmse_before_kfloor=_rmse_before_kfloor if np.isfinite(_rmse_before_kfloor) else None,
-                rmse_after=float(out["rmse"]),
-            )
-
-            log.info(
-                "PIPELINE [07b] k_floor enforce | nodes %d->%d | RMSE %.6f -> %.6f",
-                int(_sk_out.size),
-                int(_sk_f.size),
-                _rmse_before_kfloor if np.isfinite(_rmse_before_kfloor) else float("nan"),
-                float(out["rmse"]),
-            )
+    _apply_k_floor_to_result(cfg, out, log)
 
     # --- 07c Spectral polish on sigma mesh: cubic spline only ---
 

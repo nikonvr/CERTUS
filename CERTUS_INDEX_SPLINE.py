@@ -3264,6 +3264,128 @@ class _ConfigBuilderMixin:
         return cfg
 
 
+def _build_smart_init_knot_columns(
+    k_n: int,
+    knot_h,
+    sig2_sorted: np.ndarray,
+    s2_lo_f: float,
+    stretch_fn: "Callable[[float], int]",
+    lbl_lam_cols: list,
+    lbl_sig_cols: list,
+    lbl_n_cols: list,
+    lbl_L_cols: list,
+    n_btn_pairs: list,
+    L_btn_pairs: list,
+    n_auto_btns: list,
+    L_auto_btns: list,
+) -> None:
+    """Build the per-knot widget columns for the Smart Init dialog.
+
+    Clears and rebuilds the horizontal knot bar layout with columns for each
+    sigma knot: lambda/sigma labels, n +/- buttons, ln k +/- buttons, auto btns.
+    All list arguments are mutated in-place (cleared then appended to).
+    """
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+    # Clear widget lists
+    lbl_lam_cols.clear()
+    lbl_sig_cols.clear()
+    lbl_n_cols.clear()
+    lbl_L_cols.clear()
+    n_btn_pairs.clear()
+    L_btn_pairs.clear()
+    n_auto_btns.clear()
+    L_auto_btns.clear()
+
+    knot_h.addStretch(stretch_fn(float(sig2_sorted[0] - s2_lo_f)))
+
+    for j in range(k_n):
+        col_w = QWidget()
+        cv = QVBoxLayout(col_w)
+        cv.setContentsMargins(0, 0, 0, 0)
+        cv.setSpacing(2)
+        col_w.setFixedWidth(112)
+
+        lam_l = QLabel()
+        lam_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        lam_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
+
+        sig_l = QLabel()
+        sig_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        sig_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
+
+        lbl_lam_cols.append(lam_l)
+        lbl_sig_cols.append(sig_l)
+
+        cap_n = QLabel("n")
+        cap_n.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        cap_n.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
+
+        row_n = QHBoxLayout()
+        row_n.setSpacing(1)
+
+        bm_n = QPushButton("\u2212")
+        bm_n.setFixedWidth(22)
+        val_n = QLabel()
+        val_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        val_n.setMinimumWidth(36)
+        val_n.setStyleSheet("font-size: 10px;")
+        bp_n = QPushButton("+")
+        bp_n.setFixedWidth(22)
+        b_auto_n = QPushButton("auto")
+        b_auto_n.setFixedWidth(34)
+        b_auto_n.setStyleSheet("font-size: 7px; padding: 1px 2px;")
+
+        lbl_n_cols.append(val_n)
+        row_n.addWidget(bm_n)
+        row_n.addWidget(val_n, 1)
+        row_n.addWidget(bp_n)
+        row_n.addWidget(b_auto_n)
+        n_auto_btns.append(b_auto_n)
+
+        cap_L = QLabel("ln k")
+        cap_L.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        cap_L.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
+
+        row_L = QHBoxLayout()
+        row_L.setSpacing(1)
+
+        bm_L = QPushButton("\u2212")
+        bm_L.setFixedWidth(22)
+        val_L = QLabel()
+        val_L.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        val_L.setMinimumWidth(36)
+        val_L.setStyleSheet("font-size: 10px;")
+        bp_L = QPushButton("+")
+        bp_L.setFixedWidth(22)
+        b_auto_L = QPushButton("auto")
+        b_auto_L.setFixedWidth(34)
+        b_auto_L.setStyleSheet("font-size: 7px; padding: 1px 2px;")
+
+        lbl_L_cols.append(val_L)
+        row_L.addWidget(bm_L)
+        row_L.addWidget(val_L, 1)
+        row_L.addWidget(bp_L)
+        row_L.addWidget(b_auto_L)
+        L_auto_btns.append(b_auto_L)
+
+        n_btn_pairs.append((bm_n, bp_n))
+        L_btn_pairs.append((bm_L, bp_L))
+
+        cv.addWidget(lam_l)
+        cv.addWidget(sig_l)
+        cv.addWidget(cap_n)
+        cv.addLayout(row_n)
+        cv.addWidget(cap_L)
+        cv.addLayout(row_L)
+
+        knot_h.addWidget(col_w, 0)
+
+        if j + 1 < k_n:
+            knot_h.addStretch(stretch_fn(float(sig2_sorted[j + 1] - sig2_sorted[j])))
+
+
 def _smart_init_wire_hold_button(
     btn,
     row: int,
@@ -3950,175 +4072,19 @@ class _SmartInitDialogMixin:
 
             while knot_h.count():
                 item = knot_h.takeAt(0)
-
                 if item.widget():
                     item.widget().deleteLater()
 
-            lbl_lam_cols.clear()
-
-            lbl_sig_cols.clear()
-
-            lbl_n_cols.clear()
-
-            lbl_L_cols.clear()
-
-            n_btn_pairs.clear()
-
-            L_btn_pairs.clear()
-
-            n_auto_btns.clear()
-
-            L_auto_btns.clear()
-
-            # Reconstruction des colonnes
-
             current_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
             sig2_sorted_loc = np.sort(current_sk**2)
-
-            # UPDATE DES MARQUEURS SUR LE GRAPHE (consolide)
 
             redraw_knot_lines()
 
-            knot_h.addStretch(_stretch_sig(float(sig2_sorted_loc[0] - s2_lo_f)))
-
-            for j in range(state.k_n):
-                # ... (creation widgets)
-
-                col_w = QWidget()
-
-                cv = QVBoxLayout(col_w)
-
-                cv.setContentsMargins(0, 0, 0, 0)
-
-                cv.setSpacing(2)
-
-                col_w.setFixedWidth(112)
-
-                lam_l = QLabel()
-
-                lam_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-                lam_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
-
-                sig_l = QLabel()
-
-                sig_l.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-                sig_l.setStyleSheet(f"font-size: 9px; color: {CertusTheme.TEXT_SUB};")
-
-                lbl_lam_cols.append(lam_l)
-
-                lbl_sig_cols.append(sig_l)
-
-                cap_n = QLabel("n")
-
-                cap_n.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-                cap_n.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
-
-                row_n = QHBoxLayout()
-
-                row_n.setSpacing(1)
-
-                bm_n = QPushButton("")
-
-                bm_n.setFixedWidth(22)
-
-                val_n = QLabel()
-
-                val_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-                val_n.setMinimumWidth(36)
-
-                val_n.setStyleSheet("font-size: 10px;")
-
-                bp_n = QPushButton("+")
-
-                bp_n.setFixedWidth(22)
-
-                b_auto_n = QPushButton("auto")
-
-                b_auto_n.setFixedWidth(34)
-
-                b_auto_n.setStyleSheet("font-size: 7px; padding: 1px 2px;")
-
-                lbl_n_cols.append(val_n)
-
-                row_n.addWidget(bm_n)
-
-                row_n.addWidget(val_n, 1)
-
-                row_n.addWidget(bp_n)
-
-                row_n.addWidget(b_auto_n)
-
-                n_auto_btns.append(b_auto_n)
-
-                cap_L = QLabel("ln k")
-
-                cap_L.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-
-                cap_L.setStyleSheet(f"font-size: 8px; color: {CertusTheme.TEXT_SUB};")
-
-                row_L = QHBoxLayout()
-
-                row_L.setSpacing(1)
-
-                bm_L = QPushButton("")
-
-                bm_L.setFixedWidth(22)
-
-                val_L = QLabel()
-
-                val_L.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-                val_L.setMinimumWidth(36)
-
-                val_L.setStyleSheet("font-size: 10px;")
-
-                bp_L = QPushButton("+")
-
-                bp_L.setFixedWidth(22)
-
-                b_auto_L = QPushButton("auto")
-
-                b_auto_L.setFixedWidth(34)
-
-                b_auto_L.setStyleSheet("font-size: 7px; padding: 1px 2px;")
-
-                lbl_L_cols.append(val_L)
-
-                row_L.addWidget(bm_L)
-
-                row_L.addWidget(val_L, 1)
-
-                row_L.addWidget(bp_L)
-
-                row_L.addWidget(b_auto_L)
-
-                L_auto_btns.append(b_auto_L)
-
-                n_btn_pairs.append((bm_n, bp_n))
-
-                L_btn_pairs.append((bm_L, bp_L))
-
-                cv.addWidget(lam_l)
-
-                cv.addWidget(sig_l)
-
-                cv.addWidget(cap_n)
-
-                cv.addLayout(row_n)
-
-                cv.addWidget(cap_L)
-
-                cv.addLayout(row_L)
-
-                knot_h.addWidget(col_w, 0)
-
-                if j + 1 < state.k_n:
-                    knot_h.addStretch(_stretch_sig(float(sig2_sorted_loc[j + 1] - sig2_sorted_loc[j])))
+            _build_smart_init_knot_columns(
+                state.k_n, knot_h, sig2_sorted_loc, s2_lo_f, _stretch_sig,
+                lbl_lam_cols, lbl_sig_cols, lbl_n_cols, lbl_L_cols,
+                n_btn_pairs, L_btn_pairs, n_auto_btns, L_auto_btns,
+            )
 
             # Rewire +/- / auto buttons for the current k_n sigma knots
 

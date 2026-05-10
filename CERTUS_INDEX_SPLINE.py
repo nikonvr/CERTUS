@@ -3264,6 +3264,129 @@ class _ConfigBuilderMixin:
         return cfg
 
 
+def _smart_init_refresh_nk_aux(
+    curve_n,
+    curve_pk,
+    main_vb,
+    p_extra,
+    lam_window_fn: "Callable[[], tuple[float, float]]",
+    lam_nk: np.ndarray,
+    n_lam: np.ndarray,
+    k_lam: np.ndarray,
+) -> None:
+    """Update auxiliary n(λ) and ln k(λ) plots with auto-range on the study window."""
+    curve_n.setData(lam_nk, n_lam)
+    ln_k = np.log(np.maximum(k_lam, 1e-12))
+    curve_pk.setData(lam_nk, ln_k)
+
+    lo_s, hi_s = lam_window_fn()
+    pad_l = max((hi_s - lo_s) * 0.02, 1e-6)
+
+    lam_a = np.asarray(lam_nk, dtype=np.float64).ravel()
+    n_a = np.asarray(n_lam, dtype=np.float64).ravel()
+    ln_a = np.asarray(ln_k, dtype=np.float64).ravel()
+
+    n_pts = min(lam_a.size, n_a.size, ln_a.size)
+    if n_pts <= 0:
+        return
+    lam_a, n_a, ln_a = lam_a[:n_pts], n_a[:n_pts], ln_a[:n_pts]
+
+    m = np.isfinite(lam_a) & (lam_a >= lo_s) & (lam_a <= hi_s)
+    if not np.any(m):
+        m = np.isfinite(lam_a)
+
+    main_vb.setXRange(float(lo_s - pad_l), float(hi_s + pad_l), padding=0)
+
+    nn = n_a[m]
+    nn = nn[np.isfinite(nn)]
+    if nn.size > 0:
+        n_lo, n_hi = float(np.min(nn)), float(np.max(nn))
+        pr = max((n_hi - n_lo) * 0.06, 1e-6)
+        main_vb.setYRange(n_lo - pr, n_hi + pr, padding=0)
+
+    lk = ln_a[m]
+    lk = lk[np.isfinite(lk)]
+    if lk.size > 0:
+        lk_lo, lk_hi = float(np.min(lk)), float(np.max(lk))
+        pr = max((lk_hi - lk_lo) * 0.08, 1e-6)
+        p_extra.setYRange(lk_lo - pr, lk_hi + pr, padding=0)
+
+
+def _smart_init_apply_plot_range(
+    pw,
+    lam_window_fn: "Callable[[], tuple[float, float]]",
+    x_mode_index: int,
+    sk_arr: np.ndarray,
+    lam_m: np.ndarray,
+    y_exp: np.ndarray,
+    current_t_th: np.ndarray,
+) -> None:
+    """Auto-scale the spectral plot to the study region (lambda/sigma/sigma²)."""
+    lo_s, hi_s = lam_window_fn()
+    pad_l = max((hi_s - lo_s) * 0.02, 1e-6)
+
+    if x_mode_index == 0:
+        x_lo, x_hi = float(lo_s - pad_l), float(hi_s + pad_l)
+    elif x_mode_index == 1:
+        x_lo = 1.0 / float(hi_s + pad_l)
+        x_hi = 1.0 / float(max(lo_s - pad_l, 1e-30))
+    else:
+        x_lo = (1.0 / float(hi_s + pad_l)) ** 2
+        x_hi = (1.0 / float(max(lo_s - pad_l, 1e-30))) ** 2
+
+    if x_hi < x_lo:
+        x_lo, x_hi = x_hi, x_lo
+
+    cur_sk = np.asarray(sk_arr, dtype=np.float64)
+    k_vals = (
+        1.0 / np.maximum(cur_sk, 1e-30),
+        cur_sk,
+        cur_sk ** 2,
+    )[x_mode_index]
+    kv = np.asarray(k_vals, dtype=np.float64).ravel()
+    kv = kv[np.isfinite(kv)]
+    if kv.size:
+        x_lo = min(float(x_lo), float(np.min(kv)))
+        x_hi = max(float(x_hi), float(np.max(kv)))
+
+    if x_hi < x_lo:
+        x_lo, x_hi = x_hi, x_lo
+
+    pad_x = max((x_hi - x_lo) * 0.015, 1e-24)
+
+    lam = np.asarray(lam_m, dtype=np.float64).ravel()
+    ye = np.asarray(y_exp, dtype=np.float64).ravel()
+    yt = np.asarray(current_t_th, dtype=np.float64).ravel()
+    n = int(min(lam.size, ye.size, yt.size))
+    if n <= 0:
+        return
+    lam, ye, yt = lam[:n], ye[:n], yt[:n]
+
+    m = np.isfinite(lam) & (lam >= lo_s) & (lam <= hi_s)
+    if not np.any(m):
+        m = np.isfinite(lam)
+
+    yy = np.concatenate([ye[m], yt[m]])
+    yy = yy[np.isfinite(yy)]
+
+    knot_t = _interp_t_at_lam_knots(lam_m, current_t_th, sk_arr)
+    kt = np.asarray(knot_t, dtype=np.float64).ravel()
+    kt = kt[np.isfinite(kt)]
+    if kt.size:
+        yy = np.concatenate([yy, kt]) if yy.size else kt
+
+    if yy.size == 0:
+        yy = np.array([0.0, 1.0], dtype=np.float64)
+
+    y_lo, y_hi = float(np.min(yy)), float(np.max(yy))
+    if y_hi <= y_lo:
+        y_hi = y_lo + 1e-6
+    pad_y = max((y_hi - y_lo) * 0.08, 1e-5)
+
+    pw.setXRange(float(x_lo - pad_x), float(x_hi + pad_x), padding=0)
+    pw.setYRange(float(y_lo - pad_y), float(y_hi + pad_y), padding=0)
+
+
 @dataclass
 class SmartInitState:
     sk: np.ndarray
@@ -3621,156 +3744,17 @@ class _SmartInitDialogMixin:
         _study_lambda_window_nm = lambda: _compute_study_lambda_window_nm(lam_m, cfg)  # noqa: E731
 
         def _apply_manual_spectrum_plot_range() -> None:
-            """Auto scales centered on the study region (lambda or sigma / sigma^2), not the full axis span."""
-
-            lo_s, hi_s = _study_lambda_window_nm()
-
-            pad_l = max((hi_s - lo_s) * 0.02, 1e-6)
-
-            mode = cb_x_main.currentIndex()
-
-            if mode == 0:
-                x_lo, x_hi = float(lo_s - pad_l), float(hi_s + pad_l)
-
-            elif mode == 1:
-                x_lo = 1.0 / float(hi_s + pad_l)
-
-                x_hi = 1.0 / float(max(lo_s - pad_l, 1e-30))
-
-            else:
-                x_lo = (1.0 / float(hi_s + pad_l)) ** 2
-
-                x_hi = (1.0 / float(max(lo_s - pad_l, 1e-30))) ** 2
-
-            if x_hi < x_lo:
-                x_lo, x_hi = x_hi, x_lo
-
-            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            k_vals = (
-                1.0 / np.maximum(cur_sk, 1e-30),
-                np.asarray(cur_sk, dtype=np.float64),
-                np.asarray(cur_sk, dtype=np.float64) ** 2,
-            )[mode]
-
-            kv = np.asarray(k_vals, dtype=np.float64).ravel()
-
-            kv = kv[np.isfinite(kv)]
-
-            if kv.size:
-                x_lo = min(float(x_lo), float(np.min(kv)))
-
-                x_hi = max(float(x_hi), float(np.max(kv)))
-
-            if x_hi < x_lo:
-                x_lo, x_hi = x_hi, x_lo
-
-            pad_x = max((x_hi - x_lo) * 0.015, 1e-24)
-
-            lam = np.asarray(lam_m, dtype=np.float64).ravel()
-
-            ye = np.asarray(y_exp, dtype=np.float64).ravel()
-
-            yt = np.asarray(state.current_t_th, dtype=np.float64).ravel()
-
-            n = int(min(lam.size, ye.size, yt.size))
-
-            if n <= 0:
-                return
-
-            lam, ye, yt = lam[:n], ye[:n], yt[:n]
-
-            m = np.isfinite(lam) & (lam >= lo_s) & (lam <= hi_s)
-
-            if not np.any(m):
-                m = np.isfinite(lam)
-
-            yy = np.concatenate([ye[m], yt[m]])
-
-            yy = yy[np.isfinite(yy)]
-
-            cur_sk2 = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            knot_t = _interp_t_at_lam_knots(lam_m, state.current_t_th, cur_sk2)
-
-            kt = np.asarray(knot_t, dtype=np.float64).ravel()
-
-            kt = kt[np.isfinite(kt)]
-
-            if kt.size:
-                yy = np.concatenate([yy, kt]) if yy.size else kt
-
-            if yy.size == 0:
-                yy = np.array([0.0, 1.0], dtype=np.float64)
-
-            y_lo, y_hi = float(np.min(yy)), float(np.max(yy))
-
-            if y_hi <= y_lo:
-                y_hi = y_lo + 1e-6
-
-            pad_y = max((y_hi - y_lo) * 0.08, 1e-5)
-
-            pw.setXRange(float(x_lo - pad_x), float(x_hi + pad_x), padding=0)
-
-            pw.setYRange(float(y_lo - pad_y), float(y_hi + pad_y), padding=0)
+            _smart_init_apply_plot_range(
+                pw, _study_lambda_window_nm, cb_x_main.currentIndex(),
+                getattr(self, "smart_preview_sk_arr", sk), lam_m, y_exp,
+                state.current_t_th,
+            )
 
         def refresh_nk_plots_aux(lam_nk: np.ndarray, n_lam: np.ndarray, k_lam: np.ndarray) -> None:
-
-            curve_n.setData(lam_nk, n_lam)
-
-            ln_k = np.log(np.maximum(k_lam, 1e-12))
-
-            curve_pk.setData(lam_nk, ln_k)
-
-            lo_s, hi_s = _study_lambda_window_nm()
-
-            pad_l = max((hi_s - lo_s) * 0.02, 1e-6)
-
-            lam_a = np.asarray(lam_nk, dtype=np.float64).ravel()
-
-            n_a = np.asarray(n_lam, dtype=np.float64).ravel()
-
-            ln_a = np.asarray(ln_k, dtype=np.float64).ravel()
-
-            n_pts = min(lam_a.size, n_a.size, ln_a.size)
-
-            if n_pts <= 0:
-                return
-
-            lam_a = lam_a[:n_pts]
-
-            n_a = n_a[:n_pts]
-
-            ln_a = ln_a[:n_pts]
-
-            m = np.isfinite(lam_a) & (lam_a >= lo_s) & (lam_a <= hi_s)
-
-            if not np.any(m):
-                m = np.isfinite(lam_a)
-
-            main_vb.setXRange(float(lo_s - pad_l), float(hi_s + pad_l), padding=0)
-
-            nn = n_a[m]
-
-            nn = nn[np.isfinite(nn)]
-
-            if nn.size > 0:
-                n_lo, n_hi = float(np.min(nn)), float(np.max(nn))
-
-                pr = max((n_hi - n_lo) * 0.06, 1e-6)
-
-                main_vb.setYRange(n_lo - pr, n_hi + pr, padding=0)
-
-            lk = ln_a[m]
-
-            lk = lk[np.isfinite(lk)]
-
-            if lk.size > 0:
-                lk_lo, lk_hi = float(np.min(lk)), float(np.max(lk))
-
-                pr = max((lk_hi - lk_lo) * 0.08, 1e-6)
-
-                p_extra.setYRange(lk_lo - pr, lk_hi + pr, padding=0)
+            _smart_init_refresh_nk_aux(
+                curve_n, curve_pk, main_vb, p_extra,
+                _study_lambda_window_nm, lam_nk, n_lam, k_lam,
+            )
 
         # --- NEW : LIVE INDEX MONITORING ---
 

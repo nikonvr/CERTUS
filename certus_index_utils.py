@@ -53,19 +53,22 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_pts = len(lam)
 
-    thicknesses = np.array([float(d_nm)], dtype=np.float64)
+    _THICK_BUF[0] = float(d_nm)
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
     # Calcul exact R et T (avec backside)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     # T du substrate nu (avec backside) - Securite 1e-7 pour eviter NaN
 
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 
     return t_film_tot / t_sub_nu
+
+
+_THICK_BUF = np.empty(1, dtype=np.float64)  # Pre-allocated, rewritten in-place
 
 
 def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
@@ -77,15 +80,13 @@ def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     """
 
-    n_pts = len(lam)
+    _THICK_BUF[0] = float(d_nm)
 
-    thicknesses = np.array([float(d_nm)], dtype=np.float64)
-
-    n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
+    n_layers_all = (n_l - 1j * k_l).reshape(len(lam), 1)
 
     # Calcul exact R et T (avec backside)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     return t_film_tot
 
@@ -101,11 +102,11 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_pts = len(lam)
 
-    thicknesses = np.array([float(d_nm)], dtype=np.float64)
+    _THICK_BUF[0] = float(d_nm)
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    r_film_tot, t_film_tot = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam, with_backside=True)
+    r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 

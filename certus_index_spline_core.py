@@ -530,11 +530,12 @@ def _reflectance_absolute_backside_from_nk(
 
     n_pts = int(lam_nm.size)
 
-    thicknesses = np.array([float(d_nm)], dtype=np.float64)
+    _thick = np.empty(1, dtype=np.float64)
+    _thick[0] = float(d_nm)
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    r_th, _ = calculate_RT_vectorized_real(thicknesses, n_layers_all, n_sub, lam_nm, with_backside=True)
+    r_th, _ = calculate_RT_vectorized_real(_thick, n_layers_all, n_sub, lam_nm, with_backside=True)
 
     return np.asarray(r_th, dtype=np.float64).ravel()
 

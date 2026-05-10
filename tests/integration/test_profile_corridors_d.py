@@ -103,16 +103,22 @@ from spline_profile_corridors import (
 
 
 
-# --- Fast suite defaults (total runtime target ~30s) ---
+# --- Fast suite defaults (total runtime target ~15-20s) ---
+# ── PARE-FEU ──────────────────────────────────────────────────────────────────
+# Ces budgets sont volontairement serrés pour la CI.
+# Les tests vérifient la STRUCTURE des résultats (clés, shapes, intervalles),
+# PAS la convergence numérique exacte.
+# Si un test échoue après réduction : augmenter son n= local, PAS ces globaux.
+# ──────────────────────────────────────────────────────────────────────────────
 
 
-_LAM_N = 22
+_LAM_N = 14
 
 
 _N_SEG = 5
 
 
-_POLISH = 300  # cfg polish_maxfun (production floor for refits is bypassed below in tests)
+_POLISH = 150  # cfg polish_maxfun (production floor for refits is bypassed below in tests)
 
 
 

@@ -6209,57 +6209,10 @@ def _compute_corridor_rmse_threshold(
     return rmse_thresh
 
 
-def _setup_corridor_context(
-    cfg: SplineOptConfig,
-    base_result: dict,
-    *,
-    pconf: ProfileCorridorConfig | None = None,
-    log_coaching: bool = True,
-    profile_polish_maxfun: int | None = None,
-    live_cb: Any | None = None,
-) -> CorridorProfileContext | dict[str, Any]:
-    """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).
 
-    Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
-
-    """
-
-    pconf = pconf or ProfileCorridorConfig()
-
-    if not bool(pconf.enabled):
-        return {}
-
-    maxfun_prof = int(corridor_profile_refit_maxfun(cfg, profile_polish_maxfun))
-
-    t0 = time.perf_counter()
-
-    lam_full = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-    use_lr = str(getattr(pconf, "mode", "alpha")).strip().lower() == "lr"
-
-    rmse_thr_sub = str(getattr(pconf, "rmse_threshold_mode", "alpha") or "alpha").strip().lower()
-
-    use_abs_delta = (not use_lr) and rmse_thr_sub in (
-        "abs_delta",
-        "alpha_plus_delta",
-        "abs_delta_adaptive",
-        "alpha_plus_adaptive_delta",
-    )
-    use_alpha_factor = rmse_thr_sub in ("alpha_plus_delta", "alpha_plus_adaptive_delta")
-    use_adaptive_abs_delta = (not use_lr) and rmse_thr_sub in ("abs_delta_adaptive", "alpha_plus_adaptive_delta")
-
-    tol_abs = float(max(float(getattr(pconf, "rmse_abs_tolerance", 2.5e-4) or 0.0), 0.0))
-
-    if use_abs_delta:
-        log.info(
-            "%s Threshold mode resolved early | rmse_threshold_mode=%s | delta_mode=%s | alpha_factor=%s | fixed_delta_nominal=%.6f",
-            _LOG_PREFIX,
-            str(rmse_thr_sub),
-            "adaptive(local parabola+roughness)" if use_adaptive_abs_delta else "fixed(abs_delta)",
-            "on" if use_alpha_factor else "off",
-            float(tol_abs),
-        )
-
+def _prep_corridor_base_eff(
+    cfg, base_result, pconf, use_abs_delta, use_lr
+):
     scientific_nominal = bool(getattr(pconf, "scientific_nominal_corridor", True)) and use_abs_delta and (not use_lr)
 
     nom_pack: dict[str, Any] | None = None
@@ -6382,6 +6335,257 @@ def _setup_corridor_context(
         )
 
     mse_seed0, rmse_seed0 = _spectral_rmse_at_packed_nodes(cfg, base_eff, sk, float(d0), x_nodes0)
+    return (
+        base_eff, sk, n_nodes_phys0, L_nodes0, d0, _prof_geom,
+        x_nodes0, corridor_seed_x_source, bounds_nodes, x0_default,
+        mse_seed0, rmse_seed0, scientific_nominal, nom_pack, sk_n_log,
+    )
+
+def _log_corridor_start_config(
+    cfg, pconf, use_abs_delta, k, d0, rmse_opt, rmse_ref_tag, rmse_thr_sub,
+    use_adaptive_abs_delta, tol_abs, rmse_thresh, maxfun_prof, scientific_nominal,
+    use_lr, delta_chi2, sig_t, sig_r, sigma_t_f_hetero, sigma_r_f_hetero
+):
+    if use_abs_delta:
+        log.info(
+            "%s Start | K_sigma=%d | d_opt=%.6f nm | RMSE_ref=%.8f (%s) | threshold_mode=%s | Delta_mode=%s | absolute threshold RMSE <= %.8f + Delta=%.6f -> %.8f | "
+            "step=%.4g nm | span=%.4g nm | max_steps/side=%d | refine=%s tol=%.4g nm it=%d | nk_profile=%s | mono=%s | "
+            "wT=%.4g wR=%.4g | rmse_fit_lambda_nm=%s",
+            _LOG_PREFIX,
+            int(k),
+            float(d0),
+            float(rmse_opt),
+            str(rmse_ref_tag),
+            str(rmse_thr_sub),
+            "adaptive(local; effective Delta logged after center refit)" if use_adaptive_abs_delta else "fixed",
+            float(rmse_opt),
+            float(tol_abs),
+            float(rmse_thresh),
+            float(pconf.step_nm),
+            float(pconf.max_span_nm),
+            int(pconf.max_steps_each_side),
+            bool(pconf.refine_boundary),
+            float(pconf.refine_tol_nm),
+            int(pconf.refine_max_iter),
+            str(getattr(cfg, "nk_profile_interp", "smooth")),
+            str(getattr(cfg, "n_mono_band_nm", None)),
+            float(getattr(cfg, "weight_t", 0.0)),
+            float(getattr(cfg, "weight_r", 0.0)),
+            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
+        )
+
+    else:
+        log.info(
+            "%s Start | K_sigma=%d | d_opt=%.6f nm | RMSE_ref=%.8f (%s) | alpha×RMSE threshold (alpha=%.3f -> %.8f) | "
+            "step=%.4g nm | span=%.4g nm | max_steps/side=%d | refine=%s tol=%.4g nm it=%d | nk_profile=%s | mono=%s | "
+            "wT=%.4g wR=%.4g | rmse_fit_lambda_nm=%s",
+            _LOG_PREFIX,
+            int(k),
+            float(d0),
+            float(rmse_opt),
+            str(rmse_ref_tag),
+            float(pconf.rmse_alpha),
+            float(rmse_thresh),
+            float(pconf.step_nm),
+            float(pconf.max_span_nm),
+            int(pconf.max_steps_each_side),
+            bool(pconf.refine_boundary),
+            float(pconf.refine_tol_nm),
+            int(pconf.refine_max_iter),
+            str(getattr(cfg, "nk_profile_interp", "smooth")),
+            str(getattr(cfg, "n_mono_band_nm", None)),
+            float(getattr(cfg, "weight_t", 0.0)),
+            float(getattr(cfg, "weight_r", 0.0)),
+            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
+        )
+
+    log.info(
+        "%s L-BFGS-B budget per refit (profiling): maxfun=%d (main run polish=%d)",
+        _LOG_PREFIX,
+        maxfun_prof,
+        int(cfg.polish_maxfun),
+    )
+
+    if maxfun_prof < 300:
+        log.warning(
+            "%s Corridor profiling uses a very small refit budget (maxfun=%d). Profiling robustness may degrade because fixed-d refits can stop before fully relaxing n,L.",
+            _LOG_PREFIX,
+            int(maxfun_prof),
+        )
+
+    if use_abs_delta:
+        if scientific_nominal:
+            log.info(
+                "%s Reminder (scientific corridor): RMSE_ref = **spectral_rmse_best_value** (best polished model); "
+                "threshold = RMSE_ref + Delta; nominal curve included **without** corrective envelope widening.",
+                _LOG_PREFIX,
+            )
+
+        else:
+            log.info(
+                "%s Reminder (absolute threshold): RMSE_ref = masked spectrum for **n_lam/k_lam** curves from corridor base. "
+                "No automatic threshold lift; refits must stay <= RMSE_ref + Delta.",
+                _LOG_PREFIX,
+            )
+
+    else:
+        log.info(
+            "%s Reminder: RMSE_ref (above) = spectrum for the **solver** solution (fixed nodes). "
+            "Each « best-of » / refit RMSE = **n,L** re-optimization at fixed d (budget/jitter) -> can be **> RMSE_ref**; "
+            "the alpha×RMSE threshold may then track the **center refit** (center_refit fallback or automatic lift).",
+            _LOG_PREFIX,
+        )
+
+    if use_lr:
+        log.info(
+            "%s Mode LR | conf=%.4f -> Deltaχ²=%.6f | sigma_T=%.6g sigma_R=%.6g %s",
+            _LOG_PREFIX,
+            float(pconf.lr_conf_level),
+            float(delta_chi2),
+            float(sig_t),
+            float(sig_r),
+            "(+sigma_i residual)" if (sigma_t_f_hetero is not None or sigma_r_f_hetero is not None) else "(constants)",
+        )
+
+def _eval_corridor_threshold_fallback(
+    pconf, use_lr, use_abs_delta, rm_c, rmse_thresh_active, rmse_opt,
+    threshold_basis_eff, rmse_thresh
+):
+    auto_relaxed_alpha = False
+    threshold_fallback_reason = ""
+    if (
+        (not use_lr)
+        and (not use_abs_delta)
+        and bool(getattr(pconf, "auto_relax_threshold_to_include_center", True))
+        and np.isfinite(rm_c)
+        and np.isfinite(rmse_thresh_active)
+    ):
+        basis = threshold_basis_eff
+
+        rmse_nom = float(rmse_opt)
+
+        rmse_ctr = float(rm_c)
+
+        rmse_basis = rmse_nom
+
+        if basis == "center_refit":
+            rmse_basis = rmse_ctr
+
+        elif basis == "max":
+            rmse_basis = max(rmse_nom, rmse_ctr)
+
+        else:
+            basis = "nominal"
+
+            rmse_basis = rmse_nom
+
+        rmse_thresh_active = float(pconf.rmse_alpha) * float(rmse_basis)
+
+        ratio_guard = float(max(getattr(pconf, "threshold_ratio_guard", 1.25) or 1.25, 1.0))
+
+        ratio_ctr = float(rmse_ctr / max(rmse_nom, 1e-30)) if np.isfinite(rmse_nom) and rmse_nom > 0 else float("inf")
+
+        if ratio_ctr > ratio_guard and basis != "center_refit":
+            rmse_thresh_active = float(pconf.rmse_alpha) * float(rmse_ctr)
+
+            threshold_fallback_reason = f"center_refit_ratio_guard({ratio_ctr:.3f}>{ratio_guard:.3f})"
+
+            basis = "center_refit"
+
+            log.info(
+                "%s RMSE threshold fallback: RMSE_refit_center/RMSE_ref=%.3f > guard=%.3f -> basis forced to **center_refit**: "
+                "alpha×RMSE is now based on the **center refit** (not RMSE_ref alone), so d_opt is not rejected when only the "
+                "nodes-only subproblem is worse than the full solver run.",
+                _LOG_PREFIX,
+                ratio_ctr,
+                ratio_guard,
+            )
+
+        threshold_basis_eff = basis
+
+        eps_ar = float(max(getattr(pconf, "auto_relax_epsilon", 0.002) or 0.0, 1e-12))
+
+        relax_fac_cap = float(max(getattr(pconf, "auto_relax_max_factor", 1.5) or 1.5, 1.0))
+
+        need = float(rm_c) * (1.0 + eps_ar)
+
+        max_allowed = float(rmse_thresh) * relax_fac_cap if np.isfinite(rmse_thresh) else need
+
+        if need > rmse_thresh_active:
+            rmse_thresh_active = min(need, max_allowed)
+
+            auto_relaxed_alpha = True
+
+            log.info(
+                "%s RMSE threshold auto-lifted: nominal alpha×RMSE_ref=%.8f -> effective=%.8f "
+                '(center refit RMSE=%.8f; n,L refit at fixed d ≠ solver "segments" RMSE; threshold adjusted to include center).',
+                _LOG_PREFIX,
+                float(rmse_thresh),
+                float(rmse_thresh_active),
+                float(rm_c),
+            )
+    return rmse_thresh_active, auto_relaxed_alpha, threshold_basis_eff, threshold_fallback_reason
+
+def _setup_corridor_context(
+    cfg: SplineOptConfig,
+    base_result: dict,
+    *,
+    pconf: ProfileCorridorConfig | None = None,
+    log_coaching: bool = True,
+    profile_polish_maxfun: int | None = None,
+    live_cb: Any | None = None,
+) -> CorridorProfileContext | dict[str, Any]:
+    """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).
+
+    Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
+
+    """
+
+    pconf = pconf or ProfileCorridorConfig()
+
+    if not bool(pconf.enabled):
+        return {}
+
+    maxfun_prof = int(corridor_profile_refit_maxfun(cfg, profile_polish_maxfun))
+
+    t0 = time.perf_counter()
+
+    lam_full = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
+
+    use_lr = str(getattr(pconf, "mode", "alpha")).strip().lower() == "lr"
+
+    rmse_thr_sub = str(getattr(pconf, "rmse_threshold_mode", "alpha") or "alpha").strip().lower()
+
+    use_abs_delta = (not use_lr) and rmse_thr_sub in (
+        "abs_delta",
+        "alpha_plus_delta",
+        "abs_delta_adaptive",
+        "alpha_plus_adaptive_delta",
+    )
+    use_alpha_factor = rmse_thr_sub in ("alpha_plus_delta", "alpha_plus_adaptive_delta")
+    use_adaptive_abs_delta = (not use_lr) and rmse_thr_sub in ("abs_delta_adaptive", "alpha_plus_adaptive_delta")
+
+    tol_abs = float(max(float(getattr(pconf, "rmse_abs_tolerance", 2.5e-4) or 0.0), 0.0))
+
+    if use_abs_delta:
+        log.info(
+            "%s Threshold mode resolved early | rmse_threshold_mode=%s | delta_mode=%s | alpha_factor=%s | fixed_delta_nominal=%.6f",
+            _LOG_PREFIX,
+            str(rmse_thr_sub),
+            "adaptive(local parabola+roughness)" if use_adaptive_abs_delta else "fixed(abs_delta)",
+            "on" if use_alpha_factor else "off",
+            float(tol_abs),
+        )
+
+    (
+        base_eff, sk, n_nodes_phys0, L_nodes0, d0, _prof_geom,
+        x_nodes0, corridor_seed_x_source, bounds_nodes, x0_default,
+        mse_seed0, rmse_seed0, scientific_nominal, nom_pack, sk_n_log,
+    ) = _prep_corridor_base_eff(
+        cfg=cfg, base_result=base_result, pconf=pconf,
+        use_abs_delta=use_abs_delta, use_lr=use_lr
+    )
+    k = int(sk.size)
 
     n_b = np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel()
 
@@ -6499,106 +6703,14 @@ def _setup_corridor_context(
         use_abs_delta=bool(use_abs_delta),
     )
 
-    if use_abs_delta:
-        log.info(
-            "%s Start | K_sigma=%d | d_opt=%.6f nm | RMSE_ref=%.8f (%s) | threshold_mode=%s | Delta_mode=%s | absolute threshold RMSE <= %.8f + Delta=%.6f -> %.8f | "
-            "step=%.4g nm | span=%.4g nm | max_steps/side=%d | refine=%s tol=%.4g nm it=%d | nk_profile=%s | mono=%s | "
-            "wT=%.4g wR=%.4g | rmse_fit_lambda_nm=%s",
-            _LOG_PREFIX,
-            int(k),
-            float(d0),
-            float(rmse_opt),
-            str(rmse_ref_tag),
-            str(rmse_thr_sub),
-            "adaptive(local; effective Delta logged after center refit)" if use_adaptive_abs_delta else "fixed",
-            float(rmse_opt),
-            float(tol_abs),
-            float(rmse_thresh),
-            float(pconf.step_nm),
-            float(pconf.max_span_nm),
-            int(pconf.max_steps_each_side),
-            bool(pconf.refine_boundary),
-            float(pconf.refine_tol_nm),
-            int(pconf.refine_max_iter),
-            str(getattr(cfg, "nk_profile_interp", "smooth")),
-            str(getattr(cfg, "n_mono_band_nm", None)),
-            float(getattr(cfg, "weight_t", 0.0)),
-            float(getattr(cfg, "weight_r", 0.0)),
-            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
-        )
-
-    else:
-        log.info(
-            "%s Start | K_sigma=%d | d_opt=%.6f nm | RMSE_ref=%.8f (%s) | alpha×RMSE threshold (alpha=%.3f -> %.8f) | "
-            "step=%.4g nm | span=%.4g nm | max_steps/side=%d | refine=%s tol=%.4g nm it=%d | nk_profile=%s | mono=%s | "
-            "wT=%.4g wR=%.4g | rmse_fit_lambda_nm=%s",
-            _LOG_PREFIX,
-            int(k),
-            float(d0),
-            float(rmse_opt),
-            str(rmse_ref_tag),
-            float(pconf.rmse_alpha),
-            float(rmse_thresh),
-            float(pconf.step_nm),
-            float(pconf.max_span_nm),
-            int(pconf.max_steps_each_side),
-            bool(pconf.refine_boundary),
-            float(pconf.refine_tol_nm),
-            int(pconf.refine_max_iter),
-            str(getattr(cfg, "nk_profile_interp", "smooth")),
-            str(getattr(cfg, "n_mono_band_nm", None)),
-            float(getattr(cfg, "weight_t", 0.0)),
-            float(getattr(cfg, "weight_r", 0.0)),
-            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
-        )
-
-    log.info(
-        "%s L-BFGS-B budget per refit (profiling): maxfun=%d (main run polish=%d)",
-        _LOG_PREFIX,
-        maxfun_prof,
-        int(cfg.polish_maxfun),
+    _log_corridor_start_config(
+        cfg=cfg, pconf=pconf, use_abs_delta=use_abs_delta, k=k, d0=float(d0),
+        rmse_opt=float(rmse_opt), rmse_ref_tag=str(rmse_ref_tag), rmse_thr_sub=str(rmse_thr_sub),
+        use_adaptive_abs_delta=use_adaptive_abs_delta, tol_abs=float(tol_abs),
+        rmse_thresh=float(rmse_thresh), maxfun_prof=maxfun_prof, scientific_nominal=scientific_nominal,
+        use_lr=use_lr, delta_chi2=float(delta_chi2), sig_t=float(sig_t), sig_r=float(sig_r),
+        sigma_t_f_hetero=sigma_t_f_hetero, sigma_r_f_hetero=sigma_r_f_hetero,
     )
-
-    if maxfun_prof < 300:
-        log.warning(
-            "%s Corridor profiling uses a very small refit budget (maxfun=%d). Profiling robustness may degrade because fixed-d refits can stop before fully relaxing n,L.",
-            _LOG_PREFIX,
-            int(maxfun_prof),
-        )
-
-    if use_abs_delta:
-        if scientific_nominal:
-            log.info(
-                "%s Reminder (scientific corridor): RMSE_ref = **spectral_rmse_best_value** (best polished model); "
-                "threshold = RMSE_ref + Delta; nominal curve included **without** corrective envelope widening.",
-                _LOG_PREFIX,
-            )
-
-        else:
-            log.info(
-                "%s Reminder (absolute threshold): RMSE_ref = masked spectrum for **n_lam/k_lam** curves from corridor base. "
-                "No automatic threshold lift; refits must stay <= RMSE_ref + Delta.",
-                _LOG_PREFIX,
-            )
-
-    else:
-        log.info(
-            "%s Reminder: RMSE_ref (above) = spectrum for the **solver** solution (fixed nodes). "
-            "Each « best-of » / refit RMSE = **n,L** re-optimization at fixed d (budget/jitter) -> can be **> RMSE_ref**; "
-            "the alpha×RMSE threshold may then track the **center refit** (center_refit fallback or automatic lift).",
-            _LOG_PREFIX,
-        )
-
-    if use_lr:
-        log.info(
-            "%s Mode LR | conf=%.4f -> Deltaχ²=%.6f | sigma_T=%.6g sigma_R=%.6g %s",
-            _LOG_PREFIX,
-            float(pconf.lr_conf_level),
-            float(delta_chi2),
-            float(sig_t),
-            float(sig_r),
-            "(+sigma_i residual)" if (sigma_t_f_hetero is not None or sigma_r_f_hetero is not None) else "(constants)",
-        )
 
     # Store valid solutions.
 
@@ -6868,77 +6980,13 @@ def _setup_corridor_context(
                 float(tol_abs),
             )
 
-    if (
-        (not use_lr)
-        and (not use_abs_delta)
-        and bool(getattr(pconf, "auto_relax_threshold_to_include_center", True))
-        and np.isfinite(rm_c)
-        and np.isfinite(rmse_thresh_active)
-    ):
-        basis = threshold_basis_eff
-
-        rmse_nom = float(rmse_opt)
-
-        rmse_ctr = float(rm_c)
-
-        rmse_basis = rmse_nom
-
-        if basis == "center_refit":
-            rmse_basis = rmse_ctr
-
-        elif basis == "max":
-            rmse_basis = max(rmse_nom, rmse_ctr)
-
-        else:
-            basis = "nominal"
-
-            rmse_basis = rmse_nom
-
-        rmse_thresh_active = float(pconf.rmse_alpha) * float(rmse_basis)
-
-        ratio_guard = float(max(getattr(pconf, "threshold_ratio_guard", 1.25) or 1.25, 1.0))
-
-        ratio_ctr = float(rmse_ctr / max(rmse_nom, 1e-30)) if np.isfinite(rmse_nom) and rmse_nom > 0 else float("inf")
-
-        if ratio_ctr > ratio_guard and basis != "center_refit":
-            rmse_thresh_active = float(pconf.rmse_alpha) * float(rmse_ctr)
-
-            threshold_fallback_reason = f"center_refit_ratio_guard({ratio_ctr:.3f}>{ratio_guard:.3f})"
-
-            basis = "center_refit"
-
-            log.info(
-                "%s RMSE threshold fallback: RMSE_refit_center/RMSE_ref=%.3f > guard=%.3f -> basis forced to **center_refit**: "
-                "alpha×RMSE is now based on the **center refit** (not RMSE_ref alone), so d_opt is not rejected when only the "
-                "nodes-only subproblem is worse than the full solver run.",
-                _LOG_PREFIX,
-                ratio_ctr,
-                ratio_guard,
-            )
-
-        threshold_basis_eff = basis
-
-        eps_ar = float(max(getattr(pconf, "auto_relax_epsilon", 0.002) or 0.0, 1e-12))
-
-        relax_fac_cap = float(max(getattr(pconf, "auto_relax_max_factor", 1.5) or 1.5, 1.0))
-
-        need = float(rm_c) * (1.0 + eps_ar)
-
-        max_allowed = float(rmse_thresh) * relax_fac_cap if np.isfinite(rmse_thresh) else need
-
-        if need > rmse_thresh_active:
-            rmse_thresh_active = min(need, max_allowed)
-
-            auto_relaxed_alpha = True
-
-            log.info(
-                "%s RMSE threshold auto-lifted: nominal alpha×RMSE_ref=%.8f -> effective=%.8f "
-                '(center refit RMSE=%.8f; n,L refit at fixed d ≠ solver "segments" RMSE; threshold adjusted to include center).',
-                _LOG_PREFIX,
-                float(rmse_thresh),
-                float(rmse_thresh_active),
-                float(rm_c),
-            )
+    (
+        rmse_thresh_active, auto_relaxed_alpha, threshold_basis_eff, threshold_fallback_reason
+    ) = _eval_corridor_threshold_fallback(
+        pconf=pconf, use_lr=use_lr, use_abs_delta=use_abs_delta, rm_c=float(rm_c),
+        rmse_thresh_active=float(rmse_thresh_active), rmse_opt=float(rmse_opt),
+        threshold_basis_eff=str(threshold_basis_eff), rmse_thresh=float(rmse_thresh),
+    )
 
     fit0_ok = False
 

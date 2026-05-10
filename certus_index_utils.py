@@ -23,7 +23,21 @@ def log_structured_json_event(
     seq: str | None = None,
     **fields: Any,
 ) -> None:
-    """Une ligne ``<channel> {...}`` pour grep / scripts (AUTO_BEST_JSON, CONT_JSON, SPLINE_PIPELINE_JSON, …)."""
+    """Emit a single-line structured JSON log entry for machine parsing.
+
+    Parameters
+    ----------
+    log : logging.Logger or None
+        Target logger. No-op if None.
+    channel : str
+        Log channel prefix (e.g. ``SPLINE_PIPELINE_JSON``).
+    event : str
+        Event name embedded in the JSON payload.
+    seq : str, optional
+        Sequence tag for ordering in multi-phase pipelines.
+    **fields
+        Arbitrary key-value pairs added to the JSON payload.
+    """
 
     if log is None:
         return
@@ -43,12 +57,23 @@ def log_structured_json_event(
 
 
 def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
-    """
+    """Compute transmittance ratio T_film / T_bare_substrate (with backside).
 
-    Calcule le ratio theorique exact T = T_film_total / T_substrat_nu.
+    Parameters
+    ----------
+    lam : array_like
+        Wavelengths in nm.
+    n_l, k_l : array_like
+        Film refractive index (n) and extinction coefficient (k), same size as *lam*.
+    d_nm : float
+        Film thickness in nm.
+    n_sub : array_like
+        Substrate refractive index, same size as *lam*.
 
-    Inclut la correction de face arriere exacte (inconsistent cavity).
-
+    Returns
+    -------
+    np.ndarray
+        T_film_total / T_substrate_bare, element-wise.
     """
 
     n_pts = len(lam)
@@ -72,12 +97,20 @@ _THICK_BUF = np.empty(1, dtype=np.float64)  # Pre-allocated, rewritten in-place
 
 
 def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
-    """
+    """Compute absolute transmittance T_film_total (with backside correction).
 
-    Calcule la transmittance absolue T_film_total (avec correction face arriere).
+    Same TMM call as :func:`_ratio_theoretical_from_nk` but without
+    dividing by the bare substrate transmittance.
 
-    Identique a _ratio_theoretical_from_nk mais sans normaliser par T_substrat_nu.
+    Parameters
+    ----------
+    lam, n_l, k_l, d_nm, n_sub
+        See :func:`_ratio_theoretical_from_nk`.
 
+    Returns
+    -------
+    np.ndarray
+        Absolute film transmittance, element-wise.
     """
 
     _THICK_BUF[0] = float(d_nm)
@@ -92,12 +125,20 @@ def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
 
 def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
-    """
+    """Compute reflectance ratio R_film / T_bare_substrate.
 
-    Calcule le ratio theorique exact R_rel = R_total / T_substrat_nu.
+    Used in the R/T_nu experimental protocol where both R and T are
+    normalized by the bare substrate transmittance.
 
-    Selon le protocole experimental R/Tnu.
+    Parameters
+    ----------
+    lam, n_l, k_l, d_nm, n_sub
+        See :func:`_ratio_theoretical_from_nk`.
 
+    Returns
+    -------
+    np.ndarray
+        R_film_total / T_substrate_bare, element-wise.
     """
 
     n_pts = len(lam)
@@ -114,14 +155,22 @@ def _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
 
 def spectral_rmse_weights(lam, weight_space="log"):
-    """
+    """Trapezoidal quadrature weights on ln(lambda) for spectral RMSE.
 
-    Genere les weights pour le calcul de la RMSE en echelle Log-Lambda.
+    Compensates non-uniform sampling density so that RMSE is not biased
+    toward densely sampled spectral regions.
 
-    Utilise le gradient de ln(lambda) pour compenser la densite d'echantillonnage
+    Parameters
+    ----------
+    lam : array_like
+        Wavelengths in nm (any order).
+    weight_space : str, optional
+        Reserved for future use. Currently always ``"log"``.
 
-    (quadrature trapezoidale sur ln lambda ; ``weight_space`` reserve pour compatibilite).
-
+    Returns
+    -------
+    np.ndarray
+        Weight array (same size as *lam*), normalized so that ``sum(w) == len(lam)``.
     """
 
     lam = np.asarray(lam, dtype=np.float64).ravel()
@@ -165,7 +214,21 @@ def spectral_rmse_weights(lam, weight_space="log"):
 
 
 def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:
-    """Generate a uniform wavelength grid in [lo_h, hi_h] at the given step (nm)."""
+    """Generate a uniform wavelength grid snapped to multiples of *step*.
+
+    Parameters
+    ----------
+    lo_h, hi_h : float
+        Wavelength range bounds in nm.
+    step : float
+        Grid step in nm (e.g. 2.0, 5.0, 10.0).
+
+    Returns
+    -------
+    np.ndarray
+        Sorted grid points in [ceil(lo/step)*step, floor(hi/step)*step].
+        Empty array if *lo_h* >= *hi_h* or non-finite.
+    """
 
     if not (np.isfinite(lo_h) and np.isfinite(hi_h) and hi_h > lo_h):
         return np.array([], dtype=np.float64)
@@ -184,7 +247,18 @@ def _lam_uniform_grid(lo_h: float, hi_h: float, step: float) -> np.ndarray:
 
 
 def _sorted_finite_sigma_knots(sigma_knots) -> np.ndarray:
-    """Return sorted, unique, strictly positive finite sigma knots."""
+    """Clean and sort sigma knots: keep only finite, strictly positive values.
+
+    Parameters
+    ----------
+    sigma_knots : array_like or None
+        Raw knot positions in sigma space (1/nm).
+
+    Returns
+    -------
+    np.ndarray
+        Sorted unique finite knots (empty array if none valid).
+    """
 
     arr = np.asarray(sigma_knots if sigma_knots is not None else [], dtype=np.float64).ravel()
 

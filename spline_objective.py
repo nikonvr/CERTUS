@@ -209,16 +209,30 @@ def nk_from_x_pwlnk(
     n_mono_band_nm: tuple[float, float] | None = None,
     profile_interp: str = "smooth",
 ) -> tuple[np.ndarray, np.ndarray]:
-    """x = [d, n_0..n_{K-1}, L_0..L_{K-1}] with L = ln k at knots. ``sig_pre`` = 1/lambda precomputed.
+    """Decode optimization vector to (n, k) arrays on the wavelength grid.
 
-    If ``n_mono_band_nm`` = (lambda_lo, lambda_hi) nm: n components of the vector are reparameterized
+    Parameters
+    ----------
+    x : array_like
+        Optimization vector ``[d, xi_n_0..xi_n_{K-1}, L_0..L_{K-1}]``
+        where L = ln(k) at sigma knots.
+    lam_nm : array_like
+        Wavelengths in nm.
+    sigma_knots : array_like
+        Sigma knot positions (1/nm), size K.
+    k_clip_lo, k_clip_hi : float
+        Physical bounds for k clipping.
+    sig_pre : np.ndarray, optional
+        Pre-computed 1/lambda to avoid recomputation.
+    n_mono_band_nm : tuple(float, float), optional
+        If set, enforce n monotonicity on sigma segments overlapping this band.
+    profile_interp : str
+        ``"pwl"`` for piecewise-linear or ``"smooth"`` for cubic spline.
 
-    with n(sigma) non-decreasing on sigma segments overlapping [lambda_lo, lambda_hi].
-
-    ``profile_interp``: ``"pwl"`` = linear in sigma between nodes; ``"smooth"`` = cubic spline
-
-    (not-a-knot) if K>=4, otherwise fallback to PWL.
-
+    Returns
+    -------
+    n_lam, k_lam : np.ndarray
+        Refractive index and extinction coefficient on *lam_nm*.
     """
 
     x = np.asarray(x, dtype=np.float64, order="C").ravel()
@@ -264,7 +278,21 @@ def nk_from_x_pwlnk(
 
 
 def build_segment_optimizer_x_vector(out: dict[str, Any], cfg: SplineOptConfig) -> tuple[np.ndarray, np.ndarray] | None:
-    """Optimization vector [d, n..., L...] and sigma knots from segmental result."""
+    """Reconstruct the optimization vector from a segmental result dict.
+
+    Parameters
+    ----------
+    out : dict
+        Solver result containing ``sigma_knots``, ``x`` or
+        ``n_nodes_physical`` + ``L_nodes`` + ``d_nm``.
+    cfg : SplineOptConfig
+        Configuration (used for monotonicity reparameterization).
+
+    Returns
+    -------
+    tuple(np.ndarray, np.ndarray) or None
+        ``(x_vector, sigma_knots)`` or None if reconstruction fails.
+    """
 
     sk = np.asarray(out.get("sigma_knots"), dtype=np.float64).ravel()
 
@@ -392,12 +420,22 @@ def build_spline_objective_masked_grid(
     ]
     | None
 ):
-    """
+    """Build the masked spectral grid for the spline objective function.
 
-    Same spectral reduction as ``SplinePWLObjective``: ``lam_f``, ``sig_f``, weights, exp, ``inv_npix``.
+    Applies the RMSE window, data availability mask, and computes
+    trapezoidal ln(lambda) weights.
 
-    Returns ``None`` if no points in the objective mask.
+    Parameters
+    ----------
+    cfg : SplineOptConfig
+        Full configuration including ``lam_nm``, ``t_exp``, ``r_exp``,
+        ``n_sub``, and RMSE window bounds.
 
+    Returns
+    -------
+    tuple or None
+        ``(lam_f, sig_f, n_sub_f, w, inv_npix, t_exp_f, r_exp_f)``
+        where ``_f`` denotes masked arrays. None if no valid points.
     """
 
     lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
@@ -439,12 +477,27 @@ def spline_objective_mse_on_masked_grid(
     k_l: np.ndarray,
     d: float,
 ) -> float:
-    """
+    """Weighted MSE on pre-masked spectral grid (same formula as SplinePWLObjective).
 
-    Weighted average MSE identical to ``SplinePWLObjective.__call__`` (same T/R formulas).
+    Parameters
+    ----------
+    cfg : SplineOptConfig
+        Configuration (data_type, weight_t/r, t_is_ratio).
+    lam_f, n_sub_f, w : np.ndarray
+        Masked wavelengths, substrate index, and quadrature weights.
+    inv_npix : float
+        1 / number_of_masked_points.
+    t_exp_f, r_exp_f : np.ndarray or None
+        Experimental T and/or R on the masked grid.
+    n_l, k_l : np.ndarray
+        Model n and k on the masked grid.
+    d : float
+        Film thickness in nm.
 
-    ``n_sub_f`` is the point-by-point effective substrate (e.g. + Delta n_sub).
-
+    Returns
+    -------
+    float
+        Weighted average MSE (T and/or R channels).
     """
 
     loss = 0.0
@@ -518,12 +571,27 @@ def spectral_mse_rmse_masked_from_nk(
     k_lam: np.ndarray,
     d_nm: float,
 ) -> tuple[float, float]:
-    """
+    """MSE and RMSE on the full spectral mask from explicit n(lam), k(lam).
 
-    MSE / RMSE on the same spectral mask as the spline objective (RMSE window, T/R, weights),
+    Uses the same mask, weights, and T/R formulas as the spline objective.
 
-    with effective n_sub = nominal (no Deltan_sub).
+    Parameters
+    ----------
+    cfg : SplineOptConfig
+        Configuration.
+    out_meta : dict
+        Result metadata (unused but kept for API compatibility).
+    lam_full : array_like
+        Full wavelength grid in nm.
+    n_lam, k_lam : array_like
+        Model n and k on *lam_full*.
+    d_nm : float
+        Film thickness in nm.
 
+    Returns
+    -------
+    mse, rmse : float
+        Mean squared error and root-mean-squared error. ``(nan, nan)`` on failure.
     """
 
     mgf = build_spline_objective_masked_grid(cfg)

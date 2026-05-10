@@ -3264,6 +3264,55 @@ class _ConfigBuilderMixin:
         return cfg
 
 
+def _smart_init_wire_hold_button(
+    btn,
+    row: int,
+    direction: int,
+    *,
+    is_ln_k: bool,
+    parent_dlg,
+    bump_n_fn: "Callable[[int, int, float], None]",
+    bump_L_fn: "Callable[[int, int, float], None]",
+) -> None:
+    """Wire a QPushButton as a hold-to-repeat +/- button for n or ln k adjustment."""
+    from PyQt6.QtCore import QTimer
+
+    t = QTimer(parent_dlg)
+    t.setInterval(78)
+    ntick: list[int] = [0]
+
+    def on_tick() -> None:
+        ntick[0] += 1
+        mult = min(24.0, 1.0 + (ntick[0] - 1) * 0.85)
+        if is_ln_k:
+            bump_L_fn(row, direction, mult)
+        else:
+            bump_n_fn(row, direction, mult)
+
+    t.timeout.connect(on_tick)
+
+    def on_press() -> None:
+        ntick[0] = 1
+        if is_ln_k:
+            bump_L_fn(row, direction, 1.0)
+        else:
+            bump_n_fn(row, direction, 1.0)
+        t.stop()
+
+        def maybe_start_repeat() -> None:
+            if btn.isDown():
+                t.start()
+
+        QTimer.singleShot(400, maybe_start_repeat)
+
+    def on_release() -> None:
+        t.stop()
+        ntick[0] = 0
+
+    btn.pressed.connect(on_press)
+    btn.released.connect(on_release)
+
+
 def _smart_init_refresh_nk_aux(
     curve_n,
     curve_pk,
@@ -4339,62 +4388,11 @@ class _SmartInitDialogMixin:
 
             do_recalc()
 
-        def wire_hold_button(
-            btn: QPushButton,
-            row: int,
-            direction: int,
-            *,
-            is_ln_k: bool,
-        ) -> None:
-
-            t = QTimer(dlg)
-
-            t.setInterval(78)
-
-            ntick: list[int] = [0]
-
-            def on_tick() -> None:
-
-                ntick[0] += 1
-
-                mult = min(24.0, 1.0 + (ntick[0] - 1) * 0.85)
-
-                if is_ln_k:
-                    bump_L_scaled(row, direction, mult)
-
-                else:
-                    bump_n_scaled(row, direction, mult)
-
-            t.timeout.connect(on_tick)
-
-            def on_press() -> None:
-
-                ntick[0] = 1
-
-                if is_ln_k:
-                    bump_L_scaled(row, direction, 1.0)
-
-                else:
-                    bump_n_scaled(row, direction, 1.0)
-
-                t.stop()
-
-                def maybe_start_repeat() -> None:
-
-                    if btn.isDown():
-                        t.start()
-
-                QTimer.singleShot(400, maybe_start_repeat)
-
-            def on_release() -> None:
-
-                t.stop()
-
-                ntick[0] = 0
-
-            btn.pressed.connect(on_press)
-
-            btn.released.connect(on_release)
+        def wire_hold_button(btn, row, direction, *, is_ln_k=False) -> None:
+            _smart_init_wire_hold_button(
+                btn, row, direction, is_ln_k=is_ln_k,
+                parent_dlg=dlg, bump_n_fn=bump_n_scaled, bump_L_fn=bump_L_scaled,
+            )
 
         def recall_best() -> None:
             nonlocal state

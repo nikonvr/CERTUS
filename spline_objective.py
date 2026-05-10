@@ -1291,48 +1291,51 @@ def compute_spline_pwl_objective_analytic_gradient(
 
     grad[0] += grad_d
 
-    # ── Scatter per-pixel gradients into knot gradients ──
-    # This is the only remaining Python loop, but it's pure arithmetic
-    # (no Numba/TMM calls) — negligible cost vs the vectorized TMM above.
+    # ── Scatter per-pixel gradients into knot gradients (VECTORIZED) ──
+    # Replaces the former O(n_pix) Python loop with NumPy bulk operations.
+    # NE PAS réintroduire de boucle Python ici — c'est le hot path critique.
     n_n = x_slice_n_to_physical_nodes(x[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
 
-    for i in range(n_pix):
-        s = float(sig_f[i])
-        if s <= float(sk[0]):
-            j = 0
-            w0, w1 = 1.0, 0.0
-        elif s >= float(sk[-1]):
-            j = k_nodes - 2
-            w0, w1 = 0.0, 1.0
-        else:
-            j = int(np.searchsorted(sk, s, side="right") - 1)
-            j = max(0, min(j, k_nodes - 2))
-            denom = float(sk[j + 1] - sk[j])
-            if denom <= 1e-18:
-                w1 = 0.0
-                w0 = 1.0
-            else:
-                w1 = (s - float(sk[j])) / denom
-                w0 = 1.0 - w1
+    # 1. Knot interval indices for each pixel: j ∈ [0, k_nodes-2]
+    j_arr = np.searchsorted(sk, sig_f, side="right").astype(np.intp) - 1
+    np.clip(j_arr, 0, k_nodes - 2, out=j_arr)
 
-        n_unc = float(w0 * float(n_n[j]) + w1 * float(n_n[j + 1]))
-        L_lam_val = float(w0 * float(L_n[j]) + w1 * float(L_n[j + 1]))
-        k_unc = float(np.exp(L_lam_val))
+    # 2. Interpolation weights w0, w1
+    denom = sk[j_arr + 1] - sk[j_arr]
+    safe_denom = np.where(denom > 1e-18, denom, 1.0)
+    w1 = np.where(denom > 1e-18, (sig_f - sk[j_arr]) / safe_denom, 0.0)
 
-        dn_dnk = 0.0 if (n_unc <= float(N_MIN_LIMIT) or n_unc >= float(N_MAX_LIMIT)) else 1.0
-        dk_dkunc = 0.0 if (k_unc <= k_lo or k_unc >= k_hi) else 1.0
+    # Boundary overrides: sig_f <= sk[0] → w0=1,w1=0 ; sig_f >= sk[-1] → w0=0,w1=1
+    w1 = np.where(sig_f <= sk[0], 0.0, w1)
+    w1 = np.where(sig_f >= sk[-1], 1.0, w1)
+    w0 = 1.0 - w1
 
-        chain_n = float(gn_arr[i]) * dn_dnk
-        chain_k = float(gk_arr[i]) * dk_dkunc * k_unc
+    # 3. Interpolated n, k (unclipped) for clip-gate masks
+    n_unc = w0 * n_n[j_arr] + w1 * n_n[j_arr + 1]
+    L_lam_v = w0 * L_n[j_arr] + w1 * L_n[j_arr + 1]
+    k_unc = np.exp(L_lam_v)
 
-        if mode == "pwl":
-            grad[1 + j] += chain_n * w0
-            grad[1 + j + 1] += chain_n * w1
-            grad[1 + k_nodes + j] += chain_k * w0
-            grad[1 + k_nodes + j + 1] += chain_k * w1
-        else:
-            grad_n_lam[i] = chain_n
-            grad_k_lam[i] = chain_k
+    # 4. Clip-gate masks (gradient is zero where clipping is active)
+    dn_mask = ((n_unc > N_MIN_LIMIT) & (n_unc < N_MAX_LIMIT)).astype(np.float64)
+    dk_mask = ((k_unc > k_lo) & (k_unc < k_hi)).astype(np.float64)
+
+    # 5. Chain rule contributions
+    chain_n = gn_arr * dn_mask
+    chain_k = gk_arr * dk_mask * k_unc
+
+    if mode == "pwl":
+        # Scatter into knot gradients using np.add.at (handles duplicate indices)
+        cn_w0 = chain_n * w0
+        cn_w1 = chain_n * w1
+        ck_w0 = chain_k * w0
+        ck_w1 = chain_k * w1
+        np.add.at(grad, j_arr + 1, cn_w0)
+        np.add.at(grad, j_arr + 2, cn_w1)
+        np.add.at(grad, j_arr + 1 + k_nodes, ck_w0)
+        np.add.at(grad, j_arr + 2 + k_nodes, ck_w1)
+    else:
+        grad_n_lam[:] = chain_n
+        grad_k_lam[:] = chain_k
 
     if mode == "smooth":
         grad[1 : 1 + k_nodes] += S_mat.T @ grad_n_lam

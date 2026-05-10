@@ -71,6 +71,160 @@ class SplineReportBuilder:
         self.ctx = ctx
         self.logger = logger
 
+    def _write_best_indices_sheet(
+        self,
+        writer: Any,
+        *,
+        result: dict,
+        lam_src_full: np.ndarray,
+        n_best_src: np.ndarray,
+        k_best_src: np.ndarray,
+        d_best_export: float,
+        best_pretty: str,
+        best_lbl: str,
+        best_v: Any,
+        rmse_best_recalc_txt: str,
+        rmse_solver_txt: str,
+        rmse_spl_txt: str,
+        corr_grid_ok: bool,
+    ) -> None:
+        """Write the 'Best indices' sheet: n/k on uniform 2/5/10 nm grids + corridor metadata."""
+
+        lo = (
+            float(np.nanmin(lam_src_full[np.isfinite(lam_src_full)]))
+            if np.any(np.isfinite(lam_src_full))
+            else float("nan")
+        )
+
+        hi = (
+            float(np.nanmax(lam_src_full[np.isfinite(lam_src_full)]))
+            if np.any(np.isfinite(lam_src_full))
+            else float("nan")
+        )
+
+        ls_src = np.asarray(lam_src_full, dtype=np.float64).ravel()
+        n_bs = np.asarray(n_best_src, dtype=np.float64).ravel()
+        k_bs = np.asarray(k_best_src, dtype=np.float64).ravel()
+
+        grid_parts: list[pd.DataFrame] = []
+
+        if n_bs.size == ls_src.size and k_bs.size == ls_src.size and ls_src.size > 0:
+            ord_i = np.argsort(ls_src, kind="mergesort")
+            ls_s = ls_src[ord_i]
+            n_s = n_bs[ord_i]
+            k_s = k_bs[ord_i]
+
+            for step in (2.0, 5.0, 10.0):
+                lam_g = _lam_uniform_grid(lo, hi, step)
+                if lam_g.size == 0:
+                    continue
+                n_g = np.interp(lam_g, ls_s, n_s, left=np.nan, right=np.nan)
+                k_g = np.interp(lam_g, ls_s, k_s, left=np.nan, right=np.nan)
+                grid_parts.append(
+                    pd.DataFrame(
+                        {
+                            "Step (nm)": np.full(lam_g.size, step, dtype=np.float64),
+                            "Wavelength (nm)": lam_g,
+                            "n_best": n_g,
+                            "k_best": k_g,
+                        }
+                    )
+                )
+
+        df_grids = (
+            pd.concat(grid_parts, ignore_index=True)
+            if grid_parts
+            else pd.DataFrame(columns=["Step (nm)", "Wavelength (nm)", "n_best", "k_best"])
+        )
+
+        def _result_float(key: str) -> float:
+            v = result.get(key)
+            if v is None:
+                return float("nan")
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return float("nan")
+
+        desc_rows = [
+            "Source / method",
+            "Chosen model (spectral RMSE mesh polish - spline cubique sigma)",
+            "Internal label",
+            "Spectral RMSE (chosen value)",
+            "Spectral RMSE (control, result mesh + objective mask)",
+            "Thickness d associated with chosen model (nm)",
+            "n/k Corridors (d profiling): active",
+            "Corridors: d interval (nm)",
+            "Corridors: mode",
+            "Corridors: conf (LR)",
+            "Corridors: Deltachi2 (LR)",
+            "Corridors: sigma_T (LR)",
+            "Corridors: sigma_R (LR)",
+            "Corridors: alpha (RMSE <= alpha * RMSE_opt)",
+            "Corridors: RMSE_opt (threshold reference)",
+            "Corridors: ref RMSE source (spectral_rmse_segments | dict_rmse | recalc_objective)",
+            "Corridors: RMSE_threshold",
+            "Table: 2 nm then 5 nm then 10 nm grids",
+            "Spectral RMSE - solver ref (before mesh polish)",
+            "Spectral RMSE - cubic spline sigma (polish)",
+        ]
+
+        val_rows = [
+            "numpy.interp on lambda (sorted result mesh) from n(lambda), k(lambda) "
+            "curves of the best polish; uniform sub-sampling steps 2, 5 and 10 nm on [lambda_min, lambda_max].",
+            best_pretty,
+            str(best_lbl) if best_lbl else "-",
+            f"{float(best_v):.6f}" if best_v is not None and np.isfinite(float(best_v)) else "N/A",
+            rmse_best_recalc_txt,
+            f"{d_best_export:.4f}" if np.isfinite(d_best_export) else "N/A",
+            "Yes (corridor_* vectors present, aligned with lam_nm)" if corr_grid_ok else "No",
+            (
+                f"[{float(result.get('profile_d_interval_nm')[0]):.3f}, {float(result.get('profile_d_interval_nm')[1]):.3f}]"
+                if corr_grid_ok
+                and isinstance(result.get("profile_d_interval_nm"), (tuple, list))
+                and len(result.get("profile_d_interval_nm")) == 2
+                else "-"
+            ),
+            str(result.get("profile_d_mode", "-")),
+            f"{_result_float('profile_d_lr_conf'):.3f}"
+            if np.isfinite(_result_float("profile_d_lr_conf"))
+            else "-",
+            f"{_result_float('profile_d_lr_delta_chi2'):.6f}"
+            if np.isfinite(_result_float("profile_d_lr_delta_chi2"))
+            else "-",
+            f"{_result_float('profile_d_sigma_t'):.6g}"
+            if np.isfinite(_result_float("profile_d_sigma_t"))
+            else "-",
+            f"{_result_float('profile_d_sigma_r'):.6g}"
+            if np.isfinite(_result_float("profile_d_sigma_r"))
+            else "-",
+            f"{_result_float('profile_d_rmse_alpha'):.3f}"
+            if np.isfinite(_result_float("profile_d_rmse_alpha"))
+            else "-",
+            f"{_result_float('profile_d_rmse_opt'):.6f}"
+            if np.isfinite(_result_float("profile_d_rmse_opt"))
+            else "-",
+            str(result.get("profile_d_rmse_ref_source", "-")),
+            f"{_result_float('profile_d_rmse_thresh'):.6f}"
+            if np.isfinite(_result_float("profile_d_rmse_thresh"))
+            else "-",
+            "Column \u2018Step (nm)\u2019 separates the three blocks; same spectral interval.",
+            rmse_solver_txt,
+            rmse_spl_txt,
+        ]
+
+        df_head = pd.DataFrame({"Description": desc_rows, "Value": val_rows})
+        sheet_best = "Best indices"
+        df_head.to_excel(writer, sheet_name=sheet_best, index=False)
+
+        if not df_grids.empty:
+            df_grids.to_excel(
+                writer,
+                sheet_name=sheet_best,
+                index=False,
+                startrow=len(df_head) + 2,
+            )
+
     def build_report(self, auto: bool = False) -> None:
         """Automatic saving of results to Excel (like CERTUS_DESIGN).
 
@@ -844,162 +998,21 @@ class SplineReportBuilder:
                     except NUMERICAL_FAULT_EXCEPTIONS:
                         logger.exception("Export Excel: Corridors_bootstrap sheet")
 
-                # Best indices: n, k from the model with minimal spectral RMSE (sigma-mesh spline polish),
-
-                # interpolated on uniform 2 nm, 5 nm, 10 nm grids (same [lambda_min, lambda_max] range).
-
-                lo = (
-                    float(np.nanmin(lam_src_full[np.isfinite(lam_src_full)]))
-                    if np.any(np.isfinite(lam_src_full))
-                    else float("nan")
+                self._write_best_indices_sheet(
+                    writer,
+                    result=result,
+                    lam_src_full=lam_src_full,
+                    n_best_src=n_best_src,
+                    k_best_src=k_best_src,
+                    d_best_export=d_best_export,
+                    best_pretty=best_pretty,
+                    best_lbl=best_lbl,
+                    best_v=best_v,
+                    rmse_best_recalc_txt=rmse_best_recalc_txt,
+                    rmse_solver_txt=rmse_solver_txt,
+                    rmse_spl_txt=rmse_spl_txt,
+                    corr_grid_ok=corr_grid_ok,
                 )
-
-                hi = (
-                    float(np.nanmax(lam_src_full[np.isfinite(lam_src_full)]))
-                    if np.any(np.isfinite(lam_src_full))
-                    else float("nan")
-                )
-
-
-
-                ls_src = np.asarray(lam_src_full, dtype=np.float64).ravel()
-
-                n_bs = np.asarray(n_best_src, dtype=np.float64).ravel()
-
-                k_bs = np.asarray(k_best_src, dtype=np.float64).ravel()
-
-                grid_parts: list[pd.DataFrame] = []
-
-                if n_bs.size == ls_src.size and k_bs.size == ls_src.size and ls_src.size > 0:
-                    ord_i = np.argsort(ls_src, kind="mergesort")
-
-                    ls_s = ls_src[ord_i]
-
-                    n_s = n_bs[ord_i]
-
-                    k_s = k_bs[ord_i]
-
-                    for step in (2.0, 5.0, 10.0):
-                        lam_g = _lam_uniform_grid(lo, hi, step)
-
-                        if lam_g.size == 0:
-                            continue
-
-                        n_g = np.interp(lam_g, ls_s, n_s, left=np.nan, right=np.nan)
-
-                        k_g = np.interp(lam_g, ls_s, k_s, left=np.nan, right=np.nan)
-
-                        grid_parts.append(
-                            pd.DataFrame(
-                                {
-                                    "Step (nm)": np.full(lam_g.size, step, dtype=np.float64),
-                                    "Wavelength (nm)": lam_g,
-                                    "n_best": n_g,
-                                    "k_best": k_g,
-                                }
-                            )
-                        )
-
-                df_grids = (
-                    pd.concat(grid_parts, ignore_index=True)
-                    if grid_parts
-                    else pd.DataFrame(columns=["Step (nm)", "Wavelength (nm)", "n_best", "k_best"])
-                )
-
-                desc_rows = [
-                    "Source / method",
-                    "Chosen model (spectral RMSE mesh polish - spline cubique sigma)",
-                    "Internal label",
-                    "Spectral RMSE (chosen value)",
-                    "Spectral RMSE (control, result mesh + objective mask)",
-                    "Thickness d associated with chosen model (nm)",
-                    "n/k Corridors (d profiling): active",
-                    "Corridors: d interval (nm)",
-                    "Corridors: mode",
-                    "Corridors: conf (LR)",
-                    "Corridors: Deltachi2 (LR)",
-                    "Corridors: sigma_T (LR)",
-                    "Corridors: sigma_R (LR)",
-                    "Corridors: alpha (RMSE <= alpha * RMSE_opt)",
-                    "Corridors: RMSE_opt (threshold reference)",
-                    "Corridors: ref RMSE source (spectral_rmse_segments | dict_rmse | recalc_objective)",
-                    "Corridors: RMSE_threshold",
-                    "Table: 2 nm then 5 nm then 10 nm grids",
-                    "Spectral RMSE - solver ref (before mesh polish)",
-                    "Spectral RMSE - cubic spline sigma (polish)",
-                ]
-
-                def _result_float(key: str) -> float:
-                    """float(result(key)) tolerating missing key or None (e.g. alpha mode -> LR N/A)."""
-
-                    v = result.get(key)
-
-                    if v is None:
-                        return float("nan")
-
-                    try:
-                        return float(v)
-
-                    except (TypeError, ValueError):
-                        return float("nan")
-
-                val_rows = [
-                    "numpy.interp on lambda (sorted result mesh) from n(lambda), k(lambda) "
-                    "curves of the best polish; uniform sub-sampling steps 2, 5 and 10 nm on [lambda_min, lambda_max].",
-                    best_pretty,
-                    str(best_lbl) if best_lbl else "-",
-                    f"{float(best_v):.6f}" if best_v is not None and np.isfinite(float(best_v)) else "N/A",
-                    rmse_best_recalc_txt,
-                    f"{d_best_export:.4f}" if np.isfinite(d_best_export) else "N/A",
-                    "Yes (corridor_* vectors present, aligned with lam_nm)" if corr_grid_ok else "No",
-                    (
-                        f"[{float(result.get('profile_d_interval_nm')[0]):.3f}, {float(result.get('profile_d_interval_nm')[1]):.3f}]"
-                        if corr_grid_ok
-                        and isinstance(result.get("profile_d_interval_nm"), (tuple, list))
-                        and len(result.get("profile_d_interval_nm")) == 2
-                        else "-"
-                    ),
-                    str(result.get("profile_d_mode", "-")),
-                    f"{_result_float('profile_d_lr_conf'):.3f}"
-                    if np.isfinite(_result_float("profile_d_lr_conf"))
-                    else "-",
-                    f"{_result_float('profile_d_lr_delta_chi2'):.6f}"
-                    if np.isfinite(_result_float("profile_d_lr_delta_chi2"))
-                    else "-",
-                    f"{_result_float('profile_d_sigma_t'):.6g}"
-                    if np.isfinite(_result_float("profile_d_sigma_t"))
-                    else "-",
-                    f"{_result_float('profile_d_sigma_r'):.6g}"
-                    if np.isfinite(_result_float("profile_d_sigma_r"))
-                    else "-",
-                    f"{_result_float('profile_d_rmse_alpha'):.3f}"
-                    if np.isfinite(_result_float("profile_d_rmse_alpha"))
-                    else "-",
-                    f"{_result_float('profile_d_rmse_opt'):.6f}"
-                    if np.isfinite(_result_float("profile_d_rmse_opt"))
-                    else "-",
-                    str(result.get("profile_d_rmse_ref_source", "-")),
-                    f"{_result_float('profile_d_rmse_thresh'):.6f}"
-                    if np.isfinite(_result_float("profile_d_rmse_thresh"))
-                    else "-",
-                    "Column ?Step (nm)? separates the three blocks; same spectral interval.",
-                    rmse_solver_txt,
-                    rmse_spl_txt,
-                ]
-
-                df_head = pd.DataFrame({"Description": desc_rows, "Value": val_rows})
-
-                sheet_best = "Best indices"
-
-                df_head.to_excel(writer, sheet_name=sheet_best, index=False)
-
-                if not df_grids.empty:
-                    df_grids.to_excel(
-                        writer,
-                        sheet_name=sheet_best,
-                        index=False,
-                        startrow=len(df_head) + 2,
-                    )
 
                 # RMSE(d) profile (if available)
 

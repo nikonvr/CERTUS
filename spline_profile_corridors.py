@@ -6112,6 +6112,105 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
 
     return out_prof
 
+def _compute_corridor_rmse_threshold(
+    cfg: "SplineOptConfig",
+    pconf,
+    rmse_opt: float,
+    rmse_seed0: float,
+    sk: np.ndarray | None,
+    use_lr: bool,
+    use_abs_delta: bool,
+    use_alpha_factor: bool,
+    tol_abs: float,
+    rmse_ref_tag: str,
+    corridor_seed_x_source: str,
+    scientific_nominal: bool,
+    nom_pack: dict | None,
+    log: logging.Logger,
+    _LOG_PREFIX: str,
+) -> float:
+    """Compute the RMSE threshold for corridor profiling and validate the seed alignment."""
+    # N_eff for intelligent statistical threshold
+    _N_data = 0
+    if cfg.t_exp is not None:
+        _N_data += len(cfg.t_exp)
+    if cfg.r_exp is not None:
+        _N_data += len(cfg.r_exp)
+    _N_params = 1 + 2 * sk.size if sk is not None else 25
+    _N_eff = max(5, _N_data - _N_params)
+
+    alpha_intelligent = float(np.sqrt(1.0 + 3.84 / _N_eff))
+
+    use_explicit_auto_flag = (
+        str(getattr(pconf, "rmse_threshold_mode", "")).strip().lower() == "auto"
+        or str(getattr(pconf, "mode", "")).strip().lower() == "auto"
+    )
+    _alpha_user = float(pconf.rmse_alpha) if np.isfinite(float(pconf.rmse_alpha)) else 1.05
+
+    _use_intelligent_alpha = (
+        not use_lr
+        and not use_abs_delta
+        and np.isfinite(rmse_opt)
+        and (use_explicit_auto_flag or abs(_alpha_user - 1.05) < 1e-4)
+    )
+
+    if _use_intelligent_alpha:
+        rmse_thresh = alpha_intelligent * float(rmse_opt)
+        if _alpha_user > alpha_intelligent * 1.1 and not use_explicit_auto_flag:
+            log.warning(
+                "%s User alpha=%.3f > intelligent_alpha=%.3f (N_eff=%d). Using intelligent to avoid over-widening. "
+                "Set rmse_threshold_mode='auto' explicitly to silence this warning.",
+                _LOG_PREFIX, _alpha_user, alpha_intelligent, _N_eff,
+            )
+        else:
+            log.info(
+                "%s Corridor intelligent threshold | N_eff=%d (N_obs=%d, N_params=%d) => alpha=%.5f",
+                _LOG_PREFIX, _N_eff, _N_data, _N_params, alpha_intelligent,
+            )
+    elif use_lr:
+        rmse_thresh = float(pconf.rmse_alpha) * float(rmse_opt) if np.isfinite(rmse_opt) else float("nan")
+    elif use_abs_delta and np.isfinite(rmse_opt):
+        _alpha_f = float(pconf.rmse_alpha) if use_alpha_factor else 1.0
+        rmse_thresh = _alpha_f * float(rmse_opt) + tol_abs
+    elif np.isfinite(rmse_opt):
+        rmse_thresh = _alpha_user * float(rmse_opt)
+        log.info(
+            "%s Corridor user alpha threshold | alpha=%.5f (intelligent would be %.5f)",
+            _LOG_PREFIX, _alpha_user, alpha_intelligent,
+        )
+    else:
+        rmse_thresh = float("nan")
+
+    # Seed alignment validation
+    if scientific_nominal and nom_pack is not None and np.isfinite(float(rmse_opt)) and np.isfinite(float(rmse_seed0)):
+        dv = abs(float(rmse_seed0) - float(rmse_opt))
+        tol_rm = max(
+            1e-12, abs(float(rmse_opt)) * 1e-9, float(np.sqrt(np.finfo(np.float64).eps)) * abs(float(rmse_opt))
+        )
+        log.info(
+            "%s Corridor seed alignment | x_source=%s | RMSE(packed nodes @ d_opt)=%.12g | RMSE_ref(%s)=%.12g | |Delta|=%.3e (warn if >%.3e)",
+            _LOG_PREFIX, str(corridor_seed_x_source), float(rmse_seed0),
+            str(rmse_ref_tag), float(rmse_opt), float(dv), float(tol_rm),
+        )
+        if float(dv) > float(tol_rm):
+            xref = str(corridor_seed_x_source)
+            if "roundtrip" in xref.lower():
+                log.info(
+                    "%s Corridor seed vs %s: |Delta|=%.3e > tol=%.3e (x_source=%s). "
+                    "Often expected when the packed seed differs from the polished nominal pack; "
+                    "investigate only if envelopes look inconsistent (mono ξ / export mismatch otherwise).",
+                    _LOG_PREFIX, str(rmse_ref_tag), float(dv), float(tol_rm), xref,
+                )
+            else:
+                log.warning(
+                    "%s Corridor seed vs spectral_rmse_best_value: |Delta|=%.3e exceeds tol=%.3e — "
+                    "check x_seg_spline_sigma vs n_lam_seg_spline_sigma export, bounds clip, or mono ξ round-trip.",
+                    _LOG_PREFIX, float(dv), float(tol_rm),
+                )
+
+    return rmse_thresh
+
+
 def _setup_corridor_context(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -6310,114 +6409,11 @@ def _setup_corridor_context(
 
             rmse_ref_tag = "spectral_rmse_base_nk"
 
-    # Calculate N_eff for intelligent statistical threshold
-    _N_data = 0
-    if cfg.t_exp is not None:
-        _N_data += len(cfg.t_exp)
-    if cfg.r_exp is not None:
-        _N_data += len(cfg.r_exp)
-    _N_params = 1 + 2 * sk.size if sk is not None else 25  # roughly
-    _N_eff = max(5, _N_data - _N_params)
-
-    alpha_intelligent = float(np.sqrt(1.0 + 3.84 / _N_eff))
-
-    # P0.4 FIX: Intelligent alpha is now default for all alpha branches.
-    # Statistical threshold: alpha = sqrt(1 + chi2_1,95 / N_eff) where chi2_1,95 = 3.84
-    # This gives proper coverage ~95% for large N_eff, widening appropriately for small N_eff.
-    use_explicit_auto_flag = (
-        str(getattr(pconf, "rmse_threshold_mode", "")).strip().lower() == "auto"
-        or str(getattr(pconf, "mode", "")).strip().lower() == "auto"
+    rmse_thresh = _compute_corridor_rmse_threshold(
+        cfg, pconf, rmse_opt, rmse_seed0, sk, use_lr, use_abs_delta,
+        use_alpha_factor, tol_abs, rmse_ref_tag, corridor_seed_x_source,
+        scientific_nominal, nom_pack, log, _LOG_PREFIX,
     )
-    _alpha_user = float(pconf.rmse_alpha) if np.isfinite(float(pconf.rmse_alpha)) else 1.05
-
-    # Determine if we should use intelligent alpha vs user alpha
-    # Use intelligent if: auto flag set, OR user left default 1.05.
-    # We no longer force-override large user alphas (e.g. 80.0 for tests) to allow intentional loose thresholds.
-    _use_intelligent_alpha = (
-        not use_lr
-        and not use_abs_delta
-        and np.isfinite(rmse_opt)
-        and (use_explicit_auto_flag or abs(_alpha_user - 1.05) < 1e-4)
-    )
-
-    if _use_intelligent_alpha:
-        rmse_thresh = alpha_intelligent * float(rmse_opt)
-        if _alpha_user > alpha_intelligent * 1.1 and not use_explicit_auto_flag:
-            log.warning(
-                "%s User alpha=%.3f > intelligent_alpha=%.3f (N_eff=%d). Using intelligent to avoid over-widening. "
-                "Set rmse_threshold_mode='auto' explicitly to silence this warning.",
-                _LOG_PREFIX,
-                _alpha_user,
-                alpha_intelligent,
-                _N_eff,
-            )
-        else:
-            log.info(
-                "%s Corridor intelligent threshold | N_eff=%d (N_obs=%d, N_params=%d) => alpha=%.5f",
-                _LOG_PREFIX,
-                _N_eff,
-                _N_data,
-                _N_params,
-                alpha_intelligent,
-            )
-    elif use_lr:
-        rmse_thresh = float(pconf.rmse_alpha) * float(rmse_opt) if np.isfinite(rmse_opt) else float("nan")
-    elif use_abs_delta and np.isfinite(rmse_opt):
-        _alpha_f = float(pconf.rmse_alpha) if use_alpha_factor else 1.0
-        rmse_thresh = _alpha_f * float(rmse_opt) + tol_abs
-    elif np.isfinite(rmse_opt):
-        # Fallback: user-specified alpha (only if explicitly different from intelligent)
-        rmse_thresh = _alpha_user * float(rmse_opt)
-        log.info(
-            "%s Corridor user alpha threshold | alpha=%.5f (intelligent would be %.5f)",
-            _LOG_PREFIX,
-            _alpha_user,
-            alpha_intelligent,
-        )
-    else:
-        rmse_thresh = float("nan")
-
-    if scientific_nominal and nom_pack is not None and np.isfinite(float(rmse_opt)) and np.isfinite(float(rmse_seed0)):
-        dv = abs(float(rmse_seed0) - float(rmse_opt))
-
-        tol_rm = max(
-            1e-12, abs(float(rmse_opt)) * 1e-9, float(np.sqrt(np.finfo(np.float64).eps)) * abs(float(rmse_opt))
-        )
-
-        log.info(
-            "%s Corridor seed alignment | x_source=%s | RMSE(packed nodes @ d_opt)=%.12g | RMSE_ref(%s)=%.12g | |Delta|=%.3e (warn if >%.3e)",
-            _LOG_PREFIX,
-            str(corridor_seed_x_source),
-            float(rmse_seed0),
-            str(rmse_ref_tag),
-            float(rmse_opt),
-            float(dv),
-            float(tol_rm),
-        )
-
-        if float(dv) > float(tol_rm):
-            xref = str(corridor_seed_x_source)
-
-            if "roundtrip" in xref.lower():
-                log.info(
-                    "%s Corridor seed vs %s: |Delta|=%.3e > tol=%.3e (x_source=%s). "
-                    "Often expected when the packed seed differs from the polished nominal pack; "
-                    "investigate only if envelopes look inconsistent (mono ξ / export mismatch otherwise).",
-                    _LOG_PREFIX,
-                    str(rmse_ref_tag),
-                    float(dv),
-                    float(tol_rm),
-                    xref,
-                )
-
-            else:
-                log.warning(
-                    "%s Corridor seed vs spectral_rmse_best_value: |Delta|=%.3e exceeds tol=%.3e — "
-                    "check x_seg_spline_sigma vs n_lam_seg_spline_sigma export, bounds clip, or mono ξ round-trip.",
-                    _LOG_PREFIX,
-                    float(dv),
-                    float(tol_rm),
-                )
 
     rmse_thresh_active = float(rmse_thresh)
 

@@ -8,7 +8,6 @@ from scipy.optimize import approx_fprime
 from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
 from spline_objective import (
     SplinePWLObjective,
-    compute_spline_pwl_objective_analytic_gradient,
     spline_pwl_analytic_grad_supported,
 )
 
@@ -46,20 +45,7 @@ def test_spline_pwl_analytic_grad_matches_fd_transmission() -> None:
         )
     )
     obj = SplinePWLObjective(cfg, sk)
-    g = compute_spline_pwl_objective_analytic_gradient(
-        cfg,
-        sk,
-        obj.lam_f,
-        obj.sig_f,
-        obj.n_sub_f,
-        obj.w_t,
-        obj.inv_npix,
-        obj.t_exp_f,
-        obj.r_exp_f,
-        x,
-        nk_profile_interp="pwl",
-        include_n_lambda_rising_penalty=True,
-    )
+    g = obj.analytic_gradient(x)
     assert g is not None
 
     def fun(z: np.ndarray) -> float:

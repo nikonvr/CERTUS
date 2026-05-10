@@ -224,6 +224,110 @@ class SplineReportBuilder:
         }
         pd.DataFrame(substrate_data).to_excel(writer, sheet_name="Substrate_Indices", index=False)
 
+    def _write_corridor_nk_sheets(
+        self,
+        writer: Any,
+        *,
+        result: dict,
+        corr_grid_ok: bool,
+        lam_src_full: np.ndarray,
+        ord_lam_full: np.ndarray,
+        cn_ref_f: np.ndarray,
+        ck_ref_f: np.ndarray,
+        cn_lo_f: np.ndarray,
+        cn_hi_f: np.ndarray,
+        ck_lo_f: np.ndarray,
+        ck_hi_f: np.ndarray,
+    ) -> None:
+        """Write Corridors_nk or Corridors_bootstrap Excel sheets."""
+
+        if corr_grid_ok:
+            try:
+                ord_cf = ord_lam_full
+                lam_cf = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_cf]
+
+                nref_c = (
+                    cn_ref_f[ord_cf].copy()
+                    if cn_ref_f.size == lam_src_full.size
+                    else np.full(lam_cf.shape, np.nan, dtype=np.float64)
+                )
+                kref_c = (
+                    ck_ref_f[ord_cf].copy()
+                    if ck_ref_f.size == lam_src_full.size
+                    else np.full(lam_cf.shape, np.nan, dtype=np.float64)
+                )
+
+                log10_k_ref_col = np.full(lam_cf.shape, np.nan, dtype=np.float64)
+                if ck_ref_f.size == lam_src_full.size and np.any(np.isfinite(ck_ref_f)):
+                    log10_k_ref_col = _log10_k_safe(ck_ref_f[ord_cf])
+
+                corr_full: dict[str, Any] = {
+                    "Wavelength (nm)": lam_cf,
+                    "n_corridor_ref (d profiling)": nref_c,
+                    "k_corridor_ref (d profiling)": kref_c,
+                    "log10_k_corridor_ref": log10_k_ref_col,
+                    "n_corridor_lo": cn_lo_f[ord_cf],
+                    "n_corridor_hi": cn_hi_f[ord_cf],
+                    "k_corridor_lo": ck_lo_f[ord_cf],
+                    "k_corridor_hi": ck_hi_f[ord_cf],
+                    "log10_k_corridor_lo": _log10_k_safe(ck_lo_f[ord_cf]),
+                    "log10_k_corridor_hi": _log10_k_safe(ck_hi_f[ord_cf]),
+                }
+
+                bn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
+                bn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
+                bk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
+                bk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
+
+                if (
+                    bn_lo.size == lam_src_full.size
+                    and bn_hi.size == lam_src_full.size
+                    and bk_lo.size == lam_src_full.size
+                    and bk_hi.size == lam_src_full.size
+                ):
+                    corr_full["boot_n_lo"] = bn_lo[ord_cf]
+                    corr_full["boot_n_hi"] = bn_hi[ord_cf]
+                    corr_full["boot_k_lo"] = bk_lo[ord_cf]
+                    corr_full["boot_k_hi"] = bk_hi[ord_cf]
+                    corr_full["boot_log10_k_lo"] = _log10_k_safe(bk_lo[ord_cf])
+                    corr_full["boot_log10_k_hi"] = _log10_k_safe(bk_hi[ord_cf])
+
+                pd.DataFrame(corr_full).to_excel(writer, sheet_name="Corridors_nk", index=False)
+
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                logger.exception("Export Excel: feuille Corridors_nk")
+
+        else:
+            try:
+                bn_lo2 = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
+                bn_hi2 = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
+                bk_lo2 = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
+                bk_hi2 = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
+
+                if (
+                    bn_lo2.size == lam_src_full.size
+                    and bn_hi2.size == lam_src_full.size
+                    and bk_lo2.size == lam_src_full.size
+                    and bk_hi2.size == lam_src_full.size
+                    and bn_lo2.size > 0
+                ):
+                    ord_b = ord_lam_full
+                    lam_b = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_b]
+                    pd.DataFrame(
+                        {
+                            "Wavelength (nm)": lam_b,
+                            "boot_n_lo": bn_lo2[ord_b],
+                            "boot_n_hi": bn_hi2[ord_b],
+                            "boot_k_lo": bk_lo2[ord_b],
+                            "boot_k_hi": bk_hi2[ord_b],
+                            "boot_log10_k_lo": _log10_k_safe(bk_lo2[ord_b]),
+                            "boot_log10_k_hi": _log10_k_safe(bk_hi2[ord_b]),
+                        }
+                    ).to_excel(writer, sheet_name="Corridors_bootstrap", index=False)
+
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                logger.exception("Export Excel: Corridors_bootstrap sheet")
+
     def _write_best_indices_sheet(
         self,
         writer: Any,
@@ -908,110 +1012,19 @@ class SplineReportBuilder:
                     spectre_filtre=spectre_filtre,
                 )
 
-                # Corridors n/k: full lambda grid (aligned on result lam_nm), same as GUI tab.
-
-                if corr_grid_ok:
-                    try:
-                        ord_cf = ord_lam_full
-
-                        lam_cf = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_cf]
-
-                        nref_c = (
-                            cn_ref_f[ord_cf].copy()
-                            if cn_ref_f.size == lam_src_full.size
-                            else np.full(lam_cf.shape, np.nan, dtype=np.float64)
-                        )
-
-                        kref_c = (
-                            ck_ref_f[ord_cf].copy()
-                            if ck_ref_f.size == lam_src_full.size
-                            else np.full(lam_cf.shape, np.nan, dtype=np.float64)
-                        )
-
-                        log10_k_ref_col = np.full(lam_cf.shape, np.nan, dtype=np.float64)
-
-                        if ck_ref_f.size == lam_src_full.size and np.any(np.isfinite(ck_ref_f)):
-                            log10_k_ref_col = _log10_k_safe(ck_ref_f[ord_cf])
-
-                        corr_full: dict[str, Any] = {
-                            "Wavelength (nm)": lam_cf,
-                            "n_corridor_ref (d profiling)": nref_c,
-                            "k_corridor_ref (d profiling)": kref_c,
-                            "log10_k_corridor_ref": log10_k_ref_col,
-                            "n_corridor_lo": cn_lo_f[ord_cf],
-                            "n_corridor_hi": cn_hi_f[ord_cf],
-                            "k_corridor_lo": ck_lo_f[ord_cf],
-                            "k_corridor_hi": ck_hi_f[ord_cf],
-                            "log10_k_corridor_lo": _log10_k_safe(ck_lo_f[ord_cf]),
-                            "log10_k_corridor_hi": _log10_k_safe(ck_hi_f[ord_cf]),
-                        }
-
-                        bn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
-
-                        bn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
-
-                        bk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
-
-                        bk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
-
-                        if (
-                            bn_lo.size == lam_src_full.size
-                            and bn_hi.size == lam_src_full.size
-                            and bk_lo.size == lam_src_full.size
-                            and bk_hi.size == lam_src_full.size
-                        ):
-                            corr_full["boot_n_lo"] = bn_lo[ord_cf]
-
-                            corr_full["boot_n_hi"] = bn_hi[ord_cf]
-
-                            corr_full["boot_k_lo"] = bk_lo[ord_cf]
-
-                            corr_full["boot_k_hi"] = bk_hi[ord_cf]
-
-                            corr_full["boot_log10_k_lo"] = _log10_k_safe(bk_lo[ord_cf])
-
-                            corr_full["boot_log10_k_hi"] = _log10_k_safe(bk_hi[ord_cf])
-
-                        pd.DataFrame(corr_full).to_excel(writer, sheet_name="Corridors_nk", index=False)
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-                        logger.exception("Export Excel: feuille Corridors_nk")
-
-                else:
-                    try:
-                        bn_lo2 = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
-
-                        bn_hi2 = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
-
-                        bk_lo2 = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
-
-                        bk_hi2 = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
-
-                        if (
-                            bn_lo2.size == lam_src_full.size
-                            and bn_hi2.size == lam_src_full.size
-                            and bk_lo2.size == lam_src_full.size
-                            and bk_hi2.size == lam_src_full.size
-                            and bn_lo2.size > 0
-                        ):
-                            ord_b = ord_lam_full
-
-                            lam_b = np.asarray(lam_src_full, dtype=np.float64).ravel()[ord_b]
-
-                            pd.DataFrame(
-                                {
-                                    "Wavelength (nm)": lam_b,
-                                    "boot_n_lo": bn_lo2[ord_b],
-                                    "boot_n_hi": bn_hi2[ord_b],
-                                    "boot_k_lo": bk_lo2[ord_b],
-                                    "boot_k_hi": bk_hi2[ord_b],
-                                    "boot_log10_k_lo": _log10_k_safe(bk_lo2[ord_b]),
-                                    "boot_log10_k_hi": _log10_k_safe(bk_hi2[ord_b]),
-                                }
-                            ).to_excel(writer, sheet_name="Corridors_bootstrap", index=False)
-
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-                        logger.exception("Export Excel: Corridors_bootstrap sheet")
+                self._write_corridor_nk_sheets(
+                    writer,
+                    result=result,
+                    corr_grid_ok=corr_grid_ok,
+                    lam_src_full=lam_src_full,
+                    ord_lam_full=ord_lam_full,
+                    cn_ref_f=cn_ref_f,
+                    ck_ref_f=ck_ref_f,
+                    cn_lo_f=cn_lo_f,
+                    cn_hi_f=cn_hi_f,
+                    ck_lo_f=ck_lo_f,
+                    ck_hi_f=ck_hi_f,
+                )
 
                 self._write_best_indices_sheet(
                     writer,

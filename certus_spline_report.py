@@ -71,6 +71,159 @@ class SplineReportBuilder:
         self.ctx = ctx
         self.logger = logger
 
+    def _write_summary_sheets(
+        self,
+        writer: Any,
+        *,
+        result: dict,
+        rmse_solver_txt: str,
+        rmse_spl_txt: str,
+        best_line: str,
+        rw_rep: tuple[float, float, float] | None,
+        export_fallback_lam: bool,
+        spectre_filtre: bool,
+    ) -> None:
+        """Write Summary, RMSE_Index_Comparison, and Substrate_Indices sheets."""
+
+        sig_knots = result.get("sigma_knots", np.array([0, 1]))
+        smin, smax = float(sig_knots[0]), float(sig_knots[-1])
+
+        if rw_rep is not None:
+            lo_r, hi_r = float(rw_rep[0]), float(rw_rep[1])
+            fen_txt = f"[{lo_r:.2f}, {hi_r:.2f}]"
+            if export_fallback_lam:
+                spec_txt = "Fallback: all finite lambda (empty objective mask)"
+            elif spectre_filtre:
+                spec_txt = "Only lambda in objective mask (RMSE window + valid data)"
+            else:
+                spec_txt = "All lambda from result (window covers grid or no excluded points)"
+        else:
+            fen_txt = "- (full objective spectrum)"
+            spec_txt = (
+                "Fallback: all finite lambda (mask error)"
+                if export_fallback_lam
+                else "All lambda points from result"
+            )
+
+        gui_live = bool(result.get("gui_display_from_best_live"))
+        rmse_w_fin = result.get("gui_worker_raw_rmse")
+        rmse_live_gui = result.get("gui_best_live_rmse")
+        live_note = (
+            f"Yes - displayed RMSE={float(rmse_live_gui):.6f}, final worker dict RMSE={float(rmse_w_fin):.6f}"
+            if gui_live
+            and rmse_w_fin is not None
+            and rmse_live_gui is not None
+            and np.isfinite(float(rmse_w_fin))
+            and np.isfinite(float(rmse_live_gui))
+            else ("Yes (details: gui_best_live_rmse / gui_worker_raw_rmse)" if gui_live else "No")
+        )
+        spectre_ordre = "increasing lambda (mergesort, aligned with Data table / Spectrum tab)"
+
+        delta_ns_val = float(result.get("substrate_n_offset", 0.0))
+        n_sub_base_arr = np.asarray(result.get("n_sub_base", []), dtype=np.float64).ravel()
+        n_sub_eff_arr = np.asarray(result.get("n_sub_effective", []), dtype=np.float64).ravel()
+        n_sub_base_str = f"{np.mean(n_sub_base_arr):.6f}" if n_sub_base_arr.size > 0 else "N/A"
+        n_sub_eff_str = f"{np.mean(n_sub_eff_arr):.6f}" if n_sub_eff_arr.size > 0 else "N/A"
+
+        pd.DataFrame(
+            {
+                "Indicator": [
+                    "Final RMSE (result dict)",
+                    "Spectral RMSE - solver ref (mesh, before mesh polish)",
+                    "Spectral RMSE - cubic spline sigma mesh (spectral polish)",
+                    "Best model (mesh polish spline sigma)",
+                    "Thickness (nm) final model",
+                    "Substrate offset delta_ns",
+                    "Substrate n_base (mean)",
+                    "Substrate n_effective (mean)",
+                    "Display = best live snapshot (GUI)",
+                    "Spectrum sheet - Wavelength order",
+                    "RMSE lambda window (nm)",
+                    "Spectrum sheet (lambda lines)",
+                    "Variable u",
+                    "Model Type",
+                    "sigma_min (1/nm)",
+                    "sigma_max (1/nm)",
+                    "Export Date",
+                ],
+                "Value": [
+                    f"{result.get('rmse', 'N/A'):.6f}"
+                    if isinstance(result.get("rmse"), (int, float))
+                    else "N/A",
+                    rmse_solver_txt,
+                    rmse_spl_txt,
+                    best_line,
+                    f"{result.get('d_nm', 'N/A'):.2f}"
+                    if isinstance(result.get("d_nm"), (int, float))
+                    else "N/A",
+                    f"{delta_ns_val:+.6f}",
+                    n_sub_base_str,
+                    n_sub_eff_str,
+                    live_note,
+                    spectre_ordre,
+                    fen_txt,
+                    spec_txt,
+                    f"u = (sigma - {smin:.6e}) / ({smax:.6e} - {smin:.6e}), sigma = 1/lambda",
+                    "Spline in sigma (1/lambda): sigma nodes + ln(k) + cubic interpolation",
+                    f"{smin:.6e}",
+                    f"{smax:.6e}",
+                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                ],
+            }
+        ).to_excel(writer, sheet_name="Summary", index=False)
+
+        compare_note = (
+            "L-BFGS-B spectral polish on sigma mesh (cubic spline between nodes, same objective mask). "
+            f"Solver reference (before mesh polish): RMSE={rmse_solver_txt}. "
+            f"Polished model: {best_line}."
+        )
+        pd.DataFrame(
+            {
+                "Metric": [
+                    "Spectral RMSE - solver ref (before mesh polish)",
+                    "Spectral RMSE - cubic spline sigma (polish)",
+                    "Best (internal label)",
+                    "Criteria",
+                    "Note",
+                ],
+                "Value": [
+                    rmse_solver_txt,
+                    rmse_spl_txt,
+                    str(result.get("spectral_rmse_best_label", "")).strip() or "-",
+                    "Same mask and weights as spline objective (build_spline_objective_masked_grid).",
+                    compare_note,
+                ],
+            }
+        ).to_excel(writer, sheet_name="RMSE_Index_Comparison", index=False)
+
+        substrate_data = {
+            "Parameter": [
+                "Substrate n_base (mean)",
+                "Substrate n_effective (mean)",
+                "Substrate delta_ns (offset)",
+                "Substrate offset applied",
+                "Substrate data points (n_sub_base)",
+                "Substrate data points (n_sub_effective)",
+            ],
+            "Value": [
+                n_sub_base_str,
+                n_sub_eff_str,
+                f"{delta_ns_val:+.6f}",
+                "Yes" if abs(delta_ns_val) > 1e-12 else "No",
+                f"{len(n_sub_base_arr)} points" if n_sub_base_arr.size > 0 else "N/A",
+                f"{len(n_sub_eff_arr)} points" if n_sub_eff_arr.size > 0 else "N/A",
+            ],
+            "Description": [
+                "Base substrate refractive index (no offset)",
+                "Effective substrate index (with delta_ns applied)",
+                "Manual substrate offset parameter (delta_ns)",
+                "Whether delta_ns offset was applied to this result",
+                "Count of substrate n_base values in result",
+                "Count of substrate n_effective values in result",
+            ],
+        }
+        pd.DataFrame(substrate_data).to_excel(writer, sheet_name="Substrate_Indices", index=False)
+
     def _write_best_indices_sheet(
         self,
         writer: Any,
@@ -744,154 +897,16 @@ class SplineReportBuilder:
                     }
                 ).to_excel(writer, sheet_name="Mesh_Parameters", index=False)
 
-                # Normalized variable
-
-                sig_knots = result.get("sigma_knots", np.array([0, 1]))
-
-                smin, smax = float(sig_knots[0]), float(sig_knots[-1])
-
-                if rw_rep is not None:
-                    lo_r, hi_r = float(rw_rep[0]), float(rw_rep[1])
-
-                    fen_txt = f"[{lo_r:.2f}, {hi_r:.2f}]"
-
-                    if export_fallback_lam:
-                        spec_txt = "Fallback: all finite lambda (empty objective mask)"
-
-                    elif spectre_filtre:
-                        spec_txt = "Only lambda in objective mask (RMSE window + valid data)"
-
-                    else:
-                        spec_txt = "All lambda from result (window covers grid or no excluded points)"
-
-                else:
-                    fen_txt = "- (full objective spectrum)"
-
-                    spec_txt = (
-                        "Fallback: all finite lambda (mask error)"
-                        if export_fallback_lam
-                        else "All lambda points from result"
-                    )
-
-                gui_live = bool(result.get("gui_display_from_best_live"))
-
-                rmse_w_fin = result.get("gui_worker_raw_rmse")
-
-                rmse_live_gui = result.get("gui_best_live_rmse")
-
-                live_note = (
-                    f"Yes - displayed RMSE={float(rmse_live_gui):.6f}, final worker dict RMSE={float(rmse_w_fin):.6f}"
-                    if gui_live
-                    and rmse_w_fin is not None
-                    and rmse_live_gui is not None
-                    and np.isfinite(float(rmse_w_fin))
-                    and np.isfinite(float(rmse_live_gui))
-                    else ("Yes (details: gui_best_live_rmse / gui_worker_raw_rmse)" if gui_live else "No")
+                self._write_summary_sheets(
+                    writer,
+                    result=result,
+                    rmse_solver_txt=rmse_solver_txt,
+                    rmse_spl_txt=rmse_spl_txt,
+                    best_line=best_line,
+                    rw_rep=rw_rep,
+                    export_fallback_lam=export_fallback_lam,
+                    spectre_filtre=spectre_filtre,
                 )
-
-                spectre_ordre = "increasing lambda (mergesort, aligned with Data table / Spectrum tab)"
-
-                # Extract substrate information
-                delta_ns_val = float(result.get("substrate_n_offset", 0.0))
-                n_sub_base_arr = np.asarray(result.get("n_sub_base", []), dtype=np.float64).ravel()
-                n_sub_eff_arr = np.asarray(result.get("n_sub_effective", []), dtype=np.float64).ravel()
-                n_sub_base_str = f"{np.mean(n_sub_base_arr):.6f}" if n_sub_base_arr.size > 0 else "N/A"
-                n_sub_eff_str = f"{np.mean(n_sub_eff_arr):.6f}" if n_sub_eff_arr.size > 0 else "N/A"
-
-                pd.DataFrame(
-                    {
-                        "Indicator": [
-                            "Final RMSE (result dict)",
-                            "Spectral RMSE - solver ref (mesh, before mesh polish)",
-                            "Spectral RMSE - cubic spline sigma mesh (spectral polish)",
-                            "Best model (mesh polish spline sigma)",
-                            "Thickness (nm) final model",
-                            "Substrate offset delta_ns",
-                            "Substrate n_base (mean)",
-                            "Substrate n_effective (mean)",
-                            "Display = best live snapshot (GUI)",
-                            "Spectrum sheet - Wavelength order",
-                            "RMSE lambda window (nm)",
-                            "Spectrum sheet (lambda lines)",
-                            "Variable u",
-                            "Model Type",
-                            "sigma_min (1/nm)",
-                            "sigma_max (1/nm)",
-                            "Export Date",
-                        ],
-                        "Value": [
-                            f"{result.get('rmse', 'N/A'):.6f}"
-                            if isinstance(result.get("rmse"), (int, float))
-                            else "N/A",
-                            rmse_solver_txt,
-                            rmse_spl_txt,
-                            best_line,
-                            f"{result.get('d_nm', 'N/A'):.2f}"
-                            if isinstance(result.get("d_nm"), (int, float))
-                            else "N/A",
-                            f"{delta_ns_val:+.6f}",
-                            n_sub_base_str,
-                            n_sub_eff_str,
-                            live_note,
-                            spectre_ordre,
-                            fen_txt,
-                            spec_txt,
-                            f"u = (sigma - {smin:.6e}) / ({smax:.6e} - {smin:.6e}), sigma = 1/lambda",
-                            "Spline in sigma (1/lambda): sigma nodes + ln(k) + cubic interpolation",
-                            f"{smin:.6e}",
-                            f"{smax:.6e}",
-                            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        ],
-                    }
-                ).to_excel(writer, sheet_name="Summary", index=False)
-
-                pd.DataFrame(
-                    {
-                        "Metric": [
-                            "Spectral RMSE - solver ref (before mesh polish)",
-                            "Spectral RMSE - cubic spline sigma (polish)",
-                            "Best (internal label)",
-                            "Criteria",
-                            "Note",
-                        ],
-                        "Value": [
-                            rmse_solver_txt,
-                            rmse_spl_txt,
-                            str(best_lbl) if best_lbl else "-",
-                            "Same mask and weights as spline objective (build_spline_objective_masked_grid).",
-                            compare_note,
-                        ],
-                    }
-                ).to_excel(writer, sheet_name="RMSE_Index_Comparison", index=False)
-
-                # Add Substrate_Indices sheet with detailed substrate information
-                substrate_data = {
-                    "Parameter": [
-                        "Substrate n_base (mean)",
-                        "Substrate n_effective (mean)",
-                        "Substrate delta_ns (offset)",
-                        "Substrate offset applied",
-                        "Substrate data points (n_sub_base)",
-                        "Substrate data points (n_sub_effective)",
-                    ],
-                    "Value": [
-                        n_sub_base_str,
-                        n_sub_eff_str,
-                        f"{delta_ns_val:+.6f}",
-                        "Yes" if abs(delta_ns_val) > 1e-12 else "No",
-                        f"{len(n_sub_base_arr)} points" if n_sub_base_arr.size > 0 else "N/A",
-                        f"{len(n_sub_eff_arr)} points" if n_sub_eff_arr.size > 0 else "N/A",
-                    ],
-                    "Description": [
-                        "Base substrate refractive index (no offset)",
-                        "Effective substrate index (with delta_ns applied)",
-                        "Manual substrate offset parameter (delta_ns)",
-                        "Whether delta_ns offset was applied to this result",
-                        "Count of substrate n_base values in result",
-                        "Count of substrate n_effective values in result",
-                    ],
-                }
-                pd.DataFrame(substrate_data).to_excel(writer, sheet_name="Substrate_Indices", index=False)
 
                 # Corridors n/k: full lambda grid (aligned on result lam_nm), same as GUI tab.
 

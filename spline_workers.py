@@ -765,10 +765,6 @@ def _run_free_knot_stage(
         return sigma_knots_decode(raw, s_lo, s_hi, work=_decode_work, reuse_output=True)
 
 
-    if not optimize_n:
-        np.interp(sig_f, skn0, nn0)
-
-    float(max(getattr(cfg, "lnk_spline_reg_weight", 1e-3), 0.0))
 
     min_dlam_ratio_req = float(max(getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.0) or 0.0, 0.0))
     lam_lo = float(np.min(lam)) if lam.size else float("nan")

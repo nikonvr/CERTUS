@@ -1166,6 +1166,102 @@ def worker_spline_auto_add_one_knot(
         return None
 
 
+
+def _sensitivity_rank_inner_indices(
+    cfg: "SplineOptConfig",
+    active_knots: np.ndarray,
+    best_result_out: dict,
+    K: int,
+    inner_indices: list[int],
+    top_n_sensitivity: int,
+    tolerance: float,
+    strict_tol_mode: bool,
+    log: logging.Logger,
+    step: int,
+) -> list[int]:
+    """Rank inner knot indices by no-refit RMSE sensitivity and return the top-N shortlist."""
+    from spline_objective import nk_from_x_pwlnk
+
+    lam_raw = getattr(cfg, "lam_nm", None)
+    lam_full = (
+        np.asarray(lam_raw, dtype=np.float64).ravel()
+        if lam_raw is not None
+        else np.asarray([], dtype=np.float64)
+    )
+    d_nm_cur = float(best_result_out.get("d_nm", 0.0))
+    n_phys_cur = np.asarray(best_result_out.get("n_nodes_physical", []), dtype=np.float64).ravel()
+    L_nodes_cur = np.asarray(best_result_out.get("L_nodes", []), dtype=np.float64).ravel()
+    can_rank = (
+        n_phys_cur.size == K
+        and L_nodes_cur.size == K
+        and lam_full.size > 2
+        and np.isfinite(d_nm_cur)
+        and hasattr(cfg, "k_clip_lo")
+        and hasattr(cfg, "k_clip_hi")
+        and hasattr(cfg, "n_mono_band_nm")
+    )
+    if not can_rank:
+        log.debug(
+            "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking skipped | can_rank=%s | size_n=%d | size_L=%d | lam=%d | d_finite=%s",
+            int(step + 1), str(can_rank), int(n_phys_cur.size), int(L_nodes_cur.size),
+            int(lam_full.size), str(np.isfinite(d_nm_cur)),
+        )
+        return inner_indices
+
+    sensitivity_scores: list[tuple[int, float]] = []
+    for i_cand in inner_indices:
+        sk_reduced = np.delete(active_knots, i_cand)
+        try:
+            n_reduced = PchipInterpolator(active_knots, n_phys_cur)(sk_reduced)
+            L_reduced = PchipInterpolator(active_knots, L_nodes_cur)(sk_reduced)
+        except (ValueError, TypeError):
+            n_reduced = np.interp(sk_reduced, active_knots, n_phys_cur)
+            L_reduced = np.interp(sk_reduced, active_knots, L_nodes_cur)
+        n_slice = physical_nodes_to_x_slice_n(n_reduced, sk_reduced, cfg.n_mono_band_nm)
+        x_nodes_red = np.concatenate((n_slice, L_reduced))
+        x_full_red = np.concatenate((np.asarray([d_nm_cur], dtype=np.float64), x_nodes_red))
+        try:
+            n_lam_red, k_lam_red = nk_from_x_pwlnk(
+                x_full_red, lam_full, sk_reduced,
+                cfg.k_clip_lo, cfg.k_clip_hi, sig_pre=None,
+                n_mono_band_nm=cfg.n_mono_band_nm,
+                profile_interp=str(cfg.nk_profile_interp or "smooth"),
+            )
+            _, rmse_norefit = spectral_mse_rmse_masked_from_nk(
+                cfg, best_result_out, lam_full,
+                np.asarray(n_lam_red, dtype=np.float64).ravel(),
+                np.asarray(k_lam_red, dtype=np.float64).ravel(),
+                d_nm_cur,
+            )
+            sensitivity_scores.append((i_cand, float(rmse_norefit)))
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            sensitivity_scores.append((i_cand, float("inf")))
+
+    sensitivity_scores.sort(key=lambda t: t[1])
+    _strict_default = 2.0e-5
+    _loose_default = max(5.0e-5, 1.0 * float(max(tolerance, 0.0)))
+    _default_margin = _strict_default if strict_tol_mode else _loose_default
+    shortlist_margin_abs = float(
+        getattr(cfg, "auto_clean_sensitivity_shortlist_margin_abs", _default_margin) or _default_margin
+    )
+    finite_scores = [(i, s) for i, s in sensitivity_scores if np.isfinite(s)]
+    if finite_scores:
+        best_score = float(finite_scores[0][1])
+        shortlisted = [i for i, s in finite_scores if float(s) <= (best_score + float(shortlist_margin_abs))]
+        if shortlisted:
+            result = shortlisted[:top_n_sensitivity]
+        else:
+            result = [i for i, _ in finite_scores[:top_n_sensitivity]]
+    else:
+        result = [i for i, _ in sensitivity_scores[:top_n_sensitivity]]
+    log.debug(
+        "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking | K=%d | top_%d=%s | scores=%s",
+        int(step + 1), int(K), int(top_n_sensitivity), str(result),
+        ", ".join(f"{i}:{s:.6f}" for i, s in sensitivity_scores[:top_n_sensitivity]),
+    )
+    return result
+
+
 def worker_spline_auto_clean_knots(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -1579,117 +1675,14 @@ def worker_spline_auto_clean_knots(
         best_cand_knots = None
         best_cand_variant = "baseline"
 
-        # --- Sensitivity pre-ranking (no-refit RMSE on reduced mesh) ---
-        # For each inner knot, compute an approximate RMSE by simply
-        # interpolating the current n/k onto the reduced mesh (zero optimizer cost).
-        # Only the top-N candidates are then tested with the full L-BFGS-B pipeline.
         top_n_sensitivity = int(max(1, int(getattr(cfg, "auto_clean_top_n_sensitivity", 4) or 4)))
-        # The historical top_n=2 cap for K>=12 has been removed: it was
-        # excessively limiting the search on dense meshes.
         inner_indices = list(range(1, K - 1))
 
         if len(inner_indices) > top_n_sensitivity:
-            from spline_objective import nk_from_x_pwlnk
-
-            lam_raw = getattr(cfg, "lam_nm", None)
-            lam_full = (
-                np.asarray(lam_raw, dtype=np.float64).ravel()
-                if lam_raw is not None
-                else np.asarray([], dtype=np.float64)
+            inner_indices = _sensitivity_rank_inner_indices(
+                cfg, active_knots, best_result_out, K, inner_indices,
+                top_n_sensitivity, tolerance, strict_tol_mode, log, step,
             )
-            d_nm_cur = float(best_result_out.get("d_nm", 0.0))
-            n_phys_cur = np.asarray(best_result_out.get("n_nodes_physical", []), dtype=np.float64).ravel()
-            L_nodes_cur = np.asarray(best_result_out.get("L_nodes", []), dtype=np.float64).ravel()
-            can_rank = (
-                n_phys_cur.size == K
-                and L_nodes_cur.size == K
-                and lam_full.size > 2
-                and np.isfinite(d_nm_cur)
-                and hasattr(cfg, "k_clip_lo")
-                and hasattr(cfg, "k_clip_hi")
-                and hasattr(cfg, "n_mono_band_nm")
-            )
-            if can_rank:
-                sensitivity_scores: list[tuple[int, float]] = []
-                for i_cand in inner_indices:
-                    sk_reduced = np.delete(active_knots, i_cand)
-                    # Use PCHIP for accurate, shape-preserving sensitivity estimation.
-                    # Linear interp (np.interp) over-penalizes removals and distorts
-                    # the ranking, causing the wrong knots to be tested first.
-                    try:
-                        n_reduced = PchipInterpolator(active_knots, n_phys_cur)(sk_reduced)
-                        L_reduced = PchipInterpolator(active_knots, L_nodes_cur)(sk_reduced)
-                    except (ValueError, TypeError):
-                        n_reduced = np.interp(sk_reduced, active_knots, n_phys_cur)
-                        L_reduced = np.interp(sk_reduced, active_knots, L_nodes_cur)
-                    n_slice = physical_nodes_to_x_slice_n(n_reduced, sk_reduced, cfg.n_mono_band_nm)
-                    x_nodes_red = np.concatenate((n_slice, L_reduced))
-                    x_full_red = np.concatenate((np.asarray([d_nm_cur], dtype=np.float64), x_nodes_red))
-                    try:
-                        n_lam_red, k_lam_red = nk_from_x_pwlnk(
-                            x_full_red,
-                            lam_full,
-                            sk_reduced,
-                            cfg.k_clip_lo,
-                            cfg.k_clip_hi,
-                            sig_pre=None,
-                            n_mono_band_nm=cfg.n_mono_band_nm,
-                            profile_interp=str(cfg.nk_profile_interp or "smooth"),
-                        )
-                        _, rmse_norefit = spectral_mse_rmse_masked_from_nk(
-                            cfg,
-                            best_result_out,
-                            lam_full,
-                            np.asarray(n_lam_red, dtype=np.float64).ravel(),
-                            np.asarray(k_lam_red, dtype=np.float64).ravel(),
-                            d_nm_cur,
-                        )
-                        sensitivity_scores.append((i_cand, float(rmse_norefit)))
-                    except NUMERICAL_FAULT_EXCEPTIONS:
-                        sensitivity_scores.append((i_cand, float("inf")))
-
-                # Sort by RMSE: lowest = least impact from removal = best candidate.
-                sensitivity_scores.sort(key=lambda t: t[1])
-                # ── SHORTLIST MARGIN ───────────────────────────────────────────
-                # We keep all candidates with score <= best_score + margin,
-                # up to top_n_sensitivity.  This prevents a single false "winner"
-                # from hiding better options that are within noise distance.
-                _strict_default = 2.0e-5
-                _loose_default = max(5.0e-5, 1.0 * float(max(tolerance, 0.0)))
-                _default_margin = _strict_default if strict_tol_mode else _loose_default
-                shortlist_margin_abs = float(
-                    getattr(cfg, "auto_clean_sensitivity_shortlist_margin_abs", _default_margin) or _default_margin
-                )
-                finite_scores = [(i, s) for i, s in sensitivity_scores if np.isfinite(s)]
-                if finite_scores:
-                    best_score = float(finite_scores[0][1])
-                    shortlisted = [
-                        i for i, s in finite_scores if float(s) <= (best_score + float(shortlist_margin_abs))
-                    ]
-                    if shortlisted:
-                        inner_indices = shortlisted[:top_n_sensitivity]
-                    else:
-                        inner_indices = [i for i, _ in finite_scores[:top_n_sensitivity]]
-                else:
-                    inner_indices = [i for i, _ in sensitivity_scores[:top_n_sensitivity]]
-                log.debug(
-                    "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking | K=%d | top_%d=%s | scores=%s",
-                    int(step + 1),
-                    int(K),
-                    int(top_n_sensitivity),
-                    str(inner_indices),
-                    ", ".join(f"{i}:{s:.6f}" for i, s in sensitivity_scores[:top_n_sensitivity]),
-                )
-            else:
-                log.debug(
-                    "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking skipped | can_rank=%s | size_n=%d | size_L=%d | lam=%d | d_finite=%s",
-                    int(step + 1),
-                    str(can_rank),
-                    int(n_phys_cur.size),
-                    int(L_nodes_cur.size),
-                    int(lam_full.size),
-                    str(np.isfinite(d_nm_cur)),
-                )
 
         for i in inner_indices:
             if stop_event.is_set():

@@ -4218,80 +4218,18 @@ class _SmartInitDialogMixin:
             state.L_nodes = LL
 
         def do_recalc() -> None:
-
-            nonlocal state
-
-            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            _prev = state
-            state = _SmartInitState(
-                cur_sk,
-                _prev.n_phys,
-                _prev.L_nodes,
-                _prev.preview_d_nm,
-                _prev.best_rmse,
-                _prev.best_n,
-                _prev.best_L,
-                _prev.current_rmse,
-                _prev.current_t_th,
+            _cbs_recalc = {
+                "update_main_x_axes": update_main_x_axes,
+                "sync_knot_labels": sync_knot_labels,
+                "refresh_stats": refresh_stats,
+                "refresh_nk_plots_aux": refresh_nk_plots_aux,
+                "refresh_nk_plots_mon": refresh_nk_plots_mon,
+            }
+            self._execute_smart_init_do_recalc(
+                state, cfg, grids, _relax_si_mono, sk_arr,
+                curve_editor_holder, _cbs_recalc,
             )
 
-            out = self._execute_smart_init_recalc_logic(cfg, grids, _relax_si_mono, state)
-
-            if out is None:
-                return
-
-            state.n_phys = state.n_phys.copy()
-
-            state.L_nodes = state.L_nodes.copy()
-
-            state.preview_d_nm = state.preview_d_nm
-
-            state.best_rmse = state.best_rmse
-
-            state.best_n = state.best_n.copy()
-
-            state.best_L = state.best_L.copy()
-
-            state.current_t_th = state.current_t_th
-
-            state.current_rmse = state.current_rmse
-
-            lam_u_src = out.get("lam_nm")
-
-            if lam_u_src is None:
-                lam_u_src = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-                if self.logger:
-                    self.logger.warning("Smart-init preview: out.lam_nm missing; fallback to cfg.lam_nm.")
-
-            lam_u = np.asarray(lam_u_src, dtype=np.float64).ravel()
-
-            ou = np.argsort((1.0 / np.maximum(lam_u, 1e-9)) ** 2)
-
-            update_main_x_axes()
-
-            lam_uu = lam_u
-
-            sync_knot_labels()
-
-            refresh_stats(state.preview_d_nm, state.current_rmse)
-
-            if "n_lam" in out and "k_lam" in out:
-                n_lam_u = np.asarray(out["n_lam"], dtype=np.float64).ravel()
-
-                k_lam_u = np.asarray(out["k_lam"], dtype=np.float64).ravel()
-
-                refresh_nk_plots_aux(lam_uu[ou], n_lam_u[ou], k_lam_u[ou])
-
-                refresh_nk_plots_mon(lam_uu[ou], n_lam_u[ou], k_lam_u[ou])
-
-            for _ce in curve_editor_holder:
-                try:
-                    _ce.refresh_plots()
-
-                except (AttributeError, RuntimeError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         _nk_curve_editor = SmartInitNKCurveEditorDialog(
             dlg,
@@ -12168,6 +12106,52 @@ class CertusIndexSplineApp(
                 d_w,
             )
         return winner, rm_w, d_w
+
+    def _execute_smart_init_do_recalc(
+        self,
+        state: "_SmartInitState",
+        cfg: "SplineOptConfig",
+        grids,
+        relax_si_mono: bool,
+        sk_arr: np.ndarray,
+        curve_editor_holder: list,
+        ui_callbacks: dict,
+    ) -> None:
+        """Recompute spectra from current n/L/d state and refresh all UI elements.
+
+        ui_callbacks must contain: 'update_main_x_axes', 'sync_knot_labels',
+        'refresh_stats', 'refresh_nk_plots_aux', 'refresh_nk_plots_mon'.
+        """
+        cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
+        state.sk = cur_sk
+
+        out = self._execute_smart_init_recalc_logic(cfg, grids, relax_si_mono, state)
+        if out is None:
+            return
+
+        ui_callbacks["update_main_x_axes"]()
+        ui_callbacks["sync_knot_labels"]()
+        ui_callbacks["refresh_stats"](state.preview_d_nm, state.current_rmse)
+
+        lam_u_src = out.get("lam_nm")
+        if lam_u_src is None:
+            lam_u_src = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
+            if self.logger:
+                self.logger.warning("Smart-init preview: out.lam_nm missing; fallback to cfg.lam_nm.")
+        lam_u = np.asarray(lam_u_src, dtype=np.float64).ravel()
+        ou = np.argsort((1.0 / np.maximum(lam_u, 1e-9)) ** 2)
+
+        if "n_lam" in out and "k_lam" in out:
+            n_lam_u = np.asarray(out["n_lam"], dtype=np.float64).ravel()
+            k_lam_u = np.asarray(out["k_lam"], dtype=np.float64).ravel()
+            ui_callbacks["refresh_nk_plots_aux"](lam_u[ou], n_lam_u[ou], k_lam_u[ou])
+            ui_callbacks["refresh_nk_plots_mon"](lam_u[ou], n_lam_u[ou], k_lam_u[ou])
+
+        for _ce in curve_editor_holder:
+            try:
+                _ce.refresh_plots()
+            except (AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _run_smart_init_autofind(
         self,

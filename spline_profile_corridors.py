@@ -5525,8 +5525,10 @@ def compute_regular_grid_rmse_profile(
         k=k,
         coverage_complete=coverage_complete,
     )
-
-
+
+
+
+
 @dataclass
 class CorridorProfileContext:
     _use_hetero: Any
@@ -5589,6 +5591,107 @@ class CorridorProfileContext:
     center_seed_gate_eval_count: int = 0
     center_seed_gate_kept_count: int = 0
     center_seed_gate_delta_refit_minus_seed: float = float("nan")
+
+def _log_corridor_envelope_diagnostics(
+    n_lo: np.ndarray,
+    n_hi: np.ndarray,
+    k_lo: np.ndarray,
+    k_hi: np.ndarray,
+    k_stack: np.ndarray,
+    corridor_ref_k_lam: np.ndarray | None,
+    base_k_lam: np.ndarray,
+) -> None:
+    """Compute and log corridor envelope statistics (spans, logk, k-vs-ref)."""
+
+    n_span = np.asarray(n_hi, dtype=np.float64) - np.asarray(n_lo, dtype=np.float64)
+    k_span = np.asarray(k_hi, dtype=np.float64) - np.asarray(k_lo, dtype=np.float64)
+    m_n_span = np.isfinite(n_span)
+    m_k_span = np.isfinite(k_span) & np.isfinite(k_lo) & np.isfinite(k_hi) & (np.asarray(k_lo, dtype=np.float64) >= 0.0)
+    logk_span = np.full(np.asarray(k_span, dtype=np.float64).shape, np.nan, dtype=np.float64)
+    m_logk_span = (
+        np.isfinite(k_lo)
+        & np.isfinite(k_hi)
+        & (np.asarray(k_lo, dtype=np.float64) > 0.0)
+        & (np.asarray(k_hi, dtype=np.float64) > 0.0)
+    )
+    logk_span[m_logk_span] = np.log10(np.maximum(np.asarray(k_hi, dtype=np.float64)[m_logk_span], 1e-30)) - np.log10(
+        np.maximum(np.asarray(k_lo, dtype=np.float64)[m_logk_span], 1e-30)
+    )
+
+    k_ref_diag = (
+        np.asarray(corridor_ref_k_lam, dtype=np.float64).ravel()
+        if corridor_ref_k_lam is not None
+        else np.asarray(base_k_lam, dtype=np.float64).ravel()
+    )
+    k_ref_rel = np.full(np.asarray(k_span, dtype=np.float64).shape, np.nan, dtype=np.float64)
+    if k_ref_diag.size >= k_span.size and k_span.size > 0:
+        k_ref_diag = k_ref_diag[: k_span.size]
+        m_k_rel = np.isfinite(k_span) & np.isfinite(k_ref_diag) & (np.abs(k_ref_diag) > 1e-30)
+        k_ref_rel[m_k_rel] = k_span[m_k_rel] / np.abs(k_ref_diag[m_k_rel])
+        m_ref_inside = np.isfinite(k_lo) & np.isfinite(k_hi) & np.isfinite(k_ref_diag)
+        n_ref_inside = int(
+            np.count_nonzero(
+                m_ref_inside
+                & (k_ref_diag >= np.asarray(k_lo, dtype=np.float64))
+                & (k_ref_diag <= np.asarray(k_hi, dtype=np.float64))
+            )
+        )
+        n_ref_eval = int(np.count_nonzero(m_ref_inside))
+    else:
+        n_ref_inside = 0
+        n_ref_eval = 0
+
+    log.info(
+        "%s Corridor envelope stats | n_span median=%s max=%s | k_span median=%s max=%s | log10(k)_span median=%s max=%s | k_rel_span median=%s max=%s | k_ref_inside=%d/%d",
+        _LOG_PREFIX,
+        f"{float(np.nanmedian(n_span[m_n_span])):.6e}" if np.any(m_n_span) else "n/a",
+        f"{float(np.nanmax(n_span[m_n_span])):.6e}" if np.any(m_n_span) else "n/a",
+        f"{float(np.nanmedian(k_span[m_k_span])):.6e}" if np.any(m_k_span) else "n/a",
+        f"{float(np.nanmax(k_span[m_k_span])):.6e}" if np.any(m_k_span) else "n/a",
+        f"{float(np.nanmedian(logk_span[m_logk_span])):.6e}" if np.any(m_logk_span) else "n/a",
+        f"{float(np.nanmax(logk_span[m_logk_span])):.6e}" if np.any(m_logk_span) else "n/a",
+        f"{float(np.nanmedian(k_ref_rel[np.isfinite(k_ref_rel)])):.6e}" if np.any(np.isfinite(k_ref_rel)) else "n/a",
+        f"{float(np.nanmax(k_ref_rel[np.isfinite(k_ref_rel)])):.6e}" if np.any(np.isfinite(k_ref_rel)) else "n/a",
+        int(n_ref_inside),
+        int(n_ref_eval),
+    )
+
+    if k_stack.ndim == 2 and k_stack.shape[0] >= 2 and k_stack.shape[1] > 0:
+        k_ref_curve = None
+        if k_ref_diag.size >= k_stack.shape[1]:
+            k_ref_curve = np.asarray(k_ref_diag[: k_stack.shape[1]], dtype=np.float64)
+        elif k_stack.shape[0] > 0:
+            k_ref_curve = np.asarray(k_stack[0, :], dtype=np.float64)
+        if k_ref_curve is not None:
+            delta_logk = np.full((int(k_stack.shape[0]), int(k_stack.shape[1])), np.nan, dtype=np.float64)
+            m_ref_curve = np.isfinite(k_ref_curve) & (k_ref_curve > 0.0)
+            for _i in range(int(k_stack.shape[0])):
+                kr = np.asarray(k_stack[_i, :], dtype=np.float64)
+                m_row = np.isfinite(kr) & (kr > 0.0) & m_ref_curve
+                if np.any(m_row):
+                    delta_logk[_i, m_row] = np.log10(np.maximum(kr[m_row], 1e-30)) - np.log10(
+                        np.maximum(k_ref_curve[m_row], 1e-30)
+                    )
+            row_max_abs = np.nanmax(np.abs(delta_logk), axis=1)
+            row_med_abs = np.nanmedian(np.abs(delta_logk), axis=1)
+            log.info(
+                "%s Corridor k-vs-ref diagnostics | accepted_curves=%d | max|\u0394log10(k)| across curves: median=%s max=%s | median|\u0394log10(k)| across curves: median=%s max=%s",
+                _LOG_PREFIX,
+                int(k_stack.shape[0]),
+                f"{float(np.nanmedian(row_max_abs[np.isfinite(row_max_abs)])):.6e}"
+                if np.any(np.isfinite(row_max_abs))
+                else "n/a",
+                f"{float(np.nanmax(row_max_abs[np.isfinite(row_max_abs)])):.6e}"
+                if np.any(np.isfinite(row_max_abs))
+                else "n/a",
+                f"{float(np.nanmedian(row_med_abs[np.isfinite(row_med_abs)])):.6e}"
+                if np.any(np.isfinite(row_med_abs))
+                else "n/a",
+                f"{float(np.nanmax(row_med_abs[np.isfinite(row_med_abs)])):.6e}"
+                if np.any(np.isfinite(row_med_abs))
+                else "n/a",
+            )
+
 
 def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
     # Envelopes (corridors): min/max over all valid curves (linear n and linear k).
@@ -5846,97 +5949,16 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
             _LOG_PREFIX,
             int(k_min_changed),
         )
-    # ─────────────────────────────────────────────────────────────────────────────────────────────
-
-    # -- Diagnostic stats: computed AFTER enforce, i.e. on the final corridor --
-    n_span = np.asarray(n_hi, dtype=np.float64) - np.asarray(n_lo, dtype=np.float64)
-    k_span = np.asarray(k_hi, dtype=np.float64) - np.asarray(k_lo, dtype=np.float64)
-    m_n_span = np.isfinite(n_span)
-    m_k_span = np.isfinite(k_span) & np.isfinite(k_lo) & np.isfinite(k_hi) & (np.asarray(k_lo, dtype=np.float64) >= 0.0)
-    logk_span = np.full(np.asarray(k_span, dtype=np.float64).shape, np.nan, dtype=np.float64)
-    m_logk_span = (
-        np.isfinite(k_lo)
-        & np.isfinite(k_hi)
-        & (np.asarray(k_lo, dtype=np.float64) > 0.0)
-        & (np.asarray(k_hi, dtype=np.float64) > 0.0)
-    )
-    logk_span[m_logk_span] = np.log10(np.maximum(np.asarray(k_hi, dtype=np.float64)[m_logk_span], 1e-30)) - np.log10(
-        np.maximum(np.asarray(k_lo, dtype=np.float64)[m_logk_span], 1e-30)
+    _log_corridor_envelope_diagnostics(
+        n_lo=n_lo,
+        n_hi=n_hi,
+        k_lo=k_lo,
+        k_hi=k_hi,
+        k_stack=k_stack,
+        corridor_ref_k_lam=ctx.corridor_ref_k_lam,
+        base_k_lam=np.asarray(ctx.base_result.get("k_lam", []), dtype=np.float64).ravel(),
     )
 
-    k_ref_diag = (
-        np.asarray(ctx.corridor_ref_k_lam, dtype=np.float64).ravel()
-        if ctx.corridor_ref_k_lam is not None
-        else np.asarray(ctx.base_result.get("k_lam", []), dtype=np.float64).ravel()
-    )
-    k_ref_rel = np.full(np.asarray(k_span, dtype=np.float64).shape, np.nan, dtype=np.float64)
-    if k_ref_diag.size >= k_span.size and k_span.size > 0:
-        k_ref_diag = k_ref_diag[: k_span.size]
-        m_k_rel = np.isfinite(k_span) & np.isfinite(k_ref_diag) & (np.abs(k_ref_diag) > 1e-30)
-        k_ref_rel[m_k_rel] = k_span[m_k_rel] / np.abs(k_ref_diag[m_k_rel])
-        m_ref_inside = np.isfinite(k_lo) & np.isfinite(k_hi) & np.isfinite(k_ref_diag)
-        n_ref_inside = int(
-            np.count_nonzero(
-                m_ref_inside
-                & (k_ref_diag >= np.asarray(k_lo, dtype=np.float64))
-                & (k_ref_diag <= np.asarray(k_hi, dtype=np.float64))
-            )
-        )
-        n_ref_eval = int(np.count_nonzero(m_ref_inside))
-    else:
-        n_ref_inside = 0
-        n_ref_eval = 0
-
-    log.info(
-        "%s Corridor envelope stats | n_span median=%s max=%s | k_span median=%s max=%s | log10(k)_span median=%s max=%s | k_rel_span median=%s max=%s | k_ref_inside=%d/%d",
-        _LOG_PREFIX,
-        f"{float(np.nanmedian(n_span[m_n_span])):.6e}" if np.any(m_n_span) else "n/a",
-        f"{float(np.nanmax(n_span[m_n_span])):.6e}" if np.any(m_n_span) else "n/a",
-        f"{float(np.nanmedian(k_span[m_k_span])):.6e}" if np.any(m_k_span) else "n/a",
-        f"{float(np.nanmax(k_span[m_k_span])):.6e}" if np.any(m_k_span) else "n/a",
-        f"{float(np.nanmedian(logk_span[m_logk_span])):.6e}" if np.any(m_logk_span) else "n/a",
-        f"{float(np.nanmax(logk_span[m_logk_span])):.6e}" if np.any(m_logk_span) else "n/a",
-        f"{float(np.nanmedian(k_ref_rel[np.isfinite(k_ref_rel)])):.6e}" if np.any(np.isfinite(k_ref_rel)) else "n/a",
-        f"{float(np.nanmax(k_ref_rel[np.isfinite(k_ref_rel)])):.6e}" if np.any(np.isfinite(k_ref_rel)) else "n/a",
-        int(n_ref_inside),
-        int(n_ref_eval),
-    )
-
-    if k_stack.ndim == 2 and k_stack.shape[0] >= 2 and k_stack.shape[1] > 0:
-        k_ref_curve = None
-        if k_ref_diag.size >= k_stack.shape[1]:
-            k_ref_curve = np.asarray(k_ref_diag[: k_stack.shape[1]], dtype=np.float64)
-        elif k_stack.shape[0] > 0:
-            k_ref_curve = np.asarray(k_stack[0, :], dtype=np.float64)
-        if k_ref_curve is not None:
-            delta_logk = np.full((int(k_stack.shape[0]), int(k_stack.shape[1])), np.nan, dtype=np.float64)
-            m_ref_curve = np.isfinite(k_ref_curve) & (k_ref_curve > 0.0)
-            for _i in range(int(k_stack.shape[0])):
-                kr = np.asarray(k_stack[_i, :], dtype=np.float64)
-                m_row = np.isfinite(kr) & (kr > 0.0) & m_ref_curve
-                if np.any(m_row):
-                    delta_logk[_i, m_row] = np.log10(np.maximum(kr[m_row], 1e-30)) - np.log10(
-                        np.maximum(k_ref_curve[m_row], 1e-30)
-                    )
-            row_max_abs = np.nanmax(np.abs(delta_logk), axis=1)
-            row_med_abs = np.nanmedian(np.abs(delta_logk), axis=1)
-            log.info(
-                "%s Corridor k-vs-ref diagnostics | accepted_curves=%d | max|Δlog10(k)| across curves: median=%s max=%s | median|Δlog10(k)| across curves: median=%s max=%s",
-                _LOG_PREFIX,
-                int(k_stack.shape[0]),
-                f"{float(np.nanmedian(row_max_abs[np.isfinite(row_max_abs)])):.6e}"
-                if np.any(np.isfinite(row_max_abs))
-                else "n/a",
-                f"{float(np.nanmax(row_max_abs[np.isfinite(row_max_abs)])):.6e}"
-                if np.any(np.isfinite(row_max_abs))
-                else "n/a",
-                f"{float(np.nanmedian(row_med_abs[np.isfinite(row_med_abs)])):.6e}"
-                if np.any(np.isfinite(row_med_abs))
-                else "n/a",
-                f"{float(np.nanmax(row_med_abs[np.isfinite(row_med_abs)])):.6e}"
-                if np.any(np.isfinite(row_med_abs))
-                else "n/a",
-            )
 
     if ctx.log_coaching:
         _log_coaching_corridor_outcome(

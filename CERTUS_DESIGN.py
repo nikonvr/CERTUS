@@ -549,7 +549,7 @@ def _design_optimization_callback_common(app, sample) -> None:
         try:
             n_clusters = len(app._optimizer.clusterer.clusters)
             n_evals = app._optimizer.n_evals
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as cluster_err:
+        except NUMERICAL_FAULT_EXCEPTIONS as cluster_err:
             logging.warning(
                 f"Error accessing self._optimizer stats in callback: {cluster_err}",
                 exc_info=True,
@@ -583,7 +583,7 @@ def _design_optimization_callback_common(app, sample) -> None:
                 app.signals.progress.emit(pct, msg)
             app.signals.update_stats.emit("MINIMA", n_clusters)
             app.signals.update_stats.emit("EVAL", n_evals)
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as emit_err:
+        except NUMERICAL_FAULT_EXCEPTIONS as emit_err:
             logging.error(
                 f"Error emitting signals in callback: {emit_err}",
                 exc_info=True,
@@ -753,7 +753,7 @@ def _design_optimization_callback_common(app, sample) -> None:
 
                 app.signals.result.emit(best_data)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as live_err:
+            except NUMERICAL_FAULT_EXCEPTIONS as live_err:
                 logging.debug(f"OptimWorker 2s live refresh: {live_err}")
 
     except NUMERICAL_FAULT_EXCEPTIONS as callback_err:
@@ -5347,7 +5347,7 @@ class CertusDesignApp(CertusBaseApp):
                         brush=(239, 68, 68, 30),
                     )
 
-            except (ValueError, TypeError, RuntimeError, AttributeError) as _profile_ex:
+            except NUMERICAL_FAULT_EXCEPTIONS as _profile_ex:
                 logging.info(f"[PROFILE] Exception in _plot_profile: {_profile_ex}")
 
     def _plot_nk(self) -> None:
@@ -5828,7 +5828,7 @@ class CertusDesignApp(CertusBaseApp):
             try:
                 gen_info = msg.split("|")[0].strip()
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
 
         # Update progress widget
@@ -5981,7 +5981,7 @@ class CertusDesignApp(CertusBaseApp):
                             pen=pg.mkPen(CertusTheme.ERROR, width=2),
                         )
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.warning(f"Failed to update convergence plot: {e}")
 
             should_refresh_live = is_improved or not hasattr(self, "_live_curves") or not self._live_curves
@@ -5990,7 +5990,7 @@ class CertusDesignApp(CertusBaseApp):
                 try:
                     self._update_optim_live_plot(data)
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as live_e:
+                except NUMERICAL_FAULT_EXCEPTIONS as live_e:
                     logging.debug(f"Live plot update: {live_e}")
 
     def _update_optim_live_plot(self, data: Dict) -> None:
@@ -6113,7 +6113,7 @@ class CertusDesignApp(CertusBaseApp):
 
             self._plot_nk()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as profile_err:
+        except NUMERICAL_FAULT_EXCEPTIONS as profile_err:
             logging.debug(f"Live profile/nk update: {profile_err}")
 
     def _update_optim_live_plot_oblique_mode(self, data: Dict, wls: np.ndarray) -> None:
@@ -7667,7 +7667,7 @@ class CertusDesignApp(CertusBaseApp):
                     status=status_val,
                 )
                 manifest_dict = svc.fit(req).manifest.to_dict()
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.log(f"Pareto manifest generation failed: {exc}", "WARNING")
                 manifest_dict = {}
 
@@ -7769,7 +7769,7 @@ class CertusDesignApp(CertusBaseApp):
             else:
                 self.log("Pareto report generation failed", "WARNING")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.log(f"Pareto report error: {e}", "WARNING")
 
     def _decimation_remove_and_polish(self) -> None:
@@ -9533,7 +9533,7 @@ class CertusDesignApp(CertusBaseApp):
 
             manifest_dict = svc.fit(req).manifest.to_dict()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             self.log(f"Manifest generation failed: {exc}", "WARNING")
 
             manifest_dict = {}
@@ -10073,7 +10073,7 @@ class CertusDesignApp(CertusBaseApp):
 
             try:
                 self.set_validation_status("OK")
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("DESIGN validation status update skipped during export: %s", exc)
             run_manifest = None
             try:
@@ -10124,7 +10124,7 @@ class CertusDesignApp(CertusBaseApp):
                     status=status_val,
                 )
                 run_manifest = svc.fit(req).manifest
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("DESIGN manifest generation failed: %s", exc)
                 run_manifest = None
 

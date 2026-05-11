@@ -1293,7 +1293,7 @@ class _ExcelExportMixin:
                     self.add_validation_warning(msg)
             else:
                 self.set_validation_status("OK")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             self.logger.warning("INDEX_SPLINE export validation status update skipped: %s", exc)
         try:
             svc = IndexFitService(runner=lambda _cfg: self._last_result)
@@ -1314,7 +1314,7 @@ class _ExcelExportMixin:
             )
             svc_resp = svc.fit(req)
             self._last_result["run_manifest"] = svc_resp.manifest.to_dict()
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             self.logger.warning("INDEX_SPLINE manifest generation skipped: %s", exc)
 
         from certus_data import get_missing_manifest_fields
@@ -4661,7 +4661,7 @@ class SmartInitPreviewManager:
                 "relax_si_mono": self._relax_si_mono,
             }
             self.parent_worker._on_smart_init_keep(self.dlg, self.cfg, self.state, ui_ctx)
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")
             self._on_keep_called[0] = False
 
@@ -5127,7 +5127,7 @@ class _CorridorWorkerMixin:
         try:
             self._plot_corridor_rmse_tab(upd)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.debug("Corridor RMSE tab refresh after manual grid failed", exc_info=True)
 
         n_ok = int(np.asarray(upd.get("profile_d_values_nm", [])).size)
@@ -5883,7 +5883,7 @@ class _CorridorWorkerMixin:
                 self.plot_k_corridor.addItem(cu_bk)
                 self.plot_k_corridor.addItem(cl_bk)
                 self.plot_k_corridor.addItem(pg.FillBetweenItem(cl_bk, cu_bk, brush=pg.mkBrush(120, 0, 180, 80)))
-        except (ValueError, TypeError, RuntimeError, AttributeError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.debug("Corridor bootstrap band plot failed", exc_info=True)
 
         # 4. Nominal curves (on top of bands / filigree)
@@ -5953,7 +5953,7 @@ class _CorridorWorkerMixin:
                 self.plot_n_corridor.autoRange()
 
             _apply_fixed_log_k_axis(self.plot_k_corridor)
-        except (ValueError, TypeError, RuntimeError, AttributeError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             self.plot_n_corridor.autoRange()
             _apply_fixed_log_k_axis(self.plot_k_corridor)
 
@@ -6596,7 +6596,7 @@ class _PlotMixin:
             try:
                 plot.addLegend(offset=(8, 8))
 
-            except (ValueError, TypeError, RuntimeError, AttributeError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # --- n preview : enveloppe puis courbes ---
@@ -10019,7 +10019,7 @@ class _CorridorGenMixin:
         # Ensure smart/robust interval state is up-to-date with current grid.
         try:
             self._refresh_corridor_rmse_robust_view()
-        except (ValueError, TypeError, RuntimeError, AttributeError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.debug("Auto-smart corridor: robust refresh failed", exc_info=True)
 
         d_lo = float("nan")
@@ -10112,7 +10112,7 @@ class _CorridorGenMixin:
         # in addition to smart/robust guide lines already shown on RMSE(d) chart.
         try:
             self._refresh_corridor_rmse_robust_view()
-        except (ValueError, TypeError, RuntimeError, AttributeError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.debug("Auto-smart corridor: post-apply robust refresh failed", exc_info=True)
 
     def _apply_manual_corridor_selection(self) -> None:
@@ -11894,7 +11894,7 @@ class CertusIndexSplineApp(
                 d_nm_current=float(state.preview_d_nm),
                 relax_n_mono=relax_si_mono,
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             return str(exc)
 
         state.n_phys = np.asarray(out["n_nodes_physical"], dtype=np.float64).ravel().copy()
@@ -11957,7 +11957,7 @@ class CertusIndexSplineApp(
             picked = pick_best_manual_material_preset(
                 cfg, target_sk, d_nm_hint=float(preview_d_nm), relax_n_mono=relax_si_mono
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             if self.logger:
                 self.logger.warning("INDEX_SPLINE [Smart Init] Auto-selection of 3 material presets: %s", exc)
             return None
@@ -12151,7 +12151,7 @@ class CertusIndexSplineApp(
             auto_cfg, sk_canon, k_loc = self._prepare_smart_init_autofind_config(
                 cfg, cur_sk, state.n_phys, state.L_nodes, state.preview_d_nm
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             QMessageBox.warning(dlg, "Autofind", f"Preparation failed: {exc}")
             return
 
@@ -15972,7 +15972,7 @@ class CertusIndexSplineApp(
 
                 self._preview_result = True
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Smart Init preview: GUI error (full traceback)")
 
             self._preview_result = True

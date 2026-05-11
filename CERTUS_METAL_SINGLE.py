@@ -337,7 +337,7 @@ def _single_RTRback_mse(
         if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
             return 1e12
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         return 1e12
 
     nM_complex_2d = (n_calc - 1j * k_calc).reshape(-1, 1)
@@ -624,7 +624,7 @@ def gradient_function_fixed_eM(
     try:
         n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         return grad
 
     if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
@@ -803,7 +803,7 @@ class BeamAnalysisWorker(QObject):
             try:
                 n_calc_opt, k_calc_opt = get_nk_from_spline(p_spline_nk_opt, knot_l_opt, plot_lambda)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.warning(f"Optimal spline reconstruction failed: {e}")
 
                 # Fallback to zeros to avoid crash
@@ -975,7 +975,7 @@ class BeamAnalysisWorker(QObject):
 
             self.finished.emit(stats)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.error.emit(str(e))
 
             logging.error(f"Beam Worker Crash: {e}", exc_info=True)
@@ -1213,7 +1213,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             self._on_numba_ready()  # Mark as ready
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
 
     def on_file_loaded(self, data: "np.ndarray") -> None:
@@ -1269,7 +1269,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             self.logger.info(f"Loaded Data: {cols} columns. Points: {len(data)}")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error parsing data: {e}")
 
             QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {e}")
@@ -1556,7 +1556,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             self.target_data = None
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             show_error(self, "generic_error", details=str(e))
 
             self.target_data = None
@@ -1973,7 +1973,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         try:
             self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             pass
 
         # Comme Metal Bilayer : zoom n/k en live (sinon ViewBox reste sur plage vide -> courbes invisibles).
@@ -2002,7 +2002,7 @@ class CertusMetalSingleApp(MetalBaseApp):
                     f"Optimized Metal Optical Constants (n, k){src_name}", color=CertusTheme.CHART_PRIMARY, size="12pt"
                 )
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
 
             # --- SYSTEMATIC EXPORT ---
@@ -2175,7 +2175,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             if res.get("excel") or res.get("html"):
                 self.status_label.setText(f"Reports saved: {base_name}")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error exporting: {e}")
 
             traceback.print_exc()
@@ -2425,7 +2425,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             base_name = f"Beam_SINGLE{src_name}_{ts}"
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             base_name = f"Beam_SINGLE_{ts}"
 
         excel_path = str(Path(reports_dir) / f"{base_name}.xlsx")
@@ -2484,7 +2484,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             else:
                 to_excel_robust(df_summary, excel_path)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Beam export error:{e}")
 
     def _apply_config_dict(self, config):

@@ -311,7 +311,7 @@ def configure_numba_env():
 
             return
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             # Fallback to standard path if runtime introspection fails.
 
             pass
@@ -511,7 +511,7 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Lo
         except OSError as e:
             _logging.error(f"OS error creating log file '{log_file}': {e}")
             logger.warning("Continuing with console logging only")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             _logging.error(f"Unexpected error creating log file '{log_file}': {type(e).__name__}: {e}")
             logger.warning("Continuing with console logging only")
 

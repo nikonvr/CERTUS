@@ -914,7 +914,7 @@ class BeamAnalysisWorker(QObject):
 
             self.finished.emit(stats)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"Beam analysis error: {e}", exc_info=True)
 
             self.error.emit(f"Beam analysis error:\n{traceback.format_exc()}")
@@ -1050,7 +1050,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             self._on_numba_ready()  # Mark as ready
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
 
     def _create_physical_params_group(self):
@@ -1438,7 +1438,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             self.reflectance_plot.autoRange()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.critical(self, "Data Error", f"Error processing file data: {e}")
 
             self.target_data = None
@@ -1756,7 +1756,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         try:
             self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             pass
 
         if not final and int(data.get("iteration", 0)) % 3 == 0:
@@ -1839,7 +1839,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             html_path = str(Path(reports_dir) / f"{base_name}.html")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error generating report filenames: {e}")
 
             return
@@ -1934,7 +1934,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             self.export_via_builder(sections, excel_path=excel_path, html_path=html_path)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving reports: {e}")
 
             traceback.print_exc()
@@ -2048,7 +2048,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
                 f"Beam analysis results saved to\n{excel_filename}",
             )
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.critical(self, "Export Error", f"Cannot write Excel file:\n{e}")
 
     def start_beam_analysis(self):

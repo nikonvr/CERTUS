@@ -46,7 +46,7 @@ def iter_plot_data_series(plot_item: pg.PlotItem | None) -> list[tuple[str, np.n
         return out
     try:
         items = plot_item.listDataItems()
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         return out
 
     for idx, item in enumerate(items):
@@ -124,7 +124,7 @@ def _extra_scene_plot_series(
         return extra
     try:
         known = {id(x) for x in plot_item.listDataItems()}
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         known = set()
 
     scene = plot_widget.scene() if hasattr(plot_widget, "scene") else None
@@ -218,7 +218,7 @@ def plot_dataframe_from_widget(plot_widget: Any) -> pd.DataFrame | None:
             if x_data.size == 0:
                 continue
             series.append((str(name), x_data, y_data))
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             continue
     return build_wide_dataframe_for_export(series)
 

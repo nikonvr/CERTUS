@@ -6161,7 +6161,7 @@ class MaterialDatabase:
 
             return material_data
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self._logger.error(f"Failed to load materials: {e}")
 
             return {}

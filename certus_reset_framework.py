@@ -79,7 +79,7 @@ class CertusResetManager:
             self.logger.info("Application reset to defaults completed successfully")
             return True
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Reset failed: {e}", exc_info=True)
             QMessageBox.critical(self.app, "Reset Error", f"An error occurred during reset:\n{e}")
             return False

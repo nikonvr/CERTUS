@@ -1828,7 +1828,7 @@ class MetalBaseApp(CertusBaseApp):
                 status=status_val,
             )
             run_manifest = svc.fit(req).manifest
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
             logger = getattr(self, "logger", None)
             if logger is not None:
                 logger.warning("METAL manifest generation failed: %s", exc)

@@ -253,7 +253,7 @@ class CurveSmootherGUI(QMainWindow):
             self.combo_mode.setEnabled(True)
             self.auto_tune()
             logger.info("Loaded %s successfully.", path)
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to load measurement sheet: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
 
@@ -355,7 +355,7 @@ class CurveSmootherGUI(QMainWindow):
                 "Success",
                 f"Saved to clean_measurements sheet in:\n{Path(save_path).name}",
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to save %s: %s", self.file_path, e)
             QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
 

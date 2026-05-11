@@ -122,7 +122,7 @@ class RobustMaterialDatabase:
 
             self.logger.info(f"Robust DB Loaded {len(self.materials)} materials.")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Failed to load Excel DB: {e}")
 
     def _standardize_dataframe(self, df, sheet_name):

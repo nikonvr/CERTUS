@@ -341,7 +341,7 @@ class LiveOptimizationVisualizer(QObject):
 
             self.logger.debug(f"Updated live visualization at evaluation {data.n_evaluations}")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Failed to update plots: {e}")
 
     def reset(self):

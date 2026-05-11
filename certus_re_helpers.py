@@ -1938,7 +1938,7 @@ def re_drift_result_log_suffix(r: dict) -> str:
 
             return _s
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             pass
 
     parts: list[str] = []

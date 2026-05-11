@@ -403,7 +403,7 @@ def optim_bounds_thickness_healing(
             try:
                 n_val = float(mat_obj.get_nk(wls_l0)[0].real)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.warning(f"Could not get n for bounds (using 1.45): {e}")
 
         delta_d = float(l0) / (10.0 * max(n_val, 1.0))

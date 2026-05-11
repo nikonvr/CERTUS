@@ -52,7 +52,7 @@ def log_structured_json_event(
     try:
         log.info("%s %s", channel, json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         pass
 
 

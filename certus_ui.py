@@ -1300,7 +1300,7 @@ def update_global_plot_config(dark_mode: bool = False) -> None:
 
                                     axis.setTextPen(fg)
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+                except NUMERICAL_FAULT_EXCEPTIONS :
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 
@@ -3069,7 +3069,7 @@ def open_file_explorer(path: str) -> None:
 
                 raise
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.warning(f"Error opening file explorer for {path}: {e}")
 
 
@@ -3122,7 +3122,7 @@ def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50)
 
             count += 1
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             break
 
     return count
@@ -3180,7 +3180,7 @@ def init_certus_app(app_name: str = "CERTUS", app: QApplication | None = None, *
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     # Set Global App Icon
@@ -5123,7 +5123,7 @@ class CertusBaseApp(QMainWindow):
 
                 self._post_save_config(filename)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 if self.logger:
                     self.logger.error(f"Failed to save config: {e}")
 
@@ -5167,7 +5167,7 @@ class CertusBaseApp(QMainWindow):
 
                 self._post_load_config(filename, config)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 if self.logger:
                     self.logger.error(f"Failed to load config: {e}")
 
@@ -5221,7 +5221,7 @@ class CertusBaseApp(QMainWindow):
 
             win.show()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             log = getattr(self, "logger", None)
 
             if log is not None:
@@ -5695,7 +5695,7 @@ class CertusBaseApp(QMainWindow):
 
                         continue
 
-                    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                    except NUMERICAL_FAULT_EXCEPTIONS as e:
                         (self.logger.error(f"Merge error: {e}") if hasattr(self, "logger") and self.logger else None)
 
                 i += 1
@@ -6028,7 +6028,7 @@ class CertusBaseApp(QMainWindow):
 
             detached_window.show()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.log(f"Plot detach failed: {e}", "ERROR")
 
     def _get_plot_info(self, widget: QWidget) -> tuple[str, str] | None:
@@ -6436,7 +6436,7 @@ class CertusBaseApp(QMainWindow):
 
             self.log(short, "ERROR")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self._set_busy(False)
@@ -6455,7 +6455,7 @@ class CertusBaseApp(QMainWindow):
             try:
                 pw.stop("Error")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _update_busy_ui(self, busy: bool) -> None:
@@ -6502,7 +6502,7 @@ class CertusBaseApp(QMainWindow):
 
             return float(np.real(np.asarray(nk, dtype=np.complex128).ravel()[0]))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             m = mats[mat_name]
 
             n4 = getattr(m, "n4", None)

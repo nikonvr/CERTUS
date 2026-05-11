@@ -305,7 +305,7 @@ class CertusScientificPlot(pg.PlotWidget):
         self.plotItem.setXRange(0.0, 1.0, padding=padding)
         try:
             y_log = self.plotItem.ctrl.logYCheck.isChecked()
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             y_log = False
         if y_log:
             self.plotItem.setYRange(1e-6, 1e-2, padding=padding)
@@ -340,7 +340,7 @@ class CertusScientificPlot(pg.PlotWidget):
             if callable(w):
                 return int(w())
             return int(w or 1)
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             return 1
 
     def _y_snap_crosshair(self, x: float, y_mouse: float) -> float | None:
@@ -445,7 +445,7 @@ class CertusScientificPlot(pg.PlotWidget):
             curve = self.plot(x, y, pen=pen, name=name)
             self._curves[name] = curve
             return curve
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"add_curve failed for {name}: {e} (x type={type(x)}, y type={type(y)})")
             raise
 
@@ -458,7 +458,7 @@ class CertusScientificPlot(pg.PlotWidget):
         if name in self._curves:
             try:
                 self.removeItem(self._curves[name])
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
             del self._curves[name]
 
@@ -559,7 +559,7 @@ class CertusScientificPlot(pg.PlotWidget):
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
                 )
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.error(f"PNG export failed:{e}")
                 QMessageBox.warning(
                     self.window() or None,
@@ -587,7 +587,7 @@ class CertusScientificPlot(pg.PlotWidget):
                     CERTUS_UI_STRINGS["export"],
                     f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
                 )
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.error(f"SVG export failed:{e}")
                 QMessageBox.warning(
                     self.window() or None,
@@ -630,7 +630,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             import traceback
 
             logging.error(f"CSV export failed:{e}\n{traceback.format_exc()}")
@@ -675,7 +675,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             import traceback
 
             logging.error(f"TSV export failed:{e}\n{traceback.format_exc()}")
@@ -723,7 +723,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 CERTUS_UI_STRINGS["export"],
                 f"{CERTUS_UI_STRINGS['export_ok']} : {Path(filename).name}",
             )
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             import traceback
 
             logging.error(f"TSV publication export failed:{e}\n{traceback.format_exc()}")

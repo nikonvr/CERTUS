@@ -2226,7 +2226,7 @@ class IndexCore:
                         float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
                     )
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
 
             best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
@@ -2249,7 +2249,7 @@ class IndexCore:
         except (ValueError, RuntimeError, ArithmeticError) as ex:
             logger.warning("Sellmeier 3-poles fit failed: %s -> fallback to Polynomial.", str(ex))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Sellmeier 3-poles fit unexpected failure -> fallback to Polynomial.")
 
     @staticmethod
@@ -2609,7 +2609,7 @@ class IndexCore:
         except (ValueError, RuntimeError, ArithmeticError) as ex:
             logger.warning("Spline fit failed: %s -> fallback to Polynomial.", str(ex))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Spline fit unexpected failure -> fallback to Polynomial.")
 
     @staticmethod
@@ -3536,7 +3536,7 @@ class SubstrateIndexGUI(QMainWindow):
             try:
                 self._append_fn(self.format(record))
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
 
     def _attach_ui_log_handler(self) -> None:
@@ -3983,7 +3983,7 @@ class SubstrateIndexGUI(QMainWindow):
 
             self.progress_widget.stop("Loaded")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to load measurement sheet: %s", e)
 
             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
@@ -4406,7 +4406,7 @@ class SubstrateIndexGUI(QMainWindow):
                             warn_list.append(f"{_model_name}: fit skipped ({_src})")
                 self.validation_warnings = warn_list
                 self.validation_status = "WARNING_UNCERTAINTY_NOT_COMPUTED" if warn_list else "OK"
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 logger.warning("SUBSTRATE validation status synthesis failed: %s", exc)
                 self.validation_status = "OK"
                 self.validation_warnings = []
@@ -4437,7 +4437,7 @@ class SubstrateIndexGUI(QMainWindow):
                     status=status_val,
                 )
                 self.last_run_manifest = svc.fit(req).manifest.to_dict()
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 logger.warning("SUBSTRATE manifest generation failed: %s", exc)
                 self.last_run_manifest = None
 
@@ -4478,7 +4478,7 @@ class SubstrateIndexGUI(QMainWindow):
 
             raise
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as ex:
+        except NUMERICAL_FAULT_EXCEPTIONS as ex:
             self.log(f"Calculation error: {ex}", "ERROR")
 
             self.progress_widget.stop("Failed")

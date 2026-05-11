@@ -994,7 +994,7 @@ def _resolve_clues_at_wavelength(
 
         return {"H": n_h, "L": n_l, "substrate": n_sub}
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logger.warning(f"⚠️ Failed to get clues at{wl}nm: {e}. Trying nominal l0={params.get('l0', 550.0)}nm.")
 
     try:
@@ -1008,7 +1008,7 @@ def _resolve_clues_at_wavelength(
 
         return {"H": n_h, "L": n_l, "substrate": n_sub}
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e2:
+    except NUMERICAL_FAULT_EXCEPTIONS as e2:
         n_h_fb = float(params.get("nH_r", 2.1)) if "nH_r" in params else 2.1
 
         n_l_fb = float(params.get("nL_r", 1.46)) if "nL_r" in params else 1.46
@@ -1037,7 +1037,7 @@ def _build_clues_at_wavelengths(
         return {
             float(all_wls[i]): {"H": nH_all[i], "L": nL_all[i], "substrate": nSub_all[i]} for i in range(len(all_wls))
         }
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logger.warning(f"Vectorized clue build failed ({e}), falling back to per-wavelength.")
 
     # Fallback: per-wavelength with error recovery
@@ -2519,7 +2519,7 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
     try:
         T_tolerance = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
 
-    except (KeyError, ValueError, TypeError):
+    except NUMERICAL_FAULT_EXCEPTIONS :
         T_tolerance = 0.001
 
     min_resolution = 999.0
@@ -3433,7 +3433,7 @@ def _apply_elite_refinement_if_enabled(
                 if not np.isfinite(quick_nominal) or quick_nominal >= target_threshold:
                     continue
                 quick_pass.append((float(quick_nominal), int(e_idx), elite_strat))
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
 
         if not quick_pass:
@@ -3480,7 +3480,7 @@ def _apply_elite_refinement_if_enabled(
                 full_res["elite_round"] = int(elite_round)
                 full_res["elite_nominal_score"] = float(full_nominal)
                 elite_added.append(full_res)
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
 
         if not elite_added:
@@ -3638,7 +3638,7 @@ def _execute_robustness_tasks(
                 res["min_resolution"] = min_res
                 res["limiting_layer"] = bad_layer
                 strategies_results.append(res)
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logger.error(f"Strategy simulation failed: {e}", exc_info=True)
     else:
         results_by_idx: list[dict[str, Any] | None] = [None] * len(all_strategies)
@@ -3673,7 +3673,7 @@ def _execute_robustness_tasks(
                     res["min_resolution"] = min_res
                     res["limiting_layer"] = bad_layer
                     results_by_idx[idx] = res
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     logger.error(f"Strategy simulation failed: {e}", exc_info=True)
         strategies_results = [r for r in results_by_idx if r is not None]
 
@@ -5035,7 +5035,7 @@ class StrategiesTableWindow(QMainWindow):
                         item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
                     elif val > 1.0:
                         item.setForeground(QColor(CertusTheme.WARNING))
-                except (ValueError, IndexError, AttributeError):
+                except NUMERICAL_FAULT_EXCEPTIONS :
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             self.table.setItem(row, start_col_errors + err_idx, item)
 
@@ -5267,7 +5267,7 @@ class StrategiesTableWindow(QMainWindow):
             for i in range(self.table.columnCount()):
                 header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.getLogger("ThinFilm").error(f"Table update error: {e}")
 
             logging.getLogger("ThinFilm").error(traceback.format_exc())
@@ -6016,7 +6016,7 @@ def _parallel_block_worker(args) -> dict:
 
                 pre_calc_data["clues_at_wl"] = shared_clues
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Hints) reconnection failed:{e}")
 
         shared_matrix_worker = None
@@ -6027,7 +6027,7 @@ def _parallel_block_worker(args) -> dict:
 
                 pre_calc_data["nominal_matrix_cache"] = shared_matrix_worker.get_array()
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Matrix) reconnection failed: {e}")
 
         if "materials_data" in pre_calc_data and pre_calc_data["materials_data"]:
@@ -6212,7 +6212,7 @@ def _parallel_block_worker(args) -> dict:
                     }
                 )
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logger.error(f"[Worker {n_blk}] Failed to put into live_queue: {e}")
 
         return {
@@ -6452,7 +6452,7 @@ class WorkerThread(QThread):
 
             self.signals.plot.emit(clues_data_packet, "clues_check_plot")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.params["logger"].warning(f"Could not generate index check plot: {e}")
 
         if self.params.get("show_plots", True):
@@ -7078,7 +7078,7 @@ def _finalize_and_export_step_23(
                 "heatmap_data": heatmap_data,
             }
             signals.plot.emit(strat_data, "block_assignments")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             params["logger"].warning(f"Plotting error: {e}")
 
         best_noise_results = _get_best_noise_results(best_res, params["logger"])
@@ -7218,7 +7218,7 @@ def _start_monitor_live_feed_thread(
                 elif last_full_package is not None and (now - last_update) >= LIVE_REFRESH_INTERVAL:
                     signals.update_live_growth.emit(last_full_package)
                     last_update = now
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 logging.error(f"[MonitorThread] Error: {e}")
                 break
 
@@ -7226,7 +7226,8 @@ def _start_monitor_live_feed_thread(
     monitor_thread.start()
     return monitor_thread
 
-
+
+
 
 # =========================================================================================
 
@@ -8652,7 +8653,7 @@ class TransmissionVsThicknessWindow(QMainWindow):
                                 "std": float(np.std(errors)),
                             }
 
-        except (ValueError, TypeError, IndexError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         return layer_stats
@@ -8820,7 +8821,7 @@ class StrategySpectralPerformanceWindow(QMainWindow):
 
             self.plot_widget.setYRange(0, 1.0)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"Error plotting spectral performance: {e}")
 
 class JsonViewerWindow(QMainWindow):
@@ -8887,7 +8888,7 @@ class JsonViewerWindow(QMainWindow):
 
             self.text_edit.setText(pretty_json)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.text_edit.setText(f"Error parsing JSON data: {e}")
 
         main_layout.addWidget(self.text_edit)
@@ -9815,7 +9816,7 @@ class PlotRenderWorker(QObject):
 
             self.finished.emit(img_bytes, self.plot_hash)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.error.emit(str(e))
 
 def _resolve_strat_indices_db_path() -> str:
@@ -10165,7 +10166,7 @@ class CertusStratApp(CertusBaseApp):
 
             QMetaObject.invokeMethod(self, "_on_numba_ready_ui", Qt.ConnectionType.QueuedConnection)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Numba warmup warning: {e}")
 
             self.numba_ready = True
@@ -11490,7 +11491,7 @@ class CertusStratApp(CertusBaseApp):
 
             undo_shortcut.activated.connect(self._undo_stack_table)
 
-        except (RuntimeError, TypeError, AttributeError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Could not initialize UNDO shortcut: {e}")
 
     def _on_stack_table_changed(self, row, col) -> None:
@@ -11796,7 +11797,7 @@ class CertusStratApp(CertusBaseApp):
 
                         table.setItem(i, 2, QTableWidgetItem(f"{float(m):.6f}"))
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error populating table: {e}")
 
     def save_configuration(self) -> None:
@@ -11939,7 +11940,7 @@ class CertusStratApp(CertusBaseApp):
 
             self.logger.info(f"Configuration saved: '{filename}'")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving: {e}")
 
     def load_configuration(self, filename=None) -> None:
@@ -12101,7 +12102,7 @@ class CertusStratApp(CertusBaseApp):
 
                 show_load_summary_dialog(self, "STRAT Load Summary", summary)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error loading: {e}\n{traceback.format_exc()}")
 
     def load_external_strategies(self) -> None:
@@ -12208,7 +12209,7 @@ class CertusStratApp(CertusBaseApp):
 
             self.logger.info(f"Loaded {len(loaded_strategies)} valid strategies.")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error parsing strategy files: {e}")
 
             return
@@ -12499,7 +12500,7 @@ class CertusStratApp(CertusBaseApp):
         try:
             params = self.collect_params()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error collecting parameters: {e}")
 
             return
@@ -12697,7 +12698,7 @@ class CertusStratApp(CertusBaseApp):
                     )
                 else:
                     self.set_validation_status("OK")
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("Validation status update skipped during export: %s", exc)
 
             report_dir = get_resource_path("reports")
@@ -12716,7 +12717,7 @@ class CertusStratApp(CertusBaseApp):
 
                 base_name = f"Report_STRAT{src_name}_{timestamp}_RMSE_{rmse_val:.5f}"
 
-            except (ValueError, TypeError, AttributeError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 base_name = f"Report_STRAT_{timestamp}_RMSE_{rmse_val:.5f}"
 
             excel_path = str(Path(report_dir) / f"{base_name}.xlsx")
@@ -12775,7 +12776,7 @@ class CertusStratApp(CertusBaseApp):
                     status=status_val,
                 )
                 manifest_dict = svc.fit(req).manifest.to_dict()
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("STRAT manifest generation (state params) failed: %s", exc)
                 manifest_dict = {}
             manifest_dict: dict[str, Any] = {}
@@ -12797,7 +12798,7 @@ class CertusStratApp(CertusBaseApp):
                     status=status_val,
                 )
                 manifest_dict = svc.fit(req).manifest.to_dict()
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("STRAT manifest generation (metadata params) failed: %s", exc)
                 manifest_dict = {}
 
@@ -13163,7 +13164,7 @@ class CertusStratApp(CertusBaseApp):
                     self.add_validation_warning("STRAT auto-export run uses stochastic stages without explicit seed.")
                 else:
                     self.set_validation_status("OK")
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("STRAT auto-export validation status update skipped: %s", exc)
 
             report_dir = get_resource_path("reports")
@@ -13201,7 +13202,7 @@ class CertusStratApp(CertusBaseApp):
 
                 base_name = f"Report_STRAT{src_name}_{timestamp}_RMSE_{rmse_val:.5f}"
 
-            except (ValueError, TypeError, AttributeError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 base_name = f"Report_STRAT_{timestamp}_RMSE_{rmse_val:.5f}"
 
             excel_path = str(Path(report_dir) / f"{base_name}.xlsx")
@@ -13261,7 +13262,7 @@ class CertusStratApp(CertusBaseApp):
                     status=status_val,
                 )
                 manifest_dict = svc.fit(req).manifest.to_dict()
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("STRAT auto-export manifest generation failed: %s", exc)
                 manifest_dict = {}
 
@@ -13305,7 +13306,7 @@ class CertusStratApp(CertusBaseApp):
         try:
             include_secondary_rmse_stats = bool(self.collect_params().get("include_secondary_rmse_stats", False))
 
-        except (KeyError, TypeError, ValueError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             include_secondary_rmse_stats = False
 
         if self.opti_results and "p_thick_nominal" in self.opti_results:
@@ -13319,7 +13320,7 @@ class CertusStratApp(CertusBaseApp):
 
                 current_p_thick = nominal_res["physical_thicknesses_nominal"]
 
-            except (KeyError, TypeError, ValueError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 current_p_thick = []
 
         if self.strategies_table_window and self.strategies_table_window.isVisible():
@@ -13374,7 +13375,7 @@ class CertusStratApp(CertusBaseApp):
 
                     self.logger.info("ℹ️ Visualization context rebuilt after workflow error.")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     self.logger.warning(f"Cannot visualize - opti_results is empty ({e})")
 
                     return
@@ -13410,7 +13411,7 @@ class CertusStratApp(CertusBaseApp):
 
                 self.logger.info("✓ Growth window opened")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"✗ Failed to open growth window: {e}", exc_info=True)
 
             try:
@@ -13426,7 +13427,7 @@ class CertusStratApp(CertusBaseApp):
 
                 self.logger.info("✓ Spectral window opened")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"✗ Failed to open spectral window: {e}", exc_info=True)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
@@ -13517,7 +13518,7 @@ class CertusStratApp(CertusBaseApp):
 
                     self.plot_windows.append(plot_win)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error processing plot queue: {e}", exc_info=True)
 
     # === OPTIMIZATION: Hashed & Async Plot Update ===
@@ -13578,7 +13579,7 @@ class CertusStratApp(CertusBaseApp):
 
             thread.start()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Plot Dispatch Error: {e}", exc_info=True)
 
     @pyqtSlot(bytes, str)
@@ -13596,7 +13597,7 @@ class CertusStratApp(CertusBaseApp):
 
             self._apply_pixmap(pix)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error applying render: {e}", exc_info=True)
 
             with self._cache_lock:
@@ -13625,7 +13626,7 @@ class CertusStratApp(CertusBaseApp):
 
             self.stack_visual_window.show()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Failed to update stack plot: {e}")
 
     @pyqtSlot(dict)
@@ -13821,7 +13822,7 @@ if __name__ == "__main__":
 
             logging.info(f"[ROBUST DB] ✓ Activated with {len(robust_db.materials)} materials")
 
-        except (ValueError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.warning(f"[ROBUST DB] ✗ Failed to load: {e}")
 
             splash.showMessage(

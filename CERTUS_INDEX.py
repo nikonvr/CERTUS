@@ -1339,7 +1339,7 @@ def fit_sellmeier_global(
 
         return sellmeier_2poles_eval(res_local.x, wl_um), res_local.x
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.getLogger(__name__).warning(f"Sellmeier fit failed: {e}. Falling back to raw spline n.")
 
         return n_exp, None
@@ -1394,7 +1394,7 @@ def fit_k_global_8p(
 
         return k_smooth, res.x
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+    except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.getLogger(__name__).warning(f"k 8-param fit failed: {e}")
 
         return k_exp, None
@@ -3349,7 +3349,7 @@ class PGlobalOptimizerINDEX:
 
                 X = self._unit_to_physical(unit, n)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 method = "uniform"
 
         elif method == "halton":
@@ -3463,7 +3463,7 @@ class PGlobalOptimizerINDEX:
             try:
                 _numba_restore = int(numba.get_num_threads())
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 _numba_restore = _numba_set_threads_clamped(nb_cores)
 
             # nb_cores // n_workers peut depasser 31 ; restauration utilisait nb_cores brut -> ValueError
@@ -3897,7 +3897,7 @@ class IRStage2Callback:
                 },
             )
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 class IRSplineCallback:
@@ -3987,7 +3987,7 @@ class IRSplineCallback:
                 "mse": None,
             }
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             return None
 
     def __call__(self, xk) -> bool:
@@ -4238,7 +4238,7 @@ class IRGlobalModelWorker(QObject):
             else:
                 self.logger.info("  > Warm start: Sellmeier fit failed, PGlobal starts cold")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _e_ws:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e_ws:
             self.logger.warning(f"  > Warm start exception: {_e_ws}  PGlobal starts cold")
 
         pg_bounds = flat_bounds.copy()
@@ -4329,7 +4329,7 @@ class IRGlobalModelWorker(QObject):
             else:
                 self.logger.info("  > Stage 2 polish: no improvement (PGlobal already at local min)")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _e_s2:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e_s2:
             self.logger.warning(f"  > Stage 2 polish failed: {_e_s2}")
 
         self.best_mse = res_pg.y
@@ -4434,7 +4434,7 @@ class IRGlobalModelWorker(QObject):
 
             return None, None, None
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _e21:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e21:
             self.logger.warning(f"  Phase 2.1 failed: {_e21}")
 
             return None, None, None
@@ -4632,7 +4632,7 @@ class IRGlobalModelWorker(QObject):
 
                     break
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _ered:
+            except NUMERICAL_FAULT_EXCEPTIONS as _ered:
                 self.logger.warning(f"  Knot reduction failed: {_ered}, keeping {best_n} knots")
 
                 break
@@ -4835,7 +4835,7 @@ class IRGlobalModelWorker(QObject):
                     else:
                         self.logger.info("  Phase 2.3 Pass 2: no improvement, keeping Pass 1 result")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _ep2:
+                except NUMERICAL_FAULT_EXCEPTIONS as _ep2:
                     self.logger.warning(f"  Phase 2.3 Pass 2 failed: {_ep2}, keeping Pass 1 result")
 
                 n_final, k_final, p_opt_final, best_knot_lam, best_log_k, _ = self._run_phase23_knot_reduction(
@@ -4865,7 +4865,7 @@ class IRGlobalModelWorker(QObject):
             else:
                 self.logger.warning("  Phase 2.3: no improvement, keeping 8p (k_8p) result")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as _e23:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e23:
             self.logger.warning(f"  Phase 2.3 failed: {_e23}")
 
         return n_final, k_final, p_opt_final, k_spline_knots_lambda_um, k_spline_knots_values
@@ -5166,7 +5166,7 @@ class Phase1Callback:
                 try:
                     _tlu_ex = " | " + _o1.format_diag_line(s.x)
 
-                except (ValueError, TypeError, RuntimeError, AttributeError) as _e_tlu:
+                except NUMERICAL_FAULT_EXCEPTIONS as _e_tlu:
                     _tlu_ex = f" | diag_tlu_err={_e_tlu}"
 
             _k_inline = ""
@@ -5175,7 +5175,7 @@ class Phase1Callback:
                 try:
                     _k_inline = " | " + _o1.format_k_line(s.x)
 
-                except (ValueError, TypeError, RuntimeError, AttributeError):
+                except NUMERICAL_FAULT_EXCEPTIONS :
                     _k_inline = ""
 
             self.worker.logger.info(
@@ -5649,7 +5649,7 @@ class OptimizationWorker(QObject):
             else:
                 self.logger.info(f" Final optimization complete (RMSE unchanged: {np.sqrt(self.best_mse):.6f})")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Final optimization failed: {e}")
 
     def _run_phase1_global_search(
@@ -5727,13 +5727,13 @@ class OptimizationWorker(QObject):
         try:
             self.logger.info("TLU diag [warm start] | %s", obj.format_diag_line(smart_x0))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as _e_d0:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e_d0:
             self.logger.debug("TLU diag warm skip: %s", _e_d0)
 
         try:
             self.logger.info("TLU k [warm start / Phase1] | %s", obj.format_k_line(smart_x0))
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as _e_k0:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e_k0:
             self.logger.debug("TLU k warm skip: %s", _e_k0)
 
         try:
@@ -5751,7 +5751,7 @@ class OptimizationWorker(QObject):
 
                 self._emit_live_best_snapshot()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError) as _e_ws:
+        except NUMERICAL_FAULT_EXCEPTIONS as _e_ws:
             self.logger.debug("TLU warm-start preview skipped: %s", _e_ws)
 
         # No x0 injected into PGLOBAL; warm start remains diagnostics + UI baseline.
@@ -5938,7 +5938,7 @@ class OptimizationWorker(QObject):
                     else:
                         self.logger.info("Polish did not improve solution (converged).")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     self.logger.warning(f"Phase 3 polish failed: {e}")
 
             if self._finalize_if_stopped():
@@ -5973,7 +5973,7 @@ class OptimizationWorker(QObject):
 
                     self.logger.info(" Residual uncertainty calculated (3-way split).")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     self.logger.warning(f"Residual uncertainty calc failed: {e}")
 
             # === Phase 5: Final Ultimate Optimization (full grid) ===
@@ -6077,7 +6077,7 @@ class OptimizationWorker(QObject):
                 stats = dict(getattr(results, "optimization_stats", {}) or {})
                 stats["run_manifest"] = svc_resp.manifest.to_dict()
                 results.optimization_stats = stats
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as _e_manifest:
+            except NUMERICAL_FAULT_EXCEPTIONS as _e_manifest:
                 self.logger.debug("IndexFitService manifest wiring skipped: %s", _e_manifest)
 
             self.finished.emit(results)
@@ -6487,7 +6487,7 @@ class KLogAxisItem(pg.AxisItem):
 
                 strings.append(s)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 strings.append("")
 
         return strings
@@ -7627,7 +7627,7 @@ class CertusIndexApp(CertusBaseApp):
                 len(self._ksub_raw_wls),
             )
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             QMessageBox.warning(self, "k_sub Error", str(e))
 
             self._ksub_raw_wls = None
@@ -7791,7 +7791,7 @@ class CertusIndexApp(CertusBaseApp):
                     if dominant_freq > 0:
                         d_fft = dominant_freq / (2.0 * n_approx)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e_fft:
+            except NUMERICAL_FAULT_EXCEPTIONS as e_fft:
                 self.logger.debug(f"FFT thickness estimate failed: {e_fft}")
 
             #  Method 2: Peak/valley counting (robust to low-contrast fringes)
@@ -7829,7 +7829,7 @@ class CertusIndexApp(CertusBaseApp):
                     if inv_range > 0:
                         d_peaks = n_osc / (2.0 * n_approx * inv_range)
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e_pk:
+            except NUMERICAL_FAULT_EXCEPTIONS as e_pk:
                 self.logger.debug(f"Peak-count thickness estimate failed: {e_pk}")
 
             # -- Choose best estimate: FFT is primary (robust to noise & low contrast)
@@ -7892,7 +7892,7 @@ class CertusIndexApp(CertusBaseApp):
             else:
                 self.logger.info("   No oscillations detected -> thickness not estimated")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.debug(f"Auto-detect thickness failed:{e}")
 
     def _create_config_group(self) -> Any:
@@ -8363,7 +8363,7 @@ class CertusIndexApp(CertusBaseApp):
 
                 self.plot_spectrum.curve_points = {}
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 # Ignore errors after clear()
 
                 self.logger.warning(f"cleanup after clear() failed: {e}")
@@ -8438,7 +8438,7 @@ class CertusIndexApp(CertusBaseApp):
 
             self.latest_results = None
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             # Do not show error for tracking issues (non-critical)
 
             error_msg = str(e)
@@ -8509,7 +8509,7 @@ class CertusIndexApp(CertusBaseApp):
             self._redraw_target_preview(wls, preview_t, preview_r)
         except ImportError:
             self.logger.warning("scipy.signal not available for smoothing")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Failed to apply smoothing: {e}")
 
     def _ask_keep_raw_or_smoothed(self) -> bool:
@@ -8616,7 +8616,7 @@ class CertusIndexApp(CertusBaseApp):
         """Best-effort tracked-curve registration for spectrum traces."""
         try:
             self.plot_spectrum.add_tracked_curve(curve, key, "%")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _clear_plot_tracking_state(self) -> None:
@@ -8624,7 +8624,7 @@ class CertusIndexApp(CertusBaseApp):
         try:
             self.plot_spectrum._tracked_curves = []
             self.plot_spectrum.curve_points = {}
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _reset_optimization_progress_state(self, config: OptimizationConfig) -> None:
@@ -9366,13 +9366,13 @@ class CertusIndexApp(CertusBaseApp):
             try:
                 self.plot_spectrum.remove_tracked_curve("R (Live)")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             try:
                 self.plot_spectrum.remove_tracked_curve("T (Live)")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             if show_r and Rc is not None:
@@ -9402,13 +9402,13 @@ class CertusIndexApp(CertusBaseApp):
         try:
             self.plot_spectrum.getPlotItem().vb.autoRange()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         try:
             self.plot_nk.getPlotItem().vb.autoRange()
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self.tabs.setCurrentIndex(0)
@@ -9446,7 +9446,7 @@ class CertusIndexApp(CertusBaseApp):
 
                 k_c = extra_info["k"]
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error plotting live progress: {e}", exc_info=True)
 
                 wls = extra_info.get("wls", np.array([]))
@@ -9516,7 +9516,7 @@ class CertusIndexApp(CertusBaseApp):
 
                             col_idx += 1
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Live data table update error: {e}", exc_info=True)
 
             if isinstance(extra_info, dict) and "mse" in extra_info:
@@ -9688,7 +9688,7 @@ class CertusIndexApp(CertusBaseApp):
 
             self._apply_index_live_plot_payload(payload)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.debug("curve_update: %s", e, exc_info=True)
 
     def _update_spectrum_plot(self, wls, sub_df, res: OptimizationResults) -> None:
@@ -9703,7 +9703,7 @@ class CertusIndexApp(CertusBaseApp):
         try:
             _set_spectrum_plot_title(self.plot_spectrum, res.config.source_file)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+        except NUMERICAL_FAULT_EXCEPTIONS :
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # Display target data
@@ -9722,7 +9722,7 @@ class CertusIndexApp(CertusBaseApp):
 
                 self.plot_spectrum.add_tracked_curve(c_tgt_t, "T Target", "%")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error displaying T target: {e}", exc_info=True)
 
         if "R_target" in sub_df.columns:
@@ -9739,7 +9739,7 @@ class CertusIndexApp(CertusBaseApp):
 
                 self.plot_spectrum.add_tracked_curve(c_tgt_r, "R Target", "%")
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error displaying R target: {e}", exc_info=True)
 
         # Display fits
@@ -9765,7 +9765,7 @@ class CertusIndexApp(CertusBaseApp):
 
                     self.plot_spectrum.add_tracked_curve(c_fit_t, "T Fit", "%")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     self.logger.error(f"Error displaying T fit: {e}", exc_info=True)
 
         # Reflection
@@ -9784,7 +9784,7 @@ class CertusIndexApp(CertusBaseApp):
 
                     self.plot_spectrum.add_tracked_curve(c_fit_r, "R Fit", "%")
 
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
                     self.logger.error(f"Error displaying R fit: {e}", exc_info=True)
 
     def _update_nk_plot(self, wls, sub_df, res: OptimizationResults) -> None:
@@ -10166,7 +10166,7 @@ class CertusIndexApp(CertusBaseApp):
                 if c_kr is not None:
                     leg_k.addItem(c_kr, "k (90% R)")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error displaying n/k: {e}", exc_info=True)
 
             self.logger.error(traceback.format_exc())
@@ -10284,10 +10284,10 @@ class CertusIndexApp(CertusBaseApp):
 
                     self.table_params.setItem(i, 1, QTableWidgetItem(p_val))
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+            except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error updating params table: {e}")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error updating model text: {e}", exc_info=True)
 
         self.btn_copy_nk.setEnabled(True)
@@ -10479,7 +10479,7 @@ class CertusIndexApp(CertusBaseApp):
 
                         col_idx += 1
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error updating data table: {e}", exc_info=True)
 
     def _display_results(self, res: OptimizationResults) -> None:
@@ -10539,10 +10539,10 @@ class CertusIndexApp(CertusBaseApp):
 
                 self.plot_nk.getPlotItem().vb.autoRange()
 
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            except NUMERICAL_FAULT_EXCEPTIONS :
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error in _display_results: {e}", exc_info=True)
 
             self.logger.error(traceback.format_exc())
@@ -10614,7 +10614,7 @@ class CertusIndexApp(CertusBaseApp):
 
             self.lbl_status.setText("n,k table copied!")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Copy error: {e}")
 
     def _copy_params_to_clipboard(self) -> None:
@@ -10641,7 +10641,7 @@ class CertusIndexApp(CertusBaseApp):
 
             self.lbl_status.setText("Model parameters copied!")
 
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as e:
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Copy error: {e}")
 
     def _copy_eq_to_clipboard(self) -> None:
@@ -11388,7 +11388,7 @@ class CertusIndexApp(CertusBaseApp):
                     self.add_validation_warning("Input data normalized before optimization/export.")
                 else:
                     self.set_validation_status("OK")
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+            except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("INDEX validation status update skipped during export: %s", exc)
 
             run_manifest = None

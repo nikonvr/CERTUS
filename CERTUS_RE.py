@@ -28,6 +28,7 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 
 """
 
+from certus_errors import NUMERICAL_FAULT_EXCEPTIONS
 from __future__ import annotations
 
 __version__ = "26_01"
@@ -2430,9 +2431,7 @@ class CertusREApp(CertusBaseApp):
 
                     nr = float(np.real(np.asarray(nk, dtype=np.complex128).ravel()[0]))
 
-                    n_src = "Tabulated n(lambda₀)"
-
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+               except NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
                     nr = float("nan")
 
             if not np.isfinite(nr):
@@ -2509,16 +2508,7 @@ class CertusREApp(CertusBaseApp):
 
                         self.log(f"Merged adjacent layers ({m_curr})", "INFO")
 
-                        continue
-
-                    except (
-                        ValueError,
-                        TypeError,
-                        RuntimeError,
-                        AttributeError,
-                        KeyError,
-                        IndexError,
-                        FileNotFoundError,
+ except NUMERICAL_FAULT_EXCEPTIONS as e:       FileNotFoundError,
                     ) as e:
                         if hasattr(self, "logger") and self.logger:
                             self.logger.error(f"Merge error: {e}")
@@ -2628,11 +2618,7 @@ class CertusREApp(CertusBaseApp):
 
                 qw = self.front_table.cellWidget(r, _RE_FT_COL_QW).value()
 
-                stack.append(Layer(mat, qw, True))
-
-            return stack
-
-        except (AttributeError, ValueError, IndexError) as e:
+                stack.append(Layeexcept NUMERICAL_FAULT_EXCEPTIONS as e:except (AttributeError, ValueError, IndexError) as e:
             logging.debug(f"Could not get front stack: {e}")
 
             return []
@@ -2795,9 +2781,7 @@ class CertusREApp(CertusBaseApp):
 
             self._schedule_eval()
 
-            self.log(f"{len(rows_data)} row(s) pasted from Excel", "SUCCESS")
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            self.log(f"{len(rows_dexcept NUMERICAL_FAULT_EXCEPTIONS as e:Error, KeyError, IndexError, FileNotFoundError) as e:
             self.log(f"Paste error: {str(e)}", "ERROR")
 
             traceback.print_exc()
@@ -3116,10 +3100,7 @@ class CertusREApp(CertusBaseApp):
                         w=weight,
                         on=active,
                         include_backside=True,
-                    )
-                )
-
-            except (AttributeError, ValueError, IndexError) as e:
+except NUMERICAL_FAULT_EXCEPTIONS as e:except (AttributeError, ValueError, IndexError) as e:
                 logging.debug(f"Could not get oblique target row: {e}")
 
         return targets
@@ -3146,11 +3127,7 @@ class CertusREApp(CertusBaseApp):
         try:
             pw.progress_bar.setValue(max(0, min(100, int(pct))))
 
-            short = msg if len(msg) <= 160 else (msg[:157] + "...")
-
-            pw.info_label.setText(short)
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            short = msg if len(msg) <= 160 else (msg[:157] + "..."except NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             pass
 
     def _apply_re_workflow_rmse_if_better(self, r: float) -> None:
@@ -3423,9 +3400,7 @@ class CertusREApp(CertusBaseApp):
                 title = f"Spectrum ({self.front_table.rowCount()} layers) | {src_name} | RMSE grid: {n_total} lambda"
 
             else:
-                title = f"Spectrum ({self.front_table.rowCount()} layers) | RMSE grid: {n_total} lambda"
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                title = f"Spectrum ({self.front_table.rowCounexcept NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             title = f"Spectrum ({self.front_table.rowCount()} layers) | RMSE grid: {n_total} lambda"
 
         if rmse is not None and np.isfinite(rmse) and rmse >= 0.0:
@@ -3786,9 +3761,7 @@ class CertusREApp(CertusBaseApp):
 
         if hasattr(self, "progress_widget") and (not re_was_running or not re_joined_ok):
             try:
-                self.progress_widget.stop("Stopped by user")
-
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                self.except NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
                 pass
 
         if self.eval_worker and self.eval_worker.isRunning():
@@ -3961,9 +3934,7 @@ class CertusREApp(CertusBaseApp):
                 continue
 
             try:
-                wb = _opxl.load_workbook(idx_path, data_only=True)
-
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+                wb = _opxl.except NUMERICAL_FAULT_EXCEPTIONS as e:Error, KeyError, IndexError, FileNotFoundError) as e:
                 last_err = str(e)
 
                 self.log(f"RE: could not open {idx_path}: {e}", "WARNING")
@@ -4021,11 +3992,7 @@ class CertusREApp(CertusBaseApp):
                 self.log(
                     f"RE: substrate '{matched}' loaded from {idx_path}  n@{l0_ref:.0f}nm = {mat.n4:.4f}",
                     "INFO",
-                )
-
-                return mat
-
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+      except NUMERICAL_FAULT_EXCEPTIONS as e:Error, KeyError, IndexError, FileNotFoundError) as e:
                 last_err = str(e)
 
                 self.log(f"RE: error reading substrate sheet in {idx_path}: {e}", "WARNING")
@@ -4372,10 +4339,7 @@ class CertusREApp(CertusBaseApp):
 
                 wls_meas, specs, _warn = self._parse_re_measurement(wb[trial["measurement"]])
 
-                if not specs or len(wls_meas) < 2:
-                    continue
-
-            except (ValueError, TypeError, KeyError):
+                if not specs or len(wls_except NUMERICAL_FAULT_EXCEPTIONS :            except (ValueError, TypeError, KeyError):
                 continue
 
             return trial
@@ -4822,8 +4786,7 @@ class CertusREApp(CertusBaseApp):
                 try:
                     self.set_validation_status("OK")
                     for _w in re_header_warnings:
-                        self.add_validation_warning(f"RE header inference: {_w}")
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+                        self.add_validation_wexcept NUMERICAL_FAULT_EXCEPTIONS as exc:rror, RuntimeError, AttributeError, KeyError) as exc:
                     self.logger.warning("RE validation status/warnings update skipped: %s", exc)
 
                 if os.environ.get("CERTUS_RE_HEADLESS") == "1":
@@ -4843,8 +4806,7 @@ class CertusREApp(CertusBaseApp):
                     )
             else:
                 try:
-                    self.set_validation_status("OK")
-                except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+                except NUMERICAL_FAULT_EXCEPTIONS as exc:rror, RuntimeError, AttributeError, KeyError) as exc:
                     self.logger.warning("RE validation status update skipped: %s", exc)
 
             col_desc = ", ".join(
@@ -5142,16 +5104,7 @@ class CertusREApp(CertusBaseApp):
                         need_back=bool(need_back),
                     )
 
-                    self._re_show_load_summary_dialog(summary_txt)
-
-                except (
-                    ValueError,
-                    TypeError,
-                    RuntimeError,
-                    AttributeError,
-                    KeyError,
-                    IndexError,
-                    FileNotFoundError,
+                    self._re_shexcept NUMERICAL_FAULT_EXCEPTIONS as e:           FileNotFoundError,
                 ) as e:
                     self.log(f"RE: could not open summary dialog: {e}", "WARNING")
 
@@ -5168,11 +5121,7 @@ class CertusREApp(CertusBaseApp):
                 "SUCCESS",
             )
 
-            show_toast(self, f"Loaded: {Path(path).name}", "success")
-
-            return True
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            show_toast(self, f"Loaded: {Path(path).except NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             self.log(f"RE load error:\n{traceback.format_exc()}", "ERROR")
 
             return False
@@ -5287,9 +5236,7 @@ class CertusREApp(CertusBaseApp):
                 deadzone_abs=RE_RE_DEADZONE_QWOT_ABS,
             )
 
-            return _re_rmse_combined_spectral_qwot(r_sp, float(r_qw), alpha_q)
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+            return _re_rmse_combineexcept NUMERICAL_FAULT_EXCEPTIONS as e:Error, KeyError, IndexError, FileNotFoundError) as e:
             logging.warning(f"_compute_re_rmse error: {e}")
 
             return None
@@ -5652,10 +5599,7 @@ class CertusREApp(CertusBaseApp):
             if missing_manifest_fields:
                 self.log(
                     "Export blocked: incomplete manifest (missing: " + ", ".join(missing_manifest_fields) + ")",
-                    "ERROR",
-                )
-                return
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError) as exc:
+                    "ERROexcept NUMERICAL_FAULT_EXCEPTIONS as exc:eError, AttributeError, KeyError, IndexError) as exc:
             self.log(f"Manifest generation failed: {exc}", "WARNING")
             return
 
@@ -5751,9 +5695,7 @@ class CertusREApp(CertusBaseApp):
 
             wb.save(path)
 
-            self.log(f"RE targets vs theory export: {Path(path).name}", "SUCCESS")
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as ex:
+            self.log(f"RE targets vs thexcept NUMERICAL_FAULT_EXCEPTIONS as ex:rror, KeyError, IndexError, FileNotFoundError) as ex:
             self.log(f"RE export error: {ex}", "ERROR")
 
             logging.exception("export_re_targets_vs_theory")
@@ -6057,7 +5999,7 @@ class CertusREApp(CertusBaseApp):
             return 0.0
 
         try:
-            return float(self._re_speed_preset()["re_qwot_penalty_weight"])
+            return float(self._rexcept NUMERICAL_FAULT_EXCEPTIONS :])
 
         except (KeyError, TypeError, ValueError):
             return float(RE_GUI_DEFAULT_RE_QWOT_ALPHA)
@@ -6066,7 +6008,7 @@ class CertusREApp(CertusBaseApp):
         """DeltaRe envelope factor (phase 2): read from speed preset."""
 
         try:
-            return float(self._re_speed_preset()["re_envelope_scale"])
+            return float(seexcept NUMERICAL_FAULT_EXCEPTIONS :])
 
         except (KeyError, TypeError, ValueError):
             return 1.0
@@ -6102,9 +6044,7 @@ class CertusREApp(CertusBaseApp):
         mats = self._get_materials()
 
         try:
-            self._re_initial_ep = init_thickness(stack, self.l0_spin.value(), mats).copy()
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+            self._re_initial_ep = init_thicknesexcept NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             self._re_initial_ep = None
 
         self._re_initial_stack = list(stack)
@@ -6207,10 +6147,7 @@ class CertusREApp(CertusBaseApp):
                 re_rmse_initial=snap.get("re_rmse_initial"),
                 re_rmse_phase1=snap.get("re_rmse_phase1"),
                 re_rmse_final=snap.get("re_rmse_final"),
-                initial_stack=snap.get("initial_stack"),
-            )
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+                initial_staexcept NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             self.log(
                 "RE: impossible to open the results table.\n" + traceback.format_exc(),
                 "ERROR",
@@ -6645,10 +6582,7 @@ class CertusREApp(CertusBaseApp):
                 ep0,
                 re_rmse_initial=data.get("re_rmse_initial"),
                 re_rmse_phase1=data.get("re_rmse_phase1"),
-                re_rmse_final=rf,
-            )
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
+    except NUMERICAL_FAULT_EXCEPTIONS :ibuteError, KeyError, IndexError, FileNotFoundError):
             self.log(
                 "RE: the results window could not be displayed; detail:\n" + traceback.format_exc(),
                 "ERROR",
@@ -7318,17 +7252,7 @@ class CertusREApp(CertusBaseApp):
                     w_den,
                     n_cau,
                     pen=pg.mkPen("#fb923c", width=2, style=Qt.PenStyle.DotLine),
-                    name="Substrate  Cauchy 3p (ref. lambda₀)",
-                )
-
-            except (
-                ValueError,
-                TypeError,
-                RuntimeError,
-                AttributeError,
-                KeyError,
-                IndexError,
-                FileNotFoundError,
+                    name="Substrate  Cauchexcept NUMERICAL_FAULT_EXCEPTIONS as _e_cau:          FileNotFoundError,
             ) as _e_cau:
                 logging.debug("RE indices plot Cauchy 3p: %s", _e_cau)
 
@@ -7473,8 +7397,7 @@ class CertusREApp(CertusBaseApp):
         set_certus_last_dir(f)
         try:
             if not getattr(self, "validation_status", None):
-                self.set_validation_status("OK")
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError) as exc:
+    except NUMERICAL_FAULT_EXCEPTIONS as exc:rror, RuntimeError, AttributeError, KeyError) as exc:
             self.logger.warning("RE export preflight validation status skipped: %s", exc)
 
         try:
@@ -7687,9 +7610,7 @@ class CertusREApp(CertusBaseApp):
 
             wb.save(f)
 
-            self.log(f"Exported to:  {f}", "SUCCESS")
-
-        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+          except NUMERICAL_FAULT_EXCEPTIONS as e:Error, KeyError, IndexError, FileNotFoundError) as e:
             self.log(f"Export error: {str(e)}", "ERROR")
 
     def closeEvent(self, event):

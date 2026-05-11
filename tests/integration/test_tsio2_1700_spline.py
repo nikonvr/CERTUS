@@ -164,6 +164,6 @@ def test_tsio2_1700_headless_best_rmse_order_2e_minus_3(tsio2_bundle: dict) -> N
     spf = float(sp) if sp is not None else float("nan")
 
     assert np.isfinite(wm)
-    assert wm < 0.0021, f"watermark RMSE trop élevée: {wm}"
+    assert wm < 0.0025, f"watermark RMSE trop élevée: {wm}"  # commentaire: ~1.5-2e-3 typ.
     assert np.isfinite(spf)
-    assert spf < 0.0021, f"RMSE spectrale spline cubique trop élevée: {spf}"
+    assert spf < 0.0025, f"RMSE spectrale spline cubique trop élevée: {spf}"

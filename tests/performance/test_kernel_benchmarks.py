@@ -75,11 +75,12 @@ def test_bench_calculate_transmission_array(benchmark) -> None:
 
 @pytest.mark.performance
 def test_bench_calculate_rt_single_layer_single(benchmark) -> None:
-    n_sub = complex(1.52, 0.0)
+    # calculate_RT_single_layer_single has Numba signature n_sub: float64.
+    # Do NOT pass complex here (TypingError). Use calculate_transmission_single for complex n_sub.
+    n_sub = 1.52  # float64
     calculate_RT_single_layer_single(550.0, 2.05, 0.018, 120.0, n_sub)  # JIT warmup
-    r, t = benchmark(calculate_RT_single_layer_single, 550.0, 2.05, 0.018, 120.0, n_sub)
-    assert np.isfinite(r)
-    assert np.isfinite(t)
+    r_val = benchmark(calculate_RT_single_layer_single, 550.0, 2.05, 0.018, 120.0, n_sub)
+    assert np.isfinite(r_val)
 
 
 @pytest.mark.performance

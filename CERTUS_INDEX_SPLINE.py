@@ -13135,7 +13135,6 @@ class CertusIndexSplineApp(
 
         self._wire_worker_signals(_manual_progress)
 
-        self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
         self._worker.signals.error.connect(self._on_worker_err)
         self._worker.signals.finished.connect(self._cleanup_thread)
@@ -13243,7 +13242,6 @@ class CertusIndexSplineApp(
 
         self._wire_worker_signals(_manual_progress)
 
-        self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
         self._worker.signals.error.connect(self._on_worker_err)
         self._worker.signals.finished.connect(self._cleanup_thread)
@@ -13314,7 +13312,6 @@ class CertusIndexSplineApp(
 
         self._wire_worker_signals(_manual_progress)
 
-        self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
         self._worker.signals.error.connect(self._on_worker_err)
         self._worker.signals.finished.connect(self._cleanup_thread)
@@ -13386,7 +13383,6 @@ class CertusIndexSplineApp(
 
         self._wire_worker_signals(_manual_progress)
 
-        self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
         self._worker.signals.error.connect(self._on_worker_err)
         self._worker.signals.finished.connect(self._cleanup_thread)
@@ -13460,7 +13456,6 @@ class CertusIndexSplineApp(
 
         self._wire_worker_signals(_manual_progress)
 
-        self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
         self._worker.signals.error.connect(self._on_worker_err)
         self._worker.signals.finished.connect(self._cleanup_thread)

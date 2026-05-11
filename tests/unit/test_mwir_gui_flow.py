@@ -32,12 +32,20 @@ class _FakeWorker:
     def __init__(self, func, *args, **kwargs) -> None:
         self.func = func
         self.args = args
-        self.kwargs = kwargs
+        self.kwargs = dict(kwargs)  # mutable dict so _wire_worker_signals can inject progress_cb
         self.signals = _FakeWorkerSignals()
         self.started = False
 
     def start(self) -> None:
         self.started = True
+
+
+def _make_wire_worker_signals(app_ref):
+    """Minimal _wire_worker_signals that injects progress_cb into worker kwargs (mirroring production code)."""
+    def _wire(progress_fn):
+        app_ref._worker.kwargs["progress_cb"] = progress_fn
+
+    return _wire
 
 
 class _Toggle:
@@ -217,7 +225,9 @@ def test_start_manual_sigma_insert_worker_scales_progress_to_ui_range(monkeypatc
         btn_stop=_Toggle(),
         lbl_status=_Label(),
         _prog_reset_bar=lambda: None,
+        _set_worker_running_state=lambda _running: None,
     )
+    app._wire_worker_signals = _make_wire_worker_signals(app)
     result = {"sigma_knots": [1.0, 2.0], "rmse": 1e-3}
 
     CertusIndexSplineApp._start_manual_sigma_insert_worker(app, result, [1000.0])
@@ -255,7 +265,9 @@ def test_start_manual_sigma_insert_worker_passes_multiple_knots_as_sorted_sigma(
         btn_stop=_Toggle(),
         lbl_status=_Label(),
         _prog_reset_bar=lambda: None,
+        _set_worker_running_state=lambda _running: None,
     )
+    app._wire_worker_signals = _make_wire_worker_signals(app)
     result = {"sigma_knots": [1.0, 2.0], "rmse": 1e-3}
 
     CertusIndexSplineApp._start_manual_sigma_insert_worker(app, result, [3000.0, 1650.0, 1000.0])
@@ -312,7 +324,9 @@ def test_start_manual_sigma_repartition_worker_uses_current_selected_k_not_resul
         btn_stop=_Toggle(),
         lbl_status=_Label(),
         _prog_reset_bar=lambda: None,
+        _set_worker_running_state=lambda _running: None,
     )
+    app._wire_worker_signals = _make_wire_worker_signals(app)
     result = {"sigma_knots": [0.2, 0.4, 0.6, 0.8, 1.0], "rmse": 1e-3}
     selected_lambda = [3000.0, 1650.0, 1000.0]
 

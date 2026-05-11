@@ -12,6 +12,7 @@ from typing import Any
 
 import numpy as np
 
+from certus_errors import NUMERICAL_FAULT_EXCEPTIONS
 from certus_physics import calculate_RT_vectorized_real, calculate_bare_substrate_RT
 
 
@@ -52,7 +53,8 @@ def log_structured_json_event(
     try:
         log.info("%s %s", channel, json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
-    except NUMERICAL_FAULT_EXCEPTIONS :
+    except (TypeError, *NUMERICAL_FAULT_EXCEPTIONS):
+        # Silently ignore non-serializable fields (e.g. np.ndarray) or other encoding errors
         pass
 
 

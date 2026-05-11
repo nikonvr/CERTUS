@@ -672,6 +672,272 @@ def _lbfgsb_phase_with_progress(
 # Helpers extracted from _run_free_knot_stage (module-level, no closure state)
 # ---------------------------------------------------------------------------
 
+
+from dataclasses import dataclass, field
+from typing import Any, Callable
+import numpy as np
+
+@dataclass
+class FreeKnotStageContext:
+    cfg: Any
+    stop_event: Any
+    progress_cb: Callable
+    live_cb: Any
+    optimize_n: bool
+    seq_label: str
+    stage_name: str
+    
+    lam_f: np.ndarray
+    sig_f: np.ndarray
+    n_sub_f_mg: np.ndarray
+    w_f: np.ndarray
+    inv_npix: float
+    t_exp_f: np.ndarray
+    r_exp_f: np.ndarray
+    
+    s_lo: float
+    s_hi: float
+    sigma_snap_atol: float
+    
+    sk0: np.ndarray
+    skn0: np.ndarray
+    skL0: np.ndarray
+    d0: float
+    nn0: np.ndarray
+    LL0: np.ndarray
+    K: int
+    M: int
+    
+    lo_k: float
+    hi_k: float
+    L_lo: float
+    L_hi: float
+    n_lo: float
+    n_hi: float
+    
+    lam: np.ndarray
+    sig: np.ndarray
+    nk_prof_sol3: str
+    
+    bnds: list
+    mxf1: int
+    mxf2: int
+    mxf3: int
+    phase_maxfun_list: list
+    phase_weight_total: float
+    
+    decode_work: dict = field(default_factory=dict)
+    best_z: list = field(default_factory=list)
+    best_spec_mse: list = field(default_factory=list)
+
+    def w2s(self, sk: np.ndarray) -> np.ndarray:
+        from certus_core import sigma_knots_encode
+        return sigma_knots_encode(sk, self.s_lo, self.s_hi)
+
+    def s2s(self, raw: np.ndarray) -> np.ndarray:
+        from certus_core import sigma_knots_decode
+        return sigma_knots_decode(raw, self.s_lo, self.s_hi, work=self.decode_work, reuse_output=True)
+
+    def unpack(self, z: np.ndarray):
+        zz = z.ravel()
+        if self.optimize_n:
+            return (
+                float(zz[0]),
+                self.s2s(zz[1 : 1 + self.M]),
+                self.s2s(zz[1 + self.M : 1 + 2 * self.M]),
+                zz[1 + 2 * self.M : 1 + 2 * self.M + self.K],
+                zz[1 + 2 * self.M + self.K : 1 + 2 * self.M + 2 * self.K],
+            )
+        else:
+            d = float(zz[0])
+            skL = self.s2s(zz[1 : 1 + self.M])
+            LL = zz[1 + self.M : 1 + self.M + self.K]
+            return d, skL, LL
+
+    def sol3_split_to_nk_masked(self, z: np.ndarray):
+        d, skn, skL, nn, LL = self.unpack(z)
+        skn_a = np.asarray(skn, dtype=np.float64).ravel()
+        skL_a = np.asarray(skL, dtype=np.float64).ravel()
+        nn_a = np.asarray(nn, dtype=np.float64).ravel()
+        LL_v = np.asarray(LL, dtype=np.float64).ravel()
+
+        sk_ref, nn_at, LL_at = _snap_nk_mesh_sol3_split(skn_a, skL_a, nn_a, LL_v, self.sk0, self.sigma_snap_atol)
+        from spline_objective import physical_nodes_to_x_slice_n
+        xi_n = physical_nodes_to_x_slice_n(nn_at, sk_ref, self.cfg.n_mono_band_nm)
+        x_pack = np.concatenate((
+            np.asarray([float(d)], dtype=np.float64),
+            np.asarray(xi_n, dtype=np.float64).ravel(),
+            np.asarray(LL_at, dtype=np.float64).ravel(),
+        ))
+        from spline_objective import nk_from_x_pwlnk
+        n_l, k_l = nk_from_x_pwlnk(
+            x_pack, self.lam_f, sk_ref, self.lo_k, self.hi_k,
+            sig_pre=self.sig_f, n_mono_band_nm=self.cfg.n_mono_band_nm, profile_interp=self.nk_prof_sol3,
+        )
+        return n_l, k_l, float(d), skn_a, nn_a
+
+    def sol3b_to_nk_masked(self, z: np.ndarray):
+        d, skL, LL = self.unpack(z)
+        skL_a = np.asarray(skL, dtype=np.float64).ravel()
+        LL_a = np.asarray(LL, dtype=np.float64).ravel()
+        sk_ref, n_at, LL_at = _snap_nk_mesh_sol3b(skL_a, LL_a, self.skL0, self.skn0, self.nn0, self.sigma_snap_atol)
+        from spline_objective import physical_nodes_to_x_slice_n
+        xi = physical_nodes_to_x_slice_n(n_at, sk_ref, self.cfg.n_mono_band_nm)
+        x_pack = np.concatenate((
+            np.asarray([float(d)], dtype=np.float64),
+            np.asarray(xi, dtype=np.float64).ravel(),
+            LL_at,
+        ))
+        from spline_objective import nk_from_x_pwlnk
+        n_l, k_l = nk_from_x_pwlnk(
+            x_pack, self.lam_f, sk_ref, self.lo_k, self.hi_k,
+            sig_pre=self.sig_f, n_mono_band_nm=self.cfg.n_mono_band_nm, profile_interp=self.nk_prof_sol3,
+        )
+        return n_l, k_l, float(d), LL_a
+
+    def obj(self, z: np.ndarray) -> float:
+        if self.stop_event.is_set():
+            return 1e30
+        if self.optimize_n:
+            n_l, k_l, d, _, _ = self.sol3_split_to_nk_masked(z)
+        else:
+            n_l, k_l, d, _ = self.sol3b_to_nk_masked(z)
+        from spline_objective import spline_objective_mse_on_masked_grid
+        return float(
+            spline_objective_mse_on_masked_grid(
+                self.cfg, lam_f=self.lam_f, n_sub_f=self.n_sub_f_mg, w=self.w_f,
+                inv_npix=self.inv_npix, t_exp_f=self.t_exp_f, r_exp_f=self.r_exp_f,
+                n_l=n_l, k_l=k_l, d=d,
+            )
+        )
+
+    def reset_obj_tracker(self, z_init: np.ndarray) -> None:
+        zi = np.asarray(z_init, dtype=np.float64).ravel().copy()
+        self.best_z.clear()
+        self.best_spec_mse.clear()
+        self.best_z.append(zi)
+        self.best_spec_mse.append(float(self.obj(zi)))
+
+    def obj_tracked(self, z: np.ndarray) -> float:
+        v = float(self.obj(z))
+        if v < float(self.best_spec_mse[0]) - 1e-18:
+            self.best_spec_mse[0] = v
+            self.best_z[0] = np.asarray(z, dtype=np.float64).ravel().copy()
+        return v
+
+    def phase_progress_bounds(self, phase_idx: int) -> tuple[float, float]:
+        done_before = float(sum(max(1, int(v)) for v in self.phase_maxfun_list[:phase_idx]))
+        done_after = done_before + float(max(1, int(self.phase_maxfun_list[phase_idx])))
+        return 100.0 * done_before / self.phase_weight_total, 100.0 * done_after / self.phase_weight_total
+
+    def phase_display_name(self, phase_idx: int) -> str:
+        if self.optimize_n:
+            return ("descent", "polish", "deep polish")[phase_idx]
+        return ("descent", "polish")[phase_idx]
+
+    def run_lbfgsb_phase_with_progress(self, z_start: np.ndarray, options: dict, phase_idx: int) -> Any:
+        ph_lo, ph_hi = self.phase_progress_bounds(phase_idx)
+        ph_name = self.phase_display_name(phase_idx)
+        ph_count = 3 if self.optimize_n else 2
+        return _lbfgsb_phase_with_progress(
+            z_start, options, phase_idx, ph_lo, ph_hi, ph_name, ph_count,
+            self.bnds, self.stage_name, self.progress_cb, self.obj_tracked,
+        )
+
+
+@dataclass
+class SingleSplineStageContext:
+    cfg: Any
+    sigma_knots: np.ndarray
+    pipeline_seq: str
+    pg_conf: Any
+    optimizer: Any
+    progress_cb: Callable
+    live_cb: Any
+    lgr: Any
+    
+    live_interval: float = 2.0
+    pg_prog_interval: float = 0.4
+    
+    live_throttle: float = 0.0
+    best_rmse_ref: float = 0.0
+    best_mse_live_ref: float = 0.0
+    best_x_live_ref: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    pg_snap_last_eval: int = 0
+    pg_cb_count: int = 0
+    pg_prog_last: float = 0.0
+
+    def cb(self, s) -> None:
+        import time as _time_mod
+        self.pg_cb_count += 1
+        _fe = max(1, int(self.pg_conf.max_feval))
+        frac = min(1.0, float(self.optimizer.n_evals) / float(_fe))
+        pc = 15.0 + 70.0 * frac
+        rmse = float(np.sqrt(max(s.y, 0.0)))
+
+        if rmse < self.best_rmse_ref - 1e-12:
+            self.best_rmse_ref = rmse
+            self.best_mse_live_ref = float(s.y)
+            self.best_x_live_ref = np.asarray(s.x, dtype=np.float64).ravel().copy()
+            xv = self.best_x_live_ref
+            with np.printoptions(precision=6, suppress=True):
+                self.lgr.info(
+                    "PGlobal IMPROVEMENT: evals=%d  RMSE=%.6f  x(d,n,L)=%s",
+                    int(self.optimizer.n_evals),
+                    rmse,
+                    np.array2string(xv, separator=", "),
+                )
+
+        step_pg = max(1, int(self.pg_conf.max_feval) // 8)
+        step_hit = False
+
+        if self.optimizer.n_evals - self.pg_snap_last_eval >= step_pg:
+            self.pg_snap_last_eval = int(self.optimizer.n_evals)
+            step_hit = True
+            from certus_core import _log_spline_pipeline_json
+            _log_spline_pipeline_json(
+                self.lgr,
+                "pglobal_progress",
+                seq=self.pipeline_seq,
+                n_evals=int(self.optimizer.n_evals),
+                best_rmse_so_far=float(self.best_rmse_ref),
+                last_sample_rmse=rmse,
+            )
+            self.lgr.info(
+                "PIPELINE [%s] PGlobal … evals=%d | best RMSE=%.6f (current sample=%.6f)",
+                self.pipeline_seq,
+                int(self.optimizer.n_evals),
+                float(self.best_rmse_ref),
+                rmse,
+            )
+
+        _now_prog = _time_mod.monotonic()
+        _prog_time_hit = (_now_prog - self.pg_prog_last) >= self.pg_prog_interval
+        _emit_prog = self.pg_cb_count == 1 or step_hit or _prog_time_hit
+
+        if _emit_prog:
+            self.pg_prog_last = _now_prog
+            self.progress_cb(pc, f"PGlobal: evals={self.optimizer.n_evals}  RMSE={rmse:.6f}")
+
+        if self.live_cb is not None:
+            now = _time_mod.monotonic()
+            if now - self.live_throttle >= self.live_interval:
+                self.live_throttle = now
+                try:
+                    # _build_live_dict is module level
+                    self.live_cb(
+                        _build_live_dict(
+                            self.cfg,
+                            self.sigma_knots,
+                            self.best_x_live_ref,
+                            self.best_mse_live_ref,
+                            int(self.optimizer.n_evals),
+                        )
+                    )
+                except Exception:
+                    import logging
+                    logging.getLogger("CERTUS").debug("live_cb failed in PGlobal callback", exc_info=True)
+
 def _sk_max_abs_delta(a: np.ndarray, b: np.ndarray) -> float:
     """Max absolute element-wise difference between two sigma-knot arrays."""
     aa = np.asarray(a, dtype=np.float64).ravel()
@@ -830,15 +1096,8 @@ def _run_free_knot_stage(
 
     n_hi = float(N_MAX_LIMIT)
 
-    def _w2s(sk: np.ndarray) -> np.ndarray:
 
-        return sigma_knots_encode(sk, s_lo, s_hi)
 
-    _decode_work: dict[str, np.ndarray] = {}
-
-    def _s2s(raw: np.ndarray) -> np.ndarray:
-
-        return sigma_knots_decode(raw, s_lo, s_hi, work=_decode_work, reuse_output=True)
 
 
 
@@ -862,7 +1121,7 @@ def _run_free_knot_stage(
         )
 
     if optimize_n:
-        z0 = np.concatenate(([d0], _w2s(skn0), _w2s(skL0), np.clip(nn0, n_lo, n_hi), np.clip(LL0, L_lo, L_hi)))
+        z0 = np.concatenate(([d0], ctx.w2s(skn0), ctx.w2s(skL0), np.clip(nn0, n_lo, n_hi), np.clip(LL0, L_lo, L_hi)))
 
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _r_sp_n = float(min_relative_lambda_spacing_ratio(skn0, lam_lo, lam_hi))
@@ -888,20 +1147,9 @@ def _run_free_knot_stage(
             + [(L_lo, L_hi)] * K
         )
 
-        def _unpack(z: np.ndarray):
-
-            zz = z.ravel()
-
-            return (
-                float(zz[0]),
-                _s2s(zz[1 : 1 + M]),
-                _s2s(zz[1 + M : 1 + 2 * M]),
-                zz[1 + 2 * M : 1 + 2 * M + K],
-                zz[1 + 2 * M + K : 1 + 2 * M + 2 * K],
-            )
 
     else:
-        z0 = np.concatenate(([d0], _w2s(skL0), np.clip(LL0, L_lo, L_hi)))
+        z0 = np.concatenate(([d0], ctx.w2s(skL0), np.clip(LL0, L_lo, L_hi)))
 
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _r_sp_Lb = float(min_relative_lambda_spacing_ratio(skL0, lam_lo, lam_hi))
@@ -917,121 +1165,17 @@ def _run_free_knot_stage(
 
         bnds = [(float(cfg.d_lo), float(cfg.d_hi))] + [(-12.0, 12.0)] * M + [(L_lo, L_hi)] * K
 
-        def _unpack(z: np.ndarray) -> tuple[float, np.ndarray, np.ndarray]:
-
-            zz = np.asarray(z, dtype=np.float64).ravel()
-
-            d = float(zz[0])
-
-            skL = _s2s(zz[1 : 1 + M])
-
-            LL = zz[1 + M : 1 + M + K]
-
-            return d, skL, LL
 
     _nk_prof_sol3 = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth")
 
-    def _sol3_split_to_nk_masked(z: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, np.ndarray, np.ndarray]:
 
-        d, skn, skL, nn, LL = _unpack(z)
 
-        skn_a = np.asarray(skn, dtype=np.float64).ravel()
+    # ctx.obj is functionally identical to ctx.obj (same body).
+    # Kept as alias for semantic clarity: ctx.obj feeds the optimizer,
+    # ctx.obj is used for diagnostic RMSE evaluations.
 
-        skL_a = np.asarray(skL, dtype=np.float64).ravel()
 
-        nn_a = np.asarray(nn, dtype=np.float64).ravel()
-
-        LL_v = np.asarray(LL, dtype=np.float64).ravel()
-
-        sk_ref, nn_at, LL_at = _snap_nk_mesh_sol3_split(skn_a, skL_a, nn_a, LL_v, sk0, _sigma_snap_atol)
-
-        xi_n = physical_nodes_to_x_slice_n(nn_at, sk_ref, cfg.n_mono_band_nm)
-
-        x_pack = np.concatenate(
-            (
-                np.asarray([float(d)], dtype=np.float64),
-                np.asarray(xi_n, dtype=np.float64).ravel(),
-                np.asarray(LL_at, dtype=np.float64).ravel(),
-            )
-        )
-
-        n_l, k_l = nk_from_x_pwlnk(
-            x_pack,
-            lam_f,
-            sk_ref,
-            lo_k,
-            hi_k,
-            sig_pre=sig_f,
-            n_mono_band_nm=cfg.n_mono_band_nm,
-            profile_interp=_nk_prof_sol3,
-        )
-
-        return n_l, k_l, float(d), skn_a, nn_a
-
-    def _sol3b_to_nk_masked(z: np.ndarray) -> tuple[np.ndarray, np.ndarray, float, np.ndarray]:
-
-        d, skL, LL = _unpack(z)
-
-        skL_a = np.asarray(skL, dtype=np.float64).ravel()
-
-        LL_a = np.asarray(LL, dtype=np.float64).ravel()
-
-        sk_ref, n_at, LL_at = _snap_nk_mesh_sol3b(skL_a, LL_a, skL0, skn0, nn0, _sigma_snap_atol)
-
-        xi = physical_nodes_to_x_slice_n(n_at, sk_ref, cfg.n_mono_band_nm)
-
-        x_pack = np.concatenate(
-            (
-                np.asarray([float(d)], dtype=np.float64),
-                np.asarray(xi, dtype=np.float64).ravel(),
-                LL_at,
-            )
-        )
-
-        n_l, k_l = nk_from_x_pwlnk(
-            x_pack,
-            lam_f,
-            sk_ref,
-            lo_k,
-            hi_k,
-            sig_pre=sig_f,
-            n_mono_band_nm=cfg.n_mono_band_nm,
-            profile_interp=_nk_prof_sol3,
-        )
-
-        return n_l, k_l, float(d), LL_a
-
-    # _spectral_mse_sol3 is functionally identical to _obj (same body).
-    # Kept as alias for semantic clarity: _obj feeds the optimizer,
-    # _spectral_mse_sol3 is used for diagnostic RMSE evaluations.
-
-    def _obj(z: np.ndarray) -> float:
-
-        if stop_event.is_set():
-            return 1e30
-
-        if optimize_n:
-            n_l, k_l, d, _, _ = _sol3_split_to_nk_masked(z)
-
-        else:
-            n_l, k_l, d, _ = _sol3b_to_nk_masked(z)
-
-        return float(
-            spline_objective_mse_on_masked_grid(
-                cfg,
-                lam_f=lam_f,
-                n_sub_f=n_sub_f_mg,
-                w=w_f,
-                inv_npix=inv_npix,
-                t_exp_f=t_exp_f,
-                r_exp_f=r_exp_f,
-                n_l=n_l,
-                k_l=k_l,
-                d=d,
-        )
-        )
-
-    _spectral_mse_sol3 = _obj
+    ctx.obj = ctx.obj
 
     if optimize_n and x_sol2_for_check is not None:
         try:
@@ -1061,7 +1205,7 @@ def _run_free_knot_stage(
                 )
             )
 
-            _mse_sol3_z0_sp = float(_spectral_mse_sol3(z0))
+            _mse_sol3_z0_sp = float(ctx.obj(z0))
 
             _tol_m = 1e-6 * max(1.0, abs(_mse_sol2_sp))
 
@@ -1094,34 +1238,11 @@ def _run_free_knot_stage(
 
     # Best z by **spectral MSE** (same grid / same nk_from_x as SOL2): display RMSE
     # ne peut pas empirer vs le warm start le long de la trajectoire retenue.
-    _best_z: list[np.ndarray] = []
 
-    _best_spec_mse: list[float] = []
 
-    def _reset_obj_tracker(z_init: np.ndarray) -> None:
 
-        zi = np.asarray(z_init, dtype=np.float64).ravel().copy()
 
-        _best_z.clear()
-
-        _best_spec_mse.clear()
-
-        _best_z.append(zi)
-
-        _best_spec_mse.append(float(_obj(zi)))
-
-    def _obj_tracked(z: np.ndarray) -> float:
-
-        v = float(_obj(z))
-
-        if v < float(_best_spec_mse[0]) - 1e-18:
-            _best_spec_mse[0] = v
-
-            _best_z[0] = np.asarray(z, dtype=np.float64).ravel().copy()
-
-        return v
-
-    rmse_warm = float(np.sqrt(max(float(_obj(z0)), 0.0)))
+    rmse_warm = float(np.sqrt(max(float(ctx.obj(z0)), 0.0)))
 
     if not optimize_n:
         rmse_ref = float(base_result.get("rmse", float("nan")))
@@ -1169,46 +1290,20 @@ def _run_free_knot_stage(
 
     opt_p3 = {"maxiter": 6000, "maxfun": _mxf3, "ftol": 1e-16, "gtol": 1e-16}
 
-    def _phase_progress_bounds(phase_idx: int) -> tuple[float, float]:
+    ctx = FreeKnotStageContext(
+        cfg=cfg, stop_event=stop_event, progress_cb=progress_cb, live_cb=live_cb,
+        optimize_n=optimize_n, seq_label=seq_label, stage_name=stage_name,
+        lam_f=lam_f, sig_f=sig_f, n_sub_f_mg=n_sub_f_mg, w_f=w_f, inv_npix=inv_npix,
+        t_exp_f=t_exp_f, r_exp_f=r_exp_f, s_lo=s_lo, s_hi=s_hi,
+        sigma_snap_atol=_sigma_snap_atol, sk0=sk0, skn0=skn0, skL0=skL0,
+        d0=d0, nn0=nn0, LL0=LL0, K=K, M=M, lo_k=lo_k, hi_k=hi_k, L_lo=L_lo, L_hi=L_hi,
+        n_lo=n_lo, n_hi=n_hi, lam=lam, sig=sig, nk_prof_sol3=_nk_prof_sol3,
+        bnds=bnds, mxf1=_mxf1, mxf2=_mxf2, mxf3=_mxf3,
+        phase_maxfun_list=_phase_maxfun_list, phase_weight_total=_phase_weight_total
+    )
 
-        done_before = float(sum(max(1, int(v)) for v in _phase_maxfun_list[:phase_idx]))
 
-        done_after = done_before + float(max(1, int(_phase_maxfun_list[phase_idx])))
 
-        return 100.0 * done_before / _phase_weight_total, 100.0 * done_after / _phase_weight_total
-
-    def _phase_display_name(phase_idx: int) -> str:
-
-        if optimize_n:
-            return ("descent", "polish", "deep polish")[phase_idx]
-
-        return ("descent", "polish")[phase_idx]
-
-    def _run_lbfgsb_phase_with_progress(
-        z_start: np.ndarray,
-        options: dict[str, Any],
-        phase_idx: int,
-    ) -> Any:
-
-        ph_lo, ph_hi = _phase_progress_bounds(phase_idx)
-
-        ph_name = _phase_display_name(phase_idx)
-
-        ph_count = 3 if optimize_n else 2
-
-        return _lbfgsb_phase_with_progress(
-            z_start,
-            options,
-            phase_idx,
-            ph_lo,
-            ph_hi,
-            ph_name,
-            ph_count,
-            bnds,
-            stage_name,
-            progress_cb,
-            _obj_tracked,
-        )
 
     if optimize_n:
         _log_spline_pipeline_json(
@@ -1258,17 +1353,17 @@ def _run_free_knot_stage(
 
         progress_cb(0, f"{stage_name}: ln k spline + free sigma_L (descent)...")
 
-    _reset_obj_tracker(z0)
+    ctx.reset_obj_tracker(z0)
 
-    r1 = _run_lbfgsb_phase_with_progress(z0, opt_p1, 0)
+    r1 = ctx.run_lbfgsb_phase_with_progress(z0, opt_p1, 0)
 
-    z1 = np.asarray(_best_z[0], dtype=np.float64).ravel().copy()
+    z1 = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-    mse_1_spec = float(_spectral_mse_sol3(z1))
+    mse_1_spec = float(ctx.obj(z1))
 
     _x1_ret = np.asarray(getattr(r1, "x", z1), dtype=np.float64).ravel()
 
-    _mse1_ret_spec = float(_spectral_mse_sol3(_x1_ret))
+    _mse1_ret_spec = float(ctx.obj(_x1_ret))
 
     if _mse1_ret_spec > mse_1_spec + 1e-12 * max(1.0, abs(mse_1_spec)):
         log.info(
@@ -1316,7 +1411,7 @@ def _run_free_knot_stage(
                 int(opt_p1.get("maxfun", 0) or 0),
             )
 
-        progress_cb(_phase_progress_bounds(1)[0], f"{stage_name}: polish {int(z0.size)} vars...")
+        progress_cb(ctx.phase_progress_bounds(1)[0], f"{stage_name}: polish {int(z0.size)} vars...")
 
     else:
         _log_spline_pipeline_json(
@@ -1339,19 +1434,19 @@ def _run_free_knot_stage(
             rmse_1,
         )
 
-        progress_cb(_phase_progress_bounds(1)[0], f"{stage_name}: ln k spline + free sigma_L (polish)...")
+        progress_cb(ctx.phase_progress_bounds(1)[0], f"{stage_name}: ln k spline + free sigma_L (polish)...")
 
-    _reset_obj_tracker(z1)
+    ctx.reset_obj_tracker(z1)
 
-    r2 = _run_lbfgsb_phase_with_progress(z1, opt_p2, 1)
+    r2 = ctx.run_lbfgsb_phase_with_progress(z1, opt_p2, 1)
 
-    zf = np.asarray(_best_z[0], dtype=np.float64).ravel().copy()
+    zf = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-    mse_f_spec = float(_spectral_mse_sol3(zf))
+    mse_f_spec = float(ctx.obj(zf))
 
     _x2_ret = np.asarray(getattr(r2, "x", zf), dtype=np.float64).ravel()
 
-    _mse2_ret_spec = float(_spectral_mse_sol3(_x2_ret))
+    _mse2_ret_spec = float(ctx.obj(_x2_ret))
 
     if _mse2_ret_spec > mse_f_spec + 1e-12 * max(1.0, abs(mse_f_spec)):
         log.info(
@@ -1364,19 +1459,19 @@ def _run_free_knot_stage(
         )
 
     if optimize_n:
-        progress_cb(_phase_progress_bounds(2)[0], f"{stage_name}: ultra-fine polish {int(z0.size)} vars...")
+        progress_cb(ctx.phase_progress_bounds(2)[0], f"{stage_name}: ultra-fine polish {int(z0.size)} vars...")
 
-        _reset_obj_tracker(zf)
+        ctx.reset_obj_tracker(zf)
 
-        r3 = _run_lbfgsb_phase_with_progress(zf, opt_p3, 2)
+        r3 = ctx.run_lbfgsb_phase_with_progress(zf, opt_p3, 2)
 
-        z3 = np.asarray(_best_z[0], dtype=np.float64).ravel().copy()
+        z3 = np.asarray(ctx.best_z[0], dtype=np.float64).ravel().copy()
 
-        mse_3_spec = float(_spectral_mse_sol3(z3))
+        mse_3_spec = float(ctx.obj(z3))
 
         _x3_ret = np.asarray(getattr(r3, "x", z3), dtype=np.float64).ravel()
 
-        _mse3_ret_spec = float(_spectral_mse_sol3(_x3_ret))
+        _mse3_ret_spec = float(ctx.obj(_x3_ret))
 
         if _mse3_ret_spec > mse_3_spec + 1e-12 * max(1.0, abs(mse_3_spec)):
             log.info(
@@ -1405,7 +1500,7 @@ def _run_free_knot_stage(
             nfev=int(getattr(r3, "nfev", 0) or 0),
             status=int(getattr(r3, "status", -1)),
             rmse=float(rmse_3),
-            delta_rmse_vs_phase2=float(rmse_3 - float(np.sqrt(max(float(_spectral_mse_sol3(_x2_ret)), 0.0)))),
+            delta_rmse_vs_phase2=float(rmse_3 - float(np.sqrt(max(float(ctx.obj(_x2_ret)), 0.0)))),
             delta_rmse_vs_warm=float(rmse_3 - rmse_warm),
         )
 
@@ -1419,7 +1514,7 @@ def _run_free_knot_stage(
         )
 
     if optimize_n:
-        d_f, skn_f, skL_f, nn_f, LL_f = _unpack(zf)
+        d_f, skn_f, skL_f, nn_f, LL_f = ctx.unpack(zf)
 
         skn_ff = np.asarray(skn_f, dtype=np.float64).ravel()
 
@@ -1495,7 +1590,7 @@ def _run_free_knot_stage(
         )
 
     else:
-        d_f, skL_f, LL_f = _unpack(zf)
+        d_f, skL_f, LL_f = ctx.unpack(zf)
 
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _rf_L_end = float(min_relative_lambda_spacing_ratio(skL_f, lam_lo, lam_hi))
@@ -2248,125 +2343,16 @@ def _run_single_spline_stage(
         rmse_before_pg,
     )
 
-    _live_throttle = [0.0]
+    ctx_pg = SingleSplineStageContext(
+        cfg=cfg, sigma_knots=sigma_knots, pipeline_seq=pipeline_seq,
+        pg_conf=pg_conf, optimizer=optimizer, progress_cb=progress_cb,
+        live_cb=live_cb, lgr=lgr,
+        best_rmse_ref=float(np.sqrt(max(mse_local, 0.0))),
+        best_mse_live_ref=float(mse_local),
+        best_x_live_ref=np.asarray(x_local, dtype=np.float64).ravel().copy()
+    )
 
-    _LIVE_INTERVAL = 2.0
-
-    import time as _time_mod
-
-    # Track best RMSE for logging improvements
-
-    best_rmse_ref = [float(np.sqrt(max(mse_local, 0.0)))]
-
-    # GUI live_cb must show the **best-so-far** model (same contract as polish), not the last random
-
-    # sample; otherwise INDEX_SPLINE _on_live_update can treat a bad sample as a "new record" when
-
-    # _best_live_rmse was still inf (early live dicts skipped).
-
-    best_mse_live_ref = [float(mse_local)]
-
-    best_x_live_ref = [np.asarray(x_local, dtype=np.float64).ravel().copy()]
-
-    _pg_snap_last_eval = [0]
-
-    _pg_cb_count = [0]
-
-    _pg_prog_last = [0.0]
-
-    _PG_PROG_INTERVAL = 0.4
-
-    def cb(s: Sample) -> None:
-
-        _pg_cb_count[0] += 1
-
-        _fe = max(1, int(pg_conf.max_feval))
-
-        frac = min(1.0, float(optimizer.n_evals) / float(_fe))
-
-        pc = 15.0 + 70.0 * frac
-
-        rmse = float(np.sqrt(max(s.y, 0.0)))
-
-        # Log improvement with parameters
-
-        if rmse < best_rmse_ref[0] - 1e-12:
-            best_rmse_ref[0] = rmse
-
-            best_mse_live_ref[0] = float(s.y)
-
-            best_x_live_ref[0] = np.asarray(s.x, dtype=np.float64).ravel().copy()
-
-            xv = best_x_live_ref[0]
-
-            with np.printoptions(precision=6, suppress=True):
-                lgr.info(
-                    "PGlobal IMPROVEMENT: evals=%d  RMSE=%.6f  x(d,n,L)=%s",
-                    int(optimizer.n_evals),
-                    rmse,
-                    np.array2string(xv, separator=", "),
-                )
-
-        step_pg = max(1, int(pg_conf.max_feval) // 8)
-
-        step_hit = False
-
-        if optimizer.n_evals - _pg_snap_last_eval[0] >= step_pg:
-            _pg_snap_last_eval[0] = int(optimizer.n_evals)
-
-            step_hit = True
-
-            _log_spline_pipeline_json(
-                lgr,
-                "pglobal_progress",
-                seq=pipeline_seq,
-                n_evals=int(optimizer.n_evals),
-                best_rmse_so_far=float(best_rmse_ref[0]),
-                last_sample_rmse=rmse,
-            )
-
-            lgr.info(
-                "PIPELINE [%s] PGlobal … evals=%d | best RMSE=%.6f (current sample=%.6f)",
-                pipeline_seq,
-                int(optimizer.n_evals),
-                float(best_rmse_ref[0]),
-                rmse,
-            )
-
-        # GUI: éviter une file Qt saturée, tout en restant lisible (pas seulement 1er cb / pas d'éval).
-
-        _now_prog = _time_mod.monotonic()
-
-        _prog_time_hit = (_now_prog - _pg_prog_last[0]) >= _PG_PROG_INTERVAL
-
-        _emit_prog = _pg_cb_count[0] == 1 or step_hit or _prog_time_hit
-
-        if _emit_prog:
-            _pg_prog_last[0] = _now_prog
-
-            progress_cb(pc, f"PGlobal: evals={optimizer.n_evals}  RMSE={rmse:.6f}")
-
-        if live_cb is not None:
-            now = _time_mod.monotonic()
-
-            if now - _live_throttle[0] >= _LIVE_INTERVAL:
-                _live_throttle[0] = now
-
-                try:
-                    live_cb(
-                        _build_live_dict(
-                            cfg,
-                            sigma_knots,
-                            best_x_live_ref[0],
-                            best_mse_live_ref[0],
-                            int(optimizer.n_evals),
-                        )
-                    )
-
-                except NUMERICAL_FAULT_EXCEPTIONS:
-                    logging.getLogger("CERTUS").debug("live_cb failed in PGlobal callback", exc_info=True)
-
-    best = optimizer.optimize(max_iter=int(cfg.pglobal_max_iter), callback=cb)
+    best = optimizer.optimize(max_iter=int(cfg.pglobal_max_iter), callback=ctx_pg.cb)
 
     if stop_event.is_set() and best is None:
         return None, None
@@ -2377,9 +2363,9 @@ def _run_single_spline_stage(
 
     # Prefer the best sample observed during callbacks over the optimizer return value.
     # Some optimizers return the last sampled point rather than the incumbent best.
-    mse_pg_best_obs = float(best_mse_live_ref[0]) if np.isfinite(float(best_mse_live_ref[0])) else float(mse_local)
+    mse_pg_best_obs = float(ctx_pg.best_mse_live_ref) if np.isfinite(float(ctx_pg.best_mse_live_ref)) else float(mse_local)
 
-    x_pg_best_obs = np.asarray(best_x_live_ref[0], dtype=np.float64).ravel().copy()
+    x_pg_best_obs = np.asarray(ctx_pg.best_x_live_ref, dtype=np.float64).ravel().copy()
 
     if best is not None and np.isfinite(mse_pg_returned) and mse_pg_returned < mse_pg_best_obs - 1e-15:
         mse_pg_best_obs = float(mse_pg_returned)

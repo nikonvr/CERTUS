@@ -582,6 +582,60 @@ class SplineReportBuilder:
                 startrow=len(df_head) + 2,
             )
 
+
+    def _align_to_lam(self, a: np.ndarray, name: str, lam_src_full: np.ndarray) -> np.ndarray:
+    
+        v = np.asarray(a, dtype=np.float64).ravel()
+    
+        if v.size == lam_src_full.size:
+            return v
+    
+        out = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
+    
+        n_m = int(min(v.size, lam_src_full.size))
+    
+        if n_m > 0:
+            out[:n_m] = v[:n_m]
+    
+        if lam_src_full.size and v.size != lam_src_full.size:
+            self.logger.warning(
+                "Export Excel: len(%s)=%d ? len(lam_nm)=%d - padded with NaN.",
+                name,
+                int(v.size),
+                int(lam_src_full.size),
+            )
+    
+        return out
+
+    def _spectral_rmse_export(
+            self,
+            n_arr: np.ndarray,
+            k_arr: np.ndarray,
+            d_nm_c: float,
+            cfg_ex: Any,
+            lam_src_full: np.ndarray,
+            *,
+            d_nm_use: float | None = None,
+        ) -> tuple[str, float]:
+    
+        d_eff = float(d_nm_use) if d_nm_use is not None and np.isfinite(float(d_nm_use)) else float(d_nm_c)
+    
+        if cfg_ex is None or not np.isfinite(d_eff):
+            return "N/A", float("nan")
+
+    def _rmse_pref_result(self, key: str, n_a: np.ndarray, k_a: np.ndarray, d_alt: float, result: dict, d_nm_c: float, cfg_ex: Any, lam_src_full: np.ndarray) -> tuple[str, float]:
+    
+        v = result.get(key)
+    
+        if v is not None and np.isfinite(float(v)):
+            fv = float(v)
+    
+            return f"{fv:.6f}", fv
+    
+        d_use = d_alt if np.isfinite(d_alt) else None
+    
+        return self._spectral_rmse_export(n_a, k_a, d_nm_c, cfg_ex, lam_src_full, d_nm_use=d_use)
+
     def build_report(self, auto: bool = False) -> None:
         """Automatic saving of results to Excel (like CERTUS_DESIGN).
 
@@ -664,33 +718,10 @@ class SplineReportBuilder:
                         int(lam_src_full.size),
                     )
 
-            def _align_to_lam(a: np.ndarray, name: str) -> np.ndarray:
 
-                v = np.asarray(a, dtype=np.float64).ravel()
+            n_res_full = self._align_to_lam(n_res_full, "n_lam", lam_src_full)
 
-                if v.size == lam_src_full.size:
-                    return v
-
-                out = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-                n_m = int(min(v.size, lam_src_full.size))
-
-                if n_m > 0:
-                    out[:n_m] = v[:n_m]
-
-                if lam_src_full.size and v.size != lam_src_full.size:
-                    logger.warning(
-                        "Export Excel: len(%s)=%d ? len(lam_nm)=%d - padded with NaN.",
-                        name,
-                        int(v.size),
-                        int(lam_src_full.size),
-                    )
-
-                return out
-
-            n_res_full = _align_to_lam(n_res_full, "n_lam")
-
-            k_res_full = _align_to_lam(k_res_full, "k_lam")
+            k_res_full = self._align_to_lam(k_res_full, "k_lam", lam_src_full)
 
             # Calculer le ratio experimental sur le mesh complet du result
 
@@ -772,17 +803,6 @@ class SplineReportBuilder:
 
                 k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
 
-            def _spectral_rmse_export(
-                n_arr: np.ndarray,
-                k_arr: np.ndarray,
-                *,
-                d_nm_use: float | None = None,
-            ) -> tuple[str, float]:
-
-                d_eff = float(d_nm_use) if d_nm_use is not None and np.isfinite(float(d_nm_use)) else float(d_nm_c)
-
-                if cfg_ex is None or not np.isfinite(d_eff):
-                    return "N/A", float("nan")
 
                 g = build_spline_objective_masked_grid(cfg_ex)
 
@@ -843,20 +863,8 @@ class SplineReportBuilder:
                 float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
             )
 
-            def _rmse_pref_result(key: str, n_a: np.ndarray, k_a: np.ndarray, d_alt: float) -> tuple[str, float]:
 
-                v = result.get(key)
-
-                if v is not None and np.isfinite(float(v)):
-                    fv = float(v)
-
-                    return f"{fv:.6f}", fv
-
-                d_use = d_alt if np.isfinite(d_alt) else None
-
-                return _spectral_rmse_export(n_a, k_a, d_nm_use=d_use)
-
-            rmse_spl_txt, _ = _rmse_pref_result("spectral_rmse_seg_spline_sigma", n_spl_full, k_spl_full, d_spl_f)
+            rmse_spl_txt, _ = self._rmse_pref_result("spectral_rmse_seg_spline_sigma", n_spl_full, k_spl_full, d_spl_f, result, d_nm_c, cfg_ex, lam_src_full)
 
             rmse_solver_txt = "N/A"
 
@@ -900,9 +908,12 @@ class SplineReportBuilder:
                     float(d_nm_c) if isinstance(d_nm_c, (int, float)) and np.isfinite(float(d_nm_c)) else float("nan")
                 )
 
-            rmse_best_recalc_txt, _ = _spectral_rmse_export(
+            rmse_best_recalc_txt, _ = self._spectral_rmse_export(
                 n_best_src,
                 k_best_src,
+                d_nm_c,
+                cfg_ex,
+                lam_src_full,
                 d_nm_use=d_best_export if np.isfinite(d_best_export) else None,
             )
 
@@ -937,10 +948,6 @@ class SplineReportBuilder:
                 n_spl_spec = n_spl_spec[ord_ex]
 
                 k_spl_spec = k_spl_spec[ord_ex]
-
-            def _log10_k_safe(kv: np.ndarray) -> np.ndarray:
-
-                return np.log10(np.maximum(np.asarray(kv, dtype=np.float64).ravel(), 1e-300))
 
             cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel()
 

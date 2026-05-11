@@ -2157,10 +2157,17 @@ class _ExcelExportMixin:
 
         self._update_corridor_rmse_state_bar(src)
 
-class _MeshOptimizationMixin:
-    """Mixin extracting _build_basic_step4_mesh_optimizer logic."""
 
-    def _build_basic_step4_mesh_optimizer(self, parent_layout: "QVBoxLayout", style: str) -> None:
+class Step4MeshOptimizerBuilder:
+    def __init__(self, app: "CertusIndexSplineApp", parent_layout: "QVBoxLayout", style: str):
+        self.app = app
+        self.parent_layout = parent_layout
+        self.style = style
+
+    def build(self) -> None:
+        app = self.app
+        parent_layout = self.parent_layout
+        style = self.style
         box4 = CertusCard("Advanced settings")
 
         box4.setStyleSheet(style)
@@ -2180,9 +2187,9 @@ class _MeshOptimizationMixin:
 
         # --- Local budget + uncertainty: full panel (hidden in simplified interface) ---
 
-        self._w_full_adv = QWidget()
+        app._w_full_adv = QWidget()
 
-        v_adv = QVBoxLayout(self._w_full_adv)
+        v_adv = QVBoxLayout(app._w_full_adv)
 
         v_adv.setContentsMargins(0, 0, 0, 0)
 
@@ -2192,21 +2199,21 @@ class _MeshOptimizationMixin:
 
         lb_pg.setToolTip("Legacy control kept for compatibility; inactive in local-only INDEX-SPLINE mode.")
 
-        self.sp_pg_iter = QSpinBox()
+        app.sp_pg_iter = QSpinBox()
 
-        self.sp_pg_iter.setRange(5, 120)
+        app.sp_pg_iter.setRange(5, 120)
 
-        self.sp_pg_iter.setValue(int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35)))
+        app.sp_pg_iter.setValue(int(SPLINE_PERF_PRESETS.get("fast", {}).get("pglobal_max_iter", 35)))
 
-        self.sp_pg_iter.setToolTip("Inactive in local-only mode; kept only for preset/config compatibility.")
+        app.sp_pg_iter.setToolTip("Inactive in local-only mode; kept only for preset/config compatibility.")
 
-        self.sp_pg_iter.setEnabled(False)
+        app.sp_pg_iter.setEnabled(False)
 
         row_pg = QHBoxLayout()
 
         row_pg.addWidget(lb_pg)
 
-        row_pg.addWidget(self.sp_pg_iter, 1)
+        row_pg.addWidget(app.sp_pg_iter, 1)
 
         v_adv.addLayout(row_pg)
 
@@ -2216,7 +2223,7 @@ class _MeshOptimizationMixin:
             'Budget preset: polish budget and local searches. "Maximal" gives best quality at the expense of runtime.'
         )
 
-        self.cb_profilee = QComboBox()
+        app.cb_profilee = QComboBox()
 
         for lab, key in [
             ("Fast", "fast"),
@@ -2224,21 +2231,21 @@ class _MeshOptimizationMixin:
             ("Quality", "quality"),
             ("Maximal", "max"),
         ]:
-            self.cb_profilee.addItem(lab, key)
+            app.cb_profilee.addItem(lab, key)
 
-        self.cb_profilee.setCurrentIndex(0)
+        app.cb_profilee.setCurrentIndex(0)
 
-        self.cb_profilee.setToolTip(
+        app.cb_profilee.setToolTip(
             "When the profile changes, a recommended local budget may be applied automatically to the spin."
         )
 
-        self.cb_profilee.currentIndexChanged.connect(self._on_profilee_changed)
+        app.cb_profilee.currentIndexChanged.connect(app._on_profilee_changed)
 
         row_pf = QHBoxLayout()
 
         row_pf.addWidget(lb_pr)
 
-        row_pf.addWidget(self.cb_profilee, 1)
+        row_pf.addWidget(app.cb_profilee, 1)
 
         v_adv.addLayout(row_pf)
 
@@ -2251,25 +2258,25 @@ class _MeshOptimizationMixin:
             "0 = disabled (nominal behavior without this constraint)."
         )
 
-        self.sp_mesh_min_dlam = QDoubleSpinBox()
+        app.sp_mesh_min_dlam = QDoubleSpinBox()
 
-        self.sp_mesh_min_dlam.setRange(0.0, 0.5)
+        app.sp_mesh_min_dlam.setRange(0.0, 0.5)
 
-        self.sp_mesh_min_dlam.setDecimals(4)
+        app.sp_mesh_min_dlam.setDecimals(4)
 
-        self.sp_mesh_min_dlam.setSingleStep(0.0025)
+        app.sp_mesh_min_dlam.setSingleStep(0.0025)
 
-        self.sp_mesh_min_dlam.setValue(0.02)
+        app.sp_mesh_min_dlam.setValue(0.02)
 
-        self.sp_mesh_min_dlam.setSpecialValueText("disabled")
+        app.sp_mesh_min_dlam.setSpecialValueText("disabled")
 
-        self.sp_mesh_min_dlam.setToolTip(lb_mesh_dlam.toolTip())
+        app.sp_mesh_min_dlam.setToolTip(lb_mesh_dlam.toolTip())
 
         row_mesh_dlam = QHBoxLayout()
 
         row_mesh_dlam.addWidget(lb_mesh_dlam)
 
-        row_mesh_dlam.addWidget(self.sp_mesh_min_dlam, 1)
+        row_mesh_dlam.addWidget(app.sp_mesh_min_dlam, 1)
 
         v_adv.addLayout(row_mesh_dlam)
 
@@ -2279,94 +2286,94 @@ class _MeshOptimizationMixin:
             "(extremes never moved), then re-optimizes RMSE.\n\n"
             "V2 explores symmetric/asymmetric pulls and a small local 2D refinement."
         )
-        self.chk_auto_clean_neighbor_pull = QCheckBox("Enable local neighbor pull")
-        self.chk_auto_clean_neighbor_pull.setChecked(bool(getattr(self, "_auto_clean_neighbor_pull_enabled", True)))
-        self.chk_auto_clean_neighbor_pull.setToolTip(lb_auto_clean_v2.toolTip())
+        app.chk_auto_clean_neighbor_pull = QCheckBox("Enable local neighbor pull")
+        app.chk_auto_clean_neighbor_pull.setChecked(bool(getattr(app, "_auto_clean_neighbor_pull_enabled", True)))
+        app.chk_auto_clean_neighbor_pull.setToolTip(lb_auto_clean_v2.toolTip())
         row_ac0 = QHBoxLayout()
         row_ac0.addWidget(lb_auto_clean_v2)
-        row_ac0.addWidget(self.chk_auto_clean_neighbor_pull)
+        row_ac0.addWidget(app.chk_auto_clean_neighbor_pull)
         row_ac0.addStretch(1)
         v_adv.addLayout(row_ac0)
 
         row_ac1 = QHBoxLayout()
         row_ac1.addWidget(QLabel("pull ratios"))
-        self.sp_auto_clean_pull_r1 = QDoubleSpinBox()
-        self.sp_auto_clean_pull_r1.setDecimals(3)
-        self.sp_auto_clean_pull_r1.setRange(0.01, 0.45)
-        self.sp_auto_clean_pull_r1.setSingleStep(0.01)
-        self.sp_auto_clean_pull_r1.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r1", 0.10)))
-        self.sp_auto_clean_pull_r1.setToolTip("First inward pull ratio (recommended: 0.10).")
-        row_ac1.addWidget(self.sp_auto_clean_pull_r1)
-        self.sp_auto_clean_pull_r2 = QDoubleSpinBox()
-        self.sp_auto_clean_pull_r2.setDecimals(3)
-        self.sp_auto_clean_pull_r2.setRange(0.01, 0.45)
-        self.sp_auto_clean_pull_r2.setSingleStep(0.01)
-        self.sp_auto_clean_pull_r2.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r2", 0.20)))
-        self.sp_auto_clean_pull_r2.setToolTip("Second inward pull ratio (recommended: 0.20).")
-        row_ac1.addWidget(self.sp_auto_clean_pull_r2)
-        self.sp_auto_clean_pull_r3 = QDoubleSpinBox()
-        self.sp_auto_clean_pull_r3.setDecimals(3)
-        self.sp_auto_clean_pull_r3.setRange(0.01, 0.45)
-        self.sp_auto_clean_pull_r3.setSingleStep(0.01)
-        self.sp_auto_clean_pull_r3.setValue(float(getattr(self, "_auto_clean_neighbor_pull_r3", 0.30)))
-        self.sp_auto_clean_pull_r3.setToolTip("Third inward pull ratio (recommended: 0.30).")
-        row_ac1.addWidget(self.sp_auto_clean_pull_r3)
+        app.sp_auto_clean_pull_r1 = QDoubleSpinBox()
+        app.sp_auto_clean_pull_r1.setDecimals(3)
+        app.sp_auto_clean_pull_r1.setRange(0.01, 0.45)
+        app.sp_auto_clean_pull_r1.setSingleStep(0.01)
+        app.sp_auto_clean_pull_r1.setValue(float(getattr(app, "_auto_clean_neighbor_pull_r1", 0.10)))
+        app.sp_auto_clean_pull_r1.setToolTip("First inward pull ratio (recommended: 0.10).")
+        row_ac1.addWidget(app.sp_auto_clean_pull_r1)
+        app.sp_auto_clean_pull_r2 = QDoubleSpinBox()
+        app.sp_auto_clean_pull_r2.setDecimals(3)
+        app.sp_auto_clean_pull_r2.setRange(0.01, 0.45)
+        app.sp_auto_clean_pull_r2.setSingleStep(0.01)
+        app.sp_auto_clean_pull_r2.setValue(float(getattr(app, "_auto_clean_neighbor_pull_r2", 0.20)))
+        app.sp_auto_clean_pull_r2.setToolTip("Second inward pull ratio (recommended: 0.20).")
+        row_ac1.addWidget(app.sp_auto_clean_pull_r2)
+        app.sp_auto_clean_pull_r3 = QDoubleSpinBox()
+        app.sp_auto_clean_pull_r3.setDecimals(3)
+        app.sp_auto_clean_pull_r3.setRange(0.01, 0.45)
+        app.sp_auto_clean_pull_r3.setSingleStep(0.01)
+        app.sp_auto_clean_pull_r3.setValue(float(getattr(app, "_auto_clean_neighbor_pull_r3", 0.30)))
+        app.sp_auto_clean_pull_r3.setToolTip("Third inward pull ratio (recommended: 0.30).")
+        row_ac1.addWidget(app.sp_auto_clean_pull_r3)
         row_ac1.addStretch(1)
         v_adv.addLayout(row_ac1)
 
         row_ac2 = QHBoxLayout()
-        self.chk_auto_clean_neighbor_pull_local_refine = QCheckBox("Enable local 2D refine")
-        self.chk_auto_clean_neighbor_pull_local_refine.setChecked(
-            bool(getattr(self, "_auto_clean_neighbor_pull_local_refine_enabled", False))
+        app.chk_auto_clean_neighbor_pull_local_refine = QCheckBox("Enable local 2D refine")
+        app.chk_auto_clean_neighbor_pull_local_refine.setChecked(
+            bool(getattr(app, "_auto_clean_neighbor_pull_local_refine_enabled", False))
         )
-        self.chk_auto_clean_neighbor_pull_local_refine.setToolTip(
+        app.chk_auto_clean_neighbor_pull_local_refine.setToolTip(
             "After selecting the best pull variant for one removed knot, run a tiny 2D local\n"
             "search on the two adjacent knots to further reduce RMSE."
         )
-        row_ac2.addWidget(self.chk_auto_clean_neighbor_pull_local_refine)
+        row_ac2.addWidget(app.chk_auto_clean_neighbor_pull_local_refine)
         row_ac2.addWidget(QLabel("refine rel. step"))
-        self.sp_auto_clean_neighbor_pull_local_refine_step = QDoubleSpinBox()
-        self.sp_auto_clean_neighbor_pull_local_refine_step.setDecimals(3)
-        self.sp_auto_clean_neighbor_pull_local_refine_step.setRange(0.005, 0.20)
-        self.sp_auto_clean_neighbor_pull_local_refine_step.setSingleStep(0.005)
-        self.sp_auto_clean_neighbor_pull_local_refine_step.setValue(
-            float(getattr(self, "_auto_clean_neighbor_pull_local_refine_rel_step", 0.05))
+        app.sp_auto_clean_neighbor_pull_local_refine_step = QDoubleSpinBox()
+        app.sp_auto_clean_neighbor_pull_local_refine_step.setDecimals(3)
+        app.sp_auto_clean_neighbor_pull_local_refine_step.setRange(0.005, 0.20)
+        app.sp_auto_clean_neighbor_pull_local_refine_step.setSingleStep(0.005)
+        app.sp_auto_clean_neighbor_pull_local_refine_step.setValue(
+            float(getattr(app, "_auto_clean_neighbor_pull_local_refine_rel_step", 0.05))
         )
-        self.sp_auto_clean_neighbor_pull_local_refine_step.setToolTip(
+        app.sp_auto_clean_neighbor_pull_local_refine_step.setToolTip(
             "Relative step used by the local 2D refine around neighboring knots (recommended: 0.05)."
         )
-        row_ac2.addWidget(self.sp_auto_clean_neighbor_pull_local_refine_step)
+        row_ac2.addWidget(app.sp_auto_clean_neighbor_pull_local_refine_step)
         row_ac2.addStretch(1)
         v_adv.addLayout(row_ac2)
 
         # --- Profondeur de recherche (LOT E) ---
         row_ac3 = QHBoxLayout()
         row_ac3.addWidget(QLabel("Top-N candidats (auto-clean):"))
-        self.sp_auto_clean_top_n = QSpinBox()
-        self.sp_auto_clean_top_n.setRange(1, 12)
-        self.sp_auto_clean_top_n.setValue(int(getattr(self, "_auto_clean_top_n_sensitivity", 4)))
-        self.sp_auto_clean_top_n.setToolTip(
+        app.sp_auto_clean_top_n = QSpinBox()
+        app.sp_auto_clean_top_n.setRange(1, 12)
+        app.sp_auto_clean_top_n.setValue(int(getattr(app, "_auto_clean_top_n_sensitivity", 4)))
+        app.sp_auto_clean_top_n.setToolTip(
             "Number of removal candidates per step passed to full polish "
             "(plus haut = recherche plus profonde, plus lent). Recommandé : 4."
         )
-        row_ac3.addWidget(self.sp_auto_clean_top_n)
+        row_ac3.addWidget(app.sp_auto_clean_top_n)
 
         row_ac3.addWidget(QLabel("Polish maxfun candidat:"))
-        self.sp_auto_clean_cand_maxfun = QSpinBox()
-        self.sp_auto_clean_cand_maxfun.setRange(120, 4000)
-        self.sp_auto_clean_cand_maxfun.setSingleStep(100)
-        self.sp_auto_clean_cand_maxfun.setValue(int(getattr(self, "_auto_clean_candidate_polish_maxfun", 700)))
-        self.sp_auto_clean_cand_maxfun.setToolTip("Budget L-BFGS-B par candidat de retrait (recommandé : 700-1500).")
-        row_ac3.addWidget(self.sp_auto_clean_cand_maxfun)
+        app.sp_auto_clean_cand_maxfun = QSpinBox()
+        app.sp_auto_clean_cand_maxfun.setRange(120, 4000)
+        app.sp_auto_clean_cand_maxfun.setSingleStep(100)
+        app.sp_auto_clean_cand_maxfun.setValue(int(getattr(app, "_auto_clean_candidate_polish_maxfun", 700)))
+        app.sp_auto_clean_cand_maxfun.setToolTip("Budget L-BFGS-B par candidat de retrait (recommandé : 700-1500).")
+        row_ac3.addWidget(app.sp_auto_clean_cand_maxfun)
 
         row_ac3.addWidget(QLabel("Tolerance RMSE:"))
-        self.sp_auto_clean_tol = QDoubleSpinBox()
-        self.sp_auto_clean_tol.setDecimals(6)
-        self.sp_auto_clean_tol.setRange(0.0, 1.0e-2)
-        self.sp_auto_clean_tol.setSingleStep(1.0e-5)
-        self.sp_auto_clean_tol.setValue(float(getattr(self, "_auto_clean_ui_tolerance", 5.0e-5)))
-        self.sp_auto_clean_tol.setToolTip("Absolute RMSE regression tolerated per removal. 0 = strict mode.")
-        row_ac3.addWidget(self.sp_auto_clean_tol)
+        app.sp_auto_clean_tol = QDoubleSpinBox()
+        app.sp_auto_clean_tol.setDecimals(6)
+        app.sp_auto_clean_tol.setRange(0.0, 1.0e-2)
+        app.sp_auto_clean_tol.setSingleStep(1.0e-5)
+        app.sp_auto_clean_tol.setValue(float(getattr(app, "_auto_clean_ui_tolerance", 5.0e-5)))
+        app.sp_auto_clean_tol.setToolTip("Absolute RMSE regression tolerated per removal. 0 = strict mode.")
+        row_ac3.addWidget(app.sp_auto_clean_tol)
         row_ac3.addStretch(1)
         v_adv.addLayout(row_ac3)
 
@@ -2381,27 +2388,27 @@ class _MeshOptimizationMixin:
             "Enabled by default at end of optimization; results in 'Corridors n/k' tab."
         )
 
-        self.chk_corridor_d = QCheckBox("Enable")
+        app.chk_corridor_d = QCheckBox("Enable")
 
-        self.chk_corridor_d.setChecked(True)
+        app.chk_corridor_d.setChecked(True)
 
-        self.chk_corridor_d.setToolTip(lb_cor.toolTip())
+        app.chk_corridor_d.setToolTip(lb_cor.toolTip())
 
         row_cd = QHBoxLayout()
 
         row_cd.addWidget(lb_cor)
 
-        row_cd.addWidget(self.chk_corridor_d)
+        row_cd.addWidget(app.chk_corridor_d)
 
-        self.lbl_corridors_state_adv = QLabel()
+        app.lbl_corridors_state_adv = QLabel()
 
-        self.lbl_corridors_state_adv.setTextFormat(Qt.TextFormat.RichText)
+        app.lbl_corridors_state_adv.setTextFormat(Qt.TextFormat.RichText)
 
-        self.lbl_corridors_state_adv.setToolTip(
+        app.lbl_corridors_state_adv.setToolTip(
             "Read-only: same state as the 'Corridors' button under Run (Yes = computation at end of optimization)."
         )
 
-        row_cd.addWidget(self.lbl_corridors_state_adv)
+        row_cd.addWidget(app.lbl_corridors_state_adv)
 
         row_cd.addStretch(1)
 
@@ -2409,21 +2416,21 @@ class _MeshOptimizationMixin:
 
         row_cor = QHBoxLayout()
 
-        self.cb_corr_mode = QComboBox()
+        app.cb_corr_mode = QComboBox()
 
-        self.cb_corr_mode.addItem("Heuristic (alpha?RMSE_opt)", "alpha")
+        app.cb_corr_mode.addItem("Heuristic (alpha?RMSE_opt)", "alpha")
 
-        self.cb_corr_mode.addItem("RMSE_ref + Delta (absolute)", "abs_delta")
+        app.cb_corr_mode.addItem("RMSE_ref + Delta (absolute)", "abs_delta")
 
-        self.cb_corr_mode.addItem("RMSE_ref + Delta_adaptatif(local)", "abs_delta_adaptive")
+        app.cb_corr_mode.addItem("RMSE_ref + Delta_adaptatif(local)", "abs_delta_adaptive")
 
-        self.cb_corr_mode.addItem("Likelihood ratio (Delta?^2) - sigma constant or residual", "lr")
+        app.cb_corr_mode.addItem("Likelihood ratio (Delta?^2) - sigma constant or residual", "lr")
 
-        _iad = self.cb_corr_mode.findData("abs_delta_adaptive")
+        _iad = app.cb_corr_mode.findData("abs_delta_adaptive")
 
-        self.cb_corr_mode.setCurrentIndex(int(_iad) if _iad >= 0 else 0)
+        app.cb_corr_mode.setCurrentIndex(int(_iad) if _iad >= 0 else 0)
 
-        self.cb_corr_mode.setToolTip(
+        app.cb_corr_mode.setToolTip(
             "alpha : RMSE(d) <= alpha?RMSE_opt (heuristic).\n"
             "RMSE_ref+Delta: RMSE(d) <= RMSE_ref + Delta (same spectral mask). With 'best RMSE' checked, RMSE_ref = "
             "spectral_rmse_best_value (best polish) ; otherwise base curves from dict.\n"
@@ -2433,103 +2440,103 @@ class _MeshOptimizationMixin:
 
         row_cor.addWidget(QLabel("mode"))
 
-        row_cor.addWidget(self.cb_corr_mode)
+        row_cor.addWidget(app.cb_corr_mode)
 
-        self.cb_corr_mode.currentIndexChanged.connect(self._on_corr_mode_changed)
+        app.cb_corr_mode.currentIndexChanged.connect(app._on_corr_mode_changed)
 
-        self.sp_corr_alpha = QDoubleSpinBox()
+        app.sp_corr_alpha = QDoubleSpinBox()
 
-        self.sp_corr_alpha.setDecimals(3)
+        app.sp_corr_alpha.setDecimals(3)
 
-        self.sp_corr_alpha.setRange(1.000, 2.000)
+        app.sp_corr_alpha.setRange(1.000, 2.000)
 
-        self.sp_corr_alpha.setSingleStep(0.005)
+        app.sp_corr_alpha.setSingleStep(0.005)
 
-        self.sp_corr_alpha.setValue(1.05)
+        app.sp_corr_alpha.setValue(1.05)
 
-        self.sp_corr_alpha.setToolTip("alpha: RMSE threshold = alpha ? RMSE_opt (e.g. 1.05 = +5%).")
+        app.sp_corr_alpha.setToolTip("alpha: RMSE threshold = alpha ? RMSE_opt (e.g. 1.05 = +5%).")
 
-        self.lbl_corr_alpha = QLabel("alpha")
+        app.lbl_corr_alpha = QLabel("alpha")
 
-        row_cor.addWidget(self.lbl_corr_alpha)
+        row_cor.addWidget(app.lbl_corr_alpha)
 
-        row_cor.addWidget(self.sp_corr_alpha)
+        row_cor.addWidget(app.sp_corr_alpha)
 
-        self.lbl_corr_rmse_delta = QLabel("Delta RMSE abs.")
+        app.lbl_corr_rmse_delta = QLabel("Delta RMSE abs.")
 
-        self.sp_corr_rmse_delta = QDoubleSpinBox()
+        app.sp_corr_rmse_delta = QDoubleSpinBox()
 
-        self.sp_corr_rmse_delta.setDecimals(5)
+        app.sp_corr_rmse_delta.setDecimals(5)
 
-        self.sp_corr_rmse_delta.setRange(0.00005, 0.05)
+        app.sp_corr_rmse_delta.setRange(0.00005, 0.05)
 
-        self.sp_corr_rmse_delta.setSingleStep(0.00005)
+        app.sp_corr_rmse_delta.setSingleStep(0.00005)
 
-        self.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
+        app.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
 
-        self.sp_corr_rmse_delta.setToolTip(
+        app.sp_corr_rmse_delta.setToolTip(
             "Absolute margin on masked spectral RMSE: a refit at fixed d is accepted if "
             "RMSE <= RMSE_ref + Delta (default 2.5e-4; adaptive Delta_eff floor 2.5e-5). "
             "With best polished RMSE, RMSE_ref is the one of the exported model."
         )
 
-        row_cor.addWidget(self.lbl_corr_rmse_delta)
+        row_cor.addWidget(app.lbl_corr_rmse_delta)
 
-        row_cor.addWidget(self.sp_corr_rmse_delta)
+        row_cor.addWidget(app.sp_corr_rmse_delta)
 
-        self.chk_corr_scientific_nominal = QCheckBox("best RMSE")
+        app.chk_corr_scientific_nominal = QCheckBox("best RMSE")
 
-        self.chk_corr_scientific_nominal.setChecked(True)
+        app.chk_corr_scientific_nominal.setChecked(True)
 
-        self.chk_corr_scientific_nominal.setToolTip(
+        app.chk_corr_scientific_nominal.setToolTip(
             "Scientific corridor mode (only if mode = RMSE_ref+Delta): RMSE_ref = spectral_rmse_best_value; "
             "nominal curves and nodes aligned on best polished model; no envelope widening toward "
             "main solver curve. Uncheck for legacy abs_delta behavior on 'base' curves only."
         )
 
-        row_cor.addWidget(self.chk_corr_scientific_nominal)
+        row_cor.addWidget(app.chk_corr_scientific_nominal)
 
-        self.btn_corr_preset_auto_robust = create_styled_button("Auto robust", "secondary", parent=self)
+        app.btn_corr_preset_auto_robust = create_styled_button("Auto robust", "secondary", parent=app)
 
-        self.btn_corr_preset_auto_robust.setToolTip(
+        app.btn_corr_preset_auto_robust.setToolTip(
             "R?glages recommand?s pour le corridor en d : mode RMSE_ref + Delta adaptatif (local), "
             "expanded parabolic window, thickness interval symmetrized on the parabola peak, "
             "sondes lat?rales et plancher Delta renforc?s. Comportement par d?faut apr?s migration."
         )
 
-        self.btn_corr_preset_auto_robust.clicked.connect(self._apply_corridor_preset_auto_robust)
+        app.btn_corr_preset_auto_robust.clicked.connect(app._apply_corridor_preset_auto_robust)
 
-        row_cor.addWidget(self.btn_corr_preset_auto_robust)
+        row_cor.addWidget(app.btn_corr_preset_auto_robust)
 
-        self.sp_corr_conf = QDoubleSpinBox()
+        app.sp_corr_conf = QDoubleSpinBox()
 
-        self.sp_corr_conf.setDecimals(3)
+        app.sp_corr_conf.setDecimals(3)
 
-        self.sp_corr_conf.setRange(0.50, 0.999)
+        app.sp_corr_conf.setRange(0.50, 0.999)
 
-        self.sp_corr_conf.setSingleStep(0.01)
+        app.sp_corr_conf.setSingleStep(0.01)
 
-        self.sp_corr_conf.setValue(0.95)
+        app.sp_corr_conf.setValue(0.95)
 
-        self.sp_corr_conf.setToolTip("LR confidence level (df=1): e.g. 0.95 -> Delta?^2~3.84.")
+        app.sp_corr_conf.setToolTip("LR confidence level (df=1): e.g. 0.95 -> Delta?^2~3.84.")
 
         row_cor.addSpacing(8)
 
         row_cor.addWidget(QLabel("conf"))
 
-        row_cor.addWidget(self.sp_corr_conf)
+        row_cor.addWidget(app.sp_corr_conf)
 
-        self.sp_corr_sigma = QDoubleSpinBox()
+        app.sp_corr_sigma = QDoubleSpinBox()
 
-        self.sp_corr_sigma.setDecimals(6)
+        app.sp_corr_sigma.setDecimals(6)
 
-        self.sp_corr_sigma.setRange(0.0, 1.0)
+        app.sp_corr_sigma.setRange(0.0, 1.0)
 
-        self.sp_corr_sigma.setSingleStep(0.001)
+        app.sp_corr_sigma.setSingleStep(0.001)
 
-        self.sp_corr_sigma.setValue(0.0)
+        app.sp_corr_sigma.setValue(0.0)
 
-        self.sp_corr_sigma.setToolTip(
+        app.sp_corr_sigma.setToolTip(
             "Constant sigma (T and R) in fraction units (not %). 0 = auto (sigma := RMSE_opt)."
         )
 
@@ -2537,37 +2544,37 @@ class _MeshOptimizationMixin:
 
         row_cor.addWidget(QLabel("sigma"))
 
-        row_cor.addWidget(self.sp_corr_sigma)
+        row_cor.addWidget(app.sp_corr_sigma)
 
-        self.sp_corr_step = QDoubleSpinBox()
+        app.sp_corr_step = QDoubleSpinBox()
 
-        self.sp_corr_step.setDecimals(2)
+        app.sp_corr_step.setDecimals(2)
 
-        self.sp_corr_step.setRange(0.1, 50.0)
+        app.sp_corr_step.setRange(0.1, 50.0)
 
-        self.sp_corr_step.setSingleStep(0.5)
+        app.sp_corr_step.setSingleStep(0.5)
 
-        self.sp_corr_step.setValue(1.0)
+        app.sp_corr_step.setValue(1.0)
 
-        self.sp_corr_step.setToolTip("d continuation step size (nm).")
+        app.sp_corr_step.setToolTip("d continuation step size (nm).")
 
         row_cor.addSpacing(8)
 
         row_cor.addWidget(QLabel("step (nm)"))
 
-        row_cor.addWidget(self.sp_corr_step)
+        row_cor.addWidget(app.sp_corr_step)
 
-        self.sp_corr_span = QDoubleSpinBox()
+        app.sp_corr_span = QDoubleSpinBox()
 
-        self.sp_corr_span.setDecimals(1)
+        app.sp_corr_span.setDecimals(1)
 
-        self.sp_corr_span.setRange(1.0, 2000.0)
+        app.sp_corr_span.setRange(1.0, 2000.0)
 
-        self.sp_corr_span.setSingleStep(1.0)
+        app.sp_corr_span.setSingleStep(1.0)
 
-        self.sp_corr_span.setValue(15.0)
+        app.sp_corr_span.setValue(15.0)
 
-        self.sp_corr_span.setToolTip(
+        app.sp_corr_span.setToolTip(
             "Maximum offset |d - d_opt| explored in each direction (+d and -d), in nm (not the sum). "
             "Default 15 nm ~ local neighborhood around the optimal thickness."
         )
@@ -2576,17 +2583,17 @@ class _MeshOptimizationMixin:
 
         row_cor.addWidget(QLabel("span (nm)"))
 
-        row_cor.addWidget(self.sp_corr_span)
+        row_cor.addWidget(app.sp_corr_span)
 
         # Multi-start (V2.2): robustness to local minima during fixed-d refit.
 
-        self.sp_corr_starts = QSpinBox()
+        app.sp_corr_starts = QSpinBox()
 
-        self.sp_corr_starts.setRange(1, 25)
+        app.sp_corr_starts.setRange(1, 25)
 
-        self.sp_corr_starts.setValue(1)
+        app.sp_corr_starts.setValue(1)
 
-        self.sp_corr_starts.setToolTip(
+        app.sp_corr_starts.setToolTip(
             "Number of initializations (multi-start) per d value. 1 = continuation only (fast). "
             ">1 increases robustness (best solution kept), at the cost of computation time."
         )
@@ -2595,108 +2602,108 @@ class _MeshOptimizationMixin:
 
         row_cor.addWidget(QLabel("starts"))
 
-        row_cor.addWidget(self.sp_corr_starts)
+        row_cor.addWidget(app.sp_corr_starts)
 
-        self.sp_corr_jn = QDoubleSpinBox()
+        app.sp_corr_jn = QDoubleSpinBox()
 
-        self.sp_corr_jn.setDecimals(3)
+        app.sp_corr_jn.setDecimals(3)
 
-        self.sp_corr_jn.setRange(0.0, 1.0)
+        app.sp_corr_jn.setRange(0.0, 1.0)
 
-        self.sp_corr_jn.setSingleStep(0.01)
+        app.sp_corr_jn.setSingleStep(0.01)
 
-        self.sp_corr_jn.setValue(0.02)
+        app.sp_corr_jn.setValue(0.02)
 
-        self.sp_corr_jn.setToolTip("Gaussian jitter sigma on n (or ? if monotonicity active) for additional starts.")
+        app.sp_corr_jn.setToolTip("Gaussian jitter sigma on n (or ? if monotonicity active) for additional starts.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("j_n"))
 
-        row_cor.addWidget(self.sp_corr_jn)
+        row_cor.addWidget(app.sp_corr_jn)
 
-        self.sp_corr_jL = QDoubleSpinBox()
+        app.sp_corr_jL = QDoubleSpinBox()
 
-        self.sp_corr_jL.setDecimals(3)
+        app.sp_corr_jL.setDecimals(3)
 
-        self.sp_corr_jL.setRange(0.0, 5.0)
+        app.sp_corr_jL.setRange(0.0, 5.0)
 
-        self.sp_corr_jL.setSingleStep(0.05)
+        app.sp_corr_jL.setSingleStep(0.05)
 
-        self.sp_corr_jL.setValue(0.15)
+        app.sp_corr_jL.setValue(0.15)
 
-        self.sp_corr_jL.setToolTip("Gaussian jitter sigma on L=ln k for additional starts.")
+        app.sp_corr_jL.setToolTip("Gaussian jitter sigma on L=ln k for additional starts.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("j_L"))
 
-        row_cor.addWidget(self.sp_corr_jL)
+        row_cor.addWidget(app.sp_corr_jL)
 
-        self.sp_corr_seed = QSpinBox()
+        app.sp_corr_seed = QSpinBox()
 
-        self.sp_corr_seed.setRange(-(2**31), 2**31 - 1)
+        app.sp_corr_seed.setRange(-(2**31), 2**31 - 1)
 
-        self.sp_corr_seed.setValue(0)
+        app.sp_corr_seed.setValue(0)
 
-        self.sp_corr_seed.setToolTip("RNG seed for multi-start reproducibility (jitter).")
+        app.sp_corr_seed.setToolTip("RNG seed for multi-start reproducibility (jitter).")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("seed"))
 
-        row_cor.addWidget(self.sp_corr_seed)
+        row_cor.addWidget(app.sp_corr_seed)
 
         # V2.3: ln(k) regularization sensitivity scan (d2(L)^2 weight).
 
-        self.chk_corr_reg_sens = QCheckBox("scan reg")
+        app.chk_corr_reg_sens = QCheckBox("scan reg")
 
-        self.chk_corr_reg_sens.setChecked(False)
+        app.chk_corr_reg_sens.setChecked(False)
 
-        self.chk_corr_reg_sens.setToolTip(
+        app.chk_corr_reg_sens.setToolTip(
             "Runs a scan (log grid) of the ln(k) regularization weight and re-launches d profiling for each value.\n"
             "Goal: verify the robustness of the d interval and n/k corridors to regularization choices."
         )
 
         row_cor.addSpacing(10)
 
-        row_cor.addWidget(self.chk_corr_reg_sens)
+        row_cor.addWidget(app.chk_corr_reg_sens)
 
-        self.sp_corr_reg_pts = QSpinBox()
+        app.sp_corr_reg_pts = QSpinBox()
 
-        self.sp_corr_reg_pts.setRange(2, 15)
+        app.sp_corr_reg_pts.setRange(2, 15)
 
-        self.sp_corr_reg_pts.setValue(5)
+        app.sp_corr_reg_pts.setValue(5)
 
-        self.sp_corr_reg_pts.setToolTip("Number of points in the regularization scan log grid.")
+        app.sp_corr_reg_pts.setToolTip("Number of points in the regularization scan log grid.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("pts"))
 
-        row_cor.addWidget(self.sp_corr_reg_pts)
+        row_cor.addWidget(app.sp_corr_reg_pts)
 
-        self.sp_corr_reg_dec = QSpinBox()
+        app.sp_corr_reg_dec = QSpinBox()
 
-        self.sp_corr_reg_dec.setRange(0, 6)
+        app.sp_corr_reg_dec.setRange(0, 6)
 
-        self.sp_corr_reg_dec.setValue(2)
+        app.sp_corr_reg_dec.setValue(2)
 
-        self.sp_corr_reg_dec.setToolTip("Number of decades on each side of the base weight (lnk_spline_reg_weight).")
+        app.sp_corr_reg_dec.setToolTip("Number of decades on each side of the base weight (lnk_spline_reg_weight).")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("dec"))
 
-        row_cor.addWidget(self.sp_corr_reg_dec)
+        row_cor.addWidget(app.sp_corr_reg_dec)
 
         # V2.4: parametric bootstrap for publication-level bands
 
-        self.chk_corr_boot = QCheckBox("bootstrap")
+        app.chk_corr_boot = QCheckBox("bootstrap")
 
-        self.chk_corr_boot.setChecked(False)
+        app.chk_corr_boot.setChecked(False)
 
-        self.chk_corr_boot.setToolTip(
+        app.chk_corr_boot.setToolTip(
             "Parametric bootstrap: generates B T/R datasets by adding Gaussian noise (sigma_T, sigma_R),\n"
             "re-launches d profiling for each replication, then computes percentile bands on n(lambda), k(lambda)\n"
             "and a distribution of the d interval."
@@ -2704,86 +2711,86 @@ class _MeshOptimizationMixin:
 
         row_cor.addSpacing(10)
 
-        row_cor.addWidget(self.chk_corr_boot)
+        row_cor.addWidget(app.chk_corr_boot)
 
-        self.sp_corr_boot_n = QSpinBox()
+        app.sp_corr_boot_n = QSpinBox()
 
-        self.sp_corr_boot_n.setRange(5, 500)
+        app.sp_corr_boot_n.setRange(5, 500)
 
-        self.sp_corr_boot_n.setValue(40)
+        app.sp_corr_boot_n.setValue(40)
 
-        self.sp_corr_boot_n.setToolTip("Number of bootstrap replications (B). Larger = more robust, but slower.")
+        app.sp_corr_boot_n.setToolTip("Number of bootstrap replications (B). Larger = more robust, but slower.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("B"))
 
-        row_cor.addWidget(self.sp_corr_boot_n)
+        row_cor.addWidget(app.sp_corr_boot_n)
 
-        self.sp_corr_boot_p = QDoubleSpinBox()
+        app.sp_corr_boot_p = QDoubleSpinBox()
 
-        self.sp_corr_boot_p.setDecimals(3)
+        app.sp_corr_boot_p.setDecimals(3)
 
-        self.sp_corr_boot_p.setRange(0.50, 0.999)
+        app.sp_corr_boot_p.setRange(0.50, 0.999)
 
-        self.sp_corr_boot_p.setSingleStep(0.01)
+        app.sp_corr_boot_p.setSingleStep(0.01)
 
-        self.sp_corr_boot_p.setValue(0.95)
+        app.sp_corr_boot_p.setValue(0.95)
 
-        self.sp_corr_boot_p.setToolTip("Central percentile (e.g. 0.95 => bounds 2.5% / 97.5%).")
+        app.sp_corr_boot_p.setToolTip("Central percentile (e.g. 0.95 => bounds 2.5% / 97.5%).")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("p"))
 
-        row_cor.addWidget(self.sp_corr_boot_p)
+        row_cor.addWidget(app.sp_corr_boot_p)
 
-        self.sp_corr_boot_seed = QSpinBox()
+        app.sp_corr_boot_seed = QSpinBox()
 
-        self.sp_corr_boot_seed.setRange(-(2**31), 2**31 - 1)
+        app.sp_corr_boot_seed.setRange(-(2**31), 2**31 - 1)
 
-        self.sp_corr_boot_seed.setValue(0)
+        app.sp_corr_boot_seed.setValue(0)
 
-        self.sp_corr_boot_seed.setToolTip("Seed RNG bootstrap.")
+        app.sp_corr_boot_seed.setToolTip("Seed RNG bootstrap.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("seedB"))
 
-        row_cor.addWidget(self.sp_corr_boot_seed)
+        row_cor.addWidget(app.sp_corr_boot_seed)
 
-        self.cb_corr_boot_mode = QComboBox()
+        app.cb_corr_boot_mode = QComboBox()
 
-        self.cb_corr_boot_mode.addItem("parametric (T/R + N(0,sigma))", "parametric")
+        app.cb_corr_boot_mode.addItem("parametric (T/R + N(0,sigma))", "parametric")
 
-        self.cb_corr_boot_mode.addItem("residual (T_th + residuals*)", "residual")
+        app.cb_corr_boot_mode.addItem("residual (T_th + residuals*)", "residual")
 
-        self.cb_corr_boot_mode.setCurrentIndex(0)
+        app.cb_corr_boot_mode.setCurrentIndex(0)
 
-        self.cb_corr_boot_mode.setToolTip(
+        app.cb_corr_boot_mode.setToolTip(
             "parametric: adds Gaussian noise to measurements.\n"
             "residual: non-parametric bootstrap on residuals (more realistic if noise is non-Gaussian / correlated)."
         )
 
         row_cor.addSpacing(8)
 
-        row_cor.addWidget(self.cb_corr_boot_mode)
+        row_cor.addWidget(app.cb_corr_boot_mode)
 
-        self.sp_corr_boot_block = QSpinBox()
+        app.sp_corr_boot_block = QSpinBox()
 
-        self.sp_corr_boot_block.setRange(1, 5000)
+        app.sp_corr_boot_block.setRange(1, 5000)
 
-        self.sp_corr_boot_block.setValue(1)
+        app.sp_corr_boot_block.setValue(1)
 
-        self.sp_corr_boot_block.setToolTip("Block length (in lambda points) for residual bootstrap. 1 = iid.")
+        app.sp_corr_boot_block.setToolTip("Block length (in lambda points) for residual bootstrap. 1 = iid.")
 
         row_cor.addSpacing(6)
 
         row_cor.addWidget(QLabel("blk"))
 
-        row_cor.addWidget(self.sp_corr_boot_block)
+        row_cor.addWidget(app.sp_corr_boot_block)
 
-        self._on_corr_mode_changed()
+        app._on_corr_mode_changed()
 
         w_cor = QWidget()
 
@@ -2793,15 +2800,15 @@ class _MeshOptimizationMixin:
 
         row_cor_prof = QHBoxLayout()
 
-        self.sp_corr_prof_maxfun = QSpinBox()
+        app.sp_corr_prof_maxfun = QSpinBox()
 
-        self.sp_corr_prof_maxfun.setRange(0, 200000)
+        app.sp_corr_prof_maxfun.setRange(0, 200000)
 
-        self.sp_corr_prof_maxfun.setSingleStep(500)
+        app.sp_corr_prof_maxfun.setSingleStep(500)
 
-        self.sp_corr_prof_maxfun.setValue(2500)
+        app.sp_corr_prof_maxfun.setValue(2500)
 
-        self.sp_corr_prof_maxfun.setToolTip(
+        app.sp_corr_prof_maxfun.setToolTip(
             "L-BFGS-B budget (maxfun) for each refit of n, ln k nodes at fixed d during corridor profiling.\n"
             "0 = reuse the main run polish_maxfun (often 8000+, very slow per step).\n"
             "Typ. 1500-4000 for a local scan; increase if 'EXCEEDS LIMIT' messages or poor refits."
@@ -2809,7 +2816,7 @@ class _MeshOptimizationMixin:
 
         row_cor_prof.addWidget(QLabel("d profiling: maxfun / refit"))
 
-        row_cor_prof.addWidget(self.sp_corr_prof_maxfun)
+        row_cor_prof.addWidget(app.sp_corr_prof_maxfun)
 
         row_cor_prof.addStretch(1)
 
@@ -2821,40 +2828,40 @@ class _MeshOptimizationMixin:
 
         row_cor_v25 = QHBoxLayout()
 
-        self.chk_corr_sigma_hetero = QCheckBox("sigma(lambda) residual (LR + param. boot.)")
+        app.chk_corr_sigma_hetero = QCheckBox("sigma(lambda) residual (LR + param. boot.)")
 
-        self.chk_corr_sigma_hetero.setChecked(False)
+        app.chk_corr_sigma_hetero.setChecked(False)
 
-        self.chk_corr_sigma_hetero.setToolTip(
+        app.chk_corr_sigma_hetero.setToolTip(
             "In LR mode: ?^2 with sigma_i = max(floor, scale?|y_exp-y_th|) on the objective grid.\n"
             "Parametric bootstrap: same sigma_i for Gaussian noise on T/R (objective points only)."
         )
 
-        row_cor_v25.addWidget(self.chk_corr_sigma_hetero)
+        row_cor_v25.addWidget(app.chk_corr_sigma_hetero)
 
-        self.sp_corr_hetero_scale = QDoubleSpinBox()
+        app.sp_corr_hetero_scale = QDoubleSpinBox()
 
-        self.sp_corr_hetero_scale.setDecimals(3)
+        app.sp_corr_hetero_scale.setDecimals(3)
 
-        self.sp_corr_hetero_scale.setRange(0.0, 20.0)
+        app.sp_corr_hetero_scale.setRange(0.0, 20.0)
 
-        self.sp_corr_hetero_scale.setSingleStep(0.05)
+        app.sp_corr_hetero_scale.setSingleStep(0.05)
 
-        self.sp_corr_hetero_scale.setValue(1.0)
+        app.sp_corr_hetero_scale.setValue(1.0)
 
-        self.sp_corr_hetero_scale.setToolTip("Scale factor on |residual| for sigma_i(lambda) (0 = floor only).")
+        app.sp_corr_hetero_scale.setToolTip("Scale factor on |residual| for sigma_i(lambda) (0 = floor only).")
 
         row_cor_v25.addSpacing(6)
 
         row_cor_v25.addWidget(QLabel("scale sigma(lambda)"))
 
-        row_cor_v25.addWidget(self.sp_corr_hetero_scale)
+        row_cor_v25.addWidget(app.sp_corr_hetero_scale)
 
-        self.chk_corr_boot_refit = QCheckBox("fast bootstrap refit (parametric)")
+        app.chk_corr_boot_refit = QCheckBox("fast bootstrap refit (parametric)")
 
-        self.chk_corr_boot_refit.setChecked(False)
+        app.chk_corr_boot_refit.setChecked(False)
 
-        self.chk_corr_boot_refit.setToolTip(
+        app.chk_corr_boot_refit.setToolTip(
             "After each bootstrap trial: a short L-BFGS-B on (d + nodes) using noisy T/R, "
             "same spectral objective as main run (n,L interp. in sigma = cubic spline), "
             "then profiling in d from this refit (often more consistent than freezing initial mesh)."
@@ -2862,15 +2869,15 @@ class _MeshOptimizationMixin:
 
         row_cor_v25.addSpacing(12)
 
-        row_cor_v25.addWidget(self.chk_corr_boot_refit)
+        row_cor_v25.addWidget(app.chk_corr_boot_refit)
 
-        self.sp_corr_boot_maxfun = QSpinBox()
+        app.sp_corr_boot_maxfun = QSpinBox()
 
-        self.sp_corr_boot_maxfun.setRange(0, 200000)
+        app.sp_corr_boot_maxfun.setRange(0, 200000)
 
-        self.sp_corr_boot_maxfun.setValue(4000)
+        app.sp_corr_boot_maxfun.setValue(4000)
 
-        self.sp_corr_boot_maxfun.setToolTip(
+        app.sp_corr_boot_maxfun.setToolTip(
             "L-BFGS-B maxfun budget per bootstrap refit (0 = disabled even if box is checked)."
         )
 
@@ -2878,15 +2885,15 @@ class _MeshOptimizationMixin:
 
         row_cor_v25.addWidget(QLabel("maxfun"))
 
-        row_cor_v25.addWidget(self.sp_corr_boot_maxfun)
+        row_cor_v25.addWidget(app.sp_corr_boot_maxfun)
 
-        self.sp_corr_boot_workers = QSpinBox()
+        app.sp_corr_boot_workers = QSpinBox()
 
-        self.sp_corr_boot_workers.setRange(1, 64)
+        app.sp_corr_boot_workers.setRange(1, 64)
 
-        self.sp_corr_boot_workers.setValue(1)
+        app.sp_corr_boot_workers.setValue(1)
 
-        self.sp_corr_boot_workers.setToolTip(
+        app.sp_corr_boot_workers.setToolTip(
             "Number of parallel processes for bootstrap replications (1 = sequential). "
             f"Typ. 2-{max(2, multiprocessing.cpu_count() or 4)} on this machine "
             f"({multiprocessing.cpu_count() or '?'} cores). "
@@ -2897,7 +2904,7 @@ class _MeshOptimizationMixin:
 
         row_cor_v25.addWidget(QLabel("proc."))
 
-        row_cor_v25.addWidget(self.sp_corr_boot_workers)
+        row_cor_v25.addWidget(app.sp_corr_boot_workers)
 
         row_cor_v25.addStretch(1)
 
@@ -2909,11 +2916,11 @@ class _MeshOptimizationMixin:
 
         page_full_adv = QWidget()
 
-        self._box4_full_adv_layout = QVBoxLayout(page_full_adv)
+        app._box4_full_adv_layout = QVBoxLayout(page_full_adv)
 
-        self._box4_full_adv_layout.setContentsMargins(0, 0, 0, 0)
+        app._box4_full_adv_layout.setContentsMargins(0, 0, 0, 0)
 
-        self._box4_full_adv_layout.addWidget(self._w_full_adv)
+        app._box4_full_adv_layout.addWidget(app._w_full_adv)
 
         page_epure = QWidget()
 
@@ -2925,31 +2932,31 @@ class _MeshOptimizationMixin:
 
         btn_open_adv.setToolTip("Optimization budgets and detailed uncertainty / corridor options.")
 
-        btn_open_adv.clicked.connect(self._open_advanced_settings_dialog)
+        btn_open_adv.clicked.connect(app._open_advanced_settings_dialog)
 
         lay_ep.addWidget(btn_open_adv)
 
-        self._stack_box4_adv = QStackedWidget()
+        app._stack_box4_adv = QStackedWidget()
 
-        self._stack_box4_adv.addWidget(page_epure)
+        app._stack_box4_adv.addWidget(page_epure)
 
-        self._stack_box4_adv.addWidget(page_full_adv)
+        app._stack_box4_adv.addWidget(page_full_adv)
 
         def _sync_adv_stack_height(_index: int = -1) -> None:
             try:
-                current = self._stack_box4_adv.currentWidget()
+                current = app._stack_box4_adv.currentWidget()
                 if current is None:
                     return
                 h = max(1, int(current.sizeHint().height()))
-                self._stack_box4_adv.setMinimumHeight(h)
-                self._stack_box4_adv.setMaximumHeight(h)
+                app._stack_box4_adv.setMinimumHeight(h)
+                app._stack_box4_adv.setMaximumHeight(h)
             except (RuntimeError, ValueError):
-                self.logger.debug("advanced_settings_stack_height_sync_failed", exc_info=True)
+                app.logger.debug("advanced_settings_stack_height_sync_failed", exc_info=True)
 
-        self._stack_box4_adv.currentChanged.connect(_sync_adv_stack_height)
+        app._stack_box4_adv.currentChanged.connect(_sync_adv_stack_height)
         QTimer.singleShot(0, _sync_adv_stack_height)
 
-        g4.addWidget(self._stack_box4_adv, r4, 0, 1, 2)
+        g4.addWidget(app._stack_box4_adv, r4, 0, 1, 2)
 
         r4 += 1
 
@@ -2960,6 +2967,13 @@ class _MeshOptimizationMixin:
 class _ConfigBuilderMixin:
     """Mixin extracting _build_opt_config logic."""
 
+
+
+class _MeshOptimizationMixin:
+    """Mixin extracting _build_basic_step4_mesh_optimizer logic."""
+
+    def _build_basic_step4_mesh_optimizer(self, parent_layout: "QVBoxLayout", style: str) -> None:
+        Step4MeshOptimizerBuilder(self, parent_layout, style).build()
     def _build_opt_config(self, *, notify: bool = True) -> SplineOptConfig | None:
 
         if self.df is None:
@@ -3571,90 +3585,75 @@ class SmartInitState:
     current_t_th: Any
     best_live: Any
 
-class _SmartInitDialogMixin:
-    """Mixin extracting _show_smart_init_preview_dialog logic."""
+class SmartInitPreviewManager:
+    def __init__(self, parent_worker, payload):
+        self.parent_worker = parent_worker
+        self.payload = payload
+        self.cfg = payload.cfg
 
-    def _show_smart_init_preview_dialog(self, payload: SmartInitPayload) -> bool:
-        """Manual Smart Init: PWL n and ln k on K sigma knots.
+        self.sk = payload.sigma_knots
 
-        If RMSE window is on: uniform sigma^2 mesh on the objective
-        (often K=12) then bridge to worker K on Continue.
-
-        Structure (kept monolithic - 29 inner defs share closure state):
-          §A  L+0     Config extraction + sigma knot preparation
-          §B  L+100   QDialog construction (layouts, widgets, plots)
-          §C  L+370   Inner defs: redraw_knot_lines, apply_range, refresh_nk
-          §D  L+640   Inner defs: update_axes, rebuild_knot_ui, sync_labels
-          §E  L+990   Inner defs: do_recalc, place_nk_editor, run_auto, bumps
-          §F  L+1210  Inner defs: recall_best, hint, copy, save/load config
-          §G  L+1550  Inner defs: presets, on_autofind, on_keep + init
-        """
-
-        cfg = payload.cfg
-
-        sk = payload.sigma_knots
-
-        grids = payload.preview_grids
+        self.grids = payload.preview_grids
 
         logger.info(
             "Smart Init dialog enter | cfg_present=%s | grids_present=%s | payload_K=%d",
-            bool(cfg is not None),
-            bool(grids is not None),
-            int(np.asarray(sk, dtype=np.float64).size),
+            bool(self.cfg is not None),
+            bool(self.grids is not None),
+            int(np.asarray(self.sk, dtype=np.float64).size),
         )
 
-        if cfg is None or grids is None or sk.size < 2:
+        if self.cfg is None or self.grids is None or self.sk.size < 2:
             logger.warning(
                 "Smart Init dialog early return | cfg_present=%s | grids_present=%s | payload_K=%d",
-                bool(cfg is not None),
-                bool(grids is not None),
-                int(np.asarray(sk, dtype=np.float64).size),
+                bool(self.cfg is not None),
+                bool(self.grids is not None),
+                int(np.asarray(self.sk, dtype=np.float64).size),
             )
 
             QMessageBox.warning(
-                self,
+                self.parent_worker,
                 "Smart Init",
                 "Incomplete preview data (cfg or grids). Continuing without adjustment.",
             )
 
             return True
 
-        k_n = int(sk.size)
+        self.k_n = int(self.sk.size)
 
-        n_phys = payload.n_nodes_physical.copy()
+        self.n_phys = payload.n_nodes_physical.copy()
 
-        L_nodes = payload.L_nodes.copy()
+        self.L_nodes = payload.L_nodes.copy()
 
         logger.info(
             "Smart Init dialog payload vectors | len(n)=%d | len(L)=%d | K=%d",
-            int(np.asarray(n_phys, dtype=np.float64).size),
-            int(np.asarray(L_nodes, dtype=np.float64).size),
-            int(k_n),
+            int(np.asarray(self.n_phys, dtype=np.float64).size),
+            int(np.asarray(self.L_nodes, dtype=np.float64).size),
+            int(self.k_n),
         )
 
-        if n_phys.size != k_n or L_nodes.size != k_n:
+        if self.n_phys.size != self.k_n or self.L_nodes.size != self.k_n:
             logger.warning(
                 "Smart Init dialog early return | inconsistent vectors len(n)=%d len(L)=%d K=%d",
-                int(np.asarray(n_phys, dtype=np.float64).size),
-                int(np.asarray(L_nodes, dtype=np.float64).size),
-                int(k_n),
+                int(np.asarray(self.n_phys, dtype=np.float64).size),
+                int(np.asarray(self.L_nodes, dtype=np.float64).size),
+                int(self.k_n),
             )
 
-            QMessageBox.warning(self, "Smart Init", "n / L sizes are inconsistent with sigma knots.")
+            QMessageBox.warning(self.parent_worker, "Smart Init", "n / L sizes are inconsistent with sigma knots.")
 
             return True
 
-        rel_step = 0.005  # +/-0,5 % sur n et sur L = ln k
+        self.rel_step = 0.005  # +/-0,5 % sur n et sur L = ln k
 
-        L_lo_g = float(grids["L_lo"])
+        self.L_lo_g = float(self.grids["L_lo"])
 
-        L_hi_g = float(grids["L_hi"])
+        self.L_hi_g = float(self.grids["L_hi"])
 
         # During this dialog: free physical n (non-monotone in sigma) if a mono band is active elsewhere;
 
         # ? monotone reprojection applies on Continue (worker).
 
-        _relax_si_mono = cfg.n_mono_band_nm is not None
+        self._relax_si_mono = self.cfg.n_mono_band_nm is not None
 
         # Nb2O? preset (ref. 12 abscissas in data): on open, Swanepoel is replaced by Nb2O?
 
@@ -3662,130 +3661,130 @@ class _SmartInitDialogMixin:
 
         # apply Nb2O? via ?Apply preset? (interpolation on current sigma grid).
 
-        if sk.size == SPLINE_PWL_K_NODES:
-            sk, n_phys, L_nodes, d_total = _project_nb2o5_preset_to_sigma_knots(sk)
+        if self.sk.size == SPLINE_PWL_K_NODES:
+            self.sk, self.n_phys, self.L_nodes, d_total = _project_nb2o5_preset_to_sigma_knots(self.sk)
 
-            effective_d_best_nm = float(d_total)
+            self.effective_d_best_nm = float(d_total)
 
-            open_preset_name = "nb2o5"
+            self.open_preset_name = "nb2o5"
 
         else:
-            effective_d_best_nm = float(payload.d_best_nm)
+            self.effective_d_best_nm = float(payload.d_best_nm)
 
-            open_preset_name = "none"
+            self.open_preset_name = "none"
 
         # Truncated RMSE lambda window: sigma mesh for +/- columns = uniform in sigma^2 on sig_f (objective), not full spectrum.
 
-        if getattr(cfg, "rmse_fit_lambda_nm", None) is not None:
-            sig_f_g = np.asarray(grids["sig_f"], dtype=np.float64).ravel()
+        if getattr(self.cfg, "rmse_fit_lambda_nm", None) is not None:
+            sig_f_g = np.asarray(self.grids["sig_f"], dtype=np.float64).ravel()
 
             if int(sig_f_g.size) >= 2:
-                sk_win = build_smart_manual_sigma_knots_from_preview_grid(sig_f_g, n_uniform_in_sigma2=11)
+                self.sk_win = build_smart_manual_sigma_knots_from_preview_grid(sig_f_g, n_uniform_in_sigma2=11)
 
-                n_phys, L_nodes = interp_n_L_pwlnk_to_sigmas(sk, n_phys, L_nodes, sk_win)
+                self.n_phys, self.L_nodes = interp_n_L_pwlnk_to_sigmas(self.sk, self.n_phys, self.L_nodes, self.sk_win)
 
-                sk = sk_win
+                self.sk = self.sk_win
 
-                k_n = int(sk.size)
+                self.k_n = int(self.sk.size)
 
-        self.smart_preview_sk_arr = np.asarray(sk, dtype=np.float64).ravel().copy()
+        self.parent_worker.smart_preview_sk_arr = np.asarray(self.sk, dtype=np.float64).ravel().copy()
 
         # (sigma, n, L) triplets aligned on the instance: avoids drift vs local n_phys / L_nodes
 
         # after recomputation (curves, +/-) if other code reads smart_preview_sk_arr alone.
 
-        self.smart_preview_n_phys = np.asarray(n_phys, dtype=np.float64).ravel().copy()
+        self.parent_worker.smart_preview_n_phys = np.asarray(self.n_phys, dtype=np.float64).ravel().copy()
 
-        self.smart_preview_L_nodes = np.asarray(L_nodes, dtype=np.float64).ravel().copy()
+        self.parent_worker.smart_preview_L_nodes = np.asarray(self.L_nodes, dtype=np.float64).ravel().copy()
 
-        self._si_mesh_sk_snap = self.smart_preview_sk_arr.copy()
+        self.parent_worker._si_mesh_sk_snap = self.parent_worker.smart_preview_sk_arr.copy()
 
         logger.info(
             "Smart Init dialog mesh prepared | sigma_knots_count=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s",
-            int(np.asarray(self.smart_preview_sk_arr, dtype=np.float64).size),
-            str(getattr(cfg, "rmse_fit_lambda_nm", None)),
-            str(open_preset_name),
+            int(np.asarray(self.parent_worker.smart_preview_sk_arr, dtype=np.float64).size),
+            str(getattr(self.cfg, "rmse_fit_lambda_nm", None)),
+            str(self.open_preset_name),
         )
 
-        _d0 = effective_d_best_nm
+        self._d0 = self.effective_d_best_nm
 
-        if _d0 is None or not np.isfinite(float(_d0)):
-            preview_d_nm = float(0.5 * (float(cfg.d_lo) + float(cfg.d_hi)))
+        if self._d0 is None or not np.isfinite(float(self._d0)):
+            self.preview_d_nm = float(0.5 * (float(self.cfg.d_lo) + float(self.cfg.d_hi)))
 
         else:
-            preview_d_nm = float(_d0)
+            self.preview_d_nm = float(self._d0)
 
-        if str(open_preset_name) == "nb2o5":
+        if str(self.open_preset_name) == "nb2o5":
             logger.info(
                 "Smart Init dialog seed transformation | incoming_payload_d_best_nm=%.6f | nb2o5_preset_d_total_nm=%.6f | "
                 "preset_replaces_incoming_d_for_dialog_preview",
                 float(payload.d_best_nm),
-                float(preview_d_nm),
+                float(self.preview_d_nm),
             )
         else:
             logger.info(
                 "Smart Init dialog initial seed | incoming_d_best_nm=%.6f | effective_preview_d_nm=%.6f | preset=%s",
                 float(payload.d_best_nm),
-                float(preview_d_nm),
-                str(open_preset_name),
+                float(self.preview_d_nm),
+                str(self.open_preset_name),
             )
 
         _, rm0 = rmse_at_spline_stage_x0_init(
-            cfg,
-            sk,
-            n_phys,
-            L_nodes,
-            preview_d_nm,
-            relax_n_mono=_relax_si_mono,
+            self.cfg,
+            self.sk,
+            self.n_phys,
+            self.L_nodes,
+            self.preview_d_nm,
+            relax_n_mono=self._relax_si_mono,
         )
 
         best_rmse = float(rm0)
 
-        best_n = n_phys.copy()
+        best_n = self.n_phys.copy()
 
-        best_L = L_nodes.copy()
+        best_L = self.L_nodes.copy()
 
         current_rmse = float(rm0)
 
         logger.info(
             "Smart Init dialog RMSE-at-seed | dialog_d_nm=%.6f | initial_rmse=%.8f",
-            float(preview_d_nm),
+            float(self.preview_d_nm),
             float(current_rmse),
         )
 
-        dlg = QDialog(self)
+        self.dlg = QDialog(self.parent_worker)
 
         logger.info("Smart Init dialog QDialog created")
 
-        dlg.setWindowTitle(f"Smart Init  PWL n and ln k ({k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)")
+        self.dlg.setWindowTitle(f"Smart Init  PWL n and ln k ({self.k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)")
 
-        dlg.setMinimumWidth(1180)
+        self.dlg.setMinimumWidth(1180)
 
-        dlg.setMinimumHeight(620)
+        self.dlg.setMinimumHeight(620)
 
         # Auxiliary window for n(lambda) and log k(lambda)
 
-        aux_dlg, curve_n, curve_pk, main_vb, p_extra = self._build_smart_init_aux_dialog(dlg)
+        aux_dlg, curve_n, curve_pk, main_vb, p_extra = self.parent_worker._build_smart_init_aux_dialog(self.dlg)
 
         logger.info("Smart Init dialog auxiliary window created")
 
-        lay = QVBoxLayout(dlg)
+        lay = QVBoxLayout(self.dlg)
 
         h_x_main = QHBoxLayout()
 
         h_x_main.addWidget(QLabel("X axis (spectrum):"))
 
-        cb_x_main = QComboBox()
+        self.cb_x_main = QComboBox()
 
-        cb_x_main.addItems(["Lambda (nm)", "Sigma (nm⁻¹)", "Sigma² (nm⁻²)"])
+        self.cb_x_main.addItems(["Lambda (nm)", "Sigma (nm⁻¹)", "Sigma² (nm⁻²)"])
 
-        h_x_main.addWidget(cb_x_main)
+        h_x_main.addWidget(self.cb_x_main)
 
         h_x_main.addStretch()
 
         lay.addLayout(h_x_main)
 
-        if _relax_si_mono:
+        if self._relax_si_mono:
             lbl_mono_relax = QLabel(
                 "<b>Manual tuning</b>: <i>n</i> may be <b>non-monotone</b> in sigma between knots here "
                 "(sliders / editor). <b>After Continue</b>: optimization uses the "
@@ -3801,37 +3800,37 @@ class _SmartInitDialogMixin:
 
             lay.addWidget(lbl_mono_relax)
 
-        d_lo_nm = float(cfg.d_lo)
+        self.d_lo_nm = float(self.cfg.d_lo)
 
-        d_hi_nm = float(cfg.d_hi)
+        self.d_hi_nm = float(self.cfg.d_hi)
 
         _D_SLIDER_STEPS = _D_SLIDER_STEPS_DEFAULT
 
         # _d_from_slider_int / _slider_int_from_d_nm: extracted to module level
         # Capture local context via lambdas
-        _d_from_slider = lambda iv: _d_from_slider_int(iv, d_lo_nm, d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
-        _slider_from_d = lambda dv: _slider_int_from_d_nm(dv, d_lo_nm, d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
+        self._d_from_slider = lambda iv: _d_from_slider_int(iv, self.d_lo_nm, self.d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
+        self._slider_from_d = lambda dv: _slider_int_from_d_nm(dv, self.d_lo_nm, self.d_hi_nm, _D_SLIDER_STEPS)  # noqa: E731
 
         row_d = QHBoxLayout()
 
         row_d.addWidget(QLabel("Thickness d:"))
 
-        slider_d = QSlider(Qt.Orientation.Horizontal)
+        self.slider_d = QSlider(Qt.Orientation.Horizontal)
 
-        slider_d.setRange(0, _D_SLIDER_STEPS)
+        self.slider_d.setRange(0, _D_SLIDER_STEPS)
 
-        slider_d.setToolTip(
+        self.slider_d.setToolTip(
             "Slider between fit d min and d max. The +/- buttons on n and ln k do not change d; "
             "move this slider to try different thickness."
         )
 
-        lbl_d_slider = QLabel()
+        self.lbl_d_slider = QLabel()
 
-        lbl_d_slider.setMinimumWidth(220)
+        self.lbl_d_slider.setMinimumWidth(220)
 
-        row_d.addWidget(slider_d, 1)
+        row_d.addWidget(self.slider_d, 1)
 
-        row_d.addWidget(lbl_d_slider)
+        row_d.addWidget(self.lbl_d_slider)
 
         lay.addLayout(row_d)
 
@@ -3844,64 +3843,41 @@ class _SmartInitDialogMixin:
         lay.addWidget(btn_show_nk)
 
         lam_src_payload = payload.lam_nm
-        if lam_src_payload is None and self.df is not None and "lambda" in self.df.columns:
-            lam_src_payload = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
-            if self.logger:
-                self.logger.warning(
+        if lam_src_payload is None and self.parent_worker.df is not None and "lambda" in self.parent_worker.df.columns:
+            lam_src_payload = ensure_lam_nm_array(self.parent_worker.df["lambda"].to_numpy(dtype=np.float64))
+            if self.parent_worker.logger:
+                self.parent_worker.logger.warning(
                     "Corridor preview dialog: payload missing lam_nm; fallback to experimental lambda grid."
                 )
-        lam_m = np.asarray(lam_src_payload if lam_src_payload is not None else [], dtype=np.float64)
-        if lam_m.size == 0:
+        self.lam_m = np.asarray(lam_src_payload if lam_src_payload is not None else [], dtype=np.float64)
+        if self.lam_m.size == 0:
             logger.warning("Smart Init dialog: lam_nm unavailable in payload and df; spectrum plot will be empty.")
 
-        y_exp = payload.t_exp
+        self.y_exp = payload.t_exp
 
         y_th0 = payload.t_theo
 
         y_lab = "T/T_sub" if payload.t_is_ratio else "T"
 
-        pw, curve_exp, curve_theo, knot_markers = self._build_smart_init_main_plot(y_lab)
+        pw, curve_exp, curve_theo, knot_markers = self.parent_worker._build_smart_init_main_plot(y_lab)
 
         # get_xv: extracted to module level
-        get_xv = _get_xv_spectral_coord
+        self.get_xv = _get_xv_spectral_coord
 
-        knot_lines = []
+        self.knot_lines = []
 
-        def redraw_knot_lines() -> None:
 
-            for line in knot_lines:
-                try:
-                    pw.removeItem(line)
+        self.redraw_knot_lineslines()
 
-                except (AttributeError, RuntimeError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-            knot_lines.clear()
-
-            pen_k = pg.mkPen("#1a9f3c", width=1.8)
-
-            mode = cb_x_main.currentText()
-
-            sk_lines = np.asarray(getattr(self, "smart_preview_sk_arr", sk), dtype=np.float64).ravel()
-
-            for sx in sk_lines:
-                il = pg.InfiniteLine(get_xv(sx, mode), angle=90, pen=pen_k)
-
-                pw.addItem(il)
-
-                knot_lines.append(il)
-
-        redraw_knot_lines()
-
-        cb_x_main.currentIndexChanged.connect(redraw_knot_lines)
+        self.cb_x_main.currentIndexChanged.connect(self.redraw_knot_lines)
 
         current_t_th = y_th0.copy()
-        state = SmartInitState(
-            sk=sk,
-            k_n=k_n,
-            n_phys=n_phys,
-            L_nodes=L_nodes,
-            preview_d_nm=preview_d_nm,
+        self.state = SmartInitState(
+            sk=self.sk,
+            k_n=self.k_n,
+            n_phys=self.n_phys,
+            L_nodes=self.L_nodes,
+            preview_d_nm=self.preview_d_nm,
             best_rmse=best_rmse,
             best_n=best_n,
             best_L=best_L,
@@ -3911,128 +3887,63 @@ class _SmartInitDialogMixin:
         )
 
         # _study_lambda_window_nm: extracted to module level
-        _study_lambda_window_nm = lambda: _compute_study_lambda_window_nm(lam_m, cfg)  # noqa: E731
+        self._study_lambda_window_nm = lambda: _compute_study_lambda_window_nm(self.lam_m, self.cfg)  # noqa: E731
 
-        def _apply_manual_spectrum_plot_range() -> None:
-            _smart_init_apply_plot_range(
-                pw, _study_lambda_window_nm, cb_x_main.currentIndex(),
-                getattr(self, "smart_preview_sk_arr", sk), lam_m, y_exp,
-                state.current_t_th,
-            )
 
-        def refresh_nk_plots_aux(lam_nk: np.ndarray, n_lam: np.ndarray, k_lam: np.ndarray) -> None:
-            _smart_init_refresh_nk_aux(
-                curve_n, curve_pk, main_vb, p_extra,
-                _study_lambda_window_nm, lam_nk, n_lam, k_lam,
-            )
 
         # --- NEW : LIVE INDEX MONITORING ---
 
-        mon = getattr(self, "_live_nk_monitor", None)
+        self.mon = getattr(self.parent_worker, "_live_nk_monitor", None)
 
-        if mon is None or not hasattr(mon, "update_indices"):
-            mon = LiveIndexMonitor(self)
+        if self.mon is None or not hasattr(self.mon, "update_indices"):
+            self.mon = LiveIndexMonitor(self.parent_worker)
 
-            self._live_nk_monitor = mon
+            self.parent_worker._live_nk_monitor = self.mon
 
-        mon._study_lam_window_fn = _study_lambda_window_nm
+        self.mon._study_lam_window_fn = self._study_lambda_window_nm
 
-        mon.show()
+        self.mon.show()
 
         # Positionner a droite du dialog de preview (si visible).
 
         try:
-            mon.move(dlg.x() + dlg.width() + 10, dlg.y())
+            self.mon.move(self.dlg.x() + self.dlg.width() + 10, self.dlg.y())
 
         except (AttributeError, RuntimeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        def refresh_nk_plots_mon(lam_u, n_lam_u, k_lam_u) -> None:
 
-            mon.update_indices(lam_u, n_lam_u, k_lam_u, state.preview_d_nm)
+        self.lbl_stats = QLabel()
 
-        lbl_stats = QLabel()
+        self.lbl_stats.setWordWrap(True)
 
-        lbl_stats.setWordWrap(True)
 
-        def refresh_stats(dv: float, rm: float) -> None:
-
-            state.current_rmse = float(rm)
-
-            rmse_lbl = "RMSE"
-
-            if cfg.data_type == DataType.BOTH and float(cfg.weight_t) > 0.0 and float(cfg.weight_r) > 0.0:
-                rmse_lbl = "RMSE (sqrt(MSE) objective T+R, as in first optimization cost)"
-
-            lbl_stats.setText(_format_smart_init_status_text(state.k_n, dv, rmse_lbl, rm, state.best_rmse))
-
-        refresh_stats(state.preview_d_nm, rm0)
+        self.refresh_statsstats(self.state.preview_d_nm, rm0)
 
         # Colonnes alignees sous les sigma du plot (espacements  Deltasigma sur l'axe).
 
-        sk_arr = np.asarray(state.sk, dtype=np.float64).ravel()
+        self.sk_arr = np.asarray(self.state.sk, dtype=np.float64).ravel()
 
-        sig2_arr = sk_arr**2
-
-
+        sig2_arr = self.sk_arr**2
 
 
 
 
 
-        sig_pts = (1.0 / np.maximum(lam_m, 1e-9)) ** 2 if lam_m.size > 0 else sig2_arr
 
-        s2_lo_f = float(min(float(np.min(sig_pts)), float(np.min(sig2_arr))))
+
+        sig_pts = (1.0 / np.maximum(self.lam_m, 1e-9)) ** 2 if self.lam_m.size > 0 else sig2_arr
+
+        self.s2_lo_f = float(min(float(np.min(sig_pts)), float(np.min(sig2_arr))))
 
         s2_hi_f = float(max(float(np.max(sig_pts)), float(np.max(sig2_arr))))
 
-        span_sig2 = max(s2_hi_f - s2_lo_f, 1e-30)
+        span_sig2 = max(s2_hi_f - self.s2_lo_f, 1e-30)
 
-        def update_main_x_axes() -> None:
 
-            mode = cb_x_main.currentIndex()
+        self.cb_x_main.currentIndexChanged.connect(self.update_main_x_axes)
 
-            x_L = lam_m
-
-            x_s = 1.0 / np.maximum(lam_m, 1e-30)
-
-            x_s2 = x_s**2
-
-            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            k_L = 1.0 / np.maximum(cur_sk, 1e-30)
-
-            k_s = cur_sk
-
-            k_s2 = cur_sk**2
-
-            x_vals = [x_L, x_s, x_s2][mode]
-
-            k_vals = [k_L, k_s, k_s2][mode]
-
-            lbl = ["lambda (nm)", "sigma (nm?1)", "sigma2 = 1/lambda2 (nm?2)"][mode]
-
-            pw.setLabel("bottom", lbl)
-
-            o = np.argsort(x_vals)
-
-            curve_exp.setData(x_vals[o], y_exp[o])
-
-            curve_theo.setData(x_vals[o], state.current_t_th[o])
-
-            knot_t = _interp_t_at_lam_knots(lam_m, state.current_t_th, cur_sk)
-
-            knot_markers.setData(k_vals, knot_t)
-
-            for j, il in enumerate(knot_lines):
-                if j < len(k_vals):
-                    il.setPos(k_vals[j])
-
-            _apply_manual_spectrum_plot_range()
-
-        cb_x_main.currentIndexChanged.connect(update_main_x_axes)
-
-        cb_x_main.setCurrentIndex(2)
+        self.cb_x_main.setCurrentIndex(2)
 
         lbl_lam_cols: list[QLabel] = []
 
@@ -4044,14 +3955,14 @@ class _SmartInitDialogMixin:
 
         knot_bar = QWidget()
 
-        knot_h = QHBoxLayout(knot_bar)
+        self.knot_h = QHBoxLayout(knot_bar)
 
-        knot_h.setContentsMargins(2, 4, 2, 2)
+        self.knot_h.setContentsMargins(2, 4, 2, 2)
 
-        knot_h.setSpacing(0)
+        self.knot_h.setSpacing(0)
 
         # _stretch_sig: extracted to module level
-        _stretch_sig = lambda delta: _stretch_sig_to_px(delta, span_sig2)  # noqa: E731
+        self._stretch_sig = lambda delta: _stretch_sig_to_px(delta, span_sig2)  # noqa: E731
 
         n_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
 
@@ -4063,240 +3974,60 @@ class _SmartInitDialogMixin:
 
         curve_editor_holder: list[SmartInitNKCurveEditorDialog] = []
 
-        def rebuild_knot_ui(new_kn: int) -> None:
-
-            state.k_n = new_kn
-
-            # Vidage du layout actuel
-
-            while knot_h.count():
-                item = knot_h.takeAt(0)
-                if item.widget():
-                    item.widget().deleteLater()
-
-            current_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-            sig2_sorted_loc = np.sort(current_sk**2)
-
-            redraw_knot_lines()
-
-            _build_smart_init_knot_columns(
-                state.k_n, knot_h, sig2_sorted_loc, s2_lo_f, _stretch_sig,
-                lbl_lam_cols, lbl_sig_cols, lbl_n_cols, lbl_L_cols,
-                n_btn_pairs, L_btn_pairs, n_auto_btns, L_auto_btns,
-            )
-
-            # Rewire +/- / auto buttons for the current k_n sigma knots
-
-            current_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            sig2_sorted_loc = np.sort(current_sk**2)
-
-            sig_sort_idx_loc = np.argsort(current_sk)
-
-            # Rewire events
-
-            for j in range(state.k_n):
-                oi = int(sig_sort_idx_loc[j])
-
-                bm_n, bp_n = n_btn_pairs[j]
-
-                bm_L, bp_L = L_btn_pairs[j]
-
-                wire_hold_button(bm_n, oi, -1, is_ln_k=False)
-
-                wire_hold_button(bp_n, oi, +1, is_ln_k=False)
-
-                wire_hold_button(bm_L, oi, -1, is_ln_k=True)
-
-                wire_hold_button(bp_L, oi, +1, is_ln_k=True)
-
-                def _run_n_auto(*_args, row_index=oi) -> None:
-                    run_auto(row_index, False)
-
-                n_auto_btns[j].clicked.connect(_run_n_auto)
-
-                def _run_l_auto(*_args, row_index=oi) -> None:
-                    run_auto(row_index, True)
-
-                L_auto_btns[j].clicked.connect(_run_l_auto)
-
-            sync_knot_labels()
-
-            for _ce in curve_editor_holder:
-                try:
-                    _ce.refresh_plots()
-
-                except (AttributeError, RuntimeError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         knot_bar.setMinimumHeight(140)
 
-        def sync_knot_labels() -> None:
-
-            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-
-            cur_sort_idx = np.argsort(cur_sk)
-
-            cur_kn = int(cur_sk.size)
-
-            for j in range(cur_kn):
-                oi = int(cur_sort_idx[j])
-
-                lam_v = 1.0 / max(float(cur_sk[oi]), 1e-30)
-
-                lbl_lam_cols[j].setText(f"{lam_v:.1f} nm")
-
-                lbl_sig_cols[j].setText(f"{float(cur_sk[oi]):.5f}")
-
-                lbl_n_cols[j].setText(f"{float(state.n_phys[oi]):.4f}")
-
-                lbl_L_cols[j].setText(f"{float(state.L_nodes[oi]):.4f}")
-
-        def sync_d_slider_label() -> None:
-
-            lbl_d_slider.setText(f"{state.preview_d_nm:.2f} nm   [d min={d_lo_nm:.1f}, d max={d_hi_nm:.1f}]")
-
-        def set_slider_from_preview_d() -> None:
-
-            slider_d.blockSignals(True)
-
-            slider_d.setValue(_slider_from_d(state.preview_d_nm))
-
-            slider_d.blockSignals(False)
-
-            sync_d_slider_label()
-
-        def _set_n_knot_curve(i: int, v: float) -> None:
-
-            nn = np.asarray(state.n_phys, dtype=np.float64).copy()
-
-            nn[int(i)] = float(np.clip(v, N_MIN_LIMIT, N_MAX_LIMIT))
-
-            state.n_phys = nn
-
-        def _set_L_knot_curve(i: int, v: float) -> None:
-
-            LL = np.asarray(state.L_nodes, dtype=np.float64).copy()
-
-            LL[int(i)] = float(np.clip(v, L_lo_g, L_hi_g))
-
-            state.L_nodes = LL
-
-        def do_recalc() -> None:
-            _cbs_recalc = {
-                "update_main_x_axes": update_main_x_axes,
-                "sync_knot_labels": sync_knot_labels,
-                "refresh_stats": refresh_stats,
-                "refresh_nk_plots_aux": refresh_nk_plots_aux,
-                "refresh_nk_plots_mon": refresh_nk_plots_mon,
-            }
-            self._execute_smart_init_do_recalc(
-                state, cfg, grids, _relax_si_mono, sk_arr,
-                curve_editor_holder, _cbs_recalc,
-            )
 
 
-        _nk_curve_editor = SmartInitNKCurveEditorDialog(
-            dlg,
+
+
+
+
+
+        self._nk_curve_editor = SmartInitNKCurveEditorDialog(
+            self.dlg,
             n_lo=float(N_MIN_LIMIT),
             n_hi=float(N_MAX_LIMIT),
-            L_lo=float(L_lo_g),
-            L_hi=float(L_hi_g),
-            k_clip_lo=float(getattr(cfg, "k_clip_lo", 1e-30) or 1e-30),
-            get_sk=lambda: np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel(),
-            get_n_phys=lambda: state.n_phys,
-            get_L_nodes=lambda: state.L_nodes,
-            set_n_at=_set_n_knot_curve,
-            set_L_at=_set_L_knot_curve,
-            request_recalc=do_recalc,
-            study_lambda_window=_study_lambda_window_nm,
+            L_lo=float(self.L_lo_g),
+            L_hi=float(self.L_hi_g),
+            k_clip_lo=float(getattr(self.cfg, "k_clip_lo", 1e-30) or 1e-30),
+            get_sk=lambda: np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr), dtype=np.float64).ravel(),
+            get_n_phys=lambda: self.state.n_phys,
+            get_L_nodes=lambda: self.state.L_nodes,
+            set_n_at=self._set_n_knot_curve,
+            set_L_at=self._set_L_knot_curve,
+            request_recalc=self.do_recalc,
+            study_lambda_window=self._study_lambda_window_nm,
         )
 
-        curve_editor_holder.append(_nk_curve_editor)
+        curve_editor_holder.append(self._nk_curve_editor)
 
-        _nk_curve_editor.show()
-
-        def _place_nk_editor() -> None:
-
-            try:
-                fr = dlg.frameGeometry()
-
-                _nk_curve_editor.move(
-                    max(24, fr.left() - _nk_curve_editor.width() - 20),
-                    fr.top() + 32,
-                )
-
-            except (AttributeError, RuntimeError):
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-
-        QTimer.singleShot(0, _place_nk_editor)
-
-        def run_auto(row: int, is_ln_k: bool) -> None:
-            state.sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-            err = self._execute_smart_init_run_auto(cfg, row, is_ln_k, L_lo_g, L_hi_g, _relax_si_mono, state)
-            if err:
-                QMessageBox.warning(dlg, "Smart Init  auto", f"run auto failed: {err}")
-                return
-            set_slider_from_preview_d()
-            do_recalc()
+        self._nk_curve_editor.show()
 
 
-        def on_slider_d_changed(_iv: int) -> None:
-
-            state.preview_d_nm = _d_from_slider(slider_d.value())
-
-            sync_d_slider_label()
-
-            do_recalc()
-
-        slider_d.valueChanged.connect(on_slider_d_changed)
-
-        set_slider_from_preview_d()
-
-        def bump_n_scaled(row: int, direction: int, mult: float) -> None:
-
-            step = rel_step * float(mult)
-
-            f = 1.0 + float(direction) * step
-
-            state.n_phys[row] = float(np.clip(state.n_phys[row] * f, N_MIN_LIMIT, N_MAX_LIMIT))
-
-            do_recalc()
-
-        def bump_L_scaled(row: int, direction: int, mult: float) -> None:
-
-            step = rel_step * float(mult)
-
-            f = 1.0 + float(direction) * step
-
-            state.L_nodes[row] = float(np.clip(state.L_nodes[row] * f, L_lo_g, L_hi_g))
-
-            do_recalc()
-
-        def wire_hold_button(btn, row, direction, *, is_ln_k=False) -> None:
-            _smart_init_wire_hold_button(
-                btn, row, direction, is_ln_k=is_ln_k,
-                parent_dlg=dlg, bump_n_fn=bump_n_scaled, bump_L_fn=bump_L_scaled,
-            )
-
-        def recall_best() -> None:
-            state.sk = getattr(self, "smart_preview_sk_arr", sk_arr)
-            err = self._execute_smart_init_recall_best(state)
-            if err:
-                QMessageBox.information(dlg, "Smart Init", err)
-                return
-            do_recalc()
+        QTimer.singleShot(0, self._place_nk_editor)
 
 
-        rebuild_knot_ui(state.k_n)  # Appel initial  ici wire_hold_button est deja defini
+
+
+        self.slider_d.valueChanged.connect(self.on_slider_d_changed)
+
+        self.set_slider_from_preview_diew_d()
+
+
+
+
+
+
+        self.rebuild_knot_uiot_ui(self.state.k_n)  # Appel initial  ici wire_hold_button est deja defini
 
         attach_excel_clipboard_context_menu(pw)
 
-        lay.addWidget(wrap_scientific_plot_with_toolbar(dlg, pw), stretch=1)
+        lay.addWidget(wrap_scientific_plot_with_toolbar(self.dlg, pw), stretch=1)
 
         lbl_nodes = QLabel(
             f"<b>Knot adjustment (increasing sigma)</b> - <b>n &amp; k Editor</b> window on the left: drag points "
-            f"(<i>k</i> in log); here: <b>- / +</b> +/-{100 * rel_step:.1f} % on <i>n</i> and <i>L</i> (= ln <i>k</i>), "
+            f"(<i>k</i> in log); here: <b>- / +</b> +/-{100 * self.rel_step:.1f} % on <i>n</i> and <i>L</i> (= ln <i>k</i>), "
             f"<b>without</b> auto thickness recalculation (d slider above); "
             f"<b>hold down</b> to accelerate; <b>auto</b>: d + param sweep <=3 s."
         )
@@ -4309,154 +4040,55 @@ class _SmartInitDialogMixin:
 
         lay.addWidget(knot_bar)
 
-        lay.addWidget(lbl_stats)
+        lay.addWidget(self.lbl_stats)
 
         row_hint = QHBoxLayout()
 
-        lbl_row_hint = QLabel()
+        self.lbl_row_hint = QLabel()
 
-        def update_hint_text() -> None:
 
-            # Help text: same K as worker after Continue (avoids claiming ?12 knots? for a 5 ?m file).
+        self.update_hint_text_text()
 
-            lam_h = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-            k_h = int(
-                canonical_spline_sigma_knots(
-                    float(np.nanmin(lam_h)),
-                    float(np.nanmax(lam_h)),
-                    **_canonical_knots_min_lambda_kw(cfg),
-                ).size
-            )
-
-            n_h = max(1, k_h - 1)
-
-            lbl_row_hint.setText(
-                f" Continue: fixed mesh {k_h} sigma knots, {n_h} segments between knots "
-                "(canonical grid [lambda_min, lambda_max]); local refinement; knots and RMSE logged in CERTUS."
-            )
-
-        update_hint_text()
-
-        row_hint.addWidget(lbl_row_hint, stretch=1)
+        row_hint.addWidget(self.lbl_row_hint, stretch=1)
 
         btn_recall = QPushButton("Recall best")
 
         btn_recall.setToolTip("Restore n and ln k profiles with the lowest RMSE since dialog start.")
 
-        btn_recall.clicked.connect(recall_best)
+        btn_recall.clicked.connect(self.recall_best)
 
-        btn_copy = QPushButton("Copy to clipboard")
+        self.btn_copy = QPushButton("Copy to clipboard")
 
-        def on_copy() -> None:
 
-            cur_sk = getattr(self, "smart_preview_sk_arr", sk_arr)
+        self.btn_copy.clicked.connect(self.on_copy)
 
-            lines = [f"RMSE: {state.current_rmse:.8f}", f"d: {state.preview_d_nm:.6f} nm", "Nodes (sigma, n, ln k):"]
-
-            for idx in np.argsort(cur_sk):
-                lines.append(f"  {cur_sk[idx]:.8e} | {state.n_phys[idx]:.6f} | {state.L_nodes[idx]:.6f}")
-
-            QApplication.clipboard().setText("\n".join(lines))
-
-            btn_copy.setText("Copied!")
-
-            QTimer.singleShot(1500, lambda: btn_copy.setText("Copy to clipboard"))
-
-        btn_copy.clicked.connect(on_copy)
-
-        row_hint.addWidget(btn_copy)
+        row_hint.addWidget(self.btn_copy)
 
         row_hint.addWidget(btn_recall)
 
-        def _refresh_knot_lines_and_ui() -> None:
-            for line in knot_lines:
-                try:
-                    pw.removeItem(line)
-                except (AttributeError, RuntimeError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-            knot_lines.clear()
-
-            pen_k = pg.mkPen("#1a9f3c", width=1.8)
-            mode = cb_x_main.currentText()
-            for sx in state.sk:
-                il = pg.InfiniteLine(get_xv(sx, mode), angle=90, pen=pen_k)
-                pw.addItem(il)
-                knot_lines.append(il)
-
-            rebuild_knot_ui(int(len(state.sk)))
-            set_slider_from_preview_d()
-            do_recalc()
-
-        def _serialize_smart_init_index_config() -> dict[str, Any]:
-            cur_sk = np.asarray(getattr(self, "smart_preview_sk_arr", state.sk), dtype=np.float64).ravel()
-            cur_n = np.asarray(state.n_phys, dtype=np.float64).ravel()
-            cur_L = np.asarray(state.L_nodes, dtype=np.float64).ravel()
-            return {
-                "schema": "certus.index_spline.smart_init.index_config.v1",
-                "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "x_axis_mode": str(cb_x_main.currentText()),
-                "d_nm": float(state.preview_d_nm),
-                "sigma_knots": [float(v) for v in cur_sk.tolist()],
-                "n_nodes_physical": [float(v) for v in cur_n.tolist()],
-                "L_nodes": [float(v) for v in cur_L.tolist()],
-            }
-
-        def on_save_index_config() -> None:
-            ts = time.strftime("%Y%m%d_%H%M%S")
-            default_path = str(Path.cwd() / f"smart_init_index_config_{ts}.json")
-            path, _ = QFileDialog.getSaveFileName(
-                dlg,
-                "Save index config (Smart Init)",
-                default_path,
-                "JSON Files (*.json);;All Files (*.*)",
-            )
-            if not path:
-                return
-            if not path.lower().endswith(".json"):
-                path += ".json"
-
-            payload_cfg = _serialize_smart_init_index_config()
-            try:
-                with open(path, "w", encoding="utf-8") as f:
-                    json.dump(payload_cfg, f, indent=2)
-            except (OSError, TypeError, ValueError) as exc:
-                QMessageBox.warning(dlg, "Save index config", f"Save failed: {exc}")
-                return
-
-            btn_save_cfg.setText("Saved")
-            QTimer.singleShot(1200, lambda: btn_save_cfg.setText("Save As"))
-
-        def on_load_index_config() -> None:
-            self._load_smart_init_index_config(
-                state, dlg, L_lo_g, L_hi_g, d_lo_nm, d_hi_nm,
-                _refresh_knot_lines_and_ui, btn_load_cfg,
-            )
 
 
-        btn_save_cfg = QPushButton("Save As")
-        btn_save_cfg.setToolTip("Save current Smart Init index configuration (sigma, n, ln k, d) to JSON.")
-        btn_save_cfg.clicked.connect(on_save_index_config)
-
-        btn_load_cfg = QPushButton("Load")
-        btn_load_cfg.setToolTip("Load a Smart Init index configuration from JSON and apply it to the dialog.")
-        btn_load_cfg.clicked.connect(on_load_index_config)
-
-        row_hint.addWidget(btn_save_cfg)
-        row_hint.addWidget(btn_load_cfg)
-
-        def apply_manual_preset_from_projector(projector, feedback_btn, idle_label) -> None:
-            self._apply_smart_init_preset(
-                state, cfg, projector, _relax_si_mono,
-                _refresh_knot_lines_and_ui, feedback_btn, idle_label,
-            )
 
 
-        cb_material_preset = QComboBox()
 
-        cb_material_preset.setMinimumWidth(168)
+        self.btn_save_cfg = QPushButton("Save As")
+        self.btn_save_cfg.setToolTip("Save current Smart Init index configuration (sigma, n, ln k, d) to JSON.")
+        self.btn_save_cfg.clicked.connect(self.on_save_index_config)
 
-        cb_material_preset.setToolTip(
+        self.btn_load_cfg = QPushButton("Load")
+        self.btn_load_cfg.setToolTip("Load a Smart Init index configuration from JSON and apply it to the dialog.")
+        self.btn_load_cfg.clicked.connect(self.on_load_index_config)
+
+        row_hint.addWidget(self.btn_save_cfg)
+        row_hint.addWidget(self.btn_load_cfg)
+
+
+
+        self.cb_material_preset = QComboBox()
+
+        self.cb_material_preset.setMinimumWidth(168)
+
+        self.cb_material_preset.setToolTip(
             "Choose a material: Nb2O? (reference 12 sigma + d), SiO2 or Ta2O? (lambda tabulation), "
             "then 'Apply preset' - PWL interpolation on current sigma grid, d mini-optimization.\n"
             "When opening the dialog, the **three** presets are automatically tested; the best RMSE "
@@ -4468,115 +4100,69 @@ class _SmartInitDialogMixin:
             ("SiO2", "sio2"),
             ("Ta2O?", "ta2o5"),
         ):
-            cb_material_preset.addItem(_label, _pid)
+            self.cb_material_preset.addItem(_label, _pid)
 
-        btn_apply_material = QPushButton("Apply preset")
+        self.btn_apply_material = QPushButton("Apply preset")
 
-        def on_apply_material_preset() -> None:
 
-            pid = str(cb_material_preset.currentData() or "nb2o5")
+        self.btn_apply_material.clicked.connect(self.on_apply_material_preset)
 
-            dh = float(state.preview_d_nm)
+        row_hint.addWidget(self.cb_material_preset)
 
-            def _run(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+        row_hint.addWidget(self.btn_apply_material)
 
-                return project_manual_material_preset(pid, ts, d_nm_hint=dh)
 
-            apply_manual_preset_from_projector(_run, btn_apply_material, "Apply preset")
+        self.btn_autofind = QPushButton("Autofind")
 
-        btn_apply_material.clicked.connect(on_apply_material_preset)
-
-        row_hint.addWidget(cb_material_preset)
-
-        row_hint.addWidget(btn_apply_material)
-
-        def _auto_try_three_material_presets() -> None:
-            """Compares Nb2O? / SiO2 / Ta2O? on the current sigma grid and applies the best one (mini-opt d)."""
-            target_sk = np.asarray(getattr(self, "smart_preview_sk_arr", sk_arr), dtype=np.float64).ravel()
-            if int(target_sk.size) < 2:
-                return
-
-            res = self._pick_best_smart_init_material_preset(cfg, target_sk, state.preview_d_nm, bool(_relax_si_mono))
-            if res is None:
-                return
-            winner, _, d_w = res
-
-            state.preview_d_nm = float(d_w)
-            iw = cb_material_preset.findData(winner)
-            if iw >= 0:
-                cb_material_preset.blockSignals(True)
-                try:
-                    cb_material_preset.setCurrentIndex(int(iw))
-                finally:
-                    cb_material_preset.blockSignals(False)
-
-            def _proj(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-                return project_manual_material_preset(winner, ts, d_nm_hint=float(state.preview_d_nm))
-
-            apply_manual_preset_from_projector(_proj, None, "")
-
-        btn_autofind = QPushButton("Autofind")
-
-        btn_autofind.setToolTip(
+        self.btn_autofind.setToolTip(
             "SOL2 only (~30 s): local L-BFGS-B polish on fixed sigma (canonical file mesh), "
             "without free-node stage or full pipeline suite. Seed = current profile re-interpolated in PWL."
         )
 
-        autofind_prog = QProgressBar()
+        self.autofind_prog = QProgressBar()
 
-        autofind_prog.setRange(0, 100)
+        self.autofind_prog.setRange(0, 100)
 
-        autofind_prog.setValue(0)
+        self.autofind_prog.setValue(0)
 
-        autofind_prog.setMinimumWidth(220)
+        self.autofind_prog.setMinimumWidth(220)
 
-        autofind_prog.setFormat("Autofind 0% (0.0/30.0s)")
-
-        def on_autofind() -> None:
-            _cbs = {
-                "rebuild_knot_ui": rebuild_knot_ui,
-                "update_hint_text": update_hint_text,
-                "set_slider_from_preview_d": set_slider_from_preview_d,
-                "do_recalc": do_recalc,
-                "refresh_stats": refresh_stats,
-            }
-            self._run_smart_init_autofind(
-                state, cfg, sk_arr, dlg, btn_autofind, autofind_prog, _cbs,
-            )
+        self.autofind_prog.setFormat("Autofind 0% (0.0/30.0s)")
 
 
-        btn_autofind.clicked.connect(on_autofind)
 
-        row_hint.addWidget(btn_autofind)
+        self.btn_autofind.clicked.connect(self.on_autofind)
 
-        row_hint.addWidget(autofind_prog)
+        row_hint.addWidget(self.btn_autofind)
+
+        row_hint.addWidget(self.autofind_prog)
 
         lay.addLayout(row_hint)
 
-        chk_si_deep = QCheckBox("Deep SOL2 after Smart Init (legacy option inactive in local-only mode)")
+        self.chk_si_deep = QCheckBox("Deep SOL2 after Smart Init (legacy option inactive in local-only mode)")
 
-        chk_si_deep.setChecked(False)
+        self.chk_si_deep.setChecked(False)
 
-        chk_si_deep.setToolTip(
+        self.chk_si_deep.setToolTip(
             "Manual Smart Init is now always handed off to the worker in local L-BFGS-B mode. "
             "This legacy option is kept visible only for compatibility and has no effect."
         )
 
-        chk_si_deep.setEnabled(False)
+        self.chk_si_deep.setEnabled(False)
 
-        lay.addWidget(chk_si_deep)
+        lay.addWidget(self.chk_si_deep)
 
-        chk_si_two_phase = QCheckBox("Two-phase deep SOL2 (legacy option inactive in local-only mode)")
+        self.chk_si_two_phase = QCheckBox("Two-phase deep SOL2 (legacy option inactive in local-only mode)")
 
-        chk_si_two_phase.setChecked(False)
+        self.chk_si_two_phase.setChecked(False)
 
-        chk_si_two_phase.setToolTip(
+        self.chk_si_two_phase.setToolTip(
             "Legacy compatibility flag only; no second global phase exists anymore in local-only mode."
         )
 
-        chk_si_two_phase.setEnabled(False)
+        self.chk_si_two_phase.setEnabled(False)
 
-        lay.addWidget(chk_si_two_phase)
+        lay.addWidget(self.chk_si_two_phase)
 
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
@@ -4584,56 +4170,507 @@ class _SmartInitDialogMixin:
 
         bb.button(QDialogButtonBox.StandardButton.Cancel).setText("Stop")
 
-        _on_keep_called = [False]
+        self._on_keep_called = [False]
 
-        def on_keep() -> None:
-            if _on_keep_called[0]:
-                logger.debug("Smart Init on_keep: guard active, ignoring reentrant call")
-                return
-            _on_keep_called[0] = True
-            try:
-                ui_ctx = {
-                    "chk_si_deep": chk_si_deep,
-                    "chk_si_two_phase": chk_si_two_phase,
-                    "relax_si_mono": _relax_si_mono,
-                }
-                self._on_smart_init_keep(dlg, cfg, state, ui_ctx)
-            except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
-                logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")
-                _on_keep_called[0] = False
 
         # --- INITIALISATION IMMEDIATE ---
 
-        rebuild_knot_ui(state.k_n)
+        self.rebuild_knot_uiot_ui(self.state.k_n)
 
-        do_recalc()
+        self.do_recalcecalc()
 
-        _auto_try_three_material_presets()
+        self._auto_try_three_material_presetsesets()
 
-        bb.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(on_keep)
+        bb.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.on_keep)
 
-        bb.rejected.connect(dlg.reject)
+        bb.rejected.connect(self.dlg.reject)
 
         lay.addWidget(bb)
 
         logger.info("Smart Init dialog immediate init start")
 
-        _apply_manual_spectrum_plot_range()
+        self._apply_manual_spectrum_plot_rangerange()
 
         logger.info("Smart Init dialog manual plot range applied")
 
         logger.info("Smart Init dialog entering exec()")
 
-        _code = dlg.exec()
+        _code = self.dlg.exec()
 
         logger.info(
             "Smart Init dialog exec finished | code=%s | accepted=%s | preview_ret=%s",
             int(_code),
             bool(_code == QDialog.DialogCode.Accepted),
-            getattr(self, "_preview_ret", None) is not None,
+            getattr(self.parent_worker, "_preview_ret", None) is not None,
         )
 
         return _code == QDialog.DialogCode.Accepted
+
+    def redraw_knot_lines(self) -> None:
+
+        for line in self.knot_lines:
+            try:
+                pw.removeItem(line)
+
+            except (AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+        self.knot_lines.clear()
+
+        pen_k = pg.mkPen("#1a9f3c", width=1.8)
+
+        mode = self.cb_x_main.currentText()
+
+        sk_lines = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.sk), dtype=np.float64).ravel()
+
+        for sx in sk_lines:
+            il = pg.InfiniteLine(self.get_xvet_xv(sx, mode), angle=90, pen=pen_k)
+
+            pw.addItem(il)
+
+            self.knot_lines.append(il)
+
+    def _apply_manual_spectrum_plot_range(self) -> None:
+        _smart_init_apply_plot_range(
+            pw, self._study_lambda_window_nm, self.cb_x_main.currentIndex(),
+            getattr(self.parent_worker, "smart_preview_sk_arr", self.sk), self.lam_m, self.y_exp,
+            self.state.current_t_th,
+        )
+
+    def refresh_nk_plots_aux(self, lam_nk: np.ndarray, n_lam: np.ndarray, k_lam: np.ndarray) -> None:
+        _smart_init_refresh_nk_aux(
+            curve_n, curve_pk, main_vb, p_extra,
+            self._study_lambda_window_nm, lam_nk, n_lam, k_lam,
+        )
+
+    def refresh_nk_plots_mon(self, lam_u, n_lam_u, k_lam_u) -> None:
+
+        self.mon.update_indices(lam_u, n_lam_u, k_lam_u, self.state.preview_d_nm)
+
+    def refresh_stats(self, dv: float, rm: float) -> None:
+
+        self.state.current_rmse = float(rm)
+
+        rmse_lbl = "RMSE"
+
+        if self.cfg.data_type == DataType.BOTH and float(self.cfg.weight_t) > 0.0 and float(self.cfg.weight_r) > 0.0:
+            rmse_lbl = "RMSE (sqrt(MSE) objective T+R, as in first optimization cost)"
+
+        self.lbl_stats.setText(_format_smart_init_status_text(self.state.k_n, dv, rmse_lbl, rm, self.state.best_rmse))
+
+    def update_main_x_axes(self) -> None:
+
+        mode = self.cb_x_main.currentIndex()
+
+        x_L = self.lam_m
+
+        x_s = 1.0 / np.maximum(self.lam_m, 1e-30)
+
+        x_s2 = x_s**2
+
+        cur_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+
+        k_L = 1.0 / np.maximum(cur_sk, 1e-30)
+
+        k_s = cur_sk
+
+        k_s2 = cur_sk**2
+
+        x_vals = [x_L, x_s, x_s2][mode]
+
+        k_vals = [k_L, k_s, k_s2][mode]
+
+        lbl = ["lambda (nm)", "sigma (nm?1)", "sigma2 = 1/lambda2 (nm?2)"][mode]
+
+        pw.setLabel("bottom", lbl)
+
+        o = np.argsort(x_vals)
+
+        curve_exp.setData(x_vals[o], self.y_exp[o])
+
+        curve_theo.setData(x_vals[o], self.state.current_t_th[o])
+
+        knot_t = _interp_t_at_lam_knots(self.lam_m, self.state.current_t_th, cur_sk)
+
+        knot_markers.setData(k_vals, knot_t)
+
+        for j, il in enumerate(self.knot_lines):
+            if j < len(k_vals):
+                il.setPos(k_vals[j])
+
+        self._apply_manual_spectrum_plot_rangerange()
+
+    def rebuild_knot_ui(self, new_kn: int) -> None:
+
+        self.state.k_n = new_kn
+
+        # Vidage du layout actuel
+
+        while self.knot_h.count():
+            item = self.knot_h.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+
+        current_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+        sig2_sorted_loc = np.sort(current_sk**2)
+
+        self.redraw_knot_lineslines()
+
+        _build_smart_init_knot_columns(
+            self.state.k_n, self.knot_h, sig2_sorted_loc, self.s2_lo_f, self._stretch_sig,
+            lbl_lam_cols, lbl_sig_cols, lbl_n_cols, lbl_L_cols,
+            n_btn_pairs, L_btn_pairs, n_auto_btns, L_auto_btns,
+        )
+
+        # Rewire +/- / auto buttons for the current k_n sigma knots
+
+        current_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+
+        sig2_sorted_loc = np.sort(current_sk**2)
+
+        sig_sort_idx_loc = np.argsort(current_sk)
+
+        # Rewire events
+
+        for j in range(self.state.k_n):
+            oi = int(sig_sort_idx_loc[j])
+
+            bm_n, bp_n = n_btn_pairs[j]
+
+            bm_L, bp_L = L_btn_pairs[j]
+
+            self.wire_hold_buttonutton(bm_n, oi, -1, is_ln_k=False)
+
+            self.wire_hold_buttonutton(bp_n, oi, +1, is_ln_k=False)
+
+            self.wire_hold_buttonutton(bm_L, oi, -1, is_ln_k=True)
+
+            self.wire_hold_buttonutton(bp_L, oi, +1, is_ln_k=True)
+
+            def _run_n_auto(*_args, row_index=oi) -> None:
+                self.run_auto_auto(row_index, False)
+
+            n_auto_btns[j].clicked.connect(_run_n_auto)
+
+            def _run_l_auto(*_args, row_index=oi) -> None:
+                self.run_auto_auto(row_index, True)
+
+            L_auto_btns[j].clicked.connect(_run_l_auto)
+
+        self.sync_knot_labelsabels()
+
+        for _ce in curve_editor_holder:
+            try:
+                _ce.refresh_plots()
+
+            except (AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def sync_knot_labels(self) -> None:
+
+        cur_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+
+        cur_sort_idx = np.argsort(cur_sk)
+
+        cur_kn = int(cur_sk.size)
+
+        for j in range(cur_kn):
+            oi = int(cur_sort_idx[j])
+
+            lam_v = 1.0 / max(float(cur_sk[oi]), 1e-30)
+
+            lbl_lam_cols[j].setText(f"{lam_v:.1f} nm")
+
+            lbl_sig_cols[j].setText(f"{float(cur_sk[oi]):.5f}")
+
+            lbl_n_cols[j].setText(f"{float(self.state.n_phys[oi]):.4f}")
+
+            lbl_L_cols[j].setText(f"{float(self.state.L_nodes[oi]):.4f}")
+
+    def sync_d_slider_label(self) -> None:
+
+        self.lbl_d_slider.setText(f"{self.state.preview_d_nm:.2f} nm   [d min={self.d_lo_nm:.1f}, d max={self.d_hi_nm:.1f}]")
+
+    def set_slider_from_preview_d(self) -> None:
+
+        self.slider_d.blockSignals(True)
+
+        self.slider_d.setValue(self._slider_from_drom_d(self.state.preview_d_nm))
+
+        self.slider_d.blockSignals(False)
+
+        self.sync_d_slider_labellabel()
+
+    def _set_n_knot_curve(self, i: int, v: float) -> None:
+
+        nn = np.asarray(self.state.n_phys, dtype=np.float64).copy()
+
+        nn[int(i)] = float(np.clip(v, N_MIN_LIMIT, N_MAX_LIMIT))
+
+        self.state.n_phys = nn
+
+    def _set_L_knot_curve(self, i: int, v: float) -> None:
+
+        LL = np.asarray(self.state.L_nodes, dtype=np.float64).copy()
+
+        LL[int(i)] = float(np.clip(v, self.L_lo_g, self.L_hi_g))
+
+        self.state.L_nodes = LL
+
+    def do_recalc(self) -> None:
+        _cbs_recalc = {
+            "update_main_x_axes": self.update_main_x_axes,
+            "sync_knot_labels": self.sync_knot_labels,
+            "refresh_stats": self.refresh_stats,
+            "refresh_nk_plots_aux": self.refresh_nk_plots_aux,
+            "refresh_nk_plots_mon": self.refresh_nk_plots_mon,
+        }
+        self.parent_worker._execute_smart_init_do_recalc(
+            self.state, self.cfg, self.grids, self._relax_si_mono, self.sk_arr,
+            curve_editor_holder, _cbs_recalc,
+        )
+
+    def _place_nk_editor(self) -> None:
+
+        try:
+            fr = self.dlg.frameGeometry()
+
+            self._nk_curve_editor.move(
+                max(24, fr.left() - self._nk_curve_editor.width() - 20),
+                fr.top() + 32,
+            )
+
+        except (AttributeError, RuntimeError):
+            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+
+    def run_auto(self, row: int, is_ln_k: bool) -> None:
+        self.state.sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+        err = self.parent_worker._execute_smart_init_run_auto(self.cfg, row, is_ln_k, self.L_lo_g, self.L_hi_g, self._relax_si_mono, self.state)
+        if err:
+            QMessageBox.warning(self.dlg, "Smart Init  auto", f"run auto failed: {err}")
+            return
+        self.set_slider_from_preview_diew_d()
+        self.do_recalcecalc()
+
+    def on_slider_d_changed(self, _iv: int) -> None:
+
+        self.state.preview_d_nm = self._d_from_sliderlider(self.slider_d.value())
+
+        self.sync_d_slider_labellabel()
+
+        self.do_recalcecalc()
+
+    def bump_n_scaled(self, row: int, direction: int, mult: float) -> None:
+
+        step = self.rel_step * float(mult)
+
+        f = 1.0 + float(direction) * step
+
+        self.state.n_phys[row] = float(np.clip(self.state.n_phys[row] * f, N_MIN_LIMIT, N_MAX_LIMIT))
+
+        self.do_recalcecalc()
+
+    def bump_L_scaled(self, row: int, direction: int, mult: float) -> None:
+
+        step = self.rel_step * float(mult)
+
+        f = 1.0 + float(direction) * step
+
+        self.state.L_nodes[row] = float(np.clip(self.state.L_nodes[row] * f, self.L_lo_g, self.L_hi_g))
+
+        self.do_recalcecalc()
+
+    def wire_hold_button(self, btn, row, direction, *, is_ln_k=False) -> None:
+        _smart_init_wire_hold_button(
+            btn, row, direction, is_ln_k=is_ln_k,
+            parent_dlg=self.dlg, bump_n_fn=self.bump_n_scaled, bump_L_fn=self.bump_L_scaled,
+        )
+
+    def recall_best(self) -> None:
+        self.state.sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+        err = self.parent_worker._execute_smart_init_recall_best(self.state)
+        if err:
+            QMessageBox.information(self.dlg, "Smart Init", err)
+            return
+        self.do_recalcecalc()
+
+    def update_hint_text(self) -> None:
+
+        # Help text: same K as worker after Continue (avoids claiming ?12 knots? for a 5 ?m file).
+
+        lam_h = np.asarray(self.cfg.lam_nm, dtype=np.float64).ravel()
+
+        k_h = int(
+            canonical_spline_sigma_knots(
+                float(np.nanmin(lam_h)),
+                float(np.nanmax(lam_h)),
+                **_canonical_knots_min_lambda_kw(self.cfg),
+            ).size
+        )
+
+        n_h = max(1, k_h - 1)
+
+        self.lbl_row_hint.setText(
+            f" Continue: fixed mesh {k_h} sigma knots, {n_h} segments between knots "
+            "(canonical grid [lambda_min, lambda_max]); local refinement; knots and RMSE logged in CERTUS."
+        )
+
+    def on_copy(self) -> None:
+
+        cur_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
+
+        lines = [f"RMSE: {self.state.current_rmse:.8f}", f"d: {self.state.preview_d_nm:.6f} nm", "Nodes (sigma, n, ln k):"]
+
+        for idx in np.argsort(cur_sk):
+            lines.append(f"  {cur_sk[idx]:.8e} | {self.state.n_phys[idx]:.6f} | {self.state.L_nodes[idx]:.6f}")
+
+        QApplication.clipboard().setText("\n".join(lines))
+
+        self.btn_copy.setText("Copied!")
+
+        QTimer.singleShot(1500, lambda: self.btn_copy.setText("Copy to clipboard"))
+
+    def _refresh_knot_lines_and_ui(self) -> None:
+        for line in self.knot_lines:
+            try:
+                pw.removeItem(line)
+            except (AttributeError, RuntimeError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        self.knot_lines.clear()
+
+        pen_k = pg.mkPen("#1a9f3c", width=1.8)
+        mode = self.cb_x_main.currentText()
+        for sx in self.state.sk:
+            il = pg.InfiniteLine(self.get_xvet_xv(sx, mode), angle=90, pen=pen_k)
+            pw.addItem(il)
+            self.knot_lines.append(il)
+
+        self.rebuild_knot_uiot_ui(int(len(self.state.sk)))
+        self.set_slider_from_preview_diew_d()
+        self.do_recalcecalc()
+
+    def _serialize_smart_init_index_config(self) -> dict[str, Any]:
+        cur_sk = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.state.sk), dtype=np.float64).ravel()
+        cur_n = np.asarray(self.state.n_phys, dtype=np.float64).ravel()
+        cur_L = np.asarray(self.state.L_nodes, dtype=np.float64).ravel()
+        return {
+            "schema": "certus.index_spline.smart_init.index_config.v1",
+            "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "x_axis_mode": str(self.cb_x_main.currentText()),
+            "d_nm": float(self.state.preview_d_nm),
+            "sigma_knots": [float(v) for v in cur_sk.tolist()],
+            "n_nodes_physical": [float(v) for v in cur_n.tolist()],
+            "L_nodes": [float(v) for v in cur_L.tolist()],
+        }
+
+    def on_save_index_config(self) -> None:
+        ts = time.strftime("%Y%m%d_%H%M%S")
+        default_path = str(Path.cwd() / f"smart_init_index_config_{ts}.json")
+        path, _ = QFileDialog.getSaveFileName(
+            self.dlg,
+            "Save index config (Smart Init)",
+            default_path,
+            "JSON Files (*.json);;All Files (*.*)",
+        )
+        if not path:
+            return
+        if not path.lower().endswith(".json"):
+            path += ".json"
+
+        payload_cfg = self._serialize_smart_init_index_configonfig()
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(payload_cfg, f, indent=2)
+        except (OSError, TypeError, ValueError) as exc:
+            QMessageBox.warning(self.dlg, "Save index config", f"Save failed: {exc}")
+            return
+
+        self.btn_save_cfg.setText("Saved")
+        QTimer.singleShot(1200, lambda: self.btn_save_cfg.setText("Save As"))
+
+    def on_load_index_config(self) -> None:
+        self.parent_worker._load_smart_init_index_config(
+            self.state, self.dlg, self.L_lo_g, self.L_hi_g, self.d_lo_nm, self.d_hi_nm,
+            self._refresh_knot_lines_and_ui, self.btn_load_cfg,
+        )
+
+    def apply_manual_preset_from_projector(self, projector, feedback_btn, idle_label) -> None:
+        self.parent_worker._apply_smart_init_preset(
+            self.state, self.cfg, projector, self._relax_si_mono,
+            self._refresh_knot_lines_and_ui, feedback_btn, idle_label,
+        )
+
+    def on_apply_material_preset(self) -> None:
+
+        pid = str(self.cb_material_preset.currentData() or "nb2o5")
+
+        dh = float(self.state.preview_d_nm)
+
+        def _run(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+
+            return project_manual_material_preset(pid, ts, d_nm_hint=dh)
+
+        self.apply_manual_preset_from_projectorector(_run, self.btn_apply_material, "Apply preset")
+
+    def _auto_try_three_material_presets(self) -> None:
+        """Compares Nb2O? / SiO2 / Ta2O? on the current sigma grid and applies the best one (mini-opt d)."""
+        target_sk = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr), dtype=np.float64).ravel()
+        if int(target_sk.size) < 2:
+            return
+
+        res = self.parent_worker._pick_best_smart_init_material_preset(self.cfg, target_sk, self.state.preview_d_nm, bool(self._relax_si_mono))
+        if res is None:
+            return
+        winner, _, d_w = res
+
+        self.state.preview_d_nm = float(d_w)
+        iw = self.cb_material_preset.findData(winner)
+        if iw >= 0:
+            self.cb_material_preset.blockSignals(True)
+            try:
+                self.cb_material_preset.setCurrentIndex(int(iw))
+            finally:
+                self.cb_material_preset.blockSignals(False)
+
+        def _proj(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
+            return project_manual_material_preset(winner, ts, d_nm_hint=float(self.state.preview_d_nm))
+
+        self.apply_manual_preset_from_projectorector(_proj, None, "")
+
+    def on_autofind(self) -> None:
+        _cbs = {
+            "rebuild_knot_ui": self.rebuild_knot_ui,
+            "update_hint_text": self.update_hint_text,
+            "set_slider_from_preview_d": self.set_slider_from_preview_d,
+            "do_recalc": self.do_recalc,
+            "refresh_stats": self.refresh_stats,
+        }
+        self.parent_worker._run_smart_init_autofind(
+            self.state, self.cfg, self.sk_arr, self.dlg, self.btn_autofind, self.autofind_prog, _cbs,
+        )
+
+    def on_keep(self) -> None:
+        if self._on_keep_called[0]:
+            logger.debug("Smart Init on_keep: guard active, ignoring reentrant call")
+            return
+        self._on_keep_called[0] = True
+        try:
+            ui_ctx = {
+                "chk_si_deep": self.chk_si_deep,
+                "chk_si_two_phase": self.chk_si_two_phase,
+                "relax_si_mono": self._relax_si_mono,
+            }
+            self.parent_worker._on_smart_init_keep(self.dlg, self.cfg, self.state, ui_ctx)
+        except (ValueError, TypeError, RuntimeError, AttributeError, KeyError):
+            logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")
+            self._on_keep_called[0] = False
+
+class _SmartInitDialogMixin:
+    """Mixin extracting _show_smart_init_preview_dialog logic."""
+
+    def _show_smart_init_preview_dialog(self, payload) -> bool:
+        manager = SmartInitPreviewManager(self, payload)
+        return manager.dlg.exec() == 1  # QDialog.DialogCode.Accepted
 
     def _build_smart_init_aux_dialog(
         self, parent_dlg: QDialog

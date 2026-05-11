@@ -112,6 +112,66 @@ class REUserStopRequested(Exception):
     """Stop button requests cooperative exit (best TRF state already cached)."""
 
 @dataclass(frozen=True)
+@dataclass
+class REMseContext:
+    _alpha_slot: Any
+    _lref_arr: Any
+    _re_env_on_wls: Any
+    _re_state: Any
+    ep0: Any
+    is_H: Any
+    is_L: Any
+    lambda_ref: Any
+    n_layers_count: Any
+    n_layers_nominal: Any
+    n_ref_nom_per_layer: Any
+    n_sub_nominal: Any
+    oblique_config_meta: Any
+    re_env_s: Any
+    var_idx: Any
+    wls: Any
+
+
+
+@dataclass
+class REPhase2Context:
+    _Phi_sub: Any
+    _cb2_ref: Any
+    _compute_qwot_rmse: Any
+    _emit_re_prog: Any
+    _emit_re_spectrum_live: Any
+    _fd_1s: Any
+    _fd_nw: Any
+    _maxiter_p2b: Any
+    _mse_grad_accumulate_ep: Any
+    _n_joint_fd: Any
+    _n_tab_sub: Any
+    _nk: Any
+    _p2_ki_slot: Any
+    _p2_trf_log_tag: Any
+    _p2fd_cu: Any
+    _p2fd_lam: Any
+    _p2fd_spl: Any
+    _pct_p2a: Any
+    _pct_p2b: Any
+    _prefit_max: Any
+    _re_state: Any
+    _rmse_combined: Any
+    _t_p2: Any
+    _use_sub_c3: Any
+    i0: Any
+    i_cu: Any
+    i_lam: Any
+    n_layers_count: Any
+    n_sp: Any
+    pl: Any
+    re_env_s: Any
+    wls: Any
+    wt_spectral: Any
+
+
+
+@dataclass
 class REWorkerRequest:
     """DTO boundary for RE worker payload."""
 
@@ -1351,406 +1411,50 @@ class REWorker(QThread):
 
             _p2_trf_log_tag = ["phase 2b joint"]
 
+            ctx_p2 = REPhase2Context(
+                _Phi_sub=_Phi_sub,
+                _cb2_ref=_cb2_ref,
+                _compute_qwot_rmse=_compute_qwot_rmse,
+                _emit_re_prog=_emit_re_prog,
+                _emit_re_spectrum_live=_emit_re_spectrum_live,
+                _fd_1s=_fd_1s,
+                _fd_nw=_fd_nw,
+                _maxiter_p2b=_maxiter_p2b,
+                _mse_grad_accumulate_ep=_mse_grad_accumulate_ep,
+                _n_joint_fd=_n_joint_fd,
+                _n_tab_sub=_n_tab_sub,
+                _nk=_nk,
+                _p2_ki_slot=_p2_ki_slot,
+                _p2_trf_log_tag=_p2_trf_log_tag,
+                _p2fd_cu=_p2fd_cu,
+                _p2fd_lam=_p2fd_lam,
+                _p2fd_spl=_p2fd_spl,
+                _pct_p2a=_pct_p2a,
+                _pct_p2b=_pct_p2b,
+                _prefit_max=_prefit_max,
+                _re_state=_re_state,
+                _rmse_combined=_rmse_combined,
+                _t_p2=_t_p2,
+                _use_sub_c3=_use_sub_c3,
+                i0=i0,
+                i_cu=i_cu,
+                i_lam=i_lam,
+                n_layers_count=n_layers_count,
+                n_sp=n_sp,
+                pl=pl,
+                re_env_s=re_env_s,
+                wls=wls,
+                wt_spectral=wt_spectral,
+            )
+
             def _eval_both_p2(xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
-
-                if self._stop:
-                    raise REUserStopRequested()
-
-                _c = _cb2_ref[0]
-
-                if _c is None:
-                    return
-
-                # Phase 4: aperture knot values change MSE without changing xv  invalidate cache.
-
-                _ph4_ap_now = None
-
-                if _re_state.get("is_phase4"):
-                    _kap = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    _ph4_ap_now = tuple(float(x) for x in _kap)
-
-                if _c["x"] is not None and np.array_equal(xv, _c["x"]):
-                    if _ph4_ap_now is None:
-                        return
-
-                    if _c.get("_ph4_ap_snap") == _ph4_ap_now:
-                        return
-
-                # S2: Invalidate Tikhonov weights when lam2 changes by >1 nm.
-
-                cur_lam2 = float(xv[i_lam])
-
-                if _c["tk_w_c"] is None or abs(cur_lam2 - (_c["tk_lam2"] or 0.0)) > 1.0:
-                    _c["tk_w_c"] = re_compute_tikhonov_weights(re_knots_wavelengths(cur_lam2), wls)
-
-                    _c["tk_lam2"] = cur_lam2
-
-                tk_w_c = _c["tk_w_c"]
-
-                _c["i"] += 1
-
-                ep_x = np.asarray(xv[:n_layers_count], dtype=np.float64, copy=False)
-
-                dh4 = xv[i0 : i0 + _nk].copy()
-
-                dl4 = xv[i0 + _nk : i_lam].copy()
-
-                lam2 = float(xv[i_lam])
-
-                th4 = np.asarray(xv[i_cu : i_cu + 3], dtype=np.float64).ravel() if _use_sub_c3 else None
-
-                b_mat_c = re_compute_spline_basis_matrix(re_knots_wavelengths(lam2), wls)
-
-                env_c = re_envelope_max_delta_n(wls, scale=re_env_s)
-
-                if _use_sub_c3:
-                    cor_spl = (
-                        "spline_cached_sub3",
-                        dh4,
-                        dl4,
-                        lam2,
-                        b_mat_c,
-                        env_c,
-                        tk_w_c,
-                        float(th4[0]),
-                        float(th4[1]),
-                        float(th4[2]),
-                    )
-
-                else:
-                    cor_spl = ("spline_cached", dh4, dl4, lam2, b_mat_c, env_c, tk_w_c)
-
-                mse, _, r_c, j_ep = _mse_grad_accumulate_ep(ep_x, wt_spectral, True, cor_spl, return_residuals=True)
-
-                if _c["i"] == 1:
-                    _n_fd = (_n_joint_fd) if _fd_1s else (_n_joint_fd * 2)
-
-                    logging.info(
-                        "RE phase 2b  1st TRF eval: %d thick. analytic, %d FD residual blocks (%s)  FD_threads=%d",
-                        n_layers_count,
-                        _n_fd,
-                        "forward" if _fd_1s else "centered",
-                        _fd_nw,
-                    )
-
-                J_var = np.zeros((len(r_c), _n_joint_fd), dtype=np.float64)
-
-                xv64 = np.asarray(xv, dtype=np.float64, copy=True)
-
-                def _cor_sub3(_dh, _dl, _lam, _th) -> tuple:
-
-                    return (
-                        "spline_cached_sub3",
-                        _dh,
-                        _dl,
-                        float(_lam),
-                        b_mat_c,
-                        env_c,
-                        tk_w_c,
-                        float(_th[0]),
-                        float(_th[1]),
-                        float(_th[2]),
-                    )
-
-                def _p2_fd_j_res(j: int) -> tuple[int, np.ndarray]:
-
-                    if _use_sub_c3:
-                        if j < 2 * _nk:
-                            dh_p = xv64[i0 : i0 + _nk].copy()
-
-                            dl_p = xv64[i0 + _nk : i_lam].copy()
-
-                            if j < _nk:
-                                dh_p[j] += _p2fd_spl
-
-                            else:
-                                dl_p[j - _nk] += _p2fd_spl
-
-                            cor_p = _cor_sub3(dh_p, dl_p, float(xv64[i_lam]), th4)
-
-                            h = _p2fd_spl
-
-                        elif j == 2 * _nk:
-                            lam_p = float(xv64[i_lam]) + _p2fd_lam
-
-                            cor_p = (
-                                "spline_sub3",
-                                dh4,
-                                dl4,
-                                lam_p,
-                                tk_w_c,
-                                float(th4[0]),
-                                float(th4[1]),
-                                float(th4[2]),
-                            )
-
-                            h = _p2fd_lam
-
-                        else:
-                            k = j - n_sp
-
-                            thp = np.array(th4, dtype=np.float64, copy=True)
-
-                            thp[k] += _p2fd_cu
-
-                            cor_p = _cor_sub3(dh4, dl4, lam2, thp)
-
-                            h = _p2fd_cu
-
-                    elif j < 2 * _nk:
-                        dh_p = xv64[i0 : i0 + _nk].copy()
-
-                        dl_p = xv64[i0 + _nk : i_lam].copy()
-
-                        if j < _nk:
-                            dh_p[j] += _p2fd_spl
-
-                        else:
-                            dl_p[j - _nk] += _p2fd_spl
-
-                        cor_p = ("spline_cached", dh_p, dl_p, float(xv64[i_lam]), b_mat_c, env_c, tk_w_c)
-
-                        h = _p2fd_spl
-
-                    else:
-                        lam_p = float(xv64[i_lam]) + _p2fd_lam
-
-                        cor_p = ("spline", dh4, dl4, lam_p, tk_w_c)
-
-                        h = _p2fd_lam
-
-                    r_p = _mse_grad_accumulate_ep(ep_x, wt_spectral, False, cor_p, return_residuals=True)[2]
-
-                    if _fd_1s:
-                        return j, (r_p - r_c) / h
-
-                    if _use_sub_c3:
-                        if j < 2 * _nk:
-                            dh_m = xv64[i0 : i0 + _nk].copy()
-
-                            dl_m = xv64[i0 + _nk : i_lam].copy()
-
-                            if j < _nk:
-                                dh_m[j] -= _p2fd_spl
-
-                            else:
-                                dl_m[j - _nk] -= _p2fd_spl
-
-                            cor_m = _cor_sub3(dh_m, dl_m, float(xv64[i_lam]), th4)
-
-                        elif j == 2 * _nk:
-                            lam_m = float(xv64[i_lam]) - _p2fd_lam
-
-                            cor_m = (
-                                "spline_sub3",
-                                dh4,
-                                dl4,
-                                lam_m,
-                                tk_w_c,
-                                float(th4[0]),
-                                float(th4[1]),
-                                float(th4[2]),
-                            )
-
-                        else:
-                            k = j - n_sp
-
-                            thm = np.array(th4, dtype=np.float64, copy=True)
-
-                            thm[k] -= _p2fd_cu
-
-                            cor_m = _cor_sub3(dh4, dl4, lam2, thm)
-
-                    elif j < 2 * _nk:
-                        dh_m = xv64[i0 : i0 + _nk].copy()
-
-                        dl_m = xv64[i0 + _nk : i_lam].copy()
-
-                        if j < _nk:
-                            dh_m[j] -= _p2fd_spl
-
-                        else:
-                            dl_m[j - _nk] -= _p2fd_spl
-
-                        cor_m = ("spline_cached", dh_m, dl_m, float(xv64[i_lam]), b_mat_c, env_c, tk_w_c)
-
-                    else:
-                        lam_m = float(xv64[i_lam]) - _p2fd_lam
-
-                        cor_m = ("spline", dh4, dl4, lam_m, tk_w_c)
-
-                    r_m = _mse_grad_accumulate_ep(ep_x, wt_spectral, False, cor_m, return_residuals=True)[2]
-
-                    return j, (r_p - r_m) / (2.0 * h)
-
-                _nw_j = min(_fd_nw, _n_joint_fd)
-
-                _active_js = []
-
-                _act_h = bool(self.cfg.get("re_refine_h", True))
-
-                _act_l = bool(self.cfg.get("re_refine_l", True))
-
-                for j in range(_n_joint_fd):
-                    if j < _nk and not _act_h:
-                        continue
-
-                    if _nk <= j < 2 * _nk and not _act_l:
-                        continue
-
-                    if j == 2 * _nk and not (_act_h or _act_l):
-                        continue
-
-                    _active_js.append(j)
-
-                if _nw_j <= 1:
-                    for j in _active_js:
-                        jj, j_col = _p2_fd_j_res(j)
-
-                        J_var[:, jj] = j_col
-
-                else:
-                    _ex_p2 = _c.get("fd_executor")
-
-                    if _ex_p2 is None:
-                        _ex_p2 = ThreadPoolExecutor(max_workers=_nw_j)
-
-                        _c["fd_executor"] = _ex_p2
-
-                    _f_p2 = [_ex_p2.submit(_p2_fd_j_res, j) for j in _active_js]
-
-                    for _fu in as_completed(_f_p2):
-                        jj, j_col = _fu.result()
-
-                        J_var[:, jj] = j_col
-
-                if _use_sub_c3:
-                    J_spl = J_var[:, :n_sp]
-
-                    J_cu = J_var[:, n_sp : n_sp + 3]
-
-                    J_top = np.hstack([j_ep, J_spl, J_cu])
-
-                    sw_b = float(
-                        self.cfg.get(
-                            "re_sub_cauchy_barrier_sqrt_w",
-                            RE_SUB_CAUCHY_BARRIER_SQRT_W,
-                        )
-                    )
-
-                    r_b, J_b = re_substrate_cauchy_barrier_residuals_jac(
-                        th4,
-                        _Phi_sub,
-                        _n_tab_sub,
-                        sqrt_w=sw_b,
-                    )
-
-                    J_bot = np.hstack(
-                        [
-                            np.zeros(
-                                (len(r_b), n_layers_count + n_sp),
-                                dtype=np.float64,
-                            ),
-                            J_b,
-                        ]
-                    )
-
-                    _c["res"] = np.concatenate((r_c, r_b))
-
-                    _c["jac"] = np.vstack([J_top, J_bot])
-
-                    _c["barrier_norm"] = float(np.linalg.norm(r_b))
-
-                else:
-                    _c["res"] = r_c
-
-                    _c["jac"] = np.hstack([j_ep, J_var[:, :n_sp]])
-
-                    _c["barrier_norm"] = None
-
-                _c["x"] = xv.copy()
-
-                _c["mse"] = float(mse)
-
-                _c["_ph4_ap_snap"] = _ph4_ap_now
-
-                now = time.perf_counter()
-
-                if _c["i"] == 1 or (now - _c["last_emit"]) >= emit_interval:
-                    _c["last_emit"] = now
-
-                    rs2 = float(np.sqrt(max(_c["mse"], 0.0)))
-
-                    rq2 = _compute_qwot_rmse(ep_x, cor_spl)
-
-                    rmse_cur = _rmse_combined(rs2, rq2)
-
-                    if _p2_trf_log_tag[0] == "phase 4 finale":
-                        _ap_k = np.asarray(_re_state["re_aperture_knots"], dtype=float).ravel()[
-                            : int(RE_P4_BEAM_N_KNOTS)
-                        ]
-
-                        _lam_k = np.asarray(_re_state.get("re_p4_beam_knots_lam_nm", []), dtype=float).ravel()[
-                            : _ap_k.size
-                        ]
-
-                        _pairs = ", ".join(
-                            f"(lambda={lk:.0f}nm->{ak:.2f})" for lk, ak in zip(_lam_k, _ap_k, strict=False)
-                        )
-
-                        ap_sfx = f" | ap=[{_pairs}]"
-
-                    else:
-                        ap_sfx = ""
-
-                    _bn = _c.get("barrier_norm")
-
-                    _bar_sfx = f" | ||barrier||={float(_bn):.4g}" if _bn is not None else ""
-
-                    _best_prev = _c.get("best_rmse_combined")
-
-                    if _best_prev is None or rmse_cur < float(_best_prev):
-                        _c["best_rmse_combined"] = float(rmse_cur)
-
-                    rmse_best_so_far = float(_c.get("best_rmse_combined", rmse_cur))
-
-                    _trf_rms_p2 = _re_trf_residual_rms(_c["res"])
-
-                    msg = (
-                        f"RE [{_p2_trf_log_tag[0]}] TRF it ~{_c['i']}  "
-                        f"RMSE_facade(curr)={rmse_cur:.6f} | RMSE_facade(best)={rmse_best_so_far:.6f} "
-                        f"(sqrt(sp2+alpha·QWOT2); hors Tikhonov/pen H-L dans r) | "
-                        f"TRF_RMS(res)={_trf_rms_p2:.6g}{ap_sfx}{_bar_sfx}  {now - _t_p2:.1f}s"
-                    )
-
-                    logging.info(msg)
-
-                    _intra_2b = min(
-                        0.92,
-                        float(_c["i"]) / float(max(_maxiter_p2b, 1)),
-                    )
-
-                    _emit_re_prog(
-                        _pct_p2b(pl, _p2_ki_slot[0], _intra_2b),
-                        msg,
-                    )
-
-                    _emit_re_spectrum_live(ep_x, _c["i"], correc=cor_spl, last_mse=_c["mse"], force=False)
+                return self._compute_eval_both_p2(ctx_p2, xv, emit_interval)
 
             def _fun_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
-
-                _eval_both_p2(xv, emit_interval=emit_interval)
-
-                return _cb2_ref[0]["res"]
+                return self._compute_fun_res_p2(ctx_p2, xv, emit_interval)
 
             def _jac_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
-
-                _eval_both_p2(xv, emit_interval=emit_interval)
-
-                return _cb2_ref[0]["jac"]
+                return self._compute_jac_res_p2(ctx_p2, xv, emit_interval)
 
             L._p2_ctx = {
                 "_nk": _nk,
@@ -1832,172 +1536,13 @@ class REWorker(QThread):
                         _ki=_ki,
                         _t_pf=_t_pf,
                     ) -> tuple | None:
-
-                        if self._stop:
-                            raise REUserStopRequested()
-
-                        if _cb2a["x"] is not None and np.array_equal(x_sp, _cb2a["x"]):
-                            return
-
-                        # S2: Invalidate Tikhonov weights when lam2 changes by >1 nm.
-
-                        cur_lam2 = float(x_sp[2 * _nk])
-
-                        if _cb2a["tk_w_c"] is None or abs(cur_lam2 - (_cb2a["tk_lam2"] or 0.0)) > 1.0:
-                            _cb2a["tk_w_c"] = re_compute_tikhonov_weights(re_knots_wavelengths(cur_lam2), wls)
-
-                            _cb2a["tk_lam2"] = cur_lam2
-
-                        tk_w_c = _cb2a["tk_w_c"]
-
-                        _cb2a["i"] += 1
-
-                        dh = np.asarray(x_sp[:_nk], dtype=np.float64, copy=False).reshape(_nk)
-
-                        dl = np.asarray(x_sp[_nk : 2 * _nk], dtype=np.float64, copy=False).reshape(_nk)
-
-                        lam_p = float(x_sp[2 * _nk])
-
-                        # Cache the B_matrix and envelope for the central point and the 10 FD perturbations (dh, dl)
-
-                        b_mat_c = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_p), wls)
-
-                        env_c = re_envelope_max_delta_n(wls, scale=re_env_s)
-
-                        cor_c = ("spline_cached", dh, dl, lam_p, b_mat_c, env_c, tk_w_c)
-
-                        mse, _, r_c, _ = _mse_grad_accumulate_ep(
-                            ep_p1, wt_spectral, False, cor_c, return_residuals=True
-                        )
-
-                        if _cb2a["i"] == 1:
-                            _n_fd = n_sp if _fd_1s else (n_sp * 2)
-
-                            logging.info(
-                                "RE phase 2a  1st TRF eval: 0 thick. analytic, %d FD residual blocks "
-                                "(%s)  FD_threads=%d",
-                                _n_fd,
-                                "forward" if _fd_1s else "centered",
-                                _fd_nw,
-                            )
-
-                            _emit_re_prog(
-                                _pct_p2a(pl, _ki, 0.05),
-                                "RE phase 2a  first FD objective+grad eval (may take a few s)...",
-                            )
-
-                        J_sp = np.zeros((len(r_c), n_sp), dtype=np.float64)
-
-                        x_c = np.asarray(x_sp, dtype=np.float64, copy=True)
-
-                        def _pf_fd_j_res(j: int) -> tuple[int, np.ndarray]:
-
-                            hs = _p2fd_lam if j == 2 * _nk else _p2fd_spl
-
-                            xp = np.array(x_c, copy=True)
-
-                            xp[j] += hs
-
-                            dhp = xp[:_nk]
-
-                            dlp = xp[_nk : 2 * _nk]
-
-                            lamx = float(xp[2 * _nk])
-
-                            cor_p = (
-                                ("spline_cached", dhp, dlp, lamx, b_mat_c, env_c, tk_w_c)
-                                if j < 2 * _nk
-                                else ("spline", dhp, dlp, lamx, tk_w_c)
-                            )
-
-                            r_p = _mse_grad_accumulate_ep(ep_p1, wt_spectral, False, cor_p, return_residuals=True)[2]
-
-                            if _fd_1s:
-                                return j, (r_p - r_c) / hs
-
-                            xm = np.array(x_c, copy=True)
-
-                            xm[j] -= hs
-
-                            dhm = xm[:_nk]
-
-                            dlm = xm[_nk : 2 * _nk]
-
-                            lamm = float(xm[2 * _nk])
-
-                            cor_m = (
-                                ("spline_cached", dhm, dlm, lamm, b_mat_c, env_c, tk_w_c)
-                                if j < 2 * _nk
-                                else ("spline", dhm, dlm, lamm, tk_w_c)
-                            )
-
-                            r_m = _mse_grad_accumulate_ep(ep_p1, wt_spectral, False, cor_m, return_residuals=True)[2]
-
-                            return j, (r_p - r_m) / (2.0 * hs)
-
-                        _nw_sp = min(_fd_nw, n_sp)
-
-                        if _nw_sp <= 1:
-                            for j in range(n_sp):
-                                jj, j_col = _pf_fd_j_res(j)
-
-                                J_sp[:, jj] = j_col
-
-                        else:
-                            _ex_pf = _cb2a.get("fd_executor")
-
-                            if _ex_pf is None:
-                                _ex_pf = ThreadPoolExecutor(max_workers=_nw_sp)
-
-                                _cb2a["fd_executor"] = _ex_pf
-
-                            _f_pf = [_ex_pf.submit(_pf_fd_j_res, j) for j in range(n_sp)]
-
-                            for _fu in as_completed(_f_pf):
-                                jj, j_col = _fu.result()
-
-                                J_sp[:, jj] = j_col
-
-                        _cb2a["x"] = x_sp.copy()
-
-                        _cb2a["res"] = r_c
-
-                        _cb2a["jac"] = J_sp
-
-                        _cb2a["mse"] = float(mse)
-
-                        now = time.perf_counter()
-
-                        if _cb2a["i"] == 1 or (now - _cb2a["last_emit"]) >= 3.0:
-                            _cb2a["last_emit"] = now
-
-                            logging.info(
-                                "RE phase 2a  TRF iter ~%d (%.1fs since prefit start)",
-                                _cb2a["i"],
-                                now - _t_pf,
-                            )
-
-                            _intra_2a = min(
-                                0.92,
-                                float(_cb2a["i"]) / float(max(_prefit_max, 1)),
-                            )
-
-                            _emit_re_prog(
-                                _pct_p2a(pl, _ki, _intra_2a),
-                                f"RE phase 2a  iter {_cb2a['i']} TRF spline prefit...",
-                            )
+                        return self._compute_eval_both_p2a(ctx_p2, x_sp, _cb2a, ep_p1, _ki, _t_pf)
 
                     def _fun_res_p2a(x_sp: np.ndarray, _cb2a=_cb2a) -> Any:
-
-                        _eval_both_p2a(x_sp)
-
-                        return _cb2a["res"]
+                        return self._compute_fun_res_p2a(ctx_p2, x_sp, _cb2a)
 
                     def _jac_res_p2a(x_sp: np.ndarray, _cb2a=_cb2a) -> Any:
-
-                        _eval_both_p2a(x_sp)
-
-                        return _cb2a["jac"]
+                        return self._compute_jac_res_p2a(ctx_p2, x_sp, _cb2a)
 
                     logging.info(
                         "RE phase 2a  starting TRF (vars=%d, lambda₂[%.0f,%.0f] nm)",
@@ -2584,6 +2129,179 @@ class REWorker(QThread):
                             force=True,
                             rmse_override=float(_new_top_dto.rmse_combined),
                         )
+
+
+from dataclasses import dataclass, field
+from typing import Any, Callable
+import numpy as np
+import logging
+
+@dataclass
+class Phase4BeamContext:
+    wls: np.ndarray
+    re_env_s: float
+    use_sub_c3: bool
+    re_state: dict
+    nap: int
+    i_ap0: int
+    p4_fd_ap: float
+    bounds_p4: tuple
+    cb2_ref: list
+    best_res_dto: Any
+    results: list
+    rmse_final_milestone: list
+    
+    fun_res_p2: Callable
+    eval_both_p2: Callable
+    report_mse_spectral: Callable
+    compute_qwot_rmse: Callable
+    rmse_combined: Callable
+
+    def insert_result(
+        self,
+        ep_f: np.ndarray,
+        dh_v: np.ndarray,
+        dl_v: np.ndarray,
+        lam_v: float,
+        th_v: Any,
+        nfev_extra: int,
+        p4_label_suffix: str,
+        success: bool,
+    ) -> None:
+        from certus_core import re_compute_spline_basis_matrix, re_compute_tikhonov_weights, re_envelope_max_delta_n, re_knots_wavelengths
+        
+        b_mc = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_v), self.wls)
+        env_c = re_envelope_max_delta_n(self.wls, scale=self.re_env_s)
+        tk_mc = re_compute_tikhonov_weights(re_knots_wavelengths(lam_v), self.wls)
+
+        if self.use_sub_c3 and th_v is not None:
+            cor_p4 = (
+                "spline_cached_sub3",
+                dh_v,
+                dl_v,
+                lam_v,
+                b_mc,
+                env_c,
+                tk_mc,
+                float(th_v[0]),
+                float(th_v[1]),
+                float(th_v[2]),
+            )
+        else:
+            cor_p4 = (
+                "spline_cached",
+                dh_v,
+                dl_v,
+                lam_v,
+                b_mc,
+                env_c,
+                tk_mc,
+            )
+
+        rmse_p4_sp = float(np.sqrt(max(self.report_mse_spectral(ep_f, cor_p4), 0.0)))
+        rmse_qwot_p4 = self.compute_qwot_rmse(ep_f, cor_p4)
+        rmse_comb_p4 = self.rmse_combined(rmse_p4_sp, rmse_qwot_p4)
+
+        # Access constants locally or via imports since they are module level in certus_re_workers
+        from certus_core import RE_P4_BEAM_N_KNOTS, RE_RESULT_LABEL_WITH_DRIFT
+        
+        _ak4 = np.asarray(self.re_state["re_aperture_knots"], dtype=np.float64).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
+        _kn4 = np.asarray(self.re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
+
+        logging.info(
+            "RE phase 4 result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
+            "ap_deg(n knots)=%s | knots_lam_nm=%s | label=%s | "
+            "tune: re_envelope_scale re_qwot_penalty_weight alpha schedule",
+            rmse_comb_p4,
+            rmse_p4_sp,
+            rmse_qwot_p4,
+            np.array2string(_ak4, precision=2, separator=","),
+            np.array2string(_kn4, precision=2, separator=","),
+            p4_label_suffix,
+        )
+
+        from certus_re_workers import _re_p4_ap_band_intervals_str
+        logging.info(
+            "RE phase 4 plateaus (result explicit): %s",
+            _re_p4_ap_band_intervals_str(
+                _kn4,
+                _ak4,
+                float(np.min(self.wls)),
+                float(np.max(self.wls)),
+            ),
+        )
+
+        from certus_data import REPhase4Result
+        phase4_result = REPhase4Result(
+            label=RE_RESULT_LABEL_WITH_DRIFT + f" ({p4_label_suffix})",
+            ep=np.asarray(ep_f, dtype=np.float64).flatten(),
+            a=0.0,
+            b=0.0,
+            f=0.0,
+            re_dh_knots=np.asarray(dh_v, dtype=np.float64).flatten(),
+            re_dl_knots=np.asarray(dl_v, dtype=np.float64).flatten(),
+            re_knots_nm=np.asarray(re_knots_wavelengths(lam_v), dtype=np.float64).flatten(),
+            re_spline_lam_node2_nm=float(lam_v),
+            rmse=float(rmse_p4_sp),
+            rmse_qwot=float(rmse_qwot_p4),
+            rmse_combined=float(rmse_comb_p4),
+            nfev=int(self.best_res_dto.nfev) + int(nfev_extra),
+            success=bool(success),
+            nfev_phase1=int(self.best_res_dto.nfev_phase1),
+            nfev_phase2_prefit=int(self.best_res_dto.nfev_phase2_prefit),
+            re_p4_aperture_deg=float(np.mean(_ak4)),
+            re_p4_beam_ap_knots_nm=np.asarray(
+                self.re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64
+            ).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
+            re_p4_beam_ap_knots_deg=np.asarray(_ak4, dtype=np.float64).flatten(),
+            re_sub_cauchy_a0=float(th_v[0]) if (self.use_sub_c3 and th_v is not None) else None,
+            re_sub_cauchy_a1=float(th_v[1]) if (self.use_sub_c3 and th_v is not None) else None,
+            re_sub_cauchy_a2=float(th_v[2]) if (self.use_sub_c3 and th_v is not None) else None,
+        )
+        from certus_core import _prepend_result_dto
+        _prepend_result_dto(self.results, phase4_result)
+        self.rmse_final_milestone[0] = float(rmse_comb_p4)
+
+    def fun_res(self, xv) -> Any:
+        self.re_state["re_aperture_knots"][:] = xv[self.i_ap0 : self.i_ap0 + self.nap]
+        return self.fun_res_p2(xv[:self.i_ap0], emit_interval=8.0)
+
+    def jac_res(self, xv_full: np.ndarray) -> np.ndarray:
+        self.re_state["re_aperture_knots"][:] = xv_full[self.i_ap0 : self.i_ap0 + self.nap]
+        self.eval_both_p2(xv_full[:self.i_ap0], emit_interval=1.0e9)
+
+        r0 = np.asarray(self.cb2_ref[0]["res"], dtype=np.float64).copy()
+        j0 = np.asarray(self.cb2_ref[0]["jac"], dtype=np.float64).copy()
+        j_ap = np.zeros((r0.shape[0], self.nap), dtype=np.float64)
+
+        b_lo, b_hi = self.bounds_p4[0], self.bounds_p4[1]
+
+        for _k in range(self.nap):
+            _ik = self.i_ap0 + _k
+            _xk = float(xv_full[_ik])
+            _hi = float(b_hi[_ik])
+            _lo = float(b_lo[_ik])
+
+            _step = min(self.p4_fd_ap, _hi - _xk)
+            if _step < 1e-12:
+                _step = max(-self.p4_fd_ap, _lo - _xk)
+            if abs(_step) < 1e-15:
+                continue
+
+            xv_p = np.array(xv_full, dtype=np.float64, copy=True)
+            xv_p[_ik] = _xk + _step
+
+            self.re_state["re_aperture_knots"][:] = xv_p[self.i_ap0 : self.i_ap0 + self.nap]
+            self.eval_both_p2(xv_p[:self.i_ap0], emit_interval=1.0e9)
+
+            rk = np.asarray(self.cb2_ref[0]["res"], dtype=np.float64)
+            j_ap[:, _k] = (rk - r0) / _step
+
+        self.re_state["re_aperture_knots"][:] = xv_full[self.i_ap0 : self.i_ap0 + self.nap]
+        self.eval_both_p2(xv_full[:self.i_ap0], emit_interval=1.0e9)
+
+        return np.hstack([j0, j_ap])
+
 
     def _execute_phase4_beam(self) -> None:
         """Phase 4: beam aperture (stepped ap over lambda), scan + joint TRF."""
@@ -3721,417 +3439,27 @@ class REWorker(QThread):
 
         _re_env_on_wls = re_envelope_max_delta_n(wls, scale=re_env_s)
 
-        def _mse_grad_accumulate_ep(
-            ep_local,
-            spectral_weights_wls,
-            want_grad: bool,
-            correc: tuple,
-            return_residuals: bool = False,
-        ) -> tuple | None:
-
-            n_lay_m, n_sub_m = _re_apply_correc(
-                n_layers_nominal,
-                n_sub_nominal,
-                is_H=is_H,
-                is_L=is_L,
-                wls=wls,
-                lambda_ref=lambda_ref,
-                correc=correc,
-                re_env_s=re_env_s,
-                env_cache=_re_env_on_wls,
-            )
-
-            n_lay_full = np.ascontiguousarray(n_lay_m.T)
-
-            n_sub_full = np.ascontiguousarray(n_sub_m)
-
-            ep_use = np.asarray(ep_local, dtype=np.float64)
-
-            total_err = 0.0
-
-            total_w = 0.0
-
-            grad_raw = np.zeros(n_layers_count, dtype=np.float64)
-
-            res_list = []
-
-            jac_list = []
-
-            # ``stats`` groups weights/user targets per bucket.
-
-            # ``spectral_weights_local`` applies the Deltaln(lambda) quadrature on the points of the bucket.
-
-            def _accum_from_stats(y_vals, dy_vals, stats, spectral_weights_local) -> None:
-
-                nonlocal total_err, total_w, grad_raw
-
-                ws = float(stats["w_sum"])
-
-                if ws <= 0.0:
-                    return
-
-                wt_sum = float(np.sum(spectral_weights_local))
-
-                wy = spectral_weights_local * y_vals
-
-                wy2_sum = float(np.dot(wy, y_vals))
-
-                wy_sum = float(np.sum(wy))
-
-                w_tgt_sum = float(stats["w_tgt_sum"])
-
-                w_tgt2_sum = float(stats["w_tgt2_sum"])
-
-                total_err += (ws * wy2_sum) - (2.0 * w_tgt_sum * wy_sum) + (w_tgt2_sum * wt_sum)
-
-                total_w += ws * wt_sum
-
-                if want_grad:
-                    coeff = spectral_weights_local * (ws * y_vals - w_tgt_sum)
-
-                    grad_raw += np.dot(coeff, dy_vals)
-
-                if return_residuals:
-                    mean_t = w_tgt_sum / ws
-
-                    scale_f = np.sqrt(ws * spectral_weights_local)
-
-                    res_list.append(scale_f * (y_vals - mean_t))
-
-                    if want_grad:
-                        jac_list.append(dy_vals * scale_f[:, np.newaxis])
-
-            for meta in oblique_config_meta:
-                angle = float(meta["angle"])
-
-                pol = str(meta["pol"])
-
-                inc_back = bool(meta["include_backside"])
-
-                pl = pol.lower()
-
-                # Reuse precomputed union / bucket indices.
-
-                pos_all = meta.get("pos_all_union", np.array([], dtype=np.int64))
-
-                if pos_all.size == 0:
-                    continue
-
-                # Single physics call per configuration for the union of all needed wavelengths
-
-                wls_all = wls[pos_all]
-
-                n_layers_all = n_lay_full[pos_all, :]
-
-                n_sub_all = n_sub_full[pos_all]
-
-                if _re_state["is_phase4"] and angle >= 10.0:
-                    _p4_prof = _re_state.get("p4_prof")
-
-                    _t_p4_phy = time.perf_counter() if _p4_prof is not None else None
-
-                    knots_lam = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    knots_ap = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    nloc = int(wls_all.size)
-
-                    if _p4_prof is not None:
-                        _p4_prof["meta_p4_count"] = int(_p4_prof.get("meta_p4_count", 0)) + 1
-
-                        _p4_prof["n_wls_union_max"] = max(int(_p4_prof.get("n_wls_union_max", 0)), nloc)
-
-                        _p4_prof["band_groups"] = int(_p4_prof.get("band_groups", 0)) + 1
-
-                    masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
-
-                    yR_all = np.zeros(nloc, dtype=np.float64)
-
-                    yT_all = np.zeros(nloc, dtype=np.float64)
-
-                    dR_all = None
-
-                    dT_all = None
-
-                    for m in masks:
-                        if not np.any(m):
-                            continue
-
-                        if _p4_prof is not None:
-                            _p4_prof["band_mask_steps"] = int(_p4_prof.get("band_mask_steps", 0)) + 1
-
-                        sub = np.nonzero(m)[0]
-
-                        lam_c = float(np.mean(wls_all[m]))
-
-                        ap_b = _re_p4_band_ap_deg(knots_lam, knots_ap, lam_c)
-
-                        h = _re_p4_effective_half_width_deg(angle, ap_b)
-
-                        if h <= 0.0:
-                            if _p4_prof is not None:
-                                _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 1
-
-                            yR0, dR0, yT0, dT0 = _re_eval_angle_physics_for(
-                                sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
-                            )
-
-                            if dR_all is None:
-                                nv = int(dR0.shape[1])
-
-                                dR_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                                dT_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                            yR_all[sub] = yR0
-
-                            yT_all[sub] = yT0
-
-                            dR_all[sub, :] = dR0
-
-                            dT_all[sub, :] = dT0
-
-                        else:
-                            if _p4_prof is not None:
-                                _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 2
-
-                            yR1, dR1, yT1, dT1 = _re_eval_angle_physics_for(
-                                sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
-                            )
-
-                            yR2, dR2, yT2, dT2 = _re_eval_angle_physics_for(
-                                sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
-                            )
-
-                            if dR_all is None:
-                                nv = int(dR1.shape[1])
-
-                                dR_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                                dT_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                            yR_all[sub] = 0.5 * (yR1 + yR2)
-
-                            yT_all[sub] = 0.5 * (yT1 + yT2)
-
-                            dR_all[sub, :] = 0.5 * (dR1 + dR2)
-
-                            dT_all[sub, :] = 0.5 * (dT1 + dT2)
-
-                    if _p4_prof is not None and _t_p4_phy is not None:
-                        _p4_prof["phy_wall_s"] = float(_p4_prof.get("phy_wall_s", 0.0)) + (
-                            time.perf_counter() - _t_p4_phy
-                        )
-
-                else:
-                    yR_all, dR_all, yT_all, dT_all = _re_eval_angle_physics_for(
-                        None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
-                    )
-
-                # Distribute cached kernel evaluations into target buckets
-
-                for bucket in meta["buckets"]:
-                    pos = bucket["local_positions"]
-
-                    if pos.size == 0:
-                        continue
-
-                    idx = bucket.get("idx_union", np.array([], dtype=np.int64))
-
-                    if idx.size == 0:
-                        continue
-
-                    spectral_weights_local = spectral_weights_wls[pos]
-
-                    _accum_from_stats(yR_all[idx], dR_all[idx, :], bucket["R"], spectral_weights_local)
-
-                    _accum_from_stats(yT_all[idx], dT_all[idx, :], bucket["T"], spectral_weights_local)
-
-            if (
-                return_residuals
-                and correc
-                and correc[0]
-                in (
-                    "spline",
-                    "spline_cached",
-                    "spline_sub3",
-                    "spline_cached_sub3",
-                )
-                and len(correc) >= 3
-            ):
-                dh = np.asarray(correc[1], dtype=np.float64)
-
-                if dh.size >= 3:
-                    # Smoothness factor: Default is 5.0.
-
-                    # It acts on the discrete 2nd derivative of Delta_n knots
-
-                    alpha = float(self.cfg.get("re_spline_smooth_factor_n", 5.0)) * float(
-                        self.cfg.get(
-                            "re_spline_tikhonov_scale",
-                            RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
-                        )
-                    )
-
-                    tk_w = None
-
-                    if correc[0] == "spline_cached_sub3" and len(correc) >= 7:
-                        tk_w = np.asarray(correc[6], dtype=np.float64)
-
-                    elif correc[0] == "spline_cached" and len(correc) >= 7:
-                        tk_w = np.asarray(correc[6], dtype=np.float64)
-
-                    elif correc[0] == "spline_sub3" and len(correc) >= 8 and isinstance(correc[4], np.ndarray):
-                        tk_w = np.asarray(correc[4], dtype=np.float64)
-
-                    elif correc[0] == "spline" and len(correc) >= 5:
-                        tk_w = np.asarray(correc[4], dtype=np.float64)
-
-                    if alpha > 0.0:
-                        # 2nd derivative penalty for H knots
-
-                        diff2_h = dh[:-2] - 2.0 * dh[1:-1] + dh[2:]
-
-                        res_list.append(diff2_h * alpha * tk_w if tk_w is not None else diff2_h * alpha)
-
-                        if want_grad:
-                            jac_list.append(np.zeros((len(diff2_h), n_layers_count), dtype=np.float64))
-
-                        # 2nd derivative penalty for L knots
-
-                        dl = np.asarray(correc[2], dtype=np.float64)
-
-                        diff2_l = dl[:-2] - 2.0 * dl[1:-1] + dl[2:]
-
-                        res_list.append(diff2_l * alpha * tk_w if tk_w is not None else diff2_l * alpha)
-
-                        if want_grad:
-                            jac_list.append(np.zeros((len(diff2_l), n_layers_count), dtype=np.float64))
-
-            # H/L penalty on DeltaRe at knots (H/L only): |DeltaRe|<= -> 0; else √(w)(max(0,|DeltaRe|)/env)2.
-
-            if return_residuals:
-                _w_hl = float(self.cfg.get("re_hl_delta_re_reg_sqrt_w", RE_HL_DELTA_RE_REG_SQRT_W))
-
-                if _w_hl > 0.0 and correc and correc[0] in RE_SPLINE_CORREC_KINDS:
-                    _dH_k = np.asarray(correc[1], dtype=np.float64).ravel()
-
-                    _dL_k = np.asarray(correc[2], dtype=np.float64).ravel()
-
-                    _lam2_c = float(correc[3]) if len(correc) > 3 else float(RE_SPLINE_NODE2_DEFAULT_NM)
-
-                    _kn = re_knots_wavelengths(_lam2_c)
-
-                    _env_k = np.maximum(
-                        re_envelope_max_delta_n(_kn, scale=re_env_s),
-                        1e-18,
-                    )
-
-                    if _dH_k.size == _env_k.size and _dL_k.size == _env_k.size:
-                        _dz_hl = float(
-                            self.cfg.get(
-                                "re_hl_delta_re_deadzone_abs",
-                                RE_RE_DEADZONE_DELTA_RE_ABS,
-                            )
-                        )
-
-                        _sqw = np.sqrt(_w_hl)
-
-                        _exh = _re_deadzone_excess_abs(_dH_k, _dz_hl)
-
-                        _exl = _re_deadzone_excess_abs(_dL_k, _dz_hl)
-
-                        _rh = _sqw * ((_exh / _env_k) ** 2)
-
-                        _rl = _sqw * ((_exl / _env_k) ** 2)
-
-                        res_list.append(_rh)
-
-                        res_list.append(_rl)
-
-                        if want_grad:
-                            jac_list.append(np.zeros((len(_rh), n_layers_count), dtype=np.float64))
-
-                            jac_list.append(np.zeros((len(_rl), n_layers_count), dtype=np.float64))
-
-            # QWOT: dead band |Q|<= -> r_i=0; beyond that r_i = √(max(0,|Q|))².
-
-            # Q = 4n_correp/lambda_ref  ->  Q = (4/lambda_ref)(n_correp - n₀ep₀).
-
-            # Current slot updated per phase (see resolve_re_qwot_alphas).
-
-            if return_residuals:
-                _alpha_qwot = float(_alpha_slot[0])
-
-                if _alpha_qwot > 0.0:
-                    _ep_arr = np.asarray(ep_local, dtype=np.float64)
-
-                    _qw_c = correc if (correc and len(correc) > 0 and correc[0] in RE_SPLINE_CORREC_KINDS) else None
-
-                    _delta_q = re_delta_qwot_per_layer(
-                        _ep_arr,
-                        ep0,
-                        n_ref_nom_per_layer,
-                        is_H,
-                        is_L,
-                        float(lambda_ref),
-                        float(re_env_s),
-                        _lref_arr,
-                        correc=_qw_c,
-                    )
-
-                    _n_ref_corr = re_n_corr_at_lambda_ref(
-                        n_ref_nom_per_layer,
-                        is_H,
-                        is_L,
-                        _lref_arr,
-                        float(re_env_s),
-                        correc=_qw_c,
-                    )
-
-                    _kq_wl0 = 4.0 / max(float(lambda_ref), 1e-9)
-
-                    _dz_qw = float(self.cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
-
-                    _ex_q = _re_deadzone_excess_abs(_delta_q, _dz_qw)
-
-                    _r_qwot = np.sqrt(_alpha_qwot) * (_ex_q**2)
-
-                    res_list.append(_r_qwot)
-
-                    if want_grad:
-                        # r_i = √ex_i2, ex=max(0,|Q|)  ->  r_i/Q_i = 2√ex_isgn(Q_i)
-
-                        _dr_dq = np.where(
-                            _ex_q > 0.0,
-                            2.0 * np.sqrt(_alpha_qwot) * _ex_q * np.sign(_delta_q),
-                            0.0,
-                        )
-
-                        _J_qwot = np.diag(_dr_dq * (_kq_wl0 * _n_ref_corr))
-
-                        jac_list.append(_J_qwot)
-
-            denom = max(total_w, 1e-12)
-
-            mse = total_err / denom
-
-            grad = (2.0 / denom) * grad_raw if want_grad else np.zeros(n_layers_count)
-
-            if return_residuals:
-                f2 = np.sqrt(2.0 / denom)
-
-                r_out = np.concatenate(res_list) * f2 if res_list else np.array([], dtype=np.float64)
-
-                j_out = np.vstack(jac_list) * f2 if jac_list else np.empty((0, n_layers_count), dtype=np.float64)
-
-                return mse, grad, r_out, j_out
-
-            return mse, grad
+        ctx = REMseContext(
+            _alpha_slot=_alpha_slot,
+            _lref_arr=_lref_arr,
+            _re_env_on_wls=_re_env_on_wls,
+            _re_state=_re_state,
+            ep0=ep0,
+            is_H=is_H,
+            is_L=is_L,
+            lambda_ref=lambda_ref,
+            n_layers_count=n_layers_count,
+            n_layers_nominal=n_layers_nominal,
+            n_ref_nom_per_layer=n_ref_nom_per_layer,
+            n_sub_nominal=n_sub_nominal,
+            oblique_config_meta=oblique_config_meta,
+            re_env_s=re_env_s,
+            var_idx=var_idx,
+            wls=wls,
+        )
+
+        def _mse_grad_accumulate_ep(ep_arr: np.ndarray, correc: tuple) -> tuple:
+            return self._compute_re_mse_gradient(ctx, ep_arr, correc)
 
         # Bounds: thicknesses only +/-radius %
 
@@ -4622,6 +3950,995 @@ class REWorker(QThread):
             results=results,
             _re_t0=_re_t0,
         )
+
+    def _compute_re_mse_gradient(self, ctx, 
+        ep_local,
+        spectral_weights_wls,
+        want_grad: bool,
+        correc: tuple,
+        return_residuals: bool = False,
+    ) -> tuple | None:
+
+        n_lay_m, n_sub_m = _re_apply_correc(
+            ctx.n_layers_nominal,
+            ctx.n_sub_nominal,
+            is_H=ctx.is_H,
+            is_L=ctx.is_L,
+            wls=ctx.wls,
+            lambda_ref=ctx.lambda_ref,
+            correc=correc,
+            re_env_s=ctx.re_env_s,
+            env_cache=ctx._re_env_on_wls,
+        )
+
+        n_lay_full = np.ascontiguousarray(n_lay_m.T)
+
+        n_sub_full = np.ascontiguousarray(n_sub_m)
+
+        ep_use = np.asarray(ep_local, dtype=np.float64)
+
+        total_err = 0.0
+
+        total_w = 0.0
+
+        grad_raw = np.zeros(ctx.n_layers_count, dtype=np.float64)
+
+        res_list = []
+
+        jac_list = []
+
+        # ``stats`` groups weights/user targets per bucket.
+
+        # ``spectral_weights_local`` applies the Deltaln(lambda) quadrature on the points of the bucket.
+
+        def _accum_from_stats(y_vals, dy_vals, stats, spectral_weights_local) -> None:
+
+            nonlocal total_err, total_w, grad_raw
+
+            ws = float(stats["w_sum"])
+
+            if ws <= 0.0:
+                return
+
+            wt_sum = float(np.sum(spectral_weights_local))
+
+            wy = spectral_weights_local * y_vals
+
+            wy2_sum = float(np.dot(wy, y_vals))
+
+            wy_sum = float(np.sum(wy))
+
+            w_tgt_sum = float(stats["w_tgt_sum"])
+
+            w_tgt2_sum = float(stats["w_tgt2_sum"])
+
+            total_err += (ws * wy2_sum) - (2.0 * w_tgt_sum * wy_sum) + (w_tgt2_sum * wt_sum)
+
+            total_w += ws * wt_sum
+
+            if want_grad:
+                coeff = spectral_weights_local * (ws * y_vals - w_tgt_sum)
+
+                grad_raw += np.dot(coeff, dy_vals)
+
+            if return_residuals:
+                mean_t = w_tgt_sum / ws
+
+                scale_f = np.sqrt(ws * spectral_weights_local)
+
+                res_list.append(scale_f * (y_vals - mean_t))
+
+                if want_grad:
+                    jac_list.append(dy_vals * scale_f[:, np.newaxis])
+
+        for meta in ctx.oblique_config_meta:
+            angle = float(meta["angle"])
+
+            pol = str(meta["pol"])
+
+            inc_back = bool(meta["include_backside"])
+
+            pl = pol.lower()
+
+            # Reuse precomputed union / bucket indices.
+
+            pos_all = meta.get("pos_all_union", np.array([], dtype=np.int64))
+
+            if pos_all.size == 0:
+                continue
+
+            # Single physics call per configuration for the union of all needed wavelengths
+
+            wls_all = ctx.wls[pos_all]
+
+            n_layers_all = n_lay_full[pos_all, :]
+
+            n_sub_all = n_sub_full[pos_all]
+
+            if ctx._re_state["is_phase4"] and angle >= 10.0:
+                _p4_prof = ctx._re_state.get("p4_prof")
+
+                _t_p4_phy = time.perf_counter() if _p4_prof is not None else None
+
+                knots_lam = np.asarray(ctx._re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[
+                    : int(RE_P4_BEAM_N_KNOTS)
+                ]
+
+                knots_ap = np.asarray(ctx._re_state["re_aperture_knots"], dtype=np.float64).ravel()[
+                    : int(RE_P4_BEAM_N_KNOTS)
+                ]
+
+                nloc = int(wls_all.size)
+
+                if _p4_prof is not None:
+                    _p4_prof["meta_p4_count"] = int(_p4_prof.get("meta_p4_count", 0)) + 1
+
+                    _p4_prof["n_wls_union_max"] = max(int(_p4_prof.get("n_wls_union_max", 0)), nloc)
+
+                    _p4_prof["band_groups"] = int(_p4_prof.get("band_groups", 0)) + 1
+
+                masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
+
+                yR_all = np.zeros(nloc, dtype=np.float64)
+
+                yT_all = np.zeros(nloc, dtype=np.float64)
+
+                dR_all = None
+
+                dT_all = None
+
+                for m in masks:
+                    if not np.any(m):
+                        continue
+
+                    if _p4_prof is not None:
+                        _p4_prof["band_mask_steps"] = int(_p4_prof.get("band_mask_steps", 0)) + 1
+
+                    sub = np.nonzero(m)[0]
+
+                    lam_c = float(np.mean(wls_all[m]))
+
+                    ap_b = _re_p4_band_ap_deg(knots_lam, knots_ap, lam_c)
+
+                    h = _re_p4_effective_half_width_deg(angle, ap_b)
+
+                    if h <= 0.0:
+                        if _p4_prof is not None:
+                            _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 1
+
+                        yR0, dR0, yT0, dT0 = _re_eval_angle_physics_for(
+                            sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        )
+
+                        if dR_all is None:
+                            nv = int(dR0.shape[1])
+
+                            dR_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                            dT_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                        yR_all[sub] = yR0
+
+                        yT_all[sub] = yT0
+
+                        dR_all[sub, :] = dR0
+
+                        dT_all[sub, :] = dT0
+
+                    else:
+                        if _p4_prof is not None:
+                            _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 2
+
+                        yR1, dR1, yT1, dT1 = _re_eval_angle_physics_for(
+                            sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        )
+
+                        yR2, dR2, yT2, dT2 = _re_eval_angle_physics_for(
+                            sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                        )
+
+                        if dR_all is None:
+                            nv = int(dR1.shape[1])
+
+                            dR_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                            dT_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                        yR_all[sub] = 0.5 * (yR1 + yR2)
+
+                        yT_all[sub] = 0.5 * (yT1 + yT2)
+
+                        dR_all[sub, :] = 0.5 * (dR1 + dR2)
+
+                        dT_all[sub, :] = 0.5 * (dT1 + dT2)
+
+                if _p4_prof is not None and _t_p4_phy is not None:
+                    _p4_prof["phy_wall_s"] = float(_p4_prof.get("phy_wall_s", 0.0)) + (
+                        time.perf_counter() - _t_p4_phy
+                    )
+
+            else:
+                yR_all, dR_all, yT_all, dT_all = _re_eval_angle_physics_for(
+                    None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                )
+
+            # Distribute cached kernel evaluations into target buckets
+
+            for bucket in meta["buckets"]:
+                pos = bucket["local_positions"]
+
+                if pos.size == 0:
+                    continue
+
+                idx = bucket.get("idx_union", np.array([], dtype=np.int64))
+
+                if idx.size == 0:
+                    continue
+
+                spectral_weights_local = spectral_weights_wls[pos]
+
+                _accum_from_stats(yR_all[idx], dR_all[idx, :], bucket["R"], spectral_weights_local)
+
+                _accum_from_stats(yT_all[idx], dT_all[idx, :], bucket["T"], spectral_weights_local)
+
+        if (
+            return_residuals
+            and correc
+            and correc[0]
+            in (
+                "spline",
+                "spline_cached",
+                "spline_sub3",
+                "spline_cached_sub3",
+            )
+            and len(correc) >= 3
+        ):
+            dh = np.asarray(correc[1], dtype=np.float64)
+
+            if dh.size >= 3:
+                # Smoothness factor: Default is 5.0.
+
+                # It acts on the discrete 2nd derivative of Delta_n knots
+
+                alpha = float(self.cfg.get("re_spline_smooth_factor_n", 5.0)) * float(
+                    self.cfg.get(
+                        "re_spline_tikhonov_scale",
+                        RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
+                    )
+                )
+
+                tk_w = None
+
+                if correc[0] == "spline_cached_sub3" and len(correc) >= 7:
+                    tk_w = np.asarray(correc[6], dtype=np.float64)
+
+                elif correc[0] == "spline_cached" and len(correc) >= 7:
+                    tk_w = np.asarray(correc[6], dtype=np.float64)
+
+                elif correc[0] == "spline_sub3" and len(correc) >= 8 and isinstance(correc[4], np.ndarray):
+                    tk_w = np.asarray(correc[4], dtype=np.float64)
+
+                elif correc[0] == "spline" and len(correc) >= 5:
+                    tk_w = np.asarray(correc[4], dtype=np.float64)
+
+                if alpha > 0.0:
+                    # 2nd derivative penalty for H knots
+
+                    diff2_h = dh[:-2] - 2.0 * dh[1:-1] + dh[2:]
+
+                    res_list.append(diff2_h * alpha * tk_w if tk_w is not None else diff2_h * alpha)
+
+                    if want_grad:
+                        jac_list.append(np.zeros((len(diff2_h), ctx.n_layers_count), dtype=np.float64))
+
+                    # 2nd derivative penalty for L knots
+
+                    dl = np.asarray(correc[2], dtype=np.float64)
+
+                    diff2_l = dl[:-2] - 2.0 * dl[1:-1] + dl[2:]
+
+                    res_list.append(diff2_l * alpha * tk_w if tk_w is not None else diff2_l * alpha)
+
+                    if want_grad:
+                        jac_list.append(np.zeros((len(diff2_l), ctx.n_layers_count), dtype=np.float64))
+
+        # H/L penalty on DeltaRe at knots (H/L only): |DeltaRe|<= -> 0; else √(w)(max(0,|DeltaRe|)/env)2.
+
+        if return_residuals:
+            _w_hl = float(self.cfg.get("re_hl_delta_re_reg_sqrt_w", RE_HL_DELTA_RE_REG_SQRT_W))
+
+            if _w_hl > 0.0 and correc and correc[0] in RE_SPLINE_CORREC_KINDS:
+                _dH_k = np.asarray(correc[1], dtype=np.float64).ravel()
+
+                _dL_k = np.asarray(correc[2], dtype=np.float64).ravel()
+
+                _lam2_c = float(correc[3]) if len(correc) > 3 else float(RE_SPLINE_NODE2_DEFAULT_NM)
+
+                _kn = re_knots_wavelengths(_lam2_c)
+
+                _env_k = np.maximum(
+                    re_envelope_max_delta_n(_kn, scale=ctx.re_env_s),
+                    1e-18,
+                )
+
+                if _dH_k.size == _env_k.size and _dL_k.size == _env_k.size:
+                    _dz_hl = float(
+                        self.cfg.get(
+                            "re_hl_delta_re_deadzone_abs",
+                            RE_RE_DEADZONE_DELTA_RE_ABS,
+                        )
+                    )
+
+                    _sqw = np.sqrt(_w_hl)
+
+                    _exh = _re_deadzone_excess_abs(_dH_k, _dz_hl)
+
+                    _exl = _re_deadzone_excess_abs(_dL_k, _dz_hl)
+
+                    _rh = _sqw * ((_exh / _env_k) ** 2)
+
+                    _rl = _sqw * ((_exl / _env_k) ** 2)
+
+                    res_list.append(_rh)
+
+                    res_list.append(_rl)
+
+                    if want_grad:
+                        jac_list.append(np.zeros((len(_rh), ctx.n_layers_count), dtype=np.float64))
+
+                        jac_list.append(np.zeros((len(_rl), ctx.n_layers_count), dtype=np.float64))
+
+        # QWOT: dead band |Q|<= -> r_i=0; beyond that r_i = √(max(0,|Q|))².
+
+        # Q = 4n_correp/lambda_ref  ->  Q = (4/lambda_ref)(n_correp - n₀ep₀).
+
+        # Current slot updated per phase (see resolve_re_qwot_alphas).
+
+        if return_residuals:
+            _alpha_qwot = float(ctx._alpha_slot[0])
+
+            if _alpha_qwot > 0.0:
+                _ep_arr = np.asarray(ep_local, dtype=np.float64)
+
+                _qw_c = correc if (correc and len(correc) > 0 and correc[0] in RE_SPLINE_CORREC_KINDS) else None
+
+                _delta_q = re_delta_qwot_per_layer(
+                    _ep_arr,
+                    ctx.ep0,
+                    ctx.n_ref_nom_per_layer,
+                    ctx.is_H,
+                    ctx.is_L,
+                    float(ctx.lambda_ref),
+                    float(ctx.re_env_s),
+                    ctx._lref_arr,
+                    correc=_qw_c,
+                )
+
+                _n_ref_corr = re_n_corr_at_lambda_ref(
+                    ctx.n_ref_nom_per_layer,
+                    ctx.is_H,
+                    ctx.is_L,
+                    ctx._lref_arr,
+                    float(ctx.re_env_s),
+                    correc=_qw_c,
+                )
+
+                _kq_wl0 = 4.0 / max(float(ctx.lambda_ref), 1e-9)
+
+                _dz_qw = float(self.cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
+
+                _ex_q = _re_deadzone_excess_abs(_delta_q, _dz_qw)
+
+                _r_qwot = np.sqrt(_alpha_qwot) * (_ex_q**2)
+
+                res_list.append(_r_qwot)
+
+                if want_grad:
+                    # r_i = √ex_i2, ex=max(0,|Q|)  ->  r_i/Q_i = 2√ex_isgn(Q_i)
+
+                    _dr_dq = np.where(
+                        _ex_q > 0.0,
+                        2.0 * np.sqrt(_alpha_qwot) * _ex_q * np.sign(_delta_q),
+                        0.0,
+                    )
+
+                    _J_qwot = np.diag(_dr_dq * (_kq_wl0 * _n_ref_corr))
+
+                    jac_list.append(_J_qwot)
+
+        denom = max(total_w, 1e-12)
+
+        mse = total_err / denom
+
+        grad = (2.0 / denom) * grad_raw if want_grad else np.zeros(ctx.n_layers_count)
+
+        if return_residuals:
+            f2 = np.sqrt(2.0 / denom)
+
+            r_out = np.concatenate(res_list) * f2 if res_list else np.array([], dtype=np.float64)
+
+            j_out = np.vstack(jac_list) * f2 if jac_list else np.empty((0, ctx.n_layers_count), dtype=np.float64)
+
+            return mse, grad, r_out, j_out
+
+        return mse, grad
+
+
+    def _compute_eval_both_p2(self, ctx_p2, xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
+
+        if self._stop:
+            raise REUserStopRequested()
+
+        _c = ctx._cb2_ref[0]
+
+        if _c is None:
+            return
+
+        # Phase 4: aperture knot values change MSE without changing xv  invalidate cache.
+
+        _ph4_ap_now = None
+
+        if ctx._re_state.get("is_phase4"):
+            _kap = np.asarray(ctx._re_state["re_aperture_knots"], dtype=np.float64).ravel()[
+                : int(RE_P4_BEAM_N_KNOTS)
+            ]
+
+            _ph4_ap_now = tuple(float(x) for x in _kap)
+
+        if _c["x"] is not None and np.array_equal(xv, _c["x"]):
+            if _ph4_ap_now is None:
+                return
+
+            if _c.get("_ph4_ap_snap") == _ph4_ap_now:
+                return
+
+        # S2: Invalidate Tikhonov weights when lam2 changes by >1 nm.
+
+        cur_lam2 = float(xv[ctx.i_lam])
+
+        if _c["tk_w_c"] is None or abs(cur_lam2 - (_c["tk_lam2"] or 0.0)) > 1.0:
+            _c["tk_w_c"] = re_compute_tikhonov_weights(re_knots_wavelengths(cur_lam2), ctx.wls)
+
+            _c["tk_lam2"] = cur_lam2
+
+        tk_w_c = _c["tk_w_c"]
+
+        _c["i"] += 1
+
+        ep_x = np.asarray(xv[:ctx.n_layers_count], dtype=np.float64, copy=False)
+
+        dh4 = xv[ctx.i0 : ctx.i0 + ctx._nk].copy()
+
+        dl4 = xv[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+
+        lam2 = float(xv[ctx.i_lam])
+
+        th4 = np.asarray(xv[ctx.i_cu : ctx.i_cu + 3], dtype=np.float64).ravel() if ctx._use_sub_c3 else None
+
+        b_mat_c = re_compute_spline_basis_matrix(re_knots_wavelengths(lam2), ctx.wls)
+
+        env_c = re_envelope_max_delta_n(ctx.wls, scale=ctx.re_env_s)
+
+        if ctx._use_sub_c3:
+            cor_spl = (
+                "spline_cached_sub3",
+                dh4,
+                dl4,
+                lam2,
+                b_mat_c,
+                env_c,
+                tk_w_c,
+                float(th4[0]),
+                float(th4[1]),
+                float(th4[2]),
+            )
+
+        else:
+            cor_spl = ("spline_cached", dh4, dl4, lam2, b_mat_c, env_c, tk_w_c)
+
+        mse, _, r_c, j_ep = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, True, cor_spl, return_residuals=True)
+
+        if _c["i"] == 1:
+            _n_fd = (ctx._n_joint_fd) if ctx._fd_1s else (ctx._n_joint_fd * 2)
+
+            logging.info(
+                "RE phase 2b  1st TRF eval: %d thick. analytic, %d FD residual blocks (%s)  FD_threads=%d",
+                ctx.n_layers_count,
+                _n_fd,
+                "forward" if ctx._fd_1s else "centered",
+                ctx._fd_nw,
+            )
+
+        J_var = np.zeros((len(r_c), ctx._n_joint_fd), dtype=np.float64)
+
+        xv64 = np.asarray(xv, dtype=np.float64, copy=True)
+
+        def _cor_sub3(_dh, _dl, _lam, _th) -> tuple:
+
+            return (
+                "spline_cached_sub3",
+                _dh,
+                _dl,
+                float(_lam),
+                b_mat_c,
+                env_c,
+                tk_w_c,
+                float(_th[0]),
+                float(_th[1]),
+                float(_th[2]),
+            )
+
+        def _p2_fd_j_res(j: int) -> tuple[int, np.ndarray]:
+
+            if ctx._use_sub_c3:
+                if j < 2 * ctx._nk:
+                    dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+
+                    dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+
+                    if j < ctx._nk:
+                        dh_p[j] += ctx._p2fd_spl
+
+                    else:
+                        dl_p[j - ctx._nk] += ctx._p2fd_spl
+
+                    cor_p = _cor_sub3(dh_p, dl_p, float(xv64[ctx.i_lam]), th4)
+
+                    h = ctx._p2fd_spl
+
+                elif j == 2 * ctx._nk:
+                    lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
+
+                    cor_p = (
+                        "spline_sub3",
+                        dh4,
+                        dl4,
+                        lam_p,
+                        tk_w_c,
+                        float(th4[0]),
+                        float(th4[1]),
+                        float(th4[2]),
+                    )
+
+                    h = ctx._p2fd_lam
+
+                else:
+                    k = j - ctx.n_sp
+
+                    thp = np.array(th4, dtype=np.float64, copy=True)
+
+                    thp[k] += ctx._p2fd_cu
+
+                    cor_p = _cor_sub3(dh4, dl4, lam2, thp)
+
+                    h = ctx._p2fd_cu
+
+            elif j < 2 * ctx._nk:
+                dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+
+                dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+
+                if j < ctx._nk:
+                    dh_p[j] += ctx._p2fd_spl
+
+                else:
+                    dl_p[j - ctx._nk] += ctx._p2fd_spl
+
+                cor_p = ("spline_cached", dh_p, dl_p, float(xv64[ctx.i_lam]), b_mat_c, env_c, tk_w_c)
+
+                h = ctx._p2fd_spl
+
+            else:
+                lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
+
+                cor_p = ("spline", dh4, dl4, lam_p, tk_w_c)
+
+                h = ctx._p2fd_lam
+
+            r_p = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
+
+            if ctx._fd_1s:
+                return j, (r_p - r_c) / h
+
+            if ctx._use_sub_c3:
+                if j < 2 * ctx._nk:
+                    dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+
+                    dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+
+                    if j < ctx._nk:
+                        dh_m[j] -= ctx._p2fd_spl
+
+                    else:
+                        dl_m[j - ctx._nk] -= ctx._p2fd_spl
+
+                    cor_m = _cor_sub3(dh_m, dl_m, float(xv64[ctx.i_lam]), th4)
+
+                elif j == 2 * ctx._nk:
+                    lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
+
+                    cor_m = (
+                        "spline_sub3",
+                        dh4,
+                        dl4,
+                        lam_m,
+                        tk_w_c,
+                        float(th4[0]),
+                        float(th4[1]),
+                        float(th4[2]),
+                    )
+
+                else:
+                    k = j - ctx.n_sp
+
+                    thm = np.array(th4, dtype=np.float64, copy=True)
+
+                    thm[k] -= ctx._p2fd_cu
+
+                    cor_m = _cor_sub3(dh4, dl4, lam2, thm)
+
+            elif j < 2 * ctx._nk:
+                dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+
+                dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+
+                if j < ctx._nk:
+                    dh_m[j] -= ctx._p2fd_spl
+
+                else:
+                    dl_m[j - ctx._nk] -= ctx._p2fd_spl
+
+                cor_m = ("spline_cached", dh_m, dl_m, float(xv64[ctx.i_lam]), b_mat_c, env_c, tk_w_c)
+
+            else:
+                lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
+
+                cor_m = ("spline", dh4, dl4, lam_m, tk_w_c)
+
+            r_m = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
+
+            return j, (r_p - r_m) / (2.0 * h)
+
+        _nw_j = min(ctx._fd_nw, ctx._n_joint_fd)
+
+        _active_js = []
+
+        _act_h = bool(self.cfg.get("re_refine_h", True))
+
+        _act_l = bool(self.cfg.get("re_refine_l", True))
+
+        for j in range(ctx._n_joint_fd):
+            if j < ctx._nk and not _act_h:
+                continue
+
+            if ctx._nk <= j < 2 * ctx._nk and not _act_l:
+                continue
+
+            if j == 2 * ctx._nk and not (_act_h or _act_l):
+                continue
+
+            _active_js.append(j)
+
+        if _nw_j <= 1:
+            for j in _active_js:
+                jj, j_col = _p2_fd_j_res(j)
+
+                J_var[:, jj] = j_col
+
+        else:
+            _ex_p2 = _c.get("fd_executor")
+
+            if _ex_p2 is None:
+                _ex_p2 = ThreadPoolExecutor(max_workers=_nw_j)
+
+                _c["fd_executor"] = _ex_p2
+
+            _f_p2 = [_ex_p2.submit(_p2_fd_j_res, j) for j in _active_js]
+
+            for _fu in as_completed(_f_p2):
+                jj, j_col = _fu.result()
+
+                J_var[:, jj] = j_col
+
+        if ctx._use_sub_c3:
+            J_spl = J_var[:, :ctx.n_sp]
+
+            J_cu = J_var[:, ctx.n_sp : ctx.n_sp + 3]
+
+            J_top = np.hstack([j_ep, J_spl, J_cu])
+
+            sw_b = float(
+                self.cfg.get(
+                    "re_sub_cauchy_barrier_sqrt_w",
+                    RE_SUB_CAUCHY_BARRIER_SQRT_W,
+                )
+            )
+
+            r_b, J_b = re_substrate_cauchy_barrier_residuals_jac(
+                th4,
+                ctx._Phi_sub,
+                ctx._n_tab_sub,
+                sqrt_w=sw_b,
+            )
+
+            J_bot = np.hstack(
+                [
+                    np.zeros(
+                        (len(r_b), ctx.n_layers_count + ctx.n_sp),
+                        dtype=np.float64,
+                    ),
+                    J_b,
+                ]
+            )
+
+            _c["res"] = np.concatenate((r_c, r_b))
+
+            _c["jac"] = np.vstack([J_top, J_bot])
+
+            _c["barrier_norm"] = float(np.linalg.norm(r_b))
+
+        else:
+            _c["res"] = r_c
+
+            _c["jac"] = np.hstack([j_ep, J_var[:, :ctx.n_sp]])
+
+            _c["barrier_norm"] = None
+
+        _c["x"] = xv.copy()
+
+        _c["mse"] = float(mse)
+
+        _c["_ph4_ap_snap"] = _ph4_ap_now
+
+        now = time.perf_counter()
+
+        if _c["i"] == 1 or (now - _c["last_emit"]) >= emit_interval:
+            _c["last_emit"] = now
+
+            rs2 = float(np.sqrt(max(_c["mse"], 0.0)))
+
+            rq2 = ctx._compute_qwot_rmsermse(ep_x, cor_spl)
+
+            rmse_cur = ctx._rmse_combinedined(rs2, rq2)
+
+            if ctx._p2_trf_log_tag[0] == "phase 4 finale":
+                _ap_k = np.asarray(ctx._re_state["re_aperture_knots"], dtype=float).ravel()[
+                    : int(RE_P4_BEAM_N_KNOTS)
+                ]
+
+                _lam_k = np.asarray(ctx._re_state.get("re_p4_beam_knots_lam_nm", []), dtype=float).ravel()[
+                    : _ap_k.size
+                ]
+
+                _pairs = ", ".join(
+                    f"(lambda={lk:.0f}nm->{ak:.2f})" for lk, ak in zip(_lam_k, _ap_k, strict=False)
+                )
+
+                ap_sfx = f" | ap=[{_pairs}]"
+
+            else:
+                ap_sfx = ""
+
+            _bn = _c.get("barrier_norm")
+
+            _bar_sfx = f" | ||barrier||={float(_bn):.4g}" if _bn is not None else ""
+
+            _best_prev = _c.get("best_rmse_combined")
+
+            if _best_prev is None or rmse_cur < float(_best_prev):
+                _c["best_rmse_combined"] = float(rmse_cur)
+
+            rmse_best_so_far = float(_c.get("best_rmse_combined", rmse_cur))
+
+            _trf_rms_p2 = _re_trf_residual_rms(_c["res"])
+
+            msg = (
+                f"RE [{ctx._p2_trf_log_tag[0]}] TRF it ~{_c['i']}  "
+                f"RMSE_facade(curr)={rmse_cur:.6f} | RMSE_facade(best)={rmse_best_so_far:.6f} "
+                f"(sqrt(sp2+alpha·QWOT2); hors Tikhonov/pen H-L dans r) | "
+                f"TRF_RMS(res)={_trf_rms_p2:.6g}{ap_sfx}{_bar_sfx}  {now - ctx._t_p2:.1f}s"
+            )
+
+            logging.info(msg)
+
+            _intra_2b = min(
+                0.92,
+                float(_c["i"]) / float(max(ctx._maxiter_p2b, 1)),
+            )
+
+            ctx._emit_re_progprog(
+                ctx._pct_p2b_p2b(ctx.pl, ctx._p2_ki_slot[0], _intra_2b),
+                msg,
+            )
+
+            ctx._emit_re_spectrum_livelive(ep_x, _c["i"], correc=cor_spl, last_mse=_c["mse"], force=False)
+
+    def _fun_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+
+        self._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
+
+        return ctx._cb2_ref[0]["res"]
+
+    def _jac_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+
+        self._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
+
+        return ctx._cb2_ref[0]["jac"]
+
+    def _compute_eval_both_p2a(self, ctx_p2, 
+        x_sp: np.ndarray,
+        _cb2a,
+        ep_p1,
+        _ki,
+        _t_pf,
+    ) -> tuple | None:
+
+        if self._stop:
+            raise REUserStopRequested()
+
+        if _cb2a["x"] is not None and np.array_equal(x_sp, _cb2a["x"]):
+            return
+
+        # S2: Invalidate Tikhonov weights when lam2 changes by >1 nm.
+
+        cur_lam2 = float(x_sp[2 * ctx._nk])
+
+        if _cb2a["tk_w_c"] is None or abs(cur_lam2 - (_cb2a["tk_lam2"] or 0.0)) > 1.0:
+            _cb2a["tk_w_c"] = re_compute_tikhonov_weights(re_knots_wavelengths(cur_lam2), ctx.wls)
+
+            _cb2a["tk_lam2"] = cur_lam2
+
+        tk_w_c = _cb2a["tk_w_c"]
+
+        _cb2a["i"] += 1
+
+        dh = np.asarray(x_sp[:ctx._nk], dtype=np.float64, copy=False).reshape(ctx._nk)
+
+        dl = np.asarray(x_sp[ctx._nk : 2 * ctx._nk], dtype=np.float64, copy=False).reshape(ctx._nk)
+
+        lam_p = float(x_sp[2 * ctx._nk])
+
+        # Cache the B_matrix and envelope for the central point and the 10 FD perturbations (dh, dl)
+
+        b_mat_c = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_p), ctx.wls)
+
+        env_c = re_envelope_max_delta_n(ctx.wls, scale=ctx.re_env_s)
+
+        cor_c = ("spline_cached", dh, dl, lam_p, b_mat_c, env_c, tk_w_c)
+
+        mse, _, r_c, _ = ctx._mse_grad_accumulate_epe_ep(
+            ep_p1, ctx.wt_spectral, False, cor_c, return_residuals=True
+        )
+
+        if _cb2a["i"] == 1:
+            _n_fd = ctx.n_sp if ctx._fd_1s else (ctx.n_sp * 2)
+
+            logging.info(
+                "RE phase 2a  1st TRF eval: 0 thick. analytic, %d FD residual blocks "
+                "(%s)  FD_threads=%d",
+                _n_fd,
+                "forward" if ctx._fd_1s else "centered",
+                ctx._fd_nw,
+            )
+
+            ctx._emit_re_progprog(
+                ctx._pct_p2a_p2a(ctx.pl, _ki, 0.05),
+                "RE phase 2a  first FD objective+grad eval (may take a few s)...",
+            )
+
+        J_sp = np.zeros((len(r_c), ctx.n_sp), dtype=np.float64)
+
+        x_c = np.asarray(x_sp, dtype=np.float64, copy=True)
+
+        def _pf_fd_j_res(j: int) -> tuple[int, np.ndarray]:
+
+            hs = ctx._p2fd_lam if j == 2 * ctx._nk else ctx._p2fd_spl
+
+            xp = np.array(x_c, copy=True)
+
+            xp[j] += hs
+
+            dhp = xp[:ctx._nk]
+
+            dlp = xp[ctx._nk : 2 * ctx._nk]
+
+            lamx = float(xp[2 * ctx._nk])
+
+            cor_p = (
+                ("spline_cached", dhp, dlp, lamx, b_mat_c, env_c, tk_w_c)
+                if j < 2 * ctx._nk
+                else ("spline", dhp, dlp, lamx, tk_w_c)
+            )
+
+            r_p = ctx._mse_grad_accumulate_epe_ep(ep_p1, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
+
+            if ctx._fd_1s:
+                return j, (r_p - r_c) / hs
+
+            xm = np.array(x_c, copy=True)
+
+            xm[j] -= hs
+
+            dhm = xm[:ctx._nk]
+
+            dlm = xm[ctx._nk : 2 * ctx._nk]
+
+            lamm = float(xm[2 * ctx._nk])
+
+            cor_m = (
+                ("spline_cached", dhm, dlm, lamm, b_mat_c, env_c, tk_w_c)
+                if j < 2 * ctx._nk
+                else ("spline", dhm, dlm, lamm, tk_w_c)
+            )
+
+            r_m = ctx._mse_grad_accumulate_epe_ep(ep_p1, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
+
+            return j, (r_p - r_m) / (2.0 * hs)
+
+        _nw_sp = min(ctx._fd_nw, ctx.n_sp)
+
+        if _nw_sp <= 1:
+            for j in range(ctx.n_sp):
+                jj, j_col = _pf_fd_j_res(j)
+
+                J_sp[:, jj] = j_col
+
+        else:
+            _ex_pf = _cb2a.get("fd_executor")
+
+            if _ex_pf is None:
+                _ex_pf = ThreadPoolExecutor(max_workers=_nw_sp)
+
+                _cb2a["fd_executor"] = _ex_pf
+
+            _f_pf = [_ex_pf.submit(_pf_fd_j_res, j) for j in range(ctx.n_sp)]
+
+            for _fu in as_completed(_f_pf):
+                jj, j_col = _fu.result()
+
+                J_sp[:, jj] = j_col
+
+        _cb2a["x"] = x_sp.copy()
+
+        _cb2a["res"] = r_c
+
+        _cb2a["jac"] = J_sp
+
+        _cb2a["mse"] = float(mse)
+
+        now = time.perf_counter()
+
+        if _cb2a["i"] == 1 or (now - _cb2a["last_emit"]) >= 3.0:
+            _cb2a["last_emit"] = now
+
+            logging.info(
+                "RE phase 2a  TRF iter ~%d (%.1fs since prefit start)",
+                _cb2a["i"],
+                now - _t_pf,
+            )
+
+            _intra_2a = min(
+                0.92,
+                float(_cb2a["i"]) / float(max(ctx._prefit_max, 1)),
+            )
+
+            ctx._emit_re_progprog(
+                ctx._pct_p2a_p2a(ctx.pl, _ki, _intra_2a),
+                f"RE phase 2a  iter {_cb2a['i']} TRF spline prefit...",
+            )
+
+    def _compute_fun_res_p2a(self, ctx_p2, x_sp: np.ndarray, _cb2a) -> Any:
+
+        self._compute_eval_both_p2a(ctx_p2, x_sp)
+
+        return _cb2a["res"]
+
+    def _compute_jac_res_p2a(self, ctx_p2, x_sp: np.ndarray, _cb2a) -> Any:
+
+        self._compute_eval_both_p2a(ctx_p2, x_sp)
+
+        return _cb2a["jac"]
+
 
     def _execute_re_phases(self) -> None:
         """Orchestrate RE phases in nominal order."""

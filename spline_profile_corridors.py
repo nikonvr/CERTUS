@@ -2384,6 +2384,130 @@ def _detect_corridor_spike(
 
     return is_spike, rm_pred, _tol_eff
 
+
+@dataclass
+class CorridorWalkSideContext:
+    pconf: ProfileCorridorConfig
+    cfg: SplineOptConfig
+    sk: np.ndarray
+    x_nodes_center: np.ndarray
+    x0_default: np.ndarray
+    bounds_nodes: np.ndarray
+    maxfun_prof: int
+    use_lr: bool
+    sig_t: float
+    sig_r: float
+    chi2_min: float
+    delta_chi2: float
+    sigma_t_f_hetero: np.ndarray | None
+    sigma_r_f_hetero: np.ndarray | None
+    rmse_thresh_active: float
+    live_point_cb: Any | None
+    d_vals: list[float]
+    n_curves: list[np.ndarray]
+    k_curves: list[np.ndarray]
+    rmse_vals: list[float]
+    chi2_vals: list[float]
+
+def refine_bracket(
+        self,
+    a_d: float,
+    a_x: np.ndarray,
+    y_a: float,
+    b_d: float,
+    y_b: float,
+    br_sign: float,
+) -> tuple[float, np.ndarray] | None:
+
+    if not bool(self.pconf.refine_boundary):
+        return None
+
+    if not (a_d < b_d if br_sign > 0 else a_d > b_d):
+        return None
+
+    for _ in range(int(max(1, self.pconf.refine_max_iter))):
+        if abs(b_d - a_d) <= float(max(1e-6, self.pconf.refine_tol_nm)):
+            break
+
+        if y_b - y_a > 1e-12:
+            frac = -y_a / (y_b - y_a)
+            frac = min(max(frac, 0.2), 0.8)
+        else:
+            frac = 0.5
+        m_d = a_d + frac * (b_d - a_d)
+        m_x0 = a_x
+
+        fitm, _, metricm = _best_fit_at_d(
+            self.cfg,
+            sk=self.sk,
+            d_nm=float(m_d),
+            x_seed_primary=m_x0,
+            x_seed_secondary=self.x_nodes_center,
+            x_seed_default=self.x0_default,
+            bounds_nodes=self.bounds_nodes,
+            maxfun=self.maxfun_prof,
+            use_lr=self.use_lr,
+            sig_t=self.sig_t,
+            sig_r=self.sig_r,
+            chi2_min_ref=float(self.chi2_min) if (self.use_lr and np.isfinite(self.chi2_min)) else None,
+            delta_chi2=float(self.delta_chi2) if np.isfinite(self.delta_chi2) else 0.0,
+            pconf=self.pconf,
+            stage_label="Refine",
+            sigma_t_f=self.sigma_t_f_hetero,
+            sigma_r_f=self.sigma_r_f_hetero,
+        )
+
+        if fitm is None or not np.isfinite(float(fitm.get("rmse", float("nan")))):
+            b_d = float(m_d)
+
+            continue
+
+        rm = float(fitm["rmse"])
+
+        ok_rb = False
+        chi_m = float("nan")
+        y_m = 0.0
+        if self.use_lr:
+            chi_m = float(metricm)
+            ok_rb = np.isfinite(chi_m) and np.isfinite(self.chi2_min) and (chi_m <= self.chi2_min + self.delta_chi2)
+            y_m = chi_m - (self.chi2_min + self.delta_chi2)
+        else:
+            ok_rb = rm <= self.rmse_thresh_active
+            y_m = rm - self.rmse_thresh_active
+
+        if ok_rb:
+            a_d = float(m_d)
+            y_a = y_m
+
+            a_x = np.asarray(fitm["x_nodes_best"], dtype=np.float64).ravel().copy()
+
+            self.d_vals.append(float(m_d))
+
+            self.n_curves.append(np.asarray(fitm["n_lam"], dtype=np.float64))
+
+            self.k_curves.append(np.asarray(fitm["k_lam"], dtype=np.float64))
+
+            self.rmse_vals.append(rm)
+
+            self.chi2_vals.append(float(chi_m) if np.isfinite(chi_m) else float("nan"))
+            if callable(self.live_point_cb):
+                self.live_point_cb(
+                    {
+                        "d_nm": float(m_d),
+                        "rmse": float(rm),
+                        "n_lam": np.asarray(fitm["n_lam"], dtype=np.float64).ravel(),
+                        "k_lam": np.asarray(fitm["k_lam"], dtype=np.float64).ravel(),
+                        "chi2": float(chi_m) if np.isfinite(chi_m) else float("nan"),
+                    }
+                )
+
+        else:
+            b_d = float(m_d)
+            y_b = y_m
+
+    return float(a_d), np.asarray(a_x, dtype=np.float64).ravel().copy()
+
+
 def _corridor_profile_walk_side(
     walk_sign: float,
     pconf: ProfileCorridorConfig,
@@ -2440,102 +2564,30 @@ def _corridor_profile_walk_side(
     all_d_vals: list[float] = [float(d0)]
     all_rmse_vals: list[float] = [float(rmse_opt)]
 
-    def _refine_bracket(
-        a_d: float,
-        a_x: np.ndarray,
-        y_a: float,
-        b_d: float,
-        y_b: float,
-        br_sign: float,
-    ) -> tuple[float, np.ndarray] | None:
+    ctx = CorridorWalkSideContext(
+        pconf=pconf,
+        cfg=cfg,
+        sk=sk,
+        x_nodes_center=x_nodes_center,
+        x0_default=x0_default,
+        bounds_nodes=bounds_nodes,
+        maxfun_prof=maxfun_prof,
+        use_lr=use_lr,
+        sig_t=sig_t,
+        sig_r=sig_r,
+        chi2_min=chi2_min,
+        delta_chi2=delta_chi2,
+        sigma_t_f_hetero=sigma_t_f_hetero,
+        sigma_r_f_hetero=sigma_r_f_hetero,
+        rmse_thresh_active=rmse_thresh_active,
+        live_point_cb=live_point_cb,
+        d_vals=d_vals,
+        n_curves=n_curves,
+        k_curves=k_curves,
+        rmse_vals=rmse_vals,
+        chi2_vals=chi2_vals,
+    )
 
-        if not bool(pconf.refine_boundary):
-            return None
-
-        if not (a_d < b_d if br_sign > 0 else a_d > b_d):
-            return None
-
-        for _ in range(int(max(1, pconf.refine_max_iter))):
-            if abs(b_d - a_d) <= float(max(1e-6, pconf.refine_tol_nm)):
-                break
-
-            if y_b - y_a > 1e-12:
-                frac = -y_a / (y_b - y_a)
-                frac = min(max(frac, 0.2), 0.8)
-            else:
-                frac = 0.5
-            m_d = a_d + frac * (b_d - a_d)
-            m_x0 = a_x
-
-            fitm, _, metricm = _best_fit_at_d(
-                cfg,
-                sk=sk,
-                d_nm=float(m_d),
-                x_seed_primary=m_x0,
-                x_seed_secondary=x_nodes_center,
-                x_seed_default=x0_default,
-                bounds_nodes=bounds_nodes,
-                maxfun=maxfun_prof,
-                use_lr=use_lr,
-                sig_t=sig_t,
-                sig_r=sig_r,
-                chi2_min_ref=float(chi2_min) if (use_lr and np.isfinite(chi2_min)) else None,
-                delta_chi2=float(delta_chi2) if np.isfinite(delta_chi2) else 0.0,
-                pconf=pconf,
-                stage_label="Refine",
-                sigma_t_f=sigma_t_f_hetero,
-                sigma_r_f=sigma_r_f_hetero,
-            )
-
-            if fitm is None or not np.isfinite(float(fitm.get("rmse", float("nan")))):
-                b_d = float(m_d)
-
-                continue
-
-            rm = float(fitm["rmse"])
-
-            ok_rb = False
-            chi_m = float("nan")
-            y_m = 0.0
-            if use_lr:
-                chi_m = float(metricm)
-                ok_rb = np.isfinite(chi_m) and np.isfinite(chi2_min) and (chi_m <= chi2_min + delta_chi2)
-                y_m = chi_m - (chi2_min + delta_chi2)
-            else:
-                ok_rb = rm <= rmse_thresh_active
-                y_m = rm - rmse_thresh_active
-
-            if ok_rb:
-                a_d = float(m_d)
-                y_a = y_m
-
-                a_x = np.asarray(fitm["x_nodes_best"], dtype=np.float64).ravel().copy()
-
-                d_vals.append(float(m_d))
-
-                n_curves.append(np.asarray(fitm["n_lam"], dtype=np.float64))
-
-                k_curves.append(np.asarray(fitm["k_lam"], dtype=np.float64))
-
-                rmse_vals.append(rm)
-
-                chi2_vals.append(float(chi_m) if np.isfinite(chi_m) else float("nan"))
-                if callable(live_point_cb):
-                    live_point_cb(
-                        {
-                            "d_nm": float(m_d),
-                            "rmse": float(rm),
-                            "n_lam": np.asarray(fitm["n_lam"], dtype=np.float64).ravel(),
-                            "k_lam": np.asarray(fitm["k_lam"], dtype=np.float64).ravel(),
-                            "chi2": float(chi_m) if np.isfinite(chi_m) else float("nan"),
-                        }
-                    )
-
-            else:
-                b_d = float(m_d)
-                y_b = y_m
-
-        return float(a_d), np.asarray(a_x, dtype=np.float64).ravel().copy()
 
     d_prev = float(d0)
 
@@ -2873,7 +2925,7 @@ def _corridor_profile_walk_side(
             continue
 
         if not ok and not force_points and last_good_d is not None and last_good_x is not None:
-            rb = _refine_bracket(last_good_d, last_good_x, last_good_y, float(d_try), y_v, walk_sign)
+            rb = ctx.refine_bracket(last_good_d, last_good_x, last_good_y, float(d_try), y_v, walk_sign)
 
             if rb is not None:
                 n_refines += 1
@@ -4558,6 +4610,245 @@ def _package_profile_grid_result(
     }
 
 
+@dataclass
+class RegularGridProfileContext:
+    cfg: Any
+    sk: Any
+    bounds_nodes: Any
+    lam_full: Any
+    maxfun: int
+    maxfun_polish: int
+    live_cb: Any
+    d_arr: Any
+    n_tot: int
+    step_ref: float
+    d_lo_b: float
+    d_hi_b: float
+    stop_check: Any
+    max_extra_per_event: int
+    k: int
+    
+    abs_best_seen_rmse: float
+    d_list: list
+    r_list: list
+    n_list: list
+    k_list: list
+    nit_list: list
+    nfev_list: list
+    point_kind_list: list
+    point_status_code_list: list
+    x_nodes_best_list: list
+    branch_events: list
+
+    def _touch_absolute_best(self, d_nm: float, rmse: float, *, tag: str) -> None:
+        import numpy as np
+        if not (np.isfinite(rmse) and np.isfinite(float(d_nm))):
+            return
+        rf = float(rmse)
+        df = float(d_nm)
+        if rf + 1e-15 >= float(self.abs_best_seen_rmse):
+            return
+        self.abs_best_seen_rmse = rf
+        log.info(
+            "%s manual RMSE(d) grid | ABSOLUTE BEST (new record) | d_nm=%s | rmse=%s | tag=%s",
+            _LOG_PREFIX, repr(df), repr(rf), str(tag),
+        )
+
+    def _emit_live(self, current_d_nm: float, step_progress: float) -> None:
+        import numpy as np
+        if self.live_cb is None:
+            return
+        try:
+            order_live = np.argsort(np.asarray(self.d_list, dtype=np.float64))
+            d_live = np.asarray([self.d_list[i] for i in order_live], dtype=np.float64)
+            r_live = np.asarray([self.r_list[i] for i in order_live], dtype=np.float64)
+            kind_live = np.asarray([self.point_kind_list[i] for i in order_live], dtype=np.int32)
+            st_live = np.asarray([self.point_status_code_list[i] for i in order_live], dtype=np.int32)
+            done_base = int(np.sum(kind_live == 0))
+            done_extra = int(np.sum(kind_live == 1))
+
+            self.live_cb(
+                {
+                    "profile_d_values_nm": d_live,
+                    "profile_d_rmse_values": r_live,
+                    "profile_d_manual_grid_point_kind": kind_live,
+                    "profile_d_manual_grid_point_status_code": st_live,
+                    "profile_d_manual_grid_current_d_nm": float(current_d_nm),
+                    "profile_d_status": "manual_grid_live",
+                    "profile_d_manual_grid_progress": float(step_progress),
+                    "profile_d_manual_grid_done_points": int(d_live.size),
+                    "profile_d_manual_grid_total_points": int(self.d_arr.size),
+                    "profile_d_manual_grid_base_done_points": int(done_base),
+                    "profile_d_manual_grid_extra_done_points": int(done_extra),
+                    "profile_d_manual_grid_breakpoint_events": list(self.branch_events),
+                }
+            )
+        except (TypeError, ValueError, RuntimeError, AttributeError):
+            log.debug("%s failed to invoke progress_cb in profile_walk_d (non-critical)", _LOG_PREFIX)
+
+    def _append_fit_record(
+        self,
+        d_t: float,
+        fit: dict,
+        *,
+        point_kind: int = 0,
+        point_status_code: int = 0,
+    ) -> bool:
+        import numpy as np
+        n_lam = np.asarray(fit.get("n_lam", []), dtype=np.float64).ravel()
+        k_lam = np.asarray(fit.get("k_lam", []), dtype=np.float64).ravel()
+        if n_lam.size != self.lam_full.size or k_lam.size != self.lam_full.size:
+            log.warning("%s manual grid: n_lam/k_lam size mismatch at d=%.4f nm (skip point)", _LOG_PREFIX, float(d_t))
+            return False
+
+        d_new = float(d_t)
+        rm_new = float(fit.get("rmse", float("nan")))
+        nit_new = float(fit.get("nit", float("nan")))
+        nfev_new = float(fit.get("nfev", float("nan")))
+        x_new = np.asarray(fit.get("x_nodes_best", []), dtype=np.float64).ravel().copy()
+
+        i_same = -1
+        for i0, d0 in enumerate(self.d_list):
+            if np.isclose(float(d0), d_new, rtol=0.0, atol=1e-9):
+                i_same = int(i0)
+                break
+
+        if i_same >= 0:
+            rm_old = float(self.r_list[i_same])
+            keep_new = bool(np.isfinite(rm_new) and ((not np.isfinite(rm_old)) or (rm_new < rm_old - 1e-12)))
+            if not keep_new:
+                _manual_grid_tag_base_on_duplicate_discard(self.point_kind_list, i_same, incoming_point_kind=int(point_kind))
+                log.info("%s manual grid: duplicate d=%.6f nm discarded | rmse_old=%.8f <= rmse_new=%.8f", _LOG_PREFIX, d_new, rm_old, rm_new)
+                return False
+
+            self.r_list[i_same] = rm_new
+            self.n_list[i_same] = n_lam
+            self.k_list[i_same] = k_lam
+            self.nit_list[i_same] = nit_new
+            self.nfev_list[i_same] = nfev_new
+            self.point_kind_list[i_same] = int(min(int(self.point_kind_list[i_same]), int(point_kind)))
+            self.point_status_code_list[i_same] = int(min(int(self.point_status_code_list[i_same]), int(point_status_code)))
+            self.x_nodes_best_list[i_same] = x_new
+            log.info("%s manual grid: duplicate d=%.6f nm replaced | rmse_old=%.8f -> rmse_new=%.8f", _LOG_PREFIX, d_new, rm_old, rm_new)
+            self._touch_absolute_best(d_new, rm_new, tag="grid_duplicate_improved")
+            return True
+
+        self.d_list.append(d_new)
+        self.r_list.append(rm_new)
+        self.n_list.append(n_lam)
+        self.k_list.append(k_lam)
+        self.nit_list.append(nit_new)
+        self.nfev_list.append(nfev_new)
+        self.point_kind_list.append(int(point_kind))
+        self.point_status_code_list.append(int(point_status_code))
+        self.x_nodes_best_list.append(x_new)
+        self._touch_absolute_best(d_new, rm_new, tag="grid_new_point")
+        return True
+
+    def _fit_point_with_extra_polish(self, d_nm: float, x_seed_in: np.ndarray) -> dict | None:
+        import numpy as np
+        fit0 = _fit_nodes_at_fixed_d(
+            self.cfg, self.sk, float(d_nm), np.asarray(x_seed_in, dtype=np.float64).ravel().copy(),
+            self.bounds_nodes, maxfun=int(self.maxfun), keep_nominal_seed_if_refit_worse=True,
+            seed_keep_tol_rel=0.0, seed_keep_tol_abs=1e-5, pure_spectral=True,
+        )
+
+        if fit0 is None:
+            try:
+                x_seed = clip_to_bounds(np.asarray(x_seed_in, dtype=np.float64).ravel().copy(), self.bounds_nodes[:, 0], self.bounds_nodes[:, 1])
+                if x_seed.size != 2 * int(self.k): return None
+                x_full_seed = np.concatenate((np.asarray([float(d_nm)], dtype=np.float64), x_seed))
+                n_lam_seed, k_lam_seed = nk_from_x_pwlnk(
+                    x_full_seed, self.lam_full, self.sk, self.cfg.k_clip_lo, self.cfg.k_clip_hi,
+                    sig_pre=None, n_mono_band_nm=self.cfg.n_mono_band_nm, profile_interp=str(self.cfg.nk_profile_interp or "smooth"),
+                )
+                mse_seed, rmse_seed = spectral_mse_rmse_masked_from_nk(
+                    self.cfg, {}, self.lam_full, np.asarray(n_lam_seed, dtype=np.float64).ravel(),
+                    np.asarray(k_lam_seed, dtype=np.float64).ravel(), float(d_nm),
+                )
+                rmse_seed_f = float(rmse_seed)
+                mse_seed_f = float(mse_seed) if np.isfinite(float(mse_seed)) else float("nan")
+                if not np.isfinite(rmse_seed_f):
+                    from spline_objective import SplinePWLObjective
+                    obj_seed = SplinePWLObjective(self.cfg, self.sk)
+                    m_obj_seed = float(obj_seed(x_full_seed))
+                    if np.isfinite(m_obj_seed) and m_obj_seed < 1e29:
+                        rmse_seed_f = float(np.sqrt(max(m_obj_seed, 0.0)))
+                        if not np.isfinite(mse_seed_f): mse_seed_f = float(m_obj_seed)
+                    else: return None
+                n_slice_seed = x_seed[:self.k]
+                n_nodes_phys_seed = (np.asarray(n_slice_seed, dtype=np.float64).copy() if self.cfg.n_mono_band_nm is None else x_slice_n_to_physical_nodes(n_slice_seed, self.sk, self.cfg.n_mono_band_nm))
+                L_nodes_seed = np.asarray(x_seed[self.k:], dtype=np.float64).copy()
+                return {
+                    "success": False, "message": "fallback_seed_eval_after_refit_failure", "nit": 0, "nfev": 0,
+                    "d_nm": float(d_nm), "rmse": rmse_seed_f, "mse": float(mse_seed_f) if np.isfinite(float(mse_seed_f)) else float("nan"),
+                    "x_nodes_best": x_seed.copy(), "n_nodes_physical": n_nodes_phys_seed, "L_nodes": L_nodes_seed,
+                    "n_lam": np.asarray(n_lam_seed, dtype=np.float64).ravel().copy(), "k_lam": np.asarray(k_lam_seed, dtype=np.float64).ravel().copy(),
+                    "fallback_from_seed": True, "fallback_from_objective": bool(not np.isfinite(float(rmse_seed))),
+                }
+            except Exception:
+                return None
+
+        x_mid = np.asarray(fit0.get("x_nodes_best", x_seed_in), dtype=np.float64).ravel().copy()
+        fit1 = _fit_nodes_at_fixed_d(
+            self.cfg, self.sk, float(d_nm), x_mid, self.bounds_nodes, maxfun=int(self.maxfun_polish),
+            keep_nominal_seed_if_refit_worse=True, seed_keep_tol_rel=0.0, seed_keep_tol_abs=1e-5, pure_spectral=True,
+        )
+
+        if fit1 is None: return fit0
+        rm0 = float(fit0.get("rmse", float("nan")))
+        rm1 = float(fit1.get("rmse", float("nan")))
+        if np.isfinite(rm1) and (not np.isfinite(rm0) or rm1 <= rm0):
+            fit1["nfev"] = int((fit0.get("nfev", 0)) + (fit1.get("nfev", 0)))
+            fit1["nit"] = int((fit0.get("nit", 0)) + (fit1.get("nit", 0)))
+            return fit1
+        return fit0
+
+    def _choose_branch_direction_sign(
+        self, *, d_break: float, x_seed_start: np.ndarray, side_origin: int, rmse_break: float,
+    ) -> int:
+        import numpy as np
+        d_step = float(max(0.5 * float(self.step_ref), 1e-4))
+        probes = []
+        for sgn in (+1, -1):
+            d_try = float(d_break + float(sgn) * d_step)
+            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12): continue
+            fit_p = self._fit_point_with_extra_polish(float(d_try), np.asarray(x_seed_start, dtype=np.float64).ravel().copy())
+            if fit_p is None: continue
+            rm_p = float(fit_p.get("rmse", float("nan")))
+            if not np.isfinite(rm_p): continue
+            probes.append((int(sgn), float(rm_p), fit_p))
+        if not probes: return 0
+        probes.sort(key=lambda t: t[1])
+        best_sign, best_rmse, _ = probes[0]
+        if np.isfinite(rmse_break) and (best_rmse <= float(rmse_break) - 1e-12): return int(best_sign)
+        return int(-1 if side_origin > 0 else +1)
+
+    def _branch_reverse_from_breakpoint(
+        self, *, d_break: float, x_seed_start: np.ndarray, side_origin: int, branch_sign: int, primary_step_idx: int,
+    ) -> tuple[int, np.ndarray]:
+        import numpy as np
+        extra_ok = 0
+        reverse_sign = int(np.sign(branch_sign))
+        if reverse_sign == 0:
+            return 0, np.asarray(x_seed_start, dtype=np.float64).ravel().copy()
+
+        d_step = float(max(0.5 * float(self.step_ref), 1e-4))
+        for j in range(1, int(self.max_extra_per_event) + 1):
+            if self.stop_check is not None and bool(self.stop_check()): break
+            d_try = float(d_break + reverse_sign * d_step * float(j))
+            if not (self.d_lo_b - 1e-12 <= d_try <= self.d_hi_b + 1e-12): break
+            fit_b = self._fit_point_with_extra_polish(float(d_try), x_seed_start)
+            if fit_b is None: continue
+            st_code_b = 0
+            if bool(fit_b.get("fallback_from_objective", False)): st_code_b = 2
+            elif bool(fit_b.get("fallback_from_seed", False)): st_code_b = 1
+            if not self._append_fit_record(d_try, fit_b, point_kind=1, point_status_code=int(st_code_b)): continue
+            extra_ok += 1
+            x_seed_start = np.asarray(fit_b.get("x_nodes_best", x_seed_start), dtype=np.float64).ravel().copy()
+            self._emit_live(float(d_try), float(primary_step_idx + 1) / float(max(1, self.n_tot)))
+        return int(extra_ok), np.asarray(x_seed_start, dtype=np.float64).ravel().copy()
+
 def compute_regular_grid_rmse_profile(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -4799,33 +5090,10 @@ def compute_regular_grid_rmse_profile(
     abs_best_seen_rmse = float("inf")
 
 
-    def _touch_absolute_best(d_nm: float, rmse: float, *, tag: str) -> None:
-        """On each improvement of the best RMSE seen on this grid / global_opt / P0 -> log d and RMSE (float precision)."""
-        nonlocal abs_best_seen_rmse
-        if not (np.isfinite(rmse) and np.isfinite(float(d_nm))):
-            return
-        rf = float(rmse)
-        df = float(d_nm)
-        if rf + 1e-15 >= float(abs_best_seen_rmse):
-            return
-        abs_best_seen_rmse = rf
-
-        log.info(
-            "%s manual RMSE(d) grid | ABSOLUTE BEST (new record) | d_nm=%s | rmse=%s | tag=%s",
-            _LOG_PREFIX,
-            repr(df),
-            repr(rf),
-            str(tag),
-        )
-
     lookback_points = int(max(2, breakpoint_lookback_points))
-
     min_gain_abs_prevn = 2e-6
-
     min_gain_rel_prevn = 5e-4
-
     min_gain_abs_parab = 2e-6
-
     min_breakpoint_spacing_points = max(6, int(lookback_points))
 
     log.info(
@@ -4839,322 +5107,17 @@ def compute_regular_grid_rmse_profile(
         float(d_hi_b),
     )
 
-    def _emit_live(current_d_nm: float, step_progress: float) -> None:
-
-        if live_cb is None:
-            return
-
-        try:
-            order_live = np.argsort(np.asarray(d_list, dtype=np.float64))
-
-            d_live = np.asarray([d_list[i] for i in order_live], dtype=np.float64)
-
-            r_live = np.asarray([r_list[i] for i in order_live], dtype=np.float64)
-
-            kind_live = np.asarray([point_kind_list[i] for i in order_live], dtype=np.int32)
-            st_live = np.asarray([point_status_code_list[i] for i in order_live], dtype=np.int32)
-            done_base = int(np.sum(kind_live == 0))
-            done_extra = int(np.sum(kind_live == 1))
-
-            live_cb(
-                {
-                    "profile_d_values_nm": d_live,
-                    "profile_d_rmse_values": r_live,
-                    "profile_d_manual_grid_point_kind": kind_live,
-                    "profile_d_manual_grid_point_status_code": st_live,
-                    "profile_d_manual_grid_current_d_nm": float(current_d_nm),
-                    "profile_d_status": "manual_grid_live",
-                    "profile_d_manual_grid_progress": float(step_progress),
-                    "profile_d_manual_grid_done_points": int(d_live.size),
-                    "profile_d_manual_grid_total_points": int(d_arr.size),
-                    "profile_d_manual_grid_base_done_points": int(done_base),
-                    "profile_d_manual_grid_extra_done_points": int(done_extra),
-                    "profile_d_manual_grid_breakpoint_events": list(branch_events),
-                }
-            )
-
-        except (TypeError, ValueError, RuntimeError, AttributeError):
-            log.debug("%s failed to invoke progress_cb in profile_walk_d (non-critical)", _LOG_PREFIX)
-
-    def _append_fit_record(
-        d_t: float,
-        fit: dict[str, Any],
-        *,
-        point_kind: int = 0,
-        point_status_code: int = 0,
-    ) -> bool:
-
-        n_lam = np.asarray(fit.get("n_lam", []), dtype=np.float64).ravel()
-
-        k_lam = np.asarray(fit.get("k_lam", []), dtype=np.float64).ravel()
-
-        if n_lam.size != lam_full.size or k_lam.size != lam_full.size:
-            log.warning(
-                "%s manual grid: n_lam/k_lam size mismatch at d=%.4f nm (skip point)",
-                _LOG_PREFIX,
-                float(d_t),
-            )
-
-            return False
-
-        d_new = float(d_t)
-        rm_new = float(fit.get("rmse", float("nan")))
-        nit_new = float(fit.get("nit", float("nan")))
-        nfev_new = float(fit.get("nfev", float("nan")))
-        x_new = np.asarray(fit.get("x_nodes_best", []), dtype=np.float64).ravel().copy()
-
-        i_same = -1
-        for i0, d0 in enumerate(d_list):
-            if np.isclose(float(d0), d_new, rtol=0.0, atol=1e-9):
-                i_same = int(i0)
-                break
-
-        if i_same >= 0:
-            rm_old = float(r_list[i_same])
-            keep_new = bool(np.isfinite(rm_new) and ((not np.isfinite(rm_old)) or (rm_new < rm_old - 1e-12)))
-            if not keep_new:
-                # A reverse-exploration point may occupy this d_n with kind=extra but a BETTER RMSE than
-                # the chained base-grid refit arriving later (discarded duplicate). Coverage audit still
-                # counts rows with point_kind==0 as ``returned_base`` → tag the slot as fulfilling the base grid.
-                _manual_grid_tag_base_on_duplicate_discard(point_kind_list, i_same, incoming_point_kind=int(point_kind))
-                log.info(
-                    "%s manual grid: duplicate d=%.6f nm discarded | rmse_old=%.8f <= rmse_new=%.8f",
-                    _LOG_PREFIX,
-                    d_new,
-                    rm_old,
-                    rm_new,
-                )
-                return False
-
-            r_list[i_same] = rm_new
-            n_list[i_same] = n_lam
-            k_list[i_same] = k_lam
-            nit_list[i_same] = nit_new
-            nfev_list[i_same] = nfev_new
-            # Preserve "base" point kind if one of the two points is base.
-            point_kind_list[i_same] = int(min(int(point_kind_list[i_same]), int(point_kind)))
-            point_status_code_list[i_same] = int(min(int(point_status_code_list[i_same]), int(point_status_code)))
-            x_nodes_best_list[i_same] = x_new
-            log.info(
-                "%s manual grid: duplicate d=%.6f nm replaced | rmse_old=%.8f -> rmse_new=%.8f",
-                _LOG_PREFIX,
-                d_new,
-                rm_old,
-                rm_new,
-            )
-            _touch_absolute_best(d_new, rm_new, tag="grid_duplicate_improved")
-            return True
-
-        d_list.append(d_new)
-        r_list.append(rm_new)
-        n_list.append(n_lam)
-        k_list.append(k_lam)
-        nit_list.append(nit_new)
-        nfev_list.append(nfev_new)
-        point_kind_list.append(int(point_kind))
-        point_status_code_list.append(int(point_status_code))
-        x_nodes_best_list.append(x_new)
-        _touch_absolute_best(d_new, rm_new, tag="grid_new_point")
-        return True
-
-    def _fit_point_with_extra_polish(d_nm: float, x_seed_in: np.ndarray) -> dict[str, Any] | None:
-
-        fit0 = _fit_nodes_at_fixed_d(
-            cfg,
-            sk,
-            float(d_nm),
-            np.asarray(x_seed_in, dtype=np.float64).ravel().copy(),
-            bounds_nodes,
-            maxfun=int(maxfun),
-            keep_nominal_seed_if_refit_worse=True,
-            seed_keep_tol_rel=0.0,
-            seed_keep_tol_abs=1e-5,
-            pure_spectral=True,
-        )
-
-        if fit0 is None:
-            # Fallback: keep one RMSE(d) sample for this exact d target even if local
-            # L-BFGS-B refit fails, by evaluating the clipped seed at fixed thickness.
-            try:
-                x_seed = clip_to_bounds(
-                    np.asarray(x_seed_in, dtype=np.float64).ravel().copy(),
-                    bounds_nodes[:, 0],
-                    bounds_nodes[:, 1],
-                )
-                if x_seed.size != 2 * int(k):
-                    return None
-                x_full_seed = np.concatenate((np.asarray([float(d_nm)], dtype=np.float64), x_seed))
-                n_lam_seed, k_lam_seed = nk_from_x_pwlnk(
-                    x_full_seed,
-                    lam_full,
-                    sk,
-                    cfg.k_clip_lo,
-                    cfg.k_clip_hi,
-                    sig_pre=None,
-                    n_mono_band_nm=cfg.n_mono_band_nm,
-                    profile_interp=str(cfg.nk_profile_interp or "smooth"),
-                )
-                mse_seed, rmse_seed = spectral_mse_rmse_masked_from_nk(
-                    cfg,
-                    {},
-                    lam_full,
-                    np.asarray(n_lam_seed, dtype=np.float64).ravel(),
-                    np.asarray(k_lam_seed, dtype=np.float64).ravel(),
-                    float(d_nm),
-                )
-                rmse_seed_f = float(rmse_seed)
-                mse_seed_f = float(mse_seed) if np.isfinite(float(mse_seed)) else float("nan")
-                if not np.isfinite(rmse_seed_f):
-                    # Last fallback: objective value at the seed point.
-                    obj_seed = SplinePWLObjective(cfg, sk)
-                    m_obj_seed = float(obj_seed(x_full_seed))
-                    if np.isfinite(m_obj_seed) and m_obj_seed < 1e29:
-                        rmse_seed_f = float(np.sqrt(max(m_obj_seed, 0.0)))
-                        if not np.isfinite(mse_seed_f):
-                            mse_seed_f = float(m_obj_seed)
-                    else:
-                        return None
-                n_slice_seed = x_seed[:k]
-                n_nodes_phys_seed = (
-                    np.asarray(n_slice_seed, dtype=np.float64).copy()
-                    if cfg.n_mono_band_nm is None
-                    else x_slice_n_to_physical_nodes(n_slice_seed, sk, cfg.n_mono_band_nm)
-                )
-                L_nodes_seed = np.asarray(x_seed[k:], dtype=np.float64).copy()
-                return {
-                    "success": False,
-                    "message": "fallback_seed_eval_after_refit_failure",
-                    "nit": 0,
-                    "nfev": 0,
-                    "d_nm": float(d_nm),
-                    "rmse": rmse_seed_f,
-                    "mse": float(mse_seed_f) if np.isfinite(float(mse_seed_f)) else float("nan"),
-                    "x_nodes_best": x_seed.copy(),
-                    "n_nodes_physical": n_nodes_phys_seed,
-                    "L_nodes": L_nodes_seed,
-                    "n_lam": np.asarray(n_lam_seed, dtype=np.float64).ravel().copy(),
-                    "k_lam": np.asarray(k_lam_seed, dtype=np.float64).ravel().copy(),
-                    "fallback_from_seed": True,
-                    "fallback_from_objective": bool(not np.isfinite(float(rmse_seed))),
-                }
-            except (TypeError, ValueError, RuntimeError, np.linalg.LinAlgError):
-                return None
-
-        x_mid = np.asarray(fit0.get("x_nodes_best", x_seed_in), dtype=np.float64).ravel().copy()
-
-        fit1 = _fit_nodes_at_fixed_d(
-            cfg,
-            sk,
-            float(d_nm),
-            x_mid,
-            bounds_nodes,
-            maxfun=int(maxfun_polish),
-            keep_nominal_seed_if_refit_worse=True,
-            seed_keep_tol_rel=0.0,
-            seed_keep_tol_abs=1e-5,
-            pure_spectral=True,
-        )
-
-        if fit1 is None:
-            return fit0
-
-        rm0 = float(fit0.get("rmse", float("nan")))
-
-        rm1 = float(fit1.get("rmse", float("nan")))
-
-        if np.isfinite(rm1) and (not np.isfinite(rm0) or rm1 <= rm0):
-            fit1["nfev"] = int((fit0.get("nfev", 0)) + (fit1.get("nfev", 0)))
-
-            fit1["nit"] = int((fit0.get("nit", 0)) + (fit1.get("nit", 0)))
-
-            return fit1
-
-        return fit0
-
-    def _choose_branch_direction_sign(
-        *,
-        d_break: float,
-        x_seed_start: np.ndarray,
-        side_origin: int,
-        rmse_break: float,
-    ) -> int:
-        d_step = float(max(0.5 * float(step_ref), 1e-4))
-        probes: list[tuple[int, float, dict[str, Any]]] = []
-        for sgn in (+1, -1):
-            d_try = float(d_break + float(sgn) * d_step)
-            if not (d_lo_b - 1e-12 <= d_try <= d_hi_b + 1e-12):
-                continue
-            fit_p = _fit_point_with_extra_polish(
-                float(d_try), np.asarray(x_seed_start, dtype=np.float64).ravel().copy()
-            )
-            if fit_p is None:
-                continue
-            rm_p = float(fit_p.get("rmse", float("nan")))
-            if not np.isfinite(rm_p):
-                continue
-            probes.append((int(sgn), float(rm_p), fit_p))
-        if not probes:
-            return 0
-        probes.sort(key=lambda t: t[1])
-        best_sign, best_rmse, _ = probes[0]
-        if np.isfinite(rmse_break) and (best_rmse <= float(rmse_break) - 1e-12):
-            return int(best_sign)
-        # Fallback: keep old "reverse" behavior if no immediate improvement is found.
-        return int(-1 if side_origin > 0 else +1)
-
-    def _branch_reverse_from_breakpoint(
-        *,
-        d_break: float,
-        x_seed_start: np.ndarray,
-        side_origin: int,
-        branch_sign: int,
-        primary_step_idx: int,
-    ) -> tuple[int, np.ndarray]:
-
-        extra_ok = 0
-
-        reverse_sign = int(np.sign(branch_sign))
-        if reverse_sign == 0:
-            return 0, np.asarray(x_seed_start, dtype=np.float64).ravel().copy()
-
-        d_step = 0.5 * float(step_ref)
-
-        d_step = float(max(d_step, 1e-4))
-
-        for j in range(1, int(max_extra_per_event) + 1):
-            if stop_check is not None and bool(stop_check()):
-                break
-
-            d_try = float(d_break + reverse_sign * d_step * float(j))
-
-            if not (d_lo_b - 1e-12 <= d_try <= d_hi_b + 1e-12):
-                break
-
-            fit_b = _fit_point_with_extra_polish(float(d_try), x_seed_start)
-
-            if fit_b is None:
-                continue
-
-            st_code_b = 0
-            if bool(fit_b.get("fallback_from_objective", False)):
-                st_code_b = 2
-            elif bool(fit_b.get("fallback_from_seed", False)):
-                st_code_b = 1
-            if not _append_fit_record(
-                d_try,
-                fit_b,
-                point_kind=1,
-                point_status_code=int(st_code_b),
-            ):
-                continue
-
-            extra_ok += 1
-
-            x_seed_start = np.asarray(fit_b.get("x_nodes_best", x_seed_start), dtype=np.float64).ravel().copy()
-
-            _emit_live(float(d_try), float(primary_step_idx + 1) / float(max(1, n_tot)))
-
-        return int(extra_ok), np.asarray(x_seed_start, dtype=np.float64).ravel().copy()
+    ctx = RegularGridProfileContext(
+        cfg=cfg, sk=sk, bounds_nodes=bounds_nodes, lam_full=lam_full,
+        maxfun=maxfun, maxfun_polish=maxfun_polish, live_cb=live_cb,
+        d_arr=d_arr, n_tot=n_tot, step_ref=step_ref, d_lo_b=d_lo_b, d_hi_b=d_hi_b,
+        stop_check=stop_check, max_extra_per_event=max_extra_per_event, k=k,
+        abs_best_seen_rmse=abs_best_seen_rmse,
+        d_list=d_list, r_list=r_list, n_list=n_list, k_list=k_list,
+        nit_list=nit_list, nfev_list=nfev_list,
+        point_kind_list=point_kind_list, point_status_code_list=point_status_code_list,
+        x_nodes_best_list=x_nodes_best_list, branch_events=branch_events
+    )
 
     for step_i, ji in enumerate(visit_indices):
         if stop_check is not None and bool(stop_check()):
@@ -5186,7 +5149,7 @@ def compute_regular_grid_rmse_profile(
 
             side = -1
 
-        fit = _fit_point_with_extra_polish(float(d_t), x_seed_in)
+        fit = ctx._fit_point_with_extra_polish(float(d_t), x_seed_in)
 
         if fit is None:
             log.info("%s manual grid: refit failed at d=%.6f nm", _LOG_PREFIX, d_t)
@@ -5198,7 +5161,7 @@ def compute_regular_grid_rmse_profile(
             point_status_code = 2
         elif bool(fit.get("fallback_from_seed", False)):
             point_status_code = 1
-        if not _append_fit_record(
+        if not ctx._append_fit_record(
             d_t,
             fit,
             point_kind=0,
@@ -5221,7 +5184,7 @@ def compute_regular_grid_rmse_profile(
         else:
             x_seed_left = x_seed_new
 
-        _emit_live(float(d_t), float(step_i + 1) / float(max(1, n_tot)))
+        ctx._emit_live(float(d_t), float(step_i + 1) / float(max(1, n_tot)))
 
         if side != 0:
             rm_now = float(fit.get("rmse", float("nan")))
@@ -5324,7 +5287,7 @@ def compute_regular_grid_rmse_profile(
                     if isinstance(dg_ev, (int, float)) and np.isfinite(float(dg_ev)):
                         d_global_eval = float(dg_ev)
                 if np.isfinite(rmse_global):
-                    _touch_absolute_best(d_global_eval, float(rmse_global), tag="global_opt_eval")
+                    ctx._touch_absolute_best(d_global_eval, float(rmse_global), tag="global_opt_eval")
                 beat_abs = bool(
                     np.isfinite(rmse_global)
                     and (
@@ -5370,7 +5333,7 @@ def compute_regular_grid_rmse_profile(
                         ("right" if side > 0 else "left"),
                     )
 
-                branch_sign = _choose_branch_direction_sign(
+                branch_sign = ctx._choose_branch_direction_sign(
                     d_break=float(d_t),
                     x_seed_start=x_seed_new.copy(),
                     side_origin=int(side),
@@ -5392,7 +5355,7 @@ def compute_regular_grid_rmse_profile(
                         ("right" if side > 0 else "left"),
                         ("right" if int(branch_sign) > 0 else "left"),
                     )
-                    n_extra, x_seed_rev_end = _branch_reverse_from_breakpoint(
+                    n_extra, x_seed_rev_end = ctx._branch_reverse_from_breakpoint(
                         d_break=float(d_t),
                         x_seed_start=x_seed_new.copy(),
                         side_origin=int(side),
@@ -5453,8 +5416,8 @@ def compute_regular_grid_rmse_profile(
         k,
         lam_full,
         stop_check,
-        _fit_point_with_extra_polish,
-        _touch_absolute_best,
+        ctx._fit_point_with_extra_polish,
+        ctx._touch_absolute_best,
     )
     # ─────────────────────────────────────────────────────────────────────────────
 
@@ -5473,8 +5436,8 @@ def compute_regular_grid_rmse_profile(
         rmse_abs_ref,
         k,
         _build_emergency_fit_record,
-        _append_fit_record,
-        _emit_live,
+        ctx._append_fit_record,
+        ctx._emit_live,
     )
 
     return _package_profile_grid_result(
@@ -6526,235 +6489,57 @@ def _eval_corridor_threshold_fallback(
             )
     return rmse_thresh_active, auto_relaxed_alpha, threshold_basis_eff, threshold_fallback_reason
 
-def _setup_corridor_context(
-    cfg: SplineOptConfig,
-    base_result: dict,
-    *,
-    pconf: ProfileCorridorConfig | None = None,
-    log_coaching: bool = True,
-    profile_polish_maxfun: int | None = None,
-    live_cb: Any | None = None,
-) -> CorridorProfileContext | dict[str, Any]:
-    """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).
+class CorridorContextBuilder:
+    def __init__(
+        self,
+        cfg,
+        base_result,
+        pconf=None,
+        log_coaching=True,
+        profile_polish_maxfun=None,
+        live_cb=None,
+    ):
+        self.cfg = cfg
+        self.base_result = base_result
+        self.pconf = pconf or ProfileCorridorConfig()
+        self.log_coaching = log_coaching
+        self.profile_polish_maxfun = profile_polish_maxfun
+        self.live_cb = live_cb
 
-    Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
+        self.d_vals = []
+        self.n_curves = []
+        self.k_curves = []
+        self.x_curves = []
+        self.rmse_vals = []
+        self.chi2_vals = []
+        self.fit_nfev_values = []
+        self.fit_nit_values = []
+        self.fit_try_values = []
+        self.fit_fail_values = []
 
-    """
+        self.live_d_vals = []
+        self.live_rmse_vals = []
+        self.live_n_curves = []
+        self.live_k_curves = []
+        self.live_chi2_vals = []
+        import threading
+        self.live_stream_lock = threading.Lock()
 
-    pconf = pconf or ProfileCorridorConfig()
-
-    if not bool(pconf.enabled):
-        return {}
-
-    maxfun_prof = int(corridor_profile_refit_maxfun(cfg, profile_polish_maxfun))
-
-    t0 = time.perf_counter()
-
-    lam_full = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-    use_lr = str(getattr(pconf, "mode", "alpha")).strip().lower() == "lr"
-
-    rmse_thr_sub = str(getattr(pconf, "rmse_threshold_mode", "alpha") or "alpha").strip().lower()
-
-    use_abs_delta = (not use_lr) and rmse_thr_sub in (
-        "abs_delta",
-        "alpha_plus_delta",
-        "abs_delta_adaptive",
-        "alpha_plus_adaptive_delta",
-    )
-    use_alpha_factor = rmse_thr_sub in ("alpha_plus_delta", "alpha_plus_adaptive_delta")
-    use_adaptive_abs_delta = (not use_lr) and rmse_thr_sub in ("abs_delta_adaptive", "alpha_plus_adaptive_delta")
-
-    tol_abs = float(max(float(getattr(pconf, "rmse_abs_tolerance", 2.5e-4) or 0.0), 0.0))
-
-    if use_abs_delta:
-        log.info(
-            "%s Threshold mode resolved early | rmse_threshold_mode=%s | delta_mode=%s | alpha_factor=%s | fixed_delta_nominal=%.6f",
-            _LOG_PREFIX,
-            str(rmse_thr_sub),
-            "adaptive(local parabola+roughness)" if use_adaptive_abs_delta else "fixed(abs_delta)",
-            "on" if use_alpha_factor else "off",
-            float(tol_abs),
-        )
-
-    (
-        base_eff, sk, n_nodes_phys0, L_nodes0, d0, _prof_geom,
-        x_nodes0, corridor_seed_x_source, bounds_nodes, x0_default,
-        mse_seed0, rmse_seed0, scientific_nominal, nom_pack, sk_n_log,
-    ) = _prep_corridor_base_eff(
-        cfg=cfg, base_result=base_result, pconf=pconf,
-        use_abs_delta=use_abs_delta, use_lr=use_lr
-    )
-    k = int(sk.size)
-
-    n_b = np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel()
-
-    k_b = np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel()
-
-    rmse_spectral_curves = float("nan")
-
-    if n_b.size == lam_full.size and k_b.size == lam_full.size:
-        _, rmse_sc = spectral_mse_rmse_masked_from_nk(cfg, base_eff, lam_full, n_b, k_b, float(d0))
-
-        rmse_spectral_curves = float(rmse_sc) if np.isfinite(float(rmse_sc)) else float("nan")
-
-    if scientific_nominal and nom_pack is not None:
-        rmse_opt = float(nom_pack["rmse_best"])
-
-        rmse_ref_tag = "spectral_rmse_best_value"
-
-    else:
-        rmse_opt, rmse_ref_tag = _pick_rmse_reference_for_profile(cfg, base_eff, sk, float(d0), x_nodes0)
-
-        if use_abs_delta and np.isfinite(rmse_spectral_curves):
-            rmse_opt = float(rmse_spectral_curves)
-
-            rmse_ref_tag = "spectral_rmse_base_nk"
-
-    rmse_thresh = _compute_corridor_rmse_threshold(
-        cfg, pconf, rmse_opt, rmse_seed0, sk, use_lr, use_abs_delta,
-        use_alpha_factor, tol_abs, rmse_ref_tag, corridor_seed_x_source,
-        scientific_nominal, nom_pack, log, _LOG_PREFIX,
-    )
-
-    rmse_thresh_active = float(rmse_thresh)
-
-    auto_relaxed_alpha = False
-
-    threshold_fallback_reason = ""
-
-    threshold_basis_eff = str(getattr(pconf, "threshold_basis", "max") or "max").strip().lower()
-
-    delta_chi2 = float(_chi2.ppf(float(np.clip(pconf.lr_conf_level, 1e-6, 0.999999)), 1)) if use_lr else float("nan")
-
-    sigma_auto = float(rmse_opt) if np.isfinite(rmse_opt) and rmse_opt > 0 else 1.0
-
-    sig_t = float(pconf.sigma_t) if (pconf.sigma_t is not None and float(pconf.sigma_t) > 0) else sigma_auto
-
-    sig_r = float(pconf.sigma_r) if (pconf.sigma_r is not None and float(pconf.sigma_r) > 0) else sigma_auto
-
-    if lam_full.size < 3 or not np.isfinite(rmse_opt) or not np.isfinite(rmse_thresh):
-        if log_coaching:
-            _log_coaching_corridor_failure(
-                reason="rmse_meta_invalid",
-                pconf=pconf,
-                use_lr=use_lr,
-                rmse_opt=rmse_opt,
-                rmse_thresh=rmse_thresh,
-                d0=float(d0),
-            )
-
-        return {"profile_d_status": "failed"}
-
-    sigma_t_f_hetero: np.ndarray | None = None
-
-    sigma_r_f_hetero: np.ndarray | None = None
-
-    # P1.4 FIX: Unified heteroscedastic sigma for both LR and alpha modes
-    # Use new use_heteroscedastic_sigma param, fallback to legacy sigma_hetero_residual for compatibility
-    _use_hetero = bool(
-        getattr(pconf, "use_heteroscedastic_sigma", False) or getattr(pconf, "sigma_hetero_residual", False)
-    )
-    if _use_hetero:
-        # Use new unified params, fallback to legacy for compatibility
-        _heto_scale = float(
-            getattr(pconf, "heteroscedastic_sigma_scale", None) or getattr(pconf, "sigma_hetero_scale", 1.0) or 1.0
-        )
-        _heto_floor = float(
-            getattr(pconf, "heteroscedastic_sigma_floor", None)
-            or (max(1e-8, 0.01 * float(rmse_opt)) if np.isfinite(rmse_opt) else 1e-6)
-        )
-
-        sigma_t_f_hetero, sigma_r_f_hetero = _hetero_sigma_masked_from_base(
-            cfg,
-            base_eff,
-            scale=_heto_scale,
-            floor_abs=_heto_floor,
-        )
-
-        if sigma_t_f_hetero is not None or sigma_r_f_hetero is not None:
-            log.info(
-                "%s Unified heteroscedastic sigma (max(floor, scale×|residual|)) | scale=%.4g floor_abs=%.4g | mode=%s",
-                _LOG_PREFIX,
-                _heto_scale,
-                _heto_floor,
-                "LR" if use_lr else "alpha",
-            )
-
-    # P1.1 FIX: Save user_rmse_mask to output if provided
-    _user_mask = getattr(pconf, "user_rmse_mask", None)
-    if _user_mask is not None and len(np.asarray(_user_mask)) > 0:
-        log.info(
-            "%s User RMSE mask applied: %d wavelengths excluded",
-            _LOG_PREFIX,
-            int(np.sum(~np.asarray(_user_mask, dtype=bool))),
-        )
-
-    _log_corridor_base_geometry(
-        sk=np.asarray(sk, dtype=np.float64),
-        n_phys=np.asarray(n_nodes_phys0, dtype=np.float64),
-        L_nodes=np.asarray(L_nodes0, dtype=np.float64),
-        d0=float(d0),
-        sk_n_stored=sk_n_log,
-        diag=_prof_geom,
-        rmse_ref_pipeline=float(rmse_opt),
-        rmse_seed_no_refit=float(rmse_seed0),
-        mse_seed_no_refit=float(mse_seed0),
-        use_abs_delta=bool(use_abs_delta),
-    )
-
-    _log_corridor_start_config(
-        cfg=cfg, pconf=pconf, use_abs_delta=use_abs_delta, k=k, d0=float(d0),
-        rmse_opt=float(rmse_opt), rmse_ref_tag=str(rmse_ref_tag), rmse_thr_sub=str(rmse_thr_sub),
-        use_adaptive_abs_delta=use_adaptive_abs_delta, tol_abs=float(tol_abs),
-        rmse_thresh=float(rmse_thresh), maxfun_prof=maxfun_prof, scientific_nominal=scientific_nominal,
-        use_lr=use_lr, delta_chi2=float(delta_chi2), sig_t=float(sig_t), sig_r=float(sig_r),
-        sigma_t_f_hetero=sigma_t_f_hetero, sigma_r_f_hetero=sigma_r_f_hetero,
-    )
-
-    # Store valid solutions.
-
-    d_vals: list[float] = []
-
-    n_curves: list[np.ndarray] = []
-
-    k_curves: list[np.ndarray] = []
-
-    x_curves: list[np.ndarray] = []
-
-    rmse_vals: list[float] = []
-
-    chi2_vals: list[float] = []
-
-    fit_nfev_values: list[float] = []
-
-    fit_nit_values: list[float] = []
-
-    fit_try_values: list[float] = []
-
-    fit_fail_values: list[float] = []
-    live_d_vals: list[float] = []
-    live_rmse_vals: list[float] = []
-    live_n_curves: list[np.ndarray] = []
-    live_k_curves: list[np.ndarray] = []
-    live_chi2_vals: list[float] = []
-    # Serialize live streaming when +/-d walks run in parallel (two worker threads).
-    live_stream_lock = threading.Lock()
-
-    def _emit_live_profile(current_d_nm: float | None = None) -> None:
-        if not callable(live_cb):
+    def _emit_live_profile(self, current_d_nm=None):
+        if not callable(self.live_cb):
             return
-        if not live_d_vals or len(live_rmse_vals) != len(live_d_vals):
+        if not self.live_d_vals or len(self.live_rmse_vals) != len(self.live_d_vals):
             return
-        d_a = np.asarray(live_d_vals, dtype=np.float64).ravel()
-        r_a = np.asarray(live_rmse_vals, dtype=np.float64).ravel()
+        import numpy as np
+        d_a = np.asarray(self.live_d_vals, dtype=np.float64).ravel()
+        r_a = np.asarray(self.live_rmse_vals, dtype=np.float64).ravel()
         m = np.isfinite(d_a) & np.isfinite(r_a)
         if not np.any(m):
             return
         d_a = d_a[m]
         r_a = r_a[m]
         order = np.argsort(d_a, kind="mergesort")
-        payload: dict[str, Any] = {
+        payload = {
             "profile_d_status": "manual_grid_live",
             "profile_d_values_nm": np.asarray(d_a[order], dtype=np.float64),
             "profile_d_rmse_values": np.asarray(r_a[order], dtype=np.float64),
@@ -6769,46 +6554,36 @@ def _setup_corridor_context(
                 else float(d_a[order][-1])
             ),
         }
-        if len(live_n_curves) == len(live_d_vals):
-            payload["profile_d_n_curves"] = np.asarray([live_n_curves[i] for i in np.flatnonzero(m)], dtype=np.float64)[
-                order
-            ]
-        if len(live_k_curves) == len(live_d_vals):
-            payload["profile_d_k_curves"] = np.asarray([live_k_curves[i] for i in np.flatnonzero(m)], dtype=np.float64)[
-                order
-            ]
-        if len(live_chi2_vals) == len(live_d_vals):
-            payload["profile_d_chi2_values"] = np.asarray(
-                [live_chi2_vals[i] for i in np.flatnonzero(m)], dtype=np.float64
-            )[order]
+        if len(self.live_n_curves) == len(self.live_d_vals):
+            payload["profile_d_n_curves"] = np.asarray([self.live_n_curves[i] for i in np.flatnonzero(m)], dtype=np.float64)[order]
+        if len(self.live_k_curves) == len(self.live_d_vals):
+            payload["profile_d_k_curves"] = np.asarray([self.live_k_curves[i] for i in np.flatnonzero(m)], dtype=np.float64)[order]
+        if len(self.live_chi2_vals) == len(self.live_d_vals):
+            payload["profile_d_chi2_values"] = np.asarray([self.live_chi2_vals[i] for i in np.flatnonzero(m)], dtype=np.float64)[order]
         try:
-            live_cb(payload)
+            self.live_cb(payload)
         except (RuntimeError, TypeError):
             log.debug("%s failed to invoke live_cb in async loop (non-critical)", _LOG_PREFIX, exc_info=True)
 
-    def _push_live_point(
-        d_nm: float,
-        rmse: float,
-        n_lam: np.ndarray | None = None,
-        k_lam: np.ndarray | None = None,
-        chi2: float | None = None,
-    ) -> None:
-        if not callable(live_cb):
+    def _push_live_point(self, d_nm, rmse, n_lam=None, k_lam=None, chi2=None):
+        import numpy as np
+        if not callable(self.live_cb):
             return
-        with live_stream_lock:
-            live_d_vals.append(float(d_nm))
-            live_rmse_vals.append(float(rmse))
-            live_n_curves.append(
+        with self.live_stream_lock:
+            self.live_d_vals.append(float(d_nm))
+            self.live_rmse_vals.append(float(rmse))
+            self.live_n_curves.append(
                 np.asarray(n_lam, dtype=np.float64).ravel() if n_lam is not None else np.asarray([], dtype=np.float64)
             )
-            live_k_curves.append(
+            self.live_k_curves.append(
                 np.asarray(k_lam, dtype=np.float64).ravel() if k_lam is not None else np.asarray([], dtype=np.float64)
             )
-            live_chi2_vals.append(float(chi2) if (chi2 is not None and np.isfinite(float(chi2))) else float("nan"))
-            _emit_live_profile(current_d_nm=float(d_nm))
+            self.live_chi2_vals.append(float(chi2) if (chi2 is not None and np.isfinite(float(chi2))) else float("nan"))
+            self._emit_live_profile(current_d_nm=float(d_nm))
 
-    def _push_live_point_from_payload(payload: dict[str, Any]) -> None:
-        _push_live_point(
+    def _push_live_point_from_payload(self, payload):
+        import numpy as np
+        self._push_live_point(
             float(payload.get("d_nm", float("nan"))),
             float(payload.get("rmse", float("nan"))),
             np.asarray(payload.get("n_lam", []), dtype=np.float64).ravel(),
@@ -6816,401 +6591,607 @@ def _setup_corridor_context(
             float(payload.get("chi2", float("nan"))),
         )
 
-    boundary_refine_calls = 0
-    corridor_ref_n_lam = None
-    corridor_ref_k_lam = None
+    def build(self) -> CorridorProfileContext | dict:
 
+        """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).
 
+        Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
 
-    # n(lambda),k(lambda) from center d_opt refit (same family as envelope) - for UI when the dict
+        """
 
-    # shows another snapshot (e.g. best live legacy free-knot vs profiling PWL refits).
+        pconf=self.pconf or ProfileCorridorConfig()
 
+        if not bool(self.pconf.enabled):
+            return {}
 
+        maxfun_prof = int(corridor_profile_refit_maxfun(self.cfg, self.profile_polish_maxfun))
 
-    # abs_delta: include the nominal n(lambda),k(lambda) as first family member (before center refit).
+        t0 = time.perf_counter()
 
-    if use_abs_delta and n_b.size == lam_full.size and k_b.size == lam_full.size:
-        if scientific_nominal and nom_pack is not None:
-            first_rmse = float(rmse_opt)
+        lam_full = np.asarray(self.cfg.lam_nm, dtype=np.float64).ravel()
 
-        elif np.isfinite(rmse_spectral_curves):
-            first_rmse = float(rmse_spectral_curves)
+        use_lr = str(getattr(self.pconf, "mode", "alpha")).strip().lower() == "lr"
 
-        else:
-            first_rmse = None
+        rmse_thr_sub = str(getattr(self.pconf, "rmse_threshold_mode", "alpha") or "alpha").strip().lower()
 
-        if first_rmse is not None:
-            d_vals.append(float(d0))
-
-            n_curves.append(n_b.copy())
-
-            k_curves.append(k_b.copy())
-
-            rmse_vals.append(first_rmse)
-
-            chi2_vals.append(float("nan"))
-
-            fit_nfev_values.append(float("nan"))
-
-            fit_nit_values.append(float("nan"))
-
-            fit_try_values.append(float("nan"))
-
-            fit_fail_values.append(float("nan"))
-            _push_live_point(float(d0), float(first_rmse), n_b.copy(), k_b.copy(), float("nan"))
-
-            if scientific_nominal and nom_pack is not None:
-                corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
-                corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
-            else:
-                corridor_ref_n_lam = n_b.copy()
-                corridor_ref_k_lam = k_b.copy()
-
-    # Center: best-of-N. In LR mode this sets chi2_min (reference) when successful.
-
-    fit0, _, metric0 = _best_fit_at_d(
-        cfg,
-        sk=sk,
-        d_nm=float(d0),
-        x_seed_primary=x_nodes0,
-        x_seed_secondary=None,
-        x_seed_default=x0_default,
-        bounds_nodes=bounds_nodes,
-        maxfun=maxfun_prof,
-        use_lr=use_lr,
-        sig_t=sig_t,
-        sig_r=sig_r,
-        chi2_min_ref=None,
-        delta_chi2=float(delta_chi2) if np.isfinite(delta_chi2) else 0.0,
-        pconf=pconf,
-        stage_label="Center",
-        sigma_t_f=sigma_t_f_hetero,
-        sigma_r_f=sigma_r_f_hetero,
-    )
-
-    chi2_min = float(metric0) if (use_lr and np.isfinite(metric0)) else float("nan")
-
-    rm_c = (
-        float(fit0["rmse"]) if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan")))) else float("nan")
-    )
-
-    adaptive_abs_meta: dict[str, Any] = {
-        "ok": False,
-        "delta_rmse_tol": float("nan"),
-        "delta_rmse_geom": float("nan"),
-        "delta_rmse_noise": float("nan"),
-        "profile_sigma": float("nan"),
-        "curvature": float("nan"),
-        "center_nm": float("nan"),
-        "anchor_nm": float("nan"),
-        "h_ref_nm": float("nan"),
-        "sample_count": 0,
-        "sample_d_nm": np.asarray([], dtype=np.float64),
-        "sample_rmse": np.asarray([], dtype=np.float64),
-        "window_nm": (float("nan"), float("nan")),
-    }
-    tol_abs_effective = float(tol_abs)
-    if use_adaptive_abs_delta and np.isfinite(rmse_opt) and fit0 is not None and np.isfinite(rm_c):
-        adaptive_abs_meta = _estimate_adaptive_rmse_abs_tolerance(
-            cfg,
-            sk=sk,
-            d0=float(d0),
-            center_fit=fit0,
-            x_seed_primary=x_nodes0,
-            x_seed_default=x0_default,
-            bounds_nodes=bounds_nodes,
-            maxfun=maxfun_prof,
-            pconf=pconf,
-            sig_t=sig_t,
-            sig_r=sig_r,
-            sigma_t_f=sigma_t_f_hetero,
-            sigma_r_f=sigma_r_f_hetero,
+        use_abs_delta = (not use_lr) and rmse_thr_sub in (
+            "abs_delta",
+            "alpha_plus_delta",
+            "abs_delta_adaptive",
+            "alpha_plus_adaptive_delta",
         )
-        if bool(adaptive_abs_meta.get("ok", False)) and np.isfinite(
-            float(adaptive_abs_meta.get("delta_rmse_tol", float("nan")))
-        ):
-            tol_abs_effective = float(adaptive_abs_meta.get("delta_rmse_tol", float(tol_abs)))
-            _alpha_f = float(pconf.rmse_alpha) if use_alpha_factor else 1.0
-            rmse_thresh = _alpha_f * float(rmse_opt) + float(tol_abs)
-            rmse_thresh_active = _alpha_f * float(rmse_opt) + float(tol_abs_effective)
+        use_alpha_factor = rmse_thr_sub in ("alpha_plus_delta", "alpha_plus_adaptive_delta")
+        use_adaptive_abs_delta = (not use_lr) and rmse_thr_sub in ("abs_delta_adaptive", "alpha_plus_adaptive_delta")
 
-            # --- Insert probe points (except d0 already handled below) ---
-            _s_d = adaptive_abs_meta.get("sample_d_nm", np.asarray([]))
-            _s_r = adaptive_abs_meta.get("sample_rmse", np.asarray([]))
-            _s_n = adaptive_abs_meta.get("sample_n_curves", [])
-            _s_k = adaptive_abs_meta.get("sample_k_curves", [])
-            for i_smp in range(len(_s_d)):
-                if abs(float(_s_d[i_smp]) - float(d0)) < 1e-8:
-                    continue  # Ignore the center here, it will be added properly afterwards
-                d_vals.append(float(_s_d[i_smp]))
-                rmse_vals.append(float(_s_r[i_smp]))
-                n_curves.append(_s_n[i_smp])
-                k_curves.append(_s_k[i_smp])
-                chi2_vals.append(float("nan"))
-                fit_nfev_values.append(float("nan"))
-                fit_nit_values.append(float("nan"))
-                fit_try_values.append(1.0)
-                fit_fail_values.append(0.0)
-                _push_live_point(
-                    float(_s_d[i_smp]),
-                    float(_s_r[i_smp]),
-                    np.asarray(_s_n[i_smp], dtype=np.float64).ravel(),
-                    np.asarray(_s_k[i_smp], dtype=np.float64).ravel(),
-                    float("nan"),
-                )
+        tol_abs = float(max(float(getattr(self.pconf, "rmse_abs_tolerance", 2.5e-4) or 0.0), 0.0))
 
+        if use_abs_delta:
             log.info(
-                "%s Adaptive DeltaRMSE | h_ref=%.6f nm | curvature=%.6e | Delta_geom=%.6e | profile_sigma=%.6e | Delta_noise=%.6e | Delta_eff=%.6e | threshold %.8f -> %.8f",
+                "%s Threshold mode resolved early | rmse_threshold_mode=%s | delta_mode=%s | alpha_factor=%s | fixed_delta_nominal=%.6f",
                 _LOG_PREFIX,
-                float(adaptive_abs_meta.get("h_ref_nm", float("nan"))),
-                float(adaptive_abs_meta.get("curvature", float("nan"))),
-                float(adaptive_abs_meta.get("delta_rmse_geom", float("nan"))),
-                float(adaptive_abs_meta.get("profile_sigma", float("nan"))),
-                float(adaptive_abs_meta.get("delta_rmse_noise", float("nan"))),
-                float(tol_abs_effective),
-                float(_alpha_f * float(rmse_opt) + float(tol_abs)),
-                float(rmse_thresh_active),
-            )
-        else:
-            log.info(
-                "%s Adaptive DeltaRMSE unavailable around d0=%.6f nm - fallback to fixed DeltaRMSE=%.6e",
-                _LOG_PREFIX,
-                float(d0),
+                str(rmse_thr_sub),
+                "adaptive(local parabola+roughness)" if use_adaptive_abs_delta else "fixed(abs_delta)",
+                "on" if use_alpha_factor else "off",
                 float(tol_abs),
             )
 
-    (
-        rmse_thresh_active, auto_relaxed_alpha, threshold_basis_eff, threshold_fallback_reason
-    ) = _eval_corridor_threshold_fallback(
-        pconf=pconf, use_lr=use_lr, use_abs_delta=use_abs_delta, rm_c=float(rm_c),
-        rmse_thresh_active=float(rmse_thresh_active), rmse_opt=float(rmse_opt),
-        threshold_basis_eff=str(threshold_basis_eff), rmse_thresh=float(rmse_thresh),
-    )
+        (
+            base_eff, sk, n_nodes_phys0, L_nodes0, d0, _prof_geom,
+            x_nodes0, corridor_seed_x_source, bounds_nodes, x0_default,
+            mse_seed0, rmse_seed0, scientific_nominal, nom_pack, sk_n_log,
+        ) = _prep_corridor_base_eff(
+            cfg=self.cfg, base_result=self.base_result, pconf=self.pconf,
+            use_abs_delta=use_abs_delta, use_lr=use_lr
+        )
+        k = int(sk.size)
 
-    fit0_ok = False
+        n_b = np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel()
 
-    if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan")))):
-        fit0_ok = np.isfinite(chi2_min) if use_lr else (float(fit0["rmse"]) <= rmse_thresh_active)
+        k_b = np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel()
 
-    center_seed_kept = False
-    center_seed_gate_delta_refit_minus_seed = float("nan")
-    center_seed_gate_eval_count = 1 if fit0 is not None else 0
-    center_seed_gate_kept_count = 0
-    if fit0 is not None:
-        _rm_seed0 = fit0.get("rmse_seed_before_refit")
-        _rm_refit0 = fit0.get("rmse_refit_attempted")
-        if (
-            _rm_seed0 is not None
-            and _rm_refit0 is not None
-            and np.isfinite(float(_rm_seed0))
-            and np.isfinite(float(_rm_refit0))
-        ):
-            center_seed_gate_kept_count = int(bool(fit0.get("seed_kept_over_refit", False)))
-            center_seed_gate_delta_refit_minus_seed = float(_rm_refit0) - float(_rm_seed0)
-    if (not fit0_ok) and (not use_lr) and np.isfinite(float(rmse_seed0)) and np.isfinite(float(rmse_thresh_active)):
-        if float(rmse_seed0) <= float(rmse_thresh_active):
-            fit0_ok = True
-            center_seed_kept = True
+        rmse_spectral_curves = float("nan")
 
-    if fit0 is not None and fit0_ok:
-        if center_seed_kept:
-            d_vals.append(float(d0))
+        if n_b.size == lam_full.size and k_b.size == lam_full.size:
+            _, rmse_sc = spectral_mse_rmse_masked_from_nk(self.cfg, base_eff, lam_full, n_b, k_b, float(d0))
 
-            n_curves.append(np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy())
+            rmse_spectral_curves = float(rmse_sc) if np.isfinite(float(rmse_sc)) else float("nan")
 
-            k_curves.append(np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy())
+        if scientific_nominal and nom_pack is not None:
+            rmse_opt = float(nom_pack["rmse_best"])
 
-            x_curves.append(x_nodes0.copy())
-
-            rmse_vals.append(float(rmse_seed0))
-
-            chi2_vals.append(float("nan"))
-
-            fit_nfev_values.append(float("nan"))
-
-            fit_nit_values.append(float("nan"))
-
-            fit_try_values.append(0.0)
-
-            fit_fail_values.append(float(fit0.get("n_failed_fit", float("nan"))) if fit0 is not None else float("nan"))
-            _push_live_point(
-                float(d0),
-                float(rmse_seed0),
-                np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy(),
-                np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy(),
-                float("nan"),
-            )
-
-            if scientific_nominal and nom_pack is not None:
-                corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
-                corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
-            else:
-                corridor_ref_n_lam = np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy()
-                corridor_ref_k_lam = np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy()
-
-            x_nodes_center = x_nodes0.copy()
-
-            log.info(
-                "%s Center: keeping nominal seed at d=d_opt | spectral RMSE **without refit**=%.8f <= active threshold %.8f "
-                "(center refit RMSE=%s). Refitted center kept only as diagnostic; corridor remains anchored on the nominal model.",
-                _LOG_PREFIX,
-                float(rmse_seed0),
-                float(rmse_thresh_active),
-                (
-                    f"{float(fit0['rmse']):.8f}"
-                    if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan"))))
-                    else "n/a"
-                ),
-            )
+            rmse_ref_tag = "spectral_rmse_best_value"
 
         else:
-            d_vals.append(float(fit0["d_nm"]))
+            rmse_opt, rmse_ref_tag = _pick_rmse_reference_for_profile(self.cfg, base_eff, sk, float(d0), x_nodes0)
 
-            n_curves.append(np.asarray(fit0["n_lam"], dtype=np.float64))
+            if use_abs_delta and np.isfinite(rmse_spectral_curves):
+                rmse_opt = float(rmse_spectral_curves)
 
-            k_curves.append(np.asarray(fit0["k_lam"], dtype=np.float64))
+                rmse_ref_tag = "spectral_rmse_base_nk"
 
-            x_curves.append(np.asarray(fit0["x_nodes_best"], dtype=np.float64).ravel().copy())
+        rmse_thresh = _compute_corridor_rmse_threshold(
+            self.cfg, self.pconf, rmse_opt, rmse_seed0, sk, use_lr, use_abs_delta,
+            use_alpha_factor, tol_abs, rmse_ref_tag, corridor_seed_x_source,
+            scientific_nominal, nom_pack, log, _LOG_PREFIX,
+        )
 
-            rmse_vals.append(float(fit0["rmse"]))
+        rmse_thresh_active = float(rmse_thresh)
 
-            chi2_vals.append(float(chi2_min) if use_lr else float("nan"))
+        auto_relaxed_alpha = False
 
-            fit_nfev_values.append(float(fit0.get("nfev", float("nan"))))
+        threshold_fallback_reason = ""
 
-            fit_nit_values.append(float(fit0.get("nit", float("nan"))))
+        threshold_basis_eff = str(getattr(self.pconf, "threshold_basis", "max") or "max").strip().lower()
 
-            fit_try_values.append(float(fit0.get("n_try", float("nan"))))
+        delta_chi2 = float(_chi2.ppf(float(np.clip(self.pconf.lr_conf_level, 1e-6, 0.999999)), 1)) if use_lr else float("nan")
 
-            fit_fail_values.append(float(fit0.get("n_failed_fit", float("nan"))))
-            _push_live_point(
-                float(fit0["d_nm"]),
-                float(fit0["rmse"]),
-                np.asarray(fit0["n_lam"], dtype=np.float64).ravel(),
-                np.asarray(fit0["k_lam"], dtype=np.float64).ravel(),
-                float(chi2_min) if use_lr else float("nan"),
-            )
+        sigma_auto = float(rmse_opt) if np.isfinite(rmse_opt) and rmse_opt > 0 else 1.0
 
-            if not scientific_nominal:
-                corridor_ref_n_lam = np.asarray(fit0["n_lam"], dtype=np.float64).ravel().copy()
-                corridor_ref_k_lam = np.asarray(fit0["k_lam"], dtype=np.float64).ravel().copy()
+        sig_t = float(self.pconf.sigma_t) if (self.pconf.sigma_t is not None and float(self.pconf.sigma_t) > 0) else sigma_auto
 
-            x_nodes_center = np.asarray(fit0["x_nodes_best"], dtype=np.float64).ravel().copy()
+        sig_r = float(self.pconf.sigma_r) if (self.pconf.sigma_r is not None and float(self.pconf.sigma_r) > 0) else sigma_auto
 
-            mo0 = fit0.get("mse_objective")
-
-            mo0s = f"{float(mo0):.6e}" if mo0 is not None and np.isfinite(float(mo0)) else "n/a"
-
-            if use_abs_delta:
-                log.info(
-                    "%s Center: OK | Spectral RMSE **after refit** (d=d_opt)=%.8f | RMSE_ref threshold=%.8f (%s) | "
-                    "refit_objective_MSE=%s | chi2_min=%s | Delta(refit - seed without refit)=%+.6e | "
-                    "Delta(refit - nominal RMSE_ref)=%+.6e",
-                    _LOG_PREFIX,
-                    float(fit0["rmse"]),
-                    float(rmse_opt),
-                    str(rmse_ref_tag),
-                    mo0s,
-                    f"{chi2_min:.8f}" if use_lr and np.isfinite(chi2_min) else "n/a",
-                    float(fit0["rmse"]) - float(rmse_seed0),
-                    float(fit0["rmse"]) - float(rmse_opt),
-                )
-
-            else:
-                log.info(
-                    "%s Center: OK | spectral RMSE **after refit** (d=d_opt)=%.8f | pipeline RMSE_ref=%.8f (%s) | "
-                    "refit_objective_MSE=%s | chi2_min=%s | Delta(refit RMSE - no-refit seed)=%+.6e | "
-                    "Delta(refit RMSE - RMSE_ref)=%+.6e",
-                    _LOG_PREFIX,
-                    float(fit0["rmse"]),
-                    float(rmse_opt),
-                    str(rmse_ref_tag),
-                    mo0s,
-                    f"{chi2_min:.8f}" if use_lr and np.isfinite(chi2_min) else "n/a",
-                    float(fit0["rmse"]) - float(rmse_seed0),
-                    float(fit0["rmse"]) - float(rmse_opt),
-                )
-
-    else:
-        if not bool(pconf.include_center_even_if_nan):
-            if log_coaching:
+        if lam_full.size < 3 or not np.isfinite(rmse_opt) or not np.isfinite(rmse_thresh):
+            if self.log_coaching:
                 _log_coaching_corridor_failure(
-                    reason="centre_fail",
-                    pconf=pconf,
+                    reason="rmse_meta_invalid",
+                    pconf=self.pconf,
                     use_lr=use_lr,
                     rmse_opt=rmse_opt,
-                    rmse_thresh=rmse_thresh_active,
+                    rmse_thresh=rmse_thresh,
                     d0=float(d0),
                 )
 
             return {"profile_d_status": "failed"}
 
-        x_nodes_center = x_nodes0.copy()
+        sigma_t_f_hetero: np.ndarray | None = None
 
-        log.warning("%s Center: failed | continue=%s", _LOG_PREFIX, bool(pconf.include_center_even_if_nan))
+        sigma_r_f_hetero: np.ndarray | None = None
 
-    return CorridorProfileContext(
-        _use_hetero=_use_hetero,
-        _user_mask=_user_mask,
-        adaptive_abs_meta=adaptive_abs_meta,
-        auto_relaxed_alpha=auto_relaxed_alpha,
-        base_result=base_result,
-        boundary_refine_calls=boundary_refine_calls,
-        center_seed_kept=center_seed_kept,
+        # P1.4 FIX: Unified heteroscedastic sigma for both LR and alpha modes
+        # Use new use_heteroscedastic_sigma param, fallback to legacy sigma_hetero_residual for compatibility
+        _use_hetero = bool(
+            getattr(self.pconf, "use_heteroscedastic_sigma", False) or getattr(self.pconf, "sigma_hetero_residual", False)
+        )
+        if _use_hetero:
+            # Use new unified params, fallback to legacy for compatibility
+            _heto_scale = float(
+                getattr(self.pconf, "heteroscedastic_sigma_scale", None) or getattr(self.pconf, "sigma_hetero_scale", 1.0) or 1.0
+            )
+            _heto_floor = float(
+                getattr(self.pconf, "heteroscedastic_sigma_floor", None)
+                or (max(1e-8, 0.01 * float(rmse_opt)) if np.isfinite(rmse_opt) else 1e-6)
+            )
+
+            sigma_t_f_hetero, sigma_r_f_hetero = _hetero_sigma_masked_from_base(
+                self.cfg,
+                base_eff,
+                scale=_heto_scale,
+                floor_abs=_heto_floor,
+            )
+
+            if sigma_t_f_hetero is not None or sigma_r_f_hetero is not None:
+                log.info(
+                    "%s Unified heteroscedastic sigma (max(floor, scale×|residual|)) | scale=%.4g floor_abs=%.4g | mode=%s",
+                    _LOG_PREFIX,
+                    _heto_scale,
+                    _heto_floor,
+                    "LR" if use_lr else "alpha",
+                )
+
+        # P1.1 FIX: Save user_rmse_mask to output if provided
+        _user_mask = getattr(self.pconf, "user_rmse_mask", None)
+        if _user_mask is not None and len(np.asarray(_user_mask)) > 0:
+            log.info(
+                "%s User RMSE mask applied: %d wavelengths excluded",
+                _LOG_PREFIX,
+                int(np.sum(~np.asarray(_user_mask, dtype=bool))),
+            )
+
+        _log_corridor_base_geometry(
+            sk=np.asarray(sk, dtype=np.float64),
+            n_phys=np.asarray(n_nodes_phys0, dtype=np.float64),
+            L_nodes=np.asarray(L_nodes0, dtype=np.float64),
+            d0=float(d0),
+            sk_n_stored=sk_n_log,
+            diag=_prof_geom,
+            rmse_ref_pipeline=float(rmse_opt),
+            rmse_seed_no_refit=float(rmse_seed0),
+            mse_seed_no_refit=float(mse_seed0),
+            use_abs_delta=bool(use_abs_delta),
+        )
+
+        _log_corridor_start_config(
+            cfg=self.cfg, pconf=self.pconf, use_abs_delta=use_abs_delta, k=k, d0=float(d0),
+            rmse_opt=float(rmse_opt), rmse_ref_tag=str(rmse_ref_tag), rmse_thr_sub=str(rmse_thr_sub),
+            use_adaptive_abs_delta=use_adaptive_abs_delta, tol_abs=float(tol_abs),
+            rmse_thresh=float(rmse_thresh), maxfun_prof=maxfun_prof, scientific_nominal=scientific_nominal,
+            use_lr=use_lr, delta_chi2=float(delta_chi2), sig_t=float(sig_t), sig_r=float(sig_r),
+            sigma_t_f_hetero=sigma_t_f_hetero, sigma_r_f_hetero=sigma_r_f_hetero,
+        )
+
+        # Store valid solutions.
+
+        boundary_refine_calls = 0
+        corridor_ref_n_lam = None
+        corridor_ref_k_lam = None
+
+
+
+        # n(lambda),k(lambda) from center d_opt refit (same family as envelope) - for UI when the dict
+
+        # shows another snapshot (e.g. best live legacy free-knot vs profiling PWL refits).
+
+
+
+        # abs_delta: include the nominal n(lambda),k(lambda) as first family member (before center refit).
+
+        if use_abs_delta and n_b.size == lam_full.size and k_b.size == lam_full.size:
+            if scientific_nominal and nom_pack is not None:
+                first_rmse = float(rmse_opt)
+
+            elif np.isfinite(rmse_spectral_curves):
+                first_rmse = float(rmse_spectral_curves)
+
+            else:
+                first_rmse = None
+
+            if first_rmse is not None:
+                self.d_vals.append(float(d0))
+
+                self.n_curves.append(n_b.copy())
+
+                self.k_curves.append(k_b.copy())
+
+                self.rmse_vals.append(first_rmse)
+
+                self.chi2_vals.append(float("nan"))
+
+                self.fit_nfev_values.append(float("nan"))
+
+                self.fit_nit_values.append(float("nan"))
+
+                self.fit_try_values.append(float("nan"))
+
+                self.fit_fail_values.append(float("nan"))
+                self._push_live_point(float(d0), float(first_rmse), n_b.copy(), k_b.copy(), float("nan"))
+
+                if scientific_nominal and nom_pack is not None:
+                    corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
+                    corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
+                else:
+                    corridor_ref_n_lam = n_b.copy()
+                    corridor_ref_k_lam = k_b.copy()
+
+        # Center: best-of-N. In LR mode this sets chi2_min (reference) when successful.
+
+        fit0, _, metric0 = _best_fit_at_d(
+            self.cfg,
+            sk=sk,
+            d_nm=float(d0),
+            x_seed_primary=x_nodes0,
+            x_seed_secondary=None,
+            x_seed_default=x0_default,
+            bounds_nodes=bounds_nodes,
+            maxfun=maxfun_prof,
+            use_lr=use_lr,
+            sig_t=sig_t,
+            sig_r=sig_r,
+            chi2_min_ref=None,
+            delta_chi2=float(delta_chi2) if np.isfinite(delta_chi2) else 0.0,
+            pconf=self.pconf,
+            stage_label="Center",
+            sigma_t_f=sigma_t_f_hetero,
+            sigma_r_f=sigma_r_f_hetero,
+        )
+
+        chi2_min = float(metric0) if (use_lr and np.isfinite(metric0)) else float("nan")
+
+        rm_c = (
+            float(fit0["rmse"]) if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan")))) else float("nan")
+        )
+
+        adaptive_abs_meta: dict[str, Any] = {
+            "ok": False,
+            "delta_rmse_tol": float("nan"),
+            "delta_rmse_geom": float("nan"),
+            "delta_rmse_noise": float("nan"),
+            "profile_sigma": float("nan"),
+            "curvature": float("nan"),
+            "center_nm": float("nan"),
+            "anchor_nm": float("nan"),
+            "h_ref_nm": float("nan"),
+            "sample_count": 0,
+            "sample_d_nm": np.asarray([], dtype=np.float64),
+            "sample_rmse": np.asarray([], dtype=np.float64),
+            "window_nm": (float("nan"), float("nan")),
+        }
+        tol_abs_effective = float(tol_abs)
+        if use_adaptive_abs_delta and np.isfinite(rmse_opt) and fit0 is not None and np.isfinite(rm_c):
+            adaptive_abs_meta = _estimate_adaptive_rmse_abs_tolerance(
+                self.cfg,
+                sk=sk,
+                d0=float(d0),
+                center_fit=fit0,
+                x_seed_primary=x_nodes0,
+                x_seed_default=x0_default,
+                bounds_nodes=bounds_nodes,
+                maxfun=maxfun_prof,
+                pconf=self.pconf,
+                sig_t=sig_t,
+                sig_r=sig_r,
+                sigma_t_f=sigma_t_f_hetero,
+                sigma_r_f=sigma_r_f_hetero,
+            )
+            if bool(adaptive_abs_meta.get("ok", False)) and np.isfinite(
+                float(adaptive_abs_meta.get("delta_rmse_tol", float("nan")))
+            ):
+                tol_abs_effective = float(adaptive_abs_meta.get("delta_rmse_tol", float(tol_abs)))
+                _alpha_f = float(self.pconf.rmse_alpha) if use_alpha_factor else 1.0
+                rmse_thresh = _alpha_f * float(rmse_opt) + float(tol_abs)
+                rmse_thresh_active = _alpha_f * float(rmse_opt) + float(tol_abs_effective)
+
+                # --- Insert probe points (except d0 already handled below) ---
+                _s_d = adaptive_abs_meta.get("sample_d_nm", np.asarray([]))
+                _s_r = adaptive_abs_meta.get("sample_rmse", np.asarray([]))
+                _s_n = adaptive_abs_meta.get("sample_n_curves", [])
+                _s_k = adaptive_abs_meta.get("sample_k_curves", [])
+                for i_smp in range(len(_s_d)):
+                    if abs(float(_s_d[i_smp]) - float(d0)) < 1e-8:
+                        continue  # Ignore the center here, it will be added properly afterwards
+                    self.d_vals.append(float(_s_d[i_smp]))
+                    self.rmse_vals.append(float(_s_r[i_smp]))
+                    self.n_curves.append(_s_n[i_smp])
+                    self.k_curves.append(_s_k[i_smp])
+                    self.chi2_vals.append(float("nan"))
+                    self.fit_nfev_values.append(float("nan"))
+                    self.fit_nit_values.append(float("nan"))
+                    self.fit_try_values.append(1.0)
+                    self.fit_fail_values.append(0.0)
+                    self._push_live_point(
+                        float(_s_d[i_smp]),
+                        float(_s_r[i_smp]),
+                        np.asarray(_s_n[i_smp], dtype=np.float64).ravel(),
+                        np.asarray(_s_k[i_smp], dtype=np.float64).ravel(),
+                        float("nan"),
+                    )
+
+                log.info(
+                    "%s Adaptive DeltaRMSE | h_ref=%.6f nm | curvature=%.6e | Delta_geom=%.6e | profile_sigma=%.6e | Delta_noise=%.6e | Delta_eff=%.6e | threshold %.8f -> %.8f",
+                    _LOG_PREFIX,
+                    float(adaptive_abs_meta.get("h_ref_nm", float("nan"))),
+                    float(adaptive_abs_meta.get("curvature", float("nan"))),
+                    float(adaptive_abs_meta.get("delta_rmse_geom", float("nan"))),
+                    float(adaptive_abs_meta.get("profile_sigma", float("nan"))),
+                    float(adaptive_abs_meta.get("delta_rmse_noise", float("nan"))),
+                    float(tol_abs_effective),
+                    float(_alpha_f * float(rmse_opt) + float(tol_abs)),
+                    float(rmse_thresh_active),
+                )
+            else:
+                log.info(
+                    "%s Adaptive DeltaRMSE unavailable around d0=%.6f nm - fallback to fixed DeltaRMSE=%.6e",
+                    _LOG_PREFIX,
+                    float(d0),
+                    float(tol_abs),
+                )
+
+        (
+            rmse_thresh_active, auto_relaxed_alpha, threshold_basis_eff, threshold_fallback_reason
+        ) = _eval_corridor_threshold_fallback(
+            pconf=self.pconf, use_lr=use_lr, use_abs_delta=use_abs_delta, rm_c=float(rm_c),
+            rmse_thresh_active=float(rmse_thresh_active), rmse_opt=float(rmse_opt),
+            threshold_basis_eff=str(threshold_basis_eff), rmse_thresh=float(rmse_thresh),
+        )
+
+        fit0_ok = False
+
+        if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan")))):
+            fit0_ok = np.isfinite(chi2_min) if use_lr else (float(fit0["rmse"]) <= rmse_thresh_active)
+
+        center_seed_kept = False
+        center_seed_gate_delta_refit_minus_seed = float("nan")
+        center_seed_gate_eval_count = 1 if fit0 is not None else 0
+        center_seed_gate_kept_count = 0
+        if fit0 is not None:
+            _rm_seed0 = fit0.get("rmse_seed_before_refit")
+            _rm_refit0 = fit0.get("rmse_refit_attempted")
+            if (
+                _rm_seed0 is not None
+                and _rm_refit0 is not None
+                and np.isfinite(float(_rm_seed0))
+                and np.isfinite(float(_rm_refit0))
+            ):
+                center_seed_gate_kept_count = int(bool(fit0.get("seed_kept_over_refit", False)))
+                center_seed_gate_delta_refit_minus_seed = float(_rm_refit0) - float(_rm_seed0)
+        if (not fit0_ok) and (not use_lr) and np.isfinite(float(rmse_seed0)) and np.isfinite(float(rmse_thresh_active)):
+            if float(rmse_seed0) <= float(rmse_thresh_active):
+                fit0_ok = True
+                center_seed_kept = True
+
+        if fit0 is not None and fit0_ok:
+            if center_seed_kept:
+                self.d_vals.append(float(d0))
+
+                self.n_curves.append(np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy())
+
+                self.k_curves.append(np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy())
+
+                self.x_curves.append(x_nodes0.copy())
+
+                self.rmse_vals.append(float(rmse_seed0))
+
+                self.chi2_vals.append(float("nan"))
+
+                self.fit_nfev_values.append(float("nan"))
+
+                self.fit_nit_values.append(float("nan"))
+
+                self.fit_try_values.append(0.0)
+
+                self.fit_fail_values.append(float(fit0.get("n_failed_fit", float("nan"))) if fit0 is not None else float("nan"))
+                self._push_live_point(
+                    float(d0),
+                    float(rmse_seed0),
+                    np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy(),
+                    np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy(),
+                    float("nan"),
+                )
+
+                if scientific_nominal and nom_pack is not None:
+                    corridor_ref_n_lam = np.asarray(nom_pack["n_lam"], dtype=np.float64).ravel().copy()
+                    corridor_ref_k_lam = np.asarray(nom_pack["k_lam"], dtype=np.float64).ravel().copy()
+                else:
+                    corridor_ref_n_lam = np.asarray(base_eff.get("n_lam"), dtype=np.float64).ravel().copy()
+                    corridor_ref_k_lam = np.asarray(base_eff.get("k_lam"), dtype=np.float64).ravel().copy()
+
+                x_nodes_center = x_nodes0.copy()
+
+                log.info(
+                    "%s Center: keeping nominal seed at d=d_opt | spectral RMSE **without refit**=%.8f <= active threshold %.8f "
+                    "(center refit RMSE=%s). Refitted center kept only as diagnostic; corridor remains anchored on the nominal model.",
+                    _LOG_PREFIX,
+                    float(rmse_seed0),
+                    float(rmse_thresh_active),
+                    (
+                        f"{float(fit0['rmse']):.8f}"
+                        if fit0 is not None and np.isfinite(float(fit0.get("rmse", float("nan"))))
+                        else "n/a"
+                    ),
+                )
+
+            else:
+                self.d_vals.append(float(fit0["d_nm"]))
+
+                self.n_curves.append(np.asarray(fit0["n_lam"], dtype=np.float64))
+
+                self.k_curves.append(np.asarray(fit0["k_lam"], dtype=np.float64))
+
+                self.x_curves.append(np.asarray(fit0["x_nodes_best"], dtype=np.float64).ravel().copy())
+
+                self.rmse_vals.append(float(fit0["rmse"]))
+
+                self.chi2_vals.append(float(chi2_min) if use_lr else float("nan"))
+
+                self.fit_nfev_values.append(float(fit0.get("nfev", float("nan"))))
+
+                self.fit_nit_values.append(float(fit0.get("nit", float("nan"))))
+
+                self.fit_try_values.append(float(fit0.get("n_try", float("nan"))))
+
+                self.fit_fail_values.append(float(fit0.get("n_failed_fit", float("nan"))))
+                self._push_live_point(
+                    float(fit0["d_nm"]),
+                    float(fit0["rmse"]),
+                    np.asarray(fit0["n_lam"], dtype=np.float64).ravel(),
+                    np.asarray(fit0["k_lam"], dtype=np.float64).ravel(),
+                    float(chi2_min) if use_lr else float("nan"),
+                )
+
+                if not scientific_nominal:
+                    corridor_ref_n_lam = np.asarray(fit0["n_lam"], dtype=np.float64).ravel().copy()
+                    corridor_ref_k_lam = np.asarray(fit0["k_lam"], dtype=np.float64).ravel().copy()
+
+                x_nodes_center = np.asarray(fit0["x_nodes_best"], dtype=np.float64).ravel().copy()
+
+                mo0 = fit0.get("mse_objective")
+
+                mo0s = f"{float(mo0):.6e}" if mo0 is not None and np.isfinite(float(mo0)) else "n/a"
+
+                if use_abs_delta:
+                    log.info(
+                        "%s Center: OK | Spectral RMSE **after refit** (d=d_opt)=%.8f | RMSE_ref threshold=%.8f (%s) | "
+                        "refit_objective_MSE=%s | chi2_min=%s | Delta(refit - seed without refit)=%+.6e | "
+                        "Delta(refit - nominal RMSE_ref)=%+.6e",
+                        _LOG_PREFIX,
+                        float(fit0["rmse"]),
+                        float(rmse_opt),
+                        str(rmse_ref_tag),
+                        mo0s,
+                        f"{chi2_min:.8f}" if use_lr and np.isfinite(chi2_min) else "n/a",
+                        float(fit0["rmse"]) - float(rmse_seed0),
+                        float(fit0["rmse"]) - float(rmse_opt),
+                    )
+
+                else:
+                    log.info(
+                        "%s Center: OK | spectral RMSE **after refit** (d=d_opt)=%.8f | pipeline RMSE_ref=%.8f (%s) | "
+                        "refit_objective_MSE=%s | chi2_min=%s | Delta(refit RMSE - no-refit seed)=%+.6e | "
+                        "Delta(refit RMSE - RMSE_ref)=%+.6e",
+                        _LOG_PREFIX,
+                        float(fit0["rmse"]),
+                        float(rmse_opt),
+                        str(rmse_ref_tag),
+                        mo0s,
+                        f"{chi2_min:.8f}" if use_lr and np.isfinite(chi2_min) else "n/a",
+                        float(fit0["rmse"]) - float(rmse_seed0),
+                        float(fit0["rmse"]) - float(rmse_opt),
+                    )
+
+        else:
+            if not bool(self.pconf.include_center_even_if_nan):
+                if self.log_coaching:
+                    _log_coaching_corridor_failure(
+                        reason="centre_fail",
+                        pconf=self.pconf,
+                        use_lr=use_lr,
+                        rmse_opt=rmse_opt,
+                        rmse_thresh=rmse_thresh_active,
+                        d0=float(d0),
+                    )
+
+                return {"profile_d_status": "failed"}
+
+            x_nodes_center = x_nodes0.copy()
+
+            log.warning("%s Center: failed | continue=%s", _LOG_PREFIX, bool(self.pconf.include_center_even_if_nan))
+
+        return CorridorProfileContext(
+            _use_hetero=_use_hetero,
+            _user_mask=_user_mask,
+            adaptive_abs_meta=adaptive_abs_meta,
+            auto_relaxed_alpha=auto_relaxed_alpha,
+            base_result=self.base_result,
+            boundary_refine_calls=boundary_refine_calls,
+            center_seed_kept=center_seed_kept,
+            cfg=self.cfg,
+            chi2_vals=self.chi2_vals,
+            d0=d0,
+            d_vals=self.d_vals,
+            delta_chi2=delta_chi2,
+            fit_fail_values=self.fit_fail_values,
+            fit_nfev_values=self.fit_nfev_values,
+            fit_nit_values=self.fit_nit_values,
+            fit_try_values=self.fit_try_values,
+            k_curves=self.k_curves,
+            log_coaching=self.log_coaching,
+            maxfun_prof=maxfun_prof,
+            min_side=int(max(0, getattr(self.pconf, "min_valid_each_side", 0))),
+            n_curves=self.n_curves,
+            nom_pack=nom_pack,
+            pconf=self.pconf,
+            rmse_opt=rmse_opt,
+            rmse_ref_tag=rmse_ref_tag,
+            rmse_thr_sub=rmse_thr_sub,
+            rmse_thresh=rmse_thresh,
+            rmse_thresh_active=rmse_thresh_active,
+            rmse_vals=self.rmse_vals,
+            scientific_nominal=scientific_nominal,
+            seed_gate_auto_escalated_global=False,
+            seed_gate_deltas=np.asarray([], dtype=np.float64),
+            seed_gate_eval_count=0,
+            seed_gate_kept_count=0,
+            seed_gate_saturated_global=False,
+            sig_r=sig_r,
+            sig_t=sig_t,
+            sigma_r_f_hetero=sigma_r_f_hetero,
+            sigma_t_f_hetero=sigma_t_f_hetero,
+            t0=t0,
+            threshold_basis_eff=threshold_basis_eff,
+            threshold_fallback_reason=threshold_fallback_reason,
+            tol_abs=tol_abs,
+            tol_abs_effective=tol_abs_effective,
+            use_abs_delta=use_abs_delta,
+            use_adaptive_abs_delta=use_adaptive_abs_delta,
+            use_lr=use_lr,
+            sk=sk,
+            x_nodes_center=x_nodes_center,
+            x0_default=x0_default,
+            bounds_nodes=bounds_nodes,
+            chi2_min=chi2_min,
+            x_curves=self.x_curves,
+            corridor_ref_n_lam=corridor_ref_n_lam,
+            corridor_ref_k_lam=corridor_ref_k_lam,
+            _push_live_point_from_payload=self._push_live_point_from_payload,
+            center_seed_gate_eval_count=center_seed_gate_eval_count,
+            center_seed_gate_kept_count=center_seed_gate_kept_count,
+            center_seed_gate_delta_refit_minus_seed=center_seed_gate_delta_refit_minus_seed,
+        )
+
+
+def _setup_corridor_context(
+    cfg: SplineOptConfig,
+    base_result: dict,
+    *,
+    pconf: ProfileCorridorConfig | None = None,
+    log_coaching: bool = True,
+    profile_polish_maxfun: int | None = None,
+    live_cb: Any | None = None,
+) -> CorridorProfileContext | dict[str, Any]:
+    """Compute d interval and n/k corridors by profiling (refit nodes at fixed d).
+
+    Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
+
+    """
+    builder = CorridorContextBuilder(
         cfg=cfg,
-        chi2_vals=chi2_vals,
-        d0=d0,
-        d_vals=d_vals,
-        delta_chi2=delta_chi2,
-        fit_fail_values=fit_fail_values,
-        fit_nfev_values=fit_nfev_values,
-        fit_nit_values=fit_nit_values,
-        fit_try_values=fit_try_values,
-        k_curves=k_curves,
-        log_coaching=log_coaching,
-        maxfun_prof=maxfun_prof,
-        min_side=int(max(0, getattr(pconf, "min_valid_each_side", 0))),
-        n_curves=n_curves,
-        nom_pack=nom_pack,
+        base_result=base_result,
         pconf=pconf,
-        rmse_opt=rmse_opt,
-        rmse_ref_tag=rmse_ref_tag,
-        rmse_thr_sub=rmse_thr_sub,
-        rmse_thresh=rmse_thresh,
-        rmse_thresh_active=rmse_thresh_active,
-        rmse_vals=rmse_vals,
-        scientific_nominal=scientific_nominal,
-        seed_gate_auto_escalated_global=False,
-        seed_gate_deltas=np.asarray([], dtype=np.float64),
-        seed_gate_eval_count=0,
-        seed_gate_kept_count=0,
-        seed_gate_saturated_global=False,
-        sig_r=sig_r,
-        sig_t=sig_t,
-        sigma_r_f_hetero=sigma_r_f_hetero,
-        sigma_t_f_hetero=sigma_t_f_hetero,
-        t0=t0,
-        threshold_basis_eff=threshold_basis_eff,
-        threshold_fallback_reason=threshold_fallback_reason,
-        tol_abs=tol_abs,
-        tol_abs_effective=tol_abs_effective,
-        use_abs_delta=use_abs_delta,
-        use_adaptive_abs_delta=use_adaptive_abs_delta,
-        use_lr=use_lr,
-        sk=sk,
-        x_nodes_center=x_nodes_center,
-        x0_default=x0_default,
-        bounds_nodes=bounds_nodes,
-        chi2_min=chi2_min,
-        x_curves=x_curves,
-        corridor_ref_n_lam=corridor_ref_n_lam,
-        corridor_ref_k_lam=corridor_ref_k_lam,
-        _push_live_point_from_payload=_push_live_point_from_payload,
-        center_seed_gate_eval_count=center_seed_gate_eval_count,
-        center_seed_gate_kept_count=center_seed_gate_kept_count,
-        center_seed_gate_delta_refit_minus_seed=center_seed_gate_delta_refit_minus_seed,
+        log_coaching=log_coaching,
+        profile_polish_maxfun=profile_polish_maxfun,
+        live_cb=live_cb,
     )
+    return builder.build()
 
 def compute_profiled_corridors_by_d(
     cfg: SplineOptConfig,

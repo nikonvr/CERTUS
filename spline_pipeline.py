@@ -12,6 +12,7 @@ from certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 
 import logging
+from dataclasses import dataclass
 
 
 import time
@@ -1528,6 +1529,29 @@ def _eval_clean_variant(
     return step_eval_cache[cache_key]
 
 
+
+@dataclass
+class AutoCleanKnotsContext:
+    tolerance: float
+    nominal_rmse: float
+    progress_cb: Any | None
+    progress_units_total: int
+    progress_units_done: int
+
+    def emit_progress(self, units_inc: int, message: str) -> None:
+        if self.progress_cb is None:
+            return
+        self.progress_units_done = int(min(self.progress_units_total, self.progress_units_done + max(int(units_inc), 0)))
+        pct = 99.0 * (float(self.progress_units_done) / float(max(self.progress_units_total, 1)))
+        self.progress_cb(float(np.clip(pct, 0.0, 99.0)), str(message))
+
+    def decisive_improvement_margin(self) -> float:
+        return float(max(5.0e-6, 0.25 * float(max(self.tolerance, 0.0))))
+
+    def have_decisive_local_candidate(self, rmse_value: float) -> bool:
+        return bool(np.isfinite(rmse_value) and rmse_value <= (self.nominal_rmse - self.decisive_improvement_margin()))
+
+
 def worker_spline_auto_clean_knots(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -1658,23 +1682,16 @@ def worker_spline_auto_clean_knots(
         n_removed_candidates = max(0, kk - 2)
         progress_units_total += n_removed_candidates * (max_pull_variants + max_refine_variants)
         progress_units_total += 1  # validation deep polish slot per step
-    progress_units_done = 1
 
-    def _emit_progress(units_inc: int, message: str) -> None:
-        nonlocal progress_units_done
-        if progress_cb is None:
-            return
-        progress_units_done = int(min(progress_units_total, progress_units_done + max(int(units_inc), 0)))
-        pct = 99.0 * (float(progress_units_done) / float(max(progress_units_total, 1)))
-        progress_cb(float(np.clip(pct, 0.0, 99.0)), str(message))
-
+    ctx = AutoCleanKnotsContext(
+        tolerance=tolerance,
+        nominal_rmse=nominal_rmse,
+        progress_cb=progress_cb,
+        progress_units_total=progress_units_total,
+        progress_units_done=1,
+    )
 
 
-    def _decisive_improvement_margin() -> float:
-        return float(max(5.0e-6, 0.25 * float(max(tolerance, 0.0))))
-
-    def _have_decisive_local_candidate(rmse_value: float) -> bool:
-        return bool(np.isfinite(rmse_value) and rmse_value <= (nominal_rmse - _decisive_improvement_margin()))
 
 
 
@@ -1732,7 +1749,7 @@ def worker_spline_auto_clean_knots(
 
             # 1. Evaluate baseline first (always variants[0])
             baseline_name, baseline_knots = variants[0]
-            _emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{baseline_name}]...")
+            ctx.emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{baseline_name}]...")
             baseline_cand, baseline_rmse = _eval_clean_variant(
                 baseline_knots, stop_event, step_eval_cache,
                 cfg_prescreen, cfg_candidate, best_result_out,
@@ -1786,12 +1803,12 @@ def worker_spline_auto_clean_knots(
                 if (
                     remaining_variants
                     and not stop_event.is_set()
-                    and not _have_decisive_local_candidate(local_best_rmse)
+                    and not ctx.have_decisive_local_candidate(local_best_rmse)
                 ):
                     for vname, tk in remaining_variants:
-                        if stop_event.is_set() or _have_decisive_local_candidate(local_best_rmse):
+                        if stop_event.is_set() or ctx.have_decisive_local_candidate(local_best_rmse):
                             break
-                        _emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{vname}]...")
+                        ctx.emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{vname}]...")
                         try:
                             cand, cand_rmse = _eval_clean_variant(
                                 tk, stop_event, step_eval_cache,
@@ -1839,7 +1856,7 @@ def worker_spline_auto_clean_knots(
                 refine_trigger
                 and local_best_knots is not None
                 and not stop_event.is_set()
-                and not _have_decisive_local_candidate(local_best_rmse)
+                and not ctx.have_decisive_local_candidate(local_best_rmse)
             ):
                 refine_variants = _build_local_refine_variants(
                     active_knots, i, local_best_knots,
@@ -1847,9 +1864,9 @@ def worker_spline_auto_clean_knots(
                 )
                 if refine_variants:
                     for vname, tk in refine_variants:
-                        if stop_event.is_set() or _have_decisive_local_candidate(local_best_rmse):
+                        if stop_event.is_set() or ctx.have_decisive_local_candidate(local_best_rmse):
                             break
-                        _emit_progress(1, f"Step {step + 1}: 2D refinement [{vname}]...")
+                        ctx.emit_progress(1, f"Step {step + 1}: 2D refinement [{vname}]...")
                         try:
                             cand, cand_rmse = _eval_clean_variant(
                                 tk, stop_event, step_eval_cache,
@@ -1922,7 +1939,7 @@ def worker_spline_auto_clean_knots(
             # The selected candidate is already a fully polished K-1 solution.
             # Re-running the exact same target mesh creates redundant 05b work and stale
             # follow-up jobs without improving the acceptance guarantee meaningfully.
-            _emit_progress(1, f"Accepting best removal [{best_cand_variant}]...")
+            ctx.emit_progress(1, f"Accepting best removal [{best_cand_variant}]...")
             log.info(
                 "INDEX_SPLINE [AUTO_CLEAN] step=%d candidate accepted for validation | variant=%s | K_before=%d -> K_after=%d | rmse_candidate=%.8f | nominal=%.8f | delta=%+.8f",
                 int(step + 1),

@@ -13133,18 +13133,7 @@ class CertusIndexSplineApp(
             pv = int(round(float(p) * 100.0))
             self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
 
-        self._worker.kwargs["progress_cb"] = _manual_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-
-        def _manual_live_metrics(payload: object) -> None:
-            if not isinstance(payload, dict):
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                d_live = float(payload.get("d_nm", float("nan")))
-                rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+        self._wire_worker_signals(_manual_progress)
 
         self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
@@ -13179,13 +13168,7 @@ class CertusIndexSplineApp(
                     f"K_sigma={K_cur} sigma_knots_added={int(target_sigma_knots.size)} delta_ns={float(delta_ns):+.6f}"
                 ),
             )
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-            self._manual_knots_dialog.set_runtime_busy(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         self.lbl_status.setText("Manual knots: local re-optimization in progress...")
         install_skeleton(self.tabs_main, label="Manual knots...")
         self._worker.start()
@@ -13258,18 +13241,7 @@ class CertusIndexSplineApp(
             pv = int(round(float(p) * 100.0))
             self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
 
-        self._worker.kwargs["progress_cb"] = _manual_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-
-        def _manual_live_metrics(payload: object) -> None:
-            if not isinstance(payload, dict):
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                d_live = float(payload.get("d_nm", float("nan")))
-                rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+        self._wire_worker_signals(_manual_progress)
 
         self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
@@ -13293,13 +13265,7 @@ class CertusIndexSplineApp(
                 str(mode),
                 CertusIndexSplineApp._manual_mesh_change_log_line("target", mesh_summary),
             )
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-            self._manual_knots_dialog.set_runtime_busy(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         mode_label = "log(sigma)" if str(mode).strip().lower() == "log" else "sigma"
         self.lbl_status.setText(f"Manual knots: auto repartition {mode_label} in progress...")
         install_skeleton(self.tabs_main, label=f"Auto repartition {mode_label}...")
@@ -13346,18 +13312,7 @@ class CertusIndexSplineApp(
             pv = int(round(float(p) * 100.0))
             self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
 
-        self._worker.kwargs["progress_cb"] = _manual_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-
-        def _manual_live_metrics(payload: object) -> None:
-            if not isinstance(payload, dict):
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                d_live = float(payload.get("d_nm", float("nan")))
-                rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+        self._wire_worker_signals(_manual_progress)
 
         self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
@@ -13372,13 +13327,7 @@ class CertusIndexSplineApp(
                 K_cur,
                 int(target_sigma_knots.size),
             )
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-            self._manual_knots_dialog.set_runtime_busy(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         self.lbl_status.setText("Autoshift: searching for delta ns...")
         install_skeleton(self.tabs_main, label="Autoshift delta ns...")
         self._worker.start()
@@ -13435,18 +13384,7 @@ class CertusIndexSplineApp(
                 pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
                 self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
 
-        self._worker.kwargs["progress_cb"] = _manual_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-
-        def _manual_live_metrics(payload: object) -> None:
-            if not isinstance(payload, dict):
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                d_live = float(payload.get("d_nm", float("nan")))
-                rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+        self._wire_worker_signals(_manual_progress)
 
         self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
@@ -13462,13 +13400,7 @@ class CertusIndexSplineApp(
                 float(delta_ns),
             )
 
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-            self._manual_knots_dialog.set_runtime_busy(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         self.lbl_status.setText("Auto add one: testing all mid-gap insertions...")
         install_skeleton(self.tabs_main, label="Auto add one...")
         self._worker.start()
@@ -13526,18 +13458,7 @@ class CertusIndexSplineApp(
                 pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
                 self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
 
-        self._worker.kwargs["progress_cb"] = _manual_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-
-        def _manual_live_metrics(payload: object) -> None:
-            if not isinstance(payload, dict):
-                return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-                d_live = float(payload.get("d_nm", float("nan")))
-                rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+        self._wire_worker_signals(_manual_progress)
 
         self._worker.signals.live.connect(_manual_live_metrics)
         self._worker.signals.finished.connect(self._on_worker_done)
@@ -13551,13 +13472,7 @@ class CertusIndexSplineApp(
                 "INDEX_SPLINE GUI: launching auto_clean worker | K_target=%d", int(target_sigma_knots.size)
             )
 
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
-            self._manual_knots_dialog.set_runtime_busy(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         self.lbl_status.setText("Advanced cleaning: iterative knot removal in progress...")
         install_skeleton(self.tabs_main, label="Advanced cleaning...")
         self._worker.start()
@@ -13638,11 +13553,7 @@ class CertusIndexSplineApp(
                 K_cur,
                 rr if np.isfinite(rr) else float("nan"),
             )
-        self.btn_run.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        self._refresh_post_optimization_option_controls()
-        self._prog_ui_last = 0
-        self._prog_reset_bar()
+        self._set_worker_running_state(True)
         self.lbl_status.setText("MWIR node: re-optimization in progress...")
         install_skeleton(self.tabs_main, label="Extra MWIR node...")
         self._worker.start()
@@ -13922,6 +13833,34 @@ class CertusIndexSplineApp(
         self.btn_stop.setEnabled(True)
         self._set_corridor_grid_busy(True)
         self._worker.start()
+
+    def _wire_worker_signals(self, progress_fn) -> None:
+        """Wire the standard progress/live callbacks for a worker run."""
+        self._worker.kwargs["progress_cb"] = progress_fn
+        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
+        self._worker.signals.progress.connect(self._on_progress)
+        self._worker.signals.live.connect(self._on_live_update)
+
+        def _manual_live_metrics(payload: object) -> None:
+            if not isinstance(payload, dict):
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                d_live = float(payload.get("d_nm", float("nan")))
+                rmse_live = float(payload.get("rmse", float("nan")))
+                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+
+        self._worker.signals.live.connect(_manual_live_metrics)
+
+    def _set_worker_running_state(self, running: bool) -> None:
+        """Toggle UI controls between running/idle state."""
+        self.btn_run.setEnabled(not running)
+        self.btn_stop.setEnabled(running)
+        if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            self._manual_knots_dialog.set_runtime_busy(running)
+        self._refresh_post_optimization_option_controls()
+        if running:
+            self._prog_ui_last = 0
+            self._prog_reset_bar()
 
     APP_NAME = "CERTUS-INDEX-SPLINE"
 

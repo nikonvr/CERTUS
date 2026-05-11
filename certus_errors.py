@@ -31,6 +31,8 @@ Usage:
 
 from typing import List, Union
 
+import functools
+import logging
 
 import numpy as np
 
@@ -42,6 +44,41 @@ from certus_core import (
     CertusPhysicsError,
     CertusConfigError,
 )
+
+# ---------------------------------------------------------------------------
+# Broad-except tuple used across many UI modules.  Centralised here so that
+# every call site can ``except NUMERICAL_FAULT_EXCEPTIONS`` instead of
+# repeating 7 exception types.
+# ---------------------------------------------------------------------------
+NUMERICAL_FAULT_EXCEPTIONS: tuple[type[BaseException], ...] = (
+    ValueError,
+    TypeError,
+    RuntimeError,
+    AttributeError,
+    KeyError,
+    IndexError,
+    FileNotFoundError,
+)
+
+_safe_logger = logging.getLogger("CERTUS")
+
+
+def safe_ui_action(func):
+    """Decorator that wraps a UI action with the standard broad-except guard.
+
+    Catches ``NUMERICAL_FAULT_EXCEPTIONS`` and logs them via the CERTUS
+    logger instead of crashing the application.  The decorated function
+    returns ``None`` on failure.
+    """
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            _safe_logger.exception("safe_ui_action caught exception in %s", func.__qualname__)
+
+    return wrapper
 
 
 __all__ = [

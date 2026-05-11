@@ -13792,27 +13792,10 @@ if __name__ == "__main__":
 
     # --- SPLASH SCREEN ---
 
-    from PyQt6.QtWidgets import QSplashScreen
+    from certus_splash import create_splash
 
-    splash_pix = QPixmap(get_resource_path("certus.svg"))
+    splash = create_splash("Initializing CERTUS STRAT...")
 
-    if splash_pix.isNull():
-        splash_pix = QPixmap(get_resource_path("certus.ico"))
-
-    if splash_pix.isNull():
-        splash_pix = QPixmap(400, 200)
-
-        splash_pix.fill(Qt.GlobalColor.white)
-
-    splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
-
-    splash.show()
-
-    splash.showMessage(
-        "Initializing CERTUS STRAT...",
-        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
-        Qt.GlobalColor.black,
-    )
 
     # ROBUST MATERIAL DATABASE FIX: canonical indices.xlsx in example/database_index
 

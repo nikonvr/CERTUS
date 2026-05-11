@@ -7840,29 +7840,9 @@ def main():
 
     # --- SPLASH SCREEN ---
 
-    from PyQt6.QtGui import QPixmap
+    from certus_splash import create_splash
 
-    from PyQt6.QtWidgets import QSplashScreen
-
-    splash_pix = QPixmap(get_resource_path("certus.svg"))
-
-    if splash_pix.isNull():
-        splash_pix = QPixmap(get_resource_path("certus.ico"))
-
-    if splash_pix.isNull():
-        splash_pix = QPixmap(400, 200)
-
-        splash_pix.fill(Qt.GlobalColor.white)
-
-    splash = QSplashScreen(splash_pix, Qt.WindowType.WindowStaysOnTopHint)
-
-    splash.show()
-
-    splash.showMessage(
-        "Initializing CERTUS  Reverse Engineering...",
-        Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignCenter,
-        Qt.GlobalColor.black,
-    )
+    splash = create_splash("Initializing CERTUS  Reverse Engineering...")
 
     # Setup logging with centralized helper
 

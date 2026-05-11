@@ -2519,7 +2519,7 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
     try:
         T_tolerance = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
 
-    except NUMERICAL_FAULT_EXCEPTIONS :
+    except (KeyError, ValueError, TypeError):
         T_tolerance = 0.001
 
     min_resolution = 999.0
@@ -5035,7 +5035,7 @@ class StrategiesTableWindow(QMainWindow):
                         item.setFont(CertusTheme.get_font(9, QFont.Weight.Bold))
                     elif val > 1.0:
                         item.setForeground(QColor(CertusTheme.WARNING))
-                except NUMERICAL_FAULT_EXCEPTIONS :
+                except (ValueError, IndexError, AttributeError):
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
             self.table.setItem(row, start_col_errors + err_idx, item)
 
@@ -8653,7 +8653,7 @@ class TransmissionVsThicknessWindow(QMainWindow):
                                 "std": float(np.std(errors)),
                             }
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except (ValueError, TypeError, IndexError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         return layer_stats
@@ -11491,7 +11491,7 @@ class CertusStratApp(CertusBaseApp):
 
             undo_shortcut.activated.connect(self._undo_stack_table)
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (RuntimeError, TypeError, AttributeError) as e:
             self.logger.warning(f"Could not initialize UNDO shortcut: {e}")
 
     def _on_stack_table_changed(self, row, col) -> None:
@@ -12717,7 +12717,7 @@ class CertusStratApp(CertusBaseApp):
 
                 base_name = f"Report_STRAT{src_name}_{timestamp}_RMSE_{rmse_val:.5f}"
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except (ValueError, TypeError, AttributeError):
                 base_name = f"Report_STRAT_{timestamp}_RMSE_{rmse_val:.5f}"
 
             excel_path = str(Path(report_dir) / f"{base_name}.xlsx")
@@ -13202,7 +13202,7 @@ class CertusStratApp(CertusBaseApp):
 
                 base_name = f"Report_STRAT{src_name}_{timestamp}_RMSE_{rmse_val:.5f}"
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except (ValueError, TypeError, AttributeError):
                 base_name = f"Report_STRAT_{timestamp}_RMSE_{rmse_val:.5f}"
 
             excel_path = str(Path(report_dir) / f"{base_name}.xlsx")
@@ -13306,7 +13306,7 @@ class CertusStratApp(CertusBaseApp):
         try:
             include_secondary_rmse_stats = bool(self.collect_params().get("include_secondary_rmse_stats", False))
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except (KeyError, TypeError, ValueError):
             include_secondary_rmse_stats = False
 
         if self.opti_results and "p_thick_nominal" in self.opti_results:
@@ -13320,7 +13320,7 @@ class CertusStratApp(CertusBaseApp):
 
                 current_p_thick = nominal_res["physical_thicknesses_nominal"]
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except (KeyError, TypeError, ValueError):
                 current_p_thick = []
 
         if self.strategies_table_window and self.strategies_table_window.isVisible():
@@ -13822,7 +13822,7 @@ if __name__ == "__main__":
 
             logging.info(f"[ROBUST DB] ✓ Activated with {len(robust_db.materials)} materials")
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (ValueError, RuntimeError, AttributeError, KeyError, FileNotFoundError) as e:
             logging.warning(f"[ROBUST DB] ✗ Failed to load: {e}")
 
             splash.showMessage(

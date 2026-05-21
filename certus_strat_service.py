@@ -31,6 +31,13 @@ NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"
 WL_INDEX_SCALE = 10**WL_DECIMALS
 
+try:
+    from certus_core import APP_CONTEXT as _APP_CONTEXT
+except ImportError:
+    _APP_CONTEXT = {"materials_db": None}
+
+APP_CONTEXT = _APP_CONTEXT
+
 
 def wavelength_to_index(wavelength_nm: float) -> int:
     """Convert a wavelength float to a stable integer index at WL_DECIMALS precision."""
@@ -71,6 +78,9 @@ def generate_noise_array(
 
 class StratStrategyService(BaseHeadlessService):
     """Headless wrapper for STRAT payload normalization/validation."""
+
+    def __init__(self, runner=lambda config: config) -> None:
+        super().__init__(runner)
 
     VALID_STEPS = {0, 2, 3, 23, 33}
 
@@ -203,7 +213,7 @@ class StratStrategyService(BaseHeadlessService):
         """Orchestrate Step 0 (Nominal + Sensitivity + SEEL) headlessly."""
         # Inject materials_db into params if provided for the kernels to use it
         # (This avoids global lookup in APP_CONTEXT inside the headless service)
-        if materials_db:
+        if materials_db is not None:
             params["materials_db"] = materials_db
 
         nominal_results, multipliers = calculate_nominal_properties(params)

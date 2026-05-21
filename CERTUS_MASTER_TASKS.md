@@ -14,6 +14,8 @@ Ce document est volontairement large et priorisé. Il sert de backlog maître po
 - Audit des modules principaux réalisé.
 - Refactoring incrémental de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisé.
 - Validation des configurations de release et des entrypoints critiques.
+- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
+- Passage à 100% de réussite des 62 tests unitaires de `tests/unit/test_certus_ui.py` (résolution des dialogues bloquants par mock et isolation QSettings/MRU).
 
 ### Il reste
 - Finaliser les optimisations fines de l'architecture.
@@ -432,6 +434,8 @@ Si une tâche introduit du couplage supplémentaire dans un module déjà lourd,
 - Audit des modules principaux réalisé.
 - Refactoring incrémental de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisé.
 - Validation des configurations de release et des entrypoints critiques.
+- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
+- Résolution des dialogues bloquants et nettoyage MRU pour le passage au vert des 62 tests unitaires de `tests/unit/test_certus_ui.py`.
 
 ### Reste
 - Finaliser les optimisations fines de l'architecture.

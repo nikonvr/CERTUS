@@ -1275,12 +1275,6 @@ def optimize_block_strategy_hybrid(
     logger = params["logger"]
 
     try:
-        logger.info("=" * 80)
-
-        logger.info("STEP 2: ITERATIVE THICKNESS OPTIMIZATION (Refactored 2026)")
-
-        logger.info("=" * 80)
-
         l0 = float(params["l0"])
 
         stack_string = params["stack_string"]
@@ -1303,8 +1297,6 @@ def optimize_block_strategy_hybrid(
             ]
 
         num_layers = len(p_thick_nominal)
-
-        clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(params, p_thick_nominal, logger)
 
         # Scan Range
 
@@ -12081,6 +12073,7 @@ class CertusStratApp(CertusBaseApp):
         return params_out
 
     def run_workflow(self, step: int) -> None:
+        self._reports_exported = False
 
         # CLEANUP PREVIOUS WORKER
 
@@ -12472,6 +12465,7 @@ class CertusStratApp(CertusBaseApp):
 
             if generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures):
                 self.logger.info(f"✅ HTML report saved: '{html_path}'")
+                self._reports_exported = True
 
             self.status_label.setText(f"✓ Saved: {base_name}")
 
@@ -12727,6 +12721,10 @@ class CertusStratApp(CertusBaseApp):
 
     def _auto_export_results(self) -> Any:
         """Self-export results without worker signal"""
+
+        if getattr(self, "_reports_exported", False):
+            self.logger.info("Reports already exported via excel_ready signal - skipping duplicate self-export.")
+            return
 
         if not self.opti_results:
             return

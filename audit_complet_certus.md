@@ -5,14 +5,14 @@
 - Backlog P0/P1 créé.
 - Audit des modules principaux réalisé.
 - Les priorités socle / services / UI / hub / gros modules sont identifiées.
+- Refactoring incrémental et validation de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisés.
+- Validation des configurations de release et des entrypoints métier critiques.
+- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
+- Passage à 100% de réussite des 62 tests unitaires de `tests/unit/test_certus_ui.py` (résolution des dialogues bloquants par mock et isolation QSettings/MRU).
 
 ### Il reste
-- Vérifier la CI et la release de bout en bout.
-- Verrouiller `certus_core.py`.
-- Stabiliser les services headless.
-- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
-- Alléger les principaux entrypoints métier.
-- Renforcer les tests des helpers, invariants et flux # Audit Technique Exhaustif — Suite CERTUS
+- Finaliser les optimisations fines de l'architecture.
+- Continuer à renforcer la couverture de tests spécifiques au besoin. # Audit Technique Exhaustif — Suite CERTUS
 ## Édition Finale · Révision Scientifique 2026 · Post-Refactoring Cibles 1–11
 
 > Ce document évalue la base de code CERTUS sur **12 axes**, notés chacun sur 100.
@@ -332,11 +332,11 @@ Les classes `QMainWindow` comme `CertusIndexSplineApp` (16 000 lignes) cumulent 
 - Plan P0/P1 créé.
 - Backlog maître créé.
 - Audit des modules principaux réalisé.
+- Refactoring incrémental de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisé.
+- Validation des configurations de release et des entrypoints critiques.
+- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
+- Résolution des dialogues bloquants et nettoyage MRU pour le passage au vert des 62 tests unitaires de `tests/unit/test_certus_ui.py`.
 
 ### Reste
-- Vérifier la CI / release de bout en bout.
-- Verrouiller `certus_core.py`.
-- Stabiliser les services headless.
-- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
-- Alléger les gros entrypoints métier.
-- Renforcer les tests sur les helpers, invariants et flux principaux.
+- Finaliser les optimisations fines de l'architecture.
+- Continuer à renforcer la couverture de tests spécifiques au besoin.

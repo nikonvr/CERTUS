@@ -32,6 +32,14 @@ from spline_profile_corridors import enforce_min_k_corridor_half_width
 logger = logging.getLogger("CERTUS")
 
 
+def _log10_k_safe(k: np.ndarray) -> np.ndarray:
+    """Compute log10(k) safely, returning NaN for k <= 0 or non-finite values."""
+    k = np.asarray(k, dtype=np.float64)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        result = np.where(np.isfinite(k) & (k > 0.0), np.log10(k), np.nan)
+    return result
+
+
 def _mergesort_order_lambda(lam_nm: np.ndarray) -> np.ndarray:
     """Indices to permute spectral columns by increasing lambda (stable sort)."""
     lam = np.asarray(lam_nm, dtype=np.float64).ravel()

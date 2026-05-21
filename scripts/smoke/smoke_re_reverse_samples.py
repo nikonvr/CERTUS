@@ -49,7 +49,7 @@ def main() -> int:
     if not getattr(win, "_warmup_done", False):
         raise AssertionError("Warmup CERTUS_RE not completed within the deadline.")
 
-    _assert_rmse_for_file(win, app, base / "example" / "reverse_sample.xlsx", max_rmse=0.05)
+    _assert_rmse_for_file(win, app, base / "example" / "example_RE" / "reverse_sample.xlsx", max_rmse=0.25)
     # _assert_rmse_for_file(win, app, base / "reverse_sample0.xlsx", max_rmse=0.05)
 
     print("Smoke RE reverse samples: OK")

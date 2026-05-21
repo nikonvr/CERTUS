@@ -433,4 +433,17 @@ class TestSafeUIAction:
             raise ZeroDivisionError("division by zero")
         assert dummy_func() is None
 
+    def test_safe_ui_action_extra_arguments(self):
+        calls = []
+
+        class Dummy:
+            @safe_ui_action
+            def slot(self):
+                calls.append("called")
+
+        d = Dummy()
+        # Simulated PyQt clicked call with extra boolean checked argument
+        d.slot(False)
+        assert calls == ["called"]
+
 

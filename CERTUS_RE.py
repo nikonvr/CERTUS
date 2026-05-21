@@ -16,6 +16,10 @@
 
 # This file intentionally combines GUI, Workers, and Logic for performance and simplicity.
 
+# P1 boundary: only make small, reversible changes here until dedicated tests cover
+# worker phases, result formatting, and critical reverse-engineering flows.
+# Prefer extracting pure helpers before moving Qt classes or numerical kernels.
+
 # DO NOT REFACTOR INTO SUBMODULES WITHOUT EXPLICIT AUTHORIZATION.
 
 # =========================================================================================
@@ -33,24 +37,20 @@ from __future__ import annotations
 __version__ = "26_01"
 
 # RE: +/-% thickness search radius for L-BFGS-B (no toolbar control; fixed default).
-
-import copy
-
-import functools
-
+# Keeping this module tight: prefer helpers/tests over broad structural moves.
 
 import logging
-
-import multiprocessing
+import copy
+import time
 
 import os
+import functools
+import multiprocessing
 
 from pathlib import Path
 
 
 import sys
-
-import time
 
 import traceback
 
@@ -59,7 +59,9 @@ import traceback
 
 
 
-from typing import Any, Dict, List
+from typing import Any
+
+from certus_core import certus_timestamp_display, setup_logging
 
 import numpy as np
 
@@ -120,8 +122,6 @@ from certus_spectrum_eval_ui import (
     spectrum_eval_run_preamble,
     spectrum_eval_start_worker,
 )
-from certus_ux import OBJ, build_premium_overrides
-from certus_skeleton import install_skeleton, uninstall_skeleton
 
 from certus_ui import (
     attach_excel_clipboard_context_menu,
@@ -132,36 +132,36 @@ from certus_ui import (
     CertusStatusPill,
     CertusTheme,
     CertusThemeToggle,
-    confirm_stop_with_timeout,
-    create_flashy_grid,
-    create_header_logo_widget,
-    create_styled_button,
-    create_top_actions_bar,
-    EnhancedProgressWidget,
     enable_file_drop,
+    EnhancedProgressWidget,
     ExcelTableWidget,
     FlashyCard,
     get_certus_last_dir,
-    init_certus_app,
     install_standard_shortcuts,
-    open_documentation,
+    safe_ui_action,
     set_certus_last_dir,
-    set_certus_window_icon,
     show_toast,
     WelcomeGuideWidget,
-    wrap_scientific_plot_with_toolbar,
+    create_flashy_grid,
+    create_header_logo_widget,
+    create_styled_button,
+    create_styled_label,
+    create_top_actions_bar,
+    init_certus_app,
+    set_certus_window_icon,
 )
 
 from certus_core import (
     CFG,
-    certus_timestamp_display,
-    certus_timestamp_file,
     create_module_environment,
+    NUMERICAL_FAULT_EXCEPTIONS,
     get_resource_path,
-    setup_logging,
 )
 
+from certus_ux import build_premium_overrides
+
 from certus_data import OPENPYXL_AVAILABLE
+from certus_re_workers import REWorker
 
 
 # =============================================================================
@@ -180,26 +180,22 @@ script_dir = env["script_dir"]
 
 # =============================================================================
 
-from certus_re_workers import REWorker
-
-from certus_animations import fade_in
 
 # RE helpers: explicit re-exports (ARCH-1; replaced the legacy for-loop that copied certus_re_helpers into globals()).
 
 from certus_re_helpers import (
-    ParsedREColumn,
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_GUI_DEFAULT_RE_QWOT_ALPHA,
     RE_HL_DELTA_RE_REG_SQRT_W,
     RE_OPTIM_POINTS_PER_TARGET,
-    RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_P4_BEAM_N_KNOTS,
     RE_PHASE2_FD_MAX_WORKERS,
     RE_PHASE2_FD_PARALLEL,
     RE_PHASE2_ONESIDED_SPLINE_FD,
     RE_PHASE4_APERTURE_SCAN_POINTS,
+    RE_P4_BEAM_AP_BOUNDS_DEG,
+    RE_P4_BEAM_N_KNOTS,
     RE_PHASE4_TRF_MAX_NFEV,
-    RE_RANKING_ALPHA_REF,
+    re_qwot_penalty_weight_from_preset,
     RE_RE_DEADZONE_DELTA_RE_ABS,
     RE_RE_DEADZONE_QWOT_ABS,
     RE_SPEED_PRESETS,
@@ -207,7 +203,6 @@ from certus_re_helpers import (
     RE_SPLINE_N_KNOTS,
     RE_SUB_CAUCHY_TUBE_DELTA,
     RE_THICKNESS_SEARCH_RADIUS_PCT,
-    TabularMaterial,
     _RE_CANONICAL_SHEETS,
     _RE_FT_COL_MAT,
     _RE_FT_COL_N,
@@ -243,6 +238,7 @@ from certus_re_helpers import (
     re_knots_wavelengths,
     re_n_corr_at_lambda_ref,
     re_substrate_cauchy_n_re_from_theta,
+    TabularMaterial,
 )
 
 # Configure GUI
@@ -1231,7 +1227,12 @@ class CertusREApp(CertusBaseApp):
 
         left_layout.addWidget(actions_wrap)
 
-        fade_in(actions_wrap, duration_ms=200)
+        try:
+            from certus_animations import fade_in
+
+            fade_in(actions_wrap, duration_ms=200)
+        except Exception:
+            pass
 
         return left_panel
 
@@ -1272,7 +1273,7 @@ class CertusREApp(CertusBaseApp):
         btn_lay.setSpacing(10)
 
         self.load_re_btn = QPushButton(" Load RE file (Excel)")
-        self.load_re_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.load_re_btn.setObjectName("PRIMARY_BUTTON")
         self.load_re_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.load_re_btn.setToolTip("Select and load a previously saved R/E inversion file.")
@@ -1284,7 +1285,7 @@ class CertusREApp(CertusBaseApp):
         btn_lay.addWidget(self.load_re_btn)
 
         self.launch_re_btn = QPushButton(" Run RE")
-        self.launch_re_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.launch_re_btn.setObjectName("PRIMARY_BUTTON")
         self.launch_re_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.launch_re_btn.setToolTip("Run the R/E inversion process on current targets.")
@@ -1300,7 +1301,7 @@ class CertusREApp(CertusBaseApp):
         lay.addLayout(btn_lay)
 
         self.display_re_results_btn = QPushButton(" Display results")
-        self.display_re_results_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.display_re_results_btn.setObjectName("PRIMARY_BUTTON")
         self.display_re_results_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.display_re_results_btn.setToolTip(
@@ -1815,9 +1816,7 @@ class CertusREApp(CertusBaseApp):
 
         self._update_substrate_info()
 
-    def _on_re_worker_error_cleanup(self, *_args) -> None:
 
-        uninstall_skeleton(self.plot_tabs)
 
     def _build_action_buttons(self) -> QGridLayout:
         """Four actions in 2x2 grid."""
@@ -1831,7 +1830,7 @@ class CertusREApp(CertusBaseApp):
         # Evaluate
 
         self.eval_btn = QPushButton("EVALUATE")
-        self.eval_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.eval_btn.setObjectName("PRIMARY_BUTTON")
         self.eval_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.eval_btn.setToolTip("Compute RMSE and spectral curves for current stack (Ctrl+E)")
@@ -1845,7 +1844,7 @@ class CertusREApp(CertusBaseApp):
         # Stop (evaluation or RE in progress)
 
         self.stop_btn = QPushButton("STOP")
-        self.stop_btn.setObjectName(OBJ.DANGER_BUTTON)
+        self.stop_btn.setObjectName("DANGER_BUTTON")
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.stop_btn.setToolTip("Stop spectral evaluation or RE optimization in progress.")
@@ -1858,7 +1857,7 @@ class CertusREApp(CertusBaseApp):
 
         self.substrate_info_btn = QPushButton(" Stack Info")
 
-        self.substrate_info_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.substrate_info_btn.setObjectName("PRIMARY_BUTTON")
         self.substrate_info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.substrate_info_btn.setToolTip("Substrate summary and stack structure in QWOT in a separate window.")
@@ -3153,6 +3152,11 @@ class CertusREApp(CertusBaseApp):
         except NUMERICAL_FAULT_EXCEPTIONS :
             pass
 
+    def _set_workflow_best_rmse(self, value: float) -> None:
+        """Set the workflow best RMSE and refresh the status bar."""
+        self._workflow_best_rmse = float(value)
+        self._update_status_bar_stats()
+
     def _apply_re_workflow_rmse_if_better(self, r: float) -> None:
         """Update _workflow_best_rmse (RE RMSE) and refresh the status bar."""
 
@@ -3160,13 +3164,10 @@ class CertusREApp(CertusBaseApp):
             return
 
         rf = float(r)
-
         prev = float(getattr(self, "_workflow_best_rmse", float("inf")))
 
         if rf < prev - 1e-15:
-            self._workflow_best_rmse = rf
-
-            self._update_status_bar_stats()
+            self._set_workflow_best_rmse(rf)
 
     def _re_rmse_qwot_alpha_for_display(self) -> float:
         """alpha for √(sp²+alpha·QWOT²) : last RE run (phase 2b) if known, else speed preset."""
@@ -3185,6 +3186,7 @@ class CertusREApp(CertusBaseApp):
 
         return self._re_gui_qwot_penalty_weight()
 
+
     def _on_re_worker_result(self, data: object) -> None:
         """Update  Best RMSE  during RE (live emissions, previously not wired)."""
 
@@ -3198,24 +3200,19 @@ class CertusREApp(CertusBaseApp):
             return
 
         al = data.get("alpha_qwot")
-
         if al is not None:
             try:
                 al_f = float(al)
-
             except (TypeError, ValueError):
                 al_f = float("nan")
 
             if np.isfinite(al_f):
                 prev = getattr(self, "_re_last_live_alpha_qwot", None)
-
                 if prev is not None and abs(al_f - float(prev)) > 1e-12:
                     self._workflow_best_rmse = float("inf")
-
                 self._re_last_live_alpha_qwot = al_f
 
         rmse = data.get("rmse")
-
         if not self._is_valid_rmse_value(rmse):
             return
 
@@ -3223,13 +3220,9 @@ class CertusREApp(CertusBaseApp):
 
         if "re_nk_preview_dH" in data:
             self._re_nk_preview_dH = data.get("re_nk_preview_dH")
-
             self._re_nk_preview_dL = data.get("re_nk_preview_dL")
-
             self._re_nk_preview_lam2 = data.get("re_nk_preview_lam2")
-
             self._re_nk_preview_sub012 = data.get("re_nk_preview_sub012")
-
             self._plot_nk()
 
     def _update_status_bar_stats(self):
@@ -3241,38 +3234,28 @@ class CertusREApp(CertusBaseApp):
             self.stats_label.setText(f"Evals: {total}")
 
         if hasattr(self, "best_rmse_label"):
-            be = float(getattr(self, "_best_eval_rmse", float("inf")))
+            self.best_rmse_label.setText(self._best_rmse_label_text())
 
-            wf = float(getattr(self, "_workflow_best_rmse", float("inf")))
+    def _best_rmse_label_text(self) -> str:
+        """Compute the best RMSE label text from current state."""
+        be = float(getattr(self, "_best_eval_rmse", float("inf")))
+        wf = float(getattr(self, "_workflow_best_rmse", float("inf")))
 
-            # During RE: show best RMSE for *this* run (else min(eval, wf)
+        if getattr(self, "_re_mode_active", False):
+            if np.isfinite(wf) and wf < float("inf"):
+                return f"Best RMSE: {wf:.6f}"
+            if np.isfinite(be) and be < float("inf"):
+                return f"Best RMSE: {be:.6f}"
+            return "Best RMSE:  N/A"
 
-            # stuck on an old GUI eval better than the current iteration).
-
-            if getattr(self, "_re_mode_active", False):
-                if np.isfinite(wf) and wf < float("inf"):
-                    self.best_rmse_label.setText(f"Best RMSE: {wf:.6f}")
-
-                elif np.isfinite(be) and be < float("inf"):
-                    self.best_rmse_label.setText(f"Best RMSE: {be:.6f}")
-
-                else:
-                    self.best_rmse_label.setText("Best RMSE:  N/A")
-
-            else:
-                candidates: list[float] = []
-
-                if np.isfinite(be) and be < float("inf"):
-                    candidates.append(be)
-
-                if np.isfinite(wf) and wf < float("inf"):
-                    candidates.append(wf)
-
-                if candidates:
-                    self.best_rmse_label.setText(f"Best RMSE: {min(candidates):.6f}")
-
-                else:
-                    self.best_rmse_label.setText("Best RMSE:  N/A")
+        candidates: list[float] = []
+        if np.isfinite(be) and be < float("inf"):
+            candidates.append(be)
+        if np.isfinite(wf) and wf < float("inf"):
+            candidates.append(wf)
+        if candidates:
+            return f"Best RMSE: {min(candidates):.6f}"
+        return "Best RMSE:  N/A"
 
     # =========================================================================
 
@@ -3953,6 +3936,17 @@ class CertusREApp(CertusBaseApp):
         import openpyxl as _opxl
 
         sub_lower = substrate_name.lower().strip()
+        sub_map = {
+            "sapphire (al2o3)": "al2o3",
+            "sapphire": "al2o3",
+            "silicon (si)": "si",
+            "silicon": "si",
+            "si-wafer": "si",
+            "si-substrate": "si",
+            "d263t eco": "d263t",
+            "silice": "sio2",
+        }
+        sub_norm = sub_map.get(sub_lower, sub_lower)
 
         last_err: str | None = None
 
@@ -3976,7 +3970,11 @@ class CertusREApp(CertusBaseApp):
                 sh_lower = sh.lower()
 
                 if (
-                    sub_lower in sh_lower
+                    sub_norm in sh_lower
+                    or sh_lower.startswith(sub_norm)
+                    or sh_lower.replace("-", " ").split()[0] in sub_norm
+                    or (len(sub_norm) >= 3 and len(sh_lower) >= 3 and sub_norm[:3] == sh_lower[:3])
+                    or sub_lower in sh_lower
                     or sh_lower.startswith(sub_lower)
                     or sh_lower.replace("-", " ").split()[0] in sub_lower
                     or (len(sub_lower) >= 3 and len(sh_lower) >= 3 and sub_lower[:3] == sh_lower[:3])
@@ -4624,6 +4622,7 @@ class CertusREApp(CertusBaseApp):
 
         dlg.show()
 
+    @safe_ui_action
     def load_reverse_engineering(self):
         """Load a reverse-engineering .xlsx file and configure the GUI.
 
@@ -5178,66 +5177,34 @@ class CertusREApp(CertusBaseApp):
             return False
 
     def _compute_re_rmse(self, a_pct=0.0, b_pct=0.0, f_pct=0.0):
-        """RMSE of current design vs RE targets (same lambda grouping / backside as REWorker).
-
-        Spectral weight Deltaln(lambda) trapezoidal per target point (same as RE TRF least-squares objective). Re drift percents and
-
-        cubic lambda law match REWorker; Im(n) unchanged.
-
-        """
-
+        """RMSE of current design vs RE targets (same lambda grouping / backside as REWorker)."""
         try:
             if not getattr(self, "_re_loaded", False):
                 return None
 
             stack = self._get_front_stack()
-
             mats = self._get_materials()
-
-            ep = (
-                self.ep_current
-                if getattr(self, "_use_exact_ep", False)
-                else init_thickness(stack, self.l0_spin.value(), mats)
-            )
-
+            ep = self.ep_current if getattr(self, "_use_exact_ep", False) else init_thickness(stack, self.l0_spin.value(), mats)
             ep = np.asarray(ep, dtype=np.float64)
-
-            # Use per-measurement-point RE targets (NOT widget summary rows)
-
             tgts = self._get_oblique_tgts()
-
+            if not tgts:
+                return None
+            tgts = [t for t in tgts if t.on]
             if not tgts:
                 return None
 
-            float_dtype = np.float64
-
-            complex_dtype = np.complex128
-
-            # Build wls grid from target centers (matching REWorker)
-
-            tgt_centers = sorted({(t.lmin + t.lmax) / 2.0 for t in tgts if t.on})
-
-            if not tgt_centers:
+            wls = np.array(sorted({(t.lmin + t.lmax) / 2.0 for t in tgts}), dtype=np.float64)
+            if wls.size == 0:
                 return None
 
-            wls = np.array(tgt_centers, dtype=float_dtype)
-
             mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
-
-            n_layers_nominal = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
-
+            n_layers_nominal = np.array([mats_nk[l.mat] for l in stack], dtype=np.complex128)
             n_sub = np.ascontiguousarray(mats_nk["Substrate"])
-
             lambda_ref = float(self.l0_spin.value())
-
             is_H_arr = np.array([l.mat == "H" for l in stack], dtype=bool)
-
             is_L_arr = np.array([l.mat == "L" for l in stack], dtype=bool)
-
             dH_st = getattr(self, "_re_spline_dH", None)
-
             dL_st = getattr(self, "_re_spline_dL", None)
-
             lam2_rm = getattr(self, "_re_spline_lam2_nm", None)
 
             n_layers_nominal, n_sub = re_apply_re_index_model(
@@ -5258,20 +5225,12 @@ class CertusREApp(CertusBaseApp):
             )
 
             n_layers_T = np.ascontiguousarray(n_layers_nominal.T)
-
-            p4_kw = self._re_p4_display_beam_kwargs()
-
-            r_sp = float(_re_rmse_oblique_weighted(ep, n_layers_T, n_sub, wls, tgts, **p4_kw))
-
+            r_sp = float(_re_rmse_oblique_weighted(ep, n_layers_T, n_sub, wls, tgts, **self._re_p4_display_beam_kwargs()))
             ep0_rm = getattr(self, "_re_initial_ep", None)
-
             if ep0_rm is None or len(np.asarray(ep0_rm).ravel()) != len(ep):
                 ep0_rm = init_thickness(stack, self.l0_spin.value(), mats)
-
             ep0_rm = np.asarray(ep0_rm, dtype=np.float64).ravel()
-
             alpha_q = self._re_rmse_qwot_alpha_for_display()
-
             r_qw = _re_qwot_rmse_abs_delta_at_l0(
                 ep,
                 ep0_rm,
@@ -5286,12 +5245,10 @@ class CertusREApp(CertusBaseApp):
                 re_envelope_scale=self._re_envelope_scale_from_gui(),
                 deadzone_abs=RE_RE_DEADZONE_QWOT_ABS,
             )
-
             return _re_rmse_combined_spectral_qwot(r_sp, float(r_qw), alpha_q)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.warning(f"_compute_re_rmse error: {e}")
-
             return None
 
     def _re_p4_display_beam_kwargs(self) -> Dict[str, Any]:
@@ -5339,6 +5296,16 @@ class CertusREApp(CertusBaseApp):
 
         return None
 
+    def _re_format_rmse_value(self, v: float | None) -> str:
+        """Format an RMSE value for log output."""
+        if v is None:
+            return ""
+        try:
+            vf = float(v)
+            return f"{vf:.6f}" if np.isfinite(vf) else ""
+        except (TypeError, ValueError):
+            return ""
+
     def _re_log_rmse_config_recap(
         self,
         *,
@@ -5349,19 +5316,6 @@ class CertusREApp(CertusBaseApp):
     ) -> None:
         """Log RMSE milestones (start, phase 1 thicknesses, phase 2b splines + Cauchy substrate if done)."""
 
-        def _fmt(v: float | None) -> str:
-
-            if v is None:
-                return ""
-
-            try:
-                vf = float(v)
-
-                return f"{vf:.6f}" if np.isfinite(vf) else ""
-
-            except (TypeError, ValueError):
-                return ""
-
         alpha_q = self._re_rmse_qwot_alpha_for_display()
 
         logging.info(
@@ -5371,31 +5325,31 @@ class CertusREApp(CertusBaseApp):
 
         logging.info(
             "  [0] Start  initial thicknesses, tabular H/L/sub indices (Excel) : %s",
-            _fmt(re_rmse_initial),
+            self._re_format_rmse_value(re_rmse_initial),
         )
 
         logging.info(
             "  [1] Variable thicknesses (phase 1), tabular indices              : %s",
-            _fmt(re_rmse_phase1),
+            self._re_format_rmse_value(re_rmse_phase1),
         )
 
         if phase2_splines_done:
             logging.info(
                 "  [2] + DeltaRe(H,L) splines + Cauchy substrate 3p (phase 2b, tube +/-%g): %s",
                 RE_SUB_CAUCHY_TUBE_DELTA,
-                _fmt(re_rmse_final),
+                self._re_format_rmse_value(re_rmse_final),
             )
 
         else:
             logging.info(
                 "  [2] + H/L indices (phase 2b)                                   : not completed  "
                 "worker final RMSE = %s",
-                _fmt(re_rmse_final),
+                self._re_format_rmse_value(re_rmse_final),
             )
 
         if hasattr(self, "log"):
             self.log(
-                f"RE RMSE recap: [0] {_fmt(re_rmse_initial)} | [1] {_fmt(re_rmse_phase1)} | [2] {_fmt(re_rmse_final)}",
+                f"RE RMSE recap: [0] {self._re_format_rmse_value(re_rmse_initial)} | [1] {self._re_format_rmse_value(re_rmse_phase1)} | [2] {self._re_format_rmse_value(re_rmse_final)}",
                 "INFO",
             )
 
@@ -6056,11 +6010,10 @@ class CertusREApp(CertusBaseApp):
         if not bool(self.cfg.get("re_enable_qwot_penalty", True)):
             return 0.0
 
-        try:
-            return float(self._re_speed_preset()["re_qwot_penalty_weight"])
-
-        except (KeyError, TypeError, ValueError):
-            return float(RE_GUI_DEFAULT_RE_QWOT_ALPHA)
+        return re_qwot_penalty_weight_from_preset(
+            speed_preset=self._re_speed_preset(),
+            default=float(RE_GUI_DEFAULT_RE_QWOT_ALPHA),
+        )
 
     def _re_envelope_scale_from_gui(self) -> float:
         """DeltaRe envelope factor (phase 2): read from speed preset."""
@@ -6216,6 +6169,7 @@ class CertusREApp(CertusBaseApp):
                 "ERROR",
             )
 
+    @safe_ui_action
     def launch_re(self):
         """Lance REWorker : P1 epaisseurs, P2 splines DeltaRe (+substrate), P3 shakes, P4 faisceau (N paliers ap)."""
 
@@ -6356,11 +6310,11 @@ class CertusREApp(CertusBaseApp):
         if hasattr(self, "progress_widget"):
             self.progress_widget.start()
 
+        self.log("[DBG-UI] Creating REWorker...", "INFO")
         self._re_worker = REWorker(cfg)
+        self.log("[DBG-UI] Connecting REWorker signals...", "INFO")
 
         self._re_worker.signals.error.connect(self._on_error)
-
-        self._re_worker.signals.error.connect(self._on_re_worker_error_cleanup)
 
         self._re_worker.signals.finished.connect(self._on_re_done)
 
@@ -6368,13 +6322,12 @@ class CertusREApp(CertusBaseApp):
 
         self._re_worker.signals.result.connect(self._on_re_worker_result)
 
+        self.log("[DBG-UI] Calling worker.start()...", "INFO")
         self._re_worker.start()
-        install_skeleton(self.plot_tabs, label="Reverse Engineering in progress...")
+        self.log("[DBG-UI] worker.start() returned — thread launched", "INFO")
 
     def _on_re_done(self, data: Dict):
         """Handle REWorker completion; show results dialog."""
-
-        uninstall_skeleton(self.plot_tabs)
         self._re_mode_active = False
 
         self._re_clear_re_nk_preview()
@@ -7451,6 +7404,91 @@ class CertusREApp(CertusBaseApp):
     # SAUVEGARDE / CHARGEMENT
 
     # =========================================================================
+
+    def _re_apply_gui_prefs_from_dict(self, d: dict[str, Any]) -> None:
+        """Restore RE speed preset and toggle prefs from a JSON ``re_gui`` block."""
+        if not d:
+            return
+        try:
+            if hasattr(self, "re_speed_slow_radio") and "re_speed_mode" in d:
+                mode = str(d.get("re_speed_mode", "medium")).strip().lower()
+                if mode == "slow":
+                    self.re_speed_slow_radio.setChecked(True)
+                elif mode == "fast":
+                    self.re_speed_fast_radio.setChecked(True)
+                else:
+                    self.re_speed_medium_radio.setChecked(True)
+            if hasattr(self, "sub_refine_check"):
+                if "re_phase2b_substrate_cauchy" in d:
+                    self.sub_refine_check.setChecked(bool(d["re_phase2b_substrate_cauchy"]))
+                if "re_refine_h" in d:
+                    self.h_refine_check.setChecked(bool(d["re_refine_h"]))
+                if "re_refine_l" in d:
+                    self.l_refine_check.setChecked(bool(d["re_refine_l"]))
+            if hasattr(self, "re_qwot_penalty_chk") and "re_enable_qwot_penalty" in d:
+                self.re_qwot_penalty_chk.setChecked(bool(d["re_enable_qwot_penalty"]))
+        except Exception as e:
+            logging.warning("RE GUI prefs restore skipped: %s", e)
+
+    def _normalize_re_config(self, cfg: dict[str, Any]) -> dict[str, Any]:
+        """Normalize legacy RE JSON payloads before applying them to the UI."""
+        if not isinstance(cfg, dict):
+            return {}
+        out = dict(cfg)
+        aliases = {
+            # Substrate and film concepts are distinct in RE: keep substrate keys explicit.
+            "substratee_choice": "substrate_choice",
+            "lambda_ref_nm": "l0",
+            "lambda0": "l0",
+            "stack": "stack_string",
+            "qwot": "stack_string",
+        }
+        for src, dst in aliases.items():
+            if src in out and dst not in out:
+                out[dst] = out[src]
+        if "re_gui" in out and isinstance(out["re_gui"], dict):
+            self._re_apply_gui_prefs_from_dict(out["re_gui"])
+        for key in (
+            "l0", "wl_step", "scan_wl_min", "scan_wl_max", "scan_wl_step",
+            "dynamics_threshold", "min_transmission_floor", "min_spectral_resolution",
+            "robustness_seed", "iter_divider_start", "iter_divider_end",
+            "step0_sigma", "thickness_tolerance_nm", "consensus_num_seeds",
+        ):
+            if key in out and isinstance(out[key], str):
+                try:
+                    out[key] = float(str(out[key]).replace(",", "."))
+                except Exception:
+                    pass
+        if isinstance(out.get("stack_string"), list):
+            out["stack_string"] = ",".join(str(x) for x in out["stack_string"])
+        return out
+
+    def load_config(self, path: str) -> bool:
+        """Load a CERTUS RE JSON configuration or Excel RE workbook path."""
+        if not path:
+            return False
+        p = Path(path)
+        if p.suffix.lower() in {".xlsx", ".xlsm", ".xls"}:
+            return self.load_reverse_engineering_from_path(str(p))
+        if not p.is_file():
+            self.log(f"RE: config file not found: {path!r}", "ERROR")
+            return False
+        try:
+            import json
+            raw = json.loads(p.read_text(encoding="utf-8-sig"))
+            cfg = self._normalize_re_config(raw if isinstance(raw, dict) else {})
+            workbook_path = cfg.get("workbook_path") or cfg.get("re_workbook_path")
+            if workbook_path and Path(str(workbook_path)).is_file():
+                return self.load_reverse_engineering_from_path(str(workbook_path))
+            if "l0" in cfg and hasattr(self, "l0_spin"):
+                self.l0_spin.setValue(float(cfg["l0"]))
+            if "re_gui" in raw and isinstance(raw["re_gui"], dict):
+                self._re_apply_gui_prefs_from_dict(raw["re_gui"])
+            self.log("RE JSON loaded and normalized.", "INFO")
+            return True
+        except Exception as e:
+            self.log(f"RE JSON load error: {e}", "ERROR")
+            return False
 
     def open_help(self):
         """Open ``pages/CERTUS_RE.html`` in the default browser (via certus_ui.open_documentation)."""

@@ -31,6 +31,7 @@ from certus_physics import (
 )
 from certus_index_utils import (
     log_structured_json_event,
+    DataType,
 )
 
 
@@ -1350,13 +1351,6 @@ def normalize_spectrum_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return out
 
-
-class DataType(Enum):
-    TRANSMISSION = auto()
-
-    REFLECTION = auto()
-
-    BOTH = auto()
 
 
 def substrate_id_from_name(name: str) -> int:

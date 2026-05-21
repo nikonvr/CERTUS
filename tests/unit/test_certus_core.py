@@ -5,6 +5,7 @@ import pytest
 import logging
 import tempfile
 import os
+import sys
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -12,6 +13,7 @@ from unittest.mock import patch
 import numpy as np
 
 from certus_core import (
+    configure_numba_env,
     get_resource_path,
     get_float_dtype,
     get_complex_dtype,
@@ -36,22 +38,30 @@ from certus_core import (
 )
 
 
+def _safe_close_logger_handler(logger: logging.Logger, handler: logging.Handler) -> None:
+    """Close a logger handler without failing on already-closed Windows streams."""
+    try:
+        handler.close()
+    except OSError:
+        pass
+    finally:
+        logger.removeHandler(handler)
+
+
 @pytest.fixture(autouse=True)
 def cleanup_certus_logger_handlers():
     """Avoid Windows file-lock issues by closing CERTUS handlers after each test."""
     yield
     logger = logging.getLogger("CERTUS")
     for handler in list(logger.handlers):
-        handler.close()
-        logger.removeHandler(handler)
+        _safe_close_logger_handler(logger, handler)
 
 
 def _release_certus_logger_file_handlers() -> None:
     """Force-close logger handlers to release Windows file locks immediately."""
     logger = logging.getLogger("CERTUS")
     for handler in list(logger.handlers):
-        handler.close()
-        logger.removeHandler(handler)
+        _safe_close_logger_handler(logger, handler)
 
 
 class TestGlobalConfig:
@@ -180,6 +190,17 @@ class TestResourcePath:
         finally:
             os.chdir(old_cwd)
 
+    def test_get_resource_path_frozen_uses_executable_parent(self, monkeypatch, temp_directory):
+        """Frozen resource paths should resolve next to the executable."""
+        fake_exe = temp_directory / "CERTUS_HUB.exe"
+        fake_exe.write_text("stub", encoding="utf-8")
+
+        monkeypatch.setattr("sys.frozen", True, raising=False)
+        monkeypatch.setattr("sys.executable", str(fake_exe))
+
+        result = get_resource_path("data/materials_v1.json")
+        assert result == str((temp_directory / "data" / "materials_v1.json").resolve())
+
 
 class TestPrecisionConfig:
     """Tests for precision configuration."""
@@ -246,6 +267,50 @@ class TestLoggingSystem:
         logger = setup_logging("/invalid/path/test.log")
         assert isinstance(logger, logging.Logger)
         # Devrait continuer avec console logging uniquement
+
+    def test_setup_logging_is_idempotent_for_handler_count(self):
+        """Repeated setup should replace handlers instead of accumulating duplicates."""
+        first = setup_logging(level=logging.INFO)
+        first_count = len(first.handlers)
+        second = setup_logging(level=logging.INFO)
+        assert second is first
+        assert len(second.handlers) == first_count
+
+
+class TestNumbaEnvironment:
+    """Tests for Numba environment bootstrap idempotence."""
+
+    def test_configure_numba_env_is_idempotent(self, monkeypatch):
+        """Repeated calls should keep the CERTUS configured marker stable."""
+        monkeypatch.delenv("_CERTUS_NUMBA_CONFIGURED", raising=False)
+        configure_numba_env()
+        first_cache = os.environ.get("NUMBA_CACHE_DIR")
+        configure_numba_env()
+        assert os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1"
+        assert os.environ.get("NUMBA_CACHE_DIR") == first_cache
+
+    def test_configure_numba_env_sets_cache_and_thread_defaults(self, monkeypatch):
+        """Core Numba env should set cache dir and thread defaults on a clean start."""
+        for key in [
+            "_CERTUS_NUMBA_CONFIGURED",
+            "NUMBA_CACHE_DIR",
+            "NUMBA_THREADING_LAYER",
+            "NUMBA_NUM_THREADS",
+            "OMP_NUM_THREADS",
+            "OPENBLAS_NUM_THREADS",
+            "MKL_NUM_THREADS",
+            "VECLIB_MAXIMUM_THREADS",
+            "NUMEXPR_NUM_THREADS",
+        ]:
+            monkeypatch.delenv(key, raising=False)
+
+        monkeypatch.setattr("sys.modules", {k: v for k, v in sys.modules.items() if k != "numba"})
+        configure_numba_env()
+
+        assert os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1"
+        assert os.environ.get("NUMBA_CACHE_DIR")
+        assert os.environ.get("NUMBA_THREADING_LAYER") in {"omp", "workqueue"}
+        assert os.environ.get("NUMBA_NUM_THREADS") is not None
 
 
 class TestExportConfig:

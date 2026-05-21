@@ -47,6 +47,9 @@ from certus_core import (
     is_frozen,
     setup_gui_logger,
     wait_warmup,
+    check_svg_availability,
+    get_materials_db_hash,
+    setup_logging,
 )
 
 
@@ -268,3 +271,109 @@ class TestConstants:
     def test_cauchy_presets(self):
         assert "Custom" in CAUCHY_PRESETS
         assert CAUCHY_PRESETS["Custom"] == (0.0, 0.0)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Additional Coverage Boost for certus_core.py
+# ─────────────────────────────────────────────────────────────────────
+
+
+class TestCoreCoverageBoost:
+    def test_check_svg_availability_env_overrides(self, monkeypatch):
+        # Test explicit override '0'
+        monkeypatch.setenv("CERTUS_SVG_ICONS", "0")
+        assert check_svg_availability() is False
+
+        # Test explicit override 'false'
+        monkeypatch.setenv("CERTUS_SVG_ICONS", "false")
+        assert check_svg_availability() is False
+
+        # Test explicit override '1'
+        monkeypatch.setenv("CERTUS_SVG_ICONS", "1")
+        # In this case it should try to import QSvgWidget
+        res = check_svg_availability()
+        assert isinstance(res, bool)
+
+    def test_check_svg_availability_win32_py314(self, monkeypatch):
+        # If no override is provided, win32 + Python >= 3.14 should return False
+        monkeypatch.delenv("CERTUS_SVG_ICONS", raising=False)
+        monkeypatch.setattr("sys.platform", "win32")
+        monkeypatch.setattr("sys.version_info", (3, 14, 0))
+        assert check_svg_availability() is False
+
+    def test_check_svg_availability_linux_py314(self, monkeypatch):
+        # Linux + Python >= 3.14 should try to import (not automatically False)
+        monkeypatch.delenv("CERTUS_SVG_ICONS", raising=False)
+        monkeypatch.setattr("sys.platform", "linux")
+        monkeypatch.setattr("sys.version_info", (3, 14, 0))
+        res = check_svg_availability()
+        assert isinstance(res, bool)
+
+    def test_get_materials_db_hash_not_found(self, monkeypatch):
+        # Mock Path.exists to always return False
+        monkeypatch.setattr("pathlib.Path.exists", lambda self: False)
+        # Should gracefully return None when file doesn't exist
+        assert get_materials_db_hash() is None
+
+    def test_get_materials_db_hash_os_error(self, monkeypatch):
+        # If read_bytes raises OSError, it should catch it and return None
+        monkeypatch.setattr("certus_core.get_resource_path", lambda x: __file__)
+        def mock_read_bytes():
+            raise OSError("Access denied")
+        monkeypatch.setattr("pathlib.Path.read_bytes", lambda self: mock_read_bytes())
+        assert get_materials_db_hash() is None
+
+    def test_get_safe_worker_count_frozen(self, monkeypatch):
+        monkeypatch.setattr("certus_core.is_frozen", lambda: True)
+        assert get_safe_worker_count() >= 1
+        assert get_safe_worker_count(4) == 4
+
+    def test_setup_logging_permission_error(self, monkeypatch):
+        # setup_logging should catch PermissionError/OSError when path is invalid or unwritable
+        # Pass a directory name as file name to trigger OSError on file creation
+        invalid_path = str(Path(__file__).parent)
+        logger = setup_logging(log_file=invalid_path, level=logging.INFO)
+        assert logger is not None
+        # Assert that it has stream handlers
+        assert len(logger.handlers) >= 1
+
+    def test_setup_logging_jsonl_error(self, monkeypatch):
+        # Make attach_jsonl_handler raise ValueError to cover exception path
+        def mock_attach(*args):
+            raise TypeError("Mock error")
+        monkeypatch.setattr("certus_core.attach_jsonl_handler", mock_attach)
+        logger = setup_logging(log_file=None, level=logging.INFO)
+        assert logger is not None
+
+    def test_system_config_wrappers(self, monkeypatch):
+        # Verify compatibility wrappers in SystemConfig execute cleanly
+        assert SystemConfig.setup_numba_cache() is not None
+        assert SystemConfig.set_num_threads(2) == 2
+        
+        # Test handle_exception compatibility wrap
+        calls = []
+        monkeypatch.setattr("certus_core.handle_exception", lambda *args: calls.append(args))
+        SystemConfig.handle_exception(ValueError, ValueError("test"), None)
+        assert len(calls) == 1
+
+    def test_handle_exception_non_keyboard(self, monkeypatch):
+        calls = []
+        monkeypatch.setattr("logging.critical", lambda msg: calls.append(msg))
+        handle_exception(ValueError, ValueError("test error"), None)
+        assert any("Uncaught exception" in msg for msg in calls)
+
+    def test_check_svg_availability_importerror(self, monkeypatch):
+        monkeypatch.setenv("CERTUS_SVG_ICONS", "1")
+        import sys
+        orig_val = sys.modules.get("PyQt6.QtSvgWidgets", None)
+        try:
+            sys.modules["PyQt6.QtSvgWidgets"] = None
+            res = check_svg_availability()
+            assert res is False
+        finally:
+            if orig_val is None:
+                sys.modules.pop("PyQt6.QtSvgWidgets", None)
+            else:
+                sys.modules["PyQt6.QtSvgWidgets"] = orig_val
+
+

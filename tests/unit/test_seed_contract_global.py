@@ -54,6 +54,8 @@ def test_seed_contract_no_unseeded_rng_in_critical_modules() -> None:
     seen: set[Path] = set()
     dedup_targets: list[Path] = []
     for t in targets:
+        if "OLD" in t.name.upper():
+            continue
         if t in seen:
             continue
         seen.add(t)

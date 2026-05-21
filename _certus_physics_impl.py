@@ -1019,9 +1019,12 @@ class SplineBasisCache:
 
         with cls._get_lock():
             # Double-checked locking
-
             if key in cls._cache:
                 return cls._cache[key]
+
+            # Safeguard against memory leak due to dynamic knots misuse
+            if len(cls._cache) > 500:
+                cls._cache.clear()
 
             n_knots = len(knot_wavelengths)
 
@@ -8236,16 +8239,22 @@ def _compute_gradient_analytic_kernel(
 
     weight_per_wl = np.zeros(n_wls, dtype=np.float64)
 
+    # Pre-allocated buffers for forward/backward passes to avoid heap allocation inside prange loop
+    M_before_buf = np.zeros((n_wls, n_layers + 1, 8), dtype=np.float64)
+    M_after_buf = np.zeros((n_wls, n_layers + 1, 8), dtype=np.float64)
+
     for i_wl in prange(n_wls):
         # Thread-local M_before / M_after (stack-allocated per iteration)
 
-        M_before = np.zeros((n_layers + 1, 8), dtype=np.float64)
+        M_before = M_before_buf[i_wl]
 
-        M_after = np.zeros((n_layers + 1, 8), dtype=np.float64)
+        M_after = M_after_buf[i_wl]
 
         wl = wls[i_wl]
 
         inv_wl = 1.0 / wl
+
+        two_pi_inv_wl = TWO_PI * inv_wl
 
         n_s = n_sub[i_wl]
 
@@ -8288,7 +8297,7 @@ def _compute_gradient_analytic_kernel(
 
             d_k = ep[k]
 
-            phi_base = TWO_PI * d_k * inv_wl
+            phi_base = two_pi_inv_wl * d_k
 
             if abs(ni) < 1e-14:
                 phi = phi_base * nr
@@ -8448,7 +8457,7 @@ def _compute_gradient_analytic_kernel(
 
             d_k = ep[k]
 
-            phi_base = TWO_PI * d_k * inv_wl
+            phi_base = two_pi_inv_wl * d_k
 
             if abs(ni) < 1e-14:
                 phi = phi_base * nr
@@ -8613,9 +8622,9 @@ def _compute_gradient_analytic_kernel(
                 d_k = ep[k]
 
                 if abs(ni) < 1e-14:
-                    phi = TWO_PI * nr * d_k * inv_wl
+                    factor = two_pi_inv_wl * nr
 
-                    factor = TWO_PI * nr * inv_wl
+                    phi = factor * d_k
 
                     cp = np.cos(phi)
 
@@ -8642,7 +8651,7 @@ def _compute_gradient_analytic_kernel(
                 else:
                     # Closed-form derivative for absorbing media (no finite differences).
 
-                    phi_base = TWO_PI * d_k * inv_wl
+                    phi_base = two_pi_inv_wl * d_k
 
                     phr = phi_base * nr
 
@@ -10194,7 +10203,7 @@ def compute_metal_bilayer_gradient_analytic(
 
     p_spline_nk = np.concatenate((n_knots, k_knots))
 
-    n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array)
+    n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
 
     nL_calc = get_nk_cauchy_simple(l_array, n_infini, A)
 
@@ -10263,7 +10272,7 @@ def compute_metal_bilayer_gradient_analytic(
 
         k_l_p = np.concatenate(([l_array.min()], np.sort(curr_l_int), [l_array.max()]))
 
-        ns_p, ks_p = get_nk_from_spline(p_spline_nk, k_l_p, l_array)
+        ns_p, ks_p = get_nk_from_spline(p_spline_nk, k_l_p, l_array, use_cache=False)
 
         curr_l_int[i] = orig
 
@@ -10335,20 +10344,28 @@ class NKCache:
             return val_c
 
 
-def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=None) -> float:
+def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=None):
 
     if not isinstance(material_id, str):
-        return float(material_id)
+        try:
+            return float(material_id)
+        except (TypeError, ValueError):
+            return complex(material_id)
 
     # Try Database
 
     if db_instance is not None:
         try:
             if hasattr(db_instance, "get_refractive_index"):
-                return float(db_instance.get_refractive_index(material_id, wavelength_nm))
-
+                val = db_instance.get_refractive_index(material_id, wavelength_nm)
             else:
-                return float(db_instance.get_index(material_id, wavelength_nm))
+                val = db_instance.get_index(material_id, wavelength_nm)
+            
+            if isinstance(val, complex):
+                if abs(val.imag) < 1e-9:
+                    return val.real
+                return val
+            return float(val)
 
         except (KeyError, ValueError, AttributeError):
             pass
@@ -10357,9 +10374,11 @@ def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=Non
         return float(material_id)
 
     except (ValueError, TypeError):
-        # Fallback to default refractive index
-
-        return 1.5
+        try:
+            return complex(material_id)
+        except (ValueError, TypeError):
+            # Fallback to default refractive index
+            return 1.5
 
 
 def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance=None) -> np.ndarray:
@@ -13085,200 +13104,167 @@ def _compute_ir_global_cost_gradient_kernel(
     has_absorbing_substrate: bool,
     k_sub_full: np.ndarray,
     D_sub_nm: float,
+    compute_thickness_gradient: bool = False,
 ) -> np.ndarray:
-    """Gradient of IR global cost w.r.t. (Sellmeier 5p + k params).
-
-    Uses dn_dp/dk_dp from caller (Sellmeier analytic, k in FD). Sensitivities dT/dn, dR/dk:
-
-    - Non-absorbent substrate: analytical (_compute_single_layer_sensitivity_kernel).
-
-    - Absorbent substrate / frosted glass: analytical impossible -> finite differences (DELTA).
-
-    Normalization guards: same as _compute_index_cost_gradient_kernel (1e-6 / 0.05)."""
+    """Gradient of IR global cost w.r.t. parameters.
+    Returns:
+        If compute_thickness_gradient is False: size (dn_dp.shape[0] + dk_dp.shape[0])
+        If compute_thickness_gradient is True: size (1 + dn_dp.shape[0] + dk_dp.shape[0]), where [0] is dMSE/d(thickness)
+    """
 
     n_pts = len(wls)
-
     n_valid_T = 1
-
     n_valid_R = 1
-
     count_T = 0
-
     count_R = 0
 
     for i in range(n_pts):
         if weights[i] > 1e-12:
             if use_T:
                 count_T += 1
-
             if use_R:
                 count_R += 1
 
     if count_T > 0:
         n_valid_T = count_T
-
     if count_R > 0:
         n_valid_R = count_R
 
-    grad_per_wl = np.zeros((n_pts, 5 + dk_dp.shape[0]), dtype=np.float64)
+    n_n = dn_dp.shape[0]
+    n_k = dk_dp.shape[0]
+    n_total = n_n + n_k
+    offset = 0
+    if compute_thickness_gradient:
+        n_total += 1
+        offset = 1
+
+    grad_per_wl = np.zeros((n_pts, n_total), dtype=np.float64)
 
     DELTA = 1e-7
 
     for i in prange(n_pts):
         wl = wls[i]
-
         w = weights[i]
 
         if w < 1e-12:
             continue
 
         nr = n_arr[i]
-
         ni = k_arr[i]
-
         ns = n_sub[i]
 
         dTdn, dTdk, dRdn, dRdk = 0.0, 0.0, 0.0, 0.0
+        dTdd, dRdd = 0.0, 0.0
 
         if is_frosted_glass:
             ns_cmplx = ns + 0j
-
             val_R = calculate_reflection_infinite_substrate_single(wl, nr, ni, d, ns_cmplx)
-
             val_T = np.nan
 
             vR_up_n = calculate_reflection_infinite_substrate_single(wl, nr + DELTA, ni, d, ns_cmplx)
-
             vR_dn_n = calculate_reflection_infinite_substrate_single(wl, nr - DELTA, ni, d, ns_cmplx)
-
             dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
 
             vR_up_k = calculate_reflection_infinite_substrate_single(wl, nr, ni + DELTA, d, ns_cmplx)
-
             if ni < DELTA:
                 dRdk = (vR_up_k - val_R) / DELTA
-
             else:
                 vR_dn_k = calculate_reflection_infinite_substrate_single(wl, nr, ni - DELTA, d, ns_cmplx)
-
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
+
+            if compute_thickness_gradient:
+                vR_up_d = calculate_reflection_infinite_substrate_single(wl, nr, ni, d + DELTA, ns_cmplx)
+                vR_dn_d = calculate_reflection_infinite_substrate_single(wl, nr, ni, d - DELTA, ns_cmplx)
+                dRdd = (vR_up_d - vR_dn_d) / (2.0 * DELTA)
 
         elif has_absorbing_substrate:
             ks = k_sub_full[i]
-
             val_R, val_T = _calculate_RT_absorbing_sub_single(wl, nr, ni, d, ns, ks, D_sub_nm)
 
             vR_up_n, vT_up_n = _calculate_RT_absorbing_sub_single(wl, nr + DELTA, ni, d, ns, ks, D_sub_nm)
-
             vR_dn_n, vT_dn_n = _calculate_RT_absorbing_sub_single(wl, nr - DELTA, ni, d, ns, ks, D_sub_nm)
-
             dRdn = (vR_up_n - vR_dn_n) / (2.0 * DELTA)
-
             dTdn = (vT_up_n - vT_dn_n) / (2.0 * DELTA)
 
             vR_up_k, vT_up_k = _calculate_RT_absorbing_sub_single(wl, nr, ni + DELTA, d, ns, ks, D_sub_nm)
-
             if ni < DELTA:
                 dRdk = (vR_up_k - val_R) / DELTA
-
                 dTdk = (vT_up_k - val_T) / DELTA
-
             else:
                 vR_dn_k, vT_dn_k = _calculate_RT_absorbing_sub_single(wl, nr, ni - DELTA, d, ns, ks, D_sub_nm)
-
                 dRdk = (vR_up_k - vR_dn_k) / (2.0 * DELTA)
-
                 dTdk = (vT_up_k - vT_dn_k) / (2.0 * DELTA)
+
+            if compute_thickness_gradient:
+                vR_up_d, vT_up_d = _calculate_RT_absorbing_sub_single(wl, nr, ni, d + DELTA, ns, ks, D_sub_nm)
+                vR_dn_d, vT_dn_d = _calculate_RT_absorbing_sub_single(wl, nr, ni, d - DELTA, ns, ks, D_sub_nm)
+                dRdd = (vR_up_d - vR_dn_d) / (2.0 * DELTA)
+                dTdd = (vT_up_d - vT_dn_d) / (2.0 * DELTA)
 
         else:
             ns_cmplx = ns + 0j
-
             val_R, val_T = calculate_transmission_single(wl, nr, ni, d, ns_cmplx)
 
-            dTdn_corr, dTdk_corr, dRdn_corr, dRdk_corr, _, _ = _compute_single_layer_sensitivity_kernel(
+            dTdn_corr, dTdk_corr, dRdn_corr, dRdk_corr, dTdd_corr, dRdd_corr = _compute_single_layer_sensitivity_kernel(
                 wl, nr, ni, d, ns
             )
-
             dTdn = dTdn_corr
-
             dTdk = dTdk_corr
-
             dRdn = dRdn_corr
-
             dRdk = dRdk_corr
+            dTdd = dTdd_corr
+            dRdd = dRdd_corr
 
         fac_T = 0.0
-
         fac_R = 0.0
 
         if use_T:
             if use_normalized:
                 scale_T = 1.0 / max(T_substrate[i], 1e-6)
-
                 diff_T = (val_T * scale_T) - target_T[i]
-
             else:
                 scale_T = 1.0
-
                 diff_T = val_T - target_T[i]
-
             fac_T = (2.0 * w * diff_T * weight_T / n_valid_T) * scale_T
 
         if use_R:
             if use_normalized:
                 if T_substrate[i] >= 0.05:
                     scale_R = 1.0 / T_substrate[i]
-
                 else:
                     scale_R = 0.0
-
                 diff_R = (val_R * scale_R) - target_R[i]
-
             else:
                 scale_R = 1.0
-
                 diff_R = val_R - target_R[i]
-
             fac_R = (2.0 * w * diff_R * weight_R / n_valid_R) * scale_R
 
-        for p in range(5):
+        if compute_thickness_gradient:
+            grad_per_wl[i, 0] = (fac_T * dTdd + fac_R * dRdd) if (use_T or use_R) else 0.0
+
+        for p in range(n_n):
             dnp = dn_dp[p, i]
-
             term = 0.0
-
             if use_T:
                 term += fac_T * dTdn * dnp
-
             if use_R:
                 term += fac_R * dRdn * dnp
-
-            grad_per_wl[i, p] = term
-
-        n_k = dk_dp.shape[0]
+            grad_per_wl[i, offset + p] = term
 
         for p in range(n_k):
             dkp = dk_dp[p, i]
-
             term = 0.0
-
             if use_T:
                 term += fac_T * dTdk * dkp
-
             if use_R:
                 term += fac_R * dRdk * dkp
-
-            grad_per_wl[i, p + 5] = term
-
-    n_total = 5 + dk_dp.shape[0]
+            grad_per_wl[i, offset + n_n + p] = term
 
     grad = np.zeros(n_total, dtype=np.float64)
-
     for p in range(n_total):
         s = 0.0
-
         for i in range(n_pts):
             s += grad_per_wl[i, p]
-
         grad[p] = s
 
     return grad

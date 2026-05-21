@@ -13,6 +13,8 @@ from spline_presets import (
     project_manual_material_preset,
     _project_nb2o5_preset_to_sigma_knots,
     _project_sio2_preset_to_sigma_knots,
+    _interp_n_L_linear_on_sigma,
+    _project_tabulated_nk_lam_preset_to_sigma_knots,
 )
 
 
@@ -79,3 +81,64 @@ def test_manual_presets_robust_across_spectral_window(lam_lo: float, lam_hi: flo
         assert np.all(n >= N_MIN_LIMIT - 1e-9) and np.all(n <= N_MAX_LIMIT + 1e-9)
         k = np.exp(L)
         assert np.all(k >= 1e-30) and np.all(k <= K_MAX_LIMIT + 1e-9)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Additional Coverage Boost for spline_presets.py
+# ─────────────────────────────────────────────────────────────────────
+
+
+class TestSplinePresetsCoverageBoost:
+    def test_interp_n_L_linear_on_sigma_empty(self):
+        n, L = _interp_n_L_linear_on_sigma(
+            np.array([1.0, 2.0]), np.array([1.5, 1.6]), np.array([-10.0, -10.0]), np.array([])
+        )
+        assert n.size == 0
+        assert L.size == 0
+
+    def test_interp_n_L_linear_on_sigma_errors(self):
+        with pytest.raises(ValueError, match="inconsistent sk_ref"):
+            _interp_n_L_linear_on_sigma(
+                np.array([1.0]), np.array([1.5]), np.array([-10.0]), np.array([1.5])
+            )
+
+    def test_project_nb2o5_empty_target(self, monkeypatch):
+        # Temporarily mock sk_ref.size to < 2 to hit that branch
+        orig_sk = NB2O5_PRESET_KNOTS["sk"]
+        try:
+            NB2O5_PRESET_KNOTS["sk"] = [1.0]
+            sk_target = np.array([1.5])
+            res_sk, n, L, d = _project_nb2o5_preset_to_sigma_knots(sk_target)
+            assert np.all(n == 0.0)
+        finally:
+            NB2O5_PRESET_KNOTS["sk"] = orig_sk
+
+    def test_project_sio2_empty_target(self, monkeypatch):
+        orig_sk = SIO2_PRESET_KNOTS["sk"]
+        try:
+            SIO2_PRESET_KNOTS["sk"] = [1.0]
+            sk_target = np.array([1.5])
+            res_sk, n, L, d = _project_sio2_preset_to_sigma_knots(sk_target)
+            assert np.all(n == 0.0)
+        finally:
+            SIO2_PRESET_KNOTS["sk"] = orig_sk
+
+    def test_project_tabulated_preset_empty_target(self):
+        res_sk, n, L, d = _project_tabulated_nk_lam_preset_to_sigma_knots(
+            np.array([400.0, 500.0]), np.array([1.5, 1.6]), np.array([1e-5, 1e-5]), np.array([])
+        )
+        assert res_sk.size == 0
+        assert n.size == 0
+        assert L.size == 0
+        assert d == 3000.0
+
+    def test_project_tabulated_preset_errors(self):
+        with pytest.raises(ValueError, match="inconsistent lengths"):
+            _project_tabulated_nk_lam_preset_to_sigma_knots(
+                np.array([400.0]), np.array([1.5]), np.array([1e-5]), np.array([1.5])
+            )
+
+    def test_project_manual_material_preset_unknown(self):
+        with pytest.raises(ValueError, match="unknown material preset"):
+            project_manual_material_preset("unknown_preset_id", np.array([1.5]))
+

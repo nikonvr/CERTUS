@@ -80,7 +80,7 @@ def test_u7_constants_are_reasonable():
 def qt_target():
     from PyQt6.QtWidgets import QApplication, QWidget
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     w = QWidget()
     w.resize(400, 300)
     w.show()

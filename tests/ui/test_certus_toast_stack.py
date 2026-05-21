@@ -61,7 +61,7 @@ def test_u6_public_api_does_nothing_when_parent_is_none():
 def qt_parent():
     from PyQt6.QtWidgets import QApplication, QMainWindow
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     win = QMainWindow()
     win.resize(900, 600)
     win.show()

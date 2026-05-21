@@ -148,6 +148,30 @@ def test_manifest_source_paths_are_normalized_before_fingerprinting(tmp_path) ->
 
 
 @pytest.mark.unit
+def test_service_accepts_mapping_payload_and_normalizes_status(tmp_path) -> None:
+    src = tmp_path / "input.csv"
+    src.write_text("lambda,T\n500,0.91\n", encoding="utf-8")
+
+    service = IndexFitService(runner=lambda cfg: {"cfg": cfg})
+    resp = service.fit(
+        {
+            "config": {"mode": "TLU"},
+            "source_paths": [str(src)],
+            "seed": 42,
+            "app_id": "CERTUS_INDEX",
+            "app_version": "26_01",
+            "warnings": ["mapping payload"],
+            "status": "not-a-known-status",
+        }
+    )
+
+    assert resp.result == {"cfg": {"mode": "TLU"}}
+    assert resp.manifest.run_context.seed == 42
+    assert resp.manifest.run_context.status == ValidationStatus.OK
+    assert len(resp.manifest.run_context.input_fingerprints) == 1
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
     ("service_cls", "request_cls", "app_id"),
     [

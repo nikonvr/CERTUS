@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 import json
 import logging
 import pathlib
+from dataclasses import dataclass
+
 import numpy as np
 
 from certus_services import BaseHeadlessService
@@ -18,8 +21,6 @@ from certus_physics import (
     prepare_dynamics_data_kernel,
     compute_dynamics_kernel,
     check_extrema_proximity_batch,
-    simulate_stack_robustness_batch,
-    compute_batch_rmse,
     validate_wavelengths_batch,
     update_run_states_kernel,
 )
@@ -39,6 +40,15 @@ def wavelength_to_index(wavelength_nm: float) -> int:
 def build_wavelength_index_map(clues_at_wl: dict[float, dict[str, complex]]) -> dict[int, dict[str, complex]]:
     """Build an integer-indexed wavelength map to avoid float-key drift in lookups."""
     return {wavelength_to_index(wavelength): value for wavelength, value in clues_at_wl.items()}
+
+
+@dataclass(frozen=True)
+class StratPayloadParts:
+    """Validated legacy STRAT payload pieces before normalization."""
+
+    step: int
+    params: dict[str, Any]
+    opti_results: dict[str, Any] | None
 
 
 def generate_noise_array(
@@ -84,15 +94,17 @@ class StratStrategyService(BaseHeadlessService):
 
             with open(cls._SCHEMA_PATH, encoding="utf-8") as f:
                 cls._schema = json.load(f)
-        except (ImportError, FileNotFoundError):
+        except (ImportError, FileNotFoundError) as exc:
+            logging.getLogger(__name__).debug("STRAT payload schema unavailable: %s", exc)
             cls._schema = None
         return cls._schema
 
-    def validate_against_schema(self, payload: dict[str, Any]) -> list[str]:
+    def validate_against_schema(self, payload: Mapping[str, Any]) -> list[str]:
         """Validate payload against STRAT_PAYLOAD_SCHEMA_V1. Returns list of error messages."""
         schema = self._get_schema()
         if schema is None:
-            return []  # jsonschema not available or schema missing — skip silently
+            logging.getLogger(__name__).debug("STRAT schema validation skipped: schema unavailable")
+            return []
         try:
             import jsonschema
 
@@ -106,11 +118,8 @@ class StratStrategyService(BaseHeadlessService):
             logging.getLogger(__name__).warning("Schema validation skipped: %s", exc)
             return []
 
-    def validate_payload(self, payload: dict[str, Any], materials_db: Any = None) -> dict[str, Any]:
-        """Validate/normalize legacy STRAT worker payload."""
-        if not isinstance(payload, dict):
-            raise ValueError("payload must be a dict")
-
+    def _validate_payload_shape(self, payload: Mapping[str, Any]) -> StratPayloadParts:
+        """Validate the legacy STRAT payload shape before domain-specific checks."""
         try:
             step = int(payload.get("step", 0))
         except (TypeError, ValueError):
@@ -126,16 +135,29 @@ class StratStrategyService(BaseHeadlessService):
         if opti_results is not None and not isinstance(opti_results, dict):
             raise ValueError("payload.opti_results must be a dict or None")
 
+        return StratPayloadParts(step=step, params=params, opti_results=opti_results)
+
+    def _normalize_payload(self, parts: StratPayloadParts) -> dict[str, Any]:
+        """Normalize validated STRAT payload pieces into the service contract."""
+        return {
+            "step": parts.step,
+            "params": dict(parts.params),
+            "opti_results": dict(parts.opti_results) if isinstance(parts.opti_results, dict) else None,
+        }
+
+    def validate_payload(self, payload: Mapping[str, Any], materials_db: Any = None) -> dict[str, Any]:
+        """Validate/normalize legacy STRAT worker payload."""
+        if not isinstance(payload, Mapping):
+            raise ValueError("payload must be a mapping")
+
+        parts = self._validate_payload_shape(payload)
+
         # P1-8: strict schema validation
         schema_errors = self.validate_against_schema(payload)
         if schema_errors:
             raise ValueError("Payload schema violations:\n" + "\n".join(schema_errors))
 
-        normalized: dict[str, Any] = {
-            "step": step,
-            "params": dict(params),
-            "opti_results": dict(opti_results) if isinstance(opti_results, dict) else None,
-        }
+        normalized = self._normalize_payload(parts)
 
         if materials_db is not None:
             self.validate_material_coverage(normalized["params"], materials_db)
@@ -248,9 +270,11 @@ def calculate_nominal_properties(
     if not multipliers:
         raise ValueError("Stack definition is empty.")
 
-    # Note: db_instance lookup should ideally use the same logic as elsewhere
-    nH_at_l0 = get_refractive_index(nH_id, l0)
-    nL_at_l0 = get_refractive_index(nL_id, l0)
+    # Retrieve the database instance from params
+    db_instance = params.get("materials_db") or params.get("materials_db_instance")
+
+    nH_at_l0 = get_refractive_index(nH_id, l0, db_instance=db_instance)
+    nL_at_l0 = get_refractive_index(nL_id, l0, db_instance=db_instance)
 
     logger.info(f"   -> nH @ {l0}nm = {np.real(nH_at_l0):.4f}")
     logger.info(f"   -> nL @ {l0}nm = {np.real(nL_at_l0):.4f}")
@@ -266,7 +290,7 @@ def calculate_nominal_properties(
     ]
 
     wavelengths = arange_inclusive(float(wl_range[0]), float(wl_range[1]), wl_step)
-    RT = calculate_RT_normal_real(wavelengths, nH_id, nL_id, nSub_id, p_thick_nominal)
+    RT = calculate_RT_normal_real(wavelengths, nH_id, nL_id, nSub_id, p_thick_nominal, db_instance=db_instance)
 
     # RT is 2D array (num_wl, 2) with R in col 0, T in col 1
     R_nom, T_nom = RT[:, 0], RT[:, 1]
@@ -288,21 +312,19 @@ def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[s
     logger = params.get("logger", logging.getLogger("ThinFilm"))
     logger.info("Generating Sensitivity Landscape (0 -> 3nm)...")
 
+    base_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)))
+    rng = np.random.default_rng(base_seed)
+
     sigma_steps = np.linspace(0.0, 3.0, 31)
     runs_per_step = 40
     p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
     wavelengths = nominal_results["wavelengths"]
-
-    # Decouple from APP_CONTEXT: prefer params['materials_db'] if present
-    local_db = params.get("materials_db")
+    local_db = params.get("materials_db") or params.get("materials_db_instance") or APP_CONTEXT.get("materials_db")
 
     nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
     nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(
-        np.complex128
-    )
+    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
 
-    # Recalculate exact nominal transmission to ensure perfect alignment with batch kernel
     _, T_clean_batch = calculate_RT_batch_kernel(
         wavelengths,
         nH_arr,
@@ -311,31 +333,46 @@ def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[s
         np.array(p_thick_nominal, dtype=np.float64).reshape(1, -1),
     )
     T_clean = T_clean_batch[0]
+
     sensitivity_grid = np.zeros((len(sigma_steps), len(wavelengths)), dtype=np.float64)
+    envelopes: dict[float, dict[str, np.ndarray]] = {}
+    valid_sigmas = [float(s) for s in sigma_steps if s > 0.0]
+    total_runs = len(valid_sigmas) * runs_per_step
+    _emit_stat("SP", total_runs)
 
+    # Match OLD: generate all Monte-Carlo batches then compute percentile envelopes.
+    p_bulk = np.zeros((len(valid_sigmas), runs_per_step, len(p_thick_nominal)), dtype=np.float64)
+    p_thick_arr = np.array(p_thick_nominal, dtype=np.float64)
+    for idx, sigma in enumerate(valid_sigmas):
+        noise = generate_noise_array((runs_per_step, len(p_thick_nominal)), scale=sigma, rng=rng)
+        p_bulk[idx] = np.maximum(0.0, p_thick_arr + noise)
 
+    p_flat = p_bulk.reshape(total_runs, -1)
+    _, batch_T_flat = calculate_RT_batch_kernel(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
+    batch_T_bulk = batch_T_flat.reshape((len(valid_sigmas), runs_per_step, len(wavelengths)))
+
+    bulk_idx = 0
     for i, sigma in enumerate(sigma_steps):
-        if sigma < 1e-9:
-            sensitivity_grid[i, :] = 0.0
+        if sigma == 0:
             continue
-        _, T_noise_batch = simulate_stack_robustness_batch(
-            wavelengths,
-            nH_arr,
-            nL_arr,
-            nSub_arr,
-            np.array(p_thick_nominal, dtype=np.float64),
-            sigma,
-            runs_per_step,
-            seed=42,
-        )
-        # RMS error per wavelength
-        diff = T_noise_batch - T_clean
-        sensitivity_grid[i, :] = np.sqrt(np.mean(diff**2, axis=0))
+        batch_T = batch_T_bulk[bulk_idx]
+        bulk_idx += 1
+        delta_matrix = np.abs(batch_T - T_clean)
+        sensitivity_grid[i, :] = np.mean(delta_matrix, axis=0)
+        if np.isclose(sigma, 0.5) or np.isclose(sigma, 1.0) or np.isclose(sigma, 2.0):
+            envelopes[float(sigma)] = {
+                "p5": np.percentile(batch_T, 5, axis=0),
+                "p95": np.percentile(batch_T, 95, axis=0),
+                "p1": np.percentile(batch_T, 1, axis=0),
+                "p99": np.percentile(batch_T, 99, axis=0),
+            }
 
     return {
-        "sigma_steps": sigma_steps,
+        "sigmas": sigma_steps,
         "wavelengths": wavelengths,
-        "sensitivity_grid": sensitivity_grid,
+        "grid": sensitivity_grid,
+        "envelopes": envelopes,
+        "T_nominal": T_clean,
     }
 
 
@@ -344,55 +381,85 @@ def calculate_seel_analysis(params: dict[str, Any], nominal_results: dict[str, A
     logger = params.get("logger", logging.getLogger("ThinFilm"))
     logger.info("Running Parallel SEEL Analysis (3x50 runs per sigma)...")
 
-    target_sigmas = [0.05, 0.1, 0.3, 0.6, 1.2, 2.0]
-    robustness_seed = int(params.get("robustness_seed", 0))
-    rng = np.random.default_rng(robustness_seed)
+    base_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)))
+    rng = np.random.default_rng(base_seed)
 
+    target_sigmas = [0.05, 0.1, 0.3, 0.6, 1.2, 2.0]
     batches_per_sigma = 3
     runs_per_batch = 50
     p_thick_nominal = np.array(nominal_results["physical_thicknesses_nominal"], dtype=np.float64)
     wavelengths = np.array(nominal_results["wavelengths"], dtype=np.float64)
-    local_db = params.get("materials_db")
+    local_db = params.get("materials_db") or params.get("materials_db_instance") or APP_CONTEXT.get("materials_db")
 
     nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
     nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(
-        np.complex128
-    )
+    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
 
+    total_runs = len(target_sigmas) * batches_per_sigma * runs_per_batch
+    _emit_stat("SP", total_runs)
+
+    _, T_clean_batch = calculate_RT_batch_kernel(
+        wavelengths, nH_arr, nL_arr, nSub_arr, p_thick_nominal.reshape(1, -1)
+    )
+    T_clean = T_clean_batch[0]
+
+    p_bulk = np.zeros((len(target_sigmas), batches_per_sigma, runs_per_batch, len(p_thick_nominal)), dtype=np.float64)
+    for i, sigma in enumerate(target_sigmas):
+        for b in range(batches_per_sigma):
+            noise = generate_noise_array((runs_per_batch, len(p_thick_nominal)), scale=sigma, rng=rng)
+            p_bulk[i, b] = np.maximum(0.0, p_thick_nominal + noise)
+
+    p_flat = p_bulk.reshape(total_runs, -1)
+    _, batch_T_flat = calculate_RT_batch_kernel(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
+    batch_T_bulk = batch_T_flat.reshape((len(target_sigmas), batches_per_sigma, runs_per_batch, len(wavelengths)))
 
     results = []
-    for sigma in target_sigmas:
-        for _ in range(batches_per_sigma):
-            _, T_noise_batch = simulate_stack_robustness_batch(
-                wavelengths,
-                nH_arr,
-                nL_arr,
-                nSub_arr,
-                p_thick_nominal,
-                sigma,
-                runs_per_batch,
-                seed=int(rng.integers(0, 1e9)),
-            )
-            # Compute RMSE vs nominal
-            T_nom = np.array(nominal_results["T_spectral_nominal"], dtype=np.float64)
-            rmses = compute_batch_rmse(T_noise_batch, T_nom)
-            results.append(np.mean(rmses))
+    all_rmses_per_sigma = [[] for _ in target_sigmas]
+    for i in range(len(target_sigmas)):
+        for b in range(batches_per_sigma):
+            T_batch = batch_T_bulk[i, b]
+            mse_batch = np.mean((T_batch - T_clean) ** 2, axis=1)
+            current_batch_rmses = np.sqrt(mse_batch)
+            results.append(float(np.mean(current_batch_rmses)))
+            all_rmses_per_sigma[i].extend(current_batch_rmses.tolist())
 
-    # Simplified linear fit for SEEL
-    sigma_averages = np.array(results).reshape(len(target_sigmas), batches_per_sigma).mean(axis=1)
-    valid_idx = sigma_averages > 1e-9
+    rmse_p95_per_sigma = []
+    rmse_p99_per_sigma = []
+    for i in range(len(target_sigmas)):
+        arr = np.array(all_rmses_per_sigma[i], dtype=np.float64)
+        rmse_p95_per_sigma.append(float(np.percentile(arr, 95)) if len(arr) > 0 else 0.0)
+        rmse_p99_per_sigma.append(float(np.percentile(arr, 99)) if len(arr) > 0 else 0.0)
+
+    sigma_averages = []
+    sigma_values = []
+    expanded_sigmas = []
+    expanded_rmses = []
+    res_idx = 0
+    for sigma in target_sigmas:
+        batch_means = []
+        for _b in range(batches_per_sigma):
+            avg_batch = results[res_idx]
+            expanded_sigmas.append(sigma)
+            expanded_rmses.append(avg_batch)
+            batch_means.append(avg_batch)
+            res_idx += 1
+        sigma_averages.append(np.mean(batch_means))
+        sigma_values.append(sigma)
+
+    valid_idx = np.array(sigma_averages) > 1e-9
     if np.any(valid_idx):
-        x = sigma_averages[valid_idx]
-        y = np.array(target_sigmas)[valid_idx]
+        x = np.array(sigma_averages)[valid_idx]
+        y = np.array(sigma_values)[valid_idx]
         fit_k = np.sum(x * y) / np.sum(x * x)
         fit_alpha = 1.0
     else:
         fit_alpha, fit_k = 1.0, 30.0
 
     return {
-        "sigmas": target_sigmas,
-        "avg_rmse": sigma_averages.tolist(),
+        "sigmas": expanded_sigmas,
+        "avg_rmse": expanded_rmses,
+        "rmse_p95_per_sigma": rmse_p95_per_sigma,
+        "rmse_p99_per_sigma": rmse_p99_per_sigma,
         "fit_alpha": fit_alpha,
         "fit_k": fit_k,
     }
@@ -413,8 +480,14 @@ def calculate_dynamics_ULTIMATE(
     wls_array = scan_wl_range.astype(np.float64)
     all_wls_f64 = all_wls.astype(np.float64)
 
-    # Extract per-wavelength clues arrays
-    all_clues = [clues_at_wl[float(wl)] for wl in wls_array]
+    # Extract per-wavelength clues arrays using rounded integer keys to avoid float drift.
+    clues_by_wl_idx = build_wavelength_index_map(clues_at_wl)
+    all_clues = []
+    for wl in wls_array:
+        clue = clues_by_wl_idx.get(wavelength_to_index(wl))
+        if clue is None:
+            raise KeyError(f"Missing refractive clues for wavelength {wl}")
+        all_clues.append(clue)
     n_H_arr = np.array([c["H"] for c in all_clues], dtype=np.complex128)
     n_L_arr = np.array([c["L"] for c in all_clues], dtype=np.complex128)
     n_Sub_arr = np.array([c.get("substrate", 1.0) for c in all_clues], dtype=np.complex128)
@@ -574,15 +647,24 @@ def _select_candidates_phase_a(
 
 
 def compute_probe_offset_nm_from_ratio(params: dict[str, Any]) -> float:
-    """Convert probe offset ratio (e.g. 0.3) to physical thickness (nm)."""
-    offset_ratio = float(params.get("probe_offset_ratio", 0.0))
-    if offset_ratio <= 0:
-        return 0.0
-    l0 = float(params["l0"])
-    nH_at_l0 = float(np.real(get_refractive_index(params["nH_id"], l0)))
-    # For H layers (0, 2, ...), next is L (idx 1).
-    # This is a bit simplified vs legacy but usually fine.
-    return offset_ratio * (l0 / (4.0 * nH_at_l0))
+    """Convert probe offset ratio to physical thickness (nm), using legacy STRAT logic."""
+    tolerance_nm = params.get("thickness_tolerance_nm")
+    if tolerance_nm is not None:
+        return float(tolerance_nm)
+
+    l0 = float(params.get("l0", 1500.0))
+    nH_id = params.get("nH_id", 2.3)
+    nL_id = params.get("nL_id", 1.45)
+    try:
+        nH_at_l0 = get_refractive_index(nH_id, l0)
+        nL_at_l0 = get_refractive_index(nL_id, l0)
+        n_avg_at_l0 = np.real((nH_at_l0 + nL_at_l0) / 2.0)
+    except (ValueError, TypeError, KeyError):
+        n_avg_at_l0 = 1.5
+    probe_ratio = float(params.get("sim_thickness_probe_offset_ratio", 80.0))
+    if n_avg_at_l0 > 1e-6 and probe_ratio > 1e-6:
+        return float(l0 / n_avg_at_l0 / probe_ratio)
+    return 5.0
 
 
 def _validate_candidates_phase_a(
@@ -689,3 +771,59 @@ def _validate_candidates_phase_a(
         p_thick_sim_updates = []
 
     return results_thickness, p_thick_sim_updates
+
+
+def select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the best finite-ranked strategy result.
+
+    The list is usually pre-sorted, but older or partially populated payloads may
+    keep placeholder zeros at the top. We therefore prefer the first finite,
+    strictly positive score while preserving the existing ranking order.
+    """
+    if not strategies_results:
+        return None
+
+    score_keys = ("robustness_score", "rmse_p95", "rmse_mean", "rmse", "final_rmse")
+    for item in strategies_results:
+        if not isinstance(item, dict):
+            continue
+        for key in score_keys:
+            value = item.get(key)
+            if value is None:
+                continue
+            try:
+                score = float(value)
+            except (TypeError, ValueError):
+                continue
+            if np.isfinite(score) and score > 0:
+                return item
+
+    return strategies_results[0]
+
+
+def extract_best_rmse(strategies_results: list[dict[str, Any]]) -> float:
+    """Extract the best finite RMSE score from the strategies results."""
+    best_item = select_best_strat_result(strategies_results)
+    if not best_item:
+        return 0.0
+
+    score_keys = ("robustness_score", "rmse_p95", "rmse_mean", "rmse", "final_rmse")
+    for key in score_keys:
+        val = best_item.get(key)
+        if val is None:
+            continue
+        try:
+            fval = float(val)
+        except (TypeError, ValueError):
+            continue
+        if np.isfinite(fval):
+            if 0.0 <= fval < 1e-7:
+                from certus_errors import PhysicsConvergenceError
+                raise PhysicsConvergenceError(
+                    f"RMSE calculation resulted in abnormally low/null value: {fval} (< 1e-7). "
+                    "This is physically impossible for a noisy real deposition signal and suggests a convergence failure."
+                )
+            if fval > 0.0:
+                return fval
+    return 0.0
+

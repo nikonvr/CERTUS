@@ -322,8 +322,6 @@ def test_index_spline_total_optimization_converges() -> None:
         spline_local_only=True,
         stage_mandatory_local_maxfun=2000,
         polish_maxfun=1500,
-        nonlinear_alpha_second_pass_enabled=False,
-        nonlinear_alpha_budget_mode="fast",
     )
 
     out = worker_spline_optimization(cfg, stop_event=Event(), progress_cb=lambda _p, _m: None)

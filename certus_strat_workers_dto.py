@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from certus_data import TimingLogger
 
 
 def _copy_legacy_params(params: dict[str, Any] | None) -> dict[str, Any]:
@@ -19,7 +22,7 @@ class WorkerThreadRequest:
     step: int = 0
     params: dict[str, Any] = field(default_factory=dict)
     opti_results: dict[str, Any] | None = None
-    timing_logger: Any = None
+    timing_logger: TimingLogger | None = None
 
     @staticmethod
     def from_legacy(
@@ -27,7 +30,7 @@ class WorkerThreadRequest:
         step: int,
         params: dict[str, Any] | None,
         opti_results: dict[str, Any] | None = None,
-        timing_logger: Any = None,
+        timing_logger: TimingLogger | None = None,
     ) -> "WorkerThreadRequest":
         return WorkerThreadRequest(
             step=int(step),

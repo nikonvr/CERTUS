@@ -11,10 +11,12 @@ from __future__ import annotations
 
 
 import logging
-
+import time
 
 from typing import Any
 
+from certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, get_float_dtype
+from certus_physics import PGlobalConfig, PGlobalOptimizer
 
 import numpy as np
 
@@ -460,3 +462,467 @@ def optim_rmse_display_string(rmse: Any, *, ndigits: int = 6) -> str:
         return "N/A"
 
     return f"{float(rmse):.{ndigits}f}"
+
+
+def build_pglobal_config_from_cfg(
+    cfg: dict[str, Any],
+    *,
+    mode: str,
+    dim: int,
+    conv_tol: float,
+) -> tuple[PGlobalConfig, int]:
+    """Build PGlobal configuration and max iteration budget from mode and dimensions."""
+    if mode == "local":
+        pg_conf = PGlobalConfig.for_local(
+            dim=dim,
+            max_feval=cfg.get("max_feval", 10000),
+            convergence_tol=conv_tol,
+        )
+        max_iter_run = 15
+    elif mode == "healing":
+        scale = max(1.0, dim / 10.0)
+        pg_conf = PGlobalConfig(
+            n_samples_per_iter=int(1000 * scale),
+            alpha=0.02,
+            reduction_ratio=0.3,
+            local_search_budget=10000,
+            max_active_clusters=min(20, max(5, dim)),
+            max_feval=cfg.get("max_feval", 50000000),
+            convergence_tol=conv_tol,
+        )
+        max_iter_run = cfg.get("max_iter", 10)
+    else:
+        pg_conf = PGlobalConfig.for_dimension(
+            dim=dim,
+            base_samples=cfg.get("n100", 6000),
+            max_feval=cfg.get("max_feval", 50000000),
+        )
+        user_clusters = cfg.get("max_clusters")
+        overrides = {}
+        if user_clusters is not None:
+            overrides["max_active_clusters"] = user_clusters
+        if conv_tol != 1e-8:
+            overrides["convergence_tol"] = conv_tol
+        if "alpha" in cfg:
+            overrides["alpha"] = cfg["alpha"]
+        if "reduction_ratio" in cfg:
+            overrides["reduction_ratio"] = cfg["reduction_ratio"]
+        if "local_search_budget" in cfg:
+            overrides["local_search_budget"] = cfg["local_search_budget"]
+        if overrides:
+            pg_conf = pg_conf.with_overrides(**overrides)
+        max_iter_run = cfg.get("max_iter", 50)
+
+    return pg_conf, int(max_iter_run)
+
+
+def prepare_pglobal_inputs_from_state(
+    *,
+    var_idx: list[int],
+    mode: str,
+    cfg: dict[str, Any],
+    signal_emit,
+    gradient_func,
+) -> tuple[int, Any, PGlobalConfig, int]:
+    """Build PGlobal preamble objects and emit initial progress line."""
+    dim = len(var_idx)
+    conv_tol = 1e-8
+    pg_conf, max_iter_run = build_pglobal_config_from_cfg(
+        cfg=cfg,
+        mode=mode,
+        dim=dim,
+        conv_tol=conv_tol,
+    )
+    signal_emit(0, f"Config:  dim={dim}, samples/iter={pg_conf.n_samples_per_iter}")
+    return dim, gradient_func, pg_conf, max_iter_run
+
+
+def build_pglobal_optimizer(
+    *,
+    objective_wrapper,
+    bounds,
+    stop_event,
+    pg_conf,
+    x0_start,
+    gradient_func,
+):
+    """Instantiate a PGlobalOptimizer with the standard CERTUS wiring."""
+    return PGlobalOptimizer(
+        objective_wrapper,
+        bounds,
+        config=pg_conf,
+        stop_event=stop_event,
+        x0=x0_start,
+        gradient_func=gradient_func,
+    )
+
+
+def prepare_pglobal_optimizer_runtime(
+    *,
+    optimizer,
+    mode: str,
+    max_iter_run: int,
+    dim: int,
+    progress_emit,
+    best_rmse_seen: float,
+    callback_counter: int,
+) -> tuple[Any, float]:
+    """Emit progress/log preamble and return optimizer + start timestamp."""
+    if mode == "local":
+        progress_emit(0, "Fast Local Polish (PGLOBAL)...")
+    elif mode == "healing":
+        progress_emit(0, "Healing: Restricted Global Search (+/-Deltad)...")
+    else:
+        progress_emit(0, "Starting PGLOBAL Global Optimization...")
+
+    opt_start_time = time.time()
+    logging.info(f"OptimWorker: Starting PGLOBAL optimization - mode={mode}, max_iter={max_iter_run}, dim={dim}")
+    logging.info(
+        f"OptimWorker: Initial state - best_rmse_seen={best_rmse_seen:.6e}, callback_counter={callback_counter}"
+    )
+    return optimizer, opt_start_time
+
+
+def run_pglobal_restart_loop(
+    *,
+    mode: str,
+    optimizer,
+    objective_wrapper,
+    bounds,
+    pg_conf,
+    gradient_func_to_use,
+    max_iter_run: int,
+    callback,
+    opt_start_time: float,
+    stop_event,
+    progress_emit,
+    cfg: dict[str, Any],
+    callback_counter_getter,
+    set_optimizer,
+):
+    """Run the auto-restart loop and return the best sample found."""
+    best_sample_overall = None
+    restarts = 3 if mode == "global" else 1
+    restart_no_gain = 0
+    restart_rel_gain_min = float(cfg.get("restart_rel_gain_min", 2e-4))
+    restart_no_gain_patience = int(cfg.get("restart_no_gain_patience", 1))
+
+    for restart_idx in range(restarts):
+        if stop_event.is_set():
+            break
+
+        if restarts > 1:
+            progress_emit(0, f"Starting PGLOBAL Auto-Restart {restart_idx + 1}/{restarts}...")
+
+        if restart_idx > 0 and best_sample_overall is not None:
+            optimizer = PGlobalOptimizer(
+                objective_wrapper,
+                bounds,
+                config=pg_conf,
+                stop_event=stop_event,
+                x0=best_sample_overall.x.copy(),
+                gradient_func=gradient_func_to_use,
+            )
+            set_optimizer(optimizer)
+
+        try:
+            prev_best_y = best_sample_overall.y if best_sample_overall is not None else float("inf")
+            best_sample = optimizer.optimize(max_iter=max_iter_run, callback=callback)
+            opt_time = time.time() - opt_start_time
+            logging.info(
+                f"OptimWorker [Restart {restart_idx + 1}]: optimizer.optimize() returned after {opt_time:.2f}s - best_sample={best_sample is not None}, callback_count={callback_counter_getter()}"
+            )
+            if best_sample:
+                logging.info(
+                    f"OptimWorker [Restart {restart_idx + 1}]: Best sample - rmse={np.sqrt(best_sample.y):.6e}, n_evals={optimizer.n_evals}"
+                )
+                if best_sample_overall is None or best_sample.y < best_sample_overall.y:
+                    best_sample_overall = best_sample
+
+            curr_best_y = best_sample_overall.y if best_sample_overall is not None else float("inf")
+            if np.isfinite(prev_best_y) and np.isfinite(curr_best_y):
+                rel_gain = (prev_best_y - curr_best_y) / max(abs(prev_best_y), 1e-12)
+                if rel_gain < restart_rel_gain_min:
+                    restart_no_gain += 1
+                else:
+                    restart_no_gain = 0
+            else:
+                restart_no_gain = 0
+
+            if mode == "global" and restart_idx < restarts - 1 and restart_no_gain > restart_no_gain_patience:
+                logging.info(
+                    "OptimWorker: auto-restart stopped on stagnation "
+                    f"({restart_no_gain} consecutive restart(s) below {restart_rel_gain_min * 100:.3f}% gain)."
+                )
+                break
+        except NUMERICAL_FAULT_EXCEPTIONS as opt_err:
+            opt_time = time.time() - opt_start_time
+            logging.error(
+                f"OptimWorker: Error during optimizer.optimize() after {opt_time:.2f}s: {opt_err}",
+                exc_info=True,
+            )
+            raise
+
+    return best_sample_overall
+
+
+def run_coord_descent_5cycles(
+    *,
+    ep_current,
+    best_cost,
+    var_idx,
+    oblique_mode,
+    compute_oblique_error,
+    compute_oblique_error_and_grad_analytic,
+    n_layers_T,
+    n_sub,
+    wls,
+    tgt_vals,
+    tgt_weights,
+    has_back_calc,
+    n_back_T,
+    d_back,
+    cfg: dict[str, Any],
+    evaluate_thicknesses,
+    get_gradient_analytic,
+    progress_emit,
+    best_rmse_seen: float,
+):
+    """Run the final 5-cycle refinement and return updated state."""
+    use_gradient = True
+    cycle_no_gain = 0
+    cycle_rel_gain_min = float(cfg.get("cycle_rel_gain_min", 2e-4))
+    cycle_no_gain_patience = int(cfg.get("cycle_no_gain_patience", 1))
+
+    for cycle in range(5):
+        cycle_start_best = float(best_cost)
+        ep_current.copy()
+        float_dtype = get_float_dtype()
+        n_vars = len(var_idx)
+        steps = np.full(n_vars, 2.0, dtype=float_dtype)
+        min_step_val = 1e-4
+        min_steps = np.full(n_vars, min_step_val, dtype=float_dtype)
+
+        if use_gradient:
+            for _ in range(50):
+                try:
+                    cost_curr, grad = get_gradient_analytic(
+                        ep_current,
+                        oblique_mode=oblique_mode,
+                        compute_oblique_error_and_grad_analytic=compute_oblique_error_and_grad_analytic,
+                        n_layers_T=n_layers_T,
+                        n_sub=n_sub,
+                        wls=wls,
+                        tgt_vals=tgt_vals,
+                        tgt_weights=tgt_weights,
+                        has_back_calc=has_back_calc,
+                        n_back_T=n_back_T,
+                        d_back=d_back,
+                        var_idx=var_idx,
+                    )
+                    if cost_curr < best_cost:
+                        best_cost = cost_curr
+                    grad_norm = np.linalg.norm(grad)
+                    if grad_norm < 1e-8:
+                        break
+                    direction = -grad / grad_norm
+                    alpha = 2.0
+                    improved_step = False
+                    for _ in range(10):
+                        ep_trial = ep_current.copy()
+                        for i, v_idx in enumerate(var_idx):
+                            ep_trial[v_idx] += alpha * direction[i]
+                            ep_trial[v_idx] = max(CFG.MIN_THICKNESS, ep_trial[v_idx])
+                        cost_trial = evaluate_thicknesses(
+                            ep_trial,
+                            oblique_mode=oblique_mode,
+                            compute_oblique_error=compute_oblique_error,
+                            n_layers_T=n_layers_T,
+                            n_sub=n_sub,
+                            wls=wls,
+                            tgt_vals=tgt_vals,
+                            tgt_weights=tgt_weights,
+                            has_back_calc=has_back_calc,
+                            n_back_T=n_back_T,
+                            d_back=d_back,
+                        )
+                        if cost_trial < best_cost - 1e-8 * alpha * grad_norm:
+                            ep_current = ep_trial
+                            best_cost = cost_trial
+                            improved_step = True
+                            break
+                        alpha *= 0.5
+                    if not improved_step:
+                        break
+                except (ValueError, RuntimeError, np.linalg.LinAlgError) as e:
+                    logging.debug(f"Gradient optimization failed, fallback to coordinate descent: {e}")
+                    use_gradient = False
+                    break
+
+        if not use_gradient:
+            for _ in range(200):
+                improved = False
+                for i, v_idx in enumerate(var_idx):
+                    if steps[i] < min_steps[i]:
+                        continue
+                    original_val = ep_current[v_idx]
+                    step = steps[i]
+                    ep_current[v_idx] = max(CFG.MIN_THICKNESS, original_val + step)
+                    cost_plus = evaluate_thicknesses(
+                        ep_current,
+                        oblique_mode=oblique_mode,
+                        compute_oblique_error=compute_oblique_error,
+                        n_layers_T=n_layers_T,
+                        n_sub=n_sub,
+                        wls=wls,
+                        tgt_vals=tgt_vals,
+                        tgt_weights=tgt_weights,
+                        has_back_calc=has_back_calc,
+                        n_back_T=n_back_T,
+                        d_back=d_back,
+                    )
+                    if cost_plus < best_cost:
+                        best_cost = cost_plus
+                        steps[i] *= 1.2
+                        improved = True
+                        continue
+                    ep_current[v_idx] = max(CFG.MIN_THICKNESS, original_val - step)
+                    cost_minus = evaluate_thicknesses(
+                        ep_current,
+                        oblique_mode=oblique_mode,
+                        compute_oblique_error=compute_oblique_error,
+                        n_layers_T=n_layers_T,
+                        n_sub=n_sub,
+                        wls=wls,
+                        tgt_vals=tgt_vals,
+                        tgt_weights=tgt_weights,
+                        has_back_calc=has_back_calc,
+                        n_back_T=n_back_T,
+                        d_back=d_back,
+                    )
+                    if cost_minus < best_cost:
+                        best_cost = cost_minus
+                        steps[i] *= 1.2
+                        improved = True
+                    else:
+                        ep_current[v_idx] = original_val
+                        steps[i] *= 0.5
+                if not improved:
+                    break
+
+        current_rmse = np.sqrt(best_cost) if best_cost < 1e20 else 1e9
+        if current_rmse < best_rmse_seen:
+            best_rmse_seen = current_rmse
+        progress_emit(95 + cycle, f"Refine cycle {cycle + 1}/5 - RMSE: {current_rmse:.6f}")
+        if np.isfinite(cycle_start_best) and np.isfinite(best_cost):
+            rel_gain_cycle = (cycle_start_best - best_cost) / max(abs(cycle_start_best), 1e-12)
+            if rel_gain_cycle < cycle_rel_gain_min:
+                cycle_no_gain += 1
+            else:
+                cycle_no_gain = 0
+            if cycle_no_gain > cycle_no_gain_patience:
+                logging.info(
+                    "OptimWorker: final refinement stopped on stagnation "
+                    f"({cycle_no_gain} cycle(s) below {cycle_rel_gain_min * 100:.3f}% gain)."
+                )
+                break
+
+    return ep_current, best_cost, best_rmse_seen
+
+
+def maybe_upgrade_grid_tikhonravov(
+    *,
+    ep_current,
+    mats,
+    stack,
+    tgts,
+    oblique_mode,
+    oblique_tgts,
+    wls,
+    float_dtype,
+    complex_dtype,
+    has_back_stack,
+    stack_back,
+    ep_back,
+    n_sub,
+    n_layers_T,
+    n_back_T,
+    tgt_vals,
+    tgt_weights,
+):
+    """Optionally densify the wavelength grid before final refinement."""
+    try:
+        lambda_min = min(t.lmin for t in tgts if t.valid()) if not oblique_mode else min(t.lmin for t in oblique_tgts if t.valid())
+        lambda_max = max(t.lmax for t in tgts if t.valid()) if not oblique_mode else max(t.lmax for t in oblique_tgts if t.valid())
+        wl_ref = (lambda_min + lambda_max) / 2.0
+        L_total = 0.0
+        for i, layer in enumerate(stack):
+            if i >= len(ep_current):
+                continue
+            mat_obj = mats.get(layer.mat)
+            if mat_obj:
+                n_ref = mat_obj.get_nk(np.array([wl_ref]))[0].real
+                L_total += n_ref * ep_current[i]
+        if L_total > 1e-6 and lambda_max > lambda_min:
+            nu_min = 1.0 / lambda_max
+            nu_max = 1.0 / lambda_min
+            delta_nu = nu_max - nu_min
+            marge = 10.0
+            N_tikhon = int(np.ceil(2.0 * L_total * delta_nu * marge))
+            N_tikhon = max(10, min(5000, N_tikhon))
+            current_n_points = len(wls)
+            if N_tikhon > current_n_points * 1.15:
+                logging.info(
+                    f"Tikhonravov: Upgrading grid from {current_n_points} to {N_tikhon} points for final refinement"
+                )
+                active_tgts_for_grid = [t for t in (oblique_tgts if oblique_mode else tgts) if t.valid()]
+                wls_list_new = []
+                for t in active_tgts_for_grid:
+                    start = max(t.lmin, 1e-3)
+                    end = max(t.lmax, start + 1e-3)
+                    sigma_min = 1.0 / end
+                    sigma_max = 1.0 / start
+                    sigma_grid = np.linspace(sigma_min, sigma_max, N_tikhon)
+                    wls_list_new.append(1.0 / sigma_grid)
+                wls = np.unique(np.concatenate(wls_list_new))
+                wls = np.ascontiguousarray(wls.astype(float_dtype))
+                mats_nk = {k: m.get_nk(wls) for k, m in mats.items()}
+                _sub_key = "substrate" if "substrate" in mats_nk else "Substrate"
+                n_sub = np.ascontiguousarray(mats_nk[_sub_key])
+                n_layers = np.array([mats_nk[l.mat] for l in stack], dtype=complex_dtype)
+                n_layers_T = np.ascontiguousarray(n_layers.T)
+                if has_back_stack:
+                    n_back = np.array([mats_nk[l.mat] for l in stack_back], dtype=complex_dtype)
+                    n_back_T = np.ascontiguousarray(n_back.T)
+                if not oblique_mode:
+                    tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+                else:
+                    config_groups = optim_oblique_group_targets_on_wavelengths(wls, [t for t in oblique_tgts if t.valid()])
+                    oblique_configs = optim_oblique_configs_from_groups(config_groups, wls, n_sub, n_layers_T)
+                    optim_oblique_attach_local_positions(oblique_configs)
+                logging.info(f"Tikhonravov: Grid upgraded successfully to {len(wls)} points")
+    except NUMERICAL_FAULT_EXCEPTIONS as tikhon_err:
+        logging.warning(f"Tikhonravov grid update failed, using original grid: {tikhon_err}")
+
+    return wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights
+
+
+def build_needle_scan_mask(
+    stack: list,
+    mats_nk: dict,
+    *,
+    excluded_layers: list | set | tuple | None = None,
+) -> tuple[list[str], np.ndarray]:
+    """Build per-layer candidate needle material names and scan mask."""
+    N = len(stack)
+    excluded = set(excluded_layers or [])
+    needle_mat_names = [""] * N
+    scan_mask = np.zeros(N, dtype=np.int64)
+    for i, layer in enumerate(stack):
+        if i in excluded:
+            continue
+        nm = "L" if layer.mat == "H" else "H"
+        if nm in mats_nk:
+            needle_mat_names[i] = nm
+            scan_mask[i] = 1
+    return needle_mat_names, scan_mask

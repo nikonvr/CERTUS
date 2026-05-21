@@ -13,6 +13,11 @@ Part of CERTUS Suite (Harmonized Architecture 2026)
 Contains:
 
 
+P0 boundary: this module is the shared UI foundation. Keep visual primitives,
+shared dialogs, runtime helpers, and worker utilities clearly separated; avoid
+adding feature-specific business logic here.
+
+
 - CertusTheme (Colors, Fonts)
 
 
@@ -26,6 +31,13 @@ Contains:
 
 
 - Application Initialization Helpers
+
+
+Domain map:
+- Theme/design tokens: `CertusTheme`, stylesheet and plot style helpers.
+- Visual components: cards, status pills, steppers, plot/table widgets and empty states.
+- Runtime helpers: application initialization, exception handling, workers and shortcuts.
+- IO/export helpers: file dialogs, last-directory persistence, clipboard and Excel/TSV export.
 
 
 """
@@ -102,6 +114,7 @@ __all__ = [
     "init_certus_app",
     "setup_pyqtgraph_defaults",
     "setup_gui_exception_handling",
+    "safe_ui_action",
     "sanitize_xy_for_plot",
     "plot_widget_plot_finite",
     "iter_plot_data_series",
@@ -113,6 +126,7 @@ __all__ = [
     # Re-exports from certus_core
     "QueueHandler",
     "setup_gui_logger",
+    "setup_module_logging",
     # Flags
     "SVG_AVAILABLE",
     "OPENPYXL_AVAILABLE",
@@ -2515,12 +2529,6 @@ class CertusActionBar(QWidget):
     def add_stretch(self) -> None:
         self._layout.addStretch(1)
 
-    def add_separator(self) -> None:
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.VLine)
-        sep.setStyleSheet(f"color: {CertusTheme.BORDER};")
-        sep.setFixedWidth(1)
-        self._layout.addWidget(sep)
 
 
 # =============================================================================
@@ -2987,7 +2995,7 @@ def get_export_settings() -> dict[str, Any]:
 # Re-export get_export_config from certus_core for convenience
 
 
-from certus_core import get_export_config
+from certus_core import get_export_config, setup_module_logging
 
 
 def open_file_explorer(path: str) -> None:
@@ -3109,16 +3117,59 @@ def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50)
             break
 
         try:
+            formatted_msg = msg
+            parts = msg.split(" | ", 2)
+            if len(parts) == 3:
+                asctime, levelname, actual_msg = parts
+
+                # Get theme colors
+                try:
+                    from certus_ui import CertusTheme
+                    c_success = CertusTheme.SUCCESS
+                    c_error = CertusTheme.ERROR
+                    c_warning = CertusTheme.WARNING
+                    c_info = CertusTheme.TEXT_SUB
+                except Exception:
+                    c_success = "#10b981"
+                    c_error = "#ef4444"
+                    c_warning = "#f59e0b"
+                    c_info = "#94a3b8"
+
+                colors = {
+                    "SUCCESS": c_success,
+                    "ERROR": c_error,
+                    "WARNING": c_warning,
+                }
+                c = colors.get(levelname, c_info)
+
+                # Compute elapsed time
+                elapsed_str = ""
+                app = widget.window() if hasattr(widget, "window") else None
+                if app is not None:
+                    # Detect start of optimization/calculation to set start time
+                    if any(keyword in actual_msg for keyword in ("STARTING", "Starting")):
+                        import time as _time
+                        app._workflow_wall_start = _time.time()
+
+                    t0 = getattr(app, "_workflow_wall_start", None)
+                    if t0 is not None:
+                        import time as _time
+                        elapsed = _time.time() - t0
+                        m, s = divmod(int(elapsed), 60)
+                        elapsed_str = f" <b>({m}m{s:02d}s)</b>"
+
+                formatted_msg = f"<span style='color:{c}'><b>[{asctime}]</b>{elapsed_str} {actual_msg}</span>"
+
             if widget_thread is not None and current is not widget_thread:
                 QMetaObject.invokeMethod(
                     widget,
                     "append",
                     Qt.ConnectionType.QueuedConnection,
-                    Q_ARG(str, msg),
+                    Q_ARG(str, formatted_msg),
                 )
 
             else:
-                widget.append(msg)
+                widget.append(formatted_msg)
 
             count += 1
 
@@ -3282,6 +3333,96 @@ def setup_gui_exception_handling() -> None:
     import sys
 
     sys.excepthook = handle_exception
+
+
+def safe_ui_action(func):
+    """Decorator that wraps a UI action with standard robust error handling.
+
+    - Executes the decorated method safely.
+    - Catches CertusError (user-facing): pops a QMessageBox or shows a toast notification.
+    - Catches other exceptions (unhandled/generic): logs a detailed stack trace to the structured JSONL file,
+      and shows a general error message to the user to prevent crashing the UI loop.
+    """
+    import functools
+    import logging
+    from PyQt6.QtWidgets import QApplication, QWidget
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        from certus_errors import (
+            CertusError,
+            CertusValidationError,
+            NUMERICAL_FAULT_EXCEPTIONS,
+        )
+
+        app_instance = QApplication.instance()
+        parent = None
+        if args and isinstance(args[0], QWidget):
+            parent = args[0]
+        elif app_instance is not None:
+            parent = app_instance.activeWindow()
+
+        try:
+            return func(*args, **kwargs)
+        except CertusValidationError as e:
+            logger = logging.getLogger("CERTUS")
+            logger.warning(f"Validation error in {func.__qualname__}: {e.message}", exc_info=True)
+            if app_instance is None:
+                return None
+            try:
+                from certus_ui import show_toast
+                show_toast(parent, f"Validation: {e.message}", level="warning", duration_ms=4000)
+            except Exception:
+                from certus_errors import show_validation_error
+                show_validation_error(parent, e)
+            return None
+        except CertusError as e:
+            logger = logging.getLogger("CERTUS")
+            logger.error(f"Certus domain error in {func.__qualname__}: {e.message}", exc_info=True)
+            if app_instance is None:
+                return None
+            try:
+                from PyQt6.QtWidgets import QMessageBox
+                msg = QMessageBox(parent)
+                msg.setIcon(QMessageBox.Icon.Warning)
+                msg.setWindowTitle(e.message)
+                msg.setText(e.message)
+                if e.details:
+                    msg.setDetailedText(e.details)
+                if e.suggestion:
+                    msg.setInformativeText(f"💡 {e.suggestion}")
+                msg.exec()
+            except Exception:
+                from certus_errors import show_error
+                show_error(parent, "generic_error", details=e.message)
+            return None
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            logger = logging.getLogger("CERTUS")
+            logger.exception("safe_ui_action caught numerical fault in %s", func.__qualname__)
+            if app_instance is None:
+                return None
+            try:
+                from certus_ui import show_toast
+                show_toast(parent, f"Error: {str(e)}", level="error", duration_ms=4000)
+            except Exception:
+                from certus_errors import show_error
+                show_error(parent, "generic_error", details=str(e))
+            return None
+        except Exception as e:
+            logger = logging.getLogger("CERTUS")
+            logger.exception("safe_ui_action caught unexpected exception in %s", func.__qualname__)
+            if app_instance is None:
+                return None
+            try:
+                from certus_ui import show_toast
+                show_toast(parent, f"Critical: {str(e)}", level="error", duration_ms=5000)
+            except Exception:
+                from certus_errors import show_error
+                show_error(parent, "generic_error", details=str(e))
+            return None
+
+    return wrapper
+
 
 
 class ProgressDialog(QWidget):
@@ -5091,6 +5232,7 @@ class CertusBaseApp(QMainWindow):
 
         pass
 
+    @safe_ui_action
     def save_config(self) -> None:
         """Save current configuration to JSON file."""
 
@@ -5123,10 +5265,18 @@ class CertusBaseApp(QMainWindow):
 
                 self._post_save_config(filename)
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
+                from certus_errors import ConfigurationCorruptionError
+                msg = f"Failed to save configuration: {e}"
                 if self.logger:
-                    self.logger.error(f"Failed to save config: {e}")
+                    self.logger.error(msg)
+                raise ConfigurationCorruptionError(
+                    msg,
+                    details=str(e),
+                    suggestion="Please verify if the destination path is writable and disk space is sufficient."
+                ) from e
 
+    @safe_ui_action
     def load_config(self, filename: str = None) -> None:
         """Load configuration from JSON file."""
 
@@ -5155,8 +5305,12 @@ class CertusBaseApp(QMainWindow):
                         msg = f"Invalid INDEX_SPLINE configuration: {e}"
                         if self.logger:
                             self.logger.error(msg)
-                        QMessageBox.critical(self, "Invalid configuration", msg)
-                        return
+                        from certus_errors import ConfigurationCorruptionError
+                        raise ConfigurationCorruptionError(
+                            msg,
+                            details=str(e),
+                            suggestion="Ensure the configuration file matches the INDEX_SPLINE schema."
+                        ) from e
 
                 self._apply_config(config)
 
@@ -5167,9 +5321,18 @@ class CertusBaseApp(QMainWindow):
 
                 self._post_load_config(filename, config)
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
+                from certus_errors import ConfigurationCorruptionError
+                if isinstance(e, ConfigurationCorruptionError):
+                    raise
+                msg = f"Failed to load configuration: {e}"
                 if self.logger:
-                    self.logger.error(f"Failed to load config: {e}")
+                    self.logger.error(msg)
+                raise ConfigurationCorruptionError(
+                    msg,
+                    details=str(e),
+                    suggestion="Ensure the configuration file exists, is valid JSON, and has correct file permissions."
+                ) from e
 
     # --- Worker Management ---
 
@@ -6234,9 +6397,13 @@ class CertusBaseApp(QMainWindow):
 
         elapsed_str = ""
 
+        if any(keyword in msg for keyword in ("STARTING", "Starting")):
+            import time as _time
+            self._workflow_wall_start = _time.time()
+
         t0 = getattr(self, "_workflow_wall_start", None)
 
-        if t0 is not None and getattr(self, "_busy_count", 0) > 0:
+        if t0 is not None:
             import time as _time
 
             elapsed = _time.time() - t0

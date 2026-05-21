@@ -1,4 +1,18 @@
-# Audit Technique Exhaustif — Suite CERTUS
+
+## Statut
+### Déjà fait
+- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
+- Backlog P0/P1 créé.
+- Audit des modules principaux réalisé.
+- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+
+### Il reste
+- Vérifier la CI et la release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les principaux entrypoints métier.
+- Renforcer les tests des helpers, invariants et flux # Audit Technique Exhaustif — Suite CERTUS
 ## Édition Finale · Révision Scientifique 2026 · Post-Refactoring Cibles 1–11
 
 > Ce document évalue la base de code CERTUS sur **12 axes**, notés chacun sur 100.
@@ -310,3 +324,19 @@ Les classes `QMainWindow` comme `CertusIndexSplineApp` (16 000 lignes) cumulent 
 10. **Docstrings NumPy-style** sur 100% des fonctions publiques.
 11. **Éliminer les 186 closures restantes** (remplacer par `functools.partial` ou méthodes).
 12. **Zéro duplication** : extraire les 171 blocs en fonctions utilitaires.
+
+
+## État actuel
+### Fait
+- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
+- Plan P0/P1 créé.
+- Backlog maître créé.
+- Audit des modules principaux réalisé.
+
+### Reste
+- Vérifier la CI / release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les gros entrypoints métier.
+- Renforcer les tests sur les helpers, invariants et flux principaux.

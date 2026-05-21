@@ -1,4 +1,18 @@
-# Protocole d'execution du refactoring CERTUS
+
+## Statut
+### Déjà fait
+- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
+- Backlog P0/P1 créé.
+- Audit des modules principaux réalisé.
+- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+
+### Il reste
+- Vérifier la CI et la release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les principaux entrypoints métier.
+- Renforcer les tests des helpers, invariants et flux # Protocole d'execution du refactoring CERTUS
 
 Ce document verrouille l'ordre d'execution et les garde-fous pour maintenir l'objectif "zero casse".
 
@@ -48,3 +62,19 @@ Ce document verrouille l'ordre d'execution et les garde-fous pour maintenir l'ob
 - Creation autorisee d'un module de facade pour les structures non-Numba.
 - Compatibilite descendante: les imports historiques depuis `_certus_physics_impl.py` doivent continuer a fonctionner.
 - Verifier que les classes exposees (`Layer`, `Target`, `NKCache`, `PGlobalOptimizer`) restent resolvables.
+
+
+## État actuel
+### Fait
+- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
+- Plan P0/P1 créé.
+- Backlog maître créé.
+- Audit des modules principaux réalisé.
+
+### Reste
+- Vérifier la CI / release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les gros entrypoints métier.
+- Renforcer les tests sur les helpers, invariants et flux principaux.

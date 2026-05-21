@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.14"]
+        python-version: ["3.14.5"]
 
     steps:
       - name: Checkout
@@ -33,9 +33,9 @@ jobs:
         run: ruff format --check .
 
       - name: Dead symbol audit (CI)
-        if: matrix.python-version == '3.14'
+        if: matrix.python-version == '3.14.5'
         run: python tools/dead_symbol_audit.py --ci --whitelist tools/dead_symbol_whitelist.txt
 
       - name: Lambda-connect audit (baseline=0)
-        if: matrix.python-version == '3.14'
+        if: matrix.python-version == '3.14.5'
         run: python tools/lambda_connect_audit.py --ci --max-count 0

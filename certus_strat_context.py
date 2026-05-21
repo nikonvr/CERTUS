@@ -222,3 +222,386 @@ def get_context() -> StratContext:
         ctx = StratContext()
         StratContext.set_current(ctx)
     return ctx
+
+
+# --- Extracted helper constants & functions from CERTUS_STRAT ---
+
+SYM_MISSING_DISTANCE = 999.0
+FAST_AUTO_BLOCKS_DIVIDER_PRESETS = (
+    (20.0, 12.0),  # compact
+    (12.0, 6.0),   # balanced
+    (8.0, 4.0),    # extended
+    (6.0, 2.5),    # very_extended
+)
+
+
+def _clamp01(val: float) -> float:
+    return max(0.0, min(1.0, float(val)))
+
+
+def _compute_local_extrema_symmetry_score(
+    dist_prev: float,
+    dist_next: float,
+    window_ot: float,
+) -> float:
+    window = max(1e-6, float(window_ot))
+    d_prev = float(dist_prev)
+    d_next = float(dist_next)
+    if d_prev >= SYM_MISSING_DISTANCE and d_next >= SYM_MISSING_DISTANCE:
+        return 0.0
+    nearest = min(d_prev, d_next)
+    proximity = _clamp01(1.0 - min(nearest, window) / window)
+    if d_prev >= SYM_MISSING_DISTANCE or d_next >= SYM_MISSING_DISTANCE:
+        balance = 0.0
+    else:
+        denom = max(d_prev + d_next, 1e-9)
+        balance = _clamp01(1.0 - abs(d_prev - d_next) / denom)
+    return 0.65 * proximity + 0.35 * balance
+
+
+def _build_symmetry_bonus_map(
+    raw_results_thickness: dict[int, list[dict[str, float]]],
+    num_layers: int,
+    window_ot: float,
+) -> dict[int, dict[float, float]]:
+    bonus_map: dict[int, dict[float, float]] = {}
+    for i in range(num_layers):
+        layer_items = raw_results_thickness.get(i, [])
+        if not layer_items:
+            continue
+        layer_bonus: dict[float, float] = {}
+        for cand in layer_items:
+            wl = float(cand.get("wl", -1.0))
+            if wl <= 0.0:
+                continue
+            s_start = _compute_local_extrema_symmetry_score(
+                cand.get("ext_prev_start", SYM_MISSING_DISTANCE),
+                cand.get("ext_next_start", SYM_MISSING_DISTANCE),
+                window_ot,
+            )
+            s_end = _compute_local_extrema_symmetry_score(
+                cand.get("ext_prev_end", SYM_MISSING_DISTANCE),
+                cand.get("ext_next_end", SYM_MISSING_DISTANCE),
+                window_ot,
+            )
+            layer_bonus[wl] = max(s_start, s_end)
+        if layer_bonus:
+            bonus_map[i] = layer_bonus
+    return bonus_map
+
+
+def _build_layer_importance_map(
+    raw_results_thickness: dict[int, list[dict[str, float]]],
+    num_layers: int,
+) -> dict[int, float]:
+    raw_scores: dict[int, float] = {}
+    max_dyn = 0.0
+    for i in range(num_layers):
+        layer_items = raw_results_thickness.get(i, [])
+        if not layer_items:
+            continue
+        dyn_values = [float(c.get("dynamics", 0.0)) for c in layer_items if np.isfinite(c.get("dynamics", 0.0))]
+        if not dyn_values:
+            continue
+        score = float(np.percentile(np.array(dyn_values, dtype=np.float64), 75))
+        raw_scores[i] = max(0.0, score)
+        max_dyn = max(max_dyn, raw_scores[i])
+    if max_dyn <= 1e-12:
+        return {i: 0.0 for i in raw_scores}
+    return {i: _clamp01(v / max_dyn) for i, v in raw_scores.items()}
+
+
+def _compute_blocks_range_contractual(
+    num_layers: int,
+    div_start: float,
+    div_end: float,
+    dense: bool = False,
+) -> list[int]:
+    if num_layers <= 0:
+        return []
+    min_blocks = max(1, int(num_layers / max(1.0, float(div_start))))
+    max_blocks = max(min_blocks, int(num_layers / max(1.0, float(div_end))))
+    selected = {1, 2, min_blocks, max_blocks, num_layers}
+    if dense:
+        selected.update(range(min_blocks, max_blocks + 1))
+    blocks_range = sorted([b for b in selected if 1 <= b <= num_layers], reverse=True)
+    if not blocks_range:
+        blocks_range = [1]
+    return blocks_range
+
+
+def _compute_blocks_range_for_params(
+    num_layers: int,
+    params: dict[str, Any],
+    dense: bool = False,
+) -> list[int]:
+    div_start = float(params.get("iter_divider_start", 10.0))
+    div_end = float(params.get("iter_divider_end", 3.0))
+    exec_mode = str(params.get("execution_mode", "premium")).strip().lower()
+    fast_auto_blocks = bool(params.get("fast_auto_blocks", True))
+    if exec_mode == "fast" and fast_auto_blocks:
+        selected: set[int] = set()
+        for ds, de in FAST_AUTO_BLOCKS_DIVIDER_PRESETS:
+            selected.update(_compute_blocks_range_contractual(num_layers, ds, de, dense=False))
+        selected.update(_compute_blocks_range_contractual(num_layers, div_start, div_end, dense=False))
+        blocks_range = sorted([b for b in selected if 1 <= b <= num_layers], reverse=True)
+        return blocks_range or [1]
+    return _compute_blocks_range_contractual(num_layers, div_start, div_end, dense=dense)
+
+
+def _validate_strategy_blocks_contract(
+    strategy: dict[str, Any],
+    num_layers: int,
+    expected_n_blocks: int | None = None,
+) -> tuple[bool, str]:
+    if not isinstance(strategy, dict):
+        return False, "strategy is not a dict"
+    blocks = strategy.get("blocks", [])
+    if not isinstance(blocks, list) or len(blocks) == 0:
+        return False, "missing/empty blocks"
+    try:
+        n_blocks = int(strategy.get("n_blocks", len(blocks)))
+    except (TypeError, ValueError):
+        return False, "n_blocks is not an integer"
+    if expected_n_blocks is not None:
+        try:
+            expected_n_blocks_int = int(expected_n_blocks)
+        except (TypeError, ValueError):
+            return False, "expected_n_blocks is invalid"
+        if n_blocks != expected_n_blocks_int:
+            return False, f"n_blocks mismatch (expected {expected_n_blocks_int}, got {n_blocks})"
+    if len(blocks) != n_blocks:
+        return False, f"len(blocks)={len(blocks)} != n_blocks={n_blocks}"
+    cursor = 0
+    blocks_sorted = []
+    for blk in blocks:
+        if not isinstance(blk, dict):
+            return False, "block item is not a dict"
+        try:
+            start = int(blk.get("start", -1))
+            end = int(blk.get("end", -1))
+            wl = float(blk.get("wavelength", np.nan))
+            blk_num = int(blk.get("num_layers", end - start))
+        except (TypeError, ValueError):
+            return False, "block field type invalid"
+        if not np.isfinite(wl):
+            return False, "block wavelength is not finite"
+        blocks_sorted.append((start, end, wl, blk_num))
+    blocks_sorted.sort(key=lambda item: item[0])
+    for i, (start, end, _wl, blk_num) in enumerate(blocks_sorted):
+        if start != cursor:
+            return False, f"non contiguous coverage at block {i} (start={start}, cursor={cursor})"
+        if start < 0 or end <= start or end > num_layers:
+            return False, f"invalid bounds at block {i} ({start}, {end})"
+        if blk_num != (end - start):
+            return False, f"num_layers mismatch at block {i} ({blk_num} vs {end - start})"
+        cursor = end
+    if cursor != num_layers:
+        return False, f"incomplete coverage (covered up to {cursor}, expected {num_layers})"
+    return True, ""
+
+
+def _augment_solution_cost_with_sym(
+    sol: dict[str, Any],
+    sym_bonus_map: dict[int, dict[float, float]] | None,
+    layer_importance_map: dict[int, float] | None,
+    sym_weight: float,
+    same_wl_bonus: float,
+    continuity_weight: float,
+    adaptive_same_wl: bool,
+) -> tuple[float, float, int]:
+    base_cost = float(sol.get("cost", 0.0))
+    blocks_info = sol.get("blocks_info", [])
+    if not blocks_info:
+        return base_cost, 0.0, 0
+    total_sym = 0.0
+    total_layers = 0
+    for start, end, wl in blocks_info:
+        wlf = float(wl)
+        for l in range(int(start), int(end)):
+            total_layers += 1
+            if sym_bonus_map:
+                total_sym += float(sym_bonus_map.get(l, {}).get(wlf, 0.0))
+    mean_sym = (total_sym / total_layers) if total_layers > 0 else 0.0
+    same_wl_kept = 0
+    continuity_gain = 0.0
+    prev = None
+    for start, end, wl in sorted(blocks_info, key=lambda x: int(x[0])):
+        wlf = float(wl)
+        if prev is not None and abs(wlf - prev) <= 1e-3:
+            same_wl_kept += 1
+            if adaptive_same_wl:
+                boundary_layer = int(max(0, int(start) - 1))
+                importance = 0.0
+                if layer_importance_map is not None:
+                    importance = float(layer_importance_map.get(boundary_layer, 0.0))
+                continuity_gain += float(same_wl_bonus) * (1.0 + float(continuity_weight) * importance)
+            else:
+                continuity_gain += float(same_wl_bonus)
+        prev = wlf
+    if not adaptive_same_wl:
+        continuity_gain = float(same_wl_bonus) * same_wl_kept
+    augmented = base_cost - float(sym_weight) * mean_sym - float(continuity_gain)
+    return float(max(0.0, augmented)), float(mean_sym), int(same_wl_kept)
+
+
+def _origin_family(origin_raw: Any) -> str:
+    origin = str(origin_raw or "").upper().strip()
+    if not origin:
+        return "UNKNOWN"
+    return origin.split("(")[0].strip()
+
+
+def _parse_origin_priority_map(
+    raw_value: Any,
+) -> dict[str, int]:
+    default_map = {
+        "SYM": 0,
+        "SMART_MERGE_SYM": 1,
+        "THICKNESS²": 2,
+        "THICKNESS2": 2,
+        "THICKNESS": 3,
+        "SMART_MERGE_THICKNESS2": 4,
+        "SMART_MERGE_THICKNESS": 5,
+        "SMART_MERGE_MIXED": 6,
+    }
+    if isinstance(raw_value, dict):
+        out = {}
+        for k, v in raw_value.items():
+            try:
+                out[str(k).upper().strip()] = int(v)
+            except (TypeError, ValueError):
+                continue
+        return out if out else default_map
+    if isinstance(raw_value, str) and ":" in raw_value:
+        out = {}
+        for part in raw_value.split(","):
+            token = part.strip()
+            if ":" not in token:
+                continue
+            k, v = token.split(":", 1)
+            try:
+                out[str(k).upper().strip()] = int(v.strip())
+            except (TypeError, ValueError):
+                continue
+        return out if out else default_map
+    return default_map
+
+
+def _origin_priority_from_map(origin: str, priority_map: dict[str, int]) -> int:
+    fam = _origin_family(origin)
+    if fam in priority_map:
+        return int(priority_map[fam])
+    for key, val in priority_map.items():
+        if key and key in fam:
+            return int(val)
+    return 999
+
+
+def _apply_family_diversity(
+    ordered_results: list[dict[str, Any]],
+    top_k: int,
+    max_per_family: int,
+) -> list[dict[str, Any]]:
+    if top_k <= 0 or max_per_family <= 0 or not ordered_results:
+        return ordered_results
+    k = min(int(top_k), len(ordered_results))
+    selected: list[tuple[int, dict[str, Any]]] = []
+    deferred: list[tuple[int, dict[str, Any]]] = []
+    used_clues = set()
+    counts: dict[str, int] = {}
+    for idx, item in enumerate(ordered_results):
+        fam = _origin_family(item.get("strategy", {}).get("origin", "UNKNOWN"))
+        used = counts.get(fam, 0)
+        if len(selected) < k and used < max_per_family:
+            selected.append((idx, item))
+            used_clues.add(idx)
+            counts[fam] = used + 1
+        else:
+            deferred.append((idx, item))
+    for idx, item in deferred:
+        if len(selected) >= k:
+            break
+        selected.append((idx, item))
+        used_clues.add(idx)
+    diversified_head = [item for _idx, item in selected]
+    tail = [item for idx, item in enumerate(ordered_results) if idx not in used_clues]
+    return diversified_head + tail
+
+
+def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
+    sig = []
+    for blk in blocks:
+        try:
+            start = int(blk.get("start", 0))
+            end = int(blk.get("end", 0))
+            wl = round(float(blk.get("wavelength", 0.0)), 6)
+            sig.append((start, end, wl))
+        except (TypeError, ValueError):
+            continue
+    return tuple(sig)
+
+
+def _strategy_signature(strategy: dict[str, Any]) -> tuple:
+    if not isinstance(strategy, dict):
+        return tuple()
+    try:
+        n_blocks = int(strategy.get("n_blocks", len(strategy.get("blocks", []))))
+    except (TypeError, ValueError):
+        n_blocks = len(strategy.get("blocks", []))
+    return (n_blocks, _blocks_signature(strategy.get("blocks", [])))
+
+
+def _strategy_id_sort_token(strategy_id: Any) -> tuple:
+    text = str(strategy_id)
+    try:
+        return (0, int(text))
+    except (TypeError, ValueError):
+        return (1, text)
+
+
+def _extract_rmse_p95_for_noise(result_item: dict[str, Any], target_noise: float) -> float:
+    try:
+        results = result_item.get("results_per_noise", [])
+        if not results:
+            return float("inf")
+        best = min(results, key=lambda r: abs(float(r.get("noise_level", 0.0)) - float(target_noise)))
+        return float(best.get("rmse_p95", best.get("rmse_mean", np.inf)))
+    except Exception:
+        return float("inf")
+
+
+def _dedupe_preserve_order_int(values: list[int]) -> list[int]:
+    deduped: list[int] = []
+    seen: set[int] = set()
+    for v in values:
+        if v in seen:
+            continue
+        seen.add(v)
+        deduped.append(v)
+    return deduped
+
+
+def _default_consensus_seeds(
+    *,
+    base_seed: int,
+    consensus_seed_stride: int,
+    consensus_num_seeds: int,
+) -> list[int]:
+    return [base_seed + i * consensus_seed_stride for i in range(consensus_num_seeds)]
+
+
+def _resolve_consensus_top_k(params: dict[str, Any]) -> int:
+    return max(1, int(params.get("consensus_top_k", 12)))
+
+
+def _resolve_consensus_num_seeds(params: dict[str, Any]) -> int:
+    return max(1, int(params.get("consensus_num_seeds", 1)))
+
+
+def _resolve_consensus_seed_stride(params: dict[str, Any]) -> int:
+    return max(1, int(params.get("consensus_seed_stride", 1)))
+
+
+def _resolve_consensus_num_runs(params: dict[str, Any], *, num_runs: int) -> int:
+    return max(1, int(params.get("consensus_num_runs", num_runs)))

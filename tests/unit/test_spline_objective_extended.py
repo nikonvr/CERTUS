@@ -447,3 +447,147 @@ class TestObjectiveLamMaskInterpolated:
         assert mask.shape == (30,)
         assert mask.dtype == bool
 
+
+class TestSplineObjectiveCoverageBoostExtra:
+    def test_decode_edge_cases_and_work_dictionary_sizes(self) -> None:
+        work = {
+            "ww": np.array([1.0]),
+            "ds": np.array([1.0]),
+            "c": np.array([1.0]),
+            "sk": np.array([1.0, 2.0]),
+        }
+        enc = np.array([0.1, 0.2, 0.3])
+        dec = sigma_knots_decode(enc, 0.001, 0.003, work=work)
+        assert dec.size == 4
+        
+        dec2 = sigma_knots_decode(enc, 0.001, 0.003, eps_s=None)
+        assert dec2.size == 4
+        
+        dec3 = sigma_knots_decode(np.array([0.1]), 0.001, 0.003)
+        assert dec3.size == 2
+
+    def test_evaluate_batch_hybrid_fused_with_penalty(self) -> None:
+        lam = np.linspace(400, 1000, 20)
+        cfg = SplineOptConfig(
+            lam_nm=lam,
+            t_exp=np.full_like(lam, 0.5),
+            r_exp=np.full_like(lam, 0.2),
+            n_sub=np.full_like(lam, 1.46),
+            data_type=DataType.BOTH,
+            n_seg=4,
+            d_lo=50.0,
+            d_hi=500.0,
+            weight_t=0.5,
+            weight_r=0.5,
+            substrate_name="SiO2",
+            t_is_ratio=False,
+            n_lambda_penalty=1e-4,
+        )
+        sk = canonical_spline_sigma_knots(400, 1000)
+        k = int(sk.size)
+        obj = SplinePWLObjective(cfg, sk)
+        x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+        Y = obj.evaluate_batch(x.reshape(1, -1))
+        assert Y.shape == (1,)
+
+    def test_evaluate_batch_ratio_unfused(self) -> None:
+        lam = np.linspace(400, 1000, 20)
+        cfg = SplineOptConfig(
+            lam_nm=lam,
+            t_exp=np.full_like(lam, 0.5),
+            r_exp=None,
+            n_sub=np.full_like(lam, 1.46),
+            data_type=DataType.TRANSMISSION,
+            n_seg=4,
+            d_lo=50.0,
+            d_hi=500.0,
+            weight_t=1.0,
+            weight_r=0.0,
+            substrate_name="SiO2",
+            t_is_ratio=True,
+        )
+        sk = canonical_spline_sigma_knots(400, 1000)
+        k = int(sk.size)
+        obj = SplinePWLObjective(cfg, sk)
+        x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+        Y = obj.evaluate_batch(x.reshape(1, -1))
+        assert Y.shape == (1,)
+
+    def test_objective_non_finite_mse_fallback(self) -> None:
+        lam = np.linspace(400, 1000, 20)
+        cfg = SplineOptConfig(
+            lam_nm=lam,
+            t_exp=np.full_like(lam, 0.5),
+            r_exp=None,
+            n_sub=np.full_like(lam, 1.46),
+            data_type=DataType.TRANSMISSION,
+            n_seg=4,
+            d_lo=50.0,
+            d_hi=500.0,
+            weight_t=np.nan,
+            weight_r=0.0,
+            substrate_name="SiO2",
+            t_is_ratio=False,
+        )
+        sk = canonical_spline_sigma_knots(400, 1000)
+        k = int(sk.size)
+        obj = SplinePWLObjective(cfg, sk)
+        x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+        cost = obj(x)
+        assert cost == 1e30
+
+    def test_cost_and_grad_none_grad_fallback(self) -> None:
+        lam = np.linspace(400, 1000, 20)
+        cfg = SplineOptConfig(
+            lam_nm=lam,
+            t_exp=np.full_like(lam, 0.5),
+            r_exp=None,
+            n_sub=np.full_like(lam, 1.46),
+            data_type=DataType.TRANSMISSION,
+            n_seg=4,
+            d_lo=50.0,
+            d_hi=500.0,
+            weight_t=1.0,
+            weight_r=0.0,
+            substrate_name="SiO2",
+            t_is_ratio=True,
+        )
+        sk = canonical_spline_sigma_knots(400, 1000)
+        k = int(sk.size)
+        obj = SplinePWLObjective(cfg, sk)
+        x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
+        cost, grad = obj.cost_and_grad(x)
+        assert cost > 0
+        assert np.array_equal(grad, np.zeros(x.size))
+
+    def test_fast_penalty_grad_active_violations(self) -> None:
+        lam = np.linspace(400, 1000, 20)
+        cfg = SplineOptConfig(
+            lam_nm=lam,
+            t_exp=np.full_like(lam, 0.5),
+            r_exp=None,
+            n_sub=np.full_like(lam, 1.46),
+            data_type=DataType.TRANSMISSION,
+            n_seg=4,
+            d_lo=50.0,
+            d_hi=500.0,
+            weight_t=1.0,
+            weight_r=0.0,
+            substrate_name="SiO2",
+            t_is_ratio=False,
+            n_lambda_penalty=1.0,
+        )
+        sk = canonical_spline_sigma_knots(400, 1000)
+        k = int(sk.size)
+        obj = SplinePWLObjective(cfg, sk)
+        # Decrease n nodes with wavelength to violate rising penalty
+        n_vals = np.linspace(3.0, 1.1, k)
+        x = np.concatenate(([200.0], n_vals, np.full(k, np.log(1e-3))))
+        
+        cost = obj(x)
+        grad = obj.analytic_gradient(x)
+        assert cost > 0
+        assert grad.size == x.size
+
+
+

@@ -57,6 +57,8 @@ def check_lock_is_strictly_pinned() -> list[str]:
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
+        if line.startswith("--hash="):
+            continue
         if "==" not in line:
             errors.append(
                 f"requirements.lock:{idx} non figé strictement (attendu 'package==version'): {line}"
@@ -156,12 +158,21 @@ def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
 def check_release_structure() -> list[str]:
     errors: list[str] = []
 
+    pyproject = REPO_ROOT / "pyproject.toml"
+    if not pyproject.exists():
+        errors.append("Fichier manquant: pyproject.toml")
+    else:
+        py_text = pyproject.read_text(encoding="utf-8")
+        if 'requires-python = ">=3.14.5"' not in py_text:
+            errors.append("pyproject.toml doit imposer requires-python >= 3.14.5")
+
     workflow = REPO_ROOT / ".github" / "workflows" / "release-windows.yml"
     if not workflow.exists():
         return ["Workflow manquant: .github/workflows/release-windows.yml"]
     wf_text = workflow.read_text(encoding="utf-8")
     required_tokens = [
-        "python-version: [ \"3.10\", \"3.11\", \"3.12\" ]",
+        'python-version: [ "3.14.5" ]',
+        "Confirm Python release target",
         "python tools/release_checks.py",
         "python tools/release_checks.py --check-frozen",
         "python tools/release_checks.py --check-frozen-run",
@@ -180,9 +191,9 @@ def check_release_structure() -> list[str]:
     else:
         smoke_text = smoke_script.read_text(encoding="utf-8")
         if "QT_QPA_PLATFORM" not in smoke_text or "offscreen" not in smoke_text:
-            errors.append(
-                "Smoke script non conforme: QT_QPA_PLATFORM=offscreen requis"
-            )
+            errors.append("Smoke script non conforme: QT_QPA_PLATFORM=offscreen requis")
+        if "test_gui_smoke.py" not in smoke_text or "test_smoke_certus_index_spline.py" not in smoke_text:
+            errors.append("Smoke script incomplet: tests smoke attendus absents")
 
     spec_file = REPO_ROOT / "certus_hub.spec"
     if not spec_file.exists():
@@ -192,6 +203,8 @@ def check_release_structure() -> list[str]:
         for token in ("CERTUS_HUB.py", 'name="CERTUS_HUB"', 'icon="certus.ico"'):
             if token not in spec_text:
                 errors.append(f"Spec frozen incomplet (token absent): {token}")
+        if 'console=False' not in spec_text:
+            errors.append("Spec frozen incomplet: console=False attendu")
 
     for asset in ("certus.ico", "certus.svg"):
         if not (REPO_ROOT / asset).exists():

@@ -19,16 +19,16 @@ Visually aligned with CERTUS-STRAT and certus_core/certus_ui standards.
 Fixed: Header generation and Config loading robustness.
 
 
+P0 boundary: this module must stay a launcher/composition layer. Do not move
+scientific computation, service contracts, or heavy workflow orchestration here.
+
+
 """
 
-from typing import Any
-import logging
-
+from typing import Any, TypedDict
 import functools
-
-
+import logging
 import multiprocessing
-
 
 from pathlib import Path
 
@@ -39,9 +39,9 @@ import sys
 from certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
+    certus_timestamp_display,
     create_module_environment,
     setup_module_logging,
-    certus_timestamp_display,
 )
 
 
@@ -826,102 +826,144 @@ class GroupedApplicationCard(ApplicationCard):
 # =============================================================================
 
 
+class HubAppCatalogItem(TypedDict, total=False):
+    """Declarative metadata for one HUB launcher card."""
+
+    title: str
+    sub: str
+    desc: str
+    script: str
+    icon: str
+    color: str
+    badge: str
+    type: str
+    category: str
+    contract: str
+    sub_apps: list[dict[str, str]]
+
+
+HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
+    {
+        "title": "DESIGN",
+        "sub": "Synthesis",
+        "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
+        "script": "CERTUS_DESIGN.py",
+        "icon": "🧩",
+        "color": CertusTheme.BRAND_DESIGN,
+        "badge": "Concept",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
+        "title": "RE",
+        "sub": "Reverse Engineering",
+        "desc": "Extraction of refractive clues from experimental curves using spline networks.",
+        "script": "CERTUS_RE.py",
+        "icon": "🕵️",
+        "color": CertusTheme.BRAND_STRAT,
+        "badge": "Analysis",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
+        "title": "STRAT",
+        "sub": "Manufacturing",
+        "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
+        "script": "CERTUS_STRAT.py",
+        "icon": "🏭",
+        "color": CertusTheme.BRAND_STRAT,
+        "badge": "Production",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
+        "title": "INDEX",
+        "sub": "Dielectrics",
+        "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
+        "script": "CERTUS_INDEX.py",
+        "icon": "🧪",
+        "color": CertusTheme.BRAND_INDEX,
+        "badge": "Material",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
+        "title": "INDEX SPLINE",
+        "sub": "Spline Model",
+        "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
+        "script": "CERTUS_INDEX_SPLINE.py",
+        "icon": "〰️",
+        "color": CertusTheme.BRAND_INDEX,
+        "badge": "Material",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
+        "title": "SMOOTHER",
+        "sub": "Processing",
+        "desc": "Parametric smoothing of spectral measurement data.",
+        "script": "certus_curve_smoother.py",
+        "icon": "🫧",
+        "color": CertusTheme.SUCCESS,
+        "badge": "Utility",
+        "type": "single",
+        "category": "support_tool",
+        "contract": "utility_tool",
+    },
+    {
+        "title": "SUBSTRATE INDEX",
+        "sub": "Characterization",
+        "desc": "Substrate refractive index determination from spectral measurements.",
+        "script": "certus_substrate_index.py",
+        "icon": "📏",
+        "color": CertusTheme.BRAND_INDEX,
+        "badge": "Utility",
+        "type": "single",
+        "category": "support_tool",
+        "contract": "substrate_utility",
+    },
+    {
+        "title": "METAL BILAYER",
+        "sub": "Opaque Substrate",
+        "desc": "Opaque substrate strategy (Legacy).",
+        "script": "CERTUS_METAL_BILAYER.py",
+        "icon": "🛡️",
+        "color": CertusTheme.BRAND_METAL,
+        "badge": "Std",
+        "type": "single",
+        "category": "materials_specialized",
+        "contract": "material_workflow",
+    },
+    {
+        "title": "METAL SINGLE",
+        "sub": "Transparent Substrate",
+        "desc": "Transparent substrate strategy (R/T/Rb).",
+        "script": "CERTUS_METAL_SINGLE.py",
+        "icon": "🛡️",
+        "color": CertusTheme.BRAND_METAL,
+        "badge": "New",
+        "type": "single",
+        "category": "materials_specialized",
+        "contract": "material_workflow",
+    },
+)
+
+
 class CertusHub(QMainWindow):
     @staticmethod
-    def _build_hub_apps_catalog() -> list[dict[str, str]]:
-        """Return HUB application cards configuration."""
-        return [
-            {
-                "title": "DESIGN",
-                "sub": "Synthesis",
-                "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
-                "script": "CERTUS_DESIGN.py",
-                "icon": "🧩",
-                "color": CertusTheme.BRAND_DESIGN,
-                "badge": "Concept",
-                "type": "single",
-            },
-            {
-                "title": "RE",
-                "sub": "Reverse Engineering",
-                "desc": "Extraction of refractive clues from experimental curves using spline networks.",
-                "script": "CERTUS_RE.py",
-                "icon": "🕵️",
-                "color": CertusTheme.BRAND_STRAT,
-                "badge": "Analysis",
-                "type": "single",
-            },
-            {
-                "title": "STRAT",
-                "sub": "Manufacturing",
-                "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
-                "script": "CERTUS_STRAT.py",
-                "icon": "🏭",
-                "color": CertusTheme.BRAND_STRAT,
-                "badge": "Production",
-                "type": "single",
-            },
-            {
-                "title": "INDEX",
-                "sub": "Dielectrics",
-                "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
-                "script": "CERTUS_INDEX.py",
-                "icon": "🧪",
-                "color": CertusTheme.BRAND_INDEX,
-                "badge": "Material",
-                "type": "single",
-            },
-            {
-                "title": "INDEX SPLINE",
-                "sub": "Spline Model",
-                "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
-                "script": "CERTUS_INDEX_SPLINE.py",
-                "icon": "〰️",
-                "color": CertusTheme.BRAND_INDEX,
-                "badge": "Material",
-                "type": "single",
-            },
-            {
-                "title": "SMOOTHER",
-                "sub": "Processing",
-                "desc": "Parametric smoothing of spectral measurement data.",
-                "script": "certus_curve_smoother.py",
-                "icon": "🫧",
-                "color": CertusTheme.SUCCESS,
-                "badge": "Utility",
-                "type": "single",
-            },
-            {
-                "title": "SUBSTRATE INDEX",
-                "sub": "Characterization",
-                "desc": "Substrate refractive index determination from spectral measurements.",
-                "script": "certus_substrate_index.py",
-                "icon": "📏",
-                "color": CertusTheme.BRAND_INDEX,
-                "badge": "Material",
-                "type": "single",
-            },
-            {
-                "title": "METAL BILAYER",
-                "sub": "Opaque Substrate",
-                "desc": "Opaque substrate strategy (Legacy).",
-                "script": "CERTUS_METAL_BILAYER.py",
-                "icon": "🛡️",
-                "color": CertusTheme.BRAND_METAL,
-                "badge": "Std",
-                "type": "single",
-            },
-            {
-                "title": "METAL SINGLE",
-                "sub": "Transparent Substrate",
-                "desc": "Transparent substrate strategy (R/T/Rb).",
-                "script": "CERTUS_METAL_SINGLE.py",
-                "icon": "🛡️",
-                "color": CertusTheme.BRAND_METAL,
-                "badge": "New",
-                "type": "single",
-            },
-        ]
+    def _build_hub_apps_catalog() -> list[HubAppCatalogItem]:
+        """Return HUB application cards configuration.
+
+        P1 boundary: keep this catalog declarative. Runtime launch behavior belongs
+        to the launcher methods, and scientific workflow metadata belongs to the
+        target applications or service layer.
+        """
+        return list(HUB_APP_CATALOG)
 
     @staticmethod
     def _hub_export_checkbox_stylesheet() -> str:
@@ -1316,11 +1358,28 @@ class CertusHub(QMainWindow):
 
         """)
 
+    def _get_app_metadata(self, app_name: str) -> HubAppCatalogItem | None:
+        """Return declarative metadata for a launcher entry if known."""
+        base_name = Path(app_name).stem
+        for item in self.apps:
+            if Path(str(item.get("script", ""))).stem == base_name:
+                return item
+        return None
+
     def launch_module(self, app_name: str) -> None:
 
         # Use get_resource_path to get base dir
 
         base_dir = get_resource_path("")
+
+        app_meta = self._get_app_metadata(app_name)
+
+        if app_meta is not None:
+            module_category = str(app_meta.get("category", "unknown"))
+            module_contract = str(app_meta.get("contract", "unknown"))
+        else:
+            module_category = "unknown"
+            module_contract = "unknown"
 
         base_name = Path(app_name).stem
 
@@ -1357,7 +1416,12 @@ class CertusHub(QMainWindow):
 
         module_name = Path(app_name).stem
 
-        self._log_message(f"Launching {module_name}...")
+        if app_meta is not None:
+            self._log_message(
+                f"Launching {module_name} [{module_category} | {module_contract}]..."
+            )
+        else:
+            self._log_message(f"Launching {module_name}...")
 
         process.start()
 
@@ -1398,18 +1462,34 @@ class CertusHub(QMainWindow):
         if process in self.active_processes:
             self.active_processes.remove(process)
 
+        if process is not None:
+            try:
+                process.deleteLater()
+            except RuntimeError:
+                pass
+
         self._update_active_indicator()
 
         if exit_code == 0:
             self._log_message(f"{module_name} exited normally.")
 
         elif exit_code not in (1, 15, -1):  # Ignore common force-close codes
-            err = process.readAllStandardError().data().decode("utf-8", errors="replace")
+            err = ""
+            try:
+                err = process.readAllStandardError().data().decode("utf-8", errors="replace")
+            except RuntimeError:
+                pass
 
             self._log_message(f"{module_name} exited with code {exit_code}")
 
             if err:
                 self._log_message(f"Error: {err[:200]}")
+
+        if process in self.active_processes and process.state() != QProcess.ProcessState.Running:
+            try:
+                process.deleteLater()
+            except RuntimeError:
+                pass
 
     def on_toggle_details(self, checked) -> None:
 
@@ -1418,15 +1498,21 @@ class CertusHub(QMainWindow):
     def _update_active_indicator(self) -> None:
         """Update the active modules indicator in the status bar."""
 
+        if not hasattr(self, "lbl_active") or self.lbl_active is None:
+            return
+
         n = len(self.active_processes)
 
-        if n > 0:
-            self.lbl_active.setText(f"● {n} module{'s' if n > 1 else ''} running")
+        try:
+            if n > 0:
+                self.lbl_active.setText(f"● {n} module{'s' if n > 1 else ''} running")
 
-            self.lbl_active.setVisible(True)
+                self.lbl_active.setVisible(True)
 
-        else:
-            self.lbl_active.setVisible(False)
+            else:
+                self.lbl_active.setVisible(False)
+        except RuntimeError:
+            return
 
     def _log_message(self, msg) -> None:
         """Add a timestamped message to the log panel."""

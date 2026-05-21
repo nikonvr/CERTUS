@@ -12,6 +12,13 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import os
+
+# Force Qt offscreen platform for headless CI/test environments.
+# Must be set BEFORE any QApplication is created.
+if "QT_QPA_PLATFORM" not in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
 try:
     from PyQt6.QtWidgets import QApplication
 
@@ -31,7 +38,7 @@ except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexErro
 
 @pytest.fixture(scope="session")
 def qapp():
-    """QT Application for UI tests."""
+    """QT Application for UI tests (headless offscreen)."""
     if not QT_AVAILABLE:
         pytest.skip("PyQt6 non disponible")
 
@@ -39,7 +46,7 @@ def qapp():
     if app is None:
         app = QApplication([])
     yield app
-    app.quit()
+    # Do not call app.quit() — breaks other session-scoped fixtures on teardown
 
 
 @pytest.fixture(scope="session")

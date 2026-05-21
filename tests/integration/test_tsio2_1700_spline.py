@@ -153,8 +153,6 @@ def test_tsio2_1700_headless_best_rmse_order_2e_minus_3(tsio2_bundle: dict) -> N
         spline_local_only=True,
         stage_mandatory_local_maxfun=3800,
         polish_maxfun=2500,
-        nonlinear_alpha_second_pass_enabled=False,
-        nonlinear_alpha_budget_mode="fast",
     )
 
     out = worker_spline_optimization(cfg, stop_event=Event(), progress_cb=lambda _p, _m: None)

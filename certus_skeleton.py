@@ -124,25 +124,29 @@ def _build_block_class():
         offset = pyqtProperty(float, fget=_get_offset, fset=_set_offset)
 
         def paintEvent(self, _event):  # noqa: N802 - Qt
-            base, highlight, _ = _theme_colors()
-            p = QPainter(self)
-            p.setRenderHint(QPainter.RenderHint.Antialiasing)
-            rect = self.rect()
-            # Background
-            p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(base))
-            p.drawRoundedRect(rect, self._radius, self._radius)
-            # Gradient shimmer
-            grad = QLinearGradient(rect.left(), 0, rect.right(), 0)
-            pos = max(0.0, min(1.0, self._offset))
-            base_col = QColor(base)
-            hl = QColor(highlight)
-            grad.setColorAt(max(0.0, pos - 0.15), base_col)
-            grad.setColorAt(pos, hl)
-            grad.setColorAt(min(1.0, pos + 0.15), base_col)
-            p.setBrush(grad)
-            p.drawRoundedRect(rect, self._radius, self._radius)
-            p.end()
+            p = QPainter()
+            if not p.begin(self):
+                return
+            try:
+                base, highlight, _ = _theme_colors()
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                rect = self.rect()
+                # Background
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(QColor(base))
+                p.drawRoundedRect(rect, self._radius, self._radius)
+                # Gradient shimmer
+                grad = QLinearGradient(rect.left(), 0, rect.right(), 0)
+                pos = max(0.0, min(1.0, self._offset))
+                base_col = QColor(base)
+                hl = QColor(highlight)
+                grad.setColorAt(max(0.0, pos - 0.15), base_col)
+                grad.setColorAt(pos, hl)
+                grad.setColorAt(min(1.0, pos + 0.15), base_col)
+                p.setBrush(grad)
+                p.drawRoundedRect(rect, self._radius, self._radius)
+            finally:
+                p.end()
 
         def showEvent(self, e):  # noqa: N802 - Qt
             super().showEvent(e)

@@ -1,10 +1,24 @@
-# CERTUS — Optical Suite
+
+## Statut
+### Déjà fait
+- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
+- Backlog P0/P1 créé.
+- Audit des modules principaux réalisé.
+- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+
+### Il reste
+- Vérifier la CI et la release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les principaux entrypoints métier.
+- Renforcer les tests des helpers, invariants et flux # CERTUS — Optical Suite
 
 A suite of applications for thin-film analysis and design (refractive index, transmission/reflection, multilayer strategies, metal single/bilayer, reverse engineering).
 
 ## Prerequisites
 
-- Python 3.14+
+- Python 3.14.5+
 - Dependencies: PyQt6, NumPy, SciPy, pandas, Numba, pyqtgraph, openpyxl (optional for Excel)
 
 ## Installation
@@ -76,3 +90,19 @@ From the project root:
 ## Maintenance Documentation
 
 - [AUDIT_CERTUS.md](AUDIT_CERTUS.md) — Entry point for audits (including [docs/comprehensive_audit.md](docs/comprehensive_audit.md)).
+
+
+## État actuel
+### Fait
+- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
+- Plan P0/P1 créé.
+- Backlog maître créé.
+- Audit des modules principaux réalisé.
+
+### Reste
+- Vérifier la CI / release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les gros entrypoints métier.
+- Renforcer les tests sur les helpers, invariants et flux principaux.

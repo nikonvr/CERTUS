@@ -1,4 +1,18 @@
-# CERTUS Example Data
+
+## Statut
+### Déjà fait
+- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
+- Backlog P0/P1 créé.
+- Audit des modules principaux réalisé.
+- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+
+### Il reste
+- Vérifier la CI et la release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les principaux entrypoints métier.
+- Renforcer les tests des helpers, invariants et flux # CERTUS Example Data
 
 This directory contains example input files for each CERTUS application module.
 
@@ -33,3 +47,19 @@ python CERTUS_RE.py             "example/example_RE/reverse_sample.xlsx"
 ## Special Files
 
 - `sapphire fresnel.xlsx` — Authoritative sapphire substrate optical data (used by CERTUS INDEX internals)
+
+
+## État actuel
+### Fait
+- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
+- Plan P0/P1 créé.
+- Backlog maître créé.
+- Audit des modules principaux réalisé.
+
+### Reste
+- Vérifier la CI / release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les gros entrypoints métier.
+- Renforcer les tests sur les helpers, invariants et flux principaux.

@@ -66,19 +66,23 @@ _safe_logger = logging.getLogger("CERTUS")
 def safe_ui_action(func):
     """Decorator that wraps a UI action with the standard broad-except guard.
 
-    Catches ``NUMERICAL_FAULT_EXCEPTIONS`` and logs them via the CERTUS
-    logger instead of crashing the application.  The decorated function
-    returns ``None`` on failure.
+    Catches exceptions safely and logs them, displaying notifications on UI platforms.
     """
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
-        except NUMERICAL_FAULT_EXCEPTIONS:
-            _safe_logger.exception("safe_ui_action caught exception in %s", func.__qualname__)
+            from certus_ui import safe_ui_action as real_safe_ui_action
+            return real_safe_ui_action(func)(*args, **kwargs)
+        except Exception:
+            # Fallback if UI module decorator fails or has circular import issue
+            try:
+                return func(*args, **kwargs)
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                _safe_logger.exception("safe_ui_action fallback caught exception in %s", func.__qualname__)
 
     return wrapper
+
 
 
 __all__ = [
@@ -93,6 +97,9 @@ __all__ = [
     "CertusComputationError",
     "CertusConvergenceError",
     "CertusMaterialError",
+    "CertusDomainError",
+    "PhysicsConvergenceError",
+    "ConfigurationCorruptionError",
     # Validation functions
     "validate_wavelength_range",
     "validate_thickness",
@@ -180,6 +187,24 @@ class CertusConvergenceError(CertusOptimizationError):
 
 class CertusMaterialError(CertusPhysicsError):
     """Exception for material database errors."""
+
+    pass
+
+
+class CertusDomainError(CertusError):
+    """Base domain-specific business error."""
+
+    pass
+
+
+class PhysicsConvergenceError(CertusDomainError, CertusConvergenceError):
+    """Exception for TRF solver / B-spline physics convergence failures."""
+
+    pass
+
+
+class ConfigurationCorruptionError(CertusDomainError, CertusConfigError):
+    """Exception for corrupt startup config."""
 
     pass
 

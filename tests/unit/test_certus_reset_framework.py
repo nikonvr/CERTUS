@@ -25,7 +25,9 @@ def _make_mock_app(
     has_stack_table=False,
 ):
     """Fabrique une fausse app pour les tests du manager."""
-    app = Mock()
+    class FakeCertusApp:
+        pass
+    app = FakeCertusApp()
     app.log_text = Mock()
     app.log_text.clear = Mock()
     app.best_rmse_label = Mock()
@@ -45,9 +47,6 @@ def _make_mock_app(
     app.progress_widget.stop = Mock()
     if has_load_defaults:
         app._load_defaults = Mock()
-    else:
-        if hasattr(app, "_load_defaults"):
-            del app._load_defaults
     if has_cleanup_worker:
         app._cleanup_worker = Mock()
     if has_widgets and has_stack_table:
@@ -55,6 +54,7 @@ def _make_mock_app(
     elif has_widgets:
         app.widgets = {}
     app.detached_window = None
+    app.detached_plot_windows = {}
     app._force_idle = Mock()
     app.log = Mock()
     app.pareto_history = {}
@@ -67,6 +67,7 @@ def _make_mock_app(
     # findChildren must return an iterable, not a Mock
     app.findChildren = Mock(return_value=[])
     return app
+
 
 
 @pytest.mark.skipif(not RESET_AVAILABLE, reason="certus_reset_framework non disponible")
@@ -220,3 +221,172 @@ class TestResetIntegration:
         assert app._request_stop.called
         assert app._cleanup_worker.called
         assert app._request_stop.call_count >= 1 and app._cleanup_worker.call_count >= 1
+
+
+class TestResetManagerCoverageBoost:
+    def test_reset_to_defaults_exception_handling(self, monkeypatch):
+        from PyQt6.QtWidgets import QMessageBox
+        app = _make_mock_app()
+        m = CertusResetManager(app)
+        
+        # Make _stop_all_workers raise ValueError (which is in NUMERICAL_FAULT_EXCEPTIONS)
+        def mock_stop():
+            raise ValueError("Mocked reset failure")
+        monkeypatch.setattr(m, "_stop_all_workers", mock_stop)
+        monkeypatch.setattr(m, "_confirm_reset", lambda: True)
+        
+        critical_calls = []
+        monkeypatch.setattr(QMessageBox, "critical", lambda *args: critical_calls.append(args))
+        
+        assert m.reset_to_defaults() is False
+        assert len(critical_calls) == 1
+
+    def test_stop_all_workers_exceptions(self):
+        app = _make_mock_app(has_cleanup_worker=True)
+        app._request_stop = Mock(side_effect=RuntimeError("Request stop error"))
+        app._cleanup_worker = Mock(side_effect=TypeError("Cleanup error"))
+        
+        m = CertusResetManager(app)
+        m._stop_all_workers()  # Should not raise exceptions
+        
+        assert app._request_stop.called
+        assert app._cleanup_worker.called
+
+    def test_worker_stop_types_and_timeouts(self):
+        app = _make_mock_app()
+        w1 = Mock()
+        w1.isRunning = Mock(return_value=True)
+        w1.wait = Mock(return_value=False)
+        w1.requestInterruption = Mock()
+        w1.stop = Mock(side_effect=RuntimeError("Stop failed"))
+        # w1 does not have request_stop
+        del w1.request_stop
+        
+        app.optim_worker = w1
+        m = CertusResetManager(app)
+        m._stop_all_workers()
+        
+        assert w1.requestInterruption.called
+        assert w1.stop.called
+        assert w1.wait.called
+        # Check that it set the worker to None after trying to stop it
+        assert app.optim_worker is None
+
+    def test_clear_ui_exceptions(self):
+        app = _make_mock_app()
+        bad_widget = Mock()
+        bad_widget.clear = Mock(side_effect=RuntimeError("Clear failed"))
+        
+        app.findChildren = Mock(return_value=[bad_widget])
+        m = CertusResetManager(app)
+        m._clear_ui_elements()  # Should not raise
+        assert bad_widget.clear.called
+
+    def test_reset_plots_axes_labels_exception(self):
+        app = _make_mock_app()
+        plot = Mock()
+        plot.plotItem = Mock()
+        plot.plotItem.clear = Mock()
+        plot.plotItem.setLabel = Mock(side_effect=RuntimeError("SetLabel failed"))
+        plot.clear_tracking = Mock()
+        
+        app.spectrum_plot = plot
+        m = CertusResetManager(app)
+        m._reset_all_plots()  # Should handle exception cleanly
+        assert plot.plotItem.clear.called
+        assert plot.clear_tracking.called
+
+    def test_clear_internal_state_structures_without_clear(self, monkeypatch):
+        app = _make_mock_app()
+        
+        # A list without a clear method
+        class ListWithoutClear:
+            def __init__(self, data):
+                self.data = data
+            def __len__(self):
+                return len(self.data)
+                
+        nc_list = ListWithoutClear([1, 2, 3])
+        app.pareto_history = nc_list
+        app.latest_results = {"a": 1}  # Dict has clear, which is fine
+        
+        m = CertusResetManager(app)
+        m._clear_internal_state()
+        
+        # pareto_history has been replaced with an empty list
+        assert app.pareto_history == []
+
+    def test_handle_detached_windows(self):
+        app = _make_mock_app()
+        win = Mock()
+        win.close = Mock()
+        app.detached_window = win
+        
+        win2 = Mock()
+        win2.close = Mock(side_effect=RuntimeError("Close failed"))
+        app.detached_plot_windows = {"plot1": win2}
+        
+        app.close_all_auxiliary_windows = Mock()
+        
+        m = CertusResetManager(app)
+        m._handle_detached_windows()
+        
+        assert win.close.called
+        assert win2.close.called
+        assert app.close_all_auxiliary_windows.called
+        assert app.detached_window is None
+        assert app.detached_plot_windows == {}
+
+    def test_reset_app_to_defaults_no_confirm(self):
+        app = _make_mock_app()
+        app.detached_plot_windows = {}
+        from certus_reset_framework import reset_app_to_defaults
+        res = reset_app_to_defaults(app, confirm=False)
+        assert res is True
+        assert app._load_defaults.called
+
+    def test_reset_manager_extreme_branch_coverage(self, monkeypatch):
+        from certus_reset_framework import CertusResetManager
+        app = _make_mock_app()
+        
+        # 1. Test missing progress widget, labels, buttons, tables, widgets
+        for attr in ("progress_widget", "best_rmse_label", "front_table", "log_text", "widgets"):
+            if hasattr(app, attr):
+                delattr(app, attr)
+
+        
+        # 2. Test pyqtgraph plot generic reset
+        mock_pg_plot = Mock()
+        mock_pg_plot.plotItem = Mock()
+        mock_pg_plot.plotItem.clear = Mock()
+        mock_pg_plot.clear_tracking = Mock()
+        app.findChildren = Mock(return_value=[mock_pg_plot])
+        
+        # 3. Test exceptions on clear_text_outputs_only (mocked after _clear_ui_elements is run)
+        bad_console = Mock()
+        bad_console.clear = Mock(side_effect=RuntimeError("clear error"))
+        
+        # 4. Test memory cleanup exception by mocking gc.collect to fail
+        monkeypatch.setattr("gc.collect", Mock(side_effect=TypeError("gc collect failed")))
+        
+        m = CertusResetManager(app)
+        
+        # Let's run all individual sub-methods to assert no exceptions and cover lines
+        m._stop_all_workers()
+        m._clear_ui_elements()
+        
+        # Now set the bad console and trigger text outputs only clearing
+        app.console_text = bad_console
+        m._clear_text_outputs_only()
+        
+        m._reset_all_plots()
+        m._force_memory_cleanup()
+        
+        # Assertions to make sure our mocked items were called/handled
+        assert mock_pg_plot.plotItem.clear.called
+        assert mock_pg_plot.clear_tracking.called
+        assert bad_console.clear.called
+
+
+
+

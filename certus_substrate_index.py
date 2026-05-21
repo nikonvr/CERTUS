@@ -2013,22 +2013,40 @@ class IndexCore:
 
                     J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
 
-                    # Separation constraint line: numerical gradient (< 7 params -> 7 evals)
-
-                    g0 = _sellmeier_l_separation_gap_um(pv)
+                    # Separation constraint line: analytical gradient (no finite differences).
+                    # gap = max(0, SEP - min_sep) where min_sep = min diff between sorted(L1,L2,L3).
+                    # Only L-params (indices 2,4,6) contribute; A, B1, B2, B3 have zero gradient.
 
                     J_sep = np.zeros((1, 7), dtype=np.float64)
 
-                    eps = 1.0e-6
+                    _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
 
-                    for j in range(7):
-                        pv2 = np.asarray(pv, dtype=np.float64).copy()
+                    _orig_idx = np.array([2, 4, 6])
 
-                        pv2[j] += eps
+                    _sort_ord = np.argsort(_L_vals)
 
-                        g2 = _sellmeier_l_separation_gap_um(pv2)
+                    _L_s = _L_vals[_sort_ord]
 
-                        J_sep[0, j] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * (g2 - g0) / eps
+                    _diffs = _L_s[1:] - _L_s[:-1]
+
+                    _i_min = int(np.argmin(_diffs))
+
+                    _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
+
+                    if _gap > 0.0:
+                        # d(gap)/d(L_lo) = +1,  d(gap)/d(L_hi) = -1
+                        _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
+
+                        _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
+
+                        # chain rule: if log_l1l2, pv[i]=exp(qv[i]) so dpv/dqv = pv[i]
+                        _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
+
+                        _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
+
+                        J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
+
+                        J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
 
                     return np.vstack([J_main, J_sep])
 

@@ -49,6 +49,7 @@ from _certus_physics_impl import (  # noqa: F401
     calculate_bare_substrate_RT,
     calculate_bare_substrate_T_absorbing,
     calculate_single_interface_R,
+    calculate_reflection_array,
     calculate_RT_single_layer_absorbing_substrate_array,
     calculate_transmission_single,
     calculate_RT_vectorized_real,

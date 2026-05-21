@@ -66,7 +66,7 @@ def test_u1_premium_overrides_shape():
 def test_u1_apply_certus_theme_accepts_premium_flag():
     from PyQt6.QtWidgets import QApplication, QWidget
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     w = QWidget()
     from certus_ui import apply_certus_theme
 
@@ -102,7 +102,7 @@ def test_u2_icon_names_available():
 def test_u2_certus_icon_renders_non_empty():
     from PyQt6.QtWidgets import QApplication
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     from certus_icons import certus_icon, is_svg_icon_rendering_disabled
 
     ic = certus_icon("save")
@@ -117,7 +117,7 @@ def test_u2_certus_icon_renders_non_empty():
 def test_u2_unknown_icon_never_raises():
     from PyQt6.QtWidgets import QApplication
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     from certus_icons import certus_icon
 
     ic = certus_icon("__definitely_not_a_real_icon__")
@@ -127,7 +127,7 @@ def test_u2_unknown_icon_never_raises():
 def test_u2_custom_color_changes_output():
     from PyQt6.QtWidgets import QApplication
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     from certus_icons import certus_icon, clear_icon_cache, is_svg_icon_rendering_disabled
 
     if is_svg_icon_rendering_disabled():
@@ -264,7 +264,7 @@ def test_u4_dashboard_card_show_event_triggers_fade_once(monkeypatch):
     from PyQt6.QtGui import QShowEvent
     from PyQt6.QtWidgets import QApplication
 
-    QApplication.instance() or QApplication(sys.argv)
+    _app = QApplication.instance() or QApplication(sys.argv)
     calls: list[tuple[int, object]] = []
 
     fake_mod = types.SimpleNamespace(

@@ -86,12 +86,12 @@ def test_u4_collect_window_shortcuts_dedup_qshortcut_vs_command():
     from PyQt6.QtGui import QKeySequence, QShortcut
     from PyQt6.QtWidgets import QApplication, QWidget
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     from certus_command_palette import CommandAction
     from certus_shortcuts_overlay import collect_window_shortcuts
 
     w = QWidget()
-    QShortcut(QKeySequence("Ctrl+S"), w)  # will appear as "Save configuration"
+    _sc = QShortcut(QKeySequence("Ctrl+S"), w)  # will appear as "Save configuration"
 
     class _Proxy:
         """Wrap w so we can inject a commands registry."""
@@ -102,6 +102,9 @@ def test_u4_collect_window_shortcuts_dedup_qshortcut_vs_command():
 
         def findChildren(self, cls):
             return self._widget.findChildren(cls)
+
+        def children(self):
+            return self._widget.children()
 
     cmds = [
         CommandAction(
@@ -125,11 +128,11 @@ def test_u4_collect_window_shortcuts_handles_fallback_label():
     from PyQt6.QtGui import QKeySequence, QShortcut
     from PyQt6.QtWidgets import QApplication, QWidget
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
     from certus_shortcuts_overlay import collect_window_shortcuts
 
     w = QWidget()
-    QShortcut(QKeySequence("Ctrl+Alt+Z"), w)
+    _sc = QShortcut(QKeySequence("Ctrl+Alt+Z"), w)
 
     class _Proxy:
         def __init__(self, widget):
@@ -138,6 +141,9 @@ def test_u4_collect_window_shortcuts_handles_fallback_label():
 
         def findChildren(self, cls):
             return self._widget.findChildren(cls)
+
+        def children(self):
+            return self._widget.children()
 
     entries = collect_window_shortcuts(_Proxy(w))
     raw = [e for e in entries if e.sequence == "Ctrl+Alt+Z"]
@@ -173,7 +179,7 @@ def test_u4_open_shortcuts_overlay_builds_dialog():
     """Integration: construct the dialog without exec() to verify wiring."""
     from PyQt6.QtWidgets import QApplication
 
-    QApplication.instance() or QApplication([])
+    _app = QApplication.instance() or QApplication([])
 
     from certus_command_palette import CommandAction
     from certus_shortcuts_overlay import ShortcutEntry, _build_dialog_class

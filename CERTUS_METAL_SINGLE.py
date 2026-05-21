@@ -414,7 +414,7 @@ def global_objective_function(
         eM_fixed=None,
         t_tgt=t_tgt,
         rb_tgt=rb_tgt,
-        use_cache=True,
+        use_cache=False,
     )
 
 
@@ -1118,7 +1118,14 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.p2.addItem(self.k_curve)
 
         def _sync_p2_geometry(*_args):
-            self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
+            try:
+                if self.p1 is None or self.p2 is None or self.p1.vb is None:
+                    return
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                return
 
         self.p1.vb.sigResized.connect(_sync_p2_geometry)
 
@@ -1562,87 +1569,28 @@ class CertusMetalSingleApp(MetalBaseApp):
             self.target_data = None
 
     def start_optimization(self) -> None:
-        """Starts optimization"""
+        """Starts optimization using the shared _metal_start_optimization helper."""
 
-        # CLEANUP PREVIOUS THREAD
-
-        if getattr(self, "optimization_thread", None) is not None:
-            try:
-                # Check if C++ object still exists and is running
-
-                if self.optimization_thread.isRunning():
-                    if getattr(self, "worker", None):
-                        self.worker.stop()
-
-                    self.optimization_thread.quit()
-
-                    if not self.optimization_thread.wait(2000):
-                        logging.critical(
-                            "Optimization thread did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
-                        )
-
-            except RuntimeError:
-                # Thread object already deleted on C++ side
-
-                pass
-
-            self.optimization_thread = None
-
-            self.worker = None
-
-        if not self.target_data:
-            show_error(self, "optim_no_data")
-
-            return
-
-        try:
-            p = {k: v.text() for k, v in self.widgets.items() if isinstance(v, QLineEdit)}
-
-            params = {k: float(v) for k, v in p.items() if k not in ["excel_filename"]}
-
-            # CRITICAL: Enforce max 5 knots (User Constraint)
-
-            raw_knots = int(p["num_knots"])
-
+        def build_params(params):
+            # Clamp knots to 5 (User Constraint)
+            raw_knots = int(self.widgets["num_knots"].text())
             if raw_knots > 5:
                 self.logger.warning(f"Requested {raw_knots} knots. Clamping to 5 (System Limit).")
-
                 raw_knots = 5
-
                 self.widgets["num_knots"].setText("5")
-
             params["num_knots"] = raw_knots
-
-            params["eM_min"] = float(p.get("eM_min", DEFAULT_EM_MIN))
-
-            # substrate ID
-
-            # 1=Silica, 2=BK7
-
+            params["eM_min"] = float(self.widgets["eM_min"].text())
+            
             sub_id_map = {"Fused Silica": 1, "BK7": 2}
-
             sub_text = self.combo_substrate.currentText()
-
             params["substrate_id"] = sub_id_map.get(sub_text, 1)
 
-            # SECURITY CHECK: Thickness Bounds
-
-            # User constraint: Nominal thickness known to +/- 20%
-
-            # We check if the provided range is too wide given this constraint.
-
+        def before_run(params):
+            # Check wide thickness range
             e_min = params["eM_min"]
-
             e_max = params["eM_max"]
-
             e_mean = (e_min + e_max) / 2.0
-
             e_range = e_max - e_min
-
-            # If range > 50% of mean, it's likely too wide for single metal convergence
-
-            # (Allows slightly more than +/- 20% but warns if excessive)
-
             if e_range > (0.5 * e_mean):
                 ret = QMessageBox.warning(
                     self,
@@ -1653,57 +1601,14 @@ class CertusMetalSingleApp(MetalBaseApp):
                     "Do you want to proceed anyway?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
-
                 if ret == QMessageBox.StandardButton.No:
-                    return
+                    return False
 
-            params.update(
-                {
-                    "excel_filename": self.widgets["excel_filename"].text(),
-                    "popsize": DEFAULT_POPSIZE,
-                    "maxiter": DEFAULT_MAXITER,
-                    "tol": DEFAULT_TOL,
-                    "mutation_min": DEFAULT_MUTATION_MIN,
-                    "mutation_max": DEFAULT_MUTATION_MAX,
-                    "recombination": DEFAULT_RECOMBINATION,
-                    "updating": DEFAULT_UPDATING,
-                    "workers": DEFAULT_WORKERS,
-                }
-            )
-
-            # Bounds: built after target_lambda is set
-
-            mask = (self.target_data["lambda"] >= params["lmin_filter"]) & (
-                self.target_data["lambda"] <= params["lmax_filter"]
-            )
-
-            target_lambda_filtered = self.target_data["lambda"][mask]
-
-            # Pass all 3 targets
-
-            params["target_lambda"] = target_lambda_filtered
-
-            params["target_r"] = self.target_data["R"][mask]
-
-            target_t_filtered = self.target_data["T"][mask]
-
-            params["target_t"] = target_t_filtered
-
-            params["target_rb"] = self.target_data["Rback"][mask]
-
-            # SECURITY CHECK: Transmission
-
-            # User Constraint: T > 1% everywhere, Mean T > 5%
-
-            # If not met, optimization results would be garbage.
-
+            # Check transmission
+            target_t_filtered = params.get("target_t", np.array([]))
             if len(target_t_filtered) > 0:
                 t_min = np.nanmin(target_t_filtered)
-
                 t_mean = np.nanmean(target_t_filtered)
-
-                # Check 1: Min > 1% (0.01)
-
                 if t_min < 0.01:
                     QMessageBox.warning(
                         self,
@@ -1711,11 +1616,7 @@ class CertusMetalSingleApp(MetalBaseApp):
                         f"Safety Check Failed!\nMinimum Transmission is too low ({t_min * 100:.2f}% < 1%).\n\n"
                         "Optimization requires adequate transmission signal.",
                     )
-
-                    return
-
-                # Check 2: Mean > 5% (0.05)
-
+                    return False
                 if t_mean < 0.05:
                     QMessageBox.warning(
                         self,
@@ -1723,92 +1624,29 @@ class CertusMetalSingleApp(MetalBaseApp):
                         f"Safety Check Failed!\nMean Transmission is too low ({t_mean * 100:.2f}% < 5%).\n\n"
                         "Optimization requires adequate transmission signal.",
                     )
-
-                    return
+                    return False
 
             # Start logging
-
+            sub_text = self.combo_substrate.currentText()
             self.logger.info("=" * 50)
-
             self.logger.info("STARTING METAL SINGLE OPTIMIZATION")
-
             self.logger.info(f"substrate: {sub_text}")
-
             self.logger.info(
                 f"Target File: {Path(self._last_target_file).name if self._last_target_file else 'Unknown'}"
             )
-
             self.logger.info(f"Wavelength Range: {params['lmin_filter']} - {params['lmax_filter']} nm")
-
             self.logger.info(f"Metal Thickness Range: {params['eM_min']} - {params['eM_max']} nm")
+            return True
 
-            bounds = _build_single_bounds(params, l_array=params["target_lambda"], include_eM=True)
+        def build_bounds(params, target_lambda):
+            return _build_single_bounds(params, l_array=target_lambda, include_eM=True)
 
-            params["bounds"] = bounds
-
-        except (ValueError, KeyError) as e:
-            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
-
-            return
-
-        self.mse_data = {"iterations": [], "errors": []}
-
-        self.mse_curve.setData([], [])
-
-        for label in ["live_eM", "live_MSE"]:
-            self.widgets[label].setText("...")
-
-        self.btn_run.setEnabled(False)
-
-        self.btn_stop.setEnabled(True)
-
-        # Cache params for thread-safe access in callbacks
-
-        self._last_worker_params = params.copy()
-
-        self.optimization_thread = QThread()
-
-        self.worker = OptimizationWorker(params)
-
-        self.worker.moveToThread(self.optimization_thread)
-
-        self.optimization_thread.started.connect(self.worker.run)
-
-        self.worker.finished.connect(self.on_optimization_finished)
-
-        self.worker.progress.connect(self.update_plots)
-
-        self.worker.progress.connect(self._on_optim_progress)
-
-        self.worker.error.connect(self.on_optimization_error)
-
-        self.worker.stats_update.connect(self.on_stats_update)
-
-        # Proper cleanup to avoid memory leaks
-
-        self.worker.finished.connect(self.optimization_thread.quit)
-
-        self.worker.error.connect(self.optimization_thread.quit)
-
-        self.worker.finished.connect(self.worker.deleteLater)
-
-        self.optimization_thread.finished.connect(self.optimization_thread.deleteLater)
-
-        # Start progress widget timing
-
-        self._optim_max_iter = params.get("maxiter", DEFAULT_MAXITER)
-
-        self.progress_widget.start()
-
-        self.optimization_thread.start()
-
-        # Reset counters
-
-        self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
-
-        self.update_stats_display()
-
-    # stop_optimization is inherited from MetalBaseApp.
+        self._metal_start_optimization(
+            worker_class=OptimizationWorker,
+            build_bounds_fn=build_bounds,
+            build_params_fn=build_params,
+            before_run_fn=before_run,
+        )
 
     def _on_optim_progress(self, data: dict) -> None:
         """Updates progress widget with optimization progress"""
@@ -1971,9 +1809,12 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.k_curve.setData(plot_lambda_range, k_calc)
 
         try:
-            self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
+            if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             pass
 
         # Comme Metal Bilayer : zoom n/k en live (sinon ViewBox reste sur plage vide -> courbes invisibles).
@@ -2488,7 +2329,11 @@ class CertusMetalSingleApp(MetalBaseApp):
             self.logger.error(f"Beam export error:{e}")
 
     def _apply_config_dict(self, config):
-        """Loads JSON struct for config"""
+        """Loads JSON struct for config.
+
+        Contract note: `substrate_id` belongs to the transparent substrate only;
+        metal-layer parameters stay inside `physical_params` / `material_params`.
+        """
 
         phys = config.get("physical_params", {})
 
@@ -2505,68 +2350,6 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.widgets["nk_max"].setText(str(mat.get("nk_max", DEFAULT_NK_MAX)))
 
         self.widgets["min_knot_dist"].setText(str(mat.get("min_knot_dist", DEFAULT_MIN_KNOT_DISTANCE)))
-
-        # Load filters
-
-        flt = config.get("filters", {})
-
-        self.widgets["lmin_filter"].setText(str(flt.get("lmin_filter", "")))
-
-        self.widgets["lmax_filter"].setText(str(flt.get("lmax_filter", "")))
-
-        # Load excel filename
-
-        if "excel_filename" in config:
-            self.widgets["excel_filename"].setText(config["excel_filename"])
-
-        # Load target file if specified
-
-        if "target_file" in config and config["target_file"]:
-            target_file = config["target_file"]
-
-            if Path(target_file).exists():
-                self._last_target_file = target_file
-
-                # Trigger file load
-
-                try:
-                    df = read_data_file_robust(target_file)
-
-                    if len(df.columns) >= 2:
-                        data = df.iloc[:, [0, 1]].apply(pd.to_numeric, errors="coerce").dropna().to_numpy()
-
-                        if len(data) > 0:
-                            data = data[data[:, 0].argsort()]
-
-                            if data[:, 1].max() > 1.0:
-                                target_data = {
-                                    "lambda": data[:, 0],
-                                    "R": data[:, 1] / 100.0,
-                                }
-
-                            else:
-                                target_data = {"lambda": data[:, 0], "R": data[:, 1]}
-
-                            self.target_data = target_data
-
-                            self.lbl_file.setText(Path(target_file).name)
-
-                            self.target_curve.setData(self.target_data["lambda"], self.target_data["R"])
-
-                            self.update_lambda_filters()
-
-                            self.reflectance_plot.autoRange()
-
-                except (
-                    ValueError,
-                    TypeError,
-                    RuntimeError,
-                    AttributeError,
-                    KeyError,
-                    IndexError,
-                    FileNotFoundError,
-                ) as e:
-                    self.logger.warning(f"Could not load target file: {e}")
 
 
 # =============================================================================

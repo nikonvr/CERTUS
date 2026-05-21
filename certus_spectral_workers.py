@@ -837,10 +837,9 @@ class EvalWorker(QThread):
             )
 
             unique_configs: dict[tuple[Any, Any, bool], list[Any]] = {}
+            spectra_vis: dict[tuple[Any, Any, bool], dict[str, Any]] = {}
             if oblique_mode:
                 unique_configs = _prepare_oblique_configs(oblique_tgts, log_grouping=True)
-
-                spectra_vis = {}
 
                 for (angle, pol, inc_back), _ in unique_configs.items():
                     _log_oblique_eval_start(

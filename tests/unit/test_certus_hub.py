@@ -107,6 +107,26 @@ class TestHubFunctionality:
         except (ImportError, FileNotFoundError):
             pytest.skip("Gestion de ressources non disponible")
 
+    def test_hub_app_catalog_is_declarative_and_complete(self):
+        """Launcher catalog entries must expose stable card metadata."""
+        required = {"title", "sub", "desc", "script", "icon", "color", "badge", "type"}
+        catalog = CERTUS_HUB.HUB_APP_CATALOG
+        assert catalog
+        assert isinstance(catalog, tuple)
+        for item in catalog:
+            assert required.issubset(item.keys())
+            assert item["type"] in {"single", "group"}
+            assert str(item["script"]).endswith(".py")
+
+    def test_build_hub_apps_catalog_returns_mutable_copy(self):
+        """The UI builder should receive a list copy without mutating the constant catalog."""
+        catalog = CERTUS_HUB.CertusHub._build_hub_apps_catalog()
+        assert isinstance(catalog, list)
+        assert catalog == list(CERTUS_HUB.HUB_APP_CATALOG)
+        catalog.append({"title": "TEMP"})
+        assert len(catalog) == len(CERTUS_HUB.HUB_APP_CATALOG) + 1
+        assert all(item.get("title") != "TEMP" for item in CERTUS_HUB.HUB_APP_CATALOG)
+
 
 @pytest.mark.integration
 @pytest.mark.skipif(not HUB_AVAILABLE, reason="CERTUS_HUB non disponible")

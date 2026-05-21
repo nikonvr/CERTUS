@@ -277,11 +277,11 @@ def _build_stack_class():
             # Evict oldest if overflow
             while len(self._toasts) >= MAX_STACK_SIZE:
                 old = self._toasts[0]
+                self._toasts.remove(old)
                 try:
                     old._dismiss()
                 except (RuntimeError, AttributeError, TypeError):
                     old.close()
-                    self._toasts.remove(old)
 
             toast = Toast(
                 self._parent,

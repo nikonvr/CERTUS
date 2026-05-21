@@ -117,8 +117,13 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
     try:
         from PyQt6.QtGui import QShortcut  # type: ignore
 
-        for sc in window.findChildren(QShortcut):
-            seq = _q_shortcut_key(sc)
+        for child in list(window.children() if hasattr(window, "children") else []):
+            try:
+                if not isinstance(child, QShortcut):
+                    continue
+            except (RuntimeError, TypeError, ValueError):
+                continue
+            seq = _q_shortcut_key(child)
             if not seq:
                 continue
             label = _STANDARD_LABELS.get(seq, seq)
@@ -134,8 +139,8 @@ def collect_window_shortcuts(window) -> list[ShortcutEntry]:
                     source="shortcut",
                 )
             )
-    except (ImportError, AttributeError, RuntimeError, TypeError):
-        # No Qt / no children: skip.
+    except (ImportError, AttributeError, RuntimeError, TypeError, ValueError):
+        # No Qt / no children / deleted wrappers: skip safely.
         pass
 
     entries.sort(key=ShortcutEntry.sort_key)

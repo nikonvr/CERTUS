@@ -65,6 +65,27 @@ from spline_objective import (
     x_slice_n_to_physical_nodes,
 )
 
+
+def _build_theoretical_outputs(cfg: SplineOptConfig, lam: np.ndarray, n_l: np.ndarray, k_l: np.ndarray, d_nm: float, n_sub_full: np.ndarray) -> tuple[np.ndarray, np.ndarray | None]:
+    t_th = _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full) if cfg.t_is_ratio else _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
+    r_th = None
+    if cfg.r_exp is not None:
+        r_th = _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full) if cfg.t_is_ratio else _reflectance_absolute_backside_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
+    return t_th, r_th
+
+
+def _build_spline_view_payload(cfg: SplineOptConfig, sigma_knots: np.ndarray, xv: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, np.ndarray, np.ndarray, np.ndarray | None]:
+    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
+    n_sub_full = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
+    sk = np.asarray(sigma_knots, dtype=np.float64).ravel()
+    xv = np.asarray(xv, dtype=np.float64).ravel()
+    sig_full = 1.0 / np.maximum(lam, 1e-9)
+    n_l, k_l = nk_from_x_pwlnk(xv, lam, sk, cfg.k_clip_lo, cfg.k_clip_hi, sig_pre=sig_full, n_mono_band_nm=cfg.n_mono_band_nm, profile_interp=cfg.nk_profile_interp)
+    d_nm = float(xv[0])
+    t_th, r_th = _build_theoretical_outputs(cfg, lam, n_l, k_l, d_nm, n_sub_full)
+    return lam, sk, xv, n_l, k_l, d_nm, n_sub_full, t_th, r_th
+
+
 def _pglobal_bounds_trust_region(
     bounds_full: np.ndarray,
     x0: np.ndarray,
@@ -154,45 +175,8 @@ def _build_live_dict(
 ) -> dict:
     """Same spectral grid as file / cfg.lam_nm (not only masked lam_f) for GUI display."""
 
-    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-    n_sub_full = np.asarray(cfg.n_sub, dtype=np.float64).ravel()
-
-    sk = np.asarray(sigma_knots, dtype=np.float64).ravel()
-
-    xv = np.asarray(xv, dtype=np.float64).ravel()
-
-    sig_full = 1.0 / np.maximum(lam, 1e-9)
-
-    n_l, k_l = nk_from_x_pwlnk(
-        xv,
-        lam,
-        sk,
-        cfg.k_clip_lo,
-        cfg.k_clip_hi,
-        sig_pre=sig_full,
-        n_mono_band_nm=cfg.n_mono_band_nm,
-        profile_interp=cfg.nk_profile_interp,
-    )
-
-    d_nm = float(xv[0])
-
+    lam, sk, xv, n_l, k_l, d_nm, n_sub_full, t_th, r_th = _build_spline_view_payload(cfg, sigma_knots, xv)
     t_is_ratio_val = bool(cfg.t_is_ratio)
-
-    if t_is_ratio_val:
-        t_th = _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-    else:
-        t_th = _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-    r_th = None
-
-    if cfg.r_exp is not None:
-        if t_is_ratio_val:
-            r_th = _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-        else:
-            r_th = _reflectance_absolute_backside_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
 
     k_nodes = int(sk.size)
 
@@ -410,15 +394,10 @@ def _pack_spline_stage_result(
 ) -> dict[str, Any]:
     """Build the result dict for one spline stage (PGlobal + polish)."""
 
-    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
-
-    n_sub_full = np.asarray(cfg.n_sub, dtype=np.float64)
-
-    sig_full = 1.0 / np.maximum(lam, 1e-9)
-
-    sk = np.asarray(sigma_knots, dtype=np.float64).ravel()
-
-    x_best = np.asarray(x_best, dtype=np.float64).ravel().copy()
+    lam, sk, x_best, n_l, k_l, d_nm, n_sub_full, t_th, r_th = _build_spline_view_payload(cfg, sigma_knots, x_best)
+    n_sub_full = np.asarray(n_sub_full, dtype=np.float64)
+    n_l = np.asarray(n_l, dtype=np.float64)
+    k_l = np.asarray(k_l, dtype=np.float64)
 
     k_nodes = int(sk.size)
 
@@ -433,39 +412,7 @@ def _pack_spline_stage_result(
 
         logging.getLogger("CERTUS").info("k_floor enforce: L nodes adjusted (clamp/flat) in _pack_spline_stage_result")
 
-    n_l, k_l = nk_from_x_pwlnk(
-        x_best,
-        lam,
-        sk,
-        cfg.k_clip_lo,
-        cfg.k_clip_hi,
-        sig_pre=sig_full,
-        n_mono_band_nm=cfg.n_mono_band_nm,
-        profile_interp=cfg.nk_profile_interp,
-    )
-
-    d_nm = float(x_best[0])
-
-    if cfg.t_is_ratio:
-
-
-        t_th = _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-    else:
-        t_th = _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-    r_th = None
-
-    if cfg.r_exp is not None:
-        if cfg.t_is_ratio:
-            r_th = _reflectance_ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
-        else:
-            r_th = _reflectance_absolute_backside_from_nk(lam, n_l, k_l, d_nm, n_sub_full)
-
     n_nodes_phys = x_slice_n_to_physical_nodes(x_best[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
-
-    L_nodes = np.asarray(x_best[1 + k_nodes : 1 + 2 * k_nodes], dtype=np.float64).copy()
 
     mse_report = float(final_mse)
 

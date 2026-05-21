@@ -7,7 +7,7 @@ name = "certus-optical-suite"
 version = "26.01.0"
 description = "CERTUS optical thin-film suite (design, strat, RE, index, metal)."
 readme = "README.md"
-requires-python = ">=3.14.4"
+requires-python = ">=3.14.5"
 license = { text = "Proprietary" }
 authors = [
   { name = "CERTUS Team" }
@@ -21,6 +21,7 @@ dependencies = [
   "pyqtgraph>=0.14.0",
   "matplotlib>=3.9.0",
   "openpyxl>=3.1.5",
+  "pydantic>=2.11.0",
   "XlsxWriter>=3.2.0",
 ]
 
@@ -100,7 +101,6 @@ py-modules = [
   "certus_ux",
   "spline_corridor_log_coaching",
   "spline_finalize",
-  "spline_nonlinear_alpha",
   "spline_objective",
   "spline_pipeline",
   "spline_presets",
@@ -113,7 +113,7 @@ py-modules = [
 # -----------------------------------------------------------------------------
 # Ruff (lint + format) — Foundation action #2 of CERTUS_MASTER_TODO_OPTIMIZATION
 # -----------------------------------------------------------------------------
-# Target: Python 3.14+ (aligned with requires-python >= 3.14.4).
+# Target: Python 3.14+ (aligned with requires-python >= 3.14.5).
 # Initial baseline (2026-04-26): full lint select with `extend-ignore` of every
 # rule that currently has live violations across the codebase. Each ignored rule
 # below maps to a planned cleanup batch; remove the entry once the batch lands.
@@ -180,7 +180,7 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_nonlinear_alpha --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml --cov-fail-under=40"
+addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml --cov-fail-under=40"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -215,7 +215,6 @@ omit = [
   "CERTUS_METAL_SINGLE.py",
   "CERTUS_RE.py",
   "CERTUS_STRAT.py",
-  "certus_ui.py",
   "certus_plot.py",
   "certus_re_helpers.py",
   "certus_substrate_index.py",

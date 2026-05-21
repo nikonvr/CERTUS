@@ -139,14 +139,25 @@ except ImportError:
 
 
 def check_svg_availability() -> bool:
-    """Check SVG widget availability"""
+    """Check SVG widget availability.
+
+    Returns False on Windows + Python 3.14+ to prevent native crashes/warnings
+    due to unstable Qt SVG rendering engine on these platforms.
+    """
+    # Respect manual override if requested
+    o = os.environ.get("CERTUS_SVG_ICONS", "").strip().lower()
+    if o in ("0", "false", "no", "off"):
+        return False
+    if o not in ("1", "true", "yes", "on"):
+        if sys.platform == "win32" and sys.version_info >= (3, 14):
+            return False
 
     try:
         from PyQt6.QtSvgWidgets import QSvgWidget  # noqa: F401  # availability check
 
         return True
 
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         return False
 
 
@@ -227,15 +238,15 @@ def get_resource_path(filename: str) -> str:
 
     if getattr(sys, "frozen", False):
         # Exe: base path is executable dir
-
         base_path = Path(sys.executable).resolve().parent
-
     else:
         # Dev: base path is script dir (assuming this file is in root)
-
         base_path = Path(__file__).resolve().parent
 
-    return str(base_path / filename)
+    resource = Path(filename)
+    if resource.is_absolute():
+        return str(resource)
+    return str((base_path / resource).resolve())
 
 
 def is_frozen() -> bool:
@@ -257,7 +268,7 @@ def get_materials_db_hash() -> str | None:
     return None
 
 
-def configure_numba_env():
+def configure_numba_env() -> None:
     """
 
     Configure Numba environment variables for safe operation in frozen executables.
@@ -284,21 +295,19 @@ def configure_numba_env():
 
     """
 
+    if os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
+        return
+
     # If Numba is already imported/launched in this process, NEVER change thread env.
-
     # Keep env aligned with runtime value to avoid:
-
     # "Cannot set NUMBA_NUM_THREADS to a different value once threads have been launched".
-
     if "numba" in sys.modules:
         try:
             import numba  # local import to avoid hard dependency at module import time
 
             cur = str(int(numba.get_num_threads()))
-
-            os.environ["NUMBA_NUM_THREADS"] = cur
-
             for env_var in [
+                "NUMBA_NUM_THREADS",
                 "OMP_NUM_THREADS",
                 "OPENBLAS_NUM_THREADS",
                 "MKL_NUM_THREADS",
@@ -306,50 +315,40 @@ def configure_numba_env():
                 "NUMEXPR_NUM_THREADS",
             ]:
                 os.environ.setdefault(env_var, cur)
-
+            os.environ["NUMBA_NUM_THREADS"] = cur
+            os.environ.setdefault("NUMBA_THREADING_LAYER", "workqueue" if is_frozen() else "omp")
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
-
             return
-
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             # Fallback to standard path if runtime introspection fails.
-
             pass
 
-    # Skip if already configured (prevents RuntimeError when threads are launched)
-
-    if os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1":
-        return
-
     # Setup cache directory
-
     # Using a deterministic temp dir ensures reuse across runs
-
     cache_dir = str(Path(tempfile.gettempdir()) / "CERTUS_Numba_Cache")
-
     Path(cache_dir).mkdir(parents=True, exist_ok=True)
-
     os.environ["NUMBA_CACHE_DIR"] = cache_dir
 
     if is_frozen():
         # In frozen mode: force workqueue (standard python threading)
-
         # TBB is hard to bundle correctly with PyInstaller.
-
         # workqueue is safe because we enforce max_workers=1 in get_safe_worker_count() below.
-
         os.environ["NUMBA_THREADING_LAYER"] = "workqueue"
-
+        os.environ.setdefault("NUMBA_NUM_THREADS", "1")
+        for env_var in [
+            "OMP_NUM_THREADS",
+            "OPENBLAS_NUM_THREADS",
+            "MKL_NUM_THREADS",
+            "VECLIB_MAXIMUM_THREADS",
+            "NUMEXPR_NUM_THREADS",
+        ]:
+            os.environ.setdefault(env_var, "1")
     else:
         # Development mode: use optimal thread count
-
         n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
-
         s_cores = str(n_cores)
-
         if "NUMBA_THREADING_LAYER" not in os.environ:
             os.environ["NUMBA_THREADING_LAYER"] = "omp"
-
         for env_var in [
             "NUMBA_NUM_THREADS",
             "OMP_NUM_THREADS",
@@ -396,15 +395,10 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
     """
 
     if is_frozen():
-        # Optimization Python 3.14+: Free-threading allows safe parallelism even in frozen apps
+        if default_workers is not None:
+            return max(1, default_workers)
 
-        if sys.version_info >= (3, 14):
-            if default_workers is not None:
-                return max(1, default_workers)
-
-            return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
-
-        return 1
+        return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
 
     if default_workers is not None:
         return max(1, default_workers)
@@ -458,7 +452,7 @@ def set_num_threads(n_cores: int | None = None) -> int:
     return n_cores
 
 
-def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Logger":
+def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
     """Configure enhanced logging with detailed context and error handling."""
 
     import logging as _logging
@@ -468,7 +462,11 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Lo
 
     logger = _logging.getLogger("CERTUS")
     logger.setLevel(level)
-    logger.handlers = []
+    for handler in list(logger.handlers):
+        try:
+            handler.close()
+        finally:
+            logger.removeHandler(handler)
 
     formatter = _logging.Formatter(
         "%(asctime)s | %(levelname)-8s | %(name)-12s | %(funcName)-20s:%(lineno)-4d | %(message)s",
@@ -486,9 +484,9 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Lo
             log_path_obj = Path(log_path)
             if not log_path_obj.is_absolute():
                 if log_path_obj.parent == Path("."):
-                    log_dir = get_resource_path("logs")
-                    Path(log_dir).mkdir(parents=True, exist_ok=True)
-                    log_path = str(Path(log_dir) / log_file)
+                    log_dir = Path(get_resource_path("logs"))
+                    log_dir.mkdir(parents=True, exist_ok=True)
+                    log_path = str(log_dir / log_path_obj.name)
                 else:
                     log_path_obj.parent.mkdir(parents=True, exist_ok=True)
 
@@ -504,15 +502,18 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Lo
             file_handler.setLevel(_logging.DEBUG)
             logger.addHandler(file_handler)
 
-            logger.info(f"Logging initialized: file={log_path}, level={_logging.getLevelName(level)}")
-        except PermissionError as e:
-            _logging.error(f"Permission denied creating log file '{log_file}': {e}")
-            logger.warning("Continuing with console logging only")
-        except OSError as e:
-            _logging.error(f"OS error creating log file '{log_file}': {e}")
-            logger.warning("Continuing with console logging only")
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            _logging.error(f"Unexpected error creating log file '{log_file}': {type(e).__name__}: {e}")
+            logger.info("Logging initialized: file=%s, level=%s", log_path, _logging.getLevelName(level))
+        except (
+            PermissionError,
+            OSError,
+            RuntimeError,
+            FloatingPointError,
+            ValueError,
+            ZeroDivisionError,
+            OverflowError,
+            np.linalg.LinAlgError,
+        ) as e:
+            _logging.error("Logging file handler unavailable for '%s': %s", log_file, e)
             logger.warning("Continuing with console logging only")
 
     # Structured JSONL stream for cross-run correlation and machine parsing.
@@ -530,7 +531,7 @@ def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Lo
         IndexError,
         FileNotFoundError,
     ) as e:
-        logger.warning(f"Structured JSONL handler unavailable: {type(e).__name__}: {e}")
+        logger.warning("Structured JSONL handler unavailable: %s: %s", type(e).__name__, e)
 
     return logger
 
@@ -587,7 +588,7 @@ class SystemConfig:
         return get_resource_path(relative_path)
 
     @staticmethod
-    def setup_logging(log_file: str | None = None, level: int = None) -> "logging.Logger":
+    def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
         return setup_logging(log_file=log_file, level=level)
 
     @staticmethod

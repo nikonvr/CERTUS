@@ -623,17 +623,57 @@ class SplineReportBuilder:
         if cfg_ex is None or not np.isfinite(d_eff):
             return "N/A", float("nan")
 
+        g = build_spline_objective_masked_grid(cfg_ex)
+        if g is None:
+            return "N/A", float("nan")
+
+        lam_f, _, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = g
+        n_sub_eff = np.asarray(n_sub_f, dtype=np.float64)
+        ls = np.asarray(lam_src_full, dtype=np.float64).ravel()
+        na = np.asarray(n_arr, dtype=np.float64).ravel()
+        ka = np.asarray(k_arr, dtype=np.float64).ravel()
+
+        if na.size != ls.size or ka.size != ls.size:
+            return "N/A", float("nan")
+
+        ord_i = np.argsort(ls, kind="mergesort")
+        ls_s = ls[ord_i]
+        n_f = np.interp(lam_f, ls_s, na[ord_i], left=np.nan, right=np.nan)
+        k_f = np.interp(lam_f, ls_s, ka[ord_i], left=np.nan, right=np.nan)
+
+        if not np.all(np.isfinite(n_f) & np.isfinite(k_f)):
+            return "N/A", float("nan")
+
+        try:
+            mse_v = spline_objective_mse_on_masked_grid(
+                cfg_ex,
+                lam_f=lam_f,
+                n_sub_f=n_sub_eff,
+                w=w,
+                inv_npix=inv_npix,
+                t_exp_f=t_exp_f,
+                r_exp_f=r_exp_f,
+                n_l=n_f,
+                k_l=k_f,
+                d=float(d_eff),
+            )
+            if np.isfinite(mse_v) and mse_v < 1e29:
+                r = float(np.sqrt(mse_v))
+                return f"{r:.6f}", r
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            logger.exception("Spectral RMSE Excel export (model comparison)")
+
+        return "N/A", float("nan")
+
     def _rmse_pref_result(self, key: str, n_a: np.ndarray, k_a: np.ndarray, d_alt: float, result: dict, d_nm_c: float, cfg_ex: Any, lam_src_full: np.ndarray) -> tuple[str, float]:
     
         v = result.get(key)
-    
+
         if v is not None and np.isfinite(float(v)):
             fv = float(v)
-    
             return f"{fv:.6f}", fv
-    
+
         d_use = d_alt if np.isfinite(d_alt) else None
-    
         return self._spectral_rmse_export(n_a, k_a, d_nm_c, cfg_ex, lam_src_full, d_nm_use=d_use)
 
     def build_report(self, auto: bool = False) -> None:
@@ -656,6 +696,15 @@ class SplineReportBuilder:
         """
 
         result = self.ctx.result
+
+        def _result_float(key: str) -> float:
+            v = result.get(key)
+            if v is None:
+                return float("nan")
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return float("nan")
 
         if result is None:
             if auto:
@@ -694,9 +743,9 @@ class SplineReportBuilder:
             if lam_src_full.size == 0:
                 raise ValueError("lam_nm indisponible pour export Excel.")
 
-            n_res_full = np.asarray(result["n_lam"], dtype=np.float64).ravel()
+            n_res_full = np.asarray(result.get("n_lam", []), dtype=np.float64).ravel()
 
-            k_res_full = np.asarray(result["k_lam"], dtype=np.float64).ravel()
+            k_res_full = np.asarray(result.get("k_lam", []), dtype=np.float64).ravel()
 
             t_theo_raw = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
 
@@ -777,9 +826,10 @@ class SplineReportBuilder:
 
             x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
 
+            d_nm_val = result.get("d_nm")
             d_nm_c = (
-                float(result["d_nm"])
-                if isinstance(result.get("d_nm"), (int, float)) and np.isfinite(float(result["d_nm"]))
+                float(d_nm_val)
+                if isinstance(d_nm_val, (int, float)) and np.isfinite(float(d_nm_val))
                 else (float(x_res[0]) if x_res.size >= 1 and np.isfinite(float(x_res[0])) else float("nan"))
             )
 
@@ -802,60 +852,6 @@ class SplineReportBuilder:
                 n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel()
 
                 k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
-
-
-                g = build_spline_objective_masked_grid(cfg_ex)
-
-                if g is None:
-                    return "N/A", float("nan")
-
-                lam_f, _, n_sub_f, w, inv_npix, t_exp_f, r_exp_f = g
-
-                n_sub_eff = np.asarray(n_sub_f, dtype=np.float64)
-
-                ls = np.asarray(lam_src_full, dtype=np.float64).ravel()
-
-                na = np.asarray(n_arr, dtype=np.float64).ravel()
-
-                ka = np.asarray(k_arr, dtype=np.float64).ravel()
-
-                if na.size != ls.size or ka.size != ls.size:
-                    return "N/A", float("nan")
-
-                ord_i = np.argsort(ls, kind="mergesort")
-
-                ls_s = ls[ord_i]
-
-                n_f = np.interp(lam_f, ls_s, na[ord_i], left=np.nan, right=np.nan)
-
-                k_f = np.interp(lam_f, ls_s, ka[ord_i], left=np.nan, right=np.nan)
-
-                if not np.all(np.isfinite(n_f) & np.isfinite(k_f)):
-                    return "N/A", float("nan")
-
-                try:
-                    mse_v = spline_objective_mse_on_masked_grid(
-                        cfg_ex,
-                        lam_f=lam_f,
-                        n_sub_f=n_sub_eff,
-                        w=w,
-                        inv_npix=inv_npix,
-                        t_exp_f=t_exp_f,
-                        r_exp_f=r_exp_f,
-                        n_l=n_f,
-                        k_l=k_f,
-                        d=float(d_eff),
-                    )
-
-                    if np.isfinite(mse_v) and mse_v < 1e29:
-                        r = float(np.sqrt(mse_v))
-
-                        return f"{r:.6f}", r
-
-                except NUMERICAL_FAULT_EXCEPTIONS:
-                    logger.exception("Spectral RMSE Excel export (model comparison)")
-
-                return "N/A", float("nan")
 
             d_spl_x = result.get("d_nm_seg_spline_sigma")
 

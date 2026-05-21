@@ -4,6 +4,11 @@
 
 # This file intentionally combines GUI, Workers, and Logic for performance and simplicity.
 
+# P1 boundary: keep changes small and reversible until STRAT context, worker
+# phases, ranking, exports, and robustness flows have dedicated safety tests.
+# Prefer extracting pure validation/formatting helpers before moving Qt classes
+# or numerical kernels.
+
 # DO NOT REFACTOR INTO SUBMODULES WITHOUT EXPLICIT AUTHORIZATION.
 
 # =========================================================================================
@@ -11,15 +16,13 @@
 __version__ = "26_01"
 
 import functools
-
-import multiprocessing
-
 import os
 from pathlib import Path
 
+import multiprocessing
 import sys
 
-from certus_core import create_module_environment, setup_module_logging
+from certus_core import create_module_environment
 
 # =============================================================================
 
@@ -143,6 +146,7 @@ from certus_core import (
     get_safe_worker_count,
     certus_timestamp_display,
     certus_timestamp_file,
+    setup_module_logging,
 )
 
 from certus_data import (
@@ -187,7 +191,34 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
 
 # Import context system (replaces global variables)
 
-from certus_strat_context import StratContext, get_context
+from certus_strat_context import (
+    StratContext,
+    get_context,
+    SYM_MISSING_DISTANCE,
+    FAST_AUTO_BLOCKS_DIVIDER_PRESETS,
+    _clamp01,
+    _compute_local_extrema_symmetry_score,
+    _build_symmetry_bonus_map,
+    _build_layer_importance_map,
+    _compute_blocks_range_contractual,
+    _compute_blocks_range_for_params,
+    _validate_strategy_blocks_contract,
+    _augment_solution_cost_with_sym,
+    _origin_family,
+    _parse_origin_priority_map,
+    _origin_priority_from_map,
+    _apply_family_diversity,
+    _blocks_signature,
+    _strategy_signature,
+    _strategy_id_sort_token,
+    _extract_rmse_p95_for_noise,
+    _dedupe_preserve_order_int,
+    _default_consensus_seeds,
+    _resolve_consensus_top_k,
+    _resolve_consensus_num_seeds,
+    _resolve_consensus_seed_stride,
+    _resolve_consensus_num_runs,
+)
 
 # Robust db clues (fixed xlsx)
 
@@ -224,6 +255,7 @@ from certus_ui import (
     install_standard_shortcuts,
     enable_file_drop,
     show_toast,
+    safe_ui_action,
 )
 from certus_export import show_copy_excel_feedback
 
@@ -243,6 +275,8 @@ from certus_strat_service import (
     compute_probe_offset_nm_from_ratio,
     generate_noise_array,
     NOISE_DISTRIBUTION_GAUSSIAN,
+    select_best_strat_result,
+    extract_best_rmse,
 )
 
 _validate_phase_a_bridge_lock = threading.Lock()
@@ -299,8 +333,6 @@ SYM_DEFAULT_TIE_EPS_ABS = 1e-6
 
 SYM_DEFAULT_TIE_EPS_REL = 1e-4
 
-SYM_MISSING_DISTANCE = 999.0
-
 class _IdxWrapper:
     """Dict-like wrapper supporting both ``dict.get`` and ``list[idx]`` access."""
 
@@ -318,340 +350,6 @@ class _IdxWrapper:
         if hasattr(self.obj, "get"):
             return self.obj.get(k) is not None
         return False
-
-def _clamp01(val: float) -> float:
-
-    return max(0.0, min(1.0, float(val)))
-
-def _compute_local_extrema_symmetry_score(
-    dist_prev: float,
-    dist_next: float,
-    window_ot: float,
-) -> float:
-    """
-
-    Local symmetry score in [0, 1] around an extremum.
-
-    - proximity term: closer to the nearest extremum is better.
-
-    - balance term: symmetric distances left/right are better.
-
-    """
-
-    window = max(1e-6, float(window_ot))
-
-    d_prev = float(dist_prev)
-
-    d_next = float(dist_next)
-
-    if d_prev >= SYM_MISSING_DISTANCE and d_next >= SYM_MISSING_DISTANCE:
-        return 0.0
-
-    nearest = min(d_prev, d_next)
-
-    proximity = _clamp01(1.0 - min(nearest, window) / window)
-
-    if d_prev >= SYM_MISSING_DISTANCE or d_next >= SYM_MISSING_DISTANCE:
-        balance = 0.0
-
-    else:
-        denom = max(d_prev + d_next, 1e-9)
-
-        balance = _clamp01(1.0 - abs(d_prev - d_next) / denom)
-
-    return 0.65 * proximity + 0.35 * balance
-
-def _build_symmetry_bonus_map(
-    raw_results_thickness: dict[int, list[dict[str, float]]],
-    num_layers: int,
-    window_ot: float,
-) -> dict[int, dict[float, float]]:
-    """Build per-layer/per-wavelength SYM bonus map from extrema distances."""
-
-    bonus_map: dict[int, dict[float, float]] = {}
-
-    for i in range(num_layers):
-        layer_items = raw_results_thickness.get(i, [])
-
-        if not layer_items:
-            continue
-
-        layer_bonus: dict[float, float] = {}
-
-        for cand in layer_items:
-            wl = float(cand.get("wl", -1.0))
-
-            if wl <= 0.0:
-                continue
-
-            s_start = _compute_local_extrema_symmetry_score(
-                cand.get("ext_prev_start", SYM_MISSING_DISTANCE),
-                cand.get("ext_next_start", SYM_MISSING_DISTANCE),
-                window_ot,
-            )
-
-            s_end = _compute_local_extrema_symmetry_score(
-                cand.get("ext_prev_end", SYM_MISSING_DISTANCE),
-                cand.get("ext_next_end", SYM_MISSING_DISTANCE),
-                window_ot,
-            )
-
-            layer_bonus[wl] = max(s_start, s_end)
-
-        if layer_bonus:
-            bonus_map[i] = layer_bonus
-
-    return bonus_map
-
-def _build_layer_importance_map(
-    raw_results_thickness: dict[int, list[dict[str, float]]],
-    num_layers: int,
-) -> dict[int, float]:
-    """
-
-    Build layer importance in [0,1] using Phase A dynamics spread.
-
-    High dynamic layers get larger continuity reward when wavelength is kept.
-
-    """
-
-    raw_scores: dict[int, float] = {}
-
-    max_dyn = 0.0
-
-    for i in range(num_layers):
-        layer_items = raw_results_thickness.get(i, [])
-
-        if not layer_items:
-            continue
-
-        dyn_values = [float(c.get("dynamics", 0.0)) for c in layer_items if np.isfinite(c.get("dynamics", 0.0))]
-
-        if not dyn_values:
-            continue
-
-        score = float(np.percentile(np.array(dyn_values, dtype=np.float64), 75))
-
-        raw_scores[i] = max(0.0, score)
-
-        max_dyn = max(max_dyn, raw_scores[i])
-
-    if max_dyn <= 1e-12:
-        return {i: 0.0 for i in raw_scores}
-
-    return {i: _clamp01(v / max_dyn) for i, v in raw_scores.items()}
-
-def _compute_blocks_range_contractual(
-    num_layers: int,
-    div_start: float,
-    div_end: float,
-    dense: bool = False,
-) -> list[int]:
-    """Centralized contractual n_blocks range for all execution modes."""
-
-    if num_layers <= 0:
-        return []
-
-    min_blocks = max(1, int(num_layers / max(1.0, float(div_start))))
-
-    max_blocks = max(min_blocks, int(num_layers / max(1.0, float(div_end))))
-
-    selected = {1, 2, min_blocks, max_blocks, num_layers}
-
-    if dense:
-        selected.update(range(min_blocks, max_blocks + 1))
-
-    blocks_range = sorted([b for b in selected if 1 <= b <= num_layers], reverse=True)
-
-    if not blocks_range:
-        blocks_range = [1]
-
-    return blocks_range
-
-FAST_AUTO_BLOCKS_DIVIDER_PRESETS: tuple[tuple[float, float], ...] = (
-    (20.0, 12.0),  # compact
-    (12.0, 6.0),  # balanced
-    (8.0, 4.0),  # extended
-    (6.0, 2.5),  # very_extended
-)
-
-def _compute_blocks_range_for_params(
-    num_layers: int,
-    params: dict[str, Any],
-    dense: bool = False,
-) -> list[int]:
-    """Resolve contractual n_blocks range with optional fast auto sweep."""
-
-    div_start = float(params.get("iter_divider_start", 10.0))
-
-    div_end = float(params.get("iter_divider_end", 3.0))
-
-    exec_mode = str(params.get("execution_mode", "premium")).strip().lower()
-
-    fast_auto_blocks = bool(params.get("fast_auto_blocks", True))
-
-    if exec_mode == "fast" and fast_auto_blocks:
-        selected: set[int] = set()
-
-        # Keep a curated union of contractual presets in fast mode.
-
-        for ds, de in FAST_AUTO_BLOCKS_DIVIDER_PRESETS:
-            selected.update(_compute_blocks_range_contractual(num_layers, ds, de, dense=False))
-
-        # Keep user-chosen pair for compatibility with manual tuning.
-
-        selected.update(_compute_blocks_range_contractual(num_layers, div_start, div_end, dense=False))
-
-        blocks_range = sorted([b for b in selected if 1 <= b <= num_layers], reverse=True)
-
-        return blocks_range or [1]
-
-    return _compute_blocks_range_contractual(num_layers, div_start, div_end, dense=dense)
-
-def _validate_strategy_blocks_contract(
-    strategy: dict[str, Any],
-    num_layers: int,
-    expected_n_blocks: int | None = None,
-) -> tuple[bool, str]:
-    """Validate that a strategy strictly respects the contractual block schema."""
-
-    if not isinstance(strategy, dict):
-        return False, "strategy is not a dict"
-
-    blocks = strategy.get("blocks", [])
-
-    if not isinstance(blocks, list) or len(blocks) == 0:
-        return False, "missing/empty blocks"
-
-    try:
-        n_blocks = int(strategy.get("n_blocks", len(blocks)))
-
-    except (TypeError, ValueError):
-        return False, "n_blocks is not an integer"
-
-    if expected_n_blocks is not None:
-        try:
-            expected_n_blocks_int = int(expected_n_blocks)
-
-        except (TypeError, ValueError):
-            return False, "expected_n_blocks is invalid"
-
-        if n_blocks != expected_n_blocks_int:
-            return False, f"n_blocks mismatch (expected {expected_n_blocks_int}, got {n_blocks})"
-
-    if len(blocks) != n_blocks:
-        return False, f"len(blocks)={len(blocks)} != n_blocks={n_blocks}"
-
-    cursor = 0
-
-    blocks_sorted = []
-
-    for blk in blocks:
-        if not isinstance(blk, dict):
-            return False, "block item is not a dict"
-
-        try:
-            start = int(blk.get("start", -1))
-
-            end = int(blk.get("end", -1))
-
-            wl = float(blk.get("wavelength", np.nan))
-
-            blk_num = int(blk.get("num_layers", end - start))
-
-        except (TypeError, ValueError):
-            return False, "block field type invalid"
-
-        if not np.isfinite(wl):
-            return False, "block wavelength is not finite"
-
-        blocks_sorted.append((start, end, wl, blk_num))
-
-    blocks_sorted.sort(key=lambda item: item[0])
-
-    for i, (start, end, _wl, blk_num) in enumerate(blocks_sorted):
-        if start != cursor:
-            return False, f"non contiguous coverage at block {i} (start={start}, cursor={cursor})"
-
-        if start < 0 or end <= start or end > num_layers:
-            return False, f"invalid bounds at block {i} ({start}, {end})"
-
-        if blk_num != (end - start):
-            return False, f"num_layers mismatch at block {i} ({blk_num} vs {end - start})"
-
-        cursor = end
-
-    if cursor != num_layers:
-        return False, f"incomplete coverage (covered up to {cursor}, expected {num_layers})"
-
-    return True, ""
-
-def _augment_solution_cost_with_sym(
-    sol: dict[str, Any],
-    sym_bonus_map: dict[int, dict[float, float]] | None,
-    layer_importance_map: dict[int, float] | None,
-    sym_weight: float,
-    same_wl_bonus: float,
-    continuity_weight: float,
-    adaptive_same_wl: bool,
-) -> tuple[float, float, int]:
-    """Post-DP ranking cost augmentation for SYM."""
-
-    base_cost = float(sol.get("cost", 0.0))
-
-    blocks_info = sol.get("blocks_info", [])
-
-    if not blocks_info:
-        return base_cost, 0.0, 0
-
-    total_sym = 0.0
-
-    total_layers = 0
-
-    for start, end, wl in blocks_info:
-        wlf = float(wl)
-
-        for l in range(int(start), int(end)):
-            total_layers += 1
-
-            if sym_bonus_map:
-                total_sym += float(sym_bonus_map.get(l, {}).get(wlf, 0.0))
-
-    mean_sym = (total_sym / total_layers) if total_layers > 0 else 0.0
-
-    same_wl_kept = 0
-
-    continuity_gain = 0.0
-
-    prev = None
-
-    for start, end, wl in sorted(blocks_info, key=lambda x: int(x[0])):
-        wlf = float(wl)
-
-        if prev is not None and abs(wlf - prev) <= 1e-3:
-            same_wl_kept += 1
-
-            if adaptive_same_wl:
-                boundary_layer = int(max(0, int(start) - 1))
-
-                importance = 0.0
-
-                if layer_importance_map is not None:
-                    importance = float(layer_importance_map.get(boundary_layer, 0.0))
-
-                continuity_gain += float(same_wl_bonus) * (1.0 + float(continuity_weight) * importance)
-
-            else:
-                continuity_gain += float(same_wl_bonus)
-
-        prev = wlf
-
-    if not adaptive_same_wl:
-        continuity_gain = float(same_wl_bonus) * same_wl_kept
-
-    augmented = base_cost - float(sym_weight) * mean_sym - float(continuity_gain)
-
-    return float(max(0.0, augmented)), float(mean_sym), int(same_wl_kept)
 
 # -----------------------------------------------------------------------------
 
@@ -699,13 +397,7 @@ def smart_get_refractive_index(mat_id, wl, db_instance=None) -> Any:
 
     # Check if context has it implicitly or fallback to global
 
-    db_to_use = None
-
-    if ctx is not None and ctx.app_context.get("materials_db"):
-        db_to_use = ctx.app_context.get("materials_db")
-
-    else:
-        db_to_use = APP_CONTEXT.get("materials_db")
+    db_to_use = _resolve_materials_db_fallback(ctx)
 
     if db_to_use is not None:
         # Special handling for RobustMaterialDatabase if it requires direct call
@@ -736,13 +428,7 @@ def smart_get_refractive_clues_vectorized(mat_id, wls, db_instance=None) -> Any:
 
     # 3. Global Fallback
 
-    db_to_use = None
-
-    if ctx is not None and ctx.app_context.get("materials_db"):
-        db_to_use = ctx.app_context.get("materials_db")
-
-    else:
-        db_to_use = APP_CONTEXT.get("materials_db")
+    db_to_use = _resolve_materials_db_fallback(ctx)
 
     if db_to_use is not None:
         if type(db_to_use).__name__ == "RobustMaterialDatabase":
@@ -799,7 +485,7 @@ class PlotCache:
                     k: v for k, v in data_obj.items() if isinstance(v, (str, int, float, list, dict, bool, type(None)))
                 }
 
-                data_str = json.dumps(serializable, sort_keys=True)
+                data_str = json.dumps(serializable, sort_keys=True, separators=(",", ":"))
 
             else:
                 data_str = str(data_obj)
@@ -886,6 +572,15 @@ _GLOBAL_STATS_QUEUE = None
 _GLOBAL_LIVE_QUEUE = None
 
 # === STATS & THREADING UTILS (using StratContext) ===
+
+def _resolve_materials_db_fallback(ctx) -> Any:
+    """Resolve the material database using the existing fallback order."""
+
+    if ctx is not None and ctx.app_context.get("materials_db"):
+        return ctx.app_context.get("materials_db")
+
+    return APP_CONTEXT.get("materials_db")
+
 
 def _init_stats_queue() -> Any:
     """Initialize stats queue in current context."""
@@ -1329,6 +1024,196 @@ def _normalize_phase_a_results(
         raw_results_sq[i] = sq_layer
     return raw_results_sq
 
+def _prepare_block_strategy_phase_a(
+    params: dict[str, Any],
+    progress_signal: Any | None = None,
+) -> dict[str, Any]:
+    """Build Phase A context and execute the layer-by-layer search."""
+    logger = params["logger"]
+    logger.info("=" * 80)
+    logger.info("STEP 2: ITERATIVE THICKNESS OPTIMIZATION (Refactored 2026)")
+    logger.info("=" * 80)
+
+    l0 = float(params["l0"])
+    stack_string = params["stack_string"]
+    multipliers = [float(e) for e in stack_string.split(",") if e.strip()]
+
+    p_thick_nominal = params.get("p_thick_nominal")
+    if p_thick_nominal is None:
+        nH_at_l0 = get_refractive_index(params["nH_id"], l0)
+        nL_at_l0 = get_refractive_index(params["nL_id"], l0)
+        p_thick_nominal = [
+            (m * l0) / (4.0 * np.real(nH_at_l0 if (i % 2) == 0 else nL_at_l0))
+            for i, m in enumerate(multipliers)
+        ]
+
+    num_layers = len(p_thick_nominal)
+    clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(params, p_thick_nominal, logger)
+    scan_wl_range = arange_inclusive(params["scan_wl_min"], params["scan_wl_max"], params["scan_wl_step"])
+
+    logger.info("\n--- PHASE A: Layer-by-Layer Optimization (Robust Validation) ---")
+    raw_results_thickness, full_dynamics_grid, phase_a_observability, stop_requested = _run_phase_a_hybrid_loop(
+        params=params,
+        p_thick_nominal=p_thick_nominal,
+        clues_at_wl=clues_at_wl,
+        scan_wl_range=scan_wl_range,
+        num_layers=num_layers,
+        logger=logger,
+        progress_signal=progress_signal,
+        l0=l0,
+    )
+
+    if stop_requested:
+        return {
+            "stop_requested": True,
+            "raw_results_thickness": raw_results_thickness,
+            "phase_a_observability": phase_a_observability,
+            "l0": l0,
+            "p_thick_nominal": p_thick_nominal,
+        }
+
+    logger.info("\n--- Phase A: Normalization ---")
+    raw_results_sq = _normalize_phase_a_results(raw_results_thickness, num_layers)
+
+    result_phase_a = {
+        "l0": l0,
+        "p_thick_nominal": p_thick_nominal,
+        "clues_at_wl": clues_at_wl,
+        "nominal_matrix_cache": nominal_matrix_cache,
+        "all_wls": all_wls,
+        "raw_results_thickness": raw_results_thickness,
+        "raw_results_sq": raw_results_sq,
+        "full_dynamics_grid": full_dynamics_grid,
+        "phase_a_observability": phase_a_observability,
+        "num_layers": num_layers,
+    }
+
+    sym_enable = bool(params.get("sym_enable", True))
+    sym_window_ot = float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT))
+    result_phase_a["sym_bonus_map"] = (
+        _build_symmetry_bonus_map(raw_results_thickness, num_layers, sym_window_ot) if sym_enable else {}
+    )
+    result_phase_a["sym_layer_importance"] = (
+        _build_layer_importance_map(raw_results_thickness, num_layers) if sym_enable else {}
+    )
+    return result_phase_a
+
+
+def _prepare_block_strategy_phase_b(
+    phase_a: dict[str, Any],
+    params: dict[str, Any],
+    progress_signal: Any | None = None,
+) -> dict[str, Any]:
+    """Build block strategies and run robustness screening."""
+    logger = params["logger"]
+    logger.info("\n--- PHASE B: Grouping & Robustness (Sequential Mode) ---")
+
+    raw_results_thickness = phase_a["raw_results_thickness"]
+    raw_results_sq = phase_a["raw_results_sq"]
+    num_layers = phase_a["num_layers"]
+    all_strategies = []
+
+    blocks_range = _compute_blocks_range_for_params(num_layers, params, dense=False)
+    for n_blk in blocks_range:
+        logger.info(f"   Exploring {n_blk} blocks...")
+        strats = mine_strategies_for_block_count(
+            n_blk,
+            raw_results_thickness,
+            raw_results_sq,
+            num_layers,
+            top_k=5,
+            sym_enable=bool(params.get("sym_enable", True)),
+            sym_bonus_map=phase_a.get("sym_bonus_map", {}),
+            layer_importance_map=phase_a.get("sym_layer_importance", {}),
+            sym_weight=float(params.get("sym_weight", SYM_DEFAULT_WEIGHT)),
+            sym_same_wl_bonus=float(params.get("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS)),
+            sym_continuity_weight=float(params.get("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT)),
+            sym_adaptive_same_wl=bool(params.get("sym_adaptive_same_wl", True)),
+            sym_scoring_mode=str(params.get("sym_scoring_mode", SYM_DEFAULT_SCORING_MODE)),
+            sym_allow_hybrid=bool(params.get("sym_allow_hybrid", False)),
+        )
+        all_strategies.extend(strats)
+
+    phase_b: dict[str, Any] = {"all_strategies": all_strategies}
+    if not all_strategies:
+        logger.warning("⚠️ No strategies found in Phase B grouping.")
+        phase_b["final_results"] = None
+        phase_b["best_strategy"] = None
+        phase_b["best_strategy_tmin_report"] = None
+        return phase_b
+
+    logger.info(f"   Running Robustness Screening on {len(all_strategies)} strategies...")
+    phase_b_input = dict(phase_a)
+    phase_b_input["all_strategies"] = all_strategies
+    final_results = run_final_simulation_block(
+        phase_b_input, params, num_runs=int(params.get("robustness_num_runs", 150))
+    )
+    final_results.update(phase_a)
+
+    best_strategy = final_results.get("best_strategy")
+    min_t_floor = float(params.get("min_transmission_floor", 0.10))
+    enforce_post_check = bool(params.get("enforce_best_strategy_tmin_check", True))
+    tmin_report = None
+
+    if best_strategy and min_t_floor > 0.0 and enforce_post_check:
+        strategy_for_check = dict(best_strategy)
+        strategy_for_check["l0"] = float(phase_a["l0"])
+        tmin_report, tmin_violations = _validate_strategy_min_transmission_floor(
+            strategy_for_check,
+            phase_a["p_thick_nominal"],
+            phase_a["clues_at_wl"],
+            phase_a["nominal_matrix_cache"],
+            phase_a["all_wls"],
+            min_t_floor,
+        )
+        final_results["best_strategy_tmin_report"] = tmin_report
+
+        if tmin_violations:
+            sample = ", ".join(
+                [f"L{int(v['layer'])}@{v['wl']:.1f}nm:{v['t_min'] * 100:.2f}%" for v in tmin_violations[:5]]
+            )
+            raise RuntimeError(
+                f"Post-check failed: best strategy violates T_min >= {min_t_floor * 100:.1f}% "
+                f"on {len(tmin_violations)} layer(s). {sample}"
+            )
+
+        logger.info(
+            f"[POST-CHECK] Best strategy T_min floor OK on {len(tmin_report)} layers "
+            f"(threshold {min_t_floor * 100:.1f}%)."
+        )
+
+    phase_b["final_results"] = final_results
+    phase_b["best_strategy"] = best_strategy
+    phase_b["best_strategy_tmin_report"] = tmin_report
+    return phase_b
+
+
+def _finalize_block_strategy_result(
+    phase_a: dict[str, Any],
+    phase_b: dict[str, Any] | None,
+    params: dict[str, Any],
+    phase_a_only: bool = False,
+) -> dict[str, Any]:
+    """Return the final strategy payload with consistent fallbacks."""
+    _export_phase_a_observability_json(params, phase_a.get("phase_a_observability", {}))
+
+    if phase_a.get("stop_requested"):
+        return {
+            "raw_results_thickness": phase_a.get("raw_results_thickness"),
+            "phase_a_observability": phase_a.get("phase_a_observability"),
+            "stop_requested": True,
+        }
+
+    if phase_a_only or phase_b is None or phase_b.get("final_results") is None:
+        if phase_a_only:
+            params["logger"].info("✓ Phase A complete (Data Ready).")
+        if phase_b and phase_b.get("all_strategies") is not None:
+            phase_a["all_strategies"] = phase_b.get("all_strategies", [])
+        return phase_a
+
+    return phase_b["final_results"]
+
+
 def optimize_block_strategy_hybrid(
     params: dict[str, Any],
     progress_signal: Any | None = None,
@@ -1423,158 +1308,17 @@ def optimize_block_strategy_hybrid(
 
         # Scan Range
 
-        scan_wl_range = arange_inclusive(params["scan_wl_min"], params["scan_wl_max"], params["scan_wl_step"])
-
-        # Phase A Loop
-        logger.info("\n--- PHASE A: Layer-by-Layer Optimization (Robust Validation) ---")
-
-        raw_results_thickness, full_dynamics_grid, phase_a_observability, stop_requested = _run_phase_a_hybrid_loop(
-            params=params,
-            p_thick_nominal=p_thick_nominal,
-            clues_at_wl=clues_at_wl,
-            scan_wl_range=scan_wl_range,
-            num_layers=num_layers,
-            logger=logger,
-            progress_signal=progress_signal,
-            l0=l0,
-        )
-
-        if stop_requested:
-            return {
-                "raw_results_thickness": raw_results_thickness,
-                "phase_a_observability": phase_a_observability,
-                "stop_requested": True,
-            }
-
-        # Normalization
-        logger.info("\n--- Phase A: Normalization ---")
-        raw_results_sq = _normalize_phase_a_results(raw_results_thickness, num_layers)
-
-        result_phase_a = {
-            "p_thick_nominal": p_thick_nominal,
-            "clues_at_wl": clues_at_wl,
-            "nominal_matrix_cache": nominal_matrix_cache,
-            "all_wls": all_wls,
-            "raw_results_thickness": raw_results_thickness,
-            "raw_results_sq": raw_results_sq,
-            "full_dynamics_grid": full_dynamics_grid,  # [NEW] Pass to Phase B
-            "phase_a_observability": phase_a_observability,
-            "num_layers": num_layers,
-            "l0": l0,
-        }
-
-        sym_enable = bool(params.get("sym_enable", True))
-
-        sym_window_ot = float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT))
-
-        result_phase_a["sym_bonus_map"] = (
-            _build_symmetry_bonus_map(raw_results_thickness, num_layers, sym_window_ot) if sym_enable else {}
-        )
-
-        result_phase_a["sym_layer_importance"] = (
-            _build_layer_importance_map(raw_results_thickness, num_layers) if sym_enable else {}
-        )
-
+        phase_a = _prepare_block_strategy_phase_a(params=params, progress_signal=progress_signal)
+        if phase_a.get("stop_requested"):
+            return _finalize_block_strategy_result(phase_a, None, params, phase_a_only=phase_a_only)
         if phase_a_only:
-            logger.info("✓ Phase A complete (Data Ready).")
-
-            _export_phase_a_observability_json(params, result_phase_a.get("phase_a_observability", {}))
-
-            return result_phase_a
-
-        logger.info("\n--- PHASE B: Grouping & Robustness (Sequential Mode) ---")
-
-        all_strategies = []
-
-        # Determine block range (shared contractual helper + fast auto presets)
-
-        blocks_range = _compute_blocks_range_for_params(num_layers, params, dense=False)
-
-        for n_blk in blocks_range:
-            logger.info(f"   Exploring {n_blk} blocks...")
-
-            strats = mine_strategies_for_block_count(
-                n_blk,
-                raw_results_thickness,
-                raw_results_sq,
-                num_layers,
-                top_k=5,
-                sym_enable=sym_enable,
-                sym_bonus_map=result_phase_a.get("sym_bonus_map", {}),
-                layer_importance_map=result_phase_a.get("sym_layer_importance", {}),
-                sym_weight=float(params.get("sym_weight", SYM_DEFAULT_WEIGHT)),
-                sym_same_wl_bonus=float(params.get("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS)),
-                sym_continuity_weight=float(params.get("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT)),
-                sym_adaptive_same_wl=bool(params.get("sym_adaptive_same_wl", True)),
-                sym_scoring_mode=str(params.get("sym_scoring_mode", SYM_DEFAULT_SCORING_MODE)),
-                sym_allow_hybrid=bool(params.get("sym_allow_hybrid", False)),
-            )
-
-            all_strategies.extend(strats)
-
-        result_phase_a["all_strategies"] = all_strategies
-
-        if not all_strategies:
-            logger.warning("⚠️ No strategies found in Phase B grouping.")
-
-            return result_phase_a
-
-        logger.info(f"   Running Robustness Screening on {len(all_strategies)} strategies...")
-
-        final_results = run_final_simulation_block(
-            result_phase_a, params, num_runs=int(params.get("robustness_num_runs", 150))
-        )
-
-        # Merge Phase A data for completeness
-
-        final_results.update(result_phase_a)
-
-        _export_phase_a_observability_json(params, result_phase_a.get("phase_a_observability", {}))
-
-        best_strategy = final_results.get("best_strategy")
-
-        min_t_floor = float(params.get("min_transmission_floor", 0.10))
-
-        enforce_post_check = bool(params.get("enforce_best_strategy_tmin_check", True))
-
-        if best_strategy and min_t_floor > 0.0 and enforce_post_check:
-            strategy_for_check = dict(best_strategy)
-
-            strategy_for_check["l0"] = float(l0)
-
-            tmin_report, tmin_violations = _validate_strategy_min_transmission_floor(
-                strategy_for_check,
-                p_thick_nominal,
-                clues_at_wl,
-                nominal_matrix_cache,
-                all_wls,
-                min_t_floor,
-            )
-
-            final_results["best_strategy_tmin_report"] = tmin_report
-
-            if tmin_violations:
-                sample = ", ".join(
-                    [f"L{int(v['layer'])}@{v['wl']:.1f}nm:{v['t_min'] * 100:.2f}%" for v in tmin_violations[:5]]
-                )
-
-                raise RuntimeError(
-                    f"Post-check failed: best strategy violates T_min >= {min_t_floor * 100:.1f}% "
-                    f"on {len(tmin_violations)} layer(s). {sample}"
-                )
-
-            logger.info(
-                f"[POST-CHECK] Best strategy T_min floor OK on {len(tmin_report)} layers "
-                f"(threshold {min_t_floor * 100:.1f}%)."
-            )
-
-        return final_results
+            return _finalize_block_strategy_result(phase_a, None, params, phase_a_only=True)
+        phase_b = _prepare_block_strategy_phase_b(phase_a=phase_a, params=params, progress_signal=progress_signal)
+        return _finalize_block_strategy_result(phase_a, phase_b, params, phase_a_only=phase_a_only)
 
     except NUMERICAL_FAULT_EXCEPTIONS as e:
         logger.error(f"CRITICAL ERROR in Optimize Block: {e}")
-
         logger.error(traceback.format_exc())
-
         return {"error": str(e)}
 
 # === HELPER FUNCTIONS ===
@@ -1611,188 +1355,6 @@ def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -
         "symmetry_bonus": float(sol.get("symmetry_bonus", 0.0)),
         "same_wl_kept": int(sol.get("same_wl_kept", 0)),
     }
-
-def _origin_family(origin_raw: Any) -> str:
-    """Return normalized origin family token for ranking/diversity."""
-
-    origin = str(origin_raw or "").upper().strip()
-
-    if not origin:
-        return "UNKNOWN"
-
-    return origin.split("(")[0].strip()
-
-def _parse_origin_priority_map(
-    raw_value: Any,
-) -> dict[str, int]:
-    """Parse optional origin priority map from dict or 'A:0,B:1' string."""
-
-    default_map = {
-        "SYM": 0,
-        "SMART_MERGE_SYM": 1,
-        "THICKNESS²": 2,
-        "THICKNESS2": 2,
-        "THICKNESS": 3,
-        "SMART_MERGE_THICKNESS2": 4,
-        "SMART_MERGE_THICKNESS": 5,
-        "SMART_MERGE_MIXED": 6,
-    }
-
-    if isinstance(raw_value, dict):
-        out = {}
-
-        for k, v in raw_value.items():
-            try:
-                out[str(k).upper().strip()] = int(v)
-
-            except (TypeError, ValueError):
-                continue
-
-        return out if out else default_map
-
-    if isinstance(raw_value, str) and ":" in raw_value:
-        out = {}
-
-        for part in raw_value.split(","):
-            token = part.strip()
-
-            if ":" not in token:
-                continue
-
-            k, v = token.split(":", 1)
-
-            try:
-                out[str(k).upper().strip()] = int(v.strip())
-
-            except (TypeError, ValueError):
-                continue
-
-        return out if out else default_map
-
-    return default_map
-
-def _origin_priority_from_map(origin: str, priority_map: dict[str, int]) -> int:
-
-    fam = _origin_family(origin)
-
-    if fam in priority_map:
-        return int(priority_map[fam])
-
-    for key, val in priority_map.items():
-        if key and key in fam:
-            return int(val)
-
-    return 999
-
-def _apply_family_diversity(
-    ordered_results: list[dict[str, Any]],
-    top_k: int,
-    max_per_family: int,
-) -> list[dict[str, Any]]:
-    """Reorder top segment to avoid one-family monoculture."""
-
-    if top_k <= 0 or max_per_family <= 0 or not ordered_results:
-        return ordered_results
-
-    k = min(int(top_k), len(ordered_results))
-
-    selected: list[tuple[int, dict[str, Any]]] = []
-
-    deferred: list[tuple[int, dict[str, Any]]] = []
-
-    used_clues = set()
-
-    counts: dict[str, int] = {}
-
-    for idx, item in enumerate(ordered_results):
-        fam = _origin_family(item.get("strategy", {}).get("origin", "UNKNOWN"))
-
-        used = counts.get(fam, 0)
-
-        if len(selected) < k and used < max_per_family:
-            selected.append((idx, item))
-
-            used_clues.add(idx)
-
-            counts[fam] = used + 1
-
-        else:
-            deferred.append((idx, item))
-
-    for idx, item in deferred:
-        if len(selected) >= k:
-            break
-
-        selected.append((idx, item))
-
-        used_clues.add(idx)
-
-    diversified_head = [item for _idx, item in selected]
-
-    tail = [item for idx, item in enumerate(ordered_results) if idx not in used_clues]
-
-    return diversified_head + tail
-
-def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
-    """Deterministic signature for block layout/wavelength de-duplication."""
-
-    sig = []
-
-    for blk in blocks:
-        try:
-            start = int(blk.get("start", 0))
-
-            end = int(blk.get("end", 0))
-
-            wl = round(float(blk.get("wavelength", 0.0)), 6)
-
-            sig.append((start, end, wl))
-
-        except (TypeError, ValueError):
-            continue
-
-    return tuple(sig)
-
-def _strategy_signature(strategy: dict[str, Any]) -> tuple:
-    """Stable strategy signature for memoization across re-evaluations."""
-
-    if not isinstance(strategy, dict):
-        return tuple()
-
-    try:
-        n_blocks = int(strategy.get("n_blocks", len(strategy.get("blocks", []))))
-
-    except (TypeError, ValueError):
-        n_blocks = len(strategy.get("blocks", []))
-
-    return (n_blocks, _blocks_signature(strategy.get("blocks", [])))
-
-def _strategy_id_sort_token(strategy_id: Any) -> tuple:
-    """Deterministic strategy-id token (numeric first when possible)."""
-
-    text = str(strategy_id)
-
-    try:
-        return (0, int(text))
-
-    except (TypeError, ValueError):
-        return (1, text)
-
-def _extract_rmse_p95_for_noise(result_item: dict[str, Any], target_noise: float) -> float:
-    """Return RMSE P95 for the nearest noise level to target_noise."""
-
-    try:
-        results = result_item.get("results_per_noise", [])
-
-        if not results:
-            return float("inf")
-
-        best = min(results, key=lambda r: abs(float(r.get("noise_level", 0.0)) - float(target_noise)))
-
-        return float(best.get("rmse_p95", best.get("rmse_mean", np.inf)))
-
-    except NUMERICAL_FAULT_EXCEPTIONS:
-        return float("inf")
 
 def _generate_elite_candidate_strategies(
     parent_results: list[dict[str, Any]],
@@ -2049,7 +1611,7 @@ def _find_k_best_groupings_dp_sequential(
         layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W
     )
 
-    if nucleation_wl and num_layers >= nucleation_size:
+    if nucleation_wl and nucleation_size > 0 and num_layers >= nucleation_size:
         # We enforce the nucleation wavelength for the first block (start = 0).
 
         # To avoid over-constraining the DP (which might need more blocks than available if we force a size of 10),
@@ -2092,7 +1654,7 @@ def _find_k_best_groupings_dp_sequential(
 
         smart_nucl_active = nucleation_wl is not None
 
-        if not smart_nucl_active and block_counts[0, 2] == 0:
+        if num_layers >= 2 and not smart_nucl_active and block_counts[0, 2] == 0:
             l2_mask = valid_mask[1]
 
             l1_mask = valid_mask[0]
@@ -2257,6 +1819,9 @@ def mine_strategies_for_block_count(
     Returns:
 
         List of strategy dicts with ``strategy_id``, ``blocks``, ``total_cost``."""
+
+    if n_blocks <= 0 or num_layers <= 0:
+        return []
 
     strategies_collected = []
 
@@ -2743,42 +2308,6 @@ def _filter_valid_robustness_strategies(
         else:
             logger.warning(f"[ROBUSTNESS] Dropped invalid strategy {strat.get('strategy_id', '?')}: {reason}")
     return filtered
-
-def _dedupe_preserve_order_int(values: list[int]) -> list[int]:
-    """Deduplicate ints while preserving first-seen order."""
-    deduped: list[int] = []
-    seen: set[int] = set()
-    for v in values:
-        if v in seen:
-            continue
-        seen.add(v)
-        deduped.append(v)
-    return deduped
-
-def _default_consensus_seeds(
-    *,
-    base_seed: int,
-    consensus_seed_stride: int,
-    consensus_num_seeds: int,
-) -> list[int]:
-    """Build default arithmetic seed schedule for consensus reranking."""
-    return [base_seed + i * consensus_seed_stride for i in range(consensus_num_seeds)]
-
-def _resolve_consensus_top_k(params: dict[str, Any]) -> int:
-    """Resolve top-k candidate budget for consensus reranking."""
-    return max(1, int(params.get("consensus_top_k", 12)))
-
-def _resolve_consensus_num_seeds(params: dict[str, Any]) -> int:
-    """Resolve number of seeds used in consensus reranking."""
-    return max(1, int(params.get("consensus_num_seeds", 1)))
-
-def _resolve_consensus_seed_stride(params: dict[str, Any]) -> int:
-    """Resolve seed stride used for default consensus seed schedule."""
-    return max(1, int(params.get("consensus_seed_stride", 1)))
-
-def _resolve_consensus_num_runs(params: dict[str, Any], *, num_runs: int) -> int:
-    """Resolve Monte-Carlo run budget for consensus reranking."""
-    return max(1, int(params.get("consensus_num_runs", num_runs)))
 
 def _resolve_consensus_std_weight(params: dict[str, Any]) -> float:
     """Resolve non-negative std weight for mean+std consensus mode."""
@@ -3555,6 +3084,11 @@ def _apply_family_diversity_if_enabled(
             )
     return strategies_results
 
+def _select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Return the best finite-ranked strategy result (compatibility delegate)."""
+    return select_best_strat_result(strategies_results)
+
+
 def _finalize_robustness_results(
     strategies_results: list[dict[str, Any]],
     params: dict[str, Any],
@@ -3567,16 +3101,16 @@ def _finalize_robustness_results(
             r["rmse_all"] = []
             r["thicknesses_all"] = []
 
-    if strategies_results:
-        best = strategies_results[0]
+    best = _select_best_strat_result(strategies_results)
+    if best:
         logger.info(
-            f"🏆 Best Strategy ID: {best['strategy_id']} ({best['strategy'].get('origin', '?')}) - Score: {best['robustness_score']:.5f}"
+            f"🏆 Best Strategy ID: {best['strategy_id']} ({best['strategy'].get('origin', '?')}) - Score: {float(best.get('robustness_score', best.get('rmse', 0.0))):.5f}"
         )
 
     return {
-        "results_per_noise": (strategies_results[0]["results_per_noise"] if strategies_results else []),
-        "optimal_blocks": (strategies_results[0]["strategy"]["blocks"] if strategies_results else []),
-        "best_strategy": (strategies_results[0]["strategy"] if strategies_results else None),
+        "results_per_noise": (best["results_per_noise"] if best else []),
+        "optimal_blocks": (best["strategy"]["blocks"] if best else []),
+        "best_strategy": (best["strategy"] if best else None),
         "all_strategies_results": strategies_results,
     }
 
@@ -4325,13 +3859,11 @@ def _test_strategy_robustness_task(
 
         if is_absolute:
             # Noise domain: thickness (nm). Convert to transmission offset via dT/dd.
-
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector
-
         else:
-            # Noise domain: transmission (relative fraction). noise_val in %.
-
-            noise_matrix = raw_noise * (noise_val / 100.0) * penalty_vector
+            # Noise domain: T fraction. noise_val already in % units (e.g. 0.1 means 0.1%).
+            # simulate_stack_robustness_batch receives it as-is (fraction comparable to T [0-1]).
+            noise_matrix = raw_noise * noise_val * penalty_vector
 
         # --- VECTORIZED BATCH SIMULATION ---
 
@@ -6570,16 +6102,17 @@ class WorkerThread(QThread):
             # Prepare metadata for auto-naming and HTML
 
             metadata = {
-                "rmse": (
-                    np.min(
-                        [
-                            float(r.get("robustness_score", 999.0))
-                            for r in final_results.get("all_strategies_results", [])
-                        ]
+                "rmse": float(
+                    final_results.get("all_strategies_results", [{}])[0].get(
+                        "rmse_p95",
+                        final_results.get("all_strategies_results", [{}])[0].get(
+                            "rmse_mean",
+                            final_results.get("all_strategies_results", [{}])[0].get("rmse", 0.0),
+                        ),
                     )
-                    if "all_strategies_results" in final_results
-                    else 0.0
-                ),
+                )
+                if final_results.get("all_strategies_results")
+                else 0.0,
                 "strategies_count": len(final_results.get("all_strategies_results", [])),
                 "params": self.params,
                 "nominal_results": nominal_results,
@@ -6872,7 +6405,15 @@ class WorkerThread(QThread):
             best_rmse = 0.0
 
             if "all_strategies_results" in final_results and final_results["all_strategies_results"]:
-                best_rmse = float(final_results["all_strategies_results"][0].get("robustness_score", 0.0))
+                best_rmse = float(
+                    final_results["all_strategies_results"][0].get(
+                        "rmse_p95",
+                        final_results["all_strategies_results"][0].get(
+                            "rmse_mean",
+                            final_results["all_strategies_results"][0].get("rmse", 0.0),
+                        ),
+                    )
+                )
 
             metadata = {
                 "rmse": best_rmse,
@@ -11444,6 +10985,35 @@ class CertusStratApp(CertusBaseApp):
 
         self.widgets["nSub_custom"].setEnabled(is_custom)
 
+    def _extract_stack_multipliers(self, config: dict[str, Any]) -> list[float]:
+        """Return normalized stack multipliers from multiple legacy JSON shapes."""
+        raw = config.get("stack_multipliers")
+        if raw is None:
+            raw = config.get("stack_string")
+        if raw is None:
+            raw = config.get("stack")
+        if raw is None:
+            return []
+        if isinstance(raw, str):
+            tokens = [t.strip() for t in raw.replace("[", "").replace("]", "").split(",") if t.strip()]
+            out: list[float] = []
+            for tok in tokens:
+                try:
+                    out.append(float(tok))
+                except (TypeError, ValueError):
+                    continue
+            return out
+        if isinstance(raw, (list, tuple)):
+            out = []
+            for val in raw:
+                try:
+                    out.append(float(val))
+                except (TypeError, ValueError):
+                    continue
+            return out
+        return []
+
+
     def _init_widget_states(self) -> None:
         """Initialize enable/disable states for all mode-dependent widgets."""
 
@@ -11701,12 +11271,17 @@ class CertusStratApp(CertusBaseApp):
 
         """
 
-        # Historical alias (old JSON): one single canonical key on GUI side = substrate_choice.
+        # Historical aliases from older example JSON payloads.
+        if isinstance(config, dict):
+            if "substratee_choice" in config and config.get("substrate_choice") is None:
+                config["substrate_choice"] = config.get("substratee_choice")
+            if "substrate_choice" in config and config.get("substratee_choice") is None:
+                config["substratee_choice"] = config.get("substrate_choice")
 
-        if isinstance(config, dict) and "substrate_choice" not in config and "substrate_choice" in config:
-            config = dict(config)
-
-            config["substrate_choice"] = config.pop("substrate_choice")
+            # Map Silice config value to standard SiO2 combo item
+            if config.get("substrate_choice") == "Silice":
+                config["substrate_choice"] = "SiO2"
+                config["substratee_choice"] = "SiO2"
 
         # Step 1: Set radio button states
 
@@ -11800,6 +11375,7 @@ class CertusStratApp(CertusBaseApp):
             except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Error populating table: {e}")
 
+    @safe_ui_action
     def save_configuration(self) -> None:
         """Save current GUI configuration to a JSON file.
 
@@ -11943,6 +11519,7 @@ class CertusStratApp(CertusBaseApp):
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving: {e}")
 
+    @safe_ui_action
     def load_configuration(self, filename=None) -> None:
         """Load configuration from a JSON file and populate the GUI.
 
@@ -12031,11 +11608,11 @@ class CertusStratApp(CertusBaseApp):
             self.logger.info("=" * 60)
 
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
-                blocks = config.get("blocks", []) if isinstance(config, dict) else []
+                blocks = config.get("blocks") or [] if isinstance(config, dict) else []
 
                 strat_id = str(config.get("strategy_id", "")).strip()
 
-                n_blocks = int(config.get("n_blocks", len(blocks))) if isinstance(config, dict) else 0
+                n_blocks = int(config.get("n_blocks") or len(blocks)) if isinstance(config, dict) else 0
 
                 # Two formats: (1) GUI session via save_configuration - no strategy_id/blocks;
 
@@ -12337,6 +11914,18 @@ class CertusStratApp(CertusBaseApp):
                 nL_id = txt
 
         sub_choice = self.widgets["substrate_choice"].currentText()
+        if not sub_choice and "substratee_choice" in self.widgets:
+            sub_choice = self.widgets["substratee_choice"].currentText()
+
+        material_aliases = {
+            "H800-Nb": "H800-Nb",
+            "H800 Nb": "H800-Nb",
+            "H800_Nb": "H800-Nb",
+            "H800-SiO2": "H800-SiO2",
+            "H800 SiO2": "H800-SiO2",
+            "H800_SiO2": "H800-SiO2",
+            "Silice": "SiO2",
+        }
 
         if sub_choice == "Custom" or not sub_choice:
             nSub_id = self._get_float_safe("nSub_custom", 1.73)
@@ -12357,6 +11946,13 @@ class CertusStratApp(CertusBaseApp):
 
         except (ValueError, TypeError):
             noise_factors = [0.5, 1.0, 2.0]
+
+        nH_id = material_aliases.get(str(nH_id).strip(), nH_id)
+        nL_id = material_aliases.get(str(nL_id).strip(), nL_id)
+        if str(nSub_id).strip() in {"Silice", "SiO2", "H800-SiO2", "H800 SiO2", "H800_SiO2"}:
+            nSub_id = "SiO2"
+        elif str(nSub_id).strip() in {"Sapphire", "Sapphire (Al2O3)"}:
+            nSub_id = "Sapphire (Al2O3)"
 
         params_out = {
             "nH_id": nH_id,
@@ -12419,6 +12015,7 @@ class CertusStratApp(CertusBaseApp):
             "include_secondary_rmse_stats": bool(self._get_float_safe("include_secondary_rmse_stats", 0)),
             "keep_full_mc_top_k": int(self._get_float_safe("keep_full_mc_top_k", 30)),
             "robustness_seed": int(self._get_float_safe("robustness_seed", 42)),
+            "phase_a_seed": int(self._get_float_safe("phase_a_seed", self._get_float_safe("robustness_seed", 42))),
             "sym_enable": True,
             "sym_weight": self._get_float_safe("sym_weight", SYM_DEFAULT_WEIGHT),
             "sym_same_wl_bonus": self._get_float_safe("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS),
@@ -12436,6 +12033,7 @@ class CertusStratApp(CertusBaseApp):
             ),
             "enable_consensus_ranking": bool(self._get_float_safe("enable_consensus_ranking", 1.0) > 0.5),
             "consensus_num_seeds": int(self._get_float_safe("consensus_num_seeds", 3)),
+            "consensus_seed_list": str(getattr(self, "_loaded_config", {}).get("consensus_seed_list", "")),
             "consensus_seed_stride": int(self._get_float_safe("consensus_seed_stride", 1)),
             "consensus_top_k": int(self._get_float_safe("consensus_top_k", 12)),
             "consensus_num_runs": int(self._get_float_safe("consensus_num_runs", 150)),
@@ -12705,7 +12303,7 @@ class CertusStratApp(CertusBaseApp):
 
             os.makedirs(report_dir, exist_ok=True)
 
-            rmse_val = metadata.get("rmse", 0.0)
+            rmse_val = float(metadata.get("rmse", metadata.get("rmse_p95", metadata.get("rmse_mean", 0.0))))
 
             timestamp = certus_timestamp_file()
 
@@ -12757,7 +12355,7 @@ class CertusStratApp(CertusBaseApp):
                 # Keep stable order while removing duplicates.
                 return list(dict.fromkeys(paths))
 
-            manifest_dict: dict[str, Any] = {}
+            manifest_payload_source: dict[str, Any] = self.opti_results or {}
             try:
                 params_for_manifest = self.collect_params()
                 status_txt = str(getattr(self, "validation_status", "OK") or "OK")
@@ -12765,41 +12363,18 @@ class CertusStratApp(CertusBaseApp):
                     status_val = ValidationStatus(status_txt)
                 except ValueError:
                     status_val = ValidationStatus.OK
-                svc = IndexFitService(runner=lambda _cfg: self.opti_results or {})
-                req = IndexFitRequest(
-                    config={"module": "CERTUS_STRAT", "params": params_for_manifest},
-                    source_paths=_manifest_source_paths(),
-                    seed=_resolve_manifest_seed(params_for_manifest),
-                    app_id="CERTUS_STRAT",
-                    app_version=__version__,
-                    warnings=list(getattr(self, "validation_warnings", []) or []),
-                    status=status_val,
-                )
-                manifest_dict = svc.fit(req).manifest.to_dict()
+                svc = IndexFitService(runner=lambda _cfg: manifest_payload_source)
+                manifest_dict = svc.fit({
+                    "config": {"module": "CERTUS_STRAT", "params": params_for_manifest},
+                    "source_paths": _manifest_source_paths(),
+                    "seed": _resolve_manifest_seed(params_for_manifest),
+                    "app_id": "CERTUS_STRAT",
+                    "app_version": __version__,
+                    "warnings": list(getattr(self, "validation_warnings", []) or []),
+                    "status": status_val.value if isinstance(status_val, ValidationStatus) else str(status_val),
+                }).manifest.to_dict()
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                self.logger.warning("STRAT manifest generation (state params) failed: %s", exc)
-                manifest_dict = {}
-            manifest_dict: dict[str, Any] = {}
-            try:
-                params_for_manifest = metadata.get("params", {}) if isinstance(metadata, dict) else {}
-                status_txt = str(getattr(self, "validation_status", "OK") or "OK")
-                try:
-                    status_val = ValidationStatus(status_txt)
-                except ValueError:
-                    status_val = ValidationStatus.OK
-                svc = IndexFitService(runner=lambda _cfg: metadata or {})
-                req = IndexFitRequest(
-                    config={"module": "CERTUS_STRAT", "params": params_for_manifest},
-                    source_paths=_manifest_source_paths(),
-                    seed=_resolve_manifest_seed(params_for_manifest),
-                    app_id="CERTUS_STRAT",
-                    app_version=__version__,
-                    warnings=list(getattr(self, "validation_warnings", []) or []),
-                    status=status_val,
-                )
-                manifest_dict = svc.fit(req).manifest.to_dict()
-            except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                self.logger.warning("STRAT manifest generation (metadata params) failed: %s", exc)
+                self.logger.warning("STRAT manifest generation failed: %s", exc)
                 manifest_dict = {}
 
             missing_manifest_fields = get_missing_manifest_fields(manifest_dict)
@@ -13128,8 +12703,8 @@ class CertusStratApp(CertusBaseApp):
                         "ID": strat["strategy_id"],
                         "Blocks Count": strat.get("n_blocks", 0),
                         "Structure (nm)": blocks_fmt,
-                        "RMSE Score": f"{s.get('rmse', 0):.5f}",
-                        "Robustness": f"{s.get('robustness_score', 0):.5f}",
+                        "RMSE Score": f"{float(s.get('rmse_p95', s.get('rmse_mean', s.get('rmse', 0.0)))):.5f}",
+                        "Robustness": f"{float(s.get('robustness_score', 0.0)):.5f}",
                     }
                 )
             if table_data:
@@ -13171,9 +12746,10 @@ class CertusStratApp(CertusBaseApp):
 
             os.makedirs(report_dir, exist_ok=True)
 
-            # Get RMSE from best strategy (prefer final_results if available)
-
-            rmse_val = 0.0
+            # Get RMSE from the actual best-ranked strategy/result.
+            # Older payloads may keep placeholder 0.0 in the first item, so we must
+            # search for the first finite positive score instead of blindly using index 0.
+            # The RMSE used for export naming must stay an error metric, not a robustness score.
 
             strats = []
 
@@ -13183,14 +12759,7 @@ class CertusStratApp(CertusBaseApp):
             if not strats and "strategies_results" in self.opti_results:
                 strats = list(self.opti_results.get("strategies_results", []))
 
-            if strats:
-                first = strats[0]
-
-                try:
-                    rmse_val = float(first.get("robustness_score", first.get("rmse", 0.0)))
-
-                except (TypeError, ValueError):
-                    rmse_val = 0.0
+            rmse_val = extract_best_rmse(strats)
 
             timestamp = certus_timestamp_file()
 
@@ -13252,16 +12821,15 @@ class CertusStratApp(CertusBaseApp):
                 except ValueError:
                     status_val = ValidationStatus.OK
                 svc = IndexFitService(runner=lambda _cfg: self.opti_results or {})
-                req = IndexFitRequest(
-                    config={"module": "CERTUS_STRAT", "params": params_for_manifest},
-                    source_paths=_manifest_source_paths(),
-                    seed=_resolve_manifest_seed(params_for_manifest),
-                    app_id="CERTUS_STRAT",
-                    app_version=__version__,
-                    warnings=list(getattr(self, "validation_warnings", []) or []),
-                    status=status_val,
-                )
-                manifest_dict = svc.fit(req).manifest.to_dict()
+                manifest_dict = svc.fit({
+                    "config": {"module": "CERTUS_STRAT", "params": params_for_manifest},
+                    "source_paths": _manifest_source_paths(),
+                    "seed": _resolve_manifest_seed(params_for_manifest),
+                    "app_id": "CERTUS_STRAT",
+                    "app_version": __version__,
+                    "warnings": list(getattr(self, "validation_warnings", []) or []),
+                    "status": status_val.value if isinstance(status_val, ValidationStatus) else str(status_val),
+                }).manifest.to_dict()
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 self.logger.warning("STRAT auto-export manifest generation failed: %s", exc)
                 manifest_dict = {}
@@ -13726,7 +13294,7 @@ class CertusStratApp(CertusBaseApp):
                 x,
                 y,
                 bounds,
-                f"LIVE MONITORING: {strategy.get('n_blocks')} BLOCKS | RMSE: {score:.5f}",
+                f"LIVE MONITORING: {strategy.get('n_blocks')} BLOCKS | Robustness: {score:.5f}",
                 blocks,
             )
 

@@ -6,8 +6,11 @@ Provides consistent "Clear / Reset" behavior across the entire suite
 
 import gc
 import logging
-from PyQt6.QtWidgets import QMessageBox, QTextEdit, QPlainTextEdit
 from typing import Any
+
+from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit
+
+from certus_errors import NUMERICAL_FAULT_EXCEPTIONS
 
 
 __all__ = [

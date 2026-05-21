@@ -9,7 +9,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QSplashScreen
 
-from certus_core import get_resource_path
+from certus_core import get_resource_path, SVG_AVAILABLE
 
 
 def create_splash(init_message: str = "Initializing...") -> QSplashScreen:
@@ -25,7 +25,9 @@ def create_splash(init_message: str = "Initializing...") -> QSplashScreen:
     QSplashScreen
         A visible splash screen ready to receive ``showMessage`` updates.
     """
-    splash_pix = QPixmap(get_resource_path("certus.svg"))
+    splash_pix = QPixmap()
+    if SVG_AVAILABLE:
+        splash_pix = QPixmap(get_resource_path("certus.svg"))
 
     if splash_pix.isNull():
         splash_pix = QPixmap(get_resource_path("certus.ico"))

@@ -113,9 +113,9 @@ DEFAULT_MIN_KNOT_DISTANCE = 20.0
 DEFAULT_EXCEL_FILENAME = "metal_results.xlsx"
 
 
-DEFAULT_POPSIZE = 50
+DEFAULT_POPSIZE = 15
 
-DEFAULT_MAXITER = 1500
+DEFAULT_MAXITER = 800
 
 DEFAULT_TOL = 0.005
 
@@ -1711,6 +1711,123 @@ class MetalBaseApp(CertusBaseApp):
     def start_optimization(self) -> None:
 
         raise NotImplementedError
+
+    def copy_logs_to_clipboard(self) -> None:
+        """Copy logs to clipboard (delegates to certus_ui.copy_app_logs_to_clipboard)."""
+        from certus_ui import copy_app_logs_to_clipboard
+        if copy_app_logs_to_clipboard(self) and hasattr(self, "status_label"):
+            self.status_label.setText("Logs copied to clipboard!")
+
+    def _metal_start_optimization(
+        self,
+        worker_class: type[QObject],
+        build_bounds_fn: Callable[[dict, np.ndarray], np.ndarray],
+        build_params_fn: Optional[Callable[[dict], None]] = None,
+        before_run_fn: Optional[Callable[[dict], bool]] = None,
+    ) -> None:
+        """Shared logic for starting metal optimization."""
+        if getattr(self, "optimization_thread", None) is not None:
+            try:
+                if self.optimization_thread.isRunning():
+                    if getattr(self, "worker", None):
+                        self.worker.stop()
+                    self.optimization_thread.quit()
+                    if not self.optimization_thread.wait(2000):
+                        logging.critical(
+                            "Optimization thread did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
+                        )
+            except RuntimeError:
+                pass
+            self.optimization_thread = None
+            self.worker = None
+
+        if not self.target_data:
+            from certus_errors import show_error
+            show_error(self, "optim_no_data")
+            return
+
+        try:
+            p = {k: v.text() for k, v in self.widgets.items() if isinstance(v, QLineEdit)}
+            params = {k: float(v) for k, v in p.items() if k not in ["excel_filename"]}
+            
+            params.update(
+                {
+                    "excel_filename": self.widgets["excel_filename"].text(),
+                    "popsize": DEFAULT_POPSIZE,
+                    "maxiter": DEFAULT_MAXITER,
+                    "tol": DEFAULT_TOL,
+                    "mutation_min": DEFAULT_MUTATION_MIN,
+                    "mutation_max": DEFAULT_MUTATION_MAX,
+                    "recombination": DEFAULT_RECOMBINATION,
+                    "updating": DEFAULT_UPDATING,
+                    "workers": DEFAULT_WORKERS,
+                }
+            )
+
+            if build_params_fn:
+                build_params_fn(params)
+
+            mask = (self.target_data["lambda"] >= params["lmin_filter"]) & (
+                self.target_data["lambda"] <= params["lmax_filter"]
+            )
+            target_lambda_filtered = self.target_data["lambda"][mask]
+            
+            params["target_lambda"] = target_lambda_filtered
+            params["target_r"] = self.target_data["R"][mask]
+            
+            if "T" in self.target_data:
+                params["target_t"] = self.target_data["T"][mask]
+            if "Rback" in self.target_data:
+                params["target_rb"] = self.target_data["Rback"][mask]
+
+            if before_run_fn and not before_run_fn(params):
+                return
+
+            bounds = build_bounds_fn(params, target_lambda_filtered)
+            params["bounds"] = bounds
+
+        except (ValueError, KeyError) as e:
+            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
+            return
+
+        self.mse_data = {"iterations": [], "errors": []}
+        self.mse_curve.setData([], [])
+        if hasattr(self, "diel_curve"):
+            self.diel_curve.setData([], [])
+
+        for label in [
+            "live_eM", "live_MSE", "live_eM_label", "live_eL_label",
+            "live_n_infini_label", "live_A_diel_label", "live_mse_label"
+        ]:
+            if label in self.widgets:
+                self.widgets[label].setText("...")
+
+        self.btn_run.setEnabled(False)
+        self.btn_stop.setEnabled(True)
+
+        self._last_worker_params = params.copy()
+        self.optimization_thread = QThread()
+        self.worker = worker_class(params)
+        self.worker.moveToThread(self.optimization_thread)
+
+        self.optimization_thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.on_optimization_finished)
+        self.worker.progress.connect(self.update_plots)
+        self.worker.progress.connect(self._on_optim_progress)
+        self.worker.error.connect(self.on_optimization_error)
+        self.worker.stats_update.connect(self.on_stats_update)
+
+        self.worker.finished.connect(self.optimization_thread.quit)
+        self.worker.error.connect(self.optimization_thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.optimization_thread.finished.connect(self.optimization_thread.deleteLater)
+
+        self._optim_max_iter = params.get("maxiter", DEFAULT_MAXITER)
+        self.progress_widget.start()
+        self.optimization_thread.start()
+
+        self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
+        self.update_stats_display()
 
     def stop_optimization(self) -> None:
         """Confirm-then-stop for optimization and beam analysis workers.

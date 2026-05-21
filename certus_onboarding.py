@@ -254,8 +254,6 @@ def _build_overlay_class():
             self._dont_show: QCheckBox | None = None
 
             self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, False)
-            self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-            self.setStyleSheet("background: transparent;")
             parent.installEventFilter(self)
             self._resize_to_parent()
             self._build_coach()
@@ -274,35 +272,39 @@ def _build_overlay_class():
 
         # -- Drawing ---------------------------------------------------------
         def paintEvent(self, _event):  # noqa: N802 Qt
-            p = QPainter(self)
-            p.setRenderHint(QPainter.RenderHint.Antialiasing)
-            # Full-window dim
-            path = QPainterPath()
-            path.addRect(0.0, 0.0, float(self.width()), float(self.height()))
-            hole = self._spotlight_rect()
-            if hole is not None:
-                hole_path = QPainterPath()
-                hole_path.addRoundedRect(
-                    float(hole.x()),
-                    float(hole.y()),
-                    float(hole.width()),
-                    float(hole.height()),
-                    10.0,
-                    10.0,
-                )
-                path = path.subtracted(hole_path)
-                # Accent border around spotlight
-                p.setBrush(Qt.BrushStyle.NoBrush)
-                pen_color = QColor(37, 99, 235, 220)
-                pen = p.pen()
-                pen.setColor(pen_color)
-                pen.setWidth(2)
-                p.setPen(pen)
-                p.drawRoundedRect(hole, 10, 10)
-            p.setPen(Qt.PenStyle.NoPen)
-            p.setBrush(QColor(0, 0, 0, 140))
-            p.drawPath(path)
-            p.end()
+            p = QPainter()
+            if not p.begin(self):
+                return
+            try:
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                # Full-window dim
+                path = QPainterPath()
+                path.addRect(0.0, 0.0, float(self.width()), float(self.height()))
+                hole = self._spotlight_rect()
+                if hole is not None:
+                    hole_path = QPainterPath()
+                    hole_path.addRoundedRect(
+                        float(hole.x()),
+                        float(hole.y()),
+                        float(hole.width()),
+                        float(hole.height()),
+                        10.0,
+                        10.0,
+                    )
+                    path = path.subtracted(hole_path)
+                    # Accent border around spotlight
+                    p.setBrush(Qt.BrushStyle.NoBrush)
+                    pen_color = QColor(37, 99, 235, 220)
+                    pen = p.pen()
+                    pen.setColor(pen_color)
+                    pen.setWidth(2)
+                    p.setPen(pen)
+                    p.drawRoundedRect(hole, 10.0, 10.0)
+                p.setPen(Qt.PenStyle.NoPen)
+                p.setBrush(QColor(0, 0, 0, 140))
+                p.drawPath(path)
+            finally:
+                p.end()
 
         def _spotlight_rect(self) -> QRect | None:
             if not self._steps:

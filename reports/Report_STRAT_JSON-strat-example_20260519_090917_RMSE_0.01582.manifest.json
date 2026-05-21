@@ -1,0 +1,46 @@
+{
+  "run_id": "run_20260519T070917Z",
+  "started_at_utc": "2026-05-19T07:09:17.658719+00:00",
+  "app_id": "CERTUS_STRAT",
+  "app_version": "26_01",
+  "seed": 42,
+  "software_env": {
+    "python": "3.14.4",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "numba": "0.63.1",
+    "pyqt": "6.10.0",
+    "openpyxl": "3.1.5",
+    "matplotlib": "3.10.8",
+    "os": "Windows 11",
+    "certus_version": "26_01"
+  },
+  "numba_version": "0.63.1",
+  "numpy_version": "2.3.5",
+  "threading_layer": "omp",
+  "env_locale": "fr_FR.cp1252",
+  "cpu_brand": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "os_release": "11",
+  "input_fingerprints": [
+    {
+      "path": "C:\\Users\\Lemarchand\\Mon Drive\\couches minces 2026\\CERTUS\\1705\\example\\example_strat\\JSON-strat-example.json",
+      "sha256": "0a2a4799f0d2e789ed9cd459063310c6b46ff82aa364e38be4651df13902a65c",
+      "size": 3073,
+      "mtime_utc": "2026-05-13T09:54:12+00:00"
+    },
+    {
+      "path": "C:\\Users\\Lemarchand\\Mon Drive\\couches minces 2026\\CERTUS\\1705\\example\\database_index\\indices.xlsx",
+      "sha256": "5c85275bec23bf9cdda028df7c7da2bec60a533f71e8790db3c25c17f3bce8f3",
+      "size": 276486,
+      "mtime_utc": "2026-05-13T09:54:14+00:00"
+    }
+  ],
+  "params_hash": "9de85e7382bf33157fdd12a4d03fd633e09a494875b2e7156dd7b83b7d85e356",
+  "materials_db_hash": "b72b847d82264169ca83fa43f459ecf4c6d72e292d900d32b8a1673d14a0c8ee",
+  "db_version": "b72b847d8226",
+  "warnings": [
+    "STRAT run uses stochastic stages without explicit seed in exported params.",
+    "STRAT auto-export run uses stochastic stages without explicit seed."
+  ],
+  "status": "WARNING_UNSEEDED_STOCHASTIC"
+}

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Sequence
+
+import numpy as np
 
 
 def _copy_legacy_cfg(cfg: dict[str, Any] | None) -> dict[str, Any]:
@@ -50,11 +52,14 @@ class ColorWorkerResult:
     """DTO boundary for DESIGN ColorWorker output payload."""
 
     ok: bool
-    lab_nom: Any | None = None
-    labs: Any | None = None
+    lab_nom: tuple[float, float, float] | list[float] | None = None
+    labs: list[tuple[float, float, float]] | list[list[float]] | np.ndarray | None = None
 
     @staticmethod
-    def success(lab_nom: Any, labs: Any) -> "ColorWorkerResult":
+    def success(
+        lab_nom: tuple[float, float, float] | list[float],
+        labs: list[tuple[float, float, float]] | list[list[float]] | np.ndarray,
+    ) -> "ColorWorkerResult":
         return ColorWorkerResult(ok=True, lab_nom=lab_nom, labs=labs)
 
     @staticmethod
@@ -74,11 +79,11 @@ class OptimWorkerResult:
     """DTO boundary for DESIGN OptimWorker output payload."""
 
     ok: bool
-    ep: Any | None = None
+    ep: list[float] | np.ndarray | None = None
     rmse: float | None = None
 
     @staticmethod
-    def success(ep: Any, rmse: float) -> "OptimWorkerResult":
+    def success(ep: list[float] | np.ndarray, rmse: float) -> "OptimWorkerResult":
         return OptimWorkerResult(ok=True, ep=ep, rmse=float(rmse))
 
     @staticmethod

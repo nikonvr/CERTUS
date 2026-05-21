@@ -6,24 +6,26 @@
 
 # DO NOT REFACTOR INTO SUBMODULES WITHOUT EXPLICIT AUTHORIZATION.
 
+# P1 boundary: safe edits should first target small pure helpers, typing, logging,
+# and UX labels. Keep numerical kernels and workflow orchestration stable unless
+# a dedicated extraction/test plan exists.
+
 # =========================================================================================
 
 from typing import Any
-import logging
-import multiprocessing
-
 import functools
-
+import logging
 import os
+import time
 from pathlib import Path
 
+import multiprocessing
 import sys
+import time
 
 import traceback
 
-import time
-
-from certus_core import create_module_environment, setup_module_logging
+from certus_core import create_module_environment
 
 # =============================================================================
 
@@ -47,14 +49,7 @@ from numba import njit, prange
 
 from enum import Enum, auto
 
-class DataType(Enum):
-    """Spectral data type"""
 
-    TRANSMISSION = auto()
-
-    REFLECTION = auto()
-
-    BOTH = auto()
 
 class substrateMode(Enum):
     """substrate mode"""
@@ -191,6 +186,7 @@ from certus_physics import (
     _compute_phase2_derivatives_kernel,
     _compute_ir_global_cost_gradient_kernel,
     calculate_single_interface_R,
+    calculate_reflection_array,
     calculate_bare_substrate_R,
     calculate_bare_substrate_R_absorbing,
     calculate_bare_substrate_RT,
@@ -208,264 +204,27 @@ from certus_physics import (
     SplineBasisCache,
 )
 
-from certus_index_utils import spectral_rmse_weights
+from certus_index_utils import (
+    spectral_rmse_weights,
+    sellmeier_2poles_eval_nj,
+    sellmeier_2poles_eval,
+    k_law_8p_eval,
+    _deduce_knots_from_k8p,
+    _ensure_strictly_increasing,
+    _merge_closest_knot_pair,
+    _sellmeier_residuals,
+    fit_sellmeier_global,
+    fit_k_global_8p,
+    DataType,
+    _detect_data_type_from_array,
+    _detect_type_from_column_name,
+    detect_data_type,
+    analyze_loaded_data,
+    _get_substrate_n_array_index,
+    normalize_index_config,
+    calculate_index_rmse,
+)
 
-def _get_substrate_n_array_index(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
-    """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
-
-    sid = int(substrate_id)
-
-    wl_nm = np.asarray(wavelengths_nm, dtype=np.float64)
-
-    if sid != 3:
-        return get_n_substrate_array_by_id(sid, wl_nm)
-
-    coeffs = SELLMEIER_COEFFS_BY_ID.get(3)
-
-    if coeffs is None or len(coeffs) != 6:
-        raise KeyError("Missing Sellmeier coefficients for Sapphire (id=3).")
-
-    B1, C1, B2, C2, B3, C3 = (float(v) for v in coeffs)
-
-    wl_um = wl_nm / 1000.0
-
-    wl_sq = wl_um * wl_um
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        n_sq = 1.0 + (B1 * wl_sq) / (wl_sq - C1) + (B2 * wl_sq) / (wl_sq - C2) + (B3 * wl_sq) / (wl_sq - C3)
-
-    n = np.sqrt(np.maximum(n_sq, 1.0e-6))
-
-    min_lambda_nm = float(SUBSTRATES.get("Sapphire (Al2O3)", {}).get("min_lambda", 230.0))
-
-    n = np.where(wl_nm < min_lambda_nm, np.nan, n)
-
-    return n.astype(np.float64)
-
-@njit(cache=True, fastmath=True)
-def sellmeier_2poles_eval_nj(params, wl_um) -> np.ndarray:
-    """
-
-    Numba-compatible Sellmeier 2-poles model with constant A.
-
-    params = [A, B1, L1, B2, L2] where Ci = Li^2
-
-    n^2 = A + sum [ (Bi * wl^2) / (wl^2 - Ci) ]
-
-    """
-
-    A, B1, L1, B2, L2 = params
-
-    term1 = (B1 * wl_um**2) / (wl_um**2 - L1**2)
-
-    term2 = (B2 * wl_um**2) / (wl_um**2 - L2**2)
-
-    val = A + term1 + term2
-
-    return np.sqrt(np.maximum(val, 1e-6))
-
-@njit(cache=True, fastmath=True)
-def k_law_8p_eval(L_um, p) -> Any:
-    """
-
-    Numba-compatible 8-parameter empirical model for extinction coefficient k(lambda).
-
-    k(L) = 1e-6 + exp(p[0]*L + p[1]) + exp(p[2]*L + p[3]) + p[4]*exp(-|(L-p[5])/p[6]|^p[7])
-
-    p[4]=amp, p[5]=center (m), p[6]=width (m), p[7]=beta (shape exponent:
-
-    1=Laplace, 2=Gaussian, >2=Super-Gaussian). Beta is clipped to [1, 8] to match flat_bounds.
-
-    Exponential arguments are soft-saturated (tanh) to avoid overflow while keeping k(L) smooth (no kink at clip boundaries).
-
-    """
-
-    # Soft saturation to avoid overflow: smooth transition instead of hard clip so dk/dlambda is continuous (no "kink" or "break")
-
-    _lo, _hi = -25.0, 5.0
-
-    _mid = 0.5 * (_lo + _hi)
-
-    _scale = 2.0
-
-    x1 = p[0] * L_um + p[1]
-
-    x2 = p[2] * L_um + p[3]
-
-    e1_arg = _mid + (0.5 * (_hi - _lo)) * np.tanh((x1 - _mid) / _scale)
-
-    e2_arg = _mid + (0.5 * (_hi - _lo)) * np.tanh((x2 - _mid) / _scale)
-
-    base1 = np.exp(e1_arg)
-
-    base2 = np.exp(e2_arg)
-
-    # Super-Gaussian peak: ensure width and exponent are positive and within bounds
-
-    amp, center, width, exponent = p[4], p[5], p[6], p[7]
-
-    w_safe = max(width, 1e-9)
-
-    # Manual scalar clip (Numba type inference issue with np.clip on scalar)
-
-    beta = max(min(exponent, 8.0), 1.0)
-
-    # abs() required for non-integer exponents
-
-    arg = np.abs((L_um - center) / w_safe)
-
-    gauss = amp * np.exp(-(arg**beta))
-
-    return 1e-6 + base1 + base2 + gauss
-
-def _deduce_knots_from_k8p(wl_um, p_k8, num_knots=8, min_knot_dist_um=0.05) -> Any:
-    """Deduce the positions of the knots for the spline k from the curve k 8p.
-
-    Reasoning in log k: curvature of log(k_ref), cumulative equidistribution.
-
-    Returns knot_lambda_um (array of length num_knots), edges = wl_um.min/max."""
-
-    k_ref = k_law_8p_eval(wl_um, p_k8)
-
-    log_k_ref = np.log(np.maximum(k_ref, SMALL_EPSILON))
-
-    n_pts = len(wl_um)
-
-    if n_pts < 4 or num_knots < 3:
-        return np.linspace(wl_um.min(), wl_um.max(), max(3, num_knots))
-
-    # Curvature |d2(log k)/dlambda2| by central finite differences
-
-    dlam = np.diff(wl_um)
-
-    dlogk = np.diff(log_k_ref)
-
-    dlogk_dlam = np.zeros_like(wl_um, dtype=np.float64)
-
-    dlogk_dlam[0] = dlogk[0] / dlam[0] if dlam[0] > 1e-10 else 0.0
-
-    dlogk_dlam[-1] = dlogk[-1] / dlam[-1] if dlam[-1] > 1e-10 else 0.0
-
-    dlogk_dlam[1:-1] = (log_k_ref[2:] - log_k_ref[:-2]) / (wl_um[2:] - wl_um[:-2])
-
-    curv = np.zeros(n_pts, dtype=np.float64)
-
-    curv[1:-1] = np.abs((dlogk_dlam[2:] - dlogk_dlam[:-2]) / (wl_um[2:] - wl_um[:-2] + 1e-20))
-
-    cum = np.zeros(n_pts + 1, dtype=np.float64)
-
-    cum[1:] = np.cumsum(np.maximum(curv, 0.0))
-
-    total = cum[-1]
-
-    if total < 1e-20:
-        return np.linspace(wl_um.min(), wl_um.max(), num_knots)
-
-    # Equidistribution of cumulative curvature: N-2 internal nodes.
-    # Uses np.searchsorted (O(N log N)) to place knots at equal-curvature intervals
-    # instead of iterating per-knot (O(N*M) in the original loop).
-
-    knot_lam = np.empty(num_knots, dtype=np.float64)
-
-    knot_lam[0] = wl_um.min()
-
-    knot_lam[-1] = wl_um.max()
-
-    t_vals = np.arange(1, num_knots - 1, dtype=np.float64) / float(num_knots - 1)
-
-    targets = t_vals * total
-
-    # Vectorized knot placement: find insertion points for all targets at once.
-    idx = np.searchsorted(cum[1:], targets)  # O(K log N)
-
-    idx = np.clip(idx, 0, n_pts - 1)  # guard: clamp to valid range
-
-    knot_lam[1 : num_knots - 1] = wl_um[idx]
-
-    knot_lam = np.sort(knot_lam)
-
-    # Enforcer min_knot_dist
-
-    for _ in range(10):
-        bad = np.where(np.diff(knot_lam) < min_knot_dist_um)[0]
-
-        if len(bad) == 0:
-            break
-
-        for i in bad:
-            mid = (knot_lam[i] + knot_lam[i + 1]) * 0.5
-
-            knot_lam[i] = mid - min_knot_dist_um * 0.5
-
-            knot_lam[i + 1] = mid + min_knot_dist_um * 0.5
-
-        knot_lam[0] = wl_um.min()
-
-        knot_lam[-1] = wl_um.max()
-
-        knot_lam = np.sort(knot_lam)
-
-    return _ensure_strictly_increasing(knot_lam, min_gap=min_knot_dist_um * 0.5)
-
-def _ensure_strictly_increasing(knot_lam: np.ndarray, min_gap: float = 1e-10) -> np.ndarray:
-    """Guarantee a knot array is strictly increasing (CubicSpline requires strict growth).
-
-    Algorithm (vectorized prefix-scan, O(N)):
-        Subtracts a linear floor, applies ``np.maximum.accumulate``, then restores.
-        See ``_enforce_sigma_min_sep`` for detailed description of the technique.
-
-    Guards:
-        - Returns input unchanged if fewer than 2 knots.
-        - Post-condition: np.all(np.diff(out) >= min_gap - 1e-15).
-    """
-    # --- Input validation ---
-    out = np.asarray(knot_lam, dtype=np.float64).copy()
-
-    if out.size < 2:
-        return out
-
-    # --- Vectorized prefix-scan (O(N), no Python loop) ---
-    floor = np.arange(out.size, dtype=np.float64) * min_gap
-
-    shifted = out - floor
-
-    shifted = np.maximum.accumulate(shifted)
-
-    out = shifted + floor
-
-    return out
-
-def _merge_closest_knot_pair(knot_lam_um: np.ndarray, log_k_values: np.ndarray) -> tuple:
-    """Reduced by one node by merging the closest pair of consecutive nodes.
-
-    Returns (knot_lam_new, log_k_new) of length n-1."""
-
-    n = len(knot_lam_um)
-
-    if n <= 2:
-        return knot_lam_um.copy(), log_k_values.copy()
-
-    gaps = np.diff(knot_lam_um)
-
-    i_merge = int(np.argmin(gaps))
-
-    lam_new = np.concatenate(
-        [
-            knot_lam_um[:i_merge],
-            [(knot_lam_um[i_merge] + knot_lam_um[i_merge + 1]) * 0.5],
-            knot_lam_um[i_merge + 2 :],
-        ]
-    )
-
-    log_k_new = np.concatenate(
-        [
-            log_k_values[:i_merge],
-            [(log_k_values[i_merge] + log_k_values[i_merge + 1]) * 0.5],
-            log_k_values[i_merge + 2 :],
-        ]
-    )
-
-    return lam_new, log_k_new
 
 class IRGlobalObjective:
     """Refinement objective for Phase 2 (>2500nm) using 13-parameter global model."""
@@ -532,6 +291,16 @@ class IRGlobalObjective:
 
         if config.exclude_min is not None and config.exclude_max is not None:
             mask &= ~((self.wls >= config.exclude_min) & (self.wls <= config.exclude_max))
+
+        # 3. Substrate transmission safety mask (only when use_norm is True)
+
+        if self.use_norm:
+            if self.data_type == DataType.TRANSMISSION:
+                mask &= (self.T_sub > T_SUB_MIN_T_NORM)
+            elif self.data_type == DataType.REFLECTION:
+                mask &= (self.T_sub > T_SUB_MIN_R_NORM)
+            else:  # DataType.BOTH
+                mask &= (self.T_sub > T_SUB_MIN_R_NORM)
 
         self.spec_w[~mask] = 0.0
 
@@ -681,7 +450,7 @@ class IRGlobalObjective:
     def _compute_cost(self, n, k) -> Any:
 
         if self.is_frosted:
-            R_c = calculate_single_interface_R(self.wls, n, k, self.thickness, self.n_sub)
+            R_c = calculate_reflection_array(self.wls, n, k, self.thickness, self.n_sub)
 
             # Frosted: single-face R (absolute or relative). Never R/Tnu.
 
@@ -1093,9 +862,9 @@ class Phase23Pass2SplineObjective:
 
         n = sellmeier_2poles_eval_nj(p_sell, self.obj.wl_um)
 
-        B = SplineBasisCache.get(knot_lam, self.obj.wl_um)
-
-        log_k = B @ log_k_knot
+        from scipy.interpolate import CubicSpline
+        spline = CubicSpline(knot_lam, log_k_knot, bc_type="natural", extrapolate=True)
+        log_k = spline(self.obj.wl_um)
 
         log_k_c = np.clip(log_k, self._log_k_lo, self._log_k_hi)
 
@@ -1211,9 +980,9 @@ class Phase23Pass2SplineObjective:
 
         def _cost_fixed_n_for_knot(knot_lam_local: np.ndarray) -> float:
 
-            B_local = SplineBasisCache.get(knot_lam_local, self.obj.wl_um)
-
-            log_k_local = B_local @ log_k_knot
+            from scipy.interpolate import CubicSpline
+            spline_local = CubicSpline(knot_lam_local, log_k_knot, bc_type="natural", extrapolate=True)
+            log_k_local = spline_local(self.obj.wl_um)
 
             log_k_local_c = np.clip(log_k_local, self._log_k_lo, self._log_k_hi)
 
@@ -1246,158 +1015,7 @@ class Phase23Pass2SplineObjective:
 
             x_minus[idx] = x[idx]
 
-        grad_full = np.concatenate([grad_sell_logk, grad_lambda])
-
-        self._set_cached(x, grad=grad_full)
-
         return grad_full
-
-def sellmeier_2poles_eval(params, wl_um) -> Any:
-    """
-
-    params = [A, B1, L1, B2, L2] where Ci = Li^2
-
-    n^2 = A + sum [ (Bi * wl^2) / (wl^2 - Ci) ]
-
-    """
-
-    return sellmeier_2poles_eval_nj(params, wl_um)
-
-def _sellmeier_residuals(params, wl_um, n_exp) -> Any:
-
-    return (sellmeier_2poles_eval(params, wl_um) - n_exp) * 1000
-
-def fit_sellmeier_global(
-    wls_nm: np.ndarray, n_exp: np.ndarray, material: str = "other", valid_mask: np.ndarray | None = None
-) -> tuple[np.ndarray, np.ndarray]:
-    """
-
-    Robust 3-pole Sellmeier fit using differential_evolution to find the global minimum,
-
-    followed by a least_squares polish.
-
-    Returns (n_fit_array, params_array)
-
-    """
-
-    from scipy.optimize import differential_evolution, least_squares
-
-    import logging
-
-    wl_um = wls_nm / 1000.0
-
-    wl_fit = wl_um
-
-    n_fit = n_exp
-
-    if valid_mask is not None:
-        wl_fit = wl_um[valid_mask]
-
-        n_fit = n_exp[valid_mask]
-
-    # A, B1, L1, B2, L2
-
-    b_bounds = [(1.0, 10.0), (0.0, 10.0), (0.01, 0.5), (0.0, 10.0), (0.05, 0.8)]
-
-    if str(material).lower() == "sio2":
-        # A, B1, L1, B2, L2
-
-        b_bounds = [(1.4, 1.5), (0.0, 2.0), (0.01, 0.15), (0.0, 2.0), (0.05, 0.25)]
-
-    def cost_func(p) -> np.ndarray:
-
-        res = _sellmeier_residuals(p, wl_fit, n_fit)
-
-        # Soft-L1 like cost to ignore outliers/noise
-
-        return np.sum(np.log1p(res**2))
-
-    try:
-        # 1. Global Search (differential_evolution)
-
-        res_global = differential_evolution(
-            cost_func,
-            bounds=b_bounds,
-            strategy="best1bin",
-            maxiter=1000,
-            popsize=15,
-            mutation=(0.5, 1.0),
-            recombination=0.7,
-            seed=42,  # Reproducibility
-            polish=False,  # We polish manually with robust loss below
-        )
-
-        # 2. Local Polish (least_squares with soft_l1)
-
-        # We reformat bounds for least_squares: (lower_array, upper_array)
-
-        ls_bounds = ([b[0] for b in b_bounds], [b[1] for b in b_bounds])
-
-        res_local = least_squares(
-            _sellmeier_residuals, res_global.x, bounds=ls_bounds, args=(wl_fit, n_fit), loss="soft_l1", f_scale=0.1
-        )
-
-        return sellmeier_2poles_eval(res_local.x, wl_um), res_local.x
-
-    except NUMERICAL_FAULT_EXCEPTIONS as e:
-        logging.getLogger(__name__).warning(f"Sellmeier fit failed: {e}. Falling back to raw spline n.")
-
-        return n_exp, None
-
-def fit_k_global_8p(
-    wls_nm: np.ndarray, k_exp: np.ndarray, valid_mask: np.ndarray | None = None
-) -> tuple[np.ndarray, np.ndarray | None]:
-    """
-
-    Fit k with a robust 8-parameter empirical law (Exponential baselines + 1 Super-Gaussian):
-
-    k(L) = 1e-6 + exp(P1*L + P0) + exp(P3*L + P2) + P4*exp(-abs((L-P5)/P6)**P7)
-
-    """
-
-    from scipy.optimize import least_squares
-
-    L_um = wls_nm / 1000.0
-
-    mask = (k_exp > 1e-8) & (L_um >= 0.8)
-
-    if valid_mask is not None:
-        mask &= valid_mask
-
-    if np.sum(mask) < 8:
-        return k_exp, None
-
-    L_fit = L_um[mask]
-
-    k_fit = k_exp[mask]
-
-    def obj_func(p, L, k_target) -> Any:
-
-        fit = k_law_8p_eval(L, p)
-
-        return np.log10(fit + 1e-9) - np.log10(k_target + 1e-9)
-
-    # [slope1, pos1, slope2, pos2, amp, center, width, beta]
-
-    p0 = [1.0, -10.0, 0.1, -15.0, 1e-4, 2.8, 0.2, 2.0]
-
-    bounds = ([-20.0, -40.0, -20.0, -40.0, 0.0, 1.0, 0.01, 1.0], [20.0, 5.0, 20.0, 5.0, 1.0, 20.0, 5.0, 6.0])
-
-    try:
-        res = least_squares(obj_func, p0, bounds=bounds, args=(L_fit, k_fit), loss="soft_l1")
-
-        k_smooth = k_law_8p_eval(L_um, res.x)
-
-        # Prevent k from exploding on the left side too much if not fitted properly
-
-        k_smooth = np.where(L_um <= 1.0, k_exp, k_smooth)
-
-        return k_smooth, res.x
-
-    except NUMERICAL_FAULT_EXCEPTIONS as e:
-        logging.getLogger(__name__).warning(f"k 8-param fit failed: {e}")
-
-        return k_exp, None
 
 # ---------------------------------------------------------
 
@@ -1426,8 +1044,10 @@ from certus_ui import (
     get_export_config,
     init_certus_app,
     open_documentation,
+    get_certus_last_dir,
     set_certus_last_dir,
     setup_gui_exception_handling,
+    setup_module_logging,
     setup_pyqtgraph_defaults,
 )
 from certus_metrology import ValidationStatus
@@ -1490,236 +1110,7 @@ setup_pyqtgraph_defaults()
 
 setup_gui_exception_handling()
 
-def detect_data_type(data: np.ndarray, threshold: float = 0.80) -> str:
-    """Detect if data represents transmission or reflection via statistical analysis.
 
-    Heuristics:
-
-    - Transmission typically has high values (>80% for most of spectrum)
-
-    - Reflection typically has low values (<20% for uncoated substrates)
-
-    - High-reflectance mirrors can have R > 95% - use physical constraints
-
-    Returns 'T' or 'R'"""
-
-    data_copy = data.copy()
-
-    # Normalize if in percentage format
-
-    if np.nanmax(data_copy) > 1.5:
-        data_copy = data_copy / 100.0
-
-    valid_data = data_copy[np.isfinite(data_copy)]
-
-    if len(valid_data) == 0:
-        return "T"  # Default to T if no valid data
-
-    mean_val = np.nanmean(valid_data)
-
-    max_val = np.nanmax(valid_data)
-
-    # High mean (>50%) strongly suggests transmission
-
-    if mean_val > 0.50:
-        return "T"
-
-    # Low mean + low max strongly suggests reflection
-
-    if mean_val < 0.20 and max_val < 0.30:
-        return "R"
-
-    # >10% of points above threshold suggests T
-
-    n_above_threshold = np.sum(valid_data > threshold)
-
-    ratio_above = n_above_threshold / len(valid_data)
-
-    if ratio_above > 0.10:
-        return "T"
-
-    # Max > 95% typically transmission
-
-    if max_val > 0.95:
-        return "T"
-
-    return "R"
-
-def _detect_type_from_column_name(col_name: str) -> str:
-    """Detect data type from column header name.
-
-    Returns 'T', 'R', or 'unknown'."""
-
-    if col_name is None:
-        return "unknown"
-
-    name_lower = str(col_name).lower().strip()
-
-    # Transmission patterns (incl. Tnu, T_nu = normalized T)
-
-    t_patterns = ["t", "trans", "transmission", "%t", "t%", "t(%)", "tnu", "t_nu"]
-
-    for pat in t_patterns:
-        if name_lower == pat or name_lower.startswith(pat + " ") or name_lower.startswith(pat + "("):
-            return "T"
-
-    # Reflection patterns (incl. Rnu, R_nu = normalized R)
-
-    r_patterns = ["r", "refl", "reflection", "%r", "r%", "r(%)", "rnu", "r_nu"]
-
-    for pat in r_patterns:
-        if name_lower == pat or name_lower.startswith(pat + " ") or name_lower.startswith(pat + "("):
-            return "R"
-
-    return "unknown"
-
-def analyze_loaded_data(df: pd.DataFrame) -> tuple[DataType, dict[str, np.ndarray]]:
-    """Analyze a loaded DataFrame to detect data type.
-
-    Detection priority:
-
-    1. Column header names (if present: 'T', 'R', 'Trans', 'Refl', etc.)
-
-    2. Statistical analysis of data distribution
-
-    Returns (DataType, {'lambda': array, 'T': array or None, 'R': array or None})"""
-
-    result = {
-        "lambda": df.iloc[:, 0].to_numpy().astype(np.float64),
-        "T": None,
-        "R": None,
-    }
-
-    n_cols = len(df.columns)
-
-    col_names = list(df.columns)
-
-    if n_cols == 2:
-        col2_data = df.iloc[:, 1].to_numpy().astype(np.float64)
-
-        # Try column name first
-
-        col2_header_type = _detect_type_from_column_name(col_names[1])
-
-        if col2_header_type != "unknown":
-            col2_type = col2_header_type
-
-        else:
-            col2_type = detect_data_type(col2_data)
-
-        if col2_type == "T":
-            result["T"] = col2_data
-
-            return DataType.TRANSMISSION, result
-
-        else:
-            result["R"] = col2_data
-
-            return DataType.REFLECTION, result
-
-    elif n_cols >= 3:
-        col2_data = df.iloc[:, 1].to_numpy().astype(np.float64)
-
-        col3_data = df.iloc[:, 2].to_numpy().astype(np.float64)
-
-        # Try column names first
-
-        col2_header_type = _detect_type_from_column_name(col_names[1])
-
-        col3_header_type = _detect_type_from_column_name(col_names[2])
-
-        # If both headers detected, use them
-
-        if col2_header_type != "unknown" and col3_header_type != "unknown":
-            if col2_header_type == "T":
-                result["T"] = col2_data
-
-            else:
-                result["R"] = col2_data
-
-            if col3_header_type == "T":
-                result["T"] = col3_data
-
-            else:
-                result["R"] = col3_data
-
-            if result["T"] is not None and result["R"] is not None:
-                return DataType.BOTH, result
-
-            elif result["T"] is not None:
-                return DataType.TRANSMISSION, result
-
-            else:
-                return DataType.REFLECTION, result
-
-        # Fall back to statistical detection
-
-        col2_type = col2_header_type if col2_header_type != "unknown" else detect_data_type(col2_data)
-
-        col3_type = col3_header_type if col3_header_type != "unknown" else detect_data_type(col3_data)
-
-        # Conflict or Ambiguity Resolution
-
-        if col2_type == col3_type:
-            # Both look like T or both look like R
-
-            # User Rule: "The column with larger values corresponds to T"
-
-            # User Hint: "Zoom towards IR" -> substrate usually transparent in IR
-
-            # Use 95th percentile to robustly estimate "Max" without noise
-
-            val2 = np.nanpercentile(col2_data, 95)
-
-            val3 = np.nanpercentile(col3_data, 95)
-
-            # If values are extremely close (e.g. difference < 5%), look at the IR/End of spectrum
-
-            if abs(val2 - val3) < 0.05:
-                # Assume sorted wavelengths? usually yes. Take last 20% points
-
-                n_pts = len(col2_data)
-
-                start_idx = int(0.8 * n_pts)
-
-                val2_ir = np.nanmean(col2_data[start_idx:])
-
-                val3_ir = np.nanmean(col3_data[start_idx:])
-
-                # If IR distinct, use that
-
-                if abs(val2_ir - val3_ir) > 0.02:
-                    val2 = val2_ir
-
-                    val3 = val3_ir
-
-            if val2 > val3:
-                result["T"] = col2_data
-
-                result["R"] = col3_data
-
-            else:
-                result["R"] = col2_data
-
-                result["T"] = col3_data
-
-            return DataType.BOTH, result
-
-        if col2_type == "T":
-            result["T"] = col2_data
-
-            result["R"] = col3_data
-
-        else:
-            result["R"] = col2_data
-
-            result["T"] = col3_data
-
-        return DataType.BOTH, result
-
-    result["T"] = df.iloc[:, 1].to_numpy().astype(np.float64) if n_cols > 1 else np.array([])
-
-    return DataType.TRANSMISSION, result
 
 @njit(cache=True, fastmath=True, nogil=True)
 def _point_cost_kernel(
@@ -2169,13 +1560,9 @@ try:
     else:
         _SAPPHIRE_N = _df_sap[_n_col].to_numpy(dtype=np.float64)
 
-    _SAPPHIRE_K = (
-        _df_sap[_k_col].to_numpy(dtype=np.float64)
-        if _k_col is not None
-        else np.zeros_like(_SAPPHIRE_WLS, dtype=np.float64)
-    )
+    _SAPPHIRE_K = np.zeros_like(_SAPPHIRE_WLS, dtype=np.float64)
 
-    _SAPPHIRE_FILE_HAS_K_COLUMN = _k_col is not None
+    _SAPPHIRE_FILE_HAS_K_COLUMN = False
 
 except (FileNotFoundError, OSError, *NUMERICAL_FAULT_EXCEPTIONS) as _e_sap:
     _SAPPHIRE_FILE_HAS_K_COLUMN = False
@@ -2909,9 +2296,14 @@ class TLUObjective:
         # Call kernel with full normalization support
 
         if self.has_absorbing_substrate:
-            # Use the more general IR global gradient kernel which supports absorption
+            # Use the more general IR global gradient kernel which supports absorption.
+            # _compute_ir_global_cost_gradient_kernel returns a vector of size
+            # (1 + dn_dp.shape[0] + dk_dp.shape[0]) when compute_thickness_gradient=True.
+            # For TLU, dn_dp and dk_dp SHARE the same 6 parameters [Eg, A, E0, C, Eu, eps_inf].
+            # mse_grad_raw layout: [thickness, dn0..dn5, dk0..dk5] (size 1 + 6 + 6 = 13)
+            # We accumulate into grad[0:7] = [thickness, Eg, A, E0, C, Eu, eps_inf].
 
-            mse_grad = _compute_ir_global_cost_gradient_kernel(
+            mse_grad_raw = _compute_ir_global_cost_gradient_kernel(
                 self.wavelengths,
                 n_calc,
                 k_calc,
@@ -2932,7 +2324,14 @@ class TLUObjective:
                 True,  # has_absorbing_substrate
                 self.k_sub_data,
                 self.substrate_thickness_nm,
+                True,  # compute_thickness_gradient
             )
+
+            # Map result back to (7,) TLU gradient vector.
+            mse_grad = np.zeros(7, dtype=np.float64)
+            mse_grad[0] = mse_grad_raw[0]
+            mse_grad[1:7] += mse_grad_raw[1:7]
+            mse_grad[1:7] += mse_grad_raw[7:13]
 
         else:
             # Use specialized fast kernel for transparent substrates
@@ -3077,7 +2476,7 @@ class TLUObjective:
 
             if self.is_frosted_glass:
                 if self.data_type in (DataType.REFLECTION, DataType.BOTH) and self.target_R is not None:
-                    R_calc = calculate_single_interface_R(self.wavelengths, n_calc, k_calc, thickness, self.n_substrate)
+                    R_calc = calculate_reflection_array(self.wavelengths, n_calc, k_calc, thickness, self.n_substrate)
 
                     # Frosted = 1 face: R or Rnu only. Never R/Tnu.
 
@@ -3425,6 +2824,109 @@ class PGlobalOptimizerINDEX:
 
         return samples
 
+    def _should_stop_optimization(self, start_time: float, iteration: int) -> bool:
+        """Return True when the main optimize loop should stop."""
+        if self.stop_event and self.stop_event.is_set():
+            return True
+        if time.time() - start_time > self.config.max_time:
+            return True
+        if self.n_evals >= self.config.max_feval:
+            return True
+        return False
+
+    def _make_monitor_callback(self, callback):
+        """Wrap the live callback for sequential local search."""
+        if not callback:
+            return None
+
+        def monitor(xk):
+            return callback(Sample(xk, self.objective(xk)))
+
+        return monitor
+
+    def _local_search_budget(self) -> int:
+        """Budget remaining for a local refinement step."""
+        return min(self.config.local_search_budget, self.config.max_feval - self.n_evals)
+
+    def _prepare_iteration_batches(self, n_samples: int):
+        """Sample, sort and reduce the active set for one optimize iteration."""
+        new_samples = self._sample_uniform(n_samples)
+        if not new_samples:
+            return None
+
+        self._all_samples.extend(new_samples)
+        self._all_samples.sort(key=lambda s: s.y)
+
+        n_keep = max(int(len(self._all_samples) * self.config.reduction_ratio), self.n_workers * 2)
+        active_samples = self._all_samples[:n_keep]
+        x_batch = np.array([s.x for s in active_samples])
+        y_batch = np.array([s.y for s in active_samples])
+        cand_x, cand_y = self.clusterer.process_batch(x_batch, y_batch, self._n_total_samples)
+        return n_keep, cand_x, cand_y
+
+    def _callback_best_so_far(self, callback, best_ever):
+        """Emit the best sample available for iteration progress."""
+        if callback and len(self._all_samples) > 0:
+            best_so_far = self._all_samples[0]
+            callback(best_so_far if best_ever is None or best_so_far.y <= best_ever.y else best_ever)
+
+    def _run_sequential_local_search(self, cand_x, cand_y, n_dispatch: int, callback, best_ever):
+        """Run local search sequentially for the best candidates."""
+        idx_sorted = np.argsort(cand_y)[:n_dispatch]
+        for idx in idx_sorted:
+            if self.stop_event and self.stop_event.is_set():
+                break
+            x_start = cand_x[idx]
+            searcher = GradientSearcher(
+                self.objective,
+                self.bounds,
+                self.config,
+                self.stop_event,
+                monitor_callback=self._make_monitor_callback(callback),
+            )
+            try:
+                x_opt, f_opt, n_ev = searcher.search(x_start, self._local_search_budget())
+                self.n_evals += n_ev
+                self.clusterer.add_cluster_result(x_opt, f_opt)
+                if best_ever is None or f_opt < best_ever.y:
+                    best_ever = Sample(x=x_opt, y=f_opt)
+                    if callback:
+                        callback(best_ever)
+            except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
+                logging.error(f"Local search error (sequential PGLOBAL): {e}", exc_info=True)
+        return best_ever
+
+    def _run_parallel_local_search(self, cand_x, cand_y, n_dispatch: int, callback, best_ever):
+        """Run local search in the executor for the best candidates."""
+        idx_sorted = np.argsort(cand_y)[:n_dispatch]
+        futures = {}
+        for idx in idx_sorted:
+            if self.stop_event and self.stop_event.is_set():
+                break
+            x_start = cand_x[idx]
+            searcher = GradientSearcher(
+                self.objective,
+                self.bounds,
+                self.config,
+                self.stop_event,
+                monitor_callback=None,
+            )
+            futures[self._executor.submit(searcher.search, x_start, self._local_search_budget())] = x_start
+        for future in as_completed(futures):
+            if self.stop_event and self.stop_event.is_set():
+                break
+            try:
+                x_opt, f_opt, n_ev = future.result(timeout=60)
+                self.n_evals += n_ev
+                self.clusterer.add_cluster_result(x_opt, f_opt)
+                if best_ever is None or f_opt < best_ever.y:
+                    best_ever = Sample(x=x_opt, y=f_opt)
+                    if callback:
+                        callback(best_ever)
+            except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
+                logging.error(f"Local search error (parallel PGLOBAL): {e}", exc_info=True)
+        return best_ever
+
     def optimize(self, max_iter: int = 30, callback=None, x0: np.ndarray | None = None) -> Sample | None:
 
         start_time = time.time()
@@ -3477,174 +2979,25 @@ class PGlobalOptimizerINDEX:
 
         try:
             for iteration in range(max_iter):
-                if self.stop_event and self.stop_event.is_set():
-                    break
-
-                if time.time() - start_time > self.config.max_time:
-                    break
-
-                if self.n_evals >= self.config.max_feval:
+                if self._should_stop_optimization(start_time, iteration):
                     break
 
                 n_samples = self.config.n_samples_per_iter
-
                 if iteration == 0:
                     n_samples = int(n_samples * 1.5)
 
-                new_samples = self._sample_uniform(n_samples)
-
-                if not new_samples:
+                prepared = self._prepare_iteration_batches(n_samples)
+                if not prepared:
                     break
-
-                self._all_samples.extend(new_samples)
-
-                self._all_samples.sort(key=lambda s: s.y)
-
-                n_keep = max(
-                    int(len(self._all_samples) * self.config.reduction_ratio),
-                    self.n_workers * 2,
-                )
-
-                active_samples = self._all_samples[:n_keep]
-
-                x_batch = np.array([s.x for s in active_samples])
-
-                y_batch = np.array([s.y for s in active_samples])
-
-                cand_x, cand_y = self.clusterer.process_batch(x_batch, y_batch, self._n_total_samples)
-
+                n_keep, cand_x, cand_y = prepared
                 n_dispatch = min(len(cand_y), self.n_workers)
 
-                # Regular callback for UI updates at EACH iteration
-
-                if callback and len(self._all_samples) > 0:
-                    # Use best sample so far for progress display
-
-                    best_so_far = self._all_samples[0]  # Already sorted by y
-
-                    if best_ever is None or best_so_far.y <= best_ever.y:
-                        callback(best_so_far)
-
-                    else:
-                        callback(best_ever)
-
-                # --- SEQUENTIAL MODE (Safe for Frozen) ---
+                self._callback_best_so_far(callback, best_ever)
 
                 if self.n_workers <= 1 and n_dispatch > 0:
-                    idx_sorted = np.argsort(cand_y)[:n_dispatch]
-
-                    for idx in idx_sorted:
-                        if self.stop_event and self.stop_event.is_set():
-                            break
-
-                        x_start = cand_x[idx]
-
-                        # Define monitor callback for live updates inside L-BFGS-B
-
-                        monitor = None
-
-                        if callback:
-                            def monitor(xk):
-                                return callback(Sample(xk, self.objective(xk)))
-
-                        searcher = GradientSearcher(
-                            self.objective,
-                            self.bounds,
-                            self.config,
-                            self.stop_event,
-                            monitor_callback=monitor,
-                        )
-
-                        budget = min(
-                            self.config.local_search_budget,
-                            self.config.max_feval - self.n_evals,
-                        )
-
-                        # Direct call without executor
-
-                        try:
-                            x_opt, f_opt, n_ev = searcher.search(x_start, budget)
-
-                            self.n_evals += n_ev
-
-                            self.clusterer.add_cluster_result(x_opt, f_opt)
-
-                            if best_ever is None or f_opt < best_ever.y:
-                                best_ever = Sample(x=x_opt, y=f_opt)
-
-                                if callback:
-                                    callback(best_ever)
-
-                        except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                            # Aligned with OLD: a failed local search must not stop PGLOBAL.
-
-                            logging.error(
-                                f"Local search error (sequential PGLOBAL): {e}",
-                                exc_info=True,
-                            )
-
-                            pass
-
-                # --- PARALLEL MODE ---
-
+                    best_ever = self._run_sequential_local_search(cand_x, cand_y, n_dispatch, callback, best_ever)
                 elif n_dispatch > 0 and self._executor:
-                    idx_sorted = np.argsort(cand_y)[:n_dispatch]
-
-                    futures = {}
-
-                    for idx in idx_sorted:
-                        if self.stop_event and self.stop_event.is_set():
-                            break
-
-                        x_start = cand_x[idx]
-
-                        # No monitor in parallel mode: callbacks must only be called from
-
-                        # the thread that owns the Qt objects (QThread of IRGlobalModelWorker).
-
-                        # UI updates happen via the per-iteration callback above.
-
-                        searcher = GradientSearcher(
-                            self.objective,
-                            self.bounds,
-                            self.config,
-                            self.stop_event,
-                            monitor_callback=None,
-                        )
-
-                        budget = min(
-                            self.config.local_search_budget,
-                            self.config.max_feval - self.n_evals,
-                        )
-
-                        futures[self._executor.submit(searcher.search, x_start, budget)] = x_start
-
-                    for future in as_completed(futures):
-                        if self.stop_event and self.stop_event.is_set():
-                            break
-
-                        try:
-                            x_opt, f_opt, n_ev = future.result(timeout=60)
-
-                            self.n_evals += n_ev
-
-                            self.clusterer.add_cluster_result(x_opt, f_opt)
-
-                            if best_ever is None or f_opt < best_ever.y:
-                                best_ever = Sample(x=x_opt, y=f_opt)
-
-                                if callback:
-                                    callback(best_ever)
-
-                        except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                            # Aligned with OLD: L-BFGS-B futures (gradient) may raise ZeroDivisionError, etc.
-
-                            logging.error(
-                                f"Local search error (parallel PGLOBAL): {e}",
-                                exc_info=True,
-                            )
-
-                            pass
+                    best_ever = self._run_parallel_local_search(cand_x, cand_y, n_dispatch, callback, best_ever)
 
                 if len(self._all_samples) > n_keep * 2:
                     self._all_samples = self._all_samples[:n_keep]
@@ -4968,6 +4321,33 @@ class IRGlobalModelWorker(QObject):
 
             results.execution_time = duration  # Phase 2 total duration
 
+            try:
+                status_val = (
+                    ValidationStatus.WARNING_DATA_NORMALIZED
+                    if bool(getattr(c, "use_normalized", False))
+                    else ValidationStatus.OK
+                )
+                warnings_list = (
+                    ["Input data normalized before optimization."] if bool(getattr(c, "use_normalized", False)) else []
+                )
+                svc = IndexFitService(runner=lambda _cfg: results)
+                svc_resp = svc.fit(
+                    IndexFitRequest(
+                        config=c,
+                        source_paths=[str(getattr(c, "source_file", "") or "")],
+                        seed=getattr(c, "random_seed", None),
+                        app_id="CERTUS_INDEX",
+                        app_version=__version__,
+                        warnings=warnings_list,
+                        status=status_val,
+                    )
+                )
+                stats = dict(getattr(results, "optimization_stats", {}) or {})
+                stats["run_manifest"] = svc_resp.manifest.to_dict()
+                results.optimization_stats = stats
+            except NUMERICAL_FAULT_EXCEPTIONS as _e_manifest:
+                self.logger.debug("IndexFitService manifest wiring skipped: %s", _e_manifest)
+
             self.progress.emit(100, "Done (IR Refined)", None)
 
             self.finished.emit(results)
@@ -5000,11 +4380,11 @@ class IRGlobalModelWorker(QObject):
         Rc, Tc, Ts = _compute_RT_from_config(c, l_full, n, k, thickness, n_sub)
 
         with np.errstate(divide="ignore", invalid="ignore"):
-            T_s_safe = np.where(Ts > 1e-9, Ts, 1.0)
+            T_s_safe_T = np.where(Ts > T_SUB_MIN_T_NORM, Ts, np.nan)
+            T_norm = np.nan_to_num(Tc / T_s_safe_T, nan=0.0)
 
-            T_norm = Tc / T_s_safe
-
-            R_norm = Rc / T_s_safe
+            T_s_safe_R = np.where(Ts > T_SUB_MIN_R_NORM, Ts, np.nan)
+            R_norm = np.nan_to_num(Rc / T_s_safe_R, nan=0.0)
 
         df = pd.DataFrame(
             {
@@ -5086,7 +4466,7 @@ def _compute_RT_from_config(c, l_full, n, k, thickness, n_sub) -> tuple:
     nan_arr = np.full_like(l_full, np.nan)
 
     if c.is_frosted_glass:
-        Rc = calculate_single_interface_R(l_full, n, k, thickness, n_sub)
+        Rc = calculate_reflection_array(l_full, n, k, thickness, n_sub)
 
         return Rc, nan_arr, nan_arr
 
@@ -5146,51 +4526,7 @@ class Phase1Callback:
         improved = (not np.isfinite(self.worker.best_mse)) or (s.y < self.worker.best_mse)
 
         if improved:
-            self.worker.best_mse = s.y
-
-            self.worker.best_params = s.x.copy()
-
-            rmse = np.sqrt(s.y)
-
-            _tlu_ex = ""
-
-            _o1 = getattr(self.worker, "_phase1_obj", None)
-
-            if _o1 is None:
-                _opt = getattr(self.worker, "_optimizer", None)
-
-                if _opt is not None:
-                    _o1 = getattr(_opt, "objective", None)
-
-            if _o1 is not None:
-                try:
-                    _tlu_ex = " | " + _o1.format_diag_line(s.x)
-
-                except NUMERICAL_FAULT_EXCEPTIONS as _e_tlu:
-                    _tlu_ex = f" | diag_tlu_err={_e_tlu}"
-
-            _k_inline = ""
-
-            if _o1 is not None:
-                try:
-                    _k_inline = " | " + _o1.format_k_line(s.x)
-
-                except NUMERICAL_FAULT_EXCEPTIONS :
-                    _k_inline = ""
-
-            self.worker.logger.info(
-                f"  Best RMSE: {rmse:.6f} | Evaluations: {self.worker._optimizer.n_evals} | Thickness: {s.x[0]:.2f} nm{_tlu_ex}{_k_inline}"
-            )
-
-            if _o1 is None:
-                if not getattr(self.worker, "_warned_phase1_missing_obj", False):
-                    self.worker.logger.warning(
-                        "Phase1 TLU diag/k indisponible (ni _phase1_obj ni _optimizer.objective) — "
-                        "exécutez CERTUS_INDEX.py à jour (ex. dossier 1904)."
-                    )
-
-                    self.worker._warned_phase1_missing_obj = True
-
+            self.worker._update_phase1_best(s)
             self.worker._try_active_update(s.x, s.y, force=True)
 
         now = time.time()
@@ -5284,6 +4620,55 @@ class OptimizationWorker(QObject):
 
         self.thickness_initial = config.fixed_thickness  # Seed if available
 
+    def _should_emit_active_update(self, now: float, force: bool) -> bool:
+        """Return True when live plot refresh should be emitted."""
+        if force:
+            return (now - self.last_plot_update_time) > self.min_plot_interval
+        return (now - self.last_plot_update_time) > 5.0
+
+    def _update_best_live_params(self, params, mse) -> None:
+        """Update best-so-far state if the new sample is strictly better."""
+        if mse < self.best_mse:
+            self.best_mse = mse
+            self.best_params = np.asarray(params, dtype=np.float64).copy()
+
+    def _update_phase1_best(self, sample) -> None:
+        """Update phase-1 best state and log diagnostics."""
+        self.best_mse = sample.y
+        self.best_params = sample.x.copy()
+        rmse = np.sqrt(sample.y)
+
+        _tlu_ex = ""
+        _o1 = getattr(self, "_phase1_obj", None)
+        if _o1 is None:
+            _opt = getattr(self, "_optimizer", None)
+            if _opt is not None:
+                _o1 = getattr(_opt, "objective", None)
+
+        if _o1 is not None:
+            try:
+                _tlu_ex = " | " + _o1.format_diag_line(sample.x)
+            except NUMERICAL_FAULT_EXCEPTIONS as _e_tlu:
+                _tlu_ex = f" | diag_tlu_err={_e_tlu}"
+
+        _k_inline = ""
+        if _o1 is not None:
+            try:
+                _k_inline = " | " + _o1.format_k_line(sample.x)
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                _k_inline = ""
+
+        self.logger.info(
+            f"  Best RMSE: {rmse:.6f} | Evaluations: {self._optimizer.n_evals} | Thickness: {sample.x[0]:.2f} nm{_tlu_ex}{_k_inline}"
+        )
+
+        if _o1 is None and not getattr(self, "_warned_phase1_missing_obj", False):
+            self.logger.warning(
+                "Phase1 TLU diag/k indisponible (ni _phase1_obj ni _optimizer.objective) — "
+                "exécutez CERTUS_INDEX.py à jour (ex. dossier 1904)."
+            )
+            self._warned_phase1_missing_obj = True
+
     def _try_active_update(self, params, mse, force=False) -> None:
         """
 
@@ -5299,37 +4684,15 @@ class OptimizationWorker(QObject):
 
         now = time.time()
 
-        should_update = False
+        if not self._should_emit_active_update(now, force):
+            return
 
-        if force:
-            # Even for improvements, respect min_plot_interval for refreshing the heavy plot
+        if mse <= self.best_mse:
+            self._update_best_live_params(params, mse)
 
-            if now - self.last_plot_update_time > self.min_plot_interval:
-                should_update = True
-
-        else:
-            if now - self.last_plot_update_time > 5.0:
-                should_update = True
-
-        if should_update:
-            # Strict filter: show if <= best known
-
-            # Allow some floating point tolerance or strict inequality
-
-            if mse <= self.best_mse:
-                # Update best if strictly better (already done in main loop but good to track here too)
-
-                if mse < self.best_mse:
-                    self.best_mse = mse
-
-                    self.best_params = np.asarray(params, dtype=np.float64).copy()
-
-                # Live = always the curve of the best candidate to date (not arbitrary ``params``).
-
-                if self.best_params is not None:
-                    self.curve_update.emit(np.asarray(self.best_params, dtype=np.float64).copy())
-
-                    self.last_plot_update_time = now
+            if self.best_params is not None:
+                self.curve_update.emit(np.asarray(self.best_params, dtype=np.float64).copy())
+                self.last_plot_update_time = now
 
     def _emit_live_best_snapshot(self) -> None:
         """
@@ -5346,6 +4709,8 @@ class OptimizationWorker(QObject):
 
         if self.best_params is not None:
             self.curve_update.emit(np.asarray(self.best_params, dtype=np.float64).copy())
+
+
 
     def _run_subset_optim(self, clues_slice, wls, n_sub, target_T, target_R, exclude_range) -> Any:
 
@@ -5642,12 +5007,12 @@ class OptimizationWorker(QObject):
 
                 self.best_params = final_params
 
-                self.logger.info(f" Final optimization improved RMSE: {np.sqrt(final_mse):.6f}")
+                self.logger.info(f" Final optimization improved RMSE: {calculate_index_rmse(final_mse):.6f}")
 
                 self._emit_live_best_snapshot()
 
             else:
-                self.logger.info(f" Final optimization complete (RMSE unchanged: {np.sqrt(self.best_mse):.6f})")
+                self.logger.info(f" Final optimization complete (RMSE unchanged: {calculate_index_rmse(self.best_mse):.6f})")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Final optimization failed: {e}")
@@ -5690,7 +5055,7 @@ class OptimizationWorker(QObject):
             pg_conf = pg_conf.with_overrides(random_seed=int(c.random_seed))
 
         # Constrain local search (limit evals). PGlobalConfig is frozen.
-        pg_conf = pg_conf.replace(local_search_budget=1500)
+        pg_conf = pg_conf.with_overrides(local_search_budget=1500)
 
         self._optimizer = PGlobalOptimizerINDEX(
             obj,
@@ -5782,7 +5147,7 @@ class OptimizationWorker(QObject):
             if self.best_params is not None and np.isfinite(self.best_mse):
                 self.logger.info(
                     f"Using callback-captured best params as fallback "
-                    f"(RMSE={np.sqrt(self.best_mse):.6f}, d={self.best_params[0]:.2f} nm)"
+                    f"(RMSE={calculate_index_rmse(self.best_mse):.6f}, d={self.best_params[0]:.2f} nm)"
                 )
 
                 self._emit_live_best_snapshot()
@@ -5858,14 +5223,14 @@ class OptimizationWorker(QObject):
 
                 self.best_params = res.x
 
-                rmse_polish = np.sqrt(res.fun)
+                rmse_polish = calculate_index_rmse(res.fun)
 
                 self.logger.info(f" Polish complete | RMSE: {rmse_polish:.6f} | Evals: {obj.n_evals}")
 
                 self._emit_live_best_snapshot()
 
             else:
-                rmse_current = np.sqrt(self.best_mse)
+                rmse_current = calculate_index_rmse(self.best_mse)
 
                 self.logger.info(f" Polish complete | RMSE: {rmse_current:.6f} (unchanged)")
 
@@ -6025,7 +5390,7 @@ class OptimizationWorker(QObject):
 
             tlu_params = TLUParameters.from_array(self.best_params[1:7])
 
-            rmse_final = np.sqrt(self.best_mse)
+            rmse_final = calculate_index_rmse(self.best_mse)
 
             self.logger.info("\n OPTIMIZATION COMPLETE")
 
@@ -6145,11 +5510,9 @@ class OptimizationWorker(QObject):
         R_calc, T_calc, T_sub = _compute_RT_from_config(c, l_full, n_calc, k_calc, thickness, n_sub)
 
         with np.errstate(divide="ignore", invalid="ignore"):
-            T_sub_safe = np.where(T_sub > SMALL_EPSILON, T_sub, 1.0)
+            T_sub_safe = np.where(T_sub > T_SUB_MIN_T_NORM, T_sub, np.nan)
 
-            T_norm_calc = np.where(T_sub > SMALL_EPSILON, T_calc / T_sub_safe, np.nan)
-
-            T_norm_calc = np.maximum(T_norm_calc, 0.0)
+            T_norm_calc = np.nan_to_num(T_calc / T_sub_safe, nan=0.0)
 
             if c.is_frosted_glass:
                 R_norm_calc = R_calc.copy()
@@ -6732,8 +6095,6 @@ class CertusIndexApp(CertusBaseApp):
 
 
             calculate_RT_single_layer_backside_array(wls, n_test, k_test, 100.0, n_test)
-
-            calculate_single_interface_R(wls, n_test, k_test, 100.0, n_test)
 
             calculate_bare_substrate_RT(wls, n_test)
 
@@ -8697,128 +8058,125 @@ class CertusIndexApp(CertusBaseApp):
 
         self._thread.start()
 
-        def _abort_run_optimization(self, title: str, message: str, *, critical: bool = False) -> None:
-            """Abort run setup with a user-visible message and reset primary buttons."""
+    def _abort_run_optimization(self, title: str, message: str, *, critical: bool = False) -> None:
+        """Abort run setup with a user-visible message and reset primary buttons."""
+        if critical:
+            QMessageBox.critical(self, title, message)
+        else:
+            QMessageBox.warning(self, title, message)
+        self.btn_run.setEnabled(True)
+        self.btn_stop.setEnabled(False)
 
-            if critical:
-                QMessageBox.critical(self, title, message)
-            else:
-                QMessageBox.warning(self, title, message)
-            self.btn_run.setEnabled(True)
-            self.btn_stop.setEnabled(False)
+    def _resolve_substrate_absorption_inputs(
+        self,
+        *,
+        substrate_name: str,
+        wls_target: np.ndarray,
+    ) -> tuple[np.ndarray | None, float | None, np.ndarray | None] | None:
+        """Resolve (k_sub, substrate_thickness_nm, n_sub_data) for the selected substrate mode.
 
-        def _resolve_substrate_absorption_inputs(
-            self,
-            *,
-            substrate_name: str,
-            wls_target: np.ndarray,
-        ) -> tuple[np.ndarray | None, float | None, np.ndarray | None] | None:
-            """Resolve (k_sub, substrate_thickness_nm, n_sub_data) for the selected substrate mode.
+        Returns ``None`` when setup must be aborted (message already shown to the user).
+        """
+        k_sub_interp: np.ndarray | None = None
+        sub_thickness_nm: float | None = None
+        n_sub_data: np.ndarray | None = None
 
-            Returns ``None`` when setup must be aborted (message already shown to the user).
-            """
+        is_sapphire = substrate_name == "Sapphire (Al2O3)"
+        is_silicon = substrate_name == "Silicon (Si)"
 
-            k_sub_interp: np.ndarray | None = None
-            sub_thickness_nm: float | None = None
-            n_sub_data: np.ndarray | None = None
-
-            is_sapphire = substrate_name == "Sapphire (Al2O3)"
-            is_silicon = substrate_name == "Silicon (Si)"
-
-            if is_sapphire:
-                thickness_mm = self.sb_sub_thickness_mm.value()
-                if not _SAPPHIRE_FILE_HAS_K_COLUMN:
-                    if thickness_mm > 0.0 or self.chk_absorbing_sub.isChecked():
-                        self._abort_run_optimization(
-                            "Sapphire without k column",
-                            "example/sapphire fresnel.xlsx does not contain a k(lambda) column.\n"
-                            "Absorbing substrate mode is unavailable.\n"
-                            "Add a k column to the file, or use thickness = 0 mm.",
-                            critical=True,
-                        )
-                        return None
-                    self.logger.info(
-                        "[SAPPHIRE] n(lambda) from Sellmeier equation; no k column -> transparent substrate (k=0)."
+        if is_sapphire:
+            thickness_mm = self.sb_sub_thickness_mm.value()
+            if not _SAPPHIRE_FILE_HAS_K_COLUMN:
+                if thickness_mm > 0.0 or self.chk_absorbing_sub.isChecked():
+                    self._abort_run_optimization(
+                        "Sapphire without k column",
+                        "example/sapphire fresnel.xlsx does not contain a k(lambda) column.\n"
+                        "Absorbing substrate mode is unavailable.\n"
+                        "Add a k column to the file, or use thickness = 0 mm.",
+                        critical=True,
                     )
-                    return None, None, None
+                    return None
+                self.logger.info(
+                    "[SAPPHIRE] n(lambda) from Sellmeier equation; no k column -> transparent substrate (k=0)."
+                )
+                return None, None, None
 
+            if thickness_mm > 0:
+                if _SAPPHIRE_WLS is None:
+                    self._abort_run_optimization(
+                        "Sapphire k source missing",
+                        "example/sapphire fresnel.xlsx not found.\n"
+                        "n(lambda) uses Sellmeier, but absorbing mode requires k(lambda) from file.",
+                        critical=True,
+                    )
+                    return None
+                k_sub_interp = _get_sapphire_k_on_grid(wls_target)
+                if k_sub_interp is None or not np.all(np.isfinite(k_sub_interp)):
+                    self._abort_run_optimization(
+                        "Sapphire data invalid",
+                        "example/sapphire fresnel.xlsx is present but invalid for k(lambda).\n"
+                        "Calculation aborted to avoid drift on Al2O3.",
+                        critical=True,
+                    )
+                    return None
+                sub_thickness_nm = thickness_mm * 1e6
+                self.logger.info(
+                    f"[SAPPHIRE] Self-absorbent substrate: thickness={thickness_mm:.3f} mm "
+                    f"| k_sub(max)={k_sub_interp.max():.4g}"
+                )
+            else:
+                self.logger.info(
+                    "[SAPPHIRE] n(lambda) from Sellmeier equation; thickness = 0 -> transparent substrate (k=0)."
+                )
+            return k_sub_interp, sub_thickness_nm, None
+
+        if is_silicon:
+            if _SILICON_WLS is not None:
+                n_sub_data = _get_silicon_n_on_grid(wls_target)
+                thickness_mm = self.sb_sub_thickness_mm.value()
                 if thickness_mm > 0:
-                    if _SAPPHIRE_WLS is None:
-                        self._abort_run_optimization(
-                            "Sapphire k source missing",
-                            "example/sapphire fresnel.xlsx not found.\n"
-                            "n(lambda) uses Sellmeier, but absorbing mode requires k(lambda) from file.",
-                            critical=True,
-                        )
-                        return None
-                    k_sub_interp = _get_sapphire_k_on_grid(wls_target)
-                    if k_sub_interp is None or not np.all(np.isfinite(k_sub_interp)):
-                        self._abort_run_optimization(
-                            "Sapphire data invalid",
-                            "example/sapphire fresnel.xlsx is present but invalid for k(lambda).\n"
-                            "Calculation aborted to avoid drift on Al2O3.",
-                            critical=True,
-                        )
-                        return None
+                    k_sub_interp = _get_silicon_k_on_grid(wls_target)
                     sub_thickness_nm = thickness_mm * 1e6
                     self.logger.info(
-                        f"[SAPPHIRE] Self-absorbent substrate: thickness={thickness_mm:.3f} mm "
+                        f"[SILICON] Self-absorbent substrate: thickness={thickness_mm:.3f} mm "
                         f"| k_sub(max)={k_sub_interp.max():.4g}"
                     )
                 else:
-                    self.logger.info(
-                        "[SAPPHIRE] n(lambda) from Sellmeier equation; thickness = 0 -> transparent substrate (k=0)."
-                    )
-
-                return k_sub_interp, sub_thickness_nm, None
-
-            if is_silicon:
-                if _SILICON_WLS is not None:
-                    n_sub_data = _get_silicon_n_on_grid(wls_target)
-                    thickness_mm = self.sb_sub_thickness_mm.value()
-                    if thickness_mm > 0:
-                        k_sub_interp = _get_silicon_k_on_grid(wls_target)
-                        sub_thickness_nm = thickness_mm * 1e6
-                        self.logger.info(
-                            f"[SILICON] Self-absorbent substrate: thickness={thickness_mm:.3f} mm "
-                            f"| k_sub(max)={k_sub_interp.max():.4g}"
-                        )
-                    else:
-                        self.logger.info("[SILICON] Thickness = 0 -> transparent substrate (k=0 everywhere).")
-                else:
-                    self.logger.warning(
-                        "[SILICON] clues.xlsx If-substrate not found  transparent mode used (degraded)."
-                    )
-                return k_sub_interp, sub_thickness_nm, n_sub_data
-
-            if self.chk_absorbing_sub.isChecked():
-                if self._ksub_raw_wls is None or self._ksub_raw_k is None:
-                    self._abort_run_optimization(
-                        "k_sub missing",
-                        "Absorbing substrate enabled but no k_sub file loaded.\n"
-                        "Please import a CSV (lambda, k) or disable the option.",
-                        critical=False,
-                    )
-                    return None
-
-                thickness_mm = self.sb_sub_thickness_mm.value()
-                if thickness_mm <= 0:
-                    self.logger.info("Absorbent substrate: thickness = 0 -> transparent substrate (k=0 everywhere).")
-                else:
-                    k_sub_interp = np.interp(
-                        wls_target,
-                        self._ksub_raw_wls,
-                        self._ksub_raw_k,
-                        left=0.0,
-                        right=0.0,
-                    ).astype(np.float64)
-                    sub_thickness_nm = thickness_mm * 1e6
-                    self.logger.info(
-                        f"Absorbent substrate (manual): thickness={thickness_mm:.3f} mm "
-                        f"| k_sub max={k_sub_interp.max():.4g}"
-                    )
-
+                    self.logger.info("[SILICON] Thickness = 0 -> transparent substrate (k=0 everywhere).")
+            else:
+                self.logger.warning(
+                    "[SILICON] clues.xlsx If-substrate not found  transparent mode used (degraded)."
+                )
             return k_sub_interp, sub_thickness_nm, n_sub_data
+
+        if self.chk_absorbing_sub.isChecked():
+            if self._ksub_raw_wls is None or self._ksub_raw_k is None:
+                self._abort_run_optimization(
+                    "k_sub missing",
+                    "Absorbing substrate enabled but no k_sub file loaded.\n"
+                    "Please import a CSV (lambda, k) or disable the option.",
+                    critical=False,
+                )
+                return None
+
+            thickness_mm = self.sb_sub_thickness_mm.value()
+            if thickness_mm <= 0:
+                self.logger.info("Absorbent substrate: thickness = 0 -> transparent substrate (k=0 everywhere).")
+            else:
+                k_sub_interp = np.interp(
+                    wls_target,
+                    self._ksub_raw_wls,
+                    self._ksub_raw_k,
+                    left=0.0,
+                    right=0.0,
+                ).astype(np.float64)
+                sub_thickness_nm = thickness_mm * 1e6
+                self.logger.info(
+                    f"Absorbent substrate (manual): thickness={thickness_mm:.3f} mm "
+                    f"| k_sub max={k_sub_interp.max():.4g}"
+                )
+
+        return k_sub_interp, sub_thickness_nm, n_sub_data
 
     def run_optimization(self) -> None:
         """
@@ -9364,15 +8722,15 @@ class CertusIndexApp(CertusBaseApp):
                     self.plot_spectrum.plotItem.removeItem(item)
 
             try:
-                self.plot_spectrum.remove_tracked_curve("R (Live)")
+                self.plot_spectrum.remove_curve("R (Live)")
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except Exception:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             try:
-                self.plot_spectrum.remove_tracked_curve("T (Live)")
+                self.plot_spectrum.remove_curve("T (Live)")
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except Exception:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             if show_r and Rc is not None:
@@ -9516,6 +8874,7 @@ class CertusIndexApp(CertusBaseApp):
 
                             col_idx += 1
 
+                    self.table_res.resizeColumnsToContents()
             except NUMERICAL_FAULT_EXCEPTIONS as e:
                 self.logger.error(f"Live data table update error: {e}", exc_info=True)
 
@@ -10479,6 +9838,7 @@ class CertusIndexApp(CertusBaseApp):
 
                         col_idx += 1
 
+                self.table_res.resizeColumnsToContents()
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error updating data table: {e}", exc_info=True)
 
@@ -11259,7 +10619,12 @@ class CertusIndexApp(CertusBaseApp):
             self.logger.error(f"HTML export failed:{e}", exc_info=True)
 
     def export_results(self) -> None:
-        """Standardized Auto-Export (Excel + HTML)"""
+        """Standardized Auto-Export (Excel + HTML).
+
+        The export naming must reflect the final fit error used by the report,
+        while the material/substrate semantics remain confined to the model and
+        config fields.
+        """
 
         if not get_export_config():
             return
@@ -11269,11 +10634,10 @@ class CertusIndexApp(CertusBaseApp):
 
         res = self.latest_results
 
-        # Calculate RMSE for filename
-
+        # Final fit error used for report naming and summaries.
         rmse_val = np.sqrt(res.final_mse) if res.final_mse >= 0 else 0.0
 
-        # Generate Filenames
+        # Generate filenames for the standardized report bundle.
 
         try:
             reports_dir = get_resource_path("reports")
@@ -11694,6 +11058,12 @@ class CertusIndexApp(CertusBaseApp):
             "weight_R": float(self.sb_weight_R.value()) if hasattr(self, "sb_weight_R") else 1.0,
         }
 
+    def _normalize_index_config(self, cfg: dict) -> dict:
+        """Normalize legacy/new CERTUS_INDEX JSON payloads for first-launch compatibility."""
+        return normalize_index_config(cfg)
+
+
+
     def _apply_config(self, cfg: dict) -> None:
         """Restore CERTUS_INDEX widget state from a loaded config dict.
 
@@ -11701,6 +11071,8 @@ class CertusIndexApp(CertusBaseApp):
         intentionally NOT auto-loaded to avoid broken paths when sharing
         configs across machines.
         """
+
+        cfg = self._normalize_index_config(cfg)
 
         sub = cfg.get("substrate")
 
@@ -11750,6 +11122,12 @@ class CertusIndexApp(CertusBaseApp):
 
         if hasattr(self, "status_label"):
             self.status_label.setText(f" Loaded: {Path(filename).name}")
+
+        # Keep substrate semantics explicit in the UI metadata.
+        if hasattr(self, "logger"):
+            self.logger.info("CERTUS_INDEX config applied with substrate/film fields kept distinct.")
+
+
 
 if __name__ == "__main__":
     multiprocessing.freeze_support()

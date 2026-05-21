@@ -20,6 +20,16 @@ from certus_qt_widgets import QThread
 
 from certus_ui import WorkerSignals
 
+def _dbg_write(msg: str) -> None:
+    try:
+        import os
+        path = Path.home() / "worker_debug.txt"
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"DEBUG_WRITE_ERROR: {e}\n")
+
 from certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_GUI_DEFAULT_RE_PHASE1_RESTARTS,
@@ -79,6 +89,23 @@ from certus_re_helpers import (
     _re_p4_effective_half_width_deg,
     _re_rmse_combined_spectral_qwot,
     _re_sort_results_best_for_table_and_apply,
+    # Worker DTOs and Physics Helpers
+    REMseContext,
+    REPhase2Context,
+    REWorkerRequest,
+    REPhase1Result,
+    REPhase2Result,
+    REPhase3Result,
+    REPhase4Result,
+    _re_phase23_result_to_legacy_dict,
+    _result_dto_at,
+    _top_result_dto,
+    _set_top_result_dto,
+    _prepend_result_dto,
+    _replace_all_with_top_dto,
+    _re_trf_residual_rms,
+    _re_backside_bundle_fixed,
+    _re_eval_angle_physics_for,
 )
 
 from certus_re_worker_utils import (
@@ -110,385 +137,6 @@ from certus_re_results_builder import REResultsBuilder as REResultsPayloadBuilde
 
 class REUserStopRequested(Exception):
     """Stop button requests cooperative exit (best TRF state already cached)."""
-
-@dataclass(frozen=True)
-@dataclass
-class REMseContext:
-    _alpha_slot: Any
-    _lref_arr: Any
-    _re_env_on_wls: Any
-    _re_state: Any
-    ep0: Any
-    is_H: Any
-    is_L: Any
-    lambda_ref: Any
-    n_layers_count: Any
-    n_layers_nominal: Any
-    n_ref_nom_per_layer: Any
-    n_sub_nominal: Any
-    oblique_config_meta: Any
-    re_env_s: Any
-    var_idx: Any
-    wls: Any
-
-
-
-@dataclass
-class REPhase2Context:
-    _Phi_sub: Any
-    _cb2_ref: Any
-    _compute_qwot_rmse: Any
-    _emit_re_prog: Any
-    _emit_re_spectrum_live: Any
-    _fd_1s: Any
-    _fd_nw: Any
-    _maxiter_p2b: Any
-    _mse_grad_accumulate_ep: Any
-    _n_joint_fd: Any
-    _n_tab_sub: Any
-    _nk: Any
-    _p2_ki_slot: Any
-    _p2_trf_log_tag: Any
-    _p2fd_cu: Any
-    _p2fd_lam: Any
-    _p2fd_spl: Any
-    _pct_p2a: Any
-    _pct_p2b: Any
-    _prefit_max: Any
-    _re_state: Any
-    _rmse_combined: Any
-    _t_p2: Any
-    _use_sub_c3: Any
-    i0: Any
-    i_cu: Any
-    i_lam: Any
-    n_layers_count: Any
-    n_sp: Any
-    pl: Any
-    re_env_s: Any
-    wls: Any
-    wt_spectral: Any
-
-
-
-@dataclass
-class REWorkerRequest:
-    """DTO boundary for RE worker payload."""
-
-    cfg: dict[str, Any] = field(default_factory=dict)
-
-    @staticmethod
-    def from_legacy(cfg: dict[str, Any] | None) -> "REWorkerRequest":
-        if not isinstance(cfg, dict):
-            return REWorkerRequest(cfg={})
-        return REWorkerRequest(cfg=dict(cfg))
-
-@dataclass(frozen=True)
-class REPhase1Result:
-    """DTO boundary for one RE phase-1 candidate result."""
-
-    label: str
-    ep: np.ndarray
-    a: float
-    b: float
-    f: float
-    rmse: float
-    rmse_qwot: float
-    rmse_combined: float
-    nfev: int
-    success: bool
-
-    def to_legacy_dict(self) -> dict[str, Any]:
-        """Compatibility adapter for existing downstream consumers."""
-        return {
-            "label": self.label,
-            "ep": np.asarray(self.ep, dtype=np.float64).flatten(),
-            "a": float(self.a),
-            "b": float(self.b),
-            "f": float(self.f),
-            "rmse": float(self.rmse),
-            "rmse_qwot": float(self.rmse_qwot),
-            "rmse_combined": float(self.rmse_combined),
-            "nfev": int(self.nfev),
-            "success": bool(self.success),
-        }
-
-@dataclass(frozen=True)
-class REPhase2Result:
-    """DTO boundary for one RE phase-2 candidate result."""
-
-    label: str
-    ep: np.ndarray
-    a: float
-    b: float
-    f: float
-    re_dh_knots: np.ndarray
-    re_dl_knots: np.ndarray
-    re_knots_nm: np.ndarray
-    re_spline_lam_node2_nm: float
-    rmse: float
-    rmse_qwot: float
-    rmse_combined: float
-    nfev: int
-    success: bool
-    nfev_phase1: int
-    nfev_phase2_prefit: int
-    re_sub_cauchy_a0: float | None = None
-    re_sub_cauchy_a1: float | None = None
-    re_sub_cauchy_a2: float | None = None
-
-    def to_legacy_dict(self) -> dict[str, Any]:
-        """Compatibility adapter for existing downstream consumers."""
-        return _re_phase23_result_to_legacy_dict(self)
-
-@dataclass(frozen=True)
-class REPhase3Result:
-    """DTO boundary for one RE phase-3 refined result."""
-
-    label: str
-    ep: np.ndarray
-    a: float
-    b: float
-    f: float
-    re_dh_knots: np.ndarray
-    re_dl_knots: np.ndarray
-    re_knots_nm: np.ndarray
-    re_spline_lam_node2_nm: float
-    rmse: float
-    rmse_qwot: float
-    rmse_combined: float
-    nfev: int
-    success: bool
-    nfev_phase1: int
-    nfev_phase2_prefit: int
-    re_sub_cauchy_a0: float | None = None
-    re_sub_cauchy_a1: float | None = None
-    re_sub_cauchy_a2: float | None = None
-
-    def to_legacy_dict(self) -> dict[str, Any]:
-        """Compatibility adapter for existing downstream consumers."""
-        return _re_phase23_result_to_legacy_dict(self)
-
-def _re_phase23_result_to_legacy_dict(result: Any) -> dict[str, Any]:
-    """Shared legacy serializer for RE phase-2/phase-3 result DTOs."""
-    out: dict[str, Any] = {
-        "label": result.label,
-        "ep": np.asarray(result.ep, dtype=np.float64).flatten(),
-        "a": float(result.a),
-        "b": float(result.b),
-        "f": float(result.f),
-        "re_dH_knots": np.asarray(result.re_dh_knots, dtype=np.float64).tolist(),
-        "re_dL_knots": np.asarray(result.re_dl_knots, dtype=np.float64).tolist(),
-        "re_knots_nm": np.asarray(result.re_knots_nm, dtype=np.float64).tolist(),
-        "re_spline_lam_node2_nm": float(result.re_spline_lam_node2_nm),
-        "rmse": float(result.rmse),
-        "rmse_qwot": float(result.rmse_qwot),
-        "rmse_combined": float(result.rmse_combined),
-        "nfev": int(result.nfev),
-        "success": bool(result.success),
-        "nfev_phase1": int(result.nfev_phase1),
-        "nfev_phase2_prefit": int(result.nfev_phase2_prefit),
-    }
-    if result.re_sub_cauchy_a0 is not None:
-        out["re_sub_cauchy_a0"] = float(result.re_sub_cauchy_a0)
-    if result.re_sub_cauchy_a1 is not None:
-        out["re_sub_cauchy_a1"] = float(result.re_sub_cauchy_a1)
-    if result.re_sub_cauchy_a2 is not None:
-        out["re_sub_cauchy_a2"] = float(result.re_sub_cauchy_a2)
-    return out
-
-@dataclass(frozen=True)
-class REPhase4Result:
-    """DTO boundary for one RE phase-4 (beam/aperture) refined result."""
-
-    label: str
-    ep: np.ndarray
-    a: float
-    b: float
-    f: float
-    re_dh_knots: np.ndarray
-    re_dl_knots: np.ndarray
-    re_knots_nm: np.ndarray
-    re_spline_lam_node2_nm: float
-    rmse: float
-    rmse_qwot: float
-    rmse_combined: float
-    nfev: int
-    success: bool
-    nfev_phase1: int
-    nfev_phase2_prefit: int
-    re_p4_aperture_deg: float
-    re_p4_beam_ap_knots_nm: np.ndarray
-    re_p4_beam_ap_knots_deg: np.ndarray
-    re_sub_cauchy_a0: float | None = None
-    re_sub_cauchy_a1: float | None = None
-    re_sub_cauchy_a2: float | None = None
-
-    @staticmethod
-    def from_legacy_dict(payload: dict[str, Any]) -> "REPhase4Result":
-        """Build a typed phase-4 result from existing legacy dict payload."""
-        return REPhase4Result(
-            label=str(payload.get("label", RE_RESULT_LABEL_WITH_DRIFT)),
-            ep=np.asarray(payload.get("ep", []), dtype=np.float64).flatten(),
-            a=float(payload.get("a", 0.0)),
-            b=float(payload.get("b", 0.0)),
-            f=float(payload.get("f", 0.0)),
-            re_dh_knots=np.asarray(payload.get("re_dH_knots", []), dtype=np.float64).flatten(),
-            re_dl_knots=np.asarray(payload.get("re_dL_knots", []), dtype=np.float64).flatten(),
-            re_knots_nm=np.asarray(payload.get("re_knots_nm", []), dtype=np.float64).flatten(),
-            re_spline_lam_node2_nm=float(payload.get("re_spline_lam_node2_nm", 0.0)),
-            rmse=float(payload.get("rmse", 0.0)),
-            rmse_qwot=float(payload.get("rmse_qwot", 0.0)),
-            rmse_combined=float(payload.get("rmse_combined", payload.get("rmse", 0.0))),
-            nfev=int(payload.get("nfev", 0)),
-            success=bool(payload.get("success", False)),
-            nfev_phase1=int(payload.get("nfev_phase1", 0)),
-            nfev_phase2_prefit=int(payload.get("nfev_phase2_prefit", 0)),
-            re_p4_aperture_deg=float(payload.get("re_p4_aperture_deg", 0.0)),
-            re_p4_beam_ap_knots_nm=np.asarray(payload.get("re_p4_beam_ap_knots_nm", []), dtype=np.float64).flatten(),
-            re_p4_beam_ap_knots_deg=np.asarray(payload.get("re_p4_beam_ap_knots_deg", []), dtype=np.float64).flatten(),
-            re_sub_cauchy_a0=(
-                float(payload["re_sub_cauchy_a0"]) if payload.get("re_sub_cauchy_a0") is not None else None
-            ),
-            re_sub_cauchy_a1=(
-                float(payload["re_sub_cauchy_a1"]) if payload.get("re_sub_cauchy_a1") is not None else None
-            ),
-            re_sub_cauchy_a2=(
-                float(payload["re_sub_cauchy_a2"]) if payload.get("re_sub_cauchy_a2") is not None else None
-            ),
-        )
-
-    def to_legacy_dict(self) -> dict[str, Any]:
-        """Compatibility adapter for existing downstream consumers."""
-        out: dict[str, Any] = {
-            "label": self.label,
-            "ep": np.asarray(self.ep, dtype=np.float64).flatten(),
-            "a": float(self.a),
-            "b": float(self.b),
-            "f": float(self.f),
-            "re_dH_knots": np.asarray(self.re_dh_knots, dtype=np.float64).tolist(),
-            "re_dL_knots": np.asarray(self.re_dl_knots, dtype=np.float64).tolist(),
-            "re_knots_nm": np.asarray(self.re_knots_nm, dtype=np.float64).tolist(),
-            "re_spline_lam_node2_nm": float(self.re_spline_lam_node2_nm),
-            "rmse": float(self.rmse),
-            "rmse_qwot": float(self.rmse_qwot),
-            "rmse_combined": float(self.rmse_combined),
-            "nfev": int(self.nfev),
-            "success": bool(self.success),
-            "nfev_phase1": int(self.nfev_phase1),
-            "nfev_phase2_prefit": int(self.nfev_phase2_prefit),
-            "re_p4_aperture_deg": float(self.re_p4_aperture_deg),
-            "re_p4_beam_ap_knots_nm": np.asarray(self.re_p4_beam_ap_knots_nm, dtype=np.float64).tolist(),
-            "re_p4_beam_ap_knots_deg": np.asarray(self.re_p4_beam_ap_knots_deg, dtype=np.float64).tolist(),
-        }
-        if self.re_sub_cauchy_a0 is not None:
-            out["re_sub_cauchy_a0"] = float(self.re_sub_cauchy_a0)
-        if self.re_sub_cauchy_a1 is not None:
-            out["re_sub_cauchy_a1"] = float(self.re_sub_cauchy_a1)
-        if self.re_sub_cauchy_a2 is not None:
-            out["re_sub_cauchy_a2"] = float(self.re_sub_cauchy_a2)
-        return out
-
-def _result_dto_at(results: list[dict[str, Any]], idx: int) -> REPhase4Result | None:
-    """Return typed DTO view for one result index."""
-    if idx < 0 or idx >= len(results):
-        return None
-    return REPhase4Result.from_legacy_dict(results[idx])
-
-def _top_result_dto(results: list[dict[str, Any]]) -> REPhase4Result | None:
-    """Return the current top result as a typed DTO view."""
-    return _result_dto_at(results, 0)
-
-def _set_top_result_dto(results: list[dict[str, Any]], dto: REPhase4Result) -> None:
-    """Set or initialize top result from typed DTO."""
-    payload = dto.to_legacy_dict()
-    if results:
-        results[0] = payload
-        return
-    results.append(payload)
-
-def _prepend_result_dto(results: list[dict[str, Any]], dto: REPhase4Result) -> None:
-    """Insert one typed DTO result at front of ranking list."""
-    results.insert(0, dto.to_legacy_dict())
-
-def _replace_all_with_top_dto(results: list[dict[str, Any]], dto: REPhase4Result) -> None:
-    """Replace ranking list with exactly one typed top result."""
-    results[:] = [dto.to_legacy_dict()]
-
-def _re_trf_residual_rms(residual: np.ndarray | None) -> float:
-    """RMS of the residual vector as minimized by least_squares: sqrt(mean(r_i^2))."""
-
-    if residual is None:
-        return float("nan")
-
-    v = np.asarray(residual, dtype=np.float64).ravel()
-
-    if v.size == 0:
-        return 0.0
-
-    return float(np.sqrt(np.mean(v * v)))
-
-def _re_backside_bundle_fixed(ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol) -> Any:
-
-    from certus_physics import compute_oblique_backside_bundle_analytic
-
-    return compute_oblique_backside_bundle_analytic(
-        ep_local, n_layers_sel, n_sub_sel, wls_sel, var_idx, angle, is_s_pol, None, None
-    )
-
-def _re_eval_angle_physics_for(
-    sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, var_idx
-) -> tuple:
-
-    from certus_physics import compute_oblique_rt_and_grads_analytic
-
-    if sub is None:
-        wls_s = wls_all
-
-        n_lay_s = n_layers_all
-
-        n_sub_s = n_sub_all
-
-    else:
-        wls_s = wls_all[sub]
-
-        n_lay_s = n_layers_all[sub, :]
-
-        n_sub_s = n_sub_all[sub]
-
-    if pl == "avg":
-        if not inc_back:
-            Rs, Ts, dRs, dTs = compute_oblique_rt_and_grads_analytic(
-                ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True, False
-            )
-
-            Rp, Tp, dRp, dTp = compute_oblique_rt_and_grads_analytic(
-                ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False, False
-            )
-
-            return 0.5 * (Rs + Rp), 0.5 * (dRs + dRp), 0.5 * (Ts + Tp), 0.5 * (dTs + dTp)
-
-        else:
-            yRs, dRs, yTs, dTs = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, True)
-
-            yRp, dRp, yTp, dTp = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, False)
-
-            return 0.5 * (yRs + yRp), 0.5 * (dRs + dRp), 0.5 * (yTs + yTp), 0.5 * (dTs + dTp)
-
-    else:
-        is_s_pol = pl != "p"
-
-        if not inc_back:
-            rR, rT, rdR, rdT = compute_oblique_rt_and_grads_analytic(
-                ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, is_s_pol, False
-            )
-
-            return rR, rdR, rT, rdT
-
-        else:
-            rR, rdR, rT, rdT = _re_backside_bundle_fixed(ep_use, n_lay_s, n_sub_s, wls_s, var_idx, angle, is_s_pol)
-
-            return rR, rdR, rT, rdT
 
 class REWorker(QThread):
     """Two-stage RE: (1) TRF Deltaln(lambda) trapezoidal, thicknesses only, tabulated n;
@@ -1105,6 +753,7 @@ class REWorker(QThread):
         """
 
         L = self._re_phase_ns
+        _t_p2 = time.perf_counter()
 
         results = L.results
 
@@ -2131,1053 +1780,6 @@ class REWorker(QThread):
                         )
 
 
-from dataclasses import dataclass, field
-from typing import Any, Callable
-import numpy as np
-import logging
-
-@dataclass
-class Phase4BeamContext:
-    wls: np.ndarray
-    re_env_s: float
-    use_sub_c3: bool
-    re_state: dict
-    nap: int
-    i_ap0: int
-    p4_fd_ap: float
-    bounds_p4: tuple
-    cb2_ref: list
-    best_res_dto: Any
-    results: list
-    rmse_final_milestone: list
-    
-    fun_res_p2: Callable
-    eval_both_p2: Callable
-    report_mse_spectral: Callable
-    compute_qwot_rmse: Callable
-    rmse_combined: Callable
-
-    def insert_result(
-        self,
-        ep_f: np.ndarray,
-        dh_v: np.ndarray,
-        dl_v: np.ndarray,
-        lam_v: float,
-        th_v: Any,
-        nfev_extra: int,
-        p4_label_suffix: str,
-        success: bool,
-    ) -> None:
-        from certus_core import re_compute_spline_basis_matrix, re_compute_tikhonov_weights, re_envelope_max_delta_n, re_knots_wavelengths
-        
-        b_mc = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_v), self.wls)
-        env_c = re_envelope_max_delta_n(self.wls, scale=self.re_env_s)
-        tk_mc = re_compute_tikhonov_weights(re_knots_wavelengths(lam_v), self.wls)
-
-        if self.use_sub_c3 and th_v is not None:
-            cor_p4 = (
-                "spline_cached_sub3",
-                dh_v,
-                dl_v,
-                lam_v,
-                b_mc,
-                env_c,
-                tk_mc,
-                float(th_v[0]),
-                float(th_v[1]),
-                float(th_v[2]),
-            )
-        else:
-            cor_p4 = (
-                "spline_cached",
-                dh_v,
-                dl_v,
-                lam_v,
-                b_mc,
-                env_c,
-                tk_mc,
-            )
-
-        rmse_p4_sp = float(np.sqrt(max(self.report_mse_spectral(ep_f, cor_p4), 0.0)))
-        rmse_qwot_p4 = self.compute_qwot_rmse(ep_f, cor_p4)
-        rmse_comb_p4 = self.rmse_combined(rmse_p4_sp, rmse_qwot_p4)
-
-        # Access constants locally or via imports since they are module level in certus_re_workers
-        from certus_core import RE_P4_BEAM_N_KNOTS, RE_RESULT_LABEL_WITH_DRIFT
-        
-        _ak4 = np.asarray(self.re_state["re_aperture_knots"], dtype=np.float64).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
-        _kn4 = np.asarray(self.re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
-
-        logging.info(
-            "RE phase 4 result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
-            "ap_deg(n knots)=%s | knots_lam_nm=%s | label=%s | "
-            "tune: re_envelope_scale re_qwot_penalty_weight alpha schedule",
-            rmse_comb_p4,
-            rmse_p4_sp,
-            rmse_qwot_p4,
-            np.array2string(_ak4, precision=2, separator=","),
-            np.array2string(_kn4, precision=2, separator=","),
-            p4_label_suffix,
-        )
-
-        from certus_re_workers import _re_p4_ap_band_intervals_str
-        logging.info(
-            "RE phase 4 plateaus (result explicit): %s",
-            _re_p4_ap_band_intervals_str(
-                _kn4,
-                _ak4,
-                float(np.min(self.wls)),
-                float(np.max(self.wls)),
-            ),
-        )
-
-        from certus_data import REPhase4Result
-        phase4_result = REPhase4Result(
-            label=RE_RESULT_LABEL_WITH_DRIFT + f" ({p4_label_suffix})",
-            ep=np.asarray(ep_f, dtype=np.float64).flatten(),
-            a=0.0,
-            b=0.0,
-            f=0.0,
-            re_dh_knots=np.asarray(dh_v, dtype=np.float64).flatten(),
-            re_dl_knots=np.asarray(dl_v, dtype=np.float64).flatten(),
-            re_knots_nm=np.asarray(re_knots_wavelengths(lam_v), dtype=np.float64).flatten(),
-            re_spline_lam_node2_nm=float(lam_v),
-            rmse=float(rmse_p4_sp),
-            rmse_qwot=float(rmse_qwot_p4),
-            rmse_combined=float(rmse_comb_p4),
-            nfev=int(self.best_res_dto.nfev) + int(nfev_extra),
-            success=bool(success),
-            nfev_phase1=int(self.best_res_dto.nfev_phase1),
-            nfev_phase2_prefit=int(self.best_res_dto.nfev_phase2_prefit),
-            re_p4_aperture_deg=float(np.mean(_ak4)),
-            re_p4_beam_ap_knots_nm=np.asarray(
-                self.re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64
-            ).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
-            re_p4_beam_ap_knots_deg=np.asarray(_ak4, dtype=np.float64).flatten(),
-            re_sub_cauchy_a0=float(th_v[0]) if (self.use_sub_c3 and th_v is not None) else None,
-            re_sub_cauchy_a1=float(th_v[1]) if (self.use_sub_c3 and th_v is not None) else None,
-            re_sub_cauchy_a2=float(th_v[2]) if (self.use_sub_c3 and th_v is not None) else None,
-        )
-        from certus_core import _prepend_result_dto
-        _prepend_result_dto(self.results, phase4_result)
-        self.rmse_final_milestone[0] = float(rmse_comb_p4)
-
-    def fun_res(self, xv) -> Any:
-        self.re_state["re_aperture_knots"][:] = xv[self.i_ap0 : self.i_ap0 + self.nap]
-        return self.fun_res_p2(xv[:self.i_ap0], emit_interval=8.0)
-
-    def jac_res(self, xv_full: np.ndarray) -> np.ndarray:
-        self.re_state["re_aperture_knots"][:] = xv_full[self.i_ap0 : self.i_ap0 + self.nap]
-        self.eval_both_p2(xv_full[:self.i_ap0], emit_interval=1.0e9)
-
-        r0 = np.asarray(self.cb2_ref[0]["res"], dtype=np.float64).copy()
-        j0 = np.asarray(self.cb2_ref[0]["jac"], dtype=np.float64).copy()
-        j_ap = np.zeros((r0.shape[0], self.nap), dtype=np.float64)
-
-        b_lo, b_hi = self.bounds_p4[0], self.bounds_p4[1]
-
-        for _k in range(self.nap):
-            _ik = self.i_ap0 + _k
-            _xk = float(xv_full[_ik])
-            _hi = float(b_hi[_ik])
-            _lo = float(b_lo[_ik])
-
-            _step = min(self.p4_fd_ap, _hi - _xk)
-            if _step < 1e-12:
-                _step = max(-self.p4_fd_ap, _lo - _xk)
-            if abs(_step) < 1e-15:
-                continue
-
-            xv_p = np.array(xv_full, dtype=np.float64, copy=True)
-            xv_p[_ik] = _xk + _step
-
-            self.re_state["re_aperture_knots"][:] = xv_p[self.i_ap0 : self.i_ap0 + self.nap]
-            self.eval_both_p2(xv_p[:self.i_ap0], emit_interval=1.0e9)
-
-            rk = np.asarray(self.cb2_ref[0]["res"], dtype=np.float64)
-            j_ap[:, _k] = (rk - r0) / _step
-
-        self.re_state["re_aperture_knots"][:] = xv_full[self.i_ap0 : self.i_ap0 + self.nap]
-        self.eval_both_p2(xv_full[:self.i_ap0], emit_interval=1.0e9)
-
-        return np.hstack([j0, j_ap])
-
-
-    def _execute_phase4_beam(self) -> None:
-        """Phase 4: beam aperture (stepped ap over lambda), scan + joint TRF."""
-
-        L = self._re_phase_ns
-
-        results = L.results
-
-        _p2_ctx = L._p2_ctx
-
-        _use_sub_c3 = bool(L._use_sub_c3_shared)
-
-        if not _p2_ctx:
-            logging.warning("RE phase 4 skipped: phase-2 context unavailable.")
-
-            return
-
-        _nk = int(_p2_ctx["_nk"])
-
-        i0 = int(_p2_ctx["i0"])
-
-        i_lam = int(_p2_ctx["i_lam"])
-
-        i_cu = i_lam + 1
-
-        _cb2_ref = _p2_ctx["_cb2_ref"]
-
-        _p2_ki_slot = _p2_ctx["_p2_ki_slot"]
-
-        _p2_trf_log_tag = _p2_ctx["_p2_trf_log_tag"]
-
-        _eval_both_p2 = _p2_ctx["_eval_both_p2"]
-
-        _fun_res_p2 = _p2_ctx["_fun_res_p2"]
-
-
-        bounds_p2_trf = _p2_ctx["bounds_p2_trf"]
-
-        oblique_config_meta = L.oblique_config_meta
-
-        _re_state = L._re_state
-
-        _emit_re_prog = L._emit_re_prog
-
-        _re_use_staged_order = L._re_use_staged_order
-
-        _correc_nom = L._correc_nom
-
-        n_layers_count = L.n_layers_count
-
-        wls = L.wls
-
-        _ap_gui = L._ap_gui
-
-        rmse_final_milestone = L.rmse_final_milestone
-
-
-
-        _report_mse_spectral = L._report_mse_spectral
-
-        _compute_qwot_rmse = L._compute_qwot_rmse
-
-        _rmse_combined = L._rmse_combined
-
-        re_env_s = L.re_env_s
-
-        # --- Phase 4: R/T average at theta +/- ap/2 (ap = total angular width); 1D scan + short joint TRF ---
-
-        _has_high_angle = any(float(meta["angle"]) >= 10.0 for meta in oblique_config_meta)
-
-        _p4_best_seen_rmse: float | None = None
-
-        if results and not self._stop:
-            best_res = results[0]
-            best_res_dto = REPhase4Result.from_legacy_dict(best_res)
-
-            ep_p4 = np.asarray(best_res_dto.ep, dtype=np.float64)
-
-            _x0_p4 = [ep_p4]
-
-            if best_res_dto.re_dh_knots.size > 0:
-                _x0_p4.append(np.asarray(best_res_dto.re_dh_knots, dtype=np.float64))
-
-                _x0_p4.append(np.asarray(best_res_dto.re_dl_knots, dtype=np.float64))
-
-                _x0_p4.append(np.array([best_res_dto.re_spline_lam_node2_nm], dtype=np.float64))
-
-                if _use_sub_c3 and best_res_dto.re_sub_cauchy_a0 is not None:
-                    _x0_p4.append(
-                        np.array(
-                            [
-                                best_res_dto.re_sub_cauchy_a0,
-                                best_res_dto.re_sub_cauchy_a1,
-                                best_res_dto.re_sub_cauchy_a2,
-                            ],
-                            dtype=np.float64,
-                        )
-                    )
-
-            if _has_high_angle and len(_x0_p4) > 1:
-                _t_p4_wall = time.perf_counter()
-
-                _emit_re_prog(
-                    98.0,
-                    (
-                        f"RE step 3/3: full joint optimization + beam (stepped ap, {int(RE_P4_BEAM_N_KNOTS)} lambda knots)"
-                        if _re_use_staged_order
-                        else f"RE phase 4: beam aperture (stepped ap, {int(RE_P4_BEAM_N_KNOTS)} lambda knots) - re_phase4_* cfg"
-                    ),
-                )
-
-                _re_state["is_phase4"] = True
-
-                _re_state["p4_prof"] = {
-                    "phy_wall_s": 0.0,
-                    "phi_calls": 0,
-                    "band_groups": 0,
-                    "band_mask_steps": 0,
-                    "meta_p4_count": 0,
-                    "n_wls_union_max": 0,
-                }
-
-                _p4_scan_wall_s = 0.0
-
-                _p4_trf_wall_s = 0.0
-
-                _p4_scan_mse_evals = 0
-
-                _p4_trf_mse_evals = 0
-
-                x0_base = np.concatenate(_x0_p4)
-
-                _cor_base = (
-                    p2_result_to_correc_tuple(best_res, _use_sub_c3)
-                    if best_res.get("re_dH_knots") is not None
-                    else _correc_nom
-                )
-
-                _n_ap_scan = max(
-                    4,
-                    int(
-                        self.cfg.get(
-                            "re_phase4_aperture_scan_points",
-                            RE_PHASE4_APERTURE_SCAN_POINTS,
-                        )
-                    ),
-                )
-
-                _lo_ap, _hi_ap = RE_P4_BEAM_AP_BOUNDS_DEG
-
-                _apb_cfg = self.cfg.get("re_phase4_ap_bounds_deg")
-
-                if _apb_cfg is not None:
-                    _vb = np.asarray(_apb_cfg, dtype=np.float64).ravel()
-
-                    if _vb.size >= 2:
-                        _c0, _c1 = float(_vb[0]), float(_vb[1])
-
-                        if 0.0 < _c0 < _c1 < 90.0:
-                            _lo_ap, _hi_ap = _c0, _c1
-
-                _p4_trf_nfev = int(self.cfg.get("re_phase4_trf_max_nfev", RE_PHASE4_TRF_MAX_NFEV))
-
-                _p4_tol = float(self.cfg.get("re_phase4_trf_tol_factor", RE_PHASE4_TRF_TOL_FACTOR))
-
-                _p4_fd_ap = float(self.cfg.get("re_p4_ap_fd_step_deg", RE_P4_AP_FD_STEP_DEG))
-
-                _nap = int(RE_P4_BEAM_N_KNOTS)
-
-                _kn_log = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[:_nap]
-
-                _p4_hi_ang = sorted({float(m["angle"]) for m in oblique_config_meta if float(m["angle"]) >= 10.0})
-
-                _p4_lo_ang = sorted({float(m["angle"]) for m in oblique_config_meta if float(m["angle"]) < 10.0})
-
-                _p4_cfg_knm = self.cfg.get("re_p4_beam_ap_knots_nm")
-
-                _p4_ft_eff = float(RE_LBFGSB_FTOL) * _p4_tol
-
-                _p4_gt_eff = float(RE_LBFGSB_GTOL) * _p4_tol
-
-                _kn_sorted_cfg = np.sort(np.asarray(_kn_log, dtype=np.float64).ravel().copy())
-
-                _p4_band_thr = np.array(
-                    [0.5 * (_kn_sorted_cfg[i] + _kn_sorted_cfg[i + 1]) for i in range(_nap - 1)],
-                    dtype=np.float64,
-                )
-
-                _p4_band_thr_s = np.array2string(_p4_band_thr, precision=2, separator=",")
-
-                _wmin_obj = float(np.min(wls))
-
-                _wmax_obj = float(np.max(wls))
-
-                _p4_scan_plateaus_s = _re_p4_ap_band_intervals_str(
-                    _kn_log,
-                    np.full(_nap, float(_ap_gui), dtype=np.float64),
-                    _wmin_obj,
-                    _wmax_obj,
-                )
-
-                logging.info(
-                    "RE phase 4 config | wall_t0=same_block | n_wls_obj=%d "
-                    "lambda_nm[min,max]=[%.2f,%.2f] | physics_groups=%d "
-                    "angles_ge_10deg=%s | "
-                    "knots_lam_nm(sorted_display)=%s | cfg_re_p4_beam_ap_knots_nm=%s | "
-                    "band_fastpath_n=%d lambda_thresholds_nm=%s (paliers ap / bande) | "
-                    "ap_bounds_deg=[%.4f,%.4f] | scan_grid=linspace_n=%d | "
-                    "trf_max_nfev=%d | trf_tol_factor=%.4g -> ftol~%.3g xtol~%.3g gtol~%.3g | "
-                    "ap_fd_step_deg=%.5g | joint_nvar=%d (n_layers=%d spline_block=%d sub_cauchy3=%s) | "
-                    "re_beam_aperture_deg_init(cfg)=%.4f",
-                    int(wls.size),
-                    float(np.min(wls)),
-                    float(np.max(wls)),
-                    len(oblique_config_meta),
-                    _p4_hi_ang,
-                    np.array2string(_kn_log, precision=2, separator=","),
-                    repr(_p4_cfg_knm),
-                    _nap,
-                    _p4_band_thr_s,
-                    _lo_ap,
-                    _hi_ap,
-                    _n_ap_scan,
-                    _p4_trf_nfev,
-                    _p4_tol,
-                    _p4_ft_eff,
-                    _p4_ft_eff,
-                    _p4_gt_eff,
-                    _p4_fd_ap,
-                    len(x0_base),
-                    n_layers_count,
-                    int(len(x0_base) - n_layers_count),
-                    _use_sub_c3,
-                    float(
-                        self.cfg.get(
-                            "re_beam_aperture_deg",
-                            RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-                        )
-                    ),
-                )
-
-                logging.info(
-                    "RE phase 4 plateaus (scan grid, lambda intervals): %s",
-                    _p4_scan_plateaus_s,
-                )
-
-                if _p4_lo_ang:
-                    logging.info(
-                        "RE phase 4 angle policy | P4 applied only for angles >=10: %s | "
-                        "angles <10 kept without beam aperture averaging: %s",
-                        _p4_hi_ang,
-                        _p4_lo_ang,
-                    )
-
-                logging.info(
-                    "RE phase 4 cost model | grep  P4 profile  +  P4 scan profile  +  TRF profile  "
-                    "| one full MSE_ep: physics_groups × P4_block; P4_block (stepped lambda) <= %d bands "
-                    "× (1 or 2) analytical oblique calls on lambda sub-grids | "
-                    "scan: ~(n_scan+1) MSE_ep | TRF: each nfev LS = 1 residual; each jac ap = "
-                    "1 MSE + %d FD(ap) + 1 restore (see SciPy njev)",
-                    _nap,
-                    _nap,
-                )
-
-                _emit_re_prog(
-                    98.5,
-                    f"RE phase 4: scalar ap scan ({_n_ap_scan} pts, "
-                    f"{_lo_ap} to {_hi_ap} deg): same ap on all {_nap} lambda knots per trial "
-                    f"(flat beam during scan; joint TRF -> indep. ap per lambda knot)",
-                )
-
-                logging.info(
-                    "RE phase 4: during **scan**, a single ap is set at a time, "
-                    "replicated over all %d lambda knots (no chromatic steps at this stage).",
-                    _nap,
-                )
-
-                best_ap = 1.0
-
-                best_ls_sq = float("inf")
-
-                _p4_scan_emit = 1.0e9
-
-                _p4_scan_trace: list[tuple[float, float]] = []
-
-                _p4_cb_i_before_scan = int(_cb2_ref[0]["i"])
-
-                _t_p4_scan_wall = time.perf_counter()
-
-                for test_ap in np.linspace(_lo_ap, _hi_ap, _n_ap_scan):
-                    if self._stop:
-                        break
-
-                    _ta = float(test_ap)
-
-                    _re_state["re_aperture_knots"][:] = _ta
-
-                    _eval_both_p2(x0_base, emit_interval=_p4_scan_emit)
-
-                    _r_sc = _cb2_ref[0]["res"]
-
-                    _cost_sc = float(np.dot(_r_sc, _r_sc))
-
-                    _p4_scan_trace.append((_ta, _cost_sc))
-
-                    logging.debug(
-                        "RE phase 4 scan step | ap_deg=%.2f | ||r||^2=%.8g | n_res=%d",
-                        _ta,
-                        _cost_sc,
-                        int(_r_sc.size),
-                    )
-
-                    if _cost_sc < best_ls_sq:
-                        best_ls_sq = _cost_sc
-
-                        best_ap = _ta
-
-                _re_state["re_aperture_knots"][:] = best_ap
-
-                _eval_both_p2(x0_base, emit_interval=_p4_scan_emit)
-
-                best_rmse_ap = float(np.sqrt(max(_report_mse_spectral(ep_p4, _cor_base), 0.0)))
-
-                _p4_scan_wall_s = float(time.perf_counter() - _t_p4_scan_wall)
-
-                _p4_scan_mse_evals = int(_cb2_ref[0]["i"]) - _p4_cb_i_before_scan
-
-                logging.info(
-                    "RE phase 4 scan profile | wall_s=%.4f | MSE_ep_delta=%d | "
-                    "scan_steps=%d | s_per_MSE_ep%.5f | opt: re_phase4_aperture_scan_points "
-                    "ou snap grille / warm cache",
-                    _p4_scan_wall_s,
-                    _p4_scan_mse_evals,
-                    len(_p4_scan_trace),
-                    _p4_scan_wall_s / max(_p4_scan_mse_evals, 1),
-                )
-
-                if _p4_scan_trace:
-                    _costs = [c for _, c in _p4_scan_trace]
-
-                    _worst_ls = float(max(_costs))
-
-                    _spread = _worst_ls - float(best_ls_sq)
-
-                    logging.info(
-                        "RE phase 4 scan summary | n_steps=%d | best_ap_deg=%.2f | "
-                        "min||r||^2=%.8g | max||r||^2=%.8g | spread=%.8g | "
-                        "RMSE_sp(at_best)~%.6f | tune: re_phase4_aperture_scan_points bounds RE_P4_BEAM_AP_BOUNDS_DEG",
-                        len(_p4_scan_trace),
-                        best_ap,
-                        best_ls_sq,
-                        _worst_ls,
-                        _spread,
-                        best_rmse_ap,
-                    )
-
-                    logging.info(
-                        "RE phase 4 scan best plateaus (explicit): %s",
-                        _re_p4_ap_band_intervals_str(
-                            _kn_log,
-                            np.full(_nap, float(best_ap), dtype=np.float64),
-                            _wmin_obj,
-                            _wmax_obj,
-                        ),
-                    )
-
-                    logging.debug(
-                        "RE phase 4 scan detail | " + " | ".join(f"ap={a:.2f}||r||2={c:.6g}" for a, c in _p4_scan_trace)
-                    )
-
-                def _insert_p4_result(
-                    *,
-                    ep_f: np.ndarray,
-                    dh_v: np.ndarray,
-                    dl_v: np.ndarray,
-                    lam_v: float,
-                    th_v: np.ndarray | None,
-                    nfev_extra: int,
-                    p4_label_suffix: str,
-                    success: bool,
-                ) -> None:
-
-                    b_mc = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_v), wls)
-
-                    env_c = re_envelope_max_delta_n(wls, scale=re_env_s)
-
-                    tk_mc = re_compute_tikhonov_weights(re_knots_wavelengths(lam_v), wls)
-
-                    if _use_sub_c3 and th_v is not None:
-                        cor_p4 = (
-                            "spline_cached_sub3",
-                            dh_v,
-                            dl_v,
-                            lam_v,
-                            b_mc,
-                            env_c,
-                            tk_mc,
-                            float(th_v[0]),
-                            float(th_v[1]),
-                            float(th_v[2]),
-                        )
-
-                    else:
-                        cor_p4 = (
-                            "spline_cached",
-                            dh_v,
-                            dl_v,
-                            lam_v,
-                            b_mc,
-                            env_c,
-                            tk_mc,
-                        )
-
-                    rmse_p4_sp = float(np.sqrt(max(_report_mse_spectral(ep_f, cor_p4), 0.0)))
-
-                    rmse_qwot_p4 = _compute_qwot_rmse(ep_f, cor_p4)
-
-                    rmse_comb_p4 = _rmse_combined(rmse_p4_sp, rmse_qwot_p4)
-
-                    _ak4 = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    _kn4 = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    logging.info(
-                        "RE phase 4 result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
-                        "ap_deg(n knots)=%s | knots_lam_nm=%s | label=%s | "
-                        "tune: re_envelope_scale re_qwot_penalty_weight alpha schedule",
-                        rmse_comb_p4,
-                        rmse_p4_sp,
-                        rmse_qwot_p4,
-                        np.array2string(_ak4, precision=2, separator=","),
-                        np.array2string(_kn4, precision=2, separator=","),
-                        p4_label_suffix,
-                    )
-
-                    logging.info(
-                        "RE phase 4 plateaus (result explicit): %s",
-                        _re_p4_ap_band_intervals_str(
-                            _kn4,
-                            _ak4,
-                            _wmin_obj,
-                            _wmax_obj,
-                        ),
-                    )
-
-                    phase4_result = REPhase4Result(
-                        label=RE_RESULT_LABEL_WITH_DRIFT + f" ({p4_label_suffix})",
-                        ep=np.asarray(ep_f, dtype=np.float64).flatten(),
-                        a=0.0,
-                        b=0.0,
-                        f=0.0,
-                        re_dh_knots=np.asarray(dh_v, dtype=np.float64).flatten(),
-                        re_dl_knots=np.asarray(dl_v, dtype=np.float64).flatten(),
-                        re_knots_nm=np.asarray(re_knots_wavelengths(lam_v), dtype=np.float64).flatten(),
-                        re_spline_lam_node2_nm=float(lam_v),
-                        rmse=float(rmse_p4_sp),
-                        rmse_qwot=float(rmse_qwot_p4),
-                        rmse_combined=float(rmse_comb_p4),
-                        nfev=int(best_res_dto.nfev) + int(nfev_extra),
-                        success=bool(success),
-                        nfev_phase1=int(best_res_dto.nfev_phase1),
-                        nfev_phase2_prefit=int(best_res_dto.nfev_phase2_prefit),
-                        re_p4_aperture_deg=float(np.mean(_ak4)),
-                        re_p4_beam_ap_knots_nm=np.asarray(
-                            _re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64
-                        ).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
-                        re_p4_beam_ap_knots_deg=np.asarray(_ak4, dtype=np.float64).flatten(),
-                        re_sub_cauchy_a0=float(th_v[0]) if (_use_sub_c3 and th_v is not None) else None,
-                        re_sub_cauchy_a1=float(th_v[1]) if (_use_sub_c3 and th_v is not None) else None,
-                        re_sub_cauchy_a2=float(th_v[2]) if (_use_sub_c3 and th_v is not None) else None,
-                    )
-                    _prepend_result_dto(results, phase4_result)
-
-                    rmse_final_milestone[0] = float(rmse_comb_p4)
-
-                if _p4_trf_nfev > 0 and not self._stop:
-                    x0_p4 = np.concatenate(
-                        [
-                            x0_base,
-                            np.full(_nap, float(best_ap), dtype=np.float64),
-                        ]
-                    )
-
-                    bounds_p4 = (
-                        np.concatenate(
-                            [
-                                bounds_p2_trf[0],
-                                np.full(_nap, float(_lo_ap), dtype=np.float64),
-                            ]
-                        ),
-                        np.concatenate(
-                            [
-                                bounds_p2_trf[1],
-                                np.full(_nap, float(_hi_ap), dtype=np.float64),
-                            ]
-                        ),
-                    )
-
-                    i_ap0 = len(x0_p4) - _nap
-
-                    def _fun_res_p4(xv) -> Any:
-
-                        _re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + _nap]
-
-                        return _fun_res_p2(xv[:i_ap0], emit_interval=8.0)
-
-                    def _jac_res_p4(xv_full: np.ndarray) -> np.ndarray:
-
-                        _re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + _nap]
-
-                        _eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
-
-                        r0 = np.asarray(_cb2_ref[0]["res"], dtype=np.float64).copy()
-
-                        j0 = np.asarray(_cb2_ref[0]["jac"], dtype=np.float64).copy()
-
-                        j_ap = np.zeros((r0.shape[0], _nap), dtype=np.float64)
-
-                        b_lo, b_hi = bounds_p4[0], bounds_p4[1]
-
-                        for _k in range(_nap):
-                            _ik = i_ap0 + _k
-
-                            _xk = float(xv_full[_ik])
-
-                            _hi = float(b_hi[_ik])
-
-                            _lo = float(b_lo[_ik])
-
-                            _step = min(_p4_fd_ap, _hi - _xk)
-
-                            if _step < 1e-12:
-                                _step = max(-_p4_fd_ap, _lo - _xk)
-
-                            if abs(_step) < 1e-15:
-                                continue
-
-                            xv_p = np.array(xv_full, dtype=np.float64, copy=True)
-
-                            xv_p[_ik] = _xk + _step
-
-                            _re_state["re_aperture_knots"][:] = xv_p[i_ap0 : i_ap0 + _nap]
-
-                            _eval_both_p2(xv_p[:i_ap0], emit_interval=1.0e9)
-
-                            rk = np.asarray(_cb2_ref[0]["res"], dtype=np.float64)
-
-                            j_ap[:, _k] = (rk - r0) / _step
-
-                        _re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + _nap]
-
-                        _eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
-
-                        return np.hstack([j0, j_ap])
-
-                    _cb2_ref[0] = {
-                        "x": None,
-                        "res": None,
-                        "jac": None,
-                        "mse": None,
-                        "best_rmse_combined": None,
-                        "i": 0,
-                        "last_emit": time.perf_counter(),
-                        "tk_w_c": None,
-                        "tk_lam2": None,
-                    }
-
-                    _p2_trf_log_tag[0] = "phase 4 finale"
-
-                    _p2_ki_slot[0] = 0
-
-                    logging.info(
-                        "RE phase 4: **joint TRF** - %d **independent** ap (lambda-stepped active in the model); "
-                        "starting point = best flat scan %.6f on all knots.",
-                        _nap,
-                        float(best_ap),
-                    )
-
-                    _t_p4_trf_wall = time.perf_counter()
-
-                    try:
-                        res_p4 = least_squares(
-                            _fun_res_p4,
-                            x0_p4,
-                            method="trf",
-                            bounds=bounds_p4,
-                            jac=_jac_res_p4,
-                            x_scale="jac",
-                            ftol=RE_LBFGSB_FTOL * _p4_tol,
-                            xtol=RE_LBFGSB_FTOL * _p4_tol,
-                            gtol=RE_LBFGSB_GTOL * _p4_tol,
-                            max_nfev=max(8, _p4_trf_nfev),
-                        )
-
-                        x_p4 = res_p4.x
-
-                        _re_state["re_aperture_knots"][:] = x_p4[i_ap0 : i_ap0 + _nap]
-
-                        ep_p4_f = np.asarray(x_p4[:n_layers_count], dtype=np.float64)
-
-                        dh_p4 = x_p4[i0 : i0 + _nk]
-
-                        dl_p4 = x_p4[i0 + _nk : i_lam]
-
-                        lam_p4 = float(x_p4[i_lam])
-
-                        th_p4 = np.asarray(x_p4[i_cu : i_cu + 3], dtype=np.float64).ravel() if _use_sub_c3 else None
-
-                        _ap_i = np.asarray(x0_p4[i_ap0 : i_ap0 + _nap], dtype=np.float64).ravel()
-
-                        _ap_f = np.asarray(x_p4[i_ap0 : i_ap0 + _nap], dtype=np.float64).ravel()
-
-                        _cost_0 = None
-
-                        try:
-                            _re_state["re_aperture_knots"][:] = _ap_i
-
-                            _eval_both_p2(x0_base, emit_interval=1.0e9)
-
-                            _r0 = _cb2_ref[0]["res"]
-
-                            _cost_0 = float(np.dot(_r0, _r0))
-
-                        except NUMERICAL_FAULT_EXCEPTIONS:
-                            pass
-
-                        # Restore knot apertures to TRF solution (otherwise _insert_p4_result
-
-                        # and worker state remain stuck on flat scan init _ap_i).
-
-                        _re_state["re_aperture_knots"][:] = _ap_f
-
-                        _cost_f = float(getattr(res_p4, "cost", np.nan))
-
-                        _opt = float(getattr(res_p4, "optimality", float("nan")))
-
-                        _njev = int(getattr(res_p4, "njev", -1))
-
-                        _p4_trf_wall_s = float(time.perf_counter() - _t_p4_trf_wall)
-
-                        _p4_trf_mse_evals = int(_cb2_ref[0]["i"])
-
-                        _p4_best_seen_rmse = (
-                            float(_cb2_ref[0]["best_rmse_combined"])
-                            if _cb2_ref[0].get("best_rmse_combined") is not None
-                            else None
-                        )
-
-                        logging.info(
-                            "RE phase 4 TRF summary | success=%s | nfev=%d njev=%d | "
-                            "cost_final=%.8g optimality=%.4g | cost_init_scan_ap=%s | "
-                            "ap_init_deg=%s ap_final_deg=%s | msg=%s | "
-                            "tune: re_phase4_trf_max_nfev re_phase4_trf_tol_factor re_p4_ap_fd_step_deg",
-                            res_p4.success,
-                            int(res_p4.nfev),
-                            _njev,
-                            _cost_f,
-                            _opt,
-                            (f"{_cost_0:.8g}" if _cost_0 is not None else "n/a"),
-                            np.array2string(_ap_i, precision=2, separator=","),
-                            np.array2string(_ap_f, precision=2, separator=","),
-                            str(getattr(res_p4, "message", "")).replace("\n", " "),
-                        )
-
-                        logging.info(
-                            "RE phase 4 TRF plateaus | init=%s | final=%s",
-                            _re_p4_ap_band_intervals_str(_kn_log, _ap_i, _wmin_obj, _wmax_obj),
-                            _re_p4_ap_band_intervals_str(_kn_log, _ap_f, _wmin_obj, _wmax_obj),
-                        )
-
-                        logging.info(
-                            "RE phase 4 TRF profile | wall_s=%.4f | MSE_ep_count_since_TRF_reset=%d | "
-                            "ls_nfev=%d | jac: ~njev×(1+%d) MSE_ep (1 residu + %d FD ap_knots + restore) | "
-                            "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor ou jac ap analytique",
-                            _p4_trf_wall_s,
-                            _p4_trf_mse_evals,
-                            int(res_p4.nfev),
-                            _nap,
-                            _nap,
-                            _p4_trf_wall_s / max(int(res_p4.nfev), 1),
-                        )
-
-                        _insert_p4_result(
-                            ep_f=ep_p4_f,
-                            dh_v=dh_p4,
-                            dl_v=dl_p4,
-                            lam_v=lam_p4,
-                            th_v=th_p4,
-                            nfev_extra=int(res_p4.nfev),
-                            p4_label_suffix="P4 aperture+TRF",
-                            success=bool(res_p4.success),
-                        )
-
-                        if _p4_best_seen_rmse is not None and results:
-                            _p4_top_dto = _top_result_dto(results)
-                            if _p4_top_dto is None:
-                                _p4_top_dto = _result_dto_at(results, 0)
-                            if _p4_top_dto is None:
-                                _sel = float("nan")
-                            else:
-                                _sel = float(_p4_top_dto.rmse_combined)
-
-                            logging.info(
-                                "RE phase 4 TRF best tracker | RMSE_best_seen=%.6f | RMSE_selected_result=%.6f",
-                                float(_p4_best_seen_rmse),
-                                _sel,
-                            )
-
-                            _gap = float(_sel - float(_p4_best_seen_rmse))
-
-                            if _gap < -1e-10:
-                                logging.info(
-                                    "RE phase 4 invariant check | selected_result (%.6f) < best_seen (%.6f), gap=%.6g "
-                                    "-> final selection improved beyond tracked intermediate best (acceptable).",
-                                    _sel,
-                                    float(_p4_best_seen_rmse),
-                                    _gap,
-                                )
-
-                            elif _gap > 1e-4:
-                                logging.warning(
-                                    "RE phase 4 invariant check | selected_result (%.6f) > best_seen (%.6f), gap=%.6g "
-                                    "-> best intermediate was not retained as final selected result.",
-                                    _sel,
-                                    float(_p4_best_seen_rmse),
-                                    _gap,
-                                )
-
-                            else:
-                                logging.info(
-                                    "RE phase 4 invariant check | OK (selected_result and best_seen consistent, gap=%.6g).",
-                                    _gap,
-                                )
-
-                    except REUserStopRequested:
-                        if _p4_trf_wall_s <= 0.0:
-                            _p4_trf_wall_s = float(time.perf_counter() - _t_p4_trf_wall)
-
-                        _p4_trf_mse_evals = int(_cb2_ref[0].get("i", 0))
-
-                        logging.info(
-                            "RE phase 4 TRF interrupted | user stop  wall_partial=%.4fs MSE_ep_partial=%d  "
-                            "last cached state may be stale; compare logs above for scan/TRF progress",
-                            _p4_trf_wall_s,
-                            _p4_trf_mse_evals,
-                        )
-
-                elif not self._stop:
-                    logging.info(
-                        "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0  "
-                        "scan-only (raise max_nfev to polish ap knots + thickness+splines jointly)"
-                    )
-
-                    rmse_q_scan = _compute_qwot_rmse(ep_p4, _cor_base)
-
-                    rmse_c_scan = _rmse_combined(float(best_rmse_ap), rmse_q_scan)
-
-                    _sk = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    _skn = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[
-                        : int(RE_P4_BEAM_N_KNOTS)
-                    ]
-
-                    logging.info(
-                        "RE phase 4 scan-only result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
-                        "min||r||^2(scan)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
-                        rmse_c_scan,
-                        float(best_rmse_ap),
-                        rmse_q_scan,
-                        float(best_ls_sq),
-                        np.array2string(_sk, precision=2, separator=","),
-                        np.array2string(_skn, precision=2, separator=","),
-                    )
-
-                    logging.info(
-                        "RE phase 4 scan-only plateaus (explicit): %s",
-                        _re_p4_ap_band_intervals_str(
-                            _skn,
-                            _sk,
-                            _wmin_obj,
-                            _wmax_obj,
-                        ),
-                    )
-
-                    phase4_scan = REPhase4Result.from_legacy_dict(best_res)
-                    phase4_scan = REPhase4Result(
-                        label=RE_RESULT_LABEL_WITH_DRIFT + " (P4 aperture scan)",
-                        ep=phase4_scan.ep,
-                        a=phase4_scan.a,
-                        b=phase4_scan.b,
-                        f=phase4_scan.f,
-                        re_dh_knots=phase4_scan.re_dh_knots,
-                        re_dl_knots=phase4_scan.re_dl_knots,
-                        re_knots_nm=phase4_scan.re_knots_nm,
-                        re_spline_lam_node2_nm=phase4_scan.re_spline_lam_node2_nm,
-                        rmse=float(best_rmse_ap),
-                        rmse_qwot=float(rmse_q_scan),
-                        rmse_combined=float(rmse_c_scan),
-                        nfev=phase4_scan.nfev,
-                        success=True,
-                        nfev_phase1=phase4_scan.nfev_phase1,
-                        nfev_phase2_prefit=phase4_scan.nfev_phase2_prefit,
-                        re_p4_aperture_deg=float(np.mean(_sk)),
-                        re_p4_beam_ap_knots_nm=np.asarray(
-                            _re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64
-                        ).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
-                        re_p4_beam_ap_knots_deg=np.asarray(_sk, dtype=np.float64).flatten(),
-                        re_sub_cauchy_a0=phase4_scan.re_sub_cauchy_a0,
-                        re_sub_cauchy_a1=phase4_scan.re_sub_cauchy_a1,
-                        re_sub_cauchy_a2=phase4_scan.re_sub_cauchy_a2,
-                    )
-                    _prepend_result_dto(results, phase4_scan)
-
-                    rmse_final_milestone[0] = float(rmse_c_scan)
-
-                _re_state["is_phase4"] = False
-
-                _pp_fin = _re_state.get("p4_prof")
-
-                _wall_p4_tot = float(time.perf_counter() - _t_p4_wall)
-
-                if _pp_fin is not None:
-                    logging.info(
-                        "RE phase 4 P4 profile (in each MSE_ep, blocks >= 10, lambda-stepped ap) - "
-                        "inner_physics_wall_s=%.4f | oblique_phi_calls=%d | "
-                        "meta_passes=%d | n_wls_union_max=%d | "
-                        "band_groups=%d band_mask_steps=%d | "
-                        "<=%d -calls/group (2×%d lambda knots); "
-                        "vectorizing by band reduces Python overhead",
-                        float(_pp_fin.get("phy_wall_s", 0.0)),
-                        int(_pp_fin.get("phi_calls", 0)),
-                        int(_pp_fin.get("meta_p4_count", 0)),
-                        int(_pp_fin.get("n_wls_union_max", 0)),
-                        int(_pp_fin.get("band_groups", 0)),
-                        int(_pp_fin.get("band_mask_steps", 0)),
-                        2 * int(RE_P4_BEAM_N_KNOTS),
-                        int(RE_P4_BEAM_N_KNOTS),
-                    )
-
-                logging.info(
-                    "RE phase 4 wall | total=%.3fs | scan=%.3fs | TRF=%.3fs | "
-                    "overheadmax(0,total-scan-TRF-inner_physics) | "
-                    "grep  RE phase 4  /  P4 profile  pour retuner cfg & code",
-                    _wall_p4_tot,
-                    float(_p4_scan_wall_s),
-                    float(_p4_trf_wall_s),
-                )
-
-                _re_state["p4_prof"] = None
-
-            elif _has_high_angle:
-                logging.info(
-                    "RE phase 4 skipped | reason=no_spline_state_on_best | "
-                    "need re_dH_knots/re_dL_knots on results[0] (phase 2 splines)"
-                )
-
-                _emit_re_prog(
-                    99.0,
-                    "RE phase 4  skipped (no Delta Re splines on best candidate)",
-                )
-
-            else:
-                logging.info(
-                    "RE phase 4 skipped | reason=all_angles_below_10deg | beam average not applied for low incidence"
-                )
-
-                _emit_re_prog(99.0, "RE phase 4  skipped (all angles < 10 deg)")
-
-            _emit_re_prog(99.0, "RE phase 4  done")
-
     def _finalize_re_run(
         self,
         *,
@@ -3335,6 +1937,8 @@ class Phase4BeamContext:
 
     def _build_re_run_context(self, _re_t0: float) -> Any:
         """Prepares grids, MSE/QWOT, self.ctx and self._re_phase_ns for RE phases."""
+        _dbg_write("_build_re_run_context ENTER")
+        self.signals.progress.emit(1, "[DBG] _build_re_run_context: started")
 
         # --- Setup: lambda sampling, indices, oblique targets ---
 
@@ -3356,6 +1960,7 @@ class Phase4BeamContext:
 
             self.signals.progress.emit(int(round(v)), msg)
 
+        _dbg_write("_build_re_run_context reading cfg fields")
         mats = self.cfg["mats"]
 
         stack = self.cfg["stack"]
@@ -3374,10 +1979,15 @@ class Phase4BeamContext:
 
         n_layers_count = len(ep0)
 
+        self.signals.progress.emit(1, f"[DBG] re_objective_wls_grid: {n_layers_count} layers, {len(oblique_tgts)} targets")
         wls, wls_min, wls_max = re_objective_wls_grid(self.cfg, oblique_tgts, float_dtype=float_dtype)
+        self.signals.progress.emit(1, f"[DBG] re_objective_wls_grid: done -> {len(wls)} wls pts")
+        _dbg_write("re_objective_wls_grid done")
 
         _p4_beam_knots_lam = _re_p4_beam_knots_lam_nm_from_wls(wls, self.cfg)
 
+        self.signals.progress.emit(1, "[DBG] re_nominal_indices_at_wls: starting...")
+        _dbg_write("re_nominal_indices_at_wls starting")
         (
             n_layers_nominal,
             n_sub_nominal,
@@ -3386,8 +1996,14 @@ class Phase4BeamContext:
             n_ref_nom_per_layer,
             _lref_arr,
         ) = re_nominal_indices_at_wls(mats, stack, wls, lambda_ref, complex_dtype=complex_dtype)
+        self.signals.progress.emit(1, "[DBG] re_nominal_indices_at_wls: done")
+        _dbg_write("re_nominal_indices_at_wls done")
 
+        self.signals.progress.emit(1, "[DBG] re_oblique_config_meta_from_wls: starting...")
+        _dbg_write("re_oblique_config_meta_from_wls starting")
         oblique_config_meta = re_oblique_config_meta_from_wls(wls, oblique_tgts)
+        _dbg_write("re_oblique_config_meta_from_wls done")
+        self.signals.progress.emit(1, f"[DBG] re_oblique_config_meta_from_wls: done -> {len(oblique_config_meta)} configs")
 
         # Precompute per-config union indices and bucket mappings once.
 
@@ -3423,7 +2039,7 @@ class Phase4BeamContext:
             f"(each objective eval  {len(oblique_config_meta)} spectral blocks, weight Deltaln(lambda) trapezoidal)."
         )
 
-        logging.info(_msg_prep)
+        _dbg_write("RE setup OK")
 
         _emit_re_prog(_RE_P_SETUP, _msg_prep)
 
@@ -3438,6 +2054,24 @@ class Phase4BeamContext:
         re_env_s = float(self.cfg.get("re_envelope_scale", 1.0))
 
         _re_env_on_wls = re_envelope_max_delta_n(wls, scale=re_env_s)
+
+        # _ap_gui and _re_state must be defined BEFORE REMseContext instantiation
+        # (REMseContext holds a reference to _re_state via its _re_state field).
+        _ap_gui = float(
+            np.clip(
+                float(self.cfg.get("re_beam_aperture_deg", RE_GUI_DEFAULT_BEAM_APERTURE_DEG)),
+                RE_P4_BEAM_AP_BOUNDS_DEG[0],
+                RE_P4_BEAM_AP_BOUNDS_DEG[1],
+            )
+        )
+
+        _re_state = {
+            "is_phase4": False,
+            "re_aperture_knots": np.full(int(RE_P4_BEAM_N_KNOTS), _ap_gui, dtype=np.float64),
+            "re_p4_beam_knots_lam_nm": np.asarray(_p4_beam_knots_lam, dtype=np.float64).copy(),
+            # Filled during phase 4 only - profiling for performance tuning (see "P4 profile" logs).
+            "p4_prof": None,
+        }
 
         ctx = REMseContext(
             _alpha_slot=_alpha_slot,
@@ -3458,8 +2092,16 @@ class Phase4BeamContext:
             wls=wls,
         )
 
-        def _mse_grad_accumulate_ep(ep_arr: np.ndarray, correc: tuple) -> tuple:
-            return self._compute_re_mse_gradient(ctx, ep_arr, correc)
+        def _mse_grad_accumulate_ep(
+            ep_arr: np.ndarray,
+            wt: np.ndarray,
+            want_grad: bool,
+            correc: tuple,
+            return_residuals: bool = False,
+        ) -> tuple:
+            return self._compute_re_mse_gradient(
+                ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals
+            )
 
         # Bounds: thicknesses only +/-radius %
 
@@ -3533,24 +2175,7 @@ class Phase4BeamContext:
         _re_env_on_wls_disp = re_envelope_max_delta_n(wls_display, scale=re_env_s)
 
         _re_live_emit = {"t": 0.0}
-
-        _ap_gui = float(self.cfg.get("re_beam_aperture_deg", RE_GUI_DEFAULT_BEAM_APERTURE_DEG))
-
-        _ap_gui = float(
-            np.clip(
-                _ap_gui,
-                RE_P4_BEAM_AP_BOUNDS_DEG[0],
-                RE_P4_BEAM_AP_BOUNDS_DEG[1],
-            )
-        )
-
-        _re_state = {
-            "is_phase4": False,
-            "re_aperture_knots": np.full(int(RE_P4_BEAM_N_KNOTS), _ap_gui, dtype=np.float64),
-            "re_p4_beam_knots_lam_nm": np.asarray(_p4_beam_knots_lam, dtype=np.float64).copy(),
-            # Filled during phase 4 only - profiling for performance tuning (see "P4 profile" logs).
-            "p4_prof": None,
-        }
+        # _ap_gui and _re_state already defined above (before REMseContext instantiation).
 
         def _emit_re_spectrum_live(
             ep_vec: np.ndarray,
@@ -4364,7 +2989,7 @@ class Phase4BeamContext:
         return mse, grad
 
 
-    def _compute_eval_both_p2(self, ctx_p2, xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
+    def _compute_eval_both_p2(self, ctx, xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
 
         if self._stop:
             raise REUserStopRequested()
@@ -4436,7 +3061,7 @@ class Phase4BeamContext:
         else:
             cor_spl = ("spline_cached", dh4, dl4, lam2, b_mat_c, env_c, tk_w_c)
 
-        mse, _, r_c, j_ep = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, True, cor_spl, return_residuals=True)
+        mse, _, r_c, j_ep = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, True, cor_spl, return_residuals=True)
 
         if _c["i"] == 1:
             _n_fd = (ctx._n_joint_fd) if ctx._fd_1s else (ctx._n_joint_fd * 2)
@@ -4524,7 +3149,16 @@ class Phase4BeamContext:
                 else:
                     dl_p[j - ctx._nk] += ctx._p2fd_spl
 
-                cor_p = ("spline_cached", dh_p, dl_p, float(xv64[ctx.i_lam]), b_mat_c, env_c, tk_w_c)
+                cor_p = self._build_cached_spline_correc(
+                    ctx,
+                    dh_p,
+                    dl_p,
+                    float(xv64[ctx.i_lam]),
+                    tk_w_c,
+                    cached=True,
+                    b_mat_c=b_mat_c,
+                    env_c=env_c,
+                )
 
                 h = ctx._p2fd_spl
 
@@ -4535,7 +3169,7 @@ class Phase4BeamContext:
 
                 h = ctx._p2fd_lam
 
-            r_p = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
+            r_p = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
 
             if ctx._fd_1s:
                 return j, (r_p - r_c) / h
@@ -4552,20 +3186,31 @@ class Phase4BeamContext:
                     else:
                         dl_m[j - ctx._nk] -= ctx._p2fd_spl
 
-                    cor_m = _cor_sub3(dh_m, dl_m, float(xv64[ctx.i_lam]), th4)
+                    cor_m = self._build_cached_spline_correc(
+                        ctx,
+                        dh_m,
+                        dl_m,
+                        float(xv64[ctx.i_lam]),
+                        tk_w_c,
+                        th4=th4,
+                        cached=True,
+                        b_mat_c=b_mat_c,
+                        env_c=env_c,
+                    )
 
                 elif j == 2 * ctx._nk:
                     lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
 
-                    cor_m = (
-                        "spline_sub3",
+                    cor_m = self._build_cached_spline_correc(
+                        ctx,
                         dh4,
                         dl4,
                         lam_m,
                         tk_w_c,
-                        float(th4[0]),
-                        float(th4[1]),
-                        float(th4[2]),
+                        th4=th4,
+                        cached=False,
+                        b_mat_c=b_mat_c,
+                        env_c=env_c,
                     )
 
                 else:
@@ -4595,7 +3240,7 @@ class Phase4BeamContext:
 
                 cor_m = ("spline", dh4, dl4, lam_m, tk_w_c)
 
-            r_m = ctx._mse_grad_accumulate_epe_ep(ep_x, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
+            r_m = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
 
             return j, (r_p - r_m) / (2.0 * h)
 
@@ -4697,9 +3342,9 @@ class Phase4BeamContext:
 
             rs2 = float(np.sqrt(max(_c["mse"], 0.0)))
 
-            rq2 = ctx._compute_qwot_rmsermse(ep_x, cor_spl)
+            rq2 = ctx._compute_qwot_rmse(ep_x, cor_spl)
 
-            rmse_cur = ctx._rmse_combinedined(rs2, rq2)
+            rmse_cur = ctx._rmse_combined(rs2, rq2)
 
             if ctx._p2_trf_log_tag[0] == "phase 4 finale":
                 _ap_k = np.asarray(ctx._re_state["re_aperture_knots"], dtype=float).ravel()[
@@ -4746,26 +3391,26 @@ class Phase4BeamContext:
                 float(_c["i"]) / float(max(ctx._maxiter_p2b, 1)),
             )
 
-            ctx._emit_re_progprog(
-                ctx._pct_p2b_p2b(ctx.pl, ctx._p2_ki_slot[0], _intra_2b),
+            ctx._emit_re_prog(
+                ctx._pct_p2b(ctx.pl, ctx._p2_ki_slot[0], _intra_2b),
                 msg,
             )
 
-            ctx._emit_re_spectrum_livelive(ep_x, _c["i"], correc=cor_spl, last_mse=_c["mse"], force=False)
+            ctx._emit_re_spectrum_live(ep_x, _c["i"], correc=cor_spl, last_mse=_c["mse"], force=False)
 
-    def _fun_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
-
-        self._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
-
-        return ctx._cb2_ref[0]["res"]
-
-    def _jac_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+    def _compute_fun_res_p2(self, ctx_p2, xv: np.ndarray, emit_interval: float = 3.0) -> Any:
 
         self._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
 
-        return ctx._cb2_ref[0]["jac"]
+        return ctx_p2._cb2_ref[0]["res"]
 
-    def _compute_eval_both_p2a(self, ctx_p2, 
+    def _compute_jac_res_p2(self, ctx_p2, xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+
+        self._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
+
+        return ctx_p2._cb2_ref[0]["jac"]
+
+    def _compute_eval_both_p2a(self, ctx, 
         x_sp: np.ndarray,
         _cb2a,
         ep_p1,
@@ -4804,9 +3449,18 @@ class Phase4BeamContext:
 
         env_c = re_envelope_max_delta_n(ctx.wls, scale=ctx.re_env_s)
 
-        cor_c = ("spline_cached", dh, dl, lam_p, b_mat_c, env_c, tk_w_c)
+        cor_c = self._build_cached_spline_correc(
+            ctx,
+            dh,
+            dl,
+            lam_p,
+            tk_w_c,
+            cached=True,
+            b_mat_c=b_mat_c,
+            env_c=env_c,
+        )
 
-        mse, _, r_c, _ = ctx._mse_grad_accumulate_epe_ep(
+        mse, _, r_c, _ = ctx._mse_grad_accumulate_ep(
             ep_p1, ctx.wt_spectral, False, cor_c, return_residuals=True
         )
 
@@ -4821,8 +3475,8 @@ class Phase4BeamContext:
                 ctx._fd_nw,
             )
 
-            ctx._emit_re_progprog(
-                ctx._pct_p2a_p2a(ctx.pl, _ki, 0.05),
+            ctx._emit_re_prog(
+                ctx._pct_p2a(ctx.pl, _ki, 0.05),
                 "RE phase 2a  first FD objective+grad eval (may take a few s)...",
             )
 
@@ -4835,43 +3489,37 @@ class Phase4BeamContext:
             hs = ctx._p2fd_lam if j == 2 * ctx._nk else ctx._p2fd_spl
 
             xp = np.array(x_c, copy=True)
-
             xp[j] += hs
-
-            dhp = xp[:ctx._nk]
-
-            dlp = xp[ctx._nk : 2 * ctx._nk]
-
-            lamx = float(xp[2 * ctx._nk])
-
-            cor_p = (
-                ("spline_cached", dhp, dlp, lamx, b_mat_c, env_c, tk_w_c)
-                if j < 2 * ctx._nk
-                else ("spline", dhp, dlp, lamx, tk_w_c)
+            cor_p = self._build_cached_spline_correc(
+                ctx,
+                xp[:ctx._nk],
+                xp[ctx._nk : 2 * ctx._nk],
+                float(xp[2 * ctx._nk]),
+                tk_w_c,
+                cached=(j < 2 * ctx._nk),
+                b_mat_c=b_mat_c,
+                env_c=env_c,
             )
 
-            r_p = ctx._mse_grad_accumulate_epe_ep(ep_p1, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
+            r_p = ctx._mse_grad_accumulate_ep(ep_p1, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
 
             if ctx._fd_1s:
                 return j, (r_p - r_c) / hs
 
             xm = np.array(x_c, copy=True)
-
             xm[j] -= hs
-
-            dhm = xm[:ctx._nk]
-
-            dlm = xm[ctx._nk : 2 * ctx._nk]
-
-            lamm = float(xm[2 * ctx._nk])
-
-            cor_m = (
-                ("spline_cached", dhm, dlm, lamm, b_mat_c, env_c, tk_w_c)
-                if j < 2 * ctx._nk
-                else ("spline", dhm, dlm, lamm, tk_w_c)
+            cor_m = self._build_cached_spline_correc(
+                ctx,
+                xm[:ctx._nk],
+                xm[ctx._nk : 2 * ctx._nk],
+                float(xm[2 * ctx._nk]),
+                tk_w_c,
+                cached=(j < 2 * ctx._nk),
+                b_mat_c=b_mat_c,
+                env_c=env_c,
             )
 
-            r_m = ctx._mse_grad_accumulate_epe_ep(ep_p1, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
+            r_m = ctx._mse_grad_accumulate_ep(ep_p1, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
 
             return j, (r_p - r_m) / (2.0 * hs)
 
@@ -4922,20 +3570,20 @@ class Phase4BeamContext:
                 float(_cb2a["i"]) / float(max(ctx._prefit_max, 1)),
             )
 
-            ctx._emit_re_progprog(
-                ctx._pct_p2a_p2a(ctx.pl, _ki, _intra_2a),
+            ctx._emit_re_prog(
+                ctx._pct_p2a(ctx.pl, _ki, _intra_2a),
                 f"RE phase 2a  iter {_cb2a['i']} TRF spline prefit...",
             )
 
     def _compute_fun_res_p2a(self, ctx_p2, x_sp: np.ndarray, _cb2a) -> Any:
 
-        self._compute_eval_both_p2a(ctx_p2, x_sp)
+        self._compute_eval_both_p2a(ctx_p2, x_sp, _cb2a, np.asarray(ctx_p2.ep_p1, dtype=np.float64), int(ctx_p2._p2_ki_slot[0]), float(ctx_p2._t_p2))
 
         return _cb2a["res"]
 
     def _compute_jac_res_p2a(self, ctx_p2, x_sp: np.ndarray, _cb2a) -> Any:
 
-        self._compute_eval_both_p2a(ctx_p2, x_sp)
+        self._compute_eval_both_p2a(ctx_p2, x_sp, _cb2a, np.asarray(ctx_p2.ep_p1, dtype=np.float64), int(ctx_p2._p2_ki_slot[0]), float(ctx_p2._t_p2))
 
         return _cb2a["jac"]
 
@@ -4979,30 +3627,950 @@ class Phase4BeamContext:
 
     def _run_re_workflow(self) -> None:
         """Corps nominal du thread RE (sans gestion d'erreur UI)."""
-
+        _dbg_write("_run_re_workflow start")
+        self.signals.progress.emit(1, "[DBG] _run_re_workflow: building context...")
         _re_t0 = time.perf_counter()
-
         fin = self._build_re_run_context(_re_t0)
-
+        _dbg_write("_run_re_workflow context built")
+        self.signals.progress.emit(1, f"[DBG] _run_re_workflow: context OK in {time.perf_counter()-_re_t0:.2f}s, executing phases...")
         self._execute_re_phases()
-
+        self.signals.progress.emit(1, "[DBG] _run_re_workflow: phases done, finalizing...")
         self._finalize_from_context(fin)
+        self.signals.progress.emit(1, "[DBG] _run_re_workflow: finished.")
 
     def run(self) -> None:
-
+        _dbg_write("REWorker.run started")
+        self.signals.progress.emit(1, "[DBG] REWorker.run(): thread started")
         try:
             self._run_re_workflow()
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            logging.error(f"REWorker error: {e}")
-
+        except Exception as e:
             tb = traceback.format_exc()
-
+            _dbg_write(f"EXCEPTION in run: {e}\n{tb}")
+            self.signals.progress.emit(1, f"[DBG] REWorker.run() EXCEPTION: {e}")
             self.signals.error.emit(tb)
-
-            # Without ``finished``, the UI stays on "Computing..." / RE progress bar stuck.
-
             self.signals.finished.emit(REResultsPayloadBuilder.build_error_payload(self.cfg.get("ep0")))
+
+    def _get_phase4_aperture_bounds(self) -> tuple[float, float]:
+        """Return validated beam aperture bounds for phase 4."""
+        lo_ap, hi_ap = RE_P4_BEAM_AP_BOUNDS_DEG
+        apb_cfg = self.cfg.get("re_phase4_ap_bounds_deg")
+        if apb_cfg is not None:
+            vb = np.asarray(apb_cfg, dtype=np.float64).ravel()
+            if vb.size >= 2:
+                c0, c1 = float(vb[0]), float(vb[1])
+                if 0.0 < c0 < c1 < 90.0:
+                    lo_ap, hi_ap = c0, c1
+        return lo_ap, hi_ap
+
+    def _run_phase4_aperture_scan(
+        self,
+        *,
+        _emit_re_prog: Callable,
+        _nap: int,
+        _lo_ap: float,
+        _hi_ap: float,
+        _n_ap_scan: int,
+        x0_base: np.ndarray,
+        _eval_both_p2: Callable,
+        _cb2_ref: list,
+        _re_state: dict,
+        _report_mse_spectral: Callable,
+        _cor_base: tuple,
+        ep_p4: np.ndarray,
+        _kn_log: np.ndarray,
+        _wmin_obj: float,
+        _wmax_obj: float,
+    ) -> tuple[list[tuple[float, float]], float, float, float, int, float]:
+        """Run the aperture scan phase 4 logic."""
+        _emit_re_prog(
+            98.5,
+            f"RE phase 4: scalar ap scan ({_n_ap_scan} pts, "
+            f"{_lo_ap} to {_hi_ap} deg): same ap on all {_nap} lambda knots per trial "
+            f"(flat beam during scan; joint TRF -> indep. ap per lambda knot)",
+        )
+
+        logging.info(
+            "RE phase 4: during **scan**, a single ap is set at a time, "
+            "replicated over all %d lambda knots (no chromatic steps at this stage).",
+            _nap,
+        )
+
+        best_ap = 1.0
+        best_ls_sq = float("inf")
+        _p4_scan_emit = 1.0e9
+        _p4_scan_trace: list[tuple[float, float]] = []
+        _p4_cb_i_before_scan = int(_cb2_ref[0]["i"])
+        _t_p4_scan_wall = time.perf_counter()
+
+        for test_ap in np.linspace(_lo_ap, _hi_ap, _n_ap_scan):
+            if self._stop:
+                break
+            _ta = float(test_ap)
+            _re_state["re_aperture_knots"][:] = _ta
+            _eval_both_p2(x0_base, emit_interval=_p4_scan_emit)
+            _r_sc = _cb2_ref[0]["res"]
+            _cost_sc = float(np.dot(_r_sc, _r_sc))
+            _p4_scan_trace.append((_ta, _cost_sc))
+            logging.debug(
+                "RE phase 4 scan step | ap_deg=%.2f | ||r||^2=%.8g | n_res=%d",
+                _ta,
+                _cost_sc,
+                int(_r_sc.size),
+            )
+            if _cost_sc < best_ls_sq:
+                best_ls_sq = _cost_sc
+                best_ap = _ta
+
+        _re_state["re_aperture_knots"][:] = best_ap
+        _eval_both_p2(x0_base, emit_interval=_p4_scan_emit)
+        best_rmse_ap = float(np.sqrt(max(_report_mse_spectral(ep_p4, _cor_base), 0.0)))
+        _p4_scan_wall_s = float(time.perf_counter() - _t_p4_scan_wall)
+        _p4_scan_mse_evals = int(_cb2_ref[0]["i"]) - _p4_cb_i_before_scan
+
+        logging.info(
+            "RE phase 4 scan profile | wall_s=%.4f | MSE_ep_delta=%d | "
+            "scan_steps=%d | s_per_MSE_ep%.5f | opt: re_phase4_aperture_scan_points "
+            "ou snap grille / warm cache",
+            _p4_scan_wall_s,
+            _p4_scan_mse_evals,
+            len(_p4_scan_trace),
+            _p4_scan_wall_s / max(_p4_scan_mse_evals, 1),
+        )
+
+        if _p4_scan_trace:
+            _costs = [c for _, c in _p4_scan_trace]
+            _worst_ls = float(max(_costs))
+            _spread = _worst_ls - float(best_ls_sq)
+
+            logging.info(
+                "RE phase 4 scan summary | n_steps=%d | best_ap_deg=%.2f | "
+                "min||r||^2=%.8g | max||r||^2=%.8g | spread=%.8g | "
+                "RMSE_sp(at_best)~%.6f | tune: re_phase4_aperture_scan_points bounds RE_P4_BEAM_AP_BOUNDS_DEG",
+                len(_p4_scan_trace),
+                best_ap,
+                best_ls_sq,
+                _worst_ls,
+                _spread,
+                best_rmse_ap,
+            )
+
+            logging.info(
+                "RE phase 4 scan best plateaus (explicit): %s",
+                _re_p4_ap_band_intervals_str(
+                    _kn_log,
+                    np.full(_nap, float(best_ap), dtype=np.float64),
+                    _wmin_obj,
+                    _wmax_obj,
+                ),
+            )
+
+            logging.debug(
+                "RE phase 4 scan detail | " + " | ".join(f"ap={a:.2f}||r||2={c:.6g}" for a, c in _p4_scan_trace)
+            )
+
+        return _p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap
+
+    def _get_phase4_scan_inputs(self, x0_base: np.ndarray, _nap: int, _ap_gui: float, wls: np.ndarray, oblique_config_meta: list[dict[str, Any]]) -> tuple[np.ndarray, np.ndarray, np.ndarray, list[float], list[float], str]:
+        """Build derived phase-4 scan inputs and diagnostics."""
+        _kn_log = np.asarray(self._re_phase_ns._re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[:_nap]
+        _p4_hi_ang = sorted({float(m["angle"]) for m in oblique_config_meta if float(m["angle"]) >= 10.0})
+        _p4_lo_ang = sorted({float(m["angle"]) for m in oblique_config_meta if float(m["angle"]) < 10.0})
+        _kn_sorted_cfg = np.sort(np.asarray(_kn_log, dtype=np.float64).ravel().copy())
+        _p4_band_thr = np.array([0.5 * (_kn_sorted_cfg[i] + _kn_sorted_cfg[i + 1]) for i in range(_nap - 1)], dtype=np.float64)
+        _p4_scan_plateaus_s = _re_p4_ap_band_intervals_str(
+            _kn_log,
+            np.full(_nap, float(_ap_gui), dtype=np.float64),
+            float(np.min(wls)),
+            float(np.max(wls)),
+        )
+        return _kn_log, _p4_band_thr, _p4_scan_plateaus_s, _p4_hi_ang, _p4_lo_ang, repr(self.cfg.get("re_p4_beam_ap_knots_nm"))
+
+
+
+    def _build_phase4_result(
+        self,
+        *,
+        ep_f: np.ndarray,
+        dh_v: np.ndarray,
+        dl_v: np.ndarray,
+        lam_v: float,
+        th_v: np.ndarray | None,
+        nfev_extra: int,
+        p4_label_suffix: str,
+        success: bool,
+        best_res_dto: REPhase4Result,
+        _use_sub_c3: bool,
+        _report_mse_spectral,
+        _compute_qwot_rmse,
+        _rmse_combined,
+        _re_state: dict[str, Any],
+        wls: np.ndarray,
+        _wmin_obj: float,
+        _wmax_obj: float,
+    ) -> tuple[REPhase4Result, float]:
+        b_mc = re_compute_spline_basis_matrix(re_knots_wavelengths(lam_v), wls)
+        env_c = re_envelope_max_delta_n(wls, scale=self._re_phase_ns.re_env_s)
+        tk_mc = re_compute_tikhonov_weights(re_knots_wavelengths(lam_v), wls)
+
+        if _use_sub_c3 and th_v is not None:
+            cor_p4 = (
+                "spline_cached_sub3",
+                dh_v,
+                dl_v,
+                lam_v,
+                b_mc,
+                env_c,
+                tk_mc,
+                float(th_v[0]),
+                float(th_v[1]),
+                float(th_v[2]),
+            )
+        else:
+            cor_p4 = (
+                "spline_cached",
+                dh_v,
+                dl_v,
+                lam_v,
+                b_mc,
+                env_c,
+                tk_mc,
+            )
+
+        rmse_p4_sp = float(np.sqrt(max(_report_mse_spectral(ep_f, cor_p4), 0.0)))
+        rmse_qwot_p4 = _compute_qwot_rmse(ep_f, cor_p4)
+        rmse_comb_p4 = _rmse_combined(rmse_p4_sp, rmse_qwot_p4)
+
+        _ak4 = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
+        _kn4 = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[: int(RE_P4_BEAM_N_KNOTS)]
+
+        logging.info(
+            "RE phase 4 result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
+            "ap_deg(n knots)=%s | knots_lam_nm=%s | label=%s | "
+            "tune: re_envelope_scale re_qwot_penalty_weight alpha schedule",
+            rmse_comb_p4,
+            rmse_p4_sp,
+            rmse_qwot_p4,
+            np.array2string(_ak4, precision=2, separator=","),
+            np.array2string(_kn4, precision=2, separator=","),
+            p4_label_suffix,
+        )
+
+        logging.info(
+            "RE phase 4 plateaus (result explicit): %s",
+            _re_p4_ap_band_intervals_str(_kn4, _ak4, _wmin_obj, _wmax_obj),
+        )
+
+        phase4_result = REPhase4Result(
+            label=RE_RESULT_LABEL_WITH_DRIFT + f" ({p4_label_suffix})",
+            ep=np.asarray(ep_f, dtype=np.float64).flatten(),
+            a=0.0,
+            b=0.0,
+            f=0.0,
+            re_dh_knots=np.asarray(dh_v, dtype=np.float64).flatten(),
+            re_dl_knots=np.asarray(dl_v, dtype=np.float64).flatten(),
+            re_knots_nm=np.asarray(re_knots_wavelengths(lam_v), dtype=np.float64).flatten(),
+            re_spline_lam_node2_nm=float(lam_v),
+            rmse=float(rmse_p4_sp),
+            rmse_qwot=float(rmse_qwot_p4),
+            rmse_combined=float(rmse_comb_p4),
+            nfev=int(best_res_dto.nfev) + int(nfev_extra),
+            success=bool(success),
+            nfev_phase1=int(best_res_dto.nfev_phase1),
+            nfev_phase2_prefit=int(best_res_dto.nfev_phase2_prefit),
+            re_p4_aperture_deg=float(np.mean(_ak4)),
+            re_p4_beam_ap_knots_nm=np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
+            re_p4_beam_ap_knots_deg=np.asarray(_ak4, dtype=np.float64).flatten(),
+            re_sub_cauchy_a0=float(th_v[0]) if (_use_sub_c3 and th_v is not None) else None,
+            re_sub_cauchy_a1=float(th_v[1]) if (_use_sub_c3 and th_v is not None) else None,
+            re_sub_cauchy_a2=float(th_v[2]) if (_use_sub_c3 and th_v is not None) else None,
+        )
+        return phase4_result, rmse_comb_p4
+
+    def _execute_phase4_beam(self) -> None:
+        """Phase 4: beam aperture (stepped ap over lambda), scan + joint TRF."""
+
+        L = self._re_phase_ns
+
+        results = L.results
+
+        _p2_ctx = L._p2_ctx
+
+        _use_sub_c3 = bool(L._use_sub_c3_shared)
+
+        if not _p2_ctx:
+            logging.warning("RE phase 4 skipped: phase-2 context unavailable.")
+
+            return
+
+        _nk = int(_p2_ctx["_nk"])
+
+        i0 = int(_p2_ctx["i0"])
+
+        i_lam = int(_p2_ctx["i_lam"])
+
+        i_cu = i_lam + 1
+
+        _cb2_ref = _p2_ctx["_cb2_ref"]
+
+        _p2_ki_slot = _p2_ctx["_p2_ki_slot"]
+
+        _p2_trf_log_tag = _p2_ctx["_p2_trf_log_tag"]
+
+        _eval_both_p2 = _p2_ctx["_eval_both_p2"]
+
+        _fun_res_p2 = _p2_ctx["_fun_res_p2"]
+
+
+        bounds_p2_trf = _p2_ctx["bounds_p2_trf"]
+
+        oblique_config_meta = L.oblique_config_meta
+
+        _re_state = L._re_state
+
+        _emit_re_prog = L._emit_re_prog
+
+        _re_use_staged_order = L._re_use_staged_order
+
+        _correc_nom = L._correc_nom
+
+        n_layers_count = L.n_layers_count
+
+        wls = L.wls
+
+        _ap_gui = L._ap_gui
+
+        rmse_final_milestone = L.rmse_final_milestone
+
+
+
+        _report_mse_spectral = L._report_mse_spectral
+
+        _compute_qwot_rmse = L._compute_qwot_rmse
+
+        _rmse_combined = L._rmse_combined
+
+        re_env_s = L.re_env_s
+
+        # --- Phase 4: R/T average at theta +/- ap/2 (ap = total angular width); 1D scan + short joint TRF ---
+
+        _has_high_angle = any(float(meta["angle"]) >= 10.0 for meta in oblique_config_meta)
+
+        _p4_best_seen_rmse: float | None = None
+
+        if results and not self._stop:
+            best_res = results[0]
+            best_res_dto = REPhase4Result.from_legacy_dict(best_res)
+
+            ep_p4 = np.asarray(best_res_dto.ep, dtype=np.float64)
+
+            _x0_p4 = [ep_p4]
+
+            if best_res_dto.re_dh_knots.size > 0:
+                _x0_p4.append(np.asarray(best_res_dto.re_dh_knots, dtype=np.float64))
+
+                _x0_p4.append(np.asarray(best_res_dto.re_dl_knots, dtype=np.float64))
+
+                _x0_p4.append(np.array([best_res_dto.re_spline_lam_node2_nm], dtype=np.float64))
+
+                if _use_sub_c3 and best_res_dto.re_sub_cauchy_a0 is not None:
+                    _x0_p4.append(
+                        np.array(
+                            [
+                                best_res_dto.re_sub_cauchy_a0,
+                                best_res_dto.re_sub_cauchy_a1,
+                                best_res_dto.re_sub_cauchy_a2,
+                            ],
+                            dtype=np.float64,
+                        )
+                    )
+
+            if _has_high_angle and len(_x0_p4) > 1:
+                _t_p4_wall = time.perf_counter()
+
+                _emit_re_prog(
+                    98.0,
+                    (
+                        f"RE step 3/3: full joint optimization + beam (stepped ap, {int(RE_P4_BEAM_N_KNOTS)} lambda knots)"
+                        if _re_use_staged_order
+                        else f"RE phase 4: beam aperture (stepped ap, {int(RE_P4_BEAM_N_KNOTS)} lambda knots) - re_phase4_* cfg"
+                    ),
+                )
+
+                _re_state["is_phase4"] = True
+
+                _re_state["p4_prof"] = {
+                    "phy_wall_s": 0.0,
+                    "phi_calls": 0,
+                    "band_groups": 0,
+                    "band_mask_steps": 0,
+                    "meta_p4_count": 0,
+                    "n_wls_union_max": 0,
+                }
+
+                _p4_scan_wall_s = 0.0
+
+                _p4_trf_wall_s = 0.0
+
+                _p4_scan_mse_evals = 0
+
+                _p4_trf_mse_evals = 0
+
+                x0_base = np.concatenate(_x0_p4)
+
+                _cor_base = (
+                    p2_result_to_correc_tuple(best_res, _use_sub_c3)
+                    if best_res.get("re_dH_knots") is not None
+                    else _correc_nom
+                )
+
+                _n_ap_scan = max(
+                    4,
+                    int(
+                        self.cfg.get(
+                            "re_phase4_aperture_scan_points",
+                            RE_PHASE4_APERTURE_SCAN_POINTS,
+                        )
+                    ),
+                )
+
+                _lo_ap, _hi_ap = self._get_phase4_aperture_bounds()
+
+                _p4_trf_nfev = int(self.cfg.get("re_phase4_trf_max_nfev", RE_PHASE4_TRF_MAX_NFEV))
+
+                _p4_tol = float(self.cfg.get("re_phase4_trf_tol_factor", RE_PHASE4_TRF_TOL_FACTOR))
+
+                _p4_fd_ap = float(self.cfg.get("re_p4_ap_fd_step_deg", RE_P4_AP_FD_STEP_DEG))
+
+                _nap = int(RE_P4_BEAM_N_KNOTS)
+
+                _kn_log, _p4_band_thr, _p4_scan_plateaus_s, _p4_hi_ang, _p4_lo_ang, _p4_cfg_knm = self._get_phase4_scan_inputs(
+                    x0_base,
+                    _nap,
+                    _ap_gui,
+                    wls,
+                    oblique_config_meta,
+                )
+
+                _p4_ft_eff = float(RE_LBFGSB_FTOL) * _p4_tol
+
+                _p4_gt_eff = float(RE_LBFGSB_GTOL) * _p4_tol
+
+                _p4_band_thr_s = np.array2string(_p4_band_thr, precision=2, separator=",")
+
+                _wmin_obj = float(np.min(wls))
+
+                _wmax_obj = float(np.max(wls))
+
+                logging.info(
+                    "RE phase 4 config | wall_t0=same_block | n_wls_obj=%d "
+                    "lambda_nm[min,max]=[%.2f,%.2f] | physics_groups=%d "
+                    "angles_ge_10deg=%s | "
+                    "knots_lam_nm(sorted_display)=%s | cfg_re_p4_beam_ap_knots_nm=%s | "
+                    "band_fastpath_n=%d lambda_thresholds_nm=%s (paliers ap / bande) | "
+                    "ap_bounds_deg=[%.4f,%.4f] | scan_grid=linspace_n=%d | "
+                    "trf_max_nfev=%d | trf_tol_factor=%.4g -> ftol~%.3g xtol~%.3g gtol~%.3g | "
+                    "ap_fd_step_deg=%.5g | joint_nvar=%d (n_layers=%d spline_block=%d sub_cauchy3=%s) | "
+                    "re_beam_aperture_deg_init(cfg)=%.4f",
+                    int(wls.size),
+                    float(np.min(wls)),
+                    float(np.max(wls)),
+                    len(oblique_config_meta),
+                    _p4_hi_ang,
+                    np.array2string(_kn_log, precision=2, separator=","),
+                    repr(_p4_cfg_knm),
+                    _nap,
+                    _p4_band_thr_s,
+                    _lo_ap,
+                    _hi_ap,
+                    _n_ap_scan,
+                    _p4_trf_nfev,
+                    _p4_tol,
+                    _p4_ft_eff,
+                    _p4_ft_eff,
+                    _p4_gt_eff,
+                    _p4_fd_ap,
+                    len(x0_base),
+                    n_layers_count,
+                    int(len(x0_base) - n_layers_count),
+                    _use_sub_c3,
+                    float(
+                        self.cfg.get(
+                            "re_beam_aperture_deg",
+                            RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
+                        )
+                    ),
+                )
+
+                logging.info(
+                    "RE phase 4 plateaus (scan grid, lambda intervals): %s",
+                    _p4_scan_plateaus_s,
+                )
+
+                if _p4_lo_ang:
+                    logging.info(
+                        "RE phase 4 angle policy | P4 applied only for angles >=10: %s | "
+                        "angles <10 kept without beam aperture averaging: %s",
+                        _p4_hi_ang,
+                        _p4_lo_ang,
+                    )
+
+                logging.info(
+                    "RE phase 4 cost model | grep  P4 profile  +  P4 scan profile  +  TRF profile  "
+                    "| one full MSE_ep: physics_groups × P4_block; P4_block (stepped lambda) <= %d bands "
+                    "× (1 or 2) analytical oblique calls on lambda sub-grids | "
+                    "scan: ~(n_scan+1) MSE_ep | TRF: each nfev LS = 1 residual; each jac ap = "
+                    "1 MSE + %d FD(ap) + 1 restore (see SciPy njev)",
+                    _nap,
+                    _nap,
+                )
+
+                _p4_scan_trace, best_ap, best_ls_sq, _p4_scan_wall_s, _p4_scan_mse_evals, best_rmse_ap = self._run_phase4_aperture_scan(
+                    _emit_re_prog=_emit_re_prog,
+                    _nap=_nap,
+                    _lo_ap=_lo_ap,
+                    _hi_ap=_hi_ap,
+                    _n_ap_scan=_n_ap_scan,
+                    x0_base=x0_base,
+                    _eval_both_p2=_eval_both_p2,
+                    _cb2_ref=_cb2_ref,
+                    _re_state=_re_state,
+                    _report_mse_spectral=_report_mse_spectral,
+                    _cor_base=_cor_base,
+                    ep_p4=ep_p4,
+                    _kn_log=_kn_log,
+                    _wmin_obj=_wmin_obj,
+                    _wmax_obj=_wmax_obj,
+                )
+
+                def _insert_p4_result(
+                    *,
+                    ep_f: np.ndarray,
+                    dh_v: np.ndarray,
+                    dl_v: np.ndarray,
+                    lam_v: float,
+                    th_v: np.ndarray | None,
+                    nfev_extra: int,
+                    p4_label_suffix: str,
+                    success: bool,
+                ) -> None:
+                    phase4_result, rmse_comb_p4 = self._build_phase4_result(
+                        ep_f=ep_f,
+                        dh_v=dh_v,
+                        dl_v=dl_v,
+                        lam_v=lam_v,
+                        th_v=th_v,
+                        nfev_extra=nfev_extra,
+                        p4_label_suffix=p4_label_suffix,
+                        success=success,
+                        best_res_dto=best_res_dto,
+                        _use_sub_c3=_use_sub_c3,
+                        _report_mse_spectral=_report_mse_spectral,
+                        _compute_qwot_rmse=_compute_qwot_rmse,
+                        _rmse_combined=_rmse_combined,
+                        _re_state=_re_state,
+                        wls=wls,
+                        _wmin_obj=_wmin_obj,
+                        _wmax_obj=_wmax_obj,
+                    )
+                    _prepend_result_dto(results, phase4_result)
+                    rmse_final_milestone[0] = float(rmse_comb_p4)
+
+                if _p4_trf_nfev > 0 and not self._stop:
+                    x0_p4 = np.concatenate(
+                        [
+                            x0_base,
+                            np.full(_nap, float(best_ap), dtype=np.float64),
+                        ]
+                    )
+
+                    bounds_p4 = (
+                        np.concatenate(
+                            [
+                                bounds_p2_trf[0],
+                                np.full(_nap, float(_lo_ap), dtype=np.float64),
+                            ]
+                        ),
+                        np.concatenate(
+                            [
+                                bounds_p2_trf[1],
+                                np.full(_nap, float(_hi_ap), dtype=np.float64),
+                            ]
+                        ),
+                    )
+
+                    i_ap0 = len(x0_p4) - _nap
+
+                    def _fun_res_p4(xv) -> Any:
+
+                        _re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + _nap]
+
+                        return _fun_res_p2(xv[:i_ap0], emit_interval=8.0)
+
+                    def _jac_res_p4(xv_full: np.ndarray) -> np.ndarray:
+
+                        _re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + _nap]
+
+                        _eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
+
+                        r0 = np.asarray(_cb2_ref[0]["res"], dtype=np.float64).copy()
+
+                        j0 = np.asarray(_cb2_ref[0]["jac"], dtype=np.float64).copy()
+
+                        j_ap = np.zeros((r0.shape[0], _nap), dtype=np.float64)
+
+                        b_lo, b_hi = bounds_p4[0], bounds_p4[1]
+
+                        for _k in range(_nap):
+                            _ik = i_ap0 + _k
+
+                            _xk = float(xv_full[_ik])
+
+                            _hi = float(b_hi[_ik])
+
+                            _lo = float(b_lo[_ik])
+
+                            _step = min(_p4_fd_ap, _hi - _xk)
+
+                            if _step < 1e-12:
+                                _step = max(-_p4_fd_ap, _lo - _xk)
+
+                            if abs(_step) < 1e-15:
+                                continue
+
+                            xv_p = np.array(xv_full, dtype=np.float64, copy=True)
+
+                            xv_p[_ik] = _xk + _step
+
+                            _re_state["re_aperture_knots"][:] = xv_p[i_ap0 : i_ap0 + _nap]
+
+                            _eval_both_p2(xv_p[:i_ap0], emit_interval=1.0e9)
+
+                            rk = np.asarray(_cb2_ref[0]["res"], dtype=np.float64)
+
+                            j_ap[:, _k] = (rk - r0) / _step
+
+                        _re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + _nap]
+
+                        _eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
+
+                        return np.hstack([j0, j_ap])
+
+                    _cb2_ref[0] = {
+                        "x": None,
+                        "res": None,
+                        "jac": None,
+                        "mse": None,
+                        "best_rmse_combined": None,
+                        "i": 0,
+                        "last_emit": time.perf_counter(),
+                        "tk_w_c": None,
+                        "tk_lam2": None,
+                    }
+
+                    _p2_trf_log_tag[0] = "phase 4 finale"
+
+                    _p2_ki_slot[0] = 0
+
+                    logging.info(
+                        "RE phase 4: **joint TRF** - %d **independent** ap (lambda-stepped active in the model); "
+                        "starting point = best flat scan %.6f on all knots.",
+                        _nap,
+                        float(best_ap),
+                    )
+
+                    _t_p4_trf_wall = time.perf_counter()
+
+                    try:
+                        res_p4 = least_squares(
+                            _fun_res_p4,
+                            x0_p4,
+                            method="trf",
+                            bounds=bounds_p4,
+                            jac=_jac_res_p4,
+                            x_scale="jac",
+                            ftol=RE_LBFGSB_FTOL * _p4_tol,
+                            xtol=RE_LBFGSB_FTOL * _p4_tol,
+                            gtol=RE_LBFGSB_GTOL * _p4_tol,
+                            max_nfev=max(8, _p4_trf_nfev),
+                        )
+
+                        x_p4 = res_p4.x
+
+                        _re_state["re_aperture_knots"][:] = x_p4[i_ap0 : i_ap0 + _nap]
+
+                        ep_p4_f = np.asarray(x_p4[:n_layers_count], dtype=np.float64)
+
+                        dh_p4 = x_p4[i0 : i0 + _nk]
+
+                        dl_p4 = x_p4[i0 + _nk : i_lam]
+
+                        lam_p4 = float(x_p4[i_lam])
+
+                        th_p4 = np.asarray(x_p4[i_cu : i_cu + 3], dtype=np.float64).ravel() if _use_sub_c3 else None
+
+                        _ap_i = np.asarray(x0_p4[i_ap0 : i_ap0 + _nap], dtype=np.float64).ravel()
+
+                        _ap_f = np.asarray(x_p4[i_ap0 : i_ap0 + _nap], dtype=np.float64).ravel()
+
+                        _cost_0 = None
+
+                        try:
+                            _re_state["re_aperture_knots"][:] = _ap_i
+
+                            _eval_both_p2(x0_base, emit_interval=1.0e9)
+
+                            _r0 = _cb2_ref[0]["res"]
+
+                            _cost_0 = float(np.dot(_r0, _r0))
+
+                        except NUMERICAL_FAULT_EXCEPTIONS:
+                            pass
+
+                        # Restore knot apertures to TRF solution (otherwise _insert_p4_result
+
+                        # and worker state remain stuck on flat scan init _ap_i).
+
+                        _re_state["re_aperture_knots"][:] = _ap_f
+
+                        _cost_f = float(getattr(res_p4, "cost", np.nan))
+
+                        _opt = float(getattr(res_p4, "optimality", float("nan")))
+
+                        _njev = int(getattr(res_p4, "njev", -1))
+
+                        _p4_trf_wall_s = float(time.perf_counter() - _t_p4_trf_wall)
+
+                        _p4_trf_mse_evals = int(_cb2_ref[0]["i"])
+
+                        _p4_best_seen_rmse = (
+                            float(_cb2_ref[0]["best_rmse_combined"])
+                            if _cb2_ref[0].get("best_rmse_combined") is not None
+                            else None
+                        )
+
+                        logging.info(
+                            "RE phase 4 TRF summary | success=%s | nfev=%d njev=%d | "
+                            "cost_final=%.8g optimality=%.4g | cost_init_scan_ap=%s | "
+                            "ap_init_deg=%s ap_final_deg=%s | msg=%s | "
+                            "tune: re_phase4_trf_max_nfev re_phase4_trf_tol_factor re_p4_ap_fd_step_deg",
+                            res_p4.success,
+                            int(res_p4.nfev),
+                            _njev,
+                            _cost_f,
+                            _opt,
+                            (f"{_cost_0:.8g}" if _cost_0 is not None else "n/a"),
+                            np.array2string(_ap_i, precision=2, separator=","),
+                            np.array2string(_ap_f, precision=2, separator=","),
+                            str(getattr(res_p4, "message", "")).replace("\n", " "),
+                        )
+
+                        logging.info(
+                            "RE phase 4 TRF plateaus | init=%s | final=%s",
+                            _re_p4_ap_band_intervals_str(_kn_log, _ap_i, _wmin_obj, _wmax_obj),
+                            _re_p4_ap_band_intervals_str(_kn_log, _ap_f, _wmin_obj, _wmax_obj),
+                        )
+
+                        logging.info(
+                            "RE phase 4 TRF profile | wall_s=%.4f | MSE_ep_count_since_TRF_reset=%d | "
+                            "ls_nfev=%d | jac: ~njev×(1+%d) MSE_ep (1 residu + %d FD ap_knots + restore) | "
+                            "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor ou jac ap analytique",
+                            _p4_trf_wall_s,
+                            _p4_trf_mse_evals,
+                            int(res_p4.nfev),
+                            _nap,
+                            _nap,
+                            _p4_trf_wall_s / max(int(res_p4.nfev), 1),
+                        )
+
+                        _insert_p4_result(
+                            ep_f=ep_p4_f,
+                            dh_v=dh_p4,
+                            dl_v=dl_p4,
+                            lam_v=lam_p4,
+                            th_v=th_p4,
+                            nfev_extra=int(res_p4.nfev),
+                            p4_label_suffix="P4 aperture+TRF",
+                            success=bool(res_p4.success),
+                        )
+
+                        if _p4_best_seen_rmse is not None and results:
+                            _p4_top_dto = _top_result_dto(results)
+                            if _p4_top_dto is None:
+                                _p4_top_dto = _result_dto_at(results, 0)
+                            if _p4_top_dto is None:
+                                _sel = float("nan")
+                            else:
+                                _sel = float(_p4_top_dto.rmse_combined)
+
+                            logging.info(
+                                "RE phase 4 TRF best tracker | RMSE_best_seen=%.6f | RMSE_selected_result=%.6f",
+                                float(_p4_best_seen_rmse),
+                                _sel,
+                            )
+
+                            _gap = float(_sel - float(_p4_best_seen_rmse))
+
+                            if _gap < -1e-10:
+                                logging.info(
+                                    "RE phase 4 invariant check | selected_result (%.6f) < best_seen (%.6f), gap=%.6g "
+                                    "-> final selection improved beyond tracked intermediate best (acceptable).",
+                                    _sel,
+                                    float(_p4_best_seen_rmse),
+                                    _gap,
+                                )
+
+                            elif _gap > 1e-4:
+                                logging.warning(
+                                    "RE phase 4 invariant check | selected_result (%.6f) > best_seen (%.6f), gap=%.6g "
+                                    "-> best intermediate was not retained as final selected result.",
+                                    _sel,
+                                    float(_p4_best_seen_rmse),
+                                    _gap,
+                                )
+
+                            else:
+                                logging.info(
+                                    "RE phase 4 invariant check | OK (selected_result and best_seen consistent, gap=%.6g).",
+                                    _gap,
+                                )
+
+                    except REUserStopRequested:
+                        if _p4_trf_wall_s <= 0.0:
+                            _p4_trf_wall_s = float(time.perf_counter() - _t_p4_trf_wall)
+
+                        _p4_trf_mse_evals = int(_cb2_ref[0].get("i", 0))
+
+                        logging.info(
+                            "RE phase 4 TRF interrupted | user stop  wall_partial=%.4fs MSE_ep_partial=%d  "
+                            "last cached state may be stale; compare logs above for scan/TRF progress",
+                            _p4_trf_wall_s,
+                            _p4_trf_mse_evals,
+                        )
+
+                elif not self._stop:
+                    logging.info(
+                        "RE phase 4: joint TRF disabled | re_phase4_trf_max_nfev=0  "
+                        "scan-only (raise max_nfev to polish ap knots + thickness+splines jointly)"
+                    )
+
+                    rmse_q_scan = _compute_qwot_rmse(ep_p4, _cor_base)
+
+                    rmse_c_scan = _rmse_combined(float(best_rmse_ap), rmse_q_scan)
+
+                    _sk = np.asarray(_re_state["re_aperture_knots"], dtype=np.float64).ravel()[
+                        : int(RE_P4_BEAM_N_KNOTS)
+                    ]
+
+                    _skn = np.asarray(_re_state["re_p4_beam_knots_lam_nm"], dtype=float).ravel()[
+                        : int(RE_P4_BEAM_N_KNOTS)
+                    ]
+
+                    logging.info(
+                        "RE phase 4 scan-only result | RMSE_sum=%.6f RMSE_sp=%.6f RMSE_qwot=%.6f | "
+                        "min||r||^2(scan)=%.8g | ap_deg(n knots)=%s | knots_lam_nm=%s",
+                        rmse_c_scan,
+                        float(best_rmse_ap),
+                        rmse_q_scan,
+                        float(best_ls_sq),
+                        np.array2string(_sk, precision=2, separator=","),
+                        np.array2string(_skn, precision=2, separator=","),
+                    )
+
+                    logging.info(
+                        "RE phase 4 scan-only plateaus (explicit): %s",
+                        _re_p4_ap_band_intervals_str(
+                            _skn,
+                            _sk,
+                            _wmin_obj,
+                            _wmax_obj,
+                        ),
+                    )
+
+                    phase4_scan = REPhase4Result.from_legacy_dict(best_res)
+                    phase4_scan = REPhase4Result(
+                        label=RE_RESULT_LABEL_WITH_DRIFT + " (P4 aperture scan)",
+                        ep=phase4_scan.ep,
+                        a=phase4_scan.a,
+                        b=phase4_scan.b,
+                        f=phase4_scan.f,
+                        re_dh_knots=phase4_scan.re_dh_knots,
+                        re_dl_knots=phase4_scan.re_dl_knots,
+                        re_knots_nm=phase4_scan.re_knots_nm,
+                        re_spline_lam_node2_nm=phase4_scan.re_spline_lam_node2_nm,
+                        rmse=float(best_rmse_ap),
+                        rmse_qwot=float(rmse_q_scan),
+                        rmse_combined=float(rmse_c_scan),
+                        nfev=phase4_scan.nfev,
+                        success=True,
+                        nfev_phase1=phase4_scan.nfev_phase1,
+                        nfev_phase2_prefit=phase4_scan.nfev_phase2_prefit,
+                        re_p4_aperture_deg=float(np.mean(_sk)),
+                        re_p4_beam_ap_knots_nm=np.asarray(
+                            _re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64
+                        ).ravel()[: int(RE_P4_BEAM_N_KNOTS)],
+                        re_p4_beam_ap_knots_deg=np.asarray(_sk, dtype=np.float64).flatten(),
+                        re_sub_cauchy_a0=phase4_scan.re_sub_cauchy_a0,
+                        re_sub_cauchy_a1=phase4_scan.re_sub_cauchy_a1,
+                        re_sub_cauchy_a2=phase4_scan.re_sub_cauchy_a2,
+                    )
+                    _prepend_result_dto(results, phase4_scan)
+
+                    rmse_final_milestone[0] = float(rmse_c_scan)
+
+                _re_state["is_phase4"] = False
+
+                _pp_fin = _re_state.get("p4_prof")
+
+                _wall_p4_tot = float(time.perf_counter() - _t_p4_wall)
+
+                if _pp_fin is not None:
+                    logging.info(
+                        "RE phase 4 P4 profile (in each MSE_ep, blocks >= 10, lambda-stepped ap) - "
+                        "inner_physics_wall_s=%.4f | oblique_phi_calls=%d | "
+                        "meta_passes=%d | n_wls_union_max=%d | "
+                        "band_groups=%d band_mask_steps=%d | "
+                        "<=%d -calls/group (2×%d lambda knots); "
+                        "vectorizing by band reduces Python overhead",
+                        float(_pp_fin.get("phy_wall_s", 0.0)),
+                        int(_pp_fin.get("phi_calls", 0)),
+                        int(_pp_fin.get("meta_p4_count", 0)),
+                        int(_pp_fin.get("n_wls_union_max", 0)),
+                        int(_pp_fin.get("band_groups", 0)),
+                        int(_pp_fin.get("band_mask_steps", 0)),
+                        2 * int(RE_P4_BEAM_N_KNOTS),
+                        int(RE_P4_BEAM_N_KNOTS),
+                    )
+
+                logging.info(
+                    "RE phase 4 wall | total=%.3fs | scan=%.3fs | TRF=%.3fs | "
+                    "overheadmax(0,total-scan-TRF-inner_physics) | "
+                    "grep  RE phase 4  /  P4 profile  pour retuner cfg & code",
+                    _wall_p4_tot,
+                    float(_p4_scan_wall_s),
+                    float(_p4_trf_wall_s),
+                )
+
+                _re_state["p4_prof"] = None
+
+            elif _has_high_angle:
+                logging.info(
+                    "RE phase 4 skipped | reason=no_spline_state_on_best | "
+                    "need re_dH_knots/re_dL_knots on results[0] (phase 2 splines)"
+                )
+
+                _emit_re_prog(
+                    99.0,
+                    "RE phase 4  skipped (no Delta Re splines on best candidate)",
+                )
+
+            else:
+                logging.info(
+                    "RE phase 4 skipped | reason=all_angles_below_10deg | beam average not applied for low incidence"
+                )
+
+                _emit_re_prog(99.0, "RE phase 4  skipped (all angles < 10 deg)")
+
+            _emit_re_prog(99.0, "RE phase 4  done")
 
 class REPhasesService:
     """Thin service layer to orchestrate RE worker phases."""
@@ -5077,6 +4645,9 @@ class REPhase3Step:
 class REPhase4Step:
     def run(self, service: REPhasesService) -> None:
         service.execute_phase4()
+
+
+
 
 # =========================================================================================
 

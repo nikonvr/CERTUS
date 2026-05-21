@@ -276,3 +276,51 @@ def test_p1_2_select_candidates_phase_a_raises_on_strict_transmission_floor(monk
             },
             l0=550.0,
         )
+
+
+def test_select_best_strat_result_empty() -> None:
+    """Test select_best_strat_result handles empty/invalid lists."""
+    assert strat_service.select_best_strat_result([]) is None
+    assert strat_service.select_best_strat_result([None]) is None
+
+
+def test_select_best_strat_result_ranking() -> None:
+    """Test select_best_strat_result finds first finite positive score."""
+    strategies = [
+        {"strategy_id": "strat_0", "robustness_score": None},
+        {"strategy_id": "strat_1", "robustness_score": 0.0},
+        {"strategy_id": "strat_2", "robustness_score": float("nan")},
+        {"strategy_id": "strat_3", "rmse_p95": 1.23},
+        {"strategy_id": "strat_4", "rmse_mean": 0.45},
+    ]
+    best = strat_service.select_best_strat_result(strategies)
+    assert best is not None
+    assert best["strategy_id"] == "strat_3"
+
+
+def test_extract_best_rmse_correctness() -> None:
+    """Test extract_best_rmse extracts correct float values from fallbacks."""
+    strategies = [
+        {"strategy_id": "strat_1", "rmse": 0.0},
+        {"strategy_id": "strat_2", "final_rmse": 0.005},
+    ]
+    assert strat_service.extract_best_rmse(strategies) == pytest.approx(0.005)
+    assert strat_service.extract_best_rmse([]) == 0.0
+
+    strategies_invalid = [
+        {"strategy_id": "strat_1", "rmse": -1.0},
+    ]
+    assert strat_service.extract_best_rmse(strategies_invalid) == 0.0
+
+
+def test_extract_best_rmse_raises_physics_convergence_error() -> None:
+    """Test extract_best_rmse raises PhysicsConvergenceError for abnormally low RMSE (< 1e-7)."""
+    from certus_errors import PhysicsConvergenceError
+    
+    strategies_too_low = [
+        {"strategy_id": "strat_1", "rmse": 0.0},
+    ]
+    with pytest.raises(PhysicsConvergenceError, match="abnormally low/null value"):
+        strat_service.extract_best_rmse(strategies_too_low)
+
+

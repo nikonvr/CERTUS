@@ -16,6 +16,11 @@
 
 # This file intentionally combines GUI, Workers, and Logic for performance and simplicity.
 
+# P1 boundary: only make small, reversible changes here until dedicated tests cover
+# optimization workers, DTO/report contracts, and critical design workflows.
+# Prefer extracting pure helpers before moving Qt classes or numerical kernels.
+# Keep the design orchestration dense only where it is genuinely required.
+
 # DO NOT REFACTOR INTO SUBMODULES WITHOUT EXPLICIT AUTHORIZATION.
 
 # =========================================================================================
@@ -30,16 +35,14 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 __version__ = "26_01"
 
-import multiprocessing
-
-import functools
-
 import os
 from pathlib import Path
 
+import multiprocessing
 import sys
+import functools
 
-from certus_core import create_module_environment, setup_module_logging
+from certus_core import create_module_environment
 
 # =============================================================================
 
@@ -131,9 +134,12 @@ from certus_core import (
     get_resource_path,
     certus_timestamp_display,
     certus_timestamp_file,
+    setup_module_logging,
 )
 
 from certus_design_worker_utils import (
+    build_pglobal_optimizer,
+    build_pglobal_config_from_cfg,
     optim_backside_flags_from_cfg,
     optim_bounds_thickness_global,
     optim_bounds_thickness_healing,
@@ -150,6 +156,10 @@ from certus_design_worker_utils import (
     optim_rmse_display_string,
     optim_rmse_is_valid_for_log,
     optim_var_indices_from_stack,
+    prepare_pglobal_inputs_from_state,
+    prepare_pglobal_optimizer_runtime,
+    run_coord_descent_5cycles,
+    run_pglobal_restart_loop,
 )
 
 # --- 4. DATA (IO, Reporting) ---
@@ -955,35 +965,24 @@ class OptimWorker(QThread):
             ``(optimizer, opt_start_time)`` to be consumed by the restart loop.
         """
 
-        optimizer = PGlobalOptimizer(
-            objective_wrapper,
-            bounds,
-            config=pg_conf,
+        optimizer = build_pglobal_optimizer(
+            objective_wrapper=objective_wrapper,
+            bounds=bounds,
             stop_event=self._stop_event,
-            x0=x0_start,  # Densify sampling around start design
-            gradient_func=gradient_func_to_use,  # Analytic gradient for L-BFGS-B (normal + oblique)
+            pg_conf=pg_conf,
+            x0_start=x0_start,
+            gradient_func=gradient_func_to_use,
         )
-
         self._optimizer = optimizer
-
-        if mode == "local":
-            self.signals.progress.emit(0, "Fast Local Polish (PGLOBAL)...")
-
-        elif mode == "healing":
-            self.signals.progress.emit(0, "Healing: Restricted Global Search (+/-Deltad)...")
-
-        else:
-            self.signals.progress.emit(0, "Starting PGLOBAL Global Optimization...")
-
-        opt_start_time = time.time()
-
-        logging.info(f"OptimWorker: Starting PGLOBAL optimization - mode={mode}, max_iter={max_iter_run}, dim={dim}")
-
-        logging.info(
-            f"OptimWorker: Initial state - best_rmse_seen={self.best_rmse_seen:.6e}, callback_counter={self._callback_counter}"
+        return prepare_pglobal_optimizer_runtime(
+            optimizer=optimizer,
+            mode=mode,
+            max_iter_run=max_iter_run,
+            dim=dim,
+            progress_emit=self.signals.progress.emit,
+            best_rmse_seen=self.best_rmse_seen,
+            callback_counter=self._callback_counter,
         )
-
-        return optimizer, opt_start_time
 
     def _run_pglobal_restart_loop(
         self,
@@ -1000,91 +999,22 @@ class OptimWorker(QThread):
     ) -> Any:
         """Run the PGLOBAL auto-restart loop and return the best sample found."""
 
-        best_sample_overall = None
-
-        restarts = 3 if mode == "global" else 1
-
-        restart_no_gain = 0
-
-        restart_rel_gain_min = float(self.cfg.get("restart_rel_gain_min", 2e-4))  # 0.02%
-
-        restart_no_gain_patience = int(self.cfg.get("restart_no_gain_patience", 1))
-
-        for restart_idx in range(restarts):
-            if self._stop_event.is_set():
-                break
-
-            if restarts > 1:
-                self.signals.progress.emit(0, f"Starting PGLOBAL Auto-Restart {restart_idx + 1}/{restarts}...")
-
-            if restart_idx > 0 and best_sample_overall is not None:
-                # Re-initialize optimizer with the best sample from the previous run
-
-                optimizer = PGlobalOptimizer(
-                    objective_wrapper,
-                    bounds,
-                    config=pg_conf,
-                    stop_event=self._stop_event,
-                    x0=best_sample_overall.x.copy(),  # Densify sampling around best design
-                    gradient_func=gradient_func_to_use,  # Analytic gradient for L-BFGS-B (normal + oblique)
-                )
-
-                self._optimizer = optimizer
-
-            try:
-                prev_best_y = best_sample_overall.y if best_sample_overall is not None else float("inf")
-
-                best_sample = optimizer.optimize(max_iter=max_iter_run, callback=callback)
-
-                opt_time = time.time() - opt_start_time
-
-                logging.info(
-                    f"OptimWorker [Restart {restart_idx + 1}]: optimizer.optimize() returned after {opt_time:.2f}s - best_sample={best_sample is not None}, callback_count={self._callback_counter}"
-                )
-
-                if best_sample:
-                    logging.info(
-                        f"OptimWorker [Restart {restart_idx + 1}]: Best sample - rmse={np.sqrt(best_sample.y):.6e}, n_evals={optimizer.n_evals}"
-                    )
-
-                    if best_sample_overall is None or best_sample.y < best_sample_overall.y:
-                        best_sample_overall = best_sample
-
-                # Anti-stagnation across restarts: stop launching extra runs when gain plateaus.
-
-                curr_best_y = best_sample_overall.y if best_sample_overall is not None else float("inf")
-
-                if np.isfinite(prev_best_y) and np.isfinite(curr_best_y):
-                    rel_gain = (prev_best_y - curr_best_y) / max(abs(prev_best_y), 1e-12)
-
-                    if rel_gain < restart_rel_gain_min:
-                        restart_no_gain += 1
-
-                    else:
-                        restart_no_gain = 0
-
-                else:
-                    restart_no_gain = 0
-
-                if mode == "global" and restart_idx < restarts - 1 and restart_no_gain > restart_no_gain_patience:
-                    logging.info(
-                        "OptimWorker: auto-restart stopped on stagnation "
-                        f"({restart_no_gain} consecutive restart(s) below {restart_rel_gain_min * 100:.3f}% gain)."
-                    )
-
-                    break
-
-            except NUMERICAL_FAULT_EXCEPTIONS as opt_err:
-                opt_time = time.time() - opt_start_time
-
-                logging.error(
-                    f"OptimWorker: Error during optimizer.optimize() after {opt_time:.2f}s: {opt_err}",
-                    exc_info=True,
-                )
-
-                raise
-
-        return best_sample_overall
+        return run_pglobal_restart_loop(
+            mode=mode,
+            optimizer=optimizer,
+            objective_wrapper=objective_wrapper,
+            bounds=bounds,
+            pg_conf=pg_conf,
+            gradient_func_to_use=gradient_func_to_use,
+            max_iter_run=max_iter_run,
+            callback=callback,
+            opt_start_time=opt_start_time,
+            stop_event=self._stop_event,
+            progress_emit=self.signals.progress.emit,
+            cfg=self.cfg,
+            callback_counter_getter=lambda: self._callback_counter,
+            set_optimizer=lambda new_optimizer: setattr(self, "_optimizer", new_optimizer),
+        )
 
     def _evaluate_thicknesses(
         self,
@@ -1567,57 +1497,12 @@ class OptimWorker(QThread):
 
     def _build_pglobal_config(self, *, mode: str, dim: int, conv_tol: float) -> tuple[PGlobalConfig, int]:
         """Build PGlobal configuration and max iteration budget from mode and dimensions."""
-        if mode == "local":
-            # Local mode: use dedicated factory method
-            pg_conf = PGlobalConfig.for_local(
-                dim=dim,
-                max_feval=self.cfg.get("max_feval", 10000),
-                convergence_tol=conv_tol,
-            )
-            max_iter_run = 15
-        elif mode == "healing":
-            # Healing mode: quick restricted global search
-            # Explores nearby basins (+/-30%) before local polish
-            scale = max(1.0, dim / 10.0)
-            pg_conf = PGlobalConfig(
-                n_samples_per_iter=int(1000 * scale),
-                alpha=0.02,
-                reduction_ratio=0.3,
-                local_search_budget=10000,
-                max_active_clusters=min(20, max(5, dim)),
-                max_feval=self.cfg.get("max_feval", 50000000),
-                convergence_tol=conv_tol,
-            )
-            max_iter_run = self.cfg.get("max_iter", 10)
-        else:
-            # Global mode: use for_dimension() + overrides
-            pg_conf = PGlobalConfig.for_dimension(
-                dim=dim,
-                base_samples=self.cfg.get("n100", 6000),
-                max_feval=self.cfg.get("max_feval", 50000000),
-            )
-
-            # Apply user overrides if specified
-            user_clusters = self.cfg.get("max_clusters")
-            overrides = {}
-
-            if user_clusters is not None:
-                overrides["max_active_clusters"] = user_clusters
-            if conv_tol != 1e-8:
-                overrides["convergence_tol"] = conv_tol
-            if "alpha" in self.cfg:
-                overrides["alpha"] = self.cfg["alpha"]
-            if "reduction_ratio" in self.cfg:
-                overrides["reduction_ratio"] = self.cfg["reduction_ratio"]
-            if "local_search_budget" in self.cfg:
-                overrides["local_search_budget"] = self.cfg["local_search_budget"]
-
-            if overrides:
-                pg_conf = pg_conf.with_overrides(**overrides)
-
-            max_iter_run = self.cfg.get("max_iter", 50)
-
-        return pg_conf, int(max_iter_run)
+        return build_pglobal_config_from_cfg(
+            cfg=self.cfg,
+            mode=mode,
+            dim=dim,
+            conv_tol=conv_tol,
+        )
 
     def _initialize_runtime_state_for_optimization(
         self,
@@ -1730,18 +1615,15 @@ class OptimWorker(QThread):
 
     def _prepare_pglobal_inputs(self, *, var_idx: list[int], mode: str) -> tuple:
         """Build PGlobal preamble objects and emit initial progress line."""
-        dim = len(var_idx)
-        # Convergence tolerance (gradient computed in f64 - tight)
-        conv_tol = 1e-8
-        # Use analytic gradient in both normal and oblique modes.
-        gradient_func_to_use = self._gradient_func_pglobal
-        pg_conf, max_iter_run = self._build_pglobal_config(
+        from certus_design_worker_utils import prepare_pglobal_inputs_from_state
+
+        return prepare_pglobal_inputs_from_state(
+            var_idx=var_idx,
             mode=mode,
-            dim=dim,
-            conv_tol=conv_tol,
+            cfg=self.cfg,
+            signal_emit=self.signals.progress.emit,
+            gradient_func=self._gradient_func_pglobal,
         )
-        self.signals.progress.emit(0, f"Config:  dim={dim}, samples/iter={pg_conf.n_samples_per_iter}")
-        return dim, gradient_func_to_use, pg_conf, max_iter_run
 
     def run(self) -> None:
         """
@@ -1945,7 +1827,7 @@ class OptimWorker(QThread):
                 gradient_func_to_use,
             )
 
-            best_sample_overall = self._run_pglobal_restart_loop(
+            best_sample_overall = run_pglobal_restart_loop(
                 mode=mode,
                 optimizer=optimizer,
                 objective_wrapper=objective_wrapper,
@@ -1955,6 +1837,11 @@ class OptimWorker(QThread):
                 max_iter_run=max_iter_run,
                 callback=callback,
                 opt_start_time=opt_start_time,
+                stop_event=self._stop_event,
+                progress_emit=self.signals.progress.emit,
+                cfg=self.cfg,
+                callback_counter_getter=lambda: self._callback_counter,
+                set_optimizer=lambda opt: setattr(self, "_optimizer", opt),
             )
 
             # If stopped, save best solution found so far
@@ -1971,7 +1858,9 @@ class OptimWorker(QThread):
                 # === Phase final: Coord Descent (5 cycles) ===
 
                 # DYNAMIC GRID UPDATE: Apply Tikhonravov criterion before refinement
-                wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = self._maybe_upgrade_grid_tikhonravov(
+                from certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
+
+                wls, n_sub, n_layers_T, n_back_T, tgt_vals, tgt_weights = maybe_upgrade_grid_tikhonravov(
                     ep_current=ep_current,
                     mats=mats,
                     stack=stack,
@@ -1992,7 +1881,7 @@ class OptimWorker(QThread):
                 )
 
                 self.signals.progress.emit(95, "Final refinement (5x coordinate descent)...")
-                ep_current, best_cost = self._run_coord_descent_5cycles(
+                ep_current, best_cost, self.best_rmse_seen = run_coord_descent_5cycles(
                     ep_current=ep_current,
                     best_cost=best_cost,
                     var_idx=var_idx,
@@ -2007,6 +1896,11 @@ class OptimWorker(QThread):
                     has_back_calc=has_back_calc,
                     n_back_T=n_back_T,
                     d_back=d_back,
+                    cfg=self.cfg,
+                    evaluate_thicknesses=self._evaluate_thicknesses,
+                    get_gradient_analytic=self._get_gradient_analytic,
+                    progress_emit=self.signals.progress.emit,
+                    best_rmse_seen=self.best_rmse_seen,
                 )
 
                 self._finalize_and_emit_optimization_result(ep_current, best_cost)
@@ -2452,26 +2346,20 @@ class NeedleWorker(QThread):
     def _build_needle_scan_mask(self, stack: list, mats_nk: dict) -> tuple[list[str], np.ndarray]:
         """Build per-layer candidate needle material names and scan mask."""
 
-        N = len(stack)
-
         excluded_layers = set(self.cfg.get("excluded_layers", []))
+        needle_mat_names = []
+        scan_mask = []
 
-        needle_mat_names = [""] * N
-
-        scan_mask = np.zeros(N, dtype=np.int64)
-
-        for i, layer in enumerate(stack):
-            if i in excluded_layers:
+        for idx, layer in enumerate(stack):
+            mat_name = getattr(layer, "mat", None)
+            if mat_name is None:
+                mat_name = layer["mat"] if isinstance(layer, dict) and "mat" in layer else None
+            if mat_name is None:
                 continue
+            needle_mat_names.append(str(mat_name))
+            scan_mask.append(idx not in excluded_layers and str(mat_name) in mats_nk)
 
-            nm = "L" if layer.mat == "H" else "H"
-
-            if nm in mats_nk:
-                needle_mat_names[i] = nm
-
-                scan_mask[i] = 1
-
-        return needle_mat_names, scan_mask
+        return needle_mat_names, np.asarray(scan_mask, dtype=bool)
 
     def _run_needle_fallback_scan(
         self,
@@ -2666,9 +2554,11 @@ class CertusDesignApp(CertusBaseApp):
 
         self._current_eval_generation = 0
 
-        self._original_target_count = getattr(CFG, "MAX_LAYERS", 50)
+        default_max_layers: int = int(getattr(CFG, "MAX_LAYERS", 50))
+        self._original_target_count = default_max_layers
 
-        self._target_layer_count = getattr(CFG, "MAX_LAYERS", 50)
+        self._target_layer_count = default_max_layers
+        # Keep the configured target count until workflow logic explicitly updates it.
 
         self._overshoot_active = False
 
@@ -2694,8 +2584,7 @@ class CertusDesignApp(CertusBaseApp):
 
         # Needle State
 
-        self._target_layer_count = 0
-
+        # Keep the configured target count until workflow logic explicitly updates it.
         self._is_internal_restart = False
 
         self._topology_stable = True
@@ -3258,14 +3147,13 @@ class CertusDesignApp(CertusBaseApp):
 
         action_layout = QVBoxLayout()
 
+        logger = getattr(self, "logger", None)
+        if logger:
+            logger.info("DESIGN UI: building action buttons | has_functools=%s", bool(getattr(functools, "partial", None)))
+
         # Evaluate
 
-        try:
-            from certus_ux import OBJ
-
-            primary_obj = OBJ.PRIMARY_BUTTON
-        except ImportError:
-            primary_obj = "CertusPrimaryBtn"
+        primary_obj = "CertusPrimaryBtn"
 
         self.eval_btn = QPushButton("Evaluate (Ctrl+E)")
 
@@ -3276,6 +3164,8 @@ class CertusDesignApp(CertusBaseApp):
         self.eval_btn.setToolTip("Compute the spectrum for the current stack (instant).")
 
         self.eval_btn.clicked.connect(functools.partial(self._schedule_eval, True))
+        if logger:
+            logger.info("DESIGN UI: connected eval button -> _schedule_eval(True)")
 
         action_layout.addWidget(self.eval_btn)
 
@@ -5390,6 +5280,15 @@ class CertusDesignApp(CertusBaseApp):
 
         Start an optimization cycle.
 
+        logger = getattr(self, "logger", None)
+        if logger:
+            logger.info(
+                "DESIGN run_optim enter | mode=%s | keep_history=%s | kwargs_keys=%s",
+                mode,
+                bool(keep_history),
+                ",".join(sorted(map(str, kwargs.keys()))) if kwargs else "-",
+            )
+
         Entry point for the hybrid design workflow. Three optimization modes
 
         are available, each with different search scope and bounds:
@@ -5998,7 +5897,11 @@ class CertusDesignApp(CertusBaseApp):
 
         Updates Spectrum, Profile and n(lambda) regardless of which tab is displayed."""
 
-        wls = data["wls"]
+        wls = data.get("wls")
+        if wls is None:
+            wls = data.get("wavelengths")
+        if wls is None:
+            return
 
         oblique_mode = data.get("oblique_mode", False)
 

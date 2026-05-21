@@ -8,6 +8,11 @@ CERTUS-INDEX-SPLINE  Global fit of n(lambda), k(lambda) as piecewise-linear in s
 
 Standalone: no imports from CERTUS_INDEX nor certus_swanepool. Local optimization only.
 
+P1 boundary: preserve the stronger local structure of this module. Keep settings,
+persistence, spline editing, workers, and numerical helpers separated; avoid
+large moves without dedicated tests for smart init, validation, and resume flows.
+# Keep this file locally cohesive; prefer tiny helper/test updates over broad refactors.
+
 """
 
 from __future__ import annotations
@@ -80,6 +85,16 @@ from certus_index_utils import (
     _lam_uniform_grid,
     _sorted_finite_sigma_knots as _sorted_finite_sigma_knots_impl,
     log_structured_json_event,
+    _get_substrate_n_array_spline,
+    _spectral_display_align,
+    _d_from_slider_int,
+    _slider_int_from_d_nm,
+    _get_xv_spectral_coord,
+    _stretch_sig_to_px,
+    _compute_study_lambda_window_nm,
+    _rmse_d_lower_envelope_mask,
+    _filter_rmse_peaks_iteratively,
+    _safe_int_from_mapping,
 )
 from certus_ui import (
     CertusBaseApp,
@@ -110,6 +125,7 @@ from certus_ui import (
     CertusStepper,
     CertusCollapsible,
     CertusStatusPill,
+    safe_ui_action,
 )
 
 from pydantic import BaseModel, ConfigDict
@@ -164,36 +180,6 @@ _env = create_module_environment(__file__, "CERTUS_INDEX_SPLINE")
 _SCRIPT_DIR = _env["script_dir"]
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
-
-def _get_substrate_n_array_spline(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
-    """Return substrate n(lambda), forcing Sapphire (id=3) to equation-based Sellmeier."""
-
-    sid = int(substrate_id)
-
-    wl_nm = np.asarray(wavelengths_nm, dtype=np.float64)
-
-    if sid != 3:
-        return get_n_substrate_array_by_id(sid, wl_nm)
-
-    coeffs = SELLMEIER_COEFFS_BY_ID.get(3)
-
-    if coeffs is None or len(coeffs) != 6:
-        raise KeyError("Missing Sellmeier coefficients for Sapphire (id=3).")
-
-    B1, C1, B2, C2, B3, C3 = (float(v) for v in coeffs)
-
-    wl_um = wl_nm / 1000.0
-
-    wl_sq = wl_um * wl_um
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        n_sq = 1.0 + (B1 * wl_sq) / (wl_sq - C1) + (B2 * wl_sq) / (wl_sq - C2) + (B3 * wl_sq) / (wl_sq - C3)
-
-    n = np.sqrt(np.maximum(n_sq, 1.0e-6))
-
-    n = np.where(wl_nm < 230.0, np.nan, n)
-
-    return n.astype(np.float64)
 
 _QS_SPLINE_ORG = "CERTUS"
 
@@ -433,63 +419,6 @@ def _add_spectrum_thickness_badge(
         plot_w.addItem(badge)
     return badge
 
-def _spectral_display_align(lam_nm: np.ndarray, *series: np.ndarray) -> tuple[np.ndarray, list[np.ndarray], np.ndarray]:
-    """
-
-    Truncates all series to the same length as lam_nm, then sorts by increasing lambda.
-
-    Without this, a non-monotonic lambda file results in PyQtGraph lines that "smear"
-
-    the spectrum (phantom oscillations) even if the experimental points remain correct in the scatter plot.
-
-    Also returns ``order`` (indices) to reorder other arrays of the same pre-truncation.
-
-    """
-
-    lam = np.asarray(lam_nm, dtype=np.float64).ravel()
-
-    if lam.size == 0:
-        z = np.array([], dtype=np.int64)
-
-        return lam, [np.asarray(s, dtype=np.float64).ravel()[:0] for s in series], z
-
-    n_use = lam.size
-
-    arrs: list[np.ndarray] = []
-
-    for s in series:
-        a = np.asarray(s, dtype=np.float64).ravel()
-
-        n_use = min(n_use, a.size)
-
-        arrs.append(a)
-
-    if n_use <= 0:
-        zf = np.array([], dtype=np.float64)
-
-        zi = np.array([], dtype=np.int64)
-
-        return zf, [zf.copy() for _ in series], zi
-
-    if n_use != lam.size:
-        logger.warning(
-            "Spectral display: inconsistent lengths (lambda=%d, truncation to %d).",
-            lam.size,
-            n_use,
-        )
-
-    lam_u = lam[:n_use]
-
-    trimmed = [a[:n_use] for a in arrs]
-
-    order = np.argsort(lam_u, kind="mergesort")
-
-    lam_s = lam_u[order]
-
-    out = [np.asarray(t)[order] for t in trimmed]
-
-    return lam_s, out, order
-
 
 
 def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame | None:
@@ -552,164 +481,6 @@ class SplineState:
     wt: float
 
     wr: float
-
-class CorridorRMSEProfileWindow(QDialog):
-    """Window displaying the RMSE = f(thickness) curve from corridor profiling."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self.setWindowTitle("Corridor RMSE Profile  |  RMSE = f(thickness)")
-        self.resize(600, 450)
-
-        layout = QVBoxLayout(self)
-
-        # Info label
-        self.lbl_info = QLabel("No corridor data available. Run optimization with corridors enabled.")
-        self.lbl_info.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
-        self.lbl_info.setWordWrap(True)
-        layout.addWidget(self.lbl_info)
-
-        self.chk_envelope_only = QCheckBox("Lower envelope only")
-        self.chk_envelope_only.setChecked(False)
-        self.chk_envelope_only.setToolTip(
-            "Show only the lower RMSE envelope across nearby d values (filters local spikes)."
-        )
-        self.chk_envelope_only.toggled.connect(self._refresh_from_cache)
-        layout.addWidget(self.chk_envelope_only)
-
-        # Plot widget
-        self.plot_rmse = CertusScientificPlot(title="RMSE vs Thickness d")
-        self.plot_rmse.setLabel("bottom", "d (nm)")
-        self.plot_rmse.setLabel("left", "RMSE")
-        layout.addWidget(self.plot_rmse)
-
-        # Button bar
-        btn_layout = QHBoxLayout()
-
-        self.btn_copy = create_styled_button("Copy data (TSV)", "secondary", parent=self)
-        self.btn_copy.setToolTip("Copy d (nm) and RMSE values to clipboard (tab-separated)")
-        self.btn_copy.clicked.connect(self._copy_to_clipboard)
-        btn_layout.addWidget(self.btn_copy)
-
-        btn_layout.addStretch()
-
-        self.btn_close = create_styled_button("Close", "secondary", parent=self)
-        self.btn_close.clicked.connect(self.close)
-        btn_layout.addWidget(self.btn_close)
-
-        layout.addLayout(btn_layout)
-
-        apply_certus_theme(self)
-
-        self._d_data: np.ndarray | None = None
-        self._rmse_data: np.ndarray | None = None
-        self._rmse_thresh: float | None = None
-        self._d_data_raw: np.ndarray | None = None
-        self._rmse_data_raw: np.ndarray | None = None
-
-    def update_profile(self, d_nm: np.ndarray, rmse: np.ndarray, rmse_thresh: float | None = None) -> None:
-        """Updates the plot with profiling data.
-
-        Args:
-            d_nm: Array des ?paisseurs (nm)
-            rmse: Array des valeurs RMSE correspondantes
-            rmse_thresh: RMSE threshold used for acceptance (optional)
-        """
-        d_arr = np.asarray(d_nm, dtype=np.float64).ravel()
-        r_arr = np.asarray(rmse, dtype=np.float64).ravel()
-
-        if d_arr.size == 0 or r_arr.size == 0 or d_arr.size != r_arr.size:
-            self.lbl_info.setText("No valid corridor profiling data.")
-            self._d_data = None
-            self._rmse_data = None
-            self._d_data_raw = None
-            self._rmse_data_raw = None
-
-        self._d_data_raw = d_arr
-        self._rmse_data_raw = r_arr
-        self._rmse_thresh = rmse_thresh
-
-        order = np.argsort(d_arr, kind="mergesort")
-        d_sorted = d_arr[order]
-        r_sorted = r_arr[order]
-
-        if self.chk_envelope_only.isChecked() and d_sorted.size > 0:
-            d_unique = np.unique(d_sorted)
-            if d_unique.size >= 2:
-                step_nm = float(np.median(np.diff(d_unique)))
-            else:
-                step_nm = 1.0
-            env_mask = _rmse_d_lower_envelope_mask(d_sorted, r_sorted, 0.55 * max(step_nm, 1e-9))
-            d_sorted = d_sorted[env_mask]
-            r_sorted = r_sorted[env_mask]
-
-        self._d_data = d_sorted
-        self._rmse_data = r_sorted
-
-        # Mettre ? jour le graphique
-        self.plot_rmse.clear()
-
-        # Courbe RMSE(d)
-        self.plot_rmse.add_curve(d_sorted, r_sorted, "RMSE(d)", color=CertusTheme.PRIMARY, width=2)
-
-        # Ligne de seuil si disponible
-        if rmse_thresh is not None and np.isfinite(rmse_thresh):
-            d_span = float(d_sorted[-1] - d_sorted[0]) if d_sorted.size > 1 else 100.0
-            d_lo = float(d_sorted[0]) - 0.1 * d_span
-            d_hi = float(d_sorted[-1]) + 0.1 * d_span
-            self.plot_rmse.add_curve(
-                np.array([d_lo, d_hi]),
-                np.array([rmse_thresh, rmse_thresh]),
-                f"Threshold = {rmse_thresh:.6f}",
-                color=CertusTheme.DANGER,
-                width=1,
-                style=Qt.PenStyle.DashLine,
-            )
-
-        # Info
-        n_points = d_arr.size
-        d_min, d_max = float(d_sorted[0]), float(d_sorted[-1])
-        r_min, r_max = float(np.min(r_sorted)), float(np.max(r_sorted))
-        d_opt = float(d_sorted[np.argmin(r_sorted)])
-
-        info_txt = (
-            f"Points: {n_points} | "
-            f"d interval: [{d_min:.2f}, {d_max:.2f}] nm | "
-            f"d(opt) ? {d_opt:.2f} nm | "
-            f"RMSE range: [{r_min:.6f}, {r_max:.6f}]"
-        )
-        if rmse_thresh is not None and np.isfinite(rmse_thresh):
-            info_txt += f" | Threshold: {rmse_thresh:.6f}"
-
-        self.lbl_info.setText(info_txt)
-        self.plot_rmse.autoRange()
-
-    def _refresh_from_cache(self) -> None:
-        """Refreshes display after envelope toggle change."""
-        if self._d_data_raw is None or self._rmse_data_raw is None:
-            return
-        self.update_profile(self._d_data_raw, self._rmse_data_raw, self._rmse_thresh)
-
-    def _copy_to_clipboard(self) -> None:
-        """Copies (d, RMSE) data to clipboard."""
-        if self._d_data is None or self._rmse_data is None:
-            QMessageBox.information(self, "Clipboard", "No data to copy.")
-            return
-
-        lines = ["d_nm\tRMSE"]
-        for d, r in zip(self._d_data, self._rmse_data):
-            lines.append(f"{d:.6f}\t{r:.8f}")
-
-        txt = "\n".join(lines)
-        cb = QApplication.clipboard()
-        if cb is None:
-            QMessageBox.warning(self, "Clipboard", "Clipboard unavailable.")
-            return
-
-        cb.setText(txt)
-        prev = self.btn_copy.text()
-        self.btn_copy.setText("Copied!")
-        QTimer.singleShot(1500, lambda t=prev: self.btn_copy.setText(t))
 
 class LiveIndexMonitor(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -969,115 +740,6 @@ def _interp_series_at_sigma_knots(
     return lam_k[order_k], y_k[order_k]
 
 _D_SLIDER_STEPS_DEFAULT = 5000
-
-def _d_from_slider_int(iv: int, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> float:
-    """Convert slider integer position to thickness (nm)."""
-    if d_hi_nm <= d_lo_nm + 1e-30:
-        return float(d_lo_nm)
-    t = float(iv) / float(steps)
-    return float(d_lo_nm + t * (d_hi_nm - d_lo_nm))
-
-def _slider_int_from_d_nm(dv: float, d_lo_nm: float, d_hi_nm: float, steps: int = _D_SLIDER_STEPS_DEFAULT) -> int:
-    """Convert thickness (nm) to slider integer position."""
-    if d_hi_nm <= d_lo_nm + 1e-30:
-        return 0
-    dv = float(np.clip(dv, d_lo_nm, d_hi_nm))
-    t = (dv - d_lo_nm) / (d_hi_nm - d_lo_nm)
-    return int(round(t * steps))
-
-def _get_xv_spectral_coord(sx: float, mode: str) -> float:
-    """Utility for spectral coordinate conversion (lambda / sigma / sigma2)."""
-    if mode == "Sigma (nm?1)":
-        return float(sx)
-    elif mode == "Sigma2 (nm?2)":
-        return float(sx) ** 2
-    else:
-        return 1.0 / float(sx) if sx != 0 else 0.0
-
-def _stretch_sig_to_px(delta: float, span_sig2: float) -> int:
-    """Calculate pixel stretch for sigma-based UI elements."""
-    return max(1, int(max(0.0, float(delta)) / max(span_sig2, 1e-30) * 28000.0))
-
-def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: "SplineOptConfig") -> tuple[float, float]:
-    """Calculate the useful lambda band for display and RMSE calculation."""
-    lam = np.asarray(lam_m, dtype=np.float64).ravel()
-    ok = np.isfinite(lam) & (lam > 0)
-    if not np.any(ok):
-        return 400.0, 1200.0
-    lo_d = float(np.min(lam[ok]))
-    hi_d = float(np.max(lam[ok]))
-    rw = getattr(cfg, "rmse_fit_lambda_nm", None)
-    if rw is None:
-        return lo_d, hi_d
-    lo_w = float(min(rw[0], rw[1]))
-    hi_w = float(max(rw[0], rw[1]))
-    lo = max(lo_d, lo_w)
-    hi = min(hi_d, hi_w)
-    if hi <= lo:
-        return lo_d, hi_d
-    return lo, hi
-
-def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: float) -> np.ndarray:
-    """Masque bool?en : point sur l enveloppe inf?rieure locale en ?paisseur (d +/- tol)."""
-    d_a = np.asarray(d_nm, dtype=np.float64).ravel()
-    r_a = np.asarray(rmse, dtype=np.float64).ravel()
-    n = int(d_a.size)
-    if n == 0 or r_a.size != n:
-        return np.zeros(max(n, 0), dtype=bool)
-    if not np.isfinite(tol_nm) or tol_nm <= 0.0:
-        du = np.unique(d_a)
-        if du.size >= 2:
-            sp = float(np.median(np.diff(np.sort(du))))
-        else:
-            sp = 1.0
-        tol_nm = max(1e-9, 0.55 * sp)
-    keep = np.zeros(n, dtype=bool)
-    for i in range(n):
-        m = np.abs(d_a - d_a[i]) <= tol_nm
-        keep[i] = float(r_a[i]) <= float(np.min(r_a[m])) + 1e-15
-    return keep
-
-def _filter_rmse_peaks_iteratively(
-    d: np.ndarray,
-    r: np.ndarray,
-    *sidecars: np.ndarray,
-) -> tuple[np.ndarray, ...]:
-    """Remove points whose RMSE exceeds both neighbors; optional *sidecars stay row-aligned with (d, r)."""
-    if d.size < 3:
-        if sidecars:
-            return (d, r) + tuple(np.asarray(s).copy() for s in sidecars)
-        return d, r
-
-    d_curr = d.copy()
-    r_curr = r.copy()
-    sc = [np.asarray(s).copy() for s in sidecars]
-    changed = True
-    while changed:
-        changed = False
-        n = d_curr.size
-        if n < 3:
-            break
-        mask = np.ones(n, dtype=bool)
-        for i in range(1, n - 1):
-            if r_curr[i] > r_curr[i - 1] + 1e-15 and r_curr[i] > r_curr[i + 1] + 1e-15:
-                mask[i] = False
-                changed = True
-        if changed:
-            d_curr = d_curr[mask]
-            r_curr = r_curr[mask]
-            sc = [a[mask] for a in sc]
-    if sidecars:
-        return (d_curr, r_curr) + tuple(sc)
-    return d_curr, r_curr
-
-def _safe_int_from_mapping(m: Mapping[str, Any], key: str, default: int = -1) -> int:
-    v = m.get(key, None)
-    if v is None:
-        return int(default)
-    try:
-        return int(v)
-    except (TypeError, ValueError):
-        return int(default)
 
 def _worker_corridor_rmse_regular_grid(
     cfg: SplineOptConfig,
@@ -3596,27 +3258,30 @@ class SmartInitPreviewManager:
         self.grids = payload.preview_grids
 
         logger.info(
-            "Smart Init dialog enter | cfg_present=%s | grids_present=%s | payload_K=%d",
+            "Smart Init dialog enter | parent=%s | cfg_present=%s | grids_present=%s | payload_K=%d | payload_d=%.6f",
+            type(self.parent_worker).__name__,
             bool(self.cfg is not None),
             bool(self.grids is not None),
             int(np.asarray(self.sk, dtype=np.float64).size),
+            float(getattr(payload, "d_best_nm", float("nan"))),
         )
 
         if self.cfg is None or self.grids is None or self.sk.size < 2:
             logger.warning(
-                "Smart Init dialog early return | cfg_present=%s | grids_present=%s | payload_K=%d",
+                "Smart Init dialog early return | cfg_present=%s | grids_present=%s | payload_K=%d | payload_d=%.6f",
                 bool(self.cfg is not None),
                 bool(self.grids is not None),
                 int(np.asarray(self.sk, dtype=np.float64).size),
+                float(getattr(payload, "d_best_nm", float("nan"))),
             )
 
             QMessageBox.warning(
                 self.parent_worker,
                 "Smart Init",
-                "Incomplete preview data (cfg or grids). Continuing without adjustment.",
+                "Incomplete preview data (cfg or grids). Aborting preview safely.",
             )
 
-            return True
+            raise ValueError("Incomplete preview data (cfg or grids)")
 
         self.k_n = int(self.sk.size)
 
@@ -3625,10 +3290,11 @@ class SmartInitPreviewManager:
         self.L_nodes = payload.L_nodes.copy()
 
         logger.info(
-            "Smart Init dialog payload vectors | len(n)=%d | len(L)=%d | K=%d",
+            "Smart Init dialog payload vectors | len(n)=%d | len(L)=%d | K=%d | d_best=%.6f",
             int(np.asarray(self.n_phys, dtype=np.float64).size),
             int(np.asarray(self.L_nodes, dtype=np.float64).size),
             int(self.k_n),
+            float(getattr(payload, "d_best_nm", float("nan"))),
         )
 
         if self.n_phys.size != self.k_n or self.L_nodes.size != self.k_n:
@@ -3641,7 +3307,7 @@ class SmartInitPreviewManager:
 
             QMessageBox.warning(self.parent_worker, "Smart Init", "n / L sizes are inconsistent with sigma knots.")
 
-            return True
+            raise ValueError("n / L sizes are inconsistent with sigma knots")
 
         self.rel_step = 0.005  # +/-0,5 % sur n et sur L = ln k
 
@@ -3699,13 +3365,6 @@ class SmartInitPreviewManager:
 
         self.parent_worker._si_mesh_sk_snap = self.parent_worker.smart_preview_sk_arr.copy()
 
-        logger.info(
-            "Smart Init dialog mesh prepared | sigma_knots_count=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s",
-            int(np.asarray(self.parent_worker.smart_preview_sk_arr, dtype=np.float64).size),
-            str(getattr(self.cfg, "rmse_fit_lambda_nm", None)),
-            str(self.open_preset_name),
-        )
-
         self._d0 = self.effective_d_best_nm
 
         if self._d0 is None or not np.isfinite(float(self._d0)):
@@ -3713,6 +3372,14 @@ class SmartInitPreviewManager:
 
         else:
             self.preview_d_nm = float(self._d0)
+
+        logger.info(
+            "Smart Init dialog mesh prepared | sigma_knots_count=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s | preview_d=%.6f",
+            int(np.asarray(self.parent_worker.smart_preview_sk_arr, dtype=np.float64).size),
+            str(getattr(self.cfg, "rmse_fit_lambda_nm", None)),
+            str(self.open_preset_name),
+            float(self.preview_d_nm),
+        )
 
         if str(self.open_preset_name) == "nb2o5":
             logger.info(
@@ -3859,7 +3526,7 @@ class SmartInitPreviewManager:
 
         y_lab = "T/T_sub" if payload.t_is_ratio else "T"
 
-        pw, curve_exp, curve_theo, knot_markers = self.parent_worker._build_smart_init_main_plot(y_lab)
+        self.pw, self.curve_exp, self.curve_theo, self.knot_markers = self.parent_worker._build_smart_init_main_plot(y_lab)
 
         # get_xv: extracted to module level
         self.get_xv = _get_xv_spectral_coord
@@ -3867,7 +3534,13 @@ class SmartInitPreviewManager:
         self.knot_lines = []
 
 
-        self.redraw_knot_lineslines()
+        logger.info(
+            "Smart Init dialog: initial knot line refresh | k_n=%d | preview_d_nm=%.6f | has_cfg=%s",
+            int(self.k_n),
+            float(self.preview_d_nm),
+            bool(self.cfg is not None),
+        )
+        self.redraw_knot_lines()
 
         self.cb_x_main.currentIndexChanged.connect(self.redraw_knot_lines)
 
@@ -3918,7 +3591,7 @@ class SmartInitPreviewManager:
         self.lbl_stats.setWordWrap(True)
 
 
-        self.refresh_statsstats(self.state.preview_d_nm, rm0)
+        self.refresh_stats(self.state.preview_d_nm, rm0)
 
         # Colonnes alignees sous les sigma du plot (espacements  Deltasigma sur l'axe).
 
@@ -3945,13 +3618,13 @@ class SmartInitPreviewManager:
 
         self.cb_x_main.setCurrentIndex(2)
 
-        lbl_lam_cols: list[QLabel] = []
+        self.lbl_lam_cols: list[QLabel] = []
 
-        lbl_sig_cols: list[QLabel] = []
+        self.lbl_sig_cols: list[QLabel] = []
 
-        lbl_n_cols: list[QLabel] = []
+        self.lbl_n_cols: list[QLabel] = []
 
-        lbl_L_cols: list[QLabel] = []
+        self.lbl_L_cols: list[QLabel] = []
 
         knot_bar = QWidget()
 
@@ -3964,15 +3637,15 @@ class SmartInitPreviewManager:
         # _stretch_sig: extracted to module level
         self._stretch_sig = lambda delta: _stretch_sig_to_px(delta, span_sig2)  # noqa: E731
 
-        n_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
+        self.n_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
 
-        L_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
+        self.L_btn_pairs: list[tuple[QPushButton, QPushButton]] = []
 
-        n_auto_btns: list[QPushButton] = []
+        self.n_auto_btns: list[QPushButton] = []
 
-        L_auto_btns: list[QPushButton] = []
+        self.L_auto_btns: list[QPushButton] = []
 
-        curve_editor_holder: list[SmartInitNKCurveEditorDialog] = []
+        self.curve_editor_holder: list[SmartInitNKCurveEditorDialog] = []
 
 
         knot_bar.setMinimumHeight(140)
@@ -3983,6 +3656,15 @@ class SmartInitPreviewManager:
 
 
 
+
+        logger.info(
+            "Smart Init dialog: creating NK editor | n_bounds=[%.4f, %.4f] | L_bounds=[%.4f, %.4f] | k_clip_lo=%.3e",
+            float(N_MIN_LIMIT),
+            float(N_MAX_LIMIT),
+            float(self.L_lo_g),
+            float(self.L_hi_g),
+            float(getattr(self.cfg, "k_clip_lo", 1e-30) or 1e-30),
+        )
 
         self._nk_curve_editor = SmartInitNKCurveEditorDialog(
             self.dlg,
@@ -4000,10 +3682,17 @@ class SmartInitPreviewManager:
             study_lambda_window=self._study_lambda_window_nm,
         )
 
-        curve_editor_holder.append(self._nk_curve_editor)
+        self.curve_editor_holder.append(self._nk_curve_editor)
 
+        logger.info("Smart Init dialog: showing NK editor window")
         self._nk_curve_editor.show()
-
+        logger.info("Smart Init dialog: NK editor show() returned")
+        logger.info(
+            "Smart Init dialog fully shown and waiting for user | dlg_visible=%s | nk_visible=%s | preview_d=%.6f",
+            bool(self.dlg.isVisible()),
+            bool(self._nk_curve_editor.isVisible()),
+            float(self.preview_d_nm),
+        )
 
         QTimer.singleShot(0, self._place_nk_editor)
 
@@ -4012,18 +3701,30 @@ class SmartInitPreviewManager:
 
         self.slider_d.valueChanged.connect(self.on_slider_d_changed)
 
-        self.set_slider_from_preview_diew_d()
+        logger.info(
+            "Smart Init dialog: sync thickness slider | preview_d_nm=%.6f | d_lo=%.6f | d_hi=%.6f",
+            float(self.preview_d_nm),
+            float(self.d_lo_nm),
+            float(self.d_hi_nm),
+        )
+        self.set_slider_from_preview_d()
 
 
 
 
 
 
-        self.rebuild_knot_uiot_ui(self.state.k_n)  # Appel initial  ici wire_hold_button est deja defini
+        logger.info(
+            "Smart Init dialog: rebuild knot UI | k_n=%d | current_rmse=%.8f | best_rmse=%.8f",
+            int(self.state.k_n),
+            float(self.state.current_rmse),
+            float(self.state.best_rmse),
+        )
+        self.rebuild_knot_ui(self.state.k_n)  # Appel initial ici wire_hold_button est deja defini
 
-        attach_excel_clipboard_context_menu(pw)
+        attach_excel_clipboard_context_menu(self.pw)
 
-        lay.addWidget(wrap_scientific_plot_with_toolbar(self.dlg, pw), stretch=1)
+        lay.addWidget(wrap_scientific_plot_with_toolbar(self.dlg, self.pw), stretch=1)
 
         lbl_nodes = QLabel(
             f"<b>Knot adjustment (increasing sigma)</b> - <b>n &amp; k Editor</b> window on the left: drag points "
@@ -4047,7 +3748,7 @@ class SmartInitPreviewManager:
         self.lbl_row_hint = QLabel()
 
 
-        self.update_hint_text_text()
+        self.update_hint_text()
 
         row_hint.addWidget(self.lbl_row_hint, stretch=1)
 
@@ -4175,11 +3876,17 @@ class SmartInitPreviewManager:
 
         # --- INITIALISATION IMMEDIATE ---
 
-        self.rebuild_knot_uiot_ui(self.state.k_n)
+        # Build the dialog state without triggering hidden recalculation or preset sweeps.
+        # The preview window must stay idle until the user explicitly validates with Continue.
+        self.rebuild_knot_ui(self.state.k_n)
 
-        self.do_recalcecalc()
-
-        self._auto_try_three_material_presetsesets()
+        lbl_wait_user = QLabel(
+            "<b>Manual step:</b> adjust the <i>n</i> and <i>ln k</i> nodes if needed, then click <b>Continue optimization</b> "
+            "to launch the worker."
+        )
+        lbl_wait_user.setWordWrap(True)
+        lbl_wait_user.setStyleSheet(f"color: {CertusTheme.WARNING}; font-size: 11px; padding: 2px 0;")
+        lay.addWidget(lbl_wait_user)
 
         bb.button(QDialogButtonBox.StandardButton.Ok).clicked.connect(self.on_keep)
 
@@ -4189,7 +3896,7 @@ class SmartInitPreviewManager:
 
         logger.info("Smart Init dialog immediate init start")
 
-        self._apply_manual_spectrum_plot_rangerange()
+        self._apply_manual_spectrum_plot_range()
 
         logger.info("Smart Init dialog manual plot range applied")
 
@@ -4210,7 +3917,7 @@ class SmartInitPreviewManager:
 
         for line in self.knot_lines:
             try:
-                pw.removeItem(line)
+                self.pw.removeItem(line)
 
             except (AttributeError, RuntimeError):
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
@@ -4224,22 +3931,22 @@ class SmartInitPreviewManager:
         sk_lines = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.sk), dtype=np.float64).ravel()
 
         for sx in sk_lines:
-            il = pg.InfiniteLine(self.get_xvet_xv(sx, mode), angle=90, pen=pen_k)
+            il = pg.InfiniteLine(_get_xv_spectral_coord(float(sx), mode), angle=90, pen=pen_k)
 
-            pw.addItem(il)
+            self.pw.addItem(il)
 
             self.knot_lines.append(il)
 
     def _apply_manual_spectrum_plot_range(self) -> None:
         _smart_init_apply_plot_range(
-            pw, self._study_lambda_window_nm, self.cb_x_main.currentIndex(),
+            self.pw, self._study_lambda_window_nm, self.cb_x_main.currentIndex(),
             getattr(self.parent_worker, "smart_preview_sk_arr", self.sk), self.lam_m, self.y_exp,
             self.state.current_t_th,
         )
 
     def refresh_nk_plots_aux(self, lam_nk: np.ndarray, n_lam: np.ndarray, k_lam: np.ndarray) -> None:
         _smart_init_refresh_nk_aux(
-            curve_n, curve_pk, main_vb, p_extra,
+            self.curve_n, self.curve_pk, self.main_vb, self.p_extra,
             self._study_lambda_window_nm, lam_nk, n_lam, k_lam,
         )
 
@@ -4282,23 +3989,23 @@ class SmartInitPreviewManager:
 
         lbl = ["lambda (nm)", "sigma (nm?1)", "sigma2 = 1/lambda2 (nm?2)"][mode]
 
-        pw.setLabel("bottom", lbl)
+        self.pw.setLabel("bottom", lbl)
 
         o = np.argsort(x_vals)
 
-        curve_exp.setData(x_vals[o], self.y_exp[o])
+        self.curve_exp.setData(x_vals[o], self.y_exp[o])
 
-        curve_theo.setData(x_vals[o], self.state.current_t_th[o])
+        self.curve_theo.setData(x_vals[o], self.state.current_t_th[o])
 
         knot_t = _interp_t_at_lam_knots(self.lam_m, self.state.current_t_th, cur_sk)
 
-        knot_markers.setData(k_vals, knot_t)
+        self.knot_markers.setData(k_vals, knot_t)
 
         for j, il in enumerate(self.knot_lines):
             if j < len(k_vals):
                 il.setPos(k_vals[j])
 
-        self._apply_manual_spectrum_plot_rangerange()
+        self._apply_manual_spectrum_plot_range()
 
     def rebuild_knot_ui(self, new_kn: int) -> None:
 
@@ -4314,12 +4021,12 @@ class SmartInitPreviewManager:
         current_sk = getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr)
         sig2_sorted_loc = np.sort(current_sk**2)
 
-        self.redraw_knot_lineslines()
+        self.redraw_knot_lines()
 
         _build_smart_init_knot_columns(
             self.state.k_n, self.knot_h, sig2_sorted_loc, self.s2_lo_f, self._stretch_sig,
-            lbl_lam_cols, lbl_sig_cols, lbl_n_cols, lbl_L_cols,
-            n_btn_pairs, L_btn_pairs, n_auto_btns, L_auto_btns,
+            self.lbl_lam_cols, self.lbl_sig_cols, self.lbl_n_cols, self.lbl_L_cols,
+            self.n_btn_pairs, self.L_btn_pairs, self.n_auto_btns, self.L_auto_btns,
         )
 
         # Rewire +/- / auto buttons for the current k_n sigma knots
@@ -4335,31 +4042,31 @@ class SmartInitPreviewManager:
         for j in range(self.state.k_n):
             oi = int(sig_sort_idx_loc[j])
 
-            bm_n, bp_n = n_btn_pairs[j]
+            bm_n, bp_n = self.n_btn_pairs[j]
 
-            bm_L, bp_L = L_btn_pairs[j]
+            bm_L, bp_L = self.L_btn_pairs[j]
 
-            self.wire_hold_buttonutton(bm_n, oi, -1, is_ln_k=False)
+            self.wire_hold_button(bm_n, oi, -1, is_ln_k=False)
 
-            self.wire_hold_buttonutton(bp_n, oi, +1, is_ln_k=False)
+            self.wire_hold_button(bp_n, oi, +1, is_ln_k=False)
 
-            self.wire_hold_buttonutton(bm_L, oi, -1, is_ln_k=True)
+            self.wire_hold_button(bm_L, oi, -1, is_ln_k=True)
 
-            self.wire_hold_buttonutton(bp_L, oi, +1, is_ln_k=True)
+            self.wire_hold_button(bp_L, oi, +1, is_ln_k=True)
 
             def _run_n_auto(*_args, row_index=oi) -> None:
-                self.run_auto_auto(row_index, False)
+                self.run_auto(row_index, False)
 
-            n_auto_btns[j].clicked.connect(_run_n_auto)
+            self.n_auto_btns[j].clicked.connect(_run_n_auto)
 
             def _run_l_auto(*_args, row_index=oi) -> None:
-                self.run_auto_auto(row_index, True)
+                self.run_auto(row_index, True)
 
-            L_auto_btns[j].clicked.connect(_run_l_auto)
+            self.L_auto_btns[j].clicked.connect(_run_l_auto)
 
-        self.sync_knot_labelsabels()
+        self.sync_knot_labels()
 
-        for _ce in curve_editor_holder:
+        for _ce in self.curve_editor_holder:
             try:
                 _ce.refresh_plots()
 
@@ -4379,13 +4086,13 @@ class SmartInitPreviewManager:
 
             lam_v = 1.0 / max(float(cur_sk[oi]), 1e-30)
 
-            lbl_lam_cols[j].setText(f"{lam_v:.1f} nm")
+            self.lbl_lam_cols[j].setText(f"{lam_v:.1f} nm")
 
-            lbl_sig_cols[j].setText(f"{float(cur_sk[oi]):.5f}")
+            self.lbl_sig_cols[j].setText(f"{float(cur_sk[oi]):.5f}")
 
-            lbl_n_cols[j].setText(f"{float(self.state.n_phys[oi]):.4f}")
+            self.lbl_n_cols[j].setText(f"{float(self.state.n_phys[oi]):.4f}")
 
-            lbl_L_cols[j].setText(f"{float(self.state.L_nodes[oi]):.4f}")
+            self.lbl_L_cols[j].setText(f"{float(self.state.L_nodes[oi]):.4f}")
 
     def sync_d_slider_label(self) -> None:
 
@@ -4395,11 +4102,11 @@ class SmartInitPreviewManager:
 
         self.slider_d.blockSignals(True)
 
-        self.slider_d.setValue(self._slider_from_drom_d(self.state.preview_d_nm))
+        self.slider_d.setValue(self._slider_from_d(self.state.preview_d_nm))
 
         self.slider_d.blockSignals(False)
 
-        self.sync_d_slider_labellabel()
+        self.sync_d_slider_label()
 
     def _set_n_knot_curve(self, i: int, v: float) -> None:
 
@@ -4427,7 +4134,7 @@ class SmartInitPreviewManager:
         }
         self.parent_worker._execute_smart_init_do_recalc(
             self.state, self.cfg, self.grids, self._relax_si_mono, self.sk_arr,
-            curve_editor_holder, _cbs_recalc,
+            self.curve_editor_holder, _cbs_recalc,
         )
 
     def _place_nk_editor(self) -> None:
@@ -4449,16 +4156,16 @@ class SmartInitPreviewManager:
         if err:
             QMessageBox.warning(self.dlg, "Smart Init  auto", f"run auto failed: {err}")
             return
-        self.set_slider_from_preview_diew_d()
-        self.do_recalcecalc()
+        self.set_slider_from_preview_d()
+        self.do_recalc()
 
     def on_slider_d_changed(self, _iv: int) -> None:
 
-        self.state.preview_d_nm = self._d_from_sliderlider(self.slider_d.value())
+        self.state.preview_d_nm = self._d_from_slider(self.slider_d.value())
 
-        self.sync_d_slider_labellabel()
+        self.sync_d_slider_label()
 
-        self.do_recalcecalc()
+        self.do_recalc()
 
     def bump_n_scaled(self, row: int, direction: int, mult: float) -> None:
 
@@ -4468,7 +4175,7 @@ class SmartInitPreviewManager:
 
         self.state.n_phys[row] = float(np.clip(self.state.n_phys[row] * f, N_MIN_LIMIT, N_MAX_LIMIT))
 
-        self.do_recalcecalc()
+        self.do_recalc()
 
     def bump_L_scaled(self, row: int, direction: int, mult: float) -> None:
 
@@ -4478,7 +4185,7 @@ class SmartInitPreviewManager:
 
         self.state.L_nodes[row] = float(np.clip(self.state.L_nodes[row] * f, self.L_lo_g, self.L_hi_g))
 
-        self.do_recalcecalc()
+        self.do_recalc()
 
     def wire_hold_button(self, btn, row, direction, *, is_ln_k=False) -> None:
         _smart_init_wire_hold_button(
@@ -4492,7 +4199,7 @@ class SmartInitPreviewManager:
         if err:
             QMessageBox.information(self.dlg, "Smart Init", err)
             return
-        self.do_recalcecalc()
+        self.do_recalc()
 
     def update_hint_text(self) -> None:
 
@@ -4533,7 +4240,7 @@ class SmartInitPreviewManager:
     def _refresh_knot_lines_and_ui(self) -> None:
         for line in self.knot_lines:
             try:
-                pw.removeItem(line)
+                self.pw.removeItem(line)
             except (AttributeError, RuntimeError):
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
         self.knot_lines.clear()
@@ -4541,13 +4248,13 @@ class SmartInitPreviewManager:
         pen_k = pg.mkPen("#1a9f3c", width=1.8)
         mode = self.cb_x_main.currentText()
         for sx in self.state.sk:
-            il = pg.InfiniteLine(self.get_xvet_xv(sx, mode), angle=90, pen=pen_k)
-            pw.addItem(il)
+            il = pg.InfiniteLine(_get_xv_spectral_coord(float(sx), mode), angle=90, pen=pen_k)
+            self.pw.addItem(il)
             self.knot_lines.append(il)
 
-        self.rebuild_knot_uiot_ui(int(len(self.state.sk)))
-        self.set_slider_from_preview_diew_d()
-        self.do_recalcecalc()
+        self.rebuild_knot_ui(int(len(self.state.sk)))
+        self.set_slider_from_preview_d()
+        self.do_recalc()
 
     def _serialize_smart_init_index_config(self) -> dict[str, Any]:
         cur_sk = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.state.sk), dtype=np.float64).ravel()
@@ -4577,7 +4284,7 @@ class SmartInitPreviewManager:
         if not path.lower().endswith(".json"):
             path += ".json"
 
-        payload_cfg = self._serialize_smart_init_index_configonfig()
+        payload_cfg = self._serialize_smart_init_index_config()
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(payload_cfg, f, indent=2)
@@ -4610,32 +4317,8 @@ class SmartInitPreviewManager:
 
             return project_manual_material_preset(pid, ts, d_nm_hint=dh)
 
-        self.apply_manual_preset_from_projectorector(_run, self.btn_apply_material, "Apply preset")
+        self.apply_manual_preset_from_projector(_run, self.btn_apply_material, "Apply preset")
 
-    def _auto_try_three_material_presets(self) -> None:
-        """Compares Nb2O? / SiO2 / Ta2O? on the current sigma grid and applies the best one (mini-opt d)."""
-        target_sk = np.asarray(getattr(self.parent_worker, "smart_preview_sk_arr", self.sk_arr), dtype=np.float64).ravel()
-        if int(target_sk.size) < 2:
-            return
-
-        res = self.parent_worker._pick_best_smart_init_material_preset(self.cfg, target_sk, self.state.preview_d_nm, bool(self._relax_si_mono))
-        if res is None:
-            return
-        winner, _, d_w = res
-
-        self.state.preview_d_nm = float(d_w)
-        iw = self.cb_material_preset.findData(winner)
-        if iw >= 0:
-            self.cb_material_preset.blockSignals(True)
-            try:
-                self.cb_material_preset.setCurrentIndex(int(iw))
-            finally:
-                self.cb_material_preset.blockSignals(False)
-
-        def _proj(ts: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, float]:
-            return project_manual_material_preset(winner, ts, d_nm_hint=float(self.state.preview_d_nm))
-
-        self.apply_manual_preset_from_projectorector(_proj, None, "")
 
     def on_autofind(self) -> None:
         _cbs = {
@@ -4650,6 +4333,12 @@ class SmartInitPreviewManager:
         )
 
     def on_keep(self) -> None:
+        logger.info(
+            "Smart Init on_keep requested | already_called=%s | preview_d=%.6f | rmse=%.8f",
+            bool(self._on_keep_called[0]),
+            float(getattr(self.state, "preview_d_nm", float("nan"))),
+            float(getattr(self.state, "current_rmse", float("nan"))),
+        )
         if self._on_keep_called[0]:
             logger.debug("Smart Init on_keep: guard active, ignoring reentrant call")
             return
@@ -4660,6 +4349,12 @@ class SmartInitPreviewManager:
                 "chk_si_two_phase": self.chk_si_two_phase,
                 "relax_si_mono": self._relax_si_mono,
             }
+            logger.info(
+                "Smart Init on_keep: dispatching to worker | relax_mono=%s | deep=%s | two_phase=%s",
+                bool(ui_ctx.get("relax_si_mono", False)),
+                bool(ui_ctx.get("chk_si_deep", None)),
+                bool(ui_ctx.get("chk_si_two_phase", None)),
+            )
             self.parent_worker._on_smart_init_keep(self.dlg, self.cfg, self.state, ui_ctx)
         except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Smart Init on_keep: exception in _on_smart_init_keep")
@@ -4669,8 +4364,26 @@ class _SmartInitDialogMixin:
     """Mixin extracting _show_smart_init_preview_dialog logic."""
 
     def _show_smart_init_preview_dialog(self, payload) -> bool:
-        manager = SmartInitPreviewManager(self, payload)
-        return manager.dlg.exec() == 1  # QDialog.DialogCode.Accepted
+        logger.info(
+            "Smart Init dialog show requested | payload_type=%s | payload_d=%.6f | wait_event=%s",
+            type(payload).__name__,
+            float(getattr(payload, "d_best_nm", float("nan"))),
+            getattr(self, "_preview_wait_event", None) is not None,
+        )
+        try:
+            manager = SmartInitPreviewManager(self, payload)
+            code = manager.dlg.exec()
+            accepted = bool(code == QDialog.DialogCode.Accepted)
+            logger.info(
+                "Smart Init dialog exec done | code=%s | accepted=%s | preview_ret=%s",
+                int(code),
+                accepted,
+                getattr(self, "_preview_ret", None) is not None,
+            )
+            return accepted and bool(getattr(self, "_preview_result", False))
+        except Exception:
+            logger.exception("Smart Init dialog failed to open; aborting preview stage safely")
+            return False
 
     def _build_smart_init_aux_dialog(
         self, parent_dlg: QDialog
@@ -4912,9 +4625,8 @@ class _SmartInitDialogMixin:
         )
 
         if app is None:
-            logger.warning("Smart Init hook: QApplication missing, continuing without dialog.")
-
-            return True
+            logger.error("Smart Init hook: QApplication missing, cannot pause safely.")
+            return False
 
         self._preview_ret = None
 
@@ -4927,7 +4639,7 @@ class _SmartInitDialogMixin:
 
         self._preview_payload = payload
 
-        self._preview_result = True
+        self._preview_result = False
 
         self._preview_wait_event = Event()
 
@@ -4977,14 +4689,13 @@ class _SmartInitDialogMixin:
             self._preview_ret = None
 
         if not ok:
-            logger.warning("Smart Init preview: GUI timeout (600s), continuing optimization.")
-
-            return True
+            logger.error("Smart Init preview: GUI timeout (600s), aborting optimization safely.")
+            return False
 
         if ret_tuple is not None:
             return True
 
-        return bool(getattr(self, "_preview_result", True))
+        return bool(getattr(self, "_preview_result", False))
 
 class _CorridorWorkerMixin:
     """Mixin containing corridor worker callbacks and plot tab."""
@@ -8192,6 +7903,7 @@ class _CorridorExportMixin:
 class _RunMixin:
     """Mixin containing optimization run logic, live update and result plotting."""
 
+    @safe_ui_action
     def _on_run(self) -> None:
 
         # Reinitialisation de la securite retour de dialog
@@ -10544,6 +10256,7 @@ class _SettingsMixin:
 
         reset_app_to_defaults(self)
 
+    @safe_ui_action
     def _on_load(self, path: str | None = None) -> None:
 
         if not path:
@@ -12544,43 +12257,6 @@ class CertusIndexSplineApp(
 
         merged.pop("d_nm_seg_spline_sigma", None)
 
-    def _result_needs_deferred_corridors(self, result: dict) -> bool:
-
-        if not isinstance(result, dict):
-            return False
-
-        if not bool(getattr(self, "chk_corridor_d", None) and self.chk_corridor_d.isChecked()):
-            return False
-
-        if bool(result.get("profile_d_enabled", False)) or result.get("profile_d_values_nm") is not None:
-            return False
-
-        return True
-
-    def _can_offer_mwir_extra_node(self, result: dict) -> bool:
-        """True if conditions allow proposing MWIR extra node insertion dialog."""
-        if not isinstance(result, dict):
-            return False
-        sk = result.get("sigma_knots")
-        if sk is None:
-            return False
-        sk_a = np.asarray(sk, dtype=np.float64).ravel()
-        if sk_a.size < 2:
-            return False
-        # Standard mode only (no split sigma_knots_n / sigma_knots_L)
-        if "sigma_knots_n" in result or "sigma_knots_L" in result:
-            return False
-        # lambda_max > 2500 nm
-        lam_src = result.get("lam_nm")
-        if lam_src is None and self._last_run_cfg is not None:
-            lam_src = getattr(self._last_run_cfg, "lam_nm", None)
-        if lam_src is None:
-            return False
-        lam_a = np.asarray(lam_src, dtype=np.float64).ravel()
-        if lam_a.size == 0 or float(np.max(lam_a)) <= 2500.0:
-            return False
-        # Finite RMSE
-        return np.isfinite(float(result.get("rmse", float("inf"))))
 
     def _can_offer_manual_extra_knots(self, result: dict) -> bool:
         """True if conditions allow proposing manual extra knot placement."""
@@ -13472,119 +13148,7 @@ class CertusIndexSplineApp(
         install_skeleton(self.tabs_main, label="Advanced cleaning...")
         self._worker.start()
 
-    def _prompt_mwir_extra_node(self, result: dict) -> bool:
-        """Show Oui/Non dialog for MWIR extra sigma node insertion.  Returns True if user chose Oui."""
-        sk = result.get("sigma_knots") if isinstance(result, dict) else None
-        K_cur = int(np.asarray(sk, dtype=np.float64).size) if sk is not None else None
-        k_label = f"K : {K_cur} → {K_cur + 1}" if K_cur is not None else "K → K+1"
-        dlg = QDialog(self)
-        dlg.setWindowTitle("Extra MWIR node")
-        dlg.setModal(True)
-        lay = QVBoxLayout(dlg)
-        lab = QLabel(
-            "Add an extra sigma node in the MWIR?<br>"
-            f"<b>σ<sub>mid</sub></b> = (σ₀ + σ₁) / 2 &nbsp;—&nbsp; {k_label}<br><br>"
-            "An L-BFGS-B re-optimization will be launched.<br>"
-            "The result is accepted only if the RMSE improves significantly."
-        )
-        lab.setWordWrap(True)
-        lay.addWidget(lab)
-        bb = QDialogButtonBox(dlg)
-        btn_yes = bb.addButton("Yes", QDialogButtonBox.ButtonRole.AcceptRole)
-        btn_no = bb.addButton("No", QDialogButtonBox.ButtonRole.RejectRole)
-        btn_no.setDefault(True)
-        choice = {"yes": False}
 
-        def _accept() -> None:
-            choice["yes"] = True
-            dlg.accept()
-
-        btn_yes.clicked.connect(_accept)
-        btn_no.clicked.connect(dlg.reject)
-        lay.addWidget(bb)
-        dlg.exec()
-        if self.logger:
-            self.logger.info(
-                "INDEX_SPLINE GUI: MWIR extra node prompt | choice=%s",
-                "Yes" if choice["yes"] else "No",
-            )
-        return bool(choice["yes"])
-
-    def _start_mwir_insert_worker(self, result: dict) -> None:
-        """Launch MWIR node insertion worker after user confirmation."""
-        cfg_base = self._last_run_cfg
-        if cfg_base is None:
-            cfg_base = self._build_opt_config(notify=False)
-        if cfg_base is None:
-            if self.logger:
-                self.logger.warning("INDEX_SPLINE GUI: MWIR extra node - no config available, abort.")
-            return
-        CertusIndexSplineApp._prepare_worker_restart(self)
-        self._best_live_rmse = float("inf")
-        self._best_live_result = None
-        self._last_live_log_mono = 0.0
-        self._live_best_detail_log_mono = 0.0
-        cfg_eff = self._cfg_with_result_substrate(cfg_base, result)
-        self._worker = GenericWorker(worker_spline_mwir_insert_node, dict(result), cfg_eff, self._stop_event)
-
-        def _mwir_progress(p: float | int, m: str) -> None:
-            pv = int(round(float(p) * 100.0))
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), m)
-
-        self._worker.kwargs["progress_cb"] = _mwir_progress
-        self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
-        self._worker.signals.progress.connect(self._on_progress)
-        self._worker.signals.live.connect(self._on_live_update)
-        self._worker.signals.finished.connect(self._on_worker_done)
-        self._worker.signals.error.connect(self._on_worker_err)
-        self._worker.signals.finished.connect(self._cleanup_thread)
-        self._worker.signals.error.connect(self._cleanup_thread)
-        self._worker_role = "mwir_insert"
-        if self.logger:
-            K_cur = int(np.asarray(result.get("sigma_knots", []), dtype=np.float64).size)
-            rr = float(result.get("rmse", float("nan")))
-            self.logger.info(
-                "INDEX_SPLINE GUI: launching MWIR insert worker | K=%d | rmse=%.8f",
-                K_cur,
-                rr if np.isfinite(rr) else float("nan"),
-            )
-        self._set_worker_running_state(True)
-        self.lbl_status.setText("MWIR node: re-optimization in progress...")
-        install_skeleton(self.tabs_main, label="Extra MWIR node...")
-        self._worker.start()
-
-    def _start_deferred_corridor_worker_from_breakpoint_pending(self) -> None:
-
-        pending = getattr(self, "_pending_breakpoint_corridor_seed", None)
-
-        if not isinstance(pending, dict):
-            return
-
-        if self.logger:
-            p_rmse = self._rmse_from_result_dict(pending)
-            p_d = pending.get("d_nm")
-            p_d_txt = f"{float(p_d):.6f}" if isinstance(p_d, (int, float)) and np.isfinite(float(p_d)) else "n/a"
-            p_x = np.asarray(pending.get("x", []), dtype=np.float64).ravel()
-            p_n = np.asarray(pending.get("n_lam", []), dtype=np.float64).ravel()
-            p_k = np.asarray(pending.get("k_lam", []), dtype=np.float64).ravel()
-            self.logger.info(
-                "Corridors deferred launch [pending-seed-check] | d_nm=%s | rmse=%s | nan(x/n/k)=%d/%d/%d | has_solver_snapshot=%s",
-                p_d_txt,
-                (f"{p_rmse:.8f}" if np.isfinite(p_rmse) else "n/a"),
-                int(np.sum(~np.isfinite(p_x))) if p_x.size else 0,
-                int(np.sum(~np.isfinite(p_n))) if p_n.size else 0,
-                int(np.sum(~np.isfinite(p_k))) if p_k.size else 0,
-                "yes" if isinstance(pending.get("gui_solver_snapshot_for_corridors"), dict) else "no",
-            )
-
-        self._pending_breakpoint_corridor_seed = None
-
-        if not self._start_deferred_corridor_worker(pending):
-            QMessageBox.warning(
-                self,
-                "Corridor",
-                "Impossible to automatically restart corridor calculation from the new solution.",
-            )
 
     def _schedule_corridor_auto_refine(
         self,
@@ -14371,24 +13935,6 @@ class CertusIndexSplineApp(
 
         self._stack_box4_adv.setCurrentIndex(0 if epure else 1)
 
-    def _show_corridor_rmse_profile_window(self) -> None:
-        """Displays the RMSE = f(thickness) window with corridor profiling data."""
-        win = getattr(self, "_corridor_rmse_profile_win", None)
-        if win is None or not win.isVisible():
-            win = CorridorRMSEProfileWindow(self)
-            self._corridor_rmse_profile_win = win
-
-        # Mettre ? jour avec les donn?es disponibles
-        if self._last_result is not None:
-            d_prof = np.asarray(self._last_result.get("profile_d_values_nm", []), dtype=np.float64)
-            r_prof = np.asarray(self._last_result.get("profile_d_rmse_values", []), dtype=np.float64)
-            rmse_thresh = self._last_result.get("profile_d_rmse_thresh")
-            if d_prof.size > 0 and r_prof.size == d_prof.size:
-                win.update_profile(d_prof, r_prof, rmse_thresh)
-
-        win.show()
-        win.raise_()
-        win.activateWindow()
 
     def _build_controls_basic_panel(self) -> QWidget:
         """Steps 2 to 4: substrate / thickness, spectral targets, mesh and optimizer."""
@@ -15939,25 +15485,28 @@ class CertusIndexSplineApp(
             payload = SmartInitPayload.from_dict(payload)
 
         logger.info(
-            "Smart Init GUI slot enter | payload_type=%s | has_wait_event=%s",
+            "Smart Init GUI slot enter | payload_type=%s | has_wait_event=%s | thread=%s",
             type(payload).__name__,
             getattr(self, "_preview_wait_event", None) is not None,
+            type(QThread.currentThread()).__name__,
         )
 
         try:
             if isinstance(payload, SmartInitPayload):
                 logger.info(
-                    "Smart Init GUI slot: opening dialog | K_sigma=%d | incoming_d_best_nm=%.6f",
+                    "Smart Init GUI slot: opening dialog | K_sigma=%d | incoming_d_best_nm=%.6f | preview_shown=%s",
                     int(np.asarray(payload.sigma_knots, dtype=np.float64).size),
                     float(payload.d_best_nm),
+                    bool(getattr(self, "_preview_result", None) is not None),
                 )
 
-                self._preview_result = self._show_smart_init_preview_dialog(payload)
+                self._preview_result = bool(self._show_smart_init_preview_dialog(payload))
 
                 logger.info(
-                    "Smart Init GUI slot: dialog returned preview_result=%s | preview_ret=%s",
+                    "Smart Init GUI slot: dialog returned preview_result=%s | preview_ret=%s | wait_event=%s",
                     bool(self._preview_result),
                     getattr(self, "_preview_ret", None) is not None,
+                    getattr(self, "_preview_wait_event", None) is not None,
                 )
 
             else:
@@ -15965,16 +15514,24 @@ class CertusIndexSplineApp(
                     "Smart Init preview: unexpected payload type %s, skipping dialog.", type(payload).__name__
                 )
 
-                self._preview_result = True
+                self._preview_result = False
+                logger.error("Smart Init preview: unexpected payload, aborting preview safely")
 
         except NUMERICAL_FAULT_EXCEPTIONS :
             logger.exception("Smart Init preview: GUI error (full traceback)")
 
-            self._preview_result = True
+            self._preview_result = False
 
         finally:
             if self._preview_wait_event is not None:
+                logger.info(
+                    "Smart Init GUI slot: releasing wait_event | preview_result=%s | preview_ret=%s",
+                    bool(getattr(self, "_preview_result", False)),
+                    getattr(self, "_preview_ret", None) is not None,
+                )
                 self._preview_wait_event.set()
+            else:
+                logger.warning("Smart Init GUI slot finished without wait_event; preview stage cannot block safely")
 
 def main() -> None:
 

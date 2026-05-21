@@ -634,3 +634,109 @@ def test_strat_strategies_table_headers_contract(qapp):
     headers = [win.table.horizontalHeaderItem(i).text() for i in range(win.table.columnCount())]
     assert "Next" in headers
     assert "Sym Score" in headers
+
+
+@pytest.mark.ui
+@pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
+class TestUIExceptionHandling:
+    """Tests for @safe_ui_action and exception translation in UI classes."""
+
+    def test_safe_ui_action_validation_error(self, qapp):
+        from certus_errors import CertusValidationError
+        from certus_ui import safe_ui_action
+
+        class DummyWidget(QWidget):
+            @safe_ui_action
+            def fail_validation(self):
+                raise CertusValidationError("Validation failed", details="Invalid value", suggestion="Try again")
+
+        widget = DummyWidget()
+        with patch("certus_ui.show_toast") as mock_toast:
+            widget.fail_validation()
+            mock_toast.assert_called_once()
+            args, kwargs = mock_toast.call_args
+            assert "Validation" in args[1]
+            assert kwargs.get("level") == "warning"
+
+    def test_safe_ui_action_domain_error(self, qapp):
+        from certus_errors import CertusDomainError
+        from certus_ui import safe_ui_action
+        from PyQt6.QtWidgets import QMessageBox
+
+        class DummyWidget(QWidget):
+            @safe_ui_action
+            def fail_domain(self):
+                raise CertusDomainError("Domain failed", details="Physics error", suggestion="Adjust params")
+
+        widget = DummyWidget()
+        with patch.object(QMessageBox, "exec") as mock_exec:
+            widget.fail_domain()
+            mock_exec.assert_called_once()
+
+    def test_safe_ui_action_numerical_error(self, qapp):
+        from certus_ui import safe_ui_action
+
+        class DummyWidget(QWidget):
+            @safe_ui_action
+            def fail_numerical(self):
+                raise ValueError("Numerical error")
+
+        widget = DummyWidget()
+        with patch("certus_ui.show_toast") as mock_toast:
+            widget.fail_numerical()
+            mock_toast.assert_called_once()
+            args, kwargs = mock_toast.call_args
+            assert "Error: Numerical error" in args[1]
+            assert kwargs.get("level") == "error"
+
+    def test_safe_ui_action_generic_exception(self, qapp):
+        from certus_ui import safe_ui_action
+
+        class DummyWidget(QWidget):
+            @safe_ui_action
+            def fail_generic(self):
+                raise Exception("Generic crash")
+
+        widget = DummyWidget()
+        with patch("certus_ui.show_toast") as mock_toast:
+            widget.fail_generic()
+            mock_toast.assert_called_once()
+            args, kwargs = mock_toast.call_args
+            assert "Critical: Generic crash" in args[1]
+            assert kwargs.get("level") == "error"
+
+    def test_base_app_save_load_config_corruption(self, qapp):
+        from certus_ui import CertusBaseApp
+        from PyQt6.QtWidgets import QMessageBox
+
+        class DummyApp(CertusBaseApp):
+            def _collect_config(self):
+                raise ValueError("Serialization failed")
+            def _get_default_config_name(self):
+                return "test.json"
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+            def _apply_config(self, cfg):
+                raise FileNotFoundError("Missing file")
+
+        app = DummyApp()
+
+        # 1. Test save_config raising ValueError -> ConfigurationCorruptionError -> QMessageBox
+        with patch("PyQt6.QtWidgets.QFileDialog.getSaveFileName", return_value=("dummy.json", "")):
+            with patch.object(QMessageBox, "exec") as mock_exec:
+                app.save_config()
+                mock_exec.assert_called_once()
+
+        # 2. Test load_config raising FileNotFoundError -> ConfigurationCorruptionError -> QMessageBox
+        with patch("PyQt6.QtWidgets.QFileDialog.getOpenFileName", return_value=("dummy.json", "")):
+            with patch.object(QMessageBox, "exec") as mock_exec:
+                app.load_config()
+                mock_exec.assert_called_once()
+
+    def test_re_app_callbacks_protected(self, qapp):
+        pytest.importorskip("CERTUS_RE")
+        from CERTUS_RE import CertusREApp
+
+        app = CertusREApp()
+        assert hasattr(app.launch_re, "__wrapped__")
+        assert hasattr(app.load_reverse_engineering, "__wrapped__")

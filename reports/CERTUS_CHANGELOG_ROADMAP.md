@@ -1,4 +1,18 @@
-# CERTUS Roadmap — CHANGELOG (audit & cleanup history)
+
+## Statut
+### Déjà fait
+- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
+- Backlog P0/P1 créé.
+- Audit des modules principaux réalisé.
+- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+
+### Il reste
+- Vérifier la CI et la release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les principaux entrypoints métier.
+- Renforcer les tests des helpers, invariants et flux # CERTUS Roadmap — CHANGELOG (audit & cleanup history)
 
 *Historique détaillé des actions destructives et structurelles appliquées au projet CERTUS dans le cadre du roadmap d'industrialisation 2026. Le `CERTUS_MASTER_TODO_OPTIMIZATION.md` reste le pivot prospectif (« ce qui reste à faire ») ; ce document garde la trace de « ce qui a été fait ».*
 
@@ -391,3 +405,19 @@ Tests : 59 passed, 1 failed (`test_index_cost_gradient` — `UnicodeEncodeError`
 ## Antérieur à 2026-04-26
 
 *Pour l'historique complet des `Progress 2026-04-25` détaillés (ARCH-1 sur CERTUS_RE.py, P1-2 STRAT extraction, P1-12 physics coverage, etc.), voir directement `reports/CERTUS_MASTER_TODO_OPTIMIZATION.md` dans les sections §3, §4 et §12 — la migration de ces blocs vers ce CHANGELOG est planifiée au prochain sprint (cf. P1-32-doc-hygiene).*
+
+
+## État actuel
+### Fait
+- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
+- Plan P0/P1 créé.
+- Backlog maître créé.
+- Audit des modules principaux réalisé.
+
+### Reste
+- Vérifier la CI / release de bout en bout.
+- Verrouiller `certus_core.py`.
+- Stabiliser les services headless.
+- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
+- Alléger les gros entrypoints métier.
+- Renforcer les tests sur les helpers, invariants et flux principaux.

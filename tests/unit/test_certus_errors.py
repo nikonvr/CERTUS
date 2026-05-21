@@ -27,6 +27,10 @@ from certus_errors import (
     CertusFileError,
     CertusMaterialError,
     CertusValidationError,
+    CertusDomainError,
+    PhysicsConvergenceError,
+    ConfigurationCorruptionError,
+    CertusConfigError,
     format_validation_error,
     get_error_message,
     validate_parameter_range,
@@ -34,6 +38,10 @@ from certus_errors import (
     validate_spectral_data,
     validate_thickness,
     validate_wavelength_range,
+    safe_ui_action,
+    show_error,
+    show_warning,
+    show_validation_error,
 )
 
 
@@ -62,6 +70,17 @@ class TestExceptionHierarchy:
     def test_material_error_hierarchy(self):
         from certus_core import CertusPhysicsError
         assert issubclass(CertusMaterialError, CertusPhysicsError)
+
+    def test_domain_error_hierarchy(self):
+        assert issubclass(CertusDomainError, CertusError)
+
+    def test_physics_convergence_error_hierarchy(self):
+        assert issubclass(PhysicsConvergenceError, CertusDomainError)
+        assert issubclass(PhysicsConvergenceError, CertusConvergenceError)
+
+    def test_configuration_corruption_error_hierarchy(self):
+        assert issubclass(ConfigurationCorruptionError, CertusDomainError)
+        assert issubclass(ConfigurationCorruptionError, CertusConfigError)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -274,3 +293,144 @@ class TestErrorMessages:
             msg = format_validation_error(e)
             assert isinstance(msg, str)
             assert len(msg) > 0
+
+
+# ─────────────────────────────────────────────────────────────────────
+# UI helpers & safe_ui_action
+# ─────────────────────────────────────────────────────────────────────
+
+
+class TestUIHelpers:
+    def test_show_error(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                self.parent = parent
+            def setIcon(self, icon):
+                calls.append(("setIcon", icon))
+            def setWindowTitle(self, title):
+                calls.append(("setWindowTitle", title))
+            def setText(self, text):
+                calls.append(("setText", text))
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                calls.append("exec")
+
+        # Mock the QMessageBox Icon enum subclass
+        class DummyIcon:
+            Critical = "Critical"
+            Warning = "Warning"
+            Information = "Information"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        show_error(None, "file_not_found", path="test.csv")
+        assert ("setIcon", "Critical") in calls
+        assert any(c[0] == "setWindowTitle" for c in calls)
+        assert any(c[0] == "setText" for c in calls)
+        assert any(c[0] == "setInformativeText" for c in calls)
+        assert "exec" in calls
+
+    def test_show_warning(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                self.parent = parent
+            def setIcon(self, icon):
+                calls.append(("setIcon", icon))
+            def setWindowTitle(self, title):
+                calls.append(("setWindowTitle", title))
+            def setText(self, text):
+                calls.append(("setText", text))
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                calls.append("exec")
+
+        class DummyIcon:
+            Critical = "Critical"
+            Warning = "Warning"
+            Information = "Information"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        show_warning(None, "My Title", "My message", "My suggestion")
+        assert ("setIcon", "Warning") in calls
+        assert ("setWindowTitle", "My Title") in calls
+        assert ("setText", "My message") in calls
+        assert ("setInformativeText", "💡 My suggestion") in calls
+        assert "exec" in calls
+
+    def test_show_validation_error(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                self.parent = parent
+            def setIcon(self, icon):
+                calls.append(("setIcon", icon))
+            def setWindowTitle(self, title):
+                calls.append(("setWindowTitle", title))
+            def setText(self, text):
+                calls.append(("setText", text))
+            def setDetailedText(self, text):
+                calls.append(("setDetailedText", text))
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                calls.append("exec")
+
+        class DummyIcon:
+            Critical = "Critical"
+            Warning = "Warning"
+            Information = "Information"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        err = CertusValidationError("msg", details="det", suggestion="sug")
+        show_validation_error(None, err)
+        assert ("setIcon", "Warning") in calls
+        assert ("setWindowTitle", "Validation Error") in calls
+        assert ("setText", "msg") in calls
+        assert ("setDetailedText", "det") in calls
+        assert ("setInformativeText", "💡 sug") in calls
+        assert "exec" in calls
+
+
+class TestSafeUIAction:
+    def test_safe_ui_action_success(self):
+        @safe_ui_action
+        def dummy_func(a, b):
+            return a + b
+        assert dummy_func(2, 3) == 5
+
+    def test_safe_ui_action_exception_caught(self):
+        @safe_ui_action
+        def dummy_func():
+            raise ValueError("Something went wrong")
+        
+        # Should not raise, should return None
+        assert dummy_func() is None
+
+    def test_safe_ui_action_certus_validation_error(self):
+        @safe_ui_action
+        def dummy_func():
+            raise CertusValidationError("Validation failed")
+        assert dummy_func() is None
+
+    def test_safe_ui_action_certus_domain_error(self):
+        @safe_ui_action
+        def dummy_func():
+            raise CertusDomainError("Domain failed")
+        assert dummy_func() is None
+
+    def test_safe_ui_action_unexpected_exception(self):
+        @safe_ui_action
+        def dummy_func():
+            raise ZeroDivisionError("division by zero")
+        assert dummy_func() is None
+
+

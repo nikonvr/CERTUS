@@ -92,6 +92,7 @@ import pandas as pd
 
 
 from certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file
+from pathlib import Path
 
 
 # certus_ui imports consolidated below (after other imports)
@@ -341,7 +342,7 @@ def _bilayer_reflectance_mse(
     p_spline_nk = np.concatenate((n_knots, k_knots))
 
     try:
-        n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array)
+        n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
 
         if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
             return np.inf
@@ -1444,169 +1445,35 @@ class CertusMetalBilayerApp(MetalBaseApp):
             self.target_data = None
 
     def start_optimization(self):
-        """Starts optimization"""
+        """Starts optimization using the shared _metal_start_optimization helper."""
 
-        # CLEANUP PREVIOUS THREAD
-
-        if getattr(self, "optimization_thread", None) is not None:
-            try:
-                # Check if C++ object still exists and is running
-
-                if self.optimization_thread.isRunning():
-                    if getattr(self, "worker", None):
-                        self.worker.stop()
-
-                    self.optimization_thread.quit()
-
-                    if not self.optimization_thread.wait(2000):
-                        logging.critical(
-                            "Optimization thread did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
-                        )
-
-            except RuntimeError:
-                # Thread object already deleted on C++ side
-
-                pass
-
-            self.optimization_thread = None
-
-            self.worker = None
-
-        if not self.target_data:
-            QMessageBox.warning(self, "Missing Target", "Please load the reflectance file.")
-
-            return
-
-        try:
-            p = {k: v.text() for k, v in self.widgets.items() if isinstance(v, QLineEdit)}
-
-            params = {k: float(v) for k, v in p.items() if k not in ["excel_filename"]}
-
-            params["num_knots"] = int(p["num_knots"])
-
-            params.update(
-                {
-                    "excel_filename": self.widgets["excel_filename"].text(),
-                    "popsize": DEFAULT_POPSIZE,
-                    "maxiter": DEFAULT_MAXITER,
-                    "tol": DEFAULT_TOL,
-                    "mutation_min": DEFAULT_MUTATION_MIN,
-                    "mutation_max": DEFAULT_MUTATION_MAX,
-                    "recombination": DEFAULT_RECOMBINATION,
-                    "updating": DEFAULT_UPDATING,
-                    "workers": DEFAULT_WORKERS,
-                }
-            )
-
+        def build_params(params):
+            params["num_knots"] = int(self.widgets["num_knots"].text())
             params["n_infini_bounds"] = self._get_param_bounds("n_infini")
-
             params["A_diel_bounds"] = self._get_param_bounds("A_diel")
 
-            mask = (self.target_data["lambda"] >= params["lmin_filter"]) & (
-                self.target_data["lambda"] <= params["lmax_filter"]
-            )
-
-            target_lambda_filtered = self.target_data["lambda"][mask]
-
-            target_r_filtered = self.target_data["R"][mask]
-
-            bounds = _build_bilayer_bounds(params, l_array=target_lambda_filtered, include_eM=True)
-
+        def before_run(params):
             # Start logging
-
             self.logger.info("=" * 50)
-
             self.logger.info("STARTING METAL OPTIMIZATION")
-
             self.logger.info(
                 f"Target File: {Path(self._last_target_file).name if self._last_target_file else 'Unknown'}"
             )
-
             self.logger.info(f"Wavelength Range: {params['lmin_filter']} - {params['lmax_filter']} nm")
-
             self.logger.info(f"Metal Thickness Range: {params['eM_min']} - {params['eM_max']} nm")
-
             self.logger.info(f"Knots: {params['num_knots']} (min dist: {params.get('min_knot_dist', 'N/A')})")
-
             self.logger.info("=" * 50)
+            return True
 
-            params["bounds"] = bounds
+        def build_bounds(params, target_lambda):
+            return _build_bilayer_bounds(params, l_array=target_lambda, include_eM=True)
 
-            params["target_lambda"] = target_lambda_filtered
-
-            params["target_r"] = target_r_filtered
-
-        except (ValueError, KeyError) as e:
-            QMessageBox.critical(self, "Parameter Error", f"Invalid value: {e}")
-
-            return
-
-        self.mse_data = {"iterations": [], "errors": []}
-
-        self.mse_curve.setData([], [])
-
-        self.diel_curve.setData([], [])
-
-        for label in [
-            "live_eM_label",
-            "live_eL_label",
-            "live_n_infini_label",
-            "live_A_diel_label",
-            "live_mse_label",
-        ]:
-            self.widgets[label].setText("...")
-
-        self.btn_run.setEnabled(False)
-
-        self.btn_stop.setEnabled(True)
-
-        # Cache params for thread-safe access in callbacks
-
-        self._last_worker_params = params.copy()
-
-        self.optimization_thread = QThread()
-
-        self.worker = OptimizationWorker(params)
-
-        self.worker.moveToThread(self.optimization_thread)
-
-        self.optimization_thread.started.connect(self.worker.run)
-
-        self.worker.finished.connect(self.on_optimization_finished)
-
-        self.worker.progress.connect(self.update_plots)
-
-        self.worker.progress.connect(self._on_optim_progress)
-
-        self.worker.error.connect(self.on_optimization_error)
-
-        self.worker.stats_update.connect(self.on_stats_update)
-
-        # Proper cleanup to avoid memory leaks
-
-        self.worker.finished.connect(self.optimization_thread.quit)
-
-        self.worker.error.connect(self.optimization_thread.quit)
-
-        self.worker.finished.connect(self.worker.deleteLater)
-
-        self.optimization_thread.finished.connect(self.optimization_thread.deleteLater)
-
-        # Start progress widget timing
-
-        self._optim_max_iter = params.get("maxiter", DEFAULT_MAXITER)
-
-        self.progress_widget.start()
-
-        self.optimization_thread.start()
-
-        # Reset counters
-
-        self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
-
-        self.update_stats_display()
-
-    # stop_optimization is inherited from MetalBaseApp.
+        self._metal_start_optimization(
+            worker_class=OptimizationWorker,
+            build_bounds_fn=build_bounds,
+            build_params_fn=build_params,
+            before_run_fn=before_run,
+        )
 
     def _on_optim_progress(self, data):
         """Updates progress widget with optimization progress"""

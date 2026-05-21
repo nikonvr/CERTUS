@@ -93,9 +93,7 @@ def test_index_spline():
             x0w = np.concatenate((np.asarray([d_opt], dtype=np.float64), xi, L_p.astype(np.float64)))
             cfg2 = replace(cfg0, x0_warm=x0w, spline_local_only=True,
                 stage_mandatory_local_maxfun=1000, polish_maxfun=1500,
-                node_mesh_spectral_polish_enabled=False,
-                nonlinear_alpha_second_pass_enabled=False,
-                nonlinear_alpha_budget_mode="fast")
+                node_mesh_spectral_polish_enabled=False)
             out = worker_spline_optimization(cfg2, stop_event=Event(),
                 progress_cb=lambda _p, _m: None)
             assert isinstance(out, dict), "worker returned non-dict"

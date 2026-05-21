@@ -34,7 +34,7 @@ def _ensure_shared_assets() -> None:
 
 def _head_html(title: str) -> str:
     # MathJax avant le script async (recommandé)
-    return f"""<!DOCTYPE html>
+    template = """<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -43,7 +43,7 @@ def _head_html(title: str) -> str:
     <title>{title}</title>
     <script>
         window.MathJax = {{
-            tex: {{ inlineMath: [['$', '$'], ['\\\\(', '\\\\)']] }}
+            tex: {{ inlineMath: [['$', '$'], ['\\(', '\\)']] }}
         }};
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -51,8 +51,8 @@ def _head_html(title: str) -> str:
     <script src="assets/certus_report_init.js"></script>
     <link rel="stylesheet" href="assets/certus_report.css">
     <style>
-        .hidden { display: none !important; }
-        #offline-banner { position: fixed; top: 0; left: 0; width: 100%; background: #fef3c7; border-bottom: 1px solid #fde68a; color: #92400e; padding: 8px; text-align: center; font-size: 14px; z-index: 9999; }
+        .hidden {{ display: none !important; }}
+        #offline-banner {{ position: fixed; top: 0; left: 0; width: 100%; background: #fef3c7; border-bottom: 1px solid #fde68a; color: #92400e; padding: 8px; text-align: center; font-size: 14px; z-index: 9999; }}
     </style>
 </head>
 
@@ -61,12 +61,16 @@ def _head_html(title: str) -> str:
   ⚠️ Scientific formulas and diagrams may not render correctly without an internet connection (CDN-based assets).
 </div>
 <script>
-  window.addEventListener('load', function() {
-    if (typeof MathJax === 'undefined' || typeof mermaid === 'undefined') {
+  window.addEventListener('load', function() {{
+    if (typeof MathJax === 'undefined' || typeof mermaid === 'undefined') {{
       document.getElementById('offline-banner').classList.remove('hidden');
-    }
-  });
+    }}
+  }});
 </script>
+</body>
+</html>
+"""
+    return template.format(title=title)
 
 
 def rebuild_page(html_path: Path) -> None:

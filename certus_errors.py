@@ -71,6 +71,20 @@ def safe_ui_action(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        import inspect
+        try:
+            sig = inspect.signature(func)
+            has_var_positional = any(p.kind == p.VAR_POSITIONAL for p in sig.parameters.values())
+            if not has_var_positional:
+                pos_params_count = sum(
+                    1 for p in sig.parameters.values()
+                    if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+                )
+                if len(args) > pos_params_count:
+                    args = args[:pos_params_count]
+        except Exception:
+            pass
+
         try:
             from certus_ui import safe_ui_action as real_safe_ui_action
             return real_safe_ui_action(func)(*args, **kwargs)

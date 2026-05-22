@@ -80,7 +80,6 @@ __all__ = [
     "CertusStatusPill",
     "CertusActionBar",
     "CertusToast",
-    "CertusEmptyState",
     "install_standard_shortcuts",
     "enable_file_drop",
     "show_toast",
@@ -2727,55 +2726,6 @@ def attach_numeric_validator(
     _validate()
 
 
-class CertusEmptyState(QWidget):
-    """Harmonized empty-state placeholder: icon + title + subtitle + optional CTA."""
-
-    def __init__(
-        self,
-        title: str,
-        subtitle: str = "",
-        icon: str = "\u25cb",
-        action_text=None,
-        action_cb=None,
-        parent: QWidget = None,
-    ) -> None:
-        super().__init__(parent)
-        lay = QVBoxLayout(self)
-        lay.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lay.setSpacing(8)
-
-        ic = QLabel(icon)
-        ic.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        ic.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 40px;")
-        lay.addWidget(ic)
-
-        ttl = QLabel(title)
-        ttl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        ttl.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 14px; font-weight: 600;")
-        lay.addWidget(ttl)
-
-        if subtitle:
-            sub = QLabel(subtitle)
-            sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            sub.setWordWrap(True)
-            sub.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
-            lay.addWidget(sub)
-
-        if action_text and action_cb:
-            btn = QPushButton(action_text)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(
-                f"QPushButton {{ background: {CertusTheme.PRIMARY}; color: white; "
-                f"border: none; border-radius: 6px; padding: 6px 16px; font-weight: 600; }}"
-                f"QPushButton:hover {{ background: {CertusTheme.SECONDARY}; }}"
-            )
-            btn.clicked.connect(action_cb)
-            row = QHBoxLayout()
-            row.addStretch(1)
-            row.addWidget(btn)
-            row.addStretch(1)
-            lay.addLayout(row)
-
 
 # =============================================================================
 
@@ -3354,6 +3304,20 @@ def safe_ui_action(func):
             CertusValidationError,
             NUMERICAL_FAULT_EXCEPTIONS,
         )
+        import inspect
+
+        try:
+            sig = inspect.signature(func)
+            has_var_positional = any(p.kind == p.VAR_POSITIONAL for p in sig.parameters.values())
+            if not has_var_positional:
+                pos_params_count = sum(
+                    1 for p in sig.parameters.values()
+                    if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+                )
+                if len(args) > pos_params_count:
+                    args = args[:pos_params_count]
+        except Exception:
+            pass
 
         app_instance = QApplication.instance()
         parent = None

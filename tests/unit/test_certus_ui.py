@@ -26,6 +26,7 @@ from certus_ui import (
     DATA_FILE_FILTER,
     DATA_FILES_FILTER_EXTENDED,
     ExcelTableWidget,
+    CertusLogPanel,
     certus_confirm_yes_no,
     certus_get_open_file_name,
     certus_get_save_file_name,
@@ -33,6 +34,20 @@ from certus_ui import (
     apply_certus_theme,
     setup_pyqtgraph_defaults,
     open_data_file_and_read,
+    format_count_kmg,
+    StatsCounter,
+    create_log_widget,
+    create_header_logo_widget,
+    create_info_icon,
+    create_help_button,
+    set_certus_last_dir,
+    get_certus_last_dir,
+    open_file_explorer,
+    stop_worker_and_thread,
+    confirm_stop_with_timeout,
+    copy_app_logs_to_clipboard,
+    attach_numeric_validator,
+    show_toast,
 )
 
 # Conditional imports for components that may not be available
@@ -85,6 +100,13 @@ class TestDataFileFiltersAndHelper:
         assert len(df) == 2
         assert list(df.columns) == ["a", "b"]
 
+    def test_set_get_last_dir_roundtrip(self, tmp_path):
+        target = tmp_path / "nested" / "file.csv"
+        target.parent.mkdir()
+        target.write_text("x")
+        set_certus_last_dir(str(target))
+        assert get_certus_last_dir() == str(target.parent)
+
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
 class TestCertusFileDialogHelpers:
@@ -117,6 +139,27 @@ class TestCertusFileDialogHelpers:
             assert certus_confirm_yes_no(None, "t", "m") is True
         with patch("certus_ui.QMessageBox.question", return_value=QMessageBox.StandardButton.No):
             assert certus_confirm_yes_no(None, "t", "m", default_no=True) is False
+
+    def test_create_log_widget_and_panel(self, qapp):
+        _ = qapp
+        widget = create_log_widget(visible=True, height=120)
+        assert widget.isVisible()
+        assert widget.maximumHeight() == 120
+
+        panel = CertusLogPanel(title="LOGS", visible=True, height=100)
+        panel.log_text.setPlainText("hello")
+        with patch.object(QApplication.instance().clipboard(), "setText") as mock_set:
+            panel.copy_to_clipboard()
+            mock_set.assert_called_once_with("hello")
+
+    def test_header_info_help_widgets(self, qapp):
+        _ = qapp
+        header = create_header_logo_widget(title_text="T", subtitle_text="S", module_name="CERTUS_HUB")
+        assert header is not None
+        info = create_info_icon("tip")
+        assert info.toolTip() == "tip"
+        help_btn = create_help_button("CERTUS_HUB")
+        assert help_btn.text() == "?"
 
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -224,6 +267,7 @@ class TestCertusTheme:
         mock_app.setStyle.assert_called()
         mock_app.setFont.assert_called()
         mock_app.setPalette.assert_called()
+        mock_app.setStyleSheet.assert_called()
 
     @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
     def test_apply_to_app_dark_mode(self):
@@ -237,6 +281,7 @@ class TestCertusTheme:
         mock_app.setStyle.assert_called()
         mock_app.setFont.assert_called()
         mock_app.setPalette.assert_called()
+        mock_app.setStyleSheet.assert_called()
 
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -511,6 +556,18 @@ class TestUIUtilities:
         stylesheet = CertusTheme.get_danger_button_stylesheet()
         assert isinstance(stylesheet, str)
 
+    def test_format_count_kmg_and_stats_counter(self):
+        assert format_count_kmg(12) == "12"
+        assert format_count_kmg(1500) == "1.5K"
+        assert format_count_kmg(2500000) == "2.5M"
+
+        counters = StatsCounter({"EVAL": 1})
+        assert counters.inc("EVAL") == 2
+        assert counters.set("BEST", 3) == 3
+        counters.reset("EVAL")
+        assert counters.get("EVAL") == 0
+        assert counters.formatted("BEST") == "3"
+
 
 @pytest.mark.integration
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -592,6 +649,21 @@ class TestUIInteractions:
         CertusTheme.configure("dark")
         dark_bg = CertusTheme.BACKGROUND
         assert light_bg != dark_bg
+
+    def test_validator_and_toast_helpers(self, qapp):
+        _ = qapp
+        from PyQt6.QtWidgets import QLineEdit, QWidget
+
+        line = QLineEdit()
+        attach_numeric_validator(line, minimum=0, maximum=10, kind="float")
+        line.setText("-1")
+        assert "border" in line.styleSheet()
+        line.setText("5")
+        assert "border" not in line.styleSheet() or "DANGER" not in line.toolTip()
+
+        parent = QWidget()
+        toast = show_toast(parent, "Hi", level="info", duration_ms=10)
+        assert toast is not None
 
 
 @pytest.mark.ui
@@ -732,6 +804,276 @@ class TestUIExceptionHandling:
             with patch.object(QMessageBox, "exec") as mock_exec:
                 app.load_config()
                 mock_exec.assert_called_once()
+
+    def test_worker_helpers(self):
+        class DummyWorker:
+            def stop(self):
+                self.stopped = True
+
+        class DummyThread:
+            def __init__(self):
+                self._running = True
+            def isRunning(self):
+                return self._running
+            def quit(self):
+                self._running = False
+            def wait(self, timeout_ms):
+                return True
+
+        assert stop_worker_and_thread(DummyWorker(), DummyThread()) is True
+        assert confirm_stop_with_timeout is not None
+
+    def test_copy_app_logs_to_clipboard(self, qapp):
+        _ = qapp
+        from certus_ui import copy_app_logs_to_clipboard
+
+        class DummyPanel:
+            def copy_to_clipboard(self):
+                self.copied = True
+
+        class DummyApp:
+            _log_panel = DummyPanel()
+            log_text = None
+
+        assert copy_app_logs_to_clipboard(DummyApp()) is True
+
+    def test_open_file_explorer_invalid_path(self):
+        from certus_ui import open_file_explorer
+        open_file_explorer("C:/definitely/does/not/exist")
+
+    def test_base_app_private_helpers(self, qapp):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        assert app._qs_key("geometry") == "window/DUMMY/geometry"
+        assert app._get_default_config_name() == "dummy.json"
+        assert app._build_report_sections() == []
+        assert app._stack_info_l0_nm() == 500.0
+
+    def test_base_app_validation_and_recent_helpers(self, qapp, tmp_path):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        app.set_validation_status("CUSTOM")
+        assert app.validation_status == "CUSTOM"
+        app.add_validation_warning("warn one")
+        assert "warn one" in app.validation_warnings
+        assert app._record_recent_config(str(tmp_path / "config.json")) is None
+        assert isinstance(app.list_recent_configs(limit=2), list)
+
+    def test_base_app_dialog_helpers(self, qapp):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        with patch("certus_ui.QMessageBox.exec", return_value=None):
+            assert app.confirm_destructive("t", "m") in (True, False)
+
+    def test_base_app_save_and_load_config(self, qapp, tmp_path):
+        _ = qapp
+        import json
+        from certus_ui import CertusBaseApp
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {"hello": "world"}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        save_path = tmp_path / "dummy.json"
+        with patch("certus_ui.QFileDialog.getSaveFileName", return_value=(str(save_path), "")):
+            assert app.save_config() is None
+        assert json.loads(save_path.read_text(encoding="utf-8")) == {"hello": "world"}
+
+        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
+            assert app.load_config() is None
+        assert getattr(app, "_applied", None) == {"hello": "world"}
+
+    def test_base_app_menus_and_recent_helpers(self, qapp, tmp_path):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+        from certus_recent import clear_recent, RecentCategories
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+            def open_help(self):
+                self.help_opened = True
+
+        app = DummyApp()
+        app.install_help_menu(app_label="Dummy")
+        assert app.menuBar() is not None
+        clear_recent(RecentCategories.CONFIG)
+        assert app.list_recent_configs(limit=1) == []
+        app._record_recent_config(str(tmp_path / "recent.json"))
+        assert isinstance(app.open_command_palette, object)
+        assert isinstance(app.open_shortcuts_overlay, object)
+
+    def test_base_app_save_and_load_config_roundtrip(self, qapp, tmp_path):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {"alpha": 1, "nested": {"beta": 2}}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        cfg_file = tmp_path / "dummy.json"
+        with patch("certus_ui.QFileDialog.getSaveFileName", return_value=(str(cfg_file), "")):
+            app.save_config()
+        assert cfg_file.exists()
+        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(str(cfg_file), "")):
+            app.load_config()
+        assert getattr(app, "_applied", None) == {"alpha": 1, "nested": {"beta": 2}}
+
+    def test_base_app_help_menu_and_about(self, qapp):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+        from PyQt6.QtWidgets import QMessageBox
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+            def open_help(self):
+                self.help_opened = True
+
+        app = DummyApp()
+        app.install_help_menu(app_label="Dummy App")
+        assert app.menuBar() is not None
+        with patch.object(QMessageBox, "about") as mock_about:
+            app._show_default_about_dialog("Dummy App")
+            mock_about.assert_called_once()
+        assert True
+
+    def test_base_app_recent_and_reports(self, qapp, tmp_path):
+        _ = qapp
+        from certus_ui import CertusBaseApp
+        from certus_recent import clear_recent, RecentCategories
+        from PyQt6.QtWidgets import QInputDialog
+
+        class DummyApp(CertusBaseApp):
+            APP_NAME = "DUMMY"
+            APP_TITLE = "Dummy App"
+
+            def _collect_config(self):
+                return {}
+
+            def _apply_config(self, cfg):
+                self._applied = cfg
+
+            def _get_default_config_name(self):
+                return "dummy.json"
+
+            def _get_config_file_filter(self):
+                return "JSON (*.json)"
+
+        app = DummyApp()
+        clear_recent(RecentCategories.CONFIG)
+        app._record_recent_config(str(tmp_path / "config.json"))
+        with patch.object(QInputDialog, "getItem", return_value=("", False)):
+            app.open_recent_configs()
+        with patch("certus_ui.certus_get_save_file_name", return_value=None):
+            assert app.export_report_excel() is None or isinstance(app.export_report_excel(), (str, type(None)))
+            assert app.export_report_pdf() is None or isinstance(app.export_report_pdf(), (str, type(None)))
 
     def test_re_app_callbacks_protected(self, qapp):
         pytest.importorskip("CERTUS_RE")

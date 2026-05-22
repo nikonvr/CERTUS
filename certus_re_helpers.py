@@ -2854,21 +2854,50 @@ def _re_index_split_header_and_data(rows: list[tuple]) -> tuple[tuple | None, li
 def _re_index_column_map(
     header: tuple | None, _max_cols: int
 ) -> tuple[int, int | None, int | None, int | None, int | None]:
-    """Map wavelength + n1,k1,n2,k2 columns. None = missing column (use defaults)."""
+    """Map wavelength + n1,k1,n2,k2 columns. None = missing column (use defaults).
+
+    Priority:
+    1. If header labels explicitly contain n_H/k_H and n_B|n_L/k_B|k_L prefixes,
+       use name-based mapping so columns don't have to be in positional order.
+    2. Fallback: positional order (col after wavelength = n1,k1,n2,k2).
+    """
 
     if header is None:
         return 0, 1, 2, 3, 4
 
+    # --- wavelength column (unchanged) ---
     wl = 0
-
     for i, c in enumerate(header):
         if c is not None and _re_header_is_wavelength_label(_re_cell_str(c)):
             wl = i
-
             break
 
-    rest = [i for i in range(len(header)) if i != wl and header[i] is not None and _re_cell_str(header[i])]
+    # --- name-based detection of H / L columns ---
+    # Accept multiple conventions used in Excel exports:
+    #   n_H / k_H / n_L / k_L
+    #   n_high / k_high / n_low / k_low
+    #   n_haut / k_haut / n_bas / k_bas
+    #   n1 / k1 / n2 / k2
+    col_nH = col_kH = col_nL = col_kL = None
+    for i, c in enumerate(header):
+        if i == wl or c is None:
+            continue
+        s = _re_cell_str(c).lower().replace(" ", "_").replace("-", "_")
+        if s.startswith(("n_h", "n_high", "n_haut", "n1")):
+            col_nH = i
+        elif s.startswith(("k_h", "k_high", "k_haut", "k1")):
+            col_kH = i
+        elif s.startswith(("n_l", "n_low", "n_bas", "n_b", "n2")):
+            col_nL = i
+        elif s.startswith(("k_l", "k_low", "k_bas", "k_b", "k2")):
+            col_kL = i
 
+    # If we identified at least n_H and n_L by name, use name-based mapping
+    if col_nH is not None and col_nL is not None:
+        return wl, col_nH, col_kH, col_nL, col_kL
+
+    # --- fallback: positional order ---
+    rest = [i for i in range(len(header)) if i != wl and header[i] is not None and _re_cell_str(header[i])]
     rest.sort()
 
     if len(rest) >= 4:
@@ -2884,6 +2913,7 @@ def _re_index_column_map(
         return wl, rest[0], None, None, None
 
     return 0, 1, 2, 3, 4
+
 
 
 def _re_find_measurement_wavelength_column(header: tuple, data_rows: list[tuple]) -> tuple[int, str | None]:

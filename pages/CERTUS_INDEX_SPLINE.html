@@ -168,8 +168,15 @@
             To construct starting variables that better mirror the physical structure, CERTUS implements a robust variant of the 1983 Swanepoel inversion method in <code>spline_smart_init.py</code> by mapping transmission extrema ($T_{max}$ and $T_{min}$).
         </p>
         <div class="math-heavy">
-            <strong>Analytical Extraction of Pseudo Index (N)</strong><br>
-            By mapping the heavily filtered signal via <code>scipy.signal.find_peaks</code> with rolling convolution sizes proportionate to wavelength densities ($n_{pts}/120$), peak envelopes are localized. Given transparent identical substrates ($n_s$), the pseudo-refractive component $N$ solves analytically:
+            <strong>Analytical Extraction of Pseudo Index ($N$) and Absolute Transmittance Scaling</strong><br>
+            By mapping the heavily filtered signal via <code>scipy.signal.find_peaks</code> with rolling convolution sizes proportionate to wavelength densities ($n_{pts}/120$), peak envelopes are localized. 
+            Standard spectrophotometric measurements often yield relative transmittance $T_{\text{measured}}(\lambda) = T(\lambda) / T_{\text{sub}}(\lambda)$. To convert these relative envelopes $T_M$ (upper) and $T_m$ (lower) into absolute transmittance, the bare substrate transmission formula is applied:
+            $$ T_{\text{sub}}(\lambda) = \frac{2 n_s}{n_s^2 + 1} $$
+            $$ T_{M, \text{abs}}(\lambda) = T_M \times T_{\text{sub}}(\lambda) = T_M \times \frac{2 n_s}{n_s^2 + 1} $$
+            $$ T_{m, \text{abs}}(\lambda) = T_m \times T_{\text{sub}}(\lambda) = T_m \times \frac{2 n_s}{n_s^2 + 1} $$
+            Substituting these absolute envelopes into the classic Swanepoel equation:
+            $$ N = 2 n_s \frac{T_{M, \text{abs}} - T_{m, \text{abs}}}{T_{M, \text{abs}} \cdot T_{m, \text{abs}}} + \frac{n_s^2 + 1}{2} $$
+            yields the following simplified relation implemented directly in the code (which operates on relative transmittance envelopes $T_M$ and $T_m$):
             $$ N(\lambda) = \frac{n_s^2 + 1}{2} \left[ 1 + 2 \frac{T_M - T_m}{T_M \cdot T_m} \right] $$
             This directly permits the deduction of the thin film refractive component $n_{swan}$:
             $$ n_{swan} = \sqrt{ N + \sqrt{N^2 - n_s^2} } $$
@@ -226,12 +233,15 @@
             Rather than slowing the optimizer down with billions of complex local bound inequalities, the system implements robust log-proportion scalar encoding maps (Log-Softmax) embedded directly inside the solver matrix wrappers inside <code>spline_objective.py</code>:
         </p>
         <div class="math-heavy">
-            <strong>The Log-Proportion Spatial Encoder</strong><br>
+            <strong>The Log-Proportion Spatial Encoder and Monotonicity Enforcement</strong><br>
             A knot vector $\sigma$ is encoded by the relative distances between consecutive knots. For $K$ nodes, we define $K-1$ weights $w_i = (\sigma_{i+1} - \sigma_i) / (\sigma_{K-1} - \sigma_0)$. The optimizer operates on $x_{enc, i} = \ln(w_i)$ which are unconstrained in $(-\infty, \infty)$.
             The decoding back to physical $\sigma$-coordinates follows:
             $$ w_i = \frac{\exp(x_{enc, i})}{\sum_{j=0}^{K-2} \exp(x_{enc, j})} $$
             $$ \sigma_i = \sigma_0 + (\sigma_{K-1} - \sigma_0) \sum_{j=0}^{i-1} w_j $$
-            Consequently, no matter exactly how aggressive the L-BFGS-B gradient vector commands a displacement modification, $\exp(x)$ is strictly positive, assuring absolute $\sigma_{i} < \sigma_{i+1}$ sequence preservation forever.
+            Consequently, no matter exactly how aggressive the L-BFGS-B gradient vector commands a displacement modification, $\exp(x_{enc, i})$ is strictly positive, assuring sequence order preservation. To guarantee numerical stability and prevent division by zero or node merging under extreme updates, the decoder enforces a relative minimum separation constraint:
+            $$ \epsilon_s = \max\left(10^{-10},\,\, \text{SIGMA\_KNOTS\_MIN\_SEP\_REL} \times (\sigma_{K-1} - \sigma_0)\right) $$
+            where $\text{SIGMA\_KNOTS\_MIN\_SEP\_REL} = 0.005$ by default. Knots are then clipped sequentially:
+            $$ \sigma_i = \max\left(\sigma_i,\,\, \sigma_{i-1} + \epsilon_s\right) \quad \text{for } 1 \le i \le K-1 $$
         </div>
         <h3>6.3 Warm-Start Projection from SOL 2 into SOL 3</h3>
         <p>
@@ -287,15 +297,16 @@
             CERTUS explicitly avoids that bias. The transmission channel is not weighted by a heuristic visual preference, but by a quadrature rule that approximates a continuous spectral integral over the domain actually seen by the optimizer. The practical consequence is straightforward: doubling the point density in a narrow wavelength pocket must <strong>not</strong> double that pocket's physical authority over the fit if the additional samples carry no new spectral span. The role of the per-pixel coefficient $w_{pix}(\lambda_m)$ is precisely to restore this invariance.
         </p>
         <div class="math-heavy">
-            <strong>Operational Rule Used by CERTUS</strong><br>
-            For the masked wavelength vector $\lambda_1, \dots, \lambda_N$ actually entering the objective, CERTUS computes the weights on the logarithmic wavelength axis:
-            $$ u_m = \ln(\lambda_m) $$
-            Then the local quadrature weight is constructed by a trapezoidal stencil:
-            $$ w_1 = |u_2-u_1|, \qquad w_N = |u_N-u_{N-1}| $$
-            $$ w_m = \frac{1}{2}\,|u_{m+1}-u_{m-1}| \quad \text{for } 2 \le m \le N-1 $$
-            Finally, the weights are renormalized so that their sum equals the number of active points:
-            $$ \tilde w_m = w_m \cdot \frac{N}{\sum_j w_j} $$
-            The optimization therefore uses a density-corrected discrete approximation of a broadband integral while preserving an RMSE magnitude numerically comparable to a standard pointwise RMSE.
+            <strong>Continuous Integral Approximation and Quadrature Scheme</strong><br>
+            To prevent non-uniform grid densities from biasing the fit, the objective function approximates the continuous integrated discrepancy over the logarithmic wavelength spectrum:
+            $$ \int_{\ln \lambda_{\min}}^{\ln \lambda_{\max}} \left[ T_{\text{obs}}(\lambda) - T_{\text{calc}}(\lambda) \right]^2 \mathrm{d}(\ln \lambda) \approx \sum_{m=1}^{N} \left[ T_{\text{obs}}(\lambda_m) - T_{\text{calc}}(\lambda_m) \right]^2 w_m $$
+            where the unnormalized trapezoidal quadrature weights $w_m$ are computed using a central-difference stencil on the logarithmic coordinate $u_m = \ln(\lambda_m)$:
+            $$ w_1 = |u_2 - u_1| $$
+            $$ w_N = |u_N - u_{N-1}| $$
+            $$ w_m = \frac{1}{2} |u_{m+1} - u_{m-1}| \quad \text{for } 2 \le m \le N-1 $$
+            To keep the final Root-Mean-Square Error (RMSE) numerically consistent and comparable to a traditional pointwise sample standard deviation, the weights are renormalized to sum to the number of active points $N$:
+            $$ \tilde{w}_m = w_m \cdot \frac{N}{\sum_{j=1}^N w_j} $$
+            The normalized weights $\tilde{w}_m$ correspond to the $w_{pix}(\lambda_m)$ terms utilized directly in the objective calculation.
         </div>
         <p>
             The choice of the <strong>logarithmic wavelength axis</strong> is deliberate. Thin-film spectra are not physically homogeneous in linear $\lambda$: a 10 nm interval near 300 nm does not represent the same optical scale as a 10 nm interval near 3000 nm. By integrating on $\ln(\lambda)$, CERTUS gives each relative spectral decade a fairer contribution. This is aligned with the solver's broader philosophy: the optical content of the UV-VIS region is structurally denser, while the IR extends over very large absolute wavelength spans. A pure linear-$\lambda$ weighting would over-privilege the long-wave tail simply because it occupies more nanometers.
@@ -437,13 +448,17 @@
             <strong>Default absolute slack (code defaults, 2026.05.08):</strong> for <code>rmse_threshold_mode = abs_delta_adaptive</code> (INDEX-SPLINE default), the nominal additive slack <code>rmse_abs_tolerance</code> / <code>corridor_profile_d_rmse_abs_tolerance</code> is <strong>$2.5\times 10^{-4}$</strong> on the masked spectral RMSE scale. The adaptive floor <code>adaptive_rmse_abs_min</code> is <strong>$2.5\times 10^{-5}$</strong>. Crucially, the algorithm determines the active tolerance $\Delta_{\mathrm{eff}}$ dynamically by fitting a local quadratic $\text{RMSE}(d)$ valley using a probing step of <strong>0.5 nm</strong>. It then multiplies the residual noise (MAD) of this parabola by a <strong>noise factor of 2.0</strong>. This physically meaningful "Profile Likelihood" approach ties the corridor width directly to the physical rigidity of the index/thickness coupling and the experimental noise floor, rejecting arbitrary hardcoded thresholds.
         </p>
         <div class="eq-box">
-            $$ \text{RMSE}(d) \approx c_2 (d - d_{opt})^2 + c_1 (d - d_{opt}) + c_0 $$
-            $$ \sigma_{prof} = 1.4826 \times \text{median} \left| \text{RMSE}_{obs}(d) - \text{RMSE}_{fit}(d) \right| $$
-            $$ \Delta_{\mathrm{eff}} = \max(2.0 \times \sigma_{prof},\, \Delta_{\min}) $$
+            <strong>Parabolic Approximation & Robust Noise Estimation:</strong>
+            $$ \text{RMSE}_{\text{fit}}(d) = c_2 (d - d_0)^2 + c_1 (d - d_0) + c_0 $$
+            $$ r_d = \text{RMSE}_{\text{obs}}(d) - \text{RMSE}_{\text{fit}}(d) $$
+            $$ \text{MAD} = \text{median} \left| r_d - \text{median}(r_d) \right| $$
+            $$ \sigma_{\text{prof}} = 1.4826 \times \text{MAD} $$
+            $$ \Delta_{\text{eff}} = \max(2.0 \times \sigma_{\text{prof}},\, \Delta_{\min}) $$
         </div>
         <div class="eq-box">
-            $$ \Delta n(\lambda) = \max_{d \in D_{\text{accept}}} n_{sol}(\lambda, d) - \min_{d \in D_{\text{accept}}} n_{sol}(\lambda, d) $$
-            $$ \Delta k(\lambda) = \max_{d \in D_{\text{accept}}} k_{sol}(\lambda, d) - \min_{d \in D_{\text{accept}}} k_{sol}(\lambda, d) $$
+            <strong>Envelope Span Bounds:</strong>
+            $$ \Delta n(\lambda) = \max_{d \in D_{\text{accept}}} n_{\text{sol}}(\lambda, d) - \min_{d \in D_{\text{accept}}} n_{\text{sol}}(\lambda, d) $$
+            $$ \Delta k(\lambda) = \max_{d \in D_{\text{accept}}} k_{\text{sol}}(\lambda, d) - \min_{d \in D_{\text{accept}}} k_{\text{sol}}(\lambda, d) $$
             $$ \text{with } D_{\text{accept}} = \{ d \mid \text{RMSE}(d) \le \text{RMSE}_{\text{ref}} + \Delta_{\text{eff}} \} $$
         </div>
         <p>
@@ -480,7 +495,10 @@
             I2 --> J
         </div>
         <p>
-            <strong>Minimum half-width on $k$ (method floor):</strong> after the algorithmic $k(\lambda)$ envelope is assembled, the implementation widens it whenever it would be narrower than a fixed <strong>linear-$k$ half-width of $10^{-4}$</strong> about the spectral reference $k_{\mathrm{ref}}(\lambda)$ (<code>enforce_min_k_corridor_half_width</code> with <code>min_half_width=1e-4</code> in <code>spline_profile_corridors.py</code>; the same rule is mirrored for manual GUI corridor payloads, Excel export, and corridor plots in <code>CERTUS_INDEX_SPLINE.py</code>). Lower $k$ bounds are also kept on a small numerical floor ($10^{-6}$). This step runs <strong>before</strong> envelope-span diagnostics (e.g. <code>k_span</code>, <code>logk_span</code>) so reported corridor widths match the final merged envelope.
+            <strong>Minimum half-width on $k$ (method floor):</strong> after the algorithmic $k(\lambda)$ envelope $[k_{\text{lo}}(\lambda),\, k_{\text{hi}}(\lambda)]$ is assembled, the engine enforces a minimum linear half-width $\text{hw} = 10^{-4}$ relative to the spectral reference $k_{\text{ref}}(\lambda)$ using the following bounds-widening equations:
+            $$ k_{\text{lo, real}}(\lambda) = \max\left(\min\left(k_{\text{lo}}(\lambda),\, \max(k_{\text{ref}}(\lambda) - \text{hw},\, 10^{-6})\right),\, 10^{-6}\right) $$
+            $$ k_{\text{hi, real}}(\lambda) = \max\left(k_{\text{hi}}(\lambda),\, \max\left(k_{\text{ref}}(\lambda) + \text{hw},\, \max(k_{\text{ref}}(\lambda) - \text{hw},\, 10^{-6})\right)\right) $$
+            where the lower limit $10^{-6}$ acts as a physical feasibility floor to prevent non-finite logarithms or unphysical transparency states. This widening is handled by <code>enforce_min_k_corridor_half_width</code> and runs <strong>before</strong> compiling the final span metrics (e.g. <code>k_span</code>, <code>logk_span</code>) to guarantee that reported corridor widths are fully representative.
         </p>
 
         <h3>12.4 Regular-grid RMSE($d$): visit order, breakpoints, reverse exploration, P0, global-opt</h3>

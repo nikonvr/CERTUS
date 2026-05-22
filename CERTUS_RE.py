@@ -1544,6 +1544,14 @@ class CertusREApp(CertusBaseApp):
 
         self._re_last_live_alpha_qwot = None
 
+        self._re_loading_workbook = False
+
+        self._use_exact_ep = False
+
+        self._re_loaded_exact_ep = None
+
+        self.ep_current = None
+
         self._sync_display_re_results_btn_state()
 
     def _clear_re_excel_readout_ui(self) -> None:
@@ -2558,6 +2566,14 @@ class CertusREApp(CertusBaseApp):
                         it.setText(f"{d:.1f}")
 
                 self.ep_current = ep
+
+                if getattr(self, "_re_loading_workbook", False):
+                    # During RE load, keep the exact workbook-derived thickness vector as source of truth.
+                    # Do not let later UI refreshes or schedule_eval() overwrite it with a reconstructed copy.
+                    loaded_ep = np.asarray(ep, dtype=np.float64).ravel().copy()
+                    self._re_loaded_exact_ep = loaded_ep
+                    self._use_exact_ep = True
+                    self.ep_current = loaded_ep.copy()
 
                 self._on_front_thickness_updated()
 
@@ -3909,13 +3925,35 @@ class CertusREApp(CertusBaseApp):
         return out
 
     def _re_builtin_substrate_tabular(self, substrate_name: str, l0_ref: float) -> "TabularMaterial | None":
-        """Last-resort tabular substrate when no indices.xlsx match (Silicon only)."""
+        """Tabular substrate from built-in analytical models (Sellmeier SiO2, Si table).
+
+        Returns a TabularMaterial sampled on a fine grid [200, 6000] nm.
+        Priority: SiO2 (Sellmeier Malitson) > Silicon (table).
+        """
 
         sub = substrate_name.lower().strip()
 
-        if "sapphire" in sub:
-            return None
+        # --- SiO2 / fused silica / silice (Sellmeier Malitson 1965) ---
+        _sio2_names = {"sio2", "silica", "fused silica", "silice", "fusedsilica", "quartz"}
+        if sub in _sio2_names or sub.startswith("sio2") or sub.startswith("fused"):
+            lam_um = np.linspace(0.20, 6.00, 1161)  # step 5 nm
+            l2 = lam_um ** 2
+            n2 = (
+                1.0
+                + 0.6961663 * l2 / (l2 - 0.0684043 ** 2)
+                + 0.4079426 * l2 / (l2 - 0.1162414 ** 2)
+                + 0.8974794 * l2 / (l2 - 9.896161 ** 2)
+            )
+            n_sio2 = np.sqrt(np.maximum(n2, 1.0))
+            wls_nm = lam_um * 1000.0
+            return TabularMaterial(
+                wls_nm,
+                n_sio2,
+                np.zeros_like(n_sio2),
+                l0_ref=float(l0_ref),
+            )
 
+        # --- Silicon (tabulated) ---
         if "silicon" in sub or sub in ("si", "si-wafer") or sub.startswith("si ") or sub.startswith("si-"):
             from certus_physics.materials_data import SI_K_DATA, SI_N_DATA, SI_WAVELENGTH_NM
 
@@ -3928,14 +3966,15 @@ class CertusREApp(CertusBaseApp):
 
         return None
 
-    def _load_re_substrate(
+    def _re_resolve_substrate_material(
         self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
-    ) -> "TabularMaterial | None":
-        """Load substrate TabularMaterial from indices.xlsx by fuzzy-matching the sheet name."""
+    ) -> tuple["TabularMaterial | None", str, str, str]:
+        """Resolve the RE substrate material and return (material, source, raw_name, normalized_name)."""
 
         import openpyxl as _opxl
 
-        sub_lower = substrate_name.lower().strip()
+        raw_name = str(substrate_name or "").strip()
+        sub_lower = raw_name.lower()
         sub_map = {
             "sapphire (al2o3)": "al2o3",
             "sapphire": "al2o3",
@@ -3945,8 +3984,17 @@ class CertusREApp(CertusBaseApp):
             "si-substrate": "si",
             "d263t eco": "d263t",
             "silice": "sio2",
+            "silica": "sio2",
+            "fused silica": "sio2",
         }
         sub_norm = sub_map.get(sub_lower, sub_lower)
+
+        # --- Priority 1: built-in analytical model (Sellmeier SiO2, Si) ---
+        builtin = self._re_builtin_substrate_tabular(sub_norm, l0_ref)
+        if builtin is None:
+            builtin = self._re_builtin_substrate_tabular(sub_lower, l0_ref)
+        if builtin is not None:
+            return builtin, f"builtin/analytical/{sub_norm}", raw_name, sub_norm
 
         last_err: str | None = None
 
@@ -3966,26 +4014,36 @@ class CertusREApp(CertusBaseApp):
 
             matched = None
 
+            # 1. Word-based exact match first to prevent false positives (e.g. 'si' matching 'sio2' sheets)
             for sh in wb.sheetnames:
                 sh_lower = sh.lower()
-
-                if (
-                    sub_norm in sh_lower
-                    or sh_lower.startswith(sub_norm)
-                    or sh_lower.replace("-", " ").split()[0] in sub_norm
-                    or (len(sub_norm) >= 3 and len(sh_lower) >= 3 and sub_norm[:3] == sh_lower[:3])
-                    or sub_lower in sh_lower
-                    or sh_lower.startswith(sub_lower)
-                    or sh_lower.replace("-", " ").split()[0] in sub_lower
-                    or (len(sub_lower) >= 3 and len(sh_lower) >= 3 and sub_lower[:3] == sh_lower[:3])
-                ):
+                words = sh_lower.replace("-", " ").split()
+                if sub_norm in words or sub_lower in words:
                     matched = sh
-
                     break
+
+            # 2. Fallback to original fuzzy match logic if no word-based exact match found
+            if matched is None:
+                for sh in wb.sheetnames:
+                    sh_lower = sh.lower()
+
+                    if (
+                        sub_norm in sh_lower
+                        or sh_lower.startswith(sub_norm)
+                        or sh_lower.replace("-", " ").split()[0] in sub_norm
+                        or (len(sub_norm) >= 3 and len(sh_lower) >= 3 and sub_norm[:3] == sh_lower[:3])
+                        or sub_lower in sh_lower
+                        or sh_lower.startswith(sub_lower)
+                        or sh_lower.replace("-", " ").split()[0] in sub_lower
+                        or (len(sub_lower) >= 3 and len(sh_lower) >= 3 and sub_lower[:3] == sh_lower[:3])
+                    ):
+                        matched = sh
+
+                        break
 
             if matched is None:
                 self.log(
-                    f"RE: substrate '{substrate_name}' not found in {idx_path!r} "
+                    f"RE: substrate '{raw_name}' (normalized '{sub_norm}') not found in {idx_path!r} "
                     f"(sheets: {', '.join(wb.sheetnames[:8])}{'…' if len(wb.sheetnames) > 8 else ''}).",
                     "WARNING",
                 )
@@ -4012,48 +4070,41 @@ class CertusREApp(CertusBaseApp):
 
                 mat = TabularMaterial(wls, n, k, l0_ref=l0_ref)
 
-                self._re_last_substrate_source_path = str(Path(idx_path).resolve())
-
-                self._re_last_substrate_sheet = str(matched)
-
-                self.log(
-                    f"RE: substrate '{matched}' loaded from {idx_path}  n@{l0_ref:.0f}nm = {mat.n4:.4f}",
-                    "INFO",
-                )
-
-                return mat
+                return mat, f"indices.xlsx/{matched}", raw_name, sub_norm
 
             except NUMERICAL_FAULT_EXCEPTIONS as e:
                 last_err = str(e)
 
                 self.log(f"RE: error reading substrate sheet in {idx_path}: {e}", "WARNING")
 
-        fb = self._re_builtin_substrate_tabular(substrate_name, l0_ref)
-
+        fb = self._re_builtin_substrate_tabular(raw_name, l0_ref)
         if fb is not None:
-            self._re_last_substrate_source_path = "<builtin>"
+            return fb, f"builtin/fallback/{raw_name}", raw_name, raw_name.lower()
 
-            self._re_last_substrate_sheet = "silicon-stub/table"
-
+        if last_err is not None:
             self.log(
-                f"RE: indices.xlsx not usable ({last_err or 'no file matched'}); "
-                f"using built-in Silicon (n,k) table for substrate '{substrate_name}'.",
+                f"RE: no substrate match for '{raw_name}' (normalized '{sub_norm}'): {last_err}",
                 "WARNING",
             )
 
+        return None, "unresolved", raw_name, sub_norm
+
+    def _load_re_substrate(
+        self, substrate_name: str, l0_ref: float, *, re_workbook_dir: str | None = None
+    ) -> "TabularMaterial | None":
+        """Load substrate TabularMaterial."""
+
+        mat, source, raw_name, sub_norm = self._re_resolve_substrate_material(
+            substrate_name, l0_ref, re_workbook_dir=re_workbook_dir
+        )
+        if mat is not None:
+            self._re_last_substrate_source_path = source
+            self._re_last_substrate_sheet = f"analytical/{sub_norm}" if source.startswith("builtin/") else source
             self.log(
-                f"RE: built-in substrate tabular  n@{l0_ref:.0f}nm = {fb.n4:.4f}",
+                f"RE: substrate raw='{raw_name}' normalized='{sub_norm}' source={source} n@{l0_ref:.0f}nm={mat.n4:.4f}",
                 "INFO",
             )
-
-            return fb
-
-        self.log(
-            "RE: could not load substrate: no indices.xlsx found "
-            "(try CERTUS_INDICES_XLSX, place indices.xlsx in example/database_index/, "
-            "or use a known substrate name with fallback data).",
-            "WARNING",
-        )
+            return mat
 
         return None
 
@@ -4175,6 +4226,8 @@ class CertusREApp(CertusBaseApp):
 
         k2 = _col_arr(i4, 0.0)
 
+        # Keep workbook order unless the sheet headers explicitly request a swap.
+        # The reverse-engineering sample relies on a stable H/L mapping from the file itself.
         return wls_arr[:n_rows], n1, k1, n2, k2
 
     def _parse_re_measurement(self, ws) -> tuple[np.ndarray, list[tuple[ParsedREColumn, np.ndarray]], list[str]]:
@@ -4674,6 +4727,25 @@ class CertusREApp(CertusBaseApp):
             self._update_re_spectrum_title(init_rmse, suffix="(initial)")
             self.log(f"RE initial RMSE: {init_rmse:.6f}", "INFO")
 
+    def _re_capture_loaded_exact_ep(self) -> None:
+        """Freeze the exact loaded thickness vector for the first RE RMSE."""
+
+        try:
+            if self.ep_current is None:
+                return
+
+            ep = np.asarray(self.ep_current, dtype=np.float64).ravel().copy()
+
+            if ep.size == 0 or not np.all(np.isfinite(ep)):
+                return
+
+            if self._re_loaded_exact_ep is None or not np.array_equal(self._re_loaded_exact_ep, ep):
+                self._re_loaded_exact_ep = ep
+
+            self._use_exact_ep = True
+        except Exception as exc:
+            self.logger.warning("RE: failed to capture exact loaded ep: %s", exc)
+
     def _on_target_group_toggled(self, group_ref: list, checkbox: QCheckBox, *args) -> None:
         is_on = checkbox.isChecked()
         for tgt in group_ref:
@@ -4696,6 +4768,9 @@ class CertusREApp(CertusBaseApp):
         set_certus_last_dir(path)
 
         try:
+            self._re_loading_workbook = True
+            self._re_loaded_exact_ep = None
+            self._use_exact_ep = False
             _t_re = time.perf_counter()
 
             import openpyxl
@@ -5109,6 +5184,16 @@ class CertusREApp(CertusBaseApp):
 
             self._re_clear_re_nk_preview()
 
+            self._update_qwot_from_ep(ep_current if (ep_current := getattr(self, "ep_current", None)) is not None else np.asarray([], dtype=np.float64))
+
+            self._update_thickness_display()
+
+            self.ep_current = np.asarray(ep_current if ep_current is not None else self.ep_current, dtype=np.float64).copy() if ep_current is not None else self.ep_current
+
+            self._use_exact_ep = True
+
+            self._show_initial_re_rmse()
+
             self.launch_re_btn.setEnabled(True)
 
             self.eval_btn.setEnabled(True)
@@ -5176,6 +5261,9 @@ class CertusREApp(CertusBaseApp):
 
             return False
 
+        finally:
+            self._re_loading_workbook = False
+
     def _compute_re_rmse(self, a_pct=0.0, b_pct=0.0, f_pct=0.0):
         """RMSE of current design vs RE targets (same lambda grouping / backside as REWorker)."""
         try:
@@ -5184,7 +5272,9 @@ class CertusREApp(CertusBaseApp):
 
             stack = self._get_front_stack()
             mats = self._get_materials()
-            ep = self.ep_current if getattr(self, "_use_exact_ep", False) else init_thickness(stack, self.l0_spin.value(), mats)
+            ep = getattr(self, "_re_loaded_exact_ep", None)
+            if ep is None:
+                ep = self.ep_current if getattr(self, "_use_exact_ep", False) else init_thickness(stack, self.l0_spin.value(), mats)
             ep = np.asarray(ep, dtype=np.float64)
             tgts = self._get_oblique_tgts()
             if not tgts:

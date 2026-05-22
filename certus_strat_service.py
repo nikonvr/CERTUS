@@ -577,7 +577,7 @@ def _select_candidates_phase_a(
         pre_candidates = [d for d in pre_candidates if d["t_min"] >= min_t_floor]
         if n_before > len(pre_candidates):
             logger.info(
-                f"   [MIN-T] Layer {i_layer + 1}: {n_before - len(pre_candidates)} candidate(s) dropped (T_min < {min_t_floor * 100:.0f}%)"
+                f"   [MIN-T] Layer {i_layer + 1}: {n_before - len(pre_candidates)} candidate(s) dropped (T_min below {min_t_floor * 100:.0f}%)"
             )
 
     # strict_min_transmission_floor: raise hard error if no candidate survives T floor

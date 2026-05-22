@@ -520,12 +520,12 @@ class TestSafeUIAction:
 
     def test_safe_ui_action_fallback_on_import_error(self, monkeypatch):
         import sys
-        
+
         class BadModule:
             @property
             def safe_ui_action(self):
                 raise ImportError("Mocked import error")
-                
+
         monkeypatch.setitem(sys.modules, "certus_ui", BadModule())
 
         @safe_ui_action
@@ -533,5 +533,18 @@ class TestSafeUIAction:
             raise ValueError("Numerical fault caught in fallback")
 
         assert dummy_fallback() is None
+
+    def test_safe_ui_action_extra_arguments(self):
+        calls = []
+
+        class Dummy:
+            @safe_ui_action
+            def slot(self):
+                calls.append("called")
+
+        d = Dummy()
+        # Simulated PyQt clicked call with extra boolean checked argument
+        d.slot(False)
+        assert calls == ["called"]
 
 

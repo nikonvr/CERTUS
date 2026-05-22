@@ -22,6 +22,8 @@ import numpy as np
 
 from numba import njit
 
+from certus_errors import CertusError, CertusFileError, CertusMaterialError
+
 
 
 
@@ -104,19 +106,20 @@ def _silicon_stub_arrays() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 
-def _clues_xlsx_path() -> str:
-
-
-    """Project-root clues.xlsx (parent of certus_physics package)."""
-
-
+def _find_materials_xlsx_path() -> str | None:
+    """Find project-root materials constants spreadsheet (checks material_constants.xlsx then clues.xlsx)."""
     package_dir = Path(__file__).resolve().parent
-
-
     parent_dir = package_dir.parent
-
-
-    return str(parent_dir / "clues.xlsx")
+    
+    preferred = parent_dir / "material_constants.xlsx"
+    if preferred.is_file():
+        return str(preferred)
+        
+    legacy = parent_dir / "clues.xlsx"
+    if legacy.is_file():
+        return str(legacy)
+        
+    return None
 
 
 
@@ -152,7 +155,7 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
     if not Path(xlsx_path).is_file():
 
 
-        raise ValueError(f"clues.xlsx not found at {xlsx_path}")
+        raise CertusFileError(f"Silicon spreadsheet not found at {xlsx_path}")
 
 
 
@@ -179,7 +182,7 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
     except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
 
 
-        raise ValueError(f"Cannot read sheet '{_SI_XLSX_SHEET}' from clues.xlsx:{e}")
+        raise CertusFileError(f"Cannot read sheet '{_SI_XLSX_SHEET}' from {xlsx_path}: {e}")
 
 
 
@@ -230,13 +233,13 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
     if len(wl) < 2:
 
 
-        raise ValueError(f"Si-substrate sheet has fewer than 2 data points")
+        raise CertusMaterialError(f"Si-substrate sheet has fewer than 2 data points")
 
 
     if np.any(np.diff(wl) <= 0):
 
 
-        raise ValueError("Silicon wavelengths are not strictly increasing after sorting")
+        raise CertusMaterialError("Silicon wavelengths are not strictly increasing after sorting")
 
 
 
@@ -251,10 +254,10 @@ def _load_si_from_xlsx(xlsx_path: str) -> tuple[np.ndarray, np.ndarray, np.ndarr
 
 
 
-_CLUES_PATH = _clues_xlsx_path()
+_MATERIALS_PATH = _find_materials_xlsx_path()
 
 
-if not Path(_CLUES_PATH).is_file():
+if not _MATERIALS_PATH:
 
 
     SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _silicon_stub_arrays()
@@ -269,13 +272,25 @@ else:
     try:
 
 
-        SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _load_si_from_xlsx(_CLUES_PATH)
+        SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _load_si_from_xlsx(_MATERIALS_PATH)
 
 
-    except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
+    except (CertusError, OSError) as e:
 
 
-        raise ValueError(f"Fatal error loading Silicon optical constants: {e}") from e
+        SI_WAVELENGTH_NM, SI_N_DATA, SI_K_DATA = _silicon_stub_arrays()
+
+
+        _log.warning(
+
+
+            f"Error loading Silicon optical constants from {_MATERIALS_PATH}: {e}. "
+
+
+            "Falling back to built-in Silicon constants."
+
+
+        )
 
 
 

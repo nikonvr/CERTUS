@@ -26,6 +26,7 @@ from certus_physics import (
 )
 from certus_strat_context import StratContext
 from certus_core import WL_DECIMALS
+from certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
 
 NOISE_DISTRIBUTION_GAUSSIAN = "gaussian"
 NON_MONOTONIC_MODE_ATTENUATE = "attenuate"
@@ -54,8 +55,8 @@ class StratPayloadParts:
     """Validated legacy STRAT payload pieces before normalization."""
 
     step: int
-    params: dict[str, Any]
-    opti_results: dict[str, Any] | None
+    params: StratParamsDTO
+    opti_results: StratOptiResultsDTO | None
 
 
 def generate_noise_array(
@@ -137,13 +138,25 @@ class StratStrategyService(BaseHeadlessService):
         if step not in self.VALID_STEPS:
             raise ValueError(f"unsupported step: {step}")
 
-        params = payload.get("params", {})
-        if not isinstance(params, dict):
+        params_raw = payload.get("params", {})
+        if not isinstance(params_raw, dict) and not isinstance(params_raw, StratParamsDTO):
             raise ValueError("payload.params must be a dict")
 
-        opti_results = payload.get("opti_results")
-        if opti_results is not None and not isinstance(opti_results, dict):
+        opti_results_raw = payload.get("opti_results")
+        if opti_results_raw is not None and not isinstance(opti_results_raw, dict) and not isinstance(opti_results_raw, StratOptiResultsDTO):
             raise ValueError("payload.opti_results must be a dict or None")
+
+        try:
+            params = StratParamsDTO.model_validate(params_raw)
+        except Exception as exc:
+            raise ValueError(f"Invalid params payload structure: {exc}") from exc
+
+        opti_results = None
+        if opti_results_raw is not None:
+            try:
+                opti_results = StratOptiResultsDTO.model_validate(opti_results_raw)
+            except Exception as exc:
+                raise ValueError(f"Invalid opti_results payload structure: {exc}") from exc
 
         return StratPayloadParts(step=step, params=params, opti_results=opti_results)
 
@@ -151,8 +164,8 @@ class StratStrategyService(BaseHeadlessService):
         """Normalize validated STRAT payload pieces into the service contract."""
         return {
             "step": parts.step,
-            "params": dict(parts.params),
-            "opti_results": dict(parts.opti_results) if isinstance(parts.opti_results, dict) else None,
+            "params": parts.params,
+            "opti_results": parts.opti_results,
         }
 
     def validate_payload(self, payload: Mapping[str, Any], materials_db: Any = None) -> dict[str, Any]:

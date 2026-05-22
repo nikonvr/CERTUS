@@ -5,12 +5,19 @@ Part of CERTUS Suite (Refactoring 2026)
 
 Replaces global variables with a proper context object for testability
 and maintainability.
+
+Also contains pure utility classes (PlotCache, ThreadSafeCounter) extracted
+from CERTUS_STRAT.py to isolate non-Qt logic.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 import multiprocessing as mp
 import threading
+import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -605,3 +612,82 @@ def _resolve_consensus_seed_stride(params: dict[str, Any]) -> int:
 
 def _resolve_consensus_num_runs(params: dict[str, Any], *, num_runs: int) -> int:
     return max(1, int(params.get("consensus_num_runs", num_runs)))
+
+
+# =============================================================================
+# PURE UTILITY CLASSES (extracted from CERTUS_STRAT.py)
+# These classes have no Qt dependency and live here for testability.
+# CERTUS_STRAT.py imports and re-exports them for backward compatibility.
+# =============================================================================
+
+
+class PlotCache:
+    """
+    Intelligent caching system using SHA256 hashes of data content.
+
+    Prevents re-rendering identical plots.
+    """
+
+    def __init__(self, _max_size_mb: int = 200) -> None:
+        self.cache: dict = {}
+        self.max_size_items = 20  # Keep last 20 plots
+
+    def get_hash(self, data_obj: Any) -> Any:
+        """Compute a stable hash for *data_obj* (dict or arbitrary object)."""
+        try:
+            if isinstance(data_obj, dict):
+                # Filter out heavy non-serializable objects
+                serializable = {
+                    k: v
+                    for k, v in data_obj.items()
+                    if isinstance(v, (str, int, float, list, dict, bool, type(None)))
+                }
+                data_str = json.dumps(serializable, sort_keys=True, separators=(",", ":"))
+            else:
+                data_str = str(data_obj)
+            return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
+        except (TypeError, AttributeError, UnicodeEncodeError) as e:
+            logging.debug("PlotCache.get_hash failed: %s", e)
+            return str(time.time())  # Fallback
+
+    def get(self, key: Any) -> Any:
+        """Return cached item for *key*, promoting it to MRU position."""
+        if key in self.cache:
+            # Move to end (LRU style) by deleting and re-inserting
+            val = self.cache.pop(key)
+            self.cache[key] = val
+            return val
+        return None
+
+    def put(self, key: Any, item: Any) -> None:
+        """Store *item* under *key*, evicting the oldest entry when full."""
+        self.cache[key] = item
+        if len(self.cache) > self.max_size_items:
+            # Remove oldest (FIFO) — dict preserves insertion order
+            first_key = next(iter(self.cache))
+            del self.cache[first_key]
+
+
+class ThreadSafeCounter:
+    """Thread-safe counter replacing global dictionary."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._count = 0
+        self.signal: Any = None
+
+    def increment(self) -> int:
+        """Increment counter and return new value."""
+        with self._lock:
+            self._count += 1
+            return self._count
+
+    def reset(self) -> None:
+        """Reset counter to zero."""
+        with self._lock:
+            self._count = 0
+
+    def set_signal(self, signal: Any) -> None:
+        """Attach a Qt signal (or any callable) for live notifications."""
+        with self._lock:
+            self.signal = signal

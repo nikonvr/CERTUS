@@ -136,6 +136,7 @@ from certus_core import (
     certus_timestamp_file,
     setup_module_logging,
 )
+from certus_errors import safe_ui_action
 
 from certus_design_worker_utils import (
     build_pglobal_optimizer,
@@ -5275,6 +5276,7 @@ class CertusDesignApp(CertusBaseApp):
 
     # =========================================================================
 
+    @safe_ui_action
     def run_optim(self, mode: str, keep_history: bool = False, **kwargs) -> None:
         """
 
@@ -7773,6 +7775,7 @@ class CertusDesignApp(CertusBaseApp):
             "SUCCESS",
         )
 
+    @safe_ui_action
     def _drop_thinnest_and_polish(self) -> None:
         """GUI action: remove thinnest layer, merge if interior, local polish.
 
@@ -9040,6 +9043,7 @@ class CertusDesignApp(CertusBaseApp):
 
     # =========================================================================
 
+    @safe_ui_action
     def run_colorimetry(self) -> None:
         """
 
@@ -9161,6 +9165,7 @@ class CertusDesignApp(CertusBaseApp):
 
     # =========================================================================
 
+    @safe_ui_action
     def export_results(self) -> None:
 
         self.log("Entering export_results...", "DEBUG")

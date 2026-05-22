@@ -5,7 +5,7 @@
     "nL_r": "",
     "h_material_file": "H800-Nb",
     "l_material_file": "H800-SiO2",
-    "substratee_choice": "Silice",
+    "substrate_choice": "Silice",
     "nSub_custom": "",
     "l0": "600.0",
     "stack_multipliers": [

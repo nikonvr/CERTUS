@@ -263,13 +263,6 @@ def validate_wavelength_range(lambda_min: float, lambda_max: float, context: str
             f"Use a value <= {LAMBDA_MAX_PHYSICAL} nm.",
         )
 
-    if lambda_min < 0 or lambda_max < 0:
-        raise CertusValidationError(
-            "Negative wavelength",
-            f"Wavelengths must be positive (lambda_min={lambda_min}, lambda_max={lambda_max})",
-            "Use positive values.",
-        )
-
 
 def validate_thickness(
     thickness: float,

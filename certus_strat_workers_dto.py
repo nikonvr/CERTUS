@@ -4,9 +4,93 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
+from collections.abc import Mapping
+from pydantic import BaseModel, ConfigDict
 
 if TYPE_CHECKING:
     from certus_data import TimingLogger
+
+
+class StratParamsDTO(BaseModel, Mapping):
+    """Runtime-validated DTO for STRAT calculation parameters."""
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
+    nH_id: Any | None = None
+    nL_id: Any | None = None
+    nSub_id: Any | None = None
+    l0: float | None = None
+    stack_string: str | None = None
+    wl_range: list[float] | None = None
+    wl_step: float | None = None
+    scan_wl_min: float | None = None
+    scan_wl_max: float | None = None
+    reality_sim_params: dict[str, Any] | None = None
+    phase_a_seed: int | None = None
+    robustness_seed: int | None = None
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key) from None
+
+    def __iter__(self):
+        keys = list(self.__class__.model_fields.keys())
+        if self.model_extra:
+            keys.extend(self.model_extra.keys())
+        return iter(keys)
+
+    def __len__(self) -> int:
+        return len(self.__class__.model_fields) + (len(self.model_extra) if self.model_extra else 0)
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, dict):
+            self_dict = {k: v for k, v in self.items() if v is not None}
+            other_dict = {k: v for k, v in other.items() if v is not None}
+            return self_dict == other_dict
+        if isinstance(other, StratParamsDTO):
+            return self.model_dump(exclude_none=True) == other.model_dump(exclude_none=True)
+        return super().__eq__(other)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
+
+
+class StratOptiResultsDTO(BaseModel, Mapping):
+    """Runtime-validated DTO for STRAT optimization results."""
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
+    p_thick_nominal: Any | None = None
+    all_strategies: list[Any] | None = None
+    clues_at_wl: dict[float, dict[str, complex]] | None = None
+    raw_results_thickness: Any | None = None
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key) from None
+
+    def __iter__(self):
+        keys = list(self.__class__.model_fields.keys())
+        if self.model_extra:
+            keys.extend(self.model_extra.keys())
+        return iter(keys)
+
+    def __len__(self) -> int:
+        return len(self.__class__.model_fields) + (len(self.model_extra) if self.model_extra else 0)
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, dict):
+            self_dict = {k: v for k, v in self.items() if v is not None}
+            other_dict = {k: v for k, v in other.items() if v is not None}
+            return self_dict == other_dict
+        if isinstance(other, StratOptiResultsDTO):
+            return self.model_dump(exclude_none=True) == other.model_dump(exclude_none=True)
+        return super().__eq__(other)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return getattr(self, key, default)
 
 
 def _copy_legacy_params(params: dict[str, Any] | None) -> dict[str, Any]:
@@ -20,9 +104,15 @@ class WorkerThreadRequest:
     """DTO boundary for STRAT WorkerThread payload."""
 
     step: int = 0
-    params: dict[str, Any] = field(default_factory=dict)
-    opti_results: dict[str, Any] | None = None
+    params: StratParamsDTO = field(default_factory=lambda: StratParamsDTO())
+    opti_results: StratOptiResultsDTO | None = None
     timing_logger: TimingLogger | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.params, StratParamsDTO):
+            object.__setattr__(self, "params", StratParamsDTO.model_validate(self.params or {}))
+        if self.opti_results is not None and not isinstance(self.opti_results, StratOptiResultsDTO):
+            object.__setattr__(self, "opti_results", StratOptiResultsDTO.model_validate(self.opti_results))
 
     @staticmethod
     def from_legacy(
@@ -34,8 +124,8 @@ class WorkerThreadRequest:
     ) -> "WorkerThreadRequest":
         return WorkerThreadRequest(
             step=int(step),
-            params=_copy_legacy_params(params),
-            opti_results=dict(opti_results) if isinstance(opti_results, dict) else opti_results,
+            params=StratParamsDTO.model_validate(_copy_legacy_params(params)),
+            opti_results=StratOptiResultsDTO.model_validate(opti_results) if isinstance(opti_results, dict) else opti_results,
             timing_logger=timing_logger,
         )
 
@@ -46,8 +136,12 @@ class WorkerThreadResult:
 
     nominal_results: dict[str, Any] | None = None
     seel_data: dict[str, Any] | None = None
-    opti_results: dict[str, Any] | None = None
+    opti_results: StratOptiResultsDTO | None = None
     final_results: dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        if self.opti_results is not None and not isinstance(self.opti_results, StratOptiResultsDTO):
+            object.__setattr__(self, "opti_results", StratOptiResultsDTO.model_validate(self.opti_results))
 
     @staticmethod
     def for_step_0(nominal_results: dict[str, Any], seel_data: dict[str, Any]) -> "WorkerThreadResult":
@@ -58,7 +152,7 @@ class WorkerThreadResult:
 
     @staticmethod
     def for_step_2(opti_results: dict[str, Any]) -> "WorkerThreadResult":
-        return WorkerThreadResult(opti_results=dict(opti_results))
+        return WorkerThreadResult(opti_results=opti_results)
 
     @staticmethod
     def for_step_3(final_results: dict[str, Any]) -> "WorkerThreadResult":
@@ -71,7 +165,7 @@ class WorkerThreadResult:
         final_results: dict[str, Any],
     ) -> "WorkerThreadResult":
         return WorkerThreadResult(
-            opti_results=dict(opti_results),
+            opti_results=opti_results,
             final_results=dict(final_results),
         )
 
@@ -82,7 +176,7 @@ class WorkerThreadResult:
         final_results: dict[str, Any],
     ) -> "WorkerThreadResult":
         return WorkerThreadResult(
-            opti_results=dict(opti_results),
+            opti_results=opti_results,
             final_results=dict(final_results),
         )
 
@@ -93,7 +187,8 @@ class WorkerThreadResult:
         if self.seel_data is not None:
             out["seel_data"] = self.seel_data
         if self.opti_results is not None:
-            out["opti_results"] = self.opti_results
+            out["opti_results"] = self.opti_results.model_dump(exclude_none=True)
         if self.final_results is not None:
             out["final_results"] = self.final_results
         return out
+

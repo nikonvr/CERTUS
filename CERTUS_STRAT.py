@@ -457,69 +457,9 @@ PERF_MONITOR = PerformanceMonitor()
 setup_pyqtgraph_defaults()
 
 # === CACHE SYSTEM FOR PLOTS ===
-
-class PlotCache:
-    """
-
-    Intelligent caching system using SHA256 hashes of data content.
-
-    Prevents re-rendering identical plots.
-
-    """
-
-    def __init__(self, _max_size_mb=200) -> None:
-
-        self.cache = {}
-
-        self.max_size_items = 20  # Keep last 20 plots
-
-    def get_hash(self, data_obj) -> Any:
-
-        # Create a unique signature based on the data content, not the object ID
-
-        try:
-            if isinstance(data_obj, dict):
-                # Filter out heavy non-serializable objects if any
-
-                serializable = {
-                    k: v for k, v in data_obj.items() if isinstance(v, (str, int, float, list, dict, bool, type(None)))
-                }
-
-                data_str = json.dumps(serializable, sort_keys=True, separators=(",", ":"))
-
-            else:
-                data_str = str(data_obj)
-
-            return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
-
-        except (TypeError, AttributeError, UnicodeEncodeError) as e:
-            logging.debug(f"Hash computation failed: {e}")
-
-            return str(time.time())  # Fallback
-
-    def get(self, key) -> Any:
-
-        if key in self.cache:
-            # Move to end (LRU style behavior) by deleting and re-inserting
-
-            val = self.cache.pop(key)
-
-            self.cache[key] = val
-
-            return val
-
-        return None
-
-    def put(self, key, item) -> None:
-
-        self.cache[key] = item
-
-        if len(self.cache) > self.max_size_items:
-            # Remove first inserted item (FIFO) - standard dict preserves insertion order
-
-            first_key = next(iter(self.cache))
-
-            del self.cache[first_key]
+# PlotCache and ThreadSafeCounter have been extracted to certus_strat_context.
+# Imported here for full backward compatibility.
+from certus_strat_context import PlotCache, ThreadSafeCounter  # noqa: E402
 
 # === GLOBAL CONTEXT (legacy - being migrated to StratContext) ===
 
@@ -531,33 +471,7 @@ CACHE_SIZE_MATERIAL_INDEX = 10000
 
 IDENTITY_2x2_COMPLEX = np.eye(2, dtype=np.complex128)
 
-class ThreadSafeCounter:
-    """Thread-safe counter replacing global dictionary."""
-
-    def __init__(self) -> None:
-
-        self._lock = threading.Lock()
-
-        self._count = 0
-
-        self.signal = None
-
-    def increment(self) -> Any:
-
-        with self._lock:
-            self._count += 1
-
-            return self._count
-
-    def reset(self) -> None:
-
-        with self._lock:
-            self._count = 0
-
-    def set_signal(self, signal) -> None:
-
-        with self._lock:
-            self.signal = signal
+# ThreadSafeCounter is now defined in certus_strat_context (imported above).
 
 _SPECTRUM_COUNTER = ThreadSafeCounter()
 
@@ -6101,18 +6015,11 @@ class WorkerThread(QThread):
 
             # Prepare metadata for auto-naming and HTML
 
+            rmse_val = extract_best_rmse(final_results.get("all_strategies_results", []))
+            self.logger.info("STRAT Export (Classical): Extracted best RMSE %f from strategies results", rmse_val)
+
             metadata = {
-                "rmse": float(
-                    final_results.get("all_strategies_results", [{}])[0].get(
-                        "rmse_p95",
-                        final_results.get("all_strategies_results", [{}])[0].get(
-                            "rmse_mean",
-                            final_results.get("all_strategies_results", [{}])[0].get("rmse", 0.0),
-                        ),
-                    )
-                )
-                if final_results.get("all_strategies_results")
-                else 0.0,
+                "rmse": rmse_val,
                 "strategies_count": len(final_results.get("all_strategies_results", [])),
                 "params": self.params,
                 "nominal_results": nominal_results,
@@ -6402,18 +6309,8 @@ class WorkerThread(QThread):
 
             # Keep signal contract (excel_data, metadata).
 
-            best_rmse = 0.0
-
-            if "all_strategies_results" in final_results and final_results["all_strategies_results"]:
-                best_rmse = float(
-                    final_results["all_strategies_results"][0].get(
-                        "rmse_p95",
-                        final_results["all_strategies_results"][0].get(
-                            "rmse_mean",
-                            final_results["all_strategies_results"][0].get("rmse", 0.0),
-                        ),
-                    )
-                )
+            best_rmse = extract_best_rmse(final_results.get("all_strategies_results", []))
+            self.logger.info("STRAT Export (Simulation): Extracted best RMSE %f from strategies results", best_rmse)
 
             metadata = {
                 "rmse": best_rmse,
@@ -6660,9 +6557,8 @@ def _finalize_and_export_step_23(
 
     if params.get("export_excel", True):
         excel_data = generate_excel_report(nominal_res, sim_context, final_complete_structure, params)
-        best_rmse = 0.0
-        if "all_strategies_results" in final_complete_structure and final_complete_structure["all_strategies_results"]:
-            best_rmse = final_complete_structure["all_strategies_results"][0].get("robustness_score", 0.0)
+        best_rmse = extract_best_rmse(final_complete_structure.get("all_strategies_results", []))
+        params["logger"].info("STRAT Export (General): Extracted best RMSE %f from strategies results", best_rmse)
         metadata = {
             "rmse": best_rmse,
             "strategies_count": len(final_complete_structure.get("all_strategies_results", [])),
@@ -11914,8 +11810,6 @@ class CertusStratApp(CertusBaseApp):
                 nL_id = txt
 
         sub_choice = self.widgets["substrate_choice"].currentText()
-        if not sub_choice and "substratee_choice" in self.widgets:
-            sub_choice = self.widgets["substratee_choice"].currentText()
 
         material_aliases = {
             "H800-Nb": "H800-Nb",

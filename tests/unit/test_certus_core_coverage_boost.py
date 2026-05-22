@@ -376,4 +376,81 @@ class TestCoreCoverageBoost:
             else:
                 sys.modules["PyQt6.QtSvgWidgets"] = orig_val
 
+    def test_save_error(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / "non_existent_directory" / name))
+        cm = ConfigManager("test_err_save.json", "default", "key")
+        # Save to a path where directories do not exist, triggering OSError/IOError
+        assert cm.save("val") is False
+
+    def test_export_config_wrappers(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus_core import load_export_config, save_export_config, get_export_config
+        save_export_config(False)
+        assert get_export_config() is False
+        assert load_export_config() is False
+
+    def test_theme_config_wrappers(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus_core import load_theme_config, save_theme_config
+        save_theme_config("dark")
+        assert load_theme_config() == "dark"
+
+    def test_queue_handler_emit_error(self, monkeypatch):
+        q = queue.Queue()
+        handler = QueueHandler(q)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        record = logging.LogRecord("test", logging.INFO, "", 0, "hello", (), None)
+        
+        # Force log_queue.put to raise OSError
+        def mock_put(msg):
+            raise OSError("Queue closed")
+        monkeypatch.setattr(q, "put", mock_put)
+        
+        # Verify it handles the error and doesn't raise exception
+        handler.emit(record)
+
+    def test_setup_numba_cache_and_build_runtime(self, tmp_path, monkeypatch):
+        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus_core import build_runtime
+        runtime = build_runtime(log_file=str(tmp_path / "runtime.log"), level=logging.DEBUG, n_cores=2)
+        assert runtime.n_cores == 2
+        assert runtime.logger is not None
+
+    def test_wait_warmup_with_thread(self):
+        import threading
+        from certus_core import _WarmupRegistry
+        t = threading.Thread(target=lambda: None)
+        t.start()
+        _WarmupRegistry.thread = t
+        wait_warmup(1.0)
+        assert _WarmupRegistry.thread is None
+
+    def test_resource_path_frozen(self, monkeypatch):
+        monkeypatch.setattr("sys.frozen", True, raising=False)
+        monkeypatch.setattr("sys.executable", "C:\\test\\bin\\certus.exe")
+        p = get_resource_path("test.json")
+        assert "C:\\test\\bin\\test.json" in p or "C:/test/bin/test.json" in p
+
+    def test_setup_module_logging(self, tmp_path):
+        from certus_core import setup_module_logging
+        logger = setup_module_logging("TEST_MODULE", log_file=str(tmp_path / "test_module.log"))
+        assert logger is not None
+        assert logger.name == "CERTUS"
+
+    def test_create_module_environment(self, tmp_path):
+        from certus_core import create_module_environment
+        env = create_module_environment(__file__, "TEST_MODULE")
+        assert env["module_name"] == "TEST_MODULE"
+        assert env["script_dir"] is not None
+
+    def test_bootstrap_app(self):
+        from certus_core import bootstrap_app
+        script_dir = bootstrap_app(__file__)
+        assert script_dir is not None
+        
+        # Test return_runtime=True
+        script_dir2, runtime = bootstrap_app(__file__, return_runtime=True)
+        assert script_dir2 == script_dir
+        assert runtime is not None
+
 

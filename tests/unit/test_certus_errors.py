@@ -399,6 +399,91 @@ class TestUIHelpers:
         assert ("setInformativeText", "💡 sug") in calls
         assert "exec" in calls
 
+    def test_show_error_no_suggestion(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                pass
+            def setIcon(self, icon):
+                pass
+            def setWindowTitle(self, title):
+                pass
+            def setText(self, text):
+                pass
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                pass
+
+        class DummyIcon:
+            Critical = "Critical"
+            Warning = "Warning"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        from certus_errors import ERROR_MESSAGES
+        monkeypatch.setitem(
+            ERROR_MESSAGES,
+            "generic_error",
+            ("Unexpected error", "{details}", "")
+        )
+        show_error(None, "generic_error", details="some detail")
+        assert ("setInformativeText", "💡 ") not in calls
+
+    def test_show_warning_no_suggestion(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                pass
+            def setIcon(self, icon):
+                pass
+            def setWindowTitle(self, title):
+                pass
+            def setText(self, text):
+                pass
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                pass
+
+        class DummyIcon:
+            Warning = "Warning"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        show_warning(None, "Title", "Msg", suggestion="")
+        assert len(calls) == 0
+
+    def test_show_validation_error_no_details_no_suggestion(self, monkeypatch):
+        calls = []
+        class DummyQMessageBox:
+            Icon = None
+            def __init__(self, parent=None):
+                pass
+            def setIcon(self, icon):
+                pass
+            def setWindowTitle(self, title):
+                pass
+            def setText(self, text):
+                pass
+            def setDetailedText(self, text):
+                calls.append(("setDetailedText", text))
+            def setInformativeText(self, text):
+                calls.append(("setInformativeText", text))
+            def exec(self):
+                pass
+
+        class DummyIcon:
+            Warning = "Warning"
+        DummyQMessageBox.Icon = DummyIcon
+
+        monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
+        err = CertusValidationError("msg", details="", suggestion="")
+        show_validation_error(None, err)
+        assert len(calls) == 0
+
 
 class TestSafeUIAction:
     def test_safe_ui_action_success(self):
@@ -432,5 +517,21 @@ class TestSafeUIAction:
         def dummy_func():
             raise ZeroDivisionError("division by zero")
         assert dummy_func() is None
+
+    def test_safe_ui_action_fallback_on_import_error(self, monkeypatch):
+        import sys
+        
+        class BadModule:
+            @property
+            def safe_ui_action(self):
+                raise ImportError("Mocked import error")
+                
+        monkeypatch.setitem(sys.modules, "certus_ui", BadModule())
+
+        @safe_ui_action
+        def dummy_fallback():
+            raise ValueError("Numerical fault caught in fallback")
+
+        assert dummy_fallback() is None
 
 

@@ -30,3 +30,32 @@ def test_select_best_strat_result_prefers_first_positive_score(items, expected):
 
 def test_select_best_strat_result_returns_none_for_empty_list():
     assert _select_best_strat_result([]) is None
+
+
+def test_extract_best_rmse_from_final_results():
+    from CERTUS_STRAT import extract_best_rmse
+    
+    # Valide que extract_best_rmse extrait correctement le meilleur résultat fini
+    final_results = {
+        "all_strategies_results": [
+            {"strategy_id": "strat_1", "rmse": 0.005},
+            {"strategy_id": "strat_2", "rmse": 0.010},
+        ]
+    }
+    rmse = extract_best_rmse(final_results.get("all_strategies_results", []))
+    assert rmse == pytest.approx(0.005)
+
+
+def test_extract_best_rmse_raises_on_null_rmse():
+    from CERTUS_STRAT import extract_best_rmse
+    from certus_errors import PhysicsConvergenceError
+    
+    # Une RMSE de 0.0 est physiquement impossible pour un signal de dépôt réel bruité
+    final_results = {
+        "all_strategies_results": [
+            {"strategy_id": "strat_1", "rmse": 0.0},
+        ]
+    }
+    with pytest.raises(PhysicsConvergenceError, match="abnormally low/null value"):
+        extract_best_rmse(final_results.get("all_strategies_results", []))
+

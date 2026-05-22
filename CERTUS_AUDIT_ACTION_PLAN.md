@@ -1,30 +1,26 @@
+# CERTUS Audit Action Plan
 
-## Statut
-### Déjà fait
-- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
-- Backlog P0/P1 créé.
-- Audit des modules principaux réalisé.
-- Les priorités socle / services / UI / hub / gros modules sont identifiées.
-- Refactoring incrémental et validation de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisés.
-- Validation des configurations de release et des entrypoints métier critiques.
-- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
-- Passage à 100% de réussite des 62 tests unitaires de `tests/unit/test_certus_ui.py` (résolution des dialogues bloquants par mock et isolation QSettings/MRU).
+## Vision
+Faire évoluer CERTUS vers une suite plus modulaire, plus lisible et plus simple à faire évoluer, tout en conservant la précision métier et la robustesse des calculs.
 
-### Il reste
-- Finaliser les optimisations fines de l'architecture.
-- Continuer à renforcer la couverture de tests spécifiques au besoin. # CERTUS Audit Action Plan
+L’audit sert de feuille de route pour orienter les prochains chantiers vers ce qui améliore le plus la stabilité, la maintenabilité, la qualité d’exécution et la vitesse de livraison.
 
-## Objectif
-Conduire un audit large et priorisé de la suite CERTUS afin d’aligner le code, l’architecture, l’UX, les tests et la release sur un standard Python 3.14.5+ moderne et exploitable en 2026.
+## Cap de transformation
+- Réduire progressivement les monolithes critiques pour transformer le code d’orchestration en couche plus légère.
+- Clarifier les frontières entre UI, calcul, export, persistance et tests.
+- Renforcer les contrats entre modules pour limiter les régressions et simplifier le raisonnement.
+- Faire converger les flux critiques vers des parcours plus explicites et plus prédictibles.
+- Préparer la suite à des évolutions futures sans augmenter la complexité opérationnelle.
 
-## Périmètre
-Cet audit couvre :
-- les 9 à 10 modules d’entrée principaux,
+## Périmètre de couverture
+Cet audit couvre l’intégralité de la suite CERTUS, avec un regard bout en bout sur :
+- les modules d’entrée principaux,
 - les modules partagés de base,
 - l’UX des parcours utilisateurs,
 - la robustesse des tests,
 - la CI / release,
-- la performance et la maintenabilité.
+- la performance et la maintenabilité,
+- les scripts de smoke, les artefacts et la documentation utile à l’exploitation.
 
 ## Modules prioritaires à auditer
 1. `CERTUS_HUB.py`
@@ -38,80 +34,78 @@ Cet audit couvre :
 9. `certus_ui.py`
 10. `certus_core.py`
 
-## Critères d’audit
+## Axe de progression par domaine
 
-### 1. Architecture
-- responsabilités séparées,
-- orchestration claire,
-- limites de module lisibles,
-- dépendances minimales,
-- pas de logique métier enfouie dans l’UI.
+### Architecture
+Objectif futur
+- Faire de chaque module une unité plus lisible, avec une responsabilité dominante bien identifiable.
+- Limiter les dépendances croisées et éviter que l’UI porte la logique métier.
+- Déplacer les responsabilités transverses vers des modules ou helpers dédiés quand cela réduit la complexité.
+- Préserver des contrats d’entrée/sortie clairs pour chaque composant.
 
-### 2. Qualité Python
-- annotations de type cohérentes,
-- fonctions courtes et ciblées,
-- objets métier explicites,
-- erreurs gérées proprement,
-- compatibilité Python 3.14.5+.
+### Qualité Python
+Objectif futur
+- Maintenir des annotations de type cohérentes et utiles.
+- Garder des fonctions courtes, ciblées et faciles à relire.
+- Préférer des objets métier explicites aux structures implicites trop dispersées.
+- Continuer à améliorer la compatibilité et la clarté du code pour Python 3.14.5+.
 
-### 3. UX
-- navigation claire,
-- feedback visible,
-- états d’erreur explicites,
-- parcours critiques simples,
-- libellés cohérents,
-- pas d’ambiguïté dans les actions principales.
+### UX
+Objectif futur
+- Rendre les parcours critiques plus directs et plus compréhensibles.
+- Renforcer la visibilité des états d’attente, d’erreur et de succès.
+- Harmoniser les libellés, les statuts et les actions principales.
+- Réduire les ambiguïtés dans les interactions répétées ou longues.
 
-### 4. Tests
-- couverture utile,
-- tests déterministes,
-- bonne séparation unit / intégration / UI / perf,
-- échecs lisibles,
-- faible flakiness.
+### Tests
+Objectif futur
+- Consolider une couverture utile, déterministe et orientée risques.
+- Renforcer la séparation entre tests unitaires, d’intégration, UI et perf.
+- Prioriser les non-régressions sur les flux les plus sensibles.
+- Garder des échecs lisibles et exploitables.
 
-### 5. Release et CI
-- environnement reproductible,
-- checks de release fiables,
-- workflows cohérents,
-- versioning aligné,
-- artefacts vérifiables.
+### Release et CI
+Objectif futur
+- Stabiliser l’environnement de livraison et rendre les checks reproductibles.
+- Aligner les workflows sur une chaîne de validation simple à relire.
+- Garder des artefacts vérifiables et des versions cohérentes.
+- Faire de la CI un filet de sécurité plutôt qu’une source de friction.
 
-### 6. Performance
-- démarrage,
-- imports,
-- calculs lourds,
-- cache,
-- parallélisation,
-- coût mémoire.
+### Performance
+Objectif futur
+- Surveiller le démarrage, les imports et les calculs les plus lourds.
+- Réduire les recalculs inutiles et les coûts mémoire évitables.
+- Préserver la fluidité de l’interface pendant les traitements longs.
+- Favoriser les snapshots réutilisables quand le contexte le permet.
 
-## Ordre d’exécution recommandé
+## Roadmap recommandée
 
 ### Phase 1 — Socle
-1. Vérifier les contraintes Python et dépendances.
-2. Auditer les workflows CI / release.
-3. Valider les scripts de bootstrap et de smoke.
+- Vérifier en continu les contraintes Python et dépendances.
+- Garder les workflows CI / release cohérents et vérifiables.
+- Maintenir des scripts de bootstrap et de smoke stables.
 
 ### Phase 2 — Cœur applicatif
-4. Auditer les gros modules d’entrée un par un.
-5. Identifier les responsabilités mélangées.
-6. Extraire les helpers ou DTO manquants.
+- Poursuivre l’audit des gros modules d’entrée.
+- Identifier à chaque passage les responsabilités encore mélangées.
+- Extraire les helpers ou DTO qui clarifient les échanges.
 
 ### Phase 3 — UX et validation
-7. Auditer les parcours utilisateur.
-8. Vérifier les états vides, erreurs et feedback.
-9. Relever les incohérences visuelles ou fonctionnelles.
+- Revoir les parcours utilisateur les plus fréquents et les plus critiques.
+- S’assurer que chaque branche d’UI possède ses états vides, erreur et succès.
+- Corriger les incohérences visuelles ou fonctionnelles qui compliquent l’usage.
 
 ### Phase 4 — Tests et robustesse
-10. Auditer la qualité et la structure des tests.
-11. Vérifier les invariants de domaine.
-12. Examiner la stabilité des intégrations et des performances.
+- Renforcer la structure des tests sur les zones les plus risquées.
+- Vérifier les invariants de domaine et les cas limites.
+- Continuer à examiner la stabilité des intégrations et des performances.
 
-### Phase 5 — Plan de refactor
-13. Classer les chantiers par priorité.
-14. Distinguer les corrections rapides des refactors lourds.
-15. Formaliser un plan d’action fichier par fichier.
+### Phase 5 — Refactor guidé
+- Classer les chantiers par impact et par dépendance.
+- Séparer les corrections rapides des refactors structurants.
+- Formaliser les évolutions fichier par fichier pour garder un cap lisible.
 
-## Signaux d’alerte
+## Signaux d’alerte à surveiller
 - fichiers trop volumineux,
 - orchestration et calcul mélangés,
 - UI qui porte de la logique métier,
@@ -133,25 +127,17 @@ Si un sujet améliore à la fois la stabilité, la lisibilité et la capacité d
 Si un sujet est seulement cosmétique, il passe après les fondations techniques.
 
 ## Résultat attendu
-À la fin de l’audit, la suite CERTUS doit être :
+À terme, la suite CERTUS doit être :
 - plus simple à comprendre,
 - plus simple à tester,
 - plus simple à livrer,
 - plus cohérente pour l’utilisateur,
-- plus robuste à long terme.
+- plus robuste à long terme,
+- mieux préparée pour les évolutions futures.
 
-
-## État actuel
-### Fait
-- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
-- Plan P0/P1 créé.
-- Backlog maître créé.
-- Audit des modules principaux réalisé.
-- Refactoring incrémental de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisé.
-- Validation des configurations de release et des entrypoints critiques.
-- Modernisation des exceptions, décoration `@safe_ui_action` (config/RE), configuration headless et boost de couverture à 60.73% complétés.
-- Résolution des dialogues bloquants et nettoyage MRU pour le passage au vert des 62 tests unitaires de `tests/unit/test_certus_ui.py`.
-
-### Reste
-- Finaliser les optimisations fines de l'architecture.
-- Continuer à renforcer la couverture de tests spécifiques au besoin.
+## Horizon de maintenance
+- Transformer progressivement `CERTUS_INDEX_SPLINE.py` en orchestrateur plus léger.
+- Continuer à réduire les points de couplage entre UI, calcul et export.
+- Faire converger les modules vers des responsabilités plus nettes et plus stables.
+- Garder l’audit comme support vivant de priorisation et de décision.
+- Utiliser la roadmap pour aligner les refactors, les tests et les livraisons futures.

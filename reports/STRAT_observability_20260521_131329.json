@@ -1,0 +1,342 @@
+{
+  "layers": [
+    {
+      "layer": 1,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 515.0,
+      "best_cost": 0.1471859839316913
+    },
+    {
+      "layer": 2,
+      "selected_candidates_count": 50,
+      "validated_candidates_count": 50,
+      "best_wl": 570.0,
+      "best_cost": 0.3927248709092865
+    },
+    {
+      "layer": 3,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 560.0,
+      "best_cost": 0.11454469721844447
+    },
+    {
+      "layer": 4,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 570.0,
+      "best_cost": 0.33139101094312823
+    },
+    {
+      "layer": 5,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 560.0,
+      "best_cost": 0.1182721629673807
+    },
+    {
+      "layer": 6,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 610.0,
+      "best_cost": 0.38682444475956984
+    },
+    {
+      "layer": 7,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 500.0,
+      "best_cost": 0.14354565526893948
+    },
+    {
+      "layer": 8,
+      "selected_candidates_count": 51,
+      "validated_candidates_count": 51,
+      "best_wl": 555.0,
+      "best_cost": 0.3379017332454239
+    },
+    {
+      "layer": 9,
+      "selected_candidates_count": 38,
+      "validated_candidates_count": 38,
+      "best_wl": 695.0,
+      "best_cost": 0.10899755819944125
+    },
+    {
+      "layer": 10,
+      "selected_candidates_count": 38,
+      "validated_candidates_count": 38,
+      "best_wl": 540.0,
+      "best_cost": 0.3434691469534897
+    },
+    {
+      "layer": 11,
+      "selected_candidates_count": 30,
+      "validated_candidates_count": 30,
+      "best_wl": 525.0,
+      "best_cost": 0.0876396032836226
+    },
+    {
+      "layer": 12,
+      "selected_candidates_count": 31,
+      "validated_candidates_count": 31,
+      "best_wl": 540.0,
+      "best_cost": 0.2815167265132792
+    },
+    {
+      "layer": 13,
+      "selected_candidates_count": 27,
+      "validated_candidates_count": 27,
+      "best_wl": 525.0,
+      "best_cost": 0.10814477334909753
+    },
+    {
+      "layer": 14,
+      "selected_candidates_count": 27,
+      "validated_candidates_count": 27,
+      "best_wl": 695.0,
+      "best_cost": 0.3428539516873982
+    },
+    {
+      "layer": 15,
+      "selected_candidates_count": 25,
+      "validated_candidates_count": 25,
+      "best_wl": 530.0,
+      "best_cost": 0.11027228967694853
+    },
+    {
+      "layer": 16,
+      "selected_candidates_count": 25,
+      "validated_candidates_count": 25,
+      "best_wl": 535.0,
+      "best_cost": 0.2648800193330778
+    },
+    {
+      "layer": 17,
+      "selected_candidates_count": 23,
+      "validated_candidates_count": 23,
+      "best_wl": 535.0,
+      "best_cost": 0.08132298172339532
+    },
+    {
+      "layer": 18,
+      "selected_candidates_count": 24,
+      "validated_candidates_count": 24,
+      "best_wl": 515.0,
+      "best_cost": 0.3382082894902069
+    },
+    {
+      "layer": 19,
+      "selected_candidates_count": 22,
+      "validated_candidates_count": 22,
+      "best_wl": 535.0,
+      "best_cost": 0.11739775508658211
+    },
+    {
+      "layer": 20,
+      "selected_candidates_count": 23,
+      "validated_candidates_count": 23,
+      "best_wl": 520.0,
+      "best_cost": 0.42557505732454926
+    },
+    {
+      "layer": 21,
+      "selected_candidates_count": 22,
+      "validated_candidates_count": 22,
+      "best_wl": 535.0,
+      "best_cost": 0.0915214251066004
+    },
+    {
+      "layer": 22,
+      "selected_candidates_count": 22,
+      "validated_candidates_count": 22,
+      "best_wl": 525.0,
+      "best_cost": 0.3916723446391848
+    },
+    {
+      "layer": 23,
+      "selected_candidates_count": 21,
+      "validated_candidates_count": 21,
+      "best_wl": 535.0,
+      "best_cost": 0.09740408149621231
+    },
+    {
+      "layer": 24,
+      "selected_candidates_count": 21,
+      "validated_candidates_count": 21,
+      "best_wl": 530.0,
+      "best_cost": 0.4861560182158462
+    },
+    {
+      "layer": 25,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 540.0,
+      "best_cost": 0.11014426203426594
+    },
+    {
+      "layer": 26,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 530.0,
+      "best_cost": 0.3399428160633142
+    },
+    {
+      "layer": 27,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 540.0,
+      "best_cost": 0.08408304645880092
+    },
+    {
+      "layer": 28,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 530.0,
+      "best_cost": 0.5395166816906395
+    },
+    {
+      "layer": 29,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 455.0,
+      "best_cost": 0.1357412390339661
+    },
+    {
+      "layer": 30,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 540.0,
+      "best_cost": 0.35046338706165153
+    },
+    {
+      "layer": 31,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 540.0,
+      "best_cost": 0.12012400677869113
+    },
+    {
+      "layer": 32,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 535.0,
+      "best_cost": 0.37740440358044075
+    },
+    {
+      "layer": 33,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 540.0,
+      "best_cost": 0.0775212015156569
+    },
+    {
+      "layer": 34,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 535.0,
+      "best_cost": 0.41113777803910156
+    },
+    {
+      "layer": 35,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 535.0,
+      "best_cost": 0.090819402634353
+    },
+    {
+      "layer": 36,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 455.0,
+      "best_cost": 0.8740877386460878
+    },
+    {
+      "layer": 37,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 455.0,
+      "best_cost": 0.27724117404825954
+    },
+    {
+      "layer": 38,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 535.0,
+      "best_cost": 0.4699486301542347
+    },
+    {
+      "layer": 39,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 535.0,
+      "best_cost": 0.08767338178271442
+    },
+    {
+      "layer": 40,
+      "selected_candidates_count": 18,
+      "validated_candidates_count": 18,
+      "best_wl": 535.0,
+      "best_cost": 0.33452574521115885
+    },
+    {
+      "layer": 41,
+      "selected_candidates_count": 19,
+      "validated_candidates_count": 19,
+      "best_wl": 525.0,
+      "best_cost": 0.10499339020197096
+    },
+    {
+      "layer": 42,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 465.0,
+      "best_cost": 1.027021701917167
+    },
+    {
+      "layer": 43,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 455.0,
+      "best_cost": 0.18003293998883474
+    },
+    {
+      "layer": 44,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 540.0,
+      "best_cost": 0.522155858703904
+    },
+    {
+      "layer": 45,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 545.0,
+      "best_cost": 0.07226943946572106
+    },
+    {
+      "layer": 46,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 520.0,
+      "best_cost": 0.8523449341381506
+    },
+    {
+      "layer": 47,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 545.0,
+      "best_cost": 0.11949820487971717
+    },
+    {
+      "layer": 48,
+      "selected_candidates_count": 20,
+      "validated_candidates_count": 20,
+      "best_wl": 545.0,
+      "best_cost": 0.37189418271231317
+    }
+  ],
+  "scan_wl_count": 51,
+  "mc_runs_block": 50
+}

@@ -4,7 +4,14 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_index_spline_core import DataType, SplineOptConfig
+from certus_index_spline_core import (
+    DataType,
+    SplineOptConfig,
+    _apply_smart_preview_exact_mesh,
+    _extract_smart_preview_override,
+    bridge_sigma_knots_preserve_manual,
+    make_bounds_and_x0,
+)
 from spline_objective import (
     SplinePWLObjective,
     _cached_spectral_rmse_weights,
@@ -119,3 +126,64 @@ def test_objective_class_and_gradient_support(minimal_cfg: SplineOptConfig) -> N
     assert spline_pwl_analytic_grad_supported(minimal_cfg) in (True, False)
     grad = obj.analytic_gradient(x)
     assert grad is None or grad.shape == x.shape
+
+
+def test_extract_smart_preview_override_valid_and_invalid(minimal_cfg: SplineOptConfig) -> None:
+    valid = (np.array([1.0, 2.0, 3.0, 4.0]), np.array([5.0, 6.0, 7.0, 8.0]))
+    n_ov, L_ov, d_ov = _extract_smart_preview_override(minimal_cfg, valid, 4)
+    assert n_ov is not None and L_ov is not None
+    assert d_ov is None
+    invalid = (np.array([1.0, 2.0]), np.array([3.0, 4.0]))
+    n_bad, L_bad, d_bad = _extract_smart_preview_override(minimal_cfg, invalid, 4)
+    assert n_bad is None and L_bad is None and d_bad is None
+
+
+def test_apply_smart_preview_exact_mesh_consumes_cfg_state(minimal_cfg: SplineOptConfig, monkeypatch) -> None:
+    import certus_index_spline_core as core
+
+    sk_exact = np.array([0.001, 0.002, 0.003], dtype=np.float64)
+    pair_ex = (np.array([1.45, 1.5, 1.55], dtype=np.float64), np.array([0.0, 0.1, 0.2], dtype=np.float64))
+
+    monkeypatch.setattr(core, "bridge_sigma_knots_preserve_manual", lambda *args, **kwargs: np.array([0.001, 0.002, 0.003], dtype=np.float64), raising=False)
+    monkeypatch.setattr(core, "interp_n_L_pwlnk_to_sigmas", lambda *args, **kwargs: (np.array([1.45, 1.5, 1.55], dtype=np.float64), np.array([0.0, 0.1, 0.2], dtype=np.float64)), raising=False)
+    monkeypatch.setattr(core, "build_x0_smart_preview_exact", lambda *args, **kwargs: (np.zeros((5, 2), dtype=np.float64), np.zeros(5, dtype=np.float64)), raising=False)
+
+    k = _apply_smart_preview_exact_mesh(minimal_cfg, sk_exact, pair_ex, 400.0, 700.0)
+    assert k == 3
+    assert minimal_cfg.smart_preview_exact_sigma_knots is None
+    assert minimal_cfg.smart_preview_exact_n_L is None
+    assert minimal_cfg.n_seg == k - 1
+
+
+def test_make_bounds_and_x0_roundtrip_canonical_mesh(minimal_cfg: SplineOptConfig) -> None:
+    bounds, x0, sk = make_bounds_and_x0(minimal_cfg, skip_smart_init=True)
+    assert bounds.shape[1] == 2
+    assert x0.shape[0] == bounds.shape[0]
+    assert sk.ndim == 1 and sk.size >= 2
+    assert minimal_cfg.n_seg == sk.size - 1
+
+
+def test_bridge_sigma_knots_preserve_manual_keeps_edges_and_size() -> None:
+    src = np.array([0.0012, 0.0018, 0.0024], dtype=np.float64)
+    out = bridge_sigma_knots_preserve_manual(src, 400.0, 700.0)
+    assert out.ndim == 1
+    assert out.size >= src.size
+    assert np.isclose(out.min(), 1.0 / 700.0, atol=1e-12) or out.min() >= 1.0 / 700.0
+    assert np.isclose(out.max(), 1.0 / 400.0, atol=1e-12) or out.max() <= 1.0 / 400.0
+
+
+def test_make_bounds_and_x0_respects_skip_smart_init(monkeypatch, minimal_cfg: SplineOptConfig) -> None:
+    import certus_index_spline_core as core
+
+    called = {"smart": False}
+
+    def _fail_smart(*args, **kwargs):
+        called["smart"] = True
+        raise AssertionError("smart init should not run")
+
+    monkeypatch.setattr(core, "guess_smart_x0_from_extrema", _fail_smart, raising=False)
+    bounds, x0, sk = make_bounds_and_x0(minimal_cfg, skip_smart_init=True)
+    assert called["smart"] is False
+    assert bounds.shape[1] == 2
+    assert x0.shape[0] == bounds.shape[0]
+    assert sk.size == minimal_cfg.n_seg + 1

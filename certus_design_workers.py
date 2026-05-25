@@ -111,6 +111,7 @@ from certus_qt_widgets import (
     QWidget,
     pyqtSignal,
 )
+from PyQt6.QtCore import QObject
 
 # Conditional SVG Import
 
@@ -319,12 +320,15 @@ from certus_design_core import (
     _design_optimization_callback_common,
 )
 
-class OptimWorker(QThread):
+class OptimWorker(QObject):
     """PGLOBAL Optimization Worker"""
 
     def __init__(self, cfg: dict[str, Any] | OptimWorkerRequest) -> None:
 
         super().__init__()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
 
         self.request = cfg if isinstance(cfg, OptimWorkerRequest) else OptimWorkerRequest.from_legacy(cfg)
 
@@ -1460,12 +1464,15 @@ class OptimWorker(QThread):
 
             self.signals.error.emit(traceback.format_exc())
 
-class ColorWorker(QThread):
+class ColorWorker(QObject):
     """Worker for Monte Carlo color analysis"""
 
     def __init__(self, cfg: dict[str, Any] | ColorWorkerRequest) -> None:
 
         super().__init__()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
 
         self.request = cfg if isinstance(cfg, ColorWorkerRequest) else ColorWorkerRequest.from_legacy(cfg)
 
@@ -1550,12 +1557,15 @@ class ColorWorker(QThread):
 
             self.signals.error.emit(traceback.format_exc())
 
-class NeedleWorker(QThread):
+class NeedleWorker(QObject):
     """Worker for layer insertion (Needle algorithm)"""
 
     def __init__(self, cfg: dict[str, Any] | NeedleWorkerRequest) -> None:
 
         super().__init__()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
 
         self.request = cfg if isinstance(cfg, NeedleWorkerRequest) else NeedleWorkerRequest.from_legacy(cfg)
 

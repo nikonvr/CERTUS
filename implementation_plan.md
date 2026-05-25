@@ -1,62 +1,88 @@
-# Refactoring de `_setup_corridor_context` (Phase 3)
+# Plan Global de Mise à Niveau (> 18/20) - CERTUS Suite
 
-## Statut
-### Déjà fait
-- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
-- Backlog P0/P1 créé.
-- Audit des modules principaux réalisé.
-- Les priorités socle / services / UI / hub / gros modules sont identifiées.
-- Refactoring de `spline_profile_corridors.py` (Phase 3 et Bonus) complété et validé par pytest (1592 tests passed).
+Ce document décrit le plan d'implémentation complet pour lever les limitations identifiées lors des audits et faire passer tous les modules de la suite CERTUS à une note strictement supérieure à 18/20.
 
-### Il reste
-- Finaliser les optimisations fines de l'architecture.
-- Continuer à renforcer la couverture de tests spécifiques au besoin.
+---
 
-Ce plan de bataille détaille l'approche pour la prochaine session, centrée sur la modularisation de `spline_profile_corridors.py`.
+## User Review Required
 
-## Contexte
-La fonction `_setup_corridor_context` (684 lignes) est le point d'entrée critique de la génération des corridors de tolérance. Elle est responsable de l'évaluation du seuil de RMSE intelligent, de la configuration du profileur, et de l'initialisation des états (callbacks temps réel). 
-En raison de sa longueur extrême, le flux d'exécution est dur à lire et difficilement testable de manière unitaire.
+> [!IMPORTANT]
+> Ce plan implique des changements architecturaux significatifs (découpage modulaire, introduction de modèles d'oscillateurs physiques pour la causalité, et parallélisation multiprocessus). Chaque étape sera réalisée de manière incrémentale et validée par les tests unitaires.
 
-## Objectif
-Réduire la fonction principale à moins de 150 lignes en déléguant la logique complexe (vérifications de seuils, gestion adaptative du delta absolu, configuration des `live_callbacks`) à une classe dédiée ou à un `Context Builder` avec des helpers.
+---
 
-## Prochaines étapes de l'implémentation
+## 1. Concurrence & Robustesse Système
 
-### 1. Extraction du sous-contexte Live Stream
-Actuellement, les fonctions `_emit_live_profile` et `_push_live_point` sont des *closures* qui capturent des listes muables (`live_d_vals`, `live_rmse_vals`, etc.) et un `threading.Lock()`.
-- **Solution :** Créer une classe `CorridorLiveStreamer` qui encapsule les listes, le lock, et le callable `live_cb`.
+### A. Assainissement Concurrence STRAT
+- **Fichier** : [certus_strat_workers.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_strat_workers.py)
+- **Objectif** : Éliminer l'émission de signaux Qt depuis un thread système brut Python (`threading.Thread`).
+- **Plan** : 
+  - Supprimer la création de `threading.Thread` dans `_run_step_23_full`.
+  - Mettre en place un `QTimer` asynchrone sur le thread principal qui interroge régulièrement la file d'attente de statistiques (`stats_queue.get_nowait()`) sans bloquer l'interface.
 
-### 2. Isolation de l'estimation de tolérance adaptative
-Le bloc calculant `adaptive_abs_meta` et gérant le fallback du threshold (env. 200 lignes avec logs intensifs) pollue le flux principal.
-- **Solution :** Extraire ce bloc dans un helper statique `_initialize_adaptive_threshold(context)`.
+### B. Validation de Schémas au Runtime
+- **Fichier** : [certus_result_schema.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_result_schema.py)
+- **Objectif** : Intercepter les corruptions ou incohérences de fichiers projets JSON au chargement pour éviter des `KeyError` au milieu du rendu GUI.
+- **Plan** : 
+  - Définir un validateur de schéma léger à l'aide de `jsonschema` ou convertir les dictionnaires typés statiquement en modèles structurels avec vérification dynamique.
+  - Lever une exception claire `CorruptedProjectError` interceptée par le framework d'erreurs UI.
 
-### 3. Structuration globale via `CorridorProfileContext`
-La fonction existante prépare des variables pour finalement retourner un grand dictionnaire ou un objet de contexte existant. 
-- **Solution :** Reprendre le modèle `REPhase2Context`. On créera un constructeur étape par étape qui validera séquentiellement :
-  1. Base geometry & Seeds
-  2. Fallback rules & Threshold logic
-  3. Pre-run profiling / Center fits
+### C. Persistance Asynchrone des États
+- **Fichier** : [certus_reset_framework.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_reset_framework.py)
+- **Objectif** : Décharger le thread GUI des I/O d'écriture de fichiers d'historiques lourds.
+- **Plan** : 
+  - Implémenter un worker d'écriture asynchrone (`QRunnable` + `QThreadPool`) dédié à la sérialisation des états de session.
 
-## Déroulement pour le démarrage demain
-1. **Lancement du script AST** : Analyser les dépendances (`reads`/`writes`) spécifiques à `_setup_corridor_context`.
-2. **Création du `CorridorLiveStreamer`** et injection dans la signature.
-3. **Extraction des helpers** de logging massif pour épurer le flux.
-4. **Validation via `pytest`** (`pytest tests/unit/ -k "corridor"`).
+---
 
-> [!TIP]
-> **Prêt à l'emploi :** Le fichier `task.md` a été réinitialisé avec ces étapes pour lancer la session immédiatement !
+## 2. Performances Algorithmiques & Calculs
 
+### A. JIT-compilation des Corridors Spline
+- **Fichiers** : [certus_index_spline_corridors.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_index_spline_corridors.py) & [spline_profile_corridors.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/spline_profile_corridors.py)
+- **Objectif** : Éliminer la latence lors de l'évaluation interactive des enveloppes de profil d'indice.
+- **Plan** : 
+  - Extraire et vectoriser les calculs de boucles d'évaluation de spectres de corridors en fonctions pures NumPy.
+  - Décorer ces fonctions avec `@njit(cache=True, fastmath=True, parallel=True)` pour compiler le code machine et paralléliser sur tous les cœurs.
 
-## État actuel
-### Fait
-- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
-- Plan P0/P1 créé.
-- Backlog maître créé.
-- Audit des modules principaux réalisé.
-- Refactoring incrémental de `spline_profile_corridors.py` (Phase 3 et Bonus) finalisé.
-- Validation des configurations de release et des entrypoints critiques.
+### B. Bypasser le GIL lors de l'Optimisation RE
+- **Fichier** : [certus_re_workers.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_re_workers.py)
+- **Objectif** : Permettre aux calculs de jacobiennes de s'exécuter à 100% en parallèle.
+- **Plan** : 
+  - Remplacer `ThreadPoolExecutor` par un `ProcessPoolExecutor` dans `_execute_phase1` et `_evaluate_p2_fd_derivative` pour distribuer les évaluations de dérivées dans des processus système indépendants.
+  - Alterner avec une approche JIT Numba compile `@njit(nogil=True)` sur les noyaux mathématiques sous-jacents.
 
-### Reste
-- Finaliser les optimisations fines de l'architecture.
-- Continuer à renforcer la couverture de tests spécifiques au besoin.
+---
+
+## 3. Rigueur Physique & Modélisation
+
+### A. Intégration de la Causalité de Kramers-Kronig (METAL)
+- **Fichiers** : [CERTUS_METAL_SINGLE.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/CERTUS_METAL_SINGLE.py) & [certus_metal_common.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_metal_common.py)
+- **Objectif** : Empêcher le solveur de produire des profils métalliques $n(\lambda)$ et $k(\lambda)$ physiquement impossibles.
+- **Plan** : 
+  - Restreindre l'espace de recherche de l'optimiseur de constantes de métaux à l'ajustement des paramètres d'un modèle d'oscillateurs (ex: Drude + Lorentz).
+  - Calculer analytiquement $n(\lambda)$ et $k(\lambda)$ à partir des constantes diélectriques complexes $\varepsilon_1(E)$ et $\varepsilon_2(E)$ générées par le modèle physique, garantissant la cohérence KK interne.
+
+### B. Barrières de Contraintes Régulières
+- **Objectif** : Stabiliser la convergence locale L-BFGS-B près des bornes physiques ($k \ge 0$, $d \ge 0$).
+- **Plan** : 
+  - Substituer les pénalités simples de barrière dure par une barrière logarithmique continue et dérivable ($-\mu \log(x - x_{min})$).
+  - Réduire progressivement le coefficient de température $\mu$ à chaque itération du solveur global (méthode de barrière adaptative).
+
+---
+
+## 4. Architecture logicielle
+
+### A. Découpage du Monolithe Spline UI
+- **Fichier** : [certus_index_spline_ui.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_index_spline_ui.py)
+- **Objectif** : Rendre le code maintenable et lisible en éliminant le fichier monolithique de 15 000 lignes.
+- **Plan** : 
+  - Extraire la logique d'onglets et de contrôles Qt dans des modules distincts : `spline_tab_visualizer.py`, `spline_tab_corridors.py`, `spline_tab_presets.py`.
+  - Maintenir un orchestrateur central minimal `CertusIndexSplineApp` gérant uniquement la coordination des signaux et l'état global de session.
+
+### B. Séparation des Gabarits de Rapports
+- **Fichiers** : [certus_spline_report.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_spline_report.py) & [certus_reports.py](file:///c:/driveFL/couches%20minces%202026/CERTUS/2505/certus_reports.py)
+- **Objectif** : Rendre les rapports éditables et lisibles en sortant le HTML/JS du code Python.
+- **Plan** : 
+  - Créer un répertoire `resources/templates/`.
+  - Extraire les gabarits HTML bruts dans des fichiers de ressources statiques séparés.
+  - Charger et interpoler ces gabarits dynamiquement à l'aide de marqueurs ou via un moteur de templating léger lors de la génération du rapport final.

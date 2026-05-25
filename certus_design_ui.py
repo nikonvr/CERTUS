@@ -427,12 +427,15 @@ class CertusDesignApp(CertusBaseApp):
         # Workers
 
         self.optim_worker: OptimWorker | None = None
+        self.optim_thread: QThread | None = None
 
         self.eval_worker: EvalWorker | None = None
 
         self.col_worker: ColorWorker | None = None
+        self.col_thread: QThread | None = None
 
         self.needle_worker: NeedleWorker | None = None
+        self.needle_thread: QThread | None = None
 
         self.warmup_worker: WarmupWorker | None = None
 
@@ -3401,9 +3404,18 @@ class CertusDesignApp(CertusBaseApp):
         if keep_history and hasattr(self, "_workflow_best_rmse"):
             self.optim_worker.best_rmse_seen = self._workflow_best_rmse
 
-        self.optim_worker.signals.finished.connect(self._on_optim_done)
+        self.optim_thread = QThread()
+        self.optim_worker.moveToThread(self.optim_thread)
 
+        self.optim_thread.started.connect(self.optim_worker.run)
+
+        self.optim_worker.signals.finished.connect(self.optim_thread.quit)
+        self.optim_worker.signals.finished.connect(self._on_optim_done)
+        self.optim_worker.signals.finished.connect(self.optim_worker.deleteLater)
+
+        self.optim_worker.signals.error.connect(self.optim_thread.quit)
         self.optim_worker.signals.error.connect(self._on_error)
+        self.optim_worker.signals.error.connect(self.optim_worker.deleteLater)
 
         self.optim_worker.signals.result.connect(self._on_intermediate_spectrum)
 
@@ -3411,7 +3423,9 @@ class CertusDesignApp(CertusBaseApp):
 
         self.optim_worker.signals.update_stats.connect(self._on_stats_update)
 
-        self.optim_worker.start()
+        self.optim_thread.finished.connect(self.optim_thread.deleteLater)
+
+        self.optim_thread.start()
 
     def _reset_run_optim_workflow_state(self, mode: str) -> None:
         """Reset workflow state and UI counters for a fresh optimization start."""
@@ -3486,25 +3500,23 @@ class CertusDesignApp(CertusBaseApp):
     def _shutdown_previous_optim_worker(self) -> None:
         """Stop any running optimization worker before starting a new cycle."""
 
-        if self.optim_worker is None:
-            return
+        if self.optim_worker is not None and self.optim_thread is not None:
+            if self.optim_thread.isRunning():
+                self.optim_worker.request_stop()
+                self.optim_thread.quit()
 
-        if self.optim_worker.isRunning():
-            self.optim_worker.request_stop()
+                if not self.optim_thread.wait(2000):
+                    logging.critical(
+                        "Optim worker did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
+                    )
 
-            self.optim_worker.quit()
-
-            if not self.optim_worker.wait(2000):
-                logging.critical(
-                    "Optim worker did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
-                )
-
-                self.log(
-                    "Optim worker did not stop within 2s - skipping terminate() (see log).",
-                    "ERROR",
-                )
+                    self.log(
+                        "Optim worker did not stop within 2s - skipping terminate() (see log).",
+                        "ERROR",
+                    )
 
         self.optim_worker = None
+        self.optim_thread = None
 
     def _collect_run_optim_inputs(self) -> tuple:
         """Collect and validate inputs required by run_optim."""
@@ -6068,10 +6080,12 @@ class CertusDesignApp(CertusBaseApp):
 
         self.log("Stopping optimization...", "WARNING")
 
-        if self.optim_worker and self.optim_worker.isRunning():
-            self.optim_worker.request_stop()
+        if self.optim_thread and self.optim_thread.isRunning():
+            if self.optim_worker:
+                self.optim_worker.request_stop()
+            self.optim_thread.quit()
 
-            if not self.optim_worker.wait(2000):
+            if not self.optim_thread.wait(2000):
                 logging.critical(
                     "Optim worker did not stop within 2s on stop - skipping terminate() to avoid unsafe thread kill."
                 )
@@ -6081,10 +6095,10 @@ class CertusDesignApp(CertusBaseApp):
                     "ERROR",
                 )
 
-        if self.needle_worker and self.needle_worker.isRunning():
-            self.needle_worker.requestInterruption()
+        if self.needle_thread and self.needle_thread.isRunning():
+            self.needle_thread.requestInterruption()
 
-            self.needle_worker.wait(1000)
+            self.needle_thread.wait(1000)
 
         self._force_idle()
 
@@ -6421,11 +6435,22 @@ class CertusDesignApp(CertusBaseApp):
 
         self.needle_worker = NeedleWorker(cfg)
 
+        self.needle_thread = QThread()
+        self.needle_worker.moveToThread(self.needle_thread)
+
+        self.needle_thread.started.connect(self.needle_worker.run)
+
+        self.needle_worker.signals.finished.connect(self.needle_thread.quit)
         self.needle_worker.signals.finished.connect(self._on_needle_found)
+        self.needle_worker.signals.finished.connect(self.needle_worker.deleteLater)
 
+        self.needle_worker.signals.error.connect(self.needle_thread.quit)
         self.needle_worker.signals.error.connect(self._on_error)
+        self.needle_worker.signals.error.connect(self.needle_worker.deleteLater)
 
-        self.needle_worker.start()
+        self.needle_thread.finished.connect(self.needle_thread.deleteLater)
+
+        self.needle_thread.start()
 
     def _on_needle_found(self, res: Dict) -> None:
         """
@@ -6978,11 +7003,22 @@ class CertusDesignApp(CertusBaseApp):
 
         self.col_worker = ColorWorker(cfg)
 
+        self.col_thread = QThread()
+        self.col_worker.moveToThread(self.col_thread)
+
+        self.col_thread.started.connect(self.col_worker.run)
+
+        self.col_worker.signals.finished.connect(self.col_thread.quit)
         self.col_worker.signals.finished.connect(self._on_col_done)
+        self.col_worker.signals.finished.connect(self.col_worker.deleteLater)
 
+        self.col_worker.signals.error.connect(self.col_thread.quit)
         self.col_worker.signals.error.connect(self._on_error)
+        self.col_worker.signals.error.connect(self.col_worker.deleteLater)
 
-        self.col_worker.start()
+        self.col_thread.finished.connect(self.col_thread.deleteLater)
+
+        self.col_thread.start()
 
     def _on_col_done(self, d: Dict) -> None:
         """Callback after colorimetric analysis"""
@@ -7516,196 +7552,112 @@ class CertusDesignApp(CertusBaseApp):
         logging.info(f"Format Version: {c.get('version', 'Unknown')}")
 
         self._last_config_file = getattr(self, "_last_config_file", None)
-
         self.l0_spin.setValue(c.get("l0", 500))
 
-        for n, d in c.get("materials", {}).items():
-            if n in self.mat_widgets:
-                # Set preset FIRST - triggers _apply_preset callback
+        self._apply_material_config(c.get("materials", {}))
 
-                preset_name = d.get("preset", "Custom")
-
-                self.mat_widgets[n]["preset"].setCurrentText(preset_name)
-
-                # For Custom preset, restore saved values; for others, preset callback sets them
-
-                if preset_name == "Custom":
-                    self.mat_widgets[n]["n4"].setValue(d.get("n4", 1.5))
-
-                    self.mat_widgets[n]["n7"].setValue(d.get("n7", 1.5))
-
-        self.front_table.blockSignals(True)
-
-        self.front_table.setRowCount(0)
-
-        for l in c.get("front", []):
-            self._add_front_row(l["mat"], l["qw"], l["var"])
-
-        self.front_table.blockSignals(False)
+        self._apply_stack_rows(c.get("front", []), back=False)
 
         self.back_check.setChecked(c.get("back_en", False))
-
         self.back_coat_check.setChecked(c.get("back_coat", False))
-
-        self.back_table.blockSignals(True)
-
-        self.back_table.setRowCount(0)
-
-        for l in c.get("back", []):
-            self._add_back_row(l["mat"], l["qw"])
-
-        self.back_table.blockSignals(False)
-
-        # Oblique mode handling (backwards compatibility)
+        self._apply_stack_rows(c.get("back", []), back=True)
 
         oblique_mode = c.get("oblique_mode", False)
-
         logging.info(f"[LOAD] Oblique mode: {oblique_mode}")
-
-        # CRITICAL: Reset oblique state completely before setting new mode
-
-        # This prevents stale data when switching between normal/oblique files
-
-        self.oblique_targets = []  # Clear old oblique targets
-
+        self.oblique_targets = []
         if hasattr(self, "oblique_check"):
             self.oblique_check.setChecked(oblique_mode)
-
         self.oblique_mode = oblique_mode
 
         logging.info(f"[LOAD] Loading {len(c.get('targets', []))} targets...")
-
-        self._update_target_table_headers()  # Always update headers
-
+        self._update_target_table_headers()
         self.target_table.setRowCount(0)
+        self._apply_target_config(c.get("targets", []), oblique_mode)
 
-        for t in c.get("targets", []):
-            self.add_target()
-
-            r = self.target_table.rowCount() - 1
-
-            if oblique_mode:
-                # Format oblique: active, angle, pol, type, lmin, lmax, val_min, val_max, weight
-
-                active_cb = self.target_table.cellWidget(r, 0)
-
-                if active_cb:
-                    active_cb.findChild(QCheckBox).setChecked(t.get("active", t.get("on", True)))
-
-                angle_w = self.target_table.cellWidget(r, 1)
-
-                if angle_w:
-                    angle_w.setValue(t.get("angle", 0.0))
-
-                pol_w = self.target_table.cellWidget(r, 2)
-
-                if pol_w:
-                    pol_w.setCurrentText(t.get("polarization", "s"))
-
-                type_w = self.target_table.cellWidget(r, 3)
-
-                if type_w:
-                    type_w.setCurrentText(t.get("target_type", "T"))
-
-                lmin_w = self.target_table.cellWidget(r, 4)
-
-                lmax_w = self.target_table.cellWidget(r, 5)
-
-                if lmin_w:
-                    lmin_w.setValue(t.get("lmin", 400))
-
-                if lmax_w:
-                    lmax_w.setValue(t.get("lmax", 700))
-
-                vmin_w = self.target_table.cellWidget(r, 6)
-
-                vmax_w = self.target_table.cellWidget(r, 7)
-
-                if vmin_w:
-                    vmin_w.setValue(t.get("val_min", t.get("tmin", 0.0)))
-
-                if vmax_w:
-                    vmax_w.setValue(t.get("val_max", t.get("tmax", 1.0)))
-
-                weight_w = self.target_table.cellWidget(r, 8)
-
-                if weight_w:
-                    weight_w.setValue(t.get("weight", t.get("w", 1.0)))
-
-            else:
-                # Format normal: active, lmin, lmax, tmin, tmax, weight
-
-                active_cb = self.target_table.cellWidget(r, 0)
-
-                if active_cb:
-                    active_cb.findChild(QCheckBox).setChecked(t.get("on", True))
-
-                vals = [
-                    t.get("lmin", 400),
-                    t.get("lmax", 700),
-                    t.get("tmin", 0),
-                    t.get("tmax", 1),
-                    t.get("w", 1),
-                ]
-
-                for i, v in enumerate(vals):
-                    w = self.target_table.cellWidget(r, i + 1)
-
-                    if w:
-                        w.setValue(v)
-
-        opt = c.get("optimization", {})
-
-        if "points_per_target" in opt:
-            self.points_per_target_spin.setValue(opt["points_per_target"])
-
-        if "n100" in opt:
-            self.n100_spin.setValue(opt["n100"])
-
-        if "max_clusters" in opt:
-            self.max_clusters_spin.setValue(opt["max_clusters"])
-
-        if "max_iter" in opt:
-            self.global_cycles_spin.setValue(opt["max_iter"])
-
-        if "mc_n" in opt:
-            self.mc_n_spin.setValue(opt["mc_n"])
-
-        if "mc_sigma" in opt:
-            self.mc_sigma_spin.setValue(opt["mc_sigma"])
-
+        self._apply_optimization_config(c.get("optimization", {}))
         self._update_optim_point_count()
-
         self._schedule_eval(True)
+        self._update_layer_count()
 
-        # Load Optimization Params (defaults-applied pass, preserves legacy behavior)
+    def _apply_optimization_config(self, opt: dict) -> None:
+        """Apply optimization controls from a config dict."""
 
-        opt = c.get("optimization", {})
-
-        self.points_per_target_spin.setValue(opt.get("points_per_target", 100))
-
-        self.n100_spin.setValue(opt.get("n100", 50))
-
-        self.max_clusters_spin.setValue(opt.get("max_clusters", 20))
-
-        self.global_cycles_spin.setValue(opt.get("max_iter", 2))
-
-        self.mc_n_spin.setValue(opt.get("mc_n", 1000))
-
-        self.mc_sigma_spin.setValue(opt.get("mc_sigma", 0.005))
-
-        # Restore Extra Params (Needle, Polish, Scale)
+        self.points_per_target_spin.setValue(opt.get("points_per_target", self.points_per_target_spin.value()))
+        self.n100_spin.setValue(opt.get("n100", self.n100_spin.value()))
+        self.max_clusters_spin.setValue(opt.get("max_clusters", self.max_clusters_spin.value()))
+        self.global_cycles_spin.setValue(opt.get("max_iter", self.global_cycles_spin.value()))
+        self.mc_n_spin.setValue(opt.get("mc_n", self.mc_n_spin.value()))
+        self.mc_sigma_spin.setValue(opt.get("mc_sigma", self.mc_sigma_spin.value()))
 
         if hasattr(self, "pre_polish_check"):
-            self.pre_polish_check.setChecked(opt.get("pre_polish", False))
+            self.pre_polish_check.setChecked(opt.get("pre_polish", self.pre_polish_check.isChecked()))
 
         if hasattr(self, "allow_growth_check"):
-            self.allow_growth_check.setChecked(opt.get("allow_growth", True))
+            self.allow_growth_check.setChecked(opt.get("allow_growth", self.allow_growth_check.isChecked()))
 
         if hasattr(self, "auto_scale_y_check"):
-            self.auto_scale_y_check.setChecked(opt.get("auto_scale_y", True))
+            self.auto_scale_y_check.setChecked(opt.get("auto_scale_y", self.auto_scale_y_check.isChecked()))
 
-        self._update_layer_count()
+    def _apply_material_config(self, materials: dict) -> None:
+        """Apply saved material presets and custom n values."""
+
+        for n, d in materials.items():
+            if n not in self.mat_widgets:
+                continue
+            preset_name = d.get("preset", "Custom")
+            self.mat_widgets[n]["preset"].setCurrentText(preset_name)
+            if preset_name == "Custom":
+                self.mat_widgets[n]["n4"].setValue(d.get("n4", 1.5))
+                self.mat_widgets[n]["n7"].setValue(d.get("n7", 1.5))
+
+    def _apply_target_config(self, targets: list[dict], oblique_mode: bool) -> None:
+        """Apply target rows from a config dict."""
+
+        for t in targets:
+            self.add_target()
+            r = self.target_table.rowCount() - 1
+            active_cb = self.target_table.cellWidget(r, 0)
+            if active_cb:
+                active_cb.findChild(QCheckBox).setChecked(t.get("active", t.get("on", True)))
+
+            if oblique_mode:
+                widget_updates = [
+                    (1, t.get("angle", 0.0)),
+                    (2, t.get("polarization", "s")),
+                    (3, t.get("target_type", "T")),
+                    (4, t.get("lmin", 400)),
+                    (5, t.get("lmax", 700)),
+                    (6, t.get("val_min", t.get("tmin", 0.0))),
+                    (7, t.get("val_max", t.get("tmax", 1.0))),
+                    (8, t.get("weight", t.get("w", 1.0))),
+                ]
+                for idx, value in widget_updates:
+                    w = self.target_table.cellWidget(r, idx)
+                    if w is None:
+                        continue
+                    if hasattr(w, "setCurrentText"):
+                        w.setCurrentText(value)
+                    else:
+                        w.setValue(value)
+            else:
+                for idx, value in enumerate([t.get("lmin", 400), t.get("lmax", 700), t.get("tmin", 0), t.get("tmax", 1), t.get("w", 1)], start=1):
+                    w = self.target_table.cellWidget(r, idx)
+                    if w:
+                        w.setValue(value)
+
+    def _apply_stack_rows(self, rows: list[dict], *, back: bool) -> None:
+        """Apply front or back stack rows from a config dict."""
+
+        add_row = self._add_back_row if back else self._add_front_row
+        table = self.back_table if back else self.front_table
+        table.blockSignals(True)
+        table.setRowCount(0)
+        for row in rows:
+            if back:
+                add_row(row["mat"], row["qw"])
+            else:
+                add_row(row["mat"], row["qw"], row["var"])
+        table.blockSignals(False)
 
     def _post_load_config(self, filename: str, config: dict) -> None:
         """UX side-effects after a successful load (summary dialog, toast, ...)."""
@@ -7757,6 +7709,10 @@ class CertusDesignApp(CertusBaseApp):
         logging.info("[LOAD] Calling _schedule_eval (final)...")
 
         self._schedule_eval()
+
+        self._apply_optimization_config(config.get("optimization", {}))
+        self._update_optim_point_count()
+        self._update_layer_count()
 
         _load_start = getattr(self, '_load_config_start_time', None)
         if _load_start is not None:
@@ -7953,10 +7909,31 @@ class CertusDesignApp(CertusBaseApp):
 
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
 
+        threads_to_stop = []
+        if getattr(self, "optim_thread", None):
+            threads_to_stop.append((self.optim_thread, getattr(self, "optim_worker", None)))
+        if getattr(self, "needle_thread", None):
+            threads_to_stop.append((self.needle_thread, getattr(self, "needle_worker", None)))
+        if getattr(self, "col_thread", None):
+            threads_to_stop.append((self.col_thread, getattr(self, "col_worker", None)))
+
+        for thread, worker in threads_to_stop:
+            if thread and thread.isRunning():
+                try:
+                    if worker and hasattr(worker, "request_stop"):
+                        worker.request_stop()
+                    thread.requestInterruption()
+                    thread.quit()
+                    if not thread.wait(2000):
+                        logging.critical(
+                            f"Thread {type(worker).__name__ if worker else 'unknown'} did not stop within 2s in closeEvent - "
+                            "skipping terminate() to avoid unsafe thread kill."
+                        )
+                except (RuntimeError, AttributeError) as e:
+                    if hasattr(self, "logger") and self.logger:
+                        self.logger.debug(f"Error stopping thread: {e}")
+
         workers = [
-            getattr(self, "optim_worker", None),
-            getattr(self, "needle_worker", None),
-            getattr(self, "color_worker", None),
             getattr(self, "warmup_worker", None),
             getattr(self, "eval_worker", None),
         ]

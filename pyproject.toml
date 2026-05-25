@@ -181,7 +181,7 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
+addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov=spline_pipeline --cov=spline_workers --cov=_certus_physics_impl --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -219,10 +219,7 @@ omit = [
   "certus_plot.py",
   "certus_re_helpers.py",
   "certus_substrate_index.py",
-  "spline_pipeline.py",
   "spline_profile_corridors.py",
-  "spline_workers.py",
-  "_certus_physics_impl.py",
   "scripts/*",
   "tools/*",
 ]

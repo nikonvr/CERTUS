@@ -6,8 +6,8 @@ generating a unified JSON report and return codes for CI/CD or developer validat
 """
 
 import sys
-sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+sys.stdout.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
+sys.stderr.reconfigure(encoding='utf-8', errors='replace', line_buffering=True)
 import os
 import argparse
 import subprocess
@@ -122,11 +122,67 @@ def run_step(name: str, cmd: List[str], cwd: Path) -> Dict[str, Any]:
 
         captured: list[str] = []
         assert proc.stdout is not None
+        
+        last_percent = -1
+        passed_count = 0
+        failed_count = 0
+        skipped_count = 0
+        is_pytest = (name == "Pytest Suite")
+        
         for line in iter(proc.stdout.readline, ''):
             if not line:
                 break
             captured.append(line)
-            print(line, end='')
+            
+            if is_pytest:
+                l_strip = line.strip()
+                is_test_line = False
+                status = None
+                
+                # Detect standard test result lines
+                if " PASSED " in line or l_strip.endswith(" PASSED"):
+                    status = "PASSED"
+                    passed_count += 1
+                    is_test_line = True
+                elif " FAILED " in line or l_strip.endswith(" FAILED"):
+                    status = "FAILED"
+                    failed_count += 1
+                    is_test_line = True
+                elif " SKIPPED " in line or l_strip.endswith(" SKIPPED"):
+                    status = "SKIPPED"
+                    skipped_count += 1
+                    is_test_line = True
+                elif " ERROR " in line or l_strip.endswith(" ERROR"):
+                    status = "ERROR"
+                    failed_count += 1
+                    is_test_line = True
+                
+                # Extract pytest percentage
+                percent = -1
+                if is_test_line and "[" in line and "%]" in line:
+                    try:
+                        part = line.split("[")[-1].split("%]")[0].strip()
+                        percent = int(part)
+                    except Exception:
+                        pass
+                
+                if is_test_line:
+                    if status in ("FAILED", "ERROR"):
+                        test_name = line.split("::")[-1].split(" ")[0] if "::" in line else l_strip
+                        print(f"\n  {Colors.FAIL}❌ {status}: {test_name}{Colors.ENDC}", flush=True)
+                    
+                    if percent != -1 and (percent >= last_percent + 5 or percent == 100):
+                        last_percent = percent
+                        bar_width = 20
+                        filled = int(bar_width * percent / 100)
+                        bar = "█" * filled + "░" * (bar_width - filled)
+                        total_done = passed_count + failed_count + skipped_count
+                        print(f"  {Colors.OKCYAN}✦ Progress: {percent:>3}% [{bar}] | {total_done} tests run ({passed_count} passed, {failed_count} failed){Colors.ENDC}", flush=True)
+                else:
+                    # Print anything that is not an individual test success/skip to show summaries and tracebacks
+                    print(line, end='', flush=True)
+            else:
+                print(line, end='', flush=True)
 
         return_code = proc.wait()
         duration = time.time() - start_time

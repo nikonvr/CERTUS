@@ -5,19 +5,83 @@ Provides consistent "Clear / Reset" behavior across the entire suite
 """
 
 import gc
+import json
 import logging
-from typing import Any
+import os
+import tempfile
+from pathlib import Path
+from typing import Any, Callable
 
+from PyQt6.QtCore import QRunnable, QThreadPool, pyqtSlot
 from PyQt6.QtWidgets import QMessageBox, QPlainTextEdit, QTextEdit
 
 from certus_errors import NUMERICAL_FAULT_EXCEPTIONS
 
 
 __all__ = [
+    "AsyncWriteWorker",
     "CertusResetManager",
     "create_reset_button",
     "reset_app_to_defaults",
+    "save_state_async",
 ]
+
+
+class AsyncWriteWorker(QRunnable):
+    """Run JSON serialization and write operations off the GUI thread."""
+
+    def __init__(
+        self,
+        payload_factory: Callable[[], Any],
+        target_path: str | os.PathLike[str],
+        *,
+        indent: int | None = 2,
+    ) -> None:
+        super().__init__()
+        self.payload_factory = payload_factory
+        self.target_path = Path(target_path)
+        self.indent = indent
+        self.logger = logging.getLogger(__name__)
+
+    @pyqtSlot()
+    def run(self) -> None:
+        try:
+            payload = self.payload_factory()
+            serialized = json.dumps(payload, ensure_ascii=False, indent=self.indent)
+            self.target_path.parent.mkdir(parents=True, exist_ok=True)
+            fd, tmp_name = tempfile.mkstemp(
+                prefix=f".{self.target_path.name}.",
+                suffix=".tmp",
+                dir=str(self.target_path.parent),
+                text=True,
+            )
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(serialized)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(tmp_name, self.target_path)
+            finally:
+                if os.path.exists(tmp_name):
+                    try:
+                        os.unlink(tmp_name)
+                    except OSError:
+                        pass
+        except Exception:
+            self.logger.exception("Async state save failed for %s", self.target_path)
+
+
+def save_state_async(
+    payload_factory: Callable[[], Any],
+    target_path: str | os.PathLike[str],
+    *,
+    indent: int | None = 2,
+) -> AsyncWriteWorker:
+    """Schedule a JSON state save on Qt's global thread pool."""
+
+    worker = AsyncWriteWorker(payload_factory, target_path, indent=indent)
+    QThreadPool.globalInstance().start(worker)
+    return worker
 
 
 class CertusResetManager:
@@ -52,6 +116,11 @@ class CertusResetManager:
             return False
 
         try:
+            save_state_async(
+                lambda: {"status": "reset_started", "app": self.app.__class__.__name__},
+                getattr(self.app, "state_path", Path(tempfile.gettempdir()) / "certus_reset_state.json"),
+            )
+
             # 2. Stop all workers
             self._stop_all_workers()
 

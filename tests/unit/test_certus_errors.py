@@ -30,6 +30,7 @@ from certus_errors import (
     CertusDomainError,
     PhysicsConvergenceError,
     ConfigurationCorruptionError,
+    CorruptedProjectError,
     CertusConfigError,
     format_validation_error,
     get_error_message,
@@ -81,6 +82,10 @@ class TestExceptionHierarchy:
     def test_configuration_corruption_error_hierarchy(self):
         assert issubclass(ConfigurationCorruptionError, CertusDomainError)
         assert issubclass(ConfigurationCorruptionError, CertusConfigError)
+
+    def test_corrupted_project_error_hierarchy(self):
+        assert issubclass(CorruptedProjectError, CertusDomainError)
+        assert issubclass(CorruptedProjectError, CertusConfigError)
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -564,5 +569,73 @@ class TestSafeUIAction:
         # Simulated PyQt clicked call with extra boolean checked argument
         d.slot(False)
         assert calls == ["called"]
+
+
+class TestValidateProjectDict:
+    def test_valid_project_dict(self):
+        from certus_result_schema import validate_project_dict
+        valid_data = {
+            "sigma_knots": [0.1, 0.5, 0.9],
+            "n_nodes_physical": [1.5, 1.6, 1.7],
+            "L_nodes": [-1.0, 0.0, 1.0],
+            "d_nm": 120.0
+        }
+        validate_project_dict(valid_data)  # Should pass without exceptions
+
+    def test_missing_required_keys(self):
+        from certus_result_schema import validate_project_dict
+        invalid_data = {
+            "sigma_knots": [0.1, 0.5, 0.9],
+            "n_nodes_physical": [1.5, 1.6, 1.7],
+            "d_nm": 120.0
+            # missing L_nodes
+        }
+        with pytest.raises(CorruptedProjectError, match="missing from the project config"):
+            validate_project_dict(invalid_data)
+
+    def test_invalid_thickness(self):
+        from certus_result_schema import validate_project_dict
+        invalid_data = {
+            "sigma_knots": [0.1, 0.5, 0.9],
+            "n_nodes_physical": [1.5, 1.6, 1.7],
+            "L_nodes": [-1.0, 0.0, 1.0],
+            "d_nm": "not-a-number"
+        }
+        with pytest.raises(CorruptedProjectError, match="Invalid thickness value"):
+            validate_project_dict(invalid_data)
+
+    def test_invalid_non_finite_thickness(self):
+        from certus_result_schema import validate_project_dict
+        invalid_data = {
+            "sigma_knots": [0.1, 0.5, 0.9],
+            "n_nodes_physical": [1.5, 1.6, 1.7],
+            "L_nodes": [-1.0, 0.0, 1.0],
+            "d_nm": float("inf")
+        }
+        with pytest.raises(CorruptedProjectError, match="Invalid thickness value"):
+            validate_project_dict(invalid_data)
+
+    def test_invalid_type_array(self):
+        from certus_result_schema import validate_project_dict
+        invalid_data = {
+            "sigma_knots": "not-a-list",
+            "n_nodes_physical": [1.5, 1.6, 1.7],
+            "L_nodes": [-1.0, 0.0, 1.0],
+            "d_nm": 120.0
+        }
+        with pytest.raises(CorruptedProjectError, match="Invalid data structure"):
+            validate_project_dict(invalid_data)
+
+    def test_inconsistent_sizes(self):
+        from certus_result_schema import validate_project_dict
+        invalid_data = {
+            "sigma_knots": [0.1, 0.5, 0.9],
+            "n_nodes_physical": [1.5, 1.6],  # size 2 instead of 3
+            "L_nodes": [-1.0, 0.0, 1.0],
+            "d_nm": 120.0
+        }
+        with pytest.raises(CorruptedProjectError, match="Inconsistent parameters size"):
+            validate_project_dict(invalid_data)
+
 
 

@@ -1,8 +1,11 @@
 """Unit tests for certus_reset_framework.
 Covers create_reset_button, CertusResetManager, and Clear/Reset behavior of the CERTUS suite."""
 
-import pytest
+import json
+from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
+
+import pytest
 
 try:
     from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTableWidget, QVBoxLayout
@@ -12,7 +15,7 @@ except ImportError:
     QT_AVAILABLE = False
 
 try:
-    from certus_reset_framework import CertusResetManager, create_reset_button
+    from certus_reset_framework import AsyncWriteWorker, CertusResetManager, create_reset_button, save_state_async
     RESET_AVAILABLE = True
 except ImportError:
     RESET_AVAILABLE = False
@@ -221,6 +224,30 @@ class TestResetIntegration:
         assert app._request_stop.called
         assert app._cleanup_worker.called
         assert app._request_stop.call_count >= 1 and app._cleanup_worker.call_count >= 1
+
+
+class TestAsyncWriteWorker:
+    def test_worker_writes_json_atomically(self, tmp_path, monkeypatch):
+        target = tmp_path / "state.json"
+        started = []
+
+        class DummyPool:
+            def start(self, runnable):
+                started.append(runnable)
+                runnable.run()
+
+        monkeypatch.setattr("certus_reset_framework.QThreadPool.globalInstance", lambda: DummyPool())
+
+        worker = save_state_async(lambda: {"ok": True}, target)
+        assert isinstance(worker, AsyncWriteWorker)
+        assert started == [worker]
+        assert json.loads(target.read_text(encoding="utf-8")) == {"ok": True}
+
+    def test_worker_handles_payload_factory_errors(self, tmp_path, caplog):
+        worker = AsyncWriteWorker(lambda: (_ for _ in ()).throw(ValueError("boom")), tmp_path / "state.json")
+        worker.run()
+        assert not (tmp_path / "state.json").exists()
+        assert any("Async state save failed" in record.message for record in caplog.records)
 
 
 class TestResetManagerCoverageBoost:

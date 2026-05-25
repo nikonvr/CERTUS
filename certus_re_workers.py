@@ -6,7 +6,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from functools import partial
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -28,57 +28,47 @@ def _dbg_write(msg: str) -> None:
 
 def _re_precompute_union_indices(oblique_config_meta: list[dict[str, Any]]) -> None:
     """Populate per-meta union indices used by later RE phases."""
+    empty_idx = np.array([], dtype=np.int64)
     for meta in oblique_config_meta:
-        pos_list = [
-            b["local_positions"] for b in meta.get("buckets", []) if b.get("local_positions", np.array([])).size > 0
-        ]
+        buckets = meta.get("buckets", [])
+        pos_list = [b["local_positions"] for b in buckets if b.get("local_positions", empty_idx).size > 0]
 
         if not pos_list:
-            meta["pos_all_union"] = np.array([], dtype=np.int64)
+            meta["pos_all_union"] = empty_idx
             continue
 
         pos_all = np.unique(np.concatenate(pos_list)).astype(np.int64, copy=False)
         meta["pos_all_union"] = pos_all
 
-        for bucket in meta.get("buckets", []):
-            pos = bucket.get("local_positions", np.array([], dtype=np.int64))
-            if pos.size == 0:
-                bucket["idx_union"] = np.array([], dtype=np.int64)
-            else:
-                bucket["idx_union"] = np.searchsorted(pos_all, pos).astype(np.int64, copy=False)
+        for bucket in buckets:
+            pos = bucket.get("local_positions", empty_idx)
+            bucket["idx_union"] = empty_idx if pos.size == 0 else np.searchsorted(pos_all, pos).astype(np.int64, copy=False)
 
 
 def _re_init_context_fields(self, _re_t0: float) -> tuple[float, float, list[dict[str, Any]], np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float, float, np.ndarray, np.ndarray]:
     """Gather RE context inputs needed by _build_re_run_context."""
-    _RE_P_SETUP = 1.5
-    _RE_P_P1 = 27.5
-    _re_pct_hi = [0.0]
+    re_pct_hi = [0.0]
 
     def _emit_re_prog(target: float, msg: str) -> None:
-        v = max(_re_pct_hi[0], float(target))
-        v = max(0.0, min(99.0, v))
-        _re_pct_hi[0] = v
-        self.signals.progress.emit(int(round(v)), msg)
+        v = max(re_pct_hi[0], float(target))
+        re_pct_hi[0] = max(0.0, min(99.0, v))
+        self.signals.progress.emit(int(round(re_pct_hi[0])), msg)
 
     mats = self.cfg["mats"]
     stack = self.cfg["stack"]
     ep0 = np.asarray(self.cfg["ep0"], dtype=np.float64)
-    radius = float(self.cfg.get("radius", 5.0))
-    oblique_tgts = self.cfg.get("oblique_tgts", [])
     lambda_ref = float(self.cfg.get("lambda_ref", self.cfg["l0"]))
-    float_dtype = np.float64
-    complex_dtype = np.complex128
-    n_layers_count = len(ep0)
-    wls, wls_min, wls_max = re_objective_wls_grid(self.cfg, oblique_tgts, float_dtype=float_dtype)
+    oblique_tgts = self.cfg.get("oblique_tgts", [])
+    wls, _, _ = re_objective_wls_grid(self.cfg, oblique_tgts, float_dtype=np.float64)
     _p4_beam_knots_lam = _re_p4_beam_knots_lam_nm_from_wls(wls, self.cfg)
-    n_layers_nominal, n_sub_nominal, is_H, is_L, n_ref_nom_per_layer, _lref_arr = re_nominal_indices_at_wls(
-        mats, stack, wls, lambda_ref, complex_dtype=complex_dtype
+    n_layers_nominal, n_sub_nominal, is_H, is_L, n_ref_nom_per_layer, lref_arr = re_nominal_indices_at_wls(
+        mats, stack, wls, lambda_ref, complex_dtype=np.complex128
     )
     oblique_config_meta = re_oblique_config_meta_from_wls(wls, oblique_tgts)
     _re_precompute_union_indices(oblique_config_meta)
     return (
-        _RE_P_SETUP,
-        _RE_P_P1,
+        1.5,
+        27.5,
         oblique_config_meta,
         ep0,
         wls,
@@ -88,7 +78,7 @@ def _re_init_context_fields(self, _re_t0: float) -> tuple[float, float, list[dic
         is_L,
         n_ref_nom_per_layer,
         lambda_ref,
-        _lref_arr,
+        lref_arr,
         _p4_beam_knots_lam,
     )
 
@@ -192,8 +182,213 @@ def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog
     act_h = bool(self.cfg.get("re_refine_h", False))
     act_l = bool(self.cfg.get("re_refine_l", False))
     b_lam = RE_SPLINE_NODE2_BOUNDS_NM if (act_h or act_l) else (RE_SPLINE_NODE2_DEFAULT_NM - 1e-10, RE_SPLINE_NODE2_DEFAULT_NM + 1e-10)
-    bounds_spline = list(zip((np.asarray(self._re_phase_ns._env_knot) * -1).tolist(), np.asarray(self._re_phase_ns._env_knot).tolist())) if False else list(zip((-self._re_phase_ns._env_knot).tolist(), self._re_phase_ns._env_knot.tolist()))
+    env_knot = np.asarray(self._re_phase_ns._env_knot, dtype=np.float64)
+    bounds_spline = list(zip((-env_knot).tolist(), env_knot.tolist()))
     return {"_top_k": top_k, "bounds_p2": None, "b_lam": b_lam, "bounds_spline": bounds_spline, "_act_h": act_h, "_act_l": act_l, "_merge_rtol": merge_rtol}
+
+
+def _build_p2_prefit_bounds(bounds_spref):
+    lb = np.array([float(b[0]) for b in bounds_spref], dtype=np.float64)
+    ub = np.array([float(b[1]) for b in bounds_spref], dtype=np.float64)
+    return lb, ub
+
+
+def _build_phase4_aperture_bounds(bounds_p2_trf: tuple, nap: int, lo_ap: float, hi_ap: float) -> tuple[np.ndarray, np.ndarray]:
+    """Append independent aperture bounds to the base phase-2 bounds."""
+
+    return (
+        np.concatenate([bounds_p2_trf[0], np.full(nap, float(lo_ap), dtype=np.float64)]),
+        np.concatenate([bounds_p2_trf[1], np.full(nap, float(hi_ap), dtype=np.float64)]),
+    )
+
+
+def _phase4_aperture_slice(x: np.ndarray, i_ap0: int, nap: int) -> np.ndarray:
+    """Return the phase-4 aperture knot slice as a contiguous float64 vector."""
+
+    return np.asarray(x[i_ap0 : i_ap0 + nap], dtype=np.float64).ravel()
+
+
+def _build_phase2_result(
+    *,
+    res_p2: Any,
+    ep_end: np.ndarray,
+    dh_end: np.ndarray,
+    dl_end: np.ndarray,
+    knots_end: np.ndarray,
+    lam_end: float,
+    rmse_p2: float,
+    rmse_qwot_p2: float,
+    rmse_comb_p2: float,
+    nfev_p1: int,
+    nfev_phase2_prefit: int,
+    th_end: np.ndarray | None,
+) -> REPhase2Result:
+    """Build the immutable phase-2 result payload."""
+
+    return REPhase2Result(
+        label=RE_RESULT_LABEL_WITH_DRIFT,
+        ep=np.asarray(ep_end, dtype=np.float64).flatten(),
+        a=0.0,
+        b=0.0,
+        f=0.0,
+        re_dh_knots=np.asarray(dh_end, dtype=np.float64).flatten(),
+        re_dl_knots=np.asarray(dl_end, dtype=np.float64).flatten(),
+        re_knots_nm=np.asarray(knots_end, dtype=np.float64).flatten(),
+        re_spline_lam_node2_nm=float(lam_end),
+        rmse=float(rmse_p2),
+        rmse_qwot=float(rmse_qwot_p2),
+        rmse_combined=float(rmse_comb_p2),
+        nfev=int(res_p2.nfev),
+        success=bool(res_p2.success),
+        nfev_phase1=int(nfev_p1),
+        nfev_phase2_prefit=int(nfev_phase2_prefit),
+        re_sub_cauchy_a0=float(th_end[0]) if th_end is not None else None,
+        re_sub_cauchy_a1=float(th_end[1]) if th_end is not None else None,
+        re_sub_cauchy_a2=float(th_end[2]) if th_end is not None else None,
+    )
+
+
+def _build_phase2b_output(
+    *,
+    res_p2: Any,
+    x0_p2: np.ndarray,
+    cb2_ref: list,
+    n_layers_count: int,
+    nk: int,
+    i0: int,
+    i_lam: int,
+    i_cu: int,
+    use_sub_c3: bool,
+    report_mse_spectral,
+    compute_qwot_rmse,
+    rmse_combined,
+    alpha_slot: list,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, np.ndarray | None, float, float, float]:
+    """Convert phase-2b optimizer output into scientific arrays and RMSE values."""
+
+    x_end = np.asarray(res_p2.x, dtype=np.float64).ravel()
+    ep_end = np.asarray(x_end[:n_layers_count], dtype=np.float64).flatten()
+    dh_end = np.asarray(x_end[i0 : i0 + nk], dtype=np.float64).flatten()
+    dl_end = np.asarray(x_end[i0 + nk : i_lam], dtype=np.float64).flatten()
+    lam_end = float(x_end[i_lam])
+    if use_sub_c3:
+        th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()
+        cor_end = (
+            "spline_sub3",
+            dh_end,
+            dl_end,
+            lam_end,
+            float(th_end[0]),
+            float(th_end[1]),
+            float(th_end[2]),
+        )
+    else:
+        th_end = None
+        cor_end = ("spline", dh_end, dl_end, lam_end)
+    rmse_p2 = float(np.sqrt(max(report_mse_spectral(ep_end, cor_end), 0.0)))
+    rmse_qwot_p2 = compute_qwot_rmse(ep_end, cor_end)
+    rmse_comb_p2 = rmse_combined(rmse_p2, rmse_qwot_p2)
+    return ep_end, dh_end, dl_end, lam_end, th_end, rmse_p2, rmse_qwot_p2, rmse_comb_p2
+
+
+def _build_phase2b_output(
+    *,
+    res_p2: Any,
+    x0_p2: np.ndarray,
+    cb2_ref: list,
+    n_layers_count: int,
+    nk: int,
+    i0: int,
+    i_lam: int,
+    i_cu: int,
+    use_sub_c3: bool,
+    report_mse_spectral: Any,
+    compute_qwot_rmse: Any,
+    rmse_combined: Any,
+    alpha_slot: list,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, np.ndarray | None, float, float, float]:
+    """Build phase-2b vectors and metrics from an optimization result."""
+
+    x_end = res_p2.x
+    ep_end = np.asarray(x_end[:n_layers_count], dtype=np.float64).flatten()
+    dh_end = np.asarray(x_end[i0 : i0 + nk], dtype=np.float64).flatten()
+    dl_end = np.asarray(x_end[i0 + nk : i_lam], dtype=np.float64).flatten()
+    lam_end = float(x_end[i_lam])
+    knots_end = re_knots_wavelengths(lam_end)
+
+    if use_sub_c3:
+        th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()
+        cor_end = (
+            "spline_sub3",
+            dh_end,
+            dl_end,
+            lam_end,
+            float(th_end[0]),
+            float(th_end[1]),
+            float(th_end[2]),
+        )
+    else:
+        th_end = None
+        cor_end = ("spline", dh_end, dl_end, lam_end)
+
+    rmse_p2 = float(np.sqrt(max(report_mse_spectral(ep_end, cor_end), 0.0)))
+    rmse_qwot_p2 = compute_qwot_rmse(ep_end, cor_end)
+    rmse_comb_p2 = rmse_combined(rmse_p2, rmse_qwot_p2)
+
+    return ep_end, dh_end, dl_end, lam_end, th_end, rmse_p2, rmse_qwot_p2, rmse_comb_p2
+
+
+def _log_phase4_trf_summary(
+    *,
+    res_p4: Any,
+    _cost_0: float | None,
+    _cost_f: float,
+    _opt: float,
+    _njev: int,
+    _ap_i: np.ndarray,
+    _ap_f: np.ndarray,
+    kn_log: np.ndarray,
+    wmin_obj: float,
+    wmax_obj: float,
+    p4_trf_wall_s: float,
+    p4_trf_mse_evals: int,
+    nap: int,
+) -> None:
+    """Emit the standard phase-4 TRF diagnostic logs."""
+
+    logging.info(
+        "RE phase 4 TRF summary | success=%s | nfev=%d njev=%d | "
+        "cost_final=%.8g optimality=%.4g | cost_init_scan_ap=%s | "
+        "ap_init_deg=%s ap_final_deg=%s | msg=%s | "
+        "tune: re_phase4_trf_max_nfev re_phase4_trf_tol_factor re_p4_ap_fd_step_deg",
+        res_p4.success,
+        int(res_p4.nfev),
+        _njev,
+        _cost_f,
+        _opt,
+        (f"{_cost_0:.8g}" if _cost_0 is not None else "n/a"),
+        np.array2string(_ap_i, precision=2, separator=","),
+        np.array2string(_ap_f, precision=2, separator=","),
+        str(getattr(res_p4, "message", "")).replace("\n", " "),
+    )
+
+    logging.info(
+        "RE phase 4 TRF plateaus | init=%s | final=%s",
+        _re_p4_ap_band_intervals_str(kn_log, _ap_i, wmin_obj, wmax_obj),
+        _re_p4_ap_band_intervals_str(kn_log, _ap_f, wmin_obj, wmax_obj),
+    )
+
+    logging.info(
+        "RE phase 4 TRF profile | wall_s=%.4f | MSE_ep_count_since_TRF_reset=%d | "
+        "ls_nfev=%d | jac: ~njev×(1+%d) MSE_ep (1 residu + %d FD ap_knots + restore) | "
+        "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor ou jac ap analytique",
+        p4_trf_wall_s,
+        p4_trf_mse_evals,
+        int(res_p4.nfev),
+        nap,
+        nap,
+        p4_trf_wall_s / max(int(res_p4.nfev), 1),
+    )
 
 from certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
@@ -588,44 +783,19 @@ class REWorker(QThread):
             _nap_s2 = int(RE_P4_BEAM_N_KNOTS)
 
             _lo_ap_s2, _hi_ap_s2 = RE_P4_BEAM_AP_BOUNDS_DEG
-
-            _n_ap_scan_s2 = max(
-                4,
-                int(
-                    self.cfg.get(
-                        "re_phase4_aperture_scan_points",
-                        RE_PHASE4_APERTURE_SCAN_POINTS,
-                    )
-                ),
-            )
+            _n_ap_scan_s2 = max(4, int(self.cfg.get("re_phase4_aperture_scan_points", RE_PHASE4_APERTURE_SCAN_POINTS)))
 
             _apb_cfg_s2 = self.cfg.get("re_phase4_ap_bounds_deg")
-
             if _apb_cfg_s2 is not None:
                 _vb = np.asarray(_apb_cfg_s2, dtype=np.float64).ravel()
-
                 if _vb.size >= 2:
                     _c0, _c1 = float(_vb[0]), float(_vb[1])
-
                     if 0.0 < _c0 < _c1 < 90.0:
                         _lo_ap_s2, _hi_ap_s2 = _c0, _c1
 
             _p4_fd_ap_s2 = float(self.cfg.get("re_p4_ap_fd_step_deg", RE_P4_AP_FD_STEP_DEG))
-
             _p4_tol_s2 = float(self.cfg.get("re_phase4_trf_tol_factor", RE_PHASE4_TRF_TOL_FACTOR))
-
-            _p4_nfev_s2 = max(
-                8,
-                int(
-                    self.cfg.get(
-                        "re_phase4_ep_stage_max_nfev",
-                        self.cfg.get(
-                            "re_phase4_trf_max_nfev",
-                            RE_PHASE4_TRF_MAX_NFEV,
-                        ),
-                    )
-                ),
-            )
+            _p4_nfev_s2 = max(8, int(self.cfg.get("re_phase4_ep_stage_max_nfev", self.cfg.get("re_phase4_trf_max_nfev", RE_PHASE4_TRF_MAX_NFEV))))
 
             L._re_state["is_phase4"] = True
 
@@ -1412,11 +1582,7 @@ class REWorker(QThread):
                 float(b_lam[1]),
             )
 
-            b_lb_pf = np.array([float(b[0]) for b in bounds_spref], dtype=np.float64)
-
-            b_ub_pf = np.array([float(b[1]) for b in bounds_spref], dtype=np.float64)
-
-            bounds_pf_trf = (b_lb_pf, b_ub_pf)
+            bounds_pf_trf = _build_p2_prefit_bounds(bounds_spref)
 
             try:
                 res_pf = least_squares(
@@ -1562,8 +1728,6 @@ class REWorker(QThread):
                 success=False,
             )
 
-        x_end = res_p2.x
-        # R2: warn if TRF did not converge
         if not getattr(res_p2, "success", True):
             logging.warning(
                 "RE phase 2b: TRF did not converge (nfev=%d, message=%s)",
@@ -1571,38 +1735,22 @@ class REWorker(QThread):
                 getattr(res_p2, "message", "unknown"),
             )
 
-        ep_end = np.asarray(x_end[:n_layers_count], dtype=np.float64).flatten()
-
-        dh_end = np.asarray(x_end[i0 : i0 + nk], dtype=np.float64).flatten()
-
-        dl_end = np.asarray(x_end[i0 + nk : i_lam], dtype=np.float64).flatten()
-
-        lam_end = float(x_end[i_lam])
-
+        ep_end, dh_end, dl_end, lam_end, th_end, rmse_p2, rmse_qwot_p2, rmse_comb_p2 = _build_phase2b_output(
+            res_p2=res_p2,
+            x0_p2=x0_p2,
+            cb2_ref=cb2_ref,
+            n_layers_count=n_layers_count,
+            nk=nk,
+            i0=i0,
+            i_lam=i_lam,
+            i_cu=i_cu,
+            use_sub_c3=use_sub_c3,
+            report_mse_spectral=report_mse_spectral,
+            compute_qwot_rmse=compute_qwot_rmse,
+            rmse_combined=rmse_combined,
+            alpha_slot=alpha_slot,
+        )
         knots_end = re_knots_wavelengths(lam_end)
-
-        if use_sub_c3:
-            th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()
-
-            cor_end = (
-                "spline_sub3",
-                dh_end,
-                dl_end,
-                lam_end,
-                float(th_end[0]),
-                float(th_end[1]),
-                float(th_end[2]),
-            )
-
-        else:
-            cor_end = ("spline", dh_end, dl_end, lam_end)
-            th_end = None
-
-        rmse_p2 = float(np.sqrt(max(report_mse_spectral(ep_end, cor_end), 0.0)))
-
-        rmse_qwot_p2 = compute_qwot_rmse(ep_end, cor_end)
-
-        rmse_comb_p2 = rmse_combined(rmse_p2, rmse_qwot_p2)
 
         _dt_p2 = time.perf_counter() - _t_p2
 
@@ -1620,26 +1768,19 @@ class REWorker(QThread):
             f"RMSE={rmse_comb_p2:.5f}, nfev={res_p2.nfev}",
         )
 
-        phase2_result = REPhase2Result(
-            label=RE_RESULT_LABEL_WITH_DRIFT,
-            ep=np.asarray(ep_end, dtype=np.float64).flatten(),
-            a=0.0,
-            b=0.0,
-            f=0.0,
-            re_dh_knots=np.asarray(dh_end, dtype=np.float64).flatten(),
-            re_dl_knots=np.asarray(dl_end, dtype=np.float64).flatten(),
-            re_knots_nm=np.asarray(knots_end, dtype=np.float64).flatten(),
-            re_spline_lam_node2_nm=float(lam_end),
-            rmse=float(rmse_p2),
-            rmse_qwot=float(rmse_qwot_p2),
-            rmse_combined=float(rmse_comb_p2),
-            nfev=int(res_p2.nfev),
-            success=bool(res_p2.success),
-            nfev_phase1=int(nfev_p1),
-            nfev_phase2_prefit=int(nfev_phase2_prefit),
-            re_sub_cauchy_a0=float(th_end[0]) if use_sub_c3 else None,
-            re_sub_cauchy_a1=float(th_end[1]) if use_sub_c3 else None,
-            re_sub_cauchy_a2=float(th_end[2]) if use_sub_c3 else None,
+        phase2_result = _build_phase2_result(
+            res_p2=res_p2,
+            ep_end=ep_end,
+            dh_end=dh_end,
+            dl_end=dl_end,
+            knots_end=knots_end,
+            lam_end=lam_end,
+            rmse_p2=rmse_p2,
+            rmse_qwot_p2=rmse_qwot_p2,
+            rmse_comb_p2=rmse_comb_p2,
+            nfev_p1=nfev_p1,
+            nfev_phase2_prefit=nfev_phase2_prefit,
+            th_end=th_end,
         )
         return phase2_result.to_legacy_dict()
 
@@ -1685,36 +1826,20 @@ class REWorker(QThread):
         if p4_trf_nfev <= 0 or self._stop:
             return p4_trf_wall_s, p4_trf_mse_evals, p4_best_seen_rmse
 
-        x0_p4 = np.concatenate(
-            [
-                x0_base,
-                np.full(nap, float(best_ap), dtype=np.float64),
-            ]
-        )
-
-        bounds_p4 = (
-            np.concatenate(
-                [
-                    bounds_p2_trf[0],
-                    np.full(nap, float(lo_ap), dtype=np.float64),
-                ]
-            ),
-            np.concatenate(
-                [
-                    bounds_p2_trf[1],
-                    np.full(nap, float(hi_ap), dtype=np.float64),
-                ]
-            ),
-        )
+        x0_p4 = np.concatenate([x0_base, np.full(nap, float(best_ap), dtype=np.float64)])
+        bounds_p4 = _build_phase4_aperture_bounds(bounds_p2_trf, nap, lo_ap, hi_ap)
 
         i_ap0 = len(x0_p4) - nap
 
-        def _fun_res_p4(xv) -> Any:
+        def _restore_aperture_knots(xv: np.ndarray) -> None:
             re_state["re_aperture_knots"][:] = xv[i_ap0 : i_ap0 + nap]
+
+        def _fun_res_p4(xv) -> Any:
+            _restore_aperture_knots(xv)
             return fun_res_p2(xv[:i_ap0], emit_interval=8.0)
 
         def _jac_res_p4(xv_full: np.ndarray) -> np.ndarray:
-            re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + nap]
+            _restore_aperture_knots(xv_full)
             eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
             r0 = np.asarray(cb2_ref[0]["res"], dtype=np.float64).copy()
             j0 = np.asarray(cb2_ref[0]["jac"], dtype=np.float64).copy()
@@ -1724,21 +1849,18 @@ class REWorker(QThread):
             for _k in range(nap):
                 _ik = i_ap0 + _k
                 _xk = float(xv_full[_ik])
-                _hi = float(b_hi[_ik])
-                _lo = float(b_lo[_ik])
-                _step = min(p4_fd_ap, _hi - _xk)
+                _step = min(p4_fd_ap, float(b_hi[_ik]) - _xk)
                 if _step < 1e-12:
-                    _step = max(-p4_fd_ap, _lo - _xk)
+                    _step = max(-p4_fd_ap, float(b_lo[_ik]) - _xk)
                 if abs(_step) < 1e-15:
                     continue
                 xv_p = np.array(xv_full, dtype=np.float64, copy=True)
                 xv_p[_ik] = _xk + _step
-                re_state["re_aperture_knots"][:] = xv_p[i_ap0 : i_ap0 + nap]
+                _restore_aperture_knots(xv_p)
                 eval_both_p2(xv_p[:i_ap0], emit_interval=1.0e9)
-                rk = np.asarray(cb2_ref[0]["res"], dtype=np.float64)
-                j_ap[:, _k] = (rk - r0) / _step
+                j_ap[:, _k] = (np.asarray(cb2_ref[0]["res"], dtype=np.float64) - r0) / _step
 
-            re_state["re_aperture_knots"][:] = xv_full[i_ap0 : i_ap0 + nap]
+            _restore_aperture_knots(xv_full)
             eval_both_p2(xv_full[:i_ap0], emit_interval=1.0e9)
             return np.hstack([j0, j_ap])
 
@@ -1814,38 +1936,20 @@ class REWorker(QThread):
                 else None
             )
 
-            logging.info(
-                "RE phase 4 TRF summary | success=%s | nfev=%d njev=%d | "
-                "cost_final=%.8g optimality=%.4g | cost_init_scan_ap=%s | "
-                "ap_init_deg=%s ap_final_deg=%s | msg=%s | "
-                "tune: re_phase4_trf_max_nfev re_phase4_trf_tol_factor re_p4_ap_fd_step_deg",
-                res_p4.success,
-                int(res_p4.nfev),
-                _njev,
-                _cost_f,
-                _opt,
-                (f"{_cost_0:.8g}" if _cost_0 is not None else "n/a"),
-                np.array2string(_ap_i, precision=2, separator=","),
-                np.array2string(_ap_f, precision=2, separator=","),
-                str(getattr(res_p4, "message", "")).replace("\n", " "),
-            )
-
-            logging.info(
-                "RE phase 4 TRF plateaus | init=%s | final=%s",
-                _re_p4_ap_band_intervals_str(kn_log, _ap_i, wmin_obj, wmax_obj),
-                _re_p4_ap_band_intervals_str(kn_log, _ap_f, wmin_obj, wmax_obj),
-            )
-
-            logging.info(
-                "RE phase 4 TRF profile | wall_s=%.4f | MSE_ep_count_since_TRF_reset=%d | "
-                "ls_nfev=%d | jac: ~njev\u00d7(1+%d) MSE_ep (1 residu + %d FD ap_knots + restore) | "
-                "s_per_ls_nfev%.5f | opt: re_phase4_trf_max_nfev tol_factor ou jac ap analytique",
-                p4_trf_wall_s,
-                p4_trf_mse_evals,
-                int(res_p4.nfev),
-                nap,
-                nap,
-                p4_trf_wall_s / max(int(res_p4.nfev), 1),
+            _log_phase4_trf_summary(
+                res_p4=res_p4,
+                _cost_0=_cost_0,
+                _cost_f=_cost_f,
+                _opt=_opt,
+                _njev=_njev,
+                _ap_i=_ap_i,
+                _ap_f=_ap_f,
+                kn_log=kn_log,
+                wmin_obj=wmin_obj,
+                wmax_obj=wmax_obj,
+                p4_trf_wall_s=p4_trf_wall_s,
+                p4_trf_mse_evals=p4_trf_mse_evals,
+                nap=nap,
             )
 
             insert_p4_result(
@@ -2539,22 +2643,11 @@ class REWorker(QThread):
 
         # --- QWOT RMSE helper (re_delta_qwot_per_layer = residu TRF) ---
 
-        _dz_qw_cfg = float(self.cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
-
         _qwot_helpers = self._build_qwot_helpers(ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, re_env_s, _lref_arr, _alpha_slot)
         _get_delta_qwot = _qwot_helpers["_get_delta_qwot"]
         _compute_qwot_rmse = _qwot_helpers["_compute_qwot_rmse"]
         _compute_qwot_rmse_raw = _qwot_helpers["_compute_qwot_rmse_raw"]
         _rmse_combined = _qwot_helpers["_rmse_combined"]
-
-        wls_display, n_sub_disp, n_lay_disp = re_live_plot_wls_and_dispersion_nk(
-            mats,
-            stack,
-            wls_min,
-            wls_max,
-            float_dtype=float_dtype,
-            complex_dtype=complex_dtype,
-        )
 
         _re_env_on_wls_disp = re_envelope_max_delta_n(wls_display, scale=re_env_s)
 
@@ -3213,6 +3306,64 @@ class REWorker(QThread):
 
 
 
+    def _build_cached_spline_correc(
+        self,
+        ctx,
+        dh: np.ndarray,
+        dl: np.ndarray,
+        lam: float,
+        tk_w_c: np.ndarray,
+        cached: bool = True,
+        b_mat_c: np.ndarray | None = None,
+        env_c: np.ndarray | None = None,
+        th4: np.ndarray | None = None,
+    ) -> tuple:
+        if ctx._use_sub_c3:
+            th = th4 if th4 is not None else np.zeros(3)
+            if cached:
+                return (
+                    "spline_cached_sub3",
+                    dh,
+                    dl,
+                    float(lam),
+                    b_mat_c,
+                    env_c,
+                    tk_w_c,
+                    float(th[0]),
+                    float(th[1]),
+                    float(th[2]),
+                )
+            else:
+                return (
+                    "spline_sub3",
+                    dh,
+                    dl,
+                    float(lam),
+                    tk_w_c,
+                    float(th[0]),
+                    float(th[1]),
+                    float(th[2]),
+                )
+        else:
+            if cached:
+                return (
+                    "spline_cached",
+                    dh,
+                    dl,
+                    float(lam),
+                    b_mat_c,
+                    env_c,
+                    tk_w_c,
+                )
+            else:
+                return (
+                    "spline",
+                    dh,
+                    dl,
+                    float(lam),
+                    tk_w_c,
+                )
+
     def _evaluate_p2_fd_derivative(
         self,
         ctx,
@@ -3484,19 +3635,39 @@ class REWorker(QThread):
                 J_var[:, jj] = j_col
 
         else:
+            _fd_executor_kind = str(self.cfg.get("re_phase2_fd_executor", "thread")).lower()
             _ex_p2 = _c.get("fd_executor")
 
             if _ex_p2 is None:
-                _ex_p2 = ThreadPoolExecutor(max_workers=_nw_j)
+                if _fd_executor_kind == "process":
+                    _ex_p2 = ProcessPoolExecutor(max_workers=_nw_j)
+                else:
+                    _ex_p2 = ThreadPoolExecutor(max_workers=_nw_j)
 
                 _c["fd_executor"] = _ex_p2
 
-            _f_p2 = [_ex_p2.submit(_p2_fd_j_res, j) for j in _active_js]
-
-            for _fu in as_completed(_f_p2):
-                jj, j_col = _fu.result()
-
-                J_var[:, jj] = j_col
+            try:
+                _f_p2 = [_ex_p2.submit(_p2_fd_j_res, j) for j in _active_js]
+                for _fu in as_completed(_f_p2):
+                    jj, j_col = _fu.result()
+                    J_var[:, jj] = j_col
+            except Exception:
+                if _fd_executor_kind == "process":
+                    logging.getLogger(__name__).warning(
+                        "RE phase2 FD process executor fallback to threads", exc_info=True
+                    )
+                    try:
+                        _ex_p2.shutdown(wait=False, cancel_futures=True)
+                    except (AttributeError, RuntimeError, ValueError):
+                        pass
+                    _fallback = ThreadPoolExecutor(max_workers=_nw_j)
+                    _c["fd_executor"] = _fallback
+                    _f_p2 = [_fallback.submit(_p2_fd_j_res, j) for j in _active_js]
+                    for _fu in as_completed(_f_p2):
+                        jj, j_col = _fu.result()
+                        J_var[:, jj] = j_col
+                else:
+                    raise
 
         if ctx._use_sub_c3:
             J_spl = J_var[:, :ctx.n_sp]

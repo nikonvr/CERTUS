@@ -6,6 +6,12 @@ import pytest
 
 from certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 
+try:
+    from certus_strat_workers import LiveFeedMonitor
+    STRAT_WORKERS_AVAILABLE = True
+except ImportError:
+    STRAT_WORKERS_AVAILABLE = False
+
 
 @pytest.mark.unit
 def test_worker_thread_request_from_legacy_copies_payload() -> None:
@@ -77,3 +83,53 @@ def test_worker_thread_result_step33_to_legacy_dict() -> None:
     payload = dto.to_legacy_dict()
     assert payload["opti_results"] == {"ctx": 1}
     assert payload["final_results"] == {"external": True}
+
+
+@pytest.mark.skipif(not STRAT_WORKERS_AVAILABLE, reason="certus_strat_workers non disponible")
+class TestLiveFeedMonitor:
+    def test_poll_emits_latest_package(self) -> None:
+        from unittest.mock import Mock
+        import queue as queue_mod
+
+        class DummyQueue:
+            def __init__(self, items):
+                self.items = list(items)
+
+            def empty(self):
+                return not self.items
+
+            def get_nowait(self):
+                return self.items.pop(0)
+
+            def get(self, timeout=0.5):
+                if self.items:
+                    return self.items.pop(0)
+                raise queue_mod.Empty
+
+        signals = Mock()
+        signals.update_live_growth = Mock()
+        q = DummyQueue([{"strategy": "s1", "robustness_score": 0.9}])
+        monitor = LiveFeedMonitor(q, signals, [1.0, 2.0], {"a": 1})
+        monitor._poll()
+        assert signals.update_live_growth.emit.called
+
+    def test_stop_emits_finished(self) -> None:
+        from unittest.mock import Mock
+        import queue as queue_mod
+
+        class DummyQueue:
+            def empty(self):
+                return True
+
+            def get_nowait(self):
+                raise queue_mod.Empty
+
+            def get(self, timeout=0.5):
+                raise queue_mod.Empty
+
+        signals = Mock()
+        signals.update_live_growth = Mock()
+        monitor = LiveFeedMonitor(DummyQueue(), signals, [1.0], {"a": 1})
+        monitor.finished = Mock()
+        monitor.stop()
+        monitor.finished.emit.assert_called_once()

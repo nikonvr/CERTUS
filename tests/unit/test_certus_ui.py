@@ -296,7 +296,7 @@ class TestCertusTheme:
             # 1. Test configure("dark") syncs variables
             CertusTheme.configure("dark")
             assert CertusTheme.DARK_MODE is True
-            assert CertusTheme.BACKGROUND == "#0b1220"
+            assert CertusTheme.BACKGROUND == "#0f172a"
             assert CertusTheme.WARNING == "#fbbf24"
             assert CertusTheme.BASE_ELEVATED == "#111827"
             assert CertusTheme.ELEVATED == "#1f2937"
@@ -305,7 +305,7 @@ class TestCertusTheme:
             # 2. Test configure("light") syncs variables
             CertusTheme.configure("light")
             assert CertusTheme.DARK_MODE is False
-            assert CertusTheme.BACKGROUND == "#f8f9fa"
+            assert CertusTheme.BACKGROUND == "#f1f5f9"
             assert CertusTheme.WARNING == "#b45309"
             assert CertusTheme.BASE_ELEVATED == "#ffffff"
             assert CertusTheme.ELEVATED == "#f1f3f5"

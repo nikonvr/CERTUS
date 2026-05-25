@@ -16,6 +16,12 @@ from certus_re_workers import (
     REPhaseStateService,
     REPhasesService,
     REWorkerRequest,
+    _build_phase2_result,
+    _build_phase2b_output,
+    _build_p2_prefit_bounds,
+    _build_phase4_aperture_bounds,
+    _phase4_aperture_slice,
+    _prepare_phase2_fd_settings,
     _prepend_result_dto,
     _replace_all_with_top_dto,
     _result_dto_at,
@@ -32,7 +38,9 @@ class _DummyWorker:
             _re_state={"is_phase4": True},
             _use_sub_c3_shared=True,
             _p2_ctx={"pre": 1},
+            _env_knot=np.array([1.0, 2.0], dtype=np.float64),
         )
+        self.cfg = {"re_phase2_fd_executor": "process", "re_phase2_fd_parallel": True}
 
     def _execute_phase1(self):
         self.calls.append("phase1")
@@ -93,6 +101,26 @@ def test_re_phase_state_service_prepares_phase2_state() -> None:
     assert worker._re_phase_ns._re_state["is_phase4"] is False
     assert worker._re_phase_ns._use_sub_c3_shared is False
     assert worker._re_phase_ns._p2_ctx == {}
+
+
+@pytest.mark.unit
+def test_prepare_phase2_fd_settings_defaults_to_process_executor() -> None:
+    worker = _DummyWorker()
+    settings = _prepare_phase2_fd_settings(worker, re_env_s=1.0)
+    assert settings["_fd_par"] is True
+    assert settings["_fd_nw"] >= 1
+    assert settings["_nk"] > 0
+    assert settings["_knot0"].ndim == 1
+    assert settings["_env_knot"].shape == settings["_knot0"].shape
+
+
+@pytest.mark.unit
+def test_build_p2_prefit_bounds_returns_float64_bounds() -> None:
+    lb, ub = _build_p2_prefit_bounds([(0, 1), (2.5, 3.5)])
+    assert lb.dtype == np.float64
+    assert ub.dtype == np.float64
+    np.testing.assert_allclose(lb, [0.0, 2.5])
+    np.testing.assert_allclose(ub, [1.0, 3.5])
 
 
 @pytest.mark.unit
@@ -366,6 +394,56 @@ def test_re_phase4_result_from_legacy_dict_supports_pre_p4_payload() -> None:
     assert dto.re_p4_beam_ap_knots_deg.size == 0
 
 
+def test_build_phase2_result_constructs_expected_dto() -> None:
+    res_p2 = SimpleNamespace(nfev=12, success=True)
+    dto = _build_phase2_result(
+        res_p2=res_p2,
+        ep_end=np.array([1.1, 1.2], dtype=np.float64),
+        dh_end=np.array([0.01, 0.02], dtype=np.float64),
+        dl_end=np.array([0.03, 0.04], dtype=np.float64),
+        knots_end=np.array([500.0, 600.0], dtype=np.float64),
+        lam_end=600.0,
+        rmse_p2=0.5,
+        rmse_qwot_p2=0.6,
+        rmse_comb_p2=0.7,
+        nfev_p1=10,
+        nfev_phase2_prefit=4,
+        th_end=None,
+    )
+    legacy = dto.to_legacy_dict()
+    assert legacy["nfev"] == 12
+    assert legacy["success"] is True
+    assert np.allclose(legacy["ep"], [1.1, 1.2])
+
+
+def test_build_phase2b_output_reconstructs_metrics() -> None:
+    res_p2 = SimpleNamespace(x=np.array([1.0, 1.1, 0.01, 0.02, 0.03, 0.04, 600.0], dtype=np.float64))
+    out = _build_phase2b_output(
+        res_p2=res_p2,
+        x0_p2=np.array([1.0], dtype=np.float64),
+        cb2_ref=[{"res": None, "jac": None}],
+        n_layers_count=2,
+        nk=2,
+        i0=2,
+        i_lam=6,
+        i_cu=0,
+        use_sub_c3=False,
+        report_mse_spectral=lambda ep, cor: 0.25,
+        compute_qwot_rmse=lambda ep, cor: 0.5,
+        rmse_combined=lambda a, b: a + b,
+        alpha_slot=[0.1],
+    )
+    ep_end, dh_end, dl_end, lam_end, th_end, rmse_p2, rmse_qwot_p2, rmse_comb_p2 = out
+    np.testing.assert_allclose(ep_end, [1.0, 1.1])
+    np.testing.assert_allclose(dh_end, [0.01, 0.02])
+    np.testing.assert_allclose(dl_end, [0.03, 0.04])
+    assert lam_end == 600.0
+    assert th_end is None
+    assert rmse_p2 == pytest.approx(0.5)
+    assert rmse_qwot_p2 == pytest.approx(0.5)
+    assert rmse_comb_p2 == pytest.approx(1.0)
+
+
 @pytest.mark.unit
 def test_top_result_dto_returns_none_for_empty_and_maps_first_item() -> None:
     assert _top_result_dto([]) is None
@@ -419,4 +497,21 @@ def test_replace_all_with_top_dto_keeps_single_item() -> None:
     _replace_all_with_top_dto(rows, b)
     assert len(rows) == 1
     assert rows[0]["label"] == "b"
+
+
+def test_build_phase4_aperture_bounds_appends_aperture_columns() -> None:
+    lo = np.array([0.0, 1.0], dtype=np.float64)
+    hi = np.array([10.0, 11.0], dtype=np.float64)
+    b_lo, b_hi = _build_phase4_aperture_bounds((lo, hi), 3, 5.0, 15.0)
+    assert b_lo.shape == (5,)
+    assert b_hi.shape == (5,)
+    np.testing.assert_allclose(b_lo[-3:], 5.0)
+    np.testing.assert_allclose(b_hi[-3:], 15.0)
+
+
+def test_phase4_aperture_slice_extracts_contiguous_values() -> None:
+    x = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=np.float64)
+    out = _phase4_aperture_slice(x, 1, 3)
+    np.testing.assert_allclose(out, [2.0, 3.0, 4.0])
+    assert out.dtype == np.float64
 

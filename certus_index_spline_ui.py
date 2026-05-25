@@ -11552,25 +11552,24 @@ class CertusIndexSplineApp(
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            from certus_result_schema import validate_project_dict
+            validate_project_dict(data)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             QMessageBox.warning(dlg, "Load index config", f"Load failed: {exc}")
             return
+        except Exception as exc:
+            from certus_errors import CorruptedProjectError
+            if isinstance(exc, CorruptedProjectError):
+                QMessageBox.warning(dlg, "Load failed - Invalid Config", exc.full_message)
+            else:
+                QMessageBox.warning(dlg, "Load index config", f"Validation error: {exc}")
+            return
 
-        loaded_sk = np.asarray(data.get("sigma_knots", []), dtype=np.float64).ravel()
-        loaded_n = np.asarray(data.get("n_nodes_physical", []), dtype=np.float64).ravel()
-        loaded_L = np.asarray(data.get("L_nodes", []), dtype=np.float64).ravel()
-        loaded_d = float(data.get("d_nm", state.preview_d_nm))
+        loaded_sk = np.asarray(data.get("sigma_knots"), dtype=np.float64).ravel()
+        loaded_n = np.asarray(data.get("n_nodes_physical"), dtype=np.float64).ravel()
+        loaded_L = np.asarray(data.get("L_nodes"), dtype=np.float64).ravel()
+        loaded_d = float(data.get("d_nm"))
 
-        if loaded_sk.size < 2:
-            QMessageBox.warning(dlg, "Load index config", "Invalid config: need at least 2 sigma knots.")
-            return
-        if loaded_n.size != loaded_sk.size or loaded_L.size != loaded_sk.size:
-            QMessageBox.warning(dlg, "Load index config", "Invalid config: knot vector sizes are inconsistent.")
-            return
-        if not (np.all(np.isfinite(loaded_sk)) and np.all(np.isfinite(loaded_n))
-                and np.all(np.isfinite(loaded_L)) and np.isfinite(loaded_d)):
-            QMessageBox.warning(dlg, "Load index config", "Invalid config: contains non-finite values.")
-            return
 
         order = np.argsort(loaded_sk, kind="mergesort")
         loaded_sk = loaded_sk[order]

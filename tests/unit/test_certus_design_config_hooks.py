@@ -86,6 +86,19 @@ def test_design_load_config_delegates_to_hooks_and_recent():
         assert needle in src, f"load_config does not call {needle}"
 
 
+def test_design_apply_config_delegates_to_small_helpers():
+    from CERTUS_DESIGN import CertusDesignApp
+
+    src = inspect.getsource(CertusDesignApp._apply_config)
+    for needle in (
+        "_apply_material_config",
+        "_apply_stack_rows",
+        "_apply_target_config",
+        "_apply_optimization_config",
+    ):
+        assert needle in src, f"_apply_config does not call {needle}"
+
+
 def test_design_smart_cleanup_preserved_in_save_flow():
     """The smart_cleanup pre-processing must still live in the save pipeline."""
     from CERTUS_DESIGN import CertusDesignApp

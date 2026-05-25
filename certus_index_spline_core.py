@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from functools import lru_cache
 from typing import Any, Callable
 
 import numpy as np
@@ -830,11 +831,19 @@ def build_sigma_knots_log_uniform(lam_min_nm: float, lam_max_nm: float, n_seg: i
 
     sig_max = 1.0 / max(lo, 1e-9)
 
-    k = int(n_seg) + 1
-
-    k = max(2, k)
+    k = max(2, int(n_seg) + 1)
 
     return np.exp(np.linspace(np.log(sig_min), np.log(sig_max), k)).astype(np.float64)
+
+
+@lru_cache(maxsize=128)
+def _canonical_sigma_knots_cached(lam_min_nm: float, lam_max_nm: float, min_delta_lambda_over_lambda_mean: float | None) -> tuple[float, ...]:
+    """Cache the canonical mesh key to avoid rebuilding identical grids repeatedly."""
+
+    kw = {}
+    if min_delta_lambda_over_lambda_mean is not None:
+        kw["min_delta_lambda_over_lambda_mean"] = float(min_delta_lambda_over_lambda_mean)
+    return tuple(canonical_spline_sigma_knots(lam_min_nm, lam_max_nm, **kw).tolist())
 
 
 def _canonical_knots_min_lambda_kw(cfg: SplineOptConfig | None) -> dict[str, float]:
@@ -1050,6 +1059,56 @@ def canonical_spline_sigma_knots(
         )
 
     return out
+
+
+def _extract_smart_preview_override(cfg: SplineOptConfig, over: tuple, k: int) -> tuple[np.ndarray | None, np.ndarray | None, float | None]:
+    """Validate and normalize a smart-preview override tuple."""
+
+    n_ov, L_ov = over
+    n_ov = np.asarray(n_ov, dtype=np.float64).ravel()
+    L_ov = np.asarray(L_ov, dtype=np.float64).ravel()
+    if not (n_ov.size == k and L_ov.size == k):
+        return None, None, None
+    d_ov = getattr(cfg, "smart_preview_d_nm_override", None)
+    return n_ov, L_ov, d_ov
+
+
+def _apply_smart_preview_exact_mesh(cfg: SplineOptConfig, sk_exact, pair_ex, lam_min: float, lam_max: float) -> int:
+    """Rebuild the worker mesh from manual smart-preview knots."""
+
+    sk_e = np.asarray(sk_exact, dtype=np.float64).ravel()
+    ne, Le = pair_ex
+    ne = np.asarray(ne, dtype=np.float64).ravel()
+    Le = np.asarray(Le, dtype=np.float64).ravel()
+    cfg.smart_preview_exact_sigma_knots = None
+    cfg.smart_preview_exact_n_L = None
+    if not (sk_e.size >= 2 and ne.size == sk_e.size and Le.size == sk_e.size):
+        return int(sk_e.size)
+    _mdl = getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.02)
+    try:
+        _mdl_f = float(_mdl)
+    except (TypeError, ValueError):
+        _mdl_f = 0.0
+    sk_canon = bridge_sigma_knots_preserve_manual(sk_e, lam_min, lam_max, rmse_fit_lambda_nm=getattr(cfg, "rmse_fit_lambda_nm", None), min_delta_lambda_over_lambda_mean=_mdl_f if _mdl_f > 0.0 else None)
+    ne, Le = interp_n_L_pwlnk_to_sigmas(sk_e, ne, Le, sk_canon, diag_log=logger if int(sk_e.size) != int(sk_canon.size) else None, diag_tag="INDEX_SPLINE_smart_init_Ksrc_to_worker_mesh")
+    cfg.n_seg = int(sk_canon.size) - 1
+    d_ex = getattr(cfg, "smart_preview_d_nm_override", None)
+    d_use = float(d_ex) if (d_ex is not None and np.isfinite(float(d_ex))) else None
+    _, x0 = build_x0_smart_preview_exact(cfg, sk_canon, ne, Le, d_use)
+    acc_rmse = getattr(cfg, "smart_preview_accepted_rmse", None)
+    rmse_s = ""
+    if acc_rmse is not None and np.isfinite(float(acc_rmse)):
+        rmse_s = f" RMSE (spline objective, √MSE) after manual tuning: {float(acc_rmse):.6f};"
+    logger.info(
+        "INDEX_SPLINE [Smart Init]: restarting on worker mesh K=%s sigma nodes / %s segments "
+        "(manual nodes preserved + additions if needed); "
+        "n and ln k: dialogue snap + linear sigma interp. + edge extrap. (no plateau);%s d=%.2f nm.",
+        int(sk_canon.size),
+        int(cfg.n_seg),
+        rmse_s,
+        float(x0[0]),
+    )
+    return int(sk_canon.size)
 
 
 def bridge_sigma_knots_preserve_manual(
@@ -2858,36 +2917,27 @@ def _bounds_x0_for_sigma_knots(
     dim = 1 + 2 * k
 
     k_hi = float(min(max(cfg.k_clip_hi, cfg.k_clip_lo * 1.0001), float(K_MAX_LIMIT)))
-
     L_lo = float(max(np.log(max(cfg.k_clip_lo, 1e-30)), L_LNK_MIN_PHYS))
-
     L_hi = float(np.log(k_hi))
 
-    bounds = np.zeros((dim, 2), dtype=np.float64)
+    bounds = np.empty((dim, 2), dtype=np.float64)
 
-    bounds[0] = [float(min(cfg.d_lo, cfg.d_hi)), float(max(cfg.d_lo, cfg.d_hi))]
+    d_lo = float(min(cfg.d_lo, cfg.d_hi))
+    d_hi = float(max(cfg.d_lo, cfg.d_hi))
+    bounds[0] = (d_lo, d_hi)
 
     xi_lo, xi_hi = N_MONO_XI_BOUNDS
+    n_lo, n_hi = (N_MIN_LIMIT, N_MAX_LIMIT) if cfg.n_mono_band_nm is None else (float(xi_lo), float(xi_hi))
+    bounds[1 : 1 + k] = (n_lo, n_hi)
+    bounds[1 + k : 1 + 2 * k] = (L_lo, L_hi)
+
+    x0 = bounds.mean(axis=1)
+    x0[0] = float(np.clip(0.5 * (cfg.d_lo + cfg.d_hi), d_lo, d_hi))
 
     if cfg.n_mono_band_nm is None:
-        bounds[1 : 1 + k] = [N_MIN_LIMIT, N_MAX_LIMIT]
-
+        x0[1 : 1 + k] = 1.65
     else:
-        bounds[1 : 1 + k] = [float(xi_lo), float(xi_hi)]
-
-    bounds[1 + k : 1 + 2 * k] = [L_lo, L_hi]
-
-    x0 = 0.5 * (bounds[:, 0] + bounds[:, 1])
-
-    x0[0] = float(np.clip(0.5 * (cfg.d_lo + cfg.d_hi), bounds[0, 0], bounds[0, 1]))
-
-    if cfg.n_mono_band_nm is None:
-        x0[1 : 1 + k] = np.clip(1.65, N_MIN_LIMIT, N_MAX_LIMIT)
-
-    else:
-        n_flat = np.full(k, 1.65, dtype=np.float64)
-
-        x0[1 : 1 + k] = physical_nodes_to_x_slice_n(n_flat, sk, cfg.n_mono_band_nm)
+        x0[1 : 1 + k] = physical_nodes_to_x_slice_n(np.full(k, 1.65, dtype=np.float64), sk, cfg.n_mono_band_nm)
 
     x0[1 + k : 1 + 2 * k] = np.clip(np.log(1e-3), L_lo, L_hi)
 
@@ -2906,28 +2956,22 @@ def build_x0_smart_preview_exact(
     """(bounds, x0) identical to the ``sk_exact`` block of ``make_bounds_and_x0`` (without cfg mutation)."""
 
     sk_a = np.asarray(sk, dtype=np.float64).ravel()
-
-    k = int(sk_a.size)
-
     ne_a = np.asarray(ne, dtype=np.float64).ravel()
-
     Le_a = np.asarray(Le, dtype=np.float64).ravel()
 
+    k = int(sk_a.size)
     if ne_a.size != k or Le_a.size != k:
         raise ValueError("build_x0_smart_preview_exact: mismatching sizes for ne, Le and sk")
 
     bounds, x0, L_lo, L_hi = _bounds_x0_for_sigma_knots(cfg, sk_a)
 
     relax_eff = bool(relax_n_mono) and cfg.n_mono_band_nm is not None
-
     if cfg.n_mono_band_nm is None or relax_eff:
         x0[1 : 1 + k] = np.clip(ne_a, N_MIN_LIMIT, N_MAX_LIMIT)
-
     else:
         x0[1 : 1 + k] = physical_nodes_to_x_slice_n(ne_a, sk_a, cfg.n_mono_band_nm)
 
     x0[1 + k : 1 + 2 * k] = np.clip(Le_a, L_lo, L_hi)
-
     if d_nm is not None and np.isfinite(float(d_nm)):
         x0[0] = float(np.clip(float(d_nm), bounds[0, 0], bounds[0, 1]))
 
@@ -2937,56 +2981,27 @@ def build_x0_smart_preview_exact(
 def make_bounds_and_x0(
     cfg: SplineOptConfig, *, skip_smart_init: bool = False
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """n bounds via certus_core; L_j = ln k_j, k clipped after interpolation.
+    """Build the canonical spline bounds and warm-start vector."""
 
-    If ``skip_smart_init`` is true, does not launch Swanepoel / preview hook (warm-start or bootstrap).
-
-    """
-
-    from spline_smart_init import (
-        compute_smart_init_spectral_preview,
-        guess_smart_x0_from_extrema,
-        interp_n_L_pwlnk_to_sigmas,
-    )
-
-    # Do not let ``x0_warm`` overwrite d / n / L after Smart Init (manual dialog).
+    from spline_smart_init import compute_smart_init_spectral_preview, guess_smart_x0_from_extrema
 
     skip_x0_warm = False
-
     lam_min = float(np.min(cfg.lam_nm))
-
     lam_max = float(np.max(cfg.lam_nm))
-
-
-    # Optimization mesh: single source of truth. K is 12 or 14 depending on lambda_max (IR extension).
-
-    # cfg.n_seg must always be K-1 to remain aligned with SplinePWLObjective and workers.
-
-    sk = canonical_spline_sigma_knots(lam_min, lam_max, **_canonical_knots_min_lambda_kw(cfg))
-
+    sk = np.asarray(_canonical_sigma_knots_cached(lam_min, lam_max, getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.02)), dtype=np.float64)
     k = int(sk.size)
-
     cfg.n_seg = k - 1
 
-    # rmse_fit_lambda_nm only truncates the spectral MSE term **points**; the sigma mesh follows the **entire** file.
-
     rfw = getattr(cfg, "rmse_fit_lambda_nm", None)
-
     if rfw is not None:
         lo_w = float(min(rfw[0], rfw[1]))
-
         hi_w = float(max(rfw[0], rfw[1]))
-
         try:
             from spline_objective import _spline_objective_lam_mask
-
             n_pix_obj = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
-
         except NUMERICAL_FAULT_EXCEPTIONS:
             logger.debug("_spline_objective_lam_mask failed in make_bounds_and_x0", exc_info=True)
-
             n_pix_obj = -1
-
         if lam_max > hi_w + 0.5 or lam_min < lo_w - 0.5:
             logger.info(
                 "INDEX_SPLINE | File lambda [%.2f, %.2f] nm -> canonical sigma mesh K=%d (e.g. IR node at lambda~%.1f nm) ; "
@@ -3009,311 +3024,75 @@ def make_bounds_and_x0(
             int(cfg.n_seg),
         )
 
-    dim = 1 + 2 * k
-
     bounds, x0, L_lo, L_hi = _bounds_x0_for_sigma_knots(cfg, sk)
-
-    # --- NEW : PRIORITE A L'INJECTION MANUELLE ---
-
-    # If we have exact knots or a pending override, we do NOT launch Swanepoel
-
     has_exact = getattr(cfg, "smart_preview_exact_sigma_knots", None) is not None
-
     has_over = getattr(cfg, "smart_preview_node_override", None) is not None
+    preview_hook = getattr(cfg, "smart_init_preview_hook", None)
+    preview_shown = bool(getattr(cfg, "smart_init_preview_shown", False))
 
     logger.debug(
         "INDEX_SPLINE [Smart Init GATE] skip=%s exact=%s over=%s x0_warm=%s hook=%s shown=%s",
-        skip_smart_init, has_exact, has_over, cfg.x0_warm is None,
-        getattr(cfg, "smart_init_preview_hook", None) is not None,
-        bool(getattr(cfg, "smart_init_preview_shown", False)),
+        skip_smart_init,
+        has_exact,
+        has_over,
+        cfg.x0_warm is None,
+        preview_hook is not None,
+        preview_shown,
     )
 
-    if (
-        not skip_smart_init
-        and not (has_exact or has_over)
-        and cfg.x0_warm is None
-        and cfg.t_exp is not None
-        and getattr(cfg, "n_sub", None) is not None
-    ):
+    if not skip_smart_init and not (has_exact or has_over) and cfg.x0_warm is None and cfg.t_exp is not None and getattr(cfg, "n_sub", None) is not None:
         logger.info(
-            "INDEX_SPLINE [Smart Init]: launching Swanepoel on fixed mesh (%s segments -> %s sigma knots) ; "
-            "manual dialog: values re-interpolated on canonical grid if needed.",
+            "INDEX_SPLINE [Smart Init]: launching Swanepoel on fixed mesh (%s segments -> %s sigma knots) ; manual dialog: values re-interpolated on canonical grid if needed.",
             int(cfg.n_seg),
             int(k),
         )
-
-        smart_n, smart_L = guess_smart_x0_from_extrema(
-            cfg.lam_nm, cfg.t_exp, cfg.n_sub, 0.5 * (cfg.d_lo + cfg.d_hi), sk
-        )
-
+        smart_n, smart_L = guess_smart_x0_from_extrema(cfg.lam_nm, cfg.t_exp, cfg.n_sub, 0.5 * (cfg.d_lo + cfg.d_hi), sk)
         if smart_n is not None and smart_L is not None:
-            if cfg.n_mono_band_nm is None:
-                x0[1 : 1 + k] = np.clip(smart_n, N_MIN_LIMIT, N_MAX_LIMIT)
-
-            else:
-                x0[1 : 1 + k] = physical_nodes_to_x_slice_n(smart_n, sk, cfg.n_mono_band_nm)
-
-            x0[1 + k : 1 + 2 * k] = np.clip(smart_L, L_lo, L_hi)
-
-            logger.info("INDEX_SPLINE [Smart Init]: success - injecting n and L profiles from interference extrema.")
-
-            with np.printoptions(precision=3, suppress=True):
-                logger.debug(" -> Profile n_init = %s", np.array2string(smart_n, separator=", "))
-
-                logger.debug(" -> Profile L_init = %s", np.array2string(smart_L, separator=", "))
-
-            with np.printoptions(precision=1, suppress=True):
-                logger.debug(" -> Approx k_init = %s", np.array2string(np.exp(smart_L), separator=", "))
-
             n_prev = np.asarray(smart_n, dtype=np.float64).ravel()
-
             L_prev = np.asarray(smart_L, dtype=np.float64).ravel()
-
+            x0[1 : 1 + k] = np.clip(smart_n, N_MIN_LIMIT, N_MAX_LIMIT) if cfg.n_mono_band_nm is None else physical_nodes_to_x_slice_n(smart_n, sk, cfg.n_mono_band_nm)
+            x0[1 + k : 1 + 2 * k] = np.clip(smart_L, L_lo, L_hi)
+            logger.info("INDEX_SPLINE [Smart Init]: success - injecting n and L profiles from interference extrema.")
         else:
-            logger.warning(
-                "INDEX_SPLINE [Smart Init]: failed (not enough clear fringes or very noisy). Standard fallback (1.65 / 1e-3)."
-            )
-
-            if cfg.n_mono_band_nm is None:
-                n_prev = np.clip(x0[1 : 1 + k], N_MIN_LIMIT, N_MAX_LIMIT)
-
-            else:
-                n_prev = x_slice_n_to_physical_nodes(x0[1 : 1 + k], sk, cfg.n_mono_band_nm)
-
+            logger.warning("INDEX_SPLINE [Smart Init]: failed (not enough clear fringes or very noisy). Standard fallback (1.65 / 1e-3).")
+            n_prev = np.clip(x0[1 : 1 + k], N_MIN_LIMIT, N_MAX_LIMIT) if cfg.n_mono_band_nm is None else x_slice_n_to_physical_nodes(x0[1 : 1 + k], sk, cfg.n_mono_band_nm)
             L_prev = np.clip(x0[1 + k : 1 + 2 * k], L_lo, L_hi)
-
             logger.info("INDEX_SPLINE [Smart Init]: manual dialog with standard x0 (Swanepoel unavailable).")
-
-        hook = getattr(cfg, "smart_init_preview_hook", None)
-
-        logger.info(
-            "INDEX_SPLINE [Smart Init]: preview dispatch check | hook=%s | preview_shown=%s | K_sigma=%d",
-            "set" if hook is not None else "none",
-            bool(getattr(cfg, "smart_init_preview_shown", False)),
-            int(k),
-        )
-
-        if hook is not None and not bool(getattr(cfg, "smart_init_preview_shown", False)):
+        if preview_hook is not None and not preview_shown:
             pv = compute_smart_init_spectral_preview(cfg, sk, n_prev, L_prev, uniform_sigma_nodes=11)
-
-            logger.info(
-                "INDEX_SPLINE [Smart Init]: preview payload built | pv_present=%s | keys=%s",
-                bool(pv is not None),
-                sorted(list(pv.keys())) if isinstance(pv, dict) else [],
-            )
-
-            if pv is not None:
-                logger.info(
-                    "INDEX_SPLINE [Smart Init]: calling GUI hook | payload_K=%d | d_best_nm=%.6f",
-                    int(np.asarray(pv.get("sigma_knots", []), dtype=np.float64).size),
-                    float(pv.get("d_best_nm", float("nan"))),
-                )
-
-                if not hook(pv):
-                    raise SmartInitPreviewCancelled
-
-                logger.info("INDEX_SPLINE [Smart Init]: GUI hook returned success, preview marked as shown")
-
-                cfg.smart_init_preview_shown = True
-
-                over = getattr(cfg, "smart_preview_node_override", None)
-
-                # Note: "Continue" sets both node_override and smart_preview_exact_*; the
-
-                # worker mesh + d are reconstructed in the sk_exact block below. Do not apply over here
-
-                # nor clear smart_preview_d_nm_override - otherwise d falls back to default
-
-                # (e.g. mid-bounds 1700 nm) while the stored RMSE was calculated with final d
-
-                # (e.g. 1698 nm) -> factual FALSE mismatch.
-
-                exact_pending = getattr(cfg, "smart_preview_exact_sigma_knots", None) is not None
-
-                if over is not None and not exact_pending:
-                    n_ov, L_ov = over
-
-                    n_ov = np.asarray(n_ov, dtype=np.float64).ravel()
-
-                    L_ov = np.asarray(L_ov, dtype=np.float64).ravel()
-
-                    accepted = bool(n_ov.size == k and L_ov.size == k)
-
-                    if accepted:
-                        if cfg.n_mono_band_nm is None:
-                            x0[1 : 1 + k] = np.clip(n_ov, N_MIN_LIMIT, N_MAX_LIMIT)
-
-                        else:
-                            x0[1 : 1 + k] = physical_nodes_to_x_slice_n(n_ov, sk, cfg.n_mono_band_nm)
-
-                        x0[1 + k : 1 + 2 * k] = np.clip(L_ov, L_lo, L_hi)
-
-                        d_ov = getattr(cfg, "smart_preview_d_nm_override", None)
-
-                        if d_ov is not None and np.isfinite(float(d_ov)):
-                            x0[0] = float(np.clip(float(d_ov), bounds[0, 0], bounds[0, 1]))
-
-                        logger.info(
-                            "INDEX_SPLINE [Smart Init]: x0 = n, L from preview dialog, "
-                            "on the %s sigma knots of the fixed mesh; d=%.2f nm.",
-                            int(k),
-                            float(x0[0]),
-                        )
-
-                        skip_x0_warm = True
-
-                    cfg.smart_preview_node_override = None
-
-                    cfg.smart_preview_d_nm_override = None
-
-                elif over is not None and exact_pending:
-                    cfg.smart_preview_node_override = None
-
-            else:
-                logger.warning("INDEX_SPLINE [Smart Init]: preview payload is None, manual dialog skipped")
-
-                logger.info(
-                    "INDEX_SPLINE [Smart Init]: spectral preview ignored "
-                    "(wT=0 / no T, or knots mismatch / no hook plot)."
-                )
+            if pv is not None and not preview_hook(pv):
+                raise SmartInitPreviewCancelled
+            cfg.smart_init_preview_shown = True
+            over = getattr(cfg, "smart_preview_node_override", None)
+            exact_pending = getattr(cfg, "smart_preview_exact_sigma_knots", None) is not None
+            if over is not None and not exact_pending:
+                n_ov, L_ov, d_ov = _extract_smart_preview_override(cfg, over, k)
+                if n_ov is not None and L_ov is not None:
+                    x0[1 : 1 + k] = np.clip(n_ov, N_MIN_LIMIT, N_MAX_LIMIT) if cfg.n_mono_band_nm is None else physical_nodes_to_x_slice_n(n_ov, sk, cfg.n_mono_band_nm)
+                    x0[1 + k : 1 + 2 * k] = np.clip(L_ov, L_lo, L_hi)
+                    if d_ov is not None and np.isfinite(float(d_ov)):
+                        x0[0] = float(np.clip(float(d_ov), bounds[0, 0], bounds[0, 1]))
+                    skip_x0_warm = True
+                cfg.smart_preview_node_override = None
+                cfg.smart_preview_d_nm_override = None
+            elif over is not None and exact_pending:
+                cfg.smart_preview_node_override = None
 
     sk_exact = getattr(cfg, "smart_preview_exact_sigma_knots", None)
-
     pair_ex = getattr(cfg, "smart_preview_exact_n_L", None)
-
     if sk_exact is not None and pair_ex is not None:
-        sk_e = np.asarray(sk_exact, dtype=np.float64).ravel()
-
-        ne, Le = pair_ex
-
-        ne = np.asarray(ne, dtype=np.float64).ravel()
-
-        Le = np.asarray(Le, dtype=np.float64).ravel()
-
-        cfg.smart_preview_exact_sigma_knots = None
-
-        cfg.smart_preview_exact_n_L = None
-
-        if sk_e.size >= 2 and ne.size == sk_e.size and Le.size == sk_e.size:
-            # After "Continue" / Autofind: construct a worker K-canonical grid while preserving
-
-            # manual knots; we add knots instead of moving the entire mesh.
-
-            _mdl = getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.02)
-
-            try:
-                _mdl_f = float(_mdl)
-
-            except (TypeError, ValueError):
-                _mdl_f = 0.0
-
-            sk_canon = bridge_sigma_knots_preserve_manual(
-                sk_e,
-                lam_min,
-                lam_max,
-                rmse_fit_lambda_nm=getattr(cfg, "rmse_fit_lambda_nm", None),
-                min_delta_lambda_over_lambda_mean=_mdl_f if _mdl_f > 0.0 else None,
-            )
-
-            # Snap + linear sigma interpolation + edge extrapolation (no np.interp plateau).
-
-            _k_src, _k_cn = int(sk_e.size), int(sk_canon.size)
-
-            ne, Le = interp_n_L_pwlnk_to_sigmas(
-                sk_e,
-                ne,
-                Le,
-                sk_canon,
-                diag_log=logger if _k_src != _k_cn else None,
-                diag_tag="INDEX_SPLINE_smart_init_Ksrc_to_worker_mesh",
-            )
-
-            sk = sk_canon
-
-            k = int(sk.size)
-
-            cfg.n_seg = k - 1
-
-            dim = 1 + 2 * k
-
-            d_ex = getattr(cfg, "smart_preview_d_nm_override", None)
-
-            d_use = float(d_ex) if (d_ex is not None and np.isfinite(float(d_ex))) else None
-
-            bounds, x0 = build_x0_smart_preview_exact(cfg, sk, ne, Le, d_use)
-
-            acc_rmse = getattr(cfg, "smart_preview_accepted_rmse", None)
-
-            rmse_s = ""
-
-            if acc_rmse is not None and np.isfinite(float(acc_rmse)):
-                rmse_s = f" RMSE (spline objective, √MSE) after manual tuning: {float(acc_rmse):.6f};"
-
-            logger.info(
-                "INDEX_SPLINE [Smart Init]: restarting on worker mesh K=%s sigma nodes / %s segments "
-                "(manual nodes preserved + additions if needed); "
-                "n and ln k: dialogue snap + linear sigma interp. + edge extrap. (no plateau);%s d=%.2f nm.",
-                int(k),
-                int(cfg.n_seg),
-                rmse_s,
-                float(x0[0]),
-            )
-
-            ord_sig = np.argsort(sk)
-
-            for rank, idx in enumerate(ord_sig, start=1):
-                sigv = float(sk[idx])
-
-                lamv = 1.0 / max(sigv, 1e-30)
-
-                logger.info(
-                    "INDEX_SPLINE [Smart Init]:   knot %2d/%2d  lambda=%10.4f nm  sigma=%.10e nm⁻1  n=%.6f  ln k=%.6f  k=%.4e",
-                    rank,
-                    int(k),
-                    lamv,
-                    sigv,
-                    float(ne[idx]),
-                    float(Le[idx]),
-                    float(np.exp(float(Le[idx]))),
-                )
-
-            cfg.pglobal_trust_region_by_k = True
-
-            cfg.pglobal_trust_rho_lo = 0.045
-
-            cfg.pglobal_trust_rho_hi = 0.14
-
-            logger.info(
-                "INDEX_SPLINE [Smart Init]: PGlobal trust box [%.3f, %.3f] (after manual tuning in dialog).",
-                float(cfg.pglobal_trust_rho_lo),
-                float(cfg.pglobal_trust_rho_hi),
-            )
-
-            # Lock the number of sigma for stages that refuse fusion / adaptive insertion.
-
-            cfg.fixed_sigma_knots_count = k
-
-            skip_x0_warm = True
+        k = _apply_smart_preview_exact_mesh(cfg, sk_exact, pair_ex, lam_min, lam_max)
+        cfg.pglobal_trust_rho_hi = 0.14
+        cfg.fixed_sigma_knots_count = k
+        skip_x0_warm = True
 
     if cfg.x0_warm is not None and not skip_x0_warm:
         xw = np.asarray(cfg.x0_warm, float).ravel()
-
-        if xw.size == dim:
-            x0 = xw.astype(np.float64, copy=True)
-
+        if xw.size == int(bounds.shape[0]):
+            x0 = clip_to_bounds(xw.astype(np.float64, copy=True), bounds[:, 0], bounds[:, 1])
             enc = cfg.x0_warm_encoding
-
             if enc is not None:
-                x0 = reconcile_spline_x_warm_for_config(
-                    x0,
-                    sk,
-                    n_mono_target=cfg.n_mono_band_nm,
-                    x_encoding_in=str(enc),
-                    n_mono_band_for_xi_decode=(cfg.x0_warm_n_mono_band_for_decode or cfg.n_mono_band_nm),
-                )
-
-            x0 = clip_to_bounds(x0, bounds[:, 0], bounds[:, 1])
-
+                x0 = reconcile_spline_x_warm_for_config(x0, sk, n_mono_target=cfg.n_mono_band_nm, x_encoding_in=str(enc), n_mono_band_for_xi_decode=(cfg.x0_warm_n_mono_band_for_decode or cfg.n_mono_band_nm))
     return bounds, x0, sk
 
 

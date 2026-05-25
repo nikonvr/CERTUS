@@ -28,7 +28,7 @@ class CertusTheme:
 
     # Colors (Light Mode Default)
 
-    BACKGROUND = "#f8f9fa"
+    BACKGROUND = "#f1f5f9"
 
     SURFACE = "#ffffff"
     BASE_ELEVATED = SURFACE  # Backward compatibility alias used by dashboard cards
@@ -54,7 +54,7 @@ class CertusTheme:
 
     DANGER = "#dc3545"
 
-    INFO = "#0dcaf0"
+    INFO = "#0284c7"
 
     ACCENT = PRIMARY  # Alias for backward compatibility
 
@@ -339,7 +339,7 @@ class CertusTheme:
 
         if mode == "dark":
             cls.DARK_MODE = True
-            cls.BACKGROUND = "#0b1220"
+            cls.BACKGROUND = "#0f172a"
             cls.SURFACE = "#111827"
             cls.SURFACE_HOVER = "#1f2937"
             cls.BORDER = "#2d3748"
@@ -351,9 +351,10 @@ class CertusTheme:
             cls.SUCCESS = "#34d399"
             cls.WARNING = "#fbbf24"
             cls.DANGER = "#f87171"
+            cls.INFO = "#60a5fa"
         else:
             cls.DARK_MODE = False
-            cls.BACKGROUND = "#f8f9fa"
+            cls.BACKGROUND = "#f1f5f9"
             cls.SURFACE = "#ffffff"
             cls.SURFACE_HOVER = "#f1f3f5"
             cls.BORDER = "#dee2e6"
@@ -365,6 +366,7 @@ class CertusTheme:
             cls.SUCCESS = "#198754"
             cls.WARNING = "#b45309"
             cls.DANGER = "#dc3545"
+            cls.INFO = "#0284c7"
 
         # Synchronize backward compatibility aliases and derivatives
         cls.BASE_ELEVATED = cls.SURFACE
@@ -382,6 +384,60 @@ class CertusTheme:
         cls.CHART_COLORS = [cls.PRIMARY, cls.SECONDARY, cls.DANGER, cls.CHART_PURPLE, cls.WARNING, cls.INFO]
 
     @classmethod
+    def load_inter_font(cls) -> str:
+        """
+        Attempts to load Inter font. First checks if already registered.
+        If not, attempts to load from cached font files or downloads them dynamically.
+        """
+        from PyQt6.QtGui import QFontDatabase
+        families = QFontDatabase.families()
+        if "Inter" in families:
+            return "Inter"
+
+        import os
+        import urllib.request
+        from pathlib import Path
+
+        # Store in user's AppData/Temp dir
+        try:
+            cache_dir = Path(os.environ.get("APPDATA", "")) / "certus_fonts"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            import tempfile
+            cache_dir = Path(tempfile.gettempdir()) / "certus_fonts"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+
+        regular_path = cache_dir / "Inter-Regular.ttf"
+        bold_path = cache_dir / "Inter-Bold.ttf"
+
+        urls = {
+            regular_path: "https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Regular.ttf",
+            bold_path: "https://github.com/rsms/inter/raw/master/docs/font-files/Inter-Bold.ttf"
+        }
+
+        font_loaded = False
+        for path, url in urls.items():
+            if not path.exists():
+                try:
+                    # Low timeout to prevent blocking app startup
+                    with urllib.request.urlopen(url, timeout=2) as response:
+                        path.write_bytes(response.read())
+                except Exception:
+                    pass
+
+            if path.exists():
+                try:
+                    font_id = QFontDatabase.addApplicationFont(str(path))
+                    if font_id != -1:
+                        font_loaded = True
+                except Exception:
+                    pass
+
+        if font_loaded:
+            return "Inter"
+        return "Segoe UI"
+
+    @classmethod
     def apply_to_app(cls, app: QApplication, dark_mode: bool = False) -> None:
         from certus_ui import update_global_plot_config
         """Applies theme to QApplication"""
@@ -389,8 +445,15 @@ class CertusTheme:
         # Synchronize active theme configuration
         cls.configure("dark" if dark_mode else "light")
 
+        # Load and configure Inter font
+        font_family = cls.load_inter_font()
+        if font_family == "Inter":
+            cls.FONT_FAMILY = "'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
+        else:
+            cls.FONT_FAMILY = "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
+
         app.setStyle("Fusion")
-        app.setFont(QFont("Segoe UI", cls.FONT_SIZE_BASE))
+        app.setFont(QFont(font_family, cls.FONT_SIZE_BASE))
 
         p = QPalette()
         if dark_mode:

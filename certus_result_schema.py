@@ -375,3 +375,80 @@ class SplineResultDict(
     """
 
     pass
+
+
+def _validate_project_numeric_array(data: dict[str, Any], array_key: str) -> None:
+    """Validate a numeric list/array field used by project configs."""
+
+    from certus_errors import CorruptedProjectError
+
+    val = data[array_key]
+    if not isinstance(val, (list, np.ndarray)):
+        raise CorruptedProjectError(
+            "Invalid data structure",
+            f"Expected list/array for '{array_key}', got {type(val).__name__}",
+            "Verify the file has not been manually edited or corrupted.",
+        )
+
+    for idx, item in enumerate(val):
+        try:
+            f_val = float(item)
+            if not np.isfinite(f_val):
+                raise ValueError(f"Value at index {idx} of '{array_key}' is not finite")
+        except (TypeError, ValueError) as e:
+            raise CorruptedProjectError(
+                "Invalid value in array",
+                f"Expected finite number at index {idx} of '{array_key}', got {item}",
+                "Ensure the array only contains finite numerical values.",
+            ) from e
+
+
+def validate_project_dict(data: Any) -> None:
+    """Validate a loaded Smart Init Index Config dictionary structure."""
+    from certus_errors import CorruptedProjectError
+
+    if not isinstance(data, dict):
+        raise CorruptedProjectError(
+            "Invalid file format",
+            "Project config must be a JSON object/dictionary.",
+            "Ensure the file is not empty and is a valid JSON.",
+        )
+
+    required_keys = ["sigma_knots", "n_nodes_physical", "L_nodes", "d_nm"]
+    missing = [key for key in required_keys if key not in data]
+    if missing:
+        raise CorruptedProjectError(
+            "Missing required parameter",
+            f"The parameter '{missing[0]}' is missing from the project config.",
+            "Ensure the file was saved correctly by the CERTUS application.",
+        )
+
+    try:
+        loaded_d = float(data["d_nm"])
+        if not np.isfinite(loaded_d):
+            raise ValueError("Thickness is not finite")
+    except (TypeError, ValueError) as e:
+        raise CorruptedProjectError(
+            "Invalid thickness value",
+            f"Expected numeric finite 'd_nm', got {data.get('d_nm')}",
+            "Verify that thickness is a valid finite float value.",
+        ) from e
+
+    for array_key in ("sigma_knots", "n_nodes_physical", "L_nodes"):
+        _validate_project_numeric_array(data, array_key)
+
+    sk_size = len(data["sigma_knots"])
+    if sk_size < 2:
+        raise CorruptedProjectError(
+            "Insufficient knots",
+            f"Found {sk_size} knots; at least 2 are required.",
+            "Choose a configuration with 2 or more knots.",
+        )
+
+    if len(data["n_nodes_physical"]) != sk_size or len(data["L_nodes"]) != sk_size:
+        raise CorruptedProjectError(
+            "Inconsistent parameters size",
+            f"Knot count ({sk_size}) does not match 'n_nodes_physical' ({len(data['n_nodes_physical'])}) or 'L_nodes' ({len(data['L_nodes'])}).",
+            "Make sure the array lengths are identical.",
+        )
+

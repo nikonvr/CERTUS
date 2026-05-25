@@ -1514,6 +1514,7 @@ class CertusCard(QFrame):
         self.setFrameShape(QFrame.Shape.NoFrame)
         self._intro_fade_started = False
         self._refresh_style()
+        self.setGraphicsEffect(CertusTheme.get_shadow(self))
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
@@ -6419,9 +6420,11 @@ class SkeletonLoaderWidget(QWidget):
         w = float(self.width())
         h = float(self.height())
         
-        grad = QLinearGradient(self._shimmer_offset * w, 0, (self._shimmer_offset + 0.6) * w, 0)
+        grad = QLinearGradient(self._shimmer_offset * w, 0, (self._shimmer_offset + 0.4) * w, h)
         grad.setColorAt(0.0, base_color)
+        grad.setColorAt(0.45, base_color)
         grad.setColorAt(0.5, shimmer_color)
+        grad.setColorAt(0.55, base_color)
         grad.setColorAt(1.0, base_color)
         
         brush = QBrush(grad)

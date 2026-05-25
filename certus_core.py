@@ -455,6 +455,100 @@ def set_num_threads(n_cores: int | None = None) -> int:
     return n_cores
 
 
+def _supports_color() -> bool:
+    """Check if the console stdout supports ANSI colors."""
+    if os.environ.get("CERTUS_NO_COLOR", "").strip().lower() in ("1", "true", "yes", "on"):
+        return False
+    if not hasattr(sys.stdout, "isatty") or not sys.stdout.isatty():
+        return False
+    if sys.platform != "win32":
+        return True
+    return (
+        "ANSICON" in os.environ
+        or "WT_SESSION" in os.environ
+        or os.environ.get("TERM") == "xterm-256color"
+    )
+
+
+def _supports_utf8() -> bool:
+    """Check if the stdout stream supports UTF-8 characters."""
+    try:
+        encoding = getattr(sys.stdout, "encoding", None) or "ascii"
+        return "utf" in encoding.lower()
+    except Exception:
+        return False
+
+
+class CertusConsoleFormatter(logging.Formatter):
+    """Clean, elegant, and colorized log formatter for the terminal console."""
+
+    def __init__(self, use_color: bool = True):
+        super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
+        self.use_color = use_color
+        self.use_unicode = _supports_utf8()
+
+    def format(self, record: logging.LogRecord) -> str:
+        sep1 = "✦" if self.use_unicode else "*"
+        sep2 = "➔" if self.use_unicode else "->"
+
+        time_str = self.formatTime(record, self.datefmt)
+        msg = record.getMessage()
+
+        if self.use_color:
+            c_reset = "\033[0m"
+            c_bold = "\033[1m"
+            c_grey = "\033[90m"
+
+            if record.levelno >= logging.CRITICAL:
+                c_level = "\033[97;41m"
+                lvl_name = " CRIT "
+            elif record.levelno >= logging.ERROR:
+                c_level = "\033[91m"
+                lvl_name = " ERROR "
+            elif record.levelno >= logging.WARNING:
+                c_level = "\033[93m"
+                lvl_name = " WARN  "
+            elif record.levelno >= logging.INFO:
+                c_level = "\033[92m"
+                lvl_name = " INFO  "
+            else:
+                c_level = "\033[90m"
+                lvl_name = " DEBUG "
+
+            details = f"{c_grey}[{record.module}.{record.funcName}:{record.lineno}]{c_reset}"
+            level_str = f"{c_level}{c_bold}{lvl_name}{c_reset}"
+            formatted = f"{time_str} {sep1} {level_str} {details} {sep2} {msg}"
+        else:
+            lvl_name = record.levelname.ljust(5)
+            details = f"[{record.module}.{record.funcName}:{record.lineno}]"
+            formatted = f"{time_str} {sep1} {lvl_name} {details} {sep2} {msg}"
+
+        if record.exc_info:
+            formatted += "\n" + self.formatException(record.exc_info)
+        return formatted
+
+
+class CertusGuiFormatter(logging.Formatter):
+    """Clean, structured log formatter for the GUI Log panels."""
+
+    def __init__(self):
+        super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
+        self.use_unicode = _supports_utf8()
+
+    def format(self, record: logging.LogRecord) -> str:
+        sep1 = "✦" if self.use_unicode else "*"
+        sep2 = "➔" if self.use_unicode else "->"
+
+        time_str = self.formatTime(record, self.datefmt)
+        lvl_name = record.levelname.ljust(5)
+        msg = record.getMessage()
+        formatted = f"{time_str} {sep1} {lvl_name} {sep2} {msg}"
+
+        if record.exc_info:
+            formatted += "\n" + self.formatException(record.exc_info)
+        return formatted
+
+
 def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
     """Configure a single CERTUS logger with consistent console and JSONL output."""
 
@@ -478,10 +572,12 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
+    console_formatter = CertusConsoleFormatter(use_color=_supports_color())
     console_handler = _logging.StreamHandler()
-    console_handler.setFormatter(formatter)
+    console_handler.setFormatter(console_formatter)
     console_handler.setLevel(level)
     logger.addHandler(console_handler)
+
 
     if log_file:
         try:
@@ -1135,7 +1231,7 @@ def setup_gui_logger(log_queue: queue.Queue, logger_name: str = "CERTUS") -> log
 
     logger.handlers = []
 
-    formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt=TIMESTAMP_FMT_DISPLAY)
+    formatter = CertusGuiFormatter()
 
     # Handler for GUI queue ONLY - no console output
 

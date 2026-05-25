@@ -883,6 +883,98 @@ def _parallel_block_worker(args) -> dict:
 
         gc.collect()
 
+
+class StatsConsumerWorker(QObject):
+    """Asynchronous stats queue consumer to avoid raw threading signal emission"""
+    finished = pyqtSignal()
+    update_stats = pyqtSignal(str, int)
+
+    def __init__(self, stats_queue) -> None:
+        super().__init__()
+        self.stats_queue = stats_queue
+        self.is_running = True
+
+    def run(self) -> None:
+        import queue
+        while self.is_running:
+            try:
+                item = self.stats_queue.get(timeout=0.1)
+                if item is None:
+                    break
+                counter_type, increment = item
+                self.update_stats.emit(counter_type, increment)
+            except queue.Empty:
+                continue
+            except (BrokenPipeError, OSError, ValueError):
+                break
+        self.finished.emit()
+
+
+class LiveFeedMonitor(QObject):
+    """Qt-backed monitor for live preview updates."""
+
+    finished = pyqtSignal()
+
+    def __init__(self, live_preview_queue, signals, p_thick_nominal, clues_at_wl) -> None:
+        super().__init__()
+        self.live_preview_queue = live_preview_queue
+        self.signals = signals
+        self.p_thick_nominal = p_thick_nominal
+        self.clues_at_wl = clues_at_wl
+        self._timer = QTimer(self)
+        self._timer.setInterval(50)
+        self._timer.timeout.connect(self._poll)
+        self._last_update = 0.0
+        self._last_full_package = None
+
+    def start(self) -> None:
+        self._timer.start()
+
+    def stop(self) -> None:
+        self._timer.stop()
+        self.finished.emit()
+
+    def _poll(self) -> None:
+        last_update = self._last_update
+        last_full_package = self._last_full_package
+        LIVE_REFRESH_INTERVAL = 2.0
+        try:
+            item = None
+            try:
+                while not self.live_preview_queue.empty():
+                    item = self.live_preview_queue.get_nowait()
+            except (BrokenPipeError, OSError):
+                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+            if item is None:
+                try:
+                    item = self.live_preview_queue.get(timeout=0.5)
+                except (queue.Empty, AttributeError):
+                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+            if item == "STOP":
+                self.stop()
+                return
+            now = time.time()
+            if item and now - last_update > 0.4:
+                full_package = {
+                    "strategy": item["strategy"],
+                    "robustness_score": item["robustness_score"],
+                    "p_thick_nominal": self.p_thick_nominal,
+                    "clues_at_wl": self.clues_at_wl,
+                }
+                last_full_package = full_package
+                self.signals.update_live_growth.emit(full_package)
+                last_update = now
+            elif last_full_package is not None and (now - last_update) >= LIVE_REFRESH_INTERVAL:
+                self.signals.update_live_growth.emit(last_full_package)
+                last_update = now
+        except NUMERICAL_FAULT_EXCEPTIONS as e:
+            logging.error(f"[MonitorThread] Error: {e}")
+            self.stop()
+        finally:
+            self._last_update = last_update
+            self._last_full_package = last_full_package
+
+
 class WorkerThread(QThread):
     def __init__(
         self,
@@ -1304,9 +1396,17 @@ class WorkerThread(QThread):
 
         _GLOBAL_STATS_QUEUE = stats_queue
 
-        stats_thread = threading.Thread(target=self._stats_consumer_loop, args=(stats_queue,), daemon=True)
+        consumer_worker = StatsConsumerWorker(stats_queue)
+        consumer_thread = QThread()
+        consumer_worker.moveToThread(consumer_thread)
+        consumer_thread.started.connect(consumer_worker.run)
 
-        stats_thread.start()
+        consumer_worker.update_stats.connect(self.signals.update_stats)
+        consumer_worker.finished.connect(consumer_thread.quit)
+        consumer_worker.finished.connect(consumer_worker.deleteLater)
+        consumer_thread.finished.connect(consumer_thread.deleteLater)
+
+        consumer_thread.start()
 
         # UPDATED: Use standard multiprocessing.Queue instead of Manager().Queue()
 
@@ -1382,12 +1482,19 @@ class WorkerThread(QThread):
                 def stop_check():
                     return self.params.get("stop_requested", False)
 
-                monitor_thread = _start_monitor_live_feed_thread(
+                monitor_thread = QThread()
+                monitor_worker = LiveFeedMonitor(
                     live_preview_queue=live_preview_queue,
                     signals=self.signals,
                     p_thick_nominal=pre_calc_data["p_thick_nominal"],
                     clues_at_wl=pre_calc_data["clues_at_wl"],
                 )
+                monitor_worker.moveToThread(monitor_thread)
+                monitor_thread.started.connect(monitor_worker.start)
+                monitor_worker.finished.connect(monitor_thread.quit)
+                monitor_worker.finished.connect(monitor_worker.deleteLater)
+                monitor_thread.finished.connect(monitor_thread.deleteLater)
+                monitor_thread.start()
 
                 accumulated_strategies_results = _run_phaseB_parallel_execution(
                     blocks_range=blocks_range,
@@ -1408,7 +1515,8 @@ class WorkerThread(QThread):
 
                 live_preview_queue.put("STOP")
 
-                monitor_thread.join()
+                if not monitor_thread.wait(3000):
+                    self.params["logger"].warning("Live preview monitor thread did not stop within 3s")
 
                 self.signals.progress.emit(100, "Finalizing results...")
 
@@ -1429,29 +1537,17 @@ class WorkerThread(QThread):
             if stats_queue:
                 stats_queue.put(None)
 
-            if stats_thread.is_alive():
-                stats_thread.join()
+            if 'consumer_worker' in locals():
+                consumer_worker.is_running = False
+
+            if 'consumer_thread' in locals():
+                if not consumer_thread.wait(2000):
+                    self.params["logger"].warning("Stats consumer thread did not stop within 2s")
 
             _GLOBAL_STATS_QUEUE = None
 
             import gc
             gc.collect()
-
-    def _stats_consumer_loop(self, stats_queue) -> None:
-
-        while True:
-            try:
-                item = stats_queue.get()
-
-                if item is None:
-                    break
-
-                counter_type, increment = item
-
-                self.signals.update_stats.emit(counter_type, increment)
-
-            except (BrokenPipeError, OSError, ValueError):
-                break
 
     def _run_step_external_strategies(self) -> None:
 
@@ -1801,60 +1897,6 @@ def _run_phase0_and_phaseA(
     import gc
     gc.collect()
     return pre_calc_data, p_thick_nom, nucleation_info, nominal_res
-
-def _start_monitor_live_feed_thread(
-    live_preview_queue: Any,
-    signals: Any,
-    p_thick_nominal: list[float],
-    clues_at_wl: dict[str, Any],
-) -> threading.Thread:
-    """Starts a daemon thread to consume live preview events and emit plot signals."""
-
-    def monitor_live_feed() -> None:
-
-        last_update = 0.0
-        last_full_package = None
-        LIVE_REFRESH_INTERVAL = 2.0
-        while True:
-            try:
-                item = None
-                try:
-                    while not live_preview_queue.empty():
-                        item = live_preview_queue.get_nowait()
-                except (BrokenPipeError, OSError):
-                    logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-                if item is None:
-                    try:
-                        item = live_preview_queue.get(timeout=0.5)
-                    except (queue.Empty, AttributeError):
-                        logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-                if item == "STOP":
-                    break
-                now = time.time()
-                if item:
-                    if now - last_update > 0.4:
-                        full_package = {
-                            "strategy": item["strategy"],
-                            "robustness_score": item["robustness_score"],
-                            "p_thick_nominal": p_thick_nominal,
-                            "clues_at_wl": clues_at_wl,
-                        }
-                        last_full_package = full_package
-                        signals.update_live_growth.emit(full_package)
-                        last_update = now
-                elif last_full_package is not None and (now - last_update) >= LIVE_REFRESH_INTERVAL:
-                    signals.update_live_growth.emit(last_full_package)
-                    last_update = now
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
-                logging.error(f"[MonitorThread] Error: {e}")
-                break
-
-    monitor_thread = threading.Thread(target=monitor_live_feed, daemon=True)
-    monitor_thread.start()
-    return monitor_thread
-
-
-
 
 # === OPTIMIZATION: Async Plot Renderer ===
 

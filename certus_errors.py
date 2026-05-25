@@ -114,6 +114,7 @@ __all__ = [
     "CertusDomainError",
     "PhysicsConvergenceError",
     "ConfigurationCorruptionError",
+    "CorruptedProjectError",
     # Validation functions
     "validate_wavelength_range",
     "validate_thickness",
@@ -221,6 +222,13 @@ class ConfigurationCorruptionError(CertusDomainError, CertusConfigError):
     """Exception for corrupt startup config."""
 
     pass
+
+
+class CorruptedProjectError(CertusDomainError, CertusConfigError):
+    """Exception for corrupted or invalid project JSON file contents."""
+
+    pass
+
 
 
 # =============================================================================

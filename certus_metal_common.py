@@ -141,11 +141,20 @@ def normalize_percent_column(values: np.ndarray) -> np.ndarray:
     """
 
     arr = np.asarray(values)
+    if arr.size == 0:
+        return arr
     try:
         vmax = float(np.nanmax(arr))
     except (TypeError, ValueError):
         return arr
     return arr / 100.0 if vmax > 1.0 else arr
+
+
+def _format_beam_status(cur: int, tot: int, best: float) -> str:
+    """Return the standard METAL beam-analysis status line."""
+
+    rmse = float(np.sqrt(best)) if best >= 0 else 0.0
+    return f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}"
 
 
 def setup_beam_analysis_thread(app, worker) -> "QThread":
@@ -167,17 +176,13 @@ def setup_beam_analysis_thread(app, worker) -> "QThread":
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
 
-    def _on_progress(cur, tot, best) -> None:
-        rmse = float(np.sqrt(best)) if best >= 0 else 0.0
-        app.status_label.setText(f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}")
-
-    worker.progress.connect(_on_progress)
+    worker.progress.connect(lambda cur, tot, best: app.status_label.setText(_format_beam_status(cur, tot, best)))
     worker.finished.connect(app.on_beam_finished)
     worker.error.connect(app._on_beam_error)
     # Proper cleanup to avoid memory leaks
-    worker.finished.connect(thread.quit)
-    worker.error.connect(thread.quit)
-    worker.finished.connect(worker.deleteLater)
+    for signal in (worker.finished, worker.error):
+        signal.connect(thread.quit)
+        signal.connect(worker.deleteLater)
     thread.finished.connect(thread.deleteLater)
     return thread
 
@@ -191,12 +196,14 @@ def teardown_beam_thread(app, stats) -> None:
     """
 
     thread = getattr(app, "beam_thread", None)
-    if thread is not None and thread.isRunning():
-        thread.quit()
-        if not thread.wait(3000):
-            logging.critical(
-                "Beam thread did not stop within 3s in on_beam_finished - skipping terminate() to avoid unsafe thread kill."
-            )
+    if thread is not None:
+        if thread.isRunning():
+            thread.quit()
+            if not thread.wait(3000):
+                logging.critical(
+                    "Beam thread did not stop within 3s in on_beam_finished - skipping terminate() to avoid unsafe thread kill."
+                )
+        app.beam_thread = None
     if hasattr(app, "btn_run"):
         app.btn_run.setEnabled(True)
     if hasattr(app, "btn_beam"):

@@ -91,7 +91,7 @@ import numpy as np
 import pandas as pd
 
 
-from certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file
+from certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, NUMERICAL_FAULT_EXCEPTIONS
 from pathlib import Path
 
 
@@ -159,6 +159,7 @@ from certus_metal_common import (
     normalize_percent_column,
     setup_beam_analysis_thread,
     teardown_beam_thread,
+    setup_common_metal_plots,
 )
 
 
@@ -187,6 +188,7 @@ from certus_ui import (
     init_certus_app,
     setup_gui_exception_handling,
     setup_pyqtgraph_defaults,
+    show_toast,
 )
 
 
@@ -1305,43 +1307,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         # 2. Tab Indices(n, k)
 
-        self.clues_plot = CertusScientificPlot(
-            self,
-            "Optimized Metal Optical Constants (n, k)",
-            "Refractive Index (n)",
-            "Wavelength (nm)",
-        )
-
-        self.p1 = self.clues_plot.getPlotItem()
-
-        self.p2 = pg.ViewBox()
-
-        self.p1.showAxis("right")
-
-        self.p1.scene().addItem(self.p2)
-
-        self.p1.getAxis("right").linkToView(self.p2)
-
-        self.p2.setXLink(self.p1)
-
-        self.p1.getAxis("left").setLabel("Refractive Index (n)", color=CertusTheme.CHART_PRIMARY)
-
-        self.p1.getAxis("right").setLabel("Extinction Coefficient (k)", color=CertusTheme.CHART_DANGER)
-
-        self.n_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2))
-
-        self.k_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2, style=Qt.PenStyle.DashLine))
-
-        self.p1.addItem(self.n_curve)
-
-        self.p2.addItem(self.k_curve)
-
-        def _sync_p2_geometry(*_args):
-            self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
-
-        self.p1.vb.sigResized.connect(_sync_p2_geometry)
-
-        self.tabs.addTab(self.clues_plot, "n & k")
+        setup_common_metal_plots(self)
 
         # 3. Dielectric Tab
 
@@ -1501,6 +1467,8 @@ class CertusMetalBilayerApp(MetalBaseApp):
     def on_optimization_finished(self, results):
         """Handles optimization finish"""
 
+        self._uninstall_all_skeletons()
+
         self.progress_widget.stop("Optimization complete")
 
         # Cache iteration count before cleanup (thread-safe)
@@ -1621,9 +1589,11 @@ class CertusMetalBilayerApp(MetalBaseApp):
         self.diel_curve.setData(plot_lambda_range, nL_calc, pen=pen_diel)
 
         try:
-            self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
-
-        except NUMERICAL_FAULT_EXCEPTIONS :
+            if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
+        except NUMERICAL_FAULT_EXCEPTIONS:
             pass
 
         if not final and int(data.get("iteration", 0)) % 3 == 0:
@@ -1657,7 +1627,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         # Single optimization export
 
         if not hasattr(self, "final_results"):
-            QMessageBox.warning(self, "No Results", "Please run optimization first.")
+            show_toast(self, "Please run optimization first.", "warning")
 
             return
 
@@ -1922,17 +1892,17 @@ class CertusMetalBilayerApp(MetalBaseApp):
         """Starts beam analysis: metal thickness scan"""
 
         if not self.target_data:
-            QMessageBox.warning(self, "Error", "Load target file first.")
+            show_toast(self, "Load target file first.", "warning")
 
             return
 
         # Verify optimization done
 
         if not hasattr(self, "final_results") or self.final_results is None:
-            QMessageBox.warning(
+            show_toast(
                 self,
-                "Optimization Required",
                 "Run standard optimization (START) first\nto get reference solution.",
+                "warning",
             )
 
             return
@@ -2287,7 +2257,14 @@ class CertusMetalBilayerApp(MetalBaseApp):
             pass
 
         def _sync_p2_geometry(*_args):
-            self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
+            try:
+                if self.p1 is None or self.p2 is None or self.p1.vb is None:
+                    return
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                return
 
         self.p1.vb.sigResized.connect(_sync_p2_geometry)
 
@@ -2297,7 +2274,13 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         # Sync p2 geometry with p1
 
-        self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
+        try:
+            if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
+                scene_rect = self.p1.vb.sceneBoundingRect()
+                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                    self.p2.setGeometry(scene_rect)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            pass
 
         self.p2.enableAutoRange(axis="y")
 

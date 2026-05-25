@@ -45,7 +45,7 @@ def qapp():
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
-    yield app
+    return app
     # Do not call app.quit() — breaks other session-scoped fixtures on teardown
 
 

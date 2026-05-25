@@ -27,6 +27,22 @@ from certus_ui import CertusTheme
 SpectrumEvalVariant = Literal["design", "re"]
 
 
+def spectrum_eval_feedback(app: Any, message: str, level: str = "info") -> None:
+    """Best-effort premium feedback for spectrum evaluation workflows."""
+    try:
+        from certus_ui import show_status_feedback
+
+        show_status_feedback(app, message, level, duration_ms=1200)
+    except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
+        try:
+            if hasattr(app, "status_label"):
+                app.status_label.setText(message)
+            if hasattr(app, "lbl_status"):
+                app.lbl_status.setText(message)
+        except (RuntimeError, AttributeError, TypeError, ValueError):
+            pass
+
+
 def spectrum_eval_substrate_key(variant: SpectrumEvalVariant) -> str:
 
     return "Substrate"
@@ -55,12 +71,21 @@ def spectrum_eval_on_finished_prepare_display(
 
     """
 
-    logging.info(f"[EVAL] === _on_eval_finished called (oblique={data.get('oblique_mode', False)}) ===")
+    logging.info(
+        "[SPECTRUM_EVAL._on_eval_finished] callback received | oblique=%s | generation_id=%s | current_generation=%s",
+        data.get('oblique_mode', False),
+        generation_id,
+        getattr(app, '_current_eval_generation', None),
+    )
 
     result_generation = data.get("eval_generation_id", generation_id)
 
     if result_generation != app._current_eval_generation:
-        logging.debug(f"[EVAL] Ignored stale callback: gen={result_generation}, current={app._current_eval_generation}")
+        logging.debug(
+            "[SPECTRUM_EVAL._on_eval_finished] ignored stale callback | result_gen=%s | current_gen=%s",
+            result_generation,
+            app._current_eval_generation,
+        )
 
         app._set_busy(False)
 
@@ -86,8 +111,9 @@ def spectrum_eval_on_finished_prepare_display(
         data_for_display["eval_generation_id"] = result_generation
 
         logging.info(
-            "[EVAL] Keeping best visual spectrum "
-            f"(incoming RMSE={incoming_rmse:.6f} > best RMSE={app._best_eval_rmse:.6f})"
+            "[SPECTRUM_EVAL._on_eval_finished] keeping best visual spectrum | incoming_rmse=%.6f | best_rmse=%.6f",
+            incoming_rmse,
+            app._best_eval_rmse,
         )
 
         try:
@@ -111,7 +137,10 @@ def spectrum_eval_on_finished_prepare_display(
             IndexError,
             FileNotFoundError,
         ) as _e_best_sync:
-            logging.debug(f"[EVAL] Best spectrum/table sync skipped: {_e_best_sync}")
+            logging.debug(
+                "[SPECTRUM_EVAL._on_eval_finished] best spectrum/table sync skipped | error=%s",
+                _e_best_sync,
+            )
 
     return data_for_display
 
@@ -200,12 +229,21 @@ def spectrum_eval_build_worker_cfg(
     wls_optim = app._get_optim_wls()
 
     app.log(
-        f"Spectral evaluation: display {n_vis} lambda pts in [{lmin_display:.0f},{lmax_display:.0f}] nm, "
-        f"calc/RMSE grid {len(wls_optim)} pts, {len(active)} active target(s).",
+        (
+            "[SPECTRUM_EVAL.build_worker_cfg] spectral evaluation prepared | "
+            "display_pts=%d | display_range_nm=[%.0f,%.0f] | optim_pts=%d | active_targets=%d | variant=%s"
+        )
+        % (n_vis, lmin_display, lmax_display, len(wls_optim), len(active), variant),
         "INFO",
+    )
+    spectrum_eval_feedback(
+        app,
+        f"[{variant.upper()}] evaluation prepared: {len(active)} active target(s)",
+        "info",
     )
 
     cfg: Dict[str, Any] = {
+        "variant": variant,
         "mats": mats,
         "stack": stack,
         "ep": ep,
@@ -282,22 +320,37 @@ def spectrum_eval_start_worker(app: Any, cfg: Dict[str, Any], eval_start: float)
     eval_generation_id = app._current_eval_generation
 
     cfg["eval_generation_id"] = eval_generation_id
+    variant = cfg.get("variant", "design")
 
-    logging.info(f"[EVAL] Creating EvalWorker (setup took {(time.time() - eval_start) * 1000:.1f}ms)")
+    logging.info(
+        "[SPECTRUM_EVAL.start_worker] creating EvalWorker | setup_ms=%.1f | variant=%s | generation_id=%s",
+        (time.time() - eval_start) * 1000,
+        variant,
+        eval_generation_id,
+    )
 
     app._set_busy(True)
 
     app.eval_worker = EvalWorker(cfg)
 
     app.eval_worker.signals.finished.connect(lambda data, gen=eval_generation_id: app._on_eval_finished(data, gen))
+    spectrum_eval_feedback(app, f"Evaluation running ({variant})…", "info")
 
     app.eval_worker.signals.error.connect(lambda e, gen=eval_generation_id: app._on_error(e, gen))
 
-    logging.info("[EVAL] Starting EvalWorker thread...")
+    logging.info(
+        "[SPECTRUM_EVAL.start_worker] starting EvalWorker thread | variant=%s | generation_id=%s",
+        variant,
+        eval_generation_id,
+    )
 
     app.eval_worker.start()
 
-    logging.info("[EVAL] EvalWorker started, returning to event loop")
+    logging.info(
+        "[SPECTRUM_EVAL.start_worker] EvalWorker started | variant=%s | generation_id=%s",
+        variant,
+        eval_generation_id,
+    )
 
 
 def spectrum_eval_plot_curves(

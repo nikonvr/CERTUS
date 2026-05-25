@@ -31,6 +31,8 @@ from certus_data import (
     SpectrumLoadResult,
 )
 
+from certus_index_spline_core import normalize_spectrum_dataframe
+
 
 # ── ReportSection ──
 
@@ -251,6 +253,50 @@ class TestLoadSpectrumColumns:
         )
         result = load_spectrum_columns(str(csv_path))
         assert result is not None
+        assert result.n_rows == 3
+        assert list(result.dataframe.columns) == ["lambda", "T", "R"]
+        np.testing.assert_allclose(result.x, np.array([400.0, 500.0, 600.0]))
+
+    def test_load_xlsx_and_percent_normalization(self, tmp_path: Path) -> None:
+        pytest.importorskip("openpyxl")
+        xlsx_path = tmp_path / "test_spectrum.xlsx"
+        df = pd.DataFrame(
+            {
+                "Wavelength nm": [400.0, 500.0, 600.0],
+                "Trel-NB250 600": [28.9104, 31.0610, 32.1450],
+            }
+        )
+        df.to_excel(xlsx_path, index=False)
+
+        result = load_spectrum_columns(str(xlsx_path))
+        assert result.x_unit == "nm"
+        assert result.normalised_to_fraction is True
+        assert list(result.dataframe.columns) == ["lambda", "T"]
+        np.testing.assert_allclose(result.dataframe["T"].to_numpy(), np.array([0.289104, 0.31061, 0.32145]))
+
+    def test_load_um_conversion(self, tmp_path: Path) -> None:
+        csv_path = tmp_path / "test_um.csv"
+        csv_path.write_text("lambda,T\n0.4,50\n0.5,60\n", encoding="utf-8")
+        result = load_spectrum_columns(str(csv_path), x_unit="um", to_nm=True)
+        np.testing.assert_allclose(result.x, np.array([400.0, 500.0]))
+        assert result.x_unit == "nm"
+
+    def test_load_raises_for_missing_file(self) -> None:
+        with pytest.raises(FileNotFoundError):
+            load_spectrum_columns("/definitely/missing.xlsx")
+
+    def test_normalize_spectrum_dataframe_fallbacks(self) -> None:
+        df = pd.DataFrame({"Wavelength nm": [400.0, 500.0], "Trel": [0.5, 0.6]})
+        out = normalize_spectrum_dataframe(df)
+        assert "lambda" in out.columns
+        assert out.columns[0] == "lambda"
+
+    def test_normalize_spectrum_dataframe_renames_reflection(self) -> None:
+        df = pd.DataFrame({"lambda": [400.0, 500.0], "Reflection": [0.1, 0.2]})
+        out = normalize_spectrum_dataframe(df)
+        assert "lambda" in out.columns
+        assert "T" in out.columns
+        np.testing.assert_allclose(out["T"].to_numpy(), np.array([0.1, 0.2]))
 
 
 # ── PERF_MONITOR singleton ──

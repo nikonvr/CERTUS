@@ -317,7 +317,27 @@ def _build_stack_class():
                     h = toast.height()
                     x = pw - toast.width() - MARGIN_PX
                     y -= h
-                    toast.move(max(MARGIN_PX, x), max(MARGIN_PX, y))
+                    
+                    from PyQt6.QtCore import QPoint
+                    target_pos = QPoint(max(MARGIN_PX, x), max(MARGIN_PX, y))
+                    
+                    if getattr(toast, "_init_positioned", False):
+                        from PyQt6.QtCore import QPropertyAnimation, QEasingCurve
+                        if hasattr(toast, "_pos_anim") and toast._pos_anim is not None:
+                            toast._pos_anim.stop()
+                        
+                        anim = QPropertyAnimation(toast, b"pos", toast)
+                        anim.setDuration(220)
+                        anim.setStartValue(toast.pos())
+                        anim.setEndValue(target_pos)
+                        anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+                        toast._pos_anim = anim
+                        anim.start()
+                    else:
+                        toast.move(target_pos)
+                        toast._init_positioned = True
+                        toast._pos_anim = None
+                        
                     y -= GAP_PX
                 except (RuntimeError, AttributeError, TypeError):
                     continue

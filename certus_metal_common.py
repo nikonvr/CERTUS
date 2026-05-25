@@ -206,11 +206,7 @@ def teardown_beam_thread(app, stats) -> None:
     app.beam_stats = stats
 
 
-
-
-
-
-
+def setup_common_metal_plots(app) -> None:
     """Create the common METAL `n & k` tab widgets and wiring."""
 
     app.clues_plot = CertusScientificPlot(
@@ -251,8 +247,14 @@ def teardown_beam_thread(app, stats) -> None:
     app.p2.addItem(app.k_curve)
 
     def _sync_p2_geometry(*_args) -> None:
-
-        app.p2.setGeometry(app.p1.vb.sceneBoundingRect())
+        try:
+            if app.p1 is None or app.p2 is None or app.p1.vb is None:
+                return
+            scene_rect = app.p1.vb.sceneBoundingRect()
+            if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
+                app.p2.setGeometry(scene_rect)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            return
 
     app.p1.vb.sigResized.connect(_sync_p2_geometry)
 
@@ -530,6 +532,17 @@ class MetalBaseApp(CertusBaseApp):
     # Module ID for help (override in subclass)
 
     MODULE_ID = "METAL"
+
+    def _uninstall_all_skeletons(self) -> None:
+        """Uninstall all skeleton overlays from plots."""
+        try:
+            from certus_ui import remove_skeleton_loader
+            for plot_attr in ["mse_plot", "reflectance_plot", "diel_plot"]:
+                p = getattr(self, plot_attr, None)
+                if p:
+                    remove_skeleton_loader(p)
+        except Exception as e:
+            logging.getLogger("CERTUS").debug("Failsafe removing skeleton loaders: %s", e)
 
     def __init__(self, app_name="CERTUS-METAL", app_title="Metal Characterization") -> None:
 
@@ -1554,6 +1567,7 @@ class MetalBaseApp(CertusBaseApp):
 
     def on_optimization_error(self, error_message) -> None:
         """Handles optimization error"""
+        self._uninstall_all_skeletons()
         self.progress_widget.stop("Error")
         QMessageBox.critical(self, "Optimization Error", error_message)
         self.btn_run.setEnabled(True)
@@ -1561,6 +1575,7 @@ class MetalBaseApp(CertusBaseApp):
 
     def _on_beam_error(self, error_message) -> None:
         """Handles beam analysis error"""
+        self._uninstall_all_skeletons()
         self.progress_widget.stop("Beam Error")
         QMessageBox.critical(self, "Beam Analysis Error", error_message)
         self.btn_run.setEnabled(True)
@@ -1826,6 +1841,17 @@ class MetalBaseApp(CertusBaseApp):
         self.progress_widget.start()
         self.optimization_thread.start()
 
+        try:
+            from certus_ui import install_skeleton_loader
+            if hasattr(self, "mse_plot") and self.mse_plot:
+                install_skeleton_loader(self.mse_plot, "chart")
+            if hasattr(self, "reflectance_plot") and self.reflectance_plot:
+                install_skeleton_loader(self.reflectance_plot, "chart")
+            if hasattr(self, "diel_plot") and self.diel_plot:
+                install_skeleton_loader(self.diel_plot, "chart")
+        except Exception as e:
+            logging.getLogger("CERTUS").debug("Failsafe installing skeleton loaders: %s", e)
+
         self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
         self.update_stats_display()
 
@@ -1836,6 +1862,8 @@ class MetalBaseApp(CertusBaseApp):
         Subclasses can override ``_extra_stop_cleanup`` for app-specific
         post-stop logic.
         """
+
+        self._uninstall_all_skeletons()
 
         if not confirm_stop_with_timeout(self):
             return

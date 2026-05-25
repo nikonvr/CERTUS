@@ -48,6 +48,9 @@ class _PlotWidget:
     def setYRange(self, lo: float, hi: float, padding: float = 0.0) -> None:
         self.y_ranges.append((float(lo), float(hi), float(padding)))
 
+    def plot(self, *args, **kwargs) -> Any:
+        return None
+
 
 class _FakeTextItem:
     def __init__(self, *args, html: str | None = None, anchor=None, **_kwargs) -> None:
@@ -104,7 +107,9 @@ def test_plot_result_adds_large_t_knot_markers(monkeypatch) -> None:
         )
 
     monkeypatch.setattr("CERTUS_INDEX_SPLINE._plot_spectrum_raw_scatter", _fake_scatter)
+    monkeypatch.setattr("certus_index_spline_corridors._plot_spectrum_raw_scatter", _fake_scatter)
     monkeypatch.setattr("CERTUS_INDEX_SPLINE.pg.TextItem", _FakeTextItem)
+    monkeypatch.setattr("certus_index_spline_corridors.pg.TextItem", _FakeTextItem)
 
     plot_t = _PlotWidget()
     plot_n = _PlotWidget()

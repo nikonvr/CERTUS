@@ -56,7 +56,6 @@ class TestFitLocalQuadratic:
         d, r, ia = self._make_parabola(n=20, a=2e-4)
         result = _fit_local_quadratic_rmse_profile(d, r, ia, 8, 0.0)
         assert result["ok"]
-        # The curvature should be close to the true value 2e-4 * 2 = 4e-4
         assert result["curvature"] > 0, "Curvature must be positive"
 
     def test_flat_profile_returns_zero_curvature(self) -> None:
@@ -65,6 +64,18 @@ class TestFitLocalQuadratic:
         result = _fit_local_quadratic_rmse_profile(d, r, 10, 4, 0.0)
         if result["ok"]:
             assert abs(result["curvature"]) < 1e-6, "Flat profile should have near-zero curvature"
+
+    def test_invalid_inputs_return_not_ok(self) -> None:
+        d = np.array([100.0, np.nan, 101.0, 102.0, 103.0], dtype=np.float64)
+        r = np.array([0.001, 0.0011, np.nan, 0.0013, 0.0014], dtype=np.float64)
+        result = _fit_local_quadratic_rmse_profile(d, r, 0, 4, 0.0)
+        assert not result["ok"]
+
+    def test_anchor_out_of_range_graceful(self) -> None:
+        d, r, _ = self._make_parabola()
+        result = _fit_local_quadratic_rmse_profile(d, r, 999, 4, 0.0)
+        assert isinstance(result, dict)
+        assert "ok" in result
 
 
 # ────────────────────────────────────────────────────────────────────

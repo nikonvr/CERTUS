@@ -151,6 +151,7 @@ from certus_metal_common import (
     normalize_percent_column,
     setup_beam_analysis_thread,
     teardown_beam_thread,
+    setup_common_metal_plots,
 )
 
 
@@ -179,6 +180,7 @@ from certus_ui import (
     open_data_file_and_read,
     setup_gui_exception_handling,
     setup_pyqtgraph_defaults,
+    show_toast,
 )
 
 
@@ -1086,50 +1088,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.tabs.addTab(self.reflectance_plot, "Spectra")
 
-        self.clues_plot = CertusScientificPlot(
-            self,
-            "Optimized Metal Optical Constants (n, k)",
-            "Refractive Index (n)",
-            "Wavelength (nm)",
-        )
-
-        self.p1 = self.clues_plot.getPlotItem()
-
-        self.p2 = pg.ViewBox()
-
-        self.p1.showAxis("right")
-
-        self.p1.scene().addItem(self.p2)
-
-        self.p1.getAxis("right").linkToView(self.p2)
-
-        self.p2.setXLink(self.p1)
-
-        self.p1.getAxis("left").setLabel("Refractive Index (n)", color=CertusTheme.CHART_PRIMARY)
-
-        self.p1.getAxis("right").setLabel("Extinction Coefficient (k)", color=CertusTheme.CHART_DANGER)
-
-        self.n_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2))
-
-        self.k_curve = pg.PlotCurveItem(pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2, style=Qt.PenStyle.DashLine))
-
-        self.p1.addItem(self.n_curve)
-
-        self.p2.addItem(self.k_curve)
-
-        def _sync_p2_geometry(*_args):
-            try:
-                if self.p1 is None or self.p2 is None or self.p1.vb is None:
-                    return
-                scene_rect = self.p1.vb.sceneBoundingRect()
-                if scene_rect.isValid() and scene_rect.width() > 0 and scene_rect.height() > 0:
-                    self.p2.setGeometry(scene_rect)
-            except NUMERICAL_FAULT_EXCEPTIONS:
-                return
-
-        self.p1.vb.sigResized.connect(_sync_p2_geometry)
-
-        self.tabs.addTab(self.clues_plot, "n & k")
+        setup_common_metal_plots(self)
 
         self.mse_plot = CertusScientificPlot(
             self,
@@ -1680,6 +1639,8 @@ class CertusMetalSingleApp(MetalBaseApp):
     def on_optimization_finished(self, results) -> None:
         """Handles optimization finish."""
 
+        self._uninstall_all_skeletons()
+
         self.progress_widget.stop("Optimization complete")
 
         # Cache iteration count before cleanup (thread-safe)
@@ -1891,7 +1852,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             return
 
         if not hasattr(self, "final_results"):
-            QMessageBox.warning(self, "No Results", "Please run optimization first.")
+            show_toast(self, "Please run optimization first.", "warning")
 
             return
 
@@ -2025,17 +1986,17 @@ class CertusMetalSingleApp(MetalBaseApp):
         """Starts beam analysis: metal thickness scan"""
 
         if not self.target_data:
-            QMessageBox.warning(self, "Error", "Load target file first.")
+            show_toast(self, "Load target file first.", "warning")
 
             return
 
         # Verify optimization done
 
         if not hasattr(self, "final_results") or self.final_results is None:
-            QMessageBox.warning(
+            show_toast(
                 self,
-                "Optimization Required",
                 "Run standard optimization (START) first\nto get reference solution.",
+                "warning",
             )
 
             return

@@ -358,9 +358,9 @@ class TestCoreCoverageBoost:
 
     def test_handle_exception_non_keyboard(self, monkeypatch):
         calls = []
-        monkeypatch.setattr("logging.critical", lambda msg: calls.append(msg))
+        monkeypatch.setattr("logging.critical", lambda msg, *args, **kwargs: calls.append(msg % args if args else msg))
         handle_exception(ValueError, ValueError("test error"), None)
-        assert any("Uncaught exception" in msg for msg in calls)
+        assert any("uncaught_exception" in msg for msg in calls)
 
     def test_check_svg_availability_importerror(self, monkeypatch):
         monkeypatch.setenv("CERTUS_SVG_ICONS", "1")

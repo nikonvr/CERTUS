@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable
 from enum import Enum, auto
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
+
+from certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
 
 from certus_core import (
     K_MAX_LIMIT,
@@ -78,7 +80,7 @@ def _enforce_sigma_min_sep(sk: np.ndarray, s_lo: float, s_hi: float) -> np.ndarr
     Same eps_s as ``sigma_knots_decode`` so that encode→decode is a no-op on
     a mesh that already satisfies the constraint.
     """
-    sk = np.sort(np.asarray(sk, dtype=np.float64).ravel()).copy()
+    sk = sorted_float64(sk)
     if sk.size < 2:
         return sk
     eps_s = max(1e-10, SIGMA_KNOTS_MIN_SEP_REL * max(s_hi - s_lo, 1e-12))
@@ -119,9 +121,9 @@ def enforce_k_floor_on_nodes(
 
     """
 
-    sk = np.asarray(sigma_knots, dtype=np.float64).ravel().copy()
+    sk = as_float64_1d(sigma_knots, copy=True)
 
-    LL = np.asarray(L_nodes, dtype=np.float64).ravel().copy()
+    LL = as_float64_1d(L_nodes, copy=True)
 
     if sk.size < 2 or LL.size != sk.size:
         return sk, LL, False
@@ -1292,7 +1294,7 @@ def _find_lambda_column(df: pd.DataFrame) -> str | None:
         cl = str(c).strip().lower()
 
         if "wavelength" in cl or cl.endswith(", nm") or cl == "lambda (nm)":
-            return str(c)
+            return c
 
     return None
 
@@ -1334,9 +1336,16 @@ def normalize_spectrum_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     lam_c = _find_lambda_column(out)
 
     if not lam_c:
-        raise ValueError("Wavelength column not found (expected e.g. 'lambda', 'Wavelength, nm').")
+        numeric_cols = [c for c in out.columns if pd.api.types.is_numeric_dtype(out[c])]
+        if numeric_cols:
+            lam_c = str(numeric_cols[0])
+        elif len(out.columns) >= 1:
+            lam_c = str(out.columns[0])
+        else:
+            raise ValueError("Wavelength column not found (expected e.g. 'lambda', 'Wavelength, nm').")
 
-    out.rename(columns={lam_c: "lambda"}, inplace=True)
+    if lam_c != "lambda":
+        out.rename(columns={lam_c: "lambda"}, inplace=True)
 
     t_c = _find_transmission_column(out, "lambda")
 
@@ -1349,18 +1358,30 @@ def normalize_spectrum_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
             break
 
+    if "lambda" not in out.columns:
+        raise ValueError("Invalid wavelength or spectrum column after normalization.")
+
     return out
 
 
 
 def substrate_id_from_name(name: str) -> int:
 
-    return int(SUBSTRATES[name]["id"])
+    from certus_core import substrate_sellmeier_id
+
+    sid = substrate_sellmeier_id(name)
+
+    if sid is None:
+        raise KeyError(name)
+
+    return int(sid)
 
 
 def allowed_substrate_names() -> list[str]:
 
-    return [n for n in SUBSTRATE_LIST if int(SUBSTRATES[n]["id"]) >= 0]
+    from certus_core import substrate_sellmeier_id
+
+    return [n for n in SUBSTRATE_LIST if substrate_sellmeier_id(n) is not None]
 
 
 # --- P4 Refactor: Sub-configs ---
@@ -3510,3 +3531,20 @@ def log_rmse_mesh_bridge_diagnosis(
 
     except NUMERICAL_FAULT_EXCEPTIONS as exc:
         log.warning("%s | diagnostic failed: %s", tag, exc, exc_info=True)
+
+
+# --- QSettings and Default GUI Constants ---
+_QS_SPECTRUM_FIT_R = "spectrum_fit_r"
+_QS_SPECTRUM_FIT_TREL = "spectrum_fit_trel"
+_QS_SPECTRUM_FIT_T = "spectrum_fit_t"
+_QS_SPECTRUM_WR = "spectrum_weight_r"
+_QS_SPECTRUM_WT = "spectrum_weight_t"
+_QS_SPLINE_UNCERTAINTY_DEFAULTS_REV = "spline_uncertainty_defaults_rev"
+_UNCERTAINTY_DEFAULTS_REV = 12
+_QS_MAIN_SPLITTER_LAYOUT_REV = "main_splitter_layout_rev"
+_MAIN_SPLITTER_LAYOUT_REV = 4
+_QS_MAIN_SPLITTER_STATE = "main_splitter_state"
+_QS_RIGHT_SPLITTER_STATE = "right_splitter_state"
+SIO2_DEFAULT_D_HI_NM = 1800.0
+SIO2_DEFAULT_D_LO_NM = 1600.0
+

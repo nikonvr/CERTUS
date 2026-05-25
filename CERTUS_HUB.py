@@ -1462,6 +1462,13 @@ class CertusHub(QMainWindow):
         if process in self.active_processes:
             self.active_processes.remove(process)
 
+        stderr_text = ""
+        if process is not None:
+            try:
+                stderr_text = process.readAllStandardError().data().decode("utf-8", errors="replace")
+            except RuntimeError:
+                stderr_text = ""
+
         if process is not None:
             try:
                 process.deleteLater()
@@ -1474,16 +1481,10 @@ class CertusHub(QMainWindow):
             self._log_message(f"{module_name} exited normally.")
 
         elif exit_code not in (1, 15, -1):  # Ignore common force-close codes
-            err = ""
-            try:
-                err = process.readAllStandardError().data().decode("utf-8", errors="replace")
-            except RuntimeError:
-                pass
-
             self._log_message(f"{module_name} exited with code {exit_code}")
 
-            if err:
-                self._log_message(f"Error: {err[:200]}")
+            if stderr_text:
+                self._log_message(f"Error: {stderr_text[:200]}")
 
         if process in self.active_processes and process.state() != QProcess.ProcessState.Running:
             try:
@@ -1514,10 +1515,34 @@ class CertusHub(QMainWindow):
         except RuntimeError:
             return
 
+    def closeEvent(self, event) -> None:
+        """Stop child processes cleanly before the hub is destroyed."""
+
+        for process in list(self.active_processes):
+            try:
+                if process is not None and process.state() != QProcess.ProcessState.NotRunning:
+                    process.terminate()
+                    if not process.waitForFinished(1500):
+                        process.kill()
+                        process.waitForFinished(1500)
+            except RuntimeError:
+                pass
+            except Exception:
+                pass
+
+        self.active_processes.clear()
+        super().closeEvent(event)
+
     def _log_message(self, msg) -> None:
         """Add a timestamped message to the log panel."""
 
-        self.log_text.append(f"[{certus_timestamp_display()}] {msg}")
+        if not hasattr(self, "log_text") or self.log_text is None:
+            return
+
+        try:
+            self.log_text.append(f"[{certus_timestamp_display()}] {msg}")
+        except RuntimeError:
+            return
 
     def _setup_shortcuts(self) -> None:
         """Setup keyboard shortcuts for quick module launch."""
@@ -1527,6 +1552,9 @@ class CertusHub(QMainWindow):
             ("Ctrl+Shift+S", "CERTUS_STRAT.py", "Launch STRAT"),
             ("Ctrl+I", "CERTUS_INDEX.py", "Launch INDEX"),
             ("Ctrl+M", "CERTUS_METAL_SINGLE.py", "Launch METAL"),
+            ("Ctrl+Plus", None, "Zoom in"),
+            ("Ctrl+Minus", None, "Zoom out"),
+            ("Ctrl+0", None, "Reset zoom"),
             ("F1", None, "Open Documentation"),
         ]
 
@@ -1535,6 +1563,15 @@ class CertusHub(QMainWindow):
 
             if script:
                 shortcut.activated.connect(functools.partial(self.launch_module, script))
+
+            elif key == "Ctrl+Plus":
+                shortcut.activated.connect(lambda: self._log_message("Zoom shortcut reserved for child windows"))
+
+            elif key == "Ctrl+Minus":
+                shortcut.activated.connect(lambda: self._log_message("Zoom shortcut reserved for child windows"))
+
+            elif key == "Ctrl+0":
+                shortcut.activated.connect(lambda: self._log_message("Zoom reset reserved for child windows"))
 
             else:
                 shortcut.activated.connect(self.open_documentation)
@@ -1614,6 +1651,18 @@ class CertusHub(QMainWindow):
             act_shortcuts.setShortcut("F1")
 
             act_shortcuts.triggered.connect(self._open_shortcuts_overlay)
+
+            act_zoom_in = help_menu.addAction("Zoom in")
+            act_zoom_in.setShortcut("Ctrl+Plus")
+            act_zoom_in.triggered.connect(lambda: self._log_message("Zoom in is handled in child windows"))
+
+            act_zoom_out = help_menu.addAction("Zoom out")
+            act_zoom_out.setShortcut("Ctrl+Minus")
+            act_zoom_out.triggered.connect(lambda: self._log_message("Zoom out is handled in child windows"))
+
+            act_zoom_reset = help_menu.addAction("Reset zoom")
+            act_zoom_reset.setShortcut("Ctrl+0")
+            act_zoom_reset.triggered.connect(lambda: self._log_message("Reset zoom is handled in child windows"))
 
             help_menu.addSeparator()
 

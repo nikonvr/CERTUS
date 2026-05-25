@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
 from certus_core import K_MAX_LIMIT, N_MAX_LIMIT, N_MIN_LIMIT
 
 
@@ -135,10 +136,10 @@ SIO2_PRESET_KNOTS: dict[str, np.ndarray | float] = {
 
 def _clip_n_L_physical(n: np.ndarray, L: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Borne n et L = ln k après interpolation / extrapolation en σ (robustesse plage spectrale)."""
-    n_c = np.clip(np.asarray(n, dtype=np.float64), float(N_MIN_LIMIT), float(N_MAX_LIMIT))
+    n_c = np.clip(as_float64_1d(n), float(N_MIN_LIMIT), float(N_MAX_LIMIT))
     L_lo = float(np.log(1e-30))
     L_hi = float(np.log(max(float(K_MAX_LIMIT), 1e-30)))
-    L_c = np.clip(np.asarray(L, dtype=np.float64), L_lo, L_hi)
+    L_c = np.clip(as_float64_1d(L), L_lo, L_hi)
     return n_c, L_c
 
 
@@ -156,13 +157,13 @@ def _interp_n_L_linear_on_sigma(
 
     """
 
-    sk_target = np.asarray(sk_target, dtype=np.float64).ravel().copy()
+    sk_target = as_float64_1d(sk_target, copy=True)
 
-    sk_ref = np.asarray(sk_ref, dtype=np.float64).ravel()
+    sk_ref = as_float64_1d(sk_ref)
 
-    n_ref = np.asarray(n_ref, dtype=np.float64).ravel()
+    n_ref = as_float64_1d(n_ref)
 
-    L_ref = np.asarray(L_ref, dtype=np.float64).ravel()
+    L_ref = as_float64_1d(L_ref)
 
     if sk_target.size == 0:
         return np.zeros(0, dtype=np.float64), np.zeros(0, dtype=np.float64)
@@ -186,9 +187,9 @@ def _interp_n_L_linear_on_sigma(
 
     sk_sorted = sk_target[order_t]
 
-    n_sorted = np.interp(sk_sorted, sk_s, n_s, left=float(n_s[0]), right=float(n_s[-1]))
+    n_sorted = interp_sorted(sk_sorted, sk_s, n_s, left=float(n_s[0]), right=float(n_s[-1]))
 
-    L_sorted = np.interp(sk_sorted, sk_s, L_s, left=float(L_s[0]), right=float(L_s[-1]))
+    L_sorted = interp_sorted(sk_sorted, sk_s, L_s, left=float(L_s[0]), right=float(L_s[-1]))
 
     return _clip_n_L_physical(n_sorted[inv_t], L_sorted[inv_t])
 

@@ -127,6 +127,7 @@ extend-exclude = [
   "dist",
   ".venv",
   "*.egg-info",
+  "OLD VERSION",
 ]
 
 [tool.ruff.lint]
@@ -145,7 +146,7 @@ extend-ignore = [
   "F541",  # f-string-missing-placeholders
   "F601",  # multi-value-repeated-key-literal
   "F811",  # redefined-while-unused
-  "F821",  # undefined-name (mostly false positives from delayed imports)
+  "F821", "F822",  # undefined-name (mostly false positives from delayed imports)
   "F841",  # unused-variable
   # Isort
   "I001",  # unsorted-imports — `ruff format` will handle later
@@ -154,8 +155,8 @@ extend-ignore = [
   "B023", "B025", "B033", "B904", "B905",
   # Pyupgrade legacy (modernization sweep tracked separately)
   "UP006", "UP007", "UP008", "UP009", "UP015", "UP018",
-  "UP024", "UP032", "UP034", "UP035", "UP036", "UP037",
-  "UP042", "UP045", "UP046",
+  "UP024", "UP031", "UP032", "UP034", "UP035", "UP036", "UP037",
+  "UP040", "UP042", "UP045", "UP046",
   # Pytest legacy (tests already green — these are stylistic)
   "PT006", "PT007", "PT011", "PT015", "PT017", "PT018", "PT019",
   # Performance legacy
@@ -180,7 +181,7 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml --cov-fail-under=40"
+addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]

@@ -124,7 +124,7 @@ class TestSortedFiniteSigmaKnots:
 
 
 class TestRatioTheoreticalFromNk:
-    @pytest.fixture()
+    @pytest.fixture
     def glass_setup(self):
         lam = np.linspace(400, 800, 50)
         n_sub = np.full_like(lam, 1.52)

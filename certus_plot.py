@@ -8,7 +8,8 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 from PyQt6.QtWidgets import QApplication, QWidget, QMenu, QMessageBox, QToolBar, QVBoxLayout, QFileDialog, QMainWindow, QToolButton
 from PyQt6.QtGui import QKeySequence, QShortcut
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
+from certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 # Late imports from certus_export in methods to avoid circular dependency
 
@@ -76,10 +77,17 @@ def sanitize_xy_for_plot(x, y) -> tuple[np.ndarray, np.ndarray]:
 
 
 def plot_widget_plot_finite(widget, x, y, **kwargs):
-    """Equivalent to PlotWidget.plot after cleaning; returns None if no valid points."""
+    """Equivalent to PlotWidget.plot after cleaning; uses shared add_curve when available."""
     xf, yf = sanitize_xy_for_plot(x, y)
     if xf.size == 0:
         return None
+    name = kwargs.get("name", "")
+    animate = bool(kwargs.pop("animate", True))
+    if hasattr(widget, "add_curve") and callable(getattr(widget, "add_curve")):
+        color = kwargs.pop("color", kwargs.pop("pen", "#1e3a8a"))
+        width = int(kwargs.pop("width", 2))
+        style = kwargs.pop("style", Qt.PenStyle.SolidLine)
+        return widget.add_curve(xf, yf, name=name, color=color, width=width, style=style, animate=animate)
     return widget.plot(xf, yf, **kwargs)
 
 
@@ -120,6 +128,7 @@ class CertusScientificPlot(pg.PlotWidget):
         self._install_crosshair_overlay()
         self._apply_sensible_empty_range()
 
+        self._tracked_curves = []
         self._certus_crosshair_label_fn: Optional[Callable[[float, Any, float], str]] = None
         self._certus_crosshair_vertical_only: bool = False
         self._certus_mouse_moved_hook: Optional[Callable[[Any, Any, float, float, Any], None]] = None
@@ -286,19 +295,12 @@ class CertusScientificPlot(pg.PlotWidget):
             p = p.parentWidget()
 
     def _install_crosshair_overlay(self) -> None:
-        from certus_ui import (
-            CertusTheme,
-        )
-
-        self.vLine = pg.InfiniteLine(
-            angle=90, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine)
-        )
-        self.hLine = pg.InfiniteLine(
-            angle=0, movable=False, pen=pg.mkPen("#e74c3c", width=1, style=Qt.PenStyle.DashLine)
-        )
+        pen = pg.mkPen(color="#94a3b8", width=1, style=Qt.PenStyle.DashLine)
+        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=pen)
+        self.hLine = pg.InfiniteLine(angle=0, movable=False, pen=pen)
         self.addItem(self.vLine, ignoreBounds=True)
         self.addItem(self.hLine, ignoreBounds=True)
-        self.info_label = pg.TextItem(anchor=(0, 1), color=CertusTheme.PRIMARY)
+        self.info_label = pg.TextItem(anchor=(0, 1), html="")
         self.addItem(self.info_label, ignoreBounds=True)
 
     def _apply_sensible_empty_range(self, padding: float = 0.05) -> None:
@@ -389,33 +391,82 @@ class CertusScientificPlot(pg.PlotWidget):
                 self.hLine.setPos(y_cursor)
                 label_y = float(y_cursor)
 
+            from certus_ui import CertusTheme
+            bg_color = "rgba(15, 23, 42, 0.95)" if getattr(CertusTheme, "DARK_MODE", False) else "rgba(255, 255, 255, 0.95)"
+            text_color = "#e2e8f0" if getattr(CertusTheme, "DARK_MODE", False) else "#1e293b"
+            border_color = "#334155" if getattr(CertusTheme, "DARK_MODE", False) else "#cbd5e1"
+            primary_color = CertusTheme.PRIMARY
+            font_family = CertusTheme.FONT_FAMILY.split(",")[0].strip("'")
+
             fn = getattr(self, "_certus_crosshair_label_fn", None)
             if callable(fn):
-                if vertical_only:
-                    try:
-                        xr = self.plotItem.vb.viewRange()[0]
-                        x_lo, x_hi = float(xr[0]), float(xr[1])
-                        span = x_hi - x_lo
-                        if span > 0 and x > x_lo + 0.78 * span:
-                            self.info_label.setAnchor((1, 1))
-                        else:
-                            self.info_label.setAnchor((0, 1))
-                    except (
-                        ValueError,
-                        TypeError,
-                        RuntimeError,
-                        AttributeError,
-                        KeyError,
-                        IndexError,
-                        FileNotFoundError,
-                    ):
-                        self.info_label.setAnchor((0, 1))
-                self.info_label.setText(fn(x, y_show, y))
-            else:
-                if y_show is not None:
-                    self.info_label.setText(f"x = {x:.2f}, y = {y_show:.4f}")
+                custom_text = fn(x, y_show, y)
+                if custom_text.strip().startswith("<div") or "<span" in custom_text:
+                    html_text = custom_text
                 else:
-                    self.info_label.setText(f"x = {x:.2f}, y = {y:.4f} (cursor)")
+                    html_text = f"""
+                    <div style="background-color: {bg_color}; 
+                                color: {text_color}; 
+                                border: 1px solid {border_color}; 
+                                border-radius: 6px; 
+                                padding: 6px 10px; 
+                                font-family: {font_family}; 
+                                font-size: 9pt;">
+                        {custom_text.replace(chr(10), '<br/>')}
+                    </div>
+                    """
+            else:
+                tracked_infos = []
+                for item in getattr(self, "_tracked_curves", []):
+                    curve = item["curve"]
+                    if hasattr(curve, "getData"):
+                        x_data, y_data = curve.getData()
+                    else:
+                        x_data, y_data = getattr(curve, "xData", None), getattr(curve, "yData", None)
+                    
+                    if x_data is not None and y_data is not None and len(x_data) > 1:
+                        y_val = self._interp_y_sorted_curve(x_data, y_data, x)
+                        if y_val is not None:
+                            unit = item.get("unit", "")
+                            unit_str = f" {unit}" if unit else ""
+                            tracked_infos.append(f"<b>{item['name']}:</b> <span style='color: {primary_color}; font-weight: bold;'>{y_val:.4f}</span>{unit_str}")
+
+                if not tracked_infos:
+                    if y_show is not None:
+                        tracked_infos.append(f"<b>Value:</b> {y_show:.4f}")
+                    else:
+                        tracked_infos.append(f"<b>Y:</b> {y:.4f}")
+
+                tracked_text = "<br/>".join(tracked_infos)
+                html_text = f"""
+                <div style="background-color: {bg_color}; 
+                            color: {text_color}; 
+                            border: 1px solid {border_color}; 
+                            border-radius: 6px; 
+                            padding: 6px 10px; 
+                            font-family: {font_family}; 
+                            font-size: 9pt;
+                            line-height: 1.3;">
+                    <span style="color: #64748b; font-weight: bold; font-size: 8pt;">X: {x:.2f}</span><br/>
+                    <hr style="border: 0; border-top: 1px solid {border_color}; margin: 4px 0;"/>
+                    {tracked_text}
+                </div>
+                """
+
+            self.info_label.setHtml(html_text)
+
+            try:
+                xr = self.plotItem.vb.viewRange()[0]
+                yr = self.plotItem.vb.viewRange()[1]
+                x_lo, x_hi = float(xr[0]), float(xr[1])
+                y_lo, y_hi = float(yr[0]), float(yr[1])
+                
+                x_anchor = 1.15 if (x > x_lo + 0.75 * (x_hi - x_lo)) else -0.15
+                y_anchor = -0.15 if (label_y > y_lo + 0.75 * (y_hi - y_lo)) else 1.15
+                self.info_label.setAnchor((x_anchor, y_anchor))
+            except Exception:
+                self.info_label.setAnchor((0, 1))
+
             self.info_label.setPos(x, label_y)
             hook = getattr(self, "_certus_mouse_moved_hook", None)
             if callable(hook):
@@ -435,6 +486,7 @@ class CertusScientificPlot(pg.PlotWidget):
         color: str = "#1e3a8a",
         width: int = 2,
         style: Qt.PenStyle = Qt.PenStyle.SolidLine,
+        animate: bool = True,
     ) -> pg.PlotDataItem:
         try:
             x, y = sanitize_xy_for_plot(x, y)
@@ -444,23 +496,60 @@ class CertusScientificPlot(pg.PlotWidget):
             pen = pg.mkPen(color=color, width=width, style=style)
             curve = self.plot(x, y, pen=pen, name=name)
             self._curves[name] = curve
+            if animate and x.size >= 2:
+                self._animate_curve_reveal(curve, x, y, pen=pen, name=name)
             return curve
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"add_curve failed for {name}: {e} (x type={type(x)}, y type={type(y)})")
             raise
 
-    def update_curve(self, name: str, x: np.ndarray, y: np.ndarray):
+    def update_curve(self, name: str, x: np.ndarray, y: np.ndarray, animate: bool = True):
         if name in self._curves:
             xf, yf = sanitize_xy_for_plot(x, y)
-            self._curves[name].setData(xf, yf)
+            curve = self._curves[name]
+            if animate and xf.size >= 2:
+                pen = curve.opts.get("pen", None)
+                self._animate_curve_reveal(curve, xf, yf, pen=pen, name=name)
+            else:
+                curve.setData(xf, yf)
 
     def remove_curve(self, name: str):
         if name in self._curves:
             try:
                 self.removeItem(self._curves[name])
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except NUMERICAL_FAULT_EXCEPTIONS:
                 pass
             del self._curves[name]
+
+    def _animate_curve_reveal(self, curve, x: np.ndarray, y: np.ndarray, *, pen=None, name: str = "") -> None:
+        """Animate a curve from left to right using a short reveal effect."""
+        try:
+            curve.setData([], [])
+            n = int(x.size)
+            if n < 2:
+                curve.setData(x, y)
+                return
+            steps = min(24, max(8, n // 24))
+            indices = np.unique(np.linspace(2, n, steps, dtype=int))
+            if indices.size == 0 or indices[-1] != n:
+                indices = np.append(indices, n)
+
+            idx_state = {"i": 0}
+
+            def _step() -> None:
+                i = idx_state["i"]
+                if i >= len(indices):
+                    curve.setData(x, y)
+                    return
+                end = int(indices[i])
+                curve.setData(x[:end], y[:end], pen=pen)
+                idx_state["i"] = i + 1
+                QTimer.singleShot(16, _step)
+
+            QTimer.singleShot(0, _step)
+        except Exception as exc:
+            logging.debug("curve animation skipped for %s: %s", name or "curve", exc)
+            curve.setData(x, y)
 
     def clear_curves(self):
         for name in list(self._curves.keys()):
@@ -474,10 +563,10 @@ class CertusScientificPlot(pg.PlotWidget):
         self._apply_sensible_empty_range()
 
     def clear_tracking(self):
-        pass
+        self._tracked_curves.clear()
 
     def add_tracked_curve(self, curve, name: str, unit: str = ""):
-        pass
+        self._tracked_curves.append({"curve": curve, "name": name, "unit": unit})
 
     def get_toolbar(self, parent_widget: QWidget) -> QToolBar:
         from certus_ui import CERTUS_UI_STRINGS

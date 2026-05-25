@@ -484,6 +484,24 @@ class TestUIHelpers:
         show_validation_error(None, err)
         assert len(calls) == 0
 
+    def test_safe_ui_action_fallback_executes_function(self):
+        calls = []
+
+        @safe_ui_action
+        def add(a, b):
+            calls.append((a, b))
+            return a + b
+
+        assert add(2, 3) == 5
+        assert calls == [(2, 3)]
+
+    def test_safe_ui_action_exception_is_swallowed(self):
+        @safe_ui_action
+        def boom():
+            raise ValueError("boom")
+
+        assert boom() is None
+
 
 class TestSafeUIAction:
     def test_safe_ui_action_success(self):

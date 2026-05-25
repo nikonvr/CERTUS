@@ -3052,6 +3052,8 @@ class REPhase2Context:
     re_env_s: Any
     wls: Any
     wt_spectral: Any
+    ep_p1: Any = None
+
 
 
 @dataclass

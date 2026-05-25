@@ -94,6 +94,27 @@ class TestBareSubstrateSpectrumColumn:
         assert f("wo coat")
 
 
+    def test_canonicalize_sapphire_aliases(self) -> None:
+
+
+        canon = csi.canonicalize_substrate_label
+
+
+        assert canon("Sapphire") == "Sapphire (Al2O3)"
+
+
+        assert canon("sapphire") == "Sapphire (Al2O3)"
+
+
+        assert canon("saphir") == "Sapphire (Al2O3)"
+
+
+        assert canon("Al2O3") == "Sapphire (Al2O3)"
+
+
+        assert canon("Sapphire (Al2O3)") == "Sapphire (Al2O3)"
+
+
 
 
 
@@ -334,7 +355,7 @@ class TestAutoFitRange:
         wl = pd.Series(range(400, 2400, 10), dtype=float).values
 
 
-        res = pd.Series([0.002] * len(wl), dtype=float).values
+        res = pd.Series([0.002] * len(wl), dtype=float).to_numpy(copy=True)
 
 
         res[wl >= 2000] = 0.08

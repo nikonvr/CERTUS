@@ -674,17 +674,269 @@ class SplineReportBuilder:
         return "N/A", float("nan")
 
     def _rmse_pref_result(self, key: str, n_a: np.ndarray, k_a: np.ndarray, d_alt: float, result: dict, d_nm_c: float, cfg_ex: Any, lam_src_full: np.ndarray) -> tuple[str, float]:
-    
         v = result.get(key)
-
         if v is not None and np.isfinite(float(v)):
             fv = float(v)
             return f"{fv:.6f}", fv
-
         d_use = d_alt if np.isfinite(d_alt) else None
         return self._spectral_rmse_export(n_a, k_a, d_nm_c, cfg_ex, lam_src_full, d_nm_use=d_use)
 
-    def build_report(self, auto: bool = False) -> None:
+    def _build_spec_rows(
+        self,
+        *,
+        lam: np.ndarray,
+        n_lam: np.ndarray,
+        k_lam: np.ndarray,
+        n_spl_spec: np.ndarray,
+        k_spl_spec: np.ndarray,
+        ratio_exp_pct: np.ndarray,
+        ratio_theo_pct: np.ndarray,
+        corr_grid_ok: bool,
+        keep: np.ndarray,
+        ord_ex: np.ndarray,
+        cn_ref_f: np.ndarray,
+        ck_ref_f: np.ndarray,
+        cn_lo_f: np.ndarray,
+        cn_hi_f: np.ndarray,
+        ck_lo_f: np.ndarray,
+        ck_hi_f: np.ndarray,
+        boot_spec_ok: bool,
+        bsn_lo: np.ndarray,
+        bsn_hi: np.ndarray,
+        bsk_lo: np.ndarray,
+        bsk_hi: np.ndarray,
+    ) -> dict[str, Any]:
+        spec_rows: dict[str, Any] = {
+            "Wavelength (nm)": lam,
+            "n_film (final model)": n_lam,
+            "k_film (final model)": k_lam,
+            "n_cubic_spline_sigma_spectral_polish": n_spl_spec,
+            "k_cubic_spline_sigma_spectral_polish": k_spl_spec,
+            "Ratio_Exp (%)": ratio_exp_pct,
+            "Ratio_Theo (%)": ratio_theo_pct,
+        }
+        if corr_grid_ok:
+            spec_rows.update(self._build_corridor_spec_rows(lam, keep, ord_ex, cn_ref_f, ck_ref_f, cn_lo_f, cn_hi_f, ck_lo_f, ck_hi_f))
+        if boot_spec_ok:
+            spec_rows.update(self._build_boot_spec_rows(keep, ord_ex, bsn_lo, bsn_hi, bsk_lo, bsk_hi))
+        return spec_rows
+
+    def _build_corridor_spec_rows(
+        self,
+        lam: np.ndarray,
+        keep: np.ndarray,
+        ord_ex: np.ndarray,
+        cn_ref_f: np.ndarray,
+        ck_ref_f: np.ndarray,
+        cn_lo_f: np.ndarray,
+        cn_hi_f: np.ndarray,
+        ck_lo_f: np.ndarray,
+        ck_hi_f: np.ndarray,
+    ) -> dict[str, Any]:
+        cnk = cn_ref_f[keep][ord_ex] if cn_ref_f.size else np.full(lam.shape, np.nan)
+        ckk = ck_ref_f[keep][ord_ex] if ck_ref_f.size else np.full(lam.shape, np.nan)
+        return {
+            "n_corridor_ref (d profiling)": cnk,
+            "k_corridor_ref (d profiling)": ckk,
+            "log10_k_corridor_ref": _log10_k_safe(ck_ref_f[keep][ord_ex]) if cn_ref_f.size and ck_ref_f.size else np.full(lam.shape, np.nan),
+            "n_corridor_lo": cn_lo_f[keep][ord_ex],
+            "n_corridor_hi": cn_hi_f[keep][ord_ex],
+            "k_corridor_lo": ck_lo_f[keep][ord_ex],
+            "k_corridor_hi": ck_hi_f[keep][ord_ex],
+            "log10_k_corridor_lo": _log10_k_safe(ck_lo_f[keep][ord_ex]),
+            "log10_k_corridor_hi": _log10_k_safe(ck_hi_f[keep][ord_ex]),
+        }
+
+    def _build_boot_spec_rows(
+        self,
+        keep: np.ndarray,
+        ord_ex: np.ndarray,
+        bsn_lo: np.ndarray,
+        bsn_hi: np.ndarray,
+        bsk_lo: np.ndarray,
+        bsk_hi: np.ndarray,
+    ) -> dict[str, Any]:
+        return {
+            "boot_n_lo": bsn_lo[keep][ord_ex],
+            "boot_n_hi": bsn_hi[keep][ord_ex],
+            "boot_k_lo": bsk_lo[keep][ord_ex],
+            "boot_k_hi": bsk_hi[keep][ord_ex],
+            "boot_log10_k_lo": _log10_k_safe(bsk_lo[keep][ord_ex]),
+            "boot_log10_k_hi": _log10_k_safe(bsk_hi[keep][ord_ex]),
+        }
+
+    def _build_mesh_parameters_df(self, result: dict) -> pd.DataFrame:
+        xb = np.asarray(result.get("x", np.zeros(1)), dtype=np.float64)
+        labels = ["Thickness d (nm)"] + [f"Coeff_n_{i}" for i in range(1, 10)] + [f"Coeff_logk_{i}" for i in range(1, 10)]
+        while len(labels) < len(xb):
+            labels.append(f"Param_{len(labels)}")
+        return pd.DataFrame({"Index": np.arange(len(xb)), "Meaning": labels[: len(xb)], "Value": xb})
+
+    def _write_export_workbook(
+        self,
+        *,
+        out_path: str,
+        spec_rows: dict[str, Any],
+        result: dict,
+        corr_grid_ok: bool,
+        lam_src_full: np.ndarray,
+        cn_ref_f: np.ndarray,
+        ck_ref_f: np.ndarray,
+        cn_lo_f: np.ndarray,
+        cn_hi_f: np.ndarray,
+        ck_lo_f: np.ndarray,
+        ck_hi_f: np.ndarray,
+        best_params: tuple[np.ndarray, np.ndarray, float, str, str, Any, str, str],
+        rmse_solver_txt: str,
+        rmse_spl_txt: str,
+        rw_rep: tuple[float, float, float] | None,
+        export_fallback_lam: bool,
+        spectre_filtre: bool,
+    ) -> None:
+        n_best_src, k_best_src, d_best_export, best_pretty, best_lbl, best_v, rmse_best_recalc_txt, best_line = best_params
+        ord_lam_full = _mergesort_order_lambda(lam_src_full)
+
+        def _result_float(key: str) -> float:
+            v = result.get(key)
+            if v is None:
+                return float("nan")
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return float("nan")
+
+        with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+            pd.DataFrame(spec_rows).to_excel(writer, sheet_name="Spectrum", index=False)
+            self._build_mesh_parameters_df(result).to_excel(writer, sheet_name="Mesh_Parameters", index=False)
+            self._write_summary_sheets(
+                writer,
+                result=result,
+                rmse_solver_txt=rmse_solver_txt,
+                rmse_spl_txt=rmse_spl_txt,
+                best_line=best_line,
+                rw_rep=rw_rep,
+                export_fallback_lam=export_fallback_lam,
+                spectre_filtre=spectre_filtre,
+            )
+            self._write_corridor_nk_sheets(
+                writer,
+                result=result,
+                corr_grid_ok=corr_grid_ok,
+                lam_src_full=lam_src_full,
+                ord_lam_full=ord_lam_full,
+                cn_ref_f=cn_ref_f,
+                ck_ref_f=ck_ref_f,
+                cn_lo_f=cn_lo_f,
+                cn_hi_f=cn_hi_f,
+                ck_lo_f=ck_lo_f,
+                ck_hi_f=ck_hi_f,
+            )
+            self._write_best_indices_sheet(
+                writer,
+                result=result,
+                lam_src_full=lam_src_full,
+                n_best_src=n_best_src,
+                k_best_src=k_best_src,
+                d_best_export=d_best_export,
+                best_pretty=best_pretty,
+                best_lbl=best_lbl,
+                best_v=best_v,
+                rmse_best_recalc_txt=rmse_best_recalc_txt,
+                rmse_solver_txt=rmse_solver_txt,
+                rmse_spl_txt=rmse_spl_txt,
+                corr_grid_ok=corr_grid_ok,
+            )
+            self._write_analysis_sheets(writer, result=result, _result_float=_result_float)
+
+    def _select_best_export_model(
+        self,
+        *,
+        result: dict,
+        n_res_full: np.ndarray,
+        k_res_full: np.ndarray,
+        n_spl_full: np.ndarray,
+        k_spl_full: np.ndarray,
+        d_nm_c: float,
+        d_spl_f: float,
+        cfg_ex: Any,
+        lam_src_full: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, float, str, str, Any, str]:
+        best_lbl = str(result.get("spectral_rmse_best_label", "")).strip()
+        best_v = result.get("spectral_rmse_best_value")
+        best_pretty = {"Spline_cubique_sigma": "Polish on cubic sigma-spline mesh"}.get(best_lbl, best_lbl or "-")
+        best_line = f"{best_pretty} - RMSE={float(best_v):.6f}" if best_v is not None and np.isfinite(float(best_v)) and best_lbl else "N/A (see RMSE columns)"
+        has_spl_cols = bool(np.any(np.isfinite(n_spl_full)) and np.any(np.isfinite(k_spl_full)))
+        if best_lbl == "Spline_cubique_sigma" and not has_spl_cols:
+            best_line = "N/A ('sigma spline' label without n_lam_seg_spline_sigma in dict)"
+        if best_lbl == "Spline_cubique_sigma" and has_spl_cols:
+            n_best_src = np.asarray(n_spl_full, dtype=np.float64).ravel().copy()
+            k_best_src = np.asarray(k_spl_full, dtype=np.float64).ravel().copy()
+            d_best_export = float(d_spl_f) if np.isfinite(d_spl_f) else float(d_nm_c)
+        else:
+            n_best_src = np.asarray(n_res_full, dtype=np.float64).ravel().copy()
+            k_best_src = np.asarray(k_res_full, dtype=np.float64).ravel().copy()
+            d_best_export = float(d_nm_c) if isinstance(d_nm_c, (int, float)) and np.isfinite(float(d_nm_c)) else float("nan")
+        rmse_best_recalc_txt, _ = self._spectral_rmse_export(
+            n_best_src, k_best_src, d_nm_c, cfg_ex, lam_src_full, d_nm_use=d_best_export if np.isfinite(d_best_export) else None
+        )
+        return n_best_src, k_best_src, d_best_export, best_pretty, best_lbl, best_v, rmse_best_recalc_txt, best_line
+
+    def _prepare_export_arrays(self, result: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, Any, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, bool, bool, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        lam_src_raw = result.get("lam_nm")
+        if lam_src_raw is None and self.ctx.df is not None and "lambda" in self.ctx.df.columns:
+            lam_src_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
+            if self.logger:
+                self.logger.warning("event=export_excel status=fallback reason=missing_lam_nm source=experimental_grid")
+        lam_src_full = np.asarray(lam_src_raw if lam_src_raw is not None else [], dtype=np.float64).ravel()
+        if lam_src_full.size == 0:
+            raise ValueError("lam_nm indisponible pour export Excel.")
+
+        n_res_full = self._align_to_lam(np.asarray(result.get("n_lam", []), dtype=np.float64).ravel(), "n_lam", lam_src_full)
+        k_res_full = self._align_to_lam(np.asarray(result.get("k_lam", []), dtype=np.float64).ravel(), "k_lam", lam_src_full)
+        t_theo_raw = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
+        if t_theo_raw.size == lam_src_full.size:
+            t_theo_full = t_theo_raw
+        else:
+            t_theo_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
+            n_tt = int(min(t_theo_raw.size, lam_src_full.size))
+            if n_tt > 0:
+                t_theo_full[:n_tt] = t_theo_raw[:n_tt]
+
+        ratio_exp_pct_full = np.full_like(lam_src_full, np.nan)
+        if self.ctx.df is not None and "T" in self.ctx.df.columns:
+            lam_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
+            t_raw_all = _to_fraction_T(self.ctx.df["T"].to_numpy(dtype=np.float64))
+            t_raw_interp = np.interp(lam_src_full, lam_raw, t_raw_all)
+            ratio_exp_pct_full = t_raw_interp * 100.0 if result.get("t_is_ratio", self.ctx.t_is_ratio) else (t_raw_interp / np.maximum(calculate_bare_substrate_RT(lam_src_full, _get_substrate_n_array_spline(substrate_id_from_name(str(self.ctx.sub_name)), lam_src_full)), 1e-6)) * 100.0
+        ratio_theo_pct_full = t_theo_full * 100.0
+        rw_rep = self.ctx.rmse_fit_lambda_tuple
+        m_obj = self.ctx.lam_mask_callable(lam_src_full)
+        keep = m_obj > 0.5
+        spectre_filtre = bool(rw_rep is not None and np.any(~keep) and np.count_nonzero(keep) > 0)
+        export_fallback_lam = False
+        if np.count_nonzero(keep) == 0:
+            logger.warning("event=export_excel status=fallback reason=empty_objective_mask action=export_all_finite_lambda")
+            keep = np.isfinite(lam_src_full)
+            spectre_filtre = False
+            export_fallback_lam = True
+        cfg_ex = self.ctx.opt_config
+        x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
+        d_nm_val = result.get("d_nm")
+        d_nm_c = float(d_nm_val) if isinstance(d_nm_val, (int, float)) and np.isfinite(float(d_nm_val)) else (float(x_res[0]) if x_res.size >= 1 and np.isfinite(float(x_res[0])) else float("nan"))
+        n_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
+        k_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
+        n_sp = result.get("n_lam_seg_spline_sigma")
+        k_sp = result.get("k_lam_seg_spline_sigma")
+        if n_sp is not None and k_sp is not None and np.asarray(n_sp).size == lam_src_full.size and np.asarray(k_sp).size == lam_src_full.size:
+            n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel(); k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
+        d_spl_x = result.get("d_nm_seg_spline_sigma")
+        d_spl_f = float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
+        cn_lo_f = np.asarray(result.get("corridor_n_lo", []), dtype=np.float64).ravel(); cn_hi_f = np.asarray(result.get("corridor_n_hi", []), dtype=np.float64).ravel(); ck_lo_f = np.asarray(result.get("corridor_k_lo", []), dtype=np.float64).ravel(); ck_hi_f = np.asarray(result.get("corridor_k_hi", []), dtype=np.float64).ravel(); cn_ref_f = np.asarray(result.get("corridor_reference_n_lam", []), dtype=np.float64).ravel(); ck_ref_f = np.asarray(result.get("corridor_reference_k_lam", []), dtype=np.float64).ravel(); bsn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel(); bsn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel(); bsk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel(); bsk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
+        corr_grid_ok = cn_lo_f.size == lam_src_full.size and cn_hi_f.size == lam_src_full.size and ck_lo_f.size == lam_src_full.size and ck_hi_f.size == lam_src_full.size and cn_lo_f.size > 0
+        boot_spec_ok = bsn_lo.size == lam_src_full.size and bsn_hi.size == lam_src_full.size and bsk_lo.size == lam_src_full.size and bsk_hi.size == lam_src_full.size and bsn_lo.size > 0
+        return (lam_src_full, n_res_full, k_res_full, t_theo_full, ratio_exp_pct_full, ratio_theo_pct_full, n_spl_full, k_spl_full, rw_rep, d_nm_c, keep, cn_lo_f, cn_hi_f, ck_lo_f, ck_hi_f, corr_grid_ok, spectre_filtre, cn_ref_f, ck_ref_f, bsn_lo, bsn_hi, bsk_lo, bsk_hi, boot_spec_ok, export_fallback_lam)
+
+    def build_report(self, auto: bool = False, auto_export: bool | None = None) -> None:
         """Automatic saving of results to Excel (like CERTUS_DESIGN).
 
         Generates a timestamped file containing:
@@ -702,6 +954,8 @@ class SplineReportBuilder:
         - Resume / Best indices: RMSE dict, sigma-spline polish, selected model.
 
         """
+        if auto_export is not None:
+            auto = auto_export
 
         result = self.ctx.result
 
@@ -718,7 +972,7 @@ class SplineReportBuilder:
             if auto:
                 return  # No result, nothing to export
 
-            self.logger.warning("Error", "No result to export.")
+            self.logger.warning("event=export_excel status=skipped reason=no_result")
 
             return
 
@@ -742,185 +996,56 @@ class SplineReportBuilder:
         out_path = str(base_dir / fname)
 
         try:
-            lam_src_raw = result.get("lam_nm")
-            if lam_src_raw is None and self.ctx.df is not None and "lambda" in self.ctx.df.columns:
-                lam_src_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
-                if self.logger:
-                    self.logger.warning("Export Excel: result missing lam_nm; fallback to experimental lambda grid.")
-            lam_src_full = np.asarray(lam_src_raw if lam_src_raw is not None else [], dtype=np.float64).ravel()
-            if lam_src_full.size == 0:
-                raise ValueError("lam_nm indisponible pour export Excel.")
-
-            n_res_full = np.asarray(result.get("n_lam", []), dtype=np.float64).ravel()
-
-            k_res_full = np.asarray(result.get("k_lam", []), dtype=np.float64).ravel()
-
-            t_theo_raw = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
-
-            if t_theo_raw.size == lam_src_full.size:
-                t_theo_full = t_theo_raw
-
-            else:
-                t_theo_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-                n_tt = int(min(t_theo_raw.size, lam_src_full.size))
-
-                if n_tt > 0:
-                    t_theo_full[:n_tt] = t_theo_raw[:n_tt]
-
-                if lam_src_full.size and t_theo_raw.size != lam_src_full.size:
-                    logger.warning(
-                        "Export Excel: len(t_theo)=%d ? len(lam_nm)=%d - padded with NaN.",
-                        int(t_theo_raw.size),
-                        int(lam_src_full.size),
-                    )
-
-
-            n_res_full = self._align_to_lam(n_res_full, "n_lam", lam_src_full)
-
-            k_res_full = self._align_to_lam(k_res_full, "k_lam", lam_src_full)
-
-            # Calculer le ratio experimental sur le mesh complet du result
-
-            ratio_exp_pct_full = np.full_like(lam_src_full, np.nan)
-
-            if self.ctx.df is not None and "T" in self.ctx.df.columns:
-                lam_raw = ensure_lam_nm_array(self.ctx.df["lambda"].to_numpy(dtype=np.float64))
-
-                t_raw_all = _to_fraction_T(self.ctx.df["T"].to_numpy(dtype=np.float64))
-
-                t_raw_interp = np.interp(lam_src_full, lam_raw, t_raw_all)
-
-                if result.get("t_is_ratio", self.ctx.t_is_ratio):
-                    ratio_exp_pct_full = t_raw_interp * 100.0
-
-                else:
-                    sub_name = str(self.ctx.sub_name)
-
-                    sub_id = substrate_id_from_name(sub_name)
-
-                    n_sub = _get_substrate_n_array_spline(sub_id, lam_src_full)
-
-                    t_sub = calculate_bare_substrate_RT(lam_src_full, n_sub)
-
-                    ratio_exp_pct_full = (t_raw_interp / np.maximum(t_sub, 1e-6)) * 100.0
-
-            ratio_theo_pct_full = t_theo_full * 100.0
-
-            rw_rep = self.ctx.rmse_fit_lambda_tuple
-
-            m_obj = self.ctx.lam_mask_callable(lam_src_full)
-
-            keep = m_obj > 0.5
-
-            spectre_filtre = bool(rw_rep is not None and np.any(~keep) and np.count_nonzero(keep) > 0)
-
-            export_fallback_lam = False
-
-            if np.count_nonzero(keep) == 0:
-                logger.warning("Export Excel: aucun point dans le masque objectif - export de tous les lambda finis.")
-
-                keep = np.isfinite(lam_src_full)
-
-                spectre_filtre = False
-
-                export_fallback_lam = True
-
+            (
+                lam_src_full,
+                n_res_full,
+                k_res_full,
+                t_theo_full,
+                ratio_exp_pct_full,
+                ratio_theo_pct_full,
+                n_spl_full,
+                k_spl_full,
+                rw_rep,
+                d_nm_c,
+                keep,
+                cn_lo_f,
+                cn_hi_f,
+                ck_lo_f,
+                ck_hi_f,
+                corr_grid_ok,
+                spectre_filtre,
+                cn_ref_f,
+                ck_ref_f,
+                bsn_lo,
+                bsn_hi,
+                bsk_lo,
+                bsk_hi,
+                boot_spec_ok,
+                export_fallback_lam,
+            ) = self._prepare_export_arrays(result)
             cfg_ex = self.ctx.opt_config
-
-
-
-
-
-            x_res = np.asarray(result.get("x", np.zeros(19)), dtype=np.float64)
-
-            d_nm_val = result.get("d_nm")
-            d_nm_c = (
-                float(d_nm_val)
-                if isinstance(d_nm_val, (int, float)) and np.isfinite(float(d_nm_val))
-                else (float(x_res[0]) if x_res.size >= 1 and np.isfinite(float(x_res[0])) else float("nan"))
-            )
-
-            # sigma-spline mesh polish: only if curves present (same length as lambda).
-
-            n_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-            k_spl_full = np.full(lam_src_full.shape, np.nan, dtype=np.float64)
-
-            n_sp = result.get("n_lam_seg_spline_sigma")
-
-            k_sp = result.get("k_lam_seg_spline_sigma")
-
-            if (
-                n_sp is not None
-                and k_sp is not None
-                and np.asarray(n_sp).size == lam_src_full.size
-                and np.asarray(k_sp).size == lam_src_full.size
-            ):
-                n_spl_full = np.asarray(n_sp, dtype=np.float64).ravel()
-
-                k_spl_full = np.asarray(k_sp, dtype=np.float64).ravel()
-
             d_spl_x = result.get("d_nm_seg_spline_sigma")
-
-            d_spl_f = (
-                float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
-            )
-
-
+            d_spl_f = float(d_spl_x) if isinstance(d_spl_x, (int, float)) and np.isfinite(float(d_spl_x)) else float("nan")
             rmse_spl_txt, _ = self._rmse_pref_result("spectral_rmse_seg_spline_sigma", n_spl_full, k_spl_full, d_spl_f, result, d_nm_c, cfg_ex, lam_src_full)
-
             rmse_solver_txt = "N/A"
-
             srv = result.get("spectral_rmse_segments")
-
             if srv is not None and np.isfinite(float(srv)):
                 rmse_solver_txt = f"{float(srv):.6f}"
-
             has_spl_cols = bool(np.any(np.isfinite(n_spl_full)) and np.any(np.isfinite(k_spl_full)))
-
             best_lbl = str(result.get("spectral_rmse_best_label", "")).strip()
-
             best_v = result.get("spectral_rmse_best_value")
 
-            best_pretty = {
-                "Spline_cubique_sigma": "Polish on cubic sigma-spline mesh",
-            }.get(best_lbl, best_lbl or "-")
-
-            best_line = (
-                f"{best_pretty} - RMSE={float(best_v):.6f}"
-                if best_v is not None and np.isfinite(float(best_v)) and best_lbl
-                else "N/A (see RMSE columns)"
+            n_best_src, k_best_src, d_best_export, best_pretty, best_lbl, best_v, rmse_best_recalc_txt, best_line = self._select_best_export_model(
+                result=result,
+                n_res_full=n_res_full,
+                k_res_full=k_res_full,
+                n_spl_full=n_spl_full,
+                k_spl_full=k_spl_full,
+                d_nm_c=d_nm_c,
+                d_spl_f=d_spl_f,
+                cfg_ex=cfg_ex,
+                lam_src_full=lam_src_full,
             )
-
-            if best_lbl == "Spline_cubique_sigma" and not has_spl_cols:
-                best_line = "N/A ('sigma spline' label without n_lam_seg_spline_sigma in dict)"
-
-            if best_lbl == "Spline_cubique_sigma" and has_spl_cols:
-                n_best_src = np.asarray(n_spl_full, dtype=np.float64).ravel().copy()
-
-                k_best_src = np.asarray(k_spl_full, dtype=np.float64).ravel().copy()
-
-                d_best_export = float(d_spl_f) if np.isfinite(d_spl_f) else float(d_nm_c)
-
-            else:
-                n_best_src = np.asarray(n_res_full, dtype=np.float64).ravel().copy()
-
-                k_best_src = np.asarray(k_res_full, dtype=np.float64).ravel().copy()
-
-                d_best_export = (
-                    float(d_nm_c) if isinstance(d_nm_c, (int, float)) and np.isfinite(float(d_nm_c)) else float("nan")
-                )
-
-            rmse_best_recalc_txt, _ = self._spectral_rmse_export(
-                n_best_src,
-                k_best_src,
-                d_nm_c,
-                cfg_ex,
-                lam_src_full,
-                d_nm_use=d_best_export if np.isfinite(d_best_export) else None,
-            )
-
 
             lam = lam_src_full[keep]
 
@@ -999,51 +1124,10 @@ class SplineReportBuilder:
                         int(k_min_changed_export),
                     )
 
-            spec_rows: dict[str, Any] = {
-                "Wavelength (nm)": lam,
-                "n_film (final model)": n_lam,
-                "k_film (final model)": k_lam,
-                "n_cubic_spline_sigma_spectral_polish": n_spl_spec,
-                "k_cubic_spline_sigma_spectral_polish": k_spl_spec,
-                "Ratio_Exp (%)": ratio_exp_pct,
-                "Ratio_Theo (%)": ratio_theo_pct,
-            }
-
-            if corr_grid_ok:
-                cnk = cn_ref_f[keep][ord_ex] if cn_ref_f.size else np.full(lam.shape, np.nan)
-
-                ckk = ck_ref_f[keep][ord_ex] if ck_ref_f.size else np.full(lam.shape, np.nan)
-
-                spec_rows["n_corridor_ref (d profiling)"] = cnk
-
-                spec_rows["k_corridor_ref (d profiling)"] = ckk
-
-                if cn_ref_f.size and ck_ref_f.size:
-                    spec_rows["log10_k_corridor_ref"] = _log10_k_safe(ck_ref_f[keep][ord_ex])
-
-                else:
-                    spec_rows["log10_k_corridor_ref"] = np.full(lam.shape, np.nan)
-
-                spec_rows["n_corridor_lo"] = cn_lo_f[keep][ord_ex]
-
-                spec_rows["n_corridor_hi"] = cn_hi_f[keep][ord_ex]
-
-                spec_rows["k_corridor_lo"] = ck_lo_f[keep][ord_ex]
-
-                spec_rows["k_corridor_hi"] = ck_hi_f[keep][ord_ex]
-
-                spec_rows["log10_k_corridor_lo"] = _log10_k_safe(ck_lo_f[keep][ord_ex])
-
-                spec_rows["log10_k_corridor_hi"] = _log10_k_safe(ck_hi_f[keep][ord_ex])
-
             bsn_lo = np.asarray(result.get("boot_corridor_n_lo", []), dtype=np.float64).ravel()
-
             bsn_hi = np.asarray(result.get("boot_corridor_n_hi", []), dtype=np.float64).ravel()
-
             bsk_lo = np.asarray(result.get("boot_corridor_k_lo", []), dtype=np.float64).ravel()
-
             bsk_hi = np.asarray(result.get("boot_corridor_k_hi", []), dtype=np.float64).ravel()
-
             boot_spec_ok = (
                 bsn_lo.size == lam_src_full.size
                 and bsn_hi.size == lam_src_full.size
@@ -1052,99 +1136,51 @@ class SplineReportBuilder:
                 and bsn_lo.size > 0
             )
 
-            if boot_spec_ok:
-                spec_rows["boot_n_lo"] = bsn_lo[keep][ord_ex]
+            spec_rows = self._build_spec_rows(
+                lam=lam,
+                n_lam=n_lam,
+                k_lam=k_lam,
+                n_spl_spec=n_spl_spec,
+                k_spl_spec=k_spl_spec,
+                ratio_exp_pct=ratio_exp_pct,
+                ratio_theo_pct=ratio_theo_pct,
+                corr_grid_ok=corr_grid_ok,
+                keep=keep,
+                ord_ex=ord_ex,
+                cn_ref_f=cn_ref_f,
+                ck_ref_f=ck_ref_f,
+                cn_lo_f=cn_lo_f,
+                cn_hi_f=cn_hi_f,
+                ck_lo_f=ck_lo_f,
+                ck_hi_f=ck_hi_f,
+                boot_spec_ok=boot_spec_ok,
+                bsn_lo=bsn_lo,
+                bsn_hi=bsn_hi,
+                bsk_lo=bsk_lo,
+                bsk_hi=bsk_hi,
+            )
 
-                spec_rows["boot_n_hi"] = bsn_hi[keep][ord_ex]
-
-                spec_rows["boot_k_lo"] = bsk_lo[keep][ord_ex]
-
-                spec_rows["boot_k_hi"] = bsk_hi[keep][ord_ex]
-
-                spec_rows["boot_log10_k_lo"] = _log10_k_safe(bsk_lo[keep][ord_ex])
-
-                spec_rows["boot_log10_k_hi"] = _log10_k_safe(bsk_hi[keep][ord_ex])
-
-            # lambda order for ?full grid? sheets (same permutation everywhere).
-
-            ord_lam_full = _mergesort_order_lambda(lam_src_full)
-
-            with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
-                # Spectrum sheet: final model + polish spectral spline cubique sigma (seg_spline_sigma) on same lambda
-
-                pd.DataFrame(spec_rows).to_excel(writer, sheet_name="Spectrum", index=False)
-
-                # Parameters sheet (piecewise mesh x vector)
-
-                xb = np.asarray(result.get("x", np.zeros(1)), dtype=np.float64)
-
-                labels = ["Thickness d (nm)"]
-
-                labels += [f"Coeff_n_{i}" for i in range(1, 10)]
-
-                labels += [f"Coeff_logk_{i}" for i in range(1, 10)]
-
-                while len(labels) < len(xb):
-                    labels.append(f"Param_{len(labels)}")
-
-                pd.DataFrame(
-                    {
-                        "Index": np.arange(len(xb)),
-                        "Meaning": labels[: len(xb)],
-                        "Value": xb,
-                    }
-                ).to_excel(writer, sheet_name="Mesh_Parameters", index=False)
-
-                self._write_summary_sheets(
-                    writer,
-                    result=result,
-                    rmse_solver_txt=rmse_solver_txt,
-                    rmse_spl_txt=rmse_spl_txt,
-                    best_line=best_line,
-                    rw_rep=rw_rep,
-                    export_fallback_lam=export_fallback_lam,
-                    spectre_filtre=spectre_filtre,
-                )
-
-                self._write_corridor_nk_sheets(
-                    writer,
-                    result=result,
-                    corr_grid_ok=corr_grid_ok,
-                    lam_src_full=lam_src_full,
-                    ord_lam_full=ord_lam_full,
-                    cn_ref_f=cn_ref_f,
-                    ck_ref_f=ck_ref_f,
-                    cn_lo_f=cn_lo_f,
-                    cn_hi_f=cn_hi_f,
-                    ck_lo_f=ck_lo_f,
-                    ck_hi_f=ck_hi_f,
-                )
-
-                self._write_best_indices_sheet(
-                    writer,
-                    result=result,
-                    lam_src_full=lam_src_full,
-                    n_best_src=n_best_src,
-                    k_best_src=k_best_src,
-                    d_best_export=d_best_export,
-                    best_pretty=best_pretty,
-                    best_lbl=best_lbl,
-                    best_v=best_v,
-                    rmse_best_recalc_txt=rmse_best_recalc_txt,
-                    rmse_solver_txt=rmse_solver_txt,
-                    rmse_spl_txt=rmse_spl_txt,
-                    corr_grid_ok=corr_grid_ok,
-                )
-
-                self._write_analysis_sheets(
-                    writer,
-                    result=result,
-                    _result_float=_result_float,
-                )
-
-            self.logger.info("Results exported -> %s", fname)
-
-            logger.info(f"Export Excel: {out_path}")
+            self._write_export_workbook(
+                out_path=out_path,
+                spec_rows=spec_rows,
+                result=result,
+                corr_grid_ok=corr_grid_ok,
+                lam_src_full=lam_src_full,
+                cn_ref_f=cn_ref_f,
+                ck_ref_f=ck_ref_f,
+                cn_lo_f=cn_lo_f,
+                cn_hi_f=cn_hi_f,
+                ck_lo_f=ck_lo_f,
+                ck_hi_f=ck_hi_f,
+                best_params=(n_best_src, k_best_src, d_best_export, best_pretty, best_lbl, best_v, rmse_best_recalc_txt, best_line),
+                rmse_solver_txt=rmse_solver_txt,
+                rmse_spl_txt=rmse_spl_txt,
+                rw_rep=rw_rep,
+                export_fallback_lam=export_fallback_lam,
+                spectre_filtre=spectre_filtre,
+            )
+            self.logger.info("event=export_excel status=success output=%s", fname)
+            logger.info("event=export_excel status=success path=%s", out_path)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error("Error export Excel: %s", e)

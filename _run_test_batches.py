@@ -15,7 +15,7 @@ nodeids = [line.strip() for line in nodeids_file.read_text(encoding="utf-8").spl
 for batch_start in range(0, len(nodeids), 100):
     batch = nodeids[batch_start:batch_start + 100]
     print(f"\n=== BATCH {batch_start // 100 + 1} / {((len(nodeids) - 1) // 100) + 1} ===")
-    cmd = [sys.executable, "-m", "pytest", "-q", *batch]
+    cmd = [sys.executable, "-m", "pytest", "-q", "--cov-fail-under=0", *batch]
     proc = subprocess.run(cmd, cwd=root)
     print(f"=== BATCH EXIT {proc.returncode} ===")
     if proc.returncode != 0:

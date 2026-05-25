@@ -62,6 +62,14 @@ def test_apply_manual_substrate_offset_preview_refreshes_curve_without_worker() 
             self.text = str(value)
 
     class _Harness:
+        @staticmethod
+        def _post_optimization_ready_status(status_text):
+            return CertusIndexSplineApp._post_optimization_ready_status(status_text)
+
+        @staticmethod
+        def _format_post_optimization_status(display, fallback_result=None):
+            return CertusIndexSplineApp._format_post_optimization_status(display, fallback_result)
+
         def __init__(self, cfg: SplineOptConfig, n_sub_base: np.ndarray) -> None:
             self._last_run_cfg = cfg
             self._last_result = None

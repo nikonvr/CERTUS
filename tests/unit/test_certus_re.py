@@ -522,3 +522,107 @@ class TestReverseSampleXlsxInitialRmse:
     )
     def test_re_workflow_convergence(self):
         pass
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
+class TestREAppSkeletonLoaders:
+    """Validate skeleton loader integration on CertusREApp."""
+
+    def test_re_app_skeletons_methods(self, qapp, monkeypatch):
+        from CERTUS_RE import CertusREApp
+        from unittest.mock import MagicMock
+        
+        # We can mock or instantiate CertusREApp
+        app = MagicMock(spec=CertusREApp)
+        app.spectrum_plot = MagicMock()
+        app.profile_plot = MagicMock()
+        app.nk_plot = MagicMock()
+        
+        # Retrieve the unbound method
+        func_remove = CertusREApp._remove_re_skeletons
+        
+        # Mock the remove_skeleton_loader function
+        mock_remove = MagicMock()
+        monkeypatch.setattr("CERTUS_RE.remove_skeleton_loader", mock_remove)
+        
+        func_remove(app)
+        
+        assert mock_remove.call_count == 3
+        mock_remove.assert_any_call(app.spectrum_plot)
+        mock_remove.assert_any_call(app.profile_plot)
+        mock_remove.assert_any_call(app.nk_plot)
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(not RE_AVAILABLE, reason="CERTUS_RE not available")
+class TestCertusREResultsDialogSmoke:
+    """Smoke test for CertusREResultsDialog initialization."""
+
+    def test_dialog_init(self, qapp):
+        from certus_re_ui import CertusREResultsDialog
+        from unittest.mock import MagicMock
+
+        # Mock l0_spin spinbox
+        mock_l0_spin = MagicMock()
+        mock_l0_spin.value.return_value = 500.0
+
+        # Mock material and get_nk method
+        mock_material = MagicMock()
+        mock_material.get_nk.return_value = np.array([2.0 + 0j], dtype=np.complex128)
+
+        mock_materials = {"H": mock_material, "L": mock_material}
+
+        # Mock Layer with 'mat' property
+        class DummyLayer:
+            def __init__(self, mat, thickness):
+                self.mat = mat
+                self.thickness = thickness
+
+        initial_stack = [DummyLayer("H", 100.0), DummyLayer("L", 150.0)]
+
+        # Mock the main application
+        mock_app = MagicMock()
+        mock_app.l0_spin = mock_l0_spin
+        mock_app._get_materials.return_value = mock_materials
+        mock_app._re_envelope_scale_from_gui.return_value = 1.0
+        mock_app._re_spline_lam2_nm_from_result.return_value = 2000.0
+
+        results = [
+            {
+                "label": "Run 1",
+                "rmse": 0.001,
+                "nfev": 10,
+                "ep": np.array([100.0, 150.0], dtype=np.float64),
+                "re_ranking_score": 0.002,
+                "re_ranking_alpha_ref": 0.05,
+                "re_dH_knots": np.zeros(5, dtype=np.float64),
+                "re_dL_knots": np.zeros(5, dtype=np.float64),
+                "re_knots_nm": np.array([400.0, 600.0, 800.0, 1000.0, 1200.0], dtype=np.float64),
+            }
+        ]
+
+        # Use MagicMock / direct mock to avoid exec/show blocking issues
+        # Since .exec() starts an event loop, let's mock self.exec / self.show so the dialog starts and finishes immediately during the test
+        original_exec = CertusREResultsDialog.exec
+        original_show = CertusREResultsDialog.show
+        CertusREResultsDialog.exec = MagicMock()
+        CertusREResultsDialog.show = MagicMock()
+
+        try:
+            dlg = CertusREResultsDialog(
+                mock_app,
+                results,
+                ep0=np.array([100.0, 150.0]),
+                re_rmse_initial=0.015,
+                re_rmse_phase1=0.008,
+                re_rmse_final=0.002,
+                initial_stack=initial_stack,
+                announce_in_log=False,
+            )
+            assert dlg is not None
+            assert dlg.main_app == mock_app
+        finally:
+            CertusREResultsDialog.exec = original_exec
+            CertusREResultsDialog.show = original_show
+

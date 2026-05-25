@@ -21,10 +21,8 @@ from scipy.interpolate import CubicSpline
 
 
 from certus_core import N_MIN_LIMIT, N_MAX_LIMIT
-
-
+from certus_array_utils import as_float64_1d, sorted_float64, interp_sorted
 from certus_index_utils import _ratio_theoretical_from_nk, _transmittance_absolute_from_nk, spectral_rmse_weights
-
 
 import functools
 
@@ -38,7 +36,7 @@ def _cached_spectral_rmse_weights_inner(key: bytes) -> np.ndarray:
 
 def _cached_spectral_rmse_weights(lam_f: np.ndarray) -> np.ndarray:
     """Trapezoidal ln lambda weights for ``lam_f``; avoids ~N identical calls."""
-    key = np.asarray(lam_f, dtype=np.float64).ravel().tobytes()
+    key = as_float64_1d(lam_f).tobytes()
     return _cached_spectral_rmse_weights_inner(key)
 
 
@@ -53,8 +51,8 @@ def _cached_cubic_interp_matrix_inner(sk_key: bytes, sig_key: bytes, k_nodes: in
 
 
 def _cached_cubic_interp_matrix(sk: np.ndarray, sig: np.ndarray) -> np.ndarray:
-    sk_f = np.asarray(sk, dtype=np.float64).ravel()
-    sig_f = np.asarray(sig, dtype=np.float64).ravel()
+    sk_f = as_float64_1d(sk)
+    sig_f = as_float64_1d(sig)
     return _cached_cubic_interp_matrix_inner(sk_f.tobytes(), sig_f.tobytes(), int(sk_f.size))
 
 
@@ -958,7 +956,7 @@ class SplinePWLObjective:
 
     def __call__(self, xv: np.ndarray) -> float:
 
-        x = np.asarray(xv, dtype=np.float64, order="C").ravel()
+        x = as_float64_1d(xv)
 
         cached = self._get_cached(x)
 
@@ -1135,7 +1133,7 @@ class SplinePWLObjective:
     def analytic_gradient(self, xv: np.ndarray) -> np.ndarray | None:
         """Gradient of ``__call__`` when ``spline_pwl_analytic_grad_supported(self.cfg)``."""
 
-        x = np.asarray(xv, dtype=np.float64, order="C").ravel()
+        x = as_float64_1d(xv)
 
         # Reuse (n_l, k_l) from thread-local cache if __call__ was just
         # invoked on the same x (typical in _combined_fun_and_grad).

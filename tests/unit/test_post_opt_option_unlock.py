@@ -1,6 +1,41 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
+from types import SimpleNamespace as _RealSimpleNamespace
+
+class _Harness(_RealSimpleNamespace):
+    @staticmethod
+    def _format_post_optimization_status(display, fallback_result=None):
+        return "mocked_status"
+
+    @staticmethod
+    def _result_uses_split_mesh(result):
+        return False
+
+    @staticmethod
+    def _prepare_worker_restart(self):
+        pass
+
+    @staticmethod
+    def _rmse_from_result_dict(result):
+        return float(result.get("rmse", float("nan")))
+
+    @staticmethod
+    def _runtime_metrics_from_result_dict(display):
+        return 0.0, 0.0
+
+    @staticmethod
+    def _summarize_manual_mesh_change(b, r):
+        return "mesh_change"
+
+    @staticmethod
+    def _manual_mesh_change_log_line(label, summary):
+        return f"{label}: {summary}"
+
+    @staticmethod
+    def _post_optimization_ready_status(status_text):
+        return f"Ready: {status_text}"
+
+SimpleNamespace = _Harness
 from unittest.mock import MagicMock
 
 import numpy as np

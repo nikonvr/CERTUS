@@ -1756,43 +1756,58 @@ def worker_spline_auto_clean_knots(
             local_best_knots = None
             local_best_variant = "baseline"
 
+            def _update_best_candidate(vname: str, tk: np.ndarray, is_refine: bool = False) -> float:
+                nonlocal best_cand_rmse, best_cand_result, best_cand_knots, best_cand_variant
+                nonlocal local_best_rmse, local_best_knots, local_best_variant
+
+                cand, cand_rmse = _eval_clean_variant(
+                    tk, stop_event, step_eval_cache,
+                    cfg_prescreen, cfg_candidate, best_result_out,
+                    nominal_rmse, tolerance, prescreen_enabled,
+                    prescreen_margin_abs, candidate_polish_maxfun,
+                    prescreen_maxfun, log,
+                )
+                if cand is not None:
+                    if cand_rmse < best_cand_rmse:
+                        best_cand_rmse = cand_rmse
+                        best_cand_result = cand
+                        best_cand_knots = tk
+                        best_cand_variant = str(vname)
+                    if cand_rmse < local_best_rmse:
+                        local_best_rmse = cand_rmse
+                        local_best_knots = tk
+                        local_best_variant = str(vname)
+                else:
+                    gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
+                    if is_refine:
+                        kind_str = f"refine_variant={vname}"
+                    elif vname == "baseline":
+                        kind_str = "baseline"
+                    else:
+                        kind_str = f"variant={vname}"
+
+                    if np.isfinite(cand_rmse):
+                        log.debug(
+                            "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d %s rejected before polish | rmse_fast=%.8f | gate=%.8f",
+                            int(step + 1),
+                            int(i),
+                            kind_str,
+                            float(cand_rmse),
+                            float(gate),
+                        )
+                    else:
+                        log.debug(
+                            "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d %s failed/non-finite",
+                            int(step + 1),
+                            int(i),
+                            kind_str,
+                        )
+                return cand_rmse
+
             # 1. Evaluate baseline first (always variants[0])
             baseline_name, baseline_knots = variants[0]
             ctx.emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{baseline_name}]...")
-            baseline_cand, baseline_rmse = _eval_clean_variant(
-                baseline_knots, stop_event, step_eval_cache,
-                cfg_prescreen, cfg_candidate, best_result_out,
-                nominal_rmse, tolerance, prescreen_enabled,
-                prescreen_margin_abs, candidate_polish_maxfun,
-                prescreen_maxfun, log,
-            )
-            if baseline_cand is None:
-                gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
-                if np.isfinite(baseline_rmse):
-                    log.debug(
-                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d baseline rejected before polish | rmse_fast=%.8f | gate=%.8f",
-                        int(step + 1),
-                        int(i),
-                        float(baseline_rmse),
-                        float(gate),
-                    )
-                else:
-                    log.debug(
-                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d baseline failed/non-finite",
-                        int(step + 1),
-                        int(i),
-                    )
-
-            if baseline_cand is not None:
-                if baseline_rmse < best_cand_rmse:
-                    best_cand_rmse = baseline_rmse
-                    best_cand_result = baseline_cand
-                    best_cand_knots = baseline_knots
-                    best_cand_variant = str(baseline_name)
-                if baseline_rmse < local_best_rmse:
-                    local_best_rmse = baseline_rmse
-                    local_best_knots = baseline_knots
-                    local_best_variant = str(baseline_name)
+            baseline_rmse = _update_best_candidate(baseline_name, baseline_knots)
 
             # Early-exit: if baseline already improves RMSE by more than a full tolerance
             # margin, pull-variants cannot change the final outcome meaningfully.
@@ -1819,41 +1834,7 @@ def worker_spline_auto_clean_knots(
                             break
                         ctx.emit_progress(1, f"Step {step + 1}: testing knot removal {i}/{K - 2} [{vname}]...")
                         try:
-                            cand, cand_rmse = _eval_clean_variant(
-                                tk, stop_event, step_eval_cache,
-                                cfg_prescreen, cfg_candidate, best_result_out,
-                                nominal_rmse, tolerance, prescreen_enabled,
-                                prescreen_margin_abs, candidate_polish_maxfun,
-                                prescreen_maxfun, log,
-                            )
-                            if cand is not None:
-                                if cand_rmse < best_cand_rmse:
-                                    best_cand_rmse = cand_rmse
-                                    best_cand_result = cand
-                                    best_cand_knots = tk
-                                    best_cand_variant = str(vname)
-                                if cand_rmse < local_best_rmse:
-                                    local_best_rmse = cand_rmse
-                                    local_best_knots = tk
-                                    local_best_variant = str(vname)
-                            else:
-                                gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
-                                if np.isfinite(cand_rmse):
-                                    log.debug(
-                                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d variant=%s rejected before polish | rmse_fast=%.8f | gate=%.8f",
-                                        int(step + 1),
-                                        int(i),
-                                        str(vname),
-                                        float(cand_rmse),
-                                        float(gate),
-                                    )
-                                else:
-                                    log.debug(
-                                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d variant=%s failed/non-finite",
-                                        int(step + 1),
-                                        int(i),
-                                        str(vname),
-                                    )
+                            _update_best_candidate(vname, tk)
                         except (ValueError, TypeError, RuntimeError) as e:
                             log.debug("INDEX_SPLINE [AUTO_CLEAN] variant %s failed: %s", vname, e)
 
@@ -1877,41 +1858,7 @@ def worker_spline_auto_clean_knots(
                             break
                         ctx.emit_progress(1, f"Step {step + 1}: 2D refinement [{vname}]...")
                         try:
-                            cand, cand_rmse = _eval_clean_variant(
-                                tk, stop_event, step_eval_cache,
-                                cfg_prescreen, cfg_candidate, best_result_out,
-                                nominal_rmse, tolerance, prescreen_enabled,
-                                prescreen_margin_abs, candidate_polish_maxfun,
-                                prescreen_maxfun, log,
-                            )
-                            if cand is not None:
-                                if cand_rmse < best_cand_rmse:
-                                    best_cand_rmse = cand_rmse
-                                    best_cand_result = cand
-                                    best_cand_knots = tk
-                                    best_cand_variant = str(vname)
-                                if cand_rmse < local_best_rmse:
-                                    local_best_rmse = cand_rmse
-                                    local_best_knots = tk
-                                    local_best_variant = str(vname)
-                            else:
-                                gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
-                                if np.isfinite(cand_rmse):
-                                    log.debug(
-                                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d refine_variant=%s rejected before polish | rmse_fast=%.8f | gate=%.8f",
-                                        int(step + 1),
-                                        int(i),
-                                        str(vname),
-                                        float(cand_rmse),
-                                        float(gate),
-                                    )
-                                else:
-                                    log.debug(
-                                        "INDEX_SPLINE [AUTO_CLEAN] step=%d idx=%d refine_variant=%s failed/non-finite",
-                                        int(step + 1),
-                                        int(i),
-                                        str(vname),
-                                    )
+                            _update_best_candidate(vname, tk, is_refine=True)
                         except (ValueError, TypeError, RuntimeError) as e:
                             log.debug("INDEX_SPLINE [AUTO_CLEAN] refine variant %s failed: %s", vname, e)
 

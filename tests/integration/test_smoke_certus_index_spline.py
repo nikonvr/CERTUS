@@ -29,3 +29,22 @@ def test_import_certus_index_spline_app() -> None:
     from CERTUS_INDEX_SPLINE import CertusIndexSplineApp  # noqa: F401
 
     assert CertusIndexSplineApp is not None
+
+
+def test_live_index_monitor_ui(qapp) -> None:
+    from certus_index_spline_ui import LiveIndexMonitor
+    from unittest.mock import MagicMock
+    import numpy as np
+
+    # Ensure mock/None elements are supported safely
+    dialog = LiveIndexMonitor(None)
+    assert dialog is not None
+
+    # Test updating coordinates
+    lam = np.array([400.0, 500.0, 600.0])
+    n = np.array([2.1, 2.0, 1.9])
+    k = np.array([1e-4, 1e-5, 1e-6])
+    dialog.update_indices(lam, n, k, d_nm=150.0)
+    assert dialog.lbl_d.text() == "d = 150.0 nm"
+    dialog.close()
+

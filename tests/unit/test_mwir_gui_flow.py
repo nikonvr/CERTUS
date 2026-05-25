@@ -1,6 +1,41 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
+from types import SimpleNamespace as _RealSimpleNamespace
+
+class _Harness(_RealSimpleNamespace):
+    @staticmethod
+    def _format_post_optimization_status(display, fallback_result=None):
+        return CertusIndexSplineApp._format_post_optimization_status(display, fallback_result)
+
+    @staticmethod
+    def _result_uses_split_mesh(result):
+        return CertusIndexSplineApp._result_uses_split_mesh(result)
+
+    @staticmethod
+    def _prepare_worker_restart(self):
+        pass  # safe stub since it modifies QThread/GUI state
+
+    @staticmethod
+    def _rmse_from_result_dict(result):
+        return CertusIndexSplineApp._rmse_from_result_dict(result)
+
+    @staticmethod
+    def _runtime_metrics_from_result_dict(display):
+        return CertusIndexSplineApp._runtime_metrics_from_result_dict(display)
+
+    @staticmethod
+    def _summarize_manual_mesh_change(b, r):
+        return CertusIndexSplineApp._summarize_manual_mesh_change(b, r)
+
+    @staticmethod
+    def _manual_mesh_change_log_line(label, summary):
+        return CertusIndexSplineApp._manual_mesh_change_log_line(label, summary)
+
+    @staticmethod
+    def _post_optimization_ready_status(status_text):
+        return CertusIndexSplineApp._post_optimization_ready_status(status_text)
+
+SimpleNamespace = _Harness
 
 import numpy as np
 

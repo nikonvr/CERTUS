@@ -283,6 +283,68 @@ class TestCertusTheme:
         mock_app.setPalette.assert_called()
         mock_app.setStyleSheet.assert_called()
 
+    def test_dark_mode_aliases_and_a11y(self):
+        """Test dark mode alias updates, contrast settings, and palette audit logger behavior."""
+        # Backup original colors
+        original_bg = CertusTheme.BACKGROUND
+        original_surface = CertusTheme.SURFACE
+        original_warning = CertusTheme.WARNING
+        original_dark = CertusTheme.DARK_MODE
+        original_chart = CertusTheme.CHART_PRIMARY
+
+        try:
+            # 1. Test configure("dark") syncs variables
+            CertusTheme.configure("dark")
+            assert CertusTheme.DARK_MODE is True
+            assert CertusTheme.BACKGROUND == "#0b1220"
+            assert CertusTheme.WARNING == "#fbbf24"
+            assert CertusTheme.BASE_ELEVATED == "#111827"
+            assert CertusTheme.ELEVATED == "#1f2937"
+            assert CertusTheme.CHART_PRIMARY == "#60a5fa"
+
+            # 2. Test configure("light") syncs variables
+            CertusTheme.configure("light")
+            assert CertusTheme.DARK_MODE is False
+            assert CertusTheme.BACKGROUND == "#f8f9fa"
+            assert CertusTheme.WARNING == "#b45309"
+            assert CertusTheme.BASE_ELEVATED == "#ffffff"
+            assert CertusTheme.ELEVATED == "#f1f3f5"
+            assert CertusTheme.CHART_PRIMARY == "#0f62fe"
+
+            # 3. Test apply_to_app invokes the a11y audit logger safely
+            mock_app = MagicMock()
+            mock_palette = Mock()
+            mock_app.palette.return_value = mock_palette
+            
+            with patch("logging.Logger.warning") as mock_warn:
+                # Intentionally trigger contrast warning for testing if there were bad colors
+                # WARNING #b45309 vs #ffffff is fine (> 4.5:1), but if we force a bad contrast color:
+                CertusTheme.WARNING = "#ffc107"  # Bad contrast color
+                CertusTheme.apply_to_app(mock_app, dark_mode=False)
+                # Verify logger warning was called due to contrast ratio of WARNING color on light surface
+                assert mock_warn.called
+                assert any("warning" in args[0].lower() or "contrast" in args[0].lower() for args, _ in mock_warn.call_args_list)
+
+        finally:
+            # Restore state
+            CertusTheme.BACKGROUND = original_bg
+            CertusTheme.SURFACE = original_surface
+            CertusTheme.WARNING = original_warning
+            CertusTheme.DARK_MODE = original_dark
+            CertusTheme.CHART_PRIMARY = original_chart
+
+    def test_get_standard_stylesheet_class_method(self):
+        """Test that get_standard_stylesheet is callable both globally and as a class method."""
+        from certus_theme import get_standard_stylesheet as global_get_stylesheet
+        
+        global_style = global_get_stylesheet()
+        class_style = CertusTheme.get_standard_stylesheet()
+        
+        assert isinstance(global_style, str)
+        assert isinstance(class_style, str)
+        assert global_style == class_style
+        assert "QWidget" in class_style
+
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
 class TestUIComponents:
@@ -1082,3 +1144,268 @@ class TestUIExceptionHandling:
         app = CertusREApp()
         assert hasattr(app.launch_re, "__wrapped__")
         assert hasattr(app.load_reverse_engineering, "__wrapped__")
+
+
+@pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
+class TestProUXComponents:
+    """Tests for advanced UX widgets and utility functions added to boost coverage."""
+
+    def test_certus_section_header(self, qapp):
+        _ = qapp
+        from certus_ui import CertusSectionHeader
+        header = CertusSectionHeader("My Title", "My Caption")
+        assert header is not None
+
+    def test_certus_stepper(self, qapp):
+        _ = qapp
+        from PyQt6.QtCore import Qt
+        from certus_ui import CertusStepper
+        # 1 column
+        stepper1 = CertusStepper(["Step 1", "Step 2"], columns=1)
+        assert len(stepper1._btns) == 2
+        # Multiple columns grid
+        stepper2 = CertusStepper(["Step A", "Step B", "Step C"], columns=2)
+        assert len(stepper2._btns) == 3
+
+        # Click simulation & active state
+        activated_steps = []
+        stepper1.step_activated.connect(activated_steps.append)
+        stepper1._btns[1].click()
+        assert 1 in activated_steps
+
+        # set_step
+        stepper1.set_step(1)
+        assert stepper1._current == 1
+        stepper1.set_step(5)  # Out of range fallback
+        assert stepper1._current == 1
+
+    def test_certus_collapsible(self, qapp):
+        _ = qapp
+        from certus_ui import CertusCollapsible
+        from PyQt6.QtWidgets import QWidget
+        win = QWidget()
+        content = QWidget(parent=win)
+        collapsible = CertusCollapsible("Section", content, expanded=True, parent=win)
+        win.show()
+        assert collapsible.is_expanded() is True
+
+        # Toggle with animations mocked out to fall back to direct visibility change
+        with patch("certus_animations.fade_in", side_effect=RuntimeError), \
+             patch("certus_animations.fade_out", side_effect=RuntimeError):
+            collapsible.set_expanded(False)
+            assert collapsible.is_expanded() is False
+            collapsible.set_expanded(True)
+            assert collapsible.is_expanded() is True
+
+    def test_certus_status_pill(self, qapp):
+        _ = qapp
+        from certus_ui import CertusStatusPill
+        pill = CertusStatusPill("Ready", level="ready")
+        assert pill.text() == "Ready"
+        pill.set_level("running")
+        assert pill._level == "running"
+        pill.set_level("done")
+        pill.set_level("error")
+        pill.set_level("warning")
+        pill.set_level("invalid_level")
+
+    def test_certus_action_bar(self, qapp):
+        _ = qapp
+        from certus_ui import CertusActionBar
+        from PyQt6.QtWidgets import QPushButton
+        bar = CertusActionBar()
+        btn = QPushButton("Action")
+        bar.add_widget(btn)
+        bar.add_stretch()
+
+    def test_install_shortcuts(self, qapp):
+        _ = qapp
+        from PyQt6.QtCore import Qt
+        from certus_ui import install_standard_shortcuts
+        from PyQt6.QtWidgets import QWidget
+        win = QWidget()
+        called = []
+        shortcuts = install_standard_shortcuts(
+            win,
+            save=lambda: called.append("save"),
+            run=lambda: called.append("run"),
+            extra={"Ctrl+P": lambda: called.append("extra")}
+        )
+        assert any(k.startswith("save") for k in shortcuts)
+        assert any(k.startswith("run") for k in shortcuts)
+        assert "Ctrl+P" in shortcuts
+
+    def test_file_drop_filter(self, qapp):
+        _ = qapp
+        from PyQt6.QtCore import QUrl, QEvent, Qt
+        from certus_ui import enable_file_drop
+        from PyQt6.QtWidgets import QWidget
+
+        win = QWidget()
+        dropped_paths = []
+        flt = enable_file_drop(win, handler=dropped_paths.extend, extensions=[".json", ".csv"])
+
+        class MockEvent:
+            Type = QEvent.Type
+            def __init__(self, type_val, mime_data):
+                self._type = type_val
+                self._mime = mime_data
+                self.accepted = False
+            def type(self):
+                return self._type
+            def mimeData(self):
+                return self._mime
+            def acceptProposedAction(self):
+                self.accepted = True
+
+        class MockMime:
+            def __init__(self, urls):
+                self._urls = urls
+            def hasUrls(self):
+                return bool(self._urls)
+            def urls(self):
+                return self._urls
+
+        mime = MockMime([QUrl.fromLocalFile("test.json"), QUrl.fromLocalFile("test.txt")])
+        
+        # Test drag enter event filtering
+        ev_enter = MockEvent(QEvent.Type.DragEnter, mime)
+        res = flt.eventFilter(win, ev_enter)
+        assert res is True
+        assert ev_enter.accepted is True
+
+        # Test drop event
+        ev_drop = MockEvent(QEvent.Type.Drop, mime)
+        res_drop = flt.eventFilter(win, ev_drop)
+        assert res_drop is True
+        assert len(dropped_paths) > 0
+        assert "test.json" in dropped_paths[0]
+
+    def test_certus_toast(self, qapp):
+        _ = qapp
+        from certus_ui import CertusToast, show_toast
+        from PyQt6.QtWidgets import QWidget
+        parent = QWidget()
+        toast = CertusToast(parent, "Test Notification", level="success", duration_ms=10)
+        assert toast.text() == "Test Notification"
+        
+        t2 = show_toast(parent, "Info", level="info", duration_ms=10)
+        assert t2 is not None
+        assert show_toast(None, "No Parent") is None
+
+    def test_numeric_table_widget_item(self, qapp):
+        _ = qapp
+        from certus_ui import NumericTableWidgetItem
+        
+        # Numeric comparison
+        item1 = NumericTableWidgetItem("12.5")
+        item2 = NumericTableWidgetItem("3.7")
+        assert (item2 < item1) is True
+        assert (item1 < item2) is False
+
+        # Fallback to string comparison in case of error
+        item_str1 = NumericTableWidgetItem("apple")
+        item_str2 = NumericTableWidgetItem("banana")
+        assert (item_str1 < item_str2) is True
+
+    def test_flashy_card(self, qapp):
+        _ = qapp
+        from certus_ui import FlashyCard
+        
+        card1 = FlashyCard("Title 1", "Subtitle 1", icon="🚀")
+        assert card1 is not None
+        
+        card2 = FlashyCard("Title 2", "Subtitle 2", icon="")
+        assert card2 is not None
+
+    def test_welcome_guide_widget(self, qapp):
+        _ = qapp
+        from certus_ui import WelcomeGuideWidget
+        
+        guide = WelcomeGuideWidget(app_name="TestApp", steps=["Step 1", "Step 2"])
+        assert guide is not None
+
+    def test_certus_card(self, qapp):
+        _ = qapp
+        from certus_ui import CertusCard
+        
+        card_empty = CertusCard()
+        assert card_empty is not None
+        
+        card_with_text = CertusCard(title="My Card", subtitle="My Subtitle")
+        assert card_with_text is not None
+        
+        card_with_text._refresh_style()
+        # Trigger showEvent with a mock event
+        from PyQt6.QtGui import QShowEvent
+        event = QShowEvent()
+        card_with_text.showEvent(event)
+
+    def test_progress_dialog(self, qapp):
+        _ = qapp
+        from certus_ui import ProgressDialog
+        dlg = ProgressDialog("My Dialog")
+        assert dlg.is_canceled() is False
+        dlg.progress_bar.setValue(50)
+        assert dlg.progress_bar.value() == 50
+        dlg.finish()
+        assert dlg.progress_bar.value() == 100
+
+    def test_enhanced_progress_widget(self, qapp):
+        _ = qapp
+        from certus_ui import EnhancedProgressWidget
+        w = EnhancedProgressWidget(main_label="Main")
+        assert w.is_canceled() is False
+        
+        w.start()
+        w.enable_cancel(True)
+        w.set_time_budget(10.0)
+        
+        # Call update with various parameters
+        w.update(iteration=5, max_iter=10, evals=100, phase="Run", sub_iteration=2, max_sub_iter=5, animate=False)
+        assert w.progress_bar.value() == 50
+        
+        # Test cancel click
+        w.cancel_btn.click()
+        assert w.is_canceled() is True
+
+    def test_skeleton_loader(self, qapp):
+        _ = qapp
+        from certus_ui import SkeletonLoaderWidget, install_skeleton_loader, remove_skeleton_loader
+        from PyQt6.QtWidgets import QWidget
+
+        parent = QWidget()
+        loader1 = SkeletonLoaderWidget(parent, shape="chart")
+        loader2 = SkeletonLoaderWidget(parent, shape="table")
+        loader3 = SkeletonLoaderWidget(parent, shape="cards")
+        loader4 = SkeletonLoaderWidget(parent, shape="default")
+        
+        # Trigger paint events to cover rendering logic
+        loader1.repaint()
+        loader2.repaint()
+        loader3.repaint()
+        loader4.repaint()
+        
+        # Test helper functions
+        widget = QWidget()
+        loader = install_skeleton_loader(widget, shape="chart")
+        assert getattr(widget, "_certus_skeleton", None) is not None
+        assert remove_skeleton_loader(widget) is True
+        assert getattr(widget, "_certus_skeleton", None) is None
+        assert remove_skeleton_loader(widget) is False
+
+    def test_apply_os_window_effects(self, qapp):
+        _ = qapp
+        from certus_ui import apply_os_window_effects
+        from PyQt6.QtWidgets import QWidget
+        
+        window = QWidget()
+        window.show()
+        
+        # Call with both dark mode configurations
+        apply_os_window_effects(window, dark_mode=False)
+        apply_os_window_effects(window, dark_mode=True)
+        
+        window.close()
+
+

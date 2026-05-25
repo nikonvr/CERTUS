@@ -47,6 +47,7 @@ __all__ = [
     "SUBSTRATES",
     "SUBSTRATE_LIST",
     "SUBSTRATE_MAPPING",
+    "CANONICAL_SUBSTRATE_LABELS",
     "SUBSTRATE_MIN_LAMBDA",
     "CAUCHY_PRESETS",
     # Config Classes
@@ -87,6 +88,8 @@ __all__ = [
     "NUMERICAL_FAULT_EXCEPTIONS",
     "CertusConfigError",
     "wait_warmup",
+    # Facade Proxy
+    "CertusFacadeModule",
     # Internal utilities (for advanced use)
     "_get_cpu_count",
     # Timestamp formats (unified across CERTUS)
@@ -319,7 +322,7 @@ def configure_numba_env() -> None:
             os.environ.setdefault("NUMBA_THREADING_LAYER", "workqueue" if is_frozen() else "omp")
             os.environ["_CERTUS_NUMBA_CONFIGURED"] = "1"
             return
-        except NUMERICAL_FAULT_EXCEPTIONS:
+        except Exception:
             # Fallback to standard path if runtime introspection fails.
             pass
 
@@ -453,7 +456,7 @@ def set_num_threads(n_cores: int | None = None) -> int:
 
 
 def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
-    """Configure enhanced logging with detailed context and error handling."""
+    """Configure a single CERTUS logger with consistent console and JSONL output."""
 
     import logging as _logging
 
@@ -462,6 +465,8 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
 
     logger = _logging.getLogger("CERTUS")
     logger.setLevel(level)
+    logger.propagate = False
+
     for handler in list(logger.handlers):
         try:
             handler.close()
@@ -469,7 +474,7 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
             logger.removeHandler(handler)
 
     formatter = _logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)-12s | %(funcName)-20s:%(lineno)-4d | %(message)s",
+        "%(asctime)s | %(levelname)-8s | %(name)-12s | %(funcName)-22s:%(lineno)-4d | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
@@ -502,7 +507,7 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
             file_handler.setLevel(_logging.DEBUG)
             logger.addHandler(file_handler)
 
-            logger.info("Logging initialized: file=%s, level=%s", log_path, _logging.getLevelName(level))
+            logger.info("logger=certus status=initialized sink=file path=%s level=%s", log_path, _logging.getLevelName(level))
         except (
             PermissionError,
             OSError,
@@ -512,14 +517,14 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
             ZeroDivisionError,
             OverflowError,
             np.linalg.LinAlgError,
-        ) as e:
-            _logging.error("Logging file handler unavailable for '%s': %s", log_file, e)
-            logger.warning("Continuing with console logging only")
+        ) as exc:
+            logger.error("logger=certus sink=file status=unavailable path=%s reason=%s", log_file, exc)
+            logger.warning("logger=certus sink=console status=active reason=file-handler-unavailable")
 
-    # Structured JSONL stream for cross-run correlation and machine parsing.
     try:
         jsonl_path = Path(get_resource_path("logs")) / "CERTUS.jsonl"
         attach_jsonl_handler(logger, jsonl_path)
+        logger.debug("logger=certus sink=jsonl status=attached path=%s", jsonl_path)
     except (
         PermissionError,
         OSError,
@@ -530,8 +535,8 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
         KeyError,
         IndexError,
         FileNotFoundError,
-    ) as e:
-        logger.warning("Structured JSONL handler unavailable: %s: %s", type(e).__name__, e)
+    ) as exc:
+        logger.warning("logger=certus sink=jsonl status=unavailable reason=%s", exc)
 
     return logger
 
@@ -553,7 +558,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         return
 
     error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-    logging.critical(f"Uncaught exception:\n{error_msg}")
+    logging.critical("logger=certus event=uncaught_exception\n%s", error_msg)
 
 
 def build_runtime(
@@ -928,8 +933,12 @@ OH_BAND_MAX: float = 1460.0
 
 
 # Sellmeier Coefficients for Substrates (Single Source of Truth)
-
+#
 # Format: (B1, C1, B2, C2, B3, C3)
+#
+# IMPORTANT:
+# - Sapphire is the sapphire substrate (Al2O3)
+# - In CERTUS, sapphire substrates must always resolve to the Sellmeier law.
 
 SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
     0: (
@@ -963,7 +972,7 @@ SELLMEIER_COEFFS_BY_ID: dict[int, tuple[float, ...]] = {
         0.1193242**2,
         5.3414021,
         18.028251**2,
-    ),  # Sapphire
+    ),  # Sapphire (Al2O3)
     4: (
         0.90110328,
         0.0045578115,
@@ -994,12 +1003,64 @@ SUBSTRATES: dict[str, dict[str, Any]] = {
 SUBSTRATE_MAPPING: dict[str, str] = {
     "N-BK7": "N-BK7",
     "SiO2": "SiO2",
-    "Sapphire": "Sapphire",
+    "Sapphire": "Sapphire (Al2O3)",
+    "Sapphire (Al2O3)": "Sapphire (Al2O3)",
     "Si-substrate": "Si-substrate",
 }
 
 
 SUBSTRATE_LIST = list(SUBSTRATES.keys())
+
+# Canonical substrate label aliases used across CERTUS UI / parsers.
+CANONICAL_SUBSTRATE_LABELS: dict[str, str] = {
+    "sapphire": "Sapphire (Al2O3)",
+    "sapphire (al2o3)": "Sapphire (Al2O3)",
+    "al2o3": "Sapphire (Al2O3)",
+    "saphir": "Sapphire (Al2O3)",
+}
+
+# Reverse lookup for canonicalized labels.
+_CANONICAL_SUBSTRATE_LABELS_NORM: dict[str, str] = {
+    key.strip().lower(): value for key, value in CANONICAL_SUBSTRATE_LABELS.items()
+}
+
+
+def canonicalize_substrate_label(label: str | None) -> str | None:
+    """Return the canonical CERTUS substrate label for any known alias."""
+
+    raw = str(label or "").strip()
+    if not raw:
+        return None
+
+    norm = raw.casefold()
+    return _CANONICAL_SUBSTRATE_LABELS_NORM.get(norm, raw)
+
+
+def substrate_sellmeier_id(label: str | None) -> int | None:
+    """Resolve a substrate label to its Sellmeier catalog id when known."""
+
+    canon = canonicalize_substrate_label(label)
+    if canon is None:
+        return None
+
+    info = SUBSTRATES.get(canon)
+    if info is not None:
+        sid = int(info.get("id", -1))
+        return sid if sid >= 0 else None
+
+    return None
+
+
+def substrate_sellmeier_coeffs(label: str | None) -> tuple[float, ...] | None:
+    """Resolve a substrate label to its canonical Sellmeier coefficients."""
+
+    sid = substrate_sellmeier_id(label)
+    if sid is None:
+        return None
+    coeffs = SELLMEIER_COEFFS_BY_ID.get(int(sid))
+    if coeffs is None:
+        return None
+    return tuple(float(v) for v in coeffs)
 
 
 SUBSTRATE_MIN_LAMBDA: dict[int, float] = {
@@ -1208,7 +1269,7 @@ def setup_module_logging(
     base_logger = setup_logging(log_file=log_file)
     logger = get_structured_logger(base_logger, run_id=run_id, app_id=module_name)
 
-    logger.info(f"{module_name} initialized")
+    logger.info("logger=certus module=%s status=initialized", module_name)
 
     return logger
 
@@ -1357,3 +1418,36 @@ def ensure_numpy_arrays(*arrays: Any) -> tuple[np.ndarray, ...]:
     """
 
     return tuple(ensure_numpy_array(arr) for arr in arrays)
+
+
+import types
+
+
+class CertusFacadeModule(types.ModuleType):
+    """
+    Generic proxy module to support pytest monkeypatching.
+    Delegates attribute access and modification to the underlying submodules.
+    """
+    def __init__(self, name: str, submodules: list):
+        super().__init__(name)
+        self._submodules = submodules
+        # Copy dictionary attributes from the original module in sys.modules
+        if name in sys.modules:
+            for k, v in sys.modules[name].__dict__.items():
+                self.__dict__[k] = v
+
+    def __getattr__(self, name: str):
+        if name == '_submodules':
+            raise AttributeError(name)
+        for sub in self._submodules:
+            if hasattr(sub, name):
+                return getattr(sub, name)
+        raise AttributeError(f"module '{self.__name__}' has no attribute '{name}'")
+
+    def __setattr__(self, name: str, value: Any):
+        super().__setattr__(name, value)
+        if name != '_submodules' and hasattr(self, '_submodules'):
+            for sub in self._submodules:
+                if hasattr(sub, name):
+                    setattr(sub, name, value)
+

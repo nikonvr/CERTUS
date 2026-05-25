@@ -56,6 +56,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Final, Iterable
 
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 
 
@@ -179,6 +181,109 @@ def _safe_cell_value(v: Any) -> Any:
     if isinstance(v, (list, tuple)):
         return ", ".join(str(x) for x in v)
     return str(v)
+
+
+def validate_manifest_for_export(
+    manifest: dict[str, Any] | None,
+    *,
+    auto: bool = False,
+    logger_obj: logging.Logger | None = None,
+    module_name: str = "",
+) -> tuple[bool, list[str]]:
+    from certus_data import get_missing_manifest_fields
+
+    missing = get_missing_manifest_fields(manifest)
+    if missing and logger_obj:
+        missing_txt = ", ".join(missing)
+        prefix = f"[{module_name}.export] " if module_name else ""
+        logger_obj.error(
+            "%sblocked export | reason=incomplete manifest | missing=%s | auto=%s",
+            prefix,
+            missing_txt,
+            auto,
+        )
+    return (len(missing) == 0), missing
+
+
+def build_report_context(
+    *,
+    module_name: str,
+    title: str,
+    rmse: float | None = None,
+    subtitle: str = "",
+    app_name: str = "CERTUS",
+    author: str = "",
+    source_paths: list[str] | None = None,
+    run_manifest: dict[str, Any] | None = None,
+    warnings: list[str] | None = None,
+    status: str | None = None,
+) -> ReportContext:
+    manifest = dict(run_manifest or {})
+    if source_paths is not None:
+        manifest.setdefault("source_paths", source_paths)
+    if warnings:
+        manifest.setdefault("warnings", warnings)
+    if status:
+        manifest.setdefault("status", status)
+    if rmse is not None:
+        manifest.setdefault("rmse", rmse)
+    manifest.setdefault("module_name", module_name)
+    return ReportContext(
+        title=title,
+        subtitle=subtitle,
+        app_name=app_name,
+        author=author,
+        run_manifest=manifest or None,
+    )
+
+
+def build_report_sections(
+    *,
+    summary: dict[str, Any],
+    solution_rows: list[dict[str, Any]] | None = None,
+    spectra_df: pd.DataFrame | None = None,
+    manifest: dict[str, Any] | None = None,
+    notes: list[str] | None = None,
+) -> list[Section]:
+    sections: list[Section] = []
+    summary_rows = [[k, _safe_cell_value(v)] for k, v in summary.items()]
+    sections.append(Section(title="Summary", kind="table", header=["Parameter", "Value"], rows=summary_rows))
+    if solution_rows:
+        sol_rows = [[_safe_cell_value(r.get("Parameter")), _safe_cell_value(r.get("Value"))] for r in solution_rows]
+        sections.append(Section(title="Solution", kind="table", header=["Parameter", "Value"], rows=sol_rows))
+    if spectra_df is not None and isinstance(spectra_df, pd.DataFrame) and not spectra_df.empty:
+        rows = spectra_df.head(500).astype(object).where(pd.notna(spectra_df.head(500)), None).values.tolist()
+        sections.append(Section(title="Spectra", kind="table", header=list(spectra_df.columns), rows=rows))
+    if manifest:
+        manifest_rows = [[k, _safe_cell_value(v)] for k, v in manifest.items()]
+        sections.append(Section(title="Manifest", kind="table", header=["Key", "Value"], rows=manifest_rows))
+    if notes:
+        sections.append(Section(title="Notes", kind="text", text="\n".join(str(n) for n in notes)))
+    return sections
+
+
+def export_report_bundle(
+    *,
+    ctx: ReportContext,
+    sections: list[Section],
+    output_dir: str,
+    base_name: str,
+    logger_obj: logging.Logger | None = None,
+    export_excel: bool = True,
+    export_pdf: bool = False,
+) -> dict[str, str | None]:
+    out_dir = Path(output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    result: dict[str, str | None] = {"excel": None, "pdf": None}
+    if export_excel:
+        result["excel"] = build_excel_report(ctx, sections, str(out_dir / f"{base_name}.xlsx"))
+        if logger_obj:
+            logger_obj.info("Excel report saved: %s", Path(result["excel"]).name)
+    if export_pdf:
+        result["pdf"] = build_pdf_report(ctx, sections, str(out_dir / f"{base_name}.pdf"))
+        if logger_obj:
+            logger_obj.info("PDF report saved: %s", Path(result["pdf"]).name)
+    return result
 
 
 # =============================================================================

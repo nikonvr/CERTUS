@@ -179,16 +179,12 @@ def _build_live_dict(
     t_is_ratio_val = bool(cfg.t_is_ratio)
 
     k_nodes = int(sk.size)
-
     n_nodes_phys = x_slice_n_to_physical_nodes(xv[1 : 1 + k_nodes], sk, cfg.n_mono_band_nm)
-
     L_nodes = np.asarray(xv[1 + k_nodes : 1 + 2 * k_nodes], dtype=np.float64).copy()
 
     mse_ui = float(mse)
-
     if float(getattr(cfg, "n_lambda_rising_penalty_weight", 0.0) or 0.0) > 0.0:
         ms_sp = spline_spectral_mse_from_xy_nk(cfg, lam, n_l, k_l, d_nm)
-
         if ms_sp is not None and np.isfinite(ms_sp):
             mse_ui = float(ms_sp)
 
@@ -212,6 +208,36 @@ def _build_live_dict(
         "n_mono_band_nm": cfg.n_mono_band_nm,
         "x_encoding": "xi_n_mono" if cfg.n_mono_band_nm is not None else "n_physical",
     }
+
+
+def _free_knot_phase_budgets(cfg: SplineOptConfig, optimize_n: bool) -> tuple[int, int, int, list[int], float]:
+    """Compute phase budgets for the free-knot stage."""
+    mxf1 = int(sol3_phase1_maxfun_effective(cfg))
+    mxf2 = int(max(16000, 2 * mxf1))
+    mxf3 = int(max(40000, 4 * mxf1))
+    phase_list = [mxf1, mxf2] + ([mxf3] if optimize_n else [])
+    weight_total = float(max(1, sum(max(1, int(v)) for v in phase_list)))
+    return mxf1, mxf2, mxf3, phase_list, weight_total
+
+
+def _free_knot_phase_options(mxf1: int, mxf2: int, mxf3: int) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Build SciPy option dicts for the three free-knot phases."""
+    opt_p1 = {"maxiter": 1200, "maxfun": int(mxf1), "ftol": 5e-13, "gtol": 1e-12}
+    opt_p2 = {"maxiter": 3000, "maxfun": int(mxf2), "ftol": 1e-14, "gtol": 1e-14}
+    opt_p3 = {"maxiter": 6000, "maxfun": int(mxf3), "ftol": 1e-16, "gtol": 1e-16}
+    return opt_p1, opt_p2, opt_p3
+
+
+def _free_knot_emit_phase_start(log: Any, seq_label: str, stage_name: str, optimize_n: bool, K: int, z0: np.ndarray, rmse_warm: float, d0: float, mxf1: int, mxf2: int, mxf3: int, progress_cb: Callable) -> None:
+    """Emit the phase-start logs for SOL3/SOL3b."""
+    if optimize_n:
+        _log_spline_pipeline_json(log, "sol3_minimize_enter", seq=seq_label, K_sigma=int(K), n_vars=int(z0.size), rmse_warm_sol2=rmse_warm, d_warm=float(d0), phase1_maxfun=int(mxf1), phase2_maxfun=int(mxf2), phase3_maxfun=int(mxf3))
+        log.debug("PIPELINE [%s] %s L-BFGS-B - phase 1/2 | %d variables | RMSE warm (SOL2)~%.6f | phase1 maxfun=%d", seq_label, stage_name, int(z0.size), float(rmse_warm), int(mxf1))
+        progress_cb(0, f"{stage_name}: L-BFGS-B {int(z0.size)} vars (descent)...")
+    else:
+        _log_spline_pipeline_json(log, "sol3b_minimize_enter", seq=seq_label, K_sigma_L=int(K), n_vars=int(z0.size), rmse_warm_before=float(rmse_warm), phase1_maxfun=int(mxf1), phase2_maxfun=int(mxf2))
+        log.debug("PIPELINE [%s] %s - phase 1/2 | %d vars | RMSE entry=%.6f | phase1 maxfun=%d", seq_label, stage_name, int(z0.size), float(rmse_warm), int(mxf1))
+        progress_cb(0, f"{stage_name}: ln k spline + free sigma_L (descent)...")
 
 def _polish_lbfgsb_chunked(
     obj: SplinePWLObjective,
@@ -956,6 +982,50 @@ def _snap_nk_mesh_sol3b(
     return sk_ref, n_at, LL_at
 
 
+def _prepare_free_knot_problem(
+    cfg: SplineOptConfig,
+    base_result: dict,
+    optimize_n: bool,
+    seq_label: str,
+    stage_name: str,
+    ev: str,
+    progress_cb,
+    log: Any,
+):
+    lam = np.asarray(cfg.lam_nm, dtype=np.float64).ravel()
+    sig = 1.0 / np.maximum(lam, 1e-9)
+    mg = build_spline_objective_masked_grid(cfg)
+    if mg is None:
+        log.warning("_run_free_knot_stage (%s): empty objective mask.", stage_name)
+        _log_spline_pipeline_json(log, f"{ev}_abort", seq=seq_label, reason="masked_grid_empty")
+        progress_cb(100, f"{stage_name}: Aborted (empty mask).")
+        return None
+    lam_f, sig_f, n_sub_f_mg, w_f, inv_npix, t_exp_f, r_exp_f = mg
+    s_lo = float(np.min(sig)); s_hi = float(np.max(sig)); _span_sig = float(max(s_hi - s_lo, 1e-30))
+    sigma_snap_atol = float(max(2.5e-5, 1e-6 * _span_sig, 1e-12))
+    ws = _free_knot_warm_state(base_result, cfg, optimize_n, seq_label, stage_name, ev, progress_cb, log)
+    if ws is None:
+        return None
+    sk0 = ws["sk0"]; skn0 = ws["skn0"]; skL0 = ws["skL0"]; d0 = ws["d0"]; nn0 = ws["nn0"]; LL0 = ws["LL0"]
+    K = ws["K"]; x_sol2_for_check = ws["x_sol2_for_check"]
+    M = K - 1
+    lo_k = max(float(cfg.k_clip_lo), 1e-12); hi_k = max(float(cfg.k_clip_hi), lo_k * 1.0001)
+    L_lo = float(np.log(lo_k)); L_hi = float(np.log(hi_k))
+    n_lo = float(N_MIN_LIMIT); n_hi = float(N_MAX_LIMIT)
+    min_dlam_ratio_req = float(max(getattr(cfg, "spline_min_delta_lambda_over_lambda_mean", 0.0) or 0.0, 0.0))
+    lam_lo = float(np.min(lam)) if lam.size else float("nan")
+    lam_hi = float(np.max(lam)) if lam.size else float("nan")
+    skn_spacing_ref = np.asarray(skn0, dtype=np.float64).ravel().copy()
+    skL_spacing_ref = np.asarray(skL0, dtype=np.float64).ravel().copy()
+    if optimize_n:
+        z0 = np.concatenate(([d0], sigma_knots_encode(skn0, float(np.min(sig)), float(np.max(sig))), sigma_knots_encode(skL0, float(np.min(sig)), float(np.max(sig))), np.clip(nn0, n_lo, n_hi), np.clip(LL0, L_lo, L_hi)))
+        bnds = ([(float(cfg.d_lo), float(cfg.d_hi))] + [(-12.0, 12.0)] * M + [(-12.0, 12.0)] * M + [(n_lo, n_hi)] * K + [(L_lo, L_hi)] * K)
+    else:
+        z0 = np.concatenate(([d0], sigma_knots_encode(skL0, float(np.min(sig)), float(np.max(sig))), np.clip(LL0, L_lo, L_hi)))
+        bnds = [(float(cfg.d_lo), float(cfg.d_hi))] + [(-12.0, 12.0)] * M + [(L_lo, L_hi)] * K
+    return locals()
+
+
 def _run_free_knot_stage(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -1067,14 +1137,21 @@ def _run_free_knot_stage(
             lam_hi,
         )
 
+    s_lo = float(np.min(sig))
+    s_hi = float(np.max(sig))
+
     if optimize_n:
-        z0 = np.concatenate(([d0], ctx.w2s(skn0), ctx.w2s(skL0), np.clip(nn0, n_lo, n_hi), np.clip(LL0, L_lo, L_hi)))
+        z0 = np.concatenate((
+            [d0],
+            sigma_knots_encode(skn0, s_lo, s_hi),
+            sigma_knots_encode(skL0, s_lo, s_hi),
+            np.clip(nn0, n_lo, n_hi),
+            np.clip(LL0, L_lo, L_hi),
+        ))
 
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _r_sp_n = float(min_relative_lambda_spacing_ratio(skn0, lam_lo, lam_hi))
-
             _r_sp_L = float(min_relative_lambda_spacing_ratio(skL0, lam_lo, lam_hi))
-
             log.info(
                 "PIPELINE [%s] %s | SOL3 init (maille SOL2): min(Deltaλ)/λ_mean  sigma_n=%.6f  sigma_L=%.6f "
                 "| cfg construction=%.6f (un pas UV court peut donner un ratio << cfg ; "
@@ -1093,14 +1170,11 @@ def _run_free_knot_stage(
             + [(n_lo, n_hi)] * K
             + [(L_lo, L_hi)] * K
         )
-
-
     else:
-        z0 = np.concatenate(([d0], ctx.w2s(skL0), np.clip(LL0, L_lo, L_hi)))
+        z0 = np.concatenate(([d0], sigma_knots_encode(skL0, s_lo, s_hi), np.clip(LL0, L_lo, L_hi)))
 
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _r_sp_Lb = float(min_relative_lambda_spacing_ratio(skL0, lam_lo, lam_hi))
-
             log.info(
                 "PIPELINE [%s] %s | SOL3b init: min(Deltaλ)/λ_mean (sigma_L)=%.6f | cfg construction=%.6f "
                 "(pénalité seulement si ce ratio **baisse** vs ce départ).",
@@ -1115,19 +1189,64 @@ def _run_free_knot_stage(
 
     _nk_prof_sol3 = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth")
 
-
-
-    # ctx.obj is functionally identical to ctx.obj (same body).
-    # Kept as alias for semantic clarity: ctx.obj feeds the optimizer,
-    # ctx.obj is used for diagnostic RMSE evaluations.
-
-
-    ctx.obj = ctx.obj
+    ctx = FreeKnotStageContext(
+        cfg=cfg,
+        stop_event=stop_event,
+        progress_cb=progress_cb,
+        live_cb=live_cb,
+        optimize_n=optimize_n,
+        seq_label=seq_label,
+        stage_name=stage_name,
+        lam_f=lam_f,
+        sig_f=sig_f,
+        n_sub_f_mg=n_sub_f_mg,
+        w_f=w_f,
+        inv_npix=inv_npix,
+        t_exp_f=t_exp_f,
+        r_exp_f=r_exp_f,
+        s_lo=s_lo,
+        s_hi=s_hi,
+        sigma_snap_atol=_sigma_snap_atol,
+        sk0=sk0,
+        skn0=skn0,
+        skL0=skL0,
+        d0=d0,
+        nn0=nn0,
+        LL0=LL0,
+        K=K,
+        M=M,
+        lo_k=lo_k,
+        hi_k=hi_k,
+        L_lo=L_lo,
+        L_hi=L_hi,
+        n_lo=n_lo,
+        n_hi=n_hi,
+        lam=lam,
+        sig=sig,
+        nk_prof_sol3=_nk_prof_sol3,
+        bnds=bnds,
+        mxf1=0,
+        mxf2=0,
+        mxf3=0,
+        phase_maxfun_list=[],
+        phase_weight_total=1.0,
+    )
 
     if optimize_n and x_sol2_for_check is not None:
         try:
+            z0v = np.asarray(z0, dtype=np.float64).ravel()
             _n2, _k2 = nk_from_x_pwlnk(
                 np.asarray(x_sol2_for_check, dtype=np.float64).ravel(),
+                lam_f,
+                sk0,
+                lo_k,
+                hi_k,
+                sig_pre=sig_f,
+                n_mono_band_nm=cfg.n_mono_band_nm,
+                profile_interp=str(cfg.nk_profile_interp),
+            )
+            _n0, _k0 = nk_from_x_pwlnk(
+                z0v,
                 lam_f,
                 sk0,
                 lo_k,
@@ -1152,7 +1271,20 @@ def _run_free_knot_stage(
                 )
             )
 
-            _mse_sol3_z0_sp = float(ctx.obj(z0))
+            _mse_sol3_z0_sp = float(
+                spline_objective_mse_on_masked_grid(
+                    cfg,
+                    lam_f=lam_f,
+                    n_sub_f=n_sub_f_mg,
+                    w=w_f,
+                    inv_npix=inv_npix,
+                    t_exp_f=t_exp_f,
+                    r_exp_f=r_exp_f,
+                    n_l=_n0,
+                    k_l=_k0,
+                    d=float(z0v[0]),
+                )
+            )
 
             _tol_m = 1e-6 * max(1.0, abs(_mse_sol2_sp))
 
@@ -1221,84 +1353,13 @@ def _run_free_knot_stage(
 
                 return None
 
-    _mxf1 = int(sol3_phase1_maxfun_effective(cfg))
-
-    _mxf2 = int(max(16000, 2 * _mxf1))
-
-    _mxf3 = int(max(40000, 4 * _mxf1))
-
-    _phase_maxfun_list = [_mxf1, _mxf2] + ([_mxf3] if optimize_n else [])
-
-    _phase_weight_total = float(max(1, sum(max(1, int(v)) for v in _phase_maxfun_list)))
-
-    opt_p1 = {"maxiter": 1200, "maxfun": _mxf1, "ftol": 5e-13, "gtol": 1e-12}
-
-    opt_p2 = {"maxiter": 3000, "maxfun": _mxf2, "ftol": 1e-14, "gtol": 1e-14}
-
-    opt_p3 = {"maxiter": 6000, "maxfun": _mxf3, "ftol": 1e-16, "gtol": 1e-16}
-
-    ctx = FreeKnotStageContext(
-        cfg=cfg, stop_event=stop_event, progress_cb=progress_cb, live_cb=live_cb,
-        optimize_n=optimize_n, seq_label=seq_label, stage_name=stage_name,
-        lam_f=lam_f, sig_f=sig_f, n_sub_f_mg=n_sub_f_mg, w_f=w_f, inv_npix=inv_npix,
-        t_exp_f=t_exp_f, r_exp_f=r_exp_f, s_lo=s_lo, s_hi=s_hi,
-        sigma_snap_atol=_sigma_snap_atol, sk0=sk0, skn0=skn0, skL0=skL0,
-        d0=d0, nn0=nn0, LL0=LL0, K=K, M=M, lo_k=lo_k, hi_k=hi_k, L_lo=L_lo, L_hi=L_hi,
-        n_lo=n_lo, n_hi=n_hi, lam=lam, sig=sig, nk_prof_sol3=_nk_prof_sol3,
-        bnds=bnds, mxf1=_mxf1, mxf2=_mxf2, mxf3=_mxf3,
-        phase_maxfun_list=_phase_maxfun_list, phase_weight_total=_phase_weight_total
-    )
+    _mxf1, _mxf2, _mxf3, _phase_maxfun_list, _phase_weight_total = _free_knot_phase_budgets(cfg, optimize_n)
+    opt_p1, opt_p2, opt_p3 = _free_knot_phase_options(_mxf1, _mxf2, _mxf3)
 
 
 
 
-    if optimize_n:
-        _log_spline_pipeline_json(
-            log,
-            "sol3_minimize_enter",
-            seq=seq_label,
-            K_sigma=int(K),
-            n_vars=int(z0.size),
-            rmse_warm_sol2=rmse_warm,
-            d_warm=float(d0),
-            phase1_maxfun=int(_mxf1),
-            phase2_maxfun=int(_mxf2),
-            phase3_maxfun=int(_mxf3),
-        )
-
-        log.debug(
-            "PIPELINE [%s] %s L-BFGS-B - phase 1/2 | %d variables | RMSE warm (SOL2)~%.6f | phase1 maxfun=%d",
-            seq_label,
-            stage_name,
-            int(z0.size),
-            float(rmse_warm),
-            int(_mxf1),
-        )
-
-        progress_cb(0, f"{stage_name}: L-BFGS-B {int(z0.size)} vars (descent)...")
-
-    else:
-        _log_spline_pipeline_json(
-            log,
-            "sol3b_minimize_enter",
-            seq=seq_label,
-            K_sigma_L=int(K),
-            n_vars=int(z0.size),
-            rmse_warm_before=float(rmse_warm),
-            phase1_maxfun=int(_mxf1),
-            phase2_maxfun=int(_mxf2),
-        )
-
-        log.debug(
-            "PIPELINE [%s] %s - phase 1/2 | %d vars | RMSE entry=%.6f | phase1 maxfun=%d",
-            seq_label,
-            stage_name,
-            int(z0.size),
-            float(rmse_warm),
-            int(_mxf1),
-        )
-
-        progress_cb(0, f"{stage_name}: ln k spline + free sigma_L (descent)...")
+    _free_knot_emit_phase_start(log, seq_label, stage_name, optimize_n, K, z0, rmse_warm, d0, _mxf1, _mxf2, _mxf3, progress_cb)
 
     ctx.reset_obj_tracker(z0)
 

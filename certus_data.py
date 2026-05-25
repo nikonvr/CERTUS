@@ -58,6 +58,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from certus_array_utils import as_float64_1d
 # Import Core
 from certus_core import NUMERICAL_FAULT_EXCEPTIONS, OPENPYXL_AVAILABLE, certus_timestamp_file
 
@@ -281,84 +282,53 @@ def export_optimization_report(
     """Unified export for all CERTUS optimization modules.
 
     Creates both Excel and HTML reports with standardized format.
-
-    Args:
-        reports_dir: Directory for saving reports
-        module_name: Module identifier (DESIGN, INDEX, METAL, etc.)
-        rmse: Final RMSE value for filename
-        summary_dict: Key-value pairs for summary (Date, RMSE, etc.)
-        solution_df: DataFrame with solution parameters
-        spectra_df: DataFrame with spectral data
-        plots: List of pyqtgraph plot widgets for HTML report
-        extra_sheets: Additional DataFrames {sheet_name: df}
-        logger: Optional logger for status messages
-
-    Returns:
-        Tuple (excel_path, html_path) or (None, None) on error
-
-    Example:
-        >>> summary = {'Date': '2026-02-02', 'RMSE': '0.001234'}
-        >>> solution = pd.DataFrame({'Parameter': ['eM'], 'Value': [25.3]})
-        >>> spectra = pd.DataFrame({'Wavelength': wls, 'R_calc': R})
-        >>> excel, html = export_optimization_report(
-        ... 'reports', 'METAL', 0.001234, summary, solution, spectra
-        ... )"""
+    """
     reports_path = Path(reports_dir)
     reports_path.mkdir(parents=True, exist_ok=True)
 
-    # Generate filenames
     ts = certus_timestamp_file()
     base_name = f"Report_{module_name}_{ts}_RMSE_{rmse:.5f}"
     excel_path = reports_path / f"{base_name}.xlsx"
     html_path = reports_path / f"{base_name}.html"
 
     try:
-        # Create Summary DataFrame
-        df_summary = pd.DataFrame([{"Parameter": k, "Value": str(v)} for k, v in summary_dict.items()])
+        report_sections = build_report_sections(
+            summary_dict=summary_dict,
+            solution_df=solution_df,
+            spectra_df=spectra_df,
+            manifest=None,
+            extra_sheets=extra_sheets,
+        )
 
-        # Excel Export
+        excel_ok = True
+        html_ok = True
         if OPENPYXL_AVAILABLE:
-            with pd.ExcelWriter(excel_path, engine="openpyxl") as writer:
-                df_summary.to_excel(writer, sheet_name="Summary", index=False)
-                solution_df.to_excel(writer, sheet_name="Solution", index=False)
-                spectra_df.to_excel(writer, sheet_name="Spectra", index=False)
-                if extra_sheets:
-                    for name, df in extra_sheets.items():
-                        df.to_excel(
-                            writer,
-                            sheet_name=name[:EXCEL_SHEET_NAME_MAX_LENGTH],
-                            index=False,
-                        )
-            if logger:
-                logger.info(f"✅ Excel saved: {excel_path.name}")
+            report_result = build_standard_report(
+                report_sections,
+                excel_path=str(excel_path),
+                html_path=str(html_path) if plots else None,
+                html_title=f"CERTUS-{module_name} Report",
+                run_manifest=None,
+                require_complete_manifest=False,
+            )
+            excel_ok = bool(report_result.get("excel", False))
+            html_ok = bool(report_result.get("html", False)) if plots else False
+            if logger and excel_ok:
+                logger.info("Excel saved: %s", excel_path.name)
+            if logger and html_ok:
+                logger.info("HTML saved: %s", html_path.name)
         else:
+            df_summary = pd.DataFrame([{"Parameter": k, "Value": str(v)} for k, v in summary_dict.items()])
             to_excel_robust(df_summary, str(excel_path))
+            excel_ok = True
             if logger:
-                logger.info(f"Simple Excel saved: {excel_path.name}")
+                logger.info("Simple Excel saved: %s", excel_path.name)
+            html_ok = False
 
-        # HTML Report
-        if plots:
-            sections = [
-                {
-                    "title": "Optimization Summary",
-                    "type": "kv",
-                    "content": summary_dict,
-                },
-                {
-                    "title": "Solution Parameters",
-                    "type": "table",
-                    "content": solution_df.to_dict("records"),
-                },
-            ]
-            generate_html_report(str(html_path), f"CERTUS-{module_name} Report", sections, plots)
-            if logger:
-                logger.info(f"✅ HTML saved: {html_path.name}")
-
-        return str(excel_path), str(html_path)
-
+        return (str(excel_path) if excel_ok else None), (str(html_path) if html_ok else None)
     except NUMERICAL_FAULT_EXCEPTIONS as e:
         if logger:
-            logger.error(f"Error exporting reports: {e}")
+            logger.error("Error exporting reports: %s", e)
         return None, None
 
 
@@ -1061,6 +1031,80 @@ def get_missing_manifest_fields(manifest: dict[str, Any] | None) -> list[str]:
     return [key for key in MANIFEST_REQUIRED_FIELDS if manifest.get(key) in (None, "")]
 
 
+def build_export_context(
+    *,
+    module_name: str,
+    title: str,
+    rmse: float | None = None,
+    subtitle: str = "",
+    app_name: str = "CERTUS",
+    author: str = "",
+    source_paths: list[str] | None = None,
+    run_manifest: dict[str, Any] | None = None,
+    warnings: list[str] | None = None,
+    status: str | None = None,
+) -> ReportContext:
+    """Build a consistent report context for all CERTUS exports."""
+    meta_bits = [module_name]
+    if rmse is not None and np.isfinite(float(rmse)):
+        meta_bits.append(f"RMSE={float(rmse):.6f}")
+    if status:
+        meta_bits.append(f"status={status}")
+    if warnings:
+        meta_bits.append(f"warnings={len(warnings)}")
+    if source_paths:
+        meta_bits.append(f"sources={len(source_paths)}")
+    subtitle_full = " | ".join([subtitle] + [bit for bit in meta_bits if bit]) if subtitle else " | ".join(meta_bits)
+    return ReportContext(
+        title=title,
+        subtitle=subtitle_full,
+        app_name=app_name,
+        author=author,
+        run_manifest=run_manifest,
+    )
+
+
+def build_report_sections(
+    *,
+    summary_dict: dict[str, Any],
+    solution_df: pd.DataFrame,
+    spectra_df: pd.DataFrame,
+    manifest: dict[str, Any] | None = None,
+    extra_sheets: dict[str, pd.DataFrame] | None = None,
+) -> list[ReportSection]:
+    """Build the standard CERTUS optimization report sections."""
+    sections: list[ReportSection] = [
+        ReportSection(title="Optimization Summary", kind="kv", content=dict(summary_dict)),
+        ReportSection(title="Solution Parameters", kind="table", content=solution_df.copy() if solution_df is not None else pd.DataFrame()),
+        ReportSection(title="Spectra", kind="table", content=spectra_df.copy() if spectra_df is not None else pd.DataFrame()),
+    ]
+    if manifest is not None:
+        sections.append(ReportSection(title="Manifest", kind="kv", content=dict(manifest)))
+    if extra_sheets:
+        for name, df in extra_sheets.items():
+            sections.append(ReportSection(title=str(name), kind="table", content=df.copy()))
+    return sections
+
+
+def validate_manifest_for_export(
+    manifest: dict[str, Any] | None,
+    *,
+    auto: bool = False,
+    logger: logging.Logger | None = None,
+    module_name: str = "",
+) -> tuple[bool, list[str]]:
+    """Validate a manifest before export; return (ok, missing_fields)."""
+    missing = get_missing_manifest_fields(manifest)
+    if missing and logger:
+        logger.error(
+            "[%s.export] blocked export | reason=incomplete manifest | missing=%s | auto=%s",
+            module_name or "CERTUS",
+            ", ".join(missing),
+            auto,
+        )
+    return (not missing), missing
+
+
 # =============================================================================
 # SPECTRUM LOADER (P8 scaffold)
 # =============================================================================
@@ -1210,7 +1254,7 @@ def load_spectrum_columns(
         df.columns = new_names
 
     # Extract x
-    x = df.iloc[:, 0].to_numpy(dtype=float, copy=False)
+    x = as_float64_1d(df.iloc[:, 0].to_numpy(dtype=float, copy=False))
 
     # Unit detection + conversion
     detected_unit = _detect_x_unit(x, hint=x_unit)
@@ -1225,7 +1269,7 @@ def load_spectrum_columns(
     normalised = False
     if normalise_percent and len(df.columns) > 1:
         for i in range(1, len(df.columns)):
-            values = df.iloc[:, i].to_numpy(dtype=float, copy=True)
+            values = as_float64_1d(df.iloc[:, i].to_numpy(dtype=float, copy=True), copy=True)
             col_max = float(np.nanmax(values))
             if col_max > 1.5:
                 # ``isetitem`` replaces the column in-place regardless of dtype,
@@ -1237,7 +1281,7 @@ def load_spectrum_columns(
     # y_columns dict (everything after x)
     y_columns: dict[str, np.ndarray] = {}
     for i in range(1, len(df.columns)):
-        y_columns[str(df.columns[i])] = df.iloc[:, i].to_numpy(dtype=float, copy=False)
+        y_columns[str(df.columns[i])] = as_float64_1d(df.iloc[:, i].to_numpy(dtype=float, copy=False))
 
     return SpectrumLoadResult(
         dataframe=df,

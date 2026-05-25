@@ -63,7 +63,16 @@ from PyQt6.QtWidgets import (
 )
 
 
-from certus_core import setup_module_logging, __version__, SELLMEIER_COEFFS_BY_ID
+from certus_core import (
+    NUMERICAL_FAULT_EXCEPTIONS,
+    setup_module_logging,
+    __version__,
+    SELLMEIER_COEFFS_BY_ID,
+    SUBSTRATES,
+    CANONICAL_SUBSTRATE_LABELS,
+    canonicalize_substrate_label,
+    substrate_sellmeier_coeffs,
+)
 from certus_metrology import ValidationStatus
 from certus_services import SubstrateIndexRequest, SubstrateIndexService
 
@@ -217,7 +226,7 @@ _RE_SUBSTRATE_INDEX_INCLUDE = re.compile(
     r"\b(ref|raw|empty|void)\s+sub(strate|strat)?\b|\bsub(strate)?\s+ref\b|"
     r"\b(witness|blank|empty|unstacked)\b|"
     # Explicit bare materials in some exports (including French synonyms for parsing compatibility)
-    r"\b(sapphire|saphir)\b|"
+    r"\b(sapphire|saphir|al2o3)\b|"
     # Acronyms / short tags
     r"\bsnu\b|\bsbn\b|\bbsub\b|"
     # bare isolated (not in tnu/rnu: non-alnum delimited)
@@ -323,7 +332,7 @@ def _classify_substrate_index_columns(columns) -> dict[str, list]:
 
         has_tnu = "tnu" in s
 
-        is_sapphire = bool(re.search(r"\b(sapphire|saphir)\b", s))
+        is_sapphire = bool(re.search(r"\b(sapphire|saphir|al2o3)\b", s))
 
         starts_r = bool(re.match(r"^\s*r\b", s))
 
@@ -685,6 +694,220 @@ def _sellmeier_weights_from_nm(wl_nm: np.ndarray, mode: str) -> np.ndarray:
     return 1.0 / np.sqrt(wl)
 
 
+def _sellmeier_param_reparam_helpers(
+    bounds: list[tuple[float, float]],
+    log_l1l2: bool,
+) -> tuple[list[tuple[float, float]], Any, Any, np.ndarray, np.ndarray]:
+    bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
+    if log_l1l2:
+        _ll0 = float(max(bounds[2][0], 1.0e-30))
+        _ll1 = float(bounds[2][1])
+        _ln_lo = float(np.log(_ll0))
+        _ln_hi = float(np.log(_ll1))
+        bounds_q[2] = (_ln_lo, _ln_hi)
+        bounds_q[4] = (_ln_lo, _ln_hi)
+        bounds_q[6] = (_ln_lo, _ln_hi)
+
+    def _p_from_q(q: np.ndarray) -> np.ndarray:
+        q = np.asarray(q, dtype=np.float64).ravel()
+        if not log_l1l2:
+            return q.copy()
+        p = q.copy()
+        p[2] = float(np.exp(np.minimum(q[2], 700.0)))
+        p[4] = float(np.exp(np.minimum(q[4], 700.0)))
+        p[6] = float(np.exp(np.minimum(q[6], 700.0)))
+        return p
+
+    def _q_from_p(p: np.ndarray) -> np.ndarray:
+        p = np.asarray(p, dtype=np.float64).ravel()
+        if not log_l1l2:
+            return p.copy()
+        q = p.copy()
+        q[2] = float(np.log(max(float(p[2]), 1.0e-300)))
+        q[4] = float(np.log(max(float(p[4]), 1.0e-300)))
+        q[6] = float(np.log(max(float(p[6]), 1.0e-300)))
+        return q
+
+    return bounds_q, _p_from_q, _q_from_p, np.asarray([b[0] for b in bounds], dtype=np.float64), np.asarray([b[1] for b in bounds], dtype=np.float64)
+
+
+def _sellmeier_residual_factory(p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, n_lo_acc: float, n_hi_acc: float):
+    def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
+        pred = IndexCore.sellmeier_2poles_const_eval(p, x_um)
+        return (pred - y_n) * w_nm_inv * 1000.0
+
+    def _mse_full_q(q: np.ndarray) -> float:
+        p = p_from_q(q)
+        pred = IndexCore.sellmeier_2poles_const_eval(p, wl_fit_um)
+        if not np.all(np.isfinite(pred)):
+            return 1.0e30
+        if np.any((pred < n_lo_acc) | (pred > n_hi_acc)):
+            vio = float(np.mean(np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2))
+            return 1.0e12 + 1.0e9 * vio
+        r = _residuals(p, wl_fit_um, n_fit, w_fit_sell)
+        mse = float(np.dot(r, r))
+        g = _sellmeier_l_separation_gap_um(p)
+        if g > 0.0:
+            mse += 5.0e7 * (g * g)
+        return mse
+
+    return _residuals, _mse_full_q
+
+
+def _sellmeier_seed_from_compact_poly(
+    wl: np.ndarray,
+    wl_fit_nm: np.ndarray,
+    n_vals: np.ndarray,
+    mask: np.ndarray,
+    p_from_q,
+    q_mid: np.ndarray,
+    ls_bounds_q: tuple[list[float], list[float]],
+) -> tuple[str, np.ndarray]:
+    from scipy.optimize import least_squares
+    seed_desc = "centre box (q)"
+    q0 = q_mid
+    poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
+    if poly_seed is not None:
+        active_terms, p_poly, _ = poly_seed
+        lo_nm = float(np.min(wl_fit_nm))
+        hi_nm = float(np.max(wl_fit_nm))
+        n_seed_pts = int(max(7, SELLMEIER_SEED_POINTS))
+        seed_nm = np.linspace(lo_nm, hi_nm, n_seed_pts, dtype=np.float64)
+        seed_um = seed_nm / 1000.0
+        feat_s = IndexCore._poly_compact_feature_dict(seed_um)
+        phi_s = np.column_stack([feat_s[t] for t in active_terms])
+        n_tar = (phi_s @ p_poly).astype(np.float64, copy=False)
+
+        def _res5_q(qv: np.ndarray) -> np.ndarray:
+            pv = p_from_q(qv)
+            r = IndexCore.sellmeier_2poles_const_eval(pv, seed_um) - n_tar
+            g = _sellmeier_l_separation_gap_um(pv)
+            return np.append(
+                r,
+                float(SELLMEIER_L_SEP_SOFT_WEIGHT) * 0.02 * g,
+            )
+
+        r5 = least_squares(
+            _res5_q,
+            q_mid,
+            bounds=ls_bounds_q,
+            loss="linear",
+            max_nfev=2500,
+            ftol=1.0e-12,
+            xtol=1.0e-12,
+            gtol=1.0e-12,
+        )
+        q0 = np.clip(np.asarray(r5.x, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
+        seed_desc = (
+            "compact polynomial + LS "
+            f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
+        )
+    return seed_desc, q0
+
+
+def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q, _q_from_p, bounds, ls_bounds_q, n_trials: int) -> list[np.ndarray]:
+    rng = np.random.default_rng(12345)
+    q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
+    p_base = _p_from_q(q0)
+    l3_grid = (0.1, 0.5, 2.0, 8.0)
+    for l3_try in l3_grid:
+        p_try = np.asarray(p_base, dtype=np.float64).copy()
+        p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
+        q_try = _q_from_p(p_try)
+        q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
+        q_candidates.append(np.asarray(q_try, dtype=np.float64))
+    for _ in range(max(0, int(n_trials) - 1)):
+        jit = rng.uniform(-0.15, 0.15, size=q0.shape)
+        jit[6] = float(rng.uniform(-0.5, 0.5))
+        qj = np.asarray(q0 + jit, dtype=np.float64)
+        qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
+        q_candidates.append(qj)
+    return q_candidates
+
+
+def _sellmeier_polish_helpers(_p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool):
+    def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
+        pv = _p_from_q(qv)
+        r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
+        g = _sellmeier_l_separation_gap_um(pv)
+        return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
+
+    def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
+        """Analytical Jacobian of polish residual (extended with separation constraint)."""
+        pv = _p_from_q(qv)
+        J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
+        J_sep = np.zeros((1, 7), dtype=np.float64)
+        _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
+        _orig_idx = np.array([2, 4, 6])
+        _sort_ord = np.argsort(_L_vals)
+        _L_s = _L_vals[_sort_ord]
+        _diffs = _L_s[1:] - _L_s[:-1]
+        _i_min = int(np.argmin(_diffs))
+        _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
+        if _gap > 0.0:
+            _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
+            _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
+            _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
+            _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
+            J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
+            J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
+        return np.vstack([J_main, J_sep])
+
+    return _residuals_polish_q, _jac_polish_q
+
+
+# Duplicated function _sellmeier_seed_from_compact_poly removed.
+
+
+def _sellmeier_build_candidates(q0: np.ndarray, p_from_q, _q_from_p, bounds, ls_bounds_q, n_trials: int, rng) -> list[np.ndarray]:
+    q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
+    p_base = p_from_q(q0)
+    l3_grid = (0.1, 0.5, 2.0, 8.0)
+    for l3_try in l3_grid:
+        p_try = np.asarray(p_base, dtype=np.float64).copy()
+        p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
+        q_try = _q_from_p(p_try)
+        q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
+        q_candidates.append(np.asarray(q_try, dtype=np.float64))
+    for _ in range(n_trials - 1):
+        jit = rng.uniform(-0.15, 0.15, size=q0.shape)
+        jit[6] = float(rng.uniform(-0.5, 0.5))
+        qj = np.asarray(q0 + jit, dtype=np.float64)
+        qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
+        q_candidates.append(qj)
+    return q_candidates
+
+
+def _sellmeier_polish_helpers(p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool):
+    def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
+        pv = p_from_q(qv)
+        r = _sellmeier_residual_factory(p_from_q, wl_fit_um, n_fit, w_fit_sell, -np.inf, np.inf)[0](pv, wl_fit_um, n_fit, w_fit_sell)
+        g = _sellmeier_l_separation_gap_um(pv)
+        return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
+
+    def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
+        pv = p_from_q(qv)
+        J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
+        J_sep = np.zeros((1, 7), dtype=np.float64)
+        _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
+        _orig_idx = np.array([2, 4, 6])
+        _sort_ord = np.argsort(_L_vals)
+        _L_s = _L_vals[_sort_ord]
+        _diffs = _L_s[1:] - _L_s[:-1]
+        _i_min = int(np.argmin(_diffs))
+        _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
+        if _gap > 0.0:
+            _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
+            _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
+            _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
+            _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
+            J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
+            J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
+        return np.vstack([J_main, J_sep])
+
+    return _residuals_polish_q, _jac_polish_q
+
+
 def _sellmeier_2poles_jac(
     p: np.ndarray,
     x_um: np.ndarray,
@@ -802,6 +1025,12 @@ def _sellmeier_prior_coeffs_for_column(col_name: str | None) -> tuple[float, ...
 
             if c is not None and len(c) == 6:
                 return tuple(float(v) for v in c)
+
+    canon = canonicalize_substrate_label(col_name)
+    if canon is not None:
+        c = substrate_sellmeier_coeffs(canon)
+        if c is not None and len(c) == 6:
+            return tuple(float(v) for v in c)
 
     return None
 
@@ -1536,7 +1765,7 @@ class IndexCore:
         wl_eval_max = float(np.nanmax(wl)) if wl.size else float("nan")
 
         logger.info(
-            "%s fit start: wl_fit=[%.1f, %.1f]nm | points=%d/%d | eval_full=[%.1f, %.1f]nm",
+            "event=index_fit_start model=%s wl_fit_lo_nm=%.1f wl_fit_hi_nm=%.1f points=%d/%d wl_eval_lo_nm=%.1f wl_eval_hi_nm=%.1f",
             model_label,
             float(min(wl_min_fit, wl_max_fit)),
             float(max(wl_min_fit, wl_max_fit)),
@@ -1547,7 +1776,7 @@ class IndexCore:
         )
 
         logger.info(
-            "%s input stats: n_fit[min,max]=[%.6f, %.6f] | lambda[min,max]=[%.1f, %.1f]nm",
+            "event=index_input_stats model=%s n_fit_min=%.6f n_fit_max=%.6f wl_min_nm=%.1f wl_max_nm=%.1f",
             model_label,
             float(np.nanmin(n_vals[mask])) if np.any(mask) else float("nan"),
             float(np.nanmax(n_vals[mask])) if np.any(mask) else float("nan"),
@@ -1556,33 +1785,19 @@ class IndexCore:
         )
 
         if model_kind == "sellmeier3poles":
-            logger.info(
-                "Sellmeier model active: n2=A + B1*lambda2/(lambda2-L12) + B2*lambda2/(lambda2-L22) + B3*lambda2/(lambda2-L32), lambda in m."
-            )
+            logger.info("event=index_fit_mode model=sellmeier3poles equation=sellmeier_3poles")
 
         elif model_kind == "spline_adaptive":
-            logger.info(
-                "Spline n (cubic B-spline, least squares): <=%d lambda sites in m, interior knots "
-                "optimized then reduction by merge (RMSE); weights 1/lambda (nm).",
-                SPLINE_INDEX_MAX_KNOTS,
-            )
+            logger.info("event=index_fit_mode model=spline_adaptive max_knots=%d basis=cubic_bspline", SPLINE_INDEX_MAX_KNOTS)
 
         else:
-            logger.info(
-                "Polynomial model active: n(lambda)=a0+a1/lambda+a2/lambda2+a3/lambda3+a4/lambda4+a5*lambda+a6*sqrt(lambda), lambda in m."
-            )
+            logger.info("event=index_fit_mode model=polynomial equation=compact_7_term")
 
         if model_kind != "spline_adaptive":
-            logger.info(
-                "%s units: lambda input/display in nm; model evaluation in m (lambda_um = lambda_nm / 1000).",
-                model_label,
-            )
+            logger.info("event=index_units model=%s wavelength_unit=nm eval_unit=m", model_label)
 
         else:
-            logger.info(
-                "%s units: lambda in nm everywhere; extension outside knots = affine (edge slope).",
-                model_label,
-            )
+            logger.info("event=index_units model=%s wavelength_unit=nm eval_extension=affine_edge_slope", model_label)
 
         def _fit_meta(
             source: str,
@@ -1751,55 +1966,10 @@ class IndexCore:
 
             return q
 
-        bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
-
-        if log_l1l2:
-            _ll0 = float(max(bounds[2][0], 1.0e-30))
-
-            _ll1 = float(bounds[2][1])
-
-            _ln_lo = float(np.log(_ll0))
-
-            _ln_hi = float(np.log(_ll1))
-
-            bounds_q[2] = (_ln_lo, _ln_hi)
-
-            bounds_q[4] = (_ln_lo, _ln_hi)
-
-            bounds_q[6] = (_ln_lo, _ln_hi)
-
-        def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
-
-            pred = IndexCore.sellmeier_2poles_const_eval(p, x_um)
-
-            return (pred - y_n) * w_nm_inv * 1000.0
-
-        n_lo_acc, n_hi_acc = float(SELLMEIER_N_ACCEPT_LO), float(SELLMEIER_N_ACCEPT_HI)
-
-        def _mse_full_q(q: np.ndarray) -> float:
-
-            p = _p_from_q(q)
-
-            pred = IndexCore.sellmeier_2poles_const_eval(p, wl_fit_um)
-
-            if not np.all(np.isfinite(pred)):
-                return 1.0e30
-
-            if np.any((pred < n_lo_acc) | (pred > n_hi_acc)):
-                vio = float(np.mean(np.maximum(n_lo_acc - pred, 0.0) ** 2 + np.maximum(pred - n_hi_acc, 0.0) ** 2))
-
-                return 1.0e12 + 1.0e9 * vio
-
-            r = _residuals(p, wl_fit_um, n_fit, w_fit_sell)
-
-            mse = float(np.dot(r, r))
-
-            g = _sellmeier_l_separation_gap_um(p)
-
-            if g > 0.0:
-                mse += 5.0e7 * (g * g)
-
-            return mse
+        bounds_q, _p_from_q, _q_from_p, _b_lo, _b_hi = _sellmeier_param_reparam_helpers(bounds, log_l1l2)
+        n_lo_acc = float(SELLMEIER_N_ACCEPT_LO)
+        n_hi_acc = float(SELLMEIER_N_ACCEPT_HI)
+        _residuals, _mse_full_q = _sellmeier_residual_factory(_p_from_q, wl_fit_um, n_fit, w_fit_sell, n_lo_acc, n_hi_acc)
 
         ls_bounds_lin = ([b[0] for b in bounds], [b[1] for b in bounds])
 
@@ -1857,62 +2027,9 @@ class IndexCore:
             if callable(progress_cb):
                 progress_cb(1, 2)
 
-            seed_desc = "centre box (q)"
-
-            poly_seed = IndexCore._sellmeier_compact_polynomial_seed(wl, n_vals, mask)
-
-            if poly_seed is not None:
-                active_terms, p_poly, _ = poly_seed
-
-                lo_nm = float(np.min(wl_fit_nm))
-
-                hi_nm = float(np.max(wl_fit_nm))
-
-                n_seed_pts = int(max(7, SELLMEIER_SEED_POINTS))
-
-                seed_nm = np.linspace(lo_nm, hi_nm, n_seed_pts, dtype=np.float64)
-
-                seed_um = seed_nm / 1000.0
-
-                feat_s = IndexCore._poly_compact_feature_dict(seed_um)
-
-                phi_s = np.column_stack([feat_s[t] for t in active_terms])
-
-                n_tar = (phi_s @ p_poly).astype(np.float64, copy=False)
-
-                def _res5_q(qv: np.ndarray) -> np.ndarray:
-
-                    pv = _p_from_q(qv)
-
-                    r = IndexCore.sellmeier_2poles_const_eval(pv, seed_um) - n_tar
-
-                    g = _sellmeier_l_separation_gap_um(pv)
-
-                    return np.append(
-                        r,
-                        float(SELLMEIER_L_SEP_SOFT_WEIGHT) * 0.02 * g,
-                    )
-
-                r5 = least_squares(
-                    _res5_q,
-                    q_mid,
-                    bounds=ls_bounds_q,
-                    loss="linear",
-                    max_nfev=2500,
-                    ftol=1.0e-12,
-                    xtol=1.0e-12,
-                    gtol=1.0e-12,
-                )
-
-                q0 = np.clip(np.asarray(r5.x, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
-
-                seed_desc = (
-                    "compact polynomial + LS "
-                    f"{int(seed_nm.size)} points (lambda_nm={np.array2string(seed_nm, precision=1, separator=', ')})"
-                )
-
+            seed_desc, q0_seed = _sellmeier_seed_from_compact_poly(wl, wl_fit_nm, n_vals, mask, _p_from_q, q_mid, ls_bounds_q)
+            q0 = np.clip(np.asarray(q0_seed, dtype=np.float64), ls_bounds_q[0], ls_bounds_q[1])
             logger.info("Sellmeier 3-poles: seed %s.", seed_desc)
-
             run_lbfgs = timeout_s is None or timeout_s <= 0.0 or (time.monotonic() - t0) < max(0.5, timeout_s - 0.3)
 
             if run_lbfgs:
@@ -1921,39 +2038,26 @@ class IndexCore:
                 q_candidates: list[np.ndarray] = [np.asarray(q0, dtype=np.float64)]
 
                 # Reduced L3 structured grid (IR pole): 4 values covering UV-short/IR.
-
                 p_base = _p_from_q(q0)
-
-                l3_grid = (0.1, 0.5, 2.0, 8.0)  # was 9 values ; 4 enough with physical bounds
+                l3_grid = (0.1, 0.5, 2.0, 8.0)
 
                 for l3_try in l3_grid:
                     p_try = np.asarray(p_base, dtype=np.float64).copy()
-
                     p_try[6] = float(np.clip(l3_try, bounds[6][0], bounds[6][1]))
-
                     q_try = _q_from_p(p_try)
-
                     q_try = np.clip(q_try, ls_bounds_q[0], ls_bounds_q[1])
-
                     q_candidates.append(np.asarray(q_try, dtype=np.float64))
 
                 n_trials = int(max(1, SELLMEIER_MULTISTART_TRIALS))
 
                 for _ in range(n_trials - 1):
-                    # Jitter plus large (0.15 vs 0.08 ancien) car espace q est plus petit
-
                     jit = rng.uniform(-0.15, 0.15, size=q0.shape)
-
                     jit[6] = float(rng.uniform(-0.5, 0.5))
-
                     qj = np.asarray(q0 + jit, dtype=np.float64)
-
                     qj = np.clip(qj, ls_bounds_q[0], ls_bounds_q[1])
-
                     q_candidates.append(qj)
 
                 best_q = np.asarray(q0, dtype=np.float64)
-
                 best_f = float("inf")
 
                 for qi in q_candidates:
@@ -1969,98 +2073,55 @@ class IndexCore:
                     )
 
                     q_try = np.asarray(rb.x, dtype=np.float64)
-
                     f_try = float(_mse_full_q(q_try))
 
                     if f_try < best_f:
                         best_f = f_try
-
                         best_q = q_try
 
                 q_lbfgs = np.asarray(best_q, dtype=np.float64)
 
             else:
                 logger.warning("Sellmeier 3-poles: timeout before L-BFGS-B - seed alone.")
-
                 q_lbfgs = np.asarray(q0, dtype=np.float64)
 
-            skip_polish = timeout_s is not None and timeout_s > 0.0 and (time.monotonic() - t0) >= timeout_s
+            def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
+                pv = _p_from_q(qv)
+                r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
+                g = _sellmeier_l_separation_gap_um(pv)
+                return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
 
-            if skip_polish:
-                logger.warning("Sellmeier 3-poles: least_squares polish skipped (timeout).")
+            def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
+                pv = _p_from_q(qv)
+                J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
+                J_sep = np.zeros((1, 7), dtype=np.float64)
+                _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
+                _orig_idx = np.array([2, 4, 6])
+                _sort_ord = np.argsort(_L_vals)
+                _L_s = _L_vals[_sort_ord]
+                _diffs = _L_s[1:] - _L_s[:-1]
+                _i_min = int(np.argmin(_diffs))
+                _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
+                if _gap > 0.0:
+                    _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
+                    _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
+                    _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
+                    _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
+                    J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
+                    J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
+                return np.vstack([J_main, J_sep])
 
-                q_sell = np.asarray(q_lbfgs, dtype=np.float64)
+            res_pol = least_squares(
+                _residuals_polish_q,
+                q_lbfgs,
+                jac=_jac_polish_q,
+                bounds=ls_bounds_q,
+                loss="linear",
+                f_scale=1.0,
+                max_nfev=ls_max_nfev,
+            )
 
-            else:
-                # Single polish with analytical Jacobian eliminates redundant passes.
-
-                # r/p Jacobian provided analytically -> ~5x faster convergence.
-
-                def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
-
-                    pv = _p_from_q(qv)
-
-                    r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
-
-                    g = _sellmeier_l_separation_gap_um(pv)
-
-                    return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
-
-                def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
-                    """Analytical Jacobian of polish residual (extended with separation constraint)."""
-
-                    pv = _p_from_q(qv)
-
-                    J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
-
-                    # Separation constraint line: analytical gradient (no finite differences).
-                    # gap = max(0, SEP - min_sep) where min_sep = min diff between sorted(L1,L2,L3).
-                    # Only L-params (indices 2,4,6) contribute; A, B1, B2, B3 have zero gradient.
-
-                    J_sep = np.zeros((1, 7), dtype=np.float64)
-
-                    _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
-
-                    _orig_idx = np.array([2, 4, 6])
-
-                    _sort_ord = np.argsort(_L_vals)
-
-                    _L_s = _L_vals[_sort_ord]
-
-                    _diffs = _L_s[1:] - _L_s[:-1]
-
-                    _i_min = int(np.argmin(_diffs))
-
-                    _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
-
-                    if _gap > 0.0:
-                        # d(gap)/d(L_lo) = +1,  d(gap)/d(L_hi) = -1
-                        _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
-
-                        _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
-
-                        # chain rule: if log_l1l2, pv[i]=exp(qv[i]) so dpv/dqv = pv[i]
-                        _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
-
-                        _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
-
-                        J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
-
-                        J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
-
-                    return np.vstack([J_main, J_sep])
-
-                res_pol = least_squares(
-                    _residuals_polish_q,
-                    q_lbfgs,
-                    jac=_jac_polish_q,
-                    bounds=ls_bounds_q,
-                    loss="linear",
-                    f_scale=1.0,
-                    max_nfev=ls_max_nfev,
-                )
-
-                q_sell = np.asarray(res_pol.x, dtype=np.float64)
+            q_sell = np.asarray(res_pol.x, dtype=np.float64)
 
             p_sell = _p_from_q(q_sell)
 
@@ -2086,30 +2147,49 @@ class IndexCore:
 
                 return bool(np.all(ne >= n_lo_acc) and np.all(ne <= n_hi_acc))
 
-            if not _sellmeier_n_in_accept_band(p_sell) and _sellmeier_n_in_accept_band(p_lbfgs):
+            def _accept_stats(p: np.ndarray) -> tuple[bool, float, float, float]:
+                n_line = IndexCore.sellmeier_2poles_const_eval(p, wl_full_um)
+                if not np.all(np.isfinite(n_line)):
+                    return False, float("nan"), float("nan"), float("nan")
+                ne = np.asarray(n_line[mask], dtype=np.float64)
+                nmin = float(np.nanmin(ne)) if ne.size else float("nan")
+                nmax = float(np.nanmax(ne)) if ne.size else float("nan")
+                viol = float(np.max(np.maximum(n_lo_acc - ne, 0.0) + np.maximum(ne - n_hi_acc, 0.0))) if ne.size else float("inf")
+                ok = bool(np.all(ne >= n_lo_acc) and np.all(ne <= n_hi_acc))
+                return ok, nmin, nmax, viol
+
+            ok_sell, sell_min, sell_max, sell_viol = _accept_stats(p_sell)
+            ok_lbfgs, lbfgs_min, lbfgs_max, lbfgs_viol = _accept_stats(p_lbfgs)
+            if not ok_sell and ok_lbfgs:
                 logger.info(
-                    "Sellmeier 3-poles: polish candidate out of band n[%.2f,%.2f]; keeping L-BFGS-B.",
+                    "Sellmeier 3-poles: polish candidate out of band n[%.2f,%.2f] (min=%.6f max=%.6f viol=%.3g); keeping L-BFGS-B (min=%.6f max=%.6f viol=%.3g).",
                     n_lo_acc,
                     n_hi_acc,
+                    sell_min,
+                    sell_max,
+                    sell_viol,
+                    lbfgs_min,
+                    lbfgs_max,
+                    lbfgs_viol,
                 )
-
                 p_sell = np.asarray(p_lbfgs, dtype=np.float64)
+                ok_sell = ok_lbfgs
+                sell_min, sell_max, sell_viol = lbfgs_min, lbfgs_max, lbfgs_viol
+
+            if not ok_sell:
+                logger.warning(
+                    "Sellmeier 3-poles fit out of band but kept for competitiveness: n[%.2f, %.2f] -> min=%.6f max=%.6f viol=%.3g",
+                    n_lo_acc,
+                    n_hi_acc,
+                    sell_min,
+                    sell_max,
+                    sell_viol,
+                )
 
             n_out_sell = IndexCore.sellmeier_2poles_const_eval(p_sell, wl_full_um)
-
             if not np.all(np.isfinite(n_out_sell)):
                 raise ValueError("non-finite output")
-
             n_eval = np.asarray(n_out_sell[mask], dtype=np.float64)
-
-            if np.any((n_eval < n_lo_acc) | (n_eval > n_hi_acc)):
-                logger.warning(
-                    "Sellmeier 3-poles fit rejected: n(lambda) hors [%.2f, %.2f] sur la fenetre de fit -> fallback monotonic raw.",
-                    n_lo_acc,
-                    n_hi_acc,
-                )
-
-                return None, "fallback-raw-sell2p-bounds", None, {}
 
             rmse_unweighted = float(np.sqrt(np.mean((n_eval - n_fit) ** 2)))
 
@@ -2156,23 +2236,17 @@ class IndexCore:
                     _ln3 / _lg10,
                 )
 
-            # 3-term standard variant (n2=1+Bi*\u03bb2/(\u03bb2-Ci)) for literature/catalog compatibility.
-
+            # 3-term standard variant (n2=1+Bi*λ2/(λ2-Ci)) for literature/catalog compatibility.
             c_hi = max(1.0e-15, (lam_min_um * float(SELLMEIER_3TERM_C_FRAC_MAX)) ** 2)
-
             b_bounds = (-200.0, 200.0)
-
             c_bounds = (1.0e-15, c_hi)
-
             std_bounds = (
                 [b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0], b_bounds[0], c_bounds[0]],
                 [b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1], b_bounds[1], c_bounds[1]],
             )
 
             def _std_seed_from_2p(p2: np.ndarray) -> np.ndarray:
-
                 p2 = np.asarray(p2, dtype=np.float64)
-
                 seed = np.asarray(
                     [
                         p2[1],
@@ -2184,19 +2258,14 @@ class IndexCore:
                     ],
                     dtype=np.float64,
                 )
-
                 return np.clip(seed, std_bounds[0], std_bounds[1])
 
             def _std_residuals(p_std: np.ndarray) -> np.ndarray:
-
                 pred = _sellmeier_3term_standard_eval(p_std, wl_fit_um)
-
                 r = (pred - n_fit) * w_fit_sell * 1000.0
-
                 return np.asarray(r, dtype=np.float64)
 
             candidates: list[tuple[str, np.ndarray, np.ndarray, float, dict]] = []
-
             candidates.append(
                 (
                     "analytic-sellmeier-3poles-A",
@@ -2209,25 +2278,19 @@ class IndexCore:
 
             try:
                 p0_std = _std_seed_from_2p(p_sell)
-
                 res_std = least_squares(
                     _std_residuals,
                     p0_std,
                     bounds=std_bounds,
                     loss="linear",
-                    f_scale=1.0,
                     max_nfev=max(1200, int(ls_max_nfev)),
                 )
-
                 p_std = np.asarray(res_std.x, dtype=np.float64)
-
                 n_out_std = _sellmeier_3term_standard_eval(p_std, wl_full_um)
-
                 n_std_fit = np.asarray(n_out_std[mask], dtype=np.float64)
 
                 if np.all(np.isfinite(n_std_fit)) and np.all((n_std_fit >= n_lo_acc) & (n_std_fit <= n_hi_acc)):
                     wrmse_std = float(np.sqrt(np.mean(((n_std_fit - n_fit) * w_fit_sell) ** 2)))
-
                     candidates.append(
                         (
                             "analytic-sellmeier-3term-standard",
@@ -2237,14 +2300,12 @@ class IndexCore:
                             {},
                         )
                     )
-
                     logger.info(
                         "Sellmeier standard 3-term candidate: wrmse=%.6g | rmse=%.6g",
                         wrmse_std,
                         float(np.sqrt(np.mean((n_std_fit - n_fit) ** 2))),
                     )
-
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except NUMERICAL_FAULT_EXCEPTIONS:
                 logger.info("Sellmeier standard 3-term: fit unavailable, keeping 3-poles variant.")
 
             best_src, best_coeffs, best_curve, _best_wrmse, best_extra = min(
@@ -2257,6 +2318,7 @@ class IndexCore:
                     "Sellmeier selection: variante standard 3-termes retenue (plus proche, wrmse=%.6g).",
                     float(_best_wrmse),
                 )
+
             return (
                 np.asarray(best_curve, dtype=np.float64),
                 best_src,
@@ -2266,9 +2328,11 @@ class IndexCore:
 
         except (ValueError, RuntimeError, ArithmeticError) as ex:
             logger.warning("Sellmeier 3-poles fit failed: %s -> fallback to Polynomial.", str(ex))
+            return None, "fallback-raw-sell2p-error", None, {}
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             logger.exception("Sellmeier 3-poles fit unexpected failure -> fallback to Polynomial.")
+            return None, "fallback-raw-sell2p-exception", None, {}
 
     @staticmethod
     def _fit_model_spline_adaptive(
@@ -3562,7 +3626,8 @@ class SubstrateIndexGUI(QMainWindow):
         if not hasattr(self, "log_panel") or self.log_panel is None:
             return
 
-        for h in logger.handlers:
+        underlying_logger = getattr(logger, "logger", logger)
+        for h in underlying_logger.handlers:
             if isinstance(h, SubstrateIndexGUI._UILogHandler):
                 return
 
@@ -3570,7 +3635,7 @@ class SubstrateIndexGUI(QMainWindow):
 
         h.setLevel(logging.INFO)
 
-        logger.addHandler(h)
+        underlying_logger.addHandler(h)
 
         self.log("UI log bridge attached (INFO+).", "INFO")
 

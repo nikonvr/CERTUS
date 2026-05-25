@@ -5,6 +5,7 @@
 - Backlog P0/P1 créé.
 - Audit des modules principaux réalisé.
 - Les priorités socle / services / UI / hub / gros modules sont identifiées.
+- Nettoyage documentaire effectué sur les artefacts devenus obsolètes (`CERTUS_AUDIT_ACTION_PLAN.md`, `CERTUS_REOLD.py`, `docs/REFRACTORING_EXECUTION_PROTOCOL.md`).
 
 ### Il reste
 - Vérifier la CI et la release de bout en bout.
@@ -12,7 +13,9 @@
 - Stabiliser les services headless.
 - Réduire `certus_ui.py` et `CERTUS_HUB.py`.
 - Alléger les principaux entrypoints métier.
-- Renforcer les tests des helpers, invariants et flux # CERTUS Roadmap — CHANGELOG (audit & cleanup history)
+- Renforcer les tests des helpers, invariants et flux
+
+# CERTUS Roadmap — CHANGELOG (audit & cleanup history)
 
 *Historique détaillé des actions destructives et structurelles appliquées au projet CERTUS dans le cadre du roadmap d'industrialisation 2026. Le `CERTUS_MASTER_TODO_OPTIMIZATION.md` reste le pivot prospectif (« ce qui reste à faire ») ; ce document garde la trace de « ce qui a été fait ».*
 

@@ -94,7 +94,7 @@ def test_strategy_spectral_performance_window_db_assertion_guardrail():
 
 def test_worker_block_calculation_db_assertion_guardrail():
     """Verify that block calculation raises AssertionError if database is missing."""
-    from certus.workers.certus_strat_workers import _finalize_and_export_step_23
+    from certus.workers.certus_strat_workers import _finalize_and_export_pipeline_results
     
     # Ensure APP_CONTEXT does not have the database
     old_db = APP_CONTEXT.get("materials_db")
@@ -132,7 +132,7 @@ def test_worker_block_calculation_db_assertion_guardrail():
         
         # Invoking the step calculation should assert
         with pytest.raises(AssertionError) as exc_info:
-            _finalize_and_export_step_23(
+            _finalize_and_export_pipeline_results(
                 accumulated_strategies_results=accumulated_strategies_results,
                 pre_calc_data=pre_calc_data,
                 nominal_res=None,

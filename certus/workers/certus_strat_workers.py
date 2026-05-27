@@ -43,9 +43,17 @@ from certus.ui.certus_ui import setup_pyqtgraph_defaults
 
 try:
     from PyQt6.QtSvgWidgets import QSvgWidget
-
 except ImportError:
     QSvgWidget = None
+
+from enum import Enum
+
+class StratTask(Enum):
+    NOMINAL_ANALYSIS = "nominal"
+    STRATEGY_SEARCH = "optimization"
+    ROBUSTNESS_EVALUATION = "robustness"
+    FULL_PIPELINE = "full_workflow"
+    EXTERNAL_EVALUATION = "external_eval"
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -1055,7 +1063,7 @@ class LiveFeedMonitor(QObject):
 class WorkerThread(QThread):
     def __init__(
         self,
-        step: int | WorkerThreadRequest,
+        step: int | StratTask | WorkerThreadRequest,
         params: dict[str, Any] | None = None,
         opti_results: dict[str, Any] | None = None,
         timing_logger=None,
@@ -1066,11 +1074,32 @@ class WorkerThread(QThread):
         # Track C: Headless service for STRAT strategy
         self._service = StratStrategyService(runner=lambda cfg: None)
 
+        step_map_to_int = {
+            StratTask.NOMINAL_ANALYSIS: 0,
+            StratTask.STRATEGY_SEARCH: 2,
+            StratTask.ROBUSTNESS_EVALUATION: 3,
+            StratTask.FULL_PIPELINE: 23,
+            StratTask.EXTERNAL_EVALUATION: 33
+        }
+
+        if isinstance(step, StratTask):
+            self.task_type = step
+            legacy_step = step_map_to_int[step]
+        elif isinstance(step, int):
+            legacy_step = step
+            int_to_task = {v: k for k, v in step_map_to_int.items()}
+            self.task_type = int_to_task.get(step, StratTask.NOMINAL_ANALYSIS)
+        else:
+            # It is a WorkerThreadRequest
+            legacy_step = int(step.step)
+            int_to_task = {v: k for k, v in step_map_to_int.items()}
+            self.task_type = int_to_task.get(legacy_step, StratTask.NOMINAL_ANALYSIS)
+
         self.request = (
             step
             if isinstance(step, WorkerThreadRequest)
             else WorkerThreadRequest.from_legacy(
-                step=step,
+                step=legacy_step,
                 params=params,
                 opti_results=opti_results,
                 timing_logger=timing_logger,
@@ -1078,7 +1107,7 @@ class WorkerThread(QThread):
         )
 
         # Keep legacy fields for incremental migration across call sites.
-        self.step = int(self.request.step)
+        self.step = legacy_step
 
         self.params = dict(self.request.params)
 
@@ -1107,30 +1136,30 @@ class WorkerThread(QThread):
                 materials_db=APP_CONTEXT.get("materials_db"),
             )
 
-            if self.step in [2, 3, 23, 33]:
-                self._run_step_0_auto()
+            if self.task_type in [StratTask.STRATEGY_SEARCH, StratTask.ROBUSTNESS_EVALUATION, StratTask.FULL_PIPELINE, StratTask.EXTERNAL_EVALUATION]:
+                self._execute_nominal_analysis_auto()
 
-            if self.step == 0:
-                self._run_step_0()
+            if self.task_type == StratTask.NOMINAL_ANALYSIS:
+                self._execute_nominal_analysis()
 
-            elif self.step == 2:
-                self._run_step_2()
+            elif self.task_type == StratTask.STRATEGY_SEARCH:
+                self._execute_strategy_search()
 
-            elif self.step == 3:
-                self._run_step_3()
+            elif self.task_type == StratTask.ROBUSTNESS_EVALUATION:
+                self._execute_robustness_evaluation()
 
-            elif self.step == 23:
-                self._run_step_23_full()
+            elif self.task_type == StratTask.FULL_PIPELINE:
+                self._execute_full_pipeline()
 
-            elif self.step == 33:
-                self._run_step_external_strategies()
+            elif self.task_type == StratTask.EXTERNAL_EVALUATION:
+                self._execute_external_evaluation()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.signals.error.emit((type(e), e, e.__traceback__))
 
             self.params["logger"].error(traceback.format_exc())
 
-    def _run_step_0(self) -> None:
+    def _execute_nominal_analysis(self) -> None:
         """
 
         Execute Step 1: Nominal Calculation & Sensitivity Check.
@@ -1197,7 +1226,7 @@ class WorkerThread(QThread):
             ).to_legacy_dict()
         )
 
-    def _run_step_0_auto(self) -> None:
+    def _execute_nominal_analysis_auto(self) -> None:
         """
 
         Execute Auto-Step 1: Nominal Calculation & Sensitivity Check.
@@ -1279,7 +1308,7 @@ class WorkerThread(QThread):
 
         self.params["logger"].info("✓ Step 1 (Auto + Sensitivity) complete (prerequisite)\n")
 
-    def _run_step_2(self) -> None:
+    def _execute_strategy_search(self) -> None:
         """
 
         Execute Step 2: Optimized Hybrid Strategy.
@@ -1327,7 +1356,7 @@ class WorkerThread(QThread):
 
         self.signals.finished.emit(WorkerThreadResult.for_step_2(opti_results=opti_results).to_legacy_dict())
 
-    def _run_step_3(self) -> None:
+    def _execute_robustness_evaluation(self) -> None:
         """Execute Step 3: Robustness Test (classical workflow, non-Step-23).
 
         Runs final Monte Carlo simulations with thickness noise, aggregates
@@ -1455,7 +1484,7 @@ class WorkerThread(QThread):
 
         self.signals.finished.emit(WorkerThreadResult.for_step_3(final_results=final_results).to_legacy_dict())
 
-    def _run_step_23_full(self) -> None:
+    def _execute_full_pipeline(self) -> None:
         """
         Execute the full optimized workflow in deep exploration mode.
 
@@ -1500,7 +1529,7 @@ class WorkerThread(QThread):
         shm_manager = None
 
         try:
-            pre_calc_data, p_thick_nom, nucleation_info, nominal_res = _run_phase0_and_phaseA(
+            pre_calc_data, p_thick_nom, nucleation_info, nominal_res = _execute_nucleation_and_cost_mapping(
                 params=self.params,
                 signals=self.signals,
                 nominal_res=getattr(self, "nominal_results", None),
@@ -1516,7 +1545,7 @@ class WorkerThread(QThread):
 
             n_full = int(self.params.get("robustness_num_runs", 150))
 
-            self.params["logger"].info(f"🔄 PHASE B: Deep Exploration ({len(blocks_range)} steps) - HYBRID ENGINE...")
+            self.params["logger"].info(f"🔄 PHASE 3: Dynamic Programming Strategy Optimization ({len(blocks_range)} steps) - HYBRID ENGINE...")
 
             cost_map_sq_clean = {
                 l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
@@ -1619,7 +1648,7 @@ class WorkerThread(QThread):
                 import gc
                 gc.collect()
 
-                final_result_dict = _finalize_and_export_step_23(
+                final_result_dict = _finalize_and_export_pipeline_results(
                     accumulated_strategies_results=accumulated_strategies_results,
                     pre_calc_data=pre_calc_data,
                     nominal_res=nominal_res,
@@ -1667,7 +1696,7 @@ class WorkerThread(QThread):
             import gc
             gc.collect()
 
-    def _run_step_external_strategies(self) -> None:
+    def _execute_external_evaluation(self) -> None:
 
         self.params["logger"].info("--- STEP 33: EXTERNAL STRATEGIES SIMULATION ---")
 
@@ -1964,7 +1993,7 @@ def _run_phaseB_parallel_execution(
 
     return accumulated_strategies_results
 
-def _finalize_and_export_step_23(
+def _finalize_and_export_pipeline_results(
     accumulated_strategies_results: list[dict[str, Any]],
     pre_calc_data: dict[str, Any],
     nominal_res: dict[str, Any],
@@ -1973,6 +2002,7 @@ def _finalize_and_export_step_23(
     timing_logger: Any,
 ) -> dict[str, Any]:
     """Sorts final results, emits plots, triggers Excel export, and returns final payload."""
+    params["logger"].info("🚀 PHASE 4: Final Monte Carlo Yield Evaluation & Export...")
     if not accumulated_strategies_results:
         raise RuntimeError("No strategies found.")
 
@@ -2081,18 +2111,18 @@ def _finalize_and_export_step_23(
         final_results=final_complete_structure,
     ).to_legacy_dict()
 
-def _run_phase0_and_phaseA(
+def _execute_nucleation_and_cost_mapping(
     params: dict[str, Any],
     signals: Any,
     nominal_res: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[float], dict[str, float], dict[str, Any]]:
-    """Executes Phase 0 (Nucleation Analysis) and Phase A (Cost Maps)."""
+    """Executes Phase 1 (Nucleation Analysis) and Phase 2 (Cost Maps)."""
 
     if nominal_res is None:
         nominal_res, _ = calculate_nominal_properties(params)
     p_thick_nom = nominal_res["physical_thicknesses_nominal"]
 
-    params["logger"].info("🚀 PHASE 0: Initializing Smart Nucleation Analysis...")
+    params["logger"].info("🚀 PHASE 1: Initializing Smart Nucleation Analysis...")
     clues_cache, _, _ = precompute_clues_and_matrices(params, p_thick_nom, params["logger"])
     max_scan_size = min(12, max(2, len(p_thick_nom) // 2))
     mc_runs_nucl = int(params.get("nucleation_mc_runs", 40))
@@ -2110,7 +2140,7 @@ def _run_phase0_and_phaseA(
     )
     nucleation_info = {"wl": nucleation_wl, "size": nucleation_size}
 
-    params["logger"].info("\n🚀 PHASE A: Calculating Cost Maps...")
+    params["logger"].info("\n🚀 PHASE 2: Calculating Cost Maps...")
     params["p_thick_nominal"] = p_thick_nom
     pre_calc_data = optimize_block_strategy_hybrid(params, signals.progress, None, phase_a_only=True)
 
@@ -2164,4 +2194,9 @@ def _resolve_strat_indices_db_path() -> str:
     legacy = str(Path(get_resource_path("clues.xlsx")).resolve())
 
     return legacy
+
+
+# Backward compatibility aliases
+_run_phase0_and_phaseA = _execute_nucleation_and_cost_mapping
+_finalize_and_export_step_23 = _finalize_and_export_pipeline_results
 

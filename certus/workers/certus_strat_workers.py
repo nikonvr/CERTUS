@@ -1231,7 +1231,7 @@ class WorkerThread(QThread):
 
         Execute Auto-Step 1: Nominal Calculation & Sensitivity Check.
 
-        This method performs the same analysis as _run_step_0 but in automatic mode:
+        This method performs the same analysis as _execute_nominal_analysis but in automatic mode:
 
         - Nominal property calculation for the design
 
@@ -1255,7 +1255,7 @@ class WorkerThread(QThread):
 
             - Used in automatic workflow sequences
 
-            - Prerequisite for steps 2, 3, 23, 33
+            - Prerequisite for STRATEGY_SEARCH, ROBUSTNESS_EVALUATION, FULL_PIPELINE, EXTERNAL_EVALUATION tasks
 
             - Stores results for subsequent steps
 

@@ -685,7 +685,7 @@ def _parallel_block_worker(args) -> dict:
 
         live_queue = ctx.live_queue if ctx else None
 
-        logger.info(f"[DEBUG-WORKER] [Block {n_blk}] StratContext is {'NOT None' if ctx else 'None'}, live_queue is {'NOT None' if live_queue else 'None'}")
+        logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] StratContext is {'NOT None' if ctx else 'None'}, live_queue is {'NOT None' if live_queue else 'None'}")
 
         gc.collect()
 
@@ -855,7 +855,7 @@ def _parallel_block_worker(args) -> dict:
 
         if live_queue and best_final:
             try:
-                logger.info(f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}")
+                logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}")
                 live_queue.put(
                     {
                         "strategy": best_final["strategy"],
@@ -864,12 +864,12 @@ def _parallel_block_worker(args) -> dict:
                         "block_number": n_blk,
                     }
                 )
-                logger.info(f"[DEBUG-WORKER] [Block {n_blk}] Successfully put strategy into live_queue.")
+                logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Successfully put strategy into live_queue.")
 
             except Exception as e:
                 logger.error(f"[Worker {n_blk}] Failed to put into live_queue: {e}", exc_info=True)
         else:
-            logger.info(f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}")
+            logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}")
 
         return {
             "n_blk": n_blk,
@@ -990,7 +990,14 @@ class LiveFeedMonitor(QObject):
         self._latest_item = None
 
     def start(self) -> None:
-        logging.getLogger("CERTUS").info("[DEBUG-MONITOR] LiveFeedMonitor started.")
+        logging.getLogger("CERTUS").debug("[DEBUG-MONITOR] LiveFeedMonitor started.")
+        # GUARD RAIL — QTimer must only be instantiated in the target QThread context (here start()),
+        # never in __init__, otherwise it maps to the spawning main GUI thread's event loop.
+        # Ensure thread affinity of self matches the executing thread.
+        assert self.thread() == QThread.currentThread(), (
+            "CERTUS-STRAT-E-THREAD-AFFINITY: LiveFeedMonitor must be started within its own thread context. "
+            "Verify that moveToThread(monitor_thread) was called before invoking start()."
+        )
         # SAFETY — QTimer created here, in the thread that owns self (post-moveToThread)
         # Creating QTimer in __init__ would bind it to the spawning thread's event loop,
         # not to monitor_thread, causing silent mis-firing (bug fixed 2026-05-27).
@@ -1002,7 +1009,7 @@ class LiveFeedMonitor(QObject):
 
     @pyqtSlot()
     def stop(self) -> None:
-        logging.getLogger("CERTUS").info("[DEBUG-MONITOR] LiveFeedMonitor stop requested.")
+        logging.getLogger("CERTUS").debug("[DEBUG-MONITOR] LiveFeedMonitor stop requested.")
         if self._timer is not None:
             self._timer.stop()
         self.finished.emit()
@@ -1014,7 +1021,7 @@ class LiveFeedMonitor(QObject):
                     got = self.live_preview_queue.get_nowait()
                     if got is not None:
                         if got == "STOP":
-                            logging.getLogger("CERTUS").info("[DEBUG-MONITOR] LiveFeedMonitor poll received STOP.")
+                            logging.getLogger("CERTUS").debug("[DEBUG-MONITOR] LiveFeedMonitor poll received STOP.")
                             self.stop()
                             return
                         self._latest_item = got
@@ -1034,7 +1041,7 @@ class LiveFeedMonitor(QObject):
                     "p_thick_nominal": self.p_thick_nominal,
                     "clues_at_wl": self.clues_at_wl,
                 }
-                logging.getLogger("CERTUS").info(
+                logging.getLogger("CERTUS").debug(
                     f"[DEBUG-MONITOR] Emitting update_live_growth for block {full_package.get('n_blk')}. robustness: {item['robustness_score']:.5f}"
                 )
                 self.signals.update_live_growth.emit(full_package)
@@ -1787,7 +1794,7 @@ def _run_phaseB_parallel_execution(
                 logger.warning(f"🛑 Stopping Optimization at {n_blk} blocks...")
                 break
 
-            logger.info(f"[SPY-WORKER] Starting loop iteration for block {n_blk}")
+            logger.debug(f"[SPY-WORKER] Starting loop iteration for block {n_blk}")
             args = (
                 n_blk,
                 minimized_context,
@@ -1799,10 +1806,10 @@ def _run_phaseB_parallel_execution(
                 nucleation_info,
             )
             try:
-                logger.info(f"[SPY-WORKER] Running block {n_blk} inside concurrent thread pool...")
+                logger.debug(f"[SPY-WORKER] Running block {n_blk} inside concurrent thread pool...")
                 t0 = time.time()
                 result_batch = _parallel_block_worker(args)
-                logger.info(
+                logger.debug(
                     f"[SPY-WORKER] Completed block {n_blk} in {time.time() - t0:.3f}s. Results count: "
                     f"{len(result_batch.get('strategies_results', [])) if isinstance(result_batch, dict) else 'error'}"
                 )
@@ -2013,6 +2020,11 @@ def _finalize_and_export_step_23(
             # to render a flat curve (bug fixed 2026-05-27).
             # Same contract as StrategySpectralPerformanceWindow._calculate_and_plot.
             local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+            # GUARD RAIL — Ensure materials database is resolved for worker calculations to prevent flat curve regressions.
+            assert local_db is not None, (
+                "CERTUS-STRAT-E-DB-MISSING: Materials database is missing in worker context. "
+                "Verify params serialization or APP_CONTEXT initialization."
+            )
             nH_arr = get_refractive_clues_vectorized(params["nH_id"], wl_arr, db_instance=local_db).astype(
                 np.complex128
             )

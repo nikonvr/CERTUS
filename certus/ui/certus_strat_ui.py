@@ -273,56 +273,56 @@ from certus.utils.certus_strat_service import (
 
 class CertusWindowSpyMixin:
     def showEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.showEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
         super().showEvent(event)
 
     def hideEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.hideEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
         super().hideEvent(event)
 
     def closeEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.closeEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
         super().closeEvent(event)
 
     def moveEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.moveEvent() title='%s' id=%s old_pos=%s new_pos=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.oldPos(), event.pos()
         )
         super().moveEvent(event)
 
     def resizeEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.resizeEvent() title='%s' id=%s old_size=%s new_size=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.oldSize(), event.size()
         )
         super().resizeEvent(event)
 
     def changeEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.changeEvent() title='%s' id=%s event_type=%s state=%s active=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.type(), self.windowState(), self.isActiveWindow()
         )
         super().changeEvent(event)
 
     def focusInEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.focusInEvent() title='%s' id=%s reason=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.reason()
         )
         super().focusInEvent(event)
 
     def focusOutEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.focusOutEvent() title='%s' id=%s reason=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.reason()
         )
@@ -332,7 +332,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
 
     def closeEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] StrategiesTableWindow.closeEvent() title='%s' id=%s geometry=%s visible=%s selected_row=%s rows=%s",
             self.windowTitle(), id(self), self.geometry(), self.isVisible(),
             getattr(self, "selected_row", -1),
@@ -350,7 +350,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] StrategiesTableWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -1660,7 +1660,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] UniversalPlotWindow created (plot_type=%s, id=%s, parent=%s)",
             plot_type, id(self), id(parent) if parent else None
         )
@@ -2384,7 +2384,7 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] TransmissionVsThicknessWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -2397,7 +2397,7 @@ class TransmissionVsThicknessWindow(CertusWindowSpyMixin, QMainWindow):
 
         self.setGeometry(150, 150, 1450, 950)
 
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] Opening TransmissionVsThicknessWindow for strategy #%s",
             strategy.get("strategy_id", "unknown"),
         )
@@ -2905,7 +2905,7 @@ class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] StrategySpectralPerformanceWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -3012,6 +3012,12 @@ class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
             # populates params — both keys exist in different call sites.
             # ------------------------------------------------------------------
             db_instance = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+            # GUARD RAIL — Ensure materials database is loaded to prevent silent flat T(λ) curve generation.
+            assert db_instance is not None, (
+                "CERTUS-STRAT-E-DB-MISSING: Materials database instance is completely missing from params and APP_CONTEXT. "
+                "Verify that the worker thread correctly serializes/deserializes the materials database or that "
+                "APP_CONTEXT['materials_db'] is initialized on startup."
+            )
 
             nH_arr = get_refractive_clues_vectorized(nH_id, wls, db_instance).astype(np.complex128)
 
@@ -3091,7 +3097,7 @@ class JsonViewerWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] JsonViewerWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -3166,7 +3172,7 @@ class InteractiveIndicesWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] InteractiveIndicesWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -3346,7 +3352,7 @@ class InteractiveSpectrumWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] InteractiveSpectrumWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -3503,7 +3509,7 @@ class PopOutWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] PopOutWindow created id=%s parent=%s title='%s'",
             id(self), id(parent) if parent else None, title
         )
@@ -3528,7 +3534,7 @@ class LiveMonitorWindow(CertusWindowSpyMixin, QMainWindow):
 
         super().__init__(None)
         self._parent = parent
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] LiveMonitorWindow created id=%s parent=%s",
             id(self), id(parent) if parent else None
         )
@@ -3732,7 +3738,7 @@ class LiveMonitorWindow(CertusWindowSpyMixin, QMainWindow):
                     self.text_labels.append(text_item)
 
     def closeEvent(self, event) -> None:
-        logging.getLogger("CERTUS").info(
+        logging.getLogger("CERTUS").debug(
             "[STRAT-UI] LiveMonitorWindow.closeEvent() user_hidden=True title='%s' id=%s geometry=%s visible=%s",
             self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
@@ -4527,7 +4533,7 @@ class CertusStratApp(CertusBaseApp):
 
         try:
             if active_thread.isRunning():
-                self.logger.info("[STRAT-UI] Stopping active render thread...")
+                self.logger.debug("[STRAT-UI] Stopping active render thread...")
                 active_thread.quit()
                 if not active_thread.wait(timeout_ms):
                     self.logger.warning("[STRAT-UI] Active render thread did not stop within %sms.", timeout_ms)
@@ -4550,7 +4556,7 @@ class CertusStratApp(CertusBaseApp):
                 worker.params["stop_requested"] = True
 
             if worker.isRunning():
-                self.logger.info("[STRAT-UI] Stopping worker thread id=%s...", id(worker))
+                self.logger.debug("[STRAT-UI] Stopping worker thread id=%s...", id(worker))
                 worker.quit()
                 if not worker.wait(timeout_ms):
                     self.logger.warning("[STRAT-UI] Worker thread did not stop within %sms.", timeout_ms)
@@ -4571,7 +4577,7 @@ class CertusStratApp(CertusBaseApp):
         if hasattr(self, "_stopping_threads"):
             self._stopping_threads = [t for t in self._stopping_threads if t is not None and t.isRunning()]
 
-        self.logger.info("[STRAT-UI] Register worker thread label=%s id=%s running=%s", label, id(thread), thread.isRunning())
+        self.logger.debug("[STRAT-UI] Register worker thread label=%s id=%s running=%s", label, id(thread), thread.isRunning())
         self._active_worker_threads.append(thread)
         thread.finished.connect(lambda: self._unregister_worker_thread(thread, label))
 
@@ -4584,7 +4590,7 @@ class CertusStratApp(CertusBaseApp):
         try:
             if thread in self._active_worker_threads:
                 self._active_worker_threads.remove(thread)
-                self.logger.info("[STRAT-UI] Unregister worker thread label=%s id=%s", label, id(thread))
+                self.logger.debug("[STRAT-UI] Unregister worker thread label=%s id=%s", label, id(thread))
             if thread is not None:
                 if not hasattr(self, "_stopping_threads"):
                     self._stopping_threads = []
@@ -4599,11 +4605,11 @@ class CertusStratApp(CertusBaseApp):
         if not threads:
             return
 
-        self.logger.info("[STRAT-UI] Stopping %d worker threads...", len(threads))
+        self.logger.debug("[STRAT-UI] Stopping %d worker threads...", len(threads))
         for thread in threads:
             try:
                 if thread is not None and thread.isRunning():
-                    self.logger.info("[STRAT-UI] -> quitting worker thread id=%s", id(thread))
+                    self.logger.debug("[STRAT-UI] -> quitting worker thread id=%s", id(thread))
                     thread.quit()
             except (RuntimeError, AttributeError):
                 continue
@@ -4620,7 +4626,7 @@ class CertusStratApp(CertusBaseApp):
 
     def close_all_auxiliary_windows(self) -> None:
 
-        self.logger.info(
+        self.logger.debug(
             "[STRAT-UI] Closing all auxiliary windows (plot=%d, transmission=%d, json=%d, spectrum=%d, table=%s, live=%s, heatmap=%s, stack=%s, worker_threads=%d)",
             len(getattr(self, "plot_windows", [])),
             len(getattr(self, "transmission_windows", [])),
@@ -7144,7 +7150,7 @@ class CertusStratApp(CertusBaseApp):
                 final_strategies = list((self.final_results or {}).get("all_strategies_results", []) or [])
                 if not final_strategies:
                     raise RuntimeError("CERTUS-STRAT-E-FINAL-TABLE-MISSING: no strategies available for final ranking display")
-                self.logger.info(
+                self.logger.debug(
                     "[STRAT-UI] Forcing final ranking table display: count=%d",
                     len(final_strategies),
                 )
@@ -7221,7 +7227,7 @@ class CertusStratApp(CertusBaseApp):
         self.status_label.setText(message)
 
     def on_plot_ready(self, fig: Any, fig_type: str) -> None:
-        self.logger.info(
+        self.logger.debug(
             "[SPY-PLOT-READY] on_plot_ready entered: fig_type=%s | fig_id=%s | thread=%s",
             fig_type, id(fig), QThread.currentThread().objectName() or str(id(QThread.currentThread()))
         )
@@ -7229,10 +7235,10 @@ class CertusStratApp(CertusBaseApp):
         if fig_type == "pyqtgraph_heatmap":
             try:
                 if hasattr(self, "heatmap_window") and self.heatmap_window:
-                    self.logger.info("[SPY-PLOT-READY] Closing existing heatmap window.")
+                    self.logger.debug("[SPY-PLOT-READY] Closing existing heatmap window.")
                     self.heatmap_window.close()
 
-                self.logger.info(
+                self.logger.debug(
                     "[STRAT-UI] on_plot_ready(heatmap) fig_type=%s queue_size=%d plot_windows=%d",
                     fig_type,
                     self.plot_queue.qsize() if hasattr(self.plot_queue, "qsize") else -1,
@@ -7244,7 +7250,7 @@ class CertusStratApp(CertusBaseApp):
                 # Keep a strong reference before show(): the heatmap may be emitted
                 # from a worker path where the event loop turn matters.
                 self.plot_windows.append(self.heatmap_window)
-                self.logger.info("[STRAT-UI] heatmap_window stored id=%s plot_windows=%d", id(self.heatmap_window), len(self.plot_windows))
+                self.logger.debug("[STRAT-UI] heatmap_window stored id=%s plot_windows=%d", id(self.heatmap_window), len(self.plot_windows))
 
                 self.heatmap_window.show()
 
@@ -7260,12 +7266,12 @@ class CertusStratApp(CertusBaseApp):
 
                 pass
 
-        self.logger.info("[SPY-PLOT-READY] Putting plot into queue: fig_type=%s | queue_size_before=%d", fig_type, self.plot_queue.qsize())
+        self.logger.debug("[SPY-PLOT-READY] Putting plot into queue: fig_type=%s | queue_size_before=%d", fig_type, self.plot_queue.qsize())
         self.plot_queue.put((fig, fig_type))
 
     def on_excel_ready(self, excel_data: io.BytesIO, metadata: Dict) -> Any:
         """Handle automatic export (Excel + HTML)"""
-        self.logger.info("[DEBUG-UI] on_excel_ready entered.")
+        self.logger.debug("[DEBUG-UI] on_excel_ready entered.")
 
         try:
             try:

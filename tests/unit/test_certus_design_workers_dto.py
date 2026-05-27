@@ -92,3 +92,23 @@ def test_needle_worker_result_from_legacy_split_payload() -> None:
     assert payload["action"] == "split"
     assert payload["layer_idx"] == 3
     assert payload["needle_mat"] == "H"
+
+
+@pytest.mark.unit
+def test_design_params_dto_validation() -> None:
+    from certus.workers.certus_design_workers_dto import DesignParamsDTO
+
+    # Validate defaults
+    dto = DesignParamsDTO()
+    assert dto.mode == "global"
+    assert dto.oblique_mode is False
+    assert dto.local_delta_nm == 2.0
+
+    # Validate parsing in request
+    legacy = {"mode": "local", "oblique_mode": True, "local_delta_nm": 4.5, "custom_field": "val"}
+    req = OptimWorkerRequest.from_legacy(legacy)
+    assert req.params.mode == "local"
+    assert req.params.oblique_mode is True
+    assert req.params.local_delta_nm == 4.5
+    # Check that extra fields are preserved
+    assert req.params.custom_field == "val"

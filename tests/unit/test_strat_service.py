@@ -6,8 +6,8 @@ import logging
 import numpy as np
 import pytest
 
-import certus_strat_service as strat_service
-from certus_strat_service import (
+import certus.utils.certus_strat_service as strat_service
+from certus.utils.certus_strat_service import (
     StratStrategyService,
     build_wavelength_index_map,
     generate_noise_array,
@@ -38,14 +38,14 @@ def test_validate_payload_checks_material_coverage() -> None:
             }
     db = MockDB()
     params = {
-        "scan_wl_min": 350.0,  # Below 400
-        "scan_wl_max": 650.0,
+        "scan_wl_min": 200.0,  # Below 400 and no overlap
+        "scan_wl_max": 300.0,
         "nH_id": "nH",
         "nL_id": "nL",
         "nSub_id": "nSub"
     }
-    # Should raise because 350 < 400
-    with pytest.raises(ValueError, match="Requested start 350.0nm < Data start 400.0nm"):
+    # Should raise because no overlap exists at all
+    with pytest.raises(ValueError, match="Requested start 200.0nm < Data start 400.0nm"):
         svc.validate_payload({"step": 0, "params": params}, materials_db=db)
 
     # Should pass if within range
@@ -315,7 +315,7 @@ def test_extract_best_rmse_correctness() -> None:
 
 def test_extract_best_rmse_raises_physics_convergence_error() -> None:
     """Test extract_best_rmse raises PhysicsConvergenceError for abnormally low RMSE (< 1e-7)."""
-    from certus_errors import PhysicsConvergenceError
+    from certus.utils.errors import PhysicsConvergenceError
     
     strategies_too_low = [
         {"strategy_id": "strat_1", "rmse": 0.0},

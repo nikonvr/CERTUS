@@ -5,12 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
     DataType,
     SplineOptConfig,
     canonical_spline_sigma_knots,
 )
-from spline_objective import (
+from certus.spline.spline_objective import (
     sigma_knots_encode,
     sigma_knots_decode,
     nk_from_x_pwlnk,
@@ -417,7 +417,7 @@ class TestSplinePWLObjectiveCaching:
 
 class TestSplineSpectralMseFromXyNk:
     def test_returns_finite(self) -> None:
-        from spline_objective import spline_spectral_mse_from_xy_nk
+        from certus.spline.spline_objective import spline_spectral_mse_from_xy_nk
         cfg = _make_cfg(50)
         lam = np.asarray(cfg.lam_nm)
         n_l = np.full_like(lam, 2.0)
@@ -427,7 +427,7 @@ class TestSplineSpectralMseFromXyNk:
         assert np.isfinite(mse)
 
     def test_size_mismatch_returns_none(self) -> None:
-        from spline_objective import spline_spectral_mse_from_xy_nk
+        from certus.spline.spline_objective import spline_spectral_mse_from_xy_nk
         cfg = _make_cfg(50)
         lam = np.asarray(cfg.lam_nm)
         n_l = np.full(10, 2.0)  # wrong size

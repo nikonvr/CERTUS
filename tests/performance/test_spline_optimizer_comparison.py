@@ -49,7 +49,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from CERTUS_INDEX import PGlobalOptimizerINDEX
 
-from certus_core import get_safe_worker_count
+from certus.core.certus_core import get_safe_worker_count
 
 
 

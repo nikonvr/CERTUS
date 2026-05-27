@@ -15,7 +15,7 @@ import pytest
 
 
 def test_u6_supported_variants_and_icons():
-    from certus_toast_stack import supported_variants, variant_icon_name
+    from certus.ui.certus_toast_stack import supported_variants, variant_icon_name
 
     variants = supported_variants()
     assert set(variants) == {"info", "success", "warning", "error"}
@@ -28,8 +28,8 @@ def test_u6_supported_variants_and_icons():
 
 def test_u6_icons_are_real_lucide_names():
     """Every variant's associated icon must exist in the Lucide bundle."""
-    from certus_icons import available_icon_names
-    from certus_toast_stack import supported_variants, variant_icon_name
+    from certus.ui.certus_icons import available_icon_names
+    from certus.ui.certus_toast_stack import supported_variants, variant_icon_name
 
     names = set(available_icon_names())
     for v in supported_variants():
@@ -37,7 +37,7 @@ def test_u6_icons_are_real_lucide_names():
 
 
 def test_u6_variant_colors_returns_three_hex_strings():
-    from certus_toast_stack import _variant_colors
+    from certus.ui.certus_toast_stack import _variant_colors
 
     for variant in ("info", "success", "warning", "error", "unknown"):
         bg, fg, accent = _variant_colors(variant)
@@ -46,7 +46,7 @@ def test_u6_variant_colors_returns_three_hex_strings():
 
 
 def test_u6_public_api_does_nothing_when_parent_is_none():
-    from certus_toast_stack import get_toast_stack, show_toast_stack
+    from certus.ui.certus_toast_stack import get_toast_stack, show_toast_stack
 
     assert get_toast_stack(None) is None
     assert show_toast_stack(None, "hello") is None
@@ -73,7 +73,7 @@ def qt_parent():
 
 
 def test_u6_stack_per_parent_is_memoised(qt_parent):
-    from certus_toast_stack import get_toast_stack
+    from certus.ui.certus_toast_stack import get_toast_stack
 
     s1 = get_toast_stack(qt_parent)
     s2 = get_toast_stack(qt_parent)
@@ -81,7 +81,7 @@ def test_u6_stack_per_parent_is_memoised(qt_parent):
 
 
 def test_u6_show_toast_stack_returns_toast_and_registers(qt_parent):
-    from certus_toast_stack import get_toast_stack, show_toast_stack
+    from certus.ui.certus_toast_stack import get_toast_stack, show_toast_stack
 
     t = show_toast_stack(qt_parent, "Saved successfully", variant="success")
     assert t is not None
@@ -91,7 +91,7 @@ def test_u6_show_toast_stack_returns_toast_and_registers(qt_parent):
 
 
 def test_u6_stack_caps_at_max_size(qt_parent):
-    from certus_toast_stack import MAX_STACK_SIZE, get_toast_stack, show_toast_stack
+    from certus.ui.certus_toast_stack import MAX_STACK_SIZE, get_toast_stack, show_toast_stack
 
     for i in range(MAX_STACK_SIZE + 3):
         show_toast_stack(
@@ -106,7 +106,7 @@ def test_u6_stack_caps_at_max_size(qt_parent):
 
 
 def test_u6_toast_geometry_inside_parent(qt_parent):
-    from certus_toast_stack import show_toast_stack
+    from certus.ui.certus_toast_stack import show_toast_stack
 
     t = show_toast_stack(qt_parent, "Alert", variant="error", duration_ms=0)
     from PyQt6.QtCore import QCoreApplication
@@ -123,7 +123,7 @@ def test_u6_toast_geometry_inside_parent(qt_parent):
 
 
 def test_u6_variants_render_without_exception(qt_parent):
-    from certus_toast_stack import show_toast_stack, supported_variants
+    from certus.ui.certus_toast_stack import show_toast_stack, supported_variants
 
     for v in supported_variants():
         t = show_toast_stack(

@@ -19,8 +19,8 @@ import pytest
 
 pytest.importorskip("openpyxl")
 
-from certus_data import read_data_file_robust
-from certus_index_spline_core import (
+from certus.utils.certus_data import read_data_file_robust
+from certus.spline.certus_index_spline_core import (
     DataType,
     SplineOptConfig,
     canonical_spline_sigma_knots,
@@ -31,8 +31,8 @@ from certus_index_spline_core import (
     substrate_id_from_name,
 )
 from certus_physics import get_n_substrate_array_by_id, warmup_physics
-from spline_pipeline import worker_spline_optimization
-from spline_smart_init import pick_best_manual_material_preset
+from certus.spline.spline_pipeline import worker_spline_optimization
+from certus.spline.spline_smart_init import pick_best_manual_material_preset
 
 
 def _repo_root() -> Path:

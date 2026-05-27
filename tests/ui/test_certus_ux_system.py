@@ -17,7 +17,7 @@ import pytest
 
 
 def test_u1_tokens_exported():
-    from certus_ux import Elevation, Motion, OBJ, Radius, Spacing, Typography, ZIndex
+    from certus.utils.certus_ux import Elevation, Motion, OBJ, Radius, Spacing, Typography, ZIndex
 
     # 8-pt spacing scale is monotonic and matches the declared ratios
     values = [Spacing.XS, Spacing.SM, Spacing.MD, Spacing.LG, Spacing.XL, Spacing.XXL, Spacing.XXXL]
@@ -48,7 +48,7 @@ def test_u1_tokens_exported():
 
 
 def test_u1_premium_overrides_shape():
-    from certus_ux import build_premium_overrides, OBJ
+    from certus.utils.certus_ux import build_premium_overrides, OBJ
 
     css = build_premium_overrides()
     # Well-formed QSS substrings
@@ -68,7 +68,7 @@ def test_u1_apply_certus_theme_accepts_premium_flag():
 
     _app = QApplication.instance() or QApplication([])
     w = QWidget()
-    from certus_ui import apply_certus_theme
+    from certus.ui.certus_ui import apply_certus_theme
 
     # premium=True appends U1 overrides (CertusSearch object-name is unique to U1)
     apply_certus_theme(w, premium=True)
@@ -85,7 +85,7 @@ def test_u1_apply_certus_theme_accepts_premium_flag():
 
 
 def test_u2_icon_names_available():
-    from certus_icons import ICON_SVG_SOURCES, available_icon_names
+    from certus.ui.certus_icons import ICON_SVG_SOURCES, available_icon_names
 
     names = available_icon_names()
     # A stable subset we guarantee exists
@@ -103,7 +103,7 @@ def test_u2_certus_icon_renders_non_empty():
     from PyQt6.QtWidgets import QApplication
 
     _app = QApplication.instance() or QApplication([])
-    from certus_icons import certus_icon, is_svg_icon_rendering_disabled
+    from certus.ui.certus_icons import certus_icon, is_svg_icon_rendering_disabled
 
     ic = certus_icon("save")
     if is_svg_icon_rendering_disabled():
@@ -118,7 +118,7 @@ def test_u2_unknown_icon_never_raises():
     from PyQt6.QtWidgets import QApplication
 
     _app = QApplication.instance() or QApplication([])
-    from certus_icons import certus_icon
+    from certus.ui.certus_icons import certus_icon
 
     ic = certus_icon("__definitely_not_a_real_icon__")
     assert ic.isNull()  # empty QIcon, not a crash
@@ -128,7 +128,7 @@ def test_u2_custom_color_changes_output():
     from PyQt6.QtWidgets import QApplication
 
     _app = QApplication.instance() or QApplication([])
-    from certus_icons import certus_icon, clear_icon_cache, is_svg_icon_rendering_disabled
+    from certus.ui.certus_icons import certus_icon, clear_icon_cache, is_svg_icon_rendering_disabled
 
     if is_svg_icon_rendering_disabled():
         return
@@ -155,7 +155,7 @@ def test_u2_custom_color_changes_output():
 
 
 def test_u3_fuzzy_score_bounds_and_ordering():
-    from certus_command_palette import fuzzy_score
+    from certus.utils.certus_command_palette import fuzzy_score
 
     # Empty query returns neutral-positive
     assert 0 < fuzzy_score("", "anything") <= 1.0
@@ -172,7 +172,7 @@ def test_u3_fuzzy_score_bounds_and_ordering():
 
 
 def test_u3_rank_commands_respects_match_only():
-    from certus_command_palette import CommandAction, rank_commands
+    from certus.utils.certus_command_palette import CommandAction, rank_commands
 
     def noop():
         pass
@@ -190,7 +190,7 @@ def test_u3_rank_commands_respects_match_only():
 
 
 def test_u3_rank_commands_empty_query_preserves_order():
-    from certus_command_palette import CommandAction, rank_commands
+    from certus.utils.certus_command_palette import CommandAction, rank_commands
 
     def noop():
         pass
@@ -203,7 +203,7 @@ def test_u3_rank_commands_empty_query_preserves_order():
 
 
 def test_u3_command_action_enabled_cb_is_respected():
-    from certus_command_palette import CommandAction
+    from certus.utils.certus_command_palette import CommandAction
 
     a = CommandAction(id="x", title="X", callback=lambda: None, enabled_cb=lambda: False)
     assert a.is_enabled() is False
@@ -217,7 +217,7 @@ def test_u3_command_action_enabled_cb_is_respected():
 
 
 def test_u3_command_action_search_haystack_includes_keywords():
-    from certus_command_palette import CommandAction, fuzzy_score
+    from certus.utils.certus_command_palette import CommandAction, fuzzy_score
 
     a = CommandAction(
         id="x", title="Export spectra",
@@ -238,7 +238,7 @@ def test_u3_command_action_search_haystack_includes_keywords():
 
 
 def test_u3_certus_base_app_exposes_palette_hooks():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     for attr in ("register_command", "_default_commands",
                  "open_command_palette", "_toggle_theme"):
@@ -247,8 +247,8 @@ def test_u3_certus_base_app_exposes_palette_hooks():
 
 def test_u3_default_commands_include_toggle_theme_and_quit():
     """Even without save/load hooks, baseline commands must exist."""
-    from certus_command_palette import CommandAction
-    from certus_ui import CertusBaseApp
+    from certus.utils.certus_command_palette import CommandAction
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         # Minimal duck to call the unbound method
@@ -270,9 +270,9 @@ def test_u4_dashboard_card_show_event_triggers_fade_once(monkeypatch):
     fake_mod = types.SimpleNamespace(
         fade_in=lambda w, duration_ms=0: calls.append((duration_ms, w))
     )
-    monkeypatch.setitem(sys.modules, "certus_animations", fake_mod)
+    monkeypatch.setitem(sys.modules, "certus.ui.certus_animations", fake_mod)
 
-    from certus_ui import CertusDashboardCard
+    from certus.ui.certus_ui import CertusDashboardCard
 
     card = CertusDashboardCard("RMSE", icon_name="check-circle")
     ev = QShowEvent()

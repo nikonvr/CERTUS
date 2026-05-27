@@ -20,7 +20,7 @@ import pytest
 
 
 def test_u8_module_surface():
-    import certus_empty_state as m
+    import certus.ui.certus_empty_state as m
 
     for name in (
         "DEFAULT_ICON_SIZE_PX",
@@ -34,7 +34,7 @@ def test_u8_module_surface():
 
 
 def test_u8_defaults_are_sensible():
-    from certus_empty_state import DEFAULT_DESCRIPTION, DEFAULT_ICON_SIZE_PX, DEFAULT_TITLE
+    from certus.ui.certus_empty_state import DEFAULT_DESCRIPTION, DEFAULT_ICON_SIZE_PX, DEFAULT_TITLE
 
     assert 24 <= DEFAULT_ICON_SIZE_PX <= 96
     assert DEFAULT_TITLE.strip()
@@ -44,7 +44,7 @@ def test_u8_defaults_are_sensible():
 def test_u8_factory_returns_visible_widget():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_empty_state import build_empty_state
+    from certus.ui.certus_empty_state import build_empty_state
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = build_empty_state(None, title="Nothing here", description="Load a file", action_label="Load")
@@ -55,7 +55,7 @@ def test_u8_factory_returns_visible_widget():
 def test_u8_without_action_label_has_no_cta():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_empty_state import build_empty_state
+    from certus.ui.certus_empty_state import build_empty_state
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = build_empty_state(None, title="X", description="Y")
@@ -65,7 +65,7 @@ def test_u8_without_action_label_has_no_cta():
 def test_u8_action_emits_signal_and_invokes_callback():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_empty_state import build_empty_state
+    from certus.ui.certus_empty_state import build_empty_state
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     called = []
@@ -83,7 +83,7 @@ def test_u8_action_emits_signal_and_invokes_callback():
 def test_u8_set_title_and_description():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_empty_state import build_empty_state
+    from certus.ui.certus_empty_state import build_empty_state
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = build_empty_state(None)
@@ -99,7 +99,7 @@ def test_u8_set_title_and_description():
 
 
 def test_u9_variants_and_icon_mapping():
-    from certus_badges import VARIANT_LABELS, supported_variants, variant_icon_name
+    from certus.utils.certus_badges import VARIANT_LABELS, supported_variants, variant_icon_name
 
     variants = supported_variants()
     assert set(variants) == set(VARIANT_LABELS.keys())
@@ -109,8 +109,8 @@ def test_u9_variants_and_icon_mapping():
 
 
 def test_u9_icons_are_real_lucide_names():
-    from certus_badges import supported_variants, variant_icon_name
-    from certus_icons import available_icon_names
+    from certus.utils.certus_badges import supported_variants, variant_icon_name
+    from certus.ui.certus_icons import available_icon_names
 
     names = set(available_icon_names())
     for v in supported_variants():
@@ -118,7 +118,7 @@ def test_u9_icons_are_real_lucide_names():
 
 
 def test_u9_variant_color_returns_three_hex_strings():
-    from certus_badges import supported_variants, variant_color
+    from certus.utils.certus_badges import supported_variants, variant_color
 
     for v in list(supported_variants()) + ["unknown"]:
         bg, fg, border = variant_color(v)
@@ -129,7 +129,7 @@ def test_u9_variant_color_returns_three_hex_strings():
 def test_u9_widget_set_variant_changes_state():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_badges import build_status_badge
+    from certus.utils.certus_badges import build_status_badge
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     b = build_status_badge(text="Run", variant="running")
@@ -141,7 +141,7 @@ def test_u9_widget_set_variant_changes_state():
 def test_u9_uppercase_option_transforms_text():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_badges import build_status_badge
+    from certus.utils.certus_badges import build_status_badge
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     b = build_status_badge(text="done", variant="success", uppercase=True)
@@ -151,7 +151,7 @@ def test_u9_uppercase_option_transforms_text():
 def test_u9_unknown_variant_falls_back_to_neutral():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_badges import build_status_badge
+    from certus.utils.certus_badges import build_status_badge
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     b = build_status_badge(variant="wat")
@@ -164,7 +164,7 @@ def test_u9_unknown_variant_falls_back_to_neutral():
 
 
 def test_u10_tooltip_spec_is_frozen_dataclass():
-    from certus_tooltips import TooltipSpec
+    from certus.ui.certus_tooltips import TooltipSpec
 
     s = TooltipSpec(title="Hello", body="World")
     assert s.title == "Hello"
@@ -174,7 +174,7 @@ def test_u10_tooltip_spec_is_frozen_dataclass():
 
 
 def test_u10_has_icon_and_has_link_flags():
-    from certus_tooltips import TooltipSpec
+    from certus.ui.certus_tooltips import TooltipSpec
 
     s = TooltipSpec(title="t", body="b")
     assert not s.has_icon()
@@ -188,7 +188,7 @@ def test_u10_has_icon_and_has_link_flags():
 def test_u10_attach_and_detach_are_symmetric():
     from PyQt6.QtWidgets import QApplication, QLabel
 
-    from certus_tooltips import attach_rich_tooltip, detach_rich_tooltip, get_tooltip_spec
+    from certus.ui.certus_tooltips import attach_rich_tooltip, detach_rich_tooltip, get_tooltip_spec
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = QLabel("Hover me")
@@ -201,7 +201,7 @@ def test_u10_attach_and_detach_are_symmetric():
 def test_u10_reattach_replaces_previous_spec():
     from PyQt6.QtWidgets import QApplication, QLabel
 
-    from certus_tooltips import attach_rich_tooltip, get_tooltip_spec
+    from certus.ui.certus_tooltips import attach_rich_tooltip, get_tooltip_spec
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = QLabel("x")
@@ -213,7 +213,7 @@ def test_u10_reattach_replaces_previous_spec():
 
 
 def test_u10_none_widget_returns_spec_without_error():
-    from certus_tooltips import attach_rich_tooltip
+    from certus.ui.certus_tooltips import attach_rich_tooltip
 
     spec = attach_rich_tooltip(None, "T", "B")
     assert spec.title == "T"
@@ -225,7 +225,7 @@ def test_u10_none_widget_returns_spec_without_error():
 
 
 def test_u11_step_auto_slug_key():
-    from certus_progress_tracker import ProgressStep
+    from certus.utils.certus_progress_tracker import ProgressStep
 
     s = ProgressStep(title="Load data")
     assert s.key == "load_data"
@@ -236,7 +236,7 @@ def test_u11_step_auto_slug_key():
 
 
 def test_u11_step_icons_match_states():
-    from certus_progress_tracker import StepState, step_icon_name
+    from certus.utils.certus_progress_tracker import StepState, step_icon_name
 
     assert step_icon_name(StepState.PENDING) == "circle"
     assert step_icon_name(StepState.RUNNING) == "loader"
@@ -247,8 +247,8 @@ def test_u11_step_icons_match_states():
 
 
 def test_u11_step_icons_exist_in_lucide_bundle():
-    from certus_icons import available_icon_names
-    from certus_progress_tracker import StepState, step_icon_name
+    from certus.ui.certus_icons import available_icon_names
+    from certus.utils.certus_progress_tracker import StepState, step_icon_name
 
     names = set(available_icon_names())
     for st in StepState:
@@ -256,7 +256,7 @@ def test_u11_step_icons_exist_in_lucide_bundle():
 
 
 def test_u11_step_color_returns_hex_string():
-    from certus_progress_tracker import StepState, step_color
+    from certus.utils.certus_progress_tracker import StepState, step_color
 
     for st in StepState:
         c = step_color(st)
@@ -264,7 +264,7 @@ def test_u11_step_color_returns_hex_string():
 
 
 def test_u11_format_eta_variants():
-    from certus_progress_tracker import format_eta
+    from certus.utils.certus_progress_tracker import format_eta
 
     assert format_eta(None) == ""
     assert format_eta(-1) == ""
@@ -277,7 +277,7 @@ def test_u11_format_eta_variants():
 def test_u11_tracker_advance_to_updates_states():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_progress_tracker import StepState, build_progress_tracker
+    from certus.utils.certus_progress_tracker import StepState, build_progress_tracker
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     tr = build_progress_tracker(steps=["Read", "Solve", "Save"], title="Run")
@@ -294,7 +294,7 @@ def test_u11_tracker_advance_to_updates_states():
 def test_u11_mark_all_done_and_error_state():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_progress_tracker import StepState, build_progress_tracker
+    from certus.utils.certus_progress_tracker import StepState, build_progress_tracker
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     tr = build_progress_tracker(steps=["A", "B"])
@@ -309,7 +309,7 @@ def test_u11_mark_all_done_and_error_state():
 def test_u11_set_eta_shows_label():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_progress_tracker import build_progress_tracker
+    from certus.utils.certus_progress_tracker import build_progress_tracker
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     tr = build_progress_tracker(steps=["A"], eta_seconds=42)
@@ -321,7 +321,7 @@ def test_u11_set_eta_shows_label():
 def test_u11_steps_returns_snapshot_copy():
     from PyQt6.QtWidgets import QApplication
 
-    from certus_progress_tracker import build_progress_tracker
+    from certus.utils.certus_progress_tracker import build_progress_tracker
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     tr = build_progress_tracker(steps=["A", "B"])

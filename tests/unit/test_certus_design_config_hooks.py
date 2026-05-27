@@ -26,7 +26,7 @@ def test_design_app_exposes_all_config_hooks():
 def test_design_post_save_config_signature_matches_base():
     """Override must accept ``(self, filename)`` — same as CertusBaseApp."""
     from CERTUS_DESIGN import CertusDesignApp
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     base_sig = inspect.signature(CertusBaseApp._post_save_config)
     design_sig = inspect.signature(CertusDesignApp._post_save_config)

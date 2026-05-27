@@ -7,9 +7,9 @@ from dataclasses import fields
 
 import pytest
 
-import certus_services as cs
-from certus_metrology import ValidationStatus
-from certus_services import (
+import certus.utils.certus_services as cs
+from certus.core.certus_metrology import ValidationStatus
+from certus.utils.certus_services import (
     BaseHeadlessService,
     BaseHeadlessRequest,
     BaseHeadlessResponse,
@@ -239,7 +239,7 @@ def test_future_headless_services_must_follow_contract() -> None:
         if inspect.isclass(obj)
         and name.endswith("Service")
         and name != "BaseHeadlessService"
-        and obj.__module__ == "certus_services"
+        and obj.__module__ in ("certus_services", "certus.utils.certus_services")
     ]
     assert service_classes, "Aucun service headless détecté dans certus_services"
 

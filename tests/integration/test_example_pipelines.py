@@ -172,7 +172,7 @@ def test_metal_single_json_has_physical_params() -> None:
 def test_metal_bilayer_csv_loads_spectral_data() -> None:
     """Le CSV bilayer doit charger un spectre R(λ) avec ≥100 points."""
     p = _example("example_metal_bilayer/CSV-metal-example.csv")
-    from certus_data import read_data_file_robust
+    from certus.utils.certus_data import read_data_file_robust
 
     df = read_data_file_robust(str(p))
     assert df.shape[0] >= 100, f"Trop peu de points spectraux : {df.shape[0]}"
@@ -187,7 +187,7 @@ def test_metal_bilayer_csv_loads_spectral_data() -> None:
 def test_re_xlsx_loads_spectral_data() -> None:
     """Le fichier RE doit charger ≥200 points avec des colonnes de réflectance."""
     p = _example("example_RE/reverse_sample.xlsx")
-    from certus_data import read_data_file_robust
+    from certus.utils.certus_data import read_data_file_robust
 
     df = read_data_file_robust(str(p))
     assert df.shape[0] >= 200, f"Trop peu de points spectraux : {df.shape[0]}"
@@ -203,7 +203,7 @@ def test_re_xlsx_loads_spectral_data() -> None:
 def test_index_csv_loads_and_has_transmission() -> None:
     """Le CSV index doit charger un spectre T(λ) avec ≥400 points."""
     p = _example("example_index/CSV-index-example.csv")
-    from certus_data import read_data_file_robust
+    from certus.utils.certus_data import read_data_file_robust
 
     df = read_data_file_robust(str(p))
     assert df.shape[0] >= 400, f"Trop peu de points : {df.shape[0]}"
@@ -232,8 +232,8 @@ def test_index_golden_reference_exists() -> None:
 def test_index_spline_xlsx_loads_transmission() -> None:
     """Le XLSX index spline doit charger un spectre T(λ) valide."""
     p = _example("example_index_spline/TOTAL.xlsx")
-    from certus_data import read_data_file_robust
-    from certus_index_spline_core import normalize_spectrum_dataframe
+    from certus.utils.certus_data import read_data_file_robust
+    from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
 
     df = read_data_file_robust(str(p))
     df = normalize_spectrum_dataframe(df)
@@ -259,8 +259,8 @@ def test_index_spline_total_optimization_converges() -> None:
     from threading import Event
     from dataclasses import replace
 
-    from certus_data import read_data_file_robust
-    from certus_index_spline_core import (
+    from certus.utils.certus_data import read_data_file_robust
+    from certus.spline.certus_index_spline_core import (
         DataType,
         SplineOptConfig,
         canonical_spline_sigma_knots,
@@ -271,8 +271,8 @@ def test_index_spline_total_optimization_converges() -> None:
         substrate_id_from_name,
     )
     from certus_physics import get_n_substrate_array_by_id, warmup_physics
-    from spline_pipeline import worker_spline_optimization
-    from spline_smart_init import pick_best_manual_material_preset
+    from certus.spline.spline_pipeline import worker_spline_optimization
+    from certus.spline.spline_smart_init import pick_best_manual_material_preset
 
     warmup_physics()
 

@@ -21,14 +21,14 @@ import pytest
 
 
 def test_u5plus_module_exposes_public_api():
-    import certus_recent_strip as m
+    import certus.ui.certus_recent_strip as m
 
     for name in ("STRIP_MAX_ITEMS", "PILL_MAX_CHARS", "build_recent_files_strip"):
         assert hasattr(m, name)
 
 
 def test_u5plus_build_factory_is_callable_without_parent():
-    from certus_recent_strip import build_recent_files_strip
+    from certus.ui.certus_recent_strip import build_recent_files_strip
 
     # Should not raise even if no app exists yet (factory should resolve Qt lazily)
     from PyQt6.QtWidgets import QApplication
@@ -69,7 +69,7 @@ def test_u5plus_hub_attach_signature_has_optional_parent_layout():
 @pytest.fixture(autouse=True)
 def _isolated_recent_store(monkeypatch, tmp_path):
     """Use the in-memory fallback so QSettings isn't polluted across tests."""
-    import certus_recent as m
+    import certus.ui.certus_recent as m
 
     monkeypatch.setattr(m, "_qs_settings", lambda: None)
     m._MEMORY_STORE.clear()
@@ -79,7 +79,7 @@ def _isolated_recent_store(monkeypatch, tmp_path):
 
 def test_u5plus_strip_renders_empty_state_when_no_recents():
     from PyQt6.QtWidgets import QApplication, QLabel
-    from certus_recent_strip import build_recent_files_strip
+    from certus.ui.certus_recent_strip import build_recent_files_strip
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     strip = build_recent_files_strip(None, limit=3)
@@ -92,8 +92,8 @@ def test_u5plus_strip_renders_empty_state_when_no_recents():
 def test_u5plus_strip_lists_pills_after_recording(tmp_path):
     from PyQt6.QtWidgets import QApplication, QPushButton
 
-    from certus_recent import RecentCategories, record_recent
-    from certus_recent_strip import build_recent_files_strip
+    from certus.ui.certus_recent import RecentCategories, record_recent
+    from certus.ui.certus_recent_strip import build_recent_files_strip
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
 
@@ -113,8 +113,8 @@ def test_u5plus_strip_lists_pills_after_recording(tmp_path):
 def test_u5plus_strip_emits_signal_and_invokes_callback(tmp_path):
     from PyQt6.QtWidgets import QApplication, QPushButton
 
-    from certus_recent import RecentCategories, record_recent
-    from certus_recent_strip import build_recent_files_strip
+    from certus.ui.certus_recent import RecentCategories, record_recent
+    from certus.ui.certus_recent_strip import build_recent_files_strip
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
 
@@ -137,8 +137,8 @@ def test_u5plus_strip_emits_signal_and_invokes_callback(tmp_path):
 def test_u5plus_strip_refresh_reflects_latest_state(tmp_path):
     from PyQt6.QtWidgets import QApplication, QPushButton
 
-    from certus_recent import RecentCategories, record_recent
-    from certus_recent_strip import build_recent_files_strip
+    from certus.ui.certus_recent import RecentCategories, record_recent
+    from certus.ui.certus_recent_strip import build_recent_files_strip
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
 

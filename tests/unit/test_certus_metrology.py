@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from certus_metrology import (
+from certus.core.certus_metrology import (
     RunContext,
     RunManifest,
     ValidationStatus,

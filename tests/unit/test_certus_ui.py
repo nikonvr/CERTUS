@@ -21,7 +21,7 @@ try:
 except ImportError:
     QT_AVAILABLE = False
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     CertusTheme,
     DATA_FILE_FILTER,
     DATA_FILES_FILTER_EXTENDED,
@@ -52,7 +52,7 @@ from certus_ui import (
 
 # Conditional imports for components that may not be available
 try:
-    from certus_ui import CertusScientificPlot
+    from certus.ui.certus_ui import CertusScientificPlot
 
     SCIENTIFIC_PLOT_AVAILABLE = True
 except ImportError:
@@ -66,7 +66,7 @@ except ImportError:
     PYQTGRAPH_AVAILABLE = False
 
 try:
-    from certus_ui import ExcelTableWidget
+    from certus.ui.certus_ui import ExcelTableWidget
 
     EXCEL_TABLE_AVAILABLE = True
 except ImportError:
@@ -84,7 +84,7 @@ class TestDataFileFiltersAndHelper:
         assert "csv" in DATA_FILES_FILTER_EXTENDED.lower()
 
     def test_open_data_file_and_read_returns_none_when_cancelled(self):
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
             out = open_data_file_and_read()
         assert out == (None, None)
 
@@ -92,8 +92,8 @@ class TestDataFileFiltersAndHelper:
         import pandas as pd
         fake_path = "/fake/data.csv"
         fake_df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(fake_path, "")):
-            with patch("certus_ui.read_data_file_robust", return_value=fake_df):
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(fake_path, "")):
+            with patch("certus.ui.certus_ui.read_data_file_robust", return_value=fake_df):
                 path, df = open_data_file_and_read()
         assert path == fake_path
         assert df is not None
@@ -113,31 +113,31 @@ class TestCertusFileDialogHelpers:
     """certus_get_open_file_name, certus_get_save_file_name, certus_confirm_yes_no."""
 
     def test_open_cancel_returns_empty(self):
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
-            with patch("certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
+            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_open_file_name(None, "T", "*.json") == ""
                 mock_sl.assert_not_called()
 
     def test_open_ok_sets_last_dir(self):
         p = r"C:\tmp\cfg.json"
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(p, "")):
-            with patch("certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(p, "")):
+            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_open_file_name(None, "T", "JSON (*.json)") == p
                 mock_sl.assert_called_once_with(p)
 
     def test_save_ok_sets_last_dir(self):
         p = r"C:\tmp\out.xlsx"
-        with patch("certus_ui.QFileDialog.getSaveFileName", return_value=(p, "")):
-            with patch("certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(p, "")):
+            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_save_file_name(None, "T", "Excel (*.xlsx)") == p
                 mock_sl.assert_called_once_with(p)
 
     def test_confirm_yes_no(self):
         from PyQt6.QtWidgets import QMessageBox
 
-        with patch("certus_ui.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
+        with patch("certus.ui.certus_ui.QMessageBox.question", return_value=QMessageBox.StandardButton.Yes):
             assert certus_confirm_yes_no(None, "t", "m") is True
-        with patch("certus_ui.QMessageBox.question", return_value=QMessageBox.StandardButton.No):
+        with patch("certus.ui.certus_ui.QMessageBox.question", return_value=QMessageBox.StandardButton.No):
             assert certus_confirm_yes_no(None, "t", "m", default_no=True) is False
 
     def test_create_log_widget_and_panel(self, qapp):
@@ -305,10 +305,10 @@ class TestCertusTheme:
             # 2. Test configure("light") syncs variables
             CertusTheme.configure("light")
             assert CertusTheme.DARK_MODE is False
-            assert CertusTheme.BACKGROUND == "#f1f5f9"
+            assert CertusTheme.BACKGROUND == "#eef2f7"
             assert CertusTheme.WARNING == "#b45309"
             assert CertusTheme.BASE_ELEVATED == "#ffffff"
-            assert CertusTheme.ELEVATED == "#f1f3f5"
+            assert CertusTheme.ELEVATED == "#f8fafc"
             assert CertusTheme.CHART_PRIMARY == "#0f62fe"
 
             # 3. Test apply_to_app invokes the a11y audit logger safely
@@ -335,7 +335,7 @@ class TestCertusTheme:
 
     def test_get_standard_stylesheet_class_method(self):
         """Test that get_standard_stylesheet is callable both globally and as a class method."""
-        from certus_theme import get_standard_stylesheet as global_get_stylesheet
+        from certus.ui.certus_theme import get_standard_stylesheet as global_get_stylesheet
         
         global_style = global_get_stylesheet()
         class_style = CertusTheme.get_standard_stylesheet()
@@ -466,7 +466,7 @@ class TestPlotExcelExportHelpers:
 
     def test_build_wide_dataframe_for_export(self):
         import numpy as np
-        from certus_ui import build_wide_dataframe_for_export
+        from certus.ui.certus_ui import build_wide_dataframe_for_export
 
         series = [
             ("S1", np.array([1.0, 2.0]), np.array([10.0, 20.0])),
@@ -480,7 +480,7 @@ class TestPlotExcelExportHelpers:
     def test_plot_dataframe_from_widget(self, qapp):
         _ = qapp
         import pyqtgraph as pg
-        from certus_ui import plot_dataframe_from_widget, setup_pyqtgraph_defaults
+        from certus.ui.certus_ui import plot_dataframe_from_widget, setup_pyqtgraph_defaults
 
         setup_pyqtgraph_defaults()
         w = pg.PlotWidget()
@@ -493,7 +493,7 @@ class TestPlotExcelExportHelpers:
     def test_copy_plot_to_clipboard_excel(self, qapp):
         _ = qapp
         import pyqtgraph as pg
-        from certus_ui import copy_plot_to_clipboard_excel, setup_pyqtgraph_defaults
+        from certus.ui.certus_ui import copy_plot_to_clipboard_excel, setup_pyqtgraph_defaults
 
         setup_pyqtgraph_defaults()
         w = pg.PlotWidget()
@@ -776,8 +776,8 @@ class TestUIExceptionHandling:
     """Tests for @safe_ui_action and exception translation in UI classes."""
 
     def test_safe_ui_action_validation_error(self, qapp):
-        from certus_errors import CertusValidationError
-        from certus_ui import safe_ui_action
+        from certus.utils.errors import CertusValidationError
+        from certus.ui.certus_ui import safe_ui_action
 
         class DummyWidget(QWidget):
             @safe_ui_action
@@ -785,7 +785,7 @@ class TestUIExceptionHandling:
                 raise CertusValidationError("Validation failed", details="Invalid value", suggestion="Try again")
 
         widget = DummyWidget()
-        with patch("certus_ui.show_toast") as mock_toast:
+        with patch("certus.ui.certus_ui.show_toast") as mock_toast:
             widget.fail_validation()
             mock_toast.assert_called_once()
             args, kwargs = mock_toast.call_args
@@ -793,8 +793,8 @@ class TestUIExceptionHandling:
             assert kwargs.get("level") == "warning"
 
     def test_safe_ui_action_domain_error(self, qapp):
-        from certus_errors import CertusDomainError
-        from certus_ui import safe_ui_action
+        from certus.utils.errors import CertusDomainError
+        from certus.ui.certus_ui import safe_ui_action
         from PyQt6.QtWidgets import QMessageBox
 
         class DummyWidget(QWidget):
@@ -808,7 +808,7 @@ class TestUIExceptionHandling:
             mock_exec.assert_called_once()
 
     def test_safe_ui_action_numerical_error(self, qapp):
-        from certus_ui import safe_ui_action
+        from certus.ui.certus_ui import safe_ui_action
 
         class DummyWidget(QWidget):
             @safe_ui_action
@@ -816,7 +816,7 @@ class TestUIExceptionHandling:
                 raise ValueError("Numerical error")
 
         widget = DummyWidget()
-        with patch("certus_ui.show_toast") as mock_toast:
+        with patch("certus.ui.certus_ui.show_toast") as mock_toast:
             widget.fail_numerical()
             mock_toast.assert_called_once()
             args, kwargs = mock_toast.call_args
@@ -824,7 +824,7 @@ class TestUIExceptionHandling:
             assert kwargs.get("level") == "error"
 
     def test_safe_ui_action_generic_exception(self, qapp):
-        from certus_ui import safe_ui_action
+        from certus.ui.certus_ui import safe_ui_action
 
         class DummyWidget(QWidget):
             @safe_ui_action
@@ -832,7 +832,7 @@ class TestUIExceptionHandling:
                 raise Exception("Generic crash")
 
         widget = DummyWidget()
-        with patch("certus_ui.show_toast") as mock_toast:
+        with patch("certus.ui.certus_ui.show_toast") as mock_toast:
             widget.fail_generic()
             mock_toast.assert_called_once()
             args, kwargs = mock_toast.call_args
@@ -840,7 +840,7 @@ class TestUIExceptionHandling:
             assert kwargs.get("level") == "error"
 
     def test_base_app_save_load_config_corruption(self, qapp):
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
         from PyQt6.QtWidgets import QMessageBox
 
         class DummyApp(CertusBaseApp):
@@ -887,7 +887,7 @@ class TestUIExceptionHandling:
 
     def test_copy_app_logs_to_clipboard(self, qapp):
         _ = qapp
-        from certus_ui import copy_app_logs_to_clipboard
+        from certus.ui.certus_ui import copy_app_logs_to_clipboard
 
         class DummyPanel:
             def copy_to_clipboard(self):
@@ -900,12 +900,12 @@ class TestUIExceptionHandling:
         assert copy_app_logs_to_clipboard(DummyApp()) is True
 
     def test_open_file_explorer_invalid_path(self):
-        from certus_ui import open_file_explorer
+        from certus.ui.certus_ui import open_file_explorer
         open_file_explorer("C:/definitely/does/not/exist")
 
     def test_base_app_private_helpers(self, qapp):
         _ = qapp
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -931,7 +931,7 @@ class TestUIExceptionHandling:
 
     def test_base_app_validation_and_recent_helpers(self, qapp, tmp_path):
         _ = qapp
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -959,7 +959,7 @@ class TestUIExceptionHandling:
 
     def test_base_app_dialog_helpers(self, qapp):
         _ = qapp
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -978,13 +978,13 @@ class TestUIExceptionHandling:
                 return "JSON (*.json)"
 
         app = DummyApp()
-        with patch("certus_ui.QMessageBox.exec", return_value=None):
+        with patch("certus.ui.certus_ui.QMessageBox.exec", return_value=None):
             assert app.confirm_destructive("t", "m") in (True, False)
 
     def test_base_app_save_and_load_config(self, qapp, tmp_path):
         _ = qapp
         import json
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1004,18 +1004,18 @@ class TestUIExceptionHandling:
 
         app = DummyApp()
         save_path = tmp_path / "dummy.json"
-        with patch("certus_ui.QFileDialog.getSaveFileName", return_value=(str(save_path), "")):
+        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(str(save_path), "")):
             assert app.save_config() is None
         assert json.loads(save_path.read_text(encoding="utf-8")) == {"hello": "world"}
 
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
             assert app.load_config() is None
         assert getattr(app, "_applied", None) == {"hello": "world"}
 
     def test_base_app_menus_and_recent_helpers(self, qapp, tmp_path):
         _ = qapp
-        from certus_ui import CertusBaseApp
-        from certus_recent import clear_recent, RecentCategories
+        from certus.ui.certus_ui import CertusBaseApp
+        from certus.ui.certus_recent import clear_recent, RecentCategories
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1047,7 +1047,7 @@ class TestUIExceptionHandling:
 
     def test_base_app_save_and_load_config_roundtrip(self, qapp, tmp_path):
         _ = qapp
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
 
         class DummyApp(CertusBaseApp):
             APP_NAME = "DUMMY"
@@ -1067,16 +1067,16 @@ class TestUIExceptionHandling:
 
         app = DummyApp()
         cfg_file = tmp_path / "dummy.json"
-        with patch("certus_ui.QFileDialog.getSaveFileName", return_value=(str(cfg_file), "")):
+        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(str(cfg_file), "")):
             app.save_config()
         assert cfg_file.exists()
-        with patch("certus_ui.QFileDialog.getOpenFileName", return_value=(str(cfg_file), "")):
+        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(str(cfg_file), "")):
             app.load_config()
         assert getattr(app, "_applied", None) == {"alpha": 1, "nested": {"beta": 2}}
 
     def test_base_app_help_menu_and_about(self, qapp):
         _ = qapp
-        from certus_ui import CertusBaseApp
+        from certus.ui.certus_ui import CertusBaseApp
         from PyQt6.QtWidgets import QMessageBox
 
         class DummyApp(CertusBaseApp):
@@ -1108,8 +1108,8 @@ class TestUIExceptionHandling:
 
     def test_base_app_recent_and_reports(self, qapp, tmp_path):
         _ = qapp
-        from certus_ui import CertusBaseApp
-        from certus_recent import clear_recent, RecentCategories
+        from certus.ui.certus_ui import CertusBaseApp
+        from certus.ui.certus_recent import clear_recent, RecentCategories
         from PyQt6.QtWidgets import QInputDialog
 
         class DummyApp(CertusBaseApp):
@@ -1133,17 +1133,18 @@ class TestUIExceptionHandling:
         app._record_recent_config(str(tmp_path / "config.json"))
         with patch.object(QInputDialog, "getItem", return_value=("", False)):
             app.open_recent_configs()
-        with patch("certus_ui.certus_get_save_file_name", return_value=None):
+        with patch("certus.ui.certus_ui.certus_get_save_file_name", return_value=None):
             assert app.export_report_excel() is None or isinstance(app.export_report_excel(), (str, type(None)))
             assert app.export_report_pdf() is None or isinstance(app.export_report_pdf(), (str, type(None)))
 
     def test_re_app_callbacks_protected(self, qapp):
         pytest.importorskip("CERTUS_RE")
-        from CERTUS_RE import CertusREApp
+        with patch("CERTUS_RE.WarmupWorker"):
+            from CERTUS_RE import CertusREApp
 
-        app = CertusREApp()
-        assert hasattr(app.launch_re, "__wrapped__")
-        assert hasattr(app.load_reverse_engineering, "__wrapped__")
+            app = CertusREApp()
+            assert hasattr(app.launch_re, "__wrapped__")
+            assert hasattr(app.load_reverse_engineering, "__wrapped__")
 
 
 @pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
@@ -1152,14 +1153,14 @@ class TestProUXComponents:
 
     def test_certus_section_header(self, qapp):
         _ = qapp
-        from certus_ui import CertusSectionHeader
+        from certus.ui.certus_ui import CertusSectionHeader
         header = CertusSectionHeader("My Title", "My Caption")
         assert header is not None
 
     def test_certus_stepper(self, qapp):
         _ = qapp
         from PyQt6.QtCore import Qt
-        from certus_ui import CertusStepper
+        from certus.ui.certus_ui import CertusStepper
         # 1 column
         stepper1 = CertusStepper(["Step 1", "Step 2"], columns=1)
         assert len(stepper1._btns) == 2
@@ -1181,7 +1182,7 @@ class TestProUXComponents:
 
     def test_certus_collapsible(self, qapp):
         _ = qapp
-        from certus_ui import CertusCollapsible
+        from certus.ui.certus_ui import CertusCollapsible
         from PyQt6.QtWidgets import QWidget
         win = QWidget()
         content = QWidget(parent=win)
@@ -1190,8 +1191,8 @@ class TestProUXComponents:
         assert collapsible.is_expanded() is True
 
         # Toggle with animations mocked out to fall back to direct visibility change
-        with patch("certus_animations.fade_in", side_effect=RuntimeError), \
-             patch("certus_animations.fade_out", side_effect=RuntimeError):
+        with patch("certus.ui.certus_animations.fade_in", side_effect=RuntimeError), \
+             patch("certus.ui.certus_animations.fade_out", side_effect=RuntimeError):
             collapsible.set_expanded(False)
             assert collapsible.is_expanded() is False
             collapsible.set_expanded(True)
@@ -1199,7 +1200,7 @@ class TestProUXComponents:
 
     def test_certus_status_pill(self, qapp):
         _ = qapp
-        from certus_ui import CertusStatusPill
+        from certus.ui.certus_ui import CertusStatusPill
         pill = CertusStatusPill("Ready", level="ready")
         assert pill.text() == "Ready"
         pill.set_level("running")
@@ -1211,7 +1212,7 @@ class TestProUXComponents:
 
     def test_certus_action_bar(self, qapp):
         _ = qapp
-        from certus_ui import CertusActionBar
+        from certus.ui.certus_ui import CertusActionBar
         from PyQt6.QtWidgets import QPushButton
         bar = CertusActionBar()
         btn = QPushButton("Action")
@@ -1221,7 +1222,7 @@ class TestProUXComponents:
     def test_install_shortcuts(self, qapp):
         _ = qapp
         from PyQt6.QtCore import Qt
-        from certus_ui import install_standard_shortcuts
+        from certus.ui.certus_ui import install_standard_shortcuts
         from PyQt6.QtWidgets import QWidget
         win = QWidget()
         called = []
@@ -1238,7 +1239,7 @@ class TestProUXComponents:
     def test_file_drop_filter(self, qapp):
         _ = qapp
         from PyQt6.QtCore import QUrl, QEvent, Qt
-        from certus_ui import enable_file_drop
+        from certus.ui.certus_ui import enable_file_drop
         from PyQt6.QtWidgets import QWidget
 
         win = QWidget()
@@ -1283,7 +1284,7 @@ class TestProUXComponents:
 
     def test_certus_toast(self, qapp):
         _ = qapp
-        from certus_ui import CertusToast, show_toast
+        from certus.ui.certus_ui import CertusToast, show_toast
         from PyQt6.QtWidgets import QWidget
         parent = QWidget()
         toast = CertusToast(parent, "Test Notification", level="success", duration_ms=10)
@@ -1295,7 +1296,7 @@ class TestProUXComponents:
 
     def test_numeric_table_widget_item(self, qapp):
         _ = qapp
-        from certus_ui import NumericTableWidgetItem
+        from certus.ui.certus_ui import NumericTableWidgetItem
         
         # Numeric comparison
         item1 = NumericTableWidgetItem("12.5")
@@ -1310,7 +1311,7 @@ class TestProUXComponents:
 
     def test_flashy_card(self, qapp):
         _ = qapp
-        from certus_ui import FlashyCard
+        from certus.ui.certus_ui import FlashyCard
         
         card1 = FlashyCard("Title 1", "Subtitle 1", icon="🚀")
         assert card1 is not None
@@ -1320,14 +1321,14 @@ class TestProUXComponents:
 
     def test_welcome_guide_widget(self, qapp):
         _ = qapp
-        from certus_ui import WelcomeGuideWidget
+        from certus.ui.certus_ui import WelcomeGuideWidget
         
         guide = WelcomeGuideWidget(app_name="TestApp", steps=["Step 1", "Step 2"])
         assert guide is not None
 
     def test_certus_card(self, qapp):
         _ = qapp
-        from certus_ui import CertusCard
+        from certus.ui.certus_ui import CertusCard
         
         card_empty = CertusCard()
         assert card_empty is not None
@@ -1343,7 +1344,7 @@ class TestProUXComponents:
 
     def test_progress_dialog(self, qapp):
         _ = qapp
-        from certus_ui import ProgressDialog
+        from certus.ui.certus_ui import ProgressDialog
         dlg = ProgressDialog("My Dialog")
         assert dlg.is_canceled() is False
         dlg.progress_bar.setValue(50)
@@ -1353,7 +1354,7 @@ class TestProUXComponents:
 
     def test_enhanced_progress_widget(self, qapp):
         _ = qapp
-        from certus_ui import EnhancedProgressWidget
+        from certus.ui.certus_ui import EnhancedProgressWidget
         w = EnhancedProgressWidget(main_label="Main")
         assert w.is_canceled() is False
         
@@ -1371,7 +1372,7 @@ class TestProUXComponents:
 
     def test_skeleton_loader(self, qapp):
         _ = qapp
-        from certus_ui import SkeletonLoaderWidget, install_skeleton_loader, remove_skeleton_loader
+        from certus.ui.certus_ui import SkeletonLoaderWidget, install_skeleton_loader, remove_skeleton_loader
         from PyQt6.QtWidgets import QWidget
 
         parent = QWidget()
@@ -1396,7 +1397,7 @@ class TestProUXComponents:
 
     def test_apply_os_window_effects(self, qapp):
         _ = qapp
-        from certus_ui import apply_os_window_effects
+        from certus.ui.certus_ui import apply_os_window_effects
         from PyQt6.QtWidgets import QWidget
         
         window = QWidget()

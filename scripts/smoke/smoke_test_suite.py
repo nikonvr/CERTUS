@@ -18,7 +18,7 @@ sys.path.insert(0, os.getcwd())
 # Mock certus_license to avoid activation popups
 try:
     from {module_name} import {class_name}
-    from certus_ui import init_certus_app
+    from certus.ui.certus_ui import init_certus_app
     
     app = QApplication(sys.argv)
     init_certus_app("{module_name.replace('.py', '')}", app=app)

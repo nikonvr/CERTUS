@@ -49,7 +49,7 @@ import multiprocessing
 import sys
 import functools
 
-from certus_core import create_module_environment
+from certus.core.certus_core import create_module_environment
 
 # =============================================================================
 
@@ -67,13 +67,13 @@ script_dir = env["script_dir"]
 
 
 import sys
-from certus_core import CertusFacadeModule
-import certus_design_core
-import certus_design_workers
-import certus_design_ui
-from certus_design_core import *
-from certus_design_workers import *
-from certus_design_ui import *
+from certus.core.certus_core import CertusFacadeModule
+import certus.core.certus_design_core as certus_design_core
+import certus.workers.certus_design_workers as certus_design_workers
+import certus.ui.certus_design_ui as certus_design_ui
+from certus.core.certus_design_core import *
+from certus.workers.certus_design_workers import *
+from certus.ui.certus_design_ui import *
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_design_core,
@@ -106,7 +106,7 @@ def main() -> None:
     init_certus_app("CERTUS-DESIGN", app=app)
 
     try:
-        from certus_ux import build_premium_overrides
+        from certus.utils.certus_ux import build_premium_overrides
 
         app.setStyleSheet(app.styleSheet() + "\n" + build_premium_overrides())
     except ImportError:
@@ -114,7 +114,7 @@ def main() -> None:
 
     # --- SPLASH SCREEN ---
 
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
 
     splash = create_splash("Initializing Design Environment...")
 

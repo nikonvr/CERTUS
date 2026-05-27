@@ -37,16 +37,16 @@ from scipy.optimize import OptimizeResult
 
 
 
-import certus_index_spline_core as _core_mod
+import certus.spline.certus_index_spline_core as _core_mod
 
 
-import spline_profile_corridors as _spc_mod
+import certus.spline.spline_profile_corridors as _spc_mod
 
 
 
 
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
 
 
     DataType,
@@ -64,13 +64,13 @@ from certus_index_spline_core import (
 )
 
 
-from spline_objective import spectral_mse_rmse_masked_from_nk
+from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
 
 
-from spline_finalize import extract_nominal_best_polished_corridor_reference
+from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
 
 
-from spline_profile_corridors import (
+from certus.spline.spline_profile_corridors import (
 
 
     ProfileCorridorConfig,
@@ -1219,7 +1219,7 @@ def test_extract_nodes_remeshes_when_same_k_but_sigma_grids_differ() -> None:
 def test_reg_sensitivity_scan_returns_table_fields() -> None:
 
 
-    from spline_profile_corridors import compute_reg_sensitivity_scan
+    from certus.spline.spline_profile_corridors import compute_reg_sensitivity_scan
 
 
 
@@ -1294,7 +1294,7 @@ def test_bootstrap_parametric_smoke() -> None:
     """Minimal parametric bootstrap (n_boot=3 floor for quantiles in module)."""
 
 
-    from spline_profile_corridors import compute_bootstrap_corridors_by_d
+    from certus.spline.spline_profile_corridors import compute_bootstrap_corridors_by_d
 
 
 
@@ -1861,7 +1861,7 @@ def test_profile_corridors_realistic_350_5200_case_emits_health_metrics() -> Non
 def test_pipeline_corridor_base_source_explicit_solver() -> None:
 
 
-    from spline_pipeline import _select_corridor_base_result_for_profile
+    from certus.spline.spline_pipeline import _select_corridor_base_result_for_profile
 
 
 
@@ -1960,7 +1960,7 @@ def test_pipeline_corridor_base_source_explicit_solver() -> None:
 def test_pipeline_corridor_base_source_selector_dict_and_best_polished() -> None:
 
 
-    from spline_pipeline import _select_corridor_base_result_for_profile
+    from certus.spline.spline_pipeline import _select_corridor_base_result_for_profile
 
 
 
@@ -2083,7 +2083,7 @@ def test_best_polished_corridor_base_copies_x_seg_into_nodes() -> None:
     """best_polished doit recopier x_seg_spline_sigma -> x / n_nodes_physical / L_nodes (graine corridor)."""
 
 
-    from spline_pipeline import _select_corridor_base_result_for_profile
+    from certus.spline.spline_pipeline import _select_corridor_base_result_for_profile
 
 
 
@@ -2248,7 +2248,7 @@ def test_best_polished_corridor_base_copies_x_seg_into_nodes() -> None:
 def test_pipeline_best_polished_uses_seg_spline_sigma_only() -> None:
 
 
-    from spline_pipeline import _select_corridor_base_result_for_profile
+    from certus.spline.spline_pipeline import _select_corridor_base_result_for_profile
 
 
 

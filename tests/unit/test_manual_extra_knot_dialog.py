@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 
 
 def _make_dialog(qapp):

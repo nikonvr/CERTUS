@@ -14,13 +14,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from certus_data import (
+from certus.utils.certus_data import (
     EXCEL_SHEET_NAME_MAX_LENGTH,
     ReportSection,
     build_standard_report,
     get_missing_manifest_fields,
 )
-from certus_metrology import RunContext, RunManifest
+from certus.core.certus_metrology import RunContext, RunManifest
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +212,6 @@ class TestBuildStandardReport:
 
 
 def test_helpers_are_in_certus_data_all():
-    import certus_data
+    import certus.utils.certus_data as certus_data
     assert "ReportSection" in certus_data.__all__
     assert "build_standard_report" in certus_data.__all__

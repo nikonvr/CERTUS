@@ -26,14 +26,14 @@ from threading import Event
 _root = str(Path(__file__).resolve().parent.parent)
 sys.path.insert(0, _root)
 
-from certus_core import setup_logging
-from certus_data import read_data_file_robust
+from certus.core.certus_core import setup_logging
+from certus.utils.certus_data import read_data_file_robust
 from certus_physics import (
     get_n_substrate_array_by_id,
     calculate_bare_substrate_RT,
     warmup_physics,
 )
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
     normalize_spectrum_dataframe,
     run_spline_adaptive_mesh_loop,
     SplineOptConfig,

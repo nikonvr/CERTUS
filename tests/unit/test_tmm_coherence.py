@@ -71,7 +71,7 @@ if str(project_root) not in sys.path:
 
 
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
 
 
     compute_TMM_generic,

@@ -49,7 +49,7 @@ def test_seed_contract_no_unseeded_rng_in_critical_modules() -> None:
     targets: list[Path] = []
     targets.extend(repo.glob("CERTUS_*.py"))
     targets.extend(repo.glob("certus_*.py"))
-    targets.append(repo / "_certus_physics_impl.py")
+    targets.append(repo / "certus" / "core" / "_certus_physics_impl.py")
     # Deduplicate while preserving order.
     seen: set[Path] = set()
     dedup_targets: list[Path] = []

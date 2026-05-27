@@ -41,7 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
 
 
     simulate_growth_kernel,

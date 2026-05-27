@@ -8,7 +8,7 @@ import pytest
 
 import numpy as np
 
-from certus_re_workers import (
+from certus.workers.certus_re_workers import (
     REPhase1Result,
     REPhase2Result,
     REPhase3Result,

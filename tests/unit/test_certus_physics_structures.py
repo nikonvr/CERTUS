@@ -22,6 +22,6 @@ def test_physics_impl_exports_expected_symbols() -> None:
 
 @pytest.mark.unit
 def test_do_not_split_markers_still_present() -> None:
-    impl = ROOT / "_certus_physics_impl.py"
+    impl = ROOT / "certus" / "core" / "_certus_physics_impl.py"
     content = impl.read_text(encoding="utf-8", errors="ignore")
     assert "DO NOT SPLIT" in content

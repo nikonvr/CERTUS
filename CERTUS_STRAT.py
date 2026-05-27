@@ -12,7 +12,7 @@ import ctypes
 from pathlib import Path
 import logging
 
-from certus_core import create_module_environment
+from certus.core.certus_core import create_module_environment
 
 env = create_module_environment(__file__, "STRAT")
 script_dir = env["script_dir"]
@@ -21,11 +21,11 @@ script_dir = env["script_dir"]
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication
 
-from certus_core import setup_module_logging, get_safe_worker_count
-from certus_ui import init_certus_app
-from certus_strat_db import RobustMaterialDatabase
+from certus.core.certus_core import setup_module_logging, get_safe_worker_count
+from certus.ui.certus_ui import init_certus_app
+from certus.utils.certus_strat_db import RobustMaterialDatabase
 
-from certus_strat_context import (
+from certus.utils.certus_strat_context import (
     _compute_local_extrema_symmetry_score,
     _build_symmetry_bonus_map,
     _build_layer_importance_map,
@@ -55,7 +55,7 @@ from certus_physics import (
 )
 
 # Backward Compatibility Imports from submodules
-from certus_strat_core import (
+from certus.core.certus_strat_core import (
     RobustnessContext,
     _IdxWrapper,
     DYNAMICS_METRIC_NAME,
@@ -135,9 +135,9 @@ from certus_strat_core import (
     _flush_sp_stats,
     _select_best_strat_result,
 )
-from certus_strat_service import extract_best_rmse
+from certus.utils.certus_strat_service import extract_best_rmse
 
-from certus_strat_workers import (
+from certus.workers.certus_strat_workers import (
     WorkerSignals,
     WorkerThread,
     PlotRenderWorker,
@@ -147,7 +147,7 @@ from certus_strat_workers import (
     _parallel_block_worker,
 )
 
-from certus_strat_ui import (
+from certus.ui.certus_strat_ui import (
     StrategiesTableWindow,
     CertusScientificPlot,
     UniversalPlotWindow,
@@ -163,13 +163,13 @@ from certus_strat_ui import (
     CertusStratApp,
 )
 
-from certus_core import CertusFacadeModule
-import certus_strat_core
-import certus_strat_workers
-import certus_strat_ui
-import certus_strat_context
-import certus_strat_db
-import certus_strat_service
+from certus.core.certus_core import CertusFacadeModule
+import certus.core.certus_strat_core as certus_strat_core
+import certus.workers.certus_strat_workers as certus_strat_workers
+import certus.ui.certus_strat_ui as certus_strat_ui
+import certus.utils.certus_strat_context as certus_strat_context
+import certus.utils.certus_strat_db as certus_strat_db
+import certus.utils.certus_strat_service as certus_strat_service
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_strat_core,
@@ -184,7 +184,7 @@ sys.modules[__name__] = CertusFacadeModule(__name__, [
 if __name__ == "__main__":
     multiprocessing.freeze_support()
 
-    setup_module_logging("STRAT", log_file="certus_strat.log")
+    setup_module_logging("STRAT", log_file="strat.log")
 
     # High DPI scaling (Must be set BEFORE creating QApplication)
     if hasattr(Qt, "HighDpiScaleFactorRoundingPolicy"):
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     init_certus_app("CERTUS-STRAT", app=app)
 
     # --- SPLASH SCREEN ---
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
     splash = create_splash("Initializing CERTUS STRAT...")
 
     clues_file = _resolve_strat_indices_db_path()

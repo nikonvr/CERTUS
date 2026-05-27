@@ -59,15 +59,15 @@ import traceback
 
 
 
-from typing import Any
+from typing import Any, List, Dict
 
-from certus_core import certus_timestamp_display, setup_logging
+from certus.core.certus_core import certus_timestamp_display, setup_logging
 
 import numpy as np
 
 import pyqtgraph as pg
 
-from certus_qt_widgets import (
+from certus.ui.certus_qt_widgets import (
     QAbstractItemView,
     QAbstractSpinBox,
     QApplication,
@@ -78,6 +78,7 @@ from certus_qt_widgets import (
     QDialog,
     QDoubleSpinBox,
     QFileDialog,
+    QFont,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -112,9 +113,9 @@ from certus_physics import (
     calc_spectrum_full_exact_wrapper,
 )
 
-from certus_spectral_workers import EvalWorker, WarmupWorker
+from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
 
-from certus_spectrum_eval_ui import (
+from certus.ui.certus_spectrum_eval_ui import (
     spectrum_eval_apply_axes_legend_scale,
     spectrum_eval_build_worker_cfg,
     spectrum_eval_on_finished_prepare_display,
@@ -123,7 +124,7 @@ from certus_spectrum_eval_ui import (
     spectrum_eval_start_worker,
 )
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     attach_excel_clipboard_context_menu,
     CertusBaseApp,
     CertusCard,
@@ -151,19 +152,23 @@ from certus_ui import (
     set_certus_window_icon,
     install_skeleton_loader,
     remove_skeleton_loader,
+    wrap_scientific_plot_with_toolbar,
+    open_documentation,
+    confirm_stop_with_timeout,
 )
 
-from certus_core import (
+from certus.core.certus_core import (
     CFG,
     create_module_environment,
     NUMERICAL_FAULT_EXCEPTIONS,
     get_resource_path,
+    certus_timestamp_file,
 )
 
-from certus_ux import build_premium_overrides
+from certus.utils.certus_ux import build_premium_overrides
 
-from certus_data import OPENPYXL_AVAILABLE
-from certus_re_workers import REWorker
+from certus.utils.certus_data import OPENPYXL_AVAILABLE
+from certus.workers.certus_re_workers import REWorker
 
 
 # =============================================================================
@@ -185,7 +190,7 @@ script_dir = env["script_dir"]
 
 # RE helpers: explicit re-exports (ARCH-1; replaced the legacy for-loop that copied certus_re_helpers into globals()).
 
-from certus_re_helpers import (
+from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     RE_GUI_DEFAULT_RE_QWOT_ALPHA,
     RE_HL_DELTA_RE_REG_SQRT_W,
@@ -241,6 +246,7 @@ from certus_re_helpers import (
     re_n_corr_at_lambda_ref,
     re_substrate_cauchy_n_re_from_theta,
     TabularMaterial,
+    ParsedREColumn,
 )
 
 # Configure GUI
@@ -288,7 +294,7 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 # =============================================================================
 
 
-from certus_re_ui import CertusREResultsDialog
+from certus.ui.certus_re_ui import CertusREResultsDialog
 
 
 class CertusREApp(CertusBaseApp):
@@ -608,7 +614,7 @@ class CertusREApp(CertusBaseApp):
         left_layout.addWidget(actions_wrap)
 
         try:
-            from certus_animations import fade_in
+            from certus.ui.certus_animations import fade_in
 
             fade_in(actions_wrap, duration_ms=200)
         except Exception:
@@ -1256,7 +1262,7 @@ class CertusREApp(CertusBaseApp):
 
         # Clear / Reset (use app's full reset: tables, state, plots, then _load_defaults)
 
-        from certus_reset_framework import create_reset_button
+        from certus.utils.certus_reset_framework import create_reset_button
 
         self.clear_btn = create_reset_button(self, use_app_reset=True)
 
@@ -5061,9 +5067,9 @@ class CertusREApp(CertusBaseApp):
 
         manifest_dict: dict[str, Any] = {}
         try:
-            from certus_data import get_missing_manifest_fields
-            from certus_metrology import ValidationStatus
-            from certus_services import REFitService, REFitRequest
+            from certus.utils.certus_data import get_missing_manifest_fields
+            from certus.core.certus_metrology import ValidationStatus
+            from certus.utils.certus_services import REFitService, REFitRequest
 
             status_txt = str(getattr(self, "validation_status", "OK") or "OK")
             try:
@@ -7178,8 +7184,8 @@ class CertusREApp(CertusBaseApp):
 
             manifest: dict[str, Any] | None = None
             try:
-                from certus_metrology import ValidationStatus
-                from certus_services import REFitService, REFitRequest
+                from certus.core.certus_metrology import ValidationStatus
+                from certus.utils.certus_services import REFitService, REFitRequest
                 status_txt = str(getattr(self, "validation_status", "OK") or "OK")
                 try:
                     status_val = ValidationStatus(status_txt)
@@ -7241,7 +7247,7 @@ class CertusREApp(CertusBaseApp):
                 self.logger.warning("RE manifest sheet export skipped: %s", exc)
 
             manifest_dict = manifest if isinstance(manifest, dict) else {}
-            from certus_data import get_missing_manifest_fields
+            from certus.utils.certus_data import get_missing_manifest_fields
             missing_manifest_fields = get_missing_manifest_fields(manifest_dict)
             if missing_manifest_fields:
                 self.log(
@@ -7327,7 +7333,7 @@ class CertusREApp(CertusBaseApp):
     def reset_to_defaults(self):
         """Reset the application (tables, results, RE state, workers stopped)."""
 
-        from certus_reset_framework import reset_app_to_defaults
+        from certus.utils.certus_reset_framework import reset_app_to_defaults
 
         return reset_app_to_defaults(self)
 
@@ -7405,7 +7411,7 @@ def main():
 
     # --- SPLASH SCREEN ---
 
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
 
     splash = create_splash("Initializing CERTUS  Reverse Engineering...")
 

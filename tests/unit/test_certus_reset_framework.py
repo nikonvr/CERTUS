@@ -15,7 +15,7 @@ except ImportError:
     QT_AVAILABLE = False
 
 try:
-    from certus_reset_framework import AsyncWriteWorker, CertusResetManager, create_reset_button, save_state_async
+    from certus.utils.certus_reset_framework import AsyncWriteWorker, CertusResetManager, create_reset_button, save_state_async
     RESET_AVAILABLE = True
 except ImportError:
     RESET_AVAILABLE = False
@@ -367,13 +367,13 @@ class TestResetManagerCoverageBoost:
     def test_reset_app_to_defaults_no_confirm(self):
         app = _make_mock_app()
         app.detached_plot_windows = {}
-        from certus_reset_framework import reset_app_to_defaults
+        from certus.utils.certus_reset_framework import reset_app_to_defaults
         res = reset_app_to_defaults(app, confirm=False)
         assert res is True
         assert app._load_defaults.called
 
     def test_reset_manager_extreme_branch_coverage(self, monkeypatch):
-        from certus_reset_framework import CertusResetManager
+        from certus.utils.certus_reset_framework import CertusResetManager
         app = _make_mock_app()
         
         # 1. Test missing progress widget, labels, buttons, tables, widgets

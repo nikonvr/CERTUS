@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 os.chdir(str(ROOT))
 os.environ["NUMBA_DISABLE_JIT"] = "1"
 
-from certus_data import read_data_file_robust
+from certus.utils.certus_data import read_data_file_robust
 
 PASS = 0
 FAIL = 0
@@ -36,14 +36,14 @@ def record(name, ok, msg=""):
 # ═══════════════════════════════════════════════════════════════
 def test_index_spline():
     print("\n=== example_index_spline ===")
-    from certus_index_spline_core import (
+    from certus.spline.certus_index_spline_core import (
         DataType, SplineOptConfig, canonical_spline_sigma_knots,
         default_n_mono_band_nm_from_spectrum, normalize_spectrum_dataframe,
         physical_nodes_to_x_slice_n, prepare_exp_TR_for_fit, substrate_id_from_name,
     )
     from certus_physics import get_n_substrate_array_by_id
-    from spline_pipeline import worker_spline_optimization
-    from spline_smart_init import pick_best_manual_material_preset
+    from certus.spline.spline_pipeline import worker_spline_optimization
+    from certus.spline.spline_smart_init import pick_best_manual_material_preset
 
     for fname in ["TOTAL.xlsx", "TSIO2-1700-1.xlsx"]:
         fpath = ROOT / "example" / "example_index_spline" / fname
@@ -110,7 +110,7 @@ def test_index_spline():
 def test_index():
     print("\n=== example_index ===")
     from certus_physics import calculate_bare_substrate_RT, get_n_substrate_array_by_id
-    from certus_index_spline_core import substrate_id_from_name
+    from certus.spline.certus_index_spline_core import substrate_id_from_name
 
     folder = ROOT / "example" / "example_index"
     sid = substrate_id_from_name("Sapphire (Al2O3)")

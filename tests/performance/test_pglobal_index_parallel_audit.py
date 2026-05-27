@@ -74,7 +74,7 @@ class TestPGlobalIndexParallelModeAudit:
         assert opt.n_workers == 7
 
     def test_frozen_build_worker_policy_matches_certus_core(self, monkeypatch):
-        import certus_core
+        import certus.core.certus_core as certus_core
 
         monkeypatch.setattr(certus_core, "is_frozen", lambda: True)
         w = certus_core.get_safe_worker_count()

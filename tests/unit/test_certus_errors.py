@@ -19,7 +19,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from certus_errors import (
+from certus.utils.errors import (
     CertusComputationError,
     CertusConvergenceError,
     CertusDataError,
@@ -65,11 +65,11 @@ class TestExceptionHierarchy:
         assert issubclass(CertusComputationError, CertusError)
 
     def test_convergence_error_hierarchy(self):
-        from certus_core import CertusOptimizationError
+        from certus.core.certus_core import CertusOptimizationError
         assert issubclass(CertusConvergenceError, CertusOptimizationError)
 
     def test_material_error_hierarchy(self):
-        from certus_core import CertusPhysicsError
+        from certus.core.certus_core import CertusPhysicsError
         assert issubclass(CertusMaterialError, CertusPhysicsError)
 
     def test_domain_error_hierarchy(self):
@@ -427,7 +427,7 @@ class TestUIHelpers:
         DummyQMessageBox.Icon = DummyIcon
 
         monkeypatch.setattr("PyQt6.QtWidgets.QMessageBox", DummyQMessageBox)
-        from certus_errors import ERROR_MESSAGES
+        from certus.utils.errors import ERROR_MESSAGES
         monkeypatch.setitem(
             ERROR_MESSAGES,
             "generic_error",
@@ -573,7 +573,7 @@ class TestSafeUIAction:
 
 class TestValidateProjectDict:
     def test_valid_project_dict(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         valid_data = {
             "sigma_knots": [0.1, 0.5, 0.9],
             "n_nodes_physical": [1.5, 1.6, 1.7],
@@ -583,7 +583,7 @@ class TestValidateProjectDict:
         validate_project_dict(valid_data)  # Should pass without exceptions
 
     def test_missing_required_keys(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         invalid_data = {
             "sigma_knots": [0.1, 0.5, 0.9],
             "n_nodes_physical": [1.5, 1.6, 1.7],
@@ -594,7 +594,7 @@ class TestValidateProjectDict:
             validate_project_dict(invalid_data)
 
     def test_invalid_thickness(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         invalid_data = {
             "sigma_knots": [0.1, 0.5, 0.9],
             "n_nodes_physical": [1.5, 1.6, 1.7],
@@ -605,7 +605,7 @@ class TestValidateProjectDict:
             validate_project_dict(invalid_data)
 
     def test_invalid_non_finite_thickness(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         invalid_data = {
             "sigma_knots": [0.1, 0.5, 0.9],
             "n_nodes_physical": [1.5, 1.6, 1.7],
@@ -616,7 +616,7 @@ class TestValidateProjectDict:
             validate_project_dict(invalid_data)
 
     def test_invalid_type_array(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         invalid_data = {
             "sigma_knots": "not-a-list",
             "n_nodes_physical": [1.5, 1.6, 1.7],
@@ -627,7 +627,7 @@ class TestValidateProjectDict:
             validate_project_dict(invalid_data)
 
     def test_inconsistent_sizes(self):
-        from certus_result_schema import validate_project_dict
+        from certus.utils.certus_result_schema import validate_project_dict
         invalid_data = {
             "sigma_knots": [0.1, 0.5, 0.9],
             "n_nodes_physical": [1.5, 1.6],  # size 2 instead of 3

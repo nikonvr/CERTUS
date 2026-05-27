@@ -30,7 +30,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    import certus_re_helpers as h
+    import certus.utils.certus_re_helpers as h
 
     import CERTUS_RE as cre
 

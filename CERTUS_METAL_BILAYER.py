@@ -58,7 +58,7 @@ import time
 import traceback
 
 
-from certus_core import create_module_environment, setup_logging
+from certus.core.certus_core import create_module_environment, setup_logging
 
 
 # =============================================================================
@@ -91,7 +91,7 @@ import numpy as np
 import pandas as pd
 
 
-from certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, NUMERICAL_FAULT_EXCEPTIONS
 from pathlib import Path
 
 
@@ -129,7 +129,7 @@ from PyQt6.QtWidgets import (
 # --- 4. DATA (IO, Reporting) ---
 
 
-from certus_data import (
+from certus.utils.certus_data import (
     OPENPYXL_AVAILABLE,
 )
 
@@ -137,7 +137,7 @@ from certus_data import (
 # --- IMPORT METAL COMMON BASE ---
 
 
-from certus_metal_common import (
+from certus.metal.certus_metal_common import (
     DEFAULT_EM_MAX,
     DEFAULT_EM_MIN,
     DEFAULT_EXCEL_FILENAME,
@@ -178,7 +178,7 @@ from certus_physics import (
 # --- 3. UI (Theme, Widgets) ---
 
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
     CertusTheme,
@@ -1739,7 +1739,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
                 }
             )
 
-            from certus_data import ReportSection
+            from certus.utils.certus_data import ReportSection
 
             summary_kv = dict(zip(df_summary["Parameter"], df_summary["Value"]))
 
@@ -2444,7 +2444,7 @@ if __name__ == "__main__":
 
     # --- SPLASH SCREEN ---
 
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
 
     splash = create_splash("Initializing Metal Engine (Bilayer)...")
 

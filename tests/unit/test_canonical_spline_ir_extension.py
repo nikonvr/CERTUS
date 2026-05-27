@@ -49,7 +49,7 @@ import numpy as np
 
 
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
 
 
     SPLINE_EXTRA_IR_KNOTS_LAM_MAX_THRESHOLD_NM,

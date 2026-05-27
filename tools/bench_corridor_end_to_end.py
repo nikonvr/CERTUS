@@ -14,10 +14,10 @@ REPO_ROOT = str(Path(__file__).resolve().parent.parent)
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-import spline_profile_corridors as _spc
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
+import certus.spline.spline_profile_corridors as _spc
 
-from spline_profile_corridors import ProfileCorridorConfig, compute_profiled_corridors_by_d
+from certus.spline.spline_profile_corridors import ProfileCorridorConfig, compute_profiled_corridors_by_d
 
 
 def _lam(lo: float = 400.0, hi: float = 800.0, n: int = 28) -> np.ndarray:

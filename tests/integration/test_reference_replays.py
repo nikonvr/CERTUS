@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from _certus_physics_impl import calculate_transmission_single
+from certus.core._certus_physics_impl import calculate_transmission_single
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()

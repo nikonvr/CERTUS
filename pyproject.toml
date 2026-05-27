@@ -13,16 +13,16 @@ authors = [
   { name = "CERTUS Team" }
 ]
 dependencies = [
-  "numpy>=1.26.4,<2.4",
-  "scipy>=1.15.0",
-  "pandas>=2.2.3,<3.0.0",
-  "numba>=0.63.1",
-  "PyQt6>=6.10.2",
+  "numpy>=2.4.6,<3.0.0",
+  "scipy>=1.17.1",
+  "pandas>=3.0.3,<4.0.0",
+  "numba>=0.65.1",
+  "PyQt6>=6.11.0",
   "pyqtgraph>=0.14.0",
-  "matplotlib>=3.9.0",
+  "matplotlib>=3.10.9",
   "openpyxl>=3.1.5",
-  "pydantic>=2.11.0",
-  "XlsxWriter>=3.2.0",
+  "pydantic>=2.14.0a1",
+  "XlsxWriter>=3.2.9",
 ]
 
 [project.optional-dependencies]
@@ -37,78 +37,7 @@ freeze = [
 ]
 
 [tool.setuptools]
-py-modules = [
-  "_build_html_report",
-  "_certus_physics_impl",
-  "certus_a11y",
-  "certus_animations",
-  "certus_badges",
-  "certus_command_palette",
-  "certus_core",
-  "certus_curve_smoother",
-  "certus_data",
-  "certus_design_worker_utils",
-  "certus_design_workers_dto",
-  "CERTUS_DESIGN",
-  "certus_empty_state",
-  "certus_errors",
-  "certus_export",
-  "CERTUS_HUB",
-  "certus_icons",
-  "certus_index_spline_core",
-  "CERTUS_INDEX_SPLINE",
-  "certus_index_utils",
-  "CERTUS_INDEX",
-  "certus_live_visualizer",
-  "certus_load_summary",
-  "certus_measurement_excel_ui",
-  "CERTUS_METAL_BILAYER",
-  "certus_metal_common",
-  "CERTUS_METAL_SINGLE",
-  "certus_metrology",
-  "certus_onboarding",
-  "certus_plot",
-  "certus_progress_tracker",
-  "certus_qt_widgets",
-  "certus_re_helpers",
-  "certus_re_results_builder",
-  "certus_re_worker_utils",
-  "certus_re_workers",
-  "CERTUS_RE",
-  "certus_recent_strip",
-  "certus_recent",
-  "certus_reports",
-  "certus_reset_framework",
-  "certus_sample_data",
-  "certus_services",
-  "certus_shortcuts_overlay",
-  "certus_skeleton",
-  "certus_smart_init_curve_editor",
-  "certus_spectral_preproc",
-  "certus_spectral_workers",
-  "certus_spectrum_eval_ui",
-  "certus_strat_context",
-  "certus_strat_db",
-  "certus_strat_service",
-  "certus_strat_workers_dto",
-  "CERTUS_STRAT",
-  "certus_substrate_index",
-  "certus_svg",
-  "certus_toast_stack",
-  "certus_tooltips",
-  "certus_tours_catalog",
-  "certus_ui",
-  "certus_ux",
-  "spline_corridor_log_coaching",
-  "spline_finalize",
-  "spline_objective",
-  "spline_pipeline",
-  "spline_presets",
-  "spline_profile_corridors",
-  "spline_smart_init",
-  "spline_visual_utils",
-  "spline_workers",
-]
+packages = ["certus"]
 
 # -----------------------------------------------------------------------------
 # Ruff (lint + format) — Foundation action #2 of CERTUS_MASTER_TODO_OPTIMIZATION
@@ -181,7 +110,7 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus_core --cov=certus_errors --cov=certus_ui --cov=certus_data --cov=certus_reset_framework --cov=certus_metrology --cov=spline_objective --cov=spline_presets --cov=certus_spectral_preproc --cov=spline_pipeline --cov=spline_workers --cov=_certus_physics_impl --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
+addopts = "--strict-markers --strict-config --verbose --tb=short --cov=certus --cov-report=html:htmlcov --cov-report=term-missing --cov-report=xml"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]

@@ -24,7 +24,7 @@ from certus_physics import (
 )
 
 # Non-exported kernels: import directly from impl
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     calculate_bare_substrate_R,
     calculate_reflection_single,
     calculate_RT_single_layer_single,

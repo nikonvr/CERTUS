@@ -31,8 +31,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-from spline_profile_corridors import ProfileCorridorConfig, compute_profiled_corridors_by_d
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
+from certus.spline.spline_profile_corridors import ProfileCorridorConfig, compute_profiled_corridors_by_d
 
 
 def _lam(lo: float, hi: float, n: int) -> np.ndarray:
@@ -252,7 +252,7 @@ def main() -> int:
 
     promotion_fields: dict[str, Any] = {"simulated": False}
     if args.simulate_promotion:
-        from spline_pipeline import _maybe_promote_best_corridor_refit
+        from certus.spline.spline_pipeline import _maybe_promote_best_corridor_refit
 
         out = dict(base)
         out.update(extra)

@@ -18,7 +18,7 @@ def test_refactorisations():
     # 1. Tester certus_bootstrap
     print("\n1. TEST CERTUS_CORE (BOOTSTRAP):")
     try:
-        from certus_core import create_module_environment
+        from certus.core.certus_core import create_module_environment
 
         print("✅ Import create_module_environment: SUCCESS")
 
@@ -47,7 +47,7 @@ def test_refactorisations():
     # 2. Tester certus_utils
     print("\n2. TEST CERTUS_CORE (UTILS):")
     try:
-        from certus_core import ensure_numpy_array, ensure_numpy_arrays
+        from certus.core.certus_core import ensure_numpy_array, ensure_numpy_arrays
 
         print("✅ Import ensure_numpy_array: SUCCESS")
 
@@ -71,7 +71,7 @@ def test_refactorisations():
     # 3. Test refactored certus_errors
     print("\n3. TEST CERTUS_ERRORS REFACTORISÉ:")
     try:
-        from certus_errors import validate_spectral_data
+        from certus.utils.errors import validate_spectral_data
 
         print("✅ Import certus_errors: SUCCESS")
 

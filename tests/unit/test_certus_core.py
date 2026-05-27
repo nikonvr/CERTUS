@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from certus_core import (
+from certus.core.certus_core import (
     configure_numba_env,
     get_resource_path,
     get_float_dtype,
@@ -304,7 +304,7 @@ class TestNumbaEnvironment:
         ]:
             monkeypatch.delenv(key, raising=False)
 
-        monkeypatch.setattr("sys.modules", {k: v for k, v in sys.modules.items() if k != "numba"})
+        monkeypatch.setattr("sys.modules", {k: v for k, v in sys.modules.items() if not k.startswith("numba")})
         configure_numba_env()
 
         assert os.environ.get("_CERTUS_NUMBA_CONFIGURED") == "1"

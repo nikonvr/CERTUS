@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from certus_data import (
+from certus.utils.certus_data import (
     ReportSection,
     build_standard_report,
     load_spectrum_columns,
@@ -31,7 +31,7 @@ from certus_data import (
     SpectrumLoadResult,
 )
 
-from certus_index_spline_core import normalize_spectrum_dataframe
+from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
 
 
 # ── ReportSection ──

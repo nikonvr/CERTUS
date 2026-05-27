@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spline_profile_corridors import (
+from certus.spline.spline_profile_corridors import (
     _fit_local_quadratic_rmse_profile,
     _robust_sigma_from_mad,
     _generate_iso_phase_seed,

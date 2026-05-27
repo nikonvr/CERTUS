@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_spectral_preproc import (
+from certus.utils.certus_spectral_preproc import (
     auto_tune_savgol_params,
     dynamic_savgol_blend,
 )

@@ -63,7 +63,7 @@ from certus_physics import (
 
 )
 
-from certus_core import HC_EV_NM
+from certus.core.certus_core import HC_EV_NM
 
 
 

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 # We mock what we need from CERTUS_INDEX to test the logic of the callbacks independently
-from certus_core import SMALL_EPSILON, SUBSTRATES
+from certus.core.certus_core import SMALL_EPSILON, SUBSTRATES
 from certus_physics import get_n_substrate_array_by_id
 from CERTUS_INDEX import (
     CertusIndexApp,

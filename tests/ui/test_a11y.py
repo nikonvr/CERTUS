@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from certus_a11y import contrast_ratio
-from certus_ui import CertusBaseApp, CertusTheme
+from certus.ui.certus_a11y import contrast_ratio
+from certus.ui.certus_ui import CertusBaseApp, CertusTheme
 
 
 def _semantic_pairs() -> list[tuple[str, str]]:

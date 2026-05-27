@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import numpy as np
 
 # Import constants from core (Single Source of Truth)
-from certus_core import CFG, SUBSTRATE_MIN_LAMBDA, SELLMEIER_COEFFS_BY_ID  # noqa: F401
+from certus.core.certus_core import CFG, SUBSTRATE_MIN_LAMBDA, SELLMEIER_COEFFS_BY_ID  # noqa: F401
 
 # Alias for naming consistency
 SUBSTRATE_MIN_LAMBDA_BY_ID = SUBSTRATE_MIN_LAMBDA
@@ -186,6 +186,6 @@ class PGlobalConfig:
 
 
 # =============================================================================
-# SUBSTRATE DATA - Imported from certus_core (see imports at top)
+# SUBSTRATE DATA - Imported from certus.core.certus_core (see imports at top)
 # =============================================================================
-# SELLMEIER_COEFFS_BY_ID and SUBSTRATE_MIN_LAMBDA_BY_ID are imported from certus_core
+# SELLMEIER_COEFFS_BY_ID and SUBSTRATE_MIN_LAMBDA_BY_ID are imported from certus.core.certus_core

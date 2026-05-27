@@ -45,7 +45,7 @@ def test_data_th_copy_clipboard_contains_headers_and_rows(qapp) -> None:
         lbl_status=SimpleNamespace(setText=lambda _txt: None),
     )
 
-    from certus_ui import ExcelTableWidget
+    from certus.ui.certus_ui import ExcelTableWidget
 
     table = ExcelTableWidget()
     table.setColumnCount(7)
@@ -99,7 +99,7 @@ def test_refresh_data_th_table_enables_copy_button_for_non_empty_data() -> None:
     app._fmt_n_data_tab = CertusIndexSplineApp._fmt_n_data_tab
     app._fmt_k_data_tab = CertusIndexSplineApp._fmt_k_data_tab
 
-    from certus_ui import ExcelTableWidget
+    from certus.ui.certus_ui import ExcelTableWidget
 
     table = ExcelTableWidget()
     app.table_data_th = table

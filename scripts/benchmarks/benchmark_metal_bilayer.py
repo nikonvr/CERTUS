@@ -19,7 +19,7 @@ from numba import njit
 
 try:
 
-    from certus_core import TWO_PI
+    from certus.core.certus_core import TWO_PI
 
 except ImportError:
 
@@ -33,7 +33,7 @@ except ImportError:
 
 try:
 
-    from _certus_physics_impl import calculate_reflectance_bilayer_vectorized
+    from certus.core._certus_physics_impl import calculate_reflectance_bilayer_vectorized
 
 except ImportError:
 

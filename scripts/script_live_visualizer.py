@@ -18,7 +18,7 @@ from PyQt6.QtCore import QTimer
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 # Import CERTUS components
-from certus_live_visualizer import create_live_visualizer
+from certus.utils.certus_live_visualizer import create_live_visualizer
 
 
 class TestLiveVisualizationWindow(QMainWindow):

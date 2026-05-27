@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_re_results_builder import REResultsBuilder
+from certus.utils.certus_re_results_builder import REResultsBuilder
 
 
 @pytest.mark.unit

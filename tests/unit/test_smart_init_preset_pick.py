@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from certus_index_spline_core import DataType, SplineOptConfig
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig
 
-from certus_index_utils import _transmittance_absolute_from_nk
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
 
-from spline_smart_init import MANUAL_MATERIAL_PRESET_IDS, pick_best_manual_material_preset
+from certus.spline.spline_smart_init import MANUAL_MATERIAL_PRESET_IDS, pick_best_manual_material_preset
 
 
 def _cfg_and_sk_for_pick() -> tuple[SplineOptConfig, np.ndarray]:

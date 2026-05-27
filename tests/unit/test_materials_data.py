@@ -97,7 +97,7 @@ def test_find_materials_xlsx_path_priority() -> None:
 
 def test_load_si_from_xlsx_exceptions() -> None:
     """Verify that _load_si_from_xlsx raises specific Certus exceptions on failures."""
-    from certus_errors import CertusFileError, CertusMaterialError
+    from certus.utils.errors import CertusFileError, CertusMaterialError
     import pandas as pd
 
     # Case 1: File does not exist

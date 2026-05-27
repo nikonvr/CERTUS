@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import pytest
-from certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
+from certus.workers.certus_strat_workers_dto import StratParamsDTO, StratOptiResultsDTO
 
 
 class MockDB:

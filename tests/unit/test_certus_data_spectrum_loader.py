@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from certus_data import (
+from certus.utils.certus_data import (
     SpectrumLoadResult,
     load_spectrum_columns,
 )
@@ -184,7 +184,7 @@ class TestExcelAndErrors:
 
 
 def test_helpers_are_in_certus_data_all():
-    import certus_data
+    import certus.utils.certus_data as certus_data
     assert "SpectrumLoadResult" in certus_data.__all__
     assert "load_spectrum_columns" in certus_data.__all__
 

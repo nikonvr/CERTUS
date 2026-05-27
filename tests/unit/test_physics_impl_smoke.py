@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import numpy.testing as npt
 
-from _certus_physics_impl import get_nk_cauchy_wrapper
+from certus.core._certus_physics_impl import get_nk_cauchy_wrapper
 
 
 def test_get_nk_cauchy_wrapper_one_wavelength() -> None:

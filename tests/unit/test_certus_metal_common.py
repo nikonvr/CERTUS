@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from certus_metal_common import _format_beam_status, normalize_percent_column, setup_beam_analysis_thread, teardown_beam_thread
+from certus.metal.certus_metal_common import _format_beam_status, normalize_percent_column, setup_beam_analysis_thread, teardown_beam_thread
 
 
 @pytest.mark.unit
@@ -51,7 +51,7 @@ def test_setup_beam_analysis_thread_wires_cleanup_signals() -> None:
         _on_beam_error=Mock(),
     )
 
-    with patch("certus_metal_common.QThread", return_value=thread):
+    with patch("certus.metal.certus_metal_common.QThread", return_value=thread):
         out = setup_beam_analysis_thread(app, worker)
 
     assert out is thread

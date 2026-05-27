@@ -29,7 +29,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from _certus_physics_impl import compute_oblique_gradient_contrib_analytic
+from certus.core._certus_physics_impl import compute_oblique_gradient_contrib_analytic
 
 
 def _build_simple_oblique_stack(n_layers: int = 3, n_wls: int = 4):

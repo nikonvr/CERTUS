@@ -30,7 +30,7 @@ import pytest
 # PARE-FEU : skip gracieux si pytest-benchmark n'est pas installé.
 pytest.importorskip("pytest_benchmark")
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
     compute_dynamics_kernel,

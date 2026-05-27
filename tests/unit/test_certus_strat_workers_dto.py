@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
+from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 
 try:
-    from certus_strat_workers import LiveFeedMonitor
+    from certus.workers.certus_strat_workers import LiveFeedMonitor
     STRAT_WORKERS_AVAILABLE = True
 except ImportError:
     STRAT_WORKERS_AVAILABLE = False

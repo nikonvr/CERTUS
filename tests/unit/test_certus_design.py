@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 try:
     import CERTUS_DESIGN
     from certus_physics import Layer, Target, Sample
-    from certus_core import get_logger
+    from certus.core.certus_core import get_logger
 
     DESIGN_AVAILABLE = True
 except ImportError:
@@ -33,14 +33,14 @@ class TestCERTUSDesign:
 
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -61,7 +61,7 @@ class TestCERTUSDesign:
     def test_ui_integration(self):
         """Test the integration with certus_ui."""
         try:
-            from certus_ui import CertusTheme, apply_certus_theme
+            from certus.ui.certus_ui import CertusTheme, apply_certus_theme
 
             assert CertusTheme is not None
             assert callable(apply_certus_theme)
@@ -91,14 +91,14 @@ class TestDesignFunctionality:
 
     def test_extracted_worker_helpers_are_available(self):
         """New extracted worker helpers should remain importable."""
-        from certus_design_worker_utils import build_needle_scan_mask, build_pglobal_config_from_cfg
+        from certus.workers.certus_design_worker_utils import build_needle_scan_mask, build_pglobal_config_from_cfg
 
         assert callable(build_pglobal_config_from_cfg)
         assert callable(build_needle_scan_mask)
 
     def test_worker_helper_build_needle_scan_mask_excludes_layers(self):
         """Needle mask helper should skip excluded layers and preserve matching materials."""
-        from certus_design_worker_utils import build_needle_scan_mask
+        from certus.workers.certus_design_worker_utils import build_needle_scan_mask
         from certus_physics import Layer
 
         stack = [Layer(mat="H", qwot=1.0), Layer(mat="L", qwot=1.0), Layer(mat="H", qwot=1.0)]
@@ -110,7 +110,7 @@ class TestDesignFunctionality:
 
     def test_worker_helper_build_pglobal_config_local_mode(self):
         """PGlobal helper should return a config object and iteration budget for local mode."""
-        from certus_design_worker_utils import build_pglobal_config_from_cfg
+        from certus.workers.certus_design_worker_utils import build_pglobal_config_from_cfg
 
         cfg = {"max_feval": 1234}
         pg_conf, max_iter = build_pglobal_config_from_cfg(cfg, mode="local", dim=12, conv_tol=1e-8)
@@ -120,7 +120,7 @@ class TestDesignFunctionality:
 
     def test_worker_helper_prepare_pglobal_optimizer_runtime(self):
         """Runtime helper should emit the correct progress message for global mode."""
-        from certus_design_worker_utils import prepare_pglobal_optimizer_runtime
+        from certus.workers.certus_design_worker_utils import prepare_pglobal_optimizer_runtime
 
         emitted = []
 
@@ -143,7 +143,7 @@ class TestDesignFunctionality:
 
     def test_worker_helper_prepare_pglobal_inputs_uses_signal_and_gradient(self):
         """Prepared inputs should forward the gradient helper and emit a config message."""
-        from certus_design_worker_utils import prepare_pglobal_inputs_from_state
+        from certus.workers.certus_design_worker_utils import prepare_pglobal_inputs_from_state
 
         emitted = []
 
@@ -166,7 +166,7 @@ class TestDesignFunctionality:
 
     def test_worker_helper_build_pglobal_config_global_mode_overrides(self):
         """Global mode should propagate explicit overrides into the config object."""
-        from certus_design_worker_utils import build_pglobal_config_from_cfg
+        from certus.workers.certus_design_worker_utils import build_pglobal_config_from_cfg
 
         cfg = {
             "max_feval": 1234,
@@ -187,7 +187,7 @@ class TestDesignFunctionality:
 
     def test_worker_helper_tikhonravov_upgrade_is_safe_without_upgrade(self):
         """Tikhonravov helper should preserve the grid when the upgrade condition is not met."""
-        from certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
+        from certus.workers.certus_design_worker_utils import maybe_upgrade_grid_tikhonravov
         from certus_physics import Layer, Target
 
         class DummyMat:

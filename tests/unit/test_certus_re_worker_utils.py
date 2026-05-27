@@ -12,9 +12,9 @@ import pytest
 
 
 
-from certus_re_helpers import _parse_re_rmse_combined_from_progress_message
+from certus.utils.certus_re_helpers import _parse_re_rmse_combined_from_progress_message
 
-from certus_re_worker_utils import (
+from certus.workers.certus_re_worker_utils import (
 
     RE_CORREC_NOMINAL_PCT,
 
@@ -560,7 +560,7 @@ def test_re_correc_nominal_pct_tuple():
 
 def test_helpers_objective_variance_fractions_comb_matches_ranking():
 
-    import certus_re_helpers as h
+    import certus.utils.certus_re_helpers as h
 
 
 
@@ -576,7 +576,7 @@ def test_helpers_objective_variance_fractions_comb_matches_ranking():
 
 def test_helpers_combined_rmse_matches_ranking():
 
-    import certus_re_helpers as h
+    import certus.utils.certus_re_helpers as h
 
 
 

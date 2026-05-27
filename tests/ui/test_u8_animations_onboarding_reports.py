@@ -21,7 +21,7 @@ import pytest
 
 
 def test_u8_module_surface():
-    import certus_animations as m
+    import certus.ui.certus_animations as m
 
     for name in (
         "DEFAULT_DURATION_MS",
@@ -40,7 +40,7 @@ def test_u8_module_surface():
 
 
 def test_u8_easing_names_are_stable_and_validated():
-    from certus_animations import easing_names, is_valid_easing
+    from certus.ui.certus_animations import easing_names, is_valid_easing
 
     names = easing_names()
     assert "out_cubic" in names and "linear" in names
@@ -50,7 +50,7 @@ def test_u8_easing_names_are_stable_and_validated():
 
 
 def test_u8_durations_are_sensible():
-    from certus_animations import DEFAULT_DURATION_MS, HOVER_DURATION_MS, PULSE_DURATION_MS
+    from certus.ui.certus_animations import DEFAULT_DURATION_MS, HOVER_DURATION_MS, PULSE_DURATION_MS
 
     assert 100 <= DEFAULT_DURATION_MS <= 400
     assert 80 <= HOVER_DURATION_MS <= 200
@@ -58,7 +58,7 @@ def test_u8_durations_are_sensible():
 
 
 def test_u8_public_api_safe_on_none():
-    from certus_animations import fade_in, fade_out, hover_lift, pulse, slide_in, unhover_lift
+    from certus.ui.certus_animations import fade_in, fade_out, hover_lift, pulse, slide_in, unhover_lift
 
     assert fade_in(None) is None
     assert fade_out(None) is None
@@ -72,7 +72,7 @@ def test_u8_fade_in_returns_running_animation():
     from PyQt6.QtCore import QPropertyAnimation
     from PyQt6.QtWidgets import QApplication, QLabel
 
-    from certus_animations import fade_in
+    from certus.ui.certus_animations import fade_in
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = QLabel("x")
@@ -85,7 +85,7 @@ def test_u8_fade_in_returns_running_animation():
 def test_u8_hover_lift_is_idempotent():
     from PyQt6.QtWidgets import QApplication, QLabel
 
-    from certus_animations import hover_lift, unhover_lift
+    from certus.ui.certus_animations import hover_lift, unhover_lift
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     w = QLabel("x")
@@ -105,7 +105,7 @@ def test_u8_hover_lift_is_idempotent():
 @pytest.fixture
 def _isolated_onboarding(monkeypatch):
     """Force in-memory persistence so tests don't touch QSettings."""
-    import certus_onboarding as m
+    import certus.ui.certus_onboarding as m
 
     monkeypatch.setattr(m, "_qs_settings", lambda: None)
     m._MEMORY_FLAGS.clear()
@@ -114,7 +114,7 @@ def _isolated_onboarding(monkeypatch):
 
 
 def test_u9_onboarding_completion_flag(_isolated_onboarding):
-    from certus_onboarding import is_completed, mark_completed, reset_onboarding
+    from certus.ui.certus_onboarding import is_completed, mark_completed, reset_onboarding
 
     assert is_completed("INDEX") is False
     mark_completed("INDEX")
@@ -124,7 +124,7 @@ def test_u9_onboarding_completion_flag(_isolated_onboarding):
 
 
 def test_u9_reset_all_clears_every_app(_isolated_onboarding):
-    from certus_onboarding import is_completed, mark_completed, reset_onboarding
+    from certus.ui.certus_onboarding import is_completed, mark_completed, reset_onboarding
 
     mark_completed("A")
     mark_completed("B")
@@ -134,7 +134,7 @@ def test_u9_reset_all_clears_every_app(_isolated_onboarding):
 
 
 def test_u9_tour_step_is_frozen_dataclass():
-    from certus_onboarding import TourStep
+    from certus.ui.certus_onboarding import TourStep
 
     s = TourStep(title="Hi", body="Welcome")
     assert s.title == "Hi"
@@ -143,7 +143,7 @@ def test_u9_tour_step_is_frozen_dataclass():
 
 
 def test_u9_resolve_target_returns_none_for_missing_attr():
-    from certus_onboarding import resolve_target
+    from certus.ui.certus_onboarding import resolve_target
 
     class _Parent:
         existing = "hello"
@@ -156,7 +156,7 @@ def test_u9_resolve_target_returns_none_for_missing_attr():
 
 
 def test_u9_filter_resolvable_drops_invalid_steps():
-    from certus_onboarding import TourStep, filter_resolvable_steps
+    from certus.ui.certus_onboarding import TourStep, filter_resolvable_steps
 
     class _Parent:
         load_btn = object()
@@ -172,7 +172,7 @@ def test_u9_filter_resolvable_drops_invalid_steps():
 
 
 def test_u9_run_onboarding_skipped_when_empty(_isolated_onboarding):
-    from certus_onboarding import OnboardingResult, run_onboarding
+    from certus.ui.certus_onboarding import OnboardingResult, run_onboarding
 
     class _Parent:
         pass
@@ -182,7 +182,7 @@ def test_u9_run_onboarding_skipped_when_empty(_isolated_onboarding):
 
 
 def test_u9_run_onboarding_already_done(_isolated_onboarding):
-    from certus_onboarding import OnboardingResult, TourStep, mark_completed, run_onboarding
+    from certus.ui.certus_onboarding import OnboardingResult, TourStep, mark_completed, run_onboarding
 
     class _Parent:
         widget_a = object()
@@ -197,7 +197,7 @@ def test_u9_run_onboarding_already_done(_isolated_onboarding):
 
 
 def test_u9_sample_data_discovery_on_empty_root(tmp_path):
-    from certus_sample_data import SampleCategory, has_any_samples, list_samples, set_sample_root
+    from certus.utils.certus_sample_data import SampleCategory, has_any_samples, list_samples, set_sample_root
 
     set_sample_root(str(tmp_path))  # empty folder
     try:
@@ -208,7 +208,7 @@ def test_u9_sample_data_discovery_on_empty_root(tmp_path):
 
 
 def test_u9_sample_data_lists_json_configs(tmp_path):
-    from certus_sample_data import SampleCategory, default_sample, list_samples, sample_path, set_sample_root
+    from certus.utils.certus_sample_data import SampleCategory, default_sample, list_samples, sample_path, set_sample_root
 
     (tmp_path / SampleCategory.CONFIG).mkdir(parents=True)
     a = tmp_path / SampleCategory.CONFIG / "sample_a.json"
@@ -239,7 +239,7 @@ def test_u9_sample_data_lists_json_configs(tmp_path):
 
 
 def test_u10_brand_colors_have_required_keys():
-    from certus_reports import BRAND_COLORS
+    from certus.utils.certus_reports import BRAND_COLORS
 
     for k in ("primary", "accent", "success", "warning", "error", "surface"):
         assert k in BRAND_COLORS
@@ -247,7 +247,7 @@ def test_u10_brand_colors_have_required_keys():
 
 
 def test_u10_report_context_header_lines():
-    from certus_reports import ReportContext
+    from certus.utils.certus_reports import ReportContext
 
     ctx = ReportContext(title="Report", subtitle="Sub", app_name="INDEX", author="Alice")
     lines = ctx.header_lines()
@@ -258,7 +258,7 @@ def test_u10_report_context_header_lines():
 
 
 def test_u10_section_kind_predicates():
-    from certus_reports import Section
+    from certus.utils.certus_reports import Section
 
     t = Section(title="T", kind="table", rows=[[1]])
     x = Section(title="X", kind="text", text="hi")
@@ -269,7 +269,7 @@ def test_u10_section_kind_predicates():
 
 
 def test_u10_summary_header_is_newline_joined():
-    from certus_reports import ReportContext, report_summary_header
+    from certus.utils.certus_reports import ReportContext, report_summary_header
 
     ctx = ReportContext(title="T", subtitle="S", app_name="A", author="B")
     txt = report_summary_header(ctx)
@@ -278,7 +278,7 @@ def test_u10_summary_header_is_newline_joined():
 
 
 def test_u10_excel_export_is_produced(tmp_path):
-    from certus_reports import ReportContext, Section, build_excel_report
+    from certus.utils.certus_reports import ReportContext, Section, build_excel_report
 
     ctx = ReportContext(title="Test Report", subtitle="Unit test", app_name="CERTUS", author="pytest")
     sections = [
@@ -305,7 +305,7 @@ def test_u10_excel_export_is_produced(tmp_path):
 
 
 def test_u10_excel_export_handles_empty_sections(tmp_path):
-    from certus_reports import ReportContext, build_excel_report
+    from certus.utils.certus_reports import ReportContext, build_excel_report
 
     ctx = ReportContext(title="Empty", app_name="CERTUS")
     out = tmp_path / "empty.xlsx"
@@ -314,7 +314,7 @@ def test_u10_excel_export_handles_empty_sections(tmp_path):
 
 
 def test_u10_pdf_export_is_produced(tmp_path):
-    from certus_reports import ReportContext, Section, build_pdf_report
+    from certus.utils.certus_reports import ReportContext, Section, build_pdf_report
 
     ctx = ReportContext(title="PDF Report", subtitle="Unit test", app_name="CERTUS", author="pytest")
     sections = [
@@ -336,7 +336,7 @@ def test_u10_pdf_export_is_produced(tmp_path):
 
 
 def test_u10_pdf_export_handles_empty_sections(tmp_path):
-    from certus_reports import ReportContext, build_pdf_report
+    from certus.utils.certus_reports import ReportContext, build_pdf_report
 
     ctx = ReportContext(title="Empty PDF", app_name="CERTUS")
     out = tmp_path / "empty.pdf"

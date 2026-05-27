@@ -23,27 +23,27 @@ import pytest
 
 class TestMetalJobSpec:
     def test_dataclass_is_frozen(self):
-        from certus_metal_common import MetalJobSpec
+        from certus.metal.certus_metal_common import MetalJobSpec
         spec = MetalJobSpec(variant="single", n_layers=1)
         with pytest.raises((AttributeError, Exception)):
             spec.variant = "bilayer"  # type: ignore[misc]
 
     def test_default_fields(self):
-        from certus_metal_common import MetalJobSpec
+        from certus.metal.certus_metal_common import MetalJobSpec
         spec = MetalJobSpec(variant="single", n_layers=1)
         assert spec.report_sheets == ()
         assert spec.beam_analysis_kind == ""
         assert spec.extra == {}
 
     def test_canonical_single_spec(self):
-        from certus_metal_common import METAL_SINGLE_SPEC
+        from certus.metal.certus_metal_common import METAL_SINGLE_SPEC
         assert METAL_SINGLE_SPEC.variant == "single"
         assert METAL_SINGLE_SPEC.n_layers == 1
         assert METAL_SINGLE_SPEC.beam_analysis_kind == "gaussian_bands"
         assert "Summary" in METAL_SINGLE_SPEC.report_sheets
 
     def test_canonical_bilayer_spec(self):
-        from certus_metal_common import METAL_BILAYER_SPEC
+        from certus.metal.certus_metal_common import METAL_BILAYER_SPEC
         assert METAL_BILAYER_SPEC.variant == "bilayer"
         assert METAL_BILAYER_SPEC.n_layers == 2
         assert METAL_BILAYER_SPEC.beam_analysis_kind == "dbscan_multi_valleys"
@@ -68,7 +68,7 @@ class TestMetalBaseAppConfigBridge:
     def _make_dummy(self, legacy_collect_returns=None, **hooks):
         """Create a dummy object with METAL hooks."""
 
-        from certus_metal_common import MetalBaseApp
+        from certus.metal.certus_metal_common import MetalBaseApp
         dummy = MagicMock()
         # Bind the bridge methods from MetalBaseApp to the dummy
         dummy._collect_config = MetalBaseApp._collect_config.__get__(dummy)
@@ -106,27 +106,27 @@ class TestMetalBaseAppConfigBridge:
 
 class TestResetAppToDefaults:
     def test_is_exported_from_framework(self):
-        import certus_reset_framework
+        import certus.utils.certus_reset_framework as certus_reset_framework
         assert "reset_app_to_defaults" in certus_reset_framework.__all__
 
     def test_confirm_false_bypasses_dialog(self):
-        from certus_reset_framework import reset_app_to_defaults
+        from certus.utils.certus_reset_framework import reset_app_to_defaults
         app = MagicMock()
         app.findChildren = MagicMock(return_value=[])
         # With confirm=False we should reach the reset logic without showing
         # the QMessageBox. Patch the whole reset flow to verify it was called.
-        with patch("certus_reset_framework.QMessageBox") as mock_box, \
-             patch("certus_reset_framework.gc") as _gc:
+        with patch("certus.utils.certus_reset_framework.QMessageBox") as mock_box, \
+             patch("certus.utils.certus_reset_framework.gc") as _gc:
             result = reset_app_to_defaults(app, confirm=False)
         assert result is True
         # The confirmation dialog must NOT have been invoked
         mock_box.question.assert_not_called()
 
     def test_confirm_true_shows_dialog_and_respects_no(self):
-        from certus_reset_framework import reset_app_to_defaults
+        from certus.utils.certus_reset_framework import reset_app_to_defaults
         from PyQt6.QtWidgets import QMessageBox as RealQMessageBox
         app = MagicMock()
-        with patch("certus_reset_framework.QMessageBox") as mock_box:
+        with patch("certus.utils.certus_reset_framework.QMessageBox") as mock_box:
             mock_box.StandardButton = RealQMessageBox.StandardButton
             mock_box.question.return_value = RealQMessageBox.StandardButton.No
             result = reset_app_to_defaults(app, confirm=True)

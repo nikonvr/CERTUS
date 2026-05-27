@@ -6,7 +6,7 @@ import os
 import numpy as np
 import pytest
 
-from certus_core import (
+from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     certus_timestamp_file,
     certus_timestamp_display,
@@ -44,7 +44,7 @@ from certus_core import (
     ensure_numpy_arrays,
 )
 
-from certus_metal_common import normalize_percent_column
+from certus.metal.certus_metal_common import normalize_percent_column
 
 
 class TestCertusTimestampFile:

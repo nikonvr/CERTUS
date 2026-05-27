@@ -40,7 +40,7 @@ SimpleNamespace = _Harness
 import numpy as np
 
 from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
-from certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
 
 
 class _Signal:

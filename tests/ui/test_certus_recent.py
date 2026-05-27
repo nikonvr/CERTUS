@@ -13,7 +13,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def _isolated_store(monkeypatch, tmp_path):
     """Force the in-memory fallback store for each test (no QSettings pollution)."""
-    import certus_recent as m
+    import certus.ui.certus_recent as m
 
     monkeypatch.setattr(m, "_qs_settings", lambda: None)
     m._MEMORY_STORE.clear()
@@ -27,7 +27,7 @@ def _isolated_store(monkeypatch, tmp_path):
 
 
 def test_record_and_list_simple(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     f = tmp_path / "config.json"
     f.write_text("{}", encoding="utf-8")
@@ -38,7 +38,7 @@ def test_record_and_list_simple(tmp_path):
 
 
 def test_record_moves_existing_to_top(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     a = tmp_path / "a.json"; a.write_text("{}")
     b = tmp_path / "b.json"; b.write_text("{}")
@@ -55,7 +55,7 @@ def test_record_moves_existing_to_top(tmp_path):
 
 
 def test_cap_is_enforced(tmp_path):
-    from certus_recent import MAX_RECENTS_PER_CATEGORY, RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import MAX_RECENTS_PER_CATEGORY, RecentCategories, list_recent, record_recent
 
     paths = []
     for i in range(MAX_RECENTS_PER_CATEGORY + 5):
@@ -71,7 +71,7 @@ def test_cap_is_enforced(tmp_path):
 
 
 def test_list_recent_drops_missing_by_default(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     existing = tmp_path / "existing.json"
     existing.write_text("{}")
@@ -90,7 +90,7 @@ def test_list_recent_drops_missing_by_default(tmp_path):
 
 
 def test_forget_and_clear(tmp_path):
-    from certus_recent import RecentCategories, clear_recent, forget_recent, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, clear_recent, forget_recent, list_recent, record_recent
 
     a = tmp_path / "a.json"; a.write_text("{}")
     b = tmp_path / "b.json"; b.write_text("{}")
@@ -106,7 +106,7 @@ def test_forget_and_clear(tmp_path):
 
 
 def test_categories_are_isolated(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     a = tmp_path / "a.json"; a.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(a))
@@ -115,7 +115,7 @@ def test_categories_are_isolated(tmp_path):
 
 
 def test_empty_or_invalid_paths_are_ignored(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     record_recent(RecentCategories.CONFIG, "")
     record_recent(RecentCategories.CONFIG, None)  # type: ignore[arg-type]
@@ -123,7 +123,7 @@ def test_empty_or_invalid_paths_are_ignored(tmp_path):
 
 
 def test_short_label_truncates_nicely():
-    from certus_recent import short_label
+    from certus.ui.certus_recent import short_label
 
     # Short input: returned verbatim (abspath)
     assert short_label("test.json").endswith("test.json")
@@ -136,7 +136,7 @@ def test_short_label_truncates_nicely():
 
 
 def test_same_path_is_case_insensitive_and_normalised(tmp_path):
-    from certus_recent import RecentCategories, list_recent, record_recent
+    from certus.ui.certus_recent import RecentCategories, list_recent, record_recent
 
     a = tmp_path / "Mixed.json"
     a.write_text("{}")
@@ -154,7 +154,7 @@ def test_same_path_is_case_insensitive_and_normalised(tmp_path):
 
 
 def test_u5_certus_base_app_exposes_recent_hooks():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     for attr in ("_record_recent_config", "list_recent_configs", "open_recent_configs"):
         assert hasattr(CertusBaseApp, attr), f"Missing {attr!r}"
@@ -162,8 +162,8 @@ def test_u5_certus_base_app_exposes_recent_hooks():
 
 def test_u5_record_recent_config_is_called_on_save(tmp_path, monkeypatch):
     """Recording is best-effort; verify direct helper path uses the registry."""
-    from certus_recent import RecentCategories, list_recent
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_recent import RecentCategories, list_recent
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         logger = None
@@ -175,8 +175,8 @@ def test_u5_record_recent_config_is_called_on_save(tmp_path, monkeypatch):
 
 
 def test_u5_list_recent_configs_reads_from_registry(tmp_path):
-    from certus_recent import RecentCategories, record_recent
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_recent import RecentCategories, record_recent
+    from certus.ui.certus_ui import CertusBaseApp
 
     f = tmp_path / "c.json"; f.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(f))
@@ -190,8 +190,8 @@ def test_u5_list_recent_configs_reads_from_registry(tmp_path):
 
 def test_u5_default_commands_surface_recent_when_available(tmp_path):
     """When MRU is non-empty, the "Open recent" entry is added to the palette."""
-    from certus_recent import RecentCategories, record_recent
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_recent import RecentCategories, record_recent
+    from certus.ui.certus_ui import CertusBaseApp
 
     f = tmp_path / "c.json"; f.write_text("{}")
     record_recent(RecentCategories.CONFIG, str(f))
@@ -215,7 +215,7 @@ def test_u5_default_commands_surface_recent_when_available(tmp_path):
 
 
 def test_u5_default_commands_hide_recent_when_empty():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         list_recent_configs = CertusBaseApp.list_recent_configs

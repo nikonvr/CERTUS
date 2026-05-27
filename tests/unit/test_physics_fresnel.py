@@ -24,7 +24,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     calculate_RT_single_layer_single,
     calculate_reflection_single,
     calculate_reflection_array,

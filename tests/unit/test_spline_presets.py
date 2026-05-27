@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spline_presets import (
+from certus.spline.spline_presets import (
     _interp_n_L_linear_on_sigma,
     _project_nb2o5_preset_to_sigma_knots,
     _project_sio2_preset_to_sigma_knots,

@@ -97,7 +97,7 @@ from CERTUS_INDEX import (  # noqa: E402
 )
 
 
-from _certus_physics_impl import (  # noqa: E402
+from certus.core._certus_physics_impl import (  # noqa: E402
 
 
     calculate_bare_substrate_RT,

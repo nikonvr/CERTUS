@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     MaterialDatabase,
     SELLMEIER_COEFFS_BY_ID,
     SUBSTRATE_MIN_LAMBDA,

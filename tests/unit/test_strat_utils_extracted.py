@@ -13,7 +13,7 @@ import threading
 import pytest
 
 # --- Import depuis le module cible (chemin direct après extraction) ---
-from certus_strat_context import PlotCache, ThreadSafeCounter
+from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter
 
 
 # =============================================================================

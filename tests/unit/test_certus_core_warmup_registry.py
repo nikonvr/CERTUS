@@ -18,7 +18,7 @@ import time
 
 import pytest
 
-import certus_core
+import certus.core.certus_core as certus_core
 
 
 @pytest.fixture(autouse=True)

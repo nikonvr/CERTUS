@@ -11,7 +11,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     TWO_PI,
     compute_TMM_generic,
     compute_TMM_single_point_k0,

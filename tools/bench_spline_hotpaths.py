@@ -10,16 +10,16 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
     SIGMA_KNOTS_MIN_SEP_REL,
     n_lambda_rising_with_wavelength_penalty,
 )
-from spline_objective import (
+from certus.spline.spline_objective import (
     sigma_knots_decode,
     _interpolate_along_sigma,
     _cached_cubic_interp_matrix_inner,
 )
-from spline_smart_init import interp_n_L_pwlnk_to_sigmas
+from certus.spline.spline_smart_init import interp_n_L_pwlnk_to_sigmas
 
 
 def bench(label: str, fn, n_iter: int = 200) -> tuple[float, object]:

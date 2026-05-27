@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from certus_core import get_materials_db_hash
+from certus.core.certus_core import get_materials_db_hash
 
 
 EXPECTED_MATERIALS_V1_SHA256 = "b72b847d82264169ca83fa43f459ecf4c6d72e292d900d32b8a1673d14a0c8ee"

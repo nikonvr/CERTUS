@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from certus_spectral_workers import EvalWorkerRequest, EvalWorkerResult
+from certus.workers.certus_spectral_workers import EvalWorkerRequest, EvalWorkerResult
 
 
 @pytest.mark.unit

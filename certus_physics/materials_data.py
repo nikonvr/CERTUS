@@ -22,7 +22,7 @@ import numpy as np
 
 from numba import njit
 
-from certus_errors import CertusError, CertusFileError, CertusMaterialError
+from certus.utils.errors import CertusError, CertusFileError, CertusMaterialError
 
 
 

@@ -40,7 +40,7 @@ class TestCERTUSIndex:
     )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
@@ -50,7 +50,7 @@ class TestCERTUSIndex:
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -111,7 +111,7 @@ class TestCERTUSStrat:
     )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
@@ -121,7 +121,7 @@ class TestCERTUSStrat:
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -183,7 +183,7 @@ class TestCERTUSMetalSingle:
     )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
@@ -194,7 +194,7 @@ class TestCERTUSMetalSingle:
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -259,7 +259,7 @@ class TestCERTUSMetalBilayer:
     )
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
@@ -270,7 +270,7 @@ class TestCERTUSMetalBilayer:
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -308,8 +308,8 @@ class TestModulesIntegration:
     def test_modules_core_integration(self):
         """Test the modules ↔ core integration."""
         try:
-            from certus_core import get_logger, get_resource_path
-            from certus_ui import CertusTheme
+            from certus.core.certus_core import get_logger, get_resource_path
+            from certus.ui.certus_ui import CertusTheme
 
             logger = get_logger()
             theme = CertusTheme
@@ -339,7 +339,7 @@ class TestModulesIntegration:
     def test_modules_error_handling(self):
         """Test la gestion d'errors dans les modules."""
         try:
-            from certus_errors import CertusError, CertusValidationError
+            from certus.utils.errors import CertusError, CertusValidationError
 
             # Test que les exceptions sont disponibles
             error = CertusError("Test error")

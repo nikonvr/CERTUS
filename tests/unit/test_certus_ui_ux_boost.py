@@ -13,7 +13,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QWidget, QPushButton, QMainWindow
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     CertusStepper,
     CertusCollapsible,
     CertusStatusPill,
@@ -49,7 +49,7 @@ pytestmark = pytest.mark.skipif(not QT_AVAILABLE, reason="PyQt6 not available")
 @pytest.fixture
 def clean_last_dir():
     """Reset the last dir settings for clean state."""
-    with patch("certus_ui.QSettings") as mock_settings:
+    with patch("certus.ui.certus_ui.QSettings") as mock_settings:
         yield mock_settings
 
 
@@ -77,8 +77,8 @@ class TestUXComponentsBoost:
         content = QWidget()
         
         # Mock animations to run synchronously
-        with patch("certus_animations.fade_out", side_effect=lambda w, **k: w.setVisible(False)), \
-             patch("certus_animations.fade_in", side_effect=lambda w, **k: w.setVisible(True)):
+        with patch("certus.ui.certus_animations.fade_out", side_effect=lambda w, **k: w.setVisible(False)), \
+             patch("certus.ui.certus_animations.fade_in", side_effect=lambda w, **k: w.setVisible(True)):
             
             collapsible = CertusCollapsible("Options", content, expanded=True, parent=None)
             assert collapsible is not None
@@ -213,11 +213,11 @@ class TestUXComponentsBoost:
         assert toggle is not None
         
         # Mock functions called by toggle
-        with patch("certus_ui.load_theme_config", return_value="light"), \
-             patch("certus_ui.save_theme_config") as mock_save, \
-             patch("certus_ui.CertusTheme.configure") as mock_conf, \
-             patch("certus_ui.update_global_plot_config") as mock_plot, \
-             patch("certus_ui.CertusTheme.apply_to_app") as mock_apply_app:
+        with patch("certus.ui.certus_ui.load_theme_config", return_value="light"), \
+             patch("certus.ui.certus_ui.save_theme_config") as mock_save, \
+             patch("certus.ui.certus_ui.CertusTheme.configure") as mock_conf, \
+             patch("certus.ui.certus_ui.update_global_plot_config") as mock_plot, \
+             patch("certus.ui.certus_ui.CertusTheme.apply_to_app") as mock_apply_app:
             
             toggle.toggle()
             mock_save.assert_called_with("dark")
@@ -251,7 +251,7 @@ class TestUXComponentsBoost:
 
     def test_custom_formatters(self, qapp) -> None:
         _ = qapp
-        from certus_core import CertusConsoleFormatter, CertusGuiFormatter
+        from certus.core.certus_core import CertusConsoleFormatter, CertusGuiFormatter
         import logging
         
         # Test CertusConsoleFormatter with color
@@ -403,7 +403,7 @@ class TestCertusBaseAppBoost:
         assert len(cmds) > 0
         
         # Test register command
-        from certus_command_palette import CommandAction
+        from certus.utils.certus_command_palette import CommandAction
         new_cmd = CommandAction(
             id="test.action",
             title="Test Action",
@@ -417,11 +417,11 @@ class TestCertusBaseAppBoost:
         _ = qapp
         app = DummyApp()
         
-        with patch("certus_ui.load_theme_config", return_value="light"), \
-             patch("certus_ui.save_theme_config") as mock_save, \
-             patch("certus_ui.CertusTheme.configure") as mock_conf, \
-             patch("certus_ui.CertusTheme.apply_to_app") as mock_apply, \
-             patch("certus_ui.update_global_plot_config") as mock_plot:
+        with patch("certus.ui.certus_ui.load_theme_config", return_value="light"), \
+             patch("certus.ui.certus_ui.save_theme_config") as mock_save, \
+             patch("certus.ui.certus_ui.CertusTheme.configure") as mock_conf, \
+             patch("certus.ui.certus_ui.CertusTheme.apply_to_app") as mock_apply, \
+             patch("certus.ui.certus_ui.update_global_plot_config") as mock_plot:
             
             app._toggle_theme()
             mock_save.assert_called_with("dark")
@@ -432,26 +432,26 @@ class TestCertusBaseAppBoost:
         app = DummyApp()
         
         # Onboarding tour
-        with patch("certus_tours_catalog.run_app_onboarding", return_value="success") as mock_run:
+        with patch("certus.ui.certus_tours_catalog.run_app_onboarding", return_value="success") as mock_run:
             res = app.run_onboarding_tour(force=True)
             assert res == "success"
             
-        with patch("certus_onboarding.reset_onboarding") as mock_reset:
+        with patch("certus.ui.certus_onboarding.reset_onboarding") as mock_reset:
             app.reset_onboarding_tour()
             mock_reset.assert_called_once_with("CERTUS")
-
+ 
         # Open command palette and shortcuts overlay
-        with patch("certus_command_palette.open_command_palette") as mock_palette:
+        with patch("certus.utils.certus_command_palette.open_command_palette") as mock_palette:
             app.open_command_palette()
             mock_palette.assert_called_once()
             
-        with patch("certus_shortcuts_overlay.open_shortcuts_overlay") as mock_shortcuts:
+        with patch("certus.ui.certus_shortcuts_overlay.open_shortcuts_overlay") as mock_shortcuts:
             app.open_shortcuts_overlay()
             mock_shortcuts.assert_called_once()
 
     def test_load_inter_font(self, qapp) -> None:
         _ = qapp
-        from certus_theme import CertusTheme
+        from certus.ui.certus_theme import CertusTheme
         
         # Test loading of Inter font does not crash, even with mock url failures
         with patch("urllib.request.urlopen", side_effect=Exception("offline")):

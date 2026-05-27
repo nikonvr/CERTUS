@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_strat_service import (
+from certus.utils.certus_strat_service import (
     StratPayloadParts,
     StratStrategyService,
     generate_noise_array,

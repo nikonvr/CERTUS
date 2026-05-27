@@ -16,7 +16,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from certus_core import (
+from certus.core.certus_core import (
     CFG,
     CAUCHY_PRESETS,
     CertusConfigError,
@@ -61,7 +61,7 @@ from certus_core import (
 class TestConfigManager:
     def test_set_and_get(self, tmp_path, monkeypatch):
         f = tmp_path / "test_cfg.json"
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("test_cfg.json", "default_val", "my_key")
         assert cm.get() == "default_val"
 
@@ -69,7 +69,7 @@ class TestConfigManager:
         assert cm.get() == "new_val"
 
     def test_reload(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("test_cfg2.json", 42, "number")
         cm.save(99)
         cm._value = 0  # simulate stale
@@ -79,7 +79,7 @@ class TestConfigManager:
     def test_load_corrupt_file(self, tmp_path, monkeypatch):
         f = tmp_path / "bad.json"
         f.write_text("not json at all {{{")
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("bad.json", "fallback", "k")
         assert cm.get() == "fallback"
 
@@ -317,14 +317,14 @@ class TestCoreCoverageBoost:
 
     def test_get_materials_db_hash_os_error(self, monkeypatch):
         # If read_bytes raises OSError, it should catch it and return None
-        monkeypatch.setattr("certus_core.get_resource_path", lambda x: __file__)
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda x: __file__)
         def mock_read_bytes():
             raise OSError("Access denied")
         monkeypatch.setattr("pathlib.Path.read_bytes", lambda self: mock_read_bytes())
         assert get_materials_db_hash() is None
 
     def test_get_safe_worker_count_frozen(self, monkeypatch):
-        monkeypatch.setattr("certus_core.is_frozen", lambda: True)
+        monkeypatch.setattr("certus.core.certus_core.is_frozen", lambda: True)
         assert get_safe_worker_count() >= 1
         assert get_safe_worker_count(4) == 4
 
@@ -341,7 +341,7 @@ class TestCoreCoverageBoost:
         # Make attach_jsonl_handler raise ValueError to cover exception path
         def mock_attach(*args):
             raise TypeError("Mock error")
-        monkeypatch.setattr("certus_core.attach_jsonl_handler", mock_attach)
+        monkeypatch.setattr("certus.core.certus_core.attach_jsonl_handler", mock_attach)
         logger = setup_logging(log_file=None, level=logging.INFO)
         assert logger is not None
 
@@ -352,7 +352,7 @@ class TestCoreCoverageBoost:
         
         # Test handle_exception compatibility wrap
         calls = []
-        monkeypatch.setattr("certus_core.handle_exception", lambda *args: calls.append(args))
+        monkeypatch.setattr("certus.core.certus_core.handle_exception", lambda *args: calls.append(args))
         SystemConfig.handle_exception(ValueError, ValueError("test"), None)
         assert len(calls) == 1
 
@@ -377,21 +377,21 @@ class TestCoreCoverageBoost:
                 sys.modules["PyQt6.QtSvgWidgets"] = orig_val
 
     def test_save_error(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / "non_existent_directory" / name))
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / "non_existent_directory" / name))
         cm = ConfigManager("test_err_save.json", "default", "key")
         # Save to a path where directories do not exist, triggering OSError/IOError
         assert cm.save("val") is False
 
     def test_export_config_wrappers(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
-        from certus_core import load_export_config, save_export_config, get_export_config
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus.core.certus_core import load_export_config, save_export_config, get_export_config
         save_export_config(False)
         assert get_export_config() is False
         assert load_export_config() is False
 
     def test_theme_config_wrappers(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
-        from certus_core import load_theme_config, save_theme_config
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus.core.certus_core import load_theme_config, save_theme_config
         save_theme_config("dark")
         assert load_theme_config() == "dark"
 
@@ -410,15 +410,15 @@ class TestCoreCoverageBoost:
         handler.emit(record)
 
     def test_setup_numba_cache_and_build_runtime(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus_core.get_resource_path", lambda name: str(tmp_path / name))
-        from certus_core import build_runtime
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        from certus.core.certus_core import build_runtime
         runtime = build_runtime(log_file=str(tmp_path / "runtime.log"), level=logging.DEBUG, n_cores=2)
         assert runtime.n_cores == 2
         assert runtime.logger is not None
 
     def test_wait_warmup_with_thread(self):
         import threading
-        from certus_core import _WarmupRegistry
+        from certus.core.certus_core import _WarmupRegistry
         t = threading.Thread(target=lambda: None)
         t.start()
         _WarmupRegistry.thread = t
@@ -432,19 +432,19 @@ class TestCoreCoverageBoost:
         assert "C:\\test\\bin\\test.json" in p or "C:/test/bin/test.json" in p
 
     def test_setup_module_logging(self, tmp_path):
-        from certus_core import setup_module_logging
+        from certus.core.certus_core import setup_module_logging
         logger = setup_module_logging("TEST_MODULE", log_file=str(tmp_path / "test_module.log"))
         assert logger is not None
         assert logger.name == "CERTUS"
 
     def test_create_module_environment(self, tmp_path):
-        from certus_core import create_module_environment
+        from certus.core.certus_core import create_module_environment
         env = create_module_environment(__file__, "TEST_MODULE")
         assert env["module_name"] == "TEST_MODULE"
         assert env["script_dir"] is not None
 
     def test_bootstrap_app(self):
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
         script_dir = bootstrap_app(__file__)
         assert script_dir is not None
         

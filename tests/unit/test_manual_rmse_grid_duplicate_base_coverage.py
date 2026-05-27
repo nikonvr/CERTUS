@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from spline_profile_corridors import _manual_grid_tag_base_on_duplicate_discard
+from certus.spline.spline_profile_corridors import _manual_grid_tag_base_on_duplicate_discard
 
 
 def test_incoming_extra_does_not_retag_duplicate_slot() -> None:

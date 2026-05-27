@@ -65,7 +65,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
 
 
     cost_numba_fast,
@@ -269,7 +269,7 @@ def build_test_stack(n_layers=10):
     # Targets: T = 0.5 over full range
 
 
-    from _certus_physics_impl import Target
+    from certus.core._certus_physics_impl import Target
 
 
 
@@ -1082,7 +1082,7 @@ def test_edge_cases():
     nSub = np.full(len(wls), 1.52 + 0j, dtype=np.complex128)
 
 
-    from _certus_physics_impl import Target
+    from certus.core._certus_physics_impl import Target
 
 
 

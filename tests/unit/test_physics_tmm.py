@@ -8,7 +8,7 @@ import pytest
 
 def test_b4_tmm_empty_stack_matches_single_interface():
     """Empty multilayer stack should reduce to Air/Sub interface Fresnel values."""
-    from _certus_physics_impl import compute_TMM_single_point_k0
+    from certus.core._certus_physics_impl import compute_TMM_single_point_k0
 
     wl_nm = 550.0
     k0 = 2.0 * np.pi / wl_nm
@@ -25,7 +25,7 @@ def test_b4_tmm_empty_stack_matches_single_interface():
 
 def test_b4_tmm_exact_empty_stack_matches_front_and_back_interface_values():
     """Exact empty-stack TMM should expose the same interface reflectance both ways."""
-    from _certus_physics_impl import compute_TMM_single_point_k0_exact
+    from certus.core._certus_physics_impl import compute_TMM_single_point_k0_exact
 
     wl_nm = 550.0
     k0 = 2.0 * np.pi / wl_nm
@@ -48,7 +48,7 @@ def test_b4_tmm_exact_empty_stack_matches_front_and_back_interface_values():
 
 def test_b4_compute_rt_from_identity_matrix_matches_single_interface():
     """The R/T extractor should reduce to a bare Fresnel interface for M=I."""
-    from _certus_physics_impl import compute_RT_from_matrix
+    from certus.core._certus_physics_impl import compute_RT_from_matrix
 
     r, t = compute_RT_from_matrix(
         1.0 + 0.0j,
@@ -66,7 +66,7 @@ def test_b4_compute_rt_from_identity_matrix_matches_single_interface():
 
 def test_b4_compute_rt_from_matrix_zeroes_transmission_for_near_zero_incident_real_part():
     """The low-level R/T extractor should clamp T to zero when Re(n_inc) is tiny."""
-    from _certus_physics_impl import compute_RT_from_matrix
+    from certus.core._certus_physics_impl import compute_RT_from_matrix
 
     r, t = compute_RT_from_matrix(
         1.0 + 0.0j,
@@ -83,7 +83,7 @@ def test_b4_compute_rt_from_matrix_zeroes_transmission_for_near_zero_incident_re
 
 def test_b4_compute_rt_from_matrix_returns_zeros_when_system_admittance_cancels():
     """The low-level R/T extractor should fail safely when the denominator vanishes."""
-    from _certus_physics_impl import compute_RT_from_matrix
+    from certus.core._certus_physics_impl import compute_RT_from_matrix
 
     r, t = compute_RT_from_matrix(
         1.0 + 0.0j,

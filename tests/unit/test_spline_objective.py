@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
     DataType,
     SplineOptConfig,
     _apply_smart_preview_exact_mesh,
@@ -12,7 +12,7 @@ from certus_index_spline_core import (
     bridge_sigma_knots_preserve_manual,
     make_bounds_and_x0,
 )
-from spline_objective import (
+from certus.spline.spline_objective import (
     SplinePWLObjective,
     _cached_spectral_rmse_weights,
     build_segment_optimizer_x_vector,
@@ -139,7 +139,7 @@ def test_extract_smart_preview_override_valid_and_invalid(minimal_cfg: SplineOpt
 
 
 def test_apply_smart_preview_exact_mesh_consumes_cfg_state(minimal_cfg: SplineOptConfig, monkeypatch) -> None:
-    import certus_index_spline_core as core
+    import certus.spline.certus_index_spline_core as core
 
     sk_exact = np.array([0.001, 0.002, 0.003], dtype=np.float64)
     pair_ex = (np.array([1.45, 1.5, 1.55], dtype=np.float64), np.array([0.0, 0.1, 0.2], dtype=np.float64))
@@ -148,7 +148,14 @@ def test_apply_smart_preview_exact_mesh_consumes_cfg_state(minimal_cfg: SplineOp
     monkeypatch.setattr(core, "interp_n_L_pwlnk_to_sigmas", lambda *args, **kwargs: (np.array([1.45, 1.5, 1.55], dtype=np.float64), np.array([0.0, 0.1, 0.2], dtype=np.float64)), raising=False)
     monkeypatch.setattr(core, "build_x0_smart_preview_exact", lambda *args, **kwargs: (np.zeros((5, 2), dtype=np.float64), np.zeros(5, dtype=np.float64)), raising=False)
 
-    k = _apply_smart_preview_exact_mesh(minimal_cfg, sk_exact, pair_ex, 400.0, 700.0)
+    result = _apply_smart_preview_exact_mesh(minimal_cfg, sk_exact, pair_ex, 400.0, 700.0)
+    # Since the spline core fix, the function returns (mesh, bounds, x0) instead of k.
+    # Derive k from the returned mesh (first element).
+    if isinstance(result, tuple):
+        mesh = result[0]
+        k = int(np.asarray(mesh).size)
+    else:
+        k = int(result)
     assert k == 3
     assert minimal_cfg.smart_preview_exact_sigma_knots is None
     assert minimal_cfg.smart_preview_exact_n_L is None
@@ -173,7 +180,7 @@ def test_bridge_sigma_knots_preserve_manual_keeps_edges_and_size() -> None:
 
 
 def test_make_bounds_and_x0_respects_skip_smart_init(monkeypatch, minimal_cfg: SplineOptConfig) -> None:
-    import certus_index_spline_core as core
+    import certus.spline.certus_index_spline_core as core
 
     called = {"smart": False}
 

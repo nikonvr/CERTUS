@@ -28,7 +28,7 @@ def main() -> int:
 
     QApplication(sys.argv)
 
-    from certus_core import SUBSTRATE_LIST, wait_warmup
+    from certus.core.certus_core import SUBSTRATE_LIST, wait_warmup
 
     wait_warmup()
 

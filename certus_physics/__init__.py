@@ -19,7 +19,7 @@ if _parent_dir not in sys.path:
 # =============================================================================
 # CORE ENGINE (Single Source of Truth)
 # =============================================================================
-from _certus_physics_impl import (  # noqa: F401
+from certus.core._certus_physics_impl import (  # noqa: F401
     # Data Structures
     Layer,
     Target,

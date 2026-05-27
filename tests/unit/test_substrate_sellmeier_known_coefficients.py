@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 csi = pytest.importorskip("certus_substrate_index", reason="certus_substrate_index unavailable")
-from certus_core import SELLMEIER_COEFFS_BY_ID
+from certus.core.certus_core import SELLMEIER_COEFFS_BY_ID
 
 
 @pytest.mark.unit

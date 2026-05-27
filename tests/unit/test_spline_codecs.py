@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from certus_core import N_MAX_LIMIT, N_MIN_LIMIT
-from certus_index_spline_core import (
+from certus.core.certus_core import N_MAX_LIMIT, N_MIN_LIMIT
+from certus.spline.certus_index_spline_core import (
     K_FLOOR_DEFAULT,
     SIGMA_KNOTS_MIN_SEP_REL,
     _enforce_sigma_min_sep,
@@ -15,7 +15,7 @@ from certus_index_spline_core import (
     decode_xi_n_to_physical_n,
     encode_physical_n_to_xi_n,
 )
-from spline_objective import (
+from certus.spline.spline_objective import (
     physical_nodes_to_x_slice_n,
     sigma_knots_decode,
     sigma_knots_encode,

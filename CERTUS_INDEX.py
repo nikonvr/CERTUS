@@ -25,7 +25,7 @@ import time
 
 import traceback
 
-from certus_core import create_module_environment
+from certus.core.certus_core import create_module_environment
 
 # =============================================================================
 
@@ -48,7 +48,7 @@ import pandas as pd
 from numba import njit, prange
 
 from enum import Enum, auto
-from certus_index_core import (
+from certus.core.certus_index_core import (
     substrateMode,
     OptimizationConfig,
     OptimizationResults,
@@ -63,8 +63,8 @@ from certus_index_core import (
     _optimize_point_kernel,
     _optimize_all_points_batch,
 )
-from certus_index_workers import IRPGlobalCallback, IRStage2Callback, IRSplineCallback, IRGlobalModelWorker, Phase1Callback, Phase2PolishCallback, OptimizationWorker, IndexBeamAnalysisWorker
-from certus_index_ui import (
+from certus.workers.certus_index_workers import IRPGlobalCallback, IRStage2Callback, IRSplineCallback, IRGlobalModelWorker, Phase1Callback, Phase2PolishCallback, OptimizationWorker, IndexBeamAnalysisWorker
+from certus.ui.certus_index_ui import (
     CertusIndexApp,
     _detected_data_type_label,
     _source_type_label,
@@ -76,7 +76,7 @@ from certus_index_ui import (
 
 
 
-from certus_core import (
+from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
     K_MAX_LIMIT,
@@ -99,7 +99,7 @@ from certus_core import (
     certus_timestamp_file,
 )
 
-from certus_data import (
+from certus.utils.certus_data import (
     generate_html_report,
 )
 
@@ -131,7 +131,7 @@ from certus_physics import (
     SplineBasisCache,
 )
 
-from certus_index_utils import (
+from certus.utils.certus_index_utils import (
     spectral_rmse_weights,
     sellmeier_2poles_eval_nj,
     sellmeier_2poles_eval,
@@ -152,11 +152,11 @@ from certus_index_utils import (
     calculate_index_rmse,
 )
 
-from certus_core import CertusFacadeModule
-import certus_index_core
-import certus_index_workers
-import certus_index_ui
-import certus_index_utils
+from certus.core.certus_core import CertusFacadeModule
+import certus.core.certus_index_core as certus_index_core
+import certus.workers.certus_index_workers as certus_index_workers
+import certus.ui.certus_index_ui as certus_index_ui
+import certus.utils.certus_index_utils as certus_index_utils
 
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_index_core,
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
 
     # Configure logging with centralized helper
-    from certus_core import setup_module_logging
+    from certus.core.certus_core import setup_module_logging
     setup_module_logging("CERTUS_INDEX", log_file="certus_index.log")
 
     # High DPI scaling (Must be set BEFORE creating QApplication)
@@ -182,11 +182,11 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # Standardized initialization with COMMON
-    from certus_ui import init_certus_app
+    from certus.ui.certus_ui import init_certus_app
     init_certus_app("CERTUS-INDEX", app=app)
 
     # --- SPLASH SCREEN ---
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
     splash = create_splash("Initializing Physics Engine...")
 
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     logging.info("Waiting for JIT Warmup...")
 
-    from certus_core import wait_warmup
+    from certus.core.certus_core import wait_warmup
 
     wait_warmup()
 

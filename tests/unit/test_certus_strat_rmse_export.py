@@ -48,7 +48,7 @@ def test_extract_best_rmse_from_final_results():
 
 def test_extract_best_rmse_raises_on_null_rmse():
     from CERTUS_STRAT import extract_best_rmse
-    from certus_errors import PhysicsConvergenceError
+    from certus.utils.errors import PhysicsConvergenceError
     
     # Une RMSE de 0.0 est physiquement impossible pour un signal de dépôt réel bruité
     final_results = {

@@ -16,11 +16,11 @@ import numpy as np
 
 from certus_physics import clip_to_bounds
 
-from certus_index_utils import _transmittance_absolute_from_nk
+from certus.utils.certus_index_utils import _transmittance_absolute_from_nk
 
 
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
 
     SPLINE_PWL_K_NODES,
 
@@ -42,9 +42,9 @@ from certus_index_spline_core import (
 
 )
 
-from spline_objective import SplinePWLObjective
+from certus.spline.spline_objective import SplinePWLObjective
 
-from spline_smart_init import (
+from certus.spline.spline_smart_init import (
 
     _build_smart_preview_grids,
 
@@ -448,7 +448,7 @@ def test_smart_init_sweep_starts_from_current_thickness() -> None:
 
     d0 = 2800.0
 
-    from spline_smart_init import smart_init_sweep_node_thickness_rmse
+    from certus.spline.spline_smart_init import smart_init_sweep_node_thickness_rmse
 
 
 
@@ -530,7 +530,7 @@ def test_bridge_mesh_reduces_manual_to_worker_rmse_jump_with_ir_extension() -> N
 
     # Génère une cible parfaitement cohérente avec le modèle source.
 
-    from spline_objective import nk_from_x_pwlnk
+    from certus.spline.spline_objective import nk_from_x_pwlnk
 
     n_l, k_l = nk_from_x_pwlnk(
 

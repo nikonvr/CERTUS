@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from certus_index_spline_core import DataType, SplineOptConfig
-from spline_objective import SplinePWLObjective, decompose_spline_pwl_objective
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig
+from certus.spline.spline_objective import SplinePWLObjective, decompose_spline_pwl_objective
 
 
 def _cfg(**kwargs) -> SplineOptConfig:

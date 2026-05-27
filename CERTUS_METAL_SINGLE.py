@@ -54,7 +54,7 @@ import scipy.optimize
 from scipy.interpolate import CubicSpline
 
 
-from certus_core import create_module_environment, setup_logging
+from certus.core.certus_core import create_module_environment, setup_logging
 
 
 # =============================================================================
@@ -105,13 +105,13 @@ from PyQt6.QtWidgets import (
 # --- 1. CORE (Config, Constants, Utils) ---
 
 
-from certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file
+from certus.core.certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, NUMERICAL_FAULT_EXCEPTIONS
 
 
 # --- 4. DATA (IO, Reporting) ---
 
 
-from certus_data import (
+from certus.utils.certus_data import (
     OPENPYXL_AVAILABLE,
     read_data_file_robust,
     to_excel_robust,
@@ -121,7 +121,7 @@ from certus_data import (
 # --- 5. ERRORS (Validation, Messages) ---
 
 
-from certus_errors import (
+from certus.utils.errors import (
     get_error_message,
     show_error,
 )
@@ -130,7 +130,7 @@ from certus_errors import (
 # --- 5. METAL COMMON ---
 
 
-from certus_metal_common import (
+from certus.metal.certus_metal_common import (
     DEFAULT_EM_MAX,
     DEFAULT_EM_MIN,
     DEFAULT_MAXITER,
@@ -169,7 +169,7 @@ from certus_physics import (
 # --- 3. UI (Theme, Widgets) ---
 
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     CertusCard,
     CertusScientificPlot,
     CertusTheme,
@@ -184,7 +184,7 @@ from certus_ui import (
 )
 
 
-from certus_load_summary import build_summary_plain_text, show_load_summary_dialog
+from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 
 
 # Install exception handler
@@ -208,7 +208,7 @@ setup_pyqtgraph_defaults()
 # =============================================================================
 
 
-# Constants imported from certus_metal_common
+# Constants imported from certus.metal.certus_metal_common
 
 
 # Silicon Data: clues.xlsx -> Si-substrate (Single Source of Truth), accessed via certus_physics.
@@ -1361,7 +1361,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             return
 
         try:
-            from certus_data import load_spectrum_columns
+            from certus.utils.certus_data import load_spectrum_columns
 
             roles = {0: "lambda", 1: "R", 2: "T", 3: "Rback"}
 
@@ -1874,7 +1874,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             return
 
         try:
-            from certus_data import ReportSection
+            from certus.utils.certus_data import ReportSection
 
             ts = certus_timestamp_file()
 
@@ -2334,7 +2334,7 @@ if __name__ == "__main__":
 
     # --- SPLASH SCREEN ---
 
-    from certus_splash import create_splash
+    from certus.ui.certus_splash import create_splash
 
     splash = create_splash("Initializing Metal Engine (Single Layer)...")
 

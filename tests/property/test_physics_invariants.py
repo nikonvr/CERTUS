@@ -32,7 +32,7 @@ from hypothesis import given, settings, Verbosity
 
 # PARE-FEU : utiliser calculate_transmission_single (accepte n_sub complex).
 # Voir docstring du module pour la justification.
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     calculate_transmission_single,
     calculate_RT_vectorized_real,
 )

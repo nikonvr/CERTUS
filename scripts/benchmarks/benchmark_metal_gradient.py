@@ -15,7 +15,7 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 
 
-from _certus_physics_impl import _compute_metal_tmm_gradient_kernel
+from certus.core._certus_physics_impl import _compute_metal_tmm_gradient_kernel
 
 
 

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from certus_metrology import (
+from certus.core.certus_metrology import (
     ValidationStatus,
     InputFingerprint,
     SoftwareEnv,

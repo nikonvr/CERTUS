@@ -16,7 +16,7 @@ try:
         calculate_RT_vectorized_real,
         get_refractive_index,
     )
-    from certus_core import get_safe_worker_count, get_float_dtype, get_complex_dtype
+    from certus.core.certus_core import get_safe_worker_count, get_float_dtype, get_complex_dtype
 
     PHYSICS_AVAILABLE = True
 except ImportError:

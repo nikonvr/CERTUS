@@ -320,7 +320,7 @@ class SplinePerformanceAnalyzer:
         import scipy.optimize
 
 
-        from certus_core import get_safe_worker_count
+        from certus.core.certus_core import get_safe_worker_count
 
 
 

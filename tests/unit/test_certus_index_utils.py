@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_index_utils import (
+from certus.utils.certus_index_utils import (
     _lam_uniform_grid,
     _ratio_theoretical_from_nk,
     _reflectance_ratio_theoretical_from_nk,

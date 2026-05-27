@@ -487,10 +487,6 @@ if __name__ == "__main__":
 
         test_spline_n_clipping,
 
-        test_thread_attribute_consistency,
-
-        test_no_tlu_params_guard,
-
         test_batch_kernel_output_shape,
 
     ]

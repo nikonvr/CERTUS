@@ -107,7 +107,7 @@ def test_gui_module_syntax(module_name: str) -> None:
 
 def test_spline_report_context_fields() -> None:
     """SplineReportContext dataclass must have all expected fields."""
-    from certus_spline_report import SplineReportContext
+    from certus.utils.certus_spline_report import SplineReportContext
 
     expected = {
         "result",
@@ -125,7 +125,7 @@ def test_spline_report_context_fields() -> None:
 
 def test_spline_report_builder_has_build_report() -> None:
     """SplineReportBuilder must expose build_report(auto=bool)."""
-    from certus_spline_report import SplineReportBuilder
+    from certus.utils.certus_spline_report import SplineReportBuilder
     import inspect
 
     sig = inspect.signature(SplineReportBuilder.build_report)
@@ -136,7 +136,7 @@ def test_spline_report_builder_has_build_report() -> None:
 
 def test_spline_report_builder_no_result_returns_silently() -> None:
     """build_report(auto=True) with result=None should return without error."""
-    from certus_spline_report import SplineReportContext, SplineReportBuilder
+    from certus.utils.certus_spline_report import SplineReportContext, SplineReportBuilder
 
     ctx = SplineReportContext(
         result=None,
@@ -156,7 +156,7 @@ def test_spline_report_builder_no_result_returns_silently() -> None:
 def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
     """build_report must use self.ctx.spectrum_path (not self._last_spectrum_path)."""
     import inspect
-    from certus_spline_report import SplineReportBuilder
+    from certus.utils.certus_spline_report import SplineReportBuilder
 
     source = inspect.getsource(SplineReportBuilder.build_report)
     # The bug was: getattr(self, "_last_spectrum_path", ...)
@@ -168,8 +168,8 @@ def test_spline_report_builder_uses_ctx_spectrum_path() -> None:
 
 
 def test_spline_report_required_symbols_importable() -> None:
-    """All symbols used by build_report must be importable from certus_spline_report."""
-    from certus_spline_report import (
+    """All symbols used by build_report must be importable from certus.utils.certus_spline_report."""
+    from certus.utils.certus_spline_report import (
         SplineReportContext,
         SplineReportBuilder,
         _mergesort_order_lambda,
@@ -178,7 +178,7 @@ def test_spline_report_required_symbols_importable() -> None:
     )
 
     # K_MAX_LIMIT must be available in the module scope
-    import certus_spline_report as mod
+    import certus.utils.certus_spline_report as mod
 
     assert hasattr(mod, "K_MAX_LIMIT"), "K_MAX_LIMIT not found in certus_spline_report"
     assert hasattr(mod, "build_spline_objective_masked_grid"), (
@@ -194,7 +194,7 @@ def test_spline_report_required_symbols_importable() -> None:
 
 def test_mergesort_order_lambda() -> None:
     """_mergesort_order_lambda must return stable sort indices."""
-    from certus_spline_report import _mergesort_order_lambda
+    from certus.utils.certus_spline_report import _mergesort_order_lambda
 
     lam = np.array([500.0, 300.0, 700.0, 300.0])
     order = _mergesort_order_lambda(lam)
@@ -206,7 +206,7 @@ def test_mergesort_order_lambda() -> None:
 
 def test_mergesort_order_lambda_empty() -> None:
     """_mergesort_order_lambda with empty array returns empty indices."""
-    from certus_spline_report import _mergesort_order_lambda
+    from certus.utils.certus_spline_report import _mergesort_order_lambda
 
     order = _mergesort_order_lambda(np.array([]))
     assert order.size == 0
@@ -262,7 +262,7 @@ def test_excel_export_mixin_has_export_method() -> None:
 
 def test_spline_pipeline_has_copy() -> None:
     """spline_pipeline must have _copy (import copy as _copy) at module level."""
-    import spline_pipeline
+    import certus.spline.spline_pipeline as spline_pipeline
 
     assert hasattr(spline_pipeline, "_copy"), (
         "spline_pipeline._copy missing — the import was likely removed by deduplication"
@@ -293,6 +293,6 @@ def test_certus_design_physics_import_unified() -> None:
 
 def test_auto_clean_neighbor_pull_no_copy_error() -> None:
     """The auto_clean tests must not fail with NameError on _copy (regression guard)."""
-    from spline_pipeline import _copy
+    from certus.spline.spline_pipeline import _copy
 
     assert _copy.deepcopy([1, 2, 3]) == [1, 2, 3]

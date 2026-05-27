@@ -19,8 +19,8 @@ import pandas as pd
 from PyQt6.QtCore import QBuffer, QIODevice
 from PyQt6.QtGui import QImage
 
-import certus_data
-from certus_data import (
+import certus.utils.certus_data as certus_data
+from certus.utils.certus_data import (
     read_csv_robust,
     read_excel_robust,
     read_data_file_robust,
@@ -39,8 +39,8 @@ from certus_data import (
     load_spectrum_columns,
     _detect_x_unit,
 )
-import certus_metrology
-from certus_metrology import (
+import certus.core.certus_metrology as certus_metrology
+from certus.core.certus_metrology import (
     RunContext,
     RunManifest,
     ValidationStatus,
@@ -55,7 +55,7 @@ from certus_metrology import (
 def test_metrology_imports_and_exceptions(monkeypatch) -> None:
     # A. Test missing certus_core version & materials DB hash fallback using isolated loader
     # to avoid redefining types in sys.modules["certus_metrology"] which breaks other tests.
-    monkeypatch.setitem(sys.modules, "certus_core", None)
+    monkeypatch.setitem(sys.modules, "certus.core.certus_core", None)
     
     file_path = str(Path(certus_metrology.__file__).resolve())
     loader = SourceFileLoader("certus_metrology_fallback", file_path)
@@ -65,7 +65,7 @@ def test_metrology_imports_and_exceptions(monkeypatch) -> None:
     assert fallback_mod.get_materials_db_hash() == ""
     
     # Restore certus_core
-    monkeypatch.delitem(sys.modules, "certus_core")
+    monkeypatch.delitem(sys.modules, "certus.core.certus_core")
     
     # B. Test missing PyQt6 version detection exception
     monkeypatch.setitem(sys.modules, "PyQt6.QtCore", None)
@@ -139,7 +139,7 @@ def test_read_csv_robust_failures(tmp_path, monkeypatch) -> None:
 @pytest.mark.unit
 def test_excel_openpyxl_not_installed_exception(monkeypatch) -> None:
     # Force openpyxl to be missing
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", False)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", False)
 
     with pytest.raises(ImportError, match="openpyxl required"):
         read_excel_robust("dummy.xlsx")
@@ -151,7 +151,7 @@ def test_excel_openpyxl_not_installed_exception(monkeypatch) -> None:
 @pytest.mark.unit
 def test_read_excel_robust_validations_and_failures(tmp_path, monkeypatch) -> None:
     # Set OPENPYXL_AVAILABLE to True to hit validation blocks
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", True)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
 
     with pytest.raises(ValueError, match="Invalid filepath"):
         read_excel_robust("")
@@ -174,7 +174,7 @@ def test_read_excel_robust_validations_and_failures(tmp_path, monkeypatch) -> No
 
 @pytest.mark.unit
 def test_to_excel_robust_validations(monkeypatch) -> None:
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", True)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
 
     with pytest.raises(ValueError, match="Cannot save empty DataFrame"):
         to_excel_robust(pd.DataFrame(), "dummy.xlsx")
@@ -442,6 +442,6 @@ def test_load_spectrum_columns_edge_cases(tmp_path) -> None:
     assert _detect_x_unit(np.array([])) == "nm"
 
     # D. Test no columns error pathway
-    with patch("certus_data.read_data_file_robust", return_value=pd.DataFrame()):
+    with patch("certus.utils.certus_data.read_data_file_robust", return_value=pd.DataFrame()):
         with pytest.raises(ValueError, match="Spectrum file has no columns"):
             load_spectrum_columns(str(f_um))

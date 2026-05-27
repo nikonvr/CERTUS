@@ -41,9 +41,9 @@ import numpy as np
 
 import pytest
 
-from certus_core import TWO_PI
+from certus.core.certus_core import TWO_PI
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
 
     compute_TMM_generic,
 

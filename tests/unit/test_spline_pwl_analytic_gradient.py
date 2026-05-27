@@ -5,8 +5,8 @@ from __future__ import annotations
 import numpy as np
 from scipy.optimize import approx_fprime
 
-from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-from spline_objective import (
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
+from certus.spline.spline_objective import (
     SplinePWLObjective,
     spline_pwl_analytic_grad_supported,
 )

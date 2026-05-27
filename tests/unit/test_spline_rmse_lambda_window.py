@@ -10,7 +10,7 @@ import pytest
 
 
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
 
     DataType,
 
@@ -32,7 +32,7 @@ from certus_index_spline_core import (
 
 )
 
-from spline_objective import (
+from certus.spline.spline_objective import (
 
     _spline_objective_lam_mask,
 
@@ -218,7 +218,7 @@ def test_smart_init_preview_grid_same_lambda_and_weights_as_objective() -> None:
 
     """Grille lambda masquée + poids quadrature : identiques entre preview Smart Init et objectif spline."""
 
-    from spline_smart_init import _build_smart_preview_grids
+    from certus.spline.spline_smart_init import _build_smart_preview_grids
 
 
 

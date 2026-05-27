@@ -25,7 +25,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from _certus_physics_impl import _compute_gradient_analytic_kernel
+from certus.core._certus_physics_impl import _compute_gradient_analytic_kernel
 
 
 def _build_simple_stack(n_layers: int, n_wls: int, *, absorbing: bool = False, sub_k: float = 0.0):

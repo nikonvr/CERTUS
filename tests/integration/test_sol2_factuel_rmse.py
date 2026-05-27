@@ -19,7 +19,7 @@ from certus_physics import clip_to_bounds
 
 
 
-from certus_index_spline_core import (
+from certus.spline.certus_index_spline_core import (
 
 
     DataType,
@@ -49,10 +49,10 @@ from certus_index_spline_core import (
 )
 
 
-from spline_objective import SplinePWLObjective, decompose_spline_pwl_objective
+from certus.spline.spline_objective import SplinePWLObjective, decompose_spline_pwl_objective
 
 
-from spline_smart_init import interp_n_L_pwlnk_to_sigmas
+from certus.spline.spline_smart_init import interp_n_L_pwlnk_to_sigmas
 
 
 

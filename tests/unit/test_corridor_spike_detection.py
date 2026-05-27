@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from spline_profile_corridors import _detect_corridor_spike
+from certus.spline.spline_profile_corridors import _detect_corridor_spike
 
 
 # ────────────────────────────────────────────────────────────────────

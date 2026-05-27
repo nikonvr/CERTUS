@@ -36,7 +36,7 @@ from pathlib import Path
 import sys
 
 
-from certus_core import (
+from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
     certus_timestamp_display,
@@ -72,7 +72,7 @@ bootstrap_env = create_module_environment(__file__, "CERTUS_HUB")
 script_dir = bootstrap_env["script_dir"]
 
 
-from certus_qt_widgets import (
+from certus.ui.certus_qt_widgets import (
     QApplication,
     QCheckBox,
     QColor,
@@ -100,7 +100,7 @@ from certus_qt_widgets import (
 # Conditional SVG import for logo
 
 
-from certus_core import SVG_AVAILABLE
+from certus.core.certus_core import SVG_AVAILABLE
 
 
 if SVG_AVAILABLE:
@@ -120,10 +120,10 @@ else:
 # =============================================================================
 
 
-from certus_core import get_export_config, get_resource_path, save_export_config
+from certus.core.certus_core import get_export_config, get_resource_path, save_export_config
 
 
-from certus_ui import (
+from certus.ui.certus_ui import (
     SVG_AVAILABLE,
     CertusTheme,
     CertusThemeToggle,
@@ -136,7 +136,7 @@ from certus_ui import (
 )
 
 
-# Styled buttons/labels - Now imported from certus_ui
+# Styled buttons/labels - Now imported from certus.ui.certus_ui
 
 
 # (create_styled_label & create_colored_label removed for DRY)
@@ -498,7 +498,7 @@ class ApplicationCard(QFrame):
 
                 off_y = self._normal_offset + (self._hover_offset - self._normal_offset) * progress
 
-                from certus_qt_widgets import QColor
+                from certus.ui.certus_qt_widgets import QColor
 
                 self._shadow.setBlurRadius(blur)
 
@@ -1039,7 +1039,7 @@ class CertusHub(QMainWindow):
         bg_color = CertusTheme.BACKGROUND
 
         try:
-            from certus_ux import build_premium_overrides
+            from certus.utils.certus_ux import build_premium_overrides
 
             premium_css = build_premium_overrides()
         except ImportError:
@@ -1208,7 +1208,7 @@ class CertusHub(QMainWindow):
 
         self.btn_docs = QPushButton(" Scientific Documentation")
         try:
-            from certus_ux import OBJ
+            from certus.utils.certus_ux import OBJ
 
             self.btn_docs.setObjectName(OBJ.PRIMARY_BUTTON)
         except ImportError:
@@ -1602,7 +1602,7 @@ class CertusHub(QMainWindow):
         """
 
         try:
-            from certus_recent_strip import build_recent_files_strip
+            from certus.ui.certus_recent_strip import build_recent_files_strip
 
         except ImportError as e:  # pragma: no cover - defensive
             self._log_message(f"Recent strip unavailable: {e}")
@@ -1683,7 +1683,7 @@ class CertusHub(QMainWindow):
         """Delegate to certus_shortcuts_overlay if available."""
 
         try:
-            from certus_shortcuts_overlay import open_shortcuts_overlay
+            from certus.ui.certus_shortcuts_overlay import open_shortcuts_overlay
 
             open_shortcuts_overlay(self)
 
@@ -1717,7 +1717,7 @@ class CertusHub(QMainWindow):
         """Attach hover-lift and a staggered fade-in on an HUB card."""
 
         try:
-            from certus_animations import fade_in, hover_lift
+            from certus.ui.certus_animations import fade_in, hover_lift
 
         except ImportError:
             return

@@ -17,7 +17,7 @@ import pytest
 
 
 def test_p3_certus_base_app_exposes_report_helpers():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     for m in (
         "_default_report_context",
@@ -31,7 +31,7 @@ def test_p3_certus_base_app_exposes_report_helpers():
 
 
 def test_p3_build_report_sections_default_is_empty_list():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         _build_report_sections = CertusBaseApp._build_report_sections
@@ -40,7 +40,7 @@ def test_p3_build_report_sections_default_is_empty_list():
 
 
 def test_p3_command_catalog_exposes_premium_excel_command():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         _auto_discovered_commands = CertusBaseApp._auto_discovered_commands
@@ -55,12 +55,12 @@ def test_p3_command_catalog_exposes_premium_excel_command():
 
 def test_p3_export_premium_excel_produces_xlsx(tmp_path):
     """Smoke-test the wiring end-to-end via a minimal Section list."""
-    from certus_reports import Section
+    from certus.utils.certus_reports import Section
 
     out = tmp_path / "cert_report.xlsx"
 
     # Drive the export directly (the base-app path exercised on a stub).
-    from certus_reports import ReportContext, build_excel_report
+    from certus.utils.certus_reports import ReportContext, build_excel_report
 
     ctx = ReportContext(title="X", app_name="pytest")
     sections = [Section(title="Intro", kind="text", text="Hello")]
@@ -76,7 +76,7 @@ def test_p3_export_premium_excel_produces_xlsx(tmp_path):
 
 
 def test_p4_contrast_ratio_extremes():
-    from certus_a11y import contrast_ratio
+    from certus.ui.certus_a11y import contrast_ratio
 
     # Black vs white = 21.0 exactly
     ratio = contrast_ratio("#000000", "#FFFFFF")
@@ -86,14 +86,14 @@ def test_p4_contrast_ratio_extremes():
 
 
 def test_p4_short_hex_color_is_accepted():
-    from certus_a11y import contrast_ratio
+    from certus.ui.certus_a11y import contrast_ratio
 
     # "#FFF" (3-char) should expand to "#FFFFFF"
     assert contrast_ratio("#FFF", "#000") == pytest.approx(21.0)
 
 
 def test_p4_passes_wcag_aa_thresholds():
-    from certus_a11y import passes_wcag_aa
+    from certus.ui.certus_a11y import passes_wcag_aa
 
     # High-contrast pair: passes normal and large
     assert passes_wcag_aa("#111111", "#EEEEEE") is True
@@ -103,7 +103,7 @@ def test_p4_passes_wcag_aa_thresholds():
 
 
 def test_p4_audit_palette_reports_worst_pair():
-    from certus_a11y import audit_palette
+    from certus.ui.certus_a11y import audit_palette
 
     palette = {
         "surface": "#FFFFFF",
@@ -121,7 +121,7 @@ def test_p4_audit_palette_reports_worst_pair():
 def test_p4_apply_accessibility_defaults_names_widgets_without_name():
     from PyQt6.QtWidgets import QApplication, QLineEdit, QWidget
 
-    from certus_a11y import apply_accessibility_defaults
+    from certus.ui.certus_a11y import apply_accessibility_defaults
 
     _qapp = QApplication.instance() or QApplication(sys.argv)
     root = QWidget()
@@ -139,7 +139,7 @@ def test_p4_apply_accessibility_defaults_names_widgets_without_name():
 
 
 def test_p4_compute_tab_order_pairs_sequentially():
-    from certus_a11y import compute_tab_order
+    from certus.ui.certus_a11y import compute_tab_order
 
     widgets = ["a", "b", "c", "d"]
     assert compute_tab_order(widgets) == [("a", "b"), ("b", "c"), ("c", "d")]
@@ -155,7 +155,7 @@ def test_p4_compute_tab_order_pairs_sequentially():
 
 
 def test_p5_certus_base_app_exposes_confirm_destructive():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     assert hasattr(CertusBaseApp, "confirm_destructive")
 
@@ -163,7 +163,7 @@ def test_p5_certus_base_app_exposes_confirm_destructive():
 def test_p5_confirm_destructive_returns_false_on_parent_none(monkeypatch):
     """Without an actual QMainWindow instance the helper must still
     degrade gracefully (False) instead of raising."""
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         logger = None

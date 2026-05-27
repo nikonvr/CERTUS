@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from certus_design_workers_dto import (
+from certus.workers.certus_design_workers_dto import (
     ColorWorkerRequest,
     ColorWorkerResult,
     NeedleWorkerResult,

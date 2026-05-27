@@ -22,7 +22,7 @@ import pytest
 # PARE-FEU : skip gracieux si pytest-benchmark n'est pas installé.
 pytest.importorskip("pytest_benchmark")
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     calculate_RT_no_backside,
     calculate_bare_substrate_RT,
     calculate_reflection_array,

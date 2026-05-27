@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 import numpy as np
 import pytest
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     compute_TMM_single_point_k0_exact,
     calculate_RT_vectorized_real,
     calc_spectrum_oblique_vectorized,

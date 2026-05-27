@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 try:
     import CERTUS_HUB
-    from certus_core import bootstrap_app, get_logger
+    from certus.core.certus_core import bootstrap_app, get_logger
 
     HUB_AVAILABLE = True
 except ImportError:
@@ -31,7 +31,7 @@ class TestCERTUSHUB:
     def test_bootstrap_integration(self):
         """Test the integration with bootstrap_app."""
         # Verify bootstrap_app is imported
-        from certus_core import bootstrap_app
+        from certus.core.certus_core import bootstrap_app
 
         assert callable(bootstrap_app)
 
@@ -52,7 +52,7 @@ class TestCERTUSHUB:
     def test_logging_integration(self):
         """Test the integration with the logging system."""
         try:
-            from certus_core import get_logger
+            from certus.core.certus_core import get_logger
 
             logger = get_logger()
             assert logger is not None
@@ -62,7 +62,7 @@ class TestCERTUSHUB:
     def test_ui_components_import(self):
         """Test l'import des composants UI."""
         try:
-            from certus_ui import CertusTheme, apply_certus_theme
+            from certus.ui.certus_ui import CertusTheme, apply_certus_theme
 
             assert CertusTheme is not None
             assert callable(apply_certus_theme)
@@ -99,7 +99,7 @@ class TestHubFunctionality:
     def test_resource_handling(self):
         """Test la gestion des ressources."""
         try:
-            from certus_core import get_resource_path
+            from certus.core.certus_core import get_resource_path
 
             # Test avec un chemin relatif
             resource_path = get_resource_path("certus_theme.json")
@@ -153,8 +153,8 @@ class TestHubIntegration:
     def test_hub_core_integration(self):
         """Test hub ↔ core integration."""
         try:
-            from certus_core import get_logger, get_resource_path
-            from certus_ui import CertusTheme
+            from certus.core.certus_core import get_logger, get_resource_path
+            from certus.ui.certus_ui import CertusTheme
 
             # Verify that all dependencies work
             logger = get_logger()

@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from certus_spline_report import SplineReportBuilder, SplineReportContext
-from certus_index_spline_core import DataType, SplineOptConfig
+from certus.utils.certus_spline_report import SplineReportBuilder, SplineReportContext
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig
 
 
 class _DummyWriter:

@@ -26,7 +26,7 @@ def test_certus_core_import_no_file_write(tmp_path, monkeypatch):
         if p.is_file()
     }
 
-    import certus_core  # noqa: F401
+    import certus.core.certus_core as certus_core  # noqa: F401
 
     after = {
         p.name: p.stat().st_mtime
@@ -45,7 +45,7 @@ def test_certus_core_import_no_unexpected_log(caplog):
             del sys.modules[mod]
 
     with caplog.at_level(logging.WARNING, logger="certus_core"):
-        import certus_core  # noqa: F401
+        import certus.core.certus_core as certus_core  # noqa: F401
 
     warnings = [r for r in caplog.records if r.levelno >= logging.WARNING]
     assert not warnings, (

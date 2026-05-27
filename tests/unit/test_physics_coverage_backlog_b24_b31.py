@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from _certus_physics_impl import (
+from certus.core._certus_physics_impl import (
     _calc_spectrum_oblique_parallel,
     _compute_epsilon1_gradient_kernel,
     _compute_ir_global_cost_gradient_kernel,

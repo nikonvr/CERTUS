@@ -19,7 +19,7 @@ import pytest
 
 
 def test_u7_module_exposes_public_api():
-    import certus_skeleton as m
+    import certus.utils.certus_skeleton as m
 
     for name in (
         "skeleton_for",
@@ -34,7 +34,7 @@ def test_u7_module_exposes_public_api():
 
 
 def test_u7_public_api_safe_on_none():
-    from certus_skeleton import (
+    from certus.utils.certus_skeleton import (
         install_skeleton,
         is_skeleton_active,
         skeleton_for,
@@ -48,7 +48,7 @@ def test_u7_public_api_safe_on_none():
 
 
 def test_u7_theme_colors_return_three_strings():
-    from certus_skeleton import _theme_colors
+    from certus.utils.certus_skeleton import _theme_colors
 
     base, highlight, border = _theme_colors()
     for x in (base, highlight, border):
@@ -56,7 +56,7 @@ def test_u7_theme_colors_return_three_strings():
 
 
 def test_u7_constants_are_reasonable():
-    from certus_skeleton import (
+    from certus.utils.certus_skeleton import (
         DEFAULT_GAP_PX,
         DEFAULT_LINES,
         DEFAULT_LINE_HEIGHT,
@@ -92,7 +92,7 @@ def qt_target():
 
 
 def test_u7_install_then_uninstall_is_idempotent_and_symmetric(qt_target):
-    from certus_skeleton import install_skeleton, is_skeleton_active, uninstall_skeleton
+    from certus.utils.certus_skeleton import install_skeleton, is_skeleton_active, uninstall_skeleton
 
     overlay_a = install_skeleton(qt_target, label="Optimising...", lines=4)
     assert overlay_a is not None
@@ -111,7 +111,7 @@ def test_u7_install_then_uninstall_is_idempotent_and_symmetric(qt_target):
 
 
 def test_u7_overlay_covers_target_area(qt_target):
-    from certus_skeleton import install_skeleton
+    from certus.utils.certus_skeleton import install_skeleton
 
     overlay = install_skeleton(qt_target, label="Loading")
     # Overlay must match target's geometry
@@ -122,7 +122,7 @@ def test_u7_overlay_covers_target_area(qt_target):
 def test_u7_overlay_resizes_with_target(qt_target):
     from PyQt6.QtCore import QCoreApplication
 
-    from certus_skeleton import install_skeleton
+    from certus.utils.certus_skeleton import install_skeleton
 
     overlay = install_skeleton(qt_target)
     qt_target.resize(650, 420)
@@ -133,7 +133,7 @@ def test_u7_overlay_resizes_with_target(qt_target):
 
 
 def test_u7_skeleton_for_builds_overlay_without_starting(qt_target):
-    from certus_skeleton import skeleton_for
+    from certus.utils.certus_skeleton import skeleton_for
 
     ov = skeleton_for(qt_target, lines=2, label="Test")
     assert ov is not None
@@ -142,7 +142,7 @@ def test_u7_skeleton_for_builds_overlay_without_starting(qt_target):
 
 
 def test_u7_group_uses_requested_line_count(qt_target):
-    from certus_skeleton import install_skeleton
+    from certus.utils.certus_skeleton import install_skeleton
 
     ov = install_skeleton(qt_target, lines=5)
     assert len(ov._group._blocks) == 5

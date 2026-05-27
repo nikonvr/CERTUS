@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 
 def test_u4_split_sequence_is_correct():
-    from certus_shortcuts_overlay import _split_sequence
+    from certus.ui.certus_shortcuts_overlay import _split_sequence
 
     assert _split_sequence("Ctrl+K") == ["Ctrl", "K"]
     assert _split_sequence("Ctrl+Shift+P") == ["Ctrl", "Shift", "P"]
@@ -23,7 +23,7 @@ def test_u4_split_sequence_is_correct():
 
 
 def test_u4_group_entries_sorts_and_preserves_categories():
-    from certus_shortcuts_overlay import ShortcutEntry, group_entries
+    from certus.ui.certus_shortcuts_overlay import ShortcutEntry, group_entries
 
     entries = [
         ShortcutEntry("Ctrl+K", "Open command palette", "Navigation"),
@@ -43,8 +43,8 @@ def test_u4_group_entries_sorts_and_preserves_categories():
 
 def test_u4_collect_window_shortcuts_uses_commands():
     """Duck-typed window with a ``_commands`` registry produces entries."""
-    from certus_command_palette import CommandAction
-    from certus_shortcuts_overlay import collect_window_shortcuts
+    from certus.utils.certus_command_palette import CommandAction
+    from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
 
     class _FakeWindow:
         def __init__(self, cmds):
@@ -87,8 +87,8 @@ def test_u4_collect_window_shortcuts_dedup_qshortcut_vs_command():
     from PyQt6.QtWidgets import QApplication, QWidget
 
     _app = QApplication.instance() or QApplication([])
-    from certus_command_palette import CommandAction
-    from certus_shortcuts_overlay import collect_window_shortcuts
+    from certus.utils.certus_command_palette import CommandAction
+    from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
 
     w = QWidget()
     _sc = QShortcut(QKeySequence("Ctrl+S"), w)  # will appear as "Save configuration"
@@ -129,7 +129,7 @@ def test_u4_collect_window_shortcuts_handles_fallback_label():
     from PyQt6.QtWidgets import QApplication, QWidget
 
     _app = QApplication.instance() or QApplication([])
-    from certus_shortcuts_overlay import collect_window_shortcuts
+    from certus.ui.certus_shortcuts_overlay import collect_window_shortcuts
 
     w = QWidget()
     _sc = QShortcut(QKeySequence("Ctrl+Alt+Z"), w)
@@ -156,14 +156,14 @@ def test_u4_collect_window_shortcuts_handles_fallback_label():
 
 
 def test_u4_certus_base_app_exposes_overlay_hook():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     assert hasattr(CertusBaseApp, "open_shortcuts_overlay")
     assert callable(CertusBaseApp.open_shortcuts_overlay)
 
 
 def test_u4_default_commands_include_show_shortcuts():
-    from certus_ui import CertusBaseApp
+    from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
         pass
@@ -181,8 +181,8 @@ def test_u4_open_shortcuts_overlay_builds_dialog():
 
     _app = QApplication.instance() or QApplication([])
 
-    from certus_command_palette import CommandAction
-    from certus_shortcuts_overlay import ShortcutEntry, _build_dialog_class
+    from certus.utils.certus_command_palette import CommandAction
+    from certus.ui.certus_shortcuts_overlay import ShortcutEntry, _build_dialog_class
 
     entries = [
         ShortcutEntry("Ctrl+S", "Save configuration", "File"),

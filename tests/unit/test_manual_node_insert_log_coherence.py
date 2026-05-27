@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from spline_pipeline import insert_manual_sigma_nodes
+from certus.spline.spline_pipeline import insert_manual_sigma_nodes
 
 
 @dataclass
@@ -67,14 +67,14 @@ def test_manual_insert_logs_attempt_then_accepted_with_same_op_id() -> None:
         }
 
     with (
-        patch("spline_pipeline._log_spline_pipeline_json", side_effect=_capture),
-        patch("spline_pipeline.build_segment_optimizer_x_vector", return_value=(np.asarray([1700.0, 0.1, 0.2, 0.3, 0.11, 0.22, 0.33], dtype=np.float64), None)),
-        patch("spline_pipeline.x_slice_n_to_physical_nodes", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
-        patch("spline_pipeline.physical_nodes_to_x_slice_n", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
-        patch("spline_pipeline._bounds_x0_for_sigma_knots", side_effect=_fake_bounds),
-        patch("spline_pipeline._spectral_polish_node_mesh_profile", side_effect=_fake_polish),
-        patch("spline_pipeline._sync_theoretical_tr_from_nk_dict", return_value=None),
-        patch("spline_pipeline.log_index_spline_d_trace", return_value=None),
+        patch("certus.spline.spline_pipeline._log_spline_pipeline_json", side_effect=_capture),
+        patch("certus.spline.spline_pipeline.build_segment_optimizer_x_vector", return_value=(np.asarray([1700.0, 0.1, 0.2, 0.3, 0.11, 0.22, 0.33], dtype=np.float64), None)),
+        patch("certus.spline.spline_pipeline.x_slice_n_to_physical_nodes", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
+        patch("certus.spline.spline_pipeline.physical_nodes_to_x_slice_n", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
+        patch("certus.spline.spline_pipeline._bounds_x0_for_sigma_knots", side_effect=_fake_bounds),
+        patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", side_effect=_fake_polish),
+        patch("certus.spline.spline_pipeline._sync_theoretical_tr_from_nk_dict", return_value=None),
+        patch("certus.spline.spline_pipeline.log_index_spline_d_trace", return_value=None),
     ):
         out = insert_manual_sigma_nodes(
             cfg,
@@ -121,12 +121,12 @@ def test_manual_insert_logs_attempt_then_rejected_with_same_op_id() -> None:
         }
 
     with (
-        patch("spline_pipeline._log_spline_pipeline_json", side_effect=_capture),
-        patch("spline_pipeline.build_segment_optimizer_x_vector", return_value=(np.asarray([1700.0, 0.1, 0.2, 0.3, 0.11, 0.22, 0.33], dtype=np.float64), None)),
-        patch("spline_pipeline.x_slice_n_to_physical_nodes", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
-        patch("spline_pipeline.physical_nodes_to_x_slice_n", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
-        patch("spline_pipeline._bounds_x0_for_sigma_knots", side_effect=_fake_bounds),
-        patch("spline_pipeline._spectral_polish_node_mesh_profile", side_effect=_fake_polish),
+        patch("certus.spline.spline_pipeline._log_spline_pipeline_json", side_effect=_capture),
+        patch("certus.spline.spline_pipeline.build_segment_optimizer_x_vector", return_value=(np.asarray([1700.0, 0.1, 0.2, 0.3, 0.11, 0.22, 0.33], dtype=np.float64), None)),
+        patch("certus.spline.spline_pipeline.x_slice_n_to_physical_nodes", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
+        patch("certus.spline.spline_pipeline.physical_nodes_to_x_slice_n", side_effect=lambda x, *_a, **_k: np.asarray(x, dtype=np.float64).copy()),
+        patch("certus.spline.spline_pipeline._bounds_x0_for_sigma_knots", side_effect=_fake_bounds),
+        patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", side_effect=_fake_polish),
     ):
         out = insert_manual_sigma_nodes(
             cfg,

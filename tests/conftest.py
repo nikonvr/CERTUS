@@ -28,8 +28,8 @@ except ImportError:
 
 try:
     from certus_physics import Layer, Target, Sample
-    from certus_core import get_float_dtype, get_complex_dtype
-    from certus_errors import CertusError, CertusValidationError
+    from certus.core.certus_core import get_float_dtype, get_complex_dtype
+    from certus.utils.errors import CertusError, CertusValidationError
 
     PHYSICS_AVAILABLE = True
 except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError):
@@ -110,7 +110,7 @@ def compute_spectrum_simple(layers, wavelengths):
 
     Uses low-level TMM kernel with realistic clues (n=1.5 per layer,
     derived from qwot). For structural tests only."""
-    from _certus_physics_impl import compute_TMM_generic as _tmm
+    from certus.core._certus_physics_impl import compute_TMM_generic as _tmm
 
     n_sub = complex(1.52)
     n0 = complex(1.0)

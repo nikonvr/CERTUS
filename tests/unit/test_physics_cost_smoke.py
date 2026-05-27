@@ -6,7 +6,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 
-from _certus_physics_impl import compute_mse_vectorized
+from certus.core._certus_physics_impl import compute_mse_vectorized
 
 
 def test_compute_mse_vectorized_five_equal_weights_is_mean_squared_error() -> None:

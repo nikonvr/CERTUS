@@ -129,7 +129,7 @@ def test_no_sequential_pglobal():
     PGlobalOptimizer must use parallelism. Sequential looping over batches
     should only happen as a fallback.
     """
-    physics_path = Path(__file__).resolve().parents[2] / "_certus_physics_impl.py"
+    physics_path = Path(__file__).resolve().parents[2] / "certus" / "core" / "_certus_physics_impl.py"
 
     with open(physics_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=str(physics_path))
@@ -159,7 +159,7 @@ def test_numba_nogil_enabled():
     Crucial Numba kernels must explicitly define `nogil=True` and `parallel=True`
     to allow Python multi-threading to bypass the GIL.
     """
-    physics_path = Path(__file__).resolve().parents[2] / "_certus_physics_impl.py"
+    physics_path = Path(__file__).resolve().parents[2] / "certus" / "core" / "_certus_physics_impl.py"
 
     # We check specific kernels that MUST be parallel + nogil.
     target_functions = [

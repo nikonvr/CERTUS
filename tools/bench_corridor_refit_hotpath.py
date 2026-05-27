@@ -12,9 +12,9 @@ REPO_ROOT = str(Path(__file__).resolve().parent.parent)
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-from spline_objective import SplinePWLObjective, build_spline_objective_masked_grid
-from spline_profile_corridors import _bounds_for_nodes_only, _fit_nodes_at_fixed_d
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
+from certus.spline.spline_objective import SplinePWLObjective, build_spline_objective_masked_grid
+from certus.spline.spline_profile_corridors import _bounds_for_nodes_only, _fit_nodes_at_fixed_d
 
 
 def make_cfg(n_pts: int = 40) -> SplineOptConfig:

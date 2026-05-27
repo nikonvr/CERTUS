@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import numpy as np
 
-from spline_pipeline import worker_spline_auto_clean_knots
+from certus.spline.spline_pipeline import worker_spline_auto_clean_knots
 
 
 @dataclass
@@ -71,7 +71,7 @@ def test_auto_clean_prefers_neighbor_pull_variant_when_better() -> None:
         out["rmse"] = rmse
         return out
 
-    with patch("spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
         out = worker_spline_auto_clean_knots(
             base,
             cfg,
@@ -128,7 +128,7 @@ def test_auto_clean_without_neighbor_pull_only_tests_baseline_removals() -> None
         out["rmse"] = rmse
         return out
 
-    with patch("spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
         out = worker_spline_auto_clean_knots(
             base,
             cfg,
@@ -179,7 +179,7 @@ def test_auto_clean_rejects_candidate_when_returned_mesh_is_inconsistent() -> No
             out["rmse"] = 1.0
         return out
 
-    with patch("spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
         out = worker_spline_auto_clean_knots(
             base,
             cfg,
@@ -227,7 +227,7 @@ def test_auto_clean_cancel_emits_canceled_progress_not_100_percent() -> None:
             stop.set()
         return out
 
-    with patch("spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
         _ = worker_spline_auto_clean_knots(
             base,
             cfg,

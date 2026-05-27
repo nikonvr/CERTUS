@@ -13,8 +13,8 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
-from spline_objective import (
+from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots
+from certus.spline.spline_objective import (
     sigma_knots_decode,
     _interpolate_along_sigma,
     build_segment_optimizer_x_vector,
@@ -39,7 +39,7 @@ except ImportError:
 
 @pytest.mark.unit
 def test_core_openpyxl_import_error(monkeypatch):
-    import certus_core
+    import certus.core.certus_core as certus_core
     monkeypatch.setitem(sys.modules, "openpyxl", None)
     file_path = str(Path(certus_core.__file__).resolve())
     loader = SourceFileLoader("certus_core_no_openpyxl", file_path)
@@ -48,7 +48,7 @@ def test_core_openpyxl_import_error(monkeypatch):
 
 @pytest.mark.unit
 def test_setup_numba_cache_value_error(monkeypatch):
-    import certus_core
+    import certus.core.certus_core as certus_core
     import numba
     monkeypatch.setitem(sys.modules, "numba", numba)
     monkeypatch.setattr(numba, "get_num_threads", Mock(side_effect=ValueError("Simulated Error")))
@@ -72,8 +72,10 @@ def test_setup_numba_cache_value_error(monkeypatch):
 
 @pytest.mark.unit
 def test_setup_numba_cache_frozen(monkeypatch):
-    import certus_core
-    monkeypatch.delitem(sys.modules, "numba", raising=False)
+    import certus.core.certus_core as certus_core
+    for k in list(sys.modules.keys()):
+        if k.startswith("numba"):
+            monkeypatch.delitem(sys.modules, k, raising=False)
     monkeypatch.setattr(certus_core, "is_frozen", lambda: True)
     for env_var in [
         "_CERTUS_NUMBA_CONFIGURED",
@@ -96,8 +98,10 @@ def test_setup_numba_cache_frozen(monkeypatch):
 
 @pytest.mark.unit
 def test_setup_numba_cache_not_frozen(monkeypatch):
-    import certus_core
-    monkeypatch.delitem(sys.modules, "numba", raising=False)
+    import certus.core.certus_core as certus_core
+    for k in list(sys.modules.keys()):
+        if k.startswith("numba"):
+            monkeypatch.delitem(sys.modules, k, raising=False)
     monkeypatch.setattr(certus_core, "is_frozen", lambda: False)
     for env_var in [
         "_CERTUS_NUMBA_CONFIGURED",
@@ -122,7 +126,7 @@ def test_setup_numba_cache_not_frozen(monkeypatch):
 
 @pytest.mark.unit
 def test_set_num_threads_env_missing(monkeypatch):
-    import certus_core
+    import certus.core.certus_core as certus_core
     for env_var in [
         "OMP_NUM_THREADS",
         "OPENBLAS_NUM_THREADS",
@@ -135,7 +139,7 @@ def test_set_num_threads_env_missing(monkeypatch):
 
 @pytest.mark.unit
 def test_get_logger_fallback(monkeypatch):
-    import certus_core
+    import certus.core.certus_core as certus_core
     import logging
     logger = logging.getLogger("CERTUS")
     old_handlers = logger.handlers.copy()
@@ -148,14 +152,14 @@ def test_get_logger_fallback(monkeypatch):
 
 @pytest.mark.unit
 def test_system_config_setup_logging():
-    from certus_core import SystemConfig
+    from certus.core.certus_core import SystemConfig
     logger = SystemConfig.setup_logging()
     assert logger is not None
 
 @pytest.mark.unit
 def test_queue_handler_broken_pipe():
     import queue
-    from certus_core import QueueHandler
+    from certus.core.certus_core import QueueHandler
     import logging
     q = queue.Queue()
     qh = QueueHandler(q)
@@ -166,14 +170,14 @@ def test_queue_handler_broken_pipe():
 
 @pytest.mark.unit
 def test_setup_module_logging_default():
-    from certus_core import setup_module_logging
+    from certus.core.certus_core import setup_module_logging
     adapter = setup_module_logging("TEST_MOD", log_file=None)
     assert adapter is not None
 
 @pytest.mark.unit
 def test_bootstrap_app_frozen(monkeypatch):
     import sys
-    import certus_core
+    import certus.core.certus_core as certus_core
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     monkeypatch.setattr(sys, "executable", "dummy_executable.exe")
     res = certus_core.bootstrap_app("dummy_app.py")
@@ -181,7 +185,7 @@ def test_bootstrap_app_frozen(monkeypatch):
 
 @pytest.mark.unit
 def test_bg_warmup_import_error(monkeypatch):
-    import certus_core
+    import certus.core.certus_core as certus_core
     monkeypatch.setitem(sys.modules, "certus_physics", None)
     certus_core.bootstrap_app("dummy.py")
 
@@ -192,7 +196,7 @@ def test_bg_warmup_import_error(monkeypatch):
 
 @pytest.mark.unit
 def test_to_numeric_exception_handling(tmp_path, monkeypatch):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     import pandas as pd
     f = tmp_path / "test2.csv"
     f.write_text("a,b\n1,2\n3,4\n", encoding="utf-8")
@@ -202,9 +206,9 @@ def test_to_numeric_exception_handling(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_read_excel_robust_numeric_error(tmp_path, monkeypatch):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     import pandas as pd
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", True)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
     f = tmp_path / "dummy.xlsx"
     f.write_text("dummy")
     monkeypatch.setattr(pd, "read_excel", Mock(return_value=pd.DataFrame({"a": ["val"]})))
@@ -214,9 +218,9 @@ def test_read_excel_robust_numeric_error(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_to_excel_robust_engine(tmp_path, monkeypatch):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     import pandas as pd
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", True)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", True)
     df = pd.DataFrame({"a": [1]})
     f = tmp_path / "out.xlsx"
     mock_to_excel = Mock()
@@ -227,7 +231,7 @@ def test_to_excel_robust_engine(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_export_optimization_report_branches(tmp_path, monkeypatch):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     res_excel, res_html = certus_data.export_optimization_report(
         reports_dir=str(tmp_path),
         module_name="METAL",
@@ -240,7 +244,7 @@ def test_export_optimization_report_branches(tmp_path, monkeypatch):
     )
     assert res_excel is not None
 
-    monkeypatch.setattr("certus_data.OPENPYXL_AVAILABLE", False)
+    monkeypatch.setattr("certus.utils.certus_data.OPENPYXL_AVAILABLE", False)
     mock_to_excel = Mock()
     monkeypatch.setattr(certus_data, "to_excel_robust", mock_to_excel)
     res_excel, res_html = certus_data.export_optimization_report(
@@ -268,7 +272,7 @@ def test_export_optimization_report_branches(tmp_path, monkeypatch):
 
 @pytest.mark.unit
 def test_shared_indices_worker_exact_wl():
-    import certus_data
+    import certus.utils.certus_data as certus_data
     clues = {500.0: {"H": 2.0, "L": 1.0, "substrate": 1.5}}
     with certus_data.SharedIndicesManager(clues) as mgr:
         ctx = mgr.get_context_info()
@@ -278,7 +282,7 @@ def test_shared_indices_worker_exact_wl():
 
 @pytest.mark.unit
 def test_generate_html_report_dataframe(tmp_path):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     import pandas as pd
     f = tmp_path / "report.html"
     sections = [
@@ -288,7 +292,7 @@ def test_generate_html_report_dataframe(tmp_path):
 
 @pytest.mark.unit
 def test_generate_html_report_figures(tmp_path):
-    import certus_data
+    import certus.utils.certus_data as certus_data
     f = tmp_path / "report2.html"
     sections = [
         {"title": "Text", "type": "text", "content": "hello"}
@@ -299,8 +303,8 @@ def test_generate_html_report_figures(tmp_path):
 
 @pytest.mark.unit
 def test_build_standard_report_incomplete_html_only(tmp_path):
-    import certus_data
-    from certus_data import ReportSection
+    import certus.utils.certus_data as certus_data
+    from certus.utils.certus_data import ReportSection
     sections = [ReportSection(title="Summary", kind="kv", content={"X": 1})]
     html_file = tmp_path / "std_report.html"
     res = certus_data.build_standard_report(
@@ -313,8 +317,8 @@ def test_build_standard_report_incomplete_html_only(tmp_path):
 
 @pytest.mark.unit
 def test_build_standard_report_duplicate_kv(tmp_path):
-    import certus_data
-    from certus_data import ReportSection
+    import certus.utils.certus_data as certus_data
+    from certus.utils.certus_data import ReportSection
     sections = [
         ReportSection(title="Config", kind="kv", content={"A": 1}),
         ReportSection(title="Config", kind="kv", content={"B": 2}),
@@ -333,14 +337,14 @@ def test_build_standard_report_duplicate_kv(tmp_path):
 
 @pytest.mark.unit
 def test_errors_validation_wavelength_negative():
-    from certus_errors import validate_wavelength_range, CertusValidationError
+    from certus.utils.errors import validate_wavelength_range, CertusValidationError
     with pytest.raises(CertusValidationError):
         validate_wavelength_range(-10.0, 500.0)
 
 @pytest.mark.unit
 @pytest.mark.skipif(not QT_AVAILABLE, reason="Qt not available")
 def test_errors_show_helpers(qapp):
-    from certus_errors import show_error, show_warning, show_validation_error, CertusValidationError
+    from certus.utils.errors import show_error, show_warning, show_validation_error, CertusValidationError
     from PyQt6.QtWidgets import QMessageBox
     with patch.object(QMessageBox, "exec", return_value=0):
         show_error(None, "generic_error", details="some detail")
@@ -355,7 +359,7 @@ def test_errors_show_helpers(qapp):
 @pytest.mark.unit
 @pytest.mark.skipif(not QT_AVAILABLE, reason="Qt not available")
 def test_reset_framework_extra_coverage():
-    from certus_reset_framework import CertusResetManager
+    from certus.utils.certus_reset_framework import CertusResetManager
     
     app = Mock()
     w = Mock()
@@ -638,7 +642,7 @@ def test_analytic_gradient_reflection_and_mono_band():
 
 @pytest.mark.unit
 def test_dynamic_savgol_blend_value_error():
-    from certus_spectral_preproc import dynamic_savgol_blend
+    from certus.utils.certus_spectral_preproc import dynamic_savgol_blend
     x = np.linspace(4000.0, 5000.0, 10)
     y = np.ones(10)
     # w_heavy = base_window (5) if heavy_window is 0. Wait, poly = 4.
@@ -650,8 +654,8 @@ def test_dynamic_savgol_blend_value_error():
 
 @pytest.mark.unit
 def test_auto_tune_savgol_params_value_error(monkeypatch):
-    from certus_spectral_preproc import auto_tune_savgol_params
-    import certus_spectral_preproc
+    from certus.utils.certus_spectral_preproc import auto_tune_savgol_params
+    import certus.utils.certus_spectral_preproc as certus_spectral_preproc
     x = np.linspace(400, 1000, 20)
     y_mat = np.ones((2, 20))
     # Monkeypatch savgol_filter to raise ValueError only for y_macro call
@@ -669,7 +673,7 @@ def test_auto_tune_savgol_params_value_error(monkeypatch):
 
 @pytest.mark.unit
 def test_reset_framework_reset_app_to_defaults(qapp):
-    from certus_reset_framework import reset_app_to_defaults, create_reset_button
+    from certus.utils.certus_reset_framework import reset_app_to_defaults, create_reset_button
     from PyQt6.QtWidgets import QWidget
     
     # We must use a real QWidget to avoid QMessageBox C++ type errors
@@ -688,7 +692,7 @@ def test_reset_framework_reset_app_to_defaults(qapp):
 
 @pytest.mark.unit
 def test_spline_objective_more_branches():
-    from spline_objective import nk_from_x_pwlnk, objective_lam_mask_on_target_grid
+    from certus.spline.spline_objective import nk_from_x_pwlnk, objective_lam_mask_on_target_grid
     x = np.array([100.0, 2.0, 2.0, -5.0, -5.0])
     sk = np.array([0.001, 0.002])
     n_lam, k_lam = nk_from_x_pwlnk(x, np.array([400.0, 500.0]), sk, 1e-4, 1.0, profile_interp="invalid_profile_name")
@@ -719,7 +723,7 @@ def test_spline_objective_more_branches():
 
 @pytest.mark.unit
 def test_spline_objective_reflection_grad():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -754,7 +758,7 @@ def test_spline_objective_reflection_grad():
 
 @pytest.mark.unit
 def test_reset_framework_pyqtgraph_import_error(monkeypatch):
-    from certus_reset_framework import CertusResetManager
+    from certus.utils.certus_reset_framework import CertusResetManager
     import sys
     monkeypatch.setitem(sys.modules, "pyqtgraph", None)
     app = Mock()
@@ -764,7 +768,7 @@ def test_reset_framework_pyqtgraph_import_error(monkeypatch):
 
 @pytest.mark.unit
 def test_reset_framework_clear_text_error():
-    from certus_reset_framework import CertusResetManager
+    from certus.utils.certus_reset_framework import CertusResetManager
     app = Mock()
     bad_widget = Mock()
     bad_widget.clear = Mock(side_effect=AttributeError("Simulated error"))
@@ -774,7 +778,7 @@ def test_reset_framework_clear_text_error():
 
 @pytest.mark.unit
 def test_reset_framework_detached_plot_error():
-    from certus_reset_framework import CertusResetManager
+    from certus.utils.certus_reset_framework import CertusResetManager
     app = Mock()
     bad_win = Mock()
     bad_win.close = Mock(side_effect=RuntimeError("close error"))
@@ -784,7 +788,7 @@ def test_reset_framework_detached_plot_error():
 
 @pytest.mark.unit
 def test_auto_tune_savgol_params_even_w(monkeypatch):
-    from certus_spectral_preproc import auto_tune_savgol_params
+    from certus.utils.certus_spectral_preproc import auto_tune_savgol_params
     x = np.linspace(400, 1000, 20)
     y_mat = np.ones((2, 20))
     import builtins
@@ -801,7 +805,7 @@ def test_auto_tune_savgol_params_even_w(monkeypatch):
 
 @pytest.mark.unit
 def test_spectral_mse_rmse_masked_from_nk_empty_mgf():
-    from spline_objective import spectral_mse_rmse_masked_from_nk
+    from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
     cfg = SplineOptConfig(
         lam_nm=np.array([]),
         t_exp=None,
@@ -820,7 +824,7 @@ def test_spectral_mse_rmse_masked_from_nk_empty_mgf():
 
 @pytest.mark.unit
 def test_spectral_mse_rmse_masked_from_nk_mask_differs():
-    from spline_objective import spectral_mse_rmse_masked_from_nk
+    from certus.spline.spline_objective import spectral_mse_rmse_masked_from_nk
     lam = np.array([400.0, 500.0])
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -841,7 +845,7 @@ def test_spectral_mse_rmse_masked_from_nk_mask_differs():
 
 @pytest.mark.unit
 def test_spline_spectral_mse_from_xy_nk_non_finite():
-    from spline_objective import spline_spectral_mse_from_xy_nk
+    from certus.spline.spline_objective import spline_spectral_mse_from_xy_nk
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -861,8 +865,8 @@ def test_spline_spectral_mse_from_xy_nk_non_finite():
 
 @pytest.mark.unit
 def test_decompose_spline_pwl_objective_non_finite(monkeypatch):
-    from spline_objective import decompose_spline_pwl_objective
-    import spline_objective
+    from certus.spline.spline_objective import decompose_spline_pwl_objective
+    import certus.spline.spline_objective as spline_objective
     monkeypatch.setattr(spline_objective, "spline_objective_mse_on_masked_grid", lambda *args, **kwargs: float("nan"))
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
@@ -886,7 +890,7 @@ def test_decompose_spline_pwl_objective_non_finite(monkeypatch):
 
 @pytest.mark.unit
 def test_fast_penalty_grad_no_active():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -911,8 +915,8 @@ def test_fast_penalty_grad_no_active():
 
 @pytest.mark.unit
 def test_spline_pwl_objective_call_non_finite(monkeypatch):
-    from spline_objective import SplinePWLObjective
-    import spline_objective
+    from certus.spline.spline_objective import SplinePWLObjective
+    import certus.spline.spline_objective as spline_objective
     monkeypatch.setattr(spline_objective, "spline_objective_mse_on_masked_grid", lambda *args, **kwargs: float("nan"))
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
@@ -937,7 +941,7 @@ def test_spline_pwl_objective_call_non_finite(monkeypatch):
 
 @pytest.mark.unit
 def test_evaluate_batch_with_mono_band():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -962,7 +966,7 @@ def test_evaluate_batch_with_mono_band():
 
 @pytest.mark.unit
 def test_evaluate_batch_pure_spec():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -987,7 +991,7 @@ def test_evaluate_batch_pure_spec():
 
 @pytest.mark.unit
 def test_evaluate_batch_fused_pure_spec():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -1012,7 +1016,7 @@ def test_evaluate_batch_fused_pure_spec():
 
 @pytest.mark.unit
 def test_evaluate_batch_fallback_non_finite():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,
@@ -1037,7 +1041,7 @@ def test_evaluate_batch_fallback_non_finite():
 
 @pytest.mark.unit
 def test_compute_analytic_gradient_zero_wsum():
-    from spline_objective import SplinePWLObjective
+    from certus.spline.spline_objective import SplinePWLObjective
     lam = np.linspace(400, 1000, 20)
     cfg = SplineOptConfig(
         lam_nm=lam,

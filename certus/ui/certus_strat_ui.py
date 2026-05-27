@@ -254,6 +254,7 @@ from certus.workers.certus_strat_workers import (
     _resolve_strat_indices_db_path,
     WorkerThread,
     PlotRenderWorker,
+    StratTask,
 )
 import certus.utils.certus_strat_service as _strat_service_module
 from certus.utils.certus_strat_service import (
@@ -6770,12 +6771,12 @@ class CertusStratApp(CertusBaseApp):
             btn.setEnabled(False)
 
         self.worker = WorkerThread(
-            step=33,
+            step=StratTask.EXTERNAL_EVALUATION,
             params=params,
             opti_results=self.opti_results,
             timing_logger=self.timing_logger,
         )
-        self._register_worker_thread(self.worker, "STRAT-step33")
+        self._register_worker_thread(self.worker, "STRAT-external-evaluation")
 
         self.worker.signals.finished.connect(self.on_workflow_finished)
 
@@ -7019,8 +7020,35 @@ class CertusStratApp(CertusBaseApp):
 
         return params_out
 
-    def run_workflow(self, step: int) -> None:
+    def run_workflow(self, step: int | StratTask) -> None:
+        """Launch a workflow task in a background WorkerThread.
+
+        Accepts either a legacy integer (0, 2, 3, 23) or a ``StratTask`` enum
+        member.  Integer values are normalised to ``StratTask`` immediately so
+        that all internal comparisons use the semantic enum — **never** raw
+        magic numbers.
+
+        Call sites (button connections) continue to pass integers for
+        backwards compatibility; the conversion here is the single source
+        of truth for the mapping.
+        """
         self._reports_exported = False
+
+        # -- Normalise the step argument to a StratTask enum member.
+        # Legacy integers (0, 2, 3, 23) are still accepted from button
+        # connections; the WorkerThread constructor also handles them, but
+        # we convert early so every branch below uses the semantic name.
+        _INT_TO_TASK = {
+            0: StratTask.NOMINAL_ANALYSIS,
+            2: StratTask.STRATEGY_SEARCH,
+            3: StratTask.ROBUSTNESS_EVALUATION,
+            23: StratTask.FULL_PIPELINE,
+            33: StratTask.EXTERNAL_EVALUATION,
+        }
+        if not isinstance(step, StratTask):
+            task = _INT_TO_TASK.get(step, StratTask.NOMINAL_ANALYSIS)
+        else:
+            task = step
 
         # CLEANUP PREVIOUS WORKER
 
@@ -7059,7 +7087,7 @@ class CertusStratApp(CertusBaseApp):
         else:
             self.logger.info("[MODE] PREMIUM active")
 
-        self.logger.info("\n" + "=" * 80 + f"\nSTARTING WORKFLOW: Step {step}\n" + "=" * 80 + "\n")
+        self.logger.info("\n" + "=" * 80 + f"\nSTARTING WORKFLOW: {task.name} ({task.value})\n" + "=" * 80 + "\n")
 
         # New run: allow live monitor to re-open normally (unless user closes again).
 
@@ -7079,7 +7107,8 @@ class CertusStratApp(CertusBaseApp):
         ]:
             btn.setEnabled(False)
 
-        if step in [2, 23]:
+        # Enable "Stop & Proceed" only for tasks that run the optimisation engine.
+        if task in (StratTask.STRATEGY_SEARCH, StratTask.FULL_PIPELINE):
             self.stop_step2_btn.setEnabled(True)
 
             self.stop_step2_btn.setText("⏩ Stop & Proceed")
@@ -7091,21 +7120,21 @@ class CertusStratApp(CertusBaseApp):
 
         self.progress_bar.setValue(0)
 
-        if step != 0:
-            self.status_label.setText("Running Step 1 (prerequisite)...")
+        if task != StratTask.NOMINAL_ANALYSIS:
+            self.status_label.setText("Running Phase 1 (prerequisite)...")
 
-            self.logger.info("AUTO-RUNNING STEP 1: Nominal Calculation (Prerequisite)")
+            self.logger.info("AUTO-RUNNING PHASE 1: Nominal Calculation (Prerequisite)")
 
         else:
-            self.status_label.setText("Running Step 1 (Nominal)...")
+            self.status_label.setText("Running Phase 1 (Nominal)...")
 
         self.worker = WorkerThread(
-            step=step,
+            step=task,
             params=params,
             opti_results=self.opti_results,
-            timing_logger=self.timing_logger if step == 23 else None,
+            timing_logger=self.timing_logger if task == StratTask.FULL_PIPELINE else None,
         )
-        self._register_worker_thread(self.worker, f"STRAT-step{step}")
+        self._register_worker_thread(self.worker, f"STRAT-{task.name.lower()}")
 
         self.worker.signals.update_live_growth.connect(self.on_live_growth_update)
 

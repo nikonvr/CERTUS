@@ -609,6 +609,8 @@ class TestCertusREResultsDialogSmoke:
         CertusREResultsDialog.exec = MagicMock()
         CertusREResultsDialog.show = MagicMock()
 
+        mock_app._re_initial_stack = initial_stack
+
         try:
             dlg = CertusREResultsDialog(
                 mock_app,
@@ -617,11 +619,12 @@ class TestCertusREResultsDialogSmoke:
                 re_rmse_initial=0.015,
                 re_rmse_phase1=0.008,
                 re_rmse_final=0.002,
-                initial_stack=initial_stack,
+                initial_stack=None,
                 announce_in_log=False,
             )
             assert dlg is not None
             assert dlg.main_app == mock_app
+            assert dlg.initial_stack == initial_stack
         finally:
             CertusREResultsDialog.exec = original_exec
             CertusREResultsDialog.show = original_show

@@ -5827,13 +5827,6 @@ class CertusREApp(CertusBaseApp):
         if hasattr(self, "progress_widget"):
             self.progress_widget.start()
 
-        if hasattr(self, "spectrum_plot") and self.spectrum_plot is not None:
-            install_skeleton_loader(self.spectrum_plot, "chart")
-        if hasattr(self, "profile_plot") and self.profile_plot is not None:
-            install_skeleton_loader(self.profile_plot, "chart")
-        if hasattr(self, "nk_plot") and self.nk_plot is not None:
-            install_skeleton_loader(self.nk_plot, "chart")
-
         self.log("[DBG-UI] Creating REWorker...", "INFO")
         self._re_worker = REWorker(cfg)
         self.log("[DBG-UI] Connecting REWorker signals...", "INFO")

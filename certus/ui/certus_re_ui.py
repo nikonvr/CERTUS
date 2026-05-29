@@ -70,7 +70,7 @@ class CertusREResultsDialog(QDialog):
             initial_stack = list(initial_stack)
 
         else:
-            initial_stack = getattr(self, "_re_initial_stack", [])
+            initial_stack = getattr(main_app, "_re_initial_stack", [])
         self.initial_stack = initial_stack
 
         n = int(ep0.size)

@@ -367,6 +367,9 @@ def metal_optimization_worker_run_differential_evolution(
 
                 worker.best_candidate["x"] = xk.copy()
 
+            now = time.time()
+            emitted = False
+
             if worker.iteration_count % 5 == 0:
                 worker.progress.emit(
                     {
@@ -375,10 +378,10 @@ def metal_optimization_worker_run_differential_evolution(
                         "iteration": worker.iteration_count,
                     }
                 )
+                worker._last_live_emit_time = now
+                emitted = True
 
-            now = time.time()
-
-            if now - worker._last_live_emit_time >= 2.0 and worker.best_candidate["x"] is not None:
+            if not emitted and now - worker._last_live_emit_time >= 2.0 and worker.best_candidate["x"] is not None:
                 worker._last_live_emit_time = now
 
                 worker.progress.emit(

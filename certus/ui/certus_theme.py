@@ -591,9 +591,13 @@ class CertusTheme:
 
     @staticmethod
     def hex_to_rgba_tuple(hex_color: str, alpha: float = 1.0) -> tuple:
-        """Converts #RRGGBB to (r, g, b, a_float)."""
+        """Converts #RRGGBB to (r, g, b, a) with alpha as 0-255 int."""
 
         c = QColor(hex_color)
+
+        alpha_int = int(alpha) if alpha > 1 else int(alpha * 255)
+
+        return (c.red(), c.green(), c.blue(), alpha_int)
 
     @staticmethod
     def get_standard_stylesheet() -> str:

@@ -1848,17 +1848,6 @@ class MetalBaseApp(CertusBaseApp):
         self.progress_widget.start()
         self.optimization_thread.start()
 
-        try:
-            from certus.ui.certus_ui import install_skeleton_loader
-            if hasattr(self, "mse_plot") and self.mse_plot:
-                install_skeleton_loader(self.mse_plot, "chart")
-            if hasattr(self, "reflectance_plot") and self.reflectance_plot:
-                install_skeleton_loader(self.reflectance_plot, "chart")
-            if hasattr(self, "diel_plot") and self.diel_plot:
-                install_skeleton_loader(self.diel_plot, "chart")
-        except Exception as e:
-            logging.getLogger("CERTUS").debug("Failsafe installing skeleton loaders: %s", e)
-
         self.stat_counters = {"MS": 0, "MCS": 0, "SP": 0}
         self.update_stats_display()
 

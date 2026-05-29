@@ -1673,7 +1673,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
         try:
             ts = certus_timestamp_file()
 
-            rmse_val = self.rmse_history[-1] if self.rmse_history else 0.0
+            rmse_val = np.sqrt(mse) if mse > 0 else 0.0
 
             base_name = f"Report_METAL_BILAYER_{ts}_RMSE_{rmse_val:.5f}"
 

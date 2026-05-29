@@ -17,15 +17,10 @@ import functools
 from pathlib import Path
 from typing import Any
 import re
-
-
 import sys
 
 
 import logging
-
-
-import unicodedata
 
 
 import numpy as np
@@ -59,6 +54,9 @@ from PyQt6.QtWidgets import (
     QDoubleSpinBox,
     QSpinBox,
     QTextEdit,
+    QTabWidget,
+    QComboBox,
+    QTableWidget,
 )
 
 
@@ -72,6 +70,7 @@ from certus.core.certus_core import (
     canonicalize_substrate_label,
     substrate_sellmeier_coeffs,
 )
+from certus.core.certus_substrate_helpers import filter_bare_substrate_columns, is_bare_substrate_column, norm_header
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import SubstrateIndexRequest, SubstrateIndexService
 
@@ -103,83 +102,15 @@ logger = setup_module_logging("CERTUS_SUBSTRATE_INDEX")
 
 def _substrate_index_norm_header(raw) -> str:
 
-    s = str(raw).strip().lower()
-
-    s = "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
-
-    s = s.replace("œ", "oe").replace("æ", "ae")
-
-    # Usual Excel / lab separators -> spaces (robust to pasted or heterogeneous shortcuts)
-
-    s = re.sub(r"[_\-\./\\+|,:;]+", " ", s)
-
-    s = re.sub(r"\s+", " ", s).strip()
-
-    return s
+    return norm_header(raw)
 
 
 def _substrate_index_expand_substrate_abbrevs(s: str) -> str:
-    """Replaces common FR/EN abbreviations with canonical forms for the bare test."""
-
-    # Order: long / specific forms first
-
-    repl: tuple[tuple[str, str], ...] = (
-        (r"\bsubstrate\b", "substrate"),
-        (r"\bsubstrat\b", "substrate"),
-        (r"\bsubstn\b", "substrate nu"),  # substn, subst-n
-        (r"\bsbstn\b", "substrate nu"),
-        (r"\bsubstnu\b", "substrate nu"),
-        (r"\bsbstnu\b", "substrate nu"),
-        (r"\bsnu\b", "substrate nu"),  # acronyme  substrate nu
-        (r"\bsubst\b", "substrate"),
-        (r"\bsbst\b", "substrate"),
-        (r"\bsubstr\b", "substrate"),
-        (r"\bsubs\b", "substrate"),  # subs = substrate (lab usage)
-        (r"\bsub\b", "sub"),  # keep short; combines with nu elsewhere
-        (r"\buncoated\b", "uncoated"),
-        (r"\buncoat\b", "uncoated"),
-        (r"\bnocoat\b", "no coating"),
-        (r"\bno\s*coat\b", "no coating"),
-        (r"\bwo\s*coat\b", "no coating"),
-        (r"\bw/o\s*coat\b", "no coating"),
-        (r"\btemoin\b", "witness"),
-        (r"\bwitness\b", "witness"),
-        (r"\bblk\b", "blank"),
-        (r"\bref\b", "ref"),
-    )
-
-    out = s
-
-    for pat, to in repl:
-        out = re.sub(pat, to, out, flags=re.IGNORECASE)
-
-    out = re.sub(r"\s+", " ", out).strip()
-
-    return out
+    return expand_substrate_abbrevs(s)
 
 
 def _substrate_index_unglue_substrate_nu(s: str) -> str:
-    """Unglues concatenated variants like substratnu, subnu, baresub, etc."""
-
-    out = s
-
-    out = re.sub(
-        r"(substrate|sub|sbst|subst|substr|bare|blank|uncoated)(nu|nus|nue)\b",
-        r"\1 \2",
-        out,
-        flags=re.IGNORECASE,
-    )
-
-    out = re.sub(
-        r"\b(bare|blank|ref|raw|empty|void)(sub|substrate|substrate)\b",
-        r"\1 \2",
-        out,
-        flags=re.IGNORECASE,
-    )
-
-    out = re.sub(r"\s+", " ", out).strip()
-
-    return out
+    return unglue_substrate_nu(s)
 
 
 # Exclusions: stack / target (including lab abbreviations)
@@ -236,73 +167,11 @@ _RE_SUBSTRATE_INDEX_INCLUDE = re.compile(
 
 
 def _is_bare_substrate_spectrum_column(name) -> bool:
-    """True if header indicates a bare substrate measurement (not a filter / stack)."""
-
-    s0 = _substrate_index_norm_header(name)
-
-    if not s0:
-        return False
-
-    s1 = _substrate_index_unglue_substrate_nu(s0)
-
-    s2 = _substrate_index_expand_substrate_abbrevs(s1)
-
-    s3 = _substrate_index_unglue_substrate_nu(s2)
-
-    # Stack / target priority
-
-    if _RE_SUBSTRATE_INDEX_EXCLUDE.search(s3):
-        return False
-
-    return bool(_RE_SUBSTRATE_INDEX_INCLUDE.search(s3))
+    return is_bare_substrate_column(name)
 
 
 def _filter_dataframe_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str], list[str]]:
-    """Keeps lambda + spectral columns marked bare substrate; returns (df, kept, ignoreds)."""
-
-    if df is None or df.empty or len(df.columns) < 2:
-        return df, [], []
-
-    col_names = list(df.columns)
-
-    wl = col_names[0]
-
-    # Lab exports: 1st column may be "Unnamed", with lambda in another column.
-
-    for c in col_names:
-        s = _substrate_index_norm_header(c)
-
-        if not re.search(r"\b(wavelength|lambda|longueur\s*d\s*onde|wl)\b", s):
-            continue
-
-        vals = pd.to_numeric(df[c], errors="coerce")
-
-        if int(np.count_nonzero(np.isfinite(vals.values))) >= 3:
-            wl = c
-
-            break
-
-    kept_cols: list = [wl]
-
-    kept_spec: list[str] = []
-
-    dropped: list[str] = []
-
-    for col in col_names:
-        if col == wl:
-            continue
-
-        cstr = str(col)
-
-        if _is_bare_substrate_spectrum_column(col):
-            kept_cols.append(col)
-
-            kept_spec.append(cstr)
-
-        else:
-            dropped.append(cstr)
-
-    return df[kept_cols].copy(), kept_spec, dropped
+    return filter_bare_substrate_columns(df)
 
 
 def _classify_substrate_index_columns(columns) -> dict[str, list]:
@@ -859,6 +728,26 @@ def _sellmeier_polish_helpers(_p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarra
     return _residuals_polish_q, _jac_polish_q
 
 
+def _sellmeier_initial_context(
+    wl: np.ndarray,
+    wl_fit_nm: np.ndarray,
+    n_vals: np.ndarray,
+    mask: np.ndarray,
+    bounds,
+    log_l1l2: bool,
+):
+    """Build bounds and an initial Sellmeier seed in one call."""
+
+    lam_min_um = float(np.min(np.asarray(wl_fit_nm, dtype=np.float64)) / 1000.0)
+    bounds_q, _p_from_q, _q_from_p, *_ = _sellmeier_param_reparam_helpers(bounds, log_l1l2)
+    p_mid = _sellmeier_midpoint_seed(bounds, lam_min_um)
+    q_mid = np.clip(_q_from_p(p_mid), bounds_q[0], bounds_q[1])
+    seed_desc, q0 = _sellmeier_seed_from_compact_poly(wl, wl_fit_nm, n_vals, mask, _p_from_q, q_mid, bounds_q)
+    q0 = np.clip(np.asarray(q0, dtype=np.float64), bounds_q[0], bounds_q[1])
+    q_candidates = _sellmeier_multistart_candidates(q0, _p_from_q, _q_from_p, bounds, bounds_q, int(SELLMEIER_MULTISTART_TRIALS))
+    return bounds_q, _p_from_q, _q_from_p, q_mid, q0, q_candidates, seed_desc
+
+
 # Duplicated function _sellmeier_seed_from_compact_poly removed.
 
 
@@ -1054,35 +943,30 @@ def _model_selection_score(
     score = float(rmse_fit)
 
     n_line = np.asarray(n_fit, dtype=np.float64)
-
     m = np.asarray(fit_mask, dtype=bool) & np.isfinite(n_line) & np.isfinite(wl_nm)
 
-    # Sellmeier should not be penalized by a decrease constraint here.
-
     src = str((fit_meta or {}).get("source") or "")
-
     is_sellmeier = "sellmeier" in src
+    is_spline = src.startswith("analytic-bspline-lsq")
 
     if int(np.count_nonzero(m)) >= 3 and not is_sellmeier:
         n_seg = n_line[m]
-
         _cnt, frac = IndexCore._monotonic_violation_stats(n_seg)
-
         score += float(MODEL_SELECT_MONO_WEIGHT) * float(max(0.0, frac))
 
-    else:
+    if is_spline:
+        # Penalize overly flexible spline fits a bit more to avoid fitting noise.
         n_seg = n_line[m]
+        if int(np.count_nonzero(m)) >= 5:
+            rough = float(np.mean(np.abs(np.diff(n_seg)))) if n_seg.size >= 2 else 0.0
+            score += 0.01 * rough
 
     if "sellmeier" in src:
         prior = _sellmeier_prior_coeffs_for_column(col_name)
-
         if prior is not None and int(np.count_nonzero(m)) >= 8:
             wl_um = np.asarray(wl_nm[m], dtype=np.float64) / 1000.0
-
             n_prior = _sellmeier_3term_standard_eval(np.asarray(prior, dtype=np.float64), wl_um)
-
             prior_rmse = float(np.sqrt(np.mean((n_seg - n_prior) ** 2)))
-
             score += float(MODEL_SELECT_PRIOR_WEIGHT) * prior_rmse
 
     return float(score)
@@ -1151,6 +1035,224 @@ def _bad_model_labels(rms_by_label: dict[str, float]) -> set[str]:
     best = _best_finite_rmse_from_triplet(mv)
 
     return {SUBSTRATE_INDEX_MODELS[j][1] for j in range(_N_SUBSTRATE_MODELS) if _rmse_is_bad_vs_best(mv[j], best)}
+
+
+def _rank_models_by_selection_score(
+    score_m: dict[str, float],
+    rms_m: dict[str, float],
+    by_model: dict[str, np.ndarray],
+    fit_mask: np.ndarray,
+) -> tuple[str, float, float, list[tuple[str, float]]]:
+    """Return best label and ranked scores using score, RMSE, and complexity tie-breakers."""
+
+    fit_mask = np.asarray(fit_mask, dtype=bool)
+    candidates: list[tuple[str, float, float, int]] = []
+
+    for _mk, mlabel in SUBSTRATE_INDEX_MODELS:
+        sc = float(score_m.get(mlabel, float("inf")))
+        rm = float(rms_m.get(mlabel, float("inf")))
+        arr = by_model.get(mlabel)
+        if arr is None:
+            complexity = 999
+        else:
+            complexity = int(np.count_nonzero(np.isfinite(np.asarray(arr, dtype=np.float64)[fit_mask])))
+        candidates.append((mlabel, sc, rm, complexity))
+
+    ranked = sorted(
+        candidates,
+        key=lambda t: (
+            not np.isfinite(t[1]),
+            t[1],
+            not np.isfinite(t[2]),
+            t[2],
+            t[3],
+            t[0],
+        ),
+    )
+
+    ranked_scores = [(lab, float(sc)) for lab, sc, _rm, _cx in ranked]
+    best_lab, best_score, best_rmse, _cx = ranked[0]
+    return best_lab, float(best_score), float(best_rmse), ranked_scores
+
+
+def _fit_summary_line(
+    col_name: str,
+    best_lab: str,
+    best_score: float,
+    best_rmse: float,
+    best_value_at_idx: float,
+) -> str:
+    """Compact human-readable summary for logs and debug trace."""
+
+    return (
+        f"Fit column done: {str(col_name)} | best={best_lab} | score={float(best_score):.6g} | "
+        f"rmse_fit={float(best_rmse) if np.isfinite(best_rmse) else float('nan'):.6g} | "
+        f"n@4500={float(best_value_at_idx):.6f}"
+    )
+
+
+def _resolve_sellmeier_settings(
+    auto_enabled: bool,
+    timeout_spin_value: float,
+    de_iter_value: int,
+    ls_nfev_value: int,
+    log_l1l2_enabled: bool,
+) -> tuple[float | None, int, int, bool]:
+    """Normalize UI Sellmeier settings into a single robust config tuple."""
+
+    if auto_enabled:
+        timeout_cfg = 8.0
+        de_maxiter = 300
+        ls_max_nfev = 3000
+    else:
+        timeout_cfg = None if float(timeout_spin_value) <= 0.0 else float(timeout_spin_value)
+        de_maxiter = int(de_iter_value)
+        ls_max_nfev = int(ls_nfev_value)
+
+    return timeout_cfg, de_maxiter, ls_max_nfev, bool(log_l1l2_enabled)
+
+
+def _prepare_substrate_index_input(df: pd.DataFrame) -> tuple[pd.DataFrame | None, np.ndarray | None, dict[str, list[str]] | None, float | None, float | None, list[str]]:
+    """Validate input dataframe and extract wavelength + substrate groups."""
+
+    warnings_list: list[str] = []
+    if df is None or df.empty or len(df.columns) < 2:
+        return None, None, None, None, None, ["empty dataframe"]
+
+    x = np.asarray(pd.to_numeric(df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
+    m_x = np.isfinite(x)
+    if int(np.count_nonzero(m_x)) < 5:
+        return None, None, None, None, None, ["invalid wavelength column"]
+    if not np.all(m_x):
+        df = df.loc[m_x].reset_index(drop=True)
+        x = np.asarray(pd.to_numeric(df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
+        warnings_list.append("non-finite wavelengths removed")
+
+    groups = _classify_substrate_index_columns(df.columns[1:])
+    if not any(groups.values()):
+        return None, None, None, None, None, warnings_list + ["no matching bare-substrate columns"]
+
+    # Ensure every retained spectral column matches the wavelength length.
+    mismatched: list[str] = []
+    for col in df.columns[1:]:
+        y = np.asarray(pd.to_numeric(df[col], errors="coerce").values, dtype=np.float64)
+        if y.size != x.size:
+            mismatched.append(str(col))
+
+    if mismatched:
+        warnings_list.append(
+            "length-mismatch columns: " + ", ".join(mismatched[:10]) + ("..." if len(mismatched) > 10 else "")
+        )
+
+    wl_min_fit, wl_max_fit = None, None
+    if x.size >= 2:
+        wl_min_fit = float(np.nanmin(x))
+        wl_max_fit = float(np.nanmax(x))
+
+    return df, x, groups, wl_min_fit, wl_max_fit, warnings_list
+
+
+def _build_substrate_manifest(
+    service: SubstrateIndexService,
+    *,
+    wl_min_fit: float,
+    wl_max_fit: float,
+    sellmeier_log_l1l2: bool,
+    warnings_list: list[str],
+    status_val: ValidationStatus,
+    source_path: str,
+    rmse_row: dict[str, dict[str, float]],
+) -> dict | None:
+    """Best-effort manifest creation for downstream export."""
+
+    try:
+        req = SubstrateIndexRequest(
+            config={
+                "wl_min_fit": float(wl_min_fit),
+                "wl_max_fit": float(wl_max_fit),
+                "sellmeier_log_l1l2": bool(sellmeier_log_l1l2),
+            },
+            source_paths=[p for p in (str(source_path or "").strip(),) if p],
+            seed=12345,
+            app_id="CERTUS_SUBSTRATE_INDEX",
+            app_version=__version__,
+            warnings=list(warnings_list),
+            status=status_val,
+        )
+        return service.fit(req).manifest.to_dict()
+    except NUMERICAL_FAULT_EXCEPTIONS as exc:
+        logger.warning("SUBSTRATE manifest generation failed: %s", exc)
+        return None
+
+
+def _substrate_manifest_service(rmse_row: dict[str, dict[str, float]], wl_min_fit: float, wl_max_fit: float) -> SubstrateIndexService:
+    """Create the thin service wrapper used for manifest generation."""
+
+    return SubstrateIndexService(
+        runner=lambda _cfg: {
+            "rmse_row": rmse_row,
+            "fit_window_nm": [float(wl_min_fit), float(wl_max_fit)],
+        }
+    )
+
+
+def _synthesize_validation_status(n_fit_meta: dict[str, dict[str, dict]]) -> tuple[str, list[str]]:
+    """Build a lightweight validation summary from fit metadata."""
+
+    warn_list: list[str] = []
+    for _by_model in n_fit_meta.values():
+        for _model_name, _meta in _by_model.items():
+            _src = str((_meta or {}).get("source") or "")
+            if _src.startswith("skipped-"):
+                warn_list.append(f"{_model_name}: fit skipped ({_src})")
+
+    return ("WARNING_UNCERTAINTY_NOT_COMPUTED" if warn_list else "OK"), warn_list
+
+
+def _finalize_substrate_run(
+    *,
+    wl_min_fit: float,
+    wl_max_fit: float,
+    rmse_row: dict[str, dict[str, float]],
+    source_path: str,
+    status_val: ValidationStatus,
+    warnings_list: list[str],
+    sellmeier_log_l1l2: bool,
+) -> dict | None:
+    """Create manifest in one place with explicit run settings."""
+
+    svc = _substrate_manifest_service(rmse_row, wl_min_fit, wl_max_fit)
+    return _build_substrate_manifest(
+        svc,
+        wl_min_fit=float(wl_min_fit),
+        wl_max_fit=float(wl_max_fit),
+        sellmeier_log_l1l2=bool(sellmeier_log_l1l2),
+        warnings_list=list(warnings_list),
+        status_val=status_val,
+        source_path=source_path,
+        rmse_row=rmse_row,
+    )
+
+
+def _align_xy_lengths(x: np.ndarray, y: np.ndarray, *, label: str = "") -> tuple[np.ndarray, np.ndarray]:
+    x = np.asarray(x, dtype=np.float64).reshape(-1)
+    y = np.asarray(y, dtype=np.float64)
+    if y.ndim == 1:
+        y = y.reshape(1, -1)
+    if y.ndim != 2:
+        raise ValueError(f"{label}: expected 1D/2D spectral data, got shape={y.shape}")
+    n = min(int(x.size), int(y.shape[-1]))
+    if n < 5:
+        raise ValueError(f"{label}: not enough aligned points (x={x.size}, y={y.shape[-1]})")
+    if x.size != n or y.shape[-1] != n:
+        logger.warning(
+            "Aligning lengths for %s: x=%d y=%d -> %d",
+            label or "spectrum",
+            int(x.size),
+            int(y.shape[-1]),
+            n,
+        )
+    return x[:n], y[..., :n]
 
 
 def _linear_extrap_exterior(
@@ -3880,19 +3982,47 @@ class SubstrateIndexGUI(QMainWindow):
 
         c_layout.addWidget(hint)
 
+        self.main_tabs = QTabWidget()
+
         self.plot_widget = CertusScientificPlot(title="Spectra")
-
         self.plot_widget.addLegend(offset=(10, 10))
-
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
-
         self.plot_widget.setLabel("bottom", "Wavelength (nm)")
-
         self.plot_widget.setLabel("left", "Amplitude")
-
         attach_excel_clipboard_context_menu(self.plot_widget)
 
-        c_layout.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_widget))
+        spectra_tab = QWidget()
+        spectra_layout = QVBoxLayout(spectra_tab)
+        spectra_layout.setContentsMargins(0, 0, 0, 0)
+        spectra_layout.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_widget))
+        self.main_tabs.addTab(spectra_tab, "Input spectra")
+
+        self.output_plot = CertusScientificPlot(title="Substrate output")
+        self.output_plot.addLegend(offset=(10, 10))
+        self.output_plot.showGrid(x=True, y=True, alpha=0.25)
+        self.output_plot.setLabel("bottom", "Wavelength (nm)")
+        self.output_plot.setLabel("left", "Index n")
+        attach_excel_clipboard_context_menu(self.output_plot)
+
+        output_tab = QWidget()
+        output_layout = QVBoxLayout(output_tab)
+        output_layout.setContentsMargins(0, 0, 0, 0)
+        output_layout.addWidget(wrap_scientific_plot_with_toolbar(self, self.output_plot))
+        self.main_tabs.addTab(output_tab, "Output")
+
+        self.output_tables = QWidget()
+        self.output_tables_layout = QVBoxLayout(self.output_tables)
+        self.output_tables_layout.setContentsMargins(0, 0, 0, 0)
+        self.output_model_selector = QComboBox()
+        self.output_model_selector.currentIndexChanged.connect(self._refresh_output_tables)
+        self.output_tables_layout.addWidget(self.output_model_selector)
+        self.output_tables_area = QWidget()
+        self.output_tables_area_layout = QVBoxLayout(self.output_tables_area)
+        self.output_tables_area_layout.setContentsMargins(0, 0, 0, 0)
+        self.output_tables_layout.addWidget(self.output_tables_area)
+        self.main_tabs.addTab(self.output_tables, "Output tables")
+
+        c_layout.addWidget(self.main_tabs)
 
         self.log_panel = CertusLogPanel(title="LOGS", visible=True, height=170)
 
@@ -4022,6 +4152,126 @@ class SubstrateIndexGUI(QMainWindow):
 
             self.progress_widget.stop("Load failed")
 
+    def _output_table_titles(self, selected_model: str | None = None) -> list[str]:
+        titles = ["lambda (nm)"]
+        if getattr(self, "n_results_raw", None):
+            for bk in self.n_results_raw.keys():
+                titles.append(f"{bk} (Raw)")
+                if selected_model:
+                    titles.append(f"{bk} ({selected_model})")
+                else:
+                    for _mk, mlabel in self._models_order_by_bk.get(bk, []):
+                        titles.append(f"{bk} ({mlabel})")
+        return titles
+
+    def _refresh_output_tables(self, *_args) -> None:
+        if not hasattr(self, "output_tables_area"):
+            return
+        while self.output_tables_area_layout.count():
+            item = self.output_tables_area_layout.takeAt(0)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
+
+        if not hasattr(self, "n_results_raw") or not self.n_results_raw:
+            self.output_tables_area_layout.addWidget(QLabel("No output available yet."))
+            return
+
+        selected = self.output_model_selector.currentText().strip() if hasattr(self, "output_model_selector") else ""
+        if not selected:
+            selected = ""
+
+        table = QTableWidget()
+        self.output_table_widget = table
+        wl = np.asarray(self.output_table_wl if hasattr(self, "output_table_wl") else [], dtype=np.float64)
+        table.setRowCount(len(wl))
+        col_names = self._output_table_titles(selected if selected in {ml for _, ml in SUBSTRATE_INDEX_MODELS} else None)
+        table.setColumnCount(len(col_names))
+        table.setHorizontalHeaderLabels(col_names)
+        for i in range(len(wl)):
+            table.setItem(i, 0, QTableWidgetItem(f"{wl[i]:.1f}"))
+            c = 1
+            for bk in self.n_results_raw.keys():
+                table.setItem(i, c, QTableWidgetItem(f"{self.n_results_raw[bk][i]:.4f}"))
+                c += 1
+                if selected and selected in self.n_results_by_model.get(bk, {}):
+                    arr = self.n_results_by_model[bk][selected]
+                    table.setItem(i, c, QTableWidgetItem(f"{arr[i]:.4f}"))
+                    c += 1
+                else:
+                    for _mk, mlabel in self._models_order_by_bk.get(bk, []):
+                        arr = self.n_results_by_model.get(bk, {}).get(mlabel)
+                        table.setItem(i, c, QTableWidgetItem(f"{arr[i]:.4f}" if arr is not None else ""))
+                        c += 1
+        self.output_tables_area_layout.addWidget(table)
+
+    def _plot_output_results(
+        self,
+        wl: np.ndarray,
+        n_results_raw: dict[str, np.ndarray],
+        n_results_by_model: dict[str, dict[str, np.ndarray]],
+        rmse_row: dict[str, dict[str, float]],
+        fit_wl_lo: float,
+        fit_wl_hi: float,
+    ) -> None:
+        """Render the dedicated output tab for raw and fitted index curves."""
+
+        if not hasattr(self, "output_plot"):
+            return
+
+        self.output_plot.clear()
+        wl = np.asarray(wl, dtype=np.float64)
+        if wl.size == 0:
+            return
+
+        self.output_table_wl = wl
+        self.n_results_raw = n_results_raw
+        self.n_results_by_model = n_results_by_model
+        self.rmse_row = rmse_row
+
+        if hasattr(self, "output_model_selector"):
+            self.output_model_selector.blockSignals(True)
+            self.output_model_selector.clear()
+            self.output_model_selector.addItem("All models")
+            for _mk, mlabel in SUBSTRATE_INDEX_MODELS:
+                self.output_model_selector.addItem(mlabel)
+            self.output_model_selector.blockSignals(False)
+
+        fit_mask = _substrate_index_geom_fit_mask(wl, fit_wl_lo, fit_wl_hi)
+        colors = [CertusTheme.BRAND_DESIGN, CertusTheme.BRAND_INDEX, CertusTheme.SUCCESS, CertusTheme.WARNING]
+
+        for i, key in enumerate(n_results_raw.keys()):
+            c = pg.mkColor(colors[i % len(colors)])
+            c_raw = pg.mkColor(c)
+            c_raw.setAlpha(130)
+            _pg_plot_xy_split_band(
+                self.output_plot,
+                wl,
+                n_results_raw[key],
+                fit_mask,
+                pg.mkPen(color=c_raw, width=1.8),
+                pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.2),
+                name=f"{key} (Raw n)",
+            )
+            bym = n_results_by_model.get(key, {})
+            for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
+                arr = bym.get(mlabel)
+                if arr is None:
+                    continue
+                _pg_plot_xy_split_band(
+                    self.output_plot,
+                    wl,
+                    arr,
+                    fit_mask,
+                    pg.mkPen(color=pg.mkColor(c), width=2.0, style=[Qt.PenStyle.SolidLine, Qt.PenStyle.DashLine, Qt.PenStyle.DotLine][pi % 3]),
+                    pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.2),
+                    name=f"{key} ({mlabel})",
+                )
+
+        self.output_plot.getViewBox().enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
+        self.output_plot.autoRange()
+        self._refresh_output_tables()
+
     def preview_plot(self):
 
         if self.df is None:
@@ -4049,7 +4299,8 @@ class SubstrateIndexGUI(QMainWindow):
 
         fit_mask = _substrate_index_geom_fit_mask(x, lo_f, hi_f)
 
-        y_raw = np.asarray(self.df.iloc[:, 1:].values, dtype=np.float64).T[:, m_x]
+        y_raw = np.asarray(self.df.loc[m_x, self.df.columns[1:]].values, dtype=np.float64).T
+        x, y_raw = _align_xy_lengths(x, y_raw, label="preview")
 
         y_clean = IndexCore.apply_dynamic_filtering(
             x, y_raw, self.current_window, self.current_poly, self.current_heavy
@@ -4075,6 +4326,7 @@ class SubstrateIndexGUI(QMainWindow):
     def _get_clean_fraction_column(self, x: np.ndarray, col_name) -> np.ndarray:
 
         y_raw = np.asarray(pd.to_numeric(self.df[col_name], errors="coerce").values, dtype=np.float64)
+        x, y_raw = _align_xy_lengths(x, y_raw, label=str(col_name))
 
         m = np.isfinite(x) & np.isfinite(y_raw)
 
@@ -4107,6 +4359,7 @@ class SubstrateIndexGUI(QMainWindow):
         dict[str, dict[str, float]],
         dict[str, dict[str, dict]],
     ]:
+        """Compute raw n(lambda) and all fitted variants for each substrate column."""
 
         n_results_raw: dict[str, np.ndarray] = {}
 
@@ -4258,40 +4511,77 @@ class SubstrateIndexGUI(QMainWindow):
             i_edge = int(np.argmin(np.abs(xa - 4500.0)))
 
             score_m: dict[str, float] = {}
+            selection_debug: dict[str, dict[str, float]] = {}
 
             for _mk, _ml in SUBSTRATE_INDEX_MODELS:
                 arr = by_model.get(_ml)
 
                 if arr is None:
                     score_m[_ml] = float("inf")
-
+                    selection_debug[_ml] = {
+                        "rmse": float("inf"),
+                        "score": float("inf"),
+                        "mono_frac": float("inf"),
+                        "prior_rmse": float("nan"),
+                    }
                     continue
 
-                score_m[_ml] = _model_selection_score(
-                    rmse_fit=float(rms_m.get(_ml, float("nan"))),
-                    n_fit=np.asarray(arr, dtype=np.float64),
+                rmse_v = float(rms_m.get(_ml, float("nan")))
+                arr_np = np.asarray(arr, dtype=np.float64)
+                score_v = _model_selection_score(
+                    rmse_fit=rmse_v,
+                    n_fit=arr_np,
                     wl_nm=xa,
                     fit_mask=m_rmse_mask,
                     fit_meta=meta_m.get(_ml, {}),
                     col_name=str(col_name),
                 )
 
-            best_lab = min(
-                SUBSTRATE_INDEX_MODELS,
-                key=lambda t: float(score_m.get(t[1], float("inf"))),
-            )[1]
+                score_m[_ml] = score_v
+
+                mono_cnt, mono_frac = IndexCore._monotonic_violation_stats(arr_np[m_rmse_mask]) if np.any(m_rmse_mask) else (0, 0.0)
+                selection_debug[_ml] = {
+                    "rmse": rmse_v,
+                    "score": score_v,
+                    "mono_frac": float(mono_frac),
+                    "prior_rmse": float("nan"),
+                }
+
+            best_lab, best_score, best_rmse, ranked_models = _rank_models_by_selection_score(
+                score_m=score_m,
+                rms_m=rms_m,
+                by_model=by_model,
+                fit_mask=m_rmse_mask,
+            )
+
+            if len(ranked_models) > 1 and np.isfinite(best_score):
+                second_lab, second_score = ranked_models[1]
+                rel_gap = (second_score - best_score) / max(1e-12, abs(best_score)) if np.isfinite(second_score) else float("inf")
+                if rel_gap < 0.01 and len(best_lab) > len(second_lab):
+                    logger.info(
+                        "Tie-break: choosing simpler model %s over %s (scores %.6g vs %.6g).",
+                        second_lab,
+                        best_lab,
+                        float(second_score),
+                        float(best_score),
+                    )
+                    best_lab = second_lab
+                    best_score = second_score
+                    best_rmse = float(rms_m.get(best_lab, float("nan")))
 
             n_best = by_model.get(best_lab, n_raw_base)
 
             _r = np.asarray(n_best, dtype=np.float64) - np.asarray(n_raw_base, dtype=np.float64)
 
             logger.info(
-                "Fit column done: %s | best score=%s | score=%.6g | n@4500%.6f | rmse_fit(best)=%.6g",
-                str(col_name),
-                best_lab,
-                float(score_m.get(best_lab, float("nan"))),
-                float(n_best[i_edge]) if i_edge < len(n_best) else float("nan"),
-                float(np.sqrt(np.mean((_r[m_rmse_mask]) ** 2))) if np.any(m_rmse_mask) else float("nan"),
+                "%s",
+                _fit_summary_line(
+                    col_name=str(col_name),
+                    best_lab=best_lab,
+                    best_score=best_score,
+                    best_rmse=best_rmse,
+                    best_value_at_idx=float(n_best[i_edge]) if i_edge < len(n_best) else float("nan"),
+                ),
             )
 
         for c in groups["t_2f"]:
@@ -4349,23 +4639,18 @@ class SubstrateIndexGUI(QMainWindow):
         self.log("Substrate index calculation started.", "INFO")
 
         try:
-            x = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
-
-            m_x = np.isfinite(x)
-
-            if int(np.count_nonzero(m_x)) < 5:
-                QMessageBox.warning(self, "Wavelength column", "Invalid \u03bb column (not enough numerical points).")
-
-                self.progress_widget.stop("Invalid wavelength column")
-
+            prepared_df, x, groups, wl_min_fit, wl_max_fit, prep_warnings = _prepare_substrate_index_input(self.df)
+            if prepared_df is None or x is None or groups is None or wl_min_fit is None or wl_max_fit is None:
+                msg = "; ".join(prep_warnings) if prep_warnings else "invalid input"
+                QMessageBox.warning(self, "Substrate Index", f"Cannot start calculation: {msg}.")
+                self.progress_widget.stop("Invalid input")
                 return
 
-            if not np.all(m_x):
-                self.df = self.df.loc[m_x].reset_index(drop=True)
+            self.df = prepared_df
 
-                x = np.asarray(pd.to_numeric(self.df.iloc[:, 0], errors="coerce").values, dtype=np.float64)
-
-            wl_min_fit, wl_max_fit = self._get_fit_range_from_ui()
+            ui_lo, ui_hi = self._get_fit_range_from_ui()
+            wl_min_fit = float(max(ui_lo, float(np.nanmin(x))))
+            wl_max_fit = float(min(ui_hi, float(np.nanmax(x))))
 
             if wl_min_fit >= wl_max_fit:
                 QMessageBox.warning(self, "Fit range", "\u03bb min fit must be strictly less than \u03bb max fit.")
@@ -4374,45 +4659,23 @@ class SubstrateIndexGUI(QMainWindow):
 
                 return
 
-            groups = _classify_substrate_index_columns(self.df.columns[1:])
-
-            if not any(groups.values()):
-                QMessageBox.warning(self, "Column Not Found", "Could not locate expected columns.")
-
-                self.progress_widget.stop("No matching columns")
-
-                return
-
-            if bool(self.sell_auto_chk.isChecked()):
-                sell_timeout_cfg = 8.0
-
-                sell_de_maxiter = 300
-
-                sell_ls_max_nfev = 3000
-
-                logger.info(
-                    "Sellmeier full auto: budget=%.1fs | max iters L-BFGS-B=%d | polish LS nfev=%d",
-                    float(sell_timeout_cfg),
-                    int(sell_de_maxiter),
-                    int(sell_ls_max_nfev),
-                )
-
-            else:
-                sell_timeout_s = float(self.sell_timeout_spin.value())
-
-                sell_timeout_cfg = None if sell_timeout_s <= 0.0 else sell_timeout_s
-
-                sell_de_maxiter = int(self.sell_de_iter_spin.value())
-
-                sell_ls_max_nfev = int(self.sell_ls_nfev_spin.value())
-
-            sell_log_l1l2 = (
-                bool(self.sell_log_l_chk.isChecked()) if hasattr(self, "sell_log_l_chk") else SELLMEIER_DEFAULT_LOG_L1L2
+            sell_timeout_cfg, sell_de_maxiter, sell_ls_max_nfev, sell_log_l1l2 = _resolve_sellmeier_settings(
+                auto_enabled=bool(self.sell_auto_chk.isChecked()),
+                timeout_spin_value=float(self.sell_timeout_spin.value()),
+                de_iter_value=int(self.sell_de_iter_spin.value()),
+                ls_nfev_value=int(self.sell_ls_nfev_spin.value()),
+                log_l1l2_enabled=(
+                    bool(self.sell_log_l_chk.isChecked()) if hasattr(self, "sell_log_l_chk") else SELLMEIER_DEFAULT_LOG_L1L2
+                ),
             )
 
             logger.info(
-                "Sellmeier reparam. L1/L2/L3: %s",
-                "ui=ln(Li) (optimization.)" if sell_log_l1l2 else "Li lineaire (natif)",
+                "Sellmeier settings: auto=%s | timeout=%s | de_maxiter=%d | ls_nfev=%d | reparam=%s",
+                bool(self.sell_auto_chk.isChecked()),
+                "unlimited" if sell_timeout_cfg is None else f"{float(sell_timeout_cfg):.1f}s",
+                int(sell_de_maxiter),
+                int(sell_ls_max_nfev),
+                "ln(Li)" if sell_log_l1l2 else "linear(Li)",
             )
 
             self.progress_widget.update(1, 1, phase="Fit 3 laws (toutes colonnes)")
@@ -4428,14 +4691,7 @@ class SubstrateIndexGUI(QMainWindow):
                 sellmeier_log_l1l2=sell_log_l1l2,
             )
             try:
-                warn_list: list[str] = []
-                for _by_model in n_fit_meta.values():
-                    for _model_name, _meta in _by_model.items():
-                        _src = str((_meta or {}).get("source") or "")
-                        if _src.startswith("skipped-"):
-                            warn_list.append(f"{_model_name}: fit skipped ({_src})")
-                self.validation_warnings = warn_list
-                self.validation_status = "WARNING_UNCERTAINTY_NOT_COMPUTED" if warn_list else "OK"
+                self.validation_status, self.validation_warnings = _synthesize_validation_status(n_fit_meta)
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
                 logger.warning("SUBSTRATE validation status synthesis failed: %s", exc)
                 self.validation_status = "OK"
@@ -4444,32 +4700,15 @@ class SubstrateIndexGUI(QMainWindow):
                 status_val = ValidationStatus(str(self.validation_status))
             except ValueError:
                 status_val = ValidationStatus.OK
-            try:
-                svc = SubstrateIndexService(
-                    runner=lambda _cfg: {
-                        "rmse_row": rmse_row,
-                        "fit_window_nm": [float(wl_min_fit), float(wl_max_fit)],
-                    }
-                )
-                req = SubstrateIndexRequest(
-                    config={
-                        "wl_min_fit": float(wl_min_fit),
-                        "wl_max_fit": float(wl_max_fit),
-                        "sellmeier_log_l1l2": bool(sell_log_l1l2),
-                    },
-                    source_paths=[
-                        p for p in (str(getattr(self, "_last_loaded_measurement_path", "") or "").strip(),) if p
-                    ],
-                    seed=12345,
-                    app_id="CERTUS_SUBSTRATE_INDEX",
-                    app_version=__version__,
-                    warnings=list(self.validation_warnings),
-                    status=status_val,
-                )
-                self.last_run_manifest = svc.fit(req).manifest.to_dict()
-            except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                logger.warning("SUBSTRATE manifest generation failed: %s", exc)
-                self.last_run_manifest = None
+            self.last_run_manifest = _finalize_substrate_run(
+                wl_min_fit=float(wl_min_fit),
+                wl_max_fit=float(wl_max_fit),
+                rmse_row=rmse_row,
+                source_path=str(getattr(self, "_last_loaded_measurement_path", "") or ""),
+                status_val=status_val,
+                warnings_list=list(self.validation_warnings),
+                sellmeier_log_l1l2=bool(sell_log_l1l2),
+            )
 
             spec_lo = float(np.nanmin(x)) if x.size else float("nan")
 
@@ -4486,6 +4725,9 @@ class SubstrateIndexGUI(QMainWindow):
                 spectral_wl_lo=spec_lo,
                 spectral_wl_hi=spec_hi,
             )
+
+            self._plot_output_results(x, n_results_raw, n_results_by_model, rmse_row, wl_min_fit, wl_max_fit)
+            self.main_tabs.setCurrentIndex(1)
 
             self.progress_widget.update(1, 1, phase="Results")
 

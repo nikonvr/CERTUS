@@ -6,13 +6,13 @@ CERTUS Curve Smoother - Spectral Data Smoothing only
 
 from __future__ import annotations
 
-import sys
 import logging
+import sys
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-
 from PyQt6.QtCore import Qt, QSettings
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -25,24 +25,21 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from certus.core.certus_core import setup_module_logging, __version__, NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__, setup_module_logging
 from certus.ui.certus_measurement_excel_ui import open_measurement_excel_interactive
-from certus.utils.certus_spectral_preproc import (
-    auto_tune_savgol_params_from_dataframe,
-    dynamic_savgol_blend,
-)
 from certus.ui.certus_ui import (
+    CertusLogPanel,
+    CertusScientificPlot,
     CertusTheme,
     attach_excel_clipboard_context_menu,
-    CertusScientificPlot,
-    wrap_scientific_plot_with_toolbar,
-    init_certus_app,
+    create_header_logo_widget,
     create_styled_button,
     create_styled_label,
+    init_certus_app,
     set_certus_window_icon,
-    create_header_logo_widget,
-    CertusLogPanel,
+    wrap_scientific_plot_with_toolbar,
 )
+from certus.utils.certus_spectral_preproc import smooth_dataframe_auto, smooth_spectrum_auto
 
 logger = setup_module_logging("CERTUS_CURVE_SMOOTHER")
 
@@ -116,9 +113,7 @@ class CurveSmootherGUI(QMainWindow):
         self.detached_windows: list[QMainWindow] = []
         self.settings = QSettings("CERTUS_SUITE", "CurveSmoother")
         self.last_dir = self.settings.value("last_dir", "")
-        self.current_window = 15
-        self.current_poly = 2
-        self.current_heavy = 25
+        self.current_level = "Moyen"
         self._setup_ui()
         self._attach_ui_log_handler()
 
@@ -191,18 +186,11 @@ class CurveSmootherGUI(QMainWindow):
             f"color: {CertusTheme.TEXT_MAIN}; background: {CertusTheme.BACKGROUND}; "
             f"border: 1px solid {CertusTheme.BORDER}; padding: 4px; border-radius: 4px;"
         )
-        self.combo_mode.addItems(
-            [
-                "Soft (High Fidelity)",
-                "Medium (Balanced)",
-                "Hard (Smooth)",
-                "Extreme (Aggressive)",
-            ]
-        )
+        self.combo_mode.addItems(["Faible", "Moyen", "Fort"])
         self.combo_mode.setCurrentIndex(1)
         self.combo_mode.setEnabled(False)
         self.combo_mode.currentIndexChanged.connect(self.auto_tune)
-        self.lbl_computed_params = create_styled_label("   [ Parameters: Auto ]", color=CertusTheme.TEXT_SUB)
+        self.lbl_computed_params = create_styled_label("   [ Niveau: Moyen ]", color=CertusTheme.TEXT_SUB)
         self.chk_raw = QCheckBox("Show Raw Traces")
         self.chk_raw.setChecked(False)
         self.chk_raw.stateChanged.connect(self.update_plot)
@@ -221,21 +209,18 @@ class CurveSmootherGUI(QMainWindow):
         self.btn_save.clicked.connect(self.save_file)
         self.btn_save.setEnabled(False)
 
-        # Row 1 Layout
         row1.addWidget(self.btn_load)
         row1.addSpacing(15)
         row1.addWidget(create_styled_label("Filtering Mode:", style="bold", color=CertusTheme.TEXT_SUB))
         row1.addWidget(self.combo_mode)
         row1.addWidget(self.lbl_computed_params)
-        row1.addSpacing(15)
-        row1.addWidget(self.chk_raw)
         row1.addStretch()
         row1.addWidget(self.btn_help)
 
-        # Row 2 Layout
         row2.addWidget(create_styled_label("Isolate Graph:", style="bold", color=CertusTheme.TEXT_SUB))
         row2.addWidget(self.combo_isolate)
         row2.addWidget(self.btn_isolate)
+        row2.addWidget(self.chk_raw)
         row2.addStretch()
         row2.addWidget(self.btn_save)
 
@@ -243,16 +228,8 @@ class CurveSmootherGUI(QMainWindow):
 
         self.plot_widget = CertusScientificPlot()
         self.plot_widget.addLegend(offset=(10, 10))
-        self.plot_widget.setLabel(
-            "bottom",
-            "Wavelength (nm)",
-            **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"},
-        )
-        self.plot_widget.setLabel(
-            "left",
-            "Amplitude",
-            **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"},
-        )
+        self.plot_widget.setLabel("bottom", "Wavelength (nm)", **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"})
+        self.plot_widget.setLabel("left", "Amplitude", **{"color": CertusTheme.TEXT_MAIN, "font-size": "11pt"})
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
         self.plot_widget.getAxis("bottom").setPen(pg.mkPen(color=CertusTheme.BORDER))
         self.plot_widget.getAxis("left").setPen(pg.mkPen(color=CertusTheme.BORDER))
@@ -266,7 +243,8 @@ class CurveSmootherGUI(QMainWindow):
         layout.addWidget(content)
 
     def _smooth_y(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return dynamic_savgol_blend(x, y, self.current_window, self.current_poly, self.current_heavy)
+        y_smoothed, _info = smooth_spectrum_auto(x, y, level=self.current_level)
+        return y_smoothed
 
     @staticmethod
     def _chart_colors() -> list[str]:
@@ -308,7 +286,7 @@ class CurveSmootherGUI(QMainWindow):
     def show_help(self) -> None:
         help_text = (
             "<h3>CERTUS Curve Smoother</h3>"
-            "<p>Load spectra, auto-tune smoothing parameters, visualize and save smoothed curves to "
+            "<p>Load spectra, choose a smoothing level, visualize and save smoothed curves to "
             "<b>clean_measurements</b>.</p>"
         )
         QMessageBox.information(self, "Help", help_text)
@@ -316,13 +294,8 @@ class CurveSmootherGUI(QMainWindow):
     def auto_tune(self) -> None:
         if self.df is None:
             return
-        self.lbl_computed_params.setText("   [ Tuning... ]")
-        self.lbl_computed_params.setStyleSheet(f"color: {CertusTheme.WARNING}; font-weight: bold;")
-        x = self.df.iloc[:, 0].values
-        mode = self.combo_mode.currentText()
-        best_w, best_p, best_hw = auto_tune_savgol_params_from_dataframe(x, self.df, mode)
-        self.current_window, self.current_poly, self.current_heavy = best_w, best_p, best_hw
-        self.lbl_computed_params.setText(f"   [ S-G (Core): {best_w} | S-G (High Noise): {best_hw} ]")
+        self.current_level = self.combo_mode.currentText()
+        self.lbl_computed_params.setText(f"   [ Niveau: {self.current_level} ]")
         self.lbl_computed_params.setStyleSheet(f"color: {CertusTheme.SUCCESS}; font-weight: bold;")
         self.update_plot()
 
@@ -332,11 +305,11 @@ class CurveSmootherGUI(QMainWindow):
         self.plot_widget.clear()
         x = self.df.iloc[:, 0].values
         y_raw = self.df.iloc[:, 1:].values.T
-        y_clean = self._smooth_y(x, y_raw)
         colors = self._chart_colors()
         show_raw = self.chk_raw.isChecked()
         for i, col in enumerate(self.df.columns[1:]):
             color = colors[i % len(colors)]
+            y_clean = self._smooth_y(x, y_raw[i])
             if show_raw:
                 c_raw = pg.mkColor(color)
                 c_raw.setAlpha(80)
@@ -351,7 +324,7 @@ class CurveSmootherGUI(QMainWindow):
                 )
             self.plot_widget.plot(
                 x,
-                y_clean[i],
+                y_clean,
                 pen=pg.mkPen(color=color, width=2),
                 name=f"{col} (Clean)" if show_raw else col,
             )
@@ -379,13 +352,12 @@ class CurveSmootherGUI(QMainWindow):
     def save_file(self) -> None:
         if self.df is None or not self.file_path:
             return
-        x = self.df.iloc[:, 0].values
-        y_raw = self.df.iloc[:, 1:].values.T
-        y_clean = self._smooth_y(x, y_raw)
-        df_clean = self.df.copy()
-        for i, col in enumerate(df_clean.columns[1:]):
-            df_clean[col] = y_clean[i]
         try:
+            df_clean, info = smooth_dataframe_auto(self.df, level=self.current_level)
+            self.log(
+                f"Auto smoothing -> level={info.get('level')} | base={info.get('window_base')} | heavy={info.get('window_heavy')} | period_k={info.get('estimated_period_k'):.6g} | noise={info.get('noise_level'):.6g}",
+                "INFO",
+            )
             if self.file_path.endswith(".xls"):
                 save_path = self.file_path + "x"
                 all_sheets = pd.read_excel(self.file_path, sheet_name=None)

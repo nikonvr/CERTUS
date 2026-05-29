@@ -7,6 +7,7 @@ CERTUS Curve Smoother - Spectral Data Smoothing only
 from __future__ import annotations
 
 import sys
+import logging
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -40,6 +41,7 @@ from certus.ui.certus_ui import (
     create_styled_label,
     set_certus_window_icon,
     create_header_logo_widget,
+    CertusLogPanel,
 )
 
 logger = setup_module_logging("CERTUS_CURVE_SMOOTHER")
@@ -91,6 +93,18 @@ class DetachedPlotWindow(QMainWindow):
 
 
 class CurveSmootherGUI(QMainWindow):
+    class _UILogHandler(logging.Handler):
+        def __init__(self, append_fn):
+            super().__init__(level=logging.INFO)
+            self._append_fn = append_fn
+            self.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-7s | %(message)s", "%H:%M:%S"))
+
+        def emit(self, record: logging.LogRecord) -> None:
+            try:
+                self._append_fn(self.format(record))
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                pass
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle(f"CERTUS CURVE SMOOTHER v{__version__}")
@@ -106,6 +120,30 @@ class CurveSmootherGUI(QMainWindow):
         self.current_poly = 2
         self.current_heavy = 25
         self._setup_ui()
+        self._attach_ui_log_handler()
+
+    def _attach_ui_log_handler(self) -> None:
+        if not hasattr(self, "log_panel") or self.log_panel is None:
+            return
+        underlying_logger = getattr(logger, "logger", logger)
+        for h in underlying_logger.handlers:
+            if isinstance(h, CurveSmootherGUI._UILogHandler):
+                return
+        h = CurveSmootherGUI._UILogHandler(self.log_panel.log_text.append)
+        h.setLevel(logging.INFO)
+        underlying_logger.addHandler(h)
+        self.log("UI log bridge attached (INFO+).", "INFO")
+
+    def log(self, message: str, level: str = "INFO") -> None:
+        level_u = str(level).upper().strip()
+        _map = {
+            "DEBUG": logger.debug,
+            "INFO": logger.info,
+            "WARNING": logger.warning,
+            "ERROR": logger.error,
+            "SUCCESS": logger.info,
+        }
+        _map.get(level_u, logger.info)(message)
 
     def _setup_ui(self) -> None:
         central_widget = QWidget()
@@ -132,13 +170,18 @@ class CurveSmootherGUI(QMainWindow):
             f"background-color: {CertusTheme.SURFACE}; border-radius: {CertusTheme.RADIUS_LG}px; "
             f"border: 1px solid {CertusTheme.BORDER};"
         )
-        ctrl_layout = QHBoxLayout(tools_frame)
-        ctrl_layout.setContentsMargins(
+        tools_layout = QVBoxLayout(tools_frame)
+        tools_layout.setContentsMargins(
             CertusTheme.SPACING_MD,
             CertusTheme.SPACING_MD,
             CertusTheme.SPACING_MD,
             CertusTheme.SPACING_MD,
         )
+
+        row1 = QHBoxLayout()
+        row2 = QHBoxLayout()
+        tools_layout.addLayout(row1)
+        tools_layout.addLayout(row2)
 
         self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
         self.btn_load.clicked.connect(self.load_file)
@@ -178,21 +221,24 @@ class CurveSmootherGUI(QMainWindow):
         self.btn_save.clicked.connect(self.save_file)
         self.btn_save.setEnabled(False)
 
-        ctrl_layout.addWidget(self.btn_load)
-        ctrl_layout.addSpacing(15)
-        ctrl_layout.addWidget(create_styled_label("Filtering Mode:", style="bold", color=CertusTheme.TEXT_SUB))
-        ctrl_layout.addWidget(self.combo_mode)
-        ctrl_layout.addWidget(self.lbl_computed_params)
-        ctrl_layout.addSpacing(15)
-        ctrl_layout.addWidget(self.chk_raw)
-        ctrl_layout.addStretch()
-        ctrl_layout.addWidget(self.btn_help)
-        ctrl_layout.addSpacing(15)
-        ctrl_layout.addWidget(create_styled_label("Isolate Graph:", style="bold", color=CertusTheme.TEXT_SUB))
-        ctrl_layout.addWidget(self.combo_isolate)
-        ctrl_layout.addWidget(self.btn_isolate)
-        ctrl_layout.addSpacing(15)
-        ctrl_layout.addWidget(self.btn_save)
+        # Row 1 Layout
+        row1.addWidget(self.btn_load)
+        row1.addSpacing(15)
+        row1.addWidget(create_styled_label("Filtering Mode:", style="bold", color=CertusTheme.TEXT_SUB))
+        row1.addWidget(self.combo_mode)
+        row1.addWidget(self.lbl_computed_params)
+        row1.addSpacing(15)
+        row1.addWidget(self.chk_raw)
+        row1.addStretch()
+        row1.addWidget(self.btn_help)
+
+        # Row 2 Layout
+        row2.addWidget(create_styled_label("Isolate Graph:", style="bold", color=CertusTheme.TEXT_SUB))
+        row2.addWidget(self.combo_isolate)
+        row2.addWidget(self.btn_isolate)
+        row2.addStretch()
+        row2.addWidget(self.btn_save)
+
         c_layout.addWidget(tools_frame)
 
         self.plot_widget = CertusScientificPlot()
@@ -215,6 +261,8 @@ class CurveSmootherGUI(QMainWindow):
         )
         attach_excel_clipboard_context_menu(self.plot_widget)
         c_layout.addWidget(wrap_scientific_plot_with_toolbar(self, self.plot_widget))
+        self.log_panel = CertusLogPanel(title="LOGS", visible=True, height=170)
+        c_layout.addWidget(self.log_panel)
         layout.addWidget(content)
 
     def _smooth_y(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:

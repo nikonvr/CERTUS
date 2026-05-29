@@ -2435,7 +2435,13 @@ def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50)
                 app = widget.window() if hasattr(widget, "window") else None
                 if app is not None:
                     # Detect start of optimization/calculation to set start time
-                    if any(keyword in actual_msg for keyword in ("STARTING", "Starting")):
+                    is_top_start = (
+                        ("Starting" in actual_msg or "STARTING" in actual_msg)
+                        and "optimization" in actual_msg
+                        and not any(sub in actual_msg for sub in ("Auto-Restart", "PGLOBAL Global", "iterative", "local re-optimization"))
+                    ) or "Creating REWorker" in actual_msg or "Calling worker.start()" in actual_msg
+
+                    if is_top_start:
                         import time as _time
                         app._workflow_wall_start = _time.time()
 
@@ -5885,7 +5891,13 @@ class CertusBaseApp(QMainWindow):
 
         elapsed_str = ""
 
-        if any(keyword in msg for keyword in ("STARTING", "Starting")):
+        is_top_start = (
+            ("Starting" in msg or "STARTING" in msg)
+            and "optimization" in msg
+            and not any(sub in msg for sub in ("Auto-Restart", "PGLOBAL Global", "iterative", "local re-optimization"))
+        ) or "Creating REWorker" in msg or "Calling worker.start()" in msg
+
+        if is_top_start:
             import time as _time
             self._workflow_wall_start = _time.time()
 
@@ -6481,6 +6493,7 @@ def install_skeleton_loader(target_widget: QWidget, shape: str = "chart") -> Ske
     Overlays a premium SkeletonLoaderWidget on top of target_widget.
     The loader dynamically resizes to match target_widget bounds.
     """
+    remove_skeleton_loader(target_widget)
     from PyQt6.QtCore import QObject, QEvent
     
     loader = SkeletonLoaderWidget(target_widget, shape=shape)
@@ -6501,16 +6514,40 @@ def install_skeleton_loader(target_widget: QWidget, shape: str = "chart") -> Ske
 
 def remove_skeleton_loader(target_widget: QWidget) -> bool:
     """Removes a previously installed skeleton loader from target_widget."""
+    removed = False
     data = getattr(target_widget, "_certus_skeleton", None)
-    if data is None:
-        return False
-    loader, filt = data
-    target_widget.removeEventFilter(filt)
-    loader.hide()
-    loader.setParent(None)
-    loader.deleteLater()
-    del target_widget._certus_skeleton
-    return True
+    if data is not None:
+        loader, filt = data
+        try:
+            target_widget.removeEventFilter(filt)
+        except Exception:
+            pass
+        try:
+            loader.hide()
+            loader.setParent(None)
+            loader.deleteLater()
+        except Exception:
+            pass
+        try:
+            del target_widget._certus_skeleton
+        except Exception:
+            pass
+        removed = True
+
+    try:
+        # Also clean up any orphaned skeleton loader widgets that might be children
+        for child in target_widget.findChildren(SkeletonLoaderWidget):
+            try:
+                child.hide()
+                child.setParent(None)
+                child.deleteLater()
+                removed = True
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return removed
 
 
 def _hex_to_rgba_css(hex_str: str, alpha: float) -> str:

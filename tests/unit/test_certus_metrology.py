@@ -28,7 +28,7 @@ def test_run_context_create_captures_input_fingerprint(tmp_path) -> None:
 
     ctx = RunContext.create(
         app_id="CERTUS_INDEX",
-        app_version="26_01",
+        app_version="26_05",
         seed=123,
         input_paths=[str(src)],
         params={"k": 1, "v": [1, 2]},
@@ -51,7 +51,7 @@ def test_run_context_create_captures_input_fingerprint(tmp_path) -> None:
 def test_run_manifest_flat_dict_serializes_nested_values() -> None:
     ctx = RunContext.create(
         app_id="CERTUS_TEST",
-        app_version="26_01",
+        app_version="26_05",
         warnings=["w1", "w2"],
         status=ValidationStatus.OK,
     )

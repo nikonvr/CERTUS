@@ -1,0 +1,970 @@
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+    --> certus\core\_certus_physics_impl.py:6168:16
+     |
+6166 |             return material_data
+6167 |
+6168 |         except NUMERICAL_FAULT_EXCEPTIONS as e:
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+6169 |             self._logger.error(f"Failed to load materials: {e}")
+     |
+
+F821 Undefined name `grad_full`
+    --> certus\core\certus_index_core.py:1103:16
+     |
+1101 |             x_minus[idx] = x[idx]
+1102 |
+1103 |         return grad_full
+     |                ^^^^^^^^^
+1104 |
+1105 | # ---------------------------------------------------------
+     |
+
+F821 Undefined name `Event`
+    --> certus\core\certus_index_core.py:2354:21
+     |
+2352 |         bounds: np.ndarray,
+2353 |         config: PGlobalConfig,
+2354 |         stop_event: Event | None = None,
+     |                     ^^^^^
+2355 |         monitor_callback=None,
+2356 |     ) -> None:
+     |
+
+F821 Undefined name `scipy`
+    --> certus\core\certus_index_core.py:2409:19
+     |
+2407 |             jac = getattr(obj_instance, "gradient", None)
+2408 |
+2409 |             res = scipy.optimize.minimize(
+     |                   ^^^^^
+2410 |                 obj_instance,
+2411 |                 x0,
+     |
+
+F821 Undefined name `Event`
+    --> certus\core\certus_index_core.py:2452:21
+     |
+2450 |         config: PGlobalConfig | None = None,
+2451 |         log_clues: list | None = None,
+2452 |         stop_event: Event | None = None,
+     |                     ^^^^^
+2453 |     ) -> None:
+     |
+
+F821 Undefined name `as_completed`
+    --> certus\core\certus_index_core.py:2703:23
+     |
+2701 |             )
+2702 |             futures[self._executor.submit(searcher.search, x_start, self._local_search_budget())] = x_start
+2703 |         for future in as_completed(futures):
+     |                       ^^^^^^^^^^^^
+2704 |             if self.stop_event and self.stop_event.is_set():
+2705 |                 break
+     |
+
+F821 Undefined name `os`
+    --> certus\core\certus_strat_core.py:1424:9
+     |
+1422 |         report_dir = get_resource_path("reports")
+1423 |
+1424 |         os.makedirs(report_dir, exist_ok=True)
+     |         ^^
+1425 |
+1426 |         ts = certus_timestamp_file()
+     |
+
+F821 Undefined name `Any`
+   --> certus\core\certus_substrate_index.py:700:39
+    |
+698 |     bounds: list[tuple[float, float]],
+699 |     log_l1l2: bool,
+700 | ) -> tuple[list[tuple[float, float]], Any, Any, np.ndarray, np.ndarray]:
+    |                                       ^^^
+701 |     bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
+702 |     if log_l1l2:
+    |
+
+F821 Undefined name `Any`
+   --> certus\core\certus_substrate_index.py:700:44
+    |
+698 |     bounds: list[tuple[float, float]],
+699 |     log_l1l2: bool,
+700 | ) -> tuple[list[tuple[float, float]], Any, Any, np.ndarray, np.ndarray]:
+    |                                            ^^^
+701 |     bounds_q: list[tuple[float, float]] = [(float(b[0]), float(b[1])) for b in bounds]
+702 |     if log_l1l2:
+    |
+
+F821 Undefined name `_residuals`
+   --> certus\core\certus_substrate_index.py:831:13
+    |
+829 |     def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
+830 |         pv = _p_from_q(qv)
+831 |         r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
+    |             ^^^^^^^^^^
+832 |         g = _sellmeier_l_separation_gap_um(pv)
+833 |         return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
+    |
+
+F821 Undefined name `Optional`
+    --> certus\metal\certus_metal_common.py:1747:26
+     |
+1745 |         worker_class: type[QObject],
+1746 |         build_bounds_fn: Callable[[dict, np.ndarray], np.ndarray],
+1747 |         build_params_fn: Optional[Callable[[dict], None]] = None,
+     |                          ^^^^^^^^
+1748 |         before_run_fn: Optional[Callable[[dict], bool]] = None,
+1749 |     ) -> None:
+     |
+
+F821 Undefined name `Optional`
+    --> certus\metal\certus_metal_common.py:1748:24
+     |
+1746 |         build_bounds_fn: Callable[[dict, np.ndarray], np.ndarray],
+1747 |         build_params_fn: Optional[Callable[[dict], None]] = None,
+1748 |         before_run_fn: Optional[Callable[[dict], bool]] = None,
+     |                        ^^^^^^^^
+1749 |     ) -> None:
+1750 |         """Shared logic for starting metal optimization."""
+     |
+
+F821 Undefined name `CertusIndexSplineApp`
+  --> certus\spline\certus_index_spline_optimization.py:51:30
+   |
+50 | class Step4MeshOptimizerBuilder:
+51 |     def __init__(self, app: "CertusIndexSplineApp", parent_layout: "QVBoxLayout", style: str):
+   |                              ^^^^^^^^^^^^^^^^^^^^
+52 |         self.app = app
+53 |         self.parent_layout = parent_layout
+   |
+
+F821 Undefined name `precompute_clues_and_matrices`
+    --> certus\ui\certus_strat_ui.py:6285:62
+     |
+6283 |                 p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
+6284 |
+6285 |                 clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(
+     |                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+6286 |                     params, p_thick_nominal, self.logger
+6287 |                 )
+     |
+
+F821 Undefined name `WorkerThread`
+    --> certus\ui\certus_strat_ui.py:6317:23
+     |
+6315 |             btn.setEnabled(False)
+6316 |
+6317 |         self.worker = WorkerThread(
+     |                       ^^^^^^^^^^^^
+6318 |             step=33,
+6319 |             params=params,
+     |
+
+F821 Undefined name `WorkerThread`
+    --> certus\ui\certus_strat_ui.py:6642:23
+     |
+6640 |             self.status_label.setText("Running Step 1 (Nominal)...")
+6641 |
+6642 |         self.worker = WorkerThread(
+     |                       ^^^^^^^^^^^^
+6643 |             step=step,
+6644 |             params=params,
+     |
+
+F821 Undefined name `__version__`
+    --> certus\ui\certus_strat_ui.py:6852:36
+     |
+6850 |                     "seed": _resolve_manifest_seed(params_for_manifest),
+6851 |                     "app_id": "CERTUS_STRAT",
+6852 |                     "app_version": __version__,
+     |                                    ^^^^^^^^^^^
+6853 |                     "warnings": list(getattr(self, "validation_warnings", []) or []),
+6854 |                     "status": status_val.value if isinstance(status_val, ValidationStatus) else str(status_val),
+     |
+
+F821 Undefined name `__version__`
+    --> certus\ui\certus_strat_ui.py:7314:36
+     |
+7312 |                     "seed": _resolve_manifest_seed(params_for_manifest),
+7313 |                     "app_id": "CERTUS_STRAT",
+7314 |                     "app_version": __version__,
+     |                                    ^^^^^^^^^^^
+7315 |                     "warnings": list(getattr(self, "validation_warnings", []) or []),
+7316 |                     "status": status_val.value if isinstance(status_val, ValidationStatus) else str(status_val),
+     |
+
+F821 Undefined name `precompute_clues_and_matrices`
+    --> certus\ui\certus_strat_ui.py:7418:66
+     |
+7416 |                     p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
+7417 |
+7418 |                     clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(
+     |                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7419 |                         params_boot, p_thick_nominal, self.logger
+7420 |                     )
+     |
+
+F821 Undefined name `PlotRenderWorker`
+    --> certus\ui\certus_strat_ui.py:7617:22
+     |
+7615 |             thread = QThread(self)
+7616 |
+7617 |             worker = PlotRenderWorker(fig, target_w, target_h, plot_hash)
+     |                      ^^^^^^^^^^^^^^^^
+7618 |
+7619 |             worker.moveToThread(thread)
+     |
+
+F821 Undefined name `multiprocessing`
+    --> certus\ui\certus_strat_ui.py:7824:5
+     |
+7823 | if __name__ == "__main__":
+7824 |     multiprocessing.freeze_support()
+     |     ^^^^^^^^^^^^^^^
+7825 |
+7826 |     # NOTE: We do NOT touch SystemConfig.setup_numba_cache() here
+     |
+
+F821 Undefined name `set_robust_material_db`
+    --> certus\ui\certus_strat_ui.py:7874:13
+     |
+7872 |             APP_CONTEXT["materials_db"] = robust_db
+7873 |
+7874 |             set_robust_material_db(robust_db)  # Set global reference for priority access
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+7875 |
+7876 |             logging.info(f"[ROBUST DB] âœ“ Activated with {len(robust_db.materials)} materials")
+     |
+
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+   --> certus\utils\certus_curve_smoother.py:256:16
+    |
+254 |             self.auto_tune()
+255 |             logger.info("Loaded %s successfully.", path)
+256 |         except NUMERICAL_FAULT_EXCEPTIONS as e:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+257 |             logger.error("Failed to load measurement sheet: %s", e)
+258 |             QMessageBox.critical(self, "Error", f"Failed to load measurement sheet:\n{e}")
+    |
+
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+   --> certus\utils\certus_curve_smoother.py:358:16
+    |
+356 |                 f"Saved to clean_measurements sheet in:\n{Path(save_path).name}",
+357 |             )
+358 |         except NUMERICAL_FAULT_EXCEPTIONS as e:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+359 |             logger.error("Failed to save %s: %s", self.file_path, e)
+360 |             QMessageBox.critical(self, "Error", f"Failed to save:\n{e}")
+    |
+
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+   --> certus\utils\certus_live_visualizer.py:344:16
+    |
+342 |             self.logger.debug(f"Updated live visualization at evaluation {data.n_evaluations}")
+343 |
+344 |         except NUMERICAL_FAULT_EXCEPTIONS as e:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+345 |             self.logger.error(f"Failed to update plots: {e}")
+    |
+
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+    --> certus\utils\certus_re_helpers.py:1941:16
+     |
+1939 |             return _s
+1940 |
+1941 |         except NUMERICAL_FAULT_EXCEPTIONS :
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+1942 |             pass
+     |
+
+F821 Undefined name `QPushButton`
+   --> certus\utils\certus_reset_framework.py:466:72
+    |
+466 | def create_reset_button(app_instance, use_app_reset: bool = False) -> "QPushButton":
+    |                                                                        ^^^^^^^^^^^
+467 |     """
+468 |     Create a standardized reset button for any CERTUS application.
+    |
+
+F821 Undefined name `NUMERICAL_FAULT_EXCEPTIONS`
+   --> certus\utils\certus_strat_db.py:125:16
+    |
+123 |             self.logger.info(f"Robust DB Loaded {len(self.materials)} materials.")
+124 |
+125 |         except NUMERICAL_FAULT_EXCEPTIONS as e:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+126 |             self.logger.error(f"Failed to load Excel DB: {e}")
+    |
+
+F821 Undefined name `prepare_targets_vectorized`
+   --> certus\workers\certus_design_worker_utils.py:898:45
+    |
+896 |                     n_back_T = np.ascontiguousarray(n_back.T)
+897 |                 if not oblique_mode:
+898 |                     tgt_vals, tgt_weights = prepare_targets_vectorized(wls, tgts)
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+899 |                 else:
+900 |                     config_groups = optim_oblique_group_targets_on_wavelengths(wls, [t for t in oblique_tgts if t.valid()])
+    |
+
+F821 Undefined name `scipy`
+   --> certus\workers\certus_index_workers.py:573:26
+    |
+571 |                 self.logger.info("  > Stage 0: L-BFGS-B polish from Phase 1 warm start...")
+572 |
+573 |                 res_s0 = scipy.optimize.minimize(
+    |                          ^^^^^
+574 |                     obj,
+575 |                     x0_clamped,
+    |
+
+F821 Undefined name `scipy`
+   --> certus\workers\certus_index_workers.py:674:22
+    |
+672 |             _stage2_cb = IRStage2Callback(self, obj, c, l_full, thickness, n_sub_full)
+673 |
+674 |             res_s2 = scipy.optimize.minimize(
+    |                      ^^^^^
+675 |                 obj,
+676 |                 res_pg.x,
+    |
+
+F821 Undefined name `scipy`
+   --> certus\workers\certus_index_workers.py:777:19
+    |
+775 |             )
+776 |
+777 |             r21 = scipy.optimize.minimize(
+    |                   ^^^^^
+778 |                 phase23_T,
+779 |                 x0_21,
+    |
+
+F821 Undefined name `scipy`
+   --> certus\workers\certus_index_workers.py:908:26
+    |
+906 |                 )
+907 |
+908 |                 r1_try = scipy.optimize.minimize(
+    |                          ^^^^^
+909 |                     phase23_try,
+910 |                     best_x_red,
+    |
+
+F821 Undefined name `scipy`
+   --> certus\workers\certus_index_workers.py:958:26
+    |
+957 |             try:
+958 |                 r2_try = scipy.optimize.minimize(
+    |                          ^^^^^
+959 |                     phase23_p2_try,
+960 |                     x0_p2_try,
+    |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1089:23
+     |
+1087 |                 )
+1088 |
+1089 |                 r23 = scipy.optimize.minimize(
+     |                       ^^^^^
+1090 |                     phase23_obj,
+1091 |                     best_x_23,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1169:29
+     |
+1168 |                 try:
+1169 |                     r23p2 = scipy.optimize.minimize(
+     |                             ^^^^^
+1170 |                         phase23_pass2,
+1171 |                         x0_pass2,
+     |
+
+F821 Undefined name `Any`
+    --> certus\workers\certus_index_workers.py:1384:10
+     |
+1382 |         k_spline_knots_lambda_um=None,
+1383 |         k_spline_knots_values=None,
+1384 |     ) -> Any:
+     |          ^^^
+1385 |
+1386 |         c = self.config
+     |
+
+F821 Undefined name `Any`
+    --> certus\workers\certus_index_workers.py:1707:96
+     |
+1707 |     def _run_subset_optim(self, clues_slice, wls, n_sub, target_T, target_R, exclude_range) -> Any:
+     |                                                                                                ^^^
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1734:19
+     |
+1732 |         )
+1733 |
+1734 |         res_sub = scipy.optimize.minimize(
+     |                   ^^^^^
+1735 |             obj_sub,
+1736 |             self.best_params,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1749:22
+     |
+1747 |         _ubs = _bs[:, 1]
+1748 |
+1749 |         res_polish = scipy.optimize.minimize(
+     |                      ^^^^^
+1750 |             obj_sub,
+1751 |             res_sub.x,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1971:25
+     |
+1969 |             # Phase 5a: L-BFGS-B with extreme precision
+1970 |
+1971 |             res_final = scipy.optimize.minimize(
+     |                         ^^^^^
+1972 |                 obj,
+1973 |                 avg_params,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:1982:26
+     |
+1980 |             # Phase 5b: Nelder-Mead (no SciPy bounds) -> mandatory projection into the box.
+1981 |
+1982 |             res_polish = scipy.optimize.minimize(
+     |                          ^^^^^
+1983 |                 obj,
+1984 |                 res_final.x,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:2203:19
+     |
+2201 |             phase2_cb = Phase2PolishCallback(self)
+2202 |
+2203 |             res = scipy.optimize.minimize(
+     |                   ^^^^^
+2204 |                 obj,
+2205 |                 self.best_params,
+     |
+
+F821 Undefined name `scipy`
+    --> certus\workers\certus_index_workers.py:2275:30
+     |
+2273 |                         bounds_p3.append((_lo, _hi))
+2274 |
+2275 |                     res_p3 = scipy.optimize.minimize(
+     |                              ^^^^^
+2276 |                         obj_p3,
+2277 |                         x0_p3,
+     |
+
+F821 Undefined name `pl`
+    --> certus\workers\certus_re_workers.py:1298:23
+     |
+1297 |             _emit_re_prog(
+1298 |                 float(pl["prep_end"]),
+     |                       ^^
+1299 |                 f"RE phase 2: spline prefit (maxiter={_prefit_max}) or skip; "
+1300 |                 f"~{1 + (n_sp if _fd_1s else 2 * n_sp)} MSE/grad (FD={'forward' if _fd_1s else 'centered'})...",
+     |
+
+F821 Undefined name `pl`
+    --> certus\workers\certus_re_workers.py:1341:20
+     |
+1339 |                 n_layers_count=n_layers_count,
+1340 |                 n_sp=n_sp,
+1341 |                 pl=pl,
+     |                    ^^
+1342 |                 re_env_s=re_env_s,
+1343 |                 wls=wls,
+     |
+
+F821 Undefined name `pl`
+    --> certus\workers\certus_re_workers.py:1410:24
+     |
+1408 |                     i_lam=i_lam,
+1409 |                     i_cu=i_cu,
+1410 |                     pl=pl,
+     |                        ^^
+1411 |                     fun_res_p2=_fun_res_p2,
+1412 |                     jac_res_p2=_jac_res_p2,
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2646:121
+     |
+2644 |         # --- QWOT RMSE helper (re_delta_qwot_per_layer = residu TRF) ---
+2645 |
+2646 |         _qwot_helpers = self._build_qwot_helpers(ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, re_env_s, _lref_arr, _alpha_slot)
+     |                                                                                                                         ^^^^^^^^^^^
+2647 |         _get_delta_qwot = _qwot_helpers["_get_delta_qwot"]
+2648 |         _compute_qwot_rmse = _qwot_helpers["_compute_qwot_rmse"]
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2685:29
+     |
+2683 |                 wt_spectral=wt_spectral,
+2684 |                 _compute_qwot_rmse=_compute_qwot_rmse,
+2685 |                 _alpha_slot=_alpha_slot,
+     |                             ^^^^^^^^^^^
+2686 |                 _rmse_combined=_rmse_combined,
+2687 |                 oblique_config_meta=oblique_config_meta,
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2715:9
+     |
+2713 |         _a_p1, _a_p2a, _a_p2b, _a_p3 = resolve_re_qwot_alphas(self.cfg, rmse_initial_sp, rmse_initial_q)
+2714 |
+2715 |         _alpha_slot[0] = _a_p1
+     |         ^^^^^^^^^^^
+2716 |
+2717 |         logging.info(
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2746:26
+     |
+2744 |             "phase1 thickness radius +/-%g%%",
+2745 |             float(lambda_ref),
+2746 |             float(np.min(wls)) if wls.size else float("nan"),
+     |                          ^^^
+2747 |             float(np.max(wls)) if wls.size else float("nan"),
+2748 |             int(wls.size),
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2746:35
+     |
+2744 |             "phase1 thickness radius +/-%g%%",
+2745 |             float(lambda_ref),
+2746 |             float(np.min(wls)) if wls.size else float("nan"),
+     |                                   ^^^
+2747 |             float(np.max(wls)) if wls.size else float("nan"),
+2748 |             int(wls.size),
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2747:26
+     |
+2745 |             float(lambda_ref),
+2746 |             float(np.min(wls)) if wls.size else float("nan"),
+2747 |             float(np.max(wls)) if wls.size else float("nan"),
+     |                          ^^^
+2748 |             int(wls.size),
+2749 |             _n_tg_on,
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2747:35
+     |
+2745 |             float(lambda_ref),
+2746 |             float(np.min(wls)) if wls.size else float("nan"),
+2747 |             float(np.max(wls)) if wls.size else float("nan"),
+     |                                   ^^^
+2748 |             int(wls.size),
+2749 |             _n_tg_on,
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2748:17
+     |
+2746 |             float(np.min(wls)) if wls.size else float("nan"),
+2747 |             float(np.max(wls)) if wls.size else float("nan"),
+2748 |             int(wls.size),
+     |                 ^^^
+2749 |             _n_tg_on,
+2750 |             len(oblique_config_meta),
+     |
+
+F821 Undefined name `_RE_P_SETUP`
+    --> certus\workers\certus_re_workers.py:2841:24
+     |
+2839 |             re_build_p2_progress_plan,
+2840 |             re_top_k_cfg=_re_top_k_cfg,
+2841 |             re_p_setup=_RE_P_SETUP,
+     |                        ^^^^^^^^^^^
+2842 |             re_p_p1=_RE_P_P1,
+2843 |             re_n_sh_cfg=_re_n_sh_cfg,
+     |
+
+F821 Undefined name `_RE_P_P1`
+    --> certus\workers\certus_re_workers.py:2842:21
+     |
+2840 |             re_top_k_cfg=_re_top_k_cfg,
+2841 |             re_p_setup=_RE_P_SETUP,
+2842 |             re_p_p1=_RE_P_P1,
+     |                     ^^^^^^^^
+2843 |             re_n_sh_cfg=_re_n_sh_cfg,
+2844 |             re_do_2a_cfg=_re_do_2a_cfg,
+     |
+
+F821 Undefined name `_RE_P_SETUP`
+    --> certus\workers\certus_re_workers.py:2849:24
+     |
+2847 |         _pct_p1 = partial(
+2848 |             re_progress_pct_p1,
+2849 |             re_p_setup=_RE_P_SETUP,
+     |                        ^^^^^^^^^^^
+2850 |             re_p_p1=_RE_P_P1,
+2851 |             n_sched=n_sched,
+     |
+
+F821 Undefined name `_RE_P_P1`
+    --> certus\workers\certus_re_workers.py:2850:21
+     |
+2848 |             re_progress_pct_p1,
+2849 |             re_p_setup=_RE_P_SETUP,
+2850 |             re_p_p1=_RE_P_P1,
+     |                     ^^^^^^^^
+2851 |             n_sched=n_sched,
+2852 |         )
+     |
+
+F821 Undefined name `_emit_re_prog`
+    --> certus\workers\certus_re_workers.py:2879:27
+     |
+2877 |             runs=runs,
+2878 |             n_layers_count=n_layers_count,
+2879 |             _emit_re_prog=_emit_re_prog,
+     |                           ^^^^^^^^^^^^^
+2880 |             _pct_p1=_pct_p1,
+2881 |             wt_spectral=wt_spectral,
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2891:25
+     |
+2889 |             _report_mse_spectral=_report_mse_spectral,
+2890 |             _emit_re_spectrum_live=_emit_re_spectrum_live,
+2891 |             _alpha_slot=_alpha_slot,
+     |                         ^^^^^^^^^^^
+2892 |             _a_p1=_a_p1,
+2893 |             rmse_initial_u=rmse_initial_u,
+     |
+
+F821 Undefined name `_emit_re_prog`
+    --> certus\workers\certus_re_workers.py:2907:27
+     |
+2905 |             oblique_config_meta=oblique_config_meta,
+2906 |             _re_use_staged_order=_re_use_staged_order,
+2907 |             _emit_re_prog=_emit_re_prog,
+     |                           ^^^^^^^^^^^^^
+2908 |             _RE_P_SETUP=_RE_P_SETUP,
+2909 |             _RE_P_P1=_RE_P_P1,
+     |
+
+F821 Undefined name `_RE_P_SETUP`
+    --> certus\workers\certus_re_workers.py:2908:25
+     |
+2906 |             _re_use_staged_order=_re_use_staged_order,
+2907 |             _emit_re_prog=_emit_re_prog,
+2908 |             _RE_P_SETUP=_RE_P_SETUP,
+     |                         ^^^^^^^^^^^
+2909 |             _RE_P_P1=_RE_P_P1,
+2910 |             _re_state=_re_state,
+     |
+
+F821 Undefined name `_RE_P_P1`
+    --> certus\workers\certus_re_workers.py:2909:22
+     |
+2907 |             _emit_re_prog=_emit_re_prog,
+2908 |             _RE_P_SETUP=_RE_P_SETUP,
+2909 |             _RE_P_P1=_RE_P_P1,
+     |                      ^^^^^^^^
+2910 |             _re_state=_re_state,
+2911 |             _ap_gui=_ap_gui,
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2921:17
+     |
+2919 |             _report_mse_spectral=_report_mse_spectral,
+2920 |             rmse_final_milestone=rmse_final_milestone,
+2921 |             wls=wls,
+     |                 ^^^
+2922 |             re_env_s=re_env_s,
+2923 |             n_sub_nominal=n_sub_nominal,
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2926:25
+     |
+2924 |             lambda_ref=lambda_ref,
+2925 |             bounds=bounds,
+2926 |             _alpha_slot=_alpha_slot,
+     |                         ^^^^^^^^^^^
+2927 |             _a_p2a=_a_p2a,
+2928 |             _a_p2b=_a_p2b,
+     |
+
+F821 Undefined name `_re_pct_hi`
+    --> certus\workers\certus_re_workers.py:2939:24
+     |
+2937 |             _any_spl_act=_any_spl_act,
+2938 |             _maxiter_p2b=_maxiter_p2b,
+2939 |             _re_pct_hi=_re_pct_hi,
+     |                        ^^^^^^^^^^
+2940 |             _use_sub_c3_shared=False,
+2941 |             _p2_ctx={},
+     |
+
+F821 Undefined name `_alpha_slot`
+    --> certus\workers\certus_re_workers.py:2951:25
+     |
+2949 |             rmse_phase1_milestone=rmse_phase1_milestone,
+2950 |             rmse_final_milestone=rmse_final_milestone,
+2951 |             _alpha_slot=_alpha_slot,
+     |                         ^^^^^^^^^^^
+2952 |             _a_p1=_a_p1,
+2953 |             _a_p2a=_a_p2a,
+     |
+
+F821 Undefined name `wls`
+    --> certus\workers\certus_re_workers.py:2961:17
+     |
+2959 |             _compute_qwot_rmse=_compute_qwot_rmse,
+2960 |             n_sub_nominal=n_sub_nominal,
+2961 |             wls=wls,
+     |                 ^^^
+2962 |             lambda_ref=lambda_ref,
+2963 |             ep0=ep0,
+     |
+
+F821 Undefined name `_re_pct_hi`
+    --> certus\workers\certus_re_workers.py:2964:24
+     |
+2962 |             lambda_ref=lambda_ref,
+2963 |             ep0=ep0,
+2964 |             _re_pct_hi=_re_pct_hi,
+     |                        ^^^^^^^^^^
+2965 |             results=results,
+2966 |             _re_t0=_re_t0,
+     |
+
+F821 Undefined name `Callable`
+    --> certus\workers\certus_re_workers.py:4052:24
+     |
+4050 |         self,
+4051 |         *,
+4052 |         _emit_re_prog: Callable,
+     |                        ^^^^^^^^
+4053 |         _nap: int,
+4054 |         _lo_ap: float,
+     |
+
+F821 Undefined name `Callable`
+    --> certus\workers\certus_re_workers.py:4058:24
+     |
+4056 |         _n_ap_scan: int,
+4057 |         x0_base: np.ndarray,
+4058 |         _eval_both_p2: Callable,
+     |                        ^^^^^^^^
+4059 |         _cb2_ref: list,
+4060 |         _re_state: dict,
+     |
+
+F821 Undefined name `Callable`
+    --> certus\workers\certus_re_workers.py:4061:31
+     |
+4059 |         _cb2_ref: list,
+4060 |         _re_state: dict,
+4061 |         _report_mse_spectral: Callable,
+     |                               ^^^^^^^^
+4062 |         _cor_base: tuple,
+4063 |         ep_p4: np.ndarray,
+     |
+
+F821 Undefined name `_IdxWrapper`
+   --> certus\workers\certus_strat_workers.py:496:16
+    |
+494 |     # [FIX 2026] Handle SharedIndicesWorker gracefully
+495 |
+496 |     idx_dict = _IdxWrapper(clues_at_wl)
+    |                ^^^^^^^^^^^
+497 |
+498 |     candidates_to_test = np.array([wl for wl in valid_candidates if wl in idx_dict], dtype=np.float64)
+    |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1028:30
+     |
+1026 |                     "opti_results": self.request.opti_results,
+1027 |                 },
+1028 |                 materials_db=APP_CONTEXT.get("materials_db"),
+     |                              ^^^^^^^^^^^
+1029 |             )
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1092:66
+     |
+1091 |         # Track C: Orchestrate Step 0 via headless service
+1092 |         res = self._service.run_step_0(self.params, materials_db=APP_CONTEXT.get("materials_db"))
+     |                                                                  ^^^^^^^^^^^
+1093 |         nominal_results = res["nominal_results"]
+1094 |         multipliers = res["multipliers"]
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1098:9
+     |
+1096 |         seel_data = res["seel_data"]
+1097 |
+1098 |         APP_CONTEXT["seel_data"] = seel_data
+     |         ^^^^^^^^^^^
+1099 |
+1100 |         if self.params.get("show_plots", True):
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1158:66
+     |
+1157 |         # Track C: Orchestrate Step 0 via headless service
+1158 |         res = self._service.run_step_0(self.params, materials_db=APP_CONTEXT.get("materials_db"))
+     |                                                                  ^^^^^^^^^^^
+1159 |         nominal_results = res["nominal_results"]
+1160 |         multipliers = res["multipliers"]
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1164:9
+     |
+1162 |         seel_data = res["seel_data"]
+1163 |
+1164 |         APP_CONTEXT["seel_data"] = seel_data
+     |         ^^^^^^^^^^^
+1165 |
+1166 |         local_db = self.params.get("materials_db") or APP_CONTEXT.get("materials_db")
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1166:55
+     |
+1164 |         APP_CONTEXT["seel_data"] = seel_data
+1165 |
+1166 |         local_db = self.params.get("materials_db") or APP_CONTEXT.get("materials_db")
+     |                                                       ^^^^^^^^^^^
+1167 |
+1168 |         wl_clues = nominal_results["wavelengths"]
+     |
+
+F821 Undefined name `optimize_block_strategy_hybrid`
+    --> certus\workers\certus_strat_workers.py:1239:24
+     |
+1237 |             self.timing_logger.start("Step 2: Optimized Hybrid Strategy")
+1238 |
+1239 |         opti_results = optimize_block_strategy_hybrid(self.params, self.signals.progress, self.signals.plot)
+     |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1240 |
+1241 |         if self.params.get("show_plots", True) and "raw_results_thickness" in opti_results:
+     |
+
+F821 Undefined name `generate_excel_report`
+    --> certus\workers\certus_strat_workers.py:1296:26
+     |
+1294 |             nominal_results, _ = calculate_nominal_properties(self.params)
+1295 |
+1296 |             excel_data = generate_excel_report(nominal_results, self.opti_results, final_results, self.params)
+     |                          ^^^^^^^^^^^^^^^^^^^^^
+1297 |
+1298 |             # Prepare metadata for auto-naming and HTML
+     |
+
+F821 Undefined name `_get_best_noise_results`
+    --> certus\workers\certus_strat_workers.py:1325:34
+     |
+1323 |                 self.signals.plot.emit(strat_data, "block_assignments")
+1324 |
+1325 |             best_noise_results = _get_best_noise_results(final_results, self.params["logger"])
+     |                                  ^^^^^^^^^^^^^^^^^^^^^^^
+1326 |
+1327 |             if best_noise_results is None:
+     |
+
+F821 Undefined name `APP_CONTEXT`
+    --> certus\workers\certus_strat_workers.py:1439:63
+     |
+1437 |             }
+1438 |
+1439 |             materials_db = self.params.get("materials_db") or APP_CONTEXT.get("materials_db")
+     |                                                               ^^^^^^^^^^^
+1440 |
+1441 |             # [FIX 2026] Use Context Manager for automatic cleanup
+     |
+
+F821 Undefined name `precompute_clues_and_matrices`
+    --> certus\workers\certus_strat_workers.py:1566:58
+     |
+1564 |             p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
+1565 |
+1566 |             clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(
+     |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1567 |                 self.params, p_thick_nominal, self.params["logger"]
+1568 |             )
+     |
+
+F821 Undefined name `generate_excel_report`
+    --> certus\workers\certus_strat_workers.py:1594:26
+     |
+1592 |             nominal_results, _ = calculate_nominal_properties(self.params)
+1593 |
+1594 |             excel_data = generate_excel_report(nominal_results, sim_context, final_results, self.params)
+     |                          ^^^^^^^^^^^^^^^^^^^^^
+1595 |
+1596 |             # Keep signal contract (excel_data, metadata).
+     |
+
+F821 Undefined name `_get_best_noise_results`
+    --> certus\workers\certus_strat_workers.py:1808:30
+     |
+1806 |             params["logger"].warning(f"Plotting error: {e}")
+1807 |
+1808 |         best_noise_results = _get_best_noise_results(best_res, params["logger"])
+     |                              ^^^^^^^^^^^^^^^^^^^^^^^
+1809 |         if best_noise_results:
+1810 |             wl_arr = arange_inclusive(
+     |
+
+F821 Undefined name `generate_excel_report`
+    --> certus\workers\certus_strat_workers.py:1845:22
+     |
+1844 |     if params.get("export_excel", True):
+1845 |         excel_data = generate_excel_report(nominal_res, sim_context, final_complete_structure, params)
+     |                      ^^^^^^^^^^^^^^^^^^^^^
+1846 |         best_rmse = extract_best_rmse(final_complete_structure.get("all_strategies_results", []))
+1847 |         params["logger"].info("STRAT Export (General): Extracted best RMSE %f from strategies results", best_rmse)
+     |
+
+F821 Undefined name `precompute_clues_and_matrices`
+    --> certus\workers\certus_strat_workers.py:1870:25
+     |
+1869 |     params["logger"].info("ðŸš€ PHASE 0: Initializing Smart Nucleation Analysis...")
+1870 |     clues_cache, _, _ = precompute_clues_and_matrices(params, p_thick_nom, params["logger"])
+     |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1871 |     max_scan_size = min(12, max(2, len(p_thick_nom) // 2))
+1872 |     mc_runs_nucl = int(params.get("nucleation_mc_runs", 40))
+     |
+
+F821 Undefined name `optimize_block_strategy_hybrid`
+    --> certus\workers\certus_strat_workers.py:1889:21
+     |
+1887 |     params["logger"].info("\nðŸš€ PHASE A: Calculating Cost Maps...")
+1888 |     params["p_thick_nominal"] = p_thick_nom
+1889 |     pre_calc_data = optimize_block_strategy_hybrid(params, signals.progress, None, phase_a_only=True)
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1890 |
+1891 |     if "error" in pre_calc_data:
+     |
+
+Found 90 errors.

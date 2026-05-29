@@ -33,7 +33,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 from certus_physics import (
     Layer,

@@ -25,6 +25,7 @@ from certus.core.certus_core import (
     SMALL_EPSILON,
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_LIST,
+    certus_timestamp_display,
 )
 from certus.utils.certus_data import generate_html_report
 from certus.ui.certus_ui import install_standard_shortcuts

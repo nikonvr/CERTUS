@@ -45,7 +45,7 @@ def main() -> int:
     ap.add_argument(
         "--sapphire",
         action="store_true",
-        help="Forcer substrat Al2O3 (index combo 3), sinon défaut UI = SiO2",
+        help="Force Al2O3 substrate (combo index 3), otherwise default UI = SiO2",
     )
     ap.add_argument(
         "--thickness-nm",
@@ -102,7 +102,7 @@ def main() -> int:
     poller.stop()
 
     if win.latest_results is None:
-        print("Echec : aucun OptimizationResults (timeout ou erreur - voir logs).")
+        print("Failed: no OptimizationResults (timeout or error - see logs).")
         return 2
 
     res = win.latest_results

@@ -250,6 +250,15 @@ def pytest_configure(config):
 
 
 @pytest.fixture(autouse=True)
+def isolate_environ():
+    """Backup and restore os.environ between tests to prevent Numba env pollution."""
+    old_env = os.environ.copy()
+    yield
+    os.environ.clear()
+    os.environ.update(old_env)
+
+
+@pytest.fixture(autouse=True)
 def setup_test_environment():
     """Configuration automatique de l'environnement de test."""
     import logging
@@ -266,3 +275,4 @@ def setup_test_environment():
     for handler in _certus.handlers[:]:
         handler.close()
         _certus.removeHandler(handler)
+

@@ -33,7 +33,7 @@ def _ensure_shared_assets() -> None:
 
 
 def _head_html(title: str) -> str:
-    # MathJax avant le script async (recommandé)
+    # MathJax before async script (recommended)
     template = """<!DOCTYPE html>
 <html lang="en">
 

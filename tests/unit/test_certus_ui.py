@@ -283,8 +283,9 @@ class TestCertusTheme:
         mock_app.setPalette.assert_called()
         mock_app.setStyleSheet.assert_called()
 
-    def test_dark_mode_aliases_and_a11y(self):
+    def test_dark_mode_aliases_and_a11y(self, qapp):
         """Test dark mode alias updates, contrast settings, and palette audit logger behavior."""
+        _ = qapp
         # Backup original colors
         original_bg = CertusTheme.BACKGROUND
         original_surface = CertusTheme.SURFACE
@@ -320,7 +321,8 @@ class TestCertusTheme:
                 # Intentionally trigger contrast warning for testing if there were bad colors
                 # WARNING #b45309 vs #ffffff is fine (> 4.5:1), but if we force a bad contrast color:
                 CertusTheme.WARNING = "#ffc107"  # Bad contrast color
-                CertusTheme.apply_to_app(mock_app, dark_mode=False)
+                with patch.object(CertusTheme, "configure"):
+                    CertusTheme.apply_to_app(mock_app, dark_mode=False)
                 # Verify logger warning was called due to contrast ratio of WARNING color on light surface
                 assert mock_warn.called
                 assert any("warning" in args[0].lower() or "contrast" in args[0].lower() for args, _ in mock_warn.call_args_list)

@@ -43,7 +43,7 @@ def main():
         print("Warmup finished.", flush=True)
         
     print("Loading RE workbook explicitly...", flush=True)
-    xls_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example", "example_RE", "reverse_sample.xlsx")
+    xls_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "example", "example_RE", "reverse_sample.xlsx")
     success = app.load_reverse_engineering_from_path(xls_path)
     print(f"Workbook load success: {success}", flush=True)
     

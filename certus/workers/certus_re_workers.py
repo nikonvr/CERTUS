@@ -156,7 +156,7 @@ def _prepare_phase2_fd_settings(self, re_env_s: float):
     }
 
 
-def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog, re_p2_plan, nk, wls, re_use_staged_order):
+def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog, re_p2_plan, nk, wls, re_use_staged_order, env_knot, bounds):
     results.sort(key=lambda r: r.get("rmse_combined", r["rmse"]))
     re_p2_plan[0] = bind_p2_plan(len(results))
     pl = re_p2_plan[0]
@@ -184,9 +184,12 @@ def _prepare_phase2_bounds_and_topk(self, *, results, bind_p2_plan, emit_re_prog
     act_h = bool(self.cfg.get("re_refine_h", False))
     act_l = bool(self.cfg.get("re_refine_l", False))
     b_lam = RE_SPLINE_NODE2_BOUNDS_NM if (act_h or act_l) else (RE_SPLINE_NODE2_DEFAULT_NM - 1e-10, RE_SPLINE_NODE2_DEFAULT_NM + 1e-10)
-    env_knot = np.asarray(self._re_phase_ns._env_knot, dtype=np.float64)
+    env_knot = np.asarray(env_knot, dtype=np.float64)
     bounds_spline = list(zip((-env_knot).tolist(), env_knot.tolist()))
-    return {"_top_k": top_k, "bounds_p2": None, "b_lam": b_lam, "bounds_spline": bounds_spline, "_act_h": act_h, "_act_l": act_l, "_merge_rtol": merge_rtol}
+    b_spline_H = bounds_spline if act_h else [(-1e-15, 1e-15)] * nk
+    b_spline_L = bounds_spline if act_l else [(-1e-15, 1e-15)] * nk
+    bounds_p2 = list(bounds) + b_spline_H + b_spline_L + [b_lam]
+    return {"_top_k": top_k, "bounds_p2": bounds_p2, "b_lam": b_lam, "bounds_spline": bounds_spline, "_act_h": act_h, "_act_l": act_l, "_merge_rtol": merge_rtol}
 
 
 def _build_p2_prefit_bounds(bounds_spref):
@@ -1155,7 +1158,7 @@ class REWorker(QThread):
         # ── §2 FD config, knots, envelope ────────────────────────────────
         # Phase 2: thicknesses + 2×K knot DeltaRe + lambda knot #2 ; linear interp + envelope clamp ; fixed substrate.
 
-        _fd = self._prepare_phase2_fd_settings(re_env_s)
+        _fd = _prepare_phase2_fd_settings(self, re_env_s)
         _p2fd_spl = _fd["_p2fd_spl"]
         _p2fd_lam = _fd["_p2fd_lam"]
         _fd_1s = _fd["_fd_1s"]
@@ -1183,7 +1186,8 @@ class REWorker(QThread):
 
         # ── §3 Bounds, top-K, Tikhonov ────────────────────────────────────
         if results and not self._stop:
-            bounds_ctx = self._prepare_phase2_bounds_and_topk(
+            bounds_ctx = _prepare_phase2_bounds_and_topk(
+                self,
                 results=results,
                 bind_p2_plan=_bind_p2_plan,
                 emit_re_prog=_emit_re_prog,
@@ -1191,6 +1195,8 @@ class REWorker(QThread):
                 nk=_nk,
                 wls=wls,
                 re_use_staged_order=_re_use_staged_order,
+                env_knot=_env_knot,
+                bounds=bounds,
             )
             _top_k = bounds_ctx["_top_k"]
             bounds_p2 = bounds_ctx["bounds_p2"]
@@ -2600,13 +2606,13 @@ class REWorker(QThread):
         """Prepares grids, MSE/QWOT, self.ctx and self._re_phase_ns for RE phases."""
         logger.debug("_build_re_run_context ENTER")
         self.signals.progress.emit(1, "[DBG] _build_re_run_context: started")
-        ctx, prep = self._prepare_re_run_context_setup(_re_t0)
+        ctx, prep = _prepare_re_run_context_setup(self, _re_t0)
         _emit_re_prog = prep["_emit_re_prog"]
         _re_pct_hi = prep["_re_pct_hi"]
         wls = prep["wls"]
         _RE_P_SETUP = prep["_RE_P_SETUP"]
         _RE_P_P1 = prep["_RE_P_P1"]
-        _mse_grad_accumulate_ep = self._build_re_mse_grad_helper(ctx)
+        _mse_grad_accumulate_ep = _build_re_mse_grad_helper(self, ctx)
         mats = prep["mats"]
         stack = prep["stack"]
         ep0 = prep["ep0"]
@@ -2650,7 +2656,7 @@ class REWorker(QThread):
 
         # --- QWOT RMSE helper (re_delta_qwot_per_layer = residu TRF) ---
 
-        _qwot_helpers = self._build_qwot_helpers(ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, re_env_s, _lref_arr, ctx._alpha_slot)
+        _qwot_helpers = _build_qwot_helpers(self, ep0, n_ref_nom_per_layer, is_H, is_L, lambda_ref, re_env_s, _lref_arr, ctx._alpha_slot)
         _get_delta_qwot = _qwot_helpers["_get_delta_qwot"]
         _compute_qwot_rmse = _qwot_helpers["_compute_qwot_rmse"]
         _compute_qwot_rmse_raw = _qwot_helpers["_compute_qwot_rmse_raw"]

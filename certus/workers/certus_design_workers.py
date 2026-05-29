@@ -33,7 +33,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 import os
 from pathlib import Path
@@ -327,9 +327,6 @@ class OptimWorker(QObject):
 
         super().__init__()
 
-    def isInterruptionRequested(self) -> bool:
-        return QThread.currentThread().isInterruptionRequested()
-
         self.request = cfg if isinstance(cfg, OptimWorkerRequest) else OptimWorkerRequest.from_legacy(cfg)
 
         # Keep legacy mutable cfg field for incremental migration in call sites.
@@ -356,6 +353,9 @@ class OptimWorker(QObject):
         self._last_result_emit_time = 0.0
 
         self._last_live_emit_time = 0.0  # refresh best result every 2s in GUI
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
 
     def request_stop(self) -> None:
 

@@ -7,7 +7,7 @@
 """
 
 
-CERTUS-METAL-BILAYER CERTUS_SUITE_26_01
+CERTUS-METAL-BILAYER CERTUS_SUITE_26_05
 
 
 ================================
@@ -37,7 +37,7 @@ splines, while SiO2 uses a Cauchy model (n = n∞ + A/lambda²).
 
 """
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 
 import logging
@@ -614,7 +614,7 @@ class BeamAnalysisWorker(QObject):
 
             mse_threshold = max(self.optimal_mse * 1.25 + 1e-5, 2e-5)
 
-            # OPTIMIZATION: Precompute Si optical constants (only depends on wavelengths)
+            # OPTIMIZATION: Precompute If optical constants (only depends on wavelengths)
 
             nSub_precomputed = get_nk_si(l_array)
 
@@ -1051,7 +1051,12 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             get_nk_cauchy_simple(wls, 1.45, 1000.0)
 
+            from certus.core._certus_physics_impl import calculate_reflectance_bilayer_vectorized
+            c_arr = np.array([1.5 + 0.0j, 1.5 + 0.0j], dtype=np.complex128)
+            calculate_reflectance_bilayer_vectorized(wls, c_arr, 10.0, 10.0, c_arr, c_arr)
+
             self._on_numba_ready()  # Mark as ready
+
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)

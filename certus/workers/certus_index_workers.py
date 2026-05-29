@@ -644,7 +644,7 @@ class IRGlobalModelWorker(QObject):
         self.logger.info("-" * 65)
 
         optimizer = PGlobalOptimizerINDEX(
-            obj, pg_bounds, config=pg_conf, log_clues=log_clues, stop_event=self._stop_event
+            obj, pg_bounds, n_workers=1, config=pg_conf, log_clues=log_clues, stop_event=self._stop_event
         )
 
         best_y_so_far = y0_polished if np.isfinite(y0_polished) else float("inf")
@@ -1619,6 +1619,10 @@ class OptimizationWorker(QObject):
 
         self.thickness_initial = config.fixed_thickness  # Seed if available
 
+        self._last_best_rmse_log_time = 0.0
+
+        self._last_best_rmse_logged = float("inf")
+
     def _should_emit_active_update(self, now: float, force: bool) -> bool:
         """Return True when live plot refresh should be emitted."""
         if force:
@@ -1657,9 +1661,18 @@ class OptimizationWorker(QObject):
             except NUMERICAL_FAULT_EXCEPTIONS:
                 _k_inline = ""
 
-        self.logger.info(
-            f"  Best RMSE: {rmse:.6f} | Evaluations: {self._optimizer.n_evals} | Thickness: {sample.x[0]:.2f} nm{_tlu_ex}{_k_inline}"
-        )
+        # Throttle logging to avoid spamming the log during fast local search iterations
+        now = time.time()
+        significant_improvement = (rmse < self._last_best_rmse_logged * 0.995)
+        time_elapsed = (now - self._last_best_rmse_log_time >= 2.0)
+
+        if significant_improvement or time_elapsed:
+            self._last_best_rmse_log_time = now
+            self._last_best_rmse_logged = rmse
+            n_ev = self._optimizer.n_evals if self._optimizer is not None else 0
+            self.logger.info(
+                f"  Best RMSE: {rmse:.6f} | Evaluations: {n_ev} | Thickness: {sample.x[0]:.2f} nm{_tlu_ex}{_k_inline}"
+            )
 
         if _o1 is None and not getattr(self, "_warned_phase1_missing_obj", False):
             self.logger.warning(
@@ -2061,6 +2074,7 @@ class OptimizationWorker(QObject):
         self._optimizer = PGlobalOptimizerINDEX(
             obj,
             obj.get_bounds(),
+            n_workers=1,
             config=pg_conf,
             log_clues=[2, 5],
             stop_event=self._stop_event,

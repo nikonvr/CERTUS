@@ -154,15 +154,15 @@ def _build_report(
     hints: list[str] = []
     if status.lower() == "degenerate":
         hints.append(
-            "Corridor marqué dégénéré: vérifier min_valid_each_side, span de d, ou si un seul côté produit des refits admissibles."
+            "Corridor marked degenerate: check min_valid_each_side, span of d, or if only one side produces eligible refits."
         )
     if extra.get("profile_d_seed_gate_saturated"):
         hints.append(
-            "Seed-gate saturé: beaucoup de refits gardent la graine — augmenter polish_maxfun, vérifier refit_pure_spectral, ou jitter n_starts."
+            "Seed-gate saturated: many refits keep the seed — increase polish_maxfun, check refit_pure_spectral, or jitter n_starts."
         )
     if report.get("best_d_outside_symmetric_reported_interval"):
         hints.append(
-            "Le meilleur RMSE tombe hors de l’intervalle d symétrisé rapporté — normal si asymétrie forte; à corréler avec force_symmetric_interval."
+            "The best RMSE falls outside the reported symmetric d interval — normal if strong asymmetry; correlate with force_symmetric_interval."
         )
     thr_m = float(report.get("rmse_thresh_minus_best_rmse", float("nan")))
     if math.isfinite(thr_m) and thr_m < 0:
@@ -191,13 +191,13 @@ def _json_safe(obj: Any) -> Any:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Diagnostic logique du corridor d-profiling (sortie JSON).")
     ap.add_argument("--n-lam", type=int, default=24, help="Nombre de points spectraux (synthèse).")
-    ap.add_argument("--json-out", type=Path, default=None, help="Écrire le rapport JSON sur disque.")
+    ap.add_argument("--json-out", type=Path, default=None, help="Write JSON report to disk.")
     ap.add_argument("--verbose", action="store_true", help="Logs INFO du module corridor.")
     ap.add_argument("--mode", default="alpha", choices=["alpha", "lr"], help="Mode walk ProfileCorridorConfig.")
     ap.add_argument("--rmse-threshold-mode", default="alpha", dest="rmse_threshold_mode")
     ap.add_argument("--rmse-alpha", type=float, default=1.15)
     ap.add_argument("--rmse-abs-tolerance", type=float, default=2.5e-4)
-    ap.add_argument("--scientific-nominal", action="store_true", help="Activer scientific_nominal_corridor sur le pconf.")
+    ap.add_argument("--scientific-nominal", action="store_true", help="Enable scientific_nominal_corridor on pconf.")
     ap.add_argument("--step-nm", type=float, default=12.0)
     ap.add_argument("--step-nm-initial", type=float, default=12.0)
     ap.add_argument("--max-span-nm", type=float, default=48.0)
@@ -220,7 +220,7 @@ def main() -> int:
     cfg = _cfg_default(lam)
     pconf = _pconf_from_args(args)
 
-    # Cas scientifique nominal: enrichir la base comme le ferait le pipeline (minimal).
+    # Nominal scientific case: enrich the base as the (minimal) pipeline would do.
     if args.scientific_nominal:
         sk = np.asarray(base["sigma_knots"], dtype=np.float64).ravel()
         k = int(sk.size)

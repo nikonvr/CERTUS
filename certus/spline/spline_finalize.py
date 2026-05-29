@@ -301,8 +301,9 @@ def _spectral_polish_node_mesh_profile(
             "Analytic gradient probe failed in mesh polish, using FD fallback",
             exc_info=True,
         )
-
     try:
+        ftol_val = 1e-11 if _minimize_jac is True else 1e-9
+        gtol_val = 1e-8 if _minimize_jac is True else 1e-6
         res = minimize(
             _minimize_fn,
             x0,
@@ -311,8 +312,8 @@ def _spectral_polish_node_mesh_profile(
             bounds=bds,
             options={
                 "maxfun": mf_use,
-                "ftol": 1e-11,
-                "gtol": 1e-8,
+                "ftol": ftol_val,
+                "gtol": gtol_val,
             },
             callback=_cb_progress,
         )

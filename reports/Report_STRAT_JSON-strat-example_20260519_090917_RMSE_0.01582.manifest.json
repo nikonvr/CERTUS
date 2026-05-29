@@ -2,7 +2,7 @@
   "run_id": "run_20260519T070917Z",
   "started_at_utc": "2026-05-19T07:09:17.658719+00:00",
   "app_id": "CERTUS_STRAT",
-  "app_version": "26_01",
+  "app_version": "26_05",
   "seed": 42,
   "software_env": {
     "python": "3.14.4",
@@ -13,7 +13,7 @@
     "openpyxl": "3.1.5",
     "matplotlib": "3.10.8",
     "os": "Windows 11",
-    "certus_version": "26_01"
+    "certus_version": "26_05"
   },
   "numba_version": "0.63.1",
   "numpy_version": "2.3.5",

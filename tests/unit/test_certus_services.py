@@ -41,7 +41,7 @@ def test_index_fit_service_delegates_to_runner_and_wraps_manifest(tmp_path) -> N
         config={"mode": "TLU"},
         source_paths=[str(src)],
         seed=123,
-        app_version="26_01",
+        app_version="26_05",
         warnings=["normalized"],
         status=ValidationStatus.WARNING_DATA_NORMALIZED,
     )
@@ -68,7 +68,7 @@ def test_substrate_index_service_wraps_manifest_with_status(tmp_path) -> None:
         config={"fit": "sellmeier"},
         source_paths=[str(src)],
         seed=12345,
-        app_version="26_01",
+        app_version="26_05",
         warnings=["sellmeier skipped on one column"],
         status=ValidationStatus.WARNING_UNCERTAINTY_NOT_COMPUTED,
     )
@@ -95,7 +95,7 @@ def test_re_fit_service_wraps_manifest(tmp_path) -> None:
         config={"phase_count": 4},
         source_paths=[str(src)],
         seed=None,
-        app_version="26_01",
+        app_version="26_05",
         warnings=["header inferred"],
         status=ValidationStatus.OK,
     )
@@ -118,7 +118,7 @@ def test_index_fit_manifest_fingerprints_multiple_existing_paths(tmp_path) -> No
         config={"mode": "TLU"},
         source_paths=[str(src_spec), str(src_db), str(tmp_path / "missing.txt")],
         seed=7,
-        app_version="26_01",
+        app_version="26_05",
         status=ValidationStatus.OK,
     )
     resp = service.fit(req)
@@ -138,7 +138,7 @@ def test_manifest_source_paths_are_normalized_before_fingerprinting(tmp_path) ->
         config={"mode": "TLU"},
         source_paths=["", "   ", str(src), f" {src} ", str(src)],
         seed=11,
-        app_version="26_01",
+        app_version="26_05",
         status=ValidationStatus.OK,
     )
     resp = service.fit(req)
@@ -159,7 +159,7 @@ def test_service_accepts_mapping_payload_and_normalizes_status(tmp_path) -> None
             "source_paths": [str(src)],
             "seed": 42,
             "app_id": "CERTUS_INDEX",
-            "app_version": "26_01",
+            "app_version": "26_05",
             "warnings": ["mapping payload"],
             "status": "not-a-known-status",
         }
@@ -194,7 +194,7 @@ def test_seeded_service_smoke_is_deterministic_for_stable_fields(
         config={"dataset": "smoke", "seed": 20260425},
         source_paths=[str(src)],
         seed=20260425,
-        app_version="26_01",
+        app_version="26_05",
         status=ValidationStatus.OK,
     )
 

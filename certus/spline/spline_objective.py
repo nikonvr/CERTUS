@@ -1205,6 +1205,23 @@ class SplinePWLObjective:
             t_th = _transmittance_absolute_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_t else None
             r_th = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm, n_sub_f) if use_r else None
 
+        t_sub_nu = None
+        if cfg.t_is_ratio:
+            t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam_f, n_sub_f), 1e-7)
+
+        clip_t = None
+        if use_t and t_th is not None:
+            clip_t = np.where((t_th <= 1e-14) | (t_th >= 1.0 - 1e-14), 0.0, 1.0)
+            if cfg.t_is_ratio:
+                t_th = t_th / t_sub_nu
+
+        clip_r = None
+        if use_r and r_th is not None:
+            clip_r = np.where((r_th <= 1e-14) | (r_th >= 1.0 - 1e-14), 0.0, 1.0)
+            if cfg.t_is_ratio:
+                r_th_abs = r_th.copy()
+                r_th = r_th / t_sub_nu
+
         grad = np.zeros(dim, dtype=np.float64)
         scale = 1.0 / wsum
         fd_eps = 1e-7
@@ -1223,14 +1240,19 @@ class SplinePWLObjective:
             _dRdn_arr = (_rp_n - _rm_n) / (2.0 * fd_eps)
             _rp_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l + fd_eps, d_nm, n_sub_f)
             _rm_k = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l - fd_eps, d_nm, n_sub_f)
+            r_ref = r_th_abs if cfg.t_is_ratio else r_th
             _dRdk_arr = np.where(
                 k_l < fd_eps,
-                (_rp_k - r_th) / fd_eps,
+                (_rp_k - r_ref) / fd_eps,
                 (_rp_k - _rm_k) / (2.0 * fd_eps),
             )
             _rp_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm + fd_eps, n_sub_f)
             _rm_d = _reflectance_absolute_backside_from_nk(lam_f, n_l, k_l, d_nm - fd_eps, n_sub_f)
             _dRdd_arr = (_rp_d - _rm_d) / (2.0 * fd_eps)
+            if cfg.t_is_ratio:
+                _dRdn_arr = _dRdn_arr / t_sub_nu
+                _dRdk_arr = _dRdk_arr / t_sub_nu
+                _dRdd_arr = _dRdd_arr / t_sub_nu
 
         L_n = x[1 + k_nodes : 1 + 2 * k_nodes]
         k_lo = self._k_lo_phys
@@ -1243,6 +1265,10 @@ class SplinePWLObjective:
             _dTdn_arr, _dTdk_arr, _, _, _dTdd_arr, _ = _compute_single_layer_sensitivity_array(
                 lam_f, n_l, k_l, d_nm, n_sub_f
             )
+            if cfg.t_is_ratio:
+                _dTdn_arr = _dTdn_arr / t_sub_nu
+                _dTdk_arr = _dTdk_arr / t_sub_nu
+                _dTdd_arr = _dTdd_arr / t_sub_nu
 
         # Vectorized residuals & per-pixel gradient contributions
         gn_arr = np.zeros(n_pix, dtype=np.float64)
@@ -1250,7 +1276,6 @@ class SplinePWLObjective:
         grad_d = 0.0
 
         if use_t and self.t_exp_f is not None and t_th is not None:
-            clip_t = np.where((t_th <= 1e-14) | (t_th >= 1.0 - 1e-14), 0.0, 1.0)
             e_t = self.t_exp_f - t_th
             fac_t = self._weight_t * inv_npix * scale * (-2.0)
             gn_arr += fac_t * w * e_t * _dTdn_arr * clip_t
@@ -1258,7 +1283,6 @@ class SplinePWLObjective:
             grad_d += fac_t * float(np.dot(w, e_t * _dTdd_arr * clip_t))
 
         if use_r and self.r_exp_f is not None and r_th is not None:
-            clip_r = np.where((r_th <= 1e-14) | (r_th >= 1.0 - 1e-14), 0.0, 1.0)
             e_r = self.r_exp_f - r_th
             fac_r = self._weight_r * inv_npix * scale * (-2.0)
             gn_arr += fac_r * w * e_r * _dRdn_arr * clip_r
@@ -1311,9 +1335,6 @@ def spline_pwl_analytic_grad_supported(cfg: SplineOptConfig) -> bool:
     """True if the analytic gradient (T + penalties; R by FD/lambda) is consistent with the objective."""
 
     if cfg.n_mono_band_nm is not None:
-        return False
-
-    if bool(cfg.t_is_ratio):
         return False
 
     return True

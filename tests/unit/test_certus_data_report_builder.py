@@ -165,7 +165,7 @@ class TestBuildStandardReport:
         assert result["excel"] is False
 
     def test_excel_adds_manifest_sheet_when_manifest_provided(self, tmp_path):
-        ctx = RunContext.create(app_id="CERTUS_TEST", app_version="26_01", seed=42)
+        ctx = RunContext.create(app_id="CERTUS_TEST", app_version="26_05", seed=42)
         manifest = RunManifest(run_context=ctx)
         sections = [ReportSection(title="Data", kind="table", content=pd.DataFrame({"x": [1]}))]
         excel = tmp_path / "report_manifest.xlsx"

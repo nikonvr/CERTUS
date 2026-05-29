@@ -34,7 +34,7 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 
 from __future__ import annotations
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 # RE: +/-% thickness search radius for L-BFGS-B (no toolbar control; fixed default).
 # Keeping this module tight: prefer helpers/tests over broad structural moves.
@@ -1133,7 +1133,7 @@ class CertusREApp(CertusBaseApp):
         self.l0_spin.valueChanged.connect(self._on_l0_changed_update_substrate_info)
 
         self.l0_spin.setToolTip(
-            "lambda₀ (nm)  apres chargement RE, fixe par la feuille <b>design</b> (voir encadre Excel ci-dessus)."
+            "lambda₀ (nm) after loading RE, fixed by the <b>design</b> sheet (see Excel box above)."
         )
 
         self.l0_spin.setVisible(False)
@@ -1143,7 +1143,7 @@ class CertusREApp(CertusBaseApp):
         self.back_check.setText("Substrate back face (Fresnel)")
 
         self.back_check.setToolTip(
-            "Face arriere substrate  apres chargement RE, fixe par les en-tetes <b>measurement</b>."
+            "Back side substrate after RE loading, fixed by <b>measurement</b> headers."
         )
 
         self.back_check.stateChanged.connect(self._on_schedule_eval_instant_signal)
@@ -3381,7 +3381,7 @@ class CertusREApp(CertusBaseApp):
             )
 
         # --- Silicon (tabulated) ---
-        if "silicon" in sub or sub in ("si", "si-wafer") or sub.startswith("si ") or sub.startswith("si-"):
+        if "silicon" in sub or sub in ("si", "si-wafer") or sub.startswith("if ") or sub.startswith("si-"):
             from certus_physics.materials_data import SI_K_DATA, SI_N_DATA, SI_WAVELENGTH_NM
 
             return TabularMaterial(
@@ -3405,7 +3405,7 @@ class CertusREApp(CertusBaseApp):
         sub_map = {
             "sapphire (al2o3)": "al2o3",
             "sapphire": "al2o3",
-            "silicon (si)": "si",
+            "silicon (if)": "si",
             "silicon": "si",
             "si-wafer": "si",
             "si-substrate": "si",
@@ -7056,7 +7056,7 @@ class CertusREApp(CertusBaseApp):
 
             ws.title = "Configuration"
 
-            ws.append(["CERTUS-RE", "CERTUS_SUITE_26_01"])
+            ws.append(["CERTUS-RE", "CERTUS_SUITE_26_05"])
 
             ws.append([f"Generated:  {certus_timestamp_display()}"])
 

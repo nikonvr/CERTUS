@@ -19,7 +19,7 @@ def _parse_pyproject_dependencies(pyproject_path: Path) -> set[str]:
         flags=re.MULTILINE | re.DOTALL,
     )
     if not match:
-        raise RuntimeError("Impossible de lire [project].dependencies dans pyproject.toml")
+        raise RuntimeError("Cannot read [project].dependencies in pyproject.toml")
     block = match.group(1)
     names: set[str] = set()
     for raw_line in block.splitlines():
@@ -160,7 +160,7 @@ def check_release_structure() -> list[str]:
 
     pyproject = REPO_ROOT / "pyproject.toml"
     if not pyproject.exists():
-        errors.append("Fichier manquant: pyproject.toml")
+        errors.append("Missing file: pyproject.toml")
     else:
         py_text = pyproject.read_text(encoding="utf-8")
         if 'requires-python = ">=3.14.5"' not in py_text:
@@ -218,18 +218,18 @@ def main() -> int:
     parser.add_argument(
         "--check-frozen",
         action="store_true",
-        help="Vérifie la présence/qualité de l'artefact frozen.",
+        help="Check the presence/quality of the frozen artifact.",
     )
     parser.add_argument(
         "--check-frozen-run",
         action="store_true",
-        help="Vérifie un démarrage fonctionnel minimal de l'exécutable frozen.",
+        help="Checks for minimal functional startup of the frozen executable.",
     )
     parser.add_argument(
         "--startup-timeout-sec",
         type=int,
         default=12,
-        help="Timeout (secondes) pour le check de démarrage frozen.",
+        help="Timeout (seconds) for frozen boot check.",
     )
     args = parser.parse_args()
 

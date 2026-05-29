@@ -52,9 +52,12 @@ class CertusREResultsDialog(QDialog):
         initial_stack: list | None = None,
         announce_in_log: bool = True,
     ):
+        from certus.ui.certus_qt_widgets import QWidget
+        parent_widget = main_app if isinstance(main_app, QWidget) else None
+        super().__init__(parent_widget)
+
         self.main_app = main_app
         self.results = results
-        self.initial_stack = initial_stack
         self.ep0 = ep0
         _re_sort_results_best_for_table_and_apply(results)
 
@@ -68,16 +71,13 @@ class CertusREResultsDialog(QDialog):
 
         else:
             initial_stack = getattr(self, "_re_initial_stack", [])
+        self.initial_stack = initial_stack
 
         n = int(ep0.size)
 
         n_runs = len(results)
 
         l0_ref = float(self.main_app.l0_spin.value())
-
-        from certus.ui.certus_qt_widgets import QWidget
-        parent_widget = main_app if isinstance(main_app, QWidget) else None
-        super().__init__(parent_widget)
 
         self.setWindowTitle(f"RE Results (QWOT @ lambda₀={l0_ref:.0f} nm)")
 

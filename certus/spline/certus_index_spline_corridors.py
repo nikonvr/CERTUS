@@ -4627,7 +4627,7 @@ class _RunMixin:
 
         self._last_run_cfg = cfg_run
 
-        # CRITICAL : dataclasses.replace() ne copie PAS les attributs dynamiques.
+        # CRITICAL: dataclasses.replace() does NOT copy dynamic attributes.
 
         # On les transfere manuallement pour que le worker voie l'injection manualle.
 

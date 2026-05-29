@@ -487,8 +487,10 @@ class CertusTheme:
             from certus.ui.certus_a11y import audit_palette
             import logging
             logger = logging.getLogger("certus_theme")
+            # Only audit foreground/accent colors against surface (not background-vs-surface,
+            # which is a background-on-background pair and WCAG AA 4.5:1 does not apply).
+            _BACKGROUND_ONLY_KEYS = {"background", "surface"}
             palette_dict = {
-                "background": cls.BACKGROUND,
                 "surface": cls.SURFACE,
                 "primary": cls.PRIMARY,
                 "secondary": cls.SECONDARY,
@@ -501,8 +503,10 @@ class CertusTheme:
             for key, val in report.items():
                 if key == "_summary":
                     continue
+                if key in _BACKGROUND_ONLY_KEYS:
+                    continue
                 if not val.get("passes_aa", True):
-                    logger.debug(
+                    logger.warning(
                         f"Accessibility Contrast Warning: Theme color '{key}' ({palette_dict[key]}) vs 'surface' ({cls.SURFACE}) "
                         f"has contrast ratio {val.get('ratio')}:1 (min WCAG AA requirement is 4.5:1)"
                     )

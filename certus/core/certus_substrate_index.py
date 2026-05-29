@@ -3768,143 +3768,68 @@ class SubstrateIndexGUI(QMainWindow):
             f"background-color: {CertusTheme.SURFACE}; border-radius: {CertusTheme.RADIUS_LG}px; border: 1px solid {CertusTheme.BORDER};"
         )
 
-        row = QHBoxLayout(tools)
-
-        row.setContentsMargins(
+        tools_layout = QVBoxLayout(tools)
+        tools_layout.setContentsMargins(
             CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD, CertusTheme.SPACING_MD
         )
 
-        self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
+        row1 = QHBoxLayout()
+        row2 = QHBoxLayout()
+        tools_layout.addLayout(row1)
+        tools_layout.addLayout(row2)
 
+        self.btn_load = create_styled_button("Load Data (.xlsx/.xls)", variant="primary")
         self.btn_load.clicked.connect(self.load_file)
 
-        row.addWidget(QLabel("lambda min fit (nm):"))
-
         self.fit_lmin_spin = QDoubleSpinBox()
-
         self.fit_lmin_spin.setRange(100.0, 20000.0)
-
         self.fit_lmin_spin.setDecimals(1)
-
         self.fit_lmin_spin.setSingleStep(50.0)
-
         self.fit_lmin_spin.setValue(400.0)
-
         self.fit_lmin_spin.valueChanged.connect(self._on_fit_range_spin_changed)
 
-        row.addWidget(self.fit_lmin_spin)
-
-        row.addSpacing(8)
-
-        row.addWidget(QLabel("lambda max fit (nm):"))
-
         self.fit_lmax_spin = QDoubleSpinBox()
-
         self.fit_lmax_spin.setRange(100.0, 20000.0)
-
         self.fit_lmax_spin.setDecimals(1)
-
         self.fit_lmax_spin.setSingleStep(50.0)
-
         self.fit_lmax_spin.setValue(5000.0)
-
         self.fit_lmax_spin.valueChanged.connect(self._on_fit_range_spin_changed)
 
-        row.addWidget(self.fit_lmax_spin)
-
-        row.addSpacing(12)
-
         self.sell_auto_chk = QCheckBox("Sellmeier full auto")
-
         self.sell_auto_chk.setChecked(True)
-
         self.sell_auto_chk.setToolTip("Active: automatic internal Sellmeier parameters.")
-
         self.sell_auto_chk.stateChanged.connect(self._on_sell_auto_state_changed)
 
-        row.addWidget(self.sell_auto_chk)
-
-        row.addSpacing(10)
-
         self.sell_timeout_lbl = QLabel("Sellmeier budget (s):")
-
-        row.addWidget(self.sell_timeout_lbl)
-
         self.sell_timeout_spin = QDoubleSpinBox()
-
         self.sell_timeout_spin.setRange(0.0, 120.0)
-
         self.sell_timeout_spin.setDecimals(1)
-
         self.sell_timeout_spin.setSingleStep(1.0)
-
         self.sell_timeout_spin.setValue(8.0)
-
         self.sell_timeout_spin.setToolTip("0 = unlimited. Time limit for Sellmeier global optimization.")
 
-        row.addWidget(self.sell_timeout_spin)
-
-        row.addSpacing(8)
-
         self.sell_de_lbl = QLabel("Sellmeier DE iters:")
-
-        row.addWidget(self.sell_de_lbl)
-
         self.sell_de_iter_spin = QSpinBox()
-
         self.sell_de_iter_spin.setRange(10, 2000)
-
         self.sell_de_iter_spin.setSingleStep(25)
-
         self.sell_de_iter_spin.setValue(300)
-
         self.sell_de_iter_spin.setToolTip("Max L-BFGS-B iterations (Sellmeier, global phase).")
 
-        row.addWidget(self.sell_de_iter_spin)
-
-        row.addSpacing(8)
-
         self.sell_ls_lbl = QLabel("Sellmeier LS nfev:")
-
-        row.addWidget(self.sell_ls_lbl)
-
         self.sell_ls_nfev_spin = QSpinBox()
-
         self.sell_ls_nfev_spin.setRange(100, 50000)
-
         self.sell_ls_nfev_spin.setSingleStep(100)
-
         self.sell_ls_nfev_spin.setValue(3000)
-
         self.sell_ls_nfev_spin.setToolTip("Max evaluations for least_squares (polish after L-BFGS-B, Sellmeier).")
 
-        row.addWidget(self.sell_ls_nfev_spin)
-
-        row.addSpacing(8)
-
         self.sell_log_l_chk = QCheckBox("Sellmeier L1,L2 en ln (optimization.)")
-
         self.sell_log_l_chk.setChecked(bool(SELLMEIER_DEFAULT_LOG_L1L2))
-
         self.sell_log_l_chk.setToolTip(
             "If checked: optimization on ui=ln(Li) then Li=exp(ui) (log bounds). Otherwise: Li directly."
         )
 
-        row.addWidget(self.sell_log_l_chk)
-
-        row.addSpacing(12)
-
-        row.addWidget(
-            QLabel(
-                f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
-                "Systematic calculation of <b>3</b> laws (Polynomial, Sellmeier, Spline) to compare RMSE (1st row).</span>"
-            )
-        )
-
         self.btn_calc_n = create_styled_button("Calc Substrate Index (3 laws)", variant="secondary")
-
         self.btn_calc_n.clicked.connect(self.calculate_index)
-
         self.btn_calc_n.setEnabled(False)
 
         self.btn_export_datasheet = create_styled_button("Export Datasheet (JSON)", variant="outline")
@@ -3912,14 +3837,33 @@ class SubstrateIndexGUI(QMainWindow):
         self.btn_export_datasheet.clicked.connect(self.export_substrate_datasheet)
         self.btn_export_datasheet.setEnabled(False)
 
-        row.addWidget(self.btn_load)
-        row.addWidget(self.btn_export_datasheet)
+        # Row 1 layout
+        row1.addWidget(self.btn_load)
+        row1.addSpacing(10)
+        row1.addWidget(QLabel("lambda min fit (nm):"))
+        row1.addWidget(self.fit_lmin_spin)
+        row1.addSpacing(10)
+        row1.addWidget(QLabel("lambda max fit (nm):"))
+        row1.addWidget(self.fit_lmax_spin)
+        row1.addSpacing(15)
+        row1.addWidget(self.sell_auto_chk)
+        row1.addStretch()
+        row1.addWidget(self.btn_calc_n)
 
-        row.addSpacing(20)
-
-        row.addStretch()
-
-        row.addWidget(self.btn_calc_n)
+        # Row 2 layout
+        row2.addWidget(self.sell_timeout_lbl)
+        row2.addWidget(self.sell_timeout_spin)
+        row2.addSpacing(10)
+        row2.addWidget(self.sell_de_lbl)
+        row2.addWidget(self.sell_de_iter_spin)
+        row2.addSpacing(10)
+        row2.addWidget(self.sell_ls_lbl)
+        row2.addWidget(self.sell_ls_nfev_spin)
+        row2.addSpacing(10)
+        row2.addWidget(self.sell_log_l_chk)
+        row2.addSpacing(15)
+        row2.addWidget(self.btn_export_datasheet)
+        row2.addStretch()
 
         c_layout.addWidget(tools)
 

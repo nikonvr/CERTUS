@@ -3153,6 +3153,60 @@ def run_final_simulation_block(
 
     clues_at_wl = opti_results["clues_at_wl"]
 
+    # Pre-fetch clues to a local read-only plain dictionary
+    # to avoid thread contention / NumPy warnings inside threads.
+    wls_to_fetch = set()
+    if hasattr(clues_at_wl, "wls"):
+        wls_to_fetch.update(float(w) for w in clues_at_wl.wls)
+    elif hasattr(clues_at_wl, "keys"):
+        wls_to_fetch.update(float(w) for w in clues_at_wl.keys())
+    for strat in all_strategies:
+        for blk in strat.get("blocks", []):
+            wls_to_fetch.add(float(blk["wavelength"]))
+
+    idx_dict = _IdxWrapper(clues_at_wl)
+    local_clues = {}
+    for wl in wls_to_fetch:
+        try:
+            local_clues[wl] = idx_dict[wl]
+        except Exception:
+            pass
+
+    class SafeLocalClues:
+        def __init__(self, original, cache) -> None:
+            self.original = original
+            self.cache = cache
+
+        def get(self, wl: float, default=None) -> Any:
+            wl_f = float(wl)
+            if wl_f in self.cache:
+                return self.cache[wl_f]
+            try:
+                res = _IdxWrapper(self.original)[wl_f]
+                self.cache[wl_f] = res
+                return res
+            except Exception:
+                return default
+
+        def keys(self) -> Any:
+            return self.cache.keys()
+
+        def __getitem__(self, wl) -> Any:
+            res = self.get(wl)
+            if res is None:
+                raise KeyError(wl)
+            return res
+
+        def __contains__(self, wl) -> bool:
+            wl_f = float(wl)
+            if wl_f in self.cache:
+                return True
+            return wl_f in _IdxWrapper(self.original)
+
+    clues_at_wl = SafeLocalClues(clues_at_wl, local_clues)
+    opti_results = dict(opti_results)
+    opti_results["clues_at_wl"] = clues_at_wl
+
     full_dyn_grid = opti_results.get("full_dynamics_grid", {})
 
     wl_arr, nH_arr, nL_arr, nSub_arr, T_nom = _prepare_robustness_nominal_optics(

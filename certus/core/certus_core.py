@@ -21,7 +21,7 @@ Contains:
 
 """
 
-__version__ = "26_01"
+__version__ = "26_05"
 
 
 __all__ = [
@@ -1118,13 +1118,23 @@ SUBSTRATE_MAPPING: dict[str, str] = {
 
 SUBSTRATE_LIST = list(SUBSTRATES.keys())
 
-# Canonical substrate label aliases used across CERTUS UI / parsers.
 CANONICAL_SUBSTRATE_LABELS: dict[str, str] = {
     "sapphire": "Sapphire (Al2O3)",
     "sapphire (al2o3)": "Sapphire (Al2O3)",
     "al2o3": "Sapphire (Al2O3)",
     "saphir": "Sapphire (Al2O3)",
+    "fused silica": "SiO2",
+    "fusedsilica": "SiO2",
+    "sio2": "SiO2",
+    "n-bk7": "N-BK7",
+    "bk7": "N-BK7",
+    "d263t": "D263T eco",
+    "d263t eco": "D263T eco",
+    "b270i": "B270i",
+    "silicon": "Silicon (Si)",
+    "si": "Silicon (Si)",
 }
+
 
 # Reverse lookup for canonicalized labels.
 _CANONICAL_SUBSTRATE_LABELS_NORM: dict[str, str] = {

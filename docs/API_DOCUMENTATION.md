@@ -233,12 +233,12 @@ certus_core.py
 
 ## Version Information
 
-Current version: `v26.01` (build 1102)
+Current version: `v26.05` (build 1102)
 
 Version string available as:
 ```python
 from certus_core import __version__
-print(__version__)  # "26_01"
+print(__version__)  # "26_05"
 ```
 
 

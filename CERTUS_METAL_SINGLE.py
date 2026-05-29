@@ -1,7 +1,7 @@
 """
 
 
-CERTUS-METAL SINGLE CERTUS_SUITE_26_01
+CERTUS-METAL SINGLE CERTUS_SUITE_26_05
 
 
 ======================================
@@ -30,7 +30,7 @@ The metal index is modeld as wavelength-dependent splines.
 
 """
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 
 import logging
@@ -46,6 +46,21 @@ import sys
 
 
 import traceback
+
+
+
+from certus.core.certus_core import canonicalize_substrate_label, substrate_sellmeier_id, SUBSTRATE_MIN_LAMBDA
+from certus.core._certus_physics_impl import get_n_substrate_array_by_id
+
+def _resolve_single_substrate_id(sub_text: str) -> int:
+    val = substrate_sellmeier_id(canonicalize_substrate_label(sub_text))
+    return val if val is not None else 1  # Fallback to BK7 (ID 1) if None
+
+def _get_single_substrate_n_array(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
+    try:
+        return get_n_substrate_array_by_id(substrate_id, wavelengths_nm)
+    except KeyError:
+        return get_n_substrate_array_by_id(1, wavelengths_nm)
 
 
 import scipy.optimize
@@ -562,7 +577,12 @@ def objective_function_fixed_eM(
     if lambda_internes_fixed is None:
         lambda_internes_fixed = np.empty(0, dtype=np.float64)
 
-    x_full = np.concatenate((x, np.asarray(lambda_internes_fixed, dtype=np.float64)))
+    if "x_full_buffer" in precomputed:
+        x_full = precomputed["x_full_buffer"]
+        x_full[:len(x)] = x
+        # lambda_internes_fixed should already be at the end of x_full_buffer
+    else:
+        x_full = np.concatenate((x, np.asarray(lambda_internes_fixed, dtype=np.float64)))
 
     return _single_RTRback_mse(
         x_full,
@@ -1302,6 +1322,10 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         l.addLayout(self._create_labeled_input("substrate:", self.combo_substrate, "substrate Material (Transparent)."))
 
+        from PyQt6.QtWidgets import QLabel
+        self.substrate_info_label = QLabel("")
+
+
         # Metal Inputs
 
         self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
@@ -1778,7 +1802,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         except NUMERICAL_FAULT_EXCEPTIONS:
             pass
 
-        # Comme Metal Bilayer : zoom n/k en live (sinon ViewBox reste sur plage vide -> courbes invisibles).
+        # Like Metal Bilayer: n/k zoom live (otherwise ViewBox remains on empty range -> invisible curves).
 
         if not final and int(data.get("iteration", 0)) % 3 == 0:
             self.p1.vb.autoRange()

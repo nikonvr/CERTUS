@@ -2,7 +2,7 @@
 # ARCHITECTURE: LIGHTWEIGHT FAÇADE FOR BACKWARD COMPATIBILITY
 # =========================================================================================
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 import functools
 import os

@@ -497,7 +497,15 @@ class SharedIndicesWorker:
             r = self.vals[idx]
         else:
             w0, w1 = self.wls[idx - 1], self.wls[idx]
-            t = (wl - w0) / (w1 - w0)
+            denom = w1 - w0
+            if denom <= 1e-9:
+                t = 0.0
+            else:
+                t = (wl - w0) / denom
+                if np.isnan(t):
+                    t = 0.0
+                elif not (0.0 <= t <= 1.0):
+                    t = max(0.0, min(1.0, t))
             r = self.vals[idx - 1] + t * (self.vals[idx] - self.vals[idx - 1])
 
         res = {"H": float(r[0]), "L": float(r[1]), "substrate": float(r[2])}

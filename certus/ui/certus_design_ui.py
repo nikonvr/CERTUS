@@ -33,7 +33,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
-__version__ = "26_01"
+from certus.core.certus_core import __version__
 
 import os
 from pathlib import Path
@@ -1312,7 +1312,7 @@ class CertusDesignApp(CertusBaseApp):
 
         self.plot_convergence.setLogMode(y=True)
 
-        self.convergence_curve = plot_widget_plot_finite(self.plot_convergence, [], [], pen=pg.mkPen(CertusTheme.ERROR, width=2), animate=False)
+        self.convergence_curve = self.plot_convergence.plot([], [], pen=pg.mkPen(CertusTheme.ERROR, width=2))
 
         self.plot_tabs.addTab(self.plot_convergence, "Convergence")
 
@@ -3498,25 +3498,29 @@ class CertusDesignApp(CertusBaseApp):
 
         self.mse_data = {"iterations": [], "errors": []}
 
-        self.convergence_curve.setData([], [])
+        if self.convergence_curve is not None:
+            self.convergence_curve.setData([], [])
 
     def _shutdown_previous_optim_worker(self) -> None:
         """Stop any running optimization worker before starting a new cycle."""
 
         if self.optim_worker is not None and self.optim_thread is not None:
-            if self.optim_thread.isRunning():
-                self.optim_worker.request_stop()
-                self.optim_thread.quit()
+            try:
+                if self.optim_thread.isRunning():
+                    self.optim_worker.request_stop()
+                    self.optim_thread.quit()
 
-                if not self.optim_thread.wait(2000):
-                    logging.critical(
-                        "Optim worker did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
-                    )
+                    if not self.optim_thread.wait(2000):
+                        logging.critical(
+                            "Optim worker did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
+                        )
 
-                    self.log(
-                        "Optim worker did not stop within 2s - skipping terminate() (see log).",
-                        "ERROR",
-                    )
+                        self.log(
+                            "Optim worker did not stop within 2s - skipping terminate() (see log).",
+                            "ERROR",
+                        )
+            except RuntimeError:
+                pass
 
         self.optim_worker = None
         self.optim_thread = None
@@ -6083,25 +6087,31 @@ class CertusDesignApp(CertusBaseApp):
 
         self.log("Stopping optimization...", "WARNING")
 
-        if self.optim_thread and self.optim_thread.isRunning():
-            if self.optim_worker:
-                self.optim_worker.request_stop()
-            self.optim_thread.quit()
+        try:
+            if self.optim_thread and self.optim_thread.isRunning():
+                if self.optim_worker:
+                    self.optim_worker.request_stop()
+                self.optim_thread.quit()
 
-            if not self.optim_thread.wait(2000):
-                logging.critical(
-                    "Optim worker did not stop within 2s on stop - skipping terminate() to avoid unsafe thread kill."
-                )
+                if not self.optim_thread.wait(2000):
+                    logging.critical(
+                        "Optim worker did not stop within 2s on stop - skipping terminate() to avoid unsafe thread kill."
+                    )
 
-                self.log(
-                    "Optim worker did not stop within 2s - skipping terminate() (see log).",
-                    "ERROR",
-                )
+                    self.log(
+                        "Optim worker did not stop within 2s - skipping terminate() (see log).",
+                        "ERROR",
+                    )
+        except RuntimeError:
+            pass
 
-        if self.needle_thread and self.needle_thread.isRunning():
-            self.needle_thread.requestInterruption()
+        try:
+            if self.needle_thread and self.needle_thread.isRunning():
+                self.needle_thread.requestInterruption()
 
-            self.needle_thread.wait(1000)
+                self.needle_thread.wait(1000)
+        except RuntimeError:
+            pass
 
         self._force_idle()
 
@@ -7490,7 +7500,7 @@ class CertusDesignApp(CertusBaseApp):
         self._pre_save_smart_cleanup()
 
         cfg = {
-            "version": "CERTUS_SUITE_26_01",
+            "version": "CERTUS_SUITE_26_05",
             "l0": self.l0_spin.value(),
             "materials": {
                 n: {
@@ -7805,7 +7815,7 @@ class CertusDesignApp(CertusBaseApp):
 
             summary_kv = {
                 "Generated": certus_timestamp_display(),
-                "CERTUS Suite": "CERTUS_SUITE_26_01",
+                "CERTUS Suite": "CERTUS_SUITE_26_05",
                 "L0 (nm)": self.l0_spin.value(),
                 "Total layers": len(stack_rows),
             }
@@ -7913,16 +7923,28 @@ class CertusDesignApp(CertusBaseApp):
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
 
         threads_to_stop = []
-        if getattr(self, "optim_thread", None):
-            threads_to_stop.append((self.optim_thread, getattr(self, "optim_worker", None)))
-        if getattr(self, "needle_thread", None):
-            threads_to_stop.append((self.needle_thread, getattr(self, "needle_worker", None)))
-        if getattr(self, "col_thread", None):
-            threads_to_stop.append((self.col_thread, getattr(self, "col_worker", None)))
+        try:
+            optim_t = getattr(self, "optim_thread", None)
+            if optim_t is not None:
+                threads_to_stop.append((optim_t, getattr(self, "optim_worker", None)))
+        except RuntimeError:
+            pass
+        try:
+            needle_t = getattr(self, "needle_thread", None)
+            if needle_t is not None:
+                threads_to_stop.append((needle_t, getattr(self, "needle_worker", None)))
+        except RuntimeError:
+            pass
+        try:
+            col_t = getattr(self, "col_thread", None)
+            if col_t is not None:
+                threads_to_stop.append((col_t, getattr(self, "col_worker", None)))
+        except RuntimeError:
+            pass
 
         for thread, worker in threads_to_stop:
-            if thread and thread.isRunning():
-                try:
+            try:
+                if thread and thread.isRunning():
                     if worker and hasattr(worker, "request_stop"):
                         worker.request_stop()
                     thread.requestInterruption()
@@ -7932,9 +7954,9 @@ class CertusDesignApp(CertusBaseApp):
                             f"Thread {type(worker).__name__ if worker else 'unknown'} did not stop within 2s in closeEvent - "
                             "skipping terminate() to avoid unsafe thread kill."
                         )
-                except (RuntimeError, AttributeError) as e:
-                    if hasattr(self, "logger") and self.logger:
-                        self.logger.debug(f"Error stopping thread: {e}")
+            except (RuntimeError, AttributeError) as e:
+                if hasattr(self, "logger") and self.logger:
+                    self.logger.debug(f"Error stopping thread: {e}")
 
         workers = [
             getattr(self, "warmup_worker", None),
@@ -7942,8 +7964,8 @@ class CertusDesignApp(CertusBaseApp):
         ]
 
         for worker in workers:
-            if worker and worker.isRunning():
-                try:
+            try:
+                if worker and worker.isRunning():
                     # Attempt cooperative stop
 
                     if hasattr(worker, "request_stop"):
@@ -7960,11 +7982,11 @@ class CertusDesignApp(CertusBaseApp):
                             "skipping terminate() to avoid unsafe thread kill."
                         )
 
-                except (RuntimeError, AttributeError) as e:
-                    # Non-critical: worker may already be destroyed
+            except (RuntimeError, AttributeError) as e:
+                # Non-critical: worker may already be destroyed
 
-                    if hasattr(self, "logger") and self.logger:
-                        self.logger.debug(f"Error stopping worker {type(worker).__name__}: {e}")
+                if hasattr(self, "logger") and self.logger:
+                    self.logger.debug(f"Error stopping worker {type(worker).__name__}: {e}")
 
         # Call parent cleanup (stops base class workers)
 

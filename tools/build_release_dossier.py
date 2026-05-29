@@ -44,7 +44,7 @@ def build_release_dossier(version_tag: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build CERTUS release dossier zip.")
-    parser.add_argument("version_tag", help="Version tag (e.g., v26.01.0)")
+    parser.add_argument("version_tag", help="Version tag (e.g., v26.05.0)")
     args = parser.parse_args()
 
     out = build_release_dossier(args.version_tag)

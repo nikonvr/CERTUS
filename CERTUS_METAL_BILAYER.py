@@ -1615,9 +1615,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             self.diel_plot.autoRange()
 
-            # --- SYSTEMATIC EXPORT (Excel + HTML) ---
-
-            QTimer.singleShot(500, self.export_results)
+            # Export déclenché uniquement depuis on_optimization_finished
 
     def export_results(self):
         """Exports results to Excel + HTML (Single/Beam)"""

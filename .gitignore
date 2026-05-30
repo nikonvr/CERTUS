@@ -83,3 +83,4 @@ test_*.txt
 _pytest_nodeids*.txt
 diff_re.txt
 ruff_errors.txt
+translation_cache.json

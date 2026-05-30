@@ -57,6 +57,7 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QComboBox,
     QTableWidget,
+    QAbstractItemView,
 )
 
 
@@ -964,6 +965,7 @@ def _model_selection_score(
     if "sellmeier" in src:
         prior = _sellmeier_prior_coeffs_for_column(col_name)
         if prior is not None and int(np.count_nonzero(m)) >= 8:
+            n_seg = n_line[m]
             wl_um = np.asarray(wl_nm[m], dtype=np.float64) / 1000.0
             n_prior = _sellmeier_3term_standard_eval(np.asarray(prior, dtype=np.float64), wl_um)
             prior_rmse = float(np.sqrt(np.mean((n_seg - n_prior) ** 2)))
@@ -1472,14 +1474,22 @@ def _pg_plot_xy_split_band(
 ):
     """Plot y(lambda); if fit_mask provided, out-of-band segment in gray then in-band segment."""
 
-    y_out, y_in = _nan_split_band_y(y, fit_mask)
+    wl_arr = np.asarray(wl, dtype=np.float64)
+    y_arr = np.asarray(y, dtype=np.float64)
+    finite = np.isfinite(wl_arr) & np.isfinite(y_arr)
+    if not np.any(finite):
+        return None
+    wl_arr = wl_arr[finite]
+    y_arr = y_arr[finite]
+
+    y_out, y_in = _nan_split_band_y(y_arr, fit_mask[finite] if fit_mask is not None and fit_mask.size == finite.size else fit_mask)
 
     if y_out is None:
-        return plot_widget.plot(wl, y_in, pen=pen_inside, **plot_kw)
+        return plot_widget.plot(wl_arr, y_in, pen=pen_inside, **plot_kw)
 
-    plot_widget.plot(wl, y_out, pen=pen_outside)
+    plot_widget.plot(wl_arr, y_out, pen=pen_outside)
 
-    return plot_widget.plot(wl, y_in, pen=pen_inside, **plot_kw)
+    return plot_widget.plot(wl_arr, y_in, pen=pen_inside, **plot_kw)
 
 
 def _pg_plot_scatter_split_band(
@@ -1496,16 +1506,32 @@ def _pg_plot_scatter_split_band(
 ):
     """Scatter y(lambda) with symbols; fit out-of-band in gray if mask provided."""
 
-    y_out, y_in = _nan_split_band_y(y, fit_mask)
+    wl_arr = np.asarray(wl, dtype=np.float64)
+    y_arr = np.asarray(y, dtype=np.float64)
+    finite = np.isfinite(wl_arr) & np.isfinite(y_arr)
+    if not np.any(finite):
+        return None
+    wl_arr = wl_arr[finite]
+    y_arr = y_arr[finite]
+
+    fit_mask_arr = None
+    if fit_mask is not None:
+        fit_mask_arr = np.asarray(fit_mask, dtype=bool)
+        if fit_mask_arr.size == finite.size:
+            fit_mask_arr = fit_mask_arr[finite]
+        elif fit_mask_arr.size != wl_arr.size:
+            fit_mask_arr = None
+
+    y_out, y_in = _nan_split_band_y(y_arr, fit_mask_arr)
 
     kw = {"pen": None, "symbol": symbol, "symbolSize": symbol_size}
 
     if y_out is None:
-        return plot_widget.plot(wl, y_in, symbolPen=symbol_pen_inside, name=name, **kw)
+        return plot_widget.plot(wl_arr, y_in, symbolPen=symbol_pen_inside, name=name, **kw)
 
-    plot_widget.plot(wl, y_out, symbolPen=symbol_pen_outside, **kw)
+    plot_widget.plot(wl_arr, y_out, symbolPen=symbol_pen_outside, **kw)
 
-    return plot_widget.plot(wl, y_in, symbolPen=symbol_pen_inside, name=name, **kw)
+    return plot_widget.plot(wl_arr, y_in, symbolPen=symbol_pen_inside, name=name, **kw)
 
 
 class IndexCore:
@@ -3085,13 +3111,19 @@ class IndexTableDialog(QDialog):
 
         layout.addWidget(
             create_styled_label(
-                "Refractive index: 3 laws compared (RMSE on 1st row; "
-                "by series, law columns sorted by increasing RMSE, left \u2192 right)",
+                "Refractive index: 3 laws compared (best RMSE first; columns sorted by increasing RMSE inside each series)",
                 style="subtitle",
             )
         )
 
-        self.chk_only_cauchy = QCheckBox("Hide Raw points")
+        fit_span_txt = ""
+        if fit_wl_lo is not None and fit_wl_hi is not None:
+            _lo_d = float(min(fit_wl_lo, fit_wl_hi))
+            _hi_d = float(max(fit_wl_lo, fit_wl_hi))
+            fit_span_txt = f"Fit window: [{_lo_d:.1f}, {_hi_d:.1f}] nm"
+
+        self.chk_only_cauchy = QCheckBox("Hide raw points")
+        self.chk_only_cauchy.setToolTip("Toggle visibility of the raw measured points while keeping fitted curves.")
 
         self.chk_only_cauchy.setChecked(False)
 
@@ -3099,37 +3131,70 @@ class IndexTableDialog(QDialog):
 
         layout.addWidget(self.chk_only_cauchy)
 
-        if fit_wl_lo is not None and fit_wl_hi is not None:
-            _lo_d = float(min(fit_wl_lo, fit_wl_hi))
-
-            _hi_d = float(max(fit_wl_lo, fit_wl_hi))
-
-            _hint = QLabel(
-                f"Table rows and plot bands: grayed if \u03bb out of fit window "
-                f"[{_lo_d:.1f}, {_hi_d:.1f}] nm (extrapolation / out-of-fit)."
-            )
-
-            _hint.setWordWrap(True)
-
-            _hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
-
-            layout.addWidget(_hint)
+        self.summary_label = QLabel("")
+        self.summary_label.setWordWrap(True)
+        self.summary_label.setStyleSheet(
+            f"background-color: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; "
+            f"border-radius: 8px; padding: 10px; color: {CertusTheme.TEXT_MAIN};"
+        )
 
         self.raw_items = []
+        self._series_quality: dict[str, dict[str, float | str]] = {}
+        self._series_order = list(n_results_raw.keys())
+        self._last_table_summary = []
+        self._series_summary_text = []
+
+        summary_parts = ["Table summary: 3 candidate laws per substrate series."]
+        if fit_span_txt:
+            summary_parts.append(fit_span_txt)
+        summary_parts.append("Best RMSE is highlighted in green; weaker fits are muted.")
+        self.summary_label.setText(" ".join(summary_parts))
+        layout.addWidget(self.summary_label)
+        self.summary_label.setAccessibleName("Substrate index summary")
+        self.summary_label.setToolTip("Executive summary of the fit quality and window of validity.")
 
         bad_model: dict[str, set[str]] = {bk: _bad_model_labels(rmse_row.get(bk, {})) for bk in n_results_raw.keys()}
+
+        summary_rows: list[str] = []
+        for bk in self._series_order:
+            rms = rmse_row.get(bk, {})
+            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
+            q_label = "good"
+            if np.isfinite(best_v):
+                if best_v > 0.02:
+                    q_label = "degraded"
+                if best_v > 0.05:
+                    q_label = "poor"
+            self._series_quality[bk] = {"best_rmse": float(best_v), "quality_label": q_label}
+            summary_rows.append(f"{bk}: best RMSE={best_v:.6g} | quality={q_label}")
+
+        if summary_rows:
+            self._series_summary_text = summary_rows
+            detail = QLabel(" | ".join(summary_rows))
+            detail.setWordWrap(True)
+            detail.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+            layout.addWidget(detail)
+            self.summary_label.setText(self.summary_label.text() + f" | Series status: {len([s for s in self._series_quality.values() if s.get('quality_label') == 'good'])} good, {len([s for s in self._series_quality.values() if s.get('quality_label') == 'degraded'])} degraded, {len([s for s in self._series_quality.values() if s.get('quality_label') == 'poor'])} poor")
+            self.summary_label.setToolTip("Executive summary of fit quality across substrate series.")
 
         self.plot = CertusScientificPlot(title="Refractive index vs Wavelength")
 
         self.plot.setMinimumHeight(400)
 
         self.plot.addLegend(offset=(10, 10))
+        try:
+            self.plot.legend.setBrush(QBrush(QColor(CertusTheme.SURFACE)))
+            self.plot.legend.setLabelTextColor(QColor(CertusTheme.TEXT_MAIN))
+        except Exception:
+            pass
 
         self.plot.showGrid(x=True, y=True, alpha=0.3)
 
         self.plot.setLabel("bottom", "Wavelength (nm)")
 
-        self.plot.setLabel("left", "Index (n)")
+        self.plot.setLabel("left", "Index n")
+
+        self.plot.setTitle("Substrate refractive index curves — best fit highlighted")
 
         wl_plot = np.asarray(wl, dtype=np.float64)
 
@@ -3145,6 +3210,8 @@ class IndexTableDialog(QDialog):
             (2.0, Qt.PenStyle.DashLine),
             (2.0, Qt.PenStyle.DotLine),
         ]
+
+        summary_rows: list[str] = []
 
         for i, key in enumerate(n_results_raw.keys()):
             y_raw = n_results_raw[key]
@@ -3168,6 +3235,16 @@ class IndexTableDialog(QDialog):
             self.raw_items.append(raw_item)
 
             bym = n_results_by_model.get(key, {})
+            rms = rmse_row.get(key, {})
+            best_v = _best_finite_rmse_from_triplet(_rms_triplet(rms))
+            q_label = "good"
+            if np.isfinite(best_v):
+                if best_v > 0.02:
+                    q_label = "degraded"
+                if best_v > 0.05:
+                    q_label = "poor"
+            self._series_quality[key] = {"best_rmse": float(best_v), "quality_label": q_label}
+            summary_rows.append(f"{key}: best RMSE={best_v:.6g} | quality={q_label}")
 
             for pi, (_mk, mlabel) in enumerate(SUBSTRATE_INDEX_MODELS):
                 arr = bym.get(mlabel)
@@ -3184,6 +3261,18 @@ class IndexTableDialog(QDialog):
                     pc = pg.mkColor(c)
 
                     pc.setAlpha(220)
+
+                if pi == 0:
+                    pc.setAlpha(245)
+                    if q_label == "good":
+                        pc = pg.mkColor(CertusTheme.SUCCESS)
+                        pc.setAlpha(230)
+                    elif q_label == "degraded":
+                        pc = pg.mkColor(CertusTheme.WARNING)
+                        pc.setAlpha(230)
+                    elif q_label == "poor":
+                        pc = pg.mkColor(CertusTheme.ERROR)
+                        pc.setAlpha(220)
 
                 pw, pst = _fit_pen_styles[pi % 3]
 
@@ -3280,13 +3369,18 @@ class IndexTableDialog(QDialog):
         table.setColumnCount(len(col_names))
 
         table.setHorizontalHeaderLabels(col_names)
+        table.setAlternatingRowColors(True)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        table.setWordWrap(False)
+        table.verticalHeader().setVisible(False)
 
         _hh = table.horizontalHeader()
 
         for _c in range(len(col_names)):
             _hh.setSectionResizeMode(_c, QHeaderView.ResizeMode.Interactive)
 
-        _hh.setMinimumSectionSize(52)
+        _hh.setMinimumSectionSize(72)
 
         _hh.setStretchLastSection(False)
 
@@ -3416,6 +3510,9 @@ class IndexTableDialog(QDialog):
 
                     it.setFont(fnt)
 
+                if j > 0 and j < len(bad_column) and not bool(bad_column[j]) and not bool(outside_fit_row[i]):
+                    it.setBackground(QBrush(QColor(CertusTheme.SURFACE)))
+
                 table.setItem(r, j, it)
 
         layout.addWidget(table)
@@ -3430,13 +3527,21 @@ class IndexTableDialog(QDialog):
 
         btn_copy.clicked.connect(functools.partial(self.copy_to_clipboard, col_names))
 
+        btn_export = create_styled_button("Export summary", variant="outline")
+        btn_export.setToolTip("Copy a concise summary of the current fit status to the clipboard.")
+        btn_export.clicked.connect(self.copy_summary_to_clipboard)
+
         btn_row.addWidget(btn_params)
+        btn_row.addWidget(btn_export)
 
         btn_row.addStretch()
 
         btn_row.addWidget(btn_copy)
 
         layout.addLayout(btn_row)
+
+        self._last_table_summary = summary_parts
+        self._last_quality_summary = " | ".join(summary_rows)
 
     def toggle_raw_plots(self, state):
 
@@ -3445,12 +3550,29 @@ class IndexTableDialog(QDialog):
         for item in self.raw_items:
             item.setVisible(visible)
 
+    def copy_summary_to_clipboard(self):
+        lines = [
+            "CERTUS Substrate Index summary",
+            self.summary_label.text() if hasattr(self, "summary_label") else "",
+            "",
+        ]
+        if hasattr(self, "_last_table_summary") and self._last_table_summary:
+            lines.extend(self._last_table_summary)
+        if hasattr(self, "fit_wl_lo") and self.fit_wl_lo is not None and self.fit_wl_hi is not None:
+            lines.append(f"Fit window: [{float(self.fit_wl_lo):.1f}, {float(self.fit_wl_hi):.1f}] nm")
+        QApplication.clipboard().setText("\n".join([x for x in lines if x]).strip() + "\n")
+        QMessageBox.information(self, "Copied", "Summary copied to clipboard.")
+
     def copy_to_clipboard(self, col_names):
 
         header_lines: list[str] = [
             "CERTUS Substrate Index: 3 laws comparison (Polynomial, Sellmeier 3-poles, Spline n B-spline LSQ).",
             "RMSE (unweighted) calculated on fit window, vs raw n.",
         ]
+
+        if hasattr(self, "summary_label") and self.summary_label.text():
+            header_lines.append(self.summary_label.text())
+            header_lines.append(f"Quality: {getattr(self, '_last_quality_summary', 'n/a')}")
 
         if self.fit_wl_lo is not None and self.fit_wl_hi is not None:
             header_lines.append(
@@ -3602,7 +3724,9 @@ class IndexTableDialog(QDialog):
             f"<span style='color:{CertusTheme.TEXT_SUB};font-size:11px;'>"
             "RMSE (unweighted, vs raw n on fit window), description and coefficients. "
             "Series (blocks === ... ===): from minimal best RMSE to worst, top of window. "
-            "In each series: laws from best to worst RMSE (like table columns).</span>"
+            "In each series: laws from best to worst RMSE (like table columns). "
+            "Copy output now includes the summary banner and fit-window context. "
+            "Use the summary button for a compact executive view.</span>"
         )
 
         info.setWordWrap(True)
@@ -3999,9 +4123,15 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.output_plot = CertusScientificPlot(title="Substrate output")
         self.output_plot.addLegend(offset=(10, 10))
+        try:
+            self.output_plot.legend.setBrush(QBrush(QColor(CertusTheme.SURFACE)))
+            self.output_plot.legend.setLabelTextColor(QColor(CertusTheme.TEXT_MAIN))
+        except Exception:
+            pass
         self.output_plot.showGrid(x=True, y=True, alpha=0.25)
         self.output_plot.setLabel("bottom", "Wavelength (nm)")
         self.output_plot.setLabel("left", "Index n")
+        self.output_plot.setTitle("Substrate index output (raw vs fitted) — quality-aware")
         attach_excel_clipboard_context_menu(self.output_plot)
 
         output_tab = QWidget()
@@ -4014,8 +4144,14 @@ class SubstrateIndexGUI(QMainWindow):
         self.output_tables_layout = QVBoxLayout(self.output_tables)
         self.output_tables_layout.setContentsMargins(0, 0, 0, 0)
         self.output_model_selector = QComboBox()
+        self.output_model_selector.setToolTip("Select a single fitted law to highlight in the table.")
         self.output_model_selector.currentIndexChanged.connect(self._refresh_output_tables)
         self.output_tables_layout.addWidget(self.output_model_selector)
+
+        self.output_table_hint = QLabel("Tip: use the model selector to focus on one law, or keep All models to compare the full stack.")
+        self.output_table_hint.setWordWrap(True)
+        self.output_table_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.output_tables_layout.addWidget(self.output_table_hint)
         self.output_tables_area = QWidget()
         self.output_tables_area_layout = QVBoxLayout(self.output_tables_area)
         self.output_tables_area_layout.setContentsMargins(0, 0, 0, 0)
@@ -4154,13 +4290,14 @@ class SubstrateIndexGUI(QMainWindow):
 
     def _output_table_titles(self, selected_model: str | None = None) -> list[str]:
         titles = ["lambda (nm)"]
+        models_by_bk = getattr(self, "_models_order_by_bk", {})
         if getattr(self, "n_results_raw", None):
             for bk in self.n_results_raw.keys():
                 titles.append(f"{bk} (Raw)")
                 if selected_model:
                     titles.append(f"{bk} ({selected_model})")
                 else:
-                    for _mk, mlabel in self._models_order_by_bk.get(bk, []):
+                    for _mk, mlabel in models_by_bk.get(bk, []):
                         titles.append(f"{bk} ({mlabel})")
         return titles
 
@@ -4174,7 +4311,9 @@ class SubstrateIndexGUI(QMainWindow):
                 w.deleteLater()
 
         if not hasattr(self, "n_results_raw") or not self.n_results_raw:
-            self.output_tables_area_layout.addWidget(QLabel("No output available yet."))
+            empty = QLabel("No output available yet. Run the substrate fit to populate this view.")
+            empty.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; padding: 12px;")
+            self.output_tables_area_layout.addWidget(empty)
             return
 
         selected = self.output_model_selector.currentText().strip() if hasattr(self, "output_model_selector") else ""
@@ -4185,9 +4324,11 @@ class SubstrateIndexGUI(QMainWindow):
         self.output_table_widget = table
         wl = np.asarray(self.output_table_wl if hasattr(self, "output_table_wl") else [], dtype=np.float64)
         table.setRowCount(len(wl))
-        col_names = self._output_table_titles(selected if selected in {ml for _, ml in SUBSTRATE_INDEX_MODELS} else None)
+        models_known = {ml for _, ml in SUBSTRATE_INDEX_MODELS}
+        col_names = self._output_table_titles(selected if selected in models_known else None)
         table.setColumnCount(len(col_names))
         table.setHorizontalHeaderLabels(col_names)
+        models_by_bk = getattr(self, "_models_order_by_bk", {})
         for i in range(len(wl)):
             table.setItem(i, 0, QTableWidgetItem(f"{wl[i]:.1f}"))
             c = 1
@@ -4199,7 +4340,7 @@ class SubstrateIndexGUI(QMainWindow):
                     table.setItem(i, c, QTableWidgetItem(f"{arr[i]:.4f}"))
                     c += 1
                 else:
-                    for _mk, mlabel in self._models_order_by_bk.get(bk, []):
+                    for _mk, mlabel in models_by_bk.get(bk, []):
                         arr = self.n_results_by_model.get(bk, {}).get(mlabel)
                         table.setItem(i, c, QTableWidgetItem(f"{arr[i]:.4f}" if arr is not None else ""))
                         c += 1
@@ -4223,11 +4364,19 @@ class SubstrateIndexGUI(QMainWindow):
         wl = np.asarray(wl, dtype=np.float64)
         if wl.size == 0:
             return
+        m_wl = np.isfinite(wl)
+        if int(np.count_nonzero(m_wl)) < 2:
+            return
+        wl = wl[m_wl]
+        self.output_plot.setTitle("Substrate index output (raw vs fitted) — quality-aware")
 
         self.output_table_wl = wl
         self.n_results_raw = n_results_raw
         self.n_results_by_model = n_results_by_model
         self.rmse_row = rmse_row
+        self._models_order_by_bk = {
+            bk: _substrate_index_models_ordered_by_rmse(rmse_row.get(bk, {})) for bk in n_results_raw.keys()
+        }
 
         if hasattr(self, "output_model_selector"):
             self.output_model_selector.blockSignals(True)
@@ -4239,8 +4388,11 @@ class SubstrateIndexGUI(QMainWindow):
 
         fit_mask = _substrate_index_geom_fit_mask(wl, fit_wl_lo, fit_wl_hi)
         colors = [CertusTheme.BRAND_DESIGN, CertusTheme.BRAND_INDEX, CertusTheme.SUCCESS, CertusTheme.WARNING]
+        valid_points_total = 0
 
         for i, key in enumerate(n_results_raw.keys()):
+            raw_arr = np.asarray(n_results_raw[key], dtype=np.float64)
+            valid_points_total += int(np.count_nonzero(np.isfinite(raw_arr) & np.isfinite(wl)))
             c = pg.mkColor(colors[i % len(colors)])
             c_raw = pg.mkColor(c)
             c_raw.setAlpha(130)
@@ -4270,6 +4422,8 @@ class SubstrateIndexGUI(QMainWindow):
 
         self.output_plot.getViewBox().enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
         self.output_plot.autoRange()
+        if valid_points_total == 0:
+            self.output_plot.setTitle("Substrate index output — no valid points to plot")
         self._refresh_output_tables()
 
     def preview_plot(self):
@@ -4306,14 +4460,26 @@ class SubstrateIndexGUI(QMainWindow):
             x, y_raw, self.current_window, self.current_poly, self.current_heavy
         )
 
+        y_clean_arr = np.asarray(y_clean, dtype=np.float64)
+        if y_clean_arr.ndim == 1:
+            y_clean_arr = y_clean_arr.reshape(1, -1)
+
         for i, col in enumerate(self.df.columns[1:]):
+            if i >= y_clean_arr.shape[0]:
+                continue
             color = [CertusTheme.BRAND_DESIGN, CertusTheme.BRAND_INDEX, CertusTheme.SUCCESS, CertusTheme.WARNING][i % 4]
+            y_series = np.asarray(y_clean_arr[i], dtype=np.float64)
+            m_series = np.isfinite(x) & np.isfinite(y_series)
+            if int(np.count_nonzero(m_series)) < 2:
+                continue
+
+            fit_mask_series = fit_mask[m_series] if fit_mask.size == m_series.size else fit_mask
 
             _pg_plot_xy_split_band(
                 self.plot_widget,
-                x,
-                y_clean[i],
-                fit_mask,
+                x[m_series],
+                y_series[m_series],
+                fit_mask_series,
                 pg.mkPen(color=color, width=2),
                 pg.mkPen(color=CertusTheme.TEXT_SUB, width=1.6),
                 name=str(col),
@@ -4400,13 +4566,21 @@ class SubstrateIndexGUI(QMainWindow):
 
             n_raw_base = np.asarray(n_vals, dtype=np.float64)
 
+            finite_raw = np.asarray(n_raw_base, dtype=np.float64)[np.isfinite(n_raw_base)]
+            if finite_raw.size:
+                raw_min = float(np.min(finite_raw))
+                raw_max = float(np.max(finite_raw))
+            else:
+                raw_min = float("nan")
+                raw_max = float("nan")
+
             logger.info(
                 "Fit column %d/%d: %s | n_raw_range=[%.6f, %.6f]",
                 col_idx,
                 max(total_cols, 1),
                 str(col_name),
-                float(np.nanmin(n_raw_base)),
-                float(np.nanmax(n_raw_base)),
+                raw_min,
+                raw_max,
             )
 
             _i_min = int(np.argmin(n_raw_base))
@@ -4727,6 +4901,14 @@ class SubstrateIndexGUI(QMainWindow):
             )
 
             self._plot_output_results(x, n_results_raw, n_results_by_model, rmse_row, wl_min_fit, wl_max_fit)
+            self._last_quality_summary = ""
+            try:
+                first_key = next(iter(n_fit_meta.keys()))
+                first_model_key = next(iter(n_fit_meta.get(first_key, {}).keys()))
+                qmeta = n_fit_meta.get(first_key, {}).get(first_model_key, {})
+                self._last_quality_summary = f"{first_key} / {first_model_key}: {qmeta.get('source', 'n/a')}"
+            except Exception:
+                self._last_quality_summary = "n/a"
             self.main_tabs.setCurrentIndex(1)
 
             self.progress_widget.update(1, 1, phase="Results")

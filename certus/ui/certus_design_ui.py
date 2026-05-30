@@ -3011,12 +3011,17 @@ class CertusDesignApp(CertusBaseApp):
     ) -> None:
         """Plots refractive index profile (Live update on detached)"""
 
-        logging.info(
-            "[DESIGN.profile] plot requested | ep_len=%s | stack_len=%d | back_ep_len=%s | back_stack_len=%d",
-            (len(ep) if ep is not None else None),
-            len(stack) if stack else 0,
-            (len(ep_back) if ep_back is not None else None),
-            len(stack_back) if stack_back else 0,
+        self.log(
+            (
+                "[DESIGN.profile] plot requested | ep_len=%s | stack_len=%d | back_ep_len=%s | back_stack_len=%d"
+            )
+            % (
+                (len(ep) if ep is not None else None),
+                len(stack) if stack else 0,
+                (len(ep_back) if ep_back is not None else None),
+                len(stack_back) if stack_back else 0,
+            ),
+            "INFO",
         )
 
         for plot_widget in self._get_plot_targets("profile", self.profile_plot):
@@ -3025,12 +3030,12 @@ class CertusDesignApp(CertusBaseApp):
 
                 mats = self._get_materials()
 
-                logging.info("[DESIGN.profile] materials loaded | keys=%s", list(mats.keys()))
+                self.log("[DESIGN.profile] materials loaded | keys=%s" % list(mats.keys()), "INFO")
 
                 sub_key = "substrate" if "substrate" in mats else ("Substrate" if "Substrate" in mats else None)
 
                 if sub_key is None:
-                    logging.warning("[DESIGN.profile] profile plot skipped: no substrate key in materials")
+                    self.log("[DESIGN.profile] profile plot skipped: no substrate key in materials", "WARNING")
 
                     continue
 
@@ -3060,8 +3065,9 @@ class CertusDesignApp(CertusBaseApp):
                 else:
                     x, y = [0.0, 50.0], [ns, 1.0]
 
-                logging.info(
-                    f"[PROFILE] Plotting {len(x)} points, x range [{min(x):.1f},{max(x):.1f}], y range [{min(y):.2f},{max(y):.2f}]"
+                self.log(
+                    f"[PROFILE] Plotting {len(x)} points, x range [{min(x):.1f},{max(x):.1f}], y range [{min(y):.2f},{max(y):.2f}]",
+                    "INFO",
                 )
 
                 plot_widget_plot_finite(
@@ -3108,7 +3114,7 @@ class CertusDesignApp(CertusBaseApp):
                     )
 
             except NUMERICAL_FAULT_EXCEPTIONS as _profile_ex:
-                logging.info(f"[PROFILE] Exception in _plot_profile: {_profile_ex}")
+                self.log(f"[PROFILE] Exception in _plot_profile: {_profile_ex}", "INFO")
 
     def _plot_nk(self) -> None:
         """n(lambda) curves for design materials (2-point Cauchy model)."""
@@ -7562,7 +7568,7 @@ class CertusDesignApp(CertusBaseApp):
     def _apply_config(self, c: dict) -> None:
         """Apply a parsed configuration dict to the UI (Lot C)."""
 
-        logging.info(f"Format Version: {c.get('version', 'Unknown')}")
+        self.log("Format Version: %s" % c.get("version", "Unknown"), "INFO")
 
         self._last_config_file = getattr(self, "_last_config_file", None)
         self.l0_spin.setValue(c.get("l0", 500))
@@ -7576,13 +7582,13 @@ class CertusDesignApp(CertusBaseApp):
         self._apply_stack_rows(c.get("back", []), back=True)
 
         oblique_mode = c.get("oblique_mode", False)
-        logging.info(f"[LOAD] Oblique mode: {oblique_mode}")
+        self.log(f"[LOAD] Oblique mode: {oblique_mode}", "INFO")
         self.oblique_targets = []
         if hasattr(self, "oblique_check"):
             self.oblique_check.setChecked(oblique_mode)
         self.oblique_mode = oblique_mode
 
-        logging.info(f"[LOAD] Loading {len(c.get('targets', []))} targets...")
+        self.log(f"[LOAD] Loading {len(c.get('targets', []))} targets...", "INFO")
         self._update_target_table_headers()
         self.target_table.setRowCount(0)
         self._apply_target_config(c.get("targets", []), oblique_mode)
@@ -7729,7 +7735,7 @@ class CertusDesignApp(CertusBaseApp):
 
         _load_start = getattr(self, '_load_config_start_time', None)
         if _load_start is not None:
-            logging.info(f"[LOAD] === load_config complete in {(time.time() - _load_start) * 1000:.1f}ms ===")
+            self.log(f"[LOAD] === load_config complete in {(time.time() - _load_start) * 1000:.1f}ms ===", "INFO")
 
         self.log(f"Config loaded from {Path(filename).name}", "SUCCESS")
 

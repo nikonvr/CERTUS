@@ -6451,7 +6451,7 @@ class CertusStratApp(CertusBaseApp):
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
-            self.logger.info(f"Configuration saved: '{filename}'")
+            self.logger.info("Configuration saved: %s", filename)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving: {e}")
@@ -6526,21 +6526,17 @@ class CertusStratApp(CertusBaseApp):
             self.json_windows.append(viewer)
 
             self.logger.info("=" * 60)
-
-            self.logger.info(f"CONFIGURATION LOADED: {short_name}")
-
+            self.logger.info("CONFIGURATION LOADED: %s", short_name)
             self.logger.info("=" * 60)
 
             for key in sorted(config.keys()):
                 val = config[key]
-
                 if isinstance(val, list) and len(val) > 10:
                     val_str = f"{val[:3]} ... ({len(val)} items) ...  {val[-3:]}"
-
                 else:
                     val_str = str(val)
 
-                self.logger.info(f"  {key:<35}: {val_str}")
+                self.logger.info("  %-35s: %s", key, val_str)
 
             self.logger.info("=" * 60)
 
@@ -6721,7 +6717,7 @@ class CertusStratApp(CertusBaseApp):
 
                 return
 
-            self.logger.info(f"Loaded {len(loaded_strategies)} valid strategies.")
+            self.logger.info("Loaded %d valid strategies.", len(loaded_strategies))
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error parsing strategy files: {e}")
@@ -7075,19 +7071,21 @@ class CertusStratApp(CertusBaseApp):
 
         if exec_mode == "fast":
             self.logger.info(
-                "[MODE] FAST active | "
-                f"robustness_num_runs={params.get('robustness_num_runs')} | "
-                f"consensus_num_runs={params.get('consensus_num_runs')} | "
-                f"n_screen_runs={params.get('n_screen_runs')} | "
-                f"mc_runs_block={params.get('mc_runs_block')} | "
-                f"elite_rounds={params.get('elite_rounds', 1)} | "
-                f"fast_auto_blocks={params.get('fast_auto_blocks', True)}"
+                "[MODE] FAST active | robustness_num_runs=%s | consensus_num_runs=%s | n_screen_runs=%s | mc_runs_block=%s | elite_rounds=%s | fast_auto_blocks=%s",
+                params.get("robustness_num_runs"),
+                params.get("consensus_num_runs"),
+                params.get("n_screen_runs"),
+                params.get("mc_runs_block"),
+                params.get("elite_rounds", 1),
+                params.get("fast_auto_blocks", True),
             )
 
         else:
             self.logger.info("[MODE] PREMIUM active")
 
-        self.logger.info("\n" + "=" * 80 + f"\nSTARTING WORKFLOW: {task.name} ({task.value})\n" + "=" * 80 + "\n")
+        self.logger.info("=" * 80)
+        self.logger.info("STARTING WORKFLOW: %s (%s)", task.name, task.value)
+        self.logger.info("=" * 80)
 
         # New run: allow live monitor to re-open normally (unless user closes again).
 
@@ -7429,7 +7427,7 @@ class CertusStratApp(CertusBaseApp):
                 except (OSError, ValueError, TypeError) as exc:
                     self.logger.warning("STRAT manifest JSON write skipped: %s", exc)
 
-            self.logger.info(f"✅ Excel report saved: '{excel_path}'")
+            self.logger.info("✅ Excel report saved: %s", excel_path)
 
             # 2. Generate HTML Report
             self.logger.info("[DEBUG-UI] Saving HTML report...")
@@ -7489,14 +7487,14 @@ class CertusStratApp(CertusBaseApp):
             all_sections = methodology_sections + sections
 
             if generate_html_report(html_path, "CERTUS-STRAT Report", all_sections, figures):
-                self.logger.info(f"✅ HTML report saved: '{html_path}'")
+                self.logger.info("✅ HTML report saved: %s", html_path)
                 self._reports_exported = True
 
             self.status_label.setText(f"✓ Saved: {base_name}")
             self.logger.info("[DEBUG-UI] on_excel_ready completed successfully.")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"❌ Error during auto-export:{e}", exc_info=True)
+            self.logger.error("❌ Error during auto-export: %s", e, exc_info=True)
 
     def _write_export_excel(
         self,

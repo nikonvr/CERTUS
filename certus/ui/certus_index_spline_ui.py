@@ -220,17 +220,17 @@ _QS_RIGHT_SPLITTER_STATE = "right_splitter_state"
 
 _MAIN_SPLITTER_LAYOUT_REV: int = 4
 
-# Increment to reapply corridor / bootstrap / SiO2 defaults on existing workstations once.
+# Increment to reapply corridor / bootstrap / SiO2 defaults once on existing workstations.
 
 _UNCERTAINTY_DEFAULTS_REV: int = 12
 
-# Corridor d (abs / adaptive): defaults tightened ~4? vs legacy (1e-3 / 1e-4).
+# d corridor (abs / adaptive): defaults tightened ~4x vs legacy (1e-3 / 1e-4).
 
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 
-# Demi-largeur minimale (k lin?aire) appliqu?e ? l'affichage onglet Corridors n/k (coh?rent enveloppe + infobulle).
+# Minimum half-width (linear k) applied to the Corridors n/k tab display (consistent envelope + tooltip).
 _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 # INDEX-SPLINE defaults for thin SiO2 layers (~1.6-1.8 ?m) on sapphire, TSIO2-type spectra (UV-IR, T/Tsub).
@@ -532,7 +532,7 @@ def _worker_corridor_rmse_regular_grid(
     breakpoint_lookback_points: int = 5,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Worker: refit n,L ? d fix? sur une grille (m?me objectif spectral masqu? que le corridor)."""
+    """Worker: refit n,L at fixed d on a grid (same masked spectral objective as the corridor)."""
 
     progress_cb = kwargs.get("progress_cb")
 
@@ -600,7 +600,7 @@ def _worker_curve_minimum_deep_refit(
     stop_event: Event,
     **kwargs: Any,
 ) -> dict[str, Any] | None:
-    """Apr?s RMSE(d) : polish L-BFGS-B sur (d, n?uds) depuis le minimum discret de grille (?paisseur libre locale)."""
+    """After RMSE(d): L-BFGS-B polish on (d, nodes) from the discrete grid minimum (local thickness freedom)."""
     if stop_event is not None and stop_event.is_set():
         return None
     maxfun = int(kwargs.get("deep_maxfun", 10000))
@@ -620,7 +620,7 @@ def _worker_curve_minimum_deep_refit(
 def _format_smart_init_status_text(k_n: int, dv: float, rmse_lbl: str, rm: float, best_rmse: float) -> str:
     """Format the summary text for the smart init preview dialog."""
     return (
-        f"Summary: dialogue mesh K={k_n} sigma knots (worker = canonical file K after 'Continue' if different). "
+        f"Summary: dialog mesh K={k_n} sigma knots (worker uses canonical file K after 'Continue' if different). "
         f"Squares = theoretical T at knots. Continue -> local refinement on this mesh. "
         f"d {dv:.2f} nm | stage {rmse_lbl} start (x0 after clip, before L-BFGS-B) {rm:.6f} "
         f"| best reached {best_rmse:.6f}"
@@ -729,9 +729,9 @@ class _ExcelExportMixin:
                 int(getattr(self, "sp_corr_boot_seed", None).value()) if hasattr(self, "sp_corr_boot_seed") else 0
             )
             if corr_enabled and corr_seed == 0:
-                warnings_local.append("Spline corridor profiling enabled without explicit RNG seed.")
+                warnings_local.append("Spline corridor profiling enabled without an explicit RNG seed.")
             if boot_enabled and boot_seed == 0:
-                warnings_local.append("Spline bootstrap enabled without explicit RNG seed.")
+                warnings_local.append("Spline bootstrap enabled without an explicit RNG seed.")
             if warnings_local:
                 self.set_validation_status("WARNING_UNSEEDED_STOCHASTIC")
                 for msg in warnings_local:
@@ -1411,7 +1411,7 @@ class _ExcelExportMixin:
 
         self._corridor_rmse_robust_hi = float(d_hi_rb)
 
-        # --- Smart Deltad: automatic interval from code de profilage (profile_d_interval_nm) ---
+        # --- Smart Deltad: automatic interval from profiling code (profile_d_interval_nm) ---
         _int_nm = src.get("profile_d_interval_nm", None)
         _int_ok = (
             isinstance(_int_nm, (tuple, list))
@@ -1420,8 +1420,8 @@ class _ExcelExportMixin:
             and np.isfinite(float(_int_nm[1]))
         )
 
-        # Fallback : si l'intervalle n'est pas fourni (ex: grille simple),
-        # try to calculate it locally from points and RMSE threshold
+        # Fallback: if the interval is not provided (e.g. simple grid),
+        # Try to calculate it locally from the points and RMSE threshold.
         if not _int_ok and rmse_thr is not None and np.isfinite(float(rmse_thr)) and d_plot.size > 1:
             thr = float(rmse_thr)
             # On cherche les points d'intersection (simple scan lin?aire sur l'enveloppe basse)
@@ -1461,7 +1461,7 @@ class _ExcelExportMixin:
             self.plot_corridor_rmse_d.addItem(_line_int_lo)
             self.plot_corridor_rmse_d.addItem(_line_int_hi)
 
-            # Positionner les TextItems un peu au dessus du minimum
+            # Position the TextItems slightly above the minimum.
             _r_range = float(np.max(r_plot) - np.min(r_plot)) if r_plot.size > 1 else 1e-4
             _r_label = float(np.nanmin(r_plot)) + 0.05 * _r_range
             _label_lo.setPos(_d_int_lo, _r_label)
@@ -1750,7 +1750,7 @@ class Step4MeshOptimizerBuilder:
         lb_mesh_dlam = QLabel("Min. Deltalambda/lambda step (sigma mesh) :")
 
         lb_mesh_dlam.setToolTip(
-            "Canonical mesh constraint: min(Deltalambda between nodes) / lambda >= this value, "
+            "Canonical mesh constraint: min(delta-lambda between nodes) / lambda >= this value, "
             "with lambda? = (lambda_min + lambda_max) / 2 from file. Number of segments is reduced if needed; "
             "IR extension (+2 knots) is omitted if it violates threshold.\n"
             "0 = disabled (nominal behavior without this constraint)."
@@ -1851,8 +1851,8 @@ class Step4MeshOptimizerBuilder:
         app.sp_auto_clean_top_n.setRange(1, 12)
         app.sp_auto_clean_top_n.setValue(int(getattr(app, "_auto_clean_top_n_sensitivity", 4)))
         app.sp_auto_clean_top_n.setToolTip(
-            "Number of removal candidates per step passed to full polish "
-            "(plus haut = recherche plus profonde, plus lent). Recommandé : 4."
+            "Number of removal candidates per step passed to the full polish "
+            "(higher values = deeper but slower search). Recommended: 4."
         )
         row_ac3.addWidget(app.sp_auto_clean_top_n)
 
@@ -1861,7 +1861,7 @@ class Step4MeshOptimizerBuilder:
         app.sp_auto_clean_cand_maxfun.setRange(120, 4000)
         app.sp_auto_clean_cand_maxfun.setSingleStep(100)
         app.sp_auto_clean_cand_maxfun.setValue(int(getattr(app, "_auto_clean_candidate_polish_maxfun", 700)))
-        app.sp_auto_clean_cand_maxfun.setToolTip("Budget L-BFGS-B par candidat de retrait (recommandé : 700-1500).")
+        app.sp_auto_clean_cand_maxfun.setToolTip("L-BFGS-B budget per removal candidate (recommended: 700-1500).")
         row_ac3.addWidget(app.sp_auto_clean_cand_maxfun)
 
         row_ac3.addWidget(QLabel("Tolerance RMSE:"))
@@ -1878,12 +1878,12 @@ class Step4MeshOptimizerBuilder:
         lb_cor = QLabel("Corridors n/k (d profiling):")
 
         lb_cor.setToolTip(
-            "Calculates a plausible thickness interval and n(lambda), k(lambda) corridors by fixing d, then re-optimizing\n"
-            "the n and ln k nodes (same penalties and masked RMSE as the fit).\n\n"
-            "RMSE_ref+Delta mode (default): acceptance RMSE <= best polished spectral RMSE + Delta; the nominal 'best' curve\n"
-            "is a native member of the envelope (not a pseudo-CI centered on a heuristic refit).\n"
-            "Mode alpha : RMSE(d) <= alpha * RMSE_opt (heuristic).\n\n"
-            "Enabled by default at end of optimization; results in 'Corridors n/k' tab."
+            "Calculate a plausible thickness interval and n(lambda), k(lambda) corridors by fixing d, then re-optimizing\n"
+            "the n and ln k nodes with the same penalties and masked RMSE as the fit.\n\n"
+            "RMSE_ref+Delta mode (default): accepted RMSE <= best polished spectral RMSE + Delta; the nominal 'best' curve\n"
+            "is a native member of the envelope (not a pseudo-confidence interval centered on a heuristic refit).\n"
+            "Alpha mode: RMSE(d) <= alpha * RMSE_opt (heuristic).\n\n"
+            "Enabled by default at the end of optimization; results appear in the 'Corridors n/k' tab."
         )
 
         app.chk_corridor_d = QCheckBox("Enable")
@@ -1903,7 +1903,7 @@ class Step4MeshOptimizerBuilder:
         app.lbl_corridors_state_adv.setTextFormat(Qt.TextFormat.RichText)
 
         app.lbl_corridors_state_adv.setToolTip(
-            "Read-only: same state as the 'Corridors' button under Run (Yes = computation at end of optimization)."
+            "Read-only: same state as the 'Corridors' button under Run (Yes = computation at the end of optimization)."
         )
 
         row_cd.addWidget(app.lbl_corridors_state_adv)
@@ -1920,20 +1920,20 @@ class Step4MeshOptimizerBuilder:
 
         app.cb_corr_mode.addItem("RMSE_ref + Delta (absolute)", "abs_delta")
 
-        app.cb_corr_mode.addItem("RMSE_ref + Delta_adaptatif(local)", "abs_delta_adaptive")
+        app.cb_corr_mode.addItem("RMSE_ref + Delta adaptive (local)", "abs_delta_adaptive")
 
-        app.cb_corr_mode.addItem("Likelihood ratio (Delta?^2) - sigma constant or residual", "lr")
+        app.cb_corr_mode.addItem("Likelihood ratio (Delta^2) - constant sigma or residual", "lr")
 
         _iad = app.cb_corr_mode.findData("abs_delta_adaptive")
 
         app.cb_corr_mode.setCurrentIndex(int(_iad) if _iad >= 0 else 0)
 
         app.cb_corr_mode.setToolTip(
-            "alpha : RMSE(d) <= alpha?RMSE_opt (heuristic).\n"
-            "RMSE_ref+Delta: RMSE(d) <= RMSE_ref + Delta (same spectral mask). With 'best RMSE' checked, RMSE_ref = "
-            "spectral_rmse_best_value (best polish) ; otherwise base curves from dict.\n"
-            "RMSE_ref+Delta_adaptatif: Delta is estimated locally from the profiled RMSE(d) parabola and local roughness.\n"
-            "LR: Delta?^2 <= ?^2(1,conf); constant sigma or sigma_i(lambda) ? |residual| if 'sigma(lambda) residual'."
+            "Alpha mode: RMSE(d) <= alpha * RMSE_opt (heuristic).\n"
+            "RMSE_ref + Delta: RMSE(d) <= RMSE_ref + Delta (same spectral mask). With 'best RMSE' checked, RMSE_ref = "
+            "spectral_rmse_best_value (best polish); otherwise base curves from the dict.\n"
+            "RMSE_ref + Delta adaptive: Delta is estimated locally from the profiled RMSE(d) parabola and local roughness.\n"
+            "LR: Delta^2 <= chi^2(1, conf); constant sigma or sigma_i(lambda) ~ |residual| when residual sigma is enabled."
         )
 
         row_cor.addWidget(QLabel("mode"))
@@ -1952,7 +1952,7 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_alpha.setValue(1.05)
 
-        app.sp_corr_alpha.setToolTip("alpha: RMSE threshold = alpha ? RMSE_opt (e.g. 1.05 = +5%).")
+        app.sp_corr_alpha.setToolTip("Alpha threshold: RMSE threshold = alpha * RMSE_opt (e.g. 1.05 = +5%).")
 
         app.lbl_corr_alpha = QLabel("alpha")
 
@@ -1987,9 +1987,9 @@ class Step4MeshOptimizerBuilder:
         app.chk_corr_scientific_nominal.setChecked(True)
 
         app.chk_corr_scientific_nominal.setToolTip(
-            "Scientific corridor mode (only if mode = RMSE_ref+Delta): RMSE_ref = spectral_rmse_best_value; "
-            "nominal curves and nodes aligned on best polished model; no envelope widening toward "
-            "main solver curve. Uncheck for legacy abs_delta behavior on 'base' curves only."
+            "Scientific corridor mode (only if mode = RMSE_ref + Delta): RMSE_ref = spectral_rmse_best_value; "
+            "nominal curves and nodes are aligned on the best polished model; no envelope widening toward the "
+            "main solver curve. Uncheck to use legacy abs_delta behavior on base curves only."
         )
 
         row_cor.addWidget(app.chk_corr_scientific_nominal)
@@ -1997,9 +1997,9 @@ class Step4MeshOptimizerBuilder:
         app.btn_corr_preset_auto_robust = create_styled_button("Auto robust", "secondary", parent=app)
 
         app.btn_corr_preset_auto_robust.setToolTip(
-            "R?glages recommand?s pour le corridor en d : mode RMSE_ref + Delta adaptatif (local), "
-            "expanded parabolic window, thickness interval symmetrized on the parabola peak, "
-            "sondes lat?rales et plancher Delta renforc?s. Comportement par d?faut apr?s migration."
+            "Recommended settings for the d corridor: adaptive RMSE_ref + Delta mode (local), "
+            "expanded parabolic window, thickness interval symmetrized around the parabola peak, "
+            "side probes, and a reinforced Delta floor. Default behavior after migration."
         )
 
         app.btn_corr_preset_auto_robust.clicked.connect(app._apply_corridor_preset_auto_robust)
@@ -2016,7 +2016,7 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_conf.setValue(0.95)
 
-        app.sp_corr_conf.setToolTip("LR confidence level (df=1): e.g. 0.95 -> Delta?^2~3.84.")
+        app.sp_corr_conf.setToolTip("LR confidence level (df=1): e.g. 0.95 -> Delta^2 ~ 3.84.")
 
         row_cor.addSpacing(8)
 
@@ -2160,7 +2160,7 @@ class Step4MeshOptimizerBuilder:
 
         app.chk_corr_reg_sens.setToolTip(
             "Runs a scan (log grid) of the ln(k) regularization weight and re-launches d profiling for each value.\n"
-            "Goal: verify the robustness of the d interval and n/k corridors to regularization choices."
+            "Goal: verify the robustness of the d interval and the n/k corridors to regularization choices."
         )
 
         row_cor.addSpacing(10)
@@ -2428,7 +2428,7 @@ class Step4MeshOptimizerBuilder:
 
         btn_open_adv = create_styled_button("Advanced settings...", "secondary")
 
-        btn_open_adv.setToolTip("Optimization budgets and detailed uncertainty / corridor options.")
+        btn_open_adv.setToolTip("Optimization budgets and detailed uncertainty/corridor options.")
 
         btn_open_adv.clicked.connect(app._open_advanced_settings_dialog)
 
@@ -3094,7 +3094,7 @@ class SmartInitPreviewManager:
         self.grids = payload.preview_grids
 
         logger.info(
-            "Smart Init dialog enter | parent=%s | cfg_present=%s | grids_present=%s | payload_K=%d | payload_d=%.6f",
+            "[INDEX_SPLINE.SMART_INIT] dialog enter | parent=%s | cfg_present=%s | grids_present=%s | payload_k=%d | payload_d=%.6f",
             type(self.parent_worker).__name__,
             bool(self.cfg is not None),
             bool(self.grids is not None),
@@ -3104,7 +3104,7 @@ class SmartInitPreviewManager:
 
         if self.cfg is None or self.grids is None or self.sk.size < 2:
             logger.warning(
-                "Smart Init dialog early return | cfg_present=%s | grids_present=%s | payload_K=%d | payload_d=%.6f",
+                "[INDEX_SPLINE.SMART_INIT] dialog early return | cfg_present=%s | grids_present=%s | payload_k=%d | payload_d=%.6f",
                 bool(self.cfg is not None),
                 bool(self.grids is not None),
                 int(np.asarray(self.sk, dtype=np.float64).size),
@@ -3126,7 +3126,7 @@ class SmartInitPreviewManager:
         self.L_nodes = payload.L_nodes.copy()
 
         logger.info(
-            "Smart Init dialog payload vectors | len(n)=%d | len(L)=%d | K=%d | d_best=%.6f",
+            "[INDEX_SPLINE.SMART_INIT] payload vectors | len_n=%d | len_l=%d | k=%d | d_best=%.6f",
             int(np.asarray(self.n_phys, dtype=np.float64).size),
             int(np.asarray(self.L_nodes, dtype=np.float64).size),
             int(self.k_n),
@@ -3135,7 +3135,7 @@ class SmartInitPreviewManager:
 
         if self.n_phys.size != self.k_n or self.L_nodes.size != self.k_n:
             logger.warning(
-                "Smart Init dialog early return | inconsistent vectors len(n)=%d len(L)=%d K=%d",
+                "[INDEX_SPLINE.SMART_INIT] dialog early return | inconsistent_vectors len_n=%d len_l=%d k=%d",
                 int(np.asarray(self.n_phys, dtype=np.float64).size),
                 int(np.asarray(self.L_nodes, dtype=np.float64).size),
                 int(self.k_n),
@@ -3210,7 +3210,7 @@ class SmartInitPreviewManager:
             self.preview_d_nm = float(self._d0)
 
         logger.info(
-            "Smart Init dialog mesh prepared | sigma_knots_count=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s | preview_d=%.6f",
+            "[INDEX_SPLINE.SMART_INIT] mesh prepared | sigma_knots=%d | rmse_fit_window_nm=%s | preset_applied_on_open=%s | preview_d=%.6f",
             int(np.asarray(self.parent_worker.smart_preview_sk_arr, dtype=np.float64).size),
             str(getattr(self.cfg, "rmse_fit_lambda_nm", None)),
             str(self.open_preset_name),
@@ -3219,14 +3219,13 @@ class SmartInitPreviewManager:
 
         if str(self.open_preset_name) == "nb2o5":
             logger.info(
-                "Smart Init dialog seed transformation | incoming_payload_d_best_nm=%.6f | nb2o5_preset_d_total_nm=%.6f | "
-                "preset_replaces_incoming_d_for_dialog_preview",
+                "[INDEX_SPLINE.SMART_INIT] seed transformation | incoming_payload_d_best_nm=%.6f | nb2o5_preset_d_total_nm=%.6f | preset_replaces_incoming_d_for_dialog_preview",
                 float(payload.d_best_nm),
                 float(self.preview_d_nm),
             )
         else:
             logger.info(
-                "Smart Init dialog initial seed | incoming_d_best_nm=%.6f | effective_preview_d_nm=%.6f | preset=%s",
+                "[INDEX_SPLINE.SMART_INIT] initial seed | incoming_d_best_nm=%.6f | effective_preview_d_nm=%.6f | preset=%s",
                 float(payload.d_best_nm),
                 float(self.preview_d_nm),
                 str(self.open_preset_name),
@@ -3250,14 +3249,14 @@ class SmartInitPreviewManager:
         current_rmse = float(rm0)
 
         logger.info(
-            "Smart Init dialog RMSE-at-seed | dialog_d_nm=%.6f | initial_rmse=%.8f",
+            "[INDEX_SPLINE.SMART_INIT] rmse_at_seed | dialog_d_nm=%.6f | initial_rmse=%.8f",
             float(self.preview_d_nm),
             float(current_rmse),
         )
 
         self.dlg = QDialog(self.parent_worker)
 
-        logger.info("Smart Init dialog QDialog created")
+        logger.info("[INDEX_SPLINE.SMART_INIT] dialog created")
 
         self.dlg.setWindowTitle(f"Smart Init  PWL n and ln k ({self.k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)")
 
@@ -3269,7 +3268,7 @@ class SmartInitPreviewManager:
 
         aux_dlg, curve_n, curve_pk, main_vb, p_extra = self.parent_worker._build_smart_init_aux_dialog(self.dlg)
 
-        logger.info("Smart Init dialog auxiliary window created")
+        logger.info("[INDEX_SPLINE.SMART_INIT] auxiliary window created")
 
         lay = QVBoxLayout(self.dlg)
 
@@ -3350,11 +3349,11 @@ class SmartInitPreviewManager:
             lam_src_payload = ensure_lam_nm_array(self.parent_worker.df["lambda"].to_numpy(dtype=np.float64))
             if self.parent_worker.logger:
                 self.parent_worker.logger.warning(
-                    "Corridor preview dialog: payload missing lam_nm; fallback to experimental lambda grid."
+                    "[INDEX_SPLINE.SMART_INIT] payload missing lam_nm; falling back to experimental lambda grid"
                 )
         self.lam_m = np.asarray(lam_src_payload if lam_src_payload is not None else [], dtype=np.float64)
         if self.lam_m.size == 0:
-            logger.warning("Smart Init dialog: lam_nm unavailable in payload and df; spectrum plot will be empty.")
+            logger.warning("[INDEX_SPLINE.SMART_INIT] lam_nm unavailable in payload and dataframe; spectrum plot will be empty")
 
         self.y_exp = payload.t_exp
 
@@ -3371,7 +3370,7 @@ class SmartInitPreviewManager:
 
 
         logger.info(
-            "Smart Init dialog: initial knot line refresh | k_n=%d | preview_d_nm=%.6f | has_cfg=%s",
+            "[INDEX_SPLINE.SMART_INIT] initial knot refresh | k_n=%d | preview_d_nm=%.6f | has_cfg=%s",
             int(self.k_n),
             float(self.preview_d_nm),
             bool(self.cfg is not None),
@@ -3494,7 +3493,7 @@ class SmartInitPreviewManager:
 
 
         logger.info(
-            "Smart Init dialog: creating NK editor | n_bounds=[%.4f, %.4f] | L_bounds=[%.4f, %.4f] | k_clip_lo=%.3e",
+            "[INDEX_SPLINE.SMART_INIT] creating nk editor | n_bounds=[%.4f, %.4f] | l_bounds=[%.4f, %.4f] | k_clip_lo=%.3e",
             float(N_MIN_LIMIT),
             float(N_MAX_LIMIT),
             float(self.L_lo_g),
@@ -3520,11 +3519,11 @@ class SmartInitPreviewManager:
 
         self.curve_editor_holder.append(self._nk_curve_editor)
 
-        logger.info("Smart Init dialog: showing NK editor window")
+        logger.info("[INDEX_SPLINE.SMART_INIT] showing nk editor window")
         self._nk_curve_editor.show()
-        logger.info("Smart Init dialog: NK editor show() returned")
+        logger.info("[INDEX_SPLINE.SMART_INIT] nk editor show() returned")
         logger.info(
-            "Smart Init dialog fully shown and waiting for user | dlg_visible=%s | nk_visible=%s | preview_d=%.6f",
+            "[INDEX_SPLINE.SMART_INIT] dialog fully shown and waiting for user | dlg_visible=%s | nk_visible=%s | preview_d=%.6f",
             bool(self.dlg.isVisible()),
             bool(self._nk_curve_editor.isVisible()),
             float(self.preview_d_nm),
@@ -3538,7 +3537,7 @@ class SmartInitPreviewManager:
         self.slider_d.valueChanged.connect(self.on_slider_d_changed)
 
         logger.info(
-            "Smart Init dialog: sync thickness slider | preview_d_nm=%.6f | d_lo=%.6f | d_hi=%.6f",
+            "[INDEX_SPLINE.SMART_INIT] sync thickness slider | preview_d_nm=%.6f | d_lo=%.6f | d_hi=%.6f",
             float(self.preview_d_nm),
             float(self.d_lo_nm),
             float(self.d_hi_nm),
@@ -3551,12 +3550,12 @@ class SmartInitPreviewManager:
 
 
         logger.info(
-            "Smart Init dialog: rebuild knot UI | k_n=%d | current_rmse=%.8f | best_rmse=%.8f",
+            "[INDEX_SPLINE.SMART_INIT] rebuild knot ui | k_n=%d | current_rmse=%.8f | best_rmse=%.8f",
             int(self.state.k_n),
             float(self.state.current_rmse),
             float(self.state.best_rmse),
         )
-        self.rebuild_knot_ui(self.state.k_n)  # Appel initial ici wire_hold_button est deja defini
+        self.rebuild_knot_ui(self.state.k_n)  # Initial call here; wire_hold_button is already defined
 
         attach_excel_clipboard_context_menu(self.pw)
 
@@ -3565,7 +3564,7 @@ class SmartInitPreviewManager:
         lbl_nodes = QLabel(
             f"<b>Knot adjustment (increasing sigma)</b> - <b>n &amp; k Editor</b> window on the left: drag points "
             f"(<i>k</i> in log); here: <b>- / +</b> +/-{100 * self.rel_step:.1f} % on <i>n</i> and <i>L</i> (= ln <i>k</i>), "
-            f"<b>without</b> auto thickness recalculation (d slider above); "
+            f"<b>without</b> automatic thickness recalculation (d slider above); "
             f"<b>hold down</b> to accelerate; <b>auto</b>: d + param sweep <=3 s."
         )
 
@@ -3730,13 +3729,13 @@ class SmartInitPreviewManager:
 
         lay.addWidget(bb)
 
-        logger.info("Smart Init dialog immediate init start")
+        logger.info("[INDEX_SPLINE.SMART_INIT] immediate init started")
 
         self._apply_manual_spectrum_plot_range()
 
-        logger.info("Smart Init dialog manual plot range applied")
+        logger.info("[INDEX_SPLINE.SMART_INIT] manual plot range applied")
 
-        logger.info("Smart Init dialog initialized")
+        logger.info("[INDEX_SPLINE.SMART_INIT] dialog initialized")
 
     def redraw_knot_lines(self) -> None:
 
@@ -4190,7 +4189,7 @@ class _SmartInitDialogMixin:
 
     def _show_smart_init_preview_dialog(self, payload) -> bool:
         logger.info(
-            "Smart Init dialog show requested | payload_type=%s | payload_d=%.6f | wait_event=%s",
+            "[INDEX_SPLINE.SMART_INIT] show requested | payload_type=%s | payload_d=%.6f | wait_event=%s",
             type(payload).__name__,
             float(getattr(payload, "d_best_nm", float("nan"))),
             getattr(self, "_preview_wait_event", None) is not None,
@@ -4200,14 +4199,14 @@ class _SmartInitDialogMixin:
             code = manager.dlg.exec()
             accepted = bool(code == QDialog.DialogCode.Accepted)
             logger.info(
-                "Smart Init dialog exec done | code=%s | accepted=%s | preview_ret=%s",
+                "[INDEX_SPLINE.SMART_INIT] exec done | code=%s | accepted=%s | preview_ret=%s",
                 int(code),
                 accepted,
                 getattr(self, "_preview_ret", None) is not None,
             )
             return accepted and bool(getattr(self, "_preview_result", False))
         except Exception:
-            logger.exception("Smart Init dialog failed to open; aborting preview stage safely")
+            logger.exception("[INDEX_SPLINE.SMART_INIT] dialog failed to open; aborting preview stage safely")
             return False
 
     def _build_smart_init_aux_dialog(
@@ -4526,7 +4525,7 @@ class _CorridorWorkerMixin:
     """Mixin containing corridor worker callbacks and plot tab."""
 
     def _finish_corridor_rmse_d_grid_worker_done(self, result: object) -> None:
-        """Fin du worker grille RMSE(d): fusion profile_d*, UI, adoption du meilleur global. Pas pour un dict solveur."""
+        """End of RMSE(d) grid worker: merge profile_d*, refresh UI, adopt the best global result. Not for solver dicts."""
         self._worker_role = "idle"
 
         self.btn_run.setEnabled(True)
@@ -4750,31 +4749,28 @@ class _CorridorWorkerMixin:
                 chosen_seed = dict(curve_minimum_result)
                 chosen_origin = "corridor-profile-curve-minimum"
                 chosen_log_tag = "order C2:corridor-curve-min-promoted-over-global-opt"
-                chosen_status = (
-                    "RMSE(d): minimum de courbe corridor promu (meilleur que global-opt), auto-refine en cours..."
-                )
+                chosen_status = "[INDEX_SPLINE.CORRIDORS] curve minimum promoted | auto-refine in progress"
             else:
                 chosen_seed = dict(best_global_result)
                 chosen_origin = "corridor-global-optimization-best"
                 chosen_log_tag = "order C:corridor-global-opt-best-promoted"
-                chosen_status = "Nouveau minimum corridor: global-opt découverte, auto-refine en cours..."
+                chosen_status = "[INDEX_SPLINE.CORRIDORS] new corridor minimum found via global optimization | auto-refine in progress"
         elif cand_global_ok:
             chosen_seed = dict(best_global_result)
             chosen_origin = "corridor-global-optimization-best"
             chosen_log_tag = "order C:corridor-global-opt-best-promoted"
-            chosen_status = "Nouveau minimum corridor: global-opt découverte, auto-refine en cours..."
+            chosen_status = "[INDEX_SPLINE.CORRIDORS] new corridor minimum found via global optimization | auto-refine in progress"
         elif cand_curve_ok:
             chosen_seed = dict(curve_minimum_result)
             chosen_origin = "corridor-profile-curve-minimum"
             chosen_log_tag = "order B2:corridor-curve-min-promoted"
-            chosen_status = "RMSE(d): minimum de courbe corridor promu comme nominal, auto-refine en cours..."
+            chosen_status = "[INDEX_SPLINE.CORRIDORS] curve minimum promoted as nominal | auto-refine in progress"
 
         if isinstance(chosen_seed, dict):
             if not grid_cov_ok:
                 if self.logger:
                     self.logger.error(
-                        "GUI RMSE(d) regular grid [integrity] | adoption candidate rejected because base-grid coverage "
-                        "is INCOMPLETE (see profile_d_manual_grid_missing_after_emergency)."
+                        "[INDEX_SPLINE.CORRIDORS] adoption candidate rejected | reason=base-grid coverage incomplete"
                     )
                 chosen_seed = None
             if self.logger:
@@ -4784,7 +4780,7 @@ class _CorridorWorkerMixin:
                     f"{float(d_sel):.6f}" if isinstance(d_sel, (int, float)) and np.isfinite(float(d_sel)) else "n/a"
                 )
                 self.logger.info(
-                    "GUI RMSE(d) grid-profiling [adoption-decision] | candidate_origin=%s | d_selected_nm=%s | "
+                    "[INDEX_SPLINE.CORRIDORS] adoption decision | candidate_origin=%s | d_selected_nm=%s | "
                     "rmse_before_adoption=%s | rmse_global_opt=%s | rmse_curve=%s | delta_curve_vs_pre_adoption=%s | "
                     "grid_coverage_complete=%s",
                     chosen_origin,
@@ -4824,7 +4820,7 @@ class _CorridorWorkerMixin:
                     return
                 if self.logger:
                     self.logger.warning(
-                        "GUI RMSE(d) regular grid | auto-refine chain failed to start | chosen_origin=%s.",
+                        "[INDEX_SPLINE.CORRIDORS] auto-refine chain failed to start | chosen_origin=%s",
                         chosen_origin,
                     )
 
@@ -4838,7 +4834,7 @@ class _CorridorWorkerMixin:
                     rz = rv[fg_z]
                     jz = int(np.argmin(rz))
                     self.logger.info(
-                        "GUI RMSE(d) regular grid [order Z:post-merge-curve] | pts=%d | rmse_min=%.8f @ d=%.6f nm | "
+                        "[INDEX_SPLINE.CORRIDORS] post-merge curve | points=%d | rmse_min=%.8f | d=%.6f nm | "
                         "nominal_dict_d_nm=%s | nominal_dict_rmse=%s",
                         int(dz.size),
                         float(rz[jz]),
@@ -4892,7 +4888,7 @@ class _CorridorWorkerMixin:
                 op_id = result.get("op_id") if isinstance(result, dict) else None
 
                 self.logger.warning(
-                    "GUI worker_done: resultat grille RMSE(d) (profile_d_status=%s) avec _worker_role=%r worker=%s op_id=%s ; traitement grille.",
+                    "[INDEX_SPLINE.CORRIDORS] worker_done grid result | profile_d_status=%s | worker_role=%r | worker=%s | op_id=%s",
                     (result.get("profile_d_status") if isinstance(result, dict) else None),
                     role,
                     worker_name,
@@ -4915,14 +4911,14 @@ class _CorridorWorkerMixin:
             if self.logger:
                 if result is None:
                     self.logger.warning(
-                        "INDEX_SPLINE GUI: the worker finished without dict (None value). "
+                        "[INDEX_SPLINE.GUI] worker finished without a result dictionary"
                         "Common causes: Stop button during calculation, thread closure/interruption, "
                         "or silent worker-side exception. Graphs are not updated since this signal."
                     )
 
                 else:
                     self.logger.warning(
-                        "INDEX_SPLINE GUI: the worker returned a %s instead of a dict - result ignored.",
+                        "[INDEX_SPLINE.GUI] worker returned %s instead of a result dictionary - result ignored",
                         type(result).__name__,
                     )
 
@@ -4961,7 +4957,7 @@ class _CorridorWorkerMixin:
                 _wm_hint = f" | pipeline watermark (best RMSE seen during run): {_wm:.6f} (@ {_wms!s})"
 
             self.logger.info(
-                "INDEX_SPLINE GUI: result dict received - dict RMSE (current n/k curves) = %.6f | "
+                "[INDEX_SPLINE.GUI] result dictionary received | rmse_current_nk=%.6f | "
                 "d = %.4f nm | role = %s | worker = %s | op_id = %s%s",
                 float(np.sqrt(max(float(result.get("mse", 0.0)), 0.0))),
                 float(result.get("d_nm", float("nan"))),
@@ -4973,7 +4969,7 @@ class _CorridorWorkerMixin:
 
             log_index_spline_d_trace(
                 self.logger,
-                f"GUI: received worker result ({role_ctx}, op_id={op_id_ctx})",
+                f"[INDEX_SPLINE.GUI] worker result received | role={role_ctx} | op_id={op_id_ctx}",
                 result.get("d_nm"),
                 detail=("worker=" + worker_name),
             )
@@ -4981,7 +4977,7 @@ class _CorridorWorkerMixin:
             split_mesh = CertusIndexSplineApp._result_uses_split_mesh(result)
 
             self.logger.info(
-                "INDEX_SPLINE GUI: worker detail | mse=%.6e | flags split=%s continuous=%s adaptive=%s",
+                "[INDEX_SPLINE.GUI] worker details | mse=%.6e | split=%s | continuous=%s | adaptive=%s",
                 float(result.get("mse", float("nan"))),
                 bool(split_mesh),
                 bool(result.get("continuous_model")),
@@ -5153,7 +5149,7 @@ class _CorridorWorkerMixin:
                 manual_dlg.append_runtime_log(f"Re-optimisation terminee | RMSE={rmse_txt}")
                 if self.logger:
                     self.logger.info(
-                        "INDEX_SPLINE GUI: manual pipeline applied mesh | role=%s | %s",
+                        "[INDEX_SPLINE.GUI] manual pipeline applied mesh | role=%s | %s",
                         role,
                         CertusIndexSplineApp._manual_mesh_change_log_line("applied", applied_summary),
                     )
@@ -5277,7 +5273,7 @@ class _CorridorWorkerMixin:
             spec_order = np.arange(nu, dtype=np.int64)
 
         # lam_s / n_s / k_s viennent de _spectral_display_align : d?j? co-lin?aires et tri?s par lambda.
-        # spec_order sert uniquement ? r?ordonner les bandes corridor stock?es comme n_lam (ordre brut avant tri).
+        # spec_order is used only to reorder corridor bands stored as n_lam (raw order before sorting).
         lam_f = np.asarray(lam_s, dtype=np.float64).ravel()
         n_f = np.asarray(n_s, dtype=np.float64).ravel()
         k_f = np.asarray(k_s, dtype=np.float64).ravel()
@@ -5349,15 +5345,15 @@ class _CorridorWorkerMixin:
             )
             y_k_all.extend([k_lo_e, k_hi_e])
 
-            # Trace simple: k_min / k_max en pointill?s (m?mes s?ries que Data Corridor).
+            # Simple trace: k_min / k_max as dashed lines (same series as Data Corridor).
             klf = np.maximum(k_lo_e, 1e-15)
             khf = np.maximum(k_hi_e, 2e-15)
-            # Surbrillance visuelle des bornes corridor k : halo + trait pointill? au-dessus.
+            # Visual highlight for k corridor bounds: glow plus dashed line on top.
             pen_kmin_glow = pg.mkPen((255, 235, 190, 220), width=5.0, style=Qt.PenStyle.SolidLine)
             pen_kmax_glow = pg.mkPen((255, 210, 200, 220), width=5.0, style=Qt.PenStyle.SolidLine)
             pen_kmin = pg.mkPen((255, 150, 0, 255), width=2.8, style=Qt.PenStyle.DashLine)
             pen_kmax = pg.mkPen((255, 40, 0, 255), width=2.8, style=Qt.PenStyle.DashLine)
-            # M?me pipeline que k nominal (sanitize + coh?rence axe log du widget).
+            # Same pipeline as the nominal k curve (sanitize + widget log-axis consistency).
             lk_min = np.log10(np.maximum(klf, 1e-30))
             lk_max = np.log10(np.maximum(khf, 1e-30))
             self._add_curve(self.plot_k_corridor, lam_f, lk_min, "#ffe0b2", "k_min_glow", pen=pen_kmin_glow)
@@ -5365,7 +5361,7 @@ class _CorridorWorkerMixin:
             self._add_curve(self.plot_k_corridor, lam_f, lk_min, "#ff8c00", "k_min", pen=pen_kmin)
             self._add_curve(self.plot_k_corridor, lam_f, lk_max, "#ff3c00", "k_max", pen=pen_kmax)
 
-        # Donn?es pour label crosshair vertical: k_min / k_nominal / k_max au lambda curseur.
+        # Data for the vertical crosshair label: k_min / k_nominal / k_max at cursor wavelength.
         self._corridor_k_crosshair_lam = np.asarray(lam_f, dtype=np.float64).copy()
         self._corridor_k_crosshair_nom = np.asarray(k_f, dtype=np.float64).copy()
         self._corridor_k_crosshair_lo = np.asarray(klf, dtype=np.float64).copy()
@@ -5598,7 +5594,7 @@ class _CorridorWorkerMixin:
 
         self.btn_corridor_rmse_grid_calc.setToolTip(
             "<b>Full recalculation of the RMSE(d) grid</b><br>"
-            "Relance l'optimisation (n, ln k) pour chaque ?paisseur de la grille r?guli?re.<br>"
+            "Rerun the optimization (n, ln k) for each thickness in the regular grid.<br>"
             "Utilise un m?canisme de <b>continuation (warmstart)</b> et de <b>P0 re-pass</b> pour garantir "
             "l'exploration de la solution optimale physique."
         )
@@ -5610,9 +5606,9 @@ class _CorridorWorkerMixin:
         self.btn_corridor_rmse_export_data = create_styled_button("Export data", "secondary", parent=self)
 
         self.btn_corridor_rmse_export_data.setToolTip(
-            "<b>Export des donn?es (Presse-papiers)</b><br>"
+            "<b>Export data (clipboard)</b><br>"
             "Copies all numeric columns (d, RMSE, Parabola, Intervals, Breakpoints) to TSV format.<br>"
-            "Directly pastable into Excel or OriginPro for external analysis."
+            "Directly pasteable into Excel or OriginPro for external analysis."
         )
 
         self.btn_corridor_rmse_export_data.clicked.connect(self._export_corridor_rmse_profile_clipboard)
@@ -5659,7 +5655,7 @@ class _CorridorWorkerMixin:
         row_generate_grid = QHBoxLayout()
         row_generate_grid.addWidget(self.btn_corridor_generate_from_grid)
 
-        row_generate_grid.addWidget(QLabel("Corridor Deltad (+/- nm):"))
+        row_generate_grid.addWidget(QLabel("Corridor delta d (+/- nm):"))
 
         self.sp_corridor_partial_delta_nm = QDoubleSpinBox()
         self.sp_corridor_partial_delta_nm.setDecimals(4)
@@ -5679,7 +5675,7 @@ class _CorridorWorkerMixin:
         self.btn_corridor_generate_from_partial_grid.setEnabled(False)
         self.btn_corridor_generate_from_partial_grid.setToolTip(
             "Build corridor n/k from a partial RMSE(d) grid centered on current d*.\n"
-            "The width is controlled by Corridor Deltad (+/- nm)."
+            "The width is controlled by Corridor Delta d (+/- nm)."
         )
         self.btn_corridor_generate_from_partial_grid.clicked.connect(self._generate_corridor_from_partial_grid)
         row_generate_grid.addWidget(self.btn_corridor_generate_from_partial_grid)
@@ -5703,9 +5699,9 @@ class _CorridorWorkerMixin:
 
         self.pb_corridor_rmse_grid = QProgressBar()
         self.pb_corridor_rmse_grid.setToolTip(
-            "<b>Avancement du scan</b><br>"
-            "Progression en temps r?el incluant les ?tapes de continuation, "
-            "of P0 re-pass and breakpoint detection."
+            "<b>Scan progress</b><br>"
+            "Real-time progression including continuation steps, "
+            "P0 re-pass, and breakpoint detection."
         )
         self.pb_corridor_rmse_grid.setRange(0, 1000)
 
@@ -6740,8 +6736,8 @@ class _UIBuilderMixin:
 
         self.sl_corridor_manual_half.setToolTip(
             "<b>Cursor: Manual Width (±Δd)</b><br>"
-            "D?finit arbitrairement la largeur du corridor pour g?n?rer les enveloppes n, k, L.<br>"
-            "The generated corridor will be [d* - Deltad, d* + Deltad]."
+            "Set the corridor width manually to generate the n, k, and L envelopes.<br>"
+            "The generated corridor will be [d* - Δd, d* + Δd]."
         )
 
         self.sl_corridor_manual_half.setStyleSheet(slider_corridor_half_stylesheet())
@@ -6762,8 +6758,8 @@ class _UIBuilderMixin:
 
         self.btn_corridor_manual_robust.setToolTip(
             "<b>Synchronize with Robust Interval</b><br>"
-            "Automatically aligns the manual slider to the width calculated by the parabola (Purple/Orange).<br>"
-            "Allows restarting from the smart suggestion before manual fine-tuning."
+            "Automatically aligns the manual slider to the width calculated by the parabola (purple/orange).<br>"
+            "Use this to restart from the smart suggestion before manual fine-tuning."
         )
 
         self.btn_corridor_manual_robust.clicked.connect(self._use_robust_corridor_interval)
@@ -6778,8 +6774,8 @@ class _UIBuilderMixin:
 
         self.btn_generate_manual_corridor.setToolTip(
             "<b>Generate visual n/k/L corridor</b><br>"
-            "Go back to the Indices tab to reconstruct and display the uncertainty envelopes "
-            "as confidence corridors surrounding the nominal model."
+            "Reconstruct and display the uncertainty envelopes on the Indices tab "
+            "as corridors surrounding the nominal model."
         )
 
         self.btn_generate_manual_corridor.clicked.connect(self._apply_manual_corridor_selection)
@@ -6830,7 +6826,7 @@ class _UIBuilderMixin:
 
         tb = QHBoxLayout()
 
-        self.btn_copy_nk = create_styled_button("Copier tout le tableau (TSV)", "secondary")
+        self.btn_copy_nk = create_styled_button("Copy full table (TSV)", "secondary")
 
         self.btn_copy_nk.setEnabled(False)
 
@@ -6908,7 +6904,7 @@ class _UIBuilderMixin:
             "lambda grid by spectral region: 2 nm step (<=400 nm), 5 nm (400-1200 nm), "
             "10 nm beyond; n, k and envelopes interpolated from result mesh. "
             "n_alpha / k_alpha: nonlinear indices if available. "
-            "Enveloppes : bornes du corridor (profilage d). "
+            "Envelopes: corridor bounds (d profiling). "
             "Previews: all n (or k) curves, envelope band if corridor; synchronized lambda cursor. "
             "Ctrl+C: copy selection (TSV) -> Excel."
         )
@@ -6930,7 +6926,7 @@ class _UIBuilderMixin:
         lay.setContentsMargins(0, 0, 0, 0)
 
         tb = QHBoxLayout()
-        self.btn_copy_data_th = create_styled_button("Copier tableau Data TH (TSV)", "secondary")
+        self.btn_copy_data_th = create_styled_button("Copy Data TH table (TSV)", "secondary")
         self.btn_copy_data_th.setEnabled(False)
         self.btn_copy_data_th.setToolTip("Copie toutes les colonnes de Data TH (TSV) vers le clipboard.")
         self.btn_copy_data_th.clicked.connect(self._copy_data_th_to_clipboard)
@@ -6939,7 +6935,7 @@ class _UIBuilderMixin:
         lay.addLayout(tb)
 
         hint = QLabel(
-            "Table theorique sur grille lambda piecewise: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
+            "Theoretical table on a piecewise lambda grid: 2 nm (<=400), 5 nm (400-1200), 10 nm (>1200). "
             "Colonnes: lambda, n, k, d, ns, Tth, Rth."
         )
         hint.setWordWrap(True)
@@ -7188,8 +7184,8 @@ class _UIBuilderMixin:
         self.lbl_corridor_rmse_summary = QLabel("No corridor RMSE profile available yet.")
         self.lbl_corridor_rmse_summary.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
         self.lbl_corridor_rmse_summary.setToolTip(
-            "<b>R?sum? de la qualit? (Final)</b><br>"
-            "Affiche l'?paisseur optimale d* trouv?e globalement sur la grille "
+            "<b>Final quality summary</b><br>"
+            "Displays the globally optimized thickness d* found on the grid "
             "as well as the RMSE corresponding to the absolute minimum."
         )
         ctx_lay.addWidget(self.lbl_corridor_rmse_summary)
@@ -7197,8 +7193,8 @@ class _UIBuilderMixin:
         self.lbl_corridor_rmse_robust_compact.setStyleSheet(f"color: {CertusTheme.TEXT_MAIN}; font-size: 11px;")
         self.lbl_corridor_rmse_robust_compact.setToolTip(
             "<b>Robust interval (compact format)</b><br>"
-            "Affiche le centre et la demi-largeur sous la forme "
-            "<code>xxx.xxnm +/- xxx.nm</code>."
+            "Displays the center and half-width in the form "
+            "<code>xxx.xx nm +/- xxx.nm</code>."
         )
         ctx_lay.addWidget(self.lbl_corridor_rmse_robust_compact)
 
@@ -7207,7 +7203,7 @@ class _UIBuilderMixin:
         self.lbl_corridor_rmse_state.setToolTip(
             "<b>Progress / Diagnostic</b><br>"
             "Displays the current pipeline step (Calculation, Fit, or Export) "
-            "and potential alert messages on convergence."
+            "and any alert messages related to convergence."
         )
         ctx_lay.addWidget(self.lbl_corridor_rmse_state)
 
@@ -7219,17 +7215,17 @@ class _UIBuilderMixin:
 
         hint = QLabel(
             "<b>Acceptance envelope (profiling in d)</b> - n(lambda) and k(lambda) bands after optimization. "
-            "Calculation starts from <b>best polished spectral RMSE</b> ('best RMSE' + RMSE_ref+Delta default): "
-            "displayed reference curve is the scientific nominal, and the envelope groups models whose "
+            "Calculation starts from the <b>best polished spectral RMSE</b> ('best RMSE' + RMSE_ref+Delta default): "
+            "the displayed reference curve is the scientific nominal, and the envelope groups models whose "
             "masked RMSE remains <= RMSE<sub>best</sub> + Delta. This is not a Bayesian confidence interval."
             "<br><br>"
-            "<b>Automatic</b> execution at end of run if 'Corridors n/k -> Enable' is checked. "
-            "Onglet ouvert seul lorsque corridors ou bootstrap sont disponibles."
+            "<b>Automatic</b> execution at the end of the run if 'Corridors n/k -> Enable' is checked. "
+            "Opened by itself when corridors or bootstrap are available."
             "<br><br>"
             "<b>log10 k:</b> the <b>bold</b> orange curve follows the main optimization result ('n &amp; log10 k' tab). "
-            "Shaded area = min/max of linear <i>k</i> of refits accepted at various <i>d</i> "
-            "(without corrective widening in scientific mode). <b>Dashed</b> orange curve only if a central refit "
-            "differs significantly from bold. <b>Crosshair:</b> value follows bold curve at cursor lambda."
+            "Shaded area = min/max of linear <i>k</i> from refits accepted at various <i>d</i> "
+            "(without corrective widening in scientific mode). The <b>dashed</b> orange curve appears only if a central refit "
+            "differs significantly from the bold curve. <b>Crosshair:</b> the value follows the bold curve at the cursor lambda."
         )
         hint.setWordWrap(True)
         hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
@@ -8273,7 +8269,7 @@ class _RunMixin:
         _d_s = f"{_d_log:.4f}" if np.isfinite(_d_log) else "n/a"
         _corridor_pts = int(np.asarray(r.get("profile_d_values_nm", []), dtype=np.float64).size)
         _msg = (
-            f"INDEX_SPLINE [GRAPHIQUES] {plot_source} | spectral T/R+n,k (+ onglets corridor/NL selon données) "
+            f"[INDEX_SPLINE.GRAPHS] {plot_source} | spectral T/R+n,k (+ corridor/NL tabs when available) "
             f"| lam_pts={int(lam_s.size)} exp_pts={str(int(lam_exp.size)) if lam_exp is not None and lam_exp.size else '0'} abs={x_lbl} | d_nm={_d_s} rmse={_rm_s} | R_couche={bool(plot_r_model)} K_sigma={int(sigma_knots.size)} | profil_corridoir_d={_corridor_pts}pts"
         )
         if plot_source == "live":
@@ -8312,12 +8308,12 @@ class _RunMixin:
 
         dt_name = cfg.data_type.name if hasattr(cfg.data_type, "name") else str(cfg.data_type)
 
-        self.logger.info(" INDEX-SPLINE  optimization start ")
+        self.logger.info("[INDEX_SPLINE.STATE] optimization started")
 
-        self.logger.info("Spectrum: %s", path_hint or "(unknown path)")
+        self.logger.info("[INDEX_SPLINE.LOAD] spectrum path=%s", path_hint or "(unknown path)")
 
         self.logger.info(
-            "substrate: %s | lambda [%g, %g] nm | %d points | substrate-normalized T: %s",
+            "[INDEX_SPLINE.LOAD] substrate=%s | lambda=[%g, %g] nm | points=%d | substrate_normalized_t=%s",
             cfg.substrate_name,
             l0,
             l1,
@@ -8326,14 +8322,14 @@ class _RunMixin:
         )
 
         self.logger.info(
-            "Target: %s | weights wT=%.4g wR=%.4g | spectral quadrature: ln lambda (trapezoids, no cap)",
+            "[INDEX_SPLINE.CONFIG] target=%s | weight_t=%.4g | weight_r=%.4g | spectral_quadrature=ln_lambda_trapezoids",
             dt_name,
             cfg.weight_t,
             cfg.weight_r,
         )
 
         self.logger.info(
-            "d  [%.2f, %.2f] nm | segments on sigma mesh (n_seg)=%d",
+            "[INDEX_SPLINE.CONFIG] thickness_range=[%.2f, %.2f] nm | sigma_segments=%d",
             cfg.d_lo,
             cfg.d_hi,
             cfg.n_seg,
@@ -8343,14 +8339,14 @@ class _RunMixin:
             a, b = float(cfg.n_mono_band_nm[0]), float(cfg.n_mono_band_nm[1])
 
             self.logger.info(
-                "n(sigma) monotonicity on segments intersecting lambda[%.0f, %.0f] nm | continuous-law penalty w=%.4g",
+                "[INDEX_SPLINE.CONFIG] monotonic_n_band=[%.0f, %.0f] nm | continuous_penalty_weight=%.4g",
                 min(a, b),
                 max(a, b),
                 float(cfg.n_mono_continuous_penalty),
             )
 
         else:
-            self.logger.info("n(sigma) monotonicity on fixed band: disabled")
+            self.logger.info("[INDEX_SPLINE.CONFIG] monotonic_n_constraint=disabled")
 
         w_nlam = float(getattr(cfg, "n_lambda_rising_penalty_weight", 0.0) or 0.0)
 
@@ -8360,14 +8356,14 @@ class _RunMixin:
             b0, b1 = float(band_nlam[0]), float(band_nlam[1])
 
             self.logger.info(
-                "n increasing with lambda forbidden (segments sigma ? lambda[%.0f, %.0f] nm) | penalty w=%.4g",
+                "[INDEX_SPLINE.CONFIG] rising_n_constraint_band=[%.0f, %.0f] nm | penalty_weight=%.4g",
                 min(b0, b1),
                 max(b0, b1),
                 w_nlam,
             )
 
         else:
-            self.logger.info("Penalty for increasing n(lambda): disabled (w=0 or band None)")
+            self.logger.info("[INDEX_SPLINE.CONFIG] rising_n_penalty=disabled")
 
         n_fit = int(np.count_nonzero(_spline_objective_lam_mask(cfg)))
 
@@ -8375,18 +8371,18 @@ class _RunMixin:
             rl0, rl1 = float(cfg.rmse_fit_lambda_nm[0]), float(cfg.rmse_fit_lambda_nm[1])
 
             self.logger.info(
-                "RMSE fit lambda: [%.4g, %.4g] nm (%d points)",
+                "[INDEX_SPLINE.CONFIG] rmse_fit_band=[%.4g, %.4g] nm | objective_points=%d",
                 min(rl0, rl1),
                 max(rl0, rl1),
                 n_fit,
             )
 
         else:
-            self.logger.info("RMSE fit lambda: full spectrum (%d objective points)", n_fit)
+            self.logger.info("[INDEX_SPLINE.CONFIG] rmse_fit_band=full_spectrum | objective_points=%d", n_fit)
 
-        self.logger.info("Local optimizer: polish maxfun=%d", cfg.polish_maxfun)
+        self.logger.info("[INDEX_SPLINE.CONFIG] local_optimizer=lbfgsb | polish_maxfun=%d", cfg.polish_maxfun)
 
-        self.logger.info("substrate: no Deltan_sub refinement (nominal substrate).")
+        self.logger.info("[INDEX_SPLINE.CONFIG] substrate_delta_n_refinement=disabled (nominal_substrate)")
 
         prof = str(self.cb_profilee.currentData() or "fast") if hasattr(self, "cb_profilee") else "fast"
 
@@ -8803,7 +8799,7 @@ class _DataMixin:
             self.btn_copy_data_th.setText(" Copied!")
             QTimer.singleShot(
                 1800,
-                lambda: self.btn_copy_data_th.setText("Copier tableau Data TH (TSV)"),
+                lambda: self.btn_copy_data_th.setText("Copy Data TH table (TSV)"),
             )
 
     def _on_data_preview_plot_mouse_moved(
@@ -9096,7 +9092,7 @@ class _CorridorGenMixin:
     """Mixin containing corridor generation, application and table refresh methods."""
 
     def _on_corridor_rmse_grid_live_update(self, payload: object) -> None:
-        """Affiche la courbe RMSE(d) au fil de l eau pendant le recalcul de grille."""
+        """Display the RMSE(d) curve live during grid recalculation."""
 
         worker_role = str(getattr(self, "_worker_role", "") or "")
         if worker_role not in {"rmse_grid", "corridors"}:
@@ -10538,7 +10534,7 @@ class _CorridorControlMixin:
             result["gui_solver_snapshot_for_corridors"] = fresh_snap
             if self.logger:
                 self.logger.info(
-                    "Corridors: solver snapshot resynced to current mesh | K_snap=%d -> K_current=%d",
+                    "[INDEX_SPLINE.CORRIDORS] solver snapshot resynced to current mesh | k_snap=%d -> k_current=%d",
                     _snap_k, _cur_k,
                 )
 
@@ -10580,16 +10576,16 @@ class _CorridorControlMixin:
             rr = self._rmse_from_result_dict(result)
             rr_txt = f"{rr:.8f}" if np.isfinite(rr) else "n/a"
             self.logger.info(
-                "Corridors: launching deferred corridor worker | after_stage=%s | seed_d_nm=%s | seed_rmse_dict=%s",
+                "[INDEX_SPLINE.CORRIDORS] launching deferred corridor worker | after_stage=%s | seed_d_nm=%s | seed_rmse_dict=%s",
                 source_stage,
                 rd_txt,
                 rr_txt,
             )
             log_index_spline_d_trace(
                 self.logger,
-                "GUI: lancement corridor différé (_last_result seed)",
+                "[INDEX_SPLINE.CORRIDORS] deferred corridor launch trace | seed=last_result",
                 result.get("d_nm"),
-                detail=f"après_stage={source_stage} rmse_dict={rr_txt}",
+                detail=f"after_stage={source_stage} rmse_dict={rr_txt}",
             )
 
         self.btn_run.setEnabled(False)
@@ -10602,7 +10598,7 @@ class _CorridorControlMixin:
 
         self._prog_reset_bar()
 
-        self.lbl_status.setText("Corridors: calcul en cours...")
+        self.lbl_status.setText("Corridors: calculation in progress...")
 
         self._worker.start()
 
@@ -11210,7 +11206,7 @@ class CertusIndexSplineApp(
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
             if self.logger:
                 self.logger.warning(
-                    "GUI Smart Init [Keep] | could not recalculate RMSE on worker mesh: %s",
+                    "[INDEX_SPLINE.SMART_INIT] keep-preview recalculation failed on worker mesh: %s",
                     exc,
                 )
             rmse_worker_mesh = rmse_preview_mesh
@@ -11247,7 +11243,7 @@ class CertusIndexSplineApp(
             _k_gui = int(sk_final.size)
             _k_wrk = int(sk_canon_keep.size) if sk_canon_keep is not None else _k_gui
             self.logger.info(
-                "GUI Smart Init [Keep] | Fil conducteur: aperçu/fenêtre RMSE=%.6f (K=%d) → valeur retenue pour le worker (SOL2 / départ INDEX_SPLINE) RMSE=%.6f (K=%d). The second value is used for optimization.",
+                "[INDEX_SPLINE.SMART_INIT] keep-preview reference | preview_rmse=%.6f (k=%d) -> worker_rmse=%.6f (k=%d) | worker uses the second value for optimization",
                 rmse_preview_mesh,
                 _k_gui,
                 rmse_worker_mesh,
@@ -11414,7 +11410,7 @@ class CertusIndexSplineApp(
                     n_loc, L_loc = interp_n_L_pwlnk_to_sigmas(sk_snap, n_loc, L_loc, cur_sk)
 
         if n_loc.size != cur_sk.size or L_loc.size != cur_sk.size:
-            return f"Inconsistent sigma / n / ln k (K_sigma={cur_sk.size}, len(n)={n_loc.size}, len(L)={L_loc.size}). Try again after a recalculation."
+            return f"Inconsistent sigma / n / ln k (k_sigma={cur_sk.size}, len_n={n_loc.size}, len_l={L_loc.size}). Try again after recalculation."
 
         try:
             out = smart_init_sweep_node_thickness_rmse(
@@ -13932,31 +13928,25 @@ class CertusIndexSplineApp(
             src = self._corridor_profile_source_result()
 
         if not isinstance(src, dict):
-            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to start.")
-
+            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to begin.")
             return
 
         d_s = np.asarray(src.get("profile_d_values_nm", []), dtype=np.float64).ravel()
-
         if d_s.size == 0:
-            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to start.")
-
+            self.lbl_corridor_rmse_state.setText("Step 1/3: Recalculate RMSE(d) to begin.")
             return
 
         has_manual = bool(src.get("manual_corridor_active", False))
-
         d_min = float(np.nanmin(d_s)) if np.any(np.isfinite(d_s)) else float("nan")
-
         d_max = float(np.nanmax(d_s)) if np.any(np.isfinite(d_s)) else float("nan")
 
         if has_manual:
             self.lbl_corridor_rmse_state.setText(
-                f"Step 3/3: Corridor generated | Grid {int(d_s.size)} pts | d-range [{d_min:.2f}, {d_max:.2f}] nm"
+                f"Step 3/3: Corridor generated | grid {int(d_s.size)} points | d-range [{d_min:.2f}, {d_max:.2f}] nm"
             )
-
         else:
             self.lbl_corridor_rmse_state.setText(
-                f"Step 2/3: Select interval then generate corridor | Grid {int(d_s.size)} pts | d-range [{d_min:.2f}, {d_max:.2f}] nm"
+                f"Step 2/3: Select an interval, then generate the corridor | grid {int(d_s.size)} points | d-range [{d_min:.2f}, {d_max:.2f}] nm"
             )
 
     def _corridor_profile_source_result(self) -> dict[str, Any] | None:
@@ -14706,7 +14696,7 @@ class CertusIndexSplineApp(
 
         lg0 = getattr(self, "_spectrum_theory_probe_lam_nm", None)
         if lg0 is None:
-            return f"λ (indic.) = {float(lam_hint):.4f} nm  |  {y_bit}  |  n k : pas de modèle  |  d = {d_txt}"
+            return f"λ (indic.) = {float(lam_hint):.4f} nm  |  {y_bit}  |  n k: no model  |  d = {d_txt}"
 
         res = self._spectrum_theory_interp_at_lambda_nm(float(lam_hint))
         if not res.get("ok"):
@@ -14714,7 +14704,7 @@ class CertusIndexSplineApp(
                 lq = float(res.get("lambda_nm", lam_hint))
                 lo = float(res.get("lambda_lo_nm", float("nan")))
                 hi = float(res.get("lambda_hi_nm", float("nan")))
-                return f"λ = {lq:.4f} nm  (hors grille [{lo:.1f}–{hi:.1f}] nm)\nn = —    k = —    d = {d_txt}\n{y_bit}"
+                return f"λ = {lq:.4f} nm  (outside grid [{lo:.1f}–{hi:.1f}] nm)\nn = —    k = —    d = {d_txt}\n{y_bit}"
             return f"λ = {float(lam_hint):.4f} nm  |  n = —  k = —  |  d = {d_txt}  |  {y_bit}"
 
         ln = float(res["lambda_nm"])
@@ -14734,11 +14724,11 @@ class CertusIndexSplineApp(
         if getattr(self, "_spectrum_theory_probe_lam_nm", None) is None:
             return
 
-        act_show = menu.addAction("Afficher n, k, T (modèle) au point du clic…")
+        act_show = menu.addAction("Show n, k, T (model) at clicked point…")
 
         act_show.triggered.connect(lambda *_, vx=view_x, vy=view_y: self._spectrum_show_theory_probe_dialog(vx, vy))
 
-        act_copy = menu.addAction("Copier λ, n, k, d, T (R) modèle au point — TSV")
+        act_copy = menu.addAction("Copy λ, n, k, d, T (R) model at point — TSV")
 
         act_copy.triggered.connect(lambda *_, vx=view_x, vy=view_y: self._spectrum_copy_theory_probe_tsv(vx, vy))
 
@@ -14763,7 +14753,7 @@ class CertusIndexSplineApp(
             if rsn == "outside":
                 d_o = res.get("d_nm")
 
-                d_line = f"\nd affichée = {float(d_o):.4f} nm" if d_o is not None and np.isfinite(float(d_o)) else ""
+                d_line = f"\nd displayed = {float(d_o):.4f} nm" if d_o is not None and np.isfinite(float(d_o)) else ""
 
                 QMessageBox.information(
                     self,
@@ -15090,20 +15080,20 @@ class CertusIndexSplineApp(
         unlocked = isinstance(getattr(self, "_last_result", None), dict)
 
         if role == "rmse_grid":
-            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>calcul en cours...</b></span>'
+            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>calculation in progress...</b></span>'
         elif not unlocked:
             rich = (
-                f'Corridors: <span style="color:{CertusTheme.TEXT_SUB};"><b>disponibles apres optimisation</b></span>'
+                f'Corridors: <span style="color:{CertusTheme.TEXT_SUB};"><b>available after optimization</b></span>'
             )
 
         elif bool(
             self._last_result.get("profile_d_enabled", False)
             or self._last_result.get("profile_d_values_nm") is not None
         ):
-            rich = f'Corridors: <span style="color:{CertusTheme.SUCCESS};"><b>deja calcules</b></span>'
+            rich = f'Corridors: <span style="color:{CertusTheme.SUCCESS};"><b>already computed</b></span>'
 
         else:
-            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>prets a lancer</b></span>'
+            rich = f'Corridors: <span style="color:{CertusTheme.PRIMARY};"><b>ready to launch</b></span>'
 
         if hasattr(self, "lbl_corridors_run_state"):
             self.lbl_corridors_run_state.setText(rich)
@@ -15199,7 +15189,7 @@ class CertusIndexSplineApp(
     def _post_optimization_ready_status(base_status: str) -> str:
 
         status = str(base_status or "").strip()
-        hint = "Actions disponibles: Noeuds manuels / Corridors"
+        hint = "Available actions: Manual knots / Corridors"
         if not status:
             return hint
         if hint in status:

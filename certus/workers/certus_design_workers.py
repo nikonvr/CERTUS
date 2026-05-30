@@ -1561,18 +1561,15 @@ class NeedleWorker(QObject):
     """Worker for layer insertion (Needle algorithm)"""
 
     def __init__(self, cfg: dict[str, Any] | NeedleWorkerRequest) -> None:
-
         super().__init__()
-
-    def isInterruptionRequested(self) -> bool:
-        return QThread.currentThread().isInterruptionRequested()
-
         self.request = cfg if isinstance(cfg, NeedleWorkerRequest) else NeedleWorkerRequest.from_legacy(cfg)
 
         # Keep legacy mutable cfg field for incremental migration in call sites.
         self.cfg = dict(self.request.cfg)
-
         self.signals = WorkerSignals()
+
+    def isInterruptionRequested(self) -> bool:
+        return QThread.currentThread().isInterruptionRequested()
 
     def _compute_oblique_error(self, ep_test) -> Any:
         return _design_compute_oblique_error_common(self, ep_test)

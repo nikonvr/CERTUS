@@ -21,7 +21,17 @@ Contains:
 
 """
 
-__version__ = "26_05"
+from certus.core.version import (
+    APP_VERSION as __version__,
+    APP_DISPLAY_NAME,
+    APP_FULL_NAME,
+    get_app_version,
+    get_app_display_name,
+    get_app_full_name,
+)
+
+DISPLAY_VERSION_LABEL = APP_DISPLAY_NAME
+DISPLAY_FULL_LABEL = APP_FULL_NAME
 
 
 __all__ = [
@@ -47,6 +57,7 @@ __all__ = [
     "SUBSTRATES",
     "SUBSTRATE_LIST",
     "SUBSTRATE_MAPPING",
+    "SUBSTRATE_CHOICES",
     "CANONICAL_SUBSTRATE_LABELS",
     "SUBSTRATE_MIN_LAMBDA",
     "CAUCHY_PRESETS",
@@ -572,6 +583,16 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
     logger.setLevel(level)
     logger.propagate = False
 
+    desired_log_file = None
+    if log_file:
+        log_file_path = Path(log_file)
+        desired_log_file = str(log_file_path.resolve() if log_file_path.is_absolute() else log_file_path)
+
+    existing_log_file = getattr(logger, "_certus_log_file", None)
+    existing_level = getattr(logger, "_certus_log_level", None)
+    if logger.handlers and existing_log_file == desired_log_file and existing_level == level:
+        return logger
+
     for handler in list(logger.handlers):
         try:
             handler.close()
@@ -588,7 +609,6 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
     console_handler.setFormatter(console_formatter)
     console_handler.setLevel(level)
     logger.addHandler(console_handler)
-
 
     if log_file:
         try:
@@ -614,6 +634,8 @@ def setup_logging(log_file: str | None = None, level: int | None = None) -> "log
             file_handler.setLevel(_logging.DEBUG)
             logger.addHandler(file_handler)
 
+            logger._certus_log_file = desired_log_file or str(Path(log_path))
+            logger._certus_log_level = level
             logger.info("logger=certus status=initialized sink=file path=%s level=%s", log_path, _logging.getLevelName(level))
         except (
             PermissionError,
@@ -1118,6 +1140,18 @@ SUBSTRATE_MAPPING: dict[str, str] = {
 
 SUBSTRATE_LIST = list(SUBSTRATES.keys())
 
+# Canonical, de-duplicated labels for UI selection lists.
+SUBSTRATE_CHOICES = tuple(dict.fromkeys(
+    [
+        "Sapphire (Al2O3)",
+        "SiO2",
+        "N-BK7",
+        "D263T eco",
+        "B270i",
+        "Silicon (Si)",
+    ]
+))
+
 CANONICAL_SUBSTRATE_LABELS: dict[str, str] = {
     "sapphire": "Sapphire (Al2O3)",
     "sapphire (al2o3)": "Sapphire (Al2O3)",
@@ -1250,20 +1284,16 @@ def setup_gui_logger(log_queue: queue.Queue, logger_name: str = "CERTUS") -> log
 
     logger.setLevel(logging.INFO)
 
-    logger.handlers = []
-
     formatter = CertusGuiFormatter()
 
-    # Handler for GUI queue ONLY - no console output
+    # Handler for GUI queue; keep any existing file/console handlers intact so
+    # the same CERTUS log stream continues to reach Show Details as well.
+    if not any(isinstance(h, QueueHandler) and getattr(h, "log_queue", None) is log_queue for h in logger.handlers):
+        queue_handler = QueueHandler(log_queue)
+        queue_handler.setFormatter(formatter)
+        logger.addHandler(queue_handler)
 
-    queue_handler = QueueHandler(log_queue)
-
-    queue_handler.setFormatter(formatter)
-
-    logger.addHandler(queue_handler)
-
-    # Suppress propagation to root logger (prevents console output)
-
+    # Suppress propagation to root logger (prevents duplicate console output)
     logger.propagate = False
 
     return logger
@@ -1357,27 +1387,7 @@ def setup_module_logging(
     module_name: str,
     log_file: Optional[str] = None,
 ) -> logging.LoggerAdapter:
-    """
-
-    Setup logging for a specific CERTUS module.
-
-    Args:
-
-        module_name: Name of the module for logging
-
-        log_file: Optional log file path
-
-    Returns:
-
-        Logger adapter with run_id and app_id context
-
-    Example:
-
-        >>> logger = setup_module_logging("CERTUS_DESIGN")
-
-    """
-
-    # Generate log file name if not provided
+    """Setup logging for a specific CERTUS module."""
 
     if log_file is None:
         if module_name.upper() == "STRAT":
@@ -1392,7 +1402,6 @@ def setup_module_logging(
     logger = get_structured_logger(base_logger, run_id=run_id, app_id=module_name)
 
     logger.info("logger=certus module=%s status=initialized", module_name)
-
     return logger
 
 

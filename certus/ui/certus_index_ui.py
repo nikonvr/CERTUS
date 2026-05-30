@@ -96,7 +96,7 @@ def _update_lambda_bounds_from_target_data(
     lmax = float(target_data["lambda"].max())
     sb_lmin.setValue(lmin)
     sb_lmax.setValue(lmax)
-    logger.info(f"Spectral range: {lmin:.1f} - {lmax:.1f} nm")
+    logger.info("[INDEX.LOAD] spectral range | min=%.1f nm | max=%.1f nm", lmin, lmax)
     return lmin, lmax
 
 def _source_type_label(data_type: DataType) -> str:
@@ -159,7 +159,7 @@ def _display_detected_data_type(lbl_data_type, logger, data_type: DataType) -> s
     """Display and log detected source data type label."""
     type_label = _detected_data_type_label(data_type)
     lbl_data_type.setText(type_label)
-    logger.info(f"Data analysis: {type_label}")
+    logger.info("[INDEX.LOAD] data analysis | type=%s", type_label)
     return type_label
 
 def _prepare_nk_plot_inputs(wls, sub_df, res, logger) -> tuple | None:
@@ -690,7 +690,7 @@ class CertusIndexApp(CertusBaseApp):
         except (AttributeError, RuntimeError) as e:
             # Non-critical: convergence curve may not exist
 
-            logging.debug(f"Could not update convergence curve: {e}")
+            self.logger.debug("[INDEX.UI] convergence curve update skipped: %s", e)
 
             pass
 
@@ -708,7 +708,7 @@ class CertusIndexApp(CertusBaseApp):
             except (AttributeError, RuntimeError) as e:
                 # Non-critical: item may not have name or setSymbolBrush
 
-                logging.debug(f"Could not update target curve symbols: {e}")
+                self.logger.debug("[INDEX.UI] target curve symbol update skipped: %s", e)
 
                 pass
 
@@ -1554,7 +1554,7 @@ class CertusIndexApp(CertusBaseApp):
             if idx >= 0:
                 self.cb_sub.setCurrentIndex(idx)
 
-                self.logger.info(f"   Auto-detected substrate: {detected_substrate}")
+                self.logger.info("[INDEX.LOAD] auto-detected substrate | substrate=%s", detected_substrate)
 
         #  2. Pre-estimate thickness from spectrum
 
@@ -1741,13 +1741,15 @@ class CertusIndexApp(CertusBaseApp):
                 self.sb_dmax.setValue(d_max)
 
                 self.logger.info(
-                    f"   Estimated thickness: ~{d_estimate:.0f} nm "
-                    f"({method_str}) "
-                    f"-> range [{d_min:.0f}, {d_max:.0f}] nm"
+                    "[INDEX.LOAD] estimated thickness | value=~%.0f nm | method=%s | range=[%.0f, %.0f] nm",
+                    d_estimate,
+                    method_str,
+                    d_min,
+                    d_max,
                 )
 
             else:
-                self.logger.info("   No oscillations detected -> thickness not estimated")
+                self.logger.info("[INDEX.LOAD] thickness not estimated | reason=no oscillations detected")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.debug(f"Auto-detect thickness failed:{e}")
@@ -1967,6 +1969,8 @@ class CertusIndexApp(CertusBaseApp):
 
         self.chk_high_precision.setChecked(False)  # Default to Standard
 
+        self._core_logger = logging.getLogger("CERTUS")
+
         l.addWidget(self.chk_high_precision, 7, 0, 1, 2)
 
         return c
@@ -1997,7 +2001,7 @@ class CertusIndexApp(CertusBaseApp):
             except (AttributeError, RuntimeError) as e:
                 # Non-critical: exclude_region may not exist or already removed
 
-                logging.debug(f"Could not remove exclude region: {e}")
+                self.logger.debug("[INDEX.UI] exclude region removal skipped: %s", e)
 
                 pass
 
@@ -2048,7 +2052,7 @@ class CertusIndexApp(CertusBaseApp):
                 reset_zoom=getattr(self, "reset_ui_zoom", None),
             )
         except (RuntimeError, AttributeError, TypeError, ValueError):
-            logging.getLogger("CERTUS").debug("Shortcut installation failed", exc_info=True)
+            self._core_logger.debug("Shortcut installation failed", exc_info=True)
 
     def zoom_in_ui(self) -> None:
         self._apply_ui_zoom(min(getattr(self, "_zoom_factor", 1.0) + 0.05, 1.30))
@@ -2296,7 +2300,7 @@ class CertusIndexApp(CertusBaseApp):
                 except (AttributeError, RuntimeError) as e:
                     # Non-critical: tracking may fail if curve doesn't support it
 
-                    logging.debug(f"Could not add tracked curve for T: {e}")
+                    self.logger.debug("[INDEX.UI] add tracked curve for T skipped: %s", e)
 
                     pass
 
@@ -2319,7 +2323,7 @@ class CertusIndexApp(CertusBaseApp):
                 except (AttributeError, RuntimeError) as e:
                     # Non-critical: tracking may fail if curve doesn't support it
 
-                    logging.debug(f"Could not add tracked curve for R: {e}")
+                    self.logger.debug("[INDEX.UI] add tracked curve for R skipped: %s", e)
 
                     pass
 
@@ -2410,9 +2414,9 @@ class CertusIndexApp(CertusBaseApp):
             self.target_data = raw_data if keep_raw else smoothed_data
             self._redraw_target_preview(wls, preview_t, preview_r)
         except ImportError:
-            self.logger.warning("scipy.signal not available for smoothing")
+            self.logger.warning("[INDEX.LOAD] smoothing skipped: scipy.signal unavailable")
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.warning(f"Failed to apply smoothing: {e}")
+            self.logger.warning("[INDEX.LOAD] smoothing failed: %s", e)
 
     def _ask_keep_raw_or_smoothed(self) -> bool:
         """Return True when user explicitly keeps raw traces."""
@@ -2518,16 +2522,16 @@ class CertusIndexApp(CertusBaseApp):
         """Best-effort tracked-curve registration for spectrum traces."""
         try:
             self.plot_spectrum.add_tracked_curve(curve, key, "%")
-        except NUMERICAL_FAULT_EXCEPTIONS :
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            self.logger.debug("[INDEX.UI] tracked-curve registration skipped in %s", __name__, exc_info=True)
 
     def _clear_plot_tracking_state(self) -> None:
         """Best-effort cleanup of internal plot tracking structures."""
         try:
             self.plot_spectrum._tracked_curves = []
             self.plot_spectrum.curve_points = {}
-        except NUMERICAL_FAULT_EXCEPTIONS :
-            logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+        except NUMERICAL_FAULT_EXCEPTIONS:
+            self.logger.debug("[INDEX.UI] plot tracking state reset skipped in %s", __name__, exc_info=True)
 
     def _reset_optimization_progress_state(self, config: OptimizationConfig) -> None:
         """Reset progress and convergence widgets before launching the worker thread."""
@@ -2562,17 +2566,15 @@ class CertusIndexApp(CertusBaseApp):
 
         if use_two_stage:
             self.logger.info(
-                "Spectrum > 2500 nm detected: launching automatic two-stage TLU + Spline pipeline "
-                "(TLU band up to 2200 nm)."
+                "[INDEX.LOAD] pipeline selected | mode=two-stage | reason=wl_max>2500nm | tlu_band_max=2200nm"
             )
             config.lambda_max_fit = 2200.0
         elif config.lambda_max > 2500.0:
             self.logger.info(
-                "Spectrum > 2500 nm but lambda_min >= 2200 nm: single-stage optimization on the "
-                "selected range (no separate UV TLU band)."
+                "[INDEX.LOAD] pipeline selected | mode=single-stage | reason=wl_max>2500nm and lambda_min>=2200nm"
             )
         else:
-            self.logger.info("Spectrum <= 2500 nm: standard TLU-only pipeline.")
+            self.logger.info("[INDEX.LOAD] pipeline selected | mode=standard | reason=wl_max<=2500nm")
 
         self._index_tlu_live_ctx = self._make_index_tlu_live_ctx(config)
         self._worker = OptimizationWorker(config, logger=self.logger)
@@ -2642,13 +2644,14 @@ class CertusIndexApp(CertusBaseApp):
                     self.logger.info("[SILICON] Thickness = 0 -> transparent substrate (k=0 everywhere).")
             else:
                 self.logger.warning(
-                    "[SILICON] clues.xlsx If-substrate not found  transparent mode used (degraded)."
+                    "[INDEX.LOAD] silicon substrate fallback | reason=clues.xlsx substrate data unavailable | mode=transparent"
                 )
             return k_sub_interp, sub_thickness_nm, n_sub_data
 
         # For all other substrates, they are transparent (k=0)
         self.logger.info(
-            f"[{substrate_name.split()[0].upper()}] Transparent substrate forced (k=0 everywhere)."
+            "[INDEX.LOAD] substrate forced transparent | substrate=%s | k=0 everywhere",
+            substrate_name,
         )
         return None, None, None
 
@@ -2811,7 +2814,7 @@ class CertusIndexApp(CertusBaseApp):
 
         self.logger.info("=" * 60)
 
-        self.logger.info("STARTING OPTIMIZATION")
+        self.logger.info("[INDEX.STATE] optimization started")
 
         if self.source_file_path:
             self.logger.info(
@@ -2840,9 +2843,17 @@ class CertusIndexApp(CertusBaseApp):
 
         self.logger.info(f"substrate: {substrate_name} (Mode: {substrate_mode.name})")
 
-        self.logger.info(f"Thickness Range: {config.thickness_min} - {config.thickness_max} nm")
+        self.logger.info(
+            "[INDEX.LOAD] thickness range | min=%.1f nm | max=%.1f nm",
+            config.thickness_min,
+            config.thickness_max,
+        )
 
-        self.logger.info(f"Wavelength Range: {config.lambda_min} - {config.lambda_max} nm")
+        self.logger.info(
+            "[INDEX.LOAD] wavelength range | min=%.1f nm | max=%.1f nm",
+            config.lambda_min,
+            config.lambda_max,
+        )
 
         if config.exclude_min and config.exclude_max:
             self.logger.info(f"Excluded Region: {config.exclude_min} - {config.exclude_max} nm")
@@ -2932,7 +2943,7 @@ class CertusIndexApp(CertusBaseApp):
                         )
 
             except RuntimeError:
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
+                self._core_logger.debug("Silenced exception in %s", __name__, exc_info=True)
 
         self._worker = None
 
@@ -3558,7 +3569,7 @@ class CertusIndexApp(CertusBaseApp):
                 self.plot_spectrum.add_tracked_curve(c_tgt_t, "T Target", "%")
 
             except NUMERICAL_FAULT_EXCEPTIONS as e:
-                self.logger.error(f"Error displaying T target: {e}", exc_info=True)
+                self.logger.error("[INDEX.UI] display failed | component=T_target | reason=%s", e, exc_info=True)
 
         if "R_target" in sub_df.columns:
             try:
@@ -3575,7 +3586,7 @@ class CertusIndexApp(CertusBaseApp):
                 self.plot_spectrum.add_tracked_curve(c_tgt_r, "R Target", "%")
 
             except NUMERICAL_FAULT_EXCEPTIONS as e:
-                self.logger.error(f"Error displaying R target: {e}", exc_info=True)
+                self.logger.error("[INDEX.UI] display failed | component=R_target | reason=%s", e, exc_info=True)
 
         # Display fits
 
@@ -4002,7 +4013,7 @@ class CertusIndexApp(CertusBaseApp):
                     leg_k.addItem(c_kr, "k (90% R)")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Error displaying n/k: {e}", exc_info=True)
+            self.logger.error("[INDEX.UI] display failed | component=nk | reason=%s", e, exc_info=True)
 
             self.logger.error(traceback.format_exc())
 
@@ -4061,7 +4072,7 @@ class CertusIndexApp(CertusBaseApp):
                     eq_html += "</ul>"
 
                     if getattr(res, "k_spline_knots_lambda_um", None) is not None:
-                        eq_html += f"<br><i>k refined by spline (log k) Phase 2.3 {len(res.k_spline_knots_lambda_um)} knots</i>"
+                        eq_html += f"<br><i>[INDEX.SPLINE] k refined by spline (log k) | phase=2.3 | knots={len(res.k_spline_knots_lambda_um)}</i>"
 
                 eq_html += "</td></tr></table>"
 
@@ -4379,7 +4390,7 @@ class CertusIndexApp(CertusBaseApp):
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Error in _display_results: {e}", exc_info=True)
+            self.logger.error("[INDEX.UI] display failed | component=results | reason=%s", e, exc_info=True)
 
             self.logger.error(traceback.format_exc())
 
@@ -4452,7 +4463,7 @@ class CertusIndexApp(CertusBaseApp):
             self.lbl_status.setText("n,k table copied!")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Copy error: {e}")
+            self.logger.error("[INDEX.UI] copy failed | reason=%s", e)
 
     def _copy_params_to_clipboard(self) -> None:
         """Copy the 16 global model parameters to the clipboard."""
@@ -4524,7 +4535,7 @@ class CertusIndexApp(CertusBaseApp):
                     lines.append(f"P{idx + 1} = {val:.7e}")
 
                 if getattr(res, "k_spline_knots_lambda_um", None) is not None:
-                    lines.append("k refined by Phase 2.3 spline (log k)")
+                    lines.append("[INDEX.SPLINE] k refined by spline (log k) | phase=2.3")
 
                     lines.append(f"Knots (m): {res.k_spline_knots_lambda_um.tolist()}")
 
@@ -4538,7 +4549,7 @@ class CertusIndexApp(CertusBaseApp):
 
             self.lbl_status.setText(" Equations copied to clipboard")
 
-            self.logger.info("Final equations copied to clipboard.")
+            self.logger.info("[INDEX.UI] equations copied to clipboard")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Copy equations failed: {e}", exc_info=True)
@@ -4582,7 +4593,7 @@ class CertusIndexApp(CertusBaseApp):
             skip_phase5_overwrite = "PGLOBAL" in method or "Sellmeier+k" in method
 
             if skip_phase5_overwrite:
-                self.logger.info("Phase 5: skipped (global Sellmeier+k; keeping n/k as-is)")
+                self.logger.info("[INDEX.SPLINE] phase5 skipped | reason=global Sellmeier+k | action=keep_nk")
 
             else:
                 self.lbl_status.setText(" Phase 5: Global Sellmeier fit for n & k re-optimization...")
@@ -4659,7 +4670,7 @@ class CertusIndexApp(CertusBaseApp):
 
                         setattr(res, "sellmeier_params", params_n)
 
-                        self.logger.info("Phase 5: Sellmeier & K reoptimization successful")
+                        self.logger.info("[INDEX.SPLINE] phase5 complete | status=success")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Phase 5 failed (n Sellmeier / k reopt) : {e}", exc_info=True)
@@ -4741,7 +4752,7 @@ class CertusIndexApp(CertusBaseApp):
         reply = msg_box.exec()
 
         if reply == int(QMessageBox.StandardButton.No) or reply == QMessageBox.StandardButton.No:
-            self.logger.info("IR extension canceled by user. Conservation of the complete TLU model.")
+            self.logger.info("[INDEX.SPLINE] phase2/ir extension canceled by user | action=keep_full_TLU")
 
             self._on_finished(tlu_res)
 
@@ -5089,10 +5100,10 @@ class CertusIndexApp(CertusBaseApp):
                 figures.append(self.plot_delta_n)
 
             if generate_html_report(html_path, "CERTUS-INDEX Report", sections, figures):
-                self.logger.info(f"HTML report saved: {html_path}")
+                self.logger.info("[INDEX.EXPORT] html saved | path=%s", html_path)
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"HTML export failed:{e}", exc_info=True)
+            self.logger.error("[INDEX.EXPORT] html export failed | reason=%s", e, exc_info=True)
 
     def export_results(self) -> None:
         """Standardized Auto-Export (Excel + HTML).
@@ -5247,12 +5258,12 @@ class CertusIndexApp(CertusBaseApp):
                 require_complete_manifest=True,
             )
             if report_result.get("excel"):
-                self.logger.info(f"Excel report saved: {excel_path}")
+                self.logger.info("[INDEX.EXPORT] excel saved | path=%s", excel_path)
             else:
                 self.logger.error("Excel export blocked/failed: missing or incomplete run manifest.")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Excel export failed:{e}", exc_info=True)
+            self.logger.error("[INDEX.EXPORT] excel export failed | reason=%s", e, exc_info=True)
 
         # --- 2. HTML EXPORT ---
         self._export_results_html(res, rmse_val, html_path)
@@ -5485,7 +5496,7 @@ class CertusIndexApp(CertusBaseApp):
         except (AttributeError, TypeError):
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
-        self.logger.info("Application closed.")
+        self.logger.info("[INDEX.STATE] application closed")
 
         super().closeEvent(event)
 

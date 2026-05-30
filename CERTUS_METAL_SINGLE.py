@@ -49,18 +49,31 @@ import traceback
 
 
 
-from certus.core.certus_core import canonicalize_substrate_label, substrate_sellmeier_id, SUBSTRATE_MIN_LAMBDA
+from certus.core.certus_core import (
+    CANONICAL_SUBSTRATE_LABELS,
+    SUBSTRATE_CHOICES,
+    SUBSTRATE_MAPPING,
+    SUBSTRATE_MIN_LAMBDA,
+    canonicalize_substrate_label,
+    substrate_sellmeier_id,
+)
 from certus.core._certus_physics_impl import get_n_substrate_array_by_id
+
 
 def _resolve_single_substrate_id(sub_text: str) -> int:
     val = substrate_sellmeier_id(canonicalize_substrate_label(sub_text))
-    return val if val is not None else 1  # Fallback to BK7 (ID 1) if None
+    if val is not None:
+        return int(val)
+    fallback = substrate_sellmeier_id("BK7")
+    return int(fallback if fallback is not None else 1)
+
 
 def _get_single_substrate_n_array(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
     try:
         return get_n_substrate_array_by_id(substrate_id, wavelengths_nm)
     except KeyError:
-        return get_n_substrate_array_by_id(1, wavelengths_nm)
+        fallback = substrate_sellmeier_id("BK7")
+        return get_n_substrate_array_by_id(int(fallback if fallback is not None else 1), wavelengths_nm)
 
 
 import scipy.optimize
@@ -1316,7 +1329,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.combo_substrate.setToolTip("Select the transparent substrate material.")
 
-        self.combo_substrate.addItems(["Fused Silica", "BK7"])
+        self.combo_substrate.addItems(list(SUBSTRATE_CHOICES))
 
         self.combo_substrate.setFixedHeight(24)
 
@@ -1564,9 +1577,9 @@ class CertusMetalSingleApp(MetalBaseApp):
             params["num_knots"] = raw_knots
             params["eM_min"] = float(self.widgets["eM_min"].text())
             
-            sub_id_map = {"Fused Silica": 1, "BK7": 2}
             sub_text = self.combo_substrate.currentText()
-            params["substrate_id"] = sub_id_map.get(sub_text, 1)
+            params["substrate_id"] = _resolve_single_substrate_id(sub_text)
+            params["substrate_label"] = canonicalize_substrate_label(sub_text)
 
         def before_run(params):
             # Check wide thickness range
@@ -1611,9 +1624,10 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             # Start logging
             sub_text = self.combo_substrate.currentText()
+            sub_label = canonicalize_substrate_label(sub_text)
             self.logger.info("=" * 50)
             self.logger.info("STARTING METAL SINGLE OPTIMIZATION")
-            self.logger.info(f"substrate: {sub_text}")
+            self.logger.info(f"substrate: {sub_text} | canonical: {sub_label}")
             self.logger.info(
                 f"Target File: {Path(self._last_target_file).name if self._last_target_file else 'Unknown'}"
             )
@@ -2032,11 +2046,10 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             # substrate ID
 
-            sub_id_map = {"Fused Silica": 1, "BK7": 2}
-
             sub_text = self.combo_substrate.currentText()
 
-            params["substrate_id"] = sub_id_map.get(sub_text, 1)
+            params["substrate_id"] = _resolve_single_substrate_id(sub_text)
+            params["substrate_label"] = canonicalize_substrate_label(sub_text)
 
             params["eM_min"] = float(p.get("eM_min", DEFAULT_EM_MIN))
 

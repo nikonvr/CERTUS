@@ -4581,6 +4581,7 @@ class CertusBaseApp(QMainWindow):
         from certus.core.certus_core import setup_gui_logger
 
         self.logger = setup_gui_logger(self.log_queue, name)
+        self.logger.info("[%s] Show Details logger attached", name)
 
         return self.logger
 

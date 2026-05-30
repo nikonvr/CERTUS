@@ -1573,8 +1573,8 @@ except (FileNotFoundError, OSError, *NUMERICAL_FAULT_EXCEPTIONS) as _e_sap:
     import warnings
 
     warnings.warn(
-        f"[CERTUS INDEX] ATTENTION : impossible de load example/sapphire fresnel.xlsx "
-        f"({_e_sap}). Canonical sapphire absorbing substrate mode will be disabled.",
+        f"[CERTUS INDEX] Sapphire substrate reference unavailable: example/sapphire fresnel.xlsx "
+        f"({_e_sap}). Transparent substrate fallback will be used.",
         stacklevel=1,
     )
 
@@ -1615,7 +1615,7 @@ try:
 except NUMERICAL_FAULT_EXCEPTIONS as _e_si:
 
     warnings.warn(
-        f"[CERTUS INDEX] ATTENTION : impossible de load Si depuis clues.xlsx "
+        f"[CERTUS INDEX] Silicon substrate reference unavailable: clues.xlsx "
         f"({_e_si}). Silicon substrate mode will be disabled.",
         stacklevel=1,
     )
@@ -2246,8 +2246,8 @@ class TLUObjective:
 
                 _e2k = float(eps2[_ik2])
 
-                logging.getLogger("CertusIndex").warning(
-                    "event=tlu_k_penalty eval=%d remaining_logs=%d k_max=%.6g k_limit=%.4g penalty_power=%.0f Eg=%.4f Eu=%.4f E0=%.4f frac_E_gt_Eg=%.2f eps2_max=%.4g eps2_at_kmax=%.4g penalty=%.4g",
+                logging.getLogger("CERTUS").warning(
+                    "[INDEX.tlu_k_penalty] eval=%d remaining_logs=%d k_max=%.6g k_limit=%.4g penalty_power=%.0f Eg=%.4f Eu=%.4f E0=%.4f frac_E_gt_Eg=%.2f eps2_max=%.4g eps2_at_kmax=%.4g penalty=%.4g",
                     int(self.n_evals),
                     int(self._tlu_explode_logs_left),
                     float(k_peak),
@@ -2595,7 +2595,7 @@ class PGlobalOptimizerINDEX:
                     samples.append(Sample(x=X[i].copy(), y=y_val if np.isfinite(y_val) else np.inf))
 
             except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                logging.error("event=pglobal_sampling status=failed mode=parallel reason=%s", e)
+                logging.getLogger("CERTUS").error("[INDEX.PGLOBAL] sampling failed | mode=parallel | reason=%s", e)
 
                 return []
 
@@ -2685,7 +2685,7 @@ class PGlobalOptimizerINDEX:
                     if callback:
                         callback(best_ever)
             except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                logging.error("event=pglobal_local_search status=failed mode=sequential reason=%s", e, exc_info=True)
+                logging.getLogger("CERTUS").error("[INDEX.PGLOBAL] local search failed | mode=sequential | reason=%s", e, exc_info=True)
         return best_ever
 
     def _run_parallel_local_search(self, cand_x, cand_y, n_dispatch: int, callback, best_ever):
@@ -2716,7 +2716,7 @@ class PGlobalOptimizerINDEX:
                     if callback:
                         callback(best_ever)
             except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                logging.error("event=pglobal_local_search status=failed mode=parallel reason=%s", e, exc_info=True)
+                logging.getLogger("CERTUS").error("[INDEX.PGLOBAL] local search failed | mode=parallel | reason=%s", e, exc_info=True)
         return best_ever
 
     def optimize(self, max_iter: int = 30, callback=None, x0: np.ndarray | None = None) -> Sample | None:
@@ -2743,7 +2743,7 @@ class PGlobalOptimizerINDEX:
                     callback(best_ever)
 
             except (ValueError, TypeError, RuntimeError, ArithmeticError, OverflowError) as e:
-                logging.debug("event=index_initial_guess status=failed reason=%s", e)
+                logging.getLogger("CERTUS").debug("[INDEX.PGLOBAL] initial guess rejected | reason=%s", e)
 
         # Limit Numba threads when using ThreadPoolExecutor to avoid CPU oversubscription
 

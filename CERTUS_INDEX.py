@@ -172,6 +172,13 @@ if __name__ == "__main__":
     from certus.core.certus_core import setup_module_logging
     setup_module_logging("CERTUS_INDEX", log_file="certus_index.log")
 
+    import warnings
+    warnings.filterwarnings("once", category=UserWarning)
+    warnings.filterwarnings("ignore", message="First-class function type feature is experimental")
+
+    # Reduce console noise from the deepest optimizer warnings without hiding real failures.
+    warnings.filterwarnings("once", message=r"\[CERTUS INDEX\] .* substrate reference unavailable: .*", category=UserWarning)
+
     # High DPI scaling (Must be set BEFORE creating QApplication)
     from PyQt6.QtCore import Qt, QTimer
     from PyQt6.QtWidgets import QApplication

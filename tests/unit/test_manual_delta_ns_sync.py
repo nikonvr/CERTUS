@@ -167,7 +167,7 @@ def test_apply_manual_substrate_offset_preview_refreshes_curve_without_worker() 
     idx = [int(np.where(np.isclose(lam_g, x))[0][0]) for x in lam_nm]
     npt.assert_allclose(ns_g[idx], n_sub_effective, rtol=0.0, atol=1e-12)
 
-    assert "Actions disponibles: Noeuds manuels / Corridors" in harness.lbl_status.text
+    assert "Available actions: Manual knots / Corridors" in harness.lbl_status.text
 
 
 def test_equal_mesh_skip_policy_can_be_forced_for_manual_reopt() -> None:

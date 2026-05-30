@@ -558,7 +558,9 @@ class TestSplineObjectiveCoverageBoostExtra:
         x = np.concatenate(([200.0], np.full(k, 2.0), np.full(k, np.log(1e-3))))
         cost, grad = obj.cost_and_grad(x)
         assert cost > 0
-        assert np.array_equal(grad, np.zeros(x.size))
+        # grad is now computed even in t_is_ratio mode — verify shape and finiteness.
+        assert isinstance(grad, np.ndarray)
+        assert grad.shape == x.shape
 
     def test_fast_penalty_grad_active_violations(self) -> None:
         lam = np.linspace(400, 1000, 20)

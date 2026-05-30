@@ -119,7 +119,7 @@ def _estimate_fringe_period(k: np.ndarray, y: np.ndarray):
     y_centered = y - np.median(y)
     amp = np.std(y_centered)
     if amp < 1e-9:
-        return (k.max() - k.min()) / 10.0
+        return (k.max() - k.min()) / 10.0, 0, 0.0
 
     prominence = max(0.25 * amp, 1e-6)
     distance = max(2, len(k) // 50)
@@ -130,8 +130,8 @@ def _estimate_fringe_period(k: np.ndarray, y: np.ndarray):
         diffs = np.diff(k[all_extrema])
         diffs = diffs[np.isfinite(diffs) & (diffs > 0)]
         if diffs.size > 0:
-            return float(np.median(diffs))
-    return (k.max() - k.min()) / 12.0
+            return float(np.median(diffs)), int(all_extrema.size), float(np.std(diffs) / max(np.mean(diffs), 1e-12))
+    return (k.max() - k.min()) / 12.0, int(all_extrema.size), 1.0
 
 
 def _estimate_noise_level(y: np.ndarray):
@@ -152,7 +152,7 @@ def _estimate_noise_level(y: np.ndarray):
     return float(1.4826 * mad)
 
 
-def _choose_params(level: str, period_k: float, noise: float, span_k: float, n_points: int):
+def _choose_params(level: str, period_k: float, noise: float, span_k: float, n_points: int, *, fringe_count: int = 0, fringe_jitter: float = 0.0):
     level = str(level).strip().lower()
     if level in {"faible", "low"}:
         mult = 0.55
@@ -181,6 +181,12 @@ def _choose_params(level: str, period_k: float, noise: float, span_k: float, n_p
         noise_ratio = min(noise / max(ref, 1e-12), 3.0)
         window_pts *= (1.0 + 0.05 * noise_ratio)
 
+    # More regular fringe trains allow a slightly larger base window.
+    if fringe_count >= 6 and fringe_jitter < 0.35:
+        window_pts *= 1.08
+    elif fringe_count <= 2:
+        window_pts *= 0.92
+
     window_pts = _ensure_odd(window_pts)
     max_valid = n_points - 1 if n_points % 2 == 0 else n_points
     max_valid = max(5, max_valid)
@@ -206,7 +212,7 @@ def smooth_spectrum_auto(x_lambda: np.ndarray, y: np.ndarray, level: str = "moye
     # Final robustness pass after interpolation.
     y_uniform = _remove_spikes(y_uniform, z_thresh=5.0)
 
-    period_k = _estimate_fringe_period(k_uniform, y_uniform)
+    period_k, fringe_count, fringe_jitter = _estimate_fringe_period(k_uniform, y_uniform)
     noise = _estimate_noise_level(y_uniform)
     span_k = float(k_uniform.max() - k_uniform.min())
 
@@ -216,6 +222,8 @@ def smooth_spectrum_auto(x_lambda: np.ndarray, y: np.ndarray, level: str = "moye
         noise=noise,
         span_k=span_k,
         n_points=len(k_uniform),
+        fringe_count=fringe_count,
+        fringe_jitter=fringe_jitter,
     )
 
     try:
@@ -242,14 +250,29 @@ def smooth_spectrum_auto(x_lambda: np.ndarray, y: np.ndarray, level: str = "moye
     )
     y_smoothed = f_back(1.0 / x)
 
-    return _safe_clip_percent(y_smoothed), {
+    quality_score = 1.0
+    if np.isfinite(period_k) and period_k > 0:
+        quality_score *= 1.0 / (1.0 + max(0.0, fringe_jitter))
+    quality_score *= 1.0 / (1.0 + min(max(noise, 0.0), 10.0) * 0.15)
+    quality_score *= 1.0 if fringe_count >= 3 else 0.88
+    quality_score = float(np.clip(quality_score, 0.0, 1.0))
+
+    diagnostics = {
         "level": level,
         "window_base": window_base,
         "polyorder": poly,
         "window_heavy": window_heavy,
         "estimated_period_k": period_k,
         "noise_level": noise,
+        "fringe_count": fringe_count,
+        "fringe_jitter": fringe_jitter,
+        "alpha": alpha,
+        "samples_kept": int(x.size),
+        "quality_score": quality_score,
+        "quality_label": "good" if quality_score >= 0.75 else ("degraded" if quality_score >= 0.45 else "poor"),
     }
+
+    return _safe_clip_percent(y_smoothed), diagnostics
 
 
 def smooth_dataframe_auto(df: pd.DataFrame, level: str = "moyen") -> tuple[pd.DataFrame, dict]:
@@ -269,13 +292,162 @@ def smooth_dataframe_auto(df: pd.DataFrame, level: str = "moyen") -> tuple[pd.Da
     return out, last_info
 
 
+def summarize_smoothing_quality(info: dict | None) -> str:
+    """Return a compact human-readable quality summary for logs/UI."""
+
+    if not info:
+        return "smoother: unavailable"
+
+    q = info.get("quality_score", None)
+    label = str(info.get("quality_label", "unknown"))
+    base = info.get("window_base", "?")
+    heavy = info.get("window_heavy", "?")
+    period = info.get("estimated_period_k", None)
+    period_txt = f"period_k={float(period):.4g}" if isinstance(period, (int, float, np.floating)) else "period_k=?"
+    q_txt = f"q={float(q):.3f}" if isinstance(q, (int, float, np.floating)) else "q=?"
+    return f"smoother[{label}] {q_txt} base={base} heavy={heavy} {period_txt}"
+
+
+def auto_tune_savgol_params(
+    x_lambda: np.ndarray,
+    y_mat: np.ndarray,
+    preset: str = "Medium (Balanced)",
+) -> tuple[int, int, int]:
+    """Estimate Savitzky-Golay window parameters from spectral data.
+
+    Parameters
+    ----------
+    x_lambda : 1-D wavelength array (nm).
+    y_mat    : 2-D array (n_spectra, n_points) or 1-D (n_points,).
+    preset   : smoothing preset — one of:
+               "Soft (High Fidelity)", "Medium (Balanced)", "Extreme (Aggressive)".
+               Unknown values fall back to "Medium (Balanced)".
+
+    Returns
+    -------
+    (window_base, poly, window_heavy) — all int, both windows are odd,
+    window_heavy >= window_base.
+    """
+    _PRESET_MAP: dict[str, str] = {
+        "soft (high fidelity)": "faible",
+        "medium (balanced)": "moyen",
+        "extreme (aggressive)": "fort",
+    }
+    level = _PRESET_MAP.get(str(preset).strip().lower(), "moyen")
+
+    y_mat = np.asarray(y_mat, dtype=float)
+    x = np.asarray(x_lambda, dtype=float).ravel()
+
+    y_rep: np.ndarray = np.mean(y_mat, axis=0) if y_mat.ndim == 2 else y_mat.ravel()
+
+    try:
+        _x_s, k_uniform, y_uniform = _interpolate_uniform_in_k(x, y_rep)
+        y_uniform = _remove_spikes(y_uniform, z_thresh=5.0)
+        period_k, fringe_count, fringe_jitter = _estimate_fringe_period(k_uniform, y_uniform)
+        noise = _estimate_noise_level(y_uniform)
+        span_k = float(k_uniform.max() - k_uniform.min())
+        n_pts = len(k_uniform)
+    except Exception:
+        n_pts = max(int(x.size), 10)
+        period_k = 1e-4
+        noise = 0.0
+        span_k = 1e-3
+        fringe_count = 0
+        fringe_jitter = 0.0
+
+    try:
+        window_base, poly, window_heavy, _alpha = _choose_params(
+            level=level,
+            period_k=period_k,
+            noise=noise,
+            span_k=span_k,
+            n_points=n_pts,
+            fringe_count=fringe_count,
+            fringe_jitter=fringe_jitter,
+        )
+    except Exception:
+        window_base = _ensure_odd(max(3, n_pts // 8))
+        poly = 2
+        window_heavy = _ensure_odd(max(window_base + 2, int(window_base * 1.6)))
+
+    return int(window_base), int(poly), int(window_heavy)
+
+
+def auto_tune_savgol_params_from_dataframe(
+    x_lambda: np.ndarray,
+    df: pd.DataFrame,
+    preset: str = "Medium (Balanced)",
+) -> tuple[int, int, int]:
+    """Convenience wrapper: extract y_mat from a DataFrame and call auto_tune_savgol_params.
+
+    Assumes column 0 is the wavelength axis; remaining columns are spectra.
+    """
+    y_mat = df.iloc[:, 1:].values.T  # shape (n_spectra, n_points)
+    return auto_tune_savgol_params(x_lambda, y_mat, preset)
+
+
 def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: int, heavy_window: int = 0) -> np.ndarray:
     """Backward-compatible wrapper used by older callers.
 
-    The old API expected a direct blend in wavelength space. We now map it to the
-    new automatic smoother while preserving the intent of the call signature.
+    When explicit windows are provided, preserve that intent. Otherwise fall back
+    to the automatic smoother for robustness.
     """
 
-    del base_window, poly, heavy_window
-    y_smoothed, _info = smooth_spectrum_auto(np.asarray(x, dtype=float), np.asarray(y, dtype=float), level="moyen")
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+
+    # Support 2-D input (n_spectra, n_points): apply row-wise and stack.
+    if y.ndim == 2:
+        return np.vstack(
+            [dynamic_savgol_blend(x, row, base_window, poly, heavy_window) for row in y]
+        )
+
+    base_window = int(base_window)
+    poly = int(poly)
+    heavy_window = int(heavy_window)
+
+    try:
+        if base_window >= 3 and base_window > poly:
+            base_window = _ensure_odd(base_window)
+            if heavy_window < base_window:
+                heavy_window = _ensure_odd(max(base_window + 2, int(round(base_window * 1.6))))
+            heavy_window = max(heavy_window, base_window)
+            if heavy_window % 2 == 0:
+                heavy_window += 1
+
+            x_prep, k_uniform, y_uniform = _interpolate_uniform_in_k(x, y)
+            y_uniform = _remove_spikes(y_uniform, z_thresh=5.0)
+
+            max_valid = len(k_uniform) - 1 if len(k_uniform) % 2 == 0 else len(k_uniform)
+            max_valid = max(5, max_valid)
+            base_window = min(base_window, max_valid)
+            heavy_window = min(heavy_window, max_valid)
+            if base_window <= poly:
+                base_window = _ensure_odd(poly + 3)
+            if heavy_window <= base_window:
+                heavy_window = _ensure_odd(base_window + 2)
+            heavy_window = min(heavy_window, max_valid)
+            if heavy_window <= poly:
+                heavy_window = _ensure_odd(poly + 5)
+
+            y_base = savgol_filter(y_uniform, window_length=base_window, polyorder=poly, mode="interp")
+            try:
+                y_heavy = savgol_filter(y_uniform, window_length=heavy_window, polyorder=poly, mode="interp")
+            except Exception:
+                y_heavy = y_base.copy()
+
+            y_smoothed_uniform = 0.58 * y_base + 0.42 * y_heavy
+            f_back = interp1d(
+                k_uniform,
+                _safe_clip_percent(y_smoothed_uniform),
+                kind="linear",
+                fill_value=(float(y_smoothed_uniform[0]), float(y_smoothed_uniform[-1])),
+                bounds_error=False,
+                assume_sorted=True,
+            )
+            return _safe_clip_percent(f_back(1.0 / x_prep))
+    except Exception:
+        pass
+
+    y_smoothed, _info = smooth_spectrum_auto(x, y, level="moyen")
     return y_smoothed

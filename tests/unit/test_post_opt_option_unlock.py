@@ -82,7 +82,7 @@ def test_post_opt_option_controls_are_locked_before_first_result() -> None:
     assert app.btn_manual_knots_toggle.enabled_states[-1] is False
     assert app.btn_corridor_toggle.enabled_states[-1] is False
     assert app.chk_corridor_d.enabled_states[-1] is False
-    assert "disponibles apres optimisation" in app.lbl_corridors_run_state.text
+    assert "available after optimization" in app.lbl_corridors_run_state.text
 
 
 def test_post_opt_option_controls_unlock_after_result_when_idle() -> None:
@@ -103,7 +103,7 @@ def test_post_opt_option_controls_unlock_after_result_when_idle() -> None:
     assert app.btn_manual_knots_toggle.enabled_states[-1] is True
     assert app.btn_corridor_toggle.enabled_states[-1] is True
     assert app.chk_corridor_d.enabled_states[-1] is False
-    assert "prets a lancer" in app.lbl_corridors_run_state.text
+    assert "ready to launch" in app.lbl_corridors_run_state.text
 
 
 def test_corridor_state_label_reports_completed_when_profile_exists() -> None:
@@ -117,7 +117,7 @@ def test_corridor_state_label_reports_completed_when_profile_exists() -> None:
 
     CertusIndexSplineApp._refresh_corridors_gui_state_labels(app)
 
-    assert "deja calcules" in app.lbl_corridors_run_state.text
+    assert "already computed" in app.lbl_corridors_run_state.text
 
 
 def test_worker_done_non_dict_restores_idle_and_unlocks_post_opt_controls(monkeypatch) -> None:

@@ -237,7 +237,7 @@ def test_on_worker_done_skips_second_manual_prompt_after_manual_completion(monke
     assert "corridor" not in recorded
     assert "manual" not in recorded
     assert "export" in recorded
-    assert "Actions disponibles: Noeuds manuels / Corridors" in app.lbl_status.texts[-1]
+    assert "Available actions: Manual knots / Corridors" in app.lbl_status.texts[-1]
 
 
 def test_start_manual_sigma_insert_worker_scales_progress_to_ui_range(monkeypatch) -> None:
@@ -414,7 +414,7 @@ def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
     cfg_used = app._worker.args[0]
     assert getattr(cfg_used, "corridor_profile_d_enabled") is True
     assert any(
-        "Corridors: launching deferred corridor worker | after_stage=manual_sigma_insert" in msg
+        "launching deferred corridor worker | after_stage=manual_sigma_insert" in msg
         for msg in logger.info_calls
     )
 
@@ -449,7 +449,7 @@ def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> 
     assert ok is True
     cfg_used = app._worker.args[0]
     assert getattr(cfg_used, "corridor_profile_d_enabled") is True
-    assert app.lbl_status.texts[-1] == "Corridors: calcul en cours..."
+    assert app.lbl_status.texts[-1] == "Corridors: calculation in progress..."
 
 
 def test_manual_corridor_button_uses_raw_last_worker_result() -> None:
@@ -543,7 +543,7 @@ def test_curve_minimum_deep_refit_does_not_auto_start_corridors() -> None:
     assert recorded["refreshed"] is True
     assert recorded["controls"] is True
     assert recorded["export"] == {"auto_export": True}
-    assert "Actions disponibles: Noeuds manuels / Corridors" in app.lbl_status.texts[-1]
+    assert "Available actions: Manual knots / Corridors" in app.lbl_status.texts[-1]
     assert "corridor_check" not in recorded
     assert "corridor_launch" not in recorded
 

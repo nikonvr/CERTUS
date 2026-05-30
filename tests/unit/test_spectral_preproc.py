@@ -6,23 +6,45 @@ import numpy as np
 import pytest
 
 from certus.utils.certus_spectral_preproc import (
-    auto_tune_savgol_params,
     dynamic_savgol_blend,
+    smooth_spectrum_auto,
 )
 
 
-class TestAutoTuneSavgolParams:
-    def test_returns_window_and_order(self) -> None:
+# ---------------------------------------------------------------------------
+# Anciennement : auto_tune_savgol_params (fonction supprimée/fusionnée dans
+# smooth_spectrum_auto qui retourne les paramètres dans ses diagnostics).
+# Les assertions portent désormais sur smooth_spectrum_auto + diagnostics.
+# ---------------------------------------------------------------------------
+
+
+class TestSmoothSpectrumAutoParams:
+    """Vérifie que smooth_spectrum_auto retourne des paramètres cohérents."""
+
+    def test_returns_valid_window_and_order(self) -> None:
         lam = np.linspace(300, 800, 100)
         rng = np.random.default_rng(42)
         y = np.sin(lam / 100) + rng.normal(0, 0.01, 100)
-        y_mat = y.reshape(1, -1)  # 1 spectrum as 2D matrix
-        wl, order, heavy = auto_tune_savgol_params(lam, y_mat, mode="T")
+        _y_sm, diag = smooth_spectrum_auto(lam, y, level="moyen")
+        wl = diag["window_base"]
+        order = diag["polyorder"]
         assert isinstance(wl, int)
         assert isinstance(order, int)
-        assert wl >= 3  # minimum window
-        assert wl % 2 == 1  # must be odd
+        assert wl >= 3, "window doit être >= 3"
+        assert wl % 2 == 1, "window doit être impair"
         assert order >= 1
+
+    def test_heavy_window_gte_base_window(self) -> None:
+        lam = np.linspace(400, 1000, 150)
+        y = np.cos(lam / 80)
+        _y_sm, diag = smooth_spectrum_auto(lam, y, level="fort")
+        assert diag["window_heavy"] >= diag["window_base"]
+
+    def test_quality_score_in_range(self) -> None:
+        lam = np.linspace(300, 800, 200)
+        y = 0.5 + 0.1 * np.sin(lam / 50)
+        _y_sm, diag = smooth_spectrum_auto(lam, y)
+        assert 0.0 <= diag["quality_score"] <= 1.0
 
 
 class TestDynamicSavgolBlend:

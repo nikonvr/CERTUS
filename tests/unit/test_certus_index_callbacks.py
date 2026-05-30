@@ -103,8 +103,8 @@ def test_update_lambda_bounds_from_target_data_sets_spinboxes():
     class DummyLogger:
         def __init__(self):
             self.messages = []
-        def info(self, msg):
-            self.messages.append(msg)
+        def info(self, msg, *args):
+            self.messages.append(msg % args if args else str(msg))
 
     df = pd.DataFrame({"lambda": [500.0, 540.0, 580.0]})
     sb_lmin = DummySpin()

@@ -77,3 +77,9 @@ OLD VERSION/
 reports/Report_*
 reports/STRAT_observability_*
 
+# ─────────────── Generated test / CI artefacts ───────────────
+MagicMock/
+test_*.txt
+_pytest_nodeids*.txt
+diff_re.txt
+ruff_errors.txt

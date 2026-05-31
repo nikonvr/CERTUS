@@ -347,7 +347,8 @@ def _interp_t_at_lam_knots(lam_grid: np.ndarray, t_grid: np.ndarray, cur_sk: np.
         # cubic spline representation
         cs = CubicSpline(sig2_sorted, t_sorted, extrapolate=True)
         return np.asarray(cs(sk_arr ** 2), dtype=np.float64)
-    except Exception:
+    except Exception as e:
+        logger.warning("CubicSpline interpolation failed in _interp_t_at_lam_knots, using linear fallback: %s", e)
         # Fallback linear interpolation
         return np.interp(cur_sk ** 2, sig2_sorted, t_sorted)
 
@@ -399,7 +400,8 @@ def _fit_local_quadratic_rmse_profile(
             "anchor_nm": d_ref,
             "window_nm": (float(np.min(d_fit)), float(np.max(d_fit))),
         }
-    except Exception:
+    except Exception as e:
+        logger.warning("Quadratic RMSE profile fit failed in _fit_local_quadratic_rmse_profile: %s", e)
         return {"ok": False}
 
 class _ExcelExportMixin:

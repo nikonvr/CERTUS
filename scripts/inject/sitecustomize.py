@@ -50,5 +50,12 @@ sys.modules['select'] = SelectStub()
 m = ModuleType('multiprocessing.resource_tracker')
 m.register = m.unregister = m.ensure_running = lambda *args, **kw: None
 m.getfd = lambda *args, **kw: -1
+class FakeResourceTracker:
+    def __init__(self, *args, **kw): pass
+    def register(self, *args, **kw): pass
+    def unregister(self, *args, **kw): pass
+    def ensure_running(self, *args, **kw): pass
+    def getfd(self, *args, **kw): return -1
+m.ResourceTracker = FakeResourceTracker
 m._resource_tracker = m
 sys.modules['multiprocessing.resource_tracker'] = m

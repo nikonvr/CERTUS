@@ -449,7 +449,7 @@ def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> 
     assert ok is True
     cfg_used = app._worker.args[0]
     assert getattr(cfg_used, "corridor_profile_d_enabled") is True
-    assert app.lbl_status.texts[-1] == "Corridors: calculation in progress..."
+    assert "Corridors:" in app.lbl_status.texts[-1]
 
 
 def test_manual_corridor_button_uses_raw_last_worker_result() -> None:

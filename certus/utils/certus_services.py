@@ -139,7 +139,18 @@ class IndexFitResponse(BaseHeadlessResponse[dict[str, Any]]):
     """Headless response for INDEX fit execution."""
 
 
-class IndexFitService(BaseHeadlessService[IndexFitRequest, IndexFitResponse]):
+class _DelegatedFitServiceBase(BaseHeadlessService[ReqT, ResT]):
+    request_model: type[BaseHeadlessRequestModel]
+    request_type: type[ReqT]
+    response_type: type[ResT]
+
+    def fit(self, request: ReqT | Mapping[str, Any]) -> ResT:
+        req = self._to_dataclass_request(request, self.request_model, self.request_type)
+        result = self._runner(req.config)
+        return self.response_type(result=result, manifest=self._build_manifest(req))
+
+
+class IndexFitService(_DelegatedFitServiceBase[IndexFitRequest, IndexFitResponse]):
     """Thin headless service wrapper around an injected INDEX runner.
 
     The service does not implement the optimization itself yet. It wraps the
@@ -147,13 +158,12 @@ class IndexFitService(BaseHeadlessService[IndexFitRequest, IndexFitResponse]):
     reproducibility manifest, and returns a typed response.
     """
 
+    request_model = IndexFitRequestModel
+    request_type = IndexFitRequest
+    response_type = IndexFitResponse
+
     def __init__(self, runner: Runner) -> None:
         super().__init__(runner)
-
-    def fit(self, request: IndexFitRequest | Mapping[str, Any]) -> IndexFitResponse:
-        req = self._to_dataclass_request(request, IndexFitRequestModel, IndexFitRequest)
-        result = self._runner(req.config)
-        return IndexFitResponse(result=result, manifest=self._build_manifest(req))
 
 
 @dataclass(frozen=True)
@@ -168,16 +178,15 @@ class SubstrateIndexResponse(BaseHeadlessResponse[dict[str, Any]]):
     """Headless response for Substrate Index execution."""
 
 
-class SubstrateIndexService(BaseHeadlessService[SubstrateIndexRequest, SubstrateIndexResponse]):
+class SubstrateIndexService(_DelegatedFitServiceBase[SubstrateIndexRequest, SubstrateIndexResponse]):
     """Headless wrapper for substrate index computation entry points."""
+
+    request_model = SubstrateIndexRequestModel
+    request_type = SubstrateIndexRequest
+    response_type = SubstrateIndexResponse
 
     def __init__(self, runner: Runner) -> None:
         super().__init__(runner)
-
-    def fit(self, request: SubstrateIndexRequest | Mapping[str, Any]) -> SubstrateIndexResponse:
-        req = self._to_dataclass_request(request, SubstrateIndexRequestModel, SubstrateIndexRequest)
-        result = self._runner(req.config)
-        return SubstrateIndexResponse(result=result, manifest=self._build_manifest(req))
 
 
 @dataclass(frozen=True)
@@ -192,13 +201,12 @@ class REFitResponse(BaseHeadlessResponse[dict[str, Any]]):
     """Headless response for Reverse Engineering execution."""
 
 
-class REFitService(BaseHeadlessService[REFitRequest, REFitResponse]):
+class REFitService(_DelegatedFitServiceBase[REFitRequest, REFitResponse]):
     """Headless wrapper for RE computation entry points."""
+
+    request_model = REFitRequestModel
+    request_type = REFitRequest
+    response_type = REFitResponse
 
     def __init__(self, runner: Runner) -> None:
         super().__init__(runner)
-
-    def fit(self, request: REFitRequest | Mapping[str, Any]) -> REFitResponse:
-        req = self._to_dataclass_request(request, REFitRequestModel, REFitRequest)
-        result = self._runner(req.config)
-        return REFitResponse(result=result, manifest=self._build_manifest(req))

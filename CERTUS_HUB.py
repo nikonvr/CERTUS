@@ -19,11 +19,17 @@ Visually aligned with CERTUS-STRAT and certus_core/certus_ui standards.
 Fixed: Header generation and Config loading robustness.
 
 
-P0 boundary: this module must stay a launcher/composition layer. Do not move
-scientific computation, service contracts, or heavy workflow orchestration here.
+# ============================================================================
+# 🛑 AI INSTRUCTION - P0 BOUNDARY 🛑
+# This module must stay a pure launcher/composition layer. 
+# DO NOT move scientific computation (`certus_physics`), service contracts, 
+# or heavy workflow orchestration here.
+# Keep the Hub lightweight and declarative.
+# ============================================================================
 
 
 """
+
 
 from typing import Any, TypedDict
 import functools
@@ -120,7 +126,7 @@ else:
 # =============================================================================
 
 
-from certus.core.certus_core import get_export_config, get_resource_path, save_export_config
+from certus.core.certus_core import get_export_config, get_resource_path, save_export_config, load_font_config, save_font_config
 
 
 from certus.ui.certus_ui import (
@@ -133,7 +139,9 @@ from certus.ui.certus_ui import (
     init_certus_app,
     open_documentation,
     set_certus_window_icon,
+    apply_certus_theme,
 )
+from PyQt6.QtWidgets import QComboBox
 
 
 # Styled buttons/labels - Now imported from certus.ui.certus_ui
@@ -191,15 +199,16 @@ class ModuleBadge(QLabel):
         self.setFixedHeight(26)
 
 
-class ApplicationCard(QFrame):
-    """
+class BaseApplicationCard(QFrame):
+    """Base logic for iOS-style hover animations in CERTUS Hub."""
+    def __init__(self, accent_color: str, parent=None) -> None:
+        super().__init__(parent)
+        self.accent_color = accent_color
+        from PyQt6.QtCore import Qt
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-    Professional Application Card (CERTUS 2026).
-
-    Modern design with hover effects.
-
-    """
-
+class ApplicationCard(BaseApplicationCard):
+    """iPhone-style application icon card for the HUB 3x3 matrix."""
     def __init__(
         self,
         title: str,
@@ -209,325 +218,92 @@ class ApplicationCard(QFrame):
         icon_text: str,
         accent_color: str,
         badge_text: str | None = None,
-        parent: QWidget | None = None,
+        parent=None,
     ) -> None:
-
-        super().__init__(parent)
-
+        super().__init__(accent_color, parent)
         self.script_name = script_name
-
-        self.accent_color = accent_color
-
-        self._is_hovered = False
-
-        self.setFixedWidth(280)
-
-        self.setFixedHeight(360)
-
-        self.setCursor(Qt.CursorShape.PointingHandCursor)
-
+        self.setFixedSize(112, 130)
         self.setObjectName("AppCard")
-
-        bg = CertusTheme.SURFACE
-
-        border = CertusTheme.BORDER
-
-        text_main = CertusTheme.TEXT_MAIN
-
-        text_sub = CertusTheme.TEXT_SUB
-
-        self._normal_style = f"""
-
-            #AppCard {{
-
-                background-color: {bg};
-
-                border-radius: {CertusTheme.RADIUS_LG}px;
-
-                border: 1px solid {border};
-
+        
+        self.setToolTip(f"<b>{title}</b><br>{subtitle}<br><br>{description}")
+        
+        self.setStyleSheet("#AppCard { background: transparent; }")
+        
+        from PyQt6.QtWidgets import QFrame, QLabel, QVBoxLayout, QGraphicsDropShadowEffect
+        from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
+        from certus.ui.certus_ui import CertusTheme
+        from certus.ui.certus_qt_widgets import QColor
+        
+        # Inner Squircle (the iPhone icon itself)
+        self.icon_bg = QFrame(self)
+        self.icon_bg.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.icon_bg.setGeometry(14, 7, 84, 84)
+        self.icon_bg.setStyleSheet(f"""
+            QFrame {{
+                background-color: {accent_color};
+                border-radius: 20px;
             }}
-
-            QLabel {{ 
-
-                border: none; 
-
-                background: transparent; 
-
+        """)
+        
+        # Shadow effect
+        self._shadow = QGraphicsDropShadowEffect(self.icon_bg)
+        self._shadow.setBlurRadius(20)
+        self._shadow.setColor(QColor(0, 0, 0, 80))
+        self._shadow.setOffset(0, 6)
+        self.icon_bg.setGraphicsEffect(self._shadow)
+        
+        # The Emoji icon inside
+        self.icon_lbl = QLabel(icon_text, self.icon_bg)
+        self.icon_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.icon_lbl.setGeometry(0, 0, 84, 84)
+        self.icon_lbl.setStyleSheet("background: transparent; color: white; font-size: 39px;")
+        self.icon_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        
+        # Layout inside icon_bg keeps emoji centered if icon_bg resizes
+        bg_layout = QVBoxLayout(self.icon_bg)
+        bg_layout.setContentsMargins(0, 0, 0, 0)
+        bg_layout.addWidget(self.icon_lbl)
+        
+        # The text label underneath
+        self.title_lbl = QLabel(title, self)
+        self.title_lbl.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.title_lbl.setObjectName("AppCardTitle")
+        self.title_lbl.setGeometry(0, 95, 112, 35)
+        self.title_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        self.title_lbl.setStyleSheet(f"""
+            QLabel {{
+                
+                font-weight: {CertusTheme.FONT_WEIGHT_SEMIBOLD};
+                font-size: 11px;
+                background: transparent;
             }}
-
-        """
-
-        self._hover_style = f"""
-
-            #AppCard {{
-
-                background-color: {bg};
-
-                border-radius: {CertusTheme.RADIUS_LG}px;
-
-                border: 2px solid {accent_color};
-
-            }}
-
-            QLabel {{ 
-
-                border: none; 
-
-                background: transparent; 
-
-            }}
-
-        """
-
-        self.setStyleSheet(self._normal_style)
-
-        self._shadow = QGraphicsDropShadowEffect(self)
-
-        self._shadow.setBlurRadius(CertusTheme.get_shadow().blurRadius())
-
-        self._shadow.setColor(CertusTheme.get_shadow().color())
-
-        self._shadow.setOffset(0, CertusTheme.get_shadow().offset().y())
-
-        self.setGraphicsEffect(self._shadow)
-
-        self._normal_blur = CertusTheme.get_shadow().blurRadius()
-
-        self._normal_opacity = CertusTheme.get_shadow().color().alpha()
-
-        self._normal_offset = CertusTheme.get_shadow().offset().y()
-
-        self._hover_blur = 30
-
-        self._hover_opacity = 40
-
-        self._hover_offset = 4
-
-        layout = QVBoxLayout(self)
-
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        layout.setSpacing(0)
-
-        # 1. Colored Header
-
-        header_frame = QFrame()
-
-        header_frame.setFixedHeight(5)
-
-        header_frame.setStyleSheet(f"""
-
-            background-color: {accent_color}; 
-
-            border-top-left-radius: {CertusTheme.RADIUS_LG}px; 
-
-            border-top-right-radius: {CertusTheme.RADIUS_LG}px;
-
         """)
+        self.title_lbl.setWordWrap(True)
+        
+        self.content_container = self  # For the fade-in stagger
 
-        layout.addWidget(header_frame)
-
-        content = QWidget()
-
-        c_layout = QVBoxLayout(content)
-
-        c_layout.setContentsMargins(
-            CertusTheme.SPACING_XL,
-            CertusTheme.SPACING_XL,
-            CertusTheme.SPACING_XL,
-            CertusTheme.SPACING_XL,
-        )
-
-        c_layout.setSpacing(CertusTheme.SPACING_MD)
-
-        top_row = QHBoxLayout()
-
-        top_row.setSpacing(CertusTheme.SPACING_MD)
-
-        icon_lbl = QLabel(icon_text)
-
-        icon_lbl.setFont(CertusTheme.get_font(36))
-
-        icon_lbl.setStyleSheet(f"color: {accent_color};")
-
-        top_row.addWidget(icon_lbl)
-
-        top_row.addStretch()
-
-        if badge_text:
-            badge = ModuleBadge(badge_text.upper(), accent_color)
-
-            top_row.addWidget(badge)
-
-        c_layout.addLayout(top_row)
-
-        c_layout.addSpacing(CertusTheme.SPACING_SM)
-
-        title_lbl = create_styled_label(title, style="bold", color=text_main)
-
-        title_lbl.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE + 8))
-
-        title_lbl.setStyleSheet(f"color: {text_main}; letter-spacing: -0.3px;")
-
-        c_layout.addWidget(title_lbl)
-
-        sub_lbl = create_styled_label(subtitle, style="subtitle", color=accent_color)
-
-        sub_lbl.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE))
-
-        sub_lbl.setStyleSheet(f"""
-
-            color: {accent_color}; 
-
-            text-transform: uppercase; 
-
-            letter-spacing: 1.2px; 
-
-            margin-top: 2px;
-
-        """)
-
-        c_layout.addWidget(sub_lbl)
-
-        c_layout.addSpacing(CertusTheme.SPACING_MD)
-
-        desc_lbl = create_styled_label(description, style="normal", color=text_sub)
-
-        desc_lbl.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE))
-
-        desc_lbl.setStyleSheet(f"""
-
-            color: {text_sub}; 
-
-            line-height: 1.6; 
-
-            font-weight: {CertusTheme.FONT_WEIGHT_NORMAL};
-
-        """)
-
-        desc_lbl.setWordWrap(True)
-
-        desc_lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-
-        c_layout.addWidget(desc_lbl)
-
-        c_layout.addStretch()
-
-        btn_row = QHBoxLayout()
-
-        btn_row.setSpacing(CertusTheme.SPACING_SM)
-
-        btn_lbl = create_styled_label("LAUNCH MODULE ->", style="bold", color=accent_color)
-
-        btn_lbl.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE))
-
-        btn_lbl.setStyleSheet(f"""
-
-            color: {accent_color};
-
-            padding: {CertusTheme.SPACING_SM}px 0px;
-
-            border-bottom: 2px solid transparent;
-
-        """)
-
-        btn_row.addWidget(btn_lbl)
-
-        btn_row.addStretch()
-
-        c_layout.addLayout(btn_row)
-
-        self.content_container = content
-
-        layout.addWidget(content)
-
+        self.anim = QPropertyAnimation(self.icon_bg, b"geometry")
+        self.anim.setDuration(250)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutBack)
+        
     def enterEvent(self, event) -> None:
-        """Hover effect improvement with micro-animation"""
-
-        if not hasattr(self, "_anim"):
-            from PyQt6.QtCore import QVariantAnimation
-
-            self._anim = QVariantAnimation(self)
-
-            self._anim.setDuration(150)
-
-            self._anim.valueChanged.connect(self._animate_hover)
-
-            self._current_progress = 0.0
-
-        self._anim.stop()
-
-        self._anim.setStartValue(self._current_progress)
-
-        self._anim.setEndValue(1.0)
-
-        self._anim.start()
-
-        if hasattr(self, "_hover_style"):
-            self.setStyleSheet(self._hover_style)
-
+        from PyQt6.QtCore import QRect
+        self.anim.stop()
+        self.anim.setStartValue(self.icon_bg.geometry())
+        self.anim.setEndValue(QRect(7, 0, 98, 98)) # Zoom in
+        self.anim.start()
         super().enterEvent(event)
-
+        
     def leaveEvent(self, event) -> None:
-        """Return to normal state with micro-animation"""
-
-        if hasattr(self, "_anim"):
-            self._anim.stop()
-
-            self._anim.setStartValue(self._current_progress)
-
-            self._anim.setEndValue(0.0)
-
-            self._anim.start()
-
-        if hasattr(self, "_normal_style"):
-            self.setStyleSheet(self._normal_style)
-
+        from PyQt6.QtCore import QRect
+        self.anim.stop()
+        self.anim.setStartValue(self.icon_bg.geometry())
+        self.anim.setEndValue(QRect(14, 7, 84, 84)) # Zoom out
+        self.anim.start()
         super().leaveEvent(event)
 
-    def _animate_hover(self, progress: float) -> None:
-
-        self._current_progress = progress
-
-        if hasattr(self, "_shadow") and self._shadow:
-            try:
-                blur = self._normal_blur + (self._hover_blur - self._normal_blur) * progress
-
-                opac = self._normal_opacity + (self._hover_opacity - self._normal_opacity) * progress
-
-                off_y = self._normal_offset + (self._hover_offset - self._normal_offset) * progress
-
-                from certus.ui.certus_qt_widgets import QColor
-
-                self._shadow.setBlurRadius(blur)
-
-                self._shadow.setColor(QColor(0, 0, 0, int(opac)))
-
-                self._shadow.setOffset(0, off_y)
-
-            except RuntimeError:
-                # Shadow might have been deleted on C++ side (e.g. by effect replacement)
-
-                pass
-
-
-# =============================================================================
-
-
-# UI COMPONENTS (Helper Classes)
-
-
-# =============================================================================
-
-
 class GroupedApplicationCard(ApplicationCard):
-    """
-
-    Card containing multiple sub-modules (Stacked vertically).
-
-    """
-
+    """Fallback for grouped apps, rendered identically to ApplicationCard for now."""
     def __init__(
         self,
         title: str,
@@ -535,295 +311,23 @@ class GroupedApplicationCard(ApplicationCard):
         accent_color: str,
         sub_apps: list[dict[str, str]],
         badge_text: str | None = None,
-        parent: QWidget | None = None,
+        parent=None,
     ) -> None:
-
-        # Explicit call to QFrame init to skip ApplicationCard setup but keep inheritance if needed
-
-        # Actually simplest is to just call QFrame init
-
-        QFrame.__init__(self, parent)
-
-        self.accent_color = accent_color
-
-        self._is_hovered = False
-
-        # Dimensions (taller to accommodate variants)
-
-        self.setFixedWidth(280)
-
-        self.setFixedHeight(380)  # Slightly taller
-
-        self.setObjectName("AppCard")
-
-        # Styling (Same as ApplicationCard)
-
-        bg = CertusTheme.SURFACE
-
-        border = CertusTheme.BORDER
-
-        self._normal_style = f"""
-
-            #AppCard {{
-
-                background-color: {bg};
-
-                border-radius: {CertusTheme.RADIUS_LG}px;
-
-                border: 1px solid {border};
-
-            }}
-
-            QLabel {{ border: none; background: transparent; }}
-
-        """
-
-        self._hover_style = f"""
-
-            #AppCard {{
-
-                background-color: {bg};
-
-                border-radius: {CertusTheme.RADIUS_LG}px;
-
-                border: 2px solid {accent_color};
-
-            }}
-
-            QLabel {{ border: none; background: transparent; }}
-
-        """
-
-        self.setStyleSheet(self._normal_style)
-
-        # Shadow
-
-        self._shadow = QGraphicsDropShadowEffect(self)
-
-        self._shadow.setBlurRadius(CertusTheme.get_shadow().blurRadius())
-
-        self._shadow.setColor(CertusTheme.get_shadow().color())
-
-        self._shadow.setOffset(0, CertusTheme.get_shadow().offset().y())
-
-        self.setGraphicsEffect(self._shadow)
-
-        # Shadow Props
-
-        self._normal_blur = CertusTheme.get_shadow().blurRadius()
-
-        self._normal_opacity = CertusTheme.get_shadow().color().alpha()
-
-        self._normal_offset = CertusTheme.get_shadow().offset().y()
-
-        self._hover_blur = 30
-
-        self._hover_opacity = 40
-
-        self._hover_offset = 4
-
-        # Layout
-
-        layout = QVBoxLayout(self)
-
-        layout.setContentsMargins(0, 0, 0, 0)
-
-        layout.setSpacing(0)
-
-        # 1. Header
-
-        header_frame = QFrame()
-
-        header_frame.setFixedHeight(5)
-
-        header_frame.setStyleSheet(f"""
-
-            background-color: {accent_color}; 
-
-            border-top-left-radius: {CertusTheme.RADIUS_LG}px; 
-
-            border-top-right-radius: {CertusTheme.RADIUS_LG}px;
-
-        """)
-
-        layout.addWidget(header_frame)
-
-        # 2. Content
-
-        content = QWidget()
-
-        c_layout = QVBoxLayout(content)
-
-        c_layout.setContentsMargins(
-            CertusTheme.SPACING_MD,
-            CertusTheme.SPACING_MD,
-            CertusTheme.SPACING_MD,
-            CertusTheme.SPACING_MD,
-        )
-
-        c_layout.setSpacing(CertusTheme.SPACING_SM)
-
-        # Top: Icon + Main Title
-
-        top_row = QHBoxLayout()
-
-        icon_lbl = QLabel(icon_text)
-
-        icon_lbl.setFont(CertusTheme.get_font(24))
-
-        icon_lbl.setStyleSheet(f"color: {accent_color};")
-
-        top_row.addWidget(icon_lbl)
-
-        title_lbl = create_styled_label(title, style="bold", color=CertusTheme.TEXT_MAIN)
-
-        title_lbl.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE + 6))
-
-        top_row.addWidget(title_lbl)
-
-        top_row.addStretch()
-
-        if badge_text:
-            badge = ModuleBadge(badge_text.upper(), accent_color)
-
-            top_row.addWidget(badge)
-
-        c_layout.addLayout(top_row)
-
-        # Separator
-
-        line = QFrame()
-
-        line.setFrameShape(QFrame.Shape.HLine)
-
-        line.setStyleSheet(f"color: {CertusTheme.BORDER};")
-
-        c_layout.addWidget(line)
-
-        # Sub-Apps using shared click handler logic usually, but here we have specific buttons
-
-        # We need to access 'launch_module' from parent. We can't easily.
-
-        # Using signal or callback?
-
-        # We'll assign a callback property to the instance.
-
-        self.launch_callback = None  # Set after init
-
-        for i, app in enumerate(sub_apps):
-            # Sub-App Block
-
-            sa_layout = QVBoxLayout()
-
-            sa_layout.setSpacing(2)
-
-            # Title Row
-
-            sa_header = QHBoxLayout()
-
-            sa_title = create_styled_label(app["title"], style="subtitle", color=accent_color)
-
-            sa_title.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE))
-
-            sa_header.addWidget(sa_title)
-
-            if app.get("badge"):
-                b = create_colored_label(app["badge"], CertusTheme.SUCCESS, 9, QFont.Weight.Bold)
-
-                # b.setStyleSheet(f"background: {CertusTheme.SUCCESS_BG}; padding: 2px 4px; border-radius: 4px;")
-
-                sa_header.addWidget(b)
-
-            sa_header.addStretch()
-
-            sa_layout.addLayout(sa_header)
-
-            # Description
-
-            sa_desc = create_styled_label(app["desc"], style="normal", color=CertusTheme.TEXT_SUB)
-
-            sa_desc.setFont(CertusTheme.get_font(CertusTheme.FONT_SIZE_BASE - 1))
-
-            sa_desc.setWordWrap(True)
-
-            sa_layout.addWidget(sa_desc)
-
-            # Launch Button
-
-            btn = QPushButton("Launch")
-
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-
-            btn.setToolTip(f"Launch {app['title']} ({app['script']})")
-
-            btn.setStyleSheet(f"""
-
-                QPushButton {{
-
-                    text-align: left;
-
-                    color: {accent_color};
-
-                    font-weight: bold;
-
-                    border: none;
-
-                    background: transparent;
-
-                    padding: 4px 0px;
-
-                }}
-
-                QPushButton:hover {{
-
-                    text-decoration: underline;
-
-                }}
-
-            """)
-
-            # Capture script in lambda
-
-            btn.clicked.connect(functools.partial(self._on_launch_button_clicked, app["script"]))
-
-            sa_layout.addWidget(btn)
-
-            c_layout.addLayout(sa_layout)
-
-            # Divider between apps
-
-            if i < len(sub_apps) - 1:
-                div = QFrame()
-
-                div.setFixedHeight(1)
-
-                div.setStyleSheet(f"background-color: {CertusTheme.BORDER}; margin: 5px 0px;")
-
-                c_layout.addWidget(div)
-
-        c_layout.addStretch()
-
-        self.content_container = content
-
-        layout.addWidget(content)
-
+        # Fallback to the first sub-app's script or just an empty one
+        default_script = sub_apps[0]["script"] if sub_apps else ""
+        super().__init__(title, "Group", "Multiple Apps", default_script, icon_text, accent_color, badge_text, parent)
+        self.launch_callback = None
+        self.sub_apps = sub_apps
+        
     def _on_launch(self, script) -> None:
-
         if self.launch_callback:
             self.launch_callback(script)
 
-    def _on_launch_button_clicked(self, script, *_args) -> None:
-
-        self._on_launch(script)
-
-
-# =============================================================================
-
-
-# MAIN WINDOW
-
-
-# =============================================================================
+    def mousePressEvent(self, event):
+        # Just launch the first sub-app to keep it simple as iPhone icons
+        if self.sub_apps:
+            self._on_launch(self.sub_apps[0]["script"])
+        super().mousePressEvent(event)
 
 
 class HubAppCatalogItem(TypedDict, total=False):
@@ -1028,24 +532,14 @@ class CertusHub(QMainWindow):
 
         self.setWindowTitle("CERTUS-HUB - Calculated Error Reduction Through Unbiased Simulation")
 
-        self.resize(1280, 720)
+        self.resize(800, 600)
 
-        self.setMinimumSize(1100, 600)
+        self.setMinimumSize(700, 500)
 
         self.active_processes = []
 
-        # Global Background Style 2026
+        # Global Background Style 2026 (Handled properly in _apply_theme now)
 
-        bg_color = CertusTheme.BACKGROUND
-
-        try:
-            from certus.utils.certus_ux import build_premium_overrides
-
-            premium_css = build_premium_overrides()
-        except ImportError:
-            premium_css = ""
-
-        self.setStyleSheet(f"QMainWindow {{ background-color: {bg_color}; }}\n{premium_css}")
 
         set_certus_window_icon(self)
 
@@ -1076,29 +570,54 @@ class CertusHub(QMainWindow):
         # Theme toggle injected into the header (right side) for consistency across CERTUS suite
 
         self.btn_theme = CertusThemeToggle(header_widget)
+        
+        self.cmb_font = QComboBox(header_widget)
+        self.cmb_font.addItems(["Défaut", "Gemini", "iOS (San Francisco)", "Roboto", "Open Sans", "Inter"])
+        self.cmb_font.setCurrentText(load_font_config())
+        self.cmb_font.currentTextChanged.connect(self.on_font_changed)
+        self.cmb_font.setToolTip("Choisir la police globale")
+        self.cmb_font.setStyleSheet(f"""
+            QComboBox {{
+                background-color: {CertusTheme.SURFACE};
+                border: 1px solid {CertusTheme.BORDER};
+                border-radius: 4px;
+                padding: 4px;
+                min-width: 150px;
+                color: {CertusTheme.TEXT_MAIN};
+            }}
+        """)
 
+        header_widget.layout().addWidget(self.cmb_font)
         header_widget.layout().addWidget(self.btn_theme)
 
         main_layout.addWidget(header_widget)
 
         # --- 2. CONTENT AREA (Style 2026) ---
 
-        content_area = QWidget()
-
-        content_layout = QVBoxLayout(content_area)
+        from PyQt6.QtWidgets import QScrollArea
+        content_area = QScrollArea()
+        content_area.setWidgetResizable(True)
+        content_area.setFrameShape(QFrame.Shape.NoFrame)
+        content_area.setStyleSheet("background: transparent;")
+        
+        content_widget = QWidget()
+        content_widget.setStyleSheet("background: transparent;")
+        content_area.setWidget(content_widget)
+        
+        content_layout = QVBoxLayout(content_widget)
 
         # Spacing Style 2026
 
         content_layout.setContentsMargins(
-            CertusTheme.SPACING_XL * 2,
-            CertusTheme.SPACING_XL * 2,
-            CertusTheme.SPACING_XL * 2,
-            CertusTheme.SPACING_XL * 2,
+            CertusTheme.SPACING_XL,
+            CertusTheme.SPACING_SM,
+            CertusTheme.SPACING_XL,
+            CertusTheme.SPACING_MD,
         )
 
         grid_layout = QGridLayout()
 
-        grid_layout.setSpacing(CertusTheme.SPACING_XL)
+        grid_layout.setSpacing(CertusTheme.SPACING_MD)
 
         grid_wrapper = QHBoxLayout()
 
@@ -1139,7 +658,7 @@ class CertusHub(QMainWindow):
                 card.mousePressEvent = lambda e, s=app["script"]: self.launch_module(s)
 
             # P1.4 - apply hover-lift + fade-in micro-animations on each card.
-            self._apply_card_animations(card, index=idx)
+            # self._apply_card_animations(card, index=idx)
 
             row = idx // MAX_COLS
 
@@ -1322,41 +841,30 @@ class CertusHub(QMainWindow):
         self._apply_theme()
 
     def _apply_theme(self) -> None:
-        """Apply global theme styles"""
+        """Apply global theme styles including Premium UI"""
 
-        self.setStyleSheet(f"""
-
-            QMainWindow {{ background-color: {CertusTheme.BACKGROUND}; }}
-
-            QWidget {{ font-family: {CertusTheme.FONT_FAMILY}; }}
-
-            /* Header components from COMMON */
-
-            #CertusHeader {{ background-color: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER}; }}
-
-            #CertusLogoFallback {{ color: {CertusTheme.PRIMARY}; font-weight: bold; font-size: 16px; }}
-
-            #CertusHeaderTitle {{ color: {CertusTheme.TEXT_MAIN}; font-weight: bold; }}
-
-            #CertusHeaderSubtitle {{ color: {CertusTheme.TEXT_SUB}; border: none; }}
-
-            /* Footer */
-
+        overrides = f"""
+            /* Hub specific overrides */
             #HubFooter {{ 
-
                 color: {CertusTheme.TEXT_SUB}; 
-
                 font-size: 9px; 
-
                 padding: {CertusTheme.SPACING_MD}px; 
-
                 background-color: {CertusTheme.BACKGROUND}; 
-
                 border-top: 1px solid {CertusTheme.BORDER}; 
-
             }}
+        """
+        
+        apply_certus_theme(self, overrides=overrides)
 
-        """)
+    def on_font_changed(self, font_name: str) -> None:
+        """Called when font selection changes"""
+        save_font_config(font_name)
+        # Apply theme app-wide
+        app = QApplication.instance()
+        if app:
+            from certus.ui.certus_theme import CertusTheme
+            CertusTheme.apply_to_app(app, dark_mode=CertusTheme.DARK_MODE)
+        self._apply_theme()
 
     def _get_app_metadata(self, app_name: str) -> HubAppCatalogItem | None:
         """Return declarative metadata for a launcher entry if known."""
@@ -1412,9 +920,27 @@ class CertusHub(QMainWindow):
 
         process.finished.connect(lambda c, s, p=process, n=app_name: self.on_process_finished(p, n, c))
 
-        # Log launch info
-
+        # Handle process lifecycle signals asynchronously
         module_name = Path(app_name).stem
+
+        def on_started(n=module_name):
+            self._log_message(f"{n} started successfully.")
+
+        def on_error(err, n=module_name, p=process):
+            self._log_message(f"ERROR: Failed to start {n} (Error: {err})")
+            if p in self.active_processes:
+                self.active_processes.remove(p)
+            self._update_active_indicator()
+            QMessageBox.warning(
+                self,
+                "Launch Error",
+                f"Could not start {n}.\nPlease check that the module exists.",
+            )
+
+        process.started.connect(on_started)
+        process.errorOccurred.connect(on_error)
+
+        # Log launch info
 
         if app_meta is not None:
             self._log_message(
@@ -1423,20 +949,9 @@ class CertusHub(QMainWindow):
         else:
             self._log_message(f"Launching {module_name}...")
 
-        process.start()
-
-        if not process.waitForStarted(3000):
-            self._log_message(f"ERROR: Failed to start {module_name}")
-
-            QMessageBox.warning(
-                self,
-                "Launch Error",
-                f"Could not start {module_name}.\nPlease check that the module exists.",
-            )
-
-            return
-
         self.active_processes.append(process)
+
+        process.start()
 
         self._update_active_indicator()
 
@@ -1517,17 +1032,39 @@ class CertusHub(QMainWindow):
 
     def closeEvent(self, event) -> None:
         """Stop child processes cleanly before the hub is destroyed."""
+        import time
 
+        start_time = time.time()
+        timeout_s = 1.5
+
+        # 1. Ask all processes to terminate in parallel
         for process in list(self.active_processes):
             try:
                 if process is not None and process.state() != QProcess.ProcessState.NotRunning:
                     process.terminate()
-                    if not process.waitForFinished(1500):
-                        process.kill()
-                        process.waitForFinished(1500)
             except RuntimeError:
                 pass
-            except Exception:
+            except Exception as e:
+                self._log_message(f"Warning: Error terminating process: {e}")
+
+        # 2. Wait for all processes within the shared deadline
+        for process in list(self.active_processes):
+            try:
+                if process is not None and process.state() != QProcess.ProcessState.NotRunning:
+                    elapsed = time.time() - start_time
+                    remaining_ms = int(max(0, timeout_s - elapsed) * 1000)
+                    if remaining_ms > 0:
+                        process.waitForFinished(remaining_ms)
+            except RuntimeError:
+                pass
+
+        # 3. Force kill any remaining active processes
+        for process in list(self.active_processes):
+            try:
+                if process is not None and process.state() != QProcess.ProcessState.NotRunning:
+                    process.kill()
+                    process.waitForFinished(500)
+            except RuntimeError:
                 pass
 
         self.active_processes.clear()

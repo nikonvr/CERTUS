@@ -97,6 +97,15 @@ class RecentFilesRegistry:
     def __init__(self, cap: int = MAX_RECENTS_PER_CATEGORY) -> None:
         self.cap = int(cap)
 
+    def _backend(self):
+        return _qs_settings()
+
+    def _sync(self, qs) -> None:
+        try:
+            qs.sync()
+        except Exception:
+            pass
+
     # -- Read -------------------------------------------------------------
     def list_recent(self, category: str, *, limit: int | None = None, drop_missing: bool = True) -> list[str]:
         """Return MRU-sorted paths for ``category``.
@@ -136,7 +145,7 @@ class RecentFilesRegistry:
 
     def clear(self, category: str | None = None) -> None:
         """Clear one category or all if ``category`` is ``None``."""
-        qs = _qs_settings()
+        qs = self._backend()
         if qs is None:
             if category is None:
                 _MEMORY_STORE.clear()
@@ -145,14 +154,13 @@ class RecentFilesRegistry:
             return
         if category is None:
             qs.clear()
-            qs.sync()
         else:
             qs.remove(_qs_key(category))
-            qs.sync()
+        self._sync(qs)
 
     # -- Internals --------------------------------------------------------
     def _read(self, category: str) -> list[str]:
-        qs = _qs_settings()
+        qs = self._backend()
         if qs is None:
             return list(_MEMORY_STORE.get(category, []))
         raw = qs.value(_qs_key(category))
@@ -168,12 +176,12 @@ class RecentFilesRegistry:
         return [str(x) for x in items if x]
 
     def _write(self, category: str, items: list[str]) -> None:
-        qs = _qs_settings()
+        qs = self._backend()
         if qs is None:
             _MEMORY_STORE[category] = list(items)
             return
         qs.setValue(_qs_key(category), list(items))
-        qs.sync()
+        self._sync(qs)
 
 
 def _qs_key(category: str) -> str:

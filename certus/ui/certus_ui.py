@@ -848,6 +848,50 @@ class CertusLogPanel(QWidget):
         self._on_copy()
 
 
+class AutoShrinkTitleLabel(QLabel):
+    """A label that shrinks its font size to prevent being cut off (mangé)."""
+    def __init__(self, text: str, default_size: int = 16, min_size: int = 9, color: str = CertusTheme.TEXT_MAIN, weight: int | str = 800, parent=None):
+        super().__init__(text, parent)
+        from PyQt6.QtWidgets import QSizePolicy
+        from PyQt6.QtCore import Qt
+        
+        self._default_size = default_size
+        self._min_size = min_size
+        self._color = color
+        self._weight = weight
+        self._current_rendered_size = default_size
+        self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Minimum)
+        self.setWordWrap(True)
+        self._update_style(default_size)
+
+    def _update_style(self, size: int) -> None:
+        if self._current_rendered_size == size and self.styleSheet():
+            return
+        self._current_rendered_size = size
+        self.setStyleSheet(f"font-weight: {self._weight}; color: {self._color}; font-size: {size}px; background: transparent;")
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        rect = self.contentsRect()
+        if rect.width() <= 0 or rect.height() <= 0:
+            return
+            
+        current_size = self._default_size
+        font = self.font()
+        from PyQt6.QtGui import QFontMetrics
+        
+        while current_size >= self._min_size:
+            font.setPixelSize(current_size)
+            fm = QFontMetrics(font)
+            # Use 1000 for height to simulate infinite available height during measurement
+            bound = fm.boundingRect(0, 0, rect.width(), 1000, Qt.TextFlag.TextWordWrap, self.text())
+            if bound.height() <= rect.height():
+                break
+            current_size -= 1
+            
+        self._update_style(current_size)
+
+
 def create_header_logo_widget(
     title_text: str | None = None,
     subtitle_text: str | None = None,
@@ -857,53 +901,47 @@ def create_header_logo_widget(
 ) -> QWidget:
 
     w = QWidget()
-
-    w.setFixedHeight(60)
-
+    w.setMinimumHeight(60)
     w.setObjectName("CertusHeader")
-
     w.setStyleSheet(
         f"#CertusHeader {{ background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER}; }}"
     )
-
     layout = QHBoxLayout(w)
-
     layout.setContentsMargins(18, 8, 18, 8)
 
     # Logo
-
     if SVG_AVAILABLE and Path(get_resource_path("certus.svg")).exists():
         logo = QSvgWidget(get_resource_path("certus.svg"))
-
         logo.setFixedSize(logo_width, 40)
-
         layout.addWidget(logo)
-
     else:
         lbl = QLabel("CERTUS")
-
         lbl.setStyleSheet(f"font-weight: 800; color: {CertusTheme.PRIMARY}; font-size: 20px;")
-
         layout.addWidget(lbl)
 
     if title_text:
         layout.addSpacing(20)
-
         vbox = QVBoxLayout()
-
         vbox.setSpacing(0)
-
-        lbl_title = QLabel(title_text)
-
-        lbl_title.setStyleSheet(f"font-weight: 800; color: {CertusTheme.TEXT_MAIN}; font-size: 16px;")
-
+        vbox.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        
+        lbl_title = AutoShrinkTitleLabel(
+            title_text, 
+            default_size=16, 
+            min_size=9, 
+            color=CertusTheme.TEXT_MAIN, 
+            weight=800
+        )
         vbox.addWidget(lbl_title)
 
         if subtitle_text:
-            lbl_sub = QLabel(subtitle_text)
-
-            lbl_sub.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 12px; font-weight: 500;")
-
+            lbl_sub = AutoShrinkTitleLabel(
+                subtitle_text, 
+                default_size=12, 
+                min_size=8, 
+                color=CertusTheme.TEXT_SUB, 
+                weight=500
+            )
             vbox.addWidget(lbl_sub)
 
         layout.addLayout(vbox)
@@ -3353,6 +3391,28 @@ def confirm_and_stop(
         logger=logger,
         label=label,
     )
+
+
+
+class CertusAppLogsMixin:
+    """Provides common UI log operations."""
+    def copy_logs_to_clipboard(self) -> None:
+        """Copy logs to clipboard and update status label if possible."""
+        copy_app_logs_to_clipboard(self)
+        if hasattr(self, 'lbl_status') and hasattr(self.lbl_status, 'setText'):
+            self.lbl_status.setText("Logs copied to clipboard!")
+
+    def on_toggle_details(self, checked: bool) -> None:
+        """Show/Hide log panel dynamically."""
+        if hasattr(self, 'log_text'):
+            self.log_text.setVisible(checked)
+        if hasattr(self, 'toggle_details_btn'):
+            self.toggle_details_btn.setText("Hide Details" if checked else "Show Details")
+        if hasattr(self, 'right_splitter'):
+            if checked:
+                self.right_splitter.setSizes([600, 200])
+            else:
+                self.right_splitter.setSizes([1000, 0])
 
 
 def copy_app_logs_to_clipboard(app) -> bool:

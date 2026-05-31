@@ -226,6 +226,7 @@ from certus.ui.certus_ui import (
     attach_excel_clipboard_context_menu,
     confirm_stop_with_timeout,
     copy_app_logs_to_clipboard,
+    CertusAppLogsMixin,
     copy_plot_to_clipboard_excel,
     create_header_logo_widget,
     create_top_actions_bar,
@@ -4894,31 +4895,21 @@ class CertusStratApp(CertusBaseApp):
         if getattr(self, "_log_panel", None):
             self._log_panel.copied.connect(lambda: self.status_label.setText(CERTUS_UI_STRINGS["logs_copied"]))
 
-    def zoom_in_ui(self) -> None:
-        self._apply_ui_zoom(min(getattr(self, "_zoom_factor", 1.0) + 0.05, 1.30))
 
-    def zoom_out_ui(self) -> None:
-        self._apply_ui_zoom(max(getattr(self, "_zoom_factor", 1.0) - 0.05, 0.85))
-
-    def reset_ui_zoom(self) -> None:
-        self._apply_ui_zoom(1.0)
 
     def _update_zoom_label(self, factor: float) -> None:
         if hasattr(self, "zoom_label"):
             self.zoom_label.setText(f"Zoom {int(round(factor * 100))}%")
 
     def _apply_ui_zoom(self, factor: float) -> None:
-        factor = max(0.85, min(1.30, float(factor)))
-        self._zoom_factor = factor
-        base_pt = getattr(CertusTheme, "FONT_SIZE_BASE", 10)
-        app = QApplication.instance()
-        if app is not None:
-            app.setFont(QFont("Segoe UI", max(9, round(base_pt * factor))))
-        self._update_zoom_label(factor)
-        try:
-            show_toast(self, f"Zoom {int(round(factor * 100))}%", "info", duration_ms=1200)
-        except (RuntimeError, AttributeError, TypeError, ValueError):
-            pass
+        apply_app_zoom(
+            self,
+            factor,
+            label_attr="zoom_label",
+            stylesheet_fn=None,
+            toast_fn=show_toast,
+            base_font_size=getattr(CertusTheme, "FONT_SIZE_BASE", 10),
+        )
 
     def _create_design_tab(self) -> None:
 
@@ -7336,39 +7327,6 @@ class CertusStratApp(CertusBaseApp):
 
             html_path = str(Path(report_dir) / f"{base_name}.html")
 
-            def _resolve_manifest_seed(seed_container: Any) -> int | None:
-                if not isinstance(seed_container, dict):
-                    return None
-                for _k in (
-                    "seed",
-                    "random_seed",
-                    "robustness_seed",
-                    "phase_a_seed",
-                    "ensemble_seed",
-                ):
-                    _v = seed_container.get(_k)
-                    if _v is None:
-                        continue
-                    try:
-                        return int(_v)
-                    except (TypeError, ValueError):
-                        continue
-                return None
-
-            def _manifest_source_paths() -> list[str]:
-                paths: list[str] = []
-                cfg_path = str(getattr(self, "_last_config_file", "") or "").strip()
-                if cfg_path:
-                    paths.append(cfg_path)
-                try:
-                    db_path = str(_resolve_strat_indices_db_path() or "").strip()
-                except (RuntimeError, AttributeError, TypeError, ValueError, OSError):
-                    db_path = ""
-                if db_path:
-                    paths.append(db_path)
-                # Keep stable order while removing duplicates.
-                return list(dict.fromkeys(paths))
-
             manifest_payload_source: dict[str, Any] = self.opti_results or {}
             try:
                 params_for_manifest = self.collect_params()
@@ -7380,8 +7338,8 @@ class CertusStratApp(CertusBaseApp):
                 svc = IndexFitService(runner=lambda _cfg: manifest_payload_source)
                 manifest_dict = svc.fit({
                     "config": {"module": "CERTUS_STRAT", "params": params_for_manifest},
-                    "source_paths": _manifest_source_paths(),
-                    "seed": _resolve_manifest_seed(params_for_manifest),
+                    "source_paths": self._manifest_source_paths(),
+                    "seed": self._resolve_manifest_seed(params_for_manifest),
                     "app_id": "CERTUS_STRAT",
                     "app_version": __version__,
                     "warnings": list(getattr(self, "validation_warnings", []) or []),
@@ -7847,8 +7805,8 @@ class CertusStratApp(CertusBaseApp):
                 svc = IndexFitService(runner=lambda _cfg: self.opti_results or {})
                 manifest_dict = svc.fit({
                     "config": {"module": "CERTUS_STRAT", "params": params_for_manifest},
-                    "source_paths": _manifest_source_paths(),
-                    "seed": _resolve_manifest_seed(params_for_manifest),
+                    "source_paths": self._manifest_source_paths(),
+                    "seed": self._resolve_manifest_seed(params_for_manifest),
                     "app_id": "CERTUS_STRAT",
                     "app_version": __version__,
                     "warnings": list(getattr(self, "validation_warnings", []) or []),
@@ -8447,11 +8405,69 @@ class CertusStratApp(CertusBaseApp):
             self.logger.error(f"[GUI] Error in on_live_growth_update: {e}", exc_info=True)
             QMessageBox.critical(self, "CERTUS-STRAT Live Strategy Error", f"A live strategy popup/update failed.\n\n{e}")
 
+    def _stop_all_threads_parallel(self, timeout_ms: int = 10000) -> None:
+        """Stop main worker, active render thread, and auxiliary threads in parallel."""
+        thread_worker_pairs = []
+
+        main_worker = getattr(self, "worker", None)
+        if main_worker is not None:
+            thread_worker_pairs.append((main_worker, main_worker))
+            try:
+                if hasattr(main_worker, "params") and isinstance(main_worker.params, dict):
+                    main_worker.params["stop_requested"] = True
+            except (RuntimeError, AttributeError):
+                pass
+
+        render_thread = getattr(self, "_active_render_thread", None)
+        if render_thread is not None:
+            thread_worker_pairs.append((render_thread, None))
+
+        for thread in getattr(self, "_active_worker_threads", []):
+            if thread is not None:
+                thread_worker_pairs.append((thread, None))
+
+        active_pairs = []
+        for t, w in thread_worker_pairs:
+            try:
+                if t.isRunning():
+                    active_pairs.append((t, w))
+            except RuntimeError:
+                pass
+
+        if not active_pairs:
+            return
+
+        self.logger.debug("[STRAT-UI] Stopping %d active threads in parallel...", len(active_pairs))
+
+        for t, w in active_pairs:
+            try:
+                t.quit()
+            except RuntimeError:
+                pass
+
+        deadline = time.time() + (timeout_ms / 1000.0)
+        for t, w in active_pairs:
+            try:
+                remaining = max(0, int((deadline - time.time()) * 1000))
+                if t.isRunning() and remaining > 0:
+                    if not t.wait(remaining):
+                        self.logger.warning("[STRAT-UI] Thread id=%s did not stop in time, requesting interruption...", id(t))
+                        t.requestInterruption()
+                        t.wait(min(remaining, 1000))
+            except RuntimeError:
+                pass
+
+        if main_worker is not None and not main_worker.isRunning():
+            self.worker = None
+        if render_thread is not None and not render_thread.isRunning():
+            self._active_render_thread = None
+        self._active_worker_threads = [t for t in getattr(self, "_active_worker_threads", []) if t is not None and t.isRunning()]
+
     def closeEvent(self, event) -> None:
 
         try:
-            # Stop the main worker first so it cannot emit into deleted widgets.
-            self._stop_worker_thread(timeout_ms=10000)
+            # Stop all running computation/render threads in parallel to avoid sequential timeouts on exit
+            self._stop_all_threads_parallel(timeout_ms=10000)
 
             if getattr(self, "_log_timer_id", None) is not None:
                 self.killTimer(self._log_timer_id)
@@ -8460,10 +8476,6 @@ class CertusStratApp(CertusBaseApp):
                 self.killTimer(self.plot_timer)
 
             self.close_all_auxiliary_windows()
-
-            self._stop_all_worker_threads(timeout_ms=10000)
-
-            self._stop_active_render_thread(timeout_ms=5000)
 
             if hasattr(self, "materials_db"):
                 self.materials_db.clear_cache()

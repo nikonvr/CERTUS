@@ -19,10 +19,19 @@ Contains:
 
 - Utility functions (paths, frozen state)
 
+
+# ============================================================================
+# 🛑 AI INSTRUCTION - P0 BOUNDARY 🛑
+# DO NOT IMPORT PyQt6, QWidget, OR ANY UI COMPONENTS IN THIS FILE.
+# This module is strictly for logic, configuration, and data management.
+# Violating this boundary will cause circular dependencies and break the architecture.
+# ============================================================================
+
 """
 
 from certus.core.version import (
     APP_VERSION as __version__,
+    APP_SUITE_VERSION,
     APP_DISPLAY_NAME,
     APP_FULL_NAME,
     get_app_version,
@@ -37,6 +46,7 @@ DISPLAY_FULL_LABEL = APP_FULL_NAME
 __all__ = [
     # Version
     "__version__",
+    "APP_SUITE_VERSION",
     # Constants
     "SMALL_EPSILON",
     "HC_EV_NM",
@@ -155,16 +165,12 @@ except ImportError:
 def check_svg_availability() -> bool:
     """Check SVG widget availability.
 
-    Returns False on Windows + Python 3.14+ to prevent native crashes/warnings
-    due to unstable Qt SVG rendering engine on these platforms.
+    Returns False if explicitly disabled or if PyQt6.QtSvgWidgets is missing.
     """
     # Respect manual override if requested
     o = os.environ.get("CERTUS_SVG_ICONS", "").strip().lower()
     if o in ("0", "false", "no", "off"):
         return False
-    if o not in ("1", "true", "yes", "on"):
-        if sys.platform == "win32" and sys.version_info >= (3, 14):
-            return False
 
     try:
         from PyQt6.QtSvgWidgets import QSvgWidget  # noqa: F401  # availability check
@@ -173,7 +179,6 @@ def check_svg_availability() -> bool:
 
     except (ImportError, ModuleNotFoundError):
         return False
-
 
 SVG_AVAILABLE = check_svg_availability()
 
@@ -853,7 +858,7 @@ class ConfigManager:
     def save(self, value: Any) -> bool:
         """
 
-        Saves config to file.
+        Saves config to file without erasing other keys.
 
         Args:
 
@@ -868,7 +873,17 @@ class ConfigManager:
         try:
             config_path = get_resource_path(self.filename)
 
-            config = {self.key_name: value}
+            config = {}
+            if Path(config_path).exists():
+                try:
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        parsed = json.load(f)
+                        if isinstance(parsed, dict):
+                            config = parsed
+                except (IOError, json.JSONDecodeError):
+                    pass
+
+            config[self.key_name] = value
 
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2)
@@ -965,7 +980,7 @@ def get_export_config() -> bool:
 
 
 _theme_manager = ConfigManager("certus_theme.json", "light", "theme_mode")
-
+_font_manager = ConfigManager("certus_theme.json", "Défaut", "font_family")
 
 def load_theme_config() -> str:
     """Loads theme config."""
@@ -977,6 +992,16 @@ def save_theme_config(mode: str):
     """Saves theme config."""
 
     _theme_manager.save(mode)
+
+def load_font_config() -> str:
+    """Loads font config."""
+
+    return _font_manager._load()
+
+def save_font_config(font_family: str):
+    """Saves font config."""
+
+    _font_manager.save(font_family)
 
 
 # =============================================================================

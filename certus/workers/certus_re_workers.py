@@ -7,6 +7,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+import joblib
+
 from functools import partial
 from dataclasses import dataclass, field
 from types import SimpleNamespace
@@ -107,7 +109,7 @@ def _prepare_re_run_context_setup(self, _re_t0: float) -> tuple[Any, dict[str, A
 
 def _build_re_mse_grad_helper(self, ctx):
     def _mse_grad_accumulate_ep(ep_arr: np.ndarray, wt: np.ndarray, want_grad: bool, correc: tuple, return_residuals: bool = False) -> tuple:
-        return self._compute_re_mse_gradient(ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals)
+        return _global_compute_re_mse_gradient(self.cfg, ctx, ep_arr, wt, want_grad, correc, return_residuals=return_residuals)
     return _mse_grad_accumulate_ep
 
 
@@ -502,6 +504,548 @@ from certus.utils.certus_re_results_builder import REResultsBuilder as REResults
 
 class REUserStopRequested(Exception):
     """Stop button requests cooperative exit (best TRF state already cached)."""
+
+def _global_compute_re_mse_gradient(cfg, ctx, 
+    ep_local,
+    spectral_weights_wls,
+    want_grad: bool,
+    correc: tuple,
+    return_residuals: bool = False,
+) -> tuple | None:
+
+    n_lay_m, n_sub_m = _re_apply_correc(
+        ctx.n_layers_nominal,
+        ctx.n_sub_nominal,
+        is_H=ctx.is_H,
+        is_L=ctx.is_L,
+        wls=ctx.wls,
+        lambda_ref=ctx.lambda_ref,
+        correc=correc,
+        re_env_s=ctx.re_env_s,
+        env_cache=ctx._re_env_on_wls,
+    )
+
+    n_lay_full = np.ascontiguousarray(n_lay_m.T)
+
+    n_sub_full = np.ascontiguousarray(n_sub_m)
+
+    ep_use = np.asarray(ep_local, dtype=np.float64)
+
+    total_err = 0.0
+
+    total_w = 0.0
+
+    grad_raw = np.zeros(ctx.n_layers_count, dtype=np.float64)
+
+    res_list = []
+
+    jac_list = []
+
+    # ``stats`` groups weights/user targets per bucket.
+    # ``spectral_weights_local`` applies the Deltaln(lambda) quadrature on the points of the bucket.
+    def _accum_from_stats(y_vals, dy_vals, stats, spectral_weights_local) -> None:
+        nonlocal total_err, total_w, grad_raw
+        ws = float(stats["w_sum"])
+        if ws <= 0.0:
+            return
+
+        wt_sum = float(np.sum(spectral_weights_local))
+        wy = spectral_weights_local * y_vals
+        wy2_sum = float(np.dot(wy, y_vals))
+        wy_sum = float(np.sum(wy))
+        w_tgt_sum = float(stats["w_tgt_sum"])
+        w_tgt2_sum = float(stats["w_tgt2_sum"])
+
+        total_err += (ws * wy2_sum) - (2.0 * w_tgt_sum * wy_sum) + (w_tgt2_sum * wt_sum)
+        total_w += ws * wt_sum
+
+        if want_grad:
+            coeff = spectral_weights_local * (ws * y_vals - w_tgt_sum)
+            grad_raw += np.dot(coeff, dy_vals)
+
+        if return_residuals:
+            mean_t = w_tgt_sum / ws
+            scale_f = np.sqrt(ws * spectral_weights_local)
+            res_list.append(scale_f * (y_vals - mean_t))
+            if want_grad:
+                jac_list.append(dy_vals * scale_f[:, np.newaxis])
+
+    _global_evaluate_oblique_physics(
+        ctx,
+        ep_use,
+        n_lay_full,
+        n_sub_full,
+        spectral_weights_wls,
+        want_grad,
+        return_residuals,
+        _accum_from_stats,
+    )
+
+    if return_residuals:
+        _global_add_regularization_residuals(
+            ctx,
+            ep_local,
+            correc,
+            want_grad,
+            res_list,
+            jac_list,
+        )
+
+    denom = max(total_w, 1e-12)
+    mse = total_err / denom
+    grad = (2.0 / denom) * grad_raw if want_grad else np.zeros(ctx.n_layers_count)
+
+    if return_residuals:
+        f2 = np.sqrt(2.0 / denom)
+        r_out = np.concatenate(res_list) * f2 if res_list else np.array([], dtype=np.float64)
+        j_out = np.vstack(jac_list) * f2 if jac_list else np.empty((0, ctx.n_layers_count), dtype=np.float64)
+        return mse, grad, r_out, j_out
+
+    return mse, grad
+
+
+
+
+
+def _global_evaluate_oblique_physics(cfg,
+    ctx,
+    ep_use: np.ndarray,
+    n_lay_full: np.ndarray,
+    n_sub_full: np.ndarray,
+    spectral_weights_wls: np.ndarray,
+    want_grad: bool,
+    return_residuals: bool,
+    _accum_from_stats,
+) -> None:
+    for meta in ctx.oblique_config_meta:
+        angle = float(meta["angle"])
+        pol = str(meta["pol"])
+        inc_back = bool(meta["include_backside"])
+        pl = pol.lower()
+
+        pos_all = meta.get("pos_all_union", np.array([], dtype=np.int64))
+        if pos_all.size == 0:
+            continue
+
+        wls_all = ctx.wls[pos_all]
+        n_layers_all = n_lay_full[pos_all, :]
+        n_sub_all = n_sub_full[pos_all]
+
+        if ctx._re_state["is_phase4"] and angle >= 10.0:
+            _p4_prof = ctx._re_state.get("p4_prof")
+            _t_p4_phy = time.perf_counter() if _p4_prof is not None else None
+            knots_lam = np.asarray(ctx._re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[
+                : int(RE_P4_BEAM_N_KNOTS)
+            ]
+            knots_ap = np.asarray(ctx._re_state["re_aperture_knots"], dtype=np.float64).ravel()[
+                : int(RE_P4_BEAM_N_KNOTS)
+            ]
+            nloc = int(wls_all.size)
+
+            if _p4_prof is not None:
+                _p4_prof["meta_p4_count"] = int(_p4_prof.get("meta_p4_count", 0)) + 1
+                _p4_prof["n_wls_union_max"] = max(int(_p4_prof.get("n_wls_union_max", 0)), nloc)
+                _p4_prof["band_groups"] = int(_p4_prof.get("band_groups", 0)) + 1
+
+            masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
+            yR_all = np.zeros(nloc, dtype=np.float64)
+            yT_all = np.zeros(nloc, dtype=np.float64)
+            dR_all = None
+            dT_all = None
+
+            for m in masks:
+                if not np.any(m):
+                    continue
+
+                if _p4_prof is not None:
+                    _p4_prof["band_mask_steps"] = int(_p4_prof.get("band_mask_steps", 0)) + 1
+
+                sub = np.nonzero(m)[0]
+                lam_c = float(np.mean(wls_all[m]))
+                ap_b = _re_p4_band_ap_deg(knots_lam, knots_ap, lam_c)
+                h = _re_p4_effective_half_width_deg(angle, ap_b)
+
+                if h <= 0.0:
+                    if _p4_prof is not None:
+                        _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 1
+
+                    yR0, dR0, yT0, dT0 = _re_eval_angle_physics_for(
+                        sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                    )
+                    if dR_all is None:
+                        nv = int(dR0.shape[1])
+                        dR_all = np.zeros((nloc, nv), dtype=np.float64)
+                        dT_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                    yR_all[sub] = yR0
+                    yT_all[sub] = yT0
+                    dR_all[sub, :] = dR0
+                    dT_all[sub, :] = dT0
+                else:
+                    if _p4_prof is not None:
+                        _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 2
+
+                    yR1, dR1, yT1, dT1 = _re_eval_angle_physics_for(
+                        sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                    )
+                    yR2, dR2, yT2, dT2 = _re_eval_angle_physics_for(
+                        sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+                    )
+                    if dR_all is None:
+                        nv = int(dR1.shape[1])
+                        dR_all = np.zeros((nloc, nv), dtype=np.float64)
+                        dT_all = np.zeros((nloc, nv), dtype=np.float64)
+
+                    yR_all[sub] = 0.5 * (yR1 + yR2)
+                    yT_all[sub] = 0.5 * (yT1 + yT2)
+                    dR_all[sub, :] = 0.5 * (dR1 + dR2)
+                    dT_all[sub, :] = 0.5 * (dT1 + dT2)
+
+            if _p4_prof is not None and _t_p4_phy is not None:
+                _p4_prof["phy_wall_s"] = float(_p4_prof.get("phy_wall_s", 0.0)) + (
+                    time.perf_counter() - _t_p4_phy
+                )
+        else:
+            yR_all, dR_all, yT_all, dT_all = _re_eval_angle_physics_for(
+                None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
+            )
+
+        # Distribute cached kernel evaluations into target buckets
+        for bucket in meta["buckets"]:
+            pos = bucket["local_positions"]
+            if pos.size == 0:
+                continue
+            idx = bucket.get("idx_union", np.array([], dtype=np.int64))
+            if idx.size == 0:
+                continue
+            spectral_weights_local = spectral_weights_wls[pos]
+            _accum_from_stats(yR_all[idx], dR_all[idx, :], bucket["R"], spectral_weights_local)
+            _accum_from_stats(yT_all[idx], dT_all[idx, :], bucket["T"], spectral_weights_local)
+
+
+
+
+def _global_add_regularization_residuals(cfg,
+    ctx,
+    ep_local,
+    correc: tuple,
+    want_grad: bool,
+    res_list: list,
+    jac_list: list,
+) -> None:
+    if (
+        correc
+        and correc[0]
+        in (
+            "spline",
+            "spline_cached",
+            "spline_sub3",
+            "spline_cached_sub3",
+        )
+        and len(correc) >= 3
+    ):
+        dh = np.asarray(correc[1], dtype=np.float64)
+        if dh.size >= 3:
+            # Smoothness factor: Default is 5.0.
+            # It acts on the discrete 2nd derivative of Delta_n knots
+            alpha = float(cfg.get("re_spline_smooth_factor_n", 5.0)) * float(
+                cfg.get(
+                    "re_spline_tikhonov_scale",
+                    RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
+                )
+            )
+            tk_w = None
+            if correc[0] == "spline_cached_sub3" and len(correc) >= 7:
+                tk_w = np.asarray(correc[6], dtype=np.float64)
+            elif correc[0] == "spline_cached" and len(correc) >= 7:
+                tk_w = np.asarray(correc[6], dtype=np.float64)
+            elif correc[0] == "spline_sub3" and len(correc) >= 8 and isinstance(correc[4], np.ndarray):
+                tk_w = np.asarray(correc[4], dtype=np.float64)
+            elif correc[0] == "spline" and len(correc) >= 5:
+                tk_w = np.asarray(correc[4], dtype=np.float64)
+
+            if alpha > 0.0:
+                diff2_h = dh[:-2] - 2.0 * dh[1:-1] + dh[2:]
+                res_list.append(diff2_h * alpha * tk_w if tk_w is not None else diff2_h * alpha)
+                if want_grad:
+                    jac_list.append(np.zeros((len(diff2_h), ctx.n_layers_count), dtype=np.float64))
+
+                dl = np.asarray(correc[2], dtype=np.float64)
+                diff2_l = dl[:-2] - 2.0 * dl[1:-1] + dl[2:]
+                res_list.append(diff2_l * alpha * tk_w if tk_w is not None else diff2_l * alpha)
+                if want_grad:
+                    jac_list.append(np.zeros((len(diff2_l), ctx.n_layers_count), dtype=np.float64))
+
+    # H/L penalty on DeltaRe at knots (H/L only): |DeltaRe|<= -> 0; else √(w)(max(0,|DeltaRe|)/env)2.
+    _w_hl = float(cfg.get("re_hl_delta_re_reg_sqrt_w", RE_HL_DELTA_RE_REG_SQRT_W))
+    if _w_hl > 0.0 and correc and correc[0] in RE_SPLINE_CORREC_KINDS:
+        _dH_k = np.asarray(correc[1], dtype=np.float64).ravel()
+        _dL_k = np.asarray(correc[2], dtype=np.float64).ravel()
+        _lam2_c = float(correc[3]) if len(correc) > 3 else float(RE_SPLINE_NODE2_DEFAULT_NM)
+        _kn = re_knots_wavelengths(_lam2_c)
+        _env_k = np.maximum(
+            re_envelope_max_delta_n(_kn, scale=ctx.re_env_s),
+            1e-18,
+        )
+        if _dH_k.size == _env_k.size and _dL_k.size == _env_k.size:
+            _dz_hl = float(
+                cfg.get(
+                    "re_hl_delta_re_deadzone_abs",
+                    RE_RE_DEADZONE_DELTA_RE_ABS,
+                )
+            )
+            _sqw = np.sqrt(_w_hl)
+            _exh = _re_deadzone_excess_abs(_dH_k, _dz_hl)
+            _exl = _re_deadzone_excess_abs(_dL_k, _dz_hl)
+            _rh = _sqw * ((_exh / _env_k) ** 2)
+            _rl = _sqw * ((_exl / _env_k) ** 2)
+            res_list.append(_rh)
+            res_list.append(_rl)
+            if want_grad:
+                jac_list.append(np.zeros((len(_rh), ctx.n_layers_count), dtype=np.float64))
+                jac_list.append(np.zeros((len(_rl), ctx.n_layers_count), dtype=np.float64))
+
+    # QWOT: dead band |Q|<= -> r_i=0; beyond that r_i = √(max(0,|Q|))².
+    # Q = 4n_correp/lambda_ref  ->  Q = (4/lambda_ref)(n_correp - n₀ep₀).
+    # Current slot updated per phase (see resolve_re_qwot_alphas).
+    _alpha_qwot = float(ctx._alpha_slot[0])
+    if _alpha_qwot > 0.0:
+        _ep_arr = np.asarray(ep_local, dtype=np.float64)
+        _qw_c = correc if (correc and len(correc) > 0 and correc[0] in RE_SPLINE_CORREC_KINDS) else None
+        _delta_q = re_delta_qwot_per_layer(
+            _ep_arr,
+            ctx.ep0,
+            ctx.n_ref_nom_per_layer,
+            ctx.is_H,
+            ctx.is_L,
+            float(ctx.lambda_ref),
+            float(ctx.re_env_s),
+            ctx._lref_arr,
+            correc=_qw_c,
+        )
+        _n_ref_corr = re_n_corr_at_lambda_ref(
+            ctx.n_ref_nom_per_layer,
+            ctx.is_H,
+            ctx.is_L,
+            ctx._lref_arr,
+            float(ctx.re_env_s),
+            correc=_qw_c,
+        )
+        _kq_wl0 = 4.0 / max(float(ctx.lambda_ref), 1e-9)
+        _dz_qw = float(cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
+        _ex_q = _re_deadzone_excess_abs(_delta_q, _dz_qw)
+        _r_qwot = np.sqrt(_alpha_qwot) * (_ex_q**2)
+        res_list.append(_r_qwot)
+        if want_grad:
+            # r_i = √ex_i2, ex=max(0,|Q|)  ->  r_i/Q_i = 2√ex_isgn(Q_i)
+            _dr_dq = np.where(
+                _ex_q > 0.0,
+                2.0 * np.sqrt(_alpha_qwot) * _ex_q * np.sign(_delta_q),
+                0.0,
+            )
+            _J_qwot = np.diag(_dr_dq * (_kq_wl0 * _n_ref_corr))
+            jac_list.append(_J_qwot)
+
+
+
+def _global_build_cached_spline_correc(cfg,
+    ctx,
+    dh: np.ndarray,
+    dl: np.ndarray,
+    lam: float,
+    tk_w_c: np.ndarray,
+    cached: bool = True,
+    b_mat_c: np.ndarray | None = None,
+    env_c: np.ndarray | None = None,
+    th4: np.ndarray | None = None,
+) -> tuple:
+    if ctx._use_sub_c3:
+        th = th4 if th4 is not None else np.zeros(3)
+        if cached:
+            return (
+                "spline_cached_sub3",
+                dh,
+                dl,
+                float(lam),
+                b_mat_c,
+                env_c,
+                tk_w_c,
+                float(th[0]),
+                float(th[1]),
+                float(th[2]),
+            )
+        else:
+            return (
+                "spline_sub3",
+                dh,
+                dl,
+                float(lam),
+                tk_w_c,
+                float(th[0]),
+                float(th[1]),
+                float(th[2]),
+            )
+    else:
+        if cached:
+            return (
+                "spline_cached",
+                dh,
+                dl,
+                float(lam),
+                b_mat_c,
+                env_c,
+                tk_w_c,
+            )
+        else:
+            return (
+                "spline",
+                dh,
+                dl,
+                float(lam),
+                tk_w_c,
+            )
+
+
+
+def _global_evaluate_p2_fd_derivative(cfg,
+    ctx,
+    j: int,
+    xv64: np.ndarray,
+    ep_x: np.ndarray,
+    r_c: np.ndarray,
+    b_mat_c: np.ndarray,
+    env_c: np.ndarray,
+    tk_w_c: np.ndarray,
+    dh4: np.ndarray,
+    dl4: np.ndarray,
+    lam2: float,
+    th4: np.ndarray | None,
+) -> tuple[int, np.ndarray]:
+    def _cor_sub3(_dh, _dl, _lam, _th) -> tuple:
+        return (
+            "spline_cached_sub3",
+            _dh,
+            _dl,
+            float(_lam),
+            b_mat_c,
+            env_c,
+            tk_w_c,
+            float(_th[0]),
+            float(_th[1]),
+            float(_th[2]),
+        )
+
+    if ctx._use_sub_c3:
+        if j < 2 * ctx._nk:
+            dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+            dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+            if j < ctx._nk:
+                dh_p[j] += ctx._p2fd_spl
+            else:
+                dl_p[j - ctx._nk] += ctx._p2fd_spl
+            cor_p = _cor_sub3(dh_p, dl_p, float(xv64[ctx.i_lam]), th4)
+            h = ctx._p2fd_spl
+        elif j == 2 * ctx._nk:
+            lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
+            cor_p = (
+                "spline_sub3",
+                dh4,
+                dl4,
+                lam_p,
+                tk_w_c,
+                float(th4[0]),
+                float(th4[1]),
+                float(th4[2]),
+            )
+            h = ctx._p2fd_lam
+        else:
+            k = j - ctx.n_sp
+            thp = np.array(th4, dtype=np.float64, copy=True)
+            thp[k] += ctx._p2fd_cu
+            cor_p = _cor_sub3(dh4, dl4, lam2, thp)
+            h = ctx._p2fd_cu
+    elif j < 2 * ctx._nk:
+        dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+        dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+        if j < ctx._nk:
+            dh_p[j] += ctx._p2fd_spl
+        else:
+            dl_p[j - ctx._nk] += ctx._p2fd_spl
+        cor_p = _global_build_cached_spline_correc(
+            ctx,
+            dh_p,
+            dl_p,
+            float(xv64[ctx.i_lam]),
+            tk_w_c,
+            cached=True,
+            b_mat_c=b_mat_c,
+            env_c=env_c,
+        )
+        h = ctx._p2fd_spl
+    else:
+        lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
+        cor_p = ("spline", dh4, dl4, lam_p, tk_w_c)
+        h = ctx._p2fd_lam
+
+    r_p = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
+
+    if ctx._fd_1s:
+        return j, (r_p - r_c) / h
+
+    if ctx._use_sub_c3:
+        if j < 2 * ctx._nk:
+            dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+            dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+            if j < ctx._nk:
+                dh_m[j] -= ctx._p2fd_spl
+            else:
+                dl_m[j - ctx._nk] -= ctx._p2fd_spl
+            cor_m = _global_build_cached_spline_correc(
+                ctx,
+                dh_m,
+                dl_m,
+                float(xv64[ctx.i_lam]),
+                tk_w_c,
+                th4=th4,
+                cached=True,
+                b_mat_c=b_mat_c,
+                env_c=env_c,
+            )
+        elif j == 2 * ctx._nk:
+            lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
+            cor_m = _global_build_cached_spline_correc(
+                ctx,
+                dh4,
+                dl4,
+                lam_m,
+                tk_w_c,
+                th4=th4,
+                cached=False,
+                b_mat_c=b_mat_c,
+                env_c=env_c,
+            )
+        else:
+            k = j - ctx.n_sp
+            thm = np.array(th4, dtype=np.float64, copy=True)
+            thm[k] -= ctx._p2fd_cu
+            cor_m = _cor_sub3(dh4, dl4, lam2, thm)
+    elif j < 2 * ctx._nk:
+        dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
+        dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
+        if j < ctx._nk:
+            dh_m[j] -= ctx._p2fd_spl
+        else:
+            dl_m[j - ctx._nk] -= ctx._p2fd_spl
+        cor_m = ("spline_cached", dh_m, dl_m, float(xv64[ctx.i_lam]), b_mat_c, env_c, tk_w_c)
+    else:
+        lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
+        cor_m = ("spline", dh4, dl4, lam_m, tk_w_c)
+
+    r_m = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
+
+    return j, (r_p - r_m) / (2.0 * h)
+
+
 
 class REWorker(QThread):
     """Two-stage RE: (1) TRF Deltaln(lambda) trapezoidal, thicknesses only, tabulated n;
@@ -2980,542 +3524,6 @@ class REWorker(QThread):
         )
 
 
-    def _evaluate_oblique_physics(
-        self,
-        ctx,
-        ep_use: np.ndarray,
-        n_lay_full: np.ndarray,
-        n_sub_full: np.ndarray,
-        spectral_weights_wls: np.ndarray,
-        want_grad: bool,
-        return_residuals: bool,
-        _accum_from_stats,
-    ) -> None:
-        for meta in ctx.oblique_config_meta:
-            angle = float(meta["angle"])
-            pol = str(meta["pol"])
-            inc_back = bool(meta["include_backside"])
-            pl = pol.lower()
-
-            pos_all = meta.get("pos_all_union", np.array([], dtype=np.int64))
-            if pos_all.size == 0:
-                continue
-
-            wls_all = ctx.wls[pos_all]
-            n_layers_all = n_lay_full[pos_all, :]
-            n_sub_all = n_sub_full[pos_all]
-
-            if ctx._re_state["is_phase4"] and angle >= 10.0:
-                _p4_prof = ctx._re_state.get("p4_prof")
-                _t_p4_phy = time.perf_counter() if _p4_prof is not None else None
-                knots_lam = np.asarray(ctx._re_state["re_p4_beam_knots_lam_nm"], dtype=np.float64).ravel()[
-                    : int(RE_P4_BEAM_N_KNOTS)
-                ]
-                knots_ap = np.asarray(ctx._re_state["re_aperture_knots"], dtype=np.float64).ravel()[
-                    : int(RE_P4_BEAM_N_KNOTS)
-                ]
-                nloc = int(wls_all.size)
-
-                if _p4_prof is not None:
-                    _p4_prof["meta_p4_count"] = int(_p4_prof.get("meta_p4_count", 0)) + 1
-                    _p4_prof["n_wls_union_max"] = max(int(_p4_prof.get("n_wls_union_max", 0)), nloc)
-                    _p4_prof["band_groups"] = int(_p4_prof.get("band_groups", 0)) + 1
-
-                masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
-                yR_all = np.zeros(nloc, dtype=np.float64)
-                yT_all = np.zeros(nloc, dtype=np.float64)
-                dR_all = None
-                dT_all = None
-
-                for m in masks:
-                    if not np.any(m):
-                        continue
-
-                    if _p4_prof is not None:
-                        _p4_prof["band_mask_steps"] = int(_p4_prof.get("band_mask_steps", 0)) + 1
-
-                    sub = np.nonzero(m)[0]
-                    lam_c = float(np.mean(wls_all[m]))
-                    ap_b = _re_p4_band_ap_deg(knots_lam, knots_ap, lam_c)
-                    h = _re_p4_effective_half_width_deg(angle, ap_b)
-
-                    if h <= 0.0:
-                        if _p4_prof is not None:
-                            _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 1
-
-                        yR0, dR0, yT0, dT0 = _re_eval_angle_physics_for(
-                            sub, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
-                        )
-                        if dR_all is None:
-                            nv = int(dR0.shape[1])
-                            dR_all = np.zeros((nloc, nv), dtype=np.float64)
-                            dT_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                        yR_all[sub] = yR0
-                        yT_all[sub] = yT0
-                        dR_all[sub, :] = dR0
-                        dT_all[sub, :] = dT0
-                    else:
-                        if _p4_prof is not None:
-                            _p4_prof["phi_calls"] = int(_p4_prof.get("phi_calls", 0)) + 2
-
-                        yR1, dR1, yT1, dT1 = _re_eval_angle_physics_for(
-                            sub, angle - h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
-                        )
-                        yR2, dR2, yT2, dT2 = _re_eval_angle_physics_for(
-                            sub, angle + h, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
-                        )
-                        if dR_all is None:
-                            nv = int(dR1.shape[1])
-                            dR_all = np.zeros((nloc, nv), dtype=np.float64)
-                            dT_all = np.zeros((nloc, nv), dtype=np.float64)
-
-                        yR_all[sub] = 0.5 * (yR1 + yR2)
-                        yT_all[sub] = 0.5 * (yT1 + yT2)
-                        dR_all[sub, :] = 0.5 * (dR1 + dR2)
-                        dT_all[sub, :] = 0.5 * (dT1 + dT2)
-
-                if _p4_prof is not None and _t_p4_phy is not None:
-                    _p4_prof["phy_wall_s"] = float(_p4_prof.get("phy_wall_s", 0.0)) + (
-                        time.perf_counter() - _t_p4_phy
-                    )
-            else:
-                yR_all, dR_all, yT_all, dT_all = _re_eval_angle_physics_for(
-                    None, angle, pl, inc_back, ep_use, n_layers_all, n_sub_all, wls_all, pos_all, ctx.var_idx
-                )
-
-            # Distribute cached kernel evaluations into target buckets
-            for bucket in meta["buckets"]:
-                pos = bucket["local_positions"]
-                if pos.size == 0:
-                    continue
-                idx = bucket.get("idx_union", np.array([], dtype=np.int64))
-                if idx.size == 0:
-                    continue
-                spectral_weights_local = spectral_weights_wls[pos]
-                _accum_from_stats(yR_all[idx], dR_all[idx, :], bucket["R"], spectral_weights_local)
-                _accum_from_stats(yT_all[idx], dT_all[idx, :], bucket["T"], spectral_weights_local)
-
-
-    def _add_regularization_residuals(
-        self,
-        ctx,
-        ep_local,
-        correc: tuple,
-        want_grad: bool,
-        res_list: list,
-        jac_list: list,
-    ) -> None:
-        if (
-            correc
-            and correc[0]
-            in (
-                "spline",
-                "spline_cached",
-                "spline_sub3",
-                "spline_cached_sub3",
-            )
-            and len(correc) >= 3
-        ):
-            dh = np.asarray(correc[1], dtype=np.float64)
-            if dh.size >= 3:
-                # Smoothness factor: Default is 5.0.
-                # It acts on the discrete 2nd derivative of Delta_n knots
-                alpha = float(self.cfg.get("re_spline_smooth_factor_n", 5.0)) * float(
-                    self.cfg.get(
-                        "re_spline_tikhonov_scale",
-                        RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
-                    )
-                )
-                tk_w = None
-                if correc[0] == "spline_cached_sub3" and len(correc) >= 7:
-                    tk_w = np.asarray(correc[6], dtype=np.float64)
-                elif correc[0] == "spline_cached" and len(correc) >= 7:
-                    tk_w = np.asarray(correc[6], dtype=np.float64)
-                elif correc[0] == "spline_sub3" and len(correc) >= 8 and isinstance(correc[4], np.ndarray):
-                    tk_w = np.asarray(correc[4], dtype=np.float64)
-                elif correc[0] == "spline" and len(correc) >= 5:
-                    tk_w = np.asarray(correc[4], dtype=np.float64)
-
-                if alpha > 0.0:
-                    diff2_h = dh[:-2] - 2.0 * dh[1:-1] + dh[2:]
-                    res_list.append(diff2_h * alpha * tk_w if tk_w is not None else diff2_h * alpha)
-                    if want_grad:
-                        jac_list.append(np.zeros((len(diff2_h), ctx.n_layers_count), dtype=np.float64))
-
-                    dl = np.asarray(correc[2], dtype=np.float64)
-                    diff2_l = dl[:-2] - 2.0 * dl[1:-1] + dl[2:]
-                    res_list.append(diff2_l * alpha * tk_w if tk_w is not None else diff2_l * alpha)
-                    if want_grad:
-                        jac_list.append(np.zeros((len(diff2_l), ctx.n_layers_count), dtype=np.float64))
-
-        # H/L penalty on DeltaRe at knots (H/L only): |DeltaRe|<= -> 0; else √(w)(max(0,|DeltaRe|)/env)2.
-        _w_hl = float(self.cfg.get("re_hl_delta_re_reg_sqrt_w", RE_HL_DELTA_RE_REG_SQRT_W))
-        if _w_hl > 0.0 and correc and correc[0] in RE_SPLINE_CORREC_KINDS:
-            _dH_k = np.asarray(correc[1], dtype=np.float64).ravel()
-            _dL_k = np.asarray(correc[2], dtype=np.float64).ravel()
-            _lam2_c = float(correc[3]) if len(correc) > 3 else float(RE_SPLINE_NODE2_DEFAULT_NM)
-            _kn = re_knots_wavelengths(_lam2_c)
-            _env_k = np.maximum(
-                re_envelope_max_delta_n(_kn, scale=ctx.re_env_s),
-                1e-18,
-            )
-            if _dH_k.size == _env_k.size and _dL_k.size == _env_k.size:
-                _dz_hl = float(
-                    self.cfg.get(
-                        "re_hl_delta_re_deadzone_abs",
-                        RE_RE_DEADZONE_DELTA_RE_ABS,
-                    )
-                )
-                _sqw = np.sqrt(_w_hl)
-                _exh = _re_deadzone_excess_abs(_dH_k, _dz_hl)
-                _exl = _re_deadzone_excess_abs(_dL_k, _dz_hl)
-                _rh = _sqw * ((_exh / _env_k) ** 2)
-                _rl = _sqw * ((_exl / _env_k) ** 2)
-                res_list.append(_rh)
-                res_list.append(_rl)
-                if want_grad:
-                    jac_list.append(np.zeros((len(_rh), ctx.n_layers_count), dtype=np.float64))
-                    jac_list.append(np.zeros((len(_rl), ctx.n_layers_count), dtype=np.float64))
-
-        # QWOT: dead band |Q|<= -> r_i=0; beyond that r_i = √(max(0,|Q|))².
-        # Q = 4n_correp/lambda_ref  ->  Q = (4/lambda_ref)(n_correp - n₀ep₀).
-        # Current slot updated per phase (see resolve_re_qwot_alphas).
-        _alpha_qwot = float(ctx._alpha_slot[0])
-        if _alpha_qwot > 0.0:
-            _ep_arr = np.asarray(ep_local, dtype=np.float64)
-            _qw_c = correc if (correc and len(correc) > 0 and correc[0] in RE_SPLINE_CORREC_KINDS) else None
-            _delta_q = re_delta_qwot_per_layer(
-                _ep_arr,
-                ctx.ep0,
-                ctx.n_ref_nom_per_layer,
-                ctx.is_H,
-                ctx.is_L,
-                float(ctx.lambda_ref),
-                float(ctx.re_env_s),
-                ctx._lref_arr,
-                correc=_qw_c,
-            )
-            _n_ref_corr = re_n_corr_at_lambda_ref(
-                ctx.n_ref_nom_per_layer,
-                ctx.is_H,
-                ctx.is_L,
-                ctx._lref_arr,
-                float(ctx.re_env_s),
-                correc=_qw_c,
-            )
-            _kq_wl0 = 4.0 / max(float(ctx.lambda_ref), 1e-9)
-            _dz_qw = float(self.cfg.get("re_qwot_deadzone_abs", RE_RE_DEADZONE_QWOT_ABS))
-            _ex_q = _re_deadzone_excess_abs(_delta_q, _dz_qw)
-            _r_qwot = np.sqrt(_alpha_qwot) * (_ex_q**2)
-            res_list.append(_r_qwot)
-            if want_grad:
-                # r_i = √ex_i2, ex=max(0,|Q|)  ->  r_i/Q_i = 2√ex_isgn(Q_i)
-                _dr_dq = np.where(
-                    _ex_q > 0.0,
-                    2.0 * np.sqrt(_alpha_qwot) * _ex_q * np.sign(_delta_q),
-                    0.0,
-                )
-                _J_qwot = np.diag(_dr_dq * (_kq_wl0 * _n_ref_corr))
-                jac_list.append(_J_qwot)
-
-    def _compute_re_mse_gradient(self, ctx, 
-        ep_local,
-        spectral_weights_wls,
-        want_grad: bool,
-        correc: tuple,
-        return_residuals: bool = False,
-    ) -> tuple | None:
-
-        n_lay_m, n_sub_m = _re_apply_correc(
-            ctx.n_layers_nominal,
-            ctx.n_sub_nominal,
-            is_H=ctx.is_H,
-            is_L=ctx.is_L,
-            wls=ctx.wls,
-            lambda_ref=ctx.lambda_ref,
-            correc=correc,
-            re_env_s=ctx.re_env_s,
-            env_cache=ctx._re_env_on_wls,
-        )
-
-        n_lay_full = np.ascontiguousarray(n_lay_m.T)
-
-        n_sub_full = np.ascontiguousarray(n_sub_m)
-
-        ep_use = np.asarray(ep_local, dtype=np.float64)
-
-        total_err = 0.0
-
-        total_w = 0.0
-
-        grad_raw = np.zeros(ctx.n_layers_count, dtype=np.float64)
-
-        res_list = []
-
-        jac_list = []
-
-        # ``stats`` groups weights/user targets per bucket.
-        # ``spectral_weights_local`` applies the Deltaln(lambda) quadrature on the points of the bucket.
-        def _accum_from_stats(y_vals, dy_vals, stats, spectral_weights_local) -> None:
-            nonlocal total_err, total_w, grad_raw
-            ws = float(stats["w_sum"])
-            if ws <= 0.0:
-                return
-
-            wt_sum = float(np.sum(spectral_weights_local))
-            wy = spectral_weights_local * y_vals
-            wy2_sum = float(np.dot(wy, y_vals))
-            wy_sum = float(np.sum(wy))
-            w_tgt_sum = float(stats["w_tgt_sum"])
-            w_tgt2_sum = float(stats["w_tgt2_sum"])
-
-            total_err += (ws * wy2_sum) - (2.0 * w_tgt_sum * wy_sum) + (w_tgt2_sum * wt_sum)
-            total_w += ws * wt_sum
-
-            if want_grad:
-                coeff = spectral_weights_local * (ws * y_vals - w_tgt_sum)
-                grad_raw += np.dot(coeff, dy_vals)
-
-            if return_residuals:
-                mean_t = w_tgt_sum / ws
-                scale_f = np.sqrt(ws * spectral_weights_local)
-                res_list.append(scale_f * (y_vals - mean_t))
-                if want_grad:
-                    jac_list.append(dy_vals * scale_f[:, np.newaxis])
-
-        self._evaluate_oblique_physics(
-            ctx,
-            ep_use,
-            n_lay_full,
-            n_sub_full,
-            spectral_weights_wls,
-            want_grad,
-            return_residuals,
-            _accum_from_stats,
-        )
-
-        if return_residuals:
-            self._add_regularization_residuals(
-                ctx,
-                ep_local,
-                correc,
-                want_grad,
-                res_list,
-                jac_list,
-            )
-
-        denom = max(total_w, 1e-12)
-        mse = total_err / denom
-        grad = (2.0 / denom) * grad_raw if want_grad else np.zeros(ctx.n_layers_count)
-
-        if return_residuals:
-            f2 = np.sqrt(2.0 / denom)
-            r_out = np.concatenate(res_list) * f2 if res_list else np.array([], dtype=np.float64)
-            j_out = np.vstack(jac_list) * f2 if jac_list else np.empty((0, ctx.n_layers_count), dtype=np.float64)
-            return mse, grad, r_out, j_out
-
-        return mse, grad
-
-
-
-    def _build_cached_spline_correc(
-        self,
-        ctx,
-        dh: np.ndarray,
-        dl: np.ndarray,
-        lam: float,
-        tk_w_c: np.ndarray,
-        cached: bool = True,
-        b_mat_c: np.ndarray | None = None,
-        env_c: np.ndarray | None = None,
-        th4: np.ndarray | None = None,
-    ) -> tuple:
-        if ctx._use_sub_c3:
-            th = th4 if th4 is not None else np.zeros(3)
-            if cached:
-                return (
-                    "spline_cached_sub3",
-                    dh,
-                    dl,
-                    float(lam),
-                    b_mat_c,
-                    env_c,
-                    tk_w_c,
-                    float(th[0]),
-                    float(th[1]),
-                    float(th[2]),
-                )
-            else:
-                return (
-                    "spline_sub3",
-                    dh,
-                    dl,
-                    float(lam),
-                    tk_w_c,
-                    float(th[0]),
-                    float(th[1]),
-                    float(th[2]),
-                )
-        else:
-            if cached:
-                return (
-                    "spline_cached",
-                    dh,
-                    dl,
-                    float(lam),
-                    b_mat_c,
-                    env_c,
-                    tk_w_c,
-                )
-            else:
-                return (
-                    "spline",
-                    dh,
-                    dl,
-                    float(lam),
-                    tk_w_c,
-                )
-
-    def _evaluate_p2_fd_derivative(
-        self,
-        ctx,
-        j: int,
-        xv64: np.ndarray,
-        ep_x: np.ndarray,
-        r_c: np.ndarray,
-        b_mat_c: np.ndarray,
-        env_c: np.ndarray,
-        tk_w_c: np.ndarray,
-        dh4: np.ndarray,
-        dl4: np.ndarray,
-        lam2: float,
-        th4: np.ndarray | None,
-    ) -> tuple[int, np.ndarray]:
-        def _cor_sub3(_dh, _dl, _lam, _th) -> tuple:
-            return (
-                "spline_cached_sub3",
-                _dh,
-                _dl,
-                float(_lam),
-                b_mat_c,
-                env_c,
-                tk_w_c,
-                float(_th[0]),
-                float(_th[1]),
-                float(_th[2]),
-            )
-
-        if ctx._use_sub_c3:
-            if j < 2 * ctx._nk:
-                dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
-                dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
-                if j < ctx._nk:
-                    dh_p[j] += ctx._p2fd_spl
-                else:
-                    dl_p[j - ctx._nk] += ctx._p2fd_spl
-                cor_p = _cor_sub3(dh_p, dl_p, float(xv64[ctx.i_lam]), th4)
-                h = ctx._p2fd_spl
-            elif j == 2 * ctx._nk:
-                lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
-                cor_p = (
-                    "spline_sub3",
-                    dh4,
-                    dl4,
-                    lam_p,
-                    tk_w_c,
-                    float(th4[0]),
-                    float(th4[1]),
-                    float(th4[2]),
-                )
-                h = ctx._p2fd_lam
-            else:
-                k = j - ctx.n_sp
-                thp = np.array(th4, dtype=np.float64, copy=True)
-                thp[k] += ctx._p2fd_cu
-                cor_p = _cor_sub3(dh4, dl4, lam2, thp)
-                h = ctx._p2fd_cu
-        elif j < 2 * ctx._nk:
-            dh_p = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
-            dl_p = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
-            if j < ctx._nk:
-                dh_p[j] += ctx._p2fd_spl
-            else:
-                dl_p[j - ctx._nk] += ctx._p2fd_spl
-            cor_p = self._build_cached_spline_correc(
-                ctx,
-                dh_p,
-                dl_p,
-                float(xv64[ctx.i_lam]),
-                tk_w_c,
-                cached=True,
-                b_mat_c=b_mat_c,
-                env_c=env_c,
-            )
-            h = ctx._p2fd_spl
-        else:
-            lam_p = float(xv64[ctx.i_lam]) + ctx._p2fd_lam
-            cor_p = ("spline", dh4, dl4, lam_p, tk_w_c)
-            h = ctx._p2fd_lam
-
-        r_p = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_p, return_residuals=True)[2]
-
-        if ctx._fd_1s:
-            return j, (r_p - r_c) / h
-
-        if ctx._use_sub_c3:
-            if j < 2 * ctx._nk:
-                dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
-                dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
-                if j < ctx._nk:
-                    dh_m[j] -= ctx._p2fd_spl
-                else:
-                    dl_m[j - ctx._nk] -= ctx._p2fd_spl
-                cor_m = self._build_cached_spline_correc(
-                    ctx,
-                    dh_m,
-                    dl_m,
-                    float(xv64[ctx.i_lam]),
-                    tk_w_c,
-                    th4=th4,
-                    cached=True,
-                    b_mat_c=b_mat_c,
-                    env_c=env_c,
-                )
-            elif j == 2 * ctx._nk:
-                lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
-                cor_m = self._build_cached_spline_correc(
-                    ctx,
-                    dh4,
-                    dl4,
-                    lam_m,
-                    tk_w_c,
-                    th4=th4,
-                    cached=False,
-                    b_mat_c=b_mat_c,
-                    env_c=env_c,
-                )
-            else:
-                k = j - ctx.n_sp
-                thm = np.array(th4, dtype=np.float64, copy=True)
-                thm[k] -= ctx._p2fd_cu
-                cor_m = _cor_sub3(dh4, dl4, lam2, thm)
-        elif j < 2 * ctx._nk:
-            dh_m = xv64[ctx.i0 : ctx.i0 + ctx._nk].copy()
-            dl_m = xv64[ctx.i0 + ctx._nk : ctx.i_lam].copy()
-            if j < ctx._nk:
-                dh_m[j] -= ctx._p2fd_spl
-            else:
-                dl_m[j - ctx._nk] -= ctx._p2fd_spl
-            cor_m = ("spline_cached", dh_m, dl_m, float(xv64[ctx.i_lam]), b_mat_c, env_c, tk_w_c)
-        else:
-            lam_m = float(xv64[ctx.i_lam]) - ctx._p2fd_lam
-            cor_m = ("spline", dh4, dl4, lam_m, tk_w_c)
-
-        r_m = ctx._mse_grad_accumulate_ep(ep_x, ctx.wt_spectral, False, cor_m, return_residuals=True)[2]
-
-        return j, (r_p - r_m) / (2.0 * h)
-
     def _compute_eval_both_p2(self, ctx, xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
 
         if self._stop:
@@ -3652,32 +3660,27 @@ class REWorker(QThread):
             _ex_p2 = _c.get("fd_executor")
 
             if _ex_p2 is None:
-                if _fd_executor_kind == "process":
-                    _ex_p2 = ProcessPoolExecutor(max_workers=_nw_j)
-                else:
-                    _ex_p2 = ThreadPoolExecutor(max_workers=_nw_j)
-
+                # Use joblib instead of ThreadPool/ProcessPool for Phase 2 fd evaluation
+                _backend = 'loky' if _fd_executor_kind == 'process' else 'threading'
+                _ex_p2 = joblib.Parallel(n_jobs=_nw_j, backend=_backend)
                 _c["fd_executor"] = _ex_p2
 
             try:
-                _f_p2 = [_ex_p2.submit(_p2_fd_j_res, j) for j in _active_js]
-                for _fu in as_completed(_f_p2):
-                    jj, j_col = _fu.result()
+                # joblib blocks until all done and returns a list of results in order of _active_js
+                results = _ex_p2(joblib.delayed(_p2_fd_j_res)(j) for j in _active_js)
+                for res in results:
+                    jj, j_col = res
                     J_var[:, jj] = j_col
             except Exception:
                 if _fd_executor_kind == "process":
                     logging.getLogger(__name__).warning(
-                        "RE phase2 FD process executor fallback to threads", exc_info=True
+                        "RE phase2 FD process executor (loky) fallback to threading", exc_info=True
                     )
-                    try:
-                        _ex_p2.shutdown(wait=False, cancel_futures=True)
-                    except (AttributeError, RuntimeError, ValueError):
-                        pass
-                    _fallback = ThreadPoolExecutor(max_workers=_nw_j)
+                    _fallback = joblib.Parallel(n_jobs=_nw_j, backend='threading')
                     _c["fd_executor"] = _fallback
-                    _f_p2 = [_fallback.submit(_p2_fd_j_res, j) for j in _active_js]
-                    for _fu in as_completed(_f_p2):
-                        jj, j_col = _fu.result()
+                    results = _fallback(joblib.delayed(_p2_fd_j_res)(j) for j in _active_js)
+                    for res in results:
+                        jj, j_col = res
                         J_var[:, jj] = j_col
                 else:
                     raise

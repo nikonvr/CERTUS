@@ -2063,40 +2063,6 @@ class IndexCore:
 
         w_fit_sell = _sellmeier_weights_from_nm(wl_fit_nm, SELLMEIER_WEIGHT_MODE)
 
-        def _p_from_q(q: np.ndarray) -> np.ndarray:
-
-            q = np.asarray(q, dtype=np.float64).ravel()
-
-            if not log_l1l2:
-                return q.copy()
-
-            p = q.copy()
-
-            p[2] = float(np.exp(np.minimum(q[2], 700.0)))
-
-            p[4] = float(np.exp(np.minimum(q[4], 700.0)))
-
-            p[6] = float(np.exp(np.minimum(q[6], 700.0)))
-
-            return p
-
-        def _q_from_p(p: np.ndarray) -> np.ndarray:
-
-            p = np.asarray(p, dtype=np.float64).ravel()
-
-            if not log_l1l2:
-                return p.copy()
-
-            q = p.copy()
-
-            q[2] = float(np.log(max(float(p[2]), 1.0e-300)))
-
-            q[4] = float(np.log(max(float(p[4]), 1.0e-300)))
-
-            q[6] = float(np.log(max(float(p[6]), 1.0e-300)))
-
-            return q
-
         bounds_q, _p_from_q, _q_from_p, _b_lo, _b_hi = _sellmeier_param_reparam_helpers(bounds, log_l1l2)
         n_lo_acc = float(SELLMEIER_N_ACCEPT_LO)
         n_hi_acc = float(SELLMEIER_N_ACCEPT_HI)
@@ -2216,32 +2182,7 @@ class IndexCore:
                 logger.warning("Sellmeier 3-poles: timeout before L-BFGS-B - seed alone.")
                 q_lbfgs = np.asarray(q0, dtype=np.float64)
 
-            def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
-                pv = _p_from_q(qv)
-                r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
-                g = _sellmeier_l_separation_gap_um(pv)
-                return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
-
-            def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
-                pv = _p_from_q(qv)
-                J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
-                J_sep = np.zeros((1, 7), dtype=np.float64)
-                _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
-                _orig_idx = np.array([2, 4, 6])
-                _sort_ord = np.argsort(_L_vals)
-                _L_s = _L_vals[_sort_ord]
-                _diffs = _L_s[1:] - _L_s[:-1]
-                _i_min = int(np.argmin(_diffs))
-                _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
-                if _gap > 0.0:
-                    _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
-                    _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
-                    _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
-                    _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
-                    J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
-                    J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
-                return np.vstack([J_main, J_sep])
-
+            _residuals_polish_q, _jac_polish_q = _sellmeier_polish_helpers(_p_from_q, wl_fit_um, n_fit, w_fit_sell, log_l1l2)
             res_pol = least_squares(
                 _residuals_polish_q,
                 q_lbfgs,
@@ -2959,9 +2900,9 @@ class IndexCore:
         sellmeier_log_l1l2: bool | None = None,
     ):
 
-        n_raw = np.asarray(n_raw, dtype=np.float64)
+        n_raw = np.asarray(n_raw, dtype=np.float64).ravel()
 
-        wl = np.asarray(wl_nm, dtype=np.float64)
+        wl = np.asarray(wl_nm, dtype=np.float64).ravel()
 
         lo = float(min(wl_min_fit, wl_max_fit))
 
@@ -4505,6 +4446,11 @@ class SubstrateIndexGUI(QMainWindow):
         y_clean = IndexCore.apply_dynamic_filtering(
             x, y_raw, self.current_window, self.current_poly, self.current_heavy
         )
+
+        y_clean = np.asarray(y_clean, dtype=np.float64)
+        if y_clean.ndim > 1:
+            y_clean = np.squeeze(y_clean)
+        y_clean = np.asarray(y_clean, dtype=np.float64).reshape(-1)
 
         return IndexCore.to_fraction(y_clean)
 

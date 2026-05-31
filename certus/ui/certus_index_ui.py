@@ -208,6 +208,7 @@ from certus.ui.certus_ui import (
     create_styled_button,
     confirm_stop_with_timeout,
     copy_app_logs_to_clipboard,
+    CertusAppLogsMixin,
     stop_worker_and_thread,
     create_header_logo_widget,
     create_top_actions_bar,
@@ -2054,14 +2055,7 @@ class CertusIndexApp(CertusBaseApp):
         except (RuntimeError, AttributeError, TypeError, ValueError):
             self._core_logger.debug("Shortcut installation failed", exc_info=True)
 
-    def zoom_in_ui(self) -> None:
-        self._apply_ui_zoom(min(getattr(self, "_zoom_factor", 1.0) + 0.05, 1.30))
 
-    def zoom_out_ui(self) -> None:
-        self._apply_ui_zoom(max(getattr(self, "_zoom_factor", 1.0) - 0.05, 0.85))
-
-    def reset_ui_zoom(self) -> None:
-        self._apply_ui_zoom(1.0)
 
     def _update_zoom_status(self, factor: float | None = None) -> None:
         if factor is None:
@@ -2070,18 +2064,14 @@ class CertusIndexApp(CertusBaseApp):
             self.lbl_zoom.setText(f"Zoom {int(round(factor * 100))}%")
 
     def _apply_ui_zoom(self, factor: float) -> None:
-        factor = max(0.85, min(1.30, float(factor)))
-        self._zoom_factor = factor
-        base_pt = getattr(CertusTheme, "FONT_SIZE_BASE", 10)
-        app = QApplication.instance()
-        if app is not None:
-            app.setFont(QFont("Segoe UI", max(9, round(base_pt * factor))))
-        self._update_zoom_status(factor)
-        self.setStyleSheet(CertusTheme.get_standard_stylesheet())
-        try:
-            show_toast(self, f"Zoom {int(round(factor * 100))}%", "info", duration_ms=1200)
-        except (RuntimeError, AttributeError, TypeError, ValueError):
-            pass
+        apply_app_zoom(
+            self,
+            factor,
+            label_attr="lbl_zoom",
+            stylesheet_fn=CertusTheme.get_standard_stylesheet,
+            toast_fn=show_toast,
+            base_font_size=getattr(CertusTheme, "FONT_SIZE_BASE", 10),
+        )
 
     def _create_status_bar(self) -> None:
 
@@ -5429,17 +5419,6 @@ class CertusIndexApp(CertusBaseApp):
 
             win_data.show()
 
-    def reattach_plot(self, plot_name: str) -> None:
-        """Reattach a detached plot"""
-
-        if plot_name not in self.detached_plot_windows:
-            return
-
-        detached_window = self.detached_plot_windows[plot_name]
-
-        detached_window.deleteLater()
-
-        del self.detached_plot_windows[plot_name]
 
     def on_toggle_details(self, checked) -> None:
         """Show/Hide log"""

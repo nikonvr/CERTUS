@@ -34,7 +34,7 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 
 from __future__ import annotations
 
-from certus.core.certus_core import __version__
+from certus.core.certus_core import __version__, APP_SUITE_VERSION
 
 # RE: +/-% thickness search radius for L-BFGS-B (no toolbar control; fixed default).
 # Keeping this module tight: prefer helpers/tests over broad structural moves.
@@ -617,7 +617,7 @@ class CertusREApp(CertusBaseApp):
             from certus.ui.certus_animations import fade_in
 
             fade_in(actions_wrap, duration_ms=200)
-        except Exception:
+        except ImportError:
             pass
 
         return left_panel
@@ -1750,14 +1750,7 @@ class CertusREApp(CertusBaseApp):
         except (RuntimeError, AttributeError, TypeError, ValueError):
             pass
 
-    def zoom_in_ui(self) -> None:
-        self._apply_ui_zoom(min(getattr(self, "_zoom_factor", 1.0) + 0.05, 1.30))
 
-    def zoom_out_ui(self) -> None:
-        self._apply_ui_zoom(max(getattr(self, "_zoom_factor", 1.0) - 0.05, 0.85))
-
-    def reset_ui_zoom(self) -> None:
-        self._apply_ui_zoom(1.0)
 
     def _on_qwot_changed_connection(self, spinbox: QDoubleSpinBox):
         """RE specific: no extra connections."""
@@ -3398,8 +3391,6 @@ class CertusREApp(CertusBaseApp):
     ) -> tuple["TabularMaterial | None", str, str, str]:
         """Resolve the RE substrate material and return (material, source, raw_name, normalized_name)."""
 
-        import openpyxl as _opxl
-
         raw_name = str(substrate_name or "").strip()
         sub_lower = raw_name.lower()
         sub_map = {
@@ -3422,6 +3413,11 @@ class CertusREApp(CertusBaseApp):
             builtin = self._re_builtin_substrate_tabular(sub_lower, l0_ref)
         if builtin is not None:
             return builtin, f"builtin/analytical/{sub_norm}", raw_name, sub_norm
+
+        if not OPENPYXL_AVAILABLE:
+            raise ImportError("La bibliothèque 'openpyxl' est requise pour charger des indices de substrat externes depuis Excel.")
+
+        import openpyxl as _opxl
 
         last_err: str | None = None
 
@@ -6953,7 +6949,7 @@ class CertusREApp(CertusBaseApp):
                     self.l_refine_check.setChecked(bool(d["re_refine_l"]))
             if hasattr(self, "re_qwot_penalty_chk") and "re_enable_qwot_penalty" in d:
                 self.re_qwot_penalty_chk.setChecked(bool(d["re_enable_qwot_penalty"]))
-        except Exception as e:
+        except (KeyError, ValueError, TypeError) as e:
             logging.warning("RE GUI prefs restore skipped: %s", e)
 
     def _normalize_re_config(self, cfg: dict[str, Any]) -> dict[str, Any]:
@@ -6983,7 +6979,7 @@ class CertusREApp(CertusBaseApp):
             if key in out and isinstance(out[key], str):
                 try:
                     out[key] = float(str(out[key]).replace(",", "."))
-                except Exception:
+                except (ValueError, TypeError):
                     pass
         if isinstance(out.get("stack_string"), list):
             out["stack_string"] = ",".join(str(x) for x in out["stack_string"])
@@ -7049,7 +7045,7 @@ class CertusREApp(CertusBaseApp):
 
             ws.title = "Configuration"
 
-            ws.append(["CERTUS-RE", "CERTUS_SUITE_26_05"])
+            ws.append(["CERTUS-RE", APP_SUITE_VERSION])
 
             ws.append([f"Generated:  {certus_timestamp_display()}"])
 

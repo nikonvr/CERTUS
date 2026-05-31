@@ -28,6 +28,25 @@ PILL_MAX_CHARS: Final[int] = 22
 _STRIP_CLS = None
 
 
+def _pill_stylesheet() -> str:
+    return (
+        "QPushButton#recent-pill { "
+        " background: palette(base); color: palette(text); "
+        " border: 1px solid palette(mid); border-radius: 10px; "
+        " padding: 3px 10px; font-size: 9pt; }"
+        "QPushButton#recent-pill:hover { "
+        " background: palette(highlight); color: palette(highlighted-text); }"
+    )
+
+
+def _clear_layout(layout) -> None:
+    while layout.count():
+        item = layout.takeAt(0)
+        widget = item.widget()
+        if widget is not None:
+            widget.deleteLater()
+
+
 def _build_strip_class():
     from PyQt6.QtCore import Qt, pyqtSignal
     from PyQt6.QtGui import QCursor
@@ -95,15 +114,9 @@ def _build_strip_class():
 
             self.refresh()
 
-        # -- Public ----------------------------------------------------------
         def refresh(self) -> None:
             """Re-query the recent-files registry and rebuild the pills."""
-            # Tear down old pills
-            while self._pill_container.count():
-                item = self._pill_container.takeAt(0)
-                w = item.widget()
-                if w is not None:
-                    w.deleteLater()
+            _clear_layout(self._pill_container)
             self._pills.clear()
 
             paths = self._fetch_paths()
@@ -125,7 +138,6 @@ def _build_strip_class():
         def category(self) -> str | None:
             return self._category
 
-        # -- Internals -------------------------------------------------------
         def _fetch_paths(self) -> list[str]:
             try:
                 from certus.ui.certus_recent import RecentCategories, list_recent
@@ -143,14 +155,7 @@ def _build_strip_class():
             btn.setObjectName("recent-pill")
             btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
             btn.setToolTip(path)
-            btn.setStyleSheet(
-                "QPushButton#recent-pill { "
-                " background: palette(base); color: palette(text); "
-                " border: 1px solid palette(mid); border-radius: 10px; "
-                " padding: 3px 10px; font-size: 9pt; }"
-                "QPushButton#recent-pill:hover { "
-                " background: palette(highlight); color: palette(highlighted-text); }"
-            )
+            btn.setStyleSheet(_pill_stylesheet())
 
             def _emit_path(*_args, current_path=path):
                 self._emit(current_path)

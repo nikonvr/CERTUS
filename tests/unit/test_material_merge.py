@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from certus.core._certus_physics_impl import (
+from certus.utils.certus_db_helpers import (
     find_matching_sheets,
     merge_two_curves,
     merge_multiple_curves,

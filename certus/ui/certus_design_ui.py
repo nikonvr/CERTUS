@@ -33,7 +33,7 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
-from certus.core.certus_core import __version__
+from certus.core.certus_core import __version__, APP_SUITE_VERSION
 
 import os
 from pathlib import Path
@@ -226,6 +226,7 @@ from certus.ui.certus_ui import (
     certus_get_save_file_name,
     confirm_stop_with_timeout,
     copy_app_logs_to_clipboard,
+    CertusAppLogsMixin,
     create_flashy_grid,
     create_header_logo_widget,
     create_top_actions_bar,
@@ -6098,24 +6099,12 @@ class CertusDesignApp(CertusBaseApp):
                 if self.optim_worker:
                     self.optim_worker.request_stop()
                 self.optim_thread.quit()
-
-                if not self.optim_thread.wait(2000):
-                    logging.critical(
-                        "Optim worker did not stop within 2s on stop - skipping terminate() to avoid unsafe thread kill."
-                    )
-
-                    self.log(
-                        "Optim worker did not stop within 2s - skipping terminate() (see log).",
-                        "ERROR",
-                    )
         except RuntimeError:
             pass
 
         try:
             if self.needle_thread and self.needle_thread.isRunning():
                 self.needle_thread.requestInterruption()
-
-                self.needle_thread.wait(1000)
         except RuntimeError:
             pass
 
@@ -7506,7 +7495,7 @@ class CertusDesignApp(CertusBaseApp):
         self._pre_save_smart_cleanup()
 
         cfg = {
-            "version": "CERTUS_SUITE_26_05",
+            "version": APP_SUITE_VERSION,
             "l0": self.l0_spin.value(),
             "materials": {
                 n: {
@@ -7821,7 +7810,7 @@ class CertusDesignApp(CertusBaseApp):
 
             summary_kv = {
                 "Generated": certus_timestamp_display(),
-                "CERTUS Suite": "CERTUS_SUITE_26_05",
+                "CERTUS Suite": APP_SUITE_VERSION,
                 "L0 (nm)": self.l0_spin.value(),
                 "Total layers": len(stack_rows),
             }

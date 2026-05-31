@@ -440,20 +440,35 @@ class CertusTheme:
     @classmethod
     def apply_to_app(cls, app: QApplication, dark_mode: bool = False) -> None:
         from certus.ui.certus_ui import update_global_plot_config
+        from certus.core.certus_core import load_font_config
         """Applies theme to QApplication"""
 
         # Synchronize active theme configuration
         cls.configure("dark" if dark_mode else "light")
 
-        # Load and configure Inter font
-        font_family = cls.load_inter_font()
-        if font_family == "Inter":
-            cls.FONT_FAMILY = "'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
+        # Load font preference
+        font_choice = load_font_config()
+        
+        # Ensure Inter is available as a reliable fallback or if explicitly chosen
+        cls.load_inter_font()
+        
+        if font_choice == "Gemini":
+            base_font = "Google Sans"
+        elif font_choice == "iOS (San Francisco)":
+            base_font = ".AppleSystemUIFont"
+        elif font_choice == "Roboto":
+            base_font = "Roboto"
+        elif font_choice == "Open Sans":
+            base_font = "Open Sans"
+        elif font_choice == "Inter":
+            base_font = "Inter"
         else:
-            cls.FONT_FAMILY = "'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
+            base_font = "Segoe UI"
+
+        cls.FONT_FAMILY = f"'{base_font}', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif"
 
         app.setStyle("Fusion")
-        app.setFont(QFont(font_family, cls.FONT_SIZE_BASE))
+        app.setFont(QFont(base_font, cls.FONT_SIZE_BASE))
 
         p = QPalette()
         if dark_mode:

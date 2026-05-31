@@ -1,6 +1,7 @@
 """Unit tests for CERTUS_DESIGN headless service scaffolding."""
 
 from __future__ import annotations
+from certus.core.version import APP_VERSION
 
 import inspect
 from dataclasses import fields
@@ -32,7 +33,7 @@ def test_design_strategy_service_wraps_runner_and_manifest(tmp_path) -> None:
         config={"mode": "global", "pre_polish": True},
         source_paths=[str(src)],
         seed=17,
-        app_version="26_05",
+        app_version=APP_VERSION,
         warnings=["design smoke"],
         status=ValidationStatus.OK,
     )
@@ -60,7 +61,7 @@ def test_design_strategy_service_accepts_mapping_payload(tmp_path) -> None:
         "config": {"mode": "local", "cycle_no_gain_patience": 2},
         "source_paths": [str(src)],
         "seed": 99,
-        "app_version": "26_05",
+        "app_version": APP_VERSION,
         "warnings": ["mapping"],
         "status": "OK",
     }
@@ -85,7 +86,7 @@ def test_design_strategy_service_legacy_payload_filters_request_metadata(tmp_pat
             "pre_polish": True,
             "source_paths": [str(src), "", "   "],
             "seed": 5,
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": ["x"],
             "status": "OK",
         }
@@ -115,7 +116,7 @@ def test_design_strategy_service_normalizes_flat_payload_to_config(tmp_path) -> 
             "pre_polish": True,
             "source_paths": [str(src)],
             "seed": 5,
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": [],
             "status": "OK",
         }
@@ -142,7 +143,7 @@ def test_design_strategy_service_accepts_cfg_alias_in_legacy_payload(tmp_path) -
             "cfg": {"mode": "healing", "pre_polish": False, "cycle_no_gain_patience": 4},
             "source_paths": [str(src)],
             "seed": 11,
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": [],
             "status": "OK",
         }
@@ -160,7 +161,7 @@ def test_design_strategy_service_normalize_request_preserves_legacy_metadata() -
             "source_paths": ["/tmp/a.json", "", "  "],
             "seed": 123,
             "app_id": "CERTUS_DESIGN",
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": ["legacy"],
             "status": "OK",
         }
@@ -169,7 +170,7 @@ def test_design_strategy_service_normalize_request_preserves_legacy_metadata() -
     assert request.config == {"mode": "healing"}
     assert request.source_paths == ["/tmp/a.json"]
     assert request.seed == 123
-    assert request.app_version == "26_05"
+    assert request.app_version == APP_VERSION
     assert request.warnings == ["legacy"]
     assert request.status == ValidationStatus.OK
 
@@ -193,7 +194,7 @@ def test_design_strategy_service_rejects_unknown_status_and_defaults_to_ok(tmp_p
             "config": {"mode": "global"},
             "source_paths": [str(src)],
             "seed": 7,
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": ["x"],
             "status": "NOT_A_VALID_STATUS",
         }
@@ -214,7 +215,7 @@ def test_design_strategy_service_falls_back_to_safe_result_on_non_dict_runner_ou
             "config": {"mode": "global"},
             "source_paths": [str(src)],
             "seed": 2,
-            "app_version": "26_05",
+            "app_version": APP_VERSION,
             "warnings": [],
             "status": "OK",
         }

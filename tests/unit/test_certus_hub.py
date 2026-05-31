@@ -133,7 +133,7 @@ class TestHubFunctionality:
 class TestHubIntegration:
     """Integration tests for the hub."""
 
-    @patch("certus_core.bootstrap_app")
+    @patch("certus.core.certus_core.bootstrap_app")
     def test_application_initialization(self, mock_bootstrap):
         """Test l'initialisation de l'application."""
         mock_bootstrap.return_value = "/fake/path"

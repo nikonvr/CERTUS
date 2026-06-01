@@ -2292,12 +2292,10 @@ class SmartInitPreviewManager:
         self.dlg.setWindowTitle(f"Smart Init  PWL n and ln k ({self.k_n} sigma knots ? presets Nb2O? ? SiO2 ? Ta2O?)")
 
         self.dlg.setMinimumWidth(1180)
-
         self.dlg.setMinimumHeight(620)
 
         # Auxiliary window for n(lambda) and log k(lambda)
-
-        aux_dlg, curve_n, curve_pk, main_vb, p_extra = self.parent_worker._build_smart_init_aux_dialog(self.dlg)
+        self.aux_dlg, self.curve_n, self.curve_pk, self.main_vb, self.p_extra = self.parent_worker._build_smart_init_aux_dialog(self.dlg)
 
         logger.info("[INDEX_SPLINE.SMART_INIT] auxiliary window created")
 
@@ -2321,7 +2319,7 @@ class SmartInitPreviewManager:
             lbl_mono_relax = QLabel(
                 "<b>Manual tuning</b>: <i>n</i> may be <b>non-monotone</b> in sigma between knots here "
                 "(sliders / editor). <b>After Continue</b>: optimization uses the "
-                "<b>? reparametrization</b> - <i>n</i> non-decreasing in sigma on the run?s lambda band "
+                "<b>λ reparametrization</b> - <i>n</i> non-decreasing in sigma on the run’s lambda band "
                 "(so in practice <i>n</i> <b>decreasing or quasi-flat</b> as lambda increases on these segments), "
                 "plus a penalty (UV-VIS band) if <i>n</i> rises too much with lambda "
                 "(small slack on this penalty is configurable)."
@@ -2371,7 +2369,7 @@ class SmartInitPreviewManager:
 
         btn_show_nk.setFixedWidth(200)
 
-        btn_show_nk.clicked.connect(aux_dlg.show)
+        btn_show_nk.clicked.connect(self.aux_dlg.show)
 
         lay.addWidget(btn_show_nk)
 
@@ -3268,8 +3266,10 @@ class _SmartInitDialogMixin:
         aux_lay.addWidget(wrap_scientific_plot_with_toolbar(aux_dlg, pw_nk))
 
         # Curves for n and ln k
-
-        curve_n = plot_widget_plot_finite(pw_nk, np.array([], dtype=float), np.array([], dtype=float), pen=pg.mkPen(CertusTheme.PRIMARY, width=2), name="n(lambda)", animate=False)
+        curve_n = pg.PlotCurveItem(
+            pen=pg.mkPen(CertusTheme.PRIMARY, width=2), name="n(lambda)"
+        )
+        pw_nk.addItem(curve_n)
 
         # Axe Y secondaire pour ln k
 

@@ -37,6 +37,7 @@ from PyQt6.QtGui import QFont, QCursor
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
 _DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
+_CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__
 from certus.core.certus_metrology import ValidationStatus
@@ -4940,6 +4941,7 @@ class _RunMixin:
         self._apply_spectrum_x_axis_label(x_lbl)
 
         y_spec = tt_s if rt_s is None else np.concatenate([tt_s, rt_s])
+        from certus.ui.certus_index_spline_ui import _add_spectrum_thickness_badge
         _add_spectrum_thickness_badge(self.plot_T, x_mod, y_spec, d_nm)
 
         self.plot_n.autoRange()

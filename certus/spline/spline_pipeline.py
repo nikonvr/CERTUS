@@ -695,7 +695,7 @@ def insert_manual_sigma_nodes(
             explicit_mesh_edit=bool(is_explicit_mesh_edit),
             **mesh_summary,
         )
-        log.info(
+        log.debug(
             "INDEX_SPLINE [MANUAL NODE INSERT] Rejected: attempt=%s | RMSE ref=%.8f cand=n/a (candidate RMSE not finite) - rollback.",
             op_id,
             rmse_ref,
@@ -720,7 +720,7 @@ def insert_manual_sigma_nodes(
             tolerance_rel=float(getattr(cfg, "manual_node_insert_max_rmse_regression_rel", 0.0) or 0.0),
             **mesh_summary,
         )
-        log.info(
+        log.debug(
             "INDEX_SPLINE [MANUAL NODE INSERT] Rejected: attempt=%s | RMSE ref=%.8f cand=%s | regression=%+.8f > allowed=%+.8f (tol_abs=%.1e, tol_rel=%.1e) - rollback.",
             op_id,
             rmse_ref,
@@ -739,7 +739,7 @@ def insert_manual_sigma_nodes(
         return base_result
 
     if is_explicit_k_reduction and rmse_cand > rmse_ref:
-        log.info(
+        log.debug(
             "INDEX_SPLINE [MANUAL NODE INSERT] Explicit K reduction accepted despite RMSE regression: attempt=%s | K %d -> %d | RMSE %.8f -> %.8f.",
             op_id,
             K_before,
@@ -761,7 +761,7 @@ def insert_manual_sigma_nodes(
             extra_sigma_knots=extra_sorted.tolist(),
             **mesh_summary,
         )
-        log.info(
+        log.debug(
             "INDEX_SPLINE [MANUAL NODE INSERT] Rejected: attempt=%s | RMSE ref=%.8f cand=%s (no meaningful gain) - rollback.",
             op_id,
             rmse_ref,

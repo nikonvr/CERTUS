@@ -18,7 +18,6 @@ from certus.ui.certus_ui import init_certus_app
 
 # Import the modular submodules
 import certus.spline.certus_index_spline_core as certus_index_spline_core
-import certus.spline.certus_index_spline_optimization as certus_index_spline_optimization
 import certus.spline.certus_index_spline_smart_init as certus_index_spline_smart_init
 import certus.spline.certus_index_spline_corridors as certus_index_spline_corridors
 import certus.ui.certus_index_spline_ui as certus_index_spline_ui
@@ -29,7 +28,6 @@ from certus.utils.certus_spline_report import SplineReportContext, SplineReportB
 # Configure the facade to wrap and expose all underlying symbols
 sys.modules[__name__] = CertusFacadeModule(__name__, [
     certus_index_spline_core,
-    certus_index_spline_optimization,
     certus_index_spline_smart_init,
     certus_index_spline_corridors,
     certus_index_spline_ui

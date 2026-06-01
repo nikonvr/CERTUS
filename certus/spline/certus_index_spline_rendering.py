@@ -16,7 +16,7 @@ from PyQt6.QtGui import QCursor, QFont
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSplitter,
     QScrollArea, QFrame, QTabWidget, QStackedWidget, QCheckBox,
-    QDoubleSpinBox, QSpinBox, QComboBox, QSlider
+    QDoubleSpinBox, QSpinBox, QComboBox, QSlider, QGridLayout
 )
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS

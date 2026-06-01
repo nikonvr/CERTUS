@@ -92,9 +92,9 @@ def test_build_report_auto_with_minimal_context(monkeypatch, tmp_path, minimal_c
     writer_paths: list[str] = []
     monkeypatch.setattr(pd, "ExcelWriter", lambda path, *args, **kwargs: _DummyWriter(str(path), *args, **kwargs))
     monkeypatch.setattr(pd.DataFrame, "to_excel", lambda self, writer, *args, **kwargs: writer_paths.append(getattr(writer, "path", "")))
-    monkeypatch.setattr("certus_spline_report._get_script_dir", lambda: tmp_path)
-    monkeypatch.setattr("certus_spline_report._get_substrate_n_array_spline", lambda substrate_id, wavelengths_nm: np.ones_like(wavelengths_nm) * 1.45)
-    monkeypatch.setattr("certus_spline_report.calculate_bare_substrate_RT", lambda lam, n: np.ones_like(lam) * 0.95)
+    monkeypatch.setattr("certus.utils.certus_spline_report._get_script_dir", lambda: tmp_path)
+    monkeypatch.setattr("certus.utils.certus_spline_report._get_substrate_n_array_spline", lambda substrate_id, wavelengths_nm: np.ones_like(wavelengths_nm) * 1.45)
+    monkeypatch.setattr("certus.utils.certus_spline_report.calculate_bare_substrate_RT", lambda lam, n: np.ones_like(lam) * 0.95)
 
     builder = SplineReportBuilder(minimal_ctx, logger=_DummyLogger())
     builder.build_report(auto_export=True)
@@ -105,7 +105,7 @@ def test_build_report_auto_without_result_noop(monkeypatch, tmp_path, minimal_ct
     ctx = replace(minimal_ctx, result=None)
     monkeypatch.setattr(pd, "ExcelWriter", lambda path, *args, **kwargs: _DummyWriter(str(path), *args, **kwargs))
     monkeypatch.setattr(pd.DataFrame, "to_excel", lambda self, writer, *args, **kwargs: None)
-    monkeypatch.setattr("certus_spline_report._get_script_dir", lambda: tmp_path)
+    monkeypatch.setattr("certus.utils.certus_spline_report._get_script_dir", lambda: tmp_path)
     builder = SplineReportBuilder(ctx, logger=_DummyLogger())
     builder.build_report(auto_export=True)
 
@@ -122,9 +122,9 @@ def test_build_report_falls_back_to_df_lambda(monkeypatch, tmp_path, minimal_ctx
 
     monkeypatch.setattr(pd, "ExcelWriter", lambda path, *args, **kwargs: CaptureWriter(str(path), *args, **kwargs))
     monkeypatch.setattr(pd.DataFrame, "to_excel", fake_to_excel)
-    monkeypatch.setattr("certus_spline_report._get_script_dir", lambda: tmp_path)
-    monkeypatch.setattr("certus_spline_report._get_substrate_n_array_spline", lambda substrate_id, wavelengths_nm: np.ones_like(wavelengths_nm) * 1.45)
-    monkeypatch.setattr("certus_spline_report.calculate_bare_substrate_RT", lambda lam, n: np.ones_like(lam) * 0.95)
+    monkeypatch.setattr("certus.utils.certus_spline_report._get_script_dir", lambda: tmp_path)
+    monkeypatch.setattr("certus.utils.certus_spline_report._get_substrate_n_array_spline", lambda substrate_id, wavelengths_nm: np.ones_like(wavelengths_nm) * 1.45)
+    monkeypatch.setattr("certus.utils.certus_spline_report.calculate_bare_substrate_RT", lambda lam, n: np.ones_like(lam) * 0.95)
 
     builder = SplineReportBuilder(ctx, logger=_DummyLogger())
     builder.build_report(auto_export=True)

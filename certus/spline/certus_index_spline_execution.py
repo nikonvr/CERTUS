@@ -24,7 +24,8 @@ from certus.spline.certus_index_spline_core import (
     log_index_spline_d_trace,
     _log_index_spline_best_config,
     ensure_lam_nm_array,
-    _to_fraction_T
+    _to_fraction_T,
+    reset_smart_init_preview_guard
 )
 from certus.utils.certus_index_utils import (
     log_structured_json_event,

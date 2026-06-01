@@ -2807,8 +2807,6 @@ class _PlotMixin:
             lam_g,
             n_g,
             k_g,
-            n_nl_g,
-            k_nl_g,
             n_lo_g,
             n_hi_g,
             k_lo_g,
@@ -2821,9 +2819,9 @@ class _PlotMixin:
 
         kv = np.asarray(k_g, dtype=np.float64).ravel()
 
-        n_nl_v = np.asarray(n_nl_g, dtype=np.float64).ravel()
+        n_nl_v = np.full_like(lam, np.nan)
 
-        k_nl_v = np.asarray(k_nl_g, dtype=np.float64).ravel()
+        k_nl_v = np.full_like(lam, np.nan)
 
         n_lo_v = np.asarray(n_lo_g, dtype=np.float64).ravel()
 
@@ -2892,18 +2890,6 @@ class _PlotMixin:
                 pn.plot(le, ylo, pen=p_lo)
                 pn.plot(le, yhi, pen=p_hi)
 
-        if np.any(np.isfinite(n_nl_v)):
-            xnl, ynl = sanitize_xy_for_plot(lam, n_nl_v)
-
-            if xnl.size >= 2:
-                plot_widget_plot_finite(
-                    pn,
-                    xnl,
-                    ynl,
-                    pen=pg.mkPen("#0a8f5a", width=1.6),
-                    name="n_alpha",
-                )
-
         xn, yn = sanitize_xy_for_plot(lam, nv)
 
         if xn.size >= 2:
@@ -2941,20 +2927,6 @@ class _PlotMixin:
                 pk.plot(lek, yhik, pen=p_khi_glow)
                 pk.plot(lek, ylok, pen=p_klo)
                 pk.plot(lek, yhik, pen=p_khi)
-
-        if np.any(np.isfinite(k_nl_v) & (k_nl_v > 0.0)):
-            knlp = np.where(np.isfinite(k_nl_v) & (k_nl_v > 0.0), k_nl_v, np.nan)
-
-            xknl, yknl = sanitize_xy_for_plot(lam, knlp)
-
-            if xknl.size >= 2:
-                plot_widget_plot_finite(
-                    pk,
-                    xknl,
-                    yknl,
-                    pen=pg.mkPen("#0a8f5a", width=1.6),
-                    name="k_alpha",
-                )
 
         kk_plot = np.where(np.isfinite(kv) & (kv > 0.0), kv, np.nan)
 
@@ -3611,17 +3583,15 @@ class _UIBuilderMixin:
 
         self.table_nk = ExcelTableWidget()
 
-        self.table_nk.setColumnCount(9)
+        self.table_nk.setColumnCount(7)
 
         self.table_nk.setHorizontalHeaderLabels(
             [
                 "lambda (nm)",
                 "n",
-                "n_alpha",
                 "n env min",
                 "n env max",
                 "k",
-                "k_alpha",
                 "k env min",
                 "k env max",
             ]
@@ -3634,7 +3604,6 @@ class _UIBuilderMixin:
         self.table_nk.setToolTip(
             "lambda grid by spectral region: 2 nm step (<=400 nm), 5 nm (400-1200 nm), "
             "10 nm beyond; n, k and envelopes interpolated from result mesh. "
-            "n_alpha / k_alpha: nonlinear indices if available. "
             "Envelopes: corridor bounds (d profiling). "
             "Previews: all n (or k) curves, envelope band if corridor; synchronized lambda cursor. "
             "Ctrl+C: copy selection (TSV) -> Excel."
@@ -4410,8 +4379,6 @@ class _CorridorExportMixin:
             lam_g,
             n_g,
             k_g,
-            n_nl_g,
-            k_nl_g,
             n_lo_g,
             n_hi_g,
             k_lo_g,
@@ -4422,22 +4389,18 @@ class _CorridorExportMixin:
 
         try:
             with open(path, "w", encoding="utf-8") as fh:
-                fh.write("lambda_nm,n,n_alpha,n_envelope_min,n_envelope_max,k,k_alpha,k_envelope_min,k_envelope_max\n")
+                fh.write("lambda_nm,n,n_envelope_min,n_envelope_max,k,k_envelope_min,k_envelope_max\n")
 
                 for i in range(m):
                     line = f"{float(lam_g[i]):.4f},"
 
                     line += self._fmt_n_data_tab(float(n_g[i])) + ","
 
-                    line += self._fmt_n_data_tab(float(n_nl_g[i])) + ","
-
                     line += self._fmt_n_data_tab(float(n_lo_g[i])) + ","
 
                     line += self._fmt_n_data_tab(float(n_hi_g[i])) + ","
 
                     line += self._fmt_k_data_tab(float(k_g[i])) + ","
-
-                    line += self._fmt_k_data_tab(float(k_nl_g[i])) + ","
 
                     line += self._fmt_k_data_tab(float(k_lo_g[i])) + ","
 
@@ -5187,10 +5150,6 @@ class _DataMixin:
 
         lam_full = lam[:m0]
 
-        n_nl_g = np.full_like(lam_g, np.nan)
-
-        k_nl_g = np.full_like(lam_g, np.nan)
-
         n_lo_g = np.full_like(lam_g, np.nan)
 
         n_hi_g = np.full_like(lam_g, np.nan)
@@ -5220,7 +5179,7 @@ class _DataMixin:
                 # ENFORCE CONSISTENCY with Plots and Detailed Corridor Tab
                 k_lo_g, k_hi_g, _ = enforce_min_k_corridor_half_width(k_lo_g, k_hi_g, k_g, min_half_width=1e-4)
 
-        return (lam_g, n_g, k_g, n_nl_g, k_nl_g, n_lo_g, n_hi_g, k_lo_g, k_hi_g)
+        return (lam_g, n_g, k_g, n_lo_g, n_hi_g, k_lo_g, k_hi_g)
 
     def _prepare_data_th_tab_series(
         self, r: dict[str, Any]
@@ -5450,15 +5409,13 @@ class _DataMixin:
             lam_g,
             n_g,
             k_g,
-            n_nl_g,
-            k_nl_g,
             n_lo_g,
             n_hi_g,
             k_lo_g,
             k_hi_g,
         ) = ser
 
-        hdr = "lambda_nm\tn\tn_alpha\tn_envelope_min\tn_envelope_max\tk\tk_alpha\tk_envelope_min\tk_envelope_max"
+        hdr = "lambda_nm\tn\tn_envelope_min\tn_envelope_max\tk\tk_envelope_min\tk_envelope_max"
 
         lines = [hdr]
 
@@ -5469,15 +5426,11 @@ class _DataMixin:
 
             row += self._fmt_n_data_tab(float(n_g[i])) + "\t"
 
-            row += self._fmt_n_data_tab(float(n_nl_g[i])) + "\t"
-
             row += self._fmt_n_data_tab(float(n_lo_g[i])) + "\t"
 
             row += self._fmt_n_data_tab(float(n_hi_g[i])) + "\t"
 
             row += self._fmt_k_data_tab(float(k_g[i])) + "\t"
-
-            row += self._fmt_k_data_tab(float(k_nl_g[i])) + "\t"
 
             row += self._fmt_k_data_tab(float(k_lo_g[i])) + "\t"
 
@@ -5575,15 +5528,11 @@ class _DataMixin:
 
         n_at = self._interp_preview_axis(lam_a, s["n"], x)
 
-        nnl_at = self._interp_preview_axis(lam_a, s["n_nl"], x)
-
         nlo_at = self._interp_preview_axis(lam_a, s["n_lo"], x)
 
         nhi_at = self._interp_preview_axis(lam_a, s["n_hi"], x)
 
         k_at = self._interp_preview_axis(lam_a, s["k"], x)
-
-        knl_at = self._interp_preview_axis(lam_a, s["k_nl"], x)
 
         klo_at = self._interp_preview_axis(lam_a, s["k_lo"], x)
 
@@ -5593,8 +5542,8 @@ class _DataMixin:
 
         txt = (
             f"lambda = {lam_txt:.2f} nm\n"
-            f"n={_fmt_nq(n_at)}  n_alpha={_fmt_nq(nnl_at)}  n_min={_fmt_nq(nlo_at)}  n_max={_fmt_nq(nhi_at)}\n"
-            f"k={_fmt_kq(k_at)}  k_alpha={_fmt_kq(knl_at)}  k_min={_fmt_kq(klo_at)}  k_max={_fmt_kq(khi_at)}"
+            f"n={_fmt_nq(n_at)}  n_min={_fmt_nq(nlo_at)}  n_max={_fmt_nq(nhi_at)}\n"
+            f"k={_fmt_kq(k_at)}  k_min={_fmt_kq(klo_at)}  k_max={_fmt_kq(khi_at)}"
         )
 
         k_floor = float(s.get("k_floor", 1e-30))
@@ -5691,8 +5640,6 @@ class _DataMixin:
             lam_g,
             n_g,
             k_g,
-            n_nl_g,
-            k_nl_g,
             n_lo_g,
             n_hi_g,
             k_lo_g,
@@ -5701,17 +5648,15 @@ class _DataMixin:
 
         m = int(lam_g.size)
 
-        t.setColumnCount(9)
+        t.setColumnCount(7)
 
         t.setHorizontalHeaderLabels(
             [
                 "lambda (nm)",
                 "n",
-                "n_alpha",
                 "n env min",
                 "n env max",
                 "k",
-                "k_alpha",
                 "k env min",
                 "k env max",
             ]
@@ -5743,19 +5688,15 @@ class _DataMixin:
 
             t.setItem(i, 1, _cell_n(float(n_g[i])))
 
-            t.setItem(i, 2, _cell_n(float(n_nl_g[i])))
+            t.setItem(i, 2, _cell_n(float(n_lo_g[i])))
 
-            t.setItem(i, 3, _cell_n(float(n_lo_g[i])))
+            t.setItem(i, 3, _cell_n(float(n_hi_g[i])))
 
-            t.setItem(i, 4, _cell_n(float(n_hi_g[i])))
+            t.setItem(i, 4, _cell_k(float(k_g[i])))
 
-            t.setItem(i, 5, _cell_k(float(k_g[i])))
+            t.setItem(i, 5, _cell_k(float(k_lo_g[i])))
 
-            t.setItem(i, 6, _cell_k(float(k_nl_g[i])))
-
-            t.setItem(i, 7, _cell_k(float(k_lo_g[i])))
-
-            t.setItem(i, 8, _cell_k(float(k_hi_g[i])))
+            t.setItem(i, 6, _cell_k(float(k_hi_g[i])))
 
         self.btn_copy_nk.setEnabled(m > 0 and n_valid > 0)
 

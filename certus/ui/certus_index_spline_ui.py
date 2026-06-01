@@ -7889,14 +7889,14 @@ class LiveIndexMonitor(QDialog):
         self.p_k.setLabel("bottom", lbl)
 
         if "n" not in self.p_n._curves:
-            self.p_n.add_curve(x, n_arr, "n", color=CertusTheme.PRIMARY, width=2)
+            self.p_n.add_curve(x, n_arr, "n", color=CertusTheme.PRIMARY, width=2, animate=False)
         else:
-            self.p_n.update_curve("n", x, n_arr)
+            self.p_n.update_curve("n", x, n_arr, animate=False)
 
         if "k" not in self.p_k._curves:
-            self.p_k.add_curve(x, k_arr, "k", color=CertusTheme.DANGER, width=2)
+            self.p_k.add_curve(x, k_arr, "k", color=CertusTheme.DANGER, width=2, animate=False)
         else:
-            self.p_k.update_curve("k", x, k_arr)
+            self.p_k.update_curve("k", x, k_arr, animate=False)
 
         study_fn = getattr(self, "_study_lam_window_fn", None)
         if not callable(study_fn):

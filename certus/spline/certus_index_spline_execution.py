@@ -888,7 +888,6 @@ class _RunMixin:
         self._apply_spectrum_x_axis_label(x_lbl)
 
         y_spec = tt_s if rt_s is None else np.concatenate([tt_s, rt_s])
-        from certus.ui.certus_index_spline_ui import _add_spectrum_badge_local
         # Helper to avoid circular import if needed, otherwise local import
         try:
             from certus.ui.certus_index_spline_ui import _add_spectrum_thickness_badge as badge_fn

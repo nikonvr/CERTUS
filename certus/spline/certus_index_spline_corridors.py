@@ -243,6 +243,7 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
 
 # Helper structures originally defined in CERTUS_INDEX_SPLINE
 
+@dataclass
 class _RMSEPlotContext:
     d_plot: np.ndarray
     r_plot: np.ndarray

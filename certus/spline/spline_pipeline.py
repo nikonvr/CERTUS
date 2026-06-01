@@ -615,7 +615,7 @@ def insert_manual_sigma_nodes(
         **mesh_summary,
     )
     delta_ns = float(out.get("substrate_n_offset", 0.0))
-    log.info(
+    log.debug(
         "INDEX_SPLINE [MANUAL NODE INSERT] attempt=%s | K=%d -> K=%d | extra_sigma=%s | RMSE_ref=%.8f | maxfun=%d | delta_ns=%+.6f | before_lambda=%s | after_lambda=%s | removed=%s | added=%s",
         op_id,
         K_before,

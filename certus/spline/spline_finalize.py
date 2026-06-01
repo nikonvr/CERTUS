@@ -215,7 +215,7 @@ def _spectral_polish_node_mesh_profile(
 
     rm0 = float(np.sqrt(max(m0, 0.0))) if np.isfinite(m0) else float("nan")
 
-    log.info(
+    log.debug(
         "INDEX_SPLINE [sigma MESH POLISH] Starting L-BFGS-B | %s | K=%d sigma nodes | dim(x)=%d | "
         "objective mask points=%d | MSE(x0)=%.6e | RMSE(x0)=%.8f | d(x0)=%.6f nm | maxfun=%d | "
         "weights wT=%.4f wR=%.4f | data_type=%s",
@@ -335,7 +335,7 @@ def _spectral_polish_node_mesh_profile(
         if np.isfinite(m1) and m1 <= m0 + 1e-14:
             x_best, m_best, used = x1, m1, "lbfgsb"
 
-            log.info(
+            log.debug(
                 "INDEX_SPLINE [sigma MESH POLISH] L-BFGS-B completed | optimizer success | "
                 "MSE %.6e -> %.6e | RMSE %.8f -> %.8f | d %.6f -> %.6f nm | nit=%d nfev=%d | message=%s",
                 float(m0),
@@ -346,13 +346,13 @@ def _spectral_polish_node_mesh_profile(
                 float(x1[0]),
                 nit,
                 nfev,
-                str(getattr(res, "message", "")),
+                str(res.message) if hasattr(res, "message") else "",
             )
 
         else:
             x_best, m_best, used = x0, m0, "x0_fallback"
 
-            log.info(
+            log.debug(
                 "INDEX_SPLINE [sigma MESH POLISH] Fallback to x0 initiated: MSE after L-BFGS-B (%.6e) "
                 "not better than initial MSE (%.6e) - keeping starter.",
                 float(m1) if np.isfinite(m1) else float("nan"),
@@ -387,7 +387,7 @@ def _spectral_polish_node_mesh_profile(
 
     mse_r, rmse_r = spectral_mse_rmse_masked_from_nk(cfg, out, lam_full, n_full, k_full, d_best)
 
-    log.info(
+    log.debug(
         "INDEX_SPLINE [sigma MESH POLISH] Final summary (%s) | internal objective MSE=%.6e | "
         "recalculated RMSE (spectral_mse_rmse_masked_from_nk, full lambda grid)=%.8f | d=%.6f nm | "
         "n(lambda),k(lambda) curves exported under keys n_lam_seg_spline_sigma / k_lam_seg_spline_sigma",

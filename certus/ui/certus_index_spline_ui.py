@@ -331,10 +331,12 @@ from certus.spline.certus_index_spline_excel_export import (
     _RMSEPlotContext,
     _ExcelExportMixin,
 )
-from certus.spline.certus_index_spline_corridors import (
-    _CorridorWorkerMixin,
+from certus.spline.certus_index_spline_rendering import (
     _PlotMixin,
     _UIBuilderMixin,
+)
+from certus.spline.certus_index_spline_corridors import (
+    _CorridorWorkerMixin,
     _CorridorExportMixin,
     _RunMixin,
     _DataMixin,

@@ -34,7 +34,9 @@ from certus.ui.certus_ui import (
     ExcelTableWidget,
     sanitize_xy_for_plot,
     plot_widget_plot_finite,
-    EnhancedProgressWidget
+    EnhancedProgressWidget,
+    CertusCollapsible,
+    CertusLogPanel
 )
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button

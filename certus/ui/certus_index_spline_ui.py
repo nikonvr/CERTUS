@@ -335,10 +335,12 @@ from certus.spline.certus_index_spline_rendering import (
     _PlotMixin,
     _UIBuilderMixin,
 )
-from certus.spline.certus_index_spline_corridors import (
-    _CorridorWorkerMixin,
+from certus.spline.certus_index_spline_execution import (
     _CorridorExportMixin,
     _RunMixin,
+)
+from certus.spline.certus_index_spline_corridors import (
+    _CorridorWorkerMixin,
     _DataMixin,
     _CorridorGenMixin,
     _SettingsMixin,

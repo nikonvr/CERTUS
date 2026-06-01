@@ -48,6 +48,7 @@ from certus.spline.certus_index_spline_core import (
 )
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
 
+from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:

@@ -2667,6 +2667,7 @@ class _CorridorWorkerMixin:
 
         snap = dict(base)
 
+        from certus.ui.certus_index_spline_ui import _worker_corridor_rmse_regular_grid
         self._worker = GenericWorker(
             _worker_corridor_rmse_regular_grid,
             cfg,

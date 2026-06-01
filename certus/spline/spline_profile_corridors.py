@@ -4861,6 +4861,11 @@ class RegularGridProfileContext:
             except Exception:
                 return None
 
+        # Speed optimization: if fit0 was successful (converged under maxfun limit), we can skip the polish step.
+        # This prevents running a redundant second minimize which halves profiling time when warm-starting.
+        if bool(fit0.get("success", False)) or int(fit0.get("nfev", 0)) < int(self.maxfun):
+            return fit0
+
         x_mid = np.asarray(fit0.get("x_nodes_best", x_seed_in), dtype=np.float64).ravel().copy()
         fit1 = _fit_nodes_at_fixed_d(
             self.cfg, self.sk, float(d_nm), x_mid, self.bounds_nodes, maxfun=int(self.maxfun_polish),

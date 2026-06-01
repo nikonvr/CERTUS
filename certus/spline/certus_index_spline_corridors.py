@@ -627,13 +627,25 @@ class _ExcelExportMixin:
         r_vis = ctx.r_vis
         kind_vis = ctx.kind_vis
         status_vis = ctx.status_vis
-        m_rev = ctx.m_rev
-        m_main = ctx.m_main
+
+        # Filter out aberrant points (RMSE far above threshold) to keep the y-axis autoscale tight.
+        rmse_thr_val = src.get("profile_d_rmse_thresh")
+        if rmse_thr_val is not None and np.isfinite(float(rmse_thr_val)):
+            max_r = 1.5 * float(rmse_thr_val)
+        else:
+            max_r = 1.5 * np.min(r_vis) if r_vis.size > 0 else float("inf")
+        
+        m_valid_plot = r_vis <= max_r
+        d_vis = d_vis[m_valid_plot]
+        r_vis = r_vis[m_valid_plot]
+        kind_vis = kind_vis[m_valid_plot]
+        status_vis = status_vis[m_valid_plot]
+
         i_best = ctx.i_best
         m_rev = np.asarray(kind_vis == 1, dtype=bool)
         m_main = ~m_rev
 
-        # Scatter brut : TOUS les points sans liaison visuelle (conform?ment au paradigme scatter)
+        # Scatter brut : TOUS les points sans liaison visuelle (conformément au paradigme scatter)
         self.plot_corridor_rmse_d.addItem(
             pg.ScatterPlotItem(
                 d_vis[m_main],
@@ -1196,12 +1208,22 @@ class _ExcelExportMixin:
                 d_vis if envelope_display else d_plot,
                 r_vis if envelope_display else r_plot,
             )
-
         elif np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
             self._set_corridor_rmse_view_centered(float(d_center), 0.5 * float(max(0.0, d_hi_man - d_lo_man)))
-
+        elif rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb) and d_hi_rb > d_lo_rb:
+            self._set_corridor_rmse_view_centered(float(d_center), 0.5 * float(d_hi_rb - d_lo_rb))
         else:
             self.plot_corridor_rmse_d.autoRange()
+
+        # Mathematically adjust Y scale to focus on the valley and exclude outliers/aberrant points
+        if not lock_scale:
+            delta_rb_eff = max(delta_rb, 2e-4)
+            y_min_val = rmse_best - 0.25 * delta_rb_eff
+            y_max_val = rmse_best + 2.0 * delta_rb_eff
+            if rmse_thr is not None and np.isfinite(float(rmse_thr)):
+                y_max_val = max(y_max_val, float(rmse_thr) + 0.5 * delta_rb_eff)
+            y_min_val = max(1e-6, y_min_val)
+            self.plot_corridor_rmse_d.plotItem.setYRange(y_min_val, y_max_val, padding=0.0)
 
         if curvature_label_spec is not None:
             c2_l, d_vl, r_vl = curvature_label_spec

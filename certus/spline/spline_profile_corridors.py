@@ -2598,6 +2598,7 @@ def _corridor_profile_walk_side(
     sigma_t_f_hetero: np.ndarray | None,
     sigma_r_f_hetero: np.ndarray | None,
     live_streamer: CorridorLiveStreamer | None = None,
+    target_min_span: float = 0.0,
 ) -> dict[str, Any]:
     """One-sided d continuation (+d or -d). Use distinct ``pconf.rng_seed`` per thread when running in parallel."""
 
@@ -2883,7 +2884,10 @@ def _corridor_profile_walk_side(
             # x_prev remains the last stable point, favouring a good seed at the next step.
             continue
 
-        force_points = nsteps < max(3, int(getattr(pconf, "min_valid_each_side", 0)))
+        force_points = (
+            nsteps < max(3, int(getattr(pconf, "min_valid_each_side", 0)))
+            or (target_min_span > 0.0 and span < target_min_span)
+        )
 
         if ok or force_points:
             d_vals.append(float(d_try))
@@ -7226,6 +7230,13 @@ def compute_profiled_corridors_by_d(
     if isinstance(ctx, dict):
         return ctx
 
+    target_min_span = 0.0
+    if hasattr(ctx, "adaptive_abs_meta") and isinstance(ctx.adaptive_abs_meta, dict) and ctx.adaptive_abs_meta.get("ok", False):
+        _curv = float(ctx.adaptive_abs_meta.get("curvature", float("nan")))
+        _dtol = float(ctx.adaptive_abs_meta.get("delta_rmse_tol", float("nan")))
+        if np.isfinite(_curv) and _curv > 0.0 and np.isfinite(_dtol) and _dtol > 0.0:
+            target_min_span = float(np.sqrt(_dtol / _curv))
+
     def _run_walks_sequential() -> tuple[dict[str, Any], dict[str, Any]]:
 
         return (
@@ -7249,6 +7260,7 @@ def compute_profiled_corridors_by_d(
                 ctx.sigma_t_f_hetero,
                 ctx.sigma_r_f_hetero,
                 ctx.live_streamer,
+                target_min_span=target_min_span,
             ),
             _corridor_profile_walk_side(
                 -1.0,
@@ -7270,6 +7282,7 @@ def compute_profiled_corridors_by_d(
                 ctx.sigma_t_f_hetero,
                 ctx.sigma_r_f_hetero,
                 ctx.live_streamer,
+                target_min_span=target_min_span,
             ),
         )
 
@@ -7303,6 +7316,7 @@ def compute_profiled_corridors_by_d(
                     ctx.sigma_t_f_hetero,
                     ctx.sigma_r_f_hetero,
                     ctx.live_streamer,
+                    target_min_span=target_min_span,
                 )
 
                 _f_minus = _pool.submit(
@@ -7326,6 +7340,7 @@ def compute_profiled_corridors_by_d(
                     ctx.sigma_t_f_hetero,
                     ctx.sigma_r_f_hetero,
                     ctx.live_streamer,
+                    target_min_span=target_min_span,
                 )
 
                 r_plus = _f_plus.result()

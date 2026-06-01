@@ -142,7 +142,7 @@ except ImportError:
 
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button
-from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust
+from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust, build_export_context, build_report_sections, export_optimization_report
 from certus.spline.spline_profile_corridors import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width
 from certus.ui.certus_plot import sanitize_xy_for_plot, plot_widget_plot_finite, wrap_scientific_plot_with_toolbar
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet

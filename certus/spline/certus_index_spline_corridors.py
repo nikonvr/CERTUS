@@ -35,6 +35,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont, QCursor
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT_CORRIDOR_RMSE_DELTA: float = 2.5e-4
+_DEFAULT_CORRIDOR_ADAPTIVE_RMSE_MIN: float = 2.5e-5
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__
 from certus.core.certus_metrology import ValidationStatus
@@ -108,6 +110,7 @@ from certus.utils.certus_index_utils import (
     _spectral_display_align,
     _lam_uniform_grid,
     _safe_int_from_mapping,
+    _filter_rmse_peaks_iteratively,
 )
 
 from certus.spline.spline_objective import (
@@ -1675,7 +1678,7 @@ class _CorridorWorkerMixin:
                 detail=("worker=" + worker_name),
             )
 
-            split_mesh = CertusIndexSplineApp._result_uses_split_mesh(result)
+            split_mesh = self._result_uses_split_mesh(result)
 
             self.logger.info(
                 "[INDEX_SPLINE.GUI] worker details | mse=%.6e | split=%s | continuous=%s | adaptive=%s",
@@ -1739,7 +1742,7 @@ class _CorridorWorkerMixin:
 
         self._last_result = display
 
-        st = CertusIndexSplineApp._format_post_optimization_status(display, result)
+        st = self._format_post_optimization_status(display, result)
 
         if display.get("adaptive_mesh"):
             st = "Adaptive mesh | " + st
@@ -1807,7 +1810,7 @@ class _CorridorWorkerMixin:
         if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
             try:
                 manual_dlg.set_runtime_busy(False)
-                d_fin, rmse_fin = CertusIndexSplineApp._runtime_metrics_from_result_dict(display)
+                d_fin, rmse_fin = self._runtime_metrics_from_result_dict(display)
                 rmse_txt = f"{float(rmse_fin):.6f}" if np.isfinite(rmse_fin) else "n/a"
                 self._refresh_manual_dialog_preview(manual_dlg, display)
                 # Important: for manual-local flows, keep the exact worker output mesh
@@ -1818,10 +1821,10 @@ class _CorridorWorkerMixin:
                 sigma_fin = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
                 if sigma_fin.size == 0:
                     sigma_fin = np.asarray(display.get("sigma_knots", []), dtype=np.float64).ravel()
-                requested_summary = CertusIndexSplineApp._summarize_manual_mesh_change(sigma_before, sigma_requested)
-                applied_summary = CertusIndexSplineApp._summarize_manual_mesh_change(sigma_before, sigma_fin)
+                requested_summary = self._summarize_manual_mesh_change(sigma_before, sigma_requested)
+                applied_summary = self._summarize_manual_mesh_change(sigma_before, sigma_fin)
                 manual_dlg.append_runtime_log(
-                    CertusIndexSplineApp._manual_mesh_change_log_line("Requested mesh", requested_summary)
+                    self._manual_mesh_change_log_line("Requested mesh", requested_summary)
                 )
                 same_requested_and_applied = requested_summary["after_sigma_knots"].size == applied_summary[
                     "after_sigma_knots"
@@ -1836,7 +1839,7 @@ class _CorridorWorkerMixin:
                         "Worker returned a different mesh than requested; keeping the applied mesh below."
                     )
                 manual_dlg.append_runtime_log(
-                    CertusIndexSplineApp._manual_mesh_change_log_line("Applied mesh", applied_summary)
+                    self._manual_mesh_change_log_line("Applied mesh", applied_summary)
                 )
                 if sigma_fin.size:
                     manual_dlg.adopt_sigma_knots(sigma_fin)
@@ -1852,14 +1855,14 @@ class _CorridorWorkerMixin:
                     self.logger.info(
                         "[INDEX_SPLINE.GUI] manual pipeline applied mesh | role=%s | %s",
                         role,
-                        CertusIndexSplineApp._manual_mesh_change_log_line("applied", applied_summary),
+                        self._manual_mesh_change_log_line("applied", applied_summary),
                     )
                 # Stores the absolute best config for the 'Recall best RMSE' button.
                 # We use `result` (raw from worker) and not `display`: `display` may be
                 # the best live snapshot (e.g. K=14 initial during auto_clean), which
                 # would point "Recall best" to an erroneous intermediate state.
                 raw_sk = np.asarray(result.get("sigma_knots", []), dtype=np.float64).ravel()
-                raw_rmse = CertusIndexSplineApp._rmse_from_result_dict(result)
+                raw_rmse = self._rmse_from_result_dict(result)
                 if raw_sk.size and np.isfinite(raw_rmse):
                     manual_dlg.update_best_config(result, raw_sk)
             except Exception as e:
@@ -1920,7 +1923,7 @@ class _CorridorWorkerMixin:
                     _tb.format_exc(),
                 )
 
-        self.lbl_status.setText(CertusIndexSplineApp._post_optimization_ready_status(st))
+        self.lbl_status.setText(self._post_optimization_ready_status(st))
 
         try:
             self.export_excel(auto_export=True)
@@ -2633,7 +2636,7 @@ class _CorridorWorkerMixin:
 
         d_hi_grid = float(np.max(d_grid)) if d_grid.size else float("nan")
 
-        CertusIndexSplineApp._prepare_worker_restart(self)
+        self.__class__._prepare_worker_restart(self)
 
         snap = dict(base)
 
@@ -4493,7 +4496,7 @@ class _RunMixin:
 
         self._save_undo_state()
 
-        CertusIndexSplineApp._prepare_worker_restart(self)
+        self.__class__._prepare_worker_restart(self)
 
         reset_smart_init_preview_guard(cfg)
 
@@ -4727,7 +4730,7 @@ class _RunMixin:
                 float(seed.get("d_nm", float("nan"))),
             )
 
-        CertusIndexSplineApp._prepare_worker_restart(self)
+        self.__class__._prepare_worker_restart(self)
 
         self._best_live_rmse = float("inf")
 
@@ -5383,8 +5386,8 @@ class _DataMixin:
         self._plot_result(preview, plot_source="manual_delta_ns_preview")
         self._refresh_data_table(result_override=preview)
         self.lbl_status.setText(
-            CertusIndexSplineApp._post_optimization_ready_status(
-                CertusIndexSplineApp._format_post_optimization_status(preview, preview)
+            self._post_optimization_ready_status(
+                self._format_post_optimization_status(preview, preview)
             )
         )
         return True
@@ -5396,7 +5399,7 @@ class _DataMixin:
         lam_preview = np.asarray(preview_result.get("lam_nm", []), dtype=np.float64).ravel()
         y_preview = np.asarray(preview_result.get("t_theo", []), dtype=np.float64).ravel()
         dialog.update_model_preview(lam_preview, y_preview)
-        d_preview, rmse_preview = CertusIndexSplineApp._runtime_metrics_from_result_dict(preview_result)
+        d_preview, rmse_preview = self._runtime_metrics_from_result_dict(preview_result)
         dialog.set_runtime_metrics(d_preview, rmse_preview)
 
     def _copy_nk_to_clipboard(self) -> None:
@@ -7198,7 +7201,7 @@ class _CorridorControlMixin:
         if cfg_base is None:
             return False
 
-        CertusIndexSplineApp._prepare_worker_restart(self)
+        self.__class__._prepare_worker_restart(self)
 
         self._best_live_rmse = float("inf")
 
@@ -7367,7 +7370,7 @@ class _CorridorControlMixin:
         display = self._display_result_prefer_best_live(result)
         self._last_result = display
 
-        st = CertusIndexSplineApp._format_post_optimization_status(display, result)
+        st = self._format_post_optimization_status(display, result)
         status_text = "Apres minimum grille (polish profond) | " + st
         self.lbl_status.setText(status_text)
 
@@ -7394,7 +7397,7 @@ class _CorridorControlMixin:
             return
 
         self._refresh_post_optimization_option_controls()
-        self.lbl_status.setText(CertusIndexSplineApp._post_optimization_ready_status(status_text))
+        self.lbl_status.setText(self._post_optimization_ready_status(status_text))
         self.export_excel(auto_export=True)
 
     def _finish_rmse_heal_worker_done(self, healed_list: object) -> None:

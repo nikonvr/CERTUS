@@ -343,8 +343,10 @@ from certus.spline.certus_index_spline_corridors import (
     _CorridorWorkerMixin,
     _DataMixin,
     _CorridorGenMixin,
+)
+from certus.spline.certus_index_spline_settings import (
     _SettingsMixin,
-    _CorridorControlMixin
+    _CorridorControlMixin,
 )
 
 

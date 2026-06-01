@@ -895,9 +895,11 @@ class _ExcelExportMixin:
                     half_span = 0.5 * float(hi_w - lo_w)
             if not np.isfinite(half_span) or half_span <= 0.0:
                 half_span = max(1e-6, 0.5 * float(np.ptp(d_parab_arr)) if d_parab_arr.size > 1 else 1e-3)
+            d_min_val = float(np.min(d_plot)) if d_plot.size > 0 else float(d_center_fit - half_span)
+            d_max_val = float(np.max(d_plot)) if d_plot.size > 0 else float(d_center_fit + half_span)
             d_par = np.linspace(
-                float(d_center_fit - half_span),
-                float(d_center_fit + half_span),
+                d_min_val,
+                d_max_val,
                 200,
                 dtype=np.float64,
             )

@@ -327,9 +327,11 @@ from certus.spline.spline_visual_utils import (
 )
 
 from certus.spline.spline_workers import worker_auto_best_split_knot_refinement
-from certus.spline.certus_index_spline_corridors import (
+from certus.spline.certus_index_spline_excel_export import (
     _RMSEPlotContext,
     _ExcelExportMixin,
+)
+from certus.spline.certus_index_spline_corridors import (
     _CorridorWorkerMixin,
     _PlotMixin,
     _UIBuilderMixin,

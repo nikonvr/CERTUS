@@ -175,6 +175,8 @@ from certus.metal.certus_metal_common import (
     DEFAULT_WORKERS,
     MetalBaseApp,
     MetalOptimizationWorker,
+    build_metal_startup_log_lines,
+    build_metal_target_data,
     metal_optimization_worker_run_differential_evolution,
     normalize_percent_column,
     setup_beam_analysis_thread,
@@ -1089,7 +1091,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self.reflectance_plot = CertusScientificPlot(
             self,
-            "Reflectance Comparison (Target vs Calculated)",
+            "Reflectance Comparison",
             "Reflectance",
             "Wavelength (nm)",
         )
@@ -1121,68 +1123,35 @@ class CertusMetalSingleApp(MetalBaseApp):
             [], [], pen=pg.mkPen(CertusTheme.WARNING, width=2), name="Calc Rb"
         )
 
-        self.tabs.addTab(self.reflectance_plot, "Spectra")
+        self.tabs.addTab(self.reflectance_plot, "Reflectance")
 
         setup_common_metal_plots(self)
 
         self.mse_plot = CertusScientificPlot(
             self,
-            "Optimization Convergence (Total RMSE)",
-            "Root Mean Squared Error (RMSE)",
+            "Optimization Convergence",
+            "RMSE",
             "Iteration",
         )
-
         self.mse_plot.showGrid(x=True, y=True)
-
         self.mse_plot.setLogMode(y=True)
-
         self.mse_curve = self.mse_plot.plot([], [], pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2))
-
         self.tabs.addTab(self.mse_plot, "Convergence")
 
-        # Why CERTUS? tab
-
         self.perf_tab = QWidget()
-
         perf_layout = QGridLayout(self.perf_tab)
+        perf_layout.setSpacing(16)
+        perf_layout.setContentsMargins(22, 22, 22, 22)
 
-        perf_layout.setSpacing(20)
-
-        perf_layout.setContentsMargins(30, 30, 30, 30)
-
-        c1 = FlashyCard(
-            "Flexible n(lambda), k(lambda) Model",
-            "Spline interpolation for real metals\nCaptures fine dispersion variations",
-            icon="🚀",
-        )
-
-        c2 = FlashyCard(
-            "Accelerated Numba TMM",
-            "Vectorized thin film computation\nResponse time close to native",
-            icon="⚡",
-        )
-
-        c3 = FlashyCard(
-            "Dual-Axis n & k Tracking",
-            "Simultaneous reading of index/extinction\nClear analysis of material physics",
-            icon="📈",
-        )
-
-        c4 = FlashyCard(
-            "Stable Global Optimization",
-            "Differential Evolution + local polish\nFewer local minima traps",
-            icon="🔮",
-        )
-
-        perf_layout.addWidget(c1, 0, 0)
-
-        perf_layout.addWidget(c2, 0, 1)
-
-        perf_layout.addWidget(c3, 1, 0)
-
-        perf_layout.addWidget(c4, 1, 1)
-
-        self.tabs.addTab(self.perf_tab, "Why CERTUS?")
+        cards = [
+            FlashyCard("Flexible n(λ), k(λ) Model", "Spline interpolation for real metals\nCaptures fine dispersion variations", icon="🚀"),
+            FlashyCard("Accelerated Numba TMM", "Vectorized thin film computation\nResponse time close to native", icon="⚡"),
+            FlashyCard("Dual-Axis n & k Tracking", "Simultaneous reading of index/extinction\nClear analysis of material physics", icon="📈"),
+            FlashyCard("Stable Global Optimization", "Differential Evolution + local polish\nFewer local minima traps", icon="🔮"),
+        ]
+        for idx, card in enumerate(cards):
+            perf_layout.addWidget(card, idx // 2, idx % 2)
+        self.tabs.addTab(self.perf_tab, "About")
 
     def _warmup_numba(self) -> None:
         """JIT precompilation via background thread"""
@@ -1240,44 +1209,7 @@ class CertusMetalSingleApp(MetalBaseApp):
         """Process loaded data (Hook from MetalBaseApp)"""
 
         try:
-            # data is sorted numpy array [lambda, ...]
-
-            # Detect columns:
-
-            # 2 cols: Lambda, R
-
-            # 3 cols: Lambda, R, T
-
-            # 4 cols: Lambda, R, T, Rback (Target format for Single)
-
-            cols = data.shape[1]
-
-            self.target_data = {}
-
-            self.target_data["lambda"] = data[:, 0]
-
-            # R (Col 1)
-
-            if cols >= 2:
-                self.target_data["R"] = normalize_percent_column(data[:, 1])
-
-            # T (Col 2)
-
-            if cols >= 3:
-                self.target_data["T"] = normalize_percent_column(data[:, 2])
-
-            else:
-                self.target_data["T"] = np.full_like(data[:, 0], np.nan)
-
-            # Rback (Col 3)
-
-            if cols >= 4:
-                self.target_data["Rback"] = normalize_percent_column(data[:, 3])
-
-            else:
-                self.target_data["Rback"] = np.full_like(data[:, 0], np.nan)
-
-            # Update Plots
+            self.target_data = build_metal_target_data(data, include_t=True, include_rback=True)
 
             if hasattr(self, "target_curve"):
                 self.target_curve.setData(self.target_data["lambda"], self.target_data["R"])
@@ -1287,9 +1219,9 @@ class CertusMetalSingleApp(MetalBaseApp):
             if hasattr(self, "reflectance_plot"):
                 self.reflectance_plot.autoRange()
 
-            self.logger.info(f"Loaded Data: {cols} columns. Points: {len(data)}")
+            self.logger.info(f"Loaded Data: {data.shape[1]} columns. Points: {len(data)}")
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (ValueError, NUMERICAL_FAULT_EXCEPTIONS) as e:
             self.logger.error(f"Error parsing data: {e}")
 
             QMessageBox.warning(self, "Data Error", f"Could not parse data columns: {e}")
@@ -1427,15 +1359,23 @@ class CertusMetalSingleApp(MetalBaseApp):
                 filepath, max_columns=4, normalise_percent=True, sort_ascending=True, column_roles=roles
             )
 
-            wls = res.x
+            self.target_data = build_metal_target_data(
+                np.column_stack(
+                    [
+                        res.x,
+                        res.y_columns.get("R", np.full_like(res.x, np.nan)),
+                        res.y_columns.get("T", np.full_like(res.x, np.nan)),
+                        res.y_columns.get("Rback", np.full_like(res.x, np.nan)),
+                    ]
+                ),
+                include_t=True,
+                include_rback=True,
+            )
 
-            R_val = res.y_columns.get("R", np.full_like(wls, np.nan))
-
-            T_val = res.y_columns.get("T", np.full_like(wls, np.nan))
-
-            Rb_val = res.y_columns.get("Rback", np.full_like(wls, np.nan))
-
-            # Warning if data missing
+            wls = self.target_data["lambda"]
+            R_val = self.target_data["R"]
+            T_val = self.target_data["T"]
+            Rb_val = self.target_data["Rback"]
 
             if len(res.y_columns) < 3:
                 msg = []
@@ -1452,10 +1392,6 @@ class CertusMetalSingleApp(MetalBaseApp):
                     f"Some columns are missing:\n{', '.join(msg)}\n\n"
                     "Optimization will proceed using available data only.",
                 )
-
-            target_data = {"lambda": wls, "R": R_val, "T": T_val, "Rback": Rb_val}
-
-            self.target_data = target_data
 
             self._last_target_file = filepath  # Save path for JSON
 
@@ -1585,75 +1521,83 @@ class CertusMetalSingleApp(MetalBaseApp):
 
             self.target_data = None
 
+    def _build_single_optimization_params(self) -> dict:
+        """Build validated optimization parameters for the SINGLE workflow."""
+
+        params: dict[str, float | int | str | np.ndarray] = {}
+
+        raw_knots = int(self.widgets["num_knots"].text())
+        if raw_knots > 5:
+            self.logger.warning(f"Requested {raw_knots} knots. Clamping to 5 (System Limit).")
+            raw_knots = 5
+            self.widgets["num_knots"].setText("5")
+
+        params["num_knots"] = raw_knots
+        params["eM_min"] = float(self.widgets["eM_min"].text())
+
+        sub_text = self.combo_substrate.currentText()
+        params["substrate_id"] = _resolve_single_substrate_id(sub_text)
+        params["substrate_label"] = canonicalize_substrate_label(sub_text)
+        return params
+
+    def _validate_single_optimization_params(self, params: dict) -> bool:
+        """Validate SINGLE-specific optimization guardrails."""
+
+        e_min = params["eM_min"]
+        e_max = params["eM_max"]
+        e_mean = (e_min + e_max) / 2.0
+        e_range = e_max - e_min
+        if e_range > (0.5 * e_mean):
+            ret = QMessageBox.warning(
+                self,
+                "Wide Thickness Range",
+                f"The thickness range ({e_min}-{e_max} nm) is very wide.\n"
+                f"Effective Range: {e_mean:.1f} +/- {e_range / 2:.1f} nm (+/-{e_range / 2 / e_mean * 100:.0f}%)\n\n"
+                "For reliable convergence, the nominal thickness should be known to +/-20%.\n"
+                "Do you want to proceed anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if ret == QMessageBox.StandardButton.No:
+                return False
+
+        target_t_filtered = params.get("target_t", np.array([]))
+        if len(target_t_filtered) > 0:
+            t_min = np.nanmin(target_t_filtered)
+            t_mean = np.nanmean(target_t_filtered)
+            if t_min < 0.01:
+                QMessageBox.warning(
+                    self,
+                    "Transmission Low",
+                    f"Safety Check Failed!\nMinimum Transmission is too low ({t_min * 100:.2f}% < 1%).\n\n"
+                    "Optimization requires adequate transmission signal.",
+                )
+                return False
+            if t_mean < 0.05:
+                QMessageBox.warning(
+                    self,
+                    "Transmission Low",
+                    f"Safety Check Failed!\nMean Transmission is too low ({t_mean * 100:.2f}% < 5%).\n\n"
+                    "Optimization requires adequate transmission signal.",
+                )
+                return False
+
+        return True
+
     def start_optimization(self) -> None:
         """Starts optimization using the shared _metal_start_optimization helper."""
 
         def build_params(params):
-            # Clamp knots to 5 (User Constraint)
-            raw_knots = int(self.widgets["num_knots"].text())
-            if raw_knots > 5:
-                self.logger.warning(f"Requested {raw_knots} knots. Clamping to 5 (System Limit).")
-                raw_knots = 5
-                self.widgets["num_knots"].setText("5")
-            params["num_knots"] = raw_knots
-            params["eM_min"] = float(self.widgets["eM_min"].text())
-            
-            sub_text = self.combo_substrate.currentText()
-            params["substrate_id"] = _resolve_single_substrate_id(sub_text)
-            params["substrate_label"] = canonicalize_substrate_label(sub_text)
+            params.update(self._build_single_optimization_params())
 
         def before_run(params):
-            # Check wide thickness range
-            e_min = params["eM_min"]
-            e_max = params["eM_max"]
-            e_mean = (e_min + e_max) / 2.0
-            e_range = e_max - e_min
-            if e_range > (0.5 * e_mean):
-                ret = QMessageBox.warning(
-                    self,
-                    "Wide Thickness Range",
-                    f"The thickness range ({e_min}-{e_max} nm) is very wide.\n"
-                    f"Effective Range: {e_mean:.1f} +/- {e_range / 2:.1f} nm (+/-{e_range / 2 / e_mean * 100:.0f}%)\n\n"
-                    "For reliable convergence, the nominal thickness should be known to +/-20%.\n"
-                    "Do you want to proceed anyway?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                )
-                if ret == QMessageBox.StandardButton.No:
-                    return False
+            if not self._validate_single_optimization_params(params):
+                return False
 
-            # Check transmission
-            target_t_filtered = params.get("target_t", np.array([]))
-            if len(target_t_filtered) > 0:
-                t_min = np.nanmin(target_t_filtered)
-                t_mean = np.nanmean(target_t_filtered)
-                if t_min < 0.01:
-                    QMessageBox.warning(
-                        self,
-                        "Transmission Low",
-                        f"Safety Check Failed!\nMinimum Transmission is too low ({t_min * 100:.2f}% < 1%).\n\n"
-                        "Optimization requires adequate transmission signal.",
-                    )
-                    return False
-                if t_mean < 0.05:
-                    QMessageBox.warning(
-                        self,
-                        "Transmission Low",
-                        f"Safety Check Failed!\nMean Transmission is too low ({t_mean * 100:.2f}% < 5%).\n\n"
-                        "Optimization requires adequate transmission signal.",
-                    )
-                    return False
-
-            # Start logging
             sub_text = self.combo_substrate.currentText()
             sub_label = canonicalize_substrate_label(sub_text)
-            self.logger.info("=" * 50)
-            self.logger.info("STARTING METAL SINGLE OPTIMIZATION")
+            for line in build_metal_startup_log_lines(self, variant_label="METAL SINGLE", params=params):
+                self.logger.info(line)
             self.logger.info(f"substrate: {sub_text} | canonical: {sub_label}")
-            self.logger.info(
-                f"Target File: {Path(self._last_target_file).name if self._last_target_file else 'Unknown'}"
-            )
-            self.logger.info(f"Wavelength Range: {params['lmin_filter']} - {params['lmax_filter']} nm")
-            self.logger.info(f"Metal Thickness Range: {params['eM_min']} - {params['eM_max']} nm")
             return True
 
         def build_bounds(params, target_lambda):
@@ -1700,7 +1644,7 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         self._uninstall_all_skeletons()
 
-        self.progress_widget.stop("Optimization complete")
+        self.progress_widget.stop("Optimization complete — results ready")
 
         # Cache iteration count before cleanup (thread-safe)
 
@@ -2032,7 +1976,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             )
 
             if res.get("excel") or res.get("html"):
-                self.status_label.setText(f"Reports saved: {base_name}")
+                self.status_label.setText(f"Reports saved — {base_name}")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error exporting: {e}")

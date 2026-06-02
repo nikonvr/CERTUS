@@ -34,6 +34,7 @@ from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 
 from PyQt6.QtWidgets import (
     QComboBox,
+    QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -150,11 +151,60 @@ def normalize_percent_column(values: np.ndarray) -> np.ndarray:
     return arr / 100.0 if vmax > 1.0 else arr
 
 
+def build_metal_target_data(data: np.ndarray, *, include_t: bool = True, include_rback: bool = True) -> dict[str, np.ndarray]:
+    """Convert a loaded METAL spectrum array to the canonical dict schema.
+
+    The canonical schema is:
+    ``{"lambda": ..., "R": ..., "T": ..., "Rback": ...}``
+
+    Missing channels are filled with ``NaN`` arrays so downstream code can
+    safely test availability with ``np.all(np.isnan(...))``.
+    """
+
+    arr = np.asarray(data)
+    if arr.ndim != 2 or arr.shape[1] < 2:
+        raise ValueError("METAL target data requires at least two columns: lambda, R")
+
+    wls = arr[:, 0]
+    target = {
+        "lambda": wls,
+        "R": normalize_percent_column(arr[:, 1]),
+        "T": np.full_like(wls, np.nan),
+        "Rback": np.full_like(wls, np.nan),
+    }
+
+    if include_t and arr.shape[1] >= 3:
+        target["T"] = normalize_percent_column(arr[:, 2])
+
+    if include_rback and arr.shape[1] >= 4:
+        target["Rback"] = normalize_percent_column(arr[:, 3])
+
+    return target
+
+
 def _format_beam_status(cur: int, tot: int, best: float) -> str:
     """Return the standard METAL beam-analysis status line."""
 
     rmse = float(np.sqrt(best)) if best >= 0 else 0.0
     return f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}"
+
+
+def build_metal_startup_log_lines(app, *, variant_label: str, params: dict[str, Any]) -> list[str]:
+    """Build a consistent startup log block for METAL apps."""
+
+    target_file = Path(getattr(app, "_last_target_file", "") or "")
+    target_name = target_file.name if target_file.name else "Unknown"
+    lines = [
+        "=" * 50,
+        f"STARTING {variant_label} OPTIMIZATION",
+        f"Target File: {target_name}",
+        f"Wavelength Range: {params['lmin_filter']} - {params['lmax_filter']} nm",
+        f"Metal Thickness Range: {params['eM_min']} - {params['eM_max']} nm",
+    ]
+    if "num_knots" in params:
+        lines.append(f"Knots: {params['num_knots']} (min dist: {params.get('min_knot_dist', 'N/A')})")
+    lines.append("=" * 50)
+    return lines
 
 
 def setup_beam_analysis_thread(app, worker) -> "QThread":
@@ -827,157 +877,102 @@ class MetalBaseApp(CertusBaseApp):
             self.progress_widget.style().polish(self.progress_widget)
 
     def setup_ui(self) -> None:
-        """Builds standard METAL layout (Splitter: Control | Results)"""
-
-        # Main Splitter
+        """Builds a premium METAL layout with clear workflow hierarchy."""
 
         self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
-
         self.main_split = self.main_splitter
-
         self.setCentralWidget(self.main_splitter)
 
-        # === LEFT PANEL ===
-
+        # === LEFT PANEL: Workflow / Controls ===
         left_panel_widget = QWidget()
-
-        left_panel_widget.setMinimumWidth(280)
-
+        left_panel_widget.setMinimumWidth(340)
         left_panel_outer = QVBoxLayout(left_panel_widget)
-
         left_panel_outer.setContentsMargins(0, 0, 0, 0)
-
         left_panel_outer.setSpacing(0)
-
-        # Header (Pinned outside scroll)
 
         self._create_header(left_panel_outer)
 
         scroll_area = QScrollArea()
-
         scroll_area.setWidgetResizable(True)
-
         scroll_area.setFrameShape(QScrollArea.Shape.NoFrame)
-
         scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
         left_panel_outer.addWidget(scroll_area)
 
         left_panel = QWidget()
-
         scroll_area.setWidget(left_panel)
-
         left_layout = QVBoxLayout(left_panel)
-
         left_layout.setContentsMargins(0, 0, 4, 0)
-
-        left_layout.setSpacing(8)
+        left_layout.setSpacing(10)
 
         workflow_card = CertusCard("Workflow")
-
-        workflow_hint = QLabel("1 Load measurement  2 Configure metal model  3 Run optimization  4 Inspect plots")
-
+        workflow_hint = QLabel("1 Load data  →  2 Configure model  →  3 Run analysis  →  4 Review & export")
         workflow_hint.setWordWrap(True)
-
         workflow_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
-
         workflow_card.body.addWidget(workflow_hint)
-
         left_layout.addWidget(workflow_card)
 
         self.params_widget = QWidget()
-
         self.params_layout = QGridLayout(self.params_widget)
-
-        self.params_layout.setSpacing(6)
-
         self.params_layout.setContentsMargins(0, 0, 0, 0)
-
+        self.params_layout.setHorizontalSpacing(10)
+        self.params_layout.setVerticalSpacing(10)
         self._setup_parameter_grid(self.params_layout)
 
         params_card = CertusCard("Parameters")
-
         params_card.body.setContentsMargins(10, 8, 10, 10)
-
         params_card.body.addWidget(self.params_widget)
-
         left_layout.addWidget(params_card)
 
-        self._create_action_buttons(left_layout)
-
-        left_layout.addStretch()
+        actions_card = CertusCard("Actions")
+        actions_card.body.setContentsMargins(10, 8, 10, 10)
+        actions_layout = QVBoxLayout()
+        actions_layout.setContentsMargins(0, 0, 0, 0)
+        self._create_action_buttons(actions_layout)
+        actions_card.body.addLayout(actions_layout)
+        left_layout.addWidget(actions_card)
 
         self.main_splitter.addWidget(left_panel_widget)
 
-        # === RIGHT PANEL (Plots) ===
-
+        # === RIGHT PANEL: Results / Plots ===
         self.right_splitter = QSplitter(Qt.Orientation.Vertical)
 
-        # Tabs Container
-
         plot_container = QWidget()
-
         plot_layout = QVBoxLayout(plot_container)
-
         plot_layout.setContentsMargins(0, 0, 0, 0)
-
-        # Plot Header (Detach)
+        plot_layout.setSpacing(6)
 
         plot_header = QWidget()
-
         plot_header.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
-
         ph_layout = QHBoxLayout(plot_header)
-
         ph_layout.setContentsMargins(6, 2, 6, 2)
-
         detach_btn = create_styled_button("⬡  Detach Plot", "secondary")
-
         detach_btn.setFixedHeight(24)
-
         detach_btn.setToolTip("Detach the current plot tab into a separate floating window.")
-
         detach_btn.clicked.connect(self.detach_current_plot)
-
         ph_layout.addWidget(detach_btn)
-
         ph_layout.addStretch()
-
         plot_layout.addWidget(plot_header)
 
-        # Tabs
-
         self.tabs = QTabWidget()
-
-        self._setup_plots()  # Subclass defines plots
-
+        self.tabs.setDocumentMode(True)
+        self.tabs.setTabPosition(QTabWidget.TabPosition.North)
+        self._setup_plots()
         plot_layout.addWidget(self.tabs)
 
         self.right_splitter.addWidget(plot_container)
 
-        # Logs
-
         self.log_container = QWidget()
-
         self.log_container.setVisible(False)
-
         log_layout = QVBoxLayout(self.log_container)
-
         log_layout.setContentsMargins(0, 0, 0, 0)
-
         self.log_text = create_log_widget(visible=True)
-
         log_layout.addWidget(self.log_text)
-
         self.right_splitter.addWidget(self.log_container)
 
-        self.right_splitter.setSizes([800, 0])
-
+        self.right_splitter.setSizes([900, 0])
         self.right_splitter.setCollapsible(0, False)
-
         self.main_splitter.addWidget(self.right_splitter)
-
-        self.main_splitter.setSizes([380, 1020])
+        self.main_splitter.setSizes([440, 1080])
 
         self._create_status_bar()
 
@@ -1035,27 +1030,27 @@ class MetalBaseApp(CertusBaseApp):
 
         r1 = QHBoxLayout()
 
-        self.btn_run = QPushButton("▶  Start")
+        self.btn_run = QPushButton("▶  Run")
         self.btn_run.setObjectName(OBJ.PRIMARY_BUTTON)
         self.btn_run.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        self.btn_run.setFixedHeight(36)
+        self.btn_run.setFixedHeight(40)
 
-        self.btn_run.setToolTip("Start the differential evolution optimization to extract metal optical constants.")
+        self.btn_run.setToolTip("Run the optimization pipeline to extract the metal optical constants.")
 
         self.btn_run.clicked.connect(self.start_optimization)  # Subclass must implement start_optimization
 
         r1.addWidget(self.btn_run)
 
-        self.btn_stop = QPushButton("■  Stop")
+        self.btn_stop = QPushButton("■  Halt")
         self.btn_stop.setObjectName(OBJ.DANGER_BUTTON)
         self.btn_stop.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        self.btn_stop.setFixedHeight(36)
+        self.btn_stop.setFixedHeight(40)
 
         self.btn_stop.setEnabled(False)
 
-        self.btn_stop.setToolTip("Stop the running optimization and keep the best result found so far.")
+        self.btn_stop.setToolTip("Halt the running optimization and keep the best result found so far.")
 
         self.btn_stop.clicked.connect(self.stop_optimization)
 
@@ -1066,7 +1061,7 @@ class MetalBaseApp(CertusBaseApp):
         # Beam Analysis Button (Subclasses enable it)
 
         try:
-            self.btn_beam = QPushButton("Beam Analysis")
+            self.btn_beam = QPushButton("Beam Scan")
 
             beam_icon = self.style().standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)
 
@@ -1075,13 +1070,13 @@ class MetalBaseApp(CertusBaseApp):
         except (ImportError, AttributeError):
             self.btn_beam = QPushButton("Beam Analysis")
 
-        self.btn_beam.setFixedHeight(30)
+        self.btn_beam.setFixedHeight(34)
 
         self.btn_beam.setEnabled(False)  # Disabled until optimization finishes
 
         self.btn_beam.setToolTip(
-            "Run Beam Analysis: scan thickness (eM) around the optimum to map the\n"
-            "MSE valley and assess solution uniqueness."
+            "Run a beam scan: vary thickness (eM) around the optimum to map the\n"
+            "RMSE valley and assess solution uniqueness."
         )
 
         self.btn_beam.setStyleSheet(
@@ -1099,11 +1094,12 @@ class MetalBaseApp(CertusBaseApp):
 
         action_bar.add_widget(self.btn_beam)
 
-        self.btn_details = QPushButton("Show Details")
+        self.btn_details = QPushButton("Logs")
+        self.btn_details.setFixedHeight(34)
 
         self.btn_details.setCheckable(True)
 
-        self.btn_details.setToolTip("Show or hide the computation log panel.")
+        self.btn_details.setToolTip("Show or hide the live log panel below the plots.")
 
         self.btn_details.clicked.connect(self.on_toggle_details)
 
@@ -1147,71 +1143,75 @@ class MetalBaseApp(CertusBaseApp):
 
         return c, l
 
+    def _create_divider(self) -> QWidget:
+        """Create a subtle horizontal divider for premium grouping."""
+
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        line.setFrameShadow(QFrame.Shadow.Plain)
+        line.setStyleSheet(f"color: {CertusTheme.BORDER}; background: {CertusTheme.BORDER};")
+        line.setFixedHeight(1)
+        return line
+
     def _create_input_group(self) -> Any:
 
         c, l = self._create_group_box("Input Data")
 
-        self.btn_load = QPushButton(" Load File...")
-
+        self.btn_load = create_styled_button(" Load File...", "secondary")
         self.btn_load.setToolTip(
             "Load a data file (CSV or Excel) containing columns:\n"
             "lambda (nm), R, [T], [Rback]  percentage or 01 scale accepted."
         )
-
         self.btn_load.clicked.connect(self.load_target_file)
-
         l.addWidget(self.btn_load)
 
         self.lbl_file = QLabel("No file loaded")
-
         self.lbl_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
-
         l.addWidget(self.lbl_file)
 
+        self.workflow_status = QLabel("Ready to load a spectrum")
+        self.workflow_status.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        l.addWidget(self.workflow_status)
+        l.addWidget(self._create_divider())
+
+        l.addWidget(QLabel("Wavelength filter"))
+
         fl = QGridLayout()
+        fl.setContentsMargins(0, 0, 0, 0)
+        fl.setHorizontalSpacing(8)
+        fl.setVerticalSpacing(6)
 
-        fl.addWidget(QLabel("lambda min:"), 0, 0)
-
+        fl.addWidget(QLabel("λ min"), 0, 0)
         self.widgets["lmin_filter"] = QLineEdit()
-
         self.widgets["lmin_filter"].setToolTip(
             "Minimum wavelength (nm) used for fitting. Rows below this value are excluded."
         )
-
         fl.addWidget(self.widgets["lmin_filter"], 0, 1)
 
-        fl.addWidget(QLabel("lambda max:"), 1, 0)
-
+        fl.addWidget(QLabel("λ max"), 1, 0)
         self.widgets["lmax_filter"] = QLineEdit()
-
         self.widgets["lmax_filter"].setToolTip(
             "Maximum wavelength (nm) used for fitting. Rows above this value are excluded."
         )
-
         fl.addWidget(self.widgets["lmax_filter"], 1, 1)
 
         l.addLayout(fl)
-
         return c
 
     def _create_output_group(self) -> Any:
 
         c = CertusCard("Output")
-
         l = QGridLayout()
-
         l.setContentsMargins(8, 12, 8, 8)
-
+        l.setHorizontalSpacing(8)
+        l.setVerticalSpacing(6)
         c.body.addLayout(l)
 
         self.widgets["excel_filename"] = QLineEdit(DEFAULT_EXCEL_FILENAME)
-
         self.widgets["excel_filename"].setToolTip("Name of the Excel output file. Written to the reports/ directory.")
 
-        l.addWidget(QLabel("File:"), 0, 0)
-
+        l.addWidget(QLabel("File"), 0, 0)
         l.addWidget(self.widgets["excel_filename"], 0, 1)
-
         return c
 
     def _create_physical_params_group(self, show_el: bool = False, el_defaults: tuple = ("900", "20")) -> CertusCard:
@@ -1233,41 +1233,29 @@ class MetalBaseApp(CertusBaseApp):
 
         c, l = self._create_group_box("Physical Parameters")
 
-        # eM (Metal thickness)
-
         self.widgets["eM_min"] = QLineEdit(str(DEFAULT_EM_MIN))
-
         self.widgets["eM_max"] = QLineEdit(str(DEFAULT_EM_MAX))
 
         row = QHBoxLayout()
-
-        row.addWidget(QLabel("eM min (nm):"))
-
+        row.addWidget(QLabel("Metal thickness range (nm)"))
+        row.addStretch()
+        row.addWidget(QLabel("Min"))
         row.addWidget(self.widgets["eM_min"])
-
-        row.addWidget(QLabel("max:"))
-
+        row.addWidget(QLabel("Max"))
         row.addWidget(self.widgets["eM_max"])
-
         l.addLayout(row)
-
-        # Optional eL (Dielectric layer - for BILAYER)
 
         if show_el:
             self.widgets["eL_nominal"] = QLineEdit(el_defaults[0])
-
             self.widgets["eL_variation"] = QLineEdit(el_defaults[1])
 
             row2 = QHBoxLayout()
-
-            row2.addWidget(QLabel("eL Nominal (nm):"))
-
+            row2.addWidget(QLabel("Dielectric layer (nm)"))
+            row2.addStretch()
+            row2.addWidget(QLabel("Nominal"))
             row2.addWidget(self.widgets["eL_nominal"])
-
-            row2.addWidget(QLabel("+/-"))
-
+            row2.addWidget(QLabel("±"))
             row2.addWidget(self.widgets["eL_variation"])
-
             l.addLayout(row2)
 
         return c
@@ -1293,92 +1281,55 @@ class MetalBaseApp(CertusBaseApp):
 
         c, l = self._create_group_box("Material Parameters")
 
-        # Spline Knots
-
         row1 = QHBoxLayout()
-
-        row1.addWidget(QLabel("Knots:"))
+        row1.addWidget(QLabel("Spline knots"))
+        row1.addStretch()
 
         self.widgets["num_knots"] = QLineEdit(str(DEFAULT_NUM_KNOTS))
-
         self.widgets["num_knots"].setFixedWidth(50)
-
+        row1.addWidget(QLabel("Count"))
         row1.addWidget(self.widgets["num_knots"])
 
-        row1.addWidget(QLabel("n/k range:"))
-
         self.widgets["nk_min"] = QLineEdit(str(DEFAULT_NK_MIN))
-
         self.widgets["nk_min"].setFixedWidth(40)
-
-        row1.addWidget(self.widgets["nk_min"])
-
-        row1.addWidget(QLabel("-"))
-
         self.widgets["nk_max"] = QLineEdit(str(DEFAULT_NK_MAX))
-
         self.widgets["nk_max"].setFixedWidth(40)
-
+        row1.addSpacing(8)
+        row1.addWidget(QLabel("n/k"))
+        row1.addWidget(self.widgets["nk_min"])
+        row1.addWidget(QLabel("to"))
         row1.addWidget(self.widgets["nk_max"])
-
         l.addLayout(row1)
 
-        # Min knot distance
-
         row2 = QHBoxLayout()
-
-        row2.addWidget(QLabel("Min knot distance (nm):"))
-
-        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
-
-        self.widgets["min_knot_dist"].setFixedWidth(60)
-
-        row2.addWidget(self.widgets["min_knot_dist"])
-
+        row2.addWidget(QLabel("Minimum knot distance (nm)"))
         row2.addStretch()
-
+        self.widgets["min_knot_dist"] = QLineEdit(str(DEFAULT_MIN_KNOT_DISTANCE))
+        self.widgets["min_knot_dist"].setFixedWidth(60)
+        row2.addWidget(self.widgets["min_knot_dist"])
         l.addLayout(row2)
-
-        # Optional Dielectric model (for BILAYER)
 
         if show_diel_model:
             row3 = QHBoxLayout()
-
-            row3.addWidget(QLabel("n∞:"))
-
-            self.widgets["n_inf"] = QLineEdit("1.46")
-
-            self.widgets["n_inf"].setFixedWidth(50)
-
-            row3.addWidget(self.widgets["n_inf"])
-
-            row3.addWidget(QLabel("A (nm2):"))
-
-            self.widgets["A_coeff"] = QLineEdit("3500")
-
-            self.widgets["A_coeff"].setFixedWidth(60)
-
-            row3.addWidget(self.widgets["A_coeff"])
-
+            row3.addWidget(QLabel("Dielectric model"))
             row3.addStretch()
-
+            row3.addWidget(QLabel("n∞"))
+            self.widgets["n_inf"] = QLineEdit("1.46")
+            self.widgets["n_inf"].setFixedWidth(50)
+            row3.addWidget(self.widgets["n_inf"])
+            row3.addWidget(QLabel("A"))
+            self.widgets["A_coeff"] = QLineEdit("3500")
+            self.widgets["A_coeff"].setFixedWidth(60)
+            row3.addWidget(self.widgets["A_coeff"])
             l.addLayout(row3)
-
-        # Optional substrate selector
 
         if substrate_options:
             row4 = QHBoxLayout()
-
-            row4.addWidget(QLabel("substrate:"))
-
-            self.widgets["substrate"] = QComboBox()
-
-            self.widgets["substrate"].addItems(substrate_options)
-
-            row4.addWidget(self.widgets["substrate"])
-
+            row4.addWidget(QLabel("Substrate"))
             row4.addStretch()
-
+            self.widgets["substrate"] = QComboBox()
+            self.widgets["substrate"].addItems(substrate_options)
+            row4.addWidget(self.widgets["substrate"])
             l.addLayout(row4)
 
         return c
@@ -1396,52 +1347,28 @@ class MetalBaseApp(CertusBaseApp):
 
         c, l = self._create_group_box("Live Parameters")
 
-        # eM display
-
         row1 = QHBoxLayout()
-
-        row1.addWidget(QLabel("eM:"))
-
-        self.widgets["live_eM"] = QLabel("--")
-
-        self.widgets["live_eM"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.PRIMARY};")
-
-        row1.addWidget(self.widgets["live_eM"])
-
-        row1.addWidget(QLabel("nm"))
-
+        row1.addWidget(QLabel("Thickness"))
         row1.addStretch()
-
+        self.widgets["live_eM"] = QLabel("--")
+        self.widgets["live_eM"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.PRIMARY};")
+        row1.addWidget(self.widgets["live_eM"])
+        row1.addWidget(QLabel("nm"))
         l.addLayout(row1)
 
-        # MSE display
-
         row2 = QHBoxLayout()
-
-        row2.addWidget(QLabel("MSE:"))
-
-        self.widgets["live_MSE"] = QLabel("--")
-
-        self.widgets["live_MSE"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.SUCCESS};")
-
-        row2.addWidget(self.widgets["live_MSE"])
-
+        row2.addWidget(QLabel("RMSE"))
         row2.addStretch()
-
+        self.widgets["live_MSE"] = QLabel("--")
+        self.widgets["live_MSE"].setStyleSheet(f"font-weight: bold; color: {CertusTheme.SUCCESS};")
+        row2.addWidget(self.widgets["live_MSE"])
         l.addLayout(row2)
 
-        # Iterations display
-
         row3 = QHBoxLayout()
-
-        row3.addWidget(QLabel("Iterations:"))
-
-        self.widgets["live_iter"] = QLabel("--")
-
-        row3.addWidget(self.widgets["live_iter"])
-
+        row3.addWidget(QLabel("Iterations"))
         row3.addStretch()
-
+        self.widgets["live_iter"] = QLabel("--")
+        row3.addWidget(self.widgets["live_iter"])
         l.addLayout(row3)
 
         return c
@@ -1455,6 +1382,7 @@ class MetalBaseApp(CertusBaseApp):
         self.status_bar.setStyleSheet(CertusTheme.get_status_bar_stylesheet())
 
         self.status_label = CertusStatusPill("Ready", "ready")
+        self.status_label.setToolTip("Current application state and optimization progress.")
 
         self.status_bar.addWidget(self.status_label, 1)
 
@@ -1469,10 +1397,12 @@ class MetalBaseApp(CertusBaseApp):
         self.status_bar.addPermanentWidget(self.stats_label)
 
         self.progress_widget = EnhancedProgressWidget()
+        self.progress_widget.setToolTip("Optimization progress and live convergence feedback.")
 
         self.status_bar.addPermanentWidget(self.progress_widget)
 
         self.btn_theme = CertusThemeToggle(self)
+        self.btn_theme.setToolTip("Toggle between light and dark themes.")
 
         self.status_bar.addPermanentWidget(self.btn_theme)
 
@@ -1504,8 +1434,9 @@ class MetalBaseApp(CertusBaseApp):
             # Store raw data (subclass processes it)
 
             self._last_target_file = filepath
-
             self.lbl_file.setText(Path(filepath).name)
+            if hasattr(self, "workflow_status"):
+                self.workflow_status.setText("Spectrum loaded — configure parameters and run")
 
             # Common processing: wavelengths
 
@@ -1515,7 +1446,7 @@ class MetalBaseApp(CertusBaseApp):
 
             self.target_data = data  # Store raw
 
-            self.logger.info(f"Loaded {filepath}: {len(data)} points")
+            self.logger.info(f"Loaded spectrum {Path(filepath).name} — {len(data)} points")
 
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
                 n_rows = int(data.shape[0]) if isinstance(data, np.ndarray) else 0
@@ -1647,6 +1578,7 @@ class MetalBaseApp(CertusBaseApp):
 
         if getattr(self, "target_data", None) is not None:
             config["target_file"] = getattr(self, "_last_target_file", "")
+            config["target_schema"] = "lambda_R_T_Rback"
 
         if hasattr(self, "final_results") and self.final_results is not None:
             result = self.final_results["result"]
@@ -1766,7 +1698,15 @@ class MetalBaseApp(CertusBaseApp):
             self.optimization_thread = None
             self.worker = None
 
-        if not self.target_data:
+        if self.target_data is None:
+            from certus.utils.errors import show_error
+            show_error(self, "optim_no_data")
+            return
+        try:
+            has_points = len(self.target_data) > 0
+        except TypeError:
+            has_points = True
+        if not has_points:
             from certus.utils.errors import show_error
             show_error(self, "optim_no_data")
             return

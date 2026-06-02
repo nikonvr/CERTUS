@@ -1,22 +1,14 @@
 """Metal orchestration scaffold (#55).
 
-Depends on #26 deduplication for full functional routing.
+Centralizes the declarative job spec used by METAL single/bilayer workflows.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Literal
+from certus.metal.certus_metal_common import (
+    METAL_BILAYER_SPEC,
+    METAL_SINGLE_SPEC,
+    MetalJobSpec,
+)
 
-
-MetalJobKind = Literal["single", "bilayer"]
-
-
-@dataclass(frozen=True)
-class MetalJobSpec:
-    """Declarative job spec for METAL workflows."""
-
-    kind: MetalJobKind
-    payload: dict[str, Any]
-
-
+__all__ = ["MetalJobSpec", "METAL_SINGLE_SPEC", "METAL_BILAYER_SPEC"]

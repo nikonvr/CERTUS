@@ -155,6 +155,8 @@ from certus.metal.certus_metal_common import (
     DEFAULT_WORKERS,
     MetalBaseApp,
     MetalOptimizationWorker,
+    build_metal_startup_log_lines,
+    build_metal_target_data,
     metal_optimization_worker_run_differential_evolution,
     normalize_percent_column,
     setup_beam_analysis_thread,
@@ -1317,7 +1319,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         self.reflectance_plot = CertusScientificPlot(
             self,
-            "Reflectance Comparison (Target vs Calculated)",
+            "Reflectance Comparison",
             "Reflectance",
             "Wavelength (nm)",
         )
@@ -1334,132 +1336,81 @@ class CertusMetalBilayerApp(MetalBaseApp):
             [], [], pen=pg.mkPen(CertusTheme.CHART_PRIMARY, width=2), name="Calculated"
         )
 
-        self.tabs.addTab(self.reflectance_plot, "Spectra")
-
-        # 2. Tab Indices(n, k)
+        self.tabs.addTab(self.reflectance_plot, "Reflectance")
 
         setup_common_metal_plots(self)
 
-        # 3. Dielectric Tab
-
         self.diel_plot = CertusScientificPlot(
             self,
-            "Dielectric Layer Index (SiO2)",
+            "Dielectric Layer",
             "Refractive Index (n)",
             "Wavelength (nm)",
         )
-
         self.diel_plot.showGrid(x=True, y=True)
-
         self.diel_curve = self.diel_plot.plot([], [], pen=pg.mkPen(CertusTheme.SUCCESS, width=2), name="SiO2")
-
         self.tabs.addTab(self.diel_plot, "Dielectric")
-
-        # 4. Convergence Tab
 
         self.mse_plot = CertusScientificPlot(
             self,
-            "Optimization Convergence (Total RMSE)",
-            "Root Mean Squared Error (RMSE)",
+            "Optimization Convergence",
+            "RMSE",
             "Iteration",
         )
-
         self.mse_plot.showGrid(x=True, y=True)
-
         self.mse_plot.setLogMode(y=True)
-
         self.mse_curve = self.mse_plot.plot([], [], pen=pg.mkPen(CertusTheme.CHART_DANGER, width=2))
-
         self.tabs.addTab(self.mse_plot, "Convergence")
 
-        # 5. Why CERTUS? Tab
-
         self.perf_tab = QWidget()
-
         perf_layout = QGridLayout(self.perf_tab)
+        perf_layout.setSpacing(16)
+        perf_layout.setContentsMargins(22, 22, 22, 22)
 
-        perf_layout.setSpacing(20)
-
-        perf_layout.setContentsMargins(30, 30, 30, 30)
-
-        c1 = FlashyCard(
-            "Bilayer Metal + Dielectric",
-            "Joint adjustment of both layers\nBetter representation of real stacks",
-            icon="🚀",
-        )
-
-        c2 = FlashyCard(
-            "High-Speed Numba TMM",
-            "Fast evaluation of combinations\nPractical convergence over large bounds",
-            icon="⚡",
-        )
-
-        c3 = FlashyCard(
-            "Multi-View Physical Analysis",
-            "R/T, n&k, and dielectric tabs\nComprehensive diagnostic of spectral behavior",
-            icon="📈",
-        )
-
-        c4 = FlashyCard(
-            "Robust Global Optimization",
-            "Differential Evolution for non-convex spaces\nReliable search for the best compromise",
-            icon="🔮",
-        )
-
-        perf_layout.addWidget(c1, 0, 0)
-
-        perf_layout.addWidget(c2, 0, 1)
-
-        perf_layout.addWidget(c3, 1, 0)
-
-        perf_layout.addWidget(c4, 1, 1)
-
-        self.tabs.addTab(self.perf_tab, "Why CERTUS?")
+        cards = [
+            FlashyCard("Bilayer Metal + Dielectric", "Joint adjustment of both layers\nBetter representation of real stacks", icon="🚀"),
+            FlashyCard("High-Speed Numba TMM", "Fast evaluation of combinations\nPractical convergence over large bounds", icon="⚡"),
+            FlashyCard("Multi-View Physical Analysis", "R/T, n&k, and dielectric tabs\nComprehensive diagnostic of spectral behavior", icon="📈"),
+            FlashyCard("Robust Global Optimization", "Differential Evolution for non-convex spaces\nReliable search for the best compromise", icon="🔮"),
+        ]
+        for idx, card in enumerate(cards):
+            perf_layout.addWidget(card, idx // 2, idx % 2)
+        self.tabs.addTab(self.perf_tab, "About")
 
     def on_file_loaded(self, data):
         """Process loaded data (Hook from MetalBaseApp)"""
 
         try:
-            # data is [lambda, R] (sorted by lambda) from base load_target_file
-
-            # Handle %R (0-100) vs 0-1 via shared helper
-
-            self.target_data = {"lambda": data[:, 0], "R": normalize_percent_column(data[:, 1])}
-
-            # Update plot
+            self.target_data = build_metal_target_data(data, include_t=False, include_rback=False)
 
             self.target_curve.setData(self.target_data["lambda"], self.target_data["R"])
-
-            # Update filters
 
             self.update_lambda_filters()
 
             self.reflectance_plot.autoRange()
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except (ValueError, NUMERICAL_FAULT_EXCEPTIONS) as e:
             QMessageBox.critical(self, "Data Error", f"Error processing file data: {e}")
 
             self.target_data = None
+
+    def _build_bilayer_optimization_params(self) -> dict:
+        """Build validated optimization parameters for the BILAYER workflow."""
+
+        params: dict[str, float | int | str | np.ndarray] = {}
+        params["num_knots"] = int(self.widgets["num_knots"].text())
+        params["n_infini_bounds"] = self._get_param_bounds("n_infini")
+        params["A_diel_bounds"] = self._get_param_bounds("A_diel")
+        return params
 
     def start_optimization(self):
         """Starts optimization using the shared _metal_start_optimization helper."""
 
         def build_params(params):
-            params["num_knots"] = int(self.widgets["num_knots"].text())
-            params["n_infini_bounds"] = self._get_param_bounds("n_infini")
-            params["A_diel_bounds"] = self._get_param_bounds("A_diel")
+            params.update(self._build_bilayer_optimization_params())
 
         def before_run(params):
-            # Start logging
-            self.logger.info("=" * 50)
-            self.logger.info("STARTING METAL OPTIMIZATION")
-            self.logger.info(
-                f"Target File: {Path(self._last_target_file).name if self._last_target_file else 'Unknown'}"
-            )
-            self.logger.info(f"Wavelength Range: {params['lmin_filter']} - {params['lmax_filter']} nm")
-            self.logger.info(f"Metal Thickness Range: {params['eM_min']} - {params['eM_max']} nm")
-            self.logger.info(f"Knots: {params['num_knots']} (min dist: {params.get('min_knot_dist', 'N/A')})")
-            self.logger.info("=" * 50)
+            for line in build_metal_startup_log_lines(self, variant_label="METAL BILAYER", params=params):
+                self.logger.info(line)
             return True
 
         def build_bounds(params, target_lambda):
@@ -1485,7 +1436,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         eM = xk[0] if xk is not None else 0.0
 
-        self.logger.info(f"Gen {iteration}: RMSE = {rmse:.6e} | dM = {eM:.2f} nm")
+        self.logger.info(f"Generation {iteration} — RMSE {rmse:.6e} — dM {eM:.2f} nm")
 
         self.progress_widget.update(
             iteration=iteration,
@@ -1500,7 +1451,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         self._uninstall_all_skeletons()
 
-        self.progress_widget.stop("Optimization complete")
+        self.progress_widget.stop("Optimization complete — results ready")
 
         # Cache iteration count before cleanup (thread-safe)
 
@@ -1799,13 +1750,14 @@ class CertusMetalBilayerApp(MetalBaseApp):
             ]
 
             self.export_via_builder(sections, excel_path=excel_path, html_path=html_path)
+            self.logger.info(f"Reports saved — {base_name}")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving reports: {e}")
 
             traceback.print_exc()
 
-        self.status_label.setText(f"Reports saved: {base_name}")
+        self.status_label.setText(f"Reports saved — {base_name}")
 
     def _export_beam_results(self):
         """Export beam results to Excel"""

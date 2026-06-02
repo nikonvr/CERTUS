@@ -236,6 +236,47 @@ class TestDesignFunctionality:
         assert np.allclose(new_tgt_vals, tgt_vals)
         assert np.allclose(new_tgt_weights, tgt_weights)
 
+    def test_stop_qt_worker_thread_safely_handles_non_running_thread(self):
+        """Safe shutdown helper should be a no-op on already stopped threads."""
+        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+
+        class DummyThread:
+            def isRunning(self):
+                return False
+
+        class DummyWorker:
+            def request_stop(self):
+                raise AssertionError("should not be called")
+
+        assert stop_qt_worker_thread_safely(DummyThread(), DummyWorker()) is True
+
+    def test_stop_qt_worker_thread_safely_requests_cooperative_shutdown(self):
+        """Safe shutdown helper should request stop/quit without terminate()."""
+        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+
+        calls = []
+
+        class DummyThread:
+            def isRunning(self):
+                return True
+
+            def requestInterruption(self):
+                calls.append("interrupt")
+
+            def quit(self):
+                calls.append("quit")
+
+            def wait(self, timeout_ms):
+                calls.append(("wait", timeout_ms))
+                return True
+
+        class DummyWorker:
+            def request_stop(self):
+                calls.append("stop")
+
+        assert stop_qt_worker_thread_safely(DummyThread(), DummyWorker(), timeout_ms=1234) is True
+        assert calls == ["stop", "interrupt", "quit", ("wait", 1234)]
+
     def test_layer_management(self):
         """Test la gestion des couches."""
         try:

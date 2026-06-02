@@ -3293,21 +3293,16 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
     def _shutdown_previous_optim_worker(self) -> None:
         """Stop any running optimization worker before starting a new cycle."""
 
-        if self.optim_worker is not None and self.optim_thread is not None:
+        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+
+        if self.optim_thread is not None:
             try:
-                if self.optim_thread.isRunning():
-                    self.optim_worker.request_stop()
-                    self.optim_thread.quit()
-
-                    if not self.optim_thread.wait(2000):
-                        logging.critical(
-                            "Optim worker did not stop within 2s - skipping terminate() to avoid unsafe thread kill."
-                        )
-
-                        self.log(
-                            "Optim worker did not stop within 2s - skipping terminate() (see log).",
-                            "ERROR",
-                        )
+                stop_qt_worker_thread_safely(
+                    self.optim_thread,
+                    self.optim_worker,
+                    timeout_ms=2000,
+                    logger=getattr(self, "logger", None),
+                )
             except RuntimeError:
                 pass
 
@@ -5767,6 +5762,8 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
 
         """
 
+        from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
+
         # Ensure all workers are stopped to avoid "QThread: Destroyed while thread is still running"
 
         threads_to_stop = []
@@ -5791,16 +5788,13 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
 
         for thread, worker in threads_to_stop:
             try:
-                if thread and thread.isRunning():
-                    if worker and hasattr(worker, "request_stop"):
-                        worker.request_stop()
-                    thread.requestInterruption()
-                    thread.quit()
-                    if not thread.wait(2000):
-                        logging.critical(
-                            f"Thread {type(worker).__name__ if worker else 'unknown'} did not stop within 2s in closeEvent - "
-                            "skipping terminate() to avoid unsafe thread kill."
-                        )
+                if thread is not None:
+                    stop_qt_worker_thread_safely(
+                        thread,
+                        worker,
+                        timeout_ms=2000,
+                        logger=getattr(self, "logger", None),
+                    )
             except (RuntimeError, AttributeError) as e:
                 if hasattr(self, "logger") and self.logger:
                     self.logger.debug(f"Error stopping thread: {e}")

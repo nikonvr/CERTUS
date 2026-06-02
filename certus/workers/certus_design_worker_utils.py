@@ -926,3 +926,51 @@ def build_needle_scan_mask(
             needle_mat_names[i] = nm
             scan_mask[i] = 1
     return needle_mat_names, scan_mask
+
+
+def stop_qt_worker_thread_safely(thread, worker=None, *, timeout_ms: int = 2000, logger: Any | None = None) -> bool:
+    """Request a cooperative stop on a Qt worker thread without unsafe termination.
+
+    The helper is intentionally defensive and testable with simple dummy objects.
+    It never calls terminate(); callers can decide what to do if the thread does
+    not stop within the timeout.
+    """
+
+    if thread is None:
+        return True
+
+    try:
+        is_running = bool(thread.isRunning())
+    except AttributeError:
+        return True
+
+    if not is_running:
+        return True
+
+    try:
+        if worker is not None and hasattr(worker, "request_stop"):
+            worker.request_stop()
+    except (RuntimeError, AttributeError) as exc:
+        if logger is not None:
+            logger.debug("Worker stop request failed: %s", exc)
+
+    try:
+        if hasattr(thread, "requestInterruption"):
+            thread.requestInterruption()
+    except (RuntimeError, AttributeError) as exc:
+        if logger is not None:
+            logger.debug("Thread interruption request failed: %s", exc)
+
+    try:
+        if hasattr(thread, "quit"):
+            thread.quit()
+    except (RuntimeError, AttributeError) as exc:
+        if logger is not None:
+            logger.debug("Thread quit request failed: %s", exc)
+
+    try:
+        return bool(thread.wait(timeout_ms))
+    except (RuntimeError, AttributeError) as exc:
+        if logger is not None:
+            logger.debug("Thread wait failed: %s", exc)
+        return False

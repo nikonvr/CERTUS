@@ -1,0 +1,18 @@
+# CERTUS Optical Suite - AI Instructions
+
+## 🔴 ZERO REGRESSION POLICY 🔴
+You are an AI assisting in the development of the CERTUS suite. Your primary goal is to **prevent regressions**.
+1. **Conservative Changes**: Only modify the exact lines needed for a task. Do not rewrite large blocks of code for "cleanliness" unless explicitly requested.
+2. **One Change at a Time**: Work on one file or function at a time.
+3. **No Unrequested Dependencies**: Do not add new external libraries.
+
+## 🧱 ARCHITECTURAL BOUNDARIES 🧱
+CERTUS is strictly separated into Core/Physics and UI.
+- **`certus.core` & `certus_physics`**: NEVER import UI elements (`PyQt6`, `QWidget`, `certus.ui`) in these modules. These are pure logic/calculation layers.
+- **`certus.ui` & `CERTUS_HUB.py`**: Do not write heavy logic or computation algorithms here. Call the core APIs.
+
+## 🧰 QUALITY & TESTING 🧰
+1. **Types**: Respect and use Python type hints (`mypy`). If you define a new function, type its arguments and return value.
+2. **Testing**: If you modify logic, you MUST run `pytest` to ensure you haven't broken anything before submitting your work.
+3. **Formatting**: The project uses `ruff`. Do not arbitrarily change quote styles or indents; let the linter do it or stick to the existing format.
+4. **UI Styling**: Use `certus.ui.certus_ui.apply_certus_theme()` for all theming. Do not hardcode raw hex colors; use `CertusTheme` constants.

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERTUS — Optical Thin-Film Theory Guide</title>
+    <!-- Scientific fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering formulas -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* ═══════════════════════════════════════════
+           CERTUS Scientific Document — LaTeX Style
+           ═══════════════════════════════════════════ */
+
+        :root {
+            --primary-color: #0f172a; /* Slate 900 */
+            --secondary-color: #0284c7; /* Light Blue 600 */
+            --accent-color: #f59e0b;
+            --bg-color: #f8fafc;
+            --text-color: #334155;
+            --code-bg: #e2e8f0;
+            --nav-bg: #ffffff;
+            --nav-text: #0f172a;
+            --nav-hover: #0ea5e9;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: var(--serif);
+            font-size: 16px;
+            line-height: 1.75;
+            color: var(--text);
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 40px 24px 60px;
+            background-color: var(--bg);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Document Header ── */
+        .doc-header {
+            text-align: center;
+            padding: 50px 0 30px;
+            border-bottom: 2px solid var(--heading);
+            margin-bottom: 40px;
+        }
+
+        .doc-header h1 {
+            font-family: var(--sans);
+            font-size: 26px;
+            font-weight: 600;
+            color: var(--heading);
+            letter-spacing: -0.3px;
+            margin: 0 0 12px;
+        }
+
+        .doc-header .subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin: 0 0 6px;
+        }
+
+        /* ── Headings ── */
+        h1, h2, h3, h4 { color: var(--heading); margin-top: 2.5em; margin-bottom: 0.6em; }
+        h1 { font-family: var(--sans); font-size: 24px; font-weight: 600; border-bottom: 2px solid var(--heading); padding-bottom: 8px; }
+        h2 { font-family: var(--sans); font-size: 19px; font-weight: 600; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+        h3 { font-family: var(--sans); font-size: 15px; font-weight: 600; margin-top: 1.8em; }
+
+        p { margin: 0.8em 0; text-align: justify; hyphens: auto; }
+
+        /* ── Formula Boxes ── */
+        .formula-box {
+            background-color: var(--bg-formula);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 2px;
+            padding: 18px 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        /* ── Warning / Note / Pedagogy Boxes ── */
+        .warning-box, .pedagogy-box {
+            border-radius: 2px;
+            padding: 14px 20px;
+            margin: 24px 0;
+            font-size: 14.5px;
+        }
+        
+        .warning-box {
+            background-color: var(--warn-bg);
+            border: 1px solid #f5c6cb;
+            border-left: 4px solid var(--warn-border);
+            color: var(--warn-text);
+        }
+
+        .pedagogy-box {
+            background-color: var(--pedagogy-bg);
+            border: 1px solid #c5e1a5;
+            border-left: 4px solid var(--pedagogy-border);
+            color: var(--pedagogy-text);
+        }
+
+        .box-title {
+            font-family: var(--sans);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* ── Advanced Details (Collapsible) ── */
+        details.advanced-box {
+            background-color: var(--adv-bg);
+            border: 1px solid #dee2e6;
+            border-left: 4px solid var(--adv-border);
+            border-radius: 4px;
+            padding: 14px 20px;
+            margin: 24px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+
+        details.advanced-box[open] {
+            padding-bottom: 20px;
+        }
+
+        details.advanced-box summary {
+            font-family: var(--sans);
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #495057;
+            outline: none;
+            display: flex;
+            align-items: center;
+        }
+
+        details.advanced-box summary:hover {
+            color: #212529;
+        }
+
+        details.advanced-box summary::before {
+            content: "🎓 ADVANCED — ";
+            color: var(--adv-border);
+            margin-right: 6px;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        details.advanced-box > div {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ced4da;
+            font-size: 15px;
+        }
+
+        /* ── Code ── */
+        code { font-family: var(--mono); font-size: 13.5px; background-color: #eef1f6; padding: 1px 5px; border-radius: 3px; color: var(--accent); border: 1px solid var(--border-light); }
+        pre { font-family: var(--mono); font-size: 13px; line-height: 1.55; background-color: var(--bg-code); color: #cdd6f4; padding: 24px; border-radius: 4px; overflow-x: auto; border: 1px solid #313244; margin: 24px 0; }
+        pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+
+        /* ── Lists & Tables ── */
+        ul, ol { padding-left: 24px; margin: 0.6em 0; }
+        li { margin-bottom: 6px; }
+        table { border-collapse: collapse; width: 100%; margin: 24px 0; font-size: 14px; font-family: var(--sans); }
+        th, td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; vertical-align: top; }
+        th { background-color: var(--accent); color: #ffffff; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.3px; }
+        tr:nth-child(even) { background-color: var(--bg-alt); }
+        tr:hover { background-color: #edf2f7; }
+
+        .toc { background: var(--bg-alt); padding: 24px 28px; border-radius: 3px; border: 1px solid var(--border); margin: 0 0 40px; }
+        .toc h3 { font-family: var(--sans); font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+        .toc a { font-family: var(--sans); font-size: 14px; text-decoration: none; color: var(--link); display: block; margin: 4px 0; transition: color 0.15s; }
+        .toc a:hover { color: var(--accent-light); text-decoration: underline; }
+
+        /* ── SVG Diagrams ── */
+        svg { max-width: 100%; height: auto; }
+        .code-val { font-family: var(--mono); font-size: 13px; }
+            kbd {
+            background-color: #eee;
+            border-radius: 3px;
+            border: 1px solid #b4b4b4;
+            box-shadow: 0 1px 1px rgba(0,0,0,.2), 0 2px 0 0 rgba(255,255,255,.7) inset;
+            color: #333;
+            display: inline-block;
+            font-size: .85em;
+            font-weight: 700;
+            line-height: 1;
+            padding: 2px 4px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <p style="text-align:center;font-size:13px;margin:0 0 16px 0;font-family:var(--sans);">
+        <a href="CERTUS_HUB.html">HUB</a> ·
+        <a href="CERTUS_Optical_Theory_Guide.html">Theory</a> ·
+        <a href="metrology.html">Metrology</a> ·
+        <a href="CERTUS_INDEX.html">INDEX</a> ·
+        <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a> ·
+        <a href="CERTUS_STRAT.html">STRAT</a> ·
+        <a href="CERTUS_DESIGN.html">DESIGN</a> ·
+        <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+    </p>
+    <div class="doc-header">
+        <h1>Theory Guide — Thin-Film Optics</h1>
+        <p class="subtitle">CERTUS implementation · Macleod matrix formalism</p>
+        <p style="font-family: var(--sans); font-size: 12px; color: #8899aa; text-transform: uppercase; margin-top: 16px;">Full edition (Beginner &amp; Advanced) · CERTUS Suite v1602</p>
+    </div>
+    
+    <p>This document describes the physics and equations used by the CERTUS suite to compute the optical properties of a thin-film stack. It is meant to take you from basic intuition (for newcomers) to sharp implementation details (for developers, tucked inside “Advanced” blocks).</p>
+
+    <div class="toc">
+        <h3>Contents</h3>
+        <a href="#intro">0. Beginner introduction (intuition &amp; interference)</a>
+        <a href="#conventions">1. Conventions and core notation</a>
+        <a href="#tmm">2. Transfer-matrix method (TMM)</a>
+        <a href="#polarization">3. Polarization (s and p) and oblique incidence</a>
+        <a href="#coeffs">4. Fresnel coefficients and power (R, T)</a>
+        <a href="#finite_sub">5. Front surface, back surface, and finite substrate</a>
+        <a href="#efield">6. [Advanced] Absorption and electric-field profile</a>
+        <a href="#simple_example">6. Simple example: antireflection quarter-wave layer ($\lambda/4$)</a>
+        <a href="#ref_example">7. Reference numerical example (5 layers)</a>
+        <a href="#code_example">8. Complete generalized Python code</a>
+        <a href="#workflow">10. CERTUS software architecture and workflow</a>
+    </div>
+
+    <!-- 0. INTRODUCTION PEDAGOGIQUE -->
+    <h2 id="intro">0. Beginner introduction</h2>
+    
+    <div class="pedagogy-box">
+        <span class="box-title">Physical intuition: why thin films?</span>
+        Have you ever noticed iridescent colors on a soap bubble or an oil slick? That is thin-film optics in action. Part of the light reflects at the first interface (air/oil), and another part enters, travels, and reflects at the second (oil/water).
+        <br><br>
+        When these rays recombine, they <strong>interfere</strong>. Depending on layer thickness, some colors cancel (destructive interference) and others reinforce (constructive interference). Thin-film engineering stacks materials with nanometre precision to control exactly which colors are transmitted or reflected.
+    </div>
+
+    <p>Instead of summing by hand the infinite series of internal bounces in each layer, physicists use a global approach: <strong>the matrix method</strong>. Each layer is represented by a 2×2 matrix; the effect of 50 layers is just the product of 50 matrices.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <svg width="600" height="300" viewBox="0 0 600 300" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 5px;">
+            <rect x="0" y="200" width="600" height="100" fill="#e8f5e9" />
+            <rect x="0" y="100" width="600" height="100" fill="#e3f2fd" opacity="0.6"/>
+            <text x="30" y="50" font-family="sans-serif" font-weight="bold" fill="#546e7a">Air (n₀ ≈ 1)</text>
+            <text x="30" y="155" font-family="sans-serif" font-weight="bold" fill="#1565c0">Thin film (index n₁, thickness d)</text>
+            <text x="30" y="250" font-family="sans-serif" font-weight="bold" fill="#2e7d32">Substrate (glass, n_sub ≈ 1.5)</text>
+            <path d="M 150 20 L 250 100" stroke="#f57f17" stroke-width="3" fill="none" marker-end="url(#arr-orange)"/>
+            <text x="140" y="15" font-family="sans-serif" font-size="12" fill="#f57f17">Incident light</text>
+            <path d="M 250 100 L 350 20" stroke="#d32f2f" stroke-width="3" fill="none" stroke-dasharray="4"/>
+            <text x="360" y="25" font-family="sans-serif" font-size="12" fill="#d32f2f">Front-surface reflection (R₁)</text>
+            <path d="M 250 100 L 300 200 L 350 100 L 450 20" stroke="#d32f2f" stroke-width="3" fill="none"/>
+            <text x="460" y="25" font-family="sans-serif" font-size="12" fill="#d32f2f">Back-surface reflection (R₂)</text>
+            <text x="240" y="220" font-family="sans-serif" font-size="12" fill="#546e7a" font-style="italic">Rays R₁ and R₂ interfere in air.</text>
+            <defs>
+                <marker id="arr-orange" markerWidth="8" markerHeight="8" refX="5" refY="4" orient="auto">
+                    <polygon points="0 0, 8 4, 0 8" fill="#f57f17" />
+                </marker>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- 1. CONVENTIONS -->
+    <h2 id="conventions">1. Core conventions and glossary</h2>
+
+    <table>
+        <tr><th>Symbol</th><th>Name</th><th>Meaning</th></tr>
+        <tr><td>$\lambda$</td><td>Wavelength</td><td>Light color (e.g. 550 nm for green).</td></tr>
+        <tr><td>$n$</td><td>Refractive index</td><td>Slowing of light (e.g. $n=1.5$ for glass).</td></tr>
+        <tr><td>$\kappa$</td><td>Extinction coefficient</td><td>Absorption strength ($\kappa=0$ transparent, $\kappa>0$ absorbing).</td></tr>
+        <tr><td>$d$</td><td>Physical thickness</td><td>Layer thickness (often in nm).</td></tr>
+        <tr><td>$nd$</td><td>Optical thickness</td><td>Path “seen” by light ($n \times d$).</td></tr>
+        <tr><td>$\delta$</td><td>Optical phase</td><td>Optical thickness expressed as an angle (radians).</td></tr>
+        <tr><td>$\eta$</td><td>Optical admittance</td><td>How readily the field propagates in the medium.</td></tr>
+    </table>
+
+    <p style="font-size: 14.5px; color: var(--text-secondary); margin-top: -10px; margin-bottom: 20px;">
+        <em>Geometry note: the stack is numbered from $j=1$ (layer next to the substrate) to $j=N$ (layer next to air).</em>
+    </p>
+
+    <div class="warning-box">
+        <span class="box-title">Critical for code: complex index</span>
+        The refractive index is complex: $\hat{n} = n - i\kappa$. <br>
+        The <strong>minus</strong> sign on $i\kappa$ follows <strong>Macleod</strong>’s convention. Using $\hat{n} = n + i\kappa$ with the matrices in this document would yield unphysical results where materials create energy.
+    </div>
+
+    <!-- 2. TMM -->
+    <h2 id="tmm">2. Transfer-matrix method (TMM)</h2>
+    
+    <div class="pedagogy-box">
+        <span class="box-title">What is this matrix for?</span>
+        The electromagnetic field has electric $E$ and magnetic $H$ parts. The characteristic matrix $M_j$ of a layer relates $(E, H)$ at the input and output faces of that layer exactly.
+    </div>
+
+    <h3>2.1 Matrix of layer $j$</h3>
+    <p>For a layer with index $\hat{n}_j$ and thickness $d_j$, the matrix $M_j$ is:</p>
+    <div class="formula-box">
+        $$ M_j = \begin{pmatrix} \cos \delta_j & \frac{i}{\eta_j} \sin \delta_j \\ i \eta_j \sin \delta_j & \cos \delta_j \end{pmatrix} $$
+    </div>
+    <p>Here $\delta_j$ is the <strong>phase</strong> accumulated across the layer: $\delta_j = \frac{2\pi}{\lambda} (n_j - i\kappa_j) d_j \cos \theta_j$.</p>
+
+    <!-- ADVANCED: BRANCH CUT -->
+    <details class="advanced-box">
+        <summary>The “branch cut” pitfall (complex square root)</summary>
+        <div>
+            <p><strong>Context:</strong> Snell’s law gives $S_0 = n_0 \sin \theta_0$. To get $\cos \theta_j$, one uses $\cos \theta_j = \frac{\sqrt{\hat{n}_j^2 - S_0^2}}{\hat{n}_j}$. The trap is how $\sqrt{z}$ is computed in software.</p>
+            <p>$f(z) = \sqrt{z}$ is multivalued on $\mathbb{C}$. In Python/NumPy, <code>np.sqrt(z)</code> returns the root with real part $\ge 0$. That fails when $z = \hat{n}_j^2 - S_0^2$ lies in the <strong>left half-plane</strong> ($\text{Re}(z) < 0$), which is typical for highly absorbing metals ($\kappa \gg n$) at oblique incidence.</p>
+
+            <div style="text-align: center; margin: 24px 0;">
+                <svg width="520" height="380" viewBox="0 0 520 380" style="background: #fff; border: 1px solid #ccc; border-radius: 4px;">
+                    <line x1="50" y1="190" x2="500" y2="190" stroke="#546e7a" stroke-width="1.5" />
+                    <line x1="270" y1="20" x2="270" y2="360" stroke="#546e7a" stroke-width="1.5" />
+                    <text x="495" y="183" font-size="13" fill="#37474f">Re</text>
+                    <text x="278" y="32" font-size="13" fill="#37474f">Im</text>
+                    <text x="274" y="204" font-size="11" fill="#78909c">0</text>
+                    <line x1="50" y1="190" x2="270" y2="190" stroke="#c62828" stroke-width="4" stroke-linecap="round" opacity="0.7" />
+                    <text x="100" y="175" font-size="11" font-weight="bold" fill="#c62828">Branch cut (ℝ⁻)</text>
+                    <rect x="50" y="20" width="220" height="340" fill="#ffebee" opacity="0.3" />
+                    <text x="68" y="50" font-size="10" fill="#c62828">Hazard zone (metals)</text>
+                    <text x="68" y="63" font-size="10" fill="#c62828">Re(n̂² − S₀²) &lt; 0</text>
+                    <text x="370" y="50" font-size="10" fill="#2e7d32">Safe zone (dielectrics)</text>
+                    <text x="370" y="63" font-size="10" fill="#2e7d32">Re(n̂² − S₀²) &gt; 0</text>
+                    <circle cx="400" cy="188" r="6" fill="#2e7d32" />
+                    <text x="412" y="193" font-size="10" fill="#2e7d32">SiO₂ (n=1.46)</text>
+                    <circle cx="120" cy="220" r="7" fill="#c62828" />
+                    <text x="132" y="225" font-size="10" font-weight="bold" fill="#c62828">Ag (−12.4, −0.8i)</text>
+                </svg>
+            </div>
+            
+            <h4>Physical derivation of the constraint</h4>
+            <p>The electric field in layer $j$ is $E_j(z,t) = E_0 \exp[i(\omega t - k_{z,j} z)]$ with $k_{z,j} = \frac{2\pi}{\lambda} \hat{n}_j \cos\theta_j$. For the amplitude to <strong>decay</strong> as $z$ increases (attenuation in matter), one must enforce:</p>
+            <div class="formula-box" style="margin: 10px 0; padding: 10px;">
+                $$ \text{Im}(\hat{n}_j \cos\theta_j) \leq 0 \quad \text{(Convention } n-i\kappa \text{)}$$
+            </div>
+            
+            <h4>Numerical example (silver @ 550 nm, 45°)</h4>
+            <p>Data: $\hat{n}_{Ag} = 0.12 - 3.45i$, $\theta_0 = 45°$. Then $z = \hat{n}_{Ag}^2 - S_0^2 = -12.388 - 0.828i$. NumPy gives $w = \sqrt{z} = 0.118 + 3.519i$. Here $\text{Im}(w) > 0$ is the <strong>wrong sign</strong> (unphysical gain). Fix with $w_{corr} = -w$.</p>
+
+            <h4>Risk table</h4>
+            <table style="font-size: 13px;">
+                <tr><th>Material</th><th>$\hat{n}^2 - S_0^2$</th><th>Required action</th></tr>
+                <tr><td>Dielectric ($\kappa=0$)</td><td>Real positive</td><td>None (safe zone)</td></tr>
+                <tr><td>Weakly absorbing dielectric</td><td>Re &gt; 0, small Im</td><td>Preventive correction advised</td></tr>
+                <tr><td><strong>Metal (Ag, Au…)</strong></td><td><strong>Re &lt; 0</strong></td><td><strong>Mandatory correction</strong></td></tr>
+            </table>
+
+            <h4>Vectorized fix (Python)</h4>
+            <pre style="margin: 10px 0; padding: 15px;"><code>def safe_cos_theta_vectorized(n_layers, S0):
+    n_cos = np.sqrt(n_layers**2 - S0**2 + 0j)
+    mask = n_cos.imag > 0
+    n_cos[mask] *= -1
+    return n_cos / n_layers</code></pre>
+            <p style="font-size: 12px; color: #666;"><em>Ref: S.J. Byrnes, “Multilayer optical calculations”, arXiv:1603.02720 (2016), § 5.2</em></p>
+        </div>
+    </details>
+
+    <h3>2.2 Global stack matrix</h3>
+    <p>The stack matrix $M$ is the product of layer matrices. Multiply from the substrate side (layer 1) toward the incident medium (layer N):</p>
+    <div class="formula-box">
+        $$ M = \begin{pmatrix} m_{11} & m_{12} \\ m_{21} & m_{22} \end{pmatrix} = M_N \cdot M_{N-1} \cdots M_1 $$
+    </div>
+
+    <!-- 3. POLARISATION -->
+    <h2 id="polarization">3. Polarization and optical admittance</h2>
+    <p>At oblique incidence, $\eta_j$ depends on field orientation:</p>
+    <table>
+        <tr><th>Polarization</th><th>Type</th><th>Admittance $\eta_j$</th></tr>
+        <tr><td><strong>TE (s)</strong></td><td>Electric field parallel to the surface</td><td>$$ \eta_j^{(s)} = \hat{n}_j \cos \theta_j $$</td></tr>
+        <tr><td><strong>TM (p)</strong></td><td>Magnetic field parallel to the surface</td><td>$$ \eta_j^{(p)} = \frac{\hat{n}_j}{\cos \theta_j} $$</td></tr>
+    </table>
+
+    <!-- 4. COEFFICIENTS R & T -->
+    <h2 id="coeffs">4. Reflectance (R) and transmittance (T)</h2>
+    
+    <div class="pedagogy-box">
+        <span class="box-title">TL;DR: R and T</span>
+        Once the full matrix $M$ is known, apply it at the exit substrate to get reflected amplitude $r$ and transmitted amplitude $t$. Powers follow: measurable energy is $R$ and $T$.
+    </div>
+
+    <p>Define the characteristic vector:</p>
+    <div class="formula-box">
+        $$ \begin{pmatrix} B \\ C \end{pmatrix} = M \cdot \begin{pmatrix} 1 \\ \eta_{sub} \end{pmatrix} $$
+    </div>
+
+    <p>Amplitude (Fresnel) coefficients: $r = \frac{\eta_0 B - C}{\eta_0 B + C} \quad \text{and} \quad t = \frac{2 \eta_0}{\eta_0 B + C}$</p>
+
+    <p>Power ($R+T+A=1$):</p>
+    <div class="formula-box">
+        <strong>Reflectance $R$:</strong> $$ R = |r|^2 $$
+        <strong>Transmittance $T$:</strong> $$ T = \frac{\Re(\eta_{sub})}{\Re(\eta_{0})} |t|^2 $$
+    </div>
+
+    <!-- ADVANCED: POYNTING -->
+    <details class="advanced-box">
+        <summary>Why $T \neq |t|^2$? Poynting flux and oblique incidence</summary>
+        <div>
+            <p>A common mistake is to set $T = |t|^2$. Transmittance is a ratio of <strong>energy flux through the surface</strong> (Poynting vector $\vec{S}$), not a simple ratio of electric-field amplitudes.</p>
+            
+            <h4>Poynting vector and geometric projection ($\cos \theta$)</h4>
+            <p>Total intensity carried by a wave (magnitude of $\vec{S}$) scales with medium index: $|\vec{S}| = \frac{1}{2} \text{Re}(\hat{n}) |E|^2$. For energy that <em>actually crosses</em> an interface (e.g. air/glass), only the <strong>normal</strong> component of flux matters: $S_z$.</p>
+            
+            <p>At oblique incidence (angle $\theta$), a beam of spatial width $W$ illuminates a footprint $W/\cos\theta$ on the interface. Power per unit area crossing the interface is therefore reduced geometrically by $\cos\theta$.</p>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <svg width="450" height="220" viewBox="0 0 450 220" style="background: #fff; border: 1px solid #ccc; border-radius: 4px;">
+                    <!-- Interface -->
+                    <rect x="50" y="160" width="350" height="40" fill="#e8f5e9" />
+                    <line x1="50" y1="160" x2="400" y2="160" stroke="#546e7a" stroke-width="2" />
+                    <!-- Beam -->
+                    <polygon points="120,20 200,20 280,160 160,160" fill="#bbdefb" opacity="0.6" />
+                    <!-- Normal -->
+                    <line x1="220" y1="40" x2="220" y2="180" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="5" />
+                    <!-- Angle theta -->
+                    <path d="M 220 100 A 60 60 0 0 0 188 105" fill="none" stroke="#546e7a" stroke-width="1.5" />
+                    <text x="200" y="95" font-family="sans-serif" font-size="14" fill="#546e7a" font-style="italic">θ</text>
+                    <!-- Beam width -->
+                    <line x1="140" y1="55" x2="210" y2="95" stroke="#1565c0" stroke-width="2" />
+                    <text x="125" y="45" font-family="sans-serif" font-size="12" fill="#1565c0" transform="rotate(29.7 140 55)">Beam width (W)</text>
+                    <!-- Interface footprint -->
+                    <line x1="160" y1="165" x2="280" y2="165" stroke="#c62828" stroke-width="2" />
+                    <text x="220" y="185" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#c62828">Dilated footprint (W / cos θ)</text>
+                    <text x="220" y="205" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#c62828">Crossing flux drops geometrically</text>
+                </svg>
+            </div>
+
+            <p>Mathematically, projecting this flux gives:</p>
+            <div class="formula-box" style="margin: 10px 0; padding: 10px;">
+                $$ S_z = |\vec{S}| \cos\theta = \frac{1}{2} \text{Re}(\hat{n}) \cos\theta \, |E|^2 = \frac{1}{2} \text{Re}(\underbrace{\hat{n} \cos\theta}_{\text{Admittance } \eta}) \, |E|^2 $$
+            </div>
+
+            <p>Note the key term <strong>$\hat{n} \cos\theta$</strong>: it is exactly the optical admittance for TE (s) polarization. <em>(For TM, tangential-field definitions lead similarly to $\eta_p = \hat{n} / \cos\theta$.)</em> Admittance $\eta$ is not just a matrix trick: it <strong>physically</strong> combines material index and beam projection.</p>
+            
+            <p>The universal normal-flux formula is then:</p>
+            <div class="formula-box">
+                $$ \langle S_z \rangle = \frac{1}{2} \text{Re}(\eta) \, |E|^2 $$
+            </div>
+            
+            <h4>Energy balance at the interface</h4>
+            <div style="text-align: center; margin: 24px 0;">
+                <svg width="680" height="280" viewBox="0 0 680 280" style="background: #fff; border: 1px solid #ccc; border-radius: 4px;">
+                    <defs>
+                        <marker id="arr-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1565c0" /></marker>
+                        <marker id="arr-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c62828" /></marker>
+                        <marker id="arr-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d32" /></marker>
+                    </defs>
+                    <rect x="320" y="20" width="8" height="240" fill="#90a4ae" rx="2" opacity="0.5" />
+                    <text x="324" y="16" text-anchor="middle" font-size="11" font-weight="bold" fill="#546e7a">Interface</text>
+                    <text x="160" y="35" text-anchor="middle" font-size="13" fill="#1565c0" font-weight="600">Incident medium (air)</text>
+                    <text x="160" y="52" text-anchor="middle" font-size="11" fill="#546e7a">Admittance η₀</text>
+                    <line x1="40" y1="100" x2="300" y2="120" stroke="#1565c0" stroke-width="2.5" marker-end="url(#arr-blue)" />
+                    <text x="140" y="92" font-size="12" fill="#1565c0">E_i = 1</text>
+                    <line x1="300" y1="170" x2="40" y2="190" stroke="#c62828" stroke-width="2.5" marker-end="url(#arr-red)" />
+                    <text x="140" y="165" font-size="12" fill="#c62828">E_r = r</text>
+                    <text x="510" y="35" text-anchor="middle" font-size="13" fill="#2e7d32" font-weight="600">Exit medium (substrate)</text>
+                    <text x="510" y="52" text-anchor="middle" font-size="11" fill="#546e7a">Admittance η_exit</text>
+                    <line x1="340" y1="140" x2="640" y2="140" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arr-green)" />
+                    <text x="510" y="132" font-size="12" fill="#2e7d32">E_t = t</text>
+                    <rect x="100" y="238" width="460" height="30" rx="4" fill="#f0f4f8" stroke="#1a5276" stroke-width="1" />
+                    <text x="330" y="259" text-anchor="middle" font-size="13" font-weight="bold" fill="#1a5276">Conservation: S_inc = S_ref + S_trans</text>
+                </svg>
+            </div>
+            <p>Reflectance stays simple because incident and reflected waves share the same medium ($R = |r|^2$). The transmitted wave enters a new medium, hence the ratio of real parts of admittances: $T = \frac{\text{Re}(\eta_{\text{exit}})}{\text{Re}(\eta_0)} |t|^2$.</p>
+            
+            <h4>Typical correction factors</h4>
+            <table style="font-size: 13px;">
+                <tr><th>Case</th><th>Factor $\frac{\text{Re}(\eta_{\text{exit}})}{\text{Re}(\eta_0)}$</th></tr>
+                <tr><td>Incidence normale ($\kappa=0$)</td><td>$n_{\text{exit}} / n_0$</td></tr>
+                <tr><td>Oblique pol. s ($\kappa=0$)</td><td>$(n_{\text{exit}} \cos\theta_{\text{exit}}) / (n_0 \cos\theta_0)$</td></tr>
+                <tr><td>Oblique pol. p ($\kappa=0$)</td><td>$(n_{\text{exit}} / \cos\theta_{\text{exit}}) / (n_0 / \cos\theta_0)$</td></tr>
+            </table>
+            
+            <p style="color: var(--warn-border); font-weight: 500;"><em>Note: if the substrate absorbs ($\kappa_{sub} > 0$), the computed power T is not flux to infinity; it is power entering the substrate and absorbed over its thickness.</em></p>
+        </div>
+    </details>
+
+    <!-- 5. BACKSIDE CORRECTION -->
+    <!-- 5. BACKSIDE CORRECTION -->
+    <h2 id="finite_sub">5. Front surface, back surface, and finite substrate</h2>
+    <p>The formulas above assume a semi-infinite substrate. Real glass has finite thickness. Inside thick glass, coherence is lost (no interference), so one sums <em>intensities</em> (not amplitudes) of successive bounces between the stack (front) and the bottom of the plate (back).</p>
+
+    <div class="formula-box">
+        Full formula (thickness $D$ and absorption $\alpha = \frac{4\pi \kappa_{sub}}{\lambda}$):
+        $$ R_{total} = R_{front} + \frac{T_{front}^2 \cdot R_{back} \cdot e^{-2 \alpha D}}{1 - R'_{front} \cdot R_{back} \cdot e^{-2 \alpha D}} $$
+        $$ T_{total} = \frac{T_{front} \cdot T_{back} \cdot e^{-\alpha D}}{1 - R'_{front} \cdot R_{back} \cdot e^{-2 \alpha D}} $$
+    </div>
+    <p><em>Simplified (transparent glass, $\alpha=0$): $R_{total} \approx R_{front} + \frac{T_{front}^2 R_{back}}{1 - R'_{front} R_{back}}$</em></p>
+    <p>Bare glass reflects about 4% from the back; a simple pane therefore has $R_{total} \approx 4\% + 4\% = 8\%$.</p>
+
+    <!-- ADVANCED: FRONT / BACK -->
+    <details class="advanced-box">
+        <summary>“Front” (air→sub) and “back” (sub→air) calculations</summary>
+        <div>
+            <p>For the incoherent-reflection formula, you need optical properties as seen from inside the substrate ($R'_{front}$). The matrix multiplication order reverses.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <svg width="800" height="400" viewBox="0 0 800 400" style="background: #fff; border: 1px solid #ccc; border-radius: 5px;">
+                    <defs>
+                        <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#d32f2f" /></marker>
+                        <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#1976d2" /></marker>
+                    </defs>
+                    <rect x="0" y="50" width="180" height="250" fill="#e3f2fd" stroke="none" />
+                    <text x="90" y="75" text-anchor="middle" font-weight="bold" fill="#1565c0" font-family="sans-serif" font-size="16"><tspan x="90" dy="0">AIR (Incident)</tspan><tspan x="90" dy="25">n0</tspan></text>
+                    <rect x="180" y="50" width="100" height="250" fill="#f5f5f5" stroke="#333" stroke-width="2" />
+                    <text x="230" y="40" text-anchor="middle" font-weight="bold" font-family="sans-serif">Layer N</text>
+                    <rect x="280" y="50" width="100" height="250" fill="#eee" stroke="#333" stroke-width="2" />
+                    <text x="330" y="40" text-anchor="middle" font-weight="bold" font-family="sans-serif">Layer N−1</text>
+                    <text x="455" y="175" text-anchor="middle" font-size="30" fill="#666">...</text>
+                    <rect x="530" y="50" width="100" height="250" fill="#eee" stroke="#333" stroke-width="2" />
+                    <text x="580" y="40" text-anchor="middle" font-weight="bold" font-family="sans-serif">Layer 2</text>
+                    <rect x="630" y="50" width="100" height="250" fill="#f5f5f5" stroke="#333" stroke-width="2" />
+                    <text x="680" y="40" text-anchor="middle" font-weight="bold" font-family="sans-serif">Layer 1</text>
+                    <rect x="730" y="50" width="180" height="250" fill="#e8f5e9" stroke="none" />
+                    <text x="820" y="75" text-anchor="middle" font-weight="bold" fill="#2e7d32" font-family="sans-serif" font-size="16"><tspan x="820" dy="0">SUBSTRAT (Exit)</tspan><tspan x="820" dy="25">n_sub</tspan></text>
+                    <line x1="20" y1="160" x2="160" y2="160" stroke="#d32f2f" stroke-width="4" marker-end="url(#arrowhead-red)" />
+                    <text x="90" y="150" text-anchor="middle" fill="#d32f2f" font-weight="bold" font-family="sans-serif">FRONT (Air → Sub)</text>
+                    <line x1="880" y1="250" x2="750" y2="250" stroke="#1976d2" stroke-width="4" marker-end="url(#arrowhead-blue)" />
+                    <text x="815" y="240" text-anchor="middle" fill="#1976d2" font-weight="bold" font-family="sans-serif">BACK (Sub → Air)</text>
+                    <rect x="250" y="360" width="400" height="30" rx="5" fill="#fff3e0" stroke="#ffb74d" />
+                    <text x="450" y="380" text-anchor="middle" font-size="14" fill="#ef6c00" font-family="sans-serif" font-weight="bold">Matrix order: always (exit) toward (entrance)</text>
+                </svg>
+            </div>
+            <ul>
+                <li><strong>FRONT (standard):</strong> $M_{tot} = M_N \cdot M_{N-1} \cdots M_1$. Matrix applied with exit medium $n_{sub}$.</li>
+                <li><strong>BACK (from inside):</strong> $M_{back} = M_1 \cdot M_2 \cdots M_N$. Light starts in the substrate; air is the exit medium. Used to obtain $R'_{front}$.</li>
+            </ul>
+        </div>
+    </details>
+
+    <!-- 6. E-FIELD (Advanced Section) -->
+    <details class="advanced-box" id="efield">
+        <summary>Absorption and electric-field profile $|E(z)|^2$</summary>
+        <div>
+            <p>Energy balance: $R + T + A = 1$. Absorption $A$ occurs in material layers (e.g. metals).</p>
+            <p>To get the intensity profile $|E(z)|^2$ inside the stack, propagate backward from the exit substrate (only the transmitted wave, $E^+_{inc} = t$) using partial layer matrices:</p>
+            <div class="formula-box">
+                $$ \begin{pmatrix} E(d') \\ H(d') \end{pmatrix} = \begin{pmatrix} \cos \delta(d') & \frac{i}{\eta_j} \sin \delta(d') \\ i \eta_j \sin \delta(d') & \cos \delta(d') \end{pmatrix} \begin{pmatrix} E_{next} \\ H_{next} \end{pmatrix} $$
+            </div>
+            <p>with $\delta(d') = \frac{2\pi}{\lambda} (n_j - i\kappa_j) d' \cos \theta_j$. Plotting $|E(d')|^2$ shows where light is absorbed or enhanced in the design.</p>
+        </div>
+    </details>
+
+    <!-- 7. EXEMPLE SIMPLE AR -->
+    <h2 id="simple_example">6. Simple example: quarter-wave antireflection layer</h2>
+    
+    <div class="pedagogy-box">
+        <span class="box-title">Goal: cancel reflection (R=0)</span>
+        To wipe out glass’s ~4% natural reflectance, add a thin layer that makes the wave reflected at the top surface interfere destructively with the wave from the bottom of that layer.
+    </div>
+
+    <p>The layer must add a round-trip phase of half a wave. Its one-way optical thickness is therefore quarter-wave (<strong>QWOT</strong>): $n \cdot d = \frac{\lambda_0}{4}$, so $\delta = \pi/2$.</p>
+
+    <div class="formula-box">
+        Simplified matrix: $$ M_{QWOT} = \begin{pmatrix} 0 & \frac{i}{n} \\ i n & 0 \end{pmatrix} $$
+    </div>
+
+    <p>Reflectance vanishes if $n_{layer} = \sqrt{n_{air} \cdot n_{glass}}$. For glass one would need $n \approx 1.23$. Magnesium fluoride (MgF₂, $n=1.38$) is close—that is the typical purple tint on eyeglasses.</p>
+
+    <!-- 8. EXEMPLE 5 COUCHES -->
+    <h2 id="ref_example">7. Reference numerical example (5 layers)</h2>
+    <p>Full validation case including absorbing metal and oblique angles.</p>
+
+    <div style="background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+        <h4>Structure ($\lambda$ = 550 nm)</h4>
+        <ul>
+            <li><strong>Incident:</strong> air ($n=1.0$) | <strong>Substrate:</strong> glass ($n=1.52$)</li>
+            <li><strong>Stack (substrate to air):</strong>
+                <ol>
+                    <li>TiO₂ ($n=2.35$), 85 nm</li>
+                    <li>SiO₂ ($n=1.46$), 110 nm</li>
+                    <li><strong>Ag ($n=0.12 - 3.45i$), 15 nm</strong> (absorbing)</li>
+                    <li>TiO₂ ($n=2.35$), 85 nm</li>
+                    <li>SiO₂ ($n=1.46$), 90 nm</li>
+                </ol>
+            </li>
+        </ul>
+        <table style="width:100%; margin-top: 15px;">
+            <tr>
+                <th rowspan="2">Angle / pol.</th>
+                <th colspan="2">No back surface</th>
+                <th colspan="2">With back surface</th>
+            </tr>
+            <tr><th>R</th><th>T</th><th>R</th><th>T</th></tr>
+            <tr><td><strong>0°</strong></td><td class="code-val">0.497085</td><td class="code-val">0.418256</td><td class="code-val">0.504712</td><td class="code-val">0.410038</td></tr>
+            <tr><td><strong>45° (s)</strong></td><td class="code-val">0.663521</td><td class="code-val">0.257191</td><td class="code-val">0.670396</td><td class="code-val">0.249618</td></tr>
+            <tr><td><strong>45° (p)</strong></td><td class="code-val">0.565641</td><td class="code-val">0.367651</td><td class="code-val">0.566913</td><td class="code-val">0.366277</td></tr>
+        </table>
+    </div>
+
+    <!-- 9. CODE GENERALISE -->
+    <h2 id="code_example">8. Complete generalized Python code</h2>
+    <p>This robust snippet covers absorption, oblique incidence, polarization, field profile, and incoherent back reflections.</p>
+
+    <details class="advanced-box" open>
+        <summary>Show full Python source</summary>
+        <div>
+<pre>
+import numpy as np
+
+def compute_tmm_general(n_inc, n_exit, n_layers, d_layers, wavelength, theta0=0.0, pol='s', compute_field=False):
+    """
+    Generalized TMM (Macleod n−ik).
+    Returns: dict with 'R', 'T', 'A', and optional 'E_profile'.
+    """
+    # 0. Macleod convention (n − ik) — safety check
+    def enforce_macleod(n): return n if n.imag <= 0 else n.real - 1j*n.imag
+    
+    n_inc = enforce_macleod(n_inc)
+    n_exit = enforce_macleod(n_exit)
+    n_layers = [enforce_macleod(n) for n in n_layers]
+    k0 = 2 * np.pi / wavelength
+    
+    # 1. Snell's law and branch-cut fix (Byrnes)
+    S0 = n_inc * np.sin(theta0) 
+    
+    def safe_cos_th(n):
+        n_cos_th = np.sqrt(n**2 - S0**2 + 0j)
+        if n_cos_th.imag > 0: n_cos_th = -n_cos_th 
+        return n_cos_th / n
+
+    cos_inc = np.cos(theta0) 
+    cos_exit = safe_cos_th(n_exit)
+    cos_layers = [safe_cos_th(n) for n in n_layers]
+    
+    # 2. Modified admittances (eta)
+    def get_eta(n, cos_th, pol):
+        return n * cos_th if pol.lower() == 's' else n / cos_th
+            
+    eta_inc = get_eta(n_inc, cos_inc, pol)
+    eta_exit = get_eta(n_exit, cos_exit, pol)
+    eta_layers = [get_eta(n_layers[i], cos_layers[i], pol) for i in range(len(n_layers))]
+    
+    # 3. Matrix multiplication
+    M_sys = np.eye(2, dtype=complex)
+    if compute_field: matrices = []
+        
+    for i in range(len(n_layers)):
+        delta = k0 * n_layers[i] * d_layers[i] * cos_layers[i]
+        c, s = np.cos(delta), 1j * np.sin(delta)
+        eta = eta_layers[i]
+        
+        M_i = np.array([[c, s/eta], [s*eta, c]], dtype=complex)
+        if compute_field: matrices.append(M_i)
+        M_sys = np.dot(M_i, M_sys)
+
+    # 4. Final coefficients
+    B = M_sys[0,0] + M_sys[0,1] * eta_exit
+    C = M_sys[1,0] + M_sys[1,1] * eta_exit
+    
+    r = (eta_inc * B - C) / (eta_inc * B + C)
+    t = (2.0 * eta_inc) / (eta_inc * B + C)
+    
+    R = abs(r)**2
+    T_factor = (eta_exit.real) / (eta_inc.real) if eta_inc.real > 1e-12 else 0.0
+    T = T_factor * abs(t)**2
+    
+    res = {'R': R, 'T': T, 'A': 1 - R - T}
+
+    # 5. E-field profile E(z)
+    if compute_field:
+        vec_curr = np.array([t, eta_exit * t])
+        z_coords, E_sq = [0.0], [abs(vec_curr[0])**2]
+        z_accum = 0.0
+        
+        for i in range(len(n_layers)):
+            res['E_profile'] = (z_coords, E_sq)
+        
+    return res
+
+def apply_incoherent_backside(R_front, T_front, R_back, T_back, thickness_sub=0.0, alpha_sub=0.0, R_front_prime=None):
+    """Total R, T including incoherent back surface and substrate absorption."""
+    if R_front_prime is None:
+        R_front_prime = R_front # Approximation (exact if layers are lossless)
+        
+    A = np.exp(-alpha_sub * thickness_sub)
+    denom = 1.0 - R_front_prime * R_back * A**2
+    if abs(denom) < 1e-10: denom = 1.0
+        
+    R_tot = R_front + (T_front**2 * R_back * A**2) / denom 
+    T_tot = (T_front * T_back * A) / denom
+    return R_tot, T_tot
+</pre>
+        </div>
+    </details>
+
+    <!-- 10. ARCHITECTURE CERTUS -->
+    <h2 id="workflow">9. CERTUS architecture and workflow</h2>
+    <p>The CERTUS suite embeds these relations in its physics core (<strong>Numba JIT</strong> optimized to evaluate millions of stacks per second).</p>
+
+    <details class="advanced-box">
+        <summary>TMM computation flow diagram</summary>
+        <div style="text-align: center;">
+            <svg width="900" height="1320" viewBox="0 0 900 1320" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 8px;">
+                <defs>
+                    <marker id="arrow-flow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#546e7a" /></marker>
+                    <marker id="arrow-yes" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d32" /></marker>
+                    <marker id="arrow-no" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c62828" /></marker>
+                    <linearGradient id="grad-input" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e3f2fd" /><stop offset="100%" style="stop-color:#bbdefb" /></linearGradient>
+                    <linearGradient id="grad-process" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#f3e5f5" /><stop offset="100%" style="stop-color:#e1bee7" /></linearGradient>
+                    <linearGradient id="grad-kernel" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#fff3e0" /><stop offset="100%" style="stop-color:#ffe0b2" /></linearGradient>
+                    <linearGradient id="grad-output" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e8f5e9" /><stop offset="100%" style="stop-color:#c8e6c9" /></linearGradient>
+                    <filter id="shadow"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15" /></filter>
+                </defs>
+                <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#2c3e50">TMM computation pipeline — CERTUS Suite</text>
+                <text x="450" y="60" text-anchor="middle" font-size="13" fill="#78909c">PHASE 1 — Inputs</text>
+                <rect x="100" y="75" width="300" height="55" rx="8" fill="url(#grad-input)" stroke="#1976d2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="250" y="98" text-anchor="middle" font-weight="bold" font-size="13" fill="#1565c0">Materials &amp; structure</text>
+                <text x="250" y="118" text-anchor="middle" font-size="11" fill="#37474f">n̂(λ), d, stack [1..N]</text>
+                <rect x="500" y="75" width="300" height="55" rx="8" fill="url(#grad-input)" stroke="#1976d2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="650" y="98" text-anchor="middle" font-weight="bold" font-size="13" fill="#1565c0">Optical parameters</text>
+                <text x="650" y="118" text-anchor="middle" font-size="11" fill="#37474f">λ, θ₀, polarization (s/p)</text>
+                <line x1="250" y1="130" x2="250" y2="160" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <line x1="650" y1="130" x2="650" y2="160" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <text x="450" y="175" text-anchor="middle" font-size="13" fill="#78909c">PHASE 2 — Preparation</text>
+                <rect x="120" y="190" width="260" height="50" rx="6" fill="url(#grad-process)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="250" y="212" text-anchor="middle" font-weight="bold" font-size="12" fill="#4a148c">1. Convention check</text>
+                <text x="250" y="228" text-anchor="middle" font-size="10" fill="#4a148c">n̂ = n − iκ (Macleod)</text>
+                <rect x="520" y="190" width="260" height="50" rx="6" fill="url(#grad-process)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="650" y="212" text-anchor="middle" font-weight="bold" font-size="12" fill="#4a148c">2. Generalized Snell's law</text>
+                <text x="650" y="228" text-anchor="middle" font-size="10" fill="#4a148c">S₀ = n₀ sin θ₀ → cos θⱼ</text>
+                <line x1="250" y1="240" x2="250" y2="265" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <line x1="650" y1="240" x2="650" y2="265" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <rect x="120" y="270" width="260" height="50" rx="6" fill="url(#grad-process)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="250" y="292" text-anchor="middle" font-weight="bold" font-size="12" fill="#4a148c">3. Optical admittances</text>
+                <text x="250" y="308" text-anchor="middle" font-size="10" fill="#4a148c">η_s = n̂·cos θ | η_p = n̂/cos θ</text>
+                <rect x="520" y="270" width="260" height="50" rx="6" fill="url(#grad-process)" stroke="#7b1fa2" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="650" y="292" text-anchor="middle" font-weight="bold" font-size="12" fill="#4a148c">4. Phases δⱼ</text>
+                <text x="650" y="308" text-anchor="middle" font-size="10" fill="#4a148c">δⱼ = (2π/λ) · n̂ⱼ · dⱼ · cos θⱼ</text>
+                <line x1="250" y1="320" x2="250" y2="345" stroke="#546e7a" stroke-width="2" />
+                <line x1="650" y1="320" x2="650" y2="345" stroke="#546e7a" stroke-width="2" />
+                <line x1="250" y1="345" x2="450" y2="345" stroke="#546e7a" stroke-width="2" />
+                <line x1="650" y1="345" x2="450" y2="345" stroke="#546e7a" stroke-width="2" />
+                <line x1="450" y1="345" x2="450" y2="365" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <text x="450" y="382" text-anchor="middle" font-size="13" fill="#78909c">PHASE 3 — TMM core (Numba JIT)</text>
+                <rect x="225" y="395" width="450" height="60" rx="6" fill="url(#grad-kernel)" stroke="#e65100" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="418" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">5. Build matrix Mⱼ</text>
+                <text x="450" y="438" text-anchor="middle" font-size="10" fill="#bf360c">Mⱼ = [[cos δ, (i sin δ)/ηⱼ], [i ηⱼ sin δ, cos δ]]</text>
+                <line x1="450" y1="455" x2="450" y2="475" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <rect x="225" y="480" width="450" height="60" rx="6" fill="url(#grad-kernel)" stroke="#e65100" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="503" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">6. Matrix product</text>
+                <text x="450" y="523" text-anchor="middle" font-size="10" fill="#bf360c">M = M_N · M_{N-1} · … · M₁</text>
+                <line x1="450" y1="540" x2="450" y2="560" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <rect x="225" y="565" width="450" height="60" rx="6" fill="url(#grad-kernel)" stroke="#e65100" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="588" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">7. Characteristic vector [B; C]</text>
+                <text x="450" y="608" text-anchor="middle" font-size="10" fill="#bf360c">[B; C] = M · [1; η_sub]</text>
+                <line x1="450" y1="625" x2="450" y2="645" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <rect x="225" y="650" width="450" height="60" rx="6" fill="url(#grad-kernel)" stroke="#e65100" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="673" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">8. Extract R, T</text>
+                <text x="450" y="693" text-anchor="middle" font-size="10" fill="#bf360c">R = |r|²   T = Re(η_exit)/Re(η_inc) · |t|²</text>
+                <line x1="450" y1="710" x2="450" y2="740" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <text x="450" y="755" text-anchor="middle" font-size="13" fill="#78909c">PHASE 4 — Post-processing</text>
+                <polygon points="450,770 580,825 450,880 320,825" fill="#fff8e1" stroke="#f57f17" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="820" text-anchor="middle" font-weight="bold" font-size="12" fill="#e65100">Finite substrate?</text>
+                <line x1="580" y1="825" x2="700" y2="825" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrow-yes)" />
+                <text x="630" y="815" font-size="12" font-weight="bold" fill="#2e7d32">YES</text>
+                <rect x="705" y="795" width="180" height="60" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="795" y="818" text-anchor="middle" font-weight="bold" font-size="11" fill="#1b5e20">9a. Back calc</text>
+                <line x1="795" y1="855" x2="795" y2="885" stroke="#2e7d32" stroke-width="2" marker-end="url(#arrow-yes)" />
+                <rect x="705" y="890" width="180" height="60" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="795" y="913" text-anchor="middle" font-weight="bold" font-size="11" fill="#1b5e20">9b. Incoherent fix</text>
+                <line x1="795" y1="950" x2="795" y2="975" stroke="#2e7d32" stroke-width="2" />
+                <line x1="795" y1="975" x2="450" y2="975" stroke="#546e7a" stroke-width="2" />
+                <line x1="320" y1="825" x2="200" y2="825" stroke="#c62828" stroke-width="2" marker-end="url(#arrow-no)" />
+                <text x="270" y="815" font-size="12" font-weight="bold" fill="#c62828">NO</text>
+                <rect x="50" y="795" width="155" height="60" rx="6" fill="#ffebee" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="128" y="820" text-anchor="middle" font-weight="bold" font-size="11" fill="#b71c1c">R_front, T_front</text>
+                <line x1="128" y1="855" x2="128" y2="975" stroke="#c62828" stroke-width="2" />
+                <line x1="128" y1="975" x2="450" y2="975" stroke="#546e7a" stroke-width="2" />
+                <circle cx="450" cy="975" r="5" fill="#546e7a" />
+                <line x1="450" y1="980" x2="450" y2="1005" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <text x="450" y="1020" text-anchor="middle" font-size="13" fill="#78909c">PHASE 5 — Validation</text>
+                <rect x="250" y="1035" width="400" height="50" rx="6" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="450" y="1055" text-anchor="middle" font-weight="bold" font-size="12" fill="#b71c1c">10. Energy sanity check</text>
+                <text x="450" y="1072" text-anchor="middle" font-size="10" fill="#b71c1c">R + T ≤ 1.0 | A ≥ 0</text>
+                <line x1="450" y1="1085" x2="450" y2="1115" stroke="#546e7a" stroke-width="2" marker-end="url(#arrow-flow)" />
+                <text x="450" y="1130" text-anchor="middle" font-size="13" fill="#78909c">PHASE 6 — Outputs</text>
+                <rect x="50" y="1145" width="200" height="55" rx="8" fill="url(#grad-output)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="150" y="1168" text-anchor="middle" font-weight="bold" font-size="12" fill="#1b5e20">R(λ), T(λ), A(λ)</text>
+                <rect x="280" y="1145" width="200" height="55" rx="8" fill="url(#grad-output)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="380" y="1168" text-anchor="middle" font-weight="bold" font-size="12" fill="#1b5e20">|E(z)|² Profile</text>
+                <rect x="510" y="1145" width="200" height="55" rx="8" fill="url(#grad-output)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="610" y="1168" text-anchor="middle" font-weight="bold" font-size="12" fill="#1b5e20">Phase φ(λ)</text>
+                <rect x="740" y="1145" width="140" height="55" rx="8" fill="url(#grad-output)" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)" />
+                <text x="810" y="1168" text-anchor="middle" font-weight="bold" font-size="12" fill="#1b5e20">RMSE</text>
+                <line x1="450" y1="1115" x2="150" y2="1145" stroke="#546e7a" stroke-width="1.5" />
+                <line x1="450" y1="1115" x2="380" y2="1145" stroke="#546e7a" stroke-width="1.5" />
+                <line x1="450" y1="1115" x2="610" y2="1145" stroke="#546e7a" stroke-width="1.5" />
+                <line x1="450" y1="1115" x2="810" y2="1145" stroke="#546e7a" stroke-width="1.5" />
+            </svg>
+        </div>
+    </details>
+
+    <details class="advanced-box">
+        <summary>Module architecture (CERTUS HUB)</summary>
+        <div style="text-align: center;">
+            <svg width="900" height="620" viewBox="0 0 900 620" style="background: #fdfdfd; border: 1px solid #eee; border-radius: 8px;">
+                <defs>
+                    <linearGradient id="grad-mod-blue" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e3f2fd" /><stop offset="100%" style="stop-color:#90caf9" /></linearGradient>
+                    <linearGradient id="grad-mod-green" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#e8f5e9" /><stop offset="100%" style="stop-color:#a5d6a7" /></linearGradient>
+                    <linearGradient id="grad-mod-orange" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#fff3e0" /><stop offset="100%" style="stop-color:#ffcc80" /></linearGradient>
+                    <linearGradient id="grad-mod-purple" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#f3e5f5" /><stop offset="100%" style="stop-color:#ce93d8" /></linearGradient>
+                    <linearGradient id="grad-engine" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#37474f" /><stop offset="100%" style="stop-color:#546e7a" /></linearGradient>
+                    <filter id="shadow"><feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.15" /></filter>
+                </defs>
+                <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#2c3e50">Architecture CERTUS Suite 1602</text>
+                <rect x="300" y="50" width="300" height="50" rx="10" fill="url(#grad-mod-purple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="75" text-anchor="middle" font-weight="bold" font-size="14" fill="#4a148c">CERTUS_HUB</text>
+                <line x1="350" y1="100" x2="120" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
+                <line x1="400" y1="100" x2="340" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
+                <line x1="500" y1="100" x2="560" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
+                <line x1="550" y1="100" x2="780" y2="150" stroke="#9e9e9e" stroke-width="1.5" stroke-dasharray="4" />
+                <rect x="30" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-blue)" stroke="#1565c0" stroke-width="2" filter="url(#shadow)" />
+                <text x="120" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#0d47a1">INDEX & SPLINE</text>
+                <text x="120" y="195" text-anchor="middle" font-size="10" fill="#1565c0">Metrology & Synthesis</text>
+                <text x="120" y="240" text-anchor="middle" font-size="9" fill="#78909c">L-BFGS-B / Spline knots</text>
+                <rect x="250" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-green)" stroke="#2e7d32" stroke-width="2" filter="url(#shadow)" />
+                <text x="340" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#1b5e20">CERTUS_DESIGN</text>
+                <text x="340" y="195" text-anchor="middle" font-size="10" fill="#2e7d32">QWOT synthesis</text>
+                <text x="340" y="240" text-anchor="middle" font-size="9" fill="#78909c">H/L thickness optimization</text>
+                <rect x="470" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-orange)" stroke="#e65100" stroke-width="2" filter="url(#shadow)" />
+                <text x="560" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#bf360c">CERTUS_STRAT</text>
+                <text x="560" y="195" text-anchor="middle" font-size="10" fill="#e65100">Monitoring strategy</text>
+                <text x="560" y="240" text-anchor="middle" font-size="9" fill="#78909c">Optical growth simulation</text>
+                <rect x="690" y="150" width="180" height="100" rx="8" fill="url(#grad-mod-purple)" stroke="#7b1fa2" stroke-width="2" filter="url(#shadow)" />
+                <text x="780" y="175" text-anchor="middle" font-weight="bold" font-size="13" fill="#4a148c">CERTUS_METAL</text>
+                <text x="780" y="195" text-anchor="middle" font-size="10" fill="#7b1fa2">Low-E / Filtres</text>
+                <text x="780" y="240" text-anchor="middle" font-size="9" fill="#78909c">Differential evolution</text>
+                <line x1="120" y1="250" x2="120" y2="310" stroke="#546e7a" stroke-width="2" />
+                <line x1="340" y1="250" x2="340" y2="310" stroke="#546e7a" stroke-width="2" />
+                <line x1="560" y1="250" x2="560" y2="310" stroke="#546e7a" stroke-width="2" />
+                <line x1="780" y1="250" x2="780" y2="310" stroke="#546e7a" stroke-width="2" />
+                <rect x="50" y="310" width="800" height="45" rx="6" fill="#eceff1" stroke="#78909c" stroke-width="1.5" />
+                <text x="450" y="332" text-anchor="middle" font-weight="bold" font-size="12" fill="#37474f">Shared layer (UI, errors, data)</text>
+                <line x1="450" y1="355" x2="450" y2="390" stroke="#546e7a" stroke-width="2.5" marker-end="url(#arrow-flow)" />
+                <rect x="100" y="395" width="700" height="90" rx="10" fill="url(#grad-engine)" stroke="#263238" stroke-width="2" filter="url(#shadow)" />
+                <text x="450" y="435" text-anchor="middle" font-weight="bold" font-size="16" fill="#ffffff">Physics engine: certus_physics (Numba JIT)</text>
+                <text x="450" y="465" text-anchor="middle" font-size="12" fill="#b0bec5">Ultra-fast TMM (vectorized, batch, exact backside)</text>
+            </svg>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h4>Per-module computation flow</h4>
+            <table style="font-size: 13px;">
+                <tr><th>Module</th><th>Purpose</th><th>TMM kernel</th><th>Optimizer</th></tr>
+                <tr><td><strong>INDEX / SPLINE</strong></td><td>Metrology & index fitting</td><td><code>cost_and_grad</code> (Fused gradients)</td><td>L-BFGS-B (SciPy/Fortran bindings)</td></tr>
+                <tr><td><strong>DESIGN</strong></td><td>H/L QWOT thickness synthesis</td><td><code>calculate_RT_vectorized_real_HL</code></td><td>PGLOBAL + needle insertion</td></tr>
+                <tr><td><strong>STRAT</strong></td><td>Optical monitoring strategy</td><td><code>compute_dynamics_kernel</code></td><td>Monte Carlo + adaptive nucleation</td></tr>
+                <tr><td><strong>METAL</strong></td><td>Metallic stack (low-E, filters)</td><td><code>compute_TMM_generic</code></td><td>Differential evolution (SciPy)</td></tr>
+            </table>
+        </div>
+    </details>
+
+    <hr>
+    <footer>
+        <p><em>CERTUS training document — based on H.A. Macleod, <i>Thin-Film Optical Filters</i>.</em></p>
+    </footer>
+</body>
+</html>

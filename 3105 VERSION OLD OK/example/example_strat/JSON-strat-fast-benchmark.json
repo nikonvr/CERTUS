@@ -1,0 +1,111 @@
+{
+  "config": "C:\\driveFL\\couches minces 2026\\CERTUS\\1403\\example\\JSON-strat-example.json",
+  "runs": [
+    {
+      "name": "premium",
+      "elapsed_s": 58.45016469999973,
+      "summary": {
+        "strategies_count": 111,
+        "best_strategy_id": 48342,
+        "best_origin": "ELITE",
+        "best_robustness_score": 0.02066613014591293,
+        "origin_counts_top20": {
+          "ELITE": 7,
+          "SYM": 4,
+          "THICKNESS²": 5,
+          "THICKNESS": 4
+        },
+        "top5": [
+          {
+            "id": 48342,
+            "origin": "ELITE",
+            "score": 0.02066613014591293,
+            "n_blocks": 9,
+            "same_wl_kept": 0
+          },
+          {
+            "id": 48434,
+            "origin": "ELITE",
+            "score": 0.020705376978937286,
+            "n_blocks": 48,
+            "same_wl_kept": 10
+          },
+          {
+            "id": 48231,
+            "origin": "ELITE",
+            "score": 0.020735096948391575,
+            "n_blocks": 9,
+            "same_wl_kept": 0
+          },
+          {
+            "id": 9201,
+            "origin": "SYM",
+            "score": 0.020766967126554473,
+            "n_blocks": 9,
+            "same_wl_kept": 0
+          },
+          {
+            "id": 9101,
+            "origin": "THICKNESS²",
+            "score": 0.020766967126554473,
+            "n_blocks": 9,
+            "same_wl_kept": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "fast_current",
+      "elapsed_s": 15.177325500000734,
+      "summary": {
+        "strategies_count": 70,
+        "best_strategy_id": 48247,
+        "best_origin": "ELITE",
+        "best_robustness_score": 0.019000241627197312,
+        "origin_counts_top20": {
+          "ELITE": 2,
+          "THICKNESS": 6,
+          "SYM": 6,
+          "THICKNESS²": 6
+        },
+        "top5": [
+          {
+            "id": 48247,
+            "origin": "ELITE",
+            "score": 0.019000241627197312,
+            "n_blocks": 48,
+            "same_wl_kept": 8
+          },
+          {
+            "id": 9004,
+            "origin": "THICKNESS",
+            "score": 0.01920429213341983,
+            "n_blocks": 9,
+            "same_wl_kept": 0
+          },
+          {
+            "id": 48201,
+            "origin": "SYM",
+            "score": 0.019244246903599938,
+            "n_blocks": 48,
+            "same_wl_kept": 8
+          },
+          {
+            "id": 48101,
+            "origin": "THICKNESS²",
+            "score": 0.019244246903599938,
+            "n_blocks": 48,
+            "same_wl_kept": 0
+          },
+          {
+            "id": 48001,
+            "origin": "THICKNESS",
+            "score": 0.019244246903599938,
+            "n_blocks": 48,
+            "same_wl_kept": 0
+          }
+        ]
+      }
+    }
+  ]
+}

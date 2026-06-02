@@ -1,0 +1,34 @@
+# Global default owner
+* @CERTUS-Team
+
+# Build, release, and tooling
+/.github/ @CERTUS-Team
+/tools/ @CERTUS-Team
+/pyproject.toml @CERTUS-Team
+/requirements*.txt @CERTUS-Team
+/requirements*.lock @CERTUS-Team
+
+# Core runtime and shared services
+/certus_core.py @CERTUS-Team
+/certus_data.py @CERTUS-Team
+/certus_services.py @CERTUS-Team
+/certus_*.py @CERTUS-Team
+
+# Domain monoliths
+/CERTUS_DESIGN.py @CERTUS-Team
+/CERTUS_INDEX.py @CERTUS-Team
+/CERTUS_INDEX_SPLINE.py @CERTUS-Team
+/CERTUS_RE.py @CERTUS-Team
+/CERTUS_STRAT.py @CERTUS-Team
+/CERTUS_METAL_SINGLE.py @CERTUS-Team
+/CERTUS_METAL_BILAYER.py @CERTUS-Team
+
+# Numerical kernels and spline pipeline
+/_certus_physics_impl.py @CERTUS-Team
+/spline_*.py @CERTUS-Team
+
+# Tests and docs
+/tests/ @CERTUS-Team
+/docs/ @CERTUS-Team
+/reports/ @CERTUS-Team
+/schemas/ @CERTUS-Team

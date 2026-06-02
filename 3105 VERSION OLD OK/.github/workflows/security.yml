@@ -1,0 +1,70 @@
+name: security
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  schedule:
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  supply-chain-and-secrets:
+    name: pip-audit + gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14.5"
+
+      - name: Install audit tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pip-audit==2.9.0
+
+      - name: Verify lockfile contains sha256 hashes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          lines = Path("requirements.lock").read_text(encoding="utf-8").splitlines()
+          count = sum(1 for line in lines if "--hash=sha256:" in line)
+          if count == 0:
+              raise SystemExit("No sha256 hashes found in requirements.lock")
+          print(f"Found {count} sha256 hashes in requirements.lock")
+          PY
+
+      - name: Dependency vulnerability scan
+        run: |
+          pip-audit -r requirements.lock --strict
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

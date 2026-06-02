@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERTUS-HUB | Scientific Technical Report</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="assets/certus_report_init.js"></script>
+    <link rel="stylesheet" href="assets/certus_report.css">
+</head>
+
+<nav class="navbar">
+        <a href="CERTUS_HUB.html" class="certus-logo">
+            <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
+                <g transform="translate(120, 90)">
+                    <path
+                        d="M 70,0 C 70,-40 40,-70 0,-70 C -40,-70 -70,-40 -70,0 C -70,40 -40,70 0,70 C 20,70 40,50 40,50"
+                        fill="none" stroke="#05103b" stroke-width="30" stroke-linecap="round" transform="rotate(-30)" />
+                    <path
+                        d="M -90,0 C -80,-90 -70,-50 -60,0 S -40,90 -30,0 S -10,-90 0,0 S 20,90 30,0 S 50,-90 60,0 S 80,90 90,0"
+                        fill="none" stroke="#00f0ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+                </g>
+                <g transform="translate(220, 25)">
+                    <text x="0" y="70" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="80"
+                        fill="#05103b" letter-spacing="2">CERTUS</text>
+                    <text x="0" y="110" font-family="Arial, Helvetica, sans-serif" font-weight="300" font-size="18"
+                        fill="#000000" letter-spacing="1.2">THIN FILM OPTIMAL STRATEGY FINDER</text>
+                    <text x="-10" y="135" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#333333"
+                        letter-spacing="0.5">Calculated Error Reduction Through Unbiased Simulation</text>
+                </g>
+            </svg>
+        </a>
+        <div class="nav-links">
+            <a href="CERTUS_HUB.html" class="active">HUB</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
+            <a href="CERTUS_INDEX.html">INDEX</a>
+            <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header>
+            <h1>CERTUS-HUB</h1>
+            <p style="font-size: 1.3em; color: #475569; font-weight: 300;">Runtime Environment Supervisor & Unified
+                Entry Point</p>
+            <p style="font-size: 1.0em; color: #64748b; font-weight: 300;">Scientific Revision 2026.03</p>
+        </header>
+
+        <div class="abstract">
+            <strong>Executive Summary:</strong> CERTUS-HUB is the central nervous system of the CERTUS suite. Far more
+            than a simple launcher, it is a <strong>Runtime Hypervisor</strong> designed to solve the complex
+            concurrency challenges inherent in high-performance Python computing. It enforces a secure initialization
+            protocol for the Numba/LLVM JIT compiler, manages thread allocation across CPU cores to prevent GUI freezes,
+            and provides a unified UX framework shared across all scientific modules (STRAT, DESIGN, RE,
+            INDEX, METAL SINGLE/BILAYER).
+        </div>
+
+        <div class="abstract" style="border-left-color:#f59e0b;">
+            <strong>Offline note:</strong> These HTML pages load MathJax and Mermaid from a CDN (jsDelivr). Without
+            internet access, formulas and flowcharts may not render fully; body text and tables remain readable.
+        </div>
+
+        <!-- ================================================================ -->
+        <!--  1. THE INTEGRATION CHALLENGE                                     -->
+        <!-- ================================================================ -->
+        <h2>1. The Scientific Problem: The Integration Challenge</h2>
+        <p>
+            Running advanced scientific code (using JIT compilation and multiprocessing) within a desktop GUI
+            environment presents critical stability risks:
+        </p>
+        <ul>
+            <li><strong>The GIL & Threading Conflict:</strong> Standard threading libraries (TBB, OpenMP) often conflict
+                with Python's Global Interpreter Lock or the PyQt event loop, causing silent crashes or deadlocks.</li>
+            <li><strong>Process Isolation:</strong> Launching heavy Monte Carlo simulations in the main process freezes
+                the user interface.</li>
+            <li><strong>Inconsistent State:</strong> Without a centralized entry point, modules might load conflicting
+                configurations or material databases.</li>
+        </ul>
+        <p>
+            <strong>CERTUS-HUB</strong> solves this by acting as a <strong>Singleton Initializer</strong>. It sanitizes
+            the environment variables <em>before</em> any scientific library is imported.
+        </p>
+
+        <!-- ================================================================ -->
+        <!--  2. SUITE ARCHITECTURE                                            -->
+        <!-- ================================================================ -->
+        <h2>2. Suite Architecture</h2>
+
+        <div class="mermaid">
+            flowchart TD
+            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
+            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
+            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
+            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
+
+            HUB["<b>CERTUS-HUB</b><br>Environment Guard<br>License · Threads · Material DB"]:::terminal --> DESIGN
+            HUB --> STRAT
+            HUB --> INDEX
+            HUB --> IS["INDEX SPLINE"]
+            HUB --> MS["METAL SINGLE"]
+            HUB --> MB["METAL BILAYER"]
+            DESIGN["<b>DESIGN</b><br>PGLOBAL Synthesis<br>Analytic Gradient"]:::highlight --> PHYSICS
+            STRAT["<b>STRAT</b><br>Monitoring Strategy<br>Monte Carlo Validation"]:::highlight --> PHYSICS
+            INDEX["<b>INDEX</b><br>TLU n,k Extraction<br>Kramers-Kronig"]:::highlight --> PHYSICS
+            IS["<b>INDEX SPLINE</b><br>High-fidelity metrology<br>L-BFGS-B & knots"]:::highlight --> PHYSICS
+            MS["<b>METAL SINGLE</b><br>Spline n,k on<br>Transparent Substrate"]:::highlight --> PHYSICS
+            MB["<b>METAL BILAYER</b><br>Spline n,k on<br>Si/SiO₂ Stack"]:::highlight --> PHYSICS
+            PHYSICS["<b>_certus_physics_impl</b><br>TMM Kernels · Numba JIT<br>Float64 / Complex128"]:::terminal
+        </div>
+
+        <table>
+            <tr>
+                <th width="25%">Component</th>
+                <th width="25%">Technology / File</th>
+                <th>Function</th>
+            </tr>
+            <tr>
+                <td><strong>Environment Guard</strong></td>
+                <td><code>certus_core.py</code> — <code>create_module_environment()</code></td>
+                <td>Forces <code>NUMBA_THREADING_LAYER='workqueue'</code>, caps <code>NUMBA_NUM_THREADS=CPU−1</code>,
+                    sets <code>spawn</code> start method. Must execute <em>before</em> any Numba import.</td>
+            </tr>
+            <tr>
+                <td><strong>Process Manager</strong></td>
+                <td><code>QProcess</code> / <code>sys.executable</code></td>
+                <td>Launches sub-modules as independent OS processes. Auto-detects frozen (<code>.exe</code>) vs.
+                    script mode.</td>
+            </tr>
+            <tr>
+                <td><strong>Unified UX Engine</strong></td>
+                <td><code>certus_ui.py</code> — <code>CertusBaseApp</code></td>
+                <td>Shared theme tokens (<code>CertusTheme</code>), <code>CertusThemeToggle</code> (light/dark),
+                    <code>CertusLogPanel</code>, <code>WelcomeGuideWidget</code>, factory helpers
+                    (<code>create_styled_button</code>, <code>create_header_logo_widget</code>).</td>
+            </tr>
+            <tr>
+                <td><strong>Module Cards</strong></td>
+                <td><code>ApplicationCard</code>, <code>GroupedApplicationCard</code></td>
+                <td><code>ApplicationCard</code>: single-module card with hover shadow effect.
+                    <code>GroupedApplicationCard</code>: stacked sub-apps (METAL BILAYER + SINGLE) with
+                    per-button launcher callbacks.</td>
+            </tr>
+            <tr>
+                <td><strong>Material Database</strong></td>
+                <td><code>MaterialDatabase</code></td>
+                <td>Loads <code>indices.xlsx</code> into Float64 arrays; shared via <code>APP_CONTEXT</code> across
+                    all modules.</td>
+            </tr>
+            <tr>
+                <td><strong>Physics Engine</strong></td>
+                <td><code>_certus_physics_impl.py</code></td>
+                <td>All TMM kernels, gradient kernels, dispersion models — Numba JIT <code>parallel=True</code>,
+                    Float64/Complex128.</td>
+            </tr>
+        </table>
+
+        <!-- ================================================================ -->
+        <!--  3. BOOT PROTOCOL                                                 -->
+        <!-- ================================================================ -->
+        <h2>3. Algorithmic Workflow: The Secure Boot Protocol</h2>
+
+        <div class="mermaid">
+            flowchart TD
+            classDef default fill:#ffffff,stroke:#0ea5e9,stroke-width:2px,color:#0f172a
+            classDef process fill:#f8fafc,stroke:#0ea5e9,stroke-width:2px
+            classDef decision fill:#fff3e0,stroke:#f59e0b,stroke-width:2px,color:#9333ea
+            classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
+            classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
+
+            START(["Application Launch"]):::terminal --> E1["1. Inject os.environ:<br>NUMBA_THREADING_LAYER = workqueue"]:::process
+            E1 --> E2["2. Cap NUMBA_NUM_THREADS<br>= CPU_COUNT − 1"]:::process
+            E2 --> E3["3. Force multiprocessing<br>start method = spawn"]:::process
+            E3 --> DB1["4. Load indices.xlsx<br>→ MaterialDatabase (Float64)"]:::highlight
+            DB1 --> DB2{"All materials<br>parsed OK?"}:::decision
+            DB2 -->|"No"| WARN["Log warning<br>Continue with partial DB"]:::process
+            DB2 -->|"Yes"| LOG["5. Init QueueHandler<br>(thread-safe logging)"]:::process
+            WARN --> LOG
+            LOG --> JIT1["6. Background Thread:<br>JIT compile TMM kernels"]:::highlight
+            JIT1 -->
+            JIT2["calculate_RT_vectorized_real_HL<br>simulate_growth_kernel<br>compute_dynamics_kernel"]:::process
+            JIT2 --> GUI1["7. Build PyQt6 Dashboard"]:::process
+            GUI1 --> GUI2["8. Enter Event Loop<br>Await module selection"]:::process
+            GUI2 --> DISPATCH{"User selects<br>module"}:::decision
+            DISPATCH -->|"DESIGN"| MOD1["Launch CERTUS_DESIGN<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"STRAT"| MOD2["Launch CERTUS_STRAT<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"INDEX"| MOD3["Launch CERTUS_INDEX<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"SPLINE"| MOD_S["Launch CERTUS_INDEX_SPLINE<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"METAL"| MOD4["Launch CERTUS_METAL<br>init_certus_app()"]:::terminal
+        </div>
+
+        <h3>Phase I: Environment Locking (Steps 1–3)</h3>
+        <div class="highlight-box">
+            <strong>Critical Initialization Sequence:</strong><br>
+            1. <strong>Threading Policy:</strong> The <code>workqueue</code> threading layer is forced via
+            <code>os.environ</code> <em>before any Numba import</em>. This bypasses TBB/OpenMP which cause deadlocks
+            when forked from a PyQt6 application.<br>
+            2. <strong>Resource Reservation:</strong> <code>NUMBA_NUM_THREADS</code> is capped at
+            <code>CPU_COUNT − 1</code>. This reserves a dedicated physical core for the OS and GUI event loop.<br>
+            3. <strong>Process Isolation:</strong> <code>multiprocessing.set_start_method('spawn')</code> ensures
+            child processes get clean copies of the environment, preventing fork-related state corruption.
+        </div>
+
+        <h3>Phase II: Shared Library Initialization (Steps 4–6)</h3>
+        <div class="algo-step" style="background:#eef4fa; border-left:4px solid #3b82f6; padding:15px; margin:15px 0;">
+            <strong>Step 4 — Material Database:</strong> Loads <code>indices.xlsx</code> (one Excel sheet per material).
+            Each sheet's wavelength and refractive index columns are converted to contiguous <code>Float64</code> arrays
+            and stored in <code>MaterialDatabase</code> for Numba-compatible vectorized interpolation.<br><br>
+            <strong>Step 5 — Logging:</strong> Initializes a thread-safe <code>QueueHandler</code> that centralizes
+            log messages from all parallel child processes into a single stream.<br><br>
+            <strong>Step 6 — Numba Warmup:</strong> A background <code>QThread</code> triggers JIT compilation of the
+            3 most critical kernels: <code>calculate_RT_vectorized_real_HL</code>,
+            <code>simulate_growth_kernel</code>, and <code>compute_dynamics_kernel</code>. This eliminates the
+            ~5 second compilation latency on the user's first operation.
+        </div>
+
+        <h3>Phase III: Central Command Dispatch (Steps 7–8)</h3>
+        <p>
+            The PyQt6 dashboard presents launch buttons for each module. When a module is selected:
+        </p>
+        <ul>
+            <li>The Hub verifies that the module file (<code>.py</code> or <code>.exe</code>) exists on disk.</li>
+            <li>It creates a managed execution context with splash screen and error monitoring.</li>
+            <li>It calls the target module's <code>init_certus_app()</code> entry point, passing the sanitized
+                environment, material database reference, and theme configuration.</li>
+        </ul>
+
+        <!-- ================================================================ -->
+        <!--  4. NUMERICAL PRECISION POLICY                                    -->
+        <!-- ================================================================ -->
+        <h2>4. Numerical Precision Policy</h2>
+        <p>
+            Since version 2026.02, <strong>all modules operate exclusively in double precision</strong>
+            (<code>float64</code> / <code>complex128</code>). This eliminates an entire class of subtle numerical
+            bugs (silent Numba recompilation, accumulated rounding in TMM chains of 50+ layers) while the
+            performance impact is negligible on modern 64-bit CPUs with AVX2/FMA.
+        </p>
+
+        <table>
+            <tr>
+                <th>Data Type</th>
+                <th>Precision</th>
+                <th>Usage</th>
+            </tr>
+            <tr>
+                <td><code>np.float64</code></td>
+                <td>~15 significant digits</td>
+                <td>Wavelengths, thicknesses, noise matrices, cost functions</td>
+            </tr>
+            <tr>
+                <td><code>np.complex128</code></td>
+                <td>~15 digits (real + imag)</td>
+                <td>Refractive indices $\hat{n} = n - ik$, TMM matrices, Fresnel coefficients</td>
+            </tr>
+        </table>
+
+        <div class="highlight-box">
+            <strong>Why not Float32?</strong> In a 50-layer multilayer TMM, each matrix multiplication accumulates
+            rounding errors. With Float32 (~7 digits), the cumulative error after 50 multiplications can reach
+            $\sim 10^{-3}$ in transmittance — comparable to the physical effect being optimized. Float64 keeps
+            accumulated error below $10^{-10}$, well below any measurement noise.
+        </div>
+
+        <!-- ================================================================ -->
+        <!--  5. INPUTS & OUTPUTS                                              -->
+        <!-- ================================================================ -->
+        <h2>5. Inputs & Outputs</h2>
+
+        <div style="display: flex; gap: 40px;">
+            <div style="flex: 1;">
+                <h3>5.1 Inputs (System Configuration)</h3>
+                <ul>
+                    <li><strong>Hardware Fingerprint:</strong> UUID and MAC Address used for license validation.</li>
+                    <li><strong>Configuration Flags:</strong> <code>auto_export_reports</code> boolean.</li>
+                    <li><strong>Module Registry:</strong> Dynamic detection of available scripts (.py) or compiled
+                        binaries (.exe).</li>
+                    <li><strong>Material Database:</strong> <code>indices.xlsx</code> — Excel file with one sheet per
+                        material containing wavelength (nm) and refractive index columns.</li>
+                </ul>
+            </div>
+            <div style="flex: 1;">
+                <h3>5.2 Outputs (Runtime Context)</h3>
+                <ul>
+                    <li><strong>Sanitized Process:</strong> A child process guaranteed to be thread-safe (GIL-released).
+                    </li>
+                    <li><strong>Shared Memory Links:</strong> Atomically loaded <code>indices.xlsx</code> structures
+                        in Float64.</li>
+                    <li><strong>Global Logs:</strong> A unified error and status stream accessible via the "Show
+                        Details" panel.</li>
+                    <li><strong>Reports:</strong> Auto-generated Excel + HTML reports in <code>/reports</code>,
+                        tagged with timestamp and RMSE score.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ================================================================ -->
+        <!--  6. USER INTERFACE                                                -->
+        <!-- ================================================================ -->
+        <h2>6. User Interface & Controls</h2>
+
+        <h3>6.1 Quick Launch Shortcuts</h3>
+        <table>
+            <tr>
+                <th>Shortcut</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><code>Ctrl+D</code></td>
+                <td><strong>DESIGN</strong></td>
+                <td>Launch Thin Film Synthesis module</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl+I</code></td>
+                <td><strong>INDEX</strong></td>
+                <td>Launch n/k Characterization module</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl+Shift+S</code></td>
+                <td><strong>STRAT</strong></td>
+                <td>Launch Monitoring Strategy module</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl+M</code></td>
+                <td><strong>METAL BILAYER</strong></td>
+                <td>Launch Metal Bilayer Analysis (Opaque/Transparent Stack)</td>
+            </tr>
+            <tr>
+                <td><code>Ctrl+Shift+M</code></td>
+                <td><strong>METAL SINGLE</strong></td>
+                <td>Launch Metal Single Layer Analysis</td>
+            </tr>
+            <tr>
+                <td><code>F1</code></td>
+                <td><strong>DOCS</strong></td>
+                <td>Open this HTML documentation</td>
+            </tr>
+        </table>
+
+        <h3>6.2 Auto-Export Reports</h3>
+        <p>
+            When enabled, every successful operation in DESIGN, INDEX or METAL (Single/Bilayer) automatically
+            generates a detailed report (Excel + HTML) in the <code>/reports</code> folder,
+            tagged with a unique timestamp and RMSE score.
+        </p>
+
+        <!-- ================================================================ -->
+        <!--  7. KEY ARCHITECTURE ADVANTAGES                                   -->
+        <!-- ================================================================ -->
+        <h2>7. Key Architecture Advantages</h2>
+
+        <h3>7.1 "Workqueue" Stability</h3>
+        <p>
+            By strictly enforcing the <code>workqueue</code> threading policy at the root level, CERTUS-HUB eliminates
+            the most common cause of crashes in Python scientific GUIs (race conditions between the C++ Qt event loop
+            and the Numba parallel threads).
+        </p>
+
+        <h3>7.2 Modularity & Maintainability</h3>
+        <p>
+            The Hub decouples the launch logic from the scientific logic. Updates to the styling, logging, or threading
+            policies are applied in <code>certus_ui</code> and the Hub, automatically propagating to all modules
+            without rewriting their code.
+        </p>
+
+        <h3>7.3 Exact Analytic Gradients</h3>
+        <p>
+            A defining feature of the CERTUS architecture is the abandonment of numerical approximations (finite
+            differences) in favor of <strong>Exact Analytic Derivatives</strong>.
+            The core engine explicitly calculates the Jacobian matrix for both the Transfer Matrix Method (TMM) and the
+            complex Tauc-Lorentz-Urbach dispersion models:
+        </p>
+        <div class="eq-box">
+            $$ \frac{\partial \mathbf{M}_{total}}{\partial d_j} = \mathbf{M}_{after}[j] \cdot
+            \frac{d\mathbf{M}_j}{d d_j} \cdot \mathbf{M}_{before}[j] $$
+        </div>
+        <p>
+            By computing $\frac{\partial \text{MSE}}{\partial p_i}$ analytically via Numba-accelerated kernels,
+            the L-BFGS-B optimizer navigates the error landscape with machine precision ($\sim 10^{-12}$).
+            This prevents the "stagnation" often seen in optical thin film synthesis when gradients vanish in noise.
+        </p>
+
+        <h3>7.4 Unified TMM Convention</h3>
+        <p>
+            All modules share the same Transfer Matrix Method convention from
+            <code>_certus_physics_impl.py</code>:
+        </p>
+        <ul>
+            <li><strong>Macleod Convention:</strong> $\hat{n} = n - ik$ (k &gt; 0), factor <code>+1j</code> in
+                off-diagonal matrix elements.</li>
+            <li><strong>Pre-multiply Air→Substrate:</strong> New layers are pre-multiplied
+                ($\mathbf{L} \cdot \mathbf{M}$), consistent with the deposition order.</li>
+            <li><strong>Incoherent Backside:</strong> Dual-matrix approach — forward matrix for $T$, reverse matrix
+                for $R_{back}$, combined via the exact incoherent formula
+                $T_{total} = T_{fwd} \cdot T_{ext} / (1 - R_{back} \cdot R_{ext})$.</li>
+        </ul>
+
+        <!-- ================================================================ -->
+        <!--  8. MODULE SUMMARY                                                -->
+        <!-- ================================================================ -->
+        <h2>8. Module Summary</h2>
+
+        <table>
+            <tr>
+                <th>Module</th>
+                <th>Algorithm</th>
+                <th>Key Feature</th>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_DESIGN.html">DESIGN</a></strong></td>
+                <td>PGLOBAL + L-BFGS-B + Needle</td>
+                <td>Stochastic global synthesis with density clustering and topological derivative</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_RE.html">RE</a></strong></td>
+                <td>TRF + Spline prefit + Joint L-BFGS-B</td>
+                <td>Measured-spectrum reverse engineering with shared oblique TMM and batch RMSE* ranking</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_STRAT.html">STRAT</a></strong></td>
+                <td>Monte Carlo + Dynamic Programming</td>
+                <td>Monitoring strategy optimization with cumulative error propagation</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_INDEX.html">INDEX</a></strong></td>
+                <td>TLU + Kramers-Kronig + Multi-Start</td>
+                <td>Physical n,k extraction with analytic KK integral</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a></strong></td>
+                <td>L-BFGS-B + Spline PWL</td>
+                <td>Deterministic knot control and exact analytic gradients via Fused Cost & Grad</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a></strong></td>
+                <td>Differential Evolution + Splines</td>
+                <td>Model-free n,k from R+T+Rback on transparent substrate</td>
+            </tr>
+            <tr>
+                <td><strong><a href="CERTUS_METAL_BILAYER.html">METAL BILAYER</a></strong></td>
+                <td>DE + L-BFGS-B + Splines</td>
+                <td>Model-free n,k from R-only on Si/SiO₂ with beam uncertainty</td>
+            </tr>
+        </table>
+
+
+        <!-- ================================================================ -->
+        <!--  PRO 2026 ERGONOMICS & UX                                         -->
+        <!-- ================================================================ -->
+        <h2>9. Pro 2026 Ergonomics & UI Upgrades</h2>
+        <p>
+            The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific workflows.
+            All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
+            <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
+            maximum numerical stability (15 significant digits).
+        </p>
+        <h3>9.1 Global Keyboard Shortcuts</h3>
+        <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
+        <ul>
+            <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
+            <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
+            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Instantly launch the primary optimization or fitting
+                Step (Step 2).</li>
+            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level undo stack via <code>deque</code>,
+                active in all modules via <code>CertusBaseApp</code>).</li>
+            <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.</li>
+        </ul>
+        <h3>9.2 Theme Toggle &amp; Live Footer</h3>
+        <p>A <code>CertusThemeToggle</code> action (&#x2600;/&#x1F319;) switches between light and dark themes
+            system-wide at runtime without restart. The window footer dynamically displays the
+            <code>__version__</code> string from <code>certus_core.py</code>, Python version,
+            and Qt version.
+        </p>
+        <h3>9.3 Dynamic Processing Feedback</h3>
+        <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
+            thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
+            Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
+
+        <div class="footer">
+            <p>Generated from source analysis of <code>CERTUS_HUB.py</code>, <code>certus_core.py</code>,
+                <code>certus_ui.py</code> — Revision 2026.03</p>
+            <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report</p>
+        </div>
+    </div>
+
+</body>
+</html>

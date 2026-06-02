@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────
+# CERTUS — .gitignore
+# ─────────────────────────────────────────────
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ─────────────── Testing ───────────────
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+coverage.xml
+coverage_*.xml
+htmlcov/
+_test_out.txt
+test_results*.txt
+
+# ─────────────── Linters / Type checkers ───────────────
+.mypy_cache/
+.pyre/
+.ruff_cache/
+
+# ─────────────── IDE / Editor ───────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─────────────── OS files ───────────────
+.DS_Store
+Thumbs.db
+~$*
+
+# ─────────────── Profiling ───────────────
+*.prof
+
+# ─────────────── App runtime outputs ───────────────
+logs/
+*.log
+IndexSpline_Result_*.xlsx
+reports/exports/
+
+# ─────────────── Debug / scratch ───────────────
+scratch/
+artifacts/
+bottleneck_*.txt
+.benchmarks/
+
+# ─────────────── Legacy / dead code ───────────────
+_DEAD_SCRIPTS_BACKUP/
+
+# ─────────────── Build / release ───────────────
+artifacts/root_cleanup_*/
+reports/release_dossier_*.zip
+_metal_cache/
+
+# ─────────────── Local backups / test outputs ───────────────
+OLD VERSION/
+reports/Report_*
+reports/STRAT_observability_*
+
+# ─────────────── Generated test / CI artefacts ───────────────
+MagicMock/
+test_*.txt
+_pytest_nodeids*.txt
+diff_re.txt
+ruff_errors.txt
+translation_cache.json

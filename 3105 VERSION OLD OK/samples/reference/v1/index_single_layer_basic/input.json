@@ -1,0 +1,16 @@
+{
+  "scenario_name": "index_single_layer_basic",
+  "kind": "single_layer_rt",
+  "inputs": {
+    "wavelength_nm": 550.0,
+    "n_film_real": 2.05,
+    "n_film_imag": 0.018,
+    "thickness_nm": 120.0,
+    "n_sub_real": 1.52,
+    "n_sub_imag": 0.0
+  },
+  "tolerance": {
+    "rtol": 1e-9,
+    "atol": 1e-12
+  }
+}

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS-METAL | Scientific Technical Report</title>
+    <title>CERTUS-METAL BILAYER | Scientific Report</title>
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -52,19 +52,15 @@
     <div class="container">
         <header>
             <h1>CERTUS-METAL BILAYER</h1>
-            <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Non-Parametric Spline Fitting & Beam Analysis
-                Engine</p>
-            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific Revision Pro 2026.04.17</p>
+            <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Spline-based optical constant extraction and beam analysis</p>
+            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific report revision 2026.04.17</p>
         </header>
 
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-METAL BILAYER is a specialized utility for characterizing opaque
-            or semi-transparent metallic layers deposited on a dielectric buffer (e.g., SiO₂). Unlike traditional tools
-            that force experimental data to fit rigid physical models (like Drude-Lorentz), this software uses a
-            <strong>Flexible Spline-Based Approach</strong>.
-            It reconstructs the complex refractive index ($\hat{n} = n - ik$) using free-form Cubic Splines, capturing
-            real-world material behaviors. It features a unique <strong>Beam Analysis</strong> mode to rigorously map
-            the uncertainty between thickness and refractive index.
+            <strong>Abstract:</strong> CERTUS-METAL BILAYER characterizes opaque or semi-transparent metallic layers
+            deposited on a dielectric buffer such as SiO$_2$. The method reconstructs the complex refractive index
+            ($\hat{n} = n - ik$) with free-form cubic splines and includes a beam-analysis stage to map the
+            thickness–index ambiguity.
         </div>
 
         <!-- ================================================================ -->
@@ -204,26 +200,28 @@
         <h3>3.3 Hybrid Optimization Strategy</h3>
 
         <h4>Stage 1: Differential Evolution (Global Search)</h4>
-        <p><strong>Differential Evolution (DE)</strong> is a population-based stochastic optimizer:</p>
+        <p><strong>Differential Evolution (DE)</strong> is a population-based stochastic optimizer suitable for
+            non-convex problems.
+        </p>
         <ol>
-            <li><strong>Initialize:</strong> Population of random parameter vectors within bounds.</li>
-            <li><strong>Mutate:</strong> Trial vectors via weighted differences:
+            <li><strong>Initialize:</strong> generate a population of parameter vectors within the bounds.</li>
+            <li><strong>Mutate:</strong> build trial vectors using weighted differences:
                 $\mathbf{v} = \mathbf{x}_{r1} + F(\mathbf{x}_{r2} - \mathbf{x}_{r3})$</li>
-            <li><strong>Crossover:</strong> Mix trial and target vectors with probability CR.</li>
-            <li><strong>Select:</strong> Keep the better of trial and target based on MSE.</li>
-            <li><strong>Iterate:</strong> Repeat until convergence or max iterations.</li>
+            <li><strong>Crossover:</strong> combine trial and target vectors with probability CR.</li>
+            <li><strong>Select:</strong> retain the vector with the lower MSE.</li>
+            <li><strong>Iterate:</strong> repeat until convergence or the maximum number of iterations is reached.</li>
         </ol>
-        <p>Parameters: Population = 50, $F \in [0.5, 1.0]$, CR = 0.7, Max iterations = 1500.</p>
+        <p>Typical parameters are: population size 50, $F \in [0.5, 1.0]$, CR = 0.7, and a maximum of 1500 iterations.</p>
 
-        <h4>Stage 2: Nelder-Mead / L-BFGS-B Local Polishing</h4>
-        <p>After global search, solutions generated during the Beam Analysis are refined using robust local optimizers.
-            L-BFGS-B and Nelder-Mead are used in cascading succession with warm-starts from nearby solutions to rapidly
-            map the local parameter space.</p>
+        <h4>Stage 2: Local Polishing</h4>
+        <p>After the global search, candidate solutions are refined with local optimizers. L-BFGS-B and Nelder-Mead
+            are used in sequence with warm starts from nearby solutions.
+        </p>
 
         <!-- ================================================================ -->
         <!--  4. ALGORITHMIC WORKFLOW                                           -->
         <!-- ================================================================ -->
-        <h2>4. Detailed Algorithmic Flowchart</h2>
+        <h2>4. Algorithmic Workflow</h2>
 
         <div class="mermaid">
             flowchart TD
@@ -233,8 +231,8 @@
             classDef terminal fill:#0f172a,stroke:none,color:#ffffff,font-weight:bold
             classDef highlight fill:#e0f2fe,stroke:#2563eb,stroke-width:3px
 
-            START(["User Input:<br>R(λ) measurement,<br>Knot count N, d_M range"]):::terminal --> LOAD["1. Load reflectance data R(λ)<br>Auto-detect units (%, abs)"]:::process
-            LOAD --> SI["2. Load Si tabulated n,k<br>(200–1000 nm interpolation)"]:::process
+            START(["User input:<br>R(λ) data,<br>knot count N, d_M range"]):::terminal --> LOAD["1. Load reflectance data R(λ)<br>Auto-detect units (%, absolute)"]:::process
+            LOAD --> SI["2. Load tabulated Si n,k data<br>(200–1000 nm interpolation)"]:::process
             SI --> BOUNDS["3. Define parameter bounds<br>d_M, d_L, Cauchy(n∞, A),<br>spline knots n_i, k_i, λ_i"]:::process
 
             BOUNDS --> DE_INIT["4. Initialize DE population<br>50 random vectors x ∈ bounds"]:::highlight
@@ -244,11 +242,11 @@
             DE_GEN --> DE_MUT["5. Mutate: v = x_r1 + F·(x_r2 − x_r3)<br>F ∈ [0.5, 1.0]"]:::process
             DE_MUT --> DE_CROSS["6. Crossover with prob CR = 0.7"]:::process
             DE_CROSS --> DE_DECODE["7. Decode parameters:<br>d_M, d_L, Cauchy → n_SiO₂(λ)"]:::process
-            DE_DECODE --> DE_SPLINE["8. Spline interpolation<br>knots → n_metal(λ), k_metal(λ)"]:::process
+            DE_DECODE --> DE_SPLINE["8. Interpolate the spline knots<br>to obtain n_metal(λ), k_metal(λ)"]:::process
             DE_SPLINE --> DE_TMM["9. TMM (Macleod +1j, Complex128)<br>M_sys = M_Metal · M_SiO₂<br>Pre-multiply Air→Si"]:::process
             DE_TMM --> DE_REFL["10. Extract R = |r|²<br>r = (m00+nS·m01−m10−nS·m11) / (m00+nS·m01+m10+nS·m11)"]:::process
             DE_REFL --> DE_MSE["11. MSE = (1/M)Σ(R_calc − R_meas)²"]:::process
-            DE_MSE --> DE_SEL["12. Selection: keep better<br>of trial vs target"]:::process
+            DE_MSE --> DE_SEL["12. Selection: keep the better<br>of trial and target"]:::process
             DE_SEL --> DE_CONV{"Converged<br>or max gen?"}:::decision
             DE_CONV -->|"No"| DE_GEN
             DE_CONV -->|"Yes"| DE_BEST["Best solution from DE"]:::highlight
@@ -264,34 +262,33 @@
             BA_FILT --> BA_ENV["17. Compute envelope:<br>Δn(λ), Δk(λ) over beam"]:::highlight
             end
 
-            BEAM_CHK -->|"No"| MULTI{"Multi-Valley<br>Detection?"}:::decision
+            BEAM_CHK -->|"No"| MULTI{"Multi-valley<br>detection?"}:::decision
             BA_ENV --> MULTI
 
             subgraph ENSEMBLE ["EnsembleWorkerPGlobal (Optional)"]
             MULTI -->|"Yes"| ENS_RUN["19. Launch 8 parallel<br>independent PGLOBAL runs"]:::highlight
-            ENS_RUN --> ENS_CLUSTER["20. DBSCAN clustering<br>on normalized parameter space"]:::process
-            ENS_CLUSTER --> ENS_BEST["21. Report best solution<br>per cluster → multiple interpretations"]:::process
+            ENS_RUN --> ENS_CLUSTER["20. Apply DBSCAN clustering<br>in normalized parameter space"]:::process
+            ENS_CLUSTER --> ENS_BEST["21. Report the best solution<br>from each cluster"]:::process
             end
 
             MULTI -->|"No"| EXPORT
-            ENS_BEST --> EXPORT(["22. Export:<br>d_M, d_L, n(λ), k(λ),<br>beam envelope,<br>Excel + HTML
-            report"]):::terminal
+            ENS_BEST --> EXPORT(["22. Export:<br>d_M, d_L, n(λ), k(λ),<br>beam envelope,<br>Excel + HTML report"]):::terminal
         </div>
 
         <div class="algo-step">
             <span class="algo-title">Algorithm Step-by-Step Summary</span>
-            <strong>Steps 1–3:</strong> Load measured R(λ), tabulated Si optical constants, and define bounded parameter
-            space (metal thickness, SiO₂ thickness, Cauchy parameters, spline knots).<br>
+            <strong>Steps 1–3:</strong> Load measured R(λ), tabulated Si optical constants, and define the bounded
+            parameter space (metal thickness, SiO₂ thickness, Cauchy parameters, spline knots).<br>
             <strong>Steps 4–12 (DE loop):</strong> Differential Evolution explores the full parameter space. Each
-            candidate is decoded into Cauchy SiO₂ index + spline metal index, evaluated through the 2-layer TMM
-            (Macleod +1j, pre-multiply Air→Si), and scored by MSE. ~1500 generations evolve the population.<br>
-            <strong>Steps 13–17 (Beam):</strong> Systematic thickness scan maps the $n$-$k$-$d$ degeneracy.
-            Each scan point is re-optimized with warm start (L-BFGS-B/Nelder-Mead). The uncertainty envelope defines
-            $\Delta n(\lambda)$
-            and $\Delta k(\lambda)$.<br>
-            <strong>Steps 18–20 (Ensemble, optional):</strong> 8 independent PGLOBAL runs with DBSCAN clustering
-            reveal multiple valid solutions when the problem is ill-conditioned.<br>
-            <strong>Step 21:</strong> Comprehensive export with spectra, optical constants, and uncertainty data.
+            candidate is decoded into a Cauchy SiO₂ index and a spline metal index, evaluated through the two-layer
+            TMM (Macleod +1j, pre-multiply Air→Si), and scored by the MSE. The population evolves over approximately
+            1500 generations.<br>
+            <strong>Steps 13–17 (Beam):</strong> A systematic thickness scan maps the $n$-$k$-$d$ degeneracy. Each
+            scan point is re-optimized with a warm start (L-BFGS-B/Nelder-Mead). The uncertainty envelope defines
+            $\Delta n(\lambda)$ and $\Delta k(\lambda)$.<br>
+            <strong>Steps 18–20 (Ensemble, optional):</strong> Eight independent PGLOBAL runs with DBSCAN clustering
+            identify multiple valid solutions when the problem is ill-conditioned.<br>
+            <strong>Step 21:</strong> Export of spectra, optical constants, and uncertainty data.
         </div>
 
         <!-- ================================================================ -->
@@ -299,28 +296,26 @@
         <!-- ================================================================ -->
         <h2>5. Beam Analysis: Uncertainty Quantification</h2>
 
-        <h3>5.1 The Thickness-Index Degeneracy</h3>
+        <h3>5.1 Thickness-Index Degeneracy</h3>
         <p>
-            For absorbing layers, multiple $(d, n, k)$ combinations can produce nearly identical spectra.
-            The <strong>Beam Analysis</strong> systematically explores this degeneracy.
+            For absorbing layers, multiple $(d, n, k)$ combinations can produce similar spectra. The Beam Analysis
+            systematically explores this degeneracy.
         </p>
 
         <h3>5.2 Bi-Directional Scan Algorithm</h3>
         <ol>
-            <li><strong>Reference solution:</strong> Start from optimal thickness $d_{opt}$.</li>
-            <li><strong>Outward scan:</strong> Step thickness in both directions: $d_{opt} \pm 0.5$ nm, $\pm 1.0$ nm, …
-            </li>
-            <li><strong>Re-optimize:</strong> For each fixed $d_M$, optimize only the spline parameters.</li>
-            <li><strong>Tolerance filter:</strong> Keep solutions with $\text{MSE} \leq \text{MSE}_{opt} \times (1 +
-                \tau)$.</li>
-            <li><strong>Warm start:</strong> Use neighboring solution as initial guess for continuity.</li>
+            <li><strong>Reference solution:</strong> start from the optimal thickness $d_{opt}$.</li>
+            <li><strong>Outward scan:</strong> vary the thickness in both directions using 0.5 nm steps.</li>
+            <li><strong>Re-optimize:</strong> for each fixed $d_M$, optimize only the spline parameters.</li>
+            <li><strong>Tolerance filter:</strong> retain solutions with $\text{MSE} \leq \text{MSE}_{opt} \times (1 + \tau)$.</li>
+            <li><strong>Warm start:</strong> use the neighboring solution as the initial guess when available.</li>
         </ol>
 
         <div class="highlight-box">
-            <strong>Result:</strong> A "beam" envelope showing:
+            <strong>Result:</strong> a beam envelope showing:
             <ul>
-                <li>$n(\lambda)_{min}, n(\lambda)_{max}$ — Uncertainty bounds on refractive index.</li>
-                <li>$k(\lambda)_{min}, k(\lambda)_{max}$ — Uncertainty bounds on extinction coefficient.</li>
+                <li>$n(\lambda)_{min}, n(\lambda)_{max}$ — uncertainty bounds on the refractive index.</li>
+                <li>$k(\lambda)_{min}, k(\lambda)_{max}$ — uncertainty bounds on the extinction coefficient.</li>
                 <li>All solutions with MSE within tolerance of the optimum.</li>
             </ul>
         </div>
@@ -336,24 +331,23 @@
         <h3>5.4 Multi-Valley Detection (EnsembleWorkerPGlobal)</h3>
         <p>For complex solution landscapes, an ensemble of independent PGLOBAL runs identifies distinct valleys:</p>
         <ul>
-            <li>8 parallel runs from different starting points.</li>
-            <li><strong>Clustering (DBSCAN):</strong> Groups similar solutions based on normalized parameter distance.
-            </li>
-            <li>Reports the best solution from each cluster — revealing multiple valid interpretations.</li>
+            <li>Eight parallel runs from different starting points.</li>
+            <li><strong>Clustering (DBSCAN):</strong> groups similar solutions based on normalized parameter distance.</li>
+            <li>Reports the best solution from each cluster.</li>
         </ul>
 
         <!-- ================================================================ -->
         <!--  6. ROBUST POLISHING STRATEGY                                     -->
         <!-- ================================================================ -->
         <h2>6. Robust Polishing Strategy</h2>
-        <p>The parameter landscape for a bilayer structure is notoriously bumpy. Standard numeric gradients often fail
-            to descend into the true valley floor.</p>
-        <p>For polishing and beam exploration, CERTUS-METAL BILAYER implements a cascaded strategy:</p>
+        <p>The bilayer parameter landscape is highly non-linear. Standard gradient methods may fail to reach the true
+            minimum.</p>
+        <p>For polishing and beam exploration, CERTUS-METAL BILAYER uses a cascaded strategy:</p>
         <ol>
-            <li><strong>L-BFGS-B Fast Descent:</strong> Attempts a quasi-Newton descent using bounds constraints.</li>
-            <li><strong>Nelder-Mead Fallback:</strong> If gradient-based methods stall or produce mathematically invalid
-                combinations, the system falls back to the derivative-free Nelder-Mead simplex method to guarantee
-                convergence.</li>
+            <li><strong>L-BFGS-B fast descent:</strong> attempts a quasi-Newton descent with bound constraints.</li>
+            <li><strong>Nelder-Mead fallback:</strong> if the gradient-based step stalls or produces invalid parameter
+                combinations, the system switches to the derivative-free Nelder-Mead simplex method.
+            </li>
         </ol>
 
         <!-- ================================================================ -->
@@ -363,17 +357,17 @@
 
         <h3>7.1 Model-Agnostic Fitting</h3>
         <p>
-            Perfect for novel alloys or oxidized surfaces where standard literature values do not apply. The spline
-            approach fits <em>what is there</em>, not what theory says <em>should be there</em>.
+            Suitable for novel alloys or oxidized surfaces where standard literature values do not apply. The spline
+            approach fits the measured response rather than imposing a rigid analytic model.
         </p>
 
         <h3>7.2 Rigorous Uncertainty Quantification</h3>
         <p>
-            By exporting the "Beam" (the envelope of all mathematically valid solutions), researchers can put error bars
-            on their refractive index data, a critical feature for high-precision optical design.
+            By exporting the beam envelope, researchers can estimate uncertainty bounds on the refractive index, which
+            is relevant for high-precision optical analysis.
         </p>
 
-        <h3>7.3 Production-Ready Implementation</h3>
+        <h3>7.3 Implementation Summary</h3>
         <table>
             <tr>
                 <th>Feature</th>
@@ -416,10 +410,9 @@
         <!-- ================================================================ -->
         <h2>8. Pro 2026 Ergonomics & UI Upgrades</h2>
         <p>
-            The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific workflows.
-            All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
-            <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
-            maximum numerical stability (15 significant digits).
+            The CERTUS suite uses a modernized interface for scientific workflows. The numerical kernels are
+            JIT-compiled through <strong>Numba</strong> and use <code>float64</code> and <code>complex128</code>
+            datatypes to preserve numerical stability.
         </p>
         <h3>8.1 Global Keyboard Shortcuts</h3>
         <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>

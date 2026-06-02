@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS-INDEX-SPLINE | Comprehensive 2026 Core Architecture & Physics Guide</title>
+    <title>CERTUS-INDEX-SPLINE | Scientific Report</title>
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -67,25 +67,25 @@
     <div class="container">
         <header style="margin-top:20px;">
             <h1 style="font-size: 3rem; margin-bottom:0;">CERTUS-INDEX-SPLINE</h1>
-            <h2 style="border:none; color: #0f172a; margin-top: 10px;">The Master Matrix: Complete Scientific Audit & Algorithmic Topology</h2>
-            <p style="font-size: 1.2em; font-weight: 300;">An exhaustive examination spanning the core mathematical frameworks, spatial encodings, objective construction, implementation invariants, and profile-likelihood corridor mechanisms currently used by CERTUS-INDEX-SPLINE (Revision 2026.04.17; acceptance-corridor default RMSE slack tightened vs 2026.04.16).</p>
+            <h2 style="border:none; color: #0f172a; margin-top: 10px;">Scientific report on the spline-based index inversion pipeline</h2>
+            <p style="font-size: 1.2em; font-weight: 300;">This document describes the mathematical structure, parameterization, optimization flow, and uncertainty analysis used by CERTUS-INDEX-SPLINE (Revision 2026.04.17).</p>
         </header>
 
         <div class="abstract" style="margin-top: 30px;">
-            <strong>Executive Abstract</strong><br>
-            The CERTUS-INDEX-SPLINE subsystem replaces rigid phenomenological oscillator laws with a high-dimensional piecewise-linear and cubic-spline representation of the optical constants. Optimizing over up to $4K - 1$ strongly correlated variables requires a staged solver architecture to keep the inverse problem numerically stable and scientifically interpretable. This document describes the mathematical routines used from the Swanepoel-based initialization to the final profiled corridor analysis. By operating in reciprocal wavelength ($\sigma$) and on logarithmic absorption variables ($L = \ln k$), the implementation preserves positivity of $k$ while allowing flexible non-parametric reconstructions of $n(\lambda)$ and $k(\lambda)$.
+            <strong>Abstract</strong><br>
+            CERTUS-INDEX-SPLINE reconstructs the optical constants using a spline-based parameterization rather than a rigid oscillator model. The inverse problem is solved through a staged optimization pipeline that preserves numerical stability while allowing flexible reconstructions of $n(\lambda)$ and $k(\lambda)$. The method operates in reciprocal wavelength ($\sigma$) and uses a logarithmic absorption variable ($L = \ln k$) to preserve the positivity of $k$.
         </div>
 
-        <h2>Section 1: The Failure of Canonical Forms & The Transition to Model-Free</h2>
+        <h2>1. Motivation for a Model-Free Spline Representation</h2>
         <p>
-            For decades, thin film metrology has relied heavily on Lorentzian, Gaussian, and Drude derivative components. Such classical models (e.g., Tauc-Lorentz-Urbach, Modified Forouhi-Bloomer) embed explicit physical assumptions: perfectly symmetric crystalline order, isolated molecular interband transitions, and explicitly defined generalized phonon tails propagating smoothly into the near-IR.
+            Classical thin-film models such as Lorentzian, Gaussian, Drude, and related oscillator forms encode strong physical assumptions about symmetry and band structure. These assumptions can be useful, but they can also be too restrictive for materials with complex absorption features.
         </p>
         <p>
-            However, when operating dynamically on complex matrices—such as highly non-stoichiometric reactively sputtered transition metal oxynitrides, porous sol-gel matrices with mixed liquid/gas inclusions, or nanostructured transparent conducting oxides exhibiting sharp Drude cross-over points—the fundamental geometry of the absorption band fundamentally detaches from symmetric models. Forced utilization of a Tauc-Lorentz law upon such an amalgamation effectively mathematically "filters" the result, acting as a low-pass structural smoother that outright deletes asymmetric defect band absorptions present inside the physical material.
+            In practice, materials such as non-stoichiometric oxynitrides, porous sol-gel matrices, or nanostructured transparent conducting oxides may not be well described by a small number of parametric oscillators. A spline-based representation allows the optical constants to follow the measured spectral curvature without imposing a rigid analytic shape.
         </p>
         <div class="deep-dive">
-            <strong>The Spline Topological Premise:</strong>
-            Instead of demanding <i>"a priori"</i> physical definitions, CERTUS-INDEX-SPLINE employs fully unbounded algorithmic mapping arrays. By leveraging independently floating spatial nodes, it permits mathematical representations to track any geometrical curvature imposed entirely by the raw spectral transmission and reflection vectors, unencumbered by human assumption.
+            <strong>Spline premise:</strong>
+            CERTUS-INDEX-SPLINE uses floating spatial nodes so that the reconstructed optical functions can follow the measured transmission and reflection data with minimal analytic constraint.
         </div>
 
         <h2>Section 2: Fundamental Parameter Mapping Context</h2>
@@ -118,10 +118,9 @@
         </div>
         <h3>2.2 Positivity Causality via Logarithmic Absorption ($L$)</h3>
         <p>
-            A severe limitation of free-point arrays is dimensional crossover: gradient slopes aggressively pulling the extinction coefficient vector $k$ below $0$, generating theoretically impossible active-gain behaviors inside a passive substrate matrix.
-            CERTUS completely avoids negative threshold trapping by performing optimizations entirely inside logarithmic transformation fields:
+            A limitation of free-point arrays is that unconstrained gradients can drive the extinction coefficient $k$ below zero, which is not physically admissible for a passive substrate matrix. CERTUS avoids this issue by optimizing in logarithmic coordinates:
             $$ L = \ln(k) \quad \Rightarrow \quad k(\sigma) = \exp\left[L(\sigma)\right] $$
-            Within this structure, an L-BFGS-B gradient vector traversing towards negative infinity ($L \rightarrow -\infty$) safely compresses the reconstructed $k$ values toward zero without allowing sign changes, which is precisely why the logarithmic parameterization is numerically attractive for passive thin-film inversion.
+            In this representation, negative updates in $L$ reduce $k$ smoothly toward zero without allowing sign changes, which makes the parameterization numerically stable for passive thin-film inversion.
         </p>
         <h2>Section 3: The CERTUS progression architecture Sequence Matrix</h2>
         <p>
@@ -156,7 +155,7 @@
 
             J["<b>Phase 07: Continuity Masking</b><br>C2 Spline Cubique vs Linear PWL<br>Not-A-Knot Edge Validations"]:::phase --> K
 
-            K["<b>Phase 08: Non-Linear Alpha Refinement</b><br>Spectral scaling optimization (α)<br>Range: [0.995, 1.005]"]:::process --> L
+            K["<b>Phase 08: Photometric Scale Refinement</b><br>Bounded spectral scaling correction<br>Range: [0.995, 1.005]"]:::process --> L
 
             L["<b>Phase 09: Uncertainty Continua Matrix</b><br>Heteroscedastic Likelihood Ratio (LR)<br>Δχ² Fixed-Thickness Continuation Mapping"]:::phase --> M
 
@@ -245,7 +244,7 @@
         </div>
         <h3>6.3 Warm-Start Projection from SOL 2 into SOL 3</h3>
         <p>
-            In the actual code, the transition from SOL 2 to SOL 3 is not a blind restart. CERTUS projects the incumbent rigid solution onto the split-knot parameterization and explicitly checks that the projected SOL 3 initialization remains spectrally aligned with the incoming SOL 2 state. This is a subtle but publication-important safeguard: it guarantees that the new encoding changes the coordinate system of the problem without accidentally changing the physical model represented by the warm start.
+            The transition from SOL 2 to SOL 3 is not a blind restart. CERTUS projects the incumbent rigid solution onto the split-knot parameterization and checks that the projected SOL 3 initialization remains spectrally aligned with the incoming SOL 2 state. This safeguard changes the coordinate system without changing the physical model represented by the warm start.
         </p>
         <h3>6.4 Three Internal Local Phases: Descent, Polish, Deep Polish</h3>
         <p>
@@ -261,21 +260,21 @@
             $$ \frac{\partial T(\lambda)}{\partial L_{transparent}} \approx 0 $$
         </p>
         <p>
-            Because solvers fundamentally follow gradients, nodes trapped in zero-gradient spaces detach and drift chaotically. Left unconstrained in SOL 3, transparent $\sigma_L$ nodes begin forming violent unphysical saw-tooth zigzag arrays simply due to machine precision noise acting upon zero-planes.
+            In the absence of constraints, nodes in low-sensitivity regions can drift under numerical noise. In SOL 3, transparent $\sigma_L$ nodes may therefore become weakly identified if they are left fully free.
         </p>
         <p>
-            Phase 04 (SOL 3b) resolves this structurally. The $n(\sigma)$ nodes and variables freeze structurally. The vector reduces to isolating uniquely $L_i$ and $\sigma_L$. Furthermore, continuous penalty matrices apply to the un-clamped second derivative array tracking spatial acceleration:
+            Phase 04 (SOL 3b) resolves this structurally. The $n(\sigma)$ nodes are frozen, and the vector is reduced to the absorptive variables $L_i$ and $\sigma_L$. A continuous penalty is applied to the second derivative of the absorptive profile:
             $$ P_{reg} = W_{reg} \cdot \sum \left( L_{i+1} - 2L_i + L_{i-1} \right)^2 $$
-            This directly penalizes non-linear noise formation, forcing zero-gradient sub-arrays mechanically into perfectly flat, physically robust minimum baselines.
+            This penalizes oscillatory behavior and keeps low-sensitivity sub-arrays smooth and physically stable.
         </p>
         <h3>7.1 Step-by-Step Role of SOL 3b</h3>
         <p>
-            SOL 3b should be described as a <strong>sensitivity-conditioned sub-problem</strong>. The incoming state from the broader optimization is first projected onto a representation in which the refractive structure is fixed. The algorithm then optimizes only the absorptive geometry and amplitudes in regions where the transmission sensitivity to $k$ would otherwise be too weak to constrain them robustly. If the projected warm start is already worse than the incoming incumbent by a meaningful margin, the code can skip the stage entirely rather than forcing a degrading refinement. This makes SOL 3b an adaptive stabilizer, not an unconditional mandatory phase.
+            SOL 3b is a sensitivity-conditioned sub-problem. The incoming state from the broader optimization is projected onto a representation in which the refractive structure is fixed. The algorithm then optimizes only the absorptive geometry and amplitudes in regions where the transmission sensitivity to $k$ would otherwise be too weak to constrain them robustly. If the projected warm start is already worse than the incoming incumbent by a meaningful margin, the code can skip the stage rather than force a degrading refinement.
         </p>
-        <h2>Section 8: The Objective Function Core Mathematics</h2>
-        <h3>8.1 Global Weighted Masque Error Arrays</h3>
+        <h2>Section 8: Objective Function Mathematics</h2>
+        <h3>8.1 Global Weighted Error Arrays</h3>
         <p>
-            The centralized algorithmic error computation natively handles overlapping photometric hardware sources (Dual-detectors) inside <code>SplinePWLObjective</code>:
+            The centralized error computation handles overlapping photometric sources inside <code>SplinePWLObjective</code>:
         </p>
         <div class="math-heavy">
             $$ \text{MSE}_{Full} = \frac{W_T \sum_{m} \left( T_{obs}(\lambda_m) - T_{calc}(d, n, k, n_s) \right)^2 \cdot w_{pix}(\lambda_m) + W_R \sum_{m} \left( R_{obs}(\lambda_m) - R_{calc} \right)^2 \cdot w_{pix}}{W_T + W_R} $$
@@ -287,11 +286,11 @@
             $$ T_{calc} = \frac{T_{12} T_{23}}{1 - R_{21} R_{23}} \quad ; \quad R_{calc} = R_{12} + \frac{T_{12} T_{21} R_{23}}{1 - R_{21} R_{23}} $$
         </p>
         <p>
-            The spatial weighting coefficient $w_{pix}(\lambda_m)$ represents trapezoidal density integrals calculated strictly upon grid delta limits to correct artificially dense sampling distributions directly. If a spectrophotometer takes 1500 points across 10nm in a cross-over region but only 10 points per 10nm elsewhere, $w_{pix}$ automatically normalizes variance impact, preventing cross-over artifacts from commanding descent gradients alone.
+            The spatial weighting coefficient $w_{pix}(\lambda_m)$ represents trapezoidal density integrals computed from the grid spacing. If a spectrophotometer takes 1500 points across 10 nm in a cross-over region but only 10 points per 10 nm elsewhere, $w_{pix}$ normalizes the variance contribution and prevents oversampled regions from dominating the descent.
         </p>
         <h3>8.2 Why the Transmission Weights Are Essential When the Wavelength Grid Is Arbitrary</h3>
         <p>
-            This point is scientifically critical. In real spectrophotometric workflows, the wavelength grid is almost never a perfectly uniform physical sampling of the optical problem. Instruments may concatenate detector ranges, locally densify sampling near cut-overs, or simply export acquisition vectors with arbitrary step sizes. If one were to minimize a naive unweighted sum $\sum_m (T_{obs}-T_{calc})^2$, the optimization would not minimize a true broadband transmission discrepancy; it would minimize whatever regions happen to be the <em>most numerically oversampled</em> by the measurement grid.
+            In real spectrophotometric workflows, the wavelength grid is rarely uniform. Instruments may concatenate detector ranges, densify sampling near cut-overs, or export acquisition vectors with arbitrary step sizes. If one minimizes a naive unweighted sum $\sum_m (T_{obs}-T_{calc})^2$, the optimization reflects the most densely sampled regions rather than the broadband transmission discrepancy.
         </p>
         <p>
             CERTUS explicitly avoids that bias. The transmission channel is not weighted by a heuristic visual preference, but by a quadrature rule that approximates a continuous spectral integral over the domain actually seen by the optimizer. The practical consequence is straightforward: doubling the point density in a narrow wavelength pocket must <strong>not</strong> double that pocket's physical authority over the fit if the additional samples carry no new spectral span. The role of the per-pixel coefficient $w_{pix}(\lambda_m)$ is precisely to restore this invariance.
@@ -338,79 +337,45 @@
         <p>
             One objective evaluation in CERTUS proceeds in a fixed sequence. The current optimization vector is decoded into physical thickness and node variables. These variables are interpolated onto the masked wavelength grid. The transfer-matrix model computes synthetic transmission and, when applicable, reflection. The residuals against the masked experimental data are formed. Each residual is multiplied by the density-corrected quadrature weight derived from the wavelength grid. The transmission and reflection channels are then combined through the user-level channel weights $W_T$ and $W_R$. Finally, any stage-specific penalties are added if the current phase is not configured as pure spectral. This explicit order is useful in a paper because it separates <em>optical forward modeling</em>, <em>spectral quadrature</em>, and <em>regularized inverse fitting</em> as three conceptually distinct layers.
         </p>
-        <h2 style="margin-top:40px;">Section 9: Advanced Barrier Physical Checks and Anomalous Restrictors</h2>
+        <h2 style="margin-top:40px;">Section 9: Physical Barrier Constraints</h2>
         <p>
             Splines do not inherently enforce optical physics laws. Physical plausibility must therefore be introduced through external penalties and staged constraints.
         </p>
         <h3>9.1 Anomalous Normal Dispersion Barrier Penalties</h3>
         <p>
-            Under normal conditions and far from resonant electronic transitions, typical dielectric media obey the Cauchy dispersive relation ($n(\lambda) = A + B/\lambda^2$), imposing a strictly monotonic decay: $dn/d\lambda < 0$. However, unconstrained free-node vectors will artificially flip derivatives to absorb random photometric noise if left unsupervised.
+            Under normal conditions and far from resonant electronic transitions, dielectric media typically follow the Cauchy relation $n(\lambda) = A + B/\lambda^2$, which implies a monotonic decrease of $n$ with wavelength. Unconstrained free-node vectors may invert that trend to absorb noise.
         </p>
         <p>
-            CERTUS utilizes the <code>n_lambda_rising_with_wavelength_penalty</code> function acting as a soft-barrier Lagrange multiplier strictly localized inside designated optical zones. If we denote $\Delta n = n(\sigma_j) - n(\sigma_{j+1})$ where $\sigma_j < \sigma_{j+1}$ (i.e., mapping a wavelength increment $\lambda_{long} \rightarrow \lambda_{short}$):
+            CERTUS uses <code>n_lambda_rising_with_wavelength_penalty</code> as a soft barrier localized to the selected optical zones. For $\Delta n = n(\sigma_j) - n(\sigma_{j+1})$ with $\sigma_j < \sigma_{j+1}$:
             $$ P_{anomaly} = W_{disp} \cdot \sum_{j} \left[ \max\left(0, \,\, \Delta n_{j} - \text{slack}_\epsilon\right) \right]^2 $$
-            This purely continuous polynomial restriction guarantees the algorithm remains perfectly inside the classical causal subset while allowing minor local numerical slack tolerance ($\text{slack}_\epsilon \approx 0.001$) to preserve L-BFGS-B gradient viability.
+            The slack term is small ($\text{slack}_\epsilon \approx 0.001$) and preserves L-BFGS-B stability.
         </p>
         <h3>9.2 The K-Floor Clamping Vector</h3>
         <p>
-            Instrument limits mandate mathematical boundaries. Pure $0$ theoretical absorptions lead directly to unphysical transmission scaling ratios. During finalizing constraints, the <code>enforce_k_floor_on_nodes</code> acts globally across $L(\sigma)$. Where un-clamped optimizer variables drifted beneath logical $1 \cdot 10^{-5}$ boundaries, it does not merely clip values (which distorts interpolation arrays). Instead, exact numerical physical node insertion mapping occurs precisely upon the limit plane threshold, perfectly flattening sub-band regimes safely without disrupting gradient memories.
+            Instrument limits require lower bounds on absorption. Pure $0$ absorption would produce unphysical transmission scaling. During constraint finalization, <code>enforce_k_floor_on_nodes</code> applies a global floor across $L(\sigma)$. When optimizer variables fall below $1 \cdot 10^{-5}$, the code inserts values at the limit plane instead of clipping in place, which avoids interpolation distortion.
         </p>
         <h3>9.3 Why These Are Called Soft Barriers Rather Than Hard Constraints</h3>
         <p>
-            This terminology is important for scientific accuracy. CERTUS does not solve a constrained optimization problem with exact symbolic optical laws imposed at every iterate. Instead, it augments the spectral objective with continuous penalty terms that discourage physically implausible behavior while preserving a smooth landscape for quasi-Newton updates. In article language, these terms should be described as <strong>soft regularizing barriers</strong> whose strength is stage-dependent, not as exact constitutive laws enforced identically throughout the full pipeline.
+            CERTUS does not solve a fully constrained symbolic problem at every iterate. It augments the spectral objective with continuous penalties that discourage physically implausible behavior while preserving a smooth landscape for quasi-Newton updates. These terms should therefore be described as <strong>soft regularizing barriers</strong> whose strength depends on the optimization stage.
         </p>
-        <h2 style="margin-top:40px;">Section 10: IR Mesh Extension (Canonical Topology)</h2>
+        <h2 style="margin-top:40px;">Section 10: IR Mesh Extension</h2>
         <p>
-            Standard logarithmic grids (K=12) often fail to resolve structural resonance in the Far-IR (Reststrahlen bands). CERTUS implements a canonical topology extension:
-        </p>
-        <p>
-            If $\lambda_{max} > 4000 \text{ nm}$, the mesh dynamically expands to 14 nodes. The additional indices are inserted using <code>_insert_two_equi_lambda_in_last_sigma_segment</code>, which partitions the long-wavelength segment into three equal lambda sub-intervals. This provides the necessary degrees of freedom to track dispersion anomalies without compromising the resolution in the UV-VIS regime.
+            Standard logarithmic grids (K=12) may fail to resolve structural resonances in the far-IR region. CERTUS therefore uses a topology extension when the spectral range requires it.
         </p>
         <p>
-            Put differently, <strong>K=12</strong> is the canonical compact topology for spectra whose informative content remains mainly in the UV-VIS-NIR domain, where one seeks a stable compromise between flexibility and identifiability. <strong>K=14</strong> is not a "better" topology in the abstract; it is a <em>spectral-support-dependent extension</em> activated when the measured window genuinely reaches the far IR. The extra two nodes are concentrated in the final long-wavelength region rather than spread uniformly over the whole domain, because the intent is specifically to recover missing far-IR geometric freedom while preserving the UV-VIS resolution and solver stability already obtained with K=12.
+            If $\lambda_{max} > 4000 \text{ nm}$, the mesh expands to 14 nodes. The additional indices are inserted with <code>_insert_two_equi_lambda_in_last_sigma_segment</code>, which splits the long-wavelength segment into three equal sub-intervals.
+        </p>
+        <p>
+            In this framework, <strong>K=12</strong> is the compact topology for UV-VIS-NIR spectra, while <strong>K=14</strong> is the far-IR extension used when the measured window genuinely reaches the long-wavelength regime. The additional nodes are concentrated in the final segment to recover far-IR flexibility without reducing the UV-VIS resolution already provided by K=12.
         </p>
         <h3>10.1 Publication Interpretation of the IR Extension</h3>
         <p>
-            This extension should not be described merely as a numerical convenience. It is an adaptive model-order rule tied to spectral support. In effect, CERTUS states that the parameterization itself depends on whether the measured spectrum contains enough far-infrared information to justify additional degrees of freedom. Therefore, when comparing datasets or reporting solver settings, one should indicate not only the nominal node family but also the spectral coverage that triggered the chosen topology.
+            This extension should be described as an adaptive model-order rule tied to spectral support. The parameterization depends on whether the measured spectrum contains enough far-infrared information to justify additional degrees of freedom. Reporting should therefore include both the nominal node family and the spectral coverage that triggered the chosen topology.
         </p>
         <p>
-            For a manuscript, the practical reporting rule is therefore simple: if the fitted spectrum stays below the far-IR trigger, state that the solver used the <strong>12-node canonical topology</strong>; if the spectral support extends beyond the trigger and the last sigma segment is subdivided, state that the solver used the <strong>14-node IR-extended topology</strong>. This distinction is important because it changes both the dimension of the inverse problem and the class of long-wave absorption/dispersion shapes the model can accommodate.
+            In a manuscript, the practical rule is straightforward: if the fitted spectrum remains below the far-IR trigger, report the <strong>12-node canonical topology</strong>; if the spectral support extends beyond the trigger and the last sigma segment is subdivided, report the <strong>14-node IR-extended topology</strong>. This distinction changes both the dimension of the inverse problem and the class of long-wave absorption and dispersion shapes that the model can represent.
         </p>
-        <h2>Section 11: Phase 08 Non-Linear Alpha Refinement</h2>
-        <p>
-            Photometric hardware often exhibits slight absolute calibration offsets (shutter timing, lamp fluctuations). Phase 08 executes a <code>nonlinear_alpha_refinement</code> routine to optimize a global scaling coefficient $\alpha$ acting directly upon the experimental transmission/reflection arrays:
-            $$ T_{scaled} = \alpha \cdot T_{obs} $$
-        </p>
-        
-        <h3>11.1 The Essential Non-Linearity of Photometric Scaling</h3>
-        <p>
-            Superficially, $\alpha$ appears as a simple linear multiplier. A naive algorithmic approach would optimize the $(d, n, k)$ matrix once, and subsequently apply a basic linear least-squares regression to find an $\alpha$ that best aligns $T_{obs}$ to $T_{calc}$. 
-            However, this violates fundamental physical topological mapping. If the experimental spectrum shifts physically by $+0.5\%$, the absolute position of the interference extrema shifts slightly, meaning the original optimal thickness $d$ and refractive index $n$ are <strong>no longer localized in the true energetic minimum</strong>.
-        </p>
-        <p>
-            The current CERTUS implementation no longer performs a sweep or golden-section selection. Instead, it executes a <strong>joint local polish</strong> in which $\alpha$, thickness $d$, and the spline variables are optimized simultaneously inside a single L-BFGS-B problem. This is a much more faithful representation of the real coupling structure: once the measured spectrum is rescaled, the best $d$, the best refractive nodes, and the best absorption nodes all shift together. The algorithm therefore solves for the coupled minimum directly rather than via a bilevel scan.
-        </p>
-        <h3>11.2 Exact Joint Parameterization Used in Code</h3>
-        <p>
-            In code, $\alpha$ is not optimized directly on the bounded interval $[0.995, 1.005]$. CERTUS introduces an unconstrained auxiliary variable $u$ and maps it back to the physical scaling coefficient through a bounded hyperbolic tangent transform:
-            $$ \alpha(u) = 1 + \frac{\alpha_{hi}-\alpha_{lo}}{2}\tanh(u) $$
-            with $\alpha_{lo}=0.995$ and $\alpha_{hi}=1.005$. This guarantees by construction that every L-BFGS-B iterate remains inside the intended photometric correction interval while preserving a smooth differentiable parameterization.
-        </p>
-        <div class="math-heavy">
-            <strong>Joint Objective Actually Minimized</strong><br>
-            Let $x$ denote the standard spline vector containing thickness and node variables. The Phase 08 objective has the form:
-            $$ J_{NL}(u, x) = \text{MSE}_{spectral}(\alpha(u)\,T_{obs},\, \alpha(u)\,R_{obs};\, x) + P_n(x) + P_\alpha(u) $$
-            where the alpha prior term is explicitly:
-            $$ P_\alpha(u) = \left(\frac{\alpha(u)-1}{\sigma_\alpha}\right)^2 $$
-            with $\sigma_\alpha = 0.0015$ by default. The term $P_n(x)$ is the normal-dispersion penalty, but it is disabled if the configuration requests a pure spectral objective for the NL-alpha stage.
-        </div>
-        <p>
-            This detail is publication-critical: the returned $\alpha$ is <strong>not</strong> simply the minimizer of a one-dimensional residual curve. It is the minimizer of a coupled objective where the spline state is allowed to re-equilibrate at every local step. The reported outputs therefore include not only $\alpha_{opt}$, but also a complete alternative solution branch $(d_{NL}, n_{NL}(\lambda), k_{NL}(\lambda))$ associated with that optimum.
-        </p>
-        <p>
-            The implementation also quantifies practical identifiability. After convergence, CERTUS computes both the masked RMSE against the raw measurements and the masked RMSE against the alpha-scaled measurements. Their difference is stored and used to determine whether the fitted $\alpha$ had a genuinely measurable spectral effect or merely remained numerically indistinguishable from $1$. This is extremely useful when discussing whether the calibration factor is physically informative or simply absorbed by the intrinsic flexibility of the spline manifold.
-        </p>
-        <h2>Section 12: Phase 09 Corridor Engine (Code-Faithful Description)</h2>
+        <h2>Section 12: Phase 09 Corridor Engine</h2>
         <p>
             The corridor stage implemented in <code>spline_profile_corridors.py</code> is not a generic post-processing utility. It is a dedicated profiled-refit engine designed to quantify local identifiability of thickness $d$ while preserving the same spectral forward model and masking conventions as the main spline inversion pipeline.
         </p>
@@ -418,7 +383,7 @@
             In practical terms, CERTUS does not treat uncertainty as a single scalar around $d_{opt}$. It constructs one or more <strong>iterative</strong> profiled processes in $d$: a <em>continuation acceptance</em> scan (threshold-based walks from $d_{\mathrm{opt}}$) and/or a <em>regular diagnostic grid</em> with optional breakpoint-driven extras, a post-sweep <strong>P0</strong> rescue pass, and explicit logging when a new absolute-best refit RMSE is found. In all cases it freezes $d$, re-optimizes spline node variables locally on the same spectral mask, then aggregates accepted or sampled states into thickness intervals and envelopes for $n(\lambda)$ and $k(\lambda)$.
         </p>
         <p>
-            The codebase now distinguishes two complementary corridor objects that should not be conflated in manuscripts: (i) the <strong>acceptance corridor</strong> built by profiled continuation logic (<code>compute_profiled_corridors_by_d</code>) and (ii) the <strong>regular-grid RMSE(d) diagnostic corridor</strong> built by forced $\Delta d$ sampling (<code>compute_regular_grid_rmse_profile</code>). The first defines accepted uncertainty envelopes; the second provides dense local geometry diagnostics and reproducibility checks.
+            The codebase distinguishes two complementary corridor objects that should not be conflated in manuscripts: (i) the <strong>acceptance corridor</strong> built by profiled continuation logic (<code>compute_profiled_corridors_by_d</code>) and (ii) the <strong>regular-grid RMSE(d) diagnostic corridor</strong> built by forced $\Delta d$ sampling (<code>compute_regular_grid_rmse_profile</code>). The first defines accepted uncertainty envelopes; the second provides dense local geometry diagnostics and reproducibility checks.
         </p>
 
         <h3>12.1 Base Snapshot and Profile Seed Consistency</h3>
@@ -439,7 +404,7 @@
 
         <h3>12.3 Profiled acceptance corridor (continuation in $d$)</h3>
         <p>
-            Separate from the diagnostic grid, <code>compute_profiled_corridors_by_d</code> builds the <strong>acceptance corridor</strong>: a continuation-style scan around the nominal thickness $d_{\mathrm{opt}}$ using the same fixed-$d$ refit engine (<code>_best_fit_at_d</code>, multi-start with jitter, bounded L-BFGS-B). Each accepted point satisfies a user-chosen rule linking its refit RMSE to a reference RMSE on the same spectral mask (heuristic $\alpha\times \mathrm{RMSE}_{\mathrm{ref}}$, fixed $\mathrm{RMSE}_{\mathrm{ref}}+\Delta$, <strong>adaptive $\Delta$</strong> from a local quadratic estimate of $\mathrm{RMSE}(d)$ plus roughness, or LR / $\Delta\chi^2$ mode when enabled).
+            Separate from the diagnostic grid, <code>compute_profiled_corridors_by_d</code> builds the <strong>acceptance corridor</strong>: a continuation-style scan around the nominal thickness $d_{\mathrm{opt}}$ using the same fixed-$d$ refit engine (<code>_best_fit_at_d</code>, multi-start with jitter, bounded L-BFGS-B). Each accepted point satisfies a user-chosen rule linking its refit RMSE to a reference RMSE on the same spectral mask (heuristic scale factor times $\mathrm{RMSE}_{\mathrm{ref}}$, fixed $\mathrm{RMSE}_{\mathrm{ref}}+\Delta$, <strong>adaptive $\Delta$</strong> from a local quadratic estimate of $\mathrm{RMSE}(d)$ plus roughness, or LR / $\Delta\chi^2$ mode when enabled).
         </p>
         <p>
             <strong>Scientific nominal mode</strong> (when enabled): $\mathrm{RMSE}_{\mathrm{ref}}$ is tied to <code>spectral_rmse_best_value</code> on the polished nominal $n(\lambda),k(\lambda)$; the nominal curves are included as the first family member without widening the envelope toward a separate solver export. After that, the pipeline runs a <strong>center refit</strong> at $d_{\mathrm{opt}}$ as a <strong>best-of-$N$</strong> multi-start (label <code>Center</code> in logs). With adaptive absolute tolerance, auxiliary probes (<code>AdaptiveTol ±i</code>) sample nearby thicknesses to stabilize an effective $\Delta$ before the walks.
@@ -583,7 +548,7 @@
             Corridor outputs should be reported as a structured local uncertainty object: sampled RMSE(d) valley, acceptance-derived interval(s), and corresponding $n(\lambda),k(\lambda)$ envelopes, with explicit point provenance diagnostics.
         </div>
         
-        <h2 style="margin-top:40px;">Section 13: Implementation Invariants Required for Reproducibility</h2>
+        <h2 style="margin-top:40px;">Section 13: Implementation Invariants for Reproducibility</h2>
         <p>
             For a publication intended to be reproducible, it is not sufficient to describe CERTUS conceptually. Several concrete implementation invariants materially affect the returned solution and therefore must be stated explicitly in any Methods section.
         </p>
@@ -606,7 +571,7 @@
         </p>
         <h3>13.4 Spectral-Only vs Penalized Objectives</h3>
         <p>
-            A central reproducibility point is that CERTUS does <strong>not</strong> use one single objective for every stage. The standard extraction phases may include soft physical penalties such as the normal-dispersion barrier, whereas the corridor-profiling and, optionally, NL-alpha stages can switch to a pure spectral objective. This staged deactivation is deliberate: it prevents uncertainty intervals from collapsing into regularization artifacts. In a paper, these phases should be presented as distinct estimation regimes rather than as one monolithic minimization.
+            A central reproducibility point is that CERTUS does <strong>not</strong> use one single objective for every stage. The standard extraction phases may include soft physical penalties such as the normal-dispersion barrier, whereas the corridor-profiling stages can switch to a pure spectral objective. This staged deactivation is deliberate: it prevents uncertainty intervals from collapsing into regularization artifacts. In a paper, these phases should be presented as distinct estimation regimes rather than as one monolithic minimization.
         </p>
         <h3>13.5 Best-Incumbent Retention Instead of Blindly Trusting the Last Iterate</h3>
         <p>
@@ -624,13 +589,13 @@
         <p>
             The CERTUS GUI provides direct interaction with the spline algorithms. Key UI features map directly to specific optimization strategies:
         </p>
-        <h3>14.1 Autoshift & Zoom Dichotomique (Substrate Index Tuning)</h3>
+        <h3>14.1 Autoshift and Dichotomous Zoom for Substrate Index Tuning</h3>
         <p>
-            The <strong>Autoshift</strong> action initiates a 4-pass bounded dichotomy search (zoom) to find optimal substrate index shifts. It tests controlled substrate deviations against a local L-BFGS-B polish, identifying the shift that minimizes the global RMSE. This ensures the physical substrate model is perfectly aligned before full free-knot deployment.
+            The <strong>Autoshift</strong> action performs a four-pass bounded dichotomy search to identify the best substrate index shift. It tests controlled substrate deviations against a local L-BFGS-B polish and selects the shift that minimizes the global RMSE before full free-knot deployment.
         </p>
-        <h3>14.2 Auto-clean (Nettoyage Avancé)</h3>
+        <h3>14.2 Auto-clean</h3>
         <p>
-            The <strong>Auto-clean</strong> button activates a sophisticated sparsity-enforcing algorithm. Rather than running a full $O(N)$ solver pass for each knot, it uses a zero-cost <strong>PCHIP interpolation</strong> to pre-screen and rank the sensitivity of all nodes. It only promotes the top candidates to a full L-BFGS-B polish. Furthermore, it employs a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine automatically tests symmetrical and asymmetrical inward micro-shifts of adjacent nodes to mathematically compensate for the lost degree of freedom, preventing artificial RMSE spikes.
+            The <strong>Auto-clean</strong> button activates a sparsity-enforcing workflow. Rather than running a full $O(N)$ solver pass for each knot, it uses <strong>PCHIP interpolation</strong> to pre-screen and rank node sensitivity. Only the top candidates are promoted to a full L-BFGS-B polish. It also applies a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine tests inward micro-shifts of adjacent nodes to compensate for the lost degree of freedom and reduce artificial RMSE spikes.
         </p>
         <div class="mermaid">
         flowchart LR
@@ -646,60 +611,60 @@
             E --> F["Full L-BFGS-B Polish"]:::process
             F --> G(["Accept best K-1 mesh"]):::terminal
         </div>
-        <h3>14.3 Apply (Polish) & Recall Best RMSE</h3>
+        <h3>14.3 Apply (Polish) and Recall Best RMSE</h3>
         <p>
-            The <strong>Apply (Polish)</strong> action triggers a high-fidelity joint optimization. Importantly, when manual knots are added or deleted, the solver utilizes <strong>PCHIP warm starts</strong>. This shape-preserving hermite polynomial projects the previous $n(\lambda)$ and $k(\lambda)$ onto the new topology, preventing Runge oscillations (which a standard CubicSpline would cause) and ensuring the new initial guess remains strictly within physical bounds:
+            The <strong>Apply (Polish)</strong> action triggers a high-fidelity joint optimization. When manual knots are added or deleted, the solver uses <strong>PCHIP warm starts</strong>. This shape-preserving Hermite interpolant projects the previous $n(\lambda)$ and $k(\lambda)$ onto the new topology, prevents Runge oscillations, and keeps the initial guess within physical bounds:
         </p>
         <div class="eq-box">
             $$ \min(n_i, n_{i+1}) \le P(x) \le \max(n_i, n_{i+1}) \quad \forall x \in [x_i, x_{i+1}] $$
             <br>
-            <i>Equation: PCHIP strictly preserves monotonicity, avoiding unphysical index excursions ($n \to \infty$ or $n \lt 1$) during node resampling.</i>
+            <i>PCHIP preserves monotonicity and avoids unphysical index excursions during node resampling.</i>
         </div>
         <p>
-            If the optimization degrades due to local minima traps, the <strong>Recall Best RMSE</strong> feature reverts to the absolute best-performing deterministic state.
+            If the optimization degrades due to local minima, the <strong>Recall Best RMSE</strong> feature restores the best-performing deterministic state.
         </p>
         
         <h2 style="margin-top:40px;">Section 15: Manuscript-Ready Operational Narrative of the Full Pipeline</h2>
         <p>
-            The following description is intentionally written in a form close to a publishable Methods narrative and can be translated almost directly into a manuscript subsection.
+            The following description is written in a form close to a publishable Methods narrative.
         </p>
         <div class="math-heavy">
             <strong>Suggested Methods Narrative</strong><br>
-            (1) The measured transmission/reflection spectra are first sanitized through an objective mask removing invalid samples and optionally restricting the spectral fitting window.<br><br>
-            (2) The wavelength axis is transformed into reciprocal coordinates $\sigma = 1/\lambda$, and density-corrected quadrature weights are computed on $\ln(\lambda)$ to prevent arbitrary sampling density from biasing the objective.<br><br>
-            (3) A Swanepoel-based smart initialization constructs a physically informed warm start for thickness and optical constants, reducing the risk of fringe-order aliasing.<br><br>
+            (1) The measured transmission and reflection spectra are sanitized with an objective mask that removes invalid samples and can restrict the fitting window.<br><br>
+            (2) The wavelength axis is transformed into reciprocal coordinates $\sigma = 1/\lambda$, and density-corrected quadrature weights are computed on $\ln(\lambda)$ so that sampling density does not bias the objective.<br><br>
+            (3) A Swanepoel-based initialization constructs a physically informed warm start for thickness and optical constants, reducing fringe-order aliasing.<br><br>
             (4) A rigid SOL 2 stage estimates thickness and node amplitudes on fixed knot positions to stabilize the global phase structure.<br><br>
-            (5) A split free-knot SOL 3 stage releases the geometric degrees of freedom of the refractive and absorptive meshes, enabling local concentration of knots near rapidly varying spectral regions.<br><br>
+            (5) A split free-knot SOL 3 stage releases the geometric degrees of freedom of the refractive and absorptive meshes, enabling local knot concentration near rapidly varying spectral regions.<br><br>
             (6) A transparent-subband refinement (SOL 3b) regularizes low-sensitivity absorptive regions where $\partial T/\partial L \approx 0$, preventing noise-driven zigzag artifacts in $k(\lambda)$.<br><br>
-            (7) A spectral mesh polish re-optimizes the final state on a smooth spline representation, improving continuity and reducing residual staircase effects inherited from piecewise-linear intermediate stages.<br><br>
-            (8) A joint NL-alpha local polish then refines a bounded photometric scaling factor together with thickness and spline variables, thereby correcting small multiplicative calibration errors without breaking the coupled optical optimum.<br><br>
-            (9) Finally, corridor products are generated in two layers: a <strong>profile-likelihood acceptance</strong> continuation (center best-of-$N$, optional adaptive $\Delta$, parallel or sequential $\pm d$ walks with optional span extension and boundary bisection) and, when requested, a <strong>regular-grid RMSE($d$)</strong> diagnostic sweep (grid-centered visit order, breakpoint heuristics, reverse exploration, optional breakpoint-anchored global polish, P0 neighbour-rescue pass, per-point provenance, and base-grid coverage audit). When the local RMSE($d$) valley is sufficiently regular, a local parabolic fit estimates a continuous valley center for display; accepted profiled refits and the sampled grid remain the primary uncertainty evidence. New absolute-best refits along the diagnostic grid are logged explicitly for traceability.
+            (7) A spectral mesh polish re-optimizes the final state on a smooth spline representation, improving continuity and reducing residual staircase effects from piecewise-linear intermediate stages.<br><br>
+            (8) A joint photometric-scale polish is no longer part of the current pipeline and should be omitted from the method narrative.<br><br>
+            (9) Corridor products are generated in two layers: a <strong>profile-likelihood acceptance</strong> continuation and, when requested, a <strong>regular-grid RMSE($d$)</strong> diagnostic sweep. The acceptance corridor uses a center best-of-$N$, optional adaptive $\Delta$, parallel or sequential $\pm d$ walks, optional span extension, and boundary bisection. The diagnostic sweep uses grid-centered visit order, breakpoint heuristics, reverse exploration, optional breakpoint-anchored global polish, a P0 neighbour-rescue pass, point provenance, and a base-grid coverage audit. When the local RMSE($d$) valley is sufficiently regular, a local parabolic fit estimates a continuous valley center for display, but the sampled refits remain the primary uncertainty evidence. New absolute-best refits along the diagnostic grid are logged explicitly for traceability.
         </div>
         <p>
-            This sequence is not merely computational convenience. Each phase exists because the full problem is massively correlated: thickness, refractive dispersion, absorptive structure, and photometric scale can partly compensate each other. CERTUS therefore solves the inverse problem through a controlled release of degrees of freedom, using phase-specific parameterizations to keep the search inside physically interpretable basins.
+            This sequence is not merely computational convenience. Each phase exists because the full problem is strongly correlated: thickness, refractive dispersion, absorptive structure, and photometric scale can partially compensate each other. CERTUS therefore solves the inverse problem through a controlled release of degrees of freedom, using phase-specific parameterizations to keep the search inside physically interpretable basins.
         </p>
         <h3>15.1 Why Phase Ordering Matters Scientifically</h3>
         <p>
-            The phase order is one of the most publication-worthy design choices in the codebase. If all variables were released from the start, the optimizer would face immediate identifiability degeneracies: optical thickness can be preserved by trading $d$ against $n$, transparent-band absorption can oscillate at nearly no spectral cost, and local calibration drift can be confused with mild global index reshaping. The staged architecture is therefore better understood as an <strong>identifiability management strategy</strong> rather than a mere software-engineering pipeline.
+            The phase order is a key design choice. If all variables were released from the start, the optimizer would face identifiability degeneracies: optical thickness can be preserved by trading $d$ against $n$, transparent-band absorption can oscillate at almost no spectral cost, and local calibration drift can be confused with mild global index reshaping. The staged architecture is therefore better understood as an <strong>identifiability management strategy</strong> rather than a simple software pipeline.
         </p>
         <h3>15.2 What the Returned Solution Actually Represents</h3>
         <p>
-            The final dictionary returned by the worker is not just a pair of curves. It contains the nominal solution, spectral RMSE diagnostics, best-polished references, optional NL-alpha alternative curves, the active fitting window metadata, and corridor products when enabled. In publication terms, CERTUS returns both a point estimate and a structured uncertainty object. This makes it particularly suitable for reporting not only best-fit $d$, $n(\lambda)$, and $k(\lambda)$, but also the robustness of those quantities under constrained refits.
+            The final dictionary returned by the worker is not just a pair of curves. It contains the nominal solution, spectral RMSE diagnostics, best-polished references, the active fitting window metadata, and corridor products when enabled. In publication terms, CERTUS returns both a point estimate and a structured uncertainty object.
         </p>
         <h3>15.3 Step-by-Step Reproducibility Checklist for the Article</h3>
         <p>
-            To make a publication reproducible, the following implementation details should be stated explicitly: spectral range actually fitted after masking; whether transmission only or transmission-plus-reflection was optimized; the values of $W_T$ and $W_R$; whether the 12-node or 14-node topology was active; whether monotonic-dispersion penalties were enabled in extraction phases; whether corridor estimation used alpha-threshold or LR-threshold acceptance; for RMSE_ref+$\Delta$ / adaptive-$\Delta$ modes, the numeric values of <code>rmse_abs_tolerance</code> (default $2.5\times 10^{-4}$) and <code>adaptive_rmse_abs_min</code> (default $2.5\times 10^{-5}$) if not left at defaults; whether the reported RMSE(d) comes from continuation acceptance or regular-grid diagnostics; corridor seed hierarchy; and regular-grid coverage diagnostics (<code>coverage_complete</code> and fallback counters). These details are not secondary settings—they define the effective inverse problem solved by the code.
+            To make a publication reproducible, the following implementation details should be stated explicitly: the fitted spectral range after masking; whether transmission only or transmission-plus-reflection was optimized; the values of $W_T$ and $W_R$; whether the 12-node or 14-node topology was active; whether monotonic-dispersion penalties were enabled in extraction phases; whether corridor estimation used alpha-threshold or LR-threshold acceptance; for RMSE_ref+$\Delta$ and adaptive-$\Delta$ modes, the values of <code>rmse_abs_tolerance</code> (default $2.5\times 10^{-4}$) and <code>adaptive_rmse_abs_min</code> (default $2.5\times 10^{-5}$) if not left at defaults; whether the reported RMSE(d) comes from continuation acceptance or regular-grid diagnostics; the corridor seed hierarchy; and the regular-grid coverage diagnostics (<code>coverage_complete</code> and fallback counters). These details define the effective inverse problem solved by the code.
         </p>
         
-        <h2 style="margin-top:40px;">Section 16: Scientific References & Algorithmic Foundations</h2>
+        <h2 style="margin-top:40px;">Section 16: Scientific References and Algorithmic Foundations</h2>
         <p>
-            The CERTUS-INDEX-SPLINE architecture is built upon the following peer-reviewed theoretical constructs and numerical optimization methods:
+            The CERTUS-INDEX-SPLINE architecture builds on the following theoretical and numerical foundations:
         </p>
         <ul style="line-height: 1.8;">
-            <li><strong>[1] Swanepoel Constraint Mapping:</strong> <br> Swanepoel, R. (1983). <i>Determination of the thickness and optical constants of amorphous silicon.</i> Journal of Physics E: Scientific Instruments, 16(12), 1214. (Foundation for Phase 01 Determinism).</li>
-            <li><strong>[2] The Transfer Matrix Method (TMM):</strong> <br> Born, M., & Wolf, E. (1999). <i>Principles of Optics: Electromagnetic Theory of Propagation, Interference and Diffraction of Light (7th ed.).</i> Cambridge University Press. (Foundation for Phase 08 Optical Matrices).</li>
-            <li><strong>[3] L-BFGS-B Bounded Optimization:</strong> <br> Byrd, R. H., Lu, P., Nocedal, J., & Zhu, C. (1995). <i>A limited memory algorithm for bound constrained optimization.</i> SIAM Journal on Scientific Computing, 16(5), 1190-1208. (Foundation for all local node descent pathways).</li>
-            <li><strong>[4] Likelihood-Ratio Corridors (Profile Likelihood):</strong> <br> Murphy, S.A., & Van der Vaart, A.W. (2000). <i>On profile likelihood.</i> Journal of the American Statistical Association, 95(450), 449-465. (Foundation for Phase 09 $\Delta\chi^2$ confidence envelopes).</li>
+            <li><strong>[1] Swanepoel constraint mapping:</strong> Swanepoel, R. (1983). <i>Determination of the thickness and optical constants of amorphous silicon.</i> Journal of Physics E: Scientific Instruments, 16(12), 1214. Foundation for Phase 01 initialization.</li>
+            <li><strong>[2] Transfer Matrix Method (TMM):</strong> Born, M., & Wolf, E. (1999). <i>Principles of Optics: Electromagnetic Theory of Propagation, Interference and Diffraction of Light</i> (7th ed.). Cambridge University Press. Foundation for optical matrix propagation.</li>
+            <li><strong>[3] L-BFGS-B bounded optimization:</strong> Byrd, R. H., Lu, P., Nocedal, J., & Zhu, C. (1995). <i>A limited memory algorithm for bound constrained optimization.</i> SIAM Journal on Scientific Computing, 16(5), 1190-1208. Foundation for local node descent.</li>
+            <li><strong>[4] Likelihood-ratio corridors:</strong> Murphy, S. A., & Van der Vaart, A. W. (2000). <i>On profile likelihood.</i> Journal of the American Statistical Association, 95(450), 449-465. Foundation for Phase 09 confidence envelopes.</li>
         </ul>
 
         <h2 style="margin-top: 40px; margin-bottom: 20px;">Section 17: Summary Analytical Architectural Chart</h2>
@@ -709,60 +674,60 @@
                 <tr>
                     <th style="width: 25%;">Processor Core Module</th>
                     <th style="width: 20%;">Execution Function</th>
-                    <th>Scientific Physical Mandate & Mathematical Outcome</th>
+                    <th>Scientific Mandate and Mathematical Outcome</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td><code>spline_smart_init</code></td>
                     <td><code>guess_smart_x0_from_extrema</code></td>
-                    <td>Implements 1983 Swanepoel Inversion envelopes over $T_{M}$, $T_{m}$ extrema to provide pre-optimization array estimations bounding entirely uncoupled structures.</td>
+                    <td>Uses Swanepoel extrema to provide a physically informed warm start before optimization.</td>
                 </tr>
                 <tr>
                     <td><code>certus_index_spline_core</code></td>
                     <td><code>physical_nodes_to_x_slice_n</code></td>
-                    <td>Applies strict spatial encoding frameworks utilizing Log-Softmax properties and bounded $\arcsin$ projections mapping coordinates enforcing $\sigma_i \lt \sigma_{i+1}$ monotonically.</td>
+                    <td>Applies constrained spatial encoding to preserve monotonic knot ordering.</td>
                 </tr>
                 <tr>
                     <td><code>spline_objective</code></td>
                     <td><code>compute_spline_pwl_objective_analytic_gradient</code></td>
-                    <td>Executes partial $O(k)$ dimensional matrix derivatives perfectly mirroring Fresnel kernel limits. Provides the exact gradient trajectory accelerating convergence routines.</td>
+                    <td>Computes analytic objective gradients for efficient local convergence.</td>
                 </tr>
                 <tr>
                     <td><code>spline_workers</code></td>
                     <td><code>_run_free_knot_stage</code></td>
-                    <td>Manages the bounded L-BFGS-B free-knot stages used in SOL 3 and SOL 3b, including split geometric parameterizations and incumbent tracking across local phases.</td>
+                    <td>Runs bounded free-knot stages in SOL 3 and SOL 3b with incumbent tracking.</td>
                 </tr>
                 <tr>
                     <td><code>spline_finalize</code></td>
                     <td><code>_spectral_polish_node_mesh_profile</code></td>
-                    <td>Applies a final C2-continuity smooth polish on the refined mesh, eliminating slope discontinuities and finalizing the thickness variable $d$.</td>
+                    <td>Performs final spline smoothing and thickness refinement.</td>
                 </tr>
                 <tr>
-                    <td><code>spline_nonlinear_alpha</code></td>
-                    <td><code>nonlinear_alpha_refinement</code></td>
-                    <td>Executes a bounded joint local L-BFGS-B polish on photometric scaling $\alpha$, thickness, and spline variables, with a strong prior keeping $\alpha$ close to unity while allowing full local re-equilibration of the optical state.</td>
+                    <td><code>spline_photometric_scale</code></td>
+                    <td>Photometric-scale refinement</td>
+                    <td>Jointly refines photometric scale, thickness, and spline variables under a bounded prior.</td>
                 </tr>
                 <tr>
                     <td><code>spline_profile_corridors</code></td>
                     <td><code>_fit_nodes_at_fixed_d</code></td>
-                    <td>Performs local fixed-$d$ spline refits used by both the acceptance and diagnostic corridor machinery, enabling interval construction and $n(\lambda), k(\lambda)$ envelope extraction around the nominal optimum.</td>
+                    <td>Performs fixed-thickness refits for acceptance and diagnostic corridor construction.</td>
                 </tr>
                 <tr>
                     <td><code>spline_profile_corridors</code></td>
                     <td><code>compute_profiled_corridors_by_d</code></td>
-                    <td>Continuation in thickness: center multi-start, adaptive or fixed RMSE threshold, parallel $\pm d$ walks, boundary refinement, and scientific-nominal acceptance envelopes.</td>
+                    <td>Builds continuation-based acceptance envelopes around the nominal thickness.</td>
                 </tr>
                 <tr>
                     <td><code>spline_profile_corridors</code></td>
                     <td><code>compute_regular_grid_rmse_profile</code></td>
-                    <td>Diagnostic RMSE($d$) grid: anchored visit order, breakpoint-driven extras and global polish from breaks, P0 suspect rescue, coverage audit, and absolute-best logging.</td>
+                    <td>Computes diagnostic RMSE($d$) profiles with breakpoint handling and provenance tracking.</td>
                 </tr>
             </tbody>
         </table>
         <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 0.9em; padding-bottom: 20px;">
             <hr style="margin-bottom: 10px; border-top: 1px solid #cbd5e1;">
-            <i>Report Generated via CERTUS Scientific Internal Code Audit Routine • Core System Module Data Integrity Version 2026.04.17</i>
+            <i>Report generated via CERTUS scientific internal code audit routine • Core system module data integrity version 2026.04.17</i>
         </div>
     </div>
 </body>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CERTUS-METAL SINGLE | Scientific Technical Report</title>
+    <title>CERTUS-METAL SINGLE | Scientific Report</title>
     <script>
         window.MathJax = {
             tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
@@ -52,38 +52,33 @@
     <div class="container">
         <header>
             <h1>CERTUS-METAL SINGLE</h1>
-            <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Single Layer Extraction on Transparent
-                Substrate</p>
-            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific Revision Pro 2026.04.17</p>
+            <p style="font-size: 1.3em; color: #546e7a; font-weight: 300;">Single-layer optical constant extraction on a transparent substrate</p>
+            <p style="font-size: 1.0em; color: #78909c; font-weight: 300;">Scientific report revision 2026.04.17</p>
         </header>
 
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-METAL SINGLE determines the complex refractive index of a single
-            metallic or absorbing layer deposited directly onto a transparent substrate (Silica or BK7).
-            It leverages <strong>multiple optical signatures</strong> (Reflectance, Transmission, and Back-side
-            Reflectance)
-            to uniquely constrain the solution, allowing for the simultaneous extraction of thickness ($d_M$) and
-            spline-based optical constants ($n, k$) without physical model assumptions.
+            <strong>Abstract:</strong> CERTUS-METAL SINGLE estimates the complex refractive index of a single metallic
+            or absorbing layer deposited on a transparent substrate (fused silica or BK7). The method combines
+            reflectance, transmission, and backside reflectance measurements to constrain the inverse problem and
+            extract the layer thickness ($d_M$) together with spline-based optical constants ($n$, $k$).
         </div>
 
         <!-- ================================================================ -->
         <!--  1. THE SINGLE LAYER CHALLENGE                                    -->
         <!-- ================================================================ -->
-        <h2>1. Context: The "Single Layer" Challenge</h2>
+        <h2>1. Measurement Context</h2>
         <p>
-            Characterizing a single absorbing layer on a transparent substrate provides more information channels than
-            an opaque bilayer stack. Since the substrate is transparent:
+            A single absorbing layer on a transparent substrate provides three complementary observables. The
+            transparent substrate enables transmission measurements in addition to front reflectance and backside
+            reflectance.
         </p>
         <ul>
-            <li><strong>Transmission ($T$):</strong> Light passes through the substrate, offering powerful absorption
-                constraints ($k$).</li>
-            <li><strong>Back-Reflectance ($R_{back}$):</strong> Measured through the substrate, probing the
-                substrate-film interface.</li>
-            <li><strong>Front-Reflectance ($R$):</strong> Probes the air-film interface.</li>
+            <li><strong>Transmission ($T$):</strong> Constrains absorption through the substrate.</li>
+            <li><strong>Backside reflectance ($R_{back}$):</strong> Probes the film-substrate interface.</li>
+            <li><strong>Front reflectance ($R$):</strong> Probes the air-film interface.</li>
         </ul>
         <p>
-            Combining $\{R, T, R_{back}\}$ creates a highly constrained optimization landscape, reducing degeneracy
-            compared to $R$-only measurements.
+            The joint use of $R$, $T$, and $R_{back}$ reduces non-uniqueness relative to reflectance-only inversion.
         </p>
 
         <!-- ================================================================ -->
@@ -201,86 +196,86 @@
         </div>
 
         <div class="algo-step">
-            <span class="algo-title">Algorithm Step-by-Step Summary</span>
-            <strong>Steps 1–3:</strong> Load up to 3 spectral channels (R, T, Rback), configure substrate dispersion,
-            and define the bounded search space for thickness, spline knot values, and knot positions.<br>
-            <strong>Steps 4–11 (DE loop):</strong> Differential Evolution explores the parameter space. Each candidate
-            is decoded into spline optical constants, evaluated through the full TMM with incoherent backside
-            correction,
-            and scored by the multi-channel MSE. The population evolves over ~1500 generations.<br>
-            <strong>Steps 12–16 (Beam):</strong> Systematic thickness scan with Nelder-Mead re-optimization at each $d$
-            maps
-            the $n$-$k$-$d$ degeneracy. The uncertainty envelope defines rigorous process windows.<br>
-            <strong>Step 17:</strong> Export comprehensive report with spectra, optical constants, and beam envelope.
+            <span class="algo-title">Algorithm Summary</span>
+            <strong>Steps 1–3:</strong> Load up to three spectral channels (R, T, Rback), configure the substrate
+            dispersion, and define the bounded search space for thickness, spline knot values, and knot positions.<br>
+            <strong>Steps 4–11 (Differential Evolution):</strong> Differential Evolution explores the parameter space.
+            Each candidate is decoded into spline optical constants, evaluated with the full TMM including incoherent
+            backside correction, and scored using the multi-channel mean squared error. The population evolves for up
+            to approximately 1500 generations.<br>
+            <strong>Steps 12–16 (Beam analysis):</strong> A systematic thickness scan with Nelder-Mead re-optimization
+            at each fixed $d$ maps the $n$–$k$–$d$ degeneracy. The uncertainty envelope defines the admissible process
+            window.<br>
+            <strong>Step 17:</strong> Export the final report with spectra, optical constants, and the beam envelope.
         </div>
 
         <h3>3.1 Optimization Vector</h3>
-        <p>The algorithm searches for:</p>
+        <p>The optimization vector contains the following parameters:</p>
         <ul>
-            <li>$d_M$: Metal thickness (e.g., 20 nm)</li>
-            <li>$\{n_i, k_i\}$: Optical constants at $N$ knot positions.</li>
-            <li>$\{\lambda_i\}_{i=2}^{N-1}$: Spectral position of internal knots (adaptive to features).</li>
+            <li>$d_M$: metal thickness.</li>
+            <li>$\{n_i, k_i\}$: optical constants at the knot positions.</li>
+            <li>$\{\lambda_i\}_{i=2}^{N-1}$: internal knot wavelengths, adjusted to the measured spectrum.</li>
         </ul>
 
         <h3>3.2 Multi-Channel Cost Function</h3>
-        <p>The total error is the average of errors from all available data channels:</p>
+        <p>The total error is computed as the average over all available data channels:</p>
         <div
             style="background:#f8f9fa; border:1px solid #cfd8dc; padding:15px; border-radius:5px; margin:15px 0; text-align:center;">
             $$ \text{MSE}_{total} = \frac{1}{N_{ch}} \sum_{c \in \{R,T,R_{back}\}} \frac{1}{M}
             \sum_{j=1}^{M} \left(S_c^{calc}(\lambda_j) - S_c^{meas}(\lambda_j)\right)^2 $$
         </div>
-        <p>This "triangulation" forces the solution to satisfy physical reality at both interfaces and the bulk
-            absorption simultaneously. Missing channels are automatically excluded.</p>
+        <p>The combined channels constrain the film response at both interfaces and in the bulk absorption region.
+            Missing channels are excluded automatically.</p>
 
         <h3>3.3 Differential Evolution</h3>
         <p>
-            The global search uses <strong>Differential Evolution (DE)</strong> — a population-based stochastic
-            optimizer ideal for high-dimensional, non-convex problems:
+            The global search uses <strong>Differential Evolution (DE)</strong>, a population-based stochastic
+            optimizer suitable for high-dimensional and non-convex problems.
         </p>
         <ol>
-            <li><strong>Initialize:</strong> Population of random parameter vectors within bounds.</li>
-            <li><strong>Mutate:</strong> Trial vectors via weighted differences:
+            <li><strong>Initialize:</strong> generate a population of parameter vectors within the bounds.</li>
+            <li><strong>Mutate:</strong> build trial vectors using weighted differences:
                 $\mathbf{v} = \mathbf{x}_{r1} + F(\mathbf{x}_{r2} - \mathbf{x}_{r3})$</li>
-            <li><strong>Crossover:</strong> Mix trial and target vectors with probability CR.</li>
-            <li><strong>Select:</strong> Keep the better of trial and target based on MSE.</li>
+            <li><strong>Crossover:</strong> combine trial and target vectors with probability CR.</li>
+            <li><strong>Select:</strong> retain the vector with the lower mean squared error.</li>
         </ol>
-        <p>Typical parameters: Population = 50, $F \in [0.5, 1.0]$, CR = 0.7, Max iterations = 1500.</p>
+        <p>Typical parameters are: population size 50, $F \in [0.5, 1.0]$, CR = 0.7, and a maximum of 1500 iterations.</p>
 
         <!-- ================================================================ -->
         <!--  4. BEAM ANALYSIS                                                 -->
         <!-- ================================================================ -->
         <h2>4. Beam Analysis: Uncertainty Quantification</h2>
 
-        <h3>4.1 The Uniqueness Check</h3>
+        <h3>4.1 Uniqueness Assessment</h3>
         <p>
-            While the combination of $R, T, R_{back}$ highly constrains the solution, experimental noise can still
-            create ambiguity between thickness and refractive index.
-            The <strong>Beam Analysis</strong> post-processing step systematically maps this uncertainty.
+            Although the combined $R$, $T$, and $R_{back}$ measurements strongly constrain the solution,
+            experimental noise can still produce ambiguity between thickness and refractive index.
+            The beam-analysis post-processing stage maps this uncertainty explicitly.
         </p>
 
         <h3>4.2 Scan Methodology</h3>
         <ol>
-            <li><strong>Reference:</strong> Starts from the optimal thickness $d_{opt}$ found by the main solver.</li>
-            <li><strong>Constraint Scan:</strong> Step thickness in both directions ($\pm 1$ nm steps). At each step,
-                fix $d$ and re-optimize the spline optical constants to find the best possible match.</li>
-            <li><strong>Valley Mapping:</strong> Plot $\text{MSE}_{min}$ vs. Thickness.</li>
+            <li><strong>Reference:</strong> start from the optimal thickness $d_{opt}$ returned by the main solver.</li>
+            <li><strong>Constraint Scan:</strong> vary the thickness in both directions using 1 nm steps. At each step,
+                fix $d$ and re-optimize the spline optical constants.</li>
+            <li><strong>Valley Mapping:</strong> plot the minimum MSE as a function of thickness.</li>
         </ol>
 
         <h3>4.3 Interpretation</h3>
         <div class="highlight-box">
             <ul>
-                <li><strong>V-Shape:</strong> A sharp V confirms a unique solution.</li>
-                <li><strong>Flat Bottom:</strong> Indicates parameter correlation (uncertainty in $d$ vs $n$).</li>
-                <li><strong>Beam Envelope:</strong> The software exports the bundle of all $n(\lambda)$ and $k(\lambda)$
-                    curves whose MSE is within a tolerance (e.g., 2%) of the global minimum. This provides
-                    <strong>process windows</strong> technically rigorous for production control.
+                <li><strong>V-shape:</strong> a sharp V indicates a unique solution.</li>
+                <li><strong>Flat bottom:</strong> this indicates parameter correlation, mainly between $d$ and $n$.</li>
+                <li><strong>Beam envelope:</strong> the software exports the set of $n(\lambda)$ and $k(\lambda)$ curves
+                    whose MSE remains within the selected tolerance from the global minimum. This defines the admissible
+                    process window.
                 </li>
             </ul>
         </div>
 
         <h3>4.4 Uncertainty Formula</h3>
         <p>
-            The spectral uncertainty envelope defines the rigorous confidence intervals for the process windows:
+            The spectral uncertainty envelope defines the confidence intervals used to describe the process window:
         </p>
         <div class="eq-box">
             $$ \Delta n(\lambda) = \max_{d \in D_\tau} n_{sol}(\lambda, d) - \min_{d \in D_\tau} n_{sol}(\lambda, d) $$
@@ -294,7 +289,7 @@
         <h2>5. Usage Guide</h2>
 
         <h3>5.1 Input Data Format</h3>
-        <p>CSV or Excel file with up to 4 columns (auto-detected):</p>
+        <p>CSV or Excel file with up to four auto-detected columns:</p>
         <table>
             <tr>
                 <th>Column</th>
@@ -309,40 +304,42 @@
             <tr>
                 <td>2</td>
                 <td>Reflectance ($R$)</td>
-                <td>0–1 or %</td>
+                <td>0–1 or percent</td>
             </tr>
             <tr>
-                <td>3 (Optional)</td>
+                <td>3 (optional)</td>
                 <td>Transmission ($T$)</td>
-                <td>0–1 or %</td>
+                <td>0–1 or percent</td>
             </tr>
             <tr>
-                <td>4 (Optional)</td>
-                <td>Back-Reflectance ($R_{back}$)</td>
-                <td>0–1 or %</td>
+                <td>4 (optional)</td>
+                <td>Backside reflectance ($R_{back}$)</td>
+                <td>0–1 or percent</td>
             </tr>
         </table>
 
         <h3>5.2 Configuration Guidelines</h3>
         <ul>
-            <li><strong>Knots:</strong> Start with 2–3 for simple metals. Increase only if fit is poor.</li>
-            <li><strong>Thickness Range:</strong> Constrain $d_M$ (min/max) to ±20% of target deposition.</li>
-            <li><strong>Substrate:</strong> Correct substrate selection (Silica vs BK7) is critical as it affects
-                $R_{back}$ and $T$ baselines significantly.</li>
+            <li><strong>Knots:</strong> start with two or three knots for simple metals. Increase the knot count only
+                if the fit remains inadequate.</li>
+            <li><strong>Thickness range:</strong> constrain $d_M$ to approximately ±20% of the target deposition.</li>
+            <li><strong>Substrate:</strong> the substrate selection (fused silica or BK7) affects the $R_{back}$ and
+                $T$ baselines.
+            </li>
         </ul>
 
         <!-- ================================================================ -->
         <!--  6. OUTPUT                                                        -->
         <!-- ================================================================ -->
-        <h2>6. Output & Reporting</h2>
+        <h2>6. Output and Reporting</h2>
         <ul>
-            <li><strong>Rich Excel Report:</strong> Fit summary, calculated spectra, and derived $n,k$ tables.</li>
-            <li><strong>Visualization Tabs:</strong>
+            <li><strong>Excel report:</strong> fit summary, calculated spectra, and derived $n$ and $k$ tables.</li>
+            <li><strong>Visualization tabs:</strong>
                 <ul>
-                    <li><em>Spectra:</em> Target vs Calculated $R$, $T$, $R_{back}$.</li>
-                    <li><em>n & k:</em> Resulting optical constants with knots visualization.</li>
-                    <li><em>Convergence:</em> Log-scale RMSE trace.</li>
-                    <li><em>Beam:</em> Uncertainty envelope from thickness scan.</li>
+                    <li><em>Reflectance:</em> target versus calculated $R$.</li>
+                    <li><em>n and k:</em> reconstructed optical constants with knot locations.</li>
+                    <li><em>Convergence:</em> log-scale RMSE trace.</li>
+                    <li><em>Beam:</em> uncertainty envelope from the thickness scan.</li>
                 </ul>
             </li>
         </ul>
@@ -389,29 +386,27 @@
         <!-- ================================================================ -->
         <h2>8. Pro 2026 Ergonomics & UI Upgrades</h2>
         <p>
-            The CERTUS Suite features a fundamentally modernized UI engineered for high-speed scientific workflows.
-            All mathematical kernels (TMM, Monte Carlo, SEEL) are JIT-compiled to native machine code via
-            <strong>Numba</strong>, strictly enforcing <code>float64</code> and <code>complex128</code> datatypes for
-            maximum numerical stability (15 significant digits).
+            The CERTUS suite uses a modernized interface for scientific workflows. The numerical kernels are
+            JIT-compiled through <strong>Numba</strong> and use <code>float64</code> and <code>complex128</code>
+            datatypes to preserve numerical stability.
         </p>
         <h3>8.1 Global Keyboard Shortcuts</h3>
-        <p>To maximize efficiency, the interface actively maps physical keystrokes to core pipeline triggers:</p>
+        <p>The interface maps the following shortcuts to the main workflow actions:</p>
         <ul>
-            <li><kbd>Ctrl</kbd> + <kbd>S</kbd> : Save current configuration natively.</li>
-            <li><kbd>Ctrl</kbd> + <kbd>O</kbd> : Load an existing configuration.</li>
-            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd> : Instantly launch the primary optimization or fitting
-                Step (Step 2).</li>
-            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd> : Undo last configuration change (5-level stack via <code>CertusBaseApp</code>).</li>
-            <li><kbd>Esc</kbd> : Quickly dismiss detached windows, live monitors, and auxiliary floating charts.</li>
+            <li><kbd>Ctrl</kbd> + <kbd>S</kbd>: save the current configuration.</li>
+            <li><kbd>Ctrl</kbd> + <kbd>O</kbd>: load an existing configuration.</li>
+            <li><kbd>F5</kbd> or <kbd>Ctrl</kbd> + <kbd>R</kbd>: launch the primary optimization step.</li>
+            <li><kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo the last configuration change.</li>
+            <li><kbd>Esc</kbd>: close detached windows and auxiliary charts.</li>
         </ul>
         <h3>8.2 Dynamic Processing Feedback</h3>
-        <p>Heavy Background Tasks (like full DP Strategy extraction or Numba lazy-compilation hooks) are completely
-            thread-isolated. The architecture enforces <strong>Dynamic Wait Cursors (Spinners)</strong> and rich button
-            Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
+        <p>The long-running numerical tasks are executed in isolated worker threads. The interface uses wait cursors,
+            tooltips, and progress feedback to keep the event loop responsive.
+        </p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code>, <code>certus_ui.py</code> &mdash; Revision 2026.04.17</p>
-            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
+            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code> and <code>certus_ui.py</code> &mdash; Revision 2026.04.17</p>
+            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Report</p>
         </div>
     </div>
 

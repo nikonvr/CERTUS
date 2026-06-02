@@ -4093,6 +4093,8 @@ class WelcomeGuideWidget(QWidget):
         return row
 
 class CertusStratApp(CertusBaseApp):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
     """Main CERTUS-STRAT Application"""
 
     # CertusBaseApp configuration
@@ -4409,7 +4411,19 @@ class CertusStratApp(CertusBaseApp):
             self.update_stats_display()
 
     def _warmup_numba(self) -> None:
+        try:
+            self.sig_numba_ready.disconnect()
+            self.sig_numba_error.disconnect()
+        except TypeError:
+            pass
+        self.sig_numba_ready.connect(self._on_numba_ready_ui)
+        self.sig_numba_error.connect(self._on_numba_error_ui)
+        import threading
+        if hasattr(self, "status_label"):
+            self.status_label.setText("System warming up (compiling JIT)...")
+        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
+    def _warmup_numba_thread_runner(self) -> None:
         try:
             dummy_wl, dummy_n, dummy_thick = (
                 np.array([1000.0], dtype=np.float64),
@@ -4491,15 +4505,16 @@ class CertusStratApp(CertusBaseApp):
             )
 
             self.numba_ready = True
-
-            QMetaObject.invokeMethod(self, "_on_numba_ready_ui", Qt.ConnectionType.QueuedConnection)
+            self.sig_numba_ready.emit()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.warning(f"Numba warmup warning: {e}")
-
             self.numba_ready = True
+            self.sig_numba_ready.emit()
 
-            QMetaObject.invokeMethod(self, "_on_numba_ready_ui", Qt.ConnectionType.QueuedConnection)
+        except Exception as e:
+            self.logger.error(f"Numba warmup failed: {e}", exc_info=True)
+            self.sig_numba_error.emit()
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
@@ -4513,6 +4528,16 @@ class CertusStratApp(CertusBaseApp):
         self.run_step2_btn.setEnabled(True)
 
         self.run_full_btn.setEnabled(True)
+
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
+
+    @pyqtSlot()
+    def _on_numba_error_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("JIT Init Error")
 
 
     def on_toggle_details(self, checked) -> None:

@@ -368,6 +368,8 @@ _QS_INDEX_WEIGHT_T = "cost_weight_t"
 _QS_INDEX_WEIGHT_R = "cost_weight_r"
 
 class CertusIndexApp(CertusBaseApp):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
     """Main CERTUS-INDEX Application"""
 
     # CertusBaseApp configuration
@@ -577,8 +579,19 @@ class CertusIndexApp(CertusBaseApp):
         self.sb_weight_R.valueChanged.connect(self._persist_index_weight_settings)
 
     def _warmup_numba(self) -> None:
-        """JIT precompilation"""
+        """JIT precompilation via background thread"""
+        try:
+            self.sig_numba_ready.disconnect()
+            self.sig_numba_error.disconnect()
+        except TypeError:
+            pass
+        self.sig_numba_ready.connect(self._on_numba_ready_ui)
+        self.sig_numba_error.connect(self._on_numba_error_ui)
+        import threading
+        self.lbl_status.setText("System warming up (compiling JIT)...")
+        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
+    def _warmup_numba_thread_runner(self) -> None:
         try:
             from certus.core.certus_index_objectives import warmup_index_objectives
             warmup_index_objectives(silent=True)
@@ -649,14 +662,24 @@ class CertusIndexApp(CertusBaseApp):
                 np.array([False, False]),
             )
 
-            self.lbl_status.setText("Ready (JIT Compiled)")
-
-            self._on_numba_ready()  # Mark as ready
+            self.sig_numba_ready.emit()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.lbl_status.setText("JIT Init Error")
-
             self.logger.error(f" Numba warmup failed: {e}", exc_info=True)
+            self.sig_numba_error.emit()
+
+    @pyqtSlot()
+    def _on_numba_ready_ui(self) -> None:
+        self.lbl_status.setText("Ready (JIT Compiled)")
+        self._on_numba_ready()  # Mark as ready
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
+
+    @pyqtSlot()
+    def _on_numba_error_ui(self) -> None:
+        self.lbl_status.setText("JIT Init Error")
 
     def _apply_theme(self) -> None:
         """Apply Certus theme"""

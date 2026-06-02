@@ -3472,6 +3472,8 @@ from certus.ui.certus_plot import (
 
 
 class CertusBaseApp(QMainWindow):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
     """
 
     Base class for all CERTUS application windows.
@@ -4677,6 +4679,11 @@ class CertusBaseApp(QMainWindow):
             sl.setText("Ready")
 
         logging.info("[WARMUP] JIT warmup finished; spectrum eval may proceed.")
+
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
 
 
     def _apply_certus_compact_theme(self, plots: list) -> None:

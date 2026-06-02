@@ -937,6 +937,8 @@ class BeamAnalysisWorker(QObject):
 
 
 class CertusMetalBilayerApp(MetalBaseApp):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
     """Main CERTUS-METAL Application (Bilayer: Metal + SiO2)"""
 
     MODULE_ID = "CERTUS_METAL_BILAYER"
@@ -1042,24 +1044,48 @@ class CertusMetalBilayerApp(MetalBaseApp):
         layout.addWidget(w, 0, 0)
 
     def _warmup_numba(self):
-        """JIT precompilation"""
+        """JIT precompilation via background thread"""
+        try:
+            self.sig_numba_ready.disconnect()
+            self.sig_numba_error.disconnect()
+        except TypeError:
+            pass
+        self.sig_numba_ready.connect(self._on_numba_ready_ui)
+        self.sig_numba_error.connect(self._on_numba_error_ui)
+        import threading
+        if hasattr(self, "status_label"):
+            self.status_label.setText("System warming up (compiling JIT)...")
+        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
+    def _warmup_numba_thread_runner(self):
         try:
             wls = np.array([500.0, 600.0], dtype=np.float64)
-
             get_nk_si(wls)
-
             get_nk_cauchy_simple(wls, 1.45, 1000.0)
-
             from certus.core._certus_physics_impl import calculate_reflectance_bilayer_vectorized
             c_arr = np.array([1.5 + 0.0j, 1.5 + 0.0j], dtype=np.complex128)
             calculate_reflectance_bilayer_vectorized(wls, c_arr, 10.0, 10.0, c_arr, c_arr)
 
-            self._on_numba_ready()  # Mark as ready
-
+            self.sig_numba_ready.emit()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
+            self.sig_numba_error.emit()
+
+    @pyqtSlot()
+    def _on_numba_ready_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("Ready (JIT Compiled)")
+        self._on_numba_ready()  # Mark as ready
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
+
+    @pyqtSlot()
+    def _on_numba_error_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("JIT Init Error")
 
     def _create_physical_params_group(self):
         """Creates compact physical params group with Info Icons"""

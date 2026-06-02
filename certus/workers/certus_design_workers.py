@@ -1431,7 +1431,11 @@ class OptimWorker(QObject):
                     tgt_weights=tgt_weights,
                 )
 
-                self.signals.progress.emit(95, "Final refinement (5x coordinate descent)...")
+                try:
+                    self.signals.progress.emit(95, "Final refinement (5x coordinate descent)...")
+                except RuntimeError:
+                    logging.debug("OptimWorker: signals already deleted, aborting final refinement.")
+                    return
                 ep_current, best_cost, self.best_rmse_seen = run_coord_descent_5cycles(
                     ep_current=ep_current,
                     best_cost=best_cost,
@@ -1461,8 +1465,10 @@ class OptimWorker(QObject):
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error(f"Optimization worker error: {e}")
-
-            self.signals.error.emit(traceback.format_exc())
+            try:
+                self.signals.error.emit(traceback.format_exc())
+            except RuntimeError:
+                logging.debug("OptimWorker: signals already deleted, skipping error emit.")
 
 class ColorWorker(QObject):
     """Worker for Monte Carlo color analysis"""

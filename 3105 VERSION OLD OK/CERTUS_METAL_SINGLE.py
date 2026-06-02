@@ -1030,6 +1030,8 @@ class BeamAnalysisWorker(QObject):
 
 
 class CertusMetalSingleApp(MetalBaseApp):
+    sig_numba_ready = pyqtSignal()
+    sig_numba_error = pyqtSignal()
     """Main CERTUS-METAL Application"""
 
     # MetalBaseApp handles APP_NAME/TITLE via __init__ or class vars if we set them,
@@ -1183,37 +1185,56 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.tabs.addTab(self.perf_tab, "Why CERTUS?")
 
     def _warmup_numba(self) -> None:
-        """JIT precompilation"""
+        """JIT precompilation via background thread"""
+        try:
+            self.sig_numba_ready.disconnect()
+            self.sig_numba_error.disconnect()
+        except TypeError:
+            pass
+        self.sig_numba_ready.connect(self._on_numba_ready_ui)
+        self.sig_numba_error.connect(self._on_numba_error_ui)
+        import threading
+        if hasattr(self, "status_label"):
+            self.status_label.setText("System warming up (compiling JIT)...")
+        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
 
+    def _warmup_numba_thread_runner(self) -> None:
         try:
             # Warmup specific to Single Metal (Spline + Incoherent substrate)
-
             wls = np.array([500.0, 600.0], dtype=np.float64)
 
             # 1. Warmup Spline
-
             p_spline = np.array([1.5, 1.5, 0.5, 0.5], dtype=np.float64)
-
             knot_l = np.array([400.0, 800.0], dtype=np.float64)
-
             get_nk_from_spline(p_spline, knot_l, wls)
 
             # 2. Warmup TMM (Incoherent)
-
             # Create dummy arrays
-
             eM = np.array([20.0], dtype=np.float64)
-
             nM_complex_2d = np.array([[1.5 - 0.5j], [1.5 - 0.5j]], dtype=np.complex128)
-
             nSub = np.array([1.45 + 0j, 1.45 + 0j], dtype=np.complex128)
-
             calculate_RTRback_incoherent_vectorized(eM, nM_complex_2d, nSub, wls)
 
-            self._on_numba_ready()  # Mark as ready
+            self.sig_numba_ready.emit()
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"✗ Numba warmup failed: {e}", exc_info=True)
+            self.sig_numba_error.emit()
+
+    @pyqtSlot()
+    def _on_numba_ready_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("Ready (JIT Compiled)")
+        self._on_numba_ready()  # Mark as ready
+        try:
+            show_toast(self, "System ready. JIT Warmup complete.", "success")
+        except Exception:
+            pass
+
+    @pyqtSlot()
+    def _on_numba_error_ui(self) -> None:
+        if hasattr(self, "status_label"):
+            self.status_label.setText("JIT Init Error")
 
     def on_file_loaded(self, data: "np.ndarray") -> None:
         """Process loaded data (Hook from MetalBaseApp)"""

@@ -8,7 +8,7 @@ import unicodedata
 import numpy as np
 import pandas as pd
 
-from certus.core.certus_core import SUBSTRATES
+
 
 
 def norm_header(raw) -> str:
@@ -89,7 +89,7 @@ def filter_bare_substrate_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[
     wl = col_names[0]
     for c in col_names:
         s = norm_header(c)
-        if not re.search(r"\b(wavelength|lambda|longueur\s*d\s*onde|wl)\b", s):
+        if not re.search(r"\b(wavelength|lambda|wl)\b", s):
             continue
         vals = pd.to_numeric(df[c], errors="coerce")
         if int(np.count_nonzero(np.isfinite(vals.values))) >= 3:

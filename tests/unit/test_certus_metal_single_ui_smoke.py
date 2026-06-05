@@ -34,7 +34,7 @@ def test_certus_metal_single_app_constructs_headless(monkeypatch) -> None:
         assert window.combo_substrate.currentText()
 
         # Run JIT warmup directly to guarantee it has executed in this test
-        window._warmup_numba()
+        window._warmup_numba_thread_runner()
 
         # Verify that Numba has compiled the critical single JIT functions
         from certus.core._certus_physics_impl import (

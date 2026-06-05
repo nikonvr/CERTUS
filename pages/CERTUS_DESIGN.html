@@ -39,13 +39,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html" class="active">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html" class="active">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -59,10 +63,14 @@
 
         <div class="abstract">
             <strong>Executive Summary:</strong> CERTUS-DESIGN is a high-performance synthesis engine for optical thin
-            films, powered by the <strong>PGLOBAL (Population-based Global Optimization)</strong> algorithm.
+            films, powered by the <strong>PGLOBAL (Population-based Stochastic Exploration)</strong> algorithm.
+            <br><br>
+            <div style="background-color: #f8f9fa; border-left: 4px solid #6c757d; padding: 10px; margin-bottom: 15px;">
+                <strong>Scientific Note (Global Optimum Guarantee):</strong> Thin-film optical design in high-dimensional space is an NP-hard problem. While the term "Global" is used historically in PGLOBAL to contrast with purely local descents (like L-BFGS-B), the algorithm performs a <em>robust stochastic exploration</em> combined with topological mutations. It guarantees escape from immediate local minima, but does not provide a mathematical proof of finding the absolute global optimum.
+            </div>
             It solves the extreme multimodality of the thin-film design space by combining stochastic exploration with
             density-based clustering.
-            Key innovations include <strong>Analytic Gradient</strong> computation (Adjoint Method) for $O(N)$
+            Key innovations include <strong>Analytic Gradient</strong> computation (<a href="https://en.wikipedia.org/wiki/Adjoint_state_method" target="_blank">Adjoint Method</a>) for $O(N)$
             local refinement, <strong>Topological Deep Search</strong> (Needle Method) for automatic structure
             evolution, and <strong>incoherent backside correction</strong> for real-world glass substrates.
         </div>
@@ -565,8 +573,19 @@
             </tr>
             <tr>
                 <td><code>CERTUS_DESIGN.py</code></td>
-                <td>PGLOBAL orchestration, GUI (<code>CertusDesignApp</code> extends <code>CertusBaseApp</code>),
-                    target management, needle driver, colorimetry worker.</td>
+                <td>Facade Delegator. Exposes submodules dynamically for backward compatibility.</td>
+            </tr>
+            <tr>
+                <td><code>certus_design_core.py</code></td>
+                <td>PGLOBAL orchestration, target management, needle driver logic.</td>
+            </tr>
+            <tr>
+                <td><code>certus_design_workers.py</code></td>
+                <td>Background threads and multiprocessing hooks (e.g. Colorimetry worker).</td>
+            </tr>
+            <tr>
+                <td><code>certus_design_ui.py</code></td>
+                <td>GUI implementation (<code>CertusDesignApp</code>), plot generation, view components.</td>
             </tr>
             <tr>
                 <td><code>_certus_physics_impl.py</code></td>
@@ -612,8 +631,7 @@
             Tooltips to provide absolute real-time state awareness without locking the application's event loop.</p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code>, <code>_certus_physics_impl.py</code>,
-                <code>certus_ui.py</code> &mdash; Revision 2026.04.17
+            <p>Generated from source analysis of <code>CERTUS_DESIGN.py</code> (Facade), <code>certus_design_core.py</code>, <code>certus_design_ui.py</code> &mdash; Revision 2026.04.17
             </p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>

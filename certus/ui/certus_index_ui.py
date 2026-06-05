@@ -2265,7 +2265,7 @@ class CertusIndexApp(CertusBaseApp):
                         ),
                         (
                             "Potential unit conversion applied (% -> fraction): "
-                            f"{'yes' if ((parsed_data['T'] is not None and np.nanmax(parsed_data['T']) > 1.5) or (parsed_data['R'] is not None and np.nanmax(parsed_data['R']) > 1.5)) else 'no'}",
+                            f"{'yes' if (((parsed_data['T'] is not None and np.size(parsed_data['T']) > 0 and np.nanmax(parsed_data['T']) > 1.5) or (parsed_data['R'] is not None and np.size(parsed_data['R']) > 0 and np.nanmax(parsed_data['R']) > 1.5))) else 'no'}",
                             False,
                         ),
                     ],

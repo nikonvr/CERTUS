@@ -403,7 +403,7 @@ class CertusREApp(CertusBaseApp):
 
         self._re_backside_summary_html: str = ""
 
-        # Phase 4 (faisceau) : dernier best result applique  aligne RMSE / eval UI sur le fit P4.
+        # Phase 4 (beam): last best result applied aligns RMSE / UI evaluation on the P4 fit.
 
         self._re_p4_display_beam_active: bool = False
 
@@ -755,7 +755,7 @@ class CertusREApp(CertusBaseApp):
 
         self.re_qwot_penalty_chk.setToolTip(
             "ON: displayed RMSE_facade = sqrt(RMSE_sp2 + alpha·RMSE_QWOT2) (alpha varies by phase). "
-            "Le solveur minimise TRF_RMS(r) (voir logs iter). OFF: RMSE_facade = RMSE_sp."
+            "The solver minimizes TRF_RMS(r) (see iter logs). OFF: RMSE_facade = RMSE_sp."
         )
 
         self.re_qwot_penalty_chk.stateChanged.connect(lambda s: self.cfg.update({"re_enable_qwot_penalty": bool(s)}))
@@ -764,7 +764,7 @@ class CertusREApp(CertusBaseApp):
 
         lay.addWidget(self.re_qwot_penalty_chk)
 
-        # Pas d'input GUI pour ap : en P4 on travaille uniquement avec les paliers optimises.
+        # No GUI input for ap: in P4 we work only with the optimized plateaus.
 
         self.cfg["re_beam_aperture_deg"] = float(RE_GUI_DEFAULT_BEAM_APERTURE_DEG)
 
@@ -3403,7 +3403,7 @@ class CertusREApp(CertusBaseApp):
             return builtin, f"builtin/analytical/{sub_norm}", raw_name, sub_norm
 
         if not OPENPYXL_AVAILABLE:
-            raise ImportError("La bibliothèque 'openpyxl' est requise pour charger des indices de substrat externes depuis Excel.")
+            raise ImportError("The 'openpyxl' library is required to load external substrate indices from Excel.")
 
         import openpyxl as _opxl
 
@@ -3711,7 +3711,7 @@ class CertusREApp(CertusBaseApp):
 
             hsl = hs.lower()
 
-            if "wavelength" in hsl or "longueur" in hsl:
+            if "wavelength" in hsl or "length" in hsl:
                 continue
 
             try:
@@ -6798,7 +6798,7 @@ class CertusREApp(CertusBaseApp):
         dlg.exec()
 
     def _show_re_delta_qwot_plot(self, best_r: dict, initial_stack: list, original_eps: np.ndarray, parent=None):
-        """Histogramme DeltaQWOT = (4/lambda₀)(n_finep_fin  n_initep_init), n_fin inclut DeltaRe splines du run."""
+        """DeltaQWOT Histogram = (4/lambda₀)(n_finep_fin  n_initep_init), n_fin includes DeltaRe splines of the run."""
 
         dlg = QDialog(parent or self)
 
@@ -6911,7 +6911,7 @@ class CertusREApp(CertusBaseApp):
 
     # =========================================================================
 
-    # SAUVEGARDE / CHARGEMENT
+    # SAVE / LOAD
 
     # =========================================================================
 

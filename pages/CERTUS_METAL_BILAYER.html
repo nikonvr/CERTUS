@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
+<body>
 <nav class="navbar">
         <a href="CERTUS_HUB.html" class="certus-logo">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
@@ -39,13 +40,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
             <a href="CERTUS_METAL_BILAYER.html" class="active">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -200,7 +205,7 @@
         <h3>3.3 Hybrid Optimization Strategy</h3>
 
         <h4>Stage 1: Differential Evolution (Global Search)</h4>
-        <p><strong>Differential Evolution (DE)</strong> is a population-based stochastic optimizer suitable for
+        <p><a href="https://en.wikipedia.org/wiki/Differential_evolution" target="_blank"><strong>Differential Evolution (DE)</strong></a> is a population-based stochastic optimizer suitable for
             non-convex problems.
         </p>
         <ol>
@@ -214,8 +219,7 @@
         <p>Typical parameters are: population size 50, $F \in [0.5, 1.0]$, CR = 0.7, and a maximum of 1500 iterations.</p>
 
         <h4>Stage 2: Local Polishing</h4>
-        <p>After the global search, candidate solutions are refined with local optimizers. L-BFGS-B and Nelder-Mead
-            are used in sequence with warm starts from nearby solutions.
+        <p>After the global search, candidate solutions are refined with local optimizers. L-BFGS-B with analytic gradients is used with warm starts from nearby solutions, with a relaxed-tolerance fallback.
         </p>
 
         <!-- ================================================================ -->
@@ -257,7 +261,7 @@
             subgraph BEAM ["Beam Analysis — Uncertainty Mapping"]
             BEAM_CHK -->|"Yes"| BA_REF["13. Reference: d_opt from DE"]:::process
             BA_REF --> BA_SCAN["14. Scan d_M = d_opt ± Δd<br>(steps of 0.5 nm)"]:::highlight
-            BA_SCAN --> BA_REOPT["15. For each fixed d_M:<br>re-optimize spline n,k + d_L<br>(L-BFGS-B / Nelder-Mead, warm start)"]:::process
+            BA_SCAN --> BA_REOPT["15. For each fixed d_M:<br>re-optimize spline n,k + d_L<br>(L-BFGS-B analytic, warm start)"]:::process
             BA_REOPT --> BA_FILT["16. Keep solutions where<br>MSE ≤ MSE_opt × (1 + τ)"]:::process
             BA_FILT --> BA_ENV["17. Compute envelope:<br>Δn(λ), Δk(λ) over beam"]:::highlight
             end
@@ -284,7 +288,7 @@
             TMM (Macleod +1j, pre-multiply Air→Si), and scored by the MSE. The population evolves over approximately
             1500 generations.<br>
             <strong>Steps 13–17 (Beam):</strong> A systematic thickness scan maps the $n$-$k$-$d$ degeneracy. Each
-            scan point is re-optimized with a warm start (L-BFGS-B/Nelder-Mead). The uncertainty envelope defines
+            scan point is re-optimized with a warm start (L-BFGS-B with analytic gradients). The uncertainty envelope defines
             $\Delta n(\lambda)$ and $\Delta k(\lambda)$.<br>
             <strong>Steps 18–20 (Ensemble, optional):</strong> Eight independent PGLOBAL runs with DBSCAN clustering
             identify multiple valid solutions when the problem is ill-conditioned.<br>
@@ -344,9 +348,8 @@
             minimum.</p>
         <p>For polishing and beam exploration, CERTUS-METAL BILAYER uses a cascaded strategy:</p>
         <ol>
-            <li><strong>L-BFGS-B fast descent:</strong> attempts a quasi-Newton descent with bound constraints.</li>
-            <li><strong>Nelder-Mead fallback:</strong> if the gradient-based step stalls or produces invalid parameter
-                combinations, the system switches to the derivative-free Nelder-Mead simplex method.
+            <li><strong>L-BFGS-B fast descent:</strong> uses exact analytic gradients for a precise descent with bound constraints.</li>
+            <li><strong>Relaxed-tolerance fallback:</strong> if the gradient-based step stalls or produces invalid parameter combinations, the system retries L-BFGS-B with relaxed ftol/gtol thresholds to bypass numerical noise.
             </li>
         </ol>
 
@@ -387,15 +390,15 @@
             </tr>
             <tr>
                 <td><strong>Cascaded Polishing</strong></td>
-                <td>L-BFGS-B with Nelder-Mead fallback ensuring robust descent.</td>
+                <td>L-BFGS-B with analytic gradients and relaxed-tolerance fallback ensuring robust descent.</td>
             </tr>
             <tr>
                 <td><strong>Live Visualization</strong></td>
                 <td>Real-time plots of n, k, R during optimization.</td>
             </tr>
             <tr>
-                <td><strong>Shared UX</strong></td>
-                <td><code>certus_ui.py</code> — <code>CertusBaseApp</code>: 5-level undo stack (<kbd>Ctrl</kbd>+<kbd>Z</kbd>),
+                <td><strong>Shared UX & Common Metal</strong></td>
+                <td><code>certus_metal_common.py</code> and <code>certus_ui.py</code> — <code>MetalBaseApp</code>: 5-level undo stack (<kbd>Ctrl</kbd>+<kbd>Z</kbd>),
                     <code>CertusLogPanel</code>, <code>WelcomeGuideWidget</code>, theme toggle.</td>
             </tr>
             <tr>

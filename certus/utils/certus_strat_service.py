@@ -206,6 +206,11 @@ class StratStrategyService(BaseHeadlessService):
         except (KeyError, TypeError, ValueError):
             return
 
+        if req_min > req_max:
+            req_min, req_max = req_max, req_min
+            logging.getLogger(__name__).warning(
+                "STRAT requested wavelength range was inverted; values were swapped to preserve validity.")
+
         used_materials = {nH_id, nL_id, nSub_id}
         files_to_check = [m for m in used_materials if m in db.data]
         if not files_to_check:

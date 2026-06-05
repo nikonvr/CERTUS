@@ -619,7 +619,7 @@ class CertusScientificPlot(pg.PlotWidget):
         act_tsv_pub.triggered.connect(self._export_tsv_publication)
 
         act_copy = menu.addAction(CERTUS_UI_STRINGS["copy_excel_tsv"])
-        act_copy.setToolTip("Ctrl+Shift+C - TSV pour Excel")
+        act_copy.setToolTip("Ctrl+Shift+C - TSV for Excel")
         act_copy.triggered.connect(self._on_copy_excel_shortcut)
 
         act_copy_pub = menu.addAction(CERTUS_UI_STRINGS["copy_pub_tsv"])

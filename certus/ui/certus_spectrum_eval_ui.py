@@ -1,6 +1,6 @@
 # =============================================================================
 
-# UI d'evaluation spectrale partagee  CERTUS_DESIGN + CERTUS_RE
+# Shared spectral evaluation UI  CERTUS_DESIGN + CERTUS_RE
 
 # =============================================================================
 
@@ -63,11 +63,11 @@ def spectrum_eval_on_finished_prepare_display(
 ) -> Dict[str, Any] | None:
     """
 
-    Controle de generation (stale), snapshot RMSE, politique d'affichage monotone.
+    Generation control (stale), RMSE snapshot, monotonic display policy.
 
-    Retourne ``None`` si le callback est obsolete (``_set_busy(False)`` deja appele).
+    Returns ``None`` if the callback is obsolete (``_set_busy(False)`` already called).
 
-    Sinon retourne ``data_for_display`` pour la suite de ``_on_eval_finished``.
+    Otherwise returns ``data_for_display`` for the rest of ``_on_eval_finished``.
 
     """
 
@@ -153,7 +153,7 @@ def spectrum_eval_run_preamble(app: Any, run_eval_cb: Any) -> bool:
     """
 
     if not app._warmup_done:
-        # Evite un double message si plusieurs eval sont planifies avant fin warmup.
+        # Avoids double message if multiple evals are scheduled before warmup ends.
 
         if not getattr(app, "_spectrum_eval_jit_wait_logged", False):
             app.log("Waiting for JIT compilation...", "WARNING")
@@ -178,7 +178,7 @@ def spectrum_eval_build_worker_cfg(
 ) -> Dict[str, Any] | None:
     """
 
-    Prepare le dict cfg pour EvalWorker. Retourne None si abandon (materiaux / cibles).
+    Prepares the cfg dict for EvalWorker. Returns None if aborted (materials / targets).
 
     """
 
@@ -362,7 +362,7 @@ def spectrum_eval_plot_curves(
     res_optim: dict,
     oblique_mode: bool,
 ) -> None:
-    """Nettoie les widgets spectrum et trace courbes oblique ou transmission + points d'optimization."""
+    """Cleans up spectrum widgets and plots oblique curves or transmission + optimization points."""
 
     for plot_widget in plot_targets:
         items_to_keep = [
@@ -497,7 +497,7 @@ def spectrum_eval_apply_axes_legend_scale(
     res_vis: dict,
     oblique_mode: bool,
 ) -> None:
-    """Legende, echelles Y/X du plot spectrum principal."""
+    """Legend, Y/X scales of the main spectrum plot."""
 
     if oblique_mode:
         app.spectrum_plot.plotItem.setLabel("left", "R / T", color="black", size="12pt")

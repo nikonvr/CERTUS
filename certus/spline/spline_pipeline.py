@@ -105,7 +105,7 @@ def _sync_theoretical_tr_from_nk_dict(
     def _skip(msg: str) -> None:
         if _warn_skip:
             log.warning(
-                "PIPELINE [MODELE_SPECTRAL_SYNC] SKIP (audit corridor) | %s | raison=%s",
+                "PIPELINE [MODELE_SPECTRAL_SYNC] SKIP (audit corridor) | %s | reason=%s",
                 msg,
                 reason,
             )
@@ -132,7 +132,7 @@ def _sync_theoretical_tr_from_nk_dict(
         _skip("d_nm non fini")
         return
     if not (np.all(np.isfinite(lam_full)) and np.all(np.isfinite(n_l)) and np.all(np.isfinite(k_l))):
-        _skip("lam/n/k contiennent des non-finis (sync impossible)")
+        _skip("lam/n/k contain non-finite values (sync impossible)")
         return
     n_sub_raw = out.get("n_sub_effective", getattr(cfg, "n_sub", None))
     n_sub_full = np.asarray(n_sub_raw, dtype=np.float64).ravel()
@@ -152,7 +152,7 @@ def _sync_theoretical_tr_from_nk_dict(
     except NUMERICAL_FAULT_EXCEPTIONS as ex:
         if log is not None:
             log.warning(
-                "PIPELINE [MODELE_SPECTRAL_SYNC] ECHEC recalcul (non-bloquant) | raison=%s | %s",
+                "PIPELINE [MODELE_SPECTRAL_SYNC] FAILED recalculation (non-blocking) | reason=%s | %s",
                 reason,
                 ex,
             )
@@ -169,10 +169,10 @@ def _sync_theoretical_tr_from_nk_dict(
     l1 = float(lam_full[i1])
     promoted = bool(out.get("profile_d_promoted"))
     log.info(
-        "PIPELINE [MODELE_SPECTRAL_SYNC] OK | raison=%s | T_théo (et R_théo si actif) recalculées "
-        "depuis n_lam,k_lam,d_nm — preuve que le spectre modèle est aligné sur l’onglet n,k "
-        "(correctif bug « T chahuté » après promotion corridor) | lam_pts=%d λ[0,last]=[%.4f,%.4f] nm "
-        "d_nm=%.6f T_substrat_norm=%s R_théo=%s | T_théo(λ_0,λ_last)=(%.6g,%.6g) | "
+        "PIPELINE [MODELE_SPECTRAL_SYNC] OK | reason=%s | T_theo (and R_theo if active) recalculated "
+        "from n_lam,k_lam,d_nm — proof that the model spectrum is aligned on the n,k tab "
+        "(fix for \"noisy T\" bug after corridor promotion) | lam_pts=%d lambda[0,last]=[%.4f,%.4f] nm "
+        "d_nm=%.6f T_substrat_norm=%s R_theo=%s | T_theo(λ_0,λ_last)=(%.6g,%.6g) | "
         "profile_d_promoted=%s",
         reason,
         int(lam_full.size),
@@ -302,7 +302,7 @@ def _validated_extra_sigma_knots(base_sigma_knots: np.ndarray, extra_sigma_knots
     tol = max(1e-12, 1e-6 * span)
 
     valid_list = []
-    # On trie pour faciliter la comparaison
+    # Sort to make comparison easier
     extra_sorted = np.sort(extra_raw)
 
     for val in extra_sorted:
@@ -973,7 +973,7 @@ def worker_spline_auto_add_one_knot(
         best_gap_idx = -1
         best_kept_insertion = False
         n_gaps = int(max(0, active_knots.size - 1))
-        # Liste tous les candidats scan finis pour permettre une promotion top-K au deep polish.
+        # List all finished scan candidates to allow a top-K promotion during deep polish.
         scan_candidates: list[tuple[float, int, dict]] = []  # (rmse_scan, gap_idx, result_dict)
 
         log.info(
@@ -1593,7 +1593,7 @@ def worker_spline_auto_clean_knots(
     strict_tol_mode = bool(float(tolerance) <= 1e-12)
 
     # Conditional local refinement around the best per-removal variant.
-    # On respecte exclusivement le choix de l'utilisateur (case GUI). La
+    # We exclusively respect the user's choice (GUI checkbox). The
     # forced deactivation in strict mode was masking valid removals.
     local_refine_enabled = bool(getattr(cfg, "auto_clean_neighbor_pull_local_refine_enabled", False))
     local_refine_rel_step = float(getattr(cfg, "auto_clean_neighbor_pull_local_refine_rel_step", 0.05) or 0.05)
@@ -2126,7 +2126,7 @@ def worker_spline_autoshift_delta_ns(
             ((d, tested[d][1]) for d in tested if np.isfinite(tested[d][1])),
             key=lambda t: t[0],
         )
-        # Cherche un triplet bracketant un minimum strict.
+        # Looks for a triplet bracketing a strict minimum.
         best_triplet = None
         for i in range(1, len(finite_pts) - 1):
             a, fa = finite_pts[i - 1]
@@ -2455,8 +2455,8 @@ def _select_corridor_base_result_for_profile(
                     n_sz = int(np.asarray(out.get("n_lam"), dtype=np.float64).size)
                     nseg_sz = int(np.asarray(out["n_lam_seg_spline_sigma"], dtype=np.float64).size)
                     logging.getLogger("CERTUS").info(
-                        "PIPELINE [CORRIDORS d] Base best_polished ignorée: pack spline-σ archivé "
-                        "hors sync avec le résultat courant (ex. insertion manuelle de nœuds). "
+                        "PIPELINE [CORRIDORS d] Base best_polished ignored: archived spline-sigma pack "
+                        "out of sync with the current result (e.g. manual node insertion). "
                         "d_nm_seg_spline=%s d_nm_courant=%s | len(n_lam)=%d vs len(seg_pack)=%s → "
                         "profilage depuis dict nominal.",
                         f"{d_seg:.6f}" if np.isfinite(d_seg) else "n/a",
@@ -2586,6 +2586,7 @@ def _build_profile_corridor_config(
         auto_relax_epsilon=float(getattr(cfg, "corridor_profile_d_auto_relax_epsilon", 0.002) or 0.002),
         auto_relax_max_factor=float(getattr(cfg, "corridor_profile_d_auto_relax_max_factor", 1.5) or 1.5),
         parabola_half_window_pts=int(getattr(cfg, "corridor_profile_d_parabola_half_window_pts", 4) or 4),
+        force_symmetric_interval=bool(getattr(cfg, "corridor_profile_d_force_symmetric_interval", True)),
         symmetric_interval_center_mode=str(
             getattr(cfg, "corridor_profile_d_symmetric_center_mode", "parabola") or "parabola"
         ),
@@ -2679,17 +2680,17 @@ def _run_corridor_profile_block(
             )
         elif _rm_thr_mode == "alpha_plus_adaptive_delta":
             log.info(
-                "PIPELINE [CORRIDORS d] Scientific corridor (alpha_plus_adaptive_delta): threshold = %.3f × RMSE_ref + Delta_adaptatif(local) ; nominal included natively.",
+                "PIPELINE [CORRIDORS d] Scientific corridor (alpha_plus_adaptive_delta): threshold = %.3f × RMSE_ref + Delta_adaptive(local) ; nominal included natively.",
                 float(getattr(cfg_eff, "corridor_profile_d_rmse_alpha", 1.05) or 1.05),
             )
         elif _rm_thr_mode == "abs_delta_adaptive":
             if bool(getattr(cfg, "corridor_scientific_nominal_enabled", True)):
                 log.info(
-                    "PIPELINE [CORRIDORS d] Scientific corridor: RMSE_ref = best polished RMSE (spectral_rmse_best_value); threshold = RMSE_ref + Delta_adaptatif(local); nominal included natively.",
+                    "PIPELINE [CORRIDORS d] Scientific corridor: RMSE_ref = best polished RMSE (spectral_rmse_best_value); threshold = RMSE_ref + Delta_adaptive(local); nominal included natively.",
                 )
             else:
                 log.info(
-                    "PIPELINE [CORRIDORS d] Corridor threshold (adaptive abs_delta): RMSE <= RMSE_ref (base curves) + Delta_adaptatif(local).",
+                    "PIPELINE [CORRIDORS d] Corridor threshold (adaptive abs_delta): RMSE <= RMSE_ref (base curves) + Delta_adaptive(local).",
                 )
         elif _rm_thr_mode == "abs_delta":
             if bool(getattr(cfg, "corridor_scientific_nominal_enabled", True)):
@@ -2838,17 +2839,17 @@ def _run_corridor_profile_with_optional_rerun(
 ) -> None:
     """Run corridor profiling; optionally rerun from promoted optimum until stable (capped).
 
-    Each pass appelle ``_run_corridor_profile_block`` puis ``_maybe_promote_best_corridor_refit`` :
+    Each pass calls ``_run_corridor_profile_block`` then ``_maybe_promote_best_corridor_refit``:
 
-    si un point du profil RMSE(d) bat le ``rmse`` exporté, ``out`` est promu (``d_nm``, ``n_lam``,
-    ``k_lam``, …) et l'intervalle précédent peut être invalidé. Tant qu'une promotion survient et que
-    ``corridor_profile_d_rerun_after_promotion`` est vrai, le corridor est relancé avec
-    ``corridor_profile_d_base_source="dict"`` et le snapshot courant comme graine, jusqu'à ce qu'il n'y
-    ait plus de gain sur le profil ou que ``corridor_profile_d_rerun_max_extra_passes`` soit atteint.
+    if a point in the RMSE(d) profile beats the exported ``rmse``, ``out`` is promoted (``d_nm``, ``n_lam``,
+    ``k_lam``, etc.) and the previous interval can be invalidated. As long as a promotion occurs and
+    ``corridor_profile_d_rerun_after_promotion`` is true, the corridor is rerun with
+    ``corridor_profile_d_base_source="dict"`` and the current snapshot as seed, until there
+    is no more gain on the profile or ``corridor_profile_d_rerun_max_extra_passes`` is reached.
 
-    Métadonnées : ``profile_d_promoted_pass1`` / ``profile_d_promoted_pass2`` conservent la sémantique
-    historique (1ʳᵉ et 2ᵉ passe) ; ``profile_d_promoted_corridor_blocks`` donne le nombre total de
-    blocs corridor exécutés dans cette séquence.
+    Metadata: ``profile_d_promoted_pass1`` / ``profile_d_promoted_pass2`` preserve the historical
+    semantics (1st and 2nd pass); ``profile_d_promoted_corridor_blocks`` gives the total number of
+    corridor blocks executed in this sequence.
     """
     out.pop("profile_d_promoted", None)
     out.pop("profile_d_promoted_corridor_blocks", None)
@@ -3102,9 +3103,9 @@ def _maybe_promote_best_corridor_refit(
     log.info(
         "PIPELINE [CORRIDORS d] Promotion: final output switched to best corridor refit | "
         "d %.6f -> %.6f nm | RMSE %s -> %.8f | idx=%d | "
-        "AUDIT BUGFIX: après ce bloc corridor, chercher obligatoirement "
-        "« PIPELINE [MODELE_SPECTRAL_SYNC] OK » raison=corridor_profile_bloc_fin "
-        "(T_théo réalignée sur n,k,d promus ; absence = incohérence spectre vs onglet n,k possible).",
+        "AUDIT BUGFIX: after this corridor block, seek obligatorily "
+        "« PIPELINE [MODELE_SPECTRAL_SYNC] OK » reason=corridor_profile_block_end "
+        "(T_theo realigned on promoted n,k,d; absence = possible inconsistency between spectrum and n,k tab).",
         float(out.get("profile_d_promoted_from_d_nm", float("nan"))),
         float(best_d),
         (
@@ -3118,17 +3119,17 @@ def _maybe_promote_best_corridor_refit(
 
     log_index_spline_d_trace(
         log,
-        "corridor: après promotion (d dict mis à jour)",
+        "corridor: after promotion (d dict updated)",
         best_d,
         detail=(
-            "d_avant="
+            "d_before="
             + (
                 f"{float(out['profile_d_promoted_from_d_nm']):.6f} nm"
                 if out.get("profile_d_promoted_from_d_nm") is not None
                 and np.isfinite(float(out["profile_d_promoted_from_d_nm"]))
                 else "n/a"
             )
-            + f" idx_profil={idx_best}"
+            + f" profile_idx={idx_best}"
         ),
     )
 
@@ -3152,9 +3153,9 @@ def worker_run_corridor_profile_after_nl_choice(
     progress_cb(5, "Corridors: preparing post-NL profiling...")
     log_index_spline_d_trace(
         log,
-        "corridor différé/post-NL: avant profilage d",
+        "deferred/post-NL corridor: before d profiling",
         out.get("d_nm"),
-        detail="snapshot Corridor utilisé pour rerun (≠ base profilage peut différer si best_polished)",
+        detail="Corridor snapshot used for rerun (can differ from profiling base if best_polished)",
     )
     _run_corridor_profile_with_optional_rerun(
         cfg,
@@ -3167,7 +3168,7 @@ def worker_run_corridor_profile_after_nl_choice(
         return out
     log_index_spline_d_trace(
         log,
-        "corridor différé/post-NL: après profilage (dict out, avant nk masque RMSE affichage)",
+        "deferred/post-NL corridor: after profiling (dict out, before nk RMSE display mask)",
         out.get("d_nm"),
     )
     apply_rmse_fit_window_nk_nan_to_result(out, cfg.rmse_fit_lambda_nm)
@@ -3688,7 +3689,7 @@ def worker_spline_optimization(cfg: SplineOptConfig, stop_event: Event, progress
         _d_snap_s = _d_nom_s = "n/a"
     log_index_spline_d_trace(
         log,
-        "worker: cliché gui_solver_snapshot_for_corridors enregistré",
+        "worker: gui_solver_snapshot_for_corridors snapshot saved",
         solver_snapshot.get("d_nm"),
         detail=f"d_out_nominal={_d_nom_s} nm (snapshot.d={_d_snap_s})",
     )

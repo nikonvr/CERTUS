@@ -84,7 +84,7 @@ def test_apply_fixed_log_k_axis_forces_requested_bounds() -> None:
     _apply_fixed_log_k_axis(plot_k)
 
     assert plot_k.log_modes[-1] == ((False, True), {})
-    # PyQtGraph utilise l’échelle log en coordonnées log10 sur l’axe Y.
+    # PyQtGraph uses log scale in log10 coordinates on the Y axis.
     assert plot_k.y_ranges[-1] == (
         float(np.log10(_K_PLOT_YMIN)),
         float(np.log10(_K_PLOT_YMAX)),
@@ -158,7 +158,7 @@ def test_plot_result_adds_large_t_knot_markers(monkeypatch) -> None:
     assert isinstance(badge, _FakeTextItem)
     assert "d = 123.00 nm" in str(badge.html)
     assert plot_k.log_modes[-1] == ((False, True), {})
-    # PyQtGraph utilise l’échelle log en coordonnées log10 sur l’axe Y.
+    # PyQtGraph uses log scale in log10 coordinates on the Y axis.
     assert plot_k.y_ranges[-1] == (
         float(np.log10(_K_PLOT_YMIN)),
         float(np.log10(_K_PLOT_YMAX)),

@@ -1,10 +1,10 @@
 """
-Tests minimaux pour PlotCache et ThreadSafeCounter extraits vers certus_strat_context.
+Minimal tests for PlotCache and ThreadSafeCounter extracted to certus_strat_context.
 
-Valide :
-- L'import depuis certus_strat_context (module cible)
-- L'import depuis CERTUS_STRAT (rétrocompatibilité)
-- Le comportement exact des deux classes
+Validates:
+- Import from certus_strat_context (target module)
+- Import from CERTUS_STRAT (backward compatibility)
+- Exact behavior of the two classes
 """
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import threading
 
 import pytest
 
-# --- Import depuis le module cible (chemin direct après extraction) ---
+# --- Import from the target module (direct path after extraction) ---
 from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter
 
 
@@ -42,10 +42,10 @@ class TestPlotCacheHash:
         assert len(h) > 0
 
     def test_non_serializable_values_are_filtered(self):
-        """Les valeurs non-sérialisables ne doivent pas lever d'exception."""
+        """Non-serializable values must not raise an exception."""
         cache = PlotCache()
         import numpy as np
-        data = {"a": 1, "arr": np.zeros(3)}  # arr n'est pas sérialisable
+        data = {"a": 1, "arr": np.zeros(3)}  # arr is not serializable
         h = cache.get_hash(data)
         assert isinstance(h, str)
 
@@ -61,7 +61,7 @@ class TestPlotCachePutGet:
         assert cache.get("nonexistent") is None
 
     def test_lru_promotion(self):
-        """get() doit remettre l'élément en fin de dict (MRU)."""
+        """get() must put the element at the end of the dict (MRU)."""
         cache = PlotCache()
         cache.put("k1", 1)
         cache.put("k2", 2)
@@ -70,13 +70,13 @@ class TestPlotCachePutGet:
         assert keys[-1] == "k1"
 
     def test_eviction_when_full(self):
-        """La plus ancienne entrée doit être supprimée quand max_size_items est atteint."""
+        """The oldest entry must be removed when max_size_items is reached."""
         cache = PlotCache()
         cache.max_size_items = 3
         cache.put("k1", 1)
         cache.put("k2", 2)
         cache.put("k3", 3)
-        cache.put("k4", 4)  # déclenche l'éviction de k1
+        cache.put("k4", 4)  # triggers eviction of k1
         assert cache.get("k1") is None
         assert cache.get("k4") == 4
 
@@ -117,7 +117,7 @@ class TestThreadSafeCounter:
         assert c.signal is sentinel
 
     def test_thread_safe_increments(self):
-        """Plusieurs threads incrémentent sans race condition."""
+        """Multiple threads increment without race condition."""
         c = ThreadSafeCounter()
         n_threads = 20
         n_increments = 50
@@ -136,24 +136,25 @@ class TestThreadSafeCounter:
 
 
 # =============================================================================
-# Rétrocompatibilité : import depuis CERTUS_STRAT
+# Backward compatibility: import from CERTUS_STRAT
 # =============================================================================
 
 
 def test_retro_compat_plot_cache_importable_from_certus_strat():
-    """PlotCache doit rester importable depuis CERTUS_STRAT (ré-export)."""
-    # Import léger : on ne charge pas Qt, juste le symbole
+    """PlotCache must remain importable from CERTUS_STRAT (re-export)."""
+    # Lightweight import: we do not load Qt, just the symbol
     try:
         from CERTUS_STRAT import PlotCache as PC_from_strat  # noqa: F401
     except ImportError as e:
-        pytest.skip(f"CERTUS_STRAT non importable dans ce contexte : {e}")
+        pytest.skip(f"CERTUS_STRAT not importable in this context: {e}")
     assert PC_from_strat is PlotCache
 
 
 def test_retro_compat_thread_safe_counter_importable_from_certus_strat():
-    """ThreadSafeCounter doit rester importable depuis CERTUS_STRAT (ré-export)."""
+    """ThreadSafeCounter must remain importable from CERTUS_STRAT (re-export)."""
     try:
         from CERTUS_STRAT import ThreadSafeCounter as TSC_from_strat  # noqa: F401
     except ImportError as e:
-        pytest.skip(f"CERTUS_STRAT non importable dans ce contexte : {e}")
+        pytest.skip(f"CERTUS_STRAT not importable in this context: {e}")
     assert TSC_from_strat is ThreadSafeCounter
+

@@ -34,7 +34,7 @@ def test_certus_metal_bilayer_app_constructs_headless(monkeypatch) -> None:
         assert window.widgets["eM_min"].text()
 
         # Run JIT warmup directly to guarantee it has executed in this test
-        window._warmup_numba()
+        window._warmup_numba_thread_runner()
 
         # Verify that Numba has compiled the critical bilayer JIT functions
         from certus_physics.materials_data import get_nk_si

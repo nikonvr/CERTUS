@@ -70,7 +70,6 @@ __all__ = [
     "SUBSTRATE_CHOICES",
     "CANONICAL_SUBSTRATE_LABELS",
     "SUBSTRATE_MIN_LAMBDA",
-    "CAUCHY_PRESETS",
     # Config Classes
     "CFG",
     "GlobalConfig",
@@ -980,7 +979,7 @@ def get_export_config() -> bool:
 
 
 _theme_manager = ConfigManager("certus_theme.json", "light", "theme_mode")
-_font_manager = ConfigManager("certus_theme.json", "Défaut", "font_family")
+_font_manager = ConfigManager("certus_theme.json", "Default", "font_family")
 
 def load_theme_config() -> str:
     """Loads theme config."""
@@ -1174,6 +1173,8 @@ SUBSTRATE_CHOICES = tuple(dict.fromkeys(
         "D263T eco",
         "B270i",
         "Silicon (Si)",
+        "Air",
+        "Sapphire Fresnel",
     ]
 ))
 
@@ -1192,6 +1193,12 @@ CANONICAL_SUBSTRATE_LABELS: dict[str, str] = {
     "b270i": "B270i",
     "silicon": "Silicon (Si)",
     "si": "Silicon (Si)",
+    "si-substrate": "Silicon (Si)",
+    "air": "Air",
+    "void": "Air",
+    "vacuum": "Air",
+    "sapphire fresnel": "Sapphire Fresnel",
+    "sapphire (fr)": "Sapphire Fresnel",
 }
 
 
@@ -1245,20 +1252,6 @@ SUBSTRATE_MIN_LAMBDA: dict[int, float] = {
     2: 360.0,
     3: 230.0,
     4: 400.0,
-}
-
-
-# Cauchy Presets for Materials
-
-CAUCHY_PRESETS = {
-    "Custom": (0.0, 0.0),  # User-defined (editable)
-    "TiO2 (H)": (2.35, 2.30),
-    "SiO2 (L)": (1.46, 1.46),
-    "Ta2O5 (H)": (2.10, 2.05),
-    "MgF2 (L)": (1.38, 1.37),
-    "N-BK7 (Sub)": (1.52, 1.51),
-    "Al2O3 (M)": (1.63, 1.62),
-    "ZrO2 (H)": (2.15, 2.10),
 }
 
 

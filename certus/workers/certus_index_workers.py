@@ -13,35 +13,19 @@ import pandas as pd
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     HC_EV_NM,
-    K_MAX_LIMIT,
-    N_MAX_LIMIT,
     N_MIN_LIMIT,
-    OH_BAND_MAX,
-    OH_BAND_MIN,
     PI,
     SMALL_EPSILON,
     T_SUB_MIN_R_NORM,
     T_SUB_MIN_T_NORM,
-    SUBSTRATE_LIST,
-    SUBSTRATES,
-    SELLMEIER_COEFFS_BY_ID,
     __version__,
     get_resource_path,
     get_safe_worker_count,
-    _get_cpu_count,
-    certus_timestamp_display,
-    certus_timestamp_file,
 )
 from certus.core.certus_index_core import TLU_SOFT_EDGE_MARGIN, TLU_PRIOR_TRANSPARENT_N_MIN_SOFT
 from certus_physics import (
     PGlobalConfig,
-    Sample,
-    SingleLinkageClusterer,
     TLUParameters,
-    _compute_index_cost_gradient_kernel,
-    _compute_tlu_derivatives_kernel,
-    _compute_phase2_derivatives_kernel,
-    _compute_ir_global_cost_gradient_kernel,
     calculate_single_interface_R,
     calculate_reflection_array,
     calculate_bare_substrate_R,
@@ -50,34 +34,24 @@ from certus_physics import (
     calculate_bare_substrate_T_absorbing,
     calculate_RT_single_layer_absorbing_substrate_array,
     calculate_RT_single_layer_backside_array,
-    calculate_transmission_single,
     clip_to_bounds,
     compute_mse_vectorized,
     epsilon1_TL_analytic,
     epsilon2_TLU_array,
     epsilon_to_nk,
     get_n_frosted_glass_array,
-    get_n_substrate_array_by_id,
     SplineBasisCache,
 )
 from certus.utils.certus_index_utils import (
-    spectral_rmse_weights,
     sellmeier_2poles_eval_nj,
-    sellmeier_2poles_eval,
     k_law_8p_eval,
     _deduce_knots_from_k8p,
     _ensure_strictly_increasing,
     _merge_closest_knot_pair,
-    _sellmeier_residuals,
     fit_sellmeier_global,
     fit_k_global_8p,
     DataType,
-    _detect_data_type_from_array,
-    _detect_type_from_column_name,
-    detect_data_type,
-    analyze_loaded_data,
     _get_substrate_n_array_index,
-    normalize_index_config,
     calculate_index_rmse,
 )
 from certus.core.certus_metrology import ValidationStatus
@@ -89,7 +63,6 @@ from certus.core.certus_index_core import (
     TLUObjective,
     OptimizationConfig,
     OptimizationResults,
-    GradientSearcher,
     PGlobalOptimizerINDEX,
     SubsetOptimTask,
     calculate_relative_R_normalization,
@@ -167,9 +140,9 @@ class IRPGlobalCallback:
 
         # [SAFEGUARD] PROTOCOLE EXPERIMENTAL SPECIFIQUE :
 
-        # En mode relatif (use_normalized), R relatif (R_v) = R_calc / T_substrat_nu.
+        # In relative mode (use_normalized), relative R (R_v) = R_calc / T_substrat_nu.
 
-        # Ne pas corriger cette formule, elle correspond a l'etalonnage physique du spectrometre local.
+        # Do not correct this formula, it corresponds to the physical calibration of the local spectrometer.
 
         R_v = Rc / T_sub_norm if self.c.use_normalized else Rc
 
@@ -1676,8 +1649,8 @@ class OptimizationWorker(QObject):
 
         if _o1 is None and not getattr(self, "_warned_phase1_missing_obj", False):
             self.logger.warning(
-                "Phase1 TLU diag/k indisponible (ni _phase1_obj ni _optimizer.objective) — "
-                "exécutez CERTUS_INDEX.py à jour (ex. dossier 1904)."
+                "Phase1 TLU diag/k unavailable (neither _phase1_obj nor _optimizer.objective) - "
+                "run an up-to-date CERTUS_INDEX.py (e.g. folder 1904)."
             )
             self._warned_phase1_missing_obj = True
 
@@ -2366,7 +2339,7 @@ class OptimizationWorker(QObject):
 
             self.progress.emit(95, "Packaging results...", None)
 
-            # Filet anti-Nelder hors bornes (ex. sous-spectres Phase 4) -> Eg ~ 0.03 eV dans le rapport.
+            # Out-of-bounds Nelder-safety net (e.g. Phase 4 sub-spectra) -> Eg ~ 0.03 eV in the report.
 
             if self.best_params is not None:
                 _b_fix = obj.get_bounds()
@@ -2379,7 +2352,7 @@ class OptimizationWorker(QObject):
 
                 if float(np.max(np.abs(_xp - np.asarray(self.best_params, dtype=np.float64).ravel()))) > 1e-8:
                     self.logger.warning(
-                        "TLU: best_params projetés dans les bornes avant bilan (Nelder ou moyenne sous-spectres)."
+                        "TLU: best_params projected within bounds before synthesis (Nelder or sub-spectra average)."
                     )
 
                     self.best_params = _xp

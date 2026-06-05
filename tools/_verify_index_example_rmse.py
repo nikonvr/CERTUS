@@ -1,6 +1,6 @@
-"""Verification INDEX : RMSE finale sur un fichier spectre (meme chemins que l'UI).
+"""INDEX verification: final RMSE on a spectrum file (same paths as UI).
 
-Usage :
+Usage:
   python tools/_verify_index_example_rmse.py
   python tools/_verify_index_example_rmse.py --sapphire
   python tools/_verify_index_example_rmse.py --file "PATH/H800-sapphire-RTrelNB.xlsx"
@@ -14,7 +14,7 @@ import os
 import sys
 from pathlib import Path
 
-# Répertoire projet (parent de tools/)
+# Project directory (parent of tools/)
 _ROOT = str(Path(__file__).resolve().parent.parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -40,7 +40,7 @@ def main() -> int:
     ap.add_argument(
         "--file",
         default=None,
-        help="Spectre CSV/XLSX (defaut: example/CSV-index-example.csv)",
+        help="CSV/XLSX spectrum (default: example/CSV-index-example.csv)",
     )
     ap.add_argument(
         "--sapphire",
@@ -52,7 +52,7 @@ def main() -> int:
         type=float,
         default=None,
         metavar="D",
-        help="Epaisseur de couche connue : borne min=max=D (nm), ex. 2800",
+        help="Known layer thickness: bound min=max=D (nm), e.g. 2800",
     )
     args = ap.parse_args()
 
@@ -70,18 +70,18 @@ def main() -> int:
         win.sb_dmin.setValue(d_nm)
         win.sb_dmax.setValue(d_nm)
 
-    print("=== Reglages effectifs avant optimisation ===")
-    print(f"  Fichier : {spectrum_path}")
-    print(f"  Substrat : {SUBSTRATE_LIST[win.cb_sub.currentIndex()]} (combo index {win.cb_sub.currentIndex()})")
-    print(f"  lambda min/max : {win.sb_lmin.value():.1f} - {win.sb_lmax.value():.1f} nm")
-    print(f"  Epaisseur bornes : {win.sb_dmin.value():.1f} - {win.sb_dmax.value():.1f} nm")
-    print(f"  T/Tsub normalise : {win.chk_normalized.isChecked()}")
-    print(f"  Haute precision : {win.chk_high_precision.isChecked()}")
-    print(f"  Graine epaisseur FFT : {getattr(win, '_estimated_thickness_nm', None)}")
+    print("=== Effective settings before optimization ===")
+    print(f"  File: {spectrum_path}")
+    print(f"  Substrate: {SUBSTRATE_LIST[win.cb_sub.currentIndex()]} (combo index {win.cb_sub.currentIndex()})")
+    print(f"  lambda min/max: {win.sb_lmin.value():.1f} - {win.sb_lmax.value():.1f} nm")
+    print(f"  Thickness bounds: {win.sb_dmin.value():.1f} - {win.sb_dmax.value():.1f} nm")
+    print(f"  T/Tsub normalized: {win.chk_normalized.isChecked()}")
+    print(f"  High precision: {win.chk_high_precision.isChecked()}")
+    print(f"  FFT thickness seed: {getattr(win, '_estimated_thickness_nm', None)}")
     print()
 
     loop = QEventLoop()
-    # Pipeline H800 : TLU puis IR (popup auto Yes apres 5 s) — peut depasser 15 min.
+    # H800 pipeline: TLU then IR (auto popup Yes after 5 s) — can exceed 15 min.
     timeout_ms = 2_700_000
 
     def quit_loop() -> None:
@@ -107,9 +107,9 @@ def main() -> int:
 
     res = win.latest_results
     rmse = math.sqrt(max(0.0, float(res.final_mse)))
-    print("=== Resultat ===")
-    print(f"  RMSE finale (sqrt(final_mse)) : {rmse:.6f}")
-    print(f"  Epaisseur optimale : {res.optimal_thickness:.2f} nm")
+    print("=== Result ===")
+    print(f"  Final RMSE (sqrt(final_mse)): {rmse:.6f}")
+    print(f"  Optimal thickness: {res.optimal_thickness:.2f} nm")
     if res.tlu_params is not None:
         t = res.tlu_params
         print(f"  TLU : Eg={t.Eg:.4f} eV  E0={t.E0:.4f} eV  eps_inf={t.eps_inf:.4f}")

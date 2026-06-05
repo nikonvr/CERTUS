@@ -849,7 +849,7 @@ class CertusLogPanel(QWidget):
 
 
 class AutoShrinkTitleLabel(QLabel):
-    """A label that shrinks its font size to prevent being cut off (mangé)."""
+    """A label that shrinks its font size to prevent being cut off."""
     def __init__(self, text: str, default_size: int = 16, min_size: int = 9, color: str = CertusTheme.TEXT_MAIN, weight: int | str = 800, parent=None):
         super().__init__(text, parent)
         from PyQt6.QtWidgets import QSizePolicy
@@ -1221,32 +1221,45 @@ def create_top_actions_bar(
 
 
 def open_documentation(module_name: str) -> None:
-    """
-
-    Open documentation for specified module in web browser.
-
-    Args:
-
-        module_name: Name of module (e.g., "CERTUS_DESIGN")
-
-    """
+    """Open the HTML documentation page for a CERTUS module."""
 
     import webbrowser
 
-    # Correct path is 'pages/', not 'docs/'
-
-    path = get_resource_path(f"pages/{module_name}.html")
+    module_aliases = {
+        "FIELD": "CERTUS_FIELD",
+        "CERTUS_FIELD": "CERTUS_FIELD",
+        "INDEX_SPLINE": "CERTUS_INDEX_SPLINE",
+        "CERTUS_INDEX_SPLINE": "CERTUS_INDEX_SPLINE",
+        "INDEX": "CERTUS_INDEX",
+        "CERTUS_INDEX": "CERTUS_INDEX",
+        "DESIGN": "CERTUS_DESIGN",
+        "CERTUS_DESIGN": "CERTUS_DESIGN",
+        "RE": "CERTUS_RE",
+        "CERTUS_RE": "CERTUS_RE",
+        "STRAT": "CERTUS_STRAT",
+        "CERTUS_STRAT": "CERTUS_STRAT",
+        "SUBSTRATE": "CERTUS_SUBSTRATE_INDEX",
+        "CERTUS_SUBSTRATE_INDEX": "CERTUS_SUBSTRATE_INDEX",
+        "METAL SINGLE": "CERTUS_METAL_SINGLE",
+        "METAL_BILAYER": "CERTUS_METAL_BILAYER",
+        "CERTUS_METAL_SINGLE": "CERTUS_METAL_SINGLE",
+        "CERTUS_METAL_BILAYER": "CERTUS_METAL_BILAYER",
+    }
+    module_key = module_aliases.get(module_name.strip().upper(), module_name.strip().upper())
+    path = get_resource_path(f"pages/{module_key}.html")
 
     if Path(path).exists():
         webbrowser.open(QUrl.fromLocalFile(path).toString())
+        return
 
-    else:
-        # Fallback to HUB or index
-
-        fallback = get_resource_path("pages/CERTUS_HUB.html")
-
+    fallback_candidates = [
+        get_resource_path("pages/CERTUS_HUB.html"),
+        get_resource_path("pages/CERTUS_INDEX.html"),
+    ]
+    for fallback in fallback_candidates:
         if Path(fallback).exists():
             webbrowser.open(QUrl.fromLocalFile(fallback).toString())
+            return
 
 
 # NOTE: CertusScientificPlot is defined later in this file (line ~827) with full features
@@ -5373,59 +5386,133 @@ class CertusBaseApp(QMainWindow):
 
         return rmse is not None and np.isfinite(rmse) and rmse >= 0.0
 
-    def _merge_adjacent_layers(self) -> None:
+    def _merge_adjacent_layers(self, table: QTableWidget = None) -> None:
         """Merges adjacent layers of same material"""
 
-        merged = False
+        if table is None:
+            table = getattr(self, "front_table", None)
+        if table is None:
+            return
 
+        merged = False
         passes = 0
 
         while passes < 10:
             passes += 1
-
             found = False
-
             i = 1
 
-            while i < self.front_table.rowCount():
-                m_curr = self._safe_get_combo_text(i, 0)
-
-                m_prev = self._safe_get_combo_text(i - 1, 0)
+            while i < table.rowCount():
+                m_curr = self._safe_get_combo_text(i, 0, table)
+                m_prev = self._safe_get_combo_text(i - 1, 0, table)
+                if m_curr is None:
+                    item_curr = table.item(i, 0)
+                    m_curr = item_curr.text() if item_curr else None
+                if m_prev is None:
+                    item_prev = table.item(i - 1, 0)
+                    m_prev = item_prev.text() if item_prev else None
 
                 if m_curr and m_prev and m_curr == m_prev:
                     try:
-                        q_curr = self.front_table.cellWidget(i, 1).value()
+                        widget_curr = table.cellWidget(i, 1)
+                        if widget_curr and hasattr(widget_curr, "value"):
+                            q_curr = widget_curr.value()
+                        else:
+                            item_curr = table.item(i, 1)
+                            q_curr = float(item_curr.text()) if item_curr else 0.0
 
-                        sp_prev = self.front_table.cellWidget(i - 1, 1)
+                        widget_prev = table.cellWidget(i - 1, 1)
+                        if widget_prev and hasattr(widget_prev, "setValue"):
+                            widget_prev.blockSignals(True)
+                            widget_prev.setValue(widget_prev.value() + q_curr)
+                            widget_prev.blockSignals(False)
+                        else:
+                            item_prev = table.item(i - 1, 1)
+                            if item_prev:
+                                val_prev = float(item_prev.text()) + q_curr
+                                item_prev.setText(f"{val_prev:.4f}")
 
-                        sp_prev.blockSignals(True)
-
-                        sp_prev.setValue(sp_prev.value() + q_curr)
-
-                        sp_prev.blockSignals(False)
-
-                        self.front_table.removeRow(i)
-
+                        table.removeRow(i)
                         merged = True
-
                         found = True
-
                         self.log(f"Merged adjacent layers ({m_curr})", "INFO")
-
                         continue
 
                     except NUMERICAL_FAULT_EXCEPTIONS as e:
                         (self.logger.error(f"Merge error: {e}") if hasattr(self, "logger") and self.logger else None)
+                    except (ValueError, AttributeError) as e:
+                        logging.debug(f"Merge values error: {e}")
 
                 i += 1
 
             if not found:
                 break
 
-        self._update_layer_count()
+        if hasattr(self, "front_table") and table == self.front_table:
+            self._update_layer_count()
+            if merged:
+                self._schedule_eval()
+        elif hasattr(self, "structure_changed"):
+            self.structure_changed.emit()
+        elif hasattr(self, "stack_panel") and hasattr(self.stack_panel, "structure_changed"):
+            self.stack_panel.structure_changed.emit()
 
-        if merged:
-            self._schedule_eval()
+    def smart_cleanup(self, table: QTableWidget = None, update_target: bool = True) -> int:
+        """
+        Smart cleanup: merges identical adjacent materials and removes
+        very thin layers (< 1.0 nm) which are likely artifacts.
+        """
+        if table is None:
+            table = getattr(self, "front_table", None)
+        if table is None:
+            return 0
+
+        removed_count = 0
+        changed = False
+
+        # Step 1: Remove very thin layers dynamically based on RMSE
+        current_rmse = getattr(self, "_workflow_best_rmse", 1.0)
+        multiplier = getattr(self, "_cleanup_threshold_multiplier", 150.0)
+        threshold = max(0.05, min(1.0, current_rmse * multiplier))  # Adaptive threshold
+
+        rows_to_remove = []
+        for r in range(table.rowCount() - 1, -1, -1):
+            thick_item = table.item(r, 2)
+            if thick_item:
+                try:
+                    thickness = float(thick_item.text())
+                    if thickness < threshold:
+                        rows_to_remove.append(r)
+                except ValueError:
+                    pass
+
+        if rows_to_remove:
+            self.log(f"Smart cleanup: removing {len(rows_to_remove)} layers < {threshold:.2f} nm (adaptive)", "INFO")
+            for r in rows_to_remove:
+                table.removeRow(r)
+            removed_count += len(rows_to_remove)
+            changed = True
+
+        # Step 2: Merge identical adjacent materials
+        pre_merge_count = table.rowCount()
+        self._merge_adjacent_layers(table)
+        post_merge_count = table.rowCount()
+
+        merge_diff = pre_merge_count - post_merge_count
+        if merge_diff > 0:
+            removed_count += merge_diff
+            changed = True
+            self.log(f"Smart cleanup: merged {merge_diff} adjacent layers", "INFO")
+
+        if changed:
+            if hasattr(self, "_update_layer_count") and table == getattr(self, "front_table", None):
+                self._update_layer_count()
+            elif hasattr(self, "structure_changed"):
+                self.structure_changed.emit()
+            elif hasattr(self, "stack_panel") and hasattr(self.stack_panel, "structure_changed"):
+                self.stack_panel.structure_changed.emit()
+
+        return removed_count
 
     def _monotonic_visual_mode_enabled(self) -> bool:
         """Enable strict non-regression of visualized spectrum during/after workflow."""

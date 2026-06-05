@@ -39,13 +39,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html" class="active">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html" class="active">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -82,9 +86,9 @@
 
             START(["User input:<br>design thicknesses d₁…dₙ,<br>materials H/L, substrate,<br>noise tolerance σ"]):::terminal --> S0
 
-            S0["<b>Step 0</b> — Nominal Stack<br><code>calculationate_nominal_properties</code><br>Compute T_nominal(λ) via TMM<br>for the perfect stack"]:::process --> S1
+            S0["<b>Step 0</b> — Nominal Stack<br><code>calculate_nominal_properties</code><br>Compute T_nominal(λ) via TMM<br>for the perfect stack"]:::process --> S1
 
-            S1["<b>Step 1</b> — Index Precomputation<br><code>precompute_indices_and_matrices</code><br>Build n(λ) arrays (Complex128)<br>Pre-multiply M_before cache"]:::process --> NUC
+            S1["<b>Step 1</b> — Index Precomputation<br><code>precompute_clues_and_matrices</code><br>Build n(λ) arrays (Complex128)<br>Pre-multiply M_before cache"]:::process --> NUC
 
             NUC{"Smart<br>Nucleation?"}:::decision
             NUC -->|"Yes"| NUC_RUN["Nucleation Search<br>rank_nucleation_candidates_kernel<br>→ find best initial block<br>(λ_nuc, block_size)"]:::highlight
@@ -93,7 +97,7 @@
 
             subgraph PHASE_A ["Phase A — Layer-by-Layer Candidate Search"]
             PA["<b>For each layer i = 0…N−1:</b>"]:::decision --> PA1
-            PA1["A.1 Dynamics Ranking<br><code>calculationate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
+            PA1["A.1 Dynamics Ranking<br><code>calculate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
             PA2["A.2 Safety Filters<br><code>check_extrema_proximity_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>near T maxima/minima,<br>insufficient spectral resolution"]:::decision --> PA3
             PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code><br>Pre-allocated gaussian noise<br>Simulate growth → P95(|Δd|)"]:::process --> PA4
             PA4["A.4 Select Best λ for layer i<br>Save to strategy + SYM scoring"]:::highlight --> PA5
@@ -122,7 +126,7 @@
             <strong>Nucleation (optional):</strong> pre-rank initial block candidates using a parallel Numba kernel,
             then expand the block size adaptively with a 40% degradation threshold.<br>
             <strong>Phase A (per layer):</strong> for each layer, compute dynamics $\Delta T(\lambda)$ at all candidate
-            wavelengths, apply safety filters, validate the survivors using Monte Carlo simulations, and propagate the
+            wavelengths, apply safety filters, validate the survivors using <a href="https://en.wikipedia.org/wiki/Monte_Carlo_method" target="_blank">Monte Carlo</a> simulations, and propagate the
             resulting thickness errors into the TMM matrix cache for the next layer.<br>
             <strong>Phase B (global):</strong> dynamic programming groups layers into monochromatic blocks across three
             cost modes (THICKNESS, THICKNESS², SYM). Elite candidate mutations refine the top solutions. Each strategy
@@ -184,7 +188,7 @@
         <h3>1.4 Incoherent Backside Correction</h3>
         <p>
             The substrate back face reflects incoherently. CERTUS uses a <strong>dual-matrix</strong> approach in
-            <code>calculationate_detailed_growth</code>:
+            <code>calculate_detailed_growth</code>:
         </p>
         <div class="eq-box">
             $$ T_{total} = \frac{T_{fwd} \cdot T_{ext}}{1 - R_{rev} \cdot R_{ext}} $$
@@ -317,7 +321,7 @@
         </div>
 
         <h3>3.1 Step A.1 — Dynamics Ranking</h3>
-        <p><code>calculationate_dynamics_ULTIMATE</code> computes the peak-to-peak $\Delta T(\lambda_k) = T_{max} - T_{min}$
+        <p><code>calculate_dynamics_ULTIMATE</code> computes the peak-to-peak $\Delta T(\lambda_k) = T_{max} - T_{min}$
             for every candidate $\lambda_k$ in the scan range. Candidates are sorted by $\Delta T$ descending.
             The function also returns $T_{init}$, $T_{final}$, and $T_{min}$ per candidate for downstream filters.</p>
 
@@ -592,7 +596,7 @@
 
                 <h3>7.1 Spectral Resolution Check</h3>
                 <p>
-                    <code>_calculationate_strategy_spectral_resolution</code> sweeps every
+                    <code>_calculate_strategy_spectral_resolution</code> sweeps every
                     (layer, monitoring wavelength) pair and computes the curvature-based resolution limit:
                     $$\text{res\_limit} = \Delta\lambda \cdot \sqrt{T_{tol} / \kappa}$$
                     where $\kappa$ is the curvature of T(λ) at the monitoring wavelength and
@@ -627,7 +631,7 @@
 
                 <h3>7.5 Detailed Growth Visualization</h3>
                 <p>
-                    <code>calculationate_detailed_growth</code> simulates the exact transmittance curve during
+                    <code>calculate_detailed_growth</code> simulates the exact transmittance curve during
                     layer-by-layer deposition, including the dual-matrix backside correction. This produces the
                     real-time $T(d)$ trace that the operator would see on the monitoring screen.
                 </p>

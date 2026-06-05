@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Régénère pages/CERTUS_*.html : <head> unifié (MathJax + Mermaid + assets partagés)
-et corps <body> extrait de l'existant.
+Regenerates pages/CERTUS_*.html: unified <head> (MathJax + Mermaid + shared assets)
+and <body> body extracted from the existing.
 
-Usage (depuis la racine du projet) :
+Usage (from project root):
     python tools/build_certus_pages.py
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ def _ensure_shared_assets() -> None:
     text = design.read_text(encoding="utf-8")
     m = re.search(r"<style>(.*?)</style>", text, re.DOTALL)
     if not m:
-        raise SystemExit("CERTUS_DESIGN.html: bloc <style> introuvable")
+        raise SystemExit("CERTUS_DESIGN.html: <style> block not found")
     css_path = ASSETS / "certus_report.css"
     css_path.write_text(m.group(1).strip() + "\n", encoding="utf-8")
     print(f"Wrote {css_path.relative_to(ROOT)}")
@@ -77,11 +77,11 @@ def rebuild_page(html_path: Path) -> None:
     raw = html_path.read_text(encoding="utf-8")
     tm = re.search(r"<title>(.*?)</title>", raw, re.DOTALL | re.IGNORECASE)
     if not tm:
-        raise SystemExit(f"{html_path.name}: <title> manquant")
+        raise SystemExit(f"{html_path.name}: missing <title>")
     title = re.sub(r"\s+", " ", tm.group(1).strip())
     bm = re.search(r"<body[^>]*>(.*)</body>", raw, re.DOTALL | re.IGNORECASE)
     if not bm:
-        raise SystemExit(f"{html_path.name}: <body> manquant")
+        raise SystemExit(f"{html_path.name}: missing <body>")
     body_inner = bm.group(1).strip()
     out = _head_html(title) + body_inner + "\n\n</body>\n</html>\n"
     html_path.write_text(out, encoding="utf-8")

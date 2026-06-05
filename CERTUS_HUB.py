@@ -408,6 +408,18 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "contract": "scientific_workflow",
     },
     {
+        "title": "FIELD",
+        "sub": "Field & LIDT",
+        "desc": "Electric field profile computation and active minimax LIDT optimization.",
+        "script": "CERTUS_FIELD.py",
+        "icon": "⚡",
+        "color": CertusTheme.BRAND_DESIGN,
+        "badge": "LIDT",
+        "type": "single",
+        "category": "core_workflow",
+        "contract": "scientific_workflow",
+    },
+    {
         "title": "SMOOTHER",
         "sub": "Processing",
         "desc": "Parametric smoothing of spectral measurement data.",
@@ -572,10 +584,10 @@ class CertusHub(QMainWindow):
         self.btn_theme = CertusThemeToggle(header_widget)
         
         self.cmb_font = QComboBox(header_widget)
-        self.cmb_font.addItems(["Défaut", "Gemini", "iOS (San Francisco)", "Roboto", "Open Sans", "Inter"])
+        self.cmb_font.addItems(["Default", "Gemini", "iOS (San Francisco)", "Roboto", "Open Sans", "Inter"])
         self.cmb_font.setCurrentText(load_font_config())
         self.cmb_font.currentTextChanged.connect(self.on_font_changed)
-        self.cmb_font.setToolTip("Choisir la police globale")
+        self.cmb_font.setToolTip("Choose the global font")
         self.cmb_font.setStyleSheet(f"""
             QComboBox {{
                 background-color: {CertusTheme.SURFACE};
@@ -1089,6 +1101,7 @@ class CertusHub(QMainWindow):
             ("Ctrl+Shift+S", "CERTUS_STRAT.py", "Launch STRAT"),
             ("Ctrl+I", "CERTUS_INDEX.py", "Launch INDEX"),
             ("Ctrl+M", "CERTUS_METAL_SINGLE.py", "Launch METAL"),
+            ("Ctrl+F", "CERTUS_FIELD.py", "Launch FIELD"),
             ("Ctrl+Plus", None, "Zoom in"),
             ("Ctrl+Minus", None, "Zoom out"),
             ("Ctrl+0", None, "Reset zoom"),

@@ -89,11 +89,11 @@ def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_layers_all = (n_l - 1j * k_l).reshape(n_pts, 1)
 
-    # Calcul exact R et T (avec backside)
+    # Exact R and T calculation (with backside)
 
     r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
-    # T du substrate nu (avec backside) - Securite 1e-7 pour eviter NaN
+    # Bare substrate T (with backside) - 1e-7 safety bound to prevent NaN
 
     t_sub_nu = np.maximum(calculate_bare_substrate_RT(lam, n_sub), 1e-7)
 
@@ -124,7 +124,7 @@ def _transmittance_absolute_from_nk(lam, n_l, k_l, d_nm, n_sub):
 
     n_layers_all = (n_l - 1j * k_l).reshape(len(lam), 1)
 
-    # Calcul exact R et T (avec backside)
+    # Exact R and T calculation (with backside)
 
     r_film_tot, t_film_tot = calculate_RT_vectorized_real(_THICK_BUF, n_layers_all, n_sub, lam, with_backside=True)
 
@@ -187,7 +187,7 @@ def spectral_rmse_weights(lam, weight_space="log"):
     if n < 2:
         return np.ones_like(lam)
 
-    # Calcul des inter-distances en log(lambda)
+    # Compute log(lambda) inter-distances
 
     log_lam = np.log(np.maximum(lam, 1e-9))
 
@@ -201,13 +201,13 @@ def spectral_rmse_weights(lam, weight_space="log"):
 
     w[-1] = log_lam[-1] - log_lam[-2]
 
-    # On travaille en value absolue pour gerer les grilles decroissantes
+    # Work with absolute values to handle decreasing grids
 
     w = np.abs(w)
 
-    # Normalisation : la somme des weights est egale au nombre de points
+    # Normalization: the sum of weights is equal to the number of points
 
-    # pour garder une RMSE coherente avec l'echelle physique habituelle.
+    # to keep the RMSE consistent with the usual physical scale.
 
     sw = np.sum(w)
 
@@ -402,7 +402,7 @@ def _compute_study_lambda_window_nm(lam_m: np.ndarray, cfg: Any) -> tuple[float,
 
 
 def _rmse_d_lower_envelope_mask(d_nm: np.ndarray, rmse: np.ndarray, tol_nm: float) -> np.ndarray:
-    """Masque booléen : point sur l enveloppe inférieure locale en épaisseur (d +/- tol)."""
+    """Boolean mask: point on the local lower thickness envelope (d +/- tol)."""
     d_a = np.asarray(d_nm, dtype=np.float64).ravel()
     r_a = np.asarray(rmse, dtype=np.float64).ravel()
     n = int(d_a.size)

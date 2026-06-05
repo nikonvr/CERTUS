@@ -127,7 +127,6 @@ from PyQt6.QtCore import QObject
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    CAUCHY_PRESETS,
     CFG,
     ensure_numpy_array,
     get_complex_dtype,

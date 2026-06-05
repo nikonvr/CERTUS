@@ -1,4 +1,4 @@
-"""Sélection automatique du meilleur preset matériau (Smart Init)."""
+"""Automatic selection of the best material preset (Smart Init)."""
 from __future__ import annotations
 
 import numpy as np

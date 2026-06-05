@@ -1,4 +1,4 @@
-"""Tests unitaires : certus_spectral_preproc — filtrage Savitzky-Golay."""
+"""Unit tests: certus_spectral_preproc — Savitzky-Golay filtering."""
 
 from __future__ import annotations
 
@@ -12,14 +12,14 @@ from certus.utils.certus_spectral_preproc import (
 
 
 # ---------------------------------------------------------------------------
-# Anciennement : auto_tune_savgol_params (fonction supprimée/fusionnée dans
-# smooth_spectrum_auto qui retourne les paramètres dans ses diagnostics).
-# Les assertions portent désormais sur smooth_spectrum_auto + diagnostics.
+# Formerly: auto_tune_savgol_params (function deleted/merged into
+# smooth_spectrum_auto which returns parameters in its diagnostics).
+# Assertions now apply to smooth_spectrum_auto + diagnostics.
 # ---------------------------------------------------------------------------
 
 
 class TestSmoothSpectrumAutoParams:
-    """Vérifie que smooth_spectrum_auto retourne des paramètres cohérents."""
+    """Verifies that smooth_spectrum_auto returns consistent parameters."""
 
     def test_returns_valid_window_and_order(self) -> None:
         lam = np.linspace(300, 800, 100)
@@ -30,8 +30,8 @@ class TestSmoothSpectrumAutoParams:
         order = diag["polyorder"]
         assert isinstance(wl, int)
         assert isinstance(order, int)
-        assert wl >= 3, "window doit être >= 3"
-        assert wl % 2 == 1, "window doit être impair"
+        assert wl >= 3, "window must be >= 3"
+        assert wl % 2 == 1, "window must be odd"
         assert order >= 1
 
     def test_heavy_window_gte_base_window(self) -> None:
@@ -59,3 +59,4 @@ class TestDynamicSavgolBlend:
         y = np.ones_like(lam) * 0.5
         result = dynamic_savgol_blend(lam, y, base_window=7, poly=3)
         np.testing.assert_allclose(result, y, atol=1e-6)
+

@@ -591,9 +591,9 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
         # 4 & 5: Ranks
         th_rank = strat.get("thickness_rank", None)
-        self.table.setItem(row, 4, NumericTableWidgetItem(str(th_rank) if th_rank is not None else "N/A (non calcule)"))
+        self.table.setItem(row, 4, NumericTableWidgetItem(str(th_rank) if th_rank is not None else "N/A (not calculated)"))
         sp_rank = strat.get("spectral_rank", None)
-        self.table.setItem(row, 5, NumericTableWidgetItem(str(sp_rank) if sp_rank is not None else "N/A (non calcule)"))
+        self.table.setItem(row, 5, NumericTableWidgetItem(str(sp_rank) if sp_rank is not None else "N/A (not calculated)"))
 
         # 6 & 7: Blocks / Changes
         self.table.setItem(row, 6, NumericTableWidgetItem(str(strat["n_blocks"])))
@@ -1532,7 +1532,7 @@ class CertusScientificPlot(pg.PlotWidget):
 
         act_copy = QAction(CERTUS_UI_STRINGS["copy_excel_tsv"], parent_widget)
 
-        act_copy.setToolTip("Ctrl+Shift+C - TSV pour Excel")
+        act_copy.setToolTip("Ctrl+Shift+C - TSV for Excel")
 
         act_copy.triggered.connect(self._on_copy_excel_clipboard)
 
@@ -1937,7 +1937,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
 
         min_y, max_y = (np.min(sigmas), np.max(sigmas)) if len(sigmas) > 0 else (0.01, 10.0)
 
-        # Axe Y (Gauche)
+        # Y-Axis (Left)
 
         ay = plot.getAxis("left")
 
@@ -1952,7 +1952,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
         if custom_ticks_y:
             ay.setTicks(custom_ticks_y)
 
-        # Axe X (Bas)
+        # X-Axis (Bottom)
 
         ax = plot.getAxis("bottom")
 
@@ -1990,7 +1990,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
             name="Simulations",
         )
 
-        # Courbe de tendance
+        # Trend curve
 
         if len(rmses) > 0:
             x_min = float(np.min(rmses))
@@ -2197,7 +2197,7 @@ class InteractiveHeatmapWindow(QWidget):  # <--- Changement ici: QWidget au lieu
 
         self.plot_widget.showGrid(x=True, y=True, alpha=0.2)
 
-        # Ajout du widget au layout
+        # Add widget to layout
 
         attach_excel_clipboard_context_menu(self.plot_widget)
 
@@ -3552,13 +3552,13 @@ class LiveMonitorWindow(CertusWindowSpyMixin, QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        # Layout principal simple (plus de Splitter)
+        # Simple main layout (no more Splitter)
 
         self.layout = QVBoxLayout(self.central_widget)
 
         self.layout.setContentsMargins(0, 0, 0, 0)
 
-        # -- Widget de croissance uniquement --
+        # -- Growth widget only --
 
         self.growth_widget = QWidget()
 
@@ -5767,7 +5767,7 @@ class CertusStratApp(CertusBaseApp):
             if _k in self.widgets:
                 self.widgets[_k].setToolTip(_tip)
 
-        # SYM est une strategie supplementaire obligatoire: toujours activee.
+        # SYM is a mandatory supplementary strategy: always active.
 
         if "sym_enable" in self.widgets:
             self.widgets["sym_enable"].setText("1")

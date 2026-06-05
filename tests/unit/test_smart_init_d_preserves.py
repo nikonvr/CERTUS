@@ -528,7 +528,7 @@ def test_bridge_mesh_reduces_manual_to_worker_rmse_jump_with_ir_extension() -> N
 
 
 
-    # Génère une cible parfaitement cohérente avec le modèle source.
+    # Generates a target perfectly consistent with the source model.
 
     from certus.spline.spline_objective import nk_from_x_pwlnk
 

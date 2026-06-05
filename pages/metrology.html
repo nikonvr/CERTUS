@@ -54,6 +54,7 @@
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
             <a href="CERTUS_METAL_BILAYER.html">METAL</a>
@@ -221,10 +222,10 @@
     <h3>9.1 Envelopes as initial guess (seed)</h3>
     <p>Thick-film spectra have many fringes; random starts trap in wrong interference orders. Discrete <i>n(&lambda;)</i>, <i>k(&lambda;)</i>, <i>d</i> from envelopes provide a physically anchored starting point.</p>
     <h3>9.2 B-splines and RMSE on differential ratio</h3>
-    <p>Dispersion is parameterized with <strong>B-splines</strong> for <i>n</i> and <i>k</i>. The merit function must <strong>not</strong> fit absolute sample transmission (Section 6). Minimize RMSE between theoretical <i>T<sub>calc,sample</sub>/T<sub>calc,bare</sub></i> and measured <i>R<sub>raw</sub></i> over all wavelengths.</p>
+    <p>Dispersion is parameterized with <a href="https://en.wikipedia.org/wiki/B-spline" target="_blank"><strong>B-splines</strong></a> for <i>n</i> and <i>k</i>. The merit function must <strong>not</strong> fit absolute sample transmission (Section 6). Minimize RMSE between theoretical <i>T<sub>calc,sample</sub>/T<sub>calc,bare</sub></i> and measured <i>R<sub>raw</sub></i> over all wavelengths.</p>
     <div class="equation"><i>RMSE</i> = [ (1/<i>N</i>) &sum; ( <i>Ratio<sub>calc</sub></i> - <i>R<sub>raw</sub></i> )<sup>2</sup> ]<sup>1/2</sup></div>
     <h3>9.3 Phase coupling and constrained relaxation</h3>
-    <p>Fixing <i>n<sub>s</sub></i> with small systematic error forces non-physical twists in <i>n(&lambda;)</i> over ~100 fringes. Use <strong>bounded relaxation</strong>: film via free B-splines and &plusmn;2% on <i>d</i>; substrate via rigid Sellmeier plus vertical offset &Delta;<i>n<sub>s</sub></i> capped at &plusmn;0.005 (Section 1). Thick Fabry–Pérot fringes can self-calibrate <i>n<sub>s</sub></i> better than bare-substrate measurement alone.</p>
+    <p>Fixing <i>n<sub>s</sub></i> with small systematic error forces non-physical twists in <i>n(&lambda;)</i> over ~100 fringes. Use <strong>bounded relaxation</strong>: film via free B-splines and &plusmn;2% on <i>d</i>; substrate via rigid <a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank">Sellmeier</a> plus vertical offset &Delta;<i>n<sub>s</sub></i> capped at &plusmn;0.005 (Section 1). Thick Fabry–Pérot fringes can self-calibrate <i>n<sub>s</sub></i> better than bare-substrate measurement alone.</p>
     <h3>9.4 Global fit benefits</h3>
     <ul>
         <li>Statistical averaging over thousands of spectral points.</li>

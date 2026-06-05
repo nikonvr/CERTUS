@@ -1810,7 +1810,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
 
-            # Export déclenché uniquement depuis on_optimization_finished
+            # Export triggered only from on_optimization_finished
 
     def _get_config_dict(self) -> dict:
         """Returns JSON struct for config"""

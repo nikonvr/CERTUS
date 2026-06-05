@@ -51,7 +51,7 @@ def _parse_lock_requirements(lock_path: Path) -> set[str]:
 def check_lock_is_strictly_pinned() -> list[str]:
     lockfile = REPO_ROOT / "requirements.lock"
     if not lockfile.exists():
-        return [f"Fichier manquant: {lockfile.name}"]
+        return [f"Missing file: {lockfile.name}"]
     errors: list[str] = []
     for idx, raw_line in enumerate(lockfile.read_text(encoding="utf-8").splitlines(), start=1):
         line = raw_line.strip()
@@ -61,12 +61,12 @@ def check_lock_is_strictly_pinned() -> list[str]:
             continue
         if "==" not in line:
             errors.append(
-                f"requirements.lock:{idx} non figé strictement (attendu 'package==version'): {line}"
+                f"requirements.lock:{idx} not strictly pinned (expected 'package==version'): {line}"
             )
             continue
         pkg, ver = line.split("==", 1)
         if not pkg.strip() or not ver.strip():
-            errors.append(f"requirements.lock:{idx} entrée lock invalide: {line}")
+            errors.append(f"requirements.lock:{idx} invalid lock entry: {line}")
     return errors
 
 
@@ -74,9 +74,9 @@ def check_lock_consistency() -> list[str]:
     pyproject = REPO_ROOT / "pyproject.toml"
     lockfile = REPO_ROOT / "requirements.lock"
     if not pyproject.exists():
-        return [f"Fichier manquant: {pyproject.name}"]
+        return [f"Missing file: {pyproject.name}"]
     if not lockfile.exists():
-        return [f"Fichier manquant: {lockfile.name}"]
+        return [f"Missing file: {lockfile.name}"]
 
     pyproject_deps = _parse_pyproject_dependencies(pyproject)
     lock_deps = _parse_lock_requirements(lockfile)
@@ -84,7 +84,7 @@ def check_lock_consistency() -> list[str]:
     errors: list[str] = []
     if missing:
         errors.append(
-            "Dépendances pyproject absentes du lockfile: " + ", ".join(missing)
+            "pyproject dependencies missing from lockfile: " + ", ".join(missing)
         )
     return errors
 
@@ -93,34 +93,34 @@ def check_frozen_artifact() -> list[str]:
     exe = REPO_ROOT / "dist" / "CERTUS_HUB.exe"
     errors: list[str] = []
     if not exe.exists():
-        errors.append("Artefact frozen manquant: dist/CERTUS_HUB.exe")
+        errors.append("Missing frozen artifact: dist/CERTUS_HUB.exe")
         return errors
     size = exe.stat().st_size
     if size < 5_000_000:
         errors.append(
-            f"Artefact frozen trop petit ({size} octets) - build potentiellement incomplet"
+            f"Frozen artifact too small ({size} bytes) - build potentially incomplete"
         )
     if size > 500_000_000:
         errors.append(
-            f"Artefact frozen anormalement volumineux ({size} octets)"
+            f"Frozen artifact abnormally large ({size} bytes)"
         )
     try:
         data = exe.read_bytes()
         if len(data) < 64 or data[:2] != b"MZ":
-            errors.append("Artefact frozen invalide: signature DOS/PE absente (MZ)")
+            errors.append("Invalid frozen artifact: missing DOS/PE signature (MZ)")
         else:
             pe_off = int.from_bytes(data[0x3C:0x40], "little")
             if pe_off + 4 > len(data) or data[pe_off:pe_off + 4] != b"PE\x00\x00":
-                errors.append("Artefact frozen invalide: en-tête PE non trouvé")
+                errors.append("Invalid frozen artifact: PE header not found")
     except OSError as exc:
-        errors.append(f"Impossible de lire l'artefact frozen: {exc}")
+        errors.append(f"Cannot read frozen artifact: {exc}")
     return errors
 
 
 def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
     exe = REPO_ROOT / "dist" / "CERTUS_HUB.exe"
     if not exe.exists():
-        return ["Artefact frozen manquant: dist/CERTUS_HUB.exe"]
+        return ["Missing frozen artifact: dist/CERTUS_HUB.exe"]
 
     errors: list[str] = []
     full_env = os.environ.copy()
@@ -136,12 +136,12 @@ def check_frozen_functional_startup(timeout_sec: int = 12) -> list[str]:
                 continue
             if code != 0:
                 errors.append(
-                    f"Executable frozen s'arrête trop tôt avec code non nul: {code}"
+                    f"Frozen executable stopped too early with non-zero code: {code}"
                 )
             # If code == 0 quickly, still suspicious for GUI app startup.
             if code == 0 and (time.time() - start) < 2.0:
                 errors.append(
-                    "Executable frozen termine immédiatement (<2s), démarrage suspect"
+                    "Frozen executable terminated immediately (<2s), suspicious startup"
                 )
             return errors
         # Process stayed up long enough: startup considered healthy.
@@ -164,11 +164,11 @@ def check_release_structure() -> list[str]:
     else:
         py_text = pyproject.read_text(encoding="utf-8")
         if 'requires-python = ">=3.14.5"' not in py_text:
-            errors.append("pyproject.toml doit imposer requires-python >= 3.14.5")
+            errors.append("pyproject.toml must enforce requires-python >= 3.14.5")
 
     workflow = REPO_ROOT / ".github" / "workflows" / "release-windows.yml"
     if not workflow.exists():
-        return ["Workflow manquant: .github/workflows/release-windows.yml"]
+        return ["Missing workflow: .github/workflows/release-windows.yml"]
     wf_text = workflow.read_text(encoding="utf-8")
     required_tokens = [
         'python-version: [ "3.14.5" ]',
@@ -183,32 +183,32 @@ def check_release_structure() -> list[str]:
     ]
     for token in required_tokens:
         if token not in wf_text:
-            errors.append(f"Workflow release incomplet (token absent): {token}")
+            errors.append(f"Release workflow incomplete (missing token): {token}")
 
     smoke_script = REPO_ROOT / "tools" / "smoke_release.ps1"
     if not smoke_script.exists():
-        errors.append("Script manquant: tools/smoke_release.ps1")
+        errors.append("Missing script: tools/smoke_release.ps1")
     else:
         smoke_text = smoke_script.read_text(encoding="utf-8")
         if "QT_QPA_PLATFORM" not in smoke_text or "offscreen" not in smoke_text:
-            errors.append("Smoke script non conforme: QT_QPA_PLATFORM=offscreen requis")
+            errors.append("Non-compliant smoke script: QT_QPA_PLATFORM=offscreen required")
         if "test_gui_smoke.py" not in smoke_text or "test_smoke_certus_index_spline.py" not in smoke_text:
-            errors.append("Smoke script incomplet: tests smoke attendus absents")
+            errors.append("Incomplete smoke script: expected smoke tests missing")
 
     spec_file = REPO_ROOT / "certus_hub.spec"
     if not spec_file.exists():
-        errors.append("Spec manquant: certus_hub.spec")
+        errors.append("Missing spec: certus_hub.spec")
     else:
         spec_text = spec_file.read_text(encoding="utf-8")
         for token in ("CERTUS_HUB.py", 'name="CERTUS_HUB"', 'icon="certus.ico"'):
             if token not in spec_text:
-                errors.append(f"Spec frozen incomplet (token absent): {token}")
+                errors.append(f"Incomplete frozen spec (missing token): {token}")
         if 'console=False' not in spec_text:
-            errors.append("Spec frozen incomplet: console=False attendu")
+            errors.append("Incomplete frozen spec: expected console=False")
 
     for asset in ("certus.ico", "certus.svg"):
         if not (REPO_ROOT / asset).exists():
-            errors.append(f"Asset release manquant: {asset}")
+            errors.append(f"Missing release asset: {asset}")
 
     return errors
 

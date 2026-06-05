@@ -386,7 +386,7 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     if plot_w is None:
         return
     try:
-        # 1. On force d'abord le mode Log interne
+        # 1. Force the internal Log mode first
         plot_w.setLogMode(False, True)
 
         # 2. Sync the control menu (pyqtgraph 'A' button)
@@ -883,9 +883,9 @@ class Step4MeshOptimizerBuilder:
         row_ac2.addStretch(1)
         v_adv.addLayout(row_ac2)
 
-        # --- Profondeur de recherche (LOT E) ---
+        # --- Search depth (LOT E) ---
         row_ac3 = QHBoxLayout()
-        row_ac3.addWidget(QLabel("Top-N candidats (auto-clean):"))
+        row_ac3.addWidget(QLabel("Top-N candidates (auto-clean):"))
         app.sp_auto_clean_top_n = QSpinBox()
         app.sp_auto_clean_top_n.setRange(1, 12)
         app.sp_auto_clean_top_n.setValue(int(getattr(app, "_auto_clean_top_n_sensitivity", 4)))
@@ -2449,7 +2449,7 @@ class SmartInitPreviewManager:
 
         self.mon.show()
 
-        # Positionner a droite du dialog de preview (si visible).
+        # Position to the right of the preview dialog (if visible).
 
         try:
             self.mon.move(self.dlg.x() + self.dlg.width() + 10, self.dlg.y())
@@ -2465,7 +2465,7 @@ class SmartInitPreviewManager:
 
         self.refresh_stats(self.state.preview_d_nm, rm0)
 
-        # Colonnes alignees sous les sigma du plot (espacements  Deltasigma sur l'axe).
+        # Columns aligned under the plot sigmas (Delta sigma spacing on the axis).
 
         self.sk_arr = np.asarray(self.state.sk, dtype=np.float64).ravel()
 
@@ -2847,7 +2847,7 @@ class SmartInitPreviewManager:
 
         self.state.k_n = new_kn
 
-        # Vidage du layout actuel
+        # Emptying the current layout
 
         while self.knot_h.count():
             item = self.knot_h.takeAt(0)
@@ -3242,7 +3242,7 @@ class _SmartInitDialogMixin:
         )
         pw_nk.addItem(curve_n)
 
-        # Axe Y secondaire pour ln k
+        # Secondary Y-axis for ln k
 
         main_vb = pw_nk.plotItem.vb
 
@@ -3461,7 +3461,7 @@ class _SmartInitDialogMixin:
 
             return self._show_smart_init_preview_dialog(payload)
 
-        # Thread worker -> GUI: demander explicitement la preview via signal Qt.
+        # Thread worker -> GUI: explicitly request preview via Qt signal.
 
         self._preview_payload = payload
 
@@ -3477,7 +3477,7 @@ class _SmartInitDialogMixin:
 
         self.smart_preview_requested.emit(payload)
 
-        # Augmentation du timeout a 10 minutes (600s) pour laisser le temps du tuning manual
+        # Increased timeout to 10 minutes (600s) to allow time for manual tuning
 
         ok = self._preview_wait_event.wait(timeout=600.0)
 
@@ -3488,7 +3488,7 @@ class _SmartInitDialogMixin:
             getattr(self, "_preview_ret", None) is not None,
         )
 
-        # Securite PyQt : rapatrier l'etat mute depuis le thread principal via variable d'instance.
+        # PyQt safety: retrieve the muted state from the main thread via instance variable.
 
         ret_tuple = getattr(self, "_preview_ret", None)
 
@@ -4550,7 +4550,7 @@ class CertusIndexSplineApp(
             self._refresh_manual_dialog_preview(dlg, self._manual_postprocess_seed_result())
 
         def _on_auto_clean(tolerance: float) -> None:
-            # NaN = signal "lire la valeur depuis le widget GUI".
+            # NaN = signal "read value from GUI widget".
             try:
                 _tol_in = float(tolerance)
             except (TypeError, ValueError):
@@ -5288,14 +5288,14 @@ class CertusIndexSplineApp(
 
     @staticmethod
     def _is_rmse_d_grid_worker_finalize_dict(r: object) -> bool:
-        """True si ``r`` est le dict final du worker grille RMSE(d) (pas un r?sultat solveur complet)."""
+        """True if ``r`` is the final dict from the RMSE(d) grid worker (not a full solver result)."""
         if not isinstance(r, dict):
             return False
         st = str(r.get("profile_d_status", ""))
         return st in {"manual_grid", "manual_grid_empty"}
 
     def _merge_rmse_grid_promotion_into_nominal(self, promoted: dict, *, adoption_log_tag: str) -> None:
-        """Fusionne un dict promu (global-opt ou minimum grille) dans ``_last_result`` et rafra?chit l UI."""
+        """Merges a promoted dict (global-opt or grid minimum) into ``_last_result`` and refreshes the UI."""
         prev_nominal = dict(self._last_result) if isinstance(self._last_result, dict) else {}
         merged_nominal = dict(prev_nominal)
         merged_nominal.update(promoted)
@@ -5396,7 +5396,7 @@ class CertusIndexSplineApp(
         return True
 
     def _launch_corridor_rmse_gap_heal(self, tasks: list[tuple[float, dict]]) -> None:
-        """D?marre le worker de comblement de trous apr?s la grille, hors handler ``finished`` (?vite ``_cleanup_thread``)."""
+        """Starts the gap healing worker after the grid, outside the ``finished`` handler (prevents ``_cleanup_thread``)."""
         if self._worker is not None and self._worker.isRunning():
             if self.logger:
                 self.logger.warning("GUI RMSE(d) gap heal skipped: a worker is already running.")
@@ -5868,7 +5868,7 @@ class CertusIndexSplineApp(
             lg.addHandler(qh)
 
     def _create_empty_context_widget(self, message: str) -> QWidget:
-        """Cr?e une page d attente/info pour le panneau de r?glages contextuels."""
+        """Creates a waiting/info page for the contextual settings panel."""
         w = QWidget()
         lay = QVBoxLayout(w)
         lbl = QLabel(message)
@@ -5881,13 +5881,13 @@ class CertusIndexSplineApp(
         return w
 
     def _k_crosshair_formatter(self, x: float, y_on_curve: float | None, y_mouse: float) -> str:
-        """Formate l affichage du curseur pour les ?chelles logarithmiques de k."""
-        # Priorit? ? la valeur interpol?e sur la courbe (d?j? en k physique dans nos trac?s).
+        """Formats the cursor display for logarithmic scales of k."""
+        # Priority to the interpolated value on the curve (already in physical k in our plots).
         y_val = y_on_curve if y_on_curve is not None else y_mouse
         k_val = float("nan")
         if y_val is not None and np.isfinite(float(y_val)):
             y_num = float(y_val)
-            # Compat: si une coordonn?e log10 est fournie (<=0), on reconvertit.
+            # Compat: if a log10 coordinate is provided (<=0), we convert back.
             k_val = y_num if y_num > 0.0 else float(10.0**y_num)
         if not np.isfinite(k_val):
             return f"x = {x:.2f}, k = n/a"
@@ -5986,7 +5986,7 @@ class CertusIndexSplineApp(
         return w
 
     def _build_tab_spectrum(self) -> QWidget:
-        # Les contr?les sont d?plac?s dans le context_stack ? droite
+        # Controls are moved to the context_stack on the right
         ctx_w = QWidget()
         ctx_lay = QVBoxLayout(ctx_w)
         ctx_lay.setContentsMargins(0, 0, 0, 0)
@@ -6017,7 +6017,7 @@ class CertusIndexSplineApp(
         return panel
 
     def _build_tab_indices(self) -> QWidget:
-        # Page vide pour la synchro du context_stack
+        # Empty page for context_stack synchronization
         self._add_context_page(
             self._create_empty_context_widget("Standard refractive index plots.\nNo specific settings for this tab.")
         )
@@ -6252,7 +6252,7 @@ class CertusIndexSplineApp(
         )
 
     def _set_corridor_rmse_view_data_bounds(self, d_vals: np.ndarray, r_vals: np.ndarray) -> None:
-        """Fixe l ?chelle du graphe RMSE(d) sur les bornes min/max des donn?es."""
+        """Sets the scale of the RMSE(d) graph to the min/max bounds of the data."""
 
         if not hasattr(self, "plot_corridor_rmse_d"):
             return
@@ -6727,7 +6727,7 @@ class CertusIndexSplineApp(
         crosshair_primary: bool = False,
         pen: Any | None = None,
     ) -> bool:
-        # UX: Si on affiche k sur une ?chelle LOG, on lin?arise les donn?es log10 fournies
+        # UX: If displaying k on a LOG scale, we linearize the provided log10 data
         if widget in [
             getattr(self, "plot_k", None),
             getattr(self, "plot_k_corridor", None),

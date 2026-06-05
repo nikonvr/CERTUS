@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Loading interactif Excel  mesures spectrales  (feuille type measurement).
+Interactive Excel loading of spectral measurements (measurement type sheet).
 
-Partage par Curve Smoother, Substrate Index, etc.
+Shared by Curve Smoother, Substrate Index, etc.
 """
 
 from __future__ import annotations
@@ -20,9 +20,9 @@ def pick_measurement_sheet_name(
     parent,
 ) -> str | None:
     """
-    Choisit la feuille a load : unique, ou nom contenant  measurement ,
-    sinon box de dialogue.
-    Retourne None si lutilisateur cancelled la selection.
+    Selects the sheet to load: unique, or name containing "measurement",
+    otherwise a dialog box.
+    Returns None if the user cancelled the selection.
     """
     if not sheet_names:
         return None
@@ -51,8 +51,8 @@ def read_measurement_excel(
     round_wavelength_decimals: int | None = None,
 ) -> pd.DataFrame | None:
     """
-    Lit le classeur *path* ; retourne le DataFrame de la feuille retenue,
-    ou None si choix de feuille cancelled.
+    Reads the workbook *path*; returns the DataFrame of the selected sheet,
+    or None if sheet selection is cancelled.
     """
     xl = pd.ExcelFile(path)
     sheet = pick_measurement_sheet_name(list(xl.sheet_names), parent)
@@ -76,9 +76,9 @@ def open_measurement_excel_interactive(
     round_wavelength_decimals: int | None = None,
 ) -> tuple[pd.DataFrame, str, str] | None:
     """
-    Dialogue file + lecture feuille mesure.
+    File dialog + measurement sheet reading.
 
-    Retourne ``(df, path, dir_path)`` ou ``None`` si annulation (file ou feuille).
+    Returns ``(df, path, dir_path)`` or ``None`` if cancelled (file or sheet).
     """
     path, _ = QFileDialog.getOpenFileName(
         parent,

@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
+<body>
 <nav class="navbar">
         <a href="CERTUS_HUB.html" class="certus-logo">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
@@ -44,6 +45,7 @@
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
             <a href="CERTUS_METAL_BILAYER.html">METAL</a>
@@ -57,7 +59,7 @@
             <h1>CERTUS-HUB</h1>
             <p style="font-size: 1.3em; color: #475569; font-weight: 300;">Runtime Environment Supervisor & Unified
                 Entry Point</p>
-            <p style="font-size: 1.0em; color: #64748b; font-weight: 300;">Scientific Revision 2026.03</p>
+            <p style="font-size: 1.0em; color: #64748b; font-weight: 300;">Scientific Revision 2026.04.17</p>
         </header>
 
         <div class="abstract">
@@ -66,7 +68,7 @@
             concurrency challenges inherent in high-performance Python computing. It enforces a secure initialization
             protocol for the Numba/LLVM JIT compiler, manages thread allocation across CPU cores to prevent GUI freezes,
             and provides a unified UX framework shared across all scientific modules (STRAT, DESIGN, RE,
-            INDEX, METAL SINGLE/BILAYER).
+            INDEX, METAL SINGLE/BILAYER, FIELD).
         </div>
 
         <div class="abstract" style="border-left-color:#f59e0b;">
@@ -112,12 +114,14 @@
             HUB --> STRAT
             HUB --> INDEX
             HUB --> IS["INDEX SPLINE"]
+            HUB --> FIELD["FIELD"]
             HUB --> MS["METAL SINGLE"]
             HUB --> MB["METAL BILAYER"]
             DESIGN["<b>DESIGN</b><br>PGLOBAL Synthesis<br>Analytic Gradient"]:::highlight --> PHYSICS
             STRAT["<b>STRAT</b><br>Monitoring Strategy<br>Monte Carlo Validation"]:::highlight --> PHYSICS
             INDEX["<b>INDEX</b><br>TLU n,k Extraction<br>Kramers-Kronig"]:::highlight --> PHYSICS
             IS["<b>INDEX SPLINE</b><br>High-fidelity metrology<br>L-BFGS-B & knots"]:::highlight --> PHYSICS
+            FIELD["<b>FIELD</b><br>Electromagnetic Wave Solver<br>Analytical Peak Minimization"]:::highlight --> PHYSICS
             MS["<b>METAL SINGLE</b><br>Spline n,k on<br>Transparent Substrate"]:::highlight --> PHYSICS
             MB["<b>METAL BILAYER</b><br>Spline n,k on<br>Si/SiO₂ Stack"]:::highlight --> PHYSICS
             PHYSICS["<b>_certus_physics_impl</b><br>TMM Kernels · Numba JIT<br>Float64 / Complex128"]:::terminal
@@ -200,6 +204,7 @@
             DISPATCH -->|"STRAT"| MOD2["Launch CERTUS_STRAT<br>init_certus_app()"]:::terminal
             DISPATCH -->|"INDEX"| MOD3["Launch CERTUS_INDEX<br>init_certus_app()"]:::terminal
             DISPATCH -->|"SPLINE"| MOD_S["Launch CERTUS_INDEX_SPLINE<br>init_certus_app()"]:::terminal
+            DISPATCH -->|"FIELD"| MOD_F["Launch CERTUS_FIELD<br>init_certus_app()"]:::terminal
             DISPATCH -->|"METAL"| MOD4["Launch CERTUS_METAL<br>init_certus_app()"]:::terminal
         </div>
 
@@ -427,7 +432,7 @@
             </tr>
             <tr>
                 <td><strong><a href="CERTUS_RE.html">RE</a></strong></td>
-                <td>TRF + Spline prefit + Joint L-BFGS-B</td>
+                <td>TRF + Spline prefit + Joint TRF</td>
                 <td>Measured-spectrum reverse engineering with shared oblique TMM and batch RMSE* ranking</td>
             </tr>
             <tr>
@@ -446,8 +451,13 @@
                 <td>Deterministic knot control and exact analytic gradients via Fused Cost & Grad</td>
             </tr>
             <tr>
+                <td><strong><a href="CERTUS_FIELD.html">FIELD</a></strong></td>
+                <td>L-BFGS-B + PGLOBAL + Monte Carlo + Needle</td>
+                <td>Analytical electric-field peak calculation and minimax LIDT hotspot minimization</td>
+            </tr>
+            <tr>
                 <td><strong><a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a></strong></td>
-                <td>Differential Evolution + Splines</td>
+                <td>DE + L-BFGS-B + Splines</td>
                 <td>Model-free n,k from R+T+Rback on transparent substrate</td>
             </tr>
             <tr>
@@ -492,8 +502,8 @@
 
         <div class="footer">
             <p>Generated from source analysis of <code>CERTUS_HUB.py</code>, <code>certus_core.py</code>,
-                <code>certus_ui.py</code> — Revision 2026.03</p>
-            <p>&copy; CERTUS Scientific Suite v26-03 &bull; Scientific Analysis Report</p>
+                <code>certus_ui.py</code> — Revision 2026.04.17</p>
+            <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Analysis Report</p>
         </div>
     </div>
 

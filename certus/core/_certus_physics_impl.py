@@ -613,19 +613,19 @@ def get_n_substrate_array_by_id_kernel(
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
 
-    # ── PARE-FEU ──────────────────────────────────────────────────────────────
-    # Sapphire/Al2O3 (id=3) utilise la LOI ANALYTIQUE Sellmeier 3 termes,
-    # identique à tous les autres substrats.
+    # ── GUARDRAIL ─────────────────────────────────────────────────────────────
+    # Sapphire/Al2O3 (id=3) uses the ANALYTICAL 3-term Sellmeier LAW,
+    # identical to all other substrates.
     #
-    # HISTORIQUE : jusqu'en mai 2026, id=3 utilisait une interpolation tabulée
-    # depuis  example/sapphire fresnel.xlsx.  Cette approche a été abandonnée
-    # car :
-    #   1. Elle créait une dépendance externe (xlsx) pour un calcul physique.
-    #   2. Elle n'était pas cohérente avec CERTUS_INDEX / CERTUS_INDEX_SPLINE
-    #      qui forçaient déjà le Sellmeier analytique.
-    #   3. La loi Sellmeier est plus stable aux bords de la plage spectrale.
+    # HISTORY: until May 2026, id=3 used a tabulated interpolation
+    # from example/sapphire fresnel.xlsx. This approach was abandoned
+    # because:
+    #   1. It created an external dependency (xlsx) for a physical calculation.
+    #   2. It was not consistent with CERTUS_INDEX / CERTUS_INDEX_SPLINE
+    #      which already forced the analytical Sellmeier.
+    #   3. The Sellmeier law is more stable at the edges of the spectral range.
     #
-    # NE PAS réintroduire de branchement tabulé ici.
+    # DO NOT reintroduce tabulated branching here.
     # ──────────────────────────────────────────────────────────────────────────
 
     if substrate_id not in SELLMEIER_COEFFS_BY_ID:
@@ -6035,265 +6035,82 @@ def numba_interp_vectorized(x_arr: np.ndarray, xp: np.ndarray, fp: np.ndarray) -
 
 
 class MaterialDatabase:
-    """Thread-safe material DB with smart cache"""
-
-    __slots__ = (
-        "filepath",
-        "_data",
-        "_interpolation_cache",
-        "_logger",
-        "_cache_lock",
-        "_substrate_cache",
-        "_computation_cache",
-        "_cache_hits",
-        "_cache_misses",
-    )
+    """Thread-safe material DB with smart cache (Robust wrapper to prevent substrate/material cross-loading)"""
 
     def __init__(self, filepath: str = "clues.xlsx"):
-
-        self.filepath = filepath
-
-        self._data: dict[str, dict[str, Any]] | None = None
-
-        self._interpolation_cache: "OrderedDict" = OrderedDict()
-
-        self._logger = logging.getLogger("MaterialDB")
-
-        self._cache_lock = RLock()
-
+        from certus.utils.certus_strat_db import RobustMaterialDatabase
+        self._db = RobustMaterialDatabase(filepath)
+        self._interpolation_cache = {}
         self._substrate_cache = {}
-
         self._computation_cache = {}
-
         self._cache_hits = 0
-
         self._cache_misses = 0
 
     @property
     def data(self) -> dict[str, dict[str, Any]]:
-        """Lazy loading of data"""
+        return self._db.materials
 
-        if self._data is None:
-            raw = self._load_materials()
-            if not isinstance(raw, MergedMaterialDict):
-                raw = MergedMaterialDict(raw, list(raw.keys()), self._logger)
-            self._data = raw
+    @property
+    def _data(self):
+        return self._db.materials
 
-        return self._data
-
-    def _load_materials(self) -> dict[str, dict[str, Any]]:
-        """Loads materials from Excel"""
-
-        if not Path(self.filepath).is_file():
-            self._logger.warning(f"Material database not found: {self.filepath}")
-
-            return {}
-
-        try:
-            if not OPENPYXL_AVAILABLE:
-                self._logger.error("openpyxl not available for Excel reading")
-
-                return {}
-
-            # Local import to avoid top-level dependency if possible, but pandas is top-level
-
-            import pandas as pd
-
-            xls = pd.ExcelFile(self.filepath, engine="openpyxl")
-
-            material_data = {}
-
-            for sheet_name in xls.sheet_names:
-                try:
-                    df = pd.read_excel(xls, sheet_name=sheet_name, header=0)
-
-                    df.columns = df.columns.astype(str).str.strip()
-
-                    # Detect columns
-
-                    wl_col = next(
-                        (c for c in df.columns if "wavelength" in c.lower() or "lambda" in c.lower()),
-                        df.columns[0],
-                    )
-
-                    n_col = next(
-                        (c for c in df.columns if c.lower().startswith("n")),
-                        df.columns[1] if len(df.columns) > 1 else df.columns[0],
-                    )
-
-                    k_col = next(
-                        (c for c in df.columns if c.lower() == "k" or c.lower().startswith("k")),
-                        None,
-                    )
-
-                    cols_to_keep = [wl_col, n_col] + ([k_col] if k_col else [])
-
-                    rename_map = {wl_col: "wl", n_col: "n"}
-
-                    if k_col:
-                        rename_map[k_col] = "k"
-
-                    df = df[cols_to_keep].rename(columns=rename_map)
-
-                    df = df.sort_values(by="wl").dropna(subset=["wl", "n"])
-
-                    if df.empty or len(df) < 2:
-                        continue
-
-                    wl_arr = np.ascontiguousarray(df["wl"].to_numpy(), dtype=np.float64)
-
-                    n_arr = np.ascontiguousarray(df["n"].to_numpy(), dtype=np.float64)
-
-                    entry = {
-                        "wl": wl_arr,
-                        "n": n_arr,
-                        "min_wl_valid": float(wl_arr[0]),
-                        "max_wl_valid": float(wl_arr[-1]),
-                    }
-
-                    if k_col and "k" in df.columns:
-                        k_arr = df["k"].to_numpy(dtype=np.float64)
-
-                        k_arr = np.nan_to_num(k_arr, nan=0.0)
-
-                        entry["k"] = np.ascontiguousarray(k_arr)
-
-                    material_data[sheet_name] = entry
-
-                except (
-                    ValueError,
-                    TypeError,
-                    RuntimeError,
-                    AttributeError,
-                    KeyError,
-                    IndexError,
-                    FileNotFoundError,
-                ) as e:
-                    self._logger.warning(f"Skipping sheet '{sheet_name}': {e}")
-
-            self._logger.info(f"Loaded {len(material_data)} materials from database")
-
-            return material_data
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self._logger.error(f"Failed to load materials: {e}")
-
-            return {}
+    @_data.setter
+    def _data(self, value):
+        self._db.materials = value
 
     def get_index(self, material_name: str, wavelength_nm: float) -> float:
-        """Gets index at wavelength (cached)"""
-
-        wl_rounded = round(wavelength_nm, 2)  # Constant decimals
-
+        wl_rounded = round(wavelength_nm, 2)
         cache_key = (material_name, wl_rounded)
+        if cache_key in self._interpolation_cache:
+            return self._interpolation_cache[cache_key]
 
-        with self._cache_lock:
-            if cache_key in self._interpolation_cache:
-                self._interpolation_cache.move_to_end(cache_key)
-
-                return self._interpolation_cache[cache_key]
-
-            if material_name not in self.data:
-                raise ValueError(f"Material '{material_name}' not found in database")
-
-            mat_data = self.data[material_name]
-
-            n_val = float(
-                numba_interp_scalar(
-                    float(wl_rounded),
-                    mat_data["wl"],
-                    mat_data["n"],
-                )
-            )
-
-            self._interpolation_cache[cache_key] = n_val
-
-            if len(self._interpolation_cache) > CACHE_SIZE_MATERIAL_INDEX:
-                self._interpolation_cache.popitem(last=False)
-
-            return n_val
+        # Standard get_index only returns real part (float) of layer material
+        val = self._db.get_refractive_index(material_name, wavelength_nm)
+        n_val = float(val.real)
+        self._interpolation_cache[cache_key] = n_val
+        return n_val
 
     def get_clues_vectorized(self, material_name: str, wavelengths: np.ndarray) -> np.ndarray:
-        """Gets clues for wavelength array"""
-
-        if material_name not in self.data:
-            raise ValueError(f"Material '{material_name}' not found in database")
-
-        mat_data = self.data[material_name]
-
-        wls_f64 = np.asarray(wavelengths, dtype=np.float64)
-
-        return numba_interp_vectorized(wls_f64, mat_data["wl"], mat_data["n"])
+        # Standard get_clues_vectorized only returns real parts (float) of layer material
+        val = self._db.get_refractive_clues_vectorized(material_name, wavelengths)
+        return val.real
 
     def clear_cache(self):
-        """Clears interpolation cache"""
-
-        with self._cache_lock:
-            self._interpolation_cache.clear()
+        self._interpolation_cache.clear()
 
     def get_material_list(self) -> list[str]:
-        """Available materials list"""
-
-        return list(self.data.keys())
+        return list(self._db.materials.keys())
 
     def get_wavelength_range(self, material_name: str) -> tuple[float, float]:
-        """Returns valid wavelength range for material"""
-
-        if material_name not in self.data:
+        if material_name not in self._db.materials:
             raise ValueError(f"Material '{material_name}' not found")
-
-        mat = self.data[material_name]
-
-        return mat["min_wl_valid"], mat["max_wl_valid"]
+        mat = self._db.materials[material_name]
+        return float(mat["wl"][0]), float(mat["wl"][-1])
 
     @property
     def substrate_cache(self) -> dict:
-        """Cache for substrate calculationations"""
-
-        if not hasattr(self, "_substrate_cache"):
-            self._substrate_cache = {}
-
         return self._substrate_cache
 
     def get_cached_computation(self, key: str, compute_func: Callable, *args, **kwargs):
-        """Generic computation cache with statistics"""
-
-        if not hasattr(self, "_computation_cache"):
-            self._computation_cache = {}
-
-            self._cache_hits = 0
-
-            self._cache_misses = 0
-
         if key in self._computation_cache:
             self._cache_hits += 1
-
             return self._computation_cache[key]
-
         result = compute_func(*args, **kwargs)
-
         self._computation_cache[key] = result
-
         self._cache_misses += 1
-
         return result
 
     def get_cache_stats(self) -> dict:
-        """Get cache performance statistics"""
-
-        if not hasattr(self, "_computation_cache"):
-            return {"hits": 0, "misses": 0, "hit_rate": 0.0, "cache_size": 0}
-
         total = self._cache_hits + self._cache_misses
-
-        hit_rate = self._cache_hits / total if total > 0 else 0
-
+        hit_rate = self._cache_hits / total if total > 0 else 0.0
         return {
             "hits": self._cache_hits,
             "misses": self._cache_misses,
             "hit_rate": hit_rate,
             "cache_size": len(self._computation_cache),
         }
+
+
 
 
 # =============================================================================
@@ -6425,7 +6242,7 @@ def compute_TMM_generic(
 # ║  If n̂ = n + ik is used, R+T > 1 (non-physical gain).          ║
 
 
-# ║  NE PAS INVERSER LA CONVENTION.                                     ║
+# ║  DO NOT REVERSE THE CONVENTION.                                     ║
 
 
 # ╚══════════════════════════════════════════════════════════════════════╝
@@ -7126,8 +6943,8 @@ def _compute_epsilon1_gradient_kernel(
 
     denom_log_norm_sq = (E0_sq - Eg_sq) ** 2 + C_sq * Eg_sq
 
-    # Si Eg ou C sont extrêmement petits (>0 mais sous-normaux), la somme des carrés peut
-    # s'arrondir à 0 et provoquer une division par zéro sur inv_denom_log_norm (voir L-BFGS-B hors bornes réalistes).
+    # If Eg or C are extremely small (>0 but subnormal), the sum of squares can
+    # round to 0 and cause a division by zero on inv_denom_log_norm (see L-BFGS-B outside realistic bounds).
     denom_log_norm_sq = max(denom_log_norm_sq, 1e-120)
 
     denom_log_norm = np.sqrt(denom_log_norm_sq)
@@ -7169,7 +6986,7 @@ def _compute_epsilon1_gradient_kernel(
 
         diff_sq = Eg_sq - E_sq
 
-        # Log1 / Log2 : singularités si E == Eg (diff_sq -> 0) ou quasi-dégénérescence numérique.
+        # Log1 / Log2 : singularities if E == Eg (diff_sq -> 0) or numerical quasi-degeneracy.
 
         _diff_eps = 1e-14
 

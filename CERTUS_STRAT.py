@@ -1,5 +1,5 @@
 # =========================================================================================
-# ARCHITECTURE: LIGHTWEIGHT FAÇADE FOR BACKWARD COMPATIBILITY
+# ARCHITECTURE: LIGHTWEIGHT FACADE FOR BACKWARD COMPATIBILITY
 # =========================================================================================
 
 from certus.core.certus_core import __version__

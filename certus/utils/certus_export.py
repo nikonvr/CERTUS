@@ -262,7 +262,7 @@ def attach_excel_clipboard_context_menu(plot_widget: pg.PlotWidget) -> None:
     def _on_menu(pos) -> None:
         menu = QMenu(plot_widget)
         act = menu.addAction(CERTUS_UI_STRINGS["copy_excel_tsv"])
-        act.setToolTip("Format TSV pour Excel")
+        act.setToolTip("TSV format for Excel")
         chosen = menu.exec(plot_widget.mapToGlobal(pos))
         if chosen != act:
             return

@@ -535,22 +535,22 @@ class ProfileCorridorConfig(BaseModel):
     threshold_ratio_guard: float = 1.25
 
     # Continuation step (nm). The code may shrink automatically on convergence failure.
-
-    step_nm: float = 1.0
+    # Modified per USER request: force an automatic calculation every 0.5nm.
+    step_nm: float = 0.5
 
     # Adaptive march: initial step, growth factor, step cap.
 
-    step_nm_initial: float = 1.0
+    step_nm_initial: float = 0.5
 
     step_growth: float = 1.0
 
-    step_nm_max: float = 4.0
+    step_nm_max: float = 0.5
 
     parabola_half_window_pts: int = 4
 
     # Force a symmetric reported d-interval even when the accepted sampled points are imbalanced.
-
-    force_symmetric_interval: bool = False
+    # Modified per USER request: force symmetry.
+    force_symmetric_interval: bool = True
 
     # Center used for the final symmetric reported d-interval: "nominal" | "parabola".
     # Default = parabola so the excursion is centered on the local RMSE minimum.
@@ -1337,7 +1337,7 @@ def _log_corridor_base_geometry(
 
     if use_abs_delta:
         log.info(
-            "%s Spectral RMSE **without refit** (graine bornée, d=d_opt) = %.8f (MSE=%.6e) | "
+            "%s Spectral RMSE **without refit** (bounded seed, d=d_opt) = %.8f (MSE=%.6e) | "
             "RMSE **threshold** (nominal base n_lam/k_lam curves, same mask) = %.8f | seed-threshold gap=%+.6e. "
             "If the seed ≫ threshold, check sigma_n/sigma_L, mono ξ, clips. The +/-d walks re-optimize n,L at fixed d.",
             _LOG_PREFIX,
@@ -3026,7 +3026,7 @@ def _corridor_profile_walk_side(
 
         else:
             log.info(
-                "%s Walk %s: stop (RMSE > seuil) | d=%.6f nm RMSE=%.8f > %.8f",
+                "%s Walk %s: stop (RMSE > threshold) | d=%.6f nm RMSE=%.8f > %.8f",
                 _LOG_PREFIX,
                 dir_lbl,
                 float(d_try),
@@ -4627,8 +4627,8 @@ def _package_profile_grid_result(
                 d_glob_syn = float(dg0)
         log.info(
             "%s manual RMSE(d) grid | Synthesis: discrete curve minimum RMSE=%.8f @ d=%.6f nm < RMSE adoption "
-            "global_opt=%.8f @ d=%.6f nm \u2014 le flux GUI peut fusionner le global (cassure) ; un polish profond "
-            "depuis le minimum courbe reste possible.",
+            "global_opt=%.8f @ d=%.6f nm \u2014 the GUI flow can merge the global minimum; a deep polish "
+            "from the curve minimum remains possible.",
             _LOG_PREFIX,
             float(curve_min_rmse_syn),
             float(curve_min_d_syn),

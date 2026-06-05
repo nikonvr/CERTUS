@@ -2,86 +2,56 @@ import logging
 import numpy as np
 
 def find_matching_sheets(target_name: str, sheet_names: list[str]) -> list[str]:
-    """Find all Excel sheets whose name matches ``target_name``, accounting for
-    case, separators, process suffixes, and chemical aliases.
+    """Return sheets that match ``target_name`` using explicit token rules.
 
-    Matching strategy (two-pass)
-    ----------------------------
-    1. **Exact match** (case-insensitive): the sheet name equals the target.
-    2. **Structured match**: both the target and the sheet contain a known
-       *process* token (e.g. ``"h800"``) **and** a known *material* token
-       (e.g. ``"nb2o5"``).  Both tokens must agree after alias normalisation.
-    3. **Substring fallback**: if either side lacks a structured token,
-       stripped alphanumeric strings are compared with ``in`` containment.
-
-    Alias table
-    -----------
-    ``"nb"`` is treated as a synonym for ``"nb2o5"`` (both map to
-    ``"nb2o5"`` in the canonical form).  Any new alias must be added to
-    **both** the ``ALIASES`` dict here **and** in the copy of this function
-    in ``certus/core/_certus_physics_impl.py``.
-
-    RULE: keep PROCESSES and MATERIALS in sync with the actual sheet names
-    present in ``clues.xlsx``.  A material missing from MATERIALS will fall
-    back to substring matching, which is more permissive and may return
-    false positives.
-
-    Returns
-    -------
-    list[str]
-        Ordered list of matching sheet names (duplicates removed, insertion
-        order preserved).  Empty list if nothing matches.
+    The helper is intentionally conservative: it prefers exact matches,
+    then structured matches, and only then falls back to substring checks.
+    This makes material/database resolution more predictable and easier to
+    reason about in production.
     """
-    target_clean = target_name.lower().replace("-", " ").replace("_", " ").split()
-    
+    normalized_target = target_name.lower().replace("-", " ").replace("_", " ").split()
+
     PROCESSES = {"h800", "h400", "syrus", "helios"}
     MATERIALS = {"sio2", "nb2o5", "nb", "ta2o5", "al2o3", "hfo2", "zns", "tio2", "yf3", "si"}
-    
-    ALIASES = {
-        "nb": "nb2o5",
-        "nb2o5": "nb2o5",
-    }
-    
-    def get_canonical_material(word):
+    ALIASES = {"nb": "nb2o5", "nb2o5": "nb2o5"}
+
+    def canonical(word: str) -> str:
         return ALIASES.get(word, word)
-    
-    target_proc = None
-    target_mat = None
-    for word in target_clean:
-        if word in PROCESSES:
-            target_proc = word
-        elif word in MATERIALS:
-            target_mat = get_canonical_material(word)
-            
-    matches = []
+
+    def parse_tokens(text: str) -> tuple[str | None, str | None]:
+        proc = None
+        mat = None
+        for word in text.lower().replace("-", " ").replace("_", " ").split():
+            if word in PROCESSES:
+                proc = word
+            elif word in MATERIALS:
+                mat = canonical(word)
+        return proc, mat
+
+    target_proc, target_mat = parse_tokens(target_name)
+    target_stripped = "".join(c for c in target_name.lower() if c.isalnum())
+
+    matches: list[str] = []
     for sheet in sheet_names:
         sheet_lower = sheet.lower()
         if sheet_lower == target_name.lower():
             matches.append(sheet)
             continue
-            
-        sheet_clean = sheet_lower.replace("-", " ").replace("_", " ").split()
-        sheet_proc = None
-        sheet_mat = None
-        for word in sheet_clean:
-            if word in PROCESSES:
-                sheet_proc = word
-            elif word in MATERIALS:
-                sheet_mat = get_canonical_material(word)
-                
+
+        sheet_proc, sheet_mat = parse_tokens(sheet)
         if target_proc and target_mat and sheet_proc and sheet_mat:
             if target_proc == sheet_proc and target_mat == sheet_mat:
                 matches.append(sheet)
-        else:
-            target_stripped = "".join(c for c in target_name.lower() if c.isalnum())
-            sheet_stripped = "".join(c for c in sheet.lower() if c.isalnum())
-            if target_stripped in sheet_stripped or sheet_stripped in target_stripped:
-                matches.append(sheet)
-                
-    unique_matches = []
-    for m in matches:
-        if m not in unique_matches:
-            unique_matches.append(m)
+            continue
+
+        sheet_stripped = "".join(c for c in sheet_lower if c.isalnum())
+        if target_stripped in sheet_stripped or sheet_stripped in target_stripped:
+            matches.append(sheet)
+
+    unique_matches: list[str] = []
+    for match in matches:
+        if match not in unique_matches:
+            unique_matches.append(match)
     return unique_matches
 
 

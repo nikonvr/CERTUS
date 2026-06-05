@@ -2146,11 +2146,11 @@ _re_with_back_tokens = frozenset(
 class ParsedREColumn:
     """Metadata for a spectral column (RE measurement sheet)."""
 
-    target_type: str  # 'R' ou 'T'
+    target_type: str  # 'R' or 'T'
 
     angle_deg: float
 
-    pol: str  # 's', 'p', ou 'Avg'
+    pol: str  # 's', 'p', or 'Avg'
 
     include_backside: bool
 
@@ -2995,21 +2995,7 @@ def _re_measurement_values_are_percent(vals: list[float]) -> bool:
     return float(np.nanmax(np.abs(arr))) > 1.25
 
 
-from certus.core.certus_re_config import (
-    REMseContext,
-    REPhase2Context,
-    REWorkerRequest,
-    REPhase1Result,
-    REPhase2Result,
-    REPhase3Result,
-    REPhase4Result,
-    _re_phase23_result_to_legacy_dict,
-    _result_dto_at,
-    _top_result_dto,
-    _set_top_result_dto,
-    _prepend_result_dto,
-    _replace_all_with_top_dto
-)
+
 def _re_trf_residual_rms(residual: np.ndarray | None) -> float:
     """RMS of the residual vector as minimized by least_squares: sqrt(mean(r_i^2))."""
 

@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from certus.core.certus_core import (
     CFG,
-    CAUCHY_PRESETS,
     CertusConfigError,
     CertusError,
     CertusOptimizationError,
@@ -268,9 +267,6 @@ class TestConstants:
         assert 0 in SELLMEIER_COEFFS_BY_ID  # SiO2
         assert len(SELLMEIER_COEFFS_BY_ID[0]) == 6
 
-    def test_cauchy_presets(self):
-        assert "Custom" in CAUCHY_PRESETS
-        assert CAUCHY_PRESETS["Custom"] == (0.0, 0.0)
 
 
 # ─────────────────────────────────────────────────────────────────────

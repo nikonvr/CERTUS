@@ -74,10 +74,11 @@ class SplineCorridorConfig:
     corridor_profile_d_threshold_basis: str = "max"
     corridor_profile_d_threshold_ratio_guard: float = 1.25
     corridor_profile_d_auto_relax_max_factor: float = 1.5
-    corridor_profile_d_step_nm: float = 1.0
-    corridor_profile_d_step_nm_initial: float = 1.0
-    corridor_profile_d_step_growth: float = 1.4
-    corridor_profile_d_step_nm_max: float = 4.0
+    # Modified: force symmetry and automatic calculation every 0.5nm
+    corridor_profile_d_step_nm: float = 0.5
+    corridor_profile_d_step_nm_initial: float = 0.5
+    corridor_profile_d_step_growth: float = 1.0
+    corridor_profile_d_step_nm_max: float = 0.5
     corridor_profile_d_max_span_nm: float = 15.0
     corridor_profile_d_min_valid_each_side: int = 1
     corridor_profile_d_lr_conf_level: float = 0.95
@@ -101,6 +102,8 @@ class SplineCorridorConfig:
     corridor_profile_d_auto_relax_epsilon: float = 0.002
     corridor_scientific_nominal_enabled: bool = True
     corridor_profile_d_parabola_half_window_pts: int = 4
+    # Modified: Force interval to be symmetric around the parabola (USER request)
+    corridor_profile_d_force_symmetric_interval: bool = True
     corridor_profile_d_symmetric_center_mode: str = "parabola"
     corridor_profile_d_adaptive_rmse_ref_half_width_nm: float = 1.5
     corridor_profile_d_adaptive_rmse_probe_steps_each_side: int = 3
@@ -110,6 +113,9 @@ class SplineCorridorConfig:
     corridor_reg_sensitivity_points: int = 5
     corridor_reg_sensitivity_decades: int = 2
     corridor_reg_sensitivity_n_workers: int = 1
+    # If a new minimum is found, we repeat the calculation
+    corridor_profile_d_rerun_after_promotion: bool = True
+    corridor_profile_d_rerun_max_extra_passes: int = 6
 
 
 @dataclass

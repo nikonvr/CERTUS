@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
+<body>
 <nav class="navbar">
         <a href="CERTUS_HUB.html" class="certus-logo">
             <svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg">
@@ -41,13 +42,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html" class="active">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -60,13 +65,13 @@
         </header>
 
         <div class="abstract">
-            <strong>Executive Summary:</strong> CERTUS-RE solves a <strong>constrained nonlinear least-squares</strong>
+            <strong>Executive Summary:</strong> CERTUS-RE solves a <a href="https://en.wikipedia.org/wiki/Non-linear_least_squares" target="_blank"><strong>constrained nonlinear least-squares</strong></a>
             inverse problem: find physical layer thicknesses and smooth corrections \(\Delta\mathrm{Re}\) to high/low
             index dispersions (and optionally a Cauchy substrate tail) such that simulated <strong>R/T</strong> from the
             shared oblique <strong>transfer-matrix</strong> stack matches tabulated measurements. The optimiser is
-            <strong>TRF</strong> (trust-region reflective) on a vector residual built from <strong>\(1/\sqrt{\lambda}\)</strong>-weighted
+            <strong>TRF</strong> (<a href="https://en.wikipedia.org/wiki/Trust_region" target="_blank">trust-region reflective</a>) on a vector residual built from <strong>\(1/\sqrt{\lambda}\)</strong>-weighted
             spectral error plus a <strong>QWOT</strong> channel at a reference wavelength, with <strong>dead zones</strong>,
-            <strong>Tikhonov</strong> curvature on spline knots, and an <strong>HL \(\sqrt{w}\)</strong> penalty on
+            <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank"><strong>Tikhonov</strong></a> curvature on spline knots, and an <strong>HL \(\sqrt{w}\)</strong> penalty on
             \(\Delta\mathrm{Re}\) relative to a wavelength-dependent envelope. <strong>RMSE*</strong> is a
             <em>post-hoc</em> ranking scalar with fixed \(\alpha_\mathrm{ref}\), independent of phase-varying \(\alpha\)
             used inside the fit. This document ties each mechanism to what you configure in the GUI or Excel and what
@@ -130,7 +135,7 @@
         </p>
         <div class="mermaid">
             flowchart TB
-            W[Excel workbook + base cfg] --> B[re_parameter_batch.py]
+            W[Excel workbook + base cfg] --> B[Internal Batch Engine]
             B --> G{Grid mode}
             G -->|full| F1[Wide Cartesian sweep]
             G -->|refine30| F2[24-combo preset]
@@ -221,7 +226,7 @@
             After the run, the code computes
             \(\mathrm{RMSE}^{\ast}=\sqrt{\mathrm{RMSE}_\mathrm{spec}^2 + \alpha_\mathrm{ref}\,\bigl(\mathrm{RMSE}_{\mathrm{QWOT}}^{\mathrm{raw}}\bigr)^2}\)
             with fixed <code>re_ranking_alpha_ref</code> (default 0.05). This is what
-            <code>re_parameter_batch.py</code> sorts. <strong>Important:</strong> changing phase alphas changes the fit
+            the batch driver sorts. <strong>Important:</strong> changing phase alphas changes the fit
             trajectory; \(\alpha_\mathrm{ref}\) does <em>not</em> change the optimiser — it only harmonises leaderboard
             scores.
         </p>
@@ -260,6 +265,10 @@
             Second-difference penalties along knot index stabilise non-physical oscillations between wavelengths; strength
             is <code>re_spline_tikhonov_scale</code>. This is distinct from the envelope (hard bound) and from HL
             (ratio-to-envelope).
+            <br><br>
+            <span style="color: #0f172a; background-color: #f1f5f9; padding: 10px; border-left: 4px solid #cbd5e1; display: block;">
+                <strong>Scientific Note (Tikhonov Bias):</strong> Tikhonov regularization inherently introduces a bias-variance trade-off. While penalizing curvature suppresses noise and unphysical ripples, it mathematically imposes a deliberate smoothing bias that can artificially broaden or dampen true, narrow physical absorption peaks.
+            </span>
         </p>
 
         <h2>7. REWorker Pipeline — Numerical Steps</h2>
@@ -352,8 +361,7 @@
                 <tr>
                     <td>Parameter study</td>
                     <td>Manual or save cfg; tedious for grids.</td>
-                    <td><code>python tools/re_parameter_batch.py workbook.xlsx --grid full|refine30|pipeline --budget
-                        SEC --out report.json</code></td>
+                    <td><code>(Internal batch API)</code></td>
                 </tr>
                 <tr>
                     <td>Read quality</td>
@@ -498,7 +506,7 @@
                 </tr>
                 <tr>
                     <td>Batch sweeps and grids</td>
-                    <td><code>tools/re_parameter_batch.py</code></td>
+                    <td><code>(Internal tooling)</code></td>
                 </tr>
                 <tr>
                     <td>Shared physics / TMM</td>

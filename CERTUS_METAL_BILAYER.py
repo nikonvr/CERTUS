@@ -1592,7 +1592,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
             self.diel_plot.autoRange()
 
-            # Export déclenché uniquement depuis on_optimization_finished
+            # Export triggered only from on_optimization_finished
 
     def export_results(self):
         """Exports results to Excel + HTML (Single/Beam)"""

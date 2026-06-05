@@ -1,5 +1,5 @@
 # =============================================================================
-# PyQt6  reexports pour CERTUS_DESIGN, CERTUS_RE, CERTUS_HUB (imports DRY)
+# PyQt6 reexports for CERTUS_DESIGN, CERTUS_RE, CERTUS_HUB (DRY imports)
 # =============================================================================
 from __future__ import annotations
 

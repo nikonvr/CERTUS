@@ -812,11 +812,11 @@ def extract_nominal_best_polished_corridor_reference(out: dict[str, Any]) -> dic
 
     Aligned with ``spectral_rmse_best_label`` / ``spectral_rmse_best_value`` (see
 
-    ``_finalize_spectral_rmse_mesh_polish_and_best``). Étendre ici si d’autres labels
+    ``_finalize_spectral_rmse_mesh_polish_and_best``). Extend here if other labels
 
     (e.g., PWL sigma) return to the RMSE synthesis.
 
-    Retourne ``None`` si aucun best défini ou données incomplètes.
+    Returns ``None`` if no best is defined or data is incomplete.
 
     """
 

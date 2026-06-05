@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
+<body>
 <nav class="navbar">
         <a href="CERTUS_HUB.html" class="certus-logo">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
@@ -39,13 +40,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html" class="active">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html" class="active">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -186,7 +191,7 @@
             subgraph BEAM ["Beam Analysis — Uncertainty Mapping"]
             BEAM_CHK -->|"Yes"| BA_REF["12. Reference: d_opt from DE"]:::process
             BA_REF --> BA_SCAN["13. Scan d = d_opt ± Δd<br>(steps of 0.5–1 nm)"]:::highlight
-            BA_SCAN --> BA_REOPT["14. For each fixed d:<br>re-optimize spline n,k only<br>(Nelder-Mead, warm start)"]:::process
+            BA_SCAN --> BA_REOPT["14. For each fixed d:<br>re-optimize spline n,k only<br>(L-BFGS-B, analytic gradient)"]:::process
             BA_REOPT --> BA_FILT["15. Keep solutions where<br>MSE ≤ MSE_opt × (1 + τ)"]:::process
             BA_FILT --> BA_ENV["16. Compute envelope:<br>Δn(λ) = max − min over beam<br>Δk(λ) = max − min over beam"]:::highlight
             end
@@ -203,7 +208,7 @@
             Each candidate is decoded into spline optical constants, evaluated with the full TMM including incoherent
             backside correction, and scored using the multi-channel mean squared error. The population evolves for up
             to approximately 1500 generations.<br>
-            <strong>Steps 12–16 (Beam analysis):</strong> A systematic thickness scan with Nelder-Mead re-optimization
+            <strong>Steps 12–16 (Beam analysis):</strong> A systematic thickness scan with L-BFGS-B re-optimization (using analytic gradients)
             at each fixed $d$ maps the $n$–$k$–$d$ degeneracy. The uncertainty envelope defines the admissible process
             window.<br>
             <strong>Step 17:</strong> Export the final report with spectra, optical constants, and the beam envelope.
@@ -229,7 +234,7 @@
 
         <h3>3.3 Differential Evolution</h3>
         <p>
-            The global search uses <strong>Differential Evolution (DE)</strong>, a population-based stochastic
+            The global search uses <a href="https://en.wikipedia.org/wiki/Differential_evolution" target="_blank"><strong>Differential Evolution (DE)</strong></a>, a population-based stochastic
             optimizer suitable for high-dimensional and non-convex problems.
         </p>
         <ol>
@@ -363,15 +368,15 @@
             </tr>
             <tr>
                 <td><strong>Local Polish (Beam)</strong></td>
-                <td>Nelder-Mead robust derivative-free optimization on spline parameters.</td>
+                <td>L-BFGS-B optimization on spline parameters using exact analytic gradients.</td>
             </tr>
             <tr>
                 <td><strong>Backside</strong></td>
                 <td>Dual-matrix: forward (Air→Sub) + reverse (Sub→Air) for exact incoherent sum.</td>
             </tr>
             <tr>
-                <td><strong>Shared UX</strong></td>
-                <td><code>certus_ui.py</code> — <code>CertusBaseApp</code> base class providing <code>CertusLogPanel</code>,
+                <td><strong>Shared UX & Common Metal</strong></td>
+                <td><code>certus_metal_common.py</code> and <code>certus_ui.py</code> — <code>MetalBaseApp</code> base class providing <code>CertusLogPanel</code>,
                     <code>WelcomeGuideWidget</code>, 5-level undo stack (<kbd>Ctrl</kbd>+<kbd>Z</kbd>).</td>
             </tr>
             <tr>
@@ -405,7 +410,7 @@
         </p>
 
         <div class="footer">
-            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code> and <code>certus_ui.py</code> &mdash; Revision 2026.04.17</p>
+            <p>Generated from source analysis of <code>CERTUS_METAL_SINGLE.py</code>, <code>certus_metal_common.py</code>, and <code>certus_ui.py</code> &mdash; Revision 2026.04.17</p>
             <p>&copy; CERTUS Scientific Suite v26-04 &bull; Scientific Report</p>
         </div>
     </div>

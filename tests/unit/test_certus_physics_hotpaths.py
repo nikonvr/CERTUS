@@ -228,7 +228,7 @@ def test_material_database_missing_file_loads_empty_data(tmp_path) -> None:
 def test_material_database_interpolation_cache_and_ranges() -> None:
     db = MaterialDatabase(filepath="unused.xlsx")
     db._data = {
-        "SiO2": {
+        "SiO2-Layer": {
             "wl": np.array([400.0, 500.0, 600.0], dtype=np.float64),
             "n": np.array([1.46, 1.455, 1.45], dtype=np.float64),
             "min_wl_valid": 400.0,
@@ -236,19 +236,20 @@ def test_material_database_interpolation_cache_and_ranges() -> None:
         }
     }
 
-    n1 = db.get_index("SiO2", 550.0)
-    n2 = db.get_index("SiO2", 550.0)  # cached path
+    n1 = db.get_index("SiO2-Layer", 550.0)
+    n2 = db.get_index("SiO2-Layer", 550.0)  # cached path
     assert n1 == pytest.approx(1.4525, rel=1e-10, abs=1e-10)
     assert n2 == pytest.approx(n1, rel=1e-12, abs=1e-12)
     assert len(db._interpolation_cache) == 1
 
-    vec = db.get_clues_vectorized("SiO2", np.array([450.0, 550.0], dtype=np.float64))
+    vec = db.get_clues_vectorized("SiO2-Layer", np.array([450.0, 550.0], dtype=np.float64))
     assert np.allclose(vec, np.array([1.4575, 1.4525], dtype=np.float64), atol=1e-10)
-    assert db.get_wavelength_range("SiO2") == (400.0, 600.0)
-    assert db.get_material_list() == ["SiO2"]
+    assert db.get_wavelength_range("SiO2-Layer") == (400.0, 600.0)
+    assert db.get_material_list() == ["SiO2-Layer"]
 
     db.clear_cache()
     assert len(db._interpolation_cache) == 0
+
 
 
 @pytest.mark.unit

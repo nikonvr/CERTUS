@@ -6,11 +6,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import joblib
 
 from functools import partial
-from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any, Protocol, Callable
 
@@ -22,15 +21,11 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 
 from certus.core.certus_re_config import (
     REWorkerRequest,
-    REPhase1Result,
-    REPhase2Result,
     REPhase3Result,
     REPhase4Result,
-    _result_dto_at,
     _top_result_dto,
     _set_top_result_dto,
     _prepend_result_dto,
-    _replace_all_with_top_dto,
     RE_RESULT_LABEL_WITH_DRIFT,
 )
 
@@ -47,8 +42,6 @@ from certus.utils.certus_re_helpers import (
     RE_SUB_CAUCHY_TUBE_DELTA,
     RE_LBFGSB_FTOL,
     RE_LBFGSB_GTOL,
-    RE_SPLINE_N_KNOTS,
-    RE_SPLINE_NODE2_DEFAULT_NM,
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     _re_sort_results_best_for_table_and_apply,
     RE_GUI_DEFAULT_RE_PHASE1_RESTARTS,
@@ -99,26 +92,9 @@ from certus.ui.certus_qt_widgets import QThread
 from certus.ui.certus_ui import WorkerSignals
 
 from certus.core.certus_re_objectives import (
-    _dbg_write,
-    _re_precompute_union_indices,
-    _re_init_context_fields,
     _prepare_re_run_context_setup,
     _build_re_mse_grad_helper,
     _build_qwot_helpers,
-    _prepare_phase2_fd_settings,
-    _prepare_phase2_bounds_and_topk,
-    _build_p2_prefit_bounds,
-    _build_phase4_aperture_bounds,
-    _phase4_aperture_slice,
-    _build_phase2_result,
-    _build_phase2b_output,
-    _build_phase2b_output,
-    _log_phase4_trf_summary,
-    _global_compute_re_mse_gradient,
-    _global_evaluate_oblique_physics,
-    _global_add_regularization_residuals,
-    _global_build_cached_spline_correc,
-    _global_evaluate_p2_fd_derivative,
 )
 
 
@@ -1632,7 +1608,7 @@ class REWorker(QThread):
         )
 
     def _run_re_workflow(self) -> None:
-        """Corps nominal du thread RE (sans gestion d'erreur UI)."""
+        """Nominal body of the RE thread (without UI error handling)."""
         logger.debug("_run_re_workflow start")
         self.signals.progress.emit(1, "[DBG] _run_re_workflow: building context...")
         _re_t0 = time.perf_counter()
@@ -2307,7 +2283,7 @@ class REWorker(QThread):
                 logging.info(
                     "RE phase 4 wall | total=%.3fs | scan=%.3fs | TRF=%.3fs | "
                     "overheadmax(0,total-scan-TRF-inner_physics) | "
-                    "grep  RE phase 4  /  P4 profile  pour retuner cfg & code",
+                    "grep  RE phase 4  /  P4 profile  to retune cfg & code",
                     _wall_p4_tot,
                     float(_p4_scan_wall_s),
                     float(_p4_trf_wall_s),

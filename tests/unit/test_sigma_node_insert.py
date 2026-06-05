@@ -87,7 +87,7 @@ def _make_base_result(cfg: SplineOptConfig, K: int = 12) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Test 1 – flag off → fonction identique au résultat de base (non-régression)
+# Test 1 - flag off - identical function to baseline result (regression test)
 # ---------------------------------------------------------------------------
 
 def test_flag_off_pipeline_no_change() -> None:

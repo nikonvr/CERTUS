@@ -275,7 +275,8 @@ class RobustMaterialDatabase:
 
             n_val = np.interp(wl, mat_data["wl"], mat_data["n"])
 
-            k_val = np.interp(wl, mat_data["wl"], mat_data["k"])
+            k_arr = mat_data.get("k", np.zeros_like(mat_data["wl"]))
+            k_val = np.interp(wl, mat_data["wl"], k_arr)
 
             return complex(n_val, -k_val)
 
@@ -303,7 +304,8 @@ class RobustMaterialDatabase:
 
             n_vals = np.interp(wls, mat_data["wl"], mat_data["n"])
 
-            k_vals = np.interp(wls, mat_data["wl"], mat_data["k"])
+            k_arr = mat_data.get("k", np.zeros_like(mat_data["wl"]))
+            k_vals = np.interp(wls, mat_data["wl"], k_arr)
 
             return (n_vals - 1j * k_vals).astype(np.complex128)
 

@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Diagnostic hors-UI pour la **logique** du corridor d-profiling.
+"""Off-UI diagnostic for the **logic** of the d-profiling corridor.
 
-Objectif: produire un artefact lisible par machine (JSON) qui résume où la procédure
-entre en tension (seuil RMSE vs échantillon, intervalle rapporté vs meilleur point,
-dégénérescence latérale, seed-gate saturé). À utiliser pour guider une IA —
-ou un humain — vers des réglages / évolutions du code dans ``spline_profile_corridors.py``
-et ``spline_pipeline.py``.
+Goal: produce a machine-readable artifact (JSON) summarizing where the procedure
+undergoes tension (RMSE threshold vs sample, reported interval vs best point,
+lateral degeneracy, saturated seed-gate). To be used to guide an AI —
+or a human — towards settings / evolutions of the code in ``spline_profile_corridors.py``
+and ``spline_pipeline.py``.
 
-Usage (depuis la racine du dépôt)::
+Usage (from repository root):
 
     python tools/corridor_logic_diagnostic.py
     python tools/corridor_logic_diagnostic.py --json-out corridor_diag.json --verbose
 
-Ce n'est pas un benchmark de temps; pour la perf CPU voir ``bench_corridor_*.py``.
+This is not a CPU performance benchmark; for CPU performance see ``bench_corridor_*.py``.
 """
 
 from __future__ import annotations
@@ -167,7 +167,7 @@ def _build_report(
     thr_m = float(report.get("rmse_thresh_minus_best_rmse", float("nan")))
     if math.isfinite(thr_m) and thr_m < 0:
         hints.append(
-            "Meilleur RMSE au-dessus du seuil actif: soit pas de famille admissible cohérente, soit seulement points nominaux / dégénérés."
+            "Best RMSE above active threshold: either no consistent admissible family, or only nominal / degenerate points."
         )
 
     report["coaching_hypotheses"] = hints
@@ -189,10 +189,10 @@ def _json_safe(obj: Any) -> Any:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Diagnostic logique du corridor d-profiling (sortie JSON).")
-    ap.add_argument("--n-lam", type=int, default=24, help="Nombre de points spectraux (synthèse).")
+    ap = argparse.ArgumentParser(description="Logical diagnostic of the d-profiling corridor (JSON output).")
+    ap.add_argument("--n-lam", type=int, default=24, help="Number of spectral points (synthesis).")
     ap.add_argument("--json-out", type=Path, default=None, help="Write JSON report to disk.")
-    ap.add_argument("--verbose", action="store_true", help="Logs INFO du module corridor.")
+    ap.add_argument("--verbose", action="store_true", help="INFO logs of the corridor module.")
     ap.add_argument("--mode", default="alpha", choices=["alpha", "lr"], help="Mode walk ProfileCorridorConfig.")
     ap.add_argument("--rmse-threshold-mode", default="alpha", dest="rmse_threshold_mode")
     ap.add_argument("--rmse-alpha", type=float, default=1.15)
@@ -209,7 +209,7 @@ def main() -> int:
     ap.add_argument("--rng-seed", type=int, default=0)
     ap.add_argument("--lr-conf-level", type=float, default=0.95)
     ap.add_argument("--profile-polish-maxfun", type=int, default=300)
-    ap.add_argument("--simulate-promotion", action="store_true", help="Simuler _maybe_promote_best_corridor_refit (spline_pipeline).")
+    ap.add_argument("--simulate-promotion", action="store_true", help="Simulate _maybe_promote_best_corridor_refit (spline_pipeline).")
     args = ap.parse_args()
 
     log = logging.getLogger("CERTUS")

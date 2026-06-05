@@ -625,7 +625,7 @@ class _CorridorWorkerMixin:
         if not isinstance(result, dict):
             if role in manual_pipeline_roles and isinstance(manual_dlg, ManualSigmaKnotDialog):
                 manual_dlg.set_runtime_busy(False)
-                manual_dlg.append_runtime_log("Re-optimisation terminee sans resultat exploitable.")
+                manual_dlg.append_runtime_log("Re-optimization finished without usable result.")
 
             self.lbl_status.setText("Canceled or no result (dict)")
             self._worker_role = "idle"
@@ -724,7 +724,7 @@ class _CorridorWorkerMixin:
                 adaptive=bool(result.get("adaptive_mesh")),
             )
 
-        # Auto-Best: declencher une 2e passe locale (knots libres split n/logk) after la 1ere passe warm.
+        # Auto-Best: trigger a 2nd local pass (free split n/logk knots) after the 1st warm pass.
 
         if self._auto_best_two_stage_refine:
             cfg2 = self._build_opt_config()
@@ -738,7 +738,7 @@ class _CorridorWorkerMixin:
                 self._auto_best_two_stage_refine = False
 
                 self.log(
-                    "Auto-Best: launching local pass 2 (knots sigma separes pour n et ln k, puis polish).",
+                    "Auto-Best: launching local pass 2 (separated sigma knots for n and ln k, then polish).",
                     "INFO",
                 )
 
@@ -793,7 +793,7 @@ class _CorridorWorkerMixin:
                 )
             )
 
-            _log_index_spline_best_config(self.logger, display, rmse_fin, title="[FIN OPTIM  affichage / export]")
+            _log_index_spline_best_config(self.logger, display, rmse_fin, title="[END OPTIM  display / export]")
 
         # === SAFE-GUARD: Wrap entire final completion path to prevent silent app termination ===
         try:
@@ -1270,7 +1270,7 @@ class _CorridorWorkerMixin:
         self.sp_corridor_rmse_win.setToolTip(
             "<b>Demi-fen?tre locale (points)</b><br>"
             "Number of points on each side of d* used to fit the local parabola.<br>"
-            "Une fen?tre plus large lisse les bruits num?riques mais peut capturer des zones non-paraboliques."
+            "A wider window smooths numerical noise but can capture non-parabolic regions."
         )
 
         row_rob.addWidget(self.sp_corridor_rmse_win)
@@ -1319,8 +1319,8 @@ class _CorridorWorkerMixin:
         self.btn_corridor_rmse_grid_calc.setToolTip(
             "<b>Full recalculation of the RMSE(d) grid</b><br>"
             "Rerun the optimization (n, ln k) for each thickness in the regular grid.<br>"
-            "Utilise un m?canisme de <b>continuation (warmstart)</b> et de <b>P0 re-pass</b> pour garantir "
-            "l'exploration de la solution optimale physique."
+            "Uses a <b>continuation (warmstart)</b> and <b>P0 re-pass</b> mechanism to guarantee "
+            "the exploration of the optimal physical solution."
         )
 
         self.btn_corridor_rmse_grid_calc.clicked.connect(self._start_corridor_rmse_grid_recalc)
@@ -1600,7 +1600,7 @@ class _CorridorWorkerMixin:
 
             # Keep the UX non-blocking: no popup for missing base, only status feedback.
             self.lbl_status.setText(
-                "RMSE(d): base corridor indisponible (reconstruction auto impossible). Lance un fit, puis r?essaie."
+                "RMSE(d): base corridor unavailable (auto reconstruction impossible). Run a fit, then retry."
             )
 
             return

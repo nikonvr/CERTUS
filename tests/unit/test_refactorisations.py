@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for les refactorisations CERTUS
+Test script for CERTUS refactorings
 """
 
 import sys
@@ -12,17 +12,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 def test_refactorisations():
-    print("🧪 TEST DES REFACTORISATIONS")
+    print("🧪 TEST OF REFACTORINGS")
     print("=" * 50)
 
-    # 1. Tester certus_bootstrap
+    # 1. Test certus_bootstrap
     print("\n1. TEST CERTUS_CORE (BOOTSTRAP):")
     try:
         from certus.core.certus_core import create_module_environment
 
         print("✅ Import create_module_environment: SUCCESS")
 
-        # Test avec un fichier temporaire
+        # Test with a temporary file
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as tmp:
@@ -35,16 +35,16 @@ def test_refactorisations():
             print(f'      - logger: {type(env["logger"]).__name__}')
             print(f'      - module_name: {env["module_name"]}')
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-            print(f"   ❌ create_module_environment: ERREUR - {e}")
+            print(f"   ❌ create_module_environment: ERROR - {e}")
         finally:
             import os
 
             os.unlink(tmp_path)
 
     except ImportError as e:
-        print(f"   ❌ Import certus_core: ERREUR - {e}")
+        print(f"   ❌ Import certus_core: ERROR - {e}")
 
-    # 2. Tester certus_utils
+    # 2. Test certus_utils
     print("\n2. TEST CERTUS_CORE (UTILS):")
     try:
         from certus.core.certus_core import ensure_numpy_array, ensure_numpy_arrays
@@ -66,10 +66,10 @@ def test_refactorisations():
         print(f"      - Multiple arrays: {len(arrays_result)}")
 
     except ImportError as e:
-        print(f"   ❌ Import certus_core: ERREUR - {e}")
+        print(f"   ❌ Import certus_core: ERROR - {e}")
 
     # 3. Test refactored certus_errors
-    print("\n3. TEST CERTUS_ERRORS REFACTORISÉ:")
+    print("\n3. TEST CERTUS_ERRORS REFACTORED:")
     try:
         from certus.utils.errors import validate_spectral_data
 
@@ -82,32 +82,32 @@ def test_refactorisations():
         try:
             validate_spectral_data(wavelengths, values)
             print("✅ validate_spectral_data(lists): SUCCESS")
-            print("      - Accepte les listes sans error")
+            print("      - Accepts lists without error")
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-            print(f"   ❌ validate_spectral_data(listes): ERREUR - {e}")
+            print(f"   ❌ validate_spectral_data(lists): ERROR - {e}")
 
     except ImportError as e:
-        print(f"   ❌ Import certus_errors: ERREUR - {e}")
+        print(f"   ❌ Import certus_errors: ERROR - {e}")
 
-    # 4. Tester les imports dans les modules principaux
-    print("\n4. TEST IMPORTS MODULES PRINCIPAUX:")
+    # 4. Test imports in main modules
+    print("\n4. TEST MAIN MODULE IMPORTS:")
     modules_to_test = ["CERTUS_HUB", "CERTUS_DESIGN", "CERTUS_INDEX"]
     for module_name in modules_to_test:
         try:
             __import__(module_name)
             print(f"   ✅ {module_name}: Import SUCCESS")
         except ImportError as e:
-            print(f"   ❌ {module_name}: Import ERREUR - {e}")
+            print(f"   ❌ {module_name}: Import ERROR - {e}")
         except (ValueError, TypeError, RuntimeError, AttributeError, KeyError, IndexError, FileNotFoundError) as e:
-            print(f"   ⚠️  {module_name}: Autre error - {e}")
+            print(f"   ⚠️  {module_name}: Other error - {e}")
 
-    print("\n📊 RÉSUMÉ DES TESTS:")
+    print("\n📊 TEST SUMMARY:")
     print("🧪 Refactorings tested")
     print("✅ Utility modules created")
     print("✅ Centralized Bootstrap")
     print("✅ Improved validation")
     print("✅ Updated imports")
-    print("\n🎯 REFACTORISATION RÉUSSIE!")
+    print("\n🎯 REFACTORING SUCCESSFUL!")
 
 
 if __name__ == "__main__":

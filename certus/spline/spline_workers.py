@@ -497,7 +497,7 @@ def _free_knot_warm_state(
     nn0 = np.asarray(base_result.get("n_nodes_physical", []), dtype=np.float64).ravel()
     LL0 = np.asarray(base_result.get("L_nodes", []), dtype=np.float64).ravel()
 
-    # Vecteur ``x`` du stage SOL2 : source de vérité (d, ξ_n→n physique, L) après polish « best-seen ».
+    # Vector ``x`` from stage SOL2: source of truth (d, physical xi_n->n, L) after "best-seen" polish.
     x_sol2_for_check: np.ndarray | None = None
     _xp = base_result.get("x")
     if _xp is not None:
@@ -517,7 +517,7 @@ def _free_knot_warm_state(
             )
         elif (not optimize_n) and _k_mesh >= 2 and int(_xv.size) == 4 * _k_mesh - 1:
             log.info(
-                "PIPELINE [%s] %s | ``x`` au format SOL3 scindé (len=%d, K=%d); warm via sigma_knots_* / n_nodes / L_nodes.",
+                "PIPELINE [%s] %s | split SOL3 format ``x`` (len=%d, K=%d); warm via sigma_knots_* / n_nodes / L_nodes.",
                 seq_label,
                 stage_name,
                 int(_xv.size),
@@ -533,7 +533,7 @@ def _free_knot_warm_state(
             )
     else:
         log.warning(
-            "PIPELINE [%s] %s | pas de ``x`` dans base_result; warm depuis d_nm / n_nodes_physical / L_nodes (legacy).",
+            "PIPELINE [%s] %s | no ``x`` in base_result; warm from d_nm / n_nodes_physical / L_nodes (legacy).",
             seq_label,
             stage_name,
         )
@@ -1073,9 +1073,9 @@ def _run_free_knot_stage(
 
     _span_sig = float(max(s_hi - s_lo, 1e-30))
 
-    # sigma_knots_decode(encode(sk)) déplace légèrement les nœuds (~1e-5 en σ, eps_s + cumsum).
-    # Les n/L du warm start sont définis sur sigma_knots du résultat SOL2/SOL3 : pour nk_from_x
-    # on réutilise ce maillage de référence tant que sk décodé n'a pas réellement bougé.
+    # sigma_knots_decode(encode(sk)) slightly moves the nodes (~1e-5 in σ, eps_s + cumsum).
+    # The warm start n/L are defined on the sigma_knots of the SOL2/SOL3 result: for nk_from_x
+    # we reuse this reference mesh as long as the decoded sk has not actually moved.
     _sigma_snap_atol = float(max(2.5e-5, 1e-6 * _span_sig, 1e-12))
 
     _ws = _free_knot_warm_state(base_result, cfg, optimize_n, seq_label, stage_name, ev, progress_cb, log)
@@ -1128,8 +1128,8 @@ def _run_free_knot_stage(
 
     if min_dlam_ratio_req > 0.0:
         log.debug(
-            "PIPELINE [%s] %s | espacement nœuds libres : cfg min_delta_lambda/lambda_mean=%.5g ; "
-            "pénalité si min(Deltaλ)/λ_mean **diminue** vs maillage SOL2 (fichier λ [%.4f, %.4f] nm).",
+            "PIPELINE [%s] %s | free knot spacing: cfg min_delta_lambda/lambda_mean=%.5g ; "
+            "penalty if min(Delta lambda)/lambda_mean **decreases** vs SOL2 mesh (lambda file [%.4f, %.4f] nm).",
             seq_label,
             stage_name,
             min_dlam_ratio_req,
@@ -1153,9 +1153,9 @@ def _run_free_knot_stage(
             _r_sp_n = float(min_relative_lambda_spacing_ratio(skn0, lam_lo, lam_hi))
             _r_sp_L = float(min_relative_lambda_spacing_ratio(skL0, lam_lo, lam_hi))
             log.info(
-                "PIPELINE [%s] %s | SOL3 init (maille SOL2): min(Deltaλ)/λ_mean  sigma_n=%.6f  sigma_L=%.6f "
-                "| cfg construction=%.6f (un pas UV court peut donner un ratio << cfg ; "
-                "pénalité SOL3 seulement si ce ratio **baisse** vs ce départ).",
+                "PIPELINE [%s] %s | SOL3 init (SOL2 mesh): min(Delta lambda)/lambda_mean  sigma_n=%.6f  sigma_L=%.6f "
+                "| cfg construction=%.6f (a short UV step can yield a ratio << cfg; "
+                "SOL3 penalty only if this ratio **drops** vs this start).",
                 seq_label,
                 stage_name,
                 _r_sp_n,
@@ -1176,8 +1176,8 @@ def _run_free_knot_stage(
         if min_dlam_ratio_req > 0.0 and np.isfinite(lam_lo) and np.isfinite(lam_hi) and lam_hi > lam_lo:
             _r_sp_Lb = float(min_relative_lambda_spacing_ratio(skL0, lam_lo, lam_hi))
             log.info(
-                "PIPELINE [%s] %s | SOL3b init: min(Deltaλ)/λ_mean (sigma_L)=%.6f | cfg construction=%.6f "
-                "(pénalité seulement si ce ratio **baisse** vs ce départ).",
+                "PIPELINE [%s] %s | SOL3b init: min(Delta lambda)/lambda_mean (sigma_L)=%.6f | cfg construction=%.6f "
+                "(penalty only if this ratio **drops** vs this start).",
                 seq_label,
                 stage_name,
                 _r_sp_Lb,
@@ -1290,33 +1290,31 @@ def _run_free_knot_stage(
 
             if abs(_mse_sol2_sp - _mse_sol3_z0_sp) > _tol_m:
                 log.warning(
-                    "PIPELINE [%s] %s | écart init SOL2 vs SOL3(z0) (MSE spectrale grille masquée): "
-                    "%.6e vs %.6e (|Delta|=%.6e). Vérifier clip n/L ou encode sigma.",
+                    "PIPELINE [%s] %s | initial deviation SOL2 vs SOL3(z0) (spectral MSE masked grid): "
+                    "%.6e vs %.6e (|Delta|=%.6e). Check n/L clip or sigma encoding.",
                     seq_label,
                     stage_name,
                     _mse_sol2_sp,
                     _mse_sol3_z0_sp,
                     abs(_mse_sol2_sp - _mse_sol3_z0_sp),
                 )
-
             else:
                 log.info(
-                    "PIPELINE [%s] %s | init alignée: MSE spectrale SOL2 ``x`` == SOL3(z0) (~%.6e).",
+                    "PIPELINE [%s] %s | initial alignment: spectral MSE SOL2 ``x`` == SOL3(z0) (~%.6e).",
                     seq_label,
                     stage_name,
                     _mse_sol2_sp,
                 )
-
         except NUMERICAL_FAULT_EXCEPTIONS:
             log.debug(
-                "PIPELINE [%s] %s | contrôle MSE SOL2/SOL3 init impossible",
+                "PIPELINE [%s] %s | initial MSE SOL2/SOL3 check impossible",
                 seq_label,
                 stage_name,
                 exc_info=True,
             )
 
     # Best z by **spectral MSE** (same grid / same nk_from_x as SOL2): display RMSE
-    # ne peut pas empirer vs le warm start le long de la trajectoire retenue.
+    # cannot worsen vs the warm start along the selected trajectory.
 
 
 
@@ -1376,7 +1374,7 @@ def _run_free_knot_stage(
     if _mse1_ret_spec > mse_1_spec + 1e-12 * max(1.0, abs(mse_1_spec)):
         log.info(
             "PIPELINE [%s] %s phase 1: last L-BFGS-B iterate worse (spectral MSE) than best seen; "
-            "on garde le meilleur (%.6e -> %.6e).",
+            "keeping the best one (%.6e -> %.6e).",
             seq_label,
             stage_name,
             _mse1_ret_spec,
@@ -1459,7 +1457,7 @@ def _run_free_knot_stage(
     if _mse2_ret_spec > mse_f_spec + 1e-12 * max(1.0, abs(mse_f_spec)):
         log.info(
             "PIPELINE [%s] %s phase 2: last L-BFGS-B iterate worse (spectral MSE) than best seen; "
-            "on garde le meilleur (%.6e -> %.6e).",
+            "keeping the best one (%.6e -> %.6e).",
             seq_label,
             stage_name,
             _mse2_ret_spec,
@@ -1484,7 +1482,7 @@ def _run_free_knot_stage(
         if _mse3_ret_spec > mse_3_spec + 1e-12 * max(1.0, abs(mse_3_spec)):
             log.info(
                 "PIPELINE [%s] %s phase 3: last L-BFGS-B iterate worse (spectral MSE) than best seen; "
-                "on garde le meilleur (%.6e -> %.6e).",
+                "keeping the best one (%.6e -> %.6e).",
                 seq_label,
                 stage_name,
                 _mse3_ret_spec,
@@ -1557,7 +1555,7 @@ def _run_free_knot_stage(
             _rf_L = float(min_relative_lambda_spacing_ratio(skL_f, lam_lo, lam_hi))
 
             log.info(
-                "PIPELINE [%s] %s | fin: min(Deltaλ)/λ_mean  sigma_n=%.6f  sigma_L=%.6f  (départ SOL2: %.6f / %.6f ; cfg=%.6f)",
+                "PIPELINE [%s] %s | end: min(Delta lambda)/lambda_mean  sigma_n=%.6f  sigma_L=%.6f  (SOL2 start: %.6f / %.6f ; cfg=%.6f)",
                 seq_label,
                 stage_name,
                 _rf_n,
@@ -1604,7 +1602,7 @@ def _run_free_knot_stage(
             _rf_L_end = float(min_relative_lambda_spacing_ratio(skL_f, lam_lo, lam_hi))
 
             log.info(
-                "PIPELINE [%s] %s | fin: min(Deltaλ)/λ_mean (sigma_L)=%.6f (départ SOL2: %.6f ; cfg=%.6f)",
+                "PIPELINE [%s] %s | end: min(Delta lambda)/lambda_mean (sigma_L)=%.6f (SOL2 start: %.6f ; cfg=%.6f)",
                 seq_label,
                 stage_name,
                 _rf_L_end,
@@ -1803,7 +1801,7 @@ def _log_factual_sol2_analysis(
 
     nk_mode = str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth").strip().lower()
 
-    lgr.info("FACTUAL - SOL 2: RECALCUL IMMÉDIAT CÔTÉ WORKER (objectif spline)")
+    lgr.info("FACTUAL - SOL 2: IMMEDIATE RECALCULATION ON WORKER SIDE (spline objective)")
 
     lgr.info(
         " -> Objective context: nk_profile_interp=%s | lambda pixels (MSE mask)=%s | wT=%.4g wR=%.4g | "
@@ -1887,7 +1885,7 @@ def _log_factual_sol2_analysis(
         lgr.info("  SOLUTION VALIDATED: dialog and worker in close agreement.")
 
     lgr.info(
-        "FACTUAL - La ligne suivante ``INDEX_SPLINE stage ... RMSE start`` doit coïncider avec le RMSE SOL2 ici (± bruit clip)."
+        "FACTUAL - The following line ``INDEX_SPLINE stage ... RMSE start`` must coincide with the RMSE SOL2 here (± clip noise)."
     )
     lgr.info("=" * 60)
 
@@ -1951,32 +1949,32 @@ def _run_single_spline_stage(
 
         manual_rmse = float(getattr(cfg, "smart_preview_accepted_rmse", 0.0) or 0.0)
 
-        # NE PAS re-appeler make_bounds_and_x0 : les attrs dynamiques ont deja ete
+        # DO NOT re-call make_bounds_and_x0: dynamic attrs have already been
 
-        # consommes par le 1er appel (ligne 2514). bounds_full, x0, sigma_knots
+        # consumed by the 1st call (line 2514). bounds_full, x0, sigma_knots
 
-        # contiennent deja les values manualles correctes.
+        # already contain the correct manual values.
 
         cfg.smart_init_manual_force_restart = False
 
         lgr.info("=" * 60)
 
-        lgr.info("FACTUAL - SOL 1: VALEURS ISSUES DU DIALOGUE MANUEL")
+        lgr.info("FACTUAL - SOL 1: VALUES FROM THE MANUAL DIALOGUE")
 
         lgr.info(
-            " -> RMSE mémorisée (maillage worker, même métrique que SOL2 ci-dessous) = %.8f",
+            " -> Stored RMSE (worker mesh, same metric as SOL2 below) = %.8f",
             manual_rmse,
         )
 
         lgr.info(
-            " -> Si la fenêtre Smart Init affichait mieux: c'était l'aperçu ; les logs utilisent la valeur ci-dessus.",
+            " -> If the Smart Init window displayed a better value: it was the preview; logs use the value above.",
         )
 
         lgr.info(
-            " -> Regrille K_dialog → K_worker: voir ``INDEX_SPLINE_smart_init_Ksrc_to_worker_mesh`` (snap / interp / extrap)."
+            " -> Regrid K_dialog -> K_worker: see ``INDEX_SPLINE_smart_init_Ksrc_to_worker_mesh`` (snap / interp / extrap)."
         )
 
-        lgr.info(" -> d (x0 avant clip) = %.6f nm", float(x0[0]))
+        lgr.info(" -> d (x0 before clip) = %.6f nm", float(x0[0]))
 
         lgr.info(
             " -> sigma_knots (nm⁻¹) K=%d : %s",
@@ -2106,8 +2104,8 @@ def _run_single_spline_stage(
     rmse_depart_local = float(np.sqrt(max(mse_local, 0.0)))
 
     lgr.info(
-        "INDEX_SPLINE stage K_sigma=%s: RMSE départ (x0 après clip, avant local obligatoire) = %.6f  "
-        "| = √total FACTUAL SOL2 si Smart Init manuel vient d'être appliqué",
+        "INDEX_SPLINE stage K_sigma=%s: Start RMSE (x0 after clip, before mandatory local) = %.6f  "
+        "| = sqrt(total) FACTUAL SOL2 if manual Smart Init was just applied",
         int(sigma_knots.size),
         rmse_depart_local,
     )
@@ -2194,7 +2192,7 @@ def _run_single_spline_stage(
         if stop_event.is_set():
             return None, None
 
-        progress_cb(2, "L-BFGS-B uniquement (polish)...")
+        progress_cb(2, "L-BFGS-B only (polish)...")
 
         x_best, final_mse, nitp = _polish_lbfgsb_chunked(
             obj,
@@ -2249,8 +2247,8 @@ def _run_single_spline_stage(
     rmse_before_pg = float(np.sqrt(max(mse_local, 0.0)))
 
     lgr.info(
-        "INDEX_SPLINE stage K_sigma=%s: RMSE au départ PGlobal (après local obligatoire) = %.6f  "
-        "| même métrique objectif que FACTUAL SOL2",
+        "INDEX_SPLINE stage K_sigma=%s: RMSE at start of PGlobal (after mandatory local) = %.6f  "
+        "| same objective metric as FACTUAL SOL2",
         int(sigma_knots.size),
         rmse_before_pg,
     )
@@ -2274,18 +2272,18 @@ def _run_single_spline_stage(
     if cfg.pglobal_max_feval is not None:
         mfe = int(cfg.pglobal_max_feval)
 
-        # mfe = max(mfe, 6000 * dim)  # Suppression de cette contrainte qui ralentissait l'adaptatif
+        # mfe = max(mfe, 6000 * dim)  # Removed this constraint which slowed down adaptive mode
 
         pg_conf = pg_conf.with_overrides(max_feval=mfe)
 
-        # PGLOBAL ~ triple la taille du 1er batch ; eviter de depasser max_feval des literation 0
+        # PGLOBAL ~ triples the size of the 1st batch; avoid exceeding max_feval from iteration 0
 
         cap_spi = max(32, mfe // 8)
 
         if cap_spi < pg_conf.n_samples_per_iter:
             pg_conf = pg_conf.with_overrides(n_samples_per_iter=cap_spi)
 
-        # reduire les recherches locales si le budget global est serre
+        # reduce local searches if the global budget is tight
 
         if cfg.pglobal_local_search_budget is None:
             pg_conf = pg_conf.with_overrides(

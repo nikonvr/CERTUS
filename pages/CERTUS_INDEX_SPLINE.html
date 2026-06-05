@@ -56,6 +56,7 @@
             <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html" class="active">INDEX SPLINE</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
             <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
             <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
             <a href="CERTUS_METAL_BILAYER.html">METAL</a>
@@ -79,6 +80,10 @@
         <h2>1. Motivation for a Model-Free Spline Representation</h2>
         <p>
             Classical thin-film models such as Lorentzian, Gaussian, Drude, and related oscillator forms encode strong physical assumptions about symmetry and band structure. These assumptions can be useful, but they can also be too restrictive for materials with complex absorption features.
+            <br><br>
+            <div style="background-color: #fff3cd; border-left: 4px solid #ffecb5; padding: 10px; margin-bottom: 15px;">
+                <strong>Scientific Note (Causality vs. Expressivity):</strong> By moving away from classical parametric models (like TLU), the B-spline parameterization intentionally sacrifices rigorous <a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank">Kramers-Kronig (KK) causality</a> in favor of maximal empirical expressivity. The spline fits the observed data with high fidelity but does not strictly enforce the fundamental interdependent physics between $n$ and $k$.
+            </div>
         </p>
         <p>
             In practice, materials such as non-stoichiometric oxynitrides, porous sol-gel matrices, or nanostructured transparent conducting oxides may not be well described by a small number of parametric oscillators. A spline-based representation allows the optical constants to follow the measured spectral curvature without imposing a rigid analytic shape.
@@ -266,6 +271,10 @@
             Phase 04 (SOL 3b) resolves this structurally. The $n(\sigma)$ nodes are frozen, and the vector is reduced to the absorptive variables $L_i$ and $\sigma_L$. A continuous penalty is applied to the second derivative of the absorptive profile:
             $$ P_{reg} = W_{reg} \cdot \sum \left( L_{i+1} - 2L_i + L_{i-1} \right)^2 $$
             This penalizes oscillatory behavior and keeps low-sensitivity sub-arrays smooth and physically stable.
+            <br><br>
+            <div style="background-color: #e2e3e5; border-left: 4px solid #d6d8db; padding: 10px; margin-bottom: 15px;">
+                <strong>Scientific Note (Tikhonov Bias):</strong> Tikhonov regularization intrinsically introduces a bias-variance trade-off. Penalizing curvature mathematically introduces a deliberate smoothing bias, meaning it suppresses noise but may also artificially broaden true, narrow physical absorption peaks.
+            </div>
         </p>
         <h3>7.1 Step-by-Step Role of SOL 3b</h3>
         <p>
@@ -595,7 +604,7 @@
         </p>
         <h3>14.2 Auto-clean</h3>
         <p>
-            The <strong>Auto-clean</strong> button activates a sparsity-enforcing workflow. Rather than running a full $O(N)$ solver pass for each knot, it uses <strong>PCHIP interpolation</strong> to pre-screen and rank node sensitivity. Only the top candidates are promoted to a full L-BFGS-B polish. It also applies a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine tests inward micro-shifts of adjacent nodes to compensate for the lost degree of freedom and reduce artificial RMSE spikes.
+            The <strong>Auto-clean</strong> button activates a sparsity-enforcing workflow. Rather than running a full $O(N)$ solver pass for each knot, it uses <a href="https://en.wikipedia.org/wiki/Monotone_cubic_interpolation" target="_blank"><strong>PCHIP interpolation</strong></a> to pre-screen and rank node sensitivity. Only the top candidates are promoted to a full L-BFGS-B polish. It also applies a <strong>2D Neighbor Pull</strong> strategy: when a node is removed, the engine tests inward micro-shifts of adjacent nodes to compensate for the lost degree of freedom and reduce artificial RMSE spikes.
         </p>
         <div class="mermaid">
         flowchart LR

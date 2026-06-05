@@ -37,21 +37,21 @@ def log_coaching_uncertainty_parameter_guide() -> None:
     log.info("%s ━━━ Parameter guide (acceptance envelope, profiling in d) ━━━", _LOG_PREFIX)
 
     log.info(
-        "%s • RMSE_ref + Delta : avec corridor **scientifique** (défaut), RMSE_ref = **spectral_rmse_best_value** "
-        "+ courbe nominale polie ; seuil = RMSE_ref + Delta ; pas d’élargissement vers la courbe solveur. "
+        "%s • RMSE_ref + Delta: with **scientific** corridor (default), RMSE_ref = **spectral_rmse_best_value** "
+        "+ polished nominal curve; threshold = RMSE_ref + Delta; no widening towards the solver curve. "
         "Without scientific mode: RMSE_ref = masked spectrum of base curves + legacy widening possible.",
         _LOG_PREFIX,
     )
 
     log.info(
-        "%s • alpha (mode heuristique): RMSE(refit à d fixé) <= alpha × RMSE_opt (réf. segments / dict). "
+        "%s • alpha (heuristic mode): RMSE(refit at fixed d) <= alpha x RMSE_opt (ref segments / dict). "
         "Closer to 1 -> narrower d interval. Typ. 1.02-1.10.",
         _LOG_PREFIX,
     )
 
     log.info(
-        "%s • max_span_nm: max |d - d_opt| exploré de chaque côté. Si les deux marches butent sur la limite, "
-        "élargir span ; en mode alpha resserrer alpha près de d_opt ; en mode RMSE_ref+Delta augmenter Delta si le seuil est trop strict.",
+        "%s • max_span_nm: max |d - d_opt| explored on each side. If both steps hit the limit, "
+        "widen span; in alpha mode tighten alpha near d_opt; in RMSE_ref+Delta mode increase Delta if the threshold is too strict.",
         _LOG_PREFIX,
     )
 
@@ -62,20 +62,20 @@ def log_coaching_uncertainty_parameter_guide() -> None:
     )
 
     log.info(
-        "%s • Référence RMSE: en mode absolu -> toujours recalcul sur les courbes base (voir profile_d_rmse_ref_source). "
-        "En mode alpha / auto-sigma LR -> préférence ``spectral_rmse_segments`` puis dict ``rmse``.",
+        "%s • RMSE Reference: in absolute mode -> always recalculate on base curves (see profile_d_rmse_ref_source). "
+        "In alpha / auto-sigma LR mode -> preference ``spectral_rmse_segments`` then dict ``rmse``.",
         _LOG_PREFIX,
     )
 
     log.info(
-        "%s • **Refit à d fixé** : les lignes « RMSE après refit » mesurent une ré-optimisation n,L (budget corridor). "
-        "Elles peuvent dépasser la référence selon le mode ; en mode RMSE_ref+Delta la référence est la courbe nominale.",
+        "%s • **Refit at fixed d**: the lines \"RMSE after refit\" measure an n,L re-optimization (corridor budget). "
+        "They can exceed the reference depending on the mode; in RMSE_ref+Delta mode the reference is the nominal curve.",
         _LOG_PREFIX,
     )
 
     log.info(
-        "%s • Relèvement auto du seuil (**mode heuristique alpha uniquement**, si activé): si le refit central dépasse "
-        "alpha×RMSE_ref, le seuil effectif peut monter - voir profile_d_auto_relaxed_threshold. **Inactif** en RMSE_ref+Delta.",
+        "%s • Auto-raising of the threshold (**heuristic alpha mode only**, if enabled): if the central refit exceeds "
+        "alpha x RMSE_ref, the effective threshold can rise - see profile_d_auto_relaxed_threshold. **Inactive** in RMSE_ref+Delta.",
         _LOG_PREFIX,
     )
 
@@ -123,8 +123,8 @@ def log_coaching_corridor_pipeline_skip_empty() -> None:
     """When the pipeline got no corridor: short reminder to tie to [PROFILE] logs / cfg."""
 
     log.info(
-        "%s [COACH] SKIP/EMPTY: voir plus haut les lignes [CORRIDORS d] (centre_fail, too_few_valid, rmse_meta_invalid). "
-        "Pistes: mode RMSE_ref+Delta -> augmenter Delta ou budget refit ; mode alpha -> assouplir alpha ; LR -> conf/sigma ; "
+        "%s [COACH] SKIP/EMPTY: see the lines above [CORRIDORS d] (centre_fail, too_few_valid, rmse_meta_invalid). "
+        "Leads: RMSE_ref+Delta mode -> increase Delta or refit budget; alpha mode -> relax alpha; LR -> conf/sigma; "
         "max_span_nm, step_nm, n_starts/jitter, polish_maxfun.",
         _LOG_PREFIX,
     )

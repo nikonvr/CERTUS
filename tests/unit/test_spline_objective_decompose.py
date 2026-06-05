@@ -1,4 +1,4 @@
-"""Cohérence ``decompose_spline_pwl_objective`` vs ``SplinePWLObjective``."""
+"""Coherence ``decompose_spline_pwl_objective`` vs ``SplinePWLObjective``."""
 from __future__ import annotations
 
 import numpy as np

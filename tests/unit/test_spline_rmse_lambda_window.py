@@ -1,4 +1,4 @@
-"""Fenêtre spectrale optionnelle pour le masque objectif RMSE (INDEX SPLINE)."""
+"""Optional spectral window for the RMSE objective mask (INDEX SPLINE)."""
 
 from __future__ import annotations
 
@@ -216,7 +216,7 @@ def test_build_masked_grid_matches_mask_count() -> None:
 
 def test_smart_init_preview_grid_same_lambda_and_weights_as_objective() -> None:
 
-    """Grille lambda masquée + poids quadrature : identiques entre preview Smart Init et objectif spline."""
+    """Masked lambda grid + quadrature weights: identical between Smart Init preview and spline objective."""
 
     from certus.spline.spline_smart_init import _build_smart_preview_grids
 

@@ -58,7 +58,7 @@ class TestBareSubstrateSpectrumColumn:
     def test_accepts_markers_and_acronyms(self) -> None:
 
 
-        f = csi._is_bare_substrate_spectrum_column
+        f = csi.is_bare_substrate_column
 
 
         assert f("Tnu2f SNu")
@@ -121,7 +121,7 @@ class TestBareSubstrateSpectrumColumn:
     def test_rejects_bare_tnu_and_stack(self) -> None:
 
 
-        f = csi._is_bare_substrate_spectrum_column
+        f = csi.is_bare_substrate_column
 
 
         assert not f("stack SNu")

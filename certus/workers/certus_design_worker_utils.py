@@ -1,7 +1,7 @@
 # =============================================================================
 
 
-# Helpers testables pour workers design (sans Qt) - même conventions que le GUI.
+# Testable helpers for design workers (without Qt) - same conventions as the GUI.
 
 
 # =============================================================================
@@ -37,7 +37,7 @@ def optim_calc_oblique_selected(
     calc_spectrum_oblique_backside_vectorized,
     calc_spectrum_oblique_vectorized,
 ):
-    """Sélectionne le noyau oblique (front-only, backside nu, backside avec coating)."""
+    """Selects the oblique kernel (front-only, bare backside, backside with coating)."""
 
     if has_back_calc and has_back_stack:
         return calc_spectrum_full_oblique_exact(
@@ -60,9 +60,9 @@ def optim_calc_oblique_selected(
 def optim_post_optim_time_budget_seconds(n_layers: int) -> float:
     """
 
-    Budget (s) pour la chaîne post-optim (cleanup / healing / needle) selon le
+    Budget (s) for the post-optimization chain (cleanup / healing / needle) depending on the
 
-    nombre de couches - même loi que ``CertusDesign._on_optim_done``.
+    number of layers - same law as ``CertusDesign._on_optim_done``.
 
     """
 
@@ -82,13 +82,13 @@ def optim_backside_flags_from_cfg(
 ) -> tuple[bool, bool, list]:
     """
 
-    Drapeaux backside comme dans OptimWorker.run :
+    Backside flags as in OptimWorker.run:
 
-    ``has_back_stack`` = coating arrière activé et pile non vide ;
+    ``has_back_stack`` = backside coating enabled and non-empty stack;
 
-    ``has_back_calc`` = calcul face arrière (Fresnel / pile) selon ``cfg['back']``.
+    ``has_back_calc`` = backside calculation (Fresnel / stack) according to ``cfg['back']``.
 
-    Retourne aussi ``stack_back`` (liste telle que dans la config).
+    Also returns ``stack_back`` (list as in the configuration).
 
     """
 
@@ -108,9 +108,9 @@ def optim_backside_flags_from_cfg(
 def optim_oblique_unique_display_keys(valid_targets: list) -> list[tuple[Any, Any]]:
     """
 
-    Clés (angle, pol) uniques pour tracés live, ordre de première apparition
+    Unique keys (angle, pol) for live plots, order of first appearance
 
-    (même logique que OptimWorker.run).
+    (same logic as OptimWorker.run).
 
     """
 
@@ -135,9 +135,9 @@ def optim_oblique_group_targets_on_wavelengths(
 ) -> dict[tuple[Any, Any], dict[str, Any]]:
     """
 
-    Regroupe les cibles obliques par (angle, pol) : indices ``clues``, valeurs cibles
+    Groups oblique targets by (angle, pol): indices ``clues``, target values
 
-    interpolées en lambda, types et poids (étape 1 avant assemblage ``oblique_configs``).
+    interpolated in lambda, types and weights (step 1 before assembling ``oblique_configs``).
 
     """
 
@@ -186,9 +186,9 @@ def optim_oblique_configs_from_groups(
 ) -> list[dict[str, Any]]:
     """
 
-    Pour chaque (angle, pol) : indices globaux triés, vues lambda / nk / épaisseurs,
+    For each (angle, pol): sorted global indices, lambda / nk / thickness views,
 
-    table idx->local (étape 2 dans OptimWorker.run).
+    table idx->local (step 2 in OptimWorker.run).
 
     """
 
@@ -217,7 +217,7 @@ def optim_oblique_configs_from_groups(
 
 
 def optim_oblique_attach_local_positions(oblique_configs: list[dict[str, Any]]) -> None:
-    """Remplit ``local_positions`` pour chaque entrée de ``targets`` (étape 3)."""
+    """Fills ``local_positions`` for each entry of ``targets`` (step 3)."""
 
     for config in oblique_configs:
         idx_to_local = config["idx_to_local"]
@@ -243,11 +243,11 @@ def optim_prepare_stack_nk_back(
 ) -> tuple[dict[str, np.ndarray], np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
-    Indices nk(lambda) pour la pile avant, substrat (clé *substrate* en design),
+    nk(lambda) indices for the front stack, substrate (key *substrate* in design),
 
-    et piles / épaisseurs arrière si ``has_back_stack``.
+    and backside stacks / thicknesses if ``has_back_stack``.
 
-    Aligné sur OptimWorker.run (préparation avant noyaux obliques).
+    Aligned on OptimWorker.run (preparation before oblique kernels).
 
     """
 
@@ -291,9 +291,9 @@ def optim_display_wavelength_grid(
 ) -> np.ndarray:
     """
 
-    Grille lambda pour tracés / rafraîchissement live : marge spectrale 20 % par défaut,
+    lambda grid for live plots / refresh: spectral margin 20% by default,
 
-    plancher plausible 200 nm côté UV (aligné sur OptimWorker.__init__).
+    plausible floor 200 nm UV side (aligned on OptimWorker.__init__).
 
     """
 
@@ -320,9 +320,9 @@ def optim_qwot_values_from_ep_stack(
 ) -> list[float]:
     """
 
-    Liste QWOT par couche : ``4 n d / lambda₀`` avec ``n`` depuis ``mats[layer.mat].n4``
+    QWOT list per layer: ``4 n d / lambda₀`` with ``n`` from ``mats[layer.mat].n4``
 
-    (ou dict ``n4``), aligné sur ``CertusDesign._on_optim_done`` (arrêt utilisateur).
+    (or dict ``n4``), aligned on ``CertusDesign._on_optim_done`` (user stop).
 
     """
 
@@ -352,7 +352,7 @@ def optim_qwot_values_from_ep_stack(
 
 
 def optim_var_indices_from_stack(stack: list) -> np.ndarray:
-    """Indices des couches d’épaisseur optimisable (``layer.var``), comme dans OptimWorker.run."""
+    """Indices of layers with optimizable thickness (``layer.var``), as in OptimWorker.run."""
 
     return np.array([i for i, layer in enumerate(stack) if layer.var], dtype=np.int64)
 
@@ -364,7 +364,7 @@ def optim_bounds_thickness_local(
     *,
     float_dtype=np.float64,
 ) -> np.ndarray:
-    """Bornes +/-Deltanm autour des épaisseurs initiales (mode ``local`` OptimWorker)."""
+    """Bounds +/-Deltanm around initial thicknesses (local mode of OptimWorker)."""
 
     ep = np.asarray(ep0, dtype=float_dtype).ravel()
 
@@ -384,7 +384,7 @@ def optim_bounds_thickness_healing(
 ) -> np.ndarray:
     """
 
-    Bornes healing : Deltad = lambda₀/(10·n(lambda₀)) (mode ``healing`` OptimWorker).
+    Healing bounds: Deltad = lambda₀/(10·n(lambda₀)) (healing mode of OptimWorker).
 
     """
 
@@ -429,7 +429,7 @@ def optim_bounds_thickness_global(
     *,
     float_dtype=np.float64,
 ) -> np.ndarray:
-    """Borne basse 0, haute max(limite physique, 1.2×ep₀) - mode global OptimWorker."""
+    """Lower bound 0, upper max(physical limit, 1.2xep₀) - global mode of OptimWorker."""
 
     ep = np.asarray(ep0, dtype=float_dtype).ravel()
 
@@ -450,13 +450,13 @@ def optim_bounds_thickness_global(
 
 
 def optim_rmse_is_valid_for_log(rmse: Any) -> bool:
-    """True si la RMSE est définie, finie et >= 0 (affichage / logs design)."""
+    """True if RMSE is defined, finite and >= 0 (display / design logs)."""
 
     return bool(rmse is not None and np.isfinite(rmse) and float(rmse) >= 0.0)
 
 
 def optim_rmse_display_string(rmse: Any, *, ndigits: int = 6) -> str:
-    """Format fixe pour logs ou la chaîne N/A - aligné ``CertusDesign._on_optim_done``."""
+    """Fixed format for logs or the N/A string - aligned with ``CertusDesign._on_optim_done``."""
 
     if not optim_rmse_is_valid_for_log(rmse):
         return "N/A"

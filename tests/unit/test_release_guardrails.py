@@ -9,7 +9,7 @@ import pytest
 def test_release_workflow_runs_critical_guardrails() -> None:
     repo = Path(__file__).resolve().parents[2]
     workflow = repo / ".github" / "workflows" / "release-windows.yml"
-    assert workflow.exists(), "Workflow release-windows.yml manquant"
+    assert workflow.exists(), "Workflow release-windows.yml missing"
     text = workflow.read_text(encoding="utf-8")
 
     required_tokens = [
@@ -22,7 +22,7 @@ def test_release_workflow_runs_critical_guardrails() -> None:
         "./tools/smoke_release.ps1",
     ]
     missing = [tok for tok in required_tokens if tok not in text]
-    assert not missing, "Guardrails non branchés dans le workflow: " + ", ".join(missing)
+    assert not missing, "Guardrails not connected in the workflow: " + ", ".join(missing)
 
 
 @pytest.mark.unit
@@ -35,5 +35,4 @@ def test_critical_guardrail_files_exist() -> None:
         repo / "tools" / "smoke_release.ps1",
     ]
     missing = [str(p.relative_to(repo)) for p in required_files if not p.exists()]
-    assert not missing, "Fichiers garde-fou manquants: " + ", ".join(missing)
-
+    assert not missing, "Guardrail files missing: " + ", ".join(missing)

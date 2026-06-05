@@ -56,6 +56,14 @@ class StratParamsDTO(_MappingBase):
     phase_a_seed: int | None = None
     robustness_seed: int | None = None
 
+    def __post_init__(self) -> None:
+        if self.wl_range is not None and len(self.wl_range) >= 2:
+            wl_min, wl_max = float(self.wl_range[0]), float(self.wl_range[-1])
+            if self.scan_wl_min is None:
+                object.__setattr__(self, "scan_wl_min", wl_min)
+            if self.scan_wl_max is None:
+                object.__setattr__(self, "scan_wl_max", wl_max)
+
     def __eq__(self, other: Any) -> bool:
         if self._eq_mapping(other):
             return True

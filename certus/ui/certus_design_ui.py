@@ -126,7 +126,6 @@ from certus.ui.certus_qt_widgets import (
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    CAUCHY_PRESETS,
     CFG,
     ensure_numpy_array,
     get_complex_dtype,
@@ -684,7 +683,7 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
 
             combo.setToolTip("Select the material preset or 'Custom'.")
 
-            combo.addItems(CAUCHY_PRESETS.keys())
+            combo.addItems(["Custom"])
 
             combo.setCurrentText("Custom")
 
@@ -1736,13 +1735,6 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
     def _apply_preset(self, name: str, n4_spin: QDoubleSpinBox, n7_spin: QDoubleSpinBox) -> None:
         """Applies Cauchy preset and updates spinbox states."""
 
-        if name in CAUCHY_PRESETS:
-            vals = CAUCHY_PRESETS[name]
-
-            if vals[0] > 0:
-                n4_spin.setValue(vals[0])
-
-                n7_spin.setValue(vals[1])
 
         # Enable/disable spinboxes based on preset
 
@@ -2478,11 +2470,11 @@ class CertusDesignApp(CertusBaseApp, CertusDesignUIPlotMixin):
 
             # Convert spectral interval to wavenumbers (1/nm)
 
-            nu_min = 1.0 / lambda_max  # Plus petite longueur d'onde = plus grand nombre d'onde
+            nu_min = 1.0 / lambda_max  # Shorter wavelength = larger wavenumber
 
-            nu_max = 1.0 / lambda_min  # Plus grande longueur d'onde = plus petit nombre d'onde
+            nu_max = 1.0 / lambda_min  # Longer wavelength = smaller wavenumber
 
-            delta_nu = nu_max - nu_min  # en 1/nm
+            delta_nu = nu_max - nu_min  # in 1/nm
 
             # Corrected Tikhonravov formula
 

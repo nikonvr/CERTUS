@@ -39,13 +39,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html" class="active">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -60,13 +64,13 @@
         <div class="abstract">
             <strong>Executive Summary:</strong> CERTUS-INDEX is a high-level scientific tool for extracting the optical
             constants ($n, k$) of semiconductors and dielectrics over the full VIS–IR spectral range (300–5000 nm).
-            It combines a rigorous <strong>Tauc-Lorentz-Urbach (TLU) global fit</strong> (Kramers-Kronig consistent)
-            with an optional <strong>Spline Refinement pipeline</strong> that achieves RMSE &lt; 0.005 on real-world
+            It combines a rigorous <a href="CERTUS_Optical_Theory_Guide.html" target="_blank"><strong>Tauc-Lorentz-Urbach (TLU) global fit</strong></a> (<a href="https://en.wikipedia.org/wiki/Kramers%E2%80%93Kronig_relations" target="_blank">Kramers-Kronig consistent</a>)
+            with an optional <a href="CERTUS_INDEX_SPLINE.html" target="_blank"><strong>Spline Refinement pipeline</strong></a> that achieves RMSE &lt; 0.005 on real-world
             data.
             When the spectrum extends beyond 2500 nm, a <strong>two-stage pipeline</strong> runs automatically: TLU is
             fitted on 1000–2200 nm only, then <strong>IR Global Model (Phase 2)</strong> refines $n$, $k$ over the full
-            range: <strong>Stage 0–2</strong> (Sellmeier 5p + empirical k 8p with PGlobal + L-BFGS-B), then
-            <strong>Phase 2.3</strong> (spline $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
+            range: <strong>Stage 0–2</strong> (<a href="https://en.wikipedia.org/wiki/Sellmeier_equation" target="_blank">Sellmeier</a> 5p + empirical k 8p with PGlobal + <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank">L-BFGS-B</a>), then
+            <strong>Phase 2.3</strong> (<a href="https://en.wikipedia.org/wiki/B-spline" target="_blank">spline</a> $k$ in $\log k$ with knot deduction, Pass 1 + Pass 2, optional knot
             reduction 8→4), then <strong>Phase 2.1</strong> (90% T / 10% R refinement from the spline result).
             The optional Spline stage (spectrum ≤2500 nm) uses pointwise IR inversion, L-BFGS-B knot optimization,
             and a final joint re-optimization of thickness, knot positions, and $n$/$k$ values.
@@ -540,7 +544,7 @@
     noise from
     interfering with the optimization algorithms without artificially flattening the relevant
     interference
-    fringes, CERTUS-INDEX implements a <strong>Progressive Blended Savitzky-Golay</strong> filter upon
+    fringes, CERTUS-INDEX implements a <a href="https://en.wikipedia.org/wiki/Savitzky%E2%80%93Golay_filter" target="_blank"><strong>Progressive Blended Savitzky-Golay</strong></a> filter upon
     data
     loading.
 </p>
@@ -764,7 +768,7 @@
     PG_INIT["Phase 1: PGLOBAL<br>Uniform sampling in 7D<br>+ single-linkage clustering<br>+ L-BFGS-B (analytic grad)"]:::highlight --> LB_OPT["Phase 2: L-BFGS-B Polish<br>ftol=1e-12, gtol=1e-12<br>maxiter=2000"]:::process
     LB_OPT --> CD_LOOP["Phase 3: L-BFGS-B Local Polish<br>±5% bounds, 500 iters<br>(replaces Coord. Descent)"]:::process
     CD_LOOP --> GS_SPLIT["Phase 4: 3-way Grid Shift<br>Residual uncertainty Δn, Δk"]:::process
-    GS_SPLIT --> ULT_LBFGSB["Phase 5: Ultimate Refinement<br>L-BFGS-B (ftol=1e-14) + Nelder-Mead"]:::process
+    GS_SPLIT --> ULT_LBFGSB["Phase 5: Ultimate Refinement<br>L-BFGS-B (ftol=1e-14) polish"]:::process
     ULT_LBFGSB --> TLU_DONE["TLU solution: d, n(λ), k(λ)"]:::highlight
     end
 
@@ -830,9 +834,9 @@
 
 <h4>Phase 2: L-BFGS-B Polish (Quasi-Newton)</h4>
 <p>
-    The PGLOBAL result is refined using the <strong>L-BFGS-B (Limited-memory
+    The PGLOBAL result is refined using the <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS" target="_blank"><strong>L-BFGS-B (Limited-memory
         Broyden-Fletcher-Goldfarb-Shanno
-        with Bounds)</strong> algorithm.
+        with Bounds)</strong></a> algorithm.
     It is a Quasi-Newton method that does not directly evaluate the second-derivative matrix (the
     Hessian, $H$),
     which would be numerically exorbitant for 7 dimensions.
@@ -864,9 +868,7 @@
 <ol>
     <li><strong>Data Decimation:</strong> Spectral data split into 3 interleaved subsets (indices
         $0,3,6\ldots$, $1,4,7\ldots$, $2,5,8\ldots$).</li>
-    <li><strong>Independent Fits:</strong> Each subset is optimized independently (L-BFGS-B +
-        Nelder-Mead
-        polish).</li>
+    <li><strong>Independent Fits:</strong> Each subset is optimized independently via L-BFGS-B.</li>
     <li><strong>Stability Envelope:</strong>
         <div class="eq-box" style="margin: 10px 0;">
             $$ \Delta n_{res}(\lambda) = \max_{1 \le i < j \le 3} |n_i(\lambda) - n_j(\lambda)| $$
@@ -884,8 +886,7 @@
     <li><strong>L-BFGS-B</strong> with extreme tolerances (<code>ftol=1e-14</code>,
         <code>gtol=1e-14</code>).
     </li>
-    <li><strong>Nelder-Mead</strong> derivative-free verification — catches gradient blind spots.</li>
-    <li>The better of the two results becomes the final solution.</li>
+    <li>The exact analytical gradient ensures the local minimum is robustly polished to convergence.</li>
 </ol>
 
 <h2>6. IR Pipeline (Spectrum &gt; 2500 nm) — Workflow and Implementation</h2>
@@ -962,7 +963,7 @@
         Normalized mode: $T_{val} = T_{calc}/T_{sub}$, $R_{val} = R_{calc}/T_{sub}$. Spectral weight $1/\lambda$ (normalized)
         to balance fit across wavelength.</li>
     <li><strong>Substrate:</strong> If <code>k_sub_data</code> and <code>substrate_thickness_nm</code> are set (e.g. Sapphire),
-        R and T use <code>calculationate_RT_single_layer_absorbing_substrate_array</code> (Beer-Lambert in substrate).</li>
+        R and T use <code>calculate_RT_single_layer_absorbing_substrate_array</code> (Beer-Lambert in substrate).</li>
     <li><strong>Guards (return $10^{12}$ if violated):</strong>
         <br/>1) Sellmeier poles: $L_1$ or $L_2$ must not lie inside $[\lambda_{min}, \lambda_{max}]$ (µm).
         <br/>2) VIS continuity: On $\lambda \leq 2500$ nm, $|n_{Sellmeier} - n_{TLU ref}| \leq 0.20$.
@@ -1159,7 +1160,7 @@
     ($C^2$).
 </p>
 <p>To avoid "overfitting" optical noise, which would result in non-physical ripples in the index
-    profile, a <strong>Tikhonov smoothing penalty (Regularization)</strong> is added to the global
+    profile, a <a href="https://en.wikipedia.org/wiki/Tikhonov_regularization" target="_blank"><strong>Tikhonov smoothing penalty (Regularization)</strong></a> is added to the global
     objective function.</p>
 <table>
     <tr>

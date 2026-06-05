@@ -15,25 +15,22 @@ from pathlib import Path
 import numpy as np
 import pyqtgraph as pg
 
-from PyQt6.QtCore import Qt, QSettings, QTimer
+from PyQt6.QtCore import QSettings, QTimer
 from PyQt6.QtWidgets import (
-    QDialog, QMessageBox, QVBoxLayout, QHBoxLayout, QWidget, QLabel,
-    QPushButton, QSlider, QCheckBox, QDialogButtonBox, QDoubleSpinBox,
-    QFileDialog, QGridLayout, QProgressBar, QScrollArea
+    QDialog, QMessageBox, QVBoxLayout, QWidget, QLabel,
+    QPushButton, QCheckBox, QDialogButtonBox, QDoubleSpinBox,
+    QFileDialog, QGridLayout, QScrollArea
 )
-from PyQt6.QtGui import QFont, QCursor
+
 
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.ui.certus_ui import (
     CertusTheme,
-    create_styled_button,
     safe_ui_action,
     GenericWorker,
 )
 from certus.spline.certus_index_spline_core import (
     log_index_spline_d_trace,
-    SPLINE_PERF_PRESETS,
-    SplineOptConfig,
     _QS_SPLINE_ORG,
     _QS_SPLINE_APP,
     _QS_SPECTRUM_FIT_R,
@@ -47,12 +44,8 @@ from certus.spline.certus_index_spline_core import (
     _QS_RIGHT_SPLITTER_STATE,
     _MAIN_SPLITTER_LAYOUT_REV,
     _UNCERTAINTY_DEFAULTS_REV,
-    allowed_substrate_names,
 )
-from certus.utils.certus_index_utils import (
-    _slider_int_from_d_nm,
-    _d_from_slider_int,
-)
+
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
 from certus.utils.certus_data import read_data_file_robust
 from certus.spline.certus_index_spline_core import normalize_spectrum_dataframe
@@ -64,7 +57,7 @@ _CORRIDOR_K_TAB_MIN_HALF_WIDTH: float = 1e-4
 
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
-from certus.ui.certus_manual_sigma_knot_dialog import ManualSigmaKnotDialog
+
 class _SettingsMixin:
     """Mixin containing defaults reset, loading and uncertainty settings methods."""
 
@@ -861,7 +854,7 @@ class _CorridorControlMixin:
         return True
 
     def _finish_curve_minimum_deep_worker_done(self, result: object) -> None:
-        """Fin du polish profond depuis le minimum RMSE(d) : retour a l'etat post-optimisation sans lancement automatique."""
+        """End of deep polish from minimum RMSE(d): return to post-optimization state without auto-launch."""
         self._worker_role = "idle"
         self.btn_run.setEnabled(True)
         self.btn_stop.setEnabled(False)
@@ -875,8 +868,8 @@ class _CorridorControlMixin:
             QMessageBox.warning(
                 self,
                 "Polish profond",
-                "Le polish L-BFGS-B depuis le minimum de grille n'a pas renvoye de resultat valide "
-                "(interruption ou echec numerique). Le nominal n'a pas ete modifie.",
+                "L-BFGS-B polish from grid minimum did not return a valid result "
+                "(interruption or numerical failure). The nominal was not modified.",
             )
             self._refresh_post_optimization_option_controls()
             return

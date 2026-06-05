@@ -39,13 +39,17 @@
         </a>
         <div class="nav-links">
             <a href="CERTUS_HUB.html">HUB</a>
-            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
-            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_DESIGN.html">DESIGN</a>
+            <a href="CERTUS_RE.html">RE</a>
+            <a href="CERTUS_STRAT.html">STRAT</a>
             <a href="CERTUS_INDEX.html">INDEX</a>
             <a href="CERTUS_INDEX_SPLINE.html">INDEX SPLINE</a>
-            <a href="CERTUS_STRAT.html">STRAT</a>
-            <a href="CERTUS_DESIGN.html">DESIGN</a>
-            <a href="CERTUS_METAL_SINGLE.html">METAL</a>
+            <a href="CERTUS_FIELD.html">FIELD</a>
+            <a href="CERTUS_SUBSTRATE_INDEX.html" class="active">SUBSTRATE</a>
+            <a href="CERTUS_METAL_SINGLE.html">METAL SINGLE</a>
+            <a href="CERTUS_METAL_BILAYER.html">METAL</a>
+            <a href="metrology.html">Metrology</a>
+            <a href="CERTUS_Optical_Theory_Guide.html">Theory</a>
         </div>
     </nav>
 
@@ -132,7 +136,7 @@
             INV --> FIT{"Fit 3 Dispersion Laws<br>(Parallel Execution)"}:::decision
             
             FIT --> POL["4a. Polynomial Fit<br>Linear least squares"]:::process
-            FIT --> SEL["4b. Sellmeier 3-Pole Fit<br>Multistart DE + L-BFGS-B"]:::process
+            FIT --> SEL["4b. Sellmeier 3-Pole Fit<br>Multistart L-BFGS-B + least squares"]:::process
             FIT --> SPL["4c. Spline Fit<br>Bounded cubic formulation"]:::process
 
             POL --> RANK["5. Score & Rank<br>Evaluate RMSE against n_raw"]:::node
@@ -142,14 +146,12 @@
             RANK --> EXPORT(["Export Best Substrate Model"]):::output
         </div>
         <ul>
-            <li><strong>Polynomial:</strong> flexible baseline in powers of $1/\lambda$ and $\lambda$ (mixed terms as
-                implemented in code)—useful when no oscillator model is assumed.</li>
-            <li><strong>Sellmeier (3-pole):</strong> physical dispersion form with <strong>bounded</strong> coefficients:
+            <li><strong>Polynomial:</strong> flexible baseline in powers of $1/\lambda$ and $\lambda$. <span style="color: #c2410c;"><em>(Warning: This is a purely empirical, non-physical fit that diverges outside the measurement band and lacks resonant poles. Use only for narrow-band interpolation.)</em></span></li>
+            <li><strong>Sellmeier (3-pole):</strong> physical dispersion form with <strong>tightened physical bounds</strong>:
                 <div class="eq-box" style="margin: 10px 0;">
-                    $$ n^2(\lambda) - 1 = \frac{B_1 \lambda^2}{\lambda^2 - C_1} + \frac{B_2 \lambda^2}{\lambda^2 - C_2} + \frac{B_3 \lambda^2}{\lambda^2 - C_3} $$
+                    $$ n^2(\lambda) - 1 = \frac{B_1 \lambda^2}{\lambda^2 - L_1^2} + \frac{B_2 \lambda^2}{\lambda^2 - L_2^2} + \frac{B_3 \lambda^2}{\lambda^2 - L_3^2} $$
                 </div>
-                Optimized via multistart Differential Evolution + L-BFGS-B polish. Includes optional log-reparametrization of pole
-                positions ($C_i$). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
+                Optimized via multistart least squares + L-BFGS-B polish (log-reparameterization is disabled in favor of strict linear bounds). Catalogue priors from <code>SELLMEIER_COEFFS_BY_ID</code> can seed the search when
                 the material name hints a known glass.</li>
             <li><strong>Spline:</strong> non-parametric smooth representation for comparison RMSE.</li>
             <li><strong>Sellmeier full auto:</strong> hides advanced time/iteration budgets; uncheck to tune DE/L-BFGS-B

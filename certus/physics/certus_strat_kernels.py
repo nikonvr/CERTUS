@@ -32,6 +32,28 @@ from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
 
 # Macleod convention (+1j). Pre-multiply + Air->Sub.
 
+@njit(cache=True, fastmath=True, nogil=True, inline='always', error_model="numpy")
+def _calc_T_from_matrix(m00: complex, m01: complex, m10: complex, m11: complex, n_Sub: complex) -> float:
+    denom = m00 + n_Sub * m11 + n_Sub * m01 + m10
+    if abs(denom) > 1e-9:
+        t = 2.0 / denom
+        return n_Sub.real * (t.real**2 + t.imag**2)
+    return 0.0
+
+@njit(cache=True, fastmath=True, nogil=True, inline='always', error_model="numpy")
+def _calc_T_added_layer(wl: float, n_layer: complex, d_nm: float, n_Sub: complex, m00: complex, m01: complex, m10: complex, m11: complex) -> float:
+    phi = (TWO_PI / wl) * n_layer * d_nm
+    cp, sp = np.cos(phi), np.sin(phi)
+    son = (sp / n_layer) if abs(n_layer) > 1e-9 else 0.0
+    ml00, ml01 = cp, +1j * son
+    ml10, ml11 = +1j * n_layer * sp, cp
+    mt00 = ml00 * m00 + ml01 * m10
+    mt01 = ml00 * m01 + ml01 * m11
+    mt10 = ml10 * m00 + ml11 * m10
+    mt11 = ml10 * m01 + ml11 * m11
+    return _calc_T_from_matrix(mt00, mt01, mt10, mt11, n_Sub)
+
+
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def check_extrema_proximity(
@@ -79,70 +101,11 @@ def check_extrema_proximity(
     TOL = 1e-9
 
     if check_start:
-        denom_pres = m00 + n_Sub * m11 + n_Sub * m01 + m10
-
-        T_pres = 0.0
-
-        if abs(denom_pres) > 1e-9:
-            t_pres = 2.0 / denom_pres
-
-            T_pres = n_Sub.real * (t_pres.real**2 + t_pres.imag**2)
-
-        phi_f = (TWO_PI_VAL / wl) * n_current * exclusion_width
-
-        cp_f, sp_f = np.cos(phi_f), np.sin(phi_f)
-
-        son_f = (sp_f / n_current) if abs(n_current) > 1e-9 else 0.0
-
-        mf00, mf01 = cp_f, +1j * son_f
-
-        mf10, mf11 = +1j * n_current * sp_f, cp_f
-
-        M_future_00 = mf00 * m00 + mf01 * m10
-
-        M_future_01 = mf00 * m01 + mf01 * m11
-
-        M_future_10 = mf10 * m00 + mf11 * m10
-
-        M_future_11 = mf10 * m01 + mf11 * m11
-
-        denom_fut = M_future_00 + n_Sub * M_future_11 + n_Sub * M_future_01 + M_future_10
-
-        T_fut = 0.0
-
-        if abs(denom_fut) > 1e-9:
-            t_fut = 2.0 / denom_fut
-
-            T_fut = n_Sub.real * (t_fut.real**2 + t_fut.imag**2)
-
+        T_pres = _calc_T_from_matrix(m00, m01, m10, m11, n_Sub)
+        T_fut = _calc_T_added_layer(wl, n_current, exclusion_width, n_Sub, m00, m01, m10, m11)
+        
         n_prev_safe = n_previous if n_previous.real > 0.0 else n_current
-
-        phi_p = (TWO_PI_VAL / wl) * n_prev_safe * (-exclusion_width)
-
-        cp_p, sp_p = np.cos(phi_p), np.sin(phi_p)
-
-        son_p = (sp_p / n_prev_safe) if abs(n_prev_safe) > 1e-9 else 0.0
-
-        mp00, mp01 = cp_p, +1j * son_p
-
-        mp10, mp11 = +1j * n_prev_safe * sp_p, cp_p
-
-        M_past_00 = mp00 * m00 + mp01 * m10
-
-        M_past_01 = mp00 * m01 + mp01 * m11
-
-        M_past_10 = mp10 * m00 + mp11 * m10
-
-        M_past_11 = mp10 * m01 + mp11 * m11
-
-        denom_past = M_past_00 + n_Sub * M_past_11 + n_Sub * M_past_01 + M_past_10
-
-        T_past = 0.0
-
-        if abs(denom_past) > 1e-9:
-            t_past = 2.0 / denom_past
-
-            T_past = n_Sub.real * (t_past.real**2 + t_past.imag**2)
+        T_past = _calc_T_added_layer(wl, n_prev_safe, -exclusion_width, n_Sub, m00, m01, m10, m11)
 
         # Case 1 (symmetric +/-δe, always active): d=0 is at an extremum
 
@@ -156,32 +119,7 @@ def check_extrema_proximity(
         # i.e., starting this layer on the new lambda would place us just before a TP
 
         if wl_changed:
-            phi_ff = (TWO_PI_VAL / wl) * n_current * (3.0 * exclusion_width)
-
-            cp_ff, sp_ff = np.cos(phi_ff), np.sin(phi_ff)
-
-            son_ff = (sp_ff / n_current) if abs(n_current) > 1e-9 else 0.0
-
-            mff00, mff01 = cp_ff, +1j * son_ff
-
-            mff10, mff11 = +1j * n_current * sp_ff, cp_ff
-
-            M_far_00 = mff00 * m00 + mff01 * m10
-
-            M_far_01 = mff00 * m01 + mff01 * m11
-
-            M_far_10 = mff10 * m00 + mff11 * m10
-
-            M_far_11 = mff10 * m01 + mff11 * m11
-
-            denom_far = M_far_00 + n_Sub * M_far_11 + n_Sub * M_far_01 + M_far_10
-
-            T_far = 0.0
-
-            if abs(denom_far) > 1e-9:
-                t_far = 2.0 / denom_far
-
-                T_far = n_Sub.real * (t_far.real**2 + t_far.imag**2)
+            T_far = _calc_T_added_layer(wl, n_current, 3.0 * exclusion_width, n_Sub, m00, m01, m10, m11)
 
             # s_mid = T_fut - T_pres (already computed above)
 
@@ -241,32 +179,7 @@ def check_extrema_proximity(
         T_end = np.zeros(4)
 
         for k in range(4):
-            d = points[k]
-
-            phi = (TWO_PI_VAL / wl) * n_current * d
-
-            cp, sp = np.cos(phi), np.sin(phi)
-
-            son = (sp / n_current) if abs(n_current) > 1e-9 else 0.0
-
-            ml00, ml01 = cp, +1j * son
-
-            ml10, ml11 = +1j * n_current * sp, cp
-
-            mt00 = ml00 * m00 + ml01 * m10
-
-            mt01 = ml00 * m01 + ml01 * m11
-
-            mt10 = ml10 * m00 + ml11 * m10
-
-            mt11 = ml10 * m01 + ml11 * m11
-
-            denom = mt00 + n_Sub * mt11 + n_Sub * mt01 + mt10
-
-            if abs(denom) > 1e-9:
-                t = 2.0 / denom
-
-                T_end[k] = n_Sub.real * (t.real**2 + t.imag**2)
+            T_end[k] = _calc_T_added_layer(wl, n_current, points[k], n_Sub, m00, m01, m10, m11)
 
         s_left = T_end[1] - T_end[0]
 
@@ -356,30 +269,7 @@ def calculate_extrema_distances(
 
             d_arr[i] = d
 
-            phi = (TWO_PI_VAL / wl) * n_current * d
-
-            cp, sp = np.cos(phi), np.sin(phi)
-
-            son = (sp / n_current) if abs(n_current) > 1e-9 else 0.0
-
-            ml00, ml01 = cp, +1j * son
-
-            ml10, ml11 = +1j * n_current * sp, cp
-
-            mt00 = ml00 * m00 + ml01 * m10
-
-            mt01 = ml00 * m01 + ml01 * m11
-
-            mt10 = ml10 * m00 + ml11 * m10
-
-            mt11 = ml10 * m01 + ml11 * m11
-
-            denom = mt00 + n_Sub * mt11 + n_Sub * mt01 + mt10
-
-            if abs(denom) > 1e-9:
-                t = 2.0 / denom
-
-                T_arr[i] = n_Sub.real * (t.real**2 + t.imag**2)
+            T_arr[i] = _calc_T_added_layer(wl, n_current, d, n_Sub, m00, m01, m10, m11)
 
         return d_arr, T_arr
 

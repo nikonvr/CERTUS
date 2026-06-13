@@ -34,58 +34,26 @@ def compute_mse_vectorized(
 
     n = len(calc_values)
 
-    # Thread-local accumulators via parallel reduction
-
-    partial_sq = np.empty(n, dtype=np.float64)
-
-    partial_valid = np.empty(n, dtype=np.float64)
-
-    partial_wsum = np.empty(n, dtype=np.float64)
+    sum_sq = 0.0
+    sum_w = 0.0
+    count = 0
 
     for i in prange(n):
         if weights[i] > 0 and np.isfinite(calc_values[i]) and np.isfinite(target_values[i]):
             diff = calc_values[i] - target_values[i]
-
-            partial_sq[i] = diff * diff * weights[i]
-
-            partial_valid[i] = 1.0
-
-            partial_wsum[i] = weights[i]
-
-        else:
-            partial_sq[i] = 0.0
-
-            partial_valid[i] = 0.0
-
-            partial_wsum[i] = 0.0
-
-    sum_sq = 0.0
-
-    sum_w = 0.0
-
-    count = 0
-
-    for i in range(n):
-        sum_sq += partial_sq[i]
-
-        sum_w += partial_wsum[i]
-
-        count += int(partial_valid[i])
+            sum_sq += diff * diff * weights[i]
+            sum_w += weights[i]
+            count += 1
 
     if count < 5 or sum_w <= 1e-18:
         return 1e12, count
-
-    # Strict weighted average: makes the metric consistent with Deltaln(lambda)
-
-    # even if the spectral grid is irregular.
 
     return sum_sq / sum_w, count
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def clip_to_bounds(x: np.ndarray, lb: np.ndarray, ub: np.ndarray) -> np.ndarray:
-
-    return np.minimum(np.maximum(x, lb), ub)
+    return np.clip(x, lb, ub)
 
 
 # --- LOCKED --- Validated by test_tmm_inline.py (test 5) ───
@@ -151,27 +119,17 @@ def cost_numba_fast(
     if count == 0:
         return 1e12
 
-    # 3. Vectorized penalty via parallel reduction
+    # 3. Sequential scalar penalty reduction
 
-    n_ep = len(ep)
+    penalty = 0.0
 
-    penalty_arr = np.empty(n_ep, dtype=np.float64)
-
-    for i in prange(n_ep):
+    for i in range(len(ep)):
         d_val = ep[i]
 
         if 1e-12 < d_val < min_d:
             gap = min_d - d_val
 
-            penalty_arr[i] = gap * gap * 1e6
-
-        else:
-            penalty_arr[i] = 0.0
-
-    penalty = 0.0
-
-    for i in range(n_ep):
-        penalty += penalty_arr[i]
+            penalty += gap * gap * 1e6
 
     return mse + penalty
 

@@ -73,20 +73,52 @@ from certus.core.certus_strat_ranking import (
 class _IdxWrapper:
     """Dict-like wrapper supporting both ``dict.get`` and ``list[idx]`` access."""
 
-    __slots__ = ("obj",)
+    __slots__ = ("obj", "_is_dict")
 
     def __init__(self, obj) -> None:
         self.obj = obj
+        self._is_dict = hasattr(obj, "get")
 
     def __getitem__(self, k) -> Any:
-        return self.obj.get(k) if hasattr(self.obj, "get") else self.obj[k]
+        return self.obj.get(k) if self._is_dict else self.obj[k]
 
     def __contains__(self, k) -> bool:
         if hasattr(self.obj, "__contains__"):
             return k in self.obj
-        if hasattr(self.obj, "get"):
+        if self._is_dict:
             return self.obj.get(k) is not None
         return False
+
+
+class _SafeLocalClues(dict):
+    """Fallback cache dictionary for clues, optimized for Top 1%."""
+    __slots__ = ("_original",)
+    def __init__(self, original, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original = _IdxWrapper(original)
+
+    def get(self, wl: float, default=None) -> Any:
+        wl_f = float(wl)
+        if wl_f in self:
+            return self[wl_f]
+        try:
+            res = self._original[wl_f]
+            self[wl_f] = res
+            return res
+        except Exception:
+            return default
+
+    def __getitem__(self, wl) -> Any:
+        res = self.get(wl)
+        if res is None:
+            raise KeyError(wl)
+        return res
+
+    def __contains__(self, wl) -> bool:
+        wl_f = float(wl)
+        if super().__contains__(wl_f):
+            return True
+        return wl_f in self._original
 
 
 def _parse_noise_factors(raw_factors) -> list[float]:
@@ -702,45 +734,14 @@ def run_final_simulation_block(
             wls_to_fetch.add(float(blk["wavelength"]))
 
     idx_dict = _IdxWrapper(clues_at_wl)
-    local_clues = {}
+    local_clues = _SafeLocalClues(clues_at_wl)
     for wl in wls_to_fetch:
         try:
             local_clues[wl] = idx_dict[wl]
         except Exception:
             pass
 
-    class SafeLocalClues:
-        def __init__(self, original, cache) -> None:
-            self.original = original
-            self.cache = cache
-
-        def get(self, wl: float, default=None) -> Any:
-            wl_f = float(wl)
-            if wl_f in self.cache:
-                return self.cache[wl_f]
-            try:
-                res = _IdxWrapper(self.original)[wl_f]
-                self.cache[wl_f] = res
-                return res
-            except Exception:
-                return default
-
-        def keys(self) -> Any:
-            return self.cache.keys()
-
-        def __getitem__(self, wl) -> Any:
-            res = self.get(wl)
-            if res is None:
-                raise KeyError(wl)
-            return res
-
-        def __contains__(self, wl) -> bool:
-            wl_f = float(wl)
-            if wl_f in self.cache:
-                return True
-            return wl_f in _IdxWrapper(self.original)
-
-    clues_at_wl = SafeLocalClues(clues_at_wl, local_clues)
+    clues_at_wl = local_clues
     opti_results = dict(opti_results)
     opti_results["clues_at_wl"] = clues_at_wl
 

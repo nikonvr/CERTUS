@@ -116,21 +116,15 @@ def _resolve_consensus_seeds(
     seeds: list[int] = []
     raw_seed_list = params.get("consensus_seed_list", None)
 
-    if isinstance(raw_seed_list, list):
-        for x in raw_seed_list:
-            try:
-                seeds.append(int(x))
-            except (TypeError, ValueError):
-                continue
-    elif isinstance(raw_seed_list, str) and raw_seed_list.strip():
-        for token in raw_seed_list.split(","):
-            token = token.strip()
-            if not token:
-                continue
+    raw_list = raw_seed_list if isinstance(raw_seed_list, list) else (
+        [x.strip() for x in raw_seed_list.split(",")] if isinstance(raw_seed_list, str) and raw_seed_list.strip() else []
+    )
+    for token in raw_list:
+        if token:
             try:
                 seeds.append(int(token))
             except (TypeError, ValueError):
-                continue
+                pass
 
     if seeds:
         seeds = _dedupe_preserve_order_int(seeds)[: max(1, consensus_num_seeds)]
@@ -526,6 +520,7 @@ def _apply_elite_refinement_if_enabled(
     nominal_noise_level = _resolve_nominal_noise_level(ctx.noise_levels, raw_factors)
     available_wls = _resolve_available_wavelengths(ctx.clues_at_wl, ctx.wl_arr)
     total_elite_added = 0
+    worker_count = get_safe_worker_count()
 
     for elite_round in range(1, elite_rounds + 1):
         parent_count = _elite_parent_count(strategies_results, elite_parent_top_k)
@@ -557,9 +552,10 @@ def _apply_elite_refinement_if_enabled(
         )
 
         quick_pass: list[tuple[float, int, dict[str, Any]]] = []
-        for e_idx, elite_strat in enumerate(elite_candidates):
-            try:
-                quick_res = _test_strategy_robustness_task(
+        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures_quick = [
+                executor.submit(
+                    _test_strategy_robustness_task,
                     elite_strat,
                     e_idx,
                     [nominal_noise_level],
@@ -575,12 +571,17 @@ def _apply_elite_refinement_if_enabled(
                     ctx.full_dyn_grid,
                     n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
                 )
-                quick_nominal = _extract_rmse_p95_for_noise(quick_res, nominal_noise_level)
-                if not np.isfinite(quick_nominal) or quick_nominal >= target_threshold:
-                    continue
-                quick_pass.append((float(quick_nominal), int(e_idx), elite_strat))
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
-                ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+                for e_idx, elite_strat in enumerate(elite_candidates)
+            ]
+            for future, e_idx, elite_strat in zip(futures_quick, range(len(elite_candidates)), elite_candidates):
+                try:
+                    quick_res = future.result()
+                    quick_nominal = _extract_rmse_p95_for_noise(quick_res, nominal_noise_level)
+                    if not np.isfinite(quick_nominal) or quick_nominal >= target_threshold:
+                        continue
+                    quick_pass.append((float(quick_nominal), int(e_idx), elite_strat))
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
+                    ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
 
         if not quick_pass:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed quick nominal gate.")
@@ -594,9 +595,10 @@ def _apply_elite_refinement_if_enabled(
         )
 
         elite_added: list[dict[str, Any]] = []
-        for _quick_nominal, e_idx, elite_strat in full_eval_candidates:
-            try:
-                full_res = _test_strategy_robustness_task(
+        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures_full = [
+                executor.submit(
+                    _test_strategy_robustness_task,
                     elite_strat,
                     e_idx,
                     ctx.noise_levels,
@@ -612,22 +614,27 @@ def _apply_elite_refinement_if_enabled(
                     ctx.full_dyn_grid,
                     n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
                 )
-                full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
-                if not np.isfinite(full_nominal) or full_nominal >= target_threshold:
-                    continue
-                full_score = float(full_res.get("robustness_score", np.inf))
-                if not np.isfinite(full_score):
-                    continue
-                min_res, bad_layer = _calculate_strategy_spectral_resolution(
-                    full_res["strategy"], ctx.p_thick_nominal, ctx.params
-                )
-                full_res["min_resolution"] = min_res
-                full_res["limiting_layer"] = bad_layer
-                full_res["elite_round"] = int(elite_round)
-                full_res["elite_nominal_score"] = float(full_nominal)
-                elite_added.append(full_res)
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
-                ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+                for _quick_nominal, e_idx, elite_strat in full_eval_candidates
+            ]
+            for future in futures_full:
+                try:
+                    full_res = future.result()
+                    full_nominal = _extract_rmse_p95_for_noise(full_res, nominal_noise_level)
+                    if not np.isfinite(full_nominal) or full_nominal >= target_threshold:
+                        continue
+                    full_score = float(full_res.get("robustness_score", np.inf))
+                    if not np.isfinite(full_score):
+                        continue
+                    min_res, bad_layer = _calculate_strategy_spectral_resolution(
+                        full_res["strategy"], ctx.p_thick_nominal, ctx.params
+                    )
+                    full_res["min_resolution"] = min_res
+                    full_res["limiting_layer"] = bad_layer
+                    full_res["elite_round"] = int(elite_round)
+                    full_res["elite_nominal_score"] = float(full_nominal)
+                    elite_added.append(full_res)
+                except NUMERICAL_FAULT_EXCEPTIONS as e:
+                    ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
 
         if not elite_added:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")

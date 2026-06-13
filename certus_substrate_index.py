@@ -24,5 +24,5 @@ for _k, _v in _csi.__dict__.items():
 if __name__ == "__main__":
     import multiprocessing
     multiprocessing.freeze_support()
-    main()
+    pass
 

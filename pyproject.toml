@@ -32,6 +32,7 @@ dev = [
   "pytest-cov>=5.0.0",
   "ruff>=0.15.12",
   "pre-commit>=4.0.0",
+  "hypothesis>=6.0.0",
 ]
 freeze = [
   "pyinstaller>=6.10.0",

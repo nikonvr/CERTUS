@@ -1,0 +1,12 @@
+{
+    "best_rmse_sum": 62.4732052675657,
+    "rmse_single": 34.410746543131715,
+    "rmse_bilayer": 28.06245872443399,
+    "params": {
+        "alpha": 0.01135461400385957,
+        "reduction_ratio": 0.5411329661542567,
+        "base_samples": 9481,
+        "local_search_budget": 70658,
+        "max_active_clusters": 38
+    }
+}

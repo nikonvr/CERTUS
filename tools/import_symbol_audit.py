@@ -204,10 +204,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Best-effort filter: show only actual likely missing imports by requiring
     # that the name is not defined in the file text.
-    report: list[Finding] = []
-    for f in all_findings:
-        report.append(f)
-
+    report = list(all_findings)
     print(f"Scanned files: {len(files)}")
     print(f"Potential unresolved symbol reads: {len(report)}")
     for finding in report[: args.limit]:

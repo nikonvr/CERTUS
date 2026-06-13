@@ -1,0 +1,788 @@
+[
+  {
+    "type": "FunctionDef",
+    "name": "get_n_substrate_array_by_id_kernel",
+    "start": 581,
+    "end": 611
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_n_substrate_array_by_id",
+    "start": 614,
+    "end": 640
+  },
+  {
+    "type": "FunctionDef",
+    "name": "sellmeier_n_array",
+    "start": 669,
+    "end": 699
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_nk_cauchy",
+    "start": 703,
+    "end": 728
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_nk_cauchy_wrapper",
+    "start": 731,
+    "end": 734
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_nk_cauchy_simple",
+    "start": 738,
+    "end": 741
+  },
+  {
+    "type": "FunctionDef",
+    "name": "epsilon2_TLU_array",
+    "start": 745,
+    "end": 792
+  },
+  {
+    "type": "FunctionDef",
+    "name": "epsilon1_TL_analytic",
+    "start": 796,
+    "end": 873
+  },
+  {
+    "type": "FunctionDef",
+    "name": "epsilon_to_nk",
+    "start": 877,
+    "end": 907
+  },
+  {
+    "type": "ClassDef",
+    "name": "SplineCache",
+    "start": 919,
+    "end": 964
+  },
+  {
+    "type": "ClassDef",
+    "name": "SplineBasisCache",
+    "start": 970,
+    "end": 1071
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_nk_from_spline",
+    "start": 1074,
+    "end": 1102
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_bare_substrate_R",
+    "start": 1121,
+    "end": 1159
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_bare_substrate_RT",
+    "start": 1169,
+    "end": 1186
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_single_interface_R",
+    "start": 1196,
+    "end": 1226
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_complex_phase_components",
+    "start": 1236,
+    "end": 1258
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_single_layer_single",
+    "start": 1268,
+    "end": 1342
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_reflection_array",
+    "start": 1346,
+    "end": 1362
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_transmission_single",
+    "start": 1381,
+    "end": 1559
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_reflection_single",
+    "start": 1569,
+    "end": 1585
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_transmission_array",
+    "start": 1592,
+    "end": 1609
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_single_layer_backside_array",
+    "start": 1619,
+    "end": 1651
+  },
+  {
+    "type": "FunctionDef",
+    "name": "batch_single_layer_T_mse",
+    "start": 1666,
+    "end": 1690
+  },
+  {
+    "type": "FunctionDef",
+    "name": "batch_single_layer_RT_mse",
+    "start": 1694,
+    "end": 1725
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_calculate_RT_absorbing_sub_single",
+    "start": 1780,
+    "end": 1881
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_single_layer_absorbing_substrate_array",
+    "start": 1885,
+    "end": 1933
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_bare_substrate_R_absorbing",
+    "start": 1937,
+    "end": 1977
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_bare_substrate_T_absorbing",
+    "start": 1981,
+    "end": 2027
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_TMM_single_point_k0",
+    "start": 2046,
+    "end": 2101
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_TMM_single_point_k0_exact",
+    "start": 2111,
+    "end": 2202
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_apply_exact_backside_generic",
+    "start": 2212,
+    "end": 2297
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_with_backside_fused",
+    "start": 2307,
+    "end": 2367
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_vectorized_real",
+    "start": 2370,
+    "end": 2392
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_no_backside",
+    "start": 2402,
+    "end": 2431
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_front",
+    "start": 2441,
+    "end": 2470
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_full",
+    "start": 2480,
+    "end": 2504
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_full_exact",
+    "start": 2514,
+    "end": 2609
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_front_wrapper",
+    "start": 2618,
+    "end": 2621
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_full_wrapper",
+    "start": 2624,
+    "end": 2629
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_full_exact_wrapper",
+    "start": 2632,
+    "end": 2637
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_calc_spectrum_oblique_parallel",
+    "start": 2656,
+    "end": 2900
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_oblique_vectorized",
+    "start": 2909,
+    "end": 2948
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_oblique_backside_vectorized",
+    "start": 2951,
+    "end": 2980
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_oblique_stack_rt_single",
+    "start": 2984,
+    "end": 3113
+  },
+  {
+    "type": "FunctionDef",
+    "name": "oblique_front_char_matrix_single",
+    "start": 3117,
+    "end": 3196
+  },
+  {
+    "type": "FunctionDef",
+    "name": "oblique_front_rt_from_char_matrix_nsub_real",
+    "start": 3200,
+    "end": 3262
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_spectrum_full_oblique_exact",
+    "start": 3266,
+    "end": 3442
+  },
+  {
+    "type": "FunctionDef",
+    "name": "apply_exact_backside_combination",
+    "start": 3452,
+    "end": 3543
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_calculate_RT_HL_core",
+    "start": 3553,
+    "end": 3586
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_vectorized_real_HL",
+    "start": 3595,
+    "end": 3673
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_mse_vectorized",
+    "start": 3710,
+    "end": 3761
+  },
+  {
+    "type": "FunctionDef",
+    "name": "clip_to_bounds",
+    "start": 3765,
+    "end": 3767
+  },
+  {
+    "type": "FunctionDef",
+    "name": "cost_numba_fast",
+    "start": 3777,
+    "end": 3855
+  },
+  {
+    "type": "FunctionDef",
+    "name": "needle_scan_cached",
+    "start": 3889,
+    "end": 4304
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_lbfgsb_params",
+    "start": 4328,
+    "end": 4331
+  },
+  {
+    "type": "ClassDef",
+    "name": "LBFGSBSearcher",
+    "start": 4334,
+    "end": 4533
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_critical_distance",
+    "start": 4537,
+    "end": 4569
+  },
+  {
+    "type": "FunctionDef",
+    "name": "fast_clustering_kernel",
+    "start": 4573,
+    "end": 4641
+  },
+  {
+    "type": "ClassDef",
+    "name": "SingleLinkageClusterer",
+    "start": 4644,
+    "end": 4856
+  },
+  {
+    "type": "ClassDef",
+    "name": "PGlobalOptimizer",
+    "start": 4859,
+    "end": 5320
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_xyz_from_spectrum_kernel",
+    "start": 5716,
+    "end": 5738
+  },
+  {
+    "type": "FunctionDef",
+    "name": "xyz_from_spectrum",
+    "start": 5741,
+    "end": 5747
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_lab_f",
+    "start": 5751,
+    "end": 5759
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_lab_f_inv",
+    "start": 5763,
+    "end": 5771
+  },
+  {
+    "type": "FunctionDef",
+    "name": "xyz_to_lab",
+    "start": 5774,
+    "end": 5790
+  },
+  {
+    "type": "FunctionDef",
+    "name": "lab_to_xyz",
+    "start": 5793,
+    "end": 5805
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_gamma_correct_scalar",
+    "start": 5809,
+    "end": 5817
+  },
+  {
+    "type": "FunctionDef",
+    "name": "lab_to_rgb",
+    "start": 5820,
+    "end": 5834
+  },
+  {
+    "type": "FunctionDef",
+    "name": "delta_e_2000",
+    "start": 5838,
+    "end": 5939
+  },
+  {
+    "type": "FunctionDef",
+    "name": "numba_interp_scalar",
+    "start": 5970,
+    "end": 6002
+  },
+  {
+    "type": "FunctionDef",
+    "name": "numba_interp_vectorized",
+    "start": 6006,
+    "end": 6016
+  },
+  {
+    "type": "ClassDef",
+    "name": "MaterialDatabase",
+    "start": 6019,
+    "end": 6093
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_TMM_generic",
+    "start": 6117,
+    "end": 6188
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_RT_from_matrix",
+    "start": 6234,
+    "end": 6305
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RTRback_incoherent_vectorized",
+    "start": 6315,
+    "end": 6444
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_reflection_infinite_substrate_single",
+    "start": 6454,
+    "end": 6596
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_reflectance_bilayer_vectorized",
+    "start": 6609,
+    "end": 6714
+  },
+  {
+    "type": "ClassDef",
+    "name": "Material",
+    "start": 6718,
+    "end": 6745
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_n_frosted_glass_array",
+    "start": 6749,
+    "end": 6759
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_epsilon2_gradient_kernel",
+    "start": 6772,
+    "end": 6887
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_epsilon1_gradient_kernel",
+    "start": 6897,
+    "end": 7268
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_tlu_derivatives_kernel",
+    "start": 7278,
+    "end": 7335
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_single_layer_sensitivity_kernel",
+    "start": 7345,
+    "end": 7677
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_single_layer_sensitivity_array",
+    "start": 7681,
+    "end": 7708
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_index_cost_gradient_kernel",
+    "start": 7715,
+    "end": 7853
+  },
+  {
+    "type": "FunctionDef",
+    "name": "arange_inclusive",
+    "start": 7856,
+    "end": 7876
+  },
+  {
+    "type": "FunctionDef",
+    "name": "trim_worst_only",
+    "start": 7879,
+    "end": 7898
+  },
+  {
+    "type": "FunctionDef",
+    "name": "prepare_targets_vectorized",
+    "start": 7901,
+    "end": 7942
+  },
+  {
+    "type": "FunctionDef",
+    "name": "make_cost_function",
+    "start": 7945,
+    "end": 8005
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_gradient_analytic_kernel",
+    "start": 8015,
+    "end": 8604
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_oblique_gradient_contrib_kernel",
+    "start": 8608,
+    "end": 8999
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_oblique_gradient_contrib_analytic",
+    "start": 9002,
+    "end": 9051
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_oblique_rt_and_grads_kernel",
+    "start": 9055,
+    "end": 9434
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_oblique_rt_and_grads_analytic",
+    "start": 9437,
+    "end": 9468
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_oblique_rt_pair_and_grads_analytic",
+    "start": 9471,
+    "end": 9523
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_oblique_backside_bundle_analytic",
+    "start": 9526,
+    "end": 9602
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_gradient_all_layers_analytic",
+    "start": 9611,
+    "end": 9754
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_metal_tmm_gradient_kernel",
+    "start": 9764,
+    "end": 9982
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_metal_bilayer_gradient_analytic",
+    "start": 9991,
+    "end": 10103
+  },
+  {
+    "type": "ClassDef",
+    "name": "NKCache",
+    "start": 10118,
+    "end": 10156
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_refractive_index",
+    "start": 10159,
+    "end": 10193
+  },
+  {
+    "type": "FunctionDef",
+    "name": "get_refractive_clues_vectorized",
+    "start": 10196,
+    "end": 10237
+  },
+  {
+    "type": "FunctionDef",
+    "name": "check_extrema_proximity",
+    "start": 10274,
+    "end": 10526
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_extrema_distances",
+    "start": 10533,
+    "end": 10680
+  },
+  {
+    "type": "FunctionDef",
+    "name": "fit_parabola_vertex_3points",
+    "start": 10684,
+    "end": 10701
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_valid_blocks_kernel",
+    "start": 10708,
+    "end": 10827
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_dp_kernel",
+    "start": 10831,
+    "end": 10936
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_solve_quadratic_target",
+    "start": 10940,
+    "end": 10965
+  },
+  {
+    "type": "FunctionDef",
+    "name": "simulate_growth_kernel",
+    "start": 10987,
+    "end": 11200
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_T_front_at_layer",
+    "start": 11207,
+    "end": 11253
+  },
+  {
+    "type": "FunctionDef",
+    "name": "validate_wavelengths_batch",
+    "start": 11260,
+    "end": 11311
+  },
+  {
+    "type": "FunctionDef",
+    "name": "simulate_stack_robustness_batch",
+    "start": 11318,
+    "end": 11386
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_batch_rmse",
+    "start": 11390,
+    "end": 11464
+  },
+  {
+    "type": "FunctionDef",
+    "name": "precompute_matrix_cache_kernel",
+    "start": 11477,
+    "end": 11550
+  },
+  {
+    "type": "FunctionDef",
+    "name": "prepare_dynamics_data_kernel",
+    "start": 11554,
+    "end": 11628
+  },
+  {
+    "type": "FunctionDef",
+    "name": "check_extrema_proximity_batch",
+    "start": 11638,
+    "end": 11678
+  },
+  {
+    "type": "FunctionDef",
+    "name": "compute_dynamics_kernel",
+    "start": 11688,
+    "end": 11797
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_calculate_RT_HL_single_point",
+    "start": 11807,
+    "end": 11931
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_RT_batch_kernel",
+    "start": 11941,
+    "end": 11974
+  },
+  {
+    "type": "FunctionDef",
+    "name": "rank_nucleation_candidates_kernel",
+    "start": 11978,
+    "end": 12061
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_seeded_noise_sample",
+    "start": 12065,
+    "end": 12094
+  },
+  {
+    "type": "FunctionDef",
+    "name": "find_nucleation_adaptive_kernel",
+    "start": 12098,
+    "end": 12212
+  },
+  {
+    "type": "FunctionDef",
+    "name": "update_run_states_kernel",
+    "start": 12216,
+    "end": 12250
+  },
+  {
+    "type": "FunctionDef",
+    "name": "validate_backside_real_clues",
+    "start": 12287,
+    "end": 12310
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calculate_detailed_growth",
+    "start": 12320,
+    "end": 12607
+  },
+  {
+    "type": "FunctionDef",
+    "name": "init_thickness",
+    "start": 12628,
+    "end": 12682
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_qwot",
+    "start": 12685,
+    "end": 12691
+  },
+  {
+    "type": "FunctionDef",
+    "name": "calc_rmse",
+    "start": 12694,
+    "end": 12731
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_phase2_derivatives_kernel",
+    "start": 12744,
+    "end": 12881
+  },
+  {
+    "type": "FunctionDef",
+    "name": "_compute_ir_global_cost_gradient_kernel",
+    "start": 12885,
+    "end": 13069
+  },
+  {
+    "type": "FunctionDef",
+    "name": "warmup_physics",
+    "start": 13072,
+    "end": 13181
+  }
+]

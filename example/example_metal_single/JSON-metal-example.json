@@ -3,7 +3,7 @@
   "excel_filename": "metal_index_results.xlsx",
   "physical_params": {
     "eM_min": "15",
-    "eM_max": "35",
+    "eM_max": "25",
     "eL_nominal": "900",
     "eL_variation": "20"
   },
@@ -31,5 +31,5 @@
     "updating": "deferred",
     "workers": -1
   },
-  "target_file": "example/CSV-metal-example.csv"
+  "target_file": "example/example_metal_single/Target_Titane_Simu_20nm.xlsx"
 }

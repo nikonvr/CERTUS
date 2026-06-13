@@ -407,7 +407,20 @@ class CertusAppLogsMixin:
             else:
                 self.right_splitter.setSizes([1000, 0])
 
-class CertusBaseApp(QMainWindow):
+from certus.ui.mixins.certus_base_core_mixins import (
+    CertusZoomMixin, CertusCommandPaletteMixin, CertusPremiumExportMixin, 
+    CertusEmptyStateMixin, CertusRecentsMixin, CertusDialogMixin
+)
+
+class CertusBaseApp(
+    QMainWindow,
+    CertusZoomMixin,
+    CertusCommandPaletteMixin,
+    CertusPremiumExportMixin,
+    CertusEmptyStateMixin,
+    CertusRecentsMixin,
+    CertusDialogMixin,
+):
     sig_numba_ready = pyqtSignal()
     sig_numba_error = pyqtSignal()
     """
@@ -450,12 +463,22 @@ class CertusBaseApp(QMainWindow):
 
     LOG_TIMER_MS = 200
 
-    def __init__(self, parent=None, runtime: CertusRuntime | None = None) -> None:
+    def __init__(
+        self,
+        parent=None,
+        runtime: CertusRuntime | None = None,
+        worker_manager=None,
+        numba_manager=None,
+    ) -> None:
 
         super().__init__(parent)
 
         # Runtime container is injectable to avoid hidden globals.
         self.runtime: CertusRuntime = runtime if runtime is not None else build_runtime()
+
+        from certus.ui.certus_worker_manager import CertusWorkerManager, CertusNumbaWarmupManager
+        self.worker_manager = worker_manager or CertusWorkerManager(self)
+        self.numba_manager = numba_manager or CertusNumbaWarmupManager(logging.getLogger("CERTUS"), self)
 
         # Window setup
 
@@ -497,11 +520,12 @@ class CertusBaseApp(QMainWindow):
 
         self._worker: QThread | None = None
 
-        self._active_workers: list[QThread] = []
-
         # Numba ready flag
 
         self.numba_ready = False
+        
+        self.numba_manager.sig_numba_ready.connect(self._on_numba_ready_from_manager)
+        self.numba_manager.sig_numba_error.connect(self._on_numba_error_from_manager)
 
         # Log timer (started in _finalize_init)
 
@@ -606,798 +630,25 @@ class CertusBaseApp(QMainWindow):
         except (RuntimeError, AttributeError, TypeError):  # pragma: no cover - defensive
             pass
 
-    def zoom_in_ui(self) -> None:
-        """Increase the global UI zoom in a smooth, bounded way."""
-        self._apply_ui_zoom(min(getattr(self, "_zoom_factor", 1.0) + 0.05, 1.30))
 
-    def zoom_out_ui(self) -> None:
-        """Decrease the global UI zoom in a smooth, bounded way."""
-        self._apply_ui_zoom(max(getattr(self, "_zoom_factor", 1.0) - 0.05, 0.85))
-
-    def reset_ui_zoom(self) -> None:
-        """Restore the default CERTUS scale."""
-        self._apply_ui_zoom(1.0)
-
-    def _zoom_feedback_text(self, factor: float) -> str:
-        percent = int(round(factor * 100))
-        return f"Zoom {percent}%"
-
-    def _ensure_zoom_status_widget(self) -> None:
-        """Create a persistent zoom indicator in the status bar."""
-        if getattr(self, "_zoom_status_label", None) is not None:
-            return
-        from PyQt6.QtWidgets import QLabel
-
-        label = QLabel(self)
-        label.setObjectName("certusZoomStatus")
-        label.setMinimumWidth(88)
-        label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        label.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-weight: 600; padding: 0 8px;")
-        self.status_bar.addPermanentWidget(label)
-        self._zoom_status_label = label
-
-    def _update_zoom_status(self, factor: float | None = None, announce: bool = True) -> None:
-        label = getattr(self, "_zoom_status_label", None)
-        if label is not None:
-            current = getattr(self, "_zoom_factor", 1.0) if factor is None else factor
-            label.setText(self._zoom_feedback_text(current))
-        if announce and factor is not None:
-            try:
-                show_toast(self, self._zoom_feedback_text(factor), "info", duration_ms=1200)
-            except (RuntimeError, AttributeError, TypeError, ValueError):
-                pass
-
-    def _store_ui_zoom(self) -> None:
-        try:
-            qs = QSettings("CERTUS", self.APP_NAME)
-            qs.setValue(self._qs_key("uiZoom"), float(getattr(self, "_zoom_factor", 1.0)))
-        except (AttributeError, RuntimeError, TypeError, ValueError):
-            pass
-
-    def _restore_ui_zoom(self) -> None:
-        try:
-            qs = QSettings("CERTUS", self.APP_NAME)
-            value = qs.value(self._qs_key("uiZoom"), 1.0)
-            self._zoom_factor = max(0.85, min(1.30, float(value)))
-            base_pt = getattr(CertusTheme, "FONT_SIZE_BASE", 10)
-            app = QApplication.instance()
-            if app is not None:
-                app.setFont(QFont("Segoe UI", max(9, round(base_pt * self._zoom_factor))))
-        except (AttributeError, RuntimeError, TypeError, ValueError):
-            self._zoom_factor = 1.0
-        self._update_zoom_status()
-
-    def _apply_ui_zoom(self, factor: float) -> None:
-        """Apply a restrained, modern zoom level to the app and descendants."""
-        previous = getattr(self, "_zoom_factor", 1.0)
-        factor = max(0.85, min(1.30, float(factor)))
-        self._zoom_factor = factor
-        base_pt = getattr(CertusTheme, "FONT_SIZE_BASE", 10)
-        app = QApplication.instance()
-        if app is not None:
-            app.setFont(QFont("Segoe UI", max(9, round(base_pt * factor))))
-        self.setStyleSheet(get_standard_stylesheet())
-        self.setMinimumSize(int(self.MIN_WIDTH * factor), int(self.MIN_HEIGHT * factor))
-        self._store_ui_zoom()
-        try:
-            scale = factor / previous if previous else 1.0
-            self.resize(max(self.minimumWidth(), int(self.width() * scale)), max(self.minimumHeight(), int(self.height() * scale)))
-        except (AttributeError, RuntimeError, TypeError, ZeroDivisionError):
-            pass
-        if hasattr(self, "statusBar") and callable(getattr(self, "statusBar")):
-            try:
-                self.statusBar().setStyleSheet(CertusTheme.get_status_bar_stylesheet())
-            except (AttributeError, RuntimeError, TypeError):
-                pass
-        self._update_zoom_status(factor, announce=True)
 
     # =========================================================================
     # U3 — Command palette
     # =========================================================================
 
-    def register_command(self, action: Any) -> None:
-        """Register a :class:`CommandAction` in this window's palette.
 
-        Re-registering the same ``id`` replaces the previous entry.
-        """
-        if self._commands is None:
-            self._commands = list(self._default_commands())
-        self._commands = [a for a in self._commands if getattr(a, "id", None) != action.id]
-        self._commands.append(action)
-
-    def _default_commands(self) -> list[Any]:
-        """Baseline commands available in every CERTUS app.
-
-        Subclasses override to add app-specific entries (typically by
-        calling ``super()._default_commands() + [...]``).
-        """
-        from certus.utils.certus_command_palette import CommandAction
-
-        actions: list[Any] = []
-        if hasattr(self, "save_config") and callable(getattr(self, "save_config")):
-            actions.append(
-                CommandAction(
-                    id="file.save_config",
-                    title="Save configuration…",
-                    subtitle="Export current settings to a JSON file",
-                    shortcut="Ctrl+S",
-                    category="File",
-                    icon_name="save",
-                    keywords=("export", "json", "write"),
-                    callback=lambda: self.save_config(),
-                )
-            )
-        if hasattr(self, "load_config") and callable(getattr(self, "load_config")):
-            actions.append(
-                CommandAction(
-                    id="file.load_config",
-                    title="Load configuration…",
-                    subtitle="Restore settings from a JSON file",
-                    shortcut="Ctrl+O",
-                    category="File",
-                    icon_name="folder-open",
-                    keywords=("import", "json", "open"),
-                    callback=lambda: self.load_config(),
-                )
-            )
-            # U5 — dynamic "Open recent" entry (only surfaces if non-empty at build time).
-            try:
-                recents = self.list_recent_configs(limit=1) if hasattr(self, "list_recent_configs") else []
-            except (RuntimeError, AttributeError, TypeError, ValueError):
-                recents = []
-            if recents:
-                actions.append(
-                    CommandAction(
-                        id="file.open_recent",
-                        title="Open recent configuration…",
-                        subtitle="Pick from the most recently used config files",
-                        category="File",
-                        icon_name="file",
-                        keywords=("mru", "recent", "history"),
-                        callback=lambda: self.open_recent_configs(),
-                    )
-                )
-        if hasattr(self, "_copy_app_logs_to_clipboard"):
-            actions.append(
-                CommandAction(
-                    id="view.copy_logs",
-                    title="Copy application logs to clipboard",
-                    category="View",
-                    icon_name="copy",
-                    keywords=("debug", "clipboard", "logs"),
-                    callback=lambda: self._copy_app_logs_to_clipboard(),
-                )
-            )
-        actions.append(
-            CommandAction(
-                id="view.toggle_theme",
-                title="Toggle light / dark theme",
-                category="View",
-                icon_name="moon",
-                keywords=("dark", "light", "appearance"),
-                callback=lambda: self._toggle_theme(),
-            )
-        )
-        actions.append(
-            CommandAction(
-                id="view.zoom_in",
-                title="Zoom in",
-                subtitle="Increase the interface scale for readability",
-                shortcut="Ctrl+Plus",
-                category="View",
-                icon_name="search-plus",
-                keywords=("zoom", "scale", "larger", "readability"),
-                callback=lambda: self.zoom_in_ui(),
-            )
-        )
-        actions.append(
-            CommandAction(
-                id="view.zoom_out",
-                title="Zoom out",
-                subtitle="Reduce the interface scale for denser layouts",
-                shortcut="Ctrl+Minus",
-                category="View",
-                icon_name="search-minus",
-                keywords=("zoom", "scale", "smaller", "density"),
-                callback=lambda: self.zoom_out_ui(),
-            )
-        )
-        actions.append(
-            CommandAction(
-                id="view.zoom_reset",
-                title="Reset zoom",
-                subtitle="Return the interface to the default size",
-                shortcut="Ctrl+0",
-                category="View",
-                icon_name="search",
-                keywords=("zoom", "reset", "default", "scale"),
-                callback=lambda: self.reset_ui_zoom(),
-            )
-        )
-        actions.append(
-            CommandAction(
-                id="help.shortcuts",
-                title="Show keyboard shortcuts",
-                subtitle="List every registered shortcut in this window",
-                shortcut="F1",
-                category="Help",
-                icon_name="keyboard",
-                keywords=("help", "kbd", "hotkey", "cheatsheet"),
-                callback=lambda: self.open_shortcuts_overlay(),
-            )
-        )
-        actions.append(
-            CommandAction(
-                id="app.quit",
-                title="Close this window",
-                category="Application",
-                icon_name="x",
-                shortcut="Ctrl+W",
-                callback=lambda: self.close(),
-            )
-        )
-        # P0.2 - auto-discover common app actions from method names.
-        auto = getattr(self, "_auto_discovered_commands", None)
-        if callable(auto):
-            actions.extend(auto())
-        return actions
-
-    def _auto_discovered_commands(self) -> list[Any]:
-        """Introspect common method names to surface app-specific commands.
-
-        Looks up a curated list of verb→(method name) bindings on the
-        current instance and returns a :class:`CommandAction` for each
-        method that actually exists. This gives every app a reasonably
-        complete palette without any per-app refactor (P0.2).
-
-        Apps wanting richer commands should still override
-        :meth:`_default_commands` and call ``super()`` + custom entries.
-        """
-        try:
-            from certus.utils.certus_command_palette import CommandAction
-        except ImportError:
-            return []
-
-        # (command id, title, subtitle, method name, category, icon, shortcut, keywords)
-        catalogue = [
-            (
-                "run.optimize",
-                "Run optimization",
-                "Start the main optimisation workflow",
-                ("run_optimization", "run_optim", "optimize", "start_optimization"),
-                "Run",
-                "play",
-                "Ctrl+R",
-                ("run", "optimize", "solve", "fit", "start"),
-            ),
-            (
-                "run.stop",
-                "Stop optimization",
-                "Gracefully interrupt the running solver",
-                ("stop_optimization", "stop", "cancel_run"),
-                "Run",
-                "square",
-                "Esc",
-                ("stop", "cancel", "abort", "halt"),
-            ),
-            (
-                "run.analyze",
-                "Run analysis",
-                "Start the spectral / beam analysis",
-                ("run_analysis", "start_analysis", "analyze", "run_beam"),
-                "Run",
-                "activity",
-                None,
-                ("analyze", "beam", "measure", "spectrum"),
-            ),
-            (
-                "run.smart_init",
-                "Smart init",
-                "Launch the Smart-Init preparation dialog",
-                ("smart_init", "auto_init", "open_smart_init"),
-                "Run",
-                "sparkles",
-                None,
-                ("init", "bootstrap", "smart"),
-            ),
-            (
-                "edit.add_layer",
-                "Add layer",
-                "Append a new layer to the stack",
-                ("add_layer",),
-                "Edit",
-                "plus",
-                None,
-                ("add", "layer", "insert", "stack"),
-            ),
-            (
-                "edit.add_target",
-                "Add target",
-                "Append a new spectral target",
-                ("add_target",),
-                "Edit",
-                "plus",
-                None,
-                ("add", "target", "spec"),
-            ),
-            (
-                "edit.smart_cleanup",
-                "Smart cleanup",
-                "Remove low-impact layers and re-optimise",
-                ("smart_cleanup",),
-                "Edit",
-                "trash-2",
-                None,
-                ("clean", "prune", "optimize", "simplify"),
-            ),
-            (
-                "edit.reset_all",
-                "Reset",
-                "Reset the current session (destructive)",
-                ("reset_all", "clear_stack", "reset"),
-                "Edit",
-                "refresh-ccw",
-                None,
-                ("reset", "clear", "start over"),
-            ),
-            (
-                "file.export_excel",
-                "Export to Excel…",
-                "Save current data to a styled .xlsx workbook",
-                ("export_excel",),
-                "File",
-                "table",
-                None,
-                ("excel", "xlsx", "export", "report"),
-            ),
-            (
-                "file.export_csv",
-                "Export to CSV…",
-                "Save current data to a CSV file",
-                ("export_csv",),
-                "File",
-                "file-text",
-                None,
-                ("csv", "export", "data"),
-            ),
-            (
-                "file.export_pdf",
-                "Export to PDF…",
-                "Save a premium PDF report",
-                ("export_report_pdf", "export_pdf", "export_report"),
-                "File",
-                "file",
-                None,
-                ("pdf", "report", "premium", "export"),
-            ),
-            (
-                "file.export_report_excel",
-                "Export premium Excel report…",
-                "Save a fully-branded .xlsx report (cover + tables + charts)",
-                ("export_report_excel",),
-                "File",
-                "table",
-                None,
-                ("excel", "premium", "report", "branded", "xlsx"),
-            ),
-            (
-                "help.documentation",
-                "Open documentation",
-                "Show the in-app HTML documentation",
-                ("open_help", "open_documentation"),
-                "Help",
-                "book-open",
-                None,
-                ("docs", "manual", "guide", "help"),
-            ),
-        ]
-
-        out: list[Any] = []
-        for cmd_id, title, subtitle, method_names, category, icon, shortcut, keywords in catalogue:
-            bound = None
-            for name in method_names:
-                if callable(getattr(self, name, None)):
-                    bound = getattr(self, name)
-                    break
-            if bound is None:
-                continue
-            out.append(
-                CommandAction(
-                    id=cmd_id,
-                    title=title,
-                    subtitle=subtitle,
-                    shortcut=shortcut,
-                    category=category,
-                    icon_name=icon,
-                    keywords=tuple(keywords),
-                    callback=(lambda fn=bound: fn()),
-                )
-            )
-        return out
-
-    def _toggle_theme(self) -> None:
-        """Flip between light and dark themes (best-effort)."""
-        try:
-            mode = load_theme_config()
-            new_mode = "dark" if mode == "light" else "light"
-            save_theme_config(new_mode)
-            CertusTheme.configure(new_mode)
-            app = QApplication.instance()
-            if app is not None:
-                CertusTheme.apply_to_app(app, new_mode == "dark")
-            update_global_plot_config(new_mode == "dark")
-            self._apply_theme()
-            try:
-                from certus.ui.certus_icons import clear_icon_cache
-
-                clear_icon_cache()
-            except (ImportError, AttributeError):
-                logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
-        except (RuntimeError, AttributeError, TypeError, ValueError, OSError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Theme toggle failed")
-
-    def open_command_palette(self) -> None:
-        """Show the ``Ctrl+K`` command palette for this window."""
-        try:
-            from certus.utils.certus_command_palette import open_command_palette
-
-            if self._commands is None:
-                self._commands = list(self._default_commands())
-            open_command_palette(self, list(self._commands))
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Command palette failed to open")
-
-    def open_shortcuts_overlay(self) -> None:
-        """Show the ``F1`` keyboard-shortcuts cheatsheet for this window."""
-        try:
-            from certus.ui.certus_shortcuts_overlay import open_shortcuts_overlay
-
-            open_shortcuts_overlay(self)
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Shortcuts overlay failed to open")
-
-    # =========================================================================
-    # P2.3 - Standard Help menu (Shortcuts, Command palette, Docs, About)
-    # =========================================================================
-
-    def install_help_menu(self, *, app_label: str | None = None) -> None:
-        """Install a standard ``&Help`` menu on this window.
-
-        Opt-in helper; subclasses must call this explicitly (typically at
-        the end of ``__init__``). The menu offers access to the keyboard
-        shortcuts overlay, the command palette, the online documentation
-        and an About dialog. All entries are no-ops if the underlying
-        module is unavailable.
-        """
-        try:
-            mb = self.menuBar()
-            if mb is None:
-                return
-            help_menu = mb.addMenu("&Help")
-
-            act_palette = help_menu.addAction("Command palette…")
-            act_palette.setShortcut("Ctrl+K")
-            act_palette.triggered.connect(self.open_command_palette)
-            act_palette.setToolTip("Search commands, navigate features and trigger actions instantly.")
-
-            act_shortcuts = help_menu.addAction("Keyboard shortcuts…")
-            act_shortcuts.setShortcut("F1")
-            act_shortcuts.triggered.connect(self.open_shortcuts_overlay)
-            act_shortcuts.setToolTip("See all shortcuts available in this window.")
-
-            act_zoom_in = help_menu.addAction("Zoom in")
-            act_zoom_in.setShortcut("Ctrl+Plus")
-            act_zoom_in.triggered.connect(self.zoom_in_ui)
-            act_zoom_in.setToolTip("Increase interface scale for readability.")
-
-            act_zoom_out = help_menu.addAction("Zoom out")
-            act_zoom_out.setShortcut("Ctrl+Minus")
-            act_zoom_out.triggered.connect(self.zoom_out_ui)
-            act_zoom_out.setToolTip("Decrease interface scale for denser workflows.")
-
-            act_zoom_reset = help_menu.addAction("Reset zoom")
-            act_zoom_reset.setShortcut("Ctrl+0")
-            act_zoom_reset.triggered.connect(self.reset_ui_zoom)
-            act_zoom_reset.setToolTip("Return the interface to its default scale.")
-
-            help_menu.addSeparator()
-
-            if hasattr(self, "open_help"):
-                act_docs = help_menu.addAction("Open documentation…")
-                act_docs.triggered.connect(self.open_help)
-
-            help_menu.addSeparator()
-
-            # P2.2 - onboarding entries
-            act_tour = help_menu.addAction("Start guided tour")
-            act_tour.triggered.connect(functools.partial(self.run_onboarding_tour, force=True))
-
-            act_reset_tour = help_menu.addAction("Reset onboarding state")
-            act_reset_tour.triggered.connect(self.reset_onboarding_tour)
-
-            help_menu.addSeparator()
-
-            act_about = help_menu.addAction("About CERTUS…")
-            act_about.triggered.connect(functools.partial(self._show_default_about_dialog, app_label))
-        except (RuntimeError, AttributeError, TypeError, ValueError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Help menu install failed")
-
-    def _show_default_about_dialog(self, app_label: str | None = None) -> None:
-        """Minimal About dialog with the app name, version and key bindings."""
-        try:
-            from PyQt6.QtWidgets import QMessageBox
-
-            label = app_label or getattr(self, "APP_TITLE", None) or getattr(self, "APP_NAME", "CERTUS")
-            QMessageBox.about(
-                self,
-                f"About {label}",
-                f"<b>{label}</b><br>CERTUS 2026 - Optical Suite<br><br>"
-                "<code>Ctrl+K</code> &middot; Command palette<br>"
-                "<code>F1</code> &middot; Keyboard shortcuts<br>"
-                "<code>Ctrl+S</code> / <code>Ctrl+O</code> &middot; Save / Load config<br>",
-            )
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("About dialog failed to open")
-
-    # =========================================================================
-    # P2.2 - Onboarding tour helpers
-    # =========================================================================
-
-    def run_onboarding_tour(self, *, force: bool = False) -> str:
-        """Run the onboarding tour registered for this app (best-effort)."""
-        try:
-            from certus.ui.certus_tours_catalog import run_app_onboarding
-
-            return run_app_onboarding(self, force=force)
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
-            if self.logger:
-                self.logger.exception("Onboarding tour failed to start")
-            return "empty"
-
-    def reset_onboarding_tour(self) -> None:
-        """Forget the "already shown" flag so the tour runs again next time."""
-        try:
-            from certus.ui.certus_onboarding import reset_onboarding
-
-            reset_onboarding(getattr(self, "APP_NAME", "CERTUS"))
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
-            if self.logger:
-                self.logger.exception("Onboarding reset failed")
-
-    # =========================================================================
-    # P4 - Accessibility defaults (auto-wired at _finalize_init time)
-    # =========================================================================
-
-    # Subclasses may override to supply explicit {objectName: label} entries.
-    _A11Y_LABEL_MAP: dict[str, str] = {}
-
-    def _apply_accessibility_defaults(self) -> int:
-        """Fill missing accessible names / focus policies on input widgets.
-
-        Delegates to :func:`certus_a11y.apply_accessibility_defaults`. Returns
-        the number of widgets touched (useful for tests). Silently ignored
-        if the module is unavailable.
-        """
-        try:
-            from certus.ui.certus_a11y import apply_accessibility_defaults
-        except ImportError:
-            return 0
-        try:
-            return apply_accessibility_defaults(self, label_map=self._A11Y_LABEL_MAP)
-        except (RuntimeError, AttributeError, TypeError, ValueError):
-            if self.logger:
-                self.logger.exception("Accessibility defaults application failed")
-            return 0
 
     # =========================================================================
     # P5 - Destructive-action confirmations (uniform modal)
     # =========================================================================
 
-    def confirm_destructive(
-        self,
-        title: str,
-        message: str,
-        *,
-        detail: str | None = None,
-        confirm_label: str = "Continue",
-        cancel_label: str = "Cancel",
-        default_cancel: bool = True,
-    ) -> bool:
-        """Show a modal confirmation dialog with consistent styling.
 
-        Returns ``True`` when the user accepts the action, ``False`` on
-        cancel or dialog failure. Use for **irreversible** actions only
-        (overwrite, clear, kill worker, delete).
-        """
-        try:
-            from PyQt6.QtWidgets import QMessageBox
-
-            msg = QMessageBox(self)
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setWindowTitle(title)
-            msg.setText(message)
-            if detail:
-                msg.setInformativeText(detail)
-            yes = msg.addButton(confirm_label, QMessageBox.ButtonRole.AcceptRole)
-            no = msg.addButton(cancel_label, QMessageBox.ButtonRole.RejectRole)
-            msg.setDefaultButton(no if default_cancel else yes)
-            msg.exec()
-            return msg.clickedButton() is yes
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Destructive confirmation dialog failed")
-            return False
 
     # =========================================================================
     # P3 - Premium report helpers (Excel + PDF via certus_reports)
     # =========================================================================
 
-    def _default_report_context(self) -> Any:
-        """Return a :class:`certus_reports.ReportContext` prefilled from the app."""
-        try:
-            from certus.utils.certus_reports import ReportContext
-        except ImportError:
-            return None
-        app_label = getattr(self, "APP_TITLE", None) or getattr(self, "APP_NAME", "CERTUS")
-        return ReportContext(
-            title=f"{app_label} report",
-            subtitle="Automatic export",
-            app_name=getattr(self, "APP_NAME", "CERTUS"),
-            author="",
-        )
 
-    def _default_run_manifest(self) -> None:
-        """Best-effort run manifest for exports (non-blocking, UI-safe)."""
-        return None
-
-    def set_validation_status(self, status: str) -> None:
-        """Store a normalized validation status for manifest export."""
-        try:
-            from certus.core.certus_metrology import ValidationStatus
-
-            self.validation_status = ValidationStatus(str(status)).value
-        except (RuntimeError, AttributeError, TypeError, ValueError):
-            self.validation_status = str(status)
-
-    def add_validation_warning(self, warning: str) -> None:
-        """Append a warning to the manifest warning list."""
-        msg = str(warning).strip()
-        if not msg:
-            return
-        cur = getattr(self, "validation_warnings", None)
-        if not isinstance(cur, list):
-            cur = []
-        cur.append(msg)
-        self.validation_warnings = cur
-        app_id = str(
-            getattr(self, "MODULE_ID", None) or getattr(self, "APP_NAME", None) or getattr(self, "APP_TITLE", "CERTUS")
-        )
-        app_version = str(
-            getattr(self, "MODULE_VERSION", None)
-            or getattr(self, "APP_VERSION", None)
-            or getattr(self, "CERTUS_VERSION", "unknown")
-        )
-        seed = getattr(self, "run_seed", None)
-        if seed is None:
-            seed = getattr(self, "random_seed", None)
-        if seed is None and hasattr(self, "sp_corr_seed"):
-            try:
-                seed = int(self.sp_corr_seed.value())
-            except (RuntimeError, AttributeError, TypeError, ValueError):
-                seed = None
-        warnings_raw = getattr(self, "validation_warnings", None)
-        warnings = [str(w) for w in warnings_raw] if isinstance(warnings_raw, (list, tuple)) else []
-        status_raw = str(getattr(self, "validation_status", "OK") or "OK")
-        try:
-            from certus.core.certus_metrology import RunContext, RunManifest, ValidationStatus
-        except ImportError:
-            return None
-        try:
-            status = ValidationStatus(status_raw)
-        except ValueError:
-            status = ValidationStatus.OK
-        input_paths = []
-        src = getattr(self, "filename", None)
-        if isinstance(src, str) and src:
-            input_paths.append(src)
-        try:
-            ctx = RunContext.create(
-                app_id=app_id,
-                app_version=app_version,
-                seed=int(seed) if seed is not None else None,
-                input_paths=input_paths,
-                warnings=warnings,
-                status=status,
-            )
-            return RunManifest(run_context=ctx)
-        except (RuntimeError, AttributeError, TypeError, ValueError):
-            return None
-
-    def export_premium_excel(self, sections, output_path: str | None = None, *, ctx=None) -> str | None:
-        """Render a styled ``.xlsx`` report via :mod:`certus_reports`.
-
-        Parameters
-        ----------
-        sections:
-            Iterable of :class:`certus_reports.Section`.
-        output_path:
-            Destination file. When ``None``, asks the user via the standard
-            CERTUS save dialog.
-        ctx:
-            Optional :class:`ReportContext` override (defaults to the app's).
-
-        Returns the resolved absolute path on success, or ``None`` on cancel /
-        failure. Errors are surfaced in the log + as an error toast.
-        """
-        try:
-            from certus.utils.certus_reports import build_excel_report
-        except ImportError:
-            self.log("Excel export unavailable (missing dependency).", "ERROR")
-            return None
-        path = output_path
-        if not path:
-            path = certus_io_ui.certus_get_save_file_name(self, "Export premium Excel report", "Excel (*.xlsx)")
-            if not path:
-                return None
-        try:
-            report_ctx = ctx or self._default_report_context()
-            if report_ctx is not None and getattr(report_ctx, "run_manifest", None) is None:
-                report_ctx.run_manifest = self._default_run_manifest()
-            out = build_excel_report(report_ctx, sections, path)
-            self.log(f"Excel report saved: {out}", "SUCCESS")
-            return out
-        except (RuntimeError, AttributeError, TypeError, ValueError, OSError) as e:  # pragma: no cover - defensive
-            self.log(f"Excel export failed: {e}", "ERROR")
-            if self.logger:
-                self.logger.exception("Excel export failed")
-            return None
-
-    def export_premium_pdf(self, sections, output_path: str | None = None, *, ctx=None) -> str | None:
-        """Render a styled ``.pdf`` report via :mod:`certus_reports`.
-
-        Symmetric to :meth:`export_premium_excel`. Uses ``matplotlib`` under
-        the hood (already a project dependency) so no extra install is needed.
-        """
-        try:
-            from certus.utils.certus_reports import build_pdf_report
-        except ImportError:
-            self.log("PDF export unavailable (missing dependency).", "ERROR")
-            return None
-        path = output_path
-        if not path:
-            path = certus_io_ui.certus_get_save_file_name(self, "Export premium PDF report", "PDF (*.pdf)")
-            if not path:
-                return None
-        try:
-            report_ctx = ctx or self._default_report_context()
-            if report_ctx is not None and getattr(report_ctx, "run_manifest", None) is None:
-                report_ctx.run_manifest = self._default_run_manifest()
-            out = build_pdf_report(report_ctx, sections, path)
-            self.log(f"PDF report saved: {out}", "SUCCESS")
-            return out
-        except (RuntimeError, AttributeError, TypeError, ValueError, OSError) as e:  # pragma: no cover - defensive
-            self.log(f"PDF export failed: {e}", "ERROR")
-            if self.logger:
-                self.logger.exception("PDF export failed")
-            return None
-
-    # Subclasses override this to return their app-specific report sections.
-    def _build_report_sections(self) -> list:
-        """Return the :class:`Section` list for this app (empty by default)."""
-        return []
-
-    def export_report_excel(self) -> str | None:
-        """Convenience: build default sections + save Excel in one call."""
-        return self.export_premium_excel(self._build_report_sections())
-
-    def export_report_pdf(self) -> str | None:
-        """Convenience: build default sections + save PDF in one call."""
-        return self.export_premium_pdf(self._build_report_sections())
 
     # =========================================================================
     # P1.1 - Skeleton overlay convenience (any long-running op can use these)
@@ -1407,134 +658,13 @@ class CertusBaseApp(QMainWindow):
     # =========================================================================
 
     # (attribute name on self -> (icon, title, description, optional CTA))
-    _EMPTY_STATE_HINTS: dict[str, tuple[str, str, str, str | None]] = {
-        "front_table": (
-            "layers",
-            "No layers yet",
-            "Add a layer from the toolbar above, or load a configuration.",
-            "Add layer",
-        ),
-        "back_table": (
-            "layers",
-            "No back-side layers",
-            "Enable back-side coating to edit the stack on this side.",
-            None,
-        ),
-        "target_table": (
-            "target",
-            "No spectral targets",
-            "Click 'Add target' to define the first wavelength window.",
-            "Add target",
-        ),
-        "spectra_table": ("line-chart", "No spectra loaded", "Drag a CSV file here or use File → Load spectra.", None),
-        "measurement_table": (
-            "activity",
-            "No measurements yet",
-            "Import measured data or switch to the Sample demos.",
-            None,
-        ),
-        "results_table": (
-            "check-circle",
-            "No results yet",
-            "Run the optimisation from the command palette or toolbar.",
-            None,
-        ),
-    }
 
-    def _auto_install_empty_states(self) -> None:
-        """Install :class:`CertusEmptyState` overlays on well-known tables.
-
-        Scans the instance for attributes named in :attr:`_EMPTY_STATE_HINTS`
-        and wires an empty-state overlay when the attribute is a
-        :class:`QAbstractItemView`-compatible widget. No-op if the empty
-        state module is missing or the attribute does not exist.
-
-        Call sites (e.g. ``add_layer``, ``add_target``) are wired via the
-        CTA callback where available.
-        """
-        try:
-            from certus.ui.certus_empty_state import attach_empty_state_to
-        except ImportError:
-            return
-
-        for attr, (icon, title, desc, cta_label) in self._EMPTY_STATE_HINTS.items():
-            widget = getattr(self, attr, None)
-            if widget is None:
-                continue
-            # Must be a view with a model; QTableWidget / QListWidget qualify.
-            if not hasattr(widget, "model"):
-                continue
-            # Resolve CTA callback lazily from a sensible default method name.
-            on_action = None
-            if cta_label:
-                cb = getattr(self, "add_layer" if "layer" in cta_label.lower() else "add_target", None)
-                if callable(cb):
-                    on_action = cb
-                else:
-                    cta_label = None  # hide CTA button if no target method
-            try:
-                attach_empty_state_to(
-                    widget,
-                    icon_name=icon,
-                    title=title,
-                    description=desc,
-                    action_label=cta_label,
-                    on_action=on_action,
-                )
-            except (RuntimeError, AttributeError, TypeError, ValueError):
-                if self.logger:
-                    self.logger.exception("Failed to attach empty state to %s", attr)
 
     # =========================================================================
     # U5 — Recent files
     # =========================================================================
 
-    def _record_recent_config(self, filename: str) -> None:
-        """Append ``filename`` to the config MRU list (best-effort)."""
-        if not filename:
-            return
-        try:
-            from certus.ui.certus_recent import RecentCategories, record_recent
 
-            record_recent(RecentCategories.CONFIG, filename)
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            pass
-
-    def list_recent_configs(self, limit: int = 8) -> list[str]:
-        """Return up to ``limit`` most-recent config paths (existing files)."""
-        try:
-            from certus.ui.certus_recent import RecentCategories, list_recent
-
-            return list_recent(RecentCategories.CONFIG, limit=limit)
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
-            return []
-
-    def open_recent_configs(self) -> None:
-        """Show a small picker listing the most recent configs."""
-        paths = self.list_recent_configs(limit=12)
-        if not paths:
-            if self.logger:
-                self.logger.info("No recent configuration files.")
-            return
-        try:
-            from PyQt6.QtWidgets import QInputDialog
-            from certus.ui.certus_recent import short_label
-
-            items = [short_label(p, max_length=80) for p in paths]
-            label_to_path = dict(zip(items, paths))
-            choice, ok = QInputDialog.getItem(
-                self,
-                "Open recent configuration",
-                "Pick a recent file:",
-                items,
-                0,
-                False,
-            )
-            if ok and choice and choice in label_to_path:
-                self.load_config(label_to_path[choice])
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):  # pragma: no cover - defensive
-            if self.logger:
-                self.logger.exception("Failed to open recent-configs picker")
 
     def _qs_key(self, suffix: str) -> str:
         return f"window/{self.APP_NAME}/{suffix}"
@@ -1585,41 +715,37 @@ class CertusBaseApp(QMainWindow):
 
     def _warmup_numba(self) -> None:
         """
-
         Override in subclass to perform JIT precompilation.
-
-        Call self._on_numba_ready() when done.
-
+        Call self.numba_manager.start_warmup() when done.
         """
+        self.numba_manager.start_warmup(None)
 
-        self._on_numba_ready()
+    def _on_numba_ready_from_manager(self) -> None:
+        self.numba_ready = True
+        
+    def _on_numba_error_from_manager(self, message: str) -> None:
+        self.numba_ready = False
 
     def _on_numba_ready(self) -> None:
         """Called when Numba warmup completes."""
-
-        self.numba_ready = True
-
-        if self.logger:
-            self.logger.info(" Numba JIT compilation completed")
+        self.numba_manager.on_warmup_done()
 
     def _on_warmup_done(self) -> None:
         """Slot when ``WarmupWorker.finished`` fires (CERTUS_DESIGN / CERTUS_RE)."""
-
         self._warmup_done = True
-
         self._spectrum_eval_jit_wait_logged = False
-
         sl = getattr(self, "status_label", None)
-
         if sl is not None:
             sl.setText("Ready")
-
         logging.info("[WARMUP] JIT warmup finished; spectrum eval may proceed.")
-
         try:
             show_toast(self, "System ready. JIT Warmup complete.", "success")
         except Exception:
             pass
+        self._on_numba_ready()
+
+    def _on_warmup_error(self, message: str) -> None:
+        self.numba_manager.on_warmup_error(message)
 
 
     def _apply_certus_compact_theme(self, plots: list) -> None:
@@ -1830,19 +956,11 @@ class CertusBaseApp(QMainWindow):
 
     def _on_worker_finished(self, worker: QThread) -> None:
         """Called when a worker finishes."""
-
-        if worker in self._active_workers:
-            self._active_workers.remove(worker)
+        self.worker_manager.unregister_worker(worker)
 
     def _stop_all_workers(self) -> None:
         """Stop all active workers."""
-
-        for worker in self._active_workers:
-            if hasattr(worker, "stop"):
-                worker.stop()
-
-            if hasattr(worker, "requestInterruption"):
-                worker.requestInterruption()
+        self.worker_manager.stop_all()
 
     # --- Detached Plot Windows ---
 

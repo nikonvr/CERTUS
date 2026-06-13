@@ -1,0 +1,93 @@
+from pathlib import Path
+import ast
+import json
+import collections
+
+re_file = Path('CERTUS_RE.py')
+source = re_file.read_text(encoding='utf-8')
+tree = ast.parse(source)
+
+app_class = [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'CertusREApp'][0]
+methods = [n for n in app_class.body if isinstance(n, ast.FunctionDef)]
+
+# Categorize methods
+categories = {
+    'Layout': [
+        '_get_default_splitter_sizes', '_build_left_panel', '_apply_theme', '_build_re_workflow_group',
+        '_build_re_options_group', '_build_re_excel_data_group', '_build_display_group',
+        '_init_re_calc_param_widgets', '_build_refine_group', '_build_action_buttons',
+        '_build_right_panel', '_build_front_table_widget', '_build_target_table_widget',
+        '_build_status_bar', '_setup_shortcuts', '_update_target_table_headers',
+        '_show_re_p4_beam_aperture_plot', '_show_re_target_plot_overlay',
+        '_show_re_indices_plot_overlay', '_show_re_delta_qwot_plot', '_show_re_results_window'
+    ],
+    'State': [
+        'reset_to_defaults', '_load_defaults', '_normalize_re_config', 'load_config',
+        '_clear_re_session_data', '_clear_re_excel_readout_ui', '_get_substrate_info_display',
+        '_update_busy_ui', '_update_zoom_label', '_apply_ui_zoom', '_re_speed_mode',
+        '_re_speed_preset', '_re_gui_qwot_penalty_weight', '_re_envelope_scale_from_gui',
+        '_sync_display_re_results_btn_state', '_re_current_sub_cauchy_theta',
+        '_show_substrate_info_window', '_re_apply_gui_prefs_from_dict', 'closeEvent',
+        '_re_current_fit_lambda_bounds_nm', '_re_filter_targets_by_fit_window',
+        '_re_default_target_lmin_lmax_nm', '_re_fallback_plot_wavelengths_nm',
+        '_remove_re_skeletons', '_trigger_post_undo_action'
+    ],
+    'Table': [
+        '_stack_info_front_table_cols', '_on_l0_changed_refresh_front_table',
+        '_on_l0_changed_update_substrate_info', '_on_qwot_changed_connection',
+        '_on_layer_added', '_on_layer_deleted', '_update_layer_count',
+        '_re_parse_thick_nm_from_table', '_re_n_from_qwot_and_thick',
+        '_re_refresh_front_table_num_and_n', '_merge_adjacent_layers',
+        '_update_thickness_display', '_update_qwot_from_ep', '_add_front_row',
+        '_get_front_stack', 'add_target', '_get_materials', '_get_oblique_tgts',
+        '_get_plot_info', '_paste_from_excel', '_reconstruct_lambda_list',
+        '_re_build_target_theory_rows', '_re_format_rmse_value'
+    ],
+    'Plot': [
+        '_on_update_spectrum_y_scale_signal', '_plot_profile', '_plot_nk',
+        '_re_clear_re_nk_preview', '_re_init_plot_factors', '_update_re_spectrum_title',
+        '_re_spline_lam2_nm_from_result'
+    ],
+    'Excel': [
+        '_re_walk_up_indices_paths', '_re_indices_xlsx_candidate_paths',
+        '_re_builtin_substrate_tabular', '_re_resolve_substrate_material',
+        '_load_re_substrate', '_parse_re_design', '_parse_re_index',
+        '_parse_re_measurement', '_re_automap_three_sheet_workbook',
+        '_re_build_load_summary_text', '_re_show_load_summary_dialog',
+        'load_reverse_engineering', 'load_reverse_engineering_from_path',
+        '_apply_re_excel_readout_from_file', '_show_initial_re_rmse',
+        '_re_capture_loaded_exact_ep', '_show_re_drifted_indices_window',
+        'export_excel', 'export_re_targets_vs_theory'
+    ],
+    'Workers': [
+        '_on_schedule_eval_signal', '_on_schedule_eval_instant_signal',
+        'run_eval', '_on_eval_finished', 'launch_re', 'stop_optim',
+        '_on_re_worker_progress', '_on_re_worker_result', '_on_re_done',
+        '_compute_re_rmse', 'build_re_worker_cfg', '_set_workflow_best_rmse',
+        '_apply_re_workflow_rmse_if_better', '_re_rmse_qwot_alpha_for_display',
+        '_update_status_bar_stats', '_best_rmse_label_text',
+        '_on_re_fit_window_changed', '_on_target_group_toggled',
+        '_re_log_rmse_config_recap', '_on_display_re_results_clicked',
+        '_re_p4_display_beam_kwargs', '_re_substrate_re_after_final', 'open_help'
+    ]
+}
+
+# Ensure all methods are categorized except __init__
+all_categorized = []
+for k, v in categories.items():
+    all_categorized.extend(v)
+
+uncategorized = []
+for m in methods:
+    if m.name != '__init__' and m.name not in all_categorized:
+        uncategorized.append(m.name)
+
+if uncategorized:
+    print('WARNING: Uncategorized methods:', uncategorized)
+else:
+    print('All methods correctly categorized.')
+
+# Now output this distribution to a JSON file for processing later
+out = Path('tools/certus_re_mixin_map.json')
+out.write_text(json.dumps(categories, indent=2))
+print('Map saved to tools/certus_re_mixin_map.json')

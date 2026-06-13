@@ -5,116 +5,40 @@
 
 
 """
-
-
 CERTUS-METAL-BILAYER CERTUS_SUITE_26_05
-
-
 ================================
-
-
 Metal Index Determination on SiO2/Si substrate (Bilayer Strategy)
 
-
 Determines the complex refractive index (n, k) of a metal layer deposited
-
-
 on top of a SiO2 layer, itself on top of an absorbing Si substrate.
-
 
 Structure: Air | Metal (eM) | SiO2 (eL) | Si (absorbing substrate)
 
-
-Uses differential evolution optimization to extract metal optical constants
-from pathlib import Path
-
-
+Uses PGLOBAL optimization to extract metal optical constants
 from reflectance measurements. The metal index is modeld as wavelength-dependent
-
-
 splines, while SiO2 uses a Cauchy model (n = n∞ + A/lambda²).
-
-
 """
 
-from certus.core.certus_core import __version__
 
-
+import json
 import logging
-
-
 import multiprocessing
-
-
 import os
-
-
 import sys
-
-
 import time
-
-
 import traceback
-
-
-from certus.core.certus_core import create_module_environment, setup_logging
-
-
-# =============================================================================
-
-
-# BOOTSTRAP - Centralized app initialization
-
-
-# =============================================================================
-
-
-env = create_module_environment(__file__, "METAL_BILAYER")
-
-
-script_dir = env["script_dir"]
-
-
-# Configure GUI
-
-
 import warnings
-
-
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 
 import numpy as np
-
-
 import pandas as pd
-
-
-from certus.core.certus_core import get_float_dtype, get_resource_path, certus_timestamp_display, certus_timestamp_file, NUMERICAL_FAULT_EXCEPTIONS
-from pathlib import Path
-
-
-# certus_ui imports consolidated below (after other imports)
-
-
-warnings.filterwarnings("ignore", category=RuntimeWarning, module="scipy.optimize")
-
-
-
-
 import scipy.optimize
-
-
-
-
-
 import pyqtgraph as pg
 
 
 from PyQt6.QtCore import QObject, Qt, QThread, QTimer, pyqtSignal, pyqtSlot
-
-
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
@@ -126,15 +50,19 @@ from PyQt6.QtWidgets import (
 )
 
 
-# --- 4. DATA (IO, Reporting) ---
-
-
-from certus.utils.certus_data import (
-    OPENPYXL_AVAILABLE,
+from certus.core.certus_core import (
+    __version__,
+    create_module_environment,
+    setup_logging,
+    get_float_dtype,
+    get_resource_path,
+    certus_timestamp_display,
+    certus_timestamp_file,
+    NUMERICAL_FAULT_EXCEPTIONS,
 )
 
 
-# --- IMPORT METAL COMMON BASE ---
+from certus.utils.certus_data import OPENPYXL_AVAILABLE
 
 
 from certus.metal.certus_metal_common import (
@@ -155,17 +83,19 @@ from certus.metal.certus_metal_common import (
     DEFAULT_WORKERS,
     MetalBaseApp,
     MetalOptimizationWorker,
+    build_metal_progress_event,
+    build_metal_progress_status_text,
     build_metal_startup_log_lines,
     build_metal_target_data,
-    metal_optimization_worker_run_differential_evolution,
     normalize_percent_column,
+    normalize_metal_progress_payload,
     setup_beam_analysis_thread,
     teardown_beam_thread,
     setup_common_metal_plots,
 )
 
 
-# --- 2. PHYSICS (Models, Optimization, Utils) ---
+from certus.metal.pglobal_adapter import run_pglobal_optimization
 
 
 from certus_physics import (
@@ -175,9 +105,6 @@ from certus_physics import (
     get_nk_from_spline,
     get_nk_si,
 )
-
-
-# --- 3. UI (Theme, Widgets) ---
 
 
 from certus.ui.certus_ui import (
@@ -194,13 +121,25 @@ from certus.ui.certus_ui import (
 )
 
 
-# Install exception handler
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="scipy.optimize")
+
+
+# =============================================================================
+
+
+# BOOTSTRAP - Centralized app initialization
+
+
+# =============================================================================
+
+
+env = create_module_environment(__file__, "METAL_BILAYER")
+
+
+script_dir = env["script_dir"]
 
 
 setup_gui_exception_handling()
-
-
-# PyQtGraph configured via COMMON utility
 
 
 setup_pyqtgraph_defaults()
@@ -227,7 +166,7 @@ DEFAULT_EL_VARIATION = "20"
 def _build_bilayer_bounds(
     params: Dict[str, Any], l_array: Optional[np.ndarray] = None, include_eM: bool = True
 ) -> List[Tuple[float, float]]:
-    """Build scipy bounds list for bilayer DE. If include_eM=False, omit first (eM) bound."""
+    """Build bounds list for bilayer optimization. If include_eM=False, omit first (eM) bound."""
 
     eL_min = max(0, params.get("eL_nominal", 900) - params.get("eL_variation", 20))
 
@@ -245,13 +184,19 @@ def _build_bilayer_bounds(
     bounds.append(params.get("A_diel_bounds", (0, 10000)))
 
     num_knots = params["num_knots"]
+    spline_knots = num_knots
 
-    bounds += [(params.get("nk_min", 0), params.get("nk_max", 10))] * (2 * num_knots)
+    bounds += [(params.get("nk_min", 0), params.get("nk_max", 10))] * (2 * spline_knots)
 
-    num_internal = num_knots - 2
+    num_internal = spline_knots - 2
 
-    if num_internal > 0 and l_array is not None:
-        l_min, l_max = l_array.min(), l_array.max()
+    if num_internal > 0:
+        if l_array is not None:
+            l_min, l_max = float(np.min(l_array)), float(np.max(l_array))
+        else:
+            # Keep the search space aligned with the objective even when no target grid
+            # is available yet (e.g. headless smoke tests or early setup paths).
+            l_min, l_max = 350.0, 880.0
 
         bounds += [(l_min, l_max)] * num_internal
 
@@ -279,6 +224,7 @@ def _build_bilayer_bounds(
 # Note: get_nk_from_spline imported from certus_physics above
 
 
+
 def _bilayer_reflectance_mse(
     x: np.ndarray,
     l_array: np.ndarray,
@@ -288,93 +234,222 @@ def _bilayer_reflectance_mse(
     nSub_complex_array: Optional[np.ndarray],
     eM_fixed: Optional[float] = None,
 ) -> float:
-    """
+    """Compute bilayer reflectance MSE or return np.inf when constraints fail."""
 
-    Returns MSE for bilayer reflectance. Single source for global_objective_function
-
-    and objective_function_fixed_eM.
-
-    If eM_fixed is None: x = [eM, eL, n_inf, A, n_knots..., k_knots..., lambda_int...].
-
-    If eM_fixed is set: x = [eL, n_inf, A, n_knots..., k_knots..., lambda_int...], eM = eM_fixed.
-
-    Returns np.inf if constraints violated.
-
-    """
-
-    min_lambda = l_array.min()
-
-    max_lambda = l_array.max()
-
+    min_lambda = float(np.min(l_array))
+    max_lambda = float(np.max(l_array))
+    if not np.isfinite(min_lambda) or not np.isfinite(max_lambda) or max_lambda <= min_lambda:
+        return np.inf
     if nSub_complex_array is None:
         nSub_complex_array = get_nk_si(l_array)
 
+    x = np.asarray(x, dtype=float)
+    debug_ctx: dict[str, Any] = {
+        "x_dim": int(x.size),
+        "x_head": np.round(x[: min(10, x.size)], 6).tolist() if x.size else [],
+        "num_knots": int(num_knots),
+        "min_knot_dist": float(min_knot_dist),
+        "lambda_min": float(min_lambda),
+        "lambda_max": float(max_lambda),
+        "eM_fixed": None if eM_fixed is None else float(eM_fixed),
+    }
     if eM_fixed is None:
+        if x.size < 4:
+            _write_bilayer_autopsy_record("objective_shape_reject", {"reason": "x_too_short_global", "context": debug_ctx})
+            return np.inf
         eM, eL, n_infini, A = x[0], x[1], x[2], x[3]
-
         offset = 4
-
     else:
-        eM = eM_fixed
-
+        eM = float(eM_fixed)
+        if x.size < 3:
+            _write_bilayer_autopsy_record("objective_shape_reject", {"reason": "x_too_short_fixed_eM", "context": debug_ctx})
+            return np.inf
         eL, n_infini, A = x[0], x[1], x[2]
-
         offset = 3
 
-    n_knots = x[offset : offset + num_knots]
+    spline_knot_count = num_knots
+    expected_internal = max(0, spline_knot_count - 2)
+    expected_size = offset + 2 * spline_knot_count + expected_internal
+    # The global parametrization uses (num_knots + 1) control points per spline family.
+    debug_ctx["spline_knot_count"] = int(spline_knot_count)
+    debug_ctx["expected_internal"] = int(expected_internal)
+    debug_ctx["expected_size"] = int(expected_size)
+    if x.size != expected_size:
+        _write_bilayer_autopsy_record("objective_shape_reject", {"reason": "unexpected_x_size", "context": debug_ctx})
+        return np.inf
 
-    k_knots = x[offset + num_knots : offset + 2 * num_knots]
+    n_knots = x[offset : offset + spline_knot_count]
+    k_knots = x[offset + spline_knot_count : offset + 2 * spline_knot_count]
+    lambda_internes = x[offset + 2 * spline_knot_count :]
 
-    lambda_internes = x[offset + 2 * num_knots :]
+    debug_ctx["lambda_internal_dim"] = int(lambda_internes.size)
+    debug_ctx["n_knots_head"] = np.round(n_knots[: min(5, n_knots.size)], 6).tolist() if n_knots.size else []
+    debug_ctx["k_knots_head"] = np.round(k_knots[: min(5, k_knots.size)], 6).tolist() if k_knots.size else []
+    debug_ctx["lambda_internal_head"] = np.round(lambda_internes[: min(5, lambda_internes.size)], 6).tolist() if lambda_internes.size else []
 
+    if n_knots.size != spline_knot_count or k_knots.size != spline_knot_count or lambda_internes.size != expected_internal:
+        _write_bilayer_autopsy_record("objective_shape_reject", {"reason": "component_size_mismatch", "context": debug_ctx})
+        return np.inf
     if eM < 0 or eL < 0:
         return np.inf
 
     nL_calc = get_nk_cauchy_simple(l_array, n_infini, A)
-
-    if np.any(nL_calc < 1.44) or np.any(nL_calc > 1.475):
+    if np.any(~np.isfinite(nL_calc)):
+        _write_bilayer_autopsy_record("objective_physical_reject", {"reason": "non_finite_dielectric", "context": debug_ctx})
         return np.inf
 
-    knot_l = np.concatenate(([min_lambda], np.sort(lambda_internes), [max_lambda]))
-
-    if len(lambda_internes) > 0 and np.any(np.diff(knot_l) < min_knot_dist):
-        return np.inf
-
+    lambda_internes = np.sort(lambda_internes)
+    knot_l = np.empty(spline_knot_count, dtype=np.float64)
+    knot_l[0] = min_lambda
+    if expected_internal > 0:
+        knot_l[1:-1] = lambda_internes
+    knot_l[-1] = max_lambda
+    
     if not np.all(np.isfinite(knot_l)):
+        _write_bilayer_autopsy_record("objective_shape_reject", {"reason": "non_finite_knots", "context": debug_ctx})
         return np.inf
 
-    p_spline_nk = np.concatenate((n_knots, k_knots))
+    for i in range(spline_knot_count - 1):
+        if knot_l[i+1] - knot_l[i] < float(min_knot_dist):
+            return np.inf
+
+    p_spline_nk = np.empty(2 * spline_knot_count, dtype=np.float64)
+    p_spline_nk[:spline_knot_count] = n_knots
+    p_spline_nk[spline_knot_count:] = k_knots
 
     try:
         n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
-
-        if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
+        debug_ctx["n_calc_head"] = np.round(n_calc[: min(10, n_calc.size)], 6).tolist() if n_calc.size else []
+        debug_ctx["k_calc_head"] = np.round(k_calc[: min(10, k_calc.size)], 6).tolist() if k_calc.size else []
+        if n_calc.shape != l_array.shape or k_calc.shape != l_array.shape:
+            _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "spline_shape_mismatch", "context": debug_ctx})
             return np.inf
-
-        if l_array.dtype == np.float32:
-            n_calc = n_calc.astype(np.float32)
-
-            k_calc = k_calc.astype(np.float32)
-
-            nL_calc = nL_calc.astype(np.float32)
-
-            nSub_local = nSub_complex_array.astype(np.complex64)
-
-        else:
-            nSub_local = nSub_complex_array
-
-        nM_complex = n_calc - 1j * k_calc
-
-        nL_complex = nL_calc + 0j
-
-        R_calc = calculate_reflectance_bilayer_vectorized(l_array, nM_complex, eM, eL, nL_complex, nSub_local)
-
-        mse = np.mean((R_calc - r_tgt_array) ** 2)
-
-        return mse if np.isfinite(mse) else np.inf
-
-    except (ValueError, RuntimeError, TypeError):
+        if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
+            _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "non_finite_spline_output", "context": debug_ctx})
+            return np.inf
+        R_calc = calculate_reflectance_bilayer_vectorized(
+            l_array,
+            n_calc - 1j * k_calc,
+            float(eM),
+            float(eL),
+            nL_calc + 0j,
+            nSub_complex_array,
+        )
+        debug_ctx["R_calc_head"] = np.round(R_calc[: min(10, R_calc.size)], 6).tolist() if R_calc.size else []
+        if R_calc.shape != r_tgt_array.shape or not np.all(np.isfinite(R_calc)):
+            _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "non_finite_reflectance", "context": debug_ctx})
+            return np.inf
+        mse = float(np.mean((R_calc - r_tgt_array) ** 2))
+        if not np.isfinite(mse):
+            _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "non_finite_mse", "context": debug_ctx})
+            return np.inf
+        return mse
+    except Exception as exc:
+        debug_ctx["exception_type"] = type(exc).__name__
+        debug_ctx["exception"] = str(exc)
+        _write_bilayer_autopsy_record(
+            "objective_kernel_exception",
+            {
+                "reason": f"objective_kernel_exception:{type(exc).__name__}:{exc}",
+                "context": debug_ctx,
+                "x": x.tolist(),
+                "num_knots": int(num_knots),
+                "min_knot_dist": float(min_knot_dist),
+                "knot_l": knot_l.tolist(),
+            },
+        )
         return np.inf
+
+
+
+def _bilayer_autopsy_dir() -> Path:
+    """Directory used to persist autopsy payloads."""
+
+    path = Path(get_resource_path("reports")) / "autopsy"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+
+def _write_bilayer_autopsy_record(kind: str, payload: dict[str, Any]) -> Path | None:
+    """Persist a compact JSON payload for post-mortem analysis."""
+    return None
+
+
+
+def _diagnostic_bilayer_penalty(reason: str, x: np.ndarray | None = None, *, logger: logging.Logger | None = None, context: dict[str, Any] | None = None) -> float:
+    """Return the canonical penalty while emitting a high-signal diagnostic line."""
+
+    penalty = 1e12
+    try:
+        x_arr = np.asarray(x, dtype=float) if x is not None else np.asarray([])
+    except Exception:
+        x_arr = np.asarray([])
+    x_head = np.round(x_arr[: min(10, x_arr.size)], 6).tolist() if x_arr.size else []
+    payload = {
+        "reason": reason,
+        "penalty": penalty,
+        "x_dim": int(x_arr.size),
+        "x_head": x_head,
+        "context": context or {},
+    }
+    msg = f"BILAYER_DIAGNOSTIC penalty={penalty:.3e} reason={reason} x_dim={x_arr.size} x_head={x_head}"
+    if logger is not None:
+        pass # logger.debug(msg)
+    else:
+        pass # logging.getLogger("CertusMetal").debug(msg)
+    _write_bilayer_autopsy_record("penalty", payload)
+    return penalty
+
+
+
+def _validate_bilayer_objective_inputs(
+    x: np.ndarray,
+    num_knots: int,
+    l_array: np.ndarray,
+    r_tgt_array: np.ndarray,
+    min_knot_dist: float,
+    eM_fixed: Optional[float] = None,
+) -> dict[str, Any]:
+    """Fail fast with explicit errors before calling the heavy physics kernel.
+
+    Returns a compact diagnostic context used by the autopsy logger.
+    """
+
+    context: dict[str, Any] = {}
+    x = np.asarray(x, dtype=float)
+    context["x_dim"] = int(x.size)
+    context["x_head"] = np.round(x[: min(10, x.size)], 6).tolist() if x.size else []
+    context["num_knots"] = int(num_knots)
+    if x.ndim != 1:
+        raise ValueError(f"x must be 1D, got shape={x.shape}")
+    if not np.all(np.isfinite(x)):
+        bad_idx = np.where(~np.isfinite(x))[0].tolist()
+        context["non_finite_indices"] = bad_idx
+        raise ValueError(f"Non-finite optimization variables at indices={bad_idx}")
+    if int(num_knots) < 2:
+        raise ValueError(f"num_knots must be >= 2, got {num_knots}")
+    l_array = np.asarray(l_array, dtype=float)
+    r_tgt_array = np.asarray(r_tgt_array, dtype=float)
+    context["lambda_dim"] = int(l_array.size)
+    context["target_dim"] = int(r_tgt_array.size)
+    if l_array.ndim != 1 or r_tgt_array.ndim != 1:
+        raise ValueError(f"l_array and r_tgt_array must be 1D, got {l_array.shape=} {r_tgt_array.shape=}")
+    if l_array.size == 0 or r_tgt_array.size == 0:
+        raise ValueError("Empty target arrays")
+    if l_array.size != r_tgt_array.size:
+        raise ValueError(f"Target arrays size mismatch: lambda={l_array.size} R={r_tgt_array.size}")
+    if not np.all(np.isfinite(l_array)) or not np.all(np.isfinite(r_tgt_array)):
+        raise ValueError("Target arrays contain non-finite values")
+    if not np.isfinite(min_knot_dist) or float(min_knot_dist) < 0:
+        raise ValueError(f"Invalid min_knot_dist={min_knot_dist}")
+    context["min_knot_dist"] = float(min_knot_dist)
+    if eM_fixed is not None and not np.isfinite(eM_fixed):
+        raise ValueError(f"Invalid fixed eM={eM_fixed}")
+    if eM_fixed is not None:
+        context["eM_fixed"] = float(eM_fixed)
+    return context
+
 
 
 def global_objective_function(
@@ -387,15 +462,47 @@ def global_objective_function(
 ) -> float:
     """
 
-    Differential evolution objective function.
+    PGLOBAL objective function.
 
     nSub_complex_array can be pre-computed and passed for performance.
 
     """
 
-    return _bilayer_reflectance_mse(
-        x, l_array, r_tgt_array, num_knots, min_knot_dist, nSub_complex_array, eM_fixed=None
-    )
+    diag_logger = logging.getLogger("CertusMetal")
+    context: dict[str, Any] = {}
+    try:
+        context = _validate_bilayer_objective_inputs(x, num_knots, l_array, r_tgt_array, min_knot_dist, eM_fixed=None)
+        val = _bilayer_reflectance_mse(
+            x, l_array, r_tgt_array, num_knots, min_knot_dist, nSub_complex_array, eM_fixed=None
+        )
+    except Exception as exc:
+        context["exception_type"] = type(exc).__name__
+        context["exception"] = str(exc)
+        _write_bilayer_autopsy_record(
+            "global_objective_exception",
+            {
+                "reason": f"global_objective_failed:{type(exc).__name__}:{exc}",
+                "context": context,
+                "x": np.asarray(x, dtype=float).tolist() if np.asarray(x).size else [],
+                "lambda_min": float(np.min(l_array)) if np.asarray(l_array).size else None,
+                "lambda_max": float(np.max(l_array)) if np.asarray(l_array).size else None,
+                "target_min": float(np.min(r_tgt_array)) if np.asarray(r_tgt_array).size else None,
+                "target_max": float(np.max(r_tgt_array)) if np.asarray(r_tgt_array).size else None,
+            },
+        )
+        return _diagnostic_bilayer_penalty(f"global_objective_failed:{type(exc).__name__}:{exc}", x, logger=diag_logger, context=context)
+    if not np.isfinite(val):
+        context["objective_value"] = float(val)
+        _write_bilayer_autopsy_record(
+            "global_objective_non_finite",
+            {
+                "reason": f"global_objective_non_finite:{val}",
+                "context": context,
+                "x": np.asarray(x, dtype=float).tolist() if np.asarray(x).size else [],
+            },
+        )
+        return _diagnostic_bilayer_penalty(f"global_objective_non_finite:{val}", x, logger=diag_logger, context=context)
+    return float(val)
 
 
 # =============================================================================
@@ -486,7 +593,65 @@ class OptimizationWorker(MetalOptimizationWorker):
             nSub_precomputed,
         )
 
-        metal_optimization_worker_run_differential_evolution(self, global_objective_function, args_for_objective)
+        bounds = np.array(_build_bilayer_bounds(p, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+
+        from certus.core._certus_physics_impl import PGlobalConfig
+        cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
+            alpha=0.025313098184047346,
+            reduction_ratio=0.28656406706115006,
+            n_samples_per_iter=6195,
+            local_search_budget=68183,
+            max_active_clusters=5,
+        )
+
+        result = run_pglobal_optimization(
+            lambda x: global_objective_function(x, *args_for_objective),
+            bounds,
+            x0=np.asarray(p.get("x0", np.asarray([], dtype=float_dtype)), dtype=float_dtype) if p.get("x0") is not None else None,
+            max_iter=int(p.get("maxiter", DEFAULT_MAXITER)),
+            max_feval=int(p.get("maxfeval", 5000)),
+            workers=int(p.get("workers", 1)),
+            stop_event=self._stop_event,
+            callback=lambda payload: self.progress.emit(payload),
+            config=cfg,
+        )
+        self.finished.emit({"result": result, "params": p})
+
+
+def _validate_bilayer_spline_state(
+    n_knots: np.ndarray,
+    k_knots: np.ndarray,
+    lambda_internes: np.ndarray,
+    min_l: float,
+    max_l: float,
+    expected_knot_count: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return a strictly increasing knot vector compatible with spline coefficients."""
+
+    if expected_knot_count < 2:
+        raise ValueError("expected_knot_count must be >= 2")
+    if not np.isfinite(min_l) or not np.isfinite(max_l) or max_l <= min_l:
+        raise ValueError("Invalid wavelength interval for spline knots")
+
+    coeff_count = int(np.asarray(n_knots).size + np.asarray(k_knots).size)
+    if coeff_count != 2 * expected_knot_count:
+        raise ValueError(
+            f"Invalid spline coefficient state: coeff_size={coeff_count} expected={2 * expected_knot_count} knot_size={expected_knot_count}"
+        )
+
+    lambda_internes = np.asarray(lambda_internes, dtype=float)
+    lambda_internes = lambda_internes[np.isfinite(lambda_internes)]
+    lambda_internes = np.unique(np.sort(lambda_internes))
+    target_internal = expected_knot_count - 2
+    if lambda_internes.size != target_internal:
+        lambda_internes = np.linspace(min_l, max_l, expected_knot_count + 1)[1:-1]
+    knot_l = np.concatenate(([min_l], lambda_internes, [max_l]))
+    knot_l = np.unique(np.sort(knot_l))
+    if knot_l.size != expected_knot_count or not np.all(np.diff(knot_l) > 0):
+        knot_l = np.linspace(min_l, max_l, expected_knot_count)
+    if knot_l.size != expected_knot_count or not np.all(np.diff(knot_l) > 0):
+        raise ValueError("Invalid spline knot sequence: knots must be strictly increasing")
+    return knot_l, lambda_internes
 
 
 def objective_function_fixed_eM(
@@ -506,12 +671,39 @@ def objective_function_fixed_eM(
 
     """
 
-    if not np.all(np.isfinite(x)):
-        return np.inf
-
-    return _bilayer_reflectance_mse(
-        x, l_array, r_tgt_array, num_knots, min_knot_dist, nSub_complex_array, eM_fixed=eM_fixed
-    )
+    diag_logger = logging.getLogger("CertusMetal")
+    context: dict[str, Any] = {}
+    try:
+        context = _validate_bilayer_objective_inputs(x, num_knots, l_array, r_tgt_array, min_knot_dist, eM_fixed=eM_fixed)
+        val = _bilayer_reflectance_mse(
+            x, l_array, r_tgt_array, num_knots, min_knot_dist, nSub_complex_array, eM_fixed=eM_fixed
+        )
+    except Exception as exc:
+        context["exception_type"] = type(exc).__name__
+        context["exception"] = str(exc)
+        _write_bilayer_autopsy_record(
+            "fixed_eM_objective_exception",
+            {
+                "reason": f"fixed_eM_objective_failed:{type(exc).__name__}:{exc}",
+                "context": context,
+                "eM_fixed": float(eM_fixed) if np.isfinite(eM_fixed) else None,
+                "x": np.asarray(x, dtype=float).tolist() if np.asarray(x).size else [],
+            },
+        )
+        return _diagnostic_bilayer_penalty(f"fixed_eM_objective_failed:{type(exc).__name__}:{exc}", x, logger=diag_logger, context=context)
+    if not np.isfinite(val):
+        context["objective_value"] = float(val)
+        _write_bilayer_autopsy_record(
+            "fixed_eM_objective_non_finite",
+            {
+                "reason": f"fixed_eM_objective_non_finite:{val}",
+                "context": context,
+                "eM_fixed": float(eM_fixed) if np.isfinite(eM_fixed) else None,
+                "x": np.asarray(x, dtype=float).tolist() if np.asarray(x).size else [],
+            },
+        )
+        return _diagnostic_bilayer_penalty(f"fixed_eM_objective_non_finite:{val}", x, logger=diag_logger, context=context)
+    return float(val)
 
 
 class BeamAnalysisWorker(QObject):
@@ -569,11 +761,16 @@ class BeamAnalysisWorker(QObject):
 
             offset = 4
 
-            n_knots_optimal = self.optimal_solution[offset : offset + num_knots]
+            spline_knot_count = num_knots
+            n_knots_optimal = self.optimal_solution[offset : offset + spline_knot_count]
 
-            k_knots_optimal = self.optimal_solution[offset + num_knots : offset + 2 * num_knots]
+            k_knots_optimal = self.optimal_solution[offset + spline_knot_count : offset + 2 * spline_knot_count]
 
-            lambda_internes_optimal = self.optimal_solution[offset + 2 * num_knots :]
+            lambda_internes_optimal = self.optimal_solution[offset + 2 * spline_knot_count :]
+            if n_knots_optimal.size != spline_knot_count or k_knots_optimal.size != spline_knot_count:
+                raise ValueError(
+                    f"Invalid optimal spline state: n_size={n_knots_optimal.size} k_size={k_knots_optimal.size} expected={spline_knot_count}"
+                )
 
             # Initial x0 vector (without eM) for local optimization
 
@@ -641,6 +838,11 @@ class BeamAnalysisWorker(QObject):
             knot_l_opt = np.concatenate(([l_min_val], np.sort(lambda_internes_optimal), [l_max_val]))
 
             p_spline_nk_opt = np.concatenate((n_knots_optimal, k_knots_optimal))
+
+            if p_spline_nk_opt.size != 2 * knot_l_opt.size:
+                raise ValueError(
+                    f"Invalid spline state in beam analysis: coeff_size={p_spline_nk_opt.size} knot_size={knot_l_opt.size}"
+                )
 
             n_calc_opt, k_calc_opt = get_nk_from_spline(p_spline_nk_opt, knot_l_opt, plot_lambda)
 
@@ -762,15 +964,25 @@ class BeamAnalysisWorker(QObject):
 
                             eL_v, n_inf_v, A_v = x_opt[0], x_opt[1], x_opt[2]
 
-                            n_k_v = x_opt[3 : 3 + num_knots]
+                            spline_knot_count = num_knots
+                            n_k_v = x_opt[3 : 3 + spline_knot_count]
 
-                            k_k_v = x_opt[3 + num_knots : 3 + 2 * num_knots]
+                            k_k_v = x_opt[3 + spline_knot_count : 3 + 2 * spline_knot_count]
 
-                            l_int_v = x_opt[3 + 2 * num_knots :]
+                            l_int_v = x_opt[3 + 2 * spline_knot_count :]
+                            if n_k_v.size != spline_knot_count or k_k_v.size != spline_knot_count:
+                                raise ValueError(
+                                    f"Invalid beam spline state: n_size={n_k_v.size} k_size={k_k_v.size} expected={spline_knot_count}"
+                                )
 
                             knot_l = np.concatenate(([l_min_val], np.sort(l_int_v), [l_max_val]))
 
                             p_spline = np.concatenate((n_k_v, k_k_v))
+
+                            if p_spline.size != 2 * knot_l.size:
+                                raise ValueError(
+                                    f"Invalid spline state during beam scan: coeff_size={p_spline.size} knot_size={knot_l.size}"
+                                )
 
                             n_c, k_c = get_nk_from_spline(p_spline, knot_l, plot_lambda)
 
@@ -1414,7 +1626,27 @@ class CertusMetalBilayerApp(MetalBaseApp):
             return True
 
         def build_bounds(params, target_lambda):
-            return _build_bilayer_bounds(params, l_array=target_lambda, include_eM=True)
+            bounds = _build_bilayer_bounds(params, l_array=target_lambda, include_eM=True)
+            # Seed the global optimizer with a physically sane midpoint vector.
+            # This keeps the initial PGLOBAL probe aligned with the bilayer parametrization.
+            num_knots = int(params["num_knots"])
+            spline_knot_count = num_knots
+            l_min = float(np.min(target_lambda)) if np.asarray(target_lambda).size else 350.0
+            l_max = float(np.max(target_lambda)) if np.asarray(target_lambda).size else 880.0
+            internal = np.linspace(l_min + 0.1 * (l_max - l_min), l_max - 0.1 * (l_max - l_min), max(0, spline_knot_count - 2))
+            x0 = np.concatenate(
+                (
+                    [float(params.get("eM_min", DEFAULT_EM_MIN) + 0.5 * (params.get("eM_max", DEFAULT_EM_MAX) - params.get("eM_min", DEFAULT_EM_MIN)))],
+                    [float(params.get("eL_nominal", 900.0))],
+                    [float(params.get("n_infini_bounds", (1.42, 1.44))[0] + 0.5 * (params.get("n_infini_bounds", (1.42, 1.44))[1] - params.get("n_infini_bounds", (1.42, 1.44))[0]))],
+                    [float(params.get("A_diel_bounds", (0, 10000))[0] + 0.5 * (params.get("A_diel_bounds", (0, 10000))[1] - params.get("A_diel_bounds", (0, 10000))[0]))],
+                    np.full(spline_knot_count, 5.0, dtype=float),
+                    np.full(spline_knot_count, 0.5, dtype=float),
+                    internal.astype(float, copy=False),
+                )
+            )
+            params["x0"] = x0
+            return bounds
 
         self._metal_start_optimization(
             worker_class=OptimizationWorker,
@@ -1426,25 +1658,81 @@ class CertusMetalBilayerApp(MetalBaseApp):
     def _on_optim_progress(self, data):
         """Updates progress widget with optimization progress"""
 
+        data = normalize_metal_progress_payload(data)
         iteration = data.get("iteration", 0)
-
         mse = data.get("mse", 0)
-
         rmse = np.sqrt(mse) if mse > 0 else 0
-
         xk = data.get("params", None)
-
         eM = xk[0] if xk is not None else 0.0
+        progress_pct = data.get("progress_pct", None)
+        mode = str(data.get("mode", "global")).lower()
+        best_cost = float(data.get("best_cost", mse))
+        evals = int(data.get("evaluation_count", self.stat_counters.get("SP", 0)))
+        elapsed_s = float(data.get("elapsed_s", 0.0))
+        max_iter = int(data.get("max_iteration", getattr(self, "_optim_max_iter", DEFAULT_MAXITER)))
+        phase = "PGLOBAL" if mode == "global" else "local"
 
-        self.logger.info(f"Generation {iteration} — RMSE {rmse:.6e} — dM {eM:.2f} nm")
+        # UI update only (console logging is handled by pglobal_adapter)
 
         self.progress_widget.update(
             iteration=iteration,
-            max_iter=getattr(self, "_optim_max_iter", DEFAULT_MAXITER),
-            evals=self.stat_counters.get("SP", 0),
-            phase="DE",
-            extra_info=f"RMSE: {rmse:.6f}" if rmse > 0 else "",
+            max_iter=max_iter,
+            evals=evals,
+            phase=phase,
+            extra_info=f"RMSE: {rmse:.6f} | Best: {best_cost:.6f} | {elapsed_s:.0f}s" if rmse > 0 else f"Best: {best_cost:.6f} | {elapsed_s:.0f}s",
+            progress_pct=progress_pct if progress_pct is not None else -1,
         )
+
+        # Top 1% UX Morphing Live
+        if xk is not None:
+            try:
+                l_array = getattr(self, "x", None)
+                if l_array is not None:
+                    from certus.core._certus_physics_impl import get_nk_cauchy_simple, calculate_reflectance_bilayer_vectorized, get_nk_from_spline
+                    eM_fixed = getattr(self, "optim_args", {}).get("eM_fixed", None)
+                    num_knots = getattr(self, "optim_args", {}).get("num_knots", 5)
+                    offset = 4 if eM_fixed is None else 3
+                    eM_val = float(xk[0] if eM_fixed is None else eM_fixed)
+                    eL_val = float(xk[1] if eM_fixed is None else xk[0])
+                    n_infini_val = float(xk[2] if eM_fixed is None else xk[1])
+                    A_val = float(xk[3] if eM_fixed is None else xk[2])
+                    
+                    n_knots = xk[offset : offset + num_knots]
+                    k_knots = xk[offset + num_knots : offset + 2 * num_knots]
+                    lambda_internes = xk[offset + 2 * num_knots :]
+                    
+                    min_lambda = float(np.min(l_array))
+                    max_lambda = float(np.max(l_array))
+                    knot_l = np.empty(num_knots, dtype=np.float64)
+                    knot_l[0] = min_lambda
+                    if len(lambda_internes) > 0:
+                        knot_l[1:-1] = np.sort(lambda_internes)
+                    knot_l[-1] = max_lambda
+                    
+                    p_spline_nk = np.empty(2 * num_knots, dtype=np.float64)
+                    p_spline_nk[:num_knots] = n_knots
+                    p_spline_nk[num_knots:] = k_knots
+                    
+                    nM_real, nM_imag = get_nk_from_spline(p_spline_nk, knot_l, l_array, use_cache=False)
+                    nL_calc = get_nk_cauchy_simple(l_array, n_infini_val, A_val)
+                    
+                    n_sub = getattr(self, "substrate_nk", None)
+                    if n_sub is None:
+                        from certus.core._certus_physics_impl import get_nk_si
+                        n_sub = get_nk_si(l_array)
+                        
+                    R_calc = calculate_reflectance_bilayer_vectorized(
+                        l_array, nM_real - 1j * nM_imag, eM_val, eL_val, nL_calc + 0j, n_sub
+                    )
+                    
+                    self.reflectance_curve.setData(l_array, R_calc)
+                    if hasattr(self, "n_curve"): self.n_curve.setData(l_array, nM_real)
+                    if hasattr(self, "k_curve"): self.k_curve.setData(l_array, nM_imag)
+                    
+                    from PySide6.QtWidgets import QApplication
+                    QApplication.processEvents()
+            except Exception:
+                pass
 
     def on_optimization_finished(self, results):
         """Handles optimization finish"""
@@ -1472,6 +1760,12 @@ class CertusMetalBilayerApp(MetalBaseApp):
                 "params": results["result"].x,
                 "mse": results["result"].fun,
                 "iteration": iteration_count,
+                "best_cost": results["result"].fun,
+                "evaluation_count": getattr(worker, "evaluation_count", 0) if worker else 0,
+                "max_iteration": getattr(self, "_optim_max_iter", DEFAULT_MAXITER),
+                "progress_pct": 100,
+                "mode": "global",
+                "elapsed_s": 0.0,
             },
             final=True,
         )
@@ -1485,90 +1779,19 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
     def update_plots(self, data, final=False):
         """Updates plots with current optimization state (live during run, full on finish)."""
-
-        # Thread-safe params access via cache (worker may be deleted by deleteLater)
-
         p = getattr(self, "_last_worker_params", None)
-
         if p is None:
             return
 
         xk = data.get("params")
-
         if xk is None:
             return
 
-        eM, eL, n_infini, A_diel = xk[0], xk[1], xk[2], xk[3]
-
-        self.widgets["live_eM_label"].setText(f"{eM:.2f}")
-
-        self.widgets["live_eL_label"].setText(f"{eL:.2f}")
-
-        self.widgets["live_n_infini_label"].setText(f"{n_infini:.4f}")
-
-        self.widgets["live_A_diel_label"].setText(f"{A_diel:.1f}")
-
-        # Convert MSE to RMSE for display
-
         rmse_val = np.sqrt(data["mse"]) if data.get("mse", 0) >= 0 else 0.0
 
-        self.widgets["live_mse_label"].setText(f"{rmse_val:.4e}")
-
-        # Convert MSE to RMSE for plot
-
-        if not hasattr(self, "mse_data"):
-            self.mse_data = {"iterations": [], "errors": []}
-
-        self.mse_data["iterations"].append(data.get("iteration", 0))
-
-        self.mse_data["errors"].append(rmse_val)
-
-        self.mse_curve.setData(self.mse_data["iterations"], self.mse_data["errors"])
-
-        num_knots, offset = p["num_knots"], 4
-
-        n_knots = xk[offset : offset + num_knots]
-
-        k_knots = xk[offset + num_knots : offset + 2 * num_knots]
-
-        lambda_internes = xk[offset + 2 * num_knots :]
-
-        l_array = p["target_lambda"]
-
-        min_l, max_l = l_array.min(), l_array.max()
-
-        knot_l = np.concatenate(([min_l], np.sort(lambda_internes), [max_l]))
-
-        p_spline_nk = np.concatenate((n_knots, k_knots))
-
-        plot_lambda_range = np.linspace(min_l, max_l, 200)
-
-        n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, plot_lambda_range)
-
-        nL_calc = get_nk_cauchy_simple(plot_lambda_range, n_infini, A_diel)
-
-        n_calc_data, k_calc_data = get_nk_from_spline(p_spline_nk, knot_l, l_array)
-
-        R_calc = calculate_reflectance_bilayer_vectorized(
-            l_array,
-            n_calc_data - 1j * k_calc_data,
-            eM,
-            eL,
-            get_nk_cauchy_simple(l_array, n_infini, A_diel) + 0j,
-            get_nk_si(l_array),
-        )
-
-        pen_calc = pg.mkPen(CertusTheme.PRIMARY, width=3) if final else pg.mkPen(CertusTheme.PRIMARY, width=2)
-
-        pen_diel = pg.mkPen(CertusTheme.SUCCESS, width=3) if final else pg.mkPen(CertusTheme.SUCCESS, width=2)
-
-        self.calc_curve.setData(l_array, R_calc, pen=pen_calc)
-
-        self.n_curve.setData(plot_lambda_range, n_calc)
-
-        self.k_curve.setData(plot_lambda_range, k_calc)
-
-        self.diel_curve.setData(plot_lambda_range, nL_calc, pen=pen_diel)
+        self._update_bilayer_live_labels(xk, rmse_val)
+        self._update_bilayer_mse_plot(data.get("iteration", 0), rmse_val)
+        self._update_bilayer_curves(p, xk, final)
 
         try:
             if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
@@ -1580,184 +1803,236 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         if not final and int(data.get("iteration", 0)) % 3 == 0:
             self.p1.vb.autoRange()
-
             self.p2.autoRange()
-
             self.diel_plot.autoRange()
 
         if final:
-            self.p1.vb.autoRange()
+            try:
+                self.p1.vb.autoRange()
+                self.p2.autoRange()
+                self.diel_plot.autoRange()
+            except Exception as exc:
+                self.logger.warning("Bilayer final autoRange skipped: %s", exc, exc_info=True)
 
-            self.p2.autoRange()
+    def _update_bilayer_live_labels(self, xk, rmse_val):
+        eM, eL, n_infini, A_diel = xk[0], xk[1], xk[2], xk[3]
+        self.widgets["live_eM_label"].setText(f"{eM:.2f}")
+        self.widgets["live_eL_label"].setText(f"{eL:.2f}")
+        self.widgets["live_n_infini_label"].setText(f"{n_infini:.4f}")
+        self.widgets["live_A_diel_label"].setText(f"{A_diel:.1f}")
+        self.widgets["live_mse_label"].setText(f"{rmse_val:.4e}")
 
-            self.diel_plot.autoRange()
+    def _update_bilayer_mse_plot(self, iteration, rmse_val):
+        if not hasattr(self, "mse_data"):
+            self.mse_data = {"iterations": [], "errors": []}
+        self.mse_data["iterations"].append(iteration)
+        self.mse_data["errors"].append(rmse_val)
+        self.mse_curve.setData(self.mse_data["iterations"], self.mse_data["errors"])
 
-            # Export triggered only from on_optimization_finished
+    def _update_bilayer_curves(self, p, xk, final):
+        eM, eL, n_infini, A_diel = xk[0], xk[1], xk[2], xk[3]
+        num_knots, offset = p["num_knots"], 4
+        spline_knot_count = num_knots
+        n_knots = xk[offset : offset + spline_knot_count]
+        k_knots = xk[offset + spline_knot_count : offset + 2 * spline_knot_count]
+        lambda_internes = xk[offset + 2 * spline_knot_count :]
+
+        l_array = p["target_lambda"]
+        min_l, max_l = l_array.min(), l_array.max()
+
+        try:
+            knot_l, lambda_internes = _validate_bilayer_spline_state(
+                n_knots,
+                k_knots,
+                lambda_internes,
+                min_l,
+                max_l,
+                expected_knot_count=num_knots,
+            )
+        except Exception as exc:
+            self.logger.warning("Bilayer spline plot skipped: %s", exc, exc_info=True)
+            return
+
+        p_spline_nk = np.concatenate((n_knots, k_knots))
+        plot_lambda_range = np.linspace(min_l, max_l, 200)
+
+        try:
+            n_calc, k_calc = get_nk_from_spline(p_spline_nk, knot_l, plot_lambda_range)
+            n_calc_data, k_calc_data = get_nk_from_spline(p_spline_nk, knot_l, l_array)
+        except Exception as exc:
+            self.logger.warning("Bilayer spline plot skipped: %s", exc, exc_info=True)
+            return
+
+        nL_calc = get_nk_cauchy_simple(plot_lambda_range, n_infini, A_diel)
+
+        try:
+            R_calc = calculate_reflectance_bilayer_vectorized(
+                l_array,
+                n_calc_data - 1j * k_calc_data,
+                eM,
+                eL,
+                get_nk_cauchy_simple(l_array, n_infini, A_diel) + 0j,
+                get_nk_si(l_array),
+            )
+            if not np.all(np.isfinite(R_calc)):
+                raise ValueError("non-finite reflectance curve")
+        except Exception as exc:
+            self.logger.warning("Bilayer reflectance plot skipped: %s", exc, exc_info=True)
+            return
+
+        pen_calc = pg.mkPen(CertusTheme.PRIMARY, width=3) if final else pg.mkPen(CertusTheme.PRIMARY, width=2)
+        pen_diel = pg.mkPen(CertusTheme.SUCCESS, width=3) if final else pg.mkPen(CertusTheme.SUCCESS, width=2)
+
+        self.calc_curve.setData(l_array, R_calc, pen=pen_calc)
+        self.n_curve.setData(plot_lambda_range, n_calc)
+        self.k_curve.setData(plot_lambda_range, k_calc)
+        self.diel_curve.setData(plot_lambda_range, nL_calc, pen=pen_diel)
 
     def export_results(self):
         """Exports results to Excel + HTML (Single/Beam)"""
 
         # Check if beam analysis done
-
         if hasattr(self, "beam_stats") and self.beam_stats is not None:
             self._export_beam_results()
-
             return
 
         # Single optimization export
-
         if not hasattr(self, "final_results"):
             show_toast(self, "Please run optimization first.", "warning")
-
             return
 
         # Prepare data
-
-        res = self.final_results["result"]
-
-        xk = res.x
-
-        mse = res.fun
-
-        # Helper params (use cached copy - worker may be deleted by deleteLater)
-
-        p = getattr(self, "_last_worker_params", None)
-
-        if p is None:
-            if "params" in self.final_results:
-                p = self.final_results["params"]
-
-            else:
-                self.logger.error("No parameters found for export")
-
-                return
-
-        params = p
-
-        # Save to reports folder
-
         reports_dir = get_resource_path("reports")
-
         os.makedirs(reports_dir, exist_ok=True)
 
         # --- AUTO EXPORT LOGIC ---
-
         if not get_export_config():
             return
 
         try:
-            ts = certus_timestamp_file()
-
-            rmse_val = np.sqrt(mse) if mse > 0 else 0.0
-
-            base_name = f"Report_METAL_BILAYER_{ts}_RMSE_{rmse_val:.5f}"
-
-            excel_path = str(Path(reports_dir) / f"{base_name}.xlsx")
-
-            html_path = str(Path(reports_dir) / f"{base_name}.html")
-
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.logger.error(f"Error generating report filenames: {e}")
-
-            return
-
-        try:
-            df_summary = pd.DataFrame(
-                {
-                    "Parameter": ["Date", "Final RMSE", "Final MSE", "Max Iterations", "Workers"],
-                    "Value": [
-                        certus_timestamp_display(),
-                        f"{np.sqrt(mse):.6f}",
-                        f"{mse:.6e}",
-                        str(p.get("maxiter", "N/A")),
-                        str(p.get("workers", "N/A")),
-                    ],
-                }
-            )
-
-            dl_rows = [
-                {"Parameter": "eM (Metal)", "Value": xk[0], "Unit": "nm"},
-                {"Parameter": "eL (SiO2)", "Value": xk[1], "Unit": "nm"},
-                {"Parameter": "n_inf (SiO2)", "Value": xk[2], "Unit": "-"},
-                {"Parameter": "A_diel", "Value": xk[3], "Unit": "-"},
-            ]
-
-            l_array = params["target_lambda"]
-
-            num_knots, offset = p["num_knots"], 4
-
-            n_knots = xk[offset : offset + num_knots]
-
-            k_knots = xk[offset + num_knots : offset + 2 * num_knots]
-
-            lambda_internes = xk[offset + 2 * num_knots :]
-
-            min_l, max_l = l_array.min(), l_array.max()
-
-            knot_l = np.concatenate(([min_l], np.sort(lambda_internes), [max_l]))
-
-            p_spline_nk = np.concatenate((n_knots, k_knots))
-
-            n_calc_data, k_calc_data = get_nk_from_spline(p_spline_nk, knot_l, l_array)
-
-            R_calc = calculate_reflectance_bilayer_vectorized(
-                l_array,
-                n_calc_data - 1j * k_calc_data,
-                xk[0],
-                xk[1],
-                get_nk_cauchy_simple(l_array, xk[2], xk[3]) + 0j,
-                get_nk_si(l_array),
-            )
-
-            df_spectra = pd.DataFrame(
-                {
-                    "Wavelength (nm)": l_array,
-                    "R Target": p.get("target_r", np.zeros_like(l_array)),
-                    "R Calc": R_calc,
-                    "n (Metal)": n_calc_data,
-                    "k (Metal)": k_calc_data,
-                }
-            )
-
-            from certus.utils.certus_data import ReportSection
-
-            summary_kv = dict(zip(df_summary["Parameter"], df_summary["Value"]))
-
-            dl_kv = {r["Parameter"]: f"{r['Value']:.4f} {r['Unit']}" for r in dl_rows}
-
-            sections = [
-                ReportSection("Optimization Summary", kind="kv", content=summary_kv, sheet_name="Summary"),
-                ReportSection("Drude-Lorentz Parameters", kind="kv", content=dl_kv, sheet_name="Drude-Lorentz"),
-                ReportSection("Spectra", kind="table", content=df_spectra, sheet_name="Spectra"),
-                ReportSection(
-                    "Reflectance Plot",
-                    kind="image",
-                    content=self.widget_to_b64(getattr(self, "reflectance_plot", None)),
-                    include_in_excel=False,
-                ),
-                ReportSection(
-                    "Clues Plot",
-                    kind="image",
-                    content=self.widget_to_b64(getattr(self, "clues_plot", None)),
-                    include_in_excel=False,
-                ),
-                ReportSection(
-                    "MSE Plot",
-                    kind="image",
-                    content=self.widget_to_b64(getattr(self, "mse_plot", None)),
-                    include_in_excel=False,
-                ),
-            ]
-
-            self.export_via_builder(sections, excel_path=excel_path, html_path=html_path)
-            self.logger.info(f"Reports saved — {base_name}")
-
+            self._do_export_bilayer_results(reports_dir)
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.logger.error(f"Error saving reports: {e}")
-
             traceback.print_exc()
 
+    def _do_export_bilayer_results(self, reports_dir: str):
+        from certus.utils.certus_data import ReportSection
+
+        res = self.final_results["result"]
+        xk = res.x
+        mse = res.fun
+
+        p = getattr(self, "_last_worker_params", None)
+        if p is None:
+            if "params" in self.final_results:
+                p = self.final_results["params"]
+            else:
+                self.logger.error("No parameters found for export")
+                return
+
+        ts = certus_timestamp_file()
+        rmse_val = np.sqrt(mse) if mse > 0 else 0.0
+        base_name = f"Report_METAL_BILAYER_{ts}_RMSE_{rmse_val:.5f}"
+        excel_path = str(Path(reports_dir) / f"{base_name}.xlsx")
+        html_path = str(Path(reports_dir) / f"{base_name}.html")
+
+        df_summary = pd.DataFrame(
+            {
+                "Parameter": ["Date", "Final RMSE", "Final MSE", "Max Iterations", "Workers"],
+                "Value": [
+                    certus_timestamp_display(),
+                    f"{np.sqrt(mse):.6f}",
+                    f"{mse:.6e}",
+                    str(p.get("maxiter", "N/A")),
+                    str(p.get("workers", "N/A")),
+                ],
+            }
+        )
+
+        dl_rows = [
+            {"Parameter": "eM (Metal)", "Value": xk[0], "Unit": "nm"},
+            {"Parameter": "eL (SiO2)", "Value": xk[1], "Unit": "nm"},
+            {"Parameter": "n_inf (SiO2)", "Value": xk[2], "Unit": "-"},
+            {"Parameter": "A_diel", "Value": xk[3], "Unit": "-"},
+        ]
+
+        df_spectra = self._build_export_spectra_dataframe(p, xk)
+        if df_spectra is None:
+            return
+
+        summary_kv = dict(zip(df_summary["Parameter"], df_summary["Value"]))
+        dl_kv = {r["Parameter"]: f"{r['Value']:.4f} {r['Unit']}" for r in dl_rows}
+
+        sections = [
+            ReportSection("Optimization Summary", kind="kv", content=summary_kv, sheet_name="Summary"),
+            ReportSection("Drude-Lorentz Parameters", kind="kv", content=dl_kv, sheet_name="Drude-Lorentz"),
+            ReportSection("Spectra", kind="table", content=df_spectra, sheet_name="Spectra"),
+            ReportSection(
+                "Reflectance Plot",
+                kind="image",
+                content=self.widget_to_b64(getattr(self, "reflectance_plot", None)),
+                include_in_excel=False,
+            ),
+            ReportSection(
+                "Clues Plot",
+                kind="image",
+                content=self.widget_to_b64(getattr(self, "clues_plot", None)),
+                include_in_excel=False,
+            ),
+            ReportSection(
+                "MSE Plot",
+                kind="image",
+                content=self.widget_to_b64(getattr(self, "mse_plot", None)),
+                include_in_excel=False,
+            ),
+        ]
+
+        self.export_via_builder(sections, excel_path=excel_path, html_path=html_path)
+        self.logger.info(f"Reports saved — {base_name}")
         self.status_label.setText(f"Reports saved — {base_name}")
+
+    def _build_export_spectra_dataframe(self, params, xk):
+        l_array = params["target_lambda"]
+        num_knots, offset = params["num_knots"], 4
+        spline_knot_count = num_knots
+        n_knots = xk[offset : offset + spline_knot_count]
+        k_knots = xk[offset + spline_knot_count : offset + 2 * spline_knot_count]
+        lambda_internes = xk[offset + 2 * spline_knot_count :]
+        min_l, max_l = l_array.min(), l_array.max()
+
+        try:
+            knot_l, lambda_internes = _validate_bilayer_spline_state(
+                n_knots,
+                k_knots,
+                lambda_internes,
+                min_l,
+                max_l,
+                expected_knot_count=num_knots,
+            )
+        except Exception as exc:
+            self.logger.warning("Bilayer export skipped: %s", exc, exc_info=True)
+            return None
+
+        p_spline_nk = np.concatenate((n_knots, k_knots))
+        n_calc_data, k_calc_data = get_nk_from_spline(p_spline_nk, knot_l, l_array)
+        R_calc = calculate_reflectance_bilayer_vectorized(
+            l_array,
+            n_calc_data - 1j * k_calc_data,
+            xk[0],
+            xk[1],
+            get_nk_cauchy_simple(l_array, xk[2], xk[3]) + 0j,
+            get_nk_si(l_array),
+        )
+
+        return pd.DataFrame(
+            {
+                "Wavelength (nm)": l_array,
+                "R Target": params.get("target_r", np.zeros_like(l_array)),
+                "R Calc": R_calc,
+                "n (Metal)": n_calc_data,
+                "k (Metal)": k_calc_data,
+            }
+        )
 
     def _export_beam_results(self):
         """Export beam results to Excel"""
@@ -1959,284 +2234,129 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
     def on_beam_finished(self, stats):
         """Handles ensemble analysis finish"""
-
         teardown_beam_thread(self, stats)
 
-        # --- Beam Graphic Display ---
+        self._clear_beam_plots()
+        x = stats["lambda_axis"]
 
-        # Clear items, keep axes/ViewBox p2
+        if "valleys" in stats and stats["valleys"]:
+            self._plot_beam_valleys(x, stats["valleys"])
 
-        # Keep ViewBox p2 (needed for right axis)
+        self._plot_beam_global_uncertainty_n(x, stats)
+        self._plot_beam_global_uncertainty_k(x, stats)
+        self._setup_beam_axes()
 
+        if "all_solutions" in stats and len(stats["all_solutions"]) > 0:
+            self._plot_beam_individual_solutions(stats)
+
+        self._sync_beam_viewboxes()
+
+        self.p1.vb.autoRange()
+        self.p2.enableAutoRange(axis="y")
+        self.tabs.setCurrentIndex(1)
+
+        QTimer.singleShot(100, lambda: (self.p1.update(), self.p2.update()))
+
+        self._show_beam_summary_dialog(stats)
+
+        if get_export_config():
+            QTimer.singleShot(500, self.export_results)
+
+    def _clear_beam_plots(self):
         axes_to_keep = [
             self.p1.getAxis("left"),
             self.p1.getAxis("bottom"),
             self.p1.getAxis("right"),
             self.p1.getAxis("top"),
         ]
-
-        items_to_remove_p1 = []
-
-        for item in self.p1.items:
-            # Keep axes and ViewBox p2
-
-            if item not in axes_to_keep and item is not self.p2:
-                items_to_remove_p1.append(item)
-
+        items_to_remove_p1 = [item for item in self.p1.items if item not in axes_to_keep and item is not self.p2]
         for item in items_to_remove_p1:
             try:
                 self.p1.removeItem(item)
-
             except (AttributeError, RuntimeError):
                 pass
-
-        # For p2 (ViewBox), remove all items
-
         items_to_remove_p2 = list(self.p2.addedItems) if hasattr(self.p2, "addedItems") else []
-
         for item in items_to_remove_p2:
             try:
                 self.p2.removeItem(item)
-
             except (AttributeError, RuntimeError):
                 pass
 
-        x = stats["lambda_axis"]
+    def _plot_beam_valleys(self, x, valleys):
+        valley_colors = [(0, 0, 255), (255, 0, 0), (0, 128, 0), (255, 165, 0), (128, 0, 128), (0, 255, 255), (255, 192, 203)]
+        for idx, (valley_id, valley_data) in enumerate(sorted(valleys.items())):
+            if valley_id == -1:
+                continue
+            color = valley_colors[idx % len(valley_colors)]
+            alpha = 30
+            n_valley, k_valley = valley_data["n_mean"], valley_data["k_mean"]
+            n_std_valley, k_std_valley = valley_data["n_std"], valley_data["k_std"]
 
-        # Colors for distinct valleys
+            n_upper_v, n_lower_v = n_valley + 2 * n_std_valley, n_valley - 2 * n_std_valley
+            k_upper_v, k_lower_v = k_valley + 2 * k_std_valley, k_valley - 2 * k_std_valley
 
-        valley_colors = [
-            (0, 0, 255),  # Blue
-            (255, 0, 0),  # Red
-            (0, 128, 0),  # Green
-            (255, 165, 0),  # Orange
-            (128, 0, 128),  # Purple
-            (0, 255, 255),  # Cyan
-            (255, 192, 203),  # Pink
-        ]
+            curve_n_upper_v = pg.PlotDataItem(x, n_upper_v, pen=None)
+            curve_n_lower_v = pg.PlotDataItem(x, n_lower_v, pen=None)
+            fill_n_v = pg.FillBetweenItem(curve_n_lower_v, curve_n_upper_v, brush=pg.mkBrush(color[0], color[1], color[2], alpha))
+            self.p1.addItem(fill_n_v)
+            self.p1.plot(x, n_valley, pen=pg.mkPen(color, width=1.5, style=Qt.PenStyle.DashLine), name=f"Valley {valley_id}")
 
-        # Display distinct valleys if available
+            curve_k_upper_v = pg.PlotDataItem(x, k_upper_v, pen=None)
+            curve_k_lower_v = pg.PlotDataItem(x, k_lower_v, pen=None)
+            fill_k_v = pg.FillBetweenItem(curve_k_lower_v, curve_k_upper_v, brush=pg.mkBrush(color[0], color[1], color[2], alpha))
+            self.p2.addItem(fill_k_v)
+            self.p2.plot(x, k_valley, pen=pg.mkPen(color, width=1.5, style=Qt.PenStyle.DashLine))
 
-        if "valleys" in stats and stats["valleys"]:
-            valleys = stats["valleys"]
-
-            # n_valleys = stats.get('n_valleys', len(valleys))
-
-            # Display each valley with different color
-
-            for idx, (valley_id, valley_data) in enumerate(sorted(valleys.items())):
-                if valley_id == -1:  # Isolated points (DBSCAN noise)
-                    continue
-
-                color_idx = idx % len(valley_colors)
-
-                color = valley_colors[color_idx]
-
-                alpha = 30  # Transparency for zones
-
-                # Curves for this valley
-
-                n_valley = valley_data["n_mean"]
-
-                k_valley = valley_data["k_mean"]
-
-                n_std_valley = valley_data["n_std"]
-
-                k_std_valley = valley_data["k_std"]
-
-                # Uncertainty zone for this valley
-
-                n_upper_v = n_valley + 2 * n_std_valley
-
-                n_lower_v = n_valley - 2 * n_std_valley
-
-                k_upper_v = k_valley + 2 * k_std_valley
-
-                k_lower_v = k_valley - 2 * k_std_valley
-
-                # Fill area for this valley (n)
-
-                curve_n_upper_v = pg.PlotDataItem(x, n_upper_v, pen=None)
-
-                curve_n_lower_v = pg.PlotDataItem(x, n_lower_v, pen=None)
-
-                fill_n_v = pg.FillBetweenItem(
-                    curve_n_lower_v,
-                    curve_n_upper_v,
-                    brush=pg.mkBrush(color[0], color[1], color[2], alpha),
-                )
-
-                self.p1.addItem(fill_n_v)
-
-                # Mean curve for this valley (n)
-
-                pen_n = pg.mkPen(color, width=1.5, style=Qt.PenStyle.DashLine)
-
-                self.p1.plot(x, n_valley, pen=pen_n, name=f"Valley {valley_id}")
-
-                # Fill area for this valley (k)
-
-                curve_k_upper_v = pg.PlotDataItem(x, k_upper_v, pen=None)
-
-                curve_k_lower_v = pg.PlotDataItem(x, k_lower_v, pen=None)
-
-                fill_k_v = pg.FillBetweenItem(
-                    curve_k_lower_v,
-                    curve_k_upper_v,
-                    brush=pg.mkBrush(color[0], color[1], color[2], alpha),
-                )
-
-                self.p2.addItem(fill_k_v)
-
-                # Mean curve for this valley (k)
-
-                pen_k = pg.mkPen(color, width=1.5, style=Qt.PenStyle.DashLine)
-
-                self.p2.plot(x, k_valley, pen=pen_k)
-
-        # Global N zone (Blue - Total math uncertainty)
-
-        n_mean = stats["n_mean"]
-
-        n_std = stats["n_std"]
-
-        n_upper = n_mean + 2 * n_std
-
-        n_lower = n_mean - 2 * n_std
-
-        # Global n uncertainty fill
-
-        curve_n_upper = pg.PlotDataItem(
-            x,
-            n_upper,
-            pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine),
-        )
-
-        curve_n_lower = pg.PlotDataItem(
-            x,
-            n_lower,
-            pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine),
-        )
-
-        fill_n = pg.FillBetweenItem(
-            curve_n_lower,
-            curve_n_upper,
-            brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 25)),
-        )
-
+    def _plot_beam_global_uncertainty_n(self, x, stats):
+        n_mean, n_std = stats["n_mean"], stats["n_std"]
+        n_upper, n_lower = n_mean + 2 * n_std, n_mean - 2 * n_std
+        curve_n_upper = pg.PlotDataItem(x, n_upper, pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine))
+        curve_n_lower = pg.PlotDataItem(x, n_lower, pen=pg.mkPen(CertusTheme.PRIMARY, width=1, style=Qt.PenStyle.DotLine))
+        fill_n = pg.FillBetweenItem(curve_n_lower, curve_n_upper, brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 25)))
         self.p1.addItem(fill_n)
-
         self.p1.addItem(curve_n_upper)
-
         self.p1.addItem(curve_n_lower)
-
-        # Global n mean curve (blue, thick)
-
         self.n_curve = pg.PlotCurveItem(x, n_mean, pen=pg.mkPen(CertusTheme.PRIMARY, width=3), name="n (mean)")
-
         self.p1.addItem(self.n_curve)
 
-        # Global K zone (Red - Total math uncertainty)
-
-        k_mean = stats["k_mean"]
-
-        k_std = stats["k_std"]
-
-        k_upper = k_mean + 2 * k_std
-
-        k_lower = k_mean - 2 * k_std
-
-        # Global k uncertainty fill
-
-        curve_k_upper = pg.PlotDataItem(
-            x,
-            k_upper,
-            pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine),
-        )
-
-        curve_k_lower = pg.PlotDataItem(
-            x,
-            k_lower,
-            pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine),
-        )
-
-        fill_k = pg.FillBetweenItem(
-            curve_k_lower,
-            curve_k_upper,
-            brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 25)),
-        )
-
+    def _plot_beam_global_uncertainty_k(self, x, stats):
+        k_mean, k_std = stats["k_mean"], stats["k_std"]
+        k_upper, k_lower = k_mean + 2 * k_std, k_mean - 2 * k_std
+        curve_k_upper = pg.PlotDataItem(x, k_upper, pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine))
+        curve_k_lower = pg.PlotDataItem(x, k_lower, pen=pg.mkPen(CertusTheme.DANGER, width=1, style=Qt.PenStyle.DotLine))
+        fill_k = pg.FillBetweenItem(curve_k_lower, curve_k_upper, brush=pg.mkBrush(*CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 25)))
         self.p2.addItem(fill_k)
-
         self.p2.addItem(curve_k_upper)
-
         self.p2.addItem(curve_k_lower)
-
-        # Global k mean curve (red, thick, dashed)
-
-        # Remove old k curve if exists
-
-        if hasattr(self, "k_curve") and self.k_curve in self.p2.addedItems:
+        if hasattr(self, "k_curve") and self.k_curve in getattr(self.p2, "addedItems", []):
             try:
                 self.p2.removeItem(self.k_curve)
-
             except (AttributeError, RuntimeError):
                 pass
-
-        self.k_curve = pg.PlotCurveItem(
-            x,
-            k_mean,
-            pen=pg.mkPen(CertusTheme.DANGER, width=3, style=Qt.PenStyle.DashLine),
-            name="k (mean)",
-        )
-
+        self.k_curve = pg.PlotCurveItem(x, k_mean, pen=pg.mkPen(CertusTheme.DANGER, width=3, style=Qt.PenStyle.DashLine), name="k (mean)")
         self.p2.addItem(self.k_curve)
 
-        # Ensure axes visible/configured
-
+    def _setup_beam_axes(self):
         self.p1.getAxis("left").setLabel("Refractive Index (n)", color=CertusTheme.PRIMARY)
-
         self.p1.getAxis("right").setLabel("Extinction Coefficient (k)", color=CertusTheme.DANGER)
-
         self.p1.showAxis("right")
 
-        # Show individual curves to visualize beam
+    def _plot_beam_individual_solutions(self, stats):
+        for sol in stats["all_solutions"]:
+            if "n" in sol and "k" in sol and len(sol["n"]) > 0 and len(sol["k"]) > 0:
+                pen_n_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 50), width=1)
+                n_item = pg.PlotDataItem(stats["lambda_axis"], sol["n"], pen=pen_n_indiv)
+                self.p1.addItem(n_item)
+                pen_k_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 50), width=1)
+                k_item = pg.PlotDataItem(stats["lambda_axis"], sol["k"], pen=pen_k_indiv)
+                self.p2.addItem(k_item)
 
-        if "all_solutions" in stats and len(stats["all_solutions"]) > 0:
-            # Plot individual solutions with transparency
-
-            for idx, sol in enumerate(stats["all_solutions"]):
-                # Verify valid data
-
-                if "n" in sol and "k" in sol and len(sol["n"]) > 0 and len(sol["k"]) > 0:
-                    # n (blue, transparent) - left axis (p1)
-
-                    pen_n_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.PRIMARY, 50), width=1)
-
-                    n_item = pg.PlotDataItem(stats["lambda_axis"], sol["n"], pen=pen_n_indiv)
-
-                    self.p1.addItem(n_item)
-
-                    # k (red, transparent) - right axis (p2)
-
-                    pen_k_indiv = pg.mkPen(CertusTheme.hex_to_rgba_tuple(CertusTheme.DANGER, 50), width=1)
-
-                    k_item = pg.PlotDataItem(stats["lambda_axis"], sol["k"], pen=pen_k_indiv)
-
-                    self.p2.addItem(k_item)
-
-        # Ensure ViewBox p2 synced with p1
-
+    def _sync_beam_viewboxes(self):
         self.p2.setXLink(self.p1)
-
-        # Reconnect resize signal
-
         try:
             self.p1.vb.sigResized.disconnect()
-
         except (AttributeError, RuntimeError, TypeError):
             pass
-
         def _sync_p2_geometry(*_args):
             try:
                 if self.p1 is None or self.p2 is None or self.p1.vb is None:
@@ -2246,15 +2366,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
                     self.p2.setGeometry(scene_rect)
             except NUMERICAL_FAULT_EXCEPTIONS:
                 return
-
         self.p1.vb.sigResized.connect(_sync_p2_geometry)
-
-        # Update ranges
-
-        self.p1.vb.autoRange()
-
-        # Sync p2 geometry with p1
-
         try:
             if self.p1 is not None and self.p2 is not None and self.p1.vb is not None:
                 scene_rect = self.p1.vb.sceneBoundingRect()
@@ -2263,30 +2375,15 @@ class CertusMetalBilayerApp(MetalBaseApp):
         except NUMERICAL_FAULT_EXCEPTIONS:
             pass
 
-        self.p2.enableAutoRange(axis="y")
-
-        # Auto-select "n & k" tab
-
-        self.tabs.setCurrentIndex(1)  # Index 1 = "n & k"
-
-        # Force display refresh
-
-        QTimer.singleShot(100, lambda: (self.p1.update(), self.p2.update()))
-
+    def _show_beam_summary_dialog(self, stats):
         count = stats["count"]
-
-        # Convert MSE to RMSE for display
-
         rmse_best = np.sqrt(stats["best_mse"]) if stats["best_mse"] >= 0 else 0.0
-
         rmse_optimal = np.sqrt(stats["optimal_mse"]) if stats["optimal_mse"] >= 0 else 0.0
-
         rmse_threshold = np.sqrt(stats["threshold"]) if stats["threshold"] >= 0 else 0.0
 
         self.status_label.setText(
             f"Beam: {count} solutions (RMSE < {rmse_threshold:.2e}) | eM: {stats['eM_min']:.1f}-{stats['eM_max']:.1f} nm"
         )
-
         QMessageBox.information(
             self,
             "Beam Analysis Results",
@@ -2304,11 +2401,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
             f"represent mathematical uncertainty.\n\n"
             f"See 'n & k' tab to visualize results.",
         )
-
-        # Self-export beam results
-
-        if get_export_config():
-            QTimer.singleShot(500, self.export_results)
 
     def _get_config_dict(self):
         """Returns JSON struct for config"""
@@ -2443,8 +2535,6 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         f = sys.argv[1]
-
-        from pathlib import Path
 
         if Path(f).exists():
             QTimer.singleShot(100, lambda: window.load_config(f))

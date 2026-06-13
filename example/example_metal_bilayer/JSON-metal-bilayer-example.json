@@ -1,0 +1,31 @@
+{
+  "version": "1.0.1",
+  "excel_filename": "metal_bilayer_results.xlsx",
+  "physical_params": {
+    "eM_min": "10",
+    "eM_max": "30",
+    "eL_nominal": "900",
+    "eL_variation": "20"
+  },
+  "material_params": {
+    "n_infini_min": "1.42",
+    "n_infini_max": "1.44",
+    "A_diel_min": "0",
+    "A_diel_max": "10000",
+    "num_knots": "4",
+    "nk_min": "1.0",
+    "nk_max": "5.0",
+    "min_knot_dist": "20.0"
+  },
+  "filters": {
+    "lmin_filter": "350.0",
+    "lmax_filter": "880.0"
+  },
+  "optimization": {
+    "popsize": 30,
+    "maxiter": 300,
+    "tol": 0.005,
+    "workers": -1
+  },
+  "target_file": "example/example_metal_bilayer/CSV-metal-example.csv"
+}

@@ -3031,6 +3031,3 @@ class IndexCore:
 
 
 
-
-# --- UI extracted to certus.ui.certus_substrate_ui ---
-from certus.ui.certus_substrate_ui import IndexTableDialog, SubstrateIndexGUI

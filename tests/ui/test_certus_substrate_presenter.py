@@ -13,10 +13,10 @@ def test_substrate_presenter_headless():
     presenter = CertusSubstratePresenter(mock_view)
     
     # Create a mock dataframe
-    # We need a column with 'sub' to trigger the substrate logic
+    # We need a column with 'sub' to trigger the substrate logic and at least 5 points
     df = pd.DataFrame({
-        "Wavelength": [400, 500, 600, 700],
-        "n sub": [1.5, 1.48, 1.47, 1.46]
+        "Wavelength": [400, 500, 600, 700, 800],
+        "T 7157 sapphire_nu_2f": [90.0, 92.0, 93.0, 94.0, 94.5]
     })
     
     sellmeier_settings = {
@@ -43,11 +43,11 @@ def test_substrate_presenter_headless():
     n_results_raw = args[1]
     
     assert isinstance(x_result, np.ndarray)
-    assert len(x_result) == 4
+    assert len(x_result) == 5
     
     assert isinstance(n_results_raw, dict)
-    assert "n (n sub)" in n_results_raw
-    assert len(n_results_raw["n (n sub)"]) == 4
+    assert "n (T 7157 sapphire_nu_2f)" in n_results_raw
+    assert len(n_results_raw["n (T 7157 sapphire_nu_2f)"]) == 5
 
 def test_substrate_presenter_headless_invalid_input():
     """Test the presenter behavior on invalid inputs."""

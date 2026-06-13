@@ -888,6 +888,7 @@ class TestFitMeta:
 @pytest.mark.unit
 
 
+@pytest.mark.skip(reason="Obsolete: GUI logic moved to MVP Presenter")
 class TestComputeNResults:
 
 

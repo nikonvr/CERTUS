@@ -50,11 +50,10 @@ def _prepare_block_strategy_phase_a(
     logger.info("=" * 80)
 
     l0 = float(params["l0"])
-    stack_string = params["stack_string"]
-    multipliers = [float(e) for e in stack_string.split(",") if e.strip()]
-
     p_thick_nominal = params.get("p_thick_nominal")
     if p_thick_nominal is None:
+        stack_string = params["stack_string"]
+        multipliers = [float(e) for e in stack_string.split(",") if e.strip()]
         nH_at_l0 = get_refractive_index(params["nH_id"], l0)
         nL_at_l0 = get_refractive_index(params["nL_id"], l0)
         p_thick_nominal = [
@@ -141,6 +140,18 @@ def _prepare_block_strategy_phase_b(
     from certus.core.certus_strat_solvers import _compute_blocks_range_for_params
 
     blocks_range = _compute_blocks_range_for_params(num_layers, params, dense=False)
+    
+    # Extract invariants outside loop for Top 1% performance
+    sym_enable = bool(params.get("sym_enable", True))
+    sym_bonus_map = phase_a.get("sym_bonus_map", {})
+    sym_layer_importance = phase_a.get("sym_layer_importance", {})
+    sym_weight = float(params.get("sym_weight", SYM_DEFAULT_WEIGHT))
+    sym_same_wl_bonus = float(params.get("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS))
+    sym_continuity_weight = float(params.get("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT))
+    sym_adaptive_same_wl = bool(params.get("sym_adaptive_same_wl", True))
+    sym_scoring_mode = str(params.get("sym_scoring_mode", SYM_DEFAULT_SCORING_MODE))
+    sym_allow_hybrid = bool(params.get("sym_allow_hybrid", False))
+
     for n_blk in blocks_range:
         logger.info(f"   Exploring {n_blk} blocks...")
         strats = mine_strategies_for_block_count(
@@ -149,15 +160,15 @@ def _prepare_block_strategy_phase_b(
             raw_results_sq,
             num_layers,
             top_k=5,
-            sym_enable=bool(params.get("sym_enable", True)),
-            sym_bonus_map=phase_a.get("sym_bonus_map", {}),
-            layer_importance_map=phase_a.get("sym_layer_importance", {}),
-            sym_weight=float(params.get("sym_weight", SYM_DEFAULT_WEIGHT)),
-            sym_same_wl_bonus=float(params.get("sym_same_wl_bonus", SYM_DEFAULT_SAME_WL_BONUS)),
-            sym_continuity_weight=float(params.get("sym_continuity_weight", SYM_DEFAULT_CONTINUITY_WEIGHT)),
-            sym_adaptive_same_wl=bool(params.get("sym_adaptive_same_wl", True)),
-            sym_scoring_mode=str(params.get("sym_scoring_mode", SYM_DEFAULT_SCORING_MODE)),
-            sym_allow_hybrid=bool(params.get("sym_allow_hybrid", False)),
+            sym_enable=sym_enable,
+            sym_bonus_map=sym_bonus_map,
+            layer_importance_map=sym_layer_importance,
+            sym_weight=sym_weight,
+            sym_same_wl_bonus=sym_same_wl_bonus,
+            sym_continuity_weight=sym_continuity_weight,
+            sym_adaptive_same_wl=sym_adaptive_same_wl,
+            sym_scoring_mode=sym_scoring_mode,
+            sym_allow_hybrid=sym_allow_hybrid,
         )
         all_strategies.extend(strats)
 
@@ -275,19 +286,6 @@ def optimize_block_strategy_hybrid(
     logger = params["logger"]
 
     try:
-        l0 = float(params["l0"])
-        stack_string = params["stack_string"]
-        multipliers = [float(e) for e in stack_string.split(",") if e.strip()]
-
-        p_thick_nominal = params.get("p_thick_nominal")
-        if p_thick_nominal is None:
-            nH_at_l0 = get_refractive_index(params["nH_id"], l0)
-            nL_at_l0 = get_refractive_index(params["nL_id"], l0)
-            p_thick_nominal = [
-                (m * l0) / (4.0 * np.real(nH_at_l0 if (i % 2) == 0 else nL_at_l0))
-                for i, m in enumerate(multipliers)
-            ]
-
         phase_a = _prepare_block_strategy_phase_a(params=params, progress_signal=progress_signal)
         if phase_a.get("stop_requested"):
             return _finalize_block_strategy_result(phase_a, None, params, phase_a_only=phase_a_only)

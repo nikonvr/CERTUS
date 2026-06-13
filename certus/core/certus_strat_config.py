@@ -34,18 +34,7 @@ import numpy as np
 import pandas as pd
 from pydantic import ValidationError
 
-import pyqtgraph as pg
 
-
-from certus.ui.certus_ui import setup_pyqtgraph_defaults
-
-# Conditional import of Svg for the logo
-
-try:
-    from PyQt6.QtSvgWidgets import QSvgWidget
-
-except ImportError:
-    QSvgWidget = None
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -141,42 +130,7 @@ from certus.utils.certus_strat_context import (
 from certus.utils.certus_strat_db import RobustMaterialDatabase
 from certus.utils.certus_dto import StratConfigDTO
 
-from certus.ui.certus_ui import (
-    CERTUS_UI_STRINGS,
-    CertusBaseApp,
-    CertusLogPanel,
-    CertusTheme,
-    CertusThemeToggle,
-    CertusCard,
-    CertusStatusPill,
-    ExcelTableWidget,
-    FlashyCard,
-    NumericTableWidgetItem,
-    apply_certus_theme,
-    attach_excel_clipboard_context_menu,
-    confirm_stop_with_timeout,
-    copy_app_logs_to_clipboard,
-    copy_plot_to_clipboard_excel,
-    create_header_logo_widget,
-    create_top_actions_bar,
-    get_certus_last_dir,
-    get_export_settings,
-    init_certus_app,
-    open_documentation,
-    open_file_explorer,
-    plot_dataframe_from_widget,
-    set_certus_last_dir,
-    set_certus_window_icon,
-    create_styled_button,
-    install_standard_shortcuts,
-    enable_file_drop,
-    show_toast,
-    safe_ui_action,
-)
-from certus.utils.certus_export import show_copy_excel_feedback
 
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.utils.certus_ux import build_premium_overrides, OBJ
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
 from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
@@ -369,9 +323,7 @@ PERF_MONITOR = PerformanceMonitor()
 
 # setup_numba_cache skipped (handled by configure_numba_env + file lock)
 
-# PyQtGraph configured via COMMON utility
 
-setup_pyqtgraph_defaults()
 
 # === CACHE SYSTEM FOR PLOTS ===
 # PlotCache and ThreadSafeCounter have been extracted to certus_strat_context.

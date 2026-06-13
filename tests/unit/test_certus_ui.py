@@ -84,7 +84,7 @@ class TestDataFileFiltersAndHelper:
         assert "csv" in DATA_FILES_FILTER_EXTENDED.lower()
 
     def test_open_data_file_and_read_returns_none_when_cancelled(self):
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=("", "")):
             out = open_data_file_and_read()
         assert out == (None, None)
 
@@ -92,8 +92,8 @@ class TestDataFileFiltersAndHelper:
         import pandas as pd
         fake_path = "/fake/data.csv"
         fake_df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(fake_path, "")):
-            with patch("certus.ui.certus_ui.read_data_file_robust", return_value=fake_df):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=(fake_path, "")):
+            with patch("certus.ui.certus_io_ui.read_data_file_robust", return_value=fake_df):
                 path, df = open_data_file_and_read()
         assert path == fake_path
         assert df is not None
@@ -113,22 +113,22 @@ class TestCertusFileDialogHelpers:
     """certus_get_open_file_name, certus_get_save_file_name, certus_confirm_yes_no."""
 
     def test_open_cancel_returns_empty(self):
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=("", "")):
-            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=("", "")):
+            with patch("certus.ui.certus_io_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_open_file_name(None, "T", "*.json") == ""
                 mock_sl.assert_not_called()
 
     def test_open_ok_sets_last_dir(self):
         p = r"C:\tmp\cfg.json"
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(p, "")):
-            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=(p, "")):
+            with patch("certus.ui.certus_io_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_open_file_name(None, "T", "JSON (*.json)") == p
                 mock_sl.assert_called_once_with(p)
 
     def test_save_ok_sets_last_dir(self):
         p = r"C:\tmp\out.xlsx"
-        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(p, "")):
-            with patch("certus.ui.certus_ui.set_certus_last_dir") as mock_sl:
+        with patch("certus.ui.certus_io_ui.QFileDialog.getSaveFileName", return_value=(p, "")):
+            with patch("certus.ui.certus_io_ui.set_certus_last_dir") as mock_sl:
                 assert certus_get_save_file_name(None, "T", "Excel (*.xlsx)") == p
                 mock_sl.assert_called_once_with(p)
 
@@ -1006,11 +1006,11 @@ class TestUIExceptionHandling:
 
         app = DummyApp()
         save_path = tmp_path / "dummy.json"
-        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(str(save_path), "")):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getSaveFileName", return_value=(str(save_path), "")):
             assert app.save_config() is None
         assert json.loads(save_path.read_text(encoding="utf-8")) == {"hello": "world"}
 
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=(str(save_path), "")):
             assert app.load_config() is None
         assert getattr(app, "_applied", None) == {"hello": "world"}
 
@@ -1069,10 +1069,10 @@ class TestUIExceptionHandling:
 
         app = DummyApp()
         cfg_file = tmp_path / "dummy.json"
-        with patch("certus.ui.certus_ui.QFileDialog.getSaveFileName", return_value=(str(cfg_file), "")):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getSaveFileName", return_value=(str(cfg_file), "")):
             app.save_config()
         assert cfg_file.exists()
-        with patch("certus.ui.certus_ui.QFileDialog.getOpenFileName", return_value=(str(cfg_file), "")):
+        with patch("certus.ui.certus_io_ui.QFileDialog.getOpenFileName", return_value=(str(cfg_file), "")):
             app.load_config()
         assert getattr(app, "_applied", None) == {"alpha": 1, "nested": {"beta": 2}}
 
@@ -1135,7 +1135,7 @@ class TestUIExceptionHandling:
         app._record_recent_config(str(tmp_path / "config.json"))
         with patch.object(QInputDialog, "getItem", return_value=("", False)):
             app.open_recent_configs()
-        with patch("certus.ui.certus_ui.certus_get_save_file_name", return_value=None):
+        with patch("certus.ui.certus_io_ui.certus_get_save_file_name", return_value=None):
             assert app.export_report_excel() is None or isinstance(app.export_report_excel(), (str, type(None)))
             assert app.export_report_pdf() is None or isinstance(app.export_report_pdf(), (str, type(None)))
 

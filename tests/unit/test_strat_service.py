@@ -13,6 +13,8 @@ from certus.utils.certus_strat_service import (
     generate_noise_array,
     wavelength_to_index,
 )
+from certus.workers.certus_strat_workers_dto import StratParamsDTO
+
 
 
 def test_validate_payload_rejects_invalid_step() -> None:
@@ -50,6 +52,24 @@ def test_validate_payload_checks_material_coverage() -> None:
 
     # Should pass if within range
     params["scan_wl_min"] = 450.0
+    svc.validate_payload({"step": 0, "params": params}, materials_db=db)
+
+
+def test_validate_payload_checks_material_coverage_fallback_to_wl() -> None:
+    svc = StratStrategyService(lambda cfg: cfg)
+    class MockDB:
+        def __init__(self):
+            self.data = {
+                "nH": {"wl": np.array([400.0, 500.0, 700.0])}
+            }
+    db = MockDB()
+    params = {
+        "scan_wl_min": 450.0,
+        "scan_wl_max": 600.0,
+        "nH_id": "nH",
+        "nL_id": "nL",
+        "nSub_id": "nSub"
+    }
     svc.validate_payload({"step": 0, "params": params}, materials_db=db)
 
 
@@ -322,5 +342,75 @@ def test_extract_best_rmse_raises_physics_convergence_error() -> None:
     ]
     with pytest.raises(PhysicsConvergenceError, match="abnormally low/null value"):
         strat_service.extract_best_rmse(strategies_too_low)
+
+
+# ---------------------------------------------------------------------------
+# PR 5: Validation, Material Coverage, Legacy & DTO compatibility tests
+# ---------------------------------------------------------------------------
+
+def test_pr5_invalid_schema_rejected() -> None:
+    """An invalid payload structure (wrong types or missing root keys) must be rejected."""
+    svc = StratStrategyService(lambda cfg: cfg)
+    
+    # Missing params root key
+    with pytest.raises(ValueError, match="Invalid params payload structure|payload.params must be a dict"):
+        svc.validate_payload({"step": 0})
+
+    # Wrong params type
+    with pytest.raises(ValueError, match="payload.params must be a dict"):
+        svc.validate_payload({"step": 0, "params": "not-a-dict"})
+
+
+
+def test_pr5_material_coverage_failure() -> None:
+    """Material coverage checking must raise ValueError when all materials are out of bounds."""
+    svc = StratStrategyService(lambda cfg: cfg)
+    class MockDB:
+        def __init__(self):
+            self.data = {
+                "Nb2O5": {"min_wl_valid": 400.0, "max_wl_valid": 700.0},
+                "SiO2": {"min_wl_valid": 400.0, "max_wl_valid": 700.0},
+                "Silice": {"min_wl_valid": 400.0, "max_wl_valid": 700.0},
+            }
+    db = MockDB()
+    
+    # Range [800.0, 900.0] has absolutely no overlap with Nb2O5 / SiO2 / Silice (400-700)
+    params = _valid_params()
+    params["scan_wl_min"] = 800.0
+    params["scan_wl_max"] = 900.0
+    params["wl_range"] = [800.0, 900.0]
+
+    with pytest.raises(ValueError, match="CRITICAL: Material Data Missing for Spectral Range"):
+        svc.validate_payload({"step": 0, "params": params}, materials_db=db)
+
+
+def test_pr5_legacy_payload_normalization() -> None:
+    """Legacy dict-based payloads must be correctly validated and normalized."""
+    svc = StratStrategyService(lambda cfg: cfg)
+    legacy_payload = {
+        "step": 0,
+        "params": _valid_params()
+    }
+    
+    normalized = svc.validate_payload(legacy_payload)
+    assert normalized["step"] == 0
+    assert isinstance(normalized["params"], StratParamsDTO)
+    assert normalized["params"]["l0"] == 550.0
+    assert normalized["opti_results"] is None
+
+
+def test_pr5_dto_compatibility() -> None:
+    """Passing Pydantic DTO instances directly in the payload must work seamlessly."""
+    svc = StratStrategyService(lambda cfg: cfg)
+    params_dto = StratParamsDTO.model_validate(_valid_params())
+    dto_payload = {
+        "step": 0,
+        "params": params_dto
+    }
+    
+    normalized = svc.validate_payload(dto_payload)
+    assert normalized["step"] == 0
+    assert normalized["params"] is params_dto
+
 
 

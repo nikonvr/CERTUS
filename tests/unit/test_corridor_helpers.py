@@ -11,11 +11,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus.spline.spline_profile_corridors import (
+from certus.spline.certus_corridor_fitter import (
     _fit_local_quadratic_rmse_profile,
-    _robust_sigma_from_mad,
-    _generate_iso_phase_seed,
 )
+from certus.spline.certus_corridor_orchestrator_utils import _generate_iso_phase_seed
+from certus.spline.certus_corridor_utils import _robust_sigma_from_mad
 
 
 # ────────────────────────────────────────────────────────────────────

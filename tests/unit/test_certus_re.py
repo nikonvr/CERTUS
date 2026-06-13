@@ -544,7 +544,7 @@ class TestREAppSkeletonLoaders:
         
         # Mock the remove_skeleton_loader function
         mock_remove = MagicMock()
-        monkeypatch.setattr("CERTUS_RE.remove_skeleton_loader", mock_remove)
+        monkeypatch.setattr("certus.ui.certus_re_state_mixin.remove_skeleton_loader", mock_remove)
         
         func_remove(app)
         

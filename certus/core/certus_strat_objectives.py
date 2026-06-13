@@ -54,6 +54,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Import access config
 
+from certus.core.certus_strat_config import _resolve_materials_db_fallback
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_MAPPING,

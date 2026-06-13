@@ -11,7 +11,7 @@ from scipy.signal import find_peaks, savgol_filter
 
 
 def _ensure_odd(n: int) -> int:
-    n = int(round(n))
+    pass
     if n < 3:
         return 3
     if n % 2 == 0:

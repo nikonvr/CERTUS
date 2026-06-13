@@ -58,9 +58,17 @@ def log_structured_json_event(
     try:
         log.info("%s %s", channel, json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
 
-    except (TypeError, *NUMERICAL_FAULT_EXCEPTIONS):
-        # Silently ignore non-serializable fields (e.g. np.ndarray) or other encoding errors
-        pass
+    except (TypeError, *NUMERICAL_FAULT_EXCEPTIONS) as ex:
+        # Keep observability even when payload contains non-serializable fields.
+        safe_payload = {
+            "event": str(event),
+            "ts_epoch_s": float(time.time()),
+            "seq": str(seq) if seq is not None else None,
+            "serialization_failed": True,
+            "serialization_error": str(ex),
+            "field_keys": sorted(list(fields.keys())),
+        }
+        log.warning("%s %s", channel, json.dumps(safe_payload, ensure_ascii=True, separators=(",", ":")))
 
 
 def _ratio_theoretical_from_nk(lam, n_l, k_l, d_nm, n_sub):

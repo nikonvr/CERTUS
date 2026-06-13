@@ -26,9 +26,10 @@ from typing import Any, Callable, Optional
 
 
 import numpy as np
+import scipy.optimize
 import pyqtgraph as pg
 
-import scipy.optimize
+from scipy.optimize import OptimizeResult
 
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal, pyqtSlot
 
@@ -130,13 +131,35 @@ DEFAULT_UPDATING = "deferred"
 
 DEFAULT_WORKERS = -1
 
+METAL_GLOBAL_STATUS = "global"
+METAL_LOCAL_STATUS = "local"
+METAL_PROGRESS_PHASE_GLOBAL = "global_opt"
+METAL_PROGRESS_PHASE_LOCAL = "local_opt"
+METAL_PROGRESS_PHASE_BEAM = "beam"
+METAL_PROGRESS_ENHANCED_UI = os.environ.get("CERTUS_METAL_ENHANCED_PROGRESS", "1").strip().lower() not in {"0", "false", "no", "off"}
+
+
+@dataclass(frozen=True)
+class MetalProgressEvent:
+    """Canonical progress payload shared by METAL UI and worker callbacks."""
+
+    phase: str
+    progress_pct: int
+    message: str
+    iteration: int = 0
+    max_iteration: int = 0
+    evaluation_count: int = 0
+    best_cost: float = float("inf")
+    elapsed_s: float = 0.0
+    mode: str = METAL_GLOBAL_STATUS
+
 
 
 def normalize_percent_column(values: np.ndarray) -> np.ndarray:
     """Normalize a reflectance/transmittance column to the [0, 1] range.
 
     Values > 1 are assumed to be percent (0-100) and divided by 100.
-    Otherwise the input is returned unchanged. NaN-safe via ``np.nanmax``.
+    Otherwise the input is returned unchanged. NaN-safe and all-NaN safe.
 
     Used by METAL apps' ``on_file_loaded`` to handle mixed-unit inputs.
     """
@@ -144,8 +167,11 @@ def normalize_percent_column(values: np.ndarray) -> np.ndarray:
     arr = np.asarray(values)
     if arr.size == 0:
         return arr
+    finite = np.isfinite(arr)
+    if not np.any(finite):
+        return arr
     try:
-        vmax = float(np.nanmax(arr))
+        vmax = float(np.max(arr[finite]))
     except (TypeError, ValueError):
         return arr
     return arr / 100.0 if vmax > 1.0 else arr
@@ -189,6 +215,83 @@ def _format_beam_status(cur: int, tot: int, best: float) -> str:
     return f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}"
 
 
+def build_metal_progress_event(
+    *,
+    phase: str,
+    progress_pct: int,
+    message: str,
+    iteration: int = 0,
+    max_iteration: int = 0,
+    evaluation_count: int = 0,
+    best_cost: float = float("inf"),
+    elapsed_s: float = 0.0,
+    mode: str = METAL_GLOBAL_STATUS,
+) -> MetalProgressEvent:
+    return MetalProgressEvent(
+        phase=phase,
+        progress_pct=int(max(0, min(100, progress_pct))),
+        message=str(message),
+        iteration=int(max(0, iteration)),
+        max_iteration=int(max(0, max_iteration)),
+        evaluation_count=int(max(0, evaluation_count)),
+        best_cost=float(best_cost),
+        elapsed_s=float(max(0.0, elapsed_s)),
+        mode=str(mode),
+    )
+
+
+def normalize_metal_progress_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    event = build_metal_progress_event(
+        phase=str(payload.get("phase", payload.get("mode", METAL_GLOBAL_STATUS))),
+        progress_pct=int(payload.get("progress_pct", 0) or 0),
+        message=str(payload.get("message", "")),
+        iteration=int(payload.get("iteration", 0) or 0),
+        max_iteration=int(payload.get("max_iteration", 0) or 0),
+        evaluation_count=int(payload.get("evaluation_count", 0) or 0),
+        best_cost=float(payload.get("best_cost", payload.get("mse", float("inf")))),
+        elapsed_s=float(payload.get("elapsed_s", 0.0) or 0.0),
+        mode=str(payload.get("mode", METAL_GLOBAL_STATUS)),
+    )
+    out = dict(payload)
+    out.update({
+        "phase": event.phase,
+        "progress_pct": event.progress_pct,
+        "message": event.message,
+        "iteration": event.iteration,
+        "max_iteration": event.max_iteration,
+        "evaluation_count": event.evaluation_count,
+        "best_cost": event.best_cost,
+        "elapsed_s": event.elapsed_s,
+        "mode": event.mode,
+    })
+    return out
+
+
+def build_metal_progress_status_text(payload: dict[str, Any]) -> str:
+    """Return a stable human-readable progress line for METAL UI."""
+
+    if not METAL_PROGRESS_ENHANCED_UI:
+        return str(payload.get("message", "")) or f"{str(payload.get('mode', METAL_GLOBAL_STATUS)).upper()} running"
+
+    p = normalize_metal_progress_payload(payload)
+    mode = str(p.get("mode", METAL_GLOBAL_STATUS)).upper()
+    iteration = int(p.get("iteration", 0) or 0)
+    max_iteration = int(p.get("max_iteration", 0) or 0)
+    progress_pct = int(p.get("progress_pct", 0) or 0)
+    evaluation_count = int(p.get("evaluation_count", 0) or 0)
+    best_cost = float(p.get("best_cost", float("inf")))
+    current_y = float(p.get("current_y", p.get("mse", best_cost)) or best_cost)
+    elapsed_s = float(p.get("elapsed_s", 0.0) or 0.0)
+    message = str(p.get("message", "")).strip()
+    improved = bool(p.get("improved", False))
+    x_head = p.get("x_head", [])
+    best_head = p.get("best_head", [])
+    return (
+        f"[{mode}] {progress_pct}% | Gen: {iteration}/{max_iteration} | Evals: {format_count_kmg(evaluation_count)} | "
+        f"Best RMSE: {np.sqrt(max(best_cost, 0.0)):.4f} | Time: {int(elapsed_s)}s"
+    )
+
+
 def build_metal_startup_log_lines(app, *, variant_label: str, params: dict[str, Any]) -> list[str]:
     """Build a consistent startup log block for METAL apps."""
 
@@ -226,7 +329,7 @@ def setup_beam_analysis_thread(app, worker) -> "QThread":
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
 
-    worker.progress.connect(lambda cur, tot, best: app.status_label.setText(_format_beam_status(cur, tot, best)))
+    worker.progress.connect(lambda cur, tot, best: getattr(app, "field_opt_status", app.status_label).setText(_format_beam_status(cur, tot, best)))
     worker.finished.connect(app.on_beam_finished)
     worker.error.connect(app._on_beam_error)
     # Proper cleanup to avoid memory leaks
@@ -372,6 +475,7 @@ class MetalOptimizationWorker(QObject):
         self.best_candidate = {"x": None, "fun": float("inf")}
 
         self._last_progress_time = 0.0
+        self._stop_event = None
 
     @pyqtSlot()
     def stop(self) -> None:
@@ -391,11 +495,33 @@ def metal_optimization_worker_run_differential_evolution(
     """
 
     p = worker.params
+    logger = logging.getLogger("CERTUS")
+
+    def _fmt_head(vec, max_items: int = 6) -> list[float]:
+        arr = np.asarray(vec) if vec is not None else np.asarray([])
+        if arr.size == 0:
+            return []
+        return np.round(arr[: min(max_items, arr.size)], 6).tolist()
 
     try:
         worker.best_candidate = {"x": None, "fun": float("inf")}
 
         worker._last_live_emit_time = 0.0
+        worker._start_time = time.time()
+
+        logger.info(
+            "GLOBAL_OPT start popsize=%s maxiter=%s tol=%s mutation=(%s,%s) recombination=%s updating=%s workers=%s bounds=%s target_points=%s",
+            p.get("popsize", DEFAULT_POPSIZE),
+            p.get("maxiter", DEFAULT_MAXITER),
+            p.get("tol", DEFAULT_TOL),
+            p.get("mutation_min", DEFAULT_MUTATION_MIN),
+            p.get("mutation_max", DEFAULT_MUTATION_MAX),
+            p.get("recombination", DEFAULT_RECOMBINATION),
+            p.get("updating", DEFAULT_UPDATING),
+            p.get("workers", 1),
+            len(p.get("bounds", [])),
+            len(p.get("target_lambda", [])),
+        )
 
         def callback(xk, _convergence) -> None:
 
@@ -404,28 +530,59 @@ def metal_optimization_worker_run_differential_evolution(
 
             worker.iteration_count += 1
 
-            popsize = p.get("popsize", 15)
+            popsize = int(p.get("popsize", DEFAULT_POPSIZE))
 
             worker.evaluation_count += popsize
 
             worker.stats_update.emit("MCS", popsize)
 
-            current_mse = global_objective_function(xk, *args_for_objective)
+            current_mse = float(global_objective_function(xk, *args_for_objective))
+            previous_best = float(worker.best_candidate["fun"])
+            improved = current_mse < previous_best
 
-            if current_mse < worker.best_candidate["fun"]:
+            current_rmse = float(np.sqrt(max(current_mse, 0.0)))
+            previous_best_rmse = float(np.sqrt(max(previous_best, 0.0)))
+
+            if improved:
                 worker.best_candidate["fun"] = current_mse
-
-                worker.best_candidate["x"] = xk.copy()
+                worker.best_candidate["x"] = np.asarray(xk).copy()
 
             now = time.time()
+            elapsed_s = now - getattr(worker, "_start_time", now)
+            x_head = _fmt_head(xk)
+            best_head = _fmt_head(worker.best_candidate["x"])
+            logger.info(
+                "GLOBAL_OPT iter=%s/%s evals=%s current_rmse=%.6e best_rmse=%.6e improved=%s elapsed_s=%.1f x_head=%s best_head=%s",
+                worker.iteration_count,
+                p.get("maxiter", DEFAULT_MAXITER),
+                worker.evaluation_count,
+                current_rmse,
+                previous_best_rmse if not improved else float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
+                improved,
+                elapsed_s,
+                x_head,
+                best_head,
+            )
+
             emitted = False
 
-            if worker.iteration_count % 5 == 0:
+            if worker.iteration_count % 2 == 0:
                 worker.progress.emit(
                     {
                         "params": xk,
+                        "best_params": worker.best_candidate["x"].copy() if worker.best_candidate["x"] is not None else xk,
                         "mse": current_mse,
+                        "current_y": current_mse,
+                        "current_rmse": current_rmse,
+                        "best_cost": worker.best_candidate["fun"],
+                        "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
                         "iteration": worker.iteration_count,
+                        "evaluation_count": worker.evaluation_count,
+                        "elapsed_s": elapsed_s,
+                        "message": f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)}",
+                        "improved": improved,
+                        "x_head": x_head,
+                        "best_head": best_head,
                     }
                 )
                 worker._last_live_emit_time = now
@@ -437,8 +594,19 @@ def metal_optimization_worker_run_differential_evolution(
                 worker.progress.emit(
                     {
                         "params": worker.best_candidate["x"].copy(),
+                        "best_params": worker.best_candidate["x"].copy(),
                         "mse": worker.best_candidate["fun"],
+                        "current_y": current_mse,
+                        "current_rmse": current_rmse,
+                        "best_cost": worker.best_candidate["fun"],
+                        "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
                         "iteration": worker.iteration_count,
+                        "evaluation_count": worker.evaluation_count,
+                        "elapsed_s": elapsed_s,
+                        "message": f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)} | best-only",
+                        "improved": False,
+                        "x_head": x_head,
+                        "best_head": best_head,
                     }
                 )
 
@@ -491,6 +659,15 @@ def metal_optimization_worker_run_differential_evolution(
             )
 
         if hasattr(result, "nfev") and result.nfev > 0:
+            logger.info(
+                "GLOBAL_OPT complete success=%s nfev=%s nit=%s best_mse=%.6e best_x_head=%s message=%s",
+                getattr(result, "success", None),
+                getattr(result, "nfev", None),
+                getattr(result, "nit", None),
+                float(getattr(result, "fun", float("nan"))),
+                _fmt_head(getattr(result, "x", None)),
+                getattr(result, "message", ""),
+            )
             batches = result.nfev // 100
 
             if batches > 0:
@@ -504,6 +681,13 @@ def metal_optimization_worker_run_differential_evolution(
         worker.finished.emit({"result": result, "params": p})
 
     except StopIteration as e:
+        logger.info(
+            "GLOBAL_OPT stopped_by_user iterations=%s evals=%s best_mse=%s best_x_head=%s",
+            worker.iteration_count,
+            worker.evaluation_count,
+            worker.best_candidate["fun"],
+            _fmt_head(worker.best_candidate["x"]),
+        )
         if worker.best_candidate["x"] is not None:
             from scipy.optimize import OptimizeResult
 
@@ -521,7 +705,7 @@ def metal_optimization_worker_run_differential_evolution(
             worker.error.emit(str(e))
 
     except NUMERICAL_FAULT_EXCEPTIONS as e:
-        logging.error(f"Optimization worker error: {e}", exc_info=True)
+        logger.error("Optimization worker error: %s", e, exc_info=True)
 
         worker.error.emit(f"Error in optimization worker:\n{traceback.format_exc()}")
 
@@ -1451,9 +1635,9 @@ class MetalBaseApp(CertusBaseApp):
             if os.environ.get("QT_QPA_PLATFORM", "").lower() != "offscreen":
                 n_rows = int(data.shape[0]) if isinstance(data, np.ndarray) else 0
 
-                lmin = float(np.nanmin(data[:, 0])) if n_rows > 0 else float("nan")
-
-                lmax = float(np.nanmax(data[:, 0])) if n_rows > 0 else float("nan")
+                finite_wls = data[:, 0][np.isfinite(data[:, 0])] if n_rows > 0 else np.array([])
+                lmin = float(np.min(finite_wls)) if finite_wls.size > 0 else float("nan")
+                lmax = float(np.max(finite_wls)) if finite_wls.size > 0 else float("nan")
 
                 _sub_w = self.widgets.get("substrate")
                 substrate_txt = (_sub_w.currentText() if _sub_w is not None else "(unknown)").upper()

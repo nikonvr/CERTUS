@@ -653,9 +653,15 @@ class FieldWorkerThread(QThread):
                 state.eval_count = n_evals
                 state.best_cost = min(state.best_cost, de_best["fun"])
 
-                # UI Progress log msg aligned with design callback
-                msg = f"Gen {sample.generation} | Evals: {n_evals} | Clusters: {n_clusters} | Best: {state.best_cost:.6f}"
-                pct = min(90, 20 + int(70 * (sample.generation / max(1, max_iter_run))))
+                # Weighted blend: generation drives the main perception, evaluations add smoothness.
+                gen_frac = sample.generation / max(1, max_iter_run)
+                eval_frac = n_evals / max(1, int(getattr(pg_conf, "max_feval", 1) or 1))
+                blended = min(1.0, max(0.0, 0.7 * float(gen_frac) + 0.3 * float(eval_frac)))
+                msg = (
+                    f"PGLOBAL | Gen {sample.generation}/{max_iter_run} | Evals: {n_evals} | "
+                    f"Clusters: {n_clusters} | Best: {state.best_cost:.6f}"
+                )
+                pct = min(90, 20 + int(70 * blended))
                 self.signals.progress.emit(pct, msg)
 
                 emit_plot(sample.x, f"Optimization running (PGLOBAL) - Gen {sample.generation}...")

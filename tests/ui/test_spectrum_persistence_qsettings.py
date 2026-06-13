@@ -55,7 +55,7 @@ def test_spline_spectrum_step3_keys_roundtrip(isolated_qsettings_path):
 
 
 def test_index_classic_weight_keys_roundtrip(isolated_qsettings_path):
-    from CERTUS_INDEX import _QS_INDEX_APP, _QS_INDEX_ORG, _QS_INDEX_WEIGHT_R, _QS_INDEX_WEIGHT_T
+    from certus.ui.certus_index_ui_state import _QS_INDEX_APP, _QS_INDEX_ORG, _QS_INDEX_WEIGHT_R, _QS_INDEX_WEIGHT_T
 
     s = QSettings(_QS_INDEX_ORG, _QS_INDEX_APP)
     s.setValue(_QS_INDEX_WEIGHT_T, 0.25)

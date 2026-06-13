@@ -87,16 +87,16 @@ class TestStatsCounter:
 
 class TestConfirmAndStop:
     def test_returns_false_when_user_cancels(self):
-        with patch("certus.ui.certus_ui.confirm_stop_with_timeout", return_value=False) as mock_dlg, \
-             patch("certus.ui.certus_ui.stop_worker_and_thread") as mock_stop:
+        with patch("certus.ui.certus_ui_utils.confirm_stop_with_timeout", return_value=False) as mock_dlg, \
+             patch("certus.ui.certus_ui_utils.stop_worker_and_thread") as mock_stop:
             result = confirm_and_stop(parent=None, worker=object(), thread=object())
         assert result is False
         mock_dlg.assert_called_once()
         mock_stop.assert_not_called()
 
     def test_returns_true_when_confirmed_and_thread_stopped(self):
-        with patch("certus.ui.certus_ui.confirm_stop_with_timeout", return_value=True) as mock_dlg, \
-             patch("certus.ui.certus_ui.stop_worker_and_thread", return_value=True) as mock_stop:
+        with patch("certus.ui.certus_ui_utils.confirm_stop_with_timeout", return_value=True) as mock_dlg, \
+             patch("certus.ui.certus_ui_utils.stop_worker_and_thread", return_value=True) as mock_stop:
             result = confirm_and_stop(
                 parent=None, worker=object(), thread=object(),
                 timeout_sec=5, timeout_ms=1500, label="MyWorker",
@@ -109,14 +109,14 @@ class TestConfirmAndStop:
         assert kwargs["label"] == "MyWorker"
 
     def test_returns_false_when_thread_does_not_stop(self):
-        with patch("certus.ui.certus_ui.confirm_stop_with_timeout", return_value=True), \
-             patch("certus.ui.certus_ui.stop_worker_and_thread", return_value=False):
+        with patch("certus.ui.certus_ui_utils.confirm_stop_with_timeout", return_value=True), \
+             patch("certus.ui.certus_ui_utils.stop_worker_and_thread", return_value=False):
             result = confirm_and_stop(parent=None, worker=None, thread=None)
         assert result is False
 
     def test_handles_none_worker_and_thread(self):
-        with patch("certus.ui.certus_ui.confirm_stop_with_timeout", return_value=True), \
-             patch("certus.ui.certus_ui.stop_worker_and_thread", return_value=True) as mock_stop:
+        with patch("certus.ui.certus_ui_utils.confirm_stop_with_timeout", return_value=True), \
+             patch("certus.ui.certus_ui_utils.stop_worker_and_thread", return_value=True) as mock_stop:
             result = confirm_and_stop(parent=None, worker=None, thread=None)
         assert result is True
         args, _ = mock_stop.call_args

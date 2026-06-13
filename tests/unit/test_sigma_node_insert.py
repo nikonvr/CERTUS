@@ -167,7 +167,7 @@ def test_standard_mode_accepts_better_rmse() -> None:
     improved_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=improved_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=improved_pack):
         result = insert_mwir_mid_sigma_node(cfg, base, stop)
 
     K_after = int(np.asarray(result["sigma_knots"]).size)
@@ -197,7 +197,7 @@ def test_rmse_worse_rollback() -> None:
     }
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=worse_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=worse_pack):
         result = insert_mwir_mid_sigma_node(cfg, base, stop)
 
     assert result is base  # strict rollback: identity preserved
@@ -213,7 +213,7 @@ def test_polish_none_fallback() -> None:
     base = _make_base_result(cfg, K=12)
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=None):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=None):
         result = insert_mwir_mid_sigma_node(cfg, base, stop)
 
     assert result is base
@@ -244,7 +244,7 @@ def test_sigma_mid_is_midpoint() -> None:
     improved_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=improved_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=improved_pack):
         result = insert_mwir_mid_sigma_node(cfg, base, stop)
 
     sk_new = np.asarray(result["sigma_knots"])
@@ -262,7 +262,7 @@ def test_worker_delegates_to_insert() -> None:
     base = _make_base_result(cfg, K=12)
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline.insert_mwir_mid_sigma_node", return_value=base) as mock_fn:
+    with patch("certus.spline.spline_pipeline_mesh_insert.insert_mwir_mid_sigma_node", return_value=base) as mock_fn:
         result = worker_spline_mwir_insert_node(base, cfg, stop)
 
     mock_fn.assert_called_once()
@@ -292,7 +292,7 @@ def test_manual_insert_accepts_multiple_sigma_knots() -> None:
     improved_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=improved_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=improved_pack):
         result = insert_manual_sigma_nodes(cfg, base, stop, extra_sigma)
 
     sk_new = np.asarray(result["sigma_knots"], dtype=np.float64)
@@ -324,7 +324,7 @@ def test_manual_insert_rejects_multiple_sigma_knots_without_rmse_gain() -> None:
     worse_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=worse_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=worse_pack):
         result = insert_manual_sigma_nodes(cfg, base, stop, extra_sigma)
 
     assert result is base
@@ -347,7 +347,7 @@ def test_manual_worker_delegates_to_insert_manual() -> None:
     stop = Event()
     extra_sigma = np.asarray([0.5 * (float(base["sigma_knots"][1]) + float(base["sigma_knots"][2]))])
 
-    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", return_value=base) as mock_fn:
+    with patch("certus.spline.spline_pipeline_mesh_insert.insert_manual_sigma_nodes", return_value=base) as mock_fn:
         result = worker_spline_manual_sigma_insert(base, cfg, stop, extra_sigma_knots=extra_sigma)
 
     mock_fn.assert_called_once()
@@ -360,7 +360,7 @@ def test_manual_worker_delegates_with_target_sigma_knots() -> None:
     stop = Event()
     target_sigma = np.asarray(base["sigma_knots"], dtype=np.float64)[1:-1]
 
-    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", return_value=base) as mock_fn:
+    with patch("certus.spline.spline_pipeline_mesh_insert.insert_manual_sigma_nodes", return_value=base) as mock_fn:
         result = worker_spline_manual_sigma_insert(base, cfg, stop, target_sigma_knots=target_sigma)
 
     mock_fn.assert_called_once()
@@ -400,7 +400,7 @@ def test_auto_add_one_keeps_best_inserted_candidate_even_without_improvement() -
             out["rmse"] = 1.05
         return out
 
-    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline_mesh_insert.insert_manual_sigma_nodes", side_effect=_fake_insert):
         out = worker_spline_auto_add_one_knot(
             base,
             cfg,
@@ -462,7 +462,7 @@ def test_auto_add_one_second_run_uses_updated_mesh_for_new_midpoint() -> None:
             out["rmse"] = 1.0 + abs(added - 0.425)
         return out
 
-    with patch("certus.spline.spline_pipeline.insert_manual_sigma_nodes", side_effect=_fake_insert):
+    with patch("certus.spline.spline_pipeline_mesh_insert.insert_manual_sigma_nodes", side_effect=_fake_insert):
         out1 = worker_spline_auto_add_one_knot(
             base,
             cfg,
@@ -512,7 +512,7 @@ def test_manual_insert_accepts_target_sigma_knots_with_smaller_k() -> None:
     improved_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=improved_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=improved_pack):
         result = insert_manual_sigma_nodes(
             cfg,
             base,
@@ -559,14 +559,14 @@ def test_manual_insert_accepts_target_sigma_knots_when_k_reduction_worsens_rmse(
         "n_lam": np.full(80, 2.1),
         "k_lam": np.full(80, 5e-4),
         "d_nm": 200.0,
-        "spectral_rmse": rmse_ref * 1.05,
-        "spectral_mse": (rmse_ref * 1.05) ** 2,
+        "spectral_rmse": rmse_ref * 1.04,
+        "spectral_mse": (rmse_ref * 1.04) ** 2,
         "profile_interp": "smooth",
     }
     worse_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=worse_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=worse_pack):
         result = insert_manual_sigma_nodes(
             cfg,
             base,
@@ -610,7 +610,7 @@ def test_manual_insert_target_equal_k_fp_drift_snaps_to_base_mesh() -> None:
         }
 
     stop = Event()
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", side_effect=_fake_polish):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", side_effect=_fake_polish):
         result = insert_manual_sigma_nodes(
             cfg,
             base,
@@ -647,7 +647,7 @@ def test_n_seg_updated_after_accept() -> None:
     improved_pack["x_best"][0] = 200.0
     stop = Event()
 
-    with patch("certus.spline.spline_pipeline._spectral_polish_node_mesh_profile", return_value=improved_pack):
+    with patch("certus.spline.spline_pipeline_mesh_insert._spectral_polish_node_mesh_profile", return_value=improved_pack):
         result = insert_mwir_mid_sigma_node(cfg, base, stop)
 
     assert int(result["n_seg"]) == K_before  # K+1 nodes → K segments

@@ -180,16 +180,17 @@ def enforce_k_floor_on_nodes(
 
         modified = True
 
-    # --- Step 2: flattening of segments close to the floor ---
-
-    for j in range(sk.size - 1):
-        if float(LL[j]) <= L_near and float(LL[j + 1]) <= L_near:
-            if float(LL[j]) != L_floor or float(LL[j + 1]) != L_floor:
-                LL[j] = L_floor
-
-                LL[j + 1] = L_floor
-
-                modified = True
+    # --- Step 2: flattening of segments close to the floor (vectorized) ---
+    mask = (LL[:-1] <= L_near) & (LL[1:] <= L_near)
+    if np.any(mask):
+        set_floor = np.zeros_like(LL, dtype=bool)
+        set_floor[:-1] |= mask
+        set_floor[1:] |= mask
+        
+        to_modify = set_floor & (LL != L_floor)
+        if np.any(to_modify):
+            LL[to_modify] = L_floor
+            modified = True
 
     return sk, LL, modified
 
@@ -267,23 +268,16 @@ def n_mono_segment_flags(sigma_knots: np.ndarray, lam_lo_nm: float, lam_hi_nm: f
 
     lam_a = max(0.0, lam_a)
 
-    out = np.zeros(K - 1, dtype=bool)
-
-    for j in range(K - 1):
-        s0, s1 = float(sk[j]), float(sk[j + 1])
-
-        slo, shi = (s0, s1) if s0 < s1 else (s1, s0)
-
-        lam_max_seg = 1.0 / max(slo, 1e-18)
-
-        lam_min_seg = 1.0 / max(shi, 1e-18)
-
-        if lam_min_seg > lam_max_seg:
-            lam_min_seg, lam_max_seg = lam_max_seg, lam_min_seg
-
-        if not (lam_max_seg < lam_a or lam_min_seg > lam_b):
-            out[j] = True
-
+    s0, s1 = sk[:-1], sk[1:]
+    slo, shi = np.minimum(s0, s1), np.maximum(s0, s1)
+    
+    lam_max_seg = 1.0 / np.maximum(slo, 1e-18)
+    lam_min_seg = 1.0 / np.maximum(shi, 1e-18)
+    
+    true_min = np.minimum(lam_min_seg, lam_max_seg)
+    true_max = np.maximum(lam_min_seg, lam_max_seg)
+    
+    out = (true_max >= lam_a) & (true_min <= lam_b)
     return out
 
 
@@ -390,12 +384,13 @@ def decode_xi_n_to_physical_n(
     n_out = np.zeros(K, dtype=np.float64)
 
     lo, hi = float(n_min), float(n_max)
-
     span0 = hi - lo
+    
+    # Pre-compute all sigmoids to avoid function call overhead in loop
+    sigmoids = _mono_sigmoid(xi_n)
 
     for a, b in chains:
-        n_out[a] = lo + span0 * float(_mono_sigmoid(xi_n[a]))
-
+        n_out[a] = lo + span0 * float(sigmoids[a])
         prev = float(n_out[a])
 
         for idx in range(a + 1, b + 1):
@@ -403,10 +398,8 @@ def decode_xi_n_to_physical_n(
 
             if span < 1e-14:
                 n_out[idx] = prev
-
             else:
-                prev = prev + span * float(_mono_sigmoid(xi_n[idx]))
-
+                prev = prev + span * float(sigmoids[idx])
                 n_out[idx] = prev
 
     np.clip(n_out, lo, hi, out=n_out)

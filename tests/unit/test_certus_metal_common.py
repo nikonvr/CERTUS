@@ -8,7 +8,15 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-from certus.metal.certus_metal_common import _format_beam_status, normalize_percent_column, setup_beam_analysis_thread, teardown_beam_thread
+from certus.metal.certus_metal_common import (
+    METAL_GLOBAL_STATUS,
+    MetalProgressEvent,
+    _format_beam_status,
+    build_metal_progress_event,
+    normalize_percent_column,
+    setup_beam_analysis_thread,
+    teardown_beam_thread,
+)
 
 
 @pytest.mark.unit

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import numpy as np
+import time
 import pytest
 
 from certus.spline.certus_index_spline_core import DataType, SplineOptConfig, canonical_spline_sigma_knots

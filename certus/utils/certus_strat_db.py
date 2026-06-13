@@ -82,8 +82,9 @@ class RobustMaterialDatabase:
 
     def _load_database(self):
 
-        if not Path(self.filepath).exists():
-            self.logger.error(f"Material DB file not found: {self.filepath}")
+        if not self.filepath or not Path(self.filepath).exists() or Path(self.filepath).is_dir():
+            if self.filepath:
+                self.logger.error(f"Material DB file not found or is a directory: {self.filepath}")
 
             return
 

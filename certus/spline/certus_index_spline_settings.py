@@ -13,6 +13,7 @@ from typing import Any
 from pathlib import Path
 
 import numpy as np
+from certus.spline.certus_index_spline_core import _log_index_spline_best_config
 import pyqtgraph as pg
 
 from PyQt6.QtCore import QSettings, QTimer

@@ -143,7 +143,8 @@ except ImportError:
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button
 from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust, build_export_context, build_report_sections, export_optimization_report
-from certus.spline.spline_profile_corridors import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width, _fit_local_quadratic_rmse_profile
+from certus.spline.spline_profile_corridors import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width
+from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
 from certus.ui.certus_plot import sanitize_xy_for_plot, plot_widget_plot_finite, wrap_scientific_plot_with_toolbar
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
 
@@ -241,7 +242,8 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
             pass
         plot_w.setYRange(ymin_log, ymax_log, padding=0)
     except (AttributeError, RuntimeError, TypeError):
-        logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
+        import logging
+        logging.getLogger("CERTUS").debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
 # Helper structures originally defined in CERTUS_INDEX_SPLINE
 
@@ -387,7 +389,7 @@ class _CorridorWorkerMixin:
             self._plot_corridor_rmse_tab(upd)
 
         except NUMERICAL_FAULT_EXCEPTIONS :
-            logger.debug("Corridor RMSE tab refresh after manual grid failed", exc_info=True)
+            self.logger.debug("Corridor RMSE tab refresh after manual grid failed", exc_info=True)
 
         n_ok = int(np.asarray(upd.get("profile_d_values_nm", [])).size)
 
@@ -1025,7 +1027,7 @@ class _CorridorWorkerMixin:
                     _arr = np.asarray(_raw, dtype=np.float64).ravel()
                     _nfin = int(np.sum(np.isfinite(_arr)))
                     key_info.append(f"{_ck}:size={_arr.size}/fin={_nfin}")
-            self.logger.debug(
+            self.self.logger.debug(
                 "DIAG CORRIDOR PLOT | nu=%d | spec_order_size=%d | %s",
                 nu,
                 int(spec_order.size),
@@ -1140,7 +1142,7 @@ class _CorridorWorkerMixin:
                 self.plot_k_corridor.addItem(cl_bk)
                 self.plot_k_corridor.addItem(pg.FillBetweenItem(cl_bk, cu_bk, brush=pg.mkBrush(120, 0, 180, 80)))
         except NUMERICAL_FAULT_EXCEPTIONS :
-            logger.debug("Corridor bootstrap band plot failed", exc_info=True)
+            self.logger.debug("Corridor bootstrap band plot failed", exc_info=True)
 
         # 4. Nominal curves (on top of bands / filigree)
         lk_f = np.log10(np.maximum(k_f, 1e-30))
@@ -1191,7 +1193,7 @@ class _CorridorWorkerMixin:
                 self.plot_k_corridor.setToolTip("")
 
         except (AttributeError, RuntimeError):
-            logger.debug("Corridor plot title set failed", exc_info=True)
+            self.logger.debug("Corridor plot title set failed", exc_info=True)
 
         # Dynamic Y-axis limits (user request: ymin=floor, ymax=ceil for n; ymax=1e-2 for k)
         try:
@@ -1920,10 +1922,10 @@ class _DataMixin:
                     ns_g = ns_raw
             except NUMERICAL_FAULT_EXCEPTIONS:
                 if self.logger:
-                    self.logger.debug("Data TH substrate ns build failed", exc_info=True)
+                    self.self.logger.debug("Data TH substrate ns build failed", exc_info=True)
             except (TypeError, ValueError):
                 if self.logger:
-                    self.logger.debug("Data TH substrate lookup failed", exc_info=True)
+                    self.self.logger.debug("Data TH substrate lookup failed", exc_info=True)
 
         d_nm = float(r.get("d_nm", float("nan")))
         d_g = np.full_like(lam_g, d_nm, dtype=np.float64)
@@ -2035,7 +2037,7 @@ class _DataMixin:
                 preview["rmse"] = float(rmse_preview)
         except (TypeError, ValueError, RuntimeError):
             if self.logger:
-                self.logger.debug("Manual delta-ns preview RMSE recompute failed", exc_info=True)
+                self.self.logger.debug("Manual delta-ns preview RMSE recompute failed", exc_info=True)
 
         self._last_worker_result = dict(preview)
         self._last_result = dict(preview)
@@ -2547,7 +2549,7 @@ class _CorridorGenMixin:
                 self._corridor_rmse_live_last_plot_ts = now_ts
 
             except NUMERICAL_FAULT_EXCEPTIONS:
-                logger.debug("RMSE(d) live plot update failed", exc_info=True)
+                self.logger.debug("RMSE(d) live plot update failed", exc_info=True)
 
         if self.logger and (n_done <= 1 or n_done >= n_tot or (n_done % 5 == 0)):
             r_at_cur = float("nan")
@@ -2895,7 +2897,7 @@ class _CorridorGenMixin:
         try:
             self._refresh_corridor_rmse_robust_view()
         except NUMERICAL_FAULT_EXCEPTIONS :
-            logger.debug("Auto-smart corridor: robust refresh failed", exc_info=True)
+            self.logger.debug("Auto-smart corridor: robust refresh failed", exc_info=True)
 
         d_lo = float("nan")
         d_hi = float("nan")
@@ -2988,7 +2990,7 @@ class _CorridorGenMixin:
         try:
             self._refresh_corridor_rmse_robust_view()
         except NUMERICAL_FAULT_EXCEPTIONS :
-            logger.debug("Auto-smart corridor: post-apply robust refresh failed", exc_info=True)
+            self.logger.debug("Auto-smart corridor: post-apply robust refresh failed", exc_info=True)
 
     def _apply_manual_corridor_selection(self) -> None:
 

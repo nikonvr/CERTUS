@@ -129,7 +129,7 @@ def test_no_sequential_pglobal():
     PGlobalOptimizer must use parallelism. Sequential looping over batches
     should only happen as a fallback.
     """
-    physics_path = Path(__file__).resolve().parents[2] / "certus" / "core" / "_certus_physics_impl.py"
+    physics_path = Path(__file__).resolve().parents[2] / "certus" / "physics" / "certus_optimizers.py"
 
     with open(physics_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read(), filename=str(physics_path))
@@ -150,8 +150,7 @@ def test_no_sequential_pglobal():
                 uses_threadpool
             ), "PGlobalOptimizer must contain ThreadPoolExecutor for parallelism."
 
-    assert pglobal_found, "PGlobalOptimizer class not found in _certus_physics_impl.py"
-
+    assert pglobal_found, "PGlobalOptimizer class not found in certus_optimizers.py"
 
 def test_numba_nogil_enabled():
     """
@@ -159,7 +158,11 @@ def test_numba_nogil_enabled():
     Crucial Numba kernels must explicitly define `nogil=True` and `parallel=True`
     to allow Python multi-threading to bypass the GIL.
     """
-    physics_path = Path(__file__).resolve().parents[2] / "certus" / "core" / "_certus_physics_impl.py"
+    certus_dir = Path(__file__).resolve().parents[2] / "certus" / "physics"
+    kernel_files = [
+        certus_dir / "certus_opt_kernels.py",
+        certus_dir / "certus_strat_kernels.py"
+    ]
 
     # We check specific kernels that MUST be parallel + nogil.
     target_functions = [
@@ -167,40 +170,43 @@ def test_numba_nogil_enabled():
         "calculate_RT_batch_kernel",
     ]
 
-    with open(physics_path, "r", encoding="utf-8") as f:
-        tree = ast.parse(f.read(), filename=str(physics_path))
+    trees = []
+    for f_path in kernel_files:
+        with open(f_path, "r", encoding="utf-8") as f:
+            trees.append(ast.parse(f.read(), filename=str(f_path)))
 
     found = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef) and node.name in target_functions:
-            found.add(node.name)
-            is_nogil = False
-            is_parallel = False
+    for tree in trees:
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name in target_functions:
+                found.add(node.name)
+                is_nogil = False
+                is_parallel = False
 
-            for decorator in node.decorator_list:
-                if (
-                    isinstance(decorator, ast.Call)
-                    and hasattr(decorator.func, "id")
-                    and decorator.func.id == "njit"
-                ):
-                    for kw in decorator.keywords:
-                        if (
-                            kw.arg == "nogil"
-                            and getattr(kw.value, "value", False) is True
-                        ):
-                            is_nogil = True
-                        if (
-                            kw.arg == "parallel"
-                            and getattr(kw.value, "value", False) is True
-                        ):
-                            is_parallel = True
+                for decorator in node.decorator_list:
+                    if (
+                        isinstance(decorator, ast.Call)
+                        and hasattr(decorator.func, "id")
+                        and decorator.func.id == "njit"
+                    ):
+                        for kw in decorator.keywords:
+                            if (
+                                kw.arg == "nogil"
+                                and getattr(kw.value, "value", False) is True
+                            ):
+                                is_nogil = True
+                            if (
+                                kw.arg == "parallel"
+                                and getattr(kw.value, "value", False) is True
+                            ):
+                                is_parallel = True
 
-            assert (
-                is_nogil
-            ), f"Function {node.name} MUST have nogil=True in @njit decorator to allow threading."
-            assert (
-                is_parallel
-            ), f"Function {node.name} MUST have parallel=True in @njit decorator for performance."
+                assert (
+                    is_nogil
+                ), f"Function {node.name} MUST have nogil=True in @njit decorator to allow threading."
+                assert (
+                    is_parallel
+                ), f"Function {node.name} MUST have parallel=True in @njit decorator for performance."
 
     missing = sorted(set(target_functions) - found)
     assert not missing, f"Missing critical kernels in guard check: {missing}"

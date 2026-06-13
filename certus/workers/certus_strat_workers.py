@@ -1980,7 +1980,10 @@ def _run_phaseB_parallel_execution(
                 futures.append(executor.submit(_run_segment, segment))
             
             # Wait for all segments to complete (with a safe timeout)
-            concurrent.futures.wait(futures, timeout=600)
+            done, not_done = concurrent.futures.wait(futures, timeout=600)
+            for f in done:
+                if f.exception() is not None:
+                    params["logger"].error(f"❌ Future raised exception: {f.exception()}", exc_info=f.exception())
     except NUMERICAL_FAULT_EXCEPTIONS as e:
         params["logger"].error(f"ThreadPoolExecutor error: {e}")
         raise

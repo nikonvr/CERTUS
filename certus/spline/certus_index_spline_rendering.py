@@ -10,6 +10,7 @@ import logging
 from typing import Any
 
 import numpy as np
+from certus.spline.certus_index_spline_excel_export import _RMSEPlotContext
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCursor, QFont
@@ -49,6 +50,7 @@ from certus.spline.certus_index_spline_core import (
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
 
 from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
+from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
 def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
@@ -241,54 +243,78 @@ class _PlotMixin:
             pn.autoRange()
 
     def _plot_rmse_data_scatter(self, src: dict, ctx: "_RMSEPlotContext") -> None:
-        d_plot = ctx.d_plot
-        r_plot = ctx.r_plot
-        d_vis = ctx.d_vis
-        r_vis = ctx.r_vis
-        kind_vis = ctx.kind_vis
-        status_vis = ctx.status_vis
+        d_plot = np.asarray(ctx.d_plot, dtype=np.float64).ravel()
+        r_plot = np.asarray(ctx.r_plot, dtype=np.float64).ravel()
+        d_vis = np.asarray(ctx.d_vis, dtype=np.float64).ravel()
+        r_vis = np.asarray(ctx.r_vis, dtype=np.float64).ravel()
+        kind_vis = np.asarray(getattr(ctx, "kind_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
+        status_vis = np.asarray(getattr(ctx, "status_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
 
-        # Filter out aberrant points (RMSE far above threshold) to keep the y-axis autoscale tight.
+        if hasattr(self, "plot_corridor_rmse_d"):
+            self.plot_corridor_rmse_d.clear()
+
+        if d_vis.size != r_vis.size:
+            n = min(d_vis.size, r_vis.size)
+            d_vis = d_vis[:n]
+            r_vis = r_vis[:n]
+        if kind_vis.size != d_vis.size:
+            kind_vis = np.zeros_like(d_vis, dtype=np.int8)
+        if status_vis.size != d_vis.size:
+            status_vis = np.zeros_like(d_vis, dtype=np.int8)
+
+        # Live scatter should reflect the current worker data directly.
+        # Keep only the extreme outliers clipped for readability.
         rmse_thr_val = src.get("profile_d_rmse_thresh")
         if rmse_thr_val is not None and np.isfinite(float(rmse_thr_val)):
             max_r = 1.5 * float(rmse_thr_val)
+        elif r_plot.size > 0:
+            _r_min = float(np.nanmin(r_plot)) if np.any(np.isfinite(r_plot)) else float("inf")
+            max_r = 1.5 * _r_min if np.isfinite(_r_min) else float("inf")
         else:
-            max_r = 1.5 * np.min(r_vis) if r_vis.size > 0 else float("inf")
-        
-        m_valid_plot = r_vis <= max_r
-        d_vis = d_vis[m_valid_plot]
-        r_vis = r_vis[m_valid_plot]
-        kind_vis = kind_vis[m_valid_plot]
-        status_vis = status_vis[m_valid_plot]
+            max_r = float("inf")
+
+        m_valid_plot = np.isfinite(d_plot) & np.isfinite(r_plot) & (r_plot <= max_r)
+        d_plot = d_plot[m_valid_plot]
+        r_plot = r_plot[m_valid_plot]
+
+        if hasattr(self, "_corridor_rmse_curve"):
+            try:
+                self._corridor_rmse_curve.setData(d_plot, r_plot)
+            except (AttributeError, RuntimeError, TypeError, ValueError):
+                logger.debug("Failed to update corridor RMSE line curve", exc_info=True)
+
+        m_valid_vis = np.isfinite(d_vis) & np.isfinite(r_vis) & (r_vis <= max_r)
+        d_vis = d_vis[m_valid_vis]
+        r_vis = r_vis[m_valid_vis]
+        kind_vis = kind_vis[m_valid_vis]
+        status_vis = status_vis[m_valid_vis]
 
         i_best = ctx.i_best
         m_rev = np.asarray(kind_vis == 1, dtype=bool)
         m_main = ~m_rev
 
         # Scatter brut : TOUS les points sans liaison visuelle (conformément au paradigme scatter)
-        self.plot_corridor_rmse_d.addItem(
-            pg.ScatterPlotItem(
-                d_vis[m_main],
-                r_vis[m_main],
-                pen=pg.mkPen(CertusTheme.PRIMARY, width=0),
-                brush=pg.mkBrush(0, 87, 255, 160),
-                size=5,
-                symbol="o",
-                name="RMSE(d)",
-            )
+        self.plot_corridor_rmse_d.plot(
+            d_vis[m_main],
+            r_vis[m_main],
+            pen=None,
+            symbol="o",
+            symbolSize=9,
+            symbolBrush=pg.mkBrush(0, 87, 255, 220),
+            symbolPen=pg.mkPen(CertusTheme.PRIMARY, width=1),
+            name="RMSE(d)",
         )
 
         if np.any(m_rev):
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    d_vis[m_rev],
-                    r_vis[m_rev],
-                    pen=pg.mkPen(255, 140, 0, 180),
-                    brush=pg.mkBrush(255, 140, 0, 160),
-                    size=8,
-                    symbol="t",
-                    name="RMSE(d) reprise cassure",
-                )
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_rev],
+                r_vis[m_rev],
+                pen=None,
+                symbol="t",
+                symbolSize=11,
+                symbolBrush=pg.mkBrush(255, 140, 0, 200),
+                symbolPen=pg.mkPen(255, 140, 0, 220),
+                name="RMSE(d) reprise cassure",
             )
 
         # Overlay fallback points so users can immediately see where strict Deltad
@@ -297,40 +323,37 @@ class _PlotMixin:
         m_fb_obj = np.asarray(status_vis == 2, dtype=bool)
         m_fb_emg = np.asarray(status_vis == 3, dtype=bool)
         if np.any(m_fb_seed):
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    d_vis[m_fb_seed],
-                    r_vis[m_fb_seed],
-                    pen=pg.mkPen("#ff8c00", width=2),
-                    brush=pg.mkBrush(255, 255, 255, 0),
-                    size=10,
-                    symbol="x",
-                    name="Fallback seed",
-                )
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_seed],
+                r_vis[m_fb_seed],
+                pen=None,
+                symbol="x",
+                symbolSize=12,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#ff8c00", width=2),
+                name="Fallback seed",
             )
         if np.any(m_fb_obj):
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    d_vis[m_fb_obj],
-                    r_vis[m_fb_obj],
-                    pen=pg.mkPen("#c2185b", width=2),
-                    brush=pg.mkBrush(255, 255, 255, 0),
-                    size=11,
-                    symbol="d",
-                    name="Fallback objectif",
-                )
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_obj],
+                r_vis[m_fb_obj],
+                pen=None,
+                symbol="d",
+                symbolSize=13,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#c2185b", width=2),
+                name="Fallback objectif",
             )
         if np.any(m_fb_emg):
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    d_vis[m_fb_emg],
-                    r_vis[m_fb_emg],
-                    pen=pg.mkPen("#6a1b9a", width=2),
-                    brush=pg.mkBrush(255, 255, 255, 0),
-                    size=12,
-                    symbol="s",
-                    name="Fallback urgence",
-                )
+            self.plot_corridor_rmse_d.plot(
+                d_vis[m_fb_emg],
+                r_vis[m_fb_emg],
+                pen=None,
+                symbol="s",
+                symbolSize=14,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#6a1b9a", width=2),
+                name="Fallback urgence",
             )
 
         bp_events = src.get("profile_d_manual_grid_breakpoint_events", [])
@@ -367,53 +390,63 @@ class _PlotMixin:
                     elif dir_s < 0:
                         bp_dir_left += 1
         if bp_d_vals:
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    np.asarray(bp_d_vals, dtype=np.float64),
-                    np.asarray(bp_r_vals, dtype=np.float64),
-                    pen=pg.mkPen("#9b111e", width=3),
-                    brush=pg.mkBrush(255, 236, 139, 180),
-                    size=13,
-                    symbol="o",
-                    name="Breakpoints",
-                )
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_vals, dtype=np.float64),
+                np.asarray(bp_r_vals, dtype=np.float64),
+                pen=None,
+                symbol="o",
+                symbolSize=15,
+                symbolBrush=pg.mkBrush(255, 236, 139, 220),
+                symbolPen=pg.mkPen("#9b111e", width=2),
+                name="Breakpoints",
             )
         if bp_d_prevn:
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    np.asarray(bp_d_prevn, dtype=np.float64),
-                    np.asarray(bp_r_prevn, dtype=np.float64),
-                    pen=pg.mkPen("#9b111e", width=2),
-                    brush=pg.mkBrush(255, 255, 255, 0),
-                    size=11,
-                    symbol="d",
-                    name="Breakpoint prevN",
-                )
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_prevn, dtype=np.float64),
+                np.asarray(bp_r_prevn, dtype=np.float64),
+                pen=None,
+                symbol="d",
+                symbolSize=13,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#9b111e", width=2),
+                name="Breakpoint prevN",
             )
         if bp_d_parab:
-            self.plot_corridor_rmse_d.addItem(
-                pg.ScatterPlotItem(
-                    np.asarray(bp_d_parab, dtype=np.float64),
-                    np.asarray(bp_r_parab, dtype=np.float64),
-                    pen=pg.mkPen("#7a3cff", width=2),
-                    brush=pg.mkBrush(255, 255, 255, 0),
-                    size=12,
-                    symbol="t",
-                    name="Breakpoint parabola",
-                )
+            self.plot_corridor_rmse_d.plot(
+                np.asarray(bp_d_parab, dtype=np.float64),
+                np.asarray(bp_r_parab, dtype=np.float64),
+                pen=None,
+                symbol="t",
+                symbolSize=14,
+                symbolBrush=pg.mkBrush(255, 255, 255, 0),
+                symbolPen=pg.mkPen("#7a3cff", width=2),
+                name="Breakpoint parabola",
             )
+
+        if r_plot.size == 0 or d_plot.size == 0:
+            self._corridor_rmse_best_idx = None
+            return
 
         i_best = int(np.argmin(r_plot))
 
         self._corridor_rmse_best_idx = i_best
 
         d_best = float(d_plot[i_best])
+        if hasattr(self, "_corridor_rmse_best_marker"):
+            try:
+                self._corridor_rmse_best_marker.setValue(d_best)
+                self._corridor_rmse_best_marker.setZValue(25)
+            except (AttributeError, RuntimeError, TypeError, ValueError):
+                logger.debug("Failed to update corridor RMSE best marker", exc_info=True)
+
 
         rmse_best = float(r_plot[i_best])
 
-        delta_rb = float(self.sp_corridor_rmse_delta.value()) if hasattr(self, "sp_corridor_rmse_delta") else 2e-4
+        delta_rb_raw = self.sp_corridor_rmse_delta.value() if hasattr(self, "sp_corridor_rmse_delta") else None
+        delta_rb = float(delta_rb_raw) if delta_rb_raw is not None else 2e-4
 
-        win_rb = int(self.sp_corridor_rmse_win.value()) if hasattr(self, "sp_corridor_rmse_win") else 3
+        win_rb_raw = self.sp_corridor_rmse_win.value() if hasattr(self, "sp_corridor_rmse_win") else None
+        win_rb = int(win_rb_raw) if win_rb_raw is not None else 3
 
         live_parab = (
             not hasattr(self, "chk_corridor_rmse_live_parabola") or self.chk_corridor_rmse_live_parabola.isChecked()
@@ -428,6 +461,8 @@ class _PlotMixin:
         _r_parab_list: list[float] = []
         for _dv in np.unique(_d_rounded):
             _m = _d_rounded == _dv
+            if not np.any(_m):
+                continue
             _best = int(np.argmin(r_plot[_m]))
             _d_parab_list.append(float(d_plot[_m][_best]))
             _r_parab_list.append(float(r_plot[_m][_best]))
@@ -462,15 +497,15 @@ class _PlotMixin:
             )
         )
 
-        self.plot_corridor_rmse_d.addItem(
-            pg.ScatterPlotItem(
-                [d_best],
-                [rmse_best],
-                pen=pg.mkPen("#0a5f42", width=1),
-                brush=pg.mkBrush("#20c997"),
-                size=10,
-                symbol="o",
-            )
+        self.plot_corridor_rmse_d.plot(
+            [d_best],
+            [rmse_best],
+            pen=None,
+            symbol="o",
+            symbolSize=12,
+            symbolBrush=pg.mkBrush("#20c997"),
+            symbolPen=pg.mkPen("#0a5f42", width=1),
+            name="Best d*",
         )
 
         rmse_thr = src.get("profile_d_rmse_thresh")
@@ -500,7 +535,11 @@ class _PlotMixin:
             rb_ok, d_lo_rb, d_hi_rb, slope_b, _curv_b = False, float("nan"), float("nan"), float("nan"), float("nan")
 
         if bool(parab_fit.get("ok", False)):
-            win_lo, win_hi = parab_fit.get("window_nm", (float(np.min(d_parab_arr)), float(np.max(d_parab_arr))))
+            if d_parab_arr.size > 0:
+                _parab_default = (float(np.min(d_parab_arr)), float(np.max(d_parab_arr)))
+            else:
+                _parab_default = (float("nan"), float("nan"))
+            win_lo, win_hi = parab_fit.get("window_nm", _parab_default)
             d_center_fit = float(parab_fit.get("d_center", d_center))
             lo_w = float(win_lo)
             hi_w = float(win_hi)
@@ -515,8 +554,19 @@ class _PlotMixin:
                     half_span = 0.5 * float(hi_w - lo_w)
             if not np.isfinite(half_span) or half_span <= 0.0:
                 half_span = max(1e-6, 0.5 * float(np.ptp(d_parab_arr)) if d_parab_arr.size > 1 else 1e-3)
-            d_min_val = float(np.min(d_plot)) if d_plot.size > 0 else float(d_center_fit - half_span)
-            d_max_val = float(np.max(d_plot)) if d_plot.size > 0 else float(d_center_fit + half_span)
+
+            # Center the corridor display around the parabola minimum with a +/-5% window.
+            if np.isfinite(d_center_fit) and d_center_fit > 0.0:
+                d_min_val = 0.95 * float(d_center_fit)
+                d_max_val = 1.05 * float(d_center_fit)
+            else:
+                d_min_val = float(d_center_fit - half_span)
+                d_max_val = float(d_center_fit + half_span)
+
+            if not np.isfinite(d_min_val) or not np.isfinite(d_max_val) or d_max_val <= d_min_val:
+                d_min_val = float(np.min(d_plot)) if d_plot.size > 0 else float(d_center_fit - half_span)
+                d_max_val = float(np.max(d_plot)) if d_plot.size > 0 else float(d_center_fit + half_span)
+
             d_par = np.linspace(
                 d_min_val,
                 d_max_val,
@@ -577,6 +627,132 @@ class _PlotMixin:
         ctx.bp_dir_right = int(bp_dir_right)
 
 
+    @staticmethod
+    def _corridor_profile_arrays(src: dict) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, str]:
+        norm = normalize_corridor_live_payload(src)
+        d_plot = np.asarray(norm.get("corridor_d_plot", []), dtype=np.float64).ravel()
+        r_plot = np.asarray(norm.get("corridor_rmse_plot", []), dtype=np.float64).ravel()
+        d_vis = np.asarray(norm.get("corridor_d_vis", d_plot), dtype=np.float64).ravel()
+        r_vis = np.asarray(norm.get("corridor_rmse_vis", r_plot), dtype=np.float64).ravel()
+        live_status = str(norm.get("profile_d_status", ""))
+        return d_plot, r_plot, d_vis, r_vis, live_status
+
+    def _prep_rmse_plot_data(self, src: dict):
+        """Prepare a corridor-RMSE plotting context from a result dictionary."""
+        from types import SimpleNamespace
+
+        if not isinstance(src, dict):
+            return None
+
+        d_plot, r_plot, d_vis, r_vis, live_status = self._corridor_profile_arrays(src)
+
+        kind_vis = np.asarray(src.get("corridor_kind_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
+        status_vis = np.asarray(src.get("corridor_status_vis", np.zeros_like(d_vis, dtype=np.int8)), dtype=np.int8).ravel()
+
+        if kind_vis.size != d_vis.size:
+            kind_vis = np.zeros_like(d_vis, dtype=np.int8)
+        if status_vis.size != d_vis.size:
+            status_vis = np.zeros_like(d_vis, dtype=np.int8)
+
+        d_best = float(src.get("d_nm", src.get("d_best", np.nan)))
+        rmse_best = float(src.get("rmse", src.get("rmse_best", np.nan)))
+        rmse_thr = src.get("profile_d_threshold_rmse", src.get("rmse_threshold", src.get("rmse_thr", None)))
+        if rmse_thr is not None:
+            try:
+                rmse_thr = float(rmse_thr)
+            except (TypeError, ValueError):
+                rmse_thr = None
+
+        parab_fit = src.get("corridor_parab_fit", src.get("parab_fit", {})) or {}
+        curvature_label_spec = src.get("curvature_label_spec", None)
+        live_parab = bool(src.get("live_parab", False))
+        envelope_display = bool(src.get("envelope_display", True))
+        is_live_grid = bool(src.get("is_live_grid", False) or live_status == "manual_grid_live")
+        if d_plot.size > 0 and r_plot.size == d_plot.size:
+            finite_r = np.isfinite(r_plot)
+            i_best_default = int(np.nanargmin(np.where(finite_r, r_plot, np.inf))) if np.any(finite_r) else 0
+        else:
+            i_best_default = 0
+        i_best = int(src.get("i_best", i_best_default) or i_best_default)
+        win_rb = src.get("win_rb", 3)
+        if win_rb is None:
+            win_rb = 3
+        delta_rb = src.get("delta_rb", 2e-4)
+        if delta_rb is None:
+            delta_rb = 2e-4
+
+        rb_ok = bool(src.get("rb_ok", False))
+        d_lo_rb = float(src.get("d_lo_rb", np.nan))
+        d_hi_rb = float(src.get("d_hi_rb", np.nan))
+        slope_b = float(src.get("slope_b", np.nan))
+        curv_b = float(src.get("curv_b", np.nan))
+        d_center = float(src.get("d_center", d_best))
+        bp_events = src.get("bp_events", [])
+        bp_dir_left = int(src.get("bp_dir_left", 0) or 0)
+        bp_dir_right = int(src.get("bp_dir_right", 0) or 0)
+
+        return SimpleNamespace(
+            d_plot=d_plot,
+            r_plot=r_plot,
+            d_vis=d_vis,
+            r_vis=r_vis,
+            kind_vis=kind_vis,
+            status_vis=status_vis,
+            i_best=i_best,
+            parab_fit=parab_fit,
+            curvature_label_spec=curvature_label_spec,
+            envelope_display=envelope_display,
+            is_live_grid=is_live_grid,
+            live_parab=live_parab,
+            d_best=d_best,
+            rmse_best=rmse_best,
+            rmse_thr=rmse_thr,
+            d_parab_arr=d_vis,
+            r_parab_arr=r_vis,
+            win_rb=win_rb,
+            delta_rb=delta_rb,
+            rb_ok=rb_ok,
+            d_lo_rb=d_lo_rb,
+            d_hi_rb=d_hi_rb,
+            slope_b=slope_b,
+            curv_b=curv_b,
+            d_center=d_center,
+            bp_events=bp_events if isinstance(bp_events, list) else [],
+            bp_dir_left=bp_dir_left,
+            bp_dir_right=bp_dir_right,
+        )
+
+    def _draw_corridor_curvature_label(self, curvature_label_spec, r_vis, r_plot, envelope_display) -> None:
+        if curvature_label_spec is None or not hasattr(self, "plot_corridor_rmse_d"):
+            return
+        c2_l, d_vl, r_vl = curvature_label_spec
+        c2_disp = float(abs(c2_l))
+        if not np.isfinite(c2_disp) or c2_disp <= 0.0:
+            return
+        r_span_src = r_vis if envelope_display else r_plot
+        span_r = (
+            float(np.nanmax(r_span_src) - np.nanmin(r_span_src))
+            if r_span_src.size > 1
+            else max(1e-6, abs(float(r_vl)) * 0.05 if np.isfinite(r_vl) else 1e-4)
+        )
+        dy = max(1e-6, 0.035 * span_r)
+        existing = getattr(self, "_corridor_rmse_curvature_label", None)
+        if existing is not None:
+            try:
+                self.plot_corridor_rmse_d.removeItem(existing)
+            except (AttributeError, RuntimeError):
+                pass
+        label_a = pg.TextItem(
+            text=f"Curvature a = {c2_disp:.4e} nm?^2",
+            color="#7a3cff",
+            anchor=(0.5, 1),
+            fill=pg.mkColor(255, 255, 255, 220),
+        )
+        label_a.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+        label_a.setPos(d_vl, r_vl + dy)
+        self.plot_corridor_rmse_d.addItem(label_a, ignoreBounds=True)
+        self._corridor_rmse_curvature_label = label_a
+
     def _plot_corridor_rmse_tab(self, src: dict) -> None:
         """Tab corridor RMSE(d). Orchestrator."""
         if not hasattr(self, "plot_corridor_rmse_d"):
@@ -589,6 +765,8 @@ class _PlotMixin:
         r_plot = ctx.r_plot
         d_vis = ctx.d_vis
         r_vis = ctx.r_vis
+        self._corridor_rmse_d_vals = np.asarray(d_plot, dtype=np.float64).copy()
+        self._corridor_rmse_vals = np.asarray(r_plot, dtype=np.float64).copy()
         i_best = ctx.i_best
         parab_fit = ctx.parab_fit
         curvature_label_spec = ctx.curvature_label_spec
@@ -639,8 +817,9 @@ class _PlotMixin:
                     _m_below = r_parab_arr <= thr
                     if np.any(_m_below):
                         _d_below = d_parab_arr[_m_below]
-                        _int_nm = (float(np.min(_d_below)), float(np.max(_d_below)))
-                        _int_ok = True
+                        if _d_below.size > 0:
+                            _int_nm = (float(np.min(_d_below)), float(np.max(_d_below)))
+                            _int_ok = True
                 except (ValueError, TypeError, AttributeError):
                     logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
@@ -670,8 +849,11 @@ class _PlotMixin:
             self.plot_corridor_rmse_d.addItem(_line_int_hi)
 
             # Position the TextItems slightly above the minimum.
-            _r_range = float(np.max(r_plot) - np.min(r_plot)) if r_plot.size > 1 else 1e-4
-            _r_label = float(np.nanmin(r_plot)) + 0.05 * _r_range
+            if r_plot.size > 0:
+                _r_range = float(np.max(r_plot) - np.min(r_plot)) if r_plot.size > 1 else 1e-4
+                _r_label = float(np.nanmin(r_plot)) + 0.05 * _r_range
+            else:
+                _r_label = 0.0
             _label_lo.setPos(_d_int_lo, _r_label)
             _label_hi.setPos(_d_int_hi, _r_label)
             self.plot_corridor_rmse_d.addItem(_label_lo)
@@ -819,27 +1001,38 @@ class _PlotMixin:
             hasattr(self, "chk_corridor_rmse_lock_scale") and self.chk_corridor_rmse_lock_scale.isChecked()
         )
 
+        # Live mode must stay fully automatic in both axes.
         if is_live_grid:
-            # Live mode must always remain visible even if a stale/locked viewport
-            # exists from a previous run. Force bounds on current finite data.
-            self._set_corridor_rmse_view_data_bounds(
-                d_plot,
-                r_plot,
-            )
-        elif lock_scale:
-            self._set_corridor_rmse_view_data_bounds(
-                d_vis if envelope_display else d_plot,
-                r_vis if envelope_display else r_plot,
-            )
-        elif np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
-            self._set_corridor_rmse_view_centered(float(d_center), 0.5 * float(max(0.0, d_hi_man - d_lo_man)))
-        elif rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb) and d_hi_rb > d_lo_rb:
-            self._set_corridor_rmse_view_centered(float(d_center), 0.5 * float(d_hi_rb - d_lo_rb))
-        else:
+            self.plot_corridor_rmse_d.enableAutoRange(axis=pg.ViewBox.XYAxes, enable=True)
             self.plot_corridor_rmse_d.autoRange()
+        else:
+            # Center the full corridor view around the parabola minimum with a +/-5% window.
+            if np.isfinite(d_center) and d_center > 0.0:
+                d_lo_fit = 0.95 * float(d_center)
+                d_hi_fit = 1.05 * float(d_center)
+                if d_hi_fit > d_lo_fit:
+                    self.plot_corridor_rmse_d.setXRange(d_lo_fit, d_hi_fit, padding=0.0)
+                else:
+                    self.plot_corridor_rmse_d.autoRange()
+            elif np.isfinite(d_lo_man) and np.isfinite(d_hi_man) and d_hi_man >= d_lo_man:
+                self.plot_corridor_rmse_d.setXRange(float(d_lo_man), float(d_hi_man), padding=0.0)
+            elif rb_ok and np.isfinite(d_lo_rb) and np.isfinite(d_hi_rb) and d_hi_rb > d_lo_rb:
+                self.plot_corridor_rmse_d.setXRange(float(d_lo_rb), float(d_hi_rb), padding=0.0)
+            else:
+                self.plot_corridor_rmse_d.autoRange()
+
+        try:
+            self.plot_corridor_rmse_d.repaint()
+            self.plot_corridor_rmse_d.update()
+            self.plot_corridor_rmse_d.plotItem.vb.update()
+        except (AttributeError, RuntimeError):
+            logger.debug("Corridor RMSE(d) repaint failed", exc_info=True)
 
         # Mathematically adjust Y scale to focus on the valley and exclude outliers/aberrant points
-        if not lock_scale:
+        if is_live_grid:
+            self.plot_corridor_rmse_d.enableAutoRange(axis=pg.ViewBox.YAxis, enable=True)
+            self.plot_corridor_rmse_d.autoRange()
+        elif not lock_scale:
             delta_rb_eff = max(delta_rb, 2e-4)
             y_min_val = rmse_best - 0.25 * delta_rb_eff
             y_max_val = rmse_best + 2.0 * delta_rb_eff
@@ -848,29 +1041,7 @@ class _PlotMixin:
             y_min_val = max(1e-6, y_min_val)
             self.plot_corridor_rmse_d.plotItem.setYRange(y_min_val, y_max_val, padding=0.0)
 
-        if curvature_label_spec is not None:
-            c2_l, d_vl, r_vl = curvature_label_spec
-            c2_disp = float(abs(c2_l))
-            if not np.isfinite(c2_disp) or c2_disp <= 0.0:
-                c2_disp = float("nan")
-            r_span_src = r_vis if envelope_display else r_plot
-            span_r = (
-                float(np.nanmax(r_span_src) - np.nanmin(r_span_src))
-                if r_span_src.size > 1
-                else max(1e-6, abs(float(r_vl)) * 0.05 if np.isfinite(r_vl) else 1e-4)
-            )
-            dy = max(1e-6, 0.035 * span_r)
-            if np.isfinite(c2_disp):
-                label_a = pg.TextItem(
-                    text=f"Curvature a = {c2_disp:.4e} nm?^2",
-                    color="#7a3cff",
-                    anchor=(0.5, 1),
-                    fill=pg.mkColor(255, 255, 255, 220),
-                )
-                label_a.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-                label_a.setPos(d_vl, r_vl + dy)
-                self.plot_corridor_rmse_d.addItem(label_a, ignoreBounds=True)
-
+        self._draw_corridor_curvature_label(curvature_label_spec, r_vis, r_plot, envelope_display)
         self._update_corridor_rmse_state_bar(src)
 
 

@@ -30,7 +30,7 @@ SpectrumEvalVariant = Literal["design", "re"]
 def spectrum_eval_feedback(app: Any, message: str, level: str = "info") -> None:
     """Best-effort premium feedback for spectrum evaluation workflows."""
     try:
-        from certus.ui.certus_ui import show_status_feedback
+        from certus.ui.certus_ui_utils import show_status_feedback
 
         show_status_feedback(app, message, level, duration_ms=1200)
     except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
@@ -226,14 +226,15 @@ def spectrum_eval_build_worker_cfg(
 
     wls_vis = np.linspace(lmin_display, lmax_display, n_vis)
 
-    wls_optim = app._get_optim_wls()
+    wls_optim = getattr(app, "_get_optim_wls", lambda: [])()
+    n_optim = len(wls_optim) if wls_optim is not None else 0
 
     app.log(
         (
             "[SPECTRUM_EVAL.build_worker_cfg] spectral evaluation prepared | "
             "display_pts=%d | display_range_nm=[%.0f,%.0f] | optim_pts=%d | active_targets=%d | variant=%s"
         )
-        % (n_vis, lmin_display, lmax_display, len(wls_optim), len(active), variant),
+        % (n_vis, lmin_display, lmax_display, n_optim, len(active), variant),
         "INFO",
     )
     spectrum_eval_feedback(

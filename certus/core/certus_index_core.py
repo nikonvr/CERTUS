@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 from enum import Enum, auto
 from typing import Any
+from scipy.interpolate import CubicSpline
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,

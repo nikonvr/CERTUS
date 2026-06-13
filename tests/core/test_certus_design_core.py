@@ -195,4 +195,4 @@ def test_design_optimization_callback_common_oblique_mode():
     assert len(app.signals.result.emissions) > 0
     # The emitted result dictionary should contain 'spectra_display' and 'self._oblique_mode' == True
     result_dict = app.signals.result.emissions[0][0]
-    assert result_dict['self._oblique_mode'] == True
+    assert result_dict['self._oblique_mode'] is True

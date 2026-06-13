@@ -117,7 +117,7 @@ class _Cfg:
 
 
 def test_on_worker_done_uses_raw_result_for_manual_dialog_and_worker(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.uninstall_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.utils.certus_skeleton.uninstall_skeleton", lambda *_args, **_kwargs: None)
 
     recorded: dict[str, object] = {}
     raw_result = {"sigma_knots": [1.0, 2.0, 3.0], "mse": 1e-6, "rmse": 1e-3}
@@ -160,7 +160,7 @@ def test_on_worker_done_uses_raw_result_for_manual_dialog_and_worker(monkeypatch
 
 
 def test_on_worker_done_starts_manual_stage_before_deferred_corridors(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.uninstall_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.utils.certus_skeleton.uninstall_skeleton", lambda *_args, **_kwargs: None)
 
     recorded: dict[str, object] = {}
     raw_result = {"sigma_knots": [1.0, 2.0, 3.0], "mse": 1e-6, "rmse": 1e-3}
@@ -206,7 +206,7 @@ def test_on_worker_done_starts_manual_stage_before_deferred_corridors(monkeypatc
 
 
 def test_on_worker_done_skips_second_manual_prompt_after_manual_completion(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.uninstall_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.utils.certus_skeleton.uninstall_skeleton", lambda *_args, **_kwargs: None)
 
     recorded: dict[str, object] = {}
     manual_result = {"sigma_knots": [1.0, 1.5, 2.0, 3.0], "mse": 8e-7, "rmse": 9e-4}
@@ -241,8 +241,8 @@ def test_on_worker_done_skips_second_manual_prompt_after_manual_completion(monke
 
 
 def test_start_manual_sigma_insert_worker_scales_progress_to_ui_range(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.GenericWorker", _FakeWorker)
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.install_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.install_skeleton", lambda *_args, **_kwargs: None)
 
     app = SimpleNamespace(
         _last_run_cfg=object(),
@@ -281,8 +281,8 @@ def test_start_manual_sigma_insert_worker_scales_progress_to_ui_range(monkeypatc
 
 
 def test_start_manual_sigma_insert_worker_passes_multiple_knots_as_sorted_sigma(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.GenericWorker", _FakeWorker)
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.install_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.install_skeleton", lambda *_args, **_kwargs: None)
 
     app = SimpleNamespace(
         _last_run_cfg=object(),
@@ -339,8 +339,8 @@ def test_build_manual_repartition_target_sigma_knots_sigma_uses_linear_spacing_a
 
 
 def test_start_manual_sigma_repartition_worker_uses_current_selected_k_not_result_k(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.GenericWorker", _FakeWorker)
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.install_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_manualmesh_mixin.install_skeleton", lambda *_args, **_kwargs: None)
 
     app = SimpleNamespace(
         _last_run_cfg=object(),
@@ -384,7 +384,7 @@ def test_start_manual_sigma_repartition_worker_uses_current_selected_k_not_resul
 
 
 def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_corridorui_mixin.GenericWorker", _FakeWorker)
 
     logger = _Logger()
     app = SimpleNamespace(
@@ -420,7 +420,7 @@ def test_start_deferred_corridor_worker_logs_after_stage(monkeypatch) -> None:
 
 
 def test_start_deferred_corridor_worker_sets_standard_base_mode(monkeypatch) -> None:
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.GenericWorker", _FakeWorker)
+    monkeypatch.setattr("certus.ui.certus_index_spline_corridorui_mixin.GenericWorker", _FakeWorker)
 
     logger = _Logger()
     app = SimpleNamespace(
@@ -567,7 +567,7 @@ def test_on_live_update_routes_corridor_profile_only_payload_to_rmse_live_handle
 
 def test_on_worker_done_manual_dialog_logs_requested_and_applied_mesh(monkeypatch, qapp) -> None:
     _ = qapp
-    monkeypatch.setattr("CERTUS_INDEX_SPLINE.uninstall_skeleton", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("certus.utils.certus_skeleton.uninstall_skeleton", lambda *_args, **_kwargs: None)
 
     dialog = ManualSigmaKnotDialog(
         sigma_knots=np.asarray([1.0 / 2200.0, 1.0 / 1800.0, 1.0 / 1400.0, 1.0 / 800.0], dtype=np.float64),

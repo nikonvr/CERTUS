@@ -60,16 +60,16 @@ def _disable_numba_jit():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _CORE_MODULES = [
-    "certus_core",
-    "certus_data",
+    "certus.core.certus_core",
+    "certus.utils.certus_data",
     "certus_physics",
-    "spline_pipeline",
-    "certus_re_workers",
-    "spline_profile_corridors",
-    "certus_spline_report",
-    "spline_objective",
-    "certus_index_spline_core",
-    "certus_index_utils",
+    "certus.spline.spline_pipeline",
+    "certus.workers.certus_re_workers",
+    "certus.spline.spline_profile_corridors",
+    "certus.utils.certus_spline_report",
+    "certus.spline.spline_objective",
+    "certus.spline.certus_index_spline_core",
+    "certus.utils.certus_index_utils",
 ]
 
 _GUI_MODULES = [

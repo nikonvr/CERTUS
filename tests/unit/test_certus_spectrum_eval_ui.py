@@ -9,7 +9,7 @@ import pytest
 @pytest.mark.unit
 def test_spectrum_eval_feedback_prefers_shared_status_helper(monkeypatch):
     mod = importlib.import_module("certus.ui.certus_spectrum_eval_ui")
-    ui = importlib.import_module("certus.ui.certus_ui")
+    ui = importlib.import_module("certus.ui.certus_ui_utils")
     helper = Mock(return_value="toast")
     monkeypatch.setattr(ui, "show_status_feedback", helper)
 
@@ -35,7 +35,7 @@ def test_spectrum_eval_feedback_falls_back_to_status_labels(monkeypatch):
 
 @pytest.mark.unit
 def test_show_status_feedback_updates_known_status_label(monkeypatch):
-    ui = importlib.import_module("certus.ui.certus_ui")
+    ui = importlib.import_module("certus.ui.certus_ui_utils")
     toast = Mock(return_value=None)
     monkeypatch.setattr(ui, "show_toast", toast)
 
@@ -51,7 +51,7 @@ def test_show_status_feedback_updates_known_status_label(monkeypatch):
 
 @pytest.mark.unit
 def test_show_status_feedback_falls_back_to_lbl_status(monkeypatch):
-    ui = importlib.import_module("certus.ui.certus_ui")
+    ui = importlib.import_module("certus.ui.certus_ui_utils")
     monkeypatch.setattr(ui, "show_toast", Mock(return_value=None))
 
     lbl_status = Mock()

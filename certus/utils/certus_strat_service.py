@@ -12,6 +12,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from certus.utils.certus_services import BaseHeadlessService
+import certus_physics
 from certus_physics import (
     arange_inclusive,
     get_refractive_index,
@@ -23,6 +24,7 @@ from certus_physics import (
     check_extrema_proximity_batch,
     validate_wavelengths_batch,
     update_run_states_kernel,
+    calculate_detailed_growth,
 )
 from certus.utils.certus_strat_context import StratContext
 from certus.core.certus_core import WL_DECIMALS
@@ -33,11 +35,145 @@ NON_MONOTONIC_MODE_ATTENUATE = "attenuate"
 WL_INDEX_SCALE = 10**WL_DECIMALS
 
 try:
-    from certus.core.certus_core import APP_CONTEXT as _APP_CONTEXT
+    from certus.core.certus_strat_core import APP_CONTEXT as _APP_CONTEXT
 except ImportError:
-    _APP_CONTEXT = {"materials_db": None}
+    try:
+        from certus.core.certus_strat_config import APP_CONTEXT as _APP_CONTEXT
+    except ImportError:
+        _APP_CONTEXT = {"materials_db": None}
 
 APP_CONTEXT = _APP_CONTEXT
+
+
+class _PhysicsBridge:
+    """Internal bridge that resolves kernels from module globals, enabling test monkeypatching."""
+
+    @staticmethod
+    def arange_inclusive(start: float, stop: float, step: float) -> np.ndarray:
+        return arange_inclusive(start, stop, step)
+
+    @staticmethod
+    def get_refractive_index(mat_id: Any, wl: float, db_instance: Any = None) -> Any:
+        return get_refractive_index(mat_id, wl, db_instance=db_instance)
+
+    @staticmethod
+    def get_refractive_clues_vectorized(mat_id: Any, wls: np.ndarray, db_instance: Any = None) -> Any:
+        return get_refractive_clues_vectorized(mat_id, wls, db_instance=db_instance)
+
+    @staticmethod
+    def calculate_rt_hl(
+        wavelengths: np.ndarray,
+        nH: np.ndarray,
+        nL: np.ndarray,
+        nSub: np.ndarray,
+        thicknesses: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        return calculate_RT_vectorized_real_HL(wavelengths, nH, nL, nSub, thicknesses)
+
+    @staticmethod
+    def calculate_rt_batch(
+        wavelengths: np.ndarray,
+        nH: np.ndarray,
+        nL: np.ndarray,
+        nSub: np.ndarray,
+        thicknesses: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        return calculate_RT_batch_kernel(wavelengths, nH, nL, nSub, thicknesses)
+
+    @staticmethod
+    def prepare_dynamics_data(
+        wls: np.ndarray,
+        all_wls: np.ndarray,
+        matrix_cache: np.ndarray,
+        nH: np.ndarray,
+        nL: np.ndarray,
+        nSub: np.ndarray,
+        i_layer: int,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return prepare_dynamics_data_kernel(wls, all_wls, matrix_cache, nH, nL, nSub, i_layer)
+
+    @staticmethod
+    def compute_dynamics(
+        wls: np.ndarray,
+        n_layers: np.ndarray,
+        n_subs: np.ndarray,
+        thicknesses: np.ndarray,
+        M_befores: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        return compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores)
+
+    @staticmethod
+    def check_extrema_proximity(
+        wls: np.ndarray,
+        n_curr: np.ndarray,
+        n_prev: np.ndarray,
+        n_sub: np.ndarray,
+        thickness: float,
+        M_befores: np.ndarray,
+        exclusion_ratio: float,
+        is_not_first_layer: bool,
+        wl_changed: np.ndarray,
+    ) -> np.ndarray:
+        return check_extrema_proximity_batch(
+            wls, n_curr, n_prev, n_sub, thickness, M_befores, exclusion_ratio, is_not_first_layer, wl_changed
+        )
+
+    @staticmethod
+    def validate_wavelengths(
+        wls: np.ndarray,
+        nH: np.ndarray,
+        nL: np.ndarray,
+        nSub: np.ndarray,
+        history: np.ndarray,
+        nominal_thicknesses: np.ndarray,
+        i_layer: int,
+        offset: float,
+        noise: np.ndarray,
+        error_factor: float,
+        mode: str,
+    ) -> np.ndarray:
+        return validate_wavelengths_batch(
+            wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode
+        )
+
+    @staticmethod
+    def update_run_states(
+        nominal_thicknesses: np.ndarray,
+        i_layer: int,
+        history: np.ndarray,
+        best_wl: float,
+        nH: complex,
+        nL: complex,
+        nSub: complex,
+        offset: float,
+        noise: np.ndarray,
+        error_factor: float,
+        mode: str,
+    ) -> np.ndarray:
+        return update_run_states_kernel(
+            nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode
+        )
+
+    @staticmethod
+    def calculate_detailed_growth(
+        num_layers: int,
+        p_thick_arr: np.ndarray,
+        layer_wls: np.ndarray,
+        nH_arr: np.ndarray,
+        nL_arr: np.ndarray,
+        nSub_arr: np.ndarray,
+        steps_per_layer: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return calculate_detailed_growth(
+            num_layers,
+            p_thick_arr,
+            layer_wls,
+            nH_arr,
+            nL_arr,
+            nSub_arr,
+            steps_per_layer,
+        )
+
 
 
 def wavelength_to_index(wavelength_nm: float) -> int:
@@ -69,9 +205,7 @@ def generate_noise_array(
     """Generate gaussian noise array (clipped to +/-3sigma)."""
     if deterministic:
         return np.zeros(shape, dtype=np.float64)
-    # NOTE: `distribution` is intentionally ignored (gaussian-only policy).
     _ = distribution
-    # Use local RNG when provided to guarantee deterministic pipelines.
     local_rng = rng if rng is not None else np.random.default_rng(0)
     raw = np.clip(local_rng.normal(0.0, 1.0 / 3.0, shape), -1.0, 1.0)
     return (raw * scale).astype(np.float64)
@@ -100,7 +234,7 @@ class StratStrategyService(BaseHeadlessService):
         if cls._schema is not None:
             return cls._schema
         try:
-            import jsonschema  # noqa: F401 – optional dependency check
+            import jsonschema  # noqa: F401
 
             with open(cls._SCHEMA_PATH, encoding="utf-8") as f:
                 cls._schema = json.load(f)
@@ -137,7 +271,10 @@ class StratStrategyService(BaseHeadlessService):
         if step not in self.VALID_STEPS:
             raise ValueError(f"unsupported step: {step}")
 
-        params_raw = payload.get("params", {})
+        if "params" not in payload:
+            raise ValueError("payload.params must be a dict")
+
+        params_raw = payload["params"]
         if not isinstance(params_raw, dict) and not isinstance(params_raw, StratParamsDTO):
             raise ValueError("payload.params must be a dict")
 
@@ -159,8 +296,40 @@ class StratStrategyService(BaseHeadlessService):
 
         return StratPayloadParts(step=step, params=params, opti_results=opti_results)
 
-    def _normalize_payload(self, parts: StratPayloadParts) -> dict[str, Any]:
-        """Normalize validated STRAT payload pieces into the service contract."""
+    def _validate_structural(self, payload: Mapping[str, Any]) -> StratPayloadParts:
+        """Phase 1: Structural validation (JSON schema + type shape checks)."""
+        if not isinstance(payload, Mapping):
+            raise ValueError("payload must be a mapping")
+
+        # Strict JSON schema validation
+        schema_errors = self.validate_against_schema(payload)
+        if schema_errors:
+            raise ValueError("Payload schema violations:\n" + "\n".join(schema_errors))
+
+        # DTO schema and model structure checks
+        return self._validate_payload_shape(payload)
+
+    def _validate_domain(self, parts: StratPayloadParts, materials_db: Any = None) -> None:
+        """Phase 2: Domain/Business rule validation (wavelength ranges, material bounds)."""
+        params = parts.params
+        
+        # Verify scan limits consistency
+        try:
+            req_min = float(params.scan_wl_min)
+            req_max = float(params.scan_wl_max)
+            if req_min > req_max:
+                logging.getLogger(__name__).warning(
+                    "Domain validation: scan_wl_min > scan_wl_max, will be swapped dynamically."
+                )
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+        # Verify material databases coverage if database is provided
+        if materials_db is not None:
+            self.validate_material_coverage(parts.params, materials_db)
+
+    def _normalize(self, parts: StratPayloadParts) -> dict[str, Any]:
+        """Phase 3: Normalization of validated payload into final contract dictionary."""
         return {
             "step": parts.step,
             "params": parts.params,
@@ -169,24 +338,11 @@ class StratStrategyService(BaseHeadlessService):
 
     def validate_payload(self, payload: Mapping[str, Any], materials_db: Any = None) -> dict[str, Any]:
         """Validate/normalize legacy STRAT worker payload."""
-        if not isinstance(payload, Mapping):
-            raise ValueError("payload must be a mapping")
+        parts = self._validate_structural(payload)
+        self._validate_domain(parts, materials_db)
+        return self._normalize(parts)
 
-        parts = self._validate_payload_shape(payload)
-
-        # P1-8: strict schema validation
-        schema_errors = self.validate_against_schema(payload)
-        if schema_errors:
-            raise ValueError("Payload schema violations:\n" + "\n".join(schema_errors))
-
-        normalized = self._normalize_payload(parts)
-
-        if materials_db is not None:
-            self.validate_material_coverage(normalized["params"], materials_db)
-
-        return normalized
-
-    def validate_material_coverage(self, params: dict[str, Any], db: Any) -> None:
+    def validate_material_coverage(self, params: dict[str, Any] | StratParamsDTO, db: Any) -> None:
         """Validate spectral coverage, but degrade gracefully when material metadata is incomplete.
 
         The legacy workflow should not hard-fail on a single narrow material if the
@@ -221,8 +377,8 @@ class StratStrategyService(BaseHeadlessService):
 
         for mat_name in files_to_check:
             mat_data = db.data[mat_name]
-            valid_min = float(mat_data.get("min_wl_valid", float("nan")))
-            valid_max = float(mat_data.get("max_wl_valid", float("nan")))
+            valid_min = float(mat_data.get("min_wl_valid", mat_data["wl"][0] if "wl" in mat_data and len(mat_data["wl"]) > 0 else float("nan")))
+            valid_max = float(mat_data.get("max_wl_valid", mat_data["wl"][-1] if "wl" in mat_data and len(mat_data["wl"]) > 0 else float("nan")))
 
             has_bounds = np.isfinite(valid_min) and np.isfinite(valid_max) and valid_min < valid_max
             overlaps = has_bounds and not (req_max < valid_min or req_min > valid_max)
@@ -248,16 +404,25 @@ class StratStrategyService(BaseHeadlessService):
             )
 
     def run_step_0(self, params: dict[str, Any], materials_db: Any = None) -> dict[str, Any]:
-        """Orchestrate Step 0 (Nominal + Sensitivity + SEEL) headlessly."""
-        # Inject materials_db into params if provided for the kernels to use it
-        # (This avoids global lookup in APP_CONTEXT inside the headless service)
+        """Orchestrate Step 0 (Nominal + Sensitivity + SEEL) headlessly.
+
+        Step 0 evaluates the ideal design performance, deposition sensitivities
+        and SEEL (Spectral Error Envelope Limit).
+        """
+        logger = logging.getLogger(__name__)
+        logger.info("Initializing Headless Step 0 execution...")
+
+        # Setup local context parameters if needed
+        local_params = dict(params)
         if materials_db is not None:
-            params["materials_db"] = materials_db
+            local_params["materials_db"] = materials_db
 
-        nominal_results, multipliers = calculate_nominal_properties(params)
-        sensitivity_data = calculate_sensitivity_matrix(params, nominal_results)
-        seel_data = calculate_seel_analysis(params, nominal_results)
+        # Context-isolated execution path
+        nominal_results, multipliers = calculate_nominal_properties(local_params)
+        sensitivity_data = calculate_sensitivity_matrix(local_params, nominal_results)
+        seel_data = calculate_seel_analysis(local_params, nominal_results)
 
+        logger.info("Step 0 computations successfully completed.")
         return {
             "nominal_results": nominal_results,
             "multipliers": multipliers,
@@ -283,15 +448,15 @@ def calculate_RT_normal_real(
 ) -> np.ndarray:
     """Compute reflectance R and transmittance T for an alternating H/L thin-film stack."""
     wavelengths = np.asarray(wavelengths, dtype=np.float64)
-    nH_array = get_refractive_clues_vectorized(nH_id, wavelengths, db_instance=db_instance)
-    nL_array = get_refractive_clues_vectorized(nL_id, wavelengths, db_instance=db_instance)
-    nSub_array = get_refractive_clues_vectorized(nSub_id, wavelengths, db_instance=db_instance)
+    nH_array = _PhysicsBridge.get_refractive_clues_vectorized(nH_id, wavelengths, db_instance=db_instance)
+    nL_array = _PhysicsBridge.get_refractive_clues_vectorized(nL_id, wavelengths, db_instance=db_instance)
+    nSub_array = _PhysicsBridge.get_refractive_clues_vectorized(nSub_id, wavelengths, db_instance=db_instance)
     p_thick_arr = np.asarray(p_thick, dtype=np.float64)
 
     _emit_stat("SP", 1)
 
     # wrapper returns (R, T)
-    R_arr, T_arr = calculate_RT_vectorized_real_HL(wavelengths, nH_array, nL_array, nSub_array, p_thick_arr)
+    R_arr, T_arr = _PhysicsBridge.calculate_rt_hl(wavelengths, nH_array, nL_array, nSub_array, p_thick_arr)
 
     # Return as 2D array for backward compatibility
     return np.column_stack((R_arr, T_arr))
@@ -321,8 +486,8 @@ def calculate_nominal_properties(
     # Retrieve the database instance from params
     db_instance = params.get("materials_db") or params.get("materials_db_instance")
 
-    nH_at_l0 = get_refractive_index(nH_id, l0, db_instance=db_instance)
-    nL_at_l0 = get_refractive_index(nL_id, l0, db_instance=db_instance)
+    nH_at_l0 = _PhysicsBridge.get_refractive_index(nH_id, l0, db_instance=db_instance)
+    nL_at_l0 = _PhysicsBridge.get_refractive_index(nL_id, l0, db_instance=db_instance)
 
     logger.info(f"   -> nH @ {l0}nm = {np.real(nH_at_l0):.4f}")
     logger.info(f"   -> nL @ {l0}nm = {np.real(nL_at_l0):.4f}")
@@ -337,7 +502,7 @@ def calculate_nominal_properties(
         (m * l0) / (4.0 * np.real(nH_at_l0 if (i % 2) == 0 else nL_at_l0)) for i, m in enumerate(multipliers)
     ]
 
-    wavelengths = arange_inclusive(float(wl_range[0]), float(wl_range[1]), wl_step)
+    wavelengths = _PhysicsBridge.arange_inclusive(float(wl_range[0]), float(wl_range[1]), wl_step)
     RT = calculate_RT_normal_real(wavelengths, nH_id, nL_id, nSub_id, p_thick_nominal, db_instance=db_instance)
 
     # RT is 2D array (num_wl, 2) with R in col 0, T in col 1
@@ -355,6 +520,7 @@ def calculate_nominal_properties(
     }, multipliers
 
 
+
 def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[str, Any]) -> dict[str, Any]:
     """Generating Sensitivity Landscape (0 -> 3nm)."""
     logger = params.get("logger", logging.getLogger("ThinFilm"))
@@ -369,11 +535,11 @@ def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[s
     wavelengths = nominal_results["wavelengths"]
     local_db = params.get("materials_db") or params.get("materials_db_instance") or APP_CONTEXT.get("materials_db")
 
-    nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nH_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nL_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nSub_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
 
-    _, T_clean_batch = calculate_RT_batch_kernel(
+    _, T_clean_batch = _PhysicsBridge.calculate_rt_batch(
         wavelengths,
         nH_arr,
         nL_arr,
@@ -396,7 +562,7 @@ def calculate_sensitivity_matrix(params: dict[str, Any], nominal_results: dict[s
         p_bulk[idx] = np.maximum(0.0, p_thick_arr + noise)
 
     p_flat = p_bulk.reshape(total_runs, -1)
-    _, batch_T_flat = calculate_RT_batch_kernel(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
+    _, batch_T_flat = _PhysicsBridge.calculate_rt_batch(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
     batch_T_bulk = batch_T_flat.reshape((len(valid_sigmas), runs_per_step, len(wavelengths)))
 
     bulk_idx = 0
@@ -439,14 +605,14 @@ def calculate_seel_analysis(params: dict[str, Any], nominal_results: dict[str, A
     wavelengths = np.array(nominal_results["wavelengths"], dtype=np.float64)
     local_db = params.get("materials_db") or params.get("materials_db_instance") or APP_CONTEXT.get("materials_db")
 
-    nH_arr = get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nL_arr = get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
-    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nH_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nH_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nL_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nL_id"], wavelengths, db_instance=local_db).astype(np.complex128)
+    nSub_arr = _PhysicsBridge.get_refractive_clues_vectorized(params["nSub_id"], wavelengths, db_instance=local_db).astype(np.complex128)
 
     total_runs = len(target_sigmas) * batches_per_sigma * runs_per_batch
     _emit_stat("SP", total_runs)
 
-    _, T_clean_batch = calculate_RT_batch_kernel(
+    _, T_clean_batch = _PhysicsBridge.calculate_rt_batch(
         wavelengths, nH_arr, nL_arr, nSub_arr, p_thick_nominal.reshape(1, -1)
     )
     T_clean = T_clean_batch[0]
@@ -458,7 +624,7 @@ def calculate_seel_analysis(params: dict[str, Any], nominal_results: dict[str, A
             p_bulk[i, b] = np.maximum(0.0, p_thick_nominal + noise)
 
     p_flat = p_bulk.reshape(total_runs, -1)
-    _, batch_T_flat = calculate_RT_batch_kernel(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
+    _, batch_T_flat = _PhysicsBridge.calculate_rt_batch(wavelengths, nH_arr, nL_arr, nSub_arr, p_flat)
     batch_T_bulk = batch_T_flat.reshape((len(target_sigmas), batches_per_sigma, runs_per_batch, len(wavelengths)))
 
     results = []
@@ -502,6 +668,7 @@ def calculate_seel_analysis(params: dict[str, Any], nominal_results: dict[str, A
         fit_alpha = 1.0
     else:
         fit_alpha, fit_k = 1.0, 30.0
+
 
     return {
         "sigmas": expanded_sigmas,
@@ -555,13 +722,13 @@ def calculate_dynamics_ULTIMATE(
     n_L_arr = np.array([c["L"] for c in all_clues], dtype=np.complex128)
     n_Sub_arr = np.array([c.get("substrate", 1.0) for c in all_clues], dtype=np.complex128)
 
-    # prepare_dynamics_data_kernel(wls, all_wls, matrix_cache, n_H, n_L, n_Sub, i_layer)
-    n_layer_array, n_sub_array, M_before_stack = prepare_dynamics_data_kernel(
+    # _PhysicsBridge.prepare_dynamics_data(wls, all_wls, matrix_cache, n_H, n_L, n_Sub, i_layer)
+    n_layer_array, n_sub_array, M_before_stack = _PhysicsBridge.prepare_dynamics_data(
         wls_array, all_wls_f64, nominal_matrix_cache, n_H_arr, n_L_arr, n_Sub_arr, i_layer
     )
 
-    # compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores)
-    dyn_vals, t_inits, t_finals, t_mins = compute_dynamics_kernel(
+    # _PhysicsBridge.compute_dynamics(wls, n_layers, n_subs, thicknesses, M_befores)
+    dyn_vals, t_inits, t_finals, t_mins = _PhysicsBridge.compute_dynamics(
         wls_array, n_layer_array, n_sub_array, thickness_steps, M_before_stack
     )
 
@@ -720,7 +887,7 @@ def _select_candidates_phase_a(
     # M_befores: zeros placeholder when not precomputed (conservative: no extrema filtering)
     M_befores = np.zeros((n_check, 2, 2), dtype=np.complex128)
 
-    extrema_results = check_extrema_proximity_batch(
+    extrema_results = _PhysicsBridge.check_extrema_proximity(
         wls_arr,
         n_curr_arr,
         n_prev_arr,
@@ -740,6 +907,7 @@ def _select_candidates_phase_a(
     return valid_candidates_data, full_dyn_map
 
 
+
 def compute_probe_offset_nm_from_ratio(params: dict[str, Any]) -> float:
     """Convert probe offset ratio to physical thickness (nm), using legacy STRAT logic."""
     tolerance_nm = params.get("thickness_tolerance_nm")
@@ -750,8 +918,8 @@ def compute_probe_offset_nm_from_ratio(params: dict[str, Any]) -> float:
     nH_id = params.get("nH_id", 2.3)
     nL_id = params.get("nL_id", 1.45)
     try:
-        nH_at_l0 = get_refractive_index(nH_id, l0)
-        nL_at_l0 = get_refractive_index(nL_id, l0)
+        nH_at_l0 = _PhysicsBridge.get_refractive_index(nH_id, l0)
+        nL_at_l0 = _PhysicsBridge.get_refractive_index(nL_id, l0)
         n_avg_at_l0 = np.real((nH_at_l0 + nL_at_l0) / 2.0)
     except (ValueError, TypeError, KeyError):
         n_avg_at_l0 = 1.5
@@ -806,7 +974,7 @@ def _validate_candidates_phase_a(
         )
 
     nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
-    results_fast = validate_wavelengths_batch(
+    results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
         n_H_arr,
         n_L_arr,
@@ -848,7 +1016,7 @@ def _validate_candidates_phase_a(
     if results_thickness:
         best_wl = float(results_thickness[0]["wl"])
         best_idx_data = idx_dict[wavelength_to_index(best_wl)]
-        p_thick_sim_updates = update_run_states_kernel(
+        p_thick_sim_updates = _PhysicsBridge.update_run_states(
             p_thick_nom_arr,
             i_layer,
             runs_history_matrix[:, :i_layer],
@@ -865,6 +1033,7 @@ def _validate_candidates_phase_a(
         p_thick_sim_updates = []
 
     return results_thickness, p_thick_sim_updates
+
 
 
 def select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -920,4 +1089,165 @@ def extract_best_rmse(strategies_results: list[dict[str, Any]]) -> float:
             if fval > 0.0:
                 return fval
     return 0.0
+
+
+def rebuild_visualization_context(params: dict[str, Any], logger: Any = None) -> dict[str, Any]:
+    """Rebuild a minimal context (clues, matrix cache, wavelengths, nominal properties)
+    from StratParamsDTO or a raw params dictionary.
+    """
+    from certus.core.certus_strat_core import precompute_clues_and_matrices
+
+    nominal_results, _ = calculate_nominal_properties(params)
+    p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
+    clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(
+        params, p_thick_nominal, logger
+    )
+    return {
+        "p_thick_nominal": p_thick_nominal,
+        "clues_at_wl": clues_at_wl,
+        "nominal_matrix_cache": nominal_matrix_cache,
+        "all_wls": all_wls,
+    }
+
+
+def simulate_detailed_growth_for_ui(
+    strategy_result: dict[str, Any],
+    opti_results: dict[str, Any],
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    """Simulate detailed growth on the fly for UI plot visualization.
+    Encapsulates the physics and index validation logic.
+    """
+    if "detailed_growth_data" in strategy_result:
+        return strategy_result["detailed_growth_data"]
+
+    strategy = strategy_result["strategy"]
+    block_list = strategy.get("blocks", [])
+    p_thick_arr = np.array(opti_results["p_thick_nominal"], dtype=np.float64)
+    num_layers = len(p_thick_arr)
+    layer_wls = np.zeros(num_layers, dtype=np.float64)
+
+    nH_arr = np.zeros(num_layers, dtype=np.complex128)
+    nL_arr = np.zeros(num_layers, dtype=np.complex128)
+    nSub_arr = np.zeros(num_layers, dtype=np.complex128)
+
+    clues_db = opti_results["clues_at_wl"]
+
+    try:
+        first_wl = list(clues_db.keys())[0]
+        _nSub_fallback = complex(clues_db[first_wl].get("substrate", 1.52))
+    except (IndexError, AttributeError, KeyError):
+        _nSub_fallback = complex(1.52)
+
+    nH_id = params.get("nH_r", 2.3)
+    nL_id = params.get("nL_r", 1.45)
+    nSub_id = params.get("nSub_custom", 1.73)
+
+    for block in block_list:
+        wl = float(block["wavelength"])
+        try:
+            idx_data = clues_db[wl]
+        except KeyError:
+            n_h = complex(params.get("nH_r", 2.3)) if isinstance(nH_id, float) else complex(2.3)
+            n_l = complex(params.get("nL_r", 1.45)) if isinstance(nL_id, float) else complex(1.45)
+            n_sub = complex(params.get("nSub_custom", 1.73)) if isinstance(nSub_id, float) else complex(1.73)
+            idx_data = {"H": n_h, "L": n_l, "substrate": n_sub}
+
+        for layer_idx in range(block["start"], block["end"]):
+            if layer_idx < num_layers:
+                layer_wls[layer_idx] = wl
+                nH_arr[layer_idx] = idx_data.get("H", complex(2.3))
+                nL_arr[layer_idx] = idx_data.get("L", complex(1.45))
+                n_sub_val = complex(idx_data.get("substrate", _nSub_fallback))
+                if n_sub_val.real < 1.001:
+                    n_sub_val = _nSub_fallback
+                nSub_arr[layer_idx] = n_sub_val
+
+    steps_per_layer = np.full(num_layers, 50, dtype=np.int32)
+    x_pts, y_pts, bounds = _PhysicsBridge.calculate_detailed_growth(
+        num_layers,
+        p_thick_arr,
+        layer_wls,
+        nH_arr,
+        nL_arr,
+        nSub_arr,
+        steps_per_layer,
+    )
+    return {
+        "x": x_pts.tolist() if hasattr(x_pts, "tolist") else x_pts,
+        "y": y_pts.tolist() if hasattr(y_pts, "tolist") else y_pts,
+        "boundaries": bounds.tolist() if hasattr(bounds, "tolist") else bounds,
+    }
+
+
+def simulate_spectral_distribution_for_ui(
+    strategy_result: dict[str, Any],
+    opti_results: dict[str, Any],
+    params: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Simulate spectral distribution curves (T_nom, mean, p5, p95) for visual plotting."""
+    db_instance = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+    assert db_instance is not None, (
+        "CERTUS-STRAT-E-DB-MISSING: Materials database instance is completely missing from params and APP_CONTEXT. "
+        "Verify that the worker thread correctly serializes/deserializes the materials database or that "
+        "APP_CONTEXT['materials_db'] is initialized on startup."
+    )
+
+    results_list = strategy_result.get("results_per_noise", [])
+    target_res = None
+    for res in results_list:
+        if abs(res.get("noise_level", 0) - 2.0) < 0.1:
+            target_res = res
+            break
+    if not target_res and results_list:
+        target_res = results_list[0]
+    if not target_res:
+        return None
+
+    thicknesses_all = target_res.get("thicknesses_all", [])
+    p_thick_nominal = opti_results.get("p_thick_nominal")
+    if not thicknesses_all or p_thick_nominal is None:
+        return None
+
+    wls = np.arange(380.0, 1000.0, 2.0, dtype=np.float64)
+    nH_id = params.get("nH_r", 2.3)
+    nL_id = params.get("nL_r", 1.45)
+    nSub_id = params.get("nSub_custom", 1.73)
+
+    nH_arr = _PhysicsBridge.get_refractive_clues_vectorized(nH_id, wls, db_instance).astype(np.complex128)
+    nL_arr = _PhysicsBridge.get_refractive_clues_vectorized(nL_id, wls, db_instance).astype(np.complex128)
+    nSub_arr = _PhysicsBridge.get_refractive_clues_vectorized(nSub_id, wls, db_instance).astype(np.complex128)
+
+    _, T_clean_batch = _PhysicsBridge.calculate_rt_batch(
+        wls,
+        nH_arr,
+        nL_arr,
+        nSub_arr,
+        np.array(p_thick_nominal, dtype=np.float64).reshape(1, -1),
+    )
+    T_nom = T_clean_batch[0]
+
+    T_sim_list = []
+    for p_sim in thicknesses_all:
+        if len(p_sim) == len(p_thick_nominal):
+            p_arr = np.array(p_sim, dtype=np.float64).reshape(1, -1)
+            _, T_val_batch = _PhysicsBridge.calculate_rt_batch(wls, nH_arr, nL_arr, nSub_arr, p_arr)
+            T_sim_list.append(T_val_batch[0])
+
+    if not T_sim_list:
+        return None
+
+    arr_sim = np.array(T_sim_list)
+    mean = np.mean(arr_sim, axis=0)
+    p5 = np.percentile(arr_sim, 5, axis=0)
+    p95 = np.percentile(arr_sim, 95, axis=0)
+
+    return {
+        "wls": wls.tolist(),
+        "T_nom": T_nom.tolist(),
+        "mean": mean.tolist(),
+        "p5": p5.tolist(),
+        "p95": p95.tolist(),
+    }
+
 

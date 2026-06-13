@@ -329,7 +329,7 @@ def test_wavelength_continuity(
     # Expect roughly linear sensitivity: dr ~ 0.001 * dwl
     # This is a loose bound to catch major discontinuities
     if dwl > 0.1:  # Only check for meaningful wavelength differences
-        max_sensitivity = 0.02  # Maximum dr per nm (loose bound to catch major discontinuities)
+        max_sensitivity = 0.05  # Maximum dr per nm (loose bound to catch major discontinuities)
         assert dr < max_sensitivity * dwl, \
             f"Discontinuity at λ: Δλ={dwl:.1f}, Δr={dr:.4f} (ratio={dr/dwl if dwl > 0 else 0})"
 

@@ -71,6 +71,7 @@ import copy
 from threading import Event
 
 from typing import Any, List, Dict
+from PyQt6.QtCore import QPointF
 
 import numpy as np
 
@@ -311,28 +312,24 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 # =============================================================================
 
 
-from certus.core.certus_design_core import *
-from certus.workers.certus_design_workers import *
+# from certus.core.certus_design_core import *  # Unused
+from certus.workers.certus_design_workers import ColorWorker, NeedleWorker, OptimWorker
 
-from certus.ui.mixins.certus_design_plot_mixin import CertusDesignUIPlotMixin
-from certus.ui.certus_design_ui_layout import CertusDesignLayoutMixin
-from certus.ui.certus_design_ui_state import CertusDesignStateMixin
-from certus.ui.certus_design_ui_events import CertusDesignEventsMixin
-from certus.ui.certus_design_ui_worker import CertusDesignWorkerMixin
-from certus.ui.certus_design_ui_export import CertusDesignExportMixin
-from certus.ui.certus_design_ui_optimization import CertusDesignOptimizationMixin
-from certus.ui.certus_design_ui_core import CertusDesignCoreMixin
+
+from certus.ui.certus_design_ui_plot import PlotManager
+from certus.ui.certus_design_ui_layout import LayoutManager
+from certus.ui.certus_design_ui_state import StateManager
+from certus.ui.certus_design_ui_events import EventsManager
+from certus.ui.certus_design_ui_worker import WorkerManager
+from certus.ui.certus_design_ui_export import ExportManager
+from certus.ui.certus_design_ui_optimization import OptimizationManager
+from certus.ui.certus_design_ui_core import CoreManager
+from certus.ui.certus_design_ui_layout import LayoutManager
 
 
 class CertusDesignApp(
-    CertusDesignUIPlotMixin,
-    CertusDesignLayoutMixin,
-    CertusDesignStateMixin,
-    CertusDesignEventsMixin,
-    CertusDesignWorkerMixin,
-    CertusDesignExportMixin,
-    CertusDesignOptimizationMixin,
-    CertusDesignCoreMixin,
+    
+    
     CertusBaseApp,
 ):
     """Main Application CERTUS-DESIGN"""
@@ -395,6 +392,14 @@ class CertusDesignApp(
         super().__init__()
         from certus.core.certus_design_orchestrator import DesignOrchestrator
         self.orchestrator = DesignOrchestrator(self)
+        self.export_manager = ExportManager(self)
+        self.optimization_manager = OptimizationManager(self)
+        self.core_manager = CoreManager(self)
+        self.worker_manager = WorkerManager(self)
+        self.events_manager = EventsManager(self)
+        self.state_manager = StateManager(self)
+        self.plot_manager = PlotManager(self)
+        self.layout_manager = LayoutManager(self)
 
         # Setup logger (uses base class log_queue)
 
@@ -431,9 +436,9 @@ class CertusDesignApp(
         self._current_eval_generation = 0
 
         default_max_layers: int = int(getattr(CFG, "MAX_LAYERS", 50))
-        self._original_target_count = default_max_layers
+        self.orchestrator._original_target_count = default_max_layers
 
-        self._target_layer_count = default_max_layers
+        self.orchestrator._target_layer_count = default_max_layers
         # Keep the configured target count until workflow logic explicitly updates it.
 
         self._overshoot_active = False
@@ -515,6 +520,197 @@ class CertusDesignApp(
         self.warmup_worker.finished.connect(self._on_warmup_done)
 
         self.warmup_worker.start()
+
+
+    @safe_ui_action
+    def export_results(self) -> None:
+        self.export_manager.export_results()
+
+    @safe_ui_action
+    def export_excel(self) -> None:
+        self.export_manager.export_excel()
+
+    # WorkerManager Proxies
+    def run_eval(self) -> None:
+        self.worker_manager.run_eval()
+
+    def _on_eval_finished(self, data: dict, generation_id: int | None = None) -> None:
+        self.worker_manager._on_eval_finished(data, generation_id)
+
+    def run_optim(self, mode: str, keep_history: bool = False, **kwargs) -> None:
+        self.worker_manager.run_optim(mode, keep_history, **kwargs)
+
+    def run_colorimetry(self) -> None:
+        self.worker_manager.run_colorimetry()
+
+    def stop_optim(self) -> None:
+        self.worker_manager.stop_optim()
+
+    # EventsManager Proxies
+    def add_target(self) -> None:
+        self.events_manager.add_target()
+
+    def del_target(self) -> None:
+        self.events_manager.del_target()
+
+    def add_back_layer(self) -> None:
+        self.events_manager.add_back_layer()
+
+    def del_back_layer(self) -> None:
+        self.events_manager.del_back_layer()
+
+    def remove_thinnest(self) -> None:
+        self.events_manager.remove_thinnest()
+
+    def open_help(self) -> None:
+        self.events_manager.open_help()
+
+    def closeEvent(self, event) -> None:
+        self.events_manager.closeEvent(event)
+        super().closeEvent(event)
+
+    def _on_qwot_changed_connection(self, spinbox) -> None:
+        self.events_manager._on_qwot_changed_connection(spinbox)
+
+    def _on_layer_added(self) -> None:
+        self.events_manager._on_layer_added()
+
+    def _on_layer_deleted(self) -> None:
+        self.events_manager._on_layer_deleted()
+
+    def _paste_from_excel(self) -> None:
+        self.events_manager._paste_from_excel()
+
+    def _setup_shortcuts(self) -> None:
+        self.events_manager._setup_shortcuts()
+
+    def _on_tikhonravov_points_changed(self, *args) -> None:
+        self.events_manager._on_tikhonravov_points_changed(*args)
+
+    def _on_schedule_eval_signal(self, *args) -> None:
+        self.events_manager._on_schedule_eval_signal(*args)
+
+    def _toggle_back_stack(self, state: int) -> None:
+        self.events_manager._toggle_back_stack(state)
+
+
+
+    # PlotManager Proxies
+    def init_plot_elements(self) -> None:
+        self.plot_manager.init_plot_elements()
+
+    def update_plot(self, R: np.ndarray, R_back: np.ndarray | None = None) -> None:
+        self.plot_manager.update_plot(R, R_back)
+
+    def _update_pareto_plot(self) -> None:
+        self.plot_manager._update_pareto_plot()
+
+    def update_target_scatter(self) -> None:
+        self.plot_manager.update_target_scatter()
+
+    def _update_scatter(self, plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique=False):
+        return self.plot_manager._update_scatter(plot_item, x_data, y_data, w_data, is_active, brush_active, brush_inactive, is_oblique)
+
+    def update_envelope_plot(self, env_top: np.ndarray, env_bot: np.ndarray) -> None:
+        self.plot_manager.update_envelope_plot(env_top, env_bot)
+
+    def toggle_oblique_targets_display(self, show: bool) -> None:
+        self.plot_manager.toggle_oblique_targets_display(show)
+
+    def _update_target_oblique_lines(self) -> None:
+        self.plot_manager._update_target_oblique_lines()
+
+    def reset_target_scatter(self) -> None:
+        self.plot_manager.reset_target_scatter()
+
+    def draw_crosshair(self, p: QPointF, plot_item: pg.PlotItem, v_line: pg.InfiniteLine, h_line: pg.InfiniteLine, label: pg.TextItem, label_format: str) -> None:
+        self.plot_manager.draw_crosshair(p, plot_item, v_line, h_line, label, label_format)
+
+    def update_color_display(self, L: float, a: float, b: float) -> None:
+        self.plot_manager.update_color_display(L, a, b)
+
+    def _on_update_spectrum_y_scale_signal(self, *args) -> None:
+        self.plot_manager._on_update_spectrum_y_scale_signal(*args)
+
+    def _show_pareto_window(self) -> None:
+        self.plot_manager._show_pareto_window()
+
+    def _load_pareto_design(self, row: int, col: int) -> None:
+        self.plot_manager._load_pareto_design(row, col)
+
+    def _show_pareto_context_menu(self, pos) -> None:
+        self.plot_manager._show_pareto_context_menu(pos)
+
+    def _clear_pareto(self) -> None:
+        self.plot_manager._clear_pareto()
+
+    def _export_pareto_report(self) -> None:
+        self.plot_manager._export_pareto_report()
+
+    def _refresh_pareto_table(self) -> None:
+        self.plot_manager._refresh_pareto_table()
+
+    def _start_smart_pareto_decimation(self) -> None:
+        self.plot_manager._start_smart_pareto_decimation()
+
+    def _on_intermediate_spectrum(self, data: dict) -> None:
+        self.plot_manager._on_intermediate_spectrum(data)
+
+    def _update_pareto_record(self, current_ep=None, current_rmse=None) -> None:
+        self.plot_manager._update_pareto_record(current_ep, current_rmse)
+
+    def _plot_profile(self, ep: np.ndarray, stack: list, ep_back: np.ndarray, stack_back: list) -> None:
+        self.plot_manager._plot_profile(ep, stack, ep_back, stack_back)
+
+    def _plot_nk(self) -> None:
+        self.plot_manager._plot_nk()
+
+    # StateManager Proxies
+    def _load_defaults(self) -> None:
+        self.state_manager._load_defaults()
+
+    def _pre_save_smart_cleanup(self) -> None:
+        self.state_manager._pre_save_smart_cleanup()
+
+    def _post_save_config(self, filename: str) -> None:
+        self.state_manager._post_save_config(filename)
+
+    def _collect_config(self) -> dict:
+        return self.state_manager._collect_config()
+
+    def _apply_config(self, c: dict) -> None:
+        self.state_manager._apply_config(c)
+
+    def _apply_optimization_config(self, opt: dict) -> None:
+        self.state_manager._apply_optimization_config(opt)
+
+    def _apply_material_config(self, materials: dict) -> None:
+        self.state_manager._apply_material_config(materials)
+
+    def _apply_target_config(self, targets: list[dict], oblique_mode: bool) -> None:
+        self.state_manager._apply_target_config(targets, oblique_mode)
+
+    def _apply_stack_rows(self, rows: list[dict], *, back: bool) -> None:
+        self.state_manager._apply_stack_rows(rows, back=back)
+
+    def _post_load_config(self, filename: str, config: dict) -> None:
+        self.state_manager._post_load_config(filename, config)
+
+    def reset_to_defaults(self):
+        return self.state_manager.reset_to_defaults()
+
+    # LayoutManager Proxies
+    def _build_left_panel(self):
+        return self.layout_manager._build_left_panel()
+
+    def _build_right_panel(self):
+        return self.layout_manager._build_right_panel()
+
+    def _build_status_bar(self) -> None:
+        self.layout_manager._build_status_bar()
+
+    def _apply_theme(self) -> None:
+        self.layout_manager._apply_theme()
 
     # =========================================================================
 
@@ -654,9 +850,7 @@ class CertusDesignApp(
 
 
 
-    def _is_in_needle_cycle(self) -> bool:
-        """Return True when post-optim workflow is inside Needle cycle states."""
-        return hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]
+
 
 
 
@@ -794,4 +988,212 @@ class CertusDesignApp(
 # ENTRY POINT
 
 # =============================================================================
+
+
+    # --- OptimizationManager Proxies ---
+    def _handle_stopped_workflow_result(self, *args, **kwargs):
+        return self.optimization_manager._handle_stopped_workflow_result(*args, **kwargs)
+
+    def _finalize_if_post_optim_budget_exceeded(self, *args, **kwargs):
+        return self.optimization_manager._finalize_if_post_optim_budget_exceeded(*args, **kwargs)
+
+    def _track_and_apply_post_optim_result(self, *args, **kwargs):
+        return self.optimization_manager._track_and_apply_post_optim_result(*args, **kwargs)
+
+    def _run_post_optim_cleanup(self, *args, **kwargs):
+        return self.optimization_manager._run_post_optim_cleanup(*args, **kwargs)
+
+    def _finalize_completed_optimization_workflow(self, *args, **kwargs):
+        return self.optimization_manager._finalize_completed_optimization_workflow(*args, **kwargs)
+
+    def _initialize_smart_decimation_session(self, *args, **kwargs):
+        return self.optimization_manager._initialize_smart_decimation_session(*args, **kwargs)
+
+    def _smart_decimation_remove_and_optimize(self, *args, **kwargs):
+        return self.optimization_manager._smart_decimation_remove_and_optimize(*args, **kwargs)
+
+    def _apply_smart_decimation_post_removal_state(self, *args, **kwargs):
+        return self.optimization_manager._apply_smart_decimation_post_removal_state(*args, **kwargs)
+
+    def _should_stop_smart_decimation_step(self, *args, **kwargs):
+        return self.optimization_manager._should_stop_smart_decimation_step(*args, **kwargs)
+
+    def _select_smart_decimation_remove_index(self, *args, **kwargs):
+        return self.optimization_manager._select_smart_decimation_remove_index(*args, **kwargs)
+
+    def _on_smart_decimation_optim_done(self, *args, **kwargs):
+        return self.optimization_manager._on_smart_decimation_optim_done(*args, **kwargs)
+
+    def _apply_smart_decimation_optim_result(self, *args, **kwargs):
+        return self.optimization_manager._apply_smart_decimation_optim_result(*args, **kwargs)
+
+    def _record_smart_decimation_candidate(self, *args, **kwargs):
+        return self.optimization_manager._record_smart_decimation_candidate(*args, **kwargs)
+
+    def _abort_on_smart_decimation_degradation(self, *args, **kwargs):
+        return self.optimization_manager._abort_on_smart_decimation_degradation(*args, **kwargs)
+
+    def _log_smart_decimation_step_result(self, *args, **kwargs):
+        return self.optimization_manager._log_smart_decimation_step_result(*args, **kwargs)
+
+    def _restore_smart_decimation_origin(self, *args, **kwargs):
+        return self.optimization_manager._restore_smart_decimation_origin(*args, **kwargs)
+
+    def _clear_smart_decimation_state(self, *args, **kwargs):
+        return self.optimization_manager._clear_smart_decimation_state(*args, **kwargs)
+
+    def _log_smart_decimation_completion(self, *args, **kwargs):
+        return self.optimization_manager._log_smart_decimation_completion(*args, **kwargs)
+
+    def _finish_smart_decimation(self, *args, **kwargs):
+        return self.optimization_manager._finish_smart_decimation(*args, **kwargs)
+
+    def _finalize_smart_decimation_post_actions(self, *args, **kwargs):
+        return self.optimization_manager._finalize_smart_decimation_post_actions(*args, **kwargs)
+
+    def _decimation_remove_and_polish(self, *args, **kwargs):
+        return self.optimization_manager._decimation_remove_and_polish(*args, **kwargs)
+
+    def _on_decimation_polish_done(self, *args, **kwargs):
+        return self.optimization_manager._on_decimation_polish_done(*args, **kwargs)
+
+    def _drop_thinnest_and_polish(self, *args, **kwargs):
+        return self.optimization_manager._drop_thinnest_and_polish(*args, **kwargs)
+
+    def _apply_5nm_minimum(self, *args, **kwargs):
+        return self.optimization_manager._apply_5nm_minimum(*args, **kwargs)
+
+    def _save_table_state(self, *args, **kwargs):
+        return self.optimization_manager._save_table_state(*args, **kwargs)
+
+    def _restore_table_state(self, *args, **kwargs):
+        return self.optimization_manager._restore_table_state(*args, **kwargs)
+
+    def _revert_to_checkpoint(self, *args, **kwargs):
+        return self.optimization_manager._revert_to_checkpoint(*args, **kwargs)
+
+    def smart_cleanup(self, *args, **kwargs):
+        return self.optimization_manager.smart_cleanup(*args, **kwargs)
+
+    def _prune_to_target(self, *args, **kwargs):
+        return self.optimization_manager._prune_to_target(*args, **kwargs)
+
+    def _needle_thresholds(self, *args, **kwargs):
+        return self.optimization_manager._needle_thresholds(*args, **kwargs)
+
+    def _needle_gain_is_significant(self, *args, **kwargs):
+        return self.optimization_manager._needle_gain_is_significant(*args, **kwargs)
+
+    def _start_needle_process(self, *args, **kwargs):
+        return self.optimization_manager._start_needle_process(*args, **kwargs)
+
+    def _on_needle_found(self, *args, **kwargs):
+        return self.optimization_manager._on_needle_found(*args, **kwargs)
+
+    def _handle_needle_no_candidate(self, *args, **kwargs):
+        return self.optimization_manager._handle_needle_no_candidate(*args, **kwargs)
+
+    def _handle_needle_no_candidate_below_target(self, *args, **kwargs):
+        return self.optimization_manager._handle_needle_no_candidate_below_target(*args, **kwargs)
+
+    def _abort_needle_after_failed_retries(self, *args, **kwargs):
+        return self.optimization_manager._abort_needle_after_failed_retries(*args, **kwargs)
+
+    def _maybe_prune_needle_overshoot(self, *args, **kwargs):
+        return self.optimization_manager._maybe_prune_needle_overshoot(*args, **kwargs)
+
+    def _apply_needle_split_insertion(self, *args, **kwargs):
+        return self.optimization_manager._apply_needle_split_insertion(*args, **kwargs)
+
+    def _insert_needle_split_row(self, *args, **kwargs):
+        return self.optimization_manager._insert_needle_split_row(*args, **kwargs)
+
+    def _insert_right_split_row(self, *args, **kwargs):
+        return self.optimization_manager._insert_right_split_row(*args, **kwargs)
+
+    def _clear_needle_cycle_state(self, *args, **kwargs):
+        return self.optimization_manager._clear_needle_cycle_state(*args, **kwargs)
+
+    def _clear_needle_search_state(self, *args, **kwargs):
+        return self.optimization_manager._clear_needle_search_state(*args, **kwargs)
+
+
+    # --- CoreManager Proxies ---
+    def _get_default_splitter_sizes(self, *args, **kwargs):
+        return self.core_manager._get_default_splitter_sizes(*args, **kwargs)
+
+    def _get_substrate_info_display(self, *args, **kwargs):
+        return self.core_manager._get_substrate_info_display(*args, **kwargs)
+
+    def _show_substrate_info_window(self, *args, **kwargs):
+        return self.core_manager._show_substrate_info_window(*args, **kwargs)
+
+    def _toggle_oblique_mode(self, *args, **kwargs):
+        return self.core_manager._toggle_oblique_mode(*args, **kwargs)
+
+    def copy_logs_to_clipboard(self, *args, **kwargs):
+        return self.core_manager.copy_logs_to_clipboard(*args, **kwargs)
+
+    def _apply_preset(self, *args, **kwargs):
+        return self.core_manager._apply_preset(*args, **kwargs)
+
+    def _on_schedule_eval_signal(self, *args, **kwargs):
+        return self.core_manager._on_schedule_eval_signal(*args, **kwargs)
+
+    def _on_schedule_eval_instant_signal(self, *args, **kwargs):
+        return self.core_manager._on_schedule_eval_instant_signal(*args, **kwargs)
+
+    def _trigger_post_undo_action(self, *args, **kwargs):
+        return self.core_manager._trigger_post_undo_action(*args, **kwargs)
+
+    def _get_optim_wls(self, *args, **kwargs):
+        return self.core_manager._get_optim_wls(*args, **kwargs)
+
+    def _update_optim_point_count(self, *args, **kwargs):
+        return self.core_manager._update_optim_point_count(*args, **kwargs)
+
+    def _calculate_tikhonravov_points(self, *args, **kwargs):
+        return self.core_manager._calculate_tikhonravov_points(*args, **kwargs)
+
+    def _update_tikhonravov_points(self, *args, **kwargs):
+        return self.core_manager._update_tikhonravov_points(*args, **kwargs)
+
+    def _get_materials(self, *args, **kwargs):
+        return self.core_manager._get_materials(*args, **kwargs)
+
+    def _get_oblique_tgts(self, *args, **kwargs):
+        return self.core_manager._get_oblique_tgts(*args, **kwargs)
+
+    def _load_targets_to_table(self, *args, **kwargs):
+        return self.core_manager._load_targets_to_table(*args, **kwargs)
+
+    def _on_front_thickness_updated(self, *args, **kwargs):
+        return self.core_manager._on_front_thickness_updated(*args, **kwargs)
+
+    def _reset_run_optim_workflow_state(self, *args, **kwargs):
+        return self.core_manager._reset_run_optim_workflow_state(*args, **kwargs)
+
+    def _shutdown_previous_optim_worker(self, *args, **kwargs):
+        return self.core_manager._shutdown_previous_optim_worker(*args, **kwargs)
+
+    def _collect_run_optim_inputs(self, *args, **kwargs):
+        return self.core_manager._collect_run_optim_inputs(*args, **kwargs)
+
+    def _initialize_run_optim_progress_state(self, *args, **kwargs):
+        return self.core_manager._initialize_run_optim_progress_state(*args, **kwargs)
+
+    def _refresh_optim_target_scatter_foreground(self, *args, **kwargs):
+        return self.core_manager._refresh_optim_target_scatter_foreground(*args, **kwargs)
+
+    def _apply_qw_values_to_front_table(self, *args, **kwargs):
+        return self.core_manager._apply_qw_values_to_front_table(*args, **kwargs)
+
+    def on_stats_update(self, *args, **kwargs):
+        return self.core_manager.on_stats_update(*args, **kwargs)
+
+    def update_stats_display(self, *args, **kwargs):
+        return self.core_manager.update_stats_display(*args, **kwargs)
+
+    def _update_busy_ui(self, *args, **kwargs):
+        return self.core_manager._update_busy_ui(*args, **kwargs)
 

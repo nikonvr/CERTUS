@@ -5,12 +5,16 @@ Handles the complex multi-stage topology synthesis loop (Needle -> Optim -> Phas
 headless, decoupled from the UI.
 """
 from typing import Any, Dict
+import functools
 import logging
 
 import numpy as np
 from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QMessageBox
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
+from certus.utils.logging import get_structured_logger
+from certus.workers.certus_design_workers_dto import ColorWorkerRequest, NeedleWorkerRequest, OptimWorkerRequest
 from certus.ui.certus_qt_widgets import QCheckBox, QHBoxLayout, QTableWidgetItem, QWidget, Qt
 from certus.workers.certus_design_workers import NeedleWorker, OptimWorker
 
@@ -48,6 +52,13 @@ class DesignOrchestrator(QObject):
         self.current_needle_worker = None
         self.current_optim_worker = None
 
+        # State management for specific orchestration flows
+        self._healing_phase = None
+        self._overshoot_active = False
+        self._overshoot_done = False
+        self._original_target_count = None
+        self._target_layer_count = None
+
         logging.info("[ORCHESTRATOR] DesignOrchestrator initialized.")
 
     def start_synthesis(self, initial_cfg: Dict[str, Any]):
@@ -64,6 +75,10 @@ class DesignOrchestrator(QObject):
 
 
     # ================= EXTRACTED METHODS =================
+
+    def _is_in_needle_cycle(self) -> bool:
+        """Return True when post-optim workflow is inside Needle cycle states."""
+        return hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]
 
     def _on_optim_done(self, d: Dict) -> None:
         """Central callback after any optimization completes.
@@ -148,11 +163,13 @@ class DesignOrchestrator(QObject):
 
             - Coordinates healing and cleanup phases"""
 
-        self.ui.progress_widget.stop("Optimization complete")
+        self.ui.progress_widget.stop("Done")
 
         self.ui._clean_live_curves()
 
         self.ui._initial_cleared = False
+        
+        print("DEBUG: _on_optim_done ENTERED. d.ok =", d.get("ok", False))
 
         if getattr(self, "_workflow_stopped", False):
             self.ui._handle_stopped_workflow_result(d)
@@ -160,10 +177,20 @@ class DesignOrchestrator(QObject):
             return
 
         if not d.get("ok", False):
-            self.ui.log("Optimization stopped or failed.", "ERROR")
-
+            error_msg = d.get("error", "Unknown reason.")
+            self.ui.log(f"Optimization stopped or failed: {error_msg}", "ERROR")
+            print("DEBUG: _on_optim_done ERROR:", error_msg)
+            
+            # UX: Guided error message
+            QMessageBox.warning(
+                self.ui,
+                "Optimization Failed",
+                f"The optimization process could not complete successfully.\n\n"
+                f"Reason: {error_msg}\n\n"
+                f"Please verify your target curves and initial design."
+            )
+            
             self.ui._set_busy(False)
-
             return
 
         self.ui._stack_info_best_ep = None
@@ -173,7 +200,7 @@ class DesignOrchestrator(QObject):
         QTimer.singleShot(50, self.ui.optimization_finished_signal.emit)
 
         # PARETO DECIMATION: if we are polishing after decimation, route to decimation handler
-        if self.ui._handle_decimation_polish_completion(d):
+        if self._handle_decimation_polish_completion(d):
             return
 
         # TIME BUDGET for post-optimization workflow (cleanup/healing/needle)
@@ -184,7 +211,7 @@ class DesignOrchestrator(QObject):
         self.ui._track_and_apply_post_optim_result(d)
 
         # Check if we're in smart decimation mode
-        if self.ui._handle_smart_decimation_followup(d):
+        if self._handle_smart_decimation_followup(d):
             return
 
         # Needle loop management: Needle -> Optim -> Evaluate
@@ -208,7 +235,7 @@ class DesignOrchestrator(QObject):
 
         # But only if not in Needle cycle
 
-        if self.ui._handle_healing_workflow(removed):
+        if self._handle_healing_workflow(removed):
             return
 
         # If in Needle cycle and step==2, skip cleanup and go to evaluation
@@ -218,15 +245,245 @@ class DesignOrchestrator(QObject):
         if hasattr(self, "_needle_cycle_step") and self._needle_cycle_step == 2:
             self._needle_cycle_step = 3
 
-        if self.ui._handle_needle_cycle_step3(d):
+        if self._handle_needle_cycle_step3(d):
             return
 
         # Case B: Layer deficit OR Needle Exploration requested
-        if self.ui._maybe_start_needle_growth():
+        if self._maybe_start_needle_growth():
             return
 
-        # Case C: Complete - final 5nm enforcement then eval
         self.ui._finalize_completed_optimization_workflow()
+
+    def _handle_healing_workflow(self, removed: int) -> bool:
+        """Drive two-phase healing after cleanup-induced topology changes."""
+        if removed > 0 and not getattr(self.ui, "_is_in_needle_cycle", lambda: False)():
+            self.ui.log(
+                f"Smart cleanup removed {removed} layers. Healing (restricted global)...",
+                "INFO",
+            )
+            self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
+            self._healing_phase = "global"
+            QTimer.singleShot(50, functools.partial(self.ui.run_optim, "healing", keep_history=True))
+            return True
+
+        if self._healing_phase == "global":
+            self._healing_phase = "local"
+            _wf = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+            self.ui.log(
+                f"[HEALING] global→local | {self.ui.front_table.rowCount()}L | workflow_best={_wf:.6f}",
+                "INFO",
+            )
+            self.ui.log("Healing: local polish...", "INFO")
+            self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
+            QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+            return True
+
+        if self._healing_phase == "local":
+            self._healing_phase = None
+        return False
+
+    def _handle_needle_cycle_step3(self, d: dict) -> bool:
+        """Handle Needle step-3 post-optimization logic. Returns True if flow consumed."""
+        if not (hasattr(self, "_needle_cycle_step") and self._needle_cycle_step == 3):
+            return False
+
+        rmse_after_cleanup = d.get("rmse", float("inf"))
+        needle_successful = False
+        _wf = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+        self.ui.log(
+            f"[NEEDLE.step3] post-optim | merit_before={getattr(self, '_needle_merit_before', '?')} "
+            f"| rmse_after={rmse_after_cleanup:.6f} | workflow_best={_wf:.6f} "
+            f"| n={self.ui.front_table.rowCount()}L",
+            "INFO",
+        )
+
+        if getattr(self, "_needle_merit_before", None) is not None:
+            ok_gain, delta_abs, delta_rel, abs_thresh, rel_thresh = self.ui._needle_gain_is_significant(
+                self._needle_merit_before, rmse_after_cleanup
+            )
+            if ok_gain:
+                self.ui.log(
+                    f"Needle cycle successful: DeltaRMSE={delta_abs:.6g} ({delta_rel * 100:.2f}%, "
+                    f"thresholds abs>={abs_thresh:.6g} or rel>={rel_thresh * 100:.2f}%)",
+                    "SUCCESS",
+                )
+                needle_successful = True
+            else:
+                self.ui.log(
+                    f"Needle cycle: gain too small (DeltaRMSE={delta_abs:.6g}, {delta_rel * 100:.2f}%)",
+                    "WARNING",
+                )
+        else:
+            self.ui.log("Needle cycle: no improvement. Aborting needle.", "WARNING")
+            self.ui._revert_to_checkpoint()
+            return True
+
+        if hasattr(self, "_needle_cycle_step"):
+            delattr(self, "_needle_cycle_step")
+        if hasattr(self, "_needle_merit_before"):
+            delattr(self, "_needle_merit_before")
+
+        current_count_after_clean = self.ui.front_table.rowCount()
+        last_count = getattr(self, "_last_cycle_layer_count", 0)
+        if not hasattr(self, "_needle_stagnation_count"):
+            self._needle_stagnation_count = 0
+
+        if current_count_after_clean <= last_count and not needle_successful:
+            self._needle_stagnation_count += 1
+            self.ui.log(
+                f"[DESIGN.needle] stagnation detected | cycle_without_growth={self._needle_stagnation_count}/3 | target_layers={self._target_layer_count}",
+                "WARNING",
+            )
+        else:
+            self._needle_stagnation_count = 0
+
+        self._last_cycle_layer_count = current_count_after_clean
+        if self._needle_stagnation_count >= 3:
+            self.ui.log(
+                "[DESIGN.needle] aborted due to stagnation | reason=3 cycles without growth or merit | action=revert_to_checkpoint",
+                "ERROR",
+            )
+            delattr(self, "_needle_stagnation_count")
+            if hasattr(self, "_last_cycle_layer_count"):
+                delattr(self, "_last_cycle_layer_count")
+            if getattr(self, "_overshoot_active", False):
+                self._target_layer_count = getattr(self, "_original_target_count", self._target_layer_count)
+                self._overshoot_active = False
+            self.ui._revert_to_checkpoint()
+            return True
+
+        if current_count_after_clean < self._target_layer_count and current_count_after_clean < CFG.MAX_LAYERS:
+            self.ui.log(
+                f"[DESIGN.needle] growth continuing | current_layers={current_count_after_clean} | target_layers={self._target_layer_count} | action=queue_next_cycle",
+                "INFO",
+            )
+            if hasattr(self, "_needle_fail_count"):
+                delattr(self, "_needle_fail_count")
+            QTimer.singleShot(100, self._start_needle_process)
+            return True
+
+        if current_count_after_clean >= self._target_layer_count:
+            if getattr(self, "_overshoot_active", False):
+                original = getattr(self, "_original_target_count", self._target_layer_count)
+                self.ui.log(
+                    f"Overshoot complete ({current_count_after_clean} layers). Pruning to {original}...",
+                    "SUCCESS",
+                )
+                self.ui._prune_to_target(original)
+                self._overshoot_active = False
+                self._overshoot_done = True
+                self._target_layer_count = original
+                current_rmse = d.get("rmse", float("inf"))
+                checkpoint = getattr(self.ui, "_pre_needle_checkpoint", None)
+                if checkpoint and current_rmse > checkpoint["rmse"] * 1.02:
+                    self.ui.log(
+                        f"Overshoot+Prune degraded RMSE ({current_rmse:.6f} > {checkpoint['rmse']:.6f}). Reverting.",
+                        "WARNING",
+                    )
+                    self.ui._revert_to_checkpoint()
+                    return True
+                pruned = current_count_after_clean - original
+                if pruned > 0:
+                    self.ui.log(f"Pruned {pruned} thinnest layers. Final polish...", "INFO")
+                    self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
+                    self.ui._post_prune = True
+                    QTimer.singleShot(50, functools.partial(self.ui.run_optim, "local", keep_history=True))
+                    return True
+
+            self.ui.log(
+                f"Deep Needle: Target reached ({self.ui.front_table.rowCount()} layers)",
+                "SUCCESS",
+            )
+            if hasattr(self, "_needle_fail_count"):
+                delattr(self, "_needle_fail_count")
+            return False
+
+        self.ui.log("Deep Needle: MAX_LAYERS reached", "WARNING")
+        if hasattr(self, "_needle_fail_count"):
+            delattr(self, "_needle_fail_count")
+        return False
+
+    def _maybe_start_needle_growth(self) -> bool:
+        """Start Needle growth/exploration when deficit or stagnation criteria are met."""
+        import math
+        current_count = self.ui.front_table.rowCount()
+        allow_growth = self.ui.allow_growth_check.isChecked() if hasattr(self.ui, "allow_growth_check") else True
+        has_deficit = current_count < self._target_layer_count
+        stagnating = getattr(self, "_needle_no_improve_rounds", 0) >= getattr(self, "_needle_gate_no_improve_rounds", 2)
+        needs_exploration = (
+            allow_growth
+            and stagnating
+            and not getattr(self, "_overshoot_done", False)
+            and not getattr(self, "_overshoot_active", False)
+        )
+        needs_needle = has_deficit or needs_exploration
+
+        if not (needs_needle and current_count < CFG.MAX_LAYERS):
+            return False
+
+        if hasattr(self, "_needle_cycle_step") and self._needle_cycle_step in [1, 2, 3]:
+            return False
+
+        if not getattr(self, "_overshoot_active", False) and not getattr(self, "_overshoot_done", False):
+            self._original_target_count = self._target_layer_count
+            if self._target_layer_count < CFG.MAX_LAYERS:
+                ratio = getattr(self.ui, "_needle_overshoot_ratio", 0.30)
+                extra_layers = max(int(math.ceil(self._target_layer_count * ratio)), 4)
+                overshoot = min(self._target_layer_count + extra_layers, CFG.MAX_LAYERS)
+                self._target_layer_count = overshoot
+                self._overshoot_active = True
+                self.ui.log(
+                    f"Deep Needle Exploration: temporarily growing to {overshoot} layers "
+                    f"(Target: {self._original_target_count}, +{extra_layers} extra for flexibility)",
+                    "INFO",
+                )
+
+        self.ui._pre_needle_checkpoint = {
+            "ep": (self.ui.ep_current.copy() if getattr(self.ui, "ep_current", None) is not None else None),
+            "rmse": getattr(self.ui, "_workflow_best_rmse", float("inf")),
+            "table": self.ui._save_table_state(),
+        }
+        _cp_rmse = getattr(self.ui, "_workflow_best_rmse", float("inf"))
+        _ep = getattr(self.ui, "ep_current", None)
+        _ep_hash = f"{float(sum(_ep)):.4f}" if _ep is not None and len(_ep) > 0 else "?"
+        self.ui.log(
+            f"Checkpoint saved (RMSE={_cp_rmse:.6f}, {current_count} layers, ep_sum={_ep_hash})",
+            "INFO",
+        )
+
+        deficit = self._target_layer_count - current_count
+        self.ui.log(f"Layer deficit ({deficit}). Starting iterative Needle...", "INFO")
+        self._start_needle_process()
+        return True
+
+    def _handle_decimation_polish_completion(self, d: Dict) -> bool:
+        """Route decimation polish completion and bypass standard workflow."""
+        if not getattr(self.ui, "_decimation_polishing", False):
+            return False
+
+        if "ep" in d:
+            self.ui.ep_current = d["ep"].copy()
+        rmse = d.get("rmse", getattr(self.ui, "_workflow_best_rmse", float("inf")))
+        if rmse < getattr(self.ui, "_workflow_best_rmse", float("inf")):
+            self.ui._workflow_best_rmse = rmse
+        self.ui._update_thickness_display()
+        self.ui._on_decimation_polish_done()
+        return True
+
+    def _handle_smart_decimation_followup(self, d: Dict) -> bool:
+        """Advance smart decimation polish passes when enabled."""
+        if not hasattr(self.ui, "_smart_decimation_step"):
+            return False
+
+        polish_pass = getattr(self.ui, "_smart_decimation_polish_pass", 0)
+        if polish_pass == 1:
+            self.ui._smart_decimation_polish_pass = 2
+            self.ui.run_optim("local", keep_history=True)
+            return True
+
+        self.ui._smart_decimation_polish_pass = 0
+        self.ui._on_smart_decimation_optim_done(d)
+        return True
 
     def _start_needle_process(self) -> None:
         """
@@ -354,12 +611,9 @@ class DesignOrchestrator(QObject):
             if hasattr(self, "allow_growth_check"):
                 allow_growth = self.ui.allow_growth_check.isChecked()
 
-            if allow_growth and self.ui._target_layer_count <= current_count:
-                # User likely clicked "Needle" manually to grow structure
-
-                self.ui._target_layer_count = CFG.MAX_LAYERS
-
-                self.ui.log(f"Deep Needle Init: Targeting max {CFG.MAX_LAYERS} layers", "INFO")
+            if allow_growth and self._target_layer_count <= current_count:
+                # User likely clicked "Needle" manually to grow structure. Let overshoot logic handle it.
+                pass
 
         # PREVENTIVE CLEANUP: Light clean before Needle (merge only, no deletion)
 
@@ -382,15 +636,16 @@ class DesignOrchestrator(QObject):
             )
 
             self.ui._update_layer_count()
-
             self.ui._update_thickness_display()
 
+            # The stack has degraded due to merging. The old RMSE is invalid.
+            self.ui._workflow_best_rmse = float("inf")
+            if hasattr(self, "_needle_merit_before"):
+                self._needle_merit_before = float("inf")
+
             # If layers merged, restart light optimization (keep_history to preserve target)
-
             self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
-
             QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
-
             return
 
         mats = self.ui._get_materials()
@@ -458,7 +713,11 @@ class DesignOrchestrator(QObject):
             "oblique_mode": self.ui.oblique_mode,  # Pass oblique mode
             "oblique_tgts": (self.ui._get_oblique_tgts() if self.ui.oblique_mode else []),  # Pass oblique targets
             "excluded_layers": sorted(getattr(self, "_needle_excluded_layers", set())),
+            "run_id": getattr(self.ui, "_workflow_run_id", None),
+            "run_context": getattr(self.ui, "_workflow_run_ctx", None),
         }
+        if hasattr(self.ui, "progress_widget"):
+            self.ui.progress_widget.start(phase="NEEDLE SCAN")
 
         self.ui.needle_worker = NeedleWorker(cfg)
 
@@ -475,11 +734,42 @@ class DesignOrchestrator(QObject):
         self.ui.needle_worker.signals.error.connect(self.ui._on_error)
         self.ui.needle_worker.signals.error.connect(self.ui.needle_worker.deleteLater)
 
-        self.ui.needle_thread.finished.connect(self.ui.needle_thread.deleteLater)
+        if hasattr(self.ui, "_on_needle_progress"):
+            self.ui.needle_worker.signals.progress.connect(self.ui._on_needle_progress)
 
+        self.ui.needle_thread.finished.connect(self.ui.needle_thread.deleteLater)
         self.ui.needle_thread.start()
 
+    def schedule_refresh_pareto_table(self) -> None:
+        QTimer.singleShot(0, self.ui._refresh_pareto_table)
+
+    def schedule_update_substrate_info(self) -> None:
+        QTimer.singleShot(0, self.ui._update_substrate_info)
+
+    def schedule_update_tikhonravov_points(self, delay_ms: int = 300) -> None:
+        QTimer.singleShot(delay_ms, self.ui._update_tikhonravov_points)
+
+    def schedule_export_results(self) -> None:
+        QTimer.singleShot(100, self.ui.export_results)
+
+    def schedule_smart_pareto_decimation(self) -> None:
+        QTimer.singleShot(200, self.ui._start_smart_pareto_decimation)
+
+    def schedule_smart_decimation_remove_and_optimize(self) -> None:
+        QTimer.singleShot(200, self.ui._smart_decimation_remove_and_optimize)
+
+    def schedule_export_pareto_report(self) -> None:
+        QTimer.singleShot(500, self.ui._export_pareto_report)
+
+    def schedule_local_optim_keep_history(self) -> None:
+        QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+
+    def schedule_decimation_remove_and_polish(self) -> None:
+        QTimer.singleShot(100, self.ui._decimation_remove_and_polish)
+
     def _on_needle_found(self, res: Dict) -> None:
+        if hasattr(self.ui, "progress_widget"):
+            self.ui.progress_widget.stop("Done")
         """
 
         Callback after NeedleWorker completes a topological scan.
@@ -574,7 +864,7 @@ class DesignOrchestrator(QObject):
             # Clean overshoot state
 
             if getattr(self, "_overshoot_active", False):
-                self.ui._target_layer_count = self._original_target_count
+                self._target_layer_count = self._original_target_count
 
                 self._overshoot_active = False
 
@@ -585,7 +875,7 @@ class DesignOrchestrator(QObject):
         if action == "split":
             pred_cost = res.get("cost")
 
-            workflow_best = getattr(self, "_workflow_best_rmse", float("inf"))
+            workflow_best = getattr(self.ui, "_workflow_best_rmse", float("inf"))
 
             if (
                 pred_cost is not None
@@ -606,7 +896,11 @@ class DesignOrchestrator(QObject):
 
                 min_rel = getattr(self, "_needle_pred_gain_rel_threshold", 0.002)
 
-                if pred_gain_abs < min_abs and pred_gain_rel < min_rel:
+                allow_growth = True
+                if hasattr(self.ui, "allow_growth_check"):
+                    allow_growth = self.ui.allow_growth_check.isChecked()
+
+                if not allow_growth and pred_gain_abs < min_abs and pred_gain_rel < min_rel:
                     self.ui.log(
                         f"Needle: insertion skipped (predicted gain too small, "
                         f"DeltaRMSE={pred_gain_abs:.3g}, {pred_gain_rel * 100:.2f}%)",
@@ -642,7 +936,7 @@ class DesignOrchestrator(QObject):
 
         current_count = self.ui.front_table.rowCount()
 
-        if current_count < self.ui._target_layer_count:
+        if current_count < self._target_layer_count:
             return self._handle_needle_no_candidate_below_target(action, res, current_count)
 
         if self._maybe_prune_needle_overshoot(current_count):
@@ -662,7 +956,7 @@ class DesignOrchestrator(QObject):
         """Handle retries and abort for needle no-candidate results below target count."""
 
         self.ui.log(
-            f"Needle: No beneficial insertion found. Current: {current_count}, Target: {self.ui._target_layer_count}",
+            f"Needle: No beneficial insertion found. Current: {current_count}, Target: {self._target_layer_count}",
             "WARNING",
         )
 
@@ -721,7 +1015,7 @@ class DesignOrchestrator(QObject):
         self._clear_needle_cycle_state()
 
         if getattr(self, "_overshoot_active", False):
-            self.ui._target_layer_count = self._original_target_count
+            self._target_layer_count = self._original_target_count
 
             self._overshoot_active = False
 
@@ -749,6 +1043,24 @@ class DesignOrchestrator(QObject):
         if not getattr(self, "_overshoot_active", False):
             return False
 
+        allow_growth = True
+        if hasattr(self.ui, "allow_growth_check"):
+            allow_growth = self.ui.allow_growth_check.isChecked()
+
+        if allow_growth:
+            self.ui.log(
+                f"Needle: Overshoot target reached ({current_count} layers). Keeping new target as allow_growth is enabled.",
+                "SUCCESS",
+            )
+            self._overshoot_active = False
+            self._overshoot_done = False
+            self._target_layer_count = CFG.MAX_LAYERS
+            self._original_target_count = CFG.MAX_LAYERS
+            if hasattr(self, "_needle_fail_count"):
+                delattr(self, "_needle_fail_count")
+            self._clear_needle_cycle_state()
+            return False
+
         original = self._original_target_count
 
         self.ui.log(
@@ -762,7 +1074,7 @@ class DesignOrchestrator(QObject):
 
         self._overshoot_done = True
 
-        self.ui._target_layer_count = original
+        self._target_layer_count = original
 
         if hasattr(self, "_needle_fail_count"):
             delattr(self, "_needle_fail_count")
@@ -770,6 +1082,12 @@ class DesignOrchestrator(QObject):
         self._clear_needle_cycle_state()
 
         if pruned > 0:
+            # CRITICAL: The structure has changed (layers removed). 
+            # The previous best RMSE is no longer valid for this new structure.
+            # Reset workflow best RMSE so the local polish can correctly report its new baseline.
+            self.ui._workflow_best_rmse = float("inf")
+            self.ui._best_eval_rmse = float("inf")
+
             self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
 
             QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
@@ -836,8 +1154,6 @@ class DesignOrchestrator(QObject):
         if hasattr(self, "_optim_n_evals"):
             self.ui.accumulated_evals += self.ui._optim_n_evals
 
-        self._needle_merit_before = None
-
         self._needle_cycle_step = 1
 
         self.ui.run_optim("local", keep_history=True)
@@ -851,7 +1167,7 @@ class DesignOrchestrator(QObject):
 
         self.ui.front_table.insertRow(insert_idx)
 
-        target_needle_nm = 0.1
+        target_needle_nm = 3.0
 
         qw_needle = (4.0 * n_needle * target_needle_nm) / l0
 

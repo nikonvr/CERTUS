@@ -2,6 +2,11 @@ import os
 import sys
 from pathlib import Path
 import logging
+import traceback
+from certus.ui.certus_index_ui import (
+    _prepare_nk_plot_inputs,
+    KLogAxisItem,
+)
 import time
 import functools
 from datetime import datetime
@@ -233,6 +238,7 @@ class CertusIndexPlotMixin:
         self._update_plot_exclusion()
 
         try:
+            from certus.ui.certus_index_ui import _set_spectrum_plot_title
             _set_spectrum_plot_title(self.plot_spectrum, res.config.source_file)
 
         except NUMERICAL_FAULT_EXCEPTIONS :

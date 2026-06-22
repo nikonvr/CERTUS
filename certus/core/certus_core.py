@@ -38,6 +38,9 @@ from certus.core.version import (
     get_app_display_name,
     get_app_full_name,
 )
+from certus.core.certus_config import CONFIG_SCHEMA_VERSION, ConfigManager, get_resource_path as config_get_resource_path
+from certus.core.certus_runtime import CertusRuntime, build_runtime, setup_numba_cache, set_num_threads
+from certus.core.certus_logging import get_logger, handle_exception, setup_logging
 
 DISPLAY_VERSION_LABEL = APP_DISPLAY_NAME
 DISPLAY_FULL_LABEL = APP_FULL_NAME
@@ -120,7 +123,6 @@ __all__ = [
 ]
 
 
-import json
 import hashlib
 
 import logging
@@ -145,7 +147,6 @@ from datetime import datetime
 from typing import Any, Optional
 
 from certus.utils.logging import attach_jsonl_handler, get_structured_logger
-
 
 import numpy as np
 
@@ -246,25 +247,9 @@ def _get_cpu_count() -> int:
 
 
 def get_resource_path(filename: str) -> str:
-    """
+    """Returns absolute path to resource (PyInstaller/Dev compatible)."""
 
-    Returns absolute path to resource (PyInstaller/Dev compatible).
-
-    External files (svg, json, xlsx) are next to executable.
-
-    """
-
-    if getattr(sys, "frozen", False):
-        # Exe: base path is executable dir
-        base_path = Path(sys.executable).resolve().parent
-    else:
-        # Dev: base path is root dir (two levels above this file)
-        base_path = Path(__file__).resolve().parents[2]
-
-    resource = Path(filename)
-    if resource.is_absolute():
-        return str(resource)
-    return str((base_path / resource).resolve())
+    return config_get_resource_path(filename)
 
 
 def is_frozen() -> bool:
@@ -443,42 +428,6 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
 
 
 
-@dataclass(frozen=True)
-class CertusRuntime:
-    """Immutable runtime container shared by CERTUS apps."""
-
-    logger: logging.Logger
-    cache_dir: str
-    n_cores: int
-
-
-def setup_numba_cache() -> str:
-    """Configures Numba environment and returns the cache directory."""
-
-    configure_numba_env()
-    return os.environ.get("NUMBA_CACHE_DIR", "")
-
-
-def set_num_threads(n_cores: int | None = None) -> int:
-    """Sets thread env vars for parallel calculations (idempotent)."""
-
-    if n_cores is None:
-        n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
-
-    s_cores = str(n_cores)
-    env_vars = [
-        "OMP_NUM_THREADS",
-        "OPENBLAS_NUM_THREADS",
-        "MKL_NUM_THREADS",
-        "VECLIB_MAXIMUM_THREADS",
-        "NUMEXPR_NUM_THREADS",
-    ]
-
-    for env_var in env_vars:
-        if env_var not in os.environ:
-            os.environ[env_var] = s_cores
-
-    return n_cores
 
 
 def _supports_color() -> bool:
@@ -575,148 +524,6 @@ class CertusGuiFormatter(logging.Formatter):
         return formatted
 
 
-def _resolve_console_log_level(default: int) -> int:
-    """Resolve the console verbosity from env, defaulting to warning for quiet CLI runs."""
-
-    import logging as _logging
-
-    raw = os.environ.get("CERTUS_CONSOLE_LOG_LEVEL", "").strip().upper()
-    if not raw:
-        return _logging.WARNING
-    return getattr(_logging, raw, default)
-
-
-def setup_logging(log_file: str | None = None, level: int | None = None) -> "logging.Logger":
-    """Configure a single CERTUS logger with consistent console and JSONL output."""
-
-    import logging as _logging
-
-    if level is None:
-        level = _logging.INFO
-
-    logger = _logging.getLogger("CERTUS")
-    logger.setLevel(level)
-    logger.propagate = False
-
-    desired_log_file = None
-    if log_file:
-        log_file_path = Path(log_file)
-        desired_log_file = str(log_file_path.resolve() if log_file_path.is_absolute() else log_file_path)
-
-    existing_log_file = getattr(logger, "_certus_log_file", None)
-    existing_level = getattr(logger, "_certus_log_level", None)
-    if logger.handlers and existing_log_file == desired_log_file and existing_level == level:
-        return logger
-
-    for handler in list(logger.handlers):
-        try:
-            handler.close()
-        finally:
-            logger.removeHandler(handler)
-
-    formatter = _logging.Formatter(
-        "%(asctime)s | %(levelname)-8s | %(name)-12s | %(funcName)-22s:%(lineno)-4d | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    console_formatter = CertusConsoleFormatter(use_color=_supports_color())
-    console_handler = _logging.StreamHandler()
-    console_handler.setFormatter(console_formatter)
-    console_handler.setLevel(_resolve_console_log_level(level))
-    logger.addHandler(console_handler)
-
-    if log_file:
-        try:
-            log_path = log_file
-            log_path_obj = Path(log_path)
-            if not log_path_obj.is_absolute():
-                if log_path_obj.parent == Path("."):
-                    log_dir = Path(get_resource_path("logs"))
-                    log_dir.mkdir(parents=True, exist_ok=True)
-                    log_path = str(log_dir / log_path_obj.name)
-                else:
-                    log_path_obj.parent.mkdir(parents=True, exist_ok=True)
-
-            from logging.handlers import RotatingFileHandler
-
-            file_handler = RotatingFileHandler(
-                log_path,
-                maxBytes=MAX_LOG_FILE_SIZE_BYTES,
-                backupCount=MAX_LOG_BACKUP_FILES,
-                encoding="utf-8",
-            )
-            file_handler.setFormatter(formatter)
-            file_handler.setLevel(_logging.DEBUG)
-            logger.addHandler(file_handler)
-
-            logger._certus_log_file = desired_log_file or str(Path(log_path))
-            logger._certus_log_level = level
-            logger.info("logger=certus status=initialized sink=file path=%s level=%s", log_path, _logging.getLevelName(level))
-        except (
-            PermissionError,
-            OSError,
-            RuntimeError,
-            FloatingPointError,
-            ValueError,
-            ZeroDivisionError,
-            OverflowError,
-            np.linalg.LinAlgError,
-        ) as exc:
-            logger.error("logger=certus sink=file status=unavailable path=%s reason=%s", log_file, exc)
-            logger.warning("logger=certus sink=console status=active reason=file-handler-unavailable")
-
-    try:
-        jsonl_path = Path(get_resource_path("logs")) / "CERTUS.jsonl"
-        attach_jsonl_handler(logger, jsonl_path)
-        logger.debug("logger=certus sink=jsonl status=attached path=%s", jsonl_path)
-    except (
-        PermissionError,
-        OSError,
-        ValueError,
-        TypeError,
-        RuntimeError,
-        AttributeError,
-        KeyError,
-        IndexError,
-        FileNotFoundError,
-    ) as exc:
-        logger.warning("logger=certus sink=jsonl status=unavailable reason=%s", exc)
-
-    return logger
-
-
-def get_logger() -> "logging.Logger":
-    """Returns the configured logger or creates a default one."""
-
-    logger = logging.getLogger("CERTUS")
-    if not logger.handlers:
-        return setup_logging()
-    return logger
-
-
-def handle_exception(exc_type, exc_value, exc_traceback):
-    """Global exception handler for uncaught exceptions."""
-
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-
-    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-    logging.critical("logger=certus event=uncaught_exception\n%s", error_msg)
-
-
-def build_runtime(
-    *,
-    log_file: str | None = None,
-    level: int | None = None,
-    n_cores: int | None = None,
-) -> CertusRuntime:
-    """Build an immutable runtime object for dependency injection."""
-
-    cache_dir = setup_numba_cache()
-    resolved_n_cores = set_num_threads(n_cores)
-    logger = setup_logging(log_file=log_file, level=level)
-    return CertusRuntime(logger=logger, cache_dir=cache_dir, n_cores=resolved_n_cores)
 
 
 class SystemConfig:
@@ -818,109 +625,7 @@ T_SUB_MIN_R_NORM: float = 0.05  # threshold for R_nu = R/T_sub (absorption band 
 # =============================================================================
 
 
-class ConfigManager:
-    """Generic JSON config manager.
-
-    Factorizes repeated pattern for precision, export, theme configs."""
-
-    def __init__(self, filename: str, default_value: Any, key_name: str):
-        """
-
-        Args:
-
-            filename: Config file name (e.g., "certus_precision.json")
-
-            default_value: Default if file missing
-
-            key_name: Key in JSON (e.g., "use_single_precision")
-
-        """
-
-        self.filename = filename
-
-        self.default_value = default_value
-
-        self.key_name = key_name
-
-        self._value = default_value
-
-        self._load()
-
-    def _load(self) -> Any:
-        """Loads config from file."""
-
-        try:
-            config_path = get_resource_path(self.filename)
-
-            if Path(config_path).exists():
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config = json.load(f)
-
-                    self._value = config.get(self.key_name, self.default_value)
-
-                    return self._value
-
-        except (IOError, json.JSONDecodeError, KeyError) as e:
-            logging.debug(f"Could not load {self.filename}: {e}")
-
-        return self.default_value
-
-    def save(self, value: Any) -> bool:
-        """
-
-        Saves config to file without erasing other keys.
-
-        Args:
-
-            value: Value to save
-
-        Returns:
-
-            True if success, False otherwise
-
-        """
-
-        try:
-            config_path = get_resource_path(self.filename)
-
-            config = {}
-            if Path(config_path).exists():
-                try:
-                    with open(config_path, "r", encoding="utf-8") as f:
-                        parsed = json.load(f)
-                        if isinstance(parsed, dict):
-                            config = parsed
-                except (IOError, json.JSONDecodeError):
-                    pass
-
-            config[self.key_name] = value
-
-            with open(config_path, "w", encoding="utf-8") as f:
-                json.dump(config, f, indent=2)
-
-            self._value = value
-
-            return True
-
-        except (IOError, OSError, TypeError) as e:
-            logging.warning(f"Could not save {self.filename}: {e}")
-
-            return False
-
-    def get(self) -> Any:
-        """Returns curr config val."""
-
-        return self._value
-
-    def reload(self) -> Any:
-        """Reload config from disk. Returns the loaded value."""
-
-        return self._load()
-
-    def set(self, value: Any) -> bool:
-        """Sets and saves value."""
-
-        return self.save(value)
+CONFIG_SCHEMA_VERSION = 1
 
 
 # =============================================================================
@@ -967,17 +672,17 @@ _export_manager = ConfigManager("certus_export.json", True, "auto_export_enabled
 def load_export_config() -> bool:
     """Loads auto export config."""
 
-    return _export_manager._load()
+    return _export_manager.reload()
 
 
-def save_export_config(enabled: bool):
+def save_export_config(enabled: bool) -> bool:
     """Saves auto export config."""
 
-    _export_manager.save(enabled)
+    return _export_manager.save(enabled)
 
 
 def get_export_config() -> bool:
-    """Returns curr auto export config."""
+    """Returns current auto export config."""
 
     return _export_manager.get()
 
@@ -992,26 +697,29 @@ def get_export_config() -> bool:
 _theme_manager = ConfigManager("certus_theme.json", "light", "theme_mode")
 _font_manager = ConfigManager("certus_theme.json", "Default", "font_family")
 
+
 def load_theme_config() -> str:
     """Loads theme config."""
 
-    return _theme_manager._load()
+    return _theme_manager.reload()
 
 
-def save_theme_config(mode: str):
+def save_theme_config(mode: str) -> bool:
     """Saves theme config."""
 
-    _theme_manager.save(mode)
+    return _theme_manager.save(mode)
+
 
 def load_font_config() -> str:
     """Loads font config."""
 
-    return _font_manager._load()
+    return _font_manager.reload()
 
-def save_font_config(font_family: str):
+
+def save_font_config(font_family: str) -> bool:
     """Saves font config."""
 
-    _font_manager.save(font_family)
+    return _font_manager.save(font_family)
 
 
 # =============================================================================
@@ -1096,7 +804,19 @@ OH_BAND_MIN: float = 1360.0
 OH_BAND_MAX: float = 1460.0
 
 
-from certus.core.certus_substrate_db import *
+from certus.core.certus_substrate_db import (
+    CANONICAL_SUBSTRATE_LABELS,
+    SUBSTRATES,
+    SUBSTRATE_CHOICES,
+    SUBSTRATE_LIST,
+    SUBSTRATE_MAPPING,
+    SUBSTRATE_MIN_LAMBDA,
+    SELLMEIER_COEFFS_BY_ID,
+    canonicalize_substrate_label,
+    substrate_sellmeier_coeffs,
+    substrate_sellmeier_id,
+)
+
 
 
 # =============================================================================
@@ -1424,20 +1144,20 @@ import types
 
 
 class CertusFacadeModule(types.ModuleType):
+    """Generic proxy module to support pytest monkeypatching.
+
+    Delegates attribute access and modification to underlying submodules.
     """
-    Generic proxy module to support pytest monkeypatching.
-    Delegates attribute access and modification to the underlying submodules.
-    """
+
     def __init__(self, name: str, submodules: list):
         super().__init__(name)
         self._submodules = submodules
-        # Copy dictionary attributes from the original module in sys.modules
         if name in sys.modules:
             for k, v in sys.modules[name].__dict__.items():
                 self.__dict__[k] = v
 
     def __getattr__(self, name: str):
-        if name == '_submodules':
+        if name == "_submodules":
             raise AttributeError(name)
         for sub in self._submodules:
             if hasattr(sub, name):
@@ -1446,7 +1166,7 @@ class CertusFacadeModule(types.ModuleType):
 
     def __setattr__(self, name: str, value: Any):
         super().__setattr__(name, value)
-        if name != '_submodules' and hasattr(self, '_submodules'):
+        if name != "_submodules" and hasattr(self, "_submodules"):
             for sub in self._submodules:
                 if hasattr(sub, name):
                     setattr(sub, name, value)

@@ -481,12 +481,35 @@ def build_pglobal_config_from_cfg(
         max_iter_run = 15
     elif mode == "healing":
         scale = max(1.0, dim / 10.0)
+        
+        # Base config (Optimal parameters found via 18h grid search)
+        n_samples = 500
+        alpha = 0.1
+        reduction_ratio = 0.3
+        local_search_budget = 2000
+        max_active_clusters = min(40, max(10, dim * 2))
+        
+        import os
+        import json
+        env_params = os.environ.get("CERTUS_PGLOBAL_PARAMS")
+        if env_params:
+            try:
+                p = json.loads(env_params)
+                if "n_samples" in p: n_samples = int(p["n_samples"] * scale)
+                if "alpha" in p: alpha = float(p["alpha"])
+                if "reduction_ratio" in p: reduction_ratio = float(p["reduction_ratio"])
+                if "local_budget" in p: local_search_budget = int(p["local_budget"])
+                if "max_clusters" in p: max_active_clusters = int(p["max_clusters"])
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to parse CERTUS_PGLOBAL_PARAMS: {e}")
+
         pg_conf = PGlobalConfig(
-            n_samples_per_iter=int(1000 * scale),
-            alpha=0.02,
-            reduction_ratio=0.3,
-            local_search_budget=10000,
-            max_active_clusters=min(20, max(5, dim)),
+            n_samples_per_iter=n_samples,
+            alpha=alpha,
+            reduction_ratio=reduction_ratio,
+            local_search_budget=local_search_budget,
+            max_active_clusters=max_active_clusters,
             max_feval=cfg.get("max_feval", 50000000),
             convergence_tol=conv_tol,
         )

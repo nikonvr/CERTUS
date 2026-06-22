@@ -1,4 +1,17 @@
 from __future__ import annotations
+from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
+from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus.utils.certus_re_math import format_re_drift_log_triplet_pct
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
+from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
+from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
+from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
+from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
+from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
 import logging
 import copy
 import time
@@ -45,30 +58,51 @@ from certus.ui.certus_ui import (
     open_documentation, confirm_stop_with_timeout,
 )
 
-from certus.utils.certus_ux import build_premium_overrides
+from certus.utils.certus_ux import build_premium_overrides, OBJ
 from certus.utils.certus_data import OPENPYXL_AVAILABLE
 from certus.workers.certus_re_workers import REWorker
 from certus.ui.certus_re_ui import CertusREResultsDialog
 
 from certus.utils.certus_re_helpers import (
-    RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_HL_DELTA_RE_REG_SQRT_W,
-    RE_OPTIM_POINTS_PER_TARGET, RE_PHASE2_FD_MAX_WORKERS, RE_PHASE2_FD_PARALLEL,
-    RE_PHASE2_ONESIDED_SPLINE_FD, RE_PHASE4_APERTURE_SCAN_POINTS, RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_P4_BEAM_N_KNOTS, RE_PHASE4_TRF_MAX_NFEV, re_qwot_penalty_weight_from_preset,
-    RE_RE_DEADZONE_DELTA_RE_ABS, RE_RE_DEADZONE_QWOT_ABS, RE_SPEED_PRESETS,
-    RE_SPLINE_NODE2_DEFAULT_NM, RE_SPLINE_N_KNOTS, RE_SUB_CAUCHY_TUBE_DELTA,
-    RE_THICKNESS_SEARCH_RADIUS_PCT, _RE_CANONICAL_SHEETS, _RE_FT_COL_MAT, _RE_FT_COL_N,
-    _RE_FT_COL_NUM, _RE_FT_COL_QW, _RE_FT_COL_THICK, _parse_re_rmse_combined_from_progress_message,
-    _re_calc_spectrum_for_config, _re_cell_str, _re_find_measurement_wavelength_column,
-    _re_header_is_wavelength_label, _re_header_looks_like_spectrum_title, _re_index_column_map,
-    _re_index_split_header_and_data, _re_measurement_values_are_percent, _re_p4_ap_staircase_polyline,
-    _re_p4_kwargs_from_opt_result, _re_p4_sort_knot_pairs, _re_parse_design_metadata_row,
-    _re_parse_design_qwot_rows, _re_qwot_rmse_abs_delta_at_l0, _re_resolve_re_workbook_sheets,
-    _re_rmse_combined_spectral_qwot, _re_rmse_oblique_weighted, _re_sort_results_best_for_table_and_apply,
-    format_re_drift_log_triplet_pct, format_re_spline_knots_log, parse_re_column_header,
-    re_apply_re_index_model, re_delta_qwot_per_layer, re_drift_result_log_suffix,
-    re_interp_delta_knots_clamped, re_knots_wavelengths, re_n_corr_at_lambda_ref,
-    re_substrate_cauchy_n_re_from_theta, TabularMaterial, ParsedREColumn
+    RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
+    re_qwot_penalty_weight_from_preset,
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    RE_SPLINE_N_KNOTS,
+    _RE_CANONICAL_SHEETS,
+    _RE_FT_COL_MAT,
+    _RE_FT_COL_N,
+    _RE_FT_COL_NUM,
+    _RE_FT_COL_QW,
+    _RE_FT_COL_THICK,
+    _parse_re_rmse_combined_from_progress_message,
+    _re_calc_spectrum_for_config,
+    _re_cell_str,
+    _re_find_measurement_wavelength_column,
+    _re_header_is_wavelength_label,
+    _re_header_looks_like_spectrum_title,
+    _re_index_column_map,
+    _re_index_split_header_and_data,
+    _re_measurement_values_are_percent,
+    _re_p4_ap_staircase_polyline,
+    _re_p4_kwargs_from_opt_result,
+    _re_p4_sort_knot_pairs,
+    _re_parse_design_metadata_row,
+    _re_parse_design_qwot_rows,
+    _re_qwot_rmse_abs_delta_at_l0,
+    _re_resolve_re_workbook_sheets,
+    _re_rmse_combined_spectral_qwot,
+    _re_rmse_oblique_weighted,
+    _re_sort_results_best_for_table_and_apply,
+    format_re_spline_knots_log,
+    parse_re_column_header,
+    re_apply_re_index_model,
+    re_delta_qwot_per_layer,
+    re_drift_result_log_suffix,
+    re_interp_delta_knots_clamped,
+    re_knots_wavelengths,
+    re_n_corr_at_lambda_ref,
+    TabularMaterial,
+    ParsedREColumn,
 )
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
@@ -142,7 +176,7 @@ class CertusRELayoutMixin:
 
         scroll_layout.setContentsMargins(0, 0, 4, 0)
 
-        scroll_layout.setSpacing(8)
+        scroll_layout.setSpacing(12)
 
         workflow_card = CertusCard("Workflow")
 
@@ -178,21 +212,21 @@ class CertusRELayoutMixin:
 
         scroll_layout.addWidget(CertusCollapsible("5  Refinement", refine_widget, expanded=True))
 
+        actions_wrap = CertusCard("Actions")
+
+        actions_wrap.body.setContentsMargins(10, 8, 10, 10)
+
+        actions_wrap.body.setSpacing(12)
+
+        actions_wrap.body.addLayout(self._build_action_buttons())
+
+        scroll_layout.addWidget(actions_wrap)
+
         scroll_layout.addStretch()
 
         scroll.setWidget(scroll_content)
 
         left_layout.addWidget(scroll, 1)
-
-        actions_wrap = CertusCard("Actions")
-
-        actions_wrap.body.setContentsMargins(10, 8, 10, 10)
-
-        actions_wrap.body.setSpacing(8)
-
-        actions_wrap.body.addLayout(self._build_action_buttons())
-
-        left_layout.addWidget(actions_wrap)
 
         try:
             from certus.ui.certus_animations import fade_in
@@ -223,7 +257,7 @@ class CertusRELayoutMixin:
 
         lay = c.body
 
-        lay.setSpacing(10)
+        lay.setSpacing(12)
 
         hint = QLabel("<b>1</b> Load workbook &nbsp;&nbsp; <b>2</b> Evaluate spectrum &nbsp;&nbsp; <b>3</b> Run RE")
 
@@ -237,10 +271,10 @@ class CertusRELayoutMixin:
 
         btn_lay.setContentsMargins(0, 0, 0, 0)
 
-        btn_lay.setSpacing(10)
+        btn_lay.setSpacing(12)
 
         self.load_re_btn = QPushButton(" Load RE file (Excel)")
-        self.load_re_btn.setObjectName("PRIMARY_BUTTON")
+        self.load_re_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.load_re_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.load_re_btn.setToolTip("Select and load a previously saved R/E inversion file.")
@@ -252,7 +286,7 @@ class CertusRELayoutMixin:
         btn_lay.addWidget(self.load_re_btn)
 
         self.launch_re_btn = QPushButton(" Run RE")
-        self.launch_re_btn.setObjectName("PRIMARY_BUTTON")
+        self.launch_re_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.launch_re_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.launch_re_btn.setToolTip("Run the R/E inversion process on current targets.")
@@ -268,7 +302,7 @@ class CertusRELayoutMixin:
         lay.addLayout(btn_lay)
 
         self.display_re_results_btn = QPushButton(" Display results")
-        self.display_re_results_btn.setObjectName("PRIMARY_BUTTON")
+        self.display_re_results_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.display_re_results_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.display_re_results_btn.setToolTip(
@@ -290,7 +324,7 @@ class CertusRELayoutMixin:
 
         lay = c.body
 
-        lay.setSpacing(8)
+        lay.setSpacing(12)
 
         hint = QLabel(
             "Modes below are left to right: <b>Slow</b> -> <b>Medium</b> -> <b>Fast</b>. "
@@ -370,7 +404,7 @@ class CertusRELayoutMixin:
 
         lay = c.body
 
-        lay.setSpacing(8)
+        lay.setSpacing(12)
 
         lbl_idx = QLabel("<b>Optical indices</b>  H, L and substrate:  index  sheet (n(lambda), k(lambda) tables).")
 
@@ -418,7 +452,7 @@ class CertusRELayoutMixin:
 
         fit_row.setContentsMargins(0, 0, 0, 0)
 
-        fit_row.setSpacing(8)
+        fit_row.setSpacing(12)
 
         fit_row.addWidget(QLabel("RE fit lambda window:"))
 
@@ -570,14 +604,14 @@ class CertusRELayoutMixin:
 
         g = QGridLayout()
 
-        g.setHorizontalSpacing(8)
+        g.setHorizontalSpacing(12)
 
-        g.setVerticalSpacing(8)
+        g.setVerticalSpacing(12)
 
         # Evaluate
 
         self.eval_btn = QPushButton("EVALUATE")
-        self.eval_btn.setObjectName("PRIMARY_BUTTON")
+        self.eval_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.eval_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.eval_btn.setToolTip("Compute RMSE and spectral curves for current stack (Ctrl+E)")
@@ -591,7 +625,7 @@ class CertusRELayoutMixin:
         # Stop (evaluation or RE in progress)
 
         self.stop_btn = QPushButton("STOP")
-        self.stop_btn.setObjectName("DANGER_BUTTON")
+        self.stop_btn.setObjectName(OBJ.DANGER_BUTTON)
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.stop_btn.setToolTip("Stop spectral evaluation or RE optimization in progress.")
@@ -604,7 +638,7 @@ class CertusRELayoutMixin:
 
         self.substrate_info_btn = QPushButton(" Stack Info")
 
-        self.substrate_info_btn.setObjectName("PRIMARY_BUTTON")
+        self.substrate_info_btn.setObjectName(OBJ.PRIMARY_BUTTON)
         self.substrate_info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.substrate_info_btn.setToolTip("Substrate summary and stack structure in QWOT in a separate window.")
@@ -660,7 +694,7 @@ class CertusRELayoutMixin:
 
         self.spectrum_plot.setXRange(200, 3000, 0)
 
-        self.spectrum_plot.setYRange(0.0, 1.0, 0)
+        self.spectrum_plot.plotItem.enableAutoRange(y=True)
 
         self.profile_plot = CertusScientificPlot(self, "Refractive Index Profile", "n", "z (nm)")
 
@@ -773,6 +807,9 @@ class CertusRELayoutMixin:
         self.log_container.setVisible(False)  # Start hidden
 
         right_layout.addWidget(self.log_container)
+
+        # Show spectral window by default
+        self.viz_stack.setCurrentIndex(1)
 
         return right_panel
 

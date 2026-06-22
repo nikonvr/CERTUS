@@ -1,6 +1,9 @@
 """Targeted hot-path tests for _certus_physics_impl utilities."""
 
 from __future__ import annotations
+from certus.physics.certus_material_db import numba_interp_vectorized
+from certus.physics.certus_material_db import numba_interp_scalar
+from certus.physics.certus_colorimetry import lab_to_xyz
 
 import numpy as np
 import pytest
@@ -15,16 +18,13 @@ from certus.core._certus_physics_impl import (
     compute_RT_from_matrix,
     compute_TMM_single_point_k0_exact,
     delta_e_2000,
-    fit_parabola_vertex_3points,
     get_n_substrate_array_by_id,
-    lab_to_xyz,
-    numba_interp_scalar,
-    numba_interp_vectorized,
     trim_worst_only,
     validate_wavelengths_batch,
     xyz_from_spectrum,
     xyz_to_lab,
 )
+from certus.physics.certus_strat_math import fit_parabola_vertex_3points
 
 
 class _DummyTarget:

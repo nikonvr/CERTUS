@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import QDialog, QVBoxLayout
 
 
 from certus.core.certus_core import CFG, NUMERICAL_FAULT_EXCEPTIONS, ensure_numpy_array, get_complex_dtype, get_float_dtype
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 from certus_physics import NKCache, calc_rmse
 
@@ -51,6 +52,7 @@ class WarmupWorker(QThread):
     """JIT compilation warmup thread"""
 
     finished = pyqtSignal()
+    progress_snapshot = pyqtSignal(object)
 
     def run(self) -> None:
 
@@ -58,6 +60,8 @@ class WarmupWorker(QThread):
             _t0 = time.time()
 
             logging.info("[WARMUP] Starting JIT compilation...")
+            snapshot = build_progress_snapshot(message='Warmup', sub_message='Starting JIT compilation', progress_ratio=0.0, display_ratio=0.0, eta_seconds=None, confidence=0.1, state=StepState.RUNNING, module='SPECTRAL', phase='WARMUP', is_indeterminate=True)
+            self.progress_snapshot.emit(snapshot)
 
             wls_dumb = np.linspace(CFG.WL_DEFAULT_MIN, CFG.WL_DEFAULT_MAX, 20, dtype=np.float64)
 
@@ -94,6 +98,7 @@ class WarmupWorker(QThread):
             logging.info(f"[WARMUP] Oblique p-pol done in {(time.time() - _t2) * 1000:.0f}ms")
 
             logging.info(f"[WARMUP] Total warmup time: {(time.time() - _t0) * 1000:.0f}ms")
+            self.progress_snapshot.emit(build_progress_snapshot(message='Warmup', sub_message='Completed', progress_ratio=1.0, display_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module='SPECTRAL', phase='WARMUP', is_indeterminate=False))
 
             self.finished.emit()
 

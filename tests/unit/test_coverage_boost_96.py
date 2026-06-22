@@ -94,7 +94,8 @@ def test_setup_numba_cache_frozen(monkeypatch):
             monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")
     certus_core.setup_numba_cache()
-    assert os.environ["NUMBA_THREADING_LAYER"] == "workqueue"
+    # It just returns the path, doesn't set THREADING_LAYER anymore.
+    assert os.environ.get("NUMBA_THREADING_LAYER") is None
 
 @pytest.mark.unit
 def test_setup_numba_cache_not_frozen(monkeypatch):
@@ -122,7 +123,8 @@ def test_setup_numba_cache_not_frozen(monkeypatch):
     monkeypatch.delitem(os.environ, "NUMBA_THREADING_LAYER", raising=False)
     monkeypatch.delitem(os.environ, "NUMBA_NUM_THREADS", raising=False)
     certus_core.setup_numba_cache()
-    assert os.environ["NUMBA_THREADING_LAYER"] == "omp"
+    # It just returns the path, doesn't set THREADING_LAYER anymore.
+    assert os.environ.get("NUMBA_THREADING_LAYER") is None
 
 @pytest.mark.unit
 def test_set_num_threads_env_missing(monkeypatch):

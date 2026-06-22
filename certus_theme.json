@@ -1,4 +1,5 @@
 {
-  "theme_mode": "dark",
-  "font_family": "Open Sans"
+  "font_family": "Open Sans",
+  "schema_version": 1,
+  "theme_mode": "dark"
 }

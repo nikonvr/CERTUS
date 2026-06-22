@@ -47,7 +47,7 @@ def test_theme_apply_font_family(mock_app, monkeypatch):
     """Test that CertusTheme.apply_to_app correctly resolves font choices."""
     
     # Test fallback default
-    monkeypatch.setattr("certus.core.certus_core.load_font_config", lambda: "Défaut")
+    monkeypatch.setattr("certus.core.certus_core.load_font_config", lambda: "Default")
     CertusTheme.apply_to_app(mock_app, dark_mode=False)
     # The font family string should contain Segoe UI or Inter
     assert "Segoe UI" in CertusTheme.FONT_FAMILY or "Inter" in CertusTheme.FONT_FAMILY

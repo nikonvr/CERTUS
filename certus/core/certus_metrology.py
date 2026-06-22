@@ -107,6 +107,7 @@ class RunContext(BaseModel):
     cpu_brand: str = ""
     os_release: str = ""
     input_fingerprints: list[InputFingerprint] = Field(default_factory=list)
+    params: dict[str, Any] = Field(default_factory=dict)
     params_hash: str = ""
     materials_db_hash: str = ""
     db_version: str = ""
@@ -148,6 +149,7 @@ class RunContext(BaseModel):
             cpu_brand=_detect_cpu_brand(),
             os_release=platform.release(),
             input_fingerprints=fps,
+            params=dict(params or {}) if isinstance(params, dict) else ({"value": params} if params is not None else {}),
             params_hash=compute_params_hash(params) if params is not None else "",
             materials_db_hash=(_db_hash := str(get_materials_db_hash() or "")),
             db_version=_db_hash[:12],

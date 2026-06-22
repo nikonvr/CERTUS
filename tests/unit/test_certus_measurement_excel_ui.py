@@ -1,4 +1,4 @@
-"""Tests unitaires : choix de feuille « measurement » (sans dialogue fichier)."""
+"""Unit tests: choice of "measurement" sheet (without file dialog)."""
 
 from __future__ import annotations
 

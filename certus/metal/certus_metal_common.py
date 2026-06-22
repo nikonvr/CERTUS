@@ -23,6 +23,7 @@ import traceback
 from dataclasses import dataclass, field
 
 from typing import Any, Callable, Optional
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 
 import numpy as np
@@ -88,6 +89,7 @@ from certus.ui.certus_ui import (
     enable_file_drop,
     show_toast,
     open_documentation,
+    CertusLogPanel,
 )
 
 from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
@@ -129,7 +131,7 @@ DEFAULT_RECOMBINATION = 0.7
 
 DEFAULT_UPDATING = "deferred"
 
-DEFAULT_WORKERS = -1
+DEFAULT_WORKERS = 1
 
 METAL_GLOBAL_STATUS = "global"
 METAL_LOCAL_STATUS = "local"
@@ -213,6 +215,60 @@ def _format_beam_status(cur: int, tot: int, best: float) -> str:
 
     rmse = float(np.sqrt(best)) if best >= 0 else 0.0
     return f"Thickness {cur}/{tot} | Best RMSE: {rmse:.2e}"
+
+
+def elevate_spline_knots(
+    x_old: np.ndarray,
+    k_old: int,
+    l_min: float,
+    l_max: float,
+    offset: int = 1
+) -> np.ndarray:
+    """
+    Project an optimal solution from k_old knots to (k_old + 1) knots for a Metal layer.
+    
+    The vector `x_old` has `offset` base parameters at the beginning:
+    - Single Metal: offset=1 (eM)
+    - Bilayer Metal: offset=4 (eM, eL, n_infini, A)
+    
+    The remaining parameters are:
+    - n_knots: k_old elements
+    - k_knots: k_old elements
+    - lambda_internes: max(0, k_old - 2) elements
+    """
+    from scipy.interpolate import CubicSpline
+    
+    base_params = x_old[:offset]
+    n_old = x_old[offset : offset + k_old]
+    k_old_vals = x_old[offset + k_old : offset + 2 * k_old]
+    lambdas_old = x_old[offset + 2 * k_old :]
+    
+    # Reconstruct original knot lambdas
+    if len(lambdas_old) > 0:
+        l_old = np.concatenate(([l_min], np.sort(lambdas_old), [l_max]))
+    else:
+        l_old = np.array([l_min, l_max])
+        
+    # Inject exactly ONE new knot in the middle of the largest existing frequency gap (1/lambda)
+    # This preserves all previously optimized knot positions and distributes knots more physically
+    f_old = 1.0 / l_old
+    f_diffs = np.abs(np.diff(f_old))
+    max_gap_idx = np.argmax(f_diffs)
+    
+    new_f = (f_old[max_gap_idx] + f_old[max_gap_idx + 1]) / 2.0
+    new_lambda = 1.0 / new_f
+    
+    l_new = np.insert(l_old, max_gap_idx + 1, new_lambda)
+    
+    # Interpolate n and k values at the new knot positions
+    # Use natural boundary conditions just like the target objective
+    n_new = CubicSpline(l_old, n_old, bc_type="natural")(l_new)
+    k_new = CubicSpline(l_old, k_old_vals, bc_type="natural")(l_new)
+    
+    # Extract the internal lambdas
+    lambdas_new = l_new[1:-1]
+    
+    return np.concatenate((base_params, n_new, k_new, lambdas_new))
 
 
 def build_metal_progress_event(
@@ -456,6 +512,8 @@ class MetalOptimizationWorker(QObject):
 
     progress = pyqtSignal(dict)
 
+    progress_snapshot = pyqtSignal(object)
+
     error = pyqtSignal(str)
 
     stats_update = pyqtSignal(str, int)
@@ -567,48 +625,14 @@ def metal_optimization_worker_run_differential_evolution(
             emitted = False
 
             if worker.iteration_count % 2 == 0:
-                worker.progress.emit(
-                    {
-                        "params": xk,
-                        "best_params": worker.best_candidate["x"].copy() if worker.best_candidate["x"] is not None else xk,
-                        "mse": current_mse,
-                        "current_y": current_mse,
-                        "current_rmse": current_rmse,
-                        "best_cost": worker.best_candidate["fun"],
-                        "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
-                        "iteration": worker.iteration_count,
-                        "evaluation_count": worker.evaluation_count,
-                        "elapsed_s": elapsed_s,
-                        "message": f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)}",
-                        "improved": improved,
-                        "x_head": x_head,
-                        "best_head": best_head,
-                    }
-                )
+                worker.progress_snapshot.emit(build_progress_snapshot(message=f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)}", display_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), progress_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='METAL', phase='DE', metadata={"params": xk, "best_params": worker.best_candidate["x"].copy() if worker.best_candidate["x"] is not None else xk, "mse": current_mse, "current_y": current_mse, "current_rmse": current_rmse, "best_cost": worker.best_candidate["fun"], "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))), "iteration": worker.iteration_count, "evaluation_count": worker.evaluation_count, "elapsed_s": elapsed_s, "improved": improved, "x_head": x_head, "best_head": best_head}))
                 worker._last_live_emit_time = now
                 emitted = True
 
-            if not emitted and now - worker._last_live_emit_time >= 2.0 and worker.best_candidate["x"] is not None:
+            if not emitted and now - worker._last_live_emit_time >= 5.0 and worker.best_candidate["x"] is not None:
                 worker._last_live_emit_time = now
 
-                worker.progress.emit(
-                    {
-                        "params": worker.best_candidate["x"].copy(),
-                        "best_params": worker.best_candidate["x"].copy(),
-                        "mse": worker.best_candidate["fun"],
-                        "current_y": current_mse,
-                        "current_rmse": current_rmse,
-                        "best_cost": worker.best_candidate["fun"],
-                        "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))),
-                        "iteration": worker.iteration_count,
-                        "evaluation_count": worker.evaluation_count,
-                        "elapsed_s": elapsed_s,
-                        "message": f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)} | best-only",
-                        "improved": False,
-                        "x_head": x_head,
-                        "best_head": best_head,
-                    }
-                )
+                worker.progress_snapshot.emit(build_progress_snapshot(message=f"DE | Gen {worker.iteration_count}/{p.get('maxiter', DEFAULT_MAXITER)} | best-only", display_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), progress_ratio=min(1.0, worker.iteration_count / max(1, p.get('maxiter', DEFAULT_MAXITER))), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='METAL', phase='DE', metadata={"params": worker.best_candidate["x"].copy(), "best_params": worker.best_candidate["x"].copy(), "mse": worker.best_candidate["fun"], "current_y": current_mse, "current_rmse": current_rmse, "best_cost": worker.best_candidate["fun"], "best_rmse": float(np.sqrt(max(worker.best_candidate["fun"], 0.0))), "iteration": worker.iteration_count, "evaluation_count": worker.evaluation_count, "elapsed_s": elapsed_s, "improved": False, "x_head": x_head, "best_head": best_head}))
 
         bounds = p["bounds"]
 
@@ -868,7 +892,7 @@ class MetalBaseApp(CertusBaseApp):
 
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.setSpacing(5)
+        layout.setSpacing(10)
 
         lbl = QLabel(label_text)
 
@@ -1031,25 +1055,6 @@ class MetalBaseApp(CertusBaseApp):
             plots=plots,
             overrides=f"""
             {build_premium_overrides()}
-
-                /* METAL Shared Styles */
-
-                QPushButton {{
-
-                    border-radius: 4px;
-
-                    padding: 4px 10px;
-
-                    font-size: 13px;
-
-                }}
-
-                QPushButton:hover {{
-
-                    border-color: {CertusTheme.SECONDARY};
-
-                }}
-
             """,
         )
 
@@ -1091,7 +1096,7 @@ class MetalBaseApp(CertusBaseApp):
         workflow_card = CertusCard("Workflow")
         workflow_hint = QLabel("1 Load data  →  2 Configure model  →  3 Run analysis  →  4 Review & export")
         workflow_hint.setWordWrap(True)
-        workflow_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        workflow_hint.setStyleSheet(CertusTheme.get_hint_text_style())
         workflow_card.body.addWidget(workflow_hint)
         left_layout.addWidget(workflow_card)
 
@@ -1123,7 +1128,7 @@ class MetalBaseApp(CertusBaseApp):
         plot_container = QWidget()
         plot_layout = QVBoxLayout(plot_container)
         plot_layout.setContentsMargins(0, 0, 0, 0)
-        plot_layout.setSpacing(6)
+        plot_layout.setSpacing(12)
 
         plot_header = QWidget()
         plot_header.setStyleSheet(f"background: {CertusTheme.SURFACE}; border-bottom: 1px solid {CertusTheme.BORDER};")
@@ -1145,13 +1150,11 @@ class MetalBaseApp(CertusBaseApp):
 
         self.right_splitter.addWidget(plot_container)
 
-        self.log_container = QWidget()
-        self.log_container.setVisible(False)
-        log_layout = QVBoxLayout(self.log_container)
-        log_layout.setContentsMargins(0, 0, 0, 0)
-        self.log_text = create_log_widget(visible=True)
-        log_layout.addWidget(self.log_text)
-        self.right_splitter.addWidget(self.log_container)
+        self.log_panel = CertusLogPanel(title="LOGS", visible=False, height=120, parent=self)
+        self._log_panel = self.log_panel
+        self.log_container = self.log_panel
+        self.log_text = self.log_panel.log_text
+        self.right_splitter.addWidget(self.log_panel)
 
         self.right_splitter.setSizes([900, 0])
         self.right_splitter.setCollapsible(0, False)
@@ -1321,7 +1324,7 @@ class MetalBaseApp(CertusBaseApp):
 
         l = c.body
 
-        l.setSpacing(4)
+        l.setSpacing(10)
 
         l.setContentsMargins(8, 12, 8, 8)
 
@@ -1350,11 +1353,11 @@ class MetalBaseApp(CertusBaseApp):
         l.addWidget(self.btn_load)
 
         self.lbl_file = QLabel("No file loaded")
-        self.lbl_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_file.setStyleSheet(CertusTheme.get_hint_text_style())
         l.addWidget(self.lbl_file)
 
         self.workflow_status = QLabel("Ready to load a spectrum")
-        self.workflow_status.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 10px;")
+        self.workflow_status.setStyleSheet(CertusTheme.get_hint_text_style())
         l.addWidget(self.workflow_status)
         l.addWidget(self._create_divider())
 
@@ -1701,7 +1704,7 @@ class MetalBaseApp(CertusBaseApp):
     def _on_beam_error(self, error_message) -> None:
         """Handles beam analysis error"""
         self._uninstall_all_skeletons()
-        self.progress_widget.stop("Beam Error")
+        self.progress_widget.stop("Error: Beam")
         QMessageBox.critical(self, "Beam Analysis Error", error_message)
         self.btn_run.setEnabled(True)
         self.btn_beam.setEnabled(True)
@@ -1992,7 +1995,7 @@ class MetalBaseApp(CertusBaseApp):
             return
 
         if hasattr(self, "progress_widget"):
-            self.progress_widget.stop("Stopped")
+            self.progress_widget.stop("Cancelled")
 
         logger = getattr(self, "logger", None)
 

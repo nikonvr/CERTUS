@@ -146,6 +146,8 @@ class Objects:
     SURFACE_RAISED: Final[str] = "CertusSurfaceRaised"
     PRIMARY_BUTTON: Final[str] = "CertusPrimaryBtn"
     DANGER_BUTTON: Final[str] = "CertusDangerBtn"
+    SUCCESS_BUTTON: Final[str] = "CertusSuccessBtn"
+    FEATURED_BUTTON: Final[str] = "CertusFeaturedBtn"
     GHOST_BUTTON: Final[str] = "CertusGhostBtn"
     ICON_BUTTON: Final[str] = "CertusIconBtn"
     SUBTLE_TEXT: Final[str] = "CertusSubtle"
@@ -172,6 +174,22 @@ def _hex_with_alpha(hex_color: str, alpha_pct: int) -> str:
     return f"#{c}{aa}"
 
 
+def _darken_color(hex_color: str, factor: float = 0.1) -> str:
+    """Darken a hex color by a given factor (0.0 to 1.0) without transparency."""
+    c = hex_color.lstrip("#")
+    if len(c) != 6:
+        return hex_color
+    r = int(c[0:2], 16)
+    g = int(c[2:4], 16)
+    b = int(c[4:6], 16)
+
+    r = max(0, min(255, int(r * (1.0 - factor))))
+    g = max(0, min(255, int(g * (1.0 - factor))))
+    b = max(0, min(255, int(b * (1.0 - factor))))
+
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 def build_premium_overrides(_theme: str | None = None) -> str:
     """Build the premium QSS overrides string.
 
@@ -194,13 +212,21 @@ def build_premium_overrides(_theme: str | None = None) -> str:
 
     primary = T.PRIMARY
     primary_soft = _hex_with_alpha(primary, 18)
+    primary_hover = _darken_color(primary, 0.08)
+    primary_pressed = _darken_color(primary, 0.16)
     primary_stronger = _hex_with_alpha(primary, 36)
+    success = T.SUCCESS
+    success_hover = _darken_color(success, 0.08)
+    success_pressed = _darken_color(success, 0.16)
+    secondary = T.SECONDARY
     border = T.BORDER
     surface = T.SURFACE
     surface_hover = T.SURFACE_HOVER
     text_main = T.TEXT_MAIN
     text_sub = T.TEXT_SUB
     danger = T.DANGER
+    danger_hover = _darken_color(danger, 0.08)
+    danger_pressed = _darken_color(danger, 0.16)
 
     r_sm = Radius.SM
     r_md = Radius.MD
@@ -257,6 +283,29 @@ QWidget#{OBJ.SURFACE_RAISED} {{
     border-radius: {r_md}px;
 }}
 
+/* -- Default QPushButton style (global fallback for entire suite) ------ */
+QPushButton {{
+    background-color: {surface};
+    color: {text_main};
+    border: 1px solid {border};
+    border-radius: {r_md}px;
+    padding: {sp_sm}px {sp_lg}px;
+    font-weight: 500;
+    min-height: 28px;
+}}
+QPushButton:hover {{
+    background-color: {surface_hover};
+    border-color: {primary};
+}}
+QPushButton:pressed {{
+    background-color: {border};
+}}
+QPushButton:disabled {{
+    background-color: {surface};
+    color: {text_sub};
+    border-color: {border};
+}}
+
 /* -- Primary button (opt-in) ------------------------------------------- */
 QPushButton#{OBJ.PRIMARY_BUTTON} {{
     background-color: {primary};
@@ -268,13 +317,80 @@ QPushButton#{OBJ.PRIMARY_BUTTON} {{
     min-height: 28px;
 }}
 QPushButton#{OBJ.PRIMARY_BUTTON}:hover {{
-    background-color: {primary_stronger};
+    background-color: {primary_hover};
 }}
 QPushButton#{OBJ.PRIMARY_BUTTON}:pressed {{
-    background-color: {primary};
+    background-color: {primary_pressed};
     padding-top: {sp_sm + 1}px;
 }}
 QPushButton#{OBJ.PRIMARY_BUTTON}:disabled {{
+    background-color: {border};
+    color: {text_sub};
+}}
+
+/* -- Danger button (opt-in) -------------------------------------------- */
+QPushButton#{OBJ.DANGER_BUTTON} {{
+    background-color: {danger};
+    color: #ffffff;
+    border: none;
+    border-radius: {r_md}px;
+    padding: {sp_sm}px {sp_lg}px;
+    font-weight: 600;
+    min-height: 28px;
+}}
+QPushButton#{OBJ.DANGER_BUTTON}:hover {{
+    background-color: {danger_hover};
+}}
+QPushButton#{OBJ.DANGER_BUTTON}:pressed {{
+    background-color: {danger_pressed};
+    padding-top: {sp_sm + 1}px;
+}}
+QPushButton#{OBJ.DANGER_BUTTON}:disabled {{
+    background-color: {border};
+    color: {text_sub};
+}}
+
+/* -- Success button (opt-in) ------------------------------------------- */
+QPushButton#{OBJ.SUCCESS_BUTTON} {{
+    background-color: {success};
+    color: #ffffff;
+    border: none;
+    border-radius: {r_md}px;
+    padding: {sp_sm}px {sp_lg}px;
+    font-weight: 600;
+    min-height: 28px;
+}}
+QPushButton#{OBJ.SUCCESS_BUTTON}:hover {{
+    background-color: {success_hover};
+}}
+QPushButton#{OBJ.SUCCESS_BUTTON}:pressed {{
+    background-color: {success_pressed};
+    padding-top: {sp_sm + 1}px;
+}}
+QPushButton#{OBJ.SUCCESS_BUTTON}:disabled {{
+    background-color: {border};
+    color: {text_sub};
+}}
+
+/* -- Featured button (opt-in) ------------------------------------------ */
+QPushButton#{OBJ.FEATURED_BUTTON} {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {primary}, stop:1 #2563eb);
+    color: #ffffff;
+    border: none;
+    border-radius: {r_md}px;
+    padding: {sp_sm + 2}px {sp_lg * 1.5}px;
+    font-weight: 700;
+    min-height: 32px;
+}}
+QPushButton#{OBJ.FEATURED_BUTTON}:hover {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2563eb, stop:1 {secondary});
+    border: 1px solid #bfdbfe;
+}}
+QPushButton#{OBJ.FEATURED_BUTTON}:pressed {{
+    background: {secondary};
+    padding-top: {sp_sm + 3}px;
+}}
+QPushButton#{OBJ.FEATURED_BUTTON}:disabled {{
     background-color: {border};
     color: {text_sub};
 }}
@@ -363,6 +479,9 @@ QScrollBar::handle:vertical {{
 QScrollBar::handle:vertical:hover {{
     background: {text_sub};
 }}
+QScrollBar::handle:vertical:pressed {{
+    background: {primary};
+}}
 QScrollBar::add-line:vertical,
 QScrollBar::sub-line:vertical {{
     height: 0px;
@@ -382,6 +501,9 @@ QScrollBar::handle:horizontal {{
 }}
 QScrollBar::handle:horizontal:hover {{
     background: {text_sub};
+}}
+QScrollBar::handle:horizontal:pressed {{
+    background: {primary};
 }}
 QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal {{
@@ -431,6 +553,164 @@ QLineEdit[error="true"],
 QSpinBox[error="true"],
 QDoubleSpinBox[error="true"] {{
     border: 1px solid {danger};
+}}
+
+/* -- Input Fields (Unified, modern layout) ---------------------------- */
+QLineEdit,
+QComboBox,
+QSpinBox,
+QDoubleSpinBox,
+QTextEdit,
+QPlainTextEdit {{
+    background-color: {surface};
+    color: {text_main};
+    border: 1px solid {border};
+    border-radius: {r_sm}px;
+    padding: 5px 8px;
+    font-family: {Typography.FAMILY_UI};
+    font-size: 10pt;
+}}
+
+/* -- Modern Tabs (Flat clean design) ---------------------------------- */
+QTabWidget::pane {{
+    border: 1px solid {border};
+    background-color: {surface};
+    border-radius: {r_md}px;
+    top: -1px;
+}}
+QTabBar::tab {{
+    background: transparent;
+    color: {text_sub};
+    border: 1px solid transparent;
+    padding: {sp_sm}px {sp_lg}px;
+    font-weight: 500;
+    font-size: 9.5pt;
+    border-bottom: 2px solid transparent;
+    margin-right: 4px;
+}}
+QTabBar::tab:hover {{
+    color: {primary};
+    background: {surface_hover};
+    border-radius: {r_sm}px;
+}}
+QTabBar::tab:selected {{
+    color: {primary};
+    border-bottom: 2px solid {primary};
+    font-weight: 600;
+}}
+
+/* -- Group boxes (Modern clean panels) --------------------------------- */
+QGroupBox {{
+    border: 1px solid {border};
+    border-radius: {r_md}px;
+    margin-top: 20px;
+    padding-top: {sp_md}px;
+    font-weight: 600;
+    color: {text_main};
+}}
+QGroupBox::title {{
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 {sp_sm}px;
+    left: {sp_md}px;
+}}
+
+/* -- Table views ------------------------------------------------------- */
+QTableView {{
+    background-color: {surface};
+    gridline-color: {border};
+    border: 1px solid {border};
+    border-radius: {r_md}px;
+}}
+QTableCornerButton::section {{
+    background-color: {surface_hover};
+    border: none;
+}}
+
+/* -- Checkboxes and Radio Buttons ------------------------------------- */
+QCheckBox, QRadioButton {{
+    spacing: 8px;
+    font-size: 9.5pt;
+    color: {text_main};
+}}
+QCheckBox::indicator, QRadioButton::indicator {{
+    width: 16px;
+    height: 16px;
+    border: 1px solid {border};
+    background-color: {surface};
+}}
+QCheckBox::indicator {{
+    border-radius: 4px;
+}}
+QRadioButton::indicator {{
+    border-radius: 9px;
+}}
+QCheckBox::indicator:hover, QRadioButton::indicator:hover {{
+    border-color: {primary};
+    background-color: {surface_hover};
+}}
+QCheckBox::indicator:checked {{
+    background-color: {primary};
+    border-color: {primary};
+    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'></polyline></svg>");
+}}
+QRadioButton::indicator:checked {{
+    background-color: {primary};
+    border-color: {primary};
+    image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><circle cx='12' cy='12' r='5'></circle></svg>");
+}}
+
+/* -- Sliders (QSlider) ------------------------------------------------- */
+QSlider::groove:horizontal {{
+    border: none;
+    height: 6px;
+    background: {border};
+    border-radius: 3px;
+}}
+QSlider::sub-page:horizontal {{
+    background: {primary};
+    border-radius: 3px;
+}}
+QSlider::handle:horizontal {{
+    background: {surface};
+    border: 1px solid {border};
+    width: 16px;
+    margin-top: -5px;
+    margin-bottom: -5px;
+    border-radius: 8px;
+}}
+QSlider::handle:horizontal:hover {{
+    border-color: {primary};
+    background-color: {surface_hover};
+}}
+
+/* -- Empty State Call-to-Action ---------------------------------------- */
+QPushButton#empty-cta {{
+    background-color: {primary};
+    color: #ffffff;
+    border: none;
+    border-radius: {r_md}px;
+    padding: {sp_sm}px {sp_lg}px;
+    font-weight: 600;
+    min-height: 28px;
+}}
+QPushButton#empty-cta:hover {{
+    background-color: {primary_hover};
+}}
+QPushButton#empty-cta:pressed {{
+    background-color: {primary_pressed};
+    padding-top: {sp_sm + 1}px;
+}}
+
+/* -- Modern Tooltips (Tailwind style) --------------------------------- */
+QToolTip {{
+    background-color: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: {Typography.FAMILY_UI};
+    font-size: 9pt;
 }}
 """
 

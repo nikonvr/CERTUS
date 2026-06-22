@@ -226,42 +226,50 @@ class CertusWindowSpyMixin:
             "[SPY-WINDOW] %s.showEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
-        super().showEvent(event)
+        if hasattr(super(), "showEvent"):
+            super().showEvent(event)
 
     def hideEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.hideEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
-        super().hideEvent(event)
+        if hasattr(super(), "hideEvent"):
+            super().hideEvent(event)
 
     def closeEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.closeEvent() title='%s' id=%s geometry=%s visible=%s",
             self.__class__.__name__, self.windowTitle(), id(self), self.geometry(), self.isVisible()
         )
-        super().closeEvent(event)
+        if hasattr(super(), "closeEvent"):
+            super().closeEvent(event)
 
     def moveEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.moveEvent() title='%s' id=%s old_pos=%s new_pos=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.oldPos(), event.pos()
         )
-        super().moveEvent(event)
+        if hasattr(super(), "moveEvent"):
+            super().moveEvent(event)
 
     def resizeEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.resizeEvent() title='%s' id=%s old_size=%s new_size=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.oldSize(), event.size()
         )
-        super().resizeEvent(event)
+        if hasattr(super(), "resizeEvent"):
+            super().resizeEvent(event)
 
     def changeEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(
             "[SPY-WINDOW] %s.changeEvent() title='%s' id=%s event_type=%s state=%s active=%s",
             self.__class__.__name__, self.windowTitle(), id(self), event.type(), self.windowState(), self.isActiveWindow()
         )
-        super().changeEvent(event)
+        try:
+            super().changeEvent(event)
+        except AttributeError:
+            pass
 
     def focusInEvent(self, event) -> None:
         logging.getLogger("CERTUS").debug(

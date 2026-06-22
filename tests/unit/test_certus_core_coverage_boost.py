@@ -60,7 +60,7 @@ from certus.core.certus_core import (
 class TestConfigManager:
     def test_set_and_get(self, tmp_path, monkeypatch):
         f = tmp_path / "test_cfg.json"
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_config.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("test_cfg.json", "default_val", "my_key")
         assert cm.get() == "default_val"
 
@@ -68,7 +68,7 @@ class TestConfigManager:
         assert cm.get() == "new_val"
 
     def test_reload(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_config.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("test_cfg2.json", 42, "number")
         cm.save(99)
         cm._value = 0  # simulate stale
@@ -78,7 +78,7 @@ class TestConfigManager:
     def test_load_corrupt_file(self, tmp_path, monkeypatch):
         f = tmp_path / "bad.json"
         f.write_text("not json at all {{{")
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        monkeypatch.setattr("certus.core.certus_config.get_resource_path", lambda name: str(tmp_path / name))
         cm = ConfigManager("bad.json", "fallback", "k")
         assert cm.get() == "fallback"
 
@@ -375,10 +375,10 @@ class TestCoreCoverageBoost:
                 sys.modules["PyQt6.QtSvgWidgets"] = orig_val
 
     def test_save_error(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / "non_existent_directory" / name))
         cm = ConfigManager("test_err_save.json", "default", "key")
-        # Save to a path where directories do not exist, triggering OSError/IOError
-        assert cm.save("val") is False
+        from unittest.mock import patch
+        with patch("certus.core.certus_config.Path.open", side_effect=OSError("mocked I/O error")):
+            assert cm.save("val") is False
 
     def test_export_config_wrappers(self, tmp_path, monkeypatch):
         monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))

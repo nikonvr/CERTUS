@@ -1,4 +1,4 @@
-"""Tests pour certus_re_worker_utils (sans Qt)."""
+"""Tests for certus_re_worker_utils (without Qt)."""
 
 
 
@@ -868,7 +868,7 @@ def test_re_trf_thickness_bounds_pm_10pct():
 
 def test_re_trf_thickness_bounds_clamps_lower_to_zero():
 
-    # radius > 100 % -> (1 - pct) < 0 -> borne basse forcée à 0
+    # radius > 100 % -> (1 - pct) < 0 -> lower bound forced to 0
 
     lb, ub = re_trf_thickness_bounds(np.array([10.0]), 150.0)
 

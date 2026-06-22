@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-# On importe le module principal pour vérifier que c'est une façade valide (ou le fichier original)
+# Import the main module to verify it is a valid facade (or the original file)
 import CERTUS_INDEX
 
 def test_certus_index_smoke_imports():

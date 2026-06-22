@@ -1116,13 +1116,7 @@ class CertusIndexSplineCorridorUIMixin:
     def _set_corridor_grid_completed_badge(self) -> None:
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-            self.pb_corridor_rmse_grid.setValue(1000)
-
-            self.pb_corridor_rmse_grid.setEnabled(True)
-
-            self.pb_corridor_rmse_grid.setStyleSheet(
-                f"QProgressBar::chunk {{ background-color: {CertusTheme.SUCCESS}; }}"
-            )
+            self.pb_corridor_rmse_grid.stop(final_message="Done")
 
         if hasattr(self, "lbl_corridor_rmse_grid_progress"):
             base = str(self.lbl_corridor_rmse_grid_progress.text() or "").strip()

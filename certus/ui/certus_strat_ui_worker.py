@@ -258,18 +258,27 @@ class CertusStratWorkerMixin:
         import threading
         if hasattr(self, "status_label"):
             self.status_label.setText("System warming up (compiling JIT)...")
-        threading.Thread(target=self._warmup_numba_thread_runner, daemon=True).start()
+        t = threading.Thread(target=self._warmup_numba_thread_runner, daemon=True)
+        t.start()
+        # Fallback: unlock UI after 60s even if JIT is still compiling
+        self._jit_fallback_timer = QTimer(self)
+        self._jit_fallback_timer.setSingleShot(True)
+        self._jit_fallback_timer.timeout.connect(self._on_jit_fallback_timeout)
+        self._jit_fallback_timer.start(60_000)
 
     def _warmup_numba_thread_runner(self) -> None:
         try:
+            _log = logging.getLogger("CERTUS")
             dummy_wl, dummy_n, dummy_thick = (
                 np.array([1000.0], dtype=np.float64),
                 np.array([1.5], dtype=np.float64),
                 np.array([100.0], dtype=np.float64),
             )
 
+            _log.info("[JIT-WARMUP] step 1/5 – calculate_RT_vectorized_real_HL")
             _ = calculate_RT_vectorized_real_HL(dummy_wl, dummy_n, dummy_n, dummy_n, dummy_thick)
 
+            _log.info("[JIT-WARMUP] step 2/5 – simulate_growth_kernel")
             _ = simulate_growth_kernel(
                 dummy_thick,
                 0,
@@ -284,11 +293,11 @@ class CertusStratWorkerMixin:
                 NON_MONOTONIC_MODE_ATTENUATE,
             )
 
-            # Heavier optimization JIT kernels warmup
             dummy_cand = np.array([550.0], dtype=np.float64)
             dummy_thick_nom = np.array([100.0, 100.0], dtype=np.float64)
             dummy_complex = np.array([2.3 + 0.0j], dtype=np.complex128)
 
+            _log.info("[JIT-WARMUP] step 3/5 – rank_nucleation_candidates_kernel")
             _ = rank_nucleation_candidates_kernel(
                 dummy_cand,
                 dummy_thick_nom,
@@ -305,6 +314,7 @@ class CertusStratWorkerMixin:
                 0,
             )
 
+            _log.info("[JIT-WARMUP] step 4/5 – find_nucleation_adaptive_kernel")
             _ = find_nucleation_adaptive_kernel(
                 dummy_cand,
                 dummy_thick_nom,
@@ -327,6 +337,7 @@ class CertusStratWorkerMixin:
             dummy_history = np.zeros((1, 2), dtype=np.float64)
             dummy_noise = np.array([0.0], dtype=np.float64)
 
+            _log.info("[JIT-WARMUP] step 5/5 – validate_wavelengths_batch")
             _ = validate_wavelengths_batch(
                 dummy_cand,
                 dummy_complex,
@@ -341,6 +352,7 @@ class CertusStratWorkerMixin:
                 NON_MONOTONIC_MODE_ATTENUATE,
             )
 
+            _log.info("[JIT-WARMUP] all kernels compiled OK")
             self.numba_ready = True
             self.sig_numba_ready.emit()
 
@@ -355,6 +367,9 @@ class CertusStratWorkerMixin:
 
     @pyqtSlot()
     def _on_numba_ready_ui(self) -> None:
+        # Cancel fallback timer – JIT finished in time
+        if hasattr(self, "_jit_fallback_timer") and self._jit_fallback_timer.isActive():
+            self._jit_fallback_timer.stop()
 
         self.logger.info("✅ System Ready (Numba JIT Compiled)")
 
@@ -373,8 +388,23 @@ class CertusStratWorkerMixin:
 
     @pyqtSlot()
     def _on_numba_error_ui(self) -> None:
+        if hasattr(self, "_jit_fallback_timer") and self._jit_fallback_timer.isActive():
+            self._jit_fallback_timer.stop()
         if hasattr(self, "status_label"):
-            self.status_label.setText("JIT Init Error")
+            self.status_label.setText("JIT Init Error – running in fallback mode")
+        self.run_step0_btn.setEnabled(True)
+        self.run_step2_btn.setEnabled(True)
+        self.run_full_btn.setEnabled(True)
+
+    @pyqtSlot()
+    def _on_jit_fallback_timeout(self) -> None:
+        """Unlock UI if JIT warmup thread never responded (hung or very slow)."""
+        self.logger.warning("⚠️ JIT warmup timeout – enabling UI in fallback mode")
+        if hasattr(self, "status_label"):
+            self.status_label.setText("Ready (JIT pending…)")
+        self.run_step0_btn.setEnabled(True)
+        self.run_step2_btn.setEnabled(True)
+        self.run_full_btn.setEnabled(True)
 
     def update_stats_display(self) -> None:
         from certus.ui.certus_ui import format_count_kmg
@@ -617,7 +647,7 @@ class CertusStratWorkerMixin:
         else:
             self.stop_step2_btn.setEnabled(False)
 
-        self.progress_bar.setValue(0)
+        self.progress_bar.start()
 
         if task != StratTask.NOMINAL_ANALYSIS:
             self.status_label.setText("Running Phase 1 (prerequisite)...")
@@ -627,9 +657,21 @@ class CertusStratWorkerMixin:
         else:
             self.status_label.setText("Running Phase 1 (Nominal)...")
 
+        # Ensure params is a dict for the IPC schema validation
+        params_dict = params
+        if hasattr(params, "model_dump"):
+            params_dict = params.model_dump()
+        elif hasattr(params, "__dict__") and not isinstance(params, dict):
+            # In case it's a dataclass or other object without model_dump
+            import dataclasses
+            if dataclasses.is_dataclass(params):
+                params_dict = dataclasses.asdict(params)
+            else:
+                params_dict = vars(params)
+                
         self.worker = WorkerThread(
             step=task,
-            params=params,
+            params=params_dict,
             opti_results=self.opti_results,
             timing_logger=self.timing_logger if task == StratTask.FULL_PIPELINE else None,
         )
@@ -713,7 +755,7 @@ class CertusStratWorkerMixin:
 
         self.status_label.setText("Complete")
 
-        self.progress_bar.setValue(100)
+        self.progress_bar.stop(final_message="Done")
 
         # Self-export (Excel + HTML) if enabled via HUB
 
@@ -746,11 +788,11 @@ class CertusStratWorkerMixin:
 
         self.status_label.setText("Error occurred")
 
-        self.progress_bar.setValue(0)
+        self.progress_bar.stop(final_message="Error")
 
     def on_progress_update(self, value: int, message: str) -> None:
 
-        self.progress_bar.setValue(value)
+        self.progress_bar.update(iteration=value, max_iter=100, phase=message, progress_pct=value)
 
         self.status_label.setText(message)
 

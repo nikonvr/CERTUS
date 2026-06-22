@@ -562,6 +562,8 @@ def test_field_synthesis_loop_callbacks():
     assert app._synthesis_active is False
     assert app._revert_to_synthesis_checkpoint.called
     assert app.btn_opt.isEnabled() is True
+    assert hasattr(app.progress_widget, "detail_label")
+    assert app.progress_widget.detail_label.text().startswith("Status:")
     
     app.close()
 

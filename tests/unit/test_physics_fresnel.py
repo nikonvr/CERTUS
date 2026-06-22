@@ -6,15 +6,15 @@ equivalent low-level entry point is ``calculate_RT_single_layer_single``.
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
 ⚠  FASTMATH ET NaN :
 
-   Les kernels Numba compilés avec  fastmath=True  ne garantissent PAS la
-   propagation des NaN (IEEE 754 relaxé). Le test  test_b3_..._zero_film_index
-   accepte donc SOIT NaN SOIT une valeur finie pour n_film=0.
+   Numba kernels compiled with fastmath=True do NOT guarantee
+   NaN propagation (relaxed IEEE 754). The test test_b3_..._zero_film_index
+   therefore accepts EITHER NaN OR a finite value for n_film=0.
    NE PAS durcir cette assertion en  assert np.isnan(...)  uniquement.
 
 ⚠  NUMBA_DISABLE_JIT :
 
    NE PAS conditionner les assertions sur  os.environ["NUMBA_DISABLE_JIT"].
-   Cette variable peut être positionnée par d'autres modules (test_gui_smoke)
+   This variable can be set by other modules (test_gui_smoke)
    APRÈS que Numba ait déjà compilé les kernels → la valeur est trompeuse.
 ──────────────────────────────────────────────────────────────────────────────
 """

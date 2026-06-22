@@ -22,7 +22,7 @@ def _safe_rmse(value: float) -> float:
 
 
 
-def _head(vec: Any, max_items: int = 8) -> list[float]:
+def _head(vec: Any, max_items: int = 50) -> list[float]:
     try:
         arr = np.asarray(vec, dtype=np.float64)
     except Exception:
@@ -45,6 +45,7 @@ def run_pglobal_optimization(
     config: PGlobalConfig | None = None,
     ultra_wide: bool = False,
     progress_logger: Callable[[str], None] | None = None,
+    skip_polish: bool = False,
 ) -> OptimizeResult:
     """Run CERTUS-native PGlobal and return an OptimizeResult-compatible object."""
 
@@ -71,8 +72,9 @@ def run_pglobal_optimization(
     if hasattr(cfg, "workers"):
         overrides["workers"] = int(workers)
     if hasattr(cfg, "local_search_budget"):
-        default_local_budget = 30000 if ultra_wide else 15000
-        overrides["local_search_budget"] = min(max(int(getattr(cfg, "local_search_budget", 0)), default_local_budget), max(default_local_budget, budget))
+        if config is None:
+            default_local_budget = 30000 if ultra_wide else 15000
+            overrides["local_search_budget"] = min(max(int(getattr(cfg, "local_search_budget", 0)), default_local_budget), max(default_local_budget, budget))
     if hasattr(cfg, "reduction_ratio"):
         overrides["reduction_ratio"] = 0.5 if ultra_wide else min(float(getattr(cfg, "reduction_ratio", 0.3)), 0.35)
     if overrides:
@@ -150,6 +152,7 @@ def run_pglobal_optimization(
         stop_event=stop_event,
         x0=x0_arr,
     )
+    optimizer._n_workers = int(workers)
 
     t0 = time.monotonic()
     best_seen_x = x0_arr.copy() if x0_arr is not None else np.asarray([])
@@ -176,14 +179,14 @@ def run_pglobal_optimization(
             best_seen_x = sample_x.copy()
             best_seen_y = sample_y
             improved = True
-        iteration = int(getattr(sample, "iteration", 0) or 0)
+        iteration = int(getattr(sample, "generation", 0) or getattr(sample, "iteration", 0) or 0)
         evals = int(getattr(optimizer, "n_evals", 0))
         elapsed = float(time.monotonic() - t0)
         best_cost_now = float(sample_y if np.isfinite(sample_y) else best_seen_y)
         curr_rmse = _safe_rmse(best_cost_now)
         best_rmse = _safe_rmse(best_seen_y)
-        x_head = np.round(sample_x[:min(8, sample_x.size)], 6).tolist() if sample_x.size else []
-        best_head = np.round(best_seen_x[:min(8, best_seen_x.size)], 6).tolist() if best_seen_x.size else []
+        x_head = np.round(sample_x[:min(50, sample_x.size)], 6).tolist() if sample_x.size else []
+        best_head = np.round(best_seen_x[:min(50, best_seen_x.size)], 6).tolist() if best_seen_x.size else []
         should_log = progress_logger is not None and (
             iteration <= 5
             or iteration % ultra_log_every == 0
@@ -191,10 +194,18 @@ def run_pglobal_optimization(
             or (np.isfinite(best_cost_now) and best_cost_now < prev_logged_best * 0.999)
         )
         if should_log:
+            n_clusters = len(getattr(optimizer.clusterer, "get_clusters", lambda: [])()) if hasattr(optimizer, "clusterer") else 0
+            cfg_samples = getattr(optimizer.config, "n_samples_per_iter", "N/A")
+            cfg_reduct = getattr(optimizer.config, "reduction_ratio", "N/A")
+            cfg_local_b = getattr(optimizer.config, "local_search_budget", "N/A")
+            cfg_max_c = getattr(optimizer.config, "max_active_clusters", "N/A")
+            
             progress_logger(
                 f"{ultra_summary_prefix} iter={iteration:04d}/{max_iter} evals={evals} "
-                f"RMSE={best_rmse:.6e} "
-                f"improved={'yes' if improved else 'no'} elapsed={elapsed:.1f}s"
+                f"RMSE={best_rmse:.6e} (curr_RMSE={curr_rmse:.6e}) "
+                f"improved={'yes' if improved else 'no'} elapsed={elapsed:.1f}s | "
+                f"clusters={n_clusters} | cfg: samples={cfg_samples}, reduct={cfg_reduct}, local_budget={cfg_local_b}, max_clusters={cfg_max_c} | "
+                f"best_head={best_head}"
             )
         if callback is None:
             return
@@ -221,17 +232,18 @@ def run_pglobal_optimization(
             "iteration": payload.iteration,
             "max_iteration": payload.max_iteration,
             "evaluation_count": payload.evaluation_count,
-            "best_cost": payload.best_cost,
-            "best_rmse": _safe_rmse(payload.best_cost),
-            "elapsed_s": payload.elapsed_s,
-            "mode": payload.mode,
-            "params": sample_x if sample_x.size > 0 else best_seen_x.copy(),
-            "best_params": best_seen_x.copy(),
-            "current_y": float(sample_y),
+            "progress_pct": min(100, int(100 * max(iteration / max(1, max_iter), evals / max(1, budget)))),
             "current_rmse": curr_rmse,
-            "mse": float(best_seen_y if np.isfinite(best_seen_y) else best_cost_now),
-            "best_rmse_value": best_rmse,
             "best_rmse": best_rmse,
+            "mse": curr_rmse ** 2,
+            "best_cost": best_rmse ** 2,
+            "evaluation_count": evals,
+            "elapsed_s": elapsed,
+            "best_x": best_seen_x.tolist() if best_seen_x.size else None,
+            "params": best_seen_x.tolist() if best_seen_x.size else None,
+            "iteration": iteration,
+            "max_iteration": max_iter,
+            "mode": "global",
             "improved": improved,
             "x_head": x_head,
             "best_head": best_head,
@@ -258,47 +270,48 @@ def run_pglobal_optimization(
             nfev=int(getattr(optimizer, "n_evals", 0)),
         )
 
-    if progress_logger is not None:
-        progress_logger(f"{ultra_summary_prefix} pre-polish | best_rmse={_safe_rmse(final_fun):.6e} | nfev={int(getattr(optimizer, 'n_evals', 0))} | x_dim={final_x.size} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}")
+    if not skip_polish:
+        if progress_logger is not None:
+            progress_logger(f"{ultra_summary_prefix} pre-polish | nfev={int(getattr(optimizer, 'n_evals', 0))} | x_dim={final_x.size} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}")
 
-    # Multi-start local polish to recover sharp minima on tough single-layer cases.
-    polish_starts = [final_x.copy()]
-    rng_seed = os.getenv("CERTUS_METAL_POLISH_SEED", "12345")
-    rng = np.random.default_rng(int(rng_seed) if str(rng_seed).strip().isdigit() else 12345)
-    n_extra_polish = int(os.getenv("CERTUS_METAL_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
-    span = bounds_arr[:, 1] - bounds_arr[:, 0]
-    for scale in np.linspace(0.015, 0.08 if ultra_wide else 0.05, max(1, n_extra_polish)):
-        candidate = final_x + rng.normal(0.0, scale, size=final_x.size) * span
-        polish_starts.append(np.clip(candidate, bounds_arr[:, 0], bounds_arr[:, 1]))
+        # Multi-start local polish to recover sharp minima on tough single-layer cases.
+        polish_starts = [final_x.copy()]
+        rng_seed = os.getenv("CERTUS_METAL_POLISH_SEED", "12345")
+        rng = np.random.default_rng(int(rng_seed) if str(rng_seed).strip().isdigit() else 12345)
+        n_extra_polish = int(os.getenv("CERTUS_METAL_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
+        span = bounds_arr[:, 1] - bounds_arr[:, 0]
+        for scale in np.linspace(0.015, 0.08 if ultra_wide else 0.05, max(1, n_extra_polish)):
+            candidate = final_x + rng.normal(0.0, scale, size=final_x.size) * span
+            polish_starts.append(np.clip(candidate, bounds_arr[:, 0], bounds_arr[:, 1]))
 
-    for polish_idx, start_x in enumerate(polish_starts):
-        try:
-            polish = minimize(
-                objective_fn,
-                start_x,
-                method="L-BFGS-B",
-                bounds=[tuple(b) for b in bounds_arr],
-                options={"maxiter": max(300, min(3000, budget // 8)), "ftol": 1e-12, "gtol": 1e-8},
-            )
-            polished_fun = float(getattr(polish, "fun", np.inf))
-            if np.isfinite(polished_fun) and polished_fun <= final_fun:
-                final_x = np.asarray(polish.x, dtype=np.float64)
-                final_fun = polished_fun
-                if progress_logger is not None:
-                    progress_logger(
-                        f"{ultra_summary_prefix} polish accepted | restart={polish_idx}/{len(polish_starts)-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
-                    )
-            elif progress_logger is not None:
-                progress_logger(
-                    f"{ultra_summary_prefix} polish rejected | restart={polish_idx}/{len(polish_starts)-1} | polished_rmse={_safe_rmse(polished_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
+        for polish_idx, start_x in enumerate(polish_starts):
+            try:
+                polish = minimize(
+                    objective_fn,
+                    start_x,
+                    method="L-BFGS-B",
+                    bounds=[tuple(b) for b in bounds_arr],
+                    options={"maxiter": max(300, min(3000, budget // 8)), "ftol": 1e-12, "gtol": 1e-8},
                 )
-        except Exception as exc:
-            if progress_logger is not None:
-                progress_logger(f"{ultra_summary_prefix} polish failed | restart={polish_idx}/{len(polish_starts)-1} | reason={exc}")
+                polished_fun = float(getattr(polish, "fun", np.inf))
+                if np.isfinite(polished_fun) and polished_fun <= final_fun:
+                    final_x = np.asarray(polish.x, dtype=np.float64)
+                    final_fun = polished_fun
+                    if progress_logger is not None:
+                        progress_logger(
+                            f"{ultra_summary_prefix} polish accepted | restart={polish_idx}/{len(polish_starts)-1} | best_rmse={_safe_rmse(final_fun):.6e} | x_head={np.round(final_x[:min(6, final_x.size)], 6).tolist()}"
+                        )
+                elif progress_logger is not None:
+                    progress_logger(
+                        f"{ultra_summary_prefix} polish rejected | restart={polish_idx}/{len(polish_starts)-1} | polished_rmse={_safe_rmse(polished_fun):.6e} | keep_rmse={_safe_rmse(final_fun):.6e}"
+                    )
+            except Exception as exc:
+                if progress_logger is not None:
+                    progress_logger(f"{ultra_summary_prefix} polish failed | restart={polish_idx}/{len(polish_starts)-1} | reason={exc}")
 
-    severe_polish_enabled = str(os.getenv("CERTUS_METAL_SEVERE_POLISH", "1")).strip().lower() not in {"0", "false", "no", "off"}
+    severe_polish_enabled = False if skip_polish else (str(os.getenv("CERTUS_METAL_SEVERE_POLISH", "1")).strip().lower() not in {"0", "false", "no", "off"})
     if severe_polish_enabled and final_x.size > 0:
-        severe_restarts = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_RESTARTS", "12" if ultra_wide else "10") or 10)
+        severe_restarts = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_RESTARTS", "6" if ultra_wide else "4") or 4)
         severe_span_scale = float(os.getenv("CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE", "0.02" if ultra_wide else "0.012") or 0.012)
         severe_maxiter = int(os.getenv("CERTUS_METAL_SEVERE_POLISH_MAXITER", str(max(800, min(5000, budget // 4)))) or max(800, min(5000, budget // 4)))
         severe_seed = os.getenv("CERTUS_METAL_SEVERE_POLISH_SEED", rng_seed)

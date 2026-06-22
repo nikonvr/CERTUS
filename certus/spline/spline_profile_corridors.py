@@ -91,17 +91,25 @@ logging ``profile_d_rmse_thresh_nominal`` vs ``profile_d_rmse_thresh`` and ``pro
 """
 
 from __future__ import annotations
-from certus.spline.certus_corridor_config import *
-from certus.spline.certus_corridor_fitter import *
+from certus.spline.certus_corridor_config import (
+    CorridorProfileContext,
+    ProfileCorridorConfig,
+    _log_coaching_corridor_failure,
+)
+
+# from certus.spline.certus_corridor_fitter import *  # Unused
 from certus.spline.certus_corridor_fitter import _fit_nodes_at_fixed_d, _fit_local_quadratic_rmse_profile
-from certus.spline.certus_corridor_exploration import *
-from certus.spline.certus_corridor_logger import *
+from certus.spline.certus_corridor_exploration import _corridor_profile_walk_side, compute_regular_grid_rmse_profile
+
+# from certus.spline.certus_corridor_logger import *  # Unused
 from certus.spline.certus_corridor_logger import _log_coaching_corridor_outcome, _log_coaching_bootstrap_outcome, _log_coaching_reg_sensitivity_outcome, _log_corridor_base_geometry, _log_corridor_envelope_diagnostics, _log_corridor_start_config
-from certus.spline.certus_corridor_bootstrap import *
+# from certus.spline.certus_corridor_bootstrap import *  # Unused
+from certus.spline.certus_corridor_orchestrator_utils import _setup_corridor_context
 from certus.spline.certus_corridor_bootstrap import _bootstrap_single_replicate, _bootstrap_pool_entry, _resample_residuals_block
-from certus.spline.certus_corridor_utils import *
-from certus.spline.certus_corridor_utils import _expand_corridor_envelope_with_reported_nk, _robust_sigma_from_mad, _estimate_adaptive_rmse_abs_tolerance, _pick_rmse_reference_for_profile, _extract_knots_and_nodes_from_result, _spectral_rmse_at_packed_nodes, _x_nodes0_from_mesh_x_if_consistent, _bounds_for_nodes_only, _hetero_sigma_masked_from_base, _chi2_masked_constant_sigma, _detect_corridor_spike
-from certus.spline.certus_corridor_orchestrator_utils import *
+# from certus.spline.certus_corridor_utils import *  # Unused
+from certus.spline.certus_corridor_utils import _expand_corridor_envelope_with_reported_nk, _robust_sigma_from_mad, _estimate_adaptive_rmse_abs_tolerance, _pick_rmse_reference_for_profile, _extract_knots_and_nodes_from_result, _spectral_rmse_at_packed_nodes, _x_nodes0_from_mesh_x_if_consistent, _bounds_for_nodes_only, _hetero_sigma_masked_from_base, _chi2_masked_constant_sigma, _detect_corridor_spike, quick_pwlnk_refit_result_dict
+from certus.spline.certus_corridor_orchestrator_utils import enforce_min_k_corridor_half_width
+
 from certus.spline.certus_corridor_orchestrator_utils import (
     _best_fit_at_d,
     _generate_iso_phase_seed,
@@ -835,4 +843,4 @@ def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
     out_prof["profile_d_run_id"] = getattr(ctx, "_run_id", None)
     out_prof["profile_d_stage"] = getattr(ctx, "_run_stage", None)
     return out_prof
-
+

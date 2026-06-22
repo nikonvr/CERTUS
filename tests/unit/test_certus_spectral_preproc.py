@@ -1,4 +1,4 @@
-"""Tests unitaires : prétraitement spectral partagé (certus_spectral_preproc)."""
+"""Unit tests: shared spectral preprocessing (certus_spectral_preproc)."""
 
 from __future__ import annotations
 

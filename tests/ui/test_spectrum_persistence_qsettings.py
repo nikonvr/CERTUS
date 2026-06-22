@@ -1,6 +1,6 @@
 """
-Contrat QSettings pour la persistance session (INDEX SPLINE étape 3, INDEX classique wT/wR).
-Utilise un répertoire INI isolé (tmp_path) pour ne pas polluer le registre utilisateur.
+QSettings contract for session persistence (INDEX SPLINE step 3, classic INDEX wT/wR).
+Uses an isolated INI directory (tmp_path) to avoid polluting the user registry.
 """
 
 from __future__ import annotations

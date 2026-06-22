@@ -160,9 +160,10 @@ from certus_physics import (
 )
 from certus.core.certus_design_core import *
 from certus.workers.certus_design_workers import *
-from certus.ui.mixins.certus_design_plot_mixin import CertusDesignUIPlotMixin
 
-class CertusDesignCoreMixin:
+class CoreManager:
+    def __init__(self, ui):
+        self.ui = ui
     def _get_default_splitter_sizes(self) -> list[int]:
         """DESIGN specific splitter sizes."""
 
@@ -175,8 +176,8 @@ class CertusDesignCoreMixin:
 
         substrate_index = "N/A"
 
-        if hasattr(self, "mat_widgets") and "Substrate" in self.mat_widgets:
-            w = self.mat_widgets["Substrate"]
+        if hasattr(self.ui, "mat_widgets") and "Substrate" in self.ui.mat_widgets:
+            w = self.ui.mat_widgets["Substrate"]
 
             substrate_type = w["preset"].currentText()
 
@@ -191,33 +192,33 @@ class CertusDesignCoreMixin:
     def _show_substrate_info_window(self) -> None:
         """Display stack information in a separate window"""
 
-        if getattr(self, "substrate_info_window", None) and self.substrate_info_window.isVisible():
-            self.substrate_info_window.raise_()
+        if getattr(self.ui, "substrate_info_window", None) and self.ui.substrate_info_window.isVisible():
+            self.ui.substrate_info_window.raise_()
 
-            self.substrate_info_window.activateWindow()
+            self.ui.substrate_info_window.activateWindow()
 
-            self._update_substrate_info()
-
-            return
-
-        if getattr(self, "substrate_info_window", None) and not self.substrate_info_window.isVisible():
-            self.substrate_info_window.show()
-
-            self.substrate_info_window.raise_()
-
-            self.substrate_info_window.activateWindow()
-
-            self._update_substrate_info()
+            self.ui._update_substrate_info()
 
             return
 
-        self.substrate_info_window = QDialog(self)
+        if getattr(self.ui, "substrate_info_window", None) and not self.ui.substrate_info_window.isVisible():
+            self.ui.substrate_info_window.show()
 
-        self.substrate_info_window.setWindowTitle("🔬 Stack information")
+            self.ui.substrate_info_window.raise_()
 
-        self.substrate_info_window.setMinimumSize(600, 400)
+            self.ui.substrate_info_window.activateWindow()
 
-        layout = QVBoxLayout(self.substrate_info_window)
+            self.ui._update_substrate_info()
+
+            return
+
+        self.ui.substrate_info_window = QDialog(self)
+
+        self.ui.substrate_info_window.setWindowTitle("🔬 Stack information")
+
+        self.ui.substrate_info_window.setMinimumSize(600, 400)
+
+        layout = QVBoxLayout(self.ui.substrate_info_window)
 
         info_layout = QGridLayout()
 
@@ -225,13 +226,13 @@ class CertusDesignCoreMixin:
 
         info_layout.addWidget(QLabel("Index:"), 1, 0)
 
-        self.substrate_type_label = QLabel("N/A")
+        self.ui.substrate_type_label = QLabel("N/A")
 
-        self.substrate_index_label = QLabel("N/A")
+        self.ui.substrate_index_label = QLabel("N/A")
 
-        info_layout.addWidget(self.substrate_type_label, 0, 1)
+        info_layout.addWidget(self.ui.substrate_type_label, 0, 1)
 
-        info_layout.addWidget(self.substrate_index_label, 1, 1)
+        info_layout.addWidget(self.ui.substrate_index_label, 1, 1)
 
         layout.addLayout(info_layout)
 
@@ -239,13 +240,13 @@ class CertusDesignCoreMixin:
 
         structure_layout = structure_card.body
 
-        self.structure_text = QTextEdit()
+        self.ui.structure_text = QTextEdit()
 
-        self.structure_text.setReadOnly(True)
+        self.ui.structure_text.setReadOnly(True)
 
-        self.structure_text.setMaximumHeight(200)
+        self.ui.structure_text.setMaximumHeight(200)
 
-        structure_layout.addWidget(self.structure_text)
+        structure_layout.addWidget(self.ui.structure_text)
 
         layout.addWidget(structure_card)
 
@@ -253,7 +254,7 @@ class CertusDesignCoreMixin:
 
         close_btn = QPushButton("Close")
 
-        close_btn.clicked.connect(self.substrate_info_window.close)
+        close_btn.clicked.connect(self.ui.substrate_info_window.close)
 
         btn_layout.addWidget(close_btn)
 
@@ -261,32 +262,32 @@ class CertusDesignCoreMixin:
 
         layout.addLayout(btn_layout)
 
-        self.substrate_info_window.setLayout(layout)
+        self.ui.substrate_info_window.setLayout(layout)
 
-        self.substrate_info_window.show()
+        self.ui.substrate_info_window.show()
 
-        self.substrate_info_window.raise_()
+        self.ui.substrate_info_window.raise_()
 
-        self.substrate_info_window.activateWindow()
+        self.ui.substrate_info_window.activateWindow()
 
-        self._update_substrate_info()
+        self.ui._update_substrate_info()
 
     def _toggle_oblique_mode(self, state: int) -> None:
         """Toggle oblique mode and update UI"""
 
-        self.oblique_mode = state == Qt.CheckState.Checked.value
+        self.ui.oblique_mode = state == Qt.CheckState.Checked.value
 
-        self._update_target_table_headers()
+        self.ui._update_target_table_headers()
 
         # Convert existing targets if needed
 
-        if self.oblique_mode:
+        if self.ui.oblique_mode:
             # Convert normal to oblique targets
 
-            if hasattr(self, "target_widgets") and len(self.target_widgets) > 0:
-                self.oblique_targets = []
+            if hasattr(self.ui, "target_widgets") and len(self.ui.target_widgets) > 0:
+                self.ui.oblique_targets = []
 
-                for tgt in self.target_widgets:
+                for tgt in self.ui.target_widgets:
                     if isinstance(tgt, Target):
                         oblique_tgt = ObliqueTarget(
                             angle=0.0,
@@ -301,15 +302,15 @@ class CertusDesignCoreMixin:
                             include_backside=True,
                         )
 
-                        self.oblique_targets.append(oblique_tgt)
+                        self.ui.oblique_targets.append(oblique_tgt)
 
         else:
             # Convert oblique to normal targets
 
-            if len(self.oblique_targets) > 0:
-                self.target_widgets = []
+            if len(self.ui.oblique_targets) > 0:
+                self.ui.target_widgets = []
 
-                for tgt in self.oblique_targets:
+                for tgt in self.ui.oblique_targets:
                     if isinstance(tgt, ObliqueTarget):
                         normal_tgt = Target(
                             lmin=tgt.lmin,
@@ -320,19 +321,19 @@ class CertusDesignCoreMixin:
                             on=tgt.on,
                         )
 
-                        self.target_widgets.append(normal_tgt)
+                        self.ui.target_widgets.append(normal_tgt)
 
         # Reload table
 
         self._load_targets_to_table()
 
-        self._schedule_eval(True)
+        self.ui._schedule_eval(True)
 
     def copy_logs_to_clipboard(self) -> None:
         """Copy logs to clipboard (delegates to certus_ui.copy_app_logs_to_clipboard)."""
 
         if copy_app_logs_to_clipboard(self):
-            self.status_label.setText("Logs copied to clipboard.")
+            self.ui.status_label.setText("Logs copied to clipboard.")
 
     def _apply_preset(self, name: str, n4_spin: QDoubleSpinBox, n7_spin: QDoubleSpinBox) -> None:
         """Applies Cauchy preset and updates spinbox states."""
@@ -356,25 +357,25 @@ class CertusDesignCoreMixin:
 
     def _on_schedule_eval_signal(self, *_args) -> None:
 
-        self._schedule_eval()
+        self.ui._schedule_eval()
 
     def _on_schedule_eval_instant_signal(self, *_args) -> None:
 
-        self._schedule_eval(True)
+        self.ui._schedule_eval(True)
 
     def _trigger_post_undo_action(self) -> None:
         """DESIGN specific post-undo action."""
 
-        self.run_optim("local")
+        self.ui.run_optim("local")
 
     def _get_optim_wls(self) -> np.ndarray:
         """Calculates wavelengths for optimization"""
 
-        if self.oblique_mode:
+        if self.ui.oblique_mode:
             tgts = self._get_oblique_tgts()
 
         else:
-            tgts = self._get_tgts()
+            tgts = self.ui._get_tgts()
 
         active = [t for t in tgts if t.valid()]
 
@@ -383,7 +384,7 @@ class CertusDesignCoreMixin:
 
         wls_list = []
 
-        n_points = self.points_per_target_spin.value()
+        n_points = self.ui.points_per_target_spin.value()
 
         for t in active:
             start = max(t.lmin, 1e-3)
@@ -418,12 +419,12 @@ class CertusDesignCoreMixin:
 
         return wls
 
-    def _update_optim_point_count(self) -> None:
+    def _update_optim_point_count(self, *args, **kwargs) -> None:
         """Updates optimization point counter"""
 
         wls = self._get_optim_wls()
 
-        self.npts_spin.setValue(len(wls))
+        self.ui.npts_spin.setValue(len(wls))
 
     def _calculate_tikhonravov_points(self) -> int:
         """
@@ -457,17 +458,17 @@ class CertusDesignCoreMixin:
 
             mats = self._get_materials()
 
-            stack = self._get_front_stack()
+            stack = self.ui._get_front_stack()
 
             # Use correct targets based on mode (normal or oblique)
 
-            if self.oblique_mode:
+            if self.ui.oblique_mode:
                 tgts = self._get_oblique_tgts()
 
             else:
-                tgts = self._get_tgts()
+                tgts = self.ui._get_tgts()
 
-            l0 = self.l0_spin.value()
+            l0 = self.ui.l0_spin.value()
 
             if not stack or not mats:
                 return 50  # Default
@@ -476,8 +477,8 @@ class CertusDesignCoreMixin:
 
             # Use current thicknesses if available, else calc from QWOT
 
-            if self.ep_current is not None and len(self.ep_current) == len(stack):
-                ep = self.ep_current
+            if self.ui.ep_current is not None and len(self.ui.ep_current) == len(stack):
+                ep = self.ui.ep_current
 
             else:
                 ep = init_thickness(stack, l0, mats)
@@ -565,24 +566,28 @@ class CertusDesignCoreMixin:
     def _update_tikhonravov_points(self) -> None:
         """Automatically updates points count using Tikhonravov."""
 
+        if getattr(self.ui, "_loading_config", False):
+            self.ui.log("Tikhonravov update skipped during config load.", "INFO")
+            return
+
         try:
             tikhon_points = self._calculate_tikhonravov_points()
 
             if tikhon_points > 0:
-                current_val = self.points_per_target_spin.value()
+                current_val = self.ui.points_per_target_spin.value()
 
                 # Update only if change significant
 
                 if abs(tikhon_points - current_val) > max(5, current_val * 0.15):  # Threshold 15% or 5 points
-                    self.points_per_target_spin.blockSignals(True)
+                    self.ui.points_per_target_spin.blockSignals(True)
 
-                    self.points_per_target_spin.setValue(tikhon_points)
+                    self.ui.points_per_target_spin.setValue(tikhon_points)
 
-                    self.points_per_target_spin.blockSignals(False)
+                    self.ui.points_per_target_spin.blockSignals(False)
 
                     self._update_optim_point_count()
 
-                    self.log(
+                    self.ui.log(
                         f"Tikhonravov: Auto-updated points/target to {tikhon_points}",
                         "INFO",
                     )
@@ -594,7 +599,7 @@ class CertusDesignCoreMixin:
         """Retrieves configured materials."""
 
         try:
-            result = {k: Material(w["n4"].value(), w["n7"].value()) for k, w in self.mat_widgets.items()}
+            result = {k: Material(w["n4"].value(), w["n7"].value()) for k, w in self.ui.mat_widgets.items()}
 
             return result
 
@@ -606,14 +611,14 @@ class CertusDesignCoreMixin:
     def _get_oblique_tgts(self) -> list[ObliqueTarget]:
         """Retrieves spectral targets (oblique mode)"""
 
-        if not self.oblique_mode:
+        if not self.ui.oblique_mode:
             return []  # Sinon mode normal : _get_tgts()
 
         targets = []
 
-        for r in range(self.target_table.rowCount()):
+        for r in range(self.ui.target_table.rowCount()):
             try:
-                cw = self.target_table.cellWidget(r, 0)
+                cw = self.ui.target_table.cellWidget(r, 0)
 
                 if not cw:
                     continue
@@ -624,27 +629,27 @@ class CertusDesignCoreMixin:
 
                 # Angle
 
-                angle_w = self.target_table.cellWidget(r, 1)
+                angle_w = self.ui.target_table.cellWidget(r, 1)
 
                 angle = angle_w.value() if angle_w else 0.0
 
                 # Polarisation
 
-                pol_w = self.target_table.cellWidget(r, 2)
+                pol_w = self.ui.target_table.cellWidget(r, 2)
 
                 polarization = pol_w.currentText() if pol_w else "s"
 
                 # Type
 
-                type_w = self.target_table.cellWidget(r, 3)
+                type_w = self.ui.target_table.cellWidget(r, 3)
 
                 target_type = type_w.currentText() if type_w else "T"
 
                 # lambdamin, lambdamax
 
-                lmin_w = self.target_table.cellWidget(r, 4)
+                lmin_w = self.ui.target_table.cellWidget(r, 4)
 
-                lmax_w = self.target_table.cellWidget(r, 5)
+                lmax_w = self.ui.target_table.cellWidget(r, 5)
 
                 lmin = lmin_w.value() if lmin_w else 400.0
 
@@ -652,9 +657,9 @@ class CertusDesignCoreMixin:
 
                 # Val min, Val max
 
-                vmin_w = self.target_table.cellWidget(r, 6)
+                vmin_w = self.ui.target_table.cellWidget(r, 6)
 
-                vmax_w = self.target_table.cellWidget(r, 7)
+                vmax_w = self.ui.target_table.cellWidget(r, 7)
 
                 val_min = vmin_w.value() if vmin_w else 0.0
 
@@ -662,7 +667,7 @@ class CertusDesignCoreMixin:
 
                 # Weight
 
-                weight_w = self.target_table.cellWidget(r, 8)
+                weight_w = self.ui.target_table.cellWidget(r, 8)
 
                 weight = weight_w.value() if weight_w else 1.0
 
@@ -689,47 +694,47 @@ class CertusDesignCoreMixin:
     def _load_targets_to_table(self) -> None:
         """Loads targets into table from internal lists"""
 
-        self.target_table.setRowCount(0)
+        self.ui.target_table.setRowCount(0)
 
-        if self.oblique_mode:
-            for tgt in self.oblique_targets:
-                self.add_target()
+        if self.ui.oblique_mode:
+            for tgt in self.ui.oblique_targets:
+                self.ui.add_target()
 
-                r = self.target_table.rowCount() - 1
+                r = self.ui.target_table.rowCount() - 1
 
                 # Active
 
-                active_cb = self.target_table.cellWidget(r, 0)
+                active_cb = self.ui.target_table.cellWidget(r, 0)
 
                 if active_cb:
                     active_cb.findChild(QCheckBox).setChecked(tgt.on)
 
                 # Angle
 
-                angle_w = self.target_table.cellWidget(r, 1)
+                angle_w = self.ui.target_table.cellWidget(r, 1)
 
                 if angle_w:
                     angle_w.setValue(tgt.angle)
 
                 # Pol
 
-                pol_w = self.target_table.cellWidget(r, 2)
+                pol_w = self.ui.target_table.cellWidget(r, 2)
 
                 if pol_w:
                     pol_w.setCurrentText(tgt.pol)
 
                 # Type
 
-                type_w = self.target_table.cellWidget(r, 3)
+                type_w = self.ui.target_table.cellWidget(r, 3)
 
                 if type_w:
                     type_w.setCurrentText(tgt.target_type)
 
                 # lambdamin, lambdamax
 
-                lmin_w = self.target_table.cellWidget(r, 4)
+                lmin_w = self.ui.target_table.cellWidget(r, 4)
 
-                lmax_w = self.target_table.cellWidget(r, 5)
+                lmax_w = self.ui.target_table.cellWidget(r, 5)
 
                 if lmin_w:
                     lmin_w.setValue(tgt.lmin)
@@ -739,9 +744,9 @@ class CertusDesignCoreMixin:
 
                 # Val min, Val max
 
-                vmin_w = self.target_table.cellWidget(r, 6)
+                vmin_w = self.ui.target_table.cellWidget(r, 6)
 
-                vmax_w = self.target_table.cellWidget(r, 7)
+                vmax_w = self.ui.target_table.cellWidget(r, 7)
 
                 if vmin_w:
                     vmin_w.setValue(tgt.tmin)
@@ -751,20 +756,20 @@ class CertusDesignCoreMixin:
 
                 # Weight
 
-                weight_w = self.target_table.cellWidget(r, 8)
+                weight_w = self.ui.target_table.cellWidget(r, 8)
 
                 if weight_w:
                     weight_w.setValue(tgt.w)
 
         else:
-            for tgt in self.target_widgets:
-                self.add_target()
+            for tgt in self.ui.target_widgets:
+                self.ui.add_target()
 
-                r = self.target_table.rowCount() - 1
+                r = self.ui.target_table.rowCount() - 1
 
                 # Active
 
-                active_cb = self.target_table.cellWidget(r, 0)
+                active_cb = self.ui.target_table.cellWidget(r, 0)
 
                 if active_cb:
                     active_cb.findChild(QCheckBox).setChecked(tgt.on)
@@ -772,7 +777,7 @@ class CertusDesignCoreMixin:
                 # lambdamin, lambdamax, Tmin, Tmax, Weight
 
                 for i, val in enumerate([tgt.lmin, tgt.lmax, tgt.tmin, tgt.tmax, tgt.w]):
-                    w = self.target_table.cellWidget(r, i + 1)
+                    w = self.ui.target_table.cellWidget(r, i + 1)
 
                     if w:
                         w.setValue(val)
@@ -785,15 +790,9 @@ class CertusDesignCoreMixin:
     def _reset_run_optim_workflow_state(self, mode: str) -> None:
         """Reset workflow state and UI counters for a fresh optimization start."""
 
-        self._target_layer_count = self.front_table.rowCount()
+        self.ui.orchestrator._target_layer_count = self.ui.front_table.rowCount()
 
-        self._topology_stable = True
-
-        self._overshoot_active = False
-
-        self._overshoot_done = False
-
-        self._healing_phase = None
+        self.ui._topology_stable = True
 
         for attr in (
             "_needle_cycle_step",
@@ -805,95 +804,107 @@ class CertusDesignCoreMixin:
             "_needle_last_rejected_candidate",
             "_needle_exploratory_used",
         ):
+            if hasattr(self.ui.orchestrator, attr):
+                delattr(self.ui.orchestrator, attr)
             if hasattr(self, attr):
                 delattr(self, attr)
 
-        self._initial_cleared = False
+        self.ui._initial_cleared = False
 
-        self._clean_live_curves()
+        self.ui._clean_live_curves()
 
-        self.log(f"Starting {mode} optimization (PGLOBAL)...", "INFO")
+        self.ui.log(f"Starting {mode} optimization (PGLOBAL)...", "INFO")
 
-        self.stat_counters["EVAL"] = 0
+        self.ui.stat_counters["EVAL"] = 0
 
-        self.accumulated_evals = 0
+        self.ui.accumulated_evals = 0
 
-        self.stat_counters["MINIMA"] = 0
+        self.ui.stat_counters["MINIMA"] = 0
 
         self.update_stats_display()
 
-        self.best_rmse_label.setText("Best RMSE: N/A")
+        self.ui.best_rmse_label.setText("Best RMSE: N/A")
 
-        self._workflow_best_rmse = float("inf")
+        self.ui._workflow_best_rmse = float("inf")
 
-        self._best_eval_result = None
+        self.ui._best_eval_result = None
 
-        self._best_eval_rmse = float("inf")
+        self.ui._best_eval_rmse = float("inf")
 
-        self._workflow_stopped = False
+        self.ui._workflow_stopped = False
 
-        self._decimation_done = False
+        self.ui._decimation_done = False
 
-        self._export_pending = False
+        self.ui._export_pending = False
 
-        self._post_optim_start_time = None
+        self.ui._post_optim_start_time = None
 
-        self._stack_info_best_ep = None
+        self.ui._stack_info_best_ep = None
 
-        self._stack_info_best_rmse = None
+        self.ui._stack_info_best_rmse = None
 
-        self._stack_info_last_update = 0.0
+        self.ui._stack_info_last_update = 0.0
+
+        from certus.core.certus_metrology import RunContext, CERTUS_VERSION
+        
+        self.ui._workflow_run_ctx = RunContext.create(app_id="certus_design", app_version=CERTUS_VERSION)
+
+        self.ui._workflow_run_id = self.ui._workflow_run_ctx.run_id
 
         import time as _time
 
-        self._workflow_wall_start = _time.time()
+        self.ui._workflow_wall_start = _time.time()
 
-        self.mse_data = {"iterations": [], "errors": []}
+        self.ui.mse_data = {"iterations": [], "errors": []}
 
-        if self.convergence_curve is not None:
-            self.convergence_curve.setData([], [])
+        if self.ui.convergence_curve is not None:
+            self.ui.convergence_curve.setData([], [])
 
     def _shutdown_previous_optim_worker(self) -> None:
         """Stop any running optimization worker before starting a new cycle."""
 
         from certus.workers.certus_design_worker_utils import stop_qt_worker_thread_safely
 
-        if self.optim_thread is not None:
+        if self.ui.optim_thread is not None:
             try:
                 stop_qt_worker_thread_safely(
-                    self.optim_thread,
-                    self.optim_worker,
+                    self.ui.optim_thread,
+                    self.ui.optim_worker,
                     timeout_ms=2000,
-                    logger=getattr(self, "logger", None),
+                    logger=getattr(self.ui, "logger", None),
                 )
             except RuntimeError:
                 pass
 
-        self.optim_worker = None
-        self.optim_thread = None
+        self.ui.optim_worker = None
+        self.ui.optim_thread = None
 
     def _collect_run_optim_inputs(self) -> tuple:
         """Collect and validate inputs required by run_optim."""
 
-        stack = self._get_front_stack()
+        stack = self.ui._get_front_stack()
 
         if not [l for l in stack if l.var]:
-            self.log("No variable layers.", "WARNING")
+            self.ui.log("No variable layers.", "WARNING")
 
             return None, None, None, None, None
 
         mats = self._get_materials()
 
-        tgts = self._get_oblique_tgts() if self.oblique_mode else self._get_tgts()
+        tgts = self._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()
 
         active = [t for t in tgts if t.valid()]
 
         if not active:
-            self.log("No valid targets.", "WARNING")
+            self.ui.log("No valid targets.", "WARNING")
 
             return None, None, None, None, None
 
-        ep0 = init_thickness(stack, self.l0_spin.value(), mats)
+        if getattr(self.ui, "_use_exact_ep", False) and self.ui.ep_current is not None and len(self.ui.ep_current) == len(stack):
+            ep0 = self.ui.ep_current.copy()
+            self.ui._use_exact_ep = False
+        else:
+            ep0 = init_thickness(stack, self.ui.l0_spin.value(), mats)
 
         wls = self._get_optim_wls()
 
@@ -902,11 +913,32 @@ class CertusDesignCoreMixin:
     def _initialize_run_optim_progress_state(self, cfg: dict, keep_history: bool) -> None:
         """Initialize progress counters and optional time budget for a run."""
 
-        self._optim_max_iter = 100
+        self.ui._optim_max_iter = 100
 
-        self._optim_current_iter = 0
+        self.ui._optim_current_iter = 0
 
-        self._optim_n_evals = 0
+        self.ui._optim_n_evals = 0
+
+        _mode = cfg.get("mode", "global")
+        
+        # Resolve user-friendly phase name for UI feedback
+        if _mode == "local":
+            if getattr(self.ui, "_smart_decimation_step", 0) > 0:
+                self.ui._optim_current_phase = f"DECIMATION (Step {self.ui._smart_decimation_step})"
+            elif self.ui.orchestrator._is_in_needle_cycle():
+                self.ui._optim_current_phase = f"NEEDLE POLISH (Iter {getattr(self.ui.orchestrator, '_needle_cycle_step', 1)})"
+            elif getattr(self.ui.orchestrator, "_healing_phase", None) == "local":
+                self.ui._optim_current_phase = "HEALING POLISH"
+            else:
+                self.ui._optim_current_phase = "LOCAL POLISH"
+        elif _mode == "healing":
+            self.ui._optim_current_phase = "HEALING GLOBAL"
+        else:
+            allow_growth = getattr(self.ui, "allow_growth_check", None)
+            if allow_growth and allow_growth.isChecked():
+                self.ui._optim_current_phase = "GLOBAL + NEEDLE SEED"
+            else:
+                self.ui._optim_current_phase = "GLOBAL SEARCH"
 
         if keep_history:
             return
@@ -915,7 +947,7 @@ class CertusDesignCoreMixin:
 
         _mode = cfg.get("mode", "global")
 
-        allow_growth = getattr(self, "allow_growth_check", None)
+        allow_growth = getattr(self.ui, "allow_growth_check", None)
 
         _needle_coupled = allow_growth and allow_growth.isChecked() and _mode == "global"
 
@@ -933,62 +965,62 @@ class CertusDesignCoreMixin:
         else:
             _post_budget = 60.0 + (_n - 26) * (180.0 - 60.0) / (40 - 26)
 
-        self.progress_widget.set_time_budget(_global_time + _post_budget)
+        self.ui.progress_widget.set_time_budget(_global_time + _post_budget)
 
-        self.progress_widget.start()
+        self.ui.progress_widget.start()
 
     def _refresh_optim_target_scatter_foreground(self) -> None:
         """Ensure target scatter markers stay above live curves."""
 
-        if self.target_scatter is None:
+        if self.ui.target_scatter is None:
             return
 
-        self.spectrum_plot.removeItem(self.target_scatter)
+        self.ui.spectrum_plot.removeItem(self.ui.target_scatter)
 
-        self.spectrum_plot.addItem(self.target_scatter)
+        self.ui.spectrum_plot.addItem(self.ui.target_scatter)
 
     def _apply_qw_values_to_front_table(self, qw: list[float], *, debug_failures: bool = False) -> None:
         """Apply QW values to the front table thickness column safely."""
-        self.front_table.blockSignals(True)
-        for r in range(self.front_table.rowCount()):
+        self.ui.front_table.blockSignals(True)
+        for r in range(self.ui.front_table.rowCount()):
             try:
-                sb = self.front_table.cellWidget(r, 1)
+                sb = self.ui.front_table.cellWidget(r, 1)
                 if sb:
                     sb.setValue(qw[r] if r < len(qw) else 0.0)
             except (AttributeError, ValueError, IndexError) as e:
                 if debug_failures:
                     logging.debug(f"Could not set qw value for row {r}: {e}")
-        self.front_table.blockSignals(False)
+        self.ui.front_table.blockSignals(False)
 
     def on_stats_update(self, type_str: str, count: int) -> None:
         """Updates statistics"""
 
         if type_str == "EVAL":
-            self.stat_counters["EVAL"] = count
+            self.ui.stat_counters["EVAL"] = count
 
         elif type_str == "MINIMA":
-            self.stat_counters["MINIMA"] = count
+            self.ui.stat_counters["MINIMA"] = count
 
         self.update_stats_display()
 
     def update_stats_display(self) -> None:
         """Optimization counters: minimum, evaluations, best score (rainbow icon)."""
 
-        minima_count = self.stat_counters.get("MINIMA", 0)
+        minima_count = self.ui.stat_counters.get("MINIMA", 0)
 
-        eval_count = self.stat_counters.get("EVAL", 0)
+        eval_count = self.ui.stat_counters.get("EVAL", 0)
 
-        best_count = self.stat_counters.get("BEST", 0)
+        best_count = self.ui.stat_counters.get("BEST", 0)
 
         text = f"♟️ {minima_count} minima  | 🎲 {eval_count} evals  | 🌈️ {best_count}"
 
-        self.stats_label.setText(text)
+        self.ui.stats_label.setText(text)
 
     def _update_busy_ui(self, busy_now: bool) -> None:
         """Updates Design-specific button states."""
 
-        for btn in [self.local_btn, self.global_btn, self.color_btn, self.eval_btn]:
+        for btn in [self.ui.local_btn, self.ui.global_btn, self.ui.color_btn, self.ui.eval_btn]:
             btn.setEnabled(not busy_now)
 
-        self.stop_btn.setEnabled(busy_now)
+        self.ui.stop_btn.setEnabled(busy_now)
 

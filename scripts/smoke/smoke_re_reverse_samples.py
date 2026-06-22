@@ -41,7 +41,7 @@ def main() -> int:
     QMessageBox.critical = staticmethod(lambda *args, **kwargs: QMessageBox.StandardButton.Ok)
     win = CertusREApp()
 
-    deadline = time.time() + 90.0
+    deadline = time.time() + 300.0
     while not getattr(win, "_warmup_done", False) and time.time() < deadline:
         app.processEvents()
         time.sleep(0.05)

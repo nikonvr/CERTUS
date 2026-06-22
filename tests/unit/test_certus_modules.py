@@ -337,7 +337,7 @@ class TestModulesIntegration:
             pytest.skip(f"Physics integration not available:{e}")
 
     def test_modules_error_handling(self):
-        """Test la gestion d'errors dans les modules."""
+        """Test error handling in modules."""
         try:
             from certus.utils.errors import CertusError, CertusValidationError
 

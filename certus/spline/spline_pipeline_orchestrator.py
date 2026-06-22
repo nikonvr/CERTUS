@@ -104,10 +104,10 @@ from certus.spline.spline_finalize import (
     _select_final_scientific_candidate,
     _spectral_polish_node_mesh_profile,
 )
-from certus.spline.spline_profile_corridors import (
-    ProfileCorridorConfig,
-    compute_profiled_corridors_by_d,
-    widen_corridor_envelope_to_include_nk_in_result,
+from certus.spline.certus_corridor_config import ProfileCorridorConfig
+from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
+from certus.spline.certus_corridor_utils import widen_corridor_envelope_to_include_nk_in_result
+from certus.spline.certus_corridor_logger import (
     log_coaching_corridor_pipeline_skip_empty,
     log_coaching_uncertainty_parameter_guide,
 )

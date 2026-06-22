@@ -1,14 +1,37 @@
-from typing import *
+# from typing import *  # Unused
 import numpy as np
 import time
 import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from certus.core.certus_core import *
-from certus.spline.certus_index_spline_core import *
-from certus.spline.certus_corridor_config import *
-from certus.spline.certus_corridor_fitter import *
-from certus.spline.certus_corridor_utils import _extract_knots_and_nodes_from_result, _x_nodes0_from_mesh_x_if_consistent, _bounds_for_nodes_only
+from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
+
+# from certus.spline.certus_index_spline_core import *  # Unused
+from certus.spline.certus_corridor_config import (
+    CorridorLiveStreamer,
+    CorridorWalkSideContext,
+    ProfileCorridorConfig,
+    RegularGridProfileContext,
+    SplineOptConfig,
+    _hetero_sigma_masked_from_base,
+    clip_to_bounds,
+    corridor_profile_refit_maxfun,
+    x_slice_n_to_physical_nodes,
+)
+
+# from certus.spline.certus_corridor_fitter import *  # Unused
+from certus.spline.certus_corridor_utils import (
+    _extract_knots_and_nodes_from_result,
+    _x_nodes0_from_mesh_x_if_consistent,
+    _bounds_for_nodes_only,
+    _detect_corridor_spike,
+)
+from certus.spline.certus_corridor_bootstrap import (
+    _resample_residuals_block,
+    _bootstrap_pool_entry,
+    _bootstrap_single_replicate,
+)
+from certus.spline.certus_corridor_logger import _log_coaching_bootstrap_outcome
 from certus.spline.certus_corridor_orchestrator_utils import (
     _best_fit_at_d,
     _generate_iso_phase_seed,

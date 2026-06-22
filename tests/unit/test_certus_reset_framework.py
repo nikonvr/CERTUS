@@ -27,7 +27,7 @@ def _make_mock_app(
     has_widgets=False,
     has_stack_table=False,
 ):
-    """Fabrique une fausse app pour les tests du manager."""
+    """Creates a fake app for manager tests."""
     class FakeCertusApp:
         pass
     app = FakeCertusApp()
@@ -75,7 +75,7 @@ def _make_mock_app(
 
 @pytest.mark.skipif(not RESET_AVAILABLE, reason="certus_reset_framework non disponible")
 class TestCertusResetManager:
-    """Tests pour CertusResetManager."""
+    """Tests for CertusResetManager."""
 
     def test_manager_init(self):
         app = _make_mock_app()
@@ -155,7 +155,7 @@ class TestCertusResetManager:
 
 @pytest.mark.skipif(not QT_AVAILABLE or not RESET_AVAILABLE, reason="PyQt6 ou certus_reset_framework non disponible")
 class TestCreateResetButton:
-    """Tests pour create_reset_button."""
+    """Tests for create_reset_button."""
 
     def test_create_reset_button_returns_button(self, qapp):
         app = _make_mock_app()

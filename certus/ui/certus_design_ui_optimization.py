@@ -340,7 +340,7 @@ class OptimizationManager:
             "SUCCESS",
         )
         self.ui.log("Optimization complete & Structure stable.", "SUCCESS")
-        self.ui._set_busy(False)
+        self.ui._force_idle()
         self.ui._is_internal_restart = False
 
     def _initialize_smart_decimation_session(self, n_start: int, n_min_target: int) -> None:
@@ -514,6 +514,30 @@ class OptimizationManager:
             "INFO",
         )
 
+    def _restore_smart_decimation_best_overall(self) -> bool:
+        """Find and restore the absolute best champion by RMSE across Pareto history."""
+        best_overall_rmse = float("inf")
+        best_overall_rec = None
+        best_overall_n = None
+        for n, rec in self.ui.pareto_history.items():
+            if rec.get("best_rmse", float("inf")) < best_overall_rmse:
+                best_overall_rmse = rec["best_rmse"]
+                best_overall_rec = rec
+                best_overall_n = n
+
+        if best_overall_rec is not None and best_overall_rec.get("table_rmse") is not None:
+            self.ui.log(
+                f"🏆 Restoring absolute best Pareto champion: N={best_overall_n} layers (RMSE={best_overall_rmse:.6f})",
+                "SUCCESS",
+            )
+            self._restore_table_state(best_overall_rec["table_rmse"])
+            self.ui.ep_current = best_overall_rec["ep_rmse"].copy()
+            self.ui._update_thickness_display()
+            self.ui._workflow_best_rmse = best_overall_rmse
+            self.ui._use_exact_ep = True
+            return True
+        return False
+
     def _restore_smart_decimation_origin(self, start_n: int) -> None:
         """Restore the checkpointed pre-decimation design when available."""
         origin_ep = getattr(self.ui, "_smart_deci_origin_ep", None)
@@ -562,14 +586,15 @@ class OptimizationManager:
         )
 
     def _finish_smart_decimation(self) -> None:
-        """Clean up after smart decimation and REVERT to original best solution."""
+        """Clean up after smart decimation and load the best overall solution."""
 
         total_steps = getattr(self.ui, "_smart_decimation_step", 0)
 
         start_N = getattr(self.ui, "_smart_decimation_start_N", 0)
 
-        # --- REVERT to original best solution ---
-        self._restore_smart_decimation_origin(start_N)
+        # --- Load the absolute best solution found ---
+        if not self._restore_smart_decimation_best_overall():
+            self._restore_smart_decimation_origin(start_N)
 
         end_N = self.ui.front_table.rowCount()
         self._log_smart_decimation_completion(total_steps, start_N, end_N)

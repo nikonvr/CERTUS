@@ -23,6 +23,20 @@ from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_LIST,
     certus_timestamp_display,
+    OH_BAND_MIN,
+    OH_BAND_MAX,
+)
+from certus.ui.certus_ui_shared import apply_app_zoom
+from certus.ui.certus_index_ui import (
+    _notify_user,
+    _update_loaded_file_label,
+    _set_spectrum_plot_title,
+    _log_loaded_spectrum_metadata,
+    _display_detected_data_type,
+    _update_lambda_bounds_from_target_data,
+    _is_qt_offscreen_mode,
+    _source_type_label,
+    KLogAxisItem,
 )
 from certus.utils.certus_data import generate_html_report
 from certus.ui.certus_ui import install_standard_shortcuts

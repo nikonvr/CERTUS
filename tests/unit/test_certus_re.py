@@ -1,3 +1,9 @@
+from certus.utils.certus_re_math import re_envelope_max_delta_n
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta
+from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
+from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
 """Unit tests for CERTUS_RE.py (reverse engineering, Excel entries)."""
 
 import pytest
@@ -202,9 +208,7 @@ class TestREsubstrateCauchy3:
     """Model n = a0 + a1(lambdaref/lambda)² + a2(lambdaref/lambda)⁴ and tube barrier."""
 
     def test_phi_and_eval_consistency(self):
-        from certus.utils.certus_re_helpers import (
-            re_substrate_cauchy_phi_matrix,
-        )
+        
         from CERTUS_RE import (
             re_substrate_cauchy_n_re_from_theta,
         )
@@ -220,10 +224,7 @@ class TestREsubstrateCauchy3:
         assert np.allclose(n1, n2)
 
     def test_feasible_theta_matches_tab(self):
-        from certus.utils.certus_re_helpers import (
-            re_substrate_cauchy_initial_theta,
-            re_substrate_cauchy_phi_matrix,
-        )
+        
         from CERTUS_RE import (
             RE_SUB_CAUCHY_TUBE_DELTA,
         )
@@ -239,7 +240,7 @@ class TestREsubstrateCauchy3:
         assert np.max(np.abs(pred - n_tab)) <= RE_SUB_CAUCHY_TUBE_DELTA + 1e-7
 
     def test_barrier_jacobian_active_upper(self):
-        from certus.utils.certus_re_helpers import re_substrate_cauchy_barrier_residuals_jac
+        
 
         Phi = np.ones((1, 3), dtype=np.float64)
         Phi[0, 1] = 0.25
@@ -300,9 +301,7 @@ class TestREHLDeltaReKnotRegularization:
             RE_SPLINE_NODE2_DEFAULT_NM,
             re_knots_wavelengths,
         )
-        from certus.utils.certus_re_helpers import (
-            re_envelope_max_delta_n,
-        )
+        
 
         kn = re_knots_wavelengths(RE_SPLINE_NODE2_DEFAULT_NM)
         env = np.maximum(re_envelope_max_delta_n(kn, scale=1.0), 1e-18)
@@ -393,7 +392,7 @@ assert np.allclose(Ta, Tb)
         subprocess.check_call([sys.executable, "-c", code], cwd=str(root))
 
     def test_ap_staircase_polyline_matches_band_model(self):
-        """Polyline du plot ap(lambda) : chaque palier horizontal = _re_p4_band_ap_deg (même physique que P4)."""
+        """Polyline of the ap(lambda) plot: each horizontal step = _re_p4_band_ap_deg (same physics as P4)."""
         from CERTUS_RE import _re_p4_ap_staircase_polyline
         from certus.utils.certus_re_helpers import _re_p4_band_ap_deg
 
@@ -460,7 +459,7 @@ assert np.allclose(Ta, Tb)
         assert np.allclose(kw4["beam_aperture_knots_lam_nm"], [400.0, 550.0, 700.0, 900.0])
 
     def test_rmse_oblique_phase4_consistency_subprocess(self):
-        """Processus isolé : évite RuntimeError NUMBA_NUM_THREADS vs autres tests du même worker."""
+        """Isolated process: avoids RuntimeError NUMBA_NUM_THREADS vs other tests of the same worker."""
         import json
         import subprocess
         import sys
@@ -516,12 +515,7 @@ assert abs(r_scalar - r_knots) < 1e-9
 class TestReverseSampleXlsxInitialRmse:
     """RE integration (disabled without headless helper)."""
 
-    @pytest.mark.skip(
-        reason="REWorker.run() requiert un cfg complet (stack, targets, wl_arrays…) "
-        "construit par CertusREApp. À activer si un helper headless est exposé."
-    )
-    def test_re_workflow_convergence(self):
-        pass
+    # test_re_workflow_convergence removed (empty body, headless helper never exposed)
 
 
 @pytest.mark.unit

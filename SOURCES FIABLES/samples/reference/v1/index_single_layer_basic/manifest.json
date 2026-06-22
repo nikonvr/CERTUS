@@ -1,8 +1,0 @@
-{
-    "scenario_name": "index_single_layer_basic",
-    "version": "v1",
-    "files": {
-        "input.json": "0a1c8b18891d5561548af5cd43559ac05e83641dcc315a6814a9ae18877c5941",
-        "expected.json": "5dd7f63ccd4145b8f80f1f05a73f5e581d25794a48c22a0d085581ef58cd133e"
-    }
-}

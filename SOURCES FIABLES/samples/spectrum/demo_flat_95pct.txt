@@ -1,1 +1,0 @@
-Flat 95%% transmittance reference spectrum (400-800 nm, 5 nm step).

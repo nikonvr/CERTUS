@@ -10,6 +10,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Any
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 import pandas as pd
@@ -494,6 +495,11 @@ class _CorridorExportMixin:
 class _RunMixin:
     """Mixin containing optimization run logic, live update and result plotting."""
 
+    _LIVE_LOG_REMINDER_S = 3.0
+    _LIVE_BEST_DETAIL_MIN_ABS = 1e-6
+    _LIVE_BEST_DETAIL_MIN_REL = 1e-4
+    _LIVE_BEST_DETAIL_MIN_INTERVAL_S = 0.5
+
     @safe_ui_action
     def _on_run(self) -> None:
         self._preview_ret = None
@@ -744,7 +750,7 @@ class _RunMixin:
         _wsig_ab = self._worker.signals
         def _ab_progress(p: float | int, m: str) -> None:
             pv = int(round(float(p) * 100.0))
-            _wsig_ab.progress.emit(max(0, min(10000, pv)), m)
+            _wsig_ab.progress_snapshot.emit(build_progress_snapshot(message=m, display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='EXECUTION', metadata={'pv': pv}))
 
         self._worker.kwargs["progress_cb"] = _ab_progress
         self._worker_role = "auto_best"

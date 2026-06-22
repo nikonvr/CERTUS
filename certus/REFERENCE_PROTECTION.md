@@ -1,13 +1,13 @@
-# Protection interne des modules CERTUS
+# Internal protection of CERTUS modules
 
-Ce projet utilise une version de référence de travail stockée dans `3105 VERSION OLD OK`.
+This project uses a working reference version stored in `3105 VERSION OLD OK`.
 
-## Référence
-- La version `OLD` est la version de référence courante.
-- Elle doit être considérée comme la base stable pour les comparaisons.
+## Reference
+- The `OLD` version is the current reference version.
+- It must be considered as the stable base for comparisons.
 
-## Portée
-Cette règle concerne particulièrement :
+## Scope
+This rule particularly concerns:
 - `CERTUS_METAL_SINGLE.py`
 - `CERTUS_METAL_BILAYER.py`
 - `CERTUS_STRAT.py`
@@ -17,6 +17,6 @@ Cette règle concerne particulièrement :
 - `CERTUS_DESIGN.py`
 
 ## Protection
-- Conserver la compatibilité des points d'entrée.
-- Préserver les dépendances de chaque module.
-- Éviter de modifier la référence sans reproduire et vérifier le comportement.
+- Maintain compatibility of entry points.
+- Preserve the dependencies of each module.
+- Avoid modifying the reference without reproducing and verifying the behavior.

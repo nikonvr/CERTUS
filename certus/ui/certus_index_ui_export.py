@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 import logging
+import traceback
+from certus.ui.certus_index_ui import _notify_user
 import time
 import functools
 from datetime import datetime
@@ -296,6 +298,7 @@ class CertusIndexExportMixin:
         self.plot_nk.add_tracked_curve(c_n, "n (Live)")
 
         if not hasattr(self, "_vb_k") or self._vb_k is None:
+            from certus.ui.certus_index_ui import KLogAxisItem
             pi = self.plot_nk.plotItem
 
             self._vb_k = pg.ViewBox()

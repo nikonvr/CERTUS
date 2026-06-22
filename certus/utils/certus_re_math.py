@@ -2,7 +2,12 @@ from __future__ import annotations
 import numpy as np
 from numba import njit
 from scipy.interpolate import PchipInterpolator, CubicSpline
-from certus.utils.certus_re_config import *
+from certus.utils.certus_re_config import (
+    RE_P4_BEAM_N_KNOTS,
+    RE_SUB_CAUCHY_BARRIER_SQRT_W,
+    RE_SUB_CAUCHY_TUBE_DELTA,
+)
+
 
 def _re_p4_beam_knots_lam_nm_from_wls(wls: np.ndarray, cfg: dict) -> np.ndarray:
     """N knots (nm) for chromatic beam: cfg ``re_p4_beam_ap_knots_nm`` (>=4 values) or linspace on grid."""

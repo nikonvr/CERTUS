@@ -11,6 +11,7 @@ import os
 import time
 from typing import Any
 from pathlib import Path
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 from certus.spline.certus_index_spline_core import _log_index_spline_best_config
@@ -797,7 +798,7 @@ class _CorridorControlMixin:
 
             pv = int(round(float(p) * 100.0))
 
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), m)
+            self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=m, display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='SETTINGS', metadata={'pv': pv}))
 
         self._worker.kwargs["progress_cb"] = _corr_progress
         self._worker.kwargs["live_cb"] = self._worker.signals.live.emit
@@ -1098,14 +1099,10 @@ class _CorridorControlMixin:
             self.btn_corridor_generate_auto_smart_grid.setEnabled((not busy) and has_curve)
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-            self.pb_corridor_rmse_grid.setEnabled(bool(busy))
-
             if busy:
-                self.pb_corridor_rmse_grid.setStyleSheet(
-                    f"QProgressBar::chunk {{ background-color: {CertusTheme.PRIMARY}; }}"
-                )
+                self.pb_corridor_rmse_grid.start()
             else:
-                self.pb_corridor_rmse_grid.setStyleSheet("")
+                self.pb_corridor_rmse_grid.stop(final_message="Idle")
 
     def _set_corridor_grid_progress_ui(
         self,
@@ -1135,7 +1132,7 @@ class _CorridorControlMixin:
             )
 
         if hasattr(self, "pb_corridor_rmse_grid"):
-            self.pb_corridor_rmse_grid.setValue(int(round(1000.0 * frac)))
+            self.pb_corridor_rmse_grid.update(iteration=dn, max_iter=tot, phase=f"Scanning grid... {dn}/{tot}", progress_pct=int(round(100.0 * frac)))
 
         t0 = float(getattr(self, "_corridor_rmse_grid_live_t0", float("nan")))
 

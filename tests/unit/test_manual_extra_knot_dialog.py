@@ -269,3 +269,76 @@ def test_dialog_busy_state_enables_stop_and_emits_stop_request(qapp) -> None:
     assert dlg.btn_skip.isEnabled() is True
     assert dlg.btn_go.isEnabled() is True
     assert dlg.spin_delta_ns.isEnabled() is True
+
+
+def test_dialog_add_knot_in_sigma_view(qapp) -> None:
+    dlg = _make_dialog(qapp)
+    # Switch axis to sigma
+    dlg._toggle_preview_axis()
+    assert dlg._preview_axis == "sigma"
+
+    # Click/add at x_value = 10000 cm^-1 (which is 1000 nm)
+    ok = dlg._add_lambda_from_plot_x(10000.0)
+    assert ok is True
+    assert dlg.selected_lambda_knots() == [800.0, 1000.0, 1400.0, 2200.0]
+
+
+def test_dialog_select_and_remove_knot_in_sigma_view(qapp) -> None:
+    dlg = _make_dialog(qapp)
+    # Switch axis to sigma
+    dlg._toggle_preview_axis()
+    assert dlg._preview_axis == "sigma"
+
+    # Manually add a knot at 1000 nm
+    dlg.add_lambda_knot(1000.0)
+
+    # Click/select at x_value = 10000.0 cm^-1 (which is 1000 nm)
+    # tolerance is in sigma units here
+    ok_sel = dlg._select_nearest_lambda_knot(10000.0, tolerance_nm=200.0)
+    assert ok_sel is True
+    assert dlg._selected_row is not None
+    assert abs(float(dlg._selected_row.spin.value()) - 1000.0) < 1e-9
+
+    # Click/remove at x_value = 10000.0 cm^-1
+    ok_rem = dlg._remove_nearest_lambda_knot(10000.0, tolerance_nm=200.0)
+    assert ok_rem is True
+    assert dlg.selected_lambda_knots() == [800.0, 1400.0, 2200.0]
+
+
+def test_dialog_done_closes_preview_popup(qapp) -> None:
+    dlg = _make_dialog(qapp)
+    assert dlg._preview_popup.isVisible() is True
+
+    dlg.accept()
+    assert dlg._preview_popup.isVisible() is False
+
+
+def test_scientific_plot_auto_range(qapp) -> None:
+    from certus.ui.certus_plot import CertusScientificPlot
+    
+    plot = CertusScientificPlot()
+    assert plot._has_auto_ranged_on_show is False
+
+    # Plotting data while hidden does not trigger auto-range
+    plot.plot([1, 2, 3], [10, 20, 30])
+    assert plot._has_auto_ranged_on_show is False
+
+    # Showing the plot triggers auto-range because it has data
+    plot.show()
+    assert plot._has_auto_ranged_on_show is True
+    plot.close()
+
+
+def test_scientific_plot_auto_range_bypass_on_custom_limits(qapp) -> None:
+    from certus.ui.certus_plot import CertusScientificPlot
+    
+    plot = CertusScientificPlot()
+    # Explicitly setting range bypasses auto-range on show
+    plot.setXRange(0, 5)
+    assert plot._has_auto_ranged_on_show is True
+
+    plot.plot([1, 2, 3], [10, 20, 30])
+    plot.show()
+    # Still True, auto-ranging was bypassed
+    assert plot._has_auto_ranged_on_show is True
+    plot.close()

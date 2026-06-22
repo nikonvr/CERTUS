@@ -1306,10 +1306,12 @@ class CertusIndexSplineEventsExtrasMixin:
         def _manual_live_metrics(payload: object) -> None:
             if not isinstance(payload, dict):
                 return
-            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+            dialog = getattr(self, "_manual_knots_dialog", None)
+            if isinstance(dialog, ManualSigmaKnotDialog):
                 d_live = float(payload.get("d_nm", float("nan")))
                 rmse_live = float(payload.get("rmse", float("nan")))
-                self._manual_knots_dialog.set_runtime_metrics(d_live, rmse_live)
+                dialog.set_runtime_metrics(d_live, rmse_live)
+                self._refresh_manual_dialog_preview(dialog, payload)
 
         self._worker.signals.live.connect(_manual_live_metrics)
 

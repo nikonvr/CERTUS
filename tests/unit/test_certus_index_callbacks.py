@@ -238,7 +238,9 @@ def test_phase1_callback():
     assert mock_worker.best_mse == 1.0
     np.testing.assert_array_equal(mock_worker.best_params, np.array([1.0, 2.0]))
     mock_worker._try_active_update.assert_called_with(s_improved.x, s_improved.y, force=True)
-    mock_worker.progress.emit.assert_called_with(6, "Global Search...", 1.0)
+    mock_worker.emit_progress_snapshot.assert_called()
+    snapshot = mock_worker.emit_progress_snapshot.call_args[0][0]
+    assert snapshot.message == "Global Search..."
 
 def test_phase2_polish_callback():
     mock_worker = MagicMock()
@@ -251,8 +253,9 @@ def test_phase2_polish_callback():
     cb(xk)
     
     assert cb.polish_iters == 1
-    # 15 * 1 / 200 = 0 -> prog_polish = min(75, 60+0) = 60
-    mock_worker.progress.emit.assert_called_with(60, "Polish 1", None)
+    mock_worker.emit_progress_snapshot.assert_called()
+    snapshot = mock_worker.emit_progress_snapshot.call_args[0][0]
+    assert snapshot.message == "Polish 1"
     mock_worker._try_active_update.assert_called_with(xk, 0.5, force=False)
 
 
@@ -268,7 +271,7 @@ def test_phase2_polish_callback_stops_when_worker_is_stopped():
 
 
 def _tlu_reference_rt_norm(wls, n_sub, params):
-    """Référence identique à _package_results / _index_tlu_live_payload_from_params (non frosted)."""
+    """Reference identical to _package_results / _index_tlu_live_payload_from_params (unfrosted)."""
     p = np.asarray(params, dtype=np.float64).ravel()
     thickness = float(p[0])
     Eg, A, E0, C, Eu, eps_inf = (float(p[i]) for i in range(1, 7))
@@ -292,7 +295,7 @@ def _tlu_reference_rt_norm(wls, n_sub, params):
 
 
 def test_index_tlu_live_payload_normalized_matches_package_convention():
-    """Live TLU : T_plot/R_plot = T/T_sub et R_rel quand use_normalized (aligné _package_results)."""
+    """Live TLU: T_plot/R_plot = T/T_sub and R_rel when use_normalized (aligned _package_results)."""
     wls = np.linspace(400.0, 800.0, 50, dtype=np.float64)
     n_sub = get_n_substrate_array_by_id(SUBSTRATES["N-BK7"]["id"], wls)
     df = pd.DataFrame(

@@ -20,6 +20,7 @@ import time
 import traceback
 from pathlib import Path
 from typing import Any, Callable
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 import pandas as pd
@@ -132,7 +133,7 @@ from certus.spline.spline_pipeline import (
     worker_spline_optimization,
 )
 
-from certus.spline.spline_profile_corridors import quick_pwlnk_refit_result_dict
+from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 
 try:
     from certus.spline.spline_pipeline import _snap_spline_visual_dict
@@ -143,7 +144,7 @@ except ImportError:
 from certus.utils.certus_ux import OBJ
 from certus.utils.certus_reset_framework import create_reset_button
 from certus.utils.certus_data import load_spectrum_columns, read_data_file_robust, build_export_context, build_report_sections, export_optimization_report
-from certus.spline.spline_profile_corridors import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width
+from certus.spline.certus_corridor_utils import _expand_corridor_envelope_with_reported_nk, enforce_min_k_corridor_half_width
 from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
 from certus.ui.certus_plot import sanitize_xy_for_plot, plot_widget_plot_finite, wrap_scientific_plot_with_toolbar
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
@@ -1027,7 +1028,7 @@ class _CorridorWorkerMixin:
                     _arr = np.asarray(_raw, dtype=np.float64).ravel()
                     _nfin = int(np.sum(np.isfinite(_arr)))
                     key_info.append(f"{_ck}:size={_arr.size}/fin={_nfin}")
-            self.self.logger.debug(
+            self.logger.debug(
                 "DIAG CORRIDOR PLOT | nu=%d | spec_order_size=%d | %s",
                 nu,
                 int(spec_order.size),
@@ -1236,7 +1237,7 @@ class _CorridorWorkerMixin:
 
         lbl_intro = QLabel("Step 1: recalculate the RMSE(d) grid, then generate the corridor from that result.")
         lbl_intro.setWordWrap(True)
-        lbl_intro.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lbl_intro.setStyleSheet(CertusTheme.get_hint_text_style())
         lay_rmse.addWidget(lbl_intro)
 
         row_rob = QHBoxLayout()
@@ -1375,7 +1376,7 @@ class _CorridorWorkerMixin:
             "Step 2: generate the corridor from the full grid, a partial grid, or the automatic smart interval."
         )
         lbl_generate.setWordWrap(True)
-        lbl_generate.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lbl_generate.setStyleSheet(CertusTheme.get_hint_text_style())
         lay_rmse.addWidget(lbl_generate)
 
         row_generate_grid = QHBoxLayout()
@@ -1423,25 +1424,18 @@ class _CorridorWorkerMixin:
 
         row_grid_prog = QHBoxLayout()
 
-        self.pb_corridor_rmse_grid = QProgressBar()
+        self.pb_corridor_rmse_grid = EnhancedProgressWidget(main_label="RMSE Grid Calculation")
         self.pb_corridor_rmse_grid.setToolTip(
             "<b>Scan progress</b><br>"
             "Real-time progression including continuation steps, "
             "P0 re-pass, and breakpoint detection."
         )
-        self.pb_corridor_rmse_grid.setRange(0, 1000)
-
-        self.pb_corridor_rmse_grid.setValue(0)
-
-        self.pb_corridor_rmse_grid.setFormat("Grid %p%")
-
-        self.pb_corridor_rmse_grid.setEnabled(False)
 
         row_grid_prog.addWidget(self.pb_corridor_rmse_grid, 1)
 
         self.lbl_corridor_rmse_grid_progress = QLabel("Grid idle.")
 
-        self.lbl_corridor_rmse_grid_progress.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_corridor_rmse_grid_progress.setStyleSheet(CertusTheme.get_hint_text_style())
 
         row_grid_prog.addWidget(self.lbl_corridor_rmse_grid_progress)
 
@@ -1676,7 +1670,7 @@ class _CorridorWorkerMixin:
 
             pv = int(round(float(p) * 100.0))
 
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), m)
+            self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=m, display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='CORRIDORS', metadata={'pv': pv}))
 
         self._worker.kwargs["progress_cb"] = _grid_progress
 
@@ -2055,7 +2049,14 @@ class _DataMixin:
         if not isinstance(dialog, ManualSigmaKnotDialog) or not isinstance(preview_result, dict):
             return
         lam_preview = np.asarray(preview_result.get("lam_nm", []), dtype=np.float64).ravel()
-        y_preview = np.asarray(preview_result.get("t_theo", []), dtype=np.float64).ravel()
+        y_preview = np.empty(0, dtype=np.float64)
+        t_val = preview_result.get("t_theo")
+        if t_val is not None:
+            y_preview = np.asarray(t_val, dtype=np.float64).ravel()
+        if y_preview.size == 0:
+            r_val = preview_result.get("r_theo")
+            if r_val is not None:
+                y_preview = np.asarray(r_val, dtype=np.float64).ravel()
         dialog.update_model_preview(lam_preview, y_preview)
         d_preview, rmse_preview = self._runtime_metrics_from_result_dict(preview_result)
         dialog.set_runtime_metrics(d_preview, rmse_preview)

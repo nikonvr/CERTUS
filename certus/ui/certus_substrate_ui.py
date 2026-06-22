@@ -99,7 +99,20 @@ from certus.ui.certus_ui import (
 
 
 
-from certus.core.certus_substrate_index import *
+from certus.core.certus_substrate_index import (
+    IndexCore,
+    SELLMEIER_DEFAULT_LOG_L1L2,
+    SUBSTRATE_INDEX_MODELS,
+    _MODEL_LABEL_TO_INDEX,
+    logger,
+)
+
+from certus.ui.certus_substrate_plot_utils import (
+    _add_pg_fit_band_outside_shading,
+    _nan_split_band_y,
+    _pg_plot_xy_split_band,
+    _pg_plot_scatter_split_band,
+)
 from certus.core.certus_substrate_index import _fit_summary_line
 from certus.core.certus_substrate_index import (
     _N_SUBSTRATE_MODELS,
@@ -1331,7 +1344,7 @@ class SubstrateIndexGUI(QMainWindow):
                     + (", ".join(dropped_spec[:12]) + ("..." if len(dropped_spec) > 12 else "")),
                 )
 
-                self.progress_widget.stop("No bare-substrate columns")
+                self.progress_widget.stop("Error: No bare-substrate columns")
 
                 return
 
@@ -1373,7 +1386,7 @@ class SubstrateIndexGUI(QMainWindow):
 
             self.preview_plot()
 
-            self.progress_widget.stop("Loaded")
+            self.progress_widget.stop("Done")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logger.error("Failed to load measurement sheet: %s", e)
@@ -1382,7 +1395,7 @@ class SubstrateIndexGUI(QMainWindow):
 
             self.log(f"Load error: {e}", "ERROR")
 
-            self.progress_widget.stop("Load failed")
+            self.progress_widget.stop("Error: Load failed")
 
     def _output_table_titles(self, selected_model: str | None = None) -> list[str]:
         titles = ["lambda (nm)"]

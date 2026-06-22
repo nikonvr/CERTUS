@@ -9,7 +9,7 @@ def find_matching_sheets(target_name: str, sheet_names: list[str]) -> list[str]:
     This makes material/database resolution more predictable and easier to
     reason about in production.
     """
-    normalized_target = target_name.lower().replace("-", " ").replace("_", " ").split()
+    normalized_target = str(target_name).lower().replace("-", " ").replace("_", " ").split()
 
     PROCESSES = {"h800", "h400", "syrus", "helios"}
     MATERIALS = {"sio2", "nb2o5", "nb", "ta2o5", "al2o3", "hfo2", "zns", "tio2", "yf3", "si"}
@@ -21,7 +21,7 @@ def find_matching_sheets(target_name: str, sheet_names: list[str]) -> list[str]:
     def parse_tokens(text: str) -> tuple[str | None, str | None]:
         proc = None
         mat = None
-        for word in text.lower().replace("-", " ").replace("_", " ").split():
+        for word in str(text).lower().replace("-", " ").replace("_", " ").split():
             if word in PROCESSES:
                 proc = word
             elif word in MATERIALS:
@@ -29,12 +29,12 @@ def find_matching_sheets(target_name: str, sheet_names: list[str]) -> list[str]:
         return proc, mat
 
     target_proc, target_mat = parse_tokens(target_name)
-    target_stripped = "".join(c for c in target_name.lower() if c.isalnum())
+    target_stripped = "".join(c for c in str(target_name).lower() if c.isalnum())
 
     matches: list[str] = []
     for sheet in sheet_names:
         sheet_lower = sheet.lower()
-        if sheet_lower == target_name.lower():
+        if sheet_lower == str(target_name).lower():
             matches.append(sheet)
             continue
 

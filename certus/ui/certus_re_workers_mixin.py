@@ -1,4 +1,19 @@
 from __future__ import annotations
+from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
+from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus.utils.certus_re_math import format_re_drift_log_triplet_pct
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
+from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
+from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
+from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
+from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
+from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
+from certus.utils.certus_re_config import RE_THICKNESS_SEARCH_RADIUS_PCT
+from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 import logging
 import copy
 import time
@@ -51,24 +66,45 @@ from certus.workers.certus_re_workers import REWorker
 from certus.ui.certus_re_ui import CertusREResultsDialog
 
 from certus.utils.certus_re_helpers import (
-    RE_GUI_DEFAULT_BEAM_APERTURE_DEG, RE_GUI_DEFAULT_RE_QWOT_ALPHA, RE_HL_DELTA_RE_REG_SQRT_W,
-    RE_OPTIM_POINTS_PER_TARGET, RE_PHASE2_FD_MAX_WORKERS, RE_PHASE2_FD_PARALLEL,
-    RE_PHASE2_ONESIDED_SPLINE_FD, RE_PHASE4_APERTURE_SCAN_POINTS, RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_P4_BEAM_N_KNOTS, RE_PHASE4_TRF_MAX_NFEV, re_qwot_penalty_weight_from_preset,
-    RE_RE_DEADZONE_DELTA_RE_ABS, RE_RE_DEADZONE_QWOT_ABS, RE_SPEED_PRESETS,
-    RE_SPLINE_NODE2_DEFAULT_NM, RE_SPLINE_N_KNOTS, RE_SUB_CAUCHY_TUBE_DELTA,
-    RE_THICKNESS_SEARCH_RADIUS_PCT, _RE_CANONICAL_SHEETS, _RE_FT_COL_MAT, _RE_FT_COL_N,
-    _RE_FT_COL_NUM, _RE_FT_COL_QW, _RE_FT_COL_THICK, _parse_re_rmse_combined_from_progress_message,
-    _re_calc_spectrum_for_config, _re_cell_str, _re_find_measurement_wavelength_column,
-    _re_header_is_wavelength_label, _re_header_looks_like_spectrum_title, _re_index_column_map,
-    _re_index_split_header_and_data, _re_measurement_values_are_percent, _re_p4_ap_staircase_polyline,
-    _re_p4_kwargs_from_opt_result, _re_p4_sort_knot_pairs, _re_parse_design_metadata_row,
-    _re_parse_design_qwot_rows, _re_qwot_rmse_abs_delta_at_l0, _re_resolve_re_workbook_sheets,
-    _re_rmse_combined_spectral_qwot, _re_rmse_oblique_weighted, _re_sort_results_best_for_table_and_apply,
-    format_re_drift_log_triplet_pct, format_re_spline_knots_log, parse_re_column_header,
-    re_apply_re_index_model, re_delta_qwot_per_layer, re_drift_result_log_suffix,
-    re_interp_delta_knots_clamped, re_knots_wavelengths, re_n_corr_at_lambda_ref,
-    re_substrate_cauchy_n_re_from_theta, TabularMaterial, ParsedREColumn
+    RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
+    re_qwot_penalty_weight_from_preset,
+    RE_SPLINE_NODE2_DEFAULT_NM,
+    RE_SPLINE_N_KNOTS,
+    _RE_CANONICAL_SHEETS,
+    _RE_FT_COL_MAT,
+    _RE_FT_COL_N,
+    _RE_FT_COL_NUM,
+    _RE_FT_COL_QW,
+    _RE_FT_COL_THICK,
+    _parse_re_rmse_combined_from_progress_message,
+    _re_calc_spectrum_for_config,
+    _re_cell_str,
+    _re_find_measurement_wavelength_column,
+    _re_header_is_wavelength_label,
+    _re_header_looks_like_spectrum_title,
+    _re_index_column_map,
+    _re_index_split_header_and_data,
+    _re_measurement_values_are_percent,
+    _re_p4_ap_staircase_polyline,
+    _re_p4_kwargs_from_opt_result,
+    _re_p4_sort_knot_pairs,
+    _re_parse_design_metadata_row,
+    _re_parse_design_qwot_rows,
+    _re_qwot_rmse_abs_delta_at_l0,
+    _re_resolve_re_workbook_sheets,
+    _re_rmse_combined_spectral_qwot,
+    _re_rmse_oblique_weighted,
+    _re_sort_results_best_for_table_and_apply,
+    format_re_spline_knots_log,
+    parse_re_column_header,
+    re_apply_re_index_model,
+    re_delta_qwot_per_layer,
+    re_drift_result_log_suffix,
+    re_interp_delta_knots_clamped,
+    re_knots_wavelengths,
+    re_n_corr_at_lambda_ref,
+    TabularMaterial,
+    ParsedREColumn,
 )
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
@@ -407,9 +443,12 @@ class CertusREWorkersMixin:
 
         _qw_on_ui = bool(cfg.get("re_enable_qwot_penalty", True))
 
+        _fit_min = self.re_fit_lambda_min_spin.value() if hasattr(self, "re_fit_lambda_min_spin") else _fmin
+        _fit_max = self.re_fit_lambda_max_spin.value() if hasattr(self, "re_fit_lambda_max_spin") else _fmax
+
         self.log(
             "RE facade  selection UI: "
-            f"mode={_mode_lbl}, fit lambda=[{_fmin:.0f},{_fmax:.0f}]nm, "
+            f"mode={_mode_lbl}, fit lambda=[{_fit_min:.0f},{_fit_max:.0f}]nm (display=[{_fmin:.0f},{_fmax:.0f}]nm), "
             f"refine(H/L/sub)={_ref_h}/{_ref_l}/{_ref_sub}, "
             f"backside={'on' if bool(cfg.get('back', False)) else 'off'}, "
             f"QWOT_penalty={'on' if _qw_on_ui else 'off'}, "
@@ -485,7 +524,7 @@ class CertusREWorkersMixin:
 
         if hasattr(self, "progress_widget") and (not re_was_running or not re_joined_ok):
             try:
-                self.progress_widget.stop("Stopped by user")
+                self.progress_widget.stop("Cancelled")
 
             except NUMERICAL_FAULT_EXCEPTIONS :
                 pass
@@ -560,6 +599,26 @@ class CertusREWorkersMixin:
 
         self._apply_re_workflow_rmse_if_better(float(rmse))
 
+        if "ep" in data:
+            self.ep_current = data["ep"]
+            if hasattr(self, "_update_index_profile_plot"):
+                self._update_index_profile_plot()
+
+        spectra_display = data.get("spectra_display")
+        if spectra_display is not None:
+            res_vis = {"l": data.get("wls", []), "Ts": data.get("Ts", [])}
+            data_for_display = {"spectra_vis": spectra_display}
+            plot_targets = self._get_plot_targets("spectrum", self.spectrum_plot)
+            oblique_mode = data.get("oblique_mode", False)
+            spectrum_eval_plot_curves(
+                self,
+                data_for_display=data_for_display,
+                plot_targets=plot_targets,
+                res_vis=res_vis,
+                res_optim={"l": [], "Ts": []},
+                oblique_mode=oblique_mode,
+            )
+
         if "re_nk_preview_dH" in data:
             self._re_nk_preview_dH = data.get("re_nk_preview_dH")
             self._re_nk_preview_dL = data.get("re_nk_preview_dL")
@@ -580,7 +639,7 @@ class CertusREWorkersMixin:
             self.log("RE optimization failed.", "ERROR")
 
             if hasattr(self, "progress_widget"):
-                self.progress_widget.stop("RE failed")
+                self.progress_widget.stop("Error: RE failed")
 
             self._plot_nk()
 
@@ -602,7 +661,7 @@ class CertusREWorkersMixin:
             self.log("RE: no results.", "WARNING")
 
             if hasattr(self, "progress_widget"):
-                self.progress_widget.stop("RE: no result")
+                self.progress_widget.stop("Error: No result")
 
             self._plot_nk()
 
@@ -857,7 +916,7 @@ class CertusREWorkersMixin:
         )
 
         if hasattr(self, "progress_widget"):
-            self.progress_widget.stop("RE stopped  best result" if data.get("re_stopped_by_user") else "RE completed")
+            self.progress_widget.stop("Cancelled" if data.get("re_stopped_by_user") else "Done")
 
         self._schedule_eval(True)
 

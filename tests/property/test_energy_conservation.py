@@ -199,7 +199,7 @@ class TestEnergyConservation:
 
     def test_RT_sum_leq_1_compute_TMM_generic(self, d, n_layers, n_sub, label):
 
-        """compute_TMM_generic doit donner R+T <= 1 for tout empilement."""
+        """compute_TMM_generic must yield R+T <= 1 for any stack."""
 
         wls = np.linspace(380, 780, 50)
 
@@ -219,7 +219,7 @@ class TestEnergyConservation:
 
                 f"(R={R:.8f}, T={T:.8f}). "
 
-                f"RÉGRESSION: formule T ou convention n-ik violée."
+                f"REGRESSION: T formula or n-ik convention violated."
 
             )
 
@@ -229,7 +229,7 @@ class TestEnergyConservation:
 
     def test_RT_sum_leq_1_single_point_k0(self, d, n_layers, n_sub, label):
 
-        """compute_TMM_single_point_k0 doit donner R+T <= 1."""
+        """compute_TMM_single_point_k0 must yield R+T <= 1."""
 
         wls = np.linspace(380, 780, 50)
 
@@ -243,7 +243,7 @@ class TestEnergyConservation:
 
                 f"{label} @ {wl}nm: R+T = {R+T:.10f} > 1. "
 
-                f"RÉGRESSION compute_TMM_single_point_k0."
+                f"REGRESSION compute_TMM_single_point_k0."
 
             )
 
@@ -341,7 +341,7 @@ class TestMacleodReciprocity:
 
                 f"(diff={abs(T_fwd-T_bwd):.2e}). "
 
-                f"RÉGRESSION: réciprocité de Macleod violée."
+                f"REGRESSION: Macleod reciprocity violated."
 
             )
 
@@ -361,7 +361,7 @@ class TestMacleodReciprocity:
 
 class TestLosslessConservation:
 
-    """Pour un empilement sans absorption, R + T = 1 exactement."""
+    """For a stack without absorption, R + T = 1 exactly."""
 
 
 
@@ -387,7 +387,7 @@ class TestLosslessConservation:
 
                 f"(diff={abs(R+T-1):.2e}). "
 
-                f"RÉGRESSION: la formule T doit donner R+T=1 for k=0."
+                f"REGRESSION: the T formula must yield R+T=1 for k=0."
 
             )
 

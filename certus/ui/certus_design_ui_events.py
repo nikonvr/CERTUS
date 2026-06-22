@@ -160,26 +160,27 @@ from certus_physics import (
 )
 from certus.core.certus_design_core import *
 from certus.workers.certus_design_workers import *
-from certus.ui.mixins.certus_design_plot_mixin import CertusDesignUIPlotMixin
 
-class CertusDesignEventsMixin:
+class EventsManager:
+    def __init__(self, ui):
+        self.ui = ui
     def _setup_shortcuts(self) -> None:
-        """Configures keyboard shortcuts"""
+        """Register application-wide keyboard shortcuts."""
 
-        QShortcut(QKeySequence("Ctrl+E"), self, lambda: self._schedule_eval(True))
+        QShortcut(QKeySequence("Ctrl+E"), self.ui, lambda: self.ui._schedule_eval(True))
 
-        QShortcut(QKeySequence("Ctrl+O"), self, lambda: self.run_optim("local"))
+        QShortcut(QKeySequence("Ctrl+O"), self.ui, lambda: self.ui.run_optim("local"))
 
-        QShortcut(QKeySequence("Ctrl+G"), self, lambda: self.run_optim("global"))
+        QShortcut(QKeySequence("Ctrl+G"), self.ui, lambda: self.ui.run_optim("global"))
 
-        QShortcut(QKeySequence("Ctrl+S"), self, self.save_config)
+        QShortcut(QKeySequence("Ctrl+S"), self.ui, self.ui.save_config)
 
-        QShortcut(QKeySequence("Ctrl+Z"), self, self._undo)
+        QShortcut(QKeySequence("Ctrl+Z"), self.ui, self.ui._undo)
 
         install_standard_shortcuts(
-            self,
-            run=lambda: self.run_optim("global"),
-            stop=self.stop_optim,
+            self.ui,
+            run=lambda: self.ui.run_optim("global"),
+            stop=self.ui.stop_optim,
             help=self.open_help,
             zoom_in=getattr(self, "zoom_in_ui", None),
             zoom_out=getattr(self, "zoom_out_ui", None),
@@ -189,17 +190,17 @@ class CertusDesignEventsMixin:
 
         def _on_spectrum_drop(paths) -> None:
             if paths and hasattr(self, "load_config"):
-                self.load_config(paths[0])
+                self.ui.load_config(paths[0])
                 show_toast(self, f"Loaded: {Path(paths[0]).name}", "success")
 
-        enable_file_drop(self, _on_spectrum_drop, extensions=("json", "csv", "xlsx", "xls"))
+        enable_file_drop(self.ui, _on_spectrum_drop, extensions=("json", "csv", "xlsx", "xls"))
 
     def _toggle_back_stack(self, state: int) -> None:
         """Toggle backside group visibility"""
 
-        self.back_group.setVisible(bool(state))
+        self.ui.back_group.setVisible(bool(state))
 
-        self._schedule_eval(True)
+        self.ui._schedule_eval(True)
 
     def _on_qwot_changed_connection(self, spinbox: QDoubleSpinBox) -> None:
         """DESIGN specific: update Tikhonravov on QWOT change."""
@@ -208,52 +209,52 @@ class CertusDesignEventsMixin:
 
     def _on_tikhonravov_points_changed(self, *_args) -> None:
 
-        QTimer.singleShot(300, self._update_tikhonravov_points)
+        self.ui.orchestrator.schedule_update_tikhonravov_points(300)
 
     def _on_layer_added(self) -> None:
         """DESIGN specific: update thickness display and points."""
 
-        self._update_thickness_display()
+        self.ui._update_thickness_display()
 
-        QTimer.singleShot(300, self._update_tikhonravov_points)
+        self.ui.orchestrator.schedule_update_tikhonravov_points(300)
 
     def _on_layer_deleted(self) -> None:
         """DESIGN specific: update thickness display and run local optimization."""
 
-        self._update_thickness_display()
+        self.ui._update_thickness_display()
 
-        self.run_optim("local")
+        self.ui.run_optim("local")
 
     def add_back_layer(self) -> None:
         """Adds back layer"""
 
-        if self.back_table.rowCount() >= CFG.MAX_LAYERS:
+        if self.ui.back_table.rowCount() >= CFG.MAX_LAYERS:
             return
 
         mat = "H"
 
-        if self.back_table.rowCount() > 0:
-            prev = self._safe_get_combo_text(self.back_table.rowCount() - 1, 0, self.back_table)
+        if self.ui.back_table.rowCount() > 0:
+            prev = self.ui._safe_get_combo_text(self.ui.back_table.rowCount() - 1, 0, self.ui.back_table)
 
             if prev:
                 mat = "L" if prev == "H" else "H"
 
-        self._add_back_row(mat, 1.0)
+        self.ui._add_back_row(mat, 1.0)
 
-        self._schedule_eval()
+        self.ui._schedule_eval()
 
     def del_back_layer(self) -> None:
         """Removes back layer"""
 
-        r = self.back_table.currentRow()
+        r = self.ui.back_table.currentRow()
 
-        if r < 0 and self.back_table.rowCount() > 0:
-            r = self.back_table.rowCount() - 1
+        if r < 0 and self.ui.back_table.rowCount() > 0:
+            r = self.ui.back_table.rowCount() - 1
 
         if r >= 0:
-            self.back_table.removeRow(r)
+            self.ui.back_table.removeRow(r)
 
-            self._schedule_eval(True)
+            self.ui._schedule_eval(True)
 
     def remove_thinnest(self) -> None:
         """Removes thinnest layer (identically to the left panel button).
@@ -270,21 +271,21 @@ class CertusDesignEventsMixin:
 
         """
 
-        N = self.front_table.rowCount()
+        N = self.ui.front_table.rowCount()
 
         if N <= 1:
             return
 
         # Get current thicknesses
 
-        ep = self.ep_current
+        ep = self.ui.ep_current
 
         if ep is None or len(ep) != N:
             # Fallback if display not up to date
 
-            self._update_thickness_display()
+            self.ui._update_thickness_display()
 
-            ep = self.ep_current
+            ep = self.ui.ep_current
 
             if ep is None:
                 return
@@ -295,29 +296,29 @@ class CertusDesignEventsMixin:
 
         is_boundary = r == 0 or r == N - 1
 
-        self._save_undo_state()
+        self.ui._save_undo_state()
 
-        self.log(f"Remove layer {r + 1}: {ep[r]:.1f}nm", "INFO")
+        self.ui.log(f"Remove layer {r + 1}: {ep[r]:.1f}nm", "INFO")
 
-        self.front_table.removeRow(r)
+        self.ui.front_table.removeRow(r)
 
         if not is_boundary:
             # Merging is only relevant when removing an interior layer
 
             # as it brings two previously separated layers together.
 
-            self._merge_adjacent_layers()
+            self.ui._merge_adjacent_layers()
 
         else:
-            self._update_layer_count()
+            self.ui._update_layer_count()
 
-            self._update_thickness_display()
+            self.ui._update_thickness_display()
 
         # Update target count and run optimization
+        self.ui._workflow_best_rmse = float("inf")
+        self.ui.orchestrator._target_layer_count = self.ui.front_table.rowCount()
 
-        self._target_layer_count = self.front_table.rowCount()
-
-        self.run_optim("local", keep_history=True)
+        self.ui.run_optim("local", keep_history=True)
 
     def _paste_from_excel(self) -> None:
         """Pastes data from Excel into layer table"""
@@ -381,7 +382,7 @@ class CertusDesignEventsMixin:
                         mat = mat_found
 
                     else:
-                        self.log(f"Invalid material ignored: {mat}", "WARNING")
+                        self.ui.log(f"Invalid material ignored: {mat}", "WARNING")
 
                         continue
 
@@ -391,7 +392,7 @@ class CertusDesignEventsMixin:
                     qwot = float(qwot_str.replace(",", "."))
 
                 except ValueError:
-                    self.log(f"Invalid QWOT value ignored: {qwot_str}", "WARNING")
+                    self.ui.log(f"Invalid QWOT value ignored: {qwot_str}", "WARNING")
 
                     continue
 
@@ -426,17 +427,17 @@ class CertusDesignEventsMixin:
                 rows_data.append((mat, qwot, var))
 
             if not rows_data:
-                self.log("No valid data to paste", "WARNING")
+                self.ui.log("No valid data to paste", "WARNING")
 
                 return
 
             # Save state for undo
 
-            self._save_undo_state()
+            self.ui._save_undo_state()
 
             # Clear table or append depending on selection
 
-            current_row = self.front_table.currentRow()
+            current_row = self.ui.front_table.currentRow()
 
             if current_row >= 0:
                 # Paste from selected row
@@ -446,53 +447,53 @@ class CertusDesignEventsMixin:
             else:
                 # Clear table and paste from start
 
-                self.front_table.blockSignals(True)
+                self.ui.front_table.blockSignals(True)
 
-                self.front_table.setRowCount(0)
+                self.ui.front_table.setRowCount(0)
 
-                self.front_table.blockSignals(False)
+                self.ui.front_table.blockSignals(False)
 
                 start_row = 0
 
             # Add rows
 
-            self.front_table.blockSignals(True)
+            self.ui.front_table.blockSignals(True)
 
             for i, (mat, qwot, var) in enumerate(rows_data):
                 row = start_row + i
 
-                if row >= self.front_table.rowCount():
-                    self._add_front_row(mat, qwot, var)
+                if row >= self.ui.front_table.rowCount():
+                    self.ui._add_front_row(mat, qwot, var)
 
                 else:
                     # Replace existing row
 
                     # Mat
 
-                    cb = self._create_combo(mat)
+                    cb = self.ui._create_combo(mat)
 
-                    cb.currentIndexChanged.connect(self._merge_adjacent_layers)
+                    cb.currentIndexChanged.connect(self.ui._merge_adjacent_layers)
 
-                    self.front_table.setCellWidget(row, 0, cb)
+                    self.ui.front_table.setCellWidget(row, 0, cb)
 
                     # QWOT
 
-                    sb = self._create_spin(qwot, dec=6)
+                    sb = self.ui._create_spin(qwot, dec=6)
 
-                    sb.valueChanged.connect(self._on_schedule_eval_signal)
+                    sb.valueChanged.connect(self.ui._on_schedule_eval_signal)
 
                     sb.valueChanged.connect(self._on_tikhonravov_points_changed)
 
-                    self.front_table.setCellWidget(row, 1, sb)
+                    self.ui.front_table.setCellWidget(row, 1, sb)
 
                     # Var
 
-                    chk = self.front_table.cellWidget(row, 3).findChild(QCheckBox)
+                    chk = self.ui.front_table.cellWidget(row, 3).findChild(QCheckBox)
 
                     if chk:
                         chk.setChecked(var)
 
-                    del_cw = self.front_table.cellWidget(row, 4)
+                    del_cw = self.ui.front_table.cellWidget(row, 4)
 
                     if del_cw:
                         del_chk = del_cw.findChild(QCheckBox)
@@ -500,13 +501,13 @@ class CertusDesignEventsMixin:
                         if del_chk:
                             del_chk.setChecked(False)
 
-            self.front_table.blockSignals(False)
+            self.ui.front_table.blockSignals(False)
 
-            self._update_layer_count()
+            self.ui._update_layer_count()
 
-            self._schedule_eval()
+            self.ui._schedule_eval()
 
-            self.log(f"{len(rows_data)} row(s) pasted from Excel", "SUCCESS")
+            self.ui.log(f"{len(rows_data)} row(s) pasted from Excel", "SUCCESS")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error("[DESIGN.paste_from_excel] failed to paste from Excel | error=%s", e, exc_info=True)
@@ -514,9 +515,9 @@ class CertusDesignEventsMixin:
     def add_target(self) -> None:
         """Adds spectral target"""
 
-        r = self.target_table.rowCount()
+        r = self.ui.target_table.rowCount()
 
-        self.target_table.insertRow(r)
+        self.ui.target_table.insertRow(r)
 
         col_idx = 0
 
@@ -528,9 +529,9 @@ class CertusDesignEventsMixin:
 
         chk.setChecked(True)
 
-        chk.stateChanged.connect(self._schedule_eval)
+        chk.stateChanged.connect(self.ui._schedule_eval)
 
-        chk.stateChanged.connect(self._update_optim_point_count)
+        chk.stateChanged.connect(self.ui._update_optim_point_count)
 
         cw = QWidget()
 
@@ -542,22 +543,22 @@ class CertusDesignEventsMixin:
 
         cl.setContentsMargins(0, 0, 0, 0)
 
-        self.target_table.setCellWidget(r, col_idx, cw)
+        self.ui.target_table.setCellWidget(r, col_idx, cw)
 
         col_idx += 1
 
-        if self.oblique_mode:
+        if self.ui.oblique_mode:
             # Oblique: Ang, Pol, Type, lmin, lmax, Vmin, Vmax, W
 
             # Angle
 
-            angle_sb = self._create_spin(0.0, dec=1, minv=0, maxv=90)
+            angle_sb = self.ui._create_spin(0.0, dec=1, minv=0, maxv=90)
 
             angle_sb.setToolTip("Incident angle (degrees).")
 
-            angle_sb.valueChanged.connect(self._schedule_eval)
+            angle_sb.valueChanged.connect(self.ui._schedule_eval)
 
-            self.target_table.setCellWidget(r, col_idx, angle_sb)
+            self.ui.target_table.setCellWidget(r, col_idx, angle_sb)
 
             col_idx += 1
 
@@ -569,9 +570,9 @@ class CertusDesignEventsMixin:
 
             pol_combo.addItems(["s", "p", "Avg"])
 
-            pol_combo.currentTextChanged.connect(self._schedule_eval)
+            pol_combo.currentTextChanged.connect(self.ui._schedule_eval)
 
-            self.target_table.setCellWidget(r, col_idx, pol_combo)
+            self.ui.target_table.setCellWidget(r, col_idx, pol_combo)
 
             col_idx += 1
 
@@ -583,43 +584,43 @@ class CertusDesignEventsMixin:
 
             type_combo.addItems(["R", "T"])
 
-            type_combo.currentTextChanged.connect(self._schedule_eval)
+            type_combo.currentTextChanged.connect(self.ui._schedule_eval)
 
-            self.target_table.setCellWidget(r, col_idx, type_combo)
+            self.ui.target_table.setCellWidget(r, col_idx, type_combo)
 
             col_idx += 1
 
             # lambdamin, lambdamax
 
             for val, dec in [(400.0, 1), (700.0, 1)]:
-                sb = self._create_spin(val, dec=dec, minv=200, maxv=20000)
+                sb = self.ui._create_spin(val, dec=dec, minv=200, maxv=20000)
 
                 tt = "Target wavelength range start (nm)." if val == 400.0 else "Target wavelength range end (nm)."
 
                 sb.setToolTip(tt)
 
-                sb.valueChanged.connect(self._schedule_eval)
+                sb.valueChanged.connect(self.ui._schedule_eval)
 
-                sb.valueChanged.connect(self._update_optim_point_count)
+                sb.valueChanged.connect(self.ui._update_optim_point_count)
 
-                sb.valueChanged.connect(lambda _checked=False: QTimer.singleShot(300, self._update_tikhonravov_points))
+                sb.valueChanged.connect(lambda _checked=False: self.ui.orchestrator.schedule_update_tikhonravov_points(300))
 
-                self.target_table.setCellWidget(r, col_idx, sb)
+                self.ui.target_table.setCellWidget(r, col_idx, sb)
 
                 col_idx += 1
 
             # Val min, Val max, Weight
 
             for i, (val, dec, maxv) in enumerate([(0.0, 3, 1), (1.0, 3, 1), (1.0, 1, 100)]):
-                sb = self._create_spin(val, dec=dec, minv=0, maxv=maxv)
+                sb = self.ui._create_spin(val, dec=dec, minv=0, maxv=maxv)
 
                 tts = ["Minimum target value.", "Maximum target value.", "Weight multiplier for this target."]
 
                 sb.setToolTip(tts[i])
 
-                sb.valueChanged.connect(self._schedule_eval)
+                sb.valueChanged.connect(self.ui._schedule_eval)
 
-                self.target_table.setCellWidget(r, col_idx, sb)
+                self.ui.target_table.setCellWidget(r, col_idx, sb)
 
                 col_idx += 1
 
@@ -633,7 +634,7 @@ class CertusDesignEventsMixin:
             ranges = [(200, 20000), (200, 20000), (0, 1), (0, 1), (0, 100)]
 
             for i, val in enumerate(defs):
-                sb = self._create_spin(val, dec=decs[i], minv=ranges[i][0], maxv=ranges[i][1])
+                sb = self.ui._create_spin(val, dec=decs[i], minv=ranges[i][0], maxv=ranges[i][1])
 
                 tts = [
                     "Target wavelength range start (nm).",
@@ -645,32 +646,32 @@ class CertusDesignEventsMixin:
 
                 sb.setToolTip(tts[i])
 
-                sb.valueChanged.connect(self._on_schedule_eval_signal)
+                sb.valueChanged.connect(self.ui._on_schedule_eval_signal)
 
                 if i in [0, 1]:
-                    sb.valueChanged.connect(self._update_optim_point_count)
+                    sb.valueChanged.connect(self.ui._update_optim_point_count)
 
-                    sb.valueChanged.connect(lambda _checked=False: QTimer.singleShot(300, self._update_tikhonravov_points))
+                    sb.valueChanged.connect(lambda _checked=False: self.ui.orchestrator.schedule_update_tikhonravov_points(300))
 
-                self.target_table.setCellWidget(r, col_idx, sb)
+                self.ui.target_table.setCellWidget(r, col_idx, sb)
 
                 col_idx += 1
 
-        self._update_optim_point_count()
+        self.ui._update_optim_point_count()
 
     def del_target(self) -> None:
         """Removes spectral target"""
 
-        r = self.target_table.currentRow()
+        r = self.ui.target_table.currentRow()
 
         if r >= 0:
-            self.target_table.removeRow(r)
+            self.ui.target_table.removeRow(r)
 
-            self._schedule_eval()
+            self.ui._schedule_eval()
 
-            self._update_optim_point_count()
+            self.ui._update_optim_point_count()
 
-            QTimer.singleShot(200, self._update_tikhonravov_points)
+            self.ui.orchestrator.schedule_update_tikhonravov_points(200)
 
     def open_help(self) -> None:
         """Opens HTML documentation"""
@@ -722,8 +723,8 @@ class CertusDesignEventsMixin:
                         logger=getattr(self, "logger", None),
                     )
             except (RuntimeError, AttributeError) as e:
-                if hasattr(self, "logger") and self.logger:
-                    self.logger.debug(f"Error stopping thread: {e}")
+                if hasattr(self, "logger") and self.ui.logger:
+                    self.ui.logger.debug(f"Error stopping thread: {e}")
 
         workers = [
             getattr(self, "warmup_worker", None),
@@ -752,10 +753,9 @@ class CertusDesignEventsMixin:
             except (RuntimeError, AttributeError) as e:
                 # Non-critical: worker may already be destroyed
 
-                if hasattr(self, "logger") and self.logger:
-                    self.logger.debug(f"Error stopping worker {type(worker).__name__}: {e}")
+                if hasattr(self, "logger") and self.ui.logger:
+                    self.ui.logger.debug(f"Error stopping worker {type(worker).__name__}: {e}")
 
         # Call parent cleanup (stops base class workers)
-
-        super().closeEvent(event)
+        pass
 

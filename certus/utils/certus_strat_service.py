@@ -296,13 +296,25 @@ class StratStrategyService(BaseHeadlessService):
 
         return StratPayloadParts(step=step, params=params, opti_results=opti_results)
 
+    def _clean_payload_for_schema(self, val: Any) -> Any:
+        if hasattr(val, "model_dump"):
+            return self._clean_payload_for_schema(val.model_dump(exclude_none=True))
+        if isinstance(val, Mapping):
+            return {str(k): self._clean_payload_for_schema(v) for k, v in val.items() if v is not None}
+        if isinstance(val, (list, tuple)):
+            return [self._clean_payload_for_schema(v) for v in val]
+        if isinstance(val, (int, float, str, bool)) or val is None:
+            return val
+        return str(val)
+
     def _validate_structural(self, payload: Mapping[str, Any]) -> StratPayloadParts:
         """Phase 1: Structural validation (JSON schema + type shape checks)."""
         if not isinstance(payload, Mapping):
             raise ValueError("payload must be a mapping")
 
-        # Strict JSON schema validation
-        schema_errors = self.validate_against_schema(payload)
+        # Strict JSON schema validation (with rich-object clean conversion)
+        clean_payload = self._clean_payload_for_schema(payload)
+        schema_errors = self.validate_against_schema(clean_payload)
         if schema_errors:
             raise ValueError("Payload schema violations:\n" + "\n".join(schema_errors))
 

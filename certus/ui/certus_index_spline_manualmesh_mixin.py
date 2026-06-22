@@ -33,6 +33,7 @@ from dataclasses import dataclass, replace, field
 from enum import auto
 from threading import Event
 from typing import Any, Callable, Mapping
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 import pandas as pd
@@ -1085,12 +1086,30 @@ class CertusIndexSplineManualMeshMixin:
     def _prompt_manual_extra_knots(self, result: dict) -> tuple[list[float], float] | None:
         """Show the manual extra-knot placement dialog and return (lambda positions, delta_ns) on Go."""
         lam_model = np.asarray(result.get("lam_nm", []), dtype=np.float64).ravel()
-        y_model = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
+        # Try T first, fallback to R
+        y_model = np.empty(0, dtype=np.float64)
+        y_label_str = "T"
+        t_val = result.get("t_theo")
+        if t_val is not None:
+            y_model = np.asarray(t_val, dtype=np.float64).ravel()
+            y_label_str = "T/Tsub" if bool(result.get("t_is_ratio", False)) else "T"
+        
+        if y_model.size == 0:
+            r_val = result.get("r_theo")
+            if r_val is not None:
+                y_model = np.asarray(r_val, dtype=np.float64).ravel()
+                y_label_str = "R/Rsub" if bool(result.get("r_is_ratio", False)) else "R"
+
         lam_measurement = np.empty(0, dtype=np.float64)
         y_measurement = np.empty(0, dtype=np.float64)
-        if self.df is not None and "lambda" in self.df.columns and "T" in self.df.columns:
-            lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
-            y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
+        
+        if self.df is not None and "lambda" in self.df.columns:
+            if "T" in self.df.columns and result.get("t_theo") is not None and len(result.get("t_theo")) > 0:
+                lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+                y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
+            elif "R" in self.df.columns and result.get("r_theo") is not None and len(result.get("r_theo")) > 0:
+                lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+                y_measurement = _to_fraction_T(self.df["R"].to_numpy(dtype=np.float64))
 
         dlg = ManualSigmaKnotDialog(
             sigma_knots=np.asarray(result.get("sigma_knots", []), dtype=np.float64),
@@ -1098,7 +1117,7 @@ class CertusIndexSplineManualMeshMixin:
             y_model=y_model,
             lam_measurement_nm=lam_measurement,
             y_measurement=y_measurement,
-            y_label="T/Tsub" if bool(result.get("t_is_ratio", False)) else "T",
+            y_label=y_label_str,
             initial_delta_ns=0.0,
             parent=self,
         )
@@ -1134,20 +1153,53 @@ class CertusIndexSplineManualMeshMixin:
     def _open_manual_extra_knots_dialog(self, result: dict) -> None:
         """Open a non-blocking manual-knot dialog that stays open on local apply."""
         lam_model = np.asarray(result.get("lam_nm", []), dtype=np.float64).ravel()
-        y_model = np.asarray(result.get("t_theo", []), dtype=np.float64).ravel()
+        # Try T first, fallback to R
+        y_model = np.empty(0, dtype=np.float64)
+        y_label_str = "T"
+        t_val = result.get("t_theo")
+        if t_val is not None:
+            y_model = np.asarray(t_val, dtype=np.float64).ravel()
+            y_label_str = "T/Tsub" if bool(result.get("t_is_ratio", False)) else "T"
+        
+        if y_model.size == 0:
+            r_val = result.get("r_theo")
+            if r_val is not None:
+                y_model = np.asarray(r_val, dtype=np.float64).ravel()
+                y_label_str = "R/Rsub" if bool(result.get("r_is_ratio", False)) else "R"
+
         lam_measurement = np.empty(0, dtype=np.float64)
         y_measurement = np.empty(0, dtype=np.float64)
-        if self.df is not None and "lambda" in self.df.columns and "T" in self.df.columns:
-            lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
-            y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
+        
+        if self.df is not None and "lambda" in self.df.columns:
+            if "T" in self.df.columns and result.get("t_theo") is not None and len(result.get("t_theo")) > 0:
+                lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+                y_measurement = _to_fraction_T(self.df["T"].to_numpy(dtype=np.float64))
+            elif "R" in self.df.columns and result.get("r_theo") is not None and len(result.get("r_theo")) > 0:
+                lam_measurement = ensure_lam_nm_array(self.df["lambda"].to_numpy(dtype=np.float64))
+                y_measurement = _to_fraction_T(self.df["R"].to_numpy(dtype=np.float64))
 
+        if self.logger:
+            self.logger.info(
+                "MANUAL_DIALOG_DIAG: lam_model=%d y_model=%d lam_meas=%d y_meas=%d | "
+                "df=%s df_cols=%s | t_theo_in_result=%s r_theo_in_result=%s | "
+                "t_theo_len=%d r_theo_len=%d | result_keys_sample=%s",
+                lam_model.size, y_model.size,
+                lam_measurement.size, y_measurement.size,
+                self.df is not None,
+                list(self.df.columns) if self.df is not None else "None",
+                result.get("t_theo") is not None,
+                result.get("r_theo") is not None,
+                len(result.get("t_theo")) if result.get("t_theo") is not None else 0,
+                len(result.get("r_theo")) if result.get("r_theo") is not None else 0,
+                sorted(result.keys())[:20],
+            )
         dlg = ManualSigmaKnotDialog(
             sigma_knots=np.asarray(result.get("sigma_knots", []), dtype=np.float64),
             lam_model_nm=lam_model,
             y_model=y_model,
             lam_measurement_nm=lam_measurement,
             y_measurement=y_measurement,
-            y_label="T/Tsub" if bool(result.get("t_is_ratio", False)) else "T",
+            y_label=y_label_str,
             initial_delta_ns=0.0,
             keep_open_on_local_apply=True,
             parent=self,
@@ -1595,7 +1647,7 @@ class CertusIndexSplineManualMeshMixin:
 
         def _manual_progress(p: float | int, m: str) -> None:
             pv = int(round(float(p) * 100.0))
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+            self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {str(m)}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
 
@@ -1702,7 +1754,7 @@ class CertusIndexSplineManualMeshMixin:
 
         def _manual_progress(p: float | int, m: str) -> None:
             pv = int(round(float(p) * 100.0))
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+            self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {str(m)}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
 
@@ -1772,7 +1824,7 @@ class CertusIndexSplineManualMeshMixin:
 
         def _manual_progress(p: float | int, m: str) -> None:
             pv = int(round(float(p) * 100.0))
-            self._worker.signals.progress.emit(max(0, min(10000, pv)), f"[{float(p):6.2f}%] {str(m)}")
+            self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=f"[{float(p):6.2f}%] {str(m)}", display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
 
@@ -1840,10 +1892,10 @@ class CertusIndexSplineManualMeshMixin:
 
         def _manual_progress(p: float | int, m: str) -> None:
             if p < 0:
-                self._worker.signals.progress.emit(-1, str(m))
+                self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=None, progress_ratio=None, eta_seconds=None, confidence=0.0, state=StepState.ERROR, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': -1}))
             else:
                 pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
-                self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
+                self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
 
@@ -1913,10 +1965,10 @@ class CertusIndexSplineManualMeshMixin:
 
         def _manual_progress(p: float | int, m: str) -> None:
             if p < 0:
-                self._worker.signals.progress.emit(-1, str(m))
+                self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=None, progress_ratio=None, eta_seconds=None, confidence=0.0, state=StepState.ERROR, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': -1}))
             else:
                 pv = int(round(float(np.clip(p, 0.0, 100.0)) * 100.0))
-                self._worker.signals.progress.emit(max(0, min(10000, pv)), str(m))
+                self._worker.signals.progress_snapshot.emit(build_progress_snapshot(message=str(m), display_ratio=max(0.0, min(1.0, pv / 10000.0)), progress_ratio=max(0.0, min(1.0, pv / 10000.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='INDEX_SPLINE', phase='MANUAL_MESH', metadata={'pv': pv}))
 
         self._wire_worker_signals(_manual_progress)
 

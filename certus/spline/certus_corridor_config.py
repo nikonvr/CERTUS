@@ -1,11 +1,42 @@
 from dataclasses import dataclass, field
-from typing import *
+# from typing import *  # Unused
 from pydantic import BaseModel, ConfigDict
 import numpy as np
-from certus.core.certus_core import *
-from certus.spline.certus_index_spline_core import *
+from certus.core.certus_core import Any
+
+from certus.spline.certus_index_spline_config import (
+    SplineOptConfig,
+    corridor_profile_refit_maxfun,
+)
+from certus.spline.certus_index_spline_core import (
+    clip_to_bounds,
+    x_slice_n_to_physical_nodes,
+)
+from certus.spline.spline_objective import (
+    nk_from_x_pwlnk,
+    spectral_mse_rmse_masked_from_nk,
+)
+
 
 import logging
+import threading
+import time
+
+from certus.spline.certus_corridor_orchestrator_utils import (
+    _prep_corridor_base_eff,
+    _compute_corridor_rmse_threshold,
+    _eval_adaptive_abs_tolerance,
+    _eval_corridor_threshold_fallback,
+    _best_fit_at_d,
+    CorridorProfileContext
+)
+from certus.spline.certus_corridor_logger import (
+    _log_coaching_corridor_failure,
+    _log_corridor_base_geometry,
+    _log_corridor_start_config
+)
+from certus.spline.certus_corridor_utils import _pick_rmse_reference_for_profile, _hetero_sigma_masked_from_base
+from scipy.stats import chi2 as _chi2
 
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR EXPLORE]"
@@ -511,6 +542,7 @@ class RegularGridProfileContext:
             rm_old = float(self.r_list[i_same])
             keep_new = bool(np.isfinite(rm_new) and ((not np.isfinite(rm_old)) or (rm_new < rm_old - 1e-12)))
             if not keep_new:
+                from certus.spline.certus_corridor_orchestrator_utils import _manual_grid_tag_base_on_duplicate_discard
                 _manual_grid_tag_base_on_duplicate_discard(self.point_kind_list, i_same, incoming_point_kind=int(point_kind))
                 log.info("%s manual grid: duplicate d=%.6f nm discarded | rmse_old=%.8f <= rmse_new=%.8f", _LOG_PREFIX, d_new, rm_old, rm_new)
                 return False

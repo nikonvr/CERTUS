@@ -1387,7 +1387,7 @@ class CertusIndexSplineSmartInitMixin:
         )
 
         try:
-            if isinstance(payload, SmartInitPayload):
+            if type(payload).__name__ == "SmartInitPayload":
                 logger.info(
                     "Smart Init GUI slot: opening dialog | K_sigma=%d | incoming_d_best_nm=%.6f | preview_shown=%s",
                     int(np.asarray(payload.sigma_knots, dtype=np.float64).size),

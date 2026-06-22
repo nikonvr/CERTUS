@@ -1413,8 +1413,8 @@ class CertusFieldStateMixin:
         f_p_btns.addWidget(exp_btn)
         p_lay.addLayout(f_p_btns)
 
-        clr_btn.setStyleSheet("padding: 6px 12px; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px;")
-        exp_btn.setStyleSheet(f"padding: 6px 12px; background-color: {CertusTheme.PRIMARY}; color: white; border: none; border-radius: 4px;")
+        clr_btn.setStyleSheet(CertusTheme.get_button_style("secondary"))
+        exp_btn.setStyleSheet(CertusTheme.get_button_style("primary"))
 
         self._refresh_pareto_table()
         return True

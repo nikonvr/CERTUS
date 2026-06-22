@@ -33,6 +33,18 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 """
 
 from __future__ import annotations
+from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
+from certus.utils.certus_re_math import format_re_drift_log_triplet_pct
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
+from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
+from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
+from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
+from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
+from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
+from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 
 from certus.core.certus_core import __version__, APP_SUITE_VERSION
 
@@ -180,24 +192,9 @@ script_dir = env["script_dir"]
 
 from certus.utils.certus_re_helpers import (
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    RE_GUI_DEFAULT_RE_QWOT_ALPHA,
-    RE_HL_DELTA_RE_REG_SQRT_W,
-    RE_OPTIM_POINTS_PER_TARGET,
-    RE_PHASE2_FD_MAX_WORKERS,
-    RE_PHASE2_FD_PARALLEL,
-    RE_PHASE2_ONESIDED_SPLINE_FD,
-    RE_PHASE4_APERTURE_SCAN_POINTS,
-    RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_P4_BEAM_N_KNOTS,
-    RE_PHASE4_TRF_MAX_NFEV,
     re_qwot_penalty_weight_from_preset,
-    RE_RE_DEADZONE_DELTA_RE_ABS,
-    RE_RE_DEADZONE_QWOT_ABS,
-    RE_SPEED_PRESETS,
     RE_SPLINE_NODE2_DEFAULT_NM,
     RE_SPLINE_N_KNOTS,
-    RE_SUB_CAUCHY_TUBE_DELTA,
-    RE_THICKNESS_SEARCH_RADIUS_PCT,
     _RE_CANONICAL_SHEETS,
     _RE_FT_COL_MAT,
     _RE_FT_COL_N,
@@ -223,7 +220,6 @@ from certus.utils.certus_re_helpers import (
     _re_rmse_combined_spectral_qwot,
     _re_rmse_oblique_weighted,
     _re_sort_results_best_for_table_and_apply,
-    format_re_drift_log_triplet_pct,
     format_re_spline_knots_log,
     parse_re_column_header,
     re_apply_re_index_model,
@@ -232,7 +228,6 @@ from certus.utils.certus_re_helpers import (
     re_interp_delta_knots_clamped,
     re_knots_wavelengths,
     re_n_corr_at_lambda_ref,
-    re_substrate_cauchy_n_re_from_theta,
     TabularMaterial,
     ParsedREColumn,
 )
@@ -447,6 +442,11 @@ class CertusREApp(
         self._setup_shortcuts()
 
         self._load_defaults()
+
+    def _get_optim_wls(self) -> np.ndarray:
+        if self._re_targets and len(self._re_targets) > 0:
+            return self._re_targets[0].wls
+        return np.array([])
 
         # Warmup JIT
 

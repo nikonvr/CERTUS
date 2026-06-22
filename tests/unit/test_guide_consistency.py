@@ -73,7 +73,7 @@ def guide_formulas_back(WL, n0, theta0_deg, n_layers, d_layers, n_sub, pol):
         ct = cos_theta(n)
         return n * ct if p == "s" else n / ct
 
-    # Attention : Incident = Sub, Sortie = Air
+    # Warning: Incident = Sub, Exit = Air
     eta_inc = get_eta(n_sub, pol)
     eta_exit = get_eta(n0, pol)
 
@@ -199,7 +199,7 @@ def test_guide_vs_code_consistency(
         R_arr, T_arr = calc_spectrum_oblique_vectorized(
             wls, n_layers_2d, d_layers, n_sub_arr, float(angle), pol
         )
-        # Comparison avec Guide Valeurs Reference
+        # Comparison with Guide Reference Values
         print(f"\n[DEBUG] Angle={angle} Pol={pol}")
         print(f"  Guide Ref R: {Rf_g:.10f}, T: {Tf_g:.10f}")
         print(f"  Code  Cal R: {R_arr[0]:.10f}, T: {T_arr[0]:.10f}")

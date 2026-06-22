@@ -166,15 +166,21 @@ class TestUXComponentsBoost:
         assert prog is not None
         prog.show()
         prog.start()
+        prog.set_time_budget(120)
         
         prog.update(iteration=45, max_iter=100, evals=12, phase="Optimization", animate=False)
         assert prog.progress_bar.value() in (45, 46)
+        assert "ETA" in prog.info_label.text()
+        assert prog.detail_label.text().startswith("Status:")
+        assert "Phase:" in prog.detail_label.text()
         
         prog.enable_cancel(True)
         assert prog.cancel_btn.isVisible()
         
         prog._on_cancel()
         assert prog.is_canceled() is True
+        prog.stop("Completed")
+        assert prog.detail_label.text() == "Status: Cancelled • Phase: finalizing • Next: review or resume"
 
     def test_progress_dialog(self, qapp) -> None:
         _ = qapp
@@ -270,6 +276,33 @@ class TestUXComponentsBoost:
         fmt_gui = CertusGuiFormatter()
         res3 = fmt_gui.format(rec1)
         assert "INFO" in res3
+
+    def test_process_log_queue_standard(self, qapp) -> None:
+        _ = qapp
+        import queue
+        from certus.ui.certus_ui_utils import process_log_queue_standard
+        from PyQt6.QtWidgets import QTextEdit
+        
+        widget = QTextEdit()
+        q = queue.Queue()
+        
+        # Test standard GUI log
+        q.put("2026-06-16 09:49:05 ✦ INFO  ➔ [CERTUS-METAL-BILAYER] Show Details logger attached")
+        count = process_log_queue_standard(q, widget)
+        assert count == 1
+        assert "Show Details" in widget.toHtml()
+        
+        # Test GUI log with pipe character in the actual message (the bug case)
+        q.put("2026-06-16 09:49:28 ✦ INFO  ➔ GLOBAL_OPT(PGlobal) K=2 [PGLOBAL] x0_probe | rmse=1.737622e-01 | x0_head=[5.0] | x0_dim=8")
+        process_log_queue_standard(q, widget)
+        # Should parse correctly and contain rmse in the formatted text (not stripped to a bracket)
+        assert "rmse=1.737622e-01" in widget.toHtml()
+        assert "x0_head=[5.0]" in widget.toHtml()
+        
+        # Test legacy log format with pipes
+        q.put("2026-06-16 09:49:28 | INFO | Legacy message | with | pipes")
+        process_log_queue_standard(q, widget)
+        assert "Legacy message | with | pipes" in widget.toHtml()
 
 
 
@@ -417,8 +450,8 @@ class TestCertusBaseAppBoost:
         _ = qapp
         app = DummyApp()
         
-        with patch("certus.ui.certus_base_app.load_theme_config", return_value="light"), \
-             patch("certus.ui.certus_base_app.save_theme_config") as mock_save, \
+        with patch("certus.ui.mixins.certus_base_core_mixins.load_theme_config", return_value="light"), \
+             patch("certus.ui.mixins.certus_base_core_mixins.save_theme_config") as mock_save, \
              patch("certus.ui.certus_theme.CertusTheme.configure") as mock_conf, \
              patch("certus.ui.certus_theme.CertusTheme.apply_to_app") as mock_apply, \
              patch("certus.ui.certus_ui_utils.update_global_plot_config") as mock_plot:

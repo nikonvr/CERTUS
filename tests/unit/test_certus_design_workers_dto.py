@@ -11,6 +11,7 @@ from certus.workers.certus_design_workers_dto import (
     NeedleWorkerRequest,
     OptimWorkerRequest,
     OptimWorkerResult,
+    TracePayload,
 )
 
 
@@ -27,6 +28,21 @@ def test_optim_worker_request_from_legacy_copies_payload() -> None:
 def test_optim_worker_request_from_legacy_handles_non_dict() -> None:
     req = OptimWorkerRequest.from_legacy(None)
     assert req.cfg == {}
+
+
+@pytest.mark.unit
+def test_optim_worker_request_from_legacy_traceability() -> None:
+    legacy = {
+        "run_id": "test_run_123",
+        "created_at": "2026-06-14",
+        "initiated_by": "test_user",
+        "metadata": {"test": True}
+    }
+    req = OptimWorkerRequest.from_legacy(legacy)
+    assert req.trace.run_id == "test_run_123"
+    assert req.trace.created_at == "2026-06-14"
+    assert req.trace.initiated_by == "test_user"
+    assert req.trace.metadata == {"test": True}
 
 
 @pytest.mark.unit
@@ -55,9 +71,11 @@ def test_color_worker_result_to_legacy_dict_success_shape() -> None:
 
 @pytest.mark.unit
 def test_color_worker_result_to_legacy_dict_failure_shape() -> None:
-    dto = ColorWorkerResult.failure()
+    dto = ColorWorkerResult.failure(trace=TracePayload(run_id="run_f1", metadata={"err": 1}))
     payload = dto.to_legacy_dict()
-    assert payload == {"ok": False}
+    assert payload["ok"] is False
+    assert payload["run_id"] == "run_f1"
+    assert payload["metadata"] == {"err": 1}
 
 
 @pytest.mark.unit
@@ -71,16 +89,18 @@ def test_optim_worker_result_to_legacy_dict_success_shape() -> None:
 
 @pytest.mark.unit
 def test_optim_worker_result_to_legacy_dict_failure_shape() -> None:
-    dto = OptimWorkerResult.failure()
+    dto = OptimWorkerResult.failure(trace=TracePayload(run_id="run_f2"))
     payload = dto.to_legacy_dict()
-    assert payload == {"ok": False}
+    assert payload["ok"] is False
+    assert payload["run_id"] == "run_f2"
 
 
 @pytest.mark.unit
 def test_needle_worker_result_to_legacy_dict_action_only() -> None:
-    dto = NeedleWorkerResult.action_only("none")
+    dto = NeedleWorkerResult.action_only("none", trace=TracePayload(run_id="run_f3"))
     payload = dto.to_legacy_dict()
-    assert payload == {"action": "none"}
+    assert payload["action"] == "none"
+    assert payload["run_id"] == "run_f3"
 
 
 @pytest.mark.unit

@@ -26,7 +26,15 @@ from certus.core.certus_core import (
 )
 from certus.utils.certus_data import generate_html_report
 from certus.ui.certus_ui import install_standard_shortcuts
-from certus.utils.certus_index_utils import DataType, analyze_loaded_data, normalize_index_config
+from certus.utils.certus_index_utils import (
+    DataType,
+    analyze_loaded_data,
+    normalize_index_config,
+    fit_sellmeier_global,
+    fit_k_global_8p,
+)
+from certus.ui.certus_index_ui import _notify_user
+from certus.core.certus_index_core import _get_silicon_n_on_grid, _get_silicon_k_on_grid
 from certus_physics import (
     epsilon2_TLU_array,
     epsilon1_TL_analytic,
@@ -369,9 +377,32 @@ class CertusIndexWorkerMixin:
 
         """
 
-        if self.target_data is None:
+        if self.target_data is None or len(self.target_data) == 0:
             _notify_user(self, "No Data", "Please load a spectrum first.", level="warning")
 
+            self.btn_run.setEnabled(True)
+            self.btn_stop.setEnabled(False)
+            return
+
+        # Check if there are spectral points in the configured range
+        wls_target = self.target_data["lambda"].to_numpy(dtype=np.float64)
+        use_two_stage = self.sb_lmax.value() > 2500.0 and self.sb_lmin.value() < 2200.0
+        effective_lambda_max = self.sb_lmax.value()
+        if use_two_stage:
+            effective_lambda_max = 2200.0
+
+        mask = (wls_target >= self.sb_lmin.value()) & (wls_target <= effective_lambda_max)
+        wls_filtered = wls_target[mask]
+        if len(wls_filtered) == 0:
+            _notify_user(
+                self,
+                "Range Error",
+                f"No spectral points found in the range [{self.sb_lmin.value():.1f}, {effective_lambda_max:.1f}] nm.\n"
+                "Please widen the wavelength range.",
+                level="warning"
+            )
+            self.btn_run.setEnabled(True)
+            self.btn_stop.setEnabled(False)
             return
 
         # Check for frosted glass mode
@@ -554,7 +585,7 @@ class CertusIndexWorkerMixin:
 
         self.lbl_status.setText(" Stopping...")
         if hasattr(self, "progress_widget"):
-            self.progress_widget.stop("Stopped")
+            self.progress_widget.stop("Cancelled")
 
         self.btn_stop.setEnabled(False)
 
@@ -938,7 +969,7 @@ class CertusIndexWorkerMixin:
 
         mode_str = "Frosted Glass" if res.config.is_frosted_glass else res.config.data_type.name
 
-        self.progress_widget.stop(f"Done ({mode_str})")
+        self.progress_widget.stop("Done")
 
         # Status message adapted to mode
 

@@ -35,7 +35,7 @@ def test_select_best_strat_result_returns_none_for_empty_list():
 def test_extract_best_rmse_from_final_results():
     from CERTUS_STRAT import extract_best_rmse
     
-    # Valide que extract_best_rmse extrait correctement le meilleur résultat fini
+    # Validates that extract_best_rmse correctly extracts the best finite result
     final_results = {
         "all_strategies_results": [
             {"strategy_id": "strat_1", "rmse": 0.005},
@@ -50,7 +50,7 @@ def test_extract_best_rmse_raises_on_null_rmse():
     from CERTUS_STRAT import extract_best_rmse
     from certus.utils.errors import PhysicsConvergenceError
     
-    # Une RMSE de 0.0 est physiquement impossible pour un signal de dépôt réel bruité
+    # An RMSE of 0.0 is physically impossible for a real noisy deposition signal
     final_results = {
         "all_strategies_results": [
             {"strategy_id": "strat_1", "rmse": 0.0},

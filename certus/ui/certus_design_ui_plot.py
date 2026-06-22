@@ -219,51 +219,7 @@ class PlotManager:
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.ui.log(f"Pareto report error: {e}", "WARNING")
 
-    def _start_smart_pareto_decimation(self) -> None:
-        """Smart Pareto Decimation: start from best solution and iteratively remove thinnest layers.
 
-        Process:
-
-        1. Checkpoint the best solution (ep + RMSE + table)
-
-        2. Remove thinnest layer -> merge adjacent
-
-        3. Re-optimize locally
-
-        4. Update Pareto only if RMSE for this N is improved
-
-        5. If RMSE degrades > DEGRADATION_LIMIT vs initial -> stop & revert
-
-        6. Continue until N/2 reached
-
-        7. Revert to original best solution at the end
-
-        """
-
-        N_start = self.ui.front_table.rowCount()
-
-        if N_start <= 4 or self.ui.ep_current is None:
-            self.ui.log("Smart Pareto Decimation: skip (too few layers or no design)", "INFO")
-
-            return
-
-        # Calculate target minimum layers (N/2)
-
-        N_min_target = max(4, int(N_start / 2))
-
-        self.ui._initialize_smart_decimation_session(N_start, N_min_target)
-
-        self.ui.log(
-            f"🎯 Smart Pareto Decimation: {N_start} -> {N_min_target} layers"
-            f" | RMSE ref={self.ui._smart_deci_origin_rmse:.6f}",
-            "INFO",
-        )
-
-        self.ui._set_busy(True)
-
-        self.ui._smart_decimation_step = 0
-
-        self.ui.orchestrator.schedule_smart_decimation_remove_and_optimize()
 
     def _clear_pareto(self) -> None:
 
@@ -475,7 +431,11 @@ class PlotManager:
 
         self.ui.pareto_table.setRowCount(0)
 
-        for d, N in enumerate(sorted(self.ui.pareto_history.keys())):
+        sorted_keys = sorted(
+            self.ui.pareto_history.keys(),
+            key=lambda N: (self.ui.pareto_history[N].get("best_rmse", float("inf")), N)
+        )
+        for d, N in enumerate(sorted_keys):
             self.ui.pareto_table.insertRow(d)
             rec = self.ui.pareto_history[N]
             self._populate_pareto_table_row(d, N, rec)
@@ -1460,7 +1420,7 @@ class PlotManager:
             self.ui.log("Pareto is not available yet: table is still initializing.", "WARNING")
             return False
 
-        if getattr(self, "pareto_window", None) is None:
+        if getattr(self.ui, "pareto_window", None) is None:
             parent = self if isinstance(self, QWidget) else None
             self.ui.pareto_window = QDialog(parent)
             self.ui.pareto_window.setWindowTitle("Pareto Front Explorer")

@@ -80,17 +80,30 @@ def _build_widget_class():
             self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
             outer = QVBoxLayout(self)
-            outer.setContentsMargins(24, 24, 24, 24)
-            outer.setSpacing(12)
+            outer.setContentsMargins(28, 28, 28, 28)
+            outer.setSpacing(14)
             outer.addStretch(1)
+
+            content = QWidget(self)
+            content.setObjectName("empty-content")
+            content.setMaximumWidth(520)
+            content.setStyleSheet("#empty-content { padding: 8px 0; }")
+            content_layout = QVBoxLayout(content)
+            content_layout.setContentsMargins(0, 0, 0, 0)
+            content_layout.setSpacing(12)
+
+            self.setAccessibleName("Empty state panel")
+            self.setToolTip(description)
 
             # Icon
             icon_row = QHBoxLayout()
             icon_row.addStretch(1)
-            icon_label = QLabel(self)
+            icon_label = QLabel(content)
             icon_label.setObjectName("empty-icon")
             icon_label.setFixedSize(int(icon_size_px), int(icon_size_px))
+            icon_label.setStyleSheet("font-size: 20px; font-weight: 600;")
             icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            icon_label.setAccessibleName("Empty state icon")
             try:
                 from certus.ui.certus_icons import certus_icon
                 from certus.ui.certus_ui import CertusTheme
@@ -106,22 +119,26 @@ def _build_widget_class():
                 icon_label.setText("∅")
             icon_row.addWidget(icon_label)
             icon_row.addStretch(1)
-            outer.addLayout(icon_row)
+            content_layout.addLayout(icon_row)
 
             # Title
-            title_lbl = QLabel(title, self)
+            title_lbl = QLabel(title, content)
             title_lbl.setObjectName("empty-title")
             title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            title_lbl.setStyleSheet("#empty-title { color: palette(text); font-size: 12pt; font-weight: 600; }")
-            outer.addWidget(title_lbl)
+            title_lbl.setWordWrap(True)
+            title_lbl.setAccessibleName("Empty state title")
+            title_lbl.setStyleSheet("#empty-title { color: palette(text); font-size: 13pt; font-weight: 650; }")
+            content_layout.addWidget(title_lbl)
 
             # Description
-            desc_lbl = QLabel(description, self)
+            desc_lbl = QLabel(description, content)
             desc_lbl.setObjectName("empty-desc")
             desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             desc_lbl.setWordWrap(True)
-            desc_lbl.setStyleSheet("#empty-desc { color: palette(mid); font-size: 9pt; }")
-            outer.addWidget(desc_lbl)
+            desc_lbl.setAccessibleName("Empty state description")
+            desc_lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            desc_lbl.setStyleSheet("#empty-desc { color: palette(mid); font-size: 10pt; }")
+            content_layout.addWidget(desc_lbl)
 
             # Action button
             if action_label:
@@ -129,15 +146,19 @@ def _build_widget_class():
                 btn_row.addStretch(1)
                 btn = QPushButton(action_label, self)
                 btn.setObjectName("empty-cta")
+                btn.setAccessibleName("Empty state action")
                 btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-                btn.setMinimumWidth(160)
+                btn.setMinimumWidth(180)
                 btn.clicked.connect(self._emit_action)
                 btn_row.addWidget(btn)
                 btn_row.addStretch(1)
-                outer.addLayout(btn_row)
+                content_layout.addLayout(btn_row)
                 self._action_btn = btn
 
+            outer.addWidget(content, alignment=Qt.AlignmentFlag.AlignHCenter)
             outer.addStretch(1)
+
+            self.setMinimumHeight(max(240, int(icon_size_px) * 4))
 
             # Keep labels for later refresh
             self._title_lbl = title_lbl
@@ -152,6 +173,7 @@ def _build_widget_class():
 
         def set_description(self, description: str) -> None:
             self._desc_lbl.setText(description)
+            self.setToolTip(description)
 
         def set_action_label(self, label: str | None) -> None:
             if self._action_btn is None:
@@ -159,8 +181,10 @@ def _build_widget_class():
             if label:
                 self._action_btn.setText(label)
                 self._action_btn.setVisible(True)
+                self._action_btn.setEnabled(True)
             else:
                 self._action_btn.setVisible(False)
+                self._action_btn.setEnabled(False)
 
         def has_action(self) -> bool:
             return self._action_btn is not None

@@ -28,6 +28,7 @@ from collections import deque
 
 from typing import Any, Dict
 from dataclasses import dataclass
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 
@@ -382,7 +383,7 @@ def _emit_stat(counter_type: str, increment: int) -> None:
         new_val = _SPECTRUM_COUNTER.increment()
 
         if _SPECTRUM_COUNTER.signal:
-            _SPECTRUM_COUNTER.signal.progress.emit(new_val, f"Processing spectrum {new_val}")
+            _SPECTRUM_COUNTER.signal.progress_snapshot.emit(build_progress_snapshot(message=f"Processing spectrum {new_val}", display_ratio=max(0.0, min(1.0, float(new_val) / 100.0)), progress_ratio=max(0.0, min(1.0, float(new_val) / 100.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='STRAT', phase='SPECTRUM'))
 
 def _flush_sp_stats() -> None:
     """Flush buffered SP stats via context."""

@@ -32,9 +32,16 @@ if TYPE_CHECKING:
 
 
 def get_lbfgsb_params(dim: int) -> dict:
-    """L-BFGS-B tolerances - always tight (gradient computed in f64)."""
+    """L-BFGS-B tolerances - dynamically adjustable via env var."""
+    tol = 1e-12
+    env_tol = os.environ.get("CERTUS_LBFGSB_TOL")
+    if env_tol:
+        try:
+            tol = float(env_tol)
+        except ValueError:
+            pass
 
-    return {"ftol": 1e-12, "gtol": 1e-12, "maxcor": min(50, max(20, dim + 5))}
+    return {"ftol": tol, "gtol": 1e-10, "maxcor": min(50, max(20, dim + 5))}
 
 
 class LBFGSBSearcher:
@@ -686,31 +693,25 @@ class PGlobalOptimizer:
 
         if self.qmc_engine is not None:
             # Generate low-discrepancy samples in [0, 1)^d
-
             # Scipy QMC Sobol expects n to be a power of 2 for perfect balance properties.
-
             # To avoid the warning and keep balance, we generate the next power of 2 and slice.
-
             import math
-
             n_pow2 = 2 ** math.ceil(math.log2(n)) if n > 0 else 0
-
             unit_samples = self.qmc_engine.random(n_pow2)[:n]
-
             # Scale to physical bounds manually to avoid extra scipy calls overhead if needed,
-
             # though scipy.stats.qmc.scale is also fine. Manual scaling is fast and numba-friendly if extracted.
-
             bounds_min = self.bounds[:, 0]
-
             bounds_ptp = self.bounds[:, 1] - bounds_min
-
-            return unit_samples * bounds_ptp + bounds_min
-
+            samples = unit_samples * bounds_ptp + bounds_min
         else:
             # Fallback to pseudo-random uniform
+            samples = self.rng.uniform(self.bounds[:, 0], self.bounds[:, 1], (n, self.dim))
 
-            return self.rng.uniform(self.bounds[:, 0], self.bounds[:, 1], (n, self.dim))
+        if getattr(self, "x0", None) is not None and len(samples) > 0:
+            samples[0] = self.x0
+            self.x0 = None
+
+        return samples
 
     # ── Step 2: Batch Evaluation ──────────────────────────────────────
 

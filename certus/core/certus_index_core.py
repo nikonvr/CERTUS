@@ -1,3 +1,4 @@
+from certus.core.certus_index_solvers import SubsetOptimTask
 from pathlib import Path
 from certus.core.certus_core import create_module_environment
 import time
@@ -99,10 +100,22 @@ TLU_SOFT_EDGE_MARGIN = 0.05
 # TL model -> n~1 "air" with artificially low RMSE. Aligned with the current dielectric range (>=1.5).
 TLU_PRIOR_TRANSPARENT_N_MIN_SOFT = 1.50
 
-from .certus_index_config import *
-from .certus_index_objectives import *
-from .certus_index_objectives import _phase23_cached_get, _phase23_cached_set
-from .certus_index_solvers import *
+from .certus_index_config import (
+    OptimizationConfig,
+    OptimizationResults,
+    substrateMode,
+)
+from .certus_index_objectives import (
+    IRGlobalObjective,
+    Phase23SplineObjective,
+    Phase23Pass2SplineObjective,
+    TLUObjective,
+    _phase23_cached_get,
+    _phase23_cached_set,
+)
+from .certus_index_solvers import (
+    PGlobalOptimizerINDEX,
+)
 
 # ---------------------------------------------------------
 
@@ -398,11 +411,11 @@ def estimate_initial_params(
 
     Smart initialization of TLU parameters based on transmission spectrum analysis.
 
-    Calibré pour un départ diélectrique réaliste (n≈2, k faible) : ε∞≈4, Eg tient
+    Calibrated for a realistic dielectric start (n≈2, low k): ε∞≈4, Eg takes
 
-    compte de l'énergie max hν de la fenêtre spectrale afin que ε2 reste modérée
+    into account the max energy hν of the spectral window so that ε2 remains moderate
 
-    dans toute la plage (cf. Urbach / TLU).
+    across the entire range (cf. Urbach / TLU).
 
     """
 

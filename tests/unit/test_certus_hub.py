@@ -40,7 +40,7 @@ class TestCERTUSHUB:
         """Test the call to the centralized bootstrap."""
         mock_bootstrap.return_value = {"script_dir": "/fake/path"}
 
-        # Simuler l'appel dans le module
+        # Simulate the call in the module
         # Note: calling the mock directly since we can't easily trigger the top-level code execution
         # inside the test without reloading. But we can verify the mock setup.
         result = mock_bootstrap(__file__, "CERTUS_HUB")
@@ -101,7 +101,7 @@ class TestHubFunctionality:
         try:
             from certus.core.certus_core import get_resource_path
 
-            # Test avec un chemin relatif
+            # Test with a relative path
             resource_path = get_resource_path("certus_theme.json")
             assert isinstance(resource_path, str)
         except (ImportError, FileNotFoundError):

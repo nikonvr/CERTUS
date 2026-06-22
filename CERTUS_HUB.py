@@ -140,6 +140,7 @@ from certus.ui.certus_ui import (
     open_documentation,
     set_certus_window_icon,
     apply_certus_theme,
+    CertusLogPanel,
 )
 from PyQt6.QtWidgets import QComboBox
 
@@ -472,25 +473,13 @@ class CertusHub(QMainWindow):
 
         # Log Container (toggleable)
 
-        self.log_container = QWidget()
+        self.log_panel = CertusLogPanel(title="PROCESS LAUNCH LOGS", visible=False, height=150, parent=self)
 
-        self.log_container.setVisible(False)
+        self.log_container = self.log_panel
 
-        self.log_container.setFixedHeight(150)
+        self.log_text = self.log_panel.log_text
 
-        log_layout = QVBoxLayout(self.log_container)
-
-        log_layout.setContentsMargins(10, 0, 10, 10)
-
-        self.log_text = QTextEdit()
-
-        self.log_text.setReadOnly(True)
-
-        self.log_text.setStyleSheet(CertusTheme.get_log_stylesheet())
-
-        log_layout.addWidget(self.log_text)
-
-        main_layout.addWidget(self.log_container)
+        main_layout.addWidget(self.log_panel)
 
         # Show Details Button (add to bottom bar)
 

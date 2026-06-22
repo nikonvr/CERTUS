@@ -61,6 +61,7 @@ class _FakeWorkerSignals:
         self.live = _Signal()
         self.finished = _Signal()
         self.error = _Signal()
+        self.progress_snapshot = _Signal()
 
 
 class _FakeWorker:
@@ -274,10 +275,10 @@ def test_start_manual_sigma_insert_worker_scales_progress_to_ui_range(monkeypatc
     progress_cb = app._worker.kwargs["progress_cb"]
     progress_cb(12.5, "phase")
 
-    assert app._worker.signals.progress.calls
-    last_pct, last_msg = app._worker.signals.progress.calls[-1]
-    assert last_pct == 1250
-    assert "phase" in last_msg
+    assert app._worker.signals.progress_snapshot.calls
+    snapshot = app._worker.signals.progress_snapshot.calls[-1][0]
+    assert snapshot.metadata['pv'] == 1250
+    assert "phase" in snapshot.message
 
 
 def test_start_manual_sigma_insert_worker_passes_multiple_knots_as_sorted_sigma(monkeypatch) -> None:

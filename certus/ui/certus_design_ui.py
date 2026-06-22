@@ -651,7 +651,25 @@ class CertusDesignApp(
         self.plot_manager._refresh_pareto_table()
 
     def _start_smart_pareto_decimation(self) -> None:
-        self.plot_manager._start_smart_pareto_decimation()
+        """Smart Pareto Decimation: start from best solution and iteratively remove thinnest layers."""
+        N_start = self.front_table.rowCount()
+        if N_start <= 4 or self.ep_current is None:
+            self.log("Smart Pareto Decimation: skip (too few layers or no design)", "INFO")
+            if getattr(self, "_is_busy", False):
+                self._set_busy(False)
+            return
+
+        N_min_target = max(4, int(N_start / 2))
+        self._initialize_smart_decimation_session(N_start, N_min_target)
+        self.log(
+            f"🎯 Smart Pareto Decimation: {N_start} -> {N_min_target} layers"
+            f" | RMSE ref={self._smart_deci_origin_rmse:.6f}",
+            "INFO",
+        )
+
+        self._set_busy(True)
+        self._smart_decimation_step = 0
+        self.orchestrator.schedule_smart_decimation_remove_and_optimize()
 
     def _on_intermediate_spectrum(self, data: dict) -> None:
         self.plot_manager._on_intermediate_spectrum(data)

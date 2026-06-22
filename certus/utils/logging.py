@@ -68,14 +68,17 @@ def attach_jsonl_handler(
 def get_structured_logger(
     logger: logging.Logger | logging.LoggerAdapter,
     *,
-    run_id: str,
+    run_context: "Any | None" = None,
+    run_id: str | None = None,
     app_id: str,
 ) -> logging.LoggerAdapter:
     """Return a logger adapter that injects run metadata in every record."""
+    
+    actual_run_id = getattr(run_context, "run_id", run_id) if run_context else run_id
 
     if isinstance(logger, logging.LoggerAdapter):
         merged_extra = dict(getattr(logger, "extra", {}))
-        merged_extra.update({"run_id": run_id, "app_id": app_id})
+        merged_extra.update({"run_id": actual_run_id, "app_id": app_id})
         return logging.LoggerAdapter(logger.logger, extra=merged_extra)
 
-    return logging.LoggerAdapter(logger, extra={"run_id": run_id, "app_id": app_id})
+    return logging.LoggerAdapter(logger, extra={"run_id": actual_run_id, "app_id": app_id})

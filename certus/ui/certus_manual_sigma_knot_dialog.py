@@ -6,6 +6,7 @@ import pyqtgraph as pg
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
+    QComboBox,
     QGroupBox,
     QDialog,
     QDialogButtonBox,
@@ -26,21 +27,29 @@ from PyQt6.QtWidgets import (
 )
 
 from certus.ui.certus_ui import CertusScientificPlot, CertusTheme
+from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 
 
 _LOG = logging.getLogger("CERTUS")
 
 
-def _sorted_xy(lam_nm: np.ndarray | None, values: np.ndarray | None) -> tuple[np.ndarray, np.ndarray]:
+def _sorted_xy(
+    lam_nm: np.ndarray | None,
+    values: np.ndarray | None,
+    *,
+    label: str = "series",
+) -> tuple[np.ndarray, np.ndarray]:
     lam = np.asarray(lam_nm if lam_nm is not None else [], dtype=np.float64).ravel()
     val = np.asarray(values if values is not None else [], dtype=np.float64).ravel()
     n = int(min(lam.size, val.size))
     if n <= 0:
+        _LOG.warning("Manual knots preview missing %s data (lambda=%d, values=%d)", label, int(lam.size), int(val.size))
         return np.empty(0, dtype=np.float64), np.empty(0, dtype=np.float64)
     lam = lam[:n]
     val = val[:n]
     mask = np.isfinite(lam) & np.isfinite(val)
     if not np.any(mask):
+        _LOG.warning("Manual knots preview %s data has no finite samples (n=%d)", label, int(n))
         return np.empty(0, dtype=np.float64), np.empty(0, dtype=np.float64)
     lam = lam[mask]
     val = val[mask]
@@ -132,6 +141,15 @@ class ManualSigmaKnotDialog(QDialog):
 
         self._base_sigma_knots = np.asarray(sigma_knots, dtype=np.float64).ravel().copy()
         self._base_lambda_knots_nm = np.sort(1.0 / np.maximum(self._base_sigma_knots, 1e-30))
+        _LOG.info(
+            "Manual knots dialog init | base_sigma=%d | lam_model=%d | y_model=%d | lam_meas=%d | y_meas=%d | keep_open=%s",
+            int(self._base_sigma_knots.size),
+            int(np.asarray(lam_model_nm if lam_model_nm is not None else [], dtype=np.float64).size),
+            int(np.asarray(y_model if y_model is not None else [], dtype=np.float64).size),
+            int(np.asarray(lam_measurement_nm if lam_measurement_nm is not None else [], dtype=np.float64).size),
+            int(np.asarray(y_measurement if y_measurement is not None else [], dtype=np.float64).size),
+            bool(keep_open_on_local_apply),
+        )
         lam_candidates = [
             np.asarray(lam_model_nm if lam_model_nm is not None else [], dtype=np.float64).ravel(),
             np.asarray(lam_measurement_nm if lam_measurement_nm is not None else [], dtype=np.float64).ravel(),
@@ -157,7 +175,24 @@ class ManualSigmaKnotDialog(QDialog):
         self._best_per_k: dict[int, tuple[dict, np.ndarray, float]] = {}
         self._runtime_busy = False
 
-        layout = QVBoxLayout(self)
+        main_layout = QVBoxLayout(self)
+        self.main_splitter = QSplitter(Qt.Orientation.Vertical, self)
+        self.main_splitter.setChildrenCollapsible(False)
+        main_layout.addWidget(self.main_splitter)
+
+        top_widget = QWidget(self)
+        top_layout = QVBoxLayout(top_widget)
+        top_layout.setContentsMargins(0, 0, 0, 0)
+
+        bottom_widget = QWidget(self)
+        layout = QVBoxLayout(bottom_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.main_splitter.addWidget(top_widget)
+        self.main_splitter.addWidget(bottom_widget)
+        self.main_splitter.setStretchFactor(0, 1)
+        self.main_splitter.setStretchFactor(1, 0)
+
         intro = QLabel(
             "Add one or more extra knots on the lambda axis, then click 'Local Re-optimize' to run the local polish. "
             "Left click the graph to select the nearest knot (or add one if none is near), "
@@ -166,20 +201,57 @@ class ManualSigmaKnotDialog(QDialog):
             "All active knots are listed below (including pre-existing ones)."
         )
         intro.setWordWrap(True)
-        layout.addWidget(intro)
+        top_layout.addWidget(intro)
 
         self.lbl_summary = QLabel("")
-        layout.addWidget(self.lbl_summary)
+        top_layout.addWidget(self.lbl_summary)
 
         self.lbl_feedback = QLabel("")
         self.lbl_feedback.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-style: italic;")
-        layout.addWidget(self.lbl_feedback)
+        top_layout.addWidget(self.lbl_feedback)
+
+        self.lbl_preview_log = QLabel("Preview log: init")
+        self.lbl_preview_log.setWordWrap(True)
+        self.lbl_preview_log.setStyleSheet(
+            f"background-color: #141414; color: #d6f0ff; padding: 5px 7px; border-radius: 4px; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; border: 1px solid {CertusTheme.BORDER};"
+        )
+        top_layout.addWidget(self.lbl_preview_log)
+
+        preview_header = QHBoxLayout()
+        preview_header.addWidget(QLabel("Spectral preview (detached window):"))
+        self.btn_preview_popup = QPushButton("Show / focus popup", self)
+        self.btn_preview_popup.setToolTip("Open the comparison plot in a dedicated popup window.")
+        preview_header.addWidget(self.btn_preview_popup)
+        preview_header.addStretch(1)
+        top_layout.addLayout(preview_header)
 
         self.plot = CertusScientificPlot(title="Additional manual knots", x_label="lambda (nm)", y_label=y_label)
-        self.plot.setMinimumHeight(340)
+        self.plot.setMinimumHeight(200)
         self.plot.showGrid(x=True, y=True, alpha=0.35)
         self.plot.addLegend()
-        layout.addWidget(self.plot, 1)
+        self._preview_axis = "lambda"
+        self._preview_axis_button = None
+        self.plot.installEventFilter(self)
+        self._axis_toggle_style = (
+            "QToolButton { background: rgba(30,30,30,180); color: white; border: 1px solid #666; border-radius: 4px; padding: 3px 8px; }"
+            "QToolButton:hover { background: rgba(55,55,55,200); }"
+            "QToolButton:pressed { background: rgba(90,90,90,220); }"
+        )
+
+        self._preview_popup = QDialog(self)
+        self._preview_popup.setWindowTitle("Manual knots spectral preview")
+        self._preview_popup.resize(980, 540)
+        self._preview_popup.setWindowFlag(Qt.WindowType.Window, True)
+        popup_layout = QVBoxLayout(self._preview_popup)
+        popup_layout.setContentsMargins(6, 6, 6, 6)
+        popup_layout.addWidget(self.plot, 1)
+        self.btn_preview_popup.clicked.connect(self._show_preview_popup)
+        self._preview_popup.finished.connect(self._on_preview_popup_closed)
+        self._show_preview_popup()
+
+        hint_popup = QLabel("The spectral comparison graph is displayed in a separate popup window.")
+        hint_popup.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-style: italic;")
+        top_layout.addWidget(hint_popup)
 
         metrics_row = QHBoxLayout()
         self.lbl_runtime_metrics = QLabel("d: - nm   |   RMSE: -")
@@ -294,10 +366,7 @@ class ManualSigmaKnotDialog(QDialog):
 
         layout.addLayout(actions_layout)
 
-        self.progress_runtime = QProgressBar(self)
-        self.progress_runtime.setRange(0, 10000)
-        self.progress_runtime.setValue(0)
-        self.progress_runtime.setFormat("%p%")
+        self.progress_runtime = EnhancedProgressWidget(main_label="Node Processing")
         layout.addWidget(self.progress_runtime)
 
         runtime_actions = QHBoxLayout()
@@ -325,9 +394,28 @@ class ManualSigmaKnotDialog(QDialog):
         runtime_log_layout.addWidget(self.lbl_runtime_log)
         runtime_log_layout.addWidget(self.txt_runtime_log)
 
-        lam_meas_s, y_meas_s = _sorted_xy(lam_measurement_nm, y_measurement)
+        lam_meas_s, y_meas_s = _sorted_xy(lam_measurement_nm, y_measurement, label="measurement")
+        self._lam_measurement_preview_nm = lam_meas_s
+        self._y_measurement_preview = y_meas_s
+        _LOG.info(
+            "Manual knots dialog preview state | measurement_in=(lam=%s,val=%s) | measurement_out=%d | model_in=(lam=%s,val=%s)",
+            int(np.asarray(lam_measurement_nm if lam_measurement_nm is not None else [], dtype=np.float64).size),
+            int(np.asarray(y_measurement if y_measurement is not None else [], dtype=np.float64).size),
+            int(lam_meas_s.size),
+            int(np.asarray(lam_model_nm if lam_model_nm is not None else [], dtype=np.float64).size),
+            int(np.asarray(y_model if y_model is not None else [], dtype=np.float64).size),
+        )
+        self._measurement_curve = None
         if lam_meas_s.size:
-            self.plot.plot(
+            _LOG.info(
+                "Manual knots dialog measurement preview ready | n=%d | x=[%.3f, %.3f] | y=[%.6g, %.6g]",
+                int(lam_meas_s.size),
+                float(np.min(lam_meas_s)),
+                float(np.max(lam_meas_s)),
+                float(np.min(y_meas_s)),
+                float(np.max(y_meas_s)),
+            )
+            self._measurement_curve = self.plot.plot(
                 lam_meas_s,
                 y_meas_s,
                 pen=None,
@@ -336,15 +424,39 @@ class ManualSigmaKnotDialog(QDialog):
                 symbolBrush=pg.mkBrush(CertusTheme.TEXT_SUB),
                 name="Measurement",
             )
-        lam_model_s, y_model_s = _sorted_xy(lam_model_nm, y_model)
+        else:
+            _LOG.warning(
+                "Manual knots dialog: measurement preview not displayed | reason=empty_or_invalid | "
+                "lam_measurement_nm=%s | y_measurement=%s",
+                type(lam_measurement_nm).__name__ if lam_measurement_nm is not None else "None",
+                type(y_measurement).__name__ if y_measurement is not None else "None",
+            )
+
+        lam_model_s, y_model_s = _sorted_xy(lam_model_nm, y_model, label="theoretical model")
         self._lam_model_preview_nm = lam_model_s
         self._y_model_preview = y_model_s
-        self._model_curve = self.plot.plot(
-            lam_model_s,
-            y_model_s,
-            pen=pg.mkPen(CertusTheme.PRIMARY, width=2.0),
-            name="Current model",
-        )
+        if lam_model_s.size:
+            self._model_curve = self.plot.plot(
+                lam_model_s,
+                y_model_s,
+                pen=pg.mkPen(CertusTheme.PRIMARY, width=2.0),
+                name="Current model",
+            )
+        else:
+            self._model_curve = self.plot.plot(
+                [],
+                [],
+                pen=pg.mkPen(CertusTheme.PRIMARY, width=2.0),
+                name="Current model",
+            )
+            _LOG.warning(
+                "Manual knots dialog: model preview not displayed | reason=empty_or_invalid | "
+                "lam_model_nm=%s | y_model=%s",
+                type(lam_model_nm).__name__ if lam_model_nm is not None else "None",
+                type(y_model).__name__ if y_model is not None else "None",
+            )
+        self._relabel_preview_axis()
+        self._add_graph_axis_toggle()
         self._proposed_markers = self.plot.plot(
             [],
             [],
@@ -461,14 +573,52 @@ class ManualSigmaKnotDialog(QDialog):
         self._sync_summary_and_preview()
         self._refresh_runtime_titles()
 
+    def _show_preview_popup(self) -> None:
+        try:
+            if hasattr(self, "_preview_popup") and self._preview_popup is not None:
+                self._preview_popup.show()
+                self._preview_popup.raise_()
+                self._preview_popup.activateWindow()
+                self._refresh_preview_bounds()
+                _LOG.info("Manual knots dialog preview popup shown/focused (axis=%s)", self._preview_axis)
+                self.set_feedback_message("Preview popup open")
+                if hasattr(self, "lbl_preview_log"):
+                    self.lbl_preview_log.setText(f"Preview log: popup shown/focused (axis={self._preview_axis})")
+        except Exception:
+            _LOG.exception("Manual knots dialog failed to show preview popup")
+            self.set_feedback_message("Preview popup failed to open")
+            if hasattr(self, "lbl_preview_log"):
+                self.lbl_preview_log.setText("Preview log: popup failed to open")
+
+    def _on_preview_popup_closed(self, _code: int) -> None:
+        _LOG.info("Manual knots dialog preview popup closed")
+        self.set_feedback_message("Preview popup closed")
+        if hasattr(self, "lbl_preview_log"):
+            self.lbl_preview_log.setText(f"Preview log: popup closed (code={_code})")
+
     def _refresh_runtime_titles(self) -> None:
         k_before = int(self._base_sigma_knots.size)
         k_after = int(len(self._row_widgets))
         d_txt = f"{float(self._runtime_d_nm):.1f}" if np.isfinite(float(self._runtime_d_nm)) else "-"
         rmse_txt = f"{float(self._runtime_rmse):.6f}" if np.isfinite(float(self._runtime_rmse)) else "-"
-        title_plain = f"K {k_before}->{k_after} | d {d_txt} nm | RMSE {rmse_txt}"
+        title_plain = f"K {k_before}->{k_after} | d {d_txt} nm | RMSE {rmse_txt} | axis {self._preview_axis}"
         self.setWindowTitle(title_plain)
-        self.plot.setTitle(title_plain)
+        if hasattr(self, "_preview_popup") and self._preview_popup is not None:
+            self._preview_popup.setWindowTitle(title_plain)
+        if hasattr(self, "lbl_preview_log"):
+            self.lbl_preview_log.setText(f"Preview log: axis={self._preview_axis} | K={k_after}")
+
+    def _preview_x_from_lambda(self, lambda_nm: float) -> float:
+        lam = float(lambda_nm)
+        if self._preview_axis == "sigma":
+            return float(1e7 / max(lam, 1e-30))
+        return lam
+
+    def _lambda_from_preview_x(self, x_value: float) -> float:
+        x = float(x_value)
+        if self._preview_axis == "sigma":
+            return float(1e7 / max(x, 1e-30))
+        return x
 
     def _default_lambda_value(self) -> float:
         if self._row_widgets:
@@ -485,15 +635,19 @@ class ManualSigmaKnotDialog(QDialog):
         is_preexisting = str(getattr(row, "origin", "propose")).strip().lower() == "preexistant"
         base_color = "#ff9f1a" if is_preexisting else "#c97800"
         base_width = 2.5 if is_preexisting else 2.0
+        pos_x = self._preview_x_from_lambda(row.spin.value())
         line = pg.InfiniteLine(
-            pos=float(row.spin.value()),
+            pos=float(pos_x),
             angle=90,
             movable=True,
             pen=pg.mkPen(base_color, width=base_width),
             hoverPen=pg.mkPen(CertusTheme.WARNING, width=3),
         )
         try:
-            line.setBounds((self._lam_min_nm, self._lam_max_nm))
+            if self._preview_axis == "sigma":
+                line.setBounds((1e7 / max(self._lam_max_nm, 1e-30), 1e7 / max(self._lam_min_nm, 1e-30)))
+            else:
+                line.setBounds((self._lam_min_nm, self._lam_max_nm))
         except AttributeError:
             pass
         line.sigPositionChanged.connect(lambda _line: self._on_line_position_changed(row))
@@ -511,7 +665,7 @@ class ManualSigmaKnotDialog(QDialog):
                 self.plot.removeItem(row.selection_label)
                 row.selection_label = None
             return
-        x_pos = float(row.preview_line.value())
+        x_pos = self._preview_x_from_lambda(float(row.preview_line.value()))
         y_anchor = float(np.nanmax(self._y_model_preview)) if self._y_model_preview.size else 1.0
         y_pos = y_anchor + 0.02 * max(abs(y_anchor), 1.0)
         if row.selection_label is None:
@@ -569,8 +723,12 @@ class ManualSigmaKnotDialog(QDialog):
             row.spin.blockSignals(True)
             row.spin.setValue(value_nm)
             row.spin.blockSignals(False)
-            if row.preview_line is not None and abs(float(row.preview_line.value()) - value_nm) > 1e-9:
-                row.preview_line.setValue(value_nm)
+            if row.preview_line is not None:
+                target_x = self._preview_x_from_lambda(value_nm)
+                if abs(float(row.preview_line.value()) - target_x) > 1e-9:
+                    row.preview_line.blockSignals(True)
+                    row.preview_line.setValue(float(target_x))
+                    row.preview_line.blockSignals(False)
         finally:
             row.spin.blockSignals(False)
             self._syncing_preview = False
@@ -581,11 +739,15 @@ class ManualSigmaKnotDialog(QDialog):
     def _on_line_position_changed(self, row: _LambdaKnotRow) -> None:
         if self._syncing_preview or row.preview_line is None:
             return
-        value_nm = self._clip_lambda_value(row.preview_line.value())
+        value_nm = self._lambda_from_preview_x(row.preview_line.value())
+        value_nm = self._clip_lambda_value(value_nm)
         self._syncing_preview = True
         try:
-            if abs(float(row.preview_line.value()) - value_nm) > 1e-9:
-                row.preview_line.setValue(value_nm)
+            target_x = self._preview_x_from_lambda(value_nm)
+            if abs(float(row.preview_line.value()) - float(target_x)) > 1e-9:
+                row.preview_line.blockSignals(True)
+                row.preview_line.setValue(float(target_x))
+                row.preview_line.blockSignals(False)
             row.spin.blockSignals(True)
             row.spin.setValue(value_nm)
             row.spin.blockSignals(False)
@@ -609,8 +771,18 @@ class ManualSigmaKnotDialog(QDialog):
         vb = getattr(self.plot.plotItem, "vb", None)
         scene = getattr(self.plot.plotItem, "scene", None)
         if vb is None or scene is None:
+            if self._preview_axis == "sigma":
+                sig_min = 1e7 / max(self._lam_max_nm, 1e-30)
+                sig_max = 1e7 / max(self._lam_min_nm, 1e-30)
+                return max(5.0, 0.02 * (sig_max - sig_min))
             return max(5.0, 0.02 * (self._lam_max_nm - self._lam_min_nm))
-        center = vb.mapViewToScene(pg.Point(0.5 * (self._lam_min_nm + self._lam_max_nm), 0.0))
+        if self._preview_axis == "sigma":
+            sig_min = 1e7 / max(self._lam_max_nm, 1e-30)
+            sig_max = 1e7 / max(self._lam_min_nm, 1e-30)
+            plot_center_x = 0.5 * (sig_min + sig_max)
+        else:
+            plot_center_x = 0.5 * (self._lam_min_nm + self._lam_max_nm)
+        center = vb.mapViewToScene(pg.Point(plot_center_x, 0.0))
         p0 = vb.mapSceneToView(pg.Point(float(center.x() - px), float(center.y())))
         p1 = vb.mapSceneToView(pg.Point(float(center.x() + px), float(center.y())))
         tol = abs(float(p1.x()) - float(p0.x()))
@@ -622,7 +794,8 @@ class ManualSigmaKnotDialog(QDialog):
         best_row = None
         best_dist = float("inf")
         for row in self._row_widgets:
-            dist = abs(float(row.spin.value()) - float(x_value))
+            row_x = self._preview_x_from_lambda(float(row.spin.value()))
+            dist = abs(row_x - float(x_value))
             if dist < best_dist:
                 best_dist = dist
                 best_row = row
@@ -631,7 +804,8 @@ class ManualSigmaKnotDialog(QDialog):
     def _add_lambda_from_plot_x(self, x_value: float) -> bool:
         if not np.isfinite(float(x_value)):
             return False
-        self.add_lambda_knot(self._clip_lambda_value(x_value))
+        lambda_val = self._lambda_from_preview_x(x_value)
+        self.add_lambda_knot(self._clip_lambda_value(lambda_val))
         return True
 
     def _remove_nearest_lambda_knot(self, x_value: float, tolerance_nm: float | None = None) -> bool:
@@ -682,6 +856,18 @@ class ManualSigmaKnotDialog(QDialog):
                 event.accept()
                 return
         super().keyPressEvent(event)
+
+    def done(self, result: int) -> None:
+        try:
+            if hasattr(self, "_preview_popup") and self._preview_popup is not None:
+                self._preview_popup.close()
+        except Exception:
+            pass
+        super().done(result)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._refresh_preview_bounds()
 
     def add_lambda_knot(self, lambda_nm: float, *, origin: str = "propose") -> None:
         row = _LambdaKnotRow(
@@ -756,14 +942,59 @@ class ManualSigmaKnotDialog(QDialog):
             self.add_lambda_knot(float(lam_k), origin="preexistant")
         self._set_selected_row(None)
         self._sync_summary_and_preview()
+        self._refresh_preview_bounds()
 
     def update_model_preview(self, lam_model_nm: np.ndarray | None, y_model: np.ndarray | None) -> None:
-        lam_model_s, y_model_s = _sorted_xy(lam_model_nm, y_model)
+        lam_model_s, y_model_s = _sorted_xy(lam_model_nm, y_model, label="theoretical model")
+        _LOG.info(
+            "Manual knots dialog update_model_preview | axis=%s | input_sizes=(lam=%d, values=%d) | filtered_size=%d",
+            self._preview_axis,
+            int(np.asarray(lam_model_nm if lam_model_nm is not None else [], dtype=np.float64).size),
+            int(np.asarray(y_model if y_model is not None else [], dtype=np.float64).size),
+            int(lam_model_s.size),
+        )
         self._lam_model_preview_nm = lam_model_s
         self._y_model_preview = y_model_s
         if getattr(self, "_model_curve", None) is not None:
             self._model_curve.setData(lam_model_s, y_model_s)
+        else:
+            _LOG.warning("Manual knots dialog update_model_preview called before _model_curve initialization")
+        if lam_model_s.size == 0:
+            _LOG.warning("Manual knots dialog: update_model_preview received no usable model data")
+        if hasattr(self, "lbl_preview_log"):
+            self.lbl_preview_log.setText(f"Preview log: model updated with {int(lam_model_s.size)} sample(s) | axis={self._preview_axis}")
         self._sync_summary_and_preview()
+        self._refresh_preview_bounds()
+
+    def _preview_sigma_curve(self, lam_nm: np.ndarray, y_values: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+        lam = np.asarray(lam_nm, dtype=np.float64).ravel()
+        y = np.asarray(y_values, dtype=np.float64).ravel()
+        n = int(min(lam.size, y.size))
+        if n <= 0:
+            return np.empty(0, dtype=np.float64), np.empty(0, dtype=np.float64)
+        lam = lam[:n]
+        y = y[:n]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            sigma_cm = 1e7 / np.maximum(lam, 1e-30)
+        mask = np.isfinite(sigma_cm) & np.isfinite(y)
+        if not np.any(mask):
+            return np.empty(0, dtype=np.float64), np.empty(0, dtype=np.float64)
+        sigma_cm = sigma_cm[mask]
+        y = y[mask]
+        order = np.argsort(sigma_cm, kind="mergesort")
+        return sigma_cm[order], y[order]
+
+    def _refresh_preview_bounds(self) -> None:
+        try:
+            vb = self.plot.getViewBox()
+            if vb is not None:
+                vb.autoRange()
+                vb.updateAutoRange()
+                self.plot.getPlotItem().setDownsampling(auto=True, mode="peak")
+                self.plot.getPlotItem().setClipToView(True)
+                self.plot.repaint()
+        except Exception:
+            _LOG.exception("Manual knots dialog failed to refresh preview bounds")
 
     def substrate_delta_ns(self) -> float:
         return float(self.spin_delta_ns.value())
@@ -778,8 +1009,12 @@ class ManualSigmaKnotDialog(QDialog):
         row_lambda_knots = [float(row.spin.value()) for row in self._row_widgets]
         preview_lambda_knots = sorted(row_lambda_knots)
         for row, lam_k in zip(self._row_widgets, row_lambda_knots):
-            if row.preview_line is not None and abs(float(row.preview_line.value()) - float(lam_k)) > 1e-9:
-                row.preview_line.setValue(float(lam_k))
+            if row.preview_line is not None:
+                target_x = self._preview_x_from_lambda(float(lam_k))
+                if abs(float(row.preview_line.value()) - float(target_x)) > 1e-9:
+                    row.preview_line.blockSignals(True)
+                    row.preview_line.setValue(float(target_x))
+                    row.preview_line.blockSignals(False)
 
         if self._lam_model_preview_nm.size and preview_lambda_knots:
             y_preview = np.interp(
@@ -787,9 +1022,19 @@ class ManualSigmaKnotDialog(QDialog):
                 self._lam_model_preview_nm,
                 self._y_model_preview,
             )
-            self._proposed_markers.setData(preview_lambda_knots, y_preview)
+            x_preview = np.asarray([self._preview_x_from_lambda(v) for v in preview_lambda_knots], dtype=np.float64)
+            self._proposed_markers.setData(x_preview, y_preview)
         else:
             self._proposed_markers.setData([], [])
+
+        if self._preview_axis == "sigma":
+            sigma_x, sigma_y = self._preview_sigma_curve(self._lam_model_preview_nm, self._y_model_preview)
+            if getattr(self, "_model_curve", None) is not None:
+                self._model_curve.setData(sigma_x, sigma_y)
+        else:
+            if getattr(self, "_model_curve", None) is not None:
+                self._model_curve.setData(self._lam_model_preview_nm, self._y_model_preview)
+        self._relabel_preview_axis()
 
         k_before = int(self._base_sigma_knots.size)
         k_after = len(self._row_widgets)
@@ -881,6 +1126,95 @@ class ManualSigmaKnotDialog(QDialog):
     def set_feedback_message(self, message: str) -> None:
         self.lbl_feedback.setText(str(message or "").strip())
 
+    def _relabel_preview_axis(self) -> None:
+        self.plot.setLabel("bottom", "sigma (cm^-1)" if self._preview_axis == "sigma" else "lambda (nm)")
+        if hasattr(self, "_preview_popup") and self._preview_popup is not None:
+            self._preview_popup.setWindowTitle(f"Manual knots spectral preview | axis {self._preview_axis}")
+
+    def _add_graph_axis_toggle(self) -> None:
+        try:
+            if getattr(self, "_preview_axis_button", None) is None:
+                btn = QToolButton(self.plot)
+                btn.setText("lambda")
+                btn.setCheckable(True)
+                btn.setChecked(False)
+                btn.setToolTip("Toggle preview axis between lambda and sigma")
+                btn.clicked.connect(self._toggle_preview_axis)
+                btn.setStyleSheet(self._axis_toggle_style)
+                btn.setParent(self.plot)
+                btn.raise_()
+                self._preview_axis_button = btn
+            btn = self._preview_axis_button
+            if btn is not None:
+                btn.adjustSize()
+                btn.move(10, 10)
+                btn.show()
+        except Exception:
+            _LOG.exception("Manual knots dialog failed to attach graph axis toggle")
+
+    def _toggle_preview_axis(self) -> None:
+        self._preview_axis = "sigma" if self._preview_axis == "lambda" else "lambda"
+        if self._preview_axis_button is not None:
+            self._preview_axis_button.setText(self._preview_axis)
+            self._preview_axis_button.setChecked(self._preview_axis == "sigma")
+        self._relabel_preview_axis()
+        self._rescale_preview_curves()
+        self._sync_summary_and_preview()
+        _LOG.info("Manual knots dialog preview axis toggled to %s", self._preview_axis)
+        if hasattr(self, "lbl_preview_log"):
+            self.lbl_preview_log.setText(f"Preview log: axis toggled to {self._preview_axis}")
+
+    def _rescale_preview_curves(self) -> None:
+        if getattr(self, "_model_curve", None) is None:
+            return
+        try:
+            model_x = self._lam_model_preview_nm
+            model_y = self._y_model_preview
+            if self._preview_axis == "sigma":
+                model_x, model_y = self._preview_sigma_curve(model_x, model_y)
+            self._model_curve.setData(model_x, model_y)
+
+            if getattr(self, "_measurement_curve", None) is not None and self._measurement_curve is not None:
+                meas_x = self._lam_measurement_preview_nm
+                meas_y = self._y_measurement_preview
+                if self._preview_axis == "sigma":
+                    meas_x, meas_y = self._preview_sigma_curve(meas_x, meas_y)
+                self._measurement_curve.setData(meas_x, meas_y)
+
+            preview_lambda_knots = sorted([float(r.spin.value()) for r in self._row_widgets])
+            if preview_lambda_knots and self._lam_model_preview_nm.size and self._y_model_preview.size:
+                y_preview = np.interp(np.asarray(preview_lambda_knots, dtype=np.float64), self._lam_model_preview_nm, self._y_model_preview)
+                x_preview = np.asarray([self._preview_x_from_lambda(v) for v in preview_lambda_knots], dtype=np.float64)
+                self._proposed_markers.setData(x_preview, y_preview)
+            else:
+                self._proposed_markers.setData([], [])
+
+            # Also update all vertical knot lines
+            was_syncing = getattr(self, "_syncing_preview", False)
+            self._syncing_preview = True
+            try:
+                for row in self._row_widgets:
+                    if row.preview_line is not None:
+                        try:
+                            if self._preview_axis == "sigma":
+                                row.preview_line.setBounds((1e7 / max(self._lam_max_nm, 1e-30), 1e7 / max(self._lam_min_nm, 1e-30)))
+                            else:
+                                row.preview_line.setBounds((self._lam_min_nm, self._lam_max_nm))
+                        except AttributeError:
+                            pass
+                        
+                        target_x = self._preview_x_from_lambda(float(row.spin.value()))
+                        row.preview_line.blockSignals(True)
+                        row.preview_line.setValue(float(target_x))
+                        row.preview_line.blockSignals(False)
+                        self._update_selection_label(row)
+            finally:
+                self._syncing_preview = was_syncing
+
+            self._refresh_preview_bounds()
+        except Exception:
+            _LOG.exception("Manual knots dialog failed to rescale preview curves for axis=%s", self._preview_axis)
+
     def append_runtime_log(self, message: str) -> None:
         msg = str(message or "").strip()
         if not msg:
@@ -892,7 +1226,7 @@ class ManualSigmaKnotDialog(QDialog):
 
     def set_runtime_progress(self, percent: float, message: str | None = None) -> None:
         p = int(round(float(np.clip(percent, 0.0, 100.0)) * 100.0))
-        self.progress_runtime.setValue(p)
+        self.progress_runtime.update(iteration=p, max_iter=10000, phase="Optimizing...", progress_pct=int(p/100))
         if message:
             self.progress_runtime.setToolTip(str(message))
 

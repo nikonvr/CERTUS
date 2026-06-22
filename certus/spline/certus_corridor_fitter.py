@@ -1,11 +1,22 @@
-from typing import *
+# from typing import *  # Unused
 import numpy as np
 from scipy.optimize import minimize
-from certus.core.certus_core import *
-from certus.spline.certus_index_spline_core import *
+from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
+
+# from certus.spline.certus_index_spline_core import *  # Unused
 from certus.spline.certus_corridor_utils import _robust_sigma_from_mad
-from certus.spline.spline_objective import *
-from certus.spline.certus_corridor_config import *
+from certus.spline.spline_objective import (
+    SplinePWLObjective,
+    nk_from_x_pwlnk,
+    spectral_mse_rmse_masked_from_nk,
+)
+
+from certus.spline.certus_corridor_config import (
+    SplineOptConfig,
+    clip_to_bounds,
+    x_slice_n_to_physical_nodes,
+)
+
 import logging
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR FITTER]"

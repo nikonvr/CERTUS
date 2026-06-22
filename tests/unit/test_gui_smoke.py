@@ -5,17 +5,17 @@ of the GUI modules after refactoring.
 
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
 ⚠  NUMBA_DISABLE_JIT : cette variable d'environnement est NÉCESSAIRE ici
-   pour tester les imports GUI sans déclencher la compilation JIT (qui peut
+   to test GUI imports without triggering JIT compilation (which can
    échouer sur Python 3.14 / certaines CI).
 
    RÈGLES IMPÉRATIVES :
    1. NE JAMAIS utiliser  os.environ["NUMBA_DISABLE_JIT"] = "1"  au niveau
-      module — cela contamine TOUS les tests suivants dans le processus,
+      module — this contaminates ALL subsequent tests in the process,
       y compris les tests physiques qui DÉPENDENT du JIT.
    2. Utiliser UNIQUEMENT la fixture _disable_numba_jit() ci-dessous, qui
       sauvegarde et restaure la variable après exécution du module.
-   3. Si un nouveau test de ce fichier échoue de manière non déterministe
-      avec des erreurs Numba : vérifier si un autre module a importé
+   3. If a new test in this file fails non-deterministically
+      with Numba errors: check if another module imported
       _certus_physics_impl AVANT que la fixture ne soit active.
 ──────────────────────────────────────────────────────────────────────────────
 """
@@ -36,7 +36,7 @@ import pytest
 # FIXTURE — Isolation JIT (module-scoped, auto-restauration)
 # ═══════════════════════════════════════════════════════════════════════════════
 # PARE-FEU : NE PAS remplacer par un os.environ au niveau module.
-#            Voir docstring du module pour les raisons.
+#            See module docstring for reasons.
 
 @pytest.fixture(autouse=True, scope="module")
 def _disable_numba_jit():

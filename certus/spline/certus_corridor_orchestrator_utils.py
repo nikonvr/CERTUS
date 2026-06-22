@@ -1,18 +1,62 @@
-from typing import *
+from __future__ import annotations
+# from typing import *  # Unused
+import typing
 import numpy as np
 import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from certus.core.certus_core import *
-from certus.spline.certus_index_spline_core import *
-from certus.spline.certus_corridor_config import *
-from certus.spline.certus_corridor_fitter import *
+from certus.core.certus_core import (
+    Any,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    dataclass,
+    get_safe_worker_count,
+)
 
-from certus.spline.certus_corridor_utils import *
-from certus.spline.certus_corridor_logger import *
-from certus.spline.certus_corridor_bootstrap import *
-from certus.spline.spline_objective import build_spline_objective_masked_grid, nk_from_x_pwlnk
+from certus.spline.certus_index_spline_config import SplineOptConfig
+from certus_physics import clip_to_bounds
+from certus.spline.certus_index_spline_core import (
+    _reflectance_absolute_backside_from_nk,
+    physical_nodes_to_x_slice_n,
+    x_slice_n_to_physical_nodes,
+)
+
+if typing.TYPE_CHECKING:
+    from certus.spline.certus_corridor_config import CorridorLiveStreamer, ProfileCorridorConfig
+
+
+
+
+from certus.spline.certus_corridor_utils import (
+    _bounds_for_nodes_only,
+    _chi2_masked_constant_sigma,
+    _estimate_adaptive_rmse_abs_tolerance,
+    _expand_corridor_envelope_with_reported_nk,
+    _extract_knots_and_nodes_from_result,
+    _spectral_rmse_at_packed_nodes,
+    _x_nodes0_from_mesh_x_if_consistent,
+    enforce_min_k_corridor_half_width,
+    quick_pwlnk_refit_result_dict,
+)
+
+from certus.spline.certus_corridor_logger import (
+    _log_coaching_corridor_outcome,
+    _log_coaching_reg_sensitivity_outcome,
+    _log_corridor_envelope_diagnostics,
+)
+
+from certus.spline.spline_objective import (
+    build_spline_objective_masked_grid,
+    nk_from_x_pwlnk,
+    SplinePWLObjective,
+)
+from certus.utils.certus_index_utils import (
+    _ratio_theoretical_from_nk,
+    _transmittance_absolute_from_nk,
+    _reflectance_ratio_theoretical_from_nk,
+    DataType,
+)
+from certus.spline.spline_finalize import extract_nominal_best_polished_corridor_reference
 log = logging.getLogger('CERTUS')
 _LOG_PREFIX = "INDEX_SPLINE [CORRIDOR ORCHESTRATOR]"
 
@@ -44,6 +88,7 @@ def _best_fit_at_d(
 
     """
 
+    from certus.spline.certus_corridor_fitter import _fit_nodes_at_fixed_d
     rng = np.random.default_rng(int(pconf.rng_seed))
 
     seeds: list[np.ndarray] = []
@@ -383,6 +428,7 @@ def compute_reg_sensitivity_scan(
         cfg_w = cfg.replace(lnk_spline_reg_weight=float(w))
 
         try:
+            from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
             extra = compute_profiled_corridors_by_d(cfg_w, base_result, pconf=pconf, log_coaching=False)
 
         except NUMERICAL_FAULT_EXCEPTIONS:
@@ -1315,6 +1361,7 @@ class CorridorProfileContext:
     center_seed_gate_kept_count: int = 0
     center_seed_gate_delta_refit_minus_seed: float = float("nan")
 def _package_corridor_results(ctx: CorridorProfileContext) -> dict[str, Any]:
+    from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
     # Envelopes (corridors): min/max over all valid curves (linear n and linear k).
 
     # UI log₁₀(k): center refit lies in [k_lo, k_hi] in k but need not bisect [log10(k_lo), log10(k_hi)].
@@ -2172,6 +2219,7 @@ def _setup_corridor_context(
     Returns a dict of fields to merge into the pipeline result (or empty dict if disabled / impossible).
 
     """
+    from certus.spline.certus_corridor_config import CorridorContextBuilder
     builder = CorridorContextBuilder(
         cfg=cfg,
         base_result=base_result,

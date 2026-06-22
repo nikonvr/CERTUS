@@ -99,8 +99,8 @@ class _SafeLocalClues(dict):
 
     def get(self, wl: float, default=None) -> Any:
         wl_f = float(wl)
-        if wl_f in self:
-            return self[wl_f]
+        if super().__contains__(wl_f):
+            return super().__getitem__(wl_f)
         try:
             res = self._original[wl_f]
             self[wl_f] = res
@@ -150,18 +150,45 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
 def _prepare_robustness_nominal_optics(
     params: dict[str, Any],
     p_thick_nominal: list[float],
+    opti_results: dict[str, Any] | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Generates nominal wavelength and index arrays, plus nominal transmission."""
     wl_range_scan = params["wl_range"]
     wl_step = float(params["wl_step"])
     wl_arr = arange_inclusive(wl_range_scan[0], wl_range_scan[1], wl_step)
-    local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
     
-    # Import config functions dynamically to avoid any circular dependency
-    from certus.core.certus_strat_config import get_refractive_clues_vectorized
-    nH_arr = get_refractive_clues_vectorized(params["nH_id"], wl_arr, db_instance=local_db)
-    nL_arr = get_refractive_clues_vectorized(params["nL_id"], wl_arr, db_instance=local_db)
-    nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wl_arr, db_instance=local_db)
+    clues_at_wl = opti_results.get("clues_at_wl") if opti_results else None
+    
+    db_bypassed = False
+    if clues_at_wl:
+        try:
+            # Safely check if clues are accessible either by float or object
+            from certus.core.certus_strat_config import _IdxWrapper
+            idx_dict = _IdxWrapper(clues_at_wl)
+            
+            nH_list = []
+            nL_list = []
+            nSub_list = []
+            for w in wl_arr:
+                val = idx_dict[float(w)]
+                nH_list.append(val["H"])
+                nL_list.append(val["L"])
+                nSub_list.append(val["substrate"])
+                
+            nH_arr = np.array(nH_list, dtype=np.complex128)
+            nL_arr = np.array(nL_list, dtype=np.complex128)
+            nSub_arr = np.array(nSub_list, dtype=np.complex128)
+            db_bypassed = True
+        except Exception:
+            pass
+
+    if not db_bypassed:
+        local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+        from certus.core.certus_strat_config import get_refractive_clues_vectorized
+        nH_arr = get_refractive_clues_vectorized(params["nH_id"], wl_arr, db_instance=local_db)
+        nL_arr = get_refractive_clues_vectorized(params["nL_id"], wl_arr, db_instance=local_db)
+        nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wl_arr, db_instance=local_db)
+        
     p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
     _, T_nom = calculate_RT_vectorized_real_HL(wl_arr, nH_arr, nL_arr, nSub_arr, p_thick_nom_arr)
     return wl_arr, nH_arr, nL_arr, nSub_arr, T_nom
@@ -275,9 +302,9 @@ def _execute_robustness_tasks(
     logger: logging.Logger,
     n_layers_matrix_precomp: np.ndarray | None = None,
 ) -> list[dict[str, Any]]:
-    max_workers = get_safe_worker_count()
+    max_workers = 1 # Force 1 to prevent massive thread oversubscription (Numba already uses OpenMP for MCS)
     logger.info(
-        f"Running robustness tests on {len(all_strategies)} strategies ({max_workers} thread{'s' if max_workers > 1 else ''})..."
+        f"Running robustness tests on {len(all_strategies)} strategies (Numba parallel)..."
     )
 
     num_layers = len(p_thick_nominal)
@@ -318,7 +345,7 @@ def _execute_robustness_tasks(
                 res["min_resolution"] = min_res
                 res["limiting_layer"] = bad_layer
                 strategies_results.append(res)
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
                 logger.error(f"Strategy simulation failed: {e}", exc_info=True)
     else:
         results_by_idx: list[dict[str, Any] | None] = [None] * len(all_strategies)
@@ -356,7 +383,7 @@ def _execute_robustness_tasks(
                     res["min_resolution"] = min_res
                     res["limiting_layer"] = bad_layer
                     results_by_idx[idx] = res
-                except NUMERICAL_FAULT_EXCEPTIONS as e:
+                except Exception as e:
                     logger.error(f"Strategy simulation failed: {e}", exc_info=True)
         strategies_results = [r for r in results_by_idx if r is not None]
 
@@ -491,8 +518,8 @@ def _test_strategy_robustness_task(
         run_rmses = compute_batch_rmse(
             sim_thick_batch,
             wl_arr.astype(np.float64),
-            np.empty(0),
-            np.empty(0),
+            np.empty(0, dtype=np.complex128),
+            np.empty(0, dtype=np.complex128),
             nSub_arr.astype(np.complex128),
             T_nom_aligned,
             n_layers_matrix,
@@ -750,6 +777,7 @@ def run_final_simulation_block(
     wl_arr, nH_arr, nL_arr, nSub_arr, T_nom = _prepare_robustness_nominal_optics(
         params=params,
         p_thick_nominal=p_thick_nominal,
+        opti_results=opti_results,
     )
 
     params_safe = {k: v for k, v in params.items() if k not in ["logger", "materials_db", "gui_parent"]}

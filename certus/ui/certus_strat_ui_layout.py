@@ -22,6 +22,7 @@ from pydantic import ValidationError
 import pyqtgraph as pg
 from pyqtgraph.exporters import ImageExporter, SVGExporter
 from certus.ui.certus_ui import setup_pyqtgraph_defaults
+from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget
 from concurrent.futures import ThreadPoolExecutor
 from PyQt6.QtCore import (
     QMetaObject,
@@ -278,58 +279,8 @@ class CertusStratLayoutMixin:
             {build_premium_overrides()}
 
             /* Labels are slightly subtler in STRAT */
-
             QLabel {{ color: {CertusTheme.TEXT_SUB}; font-weight: 500; }}
-
-            /* STRAT buttons - wider padding, secondary hover */
-
-            QPushButton {{ padding: 6px 16px; }}
-
-            QPushButton:hover {{ border-color: {CertusTheme.SECONDARY}; }}
-
-            QPushButton:pressed {{ background-color: {CertusTheme.BACKGROUND}; padding-top: 7px; }}
-
-            /* Special RUN FULL Button Gradient */
-
-            QPushButton[text^="RUN FULL"] {{ 
-
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {CertusTheme.PRIMARY}, stop:1 #2563eb); 
-
-                color: white; border: none; font-size: 13px; padding: 12px; border-radius: 8px; 
-
-            }}
-
-            QPushButton[text^="RUN FULL"]:hover {{ 
-
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2563eb, stop:1 {CertusTheme.SECONDARY}); 
-
-                border: 1px solid #bfdbfe; 
-
-            }}
-
-            QPushButton[text^="RUN FULL"]:disabled {{ 
-
-                background-color: {CertusTheme.TEXT_DISABLED}; color: {CertusTheme.BORDER}; 
-
-            }}
-
-            /* GroupBox harmonized with CertusCard */
-
-            QGroupBox {{ background: {CertusTheme.SURFACE}; border: 1px solid {CertusTheme.BORDER}; border-radius: 8px; margin-top: 14px; padding: 10px 10px 8px 10px; font-weight: 600; color: {CertusTheme.TEXT_MAIN}; }}
-
-            QGroupBox::title {{ subcontrol-origin: margin; subcontrol-position: top left; left: 10px; padding: 0 6px; color: {CertusTheme.PRIMARY}; background: {CertusTheme.SURFACE}; }}
-
-            /* Tabs STRAT specific */
-
-            QTabWidget::pane {{ border: 1px solid {CertusTheme.BORDER}; border-radius: 8px; background: {CertusTheme.SURFACE}; top: -1px; }}
-
-            QTabBar::tab {{ background: transparent; border: none; border-bottom: 3px solid transparent; padding: 10px 20px; margin-right: 4px; color: {CertusTheme.TEXT_SUB}; font-weight: 600; }}
-
-            QTabBar::tab:selected {{ color: {CertusTheme.PRIMARY}; border-bottom: 3px solid {CertusTheme.PRIMARY}; background: rgba(30, 58, 138, 0.04); border-top-left-radius: 6px; border-top-right-radius: 6px; }}
-
-            QTabBar::tab:hover:!selected {{ color: {CertusTheme.TEXT_MAIN}; background: rgba(0,0,0,0.02); }}
-
-        """,
+            """,
         )
 
     def _build_log_container(self) -> QWidget:
@@ -410,7 +361,7 @@ class CertusStratLayoutMixin:
 
         controls_layout = QVBoxLayout(controls_widget)
 
-        controls_layout.setSpacing(8)
+        controls_layout.setSpacing(12)
 
         controls_layout.setContentsMargins(0, 0, 4, 0)
 
@@ -497,20 +448,7 @@ class CertusStratLayoutMixin:
 
         self.toggle_details_btn.setToolTip("Show/hide the computation log panel below the plot area.")
 
-        self.toggle_details_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {CertusTheme.PRIMARY};
-                color: white;
-                border: none;
-                border-radius: 10px;
-                padding: 7px 12px;
-                font-size: 11px;
-                font-weight: 700;
-            }}
-
-            QPushButton:checked {{ background-color: {CertusTheme.SECONDARY}; }}
-            QPushButton:hover {{ background-color: {CertusTheme.INFO}; }}
-        """)
+        self.toggle_details_btn.setObjectName(OBJ.PRIMARY_BUTTON)
 
         self.toggle_details_btn.toggled.connect(self.on_toggle_details)
 
@@ -533,14 +471,7 @@ class CertusStratLayoutMixin:
 
         self.status_bar.addPermanentWidget(self.stats_label)
 
-        self.progress_bar = QProgressBar()
-
-        self.progress_bar.setFixedWidth(200)
-
-        self.progress_bar.setFixedHeight(14)
-
-        self.progress_bar.setStyleSheet(CertusTheme.get_progress_bar_style())
-
+        self.progress_bar = EnhancedProgressWidget(main_label="STRAT Execution")
         self.status_bar.addPermanentWidget(self.progress_bar)
 
         if getattr(self, "_log_panel", None):
@@ -554,7 +485,7 @@ class CertusStratLayoutMixin:
 
         self.design_layout = QVBoxLayout(design_tab)
 
-        self.design_layout.setSpacing(8)
+        self.design_layout.setSpacing(12)
 
         self.design_layout.setContentsMargins(5, 8, 5, 5)
 
@@ -689,26 +620,20 @@ class CertusStratLayoutMixin:
 
         tools_grid.setContentsMargins(0, 0, 0, 0)
 
-        tools_grid.setSpacing(8)
+        tools_grid.setSpacing(12)
 
         tools_grid.setColumnStretch(0, 1)
 
         tools_grid.setColumnStretch(1, 1)
-
-        btn_style = f"QPushButton {{ border-radius: 6px; border: 1px solid {CertusTheme.BORDER}; background: {CertusTheme.SURFACE}; font-size: 11px; font-weight: 600; color: {CertusTheme.TEXT_MAIN}; padding: 5px 10px; text-align: left; }} QPushButton:hover {{ background: {CertusTheme.SURFACE_HOVER}; border-color: {CertusTheme.SECONDARY}; }}"
 
         def set_std_icon(btn, pixmap_enum) -> None:
 
             btn.setIcon(self.style().standardIcon(pixmap_enum))
 
         self.add_btn = QPushButton("Add Layer")
+        self.add_btn.setObjectName(OBJ.SUCCESS_BUTTON)
 
         self.add_btn.setFixedHeight(32)
-
-        self.add_btn.setStyleSheet(
-            btn_style
-            + f"color: {CertusTheme.SUCCESS_TEXT}; border-color: {CertusTheme.SUCCESS_BG}; background: {CertusTheme.SUCCESS_BG};"
-        )
 
         set_std_icon(self.add_btn, QStyle.StandardPixmap.SP_FileDialogNewFolder)
 
@@ -717,13 +642,9 @@ class CertusStratLayoutMixin:
         self.add_btn.clicked.connect(self.add_layer)
 
         self.remove_btn = QPushButton("Remove Layer")
+        self.remove_btn.setObjectName(OBJ.DANGER_BUTTON)
 
         self.remove_btn.setFixedHeight(32)
-
-        self.remove_btn.setStyleSheet(
-            btn_style
-            + f"color: {CertusTheme.DANGER_TEXT}; border-color: {CertusTheme.DANGER_BG}; background: {CertusTheme.DANGER_BG};"
-        )
 
         set_std_icon(self.remove_btn, QStyle.StandardPixmap.SP_TrashIcon)
 
@@ -739,8 +660,6 @@ class CertusStratLayoutMixin:
 
         btn_save.setFixedHeight(30)
 
-        btn_save.setStyleSheet(btn_style)
-
         set_std_icon(btn_save, QStyle.StandardPixmap.SP_DialogSaveButton)
 
         btn_save.setToolTip("Save the current stack & all parameters to a JSON config file (Ctrl+S).")
@@ -750,8 +669,6 @@ class CertusStratLayoutMixin:
         btn_load = QPushButton("Load Config")
 
         btn_load.setFixedHeight(30)
-
-        btn_load.setStyleSheet(btn_style)
 
         set_std_icon(btn_load, QStyle.StandardPixmap.SP_DialogOpenButton)
 
@@ -767,8 +684,6 @@ class CertusStratLayoutMixin:
 
         self.load_strat_btn.setFixedHeight(30)
 
-        self.load_strat_btn.setStyleSheet(btn_style)
-
         set_std_icon(self.load_strat_btn, QStyle.StandardPixmap.SP_ArrowDown)
 
         self.load_strat_btn.setToolTip(
@@ -781,8 +696,6 @@ class CertusStratLayoutMixin:
         self.detach_btn = QPushButton("Pop-Out")
 
         self.detach_btn.setFixedHeight(30)
-
-        self.detach_btn.setStyleSheet(btn_style)
 
         set_std_icon(self.detach_btn, QStyle.StandardPixmap.SP_TitleBarNormalButton)
 
@@ -866,7 +779,7 @@ class CertusStratLayoutMixin:
         tools_grid.addWidget(self.stop_step2_btn, 5, 1)
 
         self.run_full_btn = QPushButton(" RUN FULL WORKFLOW")
-        self.run_full_btn.setObjectName(OBJ.PRIMARY_BUTTON)
+        self.run_full_btn.setObjectName(OBJ.FEATURED_BUTTON)
         self.run_full_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.run_full_btn.setFixedHeight(42)
@@ -951,7 +864,7 @@ class CertusStratLayoutMixin:
 
         opt_layout = QVBoxLayout(opt_tab)
 
-        opt_layout.setSpacing(5)
+        opt_layout.setSpacing(10)
 
         opt_layout.setContentsMargins(5, 5, 5, 5)
 
@@ -1160,7 +1073,7 @@ class CertusStratLayoutMixin:
 
         adv_layout = QVBoxLayout(adv_tab)
 
-        adv_layout.setSpacing(5)
+        adv_layout.setSpacing(10)
 
         adv_layout.setContentsMargins(5, 5, 5, 5)
 
@@ -1397,7 +1310,7 @@ class CertusStratLayoutMixin:
 
         layout = group.body
 
-        layout.setSpacing(2)
+        layout.setSpacing(8)
 
         layout.setContentsMargins(4, 12, 4, 4)
 

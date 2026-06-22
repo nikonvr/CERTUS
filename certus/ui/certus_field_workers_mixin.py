@@ -556,7 +556,7 @@ class CertusFieldWorkersMixin:
 
         if not result.success:
             if hasattr(self, "progress_widget"):
-                self.progress_widget.stop(f"Failed: {result.message}")
+                self.progress_widget.stop(f"Error: {result.message}")
 
         if result.success:
             if hasattr(self, "status_label"):
@@ -602,7 +602,7 @@ class CertusFieldWorkersMixin:
 
             if not self._synthesis_active:
                 if hasattr(self, "progress_widget"):
-                    self.progress_widget.stop(result.message)
+                    self.progress_widget.stop("Done" if result.success else f"Error: {result.message}")
                 if action == "optimize" and result.pareto_solutions and len(result.pareto_solutions) > 1:
                     self._show_pareto_window()
                     self._pareto_cleanup_pending = True
@@ -649,7 +649,7 @@ class CertusFieldWorkersMixin:
                             self.btn_opt.setEnabled(True)
                             self.btn_mc.setEnabled(True)
                             if hasattr(self, "progress_widget"):
-                                self.progress_widget.stop("Max layers reached")
+                                self.progress_widget.stop("Error: Max layers reached")
                         else:
                             # Start needle search
                             self.btn_calc.setEnabled(False)
@@ -666,7 +666,7 @@ class CertusFieldWorkersMixin:
                                 self.btn_opt.setEnabled(True)
                                 self.btn_mc.setEnabled(True)
                                 if hasattr(self, "progress_widget"):
-                                    self.progress_widget.stop("Failed to get parameters")
+                                    self.progress_widget.stop("Error: Failed to get parameters")
                     else:
                         # Did not improve significantly
                         self.logger.info("[Synthesis] Cost did not improve significantly. Reverting to last best checkpoint and finishing.")
@@ -677,7 +677,7 @@ class CertusFieldWorkersMixin:
                         self.btn_opt.setEnabled(True)
                         self.btn_mc.setEnabled(True)
                         if hasattr(self, "progress_widget"):
-                            self.progress_widget.stop("Stagnation: reverted to checkpoint")
+                            self.progress_widget.stop("Error: Stagnation")
                         
                 elif action == "needle":
                     # Step B: Evaluate needle results
@@ -700,7 +700,7 @@ class CertusFieldWorkersMixin:
                             self.btn_opt.setEnabled(True)
                             self.btn_mc.setEnabled(True)
                             if hasattr(self, "progress_widget"):
-                                self.progress_widget.stop("Failed to get parameters")
+                                self.progress_widget.stop("Error: Failed to get parameters")
                     else:
                         self.logger.info("[Synthesis] Needle did not find any beneficial insertion. Reverting and finishing.")
                         self._revert_to_synthesis_checkpoint()
@@ -710,7 +710,7 @@ class CertusFieldWorkersMixin:
                         self.btn_opt.setEnabled(True)
                         self.btn_mc.setEnabled(True)
                         if hasattr(self, "progress_widget"):
-                            self.progress_widget.stop("No needle insertion found: reverted to checkpoint")
+                            self.progress_widget.stop("Error: No needle insertion found")
         else:
             if hasattr(self, "field_opt_status"):
                 self.field_opt_status.setText("Failed")

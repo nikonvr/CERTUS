@@ -32,6 +32,9 @@ class _MappingBase(BaseModel, Mapping):
     def get(self, key: str, default: Any = None) -> Any:
         return getattr(self, key, default)
 
+    def __setitem__(self, key: str, value: Any) -> None:
+        setattr(self, key, value)
+
     def _eq_mapping(self, other: Any) -> bool:
         if isinstance(other, dict):
             self_dict = {k: v for k, v in self.items() if v is not None}

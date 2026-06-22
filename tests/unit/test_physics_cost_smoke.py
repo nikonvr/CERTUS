@@ -29,7 +29,7 @@ def test_compute_mse_vectorized_too_few_valid_points_returns_penalty() -> None:
 
 
 def test_compute_mse_vectorized_skips_zero_weight() -> None:
-    # Cinq points valides, erreur^2=1 chacun ; seul poids nul en i1.
+    # Five valid points, error^2=1 each; only zero weight at i1.
     calc = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
     tgt = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float64)
     w = np.array([1.0, 0.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float64)

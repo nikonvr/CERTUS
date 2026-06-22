@@ -784,9 +784,21 @@ def process_log_queue_standard(q: queue.Queue, widget: Any, max_items: int = 50)
 
         try:
             formatted_msg = msg
-            parts = msg.split(" | ", 2)
-            if len(parts) == 3:
-                asctime, levelname, actual_msg = parts
+            asctime, levelname, actual_msg = None, None, None
+            for sep2 in (" ➔ ", " -> "):
+                if sep2 in msg:
+                    prefix, actual_msg = msg.split(sep2, 1)
+                    for sep1 in (" ✦ ", " * "):
+                        if sep1 in prefix:
+                            asctime, levelname = prefix.split(sep1, 1)
+                            levelname = levelname.strip()
+                            break
+                    break
+            if asctime is None:
+                parts = msg.split(" | ", 2)
+                if len(parts) == 3:
+                    asctime, levelname, actual_msg = parts
+            if asctime is not None and levelname is not None and actual_msg is not None:
 
                 # Get theme colors
                 try:

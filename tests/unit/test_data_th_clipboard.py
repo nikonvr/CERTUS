@@ -4,15 +4,15 @@
 ⚠  CLIPBOARD Qt — ISOLATION INTER-TESTS :
 
    test_data_th_copy_clipboard_contains_headers_and_rows  utilise le
-   clipboard SYSTÈME via QApplication.clipboard(). Ce clipboard est
-   PARTAGÉ entre tous les tests Qt de la session.
+   SYSTEM clipboard via QApplication.clipboard(). This clipboard is
+   SHARED among all Qt tests in the session.
 
-   RÈGLES :
-   1. TOUJOURS appeler  cb.clear()  AVANT d'écrire dans le clipboard,
-      pour éviter les résidus d'un test antérieur.
+   RULES:
+   1. ALWAYS call cb.clear() BEFORE writing to the clipboard,
+      to avoid residues from a previous test.
    2. Si le clipboard est inaccessible (CI headless, session Qt corrompue),
       le test SKIP au lieu de FAIL (ne pas changer ce comportement).
-   3. Ne pas dépendre de l'ORDRE d'exécution des tests pour ce test.
+   3. Do not depend on test execution ORDER for this test.
 ──────────────────────────────────────────────────────────────────────────────
 """
 from __future__ import annotations

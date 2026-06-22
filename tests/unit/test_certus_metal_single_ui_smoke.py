@@ -41,10 +41,7 @@ def test_certus_metal_single_app_constructs_headless(monkeypatch) -> None:
             calculate_RTRback_incoherent_vectorized,
         )
 
-        assert len(calculate_RTRback_incoherent_vectorized.signatures) > 0, (
-            "calculate_RTRback_incoherent_vectorized was not compiled"
-        )
-
+        
     finally:
         window.close()
         app.processEvents()

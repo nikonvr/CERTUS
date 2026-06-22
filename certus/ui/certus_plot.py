@@ -16,10 +16,12 @@ from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 # Avoid circular dependencies by lazy loading if needed, but since CertusTheme is defined early in certus_ui, it should be safe.
 
 
+@functools.lru_cache(maxsize=1)
 def get_plot_style_config() -> dict:
+    """Return current theme-based config for plot styling (background, text color, grid)."""
+
     from certus.ui.certus_ui import CertusTheme
 
-    """Return current theme-based config for plot styling (background, text color, grid)."""
     return {
         "background": getattr(CertusTheme, "SURFACE", "#ffffff"),
         "text_color": getattr(CertusTheme, "TEXT_MAIN", "#212529"),
@@ -28,8 +30,20 @@ def get_plot_style_config() -> dict:
     }
 
 
-def apply_certus_plot_style(plot) -> None:
+@functools.lru_cache(maxsize=1)
+def get_plot_theme_palette() -> tuple[str, str, str, str, str, str]:
+    from certus.ui.certus_ui import CertusTheme
 
+    dark_mode = bool(getattr(CertusTheme, "DARK_MODE", False))
+    bg_color = "rgba(15, 23, 42, 0.95)" if dark_mode else "rgba(255, 255, 255, 0.95)"
+    text_color = "#e2e8f0" if dark_mode else "#1e293b"
+    border_color = "#334155" if dark_mode else "#cbd5e1"
+    primary_color = getattr(CertusTheme, "PRIMARY", "#1e3a8a")
+    font_family = str(getattr(CertusTheme, "FONT_FAMILY", "Inter, sans-serif")).split(",")[0].strip("'")
+    return bg_color, text_color, border_color, primary_color, font_family, str(dark_mode)
+
+
+def apply_certus_plot_style(plot) -> None:
     """
     Apply CERTUS theme to a single pyqtgraph PlotWidget or similar.
     Use for new plots and when theme changes.
@@ -39,8 +53,8 @@ def apply_certus_plot_style(plot) -> None:
     text_color = cfg["text_color"]
     axis_pen = pg.mkPen(color=text_color, width=cfg.get("axis_width", 1))
 
-    for axis_name in ["bottom", "left", "right", "top"]:
-        if hasattr(plot, "getAxis"):
+    if hasattr(plot, "getAxis"):
+        for axis_name in ["bottom", "left", "right", "top"]:
             axis = plot.getAxis(axis_name)
             if axis:
                 axis.setPen(axis_pen)
@@ -82,7 +96,6 @@ def plot_widget_plot_finite(widget, x, y, **kwargs):
     if xf.size == 0:
         return None
     name = kwargs.get("name", "")
-    animate = bool(kwargs.pop("animate", False))
     if hasattr(widget, "add_curve") and callable(getattr(widget, "add_curve")):
         color = kwargs.pop("color", kwargs.pop("pen", "#1e3a8a"))
         width = int(kwargs.pop("width", 2))
@@ -148,8 +161,91 @@ class CertusScientificPlot(pg.PlotWidget):
         self._copy_pub_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._copy_pub_shortcut.activated.connect(self._on_copy_publication_shortcut)
 
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_context_export_menu)
+        self._has_auto_ranged_on_show_x = False
+        self._has_auto_ranged_on_show_y = False
+        self.setXRange = self._custom_setXRange
+        self.setYRange = self._custom_setYRange
+        self.setRange = self._custom_setRange
+
+    @property
+    def _has_auto_ranged_on_show(self) -> bool:
+        return self._has_auto_ranged_on_show_x or self._has_auto_ranged_on_show_y
+
+    @_has_auto_ranged_on_show.setter
+    def _has_auto_ranged_on_show(self, val: bool) -> None:
+        self._has_auto_ranged_on_show_x = val
+        self._has_auto_ranged_on_show_y = val
+
+    def _custom_setXRange(self, *args, **kwargs) -> None:
+        self.plotItem.setXRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_x = True
+
+    def _custom_setYRange(self, *args, **kwargs) -> None:
+        self.plotItem.setYRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_y = True
+
+    def _custom_setRange(self, *args, **kwargs) -> None:
+        self.plotItem.setRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_x = True
+        self._has_auto_ranged_on_show_y = True
+
+    def setXRange(self, *args, **kwargs) -> None:
+        self._custom_setXRange(*args, **kwargs)
+
+    def setYRange(self, *args, **kwargs) -> None:
+        self._custom_setYRange(*args, **kwargs)
+
+    def setRange(self, *args, **kwargs) -> None:
+        self._custom_setRange(*args, **kwargs)
+
+    def has_data(self) -> bool:
+        for item in self.plotItem.items:
+            if isinstance(item, (pg.PlotDataItem, pg.PlotCurveItem, pg.ScatterPlotItem)):
+                if hasattr(item, "getData"):
+                    try:
+                        xData, yData = item.getData()
+                        if xData is not None and len(xData) > 0:
+                            return True
+                    except Exception:
+                        pass
+        return False
+
+    def _trigger_auto_range(self) -> None:
+        if not self.has_data():
+            return
+        vb = self.getViewBox()
+        if vb is not None:
+            auto_x = not getattr(self, "_has_auto_ranged_on_show_x", False)
+            auto_y = not getattr(self, "_has_auto_ranged_on_show_y", False)
+            if auto_x and auto_y:
+                vb.autoRange()
+                self._has_auto_ranged_on_show_x = True
+                self._has_auto_ranged_on_show_y = True
+            elif auto_x or auto_y:
+                bounds = vb.childrenBounds()
+                if bounds is not None:
+                    x_range, y_range = bounds
+                    if auto_x and x_range is not None and x_range[0] is not None and x_range[1] is not None:
+                        vb.setXRange(x_range[0], x_range[1], padding=None)
+                        self._has_auto_ranged_on_show_x = True
+                    if auto_y and y_range is not None and y_range[0] is not None and y_range[1] is not None:
+                        vb.setYRange(y_range[0], y_range[1], padding=None)
+                        self._has_auto_ranged_on_show_y = True
+
+    def showEvent(self, ev) -> None:
+        super().showEvent(ev)
+        self._trigger_auto_range()
+
+    def hideEvent(self, ev) -> None:
+        super().hideEvent(ev)
+        self._has_auto_ranged_on_show = False
+
+    def plot(self, *args, **kwargs) -> pg.PlotDataItem:
+        item = self.plotItem.plot(*args, **kwargs)
+        if self.isVisible():
+            self._trigger_auto_range()
+        return item
 
     def _on_copy_excel_shortcut(self) -> None:
         self._copy_excel_tsv(show_message=True)
@@ -391,12 +487,7 @@ class CertusScientificPlot(pg.PlotWidget):
                 self.hLine.setPos(y_cursor)
                 label_y = float(y_cursor)
 
-            from certus.ui.certus_ui import CertusTheme
-            bg_color = "rgba(15, 23, 42, 0.95)" if getattr(CertusTheme, "DARK_MODE", False) else "rgba(255, 255, 255, 0.95)"
-            text_color = "#e2e8f0" if getattr(CertusTheme, "DARK_MODE", False) else "#1e293b"
-            border_color = "#334155" if getattr(CertusTheme, "DARK_MODE", False) else "#cbd5e1"
-            primary_color = CertusTheme.PRIMARY
-            font_family = CertusTheme.FONT_FAMILY.split(",")[0].strip("'")
+            bg_color, text_color, border_color, primary_color, font_family, _ = get_plot_theme_palette()
 
             fn = getattr(self, "_certus_crosshair_label_fn", None)
             if callable(fn):
@@ -516,6 +607,8 @@ class CertusScientificPlot(pg.PlotWidget):
                 self._animate_curve_reveal(curve, xf, yf, pen=pen, name=name)
             else:
                 curve.setData(xf, yf)
+            if self.isVisible():
+                self._trigger_auto_range()
 
     def remove_curve(self, name: str):
         if name in self._curves:
@@ -574,6 +667,9 @@ class CertusScientificPlot(pg.PlotWidget):
 
     def add_tracked_curve(self, curve, name: str, unit: str = ""):
         self._tracked_curves.append({"curve": curve, "name": name, "unit": unit})
+
+    def add_curve_for_tracking(self, curve, name: str, unit: str = ""):
+        self.add_tracked_curve(curve, name, unit)
 
     def get_toolbar(self, parent_widget: QWidget) -> QToolBar:
         from certus.ui.certus_ui import CERTUS_UI_STRINGS

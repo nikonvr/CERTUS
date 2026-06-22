@@ -54,7 +54,9 @@ from certus.core.certus_index_core import (
     Phase23SplineObjective,
     Phase23Pass2SplineObjective,
     TLUObjective,
-    GradientSearcher,
+)
+from certus.core.certus_index_solvers import GradientSearcher
+from certus.core.certus_index_core import (
     PGlobalOptimizerINDEX,
     SubsetOptimTask,
     calculate_relative_R_normalization,

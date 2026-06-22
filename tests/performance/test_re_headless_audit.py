@@ -34,13 +34,13 @@ except ImportError:
 @pytest.mark.performance
 @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="certus_physics indisponible")
 class TestREHeadlessThroughputAudit:
-    """Charge proche d'un worker RE : beaucoup d'appels TMM (séquentiel vs thread pool)."""
+    """Load similar to RE worker: many TMM calls (sequential vs thread pool)."""
 
     N_EVALS = 48
     POOL_WORKERS = 4
 
     def test_sequential_eval_throughput_ms_per_call(self, sample_wavelengths):
-        """Baseline séquentielle : temps total / nombre d'évaluations (proxy worker RE)."""
+        """Sequential baseline: total time / number of evaluations (RE worker proxy)."""
         layers = [
             Layer(mat="SiO2", qwot=100.0 / 100.0),
             Layer(mat="TiO2", qwot=50.0 / 100.0),
@@ -54,11 +54,11 @@ class TestREHeadlessThroughputAudit:
         elapsed = time.perf_counter() - t0
 
         ms_per = 1000.0 * elapsed / self.N_EVALS
-        # Garde-fou large : machine lente ou CI ; l'audit consigne surtout la métrique.
-        assert ms_per < 500.0, f"trop lent: {ms_per:.1f} ms/éval (séquentiel)"
+        # Broad safeguard: slow machine or CI; the audit mostly logs the metric.
+        assert ms_per < 500.0, f"too slow: {ms_per:.1f} ms/eval (sequential)"
 
     def test_parallel_pool_eval_throughput(self, sample_wavelengths):
-        """Même charge répartie sur un pool (analogie : plusieurs tâches worker / FD)."""
+        """Same load distributed on a pool (analogy: multiple worker tasks / FD)."""
         layers = [
             Layer(mat="SiO2", qwot=100.0 / 100.0),
             Layer(mat="TiO2", qwot=50.0 / 100.0),
@@ -74,4 +74,4 @@ class TestREHeadlessThroughputAudit:
         elapsed = time.perf_counter() - t0
 
         assert elapsed > 0
-        # Pas d'assert sur le speedup (dépend du CPU / Numba) : présence du test = métrique en CI.
+        # No assert on speedup (depends on CPU / Numba): test presence = CI metric.

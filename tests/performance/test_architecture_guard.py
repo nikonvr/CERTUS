@@ -161,7 +161,15 @@ def test_numba_nogil_enabled():
     certus_dir = Path(__file__).resolve().parents[2] / "certus" / "physics"
     kernel_files = [
         certus_dir / "certus_opt_kernels.py",
-        certus_dir / "certus_strat_kernels.py"
+        certus_dir / "certus_strat_kernels.py",
+        certus_dir / "certus_opt_needle.py",
+        certus_dir / "certus_strat_batch.py",
+        certus_dir / "certus_tmm_substrate.py",
+        certus_dir / "certus_tmm_single_layer.py",
+        certus_dir / "certus_tmm_matrix.py",
+        certus_dir / "certus_tmm_backside.py",
+        certus_dir / "certus_tmm_oblique.py",
+        certus_dir / "certus_tmm_hl.py"
     ]
 
     # We check specific kernels that MUST be parallel + nogil.

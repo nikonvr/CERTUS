@@ -1,4 +1,4 @@
-"""Unit tests for CERTUS_DESIGN.py
+﻿"""Unit tests for CERTUS_DESIGN.py
 
 Covers optical design features."""
 

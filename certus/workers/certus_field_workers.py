@@ -11,6 +11,7 @@ from typing import Iterable, Any
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldWorkerResult, FieldParamsDTO
 from certus.core.certus_field_core import calculate_electric_field, calculate_opt_metrics
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 try:
     from scipy.optimize import minimize
@@ -141,6 +142,7 @@ class WorkerSignals(QObject):
     finished = pyqtSignal(object)
     error = pyqtSignal(tuple)
     progress = pyqtSignal(int, str)
+    progress_snapshot = pyqtSignal(object)
     plot = pyqtSignal(object, str)
 
 
@@ -209,7 +211,7 @@ class FieldWorkerThread(QThread):
         params = self._require_params(params)
         logger.info(f"Starting _run_calculate. Number of layers: {len(params.emp_factors)}, λ={params.lambda_calcs} nm")
 
-        self.signals.progress.emit(10, "Calculating field...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Calculating field...", display_ratio=0.10, progress_ratio=0.10, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="CALCULATE", is_indeterminate=True))
 
         import time
         t0 = time.perf_counter()
@@ -234,7 +236,7 @@ class FieldWorkerThread(QThread):
         dt = time.perf_counter() - t0
         logger.debug(f"Numba analytical calculation finished in {dt:.4f}s. Points generated: {len(z_coords_final or [])}")
 
-        self.signals.progress.emit(100, "Calculation finished.")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Calculation finished.", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module="FIELD", phase="CALCULATE"))
         self.signals.finished.emit(FieldWorkerResult(
             z_coords=z_coords_final or [],
             E2_values_list=E2_values_list,
@@ -250,7 +252,7 @@ class FieldWorkerThread(QThread):
         error_pct = float(params.tolerate_error or 0.0)
         logger.info(f"Starting _run_tolerate with error {error_pct*100}%")
 
-        self.signals.progress.emit(10, "Starting Monte-Carlo...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Starting Monte-Carlo...", display_ratio=0.10, progress_ratio=0.10, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="MONTE_CARLO", is_indeterminate=True))
 
         import time
         t0 = time.perf_counter()
@@ -284,7 +286,8 @@ class FieldWorkerThread(QThread):
             if not self._is_running:
                 return
 
-            self.signals.progress.emit(10 + int(80 * (it / num_iterations)), f"Monte-Carlo {it+1}/{num_iterations}...")
+            pct = 10 + int(80 * (it / num_iterations))
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Monte-Carlo {it+1}/{num_iterations}...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="MONTE_CARLO", metadata={"iteration": it + 1, "total": num_iterations}))
 
             perturbation = np.random.normal(1.0, error_pct, n_layers)
             perturbed_emp_factors = np.clip(np.asarray(params.emp_factors, dtype=float) * perturbation, 1e-4, None)
@@ -307,7 +310,7 @@ class FieldWorkerThread(QThread):
         dt = time.perf_counter() - t0
         logger.info(f"Monte-Carlo {num_iterations} iterations finished in {dt:.2f}s.")
 
-        self.signals.progress.emit(100, "Monte-Carlo calculation finished.")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Monte-Carlo calculation finished.", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module="FIELD", phase="MONTE_CARLO"))
         self.signals.finished.emit(FieldWorkerResult(
             z_coords=z_coords_nominal or [],
             E2_values_list=E2_nominal_list,
@@ -324,7 +327,7 @@ class FieldWorkerThread(QThread):
         params = self._require_params(params)
         logger.info(f"Starting Needle Scan. Number of layers: {len(params.emp_factors)}")
 
-        self.signals.progress.emit(5, "Preparing needle scan...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Preparing needle scan...", display_ratio=0.05, progress_ratio=0.05, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="NEEDLE_SCAN"))
 
         # Current stack cost
         current_cost = top_level_objective_function(
@@ -369,7 +372,7 @@ class FieldWorkerThread(QThread):
         logger.info(f"Needle scan: found {total_candidates} candidate split positions.")
 
         if total_candidates == 0:
-            self.signals.progress.emit(100, "Needle scan finished.")
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Needle scan finished.", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module="FIELD", phase="NEEDLE_SCAN"))
             self.signals.finished.emit(FieldWorkerResult(
                 success=True,
                 message="No candidate layers thick enough to split.",
@@ -384,7 +387,7 @@ class FieldWorkerThread(QThread):
 
             if total_candidates <= 20 or idx % max(1, total_candidates // 20) == 0 or idx == total_candidates - 1:
                 pct = 5 + int(85 * (idx / total_candidates))
-                self.signals.progress.emit(pct, f"Needle scanning {idx+1}/{total_candidates}...")
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Needle scanning {idx+1}/{total_candidates}...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="NEEDLE_SCAN", metadata={"index": idx + 1, "total": total_candidates}))
 
             # Construct candidate stack
             emp_test = (
@@ -430,7 +433,8 @@ class FieldWorkerThread(QThread):
                     "layer_types": types_test,
                 }
 
-        self.signals.progress.emit(90, "Generating final metrics...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINALIZE"))
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINAL_METRICS"))
 
         z_coords_final = None
         E2_values_list = []
@@ -454,7 +458,7 @@ class FieldWorkerThread(QThread):
                     ep_c1_cn_final = ep_c1_cn
                 E2_values_list.append(E2_values.tolist())
 
-            self.signals.progress.emit(100, "Needle scan completed.")
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Needle scan completed.", display_ratio=1.0, progress_ratio=1.0, eta_seconds=0.0, confidence=1.0, state=StepState.DONE, module="FIELD", phase="NEEDLE_SCAN"))
             self.signals.finished.emit(FieldWorkerResult(
                 z_coords=z_coords_final or [],
                 E2_values_list=E2_values_list,
@@ -479,7 +483,6 @@ class FieldWorkerThread(QThread):
                     ep_c1_cn_final = ep_c1_cn
                 E2_values_list.append(E2_values.tolist())
 
-            self.signals.progress.emit(100, "Needle scan completed.")
             self.signals.finished.emit(FieldWorkerResult(
                 z_coords=z_coords_final or [],
                 E2_values_list=E2_values_list,
@@ -555,7 +558,8 @@ class FieldWorkerThread(QThread):
             f"  - Thresholds: H={params.seuil_int_1}, L={params.seuil_int_2}\n"
             f"  - Alpha: {params.alpha}"
         )
-        self.signals.progress.emit(5, "Preparing optimization...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Preparing optimization...", display_ratio=0.05, progress_ratio=0.05, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION"))
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Preparing optimization...", display_ratio=0.05, progress_ratio=0.05, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION"))
 
         def emit_plot(xk: np.ndarray, message: str) -> None:
             z_c, E2_v, ep_c, _, _ = calculate_electric_field(
@@ -598,10 +602,7 @@ class FieldWorkerThread(QThread):
                 )
                 
                 pct = min(90, 20 + state.iteration * 2)
-                self.signals.progress.emit(
-                    pct,
-                    f"Run {current_run[0]} | Iter {state.iteration} | Evals: {state.eval_count} | Cost: {state.best_cost:.6f}"
-                )
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Run {current_run[0]} | Iter {state.iteration} | Evals: {state.eval_count} | Cost: {state.best_cost:.6f}", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"iteration": state.iteration, "evals": state.eval_count, "best_cost": state.best_cost}))
                 
                 emit_plot(xk, f"Optimization running (L-BFGS-B) - Iteration {state.iteration}...")
 
@@ -613,7 +614,8 @@ class FieldWorkerThread(QThread):
         all_solutions = []
 
         if getattr(params, "global_opt", False):
-            self.signals.progress.emit(20, "Optimization running (PGLOBAL)...")
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Optimization running (PGLOBAL)...", display_ratio=0.20, progress_ratio=0.20, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "PGLOBAL"}))
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Optimization running (PGLOBAL)...", display_ratio=0.20, progress_ratio=0.20, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "PGLOBAL"}))
             from certus_physics import PGlobalConfig, PGlobalOptimizer
 
             max_iter_run = params.maxiter if params.maxiter <= 50 else 50
@@ -662,7 +664,8 @@ class FieldWorkerThread(QThread):
                     f"Clusters: {n_clusters} | Best: {state.best_cost:.6f}"
                 )
                 pct = min(90, 20 + int(70 * blended))
-                self.signals.progress.emit(pct, msg)
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=msg, display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "PGLOBAL", "generation": sample.generation, "evals": n_evals, "clusters": n_clusters, "best_cost": state.best_cost}))
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=msg, display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "PGLOBAL", "best_cost": state.best_cost, "generation": sample.generation, "evals": n_evals, "clusters": n_clusters}))
 
                 emit_plot(sample.x, f"Optimization running (PGLOBAL) - Gen {sample.generation}...")
 
@@ -708,7 +711,8 @@ class FieldWorkerThread(QThread):
                 logger.error(f"PGLOBAL optimization failed: {e}")
                 raise
         else:
-            self.signals.progress.emit(20, "Optimization running (L-BFGS-B)...")
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Optimization running (L-BFGS-B)...", display_ratio=0.20, progress_ratio=0.20, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "L-BFGS-B"}))
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message="Optimization running (L-BFGS-B)...", display_ratio=0.20, progress_ratio=0.20, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "L-BFGS-B"}))
             start_points = [np.asarray(params.emp_factors, dtype=float)]
             is_synthesis = bool(params.get("synthesis_mode", False))
             if not is_synthesis:
@@ -723,7 +727,9 @@ class FieldWorkerThread(QThread):
 
                 current_run[0] = idx + 1
                 state.iteration = 0
-                self.signals.progress.emit(20 + idx * 25, f"Optimization running (Run {idx+1}/{n_runs})...")
+                pct = 20 + idx * 25
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Optimization running (Run {idx+1}/{n_runs})...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "L-BFGS-B", "run": idx + 1, "total_runs": n_runs}))
+                self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Optimization running (Run {idx+1}/{n_runs})...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "L-BFGS-B", "run": idx + 1, "total_runs": n_runs}))
                 res_opt = minimize(
                     cost_func,
                     start_p,
@@ -839,7 +845,8 @@ class FieldWorkerThread(QThread):
                         
                 return current_x, current_types, any_cleaned, final_cost
 
-            self.signals.progress.emit(85, f"Auto-cleaning layers thinner than {dmin} nm...")
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="OPTIMIZATION", metadata={"mode": "CLEANUP", "dmin": dmin}))
+            self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Auto-cleaning layers thinner than {dmin} nm...", display_ratio=0.85, progress_ratio=0.85, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="AUTO_CLEAN"))
             
             new_best_x, new_best_types, was_cleaned, new_best_cost = clean_and_reoptimize(best_x, params.layer_types)
             if was_cleaned:
@@ -870,7 +877,7 @@ class FieldWorkerThread(QThread):
             f"  - Final QWOT sum: {sum(best_x):.4f}\n"
             f"  - Improvements: Cost reduced by {initial_cost - best_cost:.6f} ({((initial_cost - best_cost) / max(initial_cost, 1e-6)) * 100:.1f}%)"
         )
-        self.signals.progress.emit(90, "Generating final metrics...")
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINAL_METRICS"))
 
         E2_values_list = []
         z_coords_final = None

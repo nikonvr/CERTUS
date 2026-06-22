@@ -1,4 +1,4 @@
-"""Garde-fou: symboles physiques exposés par le noyau (remplace l'ancienne façade supprimée)."""
+"""Safeguard: physical symbols exposed by the core (replaces the old removed facade)."""
 
 from __future__ import annotations
 

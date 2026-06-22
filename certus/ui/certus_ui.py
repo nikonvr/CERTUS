@@ -60,6 +60,7 @@ __all__ = [
     "FlashyCard",
     "WelcomeGuideWidget",
     "ProgressDialog",
+    "DualStageProgressWidget",
     "EnhancedProgressWidget",
     # Factory Functions
     "create_header_logo_widget",
@@ -291,7 +292,7 @@ from certus.ui.certus_ui_widgets_utils import CertusToast, CertusStatusPill, Cer
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 from certus.ui.certus_plot import CertusScientificPlot, clone_plot_widget, wrap_scientific_plot_with_toolbar, ScientificPlotRefined, sanitize_xy_for_plot, plot_widget_plot_finite
 from certus.ui.certus_ui_widgets_layout import CertusCollapsible, CertusSectionHeader, CertusStepper, CertusActionBar
-from certus.ui.certus_ui_widgets_progress import EnhancedProgressWidget, ProgressDialog
+from certus.ui.certus_ui_widgets_progress import DualStageProgressWidget, EnhancedProgressWidget, ProgressDialog
 from certus.ui.certus_ui_widgets_welcome import WelcomeGuideWidget
 from certus.workers.certus_base_workers import WorkerSignals, GenericWorker, CertusWorkerBase
 from certus.ui.certus_base_app import CertusBaseApp, CertusAppLogsMixin, StatsCounter
@@ -325,7 +326,6 @@ _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
     "DATA_FILES_FILTER_EXTENDED": ("certus.ui.certus_io_ui", "DATA_FILES_FILTER_EXTENDED"),
     "CERTUS_UI_STRINGS": ("certus.ui.certus_io_ui", "CERTUS_UI_STRINGS"),
 
-    "get_plot_style_config": ("certus.ui.certus_plot", "get_plot_style_config"),
     "apply_certus_plot_style": ("certus.ui.certus_plot", "apply_certus_plot_style"),
     "apply_theme_to_plots": ("certus.ui.certus_plot", "apply_theme_to_plots"),
     "iter_plot_data_series": ("certus.utils.certus_export", "iter_plot_data_series"),
@@ -336,12 +336,16 @@ _LAZY_REEXPORTS: dict[str, tuple[str, str]] = {
 }
 
 def __getattr__(name: str):
-
     entry = _LAZY_REEXPORTS.get(name)
     if entry is not None:
         import importlib
+
         mod = importlib.import_module(entry[0])
         attr = getattr(mod, entry[1])
         globals()[name] = attr  # cache for subsequent access
         return attr
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__) | set(_LAZY_REEXPORTS))

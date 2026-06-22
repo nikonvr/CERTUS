@@ -1,4 +1,27 @@
 from __future__ import annotations
+from certus.utils.certus_re_config import RE_PHASE4_TRF_TOL_FACTOR
+from certus.utils.certus_re_config import RE_PHASE4_TRF_MAX_NFEV
+from certus.utils.certus_re_config import RE_PHASE4_APERTURE_SCAN_POINTS
+from certus.utils.certus_re_config import RE_P4_AP_FD_STEP_DEG
+from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
+from certus.utils.certus_re_config import RE_PHASE2_SPLINE_PREFIT_MAXITER
+from certus.utils.certus_re_config import RE_PHASE2_SUB_CAUCHY_FD_STEP
+from certus.utils.certus_re_config import RE_PHASE2A_PREFIT_TOL_FACTOR
+from certus.utils.certus_re_config import RE_PHASE2B_MAXITER
+from certus.utils.certus_re_config import RE_LBFGSB_GTOL
+from certus.utils.certus_re_config import RE_LBFGSB_FTOL
+from certus.utils.certus_re_math import re_substrate_cauchy_initial_theta
+from certus.utils.certus_re_math import re_compute_spline_basis_matrix
+from certus.utils.certus_re_math import re_compute_tikhonov_weights
+from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
+from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
+from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
+from certus.utils.certus_re_config import RE_PHASE2_LAM2_FD_STEP
+from certus.utils.certus_re_config import RE_PHASE2_SPLINE_FD_STEP
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
+from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
 import numpy as np
 import time
 import logging
@@ -35,42 +58,16 @@ from certus.core.certus_re_objectives import (
     _prepare_phase2_fd_settings,
 )
 from certus.utils.certus_re_helpers import (
-    RE_PHASE2A_PREFIT_TOL_FACTOR,
-    RE_PHASE2_SPLINE_PREFIT_MAXITER,
-    RE_PHASE2B_MAXITER,
     RE_SPLINE_NODE2_DEFAULT_NM,
-    re_compute_tikhonov_weights,
-    re_compute_spline_basis_matrix,
     RE_SPLINE_N_KNOTS,
     format_re_spline_knots_log,
     re_knots_wavelengths,
-    RE_PHASE4_APERTURE_SCAN_POINTS,
-    RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_P4_BEAM_N_KNOTS,
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
     _re_p4_beam_knots_lam_nm_from_wls,
-    RE_PHASE4_TRF_TOL_FACTOR,
-    RE_PHASE4_TRF_MAX_NFEV,
-    RE_P4_AP_FD_STEP_DEG,
-    RE_GUI_DEFAULT_RE_PHASE3_SHAKES,
     _re_trf_residual_rms,
-    re_substrate_cauchy_initial_theta,
-    re_substrate_cauchy_phi_matrix,
-    RE_SUB_CAUCHY_TUBE_DELTA,
-    re_substrate_cauchy_barrier_residuals_jac,
-    RE_SUB_CAUCHY_BARRIER_SQRT_W,
-    RE_PHASE2_LAM2_FD_STEP,
-    RE_PHASE2_SPLINE_FD_STEP,
-    RE_PHASE2_SUB_CAUCHY_FD_STEP,
-    RE_LBFGSB_FTOL,
-    RE_LBFGSB_GTOL,
-    RE_RESULT_LABEL_WITH_DRIFT,
-    RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
-    RE_HL_DELTA_RE_REG_SQRT_W,
-    RE_RE_DEADZONE_DELTA_RE_ABS,
-    RE_RE_DEADZONE_QWOT_ABS,
     _re_log_objective_diagnostic,
 )
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
 from certus.workers.certus_re_worker_utils import (
     re_live_plot_wls_and_dispersion_nk,
     shake_sigmas_adaptive,
@@ -144,7 +141,7 @@ def re_execute_phase1(worker) -> list[dict]:
 
             now = time.perf_counter()
 
-            if _cache["i"] == 1 or (now - _cache["last_emit"]) >= 3.0:
+            if _cache["i"] == 1 or (now - _cache["last_emit"]) >= 5.0:
                 _cache["last_emit"] = now
 
                 rs = float(np.sqrt(max(_cache["mse"], 0.0)))
@@ -420,7 +417,7 @@ def re_execute_phase1_p4_scan(worker) -> None:
             "last_emit": time.perf_counter(),
         }
 
-        def _eval_both_s2(xv_full: np.ndarray, *, emit_interval: float = 4.0) -> None:
+        def _eval_both_s2(xv_full: np.ndarray, *, emit_interval: float = 5.0) -> None:
 
             if worker._stop:
                 raise REUserStopRequested()
@@ -904,13 +901,13 @@ def re_execute_phase2_splines(worker) -> None:
             ep_p1=None,
         )
 
-        def _eval_both_p2(xv: np.ndarray, emit_interval: float = 3.0) -> tuple | None:
+        def _eval_both_p2(xv: np.ndarray, emit_interval: float = 5.0) -> tuple | None:
             return worker._compute_eval_both_p2(ctx_p2, xv, emit_interval)
 
-        def _fun_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+        def _fun_res_p2(xv: np.ndarray, emit_interval: float = 5.0) -> Any:
             return worker._compute_fun_res_p2(ctx_p2, xv, emit_interval)
 
-        def _jac_res_p2(xv: np.ndarray, emit_interval: float = 3.0) -> Any:
+        def _jac_res_p2(xv: np.ndarray, emit_interval: float = 5.0) -> Any:
             return worker._compute_jac_res_p2(ctx_p2, xv, emit_interval)
 
         L._p2_ctx = {

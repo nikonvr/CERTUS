@@ -106,41 +106,52 @@ def spectrum_eval_on_finished_prepare_display(
         and app._best_eval_result is not None
         and incoming_rmse > app._best_eval_rmse + 1e-12
     ):
-        data_for_display = copy.deepcopy(app._best_eval_result)
+        ep_best_len = len(app._best_eval_result.get("ep", []))
+        ep_incoming_len = len(data.get("ep", []))
 
-        data_for_display["eval_generation_id"] = result_generation
-
-        logging.info(
-            "[SPECTRUM_EVAL._on_eval_finished] keeping best visual spectrum | incoming_rmse=%.6f | best_rmse=%.6f",
-            incoming_rmse,
-            app._best_eval_rmse,
-        )
-
-        try:
-            ep_best = np.asarray(data_for_display.get("ep", []), dtype=float).flatten()
-
-            if ep_best.size > 0:
-                app._update_qwot_from_ep(ep_best)
-
-                app._update_thickness_display()
-
-                app.ep_current = ep_best.copy()
-
-                app._use_exact_ep = True
-
-        except (
-            ValueError,
-            TypeError,
-            RuntimeError,
-            AttributeError,
-            KeyError,
-            IndexError,
-            FileNotFoundError,
-        ) as _e_best_sync:
-            logging.debug(
-                "[SPECTRUM_EVAL._on_eval_finished] best spectrum/table sync skipped | error=%s",
-                _e_best_sync,
+        if ep_best_len != ep_incoming_len:
+            logging.info(
+                "[SPECTRUM_EVAL._on_eval_finished] skipped monotonic visual rollback due to architecture mismatch | "
+                "incoming_layers=%d | best_layers=%d",
+                ep_incoming_len,
+                ep_best_len,
             )
+        else:
+            data_for_display = copy.deepcopy(app._best_eval_result)
+
+            data_for_display["eval_generation_id"] = result_generation
+
+            logging.info(
+                "[SPECTRUM_EVAL._on_eval_finished] keeping best visual spectrum | incoming_rmse=%.6f | best_rmse=%.6f",
+                incoming_rmse,
+                app._best_eval_rmse,
+            )
+
+            try:
+                ep_best = np.asarray(data_for_display.get("ep", []), dtype=float).flatten()
+
+                if ep_best.size > 0:
+                    app._update_qwot_from_ep(ep_best)
+
+                    app._update_thickness_display()
+
+                    app.ep_current = ep_best.copy()
+
+                    app._use_exact_ep = True
+
+            except (
+                ValueError,
+                TypeError,
+                RuntimeError,
+                AttributeError,
+                KeyError,
+                IndexError,
+                FileNotFoundError,
+            ) as _e_best_sync:
+                logging.debug(
+                    "[SPECTRUM_EVAL._on_eval_finished] silent failure syncing best_ep to UI: %s",
+                    str(_e_best_sync),
+                )
 
     return data_for_display
 

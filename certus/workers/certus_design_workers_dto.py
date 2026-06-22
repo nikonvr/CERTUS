@@ -44,11 +44,22 @@ def _copy_legacy_cfg(cfg: dict[str, Any] | None) -> dict[str, Any]:
 
 
 @dataclass(frozen=True)
+class TracePayload:
+    """Standardized trace payload for worker logging and progression."""
+    run_id: str | None = None
+    created_at: str | None = None
+    initiated_by: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class OptimWorkerRequest:
     """DTO boundary for DESIGN OptimWorker payload."""
 
     cfg: dict[str, Any] = field(default_factory=dict)
     params: DesignParamsDTO = field(default_factory=lambda: DesignParamsDTO())
+    run_context: Any | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     def __post_init__(self) -> None:
         if not isinstance(self.params, DesignParamsDTO):
@@ -60,6 +71,13 @@ class OptimWorkerRequest:
         return OptimWorkerRequest(
             cfg=copied,
             params=DesignParamsDTO.model_validate(copied),
+            run_context=copied.get("run_context"),
+            trace=TracePayload(
+                run_id=copied.get("run_id"),
+                created_at=copied.get("created_at"),
+                initiated_by=copied.get("initiated_by"),
+                metadata=copied.get("metadata", {}),
+            ),
         )
 
 
@@ -69,6 +87,8 @@ class ColorWorkerRequest:
 
     cfg: dict[str, Any] = field(default_factory=dict)
     params: DesignParamsDTO = field(default_factory=lambda: DesignParamsDTO())
+    run_context: Any | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     def __post_init__(self) -> None:
         if not isinstance(self.params, DesignParamsDTO):
@@ -80,6 +100,13 @@ class ColorWorkerRequest:
         return ColorWorkerRequest(
             cfg=copied,
             params=DesignParamsDTO.model_validate(copied),
+            run_context=copied.get("run_context"),
+            trace=TracePayload(
+                run_id=copied.get("run_id"),
+                created_at=copied.get("created_at"),
+                initiated_by=copied.get("initiated_by"),
+                metadata=copied.get("metadata", {}),
+            ),
         )
 
 
@@ -89,6 +116,8 @@ class NeedleWorkerRequest:
 
     cfg: dict[str, Any] = field(default_factory=dict)
     params: DesignParamsDTO = field(default_factory=lambda: DesignParamsDTO())
+    run_context: Any | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     def __post_init__(self) -> None:
         if not isinstance(self.params, DesignParamsDTO):
@@ -100,6 +129,13 @@ class NeedleWorkerRequest:
         return NeedleWorkerRequest(
             cfg=copied,
             params=DesignParamsDTO.model_validate(copied),
+            run_context=copied.get("run_context"),
+            trace=TracePayload(
+                run_id=copied.get("run_id"),
+                created_at=copied.get("created_at"),
+                initiated_by=copied.get("initiated_by"),
+                metadata=copied.get("metadata", {}),
+            ),
         )
 
 
@@ -110,23 +146,31 @@ class ColorWorkerResult:
     ok: bool
     lab_nom: tuple[float, float, float] | list[float] | None = None
     labs: list[tuple[float, float, float]] | list[list[float]] | np.ndarray | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     @staticmethod
     def success(
         lab_nom: tuple[float, float, float] | list[float],
         labs: list[tuple[float, float, float]] | list[list[float]] | np.ndarray,
+        trace: TracePayload | None = None,
     ) -> "ColorWorkerResult":
-        return ColorWorkerResult(ok=True, lab_nom=lab_nom, labs=labs)
+        return ColorWorkerResult(ok=True, lab_nom=lab_nom, labs=labs, trace=trace or TracePayload())
 
     @staticmethod
-    def failure() -> "ColorWorkerResult":
-        return ColorWorkerResult(ok=False)
+    def failure(
+        trace: TracePayload | None = None,
+    ) -> "ColorWorkerResult":
+        return ColorWorkerResult(ok=False, trace=trace or TracePayload())
 
     def to_legacy_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"ok": bool(self.ok)}
         if self.ok:
             out["lab_nom"] = self.lab_nom
             out["labs"] = self.labs
+        out["run_id"] = self.trace.run_id
+        out["created_at"] = self.trace.created_at
+        out["initiated_by"] = self.trace.initiated_by
+        out["metadata"] = self.trace.metadata
         return out
 
 
@@ -137,20 +181,31 @@ class OptimWorkerResult:
     ok: bool
     ep: list[float] | np.ndarray | None = None
     rmse: float | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     @staticmethod
-    def success(ep: list[float] | np.ndarray, rmse: float) -> "OptimWorkerResult":
-        return OptimWorkerResult(ok=True, ep=ep, rmse=float(rmse))
+    def success(
+        ep: list[float] | np.ndarray,
+        rmse: float,
+        trace: TracePayload | None = None,
+    ) -> "OptimWorkerResult":
+        return OptimWorkerResult(ok=True, ep=ep, rmse=float(rmse), trace=trace or TracePayload())
 
     @staticmethod
-    def failure() -> "OptimWorkerResult":
-        return OptimWorkerResult(ok=False)
+    def failure(
+        trace: TracePayload | None = None,
+    ) -> "OptimWorkerResult":
+        return OptimWorkerResult(ok=False, trace=trace or TracePayload())
 
     def to_legacy_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {"ok": bool(self.ok)}
         if self.ok:
             out["ep"] = self.ep
             out["rmse"] = self.rmse
+        out["run_id"] = self.trace.run_id
+        out["created_at"] = self.trace.created_at
+        out["initiated_by"] = self.trace.initiated_by
+        out["metadata"] = self.trace.metadata
         return out
 
 
@@ -163,10 +218,14 @@ class NeedleWorkerResult:
     depth: float | None = None
     needle_mat: str | None = None
     cost: float | None = None
+    trace: TracePayload = field(default_factory=TracePayload)
 
     @staticmethod
-    def action_only(action: str) -> "NeedleWorkerResult":
-        return NeedleWorkerResult(action=str(action))
+    def action_only(
+        action: str,
+        trace: TracePayload | None = None,
+    ) -> "NeedleWorkerResult":
+        return NeedleWorkerResult(action=str(action), trace=trace or TracePayload())
 
     @staticmethod
     def from_legacy(payload: dict[str, Any] | None) -> "NeedleWorkerResult":
@@ -177,6 +236,12 @@ class NeedleWorkerResult:
             depth=float(data["depth"]) if data.get("depth") is not None else None,
             needle_mat=str(data["needle_mat"]) if data.get("needle_mat") is not None else None,
             cost=float(data["cost"]) if data.get("cost") is not None else None,
+            trace=TracePayload(
+                run_id=data.get("run_id"),
+                created_at=data.get("created_at"),
+                initiated_by=data.get("initiated_by"),
+                metadata=data.get("metadata", {}),
+            ),
         )
 
     def to_legacy_dict(self) -> dict[str, Any]:
@@ -189,4 +254,8 @@ class NeedleWorkerResult:
             out["needle_mat"] = self.needle_mat
         if self.cost is not None:
             out["cost"] = float(self.cost)
+        out["run_id"] = self.trace.run_id
+        out["created_at"] = self.trace.created_at
+        out["initiated_by"] = self.trace.initiated_by
+        out["metadata"] = self.trace.metadata
         return out

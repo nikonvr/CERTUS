@@ -160,13 +160,14 @@ from certus_physics import (
 )
 from certus.core.certus_design_core import *
 from certus.workers.certus_design_workers import *
-from certus.ui.mixins.certus_design_plot_mixin import CertusDesignUIPlotMixin
 
-class CertusDesignExportMixin:
+class ExportManager:
+    def __init__(self, ui):
+        self.ui = ui
     @safe_ui_action
     def export_results(self) -> None:
 
-        self.log("[DESIGN.export_results] entered export flow", "DEBUG")
+        self.ui.log("[DESIGN.export_results] entered export flow", "DEBUG")
 
         """Self-exports results to reports folder (Excel + HTML).
 
@@ -198,8 +199,8 @@ class CertusDesignExportMixin:
 
             - Includes RMSE value in filename"""
 
-        if not self.last_result:
-            self.log("[DESIGN.export_results] export skipped: no results available", "WARNING")
+        if not self.ui.last_result:
+            self.ui.log("[DESIGN.export_results] export skipped: no results available", "WARNING")
 
             return
 
@@ -208,7 +209,7 @@ class CertusDesignExportMixin:
 
             rmse_val, base_name, excel_path, html_path = self._prepare_export_paths()
 
-            self.log("[DESIGN.export_results] saving reports (Excel + HTML)", "INFO")
+            self.ui.log("[DESIGN.export_results] saving reports (Excel + HTML)", "INFO")
 
             manifest_dict = self._build_export_manifest()
 
@@ -222,7 +223,7 @@ class CertusDesignExportMixin:
             # 2.HTML EXPORT
             self._export_results_html(manifest_dict, rmse_val, html_path)
 
-            self.status_label.setText(f"✓ Saved: {base_name}")
+            self.ui.status_label.setText(f"✓ Saved: {base_name}")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             logging.error("Export error: %s", e, exc_info=True)
@@ -231,7 +232,7 @@ class CertusDesignExportMixin:
         """Write the Excel report workbook when openpyxl is available."""
 
         if not OPENPYXL_AVAILABLE:
-            self.log("[DESIGN._export_results_excel] Excel export skipped: openpyxl not available", "WARNING")
+            self.ui.log("[DESIGN._export_results_excel] Excel export skipped: openpyxl not available", "WARNING")
 
             return
 
@@ -247,15 +248,18 @@ class CertusDesignExportMixin:
 
         ws.append([f"Generated: {certus_timestamp_display()}"])
 
+        if manifest_dict.get("run_id"):
+            ws.append([f"Run ID: {manifest_dict['run_id']}"])
+
         ws.append([f"Best RMSE: {rmse_val:.6f}"])
 
-        t_exec = f"{self.last_result.get('execution_time', 0):.2f}" if "execution_time" in self.last_result else "N/A"
+        t_exec = f"{self.ui.last_result.get('execution_time', 0):.2f}" if "execution_time" in self.ui.last_result else "N/A"
 
         ws.append([f"Execution Time: {t_exec} s"])
 
-        ws.append([f"Global Cycles: {self.global_cycles_spin.value()}"])
+        ws.append([f"Global Cycles: {self.ui.global_cycles_spin.value()}"])
 
-        ws.append([f"Population: {self.max_clusters_spin.value()}"])
+        ws.append([f"Population: {self.ui.max_clusters_spin.value()}"])
 
         ws.append([])
 
@@ -263,9 +267,9 @@ class CertusDesignExportMixin:
 
         ws.append(["#", "Material", "QWOT", "Thickness (nm)", "Variable"])
 
-        ep = self.ep_current if self.ep_current is not None else []
+        ep = self.ui.ep_current if self.ui.ep_current is not None else []
 
-        for i, layer in enumerate(self._get_front_stack()):
+        for i, layer in enumerate(self.ui._get_front_stack()):
             d = ep[i] if i < len(ep) else 0
 
             ws.append([i + 1, layer.mat, layer.qwot, f"{d:.2f}", "Yes" if layer.var else "No"])
@@ -275,15 +279,26 @@ class CertusDesignExportMixin:
 
             ws.append(["Total Thickness (nm)", f"{np.sum(ep):.2f}"])
 
-        if "vis" in self.last_result:
+        if "vis" in self.ui.last_result:
             ws2 = wb.create_sheet("Spectrum")
-
             ws2.append(["Wavelength (nm)", "Transmission"])
-
-            vis = self.last_result["vis"]
-
+            vis = self.ui.last_result["vis"]
             for i in range(len(vis["l"])):
                 ws2.append([vis["l"][i], vis["Ts"][i]])
+
+        # 3. PARETO CATALOG EXPORT
+        if hasattr(self.ui, 'pareto_history') and self.ui.pareto_history:
+            ws_p = wb.create_sheet("Pareto Catalog")
+            ws_p.append(["Layers", "RMSE", "Stack Design"])
+            for n_layers in sorted(self.ui.pareto_history.keys(), reverse=True):
+                entry = self.ui.pareto_history[n_layers]
+                catalog = entry.get("catalog", [])
+                for cat_entry in catalog:
+                    rmse = cat_entry.get("rmse", float('inf'))
+                    ep = cat_entry.get("ep", [])
+                    stack = cat_entry.get("stack", [])
+                    design_str = " | ".join(f"{s.mat}: {d:.2f}" for s, d in zip(stack, ep))
+                    ws_p.append([n_layers, rmse, design_str])
 
         ws_m = wb.create_sheet("Manifest")
 
@@ -294,16 +309,16 @@ class CertusDesignExportMixin:
 
         wb.save(excel_path)
 
-        self.log(f"Excel saved: {Path(excel_path).name}", "SUCCESS")
+        self.ui.log(f"Excel saved: {Path(excel_path).name}", "SUCCESS")
 
     def _export_results_html(self, manifest_dict: dict[str, Any], rmse_val: float, html_path: str) -> None:
         """Write the HTML report for design optimization results."""
 
-        ep = self.ep_current if self.ep_current is not None else []
+        ep = self.ui.ep_current if self.ui.ep_current is not None else []
 
         stack_data = []
 
-        for i, layer in enumerate(self._get_front_stack()):
+        for i, layer in enumerate(self.ui._get_front_stack()):
             d = ep[i] if i < len(ep) else 0.0
 
             stack_data.append(
@@ -322,15 +337,15 @@ class CertusDesignExportMixin:
                 "type": "kv",
                 "content": {
                     "Best RMSE": f"{rmse_val:.5f}",
-                    "Total Layers": str(self.front_table.rowCount()),
+                    "Total Layers": str(self.ui.front_table.rowCount()),
                     "Total Thickness": (f"{np.sum(ep):.2f} nm" if len(ep) > 0 else "N/A"),
-                    "Reference L0": f"{self.l0_spin.value()} nm",
-                    "Targets Count": str(len(self._get_tgts())),
-                    "Global Cycles": str(self.global_cycles_spin.value()),
-                    "Cluster Pop": str(self.max_clusters_spin.value()),
+                    "Reference L0": f"{self.ui.l0_spin.value()} nm",
+                    "Targets Count": str(len(self.ui._get_tgts())),
+                    "Global Cycles": str(self.ui.global_cycles_spin.value()),
+                    "Cluster Pop": str(self.ui.max_clusters_spin.value()),
                     "Execution Time": (
-                        f"{self.last_result.get('execution_time', 0):.2f} s"
-                        if "execution_time" in self.last_result
+                        f"{self.ui.last_result.get('execution_time', 0):.2f} s"
+                        if "execution_time" in self.ui.last_result
                         else "N/A"
                     ),
                 },
@@ -371,10 +386,10 @@ class CertusDesignExportMixin:
 
         all_sections = methodology_sections + sections
 
-        figures = [self.spectrum_plot, self.profile_plot]
+        figures = [self.ui.spectrum_plot, self.ui.profile_plot]
 
         if generate_html_report(html_path, "CERTUS-DESIGN Report", all_sections, figures):
-            self.log(f"HTML saved: {Path(html_path).name}", "SUCCESS")
+            self.ui.log(f"HTML saved: {Path(html_path).name}", "SUCCESS")
 
     def _build_export_manifest(self) -> dict[str, Any]:
         """Build a run manifest for report export."""
@@ -413,14 +428,14 @@ class CertusDesignExportMixin:
                 except (TypeError, ValueError):
                     continue
 
-            svc = IndexFitService(runner=lambda _cfg: self.last_result or {})
+            svc = IndexFitService(runner=lambda _cfg: self.ui.last_result or {})
 
             req = IndexFitRequest(
                 config={
                     "module": "CERTUS_DESIGN",
                     "export_kind": "full_results",
-                    "l0_nm": float(self.l0_spin.value()),
-                    "layers_count": int(self.front_table.rowCount()),
+                    "l0_nm": float(self.ui.l0_spin.value()),
+                    "layers_count": int(self.ui.front_table.rowCount()),
                 },
                 source_paths=[
                     p
@@ -435,12 +450,13 @@ class CertusDesignExportMixin:
                 app_version=__version__,
                 warnings=list(getattr(self, "validation_warnings", []) or []),
                 status=status_val,
+                run_id=getattr(self, "_workflow_run_id", None),
             )
 
             manifest_dict = svc.fit(req).manifest.to_dict()
 
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
-            self.log(f"Manifest generation failed: {exc}", "WARNING")
+            self.ui.log(f"Manifest generation failed: {exc}", "WARNING")
 
             manifest_dict = {}
 
@@ -456,7 +472,7 @@ class CertusDesignExportMixin:
         if not missing_manifest_fields:
             return True
 
-        self.log(
+        self.ui.log(
             "Export blocked: incomplete manifest (missing: " + ", ".join(missing_manifest_fields) + ")",
             "ERROR",
         )
@@ -466,30 +482,30 @@ class CertusDesignExportMixin:
     def _sync_export_result_with_best_eval(self) -> None:
         """Keep export payload aligned with the best evaluation spectrum and thickness table."""
 
-        curr_rmse = self.last_result.get("rmse")
+        curr_rmse = self.ui.last_result.get("rmse")
 
-        curr_rmse_valid = self._is_valid_rmse_value(curr_rmse)
+        curr_rmse_valid = self.ui._is_valid_rmse_value(curr_rmse)
 
         if not (
-            self._best_eval_result is not None
-            and self._is_valid_rmse_value(self._best_eval_rmse)
-            and (not curr_rmse_valid or self._best_eval_rmse <= curr_rmse + 1e-12)
+            self.ui._best_eval_result is not None
+            and self.ui._is_valid_rmse_value(self.ui._best_eval_rmse)
+            and (not curr_rmse_valid or self.ui._best_eval_rmse <= curr_rmse + 1e-12)
         ):
             return
 
-        self.last_result = copy.deepcopy(self._best_eval_result)
+        self.ui.last_result = copy.deepcopy(self.ui._best_eval_result)
 
         try:
-            ep_best = np.asarray(self.last_result.get("ep", []), dtype=float).flatten()
+            ep_best = np.asarray(self.ui.last_result.get("ep", []), dtype=float).flatten()
 
             if ep_best.size > 0:
-                self._update_qwot_from_ep(ep_best)
+                self.ui._update_qwot_from_ep(ep_best)
 
-                self._update_thickness_display()
+                self.ui._update_thickness_display()
 
-                self.ep_current = ep_best.copy()
+                self.ui.ep_current = ep_best.copy()
 
-                self._use_exact_ep = True
+                self.ui._use_exact_ep = True
 
         except NUMERICAL_FAULT_EXCEPTIONS as _e_export_sync:
             logging.debug(f"[EXPORT] Best spectrum/table sync skipped:{_e_export_sync}")
@@ -504,7 +520,7 @@ class CertusDesignExportMixin:
         rmse_val = getattr(self, "_workflow_best_rmse", None)
 
         if rmse_val is None or not np.isfinite(rmse_val) or rmse_val < 0.0:
-            rmse_val = self.last_result.get("rmse", 0.0)
+            rmse_val = self.ui.last_result.get("rmse", 0.0)
 
         if rmse_val is None or not np.isfinite(rmse_val) or rmse_val < 0.0:
             rmse_val = float("inf")
@@ -514,8 +530,8 @@ class CertusDesignExportMixin:
         try:
             src_name = ""
 
-            if hasattr(self, "_last_config_file") and self._last_config_file:
-                src_name = "_" + Path(self._last_config_file).stem
+            if hasattr(self, "_last_config_file") and self.ui._last_config_file:
+                src_name = "_" + Path(self.ui._last_config_file).stem
 
             base_name = f"Report_DESIGN{src_name}_{ts}_RMSE_{rmse_val:.5f}"
 
@@ -540,31 +556,31 @@ class CertusDesignExportMixin:
         try:
             # FINAL CLEANUP: Clean + Polish before export
 
-            if self.front_table.rowCount() > 0:
-                self.log("Final cleanup before export...", "INFO")
+            if self.ui.front_table.rowCount() > 0:
+                self.ui.log("Final cleanup before export...", "INFO")
 
-                removed = self.smart_cleanup()
+                removed = self.ui.smart_cleanup()
 
                 if removed > 0:
-                    self.log(f"Final cleanup: removed {removed} layers.", "INFO")
+                    self.ui.log(f"Final cleanup: removed {removed} layers.", "INFO")
 
-                    self._is_internal_restart = True
+                    self.ui._is_internal_restart = True
 
-                    self._schedule_eval(True)
+                    self.ui._schedule_eval(True)
 
             # --- Materials table ---
 
-            mats = self._get_materials()
+            mats = self.ui._get_materials()
 
             df_mats = pd.DataFrame([{"Name": k, "n@400nm": m.n4, "n@700nm": m.n7} for k, m in mats.items()])
 
             # --- Front stack table ---
 
-            ep = self.ep_current if self.ep_current is not None else []
+            ep = self.ui.ep_current if self.ui.ep_current is not None else []
 
             stack_rows = []
 
-            for i, layer in enumerate(self._get_front_stack()):
+            for i, layer in enumerate(self.ui._get_front_stack()):
                 stack_rows.append(
                     {
                         "#": i + 1,
@@ -595,7 +611,7 @@ class CertusDesignExportMixin:
                         "Tmax": t.tmax,
                         "Weight": t.w,
                     }
-                    for t in self._get_tgts()
+                    for t in self.ui._get_tgts()
                 ]
             )
 
@@ -604,16 +620,16 @@ class CertusDesignExportMixin:
             summary_kv = {
                 "Generated": certus_timestamp_display(),
                 "CERTUS Suite": APP_SUITE_VERSION,
-                "L0 (nm)": self.l0_spin.value(),
+                "L0 (nm)": self.ui.l0_spin.value(),
                 "Total layers": len(stack_rows),
             }
 
             from certus.utils.certus_data import ReportSection, build_standard_report
 
             try:
-                self.set_validation_status("OK")
+                self.ui.set_validation_status("OK")
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                self.logger.warning("DESIGN validation status update skipped during export: %s", exc)
+                self.ui.logger.warning("DESIGN validation status update skipped during export: %s", exc)
             run_manifest = None
             try:
                 status_txt = str(getattr(self, "validation_status", "OK") or "OK")
@@ -621,7 +637,7 @@ class CertusDesignExportMixin:
                     status_val = ValidationStatus(status_txt)
                 except ValueError:
                     status_val = ValidationStatus.OK
-                svc = IndexFitService(runner=lambda _cfg: self.last_result or {})
+                svc = IndexFitService(runner=lambda _cfg: self.ui.last_result or {})
                 seed_val = None
                 seed_sources = [
                     getattr(self, "run_seed", None),
@@ -645,7 +661,7 @@ class CertusDesignExportMixin:
                 req = IndexFitRequest(
                     config={
                         "module": "CERTUS_DESIGN",
-                        "l0_nm": float(self.l0_spin.value()),
+                        "l0_nm": float(self.ui.l0_spin.value()),
                         "layers_count": int(len(stack_rows)),
                     },
                     source_paths=[
@@ -664,7 +680,7 @@ class CertusDesignExportMixin:
                 )
                 run_manifest = svc.fit(req).manifest
             except NUMERICAL_FAULT_EXCEPTIONS as exc:
-                self.logger.warning("DESIGN manifest generation failed: %s", exc)
+                self.ui.logger.warning("DESIGN manifest generation failed: %s", exc)
                 run_manifest = None
 
             sections = [
@@ -674,8 +690,8 @@ class CertusDesignExportMixin:
                 ReportSection("Spectral Targets", kind="table", content=df_targets, sheet_name="Targets"),
             ]
 
-            if self.last_result:
-                r = self.last_result["vis"]
+            if self.ui.last_result:
+                r = self.ui.last_result["vis"]
 
                 df_spectrum = pd.DataFrame({"Wavelength (nm)": r["l"], "Transmission": r["Ts"]})
 
@@ -689,11 +705,11 @@ class CertusDesignExportMixin:
             )
 
             if result.get("excel"):
-                self.log(f"Exported to:  {f}", "SUCCESS")
+                self.ui.log(f"Exported to:  {f}", "SUCCESS")
 
             else:
-                self.log("Export failed (build_standard_report error).", "ERROR")
+                self.ui.log("Export failed (build_standard_report error).", "ERROR")
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
-            self.log(f"Export error:{str(e)}", "ERROR")
+            self.ui.log(f"Export error:{str(e)}", "ERROR")
 

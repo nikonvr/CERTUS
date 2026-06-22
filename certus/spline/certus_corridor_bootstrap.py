@@ -1,10 +1,14 @@
-from typing import *
+# from typing import *  # Unused
 import numpy as np
 import logging
-from certus.core.certus_core import *
-from certus.spline.certus_corridor_config import *
-from certus.spline.certus_corridor_fitter import *
-from certus.spline.certus_index_spline_core import *
+from certus.core.certus_core import Any, NUMERICAL_FAULT_EXCEPTIONS
+
+from certus.spline.certus_corridor_config import (
+    ProfileCorridorConfig,
+    SplineOptConfig,
+    _LOG_PREFIX,
+)
+from certus.spline.certus_corridor_utils import quick_pwlnk_refit_result_dict
 
 log = logging.getLogger('CERTUS')
 
@@ -32,6 +36,7 @@ def _bootstrap_single_replicate(
             if br is not None:
                 base_for = br
 
+        from certus.spline.spline_profile_corridors import compute_profiled_corridors_by_d
         extra = compute_profiled_corridors_by_d(cfg_b, base_for, pconf=pconf, log_coaching=False)
 
     except NUMERICAL_FAULT_EXCEPTIONS:

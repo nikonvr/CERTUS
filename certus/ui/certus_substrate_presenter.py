@@ -53,7 +53,7 @@ class CertusSubstratePresenter:
             if prepared_df is None or x is None or groups is None or wl_min_fit is None or wl_max_fit is None:
                 msg = "; ".join(prep_warnings) if prep_warnings else "invalid input"
                 self.view.show_warning("Substrate Index", f"Cannot start calculation: {msg}.")
-                self.view.stop_progress("Invalid input")
+                self.view.stop_progress("Error: Invalid input")
                 return
 
             self.df = prepared_df
@@ -64,7 +64,7 @@ class CertusSubstratePresenter:
 
             if wl_min_fit >= wl_max_fit:
                 self.view.show_warning("Fit range", "\u03bb min fit must be strictly less than \u03bb max fit.")
-                self.view.stop_progress("Invalid fit range")
+                self.view.stop_progress("Error: Invalid fit range")
                 return
 
             sell_timeout_cfg, sell_de_maxiter, sell_ls_max_nfev, sell_log_l1l2 = _resolve_sellmeier_settings(
@@ -123,6 +123,7 @@ class CertusSubstratePresenter:
             self.view.display_results(
                 x, n_results_raw, n_results_by_model, rmse_row, n_fit_meta, wl_min_fit, wl_max_fit, quality_summary
             )
+            self.view.stop_progress("Done")
 
         except Exception as e:
             logger.error("Calculation error: %s", e)

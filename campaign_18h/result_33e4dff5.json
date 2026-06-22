@@ -1,0 +1,110 @@
+{
+    "best_rmse": 0.008692614087018406,
+    "layers": 26,
+    "stack": [
+        {
+            "material": "H",
+            "thickness": 0.286292
+        },
+        {
+            "material": "L",
+            "thickness": 0.570707
+        },
+        {
+            "material": "H",
+            "thickness": 0.706879
+        },
+        {
+            "material": "L",
+            "thickness": 0.671194
+        },
+        {
+            "material": "H",
+            "thickness": 1.105703
+        },
+        {
+            "material": "L",
+            "thickness": 0.312531
+        },
+        {
+            "material": "H",
+            "thickness": 0.42337
+        },
+        {
+            "material": "L",
+            "thickness": 1.180548
+        },
+        {
+            "material": "H",
+            "thickness": 1.134457
+        },
+        {
+            "material": "L",
+            "thickness": 0.994228
+        },
+        {
+            "material": "H",
+            "thickness": 1.511214
+        },
+        {
+            "material": "L",
+            "thickness": 0.616801
+        },
+        {
+            "material": "H",
+            "thickness": 0.230572
+        },
+        {
+            "material": "L",
+            "thickness": 1.359442
+        },
+        {
+            "material": "H",
+            "thickness": 0.573538
+        },
+        {
+            "material": "L",
+            "thickness": 0.160706
+        },
+        {
+            "material": "H",
+            "thickness": 0.73731
+        },
+        {
+            "material": "L",
+            "thickness": 2.268146
+        },
+        {
+            "material": "H",
+            "thickness": 1.982605
+        },
+        {
+            "material": "L",
+            "thickness": 1.080991
+        },
+        {
+            "material": "H",
+            "thickness": 0.260866
+        },
+        {
+            "material": "L",
+            "thickness": 0.652055
+        },
+        {
+            "material": "H",
+            "thickness": 0.115438
+        },
+        {
+            "material": "L",
+            "thickness": 1.476515
+        },
+        {
+            "material": "H",
+            "thickness": 1.725023
+        },
+        {
+            "material": "L",
+            "thickness": 0.953394
+        }
+    ]
+}

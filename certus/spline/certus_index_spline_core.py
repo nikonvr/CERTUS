@@ -1261,7 +1261,14 @@ def allowed_substrate_names() -> list[str]:
 
 
 # --- P4 Refactor: Sub-configs ---
-from certus.spline.certus_index_spline_config import *
+from certus.spline.certus_index_spline_config import (
+    SmartInitPreviewCancelled,
+    SplineOptConfig,
+    corridor_profile_refit_maxfun,
+    SPLINE_MIN_RMSE_FIT_OBJECTIVE_POINTS,
+    sol3_phase1_maxfun_effective,
+)
+
 
 def reset_smart_init_preview_guard(cfg: SplineOptConfig | None = None) -> None:
     """Allows the Smart Init dialog again for a new run (``cfg.smart_init_preview_shown = False``)."""

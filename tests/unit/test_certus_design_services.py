@@ -221,7 +221,15 @@ def test_design_strategy_service_falls_back_to_safe_result_on_non_dict_runner_ou
         }
     )
 
-    assert resp.result == {"ok": True, "ep": [], "rmse": 0.0}
+    assert resp.result == {
+        "ok": True,
+        "ep": [],
+        "rmse": 0.0,
+        "run_id": None,
+        "created_at": None,
+        "initiated_by": None,
+        "metadata": {}
+    }
     assert resp.manifest.run_context.seed == 2
 
 

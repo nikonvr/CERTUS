@@ -618,6 +618,9 @@ def _lbfgsb_phase_with_progress(
                 f" | RMSE={float(np.sqrt(max(float(state['last_fun']), 0.0))):.6f}"
                 f" | elapsed={now - float(state['t0']):.0f}s",
             )
+            logging.info(
+                f"[LIVE VIEW] Emitted 5s live refresh signal | Spline RMSE={float(np.sqrt(max(float(state['last_fun']), 0.0))):.6f}"
+            )
 
     def _obj_phase(z: np.ndarray) -> float:
         state["nfev"] += 1

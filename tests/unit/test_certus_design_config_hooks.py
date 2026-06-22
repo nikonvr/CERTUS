@@ -87,23 +87,50 @@ def test_design_load_config_delegates_to_hooks_and_recent():
 
 
 def test_design_apply_config_delegates_to_small_helpers():
-    from CERTUS_DESIGN import CertusDesignApp
+    from certus.ui.certus_design_ui_state import StateManager
 
-    src = inspect.getsource(CertusDesignApp._apply_config)
+    src = inspect.getsource(StateManager._apply_config)
     for needle in (
         "_apply_material_config",
         "_apply_stack_rows",
         "_apply_target_config",
         "_apply_optimization_config",
+        "init_thickness",
+        "ep_current rebuilt from loaded stack",
     ):
         assert needle in src, f"_apply_config does not call {needle}"
 
 
+def test_design_profile_plot_refuses_mismatched_state():
+    from certus.ui.certus_design_ui_plot import PlotManager
+
+    src = inspect.getsource(PlotManager._plot_profile_actual)
+    for needle in (
+        "plot skipped: inconsistent front state",
+        "ep_len != stack_len",
+    ):
+        assert needle in src, f"_plot_profile_actual does not guard {needle}"
+
+
+def test_design_load_post_config_refresh_order_is_safe():
+    from certus.ui.certus_design_ui_state import StateManager
+
+    src = inspect.getsource(StateManager._apply_config)
+    for needle in (
+        "_apply_optimization_config",
+        "_update_optim_point_count",
+        "_update_layer_count",
+        "ep_current rebuilt from loaded stack",
+        "_schedule_eval(True)",
+    ):
+        assert needle in src, f"_apply_config missing {needle}"
+
+
 def test_design_smart_cleanup_preserved_in_save_flow():
     """The smart_cleanup pre-processing must still live in the save pipeline."""
-    from CERTUS_DESIGN import CertusDesignApp
+    from certus.ui.certus_design_ui_state import StateManager
 
-    pre_src = inspect.getsource(CertusDesignApp._pre_save_smart_cleanup)
+    pre_src = inspect.getsource(StateManager._pre_save_smart_cleanup)
     assert "smart_cleanup" in pre_src
     assert "front_table" in pre_src
 

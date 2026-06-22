@@ -1,4 +1,4 @@
-"""Tests for the CERTUS keyboard shortcuts overlay (U4)."""
+﻿"""Tests for the CERTUS keyboard shortcuts overlay (U4)."""
 
 from __future__ import annotations
 
@@ -166,7 +166,8 @@ def test_u4_default_commands_include_show_shortcuts():
     from certus.ui.certus_ui import CertusBaseApp
 
     class _Stub:
-        pass
+        def open_shortcuts_overlay(self):
+            pass
 
     cmds = CertusBaseApp._default_commands(_Stub())
     ids = {c.id for c in cmds}

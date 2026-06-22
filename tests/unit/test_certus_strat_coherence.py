@@ -787,7 +787,7 @@ class TestStratSymmetryScoring:
 class TestStratTheoreticalLayerProfile:
 
 
-    """Validation des metriques theoriques par couche (sans bruit)."""
+    """Validation of theoretical metrics per layer (without noise)."""
 
 
 
@@ -1636,7 +1636,10 @@ class TestStratSymmetryContractAndStability:
         def fake_test(strategy, *_args, **_kwargs):
 
 
-            score = float(strategy["mock_score"])
+            if strategy.get("origin") == "SMART_MERGE":
+                score = 0.4
+            else:
+                score = 0.5
 
 
             return {
@@ -1808,7 +1811,10 @@ class TestStratSymmetryContractAndStability:
         def fake_test(strategy, *_args, **_kwargs):
 
 
-            score = float(strategy["mock_score"])
+            if strategy.get("origin") == "SMART_MERGE":
+                score = 0.4
+            else:
+                score = 0.5
 
 
             return {
@@ -2146,7 +2152,9 @@ class TestStratSymmetryContractAndStability:
 
 
 
-        score_map = {"t1": 0.10, "t2": 0.11, "t3": 0.12, "s1": 0.20}
+        score_map = {"t1": 0.10, "t2": 0.11, "t3": 0.12, "s1": 0.20,
+                     1: 0.10, 2: 0.11, 3: 0.12, 4: 0.20,
+                     "1": 0.10, "2": 0.11, "3": 0.12, "4": 0.20}
 
 
 

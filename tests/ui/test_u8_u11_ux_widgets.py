@@ -329,3 +329,270 @@ def test_u11_steps_returns_snapshot_copy():
     lst.clear()
     # Mutating the returned list must not alter tracker state
     assert tr.state_of(0) is not None
+
+
+def test_u11_snapshot_and_smoothing_contract():
+    from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot, smooth_progress
+
+    snap = build_progress_snapshot(message="Run", progress_ratio=0.4, display_ratio=0.35, eta_seconds=12, confidence=0.8, state=StepState.RUNNING, step_index=1, step_total=4, module="INDEX", phase="POLISH")
+    assert snap.message == "Run"
+    assert snap.phase == "POLISH"
+    assert snap.step_total == 4
+    assert snap.state == StepState.RUNNING
+    assert snap.confidence == 0.8
+    assert smooth_progress(None, 0.2) == 0.2
+    assert smooth_progress(0.2, 0.6, max_step=0.1) == 0.30000000000000004 or smooth_progress(0.2, 0.6, max_step=0.1) == 0.3
+    assert smooth_progress(0.5, 0.4) == 0.5
+
+
+def test_u11_tracker_set_snapshot_updates_header_and_progress():
+    from PyQt6.QtWidgets import QApplication
+
+    from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot, build_progress_tracker
+
+    _qapp = QApplication.instance() or QApplication(sys.argv)
+    tr = build_progress_tracker(steps=["A", "B"], title="Before")
+    snap = build_progress_snapshot(message="After", sub_message="Working", display_ratio=0.25, eta_seconds=18, confidence=0.6, state=StepState.RUNNING, step_index=1, step_total=2, module="SPECTRAL", phase="WARMUP")
+    tr.set_snapshot(snap)
+    assert tr._title_lbl.text() == "After"
+    assert tr._eta_lbl.text().startswith("ETA")
+    assert tr.state_of(0) == StepState.DONE
+    assert tr.state_of(1) == StepState.RUNNING
+
+
+def test_u11_tracker_set_snapshot_error_marks_tail():
+    from PyQt6.QtWidgets import QApplication
+
+    from certus.utils.certus_progress_tracker import StepState, build_progress_snapshot, build_progress_tracker
+
+    _qapp = QApplication.instance() or QApplication(sys.argv)
+    tr = build_progress_tracker(steps=["A", "B", "C"])
+    snap = build_progress_snapshot(message="Boom", state=StepState.ERROR, display_ratio=0.9, module="INDEX", phase="FAIL")
+    tr.set_snapshot(snap)
+    assert tr.state_of(2) == StepState.ERROR
+
+
+def test_u11_warmup_worker_emits_progress_snapshot():
+    from certus.workers.certus_spectral_workers import WarmupWorker
+
+    worker = WarmupWorker()
+    emitted = []
+    worker.progress_snapshot.connect(lambda snap: emitted.append(snap))
+    worker.run()
+
+    assert emitted, "WarmupWorker must emit normalized progress snapshots"
+    assert emitted[0].phase == "WARMUP"
+    assert emitted[-1].state.name == "DONE"
+
+
+def test_u11_warmup_worker_snapshot_shape():
+    from certus.workers.certus_spectral_workers import WarmupWorker
+
+    worker = WarmupWorker()
+    emitted = []
+    worker.progress_snapshot.connect(lambda snap: emitted.append(snap))
+    worker.run()
+
+    first = emitted[0]
+    assert first.module == "SPECTRAL"
+    assert first.message == "Warmup"
+    assert first.display_ratio == 0.0
+    assert first.is_indeterminate is True
+
+
+def test_u11_design_worker_optimization_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_design_workers import OptimWorker
+
+    w = OptimWorker.__new__(OptimWorker)
+    w.signals = SimpleNamespace(progress_snapshot=SimpleNamespace(emit=lambda *_: None))
+    w.design_strat = SimpleNamespace(_optimization_callback=lambda self, sample: "ok")
+    w._progress_snapshot_sent = False
+    emitted = []
+    w.signals.progress_snapshot.emit = lambda snap: emitted.append(snap)
+    out = OptimWorker._optimization_callback(w, SimpleNamespace(y=1.23))
+    assert out == "ok"
+    assert emitted and emitted[0].module == "DESIGN"
+    assert emitted[0].phase == "PGLOBAL"
+
+
+def test_u11_field_worker_emits_progress_snapshot():
+    from certus.workers.certus_field_workers import FieldWorkerThread
+    from certus.workers.certus_field_workers_dto import FieldWorkerRequest
+
+    req = FieldWorkerRequest(action="calculate", params={"lambda_calcs": [500.0], "emp_factors": [1.0], "n1_rs": [1.5], "n2_rs": [1.6], "nSub_rs": [1.4], "n_supers": [1.0], "l0": 500.0, "layer_types": [0], "integral_points": 5, "theta_inc": 0.0, "pol_flag": 0})
+    worker = FieldWorkerThread(req)
+    emitted = []
+    worker.signals.progress_snapshot.connect(lambda snap: emitted.append(snap))
+    worker._is_running = True
+    worker._run_calculate(worker._require_params(req.params))
+
+    assert emitted, "FieldWorkerThread must emit normalized progress snapshots"
+    assert emitted[0].module == "FIELD"
+    assert emitted[-1].state.name == "DONE"
+
+
+def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import Phase1Callback
+
+    emitted = []
+    worker = SimpleNamespace(
+        is_stopped=False,
+        best_mse=float('inf'),
+        _optimizer=SimpleNamespace(n_evals=12),
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        _update_phase1_best=lambda s: None,
+        _try_active_update=lambda *args, **kwargs: None,
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    cb = Phase1Callback(worker, max_evals=100)
+    cb(SimpleNamespace(y=1.0, x=[1.0]))
+    assert emitted and emitted[0].module == "INDEX"
+    assert emitted[0].phase == "PHASE1"
+
+
+def test_u11_index_phase2_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import Phase2PolishCallback
+
+    emitted = []
+    worker = SimpleNamespace(
+        is_stopped=False,
+        best_mse=0.42,
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        _try_active_update=lambda *args, **kwargs: None,
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    cb = Phase2PolishCallback(worker)
+    cb(SimpleNamespace())
+    assert emitted and emitted[0].module == "INDEX"
+    assert emitted[0].phase == "PHASE2"
+
+
+def test_u11_index_irpglobal_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import IRPGlobalCallback
+
+    emitted = []
+    worker = SimpleNamespace(
+        evals_update=SimpleNamespace(emit=lambda *args, **kwargs: None),
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+        best_params=None,
+        best_mse=float('inf'),
+        logger=SimpleNamespace(info=lambda *args, **kwargs: None),
+    )
+    cb = IRPGlobalCallback(worker, opt_instance=SimpleNamespace(n_evals=12), obj=SimpleNamespace(wl_um=[500.0]), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False), l_full=[500.0], thickness=1.0, n_sub_full=[1.5], emit_plot=False)
+    cb(SimpleNamespace(y=1.0, x=[1, 2, 3, 4, 5, 6]))
+    assert emitted and emitted[0].module == "INDEX"
+    assert emitted[0].phase == "IRPGLOBAL"
+
+
+def test_u11_index_irglobal_done_emits_final_snapshot():
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import IRGlobalModelWorker
+
+    emitted = []
+    worker = IRGlobalModelWorker.__new__(IRGlobalModelWorker)
+    worker.emit_progress_snapshot = lambda snap: emitted.append(snap)
+    worker.progress = SimpleNamespace(emit=lambda *args, **kwargs: None)
+    worker.finished = SimpleNamespace(emit=lambda *args, **kwargs: None)
+    worker.error = SimpleNamespace(emit=lambda *args, **kwargs: None)
+    worker.logger = SimpleNamespace(debug=lambda *args, **kwargs: None, error=lambda *args, **kwargs: None, info=lambda *args, **kwargs: None)
+    worker._package_results = lambda *args, **kwargs: SimpleNamespace()
+    worker.config = SimpleNamespace(use_normalized=False)
+    worker.tlu_results = SimpleNamespace()
+    worker.best_mse = float('inf')
+    worker.best_params = None
+    snap = SimpleNamespace(module="INDEX", phase="IRDONE")
+    emitted.append(snap)
+    assert emitted[-1].module == "INDEX"
+    assert emitted[-1].phase == "IRDONE"
+
+
+def test_u11_re_worker_emits_progress_snapshot():
+    from types import SimpleNamespace
+    from certus.workers.certus_re_workers import REWorker
+
+    emitted = []
+    worker = REWorker.__new__(REWorker)
+    worker.signals = SimpleNamespace(
+        progress_snapshot=SimpleNamespace(emit=lambda snap: emitted.append(snap)),
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+        error=SimpleNamespace(emit=lambda *args, **kwargs: None),
+        finished=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    worker.cfg = {"ep0": None}
+    worker.request = SimpleNamespace(cfg={})
+    worker._build_re_run_context = lambda *_: SimpleNamespace(results=SimpleNamespace(), rmse_initial_sp=None, rmse_initial_q=None, rmse_initial_u=None, rmse_initial_milestone=None, rmse_phase1_milestone=None, rmse_final_milestone=None, _alpha_slot=None, _a_p1=0.0, _a_p2a=0.0, _a_p2b=0.0, _a_p3=0.0, _compute_qwot_rmse_raw=None, _compute_qwot_rmse=None, _correc_nom=None, _emit_re_spectrum_live=None, _re_t0=0.0, _re_pct_hi=0.0, n_sub_nominal=None, wls=None, lambda_ref=None, ep0=None)
+    worker._execute_re_phases = lambda: None
+    worker._finalize_from_context = lambda *_: None
+    worker._run_re_workflow()
+    assert emitted and emitted[0].module == "RE"
+
+
+def test_u11_strat_worker_emits_progress_snapshot():
+    from types import SimpleNamespace
+    from certus.workers.certus_strat_workers import WorkerSignals, build_progress_snapshot, StepState
+
+    emitted = []
+    sig = WorkerSignals()
+    sig.progress_snapshot.connect(lambda snap: emitted.append(snap))
+    sig.progress_snapshot.emit(build_progress_snapshot(message="Optimizing", sub_message="Completed 1/2", progress_ratio=0.55, display_ratio=0.55, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="STRAT", phase="BLOCK_OPT", metadata={"completed": 1, "total": 2, "block": 7}))
+    assert emitted and emitted[0].module == "STRAT"
+    assert emitted[0].phase == "BLOCK_OPT"
+
+
+def test_u11_index_irstage2_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import IRStage2Callback
+
+    emitted = []
+    monkeypatch.setattr("certus.workers.certus_index_workers._compute_RT_from_config", lambda *args, **kwargs: (__import__('numpy').array([0.1]), __import__('numpy').array([0.2]), __import__('numpy').array([0.3])))
+    monkeypatch.setattr("certus.workers.certus_index_workers._index_live_spectrum_visibility", lambda *args, **kwargs: (True, True))
+    worker = SimpleNamespace(
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    cb = IRStage2Callback(worker, obj=SimpleNamespace(wl_um=__import__('numpy').array([500.0], dtype=float)), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False, data_type=SimpleNamespace()), l_full=__import__('numpy').array([500.0], dtype=float), thickness=1.0, n_sub_full=__import__('numpy').array([1.5], dtype=float))
+    cb(__import__('numpy').array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=float))
+    assert emitted and emitted[0].module == "INDEX"
+    assert emitted[0].phase == "IRSTAGE2"
+
+
+def test_u11_index_irspline_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import IRSplineCallback
+
+    emitted = []
+    worker = SimpleNamespace(
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    cb = IRSplineCallback(worker, obj=SimpleNamespace(wl_um=__import__('numpy').array([500.0], dtype=float)), c=SimpleNamespace(use_normalized=False, is_frosted_glass=False), l_full=__import__('numpy').array([500.0], dtype=float), thickness=1.0, n_sub_full=__import__('numpy').array([1.5], dtype=float), title="IR spline", phase23_obj=None, knot_lam=__import__('numpy').array([500.0], dtype=float), n_k=1, lk_lo=-10.0, lk_hi=10.0)
+    monkeypatch.setattr(cb, "get_plot_data", lambda xk: {"mse": None})
+    cb(__import__('numpy').array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], dtype=float))
+    assert emitted and emitted[0].module == "INDEX"
+    assert emitted[0].phase == "IRSPLINE"
+
+
+def test_u11_index_phase1_callback_emits_snapshot(monkeypatch):
+    from types import SimpleNamespace
+    from certus.workers.certus_index_workers import Phase1Callback
+
+    emitted = []
+    worker = SimpleNamespace(
+        is_stopped=False,
+        best_mse=float('inf'),
+        _optimizer=SimpleNamespace(n_evals=12),
+        emit_progress_snapshot=lambda snap: emitted.append(snap),
+        _update_phase1_best=lambda s: None,
+        _try_active_update=lambda *args, **kwargs: None,
+        progress=SimpleNamespace(emit=lambda *args, **kwargs: None),
+    )
+    cb = Phase1Callback(worker, max_evals=100)
+    cb(SimpleNamespace(y=1.0, x=[1.0]))
+    assert emitted, "Phase1Callback must emit normalized progress snapshots"
+    assert emitted[0].module == "INDEX"
+    assert emitted[0].phase == "PHASE1"

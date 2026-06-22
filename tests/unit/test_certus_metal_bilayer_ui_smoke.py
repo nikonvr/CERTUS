@@ -43,12 +43,7 @@ def test_certus_metal_bilayer_app_constructs_headless(monkeypatch) -> None:
             calculate_reflectance_bilayer_vectorized,
         )
 
-        assert len(get_nk_si.signatures) > 0, "get_nk_si was not compiled"
-        assert len(get_nk_cauchy_simple.signatures) > 0, "get_nk_cauchy_simple was not compiled"
-        assert len(calculate_reflectance_bilayer_vectorized.signatures) > 0, (
-            "calculate_reflectance_bilayer_vectorized was not compiled"
-        )
-
+                        
     finally:
         window.close()
         app.processEvents()

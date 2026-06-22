@@ -885,632 +885,45 @@ class TestFitMeta:
 
 
 
-@pytest.mark.unit
-
-
-@pytest.mark.skip(reason="Obsolete: GUI logic moved to MVP Presenter")
-class TestComputeNResults:
-
-
-    class _DummyProgress:
-
-
-        def __init__(self, canceled: bool = False) -> None:
-
-
-            self._canceled = canceled
-
-
-
-
-
-        def update(self, *_args, **_kwargs) -> None:
-
-
-            return
-
-
-
-
-
-        def is_canceled(self) -> bool:
-
-
-            return self._canceled
-
-
-
-
-
-    def test_compute_n_results_collects_three_models_and_meta(self, monkeypatch) -> None:
-
-
-        x = np.asarray([400.0, 500.0, 600.0, 700.0, 800.0], dtype=float)
-
-
-        groups = {
-
-
-            "t_2f": ["Tnu2f SNu"],
-
-
-            "r_2f": [],
-
-
-            "r45s_1f": [],
-
-
-            "r45p_1f": [],
-
-
-            "r45s_2f": [],
-
-
-            "r45p_2f": [],
-
-
-        }
-
-
-        dummy = csi.SubstrateIndexGUI.__new__(csi.SubstrateIndexGUI)
-
-
-        dummy.progress_widget = self._DummyProgress(canceled=False)
-
-
-        dummy._is_cancel_requested = lambda: False
-
-
-        dummy._get_clean_fraction_column = lambda _x, _c: np.asarray([0.4, 0.45, 0.5, 0.55, 0.6], dtype=float)
-
-
-
-
-
-        calls: list[tuple[float | None, int, int]] = []
-
-
-
-
-
-        def _fake_get_smoothed_and_fits(
-
-
-            n_raw,
-
-
-            wl_nm,
-
-
-            wl_min_fit,
-
-
-            wl_max_fit,
-
-
-            model_kind="polynomial",
-
-
-            progress_cb=None,
-
-
-            *,
-
-
-            log_preprocess=True,
-
-
-            sellmeier_timeout_s=None,
-
-
-            sellmeier_de_maxiter=300,
-
-
-            sellmeier_ls_max_nfev=3000,
-
-
-            sellmeier_log_l1l2=None,
-
-
-        ):
-
-
-            calls.append((sellmeier_timeout_s, sellmeier_de_maxiter, sellmeier_ls_max_nfev))
-
-
-            delta = {
-
-
-                "polynomial": 0.001,
-
-
-                "sellmeier3poles": 0.002,
-
-
-                "spline_adaptive": 0.003,
-
-
-            }[str(model_kind)]
-
-
-            n_fit = np.asarray(n_raw, dtype=float) + delta
-
-
-            meta = {
-
-
-                "source": f"analytic-{model_kind}",
-
-
-                "coeffs": [1.0, 2.0],
-
-
-                "requested_model_kind": str(model_kind),
-
-
-            }
-
-
-            return np.asarray(n_raw, dtype=float), n_fit, meta
-
-
-
-
-
-        monkeypatch.setattr(csi.IndexCore, "get_smoothed_and_fits", staticmethod(_fake_get_smoothed_and_fits))
-
-
-        monkeypatch.setattr(csi.QApplication, "processEvents", staticmethod(lambda: None))
-
-
-
-
-
-        n_results_raw, n_results_by_model, rmse_row, n_fit_meta = csi.SubstrateIndexGUI._compute_n_results(
-
-
-            dummy,
-
-
-            x,
-
-
-            groups,
-
-
-            400.0,
-
-
-            800.0,
-
-
-            sellmeier_timeout_s=5.0,
-
-
-            sellmeier_de_maxiter=77,
-
-
-            sellmeier_ls_max_nfev=770,
-
-
-        )
-
-
-
-
-
-        k = "n (Tnu2f SNu)"
-
-
-        assert k in n_results_raw
-
-
-        assert k in n_results_by_model
-
-
-        assert k in rmse_row
-
-
-        assert k in n_fit_meta
-
-
-        assert set(n_results_by_model[k].keys()) == {"Polynomial", "Sellmeier 3-poles", "Spline n (B-spline LSQ)"}
-
-
-        assert set(rmse_row[k].keys()) == {"Polynomial", "Sellmeier 3-poles", "Spline n (B-spline LSQ)"}
-
-
-        assert n_fit_meta[k]["Polynomial"]["requested_model_kind"] == "polynomial"
-
-
-        assert n_fit_meta[k]["Sellmeier 3-poles"]["requested_model_kind"] == "sellmeier3poles"
-
-
-        assert n_fit_meta[k]["Spline n (B-spline LSQ)"]["requested_model_kind"] == "spline_adaptive"
-
-
-        assert all(c == (5.0, 77, 770) for c in calls)
-
-
-
-
-
-    def test_compute_n_results_fallback_raw_rmse_not_used_for_best(self, monkeypatch) -> None:
-
-
-        """Courbe fallback = brut monotone peut coïncider avec n_raw (RMSE 0) ; ne doit pas « gagner »."""
-
-
-        x = np.asarray([400.0, 500.0, 600.0, 700.0, 800.0], dtype=float)
-
-
-        n_raw = np.asarray([1.8, 1.79, 1.78, 1.77, 1.76], dtype=float)
-
-
-        groups = {
-
-
-            "t_2f": ["c1"],
-
-
-            "r_2f": [],
-
-
-            "r45s_1f": [],
-
-
-            "r45p_1f": [],
-
-
-            "r45s_2f": [],
-
-
-            "r45p_2f": [],
-
-
-        }
-
-
-        dummy = csi.SubstrateIndexGUI.__new__(csi.SubstrateIndexGUI)
-
-
-        dummy.progress_widget = self._DummyProgress(canceled=False)
-
-
-        dummy._is_cancel_requested = lambda: False
-
-
-        dummy._get_clean_fraction_column = lambda _xa, _col: np.asarray([0.4, 0.45, 0.5, 0.55, 0.6], dtype=float)
-
-
-
-
-
-        def _fake_n_from_tnu2f(_t):
-
-
-            return n_raw
-
-
-
-
-
-        def _fake_get_smoothed_and_fits(
-
-
-            n_raw_in,
-
-
-            wl_nm,
-
-
-            wl_min_fit,
-
-
-            wl_max_fit,
-
-
-            model_kind="polynomial",
-
-
-            progress_cb=None,
-
-
-            *,
-
-
-            log_preprocess=True,
-
-
-            sellmeier_timeout_s=None,
-
-
-            sellmeier_de_maxiter=300,
-
-
-            sellmeier_ls_max_nfev=3000,
-
-
-            sellmeier_log_l1l2=None,
-
-
-        ):
-
-
-            mk = str(model_kind)
-
-
-            if mk == "spline_adaptive":
-
-
-                meta = {
-
-
-                    "source": "fallback-raw-spline-nonmonotonic",
-
-
-                    "coeffs": None,
-
-
-                    "requested_model_kind": "spline_adaptive",
-
-
-                }
-
-
-                return n_raw_in, n_raw_in.copy(), meta
-
-
-            delta = {"polynomial": 0.01, "sellmeier3poles": 0.02}[mk]
-
-
-            n_fit = np.asarray(n_raw_in, dtype=float) + delta
-
-
-            meta = {
-
-
-                "source": f"analytic-{mk}",
-
-
-                "coeffs": [1.0],
-
-
-                "requested_model_kind": mk,
-
-
-            }
-
-
-            return n_raw_in, n_fit, meta
-
-
-
-
-
-        monkeypatch.setattr(csi.IndexCore, "n_from_tnu2f", staticmethod(_fake_n_from_tnu2f))
-
-
-        monkeypatch.setattr(csi.IndexCore, "get_smoothed_and_fits", staticmethod(_fake_get_smoothed_and_fits))
-
-
-        monkeypatch.setattr(csi.QApplication, "processEvents", staticmethod(lambda: None))
-
-
-
-
-
-        _nrr, n_by_m, rmse_row, _meta = csi.SubstrateIndexGUI._compute_n_results(
-
-
-            dummy, x, groups, 400.0, 800.0
-
-
-        )
-
-
-        k = "n (c1)"
-
-
-        assert rmse_row[k]["Spline n (B-spline LSQ)"] == float("inf")
-
-
-        assert rmse_row[k]["Polynomial"] < rmse_row[k]["Spline n (B-spline LSQ)"]
-
-
-        # Meilleur RMSE logique : polynomial (plus petit RMSE fini)
-
-
-        poly_rmse = rmse_row[k]["Polynomial"]
-
-
-        assert poly_rmse < 1.0
-
-
-        assert np.allclose(n_by_m[k]["Polynomial"], n_raw + 0.01)
-
-
-
-
-
-    def test_compute_n_results_respects_cancel(self) -> None:
-
-
-        x = np.asarray([400.0, 500.0, 600.0], dtype=float)
-
-
-        groups = {
-
-
-            "t_2f": ["Tnu2f SNu"],
-
-
-            "r_2f": [],
-
-
-            "r45s_1f": [],
-
-
-            "r45p_1f": [],
-
-
-            "r45s_2f": [],
-
-
-            "r45p_2f": [],
-
-
-        }
-
-
-        dummy = csi.SubstrateIndexGUI.__new__(csi.SubstrateIndexGUI)
-
-
-        dummy.progress_widget = self._DummyProgress(canceled=True)
-
-
-        dummy._is_cancel_requested = lambda: True
-
-
-        dummy._get_clean_fraction_column = lambda _x, _c: np.asarray([0.4, 0.5, 0.6], dtype=float)
-
-
-
-
-
-        with pytest.raises(RuntimeError, match="cancelled"):
-
-
-            csi.SubstrateIndexGUI._compute_n_results(dummy, x, groups, 400.0, 600.0)
-
-
-
-
-
-
-
-
 def _sapphirenu_example_path() -> Path:
-
-
     return ROOT / "example" / "sapphirenu.xlsx"
 
 
-
-
-
-
-
-
 def _load_sapphirenu_example_dataframe() -> tuple[pd.DataFrame, np.ndarray, dict[str, list]]:
-
-
-    """Charge example/sapphirenu.xlsx comme l’UI (lambda fini, colonnes substrat nu)."""
-
-
-    pytest.importorskip("openpyxl", reason="openpyxl requis pour lire sapphirenu.xlsx")
-
-
+    """Charge example/sapphirenu.xlsx comme l'UI (lambda fini, colonnes substrat nu)."""
+    pytest.importorskip("openpyxl", reason="openpyxl required to read sapphirenu.xlsx")
     path = _sapphirenu_example_path()
-
-
     if not path.is_file():
-
-
-        pytest.skip(f"Fichier example manquant : {path}")
-
-
+        pytest.skip(f"Missing example file : {path}")
     raw = pd.read_excel(path)
-
-
     df2, _kept, _drop = csi._filter_dataframe_bare_substrate_columns(raw)
-
-
     x = np.asarray(pd.to_numeric(df2.iloc[:, 0], errors="coerce").values, dtype=np.float64)
-
-
     m_x = np.isfinite(x)
-
-
     if int(np.count_nonzero(m_x)) < 5:
-
-
-        pytest.skip("Colonne lambda invalide dans sapphirenu.xlsx")
-
-
+        pytest.skip("Invalid lambda column in sapphirenu.xlsx")
     if not np.all(m_x):
-
-
         df2 = df2.loc[m_x].reset_index(drop=True)
-
-
         x = np.asarray(pd.to_numeric(df2.iloc[:, 0], errors="coerce").values, dtype=np.float64)
-
-
     groups = csi._classify_substrate_index_columns(df2.columns[1:])
-
-
     return df2, x, groups
 
 
-
-
-
-
-
-
 def _n_raw_sapphirenu_column(df2: pd.DataFrame, x: np.ndarray, col: str, groups: dict[str, list]) -> np.ndarray:
-
-
-    """Même chaîne que SubstrateIndexGUI._get_clean_fraction_column + n_from_* (fenêtre 15/2/25)."""
-
-
+    """Same chain as SubstrateIndexGUI._get_clean_fraction_column + n_from_* (15/2/25 window)."""
     y_raw = np.asarray(pd.to_numeric(df2[col], errors="coerce").values, dtype=np.float64)
-
-
     m = np.isfinite(x) & np.isfinite(y_raw)
-
-
     if int(np.count_nonzero(m)) < 5:
-
-
         raise ValueError(f"colonne {col!r}")
-
-
     if not np.all(m):
-
-
         y_raw = np.interp(x, x[m], y_raw[m])
-
-
     y_clean = csi.IndexCore.apply_dynamic_filtering(x, y_raw, 15, 2, 25)
-
-
     frac = csi.IndexCore.to_fraction(y_clean)
-
-
     if col in groups["t_2f"]:
-
-
         return csi.IndexCore.n_from_tnu2f(frac)
-
-
     if col in groups["r_2f"]:
-
-
         n0 = csi.IndexCore.n_from_rnu2f(frac)
-
-
         return csi.IndexCore.enforce_normal_dispersion(x, n0)
-
-
-    raise ValueError(f"type colonne non géré : {col!r}")
-
-
-
-
-
-
+    raise ValueError(f"unhandled column type: {col!r}")
 
 
 @pytest.mark.integration
@@ -1522,25 +935,25 @@ class TestSapphirenuexampleSellmeier:
     """
 
 
-    Régression sur example/sapphirenu.xlsx.
+    Regression on example/sapphirenu.xlsx.
 
 
 
 
 
-    Problèmes numériques passés (domaine d’optimisation mal choisi, pas « physique ») :
+    Past numerical problems (poorly chosen optimization domain, not "physical"):
 
 
 
 
 
-    1. L1/L2 >> lambda_min : lambda²-L² < 0 sur la grille, plancher sur le dénominateur -> n(lambda) incohérent / rejet.
+    1. L1/L2 >> lambda_min: lambda²-L² < 0 on the grid, floor on the denominator -> inconsistent n(lambda) / rejection.
 
 
-    2. sqrt(max(n², 1e-9)) avec n² négatif : n ~ 3e-5 -> hors bande d’acceptation sur n.
+    2. sqrt(max(n², 1e-9)) with negative n²: n ~ 3e-5 -> outside n acceptance band.
 
 
-    3. Clip artificiel de n² : n plat -> RMSE énorme.
+    3. Artificial clip of n²: flat n -> huge RMSE.
 
 
 
@@ -1606,7 +1019,7 @@ class TestSapphirenuexampleSellmeier:
         n_raw = _n_raw_sapphirenu_column(df2, x, col, groups)
 
 
-        wl_lo, wl_hi = 2500.0, 4000.0  # IR : zone où le pôle IR Sapphire (~18 µm) est déterminant
+        wl_lo, wl_hi = 2500.0, 4000.0  # IR: area where the Sapphire IR pole (~18 µm) is decisive
 
 
         _nr, n_sell, meta = csi.IndexCore.get_smoothed_and_fits(
@@ -1672,7 +1085,7 @@ class TestSapphirenuexampleSellmeier:
             L1, L2, L3 = float(coeffs[2]), float(coeffs[4]), float(coeffs[6])
 
 
-            assert L1 < lam_min_um and L2 < lam_min_um and L3 < lam_min_um, "Li < lambda_min(fit) requis pour lambda²-Li²>0 sur la fenêtre"
+            assert L1 < lam_min_um and L2 < lam_min_um and L3 < lam_min_um, "Li < lambda_min(fit) required for lambda²-Li²>0 on the window"
 
 
 
@@ -1693,7 +1106,7 @@ class TestSapphirenuexampleSellmeier:
     def test_polynomial_beats_sellmeier_rmse_on_same_mask(self, sapphire_ctx, col: str) -> None:
 
 
-        """Sur la plage IR 2500-4000 nm, le Sellmeier doit être compétitif (pôle IR Sapphire à ~18 µm)."""
+        """On the 2500-4000 nm IR range, Sellmeier must be competitive (Sapphire IR pole at ~18 µm)."""
 
 
         df2, x, groups = sapphire_ctx

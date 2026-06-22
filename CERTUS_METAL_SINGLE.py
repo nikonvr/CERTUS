@@ -108,6 +108,7 @@ from certus.metal.certus_metal_common import (
     setup_beam_analysis_thread,
     teardown_beam_thread,
     setup_common_metal_plots,
+    elevate_spline_knots,
 )
 from certus.metal.pglobal_adapter import run_pglobal_optimization
 
@@ -290,6 +291,10 @@ def _single_RTRback_mse(
         if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
             return 1e12
 
+        d2_n = np.diff(n_calc, n=2)
+        d2_k = np.diff(k_calc, n=2)
+        wiggle_penalty = 1e-2 * (np.sum(d2_n**2) + np.sum(d2_k**2))
+
     except NUMERICAL_FAULT_EXCEPTIONS :
         return 1e12
 
@@ -330,11 +335,14 @@ def _single_RTRback_mse(
         if count == 0:
             return 1e12
 
-        return total_mse / count
+        return (total_mse / count) + wiggle_penalty
 
     mse = np.mean((R_calc - r_tgt) ** 2)
 
-    return mse if np.isfinite(mse) else np.inf
+    return (mse + wiggle_penalty) if np.isfinite(mse) else np.inf
+
+
+# Moved to certus_metal_common.py for mutualization
 
 
 def global_objective_function(
@@ -425,84 +433,182 @@ class OptimizationWorker(MetalOptimizationWorker):
 
         """
 
-        p = self.params
+        try:
+            p = self.params
 
-        float_dtype = get_float_dtype()
+            float_dtype = get_float_dtype()
 
-        target_lambda = np.ascontiguousarray(p["target_lambda"], dtype=float_dtype)
+            target_lambda = np.ascontiguousarray(p["target_lambda"], dtype=float_dtype)
 
-        target_r = np.ascontiguousarray(p["target_r"], dtype=float_dtype)
+            target_r = np.ascontiguousarray(p["target_r"], dtype=float_dtype)
 
-        target_t = np.ascontiguousarray(p["target_t"], dtype=float_dtype)
+            target_t = np.ascontiguousarray(p["target_t"], dtype=float_dtype)
 
-        target_rb = np.ascontiguousarray(p["target_rb"], dtype=float_dtype)
+            target_rb = np.ascontiguousarray(p["target_rb"], dtype=float_dtype)
 
-        substrate_id = p["substrate_id"]
+            substrate_id = p["substrate_id"]
 
-        nSub_real = get_n_substrate_array_by_id(substrate_id, target_lambda)
+            nSub_real = get_n_substrate_array_by_id(substrate_id, target_lambda)
 
-        nSub_complex_array = nSub_real.astype(np.complex128) + 0j
+            nSub_complex_array = nSub_real.astype(np.complex128) + 0j
 
-        num_knots = p["num_knots"]
+            num_knots = p["num_knots"]
 
-        precomputed = {
-            "min_lambda": float(target_lambda.min()),
-            "max_lambda": float(target_lambda.max()),
-        }
+            precomputed = {
+                "min_lambda": float(target_lambda.min()),
+                "max_lambda": float(target_lambda.max()),
+            }
 
-        args_for_objective = (
-            p["num_knots"],
-            target_lambda,
-            target_r,
-            target_t,
-            target_rb,
-            p["min_knot_dist"],
-            nSub_complex_array,
-            precomputed,
-        )
+            args_for_objective = (
+                p["num_knots"],
+                target_lambda,
+                target_r,
+                target_t,
+                target_rb,
+                p["min_knot_dist"],
+                nSub_complex_array,
+                precomputed,
+            )
 
-        bounds = np.array(_build_single_bounds(p, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+            # --- KNOT CONTINUATION (MESH REFINEMENT) LOGIC ---
+            # If the user explicitly provided an x0 (e.g. Resume from UI), we do not do continuation
+            user_x0 = np.asarray(p.get("x0", []), dtype=float_dtype) if p.get("x0") is not None else np.array([])
+            target_num_knots = num_knots
+            
+            if len(user_x0) > 0:
+                knot_steps = [target_num_knots]
+            else:
+                knot_steps = list(range(2, target_num_knots + 1))
+                
+            total_steps = len(knot_steps)
+            total_feval = int(p.get("maxfeval", 25000))
+            feval_per_step = max(1000, total_feval // total_steps)
+            iter_per_step = max(1, int(p.get("maxiter", DEFAULT_MAXITER)) // total_steps)
+            
+            current_x0 = user_x0 if len(user_x0) > 0 else None
+            
+            logger = logging.getLogger("CERTUS.METAL.SINGLE")
+            logger.info("Starting Knot Continuation over steps: %s", knot_steps)
+            
+            result = None
+            
+            for step_idx, k in enumerate(knot_steps):
+                if not self.is_running:
+                    break
+                    
+                logger.info("--- KNOT STEP K=%d ---", k)
+                
+                # Elevate knots if continuing from a previous step
+                if current_x0 is not None and k > 2 and len(user_x0) == 0:
+                    current_x0 = elevate_spline_knots(current_x0, k - 1, precomputed["min_lambda"], precomputed["max_lambda"])
+                
+                # Update params for current knot count
+                p_k = p.copy()
+                p_k["num_knots"] = k
+                
+                # Build bounds
+                bounds = np.array(_build_single_bounds(p_k, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+                
+                # If we are refining (k > 2) and didn't start from user_x0, tighten the bounds around the current solution
+                if k > 2 and current_x0 is not None and len(user_x0) == 0:
+                    delta_eM = 5.0
+                    delta_nk = 0.5
+                    delta_l = 50.0
+                    
+                    bounds[0] = (max(bounds[0][0], current_x0[0] - delta_eM), min(bounds[0][1], current_x0[0] + delta_eM))
+                    for idx in range(1, 1 + 2 * k):
+                        bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_nk), min(bounds[idx][1], current_x0[idx] + delta_nk))
+                    for idx in range(1 + 2 * k, len(bounds)):
+                        bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_l), min(bounds[idx][1], current_x0[idx] + delta_l))
 
-        from certus.core._certus_physics_impl import PGlobalConfig
-        cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
-            alpha=0.04334448521989881,
-            reduction_ratio=0.36169196677896504,
-            n_samples_per_iter=5593,
-            local_search_budget=40376,
-            max_active_clusters=77,
-        )
+                if current_x0 is not None:
+                    # Guarantee current_x0 is strictly within the bounds to prevent optimizer crash
+                    lows = [b[0] for b in bounds]
+                    highs = [b[1] for b in bounds]
+                    current_x0 = np.clip(current_x0, lows, highs)
 
-        logger = logging.getLogger("CERTUS")
-        logger.info(
-            "GLOBAL_OPT(PGlobal) start max_iter=%s max_feval=%s workers=%s ultra_wide=%s bounds=%s target_points=%s",
-            int(p.get("maxiter", DEFAULT_MAXITER)),
-            int(p.get("maxfeval", 25000)),
-            int(p.get("workers", 1)),
-            bool(p.get("ultra_wide", False)),
-            len(bounds),
-            len(target_lambda),
-        )
-        result = run_pglobal_optimization(
-            lambda x: global_objective_function(x, *args_for_objective),
-            bounds,
-            x0=np.asarray(p.get("x0", np.asarray([], dtype=float_dtype)), dtype=float_dtype) if p.get("x0") is not None else None,
-            max_iter=int(p.get("maxiter", DEFAULT_MAXITER)),
-            max_feval=int(p.get("maxfeval", 25000)),
-            workers=int(p.get("workers", 1)),
-            stop_event=self._stop_event,
-            callback=lambda payload: self.progress.emit(payload),
-            progress_logger=lambda msg: logging.getLogger("CERTUS").info("GLOBAL_OPT(PGlobal) %s", msg),
-            ultra_wide=bool(p.get("ultra_wide", False)),
-            config=cfg,
-        )
-        logger.info(
-            "GLOBAL_OPT(PGlobal) complete success=%s best_rmse=%s iterations=%s evals=%s",
-            getattr(result, "success", None),
-            float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
-            getattr(result, "nit", None),
-            getattr(result, "nfev", None),
-        )
-        self.finished.emit({"result": result, "params": p})
+                # Setup args for objective
+                args_for_objective = (
+                    k,
+                    target_lambda,
+                    target_r,
+                    target_t,
+                    target_rb,
+                    p["min_knot_dist"],
+                    nSub_complex_array,
+                    precomputed,
+                )
+
+                from certus.core._certus_physics_impl import PGlobalConfig
+                cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
+                    alpha=0.05,
+                    reduction_ratio=0.2,
+                    n_samples_per_iter=600,       # Fast global phase -> fluid UI
+                    local_search_budget=1500,     # Meaningful local search descent
+                    max_active_clusters=5,        # Focus deeply on the top 5 best basins
+                )
+
+                logger.info(
+                    "GLOBAL_OPT(PGlobal) K=%d start max_iter=%s max_feval=%s workers=%s bounds=%s",
+                    k, iter_per_step, feval_per_step, int(p.get("workers", 1)), len(bounds),
+                )
+                
+                def make_callback(step_i, total_s):
+                    def callback(payload):
+                        base_pct = step_i * (100.0 / total_s)
+                        step_pct = payload.get("progress_pct", 0) / total_s
+                        payload["progress_pct"] = base_pct + step_pct
+                        self.progress.emit(payload)
+                    return callback
+
+                result = run_pglobal_optimization(
+                    lambda x: global_objective_function(x, *args_for_objective),
+                    bounds,
+                    x0=current_x0,
+                    max_iter=iter_per_step,
+                    max_feval=feval_per_step,
+                    workers=int(p.get("workers", 1)),
+                    stop_event=self._stop_event,
+                    callback=make_callback(step_idx, total_steps),
+                    progress_logger=lambda msg, _k=k: logging.getLogger("CERTUS.METAL.SINGLE").info("GLOBAL_OPT(PGlobal) K=%d %s", _k, msg),
+                    ultra_wide=bool(p.get("ultra_wide", False)),
+                    config=cfg,
+                    skip_polish=(k < target_num_knots),
+                )
+                
+                current_x0 = result.x
+
+            logger.info(
+                "GLOBAL_OPT(PGlobal) complete success=%s best_rmse=%s iterations=%s evals=%s",
+                getattr(result, "success", None),
+                float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))) if result else float("inf"),
+                getattr(result, "nit", None) if result else 0,
+                getattr(result, "nfev", None) if result else 0,
+            )
+            
+            # Emit final progress 100% just in case
+            if result:
+                self.progress.emit({
+                    "progress_pct": 100,
+                    "current_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                    "best_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                    "iteration": getattr(result, "nit", 0),
+                    "max_iteration": int(p.get("maxiter", DEFAULT_MAXITER)),
+                    "best_x": result.x,
+                    "message": "Optimization Complete",
+                    "current_knots": target_num_knots
+                })
+            
+        except Exception as e:
+            import traceback
+            logging.getLogger("CERTUS.METAL.SINGLE").error("OptimizationWorker exception: %s\n%s", e, traceback.format_exc())
+            if hasattr(self, "error"):
+                self.error.emit(str(e))
+        finally:
+            if 'result' in locals():
+                self.finished.emit({"result": result, "params": p})
+            else:
+                self.finished.emit({})
 
 
 # =============================================================================
@@ -1009,6 +1115,8 @@ class CertusMetalSingleApp(MetalBaseApp):
             app_name="CERTUS-METAL-SINGLE",
             app_title="Metal Single Layer (Transparent substrate)",
         )
+        from certus.core.certus_core import setup_gui_logger
+        setup_gui_logger(self.log_queue, "CERTUS")
 
         # METAL-specific state (additions to base)
 
@@ -1654,7 +1762,7 @@ class CertusMetalSingleApp(MetalBaseApp):
             max_iter=max_iter,
             evals=evals,
             phase="PGLOBAL" if mode == "global" else "DE",
-            extra_info=f"RMSE: {rmse:.6f} | Best: {best_cost:.6f} | Time {int(elapsed_s)}s",
+            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
             progress_pct=progress_pct,
         )
         if hasattr(self, "field_opt_status"):
@@ -1753,6 +1861,8 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         if xk is None:
             return
+            
+        xk = np.asarray(xk, dtype=np.float64)
 
         eM = xk[0]
 
@@ -1780,7 +1890,11 @@ class CertusMetalSingleApp(MetalBaseApp):
         self.mse_curve.setData(self.rmse_data["iterations"], self.rmse_data["rmse"])
         self.mse_data = self.rmse_data
 
-        num_knots, offset = p["num_knots"], 1
+        # Safely deduce the number of knots from the incoming parameter vector length.
+        # Vector structure for single metal: 1 (eM) + 2k (n and k) + (k - 2) (lambdas) = 3k - 1.
+        # Therefore, k = (size + 1) / 3.
+        num_knots = int(round((len(xk) + 1) / 3.0))
+        offset = 1
 
         n_knots = xk[offset : offset + num_knots]
 
@@ -1794,17 +1908,18 @@ class CertusMetalSingleApp(MetalBaseApp):
 
         lambda_internes = lambda_internes[np.isfinite(lambda_internes)]
         lambda_internes = np.unique(np.sort(lambda_internes))
-        if lambda_internes.size < max(0, num_knots - 1):
+        num_internal_knots = max(0, num_knots - 2)
+        if lambda_internes.size < num_internal_knots:
             if max_l <= min_l:
                 raise ValueError("Invalid wavelength interval for spline knots")
-            fallback = np.linspace(min_l, max_l, num_knots + 1)[1:-1]
+            fallback = np.linspace(min_l, max_l, num_knots)[1:-1]
             lambda_internes = np.unique(np.sort(np.concatenate([lambda_internes, fallback])))
-        if lambda_internes.size > max(0, num_knots - 1):
-            lambda_internes = lambda_internes[: max(0, num_knots - 1)]
+        if lambda_internes.size > num_internal_knots:
+            lambda_internes = lambda_internes[:num_internal_knots]
 
         knot_l = np.concatenate(([min_l], lambda_internes, [max_l]))
         knot_l = np.unique(np.sort(knot_l))
-        expected_knot_count = num_knots + 1
+        expected_knot_count = num_knots
         if knot_l.size != expected_knot_count:
             # fallback to evenly spaced knots to guarantee spline validity
             knot_l = np.linspace(min_l, max_l, expected_knot_count)
@@ -2546,6 +2661,8 @@ python CERTUS_METAL_SINGLE.py --config "{config_path}" --auto-run --auto-close 2
 
 
 if __name__ == "__main__":
+    import os
+    os.environ.setdefault("CERTUS_CONSOLE_LOG_LEVEL", "INFO")
     import argparse
 
     parser = argparse.ArgumentParser(description="CERTUS Metal Single")

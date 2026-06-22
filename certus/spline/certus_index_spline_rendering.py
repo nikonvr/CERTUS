@@ -49,7 +49,7 @@ from certus.spline.certus_index_spline_core import (
 )
 from certus.core.certus_design_tokens import slider_corridor_half_stylesheet
 
-from certus.spline.spline_profile_corridors import _fit_local_quadratic_rmse_profile
+from certus.spline.certus_corridor_fitter import _fit_local_quadratic_rmse_profile
 from certus.spline.certus_index_spline_corridor_contract import normalize_corridor_live_payload
 logger = logging.getLogger("CERTUS_INDEX_SPLINE")
 
@@ -1116,7 +1116,7 @@ class _UIBuilderMixin:
         file_card.body.setSpacing(4)
         self.lbl_file = QLabel("(no file loaded)")
         self.lbl_file.setWordWrap(True)
-        self.lbl_file.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_file.setStyleSheet(CertusTheme.get_hint_text_style())
         self.lbl_file.setToolTip("Path of the last loaded file.")
         self.btn_load = create_styled_button("Load spectrum…", "secondary")
         self.btn_load.setToolTip(
@@ -1202,7 +1202,7 @@ class _UIBuilderMixin:
         action_card.body.addLayout(post_row)
 
         self.lbl_postprocess_hint = QLabel("Recommended flow: Run -> Manual knots -> Corridors / RMSE(d)")
-        self.lbl_postprocess_hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_postprocess_hint.setStyleSheet(CertusTheme.get_hint_text_style())
         action_card.body.addWidget(self.lbl_postprocess_hint)
         action_card.body.addWidget(self.lbl_corridors_run_state)
 
@@ -1449,7 +1449,7 @@ class _UIBuilderMixin:
 
         lbl_manual = QLabel("Alternative path: define a manual interval around d* and generate a corridor directly.")
         lbl_manual.setWordWrap(True)
-        lbl_manual.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        lbl_manual.setStyleSheet(CertusTheme.get_hint_text_style())
         lay_generate.addWidget(lbl_manual)
 
         row_manual = QHBoxLayout()
@@ -1511,7 +1511,7 @@ class _UIBuilderMixin:
             self.lbl_corridor_manual_dmax,
             self.lbl_corridor_manual_interval,
         ):
-            _lab.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+            _lab.setStyleSheet(CertusTheme.get_hint_text_style())
 
         row_manual_meta.addWidget(self.lbl_corridor_manual_dmin)
         row_manual_meta.addSpacing(8)
@@ -1621,7 +1621,7 @@ class _UIBuilderMixin:
             "Colonnes: lambda, n, k, d, ns, Tth, Rth."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(CertusTheme.get_hint_text_style())
         lay.addWidget(hint)
 
         self.table_data_th = ExcelTableWidget()
@@ -1794,7 +1794,7 @@ class _UIBuilderMixin:
             "<span style='color:#7a3cff;'>&#9646;</span> = local robust interval | "
             "<span style='color:#ff4d4f;'>&#9646;</span> = manual selection."
         )
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(CertusTheme.get_hint_text_style())
         ctx_lay.addWidget(hint)
 
         self.lbl_corridor_rmse_summary = QLabel("No corridor RMSE profile available yet.")
@@ -1816,7 +1816,7 @@ class _UIBuilderMixin:
         ctx_lay.addWidget(self.lbl_corridor_rmse_robust_compact)
 
         self.lbl_corridor_rmse_state = QLabel("Step 1/3: Recalculate RMSE(d) to start.")
-        self.lbl_corridor_rmse_state.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        self.lbl_corridor_rmse_state.setStyleSheet(CertusTheme.get_hint_text_style())
         self.lbl_corridor_rmse_state.setToolTip(
             "<b>Progress / Diagnostic</b><br>"
             "Displays the current pipeline step (Calculation, Fit, or Export) "
@@ -1844,7 +1844,7 @@ class _UIBuilderMixin:
             "differs significantly from the bold curve. <b>Crosshair:</b> the value follows the bold curve at the cursor lambda."
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet(f"color: {CertusTheme.TEXT_SUB}; font-size: 11px;")
+        hint.setStyleSheet(CertusTheme.get_hint_text_style())
         ctx_lay.addWidget(hint)
 
         self.lbl_corridors_tab_state = QLabel()

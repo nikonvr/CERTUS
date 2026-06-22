@@ -4,6 +4,9 @@ certus_re_ui.py - Extract of CertusREResultsDialog from CERTUS_RE.py
 """
 
 from __future__ import annotations
+from certus.utils.certus_re_config import (
+    RE_RANKING_ALPHA_REF,
+)
 
 import numpy as np
 from typing import Any
@@ -31,7 +34,6 @@ from certus.ui.certus_ui import (
 from certus.utils.certus_re_helpers import (
     RE_SPLINE_N_KNOTS,
     RE_SPLINE_NODE2_DEFAULT_NM,
-    RE_RANKING_ALPHA_REF,
     _re_sort_results_best_for_table_and_apply,
     re_drift_result_log_suffix,
     re_knots_wavelengths,

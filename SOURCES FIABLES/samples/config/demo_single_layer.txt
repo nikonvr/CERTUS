@@ -1,1 +1,0 @@
-Minimal CERTUS-DESIGN: single quarter-wave H layer at 550 nm (demo).

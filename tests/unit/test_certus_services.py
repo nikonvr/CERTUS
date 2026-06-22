@@ -42,6 +42,10 @@ def test_index_fit_service_delegates_to_runner_and_wraps_manifest(tmp_path) -> N
         config={"mode": "TLU"},
         source_paths=[str(src)],
         seed=123,
+        run_id="index-run-123",
+        created_at="2026-06-14T12:30:00Z",
+        initiated_by="qa-bot",
+        metadata={"channel": "ui"},
         app_version=APP_VERSION,
         warnings=["normalized"],
         status=ValidationStatus.WARNING_DATA_NORMALIZED,
@@ -53,6 +57,11 @@ def test_index_fit_service_delegates_to_runner_and_wraps_manifest(tmp_path) -> N
     assert resp.manifest.run_context.app_id == "CERTUS_INDEX"
     assert resp.manifest.run_context.seed == 123
     assert resp.manifest.run_context.status == ValidationStatus.WARNING_DATA_NORMALIZED
+    assert resp.manifest.run_context.params["run_id"] == "index-run-123"
+    assert resp.manifest.run_context.params["initiated_by"] == "qa-bot"
+    assert resp.manifest.run_context.params["created_at"] == "2026-06-14T12:30:00Z"
+    assert resp.manifest.run_context.params["metadata"] == {"channel": "ui"}
+    assert resp.manifest.run_context.params["config_repr"] == "{'mode': 'TLU'}"
     assert len(resp.manifest.run_context.input_fingerprints) == 1
 
 
@@ -105,6 +114,8 @@ def test_re_fit_service_wraps_manifest(tmp_path) -> None:
     assert resp.manifest.run_context.app_id == "CERTUS_RE"
     assert resp.manifest.run_context.seed is None
     assert resp.manifest.run_context.status == ValidationStatus.OK
+    assert resp.manifest.run_context.params["config_repr"] == "{'phase_count': 4}"
+    assert resp.manifest.run_context.params["run_id"] is None
 
 
 @pytest.mark.unit
@@ -159,16 +170,25 @@ def test_service_accepts_mapping_payload_and_normalizes_status(tmp_path) -> None
             "config": {"mode": "TLU"},
             "source_paths": [str(src)],
             "seed": 42,
+            "run_id": "run-42",
             "app_id": "CERTUS_INDEX",
             "app_version": APP_VERSION,
             "warnings": ["mapping payload"],
             "status": "not-a-known-status",
+            "initiated_by": "qa-bot",
+            "created_at": "2026-06-14T12:00:00Z",
+            "metadata": {"channel": "ui"},
         }
     )
 
     assert resp.result == {"cfg": {"mode": "TLU"}}
     assert resp.manifest.run_context.seed == 42
     assert resp.manifest.run_context.status == ValidationStatus.OK
+    assert resp.manifest.run_context.params["run_id"] == "run-42"
+    assert resp.manifest.run_context.params["initiated_by"] == "qa-bot"
+    assert resp.manifest.run_context.params["created_at"] == "2026-06-14T12:00:00Z"
+    assert resp.manifest.run_context.params["metadata"] == {"channel": "ui"}
+    assert resp.manifest.run_context.params["config_repr"] == "{'mode': 'TLU'}"
     assert len(resp.manifest.run_context.input_fingerprints) == 1
 
 
@@ -195,7 +215,11 @@ def test_seeded_service_smoke_is_deterministic_for_stable_fields(
         config={"dataset": "smoke", "seed": 20260425},
         source_paths=[str(src)],
         seed=20260425,
+        run_id="run-smoke-20260425",
         app_version=APP_VERSION,
+        initiated_by="qa-bot",
+        created_at="2026-06-14T12:00:00Z",
+        metadata={"mode": "smoke"},
         status=ValidationStatus.OK,
     )
 
@@ -208,6 +232,10 @@ def test_seeded_service_smoke_is_deterministic_for_stable_fields(
     assert resp_a.manifest.run_context.seed == 20260425
     assert resp_b.manifest.run_context.seed == 20260425
     assert resp_a.manifest.run_context.params_hash == resp_b.manifest.run_context.params_hash
+    assert resp_a.manifest.run_context.params["run_id"] == "run-smoke-20260425"
+    assert resp_a.manifest.run_context.params["initiated_by"] == "qa-bot"
+    assert resp_a.manifest.run_context.params["created_at"] == "2026-06-14T12:00:00Z"
+    assert resp_a.manifest.run_context.params["metadata"] == {"mode": "smoke"}
     assert len(resp_a.manifest.run_context.input_fingerprints) == 1
     assert len(resp_b.manifest.run_context.input_fingerprints) == 1
     assert (
@@ -242,11 +270,11 @@ def test_future_headless_services_must_follow_contract() -> None:
         and name != "BaseHeadlessService"
         and obj.__module__ in ("certus_services", "certus.utils.certus_services")
     ]
-    assert service_classes, "Aucun service headless détecté dans certus_services"
+    assert service_classes, "No headless service detected in certus_services"
 
     for svc_cls in service_classes:
         assert issubclass(svc_cls, BaseHeadlessService), (
-            f"{svc_cls.__name__} doit hériter de BaseHeadlessService"
+            f"{svc_cls.__name__} must inherit from BaseHeadlessService"
         )
         base = svc_cls.__name__.removesuffix("Service")
         req_name = f"{base}Request"
@@ -256,13 +284,13 @@ def test_future_headless_services_must_follow_contract() -> None:
         assert inspect.isclass(req_cls), f"Type requis manquant: {req_name}"
         assert inspect.isclass(resp_cls), f"Type requis manquant: {resp_name}"
         assert issubclass(req_cls, BaseHeadlessRequest), (
-            f"{req_name} doit hériter de BaseHeadlessRequest"
+            f"{req_name} must inherit from BaseHeadlessRequest"
         )
         assert issubclass(resp_cls, BaseHeadlessResponse), (
-            f"{resp_name} doit hériter de BaseHeadlessResponse"
+            f"{resp_name} must inherit from BaseHeadlessResponse"
         )
 
         fit_sig = inspect.signature(svc_cls.fit)
         assert list(fit_sig.parameters.keys()) == ["self", "request"], (
-            f"Signature fit invalide pour {svc_cls.__name__}"
+            f"Invalid fit signature for {svc_cls.__name__}"
         )

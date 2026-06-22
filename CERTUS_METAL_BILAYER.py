@@ -92,6 +92,7 @@ from certus.metal.certus_metal_common import (
     setup_beam_analysis_thread,
     teardown_beam_thread,
     setup_common_metal_plots,
+    elevate_spline_knots,
 )
 
 
@@ -327,6 +328,11 @@ def _bilayer_reflectance_mse(
         if not (np.all(np.isfinite(n_calc)) and np.all(np.isfinite(k_calc))):
             _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "non_finite_spline_output", "context": debug_ctx})
             return np.inf
+            
+        d2_n = np.diff(n_calc, n=2)
+        d2_k = np.diff(k_calc, n=2)
+        wiggle_penalty = 1e-2 * (np.sum(d2_n**2) + np.sum(d2_k**2))
+            
         R_calc = calculate_reflectance_bilayer_vectorized(
             l_array,
             n_calc - 1j * k_calc,
@@ -343,7 +349,7 @@ def _bilayer_reflectance_mse(
         if not np.isfinite(mse):
             _write_bilayer_autopsy_record("objective_kernel_reject", {"reason": "non_finite_mse", "context": debug_ctx})
             return np.inf
-        return mse
+        return float(mse + wiggle_penalty)
     except Exception as exc:
         debug_ctx["exception_type"] = type(exc).__name__
         debug_ctx["exception"] = str(exc)
@@ -585,36 +591,140 @@ class OptimizationWorker(MetalOptimizationWorker):
 
         nSub_precomputed = get_nk_si(target_lambda)
 
-        args_for_objective = (
-            p["num_knots"],
-            target_lambda,
-            target_r,
-            p["min_knot_dist"],
-            nSub_precomputed,
-        )
+        # --- KNOT CONTINUATION (MESH REFINEMENT) LOGIC ---
+        user_x0 = np.asarray(p.get("x0", []), dtype=float_dtype) if p.get("x0") is not None else np.array([])
+        target_num_knots = p["num_knots"]
+        
+        if len(user_x0) > 0:
+            knot_steps = [target_num_knots]
+        else:
+            knot_steps = list(range(2, target_num_knots + 1))
+            
+        total_steps = len(knot_steps)
+        total_feval = int(p.get("maxfeval", 50000))
+        feval_per_step = max(1000, total_feval // total_steps)
+        iter_per_step = max(1, int(p.get("maxiter", DEFAULT_MAXITER)) // total_steps)
+        
+        current_x0 = user_x0 if len(user_x0) > 0 else None
+        
+        logger = logging.getLogger("CERTUS.METAL.BILAYER")
+        logger.info("Starting Knot Continuation over steps: %s", knot_steps)
+        
+        result = None
+        
+        for step_idx, k in enumerate(knot_steps):
+            if not self.is_running:
+                break
+                
+            logger.info("--- KNOT STEP K=%d ---", k)
+            
+            # Elevate knots if continuing from a previous step
+            if current_x0 is not None and k > 2 and len(user_x0) == 0:
+                l_min, l_max = float(np.min(target_lambda)), float(np.max(target_lambda))
+                current_x0 = elevate_spline_knots(current_x0, k - 1, l_min, l_max, offset=4)
+                
+            p_k = p.copy()
+            p_k["num_knots"] = k
+            
+            # Build bounds
+            bounds = np.array(_build_bilayer_bounds(p_k, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+            
+            # Tighten bounds for k > 2
+            if k > 2 and current_x0 is not None and len(user_x0) == 0:
+                delta_eM = 5.0
+                delta_eL = 20.0
+                delta_n_inf = 0.02
+                delta_A = 2000.0
+                delta_nk = 0.5
+                delta_l = 50.0
+                
+                bounds[0] = (max(bounds[0][0], current_x0[0] - delta_eM), min(bounds[0][1], current_x0[0] + delta_eM))
+                bounds[1] = (max(bounds[1][0], current_x0[1] - delta_eL), min(bounds[1][1], current_x0[1] + delta_eL))
+                bounds[2] = (max(bounds[2][0], current_x0[2] - delta_n_inf), min(bounds[2][1], current_x0[2] + delta_n_inf))
+                bounds[3] = (max(bounds[3][0], current_x0[3] - delta_A), min(bounds[3][1], current_x0[3] + delta_A))
+                
+                for idx in range(4, 4 + 2 * k):
+                    bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_nk), min(bounds[idx][1], current_x0[idx] + delta_nk))
+                for idx in range(4 + 2 * k, len(bounds)):
+                    bounds[idx] = (max(bounds[idx][0], current_x0[idx] - delta_l), min(bounds[idx][1], current_x0[idx] + delta_l))
 
-        bounds = np.array(_build_bilayer_bounds(p, l_array=target_lambda, include_eM=True), dtype=float_dtype)
+            if current_x0 is not None:
+                # Guarantee current_x0 is strictly within the bounds to prevent optimizer crash
+                lows = [b[0] for b in bounds]
+                highs = [b[1] for b in bounds]
+                current_x0 = np.clip(current_x0, lows, highs)
 
-        from certus.core._certus_physics_impl import PGlobalConfig
-        cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
-            alpha=0.025313098184047346,
-            reduction_ratio=0.28656406706115006,
-            n_samples_per_iter=6195,
-            local_search_budget=68183,
-            max_active_clusters=5,
-        )
+            args_for_objective = (
+                k,
+                target_lambda,
+                target_r,
+                p["min_knot_dist"],
+                nSub_precomputed,
+            )
 
-        result = run_pglobal_optimization(
-            lambda x: global_objective_function(x, *args_for_objective),
-            bounds,
-            x0=np.asarray(p.get("x0", np.asarray([], dtype=float_dtype)), dtype=float_dtype) if p.get("x0") is not None else None,
-            max_iter=int(p.get("maxiter", DEFAULT_MAXITER)),
-            max_feval=int(p.get("maxfeval", 5000)),
-            workers=int(p.get("workers", 1)),
-            stop_event=self._stop_event,
-            callback=lambda payload: self.progress.emit(payload),
-            config=cfg,
-        )
+            from certus.core._certus_physics_impl import PGlobalConfig
+            cfg = PGlobalConfig.for_dimension(dim=len(bounds)).with_overrides(
+                alpha=0.05,
+                reduction_ratio=0.2,
+                n_samples_per_iter=800,       # Fast global phase -> fluid UI for 8-17D
+                local_search_budget=1500,     # Meaningful local search descent
+                max_active_clusters=5,        # Focus deeply on the top 5 best basins
+            )
+            
+            def make_callback(step_i, total_s):
+                def callback(payload):
+                    base_pct = step_i * (100.0 / total_s)
+                    step_pct = payload.get("progress_pct", 0) / total_s
+                    payload["progress_pct"] = base_pct + step_pct
+                    payload["message"] = f"K={k} | " + payload.get("message", "")
+                    payload["current_knots"] = k
+                    self.progress.emit(payload)
+                return callback
+
+            try:
+                result = run_pglobal_optimization(
+                    lambda x: global_objective_function(x, *args_for_objective),
+                    bounds,
+                    x0=current_x0,
+                    max_iter=iter_per_step,
+                    max_feval=feval_per_step,
+                    workers=int(p.get("workers", 1)),
+                    stop_event=self._stop_event,
+                    callback=make_callback(step_idx, total_steps),
+                    progress_logger=lambda msg, _k=k: logging.getLogger("CERTUS.METAL.BILAYER").info("GLOBAL_OPT(PGlobal) K=%d %s", _k, msg),
+                    ultra_wide=bool(p.get("ultra_wide", False)),
+                    config=cfg,
+                    skip_polish=(k < target_num_knots),
+                )
+                
+                if result and hasattr(result, "x") and result.x is not None:
+                    current_x0 = result.x
+
+                logger.info(
+                    "GLOBAL_OPT(PGlobal) complete success=%s best_rmse=%s iterations=%s evals=%s",
+                    getattr(result, "success", None),
+                    float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))) if result else float("inf"),
+                    getattr(result, "nit", None) if result else 0,
+                    getattr(result, "nfev", None) if result else 0,
+                )
+
+            except Exception as e:
+                self.error.emit(str(e))
+                return
+                
+        # Emit final progress 100% just in case
+        if result:
+            self.progress.emit({
+                "progress_pct": 100,
+                "current_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                "best_rmse": float(np.sqrt(max(float(getattr(result, "fun", float("inf"))), 0.0))),
+                "iteration": getattr(result, "nit", 0),
+                "max_iteration": int(p.get("maxiter", DEFAULT_MAXITER)),
+                "best_x": result.x,
+                "message": "Optimization Complete",
+                "current_knots": target_num_knots
+            })
+            
         self.finished.emit({"result": result, "params": p})
 
 
@@ -861,7 +971,7 @@ class BeamAnalysisWorker(QObject):
 
             processed_steps = 1
 
-            beam_emit_interval_s = 0.2
+            beam_emit_interval_s = 5.0
 
             last_beam_emit_t = 0.0
 
@@ -1156,6 +1266,23 @@ class CertusMetalBilayerApp(MetalBaseApp):
     """Main CERTUS-METAL Application (Bilayer: Metal + SiO2)"""
 
     MODULE_ID = "CERTUS_METAL_BILAYER"
+
+    def __init__(self) -> None:
+        super().__init__(
+            app_name="CERTUS-METAL-BILAYER",
+            app_title="Metal Bilayer (SiO2 on Silicon)",
+        )
+        from certus.core.certus_core import setup_gui_logger
+        setup_gui_logger(self.log_queue, "CERTUS")
+        self.worker = None
+        self.optimization_thread = None
+        self.beam_worker = None
+        self.beam_thread = None
+        self._last_worker_params = None
+        self._auto_batch_mode = False
+        self._auto_batch_config = None
+        self._auto_batch_started = False
+        self._auto_batch_quit = False
 
     # CertusBaseApp configuration
 
@@ -1627,25 +1754,6 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         def build_bounds(params, target_lambda):
             bounds = _build_bilayer_bounds(params, l_array=target_lambda, include_eM=True)
-            # Seed the global optimizer with a physically sane midpoint vector.
-            # This keeps the initial PGLOBAL probe aligned with the bilayer parametrization.
-            num_knots = int(params["num_knots"])
-            spline_knot_count = num_knots
-            l_min = float(np.min(target_lambda)) if np.asarray(target_lambda).size else 350.0
-            l_max = float(np.max(target_lambda)) if np.asarray(target_lambda).size else 880.0
-            internal = np.linspace(l_min + 0.1 * (l_max - l_min), l_max - 0.1 * (l_max - l_min), max(0, spline_knot_count - 2))
-            x0 = np.concatenate(
-                (
-                    [float(params.get("eM_min", DEFAULT_EM_MIN) + 0.5 * (params.get("eM_max", DEFAULT_EM_MAX) - params.get("eM_min", DEFAULT_EM_MIN)))],
-                    [float(params.get("eL_nominal", 900.0))],
-                    [float(params.get("n_infini_bounds", (1.42, 1.44))[0] + 0.5 * (params.get("n_infini_bounds", (1.42, 1.44))[1] - params.get("n_infini_bounds", (1.42, 1.44))[0]))],
-                    [float(params.get("A_diel_bounds", (0, 10000))[0] + 0.5 * (params.get("A_diel_bounds", (0, 10000))[1] - params.get("A_diel_bounds", (0, 10000))[0]))],
-                    np.full(spline_knot_count, 5.0, dtype=float),
-                    np.full(spline_knot_count, 0.5, dtype=float),
-                    internal.astype(float, copy=False),
-                )
-            )
-            params["x0"] = x0
             return bounds
 
         self._metal_start_optimization(
@@ -1661,7 +1769,8 @@ class CertusMetalBilayerApp(MetalBaseApp):
         data = normalize_metal_progress_payload(data)
         iteration = data.get("iteration", 0)
         mse = data.get("mse", 0)
-        rmse = np.sqrt(mse) if mse > 0 else 0
+        rmse = float(data.get("current_rmse", np.sqrt(mse) if mse > 0 else 0))
+        best_rmse = float(data.get("best_rmse", np.sqrt(float(data.get("best_cost", mse))) if float(data.get("best_cost", mse)) > 0 else 0.0))
         xk = data.get("params", None)
         eM = xk[0] if xk is not None else 0.0
         progress_pct = data.get("progress_pct", None)
@@ -1672,6 +1781,25 @@ class CertusMetalBilayerApp(MetalBaseApp):
         max_iter = int(data.get("max_iteration", getattr(self, "_optim_max_iter", DEFAULT_MAXITER)))
         phase = "PGLOBAL" if mode == "global" else "local"
 
+        self._auto_batch_last_progress = {
+            "iteration": iteration,
+            "current_rmse": rmse,
+            "best_rmse": best_rmse,
+            "best_cost": best_cost,
+            "evaluation_count": evals,
+            "elapsed_s": elapsed_s,
+            "mode": mode,
+            "max_iteration": max_iter,
+            "params": xk,
+        }
+        if getattr(self, "_auto_batch_mode", False):
+            if best_rmse > 0 and np.isfinite(best_rmse):
+                current = getattr(self, "_auto_batch_best_rmse", None)
+                self._auto_batch_best_rmse = best_rmse if current is None else min(float(current), float(best_rmse))
+            if best_cost > 0 and np.isfinite(best_cost):
+                current_mse = getattr(self, "_auto_batch_best_mse", None)
+                self._auto_batch_best_mse = best_cost if current_mse is None else min(float(current_mse), float(best_cost))
+
         # UI update only (console logging is handled by pglobal_adapter)
 
         self.progress_widget.update(
@@ -1679,7 +1807,7 @@ class CertusMetalBilayerApp(MetalBaseApp):
             max_iter=max_iter,
             evals=evals,
             phase=phase,
-            extra_info=f"RMSE: {rmse:.6f} | Best: {best_cost:.6f} | {elapsed_s:.0f}s" if rmse > 0 else f"Best: {best_cost:.6f} | {elapsed_s:.0f}s",
+            extra_info=f"RMSE: {rmse:.6f} | Best RMSE: {best_rmse:.6f} | Time {int(elapsed_s)}s",
             progress_pct=progress_pct if progress_pct is not None else -1,
         )
 
@@ -1770,12 +1898,18 @@ class CertusMetalBilayerApp(MetalBaseApp):
             final=True,
         )
 
+        if getattr(self, "_auto_batch_mode", False):
+            if hasattr(self, "_write_auto_batch_result"):
+                self._write_auto_batch_result(results, iteration_count)
+
         self.final_results = results
 
         # Self-export (Excel + HTML) if enabled via HUB
 
         if get_export_config():
             QTimer.singleShot(500, self.export_results)
+
+        self.maybe_quit_after_auto_batch()
 
     def update_plots(self, data, final=False):
         """Updates plots with current optimization state (live during run, full on finish)."""
@@ -1786,8 +1920,11 @@ class CertusMetalBilayerApp(MetalBaseApp):
         xk = data.get("params")
         if xk is None:
             return
+            
+        xk = np.asarray(xk, dtype=np.float64)
 
-        rmse_val = np.sqrt(data["mse"]) if data.get("mse", 0) >= 0 else 0.0
+        mse_val = float(data.get("mse", 0.0))
+        rmse_val = float(data.get("current_rmse", data.get("best_rmse", np.sqrt(mse_val) if mse_val >= 0 else 0.0)))
 
         self._update_bilayer_live_labels(xk, rmse_val)
         self._update_bilayer_mse_plot(data.get("iteration", 0), rmse_val)
@@ -1831,7 +1968,13 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
     def _update_bilayer_curves(self, p, xk, final):
         eM, eL, n_infini, A_diel = xk[0], xk[1], xk[2], xk[3]
-        num_knots, offset = p["num_knots"], 4
+        
+        # Safely deduce the number of knots from the incoming parameter vector length.
+        # Vector structure for bilayer: 4 (eM, eL, n_inf, A) + 2k (n and k) + (k - 2) (lambdas) = 3k + 2.
+        # Therefore, k = (size - 2) / 3.
+        num_knots = int(round((len(xk) - 2) / 3.0))
+        offset = 4
+        
         spline_knot_count = num_knots
         n_knots = xk[offset : offset + spline_knot_count]
         k_knots = xk[offset + spline_knot_count : offset + 2 * spline_knot_count]
@@ -2501,8 +2644,162 @@ class CertusMetalBilayerApp(MetalBaseApp):
 
         return layout
 
+    def _resolve_config_target_file(self, config_path: str) -> str | None:
+        try:
+            cfg_path = Path(config_path).expanduser().resolve()
+            with open(cfg_path, "r", encoding="utf-8") as fh:
+                cfg = json.load(fh)
+            target_hint = cfg.get("target_file", None)
+            if not target_hint:
+                return None
+            candidate = Path(str(target_hint)).expanduser()
+            if candidate.exists():
+                return str(candidate)
+            # Try relative to config file directory
+            candidate_rel = cfg_path.parent / candidate.name
+            if candidate_rel.exists():
+                return str(candidate_rel)
+            return None
+        except Exception:
+            return None
+
+    def _enable_auto_batch_mode(self, config_path: str) -> None:
+        self._auto_batch_mode = True
+        self._auto_batch_config = config_path
+        self._auto_batch_started = False
+        self._auto_batch_quit = False
+
+        def _kickoff():
+            if self._auto_batch_started:
+                return
+            self._auto_batch_started = True
+            self.logger.info("AUTO_BATCH starting optimization from config: %s", config_path)
+            self._last_run_config_path = config_path
+            self.load_config(config_path)
+            target_path = self._resolve_config_target_file(config_path)
+            if target_path:
+                self.load_target_file(target_path)
+            if not getattr(self, "target_data", None):
+                self.logger.error("AUTO_BATCH aborted: no valid target data loaded")
+                self.maybe_quit_after_auto_batch()
+                return
+            QTimer.singleShot(1500, self.start_optimization)
+
+        QTimer.singleShot(1000, _kickoff)
+
+    def _write_auto_batch_result(self, results, iteration_count: int) -> None:
+        out_dir = Path(self._last_run_config_path).parent if getattr(self, "_last_run_config_path", None) else Path.cwd()
+        out_path = out_dir / "auto_batch_result.json"
+        result_obj = results.get("result", None)
+        x = getattr(result_obj, "x", None)
+        params = []
+        if x is not None:
+            try:
+                params = [float(v) for v in np.asarray(x).ravel().tolist()]
+            except Exception:
+                params = []
+
+        live_last = getattr(self, "_auto_batch_last_progress", {}) or {}
+        live_best_rmse = getattr(self, "_auto_batch_best_rmse", None)
+        live_best_mse = getattr(self, "_auto_batch_best_mse", None)
+
+        final_mse = float(getattr(result_obj, "fun", results.get("mse", np.nan)))
+        final_rmse = float(np.sqrt(final_mse)) if np.isfinite(final_mse) and final_mse >= 0 else None
+
+        best_rmse = None
+        if live_best_rmse is not None:
+            try:
+                best_rmse = float(live_best_rmse)
+            except Exception:
+                best_rmse = None
+        if best_rmse is None and live_last.get("best_rmse") is not None:
+            try:
+                best_rmse = float(live_last.get("best_rmse"))
+            except Exception:
+                best_rmse = None
+        if best_rmse is None:
+            best_rmse = final_rmse
+
+        best_mse = None
+        if live_best_mse is not None:
+            try:
+                best_mse = float(live_best_mse)
+            except Exception:
+                best_mse = None
+        if best_mse is None and live_last.get("best_cost") is not None:
+            try:
+                best_mse = float(live_last.get("best_cost"))
+            except Exception:
+                best_mse = None
+        if best_mse is None:
+            best_mse = final_mse
+
+        if not params and live_last.get("params") is not None:
+            try:
+                params = [float(v) for v in np.asarray(live_last.get("params")).ravel().tolist()]
+            except Exception:
+                params = []
+
+        payload = {
+            "timestamp": __import__("datetime").datetime.now().isoformat(),
+            "best_rmse": best_rmse,
+            "best_mse": best_mse,
+            "final_rmse": final_rmse,
+            "final_mse": final_mse,
+            "live_current_rmse": live_last.get("current_rmse", None),
+            "live_best_rmse": live_last.get("best_rmse", None),
+            "iterations": int(iteration_count),
+            "nit": int(results.get("nit", iteration_count)),
+            "success": bool(results.get("success", False)),
+            "message": str(results.get("message", "")),
+            "params": params,
+            "config": str(getattr(self, "_last_run_config_path", "")),
+        }
+        import json
+        out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        self.logger.info("AUTO_BATCH wrote result file=%s best_rmse=%s", out_path, best_rmse)
+        try:
+            if getattr(self, "logger", None) and getattr(self.logger, "handlers", None):
+                for handler in self.logger.handlers:
+                    try:
+                        handler.flush()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+
+    def maybe_quit_after_auto_batch(self) -> None:
+        if self._auto_batch_mode and not self._auto_batch_quit:
+            self._auto_batch_quit = True
+            QTimer.singleShot(1200, QApplication.instance().quit)
+
+    def _build_auto_batch_script(self, config_path: str, out_dir: str) -> str:
+        return f'''$env:CERTUS_CONSOLE_LOG_LEVEL = "DEBUG"
+$env:CERTUS_METAL_PGLOBAL_MIN_FEVAL_FACTOR = "12"
+$env:CERTUS_METAL_POLISH_RESTARTS = "16"
+$env:CERTUS_METAL_INITIAL_MESH_SIZE = "128"
+$env:CERTUS_METAL_SEVERE_POLISH = "1"
+$env:CERTUS_METAL_SEVERE_POLISH_RESTARTS = "20"
+$env:CERTUS_METAL_SEVERE_POLISH_SPAN_SCALE = "0.008"
+$env:CERTUS_METAL_SEVERE_POLISH_MAXITER = "1800"
+$env:CERTUS_METAL_LOCAL_MESH_SEED = "54321"
+$env:CERTUS_METAL_INITIAL_MESH_SEED = "12345"
+python CERTUS_METAL_BILAYER.py --config "{config_path}" --auto-run --auto-close 2>&1 | Tee-Object -FilePath "{out_dir}\\run_verbose.txt"'''
+
 
 if __name__ == "__main__":
+    import os
+    os.environ.setdefault("CERTUS_CONSOLE_LOG_LEVEL", "INFO")
+    import argparse
+
+    parser = argparse.ArgumentParser(description="CERTUS Metal Bilayer")
+    parser.add_argument("config", nargs="?", help="Optional config JSON path")
+    parser.add_argument("--config", dest="config_flag", help="Optional config JSON path")
+    parser.add_argument("--auto-run", action="store_true", help="Automatically load config and start optimization")
+    parser.add_argument("--auto-close", action="store_true", help="Quit the app after optimization finishes")
+    parser.add_argument("--no-splash", action="store_true", help="Disable splash screen")
+    args = parser.parse_args()
+
     if sys.platform.startswith("win"):
         multiprocessing.freeze_support()
 
@@ -2517,26 +2814,37 @@ if __name__ == "__main__":
 
     # --- SPLASH SCREEN ---
 
-    from certus.ui.certus_splash import create_splash
-
-    splash = create_splash("Initializing Metal Engine (Bilayer)...")
+    splash = None
+    if not args.no_splash:
+        from certus.ui.certus_splash import create_splash
+        splash = create_splash("Initializing Metal Engine (Bilayer)...")
 
     # Setup logging with centralized helper
 
     setup_logging(log_file="certus_metal.log")
 
     window = CertusMetalBilayerApp()
+    if args.auto_close:
+        window._auto_batch_mode = True
+        window._auto_batch_quit = False
 
-    window.show()
+    if not (args.auto_run or args.auto_close):
+        window.show()
 
-    splash.finish(window)
+    if splash is not None:
+        splash.finish(window)
+
+    config_path = args.config_flag or args.config
 
     # Load file from CLI if provided
 
-    if len(sys.argv) > 1:
-        f = sys.argv[1]
-
-        if Path(f).exists():
-            QTimer.singleShot(100, lambda: window.load_config(f))
+    if config_path and Path(config_path).exists():
+        QTimer.singleShot(100, lambda cp=config_path: window.load_config(cp))
+        if args.auto_run or args.auto_close:
+            window._enable_auto_batch_mode(config_path)
+    elif len(sys.argv) > 1 and Path(sys.argv[1]).exists():
+        QTimer.singleShot(100, lambda p=sys.argv[1]: window.load_config(p))
+        if args.auto_run or args.auto_close:
+            window._enable_auto_batch_mode(sys.argv[1])
 
     sys.exit(app.exec())

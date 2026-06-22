@@ -11,16 +11,16 @@ These tests verify fundamental optical principles that MUST hold:
 
    On utilise  calculate_transmission_single  et NON  calculate_RT_single_layer_single.
 
-   Raison : calculate_RT_single_layer_single  est typé  n_sub: float64  en Numba
-   et REFUSE les complex128. Hypothesis génère des n_sub complexes (physiquement
-   correct pour des substrats absorbants). Passer un complex à la version float
+   Reason: calculate_RT_single_layer_single is typed n_sub: float64 in Numba
+   and REFUSES complex128. Hypothesis generates complex n_sub (physically
+   correct for absorbing substrates). Passing a complex to the float version
    provoque :
        TypingError: No implementation of function lt(complex128, float64)
 
    calculate_transmission_single  accepte  n_sub: complex  et retourne (R, T).
-   Fonctionnellement identique pour ces tests de propriétés.
+   Functionally identical for these property tests.
 
-   NE PAS RÉGRESSER vers calculate_RT_single_layer_single ici.
+   DO NOT REGRESS to calculate_RT_single_layer_single here.
 ──────────────────────────────────────────────────────────────────────────────
 """
 
@@ -31,7 +31,7 @@ import numpy as np
 from hypothesis import given, settings, Verbosity
 
 # PARE-FEU : utiliser calculate_transmission_single (accepte n_sub complex).
-# Voir docstring du module pour la justification.
+# See module docstring for justification.
 from certus.core._certus_physics_impl import (
     calculate_transmission_single,
     calculate_RT_vectorized_real,

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from certus.utils.certus_strat_db import RobustMaterialDatabase
 
-@pytest.mark.xfail(reason="Test écrit pour une ancienne API (substrate_data, get_material_index) absente de RobustMaterialDatabase — à réécrire", strict=True)
+@pytest.mark.xfail(reason="Test written for an old API (substrate_data, get_material_index) absent from RobustMaterialDatabase — to rewrite", strict=True)
 def test_robust_db_strict_boundary(tmp_path):
     # Create a dummy xlsx with a material tab and a substrate tab to simulate the database
     db_file = tmp_path / "dummy_db.xlsx"

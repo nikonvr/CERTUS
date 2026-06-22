@@ -1,7 +1,25 @@
 from __future__ import annotations
+from certus.utils.certus_re_math import re_substrate_cauchy_barrier_residuals_jac
+from certus.utils.certus_re_math import re_substrate_cauchy_phi_matrix
+from certus.utils.certus_re_math import RE_SPLINE_NODE2_BOUNDS_NM
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_PHASE2_TOP_K
+from certus.utils.certus_re_config import RE_PHASE2_TOP_K_MERGE_REL_TOL
+from certus.utils.certus_re_config import RE_P4_BEAM_AP_BOUNDS_DEG
+from certus.utils.certus_re_config import RE_PHASE2_FD_MAX_WORKERS
+from certus.utils.certus_re_config import RE_PHASE2_FD_PARALLEL
+from certus.utils.certus_re_config import RE_PHASE2_ONESIDED_SPLINE_FD
+from certus.utils.certus_re_config import RE_PHASE2_LAM2_FD_STEP
+from certus.utils.certus_re_config import RE_PHASE2_SPLINE_FD_STEP
+from certus.utils.certus_re_config import RE_P4_BEAM_N_KNOTS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_QWOT_ABS
+from certus.utils.certus_re_config import RE_RE_DEADZONE_DELTA_RE_ABS
+from certus.utils.certus_re_config import RE_HL_DELTA_RE_REG_SQRT_W
+from certus.utils.certus_re_math import re_envelope_max_delta_n
 import numpy as np
 import time
 from typing import Any
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 import logging
 
 logger = logging.getLogger(__name__)
@@ -10,40 +28,21 @@ from certus.utils.certus_re_helpers import (
     _re_apply_correc,
     _re_deadzone_excess_abs,
     re_knots_wavelengths,
-    re_envelope_max_delta_n,
     re_delta_qwot_per_layer,
     re_n_corr_at_lambda_ref,
     RE_SPLINE_CORREC_KINDS,
     RE_SPLINE_NODE2_DEFAULT_NM,
-    RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV,
-    RE_HL_DELTA_RE_REG_SQRT_W,
-    RE_RE_DEADZONE_DELTA_RE_ABS,
-    RE_RE_DEADZONE_QWOT_ABS,
-    RE_P4_BEAM_N_KNOTS,
     _re_p4_chromatic_band_masks,
     _re_p4_band_ap_deg,
     _re_p4_effective_half_width_deg,
     _re_eval_angle_physics_for,
-    RE_PHASE2_SPLINE_FD_STEP,
-    RE_PHASE2_LAM2_FD_STEP,
-    RE_PHASE2_ONESIDED_SPLINE_FD,
-    RE_PHASE2_FD_PARALLEL,
-    RE_PHASE2_FD_MAX_WORKERS,
     RE_SPLINE_N_KNOTS,
     _re_p4_beam_knots_lam_nm_from_wls,
     RE_GUI_DEFAULT_BEAM_APERTURE_DEG,
-    RE_P4_BEAM_AP_BOUNDS_DEG,
-    RE_GUI_DEFAULT_RE_QWOT_ALPHA,
-    RE_GUI_DEFAULT_RE_PHASE2_TOP_K,
-    RE_PHASE2_TOP_K_MERGE_REL_TOL,
-    RE_SPLINE_NODE2_BOUNDS_NM,
-    RE_SUB_CAUCHY_BARRIER_SQRT_W,
-    RE_SUB_CAUCHY_TUBE_DELTA,
-    re_substrate_cauchy_phi_matrix,
-    re_substrate_cauchy_barrier_residuals_jac,
     _re_p4_ap_band_intervals_str,
     _re_rmse_combined_spectral_qwot,
 )
+from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_SPLINE_TIKHONOV
 from certus.core.certus_re_config import REMseContext, REPhase2Result, RE_RESULT_LABEL_WITH_DRIFT, _result_dto_at
 from certus.workers.certus_re_worker_utils import (
     re_objective_wls_grid,
@@ -86,7 +85,7 @@ def _re_init_context_fields(self, _re_t0: float) -> tuple:
     def _emit_re_prog(target: float, msg: str) -> None:
         v = max(re_pct_hi[0], float(target))
         re_pct_hi[0] = max(0.0, min(99.0, v))
-        self.signals.progress.emit(int(round(re_pct_hi[0])), msg)
+        self.signals.progress_snapshot.emit(build_progress_snapshot(message=msg, display_ratio=max(0.0, min(1.0, float(re_pct_hi[0]) / 100.0)), progress_ratio=max(0.0, min(1.0, float(re_pct_hi[0]) / 100.0)), eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='RE', phase='OBJECTIVE'))
 
     mats = self.cfg["mats"]
     stack = self.cfg["stack"]

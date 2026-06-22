@@ -281,6 +281,90 @@ class CertusScientificPlot(pg.PlotWidget):
         self._copy_excel_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
 
         self._copy_excel_shortcut.activated.connect(self._on_copy_excel_clipboard)
+        self._has_auto_ranged_on_show_x = False
+        self._has_auto_ranged_on_show_y = False
+        self.setXRange = self._custom_setXRange
+        self.setYRange = self._custom_setYRange
+        self.setRange = self._custom_setRange
+
+    @property
+    def _has_auto_ranged_on_show(self) -> bool:
+        return self._has_auto_ranged_on_show_x or self._has_auto_ranged_on_show_y
+
+    @_has_auto_ranged_on_show.setter
+    def _has_auto_ranged_on_show(self, val: bool) -> None:
+        self._has_auto_ranged_on_show_x = val
+        self._has_auto_ranged_on_show_y = val
+
+    def _custom_setXRange(self, *args, **kwargs) -> None:
+        self.plotItem.setXRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_x = True
+
+    def _custom_setYRange(self, *args, **kwargs) -> None:
+        self.plotItem.setYRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_y = True
+
+    def _custom_setRange(self, *args, **kwargs) -> None:
+        self.plotItem.setRange(*args, **kwargs)
+        self._has_auto_ranged_on_show_x = True
+        self._has_auto_ranged_on_show_y = True
+
+    def setXRange(self, *args, **kwargs) -> None:
+        self._custom_setXRange(*args, **kwargs)
+
+    def setYRange(self, *args, **kwargs) -> None:
+        self._custom_setYRange(*args, **kwargs)
+
+    def setRange(self, *args, **kwargs) -> None:
+        self._custom_setRange(*args, **kwargs)
+
+    def has_data(self) -> bool:
+        for item in self.plotItem.items:
+            if isinstance(item, (pg.PlotDataItem, pg.PlotCurveItem, pg.ScatterPlotItem)):
+                if hasattr(item, "getData"):
+                    try:
+                        xData, yData = item.getData()
+                        if xData is not None and len(xData) > 0:
+                            return True
+                    except Exception:
+                        pass
+        return False
+
+    def _trigger_auto_range(self) -> None:
+        if not self.has_data():
+            return
+        vb = self.getViewBox()
+        if vb is not None:
+            auto_x = not getattr(self, "_has_auto_ranged_on_show_x", False)
+            auto_y = not getattr(self, "_has_auto_ranged_on_show_y", False)
+            if auto_x and auto_y:
+                vb.autoRange()
+                self._has_auto_ranged_on_show_x = True
+                self._has_auto_ranged_on_show_y = True
+            elif auto_x or auto_y:
+                bounds = vb.childrenBounds()
+                if bounds is not None:
+                    x_range, y_range = bounds
+                    if auto_x and x_range is not None and x_range[0] is not None and x_range[1] is not None:
+                        vb.setXRange(x_range[0], x_range[1], padding=None)
+                        self._has_auto_ranged_on_show_x = True
+                    if auto_y and y_range is not None and y_range[0] is not None and y_range[1] is not None:
+                        vb.setYRange(y_range[0], y_range[1], padding=None)
+                        self._has_auto_ranged_on_show_y = True
+
+    def showEvent(self, ev) -> None:
+        super().showEvent(ev)
+        self._trigger_auto_range()
+
+    def hideEvent(self, ev) -> None:
+        super().hideEvent(ev)
+        self._has_auto_ranged_on_show = False
+
+    def plot(self, *args, **kwargs) -> pg.PlotDataItem:
+        item = self.plotItem.plot(*args, **kwargs)
+        if self.isVisible():
+            self._trigger_auto_range()
+        return item
 
     def _on_copy_excel_clipboard(self) -> None:
 

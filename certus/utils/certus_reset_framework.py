@@ -226,7 +226,7 @@ class CertusResetManager:
 
         # Stop progress widget if present
         if hasattr(self.app, "progress_widget"):
-            self.app.progress_widget.stop("Reset by user")
+            self.app.progress_widget.stop("Cancelled")
 
     def _clear_ui_elements(self) -> None:
         """Clear all UI elements to default state"""

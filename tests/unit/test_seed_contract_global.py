@@ -38,7 +38,7 @@ def _find_seed_violations(path: Path) -> list[str]:
             )
         if fn in forbidden_global_random:
             violations.append(
-                f"{path.name}:{node.lineno} -> {fn} interdit (utiliser un Generator seedé)"
+                f"{path.name}:{node.lineno} -> {fn} forbidden (use a seeded Generator)"
             )
     return violations
 

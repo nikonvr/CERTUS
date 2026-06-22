@@ -15,10 +15,14 @@ class BaseHeadlessRequestModel(BaseModel):
     config: Any
     source_paths: list[str] = Field(default_factory=list)
     seed: int | None = None
+    run_id: str | None = None
     app_id: str = "unknown"
     app_version: str = "unknown"
     warnings: list[str] = Field(default_factory=list)
     status: str = "OK"
+    created_at: str | None = None
+    initiated_by: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class IndexFitRequestModel(BaseHeadlessRequestModel):

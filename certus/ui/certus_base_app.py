@@ -1103,15 +1103,8 @@ class CertusBaseApp(
 
             self.spectrum_plot.setXRange(200, 3000, 0)
 
-        if y_min is not None and y_max is not None:
-            y_margin = (y_max - y_min) * 0.1
-
-            # Limit Y between -0.02 and 1.05 for physical consistency (0-100%)
-
-            self.spectrum_plot.setYRange(max(-0.02, y_min - y_margin), min(1.05, y_max + y_margin), 0)
-
-        else:
-            self.spectrum_plot.setYRange(0.0, 1.0, 0)
+        # For Y axis, we just use Pyqtgraph's native AutoRange so it behaves exactly like the 'A' button
+        self.spectrum_plot.plotItem.enableAutoRange(y=True)
 
     def _calculate_wls_max_with_margin(self, active_targets) -> Any:
         """Calculates lambda max with 20% margin relative to max extremity"""
@@ -1557,10 +1550,7 @@ class CertusBaseApp(
 
     def _monotonic_visual_mode_enabled(self) -> bool:
         """Enable strict non-regression of visualized spectrum during/after workflow."""
-
-        wf_best = getattr(self, "_workflow_best_rmse", float("inf"))
-
-        return np.isfinite(wf_best) and wf_best < float("inf")
+        return True
 
     def _rebuild_target_scatter(self, wls: np.ndarray, oblique_mode: bool = False) -> None:
         """Rebuilds target points on plot"""
@@ -2108,7 +2098,8 @@ class CertusBaseApp(
 
             elapsed_str = f" <b>({m}m{s:02d}s)</b>"
 
-        self.log_text.append(f"<span style='color:{c}'><b>[{certus_timestamp_display()}]</b>{elapsed_str} {msg}</span>")
+        if hasattr(self, 'log_text'):
+            self.log_text.append(f"<span style='color:{c}'><b>[{certus_timestamp_display()}]</b>{elapsed_str} {msg}</span>")
 
         # P0.5 - Mirror to stacked toasts for important levels only
         self._mirror_log_to_toast(msg, lvl)

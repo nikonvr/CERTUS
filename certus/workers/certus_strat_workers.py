@@ -280,6 +280,13 @@ from certus.utils.certus_strat_service import (
 
 from threading import Event
 
+from certus.workers.certus_strat_workers_nominal import NominalAnalysisStrategy
+from certus.workers.certus_strat_workers_search import StrategySearchStrategy
+from certus.workers.certus_strat_workers_robustness import RobustnessEvaluationStrategy
+from certus.workers.certus_strat_workers_pipeline import FullPipelineStrategy
+from certus.workers.certus_strat_workers_external import ExternalEvaluationStrategy
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
+
 # === WORKER SIGNALS ===
 
 class WorkerSignals(QObject):
@@ -288,6 +295,7 @@ class WorkerSignals(QObject):
     error = pyqtSignal(tuple)
 
     progress = pyqtSignal(int, str)
+    progress_snapshot = pyqtSignal(object)
 
     plot = pyqtSignal(object, str)
 
@@ -666,7 +674,7 @@ def _parallel_block_worker(args) -> dict:
 
                 pre_calc_data["clues_at_wl"] = shared_clues
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Hints) reconnection failed:{e}")
 
         shared_matrix_worker = None
@@ -677,7 +685,7 @@ def _parallel_block_worker(args) -> dict:
 
                 pre_calc_data["nominal_matrix_cache"] = shared_matrix_worker.get_array()
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
                 logger.warning(f"[Block {n_blk}] SharedMemory (Matrix) reconnection failed: {e}")
 
         if "materials_data" in pre_calc_data and pre_calc_data["materials_data"]:
@@ -888,7 +896,7 @@ def _parallel_block_worker(args) -> dict:
             "best_strategy_error": None,
         }
 
-    except NUMERICAL_FAULT_EXCEPTIONS as e:
+    except Exception as e:
         logger.error(f"Critical error in parallel worker for block {n_blk}: {traceback.format_exc()}")
 
         return {"n_blk": n_blk, "error": str(e), "strategies_results": []}
@@ -1109,13 +1117,9 @@ class WorkerThread(QThread):
         # Keep legacy fields for incremental migration across call sites.
         self.step = legacy_step
 
-        self.params = dict(self.request.params)
+        self.params = self.request.params
 
-        self.opti_results = (
-            dict(self.request.opti_results)
-            if isinstance(self.request.opti_results, dict)
-            else self.request.opti_results
-        )
+        self.opti_results = self.request.opti_results
 
         self.timing_logger = self.request.timing_logger
 
@@ -1154,77 +1158,14 @@ class WorkerThread(QThread):
             elif self.task_type == StratTask.EXTERNAL_EVALUATION:
                 self._execute_external_evaluation()
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except Exception as e:
             self.signals.error.emit((type(e), e, e.__traceback__))
 
             self.params["logger"].error(traceback.format_exc())
 
     def _execute_nominal_analysis(self) -> None:
-        """
+        NominalAnalysisStrategy().execute(self)
 
-        Execute Step 1: Nominal Calculation & Sensitivity Check.
-
-        This method performs initial analysis including:
-
-        - Nominal property calculation for the design
-
-        - Sensitivity matrix computation
-
-        - SEEL analysis for error estimation
-
-        - Visualization of results and stack structure
-
-        Args:
-
-            self: WorkerThread instance
-
-        Returns:
-
-            None
-
-        Notes:
-
-            - Logs operation details
-
-            - Emits plot signals for visualization
-
-            - Calculates sensitivity for robustness analysis
-
-            - Stores SEEL data in application context
-
-        """
-
-        self.params["logger"].info("--- STEP 1: NOMINAL CALCULATION & SENSITIVITY CHECK ---")
-
-        # Track C: Orchestrate Step 0 via headless service
-        res = self._service.run_step_0(self.params, materials_db=APP_CONTEXT.get("materials_db"))
-        nominal_results = res["nominal_results"]
-        self.nominal_results = nominal_results
-        multipliers = res["multipliers"]
-        sensitivity_data = res["sensitivity_data"]
-        seel_data = res["seel_data"]
-
-        APP_CONTEXT["seel_data"] = seel_data
-
-        if self.params.get("show_plots", True):
-            self.signals.plot.emit(sensitivity_data, "sensitivity_popup")
-
-            stack_data = {
-                "p_thick": nominal_results["physical_thicknesses_nominal"],
-                "multipliers": multipliers,
-                "nSub_id": self.params.get("nSub_id"),
-            }
-
-            self.signals.plot.emit(stack_data, "stack_visual")
-
-            self.signals.plot.emit(seel_data, "seel_analysis_plot")
-
-        self.signals.finished.emit(
-            WorkerThreadResult.for_step_0(
-                nominal_results=nominal_results,
-                seel_data=seel_data,
-            ).to_legacy_dict()
-        )
 
     def _execute_nominal_analysis_auto(self) -> None:
         """
@@ -1290,7 +1231,7 @@ class WorkerThread(QThread):
 
             self.signals.plot.emit(clues_data_packet, "clues_check_plot")
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except Exception as e:
             self.params["logger"].warning(f"Could not generate index check plot: {e}")
 
         if self.params.get("show_plots", True):
@@ -1309,466 +1250,20 @@ class WorkerThread(QThread):
         self.params["logger"].info("✓ Step 1 (Auto + Sensitivity) complete (prerequisite)\n")
 
     def _execute_strategy_search(self) -> None:
-        """
+        StrategySearchStrategy().execute(self)
 
-        Execute Step 2: Optimized Hybrid Strategy.
-
-        This method performs the hybrid optimization strategy including:
-
-        - Block strategy optimization using hybrid algorithms
-
-        - Performance metrics calculation and analysis
-
-        - Result visualization and plotting
-
-        - Progress tracking and timing measurement
-
-        Args:
-
-            self: WorkerThread instance
-
-        Returns:
-
-            None
-
-        Notes:
-
-            - Logs operation details
-
-            - Includes timing measurement
-
-            - Emits progress and plot signals
-
-            - Handles optimization result processing
-
-        """
-
-        if self.timing_logger:
-            self.timing_logger.start("Step 2: Optimized Hybrid Strategy")
-
-        opti_results = optimize_block_strategy_hybrid(self.params, self.signals.progress, self.signals.plot)
-
-        if self.params.get("show_plots", True) and "raw_results_thickness" in opti_results:
-            self.signals.plot.emit(opti_results["raw_results_thickness"], "pyqtgraph_heatmap")
-
-        if self.timing_logger:
-            self.timing_logger.end("Step 2: Optimized Hybrid Strategy")
-
-        self.signals.finished.emit(WorkerThreadResult.for_step_2(opti_results=opti_results).to_legacy_dict())
 
     def _execute_robustness_evaluation(self) -> None:
-        """Execute Step 3: Robustness Test (classical workflow, non-Step-23).
+        RobustnessEvaluationStrategy().execute(self)
 
-        Runs final Monte Carlo simulations with thickness noise, aggregates
-        statistics, exports to Excel, and emits the ``show_strategies_table``
-        signal.
-
-        Prerequisite: ``self.opti_results`` must be populated by Step 2.
-        Raises ``RuntimeError`` otherwise.
-
-        ``db_instance`` note
-        --------------------
-        ``run_final_simulation_block`` and ``generate_excel_report`` both
-        receive ``self.params`` directly; they apply the same three-level
-        db_instance fallback internally.  Do NOT strip ``materials_db`` or
-        ``materials_db_instance`` from ``self.params`` before calling them.
-        """
-
-        if not self.opti_results:
-            raise RuntimeError("Step 2 must be completed before Step 3")
-
-        if self.timing_logger:
-            self.timing_logger.start("Step 3: Robustness Test")
-
-        num_runs = int(self.params.get("robustness_num_runs", 150))
-
-        final_results = run_final_simulation_block(self.opti_results, self.params, num_runs)
-
-        if "all_strategies_results" in final_results:
-            self.signals.show_strategies_table.emit(final_results["all_strategies_results"])
-
-        if self.params.get("export_excel", True):
-            # SAFETY — reuse cached nominal properties to avoid redundant calculation
-            nominal_results = getattr(self, "nominal_results", None)
-            if nominal_results is None:
-                nominal_results, _ = calculate_nominal_properties(self.params)
-
-            excel_data = generate_excel_report(nominal_results, self.opti_results, final_results, self.params)
-
-            # Prepare metadata for auto-naming and HTML
-
-            rmse_val = extract_best_rmse(final_results.get("all_strategies_results", []))
-            self.logger.info("STRAT Export (Classical): Extracted best RMSE %f from strategies results", rmse_val)
-
-            metadata = {
-                "rmse": rmse_val,
-                "strategies_count": len(final_results.get("all_strategies_results", [])),
-                "params": self.params,
-                "nominal_results": nominal_results,
-                "opti_results": self.opti_results,
-            }
-
-            self.signals.excel_ready.emit(excel_data, metadata)
-
-        if self.params.get("show_plots", True):
-            if "all_strategies_results" in final_results:
-                heatmap_data = self.opti_results.get("raw_results_thickness", None)
-
-                strat_data = {
-                    "strategies": final_results["all_strategies_results"],
-                    "p_thick_nominal": self.opti_results["p_thick_nominal"],
-                    "heatmap_data": heatmap_data,
-                }
-
-                self.signals.plot.emit(strat_data, "block_assignments")
-
-            best_noise_results = _get_best_noise_results(final_results, self.params["logger"])
-
-            if best_noise_results is None:
-                raise RuntimeError("Cannot retrieve robustness results")
-
-            wavelengths = arange_inclusive(
-                self.params["wl_range"][0],
-                self.params["wl_range"][1],
-                self.params["wl_step"],
-            )
-
-            local_db = self.params.get("materials_db_instance") or self.params.get("materials_db") or APP_CONTEXT.get("materials_db")
-
-            nH_arr = get_refractive_clues_vectorized(self.params["nH_id"], wavelengths, db_instance=local_db).astype(
-                np.complex128
-            )
-
-            nL_arr = get_refractive_clues_vectorized(self.params["nL_id"], wavelengths, db_instance=local_db).astype(
-                np.complex128
-            )
-
-            nSub_arr = get_refractive_clues_vectorized(
-                self.params["nSub_id"], wavelengths, db_instance=local_db
-            ).astype(np.complex128)
-
-            _, T_clean_batch = calculate_RT_batch_kernel(
-                wavelengths,
-                nH_arr,
-                nL_arr,
-                nSub_arr,
-                np.array(self.opti_results["p_thick_nominal"], dtype=np.float64).reshape(1, -1),
-            )
-
-            # Compute T_spectral_all for MC runs
-            thick_all = np.array(best_noise_results["thicknesses_all"], dtype=np.float64)
-            _, T_spectral_all = calculate_RT_batch_kernel(
-                wavelengths,
-                nH_arr,
-                nL_arr,
-                nSub_arr,
-                thick_all,
-            )
-            best_noise_results["T_spectral_all"] = T_spectral_all.tolist()
-
-            nominal_results_display = {
-                "wavelengths": wavelengths,
-                "T_spectral_nominal": T_clean_batch[0],
-            }
-
-            robust_data_pack = {
-                "nominal": nominal_results_display,
-                "best_noise": best_noise_results,
-                "opti": self.opti_results,
-            }
-
-            self.signals.plot.emit(robust_data_pack, "robustness_popout")
-
-        if self.timing_logger:
-            self.timing_logger.end("Step 3: Robustness Test")
-
-        self.signals.finished.emit(WorkerThreadResult.for_step_3(final_results=final_results).to_legacy_dict())
 
     def _execute_full_pipeline(self) -> None:
-        """
-        Execute the full optimized workflow in deep exploration mode.
+        FullPipelineStrategy().execute(self)
 
-        This method runs the complete optimization workflow including:
-        - Multi-process parallel optimization
-        - Statistics collection and monitoring
-        - Strategy generation and evaluation
-        - Robustness testing and validation
-        - Results aggregation and analysis
-        """
-
-        import multiprocessing as mp
-
-        if self.timing_logger:
-            self.timing_logger.start_global("Full Optimized Workflow (Deep Exploration Mode)")
-
-        stats_queue = _init_stats_queue()
-
-        global _GLOBAL_STATS_QUEUE
-
-        _GLOBAL_STATS_QUEUE = stats_queue
-
-        consumer_worker = StatsConsumerWorker(stats_queue)
-        self.consumer_thread = QThread()
-        consumer_worker.moveToThread(self.consumer_thread)
-        self.consumer_thread.started.connect(consumer_worker.run)
-
-        consumer_worker.update_stats.connect(self.signals.update_stats)
-        consumer_worker.finished.connect(self.consumer_thread.quit)
-        consumer_worker.finished.connect(consumer_worker.deleteLater)
-        self.consumer_thread.finished.connect(self.consumer_thread.deleteLater)
-
-        self.consumer_thread.start()
-
-        # SAFETY — queue.Queue (threading) not multiprocessing.Queue
-        # The pool below is a ThreadPoolExecutor (threads, not processes).
-        # multiprocessing.Queue uses OS pipes and hangs when consumed from threads.
-        # DO NOT replace with multiprocessing.Queue without switching the pool to
-        # ProcessPoolExecutor and verifying picklability of all enqueued objects.
-        live_preview_queue = queue.Queue()
-
-        shm_manager = None
-
-        try:
-            pre_calc_data, p_thick_nom, nucleation_info, nominal_res = _execute_nucleation_and_cost_mapping(
-                params=self.params,
-                signals=self.signals,
-                nominal_res=getattr(self, "nominal_results", None),
-            )
-
-            num_layers = pre_calc_data["num_layers"]
-
-            blocks_range = _compute_blocks_range_for_params(num_layers, self.params, dense=True)
-
-            n_screen = int(self.params.get("n_screen_runs", 25))
-
-            k_keep = int(self.params.get("k_keep_survivors", 10))
-
-            n_full = int(self.params.get("robustness_num_runs", 150))
-
-            self.params["logger"].info(f"🔄 PHASE 3: Dynamic Programming Strategy Optimization ({len(blocks_range)} steps) - HYBRID ENGINE...")
-
-            cost_map_sq_clean = {
-                l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
-            }
-
-            materials_db = self.params.get("materials_db") or APP_CONTEXT.get("materials_db")
-
-            # [FIX 2026] Use Context Manager for automatic cleanup
-
-            with (
-                SharedIndicesManager(pre_calc_data["clues_at_wl"]) as shm_manager,
-                SharedArrayManager(pre_calc_data["nominal_matrix_cache"]) as shm_matrix,
-            ):
-                minimized_context = {
-                    "raw_results_thickness": pre_calc_data["raw_results_thickness"],
-                    "raw_results_sq": pre_calc_data["raw_results_sq"],
-                    "num_layers": pre_calc_data["num_layers"],
-                    "p_thick_nominal": pre_calc_data["p_thick_nominal"],
-                    "shared_clues_info": shm_manager.get_context_info(),
-                    "shared_matrix_info": shm_matrix.get_context_info(),
-                    "all_wls": pre_calc_data["all_wls"],
-                    "materials_data": materials_db.data if materials_db else {},
-                    "nH_id": self.params["nH_id"],
-                    "nL_id": self.params["nL_id"],
-                    "nSub_id": self.params["nSub_id"],
-                    "l0": self.params["l0"],
-                    "sym_bonus_map": pre_calc_data.get("sym_bonus_map", {}),
-                    "sym_layer_importance": pre_calc_data.get("sym_layer_importance", {}),
-                }
-
-                params_for_pool = {
-                    k: v
-                    for k, v in self.params.items()
-                    if k
-                    not in [
-                        "logger",
-                        "materials_db",
-                        "gui_parent",
-                        "worker_signals",
-                        "materials_db_instance",
-                    ]
-                }
-
-                accumulated_strategies_results = []
-
-
-                # Store stop check
-
-                def stop_check():
-                    return self.params.get("stop_requested", False)
-
-                # SAFETY — strong reference prevents premature garbage collection
-                # BUG HISTORY: Assigning to a local variable allowed Python to destroy
-                # the LiveFeedMonitor object while monitor_thread was still running,
-                # crashing Qt with a dangling C++ pointer error.
-                # RULE: Always store on self so the worker lives as long as WorkerThread.
-                self.monitor_thread = QThread()
-                self.monitor_worker = LiveFeedMonitor(
-                    live_preview_queue=live_preview_queue,
-                    signals=self.signals,
-                    p_thick_nominal=pre_calc_data["p_thick_nominal"],
-                    clues_at_wl=pre_calc_data["clues_at_wl"],
-                )
-                self.monitor_worker.moveToThread(self.monitor_thread)
-                self.monitor_thread.started.connect(self.monitor_worker.start)
-                self.monitor_worker.finished.connect(self.monitor_thread.quit, Qt.ConnectionType.DirectConnection)
-                self.monitor_worker.finished.connect(self.monitor_worker.deleteLater)
-                self.monitor_thread.finished.connect(self.monitor_thread.deleteLater)
-                self.monitor_thread.start()
-
-                accumulated_strategies_results = _run_phaseB_parallel_execution(
-                    blocks_range=blocks_range,
-                    minimized_context=minimized_context,
-                    params_for_pool=params_for_pool,
-                    n_screen=n_screen,
-                    k_keep=k_keep,
-                    n_full=n_full,
-                    nucleation_info=nucleation_info,
-                    num_layers=num_layers,
-                    cost_map_sq_clean=cost_map_sq_clean,
-                    params=self.params,
-                    signals=self.signals,
-                    dyn_grid=pre_calc_data.get("full_dynamics_grid", {}),
-                    stats_queue=stats_queue,
-                    live_preview_queue=live_preview_queue,
-                )
-
-                live_preview_queue.put("STOP")
-                if getattr(self, "monitor_worker", None) is not None:
-                    QMetaObject.invokeMethod(self.monitor_worker, "stop", Qt.ConnectionType.QueuedConnection)
-                if hasattr(self, 'monitor_thread') and self.monitor_thread:
-                    self.monitor_thread.quit()
-
-                if hasattr(self, 'monitor_thread') and self.monitor_thread:
-                    if not self.monitor_thread.wait(3000):
-                        self.params["logger"].warning("Live preview monitor thread did not stop within 3s")
-
-                self.signals.progress.emit(100, "Finalizing results...")
-
-                import gc
-                gc.collect()
-
-                final_result_dict = _finalize_and_export_pipeline_results(
-                    accumulated_strategies_results=accumulated_strategies_results,
-                    pre_calc_data=pre_calc_data,
-                    nominal_res=nominal_res,
-                    params=self.params,
-                    signals=self.signals,
-                    timing_logger=self.timing_logger,
-                )
-                self.signals.finished.emit(final_result_dict)
-
-        finally:
-            if hasattr(self, 'monitor_thread') and self.monitor_thread:
-                if 'live_preview_queue' in locals() and live_preview_queue:
-                    try:
-                        live_preview_queue.put("STOP")
-                    except Exception:
-                        pass
-                if getattr(self, "monitor_worker", None) is not None:
-                    try:
-                        QMetaObject.invokeMethod(self.monitor_worker, "stop", Qt.ConnectionType.QueuedConnection)
-                    except Exception:
-                        pass
-                try:
-                    self.monitor_thread.quit()
-                except Exception:
-                    pass
-                if not self.monitor_thread.wait(3000):
-                    self.params["logger"].warning("Live preview monitor thread did not stop within 3s")
-
-            if stats_queue:
-                stats_queue.put(None)
-
-            if 'consumer_worker' in locals():
-                consumer_worker.is_running = False
-
-            if hasattr(self, 'consumer_thread') and self.consumer_thread:
-                try:
-                    self.consumer_thread.quit()
-                except Exception:
-                    pass
-                if not self.consumer_thread.wait(2000):
-                    self.params["logger"].warning("Stats consumer thread did not stop within 2s")
-
-            _GLOBAL_STATS_QUEUE = None
-
-            import gc
-            gc.collect()
 
     def _execute_external_evaluation(self) -> None:
+        ExternalEvaluationStrategy().execute(self)
 
-        self.params["logger"].info("--- STEP 33: EXTERNAL STRATEGIES SIMULATION ---")
-
-        loaded_strategies = self.params.get("loaded_strategies", [])
-
-        if not loaded_strategies:
-            raise ValueError("No strategies loaded in params['loaded_strategies']")
-
-        if not self.opti_results:
-            nominal_results = getattr(self, "nominal_results", None)
-            if nominal_results is None:
-                nominal_results, _ = calculate_nominal_properties(self.params)
-
-            p_thick_nominal = nominal_results["physical_thicknesses_nominal"]
-
-            clues_at_wl, nominal_matrix_cache, all_wls = precompute_clues_and_matrices(
-                self.params, p_thick_nominal, self.params["logger"]
-            )
-
-            self.opti_results = {
-                "p_thick_nominal": p_thick_nominal,
-                "clues_at_wl": clues_at_wl,
-                "nominal_matrix_cache": nominal_matrix_cache,
-                "all_wls": all_wls,
-                "p_thick_nominal": p_thick_nominal,
-            }
-
-        sim_context = self.opti_results.copy()
-
-        sim_context["all_strategies"] = loaded_strategies
-
-        num_runs = int(self.params.get("robustness_num_runs", 150))
-
-        self.params["logger"].info(f"🚀 Simulating {len(loaded_strategies)} external strategies ({num_runs} runs)...")
-
-        final_results = run_final_simulation_block(sim_context, self.params, num_runs)
-
-        if "all_strategies_results" in final_results:
-            self.signals.show_strategies_table.emit(final_results["all_strategies_results"])
-
-        if self.params.get("export_excel", True):
-            # SAFETY — reuse cached nominal properties to avoid redundant calculation
-            nominal_results = getattr(self, "nominal_results", None)
-            if nominal_results is None:
-                nominal_results, _ = calculate_nominal_properties(self.params)
-
-            excel_data = generate_excel_report(nominal_results, sim_context, final_results, self.params)
-
-            # Keep signal contract (excel_data, metadata).
-
-            best_rmse = extract_best_rmse(final_results.get("all_strategies_results", []))
-            self.logger.info("STRAT Export (Simulation): Extracted best RMSE %f from strategies results", best_rmse)
-
-            metadata = {
-                "rmse": best_rmse,
-                "strategies_count": len(final_results.get("all_strategies_results", [])),
-                "params": {k: v for k, v in self.params.items() if k not in ["logger", "materials_db", "clues_at_wl"]},
-            }
-
-            self.signals.excel_ready.emit(excel_data, metadata)
-
-        if self.params.get("show_plots", True):
-            if "all_strategies_results" in final_results:
-                heatmap_data = self.opti_results.get("raw_results_thickness", None)
-
-                strat_data = {
-                    "strategies": final_results["all_strategies_results"],
-                    "p_thick_nominal": self.opti_results["p_thick_nominal"],
-                    "heatmap_data": heatmap_data,
-                }
-
-                self.signals.plot.emit(strat_data, "block_assignments")
 
 
 def _run_phaseB_parallel_execution(
@@ -1812,7 +1307,8 @@ def _run_phaseB_parallel_execution(
     completed_blocks_lock = threading.Lock()
     completed_blocks_count = [0]
     total_blocks = len(blocks_range)
-    max_workers = get_safe_worker_count()
+    # FIX: Force max_workers=1 to prevent Numba CPU oversubscription and deadlocks
+    max_workers = 1
     params["logger"].info(f"   Using {max_workers} parallel workers for {len(segments)} independent segments")
 
     def _run_segment(segment: list[int]) -> None:
@@ -1954,7 +1450,7 @@ def _run_phaseB_parallel_execution(
                     del strategies_this_step
                     gc.collect()
 
-            except NUMERICAL_FAULT_EXCEPTIONS as e:
+            except Exception as e:
                 logger.error(f"   [Block {n_blk}] ❌ Error: {e}")
                 inherited_strategies = []
             finally:
@@ -1962,10 +1458,21 @@ def _run_phaseB_parallel_execution(
                     completed_blocks_count[0] += 1
                     current_completed = completed_blocks_count[0]
                 progress_pct = int((current_completed / total_blocks) * 90) + 5
-                signals.progress.emit(
-                    progress_pct,
-                    f"Optimizing ({n_blk} blocks) - Completed {current_completed}/{total_blocks}",
+                signals.progress_snapshot.emit(
+                    build_progress_snapshot(
+                        message=f"Optimizing ({n_blk} blocks)",
+                        sub_message=f"Completed {current_completed}/{total_blocks}",
+                        progress_ratio=progress_pct / 100.0,
+                        display_ratio=progress_pct / 100.0,
+                        eta_seconds=None,
+                        confidence=0.25,
+                        state=StepState.RUNNING,
+                        module="STRAT",
+                        phase="BLOCK_OPT",
+                        metadata={"completed": current_completed, "total": total_blocks, "block": n_blk},
+                    )
                 )
+                signals.progress_snapshot.emit(build_progress_snapshot(message=f"Optimizing ({n_blk} blocks) - Completed {current_completed}/{total_blocks}", sub_message=f"Completed {current_completed}/{total_blocks}", progress_ratio=progress_pct / 100.0, display_ratio=progress_pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="STRAT", phase="BLOCK_OPT", metadata={"completed": current_completed, "total": total_blocks, "block": n_blk}))
 
     executor = None
     try:
@@ -1984,7 +1491,7 @@ def _run_phaseB_parallel_execution(
             for f in done:
                 if f.exception() is not None:
                     params["logger"].error(f"❌ Future raised exception: {f.exception()}", exc_info=f.exception())
-    except NUMERICAL_FAULT_EXCEPTIONS as e:
+    except Exception as e:
         params["logger"].error(f"ThreadPoolExecutor error: {e}")
         raise
     finally:
@@ -2037,7 +1544,7 @@ def _finalize_and_export_pipeline_results(
                 "heatmap_data": heatmap_data,
             }
             signals.plot.emit(strat_data, "block_assignments")
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except Exception as e:
             params["logger"].warning(f"Plotting error: {e}")
 
         best_noise_results = _get_best_noise_results(best_res, params["logger"])
@@ -2183,7 +1690,7 @@ class PlotRenderWorker(QObject):
 
             self.finished.emit(img_bytes, self.plot_hash)
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except Exception as e:
             self.error.emit(str(e))
 
 def _resolve_strat_indices_db_path() -> str:

@@ -268,7 +268,7 @@ class CertusTheme:
 
             border: 1px solid {cls.BORDER};
 
-            border-radius: 8px;
+            border-radius: 10px;
 
             background-color: {cls.ELEVATED};
 
@@ -280,13 +280,15 @@ class CertusTheme:
 
             font-weight: 600;
 
+            min-height: 18px;
+
         }}
 
         QProgressBar::chunk {{
 
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {cls.PRIMARY}, stop:1 {cls.SECONDARY});
 
-            border-radius: 7px;
+            border-radius: 9px;
 
         }}
 
@@ -604,6 +606,11 @@ class CertusTheme:
 
         return shadow
 
+    @classmethod
+    def get_hint_text_style(cls) -> str:
+        """Returns standard styling for small hint texts and labels."""
+        return f"color: {cls.TEXT_SUB}; font-size: 11px;"
+
     @staticmethod
     def hex_to_rgba_tuple(hex_color: str, alpha: float = 1.0) -> tuple:
         """Converts #RRGGBB to (r, g, b, a) with alpha as 0-255 int."""
@@ -623,9 +630,8 @@ class CertusTheme:
                 font-family: {CertusTheme.FONT_FAMILY};
                 font-size: {CertusTheme.FONT_SIZE_BASE}pt;
                 color: {CertusTheme.TEXT_MAIN};
-                background: {CertusTheme.BACKGROUND};
             }}
-            QMainWindow, QDialog {{
+            QMainWindow, QDialog, QDockWidget, QScrollArea {{
                 background: {CertusTheme.BACKGROUND};
             }}
 

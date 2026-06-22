@@ -312,7 +312,7 @@ from certus.ui.certus_strat_ui_plot import CertusStratPlotMixin
 from certus.ui.certus_strat_ui_export import CertusStratExportMixin
 
 
-class CertusStratApp(CertusBaseApp, CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratStateMixin, CertusStratEventsMixin, CertusStratWorkerMixin, CertusStratPlotMixin, CertusStratExportMixin):
+class CertusStratApp(CertusWindowSpyMixin, CertusStratLayoutMixin, CertusStratStateMixin, CertusStratEventsMixin, CertusStratWorkerMixin, CertusStratPlotMixin, CertusStratExportMixin, CertusBaseApp):
     sig_numba_ready = pyqtSignal()
     sig_numba_error = pyqtSignal()
     """Main CERTUS-STRAT Application"""
@@ -415,9 +415,9 @@ class CertusStratApp(CertusBaseApp, CertusWindowSpyMixin, CertusStratLayoutMixin
 
         self.status_label.setText("System warming up (compiling JIT)...")
 
-        # Warmup in background thread
+        # Warmup: _warmup_numba manages its own internal thread, call directly from main thread
 
-        threading.Thread(target=self._warmup_numba, daemon=True).start()
+        self._warmup_numba()
 
         # Post-init setup
 

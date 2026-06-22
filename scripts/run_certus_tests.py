@@ -379,6 +379,8 @@ def main():
                 pytest_cmd.append("--cov-fail-under=40")
             else:
                 pytest_cmd.append("--cov-fail-under=0") # Don't fail on coverage
+                if args.no_coverage:
+                    pytest_cmd.append("--no-cov")
                 
             if args.last_failed:
                 pytest_cmd.append("--lf")
@@ -399,36 +401,40 @@ def main():
             if not res["success"]:
                 global_success = False
 
-    # Phase 2: Headless Examples
+    # Phase 2: Headless Examples / Module Integration
     if run_all or args.headless_only:
-        print_banner("PHASE 2: HEADLESS EXAMPLES VALIDATION")
+        print_banner("PHASE 2: HEADLESS / MODULE INTEGRATION")
+        headless_runner = ROOT / "tests" / "headless" / "run_all.py"
         headless_script = ROOT / "scripts" / "smoke" / "run_examples_headless.py"
-        if headless_script.exists():
-            res = run_step("Headless Examples", [sys.executable, str(headless_script)], ROOT)
-            results.append(res)
-            if not res["success"]:
-                global_success = False
-        else:
-            print(f"{Colors.WARNING}[!] Headless validation script not found at {headless_script}{Colors.ENDC}")
-
-    # Phase 3: GUI Smoke Tests
-    if run_all or args.gui_only:
-        print_banner("PHASE 3: GUI APPLICATION SMOKE TESTS")
-        smoke_scripts = [
-            ("GUI App Launch Verify", ROOT / "scripts" / "smoke" / "smoke_verify_launch_all.py"),
-            ("RE Reverse Engineering Smoke", ROOT / "scripts" / "smoke" / "smoke_re_reverse_samples.py"),
-            ("GUI Example Files Smoke", ROOT / "scripts" / "smoke" / "smoke_examples_subfolders.py"),
-            ("Global GUI Module Smoke", ROOT / "scripts" / "smoke" / "smoke_test_suite.py")
+        headless_targets = [
+            ("Headless Suite Runner", headless_runner),
+            ("Headless Examples", headless_script),
         ]
-        
-        for name, script_path in smoke_scripts:
+        for name, script_path in headless_targets:
             if script_path.exists():
                 res = run_step(name, [sys.executable, str(script_path)], ROOT)
                 results.append(res)
                 if not res["success"]:
                     global_success = False
             else:
-                print(f"{Colors.WARNING}[!] Smoke script not found: {script_path.name}{Colors.ENDC}")
+                print(f"{Colors.WARNING}[!] Headless validation script not found at {script_path}{Colors.ENDC}")
+
+    # Phase 3: GUI Smoke Tests / Exhaustive smoke discovery
+    if run_all or args.gui_only:
+        print_banner("PHASE 3: GUI APPLICATION SMOKE TESTS")
+        smoke_dir = ROOT / "scripts" / "smoke"
+        smoke_scripts = sorted(
+            [p for p in smoke_dir.glob("*.py") if p.name != "__init__.py"],
+            key=lambda p: p.name.lower(),
+        )
+        if not smoke_scripts:
+            print(f"{Colors.WARNING}[!] No smoke scripts found in {smoke_dir}{Colors.ENDC}")
+        for script_path in smoke_scripts:
+            human_name = script_path.stem.replace("_", " ").title()
+            res = run_step(human_name, [sys.executable, str(script_path)], ROOT)
+            results.append(res)
+            if not res["success"]:
+                global_success = False
 
     # Phase 4: Generate Report Dashboard
     print_banner("TESTS SUMMARY REPORT")

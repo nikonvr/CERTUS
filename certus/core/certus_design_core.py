@@ -71,6 +71,7 @@ import copy
 from threading import Event
 
 from typing import Any, List, Dict
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 import numpy as np
 
@@ -590,7 +591,7 @@ def _design_optimization_callback_common(app, sample) -> None:
         # Stats counters always updated but log message throttled
         try:
             if app._callback_counter % 1000 == 0 or current_rmse < app.best_rmse_seen:
-                app.signals.progress.emit(pct, msg)
+                app.signals.progress_snapshot.emit(build_progress_snapshot(message=msg, display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='CORE'))
             app.signals.update_stats.emit("MINIMA", n_clusters)
             app.signals.update_stats.emit("EVAL", n_evals)
         except NUMERICAL_FAULT_EXCEPTIONS as emit_err:
@@ -669,6 +670,7 @@ def _design_optimization_callback_common(app, sample) -> None:
                 result_data = {
                     "type": "intermediate",
                     "self._wls": app._wls_display,
+                    "wls": app._wls_display,
                     "Ts": Ts,
                     "ep": ep_disp,
                     "rmse": current_rmse,
@@ -678,10 +680,13 @@ def _design_optimization_callback_common(app, sample) -> None:
 
                 if app._oblique_mode:
                     result_data["self._oblique_mode"] = True
+                    result_data["oblique_mode"] = True
                     result_data["spectra_display"] = spectra_display
                     result_data["self._oblique_tgts"] = app._oblique_tgts
+                    result_data["oblique_tgts"] = app._oblique_tgts
                 else:
                     result_data["self._oblique_mode"] = False
+                    result_data["oblique_mode"] = False
 
                 app.signals.result.emit(result_data)
 
@@ -697,7 +702,7 @@ def _design_optimization_callback_common(app, sample) -> None:
                 )
 
         # Refresh best result in GUI
-        _live_interval = 2.0
+        _live_interval = 5.0
         now = time.time()
         if now - app._last_live_emit_time >= _live_interval and app.best_ep_final is not None:
             app._last_live_emit_time = now
@@ -747,6 +752,7 @@ def _design_optimization_callback_common(app, sample) -> None:
                 best_data = {
                     "type": "intermediate",
                     "self._wls": app._wls_display,
+                    "wls": app._wls_display,
                     "Ts": Ts_best,
                     "ep": ep_best.copy(),
                     "rmse": app.best_rmse_final,
@@ -756,12 +762,18 @@ def _design_optimization_callback_common(app, sample) -> None:
 
                 if app._oblique_mode:
                     best_data["self._oblique_mode"] = True
+                    best_data["oblique_mode"] = True
                     best_data["spectra_display"] = spectra_display_best if app._oblique_mode else {}
                     best_data["self._oblique_tgts"] = app._oblique_tgts
+                    best_data["oblique_tgts"] = app._oblique_tgts
                 else:
                     best_data["self._oblique_mode"] = False
+                    best_data["oblique_mode"] = False
 
                 app.signals.result.emit(best_data)
+                logging.info(
+                    f"[LIVE VIEW] Emitted 5s live refresh signal | Best RMSE={app.best_rmse_final:.6f} | Evals={n_evals}"
+                )
 
             except NUMERICAL_FAULT_EXCEPTIONS as live_err:
                 logging.debug(f"OptimWorker 2s live refresh: {live_err}")

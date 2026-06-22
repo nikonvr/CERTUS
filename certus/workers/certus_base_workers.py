@@ -10,6 +10,13 @@ import traceback
 import warnings
 from collections import deque
 from typing import Any, Callable
+from certus.utils.certus_progress_tracker import (
+    ProgressSnapshot,
+    StepState,
+    ProgressCallback,
+    build_progress_snapshot,
+    build_progress_callback,
+)
 import numpy as np
 from pydantic import ValidationError
 import pandas as pd
@@ -115,6 +122,7 @@ class WorkerSignals(QObject):
 
     progress = pyqtSignal(int, str)
     progress_sub = pyqtSignal(int, int, str, str)
+    progress_snapshot = pyqtSignal(object)
 
     update_stats = pyqtSignal(str, object)  # "Key", Value
 
@@ -210,6 +218,7 @@ class CertusWorkerBase(QThread):
 
     progress = pyqtSignal(int, str)
     progress_sub = pyqtSignal(int, int, str, str)
+    progress_snapshot = pyqtSignal(object)
 
     stats_update = pyqtSignal(str, int)
 
@@ -237,6 +246,15 @@ class CertusWorkerBase(QThread):
         """Emit stats update signal."""
 
         self.stats_update.emit(counter_type, increment)
+
+    def emit_progress_snapshot(self, snapshot: ProgressSnapshot) -> None:
+        """Emit a normalized progress snapshot."""
+
+        self.progress_snapshot.emit(snapshot)
+
+    def get_progress_adapter(self, module: str, phase: str) -> ProgressCallback:
+        """Get an adapter that forwards percentage/message calls as ProgressSnapshots."""
+        return build_progress_callback(self.progress_snapshot.emit, module, phase)
 
     def do_work(self) -> Any:
         """

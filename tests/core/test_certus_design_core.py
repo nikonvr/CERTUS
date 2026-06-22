@@ -127,6 +127,7 @@ class MockSignal:
 class MockSignals:
     def __init__(self):
         self.progress = MockSignal()
+        self.progress_snapshot = MockSignal()
         self.update_stats = MockSignal()
         self.result = MockSignal()
 
@@ -153,7 +154,7 @@ class MockCallbackApp(MockApp):
         self._last_live_emit_time = 0
         self._oblique_mode = False
         self._wls_display = np.array([500.0])
-        self._n_lay_T_disp = np.zeros((1, 1), dtype=np.complex128)
+        self._n_lay_T_disp = np.zeros((1, 3), dtype=np.complex128)
         self._n_sub_disp = np.zeros(1, dtype=np.complex128)
         self._display_oblique_keys = []
         self._has_back_calc = False
@@ -178,8 +179,8 @@ def test_design_optimization_callback_common_first_improvement():
     assert app.best_ep_final is not None
     assert app.best_ep_final[1] == 2.0
     
-    # Check that progress signal was emitted (current_rmse < best_rmse_seen initially)
-    assert len(app.signals.progress.emissions) > 0
+    # Check that progress_snapshot signal was emitted (current_rmse < best_rmse_seen initially)
+    assert len(app.signals.progress_snapshot.emissions) > 0
     # Check that result signal was emitted (improvement_ratio > 0.01)
     assert len(app.signals.result.emissions) > 0
     

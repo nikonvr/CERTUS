@@ -33,7 +33,7 @@ if match:
                                     for t in node.targets:
                                         if isinstance(t, ast.Name) and t.id == symbol:
                                             return p.replace(os.sep, '.')[:-3]
-                        except:
+                        except Exception:
                             pass
         return None
     
@@ -55,7 +55,7 @@ if match:
             valid_names.append(name)
     
     # replace the original import
-    new_import_str = '
+    new_import_str = ''
     for loc, syms in new_imports.items():
         new_import_str += f'from {loc} import {", ".join(syms)}\n'
     

@@ -64,13 +64,13 @@ def check_extrema_proximity(wl, n_current, n_previous, n_Sub, thickness_nominal,
         n_prev_safe = n_previous if n_previous.real > 0.0 else n_current
         T_past = _calc_T_added_layer(wl, n_prev_safe, -exclusion_width, n_Sub, m00, m01, m10, m11)
         diff1, diff2 = (T_pres - T_past, T_fut - T_pres)
-        if diff1 > TOL and diff2 < -TOL or (diff1 < -TOL and diff2 > TOL):
+        if (diff1 > TOL and diff2 < -TOL) or (diff1 < -TOL and diff2 > TOL):
             return False
         if wl_changed:
             T_far = _calc_T_added_layer(wl, n_current, 3.0 * exclusion_width, n_Sub, m00, m01, m10, m11)
             s_mid_s = T_fut - T_pres
             s_right_s = (T_far - T_fut) / 2.0
-            if s_mid_s > TOL and s_right_s < -TOL or (s_mid_s < -TOL and s_right_s > TOL):
+            if (s_mid_s > TOL and s_right_s < -TOL) or (s_mid_s < -TOL and s_right_s > TOL):
                 return False
     if thickness_nominal > exclusion_width:
         points = np.array([thickness_nominal - exclusion_width, thickness_nominal, thickness_nominal + exclusion_width, thickness_nominal + 3.0 * exclusion_width])
@@ -81,9 +81,9 @@ def check_extrema_proximity(wl, n_current, n_previous, n_Sub, thickness_nominal,
         s_mid = T_end[2] - T_end[1]
         s_right = (T_end[3] - T_end[2]) / 2.0
         TOL_E = 1e-09
-        if s_left > TOL_E and s_mid < -TOL_E or (s_left < -TOL_E and s_mid > TOL_E):
+        if (s_left > TOL_E and s_mid < -TOL_E) or (s_left < -TOL_E and s_mid > TOL_E):
             return False
-        if s_mid > TOL_E and s_right < -TOL_E or (s_mid < -TOL_E and s_right > TOL_E):
+        if (s_mid > TOL_E and s_right < -TOL_E) or (s_mid < -TOL_E and s_right > TOL_E):
             return False
     return True
 @njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
@@ -129,13 +129,13 @@ def calculate_extrema_distances(wl: float, n_current: complex, n_Sub: complex, t
     for i in range(1, len(d_scan1) - 1):
         s_left = T_scan1[i] - T_scan1[i - 1]
         s_right = T_scan1[i + 1] - T_scan1[i]
-        if s_left > TOL and s_right < -TOL or (s_left < -TOL and s_right > TOL):
+        if (s_left > TOL and s_right < -TOL) or (s_left < -TOL and s_right > TOL):
             extrema_d.append(d_scan1[i])
     d_scan2, T_scan2 = scan_window(thickness_nominal)
     for i in range(1, len(d_scan2) - 1):
         s_left = T_scan2[i] - T_scan2[i - 1]
         s_right = T_scan2[i + 1] - T_scan2[i]
-        if s_left > TOL and s_right < -TOL or (s_left < -TOL and s_right > TOL):
+        if (s_left > TOL and s_right < -TOL) or (s_left < -TOL and s_right > TOL):
             extrema_d.append(d_scan2[i])
     n_real = float(n_current.real)
     dist_prev_start, dist_next_start = (999.0, 999.0)

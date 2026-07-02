@@ -59,6 +59,10 @@ extend-exclude = [
   ".venv",
   "*.egg-info",
   "OLD VERSION",
+  # Legacy UTF-16 scratch snapshots (untracked, not part of the package). Kept
+  # on disk for manual reference; excluded from lint since they are not UTF-8.
+  "old_physics_impl.py",
+  "old_ui.py",
 ]
 
 [tool.ruff.lint]

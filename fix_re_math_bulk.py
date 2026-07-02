@@ -39,7 +39,8 @@ for dirpath, _, fnames in os.walk('.'):
         fp = os.path.join(dirpath, fn)
         try:
             with open(fp, 'r', encoding='utf-8') as f: src = f.read()
-        except: continue
+        except Exception:
+            continue
         if 'from ' + BAD_MOD + ' import' not in src: continue
 
         try:

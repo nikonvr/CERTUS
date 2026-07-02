@@ -25,9 +25,9 @@ class TestNeedleOptimizationStrategy:
         names, mask = strat._build_needle_scan_mask(mock_worker, stack, mats_nk)
         assert names == ['SiO2', 'TiO2', 'TiO2']
         assert len(mask) == 3
-        assert mask[0] == False  # idx 0 excluded
-        assert mask[1] == True   # idx 1 in mats
-        assert mask[2] == True   # idx 2 opposite mat 'TiO2' is in mats
+        assert not mask[0]  # idx 0 excluded
+        assert mask[1]  # idx 1 in mats
+        assert mask[2]  # idx 2 opposite mat 'TiO2' is in mats
 
     @patch('certus.workers.certus_design_workers_needle_strat.needle_scan_cached')
     @patch('certus.workers.certus_design_workers_needle_strat.cost_numba_fast')

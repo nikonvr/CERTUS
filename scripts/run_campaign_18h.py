@@ -29,7 +29,7 @@ def load_completed():
                     try:
                         data = json.loads(line)
                         completed.add(data["hash"])
-                    except:
+                    except Exception:
                         pass
     return completed
 
@@ -98,7 +98,7 @@ def main():
                         res = json.loads(f.read())
                         best_rmse = res.get("best_rmse")
                         layers = res.get("layers", 0)
-                    except:
+                    except Exception:
                         pass
                         
             if best_rmse is None:

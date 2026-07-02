@@ -27,7 +27,7 @@ def build_symbol_index():
                         continue
                     if nm:
                         symbol_location.setdefault(nm, []).append(mod)
-            except:
+            except Exception:
                 pass
     return symbol_location
 
@@ -72,7 +72,8 @@ def apply_fixes(log_content, symbol_location):
                 fp = os.path.join(dirpath, fn)
                 try:
                     with open(fp, 'r', encoding='utf-8') as f: src = f.read()
-                except: continue
+                except Exception:
+                    continue
                 if ('from ' + bad_mod + ' import') not in src or sym not in src: continue
 
                 src2 = remove_sym_from_import(src, sym, bad_mod)

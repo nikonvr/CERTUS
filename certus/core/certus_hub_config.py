@@ -1,5 +1,11 @@
-from typing import TypedDict
-from certus.ui.certus_ui import CertusTheme
+from typing import Final, TypedDict
+
+HUB_BRAND_DESIGN: Final[str] = "#8b5cf6"
+HUB_BRAND_INDEX: Final[str] = "#3b82f6"
+HUB_BRAND_METAL: Final[str] = "#64748b"
+HUB_BRAND_STRAT: Final[str] = "#10b981"
+HUB_SUCCESS: Final[str] = "#15803d"
+
 
 class HubAppCatalogItem(TypedDict, total=False):
     """Declarative metadata for one HUB launcher card."""
@@ -24,7 +30,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Stochastic Global Optimization. PGLOBAL algorithm with Single-Linkage Clustering.",
         "script": "CERTUS_DESIGN.py",
         "icon": "🧩",
-        "color": CertusTheme.BRAND_DESIGN,
+        "color": HUB_BRAND_DESIGN,
         "badge": "Concept",
         "type": "single",
         "category": "core_workflow",
@@ -36,7 +42,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Extraction of refractive clues from experimental curves using spline networks.",
         "script": "CERTUS_RE.py",
         "icon": "🕵️",
-        "color": CertusTheme.BRAND_STRAT,
+        "color": HUB_BRAND_STRAT,
         "badge": "Analysis",
         "type": "single",
         "category": "core_workflow",
@@ -48,7 +54,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Predictive Monitoring Strategy. Error self-compensation analysis.",
         "script": "CERTUS_STRAT.py",
         "icon": "🏭",
-        "color": CertusTheme.BRAND_STRAT,
+        "color": HUB_BRAND_STRAT,
         "badge": "Production",
         "type": "single",
         "category": "core_workflow",
@@ -60,7 +66,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Advanced Tauc-Lorentz Characterization. Kramers-Kronig consistent extraction.",
         "script": "CERTUS_INDEX.py",
         "icon": "🧪",
-        "color": CertusTheme.BRAND_INDEX,
+        "color": HUB_BRAND_INDEX,
         "badge": "Material",
         "type": "single",
         "category": "core_workflow",
@@ -72,7 +78,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Non-parametric n,k extraction using PWL splines. Ideal for complex IR absorption.",
         "script": "CERTUS_INDEX_SPLINE.py",
         "icon": "〰️",
-        "color": CertusTheme.BRAND_INDEX,
+        "color": HUB_BRAND_INDEX,
         "badge": "Material",
         "type": "single",
         "category": "core_workflow",
@@ -84,7 +90,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Electric field profile computation and active minimax LIDT optimization.",
         "script": "CERTUS_FIELD.py",
         "icon": "⚡",
-        "color": CertusTheme.BRAND_DESIGN,
+        "color": HUB_BRAND_DESIGN,
         "badge": "LIDT",
         "type": "single",
         "category": "core_workflow",
@@ -96,7 +102,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Parametric smoothing of spectral measurement data.",
         "script": "certus_curve_smoother.py",
         "icon": "🫧",
-        "color": CertusTheme.SUCCESS,
+        "color": HUB_SUCCESS,
         "badge": "Utility",
         "type": "single",
         "category": "support_tool",
@@ -108,7 +114,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Substrate refractive index determination from spectral measurements.",
         "script": "certus_substrate_index.py",
         "icon": "📏",
-        "color": CertusTheme.BRAND_INDEX,
+        "color": HUB_BRAND_INDEX,
         "badge": "Utility",
         "type": "single",
         "category": "support_tool",
@@ -120,7 +126,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Opaque substrate strategy (Legacy).",
         "script": "CERTUS_METAL_BILAYER.py",
         "icon": "🛡️",
-        "color": CertusTheme.BRAND_METAL,
+        "color": HUB_BRAND_METAL,
         "badge": "Std",
         "type": "single",
         "category": "materials_specialized",
@@ -132,7 +138,7 @@ HUB_APP_CATALOG: tuple[HubAppCatalogItem, ...] = (
         "desc": "Transparent substrate strategy (R/T/Rb).",
         "script": "CERTUS_METAL_SINGLE.py",
         "icon": "🛡️",
-        "color": CertusTheme.BRAND_METAL,
+        "color": HUB_BRAND_METAL,
         "badge": "New",
         "type": "single",
         "category": "materials_specialized",

@@ -10,10 +10,12 @@ import json
 import locale
 import platform
 from datetime import UTC, datetime
-from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 try:
@@ -215,10 +217,8 @@ def _get_version(module_name: str) -> str:
 
 def _detect_pyqt_version() -> str:
     try:
-        from PyQt6.QtCore import QT_VERSION_STR
-
-        return str(QT_VERSION_STR)
-    except ImportError:
+        return version("PyQt6")
+    except PackageNotFoundError:
         return "unknown"
 
 

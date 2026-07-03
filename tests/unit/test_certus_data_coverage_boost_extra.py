@@ -55,22 +55,29 @@ from certus.core.certus_metrology import (
 def test_metrology_imports_and_exceptions(monkeypatch) -> None:
     # A. Test missing certus_core version & materials DB hash fallback using isolated loader
     # to avoid redefining types in sys.modules["certus_metrology"] which breaks other tests.
-    monkeypatch.setitem(sys.modules, "certus.core.certus_core", None)
+    import builtins
+    real_import = builtins.__import__
+    def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "certus.core.certus_core":
+            raise ImportError("mocked")
+        return real_import(name, globals, locals, fromlist, level)
     
+    monkeypatch.setattr(builtins, "__import__", mock_import)
+    
+    import importlib.util
     file_path = str(Path(certus_metrology.__file__).resolve())
-    loader = SourceFileLoader("certus_metrology_fallback", file_path)
-    fallback_mod = loader.load_module()
+    spec = importlib.util.spec_from_file_location("certus_metrology_fallback", file_path)
+    fallback_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fallback_mod)
     
     assert fallback_mod.CERTUS_VERSION == "unknown"
     assert fallback_mod.get_materials_db_hash() == ""
     
-    # Restore certus_core
-    monkeypatch.delitem(sys.modules, "certus.core.certus_core")
+    
     
     # B. Test missing PyQt6 version detection exception
-    monkeypatch.setitem(sys.modules, "PyQt6.QtCore", None)
+    monkeypatch.setattr(certus_metrology, "version", Mock(side_effect=certus_metrology.PackageNotFoundError("PyQt6")))
     assert certus_metrology._detect_pyqt_version() == "unknown"
-    monkeypatch.delitem(sys.modules, "PyQt6.QtCore")
     
     # C. Test Numba threading layer error fallbacks
     import numba

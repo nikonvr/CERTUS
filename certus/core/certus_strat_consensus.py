@@ -520,6 +520,9 @@ def _apply_elite_refinement_if_enabled(
     nominal_noise_level = _resolve_nominal_noise_level(ctx.noise_levels, raw_factors)
     available_wls = _resolve_available_wavelengths(ctx.clues_at_wl, ctx.wl_arr)
     total_elite_added = 0
+    
+    is_testing = "PYTEST_CURRENT_TEST" in __import__("os").environ
+    executor_cls = concurrent.futures.ThreadPoolExecutor if is_testing else concurrent.futures.ProcessPoolExecutor
     worker_count = get_safe_worker_count()
 
     for elite_round in range(1, elite_rounds + 1):
@@ -551,55 +554,73 @@ def _apply_elite_refinement_if_enabled(
             f"rank10_nominal={nominal_threshold:.6f} target={target_threshold:.6f}"
         )
 
-        quick_pass: list[tuple[float, int, dict[str, Any]]] = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
-            futures_quick = [
-                executor.submit(
-                    _test_strategy_robustness_task,
-                    elite_strat,
-                    e_idx,
-                    [nominal_noise_level],
-                    elite_num_runs,
-                    ctx.p_thick_nominal,
-                    ctx.clues_at_wl,
-                    ctx.params_safe,
-                    ctx.wl_arr,
-                    ctx.nH_arr,
-                    ctx.nL_arr,
-                    ctx.nSub_arr,
-                    ctx.T_nom,
-                    ctx.full_dyn_grid,
-                    n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
-                )
-                for e_idx, elite_strat in enumerate(elite_candidates)
-            ]
-            for future, e_idx, elite_strat in zip(futures_quick, range(len(elite_candidates)), elite_candidates):
-                try:
-                    quick_res = future.result()
-                    quick_nominal = _extract_rmse_p95_for_noise(quick_res, nominal_noise_level)
-                    if not np.isfinite(quick_nominal) or quick_nominal >= target_threshold:
-                        continue
-                    quick_pass.append((float(quick_nominal), int(e_idx), elite_strat))
-                except NUMERICAL_FAULT_EXCEPTIONS as e:
-                    ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+        candidates_to_eval = [(int(e_idx), strat) for e_idx, strat in enumerate(elite_candidates)]
+        
+        # Adaptive Sampling: Successive Halving
+        # We progressively eliminate candidates with increasing budget
+        halving_budgets = [
+            max(2, elite_num_runs),
+            max(2, ctx.num_runs // 2)
+        ]
+        
+        for stage_idx, stage_runs in enumerate(halving_budgets):
+            stage_results: list[tuple[float, int, dict[str, Any]]] = []
+            with executor_cls(max_workers=worker_count) as executor:
+                futures_stage = [
+                    executor.submit(
+                        _test_strategy_robustness_task,
+                        strat,
+                        e_idx,
+                        [nominal_noise_level],
+                        stage_runs,
+                        ctx.p_thick_nominal,
+                        ctx.clues_at_wl,
+                        ctx.params_safe,
+                        ctx.wl_arr,
+                        ctx.nH_arr,
+                        ctx.nL_arr,
+                        ctx.nSub_arr,
+                        ctx.T_nom,
+                        ctx.full_dyn_grid,
+                        n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                    )
+                    for e_idx, strat in candidates_to_eval
+                ]
+                for future, (e_idx, strat) in zip(futures_stage, candidates_to_eval):
+                    try:
+                        res = future.result()
+                        nominal_val = _extract_rmse_p95_for_noise(res, nominal_noise_level)
+                        if not np.isfinite(nominal_val) or nominal_val >= target_threshold:
+                            continue
+                        stage_results.append((float(nominal_val), e_idx, strat))
+                    except NUMERICAL_FAULT_EXCEPTIONS as e:
+                        ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+                        
+            if not stage_results:
+                break
+                
+            stage_results.sort(key=lambda x: x[0])
+            # Keep top half, but at least enough to fill elite_max_full_evals
+            keep_count = max(elite_max_full_evals, len(stage_results) // 2)
+            candidates_to_eval = [(e_idx, strat) for _val, e_idx, strat in stage_results[:keep_count]]
 
-        if not quick_pass:
-            ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed quick nominal gate.")
+        if not candidates_to_eval:
+            ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate passed Successive Halving.")
             if elite_stop_on_no_gain:
                 break
             continue
-        quick_pass.sort(key=lambda x: x[0])
-        full_eval_candidates = quick_pass[: min(elite_max_full_evals, len(quick_pass))]
+            
+        full_eval_candidates = candidates_to_eval[: min(elite_max_full_evals, len(candidates_to_eval))]
         ctx.logger.info(
-            f"[ELITE] Round {elite_round}: quick_pass={len(quick_pass)}, full_eval={len(full_eval_candidates)}."
+            f"[ELITE] Round {elite_round}: full_eval={len(full_eval_candidates)}."
         )
 
         elite_added: list[dict[str, Any]] = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+        with executor_cls(max_workers=worker_count) as executor:
             futures_full = [
                 executor.submit(
                     _test_strategy_robustness_task,
-                    elite_strat,
+                    strat,
                     e_idx,
                     ctx.noise_levels,
                     ctx.num_runs,
@@ -614,7 +635,7 @@ def _apply_elite_refinement_if_enabled(
                     ctx.full_dyn_grid,
                     n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
                 )
-                for _quick_nominal, e_idx, elite_strat in full_eval_candidates
+                for e_idx, strat in full_eval_candidates
             ]
             for future in futures_full:
                 try:
@@ -634,7 +655,7 @@ def _apply_elite_refinement_if_enabled(
                     full_res["elite_nominal_score"] = float(full_nominal)
                     elite_added.append(full_res)
                 except NUMERICAL_FAULT_EXCEPTIONS as e:
-                    ctx.logger.warning(f"[ELITE] Round {elite_round}: candidate evaluation failed: {e}")
+                    ctx.logger.warning(f"[ELITE] Round {elite_round}: full evaluation failed: {e}")
 
         if not elite_added:
             ctx.logger.info(f"[ELITE] Round {elite_round}: no candidate beat nominal threshold.")

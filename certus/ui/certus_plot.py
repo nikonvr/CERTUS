@@ -86,7 +86,7 @@ def sanitize_xy_for_plot(x, y) -> tuple[np.ndarray, np.ndarray]:
         return np.array([], dtype=float), np.array([], dtype=float)
     x = x[:n].copy()
     y = y[:n].copy()
-    m = np.isfinite(x) & np.isfinite(y)
+    m = np.isfinite(x) & np.isfinite(y) & (np.abs(x) < 1e15) & (np.abs(y) < 1e15)
     return x[m], y[m]
 
 

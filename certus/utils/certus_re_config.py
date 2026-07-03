@@ -75,6 +75,9 @@ RE_PHASE2B_MAXITER = 400
 
 RE_PHASE2A_PREFIT_TOL_FACTOR = 50.0
 
+# Threshold (RMSE %) below which Phase 2a prefit is skipped, to save time on already-good Phase 1 fits.
+RE_PHASE2A_SKIP_PREFIT_RMSE_THRESHOLD = 0.5
+
 
 # Phase 4: beam (average +/-h); ap(lambda) in N steps (RE_P4_BEAM_N_KNOTS); 1D scan + joint TRF (expensive).
 

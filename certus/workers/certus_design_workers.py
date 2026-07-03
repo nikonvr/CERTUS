@@ -18,9 +18,8 @@ import logging
 import time
 import traceback
 import copy
-from certus.utils.logging import get_structured_logger
+from certus.utils.certus_logging import get_structured_logger
 from certus.workers.certus_design_workers_strat import DesignOptimizationStrategy
-from certus.workers.certus_design_workers_color_strat import ColorOptimizationStrategy
 from certus.workers.certus_design_workers_needle_strat import NeedleOptimizationStrategy
 from threading import Event
 from typing import Any, List, Dict
@@ -58,6 +57,9 @@ class OptimWorker(QObject):
         self.request = cfg if isinstance(cfg, OptimWorkerRequest) else OptimWorkerRequest.from_legacy(cfg)
         self.cfg = dict(self.request.cfg)
         self.signals = WorkerSignals()
+        self.on_progress_snapshot = self.signals.progress_snapshot.emit
+        self.on_update_stats = self.signals.update_stats.emit
+        self.on_result = self.signals.result.emit
         self._stop_event = Event()
         float_dtype = get_float_dtype()
         self._wls_display = optim_display_wavelength_grid(cfg, float_dtype=float_dtype)

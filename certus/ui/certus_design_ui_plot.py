@@ -1,36 +1,5 @@
-import functools
-import logging
-import os
-import time
-from pathlib import Path
-from typing import Any, Dict
-
-import numpy as np
-import pyqtgraph as pg
-from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtWidgets import (
-    QApplication,
-    QAbstractItemView,
-    QCheckBox,
-    QDialog,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
-)
-
-from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, __version__, certus_timestamp_file
-from certus.core.certus_metrology import ValidationStatus
-from certus_physics import Layer
-from certus.ui.certus_plot import plot_widget_plot_finite
-from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_data import generate_html_report, get_missing_manifest_fields
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.workers.certus_design_worker_utils import optim_rmse_is_valid_for_log
-
-logger = logging.getLogger('certus')
+from __future__ import annotations
+from certus.ui.certus_design_common import *
 
 class PlotManager:
     def __init__(self, ui):

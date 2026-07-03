@@ -285,40 +285,6 @@ def _sellmeier_multistart_candidates(q0: np.ndarray, _p_from_q, _q_from_p, bound
     return q_candidates
 
 
-def _sellmeier_polish_helpers(_p_from_q, wl_fit_um: np.ndarray, n_fit: np.ndarray, w_fit_sell: np.ndarray, log_l1l2: bool):
-    def _residuals(p: np.ndarray, x_um: np.ndarray, y_n: np.ndarray, w_nm_inv: np.ndarray) -> np.ndarray:
-        pred = sellmeier_2poles_const_eval(p, x_um)
-        return (pred - y_n) * w_nm_inv * 1000.0
-
-    def _residuals_polish_q(qv: np.ndarray) -> np.ndarray:
-        pv = _p_from_q(qv)
-        r = _residuals(pv, wl_fit_um, n_fit, w_fit_sell)
-        g = _sellmeier_l_separation_gap_um(pv)
-        return np.append(r, float(SELLMEIER_L_SEP_SOFT_WEIGHT) * g)
-
-    def _jac_polish_q(qv: np.ndarray) -> np.ndarray:
-        """Analytical Jacobian of polish residual (extended with separation constraint)."""
-        pv = _p_from_q(qv)
-        J_main = _sellmeier_2poles_jac(pv, wl_fit_um, w_fit_sell, scale=1000.0)
-        J_sep = np.zeros((1, 7), dtype=np.float64)
-        _L_vals = np.array([pv[2], pv[4], pv[6]], dtype=np.float64)
-        _orig_idx = np.array([2, 4, 6])
-        _sort_ord = np.argsort(_L_vals)
-        _L_s = _L_vals[_sort_ord]
-        _diffs = _L_s[1:] - _L_s[:-1]
-        _i_min = int(np.argmin(_diffs))
-        _gap = float(SELLMEIER_MIN_L_SEP_UM) - float(_diffs[_i_min])
-        if _gap > 0.0:
-            _pidx_lo = int(_orig_idx[int(_sort_ord[_i_min])])
-            _pidx_hi = int(_orig_idx[int(_sort_ord[_i_min + 1])])
-            _sc_lo = float(pv[_pidx_lo]) if log_l1l2 else 1.0
-            _sc_hi = float(pv[_pidx_hi]) if log_l1l2 else 1.0
-            J_sep[0, _pidx_lo] = float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_lo
-            J_sep[0, _pidx_hi] = -float(SELLMEIER_L_SEP_SOFT_WEIGHT) * _sc_hi
-        return np.vstack([J_main, J_sep])
-
-    return _residuals_polish_q, _jac_polish_q
-
 
 def _sellmeier_initial_context(
     wl: np.ndarray,

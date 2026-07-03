@@ -287,48 +287,6 @@ def _build_phase2b_output(
     i_lam: int,
     i_cu: int,
     use_sub_c3: bool,
-    report_mse_spectral,
-    compute_qwot_rmse,
-    rmse_combined,
-    alpha_slot: list,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, float, np.ndarray | None, float, float, float]:
-    """Convert phase-2b optimizer output into scientific arrays and RMSE values."""
-
-    x_end = np.asarray(res_p2.x, dtype=np.float64).ravel()
-    ep_end = np.asarray(x_end[:n_layers_count], dtype=np.float64).flatten()
-    dh_end = np.asarray(x_end[i0 : i0 + nk], dtype=np.float64).flatten()
-    dl_end = np.asarray(x_end[i0 + nk : i_lam], dtype=np.float64).flatten()
-    lam_end = float(x_end[i_lam])
-    if use_sub_c3:
-        th_end = np.asarray(x_end[i_cu : i_cu + 3], dtype=np.float64).ravel()
-        cor_end = (
-            "spline_sub3",
-            dh_end,
-            dl_end,
-            lam_end,
-            float(th_end[0]),
-            float(th_end[1]),
-            float(th_end[2]),
-        )
-    else:
-        th_end = None
-        cor_end = ("spline", dh_end, dl_end, lam_end)
-    rmse_p2 = float(np.sqrt(max(report_mse_spectral(ep_end, cor_end), 0.0)))
-    rmse_qwot_p2 = compute_qwot_rmse(ep_end, cor_end)
-    rmse_comb_p2 = rmse_combined(rmse_p2, rmse_qwot_p2)
-    return ep_end, dh_end, dl_end, lam_end, th_end, rmse_p2, rmse_qwot_p2, rmse_comb_p2
-
-def _build_phase2b_output(
-    *,
-    res_p2: Any,
-    x0_p2: np.ndarray,
-    cb2_ref: list,
-    n_layers_count: int,
-    nk: int,
-    i0: int,
-    i_lam: int,
-    i_cu: int,
-    use_sub_c3: bool,
     report_mse_spectral: Any,
     compute_qwot_rmse: Any,
     rmse_combined: Any,

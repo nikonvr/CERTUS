@@ -302,9 +302,10 @@ def _execute_robustness_tasks(
     logger: logging.Logger,
     n_layers_matrix_precomp: np.ndarray | None = None,
 ) -> list[dict[str, Any]]:
-    max_workers = 1 # Force 1 to prevent massive thread oversubscription (Numba already uses OpenMP for MCS)
+    import multiprocessing
+    max_workers = max(1, multiprocessing.cpu_count() // 2)
     logger.info(
-        f"Running robustness tests on {len(all_strategies)} strategies (Numba parallel)..."
+        f"Running robustness tests on {len(all_strategies)} strategies (ProcessPoolExecutor with {max_workers} workers)..."
     )
 
     num_layers = len(p_thick_nominal)
@@ -349,7 +350,10 @@ def _execute_robustness_tasks(
                 logger.error(f"Strategy simulation failed: {e}", exc_info=True)
     else:
         results_by_idx: list[dict[str, Any] | None] = [None] * len(all_strategies)
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        is_testing = "PYTEST_CURRENT_TEST" in __import__("os").environ
+        executor_cls = concurrent.futures.ThreadPoolExecutor if is_testing else concurrent.futures.ProcessPoolExecutor
+        
+        with executor_cls(max_workers=max_workers) as executor:
             futures = {}
             for idx, strat in enumerate(all_strategies):
                 f = executor.submit(
@@ -406,6 +410,8 @@ def _test_strategy_robustness_task(
     full_dyn_grid,
     n_layers_matrix_precomp=None,
 ) -> dict:
+    import numba
+    numba.set_num_threads(2)
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
     blocks = strategy["blocks"]
@@ -474,11 +480,20 @@ def _test_strategy_robustness_task(
     if is_absolute:
         dT_dd = _compute_dT_dd_per_layer(layer_wavelengths, n_H_vals, n_L_vals, n_Sub_vals, p_thick_nominal)
 
+    from scipy.stats import qmc, norm
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
     for noise_idx, noise_val in enumerate(noise_levels):
-        local_seed = (base_seed + _strat_idx * 100000 + noise_idx) % (2**63)
-        rng = np.random.default_rng(local_seed)
-        raw_noise = np.clip(rng.normal(0.0, 1.0 / 3.0, (num_runs, num_layers)), -1.0, 1.0).astype(np.float64)
+        # CRN: Suppression de `_strat_idx` pour appliquer EXACTEMENT la même matrice de bruit
+        # aux différentes stratégies testées (comparaison "toutes choses égales par ailleurs").
+        local_seed = (base_seed + noise_idx) % (2**31)
+        
+        # Tirage Quasi-Monte Carlo (Sobol)
+        sobol_engine = qmc.Sobol(d=num_layers, seed=local_seed)
+        sobol_samples = sobol_engine.random(n=num_runs)
+        
+        # Transformation inverse CDF (distrib. uniforme vers normale N(0, 1/3))
+        raw_noise = norm.ppf(sobol_samples, loc=0.0, scale=1.0 / 3.0)
+        raw_noise = np.clip(raw_noise, -1.0, 1.0).astype(np.float64)
 
         if is_absolute:
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector

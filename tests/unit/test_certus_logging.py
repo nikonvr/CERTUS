@@ -4,7 +4,7 @@ import json
 import logging
 from pathlib import Path
 
-from certus.utils.logging import attach_jsonl_handler, get_structured_logger
+from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 
 
 def test_structured_logger_emits_run_context(tmp_path: Path) -> None:

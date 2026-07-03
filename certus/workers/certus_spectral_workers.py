@@ -846,38 +846,27 @@ class EvalWorker(QThread):
             if oblique_mode:
                 unique_configs = _prepare_oblique_configs(oblique_tgts, log_grouping=True)
 
-                for (angle, pol, inc_back), _ in unique_configs.items():
-                    _log_oblique_eval_start(
-                        phase="VIS",
-                        angle=angle,
-                        pol=pol,
-                        inc_back=bool(inc_back),
-                    )
-
+                import concurrent.futures
+                
+                def _eval_vis_oblique(k):
+                    angle, pol, inc_back = k
+                    _log_oblique_eval_start(phase="VIS", angle=angle, pol=pol, inc_back=bool(inc_back))
                     _t0 = time.time()
-
                     R_vis, T_vis = _oblique_spectrum_for_eval(
-                        wls_vis,
-                        n_front_vis_T,
-                        d_front,
-                        n_sub_vis,
-                        angle,
-                        pol,
-                        inc_back,
-                        n_back_vis_T,
-                        d_back,
+                        wls_vis, n_front_vis_T, d_front, n_sub_vis,
+                        angle, pol, inc_back, n_back_vis_T, d_back
                     )
+                    return k, R_vis, T_vis, _t0
 
-                    spectra_vis[(angle, pol, inc_back)] = {"R": R_vis, "T": T_vis}
-
-                    _log_oblique_eval_done(
-                        phase="VIS",
-                        angle=angle,
-                        pol=pol,
-                        inc_back=bool(inc_back),
-                        n_lambda=int(len(wls_vis)),
-                        elapsed_ms=_elapsed_ms_since(_t0),
-                    )
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    futures = [executor.submit(_eval_vis_oblique, k) for k in unique_configs.keys()]
+                    for f in concurrent.futures.as_completed(futures):
+                        k, R_vis, T_vis, _t0 = f.result()
+                        spectra_vis[k] = {"R": R_vis, "T": T_vis}
+                        _log_oblique_eval_done(
+                            phase="VIS", angle=k[0], pol=k[1], inc_back=bool(k[2]),
+                            n_lambda=int(len(wls_vis)), elapsed_ms=_elapsed_ms_since(_t0)
+                        )
 
                 Ts_vis = _pick_transmission_from_spectra_or_front(
                     spectra_vis, wls_vis, n_front_vis_T, d_front, n_sub_vis
@@ -912,31 +901,27 @@ class EvalWorker(QThread):
                 )
 
                 if oblique_mode:
-                    for (angle, pol, inc_back), _ in unique_configs.items():
+                    import concurrent.futures
+                    
+                    def _eval_opt_oblique(k):
+                        angle, pol, inc_back = k
+                        _log_oblique_eval_start(phase="OPT", angle=angle, pol=pol, inc_back=bool(inc_back))
                         _to0 = time.time()
-
                         R_opt, T_opt = _oblique_spectrum_for_eval(
-                            wls_optim,
-                            n_front_opt_T,
-                            d_front,
-                            n_sub_opt,
-                            angle,
-                            pol,
-                            inc_back,
-                            n_back_opt_T,
-                            d_back,
+                            wls_optim, n_front_opt_T, d_front, n_sub_opt,
+                            angle, pol, inc_back, n_back_opt_T, d_back
                         )
-
-                        spectra_optim[(angle, pol, inc_back)] = {"R": R_opt, "T": T_opt}
-
-                        _log_oblique_eval_done(
-                            phase="OPT",
-                            angle=angle,
-                            pol=pol,
-                            inc_back=bool(inc_back),
-                            n_lambda=int(len(wls_optim)),
-                            elapsed_ms=_elapsed_ms_since(_to0),
-                        )
+                        return k, R_opt, T_opt, _to0
+                    
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        futures = [executor.submit(_eval_opt_oblique, k) for k in unique_configs.keys()]
+                        for f in concurrent.futures.as_completed(futures):
+                            k, R_opt, T_opt, _to0 = f.result()
+                            spectra_optim[k] = {"R": R_opt, "T": T_opt}
+                            _log_oblique_eval_done(
+                                phase="OPT", angle=k[0], pol=k[1], inc_back=bool(k[2]),
+                                n_lambda=int(len(wls_optim)), elapsed_ms=_elapsed_ms_since(_to0)
+                            )
 
                     Ts_optim = _pick_transmission_from_spectra_or_front(
                         spectra_optim, wls_optim, n_front_opt_T, d_front, n_sub_opt

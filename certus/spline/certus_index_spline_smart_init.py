@@ -919,38 +919,4 @@ class SmartInitPreviewManager:
             self._on_keep_called[0] = False
 
 
-def _smart_init_pw_nk_clipboard_df(curve_n: Any, curve_pk: Any) -> pd.DataFrame | None:
-    """Build a DataFrame for Excel export from n(lambda) and ln k(lambda) plot items (k = exp(ln k), capped)."""
-    xn, yn = curve_n.getData()
-    xk, yk_ln = curve_pk.getData()
 
-    xn = np.asarray(xn if xn is not None else [], dtype=float).ravel()
-    yn = np.asarray(yn if yn is not None else [], dtype=float).ravel()
-    xk = np.asarray(xk if xk is not None else [], dtype=float).ravel()
-    yk_ln = np.asarray(yk_ln if yk_ln is not None else [], dtype=float).ravel()
-
-    yk_k = np.full(yk_ln.shape, np.nan, dtype=float)
-    m_ln = np.isfinite(yk_ln)
-    yk_k[m_ln] = np.exp(np.minimum(yk_ln[m_ln], 700.0))
-
-    n = int(max(xn.size, yn.size, xk.size, yk_k.size))
-    if n == 0:
-        return None
-
-    def _pad(a: np.ndarray) -> np.ndarray:
-        a = np.asarray(a, dtype=float).ravel()
-        if a.size >= n:
-            return a[:n].copy()
-        return np.pad(a, (0, n - a.size), constant_values=np.nan)
-
-    if xn.size == xk.size and xn.size > 0 and np.allclose(xn, xk, equal_nan=True):
-        return pd.DataFrame({"lambda_nm": _pad(xn), "n": _pad(yn), "k": _pad(yk_k)})
-
-    return pd.DataFrame(
-        {
-            "lambda_nm_n": _pad(xn),
-            "n": _pad(yn),
-            "lambda_nm_k": _pad(xk),
-            "k": _pad(yk_k),
-        }
-    )

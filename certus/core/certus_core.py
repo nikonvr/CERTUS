@@ -34,9 +34,6 @@ from certus.core.version import (
     APP_SUITE_VERSION,
     APP_DISPLAY_NAME,
     APP_FULL_NAME,
-    get_app_version,
-    get_app_display_name,
-    get_app_full_name,
 )
 from certus.core.certus_config import CONFIG_SCHEMA_VERSION, ConfigManager, get_resource_path as config_get_resource_path
 from certus.core.certus_runtime import CertusRuntime, build_runtime, setup_numba_cache, set_num_threads
@@ -146,7 +143,7 @@ from datetime import datetime
 
 from typing import Any, Optional
 
-from certus.utils.logging import attach_jsonl_handler, get_structured_logger
+from certus.utils.certus_logging import attach_jsonl_handler, get_structured_logger
 
 import numpy as np
 
@@ -265,7 +262,8 @@ def get_materials_db_hash() -> str | None:
         if not db_path.exists():
             db_path = Path("data/materials_v1.json")
         if db_path.exists():
-            return hashlib.sha256(db_path.read_bytes()).hexdigest()
+            content = db_path.read_bytes().replace(b"\r\n", b"\n")
+            return hashlib.sha256(content).hexdigest()
     except OSError:
         pass
     return None

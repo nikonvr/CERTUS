@@ -10,7 +10,6 @@ import logging
 from typing import Any
 
 import numpy as np
-from certus.spline.certus_index_spline_excel_export import _RMSEPlotContext
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCursor, QFont
@@ -242,7 +241,6 @@ class _PlotMixin:
         except NUMERICAL_FAULT_EXCEPTIONS:
             pn.autoRange()
 
-    def _plot_rmse_data_scatter(self, src: dict, ctx: "_RMSEPlotContext") -> None:
         d_plot = np.asarray(ctx.d_plot, dtype=np.float64).ravel()
         r_plot = np.asarray(ctx.r_plot, dtype=np.float64).ravel()
         d_vis = np.asarray(ctx.d_vis, dtype=np.float64).ravel()

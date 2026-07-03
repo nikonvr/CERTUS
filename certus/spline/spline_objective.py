@@ -591,7 +591,7 @@ def spline_objective_mse_on_masked_grid(
 
 def spectral_mse_rmse_masked_from_nk(
     cfg: SplineOptConfig,
-    out_meta: dict[str, Any],
+    _out_meta: dict[str, Any],
     lam_full: np.ndarray,
     n_lam: np.ndarray,
     k_lam: np.ndarray,

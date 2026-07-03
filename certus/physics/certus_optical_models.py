@@ -91,10 +91,14 @@ def get_nk_cauchy(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
     return res
 
 
+@lru_cache(maxsize=1024)
+def _get_nk_cauchy_cached(n4: float, n7: float, wls_tuple: tuple) -> np.ndarray:
+    wls_arr = np.array(wls_tuple, dtype=np.float64)
+    return get_nk_cauchy(n4, n7, wls_arr)
+
 def get_nk_cauchy_wrapper(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
     """Cauchy index wrapper. Returns f64 (double precision)."""
-
-    return get_nk_cauchy(float(n4), float(n7), wls.astype(np.float64))
+    return _get_nk_cauchy_cached(float(n4), float(n7), tuple(wls.astype(np.float64)))
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
@@ -434,17 +438,17 @@ class SplineBasisCache:
             cls._cache.clear()
 
 
-def get_nk_from_spline(
-    p_spline_nk_values: np.ndarray,
-    knot_wavelengths: np.ndarray,
-    target_lambda_array: np.ndarray,
-    use_cache: bool = True,
+@lru_cache(maxsize=1024)
+def _get_nk_from_spline_cached(
+    p_spline_tuple: tuple,
+    knot_wl_tuple: tuple,
+    target_wl_tuple: tuple,
+    use_cache: bool
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Interpolates n, k from spline knots using cubic spline.
-    When use_cache=True (default), uses SplineBasisCache for fast matrix-vector evaluation.
-    When use_cache=False, falls back to direct CubicSpline construction.
-    """
+    p_spline_nk_values = np.array(p_spline_tuple)
+    knot_wavelengths = np.array(knot_wl_tuple)
+    target_lambda_array = np.array(target_wl_tuple)
+    
     num_knots = len(knot_wavelengths)
     n_knot_values = p_spline_nk_values[:num_knots]
     k_knot_values = p_spline_nk_values[num_knots:]
@@ -459,10 +463,27 @@ def get_nk_from_spline(
         n_values = spline_n(target_lambda_array)
         k_values = spline_k(target_lambda_array)
 
-    # Clip to physical/valid range (0-10)
     n_values = np.nan_to_num(np.clip(n_values, 0.0, 10.0))
     k_values = np.nan_to_num(np.clip(k_values, 0.0, 10.0))
     return n_values, k_values
+
+def get_nk_from_spline(
+    p_spline_nk_values: np.ndarray,
+    knot_wavelengths: np.ndarray,
+    target_lambda_array: np.ndarray,
+    use_cache: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Interpolates n, k from spline knots using cubic spline.
+    When use_cache=True (default), uses SplineBasisCache for fast matrix-vector evaluation.
+    When use_cache=False, falls back to direct CubicSpline construction.
+    """
+    return _get_nk_from_spline_cached(
+        tuple(p_spline_nk_values),
+        tuple(knot_wavelengths),
+        tuple(target_lambda_array),
+        use_cache
+    )
 
 
 # =============================================================================

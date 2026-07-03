@@ -42,8 +42,10 @@ def test_core_openpyxl_import_error(monkeypatch):
     import certus.core.certus_core as certus_core
     monkeypatch.setitem(sys.modules, "openpyxl", None)
     file_path = str(Path(certus_core.__file__).resolve())
-    loader = SourceFileLoader("certus_core_no_openpyxl", file_path)
-    mod = loader.load_module()
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("certus_core_no_openpyxl", file_path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
     assert mod.OPENPYXL_AVAILABLE is False
 
 @pytest.mark.unit

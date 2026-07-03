@@ -1,0 +1,30 @@
+warning: in the working copy of 'tests/headless/test_design_campaign.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/unit/test_refactoring_fixes.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tools/split_design_ui_mixins.py', LF will be replaced by CRLF the next time Git touches it
+ best_headless_stack.json                      |  40 [32m+[m[31m-[m
+ certus/core/_certus_physics_impl.py           |  23 [32m+[m[31m-[m
+ certus/core/certus_design_core.py             |  99 [32m++[m[31m--[m
+ certus/core/certus_design_orchestrator.py     | 243 [32m+++++++[m[31m--[m
+ certus/core/certus_re_objectives.py           |   3 [32m+[m
+ certus/ui/certus_base_app.py                  |  24 [32m+[m[31m-[m
+ certus/ui/certus_design.jsonl                 |  27 [32m+[m
+ certus/ui/certus_design_ui.py                 |   4 [32m+[m[31m-[m
+ certus/ui/certus_design_ui_core.py            |   4 [32m+[m
+ certus/ui/certus_design_ui_layout.py          |  12 [32m+[m[31m-[m
+ certus/ui/certus_design_ui_optimization.py    | 175 [32m+++++[m[31m--[m
+ certus/ui/certus_design_ui_plot.py            | 699 [32m+++++++++++++++++++++++[m[31m---[m
+ certus/ui/certus_design_ui_state.py           |  13 [32m+[m[31m-[m
+ certus/ui/certus_design_ui_worker.py          | 163 [32m+++++[m[31m-[m
+ certus/workers/certus_design_worker_utils.py  | 192 [32m++++++[m[31m-[m
+ certus/workers/certus_design_workers_strat.py |  97 [32m++[m[31m--[m
+ certus/workers/certus_re_workers.py           |   7 [32m+[m
+ certus/workers/certus_re_workers_phase3.py    |  76 [32m++[m[31m-[m
+ certus_certus_hub.jsonl                       |  13 [32m+[m
+ certus_certus_substrate_index.jsonl           |  13 [32m+[m
+ certus_test_mod.jsonl                         |   6 [32m+[m
+ certus_test_module.jsonl                      |   6 [32m+[m
+ tests/headless/test_design_campaign.py        |   4 [32m+[m[31m-[m
+ tests/unit/test_certus_design_worker_utils.py |   8 [32m+[m[31m-[m
+ tests/unit/test_refactoring_fixes.py          |  77 [32m+++[m
+ tools/split_design_ui_mixins.py               |   2 [32m+[m[31m-[m
+ 26 files changed, 1746 insertions(+), 284 deletions(-)

@@ -175,7 +175,7 @@ def test_numba_nogil_enabled():
     # We check specific kernels that MUST be parallel + nogil.
     target_functions = [
         "needle_scan_cached",
-        "calculate_RT_batch_kernel",
+        "_calculate_RT_batch_kernel_jit",
     ]
 
     trees = []

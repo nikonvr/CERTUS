@@ -2,7 +2,6 @@
 
 """
 CERTUS-INDEX-SPLINE Excel Export Module.
-Contains _RMSEPlotContext and _ExcelExportMixin.
 """
 
 from __future__ import annotations
@@ -22,46 +21,6 @@ from certus.utils.certus_data import (
     build_report_sections,
     export_optimization_report,
 )
-
-# Helper structures originally defined in CERTUS_INDEX_SPLINE
-
-@dataclass
-class _RMSEPlotContext:
-    d_plot: np.ndarray
-    r_plot: np.ndarray
-    kind_plot: np.ndarray
-    status_plot: np.ndarray
-    d_vis: np.ndarray
-    r_vis: np.ndarray
-    kind_vis: np.ndarray
-    status_vis: np.ndarray
-    d_s: np.ndarray
-    r_s: np.ndarray
-    m_rev: np.ndarray
-    m_main: np.ndarray
-    envelope_display: bool
-    is_live_grid: bool
-    i_best: int
-    parab_fit: dict = field(default_factory=dict)
-    curvature_label_spec: Any = None
-    live_parab: bool = False
-    d_best: float = 0.0
-    rmse_best: float = 0.0
-    rmse_thr: Any = None
-    d_parab_arr: np.ndarray = field(default_factory=lambda: np.array([]))
-    r_parab_arr: np.ndarray = field(default_factory=lambda: np.array([]))
-    win_rb: float = 0.0
-    delta_rb: float = 0.0
-    i_parab_best: int = -1
-    rb_ok: bool = False
-    d_lo_rb: float = float("nan")
-    d_hi_rb: float = float("nan")
-    slope_b: float = float("nan")
-    curv_b: float = float("nan")
-    d_center: float = float("nan")
-    bp_events: list = field(default_factory=list)
-    bp_dir_left: int = 0
-    bp_dir_right: int = 0
 
 
 class _ExcelExportMixin:

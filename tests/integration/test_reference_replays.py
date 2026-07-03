@@ -8,7 +8,8 @@ import numpy as np
 from certus.core._certus_physics_impl import calculate_transmission_single
 
 def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def test_reference_replay_single_layer_index_scenario_v1() -> None:

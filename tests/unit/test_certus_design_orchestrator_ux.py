@@ -19,20 +19,18 @@ def test_design_orchestrator_shows_guided_error_on_optimization_failure() -> Non
         "error": "Target thickness cannot be reached."
     }
 
-    # 3. Patch QMessageBox to prevent actual popup during tests
-    with patch("certus.core.certus_design_orchestrator.QMessageBox.warning") as mock_warning:
-        orchestrator._on_optim_done(payload)
+    # 3. We no longer patch QMessageBox. The orchestrator calls ui.show_error_dialog() instead.
+    orchestrator._on_optim_done(payload)
 
-        # 4. Verify that the user is guided with a popup rather than just a console log
-        mock_warning.assert_called_once()
-        
-        args, kwargs = mock_warning.call_args
-        
-        assert args[0] == mock_ui  # Parent should be the UI
-        assert args[1] == "Optimization Failed"  # Expected title
-        
-        # The body should explain the issue and contain the specific error
-        assert "Target thickness cannot be reached." in args[2]
+    # 4. Verify that the user is guided with a dialog rather than just a console log
+    mock_ui.show_error_dialog.assert_called_once()
+    
+    args, kwargs = mock_ui.show_error_dialog.call_args
+    
+    assert args[0] == "Optimization Failed"  # Expected title
+    
+    # The body should explain the issue and contain the specific error
+    assert "Target thickness cannot be reached." in args[1]
 
 def test_design_orchestrator_needle_state():
     """Verify that DesignOrchestrator tracks _is_in_needle_cycle correctly (Architecture-5)."""

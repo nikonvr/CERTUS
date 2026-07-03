@@ -9,31 +9,13 @@ import functools
 import logging
 
 import numpy as np
-from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
-from PyQt6.QtWidgets import QMessageBox
 
 from certus.core.certus_core import CFG, get_complex_dtype, get_export_config, get_float_dtype
-from certus.utils.logging import get_structured_logger
+from certus.utils.certus_logging import get_structured_logger
 from certus.workers.certus_design_workers_dto import ColorWorkerRequest, NeedleWorkerRequest, OptimWorkerRequest
-from certus.ui.certus_qt_widgets import QCheckBox, QHBoxLayout, QTableWidgetItem, QWidget, Qt
 from certus.workers.certus_design_workers import NeedleWorker, OptimWorker
 
-class DesignOrchestratorSignals(QObject):
-    """Signals emitted by the Design Orchestrator State Machine."""
-    # Emitted when a new layer is physically inserted into the stack
-    layer_inserted = pyqtSignal(dict)
-    
-    # Emitted when a local optimization step finishes (useful for plotting updates)
-    step_done = pyqtSignal(dict)
-    
-    # Emitted when the entire synthesis loop has reached its targets or max layers
-    finished = pyqtSignal(dict)
-    
-    # Emitted on critical errors to abort gracefully
-    error = pyqtSignal(str)
-
-
-class DesignOrchestrator(QObject):
+class DesignOrchestrator:
     """
     Headless State Machine for Optical Synthesis.
     
@@ -42,10 +24,8 @@ class DesignOrchestrator(QObject):
     and emits generalized events to the UI/Script listener.
     """
     
-    def __init__(self, ui_instance, parent=None):
-        super().__init__(parent)
+    def __init__(self, ui_instance):
         self.ui = ui_instance
-        self.signals = DesignOrchestratorSignals()
         self.is_running = False
 
         # References to current active workers
@@ -65,12 +45,19 @@ class DesignOrchestrator(QObject):
         """Entry point to kickstart the autonomous synthesis loop."""
         self.is_running = True
         logging.info("[ORCHESTRATOR] Synthesis loop started.")
-        self.signals.error.emit("Synthesis orchestration is not yet wired into the UI flow.")
+        self.ui.log("Synthesis orchestration is not yet wired into the UI flow.", "ERROR")
 
     def abort(self):
         """Forcefully stops any running synthesis loop."""
         self.is_running = False
         logging.info("[ORCHESTRATOR] Synthesis loop aborted.")
+
+    def _schedule_task(self, delay_ms: int, func) -> None:
+        if hasattr(self.ui, "schedule_task"):
+            self.ui.schedule_task(delay_ms, func)
+        else:
+            # Headless / Synchronous fallback
+            func()
 
 
 
@@ -182,13 +169,13 @@ class DesignOrchestrator(QObject):
             print("DEBUG: _on_optim_done ERROR:", error_msg)
             
             # UX: Guided error message
-            QMessageBox.warning(
-                self.ui,
-                "Optimization Failed",
-                f"The optimization process could not complete successfully.\n\n"
-                f"Reason: {error_msg}\n\n"
-                f"Please verify your target curves and initial design."
-            )
+            if hasattr(self.ui, "show_error_dialog"):
+                self.ui.show_error_dialog(
+                    "Optimization Failed",
+                    f"The optimization process could not complete successfully.\n\n"
+                    f"Reason: {error_msg}\n\n"
+                    f"Please verify your target curves and initial design."
+                )
             
             self.ui._set_busy(False)
             return
@@ -197,7 +184,7 @@ class DesignOrchestrator(QObject):
 
         self.ui._stack_info_best_rmse = None
 
-        QTimer.singleShot(50, self.ui.optimization_finished_signal.emit)
+        self._schedule_task(50, self.ui.optimization_finished_signal.emit)
 
         # PARETO DECIMATION: if we are polishing after decimation, route to decimation handler
         if self._handle_decimation_polish_completion(d):
@@ -263,7 +250,7 @@ class DesignOrchestrator(QObject):
             )
             self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
             self._healing_phase = "global"
-            QTimer.singleShot(50, functools.partial(self.ui.run_optim, "healing", keep_history=True))
+            self._schedule_task(50, functools.partial(self.ui.run_optim, "healing", keep_history=True))
             return True
 
         if self._healing_phase == "global":
@@ -275,7 +262,7 @@ class DesignOrchestrator(QObject):
             )
             self.ui.log("Healing: local polish...", "INFO")
             self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
-            QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+            self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
             return True
 
         if self._healing_phase == "local":
@@ -359,7 +346,7 @@ class DesignOrchestrator(QObject):
             )
             if hasattr(self, "_needle_fail_count"):
                 delattr(self, "_needle_fail_count")
-            QTimer.singleShot(100, self._start_needle_process)
+            self._schedule_task(100, self._start_needle_process)
             return True
 
         if current_count_after_clean >= self._target_layer_count:
@@ -387,7 +374,7 @@ class DesignOrchestrator(QObject):
                     self.ui.log(f"Pruned {pruned} thinnest layers. Final polish...", "INFO")
                     self.ui.accumulated_evals += getattr(self.ui, "_optim_n_evals", 0)
                     self.ui._post_prune = True
-                    QTimer.singleShot(50, functools.partial(self.ui.run_optim, "local", keep_history=True))
+                    self._schedule_task(50, functools.partial(self.ui.run_optim, "local", keep_history=True))
                     return True
 
             self.ui.log(
@@ -645,7 +632,7 @@ class DesignOrchestrator(QObject):
 
             # If layers merged, restart light optimization (keep_history to preserve target)
             self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
-            QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+            self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
             return
 
         mats = self.ui._get_materials()
@@ -719,53 +706,47 @@ class DesignOrchestrator(QObject):
         if hasattr(self.ui, "progress_widget"):
             self.ui.progress_widget.start(phase="NEEDLE SCAN")
 
-        self.ui.needle_worker = NeedleWorker(cfg)
-
-        self.ui.needle_thread = QThread()
-        self.ui.needle_worker.moveToThread(self.ui.needle_thread)
-
-        self.ui.needle_thread.started.connect(self.ui.needle_worker.run)
-
-        self.ui.needle_worker.signals.finished.connect(self.ui.needle_thread.quit)
-        self.ui.needle_worker.signals.finished.connect(self._on_needle_found)
-        self.ui.needle_worker.signals.finished.connect(self.ui.needle_worker.deleteLater)
-
-        self.ui.needle_worker.signals.error.connect(self.ui.needle_thread.quit)
-        self.ui.needle_worker.signals.error.connect(self.ui._on_error)
-        self.ui.needle_worker.signals.error.connect(self.ui.needle_worker.deleteLater)
-
-        if hasattr(self.ui, "_on_needle_progress"):
-            self.ui.needle_worker.signals.progress.connect(self.ui._on_needle_progress)
-
-        self.ui.needle_thread.finished.connect(self.ui.needle_thread.deleteLater)
-        self.ui.needle_thread.start()
+        # Delegate UI threading
+        if hasattr(self.ui, "start_needle_worker"):
+            self.ui.start_needle_worker(cfg, self._on_needle_found)
+        else:
+            self.ui.log("UI doesn't support start_needle_worker", "ERROR")
 
     def schedule_refresh_pareto_table(self) -> None:
-        QTimer.singleShot(0, self.ui._refresh_pareto_table)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(0, self.ui._refresh_pareto_table)
 
     def schedule_update_substrate_info(self) -> None:
-        QTimer.singleShot(0, self.ui._update_substrate_info)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(0, self.ui._update_substrate_info)
 
     def schedule_update_tikhonravov_points(self, delay_ms: int = 300) -> None:
-        QTimer.singleShot(delay_ms, self.ui._update_tikhonravov_points)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(delay_ms, self.ui._update_tikhonravov_points)
 
     def schedule_export_results(self) -> None:
-        QTimer.singleShot(100, self.ui.export_results)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(100, self.ui.export_results)
 
     def schedule_smart_pareto_decimation(self) -> None:
-        QTimer.singleShot(200, self.ui._start_smart_pareto_decimation)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(200, self.ui._start_smart_pareto_decimation)
 
     def schedule_smart_decimation_remove_and_optimize(self) -> None:
-        QTimer.singleShot(200, self.ui._smart_decimation_remove_and_optimize)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(200, self.ui._smart_decimation_remove_and_optimize)
 
     def schedule_export_pareto_report(self) -> None:
-        QTimer.singleShot(500, self.ui._export_pareto_report)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(500, self.ui._export_pareto_report)
 
     def schedule_local_optim_keep_history(self) -> None:
-        QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
 
     def schedule_decimation_remove_and_polish(self) -> None:
-        QTimer.singleShot(100, self.ui._decimation_remove_and_polish)
+        if hasattr(self.ui, "schedule_task"):
+            self._schedule_task(100, self.ui._decimation_remove_and_polish)
 
     def _on_needle_found(self, res: Dict) -> None:
         if hasattr(self.ui, "progress_widget"):
@@ -996,7 +977,7 @@ class DesignOrchestrator(QObject):
                 "INFO",
             )
 
-            QTimer.singleShot(200, self._start_needle_process)
+            self._schedule_task(200, self._start_needle_process)
 
             return action, res, True
 
@@ -1090,7 +1071,7 @@ class DesignOrchestrator(QObject):
 
             self.ui.accumulated_evals += getattr(self, "_optim_n_evals", 0)
 
-            QTimer.singleShot(50, lambda: self.ui.run_optim("local", keep_history=True))
+            self._schedule_task(50, lambda: self.ui.run_optim("local", keep_history=True))
 
             return True
 
@@ -1131,7 +1112,7 @@ class DesignOrchestrator(QObject):
 
         self.ui.front_table.item(idx, 2).setText(f"{depth:.1f}")
 
-        target_needle_nm = self._insert_needle_split_row(idx, mat_needle, n_needle, l0)
+        target_needle_nm = self.ui._insert_needle_split_row(idx, mat_needle, n_needle, l0)
 
         total_orig_thick = self.ui.ep_current[idx]
 
@@ -1139,7 +1120,7 @@ class DesignOrchestrator(QObject):
 
         qw_right = (4.0 * n_orig * d_right) / l0
 
-        self._insert_right_split_row(idx, mat_orig, qw_right, d_right)
+        self.ui._insert_right_split_row(idx, mat_orig, qw_right, d_right)
 
         self.ui.front_table.blockSignals(False)
 
@@ -1160,93 +1141,7 @@ class DesignOrchestrator(QObject):
 
         return True
 
-    def _insert_needle_split_row(self, idx: int, mat_needle: str, n_needle: float, l0: float) -> float:
-        """Insert the needle layer row in a split operation and return its target thickness."""
 
-        insert_idx = idx + 1
-
-        self.ui.front_table.insertRow(insert_idx)
-
-        target_needle_nm = 3.0
-
-        qw_needle = (4.0 * n_needle * target_needle_nm) / l0
-
-        cb_n = self.ui._create_combo(mat_needle)
-
-        self.ui.front_table.setCellWidget(insert_idx, 0, cb_n)
-
-        sb_n = self.ui._create_spin(qw_needle, dec=6)
-
-        sb_n.valueChanged.connect(self.ui._on_schedule_eval_signal)
-
-        self.ui.front_table.setCellWidget(insert_idx, 1, sb_n)
-
-        it_n = QTableWidgetItem(f"{target_needle_nm:.4f}")
-
-        it_n.setFlags(it_n.flags() & ~Qt.ItemFlag.ItemIsEditable)
-
-        self.ui.front_table.setItem(insert_idx, 2, it_n)
-
-        chk_n = QCheckBox()
-
-        chk_n.setToolTip("Toggle optimization for needle layer.")
-
-        chk_n.setChecked(True)
-
-        cw_n = QWidget()
-
-        cl_n = QHBoxLayout(cw_n)
-
-        cl_n.addWidget(chk_n)
-
-        cl_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        cl_n.setContentsMargins(0, 0, 0, 0)
-
-        self.ui.front_table.setCellWidget(insert_idx, 3, cw_n)
-
-        return target_needle_nm
-
-    def _insert_right_split_row(self, idx: int, mat_orig: str, qw_right: float, d_right: float) -> None:
-        """Insert the right-side row produced by a split operation."""
-
-        right_idx = idx + 2
-
-        self.ui.front_table.insertRow(right_idx)
-
-        cb_r = self.ui._create_combo(mat_orig)
-
-        self.ui.front_table.setCellWidget(right_idx, 0, cb_r)
-
-        sb_r = self.ui._create_spin(qw_right, dec=6)
-
-        sb_r.valueChanged.connect(self.ui._on_schedule_eval_signal)
-
-        self.ui.front_table.setCellWidget(right_idx, 1, sb_r)
-
-        it_r = QTableWidgetItem(f"{d_right:.1f}")
-
-        it_r.setFlags(it_r.flags() & ~Qt.ItemFlag.ItemIsEditable)
-
-        self.ui.front_table.setItem(right_idx, 2, it_r)
-
-        chk_r = QCheckBox()
-
-        chk_r.setToolTip("Toggle optimization for split layer.")
-
-        chk_r.setChecked(True)
-
-        cw_r = QWidget()
-
-        cl_r = QHBoxLayout(cw_r)
-
-        cl_r.addWidget(chk_r)
-
-        cl_r.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        cl_r.setContentsMargins(0, 0, 0, 0)
-
-        self.ui.front_table.setCellWidget(right_idx, 3, cw_r)
 
     def _clear_needle_cycle_state(self) -> None:
         """Clear state attributes used by the current needle optimization cycle."""

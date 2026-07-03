@@ -1,165 +1,5 @@
-from certus.core.certus_core import __version__, APP_SUITE_VERSION
-import os
-from pathlib import Path
-import multiprocessing
-import sys
-import functools
-from certus.core.certus_core import create_module_environment
-import logging
-import time
-import traceback
-import copy
-from threading import Event
-from typing import Any, List, Dict
-import numpy as np
-import pyqtgraph as pg
-from certus.ui.certus_qt_widgets import (
-    QAbstractItemView,
-    QAbstractSpinBox,
-    QApplication,
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDoubleSpinBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QHeaderView,
-    QKeySequence,
-    QLabel,
-    QPushButton,
-    QScrollArea,
-    QShortcut,
-    QSpinBox,
-    QSplitter,
-    QStackedWidget,
-    QStatusBar,
-    QStyle,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
-    QThread,
-    QTimer,
-    Qt,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    CFG,
-    ensure_numpy_array,
-    get_complex_dtype,
-    get_float_dtype,
-    get_resource_path,
-    certus_timestamp_display,
-    certus_timestamp_file,
-    setup_module_logging,
-)
-from certus.utils.errors import safe_ui_action
-from certus.workers.certus_design_worker_utils import (
-    build_pglobal_optimizer,
-    build_pglobal_config_from_cfg,
-    optim_backside_flags_from_cfg,
-    optim_bounds_thickness_global,
-    optim_bounds_thickness_healing,
-    optim_bounds_thickness_local,
-    optim_calc_oblique_selected,
-    optim_display_wavelength_grid,
-    optim_oblique_attach_local_positions,
-    optim_oblique_configs_from_groups,
-    optim_oblique_group_targets_on_wavelengths,
-    optim_oblique_unique_display_keys,
-    optim_post_optim_time_budget_seconds,
-    optim_prepare_stack_nk_back,
-    optim_qwot_values_from_ep_stack,
-    optim_rmse_display_string,
-    optim_rmse_is_valid_for_log,
-    optim_var_indices_from_stack,
-    prepare_pglobal_inputs_from_state,
-    prepare_pglobal_optimizer_runtime,
-    run_coord_descent_5cycles,
-    run_pglobal_restart_loop,
-)
-from certus.utils.certus_data import OPENPYXL_AVAILABLE, generate_html_report
-from certus.workers.certus_design_workers_dto import (
-    ColorWorkerRequest,
-    ColorWorkerResult,
-    NeedleWorkerResult,
-    NeedleWorkerRequest,
-    OptimWorkerRequest,
-    OptimWorkerResult,
-)
-from certus_physics import (  # Cache & Utils; Gradient Logic (Analytic); Numba Functions
-    Layer,
-    Material,
-    ObliqueTarget,
-    PGlobalConfig,
-    PGlobalOptimizer,
-    Target,
-    calc_spectrum_full_oblique_exact,
-    calc_spectrum_oblique_backside_vectorized,
-    calc_spectrum_oblique_vectorized,
-    compute_gradient_all_layers_analytic,
-    compute_oblique_rt_and_grads_analytic,
-    compute_oblique_gradient_contrib_analytic,
-    cost_numba_fast,
-    delta_e_2000,
-    init_thickness,
-    lab_to_rgb,
-    needle_scan_cached,
-    prepare_targets_vectorized,
-    xyz_from_spectrum,
-    xyz_to_lab,
-)
-from certus.utils.certus_index_utils import spectral_rmse_weights
-from certus.ui.certus_ui import (
-    CertusTheme,
-    CertusBaseApp,
-    CertusScientificPlot,
-    CertusThemeToggle,
-    CertusCard,
-    CertusCollapsible,
-    CertusStatusPill,
-    install_standard_shortcuts,
-    enable_file_drop,
-    show_toast,
-    EnhancedProgressWidget,
-    FlashyCard,
-    WelcomeGuideWidget,
-    WorkerSignals,
-    certus_get_save_file_name,
-    confirm_stop_with_timeout,
-    copy_app_logs_to_clipboard,
-    CertusAppLogsMixin,
-    create_flashy_grid,
-    create_header_logo_widget,
-    create_top_actions_bar,
-    get_export_config,
-    init_certus_app,
-    open_documentation,
-    plot_widget_plot_finite,
-)
-from certus.core.certus_metrology import ValidationStatus
-from certus.utils.certus_services import IndexFitRequest, IndexFitService
-from certus.utils.certus_load_summary import build_summary_plain_text, show_load_summary_dialog
-from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
-from certus.ui.certus_spectrum_eval_ui import (
-    spectrum_eval_apply_axes_legend_scale,
-    spectrum_eval_build_worker_cfg,
-    spectrum_eval_on_finished_prepare_display,
-    spectrum_eval_plot_curves,
-    spectrum_eval_run_preamble,
-    spectrum_eval_start_worker,
-)
-from certus_physics import (
-    calc_spectrum_front_wrapper,
-    calc_spectrum_full_wrapper,
-    calc_spectrum_full_exact_wrapper,
-)
-from certus.core.certus_design_core import *
-from certus.workers.certus_design_workers import *
+from __future__ import annotations
+from certus.ui.certus_design_common import *
 
 class OptimizationManager:
     def __init__(self, ui):
@@ -1204,11 +1044,71 @@ class OptimizationManager:
     def _apply_needle_split_insertion(self, res) -> bool:
         return getattr(self.ui, 'orchestrator', self)._apply_needle_split_insertion(res)
 
-    def _insert_needle_split_row(self, idx, mat_needle, n_needle, l0) -> float:
-        return getattr(self.ui, 'orchestrator', self)._insert_needle_split_row(idx, mat_needle, n_needle, l0)
+    def _insert_needle_split_row(self, idx: int, mat_needle: str, n_needle: float, l0: float) -> float:
+        """Insert the needle layer row in a split operation and return its target thickness."""
+        from PyQt6.QtWidgets import QWidget, QHBoxLayout
+        from PyQt6.QtCore import Qt
+        from certus.ui.certus_qt_widgets import QCheckBox, QTableWidgetItem
 
-    def _insert_right_split_row(self, idx, mat_orig, qw_right, d_right) -> None:
-        return getattr(self.ui, 'orchestrator', self)._insert_right_split_row(idx, mat_orig, qw_right, d_right)
+        insert_idx = idx + 1
+        self.ui.front_table.insertRow(insert_idx)
+        target_needle_nm = 3.0
+        qw_needle = (4.0 * n_needle * target_needle_nm) / l0
+
+        cb_n = self.ui._create_combo(mat_needle)
+        self.ui.front_table.setCellWidget(insert_idx, 0, cb_n)
+
+        sb_n = self.ui._create_spin(qw_needle, dec=6)
+        sb_n.valueChanged.connect(self.ui._on_schedule_eval_signal)
+        self.ui.front_table.setCellWidget(insert_idx, 1, sb_n)
+
+        it_n = QTableWidgetItem(f"{target_needle_nm:.4f}")
+        it_n.setFlags(it_n.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.ui.front_table.setItem(insert_idx, 2, it_n)
+
+        chk_n = QCheckBox()
+        chk_n.setToolTip("Toggle optimization for needle layer.")
+        chk_n.setChecked(True)
+
+        cw_n = QWidget()
+        cl_n = QHBoxLayout(cw_n)
+        cl_n.addWidget(chk_n)
+        cl_n.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cl_n.setContentsMargins(0, 0, 0, 0)
+        self.ui.front_table.setCellWidget(insert_idx, 3, cw_n)
+
+        return target_needle_nm
+
+    def _insert_right_split_row(self, idx: int, mat_orig: str, qw_right: float, d_right: float) -> None:
+        """Insert the right-side row produced by a split operation."""
+        from PyQt6.QtWidgets import QWidget, QHBoxLayout
+        from PyQt6.QtCore import Qt
+        from certus.ui.certus_qt_widgets import QCheckBox, QTableWidgetItem
+
+        right_idx = idx + 2
+        self.ui.front_table.insertRow(right_idx)
+
+        cb_r = self.ui._create_combo(mat_orig)
+        self.ui.front_table.setCellWidget(right_idx, 0, cb_r)
+
+        sb_r = self.ui._create_spin(qw_right, dec=6)
+        sb_r.valueChanged.connect(self.ui._on_schedule_eval_signal)
+        self.ui.front_table.setCellWidget(right_idx, 1, sb_r)
+
+        it_r = QTableWidgetItem(f"{d_right:.1f}")
+        it_r.setFlags(it_r.flags() & ~Qt.ItemFlag.ItemIsEditable)
+        self.ui.front_table.setItem(right_idx, 2, it_r)
+
+        chk_r = QCheckBox()
+        chk_r.setToolTip("Toggle optimization for split layer.")
+        chk_r.setChecked(True)
+
+        cw_r = QWidget()
+        cl_r = QHBoxLayout(cw_r)
+        cl_r.addWidget(chk_r)
+        cl_r.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        cl_r.setContentsMargins(0, 0, 0, 0)
+        self.ui.front_table.setCellWidget(right_idx, 3, cw_r)
 
     def _clear_needle_cycle_state(self, ) -> None:
         return getattr(self.ui, 'orchestrator', self)._clear_needle_cycle_state()
@@ -1216,3 +1116,34 @@ class OptimizationManager:
     def _clear_needle_search_state(self, keep_fail_count) -> None:
         return getattr(self.ui, 'orchestrator', self)._clear_needle_search_state(keep_fail_count)
 
+    def schedule_task(self, delay_ms: int, func) -> None:
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(delay_ms, func)
+
+    def show_error_dialog(self, title: str, msg: str) -> None:
+        from PyQt6.QtWidgets import QMessageBox
+        QMessageBox.warning(self.ui, title, msg)
+
+    def start_needle_worker(self, cfg, on_finished_callback) -> None:
+        from PyQt6.QtCore import QThread
+        from certus.workers.certus_design_workers import NeedleWorker
+        
+        self.ui.needle_worker = NeedleWorker(cfg)
+        self.ui.needle_thread = QThread()
+        self.ui.needle_worker.moveToThread(self.ui.needle_thread)
+
+        self.ui.needle_thread.started.connect(self.ui.needle_worker.run)
+
+        self.ui.needle_worker.signals.finished.connect(self.ui.needle_thread.quit)
+        self.ui.needle_worker.signals.finished.connect(on_finished_callback)
+        self.ui.needle_worker.signals.finished.connect(self.ui.needle_worker.deleteLater)
+
+        self.ui.needle_worker.signals.error.connect(self.ui.needle_thread.quit)
+        self.ui.needle_worker.signals.error.connect(self.ui._on_error)
+        self.ui.needle_worker.signals.error.connect(self.ui.needle_worker.deleteLater)
+
+        if hasattr(self.ui, "_on_needle_progress"):
+            self.ui.needle_worker.signals.progress.connect(self.ui._on_needle_progress)
+
+        self.ui.needle_thread.finished.connect(self.ui.needle_thread.deleteLater)
+        self.ui.needle_thread.start()

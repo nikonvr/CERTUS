@@ -133,14 +133,16 @@ from certus.ui.certus_ui import (
     SVG_AVAILABLE,
     CertusTheme,
     CertusThemeToggle,
-    create_colored_label,
-    create_header_logo_widget,
-    create_styled_label,
     init_certus_app,
     open_documentation,
     set_certus_window_icon,
     apply_certus_theme,
     CertusLogPanel,
+)
+from certus.ui.certus_ui_widgets_factory import (
+    create_colored_label,
+    create_header_logo_widget,
+    create_styled_label,
 )
 from PyQt6.QtWidgets import QComboBox
 

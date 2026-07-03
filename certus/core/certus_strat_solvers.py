@@ -43,7 +43,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # Import access config
 
-from certus.core.certus_strat_config import _resolve_materials_db_fallback
+from certus.core.certus_strat_utils import _resolve_materials_db_fallback
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_MAPPING,
@@ -167,123 +167,7 @@ from certus.utils.certus_strat_service import (
 
 _validate_phase_a_bridge_lock = threading.Lock()
 
-def _validate_candidates_phase_a(*args, **kwargs) -> Any:
-    """Compatibility bridge for tests monkeypatching STRAT kernel symbols.
-
-    ``certus_strat_service._validate_candidates_phase_a`` resolves kernels from
-    its own module globals. This wrapper mirrors legacy behavior by forwarding
-    the kernel bindings from ``CERTUS_STRAT`` before dispatch.
-    """
-    with _validate_phase_a_bridge_lock:
-        prev_validate = _strat_service_module.validate_wavelengths_batch
-        prev_update = _strat_service_module.update_run_states_kernel
-        _strat_service_module.validate_wavelengths_batch = validate_wavelengths_batch
-        _strat_service_module.update_run_states_kernel = update_run_states_kernel
-        try:
-            return _service_validate_candidates_phase_a(*args, **kwargs)
-        finally:
-            _strat_service_module.validate_wavelengths_batch = prev_validate
-            _strat_service_module.update_run_states_kernel = prev_update
-
-# NOTE: SYM_DEFAULT_* constants and DYNAMICS_METRIC_NAME are defined in
-# certus_strat_config.py and re-exported here via the _config namespace merge below.
-
-# _IdxWrapper has been moved to certus_strat_robustness.py
-
-# -----------------------------------------------------------------------------
-
-# ROBUST INDEX RETRIEVAL - Uses StratContext for dependency injection
-
-# -----------------------------------------------------------------------------
-
-# Save references to original certus_physics functions
-
-_original_get_refractive_index = get_refractive_index
-
-_original_get_refractive_clues_vectorized = get_refractive_clues_vectorized
-
-def set_robust_material_db(db) -> None:
-    """
-
-    Set the material database in the current context.
-
-    Legacy wrapper for backward compatibility.
-
-    Prefer using StratContext directly.
-
-    """
-
-    ctx = get_context()
-
-    ctx.material_db = db
-
-def smart_get_refractive_index(mat_id, wl, db_instance=None) -> Any:
-    """Get refractive index using context-based dependency injection with robust fallback."""
-
-    # 1. Explicit DB instance (Legacy)
-
-    if db_instance is not None:
-        return _original_get_refractive_index(mat_id, wl, db_instance)
-
-    # 2. Context Strategy
-
-    ctx = StratContext.get_current()
-
-    if ctx is not None and ctx.material_db is not None:
-        return ctx.material_db.get_refractive_index(mat_id, wl)
-
-    # 3. Global Fallback (APP_CONTEXT) - Critical for maintaining state if context is empty
-
-    # Check if context has it implicitly or fallback to global
-
-    db_to_use = _resolve_materials_db_fallback(ctx)
-
-    if db_to_use is not None:
-        # Special handling for RobustMaterialDatabase if it requires direct call
-
-        if type(db_to_use).__name__ == "RobustMaterialDatabase":
-            return db_to_use.get_refractive_index(mat_id, wl)
-
-        return _original_get_refractive_index(mat_id, wl, db_to_use)
-
-    # 4. Final Fallback (No DB)
-
-    return _original_get_refractive_index(mat_id, wl, None)
-
-def smart_get_refractive_clues_vectorized(mat_id, wls, db_instance=None) -> Any:
-    """Get vectorized clues using context-based dependency injection with robust fallback."""
-
-    # 1. Explicit DB instance
-
-    if db_instance is not None:
-        return _original_get_refractive_clues_vectorized(mat_id, wls, db_instance)
-
-    # 2. Context Strategy
-
-    ctx = StratContext.get_current()
-
-    if ctx is not None and ctx.material_db is not None:
-        return ctx.material_db.get_refractive_clues_vectorized(mat_id, wls)
-
-    # 3. Global Fallback
-
-    db_to_use = _resolve_materials_db_fallback(ctx)
-
-    if db_to_use is not None:
-        if type(db_to_use).__name__ == "RobustMaterialDatabase":
-            return db_to_use.get_refractive_clues_vectorized(mat_id, wls)
-
-        return _original_get_refractive_clues_vectorized(mat_id, wls, db_to_use)
-
-    # 4. Final Fallback
-
-    return _original_get_refractive_clues_vectorized(mat_id, wls, None)
-
-# Alias smart functions to replace imports
-
-get_refractive_index = smart_get_refractive_index
-
-get_refractive_clues_vectorized = smart_get_refractive_clues_vectorized
+from certus.core.certus_strat_utils import *
 
 # Global scientific display configuration
 

@@ -5,7 +5,6 @@ import math
 from typing import *
 from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE, get_complex_dtype, FROSTED_GLASS_CAUCHY_A, FROSTED_GLASS_CAUCHY_B
 from dataclasses import dataclass
-import certus.physics.certus_tmm_core as tmm_core
 from certus.physics.certus_optical_models import (
     get_nk_from_spline, get_nk_cauchy_simple, get_nk_cauchy_wrapper,
     sellmeier_n_array, get_nk_cauchy, epsilon2_TLU_array, epsilon1_TL_analytic, epsilon_to_nk

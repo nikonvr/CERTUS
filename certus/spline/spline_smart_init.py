@@ -833,9 +833,6 @@ def smart_init_sweep_node_thickness_rmse(
     d_hi: float,
     L_lo: float,
     L_hi: float,
-    time_budget_s: float = 2.9,
-    grid_d: int = 20,
-    grid_param: int = 20,
     d_nm_current: float | None = None,
     relax_n_mono: bool = False,
 ) -> dict[str, Any]:

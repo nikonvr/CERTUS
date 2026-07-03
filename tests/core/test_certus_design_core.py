@@ -148,6 +148,9 @@ class MockCallbackApp(MockApp):
         self._callback_counter = 0
         self.cfg = {'max_feval': 1000}
         self.signals = MockSignals()
+        self.on_progress_snapshot = self.signals.progress_snapshot.emit
+        self.on_result = self.signals.result.emit
+        self.on_update_stats = self.signals.update_stats.emit
         self._optimizer = MockOptimizer()
         self.best_ep_final = None
         self.best_rmse_final = None

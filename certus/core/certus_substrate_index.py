@@ -46,7 +46,6 @@ from certus.core.certus_substrate_sellmeier import (
     _fit_model_sellmeier3poles,
     _sellmeier_l_separation_gap_um,
     _sellmeier_prior_coeffs_for_column,
-    _sellmeier_build_candidates,
     _sellmeier_multistart_candidates,
     _sellmeier_compact_polynomial_seed,
     _sellmeier_polish_helpers,
@@ -56,7 +55,6 @@ from certus.core.certus_substrate_sellmeier import (
     _sellmeier_residual_factory,
     _sellmeier_seed_from_compact_poly,
     _sellmeier_midpoint_seed,
-    _sellmeier_initial_context,
     _sellmeier_weights_from_nm
 )
 

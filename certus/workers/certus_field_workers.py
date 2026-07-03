@@ -282,30 +282,51 @@ class FieldWorkerThread(QThread):
                 ep_c1_cn_final = ep_c1_cn
             E2_nominal_list.append(E2_values.tolist())
 
-        for it in range(num_iterations):
+        import concurrent.futures
+
+        perturbations = np.random.normal(1.0, error_pct, (num_iterations, n_layers))
+
+        def _mc_task(it: int) -> tuple[int, list, list]:
             if not self._is_running:
-                return
-
-            pct = 10 + int(80 * (it / num_iterations))
-            self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Monte-Carlo {it+1}/{num_iterations}...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="MONTE_CARLO", metadata={"iteration": it + 1, "total": num_iterations}))
-
-            perturbation = np.random.normal(1.0, error_pct, n_layers)
-            perturbed_emp_factors = np.clip(np.asarray(params.emp_factors, dtype=float) * perturbation, 1e-4, None)
-
-            z_c_iter = None
-            for i, lambda_calc in enumerate(params.lambda_calcs):
+                return it, None, None
+            p_emp = np.clip(np.asarray(params.emp_factors, dtype=float) * perturbations[it], 1e-4, None).tolist()
+            z_c_out = None
+            e2_out = []
+            for j, lam in enumerate(params.lambda_calcs):
                 z_coords, E2_values, _, _, _ = calculate_electric_field(
-                    n1_r=params.n1_rs[i], n2_r=params.n2_rs[i], nSub_r=params.nSub_rs[i],
-                    l0=params.l0, lambda_calc=lambda_calc,
-                    emp_factors=perturbed_emp_factors.tolist(), layer_types=params.layer_types, n_superstrate_real=params.n_supers[i],
+                    n1_r=params.n1_rs[j], n2_r=params.n2_rs[j], nSub_r=params.nSub_rs[j],
+                    l0=params.l0, lambda_calc=lam,
+                    emp_factors=p_emp, layer_types=params.layer_types, n_superstrate_real=params.n_supers[j],
                     integral_points=params.integral_points,
                     theta_inc=params.theta_inc, pol_flag=params.pol_flag
                 )
-                if i == 0:
-                    z_c_iter = z_coords.tolist()
-                E2_mc_runs[i].append(E2_values.tolist())
+                if j == 0:
+                    z_c_out = z_coords.tolist()
+                e2_out.append(E2_values.tolist())
+            return it, z_c_out, e2_out
 
-            z_coords_mc.append(z_c_iter or [])
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(_mc_task, it) for it in range(num_iterations)]
+            for i, future in enumerate(concurrent.futures.as_completed(futures)):
+                if not self._is_running:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    return
+                pct = 10 + int(80 * ((i + 1) / num_iterations))
+                self.signals.progress_snapshot.emit(build_progress_snapshot(
+                    message=f"Monte-Carlo {i+1}/{num_iterations}...",
+                    display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None,
+                    confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="MONTE_CARLO",
+                    metadata={"iteration": i + 1, "total": num_iterations}
+                ))
+
+        results = [f.result() for f in futures]
+        results.sort(key=lambda x: x[0])
+        for it, z_c_iter, e2_out in results:
+            if z_c_iter is None:
+                continue
+            z_coords_mc.append(z_c_iter)
+            for j in range(len(params.lambda_calcs)):
+                E2_mc_runs[j].append(e2_out[j])
 
         dt = time.perf_counter() - t0
         logger.info(f"Monte-Carlo {num_iterations} iterations finished in {dt:.2f}s.")
@@ -381,57 +402,61 @@ class FieldWorkerThread(QThread):
             ))
             return
 
-        for idx, (i, z) in enumerate(candidates):
+        import concurrent.futures
+
+        def _needle_task(idx: int, lay_i: int, lay_z: float) -> tuple[int, int, float, float, list, list]:
             if not self._is_running:
-                return
-
-            if total_candidates <= 20 or idx % max(1, total_candidates // 20) == 0 or idx == total_candidates - 1:
-                pct = 5 + int(85 * (idx / total_candidates))
-                self.signals.progress_snapshot.emit(build_progress_snapshot(message=f"Needle scanning {idx+1}/{total_candidates}...", display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="NEEDLE_SCAN", metadata={"index": idx + 1, "total": total_candidates}))
-
-            # Construct candidate stack
+                return idx, lay_i, lay_z, _MAX_COST, [], []
             emp_test = (
-                params.emp_factors[:i] +
-                [z, PROBE_QWOT, params.emp_factors[i] - z] +
-                params.emp_factors[i+1:]
+                params.emp_factors[:lay_i] +
+                [lay_z, PROBE_QWOT, params.emp_factors[lay_i] - lay_z] +
+                params.emp_factors[lay_i+1:]
             )
-            type_i = params.layer_types[i]
+            type_i = params.layer_types[lay_i]
             alt_type = 1 - type_i
             types_test = (
-                params.layer_types[:i] +
+                params.layer_types[:lay_i] +
                 [type_i, alt_type, type_i] +
-                params.layer_types[i+1:]
+                params.layer_types[lay_i+1:]
             )
-
             cost = top_level_objective_function(
-                emp_test,
-                params.n1_rs,
-                params.n2_rs,
-                params.nSub_rs,
-                params.l0,
-                params.seuil_int_1,
-                params.seuil_int_2,
-                params.alpha,
-                params.integral_points,
-                params.n_supers,
-                params.theta_inc,
-                params.pol_flag,
-                params.lambda_calcs,
-                types_test,
-                rmin=params.rmin if params.rmin is not None else 1.0,
+                emp_test, params.n1_rs, params.n2_rs, params.nSub_rs,
+                params.l0, params.seuil_int_1, params.seuil_int_2,
+                params.alpha, params.integral_points, params.n_supers,
+                params.theta_inc, params.pol_flag, params.lambda_calcs,
+                types_test, rmin=params.rmin if params.rmin is not None else 1.0,
                 rmax=params.rmax if params.rmax is not None else 1.0,
                 min_field_active=bool(params.min_field_active)
             )
+            return idx, lay_i, lay_z, cost, emp_test, types_test
 
-            if cost < min_cost:
-                min_cost = cost
-                best_res = {
-                    "layer_idx": i,
-                    "depth_qwot": z,
-                    "cost": min_cost,
-                    "emp_factors": emp_test,
-                    "layer_types": types_test,
-                }
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(_needle_task, idx, i, z) for idx, (i, z) in enumerate(candidates)]
+            for i_f, future in enumerate(concurrent.futures.as_completed(futures)):
+                if not self._is_running:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    return
+                
+                idx, lay_i, lay_z, cost, emp_test, types_test = future.result()
+                
+                if total_candidates <= 20 or i_f % max(1, total_candidates // 20) == 0 or i_f == total_candidates - 1:
+                    pct = 5 + int(85 * (i_f / total_candidates))
+                    self.signals.progress_snapshot.emit(build_progress_snapshot(
+                        message=f"Needle scanning {i_f+1}/{total_candidates}...",
+                        display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None,
+                        confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="NEEDLE_SCAN",
+                        metadata={"index": i_f + 1, "total": total_candidates}
+                    ))
+                
+                if cost < min_cost:
+                    min_cost = cost
+                    best_res = {
+                        "layer_idx": lay_i,
+                        "depth_qwot": lay_z,
+                        "cost": min_cost,
+                        "emp_factors": emp_test,
+                        "layer_types": types_test,
+                    }
 
         self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINALIZE"))
         self.signals.progress_snapshot.emit(build_progress_snapshot(message="Generating final metrics...", display_ratio=0.90, progress_ratio=0.90, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="FIELD", phase="FINAL_METRICS"))

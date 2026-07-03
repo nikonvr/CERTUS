@@ -1,17 +1,5 @@
 from __future__ import annotations
-
-try:
-    from PyQt6.QtGui import QFont
-    from PyQt6.QtWidgets import QApplication
-except ImportError:
-    from PyQt5.QtGui import QFont
-    from PyQt5.QtWidgets import QApplication
-
-
-_ZOOM_MIN = 0.85
-_ZOOM_MAX = 1.30
-_ZOOM_STEP = 0.05
-
+from certus.ui.certus_ui_common import *
 
 def _clamp_zoom_factor(value: float) -> float:
     return max(_ZOOM_MIN, min(_ZOOM_MAX, float(value)))

@@ -1050,14 +1050,10 @@ def _compute_index_cost_gradient_kernel(
     match certus_core.T_SUB_MIN_T_NORM and T_SUB_MIN_R_NORM; literals kept here for Numba."""
 
     n_pts = len(wls)
-
-    n_valid_T = 1
-
-    n_valid_R = 1
-
     count_T = 0
-
+    n_valid_T = 1
     count_R = 0
+    n_valid_R = 1
 
     for i in range(n_pts):
         if weights[i] > 1e-12:

@@ -809,35 +809,6 @@ class IndexTableDialog(QDialog):
 
 class SubstrateIndexGUI(QMainWindow):
     def __init__(self):
-
-        super().__init__()
-
-        self.setWindowTitle(f"CERTUS SUBSTRATE INDEX v{__version__}")
-
-        self.resize(1200, 750)
-
-        self.setStyleSheet(f"background-color: {CertusTheme.BACKGROUND};")
-
-        set_certus_window_icon(self)
-
-        self.df: pd.DataFrame | None = None
-
-        self.settings = QSettings("CERTUS_SUITE", "SubstrateIndex")
-        self.last_dir = self.settings.value("last_dir", "")
-
-        self.current_window = 15
-
-        self.current_poly = 2
-
-        self.current_heavy = 25
-        self.validation_status = "OK"
-        self.validation_warnings: list[str] = []
-        self.last_run_manifest: dict[str, object] | None = None
-
-        self._setup_ui()
-        self._attach_ui_log_handler()
-
-    def __init__(self):
         super().__init__()
 
         # Model and Presenter initialization

@@ -75,44 +75,6 @@ from certus.utils.certus_progress_tracker import build_progress_snapshot, StepSt
 
 import numpy as np
 
-# pyqtgraph configured in certus_ui, imported locally for use
-
-import pyqtgraph as pg
-
-from certus.ui.certus_qt_widgets import (
-    QAbstractItemView,
-    QAbstractSpinBox,
-    QApplication,
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDoubleSpinBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QHeaderView,
-    QKeySequence,
-    QLabel,
-    QPushButton,
-    QScrollArea,
-    QShortcut,
-    QSpinBox,
-    QSplitter,
-    QStackedWidget,
-    QStatusBar,
-    QStyle,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
-    QThread,
-    QTimer,
-    Qt,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
-
 # Conditional SVG Import
 
 # =============================================================================
@@ -208,31 +170,7 @@ from certus.utils.certus_index_utils import spectral_rmse_weights
 
 # --- 3. UI (Theme, Widgets) ---
 
-from certus.ui.certus_ui import (
-    CertusTheme,
-    CertusBaseApp,
-    CertusScientificPlot,
-    CertusThemeToggle,
-    CertusCard,
-    CertusCollapsible,
-    CertusStatusPill,
-    install_standard_shortcuts,
-    enable_file_drop,
-    show_toast,
-    EnhancedProgressWidget,
-    FlashyCard,
-    WelcomeGuideWidget,
-    WorkerSignals,
-    certus_get_save_file_name,
-    confirm_stop_with_timeout,
-    copy_app_logs_to_clipboard,
-    create_flashy_grid,
-    create_header_logo_widget,
-    create_top_actions_bar,
-    get_export_config,
-    init_certus_app,
-    open_documentation,
-)
+
 from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_services import IndexFitRequest, IndexFitService
 
@@ -240,14 +178,7 @@ from certus.utils.certus_load_summary import build_summary_plain_text, show_load
 
 from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
 
-from certus.ui.certus_spectrum_eval_ui import (
-    spectrum_eval_apply_axes_legend_scale,
-    spectrum_eval_build_worker_cfg,
-    spectrum_eval_on_finished_prepare_display,
-    spectrum_eval_plot_curves,
-    spectrum_eval_run_preamble,
-    spectrum_eval_start_worker,
-)
+
 
 # Configure GUI
 
@@ -591,9 +522,11 @@ def _design_optimization_callback_common(app, sample) -> None:
         # Stats counters always updated but log message throttled
         try:
             if app._callback_counter % 1000 == 0 or current_rmse < app.best_rmse_seen:
-                app.signals.progress_snapshot.emit(build_progress_snapshot(message=msg, display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='CORE'))
-            app.signals.update_stats.emit("MINIMA", n_clusters)
-            app.signals.update_stats.emit("EVAL", n_evals)
+                if hasattr(app, "on_progress_snapshot"):
+                    app.on_progress_snapshot(build_progress_snapshot(message=msg, display_ratio=pct / 100.0, progress_ratio=pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module='DESIGN', phase='CORE'))
+            if hasattr(app, "on_update_stats"):
+                app.on_update_stats("MINIMA", n_clusters)
+                app.on_update_stats("EVAL", n_evals)
         except NUMERICAL_FAULT_EXCEPTIONS as emit_err:
             logging.error(
                 f"Error emitting signals in callback: {emit_err}",
@@ -688,7 +621,8 @@ def _design_optimization_callback_common(app, sample) -> None:
                     result_data["self._oblique_mode"] = False
                     result_data["oblique_mode"] = False
 
-                app.signals.result.emit(result_data)
+                if hasattr(app, "on_result"):
+                    app.on_result(result_data)
 
                 if app._callback_counter % 50 == 0:
                     logging.debug(
@@ -769,8 +703,8 @@ def _design_optimization_callback_common(app, sample) -> None:
                 else:
                     best_data["self._oblique_mode"] = False
                     best_data["oblique_mode"] = False
-
-                app.signals.result.emit(best_data)
+                if hasattr(app, "on_result"):
+                    app.on_result(best_data)
                 logging.info(
                     f"[LIVE VIEW] Emitted 5s live refresh signal | Best RMSE={app.best_rmse_final:.6f} | Evals={n_evals}"
                 )

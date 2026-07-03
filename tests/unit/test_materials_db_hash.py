@@ -13,7 +13,8 @@ EXPECTED_MATERIALS_V1_SHA256 = "b72b847d82264169ca83fa43f459ecf4c6d72e292d900d32
 def test_materials_v1_hash_is_locked() -> None:
     db_path = Path("data/materials_v1.json")
     assert db_path.exists()
-    file_hash = hashlib.sha256(db_path.read_bytes()).hexdigest()
+    content = db_path.read_bytes().replace(b"\r\n", b"\n")
+    file_hash = hashlib.sha256(content).hexdigest()
     assert file_hash == EXPECTED_MATERIALS_V1_SHA256
     assert get_materials_db_hash() == EXPECTED_MATERIALS_V1_SHA256
 

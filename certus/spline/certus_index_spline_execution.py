@@ -67,33 +67,7 @@ def _apply_fixed_log_k_axis(plot_w: Any | None) -> None:
     except (AttributeError, RuntimeError, TypeError):
         logger.debug("_apply_fixed_log_k_axis failed", exc_info=True)
 
-def _interp_series_at_sigma_knots(
-    lam_grid: np.ndarray, y_grid: np.ndarray, sigma_knots: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
-    """Interpolate a spectral series at sigma-knot wavelengths and return points sorted by lambda."""
-    lam_g = np.asarray(lam_grid, dtype=np.float64).ravel()
-    y_g = np.asarray(y_grid, dtype=np.float64).ravel()
-    sig_k = np.asarray(sigma_knots, dtype=np.float64).ravel()
-
-    m = np.isfinite(lam_g) & np.isfinite(y_g)
-    if not np.any(m):
-        return np.array([], dtype=np.float64), np.array([], dtype=np.float64)
-
-    lam_f = lam_g[m]
-    y_f = y_g[m]
-    order_grid = np.argsort(lam_f, kind="mergesort")
-    lam_f = lam_f[order_grid]
-    y_f = y_f[order_grid]
-
-    lam_k = 1.0 / np.maximum(sig_k, 1e-30)
-    mk = np.isfinite(lam_k)
-    if not np.any(mk):
-        return np.array([], dtype=np.float64), np.array([], dtype=np.float64)
-
-    lam_k = lam_k[mk]
-    y_k = np.interp(lam_k, lam_f, y_f, left=y_f[0], right=y_f[-1])
-    order_k = np.argsort(lam_k, kind="mergesort")
-    return lam_k[order_k], y_k[order_k]
+from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 
 def _plot_spectrum_raw_scatter(
     plot_w: pg.PlotWidget,

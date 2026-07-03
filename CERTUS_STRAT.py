@@ -127,15 +127,19 @@ from certus.core.certus_strat_core import (
     _compute_theoretical_layer_profile,
     _test_strategy_robustness_task,
     run_final_simulation_block,
+)
+from certus.utils.certus_strat_service import (
+    extract_best_rmse,
     _select_candidates_phase_a,
     _validate_candidates_phase_a,
+)
+from certus.core.certus_strat_config import (
     _init_stats_queue,
     _worker_init,
     _emit_stat,
     _flush_sp_stats,
-    _select_best_strat_result,
 )
-from certus.utils.certus_strat_service import extract_best_rmse
+from certus.core.certus_strat_ranking import _select_best_strat_result
 
 from certus.workers.certus_strat_workers import (
     WorkerSignals,

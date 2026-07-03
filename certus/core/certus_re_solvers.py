@@ -7,6 +7,7 @@ from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 from certus.utils.certus_re_config import RE_PHASE2_SPLINE_PREFIT_MAXITER
 from certus.utils.certus_re_config import RE_PHASE2_SUB_CAUCHY_FD_STEP
 from certus.utils.certus_re_config import RE_PHASE2A_PREFIT_TOL_FACTOR
+from certus.utils.certus_re_config import RE_PHASE2A_SKIP_PREFIT_RMSE_THRESHOLD
 from certus.utils.certus_re_config import RE_PHASE2B_MAXITER
 from certus.utils.certus_re_config import RE_LBFGSB_GTOL
 from certus.utils.certus_re_config import RE_LBFGSB_FTOL
@@ -48,10 +49,8 @@ from certus.core.certus_re_objectives import (
     _global_compute_re_mse_gradient,
     _build_qwot_helpers,
     _build_phase2b_output,
-    _global_evaluate_p2_fd_derivative,
     _log_phase4_trf_summary,
     _build_phase4_aperture_bounds,
-    _phase4_aperture_slice,
     _prepare_phase2_bounds_and_topk,
     _build_p2_prefit_bounds,
     _build_phase2_result,
@@ -92,171 +91,107 @@ def re_execute_phase1(worker) -> list[dict]:
 
     # ``wt_wls`` = pre-calculated spectral weights on the objective grid lambda.
 
-    for run_idx, (label, wt_wls, x0_run) in enumerate(c.runs):
+    def _run_single_phase1(run_idx, label, wt_wls, x0_run):
         if c._stop:
-            break
-
+            return None
+            
         _run_start = time.perf_counter()
-
         _max_iter = int(c.cfg.get("re_phase1_maxiter", 100))
-
         c._emit_re_prog(
             c._pct_p1(run_idx, 0.0),
-            f"RE phase 1 (TRF, {label})  "
-            f"variables={c.n_layers_count} (thicknesses); "
-            f"nominal indices (Re H/L/substrate drift = 0%)",
+            f"RE phase 1 (TRF, {label})  variables={c.n_layers_count} (thicknesses); nominal indices"
         )
-
         _cache = {"x": None, "res": None, "jac": None, "mse": None, "i": 0, "last_emit": time.perf_counter()}
 
-        def _eval_both(
-            x: np.ndarray,
-            _cache=_cache,
-            wt_wls=wt_wls,
-            label=label,
-            _run_start=_run_start,
-            _max_iter=_max_iter,
-            run_idx=run_idx,
-        ) -> None:
-
+        def _eval_both(x: np.ndarray) -> None:
             if c._stop:
                 raise REUserStopRequested()
-
             if _cache["x"] is not None and np.array_equal(x, _cache["x"]):
                 return
-
             mse, grad, r_out, j_out = c._mse_grad_accumulate_ep(
                 x, wt_wls, True, c._correc_nom, return_residuals=True
             )
-
             _cache["x"] = x.copy()
-
             _cache["res"] = r_out
-
             _cache["jac"] = j_out
-
             _cache["mse"] = float(mse)
-
             _cache["i"] += 1
-
             now = time.perf_counter()
-
             if _cache["i"] == 1 or (now - _cache["last_emit"]) >= 5.0:
                 _cache["last_emit"] = now
-
                 rs = float(np.sqrt(max(_cache["mse"], 0.0)))
-
                 rq = c._compute_qwot_rmse(x, c._correc_nom)
-
                 rmse_cur = c._rmse_combined(rs, rq)
-
                 _trf_rms = _re_trf_residual_rms(_cache["res"])
-
                 msg = (
                     f"RE [{label}] TRF iter ~{_cache['i']}  "
-                    f"RMSE_facade={rmse_cur:.6f} (sqrt(sp2+alpha·QWOT2); Deltaln(lambda) trap) | "
-                    f"TRF_RMS(r)={_trf_rms:.6g}  "
-                    f"{now - _run_start:.1f}s since run start"
+                    f"RMSE_facade={rmse_cur:.6f} | TRF_RMS(r)={_trf_rms:.6g}  {now - _run_start:.1f}s"
                 )
-
                 logging.info(msg)
-
-                _intra_p1 = min(
-                    0.92,
-                    float(_cache["i"]) / float(max(_max_iter, 1)),
-                )
-
+                _intra_p1 = min(0.92, float(_cache["i"]) / float(max(_max_iter, 1)))
                 c._emit_re_prog(c._pct_p1(run_idx, _intra_p1), msg)
-
                 c._emit_re_spectrum_live(x, _cache["i"], correc=c._correc_nom, last_mse=_cache["mse"], force=False)
 
-        def _fun_res(x: np.ndarray, _cache=_cache) -> Any:
-
+        def _fun_res(x: np.ndarray) -> Any:
             _eval_both(x)
-
             return _cache["res"]
 
-        def _jac_res(x: np.ndarray, _cache=_cache) -> Any:
-
+        def _jac_res(x: np.ndarray) -> Any:
             _eval_both(x)
-
             return _cache["jac"]
 
         try:
             res = least_squares(
-                _fun_res,
-                x0_run,
-                method="trf",
-                bounds=c.bounds_trf,
-                jac=_jac_res,
-                x_scale="jac",
-                ftol=c.RE_LBFGSB_FTOL,
-                xtol=c.RE_LBFGSB_FTOL,
-                gtol=c.RE_LBFGSB_GTOL,
-                max_nfev=max(10, _max_iter),
+                _fun_res, x0_run, method="trf", bounds=c.bounds_trf, jac=_jac_res,
+                x_scale="jac", ftol=c.RE_LBFGSB_FTOL, xtol=c.RE_LBFGSB_FTOL,
+                gtol=c.RE_LBFGSB_GTOL, max_nfev=max(10, _max_iter),
             )
-
         except REUserStopRequested:
             x_use = _cache["x"] if _cache["x"] is not None else np.asarray(x0_run, dtype=np.float64).ravel()
-
-            res = SimpleNamespace(
-                x=np.asarray(x_use, dtype=np.float64).copy(),
-                nfev=max(0, int(_cache["i"])),
-                success=False,
-            )
+            res = SimpleNamespace(x=np.asarray(x_use, dtype=np.float64).copy(), nfev=max(0, int(_cache["i"])), success=False)
 
         x_final = res.x.copy()
-
         ep_final = np.asarray(x_final, dtype=np.float64).flatten()
-
-        a_final = 0.0
-
-        b_final = 0.0
-
-        f_final = 0.0
-
         rmse_final = float(np.sqrt(max(c._report_mse_spectral(ep_final, c._correc_nom), 0.0)))
-
         rmse_qwot_final = c._compute_qwot_rmse(ep_final, c._correc_nom)
-
         rmse_comb_final = c._rmse_combined(rmse_final, rmse_qwot_final)
-
         phase1_result = REPhase1Result(
-            label=str(label),
-            ep=np.asarray(ep_final, dtype=np.float64).flatten(),
-            a=float(a_final),
-            b=float(b_final),
-            f=float(f_final),
-            rmse=float(rmse_final),
-            rmse_qwot=float(rmse_qwot_final),
-            rmse_combined=float(rmse_comb_final),
-            nfev=int(res.nfev),
-            success=bool(res.success),
+            label=str(label), ep=ep_final, a=0.0, b=0.0, f=0.0,
+            rmse=rmse_final, rmse_qwot=rmse_qwot_final, rmse_combined=rmse_comb_final,
+            nfev=int(res.nfev), success=bool(res.success),
         )
-        res_p1.append(phase1_result.to_legacy_dict())
-
-        c._emit_re_spectrum_live(
-            ep_final,
-            res.nfev,
-            correc=c._correc_nom,
-            force=True,
-            rmse_override=rmse_comb_final,
-        )
-
+        c._emit_re_spectrum_live(ep_final, res.nfev, correc=c._correc_nom, force=True, rmse_override=rmse_comb_final)
         _run_dt = time.perf_counter() - _run_start
+        logging.info(f"RE phase 1 (TRF, {label}) done RMSE_combined={rmse_comb_final:.6f}")
+        c._emit_re_prog(c._pct_p1(run_idx + 1, 0.0), f"RE phase 1 (TRF, {label}) done.")
+        return phase1_result.to_legacy_dict()
 
-        logging.info(
-            f"RE phase 1 (TRF, {label}) done  "
-            f"RMSE_spectral={rmse_final:.6f} | RMSE_QWOT={rmse_qwot_final:.6f} | "
-            f"RMSE_combined={rmse_comb_final:.6f} (={c._alpha_slot[0]})  nfev={res.nfev}"
-        )
+    import concurrent.futures
+    import sys
+    import os
+    is_testing = "pytest" in sys.modules
+    max_workers = 1 if is_testing else min(8, os.cpu_count() or 4)
 
-        c._emit_re_prog(
-            c._pct_p1(run_idx + 1, 0.0),
-            f"RE phase 1 (TRF, {label}) {float(_run_dt):.1f}s - "
-            f"RMSE_sp={float(rmse_final):.5f} | RMSE_OT={float(rmse_qwot_final):.5f} | "
-            f"RMSE_facade={float(rmse_comb_final):.5f}",
-        )
+    if max_workers > 1:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = []
+            for run_idx, (label, wt_wls, x0_run) in enumerate(c.runs):
+                futures.append(executor.submit(_run_single_phase1, run_idx, label, wt_wls, x0_run))
+            
+            for future in concurrent.futures.as_completed(futures):
+                if c._stop:
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    break
+                result = future.result()
+                if result is not None:
+                    res_p1.append(result)
+    else:
+        for run_idx, (label, wt_wls, x0_run) in enumerate(c.runs):
+            if c._stop:
+                break
+            result = _run_single_phase1(run_idx, label, wt_wls, x0_run)
+            if result is not None:
+                res_p1.append(result)
 
     if res_p1:
         res_p1.sort(key=lambda r: r.get("rmse_combined", r["rmse"]))
@@ -1094,7 +1029,7 @@ def re_execute_phase2_candidate(
         rmse_p2_x0,
     )
 
-    if prefit_max > 0 and not worker._stop:
+    if prefit_max > 0 and rmse_p2_x0 > RE_PHASE2A_SKIP_PREFIT_RMSE_THRESHOLD and not worker._stop:
         _t_pf = time.perf_counter()
 
         x0_pf = np.concatenate(

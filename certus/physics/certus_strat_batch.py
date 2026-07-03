@@ -196,14 +196,18 @@ def _calculate_RT_HL_single_point(wl, nH, nL, n_s, thicknesses):
     T_total = T_front * T_sub / denom
     R_total = R_front + T_front * T_front * R_sub / denom
     return (R_total, T_total)
+import os
+try:
+    import joblib
+    _MEMORY = joblib.Memory(location=os.environ.get("NUMBA_CACHE_DIR", ".numba_cache") + "/joblib", verbose=0)
+except ImportError:
+    _MEMORY = None
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model='numpy')
-def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
+def _calculate_RT_batch_kernel_jit(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
     """
-
     Parallel loop over 'num_runs', where each run is a full TMM spectral calculation.
-
     thicknesses_batch: (num_runs, num_layers)
-
     """
     n_runs = thicknesses_batch.shape[0]
     n_wls = wls.shape[0]
@@ -216,3 +220,13 @@ def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
             R_batch[r, wl_idx] = r_val
             T_batch[r, wl_idx] = t_val
     return (R_batch, T_batch)
+
+if _MEMORY is not None:
+    @_MEMORY.cache
+    def _cached_calculate_RT_batch(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
+        return _calculate_RT_batch_kernel_jit(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)
+
+def calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch):
+    if _MEMORY is not None:
+        return _cached_calculate_RT_batch(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)
+    return _calculate_RT_batch_kernel_jit(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)

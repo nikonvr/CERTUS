@@ -21,7 +21,7 @@ from certus.core.certus_re_config import (
     _top_result_dto,
 )
 
-from certus.core.certus_re_solvers import (
+from certus.core.certus_re_objectives import (
     _build_phase2_result,
     _build_phase2b_output,
     _build_p2_prefit_bounds,

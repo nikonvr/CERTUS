@@ -5,13 +5,9 @@ from typing import Any
 
 import numpy as np
 
-from CERTUS_INDEX_SPLINE import (
-    CertusIndexSplineApp,
-    _K_PLOT_YMAX,
-    _K_PLOT_YMIN,
-    _apply_fixed_log_k_axis,
-    _interp_series_at_sigma_knots,
-)
+from CERTUS_INDEX_SPLINE import CertusIndexSplineApp
+from certus.ui.certus_index_spline_common import _K_PLOT_YMAX, _K_PLOT_YMIN, _apply_fixed_log_k_axis
+from certus.spline.spline_pipeline_utils import _interp_series_at_sigma_knots
 
 
 class _PlotItem:

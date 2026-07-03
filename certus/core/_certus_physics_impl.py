@@ -615,6 +615,7 @@ def get_n_substrate_array_by_id_kernel(
 
     return results
 
+_SUBSTRATE_CACHE = {}
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
 
@@ -636,13 +637,27 @@ def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -
     if substrate_id not in SELLMEIER_COEFFS_BY_ID:
         raise KeyError(f"Unknown substrate ID: {substrate_id}")
 
-    coeffs = SELLMEIER_COEFFS_BY_ID[substrate_id]
-
-    min_lambda = SUBSTRATE_MIN_LAMBDA.get(substrate_id, 200.0)
-
     wavelengths_nm = np.asarray(wavelengths_nm, dtype=np.float64)
 
-    return get_n_substrate_array_by_id_kernel(wavelengths_nm, *coeffs, min_lambda)
+    try:
+        wl_hash = hash(wavelengths_nm.tobytes())
+    except Exception:
+        wl_hash = id(wavelengths_nm)
+
+    cache_key = (substrate_id, wl_hash)
+    if cache_key in _SUBSTRATE_CACHE:
+        return _SUBSTRATE_CACHE[cache_key]
+
+    coeffs = SELLMEIER_COEFFS_BY_ID[substrate_id]
+    min_lambda = SUBSTRATE_MIN_LAMBDA.get(substrate_id, 200.0)
+
+    res = get_n_substrate_array_by_id_kernel(wavelengths_nm, *coeffs, min_lambda)
+
+    if len(_SUBSTRATE_CACHE) > 1024:
+        _SUBSTRATE_CACHE.clear()
+    _SUBSTRATE_CACHE[cache_key] = res
+
+    return res
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
@@ -667,7 +682,6 @@ from certus.physics.certus_optical_models import (
     sellmeier_n_array,
 )
 
-from certus.physics.certus_optical_models import _spline_cache
 
 from certus.physics.certus_colorimetry import lab_to_rgb, xyz_from_spectrum, xyz_to_lab
 
@@ -702,8 +716,8 @@ from certus.physics.certus_tmm_core import (
     _calculate_RT_HL_core,
 )
 from certus.physics.certus_tmm_core import _calculate_RT_absorbing_sub_single
+from certus.physics.certus_opt_tmm import Material
 from certus.physics.certus_opt_kernels import (
-    Material,
     MaterialDatabase,
     PGlobalOptimizer,
     SingleLinkageClusterer,
@@ -720,6 +734,8 @@ from certus.physics.certus_opt_kernels import (
     make_cost_function,
     prepare_targets_vectorized,
     trim_worst_only,
+    calculate_reflectance_bilayer_vectorized,
+    compute_metal_bilayer_gradient_analytic,
 )
 
 from certus.physics.certus_opt_kernels import (
@@ -1471,15 +1487,15 @@ def warmup_physics(silent: bool = True) -> None:
 # --- AUTO-PATCHED IMPORTS ---
 from certus.physics.certus_optical_models import (SplineBasisCache, get_nk_from_spline)
 from certus.physics.certus_optimizers import (compute_critical_distance, fast_clustering_kernel)
-from certus.physics.certus_opt_gradients import (compute_oblique_backside_bundle_analytic, compute_metal_bilayer_gradient_analytic)
 from certus.physics.certus_opt_needle import (needle_scan_cached)
-from certus.physics.certus_opt_tmm import (calculate_reflectance_bilayer_vectorized)
 from certus.physics.certus_strat_batch import (precompute_matrix_cache_kernel, calculate_RT_batch_kernel)
 from certus.physics.certus_strat_growth import (prepare_dynamics_data_kernel, update_run_states_kernel)
 from certus.physics.certus_strat_math import (calculate_extrema_distances, check_extrema_proximity_batch)
 from certus.physics.certus_strat_nucleation import (rank_nucleation_candidates_kernel, find_nucleation_adaptive_kernel)
-from certus.physics.certus_tmm_substrate import (calculate_bare_substrate_R, calculate_reflection_array, batch_single_layer_T_mse, batch_single_layer_RT_mse, calculate_RT_single_layer_absorbing_substrate_array, calculate_bare_substrate_R_absorbing, calculate_bare_substrate_T_absorbing)
-from certus.physics.certus_tmm_oblique import (calc_spectrum_front_wrapper, calc_spectrum_full_wrapper, calc_spectrum_full_exact_wrapper)
+from certus.physics.certus_tmm_substrate import (calculate_bare_substrate_R, calculate_bare_substrate_R_absorbing, calculate_bare_substrate_T_absorbing)
+from certus.physics.certus_tmm_single_layer import (calculate_reflection_array, batch_single_layer_T_mse, batch_single_layer_RT_mse, calculate_RT_single_layer_absorbing_substrate_array)
+from certus.physics.certus_tmm_matrix import (calc_spectrum_front_wrapper, calc_spectrum_full_wrapper, calc_spectrum_full_exact_wrapper)
+from certus.physics.certus_opt_gradients import compute_oblique_backside_bundle_analytic
 
 __all__.extend([
     'SplineBasisCache',
@@ -1487,9 +1503,7 @@ __all__.extend([
     'compute_critical_distance',
     'fast_clustering_kernel',
     'compute_oblique_backside_bundle_analytic',
-    'compute_metal_bilayer_gradient_analytic',
     'needle_scan_cached',
-    'calculate_reflectance_bilayer_vectorized',
     'precompute_matrix_cache_kernel',
     'calculate_RT_batch_kernel',
     'prepare_dynamics_data_kernel',
@@ -1510,16 +1524,29 @@ __all__.extend([
     'calc_spectrum_full_exact_wrapper'
 ])
 
-# --- MORE AUTO-PATCHED IMPORTS ---
-from certus.physics.certus_opt_tmm import compute_RT_from_matrix
-from certus.physics.certus_tmm_backside import (
+from certus.physics.certus_tmm_matrix import (
     compute_TMM_single_point_k0_exact,
-    calculate_RT_single_layer_single,
     compute_complex_phase_components,
     compute_TMM_single_point_k0,
-    calculate_reflection_single,
-    calculate_RT_no_backside
+    calculate_RT_with_backside_fused,
+    calculate_RT_vectorized_real,
+    calculate_RT_no_backside,
+    calc_spectrum_front,
+    calc_spectrum_full,
+    calc_spectrum_full_exact
 )
+from certus.physics.certus_tmm_single_layer import (
+    calculate_RT_single_layer_single,
+    calculate_reflection_single,
+    calculate_transmission_single,
+    calculate_transmission_array
+)
+from certus.physics.certus_tmm_backside import (
+    _apply_exact_backside_generic,
+    apply_exact_backside_combination
+)
+from certus.physics.certus_opt_tmm import compute_RT_from_matrix
+
 __all__.extend([
     'compute_RT_from_matrix',
     'compute_TMM_single_point_k0_exact',
@@ -1527,9 +1554,14 @@ __all__.extend([
     'compute_complex_phase_components',
     'compute_TMM_single_point_k0',
     'calculate_reflection_single',
-    'calculate_RT_no_backside'
+    'calculate_transmission_single',
+    'calculate_RT_with_backside_fused',
+    'calculate_RT_vectorized_real',
+    'calculate_RT_no_backside',
+    'calc_spectrum_front',
+    'calc_spectrum_full',
+    'calc_spectrum_full_exact',
+    '_apply_exact_backside_generic',
+    'apply_exact_backside_combination',
+    'calculate_transmission_array'
 ])
-
-# --- EVEN MORE AUTO-PATCHED IMPORTS ---
-from certus.physics.certus_tmm_backside import calculate_transmission_array
-__all__.extend(['calculate_transmission_array'])

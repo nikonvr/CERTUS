@@ -13,7 +13,7 @@ import certus_physics
 
 logging.basicConfig(level=logging.WARNING)
 
-def test_design_headless(output_file: str):
+def run_campaign_worker(output_file: str):
     print("CAMPAIGN WORKER STARTING! Output:", output_file)
     try:
         app = QApplication.instance()
@@ -123,5 +123,5 @@ if __name__ == "__main__":
         output_file = sys.argv[1]
     else:
         output_file = "D:/1406/1406/campaign_result_fallback.json"
-    test_design_headless(output_file)
+    run_campaign_worker(output_file)
     sys.exit(0)

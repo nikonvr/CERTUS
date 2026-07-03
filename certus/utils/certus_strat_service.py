@@ -12,7 +12,6 @@ from dataclasses import dataclass
 import numpy as np
 
 from certus.utils.certus_services import BaseHeadlessService
-import certus_physics
 from certus_physics import (
     arange_inclusive,
     get_refractive_index,

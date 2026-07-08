@@ -1,0 +1,22 @@
+# Configuration Mutation Testing pour CERTUS
+
+[mutmut]
+paths_to_mutate=certus/
+backup=False
+runner=pytest -x tests/core/ tests/property/
+tests_dir=tests/
+
+# Mutations à appliquer (defaults)
+# - Replace operators: + → -, * → /, == → !=
+# - Replace constants: True → False, 0 → 1
+# - Remove lines, return statements
+
+# Exclusions
+dict_synonyms=Struct, NamedTuple
+
+# Timeout par mutation (ms)
+test_time_multiplier=2.0
+test_time_base=0.5
+
+# Parallélisation
+use_multiprocessing=True

@@ -35,9 +35,14 @@ from certus.core.version import (
     APP_DISPLAY_NAME,
     APP_FULL_NAME,
 )
-from certus.core.certus_config import CONFIG_SCHEMA_VERSION, ConfigManager, get_resource_path as config_get_resource_path
+from certus.core.certus_config import (
+    CONFIG_SCHEMA_VERSION,
+    ConfigManager,
+    get_resource_path as config_get_resource_path,
+)
 from certus.core.certus_runtime import CertusRuntime, build_runtime, setup_numba_cache, set_num_threads
 from certus.core.certus_logging import get_logger, handle_exception, setup_logging
+from certus.core.certus_performance import perf_monitor, log_perf, PerformanceMonitor
 
 DISPLAY_VERSION_LABEL = APP_DISPLAY_NAME
 DISPLAY_FULL_LABEL = APP_FULL_NAME
@@ -94,6 +99,10 @@ __all__ = [
     "get_logger",
     "handle_exception",
     "build_runtime",
+    # Performance Monitoring
+    "perf_monitor",
+    "log_perf",
+    "PerformanceMonitor",
     # GUI Logging
     "QueueHandler",
     "setup_gui_logger",
@@ -135,6 +144,7 @@ import sys
 import tempfile
 
 import traceback
+from functools import lru_cache
 from pathlib import Path
 
 from dataclasses import dataclass
@@ -174,8 +184,9 @@ def check_svg_availability() -> bool:
 
         return True
 
-    except (ImportError, ModuleNotFoundError):
+    except ImportError, ModuleNotFoundError:
         return False
+
 
 SVG_AVAILABLE = check_svg_availability()
 
@@ -229,10 +240,13 @@ JSON_INDENT: int = 2
 DEFAULT_THREAD_TIMEOUT_MS: int = 3000  # 3 seconds
 
 
+@lru_cache(maxsize=1)
 def _get_cpu_count() -> int:
     """
 
     Get CPU count with fallback to default.
+
+    Cached to avoid repeated syscalls (os.cpu_count()).
 
     Returns:
 
@@ -243,8 +257,14 @@ def _get_cpu_count() -> int:
     return os.cpu_count() or _DEFAULT_CPU_COUNT
 
 
+@lru_cache(maxsize=128)
 def get_resource_path(filename: str) -> str:
-    """Returns absolute path to resource (PyInstaller/Dev compatible)."""
+    """
+    Returns absolute path to resource (PyInstaller/Dev compatible).
+
+    Cached for performance (file path resolution → cache hit).
+    Cache stats: get_resource_path.cache_info()
+    """
 
     return config_get_resource_path(filename)
 
@@ -375,10 +395,13 @@ def configure_numba_env() -> None:
     sys._certus_numba_configured = True
 
 
+@lru_cache(maxsize=8)
 def get_safe_worker_count(default_workers: int | None = None) -> int:
     """
 
     Get safe number of workers for ThreadPoolExecutor.
+
+    Cached to avoid repeated CPU count checks.
 
     Returns 1 in frozen mode to avoid Numba locking issues.
 
@@ -425,9 +448,6 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
 # =============================================================================
 
 
-
-
-
 def _supports_color() -> bool:
     """Check if the console stdout supports ANSI colors."""
     if os.environ.get("CERTUS_NO_COLOR", "").strip().lower() in ("1", "true", "yes", "on"):
@@ -436,11 +456,7 @@ def _supports_color() -> bool:
         return False
     if sys.platform != "win32":
         return True
-    return (
-        "ANSICON" in os.environ
-        or "WT_SESSION" in os.environ
-        or os.environ.get("TERM") == "xterm-256color"
-    )
+    return "ANSICON" in os.environ or "WT_SESSION" in os.environ or os.environ.get("TERM") == "xterm-256color"
 
 
 def _supports_utf8() -> bool:
@@ -520,8 +536,6 @@ class CertusGuiFormatter(logging.Formatter):
         if record.exc_info:
             formatted += "\n" + self.formatException(record.exc_info)
         return formatted
-
-
 
 
 class SystemConfig:
@@ -639,20 +653,32 @@ CONFIG_SCHEMA_VERSION = 1
 # Numba kernels auto-adapt to input dtype via JIT multi-signature.
 
 
+@lru_cache(maxsize=1)
 def get_precision_config() -> bool:
-    """Backward compatibility stub. Always returns False (mixed precision active)."""
+    """Backward compatibility stub. Always returns False (mixed precision active).
+
+    Cached to avoid repeated calls.
+    """
 
     return False
 
 
+@lru_cache(maxsize=1)
 def get_float_dtype():
-    """Default float dtype for non-gradient computation (f32 for SIMD throughput)."""
+    """Default float dtype for non-gradient computation (f32 for SIMD throughput).
+
+    Cached for performance.
+    """
 
     return np.float32
 
 
+@lru_cache(maxsize=1)
 def get_complex_dtype():
-    """Default complex dtype for non-gradient computation (c64 for SIMD throughput)."""
+    """Default complex dtype for non-gradient computation (c64 for SIMD throughput).
+
+    Cached for performance.
+    """
 
     return np.complex64
 
@@ -667,8 +693,9 @@ def get_complex_dtype():
 _export_manager = ConfigManager("certus_export.json", True, "auto_export_enabled")
 
 
+@lru_cache(maxsize=1)
 def load_export_config() -> bool:
-    """Loads auto export config."""
+    """Loads auto export config (cached)."""
 
     return _export_manager.reload()
 
@@ -816,7 +843,6 @@ from certus.core.certus_substrate_db import (
 )
 
 
-
 # =============================================================================
 
 # GUI LOGGING (Thread-Safe Queue Handler)
@@ -847,7 +873,7 @@ class QueueHandler(logging.Handler):
 
             self.log_queue.put(msg)
 
-        except (BrokenPipeError, OSError):
+        except BrokenPipeError, OSError:
             self.handleError(record)
 
 
@@ -1079,12 +1105,14 @@ def bootstrap_app(
 
         try:
             from certus_physics import warmup_physics
+
             warmup_physics(silent=True)
         except ImportError:
             pass
 
         try:
             from certus.core.certus_re_objectives import _warmup_re_physics
+
             _warmup_re_physics()
         except Exception:
             pass
@@ -1168,4 +1196,3 @@ class CertusFacadeModule(types.ModuleType):
             for sub in self._submodules:
                 if hasattr(sub, name):
                     setattr(sub, name, value)
-

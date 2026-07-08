@@ -1784,4 +1784,3 @@ def _compute_gradient_analytic_kernel(
     return cost, grad, T_arr
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

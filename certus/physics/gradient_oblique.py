@@ -1156,4 +1156,3 @@ def compute_gradient_all_layers_analytic(
     return cost, grad
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")

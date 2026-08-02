@@ -68,6 +68,7 @@ import traceback
 
 import copy
 
+import threading
 from threading import Event
 
 from typing import Any, List, Dict
@@ -240,6 +241,43 @@ calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
 # =============================================================================
 
+_EP_BUFFER_TLS = threading.local()
+
+
+def _get_ep_buffer(app) -> np.ndarray:
+    """Tampon d'epaisseurs propre au THREAD appelant.
+
+    ``app._ep_buffer`` etait un tableau unique, partage. L'objectif et le
+    gradient y ecrivaient l'empilement complet avant de le lire :
+
+        ep_buffer[:] = app._ep0
+        ep_buffer[app._var_idx] = x
+
+    Or PGlobalOptimizer appelle les deux depuis son pool (``pool.map`` a l'etape
+    d'evaluation, et une recherche locale L-BFGS-B par thread ensuite). Deux
+    threads s'ecrasaient donc mutuellement le tampon entre l'ecriture et la
+    lecture, et le cout etait calcule sur un MELANGE de deux empilements — sans
+    aucune erreur visible.
+
+    Le defaut ne se manifeste que si au moins une couche est figee
+    (``all_variable = len(var_idx) == len(ep0)``, certus_design_workers_strat.py:374),
+    ce qui est le cas des qu'on epingle une epaisseur.
+
+    Mesure du defaut : 12 threads x 4000 evaluations concurrentes sur un
+    empilement de 40 couches dont une sur deux figee -> 278 evaluations fausses
+    sur 48 000. Voir tests/oracle/test_design_objective_thread_safety.py.
+
+    Un tampon par thread conserve l'intention d'origine — ne pas allouer a chaque
+    appel — sans le partage.
+    """
+    ep0 = app._ep0
+    buf = getattr(_EP_BUFFER_TLS, "buf", None)
+    if buf is None or buf.shape != ep0.shape:
+        buf = np.empty(ep0.shape, dtype=np.float64)
+        _EP_BUFFER_TLS.buf = buf
+    return buf
+
+
 def _design_objective_wrapper_common(app, x) -> Any:
     """Shared objective wrapper for Optim/Color/Needle workers."""
     if len(x) != len(app._var_idx):
@@ -248,8 +286,8 @@ def _design_objective_wrapper_common(app, x) -> Any:
     if app._all_variable:
         ep_buffer = np.ascontiguousarray(x)
     else:
-        # Reuse pre-allocated buffer (no allocation per call)
-        ep_buffer = app._ep_buffer
+        # Tampon par thread : voir _get_ep_buffer.
+        ep_buffer = _get_ep_buffer(app)
         ep_buffer[:] = app._ep0
         ep_buffer[app._var_idx] = x
 
@@ -320,8 +358,9 @@ def _design_gradient_func_pglobal_common(app, x) -> Any:
     if app._all_variable:
         ep_full = np.ascontiguousarray(x)
     else:
-        # Reuse pre-allocated buffer (no allocation per call)
-        ep_full = app._ep_buffer
+        # Tampon par thread : voir _get_ep_buffer. Le gradient tourne lui aussi
+        # dans le pool (une recherche locale L-BFGS-B par thread).
+        ep_full = _get_ep_buffer(app)
         ep_full[:] = app._ep0
         ep_full[app._var_idx] = x
 

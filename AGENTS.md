@@ -14,7 +14,10 @@ versions divergentes.
 2. **`docs/REPRISE_PERF.md`** — pour toute question de performance : démarrage
    rapide, référence mesurée de chaque module, ce qui est fait, ce qui reste,
    profils bruts, et les tests déjà rouges qu'il ne faut pas chasser.
-3. **`docs/PLAN_AMELIORATION.md`** — chantiers d'amélioration ordonnés.
+3. **`docs/REPRISE_TESTS_ISOLATION.md`** — fuites d'état entre tests : pourquoi un test
+   peut passer seul et échouer en sélection large, la cause racine déjà corrigée, et ce
+   qui reste à auditer.
+4. **`docs/PLAN_AMELIORATION.md`** — chantiers d'amélioration ordonnés.
 
 ## Les quatre choses à savoir avant de toucher au code
 

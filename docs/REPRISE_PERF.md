@@ -55,10 +55,16 @@ bash scripts\ab_compare.sh certus\physics\certus_optimizers.py 2572f46^ design 4
 **La suite a des fuites d'état entre tests.** Plusieurs fichiers passent
 isolément et échouent dans une sélection large. Vérifié le 2026-08-02 :
 
-| Test | En sélection large | Isolé |
-|---|---|---|
-| `test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods` | ❌ | ✅ |
-| `tests/unit/test_certus_ui.py` (4 échecs) | ❌ | ✅ 80 passed |
+| Test | En sélection large | Isolé | Statut |
+|---|---|---|---|
+| `test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods` | ❌ | ✅ | ✅ **corrigé** |
+| `tests/unit/test_certus_ui.py` (4 échecs) | ❌ | ✅ 80 passed | ✅ **corrigé** |
+
+✅ **Ces deux lignes sont résolues et le correctif est commité** — cause racine
+trouvée le 2026-08-02 : `tests/ui/test_ui_module_imports.py` remplaçait des
+objets-modules dans `sys.modules` sans les restaurer, ce qui faisait atterrir les
+`monkeypatch.setattr("<module>.<nom>", …)` suivants sur une copie orpheline.
+Détails et reste à faire dans **`docs/REPRISE_TESTS_ISOLATION.md`**.
 
 Avant d'accuser ton changement : relancer le test **seul**. S'il passe, c'est une
 fuite d'état pré-existante, pas toi. (Vérifié aussi en remettant le code d'origine.)
@@ -225,9 +231,9 @@ Le banc sait le faire : `--force-cache --trace-nk --instrument`.
 
 ### 4.6 Dette non liée à la performance
 
-- `tests/unit/test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods`
-  échoue dans la sélection `-k "re_ or reverse or objectives"` et passe isolément.
-  **Pré-existant** (vérifié sur le code d'origine), fuite d'état entre tests.
+- ~~`tests/unit/test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods`
+  échoue dans la sélection `-k "re_ or reverse or objectives"` et passe isolément.~~
+  ✅ **Résolu et commité le 2026-08-02** — cf. `docs/REPRISE_TESTS_ISOLATION.md`.
 - `_is_busy` est lu dans `certus_design_ui.py:339` et **jamais écrit** nulle part.
 - `git gc` échoue toujours sur le commit orphelin `01047a1b` (arbre manquant) —
   chaque commit affiche `fatal: bad tree object`. Sans effet sur les commits.

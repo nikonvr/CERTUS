@@ -2,6 +2,10 @@
 
 Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 
+> **Isolation des tests (2026-08-02)** — une fuite d'état `sys.modules` faisait échouer en
+> sélection large des tests qui passent isolément. Cause racine corrigée ; il reste un
+> audit à faire. Voir [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
+
 ---
 
 ## 1. Ce qu'est CERTUS

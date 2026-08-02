@@ -58,8 +58,19 @@ class RefractiveIndex:
             raise ValueError(f"Extinction coefficient k={self.k} > {self.MAX_K} extreme")
 
     def to_complex(self) -> complex:
-        """Convert to complex number n + ik."""
-        return complex(self.n, self.k)
+        """Indice complexe dans la convention du projet : ``n̂ = n − ik`` (k >= 0).
+
+        Cette classe renvoyait auparavant ``n + ik``, à rebours de la convention
+        Macleod utilisée partout ailleurs dans CERTUS. Le résultat de
+        ``reflectance_normal_incidence`` est identique dans les deux conventions
+        (``|r|²`` est invariant par conjugaison), donc le défaut était LATENT — mais
+        toute valeur issue d'ici et transmise au TMM produisait un milieu à GAIN,
+        silencieusement « rattrapé » par la garde de ``compute_TMM_generic``.
+
+        Returns:
+            ``complex(n, -k)``.
+        """
+        return complex(self.n, -self.k)
 
     def is_absorbing(self, threshold: float = 1e-6) -> bool:
         """Check if material absorbs (k > threshold)."""

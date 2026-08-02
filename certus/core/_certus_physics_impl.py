@@ -615,7 +615,9 @@ def get_n_substrate_array_by_id_kernel(
 
     return results
 
+
 _SUBSTRATE_CACHE = {}
+
 
 def get_n_substrate_array_by_id(substrate_id: int, wavelengths_nm: np.ndarray) -> np.ndarray:
 
@@ -686,9 +688,16 @@ from certus.physics.certus_optical_models import (
 from certus.physics.certus_colorimetry import lab_to_rgb, xyz_from_spectrum, xyz_to_lab
 
 from certus.physics.certus_colorimetry import (
-    CIE_LAMBDA, D65_CIE_X, D65_CIE_Y, D65_CIE_Z, K_COLOR,
-    _lab_f, _lab_f_inv, _gamma_correct_scalar, _xyz_from_spectrum_kernel,
-    delta_e_2000
+    CIE_LAMBDA,
+    D65_CIE_X,
+    D65_CIE_Y,
+    D65_CIE_Z,
+    K_COLOR,
+    _lab_f,
+    _lab_f_inv,
+    _gamma_correct_scalar,
+    _xyz_from_spectrum_kernel,
+    delta_e_2000,
 )
 
 from certus.physics.certus_tmm_core import (
@@ -834,8 +843,14 @@ def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=Non
         try:
             return complex(material_id)
         except ValueError, TypeError:
-            # Fallback to default refractive index
-            return 1.5
+            # Ne JAMAIS inventer un indice ici. Renvoyer 1.5 en silence produisait un
+            # spectre calculé sur un matériau qui n'est pas celui demandé, sans le
+            # moindre signe. KeyError appartient à NUMERICAL_FAULT_EXCEPTIONS : les
+            # appelants STRAT l'interceptent déjà et disposent d'un repli JOURNALISÉ.
+            raise KeyError(
+                f"Materiau inconnu {material_id!r} "
+                f"(db_instance={'present' if db_instance is not None else 'None'})"
+            )
 
 
 def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, db_instance=None) -> np.ndarray:
@@ -1381,6 +1396,8 @@ def warmup_physics(silent: bool = True) -> None:
 
     Call once at application startup for optimal user experience.
 
+    Enhanced version: pre-compiles top 10 most critical kernels with realistic shapes.
+
     Args:
 
         silent: If True, suppresses any logging/output during warmup.
@@ -1392,15 +1409,16 @@ def warmup_physics(silent: bool = True) -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        # Minimal test arrays (10 points, single layer)
+        # Realistic test arrays matching typical usage patterns
+        # Based on performance analysis: 50 wavelengths, 10 layers is common
 
-        wls = np.linspace(400.0, 800.0, 10, dtype=np.float64)
+        wls = np.linspace(400.0, 800.0, 50, dtype=np.float64)
 
-        n_complex = np.ones((10, 1), dtype=np.complex128) * (1.5 + 0.001j)
+        n_complex = np.ones((50, 10), dtype=np.complex128) * (1.5 + 0.001j)
 
-        n_sub = np.ones(10, dtype=np.complex128) * 1.52
+        n_sub = np.ones(50, dtype=np.complex128) * 1.52
 
-        thicknesses = np.array([100.0], dtype=np.float64)
+        thicknesses = np.array([100.0, 150.0, 80.0, 200.0, 120.0, 90.0, 110.0, 140.0, 100.0, 130.0], dtype=np.float64)
 
         # Warm TMM core
 
@@ -1480,49 +1498,118 @@ def warmup_physics(silent: bool = True) -> None:
         except RuntimeError, ValueError:
             pass
 
+        # Warm gradient computation kernels (critical for optimization)
+
+        try:
+            # Gradient computation is one of the most expensive operations
+            targets_test = np.array([0.9, 0.85, 0.8, 0.75, 0.7], dtype=np.float64)
+            weights_test = np.ones(5, dtype=np.float64)
+            wls_grad = np.linspace(400.0, 800.0, 5, dtype=np.float64)
+            n_grad = np.ones((5, 3), dtype=np.complex128) * (1.5 + 0.001j)
+            n_sub_grad = np.ones(5, dtype=np.complex128) * 1.52
+            thicknesses_grad = np.array([100.0, 150.0, 120.0], dtype=np.float64)
+
+            compute_gradient_all_layers_analytic(
+                thicknesses_grad, n_grad, n_sub_grad, wls_grad, targets_test, weights_test,
+                0.01, False, n_sub_grad, np.zeros_like(wls_grad)
+            )
+
+        except RuntimeError, ValueError, NameError:
+            pass
+
+        # Warm cost function (hot path in optimization loops)
+
+        try:
+            cost_numba_fast(
+                thicknesses_grad, n_grad, n_sub_grad, wls_grad, targets_test, weights_test,
+                0.01, False, n_sub_grad, np.zeros_like(wls_grad)
+            )
+
+        except RuntimeError, ValueError, NameError:
+            pass
+
+        # Warm oblique angle calculations (if used)
+
+        try:
+            angle = 30.0  # degrees
+            pol = "s"  # s-polarization
+            calc_spectrum_oblique_vectorized(wls_grad, n_grad, thicknesses_grad, n_sub_grad, angle, pol)
+
+        except RuntimeError, ValueError, NameError:
+            pass
+
+        # Warm needle scan (expensive operation)
+
+        try:
+            from certus.physics.certus_opt_needle import needle_scan_cached
+
+            scan_mask = np.ones(len(thicknesses_grad), dtype=np.int64)
+            needle_scan_cached(
+                wls_grad, n_grad, n_grad, n_sub_grad, thicknesses_grad, targets_test, weights_test,
+                2.0, 1.0, scan_mask
+            )
+
+        except RuntimeError, ValueError, NameError, ImportError:
+            pass
+
     if not silent:
-        logging.getLogger("CERTUS").debug("Physics JIT warmup complete")
+        logging.getLogger("CERTUS").debug("Physics JIT warmup complete (enhanced)")
 
 
 # --- AUTO-PATCHED IMPORTS ---
-from certus.physics.certus_optical_models import (SplineBasisCache, get_nk_from_spline)
-from certus.physics.certus_optimizers import (compute_critical_distance, fast_clustering_kernel)
-from certus.physics.certus_opt_needle import (needle_scan_cached)
-from certus.physics.certus_strat_batch import (precompute_matrix_cache_kernel, calculate_RT_batch_kernel)
-from certus.physics.certus_strat_growth import (prepare_dynamics_data_kernel, update_run_states_kernel)
-from certus.physics.certus_strat_math import (calculate_extrema_distances, check_extrema_proximity_batch)
-from certus.physics.certus_strat_nucleation import (rank_nucleation_candidates_kernel, find_nucleation_adaptive_kernel)
-from certus.physics.certus_tmm_substrate import (calculate_bare_substrate_R, calculate_bare_substrate_R_absorbing, calculate_bare_substrate_T_absorbing)
-from certus.physics.certus_tmm_single_layer import (calculate_reflection_array, batch_single_layer_T_mse, batch_single_layer_RT_mse, calculate_RT_single_layer_absorbing_substrate_array)
-from certus.physics.certus_tmm_matrix import (calc_spectrum_front_wrapper, calc_spectrum_full_wrapper, calc_spectrum_full_exact_wrapper)
-from certus.physics.certus_opt_gradients import compute_oblique_backside_bundle_analytic
+from certus.physics.certus_optical_models import SplineBasisCache, get_nk_from_spline
+from certus.physics.certus_optimizers import compute_critical_distance, fast_clustering_kernel
+from certus.physics.certus_opt_needle import needle_scan_cached
+from certus.physics.certus_strat_batch import precompute_matrix_cache_kernel, calculate_RT_batch_kernel
+from certus.physics.certus_strat_growth import prepare_dynamics_data_kernel, update_run_states_kernel
+from certus.physics.certus_strat_math import calculate_extrema_distances, check_extrema_proximity_batch
+from certus.physics.certus_strat_nucleation import rank_nucleation_candidates_kernel, find_nucleation_adaptive_kernel
+from certus.physics.certus_tmm_substrate import (
+    calculate_bare_substrate_R,
+    calculate_bare_substrate_R_absorbing,
+    calculate_bare_substrate_T_absorbing,
+)
+from certus.physics.certus_tmm_single_layer import (
+    calculate_reflection_array,
+    batch_single_layer_T_mse,
+    batch_single_layer_RT_mse,
+    calculate_RT_single_layer_absorbing_substrate_array,
+)
+from certus.physics.certus_tmm_matrix import (
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_wrapper,
+    calc_spectrum_full_exact_wrapper,
+)
+from certus.physics.gradient_oblique import compute_oblique_backside_bundle_analytic
 
-__all__.extend([
-    'SplineBasisCache',
-    'get_nk_from_spline',
-    'compute_critical_distance',
-    'fast_clustering_kernel',
-    'compute_oblique_backside_bundle_analytic',
-    'needle_scan_cached',
-    'precompute_matrix_cache_kernel',
-    'calculate_RT_batch_kernel',
-    'prepare_dynamics_data_kernel',
-    'update_run_states_kernel',
-    'calculate_extrema_distances',
-    'check_extrema_proximity_batch',
-    'rank_nucleation_candidates_kernel',
-    'find_nucleation_adaptive_kernel',
-    'calculate_bare_substrate_R',
-    'calculate_reflection_array',
-    'batch_single_layer_T_mse',
-    'batch_single_layer_RT_mse',
-    'calculate_RT_single_layer_absorbing_substrate_array',
-    'calculate_bare_substrate_R_absorbing',
-    'calculate_bare_substrate_T_absorbing',
-    'calc_spectrum_front_wrapper',
-    'calc_spectrum_full_wrapper',
-    'calc_spectrum_full_exact_wrapper'
-])
+__all__.extend(
+    [
+        "SplineBasisCache",
+        "get_nk_from_spline",
+        "compute_critical_distance",
+        "fast_clustering_kernel",
+        "compute_oblique_backside_bundle_analytic",
+        "needle_scan_cached",
+        "precompute_matrix_cache_kernel",
+        "calculate_RT_batch_kernel",
+        "prepare_dynamics_data_kernel",
+        "update_run_states_kernel",
+        "calculate_extrema_distances",
+        "check_extrema_proximity_batch",
+        "rank_nucleation_candidates_kernel",
+        "find_nucleation_adaptive_kernel",
+        "calculate_bare_substrate_R",
+        "calculate_reflection_array",
+        "batch_single_layer_T_mse",
+        "batch_single_layer_RT_mse",
+        "calculate_RT_single_layer_absorbing_substrate_array",
+        "calculate_bare_substrate_R_absorbing",
+        "calculate_bare_substrate_T_absorbing",
+        "calc_spectrum_front_wrapper",
+        "calc_spectrum_full_wrapper",
+        "calc_spectrum_full_exact_wrapper",
+    ]
+)
 
 from certus.physics.certus_tmm_matrix import (
     compute_TMM_single_point_k0_exact,
@@ -1533,35 +1620,34 @@ from certus.physics.certus_tmm_matrix import (
     calculate_RT_no_backside,
     calc_spectrum_front,
     calc_spectrum_full,
-    calc_spectrum_full_exact
+    calc_spectrum_full_exact,
 )
 from certus.physics.certus_tmm_single_layer import (
     calculate_RT_single_layer_single,
     calculate_reflection_single,
     calculate_transmission_single,
-    calculate_transmission_array
+    calculate_transmission_array,
 )
-from certus.physics.certus_tmm_backside import (
-    _apply_exact_backside_generic,
-    apply_exact_backside_combination
-)
+from certus.physics.certus_tmm_backside import _apply_exact_backside_generic, apply_exact_backside_combination
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 
-__all__.extend([
-    'compute_RT_from_matrix',
-    'compute_TMM_single_point_k0_exact',
-    'calculate_RT_single_layer_single',
-    'compute_complex_phase_components',
-    'compute_TMM_single_point_k0',
-    'calculate_reflection_single',
-    'calculate_transmission_single',
-    'calculate_RT_with_backside_fused',
-    'calculate_RT_vectorized_real',
-    'calculate_RT_no_backside',
-    'calc_spectrum_front',
-    'calc_spectrum_full',
-    'calc_spectrum_full_exact',
-    '_apply_exact_backside_generic',
-    'apply_exact_backside_combination',
-    'calculate_transmission_array'
-])
+__all__.extend(
+    [
+        "compute_RT_from_matrix",
+        "compute_TMM_single_point_k0_exact",
+        "calculate_RT_single_layer_single",
+        "compute_complex_phase_components",
+        "compute_TMM_single_point_k0",
+        "calculate_reflection_single",
+        "calculate_transmission_single",
+        "calculate_RT_with_backside_fused",
+        "calculate_RT_vectorized_real",
+        "calculate_RT_no_backside",
+        "calc_spectrum_front",
+        "calc_spectrum_full",
+        "calc_spectrum_full_exact",
+        "_apply_exact_backside_generic",
+        "apply_exact_backside_combination",
+        "calculate_transmission_array",
+    ]
+)

@@ -21,6 +21,17 @@ from certus.utils.errors import NUMERICAL_FAULT_EXCEPTIONS
 from certus_physics import calculate_RT_vectorized_real, calculate_bare_substrate_RT
 
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        if isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        return super().default(obj)
+
+
 def log_structured_json_event(
     log: logging.Logger | None,
     channel: str,
@@ -56,7 +67,7 @@ def log_structured_json_event(
     payload.update(fields)
 
     try:
-        log.info("%s %s", channel, json.dumps(payload, ensure_ascii=True, separators=(",", ":")))
+        log.info("%s %s", channel, json.dumps(payload, cls=NumpyEncoder, ensure_ascii=True, separators=(",", ":")))
 
     except (TypeError, *NUMERICAL_FAULT_EXCEPTIONS) as ex:
         # Keep observability even when payload contains non-serializable fields.
@@ -768,6 +779,28 @@ def _detect_data_type_from_array(data: np.ndarray, threshold: float = 0.80) -> s
     return "R"
 
 
+def _match_root(name: str, roots: tuple[str, ...]) -> bool:
+    """Vrai si ``name`` commence par l'une des racines, sur une frontière non alphabétique.
+
+    La frontière évite les faux positifs : « theta » ne doit pas matcher « t », ni
+    « total » matcher « t », alors que « R_exp », « Rtot(%) » et « Reflectance » doivent
+    bien matcher « r » ou « reflectance ».
+
+    Args:
+        name: en-tête de colonne, déjà en minuscules et sans espaces de bord.
+        roots: racines à tester, de la plus longue à la plus courte.
+
+    Returns:
+        True si une racine correspond.
+    """
+    for root in roots:
+        if name == root:
+            return True
+        if name.startswith(root) and not name[len(root):len(root) + 1].isalpha():
+            return True
+    return False
+
+
 def _detect_type_from_column_name(col_name: str) -> str:
     """Detect data type from column header name.
 
@@ -778,21 +811,23 @@ def _detect_type_from_column_name(col_name: str) -> str:
 
     name_lower = str(col_name).lower().strip()
 
-    # Transmission patterns (incl. Tnu, T_nu = normalized T)
+    # Racines triées de la plus longue à la plus courte : "transmittance" doit être
+    # essayé avant "t", sinon "t" gagnerait par préfixe sur n'importe quel mot en t.
+    #
+    # L'ancienne version n'acceptait que l'égalité exacte ou le préfixe "motif " /
+    # "motif(". Les en-têtes les plus courants — « Transmittance », « Reflectance »,
+    # « R_exp », « Rtot » — ne matchaient donc RIEN et retombaient sur l'heuristique
+    # statistique, dont la première règle (moyenne > 0,5 -> "T") classe tout miroir
+    # haute réflectivité en TRANSMISSION.
 
-    t_patterns = ["t", "trans", "transmission", "%t", "t%", "t(%)", "tnu", "t_nu"]
+    t_roots = ("transmittance", "transmission", "trans", "t_nu", "tnu", "t(%)", "%t", "t%", "t")
+    r_roots = ("reflectance", "reflection", "refl", "r_nu", "rnu", "r(%)", "%r", "r%", "r")
 
-    for pat in t_patterns:
-        if name_lower == pat or name_lower.startswith(pat + " ") or name_lower.startswith(pat + "("):
-            return "T"
+    if _match_root(name_lower, t_roots):
+        return "T"
 
-    # Reflection patterns (incl. Rnu, R_nu = normalized R)
-
-    r_patterns = ["r", "refl", "reflection", "%r", "r%", "r(%)", "rnu", "r_nu"]
-
-    for pat in r_patterns:
-        if name_lower == pat or name_lower.startswith(pat + " ") or name_lower.startswith(pat + "("):
-            return "R"
+    if _match_root(name_lower, r_roots):
+        return "R"
 
     return "unknown"
 

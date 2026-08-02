@@ -248,7 +248,14 @@ def smooth_spectrum_auto(x_lambda: np.ndarray, y: np.ndarray, level: str = "moye
         bounds_error=False,
         assume_sorted=True,
     )
-    y_smoothed = f_back(1.0 / x)
+    # On ré-évalue sur l'abscisse D'ORIGINE, pas sur le `x` renvoyé par _prepare_xy :
+    # celui-ci a été trié par ordre croissant et dédupliqué. Évaluer dessus renvoyait un
+    # vecteur aligné sur l'ordre TRIÉ, que les appelants réaffectaient positionnellement
+    # sur l'ordre du fichier — un spectre mesuré en lambda décroissant (sortie standard de
+    # beaucoup de spectrophotomètres) ressortait donc EN MIROIR, sans aucune erreur.
+    # La déduplication changeait en outre la longueur du vecteur (ValueError chez l'appelant).
+    x_original = np.asarray(x_lambda, dtype=float).ravel()
+    y_smoothed = f_back(1.0 / x_original)
 
     quality_score = 1.0
     if np.isfinite(period_k) and period_k > 0:
@@ -445,7 +452,8 @@ def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: i
                 bounds_error=False,
                 assume_sorted=True,
             )
-            return _safe_clip_percent(f_back(1.0 / x_prep))
+            # Idem : `x` est l'abscisse d'origine, `x_prep` est triée/dédupliquée.
+            return _safe_clip_percent(f_back(1.0 / x))
     except Exception:
         pass
 

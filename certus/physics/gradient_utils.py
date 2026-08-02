@@ -14,7 +14,16 @@ import certus.physics.certus_tmm_core as tmm_core
 SMALL_EPSILON = 1e-12
 
 
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+# fastmath=True implique les drapeaux LLVM `nnan` et `ninf`, qui autorisent le
+# compilateur à considérer qu'aucun NaN ni Inf n'existe — il supprime alors purement et
+# simplement le `np.isfinite(...)` du filtre ci-dessous. Un seul point non fini dans les
+# valeurs calculées suffit alors à renvoyer un coût NaN à l'optimiseur, qui diverge sans
+# message. On garde donc toutes les optimisations SAUF nnan/ninf : coût identique mesuré,
+# mais la garde de finitude survit.
+FASTMATH_SAFE = {"nsz", "arcp", "contract", "afn", "reassoc"}
+
+
+@njit(cache=True, fastmath=FASTMATH_SAFE, parallel=True, nogil=True, error_model="numpy")
 def compute_mse_vectorized(
     calc_values: np.ndarray, target_values: np.ndarray, weights: np.ndarray
 ) -> tuple[float, int]:

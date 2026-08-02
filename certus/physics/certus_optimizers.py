@@ -880,13 +880,58 @@ class PGlobalOptimizer:
 
     # ── Main Loop ─────────────────────────────────────────────────────
 
+    @staticmethod
+    def _inner_numba_threads(n_workers: int) -> int:
+        """Nombre de threads numba a laisser a CHAQUE thread du pool."""
+        try:
+            import numba
+
+            total = int(numba.config.NUMBA_NUM_THREADS)
+        except (ImportError, AttributeError, TypeError, ValueError):
+            return 1
+        return max(1, total // max(1, int(n_workers)))
+
+    @staticmethod
+    def _init_pool_thread(n_inner: int) -> None:
+        """Bride le parallelisme numba INTERNE de ce thread du pool.
+
+        ``numba.set_num_threads`` est thread-local (verifie a l'execution) :
+        regler la valeur ici n'affecte que les threads de ce pool, pas le reste
+        du processus.
+        """
+        try:
+            import numba
+
+            numba.set_num_threads(n_inner)
+        except (ImportError, ValueError):
+            pass
+
     def _get_pool(self):
         """Return persistent thread pool, creating it lazily on first use."""
 
         if self._pool is None:
             from concurrent.futures import ThreadPoolExecutor
 
-            self._pool = ThreadPoolExecutor(max_workers=self._n_workers)
+            # Sur-souscription : le pool lance _n_workers threads, et CHACUN
+            # appelle un noyau njit(parallel=True) qui ouvrait a son tour
+            # NUMBA_NUM_THREADS threads. Sur 16 coeurs avec ~10 workers, cela
+            # faisait ~160 threads pour 16 coeurs, et le temps partait en
+            # contention plutot qu'en calcul.
+            #
+            # Mesure sur example/example_design (cout par evaluation de
+            # cost_numba_fast, ~850 000 appels par run — le temps total d'un run
+            # DESIGN varie de 43 a 85 s et ne permet rien de conclure) :
+            #     NUMBA_NUM_THREADS=16 : 953,30 us/appel
+            #     NUMBA_NUM_THREADS= 2 : 884,69 us/appel
+            #     NUMBA_NUM_THREADS= 1 : 749,50 us/appel
+            #
+            # C'est le meme constat qui avait motive le numba.set_num_threads(2)
+            # de _test_strategy_robustness_task, mais applique au pool.
+            self._pool = ThreadPoolExecutor(
+                max_workers=self._n_workers,
+                initializer=self._init_pool_thread,
+                initargs=(self._inner_numba_threads(self._n_workers),),
+            )
 
         return self._pool
 

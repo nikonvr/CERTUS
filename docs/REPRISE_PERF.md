@@ -8,6 +8,82 @@ plusieurs points : voir §5.
 
 ---
 
+## 0. Démarrage rapide — les cinq minutes qui font gagner des heures
+
+### Vérifier l'environnement (30 s)
+
+```bat
+:: 1. Le venv charge-t-il bien LE code d'ici ? (un .pth a déjà pointé ailleurs)
+.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+
+:: 2. Le hook d'auto-push vers le dépôt PUBLIC est-il neutralisé ?
+dir .git\hooks\post-commit*        :: doit afficher post-commit.disabled
+
+:: 3. L'oracle passe-t-il ? (8 s, 552 tests)
+.venv\Scripts\python.exe -m pytest tests\oracle\ -q --no-cov
+```
+
+### Combien de temps coûte quoi
+
+| Action | Durée |
+|---|---|
+| `pytest tests/oracle/ -q --no-cov` | **8 s** — à lancer après chaque modif de calcul |
+| Suite complète `pytest tests/ -q --no-cov` | ~6 min |
+| Banc FIELD / INDEX_SPLINE | 1–2 s |
+| Banc INDEX | 7 s |
+| Banc RE | 30 s |
+| Banc METAL_SINGLE / BILAYER | 55–70 s |
+| Banc DESIGN | 45–90 s (très dispersé) |
+| Banc STRAT | 50–65 s |
+| Une campagne A/B de 4 paires sur DESIGN | ~10 min → **tâche de fond** |
+
+Le timeout de l'outil Bash est plafonné à **10 minutes** : toute campagne de
+mesure doit partir en tâche de fond.
+
+### Les deux commandes du quotidien
+
+```bat
+:: mesurer un module sur son vrai exemple
+.venv\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
+
+:: prouver un gain, en alternant les deux versions
+bash scripts\ab_compare.sh certus\physics\certus_optimizers.py 2572f46^ design 4 --auto-yes --time-cost
+```
+
+### Ce qui est déjà rouge — ne pas partir à la chasse
+
+**La suite a des fuites d'état entre tests.** Plusieurs fichiers passent
+isolément et échouent dans une sélection large. Vérifié le 2026-08-02 :
+
+| Test | En sélection large | Isolé |
+|---|---|---|
+| `test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods` | ❌ | ✅ |
+| `tests/unit/test_certus_ui.py` (4 échecs) | ❌ | ✅ 80 passed |
+
+Avant d'accuser ton changement : relancer le test **seul**. S'il passe, c'est une
+fuite d'état pré-existante, pas toi. (Vérifié aussi en remettant le code d'origine.)
+
+🔴 **Ne pas lancer deux sessions pytest en parallèle sur ce dépôt.** Deux
+processus pytest simultanés se bloquent mutuellement — observé le 2026-08-02, les
+deux à +0,08 s de CPU en 20 s de temps réel. Cause probable : le verrou de fichier
+du cache numba (`configure_numba_env`, cf. `certus_strat_objectives.py:164`).
+- Chaque `git commit` affiche `fatal: bad tree object …` et
+  `failed to perform geometric repack`. C'est le commit orphelin `01047a1b`
+  (arbre manquant) décrit dans `CLAUDE.md §5.4`. **Le commit réussit quand même** —
+  vérifier avec `git log --oneline -1`, ne pas recommencer.
+- `warning: ignoring broken ref refs/heads/desktop.ini` : idem, sans effet.
+
+### Réflexe avant de croire à un gain
+
+L'utilisateur a une règle explicite : **ne jamais annoncer un gain sans l'avoir
+mesuré avant/après.** Trois pièges l'ont mise à l'épreuve aujourd'hui :
+
+- mesurer à entrée **figée** (un `lru_cache` qui touche à chaque appel masque tout) ;
+- mesurer **en séquence** alors que la machine dérive de ±25 % ;
+- mesurer un module dont **le résultat varie naturellement** d'un facteur 2.
+
+---
+
 ## 1. Comment mesurer — la seule méthode qui tienne
 
 ```bash

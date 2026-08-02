@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
 
 class CertusIndexSplineStateMixin:
     """CertusIndexSplineStateMixin."""

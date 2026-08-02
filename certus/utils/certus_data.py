@@ -242,6 +242,61 @@ def to_csv_robust(df: pd.DataFrame, filepath: str, decimal_separator: str = None
     df.to_csv(filepath, **kwargs)
 
 
+def _clean_and_truncate_df_for_excel(df: pd.DataFrame) -> pd.DataFrame:
+    """Truncate cell contents to Excel's limit of 32767 characters to avoid UserWarning."""
+    needs_cleaning = False
+    for col in df.columns:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            continue
+        for val in df[col]:
+            if val is None or pd.isna(val):
+                continue
+            if isinstance(val, str):
+                if len(val) > 32750:
+                    needs_cleaning = True
+                    break
+            else:
+                try:
+                    if len(str(val)) > 32750:
+                        needs_cleaning = True
+                        break
+                except Exception:
+                    pass
+        if needs_cleaning:
+            break
+
+    if not needs_cleaning:
+        return df
+
+    df = df.copy()
+    for col in df.columns:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            continue
+        def truncate_val(val):
+            if val is None or pd.isna(val):
+                return val
+            if isinstance(val, str):
+                if len(val) > 32750:
+                    return val[:32750] + "..."
+            else:
+                s = str(val)
+                if len(s) > 32750:
+                    return s[:32750] + "..."
+            return val
+        df[col] = df[col].apply(truncate_val)
+    return df
+
+
+# Monkey-patch pd.DataFrame.to_excel systematically to avoid Excel UserWarning
+_original_to_excel = pd.DataFrame.to_excel
+
+def _patched_to_excel(self, *args, **kwargs):
+    df_clean = _clean_and_truncate_df_for_excel(self)
+    return _original_to_excel(df_clean, *args, **kwargs)
+
+pd.DataFrame.to_excel = _patched_to_excel
+
+
 def to_excel_robust(df: pd.DataFrame, filepath: str, **kwargs) -> None:
     """
     Writes a DataFrame to an Excel file.
@@ -266,7 +321,8 @@ def to_excel_robust(df: pd.DataFrame, filepath: str, **kwargs) -> None:
         raise ValueError(f"Invalid filepath: {filepath}")
 
     kwargs.setdefault("engine", "openpyxl")
-    df.to_excel(filepath, **kwargs)
+    df_clean = _clean_and_truncate_df_for_excel(df)
+    df_clean.to_excel(filepath, **kwargs)
 
 
 def export_optimization_report(
@@ -984,7 +1040,8 @@ def build_standard_report(
                             name = f"{base[: EXCEL_SHEET_NAME_MAX_LENGTH - 2]}_{k}"
                             k += 1
                         used_names.add(name)
-                        df.to_excel(writer, sheet_name=name, index=False)
+                        df_clean = _clean_and_truncate_df_for_excel(df)
+                        df_clean.to_excel(writer, sheet_name=name, index=False)
                     elif sec.kind == "kv":
                         content = sec.content
                         if not isinstance(content, dict):
@@ -1000,12 +1057,15 @@ def build_standard_report(
                             [(k, v) for k, v in content.items()],
                             columns=["Key", "Value"],
                         )
-                        df.to_excel(writer, sheet_name=name, index=False)
+                        df_clean = _clean_and_truncate_df_for_excel(df)
+                        df_clean.to_excel(writer, sheet_name=name, index=False)
                     elif sec.kind == "text":
                         summary_rows.append({"Section": sec.title, "Content": str(sec.content)})
                     # "image" sections are HTML-only
                 if summary_rows and "Summary" not in used_names:
-                    pd.DataFrame(summary_rows).to_excel(writer, sheet_name="Summary", index=False)
+                    summary_df = pd.DataFrame(summary_rows)
+                    summary_df_clean = _clean_and_truncate_df_for_excel(summary_df)
+                    summary_df_clean.to_excel(writer, sheet_name="Summary", index=False)
             result["excel"] = True
         except (ValueError, TypeError, RuntimeError, OSError, PermissionError) as e:
             logging.error(f"Standard report Excel error: {e}")

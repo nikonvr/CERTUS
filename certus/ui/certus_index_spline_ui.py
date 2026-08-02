@@ -53,7 +53,7 @@ class CertusIndexSplineApp(
     DEFAULT_WIDTH = 1380
     DEFAULT_HEIGHT = 650
     MIN_WIDTH = 1100
-    MIN_HEIGHT = 520
+    MIN_HEIGHT = 200
 
     smart_preview_requested = pyqtSignal(object)
 

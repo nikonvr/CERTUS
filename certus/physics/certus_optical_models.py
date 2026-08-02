@@ -4,7 +4,6 @@ from scipy.interpolate import CubicSpline
 
 from numba import njit, float64, boolean, prange
 import math
-from typing import *
 from functools import lru_cache
 from threading import Lock
 from certus.core.certus_core import PI
@@ -96,6 +95,7 @@ def _get_nk_cauchy_cached(n4: float, n7: float, wls_tuple: tuple) -> np.ndarray:
     wls_arr = np.array(wls_tuple, dtype=np.float64)
     return get_nk_cauchy(n4, n7, wls_arr)
 
+
 def get_nk_cauchy_wrapper(n4: float, n7: float, wls: np.ndarray) -> np.ndarray:
     """Cauchy index wrapper. Returns f64 (double precision)."""
     return _get_nk_cauchy_cached(float(n4), float(n7), tuple(wls.astype(np.float64)))
@@ -154,7 +154,9 @@ def epsilon2_TLU_array(E_array: np.ndarray, Eg: float, A: float, E0: float, C: f
                 result[i] = 0.0
 
             else:
-                result[i] = eps2_at_edge * np.exp((E - Eg - delta) / Eu_safe)
+                arg = (E - Eg - delta) / Eu_safe
+                arg_clamped = min(max(arg, -700.0), 700.0)
+                result[i] = eps2_at_edge * np.exp(arg_clamped)
 
     return result
 
@@ -440,15 +442,12 @@ class SplineBasisCache:
 
 @lru_cache(maxsize=1024)
 def _get_nk_from_spline_cached(
-    p_spline_tuple: tuple,
-    knot_wl_tuple: tuple,
-    target_wl_tuple: tuple,
-    use_cache: bool
+    p_spline_tuple: tuple, knot_wl_tuple: tuple, target_wl_tuple: tuple, use_cache: bool
 ) -> tuple[np.ndarray, np.ndarray]:
     p_spline_nk_values = np.array(p_spline_tuple)
     knot_wavelengths = np.array(knot_wl_tuple)
     target_lambda_array = np.array(target_wl_tuple)
-    
+
     num_knots = len(knot_wavelengths)
     n_knot_values = p_spline_nk_values[:num_knots]
     k_knot_values = p_spline_nk_values[num_knots:]
@@ -467,6 +466,7 @@ def _get_nk_from_spline_cached(
     k_values = np.nan_to_num(np.clip(k_values, 0.0, 10.0))
     return n_values, k_values
 
+
 def get_nk_from_spline(
     p_spline_nk_values: np.ndarray,
     knot_wavelengths: np.ndarray,
@@ -479,10 +479,7 @@ def get_nk_from_spline(
     When use_cache=False, falls back to direct CubicSpline construction.
     """
     return _get_nk_from_spline_cached(
-        tuple(p_spline_nk_values),
-        tuple(knot_wavelengths),
-        tuple(target_lambda_array),
-        use_cache
+        tuple(p_spline_nk_values), tuple(knot_wavelengths), tuple(target_lambda_array), use_cache
     )
 
 

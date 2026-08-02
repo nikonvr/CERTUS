@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
     QToolButton,
     QVBoxLayout,
     QWidget,
+    QApplication,
 )
 
 from certus.ui.certus_ui import CertusScientificPlot, CertusTheme
@@ -116,6 +117,7 @@ class ManualSigmaKnotDialog(QDialog):
     auto_repartition_log_requested = pyqtSignal()
     auto_repartition_sigma_requested = pyqtSignal()
     auto_clean_requested = pyqtSignal(float)
+    force_clean_requested = pyqtSignal()
     auto_add_one_requested = pyqtSignal()
     recall_best_requested = pyqtSignal()
     recall_best_for_k_requested = pyqtSignal(int)
@@ -137,7 +139,10 @@ class ManualSigmaKnotDialog(QDialog):
         super().__init__(parent)
         self.setModal(True)
         self.setWindowTitle("Additional manual knots")
-        self.resize(940, 700)
+        screen = QApplication.primaryScreen().availableGeometry()
+        w = min(940, screen.width() - 40)
+        h = min(700, screen.height() - 60)
+        self.resize(w, h)
 
         self._base_sigma_knots = np.asarray(sigma_knots, dtype=np.float64).ravel().copy()
         self._base_lambda_knots_nm = np.sort(1.0 / np.maximum(self._base_sigma_knots, 1e-30))
@@ -226,7 +231,7 @@ class ManualSigmaKnotDialog(QDialog):
         top_layout.addLayout(preview_header)
 
         self.plot = CertusScientificPlot(title="Additional manual knots", x_label="lambda (nm)", y_label=y_label)
-        self.plot.setMinimumHeight(200)
+        self.plot.setMinimumHeight(80)
         self.plot.showGrid(x=True, y=True, alpha=0.35)
         self.plot.addLegend()
         self._preview_axis = "lambda"
@@ -324,6 +329,11 @@ class ManualSigmaKnotDialog(QDialog):
         self.btn_auto_clean.clicked.connect(self._on_auto_clean_clicked)
         lay_mesh.addWidget(self.btn_auto_clean)
 
+        self.btn_force_clean = QPushButton("Force Drop Node", self)
+        self.btn_force_clean.setToolTip("Removes exactly one knot (the least sensitive/penalizing one) unconditionally.")
+        self.btn_force_clean.clicked.connect(self._on_force_clean_clicked)
+        lay_mesh.addWidget(self.btn_force_clean)
+
         self.btn_auto_repartition_log = QPushButton("Repart. Log", self)
         self.btn_auto_repartition_log.setToolTip(
             "Redistributes all active knots with uniform spacing in log(sigma), then relaunches a local polish."
@@ -381,7 +391,7 @@ class ManualSigmaKnotDialog(QDialog):
         self.lbl_runtime_log = QLabel("Re-optimization log")
         self.txt_runtime_log = QPlainTextEdit(self)
         self.txt_runtime_log.setReadOnly(True)
-        self.txt_runtime_log.setMinimumHeight(80)
+        self.txt_runtime_log.setMinimumHeight(30)
         self.txt_runtime_log.setStyleSheet(
             f"background-color: #121212; color: #00ff00; font-family: 'Consolas', 'Courier New', monospace; font-size: 11px; border: 1px solid {CertusTheme.BORDER}; border-radius: 4px; padding: 4px;"
         )
@@ -515,8 +525,8 @@ class ManualSigmaKnotDialog(QDialog):
         rows_panel_layout.setSpacing(6)
         rows_panel_layout.addWidget(rows_toolbar)
         rows_panel_layout.addWidget(scroll, 1)
-        rows_toolbar.setMinimumHeight(38)
-        scroll.setMinimumHeight(70)
+        rows_toolbar.setMinimumHeight(15)
+        scroll.setMinimumHeight(30)
 
         # Vertical splitter: horizontal handle that actually resizes log vs knot list.
         self.rows_splitter = QSplitter(Qt.Orientation.Vertical, self)
@@ -524,8 +534,8 @@ class ManualSigmaKnotDialog(QDialog):
         self.rows_splitter.setHandleWidth(10)
         self.rows_splitter.addWidget(runtime_log_panel)
         self.rows_splitter.addWidget(rows_panel)
-        runtime_log_panel.setMinimumHeight(70)
-        rows_panel.setMinimumHeight(90)
+        runtime_log_panel.setMinimumHeight(30)
+        rows_panel.setMinimumHeight(30)
         self.rows_splitter.setStretchFactor(0, 0)
         self.rows_splitter.setStretchFactor(1, 1)
         self.rows_splitter.setSizes([130, 260])
@@ -1349,6 +1359,15 @@ class ManualSigmaKnotDialog(QDialog):
         # Tolerance is now read from the main GUI via the listener;
         # 5e-5 remains the default on the CERTUS_INDEX_SPLINE._on_auto_clean side.
         self.auto_clean_requested.emit(float("nan"))
+        self._refresh_runtime_titles()
+
+    def _on_force_clean_clicked(self) -> None:
+        _LOG.info(
+            "MANUAL_DIALOG user requested force-clean | current_rmse=%s | session_best=%s",
+            f"{float(self._runtime_rmse):.8f}" if np.isfinite(float(self._runtime_rmse)) else "n/a",
+            f"{float(self._session_best_rmse):.8f}" if np.isfinite(float(self._session_best_rmse)) else "n/a",
+        )
+        self.force_clean_requested.emit()
         self._refresh_runtime_titles()
 
     def _on_auto_add_one_clicked(self) -> None:

@@ -129,7 +129,7 @@ def get_logger() -> logging.Logger:
     return logger if logger.handlers else setup_logging()
 
 
-def handle_exception(exc_type, exc_value, exc_traceback):
+def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: object) -> None:
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return

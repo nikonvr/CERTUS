@@ -24,6 +24,7 @@ import numpy as np
 
 from certus.core.certus_strat_pipeline import optimize_block_strategy_hybrid
 from certus.utils.certus_strat_context import _strategy_signature
+from certus.utils.certus_copy_utils import copy_result_dict
 
 
 @dataclass(frozen=True)
@@ -70,7 +71,7 @@ DEFAULT_AUDIT_CASES: tuple[StratAuditCase, ...] = (
 
 
 def _copy_params(params: dict[str, Any]) -> dict[str, Any]:
-    return copy.deepcopy(params)
+    return copy_result_dict(params)
 
 
 def _extract_strategy_fields(result: Any) -> tuple[Any, str, float | None, int | None]:
@@ -83,11 +84,11 @@ def _extract_strategy_fields(result: Any) -> tuple[Any, str, float | None, int |
     cost_val = strategy.get("total_cost", strategy.get("cost"))
     try:
         total_cost = float(cost_val) if cost_val is not None else None
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         total_cost = None
     try:
         n_blocks = int(strategy.get("n_blocks", 0)) if strategy.get("n_blocks") is not None else None
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         n_blocks = None
     return (strategy.get("strategy_id"), signature, total_cost, n_blocks)
 
@@ -102,7 +103,7 @@ def _score_proxy(result: Any) -> float:
             score = final.get("robustness_score")
     try:
         return float(score)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return float("inf")
 
 
@@ -131,6 +132,7 @@ def run_strat_sensitivity_audit(
         try:
             output = optimize_block_strategy_hybrid(params)
         except Exception as exc:  # noqa: BLE001
+            logger.error("Audit case %s failed: %s", case.name, exc, exc_info=True)
             output = {"error": repr(exc)}
         strategy_id, signature, total_cost, n_blocks = _extract_strategy_fields(output)
         score_proxy = _score_proxy(output)

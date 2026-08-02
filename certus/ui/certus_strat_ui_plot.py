@@ -1,5 +1,9 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_plots_ui import UniversalPlotWindow
+from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
+from certus.ui.certus_strat_table_ui import StrategiesTableWindow
+from certus.ui.certus_strat_indices_ui import InteractiveIndicesWindow
 
 class CertusStratPlotMixin:
     def on_plot_ready(self, fig: Any, fig_type: str) -> None:

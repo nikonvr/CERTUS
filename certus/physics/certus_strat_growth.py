@@ -1,7 +1,6 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.core.certus_core import TWO_PI
 from certus.physics.certus_opt_kernels import compute_RT_from_matrix
 from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
@@ -10,10 +9,30 @@ NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
-from .certus_strat_math import check_extrema_proximity, calculate_extrema_distances, fit_parabola_vertex_3points, _solve_quadratic_target, _calc_T_from_matrix, _calc_T_added_layer
+from .certus_strat_math import (
+    check_extrema_proximity,
+    calculate_extrema_distances,
+    fit_parabola_vertex_3points,
+    _solve_quadratic_target,
+    _calc_T_from_matrix,
+    _calc_T_added_layer,
+)
 
-@njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
-def simulate_growth_kernel(p_thick_nominal: np.ndarray, i_layer: int, prev_thicknesses_sim: np.ndarray, wl: float, n_H, n_L, n_Sub, probe_offset: float, noise_val_precalc: float, non_monotonic_factor: float, non_monotonic_mode: int=NON_MONOTONIC_MODE_ATTENUATE) -> tuple[float, float]:
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def simulate_growth_kernel(
+    p_thick_nominal: np.ndarray,
+    i_layer: int,
+    prev_thicknesses_sim: np.ndarray,
+    wl: float,
+    n_H,
+    n_L,
+    n_Sub,
+    probe_offset: float,
+    noise_val_precalc: float,
+    non_monotonic_factor: float,
+    non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
+) -> tuple[float, float]:
     """
 
     Fast TMM Simulation for robustness heuristics.
@@ -77,7 +96,7 @@ def simulate_growth_kernel(p_thick_nominal: np.ndarray, i_layer: int, prev_thick
             a11 = m10_c * M_before_01 + cp_c * M_before_11
             denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
             if abs(denom) > 1e-09:
-                T_mono[k] = 4.0 * n_Sub.real / (denom.real ** 2 + denom.imag ** 2)
+                T_mono[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
         diffs = np.zeros(4, dtype=np.float64)
         for k in range(4):
             diffs[k] = T_mono[k + 1] - T_mono[k]
@@ -115,7 +134,7 @@ def simulate_growth_kernel(p_thick_nominal: np.ndarray, i_layer: int, prev_thick
         a11 = m10 * M_before_01 + cp * M_before_11
         denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
         if abs(denom) > 1e-09:
-            T_points[k] = 4.0 * n_Sub.real / (denom.real ** 2 + denom.imag ** 2)
+            T_points[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
     a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
     calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
     error_raw = calc_thick - nominal_th
@@ -129,8 +148,12 @@ def simulate_growth_kernel(p_thick_nominal: np.ndarray, i_layer: int, prev_thick
             gain = non_monotonic_factor
             return (max(0.0, nominal_th + error_raw / gain), dyn_encounter)
     return (max(0.0, nominal_th + error_raw), dyn_encounter)
-@njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
-def compute_T_front_at_layer(wl: float, n_layer, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11, d: float) -> float:
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def compute_T_front_at_layer(
+    wl: float, n_layer, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11, d: float
+) -> float:
     """
 
     Compute front-side T at end of a single layer (same convention as simulate_growth_kernel).
@@ -152,10 +175,20 @@ def compute_T_front_at_layer(wl: float, n_layer, n_Sub, M_before_00, M_before_01
     a11 = m10 * M_before_01 + cp * M_before_11
     denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
     if abs(denom) > 1e-09:
-        return float(4.0 * np.real(n_Sub) / (denom.real ** 2 + denom.imag ** 2))
+        return float(4.0 * np.real(n_Sub) / (denom.real**2 + denom.imag**2))
     return 0.0
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model='numpy')
-def prepare_dynamics_data_kernel(wls_array: np.ndarray, all_wls: np.ndarray, nominal_matrix_cache: np.ndarray, n_H_arr: np.ndarray, n_L_arr: np.ndarray, n_Sub_arr: np.ndarray, i_layer: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+
+
+@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+def prepare_dynamics_data_kernel(
+    wls_array: np.ndarray,
+    all_wls: np.ndarray,
+    nominal_matrix_cache: np.ndarray,
+    n_H_arr: np.ndarray,
+    n_L_arr: np.ndarray,
+    n_Sub_arr: np.ndarray,
+    i_layer: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
 
     Parallel preparation of data for dynamics calculation.
@@ -190,7 +223,9 @@ def prepare_dynamics_data_kernel(wls_array: np.ndarray, all_wls: np.ndarray, nom
             M_before_stack[i, 1, 0] = nominal_matrix_cache[i_layer - 1, idx, 1, 0]
             M_before_stack[i, 1, 1] = nominal_matrix_cache[i_layer - 1, idx, 1, 1]
     return (n_layer_array, n_sub_array, M_before_stack)
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model='numpy')
+
+
+@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
     """
 
@@ -240,7 +275,7 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
                 a11 = m10 * M_before_01 + cp * M_before_11
                 denom = a00 + n_sub * a01 + a10 + n_sub * a11
                 if abs(denom) > 1e-09:
-                    T_current = 4.0 * np.real(n_sub) / (denom.real ** 2 + denom.imag ** 2)
+                    T_current = 4.0 * np.real(n_sub) / (denom.real**2 + denom.imag**2)
                 else:
                     T_current = 0.0
             if step_idx == 0:
@@ -256,16 +291,46 @@ def compute_dynamics_kernel(wls, n_layers, n_subs, thicknesses, M_befores):
         t_final[wl_idx] = T_end
         t_min[wl_idx] = T_min_val
     return (dynamics, t_init, t_final, t_min)
-@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model='numpy')
-def update_run_states_kernel(p_thick_nom_arr: np.ndarray, i_layer: int, prev_stacks: np.ndarray, best_wl: float, nH, nL, nSub, offset_val: float, noise_values: np.ndarray, factor_val: float, non_monotonic_mode: int=NON_MONOTONIC_MODE_ATTENUATE):
+
+
+@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
+def update_run_states_kernel(
+    p_thick_nom_arr: np.ndarray,
+    i_layer: int,
+    prev_stacks: np.ndarray,
+    best_wl: float,
+    nH,
+    nL,
+    nSub,
+    offset_val: float,
+    noise_values: np.ndarray,
+    factor_val: float,
+    non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
+):
     """Parallel update of simulation states for next layer."""
     num_runs = prev_stacks.shape[0]
     updates = np.empty(num_runs, dtype=np.float64)
     for r in prange(num_runs):
-        updates[r], _ = simulate_growth_kernel(p_thick_nom_arr, i_layer, prev_stacks[r], best_wl, nH, nL, nSub, offset_val, noise_values[r], factor_val, non_monotonic_mode)
+        updates[r], _ = simulate_growth_kernel(
+            p_thick_nom_arr,
+            i_layer,
+            prev_stacks[r],
+            best_wl,
+            nH,
+            nL,
+            nSub,
+            offset_val,
+            noise_values[r],
+            factor_val,
+            non_monotonic_mode,
+        )
     return updates
-@njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
-def calculate_detailed_growth(num_layers, p_thick_nominal, layer_wavelengths, n_H_arr, n_L_arr, n_Sub_arr, steps_per_layer_arr):
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def calculate_detailed_growth(
+    num_layers, p_thick_nominal, layer_wavelengths, n_H_arr, n_L_arr, n_Sub_arr, steps_per_layer_arr
+):
     """
 
     Detailed growth simulation with exact physics.
@@ -344,9 +409,9 @@ def calculate_detailed_growth(num_layers, p_thick_nominal, layer_wavelengths, n_
         denom_f = F00 + n_s * F01 + F10 + n_s * F11
         denom_r = n_s * R00 + n_s * R01 + R10 + R11
         if abs(denom_f) > 1e-12 and abs(denom_r) > 1e-12:
-            Tf = 4.0 * nsr / (denom_f.real ** 2 + denom_f.imag ** 2)
+            Tf = 4.0 * nsr / (denom_f.real**2 + denom_f.imag**2)
             num_r = n_s * R00 + n_s * R01 - R10 - R11
-            Rf = (num_r.real ** 2 + num_r.imag ** 2) / (denom_r.real ** 2 + denom_r.imag ** 2)
+            Rf = (num_r.real**2 + num_r.imag**2) / (denom_r.real**2 + denom_r.imag**2)
             T_val = Tf * T_ext / (1.0 - Rf * R_ext)
         else:
             T_val = 0.0
@@ -373,9 +438,9 @@ def calculate_detailed_growth(num_layers, p_thick_nominal, layer_wavelengths, n_
             denom_f = ft00 + n_s * ft01 + ft10 + n_s * ft11
             denom_r = n_s * rt00 + n_s * rt01 + rt10 + rt11
             if abs(denom_f) > 1e-12 and abs(denom_r) > 1e-12:
-                Tf = 4.0 * nsr / (denom_f.real ** 2 + denom_f.imag ** 2)
+                Tf = 4.0 * nsr / (denom_f.real**2 + denom_f.imag**2)
                 num_r = n_s * rt00 + n_s * rt01 - rt10 - rt11
-                Rf = (num_r.real ** 2 + num_r.imag ** 2) / (denom_r.real ** 2 + denom_r.imag ** 2)
+                Rf = (num_r.real**2 + num_r.imag**2) / (denom_r.real**2 + denom_r.imag**2)
                 val = Tf * T_ext / (1.0 - Rf * R_ext)
             else:
                 val = 0.0

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_ui import WelcomeGuideWidget, EnhancedProgressWidget
 
 class CertusStratLayoutMixin:
     def apply_default_layout(self) -> None:

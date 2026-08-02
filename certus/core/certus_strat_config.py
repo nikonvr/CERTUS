@@ -153,7 +153,20 @@ from certus.utils.certus_strat_service import (
 
 _validate_phase_a_bridge_lock = threading.Lock()
 
-from certus.core.certus_strat_utils import *
+from certus.core.certus_strat_utils import (
+    _IdxWrapper,
+    APP_CONTEXT,
+    SYM_DEFAULT_EXTREMA_WINDOW_OT,
+    SYM_DEFAULT_CONTINUITY_WEIGHT,
+    SYM_DEFAULT_WEIGHT,
+    SYM_DEFAULT_SAME_WL_BONUS,
+    SYM_DEFAULT_SCORING_MODE,
+    SYM_DEFAULT_TIE_EPS_ABS,
+    SYM_DEFAULT_TIE_EPS_REL,
+    DYNAMICS_METRIC_NAME,
+    get_refractive_index,
+    get_refractive_clues_vectorized,
+)
 
 # Global scientific display configuration
 

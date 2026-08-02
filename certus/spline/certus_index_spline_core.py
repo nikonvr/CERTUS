@@ -1469,9 +1469,18 @@ def _log_index_spline_best_config(
         )
 
     x_encoding = str(r.get("x_encoding", "?"))
+    lam_knots = np.sort(1.0 / np.maximum(sk, 1e-30))
+    from certus.spline.spline_pipeline_utils import _format_lambda_knots_nm_for_log
+    lam_txt = _format_lambda_knots_nm_for_log(lam_knots, precision=1, max_items=200)
 
     logger.info(
-        "%s RMSE=%.8f | d_nm=%.6f nm | K=%d sigma knots | x_encoding=%s", title, float(rmse), d_nm, k, x_encoding
+        "%s RMSE=%.8f | d_nm=%.6f nm | K=%d knots | lambda_knots=%s | x_encoding=%s",
+        title,
+        float(rmse),
+        d_nm,
+        k,
+        lam_txt,
+        x_encoding,
     )
 
     _log_spectral_mesh_polish_rmse_block(logger, r)

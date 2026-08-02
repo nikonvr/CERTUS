@@ -1,10 +1,10 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
+
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def calculate_bare_substrate_R(wavelengths: np.ndarray, n_substrate: np.ndarray) -> np.ndarray:
@@ -222,4 +222,3 @@ def calculate_bare_substrate_T_absorbing(
 
 
 # Macleod convention (+1j, n̂ = n - ik). index 0 = substrate. DO NOT MODIFY without re-running the tests.
-

@@ -198,8 +198,12 @@ class TestResourcePath:
         monkeypatch.setattr("sys.frozen", True, raising=False)
         monkeypatch.setattr("sys.executable", str(fake_exe))
 
-        result = get_resource_path("data/materials_v1.json")
-        assert result == str((temp_directory / "data" / "materials_v1.json").resolve())
+        get_resource_path.cache_clear()
+        try:
+            result = get_resource_path("data/materials_v1.json")
+            assert result == str((temp_directory / "data" / "materials_v1.json").resolve())
+        finally:
+            get_resource_path.cache_clear()
 
 
 class TestPrecisionConfig:

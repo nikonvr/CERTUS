@@ -154,3 +154,23 @@ def open_file_explorer(path: str) -> None:
                 raise
     except NUMERICAL_FAULT_EXCEPTIONS as e:
         logging.warning(f"Error opening file explorer for {path}: {e}")
+
+
+def extract_extensions_from_filter(file_filter: str) -> list[str] | None:
+    """Helper to extract allowed extensions from a Qt file filter string."""
+    import re
+    if not file_filter:
+        return None
+    if "all files (*" in file_filter.lower() or "*.*" in file_filter:
+        return None
+
+    exts = []
+    matches = re.findall(r"\((.*?)\)", file_filter)
+    for m in matches:
+        parts = re.split(r"[\s;]+", m)
+        for p in parts:
+            if p.startswith("*."):
+                exts.append(p[1:])  # keep the dot: '.xlsx'
+            elif p == "*":
+                return None
+    return exts if exts else None

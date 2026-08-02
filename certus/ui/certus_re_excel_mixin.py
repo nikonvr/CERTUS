@@ -1424,6 +1424,9 @@ class CertusREExcelMixin:
 
             self._show_initial_re_rmse()
 
+            if hasattr(self, "_rebuild_target_scatter"):
+                self._rebuild_target_scatter(np.asarray(wls_meas, dtype=np.float64), oblique_mode=True)
+
             self.launch_re_btn.setEnabled(True)
 
             self.eval_btn.setEnabled(True)

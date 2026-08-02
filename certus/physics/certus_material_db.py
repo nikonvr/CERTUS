@@ -1,6 +1,6 @@
 import numpy as np
 from numba import njit, prange
-from typing import *
+from typing import Any, Callable
 from functools import lru_cache
 import math
 from certus.core.certus_core import SUBSTRATES
@@ -82,6 +82,7 @@ class MaterialDatabase:
 
     def __init__(self, filepath: str = "clues.xlsx"):
         from certus.utils.certus_strat_db import RobustMaterialDatabase
+
         self._db = RobustMaterialDatabase(filepath)
         self._interpolation_cache = {}
         self._substrate_cache = {}
@@ -152,8 +153,6 @@ class MaterialDatabase:
             "hit_rate": hit_rate,
             "cache_size": len(self._computation_cache),
         }
-
-
 
 
 # =============================================================================

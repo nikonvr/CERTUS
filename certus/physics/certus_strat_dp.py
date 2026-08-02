@@ -1,7 +1,6 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.core.certus_core import TWO_PI
 from certus.physics.certus_opt_kernels import compute_RT_from_matrix
 from certus.physics.certus_tmm_core import compute_TMM_single_point_k0_exact
@@ -12,8 +11,11 @@ K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 from .certus_strat_math import check_extrema_proximity, _calc_T_from_matrix, _calc_T_added_layer
 
-@njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
-def _compute_valid_blocks_kernel(layer_wls: np.ndarray, layer_costs: np.ndarray, valid_mask: np.ndarray, num_layers: int, top_k: int, max_W: int):
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def _compute_valid_blocks_kernel(
+    layer_wls: np.ndarray, layer_costs: np.ndarray, valid_mask: np.ndarray, num_layers: int, top_k: int, max_W: int
+):
     block_costs = np.full((num_layers + 1, num_layers + 1, top_k), np.inf, dtype=np.float64)
     block_wls = np.full((num_layers + 1, num_layers + 1, top_k), -1.0, dtype=np.float64)
     block_counts = np.zeros((num_layers + 1, num_layers + 1), dtype=np.int32)
@@ -82,8 +84,12 @@ def _compute_valid_blocks_kernel(layer_wls: np.ndarray, layer_costs: np.ndarray,
                     block_wls[i, j, k] = temp_wls[k]
                 block_counts[i, j] = take
     return (block_costs, block_wls, block_counts)
-@njit(cache=True, fastmath=True, nogil=True, error_model='numpy')
-def _dp_kernel(block_costs: np.ndarray, block_wls: np.ndarray, block_counts: np.ndarray, n_blocks: int, num_layers: int, top_k: int):
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def _dp_kernel(
+    block_costs: np.ndarray, block_wls: np.ndarray, block_counts: np.ndarray, n_blocks: int, num_layers: int, top_k: int
+):
     dp_costs = np.full((n_blocks + 1, num_layers + 1, top_k * 2), np.inf, dtype=np.float64)
     dp_paths_start = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)
     dp_paths_end = np.full((n_blocks + 1, num_layers + 1, top_k * 2, n_blocks), -1, dtype=np.int32)

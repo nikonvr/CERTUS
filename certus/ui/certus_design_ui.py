@@ -816,6 +816,9 @@ class CertusDesignApp(
     def _clear_needle_search_state(self, *args, **kwargs):
         return self.optimization_manager._clear_needle_search_state(*args, **kwargs)
 
+    def start_needle_worker(self, *args, **kwargs):
+        return self.optimization_manager.start_needle_worker(*args, **kwargs)
+
 
     # --- CoreManager Proxies ---
     def _get_default_splitter_sizes(self, *args, **kwargs):

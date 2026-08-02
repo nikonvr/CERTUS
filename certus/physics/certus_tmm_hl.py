@@ -1,14 +1,13 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
 from .certus_tmm_substrate import calculate_bare_substrate_R, calculate_bare_substrate_RT
-
+from .certus_tmm_matrix import calculate_RT_with_backside_fused, calculate_RT_no_backside
 
 # --- LOCKED --- Validated by test_tmm_coherence.py (test_analytical_hlh, test_vectorized_vs_reference) ───
 
@@ -142,4 +141,3 @@ def calculate_RT_vectorized_real_HL(
 
 
 # =========================================================================================
-

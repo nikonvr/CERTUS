@@ -149,7 +149,8 @@ class REMathStrategy:
             logging.info(msg)
             _intra_2b = min(0.92, float(_c['i']) / float(max(ctx._maxiter_p2b, 1)))
             ctx._emit_re_prog(ctx._pct_p2b(ctx.pl, ctx._p2_ki_slot[0], _intra_2b), msg)
-            ctx._emit_re_spectrum_live(ep_x, _c['i'], correc=cor_spl, last_mse=_c['mse'], force=False)
+        
+        ctx._emit_re_spectrum_live(ep_x, _c['i'], correc=cor_spl, last_mse=_c['mse'], force=False)
 
     def _compute_fun_res_p2(worker, ctx_p2, xv: np.ndarray, emit_interval: float=5.0) -> Any:
         worker._compute_eval_both_p2(ctx_p2, xv, emit_interval=emit_interval)
@@ -221,6 +222,8 @@ class REMathStrategy:
             logging.info('RE phase 2a  TRF iter ~%d (%.1fs since prefit start)', _cb2a['i'], now - _t_pf)
             _intra_2a = min(0.92, float(_cb2a['i']) / float(max(ctx._prefit_max, 1)))
             ctx._emit_re_prog(ctx._pct_p2a(ctx.pl, _ki, _intra_2a), f"RE phase 2a  iter {_cb2a['i']} TRF spline prefit...")
+        
+        ctx._emit_re_spectrum_live(ep_p1, _cb2a['i'], correc=cor_c, last_mse=float(mse), force=False)
 
     def _compute_fun_res_p2a(worker, ctx_p2, x_sp: np.ndarray, _cb2a) -> Any:
         worker._compute_eval_both_p2a(ctx_p2, x_sp, _cb2a, np.asarray(ctx_p2.ep_p1, dtype=np.float64), int(ctx_p2._p2_ki_slot[0]), float(ctx_p2._t_p2))

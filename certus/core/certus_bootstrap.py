@@ -6,5 +6,5 @@ from certus.core.certus_runtime import build_runtime, CertusRuntime, setup_numba
 from certus.core.certus_logging import setup_logging, get_logger, handle_exception
 
 
-def bootstrap_app(*args, **kwargs):
+def bootstrap_app(*args: object, **kwargs: object) -> CertusRuntime:
     return build_runtime(*args, **kwargs)

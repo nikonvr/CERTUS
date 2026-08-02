@@ -835,6 +835,7 @@ def smart_init_sweep_node_thickness_rmse(
     L_hi: float,
     d_nm_current: float | None = None,
     relax_n_mono: bool = False,
+    **_kwargs,
 ) -> dict[str, Any]:
     """
 

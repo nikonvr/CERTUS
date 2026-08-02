@@ -28,6 +28,7 @@ from .spline_pipeline_utils import (
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
 import copy as _copy
+from certus.utils.certus_copy_utils import copy_spline_result
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 from dataclasses import dataclass
@@ -82,7 +83,6 @@ from certus.spline.certus_corridor_logger import (
     log_coaching_corridor_pipeline_skip_empty,
     log_coaching_uncertainty_parameter_guide,
 )
-
 
 
 def insert_manual_sigma_nodes(
@@ -167,7 +167,7 @@ def insert_manual_sigma_nodes(
             _bpr = float(_best_polished_rmse)
             if np.isfinite(_bpr) and _bpr < rmse_ref:
                 rmse_ref = _bpr
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             pass
     if not np.isfinite(rmse_ref):
         _log_spline_pipeline_json(log, "manual_node_insert_skip", seq="05b", reason="rmse_not_finite")
@@ -543,7 +543,11 @@ def insert_manual_sigma_nodes(
         rmse_after=rmse_new,
     )
     rmse_delta_final = float(rmse_new - rmse_ref) if np.isfinite(rmse_new) and np.isfinite(rmse_ref) else float("nan")
-    acceptance_rule = "explicit_k_reduction_or_rmse_within_tolerance" if is_explicit_k_reduction else "rmse_regression_within_tolerance"
+    acceptance_rule = (
+        "explicit_k_reduction_or_rmse_within_tolerance"
+        if is_explicit_k_reduction
+        else "rmse_regression_within_tolerance"
+    )
     audit_status = "accepted_worse_rmse" if np.isfinite(rmse_delta_final) and rmse_delta_final > 0.0 else "ok"
     human_status = "ACCEPTED (worse RMSE)" if audit_status == "accepted_worse_rmse" else "ACCEPTED"
     delta_ns_final = float(out.get("substrate_n_offset", 0.0))
@@ -572,6 +576,7 @@ def insert_manual_sigma_nodes(
 
     return out
 
+
 def insert_mwir_mid_sigma_node(
     cfg: SplineOptConfig,
     base_result: dict,
@@ -598,6 +603,7 @@ def insert_mwir_mid_sigma_node(
         live_cb=live_cb,
     )
 
+
 def worker_spline_mwir_insert_node(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -617,6 +623,7 @@ def worker_spline_mwir_insert_node(
     except NUMERICAL_FAULT_EXCEPTIONS as ex:
         log.error("INDEX_SPLINE [MWIR NODE INSERT] worker unhandled exception: %s", ex, exc_info=True)
         return None
+
 
 def worker_spline_manual_sigma_insert(
     base_result: dict,
@@ -648,6 +655,7 @@ def worker_spline_manual_sigma_insert(
         log.error("INDEX_SPLINE [MANUAL NODE INSERT] worker unhandled exception: %s", ex, exc_info=True)
         return None
 
+
 def worker_spline_auto_add_one_knot(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -665,17 +673,17 @@ def worker_spline_auto_add_one_knot(
         active_knots = np.unique(np.sort(np.asarray(target_sigma_knots, dtype=np.float64).ravel()))
         if active_knots.size < 2:
             log.info("INDEX_SPLINE [AUTO_ADD_ONE] skip: need at least two knots (K=%d)", int(active_knots.size))
-            return _copy.deepcopy(base_result)
+            return copy_spline_result(base_result)
 
         rmse_ref = float(base_result.get("rmse", float("inf")))
         if not np.isfinite(rmse_ref):
             log.warning("INDEX_SPLINE [AUTO_ADD_ONE] abort: reference RMSE is non-finite")
-            return _copy.deepcopy(base_result)
+            return copy_spline_result(base_result)
 
         candidate_maxfun = int(max(120, int(getattr(cfg, "auto_add_one_candidate_maxfun", 500) or 500)))
         cfg_eval = cfg.replace(manual_node_insert_polish_maxfun=candidate_maxfun)
 
-        best_result = _copy.deepcopy(base_result)
+        best_result = copy_spline_result(base_result)
         best_rmse = float("inf")
         best_gap_idx = -1
         best_kept_insertion = False
@@ -716,7 +724,7 @@ def worker_spline_auto_add_one_knot(
             # test uses the solver RMSE (0.002402) not the tighter polished reference
             # (0.002196).  Suppressing live_cb prevents intermediate scan results
             # (partially converged, 240 iters) from appearing as a degradation in the GUI.
-            _scan_seed = _copy.deepcopy(base_result)
+            _scan_seed = copy_spline_result(base_result)
             for _pk in (
                 "spectral_rmse_global_best_value",
                 "spectral_rmse_polished_value",
@@ -749,15 +757,15 @@ def worker_spline_auto_add_one_knot(
             )
 
             if np.isfinite(rmse_cand):
-                scan_candidates.append((float(rmse_cand), int(gi), _copy.deepcopy(cand)))
+                scan_candidates.append((float(rmse_cand), int(gi), copy_spline_result(cand)))
                 if (not best_kept_insertion) or rmse_cand < (best_rmse - 1e-12):
                     best_rmse = float(rmse_cand)
-                    best_result = _copy.deepcopy(cand)
+                    best_result = copy_spline_result(cand)
                     best_gap_idx = int(gi)
                     best_kept_insertion = True
 
         if not best_kept_insertion:
-            best_result = _copy.deepcopy(base_result)
+            best_result = copy_spline_result(base_result)
             best_rmse = float(rmse_ref)
 
         # ── DEEP POLISH PHASE (TOP-K PROMOTION) ──────────────────────────────
@@ -796,7 +804,7 @@ def worker_spline_auto_add_one_knot(
                             f"(gap={gap_idx_pr + 1}, scan_rmse={scan_rmse:.6f})",
                         )
                     winner_knots = np.asarray(cand_pr.get("sigma_knots", []), dtype=np.float64)
-                    _deep_seed = _copy.deepcopy(cand_pr)
+                    _deep_seed = copy_spline_result(cand_pr)
                     # Strip polished RMSE fields so the deep polish acceptance test
                     # uses the solver RMSE, not an unreachable polished reference
                     # that would cause systematic false rejections.
@@ -873,6 +881,7 @@ def worker_spline_auto_add_one_knot(
         log.error("INDEX_SPLINE [AUTO_ADD_ONE] worker unhandled exception: %s", ex, exc_info=True)
         return None
 
+
 def _sensitivity_rank_inner_indices(
     cfg: "SplineOptConfig",
     active_knots: np.ndarray,
@@ -890,9 +899,7 @@ def _sensitivity_rank_inner_indices(
 
     lam_raw = getattr(cfg, "lam_nm", None)
     lam_full = (
-        np.asarray(lam_raw, dtype=np.float64).ravel()
-        if lam_raw is not None
-        else np.asarray([], dtype=np.float64)
+        np.asarray(lam_raw, dtype=np.float64).ravel() if lam_raw is not None else np.asarray([], dtype=np.float64)
     )
     d_nm_cur = float(best_result_out.get("d_nm", 0.0))
     n_phys_cur = np.asarray(best_result_out.get("n_nodes_physical", []), dtype=np.float64).ravel()
@@ -909,8 +916,12 @@ def _sensitivity_rank_inner_indices(
     if not can_rank:
         log.debug(
             "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking skipped | can_rank=%s | size_n=%d | size_L=%d | lam=%d | d_finite=%s",
-            int(step + 1), str(can_rank), int(n_phys_cur.size), int(L_nodes_cur.size),
-            int(lam_full.size), str(np.isfinite(d_nm_cur)),
+            int(step + 1),
+            str(can_rank),
+            int(n_phys_cur.size),
+            int(L_nodes_cur.size),
+            int(lam_full.size),
+            str(np.isfinite(d_nm_cur)),
         )
         return inner_indices
 
@@ -920,7 +931,7 @@ def _sensitivity_rank_inner_indices(
         try:
             n_reduced = PchipInterpolator(active_knots, n_phys_cur)(sk_reduced)
             L_reduced = PchipInterpolator(active_knots, L_nodes_cur)(sk_reduced)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             n_reduced = np.interp(sk_reduced, active_knots, n_phys_cur)
             L_reduced = np.interp(sk_reduced, active_knots, L_nodes_cur)
         n_slice = physical_nodes_to_x_slice_n(n_reduced, sk_reduced, cfg.n_mono_band_nm)
@@ -928,13 +939,19 @@ def _sensitivity_rank_inner_indices(
         x_full_red = np.concatenate((np.asarray([d_nm_cur], dtype=np.float64), x_nodes_red))
         try:
             n_lam_red, k_lam_red = nk_from_x_pwlnk(
-                x_full_red, lam_full, sk_reduced,
-                cfg.k_clip_lo, cfg.k_clip_hi, sig_pre=None,
+                x_full_red,
+                lam_full,
+                sk_reduced,
+                cfg.k_clip_lo,
+                cfg.k_clip_hi,
+                sig_pre=None,
                 n_mono_band_nm=cfg.n_mono_band_nm,
                 profile_interp=str(cfg.nk_profile_interp or "smooth"),
             )
             _, rmse_norefit = spectral_mse_rmse_masked_from_nk(
-                cfg, best_result_out, lam_full,
+                cfg,
+                best_result_out,
+                lam_full,
                 np.asarray(n_lam_red, dtype=np.float64).ravel(),
                 np.asarray(k_lam_red, dtype=np.float64).ravel(),
                 d_nm_cur,
@@ -962,10 +979,14 @@ def _sensitivity_rank_inner_indices(
         result = [i for i, _ in sensitivity_scores[:top_n_sensitivity]]
     log.debug(
         "INDEX_SPLINE [AUTO_CLEAN] step=%d sensitivity ranking | K=%d | top_%d=%s | scores=%s",
-        int(step + 1), int(K), int(top_n_sensitivity), str(result),
+        int(step + 1),
+        int(K),
+        int(top_n_sensitivity),
+        str(result),
         ", ".join(f"{i}:{s:.6f}" for i, s in sensitivity_scores[:top_n_sensitivity]),
     )
     return result
+
 
 def _build_local_pull_variants(
     knots: np.ndarray,
@@ -1038,6 +1059,7 @@ def _build_local_pull_variants(
 
     return variants
 
+
 def _build_local_refine_variants(
     knots: np.ndarray,
     removed_idx: int,
@@ -1105,4 +1127,3 @@ def _build_local_refine_variants(
             out.append((f"neighbor_pull_refine_dl{d_left:+.3e}_dr{d_right:+.3e}", cand.copy()))
 
     return out
-

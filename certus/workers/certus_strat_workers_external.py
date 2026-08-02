@@ -1,4 +1,3 @@
-
 from typing import TYPE_CHECKING, Any
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_core import APP_CONTEXT
@@ -8,6 +7,7 @@ from certus.core.certus_metrology import ValidationStatus
 from certus.utils.certus_strat_service import calculate_nominal_properties, extract_best_rmse, select_best_strat_result
 from certus.core.certus_strat_core import generate_excel_report
 from certus.core.certus_core import get_export_config, get_resource_path, certus_timestamp_file
+from certus.utils.certus_exclusions import filter_params_for_serialization
 from pathlib import Path
 from certus.core.certus_core import SUBSTRATE_MAPPING
 import certus.utils.certus_strat_service as _strat_service_module
@@ -19,6 +19,7 @@ from certus.core.certus_strat_robustness import run_final_simulation_block
 
 if TYPE_CHECKING:
     from certus.workers.certus_strat_workers import WorkerThread
+
 
 class ExternalEvaluationStrategy:
     def execute(self, worker: "WorkerThread") -> None:
@@ -78,7 +79,7 @@ class ExternalEvaluationStrategy:
             metadata = {
                 "rmse": best_rmse,
                 "strategies_count": len(final_results.get("all_strategies_results", [])),
-                "params": {k: v for k, v in worker.params.items() if k not in ["logger", "materials_db", "clues_at_wl"]},
+                "params": filter_params_for_serialization(worker.params),
             }
 
             worker.signals.excel_ready.emit(excel_data, metadata)

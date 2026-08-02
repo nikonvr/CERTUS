@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from unittest.mock import MagicMock
-from certus.core.certus_index_core import (
+from certus.core.certus_index_objectives import (
     _phase23_cached_get,
     _phase23_cached_set,
     Phase23SplineObjective,

@@ -707,11 +707,11 @@ class FreeKnotStageContext:
     best_spec_mse: list = field(default_factory=list)
 
     def w2s(self, sk: np.ndarray) -> np.ndarray:
-        from certus.core.certus_core import sigma_knots_encode
+        from certus.spline.spline_objective import sigma_knots_encode
         return sigma_knots_encode(sk, self.s_lo, self.s_hi)
 
     def s2s(self, raw: np.ndarray) -> np.ndarray:
-        from certus.core.certus_core import sigma_knots_decode
+        from certus.spline.spline_objective import sigma_knots_decode
         return sigma_knots_decode(raw, self.s_lo, self.s_hi, work=self.decode_work, reuse_output=True)
 
     def unpack(self, z: np.ndarray):
@@ -870,7 +870,7 @@ class SingleSplineStageContext:
         if self.optimizer.n_evals - self.pg_snap_last_eval >= step_pg:
             self.pg_snap_last_eval = int(self.optimizer.n_evals)
             step_hit = True
-            from certus.core.certus_core import _log_spline_pipeline_json
+            from certus.spline.certus_index_spline_core import _log_spline_pipeline_json
             _log_spline_pipeline_json(
                 self.lgr,
                 "pglobal_progress",

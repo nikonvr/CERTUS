@@ -67,7 +67,8 @@ class ConfigManager:
                         parsed = json.load(f)
                         if isinstance(parsed, dict):
                             config = parsed
-                except (OSError, IOError, json.JSONDecodeError, TypeError):
+                except (OSError, IOError, json.JSONDecodeError, TypeError) as exc:
+                    logging.debug("Could not read existing config file for save, starting fresh: %s", exc)
                     config = {}
             config["schema_version"] = CONFIG_SCHEMA_VERSION
             config[self.key_name] = value

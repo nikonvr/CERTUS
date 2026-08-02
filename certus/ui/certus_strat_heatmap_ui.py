@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_plots_ui import CertusScientificPlot
 
 class InteractiveHeatmapWindow(QWidget):  # <--- Changement ici: QWidget au lieu de QMainWindow
     def __init__(self, parent, raw_data_thickness) -> Any:

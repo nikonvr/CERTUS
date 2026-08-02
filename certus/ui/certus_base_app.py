@@ -137,6 +137,7 @@ __all__ = [
 
 
 import copy
+from certus.utils.certus_copy_utils import copy_optimization_result
 import functools
 
 
@@ -283,21 +284,27 @@ from certus.utils.certus_data import read_data_file_robust
 # =============================================================================
 
 
-
-
 from certus.ui.certus_ui_utils import (
-    safe_ui_action, show_toast, show_status_feedback, confirm_stop_with_timeout,
-    process_log_queue_standard, open_file_explorer, stop_worker_and_thread,
-    format_count_kmg, set_certus_window_icon, copy_app_logs_to_clipboard,
-    install_standard_shortcuts, _CertusDropFilter, update_global_plot_config,
-    apply_certus_theme
+    safe_ui_action,
+    show_toast,
+    show_status_feedback,
+    confirm_stop_with_timeout,
+    process_log_queue_standard,
+    open_file_explorer,
+    stop_worker_and_thread,
+    format_count_kmg,
+    set_certus_window_icon,
+    copy_app_logs_to_clipboard,
+    install_standard_shortcuts,
+    _CertusDropFilter,
+    update_global_plot_config,
+    apply_certus_theme,
 )
-from certus.ui.certus_ui_widgets_factory import (
-    create_log_widget, create_top_actions_bar
-)
+from certus.ui.certus_ui_widgets_factory import create_log_widget, create_top_actions_bar
 from certus.ui.certus_ui_widgets_utils import CertusLogPanel
 from certus.ui.certus_theme import CertusTheme, get_standard_stylesheet
 import certus.ui.certus_io_ui as certus_io_ui
+
 
 class StatsCounter:
     """Lightweight counter container shared across CERTUS apps.
@@ -387,30 +394,38 @@ class StatsCounter:
     def __repr__(self) -> str:
         return f"StatsCounter({self._data!r})"
 
+
 class CertusAppLogsMixin:
     """Provides common UI log operations."""
+
     def copy_logs_to_clipboard(self) -> None:
         """Copy logs to clipboard and update status label if possible."""
         copy_app_logs_to_clipboard(self)
-        if hasattr(self, 'lbl_status') and hasattr(self.lbl_status, 'setText'):
+        if hasattr(self, "lbl_status") and hasattr(self.lbl_status, "setText"):
             self.lbl_status.setText("Logs copied to clipboard!")
 
     def on_toggle_details(self, checked: bool) -> None:
         """Show/Hide log panel dynamically."""
-        if hasattr(self, 'log_text'):
+        if hasattr(self, "log_text"):
             self.log_text.setVisible(checked)
-        if hasattr(self, 'toggle_details_btn'):
+        if hasattr(self, "toggle_details_btn"):
             self.toggle_details_btn.setText("Hide Details" if checked else "Show Details")
-        if hasattr(self, 'right_splitter'):
+        if hasattr(self, "right_splitter"):
             if checked:
                 self.right_splitter.setSizes([600, 200])
             else:
                 self.right_splitter.setSizes([1000, 0])
 
+
 from certus.ui.mixins.certus_base_core_mixins import (
-    CertusZoomMixin, CertusCommandPaletteMixin, CertusPremiumExportMixin, 
-    CertusEmptyStateMixin, CertusRecentsMixin, CertusDialogMixin
+    CertusZoomMixin,
+    CertusCommandPaletteMixin,
+    CertusPremiumExportMixin,
+    CertusEmptyStateMixin,
+    CertusRecentsMixin,
+    CertusDialogMixin,
 )
+
 
 class CertusBaseApp(
     QMainWindow,
@@ -477,6 +492,7 @@ class CertusBaseApp(
         self.runtime: CertusRuntime = runtime if runtime is not None else build_runtime()
 
         from certus.ui.certus_worker_manager import CertusWorkerManager, CertusNumbaWarmupManager
+
         self.worker_manager = worker_manager or CertusWorkerManager(self)
         self.numba_manager = numba_manager or CertusNumbaWarmupManager(logging.getLogger("CERTUS"), self)
 
@@ -493,14 +509,12 @@ class CertusBaseApp(
         # Center on screen
 
         screen = QApplication.primaryScreen().availableGeometry()
-
-        x = (screen.width() - self.DEFAULT_WIDTH) // 2
-
-        y = (screen.height() - self.DEFAULT_HEIGHT) // 2
-
-        self.setGeometry(x, y, self.DEFAULT_WIDTH, self.DEFAULT_HEIGHT)
-
-        self.setMinimumSize(self.MIN_WIDTH, self.MIN_HEIGHT)
+        width = min(self.DEFAULT_WIDTH, screen.width() - 40)
+        height = min(self.DEFAULT_HEIGHT, screen.height() - 60)
+        x = max(20, (screen.width() - width) // 2)
+        y = max(30, (screen.height() - height) // 2)
+        self.setGeometry(x, y, width, height)
+        self.setMinimumSize(min(self.MIN_WIDTH, width), min(self.MIN_HEIGHT, height))
 
         # Common state
 
@@ -523,7 +537,7 @@ class CertusBaseApp(
         # Numba ready flag
 
         self.numba_ready = False
-        
+
         self.numba_manager.sig_numba_ready.connect(self._on_numba_ready_from_manager)
         self.numba_manager.sig_numba_error.connect(self._on_numba_error_from_manager)
 
@@ -565,7 +579,7 @@ class CertusBaseApp(
                 sc.setContext(Qt.ShortcutContext.WindowShortcut)
                 sc.activated.connect(self.open_command_palette)
                 self._command_palette_shortcuts.append(sc)
-            except (TypeError, RuntimeError):
+            except TypeError, RuntimeError:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # U4: install F1 / Shift+? to open the keyboard-shortcuts overlay.
@@ -575,7 +589,7 @@ class CertusBaseApp(
                 sc.setContext(Qt.ShortcutContext.WindowShortcut)
                 sc.activated.connect(self.open_shortcuts_overlay)
                 self._command_palette_shortcuts.append(sc)
-            except (TypeError, RuntimeError):
+            except TypeError, RuntimeError:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # U5: install global zoom shortcuts for a more premium 2026 layout.
@@ -587,14 +601,14 @@ class CertusBaseApp(
                 zoom_out=self.zoom_out_ui,
                 reset_zoom=self.reset_ui_zoom,
             )
-        except (TypeError, RuntimeError, AttributeError):
+        except TypeError, RuntimeError, AttributeError:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # U5b: reflect the current zoom level in the status bar for instant feedback.
         try:
             self._ensure_zoom_status_widget()
             self._update_zoom_status()
-        except (TypeError, RuntimeError, AttributeError):
+        except TypeError, RuntimeError, AttributeError:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         # P2.3 - Install the standard Help menu on every subclass (idempotent).
@@ -604,7 +618,7 @@ class CertusBaseApp(
                 already_present = any((a.text() or "").replace("&", "").strip().lower() == "help" for a in mb.actions())
                 if not already_present:
                     self.install_help_menu()
-        except (RuntimeError, AttributeError, TypeError):  # pragma: no cover - defensive
+        except RuntimeError, AttributeError, TypeError:  # pragma: no cover - defensive
             pass
 
         # P1.3 - Auto-wire empty-state overlays on well-known table widgets.
@@ -627,28 +641,20 @@ class CertusBaseApp(
         """Best-effort: run the onboarding tour the first time only."""
         try:
             self.run_onboarding_tour(force=False)
-        except (RuntimeError, AttributeError, TypeError):  # pragma: no cover - defensive
+        except RuntimeError, AttributeError, TypeError:  # pragma: no cover - defensive
             pass
-
-
 
     # =========================================================================
     # U3 — Command palette
     # =========================================================================
 
-
-
     # =========================================================================
     # P5 - Destructive-action confirmations (uniform modal)
     # =========================================================================
 
-
-
     # =========================================================================
     # P3 - Premium report helpers (Excel + PDF via certus_reports)
     # =========================================================================
-
-
 
     # =========================================================================
     # P1.1 - Skeleton overlay convenience (any long-running op can use these)
@@ -659,12 +665,9 @@ class CertusBaseApp(
 
     # (attribute name on self -> (icon, title, description, optional CTA))
 
-
     # =========================================================================
     # U5 — Recent files
     # =========================================================================
-
-
 
     def _qs_key(self, suffix: str) -> str:
         return f"window/{self.APP_NAME}/{suffix}"
@@ -722,7 +725,7 @@ class CertusBaseApp(
 
     def _on_numba_ready_from_manager(self) -> None:
         self.numba_ready = True
-        
+
     def _on_numba_error_from_manager(self, message: str) -> None:
         self.numba_ready = False
 
@@ -746,7 +749,6 @@ class CertusBaseApp(
 
     def _on_warmup_error(self, message: str) -> None:
         self.numba_manager.on_warmup_error(message)
-
 
     def _apply_certus_compact_theme(self, plots: list) -> None:
         """Shared theme application for compact-UI modules (DESIGN, RE).
@@ -803,7 +805,6 @@ class CertusBaseApp(
 
         if log_widget and self.log_queue:
             process_log_queue_standard(self.log_queue, log_widget)
-
 
     # --- Config Save/Load ---
 
@@ -885,13 +886,14 @@ class CertusBaseApp(
 
             except Exception as e:
                 from certus.utils.errors import ConfigurationCorruptionError
+
                 msg = f"Failed to save configuration: {e}"
                 if self.logger:
                     self.logger.error(msg)
                 raise ConfigurationCorruptionError(
                     msg,
                     details=str(e),
-                    suggestion="Please verify if the destination path is writable and disk space is sufficient."
+                    suggestion="Please verify if the destination path is writable and disk space is sufficient.",
                 ) from e
 
     @safe_ui_action
@@ -924,10 +926,11 @@ class CertusBaseApp(
                         if self.logger:
                             self.logger.error(msg)
                         from certus.utils.errors import ConfigurationCorruptionError
+
                         raise ConfigurationCorruptionError(
                             msg,
                             details=str(e),
-                            suggestion="Ensure the configuration file matches the INDEX_SPLINE schema."
+                            suggestion="Ensure the configuration file matches the INDEX_SPLINE schema.",
                         ) from e
 
                 self._apply_config(config)
@@ -941,6 +944,7 @@ class CertusBaseApp(
 
             except Exception as e:
                 from certus.utils.errors import ConfigurationCorruptionError
+
                 if isinstance(e, ConfigurationCorruptionError):
                     raise
                 msg = f"Failed to load configuration: {e}"
@@ -949,7 +953,7 @@ class CertusBaseApp(
                 raise ConfigurationCorruptionError(
                     msg,
                     details=str(e),
-                    suggestion="Ensure the configuration file exists, is valid JSON, and has correct file permissions."
+                    suggestion="Ensure the configuration file exists, is valid JSON, and has correct file permissions.",
                 ) from e
 
     # --- Worker Management ---
@@ -1719,7 +1723,7 @@ class CertusBaseApp(
         if rmse <= self._best_eval_rmse + 1e-12:
             self._best_eval_rmse = float(rmse)
 
-            self._best_eval_result = copy.deepcopy(data)
+            self._best_eval_result = copy_optimization_result(data)
 
     def _save_undo_state(self, force: bool = False) -> None:
         """Saves current state for undo"""
@@ -2078,13 +2082,20 @@ class CertusBaseApp(
         elapsed_str = ""
 
         is_top_start = (
-            ("Starting" in msg or "STARTING" in msg)
-            and "optimization" in msg
-            and not any(sub in msg for sub in ("Auto-Restart", "PGLOBAL Global", "iterative", "local re-optimization"))
-        ) or "Creating REWorker" in msg or "Calling worker.start()" in msg
+            (
+                ("Starting" in msg or "STARTING" in msg)
+                and "optimization" in msg
+                and not any(
+                    sub in msg for sub in ("Auto-Restart", "PGLOBAL Global", "iterative", "local re-optimization")
+                )
+            )
+            or "Creating REWorker" in msg
+            or "Calling worker.start()" in msg
+        )
 
         if is_top_start:
             import time as _time
+
             self._workflow_wall_start = _time.time()
 
         t0 = getattr(self, "_workflow_wall_start", None)
@@ -2098,8 +2109,10 @@ class CertusBaseApp(
 
             elapsed_str = f" <b>({m}m{s:02d}s)</b>"
 
-        if hasattr(self, 'log_text'):
-            self.log_text.append(f"<span style='color:{c}'><b>[{certus_timestamp_display()}]</b>{elapsed_str} {msg}</span>")
+        if hasattr(self, "log_text"):
+            self.log_text.append(
+                f"<span style='color:{c}'><b>[{certus_timestamp_display()}]</b>{elapsed_str} {msg}</span>"
+            )
 
         # P0.5 - Mirror to stacked toasts for important levels only
         self._mirror_log_to_toast(msg, lvl)
@@ -2122,7 +2135,7 @@ class CertusBaseApp(
             clean = re.sub(r"<[^>]+>", "", str(msg)).strip()
             if clean:
                 show_toast_stack(self, clean[:200], variant=variant, duration_ms=3500)
-        except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
+        except RuntimeError, AttributeError, TypeError, ValueError, ImportError:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def reattach_front_table(self) -> None:
@@ -2290,7 +2303,7 @@ class CertusBaseApp(
 
             self.log(short, "ERROR")
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         self._set_busy(False)
@@ -2309,7 +2322,7 @@ class CertusBaseApp(
             try:
                 pw.stop("Error")
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except NUMERICAL_FAULT_EXCEPTIONS:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
     def _update_busy_ui(self, busy: bool) -> None:
@@ -2356,7 +2369,7 @@ class CertusBaseApp(
 
             return float(np.real(np.asarray(nk, dtype=np.complex128).ravel()[0]))
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             m = mats[mat_name]
 
             n4 = getattr(m, "n4", None)
@@ -2440,7 +2453,7 @@ class CertusBaseApp(
                     try:
                         qwot_f = float(sb.value())
 
-                    except (TypeError, ValueError):
+                    except TypeError, ValueError:
                         qwot_f = float("nan")
 
                 if np.isfinite(qwot_f):

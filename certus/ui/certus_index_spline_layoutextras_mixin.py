@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.ui.certus_index_spline_common import _apply_fixed_log_k_axis
 
 class CertusIndexSplineLayoutExtrasMixin:
     """CertusIndexSplineLayoutExtrasMixin."""

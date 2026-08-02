@@ -521,8 +521,7 @@ def _apply_elite_refinement_if_enabled(
     available_wls = _resolve_available_wavelengths(ctx.clues_at_wl, ctx.wl_arr)
     total_elite_added = 0
     
-    is_testing = "PYTEST_CURRENT_TEST" in __import__("os").environ
-    executor_cls = concurrent.futures.ThreadPoolExecutor if is_testing else concurrent.futures.ProcessPoolExecutor
+    executor_cls = concurrent.futures.ThreadPoolExecutor
     worker_count = get_safe_worker_count()
 
     for elite_round in range(1, elite_rounds + 1):

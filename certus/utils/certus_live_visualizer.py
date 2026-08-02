@@ -14,13 +14,12 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 # Import CERTUS components
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
+from certus.core.certus_lazy_imports import lazy_matplotlib
 
 
 @dataclass
@@ -166,7 +165,11 @@ class LiveOptimizationVisualizer(QObject):
         head.addWidget(self._btn_copy_excel)
         self.layout.addLayout(head)
 
-        # Create matplotlib figure
+        # Create matplotlib figure (lazy loaded)
+        matplotlib = lazy_matplotlib()
+        Figure = matplotlib.figure.Figure
+        FigureCanvas = matplotlib.backends.backend_qtagg.FigureCanvasQTAgg
+
         self.figure = Figure(figsize=(14, 10))
         self.canvas = FigureCanvas(self.figure)
         self.layout.addWidget(self.canvas)

@@ -417,9 +417,9 @@ class _CorridorExportMixin:
 
         start_dir = get_certus_last_dir()
         # Fallback helper path check
-        from certus.spline.certus_index_spline_rendering import _SCRIPT_DIR as rendering_script_dir
         if not start_dir or not Path(start_dir).is_dir():
-            start_dir = str(rendering_script_dir)
+            from pathlib import Path
+            start_dir = str(Path(__file__).parent.absolute())
 
         suggested = str(Path(start_dir) / "certus_index_spline_nk.csv")
         path, _ = QFileDialog.getSaveFileName(

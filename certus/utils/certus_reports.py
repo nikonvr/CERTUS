@@ -486,10 +486,11 @@ def build_pdf_report(
     Uses matplotlib's ``PdfPages`` so no extra dependency is required.
     """
     try:
-        import matplotlib
+        from certus.core.certus_lazy_imports import lazy_matplotlib, lazy_matplotlib_pyplot
 
+        matplotlib = lazy_matplotlib()
         matplotlib.use("Agg", force=False)
-        import matplotlib.pyplot as plt
+        plt = lazy_matplotlib_pyplot()
         from matplotlib.backends.backend_pdf import PdfPages
     except ImportError as e:
         raise ImportError("matplotlib is required for PDF export") from e
@@ -695,7 +696,10 @@ def _render_pdf_chart(ax, sec: Section) -> None:
         return
     try:
         import io
-        import matplotlib.image as mpimg
+        from certus.core.certus_lazy_imports import lazy_matplotlib
+
+        matplotlib = lazy_matplotlib()
+        mpimg = matplotlib.image
 
         buf = io.BytesIO()
         fig_obj.savefig(buf, format="png", dpi=150, bbox_inches="tight")

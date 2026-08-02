@@ -349,3 +349,69 @@ def __getattr__(name: str):
 
 def __dir__() -> list[str]:
     return sorted(set(globals()) | set(__all__) | set(_LAZY_REEXPORTS))
+
+
+# Caching/Monkeypatching of QFileDialog to enforce security checks globally.
+original_get_open_file_name = QFileDialog.getOpenFileName
+original_get_save_file_name = QFileDialog.getSaveFileName
+original_get_open_file_names = QFileDialog.getOpenFileNames
+
+def _get_filter_and_parent(*args, **kwargs) -> tuple[str | None, Any]:
+    file_filter = kwargs.get("filter")
+    if file_filter is None and len(args) > 3:
+        file_filter = args[3]
+    parent = kwargs.get("parent")
+    if parent is None and len(args) > 0:
+        parent = args[0]
+    return file_filter, parent
+
+def secure_get_open_file_name(*args, **kwargs):
+    path, sel_filter = original_get_open_file_name(*args, **kwargs)
+    if path:
+        file_filter, parent = _get_filter_and_parent(*args, **kwargs)
+        from certus.utils.certus_validation import PathValidator
+        from certus.ui.certus_io_ui import extract_extensions_from_filter
+        allowed = extract_extensions_from_filter(file_filter)
+        try:
+            PathValidator.validate_path(path, allowed_extensions=allowed)
+        except ValueError as e:
+            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+            return "", ""
+    return path, sel_filter
+
+def secure_get_save_file_name(*args, **kwargs):
+    path, sel_filter = original_get_save_file_name(*args, **kwargs)
+    if path:
+        file_filter, parent = _get_filter_and_parent(*args, **kwargs)
+        from certus.utils.certus_validation import PathValidator
+        from certus.ui.certus_io_ui import extract_extensions_from_filter
+        allowed = extract_extensions_from_filter(file_filter)
+        try:
+            PathValidator.validate_path(path, allowed_extensions=allowed)
+        except ValueError as e:
+            QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+            return "", ""
+    return path, sel_filter
+
+def secure_get_open_file_names(*args, **kwargs):
+    paths, sel_filter = original_get_open_file_names(*args, **kwargs)
+    if paths:
+        file_filter, parent = _get_filter_and_parent(*args, **kwargs)
+        from certus.utils.certus_validation import PathValidator
+        from certus.ui.certus_io_ui import extract_extensions_from_filter
+        allowed = extract_extensions_from_filter(file_filter)
+        validated_paths = []
+        for path in paths:
+            try:
+                PathValidator.validate_path(path, allowed_extensions=allowed)
+                validated_paths.append(path)
+            except ValueError as e:
+                QMessageBox.warning(parent, "Security Alert", f"Invalid File Selected:\n{e}")
+                return [], ""
+        return validated_paths, sel_filter
+    return paths, sel_filter
+
+# Assign to static/class methods
+QFileDialog.getOpenFileName = secure_get_open_file_name
+QFileDialog.getSaveFileName = secure_get_save_file_name
+QFileDialog.getOpenFileNames = secure_get_open_file_names

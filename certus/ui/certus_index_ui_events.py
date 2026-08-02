@@ -27,7 +27,7 @@ from certus.core.certus_core import (
     OH_BAND_MAX,
 )
 from certus.ui.certus_ui_shared import apply_app_zoom
-from certus.ui.certus_index_ui import (
+from certus.ui.certus_index_ui_utils import (
     _notify_user,
     _update_loaded_file_label,
     _set_spectrum_plot_title,

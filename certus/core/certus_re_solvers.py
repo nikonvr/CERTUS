@@ -130,7 +130,8 @@ def re_execute_phase1(worker) -> list[dict]:
                 logging.info(msg)
                 _intra_p1 = min(0.92, float(_cache["i"]) / float(max(_max_iter, 1)))
                 c._emit_re_prog(c._pct_p1(run_idx, _intra_p1), msg)
-                c._emit_re_spectrum_live(x, _cache["i"], correc=c._correc_nom, last_mse=_cache["mse"], force=False)
+            
+            c._emit_re_spectrum_live(x, _cache["i"], correc=c._correc_nom, last_mse=_cache["mse"], force=False)
 
         def _fun_res(x: np.ndarray) -> Any:
             _eval_both(x)

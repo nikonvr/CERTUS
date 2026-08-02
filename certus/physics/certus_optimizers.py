@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from numba import njit, prange
-from typing import *
+from typing import Callable, TYPE_CHECKING
 import time
 import os
 import math
@@ -11,6 +11,8 @@ from threading import RLock
 from concurrent.futures import ProcessPoolExecutor
 from collections import defaultdict
 from certus.core.certus_core import PI
+from certus.core._certus_physics_impl import PGlobalConfig
+from threading import Event
 
 if TYPE_CHECKING:
     from certus_physics.structures import Sample
@@ -118,7 +120,7 @@ class LBFGSBSearcher:
             if isinstance(_probe, tuple) and len(_probe) == 2:
                 self._objective_fn = self._fun_and_grad
                 self._jac_arg = True
-        except (ValueError, RuntimeError, TypeError):
+        except ValueError, RuntimeError, TypeError:
             pass
 
     def _search_direct(
@@ -242,7 +244,7 @@ class LBFGSBSearcher:
 
             return res.x, float(res.fun), int(res.nfev)
 
-        except (ValueError, RuntimeError, np.linalg.LinAlgError):
+        except ValueError, RuntimeError, np.linalg.LinAlgError:
             return x0.copy(), float(self.func(x0)), 1
 
 
@@ -696,6 +698,7 @@ class PGlobalOptimizer:
             # Scipy QMC Sobol expects n to be a power of 2 for perfect balance properties.
             # To avoid the warning and keep balance, we generate the next power of 2 and slice.
             import math
+
             n_pow2 = 2 ** math.ceil(math.log2(n)) if n > 0 else 0
             unit_samples = self.qmc_engine.random(n_pow2)[:n]
             # Scale to physical bounds manually to avoid extra scipy calls overhead if needed,
@@ -733,7 +736,7 @@ class PGlobalOptimizer:
         if _eb is not None:
             try:
                 return np.asarray(_eb(X), dtype=np.float64)
-            except (ValueError, TypeError, RuntimeError):
+            except ValueError, TypeError, RuntimeError:
                 pass  # Fallback to per-point
 
         Y = np.empty(n, dtype=np.float64)
@@ -812,7 +815,7 @@ class PGlobalOptimizer:
 
             return (x_opt, f_opt, n_ev)
 
-        except (ValueError, RuntimeError):
+        except ValueError, RuntimeError:
             return None
 
     def _dispatch_and_collect(
@@ -849,7 +852,7 @@ class PGlobalOptimizer:
 
             try:
                 res = future.result()
-            except (ValueError, RuntimeError, TypeError, ArithmeticError):
+            except ValueError, RuntimeError, TypeError, ArithmeticError:
                 continue
 
             if res is None:
@@ -863,6 +866,7 @@ class PGlobalOptimizer:
 
             if self._best_ever is None or f_opt < self._best_ever.y:
                 from certus_physics.structures import Sample
+
                 self._best_ever = Sample(x_opt.copy(), f_opt, iteration)
 
                 best_ever_y = f_opt
@@ -983,6 +987,7 @@ class PGlobalOptimizer:
 
             if f_best < best_ever_y and callback and iteration % 2 == 0:
                 from certus_physics.structures import Sample
+
                 callback(Sample(X_batch[best_idx], f_best, iteration))
 
             # ── 5. Parallel Local Searches ────────────────────────

@@ -39,7 +39,7 @@
     "params": {
       "type": "object",
       "required": ["l0", "stack_string", "wl_range", "nH_id", "nL_id", "nSub_id"],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "l0": {
           "type": "number",
@@ -113,7 +113,7 @@
       "oneOf": [
         {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": true
         },
         {"type": "null"}
       ]
@@ -123,7 +123,7 @@
     {
       "if": {
         "properties": {
-          "step": {"enum": [23, 33]}
+          "step": {"enum": [33]}
         }
       },
       "then": {
@@ -131,7 +131,7 @@
         "properties": {
           "opti_results": {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": true
           }
         }
       }

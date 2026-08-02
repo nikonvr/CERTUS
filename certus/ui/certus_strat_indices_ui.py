@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_plots_ui import CertusScientificPlot
 
 class InteractiveIndicesWindow(CertusWindowSpyMixin, QMainWindow):
 

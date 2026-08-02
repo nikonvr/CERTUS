@@ -249,6 +249,64 @@ class CertusIndexSplineSmartInitMixin:
 
         return out
 
+    def _prepare_smart_init_autofind_config(
+        self,
+        cfg: "SplineOptConfig",
+        cur_sk: np.ndarray,
+        n_loc: np.ndarray,
+        L_loc: np.ndarray,
+        preview_d_nm: float,
+    ) -> tuple["SplineOptConfig", np.ndarray, int]:
+        auto_cfg = cfg.replace()
+        k_loc = int(cur_sk.size)
+        
+        # In autofind, we just want to run local optimization on the current knots
+        auto_cfg.spline_local_only = True
+        auto_cfg.polish = 1000  # Give it some iterations
+        
+        # Set boundaries around current d
+        auto_cfg.d_lo = max(0.0, float(preview_d_nm) - 50.0)
+        auto_cfg.d_hi = float(preview_d_nm) + 50.0
+        
+        # Tell the config to start from n_loc, L_loc, preview_d_nm
+        auto_cfg._smart_init_start_n = n_loc.copy()
+        auto_cfg._smart_init_start_L = L_loc.copy()
+        auto_cfg._smart_init_start_d = float(preview_d_nm)
+        
+        return auto_cfg, cur_sk.copy(), k_loc
+
+    def _apply_smart_init_autofind_result(
+        self,
+        best: dict[str, Any],
+        k_loc: int,
+        sk_canon: np.ndarray,
+        state: "_SmartInitState",
+    ) -> bool:
+        res_x = best.get("x")
+        if res_x is None:
+            return False
+            
+        res_x = np.asarray(res_x, dtype=np.float64).ravel()
+        
+        from certus.spline.spline_objective import x_slice_n_to_physical_nodes
+        
+        try:
+            d_nm = float(res_x[0])
+            n_xi = res_x[1 : 1 + k_loc]
+            L_nodes = res_x[1 + k_loc : 1 + 2 * k_loc]
+            
+            n_phys = x_slice_n_to_physical_nodes(n_xi, sk_canon, getattr(self.cfg, "n_mono_band_nm", None))
+            
+            if n_phys.size != k_loc or L_nodes.size != k_loc:
+                return False
+                
+            state.preview_d_nm = d_nm
+            state.n_phys = n_phys.copy()
+            state.L_nodes = L_nodes.copy()
+            return True
+        except Exception:
+            return False
+
     def _pick_best_smart_init_material_preset(
         self, cfg: "SplineOptConfig", target_sk: np.ndarray, preview_d_nm: float, relax_si_mono: bool
     ) -> tuple[str, float, float] | None:

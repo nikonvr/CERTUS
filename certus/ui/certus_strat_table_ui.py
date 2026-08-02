@@ -1,6 +1,7 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
+from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)

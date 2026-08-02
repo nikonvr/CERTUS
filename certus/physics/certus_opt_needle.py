@@ -2,17 +2,22 @@ SMALL_EPSILON = 1e-12
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 from dataclasses import dataclass
 import certus.physics.certus_tmm_core as tmm_core
 from certus.physics.certus_optical_models import (
-    get_nk_from_spline, get_nk_cauchy_simple, get_nk_cauchy_wrapper,
-    sellmeier_n_array, get_nk_cauchy, epsilon2_TLU_array, epsilon1_TL_analytic, epsilon_to_nk
+    get_nk_from_spline,
+    get_nk_cauchy_simple,
+    get_nk_cauchy_wrapper,
+    sellmeier_n_array,
+    get_nk_cauchy,
+    epsilon2_TLU_array,
+    epsilon1_TL_analytic,
+    epsilon_to_nk,
 )
 from scipy.interpolate import CubicSpline
-from .certus_opt_tmm import *
-from .certus_opt_gradients import *
+
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def needle_scan_cached(
     wls: np.ndarray,  # (W,) float64

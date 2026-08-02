@@ -1,7 +1,6 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
 
@@ -23,9 +22,12 @@ def compute_complex_phase_components(phi_r: float, phi_i: float) -> tuple[float,
 
     # Returns cos/sin components equivalent to Macleod convention (n-ik phase).
 
-    exp_pos = np.exp(-phi_i)
+    # Clamp to prevent overflow for thick absorbing layers
+    phi_i_clamped = min(max(phi_i, -700.0), 700.0)
 
-    exp_neg = np.exp(phi_i)
+    exp_pos = np.exp(-phi_i_clamped)
+
+    exp_neg = np.exp(phi_i_clamped)
 
     cos_phi_r = np.cos(phi_r)
 
@@ -570,4 +572,3 @@ def calc_spectrum_full_exact_wrapper(wls, nf, df, ns, nb, db):
 
 
 # Macleod convention (+1j) baked-in. DO NOT MODIFY without running tests.
-

@@ -26,15 +26,17 @@ def run_warmup(progress_callback=None):
         
     try:
         if progress_callback: progress_callback("Warming up TMM Oblique functions...")
-        from certus.physics.certus_tmm_oblique import calculate_bare_substrate_R as calc_oblique
-        calc_oblique(wls, n_sub)
+        from certus.physics.certus_tmm_oblique import calc_spectrum_oblique_vectorized
+        n_layers_T = np.full((len(wls), 1), 1.5 + 0j, dtype=np.complex128)
+        d_layers = np.array([100.0], dtype=np.float64)
+        calc_spectrum_oblique_vectorized(wls, n_layers_T, d_layers, n_sub, 45.0, "p")
     except Exception as e:
         logger.error(f"Warmup TMM Oblique failed: {e}")
 
     try:
         if progress_callback: progress_callback("Warming up TMM Single Layer functions...")
-        from certus.physics.certus_tmm_single_layer import calculate_bare_substrate_R as calc_single
-        calc_single(wls, n_sub)
+        from certus.physics.certus_tmm_single_layer import calculate_reflection_array
+        calculate_reflection_array(wls, n_sub, np.zeros_like(wls), 100.0, n_sub)
     except Exception as e:
         logger.error(f"Warmup TMM Single Layer failed: {e}")
         

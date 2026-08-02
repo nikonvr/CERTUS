@@ -16,6 +16,7 @@ from certus.utils.certus_re_config import RE_THICKNESS_SEARCH_RADIUS_PCT
 from certus.utils.certus_re_config import RE_SUB_CAUCHY_TUBE_DELTA
 import logging
 import copy
+from certus.utils.certus_copy_utils import copy_list_of_results, copy_result_dict
 import time
 import os
 import functools
@@ -27,37 +28,101 @@ from typing import Any, List, Dict
 import numpy as np
 import pyqtgraph as pg
 
-from certus.core.certus_core import certus_timestamp_display, setup_logging, CFG, create_module_environment, NUMERICAL_FAULT_EXCEPTIONS, get_resource_path, certus_timestamp_file
+from certus.core.certus_core import (
+    certus_timestamp_display,
+    setup_logging,
+    CFG,
+    create_module_environment,
+    NUMERICAL_FAULT_EXCEPTIONS,
+    get_resource_path,
+    certus_timestamp_file,
+)
 
 from certus.ui.certus_qt_widgets import (
-    QAbstractItemView, QAbstractSpinBox, QApplication, QButtonGroup, QCheckBox,
-    QColor, QComboBox, QDialog, QDoubleSpinBox, QFileDialog, QFont, QFrame,
-    QGridLayout, QHBoxLayout, QHeaderView, QKeySequence, QLabel, QMessageBox,
-    QPushButton, QRadioButton, QScrollArea, QShortcut, QSplitter, QStackedWidget,
-    QStatusBar, QTableWidgetItem, QTabWidget, QTextEdit, QTimer, Qt, QVBoxLayout,
+    QAbstractItemView,
+    QAbstractSpinBox,
+    QApplication,
+    QButtonGroup,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFont,
+    QFrame,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QKeySequence,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QRadioButton,
+    QScrollArea,
+    QShortcut,
+    QSplitter,
+    QStackedWidget,
+    QStatusBar,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QTimer,
+    Qt,
+    QVBoxLayout,
     QWidget,
 )
 
-from certus_physics import Layer, ObliqueTarget, init_thickness, calc_spectrum_front_wrapper, calc_spectrum_full_exact_wrapper
+from certus_physics import (
+    Layer,
+    ObliqueTarget,
+    init_thickness,
+    calc_spectrum_front_wrapper,
+    calc_spectrum_full_exact_wrapper,
+)
 
 from certus.workers.certus_spectral_workers import EvalWorker, WarmupWorker
 
 from certus.ui.certus_spectrum_eval_ui import (
-    spectrum_eval_apply_axes_legend_scale, spectrum_eval_build_worker_cfg,
-    spectrum_eval_on_finished_prepare_display, spectrum_eval_plot_curves,
-    spectrum_eval_run_preamble, spectrum_eval_start_worker,
+    spectrum_eval_apply_axes_legend_scale,
+    spectrum_eval_build_worker_cfg,
+    spectrum_eval_on_finished_prepare_display,
+    spectrum_eval_plot_curves,
+    spectrum_eval_run_preamble,
+    spectrum_eval_start_worker,
 )
 
 from certus.ui.certus_ui import (
-    attach_excel_clipboard_context_menu, CertusBaseApp, CertusCard, CertusCollapsible,
-    CertusScientificPlot, CertusStatusPill, CertusTheme, CertusThemeToggle,
-    enable_file_drop, EnhancedProgressWidget, ExcelTableWidget, FlashyCard,
-    get_certus_last_dir, install_standard_shortcuts, safe_ui_action,
-    set_certus_last_dir, show_toast, WelcomeGuideWidget, create_flashy_grid,
-    create_header_logo_widget, create_styled_button, create_styled_label,
-    create_top_actions_bar, init_certus_app, set_certus_window_icon,
-    install_skeleton_loader, remove_skeleton_loader, wrap_scientific_plot_with_toolbar,
-    open_documentation, confirm_stop_with_timeout,
+    attach_excel_clipboard_context_menu,
+    CertusBaseApp,
+    CertusCard,
+    CertusCollapsible,
+    CertusScientificPlot,
+    CertusStatusPill,
+    CertusTheme,
+    CertusThemeToggle,
+    enable_file_drop,
+    EnhancedProgressWidget,
+    ExcelTableWidget,
+    FlashyCard,
+    get_certus_last_dir,
+    install_standard_shortcuts,
+    safe_ui_action,
+    set_certus_last_dir,
+    show_toast,
+    WelcomeGuideWidget,
+    create_flashy_grid,
+    create_header_logo_widget,
+    create_styled_button,
+    create_styled_label,
+    create_top_actions_bar,
+    init_certus_app,
+    set_certus_window_icon,
+    install_skeleton_loader,
+    remove_skeleton_loader,
+    wrap_scientific_plot_with_toolbar,
+    open_documentation,
+    confirm_stop_with_timeout,
 )
 
 from certus.utils.certus_ux import build_premium_overrides
@@ -106,6 +171,7 @@ from certus.utils.certus_re_helpers import (
     TabularMaterial,
     ParsedREColumn,
 )
+
 calc_spectrum_front = calc_spectrum_front_wrapper
 calc_spectrum_full_exact = calc_spectrum_full_exact_wrapper
 
@@ -266,7 +332,7 @@ class CertusREWorkersMixin:
             else:
                 title = f"Spectrum ({self.front_table.rowCount()} layers) | RMSE grid: {n_total} lambda"
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             title = f"Spectrum ({self.front_table.rowCount()} layers) | RMSE grid: {n_total} lambda"
 
         if rmse is not None and np.isfinite(rmse) and rmse >= 0.0:
@@ -406,8 +472,6 @@ class CertusREWorkersMixin:
 
         _i2b = int(cfg.get("re_phase2b_maxiter", 0))
 
-
-
         self.log(
             f"RE preset  {_mode_lbl}  : multistarts={_p1m}, top-K={_tk}, shakes={_sh}, "
             f"maxiter P1/2a/2b={_i1}/{_i2a}/{_i2b}.",
@@ -469,6 +533,8 @@ class CertusREWorkersMixin:
 
         self._re_worker.signals.progress.connect(self._on_re_worker_progress)
 
+        self._re_worker.signals.progress_snapshot.connect(self._on_re_worker_progress_snapshot)
+
         self._re_worker.signals.result.connect(self._on_re_worker_result)
 
         self.log("[DBG-UI] Calling worker.start()...", "INFO")
@@ -526,7 +592,7 @@ class CertusREWorkersMixin:
             try:
                 self.progress_widget.stop("Cancelled")
 
-            except NUMERICAL_FAULT_EXCEPTIONS :
+            except NUMERICAL_FAULT_EXCEPTIONS:
                 pass
 
         if self.eval_worker and self.eval_worker.isRunning():
@@ -538,6 +604,28 @@ class CertusREWorkersMixin:
 
         if not re_was_running or not re_joined_ok:
             self.log("Calculation stopped.", "WARNING")
+
+    def _on_re_worker_progress_snapshot(self, snapshot) -> None:
+        """Forward progress snapshot to progress widget and logs panel."""
+        if not snapshot:
+            return
+
+        if hasattr(self, "progress_widget") and self.progress_widget is not None:
+            try:
+                self.progress_widget.apply_progress_snapshot(snapshot)
+            except NUMERICAL_FAULT_EXCEPTIONS:
+                pass
+
+        msg = snapshot.message
+        if getattr(snapshot, "sub_message", None):
+            msg = f"{msg} - {snapshot.sub_message}"
+        if msg:
+            self.log(msg, "INFO")
+
+        if getattr(self, "_re_mode_active", False) and msg:
+            _rp = _parse_re_rmse_combined_from_progress_message(msg)
+            if _rp is not None:
+                self._apply_re_workflow_rmse_if_better(_rp)
 
     def _on_re_worker_progress(self, pct: int, msg: str):
         """Synchronizes REWorker progress -> LOGS panel + progress widget."""
@@ -565,7 +653,7 @@ class CertusREWorkersMixin:
 
             pw.info_label.setText(short)
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             pass
 
     def _on_re_worker_result(self, data: object) -> None:
@@ -584,7 +672,7 @@ class CertusREWorkersMixin:
         if al is not None:
             try:
                 al_f = float(al)
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 al_f = float("nan")
 
             if np.isfinite(al_f):
@@ -673,7 +761,7 @@ class CertusREWorkersMixin:
             try:
                 self._re_rmse_qwot_alpha_ref = float(_a2b_done)
 
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 self._re_rmse_qwot_alpha_ref = None
 
         else:
@@ -883,13 +971,15 @@ class CertusREWorkersMixin:
 
         try:
             self._re_last_results_snapshot = {
-                "results": copy.deepcopy(results),
+                "results": copy_list_of_results(results),
                 "ep0": np.asarray(ep0, dtype=np.float64).copy(),
                 "re_rmse_initial": ri,
                 "re_rmse_phase1": r1,
                 "re_rmse_final": rf,
                 "re_qwot_alpha_phase2b": data.get("re_qwot_alpha_phase2b"),
-                "initial_stack": copy.deepcopy(getattr(self, "_re_initial_stack", [])),
+                "initial_stack": list(
+                    getattr(self, "_re_initial_stack", [])
+                ),  # Shallow copy sufficient for list of primitives
             }
 
             self._sync_display_re_results_btn_state()
@@ -902,7 +992,7 @@ class CertusREWorkersMixin:
                 re_rmse_final=rf,
             )
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             self.log(
                 "RE: the results window could not be displayed; detail:\n" + traceback.format_exc(),
                 "ERROR",
@@ -942,7 +1032,11 @@ class CertusREWorkersMixin:
             mats = self._get_materials()
             ep = getattr(self, "_re_loaded_exact_ep", None)
             if ep is None:
-                ep = self.ep_current if getattr(self, "_use_exact_ep", False) else init_thickness(stack, self.l0_spin.value(), mats)
+                ep = (
+                    self.ep_current
+                    if getattr(self, "_use_exact_ep", False)
+                    else init_thickness(stack, self.l0_spin.value(), mats)
+                )
             ep = np.asarray(ep, dtype=np.float64)
             tgts = self._get_oblique_tgts()
             if not tgts:
@@ -983,7 +1077,9 @@ class CertusREWorkersMixin:
             )
 
             n_layers_T = np.ascontiguousarray(n_layers_nominal.T)
-            r_sp = float(_re_rmse_oblique_weighted(ep, n_layers_T, n_sub, wls, tgts, **self._re_p4_display_beam_kwargs()))
+            r_sp = float(
+                _re_rmse_oblique_weighted(ep, n_layers_T, n_sub, wls, tgts, **self._re_p4_display_beam_kwargs())
+            )
             ep0_rm = getattr(self, "_re_initial_ep", None)
             if ep0_rm is None or len(np.asarray(ep0_rm).ravel()) != len(ep):
                 ep0_rm = init_thickness(stack, self.l0_spin.value(), mats)
@@ -1028,7 +1124,7 @@ class CertusREWorkersMixin:
         try:
             self._re_initial_ep = init_thickness(stack, self.l0_spin.value(), mats).copy()
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             self._re_initial_ep = None
 
         self._re_initial_stack = list(stack)
@@ -1127,7 +1223,7 @@ class CertusREWorkersMixin:
             try:
                 rf = float(r)
 
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 rf = float("nan")
 
             if np.isfinite(rf) and rf >= 0.0:
@@ -1248,7 +1344,7 @@ class CertusREWorkersMixin:
                 initial_stack=snap.get("initial_stack"),
             )
 
-        except NUMERICAL_FAULT_EXCEPTIONS :
+        except NUMERICAL_FAULT_EXCEPTIONS:
             self.log(
                 "RE: impossible to open the results table.\n" + traceback.format_exc(),
                 "ERROR",

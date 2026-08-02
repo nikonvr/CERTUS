@@ -43,6 +43,7 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QVBoxLayout,
     QWidget,
+    QScrollArea,
 )
 
 
@@ -294,7 +295,7 @@ class SmartInitNKCurveEditorDialog(QDialog):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("n & k Editor - drag points")
-        self.setMinimumSize(540, 680)
+        self.setMinimumSize(540, 300)
         self._n_lo = float(n_lo)
         self._n_hi = float(n_hi)
         self._L_lo = float(L_lo)
@@ -319,7 +320,13 @@ class SmartInitNKCurveEditorDialog(QDialog):
         self._debounce_main.setInterval(110)
         self._debounce_main.timeout.connect(self._recalc)
 
-        lay = QVBoxLayout(self)
+        self.scroll_area = QScrollArea(self)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        self.scroll_container = QWidget()
+        lay = QVBoxLayout(self.scroll_container)
         hint = QLabel(
             "<b>1)</b> Click near a wavelength (wide band) - the closest point in <i>n</i> or <i>k</i> is picked. "
             "<b>2)</b> Drag <b>vertically</b>. <b>Shift</b> = fine adjustment. "
@@ -455,6 +462,11 @@ class SmartInitNKCurveEditorDialog(QDialog):
             hover_callback=self._on_hover,
             sizes_callback=self._apply_sizes,
         )
+
+        self.scroll_area.setWidget(self.scroll_container)
+        dlg_layout = QVBoxLayout(self)
+        dlg_layout.setContentsMargins(0, 0, 0, 0)
+        dlg_layout.addWidget(self.scroll_area)
 
     def _set_n_phys_wrapper(self, i: int, v: float) -> None:
         self._set_n(int(i), float(v))

@@ -35,15 +35,11 @@ import pandas as pd
 from pydantic import ValidationError
 
 
-
 from concurrent.futures import ThreadPoolExecutor
 
 
-
-
 # Import access config
-
-from certus.core.certus_strat_utils import _resolve_materials_db_fallback
+from certus.utils.certus_exclusions import filter_params_for_serialization
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_MAPPING,
@@ -167,8 +163,6 @@ from certus.utils.certus_strat_service import (
 
 _validate_phase_a_bridge_lock = threading.Lock()
 
-from certus.core.certus_strat_utils import *
-
 # Global scientific display configuration
 
 PERF_MONITOR = PerformanceMonitor()
@@ -193,6 +187,7 @@ from certus.utils.certus_strat_context import (
 # _convert_solution_to_strategy has been moved to certus_strat_ranking.py
 
 # _generate_elite_candidate_strategies has been moved to certus_strat_consensus.py
+
 
 def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str, Any]) -> None:
     """Export lightweight observability JSON for audit/tracing."""
@@ -220,6 +215,7 @@ def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str
     except NUMERICAL_FAULT_EXCEPTIONS:
         logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
+
 # _find_k_best_groupings_dp_sequential and mine_strategies_for_block_count have been moved to certus_strat_ranking.py
 
 # _get_best_noise_results has been moved to certus_strat_robustness.py
@@ -235,13 +231,13 @@ def _export_phase_a_observability_json(params: dict[str, Any], payload: dict[str
 
 # Robustness simulation and scoring logic has been moved to certus_strat_robustness.py
 
+
 def generate_excel_report(
     nominal_results: dict[str, Any],
     opti_results: dict[str, Any],
     final_results: dict[str, Any],
     params: dict[str, Any],
 ) -> io.BytesIO:
-
 
     include_secondary_rmse_stats = bool(params.get("include_secondary_rmse_stats", False))
 
@@ -266,7 +262,7 @@ def generate_excel_report(
         output = io.BytesIO()
 
         with pd.ExcelWriter(output, engine=engine) as writer:
-            params_clean = {k: str(v) for k, v in params.items() if k not in ["logger", "materials_db", "clues_at_wl"]}
+            params_clean = {k: str(v) for k, v in filter_params_for_serialization(params).items()}
 
             pd.DataFrame.from_dict(params_clean, orient="index", columns=["Value"]).to_excel(
                 writer, sheet_name="Parameters"

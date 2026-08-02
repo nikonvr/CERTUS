@@ -4,9 +4,6 @@
 from pathlib import Path
 
 
-
-
-
 import logging
 
 import queue
@@ -22,12 +19,8 @@ from typing import Any
 import numpy as np
 
 
-
-
-
-
-
 from enum import Enum
+
 
 class StratTask(Enum):
     NOMINAL_ANALYSIS = "nominal"
@@ -35,6 +28,7 @@ class StratTask(Enum):
     ROBUSTNESS_EVALUATION = "robustness"
     FULL_PIPELINE = "full_workflow"
     EXTERNAL_EVALUATION = "external_eval"
+
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -47,12 +41,13 @@ from PyQt6.QtCore import (
 )
 
 
-
 # Import access config
 
 from certus.core.certus_core import (
     get_resource_path,
 )
+
+from certus.utils.certus_exclusions import filter_params_for_serialization
 
 from certus.core.certus_strat_core import (
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
@@ -105,7 +100,6 @@ from certus.utils.certus_strat_context import (
 # Robust db clues (fixed xlsx)
 
 
-
 from certus.workers.certus_strat_workers_dto import WorkerThreadRequest, WorkerThreadResult
 from certus.utils.certus_strat_service import (
     StratStrategyService,
@@ -123,6 +117,7 @@ from certus.workers.certus_strat_workers_external import ExternalEvaluationStrat
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 # === WORKER SIGNALS ===
+
 
 class WorkerSignals(QObject):
     finished = pyqtSignal(object)
@@ -142,7 +137,9 @@ class WorkerSignals(QObject):
 
     update_live_growth = pyqtSignal(dict)
 
+
 # === LOGIC HELPERS ===
+
 
 def _estimate_fusion_cost_fast(b1, b2, cost_map_sq) -> Any:
 
@@ -160,6 +157,7 @@ def _estimate_fusion_cost_fast(b1, b2, cost_map_sq) -> Any:
             cost += 1e6
 
     return cost
+
 
 def _find_best_wl_fast(start_layer, end_layer, cost_map_sq) -> Any:
 
@@ -192,6 +190,7 @@ def _find_best_wl_fast(start_layer, end_layer, cost_map_sq) -> Any:
             best_wl = wl
 
     return best_wl
+
 
 def derive_strategies_exhaustive(
     high_complexity_results: list[dict[str, Any]],
@@ -297,6 +296,7 @@ def derive_strategies_exhaustive(
                     )
 
     return derived_strategies
+
 
 def find_robust_nucleation_wavelength_adaptive(
     params: dict[str, Any],
@@ -451,6 +451,7 @@ def find_robust_nucleation_wavelength_adaptive(
 
     return winner["wl"], winner["size"]
 
+
 # =========================================================================================
 
 # [MONOLITHIC BLOCK] WORKER THREADS
@@ -460,6 +461,7 @@ def find_robust_nucleation_wavelength_adaptive(
 # =========================================================================================
 
 # === WORKER LOGIC ===
+
 
 def _parallel_block_worker(args) -> dict:
     """Worker function for the ProcessPoolExecutor - corrected version substrate."""
@@ -536,7 +538,9 @@ def _parallel_block_worker(args) -> dict:
 
         live_queue = ctx.live_queue if ctx else None
 
-        logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] StratContext is {'NOT None' if ctx else 'None'}, live_queue is {'NOT None' if live_queue else 'None'}")
+        logger.debug(
+            f"[DEBUG-WORKER] [Block {n_blk}] StratContext is {'NOT None' if ctx else 'None'}, live_queue is {'NOT None' if live_queue else 'None'}"
+        )
 
         gc.collect()
 
@@ -706,7 +710,9 @@ def _parallel_block_worker(args) -> dict:
 
         if live_queue and best_final:
             try:
-                logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}")
+                logger.debug(
+                    f"[DEBUG-WORKER] [Block {n_blk}] Putting best strategy into live_queue. Robustness: {best_final['robustness_score']:.5f}"
+                )
                 live_queue.put(
                     {
                         "strategy": best_final["strategy"],
@@ -720,7 +726,9 @@ def _parallel_block_worker(args) -> dict:
             except Exception as e:
                 logger.error(f"[Worker {n_blk}] Failed to put into live_queue: {e}", exc_info=True)
         else:
-            logger.debug(f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}")
+            logger.debug(
+                f"[DEBUG-WORKER] [Block {n_blk}] Skipped putting into live_queue. live_queue exists: {live_queue is not None}, final_results length: {len(final_results) if final_results else 0}"
+            )
 
         return {
             "n_blk": n_blk,
@@ -741,7 +749,7 @@ def _parallel_block_worker(args) -> dict:
             try:
                 shared_clues.close()
 
-            except (OSError, AttributeError):
+            except OSError, AttributeError:
                 # Shared memory may already be closed
 
                 pass
@@ -750,7 +758,7 @@ def _parallel_block_worker(args) -> dict:
             try:
                 shared_matrix_worker.close()
 
-            except (OSError, AttributeError):
+            except OSError, AttributeError:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
         _flush_sp_stats()
@@ -760,6 +768,7 @@ def _parallel_block_worker(args) -> dict:
 
 class StatsConsumerWorker(QObject):
     """Asynchronous stats queue consumer to avoid raw threading signal emission"""
+
     finished = pyqtSignal()
     update_stats = pyqtSignal(str, int)
 
@@ -770,6 +779,7 @@ class StatsConsumerWorker(QObject):
 
     def run(self) -> None:
         import queue
+
         while self.is_running:
             try:
                 item = self.stats_queue.get(timeout=0.1)
@@ -779,7 +789,7 @@ class StatsConsumerWorker(QObject):
                 self.update_stats.emit(counter_type, increment)
             except queue.Empty:
                 continue
-            except (BrokenPipeError, OSError, ValueError):
+            except BrokenPipeError, OSError, ValueError:
                 break
         self.finished.emit()
 
@@ -876,9 +886,9 @@ class LiveFeedMonitor(QObject):
                             self.stop()
                             return
                         self._latest_item = got
-            except (queue.Empty, IndexError, AttributeError):
+            except queue.Empty, IndexError, AttributeError:
                 pass
-            except (BrokenPipeError, OSError):
+            except BrokenPipeError, OSError:
                 logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
             now = time.time()
@@ -922,7 +932,7 @@ class WorkerThread(QThread):
             StratTask.STRATEGY_SEARCH: 2,
             StratTask.ROBUSTNESS_EVALUATION: 3,
             StratTask.FULL_PIPELINE: 23,
-            StratTask.EXTERNAL_EVALUATION: 33
+            StratTask.EXTERNAL_EVALUATION: 33,
         }
 
         if isinstance(step, StratTask):
@@ -975,7 +985,12 @@ class WorkerThread(QThread):
                 materials_db=APP_CONTEXT.get("materials_db"),
             )
 
-            if self.task_type in [StratTask.STRATEGY_SEARCH, StratTask.ROBUSTNESS_EVALUATION, StratTask.FULL_PIPELINE, StratTask.EXTERNAL_EVALUATION]:
+            if self.task_type in [
+                StratTask.STRATEGY_SEARCH,
+                StratTask.ROBUSTNESS_EVALUATION,
+                StratTask.FULL_PIPELINE,
+                StratTask.EXTERNAL_EVALUATION,
+            ]:
                 self._execute_nominal_analysis_auto()
 
             if self.task_type == StratTask.NOMINAL_ANALYSIS:
@@ -1000,7 +1015,6 @@ class WorkerThread(QThread):
 
     def _execute_nominal_analysis(self) -> None:
         NominalAnalysisStrategy().execute(self)
-
 
     def _execute_nominal_analysis_auto(self) -> None:
         """
@@ -1087,18 +1101,14 @@ class WorkerThread(QThread):
     def _execute_strategy_search(self) -> None:
         StrategySearchStrategy().execute(self)
 
-
     def _execute_robustness_evaluation(self) -> None:
         RobustnessEvaluationStrategy().execute(self)
-
 
     def _execute_full_pipeline(self) -> None:
         FullPipelineStrategy().execute(self)
 
-
     def _execute_external_evaluation(self) -> None:
         ExternalEvaluationStrategy().execute(self)
-
 
 
 def _run_phaseB_parallel_execution(
@@ -1175,9 +1185,7 @@ def _run_phaseB_parallel_execution(
                 )
 
                 if int(result_batch.get("n_blk", n_blk)) != int(n_blk):
-                    logger.error(
-                        f"    [Block {n_blk}] ❌ Worker returned wrong n_blk={result_batch.get('n_blk')}"
-                    )
+                    logger.error(f"    [Block {n_blk}] ❌ Worker returned wrong n_blk={result_batch.get('n_blk')}")
                     inherited_strategies = []
                     continue
 
@@ -1193,9 +1201,7 @@ def _run_phaseB_parallel_execution(
                         if ok:
                             strategies_this_step.append(s_res)
                         else:
-                            logger.warning(
-                                f"    [Block {n_blk}] Dropped invalid strategy payload: {reason}"
-                            )
+                            logger.warning(f"    [Block {n_blk}] Dropped invalid strategy payload: {reason}")
 
                     with completed_blocks_lock:
                         accumulated_strategies_results.extend(strategies_this_step)
@@ -1269,9 +1275,7 @@ def _run_phaseB_parallel_execution(
                                 f" | missing_key={missing_key_count}"
                             )
 
-                    logger.info(
-                        f"   [Block {n_blk}] Completed. {len(strategies_this_step)} retained{dyn_msg}"
-                    )
+                    logger.info(f"   [Block {n_blk}] Completed. {len(strategies_this_step)} retained{dyn_msg}")
 
                     if strategies_this_step:
                         inherited_strategies = derive_strategies_exhaustive(
@@ -1307,7 +1311,20 @@ def _run_phaseB_parallel_execution(
                         metadata={"completed": current_completed, "total": total_blocks, "block": n_blk},
                     )
                 )
-                signals.progress_snapshot.emit(build_progress_snapshot(message=f"Optimizing ({n_blk} blocks) - Completed {current_completed}/{total_blocks}", sub_message=f"Completed {current_completed}/{total_blocks}", progress_ratio=progress_pct / 100.0, display_ratio=progress_pct / 100.0, eta_seconds=None, confidence=0.25, state=StepState.RUNNING, module="STRAT", phase="BLOCK_OPT", metadata={"completed": current_completed, "total": total_blocks, "block": n_blk}))
+                signals.progress_snapshot.emit(
+                    build_progress_snapshot(
+                        message=f"Optimizing ({n_blk} blocks) - Completed {current_completed}/{total_blocks}",
+                        sub_message=f"Completed {current_completed}/{total_blocks}",
+                        progress_ratio=progress_pct / 100.0,
+                        display_ratio=progress_pct / 100.0,
+                        eta_seconds=None,
+                        confidence=0.25,
+                        state=StepState.RUNNING,
+                        module="STRAT",
+                        phase="BLOCK_OPT",
+                        metadata={"completed": current_completed, "total": total_blocks, "block": n_blk},
+                    )
+                )
 
     executor = None
     try:
@@ -1320,7 +1337,7 @@ def _run_phaseB_parallel_execution(
             futures = []
             for segment in segments:
                 futures.append(executor.submit(_run_segment, segment))
-            
+
             # Wait for all segments to complete (with a safe timeout)
             done, not_done = concurrent.futures.wait(futures, timeout=600)
             for f in done:
@@ -1337,6 +1354,7 @@ def _run_phaseB_parallel_execution(
                 params["logger"].warning(f"Error shutting down executor: {e}")
 
     return accumulated_strategies_results
+
 
 def _finalize_and_export_pipeline_results(
     accumulated_strategies_results: list[dict[str, Any]],
@@ -1394,7 +1412,9 @@ def _finalize_and_export_pipeline_results(
             # returned None in most Step-23 paths, causing the robustness plot
             # to render a flat curve (bug fixed 2026-05-27).
             # Same contract as StrategySpectralPerformanceWindow._calculate_and_plot.
-            local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+            local_db = (
+                params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
+            )
             # GUARD RAIL — Ensure materials database is resolved for worker calculations to prevent flat curve regressions.
             assert local_db is not None, (
                 "CERTUS-STRAT-E-DB-MISSING: Materials database is missing in worker context. "
@@ -1447,7 +1467,7 @@ def _finalize_and_export_pipeline_results(
         metadata = {
             "rmse": best_rmse,
             "strategies_count": len(final_complete_structure.get("all_strategies_results", [])),
-            "params": {k: v for k, v in params.items() if k not in ["logger", "materials_db", "clues_at_wl"]},
+            "params": filter_params_for_serialization(params),
         }
         signals.excel_ready.emit(excel_data, metadata)
 
@@ -1455,6 +1475,7 @@ def _finalize_and_export_pipeline_results(
         opti_results=sim_context,
         final_results=final_complete_structure,
     ).to_legacy_dict()
+
 
 def _execute_nucleation_and_cost_mapping(
     params: dict[str, Any],
@@ -1496,10 +1517,13 @@ def _execute_nucleation_and_cost_mapping(
         signals.plot.emit(pre_calc_data["raw_results_thickness"], "pyqtgraph_heatmap")
 
     import gc
+
     gc.collect()
     return pre_calc_data, p_thick_nom, nucleation_info, nominal_res
 
+
 # === OPTIMIZATION: Async Plot Renderer ===
+
 
 class PlotRenderWorker(QObject):
     finished = pyqtSignal(bytes, str)
@@ -1528,6 +1552,7 @@ class PlotRenderWorker(QObject):
         except Exception as e:
             self.error.emit(str(e))
 
+
 def _resolve_strat_indices_db_path() -> str:
     """Return canonical indices DB path for STRAT, with legacy fallback."""
 
@@ -1544,4 +1569,3 @@ def _resolve_strat_indices_db_path() -> str:
 # Backward compatibility aliases
 _run_phase0_and_phaseA = _execute_nucleation_and_cost_mapping
 _finalize_and_export_step_23 = _finalize_and_export_pipeline_results
-

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_strat_json_ui import JsonViewerWindow
 
 class CertusStratStateMixin:
     def _load_defaults(self) -> None:
@@ -529,6 +530,14 @@ class CertusStratStateMixin:
 
             if not isinstance(config, dict):
                 raise ValueError("Configuration JSON must be an object/dictionary.")
+
+            # Validate that the file is not a DESIGN config loaded into STRAT
+            if "front" in config and not config.get("stack_multipliers") and not config.get("stack_string") and not config.get("blocks"):
+                raise ValueError(
+                    "This file appears to be a DESIGN configuration. "
+                    "Please load a valid STRAT strategy configuration containing stack multipliers or blocks."
+                )
+
             try:
                 validated = StratConfigDTO.model_validate(config)
                 config = validated.model_dump(mode="python", exclude_none=False)
@@ -661,8 +670,13 @@ class CertusStratStateMixin:
 
                 show_load_summary_dialog(self, "STRAT Load Summary", summary)
 
-        except NUMERICAL_FAULT_EXCEPTIONS as e:
+        except Exception as e:
             self.logger.error(f"Error loading: {e}\n{traceback.format_exc()}")
+            QMessageBox.critical(
+                self,
+                "Error Loading Configuration",
+                f"Could not load configuration file:\n{e}"
+            )
 
     def load_external_strategies(self) -> None:
 

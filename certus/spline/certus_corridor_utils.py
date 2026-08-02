@@ -925,11 +925,12 @@ def _detect_corridor_spike(
     rm: float,
     d0: float,
     parab_tol_abs: float,
-) -> tuple[bool, float, float]:
+) -> tuple[bool, float, float, float]:
     """Detects if an RMSE point is an abnormal spike using local parabolic fit + discontinuity check."""
     is_spike = False
     rm_pred = float("nan")
     _tol_eff = float("nan")
+    _sigma = float("nan")
 
     if len(d_vals) >= 5:
         try:
@@ -941,7 +942,7 @@ def _detect_corridor_spike(
             _pred_hist = np.polyval(_coeffs, _ds - d0)
             _resid = _rs - _pred_hist
             _sigma = float(1.4826 * np.median(np.abs(_resid - np.median(_resid))))
-            _tol_eff = max(parab_tol_abs, 4.0 * _sigma)
+            _tol_eff = max(parab_tol_abs, 3.0 * _sigma)
 
             parab_exceeds = bool(rm > rm_pred + _tol_eff)
 
@@ -954,13 +955,15 @@ def _detect_corridor_spike(
                 else:
                     _median_delta = 0.0
                 jump_ratio = delta_prev / max(_median_delta, 1e-12) if _median_delta > 1e-12 else float("inf")
-                is_spike = bool(jump_ratio >= 3.0)
+                is_spike = bool(jump_ratio >= 2.5 or rm > rm_pred + max(parab_tol_abs * 2.0, 4.0 * _sigma))
             elif parab_exceeds:
                 is_spike = True
-        except ValueError, TypeError, IndexError:
-            log.debug("%s _detect_breakpoint: validation check failed (non-critical)", _LOG_PREFIX)
+        except (ValueError, TypeError, IndexError):
+            import logging
+            log = logging.getLogger('CERTUS')
+            log.debug("INDEX_SPLINE [CORRIDOR ORCHESTRATOR] _detect_breakpoint: validation check failed (non-critical)")
 
-    return is_spike, rm_pred, _tol_eff
+    return is_spike, rm_pred, _tol_eff, _sigma
 def quick_pwlnk_refit_result_dict(
     cfg: SplineOptConfig,
     base_result: dict,

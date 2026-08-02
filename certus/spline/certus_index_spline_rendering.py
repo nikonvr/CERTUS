@@ -241,6 +241,7 @@ class _PlotMixin:
         except NUMERICAL_FAULT_EXCEPTIONS:
             pn.autoRange()
 
+    def _plot_rmse_data_scatter(self, src: dict, ctx: Any) -> None:
         d_plot = np.asarray(ctx.d_plot, dtype=np.float64).ravel()
         r_plot = np.asarray(ctx.r_plot, dtype=np.float64).ravel()
         d_vis = np.asarray(ctx.d_vis, dtype=np.float64).ravel()

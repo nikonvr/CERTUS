@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.spline.certus_index_spline_core import SPLINE_PERF_PRESETS
 
 class Step4MeshOptimizerBuilder:
     def __init__(self, app: "CertusIndexSplineApp", parent_layout: "QVBoxLayout", style: str):
@@ -315,7 +316,8 @@ class Step4MeshOptimizerBuilder:
 
         app.sp_corr_rmse_delta.setSingleStep(0.00005)
 
-        app.sp_corr_rmse_delta.setValue(float(_DEFAULT_CORRIDOR_RMSE_DELTA))
+        from certus.ui.certus_index_spline_common import _DEFAULT_CORRIDOR_RMSE_DELTA as default_delta
+        app.sp_corr_rmse_delta.setValue(float(default_delta))
 
         app.sp_corr_rmse_delta.setToolTip(
             "Absolute margin on masked spectral RMSE: a refit at fixed d is accepted if "

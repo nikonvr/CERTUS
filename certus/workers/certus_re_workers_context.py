@@ -88,9 +88,10 @@ class REContextStrategy:
         if worker._stop and (not force):
             return
         now_te = time.perf_counter()
-        if not force and _re_live_emit['t'] > 0.0 and (now_te - _re_live_emit['t'] < 5.0):
+        _last = getattr(worker, "_last_live_emit_time", 0.0)
+        if not force and _last > 0.0 and (now_te - _last < 5.0):
             return
-        _re_live_emit['t'] = now_te
+        worker._last_live_emit_time = now_te
         try:
             ep_use = np.asarray(ep_vec, dtype=np.float64).flatten()
             n_lm, n_sm = _re_apply_correc(n_lay_disp, n_sub_disp, is_H=is_H, is_L=is_L, wls=wls_display, lambda_ref=lambda_ref, correc=correc, re_env_s=re_env_s, env_cache=_re_env_on_wls_disp)

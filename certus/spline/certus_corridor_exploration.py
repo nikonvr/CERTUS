@@ -296,20 +296,37 @@ def _corridor_profile_walk_side(
         all_d_vals.append(float(d_try))
         all_rmse_vals.append(float(rm))
         parab_tol_abs = float(getattr(pconf, "parabola_spike_tolerance_abs", 2e-5))
-        is_spike, rm_pred, _tol_eff = _detect_corridor_spike(
+        is_spike, rm_pred, _tol_eff, _sigma = _detect_corridor_spike(
             all_d_vals, all_rmse_vals, d_try, rm, float(d0), parab_tol_abs
         )
 
+        # Smart escalation: if the points are too dispersed vs parabola, the optimizations
+        # are insufficiently pushed. Increase rigor globally for this corridor side.
+        if np.isfinite(_sigma) and _sigma > max(parab_tol_abs, 2e-5) * 1.5:
+            if maxfun_prof < 2000:
+                _old_maxfun = maxfun_prof
+                maxfun_prof = int(maxfun_prof * 1.5)
+                pconf = pconf.replace(n_starts=max(4, int(pconf.n_starts) + 1))
+                log.warning(
+                    "%s Walk %s: high dispersion vs parabola (sigma=%.6f > tol). "
+                    "Intelligently pushing optimizations further: maxfun %d -> %d, n_starts -> %d.",
+                    _LOG_PREFIX, dir_lbl, _sigma, _old_maxfun, maxfun_prof, pconf.n_starts
+                )
+                if not is_spike and rm > rm_pred:
+                    # Point might be slightly off but not a massive spike, still force a retry
+                    # to clean it up under the new rigorous settings.
+                    is_spike = True
+
         if is_spike:
             log.info(
-                "%s Walk %s: spike detected at d=%.6f nm (RMSE=%.8f vs pred=%.8f). Retrying with jitter...",
+                "%s Walk %s: spike/noise detected at d=%.6f nm (RMSE=%.8f vs pred=%.8f). Retrying with jitter...",
                 _LOG_PREFIX,
                 dir_lbl,
                 d_try,
                 rm,
                 rm_pred,
             )
-            pconf_retry = pconf.replace(n_starts=max(3, int(pconf.n_starts) + 2))
+            pconf_retry = pconf.replace(n_starts=max(4, int(pconf.n_starts) + 2))
 
             fit_retry, _, _ = _best_fit_at_d(
                 cfg,
@@ -337,6 +354,7 @@ def _corridor_profile_walk_side(
                     log.info("%s Walk %s: retry improved RMSE %.8f -> %.8f", _LOG_PREFIX, dir_lbl, rm, rm_retry)
                     fit = fit_retry
                     rm = rm_retry
+                    all_rmse_vals[-1] = rm  # P0.3 FIX: Update the tracked history with the improved value
                     # Re-check after retry
                     if rm <= rm_pred + _tol_eff:
                         is_spike = False
@@ -351,9 +369,14 @@ def _corridor_profile_walk_side(
                 rm,
                 rm_pred,
             )
+            # Remove the rejected point from the history so it doesn't corrupt future parabola fits
+            all_d_vals.pop()
+            all_rmse_vals.pop()
+            
             # Advance thickness to avoid looping, but do not add the point to results
             # and do not validate the step.
             d_prev = float(d_try)
+            span = abs(float(d_try) - float(d0))
             nsteps += 1
             # x_prev remains the last stable point, favouring a good seed at the next step.
             continue

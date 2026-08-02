@@ -293,7 +293,7 @@ def _sigma_knots_to_lambda_nm_for_log(sigma_knots: np.ndarray | None) -> np.ndar
     return np.sort(1.0 / np.maximum(sig, 1e-30))
 
 def _format_lambda_knots_nm_for_log(
-    lambda_knots_nm: np.ndarray | None, *, precision: int = 1, max_items: int = 6
+    lambda_knots_nm: np.ndarray | None, *, precision: int = 1, max_items: int = 200
 ) -> str:
     lam = np.asarray(lambda_knots_nm if lambda_knots_nm is not None else [], dtype=np.float64).ravel()
     lam = lam[np.isfinite(lam) & (lam > 0.0)]
@@ -325,6 +325,15 @@ def _sigma_mesh_change_summary_for_log(
         "mesh_after_lambda_summary": _format_lambda_knots_nm_for_log(after_lambda),
         "mesh_removed_lambda_summary": _format_lambda_knots_nm_for_log(removed_lambda),
         "mesh_added_lambda_summary": _format_lambda_knots_nm_for_log(added_lambda),
+        "k_before": int(before_sigma.size),
+        "k_after": int(after_sigma.size),
+        "delta_k": int(after_sigma.size - before_sigma.size),
+        "before_lambda_knots_nm": before_lambda,
+        "after_lambda_knots_nm": after_lambda,
+        "removed_lambda_knots_nm": removed_lambda,
+        "added_lambda_knots_nm": added_lambda,
+        "before_sigma_knots": before_sigma,
+        "after_sigma_knots": after_sigma,
     }
 
 def _knots_cache_key(knots: np.ndarray) -> tuple[float, ...]:

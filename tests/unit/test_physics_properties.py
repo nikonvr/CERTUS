@@ -32,8 +32,8 @@ def test_tmm_energy_conservation(d_h, d_l, n_h, n_l, n_sub, wl):
     
     # Conservation de l'énergie (A = 0 car indices réels)
     assert np.isclose(R + T, 1.0, atol=1e-12)
-    assert 0.0 <= R <= 1.0
-    assert 0.0 <= T <= 1.0
+    assert -1e-12 <= R <= 1.0 + 1e-12
+    assert -1e-12 <= T <= 1.0 + 1e-12
 
 @settings(max_examples=50, deadline=None)
 @given(

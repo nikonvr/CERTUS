@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.ui.certus_ui import CertusScientificPlot
 
 class StrategySpectralPerformanceWindow(CertusWindowSpyMixin, QMainWindow):
     """Detail window showing spectral transmission curves for a single strategy.

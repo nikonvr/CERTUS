@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.ui.certus_index_spline_managers_ui import Step4MeshOptimizerBuilder
 
 class _ConfigBuilderMixin:
     """Mixin extracting _build_opt_config logic."""
@@ -183,7 +184,7 @@ class _MeshOptimizationMixin:
             else 1.05,
             corridor_profile_d_rmse_abs_tolerance=float(getattr(self, "sp_corr_rmse_delta", None).value())
             if hasattr(self, "sp_corr_rmse_delta")
-            else float(_DEFAULT_CORRIDOR_RMSE_DELTA),
+            else float(__import__("certus.ui.certus_index_spline_common", fromlist=["_DEFAULT_CORRIDOR_RMSE_DELTA"])._DEFAULT_CORRIDOR_RMSE_DELTA),
             corridor_scientific_nominal_enabled=(
                 not hasattr(self, "chk_corr_scientific_nominal") or bool(self.chk_corr_scientific_nominal.isChecked())
             ),
@@ -322,6 +323,7 @@ class _SmartInitDialogMixin:
             getattr(self, "_preview_wait_event", None) is not None,
         )
         try:
+            from certus.spline.certus_index_spline_smart_init import SmartInitPreviewManager
             manager = SmartInitPreviewManager(self, payload)
             logger.info(
                 "[INDEX_SPLINE.SMART_INIT] dialog constructed | dlg_visible=%s | aux_visible=%s | main_visible=%s | k_n=%d | d=%.6f",

@@ -1,13 +1,17 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.physics.certus_opt_tmm import compute_TMM_generic, compute_RT_from_matrix
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_substrate import calculate_bare_substrate_R_absorbing, calculate_bare_substrate_T_absorbing, calculate_bare_substrate_R, calculate_bare_substrate_RT
+from .certus_tmm_substrate import (
+    calculate_bare_substrate_R_absorbing,
+    calculate_bare_substrate_T_absorbing,
+    calculate_bare_substrate_R,
+    calculate_bare_substrate_RT,
+)
 
 
 # ─── LOCKED ─── Validated by test_tmm_coherence.py ───
@@ -210,4 +214,3 @@ def apply_exact_backside_combination(
 
 
 # Macleod convention (+1j). Delegates to calculate_RT_no_backside. DO NOT MODIFY without running tests.
-

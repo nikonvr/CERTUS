@@ -564,7 +564,7 @@ class SystemConfig:
         return get_logger()
 
     @staticmethod
-    def handle_exception(exc_type, exc_value, exc_traceback):
+    def handle_exception(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: object) -> None:
         handle_exception(exc_type, exc_value, exc_traceback)
 
 

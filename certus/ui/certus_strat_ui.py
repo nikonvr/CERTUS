@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.ui.certus_strat_table_ui import StrategiesTableWindow
 from certus.ui.certus_strat_plots_ui import CertusScientificPlot, UniversalPlotWindow

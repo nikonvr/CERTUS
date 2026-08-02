@@ -54,6 +54,7 @@ class REWorker(QThread):
         self.cfg = dict(self.request.cfg)
         self.signals = WorkerSignals()
         self._stop = False
+        self._last_live_emit_time = 0.0
 
     def request_stop(self) -> None:
         """Cooperative stop (Stop button  not only QThread.requestInterruption)."""

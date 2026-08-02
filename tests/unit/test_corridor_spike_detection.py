@@ -38,7 +38,7 @@ class TestDetectCorridorSpike:
         d_try = 105.0
         rm = 1e-4 * (105.0 - d0) ** 2 + 0.001
 
-        is_spike, rm_pred, tol = _detect_corridor_spike(
+        is_spike, rm_pred, tol, sigma = _detect_corridor_spike(
             d_vals, rmse_vals, d_try, rm, d0, 2e-5,
         )
         assert not is_spike, "Smooth parabolic point should not be flagged as spike"
@@ -54,7 +54,7 @@ class TestDetectCorridorSpike:
         rm_expected = 1e-4 * (105.0 - d0) ** 2 + 0.001
         rm_spike = rm_expected * 10.0
 
-        is_spike, rm_pred, tol = _detect_corridor_spike(
+        is_spike, rm_pred, tol, sigma = _detect_corridor_spike(
             d_vals, rmse_vals, d_try, rm_spike, d0, 2e-5,
         )
         assert is_spike, "Genuine 10× spike should be detected"
@@ -64,7 +64,7 @@ class TestDetectCorridorSpike:
         d_vals = [100.0, 100.5, 101.0, 101.5]
         rmse_vals = [0.001, 0.0011, 0.0013, 0.0016]
 
-        is_spike, rm_pred, tol = _detect_corridor_spike(
+        is_spike, rm_pred, tol, sigma = _detect_corridor_spike(
             d_vals, rmse_vals, 102.0, 0.01, 100.0, 2e-5,
         )
         assert not is_spike, "Should not flag spike with < 5 points"
@@ -87,7 +87,7 @@ class TestDetectCorridorSpike:
         d_try = 106.0
         rm = 0.001 + 2e-5 * (d_try - d0) ** 3
 
-        is_spike, rm_pred, tol = _detect_corridor_spike(
+        is_spike, rm_pred, tol, sigma = _detect_corridor_spike(
             d_vals, rmse_vals, d_try, rm, d0, 2e-5,
         )
         # With all points in the history, the parabola adapts to the rising trend.
@@ -108,7 +108,7 @@ class TestDetectCorridorSpike:
         d_try = 104.0
         rm = 1e-4 * (104.0 - d0) ** 2 + 0.001
 
-        is_spike, rm_pred, tol = _detect_corridor_spike(
+        is_spike, rm_pred, tol, sigma = _detect_corridor_spike(
             d_vals, rmse_vals, d_try, rm, d0, 2e-5,
         )
         assert np.isfinite(rm_pred), "Prediction should be finite"

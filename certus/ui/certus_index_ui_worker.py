@@ -33,7 +33,7 @@ from certus.utils.certus_index_utils import (
     fit_sellmeier_global,
     fit_k_global_8p,
 )
-from certus.ui.certus_index_ui import _notify_user
+from certus.ui.certus_index_ui_utils import _notify_user
 from certus.core.certus_index_core import _get_silicon_n_on_grid, _get_silicon_k_on_grid
 from certus_physics import (
     epsilon2_TLU_array,

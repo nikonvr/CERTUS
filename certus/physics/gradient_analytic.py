@@ -124,7 +124,10 @@ def _compute_epsilon2_gradient_kernel(
             else:
                 arg = (E - Eg - delta) * inv_Eu
 
-                exp_val = np.exp(arg)
+                # Clamp to prevent exponential overflow/underflow
+                arg_clamped = min(max(arg, -700.0), 700.0)
+
+                exp_val = np.exp(arg_clamped)
 
                 val = eps2_edge * exp_val
 

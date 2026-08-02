@@ -381,14 +381,19 @@ class TestCoreCoverageBoost:
             assert cm.save("val") is False
 
     def test_export_config_wrappers(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        _rp = lambda name: str(tmp_path / name)
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", _rp)
+        monkeypatch.setattr("certus.core.certus_config.get_resource_path", _rp)
         from certus.core.certus_core import load_export_config, save_export_config, get_export_config
+        load_export_config.cache_clear()
         save_export_config(False)
         assert get_export_config() is False
         assert load_export_config() is False
 
     def test_theme_config_wrappers(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("certus.core.certus_core.get_resource_path", lambda name: str(tmp_path / name))
+        _rp = lambda name: str(tmp_path / name)
+        monkeypatch.setattr("certus.core.certus_core.get_resource_path", _rp)
+        monkeypatch.setattr("certus.core.certus_config.get_resource_path", _rp)
         from certus.core.certus_core import load_theme_config, save_theme_config
         save_theme_config("dark")
         assert load_theme_config() == "dark"
@@ -424,10 +429,14 @@ class TestCoreCoverageBoost:
         assert _WarmupRegistry.thread is None
 
     def test_resource_path_frozen(self, monkeypatch):
+        get_resource_path.cache_clear()
         monkeypatch.setattr("sys.frozen", True, raising=False)
         monkeypatch.setattr("sys.executable", "C:\\test\\bin\\certus.exe")
-        p = get_resource_path("test.json")
-        assert "C:\\test\\bin\\test.json" in p or "C:/test/bin/test.json" in p
+        try:
+            p = get_resource_path("test.json")
+            assert "C:\\test\\bin\\test.json" in p or "C:/test/bin/test.json" in p
+        finally:
+            get_resource_path.cache_clear()
 
     def test_setup_module_logging(self, tmp_path):
         from certus.core.certus_core import setup_module_logging

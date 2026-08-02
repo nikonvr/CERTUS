@@ -8,6 +8,7 @@ from __future__ import annotations
 
 
 import copy
+from certus.utils.certus_copy_utils import copy_optimization_result
 
 import logging
 
@@ -33,13 +34,13 @@ def spectrum_eval_feedback(app: Any, message: str, level: str = "info") -> None:
         from certus.ui.certus_ui_utils import show_status_feedback
 
         show_status_feedback(app, message, level, duration_ms=1200)
-    except (RuntimeError, AttributeError, TypeError, ValueError, ImportError):
+    except RuntimeError, AttributeError, TypeError, ValueError, ImportError:
         try:
             if hasattr(app, "status_label"):
                 app.status_label.setText(message)
             if hasattr(app, "lbl_status"):
                 app.lbl_status.setText(message)
-        except (RuntimeError, AttributeError, TypeError, ValueError):
+        except RuntimeError, AttributeError, TypeError, ValueError:
             pass
 
 
@@ -73,9 +74,9 @@ def spectrum_eval_on_finished_prepare_display(
 
     logging.info(
         "[SPECTRUM_EVAL._on_eval_finished] callback received | oblique=%s | generation_id=%s | current_generation=%s",
-        data.get('oblique_mode', False),
+        data.get("oblique_mode", False),
         generation_id,
-        getattr(app, '_current_eval_generation', None),
+        getattr(app, "_current_eval_generation", None),
     )
 
     result_generation = data.get("eval_generation_id", generation_id)
@@ -117,7 +118,7 @@ def spectrum_eval_on_finished_prepare_display(
                 ep_best_len,
             )
         else:
-            data_for_display = copy.deepcopy(app._best_eval_result)
+            data_for_display = copy_optimization_result(app._best_eval_result)
 
             data_for_display["eval_generation_id"] = result_generation
 

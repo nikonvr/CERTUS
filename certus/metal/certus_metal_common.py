@@ -1150,7 +1150,7 @@ class MetalBaseApp(CertusBaseApp):
 
         self.right_splitter.addWidget(plot_container)
 
-        self.log_panel = CertusLogPanel(title="LOGS", visible=False, height=120, parent=self)
+        self.log_panel = CertusLogPanel(title="LOGS", visible=True, height=120, parent=self)
         self._log_panel = self.log_panel
         self.log_container = self.log_panel
         self.log_text = self.log_panel.log_text

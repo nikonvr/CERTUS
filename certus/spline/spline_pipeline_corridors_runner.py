@@ -526,7 +526,7 @@ def _run_corridor_profile_block(
         # V2.3: ln(k) regularization weight sensitivity scan.
         if bool(getattr(cfg, "corridor_reg_sensitivity_enabled", False)):
             try:
-                from certus.spline.spline_profile_corridors import compute_reg_sensitivity_scan
+                from certus.spline.certus_corridor_orchestrator_utils import compute_reg_sensitivity_scan
 
                 base_w = float(max(getattr(cfg, "lnk_spline_reg_weight", 0.0) or 0.0, 0.0))
                 decades = int(max(0, getattr(cfg, "corridor_reg_sensitivity_decades", 2) or 2))
@@ -549,7 +549,7 @@ def _run_corridor_profile_block(
         # V2.4: parametric bootstrap (bands).
         if bool(getattr(cfg, "corridor_bootstrap_enabled", False)):
             try:
-                from certus.spline.spline_profile_corridors import compute_bootstrap_corridors_by_d
+                from certus.spline.certus_corridor_exploration import compute_bootstrap_corridors_by_d
 
                 B = int(max(0, getattr(cfg, "corridor_bootstrap_n", 40) or 40))
                 p = float(getattr(cfg, "corridor_bootstrap_percentile", 0.95) or 0.95)

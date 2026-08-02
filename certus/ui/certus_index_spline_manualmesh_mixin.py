@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
 class CertusIndexSplineManualMeshMixin:
     """CertusIndexSplineManualMeshMixin."""
@@ -16,8 +17,8 @@ class CertusIndexSplineManualMeshMixin:
 
     @staticmethod
     def _sigma_knot_difference_with_tolerance(source_sigma_knots: Any, reference_sigma_knots: Any) -> np.ndarray:
-        from certus.spline.spline_pipeline_utils import _sigma_knot_difference_with_tolerance_for_log
-        return _sigma_knot_difference_with_tolerance_for_log(source_sigma_knots, reference_sigma_knots)
+        from certus.spline.spline_pipeline_utils import _sigma_knot_difference_for_log
+        return _sigma_knot_difference_for_log(source_sigma_knots, reference_sigma_knots)
 
     @staticmethod
     def _summarize_manual_mesh_change(before_sigma_knots: Any, after_sigma_knots: Any) -> dict[str, Any]:
@@ -363,7 +364,7 @@ class CertusIndexSplineManualMeshMixin:
                 return
             self._refresh_manual_dialog_preview(dlg, self._manual_postprocess_seed_result())
 
-        def _on_auto_clean(tolerance: float) -> None:
+        def _on_auto_clean(tolerance: float, force_clean: bool = False) -> None:
             # NaN = signal "read value from GUI widget".
             try:
                 _tol_in = float(tolerance)
@@ -402,22 +403,29 @@ class CertusIndexSplineManualMeshMixin:
                 return
             if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
                 self._manual_knots_dialog.clear_runtime_log()
-                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting clean...")
+                if force_clean:
+                    self._manual_knots_dialog.set_runtime_progress(0.0, "Starting force clean...")
+                else:
+                    self._manual_knots_dialog.set_runtime_progress(0.0, "Starting clean...")
                 d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
                 self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
-                self._manual_knots_dialog.append_runtime_log(f"Advanced iterative clean (tolerance: +{tolerance})...")
+                if force_clean:
+                    self._manual_knots_dialog.append_runtime_log("Force clean: removing least penalizing knot...")
+                else:
+                    self._manual_knots_dialog.append_runtime_log(f"Advanced iterative clean (tolerance: +{tolerance})...")
             selected_lambda_knots_nm = dlg.selected_lambda_knots()
             delta_ns = dlg.substrate_delta_ns()
             if self.logger:
                 self.logger.info(
-                    "INDEX_SPLINE GUI: launching auto_clean | tolerance=+%.5f | seed_rmse=%.8f | seed_d=%.4f | K_selected=%d | delta_ns=%+.6f",
+                    "INDEX_SPLINE GUI: launching auto_clean | tolerance=+%.5f | seed_rmse=%.8f | seed_d=%.4f | K_selected=%d | delta_ns=%+.6f | force_clean=%s",
                     float(tolerance),
                     float(CertusIndexSplineApp._rmse_from_result_dict(seed_current)),
                     float(seed_current.get("d_nm", float("nan"))),
                     int(len(selected_lambda_knots_nm)),
                     float(delta_ns),
+                    str(force_clean),
                 )
-            self._start_manual_auto_clean_worker(seed_current, selected_lambda_knots_nm, float(delta_ns), tolerance)
+            self._start_manual_auto_clean_worker(seed_current, selected_lambda_knots_nm, float(delta_ns), tolerance, force_clean=force_clean)
 
         def _on_auto_add_one() -> None:
             if self._worker_role not in ("idle",):
@@ -457,6 +465,45 @@ class CertusIndexSplineManualMeshMixin:
             selected_lambda_knots_nm = dlg.selected_lambda_knots()
             delta_ns = dlg.substrate_delta_ns()
             self._start_manual_auto_add_one_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
+
+        def _on_auto_nkd_sweep() -> None:
+            if self._worker_role not in ("idle",):
+                if self.logger:
+                    self.logger.warning(
+                        "INDEX_SPLINE GUI: auto_nkd_sweep refused because worker busy | role=%s",
+                        str(self._worker_role),
+                    )
+                if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                    self._manual_knots_dialog.append_runtime_log(
+                        "Launch refused: an optimization is already in progress."
+                    )
+                QMessageBox.information(
+                    self,
+                    "Manual knots",
+                    "An optimization is already in progress. Wait for it to finish before restarting.",
+                )
+                return
+            seed_current = self._manual_postprocess_seed_result()
+            if not isinstance(seed_current, dict):
+                if self.logger:
+                    self.logger.warning("INDEX_SPLINE GUI: auto_nkd_sweep refused because no usable seed result")
+                QMessageBox.information(
+                    self,
+                    "Auto NKD Sweep",
+                    "No usable current result to start sweep.",
+                )
+                return
+            if isinstance(getattr(self, "_manual_knots_dialog", None), ManualSigmaKnotDialog):
+                self._manual_knots_dialog.clear_runtime_log()
+                self._manual_knots_dialog.set_runtime_progress(0.0, "Starting auto NKD sweep...")
+                d_seed, rmse_seed = CertusIndexSplineApp._runtime_metrics_from_result_dict(seed_current)
+                self._manual_knots_dialog.set_runtime_metrics(d_seed, rmse_seed)
+                self._manual_knots_dialog.append_runtime_log(
+                    "Auto NKD Sweep: optimizing across groups of 3 knots..."
+                )
+            selected_lambda_knots_nm = dlg.selected_lambda_knots()
+            delta_ns = dlg.substrate_delta_ns()
+            self._start_manual_auto_nkd_sweep_worker(seed_current, selected_lambda_knots_nm, float(delta_ns))
 
         def _on_recall_best() -> None:
             if self._worker_role not in ("idle",):
@@ -517,6 +564,7 @@ class CertusIndexSplineManualMeshMixin:
         dlg.auto_repartition_log_requested.connect(lambda: _on_auto_repartition("log"))
         dlg.auto_repartition_sigma_requested.connect(lambda: _on_auto_repartition("sigma"))
         dlg.auto_clean_requested.connect(_on_auto_clean)
+        dlg.force_clean_requested.connect(lambda: _on_auto_clean(float("nan"), force_clean=True))
         dlg.auto_add_one_requested.connect(_on_auto_add_one)
 
         def _on_recall_best_for_k(k: int) -> None:
@@ -922,7 +970,7 @@ class CertusIndexSplineManualMeshMixin:
         self._worker.start()
 
     def _start_manual_auto_clean_worker(
-        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float, tolerance: float
+        self, result: dict, selected_lambda_knots_nm: list[float], delta_ns: float, tolerance: float, force_clean: bool = False
     ) -> None:
         """Launch auto-clean worker to iteratively remove least sensitive knots."""
         cfg_base = self._last_run_cfg
@@ -965,6 +1013,7 @@ class CertusIndexSplineManualMeshMixin:
             self._stop_event,
             target_sigma_knots=target_sigma_knots,
             tolerance=tolerance,
+            force_clean=force_clean,
         )
 
         def _manual_progress(p: float | int, m: str) -> None:

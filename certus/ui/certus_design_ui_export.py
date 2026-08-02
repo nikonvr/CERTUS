@@ -1,9 +1,12 @@
 from __future__ import annotations
 from certus.ui.certus_design_common import *
+from certus.utils.certus_copy_utils import copy_optimization_result
+
 
 class ExportManager:
     def __init__(self, ui):
         self.ui = ui
+
     @safe_ui_action
     def export_results(self) -> None:
 
@@ -93,7 +96,9 @@ class ExportManager:
 
         ws.append([f"Best RMSE: {rmse_val:.6f}"])
 
-        t_exec = f"{self.ui.last_result.get('execution_time', 0):.2f}" if "execution_time" in self.ui.last_result else "N/A"
+        t_exec = (
+            f"{self.ui.last_result.get('execution_time', 0):.2f}" if "execution_time" in self.ui.last_result else "N/A"
+        )
 
         ws.append([f"Execution Time: {t_exec} s"])
 
@@ -127,14 +132,14 @@ class ExportManager:
                 ws2.append([vis["l"][i], vis["Ts"][i]])
 
         # 3. PARETO CATALOG EXPORT
-        if hasattr(self.ui, 'pareto_history') and self.ui.pareto_history:
+        if hasattr(self.ui, "pareto_history") and self.ui.pareto_history:
             ws_p = wb.create_sheet("Pareto Catalog")
             ws_p.append(["Layers", "RMSE", "Stack Design"])
             for n_layers in sorted(self.ui.pareto_history.keys(), reverse=True):
                 entry = self.ui.pareto_history[n_layers]
                 catalog = entry.get("catalog", [])
                 for cat_entry in catalog:
-                    rmse = cat_entry.get("rmse", float('inf'))
+                    rmse = cat_entry.get("rmse", float("inf"))
                     ep = cat_entry.get("ep", [])
                     stack = cat_entry.get("stack", [])
                     design_str = " | ".join(f"{s.mat}: {d:.2f}" for s, d in zip(stack, ep))
@@ -265,7 +270,7 @@ class ExportManager:
 
                     break
 
-                except (TypeError, ValueError):
+                except TypeError, ValueError:
                     continue
 
             svc = IndexFitService(runner=lambda _cfg: self.ui.last_result or {})
@@ -333,7 +338,7 @@ class ExportManager:
         ):
             return
 
-        self.ui.last_result = copy.deepcopy(self.ui._best_eval_result)
+        self.ui.last_result = copy_optimization_result(self.ui._best_eval_result)
 
         try:
             ep_best = np.asarray(self.ui.last_result.get("ep", []), dtype=float).flatten()
@@ -496,7 +501,7 @@ class ExportManager:
                     try:
                         seed_val = int(_seed_candidate)
                         break
-                    except (TypeError, ValueError):
+                    except TypeError, ValueError:
                         continue
                 req = IndexFitRequest(
                     config={
@@ -552,4 +557,3 @@ class ExportManager:
 
         except NUMERICAL_FAULT_EXCEPTIONS as e:
             self.ui.log(f"Export error:{str(e)}", "ERROR")
-

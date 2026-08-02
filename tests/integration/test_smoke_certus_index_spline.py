@@ -32,7 +32,7 @@ def test_import_certus_index_spline_app() -> None:
 
 
 def test_live_index_monitor_ui(qapp) -> None:
-    from certus.ui.certus_index_spline_ui import LiveIndexMonitor
+    from certus.ui.certus_index_spline_monitor_ui import LiveIndexMonitor
     from unittest.mock import MagicMock
     import numpy as np
 

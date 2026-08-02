@@ -40,8 +40,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 # Import access config
-
-from certus.core.certus_strat_utils import _resolve_materials_db_fallback
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     SUBSTRATE_MAPPING,
@@ -155,7 +153,7 @@ from certus.utils.certus_strat_service import (
 
 _validate_phase_a_bridge_lock = threading.Lock()
 
-from certus.core.certus_strat_utils import *
+from certus.core.certus_strat_utils import _IdxWrapper
 
 # Global scientific display configuration
 
@@ -259,7 +257,7 @@ def _run_phase_a_hybrid_loop(
         )
         full_dynamics_grid[i_layer] = layer_full_dyn
 
-        results_thickness, sim_updates = _validate_candidates_phase_a(
+        results_thickness, sim_updates = _service_validate_candidates_phase_a(
             candidates,
             i_layer,
             num_runs,
@@ -551,7 +549,8 @@ def _compute_strategy_symmetry_score_percent(
 
             layer_scores.append(max(float(s_start), float(s_end)))
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError) as exc:
+            logging.getLogger("CERTUS").warning("Failed to compute symmetry score for layer: %s", exc)
             layer_scores.append(0.0)
 
     if not layer_scores:

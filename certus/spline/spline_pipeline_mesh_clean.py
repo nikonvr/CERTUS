@@ -38,6 +38,7 @@ from .spline_pipeline_mesh_insert import (
 
 """Main spline pipeline: JSON logging, RMSE snapshots, worker orchestration."""
 import copy as _copy
+from certus.utils.certus_copy_utils import copy_spline_result
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 import logging
 from dataclasses import dataclass
@@ -94,7 +95,6 @@ from certus.spline.certus_corridor_logger import (
 )
 
 
-
 @dataclass
 class AutoCleanKnotsContext:
     tolerance: float
@@ -106,7 +106,9 @@ class AutoCleanKnotsContext:
     def emit_progress(self, units_inc: int, message: str) -> None:
         if self.progress_cb is None:
             return
-        self.progress_units_done = int(min(self.progress_units_total, self.progress_units_done + max(int(units_inc), 0)))
+        self.progress_units_done = int(
+            min(self.progress_units_total, self.progress_units_done + max(int(units_inc), 0))
+        )
         pct = 99.0 * (float(self.progress_units_done) / float(max(self.progress_units_total, 1)))
         self.progress_cb(float(np.clip(pct, 0.0, 99.0)), str(message))
 
@@ -115,6 +117,7 @@ class AutoCleanKnotsContext:
 
     def have_decisive_local_candidate(self, rmse_value: float) -> bool:
         return bool(np.isfinite(rmse_value) and rmse_value <= (self.nominal_rmse - self.decisive_improvement_margin()))
+
 
 def _auto_clean_cache_result(
     cache: dict,
@@ -125,6 +128,7 @@ def _auto_clean_cache_result(
     payload = (cand, float(rmse_value))
     cache[cache_key] = payload
     return payload
+
 
 def _auto_clean_prescreen_result(
     *,
@@ -145,15 +149,25 @@ def _auto_clean_prescreen_result(
         log.warning("INDEX_SPLINE [AUTO_CLEAN] prescreen produced non-finite RMSE | K=%d", k_sz)
         return _auto_clean_cache_result(cache, cache_key, None, float("inf"))
     if not _candidate_mesh_matches_target(cand, test_knots):
-        log.warning("INDEX_SPLINE [AUTO_CLEAN] prescreen returned inconsistent mesh | K_target=%d | rmse_fast=%.8f", k_sz, float(rmse_value))
+        log.warning(
+            "INDEX_SPLINE [AUTO_CLEAN] prescreen returned inconsistent mesh | K_target=%d | rmse_fast=%.8f",
+            k_sz,
+            float(rmse_value),
+        )
         return _auto_clean_cache_result(cache, cache_key, None, rmse_value)
     gate = float(nominal_rmse + tolerance + prescreen_margin_abs)
     if rmse_value > gate:
-        log.debug("INDEX_SPLINE [AUTO_CLEAN] prescreen rejected variant | K=%d | rmse_fast=%.8f | gate=%.8f", k_sz, float(rmse_value), float(gate))
+        log.debug(
+            "INDEX_SPLINE [AUTO_CLEAN] prescreen rejected variant | K=%d | rmse_fast=%.8f | gate=%.8f",
+            k_sz,
+            float(rmse_value),
+            float(gate),
+        )
         return _auto_clean_cache_result(cache, cache_key, None, rmse_value)
     if int(candidate_polish_maxfun) <= int(prescreen_maxfun):
         return _auto_clean_cache_result(cache, cache_key, cand, rmse_value)
     return None
+
 
 def _eval_clean_variant(
     test_knots: np.ndarray,
@@ -184,7 +198,15 @@ def _eval_clean_variant(
 
     warm_seed = best_result_out
     if prescreen_enabled:
-        cand_fast = insert_manual_sigma_nodes(cfg_prescreen, best_result_out, stop_event, np.asarray([], dtype=np.float64), target_sigma_knots=test_knots, force_reopt=True, live_cb=None)
+        cand_fast = insert_manual_sigma_nodes(
+            cfg_prescreen,
+            best_result_out,
+            stop_event,
+            np.asarray([], dtype=np.float64),
+            target_sigma_knots=test_knots,
+            force_reopt=True,
+            live_cb=None,
+        )
         rmse_fast = float(cand_fast.get("rmse", float("inf")))
         prescreen_out = _auto_clean_prescreen_result(
             log=log,
@@ -204,15 +226,37 @@ def _eval_clean_variant(
         if int(candidate_polish_maxfun) > int(prescreen_maxfun):
             warm_seed = cand_fast
 
-    cand = insert_manual_sigma_nodes(cfg_candidate, warm_seed, stop_event, np.asarray([], dtype=np.float64), target_sigma_knots=test_knots, force_reopt=True, live_cb=None)
+    cand = insert_manual_sigma_nodes(
+        cfg_candidate,
+        warm_seed,
+        stop_event,
+        np.asarray([], dtype=np.float64),
+        target_sigma_knots=test_knots,
+        force_reopt=True,
+        live_cb=None,
+    )
     rmse_cand = float(cand.get("rmse", float("inf")))
     if not np.isfinite(rmse_cand):
-        log.warning("INDEX_SPLINE [AUTO_CLEAN] candidate polish produced non-finite RMSE | K=%d", int(np.asarray(test_knots, dtype=np.float64).size))
+        log.warning(
+            "INDEX_SPLINE [AUTO_CLEAN] candidate polish produced non-finite RMSE | K=%d",
+            int(np.asarray(test_knots, dtype=np.float64).size),
+        )
     if not _candidate_mesh_matches_target(cand, test_knots):
-        log.warning("INDEX_SPLINE [AUTO_CLEAN] candidate polish returned inconsistent mesh | K_target=%d | rmse=%.8f", int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_cand))
+        log.warning(
+            "INDEX_SPLINE [AUTO_CLEAN] candidate polish returned inconsistent mesh | K_target=%d | rmse=%.8f",
+            int(np.asarray(test_knots, dtype=np.float64).size),
+            float(rmse_cand),
+        )
         return _auto_clean_cache_result(step_eval_cache, cache_key, None, rmse_cand)
-    log.debug("INDEX_SPLINE [AUTO_CLEAN] candidate polish done | K=%d | rmse=%.8f | delta_nominal=%+.8f | within_tol=%s", int(np.asarray(test_knots, dtype=np.float64).size), float(rmse_cand), float(rmse_cand - nominal_rmse) if np.isfinite(rmse_cand) else float("nan"), str(rmse_cand <= nominal_rmse + tolerance) if np.isfinite(rmse_cand) else "n/a")
+    log.debug(
+        "INDEX_SPLINE [AUTO_CLEAN] candidate polish done | K=%d | rmse=%.8f | delta_nominal=%+.8f | within_tol=%s",
+        int(np.asarray(test_knots, dtype=np.float64).size),
+        float(rmse_cand),
+        float(rmse_cand - nominal_rmse) if np.isfinite(rmse_cand) else float("nan"),
+        str(rmse_cand <= nominal_rmse + tolerance) if np.isfinite(rmse_cand) else "n/a",
+    )
     return _auto_clean_cache_result(step_eval_cache, cache_key, cand, rmse_cand)
+
 
 def worker_spline_auto_clean_knots(
     base_result: dict,
@@ -221,6 +265,7 @@ def worker_spline_auto_clean_knots(
     *,
     target_sigma_knots: np.ndarray,
     tolerance: float,
+    force_clean: bool = False,
     progress_cb=None,
     live_cb=None,
 ) -> dict | None:
@@ -238,7 +283,7 @@ def worker_spline_auto_clean_knots(
                 rv = float(rr)
                 if np.isfinite(rv) and 0.0 < rv < 0.49:
                     pull_ratios.append(rv)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             pull_ratios = [0.20]
         if not pull_ratios:
             pull_ratios = [0.20]
@@ -277,11 +322,7 @@ def worker_spline_auto_clean_knots(
         int(candidate_polish_maxfun),
     )
 
-
-
-
-
-    current_result = _copy.deepcopy(base_result)
+    current_result = copy_spline_result(base_result)
     current_knots = np.sort(target_sigma_knots)
     if current_knots.size >= 2:
         _diff = np.diff(current_knots)
@@ -291,12 +332,14 @@ def worker_spline_auto_clean_knots(
                 int(current_knots.size),
                 float(np.min(_diff)) if _diff.size else float("nan"),
             )
+        lam_pos = ", ".join(f"{1.0/max(s, 1e-30):.1f}" for s in current_knots)
         log.info(
-            "INDEX_SPLINE [AUTO_CLEAN] target mesh summary | K_target=%d | sigma_min=%.8e | sigma_max=%.8e | span=%.8e",
+            "INDEX_SPLINE [AUTO_CLEAN] target mesh summary | K_target=%d | sigma_min=%.8e | sigma_max=%.8e | span=%.8e\n    Lambda positions (nm): %s",
             int(current_knots.size),
             float(current_knots[0]),
             float(current_knots[-1]),
             float(current_knots[-1] - current_knots[0]),
+            lam_pos,
         )
 
     if progress_cb:
@@ -321,7 +364,7 @@ def worker_spline_auto_clean_knots(
     _d_nom = nominal_result.get("d_nm", float("nan"))
     try:
         _d_nom_f = float(_d_nom)
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         _d_nom_f = float("nan")
     log.info(
         "INDEX_SPLINE [AUTO_CLEAN] nominal reference | K=%d | RMSE=%.8f | d=%s",
@@ -353,16 +396,6 @@ def worker_spline_auto_clean_knots(
         progress_units_done=1,
     )
 
-
-
-
-
-
-
-
-
-
-
     step = 0
     while True:
         if stop_event.is_set():
@@ -389,8 +422,16 @@ def worker_spline_auto_clean_knots(
 
         if len(inner_indices) > top_n_sensitivity:
             inner_indices = _sensitivity_rank_inner_indices(
-                cfg, active_knots, best_result_out, K, inner_indices,
-                top_n_sensitivity, tolerance, strict_tol_mode, log, step,
+                cfg,
+                active_knots,
+                best_result_out,
+                K,
+                inner_indices,
+                top_n_sensitivity,
+                tolerance,
+                strict_tol_mode,
+                log,
+                step,
             )
 
         for i in inner_indices:
@@ -414,11 +455,19 @@ def worker_spline_auto_clean_knots(
                 nonlocal local_best_rmse, local_best_knots, local_best_variant
 
                 cand, cand_rmse = _eval_clean_variant(
-                    tk, stop_event, step_eval_cache,
-                    cfg_prescreen, cfg_candidate, best_result_out,
-                    nominal_rmse, tolerance, prescreen_enabled,
-                    prescreen_margin_abs, candidate_polish_maxfun,
-                    prescreen_maxfun, log,
+                    tk,
+                    stop_event,
+                    step_eval_cache,
+                    cfg_prescreen,
+                    cfg_candidate,
+                    best_result_out,
+                    nominal_rmse,
+                    tolerance,
+                    prescreen_enabled,
+                    prescreen_margin_abs,
+                    candidate_polish_maxfun,
+                    prescreen_maxfun,
+                    log,
                 )
                 if cand is not None:
                     if cand_rmse < best_cand_rmse:
@@ -502,8 +551,12 @@ def worker_spline_auto_clean_knots(
                 and not ctx.have_decisive_local_candidate(local_best_rmse)
             ):
                 refine_variants = _build_local_refine_variants(
-                    active_knots, i, local_best_knots,
-                    pull_enabled, local_refine_enabled, local_refine_rel_step,
+                    active_knots,
+                    i,
+                    local_best_knots,
+                    pull_enabled,
+                    local_refine_enabled,
+                    local_refine_rel_step,
                 )
                 if refine_variants:
                     for vname, tk in refine_variants:
@@ -544,13 +597,13 @@ def worker_spline_auto_clean_knots(
                 progress_cb(-1, "Cleaning finished: no finite candidate found for knot removal.")
             break
 
-        if best_cand_rmse <= nominal_rmse + tolerance:
+        if best_cand_rmse <= nominal_rmse + tolerance or force_clean:
             # The selected candidate is already a fully polished K-1 solution.
             # Re-running the exact same target mesh creates redundant 05b work and stale
             # follow-up jobs without improving the acceptance guarantee meaningfully.
             ctx.emit_progress(1, f"Accepting best removal [{best_cand_variant}]...")
             log.info(
-                "INDEX_SPLINE [AUTO_CLEAN] step=%d candidate accepted for validation | variant=%s | K_before=%d -> K_after=%d | rmse_candidate=%.8f | nominal=%.8f | delta=%+.8f",
+                "INDEX_SPLINE [AUTO_CLEAN] step=%d candidate accepted for validation | variant=%s | K_before=%d -> K_after=%d | rmse_candidate=%.8f | nominal=%.8f | delta=%+.8f | force_clean=%s",
                 int(step + 1),
                 str(best_cand_variant),
                 int(K),
@@ -558,6 +611,7 @@ def worker_spline_auto_clean_knots(
                 float(best_cand_rmse),
                 float(nominal_rmse),
                 float(best_cand_rmse - nominal_rmse),
+                str(force_clean),
             )
             final_cand = best_cand_result if best_cand_result is not None else None
             final_rmse = float(best_cand_rmse)
@@ -566,34 +620,40 @@ def worker_spline_auto_clean_knots(
 
             final_mesh_ok = _candidate_mesh_matches_target(final_cand, np.asarray(best_cand_knots, dtype=np.float64))
 
-            if final_cand is not None and final_mesh_ok and final_rmse <= nominal_rmse + tolerance:
+            if final_cand is not None and final_mesh_ok and (final_rmse <= nominal_rmse + tolerance or force_clean):
                 active_knots = np.asarray(best_cand_knots, dtype=np.float64).ravel().copy()
                 best_result_out = final_cand
                 if live_cb is not None:
                     live_cb(best_result_out)
                 step += 1
+                lam_pos = ", ".join(f"{1.0/max(s, 1e-30):.1f}" for s in active_knots)
                 log.info(
-                    "INDEX_SPLINE [AUTO_CLEAN] step=%d accepted | variant=%s | K=%d | RMSE=%.8f | nominal_delta=%+.8f",
+                    "INDEX_SPLINE [AUTO_CLEAN] step=%d accepted | variant=%s | K=%d | RMSE=%.8f | nominal_delta=%+.8f | force_clean=%s\n    Lambda positions (nm): %s",
                     int(step),
                     str(best_cand_variant),
                     int(active_knots.size),
                     float(final_rmse),
                     float(final_rmse - nominal_rmse),
+                    str(force_clean),
+                    lam_pos,
                 )
                 if progress_cb:
                     progress_cb(
                         -1,
                         f"Knot removed! [{best_cand_variant}] K={active_knots.size}. RMSE={final_rmse:.6f} (+{final_rmse - nominal_rmse:.6f}) | d: {d_prev} -> {d_new}",
                     )
+                if force_clean:
+                    break
             else:
                 log.info(
-                    "INDEX_SPLINE [AUTO_CLEAN] step=%d rejected after final consistency check | variant=%s | mesh_ok=%s | RMSE=%.8f | nominal_delta=%+.8f | tolerance=+%.8f",
+                    "INDEX_SPLINE [AUTO_CLEAN] step=%d rejected after final consistency check | variant=%s | mesh_ok=%s | RMSE=%.8f | nominal_delta=%+.8f | tolerance=+%.8f | force_clean=%s",
                     int(step + 1),
                     str(best_cand_variant),
                     str(final_mesh_ok),
                     float(final_rmse),
                     float(final_rmse - nominal_rmse),
                     float(tolerance),
+                    str(force_clean),
                 )
                 if progress_cb:
                     progress_cb(
@@ -633,7 +693,7 @@ def worker_spline_auto_clean_knots(
             final_knots = active_knots.copy()
             deep_final = insert_manual_sigma_nodes(
                 cfg_final_deep,
-                _copy.deepcopy(best_result_out),
+                copy_spline_result(best_result_out),
                 stop_event,
                 np.asarray([], dtype=np.float64),
                 target_sigma_knots=final_knots,
@@ -682,6 +742,7 @@ def worker_spline_auto_clean_knots(
 
     return best_result_out
 
+
 def worker_spline_autoshift_delta_ns(
     base_result: dict,
     cfg: SplineOptConfig,
@@ -707,7 +768,7 @@ def worker_spline_autoshift_delta_ns(
     # --- helpers --------------------------------------------------------
     def _try_shift(d_ns: float, maxfun_override: int | None = None) -> tuple[dict | None, float]:
         """Run a full polish at *d_ns* and return (result, rmse)."""
-        seed = _copy.deepcopy(base_result)  # isolation totale
+        seed = copy_spline_result(base_result)  # isolation totale
 
         cfg_args = {
             "substrate_n_offset": d_ns,
@@ -739,7 +800,7 @@ def worker_spline_autoshift_delta_ns(
     # --- 1D Brent search for optimal delta_ns ---
     from scipy.optimize import minimize_scalar
 
-    best_result_out = _copy.deepcopy(base_result)
+    best_result_out = copy_spline_result(base_result)
     best_rmse = float(best_result_out.get("rmse", float("inf")))
     best_dns = 0.0
     tested: dict[float, tuple[dict | None, float]] = {}
@@ -824,4 +885,3 @@ def worker_spline_autoshift_delta_ns(
         best_rmse,
     )
     return best_result_out
-

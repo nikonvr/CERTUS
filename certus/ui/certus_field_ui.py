@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_field_common import *
+from certus.workers.certus_strat_workers import _resolve_strat_indices_db_path
 from certus.ui.certus_field_layout_mixin import CertusFieldLayoutMixin
 from certus.ui.certus_field_plot_mixin import CertusFieldPlotMixin
 from certus.ui.certus_field_events_mixin import CertusFieldEventsMixin

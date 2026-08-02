@@ -105,17 +105,6 @@ from .certus_index_config import (
     OptimizationResults,
     substrateMode,
 )
-from .certus_index_objectives import (
-    IRGlobalObjective,
-    Phase23SplineObjective,
-    Phase23Pass2SplineObjective,
-    TLUObjective,
-    _phase23_cached_get,
-    _phase23_cached_set,
-)
-from .certus_index_solvers import (
-    PGlobalOptimizerINDEX,
-)
 
 # ---------------------------------------------------------
 

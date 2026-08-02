@@ -1823,7 +1823,7 @@ class TLUObjective:
 
                 _e2k = float(eps2[_ik2])
 
-                logging.getLogger("CERTUS").warning(
+                logging.getLogger("CERTUS").info(
                     "[INDEX.tlu_k_penalty] eval=%d remaining_logs=%d k_max=%.6g k_limit=%.4g penalty_power=%.0f Eg=%.4f Eu=%.4f E0=%.4f frac_E_gt_Eg=%.2f eps2_max=%.4g eps2_at_kmax=%.4g penalty=%.4g",
                     int(self.n_evals),
                     int(self._tlu_explode_logs_left),

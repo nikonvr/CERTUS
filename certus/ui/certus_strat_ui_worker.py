@@ -1,5 +1,6 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
+from certus.core.certus_strat_config import _SPECTRUM_COUNTER
 
 class CertusStratWorkerMixin:
     def _request_stop(self) -> None:

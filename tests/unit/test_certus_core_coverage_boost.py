@@ -173,10 +173,14 @@ class TestUtilities:
         assert get_precision_config() is False
 
     def test_get_float_dtype(self):
-        assert get_float_dtype() == np.float32
+        # Double precision. La politique « precision mixte f32/c64 pour le debit
+        # SIMD » a ete mesuree le 2026-08-02 : 1,1 % PLUS LENTE que la double
+        # precision, pour 8 ordres de grandeur de precision perdus (erreur R de
+        # 2,7e-08 contre 0 sur compute_TMM_generic). Voir certus_core.py.
+        assert get_float_dtype() == np.float64
 
     def test_get_complex_dtype(self):
-        assert get_complex_dtype() == np.complex64
+        assert get_complex_dtype() == np.complex128
 
     def test_get_safe_worker_count_default(self):
         n = get_safe_worker_count()

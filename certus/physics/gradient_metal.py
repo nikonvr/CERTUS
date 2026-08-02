@@ -12,7 +12,11 @@ from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
 from certus.physics.gradient_utils import compute_mse_vectorized
 from scipy.interpolate import CubicSpline
-from certus.physics.certus_optical_models import get_nk_from_spline, get_nk_cauchy_simple
+from certus.physics.certus_optical_models import (
+    SplineBasisCache,
+    get_nk_cauchy_simple,
+    get_nk_from_spline,
+)
 
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
@@ -298,18 +302,21 @@ def compute_metal_bilayer_gradient_analytic(
 
     dJ_dk = -sens_nM_i
 
-    basis = np.zeros((spline_knot_count, len(l_array)), dtype=np.float64)
-
-    for i in range(spline_knot_count):
-        unit_vals = np.zeros(spline_knot_count)
-
-        unit_vals[i] = 1.0
-
-        spline_basis = CubicSpline(knot_l, unit_vals, bc_type="natural", extrapolate=False)
-
-        basis_vals = spline_basis(l_array)
-
-        basis[i, :] = np.nan_to_num(basis_vals, nan=0.0)
+    # Base spline mise en CACHE au lieu d'etre reconstruite a chaque appel du gradient.
+    #
+    # La boucle precedente construisait spline_knot_count objets CubicSpline distincts,
+    # un par vecteur unite, A CHAQUE EVALUATION. Mesure sur une grille de 601 points :
+    # 1,0 ms a 5 noeuds, 1,6 ms a 8, 3,9 ms a 20 — soit environ 0,9 s sur 500
+    # evaluations et 3,4 s sur 2000, pour un resultat rigoureusement identique d'un
+    # appel a l'autre tant que les positions de noeuds ne bougent pas.
+    #
+    # SplineBasisCache fait exactement ce calcul et le memorise. extrapolate=False
+    # reproduit le comportement d'origine (0 hors du domaine des noeuds) ; ce drapeau
+    # fait partie de la cle, les deux variantes coexistent donc sans se melanger.
+    # La matrice rendue est (n_targets x n_knots) : on la transpose pour conserver
+    # l'indexation basis[i, :] utilisee plus bas. La transposition est une vue, pas
+    # une copie — la matrice est partagee, ne pas ecrire dedans.
+    basis = SplineBasisCache.get(knot_l, l_array, extrapolate=False).T
 
     basis_n = basis
 

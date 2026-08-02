@@ -217,13 +217,17 @@ class TestPrecisionConfig:
 
     def test_get_float_dtype(self):
         """Test get_float_dtype."""
+        # Double precision. La politique « precision mixte f32/c64 pour le debit
+        # SIMD » a ete mesuree le 2026-08-02 : 1,1 % PLUS LENTE que la double
+        # precision, pour 8 ordres de grandeur de precision perdus (erreur R de
+        # 2,7e-08 contre 0 sur compute_TMM_generic). Voir certus_core.py.
         dtype = get_float_dtype()
-        assert dtype == np.float32
+        assert dtype == np.float64
 
     def test_get_complex_dtype(self):
         """Test get_complex_dtype."""
         dtype = get_complex_dtype()
-        assert dtype == np.complex64
+        assert dtype == np.complex128
 
 
 class TestLoggingSystem:

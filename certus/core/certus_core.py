@@ -663,24 +663,43 @@ def get_precision_config() -> bool:
     return False
 
 
+# La politique « precision mixte f32/c64 pour le debit SIMD » a ete MESUREE le
+# 2026-08-02 et ne tient pas. Sur compute_TMM_generic, empilement de 12 couches,
+# meilleur temps sur 5 passes de 5000 appels :
+#
+#     c128/f64 : 0,9045 us/appel   erreur R = 0        (reference : oracle TMM)
+#     c64/f32  : 0,9144 us/appel   erreur R = 2,7e-08
+#
+# Soit 1,1 % PLUS LENT, pour huit ordres de grandeur de precision perdus. LLVM ne
+# vectorise pas mieux le complex64 que le complex128 sur cette boucle, et les
+# conversions coutent plus qu'elles ne rapportent.
+#
+# Ces deux fonctions alimentent 20 sites d'appel, dont certus_opt_tmm.py:507 et les
+# workers de design. Une erreur de 2,7e-08 sur R reste sous le bruit de mesure d'un
+# spectrophotometre, mais elle est desastreuse pour les gradients par differences
+# finies : avec un pas h = 1e-6, elle se traduit par ~3 % d'erreur sur la derivee.
+#
+# Repasse en double precision. Le sens du changement est strictement ameliorant.
+
+
 @lru_cache(maxsize=1)
 def get_float_dtype():
-    """Default float dtype for non-gradient computation (f32 for SIMD throughput).
+    """Type flottant par defaut. Double precision — cf. la mesure ci-dessus.
 
     Cached for performance.
     """
 
-    return np.float32
+    return np.float64
 
 
 @lru_cache(maxsize=1)
 def get_complex_dtype():
-    """Default complex dtype for non-gradient computation (c64 for SIMD throughput).
+    """Type complexe par defaut. Double precision — cf. la mesure ci-dessus.
 
     Cached for performance.
     """
 
-    return np.complex64
+    return np.complex128
 
 
 # =============================================================================

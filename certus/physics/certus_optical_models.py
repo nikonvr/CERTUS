@@ -378,13 +378,24 @@ class SplineBasisCache:
         return cls._lock
 
     @classmethod
-    def get(cls, knot_wavelengths: np.ndarray, target_wavelengths: np.ndarray) -> np.ndarray:
-        """
+    def get(
+        cls,
+        knot_wavelengths: np.ndarray,
+        target_wavelengths: np.ndarray,
+        extrapolate: bool = True,
+    ) -> np.ndarray:
+        """Matrice de base B (n_targets x n_knots), calculée puis mise en cache.
 
-        Returns the pre-computed basis matrix B (n_targets x n_knots).
+        Args:
+            knot_wavelengths: positions des nœuds.
+            target_wavelengths: grille d'évaluation.
+            extrapolate: comportement hors du domaine des nœuds. ``True`` prolonge le
+                spline, ``False`` renvoie 0 (les NaN produits par scipy sont ramenés à
+                zéro dans les deux cas). Ce drapeau fait partie de la clé : les deux
+                variantes coexistent sans se marcher dessus.
 
-        Computes and caches it on first call for a given (knots, targets) pair.
-
+        Returns:
+            La matrice de base. **Objet partagé — ne pas modifier en place.**
         """
 
         # Cle construite par .tobytes() et non par tuple().
@@ -402,6 +413,7 @@ class SplineBasisCache:
         key = (
             np.round(np.asarray(knot_wavelengths, dtype=np.float64), 6).tobytes(),
             np.round(np.asarray(target_wavelengths, dtype=np.float64), 4).tobytes(),
+            bool(extrapolate),
         )
 
         if key in cls._cache:
@@ -433,11 +445,13 @@ class SplineBasisCache:
 
                 unit_vals[j] = 1.0
 
-                basis_spline = CubicSpline(knot_wavelengths, unit_vals, bc_type="natural", extrapolate=True)
+                basis_spline = CubicSpline(
+                    knot_wavelengths, unit_vals, bc_type="natural", extrapolate=extrapolate
+                )
 
                 col = basis_spline(target_wavelengths)
 
-                np.nan_to_num(col, copy=False)
+                np.nan_to_num(col, copy=False, nan=0.0)
 
                 B[:, j] = col
 

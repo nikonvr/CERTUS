@@ -94,6 +94,7 @@ def check_gradient(
     rtol: float = 1e-6,
     atol: float = 1e-12,
     label: str = "",
+    blocks: list[tuple[int, int]] | None = None,
 ) -> np.ndarray:
     """Vérifie qu'un gradient analytique est la dérivée du coût qu'il accompagne.
 
@@ -127,34 +128,43 @@ def check_gradient(
             f"le point d'évaluation est dégénéré, le test ne prouve rien."
         )
 
-    # L'échelle de comparaison est celle du VECTEUR, pas de chaque composante isolée.
+    # Métrique standard en optimisation : ||g_a - g_n||_inf / ||g_n||_inf, appliquée
+    # PAR BLOC.
     #
-    # Une différence finie porte un bruit absolu d'environ eps.|cout|/h, indépendant
-    # de la composante mesurée. Rapporté à une composante mille fois plus petite que
-    # la plus grande du gradient, ce bruit devient une erreur relative énorme — sans
-    # que le gradient soit faux pour autant. Comparer chaque composante à elle-même
-    # ferait donc échouer le test sur les directions les moins sensibles, qui sont
-    # précisément celles où la différence finie n'apporte aucune information.
+    # Une composante ne se compare pas à elle-même : le bruit d'une différence finie
+    # est ABSOLU (de l'ordre de eps.|cout|/h), donc rapporté à une direction cent fois
+    # moins sensible que la dominante il produit une erreur relative énorme sans que
+    # le gradient soit faux.
     #
-    # On plancherise donc l'échelle à une fraction de la plus grande composante :
-    # une direction 1e6 fois moins sensible que la direction dominante n'est pas
-    # mesurable par différence finie, et son écart n'a pas de sens.
-    # Métrique standard en optimisation : ||g_a - g_n||_inf / ||g_n||_inf.
-    # C'est bien l'échelle du vecteur qui compte, une composante ne se compare pas
-    # à elle-même.
-    magnitude = max(float(np.max(np.abs(numerical))), atol)
-    relative = np.abs(analytic - numerical) / magnitude
+    # Mais elle ne doit pas non plus se comparer à une famille de paramètres d'une
+    # tout autre échelle. Mesuré sur l'objectif spline : le gradient vaut ~6,7e+02 sur
+    # les nœuds n et ~1e-04 sur les nœuds ln(k) — six ordres de grandeur. Sous une
+    # norme globale, une erreur de 2 % sur le bloc k devient invisible. C'est
+    # exactement ce qui a rendu ce harnais aveugle à un défaut de règle de chaîne
+    # pourtant bien présent.
+    spans = blocks if blocks is not None else [(0, analytic.size)]
 
-    worst = int(np.argmax(relative))
-    if relative[worst] > rtol:
-        raise GradientMismatch(
-            f"{label}: composante {worst} — "
-            f"analytique={analytic[worst]:.12e}, "
-            f"diff.finie={numerical[worst]:.12e}, "
-            f"ecart relatif={relative[worst]:.3e} > {rtol:.1e}\n"
-            f"  analytique : {np.array2string(analytic, precision=8)}\n"
-            f"  diff.finie : {np.array2string(numerical, precision=8)}"
-        )
+    for start_idx, stop_idx in spans:
+        block_analytic = analytic[start_idx:stop_idx]
+        block_numerical = numerical[start_idx:stop_idx]
+
+        if block_analytic.size == 0:
+            continue
+
+        magnitude = max(float(np.max(np.abs(block_numerical))), atol)
+        relative = np.abs(block_analytic - block_numerical) / magnitude
+
+        worst = int(np.argmax(relative))
+        if relative[worst] > rtol:
+            details = [
+                f"{label}: bloc [{start_idx}:{stop_idx}], composante {start_idx + worst}",
+                f"  analytique  = {block_analytic[worst]:.12e}",
+                f"  diff. finie = {block_numerical[worst]:.12e}",
+                f"  ecart relatif = {relative[worst]:.3e} > {rtol:.1e}",
+                f"  bloc analytique : {np.array2string(block_analytic, precision=8)}",
+                f"  bloc diff.finie : {np.array2string(block_numerical, precision=8)}",
+            ]
+            raise GradientMismatch(chr(10).join(details))
 
     return analytic
 

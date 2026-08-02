@@ -411,7 +411,27 @@ def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_l
         
     import math
     from scipy.stats import qmc, norm
-    local_seed = (base_seed + noise_idx) % (2**31)
+    # Melange multiplicatif, et NON une somme.
+    #
+    # `base_seed + noise_idx` fait collisionner des couples distincts : le consensus
+    # genere ses graines par `base_seed + i * stride` avec un stride valant 1 par defaut
+    # (certus/utils/certus_strat_context.py:598 et :610), donc (graine 42, niveau 1) et
+    # (graine 43, niveau 0) donnaient tous deux local_seed = 43 — le MEME bruit.
+    # Le recouvrement est triangulaire et massif :
+    #     3 graines x 3 niveaux =  9 tirages ->  5 distincts (44 % perdus)
+    #     5 graines x 4 niveaux = 20 tirages ->  8 distincts (60 % perdus)
+    #     8 graines x 5 niveaux = 40 tirages -> 12 distincts (70 % perdus)
+    # Or le consensus est cense moyenner sur des graines INDEPENDANTES : partager le
+    # bruit entre membres gonfle leur accord apparent, donc surestime la robustesse.
+    #
+    # Les deux constantes sont des entiers impairs proches de 2^32/phi et 2^16/phi :
+    # elles dispersent les bits de poids faible, qui sont precisement ceux qui variaient
+    # ici (indices petits et consecutifs).
+    #
+    # NOTE : ce correctif change les tirages, donc les resultats de robustesse ne sont
+    # pas numeriquement comparables a ceux d'avant. C'est inevitable — les anciens
+    # etaient statistiquement biaises.
+    local_seed = (base_seed * 2_654_435_761 + noise_idx * 40_503) % (2**31)
     sobol_engine = qmc.Sobol(d=num_layers, seed=local_seed)
     n_pow2 = 2 ** math.ceil(math.log2(num_runs)) if num_runs > 0 else 0
     sobol_samples = sobol_engine.random(n=n_pow2)[:num_runs]

@@ -387,9 +387,21 @@ class SplineBasisCache:
 
         """
 
+        # Cle construite par .tobytes() et non par tuple().
+        #
+        # tuple(np.round(arr, n)) materialise un tuple Python de scalaires numpy puis le
+        # hache element par element. Mesure sur une grille cible de 601 points : 35,9 us
+        # par appel, soit 85 % du cout total du chemin CHAUD (42,5 us) — l'essentiel du
+        # temps etait passe a fabriquer la cle, pas a rendre la matrice.
+        # .tobytes() donne une cle stable en un seul bloc memoire. C'est deja l'idiome
+        # employe par _cached_cubic_interp_matrix (spline_objective.py:53).
+        #
+        # np.asarray(..., float64) est necessaire : deux appelants passant l'un du
+        # float32 et l'autre du float64 produiraient des octets differents pour des
+        # valeurs identiques, donc deux entrees de cache au lieu d'une.
         key = (
-            tuple(np.round(knot_wavelengths, 6)),
-            tuple(np.round(target_wavelengths, 4)),
+            np.round(np.asarray(knot_wavelengths, dtype=np.float64), 6).tobytes(),
+            np.round(np.asarray(target_wavelengths, dtype=np.float64), 4).tobytes(),
         )
 
         if key in cls._cache:

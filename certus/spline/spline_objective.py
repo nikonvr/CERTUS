@@ -890,7 +890,15 @@ class SplinePWLObjective:
         self._wsum, self._use_t, self._use_r = _spectral_wsum_and_channels(cfg, self.t_exp_f, self.r_exp_f)
         self._k_lo_phys = float(max(float(cfg.k_clip_lo), float(K_MIN_PHYS)))
         self._k_hi_phys = float(cfg.k_clip_hi)
-        self._interp_mode = str(cfg.nk_profile_interp or "smooth")
+        # NE PAS reaffecter _interp_mode ici : il est deja resolu plus haut (lignes
+        # 860-865), conjointement avec _interp_mat, et les deux DOIVENT rester coherents.
+        #
+        # Cette ligne y remettait la chaine BRUTE de la config. Consequences :
+        #  - pour K < 4, le bloc du haut choisit "pwl" et met _interp_mat = None, mais on
+        #    remettait "smooth" : le gradient prenait alors la branche smooth et faisait
+        #    S_mat.T @ ... sur None ;
+        #  - la chaine n'etait ni .strip() ni .lower() ici, contrairement a la ligne 859 :
+        #    une valeur "Smooth " ne matchait plus la comparaison mode == "smooth".
         self._weight_t = float(cfg.weight_t)
         self._weight_r = float(cfg.weight_r)
 
@@ -1329,8 +1337,23 @@ class SplinePWLObjective:
         w1 = np.where(sig_f >= sk[-1], 1.0, w1)
         w0 = 1.0 - w1
 
-        n_unc = w0 * n_n[j_arr] + w1 * n_n[j_arr + 1]
-        L_lam_v = w0 * L_n[j_arr] + w1 * L_n[j_arr + 1]
+        # Le facteur de la regle de chaine doit etre evalue avec L'INTERPOLATION DU
+        # MODELE, pas systematiquement avec la lineaire par morceaux.
+        #
+        # k_lam = exp(L_lam), donc d k_lam / d L_noeud = exp(L_lam) * dL_lam/d L_noeud.
+        # La projection dL_lam/d L_noeud est bien traitee plus bas (S_mat.T en mode
+        # smooth, w0/w1 en mode pwl), mais le facteur exp(L_lam) etait TOUJOURS calcule
+        # a partir des poids lineaires w0/w1. En mode "smooth" — le mode PAR DEFAUT des
+        # que K >= 4 (cf. ligne 860) — le modele direct interpole par matrice cubique
+        # (ligne 245, mat @ v) : le facteur etait donc evalue au mauvais endroit, et les
+        # masques de bornes dn_mask/dk_mask testes sur les mauvaises valeurs.
+        if mode == "smooth":
+            n_unc = S_mat @ n_n
+            L_lam_v = S_mat @ L_n
+        else:
+            n_unc = w0 * n_n[j_arr] + w1 * n_n[j_arr + 1]
+            L_lam_v = w0 * L_n[j_arr] + w1 * L_n[j_arr + 1]
+
         k_unc = np.exp(L_lam_v)
 
         dn_mask = ((n_unc > N_MIN_LIMIT) & (n_unc < N_MAX_LIMIT)).astype(np.float64)

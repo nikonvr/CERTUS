@@ -640,6 +640,15 @@ class IRGlobalObjective:
             self.n_ref_global if self.n_ref_global is not None else np.zeros(0),
             self.n_ref_tol,
         )
+
+        # La garde etait CALCULEE puis JETEE : is_valid n'etait relu nulle part dans la
+        # suite de la methode. Des parametres non physiques (n hors [1.2, 4.0], k au-dela
+        # de k_max_guard, discontinuite avec la phase 1, ou NaN issu de fastmath)
+        # recevaient donc un cout fini, et l'optimiseur pouvait converger vers eux.
+        # Meme valeur de rejet que la garde de domaine spectral ci-dessus.
+        if not is_valid:
+            return 1e12
+
         use_T = self.target_T is not None and self.data_type in (DataType.TRANSMISSION, DataType.BOTH)
         use_R = self.target_R is not None and self.data_type in (DataType.REFLECTION, DataType.BOTH)
 

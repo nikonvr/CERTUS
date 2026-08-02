@@ -12,12 +12,32 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# La console Windows est en cp1252 : tout print d'un caractère hors Latin-1 lève
+# UnicodeEncodeError et fait ÉCHOUER le test, alors qu'il s'agit d'un simple message
+# de diagnostic. Le cas typique est un test qui plante en écrivant sa ligne de SUCCÈS
+# (« ✅ analytic=..., fd=... »). 48 occurrences de ✅/❌/⚠ dans 12 fichiers de tests.
+# On force UTF-8 sur les flux de test : un print de diagnostic ne doit jamais pouvoir
+# faire échouer une assertion qui, elle, est passée.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 import os
 
 # Force Qt offscreen platform for headless CI/test environments.
 # Must be set BEFORE any QApplication is created.
 if "QT_QPA_PLATFORM" not in os.environ:
     os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
+# Disable automatic onboarding tour during tests
+try:
+    from certus.ui.certus_base_app import CertusBaseApp
+    CertusBaseApp._maybe_run_first_time_tour = lambda self: None
+except ImportError:
+    pass
 
 try:
     from PyQt6.QtWidgets import QApplication
@@ -105,23 +125,10 @@ def sample_spectrum(sample_wavelengths):
     return R, T
 
 
-def compute_spectrum_simple(layers, wavelengths):
-    """High-level wrapper: List[Layer] + wavelengths -> R array.
-
-    Uses low-level TMM kernel with realistic clues (n=1.5 per layer,
-    derived from qwot). For structural tests only."""
-    from certus.core._certus_physics_impl import compute_TMM_generic as _tmm
-
-    n_sub = complex(1.52)
-    n0 = complex(1.0)
-    N = len(layers)
-    d_arr = np.array([l.qwot * 137.5 for l in layers])  # QWOT -> nm approximatif
-    n_arr = np.array([complex(1.5, 0.0)] * N)
-    R_out = np.empty(len(wavelengths))
-    for i, wl in enumerate(wavelengths):
-        k0 = 2.0 * np.pi / wl
-        R_out[i], _ = _tmm(k0, d_arr, n_arr, n0, n_sub)
-    return R_out
+# Deplace vers tests/spectrum_helpers.py : un conftest.py declare des fixtures,
+# il ne doit pas servir de bibliotheque importable par nom nu (plusieurs
+# conftest.py coexistent, le nom "conftest" est ambigu).
+from spectrum_helpers import compute_spectrum_simple  # noqa: E402,F401
 
 
 @pytest.fixture

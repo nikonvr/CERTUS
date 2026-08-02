@@ -50,7 +50,7 @@ except ImportError:
 
 
 
-from conftest import compute_spectrum_simple
+from spectrum_helpers import compute_spectrum_simple
 
 
 
@@ -266,7 +266,16 @@ class TestModuleInteraction:
 
         """Test the availability of main modules."""
 
-        modules_to_test = ["certus_core", "certus_ui", "certus_errors"]
+        # Chemins REELS du paquet. Les noms nus ("certus_core", "certus_ui",
+        # "certus_errors") datent de la disposition a plat : ils n'etaient importables
+        # que via l'install editable du venv, qui resolvait vers un AUTRE snapshot
+        # (CERTUS/0807, fige au 13 juillet). Ce .pth a ete retire ; le test doit donc
+        # verifier ce que le depot expose reellement.
+        modules_to_test = [
+            "certus.core.certus_core",
+            "certus.ui.certus_ui",
+            "certus.utils.errors",
+        ]
 
 
 

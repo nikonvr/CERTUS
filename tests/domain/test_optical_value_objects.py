@@ -203,12 +203,17 @@ def test_refractive_index_invariants(n, k):
 @given(n=st.floats(min_value=1.0, max_value=4.0), k=st.floats(min_value=0.0, max_value=2.0))
 @settings(max_examples=100, deadline=1000)
 def test_refractive_index_to_complex_correct(n, k):
-    """Property: to_complex() must produce n + ik."""
+    """Propriete : to_complex() doit produire n - ik (convention Macleod du projet).
+
+    L'assertion exigeait auparavant n + ik, verrouillant une convention opposee a
+    celle utilisee dans tout le reste de CERTUS (cf. CLAUDE.md §3). Une valeur en
+    n + ik injectee dans le TMM produit un milieu a gain, avec R + T > 1.
+    """
     ri = RefractiveIndex(n, k)
     c = ri.to_complex()
 
     assert np.isclose(c.real, n, rtol=1e-15)
-    assert np.isclose(c.imag, k, rtol=1e-15)
+    assert np.isclose(c.imag, -k, rtol=1e-15)
 
 
 @given(

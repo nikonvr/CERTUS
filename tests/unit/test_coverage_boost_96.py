@@ -65,10 +65,13 @@ def test_setup_numba_cache_value_error(monkeypatch):
         "VECLIB_MAXIMUM_THREADS",
         "NUMEXPR_NUM_THREADS",
     ]:
-        if env_var in os.environ:
-            monkeypatch.setenv(env_var, os.environ[env_var])
-        else:
-            monkeypatch.delenv(env_var, raising=False)
+        # Effacer INCONDITIONNELLEMENT. L'ancienne version faisait
+        # `setenv(var, os.environ[var])` quand la variable existait — elle PRÉSERVAIT
+        # donc la valeur en place, avant d'asserter plus bas qu'elle vaut None. Le test
+        # ne passait que tant qu'aucun autre test du lot ne positionnait ces variables :
+        # dépendance à l'ordre d'exécution, invisible en lancement isolé.
+        # monkeypatch restaure les valeurs d'origine en fin de test.
+        monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")
     certus_core.setup_numba_cache()
 
@@ -90,10 +93,13 @@ def test_setup_numba_cache_frozen(monkeypatch):
         "VECLIB_MAXIMUM_THREADS",
         "NUMEXPR_NUM_THREADS",
     ]:
-        if env_var in os.environ:
-            monkeypatch.setenv(env_var, os.environ[env_var])
-        else:
-            monkeypatch.delenv(env_var, raising=False)
+        # Effacer INCONDITIONNELLEMENT. L'ancienne version faisait
+        # `setenv(var, os.environ[var])` quand la variable existait — elle PRÉSERVAIT
+        # donc la valeur en place, avant d'asserter plus bas qu'elle vaut None. Le test
+        # ne passait que tant qu'aucun autre test du lot ne positionnait ces variables :
+        # dépendance à l'ordre d'exécution, invisible en lancement isolé.
+        # monkeypatch restaure les valeurs d'origine en fin de test.
+        monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")
     certus_core.setup_numba_cache()
     # It just returns the path, doesn't set THREADING_LAYER anymore.

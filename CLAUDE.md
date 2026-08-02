@@ -231,6 +231,14 @@ Reprises de `.cursorrules` — politique **zéro régression** :
 
 ---
 
+## 6bis. 📋 Plan de reprise
+
+**`docs/PLAN_AMELIORATION.md`** — plan d'amélioration complet et ordonné, écrit pour un
+agent qui prend la suite. Six chantiers dont chacun rend le suivant sûr, avec pour chacun
+la méthode de vérification et le niveau de risque. Lis-le après ce fichier.
+
+---
+
 ## 7. 🟢 L'oracle TMM — sers-t'en
 
 `tests/oracle/tmm_reference.py` est une référence TMM **indépendante**, sans aucune ligne

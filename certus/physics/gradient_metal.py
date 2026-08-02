@@ -347,7 +347,23 @@ def compute_metal_bilayer_gradient_analytic(
 
         dk_dp = (ks_p - k_calc) / h_val
 
-        grad[offset + 2 * num_knots + i] = np.dot(dJ_dn, dn_dp) + np.dot(dJ_dk, dk_dp)
+        # Indice : 2 * spline_knot_count, et NON 2 * num_knots.
+        #
+        # spline_knot_count vaut num_knots + 1, donc l'ancien indice ecrivait DEUX
+        # positions trop tot. Le bloc des noeuds k occupe grad[offset + skc :
+        # offset + 2*skc] ; la boucle lambda ecrasait donc ses deux dernieres cases,
+        # et les deux dernieres positions lambda ne recevaient JAMAIS de gradient.
+        #
+        # Verifie numeriquement contre differences finies (num_knots=4, 3 lambda) :
+        #   k[3], k[4]           -> gradients detruits, remplaces par ceux de lambda
+        #   lambda[0]            -> recevait le gradient de lambda[2]
+        #   lambda[1], lambda[2] -> exactement 0, alors que la FD est non nulle
+        # Le decalage etait de 2 exactement : la FD de lambda[0] valait -8,852689e-06,
+        # soit precisement la valeur logee dans la case de k[3].
+        #
+        # L'optimiseur metal bicouche partait donc dans une mauvaise direction sur les
+        # deux derniers noeuds k, et ne deplacait jamais les dernieres positions lambda.
+        grad[offset + 2 * spline_knot_count + i] = np.dot(dJ_dn, dn_dp) + np.dot(dJ_dk, dk_dp)
 
     if eM < 1.0:
         grad[0] -= 1000.0 * (1.0 - eM)

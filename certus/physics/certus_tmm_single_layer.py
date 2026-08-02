@@ -1,12 +1,15 @@
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
 from certus.core.certus_core import TWO_PI
 
 SMALL_EPSILON = 1e-12
 
-from .certus_tmm_substrate import calculate_single_interface_R, calculate_bare_substrate_R_absorbing, calculate_bare_substrate_T_absorbing
+from .certus_tmm_substrate import (
+    calculate_single_interface_R,
+    calculate_bare_substrate_R_absorbing,
+    calculate_bare_substrate_T_absorbing,
+)
 from .certus_tmm_matrix import compute_complex_phase_components
 
 
@@ -35,7 +38,12 @@ def calculate_RT_single_layer_single(
 
     phi_r = k * n_film_real * thickness_nm
 
-    phi_i = k * n_film_imag * thickness_nm
+    # Convention Macleod n̂ = n − ik : la partie imaginaire du déphasage est NÉGATIVE.
+    # compute_complex_phase_components renvoie cos/sin(φr + i·φi) — soit le conjugué de
+    # ce que sa docstring annonce. Les appelants obliques compensent en passant phi.imag
+    # déjà signé ; ici n_film_imag arrive positif, d'où le signe explicite.
+    # Validé contre tests/oracle/tmm_reference.py (cf. tests/oracle/test_tmm_oracle.py).
+    phi_i = -k * n_film_imag * thickness_nm
 
     cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)
 
@@ -241,7 +249,7 @@ def calculate_transmission_single(
         rp_num = ns * Bp - Cp
 
         R_prime = (rp_num.real * rp_num.real + rp_num.imag * rp_num.imag) / Yp_mag_sq
-        
+
         # T' = 4 * Re(1) * Re(ns) / |Y'|^2 = 4 * ns.real / Yp_mag_sq
         T_prime = 4.0 * ns.real / Yp_mag_sq
 
@@ -683,4 +691,3 @@ def calculate_RT_single_layer_absorbing_substrate_array(
         )
 
     return R_arr, T_arr
-

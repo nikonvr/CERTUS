@@ -2,14 +2,28 @@ SMALL_EPSILON = 1e-12
 import numpy as np
 from numba import njit, prange
 import math
-from typing import *
-from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE, get_complex_dtype, FROSTED_GLASS_CAUCHY_A, FROSTED_GLASS_CAUCHY_B
+from certus.core.certus_core import (
+    WL_DECIMALS,
+    PI,
+    TWO_PI,
+    N_SUPERSTRATE,
+    get_complex_dtype,
+    FROSTED_GLASS_CAUCHY_A,
+    FROSTED_GLASS_CAUCHY_B,
+)
 from dataclasses import dataclass
 from certus.physics.certus_optical_models import (
-    get_nk_from_spline, get_nk_cauchy_simple, get_nk_cauchy_wrapper,
-    sellmeier_n_array, get_nk_cauchy, epsilon2_TLU_array, epsilon1_TL_analytic, epsilon_to_nk
+    get_nk_from_spline,
+    get_nk_cauchy_simple,
+    get_nk_cauchy_wrapper,
+    sellmeier_n_array,
+    get_nk_cauchy,
+    epsilon2_TLU_array,
+    epsilon1_TL_analytic,
+    epsilon_to_nk,
 )
 from scipy.interpolate import CubicSpline
+
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def clip_to_bounds(x: np.ndarray, lb: np.ndarray, ub: np.ndarray) -> np.ndarray:
@@ -23,6 +37,7 @@ def clip_to_bounds(x: np.ndarray, lb: np.ndarray, ub: np.ndarray) -> np.ndarray:
         else:
             out[i] = v
     return out
+
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_TMM_generic(
@@ -98,6 +113,7 @@ def compute_TMM_generic(
 
     return compute_RT_from_matrix(M00, M01, M10, M11, n_inc, n_sub)
 
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def compute_RT_from_matrix(
     M00: complex,
@@ -171,6 +187,7 @@ def compute_RT_from_matrix(
     T = max(0.0, T)
 
     return R, T
+
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def calculate_RTRback_incoherent_vectorized(
@@ -304,6 +321,7 @@ def calculate_RTRback_incoherent_vectorized(
 
     return R_total, T_total, Rback_total
 
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def calculate_reflection_infinite_substrate_single(
     wavelength: float,
@@ -331,123 +349,32 @@ def calculate_reflection_infinite_substrate_single(
     if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
         return np.nan
 
-    n0 = N_SUPERSTRATE  # Air
+    # Delegation a compute_TMM_generic : source unique de verite du projet.
+    # CLAUDE.md §3 : « Toute nouvelle variante TMM doit lui deleguer — ne reimplemente
+    # jamais la formule. » Cette fonction developpait la matrice a la main et utilisait
+    # -i*sin(d)/n et -i*n*sin(d), alors que la convention Macleod du projet est +i
+    # (cf. compute_TMM_generic, I_VAL = +1j). Exacte a k = 0, elle derivait jusqu'a
+    # 82 points de reflectance des que k > 0 — mesure contre tests/oracle/tmm_reference.py.
+    # Chemin VIVANT : il alimente l'ajustement n,k de CERTUS_INDEX et ses gradients par
+    # differences finies (certus/core/certus_index_objectives.py:222-231).
+    #
+    # n_film_imag arrive en k POSITIF ; la convention interne est n = n - ik.
+    thicknesses = np.empty(1, dtype=np.float64)
+    thicknesses[0] = thickness_nm
 
-    k = TWO_PI / wavelength
+    layers = np.empty(1, dtype=np.complex128)
+    layers[0] = complex(n_film_real, -abs(n_film_imag))
 
-    # Complex phase in the film
-
-    phi_r = k * n_film_real * thickness_nm
-
-    phi_i = k * n_film_imag * thickness_nm
-
-    # Complex exponential
-
-    exp_pos = np.exp(-phi_i)
-
-    exp_neg = np.exp(phi_i)
-
-    cos_phi_r = np.cos(phi_r)
-
-    sin_phi_r = np.sin(phi_r)
-
-    cos_phi_real = cos_phi_r * (exp_pos + exp_neg) / 2.0
-
-    cos_phi_imag = sin_phi_r * (exp_neg - exp_pos) / 2.0
-
-    sin_phi_real = sin_phi_r * (exp_pos + exp_neg) / 2.0
-
-    sin_phi_imag = cos_phi_r * (exp_pos - exp_neg) / 2.0
-
-    # Inverse of complex film index
-
-    n_mag_sq = n_film_real * n_film_real + n_film_imag * n_film_imag
-
-    if n_mag_sq < SMALL_EPSILON:
-        return np.nan
-
-    inv_n_r = n_film_real / n_mag_sq
-
-    inv_n_i = n_film_imag / n_mag_sq
-
-    # Transfer matrix elements (Macleod: -i * sin / n,  -i * n * sin)
-
-    M00_real = cos_phi_real
-
-    M00_imag = cos_phi_imag
-
-    M01_real = inv_n_r * sin_phi_imag + inv_n_i * sin_phi_real
-
-    M01_imag = -(inv_n_r * sin_phi_real - inv_n_i * sin_phi_imag)
-
-    M10_real = n_film_real * sin_phi_imag + n_film_imag * sin_phi_real
-
-    M10_imag = -(n_film_real * sin_phi_real - n_film_imag * sin_phi_imag)
-
-    M11_real = cos_phi_real
-
-    M11_imag = cos_phi_imag
-
-    # substrate complex index
-
-    ns_r = n_sub.real
-
-    ns_i = n_sub.imag
-
-    # Term n_sub * M01
-
-    nsM01_r = ns_r * M01_real - ns_i * M01_imag
-
-    nsM01_i = ns_r * M01_imag + ns_i * M01_real
-
-    # Term n_sub * M11
-
-    nsM11_r = ns_r * M11_real - ns_i * M11_imag
-
-    nsM11_i = ns_r * M11_imag + ns_i * M11_real
-
-    # Denominator: n0*B + C where B = M00+ns*M01, C = M10+ns*M11
-
-    # B = M00 + nsM01
-
-    B_r = M00_real + nsM01_r
-
-    B_i = M00_imag + nsM01_i
-
-    # C = M10 + nsM11
-
-    C_r = M10_real + nsM11_r
-
-    C_i = M10_imag + nsM11_i
-
-    # Denom = n0 * B + C
-
-    denom_real = n0 * B_r + C_r
-
-    denom_imag = n0 * B_i + C_i
-
-    denom_mag_sq = denom_real * denom_real + denom_imag * denom_imag
-
-    if denom_mag_sq < SMALL_EPSILON:
-        return np.nan
-
-    # Numerator: n0*B - C (standard Macleod)
-
-    num_r_real = n0 * B_r - C_r
-
-    num_r_imag = n0 * B_i - C_i
-
-    # Amplitude reflection coefficient
-
-    r_real = (num_r_real * denom_real + num_r_imag * denom_imag) / denom_mag_sq
-
-    r_imag = (num_r_imag * denom_real - num_r_real * denom_imag) / denom_mag_sq
-
-    # Reflectance (intensity)
-
-    R = r_real * r_real + r_imag * r_imag
+    R, _T = compute_TMM_generic(
+        TWO_PI / wavelength,
+        thicknesses,
+        layers,
+        complex(N_SUPERSTRATE, 0.0),
+        n_sub,
+    )
 
     return max(0.0, min(1.0, R))
+
 
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def calculate_reflectance_bilayer_vectorized(
@@ -557,6 +484,7 @@ def calculate_reflectance_bilayer_vectorized(
 
     return R_out
 
+
 @dataclass(slots=True)
 class Material:
     """Material with Cauchy model (slots=True for reduced RAM)"""
@@ -587,6 +515,7 @@ class Material:
 
         return float(result[0].real)
 
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
     """Calculate frosted glass refractive index for an array of wavelengths."""
@@ -599,6 +528,7 @@ def get_n_frosted_glass_array(wavelengths_nm: np.ndarray) -> np.ndarray:
         result[i] = FROSTED_GLASS_CAUCHY_A + FROSTED_GLASS_CAUCHY_B / (wavelengths_nm[i] * wavelengths_nm[i])
 
     return result
+
 
 def arange_inclusive(start: float, stop: float, step: float, decimals: int = WL_DECIMALS) -> np.ndarray:
     """
@@ -621,6 +551,7 @@ def arange_inclusive(start: float, stop: float, step: float, decimals: int = WL_
     stop_rounded = round(stop, decimals)
 
     return arr[arr <= stop_rounded + 10 ** (-decimals - 1)]
+
 
 def trim_worst_only(data: np.ndarray, trim_percent: int = 10) -> np.ndarray:
     """

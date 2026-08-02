@@ -11,9 +11,6 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
 from PyQt6.QtSvgWidgets import QSvgWidget
 
 from certus.core.certus_core import (

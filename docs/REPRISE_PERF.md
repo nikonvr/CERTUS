@@ -42,13 +42,23 @@ mesure doit partir en tâche de fond.
 
 ### Les deux commandes du quotidien
 
-```bat
-:: mesurer un module sur son vrai exemple
-.venv\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
+Mesurer un module sur son vrai exemple — depuis `cmd` :
 
-:: prouver un gain, en alternant les deux versions
-bash scripts\ab_compare.sh certus\physics\certus_optimizers.py 2572f46^ design 4 --auto-yes --time-cost
+```bat
+.venv\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
 ```
+
+Prouver un gain en alternant les deux versions — **depuis Git Bash**, avec des
+barres obliques et le `^` entre guillemets :
+
+```bash
+bash scripts/ab_compare.sh certus/physics/certus_optimizers.py "2572f46^" design 4 --auto-yes --time-cost
+```
+
+⚠️ Ces deux détails ne sont pas cosmétiques. Sous bash, `scripts\ab_compare.sh`
+devient `scriptsab_compare.sh` — l'antislash est un caractère d'échappement, et la
+commande échoue. Sous `cmd`, c'est le `^` de `2572f46^` qui disparaît, car c'est
+le caractère d'échappement de `cmd` : on ne compare alors plus au bon commit.
 
 ### Ce qui est déjà rouge — ne pas partir à la chasse
 
@@ -97,7 +107,7 @@ mesuré avant/après.** Trois pièges l'ont mise à l'épreuve aujourd'hui :
 
 ## 1. Comment mesurer — la seule méthode qui tienne
 
-```bash
+```bat
 .venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes [--sample]
 ```
 

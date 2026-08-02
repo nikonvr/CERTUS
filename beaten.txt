@@ -1,3 +1,0 @@
-
-!!! SUCCESS !!! Reference Score of 0.004800 was beaten!
-New Best Score: 0.002051 | Layers: 26

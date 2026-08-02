@@ -1,5 +1,10 @@
 # CERTUS Optical Suite - AI Instructions
 
+> Ces regles sont le socle. Le contexte complet du projet est dans **`CLAUDE.md`**
+> (conventions physiques, architecture, problemes ouverts) et, pour toute question
+> de performance, dans **`docs/REPRISE_PERF.md`** (reference mesuree par module,
+> banc de mesure, tests deja rouges). Voir aussi `AGENTS.md`.
+
 ## 🔴 ZERO REGRESSION POLICY 🔴
 You are an AI assisting in the development of the CERTUS suite. Your primary goal is to **prevent regressions**.
 1. **Conservative Changes**: Only modify the exact lines needed for a task. Do not rewrite large blocks of code for "cleanliness" unless explicitly requested.

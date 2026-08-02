@@ -231,11 +231,30 @@ Reprises de `.cursorrules` — politique **zéro régression** :
 
 ---
 
-## 6bis. 📋 Plan de reprise
+## 6bis. 📋 Plans de reprise
+
+**`docs/REPRISE_PERF.md`** — 🔴 **à lire en premier pour toute question de performance.**
+Mis à jour le 2026-08-02 : référence mesurée de chaque module sur les vrais exemples,
+ce qui est déjà optimisé (5 commits), ce qui reste, les profils bruts, et les pièges de
+mesure. Il **corrige trois affirmations fausses** de `docs/PLAN_OPTIMISATION.md` — ne
+retravaille pas ce dernier sans avoir lu la §5 du premier.
 
 **`docs/PLAN_AMELIORATION.md`** — plan d'amélioration complet et ordonné, écrit pour un
 agent qui prend la suite. Six chantiers dont chacun rend le suivant sûr, avec pour chacun
-la méthode de vérification et le niveau de risque. Lis-le après ce fichier.
+la méthode de vérification et le niveau de risque.
+
+**`docs/PLAN_OPTIMISATION.md`** — profil du chemin spline. Reste valable **pour METAL
+uniquement** : mesuré, INDEX / INDEX_SPLINE / RE / FIELD ne touchent jamais
+`SplineBasisCache`.
+
+### Banc de mesure
+
+```bat
+.venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes [--sample]
+```
+
+Pilote les vrais exemples de `example/` sans mock. **N'utilise pas `tests/headless/`
+pour mesurer** : `test_design.py` et `test_strat.py` remplacent le calcul par un mock.
 
 ---
 

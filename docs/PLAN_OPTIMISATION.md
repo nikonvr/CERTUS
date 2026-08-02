@@ -8,6 +8,29 @@ n'est une estimation.**
 
 ---
 
+> ## ⚠️ Corrigé le 2026-08-02 par la mesure — lire `docs/REPRISE_PERF.md` §5
+>
+> Ce document reste utile **pour METAL**, mais trois de ses affirmations ont été
+> démenties en les mesurant. Ne perds pas de temps à les refaire.
+>
+> 1. **§2.5 est faux.** Le cache ne « se saborde » pas : le vidage total ne coûtait
+>    que **15 reconstructions sur 5 522**. L'éviction LRU rapporte **+0,124 s**
+>    (0,4 % d'un run), et **0 s** en production — `SplineBasisCache` n'est appelé
+>    que **18 fois** par run de METAL_SINGLE. Le −53 % n'est donc pas « un plancher ».
+> 2. **§5 étapes 1 et 2 ne concernent QUE METAL.** Mesuré : INDEX, INDEX_SPLINE, RE
+>    et FIELD font **zéro appel** à `SplineBasisCache` et à `get_nk_from_spline`.
+>    Pour les modules du quotidien, il fallait commencer par l'étape 3.
+> 3. **§1 sous-évalue STRAT et DESIGN**, parce que `tests/headless/test_strat.py` et
+>    `test_design.py` **remplacent le calcul par un mock**. Vrais chiffres :
+>    STRAT 137 s (ramené à ~50 s), DESIGN 43–93 s. Mesurer avec
+>    `scripts/bench_examples.py`, pas avec `tests/headless/`.
+>
+> Reste valable et non fait : le **§2.4** (basculer `use_cache=True` site par site
+> sur METAL), avec la réserve notée en `REPRISE_PERF.md` §4.5 — le RMSE final
+> change, ce qui n'est pas expliqué.
+
+---
+
 ## 0. La règle qui a coûté le plus cher aujourd'hui
 
 **Mesurer à entrée VARIABLE.** Deux fois dans la même session, un banc d'essai à

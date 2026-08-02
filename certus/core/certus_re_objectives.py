@@ -60,6 +60,28 @@ from certus.workers.certus_re_worker_utils import (
 def _dbg_write(msg: str) -> None:
     logger.debug(msg)
 
+def _contiguous_selector(idx: np.ndarray):
+    """``slice`` equivalent a ``idx`` quand celui-ci est un intervalle contigu.
+
+    Indexer un tableau numpy par un tableau d'entiers COPIE la selection ; par un
+    ``slice``, on obtient une vue. Dans la boucle d'objectif de RE, cette copie
+    portait sur un bloc (n_points x n_couches) reconstruit deux fois par bucket a
+    chaque evaluation.
+
+    Le test est en O(n) mais n'est fait qu'une fois, au montage des buckets. Si
+    les indices ne sont pas contigus, on renvoie ``idx`` tel quel : le
+    comportement est alors strictement inchange.
+    """
+    n = int(idx.size)
+    if n == 0:
+        return idx
+    start = int(idx[0])
+    stop = start + n
+    if int(idx[-1]) == stop - 1 and np.array_equal(idx, np.arange(start, stop, dtype=np.int64)):
+        return slice(start, stop)
+    return idx
+
+
 def _re_precompute_union_indices(oblique_config_meta: list[dict[str, Any]]) -> None:
     """Populate per-meta union indices used by later RE phases."""
     empty_idx = np.array([], dtype=np.int64)
@@ -77,6 +99,9 @@ def _re_precompute_union_indices(oblique_config_meta: list[dict[str, Any]]) -> N
         for bucket in buckets:
             pos = bucket.get("local_positions", empty_idx)
             bucket["idx_union"] = empty_idx if pos.size == 0 else np.searchsorted(pos_all, pos).astype(np.int64, copy=False)
+            # Selecteurs calcules ici, une seule fois, et non a chaque evaluation.
+            bucket["idx_selector"] = _contiguous_selector(bucket["idx_union"])
+            bucket["pos_selector"] = _contiguous_selector(np.asarray(pos, dtype=np.int64)) if pos.size else pos
 
 def _re_init_context_fields(self, _re_t0: float) -> tuple:
     """Gather RE context inputs needed by _build_re_run_context."""
@@ -595,9 +620,16 @@ def _global_evaluate_oblique_physics(
             idx = bucket.get("idx_union", np.array([], dtype=np.int64))
             if idx.size == 0:
                 continue
-            spectral_weights_local = spectral_weights_wls[pos]
-            _accum_from_stats(yR_all[idx], dR_all[idx, :], bucket["R"], spectral_weights_local)
-            _accum_from_stats(yT_all[idx], dT_all[idx, :], bucket["T"], spectral_weights_local)
+            # Selecteurs precalcules : un slice quand la selection est contigue,
+            # donc une VUE au lieu d'une copie du bloc (n_points x n_couches).
+            # C'est ici que passait la moitie du temps de RE sur le profil a la
+            # ligne de example/example_RE (32,1 % + 17,7 %) : la copie etait
+            # refaite deux fois par bucket, a chaque evaluation de l'objectif.
+            sel = bucket.get("idx_selector", idx)
+            sel_pos = bucket.get("pos_selector", pos)
+            spectral_weights_local = spectral_weights_wls[sel_pos]
+            _accum_from_stats(yR_all[sel], dR_all[sel, :], bucket["R"], spectral_weights_local)
+            _accum_from_stats(yT_all[sel], dT_all[sel, :], bucket["T"], spectral_weights_local)
 
 def _global_add_regularization_residuals(cfg,
     ctx,

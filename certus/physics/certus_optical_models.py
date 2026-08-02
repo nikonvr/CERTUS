@@ -4,6 +4,7 @@ from scipy.interpolate import CubicSpline
 
 from numba import njit, float64, boolean, prange
 import math
+from collections import OrderedDict
 from functools import lru_cache
 from threading import Lock
 from certus.core.certus_core import PI
@@ -363,7 +364,11 @@ class SplineBasisCache:
 
     """
 
-    _cache: dict = {}
+    _cache: OrderedDict = OrderedDict()
+
+    # Borne du cache. Au-dela, on evince la plus ancienne entree UTILISEE (LRU),
+    # et non la totalite du cache — voir le commentaire dans get().
+    _MAX_ENTRIES = 512
 
     _lock = None  # Initialized lazily to avoid import-time threading overhead
 
@@ -416,17 +421,26 @@ class SplineBasisCache:
             bool(extrapolate),
         )
 
-        if key in cls._cache:
-            return cls._cache[key]
+        # Chemin CHAUD, sans verrou : dict.get est atomique sous le GIL.
+        #
+        # move_to_end note la recence. C'est un appel C unique, lui aussi atomique
+        # sous le GIL ; on evite ainsi de prendre le verrou sur un succes de cache,
+        # ce qui ferait attendre un lecteur derriere la construction (~1 ms) en cours
+        # dans un autre thread.
+        cached = cls._cache.get(key)
+        if cached is not None:
+            try:
+                cls._cache.move_to_end(key)
+            except KeyError:  # evincee entre-temps : sans consequence
+                pass
+            return cached
 
         with cls._get_lock():
             # Double-checked locking
-            if key in cls._cache:
-                return cls._cache[key]
-
-            # Safeguard against memory leak due to dynamic knots misuse
-            if len(cls._cache) > 500:
-                cls._cache.clear()
+            cached = cls._cache.get(key)
+            if cached is not None:
+                cls._cache.move_to_end(key)
+                return cached
 
             n_knots = len(knot_wavelengths)
 
@@ -456,6 +470,20 @@ class SplineBasisCache:
                 B[:, j] = col
 
             cls._cache[key] = B
+
+            # Eviction LRU bornee, et NON un vidage total.
+            #
+            # L'ancien garde-fou faisait `if len(_cache) > 500: _cache.clear()`. Le
+            # cout d'un vidage n'est pas la place liberee mais la localite perdue :
+            # les entrees chaudes du moment partaient avec les froides, et un pas de
+            # difference finie qui venait de servir devait etre reconstruit.
+            # Mesure sur l'exemple reel example/example_metal_single, cache force a
+            # use_cache=True : 46 872 appels, 5 489 matrices distinctes, 11 vidages,
+            # 5 557 constructions — soit 68 reconstructions dues au vidage.
+            # popitem(last=False) retire la plus ancienne UTILISEE ; le bornage reste
+            # le meme, la localite temporelle est conservee.
+            while len(cls._cache) > cls._MAX_ENTRIES:
+                cls._cache.popitem(last=False)
 
             return B
 

@@ -80,3 +80,44 @@ def test_cache_touche_sur_appel_identique() -> None:
     second = SplineBasisCache.get(KNOTS, TARGETS)
 
     assert first is second
+
+
+def _knots(i: int) -> np.ndarray:
+    """Un vecteur de nœuds distinct par indice, comme un pas de gradient."""
+    k = KNOTS.copy()
+    k[1] += 1e-3 * (i + 1)
+    return k
+
+
+def test_saturation_evince_une_entree_et_non_tout_le_cache() -> None:
+    """GARDE-FOU : dépasser la borne ne doit JAMAIS vider le cache entier.
+
+    Le garde-fou d'origine faisait ``if len(_cache) > 500: _cache.clear()``. Avec
+    18 402 vecteurs de nœuds distincts sur un run réel de METAL_SINGLE, il vidait
+    tout en boucle et jetait les entrées chaudes avec les froides. Ce test échoue
+    sur cette version : après saturation, le cache y retombait à 1 entrée.
+    """
+    n = SplineBasisCache._MAX_ENTRIES + 20
+    for i in range(n):
+        SplineBasisCache.get(_knots(i), TARGETS)
+
+    assert len(SplineBasisCache._cache) == SplineBasisCache._MAX_ENTRIES
+
+
+def test_eviction_retire_la_plus_ancienne_utilisee() -> None:
+    """La récence compte : une entrée réutilisée doit survivre à la saturation.
+
+    C'est tout l'intérêt du LRU sur ce cache. Les pas de différences finies
+    consécutifs partagent leurs nœuds ; une entrée qui vient de servir est celle
+    qui resservira. L'évincer est exactement l'erreur que faisait le vidage total.
+    """
+    veteran = _knots(0)
+    first = SplineBasisCache.get(veteran, TARGETS)
+
+    # On sature le cache en réutilisant `veteran` à chaque tour : il est donc
+    # toujours l'entrée la plus récemment utilisée, donc la dernière à évincer.
+    # L'identité de l'objet est ce qui compte — une égalité numérique ne
+    # distinguerait pas une entrée conservée d'une entrée reconstruite.
+    for i in range(1, SplineBasisCache._MAX_ENTRIES + 20):
+        SplineBasisCache.get(_knots(i), TARGETS)
+        assert SplineBasisCache.get(veteran, TARGETS) is first

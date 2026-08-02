@@ -115,7 +115,23 @@ class CoreManager:
     def _toggle_oblique_mode(self, state: int) -> None:
         """Toggle oblique mode and update UI"""
 
-        self.ui.oblique_mode = state == Qt.CheckState.Checked.value
+        new_mode = state == Qt.CheckState.Checked.value
+
+        if new_mode == self.ui.oblique_mode:
+            return
+
+        # On lit les cibles DANS LA TABLE, et AVANT de basculer le drapeau.
+        #
+        # Les deux lecteurs (_get_tgts / _get_oblique_tgts) renvoient [] si oblique_mode
+        # ne correspond pas à leur mode : les appeler après la bascule ne rendrait rien.
+        # L'ancienne version lisait self.ui.target_widgets, une liste initialisée à [] et
+        # JAMAIS remplie ailleurs que par le sens inverse de ce même basculement. La
+        # conversion ne trouvait donc jamais rien, puis _load_targets_to_table() faisait
+        # setRowCount(0) : toutes les cibles spectrales saisies par l'utilisateur
+        # disparaissaient au simple fait de cocher « Oblique ».
+        targets_from_table = self.ui._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()
+
+        self.ui.oblique_mode = new_mode
 
         self.ui._update_target_table_headers()
 
@@ -124,10 +140,10 @@ class CoreManager:
         if self.ui.oblique_mode:
             # Convert normal to oblique targets
 
-            if hasattr(self.ui, "target_widgets") and len(self.ui.target_widgets) > 0:
+            if len(targets_from_table) > 0:
                 self.ui.oblique_targets = []
 
-                for tgt in self.ui.target_widgets:
+                for tgt in targets_from_table:
                     if isinstance(tgt, Target):
                         oblique_tgt = ObliqueTarget(
                             angle=0.0,
@@ -147,10 +163,10 @@ class CoreManager:
         else:
             # Convert oblique to normal targets
 
-            if len(self.ui.oblique_targets) > 0:
+            if len(targets_from_table) > 0:
                 self.ui.target_widgets = []
 
-                for tgt in self.ui.oblique_targets:
+                for tgt in targets_from_table:
                     if isinstance(tgt, ObliqueTarget):
                         normal_tgt = Target(
                             lmin=tgt.lmin,

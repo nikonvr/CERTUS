@@ -39,6 +39,8 @@ from certus.core.certus_core import (
     get_safe_worker_count,
 )
 
+from certus.utils.certus_exclusions import filter_params_for_gui
+
 from certus.core.certus_strat_config import (
     APP_CONTEXT,
     RobustnessContext,
@@ -92,7 +94,9 @@ class _IdxWrapper:
 
 class _SafeLocalClues(dict):
     """Fallback cache dictionary for clues, optimized for Top 1%."""
+
     __slots__ = ("_original",)
+
     def __init__(self, original, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._original = _IdxWrapper(original)
@@ -142,7 +146,7 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
 
     try:
         base_noise = float(params["reality_sim_params"]["trigger_tolerance"])
-    except (KeyError, TypeError):
+    except KeyError, TypeError:
         base_noise = float(params.get("trigger_tolerance", 0.5))
     return [base_noise * f for f in noise_factors]
 
@@ -156,16 +160,17 @@ def _prepare_robustness_nominal_optics(
     wl_range_scan = params["wl_range"]
     wl_step = float(params["wl_step"])
     wl_arr = arange_inclusive(wl_range_scan[0], wl_range_scan[1], wl_step)
-    
+
     clues_at_wl = opti_results.get("clues_at_wl") if opti_results else None
-    
+
     db_bypassed = False
     if clues_at_wl:
         try:
             # Safely check if clues are accessible either by float or object
             from certus.core.certus_strat_config import _IdxWrapper
+
             idx_dict = _IdxWrapper(clues_at_wl)
-            
+
             nH_list = []
             nL_list = []
             nSub_list = []
@@ -174,7 +179,7 @@ def _prepare_robustness_nominal_optics(
                 nH_list.append(val["H"])
                 nL_list.append(val["L"])
                 nSub_list.append(val["substrate"])
-                
+
             nH_arr = np.array(nH_list, dtype=np.complex128)
             nL_arr = np.array(nL_list, dtype=np.complex128)
             nSub_arr = np.array(nSub_list, dtype=np.complex128)
@@ -185,10 +190,11 @@ def _prepare_robustness_nominal_optics(
     if not db_bypassed:
         local_db = params.get("materials_db_instance") or params.get("materials_db") or APP_CONTEXT.get("materials_db")
         from certus.core.certus_strat_config import get_refractive_clues_vectorized
+
         nH_arr = get_refractive_clues_vectorized(params["nH_id"], wl_arr, db_instance=local_db)
         nL_arr = get_refractive_clues_vectorized(params["nL_id"], wl_arr, db_instance=local_db)
         nSub_arr = get_refractive_clues_vectorized(params["nSub_id"], wl_arr, db_instance=local_db)
-        
+
     p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
     _, T_nom = calculate_RT_vectorized_real_HL(wl_arr, nH_arr, nL_arr, nSub_arr, p_thick_nom_arr)
     return wl_arr, nH_arr, nL_arr, nSub_arr, T_nom
@@ -232,7 +238,7 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
 
     try:
         T_tolerance = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
-    except (KeyError, ValueError, TypeError):
+    except KeyError, ValueError, TypeError:
         T_tolerance = 0.001
 
     min_resolution = 999.0
@@ -303,9 +309,10 @@ def _execute_robustness_tasks(
     n_layers_matrix_precomp: np.ndarray | None = None,
 ) -> list[dict[str, Any]]:
     import multiprocessing
+
     max_workers = max(1, multiprocessing.cpu_count() // 2)
     logger.info(
-        f"Running robustness tests on {len(all_strategies)} strategies (ProcessPoolExecutor with {max_workers} workers)..."
+        f"Running robustness tests on {len(all_strategies)} strategies (ThreadPoolExecutor with {max_workers} workers)..."
     )
 
     num_layers = len(p_thick_nominal)
@@ -340,7 +347,9 @@ def _execute_robustness_tasks(
                     n_layers_matrix_precomp=n_layers_matrix_precomp,
                 )
                 try:
-                    min_res, bad_layer = _calculate_strategy_spectral_resolution(res["strategy"], p_thick_nominal, params)
+                    min_res, bad_layer = _calculate_strategy_spectral_resolution(
+                        res["strategy"], p_thick_nominal, params
+                    )
                 except Exception:
                     min_res, bad_layer = 999.0, -1
                 res["min_resolution"] = min_res
@@ -350,9 +359,8 @@ def _execute_robustness_tasks(
                 logger.error(f"Strategy simulation failed: {e}", exc_info=True)
     else:
         results_by_idx: list[dict[str, Any] | None] = [None] * len(all_strategies)
-        is_testing = "PYTEST_CURRENT_TEST" in __import__("os").environ
-        executor_cls = concurrent.futures.ThreadPoolExecutor if is_testing else concurrent.futures.ProcessPoolExecutor
-        
+        executor_cls = concurrent.futures.ThreadPoolExecutor
+
         with executor_cls(max_workers=max_workers) as executor:
             futures = {}
             for idx, strat in enumerate(all_strategies):
@@ -394,6 +402,28 @@ def _execute_robustness_tasks(
     return _filter_finite_robustness_scores(strategies_results, logger=logger)
 
 
+_SOBOL_NOISE_CACHE = {}
+
+def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_layers: int) -> np.ndarray:
+    key = (base_seed, noise_idx, num_runs, num_layers)
+    if key in _SOBOL_NOISE_CACHE:
+        return _SOBOL_NOISE_CACHE[key]
+        
+    import math
+    from scipy.stats import qmc, norm
+    local_seed = (base_seed + noise_idx) % (2**31)
+    sobol_engine = qmc.Sobol(d=num_layers, seed=local_seed)
+    n_pow2 = 2 ** math.ceil(math.log2(num_runs)) if num_runs > 0 else 0
+    sobol_samples = sobol_engine.random(n=n_pow2)[:num_runs]
+    
+    # Transformation inverse CDF (distrib. uniforme vers normale N(0, 1/3))
+    raw_noise = norm.ppf(sobol_samples, loc=0.0, scale=1.0 / 3.0)
+    raw_noise = np.clip(raw_noise, -1.0, 1.0).astype(np.float64)
+    
+    _SOBOL_NOISE_CACHE[key] = raw_noise
+    return raw_noise
+
+
 def _test_strategy_robustness_task(
     strategy,
     _strat_idx,
@@ -411,6 +441,7 @@ def _test_strategy_robustness_task(
     n_layers_matrix_precomp=None,
 ) -> dict:
     import numba
+
     numba.set_num_threads(2)
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
@@ -480,20 +511,9 @@ def _test_strategy_robustness_task(
     if is_absolute:
         dT_dd = _compute_dT_dd_per_layer(layer_wavelengths, n_H_vals, n_L_vals, n_Sub_vals, p_thick_nominal)
 
-    from scipy.stats import qmc, norm
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
     for noise_idx, noise_val in enumerate(noise_levels):
-        # CRN: Suppression de `_strat_idx` pour appliquer EXACTEMENT la même matrice de bruit
-        # aux différentes stratégies testées (comparaison "toutes choses égales par ailleurs").
-        local_seed = (base_seed + noise_idx) % (2**31)
-        
-        # Tirage Quasi-Monte Carlo (Sobol)
-        sobol_engine = qmc.Sobol(d=num_layers, seed=local_seed)
-        sobol_samples = sobol_engine.random(n=num_runs)
-        
-        # Transformation inverse CDF (distrib. uniforme vers normale N(0, 1/3))
-        raw_noise = norm.ppf(sobol_samples, loc=0.0, scale=1.0 / 3.0)
-        raw_noise = np.clip(raw_noise, -1.0, 1.0).astype(np.float64)
+        raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, num_layers)
 
         if is_absolute:
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector
@@ -676,39 +696,54 @@ def _validate_strategy_min_transmission_floor(
     """Validate strategy minimum transmission floor."""
     num_layers = len(p_thick_nominal)
     layer_wavelengths = _build_layer_wavelengths_from_strategy(strategy, num_layers, float(strategy.get("l0", 550.0)))
-    
+
     tmin_report = []
     tmin_violations = []
-    
+
     idx_dict = _IdxWrapper(clues_at_wl)
     for i in range(num_layers):
         wl = layer_wavelengths[i]
         clue = idx_dict[wl]
         n_current = clue["H"] if i % 2 == 0 else clue["L"]
         n_sub = clue.get("substrate", 1.0)
-        
+
         # Calculate theoretical transmission at nominal thickness
         from certus_physics import compute_T_front_at_layer
-        M_before = np.eye(2, dtype=np.complex128) if i == 0 else nominal_matrix_cache[i - 1, 0, :, :]
-        
+
         # We need to map wavelength float to cache index
         wl_idx = np.searchsorted(all_wls, wl)
         if wl_idx < len(all_wls) and abs(all_wls[wl_idx] - wl) < 1e-5:
+            # La matrice cumulée doit être lue à LA MÊME longueur d'onde que celle à
+            # laquelle T est évalué. L'indice de longueur d'onde était codé en dur à 0 :
+            # M_before venait donc toujours de all_wls[0], alors que T_val est calculé à
+            # `wl`. Le post-check T_min comparait un empilement partiel pris à une
+            # longueur d'onde avec une transmission calculée à une autre — d'autant plus
+            # faux que `wl` s'éloigne du premier point de la grille.
+            # Cache de forme (num_layers, n_wls, 2, 2) — cf. certus_strat_config.py:436.
+            M_before = (
+                np.eye(2, dtype=np.complex128)
+                if i == 0
+                else nominal_matrix_cache[i - 1, wl_idx, :, :]
+            )
+
             # cur_M is computed at layer i
             T_val = compute_T_front_at_layer(
                 float(wl),
                 complex(n_current),
                 complex(n_sub),
+                complex(M_before[0, 0]),
+                complex(M_before[0, 1]),
+                complex(M_before[1, 0]),
+                complex(M_before[1, 1]),
                 float(p_thick_nominal[i]),
-                M_before,
             )
         else:
             T_val = 1.0  # Fallback
-            
+
         tmin_report.append({"layer": i + 1, "wl": wl, "t_min": T_val})
         if T_val < min_t_floor:
             tmin_violations.append({"layer": i + 1, "wl": wl, "t_min": T_val})
-            
+
     return tmin_report, tmin_violations
 
 
@@ -795,7 +830,7 @@ def run_final_simulation_block(
         opti_results=opti_results,
     )
 
-    params_safe = {k: v for k, v in params.items() if k not in ["logger", "materials_db", "gui_parent"]}
+    params_safe = filter_params_for_gui(params)
 
     nH_c128 = nH_arr.astype(np.complex128)
     nL_c128 = nL_arr.astype(np.complex128)
@@ -1026,4 +1061,3 @@ def _get_best_noise_results(final_results: dict[str, Any], logger: logging.Logge
         return None
 
     return selected_results
-

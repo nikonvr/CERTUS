@@ -717,10 +717,18 @@ class FreeKnotStageContext:
     def unpack(self, z: np.ndarray):
         zz = z.ravel()
         if self.optimize_n:
+            # s2s decode avec work=self.decode_work et reuse_output=True : il renvoie
+            # LE MEME objet tableau a chaque appel. Les deux maillages etaient donc
+            # decodes dans le meme tampon, et le second ECRASAIT le premier — verifie
+            # a l'execution, `a is b` vaut True. sigma_n valait en realite sigma_L, le
+            # maillage n etait perdu sans erreur.
+            sigma_n = self.s2s(zz[1 : 1 + self.M]).copy()
+            sigma_L = self.s2s(zz[1 + self.M : 1 + 2 * self.M])
+
             return (
                 float(zz[0]),
-                self.s2s(zz[1 : 1 + self.M]),
-                self.s2s(zz[1 + self.M : 1 + 2 * self.M]),
+                sigma_n,
+                sigma_L,
                 zz[1 + 2 * self.M : 1 + 2 * self.M + self.K],
                 zz[1 + 2 * self.M + self.K : 1 + 2 * self.M + 2 * self.K],
             )

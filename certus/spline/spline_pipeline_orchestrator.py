@@ -92,6 +92,7 @@ from certus_physics import (
     clip_to_bounds,
 )
 from certus.spline.spline_objective import (
+    _interpolate_along_sigma,
     build_segment_optimizer_x_vector,
     build_spline_objective_masked_grid,
     spectral_mse_rmse_masked_from_nk,
@@ -164,7 +165,13 @@ def _apply_k_floor_to_result(
     # Recompute k_lam and spectra
     lam_out = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
     sig_out = 1.0 / np.maximum(lam_out, 1e-30)
-    L_lam_out = np.interp(sig_out, _sk_f, _LL_f)
+    # Reconstruire k_lam avec L'INTERPOLATION DU MODELE, pas systematiquement en
+    # lineaire par morceaux. np.interp etait code en dur ici, alors que le mode par
+    # defaut est "smooth" des K >= 4 : le k_lam reecrit dans le resultat differait de
+    # celui que l'objectif avait reellement utilise pour l'ajustement.
+    L_lam_out = _interpolate_along_sigma(
+        sig_out, _sk_f, _LL_f, str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth")
+    )
     k_lam_out = np.exp(L_lam_out)
     lo_k = max(float(cfg.k_clip_lo), K_MIN_PHYS)
     np.clip(k_lam_out, lo_k, float(cfg.k_clip_hi), out=k_lam_out)

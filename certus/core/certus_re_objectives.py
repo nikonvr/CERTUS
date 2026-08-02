@@ -515,14 +515,28 @@ def _global_evaluate_oblique_physics(
                 _p4_prof["band_groups"] = int(_p4_prof.get("band_groups", 0)) + 1
 
             masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
-            yR_all = ctx.yR_all_buf
-            yT_all = ctx.yT_all_buf
-            yR_all.fill(0.0)
-            yT_all.fill(0.0)
-            dR_all = ctx.dR_all_buf
-            dT_all = ctx.dT_all_buf
-            dR_all.fill(0.0)
-            dT_all.fill(0.0)
+
+            # Tampons LOCAUX, pas les champs partages de REMseContext.
+            #
+            # Le contexte est cree UNE SEULE FOIS par run (ligne 135) puis capture par
+            # closure ; les 11 threads de derivees finies de la phase 4
+            # (certus/workers/certus_re_workers_math.py:96, joblib.Parallel backend
+            # 'threading', n_jobs = 2*RE_SPLINE_N_KNOTS+1 = 11) reutilisaient donc TOUS
+            # les memes tableaux. Course reproduite : un thread ecrit sa bande, un autre
+            # entre et fait son fill(0.0) qui l'efface, le premier relit un spectre a
+            # moitie nul. Mesure : 5 essais sur 5 avec 10 a 11 colonnes de jacobien
+            # fausses, sans aucune exception ni journal. Consequence : direction de
+            # recherche fausse en phase 4, optimum degrade et non reproductible.
+            #
+            # wls_all.size est le bon dimensionnement : bucket['idx_union'] (ligne 79)
+            # indexe la seule union pos_all_union, donc idx < pos_all.size == wls_all.size
+            # — c'est deja l'hypothese de la branche non-phase-4 (ligne 572).
+            _n_union = int(wls_all.size)
+            _n_vars = int(ctx.n_layers_count)
+            yR_all = np.zeros(_n_union, dtype=np.float64)
+            yT_all = np.zeros(_n_union, dtype=np.float64)
+            dR_all = np.zeros((_n_union, _n_vars), dtype=np.float64)
+            dT_all = np.zeros((_n_union, _n_vars), dtype=np.float64)
 
             for m in masks:
                 if not np.any(m):

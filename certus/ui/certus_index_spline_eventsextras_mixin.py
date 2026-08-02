@@ -1,5 +1,13 @@
 from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
+from certus.utils.certus_index_utils import _lam_uniform_grid
+
+# Registre des workers qui n'ont pas repondu a l'arret cooperatif. Il maintient une
+# reference FORTE jusqu'a l'emission de QThread.finished(), ce qui empeche Python de
+# detruire un QThread encore vivant (qFatal Qt, processus tue). Volontairement au
+# niveau module : sur le chemin closeEvent, le widget lui-meme est detruit.
+_ORPHAN_WORKERS: list = []
+
 
 class CertusIndexSplineEventsExtrasMixin:
     """CertusIndexSplineEventsExtrasMixin."""
@@ -74,8 +82,32 @@ class CertusIndexSplineEventsExtrasMixin:
 
                 worker.wait(50)
 
-            if worker.isRunning() and self.logger:
-                self.logger.warning("Worker thread still running after ~4s wait; queued deleteLater()")
+            if worker.isRunning():
+                # NE PAS appeler deleteLater() sur un QThread encore en cours : Qt emet
+                # « QThread: Destroyed while thread is still running » puis qFatal, et le
+                # processus est tue net (reproduit : EXIT=127, contre EXIT=0 quand le
+                # thread est termine). L'utilisateur perd sa session sans message.
+                #
+                # On confie plutot la destruction au signal natif QThread.finished :
+                # l'affinite du QThread etant le thread GUI, la connexion est queued, donc
+                # deleteLater() n'est traite qu'une fois isFinished() vrai.
+                #
+                # Le registre est au niveau MODULE et pas sur self : sur le chemin
+                # closeEvent, self est detruit, et une liste portee par self perdrait la
+                # reference forte — Python detruirait alors un QThread vivant et le qFatal
+                # reviendrait a l'extinction.
+                if self.logger:
+                    self.logger.warning(
+                        "Worker thread still running after ~4s wait; destruction differee a finished()"
+                    )
+
+                _ORPHAN_WORKERS.append(worker)
+                worker.finished.connect(worker.deleteLater)
+                worker.finished.connect(
+                    lambda w=worker: _ORPHAN_WORKERS.remove(w) if w in _ORPHAN_WORKERS else None
+                )
+                self._worker = None
+                return
 
         try:
             worker.deleteLater()
@@ -129,7 +161,7 @@ class CertusIndexSplineEventsExtrasMixin:
         return d_nm, rmse
 
     @staticmethod
-    def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 6) -> str:
+    def _format_lambda_knots_for_log(lambda_knots_nm: Any, *, precision: int = 1, max_items: int = 200) -> str:
         from certus.spline.spline_pipeline_utils import _format_lambda_knots_nm_for_log
         return _format_lambda_knots_nm_for_log(lambda_knots_nm, precision=precision, max_items=max_items)
 

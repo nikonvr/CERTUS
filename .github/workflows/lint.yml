@@ -3,7 +3,12 @@ name: lint
 on:
   pull_request:
   push:
-    branches: ["main"]
+    branches:
+      - main
+      # La branche de travail a plus de 150 commits d'avance sur main, dont le
+      # dernier commit remonte au 2026-04-27. Ne surveiller que main revenait a
+      # ne rien surveiller du tout.
+      - refactor-corridors-mixins
 
 jobs:
   ruff:

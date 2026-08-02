@@ -1310,10 +1310,21 @@ class TLUObjective:
             self.R_substrate = calculate_single_interface_R(self.wavelengths, self.n_substrate)
 
         else:
-            self.R_substrate = (
-                calculate_bare_substrate_RT,
-                calculate_single_interface_R(self.wavelengths, self.n_substrate),
-            )
+            # Substrat POLI (mode standard) : la mesure de référence inclut la face
+            # arrière, donc R_total = 2*R_single/(1+R_single) — c'est exactement ce que
+            # calcule calculate_bare_substrate_R, dont le commentaire de tête dit
+            # « DO NOT REVERT TO SINGLE INTERFACE REFLECTION ».
+            #
+            # Cette branche construisait un TUPLE (fonction, ndarray) là où la branche
+            # dépoli assigne un tableau, et sa charge utile était justement la réflexion
+            # à interface unique proscrite ici. Deux conséquences :
+            #  - type incohérent passé au noyau aux côtés de T_substrate (signature Numba
+            #    non cachable, recompilation à chaque exécution) ;
+            #  - référence de normalisation fausse : appariée à
+            #    T_substrate = calculate_bare_substrate_RT (deux faces), elle perdait
+            #    3,91 % d'énergie à n_sub = 1,52, alors que le bon couple donne
+            #    R + T = 1,00000000.
+            self.R_substrate = calculate_bare_substrate_R(self.wavelengths, self.n_substrate)
 
         # Use unified Log-Lambda weighting for broadband optimization.
 

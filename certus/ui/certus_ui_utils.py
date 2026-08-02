@@ -47,40 +47,21 @@ __all__ = [
     "CertusTheme",
     "get_standard_stylesheet",
     "apply_certus_theme",
-    "apply_theme_to_plots",
-    "get_plot_style_config",
-    "apply_certus_plot_style",
     # Widgets
-    "CertusThemeToggle",
-    "CertusScientificPlot",
-    "ScientificPlotRefined",
-    "DetachedPlotWindow",
-    "ExcelTableWidget",
-    "NumericTableWidgetItem",
-    "FlashyCard",
-    "WelcomeGuideWidget",
-    "ProgressDialog",
-    "EnhancedProgressWidget",
     # Factory Functions
-    "create_header_logo_widget",
-    "create_styled_button",
-    "create_info_icon",
-    "create_help_button",
     "set_certus_window_icon",
     "open_documentation",
-    "create_flashy_grid",
-    "create_log_widget",
-    "CertusLogPanel",
-    "clone_plot_widget",
     # Pro UX Design System components
-    "CertusCard",
-    "CertusSectionHeader",
-    "CertusStepper",
-    "CertusCollapsible",
-    "CertusStatusPill",
-    "CertusActionBar",
-    "CertusToast",
-    "SkeletonLoaderWidget",
+    # SkeletonLoaderWidget retire de __all__ : il n'est PAS un export de ce module a
+    # l'execution. Il vient de certus_ui_widgets_utils, qui importe lui-meme depuis
+    # certus_ui_utils (ligne 86) — d'ou un cycle, casse ici par un import place sous
+    # `if TYPE_CHECKING`. Le nom ne sert donc que d'annotation de retour, entre
+    # guillemets (install_skeleton_loader, ligne 1219).
+    # Le declarer dans __all__ faisait lever AttributeError a tout `import *` sur ce
+    # module. ruff ne le signale pas : un import TYPE_CHECKING lie bien le nom dans
+    # son analyse statique. Seule une verification a l'execution le revele.
+    # Les consommateurs doivent l'importer de certus_ui_widgets_utils, ce que fait
+    # deja certus_ui.py:274.
     "install_skeleton_loader",
     "remove_skeleton_loader",
     "apply_os_window_effects",
@@ -89,47 +70,21 @@ __all__ = [
     "show_toast",
     "attach_numeric_validator",
     # Threading
-    "WorkerSignals",
-    "GenericWorker",
-    "CertusWorkerBase",
     # App Base
-    "CertusBaseApp",
     # Utilities
     "get_export_settings",
-    "get_export_config",
     "open_file_explorer",
-    "open_data_file_and_read",
-    "get_certus_last_dir",
-    "set_certus_last_dir",
-    "certus_get_open_file_name",
-    "certus_get_save_file_name",
-    "certus_confirm_yes_no",
-    "DATA_FILE_FILTER",
-    "DATA_FILES_FILTER_EXTENDED",
-    "CERTUS_UI_STRINGS",
     "process_log_queue_standard",
     "confirm_stop_with_timeout",
     "copy_app_logs_to_clipboard",
     "format_count_kmg",
-    "StatsCounter",
     "stop_worker_and_thread",
     "confirm_and_stop",
     "init_certus_app",
     "setup_pyqtgraph_defaults",
     "setup_gui_exception_handling",
     "safe_ui_action",
-    "sanitize_xy_for_plot",
-    "plot_widget_plot_finite",
-    "iter_plot_data_series",
-    "build_wide_dataframe_for_export",
-    "plot_dataframe_from_widget",
-    "copy_plot_to_clipboard_excel",
-    "attach_excel_clipboard_context_menu",
-    "wrap_scientific_plot_with_toolbar",
     # Re-exports from certus.core.certus_core
-    "QueueHandler",
-    "setup_gui_logger",
-    "setup_module_logging",
     # Flags
     "SVG_AVAILABLE",
     "OPENPYXL_AVAILABLE",

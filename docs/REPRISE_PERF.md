@@ -73,6 +73,11 @@ fuite d'état pré-existante, pas toi. (Vérifié aussi en remettant le code d'o
 processus pytest simultanés se bloquent mutuellement — observé le 2026-08-02, les
 deux à +0,08 s de CPU en 20 s de temps réel. Cause probable : le verrou de fichier
 du cache numba (`configure_numba_env`, cf. `certus_strat_objectives.py:164`).
+
+### Bruits de fond à ignorer
+
+Ces messages apparaissent à chaque fois et n'indiquent aucun problème :
+
 - Chaque `git commit` affiche `fatal: bad tree object …` et
   `failed to perform geometric repack`. C'est le commit orphelin `01047a1b`
   (arbre manquant) décrit dans `CLAUDE.md §5.4`. **Le commit réussit quand même** —
@@ -196,9 +201,16 @@ couverts par le warmup, et les y ajouter.
 
 `<frozen importlib._bootstrap_external>:145:_path_stat` pèse 18,6 % du thread
 principal d'INDEX et 23 % d'INDEX_SPLINE. Le dépôt vit dans un dossier **Google
-Drive** (`D:\drivefl\…`) : chaque `stat` peut être coûteux. Deux pistes
-indépendantes : remonter les imports tardifs en tête de module, et vérifier où
-numba pose son cache (`NUMBA_CACHE_DIR` hors du dossier synchronisé).
+Drive** (`D:\drivefl\…`) : chaque `stat` peut être coûteux.
+
+⚠️ **Le cache numba n'est PAS en cause, c'est vérifié** : `configure_numba_env`
+(`certus/core/certus_core.py:323`) le place déjà dans
+`%TEMP%\CERTUS_Numba_Cache`, donc hors du dossier synchronisé. Ne repars pas sur
+cette piste.
+
+Il reste donc une seule piste : remonter en tête de module les imports faits
+tardivement, pendant le calcul. Le profil `--sample` les montre sous
+`_path_stat` et `get_data` du thread principal.
 
 ### 4.4 STRAT — ce qui reste après `33af845`
 

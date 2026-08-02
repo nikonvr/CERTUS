@@ -13,6 +13,13 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication
 
+# Configuration Numba AVANT tout import tirant @njit (cf. CERTUS_HUB.py).
+# Sans cet appel, NUMBA_CACHE_DIR n'est pas defini et le cache JIT s'ecrit a cote
+# des sources, dans le dossier synchronise cloud -> recompilations a repetition.
+from certus.core.certus_core import configure_numba_env as _configure_numba_env
+
+_configure_numba_env()
+
 from certus.core.certus_core import CertusFacadeModule, setup_module_logging
 from certus.ui.certus_ui import init_certus_app
 

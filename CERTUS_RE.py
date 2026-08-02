@@ -33,6 +33,13 @@ CERTUS-RE.py - Reverse Engineering & Drift Correction
 """
 
 from __future__ import annotations
+# Configuration Numba AVANT tout import tirant @njit (cf. CERTUS_HUB.py).
+# Sans cet appel, NUMBA_CACHE_DIR n'est pas defini et le cache JIT s'ecrit a cote
+# des sources, dans le dossier synchronise cloud -> recompilations a repetition.
+from certus.core.certus_core import configure_numba_env as _configure_numba_env
+
+_configure_numba_env()
+
 from certus.utils.certus_re_math import re_substrate_cauchy_n_re_from_theta
 from certus.utils.certus_re_math import format_re_drift_log_triplet_pct
 from certus.utils.certus_re_config import RE_GUI_DEFAULT_RE_QWOT_ALPHA

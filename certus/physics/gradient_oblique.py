@@ -8,11 +8,13 @@ Contains gradient computation for oblique (non-normal) incidence angles.
 import numpy as np
 from numba import njit, prange
 import math
-from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
-from certus.physics.gradient_utils import compute_mse_vectorized
+from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
+from certus.physics.gradient_utils import compute_mse_vectorized, SMALL_EPSILON
+from .gradient_analytic import _compute_gradient_analytic_kernel
 
 
+@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def _compute_oblique_gradient_contrib_kernel(
     ep: np.ndarray,
     n_layers_T: np.ndarray,

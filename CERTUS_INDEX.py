@@ -23,6 +23,13 @@ import multiprocessing
 import sys
 import traceback
 
+# Configuration Numba AVANT tout import tirant @njit (cf. CERTUS_HUB.py).
+# Sans cet appel, NUMBA_CACHE_DIR n'est pas defini et le cache JIT s'ecrit a cote
+# des sources, dans le dossier synchronise cloud -> recompilations a repetition.
+from certus.core.certus_core import configure_numba_env as _configure_numba_env
+
+_configure_numba_env()
+
 from certus.core.certus_core import create_module_environment
 
 # =============================================================================
@@ -46,26 +53,30 @@ import pandas as pd
 from numba import njit, prange
 
 from enum import Enum, auto
-from certus.core.certus_index_core import (
+from certus.core.certus_index_config import (
     substrateMode,
     OptimizationConfig,
     OptimizationResults,
+)
+from certus.core.certus_index_objectives import (
     IRGlobalObjective,
     Phase23SplineObjective,
     Phase23Pass2SplineObjective,
     TLUObjective,
 )
-from certus.core.certus_index_solvers import GradientSearcher
-from certus.core.certus_index_core import (
+from certus.core.certus_index_solvers import (
+    GradientSearcher,
     PGlobalOptimizerINDEX,
     SubsetOptimTask,
+)
+from certus.core.certus_index_core import (
     calculate_relative_R_normalization,
     _optimize_point_kernel,
     _optimize_all_points_batch,
 )
 from certus.workers.certus_index_workers import IRPGlobalCallback, IRStage2Callback, IRSplineCallback, IRGlobalModelWorker, Phase1Callback, Phase2PolishCallback, OptimizationWorker, IndexBeamAnalysisWorker
-from certus.ui.certus_index_ui import (
-    CertusIndexApp,
+from certus.ui.certus_index_ui import CertusIndexApp
+from certus.ui.certus_index_ui_utils import (
     _detected_data_type_label,
     _source_type_label,
     _prepare_nk_plot_inputs,

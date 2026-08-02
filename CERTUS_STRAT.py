@@ -2,6 +2,13 @@
 # ARCHITECTURE: LIGHTWEIGHT FACADE FOR BACKWARD COMPATIBILITY
 # =========================================================================================
 
+# Configuration Numba AVANT tout import tirant @njit (cf. CERTUS_HUB.py).
+# Sans cet appel, NUMBA_CACHE_DIR n'est pas defini et le cache JIT s'ecrit a cote
+# des sources, dans le dossier synchronise cloud -> recompilations a repetition.
+from certus.core.certus_core import configure_numba_env as _configure_numba_env
+
+_configure_numba_env()
+
 from certus.core.certus_core import __version__
 
 import functools
@@ -17,13 +24,7 @@ from certus.core.certus_core import create_module_environment
 env = create_module_environment(__file__, "STRAT")
 script_dir = env["script_dir"]
 
-# Standard Qt and styling setup imports
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication
-
 from certus.core.certus_core import setup_module_logging, get_safe_worker_count
-from certus.ui.certus_ui import init_certus_app
-from certus.utils.certus_strat_db import RobustMaterialDatabase
 
 from certus.utils.certus_strat_context import (
     _compute_local_extrema_symmetry_score,
@@ -151,21 +152,6 @@ from certus.workers.certus_strat_workers import (
     _parallel_block_worker,
 )
 
-from certus.ui.certus_strat_ui import (
-    StrategiesTableWindow,
-    CertusScientificPlot,
-    UniversalPlotWindow,
-    InteractiveHeatmapWindow,
-    TransmissionVsThicknessWindow,
-    StrategySpectralPerformanceWindow,
-    JsonViewerWindow,
-    InteractiveIndicesWindow,
-    InteractiveSpectrumWindow,
-    PopOutWindow,
-    LiveMonitorWindow,
-    WelcomeGuideWidget,
-    CertusStratApp,
-)
 
 from certus.core.certus_core import CertusFacadeModule
 import certus.core.certus_strat_core as certus_strat_core
@@ -189,6 +175,12 @@ if __name__ == "__main__":
     multiprocessing.freeze_support()
 
     setup_module_logging("STRAT", log_file="strat.log")
+
+    from PyQt6.QtCore import Qt, QTimer
+    from PyQt6.QtWidgets import QApplication
+    from certus.ui.certus_ui import init_certus_app
+    from certus.utils.certus_strat_db import RobustMaterialDatabase
+    from certus.ui.certus_strat_ui import CertusStratApp
 
     # High DPI scaling (Must be set BEFORE creating QApplication)
     if hasattr(Qt, "HighDpiScaleFactorRoundingPolicy"):

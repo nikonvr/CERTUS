@@ -11,8 +11,11 @@ import math
 from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
 from certus.physics.gradient_utils import compute_mse_vectorized
+from scipy.interpolate import CubicSpline
+from certus.physics.certus_optical_models import get_nk_from_spline, get_nk_cauchy_simple
 
 
+@njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def _compute_metal_tmm_gradient_kernel(
     l_array: np.ndarray,
     nM_complex_array: np.ndarray,

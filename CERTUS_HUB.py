@@ -46,9 +46,19 @@ from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
     __version__,
     certus_timestamp_display,
+    configure_numba_env,
     create_module_environment,
     setup_module_logging,
 )
+
+# DOIT rester le premier appel, avant tout import tirant Numba (physics, workers, ui).
+# Cette fonction existait, était exportée et testée, mais n'était appelée NULLE PART :
+# NUMBA_CACHE_DIR, NUMBA_NUM_THREADS et NUMBA_THREADING_LAYER restaient non définis.
+# Conséquences mesurées : Numba prenait les 16 cœurs (aucun réservé à l'OS/GUI) et le
+# cache @njit(cache=True) s'écrivait à côté des sources — donc dans le dossier
+# synchronisé Google Drive, ce qui provoque des recompilations JIT à répétition.
+# certus_core n'importe pas Numba au niveau module : l'appel ici est donc à l'heure.
+configure_numba_env()
 
 
 # =============================================================================

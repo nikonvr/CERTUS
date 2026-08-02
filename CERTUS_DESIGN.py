@@ -33,6 +33,13 @@ CERTUS-DESIGN.py - Optical Filter Design & Optimization
 
 """
 
+# Configuration Numba AVANT tout import tirant @njit (cf. CERTUS_HUB.py).
+# Sans cet appel, NUMBA_CACHE_DIR n'est pas defini et le cache JIT s'ecrit a cote
+# des sources, dans le dossier synchronise cloud -> recompilations a repetition.
+from certus.core.certus_core import configure_numba_env as _configure_numba_env
+
+_configure_numba_env()
+
 from certus.core.certus_core import __version__
 
 from certus_physics import (

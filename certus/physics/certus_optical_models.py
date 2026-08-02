@@ -466,22 +466,21 @@ class SplineBasisCache:
             cls._cache.clear()
 
 
-@lru_cache(maxsize=1024)
-def _get_nk_from_spline_cached(
-    p_spline_tuple: tuple, knot_wl_tuple: tuple, target_wl_tuple: tuple, use_cache: bool
+def _compute_nk_from_spline(
+    p_spline_nk_values: np.ndarray,
+    knot_wavelengths: np.ndarray,
+    target_lambda_array: np.ndarray,
+    use_cache: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
-    p_spline_nk_values = np.array(p_spline_tuple)
-    knot_wavelengths = np.array(knot_wl_tuple)
-    target_lambda_array = np.array(target_wl_tuple)
-
+    """Coeur du calcul, sur TABLEAUX. Aucune conversion, aucun hachage."""
     num_knots = len(knot_wavelengths)
     n_knot_values = p_spline_nk_values[:num_knots]
     k_knot_values = p_spline_nk_values[num_knots:]
 
     if use_cache:
-        B = SplineBasisCache.get(knot_wavelengths, target_lambda_array)
-        n_values = B @ n_knot_values
-        k_values = B @ k_knot_values
+        basis = SplineBasisCache.get(knot_wavelengths, target_lambda_array)
+        n_values = basis @ n_knot_values
+        k_values = basis @ k_knot_values
     else:
         spline_n = CubicSpline(knot_wavelengths, n_knot_values, bc_type="natural", extrapolate=True)
         spline_k = CubicSpline(knot_wavelengths, k_knot_values, bc_type="natural", extrapolate=True)
@@ -491,6 +490,24 @@ def _get_nk_from_spline_cached(
     n_values = np.nan_to_num(np.clip(n_values, 0.0, 10.0))
     k_values = np.nan_to_num(np.clip(k_values, 0.0, 10.0))
     return n_values, k_values
+
+
+@lru_cache(maxsize=1024)
+def _get_nk_from_spline_keyed(
+    p_key: bytes, knot_key: bytes, target_key: bytes, use_cache: bool
+) -> tuple[np.ndarray, np.ndarray]:
+    """Variante memorisee. Cle en OCTETS, et non en tuples Python.
+
+    L'ancienne version prenait trois tuples et les reconvertissait aussitot en
+    tableaux : le trajet complet etait tableau -> tuple -> hachage -> tableau, paye
+    sur des vecteurs de plusieurs centaines de points.
+    """
+    return _compute_nk_from_spline(
+        np.frombuffer(p_key, dtype=np.float64),
+        np.frombuffer(knot_key, dtype=np.float64),
+        np.frombuffer(target_key, dtype=np.float64),
+        use_cache,
+    )
 
 
 def get_nk_from_spline(
@@ -504,8 +521,20 @@ def get_nk_from_spline(
     When use_cache=True (default), uses SplineBasisCache for fast matrix-vector evaluation.
     When use_cache=False, falls back to direct CubicSpline construction.
     """
-    return _get_nk_from_spline_cached(
-        tuple(p_spline_nk_values), tuple(knot_wavelengths), tuple(target_lambda_array), use_cache
+    p_arr = np.ascontiguousarray(p_spline_nk_values, dtype=np.float64)
+    knot_arr = np.ascontiguousarray(knot_wavelengths, dtype=np.float64)
+    target_arr = np.ascontiguousarray(target_lambda_array, dtype=np.float64)
+
+    # Les DEUX chemins passent par la memoisation : `use_cache` ne choisit pas s'il
+    # faut memoiser, mais quelle methode d'evaluation employer — matrice de base
+    # pre-calculee, ou construction directe d'un CubicSpline. Ce parametre fait donc
+    # partie de la cle.
+    #
+    # La cle est en OCTETS et non en tuples Python. L'ancienne version faisait
+    # tableau -> tuple -> hachage element par element -> tableau, sur des vecteurs de
+    # plusieurs centaines de points ; .tobytes() hache un seul bloc memoire.
+    return _get_nk_from_spline_keyed(
+        p_arr.tobytes(), knot_arr.tobytes(), target_arr.tobytes(), bool(use_cache)
     )
 
 

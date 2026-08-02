@@ -179,6 +179,86 @@ def compute_T_front_at_layer(
     return 0.0
 
 
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def compute_T_front_profile(
+    wl: float,
+    n_layer,
+    n_Sub,
+    M_before_00,
+    M_before_01,
+    M_before_10,
+    M_before_11,
+    d_array: np.ndarray,
+) -> np.ndarray:
+    """T de face avant sur TOUTE une grille d'epaisseurs, en un seul appel.
+
+    Meme calcul que ``compute_T_front_at_layer``, point par point : la boucle est
+    simplement passee du cote compile. L'arithmetique est identique, donc les
+    resultats le sont bit a bit.
+
+    Motif : ``_compute_theoretical_layer_profile`` echantillonnait la courbe T(d)
+    tous les nanometres depuis Python, soit ~200 franchissements de la frontiere
+    Python->njit par couche, repetes pour chaque strategie et chaque tirage de
+    Monte-Carlo. Le calcul lui-meme est negligeable devant ce cout de dispatch.
+    """
+    n = d_array.shape[0]
+    out = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        out[i] = compute_T_front_at_layer(
+            wl, n_layer, n_Sub, M_before_00, M_before_01, M_before_10, M_before_11, d_array[i]
+        )
+    return out
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def compute_dT_dd_kernel(
+    layer_wavelengths: np.ndarray,
+    n_H_vals: np.ndarray,
+    n_L_vals: np.ndarray,
+    n_Sub_vals: np.ndarray,
+    p_thick_arr: np.ndarray,
+    M_before_all: np.ndarray,
+    h_nm: float,
+) -> np.ndarray:
+    """dT/dd par difference centree, pour toutes les couches en un appel.
+
+    Transposition directe de la boucle finale de ``_compute_dT_dd_per_layer`` :
+    memes operations dans le meme ordre, donc memes resultats bit a bit. Elle
+    faisait deux appels njit par couche depuis Python ; sur un empilement de
+    quarante couches, evalue pour chaque strategie candidate, le cout de dispatch
+    depassait celui du calcul.
+    """
+    num_layers = p_thick_arr.shape[0]
+    dT_dd = np.zeros(num_layers, dtype=np.float64)
+
+    for i in range(num_layers):
+        wl_i = layer_wavelengths[i]
+
+        if wl_i < 0.1:
+            dT_dd[i] = 1e-6
+            continue
+
+        n_current = n_H_vals[i] if (i % 2) == 0 else n_L_vals[i]
+        n_Sub = n_Sub_vals[i]
+        d_nom = p_thick_arr[i]
+
+        M00 = M_before_all[i, 0, 0]
+        M01 = M_before_all[i, 0, 1]
+        M10 = M_before_all[i, 1, 0]
+        M11 = M_before_all[i, 1, 1]
+
+        d_plus = d_nom + h_nm
+        d_minus = max(0.1, d_nom - h_nm)
+
+        T_plus = compute_T_front_at_layer(wl_i, n_current, n_Sub, M00, M01, M10, M11, d_plus)
+        T_minus = compute_T_front_at_layer(wl_i, n_current, n_Sub, M00, M01, M10, M11, d_minus)
+
+        denom = d_plus - d_minus
+        dT_dd[i] = (T_plus - T_minus) / denom if denom > 1e-9 else 1e-6
+
+    return dT_dd
+
+
 @njit(cache=True, fastmath=True, parallel=True, nogil=True, error_model="numpy")
 def prepare_dynamics_data_kernel(
     wls_array: np.ndarray,

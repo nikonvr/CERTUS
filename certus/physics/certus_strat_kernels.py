@@ -25,6 +25,8 @@ from .certus_strat_dp import (
 from .certus_strat_growth import (
     simulate_growth_kernel,
     compute_T_front_at_layer,
+    compute_T_front_profile,
+    compute_dT_dd_kernel,
     prepare_dynamics_data_kernel,
     compute_dynamics_kernel,
     update_run_states_kernel,
@@ -63,6 +65,8 @@ __all__ = [
     "_dp_kernel",
     "simulate_growth_kernel",
     "compute_T_front_at_layer",
+    "compute_T_front_profile",
+    "compute_dT_dd_kernel",
     "prepare_dynamics_data_kernel",
     "compute_dynamics_kernel",
     "update_run_states_kernel",

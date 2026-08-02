@@ -109,6 +109,8 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     simulate_stack_robustness_batch,
     compute_batch_rmse,
     compute_T_front_at_layer,
+    compute_T_front_profile,
+    compute_dT_dd_kernel,
     # Non-monotonic handling modes
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,

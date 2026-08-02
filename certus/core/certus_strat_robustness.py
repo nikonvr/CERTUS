@@ -51,6 +51,7 @@ from certus.core.certus_strat_config import (
 
 from certus.core.certus_strat_objectives import (
     _compute_dT_dd_per_layer,
+    build_M_before_cache,
     _compute_theoretical_layer_profile,
     _compute_strategy_symmetry_score_percent,
 )
@@ -526,10 +527,32 @@ def _test_strategy_robustness_task(
             n_L_vals[i] = b_nL
             n_Sub_vals[i] = b_nSub
 
+    # Cache de matrices construit UNE fois et partage.
+    #
+    # Il l'etait deux fois par strategie : une premiere dans
+    # _compute_dT_dd_per_layer, une seconde plus bas pour le profil theorique
+    # des couches — memes entrees, meme resultat. Sur le profil de
+    # example/example_strat, ces deux constructions pesaient 69,5 % et 63,8 %
+    # des echantillons.
+    _M_before_cache = build_M_before_cache(
+        layer_wavelengths,
+        n_H_vals,
+        n_L_vals,
+        p_thick_nom_arr,
+        num_layers,
+    )
+
     is_absolute = params.get("thickness_tolerance_nm") is not None
     dT_dd = None
     if is_absolute:
-        dT_dd = _compute_dT_dd_per_layer(layer_wavelengths, n_H_vals, n_L_vals, n_Sub_vals, p_thick_nominal)
+        dT_dd = _compute_dT_dd_per_layer(
+            layer_wavelengths,
+            n_H_vals,
+            n_L_vals,
+            n_Sub_vals,
+            p_thick_nominal,
+            M_before_all=_M_before_cache,
+        )
 
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
     for noise_idx, noise_val in enumerate(noise_levels):
@@ -600,28 +623,7 @@ def _test_strategy_robustness_task(
 
     extrema_dist_info = []
     theoretical_layer_profile = []
-    _M_before_cache = np.zeros((num_layers, 2, 2), dtype=np.complex128)
-    _M_before_cache[0] = np.eye(2, dtype=np.complex128)
-    _blk_starts = [0]
-    for _bi in range(1, num_layers):
-        if abs(float(layer_wavelengths[_bi]) - float(layer_wavelengths[_blk_starts[-1]])) > 1e-3:
-            _blk_starts.append(_bi)
-    for _bidx in range(len(_blk_starts)):
-        _bs = _blk_starts[_bidx]
-        _be = _blk_starts[_bidx + 1] if _bidx + 1 < len(_blk_starts) else num_layers
-        _wlb = float(layer_wavelengths[_bs])
-        _ll = _be - 1
-        if _wlb > 0.1 and _ll > 0:
-            _mc = precompute_matrix_cache_kernel(
-                np.array([_wlb], dtype=np.float64),
-                np.array([n_H_vals[_bs]], dtype=np.complex128),
-                np.array([n_L_vals[_bs]], dtype=np.complex128),
-                np.array(p_thick_nominal[:_ll], dtype=np.float64),
-                _ll,
-            )
-            for _ci in range(max(1, _bs), _be):
-                if _ci - 1 < _mc.shape[0]:
-                    _M_before_cache[_ci] = _mc[_ci - 1, 0, :, :]
+    # _M_before_cache : deja construit plus haut, partage avec dT/dd.
 
     for i_layer in range(num_layers):
         wl_sel = float(layer_wavelengths[i_layer])

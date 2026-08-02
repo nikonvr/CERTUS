@@ -79,6 +79,8 @@ from certus_physics import (  # STRAT-specific kernels (previously imported from
     calculate_extrema_distances,
     compute_batch_rmse,
     compute_T_front_at_layer,
+    compute_T_front_profile,
+    compute_dT_dd_kernel,
     find_nucleation_adaptive_kernel,
     get_refractive_index,
     get_refractive_clues_vectorized,
@@ -336,34 +338,28 @@ def _normalize_phase_a_results(
         raw_results_sq[i] = sq_layer
     return raw_results_sq
 
-def _compute_dT_dd_per_layer(
+def build_M_before_cache(
     layer_wavelengths: np.ndarray,
     n_H_vals: np.ndarray,
     n_L_vals: np.ndarray,
-    n_Sub_vals: np.ndarray,
-    p_thick_nominal: list[float],
-    h_nm: float = 0.5,
+    p_thick_arr: np.ndarray,
+    num_layers: int,
 ) -> np.ndarray:
+    """Matrices M_before de chaque couche, un appel de noyau par bloc spectral.
+
+    Ce cache ne depend que de l'empilement nominal et du decoupage en blocs de
+    longueur d'onde. Il etait construit DEUX FOIS par strategie evaluee, a
+    l'identique : ici pour dT/dd, et une seconde fois dans
+    ``_test_strategy_robustness_task`` pour le profil theorique des couches.
     """
-
-    Compute dT/dd at nominal thickness for each layer (transmission sensitivity).
-
-    Used when noise_domain is thickness_nm to convert thickness noise to transmission noise.
-
-    """
-
-    num_layers = len(p_thick_nominal)
-
-    p_thick_arr = np.array(p_thick_nominal, dtype=np.float64)
-
-    dT_dd = np.zeros(num_layers, dtype=np.float64)
+    M_before_all = np.zeros((num_layers, 2, 2), dtype=np.complex128)
+    if num_layers == 0:
+        return M_before_all
+    M_before_all[0] = np.eye(2, dtype=np.complex128)
 
     # Precompute M_before per wavelength block to avoid O(N²) recomputation (C2 fix).
     # Within a block all layers share the same monitoring wavelength, so one
     # precompute_matrix_cache_kernel call covers every layer in that block.
-    M_before_all = np.zeros((num_layers, 2, 2), dtype=np.complex128)
-    M_before_all[0] = np.eye(2, dtype=np.complex128)
-
     block_starts = [0]
     for i in range(1, num_layers):
         if abs(float(layer_wavelengths[i]) - float(layer_wavelengths[block_starts[-1]])) > 1e-3:
@@ -388,36 +384,48 @@ def _compute_dT_dd_per_layer(
                 if i - 1 < cache.shape[0]:
                     M_before_all[i] = cache[i - 1, 0, :, :]
 
-    for i in range(num_layers):
-        wl_i = float(layer_wavelengths[i])
+    return M_before_all
 
-        if wl_i < 0.1:
-            dT_dd[i] = 1e-6
 
-            continue
+def _compute_dT_dd_per_layer(
+    layer_wavelengths: np.ndarray,
+    n_H_vals: np.ndarray,
+    n_L_vals: np.ndarray,
+    n_Sub_vals: np.ndarray,
+    p_thick_nominal: list[float],
+    h_nm: float = 0.5,
+    M_before_all: np.ndarray | None = None,
+) -> np.ndarray:
+    """
 
-        n_current = n_H_vals[i] if (i % 2) == 0 else n_L_vals[i]
+    Compute dT/dd at nominal thickness for each layer (transmission sensitivity).
 
-        n_Sub = n_Sub_vals[i]
+    Used when noise_domain is thickness_nm to convert thickness noise to transmission noise.
 
-        d_nom = p_thick_arr[i]
+    ``M_before_all`` evite de reconstruire le cache de matrices quand l'appelant
+    le possede deja ; laisse a None, le comportement est inchange.
+    """
 
-        M_b = M_before_all[i]
-        M00, M01, M10, M11 = M_b[0, 0], M_b[0, 1], M_b[1, 0], M_b[1, 1]
+    num_layers = len(p_thick_nominal)
 
-        d_plus = d_nom + h_nm
+    p_thick_arr = np.array(p_thick_nominal, dtype=np.float64)
 
-        d_minus = max(0.1, d_nom - h_nm)
+    if M_before_all is None:
+        M_before_all = build_M_before_cache(
+            layer_wavelengths, n_H_vals, n_L_vals, p_thick_arr, num_layers
+        )
 
-        T_plus = compute_T_front_at_layer(wl_i, n_current, n_Sub, M00, M01, M10, M11, d_plus)
-
-        T_minus = compute_T_front_at_layer(wl_i, n_current, n_Sub, M00, M01, M10, M11, d_minus)
-
-        denom = d_plus - d_minus
-
-        dT_dd[i] = (T_plus - T_minus) / denom if denom > 1e-9 else 1e-6
-
-    return dT_dd
+    # Boucle finale deportee dans un seul noyau compile : elle enchainait deux
+    # appels njit par couche depuis Python.
+    return compute_dT_dd_kernel(
+        np.ascontiguousarray(layer_wavelengths, dtype=np.float64),
+        np.ascontiguousarray(n_H_vals, dtype=np.complex128),
+        np.ascontiguousarray(n_L_vals, dtype=np.complex128),
+        np.ascontiguousarray(n_Sub_vals, dtype=np.complex128),
+        p_thick_arr,
+        M_before_all,
+        float(h_nm),
+    )
 
 def _extract_local_extrema_points(d_vals: np.ndarray, t_vals: np.ndarray, eps: float = 1e-10) -> list[dict[str, float]]:
     """Find local extrema from sampled T(d) curve."""
@@ -427,18 +435,28 @@ def _extract_local_extrema_points(d_vals: np.ndarray, t_vals: np.ndarray, eps: f
     if len(d_vals) < 3 or len(t_vals) < 3:
         return extrema
 
-    for i in range(1, len(t_vals) - 1):
-        prev_v = float(t_vals[i - 1])
+    # Comparaisons vectorisees, puis boucle sur les SEULS extrema.
+    #
+    # La version precedente parcourait toute la grille en Python — un tour par
+    # nanometre d'epaisseur — et convertissait trois scalaires numpy en float a
+    # chaque tour, alors que les extrema se comptent sur les doigts d'une main.
+    # Les comparaisons strictes et l'ordre de sortie sont conserves.
+    prev_v = t_vals[:-2]
+    cur_v = t_vals[1:-1]
+    next_v = t_vals[2:]
 
-        cur_v = float(t_vals[i])
+    is_max = ((cur_v - prev_v) > eps) & ((cur_v - next_v) > eps)
+    is_min = ((prev_v - cur_v) > eps) & ((next_v - cur_v) > eps)
 
-        next_v = float(t_vals[i + 1])
-
-        if (cur_v - prev_v) > eps and (cur_v - next_v) > eps:
-            extrema.append({"type": "max", "d_nm": float(d_vals[i]), "T": cur_v})
-
-        elif (prev_v - cur_v) > eps and (next_v - cur_v) > eps:
-            extrema.append({"type": "min", "d_nm": float(d_vals[i]), "T": cur_v})
+    for j in np.flatnonzero(is_max | is_min):
+        i = int(j) + 1
+        extrema.append(
+            {
+                "type": "max" if is_max[j] else "min",
+                "d_nm": float(d_vals[i]),
+                "T": float(t_vals[i]),
+            }
+        )
 
     return extrema
 
@@ -464,10 +482,11 @@ def _compute_theoretical_layer_profile(
 
     d_grid = np.linspace(0.0, d_nom, n_steps, dtype=np.float64)
 
-    t_grid = np.empty(n_steps, dtype=np.float64)
-
-    for idx in range(n_steps):
-        t_grid[idx] = compute_T_front_at_layer(wl_nm, n_current, n_sub, M00, M01, M10, M11, d_grid[idx])
+    # Un seul appel compile pour toute la grille, au lieu d'un par nanometre.
+    # La boucle est passee du cote njit (compute_T_front_profile) : meme
+    # arithmetique point par point, mais ~200 franchissements de frontiere
+    # Python->njit economises par couche.
+    t_grid = compute_T_front_profile(wl_nm, n_current, n_sub, M00, M01, M10, M11, d_grid)
 
     t_init = float(t_grid[0])
 

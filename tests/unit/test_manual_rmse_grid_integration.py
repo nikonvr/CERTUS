@@ -41,11 +41,13 @@ def test_manual_grid_reverse_extra_then_base_duplicate_keeps_coverage_complete(
     depuis 3080 nm, j=16 donne 3000 nm avant la paire ofs=12 sur le dernier bras.
     """
 
-    monkeypatch.delenv("NUMBA_DISABLE_JIT", raising=False)
-    monkeypatch.setenv("NUMBA_DISABLE_JIT", "1")
-    monkeypatch.delenv("NUMBA_DISABLE_PARALLEL", raising=False)
-    monkeypatch.setenv("NUMBA_DISABLE_PARALLEL", "1")
-
+    # NB: ne pas toucher à NUMBA_DISABLE_JIT ici. Les kernels appelés plus bas
+    # sont déjà décorés au moment de l'import du module, donc la variable ne les
+    # « dé-jitte » pas ; elle ne s'applique qu'aux compilations suivantes — y
+    # compris celles que Numba déclenche en interne pour ses propres @overload
+    # (np.empty_like…). Sur un cache Numba froid, clip_to_bounds doit encore être
+    # compilé et l'overload retombe alors sur une fonction Python nue :
+    # AttributeError: 'function' object has no attribute 'get_call_template'.
     d_grid = np.array([float(3000 + 10 * j) for j in range(13)], dtype=np.float64)
     n_pts = int(d_grid.size)
 

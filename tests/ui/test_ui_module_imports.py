@@ -37,6 +37,31 @@ def _collect_ui_modules() -> list[str]:
 _UI_MODULES: list[str] = _collect_ui_modules()
 
 
+def _restore_module(module_name: str, original: object | None) -> None:
+    """Put ``original`` back in ``sys.modules`` after a forced re-import.
+
+    Re-importing a module creates a *second* module object while every already
+    imported consumer keeps referring to the first one. Classes defined in the
+    original module — e.g. the RE mixins inherited by ``CertusREApp`` — resolve
+    their globals against that first object, so leaving the fresh copy cached
+    would silently break any later ``monkeypatch.setattr("<module>.<name>", …)``:
+    the patch would land on the orphaned copy and the real function would run.
+
+    When the module had never been imported before, the fresh import is exactly
+    what a normal import would have left behind, so nothing is restored.
+    """
+    if original is None:
+        return
+
+    sys.modules[module_name] = original
+
+    # ``import_module`` also rebinds the attribute on the parent package.
+    parent_name, _, attr = module_name.rpartition(".")
+    parent = sys.modules.get(parent_name) if parent_name else None
+    if parent is not None:
+        setattr(parent, attr, original)
+
+
 # ---------------------------------------------------------------------------
 # Parametrized import test – one test case per module
 # ---------------------------------------------------------------------------
@@ -50,6 +75,7 @@ def test_ui_module_importable(module_name: str, qapp) -> None:
     the corresponding ``from ... import ...`` statement was added.
     """
     # Force a fresh import attempt (ignore cached state so refactors are caught)
+    original = sys.modules.get(module_name)
     sys.modules.pop(module_name, None)
 
     try:
@@ -68,3 +94,7 @@ def test_ui_module_importable(module_name: str, qapp) -> None:
         # Other runtime errors (e.g. Qt widget init requiring real data) are
         # intentionally not caught — only import-resolution errors matter.
         pass
+    finally:
+        # Never let the throwaway copy outlive the test: it would shadow the
+        # module the rest of the process is already bound to.
+        _restore_module(module_name, original)

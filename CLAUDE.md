@@ -41,7 +41,7 @@ certus/
 └── ui/       109 fich.  60 747 l.  ← PyQt6
 ```
 
-### Frontières à respecter (héritées de `.cursorrules`)
+### Frontières à respecter
 
 - **`certus.core`, `certus.physics`, `certus.domain` n'importent JAMAIS** `PyQt6`, `QWidget`, ni `certus.ui`.
 - **`certus.ui` et `CERTUS_HUB.py`** ne contiennent pas d'algorithme de calcul — ils appellent les API du noyau.
@@ -212,7 +212,7 @@ python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 
 ## 6. Conventions de travail
 
-Reprises de `.cursorrules` — politique **zéro régression** :
+Politique **zéro régression** :
 
 1. **Changements conservateurs** — modifie uniquement les lignes nécessaires. Pas de réécriture de blocs « pour la propreté » sans demande explicite.
 2. **Une chose à la fois** — un fichier ou une fonction par tâche.

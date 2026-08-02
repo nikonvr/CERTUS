@@ -1,10 +1,10 @@
 # AGENTS.md — point d'entrée pour tout agent de code
 
 Ce fichier est un **panneau indicateur**, pas de la documentation. Il existe
-parce que chaque outil charge un fichier différent : Claude Code lit `CLAUDE.md`,
-Cursor lit `.cursorrules`, d'autres cherchent `AGENTS.md`. Le contenu, lui, ne
-vit qu'à un seul endroit — ici on ne fait qu'y renvoyer, pour qu'il n'y ait
-jamais deux versions divergentes.
+parce que chaque outil charge automatiquement un fichier différent : Claude Code
+lit `CLAUDE.md`, d'autres cherchent `AGENTS.md`. Le contenu, lui, ne vit qu'à un
+seul endroit — ici on ne fait qu'y renvoyer, pour qu'il n'y ait jamais deux
+versions divergentes.
 
 ## À lire, dans cet ordre
 

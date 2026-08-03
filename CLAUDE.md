@@ -6,6 +6,13 @@ Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 > sélection large des tests qui passent isolément. Cause racine corrigée ; il reste un
 > audit à faire. Voir [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
 
+> **Environnement et performance (2026-08-03)** — le dépôt a quitté Google Drive pour un disque
+> local, les dépendances sont remontées (numba 0.65.1 → 0.66.0) et la machine de travail a
+> 4 cœurs, non 16. **Les chiffres de `REPRISE_PERF.md` ne sont plus reproductibles en l'état**,
+> et le banc INDEX ne produit aucun ancrage de correction (`RESULT=None`). Lire
+> [`docs/REPRISE_SESSION_2026-08-03.md`](docs/REPRISE_SESSION_2026-08-03.md) **avant**
+> `REPRISE_PERF.md`.
+
 ---
 
 ## 1. Ce qu'est CERTUS

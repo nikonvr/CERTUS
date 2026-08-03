@@ -226,3 +226,96 @@ Ce job était rouge, il ne devrait plus l'être.
 🔴 **Rappel non négociable** : une seule session de calcul à la fois. Deux
 processus numba concurrents se bloquent mutuellement (verrou du cache, §0 de
 `REPRISE_PERF.md`), et sur 4 cœurs toute charge parallèle fausse la mesure.
+
+---
+
+## 9. Analyse statique du §4.4 — la prémisse du document est fausse
+
+Issu d'une analyse parallèle dont **16 agents sur 17 ont été tués par une limite
+de quota**. Un seul a abouti, sur le §4.4, et ses dix vérificateurs sont morts
+avec les autres.
+
+⚠️ **Statut : NON VÉRIFIÉ**, sauf les trois lignes contrôlées à la main et
+marquées ✅ ci-dessous. Tout le reste est à recouper avant d'agir.
+
+### 9.1 Le gisement n'est pas là où le document le dit
+
+Le §4.4 de `REPRISE_PERF.md` désigne la liste réfléchie numba
+(`extrema_d = []`, `certus/physics/certus_strat_math.py`) comme le problème.
+La lecture du code dit autre chose : cette liste ne représente que **2 des 6
+allocations NRT** par appel et ne contient en pratique que **0 à 2 éléments**.
+Le coût réel de la fonction, ce sont les **56 à 88 évaluations** de
+`_calc_T_added_layer`, chacune avec `cos`/`sin` sur argument complexe.
+
+Le vrai gisement est ailleurs, et il est bien plus gros. Le bloc de profil
+théorique de `certus/core/certus_strat_robustness.py:624-658` est **calculé puis
+jeté** par deux des trois familles d'appelants :
+
+- rescoring consensus (`robustness.py:951`) ne lit que `robustness_score` ;
+- successive halving ELITE (`certus_strat_consensus.py:570`) ne lit que
+  `results_per_noise[].rmse_p95`.
+
+✅ Vérifié à la main : `final_score` est calculé en `:622`, **avant** le bloc, qui
+démarre en `:624` par `extrema_dist_info = []` et boucle
+`for i_layer in range(num_layers)`.
+
+Or c'est exactement là que vivent **les deux lignes les plus chères** du profil
+post-`33af845` du document : `certus_strat_objectives.py:489`
+(`compute_T_front_profile`, 107,2 %) et `:497` (`calculate_extrema_distances`,
+106,7 %). Volume estimé : **~500 tâches × 48 couches ≈ 25 000 appels inutiles**
+par run, sur chacune des deux fonctions.
+
+**Action proposée** — ajouter `compute_layer_profile: bool = True` à
+`_test_strategy_robustness_task` (`robustness.py:448`), englober les lignes
+624-658 dans `if compute_layer_profile:`, et passer `False` aux **deux seuls**
+sites qui jettent le résultat : `robustness.py:951` et `consensus.py:570`.
+Surtout **pas** en `consensus.py:621` (évaluation complète, dont
+`full_res['strategy']` est réutilisé en `:648`) ni dans
+`_execute_robustness_tasks`. Le défaut `True` préserve tout appelant non modifié.
+
+### 9.2 ✅ Sur-souscription de threads confirmée — à corriger AVANT toute mesure
+
+Vérifié à la main dans `certus/core/certus_strat_robustness.py` :
+
+- `:314` → `max_workers = max(1, multiprocessing.cpu_count() // 2)`
+- `:466` → `numba.set_num_threads(2)` en tête de **chaque** tâche
+
+Sur l'i5-8250U, `cpu_count()` renvoie 8 (SMT), donc `max_workers = 4`, soit
+**4 × 2 = 8 threads numba pour 4 cœurs physiques à 15 W**. Le réglage `2` a été
+choisi sur une machine 16 cœurs.
+
+🔴 **C'est un prérequis, pas une optimisation.** Une sur-souscription ×2 sur un
+15 W se paie en throttling thermique, ce qui **bruite toutes les mesures A/B**.
+Le corriger après avoir lancé les campagnes invaliderait les campagnes.
+Piste : baser `max_workers` sur les cœurs **physiques** plutôt que sur
+`cpu_count()`. Vérifier aussi `get_safe_worker_count()` (`:944`), autre chemin.
+
+### 9.3 Le `.tolist()` du §4.4 exige un commit préalable défensif
+
+Retirer les `.tolist()` (`robustness.py:595` et `:614`) casserait **quatre**
+tests de véracité, dont **deux silencieusement** — `if thicknesses_all:` sur un
+ndarray 2D lève `ValueError`, avalée par le `except` englobant :
+
+| Site | Effet |
+|---|---|
+| `certus/ui/certus_strat_thickness_ui.py:402` | 🔇 silencieux — stats par couche vides |
+| `certus/ui/certus_strat_table_ui.py:164` | 🔇 silencieux — colonne en erreur tronquée |
+| `certus/core/certus_strat_robustness.py:1081` | échec franc |
+| `certus/utils/certus_strat_service.py:1220` | échec franc |
+
+C'est le mode de défaillance de `bc2042a` (§3 du document : 278 évaluations
+fausses sur 48 000, sans erreur visible). **Faire d'abord un commit séparé et
+neutre** remplaçant les 4 tests par `is None or len(...) == 0`, puis seulement
+basculer le producteur. Gain CPU estimé faible (~1-3 %), mais ~4× en mémoire —
+ce qui compte sur 8 Go.
+
+### 9.4 Deux pièges signalés
+
+- **Docstring fausse**, `certus_strat_math.py:121` : elle annonce 200 nm de
+  portée, le code balaie ±16 nm de **chemin optique**, soit ±16/|n| nm physiques
+  (±6,96 nm pour Nb₂O₅, ±10,96 nm pour SiO₂). Erreur d'un facteur 12 à 29.
+- **Ne pas réduire `scan_ot`** (`certus_strat_math.py:129`, valeur 16.0) en
+  croyant faire une optimisation iso-résultat. Le terme `balance` de
+  `_compute_local_extrema_symmetry_score`
+  (`certus/utils/certus_strat_context.py:264-265`) utilise les distances brutes,
+  pas saturées : tronquer le scan **change le classement des stratégies**.

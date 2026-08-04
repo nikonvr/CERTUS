@@ -6,12 +6,18 @@ Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 > sélection large des tests qui passent isolément. Cause racine corrigée ; il reste un
 > audit à faire. Voir [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
 
-> **Environnement et performance (2026-08-03)** — le dépôt a quitté Google Drive pour un disque
+> **Environnement et performance (2026-08-04)** — le dépôt a quitté Google Drive pour un disque
 > local, les dépendances sont remontées (numba 0.65.1 → 0.66.0) et la machine de travail a
 > 4 cœurs, non 16. **Les chiffres de `REPRISE_PERF.md` ne sont plus reproductibles en l'état**,
-> et le banc INDEX ne produit aucun ancrage de correction (`RESULT=None`). Lire
-> [`docs/REPRISE_SESSION_2026-08-03.md`](docs/REPRISE_SESSION_2026-08-03.md) **avant**
-> `REPRISE_PERF.md`.
+> et son §0 comme son §4.3 sont démentis par la mesure.
+>
+> 🔴 **L'outillage de mesure était cassé sur trois points** : `ab_compare.sh` n'alternait qu'un
+> fichier, `RESULT` valait `None` sur INDEX **et** STRAT (donc aucun garde-fou de correction sur
+> les deux plus gros chantiers du §4), et le parallélisme était dimensionné sur les cœurs
+> logiques. Corrigés — mais 4 modules n'ont pas été contrôlés.
+>
+> Lire **[`docs/REPRISE_SESSION_2026-08-03.md`](docs/REPRISE_SESSION_2026-08-03.md) §0
+> « PAR OÙ COMMENCER »** avant toute chose, puis `REPRISE_PERF.md`.
 
 ---
 

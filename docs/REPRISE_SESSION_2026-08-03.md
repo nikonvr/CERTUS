@@ -10,6 +10,77 @@ lu le §2 de celui-ci.
 
 ---
 
+# 0. PAR OÙ COMMENCER
+
+*Si tu ne lis qu'une section, c'est celle-ci. Le reste est la justification.*
+
+## 0.1 Vérifier l'environnement — 1 minute
+
+```bat
+cd /d C:\dev\CERTUS\0108
+uv sync --extra dev --extra freeze
+.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+dir .git\hooks\post-commit*
+```
+
+Le chemin affiché doit être sous `C:\dev\CERTUS\0108`. Le hook `post-commit` est
+**ACTIF** : chaque commit part automatiquement vers le dépôt **public**
+`nikonvr/CERTUS` (§7).
+
+## 0.2 Les prochaines actions, dans l'ordre
+
+| # | Action | Coût ici | Pourquoi celle-là |
+|---|---|---|---|
+| **1** | **Contrôler l'ancrage `RESULT` de `metal_single`, `metal_bilayer`, `re`, `design`** | ~5 min | **Bloquant.** 2 des 4 modules déjà vérifiés étaient cassés. Un module sans ancrage ne peut pas être optimisé — le banc affiche un `WARN` explicite (§11.2). |
+| **2** | **Prouver les 2 changements de perf non mesurés** | ~20 min/campagne | C'est une **dette** : `190a37d` et `e9221b8` sont commités sans gain démontré (§0.4). |
+| **3** | **Expliquer INDEX_SPLINE à ×5,9** | ~1 min/run | Seul écart machine inexpliqué, et le module le moins cher à instruire (§2). |
+| 4 | §4.2 — le float32 de `certus_index_solvers.py:255` | — | À ne tenter **qu'après** avoir exposé une graine dans le banc : INDEX est dispersif à 8 % (§3.1). |
+| 5 | §4.1 — tirage PGLOBAL | nuits | Son protocole exige ≥5 graines sur DESIGN. |
+
+**Commandes utiles :**
+
+```bat
+:: un banc, machine au repos
+.venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes
+```
+
+```bash
+# A/B alterne — depuis Git Bash, chemins en /, liste de fichiers entre guillemets
+bash scripts/ab_compare.sh "fichier1.py,fichier2.py" "<commit>^" strat 4 --auto-yes
+```
+
+## 0.3 🔴 Ne PAS faire — pièges tous vérifiés dans cette session
+
+| Piège | Ce qu'il coûte |
+|---|---|
+| **Mesurer avec autre chose en vol** | INDEX : `RUN_S` **81,5 s** chargé contre **12,4 s** au repos. Facteur **6,6**, pas quelques pourcents (§2). |
+| **Moyenner au lieu de compter les paires gagnantes** | STRAT dérive de **17 %** entre runs identiques (§12). Une moyenne noierait un gain réel de 10 %. |
+| **Alterner UN fichier d'un changement qui en touche plusieurs** | Ancienne signature + appelant non basculé → candidats **silencieusement écartés** et bras « SANS » faussement rapide (§11.1). |
+| **Croire un `RESULT` sans avoir lu le `WARN`** | 2 modules sur 8 rendaient `None` en silence (§11.2). |
+| **Basculer `use_cache=True`** | **Non sûr**, mécanisme établi : la clé de cache arrondit à 1e-6 nm quand le pas de gradient vaut 1e-8 (§10.3). |
+| **`uv pip compile` pour régénérer `requirements.lock`** | `pydantic>=2.14.0a1` fait basculer tout le graphe en préversions → tire `numba 0.67.0rc1` (§6). Utiliser `uv export`. |
+| **Recopier le `.venv` vers Google Drive** | `os error 433`, le volume disparaît en cours d'écriture (§1). |
+
+**En revanche, paralléliser est SÛR pour les validations** : deux sessions pytest
+simultanées à cache chaud coûtent **+7 %** et font gagner **37 %** de wall-clock.
+Le 🔴 du §0 de `REPRISE_PERF.md` est démenti. Jamais pour les mesures.
+
+## 0.4 Ce qui est prouvé, et ce qui ne l'est pas
+
+| Affirmation | Statut |
+|---|---|
+| Facteurs machine : oracle ×1,46 · FIELD ×2,0 · INDEX ×0,97 · INDEX_SPLINE ×5,9 · STRAT ×2,4-3,2 | ✅ **mesuré** |
+| Le cache numba n'est pas dans `%TEMP%` mais dans les `__pycache__` | ✅ **artefact** (78 `.nbi`) |
+| Le warmup colorimétrie était mort | ✅ **artefact** (`.nbi` absents puis apparus) |
+| INDEX et STRAT n'avaient aucun ancrage de correction | ✅ **corrigé et vérifié** |
+| Parallélisme des validations sans blocage | ✅ **mesuré** |
+| **Gain de `compute_layer_profile` (`190a37d`)** | ❌ **NON MESURÉ** — mécanisme vérifié, volume non |
+| **Sur-souscription (`e9221b8`)** | 🔴 **MESURÉ — c'est une RÉGRESSION de 5 à 7 % sur STRAT**, 4 paires sur 4 (§14) |
+| Le mécanisme du §4.5 (`use_cache` non sûr) | ⚠️ **non recoupé** — issu d'un agent dont les vérificateurs sont tombés |
+| Les constats du §10 sans ✅ | ⚠️ **non vérifiés** |
+
+---
+
 ## 1. Ce qui a changé dans l'environnement
 
 Trois variables ont bougé **en même temps**. Aucune comparaison avant/après ne
@@ -274,23 +345,40 @@ Ce job était rouge, il ne devrait plus l'être.
 
 ---
 
-## 8. Ce qui reste à faire, par ordre
+## 8. Ce qui reste à faire
 
-1. **Refaire les bancs rapides machine au repos** — FIELD, INDEX_SPLINE, INDEX,
-   deux passes, rien d'autre en vol. C'est ce qui tranche l'hypothèse
-   « régression numba 0.66 » et la question `_path_stat` du §4.3, pour quelques
-   minutes de calcul.
-2. **Corriger l'extraction de `RESULT` du banc INDEX** (§3 ci-dessus).
-3. **Trancher l'ambiguïté 6,5 s / 12,8 s** (§4).
-4. **Vérifier les réglages de threads pour 4 cœurs** — le gain le moins cher s'ils
-   sont en dur.
-5. Puis seulement les bancs lourds : RE, METAL_SINGLE, METAL_BILAYER, et enfin
-   STRAT et DESIGN, dont la dispersion naturelle impose plusieurs runs chacun.
-   Sur cette machine c'est une campagne de fond, pas une mesure interactive.
+✅ **Faits** : bancs rapides remesurés au repos (§2) · extraction `RESULT` réparée
+sur INDEX **et** STRAT (§3, §11.2) · ambiguïté 6,5 / 12,8 s tranchée (§4) ·
+sur-souscription corrigée (§11.3) · `ab_compare.sh` étendu au multi-fichiers (§11.1).
 
-🔴 **Rappel non négociable** : une seule session de calcul à la fois. Deux
-processus numba concurrents se bloquent mutuellement (verrou du cache, §0 de
-`REPRISE_PERF.md`), et sur 4 cœurs toute charge parallèle fausse la mesure.
+**Restent, par ordre :**
+
+1. 🔴 **Prouver les deux changements de performance non mesurés** —
+   `compute_layer_profile` (`190a37d`) et la sur-souscription (`e9221b8`). Aucun
+   des deux n'a de gain démontré. C'est une dette, pas un acquis.
+2. **Contrôler l'ancrage `RESULT` des quatre modules non vérifiés** :
+   `metal_single`, `metal_bilayer`, `re`, `design`. Deux modules sur les quatre
+   déjà contrôlés étaient cassés — la probabilité que les autres le soient n'est
+   pas faible. Le `WARN` du banc (§11.2) le signale désormais au premier run.
+3. **INDEX_SPLINE à ×5,9**, seul écart machine encore inexpliqué (§2).
+4. **§4.2 — le float32 de `certus_index_solvers.py:255`**, à ne tenter qu'après
+   avoir exposé une graine dans le banc : INDEX est dispersif à 8 % (§3.1).
+5. **§4.1 — le tirage PGLOBAL**, dont le protocole coûte des nuits ici.
+
+⚠️ **Ne PAS faire** : basculer `use_cache=True` (§10.3, non sûr, mécanisme établi).
+
+### Règle de mesure — corrigée le 2026-08-04
+
+~~🔴 Une seule session de calcul à la fois.~~ **Mesuré, c'est plus subtil :**
+
+- **Paralléliser des VALIDATIONS** (oracle, tests unitaires, lint) : ✅ sûr.
+  Deux sessions pytest simultanées à cache chaud coûtent **+7 %** et font gagner
+  **37 %** de wall-clock. Le 🔴 du §0 de `REPRISE_PERF.md` était faux, et sa cause
+  invoquée — le verrou du cache numba via `configure_numba_env` — ne pouvait pas
+  l'être puisque cette fonction ne pose jamais `NUMBA_CACHE_DIR` (§10.1).
+- **Paralléliser des MESURES** : ❌ jamais. INDEX affichait `RUN_S` **81,5 s** en
+  environnement chargé contre **12,4 s** au repos. Sur 4 cœurs, la charge
+  concurrente n'ajoute pas du bruit, elle invente un résultat.
 
 ---
 
@@ -538,3 +626,208 @@ Corroboré par `pickletools` sur les `.nbi` : 2 à 3 `.nbc` par fonction
 de l'optimiseur. **À ne tenter qu'après réparation de l'extraction `RESULT` du
 banc INDEX (§3)** — sinon c'est un changement numérique sans filet.
 
+
+---
+
+## 11. L'outillage de mesure était cassé sur trois points
+
+C'est le résultat le plus important de la session, et il n'était pas cherché.
+**Avant de mesurer quoi que ce soit sur ce dépôt, vérifie l'instrument.**
+
+### 11.1 `ab_compare.sh` n'alternait qu'UN fichier
+
+Le script ne prenait qu'un `$FILE`. Or `compute_layer_profile` (`190a37d`) en
+touche deux, et la sur-souscription (`e9221b8`) en touche sept.
+
+🔴 **Le piège n'était pas théorique.** En basculant `certus_strat_robustness.py`
+seul vers la référence, l'ancienne signature n'accepte pas le mot-clé mais
+`certus_strat_consensus.py` continue de le passer : soit un `TypeError`, soit —
+bien pire — des candidats **silencieusement écartés** par le `except` englobant et
+un bras « SANS » artificiellement rapide. On aurait mesuré un gain spectaculaire
+et entièrement faux.
+
+Le premier argument accepte désormais une liste séparée par des virgules.
+**Deux défauts latents ont été trouvés en chemin :**
+
+1. La restauration passait par `git checkout HEAD -- "$FILE"`, alors que l'en-tête
+   documente `<ref-git> = HEAD` pour un changement encore dans l'arbre de travail.
+   Dans ce cas le bras « AVEC » **détruisait le changement à mesurer**.
+2. `git show "$REF:$FILE" > "$FILE"` **tronquait le fichier avant** que git ne
+   s'exécute : un `show` en échec laissait un fichier vide dans le dépôt.
+
+Le trap couvre maintenant les N fichiers — vérifié par SIGINT (sortie 130) et
+SIGTERM (sortie 143), fichiers restaurés, `git status` propre.
+
+### 11.2 🔴 Deux modules sur huit n'avaient AUCUN ancrage de correction
+
+`RESULT` valait `None` sur **INDEX** et sur **STRAT** — précisément les deux plus
+gros chantiers du §4 de `REPRISE_PERF.md`. Le banc sortait la ligne sans rien
+signaler. **N'importe qui pouvait « optimiser » ces modules, constater un gain, et
+publier un résultat faux sans qu'aucun garde-fou ne bronche.**
+
+| Module | Cause réelle |
+|---|---|
+| INDEX | `OptimizationResults` expose `final_mse`, pas `rmse_final`, et porte `__slots__` — donc le repli `isinstance(res, dict)` ne pouvait pas aboutir non plus. Les **deux** branches d'extraction échouaient. |
+| STRAT | La charge utile est le `to_legacy_dict()` d'un `WorkerThreadResult` : un dict à deux clés, `final_results` et `opti_results`. Le RMSE n'y figure pas — la clé `"rmse"` appartient à `metadata`, qui part vers un **autre signal**, `excel_ready`. Il se dérive de `final_results["all_strategies_results"]` via `extract_best_rmse`. |
+
+✅ **Le correctif qui compte le plus** : le banc émet désormais un `WARN` explicite
+quand `RESULT` est `None`, disant que le module n'a aucun ancrage et qu'il ne faut
+rien conclure d'un A/B sur lui.
+
+> Un outil de mesure qui rend silencieusement une valeur vide est pire qu'un outil
+> qui plante : il donne l'illusion d'une vérification.
+
+⚠️ **`metal_single`, `metal_bilayer`, `re` et `design` n'ont PAS été contrôlés.**
+Deux des quatre modules vérifiés étaient cassés. Le `WARN` le dira au premier run.
+
+### 11.3 La sur-souscription était systémique
+
+**Aucun endroit du dépôt ne connaissait la notion de cœur physique** : 100 % des
+décisions de parallélisme dérivaient de `cpu_count()`, qui compte les processeurs
+**logiques**. Sur une puce SMT, le facteur 2 était donc systématique.
+
+Threads réels, pour `cpu_count() = 8` et 4 cœurs physiques :
+
+| Site | Avant | Après |
+|---|---|---|
+| `NUMBA_NUM_THREADS` | 7 | **3** |
+| STRAT `robustness.py:314` | 4 × 2 = **8** | **4** |
+| STRAT `consensus.py:525` (2 pools) | 7 × 2 = **14** | **4** |
+| STRAT `robustness.py:962` | 7 × 2 = **14** | **4** |
+| PGlobal INDEX | 7 × 7 = **jusqu'à 49** | 7 × 1 = **7** |
+| RE phases 1 et 2a | 8 chacune | **4** |
+| FIELD, deux pools | 12 chacun | **4** |
+
+`get_physical_core_count()` a été ajoutée dans `certus/core/certus_core.py`, **sans
+nouvelle dépendance** (`kernel32` via `ctypes` sous Windows, `thread_siblings_list`
+sous Linux). Repli documenté : en cas d'échec elle rend le compte **logique**,
+c'est-à-dire exactement l'ancien comportement.
+
+**Deux constats de l'analyse ont été RÉFUTÉS par la lecture, et non appliqués :**
+
+- `get_safe_worker_count()` n'a pas son adaptativité « inversée » : la réserve vaut
+  12,5 % dans les deux cas. Sa valeur n'a pas été changée car `self.n_workers`
+  alimente `n_dispatch = min(len(cand_y), n_workers)` dans PGlobal INDEX : c'est un
+  paramètre **algorithmique**, qui décide combien de candidats reçoivent un
+  raffinement L-BFGS-B. Le modifier changerait la trajectoire de recherche.
+- Les deux pools de RE ne sont **pas imbriqués mais séquentiels**.
+
+⚠️ **Risque numérique assumé.** Un balayage AST trouve exactement deux noyaux
+`@njit(parallel=True)` portant une réduction inter-`prange`, seule construction
+dont le résultat dépend du nombre de threads : `compute_mse_vectorized` (chemin
+chaud d'INDEX) et `_compute_metal_tmm_gradient_kernel`. Les changements de nombre
+de threads **numba** peuvent les déplacer de quelques ulps. Jugé acceptable : cette
+valeur était déjà dépendante de la machine (15 sur la 16 cœurs), des résultats
+identiques au bit près entre machines n'ont jamais été une propriété de ce code, et
+l'oracle passe. Les changements de nombre de **workers** sont du pur ordonnancement
+et ne peuvent rien déplacer.
+
+**Non traités, signalés** : `certus/core/certus_runtime.py:24` (pose OMP/OPENBLAS/MKL
+depuis `cpu_count()` — toucher aux threads BLAS déplacerait les réductions BLAS) et
+`certus/physics/certus_optimizers.py:687` (dérive encore 6 workers de `cpu_count()`).
+
+---
+
+## 12. STRAT — première mesure sur cette machine
+
+| Réf. doc (16 cœurs) | Ici (`RUN_S`) | Facteur |
+|---|---|---|
+| 47–64 s | **126,3 à 152,5 s** | **×2,4 à ×3,2** |
+
+Six runs consécutifs, machine au repos : 152,5 · 126,3 · 140,5 · 131,2 · 129,6 ·
+130,7 s. **Dispersion ≈ 17 %**, cohérente avec les 47–64 s du document.
+
+Conséquence directe : **compter les paires gagnantes, jamais moyenner.** Une
+moyenne sur quatre runs ne distinguerait pas un gain réel de 10 % du bruit.
+
+Coût de campagne : 4 paires ≈ **20 minutes**. C'est tenable, contrairement à ce que
+je craignais.
+
+`RESULT` de référence après réparation : **0,02519543055680181**.
+
+---
+
+## 13. Leçon de méthode — mesurer aussi le diagnostic
+
+Le document d'origine martèle « ne jamais annoncer un gain sans l'avoir mesuré ».
+Cette session montre que **la même règle vaut pour le diagnostic**.
+
+Sur le `RESULT=None` de STRAT, j'ai enchaîné **trois hypothèses fausses**, chacune
+payée d'un run de 130 s :
+
+1. un double-envoi du signal `finished` — plausible, écrit dans le code avec un
+   commentaire affirmatif **avant** d'être démontré ;
+2. la clé `rmse` dans `final_results` — déduite d'un `awk` qui ne montrait pas dans
+   quel dictionnaire la clé atterrissait ;
+3. l'accès par attribut alors que la charge utile est un dict.
+
+Ce qui a tranché en un seul run : **quinze lignes d'instrumentation** sortant
+`DIAG_TYPE` et `DIAG_KEYS`, puis la lecture du bloc complet autour du `return`.
+Deux gestes gratuits qui auraient dû venir en premier.
+
+À l'inverse, ce qui a été établi vite et solidement l'a été **par artefact** :
+
+- le warmup colorimétrie mort, prouvé par l'**absence** des `.nbi` correspondants,
+  puis confirmé par leur **apparition** après correctif ;
+- le cache numba hors de `%TEMP%`, prouvé par 78 `.nbi` dans les `__pycache__` et
+  un répertoire `%TEMP%\CERTUS_Numba_Cache` inexistant.
+
+> **Un contrôle par artefact coûte une seconde et conclut. Une déduction coûte un
+> run et se trompe.** Sur ce dépôt, chercher le fichier produit — `.nbi`, `RESULT`,
+> `git status` — bat la lecture de code à chaque fois.
+
+
+---
+
+## 14. 🔴 La sur-souscription "corrigée" est une RÉGRESSION sur STRAT
+
+Première campagne A/B de la session, et elle réfute le correctif `e9221b8`.
+
+Protocole : `ab_compare.sh` sur les **7 fichiers** du commit contre `e9221b8^`,
+4 paires alternées, module `strat`, machine au repos.
+
+| Paire | SANS (avant) | AVEC (après) | Écart |
+|---|---|---|---|
+| 1 | 128,739 s | 135,356 s | **+5,1 %** |
+| 2 | 129,211 s | 137,236 s | **+6,2 %** |
+| 3 | 131,183 s | 140,766 s | **+7,3 %** |
+| 4 | 142,203 s | 149,043 s | **+4,8 %** |
+
+**4 paires sur 4 dans le même sens.** Le critère du §1 de `REPRISE_PERF.md` est
+sans appel : réduire le parallélisme de 14 threads à 4 **ralentit STRAT**.
+
+L'hypothèse de départ — « 8 threads numba pour 4 cœurs physiques sur une puce
+15 W se paient en throttling thermique » — est donc **fausse pour ce module**.
+L'explication la plus plausible, **non vérifiée** : les tâches STRAT alternent
+calcul et synchronisation, et le SMT masque cette latence ; brider à 4 threads
+laisse les unités d'exécution inoccupées.
+
+### Ce que la campagne valide au passage
+
+- ✅ **`RESULT` identique aux 8 runs** (`0,02519543055680181`). L'ancrage réparé
+  au §11.2 fonctionne et **est déterministe sur STRAT** — seul le temps disperse.
+- ✅ Le changement de threads **n'a rien déplacé numériquement** : le risque
+  d'ulps du §11.3 ne s'est pas matérialisé ici.
+- ✅ Le trap multi-fichiers du §11.1 a restauré les 7 fichiers, arbre propre.
+
+### Le suspect à isoler avant de décider
+
+`e9221b8` regroupe plusieurs sites. Le plus probable coupable n'est pas le nombre
+de *workers* mais **`NUMBA_NUM_THREADS`, passé de 7 à 3** dans
+`certus/core/certus_core.py` — c'est un réglage **global**, qui bride toutes les
+régions parallèles numba du processus, pas seulement celles de STRAT.
+
+**Prochaine expérience, une seule ligne à alterner :**
+
+```bash
+bash scripts/ab_compare.sh certus/core/certus_core.py "e9221b8^" strat 4 --auto-yes
+```
+
+Si la régression suit `certus_core.py` seul, c'est `NUMBA_NUM_THREADS` : on peut
+alors garder les comptes de *workers* sur les cœurs physiques et laisser le
+plafond numba sur les logiques. Sinon, ce sont les comptes de workers, et le
+commit est à annuler.
+
+⚠️ **Rien ne dit que ce correctif soit néfaste ailleurs** : il touche aussi INDEX,
+RE et FIELD, **aucun mesuré**. Ne pas généraliser ce résultat STRAT aux autres
+modules — c'est exactement l'erreur que ce document reproche au §2 d'origine.

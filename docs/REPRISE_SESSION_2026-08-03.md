@@ -881,3 +881,113 @@ commit est à annuler.
 ⚠️ **Rien ne dit que ce correctif soit néfaste ailleurs** : il touche aussi INDEX,
 RE et FIELD, **aucun mesuré**. Ne pas généraliser ce résultat STRAT aux autres
 modules — c'est exactement l'erreur que ce document reproche au §2 d'origine.
+
+---
+
+# 15. 🔴 RECHERCHE — la compensation d'erreur n'est PAS modélisée dans STRAT
+
+Analyse critique du raisonnement de STRAT, 5 étapes en parallèle + synthèse
+(2026-08-04). **Le constat central est vérifié à la main** ; le reste vient de
+l'analyse et est à recouper.
+
+## 15.1 Le constat qui invalide le juge de Phase B
+
+**J'avais conclu l'inverse en première lecture, à tort.** La plomberie séquentielle
+EST correcte : `certus/physics/certus_strat_batch.py:82-101` passe bien
+`current_run_th_buffer[r, :i_layer]` — les épaisseurs réellement déposées — et
+`simulate_growth_kernel` reconstruit `M_before` sur l'empilement erroné. Condition
+**nécessaire** remplie.
+
+La condition **suffisante** ne l'est pas. ✅ Vérifié dans
+`certus/physics/certus_strat_growth.py:84-140` :
+
+```python
+T_mono[k]      # T a th_frac = k/4 * nominal_th, sur M_before REEL
+target_T_noisy = T_mono[4] + noise_val_precalc        # ligne 121
+T_points[1]    # T a d = nominal_th, MEME M_before, MEME formule
+```
+
+`T_points[1]` et `T_mono[4]` sont **identiques bit à bit**. La parabole d'inversion
+interpole exactement ses trois points, donc `P(d_nom) = cible − bruit`, et la
+résolution donne :
+
+> **Δd_i = bruit_i / P′_réel(d_nom, i)**, et rien d'autre.
+
+**À bruit nul sur la couche i, Δd_i = 0 quelles que soient les erreurs des couches
+1..i−1.** Donc `E[Δd_{i+1} | Δd_i] = 0` : aucun terme de rappel, aucune
+compensation.
+
+### Pourquoi c'est physiquement faux
+
+En salle, le niveau de déclenchement est **figé à l'avance** depuis la conception
+nominale. C'est le fait de viser un niveau devenu périmé sur un empilement erroné
+qui engendre l'erreur de signe opposé — le mécanisme de Macleod et Bousquet. Le
+code simule un contrôleur qui **connaîtrait parfaitement l'empilement réel** et
+choisirait néanmoins de déposer l'épaisseur nominale. Ce régime n'existe pas.
+
+### Ce que ça change sur le classement
+
+L'erreur cumulée croît en **√N pour TOUTES les stratégies**, alors que la théorie
+prédit une accumulation **bornée** pour les stratégies auto-compensatrices (cas
+d'école : quart d'onde monitoré à λ constante).
+
+> **Le score de Phase B ne peut donc pas distinguer un bloc monochromatique long
+> d'une affectation panachée.** La décision même que la Phase 3 existe pour prendre
+> — regrouper ou non les couches — est INVISIBLE au juge final.
+
+Pire, il favorise les stratégies qui maximisent la pente locale couche par couche,
+donc les **changements fréquents de λ**. Le code le sait implicitement : il
+compense à la main par `wavelength_change_penalty`, appliqué au bruit de la seule
+première couche de chaque bloc (`certus/core/certus_strat_robustness.py:475-486`) —
+un facteur scalaire là où l'effet est structurel.
+
+### 🔧 Le correctif tient en une ligne
+
+Calculer le niveau de cible sur `M_before` **NOMINAL** — déjà construit et
+disponible dans `robustness.py:538-544` via `build_M_before_cache` — en gardant la
+parabole d'inversion sur l'empilement **réel**. Le terme
+`T_nominal(d_nom) − T_réel(d_nom)` réapparaît alors au numérateur : **c'est
+exactement le terme de compensation.**
+
+## 15.2 Le bruit fait un aller-retour qui s'annule
+
+En mode tolérance-nm — **le seul atteignable depuis l'interface**, car
+`_get_float_safe` (`certus/ui/certus_strat_ui_state.py:1083-1097`) renvoie le
+défaut `1.0` et jamais `None`, donc `is_absolute` est toujours vrai :
+
+```
+Δd_i = z_i · σ_nm · penalty · [ dT/dd|nominal,i / P′|réel,i ]
+```
+
+Le facteur injecté est celui-là même par lequel l'inversion divise : **il se
+simplifie**. Et il s'annule exactement au point tournant, là où le monitoring est
+justement le plus fragile. ⚠️ À recouper, non vérifié à la main.
+
+## 15.3 Ce qui est solide, et mérite d'être dit
+
+- **L'inversion parabolique à 3 points** (`growth.py:122-139`) est le bon objet :
+  un modèle linéaire divergerait au point tournant ; le quadratique produit
+  naturellement l'asymptotique en √(ΔT/T″), qui **est** la loi correcte du
+  monitoring au point tournant.
+- **`dT/dd` est signée, pas en valeur absolue** (`growth.py:257`) : l'information
+  de phase est conservée, là où beaucoup de codes la détruisent.
+- **Les nombres aléatoires communs sont réellement communs** — la clé de cache
+  `(base_seed, noise_idx, num_runs, num_layers)` ne dépend pas de la stratégie
+  (`robustness.py:408-411`). C'est la bonne pratique pour un problème de
+  **classement** : elle réduit la variance de la *différence* de scores.
+- **Le classement final est lexicographique, pas une somme pondérée**
+  (`certus/core/certus_strat_ranking.py:377-395`) : aucune unité hétérogène n'est
+  mélangée au moment de la décision.
+- **P95 plutôt que moyenne** comme statistique de coût : correct pour un critère de
+  fabricabilité, on classe sur la queue et non sur le comportement typique.
+
+## 15.4 Si la piste est reprise
+
+Le correctif du §15.1 est **une ligne**, mais il change tous les scores de
+robustesse. Protocole : appliquer, vérifier que l'oracle passe, puis A/B alterné
+sur STRAT (4 paires, ~20 min) en regardant non pas le temps mais **le classement
+des stratégies** — l'attendu est que les blocs monochromatiques longs remontent.
+
+⚠️ Ce n'est **pas** une optimisation de performance, c'est une **correction de
+modèle**. Les résultats de robustesse ne seront pas comparables aux anciens.
+

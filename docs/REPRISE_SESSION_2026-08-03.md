@@ -160,10 +160,11 @@ double.** À trancher avant de reconstruire le tableau du §2.
 3. **§3, tous les gains mesurés (`33af845` −61 %, `2572f46` −29 %, `f6f9102`
    −11 %) datent de numba 0.65.1 et de 16 cœurs.** Ils ne sont pas invalidés,
    mais ils ne sont plus reproductibles ici en l'état.
-4. **`2572f46` est suspect sur cette machine.** Il règle une sur-souscription de
-   threads numba, réglage calibré par nature sur le nombre de cœurs. Le profil
-   DESIGN à 873 % suggère un pool d'une dizaine de threads : sur 8 processeurs
-   logiques ce serait déjà de la sur-souscription. **Non vérifié.**
+4. ~~**`2572f46` est suspect sur cette machine.**~~ ❌ **J'avais tort — voir §10.4.**
+   La lecture du code montre que son réglage (`certus/physics/certus_optimizers.py:892`)
+   est **adaptatif**, pas en dur, et reste pertinent sur 4 cœurs. La
+   sur-souscription réelle est ailleurs, et elle est bien plus large que ce
+   commit.
 
 ---
 
@@ -319,3 +320,157 @@ ce qui compte sur 8 Go.
   `_compute_local_extrema_symmetry_score`
   (`certus/utils/certus_strat_context.py:264-265`) utilise les distances brutes,
   pas saturées : tronquer le scan **change le classement des stratégies**.
+
+---
+
+## 10. Analyse statique — 5 pistes restantes
+
+Seconde vague de fan-out. Les 5 analyses ont abouti ; **les 4 vérificateurs et la
+synthèse ont été tués par le quota**. Statut par défaut : **NON VÉRIFIÉ**, sauf
+✅ = contrôlé à la main dans cette session.
+
+### 10.1 ✅ Le cache numba n'a JAMAIS été dans `%TEMP%` — le §4.3 dit le contraire
+
+`REPRISE_PERF.md` §4.3 affirme, en gras et avec un ⚠️, que `configure_numba_env`
+place déjà le cache dans `%TEMP%\CERTUS_Numba_Cache`, hors du dossier synchronisé,
+et conclut « ne repars pas sur cette piste ».
+
+**C'est faux, et l'instruction de ne pas creuser était donc infondée.**
+
+`configure_numba_env` ne pose `NUMBA_CACHE_DIR` qu'en `certus/core/certus_core.py:359-361`,
+mais la branche de `:334` (`if "numba" in sys.modules ...`) **retourne en `:352`
+avant d'y arriver**. Or `scripts/bench_examples.py:443` fait `import certus_physics`
+— qui importe numba — **avant** la ligne `:444` qui importe `CERTUS_INDEX`, seul
+endroit appelant `_configure_numba_env()`. La branche est donc toujours prise.
+`tests/conftest.py` ne pose rien non plus.
+
+Aggravant, lu dans numba 0.66 installé : le locator de cache est figé **à la
+décoration**, pas à la compilation (`numba/core/caching.py:414-420`). Poser la
+variable après le premier import `@njit` est sans effet de toute façon.
+
+✅ **Vérifié à la main :**
+
+| Contrôle | Résultat |
+|---|---|
+| `%TEMP%\CERTUS_Numba_Cache` | **n'existe pas** |
+| `.nbi` dans les `__pycache__` du dépôt | **58 fichiers** |
+
+Le cache JIT vit donc **à côté des sources** — c'est-à-dire, avant le
+rapatriement, **dans le dossier Google Drive**. Les 18,6 % / 23 % de `_path_stat`
+du §4.3 étaient très probablement ce cache lu à travers Drive.
+
+⚠️ **Conséquence de mesure** : le banc et l'application n'utilisent pas le même
+répertoire de cache. Un « cache chaud » mesuré par `bench_examples.py` ne dit
+rien du cache de `python CERTUS_INDEX.py`, qui n'a jamais été peuplé ici.
+
+### 10.2 §4.3 — la mesure elle-même est l'artefact
+
+`scripts/bench_examples.py:687` : **la fenêtre d'échantillonnage englobe l'import
+de l'application**. Les 18,6 % et 23 % de `_path_stat` ne sont donc **pas du temps
+de calcul** — c'est le chargement des modules, compté dans le profil.
+
+La piste « remonter les imports tardifs » ne peut pas rapporter ce que le §4.3
+espère. Ce qui reste, plus modeste mais réel :
+
+- `certus/spline/spline_workers.py:789` — **4 à 5 imports par évaluation
+  L-BFGS-B**, tous redondants avec le bloc d'en-tête. Supprimables sans risque.
+- `certus/core/certus_index_solvers.py:240` — le seul import tardif d'INDEX
+  capable de produire un vrai `_path_stat` pendant le run.
+- `certus/workers/certus_index_workers.py` — les 11 imports tardifs sont **NON
+  déplaçables**, cycle d'import prouvé. Ne pas y toucher.
+
+### 10.3 §4.5 RÉSOLU — `use_cache=True` n'est PAS sûr, et on sait pourquoi
+
+La question ouverte du document trouve sa réponse, et **ce ne sont pas les
+1,78e-15 de réassociation flottante**. C'est une **perte d'information dans la clé
+de cache**.
+
+`SplineBasisCache.get` arrondit les positions de nœuds à **6 décimales** pour
+construire sa clé (`certus/physics/certus_optical_models.py:419`). Les longueurs
+d'onde de METAL sont en **nanomètres** (`CERTUS_METAL_SINGLE.py:1256` :
+`knot_l = np.array([400.0, 800.0])`). Le quantum de la clé vaut donc **1e-6 nm**,
+soit **100× le pas de différence finie de L-BFGS-B (1e-8)**.
+
+**La perturbation du gradient est exactement annulée par l'arrondi de la clé.**
+L'optimiseur calcule des dérivées sur un objectif devenu localement constant.
+
+Trois corollaires, tous ancrés :
+
+- `certus_optical_models.py:453` — la matrice stockée n'est pas reconstruite à
+  partir de la clé : l'objectif devient **dépendant de l'historique du cache**,
+  donc non reproductible d'un run à l'autre.
+- `tests/oracle/test_spline_basis_cache.py:46` — le garde-fou censé attraper
+  exactement ce bug **ne peut pas le voir** : il déplace les nœuds de 1e-4, soit
+  100× le quantum de la clé.
+- `scripts/bench_examples.py:307` — **le 55,9 s → 24,7 s ne mesure pas ce que le
+  §4.5 propose** : `--force-cache` patche globalement, y compris des sites que le
+  plan ne prévoit pas de basculer. Le gain annoncé n'est pas celui de l'action.
+
+Même pathologie ailleurs, en pire : `certus/utils/certus_re_math.py:396` arrondit
+les nœuds à 0,1 nm et la grille à 1 nm — quantum **100 000× plus grossier**.
+
+**Conclusion : ne pas basculer `use_cache=True` en l'état.** Les sites où les
+positions de nœuds sont figées sont immunisés ; ceux où elles varient ne le sont
+pas.
+
+### 10.4 La sur-souscription est systémique, pas locale
+
+> **AUCUN endroit du dépôt ne connaît la notion de cœur physique.** Pas de
+> `psutil`, pas de `cpu_count(logical=False)`. 100 % des décisions de
+> parallélisme dérivent de `os.cpu_count()` / `multiprocessing.cpu_count()`, qui
+> vaut **8** ici. Le facteur 2 du SMT est donc **systématique**.
+
+| Fichier:ligne | Constat |
+|---|---|
+| `certus/core/certus_core.py:226` | `get_safe_worker_count()` rend **7 workers** pour 4 cœurs physiques ; `_RESERVED_CORES_FOR_WORKERS` a son adaptativité **inversée** |
+| `certus/core/certus_core.py:379` | `NUMBA_NUM_THREADS` = logiques − 1 = **7 threads OMP par noyau** |
+| `certus/core/certus_strat_consensus.py:525` | **Trois autres sites** du type de `:314`, et pires : 7 workers × 2 threads numba |
+| `certus/core/certus_index_solvers.py:511` | Le garde-fou anti-sur-souscription de PGlobal est posé **sur le mauvais thread** — `set_num_threads` avant création du pool, le masque n'atteint aucun worker : **inerte** |
+| `certus/core/certus_re_solvers.py:174` | RE : **deux pools imbriqués à 8 threads chacun**, aucun bridage numba sur tout le chemin |
+| `certus/workers/certus_field_workers.py:308` | Deux pools non bornés, et un noyau défini en double |
+| `certus/physics/certus_optimizers.py:892` | ✅ `2572f46` est **adaptatif** et reste pertinent — **corrige le §5.4 ci-dessus, où j'avais tort** |
+
+### 10.5 ✅ Le bloc colorimétrie de `warmup_physics` est mort depuis des années
+
+`certus/core/_certus_physics_impl.py` : `:1419` construit `wls` sur **50 points**,
+`:1490` construit `R_test` sur **10 points**, et `:1492` fait
+`np.interp(CIE_LAMBDA, wls, R_test)` → `ValueError`, avalée par le
+`except RuntimeError, ValueError:` de `:1502`. Tout ce qui suit dans le bloc n'est
+jamais compilé.
+
+✅ **Vérifié par artefact disque** — les `.nbi` présents sont exactement ceux des
+appels situés **avant** la ligne 1492 (`_lab_f`, `_lab_f_inv`,
+`_gamma_correct_scalar`), et il n'existe **aucun** `.nbi` pour
+`_xyz_from_spectrum_kernel` ni `delta_e_2000`. La coupure sur disque tombe
+précisément au point de rupture.
+
+Correctif : `R_test = np.full(len(wls), 0.5, dtype=np.float64)`. Gain nul sur
+INDEX (la colorimétrie n'est pas sur le chemin chaud) — l'intérêt est
+méthodologique : **un bloc de warmup peut mourir sans le moindre bruit**, et la
+présence du `.nbi` est un contrôle qui ne coûte aucun calcul.
+
+### 10.6 §4.2 — l'hypothèse prioritaire est infirmée, la vraie cause est ailleurs
+
+Un balayage AST des **111 fonctions `@njit`/`@jit`** du paquet `certus` montre
+qu'**elles portent toutes `cache=True`**, sans exception. Aucun cache n'a été
+perdu avec numba 0.66 : mon hypothèse était fausse.
+
+La vraie cause du JIT pendant le run est ✅ `certus/core/certus_index_solvers.py:255` :
+`X = np.empty((n, self.dim), dtype=np.float32)`. Les échantillons partent en
+**float32** vers `TLUObjective.__call__` (`certus_index_objectives.py:1755`, les
+54 % du profil), tandis que la phase locale scipy repasse en **float64**. numba
+compile donc **deux signatures** du chemin chaud, et `warmup_physics` — qui ne
+passe que des float Python — n'en couvre qu'une. Une **troisième** variante
+`readonly` existe, produite par l'idiome `np.frombuffer(clé_en_octets)` des caches
+lru (`certus_optical_models.py:534-536`, `spline_objective.py:33`).
+
+Corroboré par `pickletools` sur les `.nbi` : 2 à 3 `.nbc` par fonction
+(`epsilon2_TLU_array`, `epsilon1_TL_analytic`, `calculate_RT_single_layer_backside_array`).
+
+> **Ce ne sont pas des noyaux oubliés, ce sont des SIGNATURES oubliées sur des
+> noyaux déjà réchauffés.**
+
+⚠️ Passer `:255` en float64 change le pas d'échantillonnage, donc la trajectoire
+de l'optimiseur. **À ne tenter qu'après réparation de l'extraction `RESULT` du
+banc INDEX (§3)** — sinon c'est un changement numérique sans filet.
+

@@ -169,9 +169,12 @@ def re_execute_phase1(worker) -> list[dict]:
 
     import concurrent.futures
     import sys
-    import os
+    from certus.core.certus_core import get_physical_core_count
     is_testing = "pytest" in sys.modules
-    max_workers = 1 if is_testing else min(8, os.cpu_count() or 4)
+    # AVANT : min(8, os.cpu_count()), soit 8 sur une puce 4C/8T. Chaque run TRF
+    # appelle des noyaux numba parallel=True : aucun bridage n'existe sur ce
+    # chemin, le pool doit donc rester borne par les coeurs PHYSIQUES.
+    max_workers = 1 if is_testing else min(8, get_physical_core_count())
 
     if max_workers > 1:
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

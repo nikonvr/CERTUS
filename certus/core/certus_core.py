@@ -87,6 +87,7 @@ __all__ = [
     "get_materials_db_hash",
     "configure_numba_env",
     "get_safe_worker_count",
+    "get_physical_core_count",
     "get_precision_config",
     "get_float_dtype",
     "get_complex_dtype",
@@ -375,8 +376,12 @@ def configure_numba_env() -> None:
         ]:
             os.environ.setdefault(env_var, "1")
     else:
-        # Development mode: use optimal thread count
-        n_cores = max(1, _get_cpu_count() - _RESERVED_CORES_FOR_NUMBA)
+        # Development mode: use optimal thread count.
+        # Based on PHYSICAL cores, not logical ones: an SMT sibling is not an
+        # extra execution unit, and NUMBA_NUM_THREADS is the ceiling every
+        # parallel kernel opens. Same formula as before (one core left to the
+        # OS/GUI), only the base changed from logical to physical.
+        n_cores = max(1, get_physical_core_count() - _RESERVED_CORES_FOR_NUMBA)
         s_cores = str(n_cores)
         if "NUMBA_THREADING_LAYER" not in os.environ:
             os.environ["NUMBA_THREADING_LAYER"] = "omp"
@@ -439,6 +444,111 @@ def get_safe_worker_count(default_workers: int | None = None) -> int:
         return max(1, default_workers)
 
     return max(1, _get_cpu_count() - _RESERVED_CORES_FOR_WORKERS)
+
+
+@lru_cache(maxsize=1)
+def get_physical_core_count() -> int:
+    """Number of PHYSICAL CPU cores, with SMT / Hyper-Threading siblings collapsed.
+
+    ``os.cpu_count()`` and ``multiprocessing.cpu_count()`` count LOGICAL
+    processors. On an SMT part they return twice the number of real execution
+    cores (8 for a 4-core i5-8250U). Sizing a thread pool on that number and then
+    letting each of its threads open a Numba parallel region oversubscribes the
+    machine by a factor of two or more, which on a low-TDP laptop part is paid in
+    thermal throttling.
+
+    NO EXTERNAL DEPENDENCY is used. ``psutil`` is deliberately not a requirement
+    of this project (``requirements.lock`` is verified by CI), so the count is
+    read from the OS directly:
+
+    - Windows: ``kernel32!GetLogicalProcessorInformation`` through ``ctypes``,
+      counting the ``RelationProcessorCore`` records.
+    - Linux: the distinct values of
+      ``/sys/devices/system/cpu/cpu*/topology/thread_siblings_list``, falling
+      back to the ``(physical id, core id)`` pairs of ``/proc/cpuinfo``.
+
+    FALLBACK — documented on purpose. When the physical count cannot be
+    established (unsupported platform, restricted sandbox, API failure, or a
+    value that fails the ``1 <= physical <= logical`` sanity check) this function
+    returns the LOGICAL count, i.e. exactly the number every call site used
+    before. It never returns 0 or a negative value, so callers always get a
+    usable worker count; the only consequence of a failed probe is that the
+    previous behaviour is preserved rather than a worse one being invented.
+
+    Cached: the topology cannot change during the life of the process.
+
+    Returns:
+
+        Number of physical cores (>= 1), or the logical count if undeterminable.
+
+    Example:
+
+        >>> get_physical_core_count()  # i5-8250U: 4 physical, 8 logical
+        4
+
+    """
+
+    logical = _get_cpu_count()
+    physical: int | None = None
+
+    try:
+        if sys.platform == "win32":
+            import ctypes
+
+            RELATION_PROCESSOR_CORE = 0
+
+            class _ProcInfoUnion(ctypes.Union):
+                _fields_ = [("Reserved", ctypes.c_ulonglong * 2)]
+
+            class _ProcInfo(ctypes.Structure):
+                _fields_ = [
+                    ("ProcessorMask", ctypes.c_size_t),  # ULONG_PTR
+                    ("Relationship", ctypes.c_ulong),  # LOGICAL_PROCESSOR_RELATIONSHIP
+                    ("u", _ProcInfoUnion),
+                ]
+
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            size = ctypes.c_ulong(0)
+            # First call fails with ERROR_INSUFFICIENT_BUFFER and fills `size`.
+            kernel32.GetLogicalProcessorInformation(None, ctypes.byref(size))
+            n_entries = size.value // ctypes.sizeof(_ProcInfo)
+            if n_entries > 0:
+                buffer = (_ProcInfo * n_entries)()
+                if kernel32.GetLogicalProcessorInformation(ctypes.byref(buffer), ctypes.byref(size)):
+                    physical = sum(1 for entry in buffer if entry.Relationship == RELATION_PROCESSOR_CORE)
+
+        elif sys.platform.startswith("linux"):
+            siblings = {
+                path.read_text(encoding="ascii").strip()
+                for path in Path("/sys/devices/system/cpu").glob("cpu[0-9]*/topology/thread_siblings_list")
+            }
+            if siblings:
+                physical = len(siblings)
+            else:
+                cores: set[tuple[str, str]] = set()
+                package_id: str | None = None
+                core_id: str | None = None
+                for line in Path("/proc/cpuinfo").read_text(encoding="ascii", errors="replace").splitlines():
+                    if line.startswith("physical id"):
+                        package_id = line.split(":", 1)[1].strip()
+                    elif line.startswith("core id"):
+                        core_id = line.split(":", 1)[1].strip()
+                    elif not line.strip():
+                        if package_id is not None and core_id is not None:
+                            cores.add((package_id, core_id))
+                        package_id = core_id = None
+                if package_id is not None and core_id is not None:
+                    cores.add((package_id, core_id))
+                if cores:
+                    physical = len(cores)
+
+    except Exception:  # noqa: BLE001 - a topology probe must never break startup
+        physical = None
+
+    if not isinstance(physical, int) or physical < 1 or physical > logical:
+        return logical
+
+    return physical
 
 
 # =============================================================================

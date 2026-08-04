@@ -43,6 +43,7 @@ from certus.core.certus_core import (
     get_resource_path,
     get_safe_worker_count,
     _get_cpu_count,
+    get_physical_core_count,
     certus_timestamp_display,
     certus_timestamp_file,
 )
@@ -509,7 +510,9 @@ class PGlobalOptimizerINDEX:
         if self.n_workers > 1:
             import numba
 
-            nb_cores = _get_cpu_count()
+            # Coeurs PHYSIQUES : sur une puce SMT, _get_cpu_count() en annonce deux
+            # fois trop et le bridage ci-dessous devient un non-evenement.
+            nb_cores = get_physical_core_count()
 
             try:
                 _numba_restore = int(numba.get_num_threads())
@@ -519,9 +522,29 @@ class PGlobalOptimizerINDEX:
 
             # nb_cores // n_workers peut depasser 31 ; restauration utilisait nb_cores brut -> ValueError
 
-            numba.set_num_threads(_numba_set_threads_clamped(max(1, nb_cores // self.n_workers)))
+            _n_inner = _numba_set_threads_clamped(max(1, nb_cores // self.n_workers))
 
-            self._executor = ThreadPoolExecutor(max_workers=self.n_workers)
+            # Ce thread-ci evalue aussi l'objectif (_prepare_iteration_batches ->
+            # _sample_uniform) : il doit etre bride lui aussi.
+            numba.set_num_threads(_n_inner)
+
+            def _bridle_pool_thread(_n: int = _n_inner) -> None:
+                """Bride numba DANS chaque thread du pool.
+
+                `numba.set_num_threads` est thread-local (verifie a l'execution) :
+                l'appel ci-dessus ne masquait QUE le thread appelant, les threads
+                du pool naissaient a NUMBA_NUM_THREADS. Le garde-fou etait donc
+                inerte pour les workers, exactement ceux qu'il visait.
+                """
+                try:
+                    numba.set_num_threads(_n)
+                except NUMERICAL_FAULT_EXCEPTIONS:
+                    pass
+
+            self._executor = ThreadPoolExecutor(
+                max_workers=self.n_workers,
+                initializer=_bridle_pool_thread,
+            )
 
         else:
             self._executor = None

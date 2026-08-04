@@ -27,15 +27,36 @@ Le chemin affiché doit être sous `C:\dev\CERTUS\0108`. Le hook `post-commit` e
 **ACTIF** : chaque commit part automatiquement vers le dépôt **public**
 `nikonvr/CERTUS` (§7).
 
-## 0.2 Les prochaines actions, dans l'ordre
+## 0.2 L'OBJECTIF : un facteur 2 sur un module. Rien d'autre.
 
-| # | Action | Coût ici | Pourquoi celle-là |
-|---|---|---|---|
-| **1** | **Contrôler l'ancrage `RESULT` de `metal_single`, `metal_bilayer`, `re`, `design`** | ~5 min | **Bloquant.** 2 des 4 modules déjà vérifiés étaient cassés. Un module sans ancrage ne peut pas être optimisé — le banc affiche un `WARN` explicite (§11.2). |
-| **2** | **Prouver les 2 changements de perf non mesurés** | ~20 min/campagne | C'est une **dette** : `190a37d` et `e9221b8` sont commités sans gain démontré (§0.4). |
-| **3** | **Expliquer INDEX_SPLINE à ×5,9** | ~1 min/run | Seul écart machine inexpliqué, et le module le moins cher à instruire (§2). |
-| 4 | §4.2 — le float32 de `certus_index_solvers.py:255` | — | À ne tenter **qu'après** avoir exposé une graine dans le banc : INDEX est dispersif à 8 % (§3.1). |
-| 5 | §4.1 — tirage PGLOBAL | nuits | Son protocole exige ≥5 graines sur DESIGN. |
+> Le but n'est **pas** d'optimiser CERTUS en général. C'est de savoir s'il existe
+> un **×2** sur l'un des modules. Tout ce qui vise moins de ×1,5 ne mérite pas le
+> temps de mesure qu'il coûte sur cette machine — et une mesure coûte cher ici :
+> STRAT, c'est 130 s le run, donc 20 min la campagne A/B.
+
+### Où le ×2 est possible
+
+| Piste | Statut | Pourquoi c'est celle-là |
+|---|---|---|
+| 🥇 **METAL — `use_cache=True`** | **×2,26 DÉJÀ MESURÉ** par le doc d'origine : 55,9 s → 24,7 s | Le seul facteur 2 chiffré de tout le corpus. Bloqué par un défaut de **correction**, pas de performance : la clé de `SplineBasisCache` arrondit les nœuds à 1e-6 nm quand le pas de différence finie de L-BFGS-B vaut 1e-8, donc la perturbation du gradient est annulée (§10.3). **Ce n'est pas un mur, c'est la précision d'un seul paramètre.** |
+| 🥈 **STRAT — `compute_layer_profile`** | codé, commité, **non mesuré** | Supprime ~25 000 appels inutiles par run sur les deux lignes les plus chères du profil (107 % + 107 %). Ordre de grandeur plausible : ×1,5. Rien à écrire, 20 min à mesurer. |
+
+### Où le ×2 n'existe PAS — ne pas y perdre de temps
+
+| Module | Plafond réaliste | Raison |
+|---|---|---|
+| INDEX | 20-30 % | JIT pendant le run ~15 %, float32 en double compilation autant. |
+| FIELD | ~0 | 0,119 s. Le doc dit « rien à gagner », il a raison. |
+| DESIGN | — | PGLOBAL ne pèse que **1,5 %** du profil. Le §4.1 vise la *qualité* d'optimum à budget égal, **pas le temps**, et son protocole coûte des nuits ici. |
+| RE | — | Déjà traité par `f6f9102` (−11 %). Aucun gisement identifié. |
+| INDEX_SPLINE | — | Son ×5,9 est un écart **machine**, pas un gisement algorithmique. |
+
+### Le seul travail non-performance qui reste justifié
+
+**Contrôler l'ancrage `RESULT` de `metal_single`, `metal_bilayer`, `re`, `design`**
+— ~5 min. Ce n'est pas de l'optimisation, c'est un garde-fou : 2 des 4 modules
+déjà vérifiés rendaient `None` en silence (§11.2). Et `metal_single` est
+précisément le module de la piste n°1.
 
 **Commandes utiles :**
 

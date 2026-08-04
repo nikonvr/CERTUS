@@ -10,7 +10,6 @@ from typing import Iterable, Any
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from certus.workers.certus_field_workers_dto import FieldWorkerRequest, FieldWorkerResult, FieldParamsDTO
-from certus.core.certus_core import get_physical_core_count
 from certus.core.certus_field_core import calculate_electric_field, calculate_opt_metrics
 from certus.utils.certus_progress_tracker import build_progress_snapshot, StepState
 
@@ -306,10 +305,7 @@ class FieldWorkerThread(QThread):
                 e2_out.append(E2_values.tolist())
             return it, z_c_out, e2_out
 
-        # Pool non borne AVANT : ThreadPoolExecutor() prend min(32, cpu_count() + 4),
-        # soit 12 threads sur une puce 4C/8T. L'ordre des resultats est retabli par
-        # le tri sur `it` plus bas : la taille du pool n'influe sur aucune valeur.
-        with concurrent.futures.ThreadPoolExecutor(max_workers=get_physical_core_count()) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(_mc_task, it) for it in range(num_iterations)]
             for i, future in enumerate(concurrent.futures.as_completed(futures)):
                 if not self._is_running:
@@ -434,8 +430,7 @@ class FieldWorkerThread(QThread):
             )
             return idx, lay_i, lay_z, cost, emp_test, types_test
 
-        # Pool non borne AVANT (12 threads sur une puce 4C/8T), cf. Monte-Carlo.
-        with concurrent.futures.ThreadPoolExecutor(max_workers=get_physical_core_count()) as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(_needle_task, idx, i, z) for idx, (i, z) in enumerate(candidates)]
             for i_f, future in enumerate(concurrent.futures.as_completed(futures)):
                 if not self._is_running:

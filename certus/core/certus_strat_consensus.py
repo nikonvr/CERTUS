@@ -15,11 +15,7 @@ import concurrent.futures
 import numpy as np
 from typing import Any
 
-from certus.core.certus_core import (
-    NUMERICAL_FAULT_EXCEPTIONS,
-    get_physical_core_count,
-    get_safe_worker_count,
-)
+from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS, get_safe_worker_count
 from certus.core.certus_strat_config import APP_CONTEXT, RobustnessContext
 
 # Import helpers from context and ranking
@@ -526,16 +522,7 @@ def _apply_elite_refinement_if_enabled(
     total_elite_added = 0
     
     executor_cls = concurrent.futures.ThreadPoolExecutor
-    # Les deux pools ci-dessous executent `_test_strategy_robustness_task`, qui
-    # bride numba a NUMBA_THREADS_PER_ROBUSTNESS_TASK threads. `get_safe_worker_count()`
-    # derive des coeurs LOGIQUES (7 sur une puce 4C/8T) : 7 x 2 = 14 threads pour
-    # 4 coeurs. On borne le produit par les coeurs PHYSIQUES.
-    from certus.core.certus_strat_robustness import NUMBA_THREADS_PER_ROBUSTNESS_TASK
-
-    worker_count = min(
-        get_safe_worker_count(),
-        max(1, get_physical_core_count() // NUMBA_THREADS_PER_ROBUSTNESS_TASK),
-    )
+    worker_count = get_safe_worker_count()
 
     for elite_round in range(1, elite_rounds + 1):
         parent_count = _elite_parent_count(strategies_results, elite_parent_top_k)

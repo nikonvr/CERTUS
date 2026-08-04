@@ -191,10 +191,8 @@ def _prepare_phase2_fd_settings(self, re_env_s: float):
     _fd_1s = bool(self.cfg.get("re_phase2_onesided_spline_fd", RE_PHASE2_ONESIDED_SPLINE_FD))
     _fd_par = bool(self.cfg.get("re_phase2_fd_parallel", RE_PHASE2_FD_PARALLEL))
     _mw_cfg = int(self.cfg.get("re_phase2_fd_max_workers", RE_PHASE2_FD_MAX_WORKERS))
-    # Coeurs PHYSIQUES : les colonnes de differences finies appellent des noyaux
-    # numba parallel=True, un thread par coeur logique en ouvrirait deux fois trop.
-    from certus.core.certus_core import get_physical_core_count
-    _cpu = get_physical_core_count()
+    from certus.core.certus_core import _get_cpu_count
+    _cpu = _get_cpu_count()
     _fd_cap = _mw_cfg if _mw_cfg > 0 else min(_cpu, 2 * int(RE_SPLINE_N_KNOTS) + 1)
     _nk = int(RE_SPLINE_N_KNOTS)
     _fd_nw = max(1, min(_fd_cap, 2 * _nk + 1)) if _fd_par else 1

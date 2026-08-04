@@ -36,7 +36,6 @@ from certus_physics import (
 
 from certus.core.certus_core import (
     NUMERICAL_FAULT_EXCEPTIONS,
-    get_physical_core_count,
     get_safe_worker_count,
 )
 
@@ -72,14 +71,6 @@ from certus.core.certus_strat_ranking import (
     _filter_valid_robustness_strategies,
     _select_best_strat_result,
 )
-
-
-# Chaque tache de robustesse ouvre ses propres threads numba (voir
-# `_test_strategy_robustness_task`, qui appelle `numba.set_num_threads`).
-# Le produit `workers x threads` doit rester borne par le nombre de coeurs
-# PHYSIQUES : sur une puce SMT, `cpu_count()` en annonce deux fois trop et la
-# sur-souscription se paie en throttling, pas en calcul.
-NUMBA_THREADS_PER_ROBUSTNESS_TASK = 2
 
 
 class _IdxWrapper:
@@ -318,9 +309,9 @@ def _execute_robustness_tasks(
     logger: logging.Logger,
     n_layers_matrix_precomp: np.ndarray | None = None,
 ) -> list[dict[str, Any]]:
-    # AVANT : `multiprocessing.cpu_count() // 2`, soit 4 sur une puce 4C/8T, que
-    # multipliaient les 2 threads numba de chaque tache -> 8 threads pour 4 coeurs.
-    max_workers = max(1, get_physical_core_count() // NUMBA_THREADS_PER_ROBUSTNESS_TASK)
+    import multiprocessing
+
+    max_workers = max(1, multiprocessing.cpu_count() // 2)
     logger.info(
         f"Running robustness tests on {len(all_strategies)} strategies (ThreadPoolExecutor with {max_workers} workers)..."
     )
@@ -473,9 +464,7 @@ def _test_strategy_robustness_task(
 ) -> dict:
     import numba
 
-    # `set_num_threads` refuse une valeur > NUMBA_NUM_THREADS (ValueError). Sur une
-    # machine a 1 ou 2 coeurs physiques ce plafond peut descendre sous 2 : on borne.
-    numba.set_num_threads(min(NUMBA_THREADS_PER_ROBUSTNESS_TASK, max(1, int(numba.config.NUMBA_NUM_THREADS))))
+    numba.set_num_threads(2)
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
     blocks = strategy["blocks"]
@@ -970,14 +959,7 @@ def run_final_simulation_block(
                 _consensus_tasks.append((local_idx, sid, strat_sig, seed, cache_key, None))
 
         if _consensus_tasks:
-            # `get_safe_worker_count()` derive des coeurs LOGIQUES (7 sur 4C/8T) et
-            # ces taches ouvrent chacune NUMBA_THREADS_PER_ROBUSTNESS_TASK threads :
-            # on borne en plus par les coeurs PHYSIQUES.
-            _consensus_max_workers = min(
-                len(_consensus_tasks),
-                get_safe_worker_count(),
-                max(1, get_physical_core_count() // NUMBA_THREADS_PER_ROBUSTNESS_TASK),
-            )
+            _consensus_max_workers = min(len(_consensus_tasks), get_safe_worker_count())
             _task_futures: list[tuple[str, int, tuple, concurrent.futures.Future]] = []
             with concurrent.futures.ThreadPoolExecutor(max_workers=_consensus_max_workers) as _cexec:
                 for local_idx, sid, strat_sig, seed, cache_key, _ in _consensus_tasks:

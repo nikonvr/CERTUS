@@ -582,6 +582,12 @@ def _apply_elite_refinement_if_enabled(
                         ctx.T_nom,
                         ctx.full_dyn_grid,
                         n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                        # Ce halving ne lit que _extract_rmse_p95_for_noise(res, ...)
+                        # et reempile `strat`, la strategie D'ENTREE. Le profil
+                        # theorique serait integralement jete : on ne le calcule pas.
+                        # L'evaluation ELITE complete plus bas le garde, elle en a
+                        # besoin via full_res["strategy"].
+                        compute_layer_profile=False,
                     )
                     for e_idx, strat in candidates_to_eval
                 ]

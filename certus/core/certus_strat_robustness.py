@@ -460,6 +460,7 @@ def _test_strategy_robustness_task(
     T_nom,
     full_dyn_grid,
     n_layers_matrix_precomp=None,
+    compute_layer_profile: bool = True,
 ) -> dict:
     import numba
 
@@ -621,41 +622,58 @@ def _test_strategy_robustness_task(
     _emit_stat("MCS", total_mc_sims)
     final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
 
-    extrema_dist_info = []
-    theoretical_layer_profile = []
-    # _M_before_cache : deja construit plus haut, partage avec dT/dd.
+    # Ce bloc est calcule APRES final_score et results_per_noise, dont il ne
+    # depend pas. Or il est le plus cher de la fonction : il appelle
+    # _compute_theoretical_layer_profile une fois par couche, ou vivent les deux
+    # lignes les plus cheres du profil STRAT (certus_strat_objectives.py:489
+    # compute_T_front_profile a 107,2 %, et :497 calculate_extrema_distances a
+    # 106,7 %, cf. docs/REPRISE_PERF.md §6).
+    #
+    # Deux appelants sur trois jettent integralement son resultat :
+    #   - rescoring consensus (certus_strat_robustness.py, _consensus_score_from_result)
+    #     ne lit que robustness_score ;
+    #   - halving ELITE (certus_strat_consensus.py) ne lit que rmse_p95 et
+    #     reempile la strategie D'ENTREE, pas res["strategy"].
+    # Seules la passe principale et l'evaluation ELITE complete l'exploitent,
+    # cette derniere via full_res["strategy"] pour la resolution spectrale.
+    #
+    # Le defaut True preserve le comportement de tout appelant non modifie.
+    if compute_layer_profile:
+        extrema_dist_info = []
+        theoretical_layer_profile = []
+        # _M_before_cache : deja construit plus haut, partage avec dT/dd.
 
-    for i_layer in range(num_layers):
-        wl_sel = float(layer_wavelengths[i_layer])
-        M_before = _M_before_cache[i_layer]
-        n_current = n_H_vals[i_layer] if i_layer % 2 == 0 else n_L_vals[i_layer]
-        layer_profile = _compute_theoretical_layer_profile(
-            wl_sel,
-            n_current,
-            n_Sub_vals[i_layer],
-            float(p_thick_nominal[i_layer]),
-            M_before,
-        )
-        dist_ps = float(layer_profile["dist_prev_start"])
-        dist_ns = float(layer_profile["dist_next_start"])
-        dist_pe = float(layer_profile["dist_prev_end"])
-        dist_ne = float(layer_profile["dist_next_end"])
-        extrema_dist_info.append(
-            {
-                "prev_start": dist_ps,
-                "next_start": dist_ns,
-                "prev_end": dist_pe,
-                "next_end": dist_ne,
-            }
-        )
-        theoretical_layer_profile.append(layer_profile)
+        for i_layer in range(num_layers):
+            wl_sel = float(layer_wavelengths[i_layer])
+            M_before = _M_before_cache[i_layer]
+            n_current = n_H_vals[i_layer] if i_layer % 2 == 0 else n_L_vals[i_layer]
+            layer_profile = _compute_theoretical_layer_profile(
+                wl_sel,
+                n_current,
+                n_Sub_vals[i_layer],
+                float(p_thick_nominal[i_layer]),
+                M_before,
+            )
+            dist_ps = float(layer_profile["dist_prev_start"])
+            dist_ns = float(layer_profile["dist_next_start"])
+            dist_pe = float(layer_profile["dist_prev_end"])
+            dist_ne = float(layer_profile["dist_next_end"])
+            extrema_dist_info.append(
+                {
+                    "prev_start": dist_ps,
+                    "next_start": dist_ns,
+                    "prev_end": dist_pe,
+                    "next_end": dist_ne,
+                }
+            )
+            theoretical_layer_profile.append(layer_profile)
 
-    strategy["extrema_distances"] = extrema_dist_info
-    strategy["theoretical_layer_profile"] = theoretical_layer_profile
-    strategy["symmetry_score_pct"] = _compute_strategy_symmetry_score_percent(
-        theoretical_layer_profile,
-        float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT)),
-    )
+        strategy["extrema_distances"] = extrema_dist_info
+        strategy["theoretical_layer_profile"] = theoretical_layer_profile
+        strategy["symmetry_score_pct"] = _compute_strategy_symmetry_score_percent(
+            theoretical_layer_profile,
+            float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT)),
+        )
 
     return {
         "strategy_id": strategy["strategy_id"],
@@ -964,6 +982,10 @@ def run_final_simulation_block(
                         T_nom,
                         full_dyn_grid,
                         n_layers_matrix_precomp=n_layers_matrix_precomp,
+                        # _consensus_score_from_result ne lit que robustness_score,
+                        # puis res_consensus est abandonne : le profil theorique
+                        # serait calcule pour rien.
+                        compute_layer_profile=False,
                     )
                     _task_futures.append((sid, seed, cache_key, f))
 

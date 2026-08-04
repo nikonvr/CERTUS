@@ -140,19 +140,53 @@ if val is None and isinstance(res, dict):
     val = res.get("rmse")
 ```
 
-Les signaux `finished` des workers d'INDEX portent bien une charge utile —
-`certus/workers/certus_index_workers.py:358` et `:757` émettent `pyqtSignal(object)`,
-`:1178` émet `pyqtSignal(list)`. Donc `res` n'est pas nul, mais il n'a **ni
-l'attribut `rmse_final`, ni la forme d'un dict**. Le cas `list` est le candidat
-le plus probable.
+✅ **CORRIGÉ.** Ma première hypothèse (une charge `list`) était fausse. La cause
+réelle : `run_optimization` emploie `OptimizationWorker`
+(`certus/ui/certus_index_ui_worker.py:264`), dont le signal `finished` émet un
+**`OptimizationResults`** (`certus/core/certus_index_config.py:261`). Or cette
+classe expose **`final_mse`**, pas `rmse_final` — et elle porte `__slots__`, donc
+elle n'a pas de `__dict__` et le repli `isinstance(res, dict)` ne pouvait pas
+aboutir non plus. **Les deux branches d'extraction échouaient.**
 
-**À faire :** identifier lequel des trois workers `app.run_optimization()`
-emploie réellement, puis extraire la grandeur comme le font les autres runners
-(`run_design` lit `getattr(app, "_workflow_best_rmse", None)`).
+Le banc lit désormais `final_mse` et prend la racine, conformément à
+`calculate_index_rmse` (`certus/utils/certus_index_utils.py:1109`) et à la
+convention des autres runners (`float(r.fun) ** 0.5`).
 
-**Tant que ce n'est pas corrigé, toute optimisation des noyaux d'INDEX — donc
-toute la piste §4.2 — se ferait sans filet.** C'est exactement la classe de
-problème que `tests/oracle/test_silent_wrong_results.py` existe pour attraper.
+### 3.1 🔴 Ce que la réparation a révélé : INDEX est DISPERSIF
+
+Deux passes consécutives, exemple identique, machine au repos :
+
+| Passe | `RESULT` | `RUN_S` |
+|---|---|---|
+| 1 | 0,002568007655588442 | 11,095 s |
+| 2 | 0,0027806293789642065 | 8,068 s |
+
+**8 % d'écart sur le RMSE, 27 % sur le temps.** La règle 2 du §1 de
+`REPRISE_PERF.md` ne met en garde que sur DESIGN et STRAT : **elle s'applique
+aussi à INDEX**. Personne ne pouvait le savoir tant que le banc rendait `None`.
+
+⚠️ **Conséquence** : `RESULT` est un ancrage **statistique**, pas une égalité
+exacte. Valider la piste §10.6 (float32 → float64) en comparant deux runs isolés
+donnerait un verdict au hasard.
+
+### 3.2 ✅ `random_seed` était inopérant sur deux échantillonneurs sur quatre
+
+`certus/core/certus_index_solvers.py` : Sobol reçoit bien
+`seed=... self.random_seed ...` (`:245`) et le repli `uniform` utilise `self._rng`
+correctement initialisé (`:319`). Mais **`Halton` (`:296`) et `LatinHypercube`
+(`:309`) ne recevaient aucune graine** — `random_seed` y était silencieusement
+ignoré. Corrigé : les quatre chemins l'honorent désormais.
+
+Ce n'est pas nécessairement *la* cause de la dispersion ci-dessus (le chemin
+emprunté dépend de `method`), mais **il était impossible de rendre INDEX
+reproductible même en fixant la graine**.
+
+### 3.3 Ce qui manque encore
+
+Le banc **n'expose pas** de `--seed`. La configuration étant construite à
+l'intérieur de l'interface, l'ajouter touche les huit modules. C'est le chaînon
+manquant pour rendre INDEX comparable d'un run à l'autre, et donc la piste §10.6
+réellement vérifiable.
 
 ---
 

@@ -456,9 +456,19 @@ def run_index():
     res = wait_for(worker) if worker else None
     run = time.perf_counter() - t1
 
-    val = getattr(res, "rmse_final", None) if res is not None else None
-    if val is None and isinstance(res, dict):
-        val = res.get("rmse")
+    # OptimizationResults (certus/core/certus_index_config.py:261) expose final_mse,
+    # PAS rmse_final, et porte __slots__ : ni getattr("rmse_final") ni le repli
+    # isinstance(dict) ne pouvaient aboutir. RESULT valait donc None sur INDEX, ce
+    # qui privait le module du seul ancrage de correction du banc.
+    # RMSE = sqrt(MSE), cf. calculate_index_rmse (certus/utils/certus_index_utils.py:1109)
+    # et la convention des autres runners (float(r.fun) ** 0.5).
+    val = None
+    if res is not None:
+        mse = getattr(res, "final_mse", None)
+        if mse is not None:
+            val = float(mse) ** 0.5
+        elif isinstance(res, dict):
+            val = res.get("rmse")
     return setup, run, val
 
 

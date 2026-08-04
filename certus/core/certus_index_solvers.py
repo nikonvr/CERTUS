@@ -293,7 +293,14 @@ class PGlobalOptimizerINDEX:
             try:
                 from scipy.stats.qmc import Halton
 
-                sampler = Halton(d=self.dim, scramble=True)
+                # seed= comme pour Sobol plus haut : sans lui, random_seed etait
+                # silencieusement ignore sur ce chemin et le run restait
+                # irreproductible meme graine fixee.
+                sampler = Halton(
+                    d=self.dim,
+                    scramble=True,
+                    seed=None if self.random_seed is None else int(self.random_seed),
+                )
 
                 unit = sampler.random(n)
 
@@ -306,7 +313,11 @@ class PGlobalOptimizerINDEX:
             try:
                 from scipy.stats.qmc import LatinHypercube
 
-                sampler = LatinHypercube(d=self.dim)
+                # idem Halton : random_seed n'etait pas transmis.
+                sampler = LatinHypercube(
+                    d=self.dim,
+                    seed=None if self.random_seed is None else int(self.random_seed),
+                )
 
                 unit = sampler.random(n)
 

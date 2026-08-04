@@ -73,6 +73,17 @@ from certus.core.certus_strat_ranking import (
 )
 
 
+# Taux de depots non terminables au-dela duquel une strategie est ELIMINEE.
+#
+# Un depot qui ne se termine pas est un run perdu en salle, pas un compromis de
+# qualite : la strategie sort du classement au lieu d'etre penalisee. En dessous
+# du seuil, l'alea est juge acceptable au regard du gain spectral eventuel.
+#
+# rmse_p95 ne peut PAS remplacer ce controle : etant un 95e percentile, il est
+# structurellement aveugle a tout evenement survenant dans moins de 5 % des runs.
+CRASH_RATE_TOLERANCE = 0.05
+
+
 class _IdxWrapper:
     """Dict-like wrapper supporting both ``dict.get`` and ``list[idx]`` access."""
 
@@ -509,6 +520,7 @@ def _test_strategy_robustness_task(
         prev_wl = current_wl
 
     results_per_noise = []
+    crash_rate_max = 0.0  # pire taux de depots non terminables sur les niveaux de bruit
     unique_wls = len(set(b["wavelength"] for b in blocks))
     complexity = unique_wls / len(blocks) if blocks else 0
 
@@ -616,6 +628,17 @@ def _test_strategy_robustness_task(
                             f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
                         )
 
+        # DEPOTS NON TERMINABLES. simulate_growth_kernel renvoie une epaisseur
+        # majoree de 1e6 quand le niveau d'arret n'est jamais atteint, ou quand le
+        # comptage d'extrema diverge entre nominal et reel : dans les deux cas la
+        # machine ne peut pas terminer la couche.
+        #
+        # Ces evenements sont DISCRETS et rmse_p95 ne peut pas les voir sous 5 % :
+        # un taux de plantage de 2 % passerait totalement inapercu alors qu'il rend
+        # la strategie inutilisable en production. D'ou un comptage explicite.
+        n_crash_run = int(np.count_nonzero(np.any(sim_thick_batch > 1e5, axis=1)))
+        crash_rate_max = max(crash_rate_max, n_crash_run / max(1, num_runs))
+
         run_thicknesses = sim_thick_batch.tolist()
         run_rmses = compute_batch_rmse(
             sim_thick_batch,
@@ -644,6 +667,18 @@ def _test_strategy_robustness_task(
     total_mc_sims = num_runs * len(noise_levels)
     _emit_stat("MCS", total_mc_sims)
     final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
+
+    # ELIMINATION SUR RISQUE DE PLANTAGE.
+    #
+    # Une strategie dont le depot risque de ne pas se terminer est inutilisable,
+    # quelle que soit sa performance spectrale : ce n'est pas un compromis de
+    # qualite, c'est un run perdu en salle. On la sort donc du classement plutot
+    # que de la penaliser, sauf si l'evenement reste sous le seuil de tolerance.
+    #
+    # Seuil a 1 % : en dessous, l'alea est juge acceptable au regard du gain
+    # spectral eventuel. Au-dessus, elimination franche.
+    if crash_rate_max >= CRASH_RATE_TOLERANCE:
+        final_score = float("inf")
 
     # Ce bloc est calcule APRES final_score et results_per_noise, dont il ne
     # depend pas. Or il est le plus cher de la fonction : il appelle
@@ -703,6 +738,7 @@ def _test_strategy_robustness_task(
         "strategy": strategy,
         "results_per_noise": results_per_noise,
         "robustness_score": final_score,
+        "crash_rate": crash_rate_max,
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
         "complexity_score": complexity,

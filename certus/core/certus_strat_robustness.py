@@ -472,21 +472,30 @@ def _test_strategy_robustness_task(
     num_layers = len(p_thick_nominal)
     offset_val = compute_probe_offset_nm_from_ratio(params)
     factor_val = float(params.get("non_monotonic_error_factor", 2.0))
-    # Defaut 1.0 et non 1.2 depuis l'implementation de POEM.
+    # Defaut MAINTENU a 1.2, contrairement a ce que j'avais fait un temps.
     #
-    # Ce facteur majorait le bruit de la PREMIERE couche de chaque bloc, pour
-    # representer la perte d'information au changement de longueur d'onde. C'etait
-    # une bequille : le modele ne produisait aucune compensation, donc le benefice
-    # d'un bloc long devait etre injecte a la main.
+    # Ce facteur majore le bruit de la PREMIERE couche de chaque bloc pour
+    # representer la perte d'historique au changement de longueur d'onde. J'avais
+    # cru pouvoir le neutraliser en implementant POEM, au motif que le benefice
+    # des blocs deviendrait structurel. C'ETAIT FAUX, et il faut le dire :
     #
-    # Avec la cible figee et POEM, ce benefice est desormais STRUCTUREL. Une
-    # premiere couche de bloc est naturellement penalisee : elle dispose de moins
-    # d'extrema exploitables et retombe plus souvent sur les points tournants
-    # virtuels, donc sur un recalage moins bien conditionne. Majorer son bruit en
-    # plus reviendrait a compter deux fois le meme effet.
+    #   POEM tel qu'implemente balaie a partir de d = 0 de la couche COURANTE
+    #   (certus_strat_growth.py) et ne voit que son propre segment de signal. Il
+    #   capture donc le swing INTRA-COUCHE, mais pas l'historique des extrema
+    #   observes pendant les couches precedentes du meme bloc.
     #
-    # Le parametre reste reglable pour qui veut retrouver l'ancien comportement.
-    penalty_factor = float(params.get("wavelength_change_penalty", 1.0))
+    # Or c'est cet historique qui fait la valeur d'un bloc : a longueur d'onde
+    # inchangee le signal est continu, donc les points tournants deja observes
+    # restent exploitables ; au changement de lambda on repart sur un signal neuf.
+    # Zideluns et al., Opt. Express 29, 33398 (2021) : "self-compensation operates
+    # only at the monitored wavelength and diminishes when layers are monitored at
+    # different wavelengths".
+    #
+    # Retirer ce facteur sans avoir implemente l'historique laisserait le modele
+    # SANS AUCUNE preference pour les blocs. Il reste donc, en attendant que le
+    # balayage POEM soit rendu continu sur toute la longueur du bloc — ce qui
+    # demande de passer l'indice de debut de bloc au noyau.
+    penalty_factor = float(params.get("wavelength_change_penalty", 1.2))
     penalty_vector = np.ones(num_layers, dtype=np.float64)
 
     sorted_blocks = sorted(blocks, key=lambda b: b["start"])

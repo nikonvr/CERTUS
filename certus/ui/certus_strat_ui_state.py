@@ -943,7 +943,31 @@ class CertusStratStateMixin:
                 "trigger_tolerance": self._get_float_safe("trigger_tolerance", 0.1),
                 "noise_distribution": NOISE_DISTRIBUTION_GAUSSIAN,
             },
-            "thickness_tolerance_nm": self._get_float_safe("thickness_tolerance_nm", 1.0),
+            # Defaut None et non 1.0 — MESURE du 2026-08-04.
+            #
+            # Ce parametre choisit la convention de bruit de la Phase B
+            # (certus/core/certus_strat_robustness.py:546 et :563) :
+            #   non None -> bruit = dT_dd * z * sigma_nm  (mode "tolerance nm")
+            #   None     -> bruit = z * tolerance / 100   (mode PHOTOMETRIQUE)
+            #
+            # Le mode nm est auto-coherent — on demande +/-1 nm par couche, on obtient
+            # +/-1 nm par couche — mais il rend le CHOIX DE LA LONGUEUR D'ONDE SANS
+            # EFFET : le facteur dT_dd injecte est celui-la meme par lequel l'inversion
+            # parabolique divise, et il se simplifie. Mesure sur simulate_growth_kernel,
+            # hors extrema, pour une pente variant d'un facteur 7,6 :
+            #     mode nm          Delta_d = 0,966 a 1,09 nm   (+/-13 %, insensible)
+            #     photometrique    Delta_d = -1,18 a +7,11 nm  (suit dT / |dT/dd|)
+            #
+            # Or la Phase A selectionne justement ses longueurs d'onde sur P95(|Delta_d|)
+            # avec le bruit PHOTOMETRIQUE (certus/utils/certus_strat_service.py:954).
+            # Avec le defaut 1.0, la Phase B jugeait donc les strategies avec une
+            # convention aveugle a ce que la Phase A venait d'optimiser.
+            #
+            # Avec None par defaut, un champ vide selectionne le mode photometrique et
+            # les deux phases parlent enfin de la meme chose. Saisir explicitement une
+            # valeur restaure le mode nm, qui reste utile pour repondre a la question
+            # "et si chaque couche derivait de X nm ?".
+            "thickness_tolerance_nm": self._get_float_safe("thickness_tolerance_nm", None),
             "mse_tolerance_limit_pct": self._get_float_safe("mse_tolerance_limit_pct", 30.0),
             # Legacy/Fallback if needed (hidden from GUI by default now if we remove it, but user might have it in old logical flow)
             "sim_thickness_probe_offset_ratio": 80.0,  # Hardcoded fallback or self._get_float_safe("sim_thickness_probe_offset_ratio", 80.0),

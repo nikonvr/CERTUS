@@ -8,6 +8,30 @@ plusieurs points : voir §5.
 
 ---
 
+> 🔴 **AVERTISSEMENT — révision du 2026-08-04**
+>
+> Ce document reste utile, mais **plusieurs de ses conclusions ont été démenties
+> par la mesure** depuis. Lis d'abord
+> [`docs/REPRISE_SESSION_2026-08-03.md`](REPRISE_SESSION_2026-08-03.md).
+>
+> Ce qui a changé sous les pieds du plan : le dépôt a quitté Google Drive pour un
+> disque local, la machine de travail a **4 cœurs et non 16**, et numba est passé
+> de 0.65.1 à **0.66.0**. Aucune comparaison avant/après ne peut enjamber cette
+> rupture.
+>
+> Les corrections sont signalées en ligne, section par section. Les cinq
+> principales :
+>
+> | Section | Statut |
+> |---|---|
+> | §0, interdiction du parallélisme | ❌ **démentie** — voir ci-dessous |
+> | §2, ligne INDEX à 6,5 s | ❌ **fausse d'un facteur 2**, la vraie référence est 12,8 s |
+> | §4.3, « le cache numba n'est pas en cause, c'est vérifié » | ❌ **faux** — il n'a jamais été dans `%TEMP%` |
+> | §4.4, la liste réfléchie numba | ⚠️ **mauvaise cible** — le vrai gisement était ailleurs |
+> | §4.5, `use_cache=True` | ✅ **résolu** — le basculement n'est PAS sûr |
+
+---
+
 ## 0. Démarrage rapide — les cinq minutes qui font gagner des heures
 
 ### Vérifier l'environnement (30 s)
@@ -79,10 +103,37 @@ Détails et reste à faire dans **`docs/REPRISE_TESTS_ISOLATION.md`**.
 Avant d'accuser ton changement : relancer le test **seul**. S'il passe, c'est une
 fuite d'état pré-existante, pas toi. (Vérifié aussi en remettant le code d'origine.)
 
-🔴 **Ne pas lancer deux sessions pytest en parallèle sur ce dépôt.** Deux
-processus pytest simultanés se bloquent mutuellement — observé le 2026-08-02, les
-deux à +0,08 s de CPU en 20 s de temps réel. Cause probable : le verrou de fichier
-du cache numba (`configure_numba_env`, cf. `certus_strat_objectives.py:164`).
+~~🔴 Ne pas lancer deux sessions pytest en parallèle sur ce dépôt.~~
+❌ **DÉMENTI PAR LA MESURE le 2026-08-04.** À cache numba **chaud**, deux sessions
+pytest simultanées ne se bloquent pas du tout :
+
+| | Wall | pytest |
+|---|---|---|
+| 1 passe seule | 17,7 s | 11,32 s |
+| 2 passes simultanées | 21,1 et 20,9 s | 12,12 et 12,11 s |
+
+552 tests au vert dans les deux cas, **+7 %** seulement sur le temps pytest, et
+22,3 s au total contre ~35,4 s en séquentiel — **37 % de gain**.
+
+La cause invoquée par la version précédente de ce paragraphe (« le verrou de
+fichier du cache numba, `configure_numba_env` ») ne peut pas être la bonne :
+`configure_numba_env` **ne pose jamais** `NUMBA_CACHE_DIR`, cf.
+`docs/REPRISE_SESSION_2026-08-03.md` §10.1. L'observation du 2026-08-02 était
+probablement faite à cache **froid**, où deux processus tentent d'*écrire* les
+mêmes `.nbi` ; à chaud ils ne font que les *lire*. Hypothèse non vérifiée.
+
+⚠️ **Mais garde la distinction, elle est essentielle :**
+
+- **Paralléliser des VALIDATIONS** — oracle, tests unitaires, lint, pendant qu'un
+  banc tourne : ✅ sûr et rentable.
+- **Paralléliser des MESURES** — deux bancs, ou un banc pendant autre chose :
+  ❌ jamais. Mesuré le 2026-08-03 : INDEX affichait `RUN_S` **81,5 s** pendant
+  qu'une copie vers Drive et des lectures tournaient, contre **12,4 s** machine au
+  repos. Sur 4 cœurs, la charge concurrente n'ajoute pas du bruit, elle invente un
+  résultat.
+
+L'oracle ci-dessus est une charge légère. Deux bancs lourds (DESIGN tourne à 873 %
+de CPU) se disputeraient bien davantage les 4 cœurs physiques.
 
 ### Bruits de fond à ignorer
 
@@ -92,7 +143,9 @@ Ces messages apparaissent à chaque fois et n'indiquent aucun problème :
   `failed to perform geometric repack`. C'est le commit orphelin `01047a1b`
   (arbre manquant) décrit dans `CLAUDE.md §5.4`. **Le commit réussit quand même** —
   vérifier avec `git log --oneline -1`, ne pas recommencer.
-- `warning: ignoring broken ref refs/heads/desktop.ini` : idem, sans effet.
+- ~~`warning: ignoring broken ref refs/heads/desktop.ini` : idem, sans effet.~~
+  ✅ **Disparu** : la ref cassée n'a pas survécu au rapatriement du dépôt hors de
+  Google Drive (2026-08-03). Le commit orphelin `01047a1b`, lui, est toujours là.
 
 ### Réflexe avant de croire à un gain
 
@@ -150,11 +203,29 @@ correctifs de la §3.
 | METAL_BILAYER | `JSON-metal-bilayer-example.json` | 67 s | — |
 | METAL_SINGLE | `JSON-metal-example.json` | 52–68 s | `get_nk_from_spline`, 66 975 appels |
 | RE | `reverse_sample.xlsx` | 29–30 s | `_global_evaluate_oblique_physics` 61 % |
-| INDEX | `H400-RTNBrel-sapphire.xlsx` | 6,5 s | `certus_index_objectives.py:1755:__call__` 54 % |
+| INDEX | `H400-RTNBrel-sapphire.xlsx` | ❌ ~~6,5 s~~ → **12,8 s** | `certus_index_objectives.py:1755:__call__` 54 % |
 | INDEX_SPLINE | `TSIO2-1700-1.xlsx` | 1,6 s | `spline_objective.py:517` 25 %, `_fast_nk` 20 % |
 | FIELD | `test_hr_mirror.json` | 0,06 s | rien à gagner |
 
 Les pourcentages dépassent 100 % : DESIGN et STRAT tournent sur un pool de threads.
+
+> ❌ **La ligne INDEX était fausse d'un facteur 2.** Elle mesurait le run SANS
+> `--auto-yes`, c'est-à-dire avec la réponse « No » par défaut, qui fait sauter la
+> phase IR — exactement ce que le §6 dénonce plus bas (« on mesurait la moitié du
+> pipeline »). Mesuré le 2026-08-04 avec `--auto-yes` sur la machine 4 cœurs :
+> **12,425 s**, contre 12,8 s ici. **La référence correcte est 12,8 s.**
+>
+> ⚠️ **INDEX est aussi DISPERSIF**, ce que ce tableau ne dit pas : deux passes
+> consécutives donnent RMSE 0,002568 puis 0,002781 (**8 %**) et `RUN_S` 11,1 puis
+> 8,1 s (**27 %**). La règle 2 du §1 ne vise que DESIGN et STRAT ; **elle vaut
+> aussi pour INDEX**. Personne ne pouvait le savoir : le banc rendait `RESULT=None`
+> sur ce module, faute d'extraction correcte (corrigé, cf. §3 du document de
+> reprise).
+>
+> **Facteurs mesurés sur la machine 4 cœurs** (`RUN_S`, cache chaud, machine au
+> repos) : FIELD ×2,0 · INDEX **×0,97, la parité** · INDEX_SPLINE **×5,9**.
+> La parité d'INDEX s'explique : le cache `.nbi` de la machine 16 cœurs vivait
+> dans Google Drive, son avantage CPU était mangé par les I/O.
 
 ---
 
@@ -207,20 +278,72 @@ coût égal. Vu la dispersion de DESIGN (RMSE 0,0023 → 0,0051), il faut au moi
 2,9 %, `numba/core/caching.py:_load_index` 1 %. Trouver quels noyaux ne sont pas
 couverts par le warmup, et les y ajouter.
 
+> ⚠️ **Piste plus rentable qu'avant** : mesuré le 2026-08-03, la compilation à
+> froid de l'oracle est passée de **60,6 s à 104,6 s** (+73 %) entre numba 0.65.1
+> et 0.66.0.
+>
+> ❌ **Ce ne sont pas des noyaux oubliés, ce sont des SIGNATURES oubliées.** Un
+> balayage AST des **111 fonctions `@njit`** du paquet montre qu'elles portent
+> **toutes** `cache=True`. La vraie cause est
+> `certus/core/certus_index_solvers.py:255`, qui alloue les échantillons en
+> **float32** alors que la phase locale scipy repasse en float64 : numba compile
+> **deux signatures** du chemin chaud, et `warmup_physics` — qui ne passe que des
+> float Python — n'en couvre qu'une. Une **troisième** variante `readonly` existe,
+> produite par l'idiome `np.frombuffer(clé_en_octets)` des caches lru.
+>
+> ✅ **Un bloc entier du warmup était mort depuis des années** :
+> `certus/core/_certus_physics_impl.py:1492` faisait
+> `np.interp(CIE_LAMBDA, wls, R_test)` avec `wls` à 50 points et `R_test` à 10 —
+> `ValueError` avalée par le `except` englobant, donc `_xyz_from_spectrum_kernel`
+> et `delta_e_2000` n'ont jamais été compilés par le warmup. Diagnostiqué par
+> **l'absence de leur `.nbi` sur disque**, corrigé, confirmé par leur apparition.
+> Retiens la méthode : **la présence du `.nbi` est un contrôle qui ne coûte aucun
+> calcul.**
+>
+> ⚠️ Passer `:255` en float64 change le pas d'échantillonnage, donc la trajectoire
+> de l'optimiseur. À ne tenter **qu'après** avoir exposé une graine dans le banc :
+> INDEX est dispersif à 8 %, un A/B sur deux runs isolés donnerait un verdict au
+> hasard.
+
 ### 4.3 Imports tardifs sur disque lent
 
 `<frozen importlib._bootstrap_external>:145:_path_stat` pèse 18,6 % du thread
 principal d'INDEX et 23 % d'INDEX_SPLINE. Le dépôt vit dans un dossier **Google
 Drive** (`D:\drivefl\…`) : chaque `stat` peut être coûteux.
 
-⚠️ **Le cache numba n'est PAS en cause, c'est vérifié** : `configure_numba_env`
-(`certus/core/certus_core.py:323`) le place déjà dans
-`%TEMP%\CERTUS_Numba_Cache`, donc hors du dossier synchronisé. Ne repars pas sur
-cette piste.
+~~⚠️ Le cache numba n'est PAS en cause, c'est vérifié : `configure_numba_env` le
+place déjà dans `%TEMP%\CERTUS_Numba_Cache`. Ne repars pas sur cette piste.~~
 
-Il reste donc une seule piste : remonter en tête de module les imports faits
-tardivement, pendant le calcul. Le profil `--sample` les montre sous
-`_path_stat` et `get_data` du thread principal.
+❌ **FAUX, et cette interdiction était donc infondée.** Vérifié le 2026-08-04 :
+
+| Contrôle | Résultat |
+|---|---|
+| `%TEMP%\CERTUS_Numba_Cache` | **n'existe pas** |
+| `.nbi` dans les `__pycache__` du dépôt | **78 fichiers** |
+
+`configure_numba_env` ne pose `NUMBA_CACHE_DIR` qu'en `certus_core.py:359-361`,
+mais la branche de `:334` **retourne en `:352` avant d'y arriver** — et
+`bench_examples.py:443` importe `certus_physics`, donc numba, **avant** que
+`CERTUS_INDEX` n'appelle `_configure_numba_env()`. La branche est toujours prise.
+Aggravant : dans numba 0.66, le locator de cache est figé **à la décoration**
+(`numba/core/caching.py:414-420`), donc poser la variable trop tard est sans effet.
+
+**Le cache JIT vit à côté des sources** — c'est-à-dire, à l'époque de ce document,
+**dans le dossier Google Drive**. Les 18,6 % et 23 % de `_path_stat` ci-dessus,
+c'était très probablement lui.
+
+❌ **Et la mesure elle-même était un artefact.** `scripts/bench_examples.py:687`
+place la fenêtre d'échantillonnage **autour de l'import de l'application** : ces
+pourcentages ne sont pas du temps de calcul, mais du chargement de modules.
+Re-profilé le 2026-08-04 sur disque local, INDEX_SPLINE donne `_path_stat` à
+**9,0 %** (contre 23,0 %) et 42 % dans `_call_with_frames_removed`, c'est-à-dire
+l'import lui-même.
+
+✅ **Ce qui restait de réel a été fait** : 8 imports tardifs supprimés de
+`certus/spline/spline_workers.py`, dont un exécuté à **chaque évaluation
+L-BFGS-B**. Aucun cycle (vérifié), et 6 des 8 noms étaient déjà en tête de module.
+Les 11 imports tardifs de `certus/workers/certus_index_workers.py` sont, eux,
+**NON déplaçables** : cycle d'import prouvé. Ne pas y toucher.
 
 ### 4.4 STRAT — ce qui reste après `33af845`
 
@@ -228,14 +351,47 @@ Le profil à la ligne est désormais dominé par de vrais noyaux compilés :
 `compute_batch_rmse` (146 %), `compute_T_front_profile` (107 %),
 `calculate_extrema_distances` (107 %), `simulate_stack_robustness_batch` (44 %).
 
-Une piste concrète reste : `calculate_extrema_distances`
-(`certus/physics/certus_strat_math.py:106`) accumule ses extrema dans une **liste
-réfléchie numba** (`extrema_d = []`), notoirement lente. La remplacer par un
-tableau préalloué. Résultats à vérifier identiques.
+~~Une piste concrète reste : `calculate_extrema_distances` accumule ses extrema
+dans une liste réfléchie numba, notoirement lente. La remplacer par un tableau
+préalloué.~~
 
-Autre piste, plus lourde : `_test_strategy_robustness_task` stocke
-`rmse_all` et `thicknesses_all` en listes Python (`.tolist()` sur des tableaux
-`num_runs × num_layers`), par niveau de bruit et par stratégie.
+⚠️ **MAUVAISE CIBLE.** La lecture du code montre que cette liste ne représente que
+**2 des 6 allocations NRT** de la fonction et ne contient en pratique que **0 à 2
+éléments** — la fenêtre couvre ±16 nm de chemin optique quand les extrema de T(d)
+sont espacés de λ/2, soit ~275 nm à 550 nm. Le coût réel, ce sont les **56 à 88
+évaluations** de `_calc_T_added_layer`, chacune avec `cos`/`sin` sur argument
+complexe. Le plafond de gain de cette piste est donc bas.
+
+✅ **Le vrai gisement était ailleurs, et il est traité.** Le bloc de profil
+théorique de `certus/core/certus_strat_robustness.py:624-658` — là où vivent
+précisément les deux lignes les plus chères ci-dessus, `compute_T_front_profile`
+à 107,2 % et `calculate_extrema_distances` à 106,7 % — est calculé **puis jeté**
+par deux appelants sur trois :
+
+- le rescoring consensus ne lit que `robustness_score` ;
+- le halving ELITE ne lit que `rmse_p95` et réempile la stratégie **d'entrée**.
+
+Seules la passe principale et l'évaluation ELITE complète l'exploitent, cette
+dernière via `full_res["strategy"]`. Un paramètre `compute_layer_profile: bool =
+True` a été ajouté et les deux sites qui jettent le résultat passent `False`.
+**Gain non mesuré** : le mécanisme est vérifié, le volume ne l'est pas.
+
+⚠️ **Piste `.tolist()` : ne pas l'attaquer directement.** `_test_strategy_robustness_task`
+stocke bien `rmse_all` et `thicknesses_all` en listes Python, mais passer en numpy
+casserait **quatre** tests de véracité, dont **deux silencieusement** —
+`if thicknesses_all:` sur un ndarray 2D lève `ValueError`, avalée par le `except`
+englobant (`certus/ui/certus_strat_thickness_ui.py:402` et
+`certus/ui/certus_strat_table_ui.py:164`). C'est le mode de défaillance de
+`bc2042a`. Il faut un **commit préalable et séparé** remplaçant les 4 tests par
+`is None or len(...) == 0`.
+
+🔴 **Et un prérequis à toute mesure STRAT** : `certus_strat_robustness.py:314` fait
+`max_workers = cpu_count() // 2` et `:466` fait `numba.set_num_threads(2)`, soit
+**8 threads numba pour 4 cœurs physiques** sur la machine actuelle. Plus
+largement, **aucun endroit du dépôt ne connaît la notion de cœur physique** : tout
+dérive de `cpu_count()`. Six sites recensés au §10.4 du document de reprise. Sur un
+15 W, cette sur-souscription se paie en throttling thermique, qui bruite toutes
+les comparaisons A/B.
 
 ### 4.5 METAL — étape 2 de `PLAN_OPTIMISATION.md §2.4`
 
@@ -245,9 +401,37 @@ Basculer `use_cache=True` site par site (`gradient_metal.py` ×2,
 
 Mesuré en forçant globalement `use_cache=True` sur METAL_SINGLE :
 **55,9 s → 24,7 s**. Mais **attention** : le RMSE final change (0,006100 →
-0,006124–0,006190). À comprendre avant de basculer — la mesure d'équivalence
-numérique du plan (1,78e-15) ne suffit visiblement pas à garantir la même
-trajectoire d'optimiseur.
+0,006124–0,006190).
+
+✅ **RÉSOLU le 2026-08-04 — et la réponse est : NE PAS BASCULER.**
+
+Ce ne sont pas les 1,78e-15 de réassociation flottante. C'est une **perte
+d'information dans la clé de cache**. `SplineBasisCache.get` arrondit les
+positions de nœuds à **6 décimales** pour construire sa clé
+(`certus/physics/certus_optical_models.py:419`). Les longueurs d'onde de METAL
+sont en **nanomètres** (`CERTUS_METAL_SINGLE.py:1256`), donc le quantum de la clé
+vaut **1e-6 nm**, soit **100× le pas de différence finie de L-BFGS-B (1e-8)**.
+
+> **La perturbation du gradient est exactement annulée par l'arrondi de la clé.**
+> L'optimiseur dérive un objectif devenu localement constant.
+
+Trois corollaires :
+
+- `certus_optical_models.py:453` — la matrice stockée n'est pas reconstruite à
+  partir de la clé : l'objectif devient **dépendant de l'historique du cache**,
+  donc non reproductible d'un run à l'autre.
+- `tests/oracle/test_spline_basis_cache.py:46` — le garde-fou censé attraper ce
+  bug **ne peut pas le voir** : il déplace les nœuds de 1e-4, soit 100× le quantum.
+- `scripts/bench_examples.py:307` — **le 55,9 s → 24,7 s ne mesure pas l'action
+  proposée** : `--force-cache` patche globalement, y compris des sites que le plan
+  ne prévoit pas de basculer.
+
+Même pathologie, 100 000× plus grossière, dans `certus/utils/certus_re_math.py:396`
+(nœuds arrondis à 0,1 nm, grille à 1 nm).
+
+Les sites où les positions de nœuds sont **figées** sont immunisés ; ceux où elles
+varient ne le sont pas. ⚠️ Constats issus d'une analyse dont les vérificateurs ont
+été interrompus : **à recouper ligne à ligne avant d'agir.**
 
 Le banc sait le faire : `--force-cache --trace-nk --instrument`.
 
@@ -330,7 +514,13 @@ d'évaluations (donc l'échantillonnage, §4.1).
 10,8 %  gradient_oblique.py:869
 ```
 
-### INDEX (6,5 s, avec `--auto-yes`)
+### INDEX (❌ ~~6,5 s, avec `--auto-yes`~~ → **12,8 s avec `--auto-yes`**)
+
+> Ce titre se contredisait avec son propre paragraphe ci-dessous, qui dit que le
+> « No » par défaut fait tomber le run **de 12,8 s à 6,5 s**. Tranché par la mesure
+> du 2026-08-04 : `--auto-yes` donne **12,425 s** sur la machine 4 cœurs. C'est le
+> corps du texte qui avait raison — **6,5 s est la mesure SANS `--auto-yes`**,
+> c'est-à-dire le demi-pipeline. Le tableau du §2 reprenait le mauvais chiffre.
 
 ```
 [WORK] 54,5 %  certus_index_objectives.py:1755:__call__

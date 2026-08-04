@@ -253,6 +253,51 @@
       <code>wavelength_change_penalty</code> repasse a 1.0 : le mecanisme est desormais dans
       le modele, la bequille ferait doublon.
     </p>
+    <p style="margin:14px 0 10px;font-weight:700;color:#991b1b;">
+      Defaillance DURE &mdash; le depot qui ne se termine jamais
+    </p>
+    <p style="margin:0 0 10px;">
+      Si l&rsquo;arret theorique tombe <b>juste AVANT un point tournant</b>, une erreur amont
+      peut faire tourner le signal <i>avant</i> d&rsquo;avoir atteint la valeur visee. La machine
+      attend alors un niveau qui ne viendra jamais et le depot part en vrille. Ce n&rsquo;est pas
+      une perte de precision, c&rsquo;est un <b>plantage</b> &mdash; un evenement <b>discret</b>,
+      structurellement invisible a un critere de RMSE.
+    </p>
+    <p style="margin:0 0 10px;">
+      A l&rsquo;inverse, s&rsquo;arreter <b>APRES</b> un point tournant est sur : l&rsquo;extremum est deja
+      compte, le signal s&rsquo;en eloigne de facon monotone, le niveau est fatalement atteint.
+      C&rsquo;est la justification physique de l&rsquo;asymetrie de <code>check_extrema_proximity</code>
+      &mdash; zone interdite 3&times; plus large avant un point tournant qu&rsquo;apres.
+    </p>
+    <p style="margin:0 0 10px;">
+      Le noyau detecte desormais <b>deux defaillances dures</b>, penalite 1e6 : le niveau vise
+      n&rsquo;est pas encadre par le signal reel entre le debut de couche et le prochain extremum ;
+      et le <b>nombre d&rsquo;extrema comptes diverge</b> entre nominal et reel &mdash; auquel cas la
+      machine ancre POEM sur les mauvais points tournants. Ce second cas impose de detecter
+      les extrema sur le signal <b>REEL</b>, celui que la machine mesure, et non sur le
+      nominal : detecter sur le nominal doterait le simulateur d&rsquo;une connaissance que la
+      machine n&rsquo;a pas.
+    </p>
+    <p style="margin:0 0 10px;">
+      <b>Mesure</b>, 17 erreurs amont de &minus;8 a +8 nm, taux de depot non terminable :
+    </p>
+    <table style="border-collapse:collapse;margin:0 0 10px;">
+      <tr><th style="border:1px solid #fca5a5;padding:4px 10px;">lambda</th>
+          <th style="border:1px solid #fca5a5;padding:4px 10px;">plantages</th></tr>
+      <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">420 / 460 / 500 / 700 / 900 / 1000 nm</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;">0 / 17</td></tr>
+      <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>600 nm</b></td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>6 / 17 &mdash; 35 %</b></td></tr>
+      <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>800 nm</b></td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>6 / 17 &mdash; 35 %</b></td></tr>
+    </table>
+    <p style="margin:0;">
+      <b>600 nm etait pourtant excellent sur le gain de compensation</b> (0,02 mesure a
+      620 nm). Une longueur d&rsquo;onde peut donc etre optimale en <i>precision</i> et
+      catastrophique en <i>operabilite</i>. Les deux criteres sont <b>orthogonaux</b>, et le
+      second etait invisible au simulateur jusqu&rsquo;ici. Toute selection de longueur d&rsquo;onde
+      doit desormais franchir les deux.
+    </p>
   </div>
 
         </div>

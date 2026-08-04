@@ -18,6 +18,11 @@ Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 >
 > Lire **[`docs/REPRISE_SESSION_2026-08-03.md`](docs/REPRISE_SESSION_2026-08-03.md) §0
 > « PAR OÙ COMMENCER »** avant toute chose, puis `REPRISE_PERF.md`.
+>
+> 🔬 **Modele de monitoring de STRAT refondu (2026-08-04)** : cible figee sur le nominal,
+> POEM, historique du bloc, detection des depots non terminables. Les scores de robustesse
+> **ne sont plus comparables** aux anciens. Voir
+> [`docs/REPRISE_STRAT_MONITORING.md`](docs/REPRISE_STRAT_MONITORING.md).
 
 ---
 

@@ -415,6 +415,18 @@ class SplineBasisCache:
         # np.asarray(..., float64) est necessaire : deux appelants passant l'un du
         # float32 et l'autre du float64 produiraient des octets differents pour des
         # valeurs identiques, donc deux entrees de cache au lieu d'une.
+        # ⚠️ L'ARRONDI EST DELIBERE ET NE DOIT PAS ETRE AFFINE. Mesure du 2026-08-04
+        # sur METAL_SINGLE (bench_examples.py metal_single --force-cache --instrument) :
+        #
+        #   sans cache          RUN_S=154,6 s   RESULT=0,006100345590625494
+        #   cle arrondie (ici)  RUN_S= 75,2 s   RESULT=0,00613372429822523   HITRATE=88,1 %
+        #   cle EXACTE          RUN_S=150,3 s   RESULT=0,006100345473793503  HITRATE=18,8 %
+        #
+        # Autrement dit : le x2 apparent de use_cache=True vient de ce que cet arrondi
+        # ECRASE des geometries reellement distinctes — precisement les perturbations
+        # de gradient de L-BFGS-B. Une cle exacte rend le resultat juste MAIS supprime
+        # tout le gain (x1,03). LE GAIN EST L'ERREUR : il n'y a rien a recuperer ici.
+        # Ne pas relancer cette piste, cf. docs/REPRISE_PERF.md §4.5.
         key = (
             np.round(np.asarray(knot_wavelengths, dtype=np.float64), 6).tobytes(),
             np.round(np.asarray(target_wavelengths, dtype=np.float64), 4).tobytes(),

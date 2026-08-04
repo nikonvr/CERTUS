@@ -34,12 +34,41 @@ Le chemin affiché doit être sous `C:\dev\CERTUS\0108`. Le hook `post-commit` e
 > temps de mesure qu'il coûte sur cette machine — et une mesure coûte cher ici :
 > STRAT, c'est 130 s le run, donc 20 min la campagne A/B.
 
-### Où le ×2 est possible
+### 🔴 RÉPONSE : il n'y a PAS de ×2 disponible dans CERTUS en l'état
 
-| Piste | Statut | Pourquoi c'est celle-là |
-|---|---|---|
-| 🥇 **METAL — `use_cache=True`** | **×2,26 DÉJÀ MESURÉ** par le doc d'origine : 55,9 s → 24,7 s | Le seul facteur 2 chiffré de tout le corpus. Bloqué par un défaut de **correction**, pas de performance : la clé de `SplineBasisCache` arrondit les nœuds à 1e-6 nm quand le pas de différence finie de L-BFGS-B vaut 1e-8, donc la perturbation du gradient est annulée (§10.3). **Ce n'est pas un mur, c'est la précision d'un seul paramètre.** |
-| 🥈 **STRAT — `compute_layer_profile`** | codé, commité, **non mesuré** | Supprime ~25 000 appels inutiles par run sur les deux lignes les plus chères du profil (107 % + 107 %). Ordre de grandeur plausible : ×1,5. Rien à écrire, 20 min à mesurer. |
+Les deux seules pistes crédibles ont été mesurées le 2026-08-04. **Les deux sont
+tranchées.**
+
+| Piste | Verdict mesuré |
+|---|---|
+| **METAL — `use_cache=True`** | 🔴 **CLOSE. Le gain EST l'erreur.** Le ×2,06 se reproduit (154,6 → 75,2 s) mais avec une clé de cache **exacte** le résultat redevient juste et le gain disparaît : **×1,03**, taux de succès effondré de 88,1 % à 18,8 %. Les 88 % de hits étaient des géométries distinctes écrasées par l'arrondi — précisément les perturbations de gradient. Détail complet dans `REPRISE_PERF.md` §4.5. |
+| **STRAT — `compute_layer_profile`** | ✅ **GAIN RÉEL de −9 à −10 %**, 4 paires sur 4, `RESULT` identique aux 8 runs. Acquis et conservé. Mais ce n'est pas un ×2. |
+
+**Conclusion honnête : le seul gain réel de la session est de 10 % sur STRAT.**
+Aucun facteur 2 n'existe dans les pistes documentées. Chercher plus loin coûterait
+des nuits de calcul pour des gains de quelques pourcents.
+
+Ce qui a aussi été établi, et qui vaut mieux qu'un ×2 hypothétique : **le fossé
+machine est bien plus faible que le document ne le laisse craindre** — de ×1 à ×3,2
+selon les modules, pas ×7-10. Une partie de ce que le plan attribuait au code venait
+du cache numba qui traînait dans Google Drive, et le déménagement l'a réglé
+gratuitement.
+
+### Facteurs machine — les 8 modules, tous mesurés
+
+| Module | Réf. doc (16 c) | Ici `RUN_S` | Facteur |
+|---|---|---|---|
+| INDEX | 12,8 s | 12,4 | **×0,97** |
+| Oracle | 8 s | 11,7 | ×1,46 |
+| FIELD | 0,06 s | 0,119 | ×2,0 |
+| STRAT | 47-64 s | 113-152 | ×2,4-3,2 |
+| METAL_SINGLE | 52-68 s | 154,6 | ×2,3-3,0 |
+| RE | 29-30 s | 91,8 | ×3,1 |
+| METAL_BILAYER | 67 s | 212,5 | ×3,2 |
+| DESIGN | 43-93 s | 115,2 | ×1,2-2,7 |
+| INDEX_SPLINE | 1,6 s | 9,43 | ×5,9 ⚠️ |
+
+✅ **Les 8 modules ont désormais un ancrage `RESULT` valide** (§11.2).
 
 ### Où le ×2 n'existe PAS — ne pas y perdre de temps
 

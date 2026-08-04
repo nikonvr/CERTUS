@@ -403,7 +403,33 @@ Mesuré en forçant globalement `use_cache=True` sur METAL_SINGLE :
 **55,9 s → 24,7 s**. Mais **attention** : le RMSE final change (0,006100 →
 0,006124–0,006190).
 
-✅ **RÉSOLU le 2026-08-04 — et la réponse est : NE PAS BASCULER.**
+🔴 **PISTE CLOSE le 2026-08-04, MESURE À L'APPUI. LE GAIN EST L'ERREUR.**
+
+Trois runs `metal_single --force-cache --instrument`, machine au repos :
+
+| | `RUN_S` | `RESULT` | `HITRATE` |
+|---|---|---|---|
+| Sans cache | 154,6 s | `0,006100345590625494` | — |
+| Cache, **clé arrondie** (code actuel) | **75,2 s** | `0,00613372429822523` ❌ | **88,1 %** |
+| Cache, **clé exacte** (essai) | **150,3 s** | `0,006100345473793503` ✅ | **18,8 %** |
+
+Le ×2,06 se reproduit. Mais avec une clé **exacte**, le résultat redevient juste et
+**le gain disparaît entièrement** — ×1,03. Les 88 % de succès étaient à ~70 points
+des géométries réellement distinctes, écrasées par l'arrondi à 1e-6 nm : ce sont
+précisément les perturbations de différence finie de L-BFGS-B. Construction des
+matrices : 19,1 s pour 5 499 distinctes contre 69,3 s pour 10 737.
+
+⚠️ **Piège supplémentaire, invisible dans la mesure d'origine** : avec le cache, le
+nombre d'appels à `get_nk_from_spline` passe de **68 503 à 51 149**. L'optimiseur ne
+fait pas le même travail plus vite, **il fait 25 % de travail en moins** parce que sa
+trajectoire diverge. Le « ×2 » n'est donc même pas une accélération pure.
+
+**Ne pas relancer cette piste.** L'arrondi de `certus_optical_models.py:419` est
+délibéré et documenté sur place.
+
+---
+
+Analyse de la cause, conservée pour mémoire :
 
 Ce ne sont pas les 1,78e-15 de réassociation flottante. C'est une **perte
 d'information dans la clé de cache**. `SplineBasisCache.get` arrondit les

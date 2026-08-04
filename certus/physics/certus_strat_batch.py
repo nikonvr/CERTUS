@@ -79,6 +79,16 @@ def simulate_stack_robustness_batch(
     results = np.empty((n_runs, n_layers), dtype=np.float64)
     all_dyns = np.empty((n_runs, n_layers), dtype=np.float64)
     current_run_th_buffer = np.empty((n_runs, n_layers), dtype=np.float64)
+    # Debut du bloc monochromatique de chaque couche. A lambda inchangee le signal
+    # de monitoring est CONTINU, donc les points tournants deja observes restent
+    # exploitables par POEM ; au changement de lambda l'historique est perdu.
+    # C'est ce qui donne leur valeur aux blocs.
+    block_start = np.zeros(n_layers, dtype=np.int64)
+    for i in range(1, n_layers):
+        if abs(layer_wavelengths[i] - layer_wavelengths[i - 1]) > 1e-06:
+            block_start[i] = i
+        else:
+            block_start[i] = block_start[i - 1]
     for r in prange(n_runs):
         for i_layer in range(n_layers):
             wl = layer_wavelengths[i_layer]
@@ -96,6 +106,7 @@ def simulate_stack_robustness_batch(
                 noise_val,
                 non_monotonic_factor,
                 non_monotonic_mode,
+                block_start[i_layer],
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

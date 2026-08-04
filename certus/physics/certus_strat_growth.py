@@ -32,6 +32,7 @@ def simulate_growth_kernel(
     noise_val_precalc: float,
     non_monotonic_factor: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
+    block_start_layer: int = -1,
 ) -> tuple[float, float]:
     """
 
@@ -205,7 +206,26 @@ def simulate_growth_kernel(
     # 64 points et non 5 : localiser un point tournant a 5 points ne permet ni
     # de distinguer un extremum franc d'un epaulement, ni d'en compter plusieurs.
     # Cout : 64 evaluations de T par couche et par run, contre 8 auparavant.
+    # BALAYAGE CONTINU SUR LA LONGUEUR DU BLOC, et non sur la seule couche
+    # courante. Sans cela POEM ne capture que le swing intra-couche.
+    #
+    #   A longueur d'onde INCHANGEE le signal de monitoring est CONTINU d'une
+    #   couche a l'autre : les points tournants deja traverses pendant les couches
+    #   precedentes du bloc restent des mesures valides, exploitables pour recaler
+    #   la couche courante. Au changement de lambda on repart sur un signal neuf
+    #   et tout l'historique est perdu.
+    #
+    # C'est ce qui donne leur valeur aux blocs monochromatiques, ce que le P-PM
+    # d'Arsac (chap. 4) exploite, et ce que Zideluns et al. (Opt. Express 29,
+    # 33398, 2021) formulent ainsi : "self-compensation operates only at the
+    # monitored wavelength and diminishes when layers are monitored at different
+    # wavelengths".
+    #
+    # block_start_layer = indice de la premiere couche du bloc. Defaut -1 =
+    # couche seule, ce qui preserve le comportement des appelants non modifies.
     NPTS = 64
+    NPTS_PREV = 16
+    MAX_LOOKBACK = 4
     D_SCAN = 3.0
     SWING_MIN = 0.04
     poem_ok = False
@@ -214,10 +234,75 @@ def simulate_growth_kernel(
     T_prev_nom = 0.0
     T_last_nom = 0.0
     if nominal_th > 0.0001:
+        j0 = block_start_layer
+        if j0 < 0 or j0 > i_layer:
+            j0 = i_layer
+        if i_layer - j0 > MAX_LOOKBACK:
+            j0 = i_layer - MAX_LOOKBACK
+        n_hist = (i_layer - j0) * NPTS_PREV
+        n_tot = n_hist + NPTS
+        Ts_r = np.zeros(n_tot, dtype=np.float64)
+        Ts_n = np.zeros(n_tot, dtype=np.float64)
+        R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
+        Q00, Q01, Q10, Q11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
+        for j in range(j0):
+            n_p = n_H if j % 2 == 0 else n_L
+            ph1 = TWO_PI_VAL / wl * n_p * prev_thicknesses_sim[j]
+            c1, s1 = (np.cos(ph1), np.sin(ph1))
+            so1 = s1 / n_p if abs(n_p) > 1e-09 else 0.0
+            a0 = c1 * R00 + 1j * so1 * R10
+            a1 = c1 * R01 + 1j * so1 * R11
+            a2 = 1j * n_p * s1 * R00 + c1 * R10
+            a3 = 1j * n_p * s1 * R01 + c1 * R11
+            R00, R01, R10, R11 = (a0, a1, a2, a3)
+            ph2 = TWO_PI_VAL / wl * n_p * p_thick_nominal[j]
+            c2, s2 = (np.cos(ph2), np.sin(ph2))
+            so2 = s2 / n_p if abs(n_p) > 1e-09 else 0.0
+            b0 = c2 * Q00 + 1j * so2 * Q10
+            b1 = c2 * Q01 + 1j * so2 * Q11
+            b2 = 1j * n_p * s2 * Q00 + c2 * Q10
+            b3 = 1j * n_p * s2 * Q01 + c2 * Q11
+            Q00, Q01, Q10, Q11 = (b0, b1, b2, b3)
+        idx = 0
+        for j in range(j0, i_layer):
+            n_j = n_H if j % 2 == 0 else n_L
+            d_rj = prev_thicknesses_sim[j]
+            d_nj = p_thick_nominal[j]
+            for k in range(1, NPTS_PREV + 1):
+                f = k / NPTS_PREV
+                p3 = TWO_PI_VAL / wl * n_j * (f * d_rj)
+                c3, s3 = (np.cos(p3), np.sin(p3))
+                o3 = s3 / n_j if abs(n_j) > 1e-09 else 0.0
+                z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
+                z1 = z1 + (1j * n_j * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j * s3 * R01 + c3 * R11)
+                if abs(z1) > 1e-09:
+                    Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
+                p4 = TWO_PI_VAL / wl * n_j * (f * d_nj)
+                c4, s4 = (np.cos(p4), np.sin(p4))
+                o4 = s4 / n_j if abs(n_j) > 1e-09 else 0.0
+                z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
+                z2 = z2 + (1j * n_j * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j * s4 * Q01 + c4 * Q11)
+                if abs(z2) > 1e-09:
+                    Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
+                idx += 1
+            p3 = TWO_PI_VAL / wl * n_j * d_rj
+            c3, s3 = (np.cos(p3), np.sin(p3))
+            o3 = s3 / n_j if abs(n_j) > 1e-09 else 0.0
+            g0 = c3 * R00 + 1j * o3 * R10
+            g1 = c3 * R01 + 1j * o3 * R11
+            g2 = 1j * n_j * s3 * R00 + c3 * R10
+            g3 = 1j * n_j * s3 * R01 + c3 * R11
+            R00, R01, R10, R11 = (g0, g1, g2, g3)
+            p4 = TWO_PI_VAL / wl * n_j * d_nj
+            c4, s4 = (np.cos(p4), np.sin(p4))
+            o4 = s4 / n_j if abs(n_j) > 1e-09 else 0.0
+            h0 = c4 * Q00 + 1j * o4 * Q10
+            h1 = c4 * Q01 + 1j * o4 * Q11
+            h2 = 1j * n_j * s4 * Q00 + c4 * Q10
+            h3 = 1j * n_j * s4 * Q01 + c4 * Q11
+            Q00, Q01, Q10, Q11 = (h0, h1, h2, h3)
         d_max = D_SCAN * nominal_th
         step_s = d_max / (NPTS - 1)
-        Ts_r = np.zeros(NPTS, dtype=np.float64)
-        Ts_n = np.zeros(NPTS, dtype=np.float64)
         for k in range(NPTS):
             d_k = k * step_s
             phi_k = TWO_PI_VAL / wl * n_current * d_k
@@ -225,26 +310,27 @@ def simulate_growth_kernel(
             sonk = spk / n_current if abs(n_current) > 1e-09 else 0.0
             e01 = +1j * sonk
             e10 = +1j * n_current * spk
-            r00 = cpk * M_before_00 + e01 * M_before_10
-            r01 = cpk * M_before_01 + e01 * M_before_11
-            r10 = e10 * M_before_00 + cpk * M_before_10
-            r11 = e10 * M_before_01 + cpk * M_before_11
+            r00 = cpk * R00 + e01 * R10
+            r01 = cpk * R01 + e01 * R11
+            r10 = e10 * R00 + cpk * R10
+            r11 = e10 * R01 + cpk * R11
             dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
             if abs(dr) > 1e-09:
-                Ts_r[k] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
-            q00 = cpk * M_nom_00 + e01 * M_nom_10
-            q01 = cpk * M_nom_01 + e01 * M_nom_11
-            q10 = e10 * M_nom_00 + cpk * M_nom_10
-            q11 = e10 * M_nom_01 + cpk * M_nom_11
+                Ts_r[idx] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
+            q00 = cpk * Q00 + e01 * Q10
+            q01 = cpk * Q01 + e01 * Q11
+            q10 = e10 * Q00 + cpk * Q10
+            q11 = e10 * Q01 + cpk * Q11
             dn = q00 + n_Sub * q01 + q10 + n_Sub * q11
             if abs(dn) > 1e-09:
-                Ts_n[k] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
+                Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
+            idx += 1
         # Points tournants du signal NOMINAL : c'est lui qui definit la
         # strategie, le signal reel ne fait que fournir les valeurs mesurees.
-        idx_nom_stop = int(round((NPTS - 1) / D_SCAN))
+        idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
         tp_a = -1
         tp_b = -1
-        for k in range(1, NPTS - 1):
+        for k in range(1, n_tot - 1):
             dl = Ts_n[k] - Ts_n[k - 1]
             dr2 = Ts_n[k + 1] - Ts_n[k]
             if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):

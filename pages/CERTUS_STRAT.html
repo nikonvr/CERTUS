@@ -214,6 +214,45 @@
       devient 13) contre 0,00 a 780 nm. <b>Ces scores de robustesse ne sont pas comparables
       a ceux d&rsquo;avant cette revision.</b>
     </p>
+    <p style="margin:14px 0 10px;font-weight:700;color:#991b1b;">
+      Historique du bloc &mdash; la valeur des paquets monochromatiques, enfin quantifiee
+    </p>
+    <p style="margin:0 0 10px;">
+      A longueur d&rsquo;onde <b>inchangee</b>, le signal de monitoring est <b>continu</b> d&rsquo;une
+      couche a l&rsquo;autre : les points tournants deja traverses restent des mesures valides,
+      exploitables pour recaler la couche courante. Au changement de lambda on repart sur un
+      signal neuf et tout l&rsquo;historique est perdu. Le balayage POEM porte donc desormais sur
+      <b>toute la longueur du bloc</b> &mdash; 16 points par couche d&rsquo;historique, 64 pour la
+      couche courante, retour en arriere borne a 4 couches.
+    </p>
+    <p style="margin:0 0 10px;">
+      <b>Mesure</b>, erreur deliberee sur la couche precedente, bruit nul, couche courante de
+      <b>30 nm</b> (trop mince pour contenir deux extrema) :
+    </p>
+    <table style="border-collapse:collapse;margin:0 0 10px;">
+      <tr><th style="border:1px solid #fca5a5;padding:4px 10px;">lambda</th>
+          <th style="border:1px solid #fca5a5;padding:4px 10px;">erreur amont</th>
+          <th style="border:1px solid #fca5a5;padding:4px 10px;">couche seule</th>
+          <th style="border:1px solid #fca5a5;padding:4px 10px;">bloc entier</th></tr>
+      <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">500 nm</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;">+2,0 nm</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;">&minus;5,4757</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>&minus;1,4463</b></td></tr>
+      <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">500 nm</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;">&minus;5,0 nm</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;">+16,5007</td>
+          <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>+4,5855</b></td></tr>
+    </table>
+    <p style="margin:0;">
+      Facteur <b>3,6</b> de reduction d&rsquo;erreur, et un cas <b>divergent</b> (gain 3,30) qui
+      devient <b>stable</b> (0,92). Sur une couche epaisse l&rsquo;ecart est nul, et c&rsquo;est correct :
+      quand la couche contient deja deux extrema, ce sont eux les deux derniers et
+      l&rsquo;historique n&rsquo;a rien a dire. <b>La valeur des blocs monochromatiques est donc
+      concentree sur les couches minces</b> &mdash; precisement celles qu&rsquo;Arsac traite au
+      chapitre 5 par du controle au temps. En consequence,
+      <code>wavelength_change_penalty</code> repasse a 1.0 : le mecanisme est desormais dans
+      le modele, la bequille ferait doublon.
+    </p>
   </div>
 
         </div>

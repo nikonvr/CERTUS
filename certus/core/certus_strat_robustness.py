@@ -495,7 +495,7 @@ def _test_strategy_robustness_task(
     # SANS AUCUNE preference pour les blocs. Il reste donc, en attendant que le
     # balayage POEM soit rendu continu sur toute la longueur du bloc — ce qui
     # demande de passer l'indice de debut de bloc au noyau.
-    penalty_factor = float(params.get("wavelength_change_penalty", 1.2))
+    penalty_factor = float(params.get("wavelength_change_penalty", 1.0))
     penalty_vector = np.ones(num_layers, dtype=np.float64)
 
     sorted_blocks = sorted(blocks, key=lambda b: b["start"])

@@ -57,6 +57,7 @@ from certus.spline.spline_objective import (
     build_spline_objective_masked_grid,
     decompose_spline_pwl_objective,
     nk_from_x_pwlnk,
+    physical_nodes_to_x_slice_n,
     sigma_knots_decode,
     sigma_knots_encode,
     spline_objective_mse_on_masked_grid,
@@ -345,7 +346,6 @@ def _polish_lbfgsb_chunked(
     _minimize_jac = None
 
     try:
-        from certus.spline.spline_objective import spline_pwl_analytic_grad_supported
 
         if spline_pwl_analytic_grad_supported(_orig_obj.cfg):
             _gt = _orig_obj.analytic_gradient(x_cur)
@@ -707,11 +707,9 @@ class FreeKnotStageContext:
     best_spec_mse: list = field(default_factory=list)
 
     def w2s(self, sk: np.ndarray) -> np.ndarray:
-        from certus.spline.spline_objective import sigma_knots_encode
         return sigma_knots_encode(sk, self.s_lo, self.s_hi)
 
     def s2s(self, raw: np.ndarray) -> np.ndarray:
-        from certus.spline.spline_objective import sigma_knots_decode
         return sigma_knots_decode(raw, self.s_lo, self.s_hi, work=self.decode_work, reuse_output=True)
 
     def unpack(self, z: np.ndarray):
@@ -746,14 +744,12 @@ class FreeKnotStageContext:
         LL_v = np.asarray(LL, dtype=np.float64).ravel()
 
         sk_ref, nn_at, LL_at = _snap_nk_mesh_sol3_split(skn_a, skL_a, nn_a, LL_v, self.sk0, self.sigma_snap_atol)
-        from certus.spline.spline_objective import physical_nodes_to_x_slice_n
         xi_n = physical_nodes_to_x_slice_n(nn_at, sk_ref, self.cfg.n_mono_band_nm)
         x_pack = np.concatenate((
             np.asarray([float(d)], dtype=np.float64),
             np.asarray(xi_n, dtype=np.float64).ravel(),
             np.asarray(LL_at, dtype=np.float64).ravel(),
         ))
-        from certus.spline.spline_objective import nk_from_x_pwlnk
         n_l, k_l = nk_from_x_pwlnk(
             x_pack, self.lam_f, sk_ref, self.lo_k, self.hi_k,
             sig_pre=self.sig_f, n_mono_band_nm=self.cfg.n_mono_band_nm, profile_interp=self.nk_prof_sol3,
@@ -765,14 +761,12 @@ class FreeKnotStageContext:
         skL_a = np.asarray(skL, dtype=np.float64).ravel()
         LL_a = np.asarray(LL, dtype=np.float64).ravel()
         sk_ref, n_at, LL_at = _snap_nk_mesh_sol3b(skL_a, LL_a, self.skL0, self.skn0, self.nn0, self.sigma_snap_atol)
-        from certus.spline.spline_objective import physical_nodes_to_x_slice_n
         xi = physical_nodes_to_x_slice_n(n_at, sk_ref, self.cfg.n_mono_band_nm)
         x_pack = np.concatenate((
             np.asarray([float(d)], dtype=np.float64),
             np.asarray(xi, dtype=np.float64).ravel(),
             LL_at,
         ))
-        from certus.spline.spline_objective import nk_from_x_pwlnk
         n_l, k_l = nk_from_x_pwlnk(
             x_pack, self.lam_f, sk_ref, self.lo_k, self.hi_k,
             sig_pre=self.sig_f, n_mono_band_nm=self.cfg.n_mono_band_nm, profile_interp=self.nk_prof_sol3,
@@ -786,7 +780,6 @@ class FreeKnotStageContext:
             n_l, k_l, d, _, _ = self.sol3_split_to_nk_masked(z)
         else:
             n_l, k_l, d, _ = self.sol3b_to_nk_masked(z)
-        from certus.spline.spline_objective import spline_objective_mse_on_masked_grid
         return float(
             spline_objective_mse_on_masked_grid(
                 self.cfg, lam_f=self.lam_f, n_sub_f=self.n_sub_f_mg, w=self.w_f,

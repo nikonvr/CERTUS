@@ -1487,7 +1487,12 @@ def warmup_physics(silent: bool = True) -> None:
 
             _gamma_correct_scalar(0.5)
 
-            R_test = np.full(10, 0.5, dtype=np.float64)
+            # len(wls), pas 10 : np.interp exige len(xp) == len(fp). Avec 10 il
+            # levait une ValueError avalee par le except ci-dessous, et les deux
+            # noyaux suivants n'ont jamais ete compiles par le warmup. Constate
+            # sur disque : aucun .nbi pour _xyz_from_spectrum_kernel ni pour
+            # delta_e_2000, alors que les trois appels precedents en ont un.
+            R_test = np.full(len(wls), 0.5, dtype=np.float64)
 
             R_interp = np.interp(CIE_LAMBDA, wls, R_test)
 

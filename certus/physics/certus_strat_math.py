@@ -63,7 +63,6 @@ def check_extrema_proximity(
     m10, m11 = (M_before[1, 0], M_before[1, 1])
     if wl < 0.1:
         return False
-    TWO_PI_VAL = TWO_PI
     TOL = 1e-09
     if check_start:
         T_pres = _calc_T_from_matrix(m00, m01, m10, m11, n_Sub)
@@ -118,14 +117,18 @@ def calculate_extrema_distances(
 
         Positive distances mean the extremum is purely that far away (absolute distance).
 
-        If no extremum is found within 200nm, returns 999.0 for that value.
+        Distances are OPTICAL thicknesses (nm), i.e. already multiplied by n.real.
+
+        If no extremum is found inside the scan window -- +/- 16 nm of optical
+        thickness, i.e. +/- 16/|n_current| nm of PHYSICAL thickness -- returns
+        999.0 for that value. (The docstring previously announced 200 nm, which
+        overstated the real reach by a factor 12 to 29 depending on the index.)
 
     """
     m00, m01 = (M_before[0, 0], M_before[0, 1])
     m10, m11 = (M_before[1, 0], M_before[1, 1])
     if wl < 0.1:
         return (999.0, 999.0, 999.0, 999.0)
-    TWO_PI_VAL = TWO_PI
     scan_ot = 16.0
     physical_scan_radius = scan_ot / float(abs(n_current)) if abs(n_current) > 1e-09 else 16.0
     step = 0.5

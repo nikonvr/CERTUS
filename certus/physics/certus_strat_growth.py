@@ -112,6 +112,8 @@ def simulate_growth_kernel(
     n_current = n_H if i_layer % 2 == 0 else n_L
     is_non_monotonic = False
     T_mono = np.zeros(5, dtype=np.float64)
+    T_mono_nom = np.zeros(5, dtype=np.float64)  # meme balayage, empilement NOMINAL
+    k_ext = -1  # indice du dernier extremum traverse (swing), -1 si aucun
     if nominal_th > 0.0001:
         for k in range(5):
             th_frac = k / 4.0 * nominal_th
@@ -127,6 +129,15 @@ def simulate_growth_kernel(
             denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
             if abs(denom) > 1e-09:
                 T_mono[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
+            # meme point, mais sur la matrice NOMINALE : c'est la valeur que le
+            # controleur ATTENDAIT de voir passer.
+            b00 = cp_c * M_nom_00 + m01_c * M_nom_10
+            b01 = cp_c * M_nom_01 + m01_c * M_nom_11
+            b10 = m10_c * M_nom_00 + cp_c * M_nom_10
+            b11 = m10_c * M_nom_01 + cp_c * M_nom_11
+            den_n = b00 + n_Sub * b01 + b10 + n_Sub * b11
+            if abs(den_n) > 1e-09:
+                T_mono_nom[k] = 4.0 * n_Sub.real / (den_n.real**2 + den_n.imag**2)
         diffs = np.zeros(4, dtype=np.float64)
         for k in range(4):
             diffs[k] = T_mono[k + 1] - T_mono[k]
@@ -166,9 +177,99 @@ def simulate_growth_kernel(
     else:
         target_nominal = T_mono[4]
 
-    # L'ecart target_nominal - T_reel(d_nom) est le terme de compensation : il
-    # porte le signe de l'erreur accumulee et la corrige partiellement.
-    target_T_noisy = target_nominal + noise_val_precalc
+    # ------------------------------------------------------------------------
+    # POEM — Percent of Optical Extrema Monitoring
+    #
+    #   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
+    #   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
+    #
+    # Le point d'arret n'est PAS une valeur de transmission mais une FRACTION de
+    # l'amplitude photometrique entre les deux derniers points tournants. La
+    # fraction est pre-calculee sur le NOMINAL et figee avant le depot ; a
+    # l'execution on la reporte sur les extrema REELLEMENT observes.
+    #
+    # Consequence, et c'est tout l'interet : si le signal reel subit une
+    # distorsion affine T_reel = a*T_nom + b — derive de gain ou d'offset
+    # photometrique, erreur d'indice, erreur d'epaisseur amont — alors
+    # T_prev et T_last subissent la meme, et le niveau reporte vaut
+    # a*T_trigger_nom + b. On s'arrete donc exactement a l'epaisseur voulue.
+    # La compensation est obtenue par CHANGEMENT DE VARIABLE, pas par un
+    # coefficient de reduction regle a la main.
+    #
+    # "If the current layer has less than two turning points, the virtual next
+    #  turning points are used" : on prolonge le balayage au-dela de d_nom.
+    #
+    # Repli : si l'amplitude du swing est trop faible (< SWING_MIN, cf. les 4 %
+    # d'amplitude de depart minimale de Zideluns et al.), POEM est mal
+    # conditionne et on retombe sur la cible absolue figee.
+    # 64 points et non 5 : localiser un point tournant a 5 points ne permet ni
+    # de distinguer un extremum franc d'un epaulement, ni d'en compter plusieurs.
+    # Cout : 64 evaluations de T par couche et par run, contre 8 auparavant.
+    NPTS = 64
+    D_SCAN = 3.0
+    SWING_MIN = 0.04
+    poem_ok = False
+    T_prev_real = 0.0
+    T_last_real = 0.0
+    T_prev_nom = 0.0
+    T_last_nom = 0.0
+    if nominal_th > 0.0001:
+        d_max = D_SCAN * nominal_th
+        step_s = d_max / (NPTS - 1)
+        Ts_r = np.zeros(NPTS, dtype=np.float64)
+        Ts_n = np.zeros(NPTS, dtype=np.float64)
+        for k in range(NPTS):
+            d_k = k * step_s
+            phi_k = TWO_PI_VAL / wl * n_current * d_k
+            cpk, spk = (np.cos(phi_k), np.sin(phi_k))
+            sonk = spk / n_current if abs(n_current) > 1e-09 else 0.0
+            e01 = +1j * sonk
+            e10 = +1j * n_current * spk
+            r00 = cpk * M_before_00 + e01 * M_before_10
+            r01 = cpk * M_before_01 + e01 * M_before_11
+            r10 = e10 * M_before_00 + cpk * M_before_10
+            r11 = e10 * M_before_01 + cpk * M_before_11
+            dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
+            if abs(dr) > 1e-09:
+                Ts_r[k] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
+            q00 = cpk * M_nom_00 + e01 * M_nom_10
+            q01 = cpk * M_nom_01 + e01 * M_nom_11
+            q10 = e10 * M_nom_00 + cpk * M_nom_10
+            q11 = e10 * M_nom_01 + cpk * M_nom_11
+            dn = q00 + n_Sub * q01 + q10 + n_Sub * q11
+            if abs(dn) > 1e-09:
+                Ts_n[k] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
+        # Points tournants du signal NOMINAL : c'est lui qui definit la
+        # strategie, le signal reel ne fait que fournir les valeurs mesurees.
+        idx_nom_stop = int(round((NPTS - 1) / D_SCAN))
+        tp_a = -1
+        tp_b = -1
+        for k in range(1, NPTS - 1):
+            dl = Ts_n[k] - Ts_n[k - 1]
+            dr2 = Ts_n[k + 1] - Ts_n[k]
+            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
+                if k <= idx_nom_stop or tp_b < 0:
+                    tp_a = tp_b
+                    tp_b = k
+        if tp_a >= 0 and tp_b >= 0:
+            T_prev_nom = Ts_n[tp_a]
+            T_last_nom = Ts_n[tp_b]
+            T_prev_real = Ts_r[tp_a]
+            T_last_real = Ts_r[tp_b]
+            amp_nom = T_last_nom - T_prev_nom
+            amp_real = T_last_real - T_prev_real
+            if abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
+                poem_ok = True
+
+    if poem_ok:
+        # fraction figee, calculee sur le nominal (eq. 2.2)
+        p_poem = (target_nominal - T_prev_nom) / (T_last_nom - T_prev_nom)
+        # reportee sur les extrema reellement observes
+        target_level = T_prev_real + p_poem * (T_last_real - T_prev_real)
+    else:
+        target_level = target_nominal
+
+    target_T_noisy = target_level + noise_val_precalc
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
     for k in range(3):
@@ -194,9 +295,24 @@ def simulate_growth_kernel(
     if is_non_monotonic:
         if non_monotonic_mode == NON_MONOTONIC_MODE_REJECT:
             return (nominal_th + 1000000.0, dyn_encounter)
-        else:
-            gain = non_monotonic_factor
-            return (max(0.0, nominal_th + error_raw / gain), dyn_encounter)
+        # non_monotonic_factor N'EST PLUS APPLIQUE.
+        #
+        # Il divisait l'erreur par une constante (defaut 2.0) des qu'un extremum
+        # etait traverse. C'etait la forme reduite du gain d'information apporte
+        # par le swing — un pansement, rendu necessaire par le fait que le modele
+        # ne pouvait PAS produire ce gain lui-meme : la cible etant recalculee sur
+        # l'empilement reel, error_raw ne contenait que du bruit local et il n'y
+        # avait rien a corriger.
+        #
+        # Avec la cible figee et POEM, le gain du swing est desormais STRUCTUREL :
+        # il varie avec le contraste reellement observe et avec le nombre
+        # d'extrema, au lieu d'etre le meme pour une couche qui frole un extremum
+        # et une couche qui en traverse trois. Le diviser en plus reviendrait a
+        # compter deux fois le meme effet.
+        #
+        # Le parametre est conserve dans la signature pour ne pas casser les six
+        # sites d'appel ; il ne sert plus qu'au mode REJECT ci-dessus.
+        return (max(0.0, nominal_th + error_raw), dyn_encounter)
     return (max(0.0, nominal_th + error_raw), dyn_encounter)
 
 

@@ -325,21 +325,48 @@ def simulate_growth_kernel(
             if abs(dn) > 1e-09:
                 Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
             idx += 1
-        # Points tournants du signal NOMINAL : c'est lui qui definit la
-        # strategie, le signal reel ne fait que fournir les valeurs mesurees.
+        # DEUX detections distinctes, et c'est essentiel.
+        #
+        # La FRACTION POEM est pre-calculee hors ligne sur le signal NOMINAL :
+        # c'est la strategie, elle est figee avant le depot.
+        #
+        # Les ANCRES, elles, sont les points tournants que la machine COMPTE sur
+        # le signal REEL. Si les erreurs amont deplacent ou font disparaitre un
+        # extremum, la machine n'en compte pas le meme nombre et ancre POEM sur
+        # les mauvais : c'est un mode de defaillance DISCRET, invisible a un
+        # critere de RMSE, et il ne peut apparaitre que si l'on detecte sur le
+        # reel. Detecter sur le nominal reviendrait a doter la machine d'une
+        # connaissance qu'elle n'a pas.
         idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
         tp_a = -1
         tp_b = -1
+        n_tp_real = 0
+        for k in range(1, n_tot - 1):
+            dl = Ts_r[k] - Ts_r[k - 1]
+            dr2 = Ts_r[k + 1] - Ts_r[k]
+            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
+                if k <= idx_nom_stop:
+                    n_tp_real += 1
+                if k <= idx_nom_stop or tp_b < 0:
+                    tp_a = tp_b
+                    tp_b = k
+        # Points tournants attendus par la strategie, sur le nominal.
+        tp_a_n = -1
+        tp_b_n = -1
+        n_tp_nom = 0
         for k in range(1, n_tot - 1):
             dl = Ts_n[k] - Ts_n[k - 1]
             dr2 = Ts_n[k + 1] - Ts_n[k]
             if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
-                if k <= idx_nom_stop or tp_b < 0:
-                    tp_a = tp_b
-                    tp_b = k
-        if tp_a >= 0 and tp_b >= 0:
-            T_prev_nom = Ts_n[tp_a]
-            T_last_nom = Ts_n[tp_b]
+                if k <= idx_nom_stop:
+                    n_tp_nom += 1
+                if k <= idx_nom_stop or tp_b_n < 0:
+                    tp_a_n = tp_b_n
+                    tp_b_n = k
+        if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
+            # fraction : ancrages NOMINAUX  |  report : ancrages REELS mesures
+            T_prev_nom = Ts_n[tp_a_n]
+            T_last_nom = Ts_n[tp_b_n]
             T_prev_real = Ts_r[tp_a]
             T_last_real = Ts_r[tp_b]
             amp_nom = T_last_nom - T_prev_nom
@@ -356,6 +383,50 @@ def simulate_growth_kernel(
         target_level = target_nominal
 
     target_T_noisy = target_level + noise_val_precalc
+
+    # ---- DEFAILLANCE DURE : le niveau d'arret n'est jamais atteint ----------
+    #
+    # Cas tres defavorable signale en salle : si l'arret theorique tombe JUSTE
+    # AVANT un point tournant, une erreur amont peut faire tourner le signal
+    # avant d'avoir atteint la valeur visee. La machine attend un niveau qui ne
+    # viendra jamais et le depot part en vrille. Ce n'est pas une perte de
+    # precision, c'est un PLANTAGE — un evenement discret, invisible a un critere
+    # de RMSE tant qu'on ne le detecte pas explicitement.
+    #
+    # C'est pour cela que s'arreter APRES un point tournant est bien plus sur :
+    # l'extremum est deja compte, le signal s'en eloigne de facon monotone, et le
+    # niveau est fatalement atteint. C'est aussi la justification de l'asymetrie
+    # de check_extrema_proximity — zone interdite 3x plus large AVANT un point
+    # tournant qu'APRES.
+    #
+    # On modelise ici la defaillance telle qu'elle se produit : si le niveau vise
+    # n'est pas encadre par le signal reel entre le debut de la couche et le
+    # prochain extremum, le run est perdu.
+    if poem_ok and nominal_th > 0.0001:
+        i_lay0 = n_hist
+        i_stop = idx_nom_stop
+        # borne haute : prochain extremum reel apres l'arret, sinon fin du balayage
+        i_end = n_tot - 1
+        for k in range(i_stop + 1, n_tot - 1):
+            dl = Ts_r[k] - Ts_r[k - 1]
+            dr2 = Ts_r[k + 1] - Ts_r[k]
+            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
+                i_end = k
+                break
+        t_lo = Ts_r[i_lay0]
+        t_hi = Ts_r[i_lay0]
+        for k in range(i_lay0, i_end + 1):
+            if Ts_r[k] < t_lo:
+                t_lo = Ts_r[k]
+            if Ts_r[k] > t_hi:
+                t_hi = Ts_r[k]
+        if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
+            # niveau jamais atteint : depot non terminable
+            return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
+        # Comptage d'extrema divergent entre nominal et reel : la machine
+        # n'ancre pas POEM sur les memes points tournants que la strategie.
+        if n_tp_real != n_tp_nom:
+            return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
     for k in range(3):

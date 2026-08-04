@@ -646,7 +646,29 @@ def run_strat():
     res = wait_for(app.worker) if getattr(app, "worker", None) else None
     run = time.perf_counter() - t1
 
-    val = res.get("best_rmse") if isinstance(res, dict) else None
+    # Le pipeline STRAT emet un WorkerThreadResult
+    # (certus/workers/certus_strat_workers_dto.py:132), PAS un dict : la cle
+    # portant le RMSE est `rmse`, dans son champ `final_results`. Le banc
+    # cherchait `best_rmse` sur un dict — les deux etaient faux, donc RESULT
+    # valait None sur STRAT et le module n'avait aucun ancrage de correction.
+    # La charge utile est le to_legacy_dict() d'un WorkerThreadResult
+    # (certus/workers/certus_strat_workers_dto.py:132) : un dict a DEUX cles,
+    # `final_results` et `opti_results` (constate par instrumentation).
+    #
+    # Le RMSE n'y figure PAS directement. La cle "rmse" du module appartient a
+    # `metadata`, qui part vers un AUTRE signal, excel_ready, pour l'export Excel
+    # (certus_strat_workers.py, juste avant le for_step_23). Le RMSE se derive de
+    # final_results["all_strategies_results"] par extract_best_rmse — exactement
+    # ce que fait le module lui-meme deux lignes plus haut.
+    val = None
+    final_results = res.get("final_results") if isinstance(res, dict) else None
+    if isinstance(final_results, dict):
+        from certus.utils.certus_strat_service import extract_best_rmse
+
+        try:
+            val = float(extract_best_rmse(final_results.get("all_strategies_results", [])))
+        except BaseException as exc:  # noqa: BLE001 - un ancrage manquant doit se voir, pas tuer le banc
+            emit(f"WARN_RESULT_EXTRACTION={exc!r}")
     return setup, run, val
 
 
@@ -709,6 +731,17 @@ def main() -> None:
     emit(f"SETUP_S={setup:.3f}")
     emit(f"RUN_S={run:.3f}")
     emit(f"RESULT={val}")
+    if val is None:
+        # RESULT=None a longtemps passe inapercu sur INDEX puis sur STRAT : le banc
+        # sortait la ligne sans rien signaler, et ces modules ont donc ete
+        # optimisables sans aucun garde-fou de correction. Un module sans ancrage
+        # doit desormais le CRIER, pas le taire.
+        emit(
+            f"WARN=RESULT est None sur {args.module} : ce module n'a AUCUN ancrage "
+            "de correction. Ne conclus RIEN d'un A/B sur lui tant que l'extraction "
+            "de son runner n'est pas reparee — un changement qui supprime du calcul "
+            "passerait pour un gain sans qu'on voie qu'il a change le resultat."
+        )
     dump_probes()
     if args.sample:
         dump_sampler()

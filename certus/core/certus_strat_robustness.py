@@ -472,7 +472,21 @@ def _test_strategy_robustness_task(
     num_layers = len(p_thick_nominal)
     offset_val = compute_probe_offset_nm_from_ratio(params)
     factor_val = float(params.get("non_monotonic_error_factor", 2.0))
-    penalty_factor = float(params.get("wavelength_change_penalty", 1.2))
+    # Defaut 1.0 et non 1.2 depuis l'implementation de POEM.
+    #
+    # Ce facteur majorait le bruit de la PREMIERE couche de chaque bloc, pour
+    # representer la perte d'information au changement de longueur d'onde. C'etait
+    # une bequille : le modele ne produisait aucune compensation, donc le benefice
+    # d'un bloc long devait etre injecte a la main.
+    #
+    # Avec la cible figee et POEM, ce benefice est desormais STRUCTUREL. Une
+    # premiere couche de bloc est naturellement penalisee : elle dispose de moins
+    # d'extrema exploitables et retombe plus souvent sur les points tournants
+    # virtuels, donc sur un recalage moins bien conditionne. Majorer son bruit en
+    # plus reviendrait a compter deux fois le meme effet.
+    #
+    # Le parametre reste reglable pour qui veut retrouver l'ancien comportement.
+    penalty_factor = float(params.get("wavelength_change_penalty", 1.0))
     penalty_vector = np.ones(num_layers, dtype=np.float64)
 
     sorted_blocks = sorted(blocks, key=lambda b: b["start"])

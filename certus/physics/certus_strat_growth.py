@@ -78,6 +78,36 @@ def simulate_growth_kernel(
         t10 = m10 * M_before_00 + cp * M_before_10
         t11 = m10 * M_before_01 + cp * M_before_11
         M_before_00, M_before_01, M_before_10, M_before_11 = (t00, t01, t10, t11)
+    # --- Empilement NOMINAL, accumule en parallele du reel ---------------------
+    #
+    # Le niveau de declenchement d'une couche est calcule AVANT le depot, sur la
+    # conception nominale, et il ne bouge plus. Le viser sur un empilement devenu
+    # errone est ce qui produit l'erreur de signe oppose : c'est le mecanisme de
+    # compensation (Macleod, Bousquet).
+    #
+    # Avant ce correctif, la cible etait T_reel(d_nom) : la parabole d'inversion
+    # interpolant exactement ce meme point, la resolution donnait Delta_d =
+    # bruit / P', SANS aucun terme d'erreur accumulee. A bruit nul, l'epaisseur
+    # etait nominale quelles que soient les erreurs precedentes, donc aucune
+    # compensation ne pouvait apparaitre NI etre mesuree.
+    M_nom_00 = 1.0 + 0j
+    M_nom_01 = 0.0 + 0j
+    M_nom_10 = 0.0 + 0j
+    M_nom_11 = 1.0 + 0j
+    for j in range(i_layer):
+        n_prev = n_H if j % 2 == 0 else n_L
+        th_prev_nom = p_thick_nominal[j]
+        phi = TWO_PI_VAL / wl * n_prev * th_prev_nom
+        cp, sp = (np.cos(phi), np.sin(phi))
+        son = sp / n_prev if abs(n_prev) > 1e-09 else 0.0
+        m01 = +1j * son
+        m10 = +1j * n_prev * sp
+        t00 = cp * M_nom_00 + m01 * M_nom_10
+        t01 = cp * M_nom_01 + m01 * M_nom_11
+        t10 = m10 * M_nom_00 + cp * M_nom_10
+        t11 = m10 * M_nom_01 + cp * M_nom_11
+        M_nom_00, M_nom_01, M_nom_10, M_nom_11 = (t00, t01, t10, t11)
+
     nominal_th = p_thick_nominal[i_layer]
     n_current = n_H if i_layer % 2 == 0 else n_L
     is_non_monotonic = False
@@ -118,7 +148,27 @@ def simulate_growth_kernel(
                 current_sign = next_sign
         if flips > 0:
             is_non_monotonic = True
-    target_T_noisy = T_mono[4] + noise_val_precalc
+    # Niveau de declenchement FIGE, calcule sur le nominal et non sur le reel.
+    target_nominal = 0.0
+    if nominal_th > 0.0001:
+        phi_t = TWO_PI_VAL / wl * n_current * nominal_th
+        cp_t, sp_t = (np.cos(phi_t), np.sin(phi_t))
+        son_t = sp_t / n_current if abs(n_current) > 1e-09 else 0.0
+        mt01 = +1j * son_t
+        mt10 = +1j * n_current * sp_t
+        b00 = cp_t * M_nom_00 + mt01 * M_nom_10
+        b01 = cp_t * M_nom_01 + mt01 * M_nom_11
+        b10 = mt10 * M_nom_00 + cp_t * M_nom_10
+        b11 = mt10 * M_nom_01 + cp_t * M_nom_11
+        den_t = b00 + n_Sub * b01 + b10 + n_Sub * b11
+        if abs(den_t) > 1e-09:
+            target_nominal = 4.0 * n_Sub.real / (den_t.real**2 + den_t.imag**2)
+    else:
+        target_nominal = T_mono[4]
+
+    # L'ecart target_nominal - T_reel(d_nom) est le terme de compensation : il
+    # porte le signe de l'erreur accumulee et la corrige partiellement.
+    target_T_noisy = target_nominal + noise_val_precalc
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
     for k in range(3):

@@ -66,23 +66,45 @@ Le seul chiffre **propre** est celui de l'oracle, mesuré machine au repos :
 mono-thread. Il ne dit rien de DESIGN (873 % de CPU) ni de STRAT (691 %), qui
 exploitent réellement 16 cœurs sur la machine d'origine.
 
-### Bancs rapides : chiffres POLLUÉS, à refaire
+### Bancs rapides — mesure PROPRE, machine au repos
 
-Mesurés pendant qu'un robocopy vers Drive et des agents de lecture tournaient.
-**Inexploitables**, conservés seulement pour l'ordre de grandeur.
+Deux passes par module, `--auto-yes`, aucun autre processus (vérifié : 0 python
+actif au départ). Valeur retenue = seconde passe, cache chaud.
 
-| Module | Réf. doc | `RUN_S` ici (chaud) | Rapport |
+| Module | Réf. doc | `RUN_S` ici | Facteur |
 |---|---|---|---|
-| FIELD | 0,06 s | 0,216 | ×3,6 |
-| INDEX_SPLINE | 1,6 s | 12,188 | ×7,6 |
-| INDEX | 6,5 s | 81,521 | ×12,5 |
+| FIELD | 0,06 s | **0,119** | ×2,0 |
+| INDEX_SPLINE | 1,6 s | **9,431** | **×5,9** ⚠️ |
+| INDEX | 12,8 s (voir §4) | **12,425** | **×0,97** |
 
-La contamination est **prouvée par la série elle-même** : sur INDEX_SPLINE,
-`RUN_S` descend de 17,898 à 12,188 s pendant que le wall-clock monte de 26,65 à
-33,74 s. Le calcul accélère et le processus ralentit : c'est une interférence
-externe, pas du bruit.
+**Sur INDEX, cette machine est à parité avec la 16 cœurs.** Ce qui s'explique :
+le cache `.nbi` de la machine d'origine vivait dans le dossier Google Drive
+(§10.1), son INDEX était donc ralenti par les I/O Drive autant que le nôtre l'est
+par un CPU plus lent.
 
-**À refaire machine au repos**, un seul processus à la fois.
+⚠️ **INDEX_SPLINE à ×5,9 est désormais le seul vrai écart, et il est inexpliqué.**
+C'est la prochaine question à instruire, et elle est peu coûteuse : le module
+tourne en ~10 s.
+
+### Pourquoi la série précédente était fausse — à titre d'avertissement
+
+Une première passe, lancée pendant qu'un robocopy vers Drive et des agents de
+lecture tournaient, donnait FIELD 0,216 · INDEX_SPLINE 12,188 · **INDEX 81,521**.
+Soit un facteur **6,6** sur INDEX par rapport à la mesure propre.
+
+La contamination était détectable dans la série elle-même : `RUN_S` d'INDEX_SPLINE
+descendait de 17,898 à 12,188 s pendant que le wall-clock **montait** de 26,65 à
+33,74 s. Calcul qui accélère et processus qui ralentit = interférence externe.
+
+🔴 **Ne jamais mesurer avec quoi que ce soit d'autre en vol.** Sur 4 cœurs, l'écart
+n'est pas de quelques pourcents, il est d'un ordre de grandeur.
+
+### Coût fixe par processus
+
+Le wall-clock dépasse toujours `SETUP_S + RUN_S` de **7 à 8 s** même à cache
+chaud : c'est Qt et les imports, hors des compteurs du banc. À froid ce surcoût
+monte à ~33 s (FIELD : 42,59 s de wall pour 2,0 s comptés). Toute campagne doit
+en tenir compte : un banc de 10 s coûte 18 s de processus.
 
 ### Le JIT est plus cher qu'avant
 
@@ -134,15 +156,23 @@ problème que `tests/oracle/test_silent_wrong_results.py` existe pour attraper.
 
 ---
 
-## 4. Ambiguïté à trancher dans REPRISE_PERF.md
+## 4. ✅ TRANCHÉ — la référence INDEX du document est fausse d'un facteur 2
 
-Le §2 donne INDEX à **6,5 s**. Le §6 titre « INDEX (6,5 s, avec `--auto-yes`) »,
-mais explique dans le même paragraphe que le « No » par défaut fait sauter la
-phase IR et fait tomber le run **de 12,8 s à 6,5 s**.
+Le §2 de `REPRISE_PERF.md` donne INDEX à **6,5 s** et le §6 titre
+« INDEX (6,5 s, avec `--auto-yes`) ». Mais le corps du même §6 explique que le
+« No » par défaut fait sauter la phase IR et fait tomber le run **de 12,8 s à
+6,5 s**. Les deux lectures étaient incompatibles.
 
-Les deux lectures sont incompatibles : soit 6,5 s est la mesure `--auto-yes`,
-soit c'est celle sans. **Le facteur machine d'INDEX en dépend du simple au
-double.** À trancher avant de reconstruire le tableau du §2.
+**La mesure tranche : `--auto-yes` donne 12,425 s ici.** C'est donc le corps du
+texte qui a raison — 12,8 s est la mesure `--auto-yes`, 6,5 s celle sans.
+
+Conséquences :
+
+1. **Le titre du §6 est faux** : ce n'est pas « 6,5 s avec `--auto-yes` ».
+2. **La ligne INDEX du tableau du §2 mesure le demi-pipeline**, exactement ce que
+   le §6 dénonce trois pages plus loin (« on mesurait la moitié du pipeline »).
+   La bonne référence est **12,8 s**.
+3. Le facteur machine d'INDEX n'est donc pas ×1,9 mais **×0,97 — la parité**.
 
 ---
 

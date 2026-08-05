@@ -130,9 +130,12 @@ class _PhysicsBridge:
         noise: np.ndarray,
         error_factor: float,
         mode: str,
+        block_start_arr: np.ndarray | None = None,
+        gain_probe_nm: float = 1.0,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
-            wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode
+            wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
+            block_start_arr, gain_probe_nm,
         )
 
     @staticmethod
@@ -148,9 +151,11 @@ class _PhysicsBridge:
         noise: np.ndarray,
         error_factor: float,
         mode: str,
+        block_start_layer: int = -1,
     ) -> np.ndarray:
         return update_run_states_kernel(
-            nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode
+            nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
+            block_start_layer,
         )
 
     @staticmethod
@@ -985,6 +990,23 @@ def _validate_candidates_phase_a(
         )
 
     nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
+
+    # Debut du bloc monochromatique, PAR CANDIDATE. Un candidat qui reprend la
+    # longueur d'onde de la couche precedente PROLONGE le bloc en cours et herite
+    # de son historique de points tournants ; tout autre candidat ouvre un bloc
+    # neuf a cette couche. Sans cela la Phase A ne pouvait pas voir ce qui fait la
+    # valeur d'un bloc, alors que la Phase B le modelise depuis 87bb056.
+    prev_layer_wl = float(params.get("prev_layer_wl", -1.0))
+    running_block_start = int(params.get("phase_a_block_start", i_layer))
+    if i_layer == 0 or prev_layer_wl < 0.0:
+        block_start_arr = np.full(len(candidate_wls), i_layer, dtype=np.int64)
+    else:
+        block_start_arr = np.array(
+            [running_block_start if abs(float(w) - prev_layer_wl) <= 0.1 else i_layer for w in candidate_wls],
+            dtype=np.int64,
+        )
+
+    gain_probe_nm = float(params.get("phase_a_gain_probe_nm", 1.0))
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
         n_H_arr,
@@ -997,6 +1019,8 @@ def _validate_candidates_phase_a(
         noise_values,
         factor_val,
         nm_mode,
+        block_start_arr,
+        gain_probe_nm,
     )
 
     results_thickness = []
@@ -1006,20 +1030,89 @@ def _validate_candidates_phase_a(
     _EXT_KEYS = ("ext_prev_start", "ext_next_start", "ext_prev_end", "ext_next_end", "dynamics")
     idx_dict = {wavelength_to_index(w): clues_by_wl_idx[wavelength_to_index(w)] for w in candidate_wls}
 
+    # 🔴 LE COUT DE LA PHASE A COMBINE DESORMAIS DEUX GRANDEURS ORTHOGONALES.
+    #
+    #     cout = P95(|Delta_d|)  +  gain x erreur_amont
+    #            \____________/     \_________________/
+    #             erreur LOCALE      erreur HERITEE de la couche precedente
+    #
+    # Les deux termes sont en nanometres et s'ajoutent parce que ce sont deux
+    # contributions a la MEME grandeur : l'erreur d'epaisseur de la couche a la
+    # fin de son depot. Aucune constante d'ajustement n'intervient — l'echelle de
+    # l'erreur amont est mesuree, pas postulee (cf. phase_a_prev_error_nm, un
+    # P95 sur les etats Monte-Carlo reellement propages).
+    #
+    # Le troisieme critere, le taux de plantage, n'entre PAS dans le cout : une
+    # strategie dont le depot ne se termine pas n'est pas mediocre, elle est
+    # inutilisable. Elle est ELIMINEE, comme en Phase B.
+    # 🔴 LE SEUIL PAR COUCHE SE DEDUIT DU SEUIL PAR STRATEGIE, IL NE S'Y COPIE PAS.
+    #
+    # Le taux de plantage se COMPOSE sur la hauteur de l'empilement : une couche
+    # sure a 99,9 % donne, sur 48 couches, (1 - 0,001)^48 = 95,3 %, soit deja
+    # 4,7 % de depots perdus. Reutiliser tel quel le 5 % de la Phase B rendrait ce
+    # filtre inoperant — 5 % par couche autorise 91 % de plantage sur 48 couches.
+    #
+    #     tolerance_par_couche = 1 - (1 - 0,05)^(1/N)
+    #     N = 48  ->  0,107 %,  soit quarante-sept fois plus strict que 5 %
+    n_layers_total = max(1, len(p_thick_nominal))
+    crash_tol = params.get("phase_a_crash_tolerance")
+    crash_tol = (
+        float(crash_tol)
+        if crash_tol is not None
+        else 1.0 - (1.0 - 0.05) ** (1.0 / n_layers_total)
+    )
+    gain_weight = float(params.get("phase_a_compensation_weight", 1.0))
+    err_prev_nm = float(params.get("phase_a_prev_error_nm", 0.0))
+    # Sous 0,05 nm il n'y a pas d'epaisseur — moins d'un atome. Une erreur amont
+    # de cet ordre ne merite pas d'etre propagee.
+    if err_prev_nm < 0.05:
+        err_prev_nm = 0.0
+
+    eliminated = []
     for idx, wl in enumerate(candidate_wls):
-        rmse = results_fast[idx, 0]
-        std = results_fast[idx, 1]
+        rmse = float(results_fast[idx, 0])
+        std = float(results_fast[idx, 1])
+        crash_rate = float(results_fast[idx, 2])
+        gain = float(results_fast[idx, 3])
         entry: dict[str, Any] = {
             "wl": float(wl),
-            "cost": float(rmse),
-            "std_dev": float(std),
+            "cost": rmse,
+            "std_dev": std,
+            "crash_rate": crash_rate,
+            "compensation_gain": gain,
+            "cost_local": rmse,
         }
+        if gain >= 0.0 and err_prev_nm > 0.0:
+            entry["cost"] = rmse + gain_weight * gain * err_prev_nm
         # Carry over extrema and dynamics metadata from candidate (required by mining)
         src = candidates[idx]
         for k in _EXT_KEYS:
             if k in src:
                 entry[k] = src[k]
+        # gain < 0 : non mesurable (le depot ne se termine pas meme a bruit nul)
+        if crash_rate >= crash_tol or gain < 0.0:
+            eliminated.append(entry)
+            continue
         results_thickness.append(entry)
+
+    logger = params.get("logger")
+    if not results_thickness and eliminated:
+        # Aucune longueur d'onde n'est sure sur cette couche. On ne peut pas
+        # rendre une liste vide — la Phase A s'arreterait la — mais on ne doit
+        # surtout pas faire silence : on garde le moins mauvais et on le dit.
+        best_crash = min(e["crash_rate"] for e in eliminated)
+        results_thickness = [e for e in eliminated if e["crash_rate"] <= best_crash + 1e-12]
+        if logger:
+            logger.warning(
+                f"   [CRASH] Layer {i_layer + 1}: AUCUNE longueur d'onde sous le seuil de "
+                f"{crash_tol:.0%} de depots non terminables. Repli sur le taux minimal "
+                f"observe ({best_crash:.1%}) — la couche est un point dur."
+            )
+    elif eliminated and logger:
+        logger.info(
+            f"   [CRASH] Layer {i_layer + 1}: {len(eliminated)}/{len(candidate_wls)} candidate(s) "
+            f"eliminee(s), depot non terminable au-dela de {crash_tol:.0%}."
+        )
 
     results_thickness.sort(key=lambda x: x["cost"])
 
@@ -1027,6 +1120,12 @@ def _validate_candidates_phase_a(
     if results_thickness:
         best_wl = float(results_thickness[0]["wl"])
         best_idx_data = idx_dict[wavelength_to_index(best_wl)]
+        # Meme historique de bloc que celui sous lequel cette longueur d'onde a
+        # ete jugee, sinon la Phase A se contredirait d'une etape a l'autre.
+        if i_layer == 0 or prev_layer_wl < 0.0 or abs(best_wl - prev_layer_wl) > 0.1:
+            best_block_start = i_layer
+        else:
+            best_block_start = running_block_start
         p_thick_sim_updates = _PhysicsBridge.update_run_states(
             p_thick_nom_arr,
             i_layer,
@@ -1039,6 +1138,7 @@ def _validate_candidates_phase_a(
             noise_values,
             factor_val,
             nm_mode,
+            best_block_start,
         ).tolist()
     else:
         p_thick_sim_updates = []

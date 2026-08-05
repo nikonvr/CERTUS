@@ -23,6 +23,15 @@ Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 > POEM, historique du bloc, detection des depots non terminables. Les scores de robustesse
 > **ne sont plus comparables** aux anciens. Voir
 > [`docs/REPRISE_STRAT_MONITORING.md`](docs/REPRISE_STRAT_MONITORING.md).
+>
+> 🔴 **STRAT ne rendait AUCUNE strategie sur l'exemple reel (2026-08-05)** — il en minait
+> 240 et les eliminait toutes les 240 au filtre de robustesse. `CRASH_RATE_TOLERANCE = 0.05`
+> est un seuil **par strategie** applique a une grandeur qui **se compose sur 48 couches** :
+> il faut 0,107 % par couche, la meilleure longueur d'onde de l'exemple en donne 0,8 %.
+> Correctifs poses et verifies ; **trois questions de modele restent ouvertes.**
+> ⚠️ Les taux de plantage du §2 de `REPRISE_STRAT_MONITORING.md` sont sous-comptes d'un
+> facteur ~30 : ils ont ete etablis avant le degating de la detection.
+> Lire [`docs/REPRISE_STRAT_BLOCAGE.md`](docs/REPRISE_STRAT_BLOCAGE.md).
 
 ---
 
@@ -212,7 +221,7 @@ ruff check .  (mêmes règles, sans ignore) → 12 157 erreurs
 - ✅ **desktop.ini : réglé.** Il n'y en avait pas 69 mais **270 dans `.git/`** (252 dans les répertoires d'objets, 5 refs, 2 refs de worktrees), tous des fichiers d'icône Google Drive byte-identiques. `git log --all` ne renvoyait pas « parfois vide » : il était **totalement mort** (`fatal: bad object refs/desktop.ini`, 0 commit). Il rend maintenant 141 commits et `git fsck` est propre.
   ⚠️ `git update-ref -d` **ne peut pas** supprimer ces refs (`cannot lock ref: reference broken`) — il faut supprimer les fichiers.
 - ⚠️ `.env` toujours committé (`35348c0`) et poussé sur le dépôt **public** `nikonvr/CERTUS`. Clé à révoquer. **`.gitignore` ne suffit pas** : le fichier est *suivi*, donc `.gitignore` n'a aucun effet sur lui. Il faudra `git rm --cached .env` **en plus** de la réécriture d'historique.
-- 🔴 **Hook `post-commit` d'auto-push.** `.git/hooks/post-commit` pousse chaque commit vers le dépôt **public**, en arrière-plan. `git commit --no-verify` **ne le neutralise pas** (`--no-verify` ne saute que `pre-commit` et `commit-msg`). Actuellement renommé en `post-commit.disabled`. Vérifie son état avant tout commit que tu ne veux pas publier.
+- 🔴 **Hook `post-commit` d'auto-push.** `.git/hooks/post-commit` pousse chaque commit vers le dépôt **public**, en arrière-plan. `git commit --no-verify` **ne le neutralise pas** (`--no-verify` ne saute que `pre-commit` et `commit-msg`). **Vérifié ACTIF le 2026-08-05** : `.git/hooks/post-commit` existe et est exécutable. Vérifie son état avant tout commit que tu ne veux pas publier — cette ligne a déjà affirmé le contraire, ne lui fais pas confiance sans un `ls .git/hooks/post-commit*`.
 - Un commit orphelin `01047a1b` (2 juillet) a un arbre manquant : injoignable depuis toute ref, sans effet, mais il fait **échouer `git gc`** (`fatal: bad tree object`).
 - Worktrees : `audit-complet-suite-certus` (Antigravity) est un **ancêtre strict** de la branche de travail, 0 commit propre. Un worktree `0807` est `prunable`.
 

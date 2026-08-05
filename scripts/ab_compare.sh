@@ -49,6 +49,25 @@
 # Resultat attendu : compter les paires gagnantes, pas faire une moyenne. Une
 # metrique stable aide — COST_US_PER_CALL plutot que RUN_S sur DESIGN, dont le
 # temps total va naturellement de 43 a 93 s.
+#
+# 🔴 AB_WARMUP=1 — OBLIGATOIRE DES QUE LA LISTE CONTIENT UN FICHIER A NOYAUX @njit.
+# Numba tient un cache sur disque dans certus/*/__pycache__/*.nbi, dont la cle est
+# l'empreinte (mtime, taille) du fichier source. `switch_to` recopie par `cp -f`,
+# donc CHAQUE bascule remet le mtime a maintenant et invalide le cache : le run
+# qui suit paie la recompilation complete.
+#
+# Mesure du 2026-08-05 sur STRAT, machine au repos : 145,3 s a froid contre 44,1
+# et 37,7 s a chaud. La compilation pese donc ~105 s, soit 72 % du RUN_S a froid.
+#
+# Et ce n'est pas qu'du bruit, c'est un BIAIS ORIENTE : le bras qui contient le
+# plus de code a compiler paie la recompilation la plus longue, et l'A/B attribue
+# cet ecart a son cout d'EXECUTION. Sur le balayage POEM, le faux positif tombe
+# exactement dans le sens attendu — le pire cas possible.
+#
+# AB_WARMUP=1 insere un run jete apres chaque bascule. Il double le cout de la
+# campagne et supprime le biais.
+#
+#   AB_WARMUP=1 bash scripts/ab_compare.sh "a.py,b.py" "<commit>^" strat 4 --auto-yes
 
 set -u
 
@@ -142,14 +161,24 @@ echo "A/B alterne : ${#FILES[@]} fichier(s)   reference=$REF   module=$MODULE   
 for _f in "${FILES[@]}"; do echo "  - $_f"; done
 echo
 
+warmup() {   # run jete apres une bascule, pour ne pas mesurer la compilation numba
+    [ "${AB_WARMUP:-0}" = "1" ] || return 0
+    printf '  (chauffe) '
+    "$PY" -u scripts/bench_examples.py "$MODULE" "${OPTS[@]}" 2>&1 \
+        | grep -E '^RUN_S' | tr '\n' ' '
+    echo
+}
+
 for i in $(seq 1 "$PAIRS"); do
     switch_to REFCOPY
+    warmup
     printf 'paire %s  SANS : ' "$i"
     "$PY" -u scripts/bench_examples.py "$MODULE" "${OPTS[@]}" 2>&1 \
         | grep -E '^(RUN_S|COST_US_PER_CALL|RESULT)' | tr '\n' ' '
     echo
 
     switch_to BACKUPS
+    warmup
     printf 'paire %s  AVEC : ' "$i"
     "$PY" -u scripts/bench_examples.py "$MODULE" "${OPTS[@]}" 2>&1 \
         | grep -E '^(RUN_S|COST_US_PER_CALL|RESULT)' | tr '\n' ' '

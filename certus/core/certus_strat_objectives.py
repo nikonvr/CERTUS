@@ -214,6 +214,7 @@ def _run_phase_a_hybrid_loop(
     )
 
     idx_dict_opt = _IdxWrapper(clues_at_wl)
+    block_start_running = 0
 
     for i_layer in range(num_layers):
         if params.get("stop_requested", False):
@@ -245,6 +246,31 @@ def _run_phase_a_hybrid_loop(
             params["prev_layer_wl"] = float(prev_data[0]["wl"]) if prev_data else -1.0
         else:
             params["prev_layer_wl"] = -1.0
+
+        # --- ERREUR AMONT REELLEMENT ACCUMULEE, mesuree et non postulee -------
+        #
+        # C'est l'echelle sur laquelle le gain de compensation se convertit en
+        # nanometres : gain x erreur_amont = ce que la couche courante herite.
+        # On la prend sur les etats Monte-Carlo effectivement propages, au meme
+        # percentile que le cout local (P95), pour que les deux termes du cout
+        # soient la meme statistique de la meme grandeur.
+        params["phase_a_prev_error_nm"] = 0.0
+        if i_layer > 0:
+            prev_sim = np.array(
+                [run["p_thick_sim"][i_layer - 1] for run in run_states], dtype=np.float64
+            )
+            dev = np.abs(prev_sim - float(p_thick_nominal[i_layer - 1]))
+            dev = dev[dev < 1e5]  # les runs plantes ne sont pas une erreur d'epaisseur
+            if dev.size:
+                params["phase_a_prev_error_nm"] = float(np.percentile(dev, 95))
+
+        # --- DEBUT DU BLOC MONOCHROMATIQUE EN COURS ---------------------------
+        # A lambda inchangee le signal de monitoring est continu : les points
+        # tournants deja traverses restent exploitables. C'est ce qui donne leur
+        # valeur aux blocs, et la Phase A y etait aveugle. block_start_running est
+        # tenu a jour en fin d'iteration : il vaut ici l'indice de la premiere
+        # couche du bloc auquel appartient la couche i_layer - 1.
+        params["phase_a_block_start"] = block_start_running
 
         candidates, layer_full_dyn = _select_candidates_phase_a(
             scan_wl_range,
@@ -288,6 +314,7 @@ def _run_phase_a_hybrid_loop(
         best_cost = float(results_thickness[0]["cost"]) if results_thickness else None
         best_wl = float(results_thickness[0]["wl"]) if results_thickness else None
 
+        best_entry = results_thickness[0] if results_thickness else {}
         phase_a_observability["layers"].append(
             {
                 "layer": int(i_layer + 1),
@@ -295,8 +322,21 @@ def _run_phase_a_hybrid_loop(
                 "validated_candidates_count": int(len(results_thickness)),
                 "best_wl": best_wl,
                 "best_cost": best_cost,
+                # Les trois grandeurs qui decident maintenant du classement, pour
+                # qu'un ecart de choix soit lisible apres coup sans reinstrumenter.
+                "best_cost_local": best_entry.get("cost_local"),
+                "best_compensation_gain": best_entry.get("compensation_gain"),
+                "best_crash_rate": best_entry.get("crash_rate"),
+                "prev_error_nm": float(params.get("phase_a_prev_error_nm", 0.0)),
+                "block_start": int(block_start_running),
             }
         )
+
+        # Le bloc courant se prolonge tant que la longueur d'onde retenue ne
+        # change pas ; sinon un bloc neuf s'ouvre a cette couche.
+        prev_wl_for_block = float(params.get("prev_layer_wl", -1.0))
+        if i_layer == 0 or best_wl is None or prev_wl_for_block < 0.0 or abs(best_wl - prev_wl_for_block) > 0.1:
+            block_start_running = i_layer
 
         for r_idx in range(num_runs):
             run_states[r_idx]["p_thick_sim"].append(sim_updates[r_idx])

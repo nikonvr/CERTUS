@@ -117,6 +117,18 @@ modèle produit maintenant leurs effets **là où ils existent physiquement**.
 
 ## 2. 🔴 LE RÉSULTAT LE PLUS IMPORTANT
 
+> 🔴 **LES CHIFFRES DU TABLEAU CI-DESSOUS SONT PÉRIMÉS — mesure à refaire.**
+> Ils sont faux **deux fois, et dans le même sens** : ils sous-comptent les plantages.
+> 1. Établis **avant** le dégagement de la garde `poem_ok`, qui désactivait la détection
+>    précisément quand POEM est mal conditionné. Repli muet sur le sommet de la parabole :
+>    6,68 % → 0,04 % ; non-terminabilité signalée : 0,21 % → 7,26 %. **Facteur ~30.**
+> 2. Mesurés à `trigger_tolerance = 0.5`, soit σ = 0,5 point de T, alors que le bruit réel
+>    de l'OMS 5100 est de l'ordre de **0,05 point** (physicien, 2026-08-05). **Cinq à dix
+>    fois trop de bruit.** Voir [`REPRISE_STRAT_BLOCAGE.md`](REPRISE_STRAT_BLOCAGE.md) §2.1.
+>
+> **L'énoncé qualitatif, lui, reste vrai et c'est ce qu'il faut retenir : les deux critères
+> sont orthogonaux et il faut les deux.** Seules les valeurs sont à refaire.
+
 **Deux critères orthogonaux, et il faut les deux.**
 
 | λ | Gain de compensation | Taux de plantage |

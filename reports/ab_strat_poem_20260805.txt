@@ -1,0 +1,23 @@
+A/B alterne : 3 fichier(s)   reference=b58e7aa^   module=strat   paires=4
+  - certus/physics/certus_strat_growth.py
+  - certus/physics/certus_strat_batch.py
+  - certus/core/certus_strat_robustness.py
+
+  (chauffe) RUN_S=64.899 
+paire 1  SANS : RUN_S=3.618 RESULT=None 
+  (chauffe) RUN_S=174.669 
+paire 1  AVEC : RUN_S=45.246 RESULT=0.47042039196018925 
+  (chauffe) RUN_S=53.340 
+paire 2  SANS : RUN_S=4.276 RESULT=None 
+  (chauffe) RUN_S=188.543 
+paire 2  AVEC : RUN_S=50.208 RESULT=0.47042039196018925 
+  (chauffe) RUN_S=55.628 
+paire 3  SANS : RUN_S=3.866 RESULT=None 
+  (chauffe) RUN_S=102.188 
+paire 3  AVEC : RUN_S=27.872 RESULT=0.47042039196018925 
+  (chauffe) RUN_S=25.716 
+paire 4  SANS : RUN_S=2.871 RESULT=None 
+  (chauffe) RUN_S=90.535 
+paire 4  AVEC : RUN_S=28.084 RESULT=0.47042039196018925 
+
+TERMINE — compter les paires gagnantes, pas la moyenne.

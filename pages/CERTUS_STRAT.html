@@ -99,7 +99,7 @@
             PA["<b>For each layer i = 0…N−1:</b>"]:::decision --> PA1
             PA1["A.1 Dynamics Ranking<br><code>calculate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
             PA2["A.2 Safety Filters<br><code>check_extrema_proximity_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>near T maxima/minima,<br>insufficient spectral resolution"]:::decision --> PA3
-            PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code><br>Pre-allocated gaussian noise<br>Simulate growth → P95(|Δd|)"]:::process --> PA4
+            PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code> → 4 columns<br>P95(|Δd|) · std · crash rate · compensation gain<br>Cost = P95 + gain × upstream error<br>Eliminate: crash ≥ 1−(1−5%)^(1/N) or gain &lt; 0"]:::process --> PA4
             PA4["A.4 Select Best λ for layer i<br>Save to strategy + SYM scoring"]:::highlight --> PA5
             PA5["A.5 Error Propagation<br><code>update_run_states_kernel</code><br>Update run_states with<br>simulated thicknesses<br>→ perturbed M_before for layer i+1"]:::process
             PA5 --> PA_NEXT{"More layers?"}:::decision
@@ -278,6 +278,21 @@
       nominal : detecter sur le nominal doterait le simulateur d&rsquo;une connaissance que la
       machine n&rsquo;a pas.
     </p>
+    <p style="margin:0 0 10px;background:#fef3c7;border-left:4px solid #d97706;padding:8px 12px;">
+      🔴 <b>CHIFFRES PERIMES &mdash; NE PAS S&rsquo;EN SERVIR, mesure a refaire.</b> Ce tableau a ete
+      etabli <i>avant</i> deux corrections qui l&rsquo;invalident toutes deux, et dans le meme sens :
+      il <b>sous-compte</b> les plantages.
+      <br>&mdash; La detection de plantage etait conditionnee a <code>poem_ok</code>, ce qui la
+      desactivait precisement quand POEM est mal conditionne. Le repli muet sur le sommet de la
+      parabole tombe de <b>6,68 % a 0,04 %</b> une fois la garde levee, et la non-terminabilite
+      signalee passe de <b>0,21 % a 7,26 %</b> &mdash; les taux ci-dessous sont sous-comptes d&rsquo;un
+      facteur ~30.
+      <br>&mdash; La mesure a ete faite a <code>trigger_tolerance = 0.5</code>, soit
+      &sigma; = 0,5 point de transmission. Le bruit reellement observe sur OMS 5100 est de l&rsquo;ordre
+      de <b>0,05 point</b> ; avec une marge de securite de 2, la valeur juste est <b>0,1</b> &mdash;
+      qui est aussi le defaut du depot (<code>certus_strat_ui_state.py:90</code>). Le tableau a donc
+      ete etabli avec un bruit <b>cinq fois trop fort</b>.
+    </p>
     <p style="margin:0 0 10px;">
       <b>Mesure</b>, 17 erreurs amont de &minus;8 a +8 nm, taux de depot non terminable :
     </p>
@@ -297,6 +312,61 @@
       catastrophique en <i>operabilite</i>. Les deux criteres sont <b>orthogonaux</b>, et le
       second etait invisible au simulateur jusqu&rsquo;ici. Toute selection de longueur d&rsquo;onde
       doit desormais franchir les deux.
+    </p>
+  </div>
+
+  <div style="border:2px solid #16a34a;border-radius:8px;padding:14px 18px;margin:18px 0;background:#f0fdf4;">
+    <p style="margin:0 0 10px;font-weight:700;color:#166534;">
+      2026-08-05 &mdash; le blocage de STRAT venait du bruit du fichier d&rsquo;exemple, pas du code
+    </p>
+    <p style="margin:0 0 10px;">
+      <code>trigger_tolerance</code> s&rsquo;applique en <b>% de transmission</b> : <code>0.5</code>
+      vaut &sigma; = 0,5 point de T absolu. Sur OMS 5100, le signal observe fluctue de
+      <b>45,5 % a 45,55 %</b>, soit <b>0,05 point</b>. Le fichier
+      <code>JSON-strat-example.json</code> etait donc <b>dix fois trop bruite</b> &mdash; le defaut
+      du depot, <code>0.1</code>, etait deja correct.
+    </p>
+    <p style="margin:0 0 10px;background:#fef3c7;border-left:4px solid #d97706;padding:8px 12px;">
+      ⚠️ <b>La marge de securite &times;2 est DEJA dans le modele</b> :
+      <code>_resolve_robustness_noise_levels</code> teste a <code>[0,5&times; ; 1&times; ; 2&times;]</code> le
+      bruit de base et <code>crash_rate_max</code> retient le <b>pire</b> des trois. Regler la base
+      a <code>0.1</code> &laquo;&nbsp;pour la marge&nbsp;&raquo; fait tester a &sigma; = 0,2, soit
+      <b>quatre fois</b> le bruit reel : la marge est comptee deux fois.
+    </p>
+    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+      <tr style="background:#dcfce7;">
+        <th style="border:1px solid #86efac;padding:4px 10px;">trigger_tolerance</th>
+        <th style="border:1px solid #86efac;padding:4px 10px;">strategies</th>
+        <th style="border:1px solid #86efac;padding:4px 10px;">repechees</th>
+        <th style="border:1px solid #86efac;padding:4px 10px;">crash min / median</th>
+        <th style="border:1px solid #86efac;padding:4px 10px;">nblocks du 1<sup>er</sup></th>
+        <th style="border:1px solid #86efac;padding:4px 10px;">RESULT</th></tr>
+      <tr><td style="border:1px solid #86efac;padding:4px 10px;">0,5 &mdash; exemple actuel</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">4</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>4/4</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">0,700 / 0,800</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">19</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">0,4704 <i>(repechage)</i></td></tr>
+      <tr><td style="border:1px solid #86efac;padding:4px 10px;">0,1 &mdash; marge &times;2 en trop</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">37</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>36/37</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">0,025 / 0,225</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">12</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">0,0677 <i>(repechage)</i></td></tr>
+      <tr style="background:#dcfce7;">
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>0,05 &mdash; ✅ valeur juste</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>43</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;">18/43</td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>0,000 / 0,025</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>8</b></td>
+          <td style="border:1px solid #86efac;padding:4px 10px;"><b>0,0178</b> <i>(vrai score)</i></td></tr>
+    </table>
+    <p style="margin:0;">
+      Au bruit juste, <b>25 strategies passent le filtre sans etre repechees</b>, a 0&ndash;2,5 %
+      de plantage &mdash; largement sous les 5 % de tolerance. Le composant est monitorable en
+      coupure de niveau. Et la longueur des blocs est <b>monotone en fonction du bruit</b> :
+      19 &rarr; 12 &rarr; 8 quand &sigma; baisse. <b>Moins de bruit, blocs plus longs</b> &mdash;
+      c&rsquo;est la valeur des blocs monochromatiques, mesuree.
     </p>
   </div>
 
@@ -514,10 +584,43 @@
         <div class="algo-step">
             <span class="algo-title">Vectorized Monte Carlo (Numba <code>validate_wavelengths_batch</code>):</span>
             1. Use column $i$ from the pre-allocated <code>global_noise_matrix</code> (gaussian, seeded by <code>phase_a_seed</code>).<br>
-            2. For each run $r$, simulate the full growth of layer $i$ at wavelength $\lambda_k$ using cumulative history from <code>runs_history_matrix</code>.<br>
-            3. Compute thickness error: $\Delta d_r = |d_{simulated}^{(r)} - d_{nominal}|$.<br>
-            4. Compute <strong>P95 thickness error</strong>:
-            $$ \text{Cost}(\lambda_k) = Q_{0.95}\left(\Delta d_r\right) $$
+            2. For each run $r$, simulate the full growth of layer $i$ at wavelength $\lambda_k$ using cumulative history from <code>runs_history_matrix</code>.
+            A candidate that <em>reuses the previous layer's wavelength</em> extends the current block and inherits its turning-point history
+            (<code>block_start_arr</code>) — without this, Phase A is blind to the block value that Phase B models.<br>
+            3. Compute thickness error: $\Delta d_r = |d_{simulated}^{(r)} - d_{nominal}|$, over the runs that <strong>terminate</strong>.<br>
+            4. Return <strong>four</strong> columns per candidate, not one.
+        </div>
+        <p>
+            <code>validate_wavelengths_batch</code> returns a $(n_{cands}, 4)$ array:
+            $Q_{0.95}(\Delta d_r)$, its standard deviation, the <strong>crash rate</strong>, and the
+            <strong>compensation gain</strong>. The P95 and the standard deviation are computed only on runs that
+            terminate: leaving the $10^6$ sentinel in would mix nanometres with a failure counter.
+        </p>
+        <div class="algo-step">
+            <span class="algo-title">Cost — two terms, both in nanometres, no fitting constant:</span>
+            $$ \text{Cost}(\lambda_k) = Q_{0.95}\left(\Delta d_r\right) \;+\; w \cdot g(\lambda_k) \cdot \varepsilon_{\text{prev}} $$
+            $g(\lambda_k)$ is the compensation gain — how much of an upstream error the layer carries forward
+            ($g < 1$ self-compensates, $g > 1$ amplifies). It costs <strong>two noise-free evaluations</strong>, no Monte Carlo.
+            $\varepsilon_{\text{prev}}$ (<code>phase_a_prev_error_nm</code>) is the P95 measured on the Monte Carlo states
+            <em>actually propagated</em> — measured, not postulated. $w$ is <code>phase_a_compensation_weight</code>, default $1$.
+            <br><br>
+            Below <strong>0.05 nm</strong> — less than one atom — $\varepsilon_{\text{prev}}$ is floored to zero and the second term vanishes.
+        </div>
+        <div class="note">
+            <p><strong>The crash rate is NOT part of the cost.</strong></p>
+            <p>
+                A strategy whose deposition does not terminate is not mediocre, it is unusable. It is
+                <strong>eliminated</strong>, as in Phase B — a candidate is dropped when
+                $\text{crash} \geq 1 - (1-0.05)^{1/N}$ or when $g < 0$ (gain not measurable: the layer does not
+                terminate even at zero noise).
+            </p>
+            <p>
+                🔴 <strong>The per-layer threshold is DERIVED from the per-strategy one, it is not copied into it.</strong>
+                The crash rate compounds over the height of the stack: a layer safe at 99.9 % still loses
+                $1-(1-0.001)^{48} = 4.7\,\%$ of depositions over 48 layers. Reusing Phase B's 5 % as-is would make the
+                filter inoperative — 5 % per layer allows 91 % failure over 48 layers. For $N = 48$ the threshold is
+                <strong>0.107 %</strong>, forty-seven times stricter.
+            </p>
         </div>
 
         <h3>3.4 Step A.4 — Error Propagation + Normalization</h3>
@@ -559,7 +662,9 @@
             <ul>
                 <li>$V_k(i)$: cumulative minimum cost (corresponding to <code>DP[k][i]</code>) for covering layers $1 \dots i$ with exactly $k$ blocks.</li>
                 <li>$j$: optimal cut point (end of block $k-1$).</li>
-                <li>$\text{Cost}(m, \lambda)$: P95 error cost of layer $m$ monitored at $\lambda$.</li>
+                <li>$\text{Cost}(m, \lambda)$: cost of layer $m$ monitored at $\lambda$, as defined in §3.3 —
+                    $Q_{0.95}(\Delta d) + w \cdot g \cdot \varepsilon_{\text{prev}}$, <em>not</em> the P95 alone.
+                    Candidates eliminated on crash rate never reach the DP.</li>
                 <li>The inner minimization loop corresponds to $\text{BlockCost}(j, i)$.</li>
             </ul>
         </div>

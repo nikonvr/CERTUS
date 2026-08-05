@@ -1404,8 +1404,10 @@ class TestStratSymmetryContractAndStability:
 
         def fake_validate(*_args, **_kwargs):
 
-
-            return np.array([[0.25, 0.01]], dtype=np.float64)
+            # (n_cands, 4) : P95(|dd|), ecart-type, taux de plantage, gain de
+            # compensation. Un double a 2 colonnes ne decrirait plus le contrat
+            # du noyau : la Phase A classe sur trois criteres, pas sur un.
+            return np.array([[0.25, 0.01, 0.0, 0.5]], dtype=np.float64)
 
 
 

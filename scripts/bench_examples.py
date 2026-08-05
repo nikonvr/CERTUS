@@ -111,14 +111,22 @@ def wait_for(worker, timeout_ms: int = 1_800_000):
     from PyQt6.QtCore import QEventLoop, QTimer
 
     loop = QEventLoop()
-    box: dict = {"result": None, "error": None}
+    # `exit` distingue les TROIS sorties de la boucle, que le banc confondait :
+    # emission de `finished`, emission de `error`, et expiration du QTimer. Les
+    # trois rendaient None sans un mot, alors que STRAT compte CINQ sites de levee
+    # avant son unique `finished.emit` (certus_strat_workers.py:1370, :1419, :1464,
+    # :1465 et la validation pydantic de :1474). Un RESULT=None ne disait donc pas
+    # lequel. La valeur de retour est inchangee : les huit runners en dependent.
+    box: dict = {"result": None, "error": None, "exit": "timeout"}
 
     def on_done(res=None):
         box["result"] = res
+        box["exit"] = "finished"
         loop.quit()
 
     def on_error(err=None):
         box["error"] = err
+        box["exit"] = "error"
         loop.quit()
 
     sig = getattr(worker, "signals", worker)
@@ -133,8 +141,23 @@ def wait_for(worker, timeout_ms: int = 1_800_000):
     t.start(timeout_ms)
     loop.exec()
     t.stop()
+    emit(f"WAIT_EXIT={box['exit']}")
+    if box["exit"] == "timeout":
+        # Le runner DESIGN criait deja son TIMEOUT (voir run_design) ; wait_for,
+        # lui, sortait muet. Un banc qui rend None apres 30 min de silence donne
+        # l'illusion d'une mesure.
+        emit(f"WAIT_TIMEOUT={timeout_ms / 1000.0:.0f} s — aucune emission recue")
     if box["error"] is not None:
+        # STRAT emet (type, exc, tb) : le repr du tuple ne montre pas OU c'est
+        # tombe, et c'est precisement ce qu'on cherche.
         emit(f"WORKER_ERROR: {box['error']}")
+        try:
+            import traceback as _tb
+
+            if isinstance(box["error"], tuple) and len(box["error"]) == 3:
+                emit("WORKER_TRACEBACK:\n" + "".join(_tb.format_exception(*box["error"])))
+        except BaseException as exc:  # noqa: BLE001 - le diagnostic ne doit pas tuer le banc
+            emit(f"WORKER_TRACEBACK_FAILED={exc!r}")
     return box["result"]
 
 
@@ -669,7 +692,54 @@ def run_strat():
             val = float(extract_best_rmse(final_results.get("all_strategies_results", [])))
         except BaseException as exc:  # noqa: BLE001 - un ancrage manquant doit se voir, pas tuer le banc
             emit(f"WARN_RESULT_EXTRACTION={exc!r}")
+        dump_strat_ranking(final_results.get("all_strategies_results", []))
     return setup, run, val
+
+
+def dump_strat_ranking(strategies: list, top: int = 10) -> None:
+    """Sort le CLASSEMENT de STRAT, pas seulement le score du premier.
+
+    `RESULT` seul ne suffit pas a interpreter un A/B sur STRAT : deux versions
+    peuvent rendre le meme meilleur score en ayant reordonne tout le reste, ou en
+    ayant explore un nombre de strategies different. Le classement est la vraie
+    grandeur a comparer — c'est ce que demande REPRISE_STRAT_MONITORING.md §3.2.
+
+    ⚠️ `crash_eliminated` marque les strategies repechees par le repli de
+    `_filter_finite_robustness_scores` : leur `robustness_score` n'est PLUS un
+    score de robustesse mais le pire RMSE fini (`_worst_finite_rmse`). Si ce
+    compte n'est pas nul, `RESULT` ne mesure pas la meme grandeur qu'un run ou il
+    l'est, et les deux ne sont pas comparables.
+    """
+    if not isinstance(strategies, list) or not strategies:
+        emit("STRAT_N_STRATEGIES=0")
+        return
+    emit(f"STRAT_N_STRATEGIES={len(strategies)}")
+    try:
+        n_elim = sum(1 for s in strategies if isinstance(s, dict) and s.get("crash_eliminated"))
+        emit(f"STRAT_CRASH_ELIMINATED={n_elim}/{len(strategies)}")
+
+        crashes = [float(s.get("crash_rate", float("nan"))) for s in strategies if isinstance(s, dict)]
+        finite = sorted(c for c in crashes if c == c)
+        if finite:
+            emit(f"STRAT_CRASH_RATE_MIN={finite[0]:.4f} MEDIAN={finite[len(finite) // 2]:.4f}")
+
+        for i, s in enumerate(strategies[:top]):
+            if not isinstance(s, dict):
+                continue
+            strat = s.get("strategy", {}) or {}
+            blocks = strat.get("blocks", []) or []
+            wls = ",".join(f"{b.get('wavelength', 0):g}" for b in blocks)
+            emit(
+                f"STRAT_RANK{i:02d} id={strat.get('strategy_id', '?')} "
+                f"origin={strat.get('origin', '?')} "
+                f"score={float(s.get('robustness_score', float('nan'))):.6f} "
+                f"crash={float(s.get('crash_rate', float('nan'))):.4f} "
+                f"elim={bool(s.get('crash_eliminated', False))} "
+                f"nblocks={len(blocks)} nwl={s.get('num_unique_wavelengths', '?')} "
+                f"wl=[{wls}]"
+            )
+    except BaseException as exc:  # noqa: BLE001 - le classement est un diagnostic, il ne doit pas tuer le banc
+        emit(f"WARN_RANKING_DUMP={exc!r}")
 
 
 RUNNERS = {

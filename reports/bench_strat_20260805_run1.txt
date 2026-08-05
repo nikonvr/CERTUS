@@ -1,0 +1,7 @@
+=== START strat ===
+dialogues: reponse automatique OUI
+WAIT_EXIT=finished
+MODULE=strat
+SETUP_S=1.520
+RUN_S=145.291
+RESULT=0.4704203919602041

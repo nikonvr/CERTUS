@@ -75,7 +75,7 @@
     "strategy_phase_timeout": "120",
     "screening_mc_runs": "20",
     "screening_keep_top_k": "5",
-    "trigger_tolerance": "0.5",
+    "trigger_tolerance": "0.05",
     "sim_thickness_probe_offset_ratio": "120.0",
     "non_monotonic_error_factor": "2.0",
     "wavelength_change_penalty": "1.0",

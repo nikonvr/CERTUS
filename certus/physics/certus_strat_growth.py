@@ -402,7 +402,26 @@ def simulate_growth_kernel(
     # On modelise ici la defaillance telle qu'elle se produit : si le niveau vise
     # n'est pas encadre par le signal reel entre le debut de la couche et le
     # prochain extremum, le run est perdu.
-    if poem_ok and nominal_th > 0.0001:
+    #
+    # ⚠ CE TEST NE DOIT PAS DEPENDRE DE poem_ok. Il l'a fait, et c'etait un trou.
+    #
+    # Qu'un niveau soit atteignable ou non est une question de PHYSIQUE du signal,
+    # pas de la strategie d'ancrage employee pour le calculer. Garder la detection
+    # derriere `poem_ok` la desactivait justement dans les cas ou POEM est mal
+    # conditionne — swing sous SWING_MIN, moins de deux points tournants — qui sont
+    # precisement les plus exposes.
+    #
+    # Mesure sur example/example_strat/JSON-strat-example.json, 48 couches x 51
+    # longueurs d'onde de balayage, erreur amont de +2 nm, bruit nul :
+    #   plantage detecte                         :  0,21 %
+    #   repli MUTIQUE sur le sommet (disc < 0)   :  6,68 %   <- 30 fois plus
+    # Ces 6,68 % sortaient de _solve_quadratic_target par sa branche
+    # `discriminant < 0` (certus_strat_math.py:207), qui renvoie le sommet de la
+    # parabole sans rien signaler : erreur mediane 5,2 nm, maximum 29 nm, la ou
+    # 0,05 nm vaut deja moins d'un atome. Le taux verifie ne dependait PAS de
+    # probe_offset (6,63 % a 0,5 nm, 6,88 % a 10 nm) : ce n'etait pas un artefact
+    # du fit, mais bien la defaillance physique, non comptee.
+    if nominal_th > 0.0001:
         i_lay0 = n_hist
         i_stop = idx_nom_stop
         # borne haute : prochain extremum reel apres l'arret, sinon fin du balayage
@@ -420,12 +439,28 @@ def simulate_growth_kernel(
                 t_lo = Ts_r[k]
             if Ts_r[k] > t_hi:
                 t_hi = Ts_r[k]
+        # ✅ AUCUNE TOLERANCE ICI, ET C'EST VOULU.
+        #
+        # J'ai cru un moment qu'il fallait tolerer un depassement de l'ordre du
+        # bruit, au motif qu'un empilement quart d'onde monitore a sa propre
+        # longueur d'onde de centrage plantait a 100 %. C'etait une erreur de ma
+        # part : ce 100 % est le BON resultat.
+        #
+        # A QWOT exact l'arret tombe sur le point tournant, ou dT/dd = 0 : un
+        # niveau n'a plus aucune sensibilite a l'epaisseur, et la moitie des
+        # realisations du bruit place la cible au-dela de l'extremum, ou elle ne
+        # sera jamais atteinte. C'est exactement pour cela qu'on ne monitore pas
+        # un QWOT a sa lambda_0 par coupure de niveau — et c'est le travail de
+        # STRAT que d'aller chercher ailleurs. check_extrema_proximity existe
+        # pour la meme raison.
         if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
             # niveau jamais atteint : depot non terminable
             return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
         # Comptage d'extrema divergent entre nominal et reel : la machine
         # n'ancre pas POEM sur les memes points tournants que la strategie.
-        if n_tp_real != n_tp_nom:
+        # Celui-ci, en revanche, RESTE conditionne a poem_ok : sans POEM il n'y a
+        # pas d'ancrage sur des points tournants, donc rien qui puisse diverger.
+        if poem_ok and n_tp_real != n_tp_nom:
             return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
@@ -709,8 +744,15 @@ def update_run_states_kernel(
     noise_values: np.ndarray,
     factor_val: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
+    block_start_layer: int = -1,
 ):
-    """Parallel update of simulation states for next layer."""
+    """Parallel update of simulation states for next layer.
+
+    ``block_start_layer`` doit valoir CELUI DE LA LONGUEUR D'ONDE RETENUE. Les
+    etats propages ici deviennent l'historique sur lequel la couche suivante sera
+    jugee : les evaluer sans l'historique du bloc alors que les candidates l'ont
+    ete avec produirait une Phase A incoherente avec elle-meme.
+    """
     num_runs = prev_stacks.shape[0]
     updates = np.empty(num_runs, dtype=np.float64)
     for r in prange(num_runs):
@@ -726,6 +768,7 @@ def update_run_states_kernel(
             noise_values[r],
             factor_val,
             non_monotonic_mode,
+            block_start_layer,
         )
     return updates
 

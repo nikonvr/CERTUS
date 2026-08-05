@@ -87,206 +87,78 @@ class TestNoiseDistribution:
 
 
     def test_uniform_vs_gaussian_p95(self):
+        """Uniforme contre gaussienne : la queue de distribution doit se voir.
 
+        🔴 CONFIGURATION CHOISIE POUR ETRE MONITORABLE, et ce n'est pas un detail.
 
-        """Check that gaussian and uniform give different P95s."""
+        L'ancienne version prenait 10 couches de 100 nm monitorees a 1500 nm avec
+        3 points de transmission de bruit, soit six fois le bruit nominal du
+        fichier d'exemple. Dans ce regime la quasi-totalite des runs est declaree
+        NON TERMINABLE et le P95 vaut la sentinelle 1e6 : le test ne mesurait plus
+        la distribution du bruit, il mesurait un taux de plantage. Il echouait
+        d'ailleurs sur HEAD depuis le commit 932c744.
 
-
-        np.random.seed(42)
-
-
-
-
-
-        # Setup simple: 10 couches QWOT
-
-
+        On prend donc un empilement quart d'onde a 1500 nm monitore a 1300 nm —
+        loin des points tournants, la ou la coupure de niveau a de la sensibilite
+        — et le bruit reel du fichier d'exemple.
+        """
         num_layers = 10
-
-
-        p_thick_nominal = np.array([100.0] * num_layers, dtype=np.float64)
-
-
-        wl = 1500.0
-
-
+        l0 = 1500.0
         n_H = complex(2.3, 0.0)
-
-
         n_L = complex(1.45, 0.0)
-
-
         n_Sub = complex(1.52, 0.0)
-
-
-
-
-
-        num_runs = 100
-
-
-        noise_pct = 0.03  # 3%
-
-
-
-
-
-        # Generate uniform noise
-
-
-        np.random.seed(42)
-
-
-        uniform_noise = np.random.uniform(-1.0, 1.0, (num_runs, num_layers)) * noise_pct
-
-
-
-
-
-        # Generate gaussian noise (clipped to +/-3sigma)
-
-
-        np.random.seed(42)
-
-
-        gaussian_raw = np.clip(np.random.normal(0.0, 1.0 / 3.0, (num_runs, num_layers)), -1.0, 1.0)
-
-
-        gaussian_noise = gaussian_raw * noise_pct
-
-
-
-
-
-        # Run simulations with both noise types
-
-
-        results_uniform, _ = simulate_stack_robustness_batch(
-
-
-            p_thick_nominal,
-
-
-            np.array([wl] * num_layers),
-
-
-            np.array([n_H] * num_layers),
-
-
-            np.array([n_L] * num_layers),
-
-
-            np.array([n_Sub] * num_layers),
-
-
-            uniform_noise,
-
-
-            10.0,  # probe_offset
-
-
-            2.0,   # non_monotonic_factor
-
-
-            NON_MONOTONIC_MODE_ATTENUATE,
-
-
+        p_thick_nominal = np.array(
+            [l0 / (4.0 * (2.3 if i % 2 == 0 else 1.45)) for i in range(num_layers)],
+            dtype=np.float64,
         )
+        wl_monitor = 1300.0
+        sigma = 0.001  # 0,1 point de transmission
 
+        rng = np.random.default_rng(42)
+        uniform_noise = rng.uniform(-1.0, 1.0, (200, num_layers)) * sigma
+        rng = np.random.default_rng(42)
+        gaussian_noise = np.clip(rng.normal(0.0, 1.0 / 3.0, (200, num_layers)), -1.0, 1.0) * sigma
 
+        def run(noise):
+            sim, _ = simulate_stack_robustness_batch(
+                p_thick_nominal,
+                np.full(num_layers, wl_monitor),
+                np.full(num_layers, n_H),
+                np.full(num_layers, n_L),
+                np.full(num_layers, n_Sub),
+                noise,
+                2.0,   # probe_offset
+                2.0,   # non_monotonic_factor (sans effet, cf. test dedie)
+                NON_MONOTONIC_MODE_ATTENUATE,
+            )
+            crashed = np.any(sim > 1e5, axis=1)
+            completed = sim[~crashed]
+            # Le P95 se mesure sur les runs qui se TERMINENT. Y laisser la
+            # sentinelle melangerait des nanometres et un compteur d'echecs.
+            p95 = float(np.percentile(np.abs(completed - p_thick_nominal), 95)) if completed.size else float("nan")
+            return crashed.mean(), p95
 
+        crash_uniform, p95_uniform = run(uniform_noise)
+        crash_gaussian, p95_gaussian = run(gaussian_noise)
 
+        print(f"Uniforme  : plantage {crash_uniform:.1%}  P95 {p95_uniform:.4f} nm")
+        print(f"Gaussienne: plantage {crash_gaussian:.1%}  P95 {p95_gaussian:.4f} nm")
 
-        results_gaussian, _ = simulate_stack_robustness_batch(
+        # 1. La configuration doit etre monitorable, sinon le test ne mesure rien.
+        assert crash_uniform == 0.0, f"configuration non monitorable : {crash_uniform:.1%} de plantage"
+        assert crash_gaussian == 0.0, f"configuration non monitorable : {crash_gaussian:.1%} de plantage"
 
+        # 2. Les deux P95 doivent etre physiquement significatifs : au-dessus de
+        #    0,05 nm (moins d'un atome) et tres en dessous de l'epaisseur nominale.
+        for name, p95 in (("uniforme", p95_uniform), ("gaussienne", p95_gaussian)):
+            assert 0.05 < p95 < 0.2 * p_thick_nominal.min(), f"P95 {name} invraisemblable : {p95}"
 
-            p_thick_nominal,
-
-
-            np.array([wl] * num_layers),
-
-
-            np.array([n_H] * num_layers),
-
-
-            np.array([n_L] * num_layers),
-
-
-            np.array([n_Sub] * num_layers),
-
-
-            gaussian_noise,
-
-
-            10.0,
-
-
-            2.0,
-
-
-            NON_MONOTONIC_MODE_ATTENUATE,
-
-
+        # 3. La gaussienne clippee concentre le bruit autour de zero : son P95 doit
+        #    etre STRICTEMENT inferieur a celui de l'uniforme, qui charge les bords.
+        assert p95_gaussian < p95_uniform, (
+            f"la gaussienne devrait donner un P95 plus faible que l'uniforme "
+            f"({p95_gaussian:.4f} vs {p95_uniform:.4f})"
         )
-
-
-
-
-
-        # Calculate P95 errors
-
-
-        errors_uniform = np.abs(results_uniform - p_thick_nominal)
-
-
-        errors_gaussian = np.abs(results_gaussian - p_thick_nominal)
-
-
-
-
-
-        p95_uniform = np.percentile(errors_uniform.flatten(), 95)
-
-
-        p95_gaussian = np.percentile(errors_gaussian.flatten(), 95)
-
-
-
-
-
-        print(f"\nP95 Uniform: {p95_uniform:.4f} nm")
-
-
-        print(f"P95 Gaussian: {p95_gaussian:.4f} nm")
-
-
-
-
-
-        # Both should be reasonable (< 100nm for this setup)
-
-
-        # Gaussian typically gives slightly lower P95 due to concentration around mean
-
-
-        assert p95_uniform < 100.0, f"P95 uniform too high: {p95_uniform}"
-
-
-        assert p95_gaussian < 100.0, f"P95 gaussian too high: {p95_gaussian}"
-
-
-        # Verify the test actually ran (non-zero results)
-
-
-        assert p95_uniform > 0.1, f"P95 uniform suspiciously low: {p95_uniform}"
-
-
-        assert p95_gaussian > 0.1, f"P95 gaussian suspiciously low: {p95_gaussian}"
-
-
-
-
-
 
 
 
@@ -438,99 +310,44 @@ class TestNonMonotonicMode:
 
 
     def test_attenuate_mode(self):
+        """Le mode ATTENUATE ne doit PLUS diviser l'erreur par le facteur.
 
+        Ce test verifiait autrefois l'inverse. `non_monotonic_factor` divisait
+        l'erreur par une constante des qu'un extremum etait traverse : la forme
+        reduite du gain d'information apporte par le swing, rendue necessaire
+        parce que le modele ne pouvait pas produire ce gain lui-meme.
 
-        """Verifies that attenuate mode divides the error by the factor."""
+        Avec la cible figee sur le nominal et POEM, ce gain est devenu STRUCTUREL
+        — il varie avec le contraste reellement observe et avec le nombre
+        d'extrema. Continuer a diviser en plus compterait deux fois le meme effet.
+        Le parametre n'est conserve que pour le mode REJECT.
 
-
-        np.random.seed(42)
-
-
-
-
-
-        # Setup pour forcer une zone non-monotone
-
-
-        p_thick = np.array([200.0, 200.0], dtype=np.float64)
-
-
-        wl = 1500.0
-
-
+        L'ancienne version prenait 2 % de bruit de transmission sur une couche de
+        200 nm monitoree a 1500 nm : dans ce regime le depot n'est plus
+        terminable et le test ne mesurait plus le facteur.
+        """
+        l0 = 1500.0
+        p_thick = np.array([l0 / (4.0 * 2.3), l0 / (4.0 * 1.45)], dtype=np.float64)
+        wl = 1300.0            # loin du point tournant : la coupure a de la sensibilite
         n_H = complex(2.3, 0.0)
-
-
         n_L = complex(1.45, 0.0)
-
-
         n_Sub = complex(1.52, 0.0)
+        prev_thick = np.array([p_thick[0] + 1.0], dtype=np.float64)  # erreur amont de 1 nm
+        noise = 0.001          # 0,1 point de transmission
 
+        results = [
+            simulate_growth_kernel(
+                p_thick, 1, prev_thick, wl, n_H, n_L, n_Sub,
+                2.0, noise, factor, NON_MONOTONIC_MODE_ATTENUATE,
+            )[0]
+            for factor in (1.0, 2.0, 5.0)
+        ]
 
-
-
-
-        prev_thick = np.array([200.0], dtype=np.float64)
-
-
-        noise = 0.02
-
-
-        factor = 2.0
-
-
-
-
-
-        result_attenuate, _ = simulate_growth_kernel(
-
-
-            p_thick,
-
-
-            1,  # i_layer
-
-
-            prev_thick,
-
-
-            wl,
-
-
-            n_H,
-
-
-            n_L,
-
-
-            n_Sub,
-
-
-            10.0,
-
-
-            noise,
-
-
-            factor,
-
-
-            NON_MONOTONIC_MODE_ATTENUATE,
-
-
+        assert all(r < 1e5 for r in results), f"depot declare non terminable : {results}"
+        assert all(0.0 < r < 2.0 * p_thick[1] for r in results), f"epaisseurs invraisemblables : {results}"
+        assert max(results) - min(results) < 1e-9, (
+            f"non_monotonic_factor influe encore sur le resultat : {results}"
         )
-
-
-
-
-
-        # Should return a reasonable thickness
-
-
-        assert 0.0 < result_attenuate < 500.0, f"Unreasonable result: {result_attenuate}"
-
-
-
 
 
     def test_reject_mode_penalty(self):

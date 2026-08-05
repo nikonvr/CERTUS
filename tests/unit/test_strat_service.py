@@ -204,7 +204,8 @@ def test_p1_10_validate_candidates_phase_a_uses_params_deterministic_flag(monkey
         return np.zeros(shape, dtype=np.float64)
 
     def fake_validate_wavelengths_batch(*args, **kwargs):
-        return np.array([[0.1, 0.01]], dtype=np.float64)
+        # (n_cands, 4) : P95(|dd|), ecart-type, taux de plantage, gain
+        return np.array([[0.1, 0.01, 0.0, 0.4]], dtype=np.float64)
 
     def fake_update_run_states_kernel(*args, **kwargs):
         return np.array([[100.0]], dtype=np.float64)
@@ -245,7 +246,8 @@ def test_p1_9_build_wavelength_index_map_supports_nearby_float_queries() -> None
 
 def test_p1_9_validate_candidates_phase_a_uses_integer_wavelength_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_validate_wavelengths_batch(*args, **kwargs):
-        return np.array([[0.1, 0.01]], dtype=np.float64)
+        # (n_cands, 4) : P95(|dd|), ecart-type, taux de plantage, gain
+        return np.array([[0.1, 0.01, 0.0, 0.4]], dtype=np.float64)
 
     def fake_update_run_states_kernel(*args, **kwargs):
         return np.array([[100.0]], dtype=np.float64)

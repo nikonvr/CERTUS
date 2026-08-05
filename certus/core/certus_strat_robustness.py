@@ -289,18 +289,81 @@ def _filter_finite_robustness_scores(
     *,
     logger,
 ) -> list[dict[str, Any]]:
-    """Keep only strategies with finite robustness score."""
+    """Keep only strategies with finite robustness score.
+
+    🔴 AVEC UN REPLI OBLIGATOIRE : ce filtre ne doit JAMAIS rendre une liste vide.
+
+    Le taux de plantage se COMPOSE sur la hauteur de l'empilement. Sur 48 couches,
+    tenir 5 % au niveau de la strategie exige 1 - (1 - 0,05)^(1/48) = 0,107 % par
+    couche. C'est une falaise, pas un classement : soit toutes les strategies
+    passent, soit aucune.
+
+    Mesure sur example/example_strat/JSON-strat-example.json — un dichroique
+    passe-court a front raide a 545 nm, 48 couches :
+
+        strategies minees .................. 240
+        valides apres contrat .............. 240
+        crash_rate ......... min 0,833  mediane 1,000
+        survivantes ........................   0   <- STRAT ne rendait RIEN
+
+    Et c'est coherent avec la physique du composant : au-dessus de 555 nm le
+    filtre bloque a moins de 0,1 % de transmission, donc plus de la moitie de la
+    plage de balayage (450-700 nm) n'offre aucun signal exploitable. La meilleure
+    longueur d'onde monochromatique, 530 nm, plafonne a 0,8 % de plantage par
+    couche — huit fois le budget.
+
+    Rendre une liste vide fait remonter `all_strategies_results = []` jusqu'au
+    banc, qui affiche RESULT=None : l'utilisateur n'obtient aucune strategie et
+    aucune explication. Mieux vaut rendre la moins risquee en le disant
+    franchement — c'est a l'operateur de juger si 38 % de plantage est acceptable
+    ou si le composant demande un autre paradigme de monitoring (TPM, verres
+    temoins multiples), que ce simulateur ne modelise pas.
+    """
     filtered_results: list[dict[str, Any]] = []
+    rejected: list[dict[str, Any]] = []
     for item in strategies_results:
         score = float(item.get("robustness_score", np.inf))
         if np.isfinite(score):
             filtered_results.append(item)
         else:
+            rejected.append(item)
             logger.warning(
                 f"[ROBUSTNESS] Dropped non-finite score for strategy "
                 f"{item.get('strategy', {}).get('strategy_id', '?')}: {score}"
             )
-    return filtered_results
+
+    if filtered_results or not rejected:
+        return filtered_results
+
+    # Aucune survivante : on reclasse les eliminees par risque croissant et on
+    # leur rend un score fini, faute de quoi elles seraient perdues plus loin.
+    def _fallback_key(it: dict[str, Any]) -> tuple[float, float]:
+        return (float(it.get("crash_rate", 1.0)), _worst_finite_rmse(it))
+
+    rejected.sort(key=_fallback_key)
+    best_crash = float(rejected[0].get("crash_rate", 1.0))
+    logger.error(
+        f"[ROBUSTNESS] 🔴 AUCUNE des {len(rejected)} strategies ne tient sous "
+        f"{CRASH_RATE_TOLERANCE:.0%} de depots non terminables. Le taux se compose "
+        f"sur la hauteur de l'empilement : le meilleur candidat plante dans "
+        f"{best_crash:.1%} des tirages. On rend malgre tout le classement par risque "
+        f"croissant — mais AUCUNE de ces strategies n'est utilisable en l'etat, et "
+        f"le composant demande vraisemblablement un autre paradigme de monitoring."
+    )
+    for item in rejected:
+        item["robustness_score"] = _worst_finite_rmse(item)
+        item["crash_eliminated"] = True
+    return rejected
+
+
+def _worst_finite_rmse(item: dict[str, Any]) -> float:
+    """Pire RMSE fini sur les niveaux de bruit, pour reclasser une eliminee."""
+    worst = 0.0
+    for r in item.get("results_per_noise", []) or []:
+        val = float(r.get("rmse_p95", r.get("rmse_mean", 0.0)) or 0.0)
+        if np.isfinite(val) and val > worst:
+            worst = val
+    return worst
 
 
 def _execute_robustness_tasks(

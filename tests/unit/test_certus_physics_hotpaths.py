@@ -162,9 +162,21 @@ def test_validate_wavelengths_batch_shape_and_nonnegative_metrics() -> None:
         noise_values,
         2.0,
     )
-    assert metrics.shape == (2, 2)
+    # QUATRE colonnes depuis l'integration des trois criteres de la Phase A :
+    #   0 = P95(|Delta d|) en nm   1 = ecart-type   2 = taux de plantage   3 = gain
+    # Ce test exigeait (2, 2) et `metrics >= 0` partout. Les deux etaient faux :
+    # la colonne du GAIN admet une valeur NEGATIVE comme sentinelle « non
+    # mesurable » — le depot ne se termine pas meme a bruit nul — et
+    # _validate_candidates_phase_a s'en sert pour eliminer (certus_strat_service.py,
+    # `if crash_rate >= crash_tol or gain < 0.0`). Une assertion globale
+    # `>= 0` interdirait donc la sentinelle qui fait fonctionner le filtre.
+    assert metrics.shape == (2, 4)
     assert np.all(np.isfinite(metrics))
-    assert np.all(metrics >= 0.0)
+    p95, std, crash, gain = metrics[:, 0], metrics[:, 1], metrics[:, 2], metrics[:, 3]
+    assert np.all(p95 >= 0.0), "un P95 d'ecart d'epaisseur ne peut pas etre negatif"
+    assert np.all(std >= 0.0), "un ecart-type ne peut pas etre negatif"
+    assert np.all((crash >= 0.0) & (crash <= 1.0)), "le taux de plantage est une proportion"
+    assert np.all(np.isfinite(gain)), "le gain peut etre negatif (sentinelle), jamais non fini"
 
 
 @pytest.mark.unit

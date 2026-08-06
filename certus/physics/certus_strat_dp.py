@@ -14,11 +14,50 @@ from .certus_strat_math import check_extrema_proximity, _calc_T_from_matrix, _ca
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def _compute_valid_blocks_kernel(
-    layer_wls: np.ndarray, layer_costs: np.ndarray, valid_mask: np.ndarray, num_layers: int, top_k: int, max_W: int
+    layer_wls: np.ndarray,
+    layer_costs: np.ndarray,
+    valid_mask: np.ndarray,
+    num_layers: int,
+    top_k: int,
+    max_W: int,
+    min_wl_sep: float = 0.0,
 ):
+    """Couts des blocs candidats, avec SEPARATION SPECTRALE MINIMALE.
+
+    `min_wl_sep` <= 0 restitue le comportement historique : les `top_k` longueurs d'onde
+    de cout le plus bas, sans autre critere.
+
+    🔴 POURQUOI CE PARAMETRE EXISTE. Mesure du 2026-08-05, pas de balayage porte de 5 a
+    2 nm sur la demande du physicien (`scripts/probe_block_wls.py`) :
+
+        pas de balayage        5 nm            2 nm
+        etendue des 10 lambda  95 nm mediane   36 nm mediane, 18 nm minimum
+        regions a 20 nm        4 (min 3)       2 (min 1)
+        candidats disponibles  18 par bloc     40 par bloc
+        rejetes par le cap     8 sur 18        30 sur 40
+
+    A 2 nm, 14 % des blocs recevaient dix longueurs d'onde formant UNE SEULE region, par
+    exemple [456, 458, 460, 462, 464, 466, 468, 470, 472, 474] : dix points de grille
+    CONSECUTIFS. Ce ne sont pas dix strategies, c'est une region echantillonnee a chaque
+    pas — et pendant ce temps trente candidats couvrant d'autres regions etaient jetes.
+    Le cout etant une fonction lisse de lambda, affiner la grille resserre mecaniquement
+    les `top_k` moins chers autour du meme minimum local.
+
+    ⚠️ Deux echelles a ne pas confondre. Le pas de BALAYAGE (2 nm) est la resolution avec
+    laquelle on cherche le meilleur point A L'INTERIEUR d'une region ; il doit rester fin.
+    La separation minimale est l'echelle a laquelle deux longueurs d'onde constituent des
+    choix de monitoring DIFFERENTS ; elle se lit sur la variation du gain de compensation
+    (facteur 17 entre 475 et 550 nm) et sur l'espacement des minima locaux du cout, soit
+    quelques dizaines de nanometres.
+
+    L'algorithme ne perd AUCUNE arete : une premiere passe prend le moins cher de chaque
+    region, une seconde complete avec les moins chers restants. On obtient donc autant de
+    candidats qu'avant, mais aussi distincts que possible.
+    """
     block_costs = np.full((num_layers + 1, num_layers + 1, top_k), np.inf, dtype=np.float64)
     block_wls = np.full((num_layers + 1, num_layers + 1, top_k), -1.0, dtype=np.float64)
     block_counts = np.zeros((num_layers + 1, num_layers + 1), dtype=np.int32)
+    taken = np.zeros(max_W, dtype=np.bool_)
     for i in range(num_layers):
         for j in range(i + 1, num_layers + 1):
             bl_ok = True
@@ -79,10 +118,46 @@ def _compute_valid_blocks_kernel(
                             temp_wls[x] = temp_wls[y]
                             temp_wls[y] = tw
                 take = min(temp_count, top_k)
-                for k in range(take):
-                    block_costs[i, j, k] = temp_costs[k]
-                    block_wls[i, j, k] = temp_wls[k]
-                block_counts[i, j] = take
+                if min_wl_sep <= 0.0:
+                    for k in range(take):
+                        block_costs[i, j, k] = temp_costs[k]
+                        block_wls[i, j, k] = temp_wls[k]
+                    block_counts[i, j] = take
+                else:
+                    for x in range(temp_count):
+                        taken[x] = False
+                    n_sel = 0
+                    # Passe 1 — le moins cher de chaque region. temp_* est trie par
+                    # cout croissant, donc le tout premier retenu est bien l'optimum
+                    # global du bloc : on ne sacrifie jamais le meilleur a la diversite.
+                    for x in range(temp_count):
+                        if n_sel >= take:
+                            break
+                        ok = True
+                        for s in range(n_sel):
+                            d = block_wls[i, j, s] - temp_wls[x]
+                            if d < 0.0:
+                                d = -d
+                            if d < min_wl_sep:
+                                ok = False
+                                break
+                        if ok:
+                            block_costs[i, j, n_sel] = temp_costs[x]
+                            block_wls[i, j, n_sel] = temp_wls[x]
+                            taken[x] = True
+                            n_sel += 1
+                    # Passe 2 — completer avec les moins chers restants, pour ne perdre
+                    # aucune arete quand la plage utile est trop etroite pour fournir
+                    # `take` regions distinctes.
+                    for x in range(temp_count):
+                        if n_sel >= take:
+                            break
+                        if not taken[x]:
+                            block_costs[i, j, n_sel] = temp_costs[x]
+                            block_wls[i, j, n_sel] = temp_wls[x]
+                            taken[x] = True
+                            n_sel += 1
+                    block_counts[i, j] = n_sel
     return (block_costs, block_wls, block_counts)
 
 

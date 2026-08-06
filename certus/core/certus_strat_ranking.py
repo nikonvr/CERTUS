@@ -26,6 +26,8 @@ from certus.core.certus_strat_config import (
     SYM_DEFAULT_TIE_EPS_REL,
 )
 
+from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
+
 from certus.utils.certus_strat_service import select_best_strat_result
 
 from certus.utils.certus_strat_context import (
@@ -88,6 +90,7 @@ def _find_k_best_groupings_dp_sequential(
     continuity_weight: float = SYM_DEFAULT_CONTINUITY_WEIGHT,
     adaptive_same_wl: bool = True,
     enable_sym_post_ranking: bool = False,
+    min_wl_sep_nm: float = 0.0,
 ) -> list[dict[str, Any]]:
     max_W = max((len(v) for v in cost_map.values() if v), default=0)
     layer_wls = np.full((num_layers, max_W), -1.0, dtype=np.float64)
@@ -104,7 +107,7 @@ def _find_k_best_groupings_dp_sequential(
             valid_mask[layer_idx, w_idx] = True
 
     block_costs, block_wls, block_counts = _compute_valid_blocks_kernel(
-        layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W
+        layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W, float(min_wl_sep_nm)
     )
 
     if nucleation_wl and nucleation_size > 0 and num_layers >= nucleation_size:
@@ -219,6 +222,7 @@ def mine_strategies_for_block_count(
     sym_adaptive_same_wl: bool = True,
     sym_scoring_mode: str = SYM_DEFAULT_SCORING_MODE,
     sym_allow_hybrid: bool = False,
+    min_wl_sep_nm: float = DP_DEFAULT_MIN_WL_SEPARATION_NM,
 ) -> list[dict[str, Any]]:
     if n_blocks <= 0 or num_layers <= 0:
         return []
@@ -336,6 +340,7 @@ def mine_strategies_for_block_count(
             continuity_weight=float(sym_continuity_weight) if apply_sym_post else SYM_DEFAULT_CONTINUITY_WEIGHT,
             adaptive_same_wl=bool(sym_adaptive_same_wl) if apply_sym_post else False,
             enable_sym_post_ranking=bool(apply_sym_post and post_sym_enabled),
+            min_wl_sep_nm=float(min_wl_sep_nm),
         )
         logger.debug(f"[DEBUG MINING] {origin_name}: DP returned {len(solutions)} solutions")
 

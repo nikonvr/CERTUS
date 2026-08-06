@@ -49,6 +49,8 @@ from certus.core.certus_core import (
 
 from certus.utils.certus_exclusions import filter_params_for_serialization
 
+from certus.core.certus_strat_utils import DP_DEFAULT_MIN_WL_SEPARATION_NM
+
 from certus.core.certus_strat_core import (
     SYM_DEFAULT_EXTREMA_WINDOW_OT,
     SYM_DEFAULT_SCORING_MODE,
@@ -601,6 +603,9 @@ def _parallel_block_worker(args) -> dict:
             sym_adaptive_same_wl=bool(params.get("sym_adaptive_same_wl", True)),
             sym_scoring_mode=str(params.get("sym_scoring_mode", SYM_DEFAULT_SCORING_MODE)),
             sym_allow_hybrid=bool(params.get("sym_allow_hybrid", False)),
+            min_wl_sep_nm=float(
+                params.get("dp_min_wl_separation_nm", DP_DEFAULT_MIN_WL_SEPARATION_NM)
+            ),
         )
 
         logger.debug(f"[W{n_blk}] mine_strategies_for_block_count returned {len(strategies_dp)} strategies")

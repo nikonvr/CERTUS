@@ -1,0 +1,73 @@
+{
+ "n_captures": 8,
+ "per_group": [
+  {
+   "num_runs": 25,
+   "n_blocks": 7,
+   "n": 240,
+   "spearman_rho": -0.042412116751091855,
+   "spearman_p": 0.5131700106236756,
+   "kendall_tau": -0.020719398577250216,
+   "overlap_top10": 0,
+   "overlap_top5": 0,
+   "cost_range": [
+    92.95068230893872,
+    123.65878797161004
+   ],
+   "score_range": [
+    0.06322217760218606,
+    0.4595206878056841
+   ]
+  },
+  {
+   "num_runs": 25,
+   "n_blocks": 8,
+   "n": 10,
+   "spearman_rho": -0.32603322669746937,
+   "spearman_p": 0.35790080204081776,
+   "kendall_tau": -0.325101610132231,
+   "overlap_top10": null,
+   "overlap_top5": 2,
+   "cost_range": [
+    32.90011326342472,
+    60.14529477876359
+   ],
+   "score_range": [
+    0.03425332542494982,
+    0.05209499745887907
+   ]
+  },
+  {
+   "num_runs": 25,
+   "n_blocks": 9,
+   "n": 47,
+   "spearman_rho": 0.10935785004451971,
+   "spearman_p": 0.4643331551910747,
+   "kendall_tau": 0.06610304162599533,
+   "overlap_top10": 3,
+   "overlap_top5": 0,
+   "cost_range": [
+    23.750973328870757,
+    52.31185002170326
+   ],
+   "score_range": [
+    0.015822216131378502,
+    0.03983429736432744
+   ]
+  }
+ ],
+ "pooled": {
+  "n": 297,
+  "spearman_rho": 0.4457394212910046,
+  "spearman_p": 6.652136071274552e-16,
+  "note": "populations melangees (n_blocks differents) \u2014 indicatif seulement"
+ },
+ "screening_rho_pondere_par_n": -0.02794417957961048,
+ "screening_overlap_top10": {
+  "n_groupes": 2,
+  "min": 0,
+  "median": 3,
+  "max": 3,
+  "mean": 1.5
+ }
+}

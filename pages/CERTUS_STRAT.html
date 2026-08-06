@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="assets/certus_report.css">
 </head>
 
+<body>
+
 <nav class="navbar">
         <a href="CERTUS_HUB.html" class="certus-logo">
             <svg height="55" viewBox="0 0 820 170" xmlns="http://www.w3.org/2000/svg">
@@ -289,9 +291,9 @@
       facteur ~30.
       <br>&mdash; La mesure a ete faite a <code>trigger_tolerance = 0.5</code>, soit
       &sigma; = 0,5 point de transmission. Le bruit reellement observe sur OMS 5100 est de l&rsquo;ordre
-      de <b>0,05 point</b> ; avec une marge de securite de 2, la valeur juste est <b>0,1</b> &mdash;
-      qui est aussi le defaut du depot (<code>certus_strat_ui_state.py:90</code>). Le tableau a donc
-      ete etabli avec un bruit <b>cinq fois trop fort</b>.
+      de <b>0,05 point</b>, et c&rsquo;est <b>0,05</b> qu&rsquo;il faut regler &mdash; la marge de securite
+      &times;2 etant deja appliquee par le modele lui-meme (voir l&rsquo;encadre plus bas). Le tableau a
+      donc ete etabli avec un bruit <b>dix fois trop fort</b>.
     </p>
     <p style="margin:0 0 10px;">
       <b>Mesure</b>, 17 erreurs amont de &minus;8 a +8 nm, taux de depot non terminable :
@@ -323,8 +325,13 @@
       <code>trigger_tolerance</code> s&rsquo;applique en <b>% de transmission</b> : <code>0.5</code>
       vaut &sigma; = 0,5 point de T absolu. Sur OMS 5100, le signal observe fluctue de
       <b>45,5 % a 45,55 %</b>, soit <b>0,05 point</b>. Le fichier
-      <code>JSON-strat-example.json</code> etait donc <b>dix fois trop bruite</b> &mdash; le defaut
-      du depot, <code>0.1</code>, etait deja correct.
+      <code>JSON-strat-example.json</code> etait donc <b>dix fois trop bruite</b>.
+      <br>⚠️ <b>Le defaut du depot n&rsquo;est pas correct non plus</b> &mdash; une version
+      anterieure de cette page l&rsquo;affirmait, a tort. <code>0.1</code>
+      (<code>certus_strat_ui_state.py:90</code>) vaut <b>deux fois</b> le bruit reel, donc quatre
+      fois une fois passe au facteur 2 du modele ; il est seulement <i>moins</i> faux que
+      <code>0.5</code>. <b>La valeur juste est <code>0.05</code> aux deux endroits</b> : le fichier
+      d&rsquo;exemple <b>et</b> le defaut de l&rsquo;interface.
     </p>
     <p style="margin:0 0 10px;background:#fef3c7;border-left:4px solid #d97706;padding:8px 12px;">
       ⚠️ <b>La marge de securite &times;2 est DEJA dans le modele</b> :
@@ -689,8 +696,59 @@
             style START fill:#f1f5f9,stroke:#94a3b8,stroke-dasharray: 5 5
         </div>
         <p style="font-size: 0.9em; text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 20px;">
-            <em>DAG des transitions de la Programmation Dynamique : Le graphe montre l'exploration exhaustive de tous les découpages possibles en blocs monochromatiques.</em>
+            <em>DAG des transitions de la Programmation Dynamique. Le graphe est schématique :
+            l'exploration n'est <strong>pas</strong> exhaustive — voir l'encadré ci-dessous.</em>
         </p>
+
+        <div style="border:2px solid #dc2626;border-radius:8px;padding:14px 18px;margin:18px 0;background:#fef2f2;">
+            <p style="margin:0 0 10px;font-weight:700;color:#991b1b;">
+                Ce que cette DP peut voir — et ce qu'elle ne peut pas
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>1. Le coût d'un bloc est la SOMME BRUTE des coûts de ses couches</b>
+                (<code>certus_strat_dp.py:61</code>), et la DP additionne les blocs (<code>:118</code>).
+                L'objectif minimisé est donc exactement
+                $\sum_{\ell} \text{Cost}(\ell, \lambda_{\text{bloc}(\ell)})$.
+                <br>Conséquence structurelle : <b>fusionner deux blocs adjacents à la même
+                &lambda; ne change rien au coût.</b> La DP est aveugle au découpage — seule la
+                contrainte $k = n_{\text{blocks}}$ le fixe. Or la valeur physique d'un bloc est
+                précisément que le signal reste continu à &lambda; constante et que
+                l'auto-compensation opère. <b>Cette valeur ne figure pas dans l'objectif.</b>
+                C'est ce que les bonus de symétrie et les passes ELITE tentent de rattraper
+                <i>après coup</i>.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>2. <code>n_blocks</code> est un compte de coupures, pas de blocs
+                monochromatiques.</b> Deux blocs adjacents à la même &lambda; sont comptés
+                comme deux alors qu'en salle c'est <b>un seul</b> — le signal n'est pas
+                interrompu. Le nombre affiché ne veut donc pas dire ce qu'il semble dire.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>3. Seules les 10 meilleures &lambda; par bloc entrent dans la DP</b>
+                (<code>certus_strat_dp.py:117</code>, <code>min(10, bl_count)</code>, en dur).
+                Mesuré sur l'exemple (<code>scripts/probe_block_wls.py</code>) : le cap mord
+                sur 38 blocs sur 40, jetant 8 candidats en médiane sur 18 disponibles. Mais
+                <b>ce qu'il jette est la queue</b> — le 10<sup>e</sup> retenu coûte déjà
+                &times;2,2 le premier en médiane — et les 10 retenus s'étalent sur 95 nm en
+                médiane, couvrant 4 régions distinctes alors que <code>coût(&lambda;)</code>
+                n'a que 2 à 5 minima locaux. La structure est donc déjà capturée.
+                <b>Le vrai élagueur n'est pas ce cap, c'est la Phase A</b>, qui réduit
+                ~51 &lambda; scannées à 1–27 survivantes par couche.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>4. Un bloc n'est valide que si TOUTES ses couches ont cette &lambda;</b>
+                parmi leurs survivantes de Phase A (<code>:64-66</code>). Une élimination sur
+                une seule couche tue le bloc entier. L'énumération part de la couche la
+                <b>plus contrainte</b> (<code>:36-45</code>) — heuristique de propagation de
+                contraintes, et c'est un bon choix.
+            </p>
+            <p style="margin:0;">
+                <b>5. La DP conserve <code>top_k</code>&times;2 chemins par état</b>
+                (<code>:93</code>). C'est bien une recherche des <i>k</i> meilleurs chemins,
+                pas un simple faisceau : l'optimalité de Bellman est préservée pour l'objectif
+                donné. <b>Le problème n'est pas l'algorithme, c'est l'objectif.</b>
+            </p>
+        </div>
 
         <p>
             The algorithm explores block counts from a contractual range controlled by the

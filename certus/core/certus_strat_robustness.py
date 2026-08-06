@@ -714,12 +714,45 @@ def _test_strategy_robustness_task(
         )
         rmse_p95 = float(np.percentile(run_rmses, 95))
         rmse_p99 = float(np.percentile(run_rmses, 99))
+
+        # CVaR95 — MOYENNE DES 5 % PIRES, et non le point a 95 %.
+        #
+        # Un quantile est la fonctionnelle la MOINS efficace d'un echantillon : il
+        # est determine par la queue haute et par elle seule. Le nombre de points
+        # qui decident reellement d'un P95 :
+        #
+        #     N =   6  ->  UN SEUL (le maximum)      <- mode `fast`, n_screen_runs
+        #     N =  25  ->  un a deux
+        #     N = 150  ->  environ sept
+        #
+        # A 6 tirages, l'elimination de 230 strategies sur 240 se decidait donc sur
+        # une seule realisation Monte-Carlo par strategie. Mesure du 2026-08-05 :
+        # rho de Spearman entre le cout de la DP et ce score = 0,29, et des dix
+        # strategies gardees par la DP, UNE SEULE figurait dans les dix meilleures.
+        #
+        # La CVaR (expected shortfall) garde exactement la meme semantique de risque
+        # — « a quel point est-ce mauvais quand c'est mauvais » — mais elle MOYENNE
+        # la queue au lieu d'en piocher un point. A N egal, la variance de
+        # l'estimateur est nettement plus basse, sans un seul tirage supplementaire.
+        # C'est la raison pour laquelle la finance a remplace la VaR par l'expected
+        # shortfall.
+        #
+        # ⚠️ CVaR95 >= P95 par construction : les scores changent d'echelle. Un
+        # classement produit avec l'une n'est PAS comparable a un classement produit
+        # avec l'autre. `robustness_score_functional` permet de rejouer a l'ancienne
+        # pour comparer sur un meme run.
+        _sorted_rmses = np.sort(run_rmses)
+        _k_tail = max(1, int(np.ceil(0.05 * _sorted_rmses.size)))
+        rmse_cvar95 = float(np.mean(_sorted_rmses[-_k_tail:]))
+
         results_per_noise.append(
             {
                 "noise_level": noise_val,
                 "rmse_mean": float(np.mean(run_rmses)),
                 "rmse_std": float(np.std(run_rmses)),
                 "rmse_p95": rmse_p95,
+                "rmse_cvar95": rmse_cvar95,
+                "cvar95_tail_n": int(_k_tail),
                 "rmse_p99": rmse_p99,
                 "rmse_all": run_rmses.tolist(),
                 "thicknesses_all": run_thicknesses,
@@ -729,7 +762,18 @@ def _test_strategy_robustness_task(
 
     total_mc_sims = num_runs * len(noise_levels)
     _emit_stat("MCS", total_mc_sims)
-    final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
+    # La fonctionnelle de classement est CVaR95 par defaut (voir le commentaire de
+    # son calcul plus haut). `robustness_score_functional = "p95"` restitue le
+    # comportement anterieur, pour pouvoir COMPARER les deux classements sur un
+    # meme run plutot que de basculer a l'aveugle.
+    _functional = str(params.get("robustness_score_functional", "cvar95")).strip().lower()
+    if _functional == "p95":
+        final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
+    else:
+        final_score = max(
+            r.get("rmse_cvar95", r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]))
+            for r in results_per_noise
+        )
 
     # ELIMINATION SUR RISQUE DE PLANTAGE.
     #

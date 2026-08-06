@@ -204,7 +204,96 @@ linéaire.
 
 ---
 
-## 3. 🔴 La mesure à faire AVANT toute décision
+## 2bis. 🔴 MESURÉ — le coût de la DP ne prédit pas la réponse spectrale
+
+C'est le résultat central de l'audit. `scripts/probe_dp_vs_truth.py` intercepte
+`run_final_simulation_block`, qui rend le `robustness_score` de **chaque** stratégie minée —
+avant toute coupe au top-*k*, donc sans troncature de sélection. Le ρ est calculé **par
+`n_blocks`**, `total_cost` n'étant pas comparable d'un compte de blocs à l'autre.
+
+### Résultat, budget `premium` (25 tirages au screening, 150 à la passe complète)
+
+| `n_blocks` | n | `total_cost` (DP) | `robustness_score` (vérité) | ρ Spearman | τ Kendall | top-10 |
+|---|---|---|---|---|---|---|
+| **7** | **240** | 92,9 → 123,7 (**×1,33**) | 0,063 → 0,46 (**×7,3**) | **−0,042** | −0,021 | **0/10** |
+| 9 | 47 | 23,8 → 52,3 (×2,20) | 0,016 → 0,040 (×2,5) | +0,109 | +0,066 | 3/10 |
+| 8 | 10 | 32,9 → 60,2 (×1,83) | 0,034 → 0,052 (×1,5) | −0,326 | −0,325 | — |
+| | | | | **ρ pondéré = −0,028** | | |
+
+> **Le coût de la DP varie de 33 %. La vérité varie d'un facteur 7,3. Les deux sont
+> décorrélés.** La DP discrimine — elle discrimine sur quelque chose qui n'a aucun rapport
+> avec le résultat.
+
+Et le chiffre opérationnel est sans appel : **des dix stratégies que la DP garde par coût,
+zéro figure dans les dix réellement meilleures.**
+
+### Pourquoi ce n'est pas un artefact de mesure
+
+Le même protocole en budget `fast` (6 tirages) donnait ρ = +0,29. On pouvait alors soupçonner
+une **atténuation par erreur de mesure** : à 6 tirages, un P95 est le maximum d'un échantillon
+de six, et une vérité bruitée déprime mécaniquement toute corrélation.
+
+**Quadrupler la précision a fait DESCENDRE ρ à zéro, pas monter.** Si le proxy était bon mais
+mal mesuré, ρ aurait augmenté. L'hypothèse d'atténuation est donc écartée.
+
+Et l'explication triviale — « le coût ne varie pas assez pour discriminer » — est écartée
+aussi : il varie de 33 % sur 240 stratégies.
+
+### Ce que cela implique
+
+La Phase B élimine la quasi-totalité de l'espace sur `total_cost`. Ce tri est **sans valeur
+prédictive**. Trois conséquences :
+
+1. **La DP ne doit pas être un CLASSEUR.** Elle est algorithmiquement irréprochable —
+   *k*-meilleurs chemins exacts — mais pour un objectif qui ne prédit pas la sortie. Elle doit
+   devenir un **générateur de diversité**, et le tri revenir au Monte-Carlo, seul à mesurer la
+   réponse spectrale.
+2. **Les refontes de la fonction de coût deviennent prioritaires, pas secondaires.** Coût
+   dépendant de la longueur du bloc, pondération par la sensibilité spectrale, écart à la
+   cible plutôt qu'au nominal : ce ne sont plus des raffinements, ce sont les candidats pour
+   remplacer un critère dont on vient de prouver qu'il ne prédit rien.
+3. **Toute optimisation de la Phase A qui vise à mieux estimer ce coût est du temps perdu**
+   tant que le coût lui-même n'est pas relié à l'objectif.
+
+### Le budget réel : `execution_mode = "fast"` divise tout par quatre
+
+Découvert en instrumentant. `certus/ui/certus_strat_ui_state.py:1034-1062` :
+
+| Paramètre | Configuré | Réellement utilisé en `fast` |
+|---|---|---|
+| `n_screen_runs` | 25 | **6** |
+| `robustness_num_runs` | 150 | **40** |
+| `consensus_num_runs` | 150 | **40** |
+| `consensus_num_seeds` | 3 | **2** |
+| `elite_rounds` | 2 | **1** |
+
+Le défaut du dépôt est `premium` (`ui_state.py:96`, `ui_layout.py:869`) ; c'est **le fichier
+d'exemple** qui imposait `fast`. Même schéma que `trigger_tolerance`. Toutes les mesures de
+la session antérieures à ce constat — dont le tableau de calibration du bruit — ont été
+faites à un quart du budget.
+
+⚠️ Conséquence statistique, et c'est elle qui compte : **à 6 tirages, un P95 est le maximum
+de six**. L'élimination de 230 stratégies sur 240 se décidait donc sur **une seule
+réalisation Monte-Carlo par stratégie**. Et le taux de plantage, binomial, avait une
+résolution de 1/6 = **17 %** pour un seuil à **5 %**.
+
+### Correctif posé : CVaR95 remplace P95 comme fonctionnelle de classement
+
+`certus/core/certus_strat_robustness.py`. Un quantile est la fonctionnelle la moins efficace
+d'un échantillon — le nombre de points qui décident réellement d'un P95 vaut 1 à N=6, 1-2 à
+N=25, ~7 à N=150. La **CVaR95** (moyenne des 5 % pires, *expected shortfall*) garde la même
+sémantique de risque mais **moyenne** la queue au lieu d'en piocher un point.
+
+`rmse_cvar95` est calculée à côté de `rmse_p95`, qui reste en place — 32 références dans le
+dépôt. `robustness_score_functional = "p95"` restitue le comportement antérieur, pour
+comparer les deux classements sur un même run.
+
+⚠️ CVaR95 ≥ P95 par construction : **les scores changent d'échelle et les classements
+produits par les deux ne sont pas comparables.**
+
+---
+
+## 3. La mesure suivante
 
 Une seule, et elle décide de tout le reste :
 

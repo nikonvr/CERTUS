@@ -485,8 +485,21 @@
                 <li><strong>Deterministic pipeline:</strong> Phase A uses a globally pre-allocated noise matrix
                     <code>global_noise_matrix[runs × layers]</code> generated once from <code>phase_a_seed</code>.
                     Each layer gets a fixed column, ensuring reproducibility regardless of thread ordering.</li>
-                <li>Phase B uses derived seeds: <code>seed = robustness_seed + strategy_idx × 10⁵ + noise_idx</code>,
-                    so robustness results are reproducible across execution orders.</li>
+                <li><strong>Phase B uses COMMON RANDOM NUMBERS.</strong> The noise matrix depends only on
+                    <code>(robustness_seed, noise_idx, num_runs, num_layers)</code> and is served from a cache
+                    (<code>_get_cached_sobol_noise</code>, <code>certus_strat_robustness.py:482-510</code>) — it does
+                    <em>not</em> depend on the strategy. The <code>_strat_idx</code> argument of
+                    <code>_test_strategy_robustness_task</code> is underscore-prefixed and deliberately unused
+                    (<code>:524</code>).
+                    <br>This is the right design and it matters: every strategy faces the <em>same</em> noise
+                    realisations, so the comparison between two strategies is <strong>paired</strong> and the noise
+                    largely cancels in the difference — which is the only thing a ranking depends on.
+                    <br>⚠️ A previous version of this page claimed
+                    <code>seed = robustness_seed + strategy_idx × 10⁵ + noise_idx</code>. That was wrong: it would
+                    have given each strategy an independent draw and made the ranking far noisier.
+                    <br>The Sobol seed itself is scrambled — <code>base_seed × 2 654 435 761 + noise_idx × 40 503</code>
+                    (<code>:509</code>) — because the naive <code>base_seed + noise_idx</code> made distinct pairs
+                    collide: (seed 42, level 1) and (seed 43, level 0) both gave 43, hence the <em>same</em> noise.</li>
                 <li>The legacy <code>distribution</code> argument is accepted for backward compatibility but
                     intentionally ignored — behavior is always gaussian.</li>
             </ul>
@@ -791,9 +804,48 @@
         </div>
 
         <h3>4.3 SYM — Symmetry-Based Scoring</h3>
+
+        <div style="border:2px solid #dc2626;border-radius:8px;padding:14px 18px;margin:0 0 18px;background:#fef2f2;">
+            <p style="margin:0 0 10px;font-weight:700;color:#991b1b;">
+                🔴 Le terme de symétrie est MORT — vérifié ligne à ligne le 2026-08-05
+            </p>
+            <p style="margin:0 0 10px;">
+                Désaccord de nom entre producteur et consommateur. Le producteur
+                (<code>certus_strat_objectives.py:565-568</code>) émet
+                <code>dist_prev_start</code>, <code>dist_next_start</code>,
+                <code>dist_prev_end</code>, <code>dist_next_end</code>. Le consommateur
+                (<code>certus_strat_context.py:285-291</code>) lit
+                <code>ext_prev_start</code>… Et <code>_EXT_KEYS</code>
+                (<code>certus_strat_service.py:1030</code>), censé faire le pont, recopie
+                lui aussi des clés <code>ext_*</code>.
+            </p>
+            <p style="margin:0 0 10px;">
+                Un <code>grep</code> sur tout le dépôt ne trouve <code>ext_prev_start</code>
+                <b>qu'à ces deux endroits</b> : rien ne l'écrit jamais. Donc
+                <code>cand.get("ext_prev_start", SYM_MISSING_DISTANCE)</code> rend
+                <b>999.0 pour tout candidat</b>, et le score de symétrie vaut la même
+                constante partout. <b>Il ne discrimine rien.</b>
+            </p>
+            <p style="margin:0;">
+                Conséquence : la passe de minage SYM ne diffère de THICKNESS que d'une
+                constante, produit le même classement, et donc des <b>doublons</b> — environ
+                un tiers du budget de minage et de screening recalcule THICKNESS. Cela
+                explique qu'à <code>trigger_tolerance = 0,5</code> les quatre finalistes
+                portaient toutes <code>origin=SYM</code>.
+                <br>⚠️ Réparer le nom <b>activera ce terme pour la première fois</b> :
+                <code>sym_weight</code> n'a jamais été calibré sur un terme vivant. À poser
+                derrière une mesure, pas en aveugle.
+            </p>
+        </div>
+
         <div class="new-badge">
-            <p>The SYM system rewards monitoring wavelengths that place triggers near extrema, where error propagation
-            is more symmetric, and penalizes unnecessary wavelength changes between adjacent blocks. Key parameters:</p>
+            <p><em>Description de l'intention, telle que codée — voir l'encadré ci-dessus
+            pour ce qui s'exécute réellement.</em> Le système SYM récompense les longueurs
+            d'onde qui placent les déclenchements près des extrema, où la propagation
+            d'erreur est plus symétrique, et pénalise les changements de longueur d'onde
+            inutiles entre blocs adjacents. Seul le second terme est vivant. Paramètres
+            (les valeurs par défaut ci-dessous sont exactes, cf.
+            <code>certus_strat_utils.py:49-57</code> ; le fichier d'exemple les écrase) :</p>
             <ul>
                 <li><code>sym_enable</code>: enable SYM scoring (default True).</li>
                 <li><code>sym_extrema_window</code>: optical thickness window for extrema proximity (default 12 OT).</li>
@@ -818,9 +870,128 @@
                     &emsp;b. apply a wavelength-change penalty when $\lambda$ switches between adjacent blocks.<br>
                     &emsp;c. run <code>simulate_stack_robustness_batch</code> to propagate cumulative errors through the stack.<br>
                     &emsp;d. compute the spectral RMSE versus the nominal T(λ) via <code>compute_batch_rmse</code>.<br>
-                    2. Rank strategies by the worst-case RMSE P95 across the tested noise levels.<br>
+                    2. Rank strategies by the worst-case <strong>CVaR95</strong> across the tested noise levels
+                       (was the P95 — see below).<br>
                     3. Select parallel or sequential execution automatically via <code>get_safe_worker_count()</code>.<br>
                     4. Filter non-finite robustness scores before final ranking.
+                </div>
+
+                <div style="border:2px solid #dc2626;border-radius:8px;padding:14px 18px;margin:18px 0;background:#fef2f2;">
+                    <p style="margin:0 0 10px;font-weight:700;color:#991b1b;">
+                        🔴 Le RMSE est mesuré contre le NOMINAL, pas contre la cible
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        L'étape&nbsp;1.d compare à <code>T_nom</code>, la transmission des
+                        <b>épaisseurs nominales</b> (<code>certus_strat_robustness.py:211</code>),
+                        et c'est ce tableau qui part en argument <code>T_target</code> de
+                        <code>compute_batch_rmse</code> (<code>:706-712</code>). Le RMSE est
+                        <b>non pondéré, à pas constant, sur toute la plage</b>.
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        Et STRAT n'a <b>jamais reçu la cible</b> : zéro occurrence de
+                        <code>targets</code> dans tout le module, alors que DESIGN la porte
+                        sous forme de zones <code>{lmin, lmax, tmin, tmax, w}</code>. STRAT
+                        répond donc à « quelle stratégie reproduit le mieux le spectre des
+                        épaisseurs conçues ? », et non « laquelle respecte le mieux la
+                        cible ? ».
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        Sur le dichroïque de l'exemple, plage 400–700&nbsp;nm au pas de
+                        1&nbsp;nm : la bande bloquée pèse <b>146 points sur 301</b> et son
+                        exigence est &lt;&nbsp;0,1&nbsp;% — un demi-point d'écart y vaut cinq
+                        fois hors spec — mais elle compte exactement autant que la bande
+                        passante, où le même écart est invisible.
+                    </p>
+                    <p style="margin:0;">
+                        ⚠️ <b>Distinction à ne pas rater.</b> Le point <i>visé</i> pendant le
+                        dépôt doit rester le nominal figé : c'est le mécanisme même de
+                        l'auto-compensation. Seule la <b>figure de mérite qui classe</b> les
+                        stratégies doit passer à la cible pondérée.
+                    </p>
+                </div>
+
+                <div style="border:2px solid #16a34a;border-radius:8px;padding:14px 18px;margin:18px 0;background:#f0fdf4;">
+                    <p style="margin:0 0 10px;font-weight:700;color:#166534;">
+                        2026-08-05 — CVaR95 remplace le P95 comme fonctionnelle de classement
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        Un quantile est la fonctionnelle la <b>moins efficace</b> d'un
+                        échantillon : il est déterminé par la seule queue haute. Nombre de
+                        points qui décident réellement d'un P95 :
+                    </p>
+                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                        <tr style="background:#dcfce7;">
+                            <th style="border:1px solid #86efac;padding:4px 10px;">N tirages</th>
+                            <th style="border:1px solid #86efac;padding:4px 10px;">points décidant le P95</th>
+                            <th style="border:1px solid #86efac;padding:4px 10px;">résolution sur <code>crash_rate</code></th></tr>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>6</b> — mode <code>fast</code></td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>un seul (le maximum)</b></td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>17 %</b> pour un seuil à 5 %</td></tr>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">25</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">un à deux</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">4 %</td></tr>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">150</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">environ sept</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">0,7 %</td></tr>
+                    </table>
+                    <p style="margin:0 0 10px;">
+                        La <b>CVaR95</b> — moyenne des 5&nbsp;% pires, <i>expected
+                        shortfall</i> — garde exactement la même sémantique de risque mais
+                        <b>moyenne</b> la queue au lieu d'en piocher un point. À N égal, la
+                        variance de l'estimateur est nettement plus basse, sans un seul
+                        tirage supplémentaire.
+                    </p>
+                    <p style="margin:0;">
+                        <code>rmse_cvar95</code> est calculée à côté de <code>rmse_p95</code>,
+                        qui reste en place. <code>robustness_score_functional = "p95"</code>
+                        restitue le comportement antérieur.
+                        <br>⚠️ CVaR95 &ge; P95 par construction : <b>les scores changent
+                        d'échelle et les classements produits par les deux ne sont pas
+                        comparables.</b>
+                    </p>
+                </div>
+
+                <div style="border:2px solid #dc2626;border-radius:8px;padding:14px 18px;margin:18px 0;background:#fef2f2;">
+                    <p style="margin:0 0 10px;font-weight:700;color:#991b1b;">
+                        🔴 Mesuré : le coût de la DP ne prédit pas ce score (&rho; = &minus;0,04)
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        Cette étape est la <b>seule</b> du pipeline où la réponse spectrale est
+                        réellement évaluée. Tout ce qui est éliminé en amont l'est sur
+                        <code>total_cost</code>, une somme de nanomètres produite par la DP.
+                        <code>scripts/probe_dp_vs_truth.py</code> a mesuré le lien entre les
+                        deux, sur la population complète avant toute coupe :
+                    </p>
+                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                        <tr style="background:#fee2e2;">
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">n_blocks</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">n</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">étendue <code>total_cost</code></th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">étendue du vrai score</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px">&rho;</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">top-10</th></tr>
+                        <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>7</b></td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>240</b></td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">&times;1,33</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>&times;7,3</b></td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>&minus;0,042</b></td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>0/10</b></td></tr>
+                        <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">9</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">47</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">&times;2,20</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">&times;2,5</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">+0,109</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">3/10</td></tr>
+                    </table>
+                    <p style="margin:0;">
+                        Le coût varie de 33&nbsp;%, la vérité d'un facteur 7,3, et les deux
+                        sont <b>décorrélés</b>. Le même protocole à 6 tirages donnait
+                        &rho;&nbsp;=&nbsp;+0,29 : <b>quadrupler la précision a fait descendre
+                        &rho; à zéro, pas monter</b>, ce qui écarte l'atténuation par erreur de
+                        mesure. <b>La DP ne peut donc pas servir de classeur ; elle doit
+                        devenir un générateur de diversité, et le tri revenir au
+                        Monte-Carlo.</b>
+                    </p>
                 </div>
 
                 <h3>4.5 Consensus Multi-Seed Ranking (optional)</h3>

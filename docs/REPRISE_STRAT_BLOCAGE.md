@@ -38,8 +38,14 @@ bloquée. **Ce n'est pas un problème** — voir §2.2.
 
 **Réponse du physicien, 2026-08-05 :** sur OMS 5100, le signal fluctue typiquement de
 **45,5 % à 45,55 %**, soit **0,05 point**. Le `0.5` de l'exemple est donc **dix fois trop
-fort**. Le défaut du dépôt, lui, était déjà correct : `0.1`
-(`certus/ui/certus_strat_ui_state.py:90` et `:943`) — seul le fichier d'exemple l'écrasait.
+fort**.
+
+⚠️ **Le défaut du dépôt n'est PAS correct non plus.** Une version antérieure de cette page
+l'affirmait — c'est faux, et la ligne suivante le démontre. `0.1`
+(`certus/ui/certus_strat_ui_state.py:90` et `:943`) vaut **deux fois** le bruit réel, donc
+**quatre fois** une fois passé au facteur 2 du modèle. Il est seulement *moins* faux que le
+`0.5` de l'exemple. **La valeur juste est `0.05` aux deux endroits** : le fichier d'exemple
+**et** le défaut de l'interface.
 
 **⚠️ La marge de sécurité ×2 est DÉJÀ dans le modèle, ne l'applique pas deux fois.**
 `_resolve_robustness_noise_levels` (`certus/core/certus_strat_robustness.py:152-163`) rend
@@ -58,9 +64,16 @@ Mesuré, machine au repos, un run par ligne :
 À `0.05` : `RANK00 id=8202 origin=ELITE score=0.017793 crash=0.0250 elim=False nblocks=8
 wl=[550,485,460,455,465,460,475,495]`.
 
-**Reste à faire : corriger `example/example_strat/JSON-strat-example.json` à `0.05`.**
-Non fait — c'est un changement de paramètre physique sur un fichier de référence, il
-demande une décision explicite, pas une initiative d'agent.
+✅ **Fait.** `example/example_strat/JSON-strat-example.json:78` porte `"trigger_tolerance": "0.05"`
+depuis le commit `0551b60` — celui-là même qui a écrit ce document en annonçant l'inverse.
+Une version antérieure de cette section disait « reste à faire, non fait » : c'était faux,
+la correction était dans le même commit. Vérifier par
+`git show HEAD:example/example_strat/JSON-strat-example.json | grep trigger_tolerance`.
+
+⚠️ **Reste à faire, en revanche : le défaut de l'interface.** Il vaut encore `0.1`
+(`certus/ui/certus_strat_ui_state.py:90` et `:943`), soit deux fois le bruit réel — donc
+quatre fois après le facteur 2 du modèle. Tout utilisateur qui part d'une configuration
+neuve, sans charger l'exemple, hérite de cette valeur.
 
 ### 2.2 La plage de balayage — on ne la borne pas
 

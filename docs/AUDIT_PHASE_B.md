@@ -101,25 +101,64 @@ Une stratégie de score **exactement 0** — le meilleur possible — est **saut
 
 Non vérifiés par moi. La réfutation adversariale n'a pas eu lieu.
 
-### 2.1 Les dix λ retenues par bloc sont probablement dix fois la même
+### 2.1 ❌ RÉFUTÉ PAR LA MESURE — les dix λ ne sont PAS dix fois la même
 
-`certus/physics/certus_strat_dp.py:117` garde les **10 λ de coût le plus bas**, sans aucune
-contrainte de **séparation spectrale**. Le coût est une fonction lisse de λ et le pas de scan
-est fin. Les dix « meilleures » d'un bloc sont donc vraisemblablement dix points voisins du
-**même minimum local**.
+**Hypothèse testée.** `certus/physics/certus_strat_dp.py:117` garde les 10 λ de coût le plus
+bas, sans contrainte de séparation spectrale. Si `coût(λ)` était lisse à minimum unique, ces
+dix seraient dix points voisins du même minimum — on échantillonnerait dix fois la même
+stratégie avant de dépenser dessus le budget Monte-Carlo.
 
-> On ne garde pas dix stratégies, **on échantillonne dix fois la même** — puis on dépense
-> dessus le budget Monte-Carlo, qui est la seule étape à mesurer la bonne grandeur.
+**Mesure.** `scripts/probe_block_wls.py` intercepte `_compute_valid_blocks_kernel` au premier
+appel, sans rien changer au calcul. Sortie complète : `reports/probe_block_wls.json`.
 
-**Vérification en une ligne** : imprimer `block_wls[j, i, 0:10]` pour quelques blocs.
-**Correctif si confirmé** : n'accepter un candidat que si `|λ_b − λ_retenue| ≥ δ_min` pour
-toutes les retenues. Ordre de grandeur de `δ_min` : le gain varie d'un facteur 17 entre 475 et
-550 nm, donc à l'échelle de quelques dizaines de nm — **δ_min ≈ 20 nm** comme point de départ.
-Coût : une boucle de rejet, zéro simulation supplémentaire.
+```
+BLOCS_VALIDES=211   AVEC_10_CANDIDATS=140
+SPAN_NM      min=50   p25=75   median=95   p75=245   max=250
+REGIONS_20NM min=3    median=4  max=5      mean=4.09
+```
 
-C'est un renversement de perspective : **la DP ne doit pas être un classeur, mais un
-générateur de diversité.** Le tri appartient au Monte-Carlo, seul à mesurer la réponse
-spectrale.
+**Les dix λ s'étalent sur 95 nm en médiane** — jusqu'à 250 nm, toute la plage — et forment
+**3 à 5 régions distinctes**. L'hypothèse est fausse.
+
+**Ce que la mesure établit en revanche :**
+
+| Fait | Chiffre |
+|---|---|
+| Le cap de 10 **mord** | 38 blocs sur 40 échantillonnés |
+| Candidats jetés quand il mord | **8** en médiane, sur 18 disponibles |
+| Coût du 10ᵉ retenu / coût du 1ᵉʳ | médiane **×2,21**, max ×4,94 |
+| Minima locaux de `coût(λ)` par couche | **2 à 5** (couche 24 : 465, 485, 500, 515 nm) |
+| Régions couvertes par les 10 retenus | **4** en médiane |
+| λ survivantes à la Phase A, par couche | **1 à 27** sur ~51 scannées |
+
+Deux conclusions :
+
+1. **Ce que le cap jette est la queue**, pas de la diversité : des candidats déjà 2 à 5 fois
+   plus chers localement, dans des régions déjà représentées. Les 10 retenus couvrent
+   4 régions alors qu'il n'existe que 2 à 5 minima locaux — **la structure est déjà capturée**.
+2. **Le vrai élagueur n'est pas le cap, c'est la Phase A.** Le filtre de plantage réduit
+   51 λ scannées à 1–27 survivantes par couche, bien avant la DP. Les couches 0 et 1 n'ont
+   qu'**une seule** survivante (550 nm), effet de `force_first_layer_same_wl`.
+
+**Conséquence pour la sélection par intervalles** (proposition du physicien : découper la
+plage en 10 intervalles et prendre le meilleur de chacun, plutôt que les 10 meilleurs points).
+L'idée est structurellement supérieure à une séparation minimale gloutonne — elle est
+déterministe et couvre par construction, là où le glouton dépend de l'ordre des coûts. Mais
+son gain sur ce composant est **faible** : on passerait d'environ 4 régions effectives à
+jusqu'à 10, alors que la fonction de coût n'en a que 2 à 5 qui aient un sens. Des intervalles
+de largeur fixe sur 450–700 nm seraient d'ailleurs **contre-productifs** : la Phase A ne
+retient rien au-dessus de 495 nm, donc 6 ou 7 intervalles sur 10 tomberaient dans une zone
+morte.
+
+**La bonne variante, si on la fait un jour**, n'est pas l'intervalle en λ mais le **minimum
+local** : chaque minimum de `coût(λ)` est un choix de monitoring réellement distinct, et il y
+en a précisément 2 à 5. Une sélection « les N meilleurs minima locaux » donnerait la même
+couverture que les 10 actuels en coûtant **deux fois moins d'arêtes à la DP**.
+
+⚠️ **Mais cette question ne se tranche pas avant celle du §3.** Tout ceci raisonne sur le
+coût *local*, dont la valeur prédictive n'a jamais été mesurée. Si le ρ de Spearman est
+faible, « garder les 10 moins chers » est une mauvaise règle **quelle que soit** leur
+répartition spectrale — et c'est alors la règle qu'il faut changer, pas son échantillonnage.
 
 ### 2.2 Le consensus tourne pendant le screening
 

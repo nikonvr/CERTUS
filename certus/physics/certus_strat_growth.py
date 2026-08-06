@@ -338,9 +338,49 @@ def simulate_growth_kernel(
         # reel. Detecter sur le nominal reviendrait a doter la machine d'une
         # connaissance qu'elle n'a pas.
         idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
+        # ---- LE SUBSTRAT NU EST UN POINT TOURNANT, ET IL ETAIT IGNORE ----------
+        #
+        # Physicien, 2026-08-05 : « pour la couche 1 on demarre la couche sur un
+        # turning point, mais ca c'est obligatoire ».
+        #
+        # C'est exact et c'est automatique. Pour une couche unique sur substrat,
+        # R(d) = A + B.cos(2.delta) avec delta = 2.pi.n.d/lambda, donc
+        # dR/dd proportionnel a sin(2.delta), qui S'ANNULE en d = 0. Verifie
+        # numeriquement (n_H = 2,35, substrat 1,52, lambda = 500 nm) : pente en
+        # d = 0 de -8,0e-4 par nm contre -7,9e-3 au milieu du quart d'onde, soit
+        # dix fois moins — le residu vient de la difference finie sur un pas de
+        # 2,5 nm, la derivee vraie est nulle.
+        #
+        # Or la boucle de detection commence a k = 1 : un extremum de BORD est
+        # structurellement invisible. Consequence mesuree sur l'exemple, dont le
+        # premier multiplicateur vaut 1,556 (donc idx_nom_stop ~ 33) :
+        #
+        #     extrema detectes    [21, 42]        d = 53,2 et 106,4 nm
+        #     k = 21 <= 33        tp_b = 21, tp_a reste -1
+        #     k = 42 >  33        rejete car tp_b >= 0
+        #     => tp_a = -1  =>  poem_ok = FALSE sur la couche 0
+        #
+        # La couche 0 retombait donc sur la cible absolue, sans compensation. Et
+        # cela expliquait qu'elle n'ait qu'UNE seule longueur d'onde survivante
+        # sur ~51 scannees, d'ou l'absence de lambda commune avec la couche 1,
+        # d'ou le repli force_monolayer qui fabrique une arete invalide.
+        #
+        # 🔴 CETTE ANCRE EST LA PLUS FIABLE DE TOUTES. En d = 0 sur la couche 0,
+        # l'empilement reel et l'empilement nominal sont le MEME objet — le
+        # substrat nu. T_prev_real = T_prev_nom exactement, sans erreur amont
+        # possible, et la machine mesure ce niveau avant meme de commencer.
+        #
+        # Condition volontairement etroite : uniquement la premiere couche de
+        # l'empilement (i_layer == 0, donc j0 == 0). Pour un bloc demarrant plus
+        # haut, d = 0 de sa premiere couche n'est PAS un extremum en general :
+        # le sous-empilement deja depose n'a aucune raison d'y etre stationnaire.
+        start_is_tp = i_layer == 0 and j0 == 0
         tp_a = -1
         tp_b = -1
         n_tp_real = 0
+        if start_is_tp:
+            n_tp_real += 1
+            tp_b = 0
         for k in range(1, n_tot - 1):
             dl = Ts_r[k] - Ts_r[k - 1]
             dr2 = Ts_r[k + 1] - Ts_r[k]
@@ -351,9 +391,17 @@ def simulate_growth_kernel(
                     tp_a = tp_b
                     tp_b = k
         # Points tournants attendus par la strategie, sur le nominal.
+        # Meme traitement sur le nominal, imperativement : les deux comptages
+        # servent aussi a detecter la DIVERGENCE du nombre d'extrema entre reel et
+        # nominal, qui est l'un des deux modes de plantage. Compter le bord d'un
+        # cote et pas de l'autre fabriquerait une divergence fictive a chaque
+        # premiere couche.
         tp_a_n = -1
         tp_b_n = -1
         n_tp_nom = 0
+        if start_is_tp:
+            n_tp_nom += 1
+            tp_b_n = 0
         for k in range(1, n_tot - 1):
             dl = Ts_n[k] - Ts_n[k - 1]
             dr2 = Ts_n[k + 1] - Ts_n[k]

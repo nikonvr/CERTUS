@@ -89,9 +89,65 @@ monitoring n'a pas de sens physique** — c'est la faute que le dépôt s'interd
 | # | Action | Fichier | Pourquoi |
 |---|---|---|---|
 | 1.1 | **Réparer le nom des clés SYM** | `certus_strat_objectives.py:565-568` ↔ `certus_strat_context.py:285-291` ↔ `certus_strat_service.py:1030` | Le producteur émet `dist_*`, le consommateur lit `ext_*`, et `_EXT_KEYS` recopie `ext_*`. **Rien n'écrit jamais ces clés** : le score de symétrie vaut 999,0 partout et ne discrimine rien. La passe SYM produit donc des doublons de THICKNESS — un tiers du budget de minage gaspillé. |
-| 1.2 | **`force_monolayer` : vérifier la validité sur la couche 0** | `certus_strat_ranking.py:127-149` | Fabrique une arête `[0,2)` depuis les 10 meilleures λ de la **couche 1**, sans vérifier que la couche 0 a cette λ. Une λ éliminée pour plantage rentre dans la DP, **facturée en nanomètres** au lieu d'être exclue. La pénalité `* 2.0` ligne 134 est magique. |
+| 1.2 | **`force_monolayer`** — ⚠️ **DORMANT sur cet exemple, ne pas y toucher sans mesure** | `certus_strat_ranking.py:130-152` | Fabrique une arête `[0,2)` depuis les λ de la **couche 1**, sans vérifier que la couche 0 les a valides. Le constat tient — mais le repli est **gardé par `not smart_nucl_active`**, et sur cet exemple les couches 0 et 1 sont épinglées sur une λ unique en amont (voir §1.6). Il ne se déclenche donc pas. Priorité rétrogradée. |
 | 1.3 | ~~`score > 0` → `score >= 0`~~ **ANNULÉ** | `certus_strat_service.py:1172, 1194` | ❌ **Ce n'était pas un bug — erreur de ma part.** Le `> 0` saute les zéros de remplissage (raison écrite dans la docstring) et la levée est **spécifiée par deux tests** (`test_strat_service.py:346`, `test_certus_strat_rmse_export.py:51`). Reste discutable : l'**emplacement** de la garde, qui tue le run au lieu de le signaler. Décision de conception → parquée pour le physicien. |
 | 1.4 | **Afficher `crash_rate` dans la table opérateur** | `certus_strat_table_ui.py:217-300` | Le seul critère qui parle à un fabricant est calculé, sert de couperet, puis n'est jamais montré. |
+
+### 1.6 🔴 Les couches 0 et 1 sont épinglées sur UNE longueur d'onde — et ce n'est pas la Phase A
+
+Mesuré le 2026-08-06, et ça invalide deux pistes que je croyais tenir.
+
+| Source | Couche 0 (`layer 1` du rapport d'observabilité) |
+|---|---|
+| **Phase A produit** | **126 candidates validées sur 126** |
+| **La DP reçoit** | **1** |
+
+La réduction n'a donc pas lieu en Phase A. Le seul mécanisme du dépôt qui ramène une couche
+à exactement une longueur d'onde est `apply_nucleation_constraint`
+(`certus_strat_ranking.py:29-47`) :
+
+```python
+cost_map_in[i] = {n_wl: val}      # pour i < nucleation_size
+```
+
+C'est **délibéré** — la « Smart Nucleation » impose la λ des premières couches.
+
+**Conséquences, et elles annulent deux analyses précédentes :**
+
+- **Le correctif du point tournant du substrat nu est DORMANT ici.** Il est physiquement
+  juste (voir §1.7) mais la couche 0 n'a de toute façon aucun choix de λ à faire, donc l'état
+  de POEM sur elle ne change aucun classement. Mesure à l'appui : résultat **identique au bit
+  près** — 191 stratégies, 0 repêchée, mêmes rangs, mêmes statistiques d'étendue.
+- **Le repli `force_monolayer` est DORMANT aussi**, car explicitement gardé par
+  `not smart_nucl_active`.
+
+> Trois fois dans la même session, j'ai pris un comportement surprenant pour un défaut sans
+> chercher l'intention ni la cause amont : `score > 0` (garde délibérée et testée),
+> `force_monolayer` (symptôme, pas maladie), puis cette chaîne causale
+> POEM → élimination qui n'existe pas — `poem_ok = False` dégrade la compensation, il ne
+> provoque **aucune** élimination. La Phase A n'élimine que sur `crash_rate ≥ seuil` ou
+> `gain < 0`.
+
+### 1.7 Le substrat nu est un point tournant, et il n'était pas compté
+
+Physicien, 2026-08-05 : *« pour la couche 1 on démarre la couche sur un turning point, mais
+ça c'est obligatoire »*. C'est exact et automatique : pour une couche unique sur substrat,
+`R(d) = A + B·cos(2δ)`, donc `dR/dd ∝ sin(2δ)` **s'annule en `d = 0`**. Vérifié numériquement
+(n_H = 2,35, substrat 1,52, λ = 500 nm) : pente en `d = 0` de −8,0·10⁻⁴/nm contre
+−7,9·10⁻³/nm au milieu du quart d'onde.
+
+Or la détection commence à `k = 1` (`certus_strat_growth.py`) : un extremum de **bord** est
+structurellement invisible. Sur l'exemple, cela donnait `tp_a = −1` et donc
+`poem_ok = False` sur la couche 0.
+
+**Corrigé** — et c'est l'ancre la plus fiable qui soit : en `d = 0` sur la couche 0,
+l'empilement réel et l'empilement nominal sont le **même objet**, le substrat nu.
+`T_prev_real = T_prev_nom` exactement, sans erreur amont possible, et la machine mesure ce
+niveau avant même de commencer.
+
+⚠️ **Effet mesuré sur cet exemple : AUCUN**, pour la raison du §1.6. Le correctif est
+conservé parce qu'il est physiquement juste et qu'il vaudra sur tout empilement dont la
+première couche n'est pas épinglée par la nucléation — mais il n'est **pas démontré** ici.
 
 ⚠️ **1.1 activera le terme SYM pour la première fois.** `sym_weight = 0,35` n'a jamais été
 calibré sur un terme vivant. À poser **derrière une mesure**, pas en aveugle.

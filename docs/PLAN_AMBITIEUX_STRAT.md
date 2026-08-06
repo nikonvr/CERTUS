@@ -329,7 +329,7 @@ mauvais critère. Il produit les `551, 552, 553, 554` observés en tête de clas
 > **La DP trouve un bon point de départ. La recherche locale trouve le meilleur.** Et elle ne
 > demande aucune théorie — juste du budget.
 
-### 4.4a / 4.4c  Deux réparations qui conditionnent la génération
+### 4.4a et 4.4c — Deux réparations qui conditionnent la génération
 
 Elles ne sont pas des raffinements : elles gaspillent ou corrompent le budget de génération.
 
@@ -358,22 +358,49 @@ On les confondait en un seul « coût », et c'est pour cela qu'aucune ne foncti
 
 ---
 
-## Axe 4bis — Réparer le lien Phase A → DP (si l'on garde un terme de précision)
+## Axe 4bis — ❌ ABANDONNÉ : réparer l'estimation d'une grandeur dont on ne veut pas
 
-📏 ρ(coût DP, vrai score) = **−0,04** sur 240 stratégies. Et la décomposition montre que **la
-formule est bonne** (+0,59 mesurée) : c'est son **estimation** qui est anti-corrélée (−0,41).
+👤 *« D'une manière générale, on se branle en partie B de l'erreur d'épaisseur. Seul l'écart
+spectral final compte. »*
 
-**Cause identifiée** : `cost_map` est 2D `[couche][λ]` alors que le coût dépend du **début de
-bloc**. La Phase A le calcule sous une hypothèse gloutonne, la DP le réutilise pour tous les
-découpages.
+Cet axe proposait de rendre `cost_map` tridimensionnelle `[couche][λ][début de bloc]` pour
+réparer l'estimation du coût en nanomètres — 📏 la formule est bonne (+0,59 mesurée) mais son
+estimation par la Phase A est anti-corrélée (−0,41) parce qu'elle suppose un découpage glouton
+que la DP n'évalue pas.
 
-- **Correctif** : `cost_map[couche][λ][début de bloc]`. Avec `MAX_LOOKBACK = 4`, cela multiplie
-  la carte par cinq au plus, pas par 48.
-- **Repli si ρ ne remonte pas** : assumer la DP comme **générateur de diversité** et rendre le
-  tri au Monte-Carlo, seul à mesurer la bonne grandeur.
+**Le correctif est juste, et il devient sans objet.** Mieux estimer une erreur d'épaisseur ne
+sert à rien si l'erreur d'épaisseur n'est pas la grandeur qui décide. On ne répare pas
+l'estimateur d'une quantité qu'on va cesser d'utiliser.
+
+### La bonne lecture : chaque étage doit parler dans la bonne monnaie
+
+| Étage | Monnaie aujourd'hui | Monnaie juste |
+|---|---|---|
+| Phase A — élimination | plantage (sans dimension) ✅ | inchangé |
+| Phase A — coût de candidate | **nanomètres d'épaisseur** | 🔴 plus de consommateur (voir ci-dessous) |
+| Objectif de la DP | **somme de nanomètres** | 🔴 **`Σ −log(1 − p)` — le log du rendement** (§4.1) |
+| Score de robustesse | RMSE **spectral** ✅, mais contre le **nominal** | RMSE spectral contre la **cible pondérée** (axe 3) |
+| Score rendu | `robustness_score` | **`P(conforme)`** (§2.3) |
+
+Le score final était donc **déjà spectral** — `compute_batch_rmse` opère bien sur le spectre.
+Le nanomètre ne survit qu'en Phase A et dans l'objectif de la DP, et ces deux-là tombent
+ensemble.
+
+### La conséquence, qu'il faut assumer
+
+Si la DP n'optimise plus que le rendement, **le coût en nanomètres de la Phase A n'a plus de
+consommateur**. Elle ne sert alors qu'à deux choses, et c'est suffisant : **éliminer** (plantage
+au-dessus du seuil, gain non mesurable) et **fournir les taux de plantage par (couche, λ)** qui
+alimentent le nouvel objectif.
+
+⚠️ **Risque à surveiller** : une DP qui n'optimise que le rendement peut proposer des stratégies
+sûres mais spectralement médiocres. Le Monte-Carlo les écartera — **mais seulement parmi celles
+qui ont été générées.** D'où l'importance de la diversité (§4.2) et des amorces (§4.3) : la
+génération doit couvrir, le tri spectral fera le reste.
 
 ⚠️ **Ne pas chercher un coût `sᵀΣs`** : réfuté par la mesure — ni les sensibilités spectrales
-(+0,589 contre +0,590) ni la covariance (+0,643) n'apportent quoi que ce soit.
+(+0,589 contre +0,590) ni la covariance (+0,643) n'apportent quoi que ce soit. Et de toute
+façon, c'était encore une tentative de prédire ce qui doit être **mesuré**.
 
 ---
 
@@ -398,24 +425,47 @@ découpages.
 
 C'est ce qui séparerait un code plausible d'un code éprouvé.
 
-1. **Reproduire un repère expérimental publié.** C'est le test d'acceptation du module — mais
-   il faut d'abord choisir le bon repère, et je me suis trompé de source.
+1. 🔴 **LE test d'acceptation : la séparatrice 8 couches de Zideluns, chapitre 4.**
 
-   ⚠️ **Les « 0,4 nm en PM (51 couches) et 0,3 nm en P-PM (75 couches) » que ce document citait
-   ne sont PAS vérifiés.** Ils viennent de `REPRISE_STRAT_MONITORING.md` §4, qui les attribue à
-   la thèse Arsac — que je n'ai pas lue. 📏 Recherche dans la thèse Zideluns : **zéro
-   occurrence** de « 0.4 nm », « 0.3 nm » ou « P-PM ». À reprendre à la source avant d'en faire
-   un critère.
+   ⚠️ Deux fausses pistes écartées d'abord. Les « **0,4 nm en PM / 0,3 nm en P-PM** » que ce
+   document citait ne sont **pas vérifiés** — ils viennent de `REPRISE_STRAT_MONITORING.md` §4,
+   attribués à la thèse Arsac que je n'ai pas lue, et 📏 la recherche dans la thèse Zideluns
+   donne **zéro occurrence**. Et le repère « ~0,5 % sur 20 couches » de la p. 158 concerne le
+   **large bande** : 👤 *« oublie le broadband monitoring, on n'en fait pas »*. Écarté.
 
-   ✅ **Repère vérifié, en revanche**, 📖 Zideluns p. 158 : *« from the experiments described in
-   the previous chapter, we know that with broadband monitoring we can achieve small thickness
-   errors (**~0.5 %**) for 20 layers »*. Attention : c'est une erreur **relative** (0,5 % de
-   l'épaisseur, soit ~0,5 nm sur une couche de 100 nm) et elle concerne le **large bande**,
-   pas le monochromatique que simule STRAT. La figure 6-1 donne l'erreur d'épaisseur moyenne
-   mesurée par couche.
+   ✅ **Le bon repère est monochromatique, publié, et directement pertinent.** 📖 Zideluns
+   §4.2, p. 119-120 : une **séparatrice 50/50 à 8 couches**, déposée **quatre fois** avec quatre
+   stratégies **monochromatiques** différentes — MF2, MF3, MF4 (automatiques, une λ par couche,
+   soit exactement ce que produit STRAT) et une stratégie manuelle à λ unique de 595 nm, choisie
+   *« as it showed the lowest noise sensitivity in the simulation »*.
 
-   **Action** : obtenir la thèse Arsac pour le repère monochromatique, ou construire le test
-   sur le repère large bande de Zideluns en assumant qu'il ne teste pas la même méthode.
+   Deux résultats exploitables, et le second vaut bien plus que le premier :
+
+   | Résultat | Valeur | Ce qu'il teste |
+   |---|---|---|
+   | Déviation de transmission mesurée | **±0,7 %** (corridor visé ±1 %, erreurs d'épaisseur < 0,5 % requises) | l'**échelle absolue** du modèle |
+   | 📖 *« the measured curve obtained by strategy using **MF4** wavelengths more closely follows the theory across the spectral range of interest »* | **MF4 > MF2, MF3, standard** | le **classement** — ce que STRAT prétend faire |
+
+   > 🔴 **Le test ordinal est le vrai test d'acceptation.** Il ne demande pas que la calibration
+   > du bruit soit parfaite en valeur absolue — seulement que **l'ordre soit juste**. Si STRAT,
+   > alimenté avec la même conception et les quatre mêmes jeux de longueurs d'onde, ne place pas
+   > MF4 en tête, il ne sait pas faire ce pour quoi il existe. Et s'il l'y place, c'est une
+   > validation **contre une expérience réelle**, pas contre lui-même.
+
+   **Le test est entièrement reproductible** : la conception est en annexe 1 de la thèse, et
+   📖 *« les informations détaillées sur les stratégies de contrôle de ces conceptions
+   (méthodes, longueurs d'onde, etc.) sont données dans l'annexe 4 »* — donc les λ de MF2, MF3,
+   MF4 et de la stratégie standard sont disponibles.
+
+   **Extension naturelle** : le filtre de compensation D65 à **37 couches** (§4.3.1), pour
+   lequel 📖 *« it was not possible to find a single wavelength that would monitor all 37
+   layers »* — un cas où la stratégie polychromatique est **obligatoire**, et donc un second
+   témoin.
+
+   📌 À noter au passage, et cela recoupe le §1.6 du `BILAN` : sur le D65,
+   📖 *« the first layer was rate monitored, because it is a SiO2 layer and the refractive index
+   contrast with the substrate »* est insuffisant. **La première couche est un cas particulier
+   en salle aussi** — ce n'est pas seulement un artefact de la nucléation dans le code.
 2. **Test de calibration sur l'exemple réel** : « au moins N stratégies non repêchées à
    `crash_rate < 5 %` ». Un run. Il aurait transformé deux sessions d'analyse en trente
    secondes de diagnostic.
@@ -467,14 +517,12 @@ ETAPE 3 — « prometteuses » : rendement predit, diversite construite, precisi
   4.3  amorces structurees (mono-lambda, un bloc par couche, decoupages humains)
   5    successive halving + jamais d'elimination sous-resolue
   4.4c reparer les cles SYM (+ recalibrer sym_weight derriere une mesure)
-  4bis cost_map 3D, seulement si l'on garde un terme de precision dans la DP
 
 CONSOLIDATION
   1.3  extraire MachineModel                             <- calibration tracable et datee
-  6.1  reproduire les reperes experimentaux              <- LE test d'acceptation
+  6.1  separatrice 8 couches de Zideluns : STRAT doit classer MF4 en tete  <- LE test
   1.2  cadence et temps d'integration
   1.5  sigma(lambda)
-  2.2  rendement compose dans l'objectif
 
 RECHERCHE
   7    verres temoins multiples
@@ -513,9 +561,7 @@ qu'il colle au réel. C'est la différence entre *« ma simulation dit 95 % »* 
 **🔴 Une réserve de fond, indépendante de tout cela.** Même avec une statistique parfaite, on
 ne classe que **ce que la DP a généré**. Aujourd'hui ρ = −0,04 et le top 5 est une seule
 stratégie déclinée à ±1 nm. Une statistique irréprochable appliquée à un échantillon biaisé
-rend le meilleur *des candidats proposés*, pas le meilleur possible. C'est l'axe 4, et son
-repli honnête — faire de la DP un générateur de diversité et rendre le tri au Monte-Carlo —
-reste sur la table.
+rend le meilleur *des candidats proposés*, pas le meilleur possible. C'est l'axe 4, et sa reponse est desormais assumee : la DP devient un GENERATEUR de diversite, le tri revient au Monte-Carlo.
 
 ---
 

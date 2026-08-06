@@ -425,7 +425,39 @@ façon, c'était encore une tentative de prédire ce qui doit être **mesuré**.
 
 C'est ce qui séparerait un code plausible d'un code éprouvé.
 
-1. 🔴 **LE test d'acceptation : la séparatrice 8 couches de Zideluns, chapitre 4.**
+### 6.0 🔴 LE JUGE DE PAIX EST LE DICHROÏQUE 48 COUCHES
+
+👤 *« Le juge de paix sera mon dichroïque 48 couches. »* (2026-08-06)
+
+C'est `example/example_strat/JSON-strat-example.json` — le composant sur lequel toute la
+session a mesuré. Conséquences immédiates :
+
+- **Tous les chiffres de ce document portent déjà sur le juge.** 191 stratégies, 0 repêchée,
+  plantage médian nul, meilleur découpage à 5 blocs : c'est lui.
+- **Les réglages de ce fichier ne sont plus « un exemple », ce sont les conditions du test.**
+  D'où la gravité des trois dérives corrigées — `trigger_tolerance` 0,5 → 0,05,
+  `execution_mode` fast → premium, `scan_wl_step` 5 → 2 nm. Un juge mal réglé condamne
+  ou acquitte au hasard.
+- **Le test anti-dérive de l'exemple (§6.5) devient critique**, pas secondaire.
+
+⚠️ **Question ouverte, et elle détermine ce que ce juge peut trancher.**
+
+| Si… | Alors le juge est… | Et il valide… |
+|---|---|---|
+| Le dichroïque a été **déposé** et on a des **spectres mesurés** pour des stratégies connues | une **validation externe** | que le modèle colle au réel — le vrai test d'acceptation |
+| C'est le composant de **référence interne**, sans dépôt réel associé | un **banc de cohérence** | que le code est stable et reproductible, **pas** qu'il dit vrai |
+
+Dans le second cas, la validation externe reste à faire, et la séparatrice de Zideluns
+ci-dessous demeure le seul candidat publié et vérifiable.
+
+**Ce qu'il faudrait pour transformer le dichroïque en juge externe** : au moins **deux**
+stratégies réellement déposées sur ce composant, avec leurs spectres mesurés. Deux suffisent —
+le test décisif est **ordinal** : STRAT doit les classer dans le bon ordre. C'est bien moins
+exigeant qu'une correspondance absolue, et bien plus probant qu'un accord avec lui-même.
+
+---
+
+### 6.1 Le témoin publié : la séparatrice 8 couches de Zideluns, chapitre 4
 
    ⚠️ Deux fausses pistes écartées d'abord. Les « **0,4 nm en PM / 0,3 nm en P-PM** » que ce
    document citait ne sont **pas vérifiés** — ils viennent de `REPRISE_STRAT_MONITORING.md` §4,

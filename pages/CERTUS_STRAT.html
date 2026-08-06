@@ -709,6 +709,68 @@
             </p>
         </div>
 
+        <div style="border:3px solid #a16207;border-radius:10px;padding:16px 20px;margin:22px 0;background:#fefce8;">
+            <p style="margin:0 0 12px;font-weight:700;font-size:1.12em;color:#713f12;">
+                🔴 ÉTAPE 3 — « prometteuses » : le nœud du problème
+            </p>
+            <p style="margin:0 0 12px;">
+                48 couches donnent <b>2<sup>47</sup> &asymp; 1,4&middot;10<sup>14</sup>
+                découpages</b> en blocs contigus, multipliés par les affectations de &lambda;.
+                L'énumération est exclue : il faut un générateur, et il doit valoir mieux que
+                le hasard.
+            </p>
+            <p style="margin:0 0 12px;background:#fff;border:2px solid #a16207;border-radius:6px;padding:10px 14px;">
+                <b>L'observation qui débloque :</b> $P(\text{conforme})$ se factorise en deux
+                morceaux de nature <b>opposée</b>.
+                $$P(\text{conforme}) = \underbrace{P(\text{le dépôt se termine})}_{\text{SÉPARABLE}} \times \underbrace{P(\text{spectre dans la spec} \mid \text{terminé})}_{\text{NON SÉPARABLE}}$$
+                Le <b>rendement</b> est séparable : un dépôt se termine si <i>chaque</i> couche
+                se termine, $\prod(1-p_i)$, dont le <b>logarithme est additif</b> — exactement
+                ce qu'une DP de Bellman optimise exactement. La <b>précision</b> ne l'est pas :
+                les erreurs se composent et se compensent, seul le Monte-Carlo en juge.
+                <br><br><b>La DP doit optimiser la partie séparable et laisser l'autre au
+                Monte-Carlo. Aujourd'hui elle fait l'inverse</b> — elle optimise un proxy de
+                précision (&rho; = &minus;0,04) et traite le rendement comme un couperet
+                binaire.
+            </p>
+            <p style="margin:0 0 12px;">
+                <b>🔴 Et la donnée existe déjà, jetée à la dernière ligne.</b> La Phase A
+                calcule le taux de plantage <b>par couche et par longueur d'onde</b>
+                (<code>results_fast[idx, 2]</code>, rangé en
+                <code>certus_strat_service.py:1081</code>) et ne s'en sert que comme
+                <b>seuil binaire</b> :
+                <code>if crash_rate &gt;= crash_tol: eliminated.append(entry)</code>.
+                Une &lambda; à 0,001 % et une à 0,106 % sont traitées à l'identique, alors
+                qu'elles diffèrent d'un facteur cent sur la seule grandeur qui <b>compose</b>
+                sur la hauteur de l'empilement.
+                <br><code>raw_results_thickness</code> conserve les entrées complètes
+                (<code>objectives.py:313</code>), mais la carte donnée à la DP ne garde que
+                <code>x["cost"]</code> (<code>pipeline.py:103</code>).
+                <br><b>Correctif :</b> une carte parallèle <code>crash_map[couche][&lambda;]</code>
+                et l'objectif $\min \sum_\ell -\log\left(1 - p(\ell,\lambda)\right)$ — le
+                <b>log du rendement, exactement</b>. Ce n'est plus un proxy : c'est une
+                composante directe de $P(\text{conforme})$, à coût nul.
+                <br>⚠️ L'indépendance entre couches est approximative — celles d'un même bloc
+                partagent l'historique de points tournants. À <b>mesurer</b>, pas à supposer.
+            </p>
+            <p style="margin:0;">
+                <b>🔴 Mais le vrai levier manque totalement : la recherche locale.</b> Puisque
+                le Monte-Carlo est le juge et que le budget n'est pas contraint, le meilleur
+                générateur n'est pas un générateur. Partir des survivantes et perturber —
+                déplacer une frontière de bloc, changer la &lambda; d'un bloc, fusionner,
+                scinder — en <b>réévaluant chaque perturbation au Monte-Carlo sur
+                $P(\text{conforme})$</b>. Pas de proxy, pas de séparabilité, pas de problème de
+                corrélation.
+                <br><code>ELITE</code> s'en approche et échoue deux fois : il perturbe à
+                <b>&plusmn;1 nm</b>, soit <b>sous le pas de grille</b> donc sans signification
+                physique, et il juge sur le mauvais critère. Il produit les
+                <code>551, 552, 553, 554</code> observés en tête de classement.
+                <br><br><b>« Prometteuses » recouvrait trois choses distinctes</b> qu'on
+                confondait en un seul coût : le <b>rendement</b> se <i>prédit</i>, la
+                <b>diversité</b> se <i>construit</i>, la <b>précision</b> ne se prédit pas —
+                elle se <i>mesure</i>, puis on grimpe dessus.
+            </p>
+        </div>
+
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:22px 0;background:#fef2f2;">
             <p style="margin:0 0 12px;font-weight:700;font-size:1.12em;color:#7f1d1d;">
                 🔴 ÉTAPE 1 — le juge de paix, et le modèle n'y répond pas

@@ -235,7 +235,107 @@ et compte aujourd'hui autant que la bande passante.
 
 ---
 
-## Axe 4 — Réparer le lien Phase A → DP
+## Axe 4 — 🔴 « Prometteuses » : le nœud du problème
+
+👤 *« Comment alors trouver des stratégies prometteuses ? C'est le nœud du problème. »*
+
+**L'espace est inatteignable par énumération** : 48 couches donnent 2⁴⁷ ≈ 1,4·10¹⁴ découpages
+en blocs contigus, multipliés par les affectations de λ. Il faut donc un générateur, et il doit
+valoir mieux que le hasard.
+
+### 4.0 L'observation qui débloque : `P(conforme)` se factorise en deux morceaux de nature opposée
+
+```
+P(conforme)  =  P(le dépôt se termine)  ×  P(spectre dans la spec | terminé)
+                └─────── SÉPARABLE ──────┘   └──── NON SÉPARABLE ─────┘
+```
+
+- **Le rendement est séparable.** Un dépôt se termine si *chaque* couche se termine :
+  `Π(1 − pᵢ)`, dont le logarithme est **additif** — exactement ce qu'une DP de Bellman sait
+  optimiser exactement.
+- **La précision ne l'est pas.** Les erreurs se composent et se compensent ; seule la
+  simulation Monte-Carlo peut en juger.
+
+> **La DP doit optimiser la partie séparable — le rendement — et laisser au Monte-Carlo la
+> partie qui ne l'est pas.** Aujourd'hui elle fait exactement l'inverse : elle optimise un
+> proxy de *précision* (ρ = −0,04) et traite le *rendement* comme un couperet binaire.
+
+### 4.1 🔴 La donnée existe déjà, et elle est jetée au dernier moment
+
+La Phase A calcule `results_fast[idx, 2]` — **le taux de plantage, par couche et par longueur
+d'onde** — et le range dans l'entrée (`certus_strat_service.py:1081`). Puis :
+
+```python
+if crash_rate >= crash_tol or gain < 0.0:
+    eliminated.append(entry); continue      # ← SEUL usage : un seuil binaire
+```
+
+Il **n'entre jamais dans le coût**. Une λ à 0,001 % de plantage et une à 0,106 % sont traitées
+à l'identique, alors qu'elles diffèrent d'un facteur cent sur la seule grandeur qui **compose**
+sur la hauteur de l'empilement.
+
+📏 Vérifié : `raw_results_thickness[i_layer]` conserve les entrées complètes
+(`certus_strat_objectives.py:313`), mais la carte donnée à la DP ne garde que `x["cost"]`
+(`certus_strat_workers_pipeline.py:103`). **La donnée survit jusqu'à la dernière ligne, où on
+la jette.**
+
+**Correctif** : construire une carte parallèle `crash_map[couche][λ]` depuis la même source, et
+donner à la DP l'objectif
+
+```
+minimiser  Σ_couches  −log(1 − p(couche, λ))
+```
+
+C'est **le log du rendement, exactement**. Là où le coût actuel affiche ρ = −0,04, celui-ci
+n'est pas un proxy : **c'est une composante directe de `P(conforme)`**. Coût d'implémentation :
+une carte de plus, aucune simulation supplémentaire.
+
+⚠️ **Réserve à instruire, pas à supposer** : l'indépendance entre couches est approximative —
+celles d'un même bloc partagent l'historique de points tournants. À mesurer. Mais même
+imparfaite, elle sera incomparablement mieux corrélée qu'un proxy décorrélé.
+
+### 4.2 De la diversité explicite, sinon les *k* meilleurs sont un seul
+
+Les *k* meilleurs chemins d'une DP sont des quasi-doublons **par construction**. Il faut
+sélectionner sur la **signature de découpage**, pas seulement sur le score. La séparation
+spectrale posée le 2026-08-05 fait cela au niveau des λ ; **il manque l'équivalent au niveau
+des blocs.**
+
+### 4.3 Des amorces structurées, que la DP ne produira jamais
+
+Tout l'empilement à une seule λ · un bloc par couche · les découpages « humains » qu'un
+opérateur essaierait. Elles ancrent l'ensemble, servent de témoins, et coûtent une poignée
+d'évaluations.
+
+### 4.4 🔴 Le vrai levier, et il manque totalement : la recherche locale sur le vrai objectif
+
+👤 *« J'ai tout mon temps. »* Puisque le Monte-Carlo est le juge et que le budget n'est pas
+contraint, **le meilleur générateur n'est pas un générateur : c'est une recherche locale.**
+
+Partir des survivantes du screening et perturber — déplacer une frontière de bloc, changer la
+λ d'un bloc, fusionner, scinder — en **réévaluant chaque perturbation au Monte-Carlo sur
+`P(conforme)`**. Pas de proxy, pas d'hypothèse de séparabilité, pas de problème de corrélation.
+
+C'est ce qui manque aujourd'hui. `ELITE` s'en approche mais échoue deux fois : il perturbe à
+**±1 nm**, soit **sous le pas de grille** donc sans signification physique, et il juge sur le
+mauvais critère. Il produit les `551, 552, 553, 554` observés en tête de classement.
+
+> **La DP trouve un bon point de départ. La recherche locale trouve le meilleur.** Et elle ne
+> demande aucune théorie — juste du budget.
+
+### 4.5 En résumé : « prometteuses » recouvrait trois choses distinctes
+
+| Composante | Comment l'obtenir |
+|---|---|
+| **Le rendement** | se **prédit** — DP sur `Σ −log(1−p)`, donnée déjà mesurée |
+| **La diversité** | se **construit** — signatures de découpage, séparation spectrale, amorces |
+| **La précision** | ne se prédit pas — elle se **mesure**, puis on **grimpe** dessus |
+
+On les confondait en un seul « coût », et c'est pour cela qu'aucune ne fonctionnait.
+
+---
+
+## Axe 4bis — Réparer le lien Phase A → DP (si l'on garde un terme de précision)
 
 📏 ρ(coût DP, vrai score) = **−0,04** sur 240 stratégies. Et la décomposition montre que **la
 formule est bonne** (+0,59 mesurée) : c'est son **estimation** qui est anti-corrélée (−0,41).
@@ -321,9 +421,13 @@ ETAPE 4 — « la meilleure » a besoin d'une definition
 GARDE-FOU, des que 1.1 et 3 sont poses
   6.2  test de calibration sur l'exemple reel
 
-ETAPE 3 — « prometteuses » -> « couvrantes »
-  4    cost_map 3D ; si rho ne remonte pas, DP = generateur assume
+ETAPE 3 — « prometteuses » : rendement predit, diversite construite, precision mesuree
+  4.1  DP sur Sigma -log(1-p)  <- LE RENDEMENT, donnee deja mesuree et jetee
+  4.2  diversite par signature de decoupage
+  4.4  RECHERCHE LOCALE sur P(conforme)  <- le vrai levier, absent aujourd'hui
+  4.3  amorces structurees (mono-lambda, un bloc par couche, decoupages humains)
   5    successive halving + jamais d'elimination sous-resolue
+  4bis cost_map 3D, seulement si l'on garde un terme de precision dans la DP
 
 CONSOLIDATION
   1.3  extraire MachineModel                             <- calibration tracable et datee

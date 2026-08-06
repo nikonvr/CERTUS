@@ -58,10 +58,17 @@ def install_probe() -> None:
 
     original = R._compute_valid_blocks_kernel
 
-    def patched(layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W):
-        block_costs, block_wls, block_counts = original(
-            layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W
-        )
+    # Signature agnostique : le kernel a gagne un parametre `min_wl_sep` le 2026-08-05
+    # et une sonde a signature figee a fait echouer tout le pipeline (TypeError avale
+    # par le worker, « No strategies found », 7 s perdues). Une sonde ne doit jamais
+    # dependre de l'arite de ce qu'elle observe.
+    def patched(*a, **kw):
+        block_costs, block_wls, block_counts = original(*a, **kw)
+        num_layers = a[3] if len(a) > 3 else kw["num_layers"]
+        max_W = a[5] if len(a) > 5 else kw["max_W"]
+        layer_wls = a[0] if a else kw["layer_wls"]
+        layer_costs = a[1] if len(a) > 1 else kw["layer_costs"]
+        valid_mask = a[2] if len(a) > 2 else kw["valid_mask"]
         if PROBE["captured"]:
             return block_costs, block_wls, block_counts
         PROBE["captured"] = True

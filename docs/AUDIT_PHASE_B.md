@@ -88,12 +88,43 @@ fictif.** Deux blocs adjacents à la même λ sont comptés comme deux alors qu'
 **un seul** bloc — le signal n'est pas interrompu. Le nombre de blocs affiché à l'opérateur ne
 correspond donc pas au nombre de blocs monochromatiques réels.
 
-### 1.5 ✅ `_select_best_strat_result` rejette le résultat parfait
+### 1.5 ❌ CORRECTION — ce n'est PAS un bug, c'est un garde-fou délibéré et testé
 
-`certus/utils/certus_strat_service.py:1157-1175` : `if np.isfinite(score) and score > 0`.
-Une stratégie de score **exactement 0** — le meilleur possible — est **sautée**. Et
-`extract_best_rmse` (`:1194-1199`) **lève** `PhysicsConvergenceError` si le score tombe dans
-`[0, 1e-7)`. Deux pièges dans la même fonction, sur la même valeur.
+**Une version antérieure de ce document classait ceci en « bug vérifié ». C'était faux, et
+l'erreur est de moi.** Je l'ai laissée visible plutôt que de la réécrire en silence.
+
+Le constat de départ est exact : `certus/utils/certus_strat_service.py:1172` teste
+`if np.isfinite(score) and score > 0`, donc une stratégie de score exactement 0 est sautée ;
+et `extract_best_rmse` (`:1194-1199`) **lève** `PhysicsConvergenceError` si le score tombe
+dans `[0, 1e-7)`.
+
+**Mais les deux sont intentionnels, documentés et couverts par des tests :**
+
+- Le `> 0` a une raison écrite dans la docstring : *« older or partially populated payloads
+  may keep placeholder zeros at the top »*. Il **saute les zéros de remplissage**. Le
+  remplacer par `>= 0` réintroduirait précisément le bug qu'il corrige.
+- La levée est **spécifiée par deux tests** :
+  `tests/unit/test_strat_service.py:346-352` et
+  `tests/unit/test_certus_strat_rmse_export.py:51-59`, tous deux en
+  `pytest.raises(PhysicsConvergenceError, match="abnormally low/null value")`.
+  Et elle est physiquement défendable : avec σ = 0,05 point de T, un RMSE spectral sous
+  10⁻⁷ est impossible — c'est bien le signe d'une défaillance de convergence.
+
+**Ce qui reste discutable n'est pas la garde, c'est son EMPLACEMENT.** `extract_best_rmse`
+est appelée à l'intérieur de `_finalize_and_export_pipeline_results`
+(`certus_strat_workers.py:1465`), **avant** le `return` et avant l'émission de `finished`.
+Une levée y détruit donc tout le run au lieu de le signaler : le pipeline meurt, `finished`
+n'est jamais émis, et le banc rend `RESULT=None`. C'est le cinquième site de levée
+pré-émission du §3.2.
+
+**Décision : parqué, pas corrigé.** Déplacer une garde spécifiée par deux tests relève d'un
+choix de conception — signaler sans tuer, ou tuer pour forcer l'attention — et cette décision
+appartient au physicien, pas à un agent. La lacune réelle du §3.2 (cinq sites de levée
+indiscernables) reste valable et se traite par des codes d'erreur distincts, sans toucher aux
+gardes elles-mêmes.
+
+> Leçon de méthode : « le code fait X, or X est mauvais » n'est un bug que si personne n'a
+> voulu X. Un `grep` dans `tests/` avant de conclure aurait évité cette erreur.
 
 ---
 

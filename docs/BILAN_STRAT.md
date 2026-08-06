@@ -82,7 +82,100 @@ plantage · gain de compensation.
 
 ---
 
-## 3. 🔴 Les non-conformités à la littérature
+## 2bis. 🔴🔴 LE JUGE DE PAIX — et le modèle n'y répond pas
+
+👤 *« Le juge de paix c'est toujours l'étude stochastique et statistique : voit-on les turning
+points ? Risque-t-on de compter le mauvais nombre de turning points ? Risque-t-on de ne jamais
+atteindre le niveau de transmission ? La machine réelle compte le nombre de turning points,
+fait une correction POEM et s'arrête sur un niveau. Tout ce qui est swing in, swing out, c'est
+une vue de l'esprit humain pour essayer d'intuiter les choses. MAIS ici, le roi c'est la
+statistique ! Si 95 % des dépôts fonctionnent, c'est gagné. »*
+
+**Ce cadrage réordonne tout le document.** Les critères de la littérature — 15–85 %, amplitude
+de départ ≥ 4 %, swing in / swing out — sont des **heuristiques de pré-sélection**, des façons
+d'intuiter à l'avance ce que le Monte-Carlo mesure directement. Elles ne sont pas le critère.
+Le critère, ce sont les **trois modes de défaillance**, comptés statistiquement.
+
+### 📏 Ce que le noyau modélise réellement
+
+`noise_val_precalc` n'apparaît **qu'une seule fois** dans tout `certus_strat_growth.py` :
+
+```python
+433:  target_T_noisy = target_level + noise_val_precalc
+```
+
+Or `Ts_r`, le signal « réel », sert à trois choses — et **aucune n'est bruitée** :
+
+| Ligne | Usage de `Ts_r` | Bruit appliqué |
+|---|---|---|
+| 385-386 | **détection des points tournants** | ❌ aucun |
+| 418-419 | **ancres POEM** `T_prev_real`, `T_last_real` | ❌ aucun |
+| 478-479 | **détection de plantage** (encadrement du niveau) | ❌ aucun |
+
+Et il n'y a qu'**un seul tirage de bruit par couche et par run** — `noise_val_precalc` est un
+scalaire issu de `global_noise_matrix[:, i_layer]` — appliqué à la seule comparaison d'arrêt.
+La machine, elle, lit un flux continu de mesures bruitées.
+
+### Réponse du modèle aux trois questions
+
+| Question | Ce que le modèle répond aujourd'hui |
+|---|---|
+| **Voit-on les turning points ?** | 🔴 *« Toujours, et exactement. »* La question **n'est pas posée** : les extrema sont localisés sur une courbe TMM parfaite. Or sur un extremum plat, ne pas le voir est le mode de défaillance classique. |
+| **Compte-t-on le bon nombre ?** | ⚠️ Modélisé, mais **uniquement via les erreurs d'épaisseur** qui déplacent les extrema. Jamais via le bruit qui en masque un ou en fabrique un faux. **Risque sous-estimé.** |
+| **Atteint-on le niveau ?** | ⚠️ Modélisé (encadrement avant le prochain extremum), mais jugé sur le signal propre. Le niveau peut être atteignable dans le modèle et pas en salle. |
+
+### 🔴 Et POEM est évalué gratuitement
+
+POEM reporte la fraction figée **sur les extrema réellement observés** — c'est tout son
+intérêt. `T_prev_real` et `T_last_real` sont censés être des **mesures**. Dans le modèle, ce
+sont des valeurs exactes.
+
+> **On donne à POEM le bénéfice du recalage sans lui en faire payer le coût.**
+
+Le coût est quantifiable. Le niveau visé vaut
+`T_prev + p·(T_last − T_prev)`, donc si chaque ancre porte une erreur de mesure
+indépendante d'écart-type σ, la variance du niveau visé vaut
+
+```
+Var[cible] = σ² · [ (1−p)² + p² ]      auquel s'ajoute σ² sur la lecture d'arrêt
+```
+
+soit un bruit effectif de **σ·√(1 + (1−p)² + p²)** : **×1,22 à p = 0,5, jusqu'à ×1,41** quand
+le trigger tombe sur une ancre. POEM n'est donc pas gratuit — **il échange un biais (l'erreur
+non compensée) contre une variance (deux mesures supplémentaires)**, et le modèle actuel ne
+compte que le bénéfice.
+
+Corollaire important pour le classement : le modèle **favorise structurellement** les
+stratégies qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes héritées du bloc,
+puisqu'il leur accorde une précision parfaite.
+
+### Le correctif
+
+Bruiter `Ts_r` **avant** la détection, avec le même σ que la lecture d'arrêt. Les trois
+questions deviennent alors des **mesures** au lieu d'hypothèses :
+
+- un extremum plat sera parfois manqué ou dédoublé → `n_tp_real ≠ n_tp_nom` → plantage compté ;
+- les ancres POEM porteront leur incertitude → la compensation sera évaluée à son coût réel ;
+- l'encadrement du niveau sera jugé sur le signal que la machine voit vraiment.
+
+⚠️ **Changement de modèle de premier ordre.** Il fera **monter** les taux de plantage et
+**baisser** le bénéfice apparent de POEM. Posé derrière un drapeau **par défaut inactif**
+(`poem_anchor_noise`), pour que la mesure tranche et non l'intuition.
+
+---
+
+## 3. Les critères de la littérature — heuristiques, pas juges
+
+👤 *« Tout ce qui est swing in, swing out, c'est une vue de l'esprit humain. »* Les trois points
+ci-dessous restent des **écarts constatés**, mais ils ne sont plus des défauts à corriger en
+priorité : ce sont des pré-sélections que la statistique, si elle est fidèle (§2bis), rend
+inutiles.
+
+⚠️ **Une correction de ma part sur le §3.1** : j'avais présenté les points tournants virtuels
+comme un manque. C'est faux. **Un point tournant virtuel ne peut pas servir d'ancre à
+l'exécution** — la machine ne l'a pas mesuré. Le code a raison d'exiger deux extrema réellement
+traversés. Le balayage à 3× n'est pas gaspillé pour autant : il sert à la **détection de
+plantage**, qui doit savoir où tombe le prochain extremum.
 
 ### 3.1 Les points tournants virtuels sont calculés puis rendus inatteignables
 

@@ -663,9 +663,96 @@
         <!-- ================================================================ -->
         <!--  4. PHASE B: GROUPING & ROBUSTNESS                               -->
         <!-- ================================================================ -->
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:22px 0;background:#fef2f2;">
+            <p style="margin:0 0 12px;font-weight:700;font-size:1.12em;color:#7f1d1d;">
+                🔴 LE JUGE DE PAIX — et le modèle n'y répond pas
+            </p>
+            <p style="margin:0 0 12px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
+                « Le juge de paix c'est toujours l'étude stochastique et statistique : voit-on
+                les turning points ? Risque-t-on de compter le mauvais nombre de turning
+                points ? Risque-t-on de ne jamais atteindre le niveau de transmission ? La
+                machine réelle compte le nombre de turning points, fait une correction POEM et
+                s'arrête sur un niveau. Tout ce qui est swing in, swing out, c'est une vue de
+                l'esprit humain pour essayer d'intuiter les choses. MAIS ici, le roi c'est la
+                statistique ! Si 95 % des dépôts fonctionnent, c'est gagné. »
+                <br><span style="font-style:normal;">— le physicien, 2026-08-06</span>
+            </p>
+            <p style="margin:0 0 12px;">
+                Ce cadrage réordonne tout. Les critères de la littérature — 15–85 %, amplitude
+                de départ &ge; 4 %, swing in / swing out — sont des <b>heuristiques de
+                pré-sélection</b>, des façons d'intuiter à l'avance ce que le Monte-Carlo mesure
+                directement. <b>Le critère, ce sont les trois modes de défaillance, comptés
+                statistiquement.</b>
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>Or <code>noise_val_precalc</code> n'apparaît qu'UNE SEULE FOIS dans tout le
+                noyau</b> (<code>certus_strat_growth.py:433</code>) :
+                <code>target_T_noisy = target_level + noise_val_precalc</code>.
+                Le signal « réel » <code>Ts_r</code> sert pourtant à trois choses, et aucune
+                n'est bruitée :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;">Ligne</th>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">Usage de <code>Ts_r</code></th>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;">Bruit</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">385-386</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection des points tournants</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">418-419</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>ancres POEM</b> <code>T_prev_real</code>, <code>T_last_real</code></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">478-479</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection de plantage</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                Et il n'y a qu'<b>un seul tirage de bruit par couche et par run</b>, appliqué à
+                la seule comparaison d'arrêt. La machine, elle, lit un flux continu de mesures
+                bruitées.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>Réponse du modèle aux trois questions :</b> « voit-on les turning points ? »
+                → 🔴 <i>toujours, et exactement</i> — la question n'est pas posée.
+                « Compte-t-on le bon nombre ? » → ⚠️ modélisé <b>uniquement via les erreurs
+                d'épaisseur</b>, jamais via le bruit : risque sous-estimé.
+                « Atteint-on le niveau ? » → ⚠️ jugé sur le signal propre.
+            </p>
+            <p style="margin:0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
+                <b>🔴 Et POEM est évalué gratuitement.</b> Il reporte la fraction figée sur les
+                extrema <i>réellement observés</i> — c'est tout son intérêt, et ces ancres sont
+                censées être des <b>mesures</b>. Dans le modèle, ce sont des valeurs exactes.
+                <br>Le coût ignoré est quantifiable : le niveau visé vaut
+                $T_{\text{prev}} + p\,(T_{\text{last}} - T_{\text{prev}})$, donc si chaque ancre
+                porte une erreur indépendante d'écart-type $\sigma$,
+                $$\operatorname{Var}[\text{cible}] = \sigma^2\left[(1-p)^2 + p^2\right] + \sigma^2$$
+                soit un bruit effectif de $\sigma\sqrt{1+(1-p)^2+p^2}$ — <b>&times;1,22 à
+                p = 0,5, jusqu'à &times;1,41</b> quand le trigger tombe sur une ancre.
+                <br><b>POEM échange donc un biais contre une variance, et le modèle ne compte
+                que le bénéfice.</b> Corollaire : il favorise structurellement les stratégies
+                qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes héritées du
+                bloc, puisqu'il leur accorde une précision parfaite.
+                <br><br><b>Correctif</b> : bruiter <code>Ts_r</code> <i>avant</i> la détection,
+                avec le même &sigma;. Les trois questions deviennent alors des <b>mesures</b>.
+                Posé derrière un drapeau par défaut inactif — ce changement fera monter les taux
+                de plantage et baisser le bénéfice apparent de POEM, et c'est la mesure qui doit
+                trancher.
+            </p>
+        </div>
+
         <div style="border:3px solid #7c3aed;border-radius:10px;padding:16px 20px;margin:22px 0;background:#faf5ff;">
             <p style="margin:0 0 12px;font-weight:700;font-size:1.08em;color:#5b21b6;">
                 📖 Conformité à la littérature — vérifiée sur la thèse Zideluns (206 p.), 2026-08-06
+            </p>
+            <p style="margin:0 0 12px;background:#ede9fe;border-radius:6px;padding:8px 12px;">
+                ⚠️ <b>À lire APRÈS l'encadré ci-dessus.</b> Ces critères sont des
+                <b>heuristiques de pré-sélection</b>, pas des juges. Et une correction de ma
+                part : j'avais présenté les <b>points tournants virtuels</b> comme un manque —
+                c'est faux. Un point tournant virtuel <b>ne peut pas servir d'ancre à
+                l'exécution</b>, la machine ne l'a pas mesuré. Le code a raison d'exiger deux
+                extrema réellement traversés. Le balayage à 3&times; n'est pas gaspillé pour
+                autant : il sert à la <b>détection de plantage</b>, qui doit savoir où tombe le
+                prochain extremum.
             </p>
             <p style="margin:0 0 12px;">
                 Toutes les citations ci-dessous sont <b>textuelles</b>. La question « Arsac et

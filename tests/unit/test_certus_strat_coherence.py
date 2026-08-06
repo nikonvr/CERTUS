@@ -313,40 +313,24 @@ class TestStratRobustnessScoring:
         )
 
 
-        # Depuis 2026-08-05 la fonctionnelle de classement est la CVaR95 — la MOYENNE
-        # des 5 % pires — et non plus le P95, qui est le point a 95 %. Un quantile est
-        # la fonctionnelle la moins efficace d'un echantillon : il est decide par un
-        # seul point a N=6, un a deux a N=25, environ sept a N=150. La CVaR moyenne la
-        # queue, donc la variance de l'estimateur est plus basse a N egal.
-        expected_cvar = max(r["rmse_cvar95"] for r in res["results_per_noise"])
-        expected_p95 = max(r["rmse_p95"] for r in res["results_per_noise"])
+        # Fonctionnelle de classement : le P95, tranche par la mesure le 2026-08-06.
+        # La CVaR95 (moyenne des 5 % pires) a ete essayee sur l'argument qu'un quantile
+        # est decide par tres peu de points. L'argument est juste sur la PRECISION de
+        # l'estimateur — le CV bootstrap de la CVaR est meilleur dans cinq cas sur six —
+        # et FAUX sur ce qui nous interesse : la CVaR compresse les ecarts entre
+        # strategies, donc son CLASSEMENT se reproduit MOINS bien.
+        # scripts/probe_functional_stability.py, 1281 captures, demi-echantillons du
+        # meme tirage : rho_p95 = +0,782 / +0,752 / +0,717 a N=25 contre rho_cvar =
+        # +0,725 / +0,650 / +0,650 ; egalite a N=150. Le P95 est conserve.
+        expected = max(r["rmse_p95"] for r in res["results_per_noise"])
+        assert res["robustness_score"] == expected
 
-        assert res["robustness_score"] == expected_cvar
-
-        # Les deux grandeurs restent exposees, et l'inegalite CVaR95 >= P95 est
-        # structurelle : la moyenne des valeurs au-dela du quantile ne peut pas lui
-        # etre inferieure. Si elle tombait en defaut, le calcul de la queue serait faux.
-        assert expected_cvar >= expected_p95
-
-        # La taille de queue effectivement moyennee est exposee, et vaut au moins 1 :
-        # a N=8 tirages, ceil(0,05 x 8) = 1, donc la CVaR degenere ici vers le maximum.
-        # C'est voulu et c'est le pire cas — il documente pourquoi les petits budgets
-        # Monte-Carlo ne discriminent rien.
+        # La cle rmse_all doit rester exposee : c'est elle qui permet de rejouer une
+        # autre fonctionnelle hors ligne sans relancer le Monte-Carlo.
         for r in res["results_per_noise"]:
-            assert r["cvar95_tail_n"] >= 1
-            assert r["cvar95_tail_n"] <= len(r["rmse_all"])
-
-        # Le repli explicite restitue l'ancien comportement, pour pouvoir comparer les
-        # deux classements sur un meme run plutot que de basculer a l'aveugle.
-        params_p95 = dict(params)
-        params_p95["robustness_score_functional"] = "p95"
-        res_p95 = _test_strategy_robustness_task(
-            strategy, 0, [0.5, 1.0], 8, p_thick, clues_at_wl, params_p95,
-            wl_arr, nH, nL, nSub, T_nom, {},
-        )
-        assert res_p95["robustness_score"] == max(
-            r["rmse_p95"] for r in res_p95["results_per_noise"]
-        )
+            assert len(r["rmse_all"]) == 8
+            assert r["rmse_p95"] <= max(r["rmse_all"]) + 1e-12
+            assert r["rmse_mean"] <= r["rmse_p95"] + 1e-12
 
 
 

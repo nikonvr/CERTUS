@@ -1031,35 +1031,47 @@ class CertusStratStateMixin:
             "fast_auto_blocks": True,
         }
 
-        if params_out.get("execution_mode", "premium") == "fast":
-            # Fast profile: ~4x lower compute budget for interactive iteration.
-
-            params_out["mc_runs_block"] = max(25, int(params_out["mc_runs_block"] / 4))
-
-            params_out["n_screen_runs"] = max(6, int(params_out["n_screen_runs"] / 4))
-
-            params_out["screening_mc_runs"] = max(6, int(params_out["screening_mc_runs"] / 3))
-
-            params_out["nucleation_mc_runs"] = max(30, int(params_out["nucleation_mc_runs"] / 3))
-
-            params_out["robustness_num_runs"] = max(40, int(params_out["robustness_num_runs"] / 4))
-
-            params_out["consensus_num_runs"] = max(40, int(params_out["consensus_num_runs"] / 4))
-
-            params_out["consensus_num_seeds"] = min(
-                int(params_out.get("consensus_num_seeds", 3)),
-                2,
-            )
-
-            params_out["consensus_top_k"] = max(12, int(params_out.get("consensus_top_k", 12) / 2))
-
-            params_out["elite_rounds"] = 1
-
-            params_out["elite_max_candidates"] = 60
-
-            params_out["elite_max_full_evals"] = 16
-
-            params_out["keep_full_mc_top_k"] = max(10, int(params_out["keep_full_mc_top_k"] / 2))
+        # 🔴 LE MODE FAST EST INTERDIT — decision du physicien, 2026-08-05 :
+        # « d'une maniere generale, interdit le mode fast. Je veux un mode vraiment
+        #   semblable a la realite, et j'ai tout mon temps. »
+        #
+        # Ce que `fast` faisait, et pourquoi c'etait nocif :
+        #
+        #   n_screen_runs        25 -> 6     un P95 sur 6 tirages est le MAXIMUM DE SIX.
+        #                                    L'elimination de 230 strategies sur 240 se
+        #                                    decidait donc sur UNE SEULE realisation
+        #                                    Monte-Carlo par strategie.
+        #   robustness_num_runs 150 -> 40
+        #   consensus_num_runs  150 -> 40
+        #   consensus_num_seeds   3 -> 2
+        #   elite_rounds          2 -> 1
+        #   keep_full_mc_top_k   30 -> 15
+        #   + la plage de comptes de blocs retombait sur des presets non denses
+        #     (_compute_blocks_range_for_params, certus_strat_context.py)
+        #
+        # Le taux de plantage est BINOMIAL : son ecart-type a p = 5 % vaut
+        # sqrt(0,05 x 0,95 / N), soit 8,9 % a N = 6 contre 1,8 % a N = 150. On
+        # prononcait donc une elimination IRREVERSIBLE avec un instrument dont la
+        # resolution (17 %) etait trois fois plus grossiere que le seuil mesure (5 %).
+        #
+        # On ne se contente pas de le deconseiller : une configuration enregistree qui
+        # porte encore `fast` est RAMENEE a `premium`, bruyamment. Un mode degrade qui
+        # se reactive en silence au chargement d'un vieux fichier est exactement le
+        # piege que cette session a paye trois fois (trigger_tolerance, execution_mode,
+        # scan_wl_step : le fichier d'exemple etait a chaque fois pire que le defaut).
+        if str(params_out.get("execution_mode", "premium")).strip().lower() != "premium":
+            demande = params_out.get("execution_mode")
+            params_out["execution_mode"] = "premium"
+            try:
+                self.logger.warning(
+                    "[MODE] execution_mode=%r demande mais INTERDIT : ramene a 'premium'. "
+                    "Le mode degrade divisait les budgets Monte-Carlo par 4 et rendait "
+                    "l'elimination sur plantage non significative (resolution 17 %% pour "
+                    "un seuil a 5 %%).",
+                    demande,
+                )
+            except AttributeError:
+                pass
 
         return params_out
 

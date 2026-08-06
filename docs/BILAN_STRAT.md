@@ -17,6 +17,32 @@ Sources de référence, lues et citées textuellement :
 
 ---
 
+## 0. La chaîne canonique
+
+👤 Le physicien, 2026-08-06 — c'est la référence contre laquelle tout le reste se juge :
+
+> 1. On simule un dépôt et la mesure de transmission bruitée.
+> 2. On utilise le POEM comme méthode d'arrêt.
+> 3. On teste statistiquement tout un ensemble de stratégies prometteuses.
+> 4. On en déduit la meilleure stratégie.
+
+| Étape | État |
+|---|---|
+| 1. Simuler la mesure bruitée | 🔴 **la mesure n'est presque pas bruitée** — §2bis |
+| 2. POEM comme arrêt | ✅ conforme à l'éq. 2-4 — §2.1 |
+| 3. Stratégies « prometteuses » | ⚠️ elles sont **arbitraires** : ρ = −0,04 — §4 |
+| 4. La « meilleure » | ⚠️ **non défini** : classement contre le nominal, sans cible — §3.4 |
+
+👤 *« Ce que je veux, c'est la meilleure stratégie. »* + *« si 95 % des dépôts fonctionnent,
+c'est gagné »* + *« le plus important est la cible spectrale respectée »* définissent **une
+grandeur unique** :
+
+> **`P(le filtre sorti est conforme à la cible)`.** Un dépôt qui plante et un dépôt hors spec
+> sont **le même échec** — il n'y a donc pas deux critères à arbitrer, et pas de front de
+> Pareto à rendre.
+
+---
+
 ## 1. L'objectif, et l'étalon de tout jugement
 
 👤 *« Coller au mieux à ce qu'il se fait en dépôt, avec comme source d'erreur un ΔT

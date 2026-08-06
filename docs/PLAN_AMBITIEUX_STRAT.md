@@ -10,7 +10,50 @@ du physicien.
 
 ---
 
-## 0. La thèse de ce plan
+## 0. La chaîne canonique — et les trois étapes qui ne font pas ce qu'elles disent
+
+👤 Le physicien, 2026-08-06 :
+
+> 1. On simule un dépôt et la mesure de transmission bruitée.
+> 2. On utilise le POEM comme méthode d'arrêt.
+> 3. On teste statistiquement tout un ensemble de stratégies prometteuses.
+> 4. On en déduit la meilleure stratégie.
+
+**Cette chaîne est la bonne, et elle est plus simple que ce que ce document proposait
+initialement** — pas de front de Pareto, pas de recherche en faisceau avec *rollout*.
+L'architecture n'est pas le problème. Le problème est que **trois de ces quatre étapes ne font
+pas ce qu'elles annoncent.**
+
+| Étape | État vérifié |
+|---|---|
+| **1. Simuler le dépôt et la mesure bruitée** | 🔴 **Le dépôt est simulé, la mesure ne l'est presque pas.** `noise_val_precalc` n'apparaît qu'une fois dans tout le noyau, sur la comparaison d'arrêt. La détection des points tournants, la lecture des ancres POEM et le test d'atteignabilité se font sur une courbe **parfaite**. La machine simulée voit un signal sans bruit et n'en subit le bruit qu'au moment de comparer. **C'est le seul écart vraiment grave, et il rend les trois autres étapes optimistes par construction.** |
+| **2. POEM comme méthode d'arrêt** | ✅ **Aligné**, et 📖 conforme à l'éq. 2-4. Nuance factuelle : c'est POEM **quand c'est possible**, niveau absolu sinon — il faut deux points tournants traversés et une amplitude suffisante. C'est fidèle : la machine ne peut pas se recaler sur des extrema qu'elle n'a pas vus. |
+| **3. Tester statistiquement un ensemble de stratégies prometteuses** | ⚠️ Le mot qui coince est **« prometteuses »**. Elles sont choisies par le coût de la DP, 📏 décorrélé du résultat (ρ = −0,04, zéro des dix meilleures par coût dans les dix vraies meilleures). L'ensemble testé n'est pas prometteur, il est **arbitraire** — et son top 5 est une seule stratégie déclinée à ±1 nm. Et « statistiquement » : le screening décide sur 25 tirages, résolution 4 % pour un seuil à 5 %. |
+| **4. En déduire la meilleure stratégie** | ⚠️ **« Meilleure » n'a pas de définition dans le code.** Le classement porte sur l'écart au spectre **nominal**, non pondéré, et STRAT n'a jamais reçu la cible. |
+
+### La conséquence sur la méthode de recherche
+
+👤 *« Ce que je veux, c'est la meilleure stratégie. »* Combiné au reste — le juge est la
+statistique, 95 % de dépôts qui fonctionnent c'est gagné, la cible spectrale prime — cela
+définit **une grandeur unique** :
+
+> **La meilleure stratégie est celle qui maximise `P(le filtre sorti est conforme à la cible)`.**
+
+⚠️ **Cela annule le front de Pareto** que ce document proposait au §2.3. Il n'y a pas deux
+critères à arbitrer : un dépôt qui plante ne produit pas de filtre conforme, un dépôt hors spec
+non plus — **les deux sont le même échec**. On garde les deux causes séparées *à l'affichage*
+(3 % de runs perdus n'a pas le même sens économique que 3 % hors spec) mais on optimise leur
+somme.
+
+**Et cela simplifie la recherche.** Puisque le tri est fait par la statistique, la DP n'a plus
+à bien **classer** — elle doit bien **couvrir**. C'est un cahier des charges beaucoup plus
+facile à satisfaire que celui auquel elle échoue aujourd'hui. 👤 *« La DP pour moi n'est pas
+obligatoire »* : elle reste néanmoins un bon générateur, à condition de la juger sur sa
+couverture et non sur son classement.
+
+---
+
+## 0bis. La thèse de ce plan
 
 Aujourd'hui, **le simulateur ne sait pas échouer comme la machine échoue.**
 
@@ -150,11 +193,20 @@ classe sur le coût », qui détruit une stratégie à 5,1 % et garde celle à 4
 
 ⚠️ Hypothèse d'indépendance entre couches à instruire — elles partagent l'historique du bloc.
 
-### 2.3 Un front de Pareto rendement × écart spectral
+### 2.3 ❌ ANNULÉ — le front de Pareto est inutile
 
-Deux critères non commensurables ne se résument pas à un nombre. Rendre à l'opérateur une
-frontière, pas un gagnant, et le laisser trancher en salle. *(Question ouverte : le physicien
-préfère-t-il une stratégie unique ?)*
+Ce document proposait de rendre une frontière rendement × écart spectral plutôt qu'un gagnant.
+**C'était une complication inutile, née de ma propre confusion sur l'objectif.**
+
+👤 La définition du physicien — *« ce que je veux, c'est la meilleure stratégie »*, jugée sur
+*« si 95 % des dépôts fonctionnent, c'est gagné »* et *« le plus important est la cible
+spectrale respectée »* — **collapse les deux critères en un seul** : un dépôt qui plante ne
+produit pas de filtre conforme, un dépôt hors spec non plus. Les deux sont le même échec.
+
+**Une seule grandeur : `P(conforme)`.** On affiche les deux causes séparément parce qu'elles
+n'ont pas le même sens économique — un run perdu coûte du temps machine, un filtre hors spec
+coûte de la matière et se découvre tard — mais **on optimise leur somme**, et on rend **une**
+stratégie.
 
 ### 2.4 Les heuristiques deviennent des diagnostics, plus des filtres
 
@@ -254,20 +306,42 @@ C'est ce qui séparerait un code plausible d'un code éprouvé.
 
 ## Ordre recommandé
 
+Il découle directement des quatre étapes du §0 : **réparer chaque étape dans l'ordre où elle
+conditionne les suivantes.**
+
 ```
-1.1  bruiter Ts_r, derriere un drapeau, CRN preserves     <- FONDATION, tout en depend
-2.1  les trois modes de defaillance en sorties, + le rendement
-6.2  test de calibration                                   <- garde-fou, une journee
-4    cost_map 3D                                           <- le rho = -0,04
-3    acheminer targets + ponderer le RMSE
-5    successive halving + regle de resolution
-1.3  extraire MachineModel                                 <- rend la calibration tracable
-6.1  reproduire les reperes experimentaux                  <- le test d'acceptation
-1.2  cadence et temps d'integration
-2.2  rendement compose dans l'objectif
-2.3  front de Pareto
-7    verres temoins multiples
+ETAPE 1 — « simuler la mesure bruitee »
+  1.1  bruiter Ts_r avant la detection, CRN preserves    <- FONDATION, tout en depend
+  1.4b injecter une distorsion affine (indice, calibration)  <- eprouve enfin l'argument de POEM
+
+ETAPE 4 — « la meilleure » a besoin d'une definition
+  3    acheminer targets depuis DESIGN + ponderer par zone
+  2.1  P(conforme) comme score unique, les trois modes de defaillance en sorties
+
+GARDE-FOU, des que 1.1 et 3 sont poses
+  6.2  test de calibration sur l'exemple reel
+
+ETAPE 3 — « prometteuses » -> « couvrantes »
+  4    cost_map 3D ; si rho ne remonte pas, DP = generateur assume
+  5    successive halving + jamais d'elimination sous-resolue
+
+CONSOLIDATION
+  1.3  extraire MachineModel                             <- calibration tracable et datee
+  6.1  reproduire les reperes experimentaux              <- LE test d'acceptation
+  1.2  cadence et temps d'integration
+  1.4  sigma(lambda)
+  2.2  rendement compose dans l'objectif
+
+RECHERCHE
+  7    verres temoins multiples
 ```
+
+⚠️ **Ce qui a disparu de cet ordre** : le front de Pareto (§2.3, annulé — `P(conforme)` est un
+scalaire) et la recherche en faisceau avec *rollout*. Cette dernière n'est pas nécessaire :
+👤 la chaîne du physicien dit *« on teste statistiquement tout un ensemble de stratégies »* —
+générer largement puis départager par la statistique suffit, à condition que la génération
+vise la **couverture**. Une recherche plus sophistiquée ne se justifierait que si la couverture
+mesurée s'avérait insuffisante.
 
 **La règle qui gouverne l'ordre** : rien ne se décide sans mesure, et aucune mesure ne vaut
 tant que l'axe 1.1 n'est pas posé — parce que jusque-là, le simulateur ne peut pas échouer.

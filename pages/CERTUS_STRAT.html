@@ -663,9 +663,55 @@
         <!-- ================================================================ -->
         <!--  4. PHASE B: GROUPING & ROBUSTNESS                               -->
         <!-- ================================================================ -->
+        <div style="border:3px solid #0f766e;border-radius:10px;padding:16px 20px;margin:22px 0;background:#f0fdfa;">
+            <p style="margin:0 0 12px;font-weight:700;font-size:1.12em;color:#115e59;">
+                La chaîne canonique — et les trois étapes qui ne font pas ce qu'elles disent
+            </p>
+            <p style="margin:0 0 12px;font-style:italic;border-left:4px solid #0f766e;padding-left:12px;">
+                1. On simule un dépôt et la mesure de transmission bruitée.<br>
+                2. On utilise le POEM comme méthode d'arrêt.<br>
+                3. On teste statistiquement tout un ensemble de stratégies prometteuses.<br>
+                4. On en déduit la meilleure stratégie.
+                <br><span style="font-style:normal;">— le physicien, 2026-08-06</span>
+            </p>
+            <p style="margin:0 0 12px;">
+                <b>Cette chaîne est la bonne.</b> L'architecture n'est pas le problème — le
+                problème est que <b>trois de ces quatre étapes ne font pas ce qu'elles
+                annoncent.</b>
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;width:100%;">
+                <tr style="background:#ccfbf1;">
+                    <th style="border:1px solid #5eead4;padding:5px 10px;text-align:left;">Étape</th>
+                    <th style="border:1px solid #5eead4;padding:5px 10px;text-align:left;">État vérifié</th></tr>
+                <tr><td style="border:1px solid #5eead4;padding:5px 10px;"><b>1.</b> Simuler la mesure bruitée</td>
+                    <td style="border:1px solid #5eead4;padding:5px 10px;">🔴 <b>Le dépôt est simulé, la mesure ne l'est presque pas.</b> Voir l'encadré rouge ci-dessous — c'est le seul écart vraiment grave, et il rend les trois autres étapes optimistes par construction.</td></tr>
+                <tr><td style="border:1px solid #5eead4;padding:5px 10px;"><b>2.</b> POEM comme arrêt</td>
+                    <td style="border:1px solid #5eead4;padding:5px 10px;">✅ <b>Aligné</b>, conforme à l'éq. 2-4. Nuance : POEM <i>quand c'est possible</i>, niveau absolu sinon — et c'est fidèle, la machine ne se recale pas sur des extrema qu'elle n'a pas vus.</td></tr>
+                <tr><td style="border:1px solid #5eead4;padding:5px 10px;"><b>3.</b> Stratégies « prometteuses »</td>
+                    <td style="border:1px solid #5eead4;padding:5px 10px;">⚠️ Le mot qui coince est <b>prometteuses</b>. Choisies par un coût dont &rho; = &minus;0,04 : l'ensemble testé n'est pas prometteur, il est <b>arbitraire</b>.</td></tr>
+                <tr><td style="border:1px solid #5eead4;padding:5px 10px;"><b>4.</b> La « meilleure »</td>
+                    <td style="border:1px solid #5eead4;padding:5px 10px;">⚠️ <b>Sans définition dans le code</b> : classement contre le spectre nominal, non pondéré, et STRAT n'a jamais reçu la cible.</td></tr>
+            </table>
+            <p style="margin:0;background:#fff;border:2px solid #0f766e;border-radius:6px;padding:10px 14px;">
+                <b>Une seule grandeur, pas deux.</b> « Ce que je veux, c'est la meilleure
+                stratégie » + « si 95 % des dépôts fonctionnent, c'est gagné » + « le plus
+                important est la cible spectrale respectée » définissent
+                <b>$P(\text{le filtre sorti est conforme à la cible})$</b>.
+                <br>Un dépôt qui plante ne produit pas de filtre conforme ; un dépôt hors spec
+                non plus. <b>Les deux sont le même échec</b> — il n'y a donc pas deux critères
+                à arbitrer, et <b>pas de front de Pareto à rendre</b>. On affiche les deux
+                causes séparément, parce qu'un run perdu et un filtre hors spec n'ont pas le
+                même sens économique, mais on optimise leur somme.
+                <br><br><b>Conséquence sur la recherche :</b> puisque le tri est fait par la
+                statistique, la DP n'a plus à bien <i>classer</i> — elle doit bien
+                <b>couvrir</b>. C'est un cahier des charges bien plus facile que celui auquel
+                elle échoue aujourd'hui.
+            </p>
+        </div>
+
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:22px 0;background:#fef2f2;">
             <p style="margin:0 0 12px;font-weight:700;font-size:1.12em;color:#7f1d1d;">
-                🔴 LE JUGE DE PAIX — et le modèle n'y répond pas
+                🔴 ÉTAPE 1 — le juge de paix, et le modèle n'y répond pas
             </p>
             <p style="margin:0 0 12px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
                 « Le juge de paix c'est toujours l'étude stochastique et statistique : voit-on

@@ -80,6 +80,42 @@ Bénéfice : **la calibration devient un acte unique et traçable**, au lieu d'u
 constantes. Cette session a perdu deux jours sur un `trigger_tolerance` mal réglé dans un
 fichier d'exemple.
 
+### 1.4bis 🔴 Les autres sources d'erreur — la seule est aujourd'hui le bruit de lecture
+
+📏 Vérifié : **aucune erreur d'indice n'est modélisée** dans STRAT. `grep` sur
+`index_error|delta_n|index_tolerance` dans `certus_strat_robustness.py`,
+`certus_strat_growth.py` et `certus_strat_batch.py` : **zéro occurrence**. La seule source
+stochastique de tout le module est un tirage gaussien sur le niveau de déclenchement, **un par
+couche et par run**.
+
+Manquent donc :
+
+| Source | Effet réel | Modélisée ? |
+|---|---|---|
+| Bruit de lecture ΔT | erreur d'arrêt | ✅ (mais seulement sur la comparaison, cf. §1.1) |
+| **Erreur d'indice run-à-run** | décale tout le signal, change l'épaisseur optique | ❌ |
+| **Dérive de calibration** | distorsion affine `T → a·T + b` | ❌ |
+| **Instabilité de source / détecteur** | dérive lente pendant le dépôt | ❌ |
+| Vitesse de dépôt, inertie de l'obturateur | dépassement à l'arrêt | ❌ |
+
+**Et l'ironie est nette.** Le commentaire de `certus_strat_growth.py:194` justifie POEM ainsi :
+*« si le signal réel subit une distorsion affine `T_réel = a·T_nom + b`, les deux ancrages la
+subissent identiquement et le niveau reporté vaut `a·T_trigger_nom + b` »*. C'est
+**exactement** l'argument qui rend POEM robuste aux erreurs d'indice et de calibration.
+
+> **Le code affirme que POEM absorbe les erreurs d'indice, et ne l'éprouve jamais — parce
+> qu'il n'en injecte aucune.** L'argument central du mécanisme est non testé.
+
+Injecter une distorsion affine par run (un `a` et un `b` tirés) est **peu coûteux** et rendrait
+cette affirmation vérifiable. C'est aussi le seul moyen de mesurer ce que POEM apporte
+réellement par rapport à une cible absolue, au lieu de le postuler.
+
+📖 Zideluns traite les erreurs d'indice explicitement au chapitre 2 : une erreur d'indice à
+épaisseur physique constante détruit un Fabry-Perot comme le ferait une erreur d'épaisseur,
+alors qu'à **épaisseur optique** constante elle est presque sans effet — *« this is of course
+the result of the so-called quarter-wave design, and the self-error compensation mechanism »*.
+C'est précisément ce qu'un monitoring optique contrôle, et donc ce qu'il faut savoir simuler.
+
 ### 1.4 σ dépend de la longueur d'onde
 
 Le modèle utilise un σ constant. L'écart est connu et documenté : le bruit de l'OMS 5100 est
@@ -235,6 +271,33 @@ C'est ce qui séparerait un code plausible d'un code éprouvé.
 
 **La règle qui gouverne l'ordre** : rien ne se décide sans mesure, et aucune mesure ne vaut
 tant que l'axe 1.1 n'est pas posé — parce que jusque-là, le simulateur ne peut pas échouer.
+
+---
+
+## Ce que ce plan donnera, et ce qu'il ne donnera pas
+
+Question du physicien : *« ce plan va donc réellement me permettre de trouver une stratégie à
+partir d'une statistique réelle ? »* — la réponse honnête tient en trois conditions.
+
+**✅ Une statistique qui peut échouer.** Dès l'axe 1.1, les trois questions du juge de paix
+deviennent des mesures au lieu d'hypothèses, et le rendement devient un chiffre qui a un sens.
+C'est un saut par rapport à aujourd'hui, où un plantage médian nul est un artefact du modèle.
+
+**⚠️ Mais « réelle » exige les autres sources d'erreur** (axe 1.4bis). Sans elles, tu obtiens
+un rendement fidèle **au bruit de lecture seul**. Or c'est précisément là que POEM est censé
+briller — sur les erreurs d'indice et de calibration — et l'affirmation reste non testée.
+
+**⚠️ Et « réelle » exige la validation externe** (axe 6.1). Sans reproduire les 0,4 nm en PM
+et 0,3 nm en P-PM, on obtient un modèle **cohérent avec lui-même**, pas un modèle dont on sait
+qu'il colle au réel. C'est la différence entre *« ma simulation dit 95 % »* et *« je sais que
+95 % veut dire 95 % »*.
+
+**🔴 Une réserve de fond, indépendante de tout cela.** Même avec une statistique parfaite, on
+ne classe que **ce que la DP a généré**. Aujourd'hui ρ = −0,04 et le top 5 est une seule
+stratégie déclinée à ±1 nm. Une statistique irréprochable appliquée à un échantillon biaisé
+rend le meilleur *des candidats proposés*, pas le meilleur possible. C'est l'axe 4, et son
+repli honnête — faire de la DP un générateur de diversité et rendre le tri au Monte-Carlo —
+reste sur la table.
 
 ---
 

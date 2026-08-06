@@ -663,6 +663,101 @@
         <!-- ================================================================ -->
         <!--  4. PHASE B: GROUPING & ROBUSTNESS                               -->
         <!-- ================================================================ -->
+        <div style="border:3px solid #7c3aed;border-radius:10px;padding:16px 20px;margin:22px 0;background:#faf5ff;">
+            <p style="margin:0 0 12px;font-weight:700;font-size:1.08em;color:#5b21b6;">
+                📖 Conformité à la littérature — vérifiée sur la thèse Zideluns (206 p.), 2026-08-06
+            </p>
+            <p style="margin:0 0 12px;">
+                Toutes les citations ci-dessous sont <b>textuelles</b>. La question « Arsac et
+                Zideluns décrivent-ils le même mécanisme ? » est close : Zideluns p. 60 écrit
+                <i>« the percentage of optical extrema monitoring (POEM) [50] <b>or what is
+                sometimes referred to monitoring by swing values</b> [35] »</i>. Même mécanisme,
+                deux noms.
+            </p>
+
+            <table style="border-collapse:collapse;margin:0 0 14px;font-size:0.95em;width:100%;">
+                <tr style="background:#ede9fe;">
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;text-align:left;">Point</th>
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;">Statut</th>
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;text-align:left;">Source</th></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:5px 10px;">Formule POEM</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">✅ conforme</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">éq. 2-4, p. 61</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:5px 10px;">Historique de bloc à &lambda; constante</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">✅ conforme</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">p. 61</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:5px 10px;">1<sup>re</sup> couche démarre sur un point tournant</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">✅ corrigé</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">p. 104 — <i>« S<sub>in</sub> for first layer will be 0 % »</i></td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">Points tournants <b>virtuels</b> (couches minces)</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">🔴 <b>calculés puis inatteignables</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">p. 104</td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">Seuil de 4 % d'amplitude</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">🔴 <b>appliqué à la mauvaise amplitude</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">p. 112</td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">Trigger dans 15–85 % du swing</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">🔴 <b>non implémenté</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">p. 113</td></tr>
+            </table>
+
+            <p style="margin:0 0 10px;">
+                <b>1. La formule est juste.</b> Le code calcule
+                $p = (T_{\text{trig}} - T_{\text{prev}})/(T_{\text{last}} - T_{\text{prev}})$ ;
+                l'équation 2-4 définit
+                $S = (T_{\text{trig}} - T_{\text{last}})/(T_{\text{last}} - T_{\text{prev}})$.
+                Comme $p = S + 1$, les deux reconstructions donnent
+                <b>exactement le même niveau</b> — c'est la même interpolation affine avec un
+                point de référence différent. ⚠️ Les deux ancres sont <b>toutes deux avant</b>
+                le trigger : elles ne l'encadrent pas.
+            </p>
+
+            <p style="margin:0 0 10px;">
+                <b>2. 🔴 Les points tournants virtuels sont inatteignables.</b> p. 104 :
+                <i>« In case of thin layers, the <b>virtual increase in thickness is used to
+                locate the missing turning points</b> »</i>. Le balayage à 64 points sur 3&times;
+                l'épaisseur nominale existe pour ça — mais
+                <code>if k &lt;= idx_nom_stop or tp_b &lt; 0</code> fait qu'un extremum au-delà
+                de l'arrêt ne peut jamais devenir <code>tp_a</code> : il laisse
+                <code>tp_a = &minus;1</code> et la garde échoue. <b>Sur une couche mince — le
+                cas que la littérature désigne — POEM est donc désactivé au lieu d'utiliser le
+                prolongement.</b> On paie le balayage (64 évaluations au lieu de ~21 par couche
+                et par run) sans en tirer le bénéfice.
+            </p>
+
+            <p style="margin:0 0 10px;">
+                <b>3. 🔴 Le seuil de 4 % porte sur la mauvaise grandeur.</b> p. 112 :
+                <i>« for this monochromatic optical monitoring setup (OMS5100), a <b>start
+                amplitude</b> of at least 4 % is needed »</i>, et la figure 4-7 distingue
+                <b>A</b> (amplitude totale entre points tournants) de <b>B</b> (amplitude de
+                départ, entre la transmission initiale et le premier point tournant). Le code
+                applique <code>SWING_MIN</code> à <b>A</b>. Or <b>A &ge; B toujours</b> : le
+                code est donc <b>plus permissif que la machine</b>. Et la thèse en fait un
+                critère de <b>sélection de longueur d'onde</b> — <i>« use the start amplitude
+                to determine whether or not we can use a given wavelength for monitoring »</i> —
+                alors que le code n'en fait qu'un repli de POEM. Il devrait vivre en Phase A.
+            </p>
+
+            <p style="margin:0;">
+                <b>4. 🔴 La règle des 15–85 % n'existe pas dans le code.</b> p. 113 :
+                <i>« the trigger point in the range <b>15-85 % of the full amplitude</b> between
+                turning points appears to be the most efficient region »</i>.
+                <code>check_extrema_proximity</code> travaille en <b>espace des épaisseurs</b>
+                (marge en nm dérivée de <code>extrema_exclusion_ratio = 60</code>). Près d'un
+                extremum, $T$ varie <b>quadratiquement</b> avec $d$ : une marge fixe en épaisseur
+                correspond à une fraction d'amplitude minuscule et non contrôlée. Le critère
+                physique — le rapport signal sur bruit sur le niveau — n'est pas celui appliqué.
+                <br>✅ En revanche l'<b>asymétrie 3&times;/1&times;</b> est fondée : s'arrêter
+                après un extremum est sûr, il est compté et le signal s'en éloigne monotonement.
+                <br>📌 <b>Pour la question du TPM</b>, la même page conclut : <i>« the
+                combination of turning point monitoring and level cut monitoring in the same
+                monitoring sequence should be considered because <b>both monitoring methods are
+                readily available with the OMS5100</b> »</i>.
+            </p>
+        </div>
+
         <h2>4. Phase B: Block Grouping &amp; Robustness Screening</h2>
 
         <h3>4.1 Dynamic Programming Segmentation</h3>

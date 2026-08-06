@@ -1,0 +1,2117 @@
+dialogues: reponse automatique OUI
+sonde installee sur _compute_valid_blocks_kernel
+08:54:09 | ERROR | Critical error in parallel worker for block 48: Traceback (most recent call last):
+  File "C:\dev\CERTUS\0108\certus\workers\certus_strat_workers.py", line 587, in _parallel_block_worker
+    strategies_dp = mine_strategies_for_block_count(
+        n_blk,
+    ...<19 lines>...
+        ),
+    )
+  File "C:\dev\CERTUS\0108\certus\core\certus_strat_ranking.py", line 366, in mine_strategies_for_block_count
+    strategies_collected.extend(f1.result())
+                                ~~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 454, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 396, in __get_result
+    raise self._exception
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 86, in run
+    result = ctx.run(self.task)
+  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 73, in run
+    return fn(*args, **kwargs)
+  File "C:\dev\CERTUS\0108\certus\core\certus_strat_ranking.py", line 327, in run_mining
+    solutions = _find_k_best_groupings_dp_sequential(
+        cost_map,
+    ...<14 lines>...
+        min_wl_sep_nm=float(min_wl_sep_nm),
+    )
+  File "C:\dev\CERTUS\0108\certus\core\certus_strat_ranking.py", line 109, in _find_k_best_groupings_dp_sequential
+    block_costs, block_wls, block_counts = _compute_valid_blocks_kernel(
+                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W, float(min_wl_sep_nm)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\dev\CERTUS\0108\scripts\probe_block_wls.py", line 146, in patched
+    "top_k": int(top_k),
+                 ^^^^^
+NameError: name 'top_k' is not defined
+
+08:54:09 | INFO |    [Block 9] Mining found 240 strategies.
+08:54:09 | INFO |    [Block 9] Running screening on 240 strategies...
+08:54:09 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 4 workers)...
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9000: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9001: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9002: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9003: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9004: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9005: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9006: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9007: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9008: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9009: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9010: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9011: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9012: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9013: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9014: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9015: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9016: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9017: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9018: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9019: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9020: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9022: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9023: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9024: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9026: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9027: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9028: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9029: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9030: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9031: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9032: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9033: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9034: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9035: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9036: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9037: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9038: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9039: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9040: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9041: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9042: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9043: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9044: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9045: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9046: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9047: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9048: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9049: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9050: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9052: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9053: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9054: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9055: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9056: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9057: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9058: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9059: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9060: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9061: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9062: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9063: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9064: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9065: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9066: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9067: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9068: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9069: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9070: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9071: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9072: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9073: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9074: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9075: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9076: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9077: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9078: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9079: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9100: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9101: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9102: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9103: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9104: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9105: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9106: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9107: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9108: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9109: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9110: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9111: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9112: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9113: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9114: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9115: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9117: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9118: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9121: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9122: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9123: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9124: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9126: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9127: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9128: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9130: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9131: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9132: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9134: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9135: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9136: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9137: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9138: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9139: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9140: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9141: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9142: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9144: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9145: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9146: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9147: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9148: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9149: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9150: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9153: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9154: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9156: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9157: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9159: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9160: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9161: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9162: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9163: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9164: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9165: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9167: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9168: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9169: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9170: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9171: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9172: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9173: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9174: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9175: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9176: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9177: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9178: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9179: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9200: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9201: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9202: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9203: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9204: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9205: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9206: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9207: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9208: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9209: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9210: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9211: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9212: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9213: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9214: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9215: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9216: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9217: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9218: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9219: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9220: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9222: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9223: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9224: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9226: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9227: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9228: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9229: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9230: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9231: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9232: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9233: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9234: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9235: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9236: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9237: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9238: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9239: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9240: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9241: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9242: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9243: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9244: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9245: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9246: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9247: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9248: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9249: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9250: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9252: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9253: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9254: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9255: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9256: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9257: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9258: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9259: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9260: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9261: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9262: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9263: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9264: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9265: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9266: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9267: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9268: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9269: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9270: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9271: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9272: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9273: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9274: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9275: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9276: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9277: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9278: inf
+08:54:29 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9279: inf
+08:54:30 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:54:42 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 3/18 (pre-elite).
+08:54:42 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:54:42 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.031650 target=0.031650
+08:54:45 | INFO | [ELITE] Round 1: full_eval=36.
+08:54:47 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+08:54:47 | INFO | [ELITE] No candidate added across all rounds.
+08:54:47 | INFO | \U0001f3c6 Best Strategy ID: 9133 (THICKNESS²) - Score: 0.07784
+08:54:47 | INFO |    [Block 9] Screening complete. Results count: 18
+08:54:47 | INFO |    [Block 9] Full pass on 6 survivors (n_full=150)...
+08:54:47 | INFO | Running robustness tests on 6 strategies (ThreadPoolExecutor with 4 workers)...
+08:54:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9133: inf
+08:54:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9221: inf
+08:54:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9225: inf
+08:54:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9125: inf
+08:54:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 9129: inf
+08:54:49 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=1, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:54:50 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 1/1 (pre-elite).
+08:54:50 | INFO | [ELITE] Round 1/2: generated=32 parents=1 rank10_nominal=0.031320 target=0.031320
+08:54:53 | INFO | [ELITE] Round 1: full_eval=4.
+08:54:54 | INFO | [ELITE] Round 1: added 1 strategy(ies) above threshold.
+08:54:54 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=2, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:54:55 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 2/2 (post-elite-r1).
+08:54:55 | INFO | [ELITE] Round 2/2: generated=62 parents=2 rank10_nominal=0.031320 target=0.031320
+08:55:00 | INFO | [ELITE] Round 2: full_eval=17.
+08:55:06 | INFO | [ELITE] Round 2: added 9 strategy(ies) above threshold.
+08:55:06 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=11, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:55:15 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 11/11 (post-elite-r2).
+08:55:15 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:55:15 | INFO | \U0001f3c6 Best Strategy ID: 9281 (ELITE) - Score: 0.08879
+08:55:15 | INFO | [Block 9] Best strategy ready: RMSE=0.08879 blocks=9
+08:55:16 | INFO |    [Block 8] Mining found 240 strategies.
+08:55:16 | INFO |    [Block 8] Running screening on 240 strategies...
+08:55:16 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 4 workers)...
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8000: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8001: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8002: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8003: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8004: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8005: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8006: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8007: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8008: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8009: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8010: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8011: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8012: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8013: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8014: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8015: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8016: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8017: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8018: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8019: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8020: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8021: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8022: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8023: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8024: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8025: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8026: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8027: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8028: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8029: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8030: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8031: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8032: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8033: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8034: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8035: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8036: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8037: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8038: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8039: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8040: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8041: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8042: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8043: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8045: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8046: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8047: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8048: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8049: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8052: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8053: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8054: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8055: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8056: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8057: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8058: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8059: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8060: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8061: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8062: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8063: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8064: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8065: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8066: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8067: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8068: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8069: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8070: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8071: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8072: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8073: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8074: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8075: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8076: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8077: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8078: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8079: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8103: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8104: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8105: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8106: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8112: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8113: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8115: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8117: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8118: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8123: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8124: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8125: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8126: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8127: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8128: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8129: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8130: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8132: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8133: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8134: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8135: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8136: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8138: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8139: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8140: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8141: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8143: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8145: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8147: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8148: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8149: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8150: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8154: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8155: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8156: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8157: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8159: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8161: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8162: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8166: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8167: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8168: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8169: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8170: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8172: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8173: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8174: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8176: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8178: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8179: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8200: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8201: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8202: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8203: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8204: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8205: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8206: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8207: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8208: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8209: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8210: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8211: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8212: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8213: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8214: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8215: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8216: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8217: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8218: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8219: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8220: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8221: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8222: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8223: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8224: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8225: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8226: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8227: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8228: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8229: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8230: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8231: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8232: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8233: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8234: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8235: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8236: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8237: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8238: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8239: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8240: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8241: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8242: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8243: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8245: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8246: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8247: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8248: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8249: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8252: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8253: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8254: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8255: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8256: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8257: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8258: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8259: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8260: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8261: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8262: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8263: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8264: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8265: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8266: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8267: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8268: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8269: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8270: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8271: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8272: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8273: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8274: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8275: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8276: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8277: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8278: inf
+08:55:35 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8279: inf
+08:55:35 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:55:45 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/36 (pre-elite).
+08:55:45 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:55:45 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.036137 target=0.036137
+08:55:47 | INFO | [ELITE] Round 1: full_eval=34.
+08:55:50 | INFO | [ELITE] Round 1: added 28 strategy(ies) above threshold.
+08:55:50 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:56:00 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 9/64 (post-elite-r1).
+08:56:00 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:56:00 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.026048 target=0.026048
+08:56:03 | INFO | [ELITE] Round 2: full_eval=36.
+08:56:05 | INFO | [ELITE] Round 2: added 13 strategy(ies) above threshold.
+08:56:05 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:56:13 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 8/77 (post-elite-r2).
+08:56:13 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:56:13 | INFO | \U0001f3c6 Best Strategy ID: 8340 (ELITE) - Score: 0.04541
+08:56:13 | INFO |    [Block 8] Screening complete. Results count: 77
+08:56:13 | INFO | Running robustness tests on 143 strategies (ThreadPoolExecutor with 4 workers)...
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000001: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000004: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000005: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000006: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000007: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000008: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000009: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000010: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000011: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000012: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000013: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000014: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000015: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000016: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000017: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000018: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000019: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000020: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000021: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000022: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000023: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000024: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000025: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000026: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000027: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000028: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000029: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000031: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000032: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000034: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000035: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000037: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000038: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000039: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000040: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000041: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000042: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000043: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000044: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000045: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000046: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000047: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000049: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000050: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000051: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000052: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000054: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000055: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000056: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000057: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000058: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000059: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000060: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000061: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000062: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000063: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000064: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000065: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000066: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000067: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000068: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000069: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000070: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000071: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000072: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000073: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000074: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000075: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000076: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000077: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000078: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000079: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000080: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000081: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000082: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000083: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000084: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000085: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000086: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000087: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000088: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000089: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000090: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000091: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000092: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000093: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000094: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000095: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000096: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000097: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000098: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000099: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000100: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000101: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000102: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000103: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000104: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000105: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000106: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000107: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000108: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000109: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000110: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000111: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000112: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000113: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000114: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000115: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000117: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000118: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000119: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000120: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000121: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000122: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000123: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000124: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000125: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000126: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000127: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000128: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000129: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000130: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000131: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000132: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000133: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000134: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000135: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000136: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000137: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000138: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000139: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000140: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000141: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000142: inf
+08:56:24 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000143: inf
+08:56:24 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=8, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:56:31 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 7/8 (pre-elite).
+08:56:31 | INFO | [ELITE] Round 1/2: generated=120 parents=8 rank10_nominal=0.028768 target=0.028768
+08:56:34 | INFO | [ELITE] Round 1: full_eval=36.
+08:56:36 | INFO | [ELITE] Round 1: added 4 strategy(ies) above threshold.
+08:56:36 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:56:39 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 11/12 (post-elite-r1).
+08:56:40 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.031745 target=0.031745
+08:56:42 | INFO | [ELITE] Round 2: full_eval=36.
+08:56:44 | INFO | [ELITE] Round 2: added 26 strategy(ies) above threshold.
+08:56:44 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:56:54 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/38 (post-elite-r2).
+08:56:54 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:56:54 | INFO | \U0001f3c6 Best Strategy ID: 900000203 (ELITE) - Score: 0.05961
+08:56:54 | INFO |    [Block 8] Full pass on 19 survivors (n_full=150)...
+08:56:54 | INFO | Running robustness tests on 19 strategies (ThreadPoolExecutor with 4 workers)...
+08:57:00 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8340: inf
+08:57:00 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8389: inf
+08:57:00 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8250: inf
+08:57:00 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 8274: inf
+08:57:00 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:57:10 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/15 (pre-elite).
+08:57:10 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.023970 target=0.023970
+08:57:17 | INFO | [ELITE] Round 1: full_eval=21.
+08:57:23 | INFO | [ELITE] Round 1: added 14 strategy(ies) above threshold.
+08:57:23 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:57:33 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/29 (post-elite-r1).
+08:57:33 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.024395 target=0.024395
+08:57:40 | INFO | [ELITE] Round 2: full_eval=36.
+08:57:51 | INFO | [ELITE] Round 2: added 25 strategy(ies) above threshold.
+08:57:51 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:58:00 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/54 (post-elite-r2).
+08:58:00 | INFO | \U0001f3c6 Best Strategy ID: 900000379 (ELITE) - Score: 0.04648
+08:58:00 | INFO | [Block 8] Best strategy ready: RMSE=0.04648 blocks=8
+08:58:00 | INFO |    [Block 7] Mining found 240 strategies.
+08:58:00 | INFO |    [Block 7] Running screening on 240 strategies...
+08:58:00 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 4 workers)...
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7000: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7001: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7002: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7003: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7004: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7005: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7006: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7007: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7008: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7009: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7010: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7011: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7012: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7013: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7014: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7015: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7016: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7017: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7018: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7019: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7020: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7021: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7022: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7023: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7024: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7026: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7027: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7028: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7029: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7030: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7032: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7033: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7034: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7035: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7036: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7037: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7041: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7042: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7043: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7044: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7046: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7047: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7048: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7049: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7050: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7051: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7052: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7053: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7054: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7055: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7056: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7057: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7058: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7059: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7060: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7061: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7062: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7063: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7065: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7066: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7067: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7068: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7070: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7071: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7072: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7073: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7075: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7076: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7077: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7078: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7079: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7102: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7103: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7105: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7114: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7116: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7117: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7120: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7122: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7123: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7125: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7126: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7128: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7130: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7131: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7132: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7134: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7136: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7137: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7139: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7142: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7145: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7146: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7148: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7150: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7152: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7154: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7157: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7158: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7163: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7164: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7166: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7167: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7170: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7171: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7172: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7173: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7174: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7179: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7200: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7201: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7202: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7203: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7204: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7205: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7206: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7207: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7208: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7209: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7210: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7211: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7212: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7213: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7214: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7215: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7216: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7217: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7218: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7219: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7220: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7221: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7222: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7223: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7224: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7226: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7227: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7228: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7229: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7230: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7232: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7233: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7234: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7235: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7236: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7237: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7241: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7242: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7243: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7244: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7246: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7247: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7248: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7249: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7250: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7251: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7252: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7253: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7254: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7255: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7256: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7257: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7258: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7259: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7260: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7261: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7262: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7263: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7265: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7266: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7267: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7268: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7270: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7271: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7272: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7273: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7275: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7276: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7277: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7278: inf
+08:58:18 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7279: inf
+08:58:18 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:58:29 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/60 (pre-elite).
+08:58:29 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:58:29 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.019954 target=0.019954
+08:58:31 | INFO | [ELITE] Round 1: full_eval=25.
+08:58:33 | INFO | [ELITE] Round 1: added 22 strategy(ies) above threshold.
+08:58:33 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:58:43 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 11/82 (post-elite-r1).
+08:58:43 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:58:43 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.033700 target=0.033700
+08:58:46 | INFO | [ELITE] Round 2: full_eval=36.
+08:58:48 | INFO | [ELITE] Round 2: added 28 strategy(ies) above threshold.
+08:58:48 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:58:58 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 9/110 (post-elite-r2).
+08:58:58 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:58:58 | INFO | \U0001f3c6 Best Strategy ID: 7327 (ELITE) - Score: 0.03178
+08:58:58 | INFO |    [Block 7] Screening complete. Results count: 110
+08:58:58 | INFO | Running robustness tests on 214 strategies (ThreadPoolExecutor with 4 workers)...
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000001: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000002: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000003: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000004: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000005: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000006: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000008: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000009: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000011: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000012: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000013: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000014: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000016: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000017: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000018: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000019: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000021: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000022: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000023: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000025: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000026: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000028: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000029: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000030: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000031: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000033: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000034: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000036: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000037: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000038: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000039: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000040: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000041: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000042: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000044: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000045: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000046: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000047: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000048: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000049: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000050: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000051: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000052: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000054: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000055: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000056: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000057: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000058: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000059: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000060: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000063: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000064: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000065: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000066: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000067: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000068: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000070: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000071: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000072: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000073: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000074: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000076: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000077: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000078: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000079: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000080: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000081: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000082: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000083: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000086: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000087: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000088: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000089: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000091: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000092: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000093: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000094: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000095: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000096: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000098: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000099: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000100: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000101: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000103: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000104: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000105: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000108: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000109: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000110: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000112: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000113: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000114: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000115: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000116: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000117: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000118: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000119: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000120: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000121: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000123: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000124: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000125: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000126: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000127: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000128: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000129: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000131: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000132: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000134: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000135: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000136: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000137: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000138: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000139: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000142: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000143: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000144: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000145: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000147: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000148: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000149: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000150: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000151: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000152: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000153: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000154: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000155: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000156: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000158: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000159: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000160: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000161: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000163: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000164: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000165: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000166: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000167: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000168: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000169: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000171: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000172: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000173: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000174: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000175: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000177: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000178: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000179: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000180: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000181: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000182: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000183: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000184: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000185: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000187: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000188: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000189: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000190: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000192: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000193: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000194: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000195: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000197: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000198: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000199: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000200: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000201: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000202: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000203: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000204: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000206: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000207: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000208: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000209: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000210: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000211: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000212: inf
+08:59:17 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000213: inf
+08:59:17 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:59:27 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/37 (pre-elite).
+08:59:27 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.014775 target=0.014775
+08:59:30 | INFO | [ELITE] Round 1: full_eval=5.
+08:59:30 | INFO | [ELITE] Round 1: added 2 strategy(ies) above threshold.
+08:59:30 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:59:39 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/39 (post-elite-r1).
+08:59:39 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.016242 target=0.016242
+08:59:42 | INFO | [ELITE] Round 2: full_eval=35.
+08:59:44 | INFO | [ELITE] Round 2: added 24 strategy(ies) above threshold.
+08:59:44 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+08:59:55 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/63 (post-elite-r2).
+08:59:55 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+08:59:55 | INFO | \U0001f3c6 Best Strategy ID: 900000326 (ELITE) - Score: 0.03098
+08:59:55 | INFO |    [Block 7] Full pass on 20 survivors (n_full=150)...
+08:59:55 | INFO | Running robustness tests on 20 strategies (ThreadPoolExecutor with 4 workers)...
+09:00:01 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7327: inf
+09:00:01 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7326: inf
+09:00:01 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7317: inf
+09:00:01 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7388: inf
+09:00:01 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 7330: inf
+09:00:01 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:00:12 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/15 (pre-elite).
+09:00:12 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:00:12 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.011797 target=0.011797
+09:00:20 | INFO | [ELITE] Round 1: full_eval=36.
+09:00:30 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+09:00:30 | INFO | [ELITE] No candidate added across all rounds.
+09:00:30 | INFO | \U0001f3c6 Best Strategy ID: 900000106 (SMART_MERGE_MIXED (from ID 900000411)) - Score: 0.03840
+09:00:30 | INFO | [Block 7] Best strategy ready: RMSE=0.03840 blocks=7
+09:00:31 | INFO |    [Block 6] Mining found 240 strategies.
+09:00:31 | INFO |    [Block 6] Running screening on 240 strategies...
+09:00:31 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 4 workers)...
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6000: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6001: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6004: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6010: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6011: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6014: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6015: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6017: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6019: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6020: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6022: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6023: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6025: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6027: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6028: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6029: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6030: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6031: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6032: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6033: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6034: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6035: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6037: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6039: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6040: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6041: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6042: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6043: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6045: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6046: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6048: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6050: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6051: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6052: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6053: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6055: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6056: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6057: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6058: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6059: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6060: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6061: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6062: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6064: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6065: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6066: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6067: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6068: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6069: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6070: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6071: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6072: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6073: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6075: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6076: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6077: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6078: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6079: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6100: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6101: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6107: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6110: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6113: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6115: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6118: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6120: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6122: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6123: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6126: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6127: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6130: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6135: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6136: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6139: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6140: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6141: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6143: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6144: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6147: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6148: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6149: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6152: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6153: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6154: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6155: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6156: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6158: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6163: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6164: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6165: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6166: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6167: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6168: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6169: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6170: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6171: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6173: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6174: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6175: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6177: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6178: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6179: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6200: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6201: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6204: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6210: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6211: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6214: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6215: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6217: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6219: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6220: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6222: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6223: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6225: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6227: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6228: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6229: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6230: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6231: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6232: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6233: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6234: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6235: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6237: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6239: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6240: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6241: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6242: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6243: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6245: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6246: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6248: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6250: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6251: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6252: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6253: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6255: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6256: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6257: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6258: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6259: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6260: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6261: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6262: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6264: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6265: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6266: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6267: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6268: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6269: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6270: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6271: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6272: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6273: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6275: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6276: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6277: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6278: inf
+09:00:48 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 6279: inf
+09:00:48 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:00:59 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/80 (pre-elite).
+09:00:59 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:00:59 | INFO | [ELITE] Round 1/2: generated=81 parents=10 rank10_nominal=0.017579 target=0.017579
+09:01:00 | INFO | [ELITE] Round 1: full_eval=34.
+09:01:03 | INFO | [ELITE] Round 1: added 11 strategy(ies) above threshold.
+09:01:03 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:01:12 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/91 (post-elite-r1).
+09:01:12 | INFO | [ELITE] Round 2/2: generated=113 parents=10 rank10_nominal=0.017456 target=0.017456
+09:01:14 | INFO | [ELITE] Round 2: full_eval=25.
+09:01:16 | INFO | [ELITE] Round 2: added 7 strategy(ies) above threshold.
+09:01:16 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:01:25 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/98 (post-elite-r2).
+09:01:25 | INFO | \U0001f3c6 Best Strategy ID: 6132 (THICKNESS²) - Score: 0.03315
+09:01:25 | INFO |    [Block 6] Screening complete. Results count: 98
+09:01:25 | INFO | Running robustness tests on 173 strategies (ThreadPoolExecutor with 4 workers)...
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000002: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000003: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000004: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000007: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000008: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000009: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000010: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000012: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000013: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000014: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000015: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000016: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000017: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000018: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000019: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000021: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000022: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000023: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000026: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000027: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000028: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000029: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000030: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000032: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000033: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000035: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000036: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000037: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000038: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000039: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000040: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000041: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000043: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000046: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000047: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000049: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000050: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000051: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000052: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000053: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000055: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000056: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000057: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000060: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000061: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000062: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000064: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000065: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000066: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000067: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000068: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000071: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000073: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000075: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000076: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000077: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000078: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000079: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000081: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000082: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000083: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000084: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000085: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000087: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000088: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000089: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000091: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000092: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000095: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000096: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000097: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000098: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000099: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000100: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000101: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000104: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000106: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000107: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000108: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000110: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000111: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000112: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000113: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000114: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000117: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000119: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000120: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000121: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000123: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000124: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000125: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000126: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000127: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000128: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000130: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000131: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000132: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000133: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000139: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000140: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000142: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000143: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000144: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000146: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000147: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000148: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000149: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000150: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000151: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000153: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000155: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000156: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000157: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000159: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000160: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000162: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000163: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000164: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000167: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000168: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000169: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000170: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000172: inf
+09:01:37 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000173: inf
+09:01:37 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:01:48 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/49 (pre-elite).
+09:01:48 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:01:48 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.012302 target=0.012302
+09:01:51 | INFO | [ELITE] Round 1: full_eval=36.
+09:01:53 | INFO | [ELITE] Round 1: added 2 strategy(ies) above threshold.
+09:01:53 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:02:03 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/51 (post-elite-r1).
+09:02:03 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:02:03 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.016375 target=0.016375
+09:02:06 | INFO | [ELITE] Round 2: full_eval=27.
+09:02:08 | INFO | [ELITE] Round 2: added 21 strategy(ies) above threshold.
+09:02:08 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:02:19 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/72 (post-elite-r2).
+09:02:19 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:02:19 | INFO | \U0001f3c6 Best Strategy ID: 900000165 (SMART_MERGE_MIXED (from ID 900000384)) - Score: 0.03592
+09:02:19 | INFO |    [Block 6] Full pass on 17 survivors (n_full=150)...
+09:02:19 | INFO | Running robustness tests on 17 strategies (ThreadPoolExecutor with 4 workers)...
+09:02:26 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:02:37 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/17 (pre-elite).
+09:02:37 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:02:37 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.014833 target=0.014833
+09:02:46 | INFO | [ELITE] Round 1: full_eval=36.
+09:02:57 | INFO | [ELITE] Round 1: added 20 strategy(ies) above threshold.
+09:02:57 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:03:05 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/37 (post-elite-r1).
+09:03:05 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:03:05 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.014833 target=0.014833
+09:03:13 | INFO | [ELITE] Round 2: full_eval=36.
+09:03:24 | INFO | [ELITE] Round 2: added 19 strategy(ies) above threshold.
+09:03:24 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:03:34 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/56 (post-elite-r2).
+09:03:34 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:03:34 | INFO | \U0001f3c6 Best Strategy ID: 900000381 (ELITE) - Score: 0.02921
+09:03:34 | INFO | [Block 6] Best strategy ready: RMSE=0.02921 blocks=6
+09:03:34 | INFO |    [Block 5] Mining found 240 strategies.
+09:03:34 | INFO |    [Block 5] Running screening on 240 strategies...
+09:03:34 | INFO | Running robustness tests on 240 strategies (ThreadPoolExecutor with 4 workers)...
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5000: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5001: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5002: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5003: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5004: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5005: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5006: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5007: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5008: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5009: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5010: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5011: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5012: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5013: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5014: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5015: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5016: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5017: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5018: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5019: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5020: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5021: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5022: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5023: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5024: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5025: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5026: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5027: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5028: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5029: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5030: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5031: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5032: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5033: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5034: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5035: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5036: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5037: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5038: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5039: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5040: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5041: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5042: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5043: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5044: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5045: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5046: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5047: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5048: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5049: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5050: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5051: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5052: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5053: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5054: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5055: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5056: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5057: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5058: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5059: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5060: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5061: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5062: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5063: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5064: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5065: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5066: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5067: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5068: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5069: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5070: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5071: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5072: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5073: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5074: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5075: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5076: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5078: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5079: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5100: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5101: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5102: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5103: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5104: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5105: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5106: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5107: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5108: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5109: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5110: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5111: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5112: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5113: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5114: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5115: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5116: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5117: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5118: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5119: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5120: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5121: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5122: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5123: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5124: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5125: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5126: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5127: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5128: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5129: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5130: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5131: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5132: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5133: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5134: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5135: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5136: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5137: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5138: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5139: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5140: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5141: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5142: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5143: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5144: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5145: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5146: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5147: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5148: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5149: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5150: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5151: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5152: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5153: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5154: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5155: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5156: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5157: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5158: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5159: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5160: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5161: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5162: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5163: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5164: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5165: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5166: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5167: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5168: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5169: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5170: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5171: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5172: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5173: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5174: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5175: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5176: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5177: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5178: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5179: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5200: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5201: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5202: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5203: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5204: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5205: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5206: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5207: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5208: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5209: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5210: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5211: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5212: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5213: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5214: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5215: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5216: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5217: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5218: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5219: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5220: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5221: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5222: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5223: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5224: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5225: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5226: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5227: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5228: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5229: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5230: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5231: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5232: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5233: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5234: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5235: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5236: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5237: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5238: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5239: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5240: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5241: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5242: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5243: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5244: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5245: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5246: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5247: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5248: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5249: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5250: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5251: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5252: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5253: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5254: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5255: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5256: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5257: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5258: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5259: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5260: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5261: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5262: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5263: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5264: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5265: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5266: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5267: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5268: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5269: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5270: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5271: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5272: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5273: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5274: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5275: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5276: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5278: inf
+09:03:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5279: inf
+09:03:53 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=2, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:03:55 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 2/2 (pre-elite).
+09:03:55 | INFO | [ELITE] Round 1/2: generated=18 parents=2 rank10_nominal=0.019640 target=0.019640
+09:03:56 | INFO | [ELITE] Round 1: full_eval=7.
+09:03:56 | INFO | [ELITE] Round 1: added 4 strategy(ies) above threshold.
+09:03:56 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=6, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:04:00 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 5/6 (post-elite-r1).
+09:04:00 | INFO | [ELITE] Round 2/2: generated=76 parents=6 rank10_nominal=0.015074 target=0.015074
+09:04:01 | INFO | [ELITE] Round 2: full_eval=5.
+09:04:02 | INFO | [ELITE] Round 2: added 3 strategy(ies) above threshold.
+09:04:02 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=9, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:04:05 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 7/9 (post-elite-r2).
+09:04:05 | INFO | \U0001f3c6 Best Strategy ID: 5294 (ELITE) - Score: 0.09945
+09:04:05 | INFO |    [Block 5] Screening complete. Results count: 9
+09:04:05 | INFO | Running robustness tests on 165 strategies (ThreadPoolExecutor with 4 workers)...
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000001: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000002: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000004: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000005: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000008: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000009: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000010: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000011: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000013: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000014: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000015: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000016: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000017: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000018: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000019: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000021: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000022: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000023: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000024: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000025: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000026: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000027: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000028: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000030: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000032: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000035: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000036: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000037: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000038: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000041: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000044: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000045: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000046: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000047: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000048: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000050: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000051: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000052: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000053: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000054: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000055: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000056: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000057: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000058: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000061: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000063: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000064: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000065: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000066: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000067: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000068: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000069: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000072: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000073: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000074: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000075: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000076: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000078: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000079: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000080: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000081: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000082: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000084: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000085: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000086: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000087: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000088: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000089: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000090: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000092: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000093: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000094: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000095: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000096: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000097: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000099: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000102: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000103: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000104: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000105: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000106: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000107: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000109: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000114: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000115: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000116: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000119: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000120: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000121: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000123: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000124: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000126: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000129: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000130: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000132: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000133: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000134: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000135: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000137: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000138: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000140: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000141: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000142: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000143: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000144: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000145: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000146: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000147: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000149: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000150: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000152: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000153: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000156: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000157: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000159: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000161: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000162: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000163: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000164: inf
+09:04:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000165: inf
+09:04:19 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:04:30 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/45 (pre-elite).
+09:04:30 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.012297 target=0.012297
+09:04:33 | INFO | [ELITE] Round 1: full_eval=9.
+09:04:33 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+09:04:33 | INFO | [ELITE] No candidate added across all rounds.
+09:04:33 | INFO | \U0001f3c6 Best Strategy ID: 900000083 (SMART_MERGE_MIXED (from ID 900000392)) - Score: 0.02776
+09:04:33 | INFO |    [Block 5] Full pass on 18 survivors (n_full=150)...
+09:04:33 | INFO | Running robustness tests on 18 strategies (ThreadPoolExecutor with 4 workers)...
+09:04:40 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5294: inf
+09:04:40 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5299: inf
+09:04:40 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5277: inf
+09:04:40 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5278: inf
+09:04:40 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 5282: inf
+09:04:40 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:04:51 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/13 (pre-elite).
+09:04:51 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:04:51 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.014174 target=0.014174
+09:04:59 | INFO | [ELITE] Round 1: full_eval=34.
+09:05:09 | INFO | [ELITE] Round 1: added 15 strategy(ies) above threshold.
+09:05:09 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:05:19 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/28 (post-elite-r1).
+09:05:19 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:05:19 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.014089 target=0.014089
+09:05:28 | INFO | [ELITE] Round 2: full_eval=36.
+09:05:40 | INFO | [ELITE] Round 2: added 13 strategy(ies) above threshold.
+09:05:40 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:05:46 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/41 (post-elite-r2).
+09:05:46 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:05:46 | INFO | \U0001f3c6 Best Strategy ID: 900000233 (ELITE) - Score: 0.02917
+09:05:46 | INFO | [Block 5] Best strategy ready: RMSE=0.02917 blocks=5
+09:05:46 | INFO |    [Block 4] Mining found 81 strategies.
+09:05:46 | INFO |    [Block 4] Running screening on 81 strategies...
+09:05:46 | INFO | Running robustness tests on 81 strategies (ThreadPoolExecutor with 4 workers)...
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4000: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4001: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4002: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4003: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4004: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4005: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4006: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4007: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4008: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4009: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4010: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4011: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4012: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4013: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4014: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4015: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4016: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4017: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4018: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4019: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4020: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4021: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4022: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4023: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4024: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4025: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4026: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4100: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4101: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4102: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4103: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4104: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4105: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4106: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4107: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4108: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4109: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4110: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4111: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4112: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4113: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4114: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4115: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4116: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4117: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4118: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4119: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4120: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4121: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4122: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4123: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4124: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4125: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4126: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4200: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4201: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4202: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4203: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4204: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4205: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4206: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4207: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4208: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4209: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4210: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4211: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4212: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4213: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4214: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4215: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4216: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4217: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4218: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4219: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4220: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4221: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4222: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4223: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4224: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4225: inf
+09:05:53 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4226: inf
+09:05:53 | ERROR | [ROBUSTNESS] \U0001f534 AUCUNE des 81 strategies ne tient sous 5% de depots non terminables. Le taux se compose sur la hauteur de l'empilement : le meilleur candidat plante dans 56.0% des tirages. On rend malgre tout le classement par risque croissant — mais AUCUNE de ces strategies n'est utilisable en l'etat, et le composant demande vraisemblablement un autre paradigme de monitoring.
+09:05:53 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:06:04 | INFO | [ELITE] Round 1/2: generated=47 parents=10 rank10_nominal=0.192208 target=0.192208
+09:06:05 | INFO | [ELITE] Round 1: full_eval=22.
+09:06:07 | INFO | [ELITE] Round 1: no candidate beat nominal threshold.
+09:06:07 | INFO | [ELITE] No candidate added across all rounds.
+09:06:07 | INFO | \U0001f3c6 Best Strategy ID: 4202 (SYM) - Score: 0.22922
+09:06:07 | INFO |    [Block 4] Screening complete. Results count: 81
+09:06:07 | INFO | Running robustness tests on 132 strategies (ThreadPoolExecutor with 4 workers)...
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000002: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000003: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000004: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000005: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000006: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000007: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000008: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000010: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000011: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000012: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000013: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000014: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000015: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000017: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000018: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000019: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000020: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000021: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000022: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000024: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000025: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000026: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000027: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000028: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000029: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000030: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000031: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000032: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000034: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000035: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000037: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000038: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000039: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000040: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000041: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000042: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000043: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000044: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000045: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000047: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000048: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000049: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000050: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000052: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000053: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000054: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000055: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000057: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000059: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000060: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000061: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000062: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000063: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000064: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000065: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000066: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000067: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000068: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000069: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000070: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000071: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000072: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000073: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000074: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000075: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000077: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000078: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000079: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000080: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000081: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000082: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000084: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000085: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000086: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000087: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000088: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000089: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000091: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000092: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000093: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000095: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000096: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000098: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000100: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000101: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000102: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000103: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000105: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000107: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000108: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000110: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000111: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000112: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000113: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000115: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000116: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000117: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000118: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000119: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000120: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000121: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000123: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000124: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000125: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000127: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000129: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000130: inf
+09:06:19 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 900000131: inf
+09:06:19 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:06:30 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/24 (pre-elite).
+09:06:30 | INFO | [ELITE] Round 1/2: generated=117 parents=10 rank10_nominal=0.014997 target=0.014997
+09:06:33 | INFO | [ELITE] Round 1: full_eval=6.
+09:06:33 | INFO | [ELITE] Round 1: added 6 strategy(ies) above threshold.
+09:06:33 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:06:39 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/30 (post-elite-r1).
+09:06:39 | INFO | [ELITE] Round 2/2: generated=117 parents=10 rank10_nominal=0.014523 target=0.014523
+09:06:41 | INFO | [ELITE] Round 2: full_eval=7.
+09:06:41 | INFO | [ELITE] Round 2: added 3 strategy(ies) above threshold.
+09:06:41 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:06:44 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/33 (post-elite-r2).
+09:06:44 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:06:44 | INFO | \U0001f3c6 Best Strategy ID: 900000076 (SMART_MERGE_MIXED (from ID 900000240)) - Score: 0.03652
+09:06:44 | INFO |    [Block 4] Full pass on 14 survivors (n_full=150)...
+09:06:44 | INFO | Running robustness tests on 14 strategies (ThreadPoolExecutor with 4 workers)...
+09:06:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4202: inf
+09:06:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4220: inf
+09:06:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4214: inf
+09:06:49 | WARNING | [ROBUSTNESS] Dropped non-finite score for strategy 4216: inf
+09:06:49 | INFO | [ROBUSTNESS] Consensus ranking enabled (pre-elite, top_k=10, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:06:58 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 10/10 (pre-elite).
+09:06:58 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:06:58 | INFO | [ELITE] Round 1/2: generated=120 parents=10 rank10_nominal=0.014013 target=0.014013
+09:07:05 | INFO | [ELITE] Round 1: full_eval=24.
+09:07:12 | INFO | [ELITE] Round 1: added 3 strategy(ies) above threshold.
+09:07:12 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r1, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:07:15 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/13 (post-elite-r1).
+09:07:15 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:07:15 | INFO | [ELITE] Round 2/2: generated=120 parents=10 rank10_nominal=0.013830 target=0.013830
+09:07:22 | INFO | [ELITE] Round 2: full_eval=22.
+09:07:29 | INFO | [ELITE] Round 2: added 1 strategy(ies) above threshold.
+09:07:29 | INFO | [ROBUSTNESS] Consensus ranking enabled (post-elite-r2, top_k=12, seeds=[41, 42, 43], mode=mean_std, runs=150)
+09:07:30 | INFO | [ROBUSTNESS] Consensus re-scored strategies: 12/14 (post-elite-r2).
+09:07:30 | INFO | [ROBUSTNESS] Family diversity reordering applied (top_k=12, max_per_family=4).
+09:07:30 | INFO | \U0001f3c6 Best Strategy ID: 900000076 (SMART_MERGE_MIXED (from ID 900000240)) - Score: 0.03652
+09:07:30 | INFO | [Block 4] Best strategy ready: RMSE=0.03652 blocks=4
+09:07:31 | INFO |    [Block 3] Mining returned 0 strategies.
+09:07:31 | INFO |    [Block 2] Mining returned 0 strategies.
+09:07:32 | INFO |    [Block 1] Mining returned 0 strategies.
+Traceback (most recent call last):
+  File "C:\dev\CERTUS\0108\certus\ui\certus_strat_ui_events.py", line 46, in timerEvent
+    self.process_plot_queue()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\dev\CERTUS\0108\certus\ui\certus_strat_ui_plot.py", line 145, in process_plot_queue
+    plot_win = UniversalPlotWindow(self, data_obj, fig_type)
+  File "C:\dev\CERTUS\0108\certus\ui\certus_strat_plots_ui.py", line 422, in __init__
+    self._init_strategies_plot(data_obj)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "C:\dev\CERTUS\0108\certus\ui\certus_strat_plots_ui.py", line 776, in _init_strategies_plot
+    win = InteractiveHeatmapWindow(self, heatmap_data if heatmap_data else {})
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'InteractiveHeatmapWindow' is not defined
+Traceback (most recent call last):
+  File "C:\dev\CERTUS\0108\certus\ui\certus_strat_ui_export.py", line 180, in on_excel_ready
+    "app_version": __version__,
+                   ^^^^^^^^^^^
+NameError: name '__version__' is not defined
+WAIT_EXIT=finished
+STRAT_N_STRATEGIES=191
+STRAT_CRASH_ELIMINATED=0/191
+STRAT_CRASH_RATE_MIN=0.0000 MEDIAN=0.0000
+STRAT_RANK00 id=900000233 origin=ELITE score=0.029174 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[551,488,466,476,453]
+STRAT_RANK01 id=900000381 origin=ELITE score=0.029209 crash=0.0000 elim=False nblocks=6 nwl=6 wl=[554,474,488,466,476,453]
+STRAT_RANK02 id=900000149 origin=ELITE score=0.029219 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[552,488,466,476,453]
+STRAT_RANK03 id=900000049 origin=SMART_MERGE_MIXED (from ID 900000371) score=0.029277 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[553,488,466,476,453]
+STRAT_RANK04 id=900000401 origin=ELITE score=0.029277 crash=0.0000 elim=False nblocks=6 nwl=6 wl=[554,475,488,466,476,453]
+STRAT_RANK05 id=900000007 origin=SMART_MERGE_MIXED (from ID 900000381) score=0.029279 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[554,488,466,476,453]
+STRAT_RANK06 id=900000238 origin=ELITE score=0.029313 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[552,488,466,475,453]
+STRAT_RANK07 id=900000166 origin=ELITE score=0.029353 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[555,488,466,476,453]
+STRAT_RANK08 id=900000373 origin=ELITE score=0.029366 crash=0.0000 elim=False nblocks=6 nwl=6 wl=[554,473,488,466,476,453]
+STRAT_RANK09 id=900000154 origin=ELITE score=0.029373 crash=0.0000 elim=False nblocks=5 nwl=5 wl=[553,488,466,475,453]
+SETUP_S=0.820  RUN_S=815.780  RESULT=0.029173686359746848
+PROBE_JAMAIS_APPELEE — le kernel n'a pas ete atteint

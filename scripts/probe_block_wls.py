@@ -64,14 +64,31 @@ def install_probe() -> None:
     # dependre de l'arite de ce qu'elle observe.
     def patched(*a, **kw):
         block_costs, block_wls, block_counts = original(*a, **kw)
-        num_layers = a[3] if len(a) > 3 else kw["num_layers"]
-        max_W = a[5] if len(a) > 5 else kw["max_W"]
-        layer_wls = a[0] if a else kw["layer_wls"]
-        layer_costs = a[1] if len(a) > 1 else kw["layer_costs"]
-        valid_mask = a[2] if len(a) > 2 else kw["valid_mask"]
         if PROBE["captured"]:
             return block_costs, block_wls, block_counts
-        PROBE["captured"] = True
+        try:
+            return _capture(a, kw, block_costs, block_wls, block_counts)
+        except BaseException as exc:  # noqa: BLE001
+            # 🔴 UNE SONDE NE DOIT JAMAIS CASSER CE QU'ELLE OBSERVE. Deux incidents
+            # le 2026-08-05 : signature figee a 6 arguments apres l'ajout de
+            # min_wl_sep (TypeError -> « No strategies found », run perdu), puis
+            # un NameError sur top_k qui a desarme la sonde pour tout le run
+            # parce que `captured` etait pose AVANT le corps. Desormais : corps
+            # sous garde, et `captured` pose seulement en cas de SUCCES.
+            PROBE["error"] = repr(exc)
+            B.emit(f"PROBE_CAPTURE_FAILED={exc!r}")
+            return block_costs, block_wls, block_counts
+
+    def _capture(a, kw, block_costs, block_wls, block_counts):
+        def _arg(pos, name):
+            return a[pos] if len(a) > pos else kw[name]
+
+        layer_wls = _arg(0, "layer_wls")
+        layer_costs = _arg(1, "layer_costs")
+        valid_mask = _arg(2, "valid_mask")
+        num_layers = int(_arg(3, "num_layers"))
+        top_k = int(_arg(4, "top_k"))
+        max_W = int(_arg(5, "max_W"))
 
         # --- ce que la DP voit reellement : les 10 premieres de chaque bloc -------
         per_block = []
@@ -154,6 +171,9 @@ def install_probe() -> None:
             "curves": curves,
             "sample_blocks": per_block[:40],
         }
+        # Pose UNIQUEMENT en cas de succes : si la capture echoue, la sonde
+        # reste armee et retentera au prochain bloc au lieu de rendre un run muet.
+        PROBE["captured"] = True
         return block_costs, block_wls, block_counts
 
     R._compute_valid_blocks_kernel = patched

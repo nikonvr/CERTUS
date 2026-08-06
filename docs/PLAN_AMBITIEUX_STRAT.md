@@ -120,10 +120,10 @@ monochromateur · plage de λ accessible · règle de détection des points tour
 contrôle disponibles (niveau, point tournant).
 
 Bénéfice : **la calibration devient un acte unique et traçable**, au lieu d'une chasse aux
-constantes. Cette session a perdu deux jours sur un `trigger_tolerance` mal réglé dans un
+constantes. Deux sessions ont été perdues sur un `trigger_tolerance` mal réglé dans un
 fichier d'exemple.
 
-### 1.4bis 🔴 Les autres sources d'erreur — la seule est aujourd'hui le bruit de lecture
+### 1.4 🔴 Les autres sources d'erreur — la seule est aujourd'hui le bruit de lecture
 
 📏 Vérifié : **aucune erreur d'indice n'est modélisée** dans STRAT. `grep` sur
 `index_error|delta_n|index_tolerance` dans `certus_strat_robustness.py`,
@@ -159,7 +159,7 @@ alors qu'à **épaisseur optique** constante elle est presque sans effet — *«
 the result of the so-called quarter-wave design, and the self-error compensation mechanism »*.
 C'est précisément ce qu'un monitoring optique contrôle, et donc ce qu'il faut savoir simuler.
 
-### 1.4 σ dépend de la longueur d'onde
+### 1.5 σ dépend de la longueur d'onde
 
 Le modèle utilise un σ constant. L'écart est connu et documenté : le bruit de l'OMS 5100 est
 plus fort vers 400 et 1100 nm. Une fois `MachineModel` en place, σ(λ) est une table, pas une
@@ -182,16 +182,22 @@ n'est même pas affiché à l'opérateur. Il faut, **par stratégie et par couch
 | `yield = 1 − p_échec` | **Combien de dépôts sur cent réussissent ?** |
 
 👤 *« Si 95 % des dépôts fonctionnent, c'est gagné. »* — **le rendement doit être la grandeur
-de tête**, affichée avant le RMSE.
+de tête**, affichée avant le RMSE. Aujourd'hui `crash_rate` n'apparaît même pas dans la table
+opérateur (`certus_strat_table_ui.py:217-300`), qui montre résolution, `n_blocks`, changements,
+λ uniques, score et symétrie.
 
-### 2.2 Le rendement composé, et non un seuil par couche
+⚠️ **Dépendance** : `p_tp_invisible` et une part de `p_tp_miscount` **ne sont mesurables
+qu'après l'axe 1.1**. Avant, elles valent zéro par construction.
 
-Le rendement d'un empilement est `Π(1 − pᵢ)`. Son logarithme est **additif**, donc
-DP-compatible : `Σ log(1 − pᵢ)`. Cela permettrait d'arbitrer précision contre rendement dans
-**un objectif unique** au lieu du lexicographique actuel « j'élimine sur le plantage, puis je
-classe sur le coût », qui détruit une stratégie à 5,1 % et garde celle à 4,9 %.
+### 2.2 Le rendement composé remplace le couperet binaire → **traité au §4.1**
 
-⚠️ Hypothèse d'indépendance entre couches à instruire — elles partagent l'historique du bloc.
+Le rendement d'un empilement est `Π(1 − pᵢ)`, de logarithme **additif**, donc DP-compatible.
+Cela remplace le lexicographique actuel — « j'élimine sur le plantage, puis je classe sur le
+coût » — qui détruit une stratégie à 5,1 % et garde celle à 4,9 %.
+
+**Le détail, la donnée déjà disponible et le correctif exact sont au §4.1**, où cette idée
+prend tout son sens : elle n'est pas seulement un meilleur agrégateur, c'est **l'objectif que
+la DP devrait avoir**.
 
 ### 2.3 ❌ ANNULÉ — le front de Pareto est inutile
 
@@ -323,6 +329,23 @@ mauvais critère. Il produit les `551, 552, 553, 554` observés en tête de clas
 > **La DP trouve un bon point de départ. La recherche locale trouve le meilleur.** Et elle ne
 > demande aucune théorie — juste du budget.
 
+### 4.4a / 4.4c  Deux réparations qui conditionnent la génération
+
+Elles ne sont pas des raffinements : elles gaspillent ou corrompent le budget de génération.
+
+- 🔴 **Le terme SYM est mort** — désaccord de nom entre producteur (`dist_*`,
+  `certus_strat_objectives.py:565-568`) et consommateur (`ext_*`,
+  `certus_strat_context.py:285-291`, et `_EXT_KEYS` en `certus_strat_service.py:1030`). Rien
+  n'écrit jamais ces clés : le score vaut `999.0` partout. La passe de minage SYM ne diffère
+  donc de THICKNESS que d'une constante et produit des **doublons** — environ **un tiers du
+  budget de minage et de screening recalcule THICKNESS**.
+  ⚠️ Réparer le nom **activera ce terme pour la première fois** ; `sym_weight = 0,35` n'a
+  jamais été calibré sur un terme vivant. À poser derrière une mesure.
+- 🔴 **Déduplication en λ à l'étage ELITE.** Le top 5 mesuré est `551, 552, 553, 554` — des
+  perturbations **sous le pas de grille de 2 nm**, donc sans signification physique. Quatre
+  cinquièmes du budget Monte-Carlo final sont dépensés sur la même stratégie. La séparation
+  spectrale posée dans le kernel DP ne couvre pas cet étage.
+
 ### 4.5 En résumé : « prometteuses » recouvrait trois choses distinctes
 
 | Composante | Comment l'obtenir |
@@ -375,9 +398,24 @@ découpages.
 
 C'est ce qui séparerait un code plausible d'un code éprouvé.
 
-1. **Reproduire les repères expérimentaux publiés** — erreurs d'épaisseur moyennes de l'ordre
-   de 0,4 nm en PM et 0,3 nm en P-PM. Construire ces empilements, tourner au bruit calibré, et
-   vérifier qu'on atterrit là. **C'est le test d'acceptation du module.**
+1. **Reproduire un repère expérimental publié.** C'est le test d'acceptation du module — mais
+   il faut d'abord choisir le bon repère, et je me suis trompé de source.
+
+   ⚠️ **Les « 0,4 nm en PM (51 couches) et 0,3 nm en P-PM (75 couches) » que ce document citait
+   ne sont PAS vérifiés.** Ils viennent de `REPRISE_STRAT_MONITORING.md` §4, qui les attribue à
+   la thèse Arsac — que je n'ai pas lue. 📏 Recherche dans la thèse Zideluns : **zéro
+   occurrence** de « 0.4 nm », « 0.3 nm » ou « P-PM ». À reprendre à la source avant d'en faire
+   un critère.
+
+   ✅ **Repère vérifié, en revanche**, 📖 Zideluns p. 158 : *« from the experiments described in
+   the previous chapter, we know that with broadband monitoring we can achieve small thickness
+   errors (**~0.5 %**) for 20 layers »*. Attention : c'est une erreur **relative** (0,5 % de
+   l'épaisseur, soit ~0,5 nm sur une couche de 100 nm) et elle concerne le **large bande**,
+   pas le monochromatique que simule STRAT. La figure 6-1 donne l'erreur d'épaisseur moyenne
+   mesurée par couche.
+
+   **Action** : obtenir la thèse Arsac pour le repère monochromatique, ou construire le test
+   sur le repère large bande de Zideluns en assumant qu'il ne teste pas la même méthode.
 2. **Test de calibration sur l'exemple réel** : « au moins N stratégies non repêchées à
    `crash_rate < 5 %` ». Un run. Il aurait transformé deux sessions d'analyse en trente
    secondes de diagnostic.
@@ -412,7 +450,7 @@ conditionne les suivantes.**
 ```
 ETAPE 1 — « simuler la mesure bruitee »
   1.1  bruiter Ts_r avant la detection, CRN preserves    <- FONDATION, tout en depend
-  1.4b injecter une distorsion affine (indice, calibration)  <- eprouve enfin l'argument de POEM
+  1.4  injecter une distorsion affine (indice, calibration)  <- eprouve enfin l'argument de POEM
 
 ETAPE 4 — « la meilleure » a besoin d'une definition
   3    acheminer targets depuis DESIGN + ponderer par zone
@@ -422,18 +460,20 @@ GARDE-FOU, des que 1.1 et 3 sont poses
   6.2  test de calibration sur l'exemple reel
 
 ETAPE 3 — « prometteuses » : rendement predit, diversite construite, precision mesuree
+  4.4a deduplication en lambda a l'etage ELITE   <- 4/5 du budget MC final gaspille
   4.1  DP sur Sigma -log(1-p)  <- LE RENDEMENT, donnee deja mesuree et jetee
   4.2  diversite par signature de decoupage
   4.4  RECHERCHE LOCALE sur P(conforme)  <- le vrai levier, absent aujourd'hui
   4.3  amorces structurees (mono-lambda, un bloc par couche, decoupages humains)
   5    successive halving + jamais d'elimination sous-resolue
+  4.4c reparer les cles SYM (+ recalibrer sym_weight derriere une mesure)
   4bis cost_map 3D, seulement si l'on garde un terme de precision dans la DP
 
 CONSOLIDATION
   1.3  extraire MachineModel                             <- calibration tracable et datee
   6.1  reproduire les reperes experimentaux              <- LE test d'acceptation
   1.2  cadence et temps d'integration
-  1.4  sigma(lambda)
+  1.5  sigma(lambda)
   2.2  rendement compose dans l'objectif
 
 RECHERCHE
@@ -461,7 +501,7 @@ partir d'une statistique réelle ? »* — la réponse honnête tient en trois c
 deviennent des mesures au lieu d'hypothèses, et le rendement devient un chiffre qui a un sens.
 C'est un saut par rapport à aujourd'hui, où un plantage médian nul est un artefact du modèle.
 
-**⚠️ Mais « réelle » exige les autres sources d'erreur** (axe 1.4bis). Sans elles, tu obtiens
+**⚠️ Mais « réelle » exige les autres sources d'erreur** (axe 1.4). Sans elles, tu obtiens
 un rendement fidèle **au bruit de lecture seul**. Or c'est précisément là que POEM est censé
 briller — sur les erreurs d'indice et de calibration — et l'affirmation reste non testée.
 
@@ -483,6 +523,14 @@ reste sur la table.
 
 - Chercher un coût prédictif par `sᵀΣs` — **réfuté par la mesure**.
 - Toucher au cap de 10 λ par bloc — traité par la séparation spectrale.
+- **Tenter de rendre les « points tournants virtuels » utilisables comme ancres POEM.**
+  `BILAN_STRAT.md` §3.1 l'a d'abord présenté comme un manque ; **c'est faux, et corrigé**. Un
+  point tournant virtuel est une extrapolation théorique — **la machine ne l'a pas mesuré**,
+  elle ne peut donc pas s'y recaler. Le code a raison d'exiger deux extrema réellement
+  traversés. Le balayage à 3× n'est pas gaspillé pour autant : il sert à la **détection de
+  plantage**, qui doit savoir où tombe le prochain extremum.
+- **Citer les repères « 0,4 nm / 0,3 nm » comme s'ils étaient vérifiés** — ils sont absents de
+  la thèse Zideluns et proviennent d'une reprise citant Arsac, non relue (§6.1).
 - Implémenter les heuristiques de la littérature comme des **filtres** — elles sont des
   diagnostics ; la statistique juge.
 - Activer SYM sans recalibrer `sym_weight` — le terme n'a jamais tourné.

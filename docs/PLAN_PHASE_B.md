@@ -103,17 +103,34 @@ calibré sur un terme vivant. À poser **derrière une mesure**, pas en aveugle.
 **Deux stratégies dont les longueurs d'onde diffèrent de moins de δλ_min sont la même
 stratégie.** Déduplication **avant** de dépenser le moindre tirage Monte-Carlo.
 
-- **Valeur de départ** : le pas de balayage, 5 nm. Défendable jusqu'à 20 nm au vu de
-  l'échelle de variation du gain de compensation (facteur 17 entre 475 et 550 nm).
+**δλ_min = un pas de balayage, soit 2 nm.** Réponse du physicien, 2026-08-05 : *« par
+expérience, il vaut mieux un pas de balayage de 2 nm »*. Cela fixe l'échelle : ce qui est plus
+fin qu'un pas de grille est **sous la résolution de la recherche elle-même**, donc dénué de
+sens. Ma proposition initiale de 20 nm était trop agressive — elle aurait écarté des λ que le
+physicien considère comme distinctes.
+
 - **Où** : à la sortie du minage et dans la génération ELITE, qui est la source des
-  perturbations à ±1 nm.
+  perturbations à ±1 nm — c'est-à-dire **sous le pas de grille**.
 - **Effet attendu** : le budget Monte-Carlo cesse d'être dépensé quatre à cinq fois sur la
-  même stratégie.
+  même stratégie. Rappel du constat : le top 5 est une seule stratégie, trois perturbations à
+  ±1 nm et un doublon exact.
 
 > C'est la règle des 0,05 nm du dépôt, transposée à λ. Elle manque.
 
 **Validation** : recompter les stratégies réellement distinctes du classement final avant et
 après. Attendu : le top 10 doit contenir 10 stratégies différentes, pas 2 ou 3.
+
+### ⚠️ Conséquence à ne pas rater : le cap de 10 λ doit être re-mesuré
+
+Le pas de balayage de l'exemple est passé de 5 à **2 nm** (`scan_wl_step`), soit **126 λ
+candidates au lieu de 51** sur 450–700 nm. Or ma réfutation de l'hypothèse « les 10 λ retenues
+par bloc sont dix fois la même » a été mesurée **à 5 nm** : elles s'étalaient sur 95 nm en
+médiane et couvraient 4 régions.
+
+**À 2 nm, la densité de candidates est multipliée par 2,5, et les 10 moins chères ont
+mécaniquement plus de chances de se regrouper.** L'hypothèse peut revenir. `§7 — ne pas
+toucher au cap` est donc **suspendu** jusqu'à une nouvelle passe de
+`scripts/probe_block_wls.py` au nouveau pas.
 
 ---
 
@@ -239,11 +256,37 @@ passer à la cible pondérée.
 `sym_weight=0,35` · `sym_same_wl_bonus=0,15` · `sym_continuity_weight=0,25` ·
 `sym_extrema_window=12,0 OT` · `SYM_MISSING_DISTANCE=999,0` · la pénalité `* 2.0` de
 `ranking.py:134` · `min(10, bl_count)` de `dp.py:117` · `consensus_std_weight=0,35` ·
-`CRASH_RATE_TOLERANCE=0,05` · `extrema_exclusion_ratio=60` · `dynamics_threshold=0,025` ·
+`extrema_exclusion_ratio=60` · `dynamics_threshold=0,025` ·
 `nucleation_degradation=1,4` · `step0_sigma=2,0`.
 
 Le dépôt a perdu deux sessions sur un paramètre non calibré (`trigger_tolerance`). C'est le
-même risque, treize fois.
+même risque, douze fois.
+
+### ✅ Constantes qui ont désormais une provenance
+
+| Constante | Valeur | Source |
+|---|---|---|
+| `trigger_tolerance` | **0,05** | mesuré — OMS 5100, signal fluctuant de 45,5 à 45,55 % de T (physicien, 2026-08-05) |
+| `CRASH_RATE_TOLERANCE` | **0,05** | ✅ **validé par le physicien : « 5 % de dépôt perdu, c'est parfait »** (2026-08-05) |
+| `scan_wl_step` | **2,0 nm** | ✅ **expérience du physicien : « par expérience, il vaut mieux un pas de balayage de 2 nm »** (2026-08-05) |
+| `robustness_noise_factors` | [0,5 ; 1 ; 2] | c'est la marge de sécurité ×2 — ne pas l'appliquer une seconde fois sur la base |
+
+---
+
+## 8bis. 🔴 Le fichier d'exemple est systématiquement pire que les défauts du code
+
+Trois fois, et à chaque fois le défaut du dépôt était correct :
+
+| Paramètre | Exemple | Défaut du code | Effet du mauvais réglage |
+|---|---|---|---|
+| `trigger_tolerance` | 0,5 | 0,1 (juste : 0,05) | bruit ×10 → **zéro stratégie utilisable** |
+| `execution_mode` | `fast` | `premium` | tous les budgets Monte-Carlo **÷4** ; P95 sur 6 tirages = le maximum de six |
+| `scan_wl_step` | 5,0 | **2,0** | 51 λ candidates au lieu de 126 |
+
+C'est un mode de défaillance à part entière : **le fichier de référence sur lequel tout le
+monde diagnostique est celui qui dégrade le plus le résultat.** Les trois sont corrigés.
+Un test devrait vérifier que l'exemple ne s'écarte d'un défaut du code que là où c'est
+intentionnel et documenté.
 
 ---
 

@@ -63,7 +63,7 @@
  "wl_step": "1.0",
  "scan_wl_min": "450.0",
  "scan_wl_max": "700.0",
- "scan_wl_step": "5.0",
+ "scan_wl_step": "2.0",
  "dynamics_threshold": "0.025",
  "min_transmission_floor": "0.10",
  "strict_min_transmission_floor": true,

@@ -107,18 +107,24 @@ Sortie : `<coller>` — doit être exactement `All checks passed!`
 
 ---
 
-## COMMIT DE DÉPART — le point zéro
+## POINT DE DÉPART — le repère `depart-gemini`
 
-```
-47821e221a2a19104fc847649a3c9d0a624e8222
-```
-
-**Ne perds jamais ce hash.** C'est lui qui permettra de voir, plus tard, exactement ce que
-tu as changé :
+L'état du dépôt **avant que tu ne touches à quoi que ce soit** est marqué par une étiquette
+git nommée `depart-gemini`. Tu n'as pas de hash à retenir : utilise ce nom.
 
 ```bat
-git log --oneline --stat 47821e221a2a19104fc847649a3c9d0a624e8222..HEAD
+git log --oneline --stat depart-gemini..HEAD
 ```
+
+Cette commande liste **exactement** ce que tu as changé depuis le début. Lance-la de temps
+en temps pour vérifier que tu n'as rien modifié sans t'en rendre compte.
+
+Tout ce qui apparaît dans cette liste et n'a pas d'entrée correspondante dans ce journal
+sera traité comme **une modification non déclarée**, donc suspecte.
+
+**Ne supprime pas et ne déplace pas cette étiquette.** Si `git log depart-gemini..HEAD`
+répond `unknown revision`, arrête-toi et signale-le : sans ce repère, personne ne pourra
+plus séparer ton travail de ce qui existait avant.
 
 Tout ce qui apparaît dans cette liste et n'a pas d'entrée correspondante dans ce journal
 sera traité comme **une modification non déclarée**, donc suspecte.

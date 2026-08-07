@@ -492,15 +492,26 @@ sécurité qui en découle s'exprime **en transmission**, jamais en nanomètres 
 point tournant `T ≈ T_ext − c·(d−d₀)²`, donc une marge fixe en épaisseur correspond à une
 fraction d'amplitude non contrôlée.
 
-### 👤 Les longueurs d'onde de contrôle se choisissent au pas de 2 nm
+### 👤 Les longueurs d'onde de contrôle se choisissent sur la grille de balayage — **aujourd'hui au pas de 1 nm**
 
 **En longueur d'onde, pas en épaisseur.** La grille est
 `arange_inclusive(scan_wl_min, scan_wl_max, scan_wl_step)`, servie par
 `_resolve_monitoring_wavelength_grid` (`certus/core/certus_strat_ranking.py`).
 
+Ce qui est **gravé**, c'est que les λ candidates doivent tomber sur une grille régulière
+que la machine sait réellement atteindre — jamais sur une grille d'affichage, jamais sur
+une grille implicite. La **valeur** du pas, elle, se mesure : elle a valu 2 nm, puis
+👤 *« la machine sait positionner 1 nm »*, et la simulation a confirmé que 1 nm est
+meilleur (§5bis). Elle vaut donc **1 nm** et n'a plus vocation à bouger.
+
 🔴 **Ne JAMAIS la déduire des clés de `clues_at_wl`.** Ce dictionnaire porte l'**union**
 de la grille de balayage et de la grille d'affichage (`wl_range` / `wl_step`), donc un pas
-de 1 nm sur tout le recouvrement **et un débordement hors de la plage de balayage**.
+plus fin sur tout le recouvrement **et un débordement hors de la plage de balayage**.
+
+⚠️ Les deux pas valant aujourd'hui 1 nm, cette union est devenue indistinguable de la
+grille de balayage — **le défaut est masqué, pas corrigé**. C'est exactement le genre de
+situation où l'on supprime un correctif « devenu inutile » et où le bug revient un an plus
+tard. `_resolve_monitoring_wavelength_grid` **reste nécessaire**.
 
 ### 👤 La cible spectrale reste NON PONDÉRÉE jusqu'à nouvel ordre
 

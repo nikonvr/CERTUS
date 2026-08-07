@@ -893,15 +893,21 @@
             for every candidate $\lambda_k$ in the scan range. Candidates are sorted by $\Delta T$ descending.
             The function also returns $T_{init}$, $T_{final}$, and $T_{min}$ per candidate for downstream filters.</p>
         <div class="note">
-            🔴 <b>LA GRILLE DES &lambda; DE CONTRÔLE EST CELLE DU BALAYAGE — pas de 2 nm.</b>
+            🔴 <b>LA GRILLE DES &lambda; DE CONTRÔLE EST CELLE DU BALAYAGE — aujourd'hui au pas de 1 nm.</b>
             👤 <i>« Les longueurs doivent pouvoir être choisies par pas de 2 nm »</i> (2026-08-06), en longueur
-            d'onde et non en épaisseur. Elle vaut
-            <code>arange_inclusive(scan_wl_min, scan_wl_max, scan_wl_step)</code>, soit 126 &lambda; sur
-            450–700 nm au pas de 2 nm pour le juge de paix. <b>Elle ne doit pas être confondue avec la grille
+            d'onde et non en épaisseur — puis 👤 <i>« la machine sait positionner 1 nm »</i> (2026-08-07), et la
+            simulation complète a confirmé que 1 nm fait mieux (§3.3). Ce qui est <b>gravé</b>, c'est que les
+            &lambda; candidates tombent sur une grille régulière que la machine sait atteindre ; la <b>valeur</b>
+            du pas, elle, se mesure. Elle vaut
+            <code>arange_inclusive(scan_wl_min, scan_wl_max, scan_wl_step)</code>, soit <b>251 &lambda; sur
+            450–700 nm au pas de 1 nm</b> pour le juge de paix. <b>Elle ne doit pas être confondue avec la grille
             d'affichage</b> <code>wl_range</code> / <code>wl_step</code> (400–700 nm au pas de 1 nm) : leur union
-            est ce que contient <code>clues_at_wl</code>, et c'est cette union qui a fait muter ELITE de 1 nm.
+            est ce que contient <code>clues_at_wl</code>, et c'est cette union qui a fait muter ELITE hors grille.
             Toute étape qui choisit une &lambda; de contrôle — A.1, A.3, la DP, ELITE — doit lire la grille de
             balayage via <code>_resolve_monitoring_wavelength_grid</code>.
+            <br>⚠️ Les deux pas valant tous deux 1 nm, cette union est <b>indistinguable</b> de la grille de
+            balayage : le défaut est <b>masqué, pas corrigé</b>. Ne retire pas
+            <code>_resolve_monitoring_wavelength_grid</code> sous prétexte qu'il n'a plus d'effet visible.
         </div>
 
         <h3>3.2 Step A.2 — Safety Filters</h3>
@@ -1223,12 +1229,13 @@
                 épaisseur. La cause était précise : <code>_resolve_available_wavelengths</code>
                 rendait les <b>clés de <code>clues_at_wl</code></b>, qui est l'<b>union</b> de deux
                 grilles sans rapport (<code>_prepare_precompute_wavelength_grid</code>) — la grille
-                de <b>balayage</b> au pas <code>scan_wl_step</code> = 2 nm, et la grille
-                d'<b>affichage</b> au pas <code>wl_step</code> = 1 nm. L'union est à 1 nm sur tout
+                de <b>balayage</b>, qui valait alors <code>scan_wl_step</code> = 2 nm, et la grille
+                d'<b>affichage</b> au pas <code>wl_step</code> = 1 nm. L'union était à 1 nm sur tout
                 le recouvrement, et « muter vers la &lambda; voisine » mutait donc de 1 nm, hors
                 grille de contrôle. <code>_resolve_monitoring_wavelength_grid</code> rend
-                désormais la seule grille de balayage : <b>126 &lambda; au pas de 2 nm</b> sur
-                450–700 nm. Le second échec — juger sur le mauvais critère — reste ouvert.
+                désormais la seule grille de balayage, quelle que soit la valeur du pas —
+                <b>251 &lambda; au pas de 1 nm</b> sur 450–700 nm depuis que la valeur a été
+                tranchée. Le second échec — juger sur le mauvais critère — reste ouvert.
                 <br>⚠️ <b>ATTRIBUTION RÉFUTÉE PAR LA MESURE — et c'est mon erreur.</b> Ce correctif
                 avait changé DEUX choses à la fois : le <b>pas</b> et la <b>plage</b>. J'avais
                 imputé le gain de 5,7 au passage à 2 nm, en avançant qu'une grille plus fine

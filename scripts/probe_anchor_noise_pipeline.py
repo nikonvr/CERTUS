@@ -77,7 +77,7 @@ def patch_flag(
         f"| phase_a_level_margin_factor={margin:g} "
         f"| scan_wl_step={'(config)' if scan_step is None else f'{scan_step:g} nm'}"
         f"| seed={'(config)' if seed is None else seed}"
-        f"| dp_yield_weight={'(config)' if yield_weight is None else yield_weight:g}"
+        f"| dp_yield_weight={'(config)' if yield_weight is None else f'{float(yield_weight):g}'}"
     )
 
 

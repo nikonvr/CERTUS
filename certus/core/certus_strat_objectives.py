@@ -587,6 +587,10 @@ def _compute_theoretical_layer_profile(
         "Tfinal": t_final,
         "Textrema": extrema,
         "d_nom_nm": d_nom,
+        "ext_prev_start": float(dist_ps),
+        "ext_next_start": float(dist_ns),
+        "ext_prev_end": float(dist_pe),
+        "ext_next_end": float(dist_ne),
         "dist_prev_start": float(dist_ps),
         "dist_next_start": float(dist_ns),
         "dist_prev_end": float(dist_pe),
@@ -620,14 +624,14 @@ def _compute_strategy_symmetry_score_percent(
     for prof in theoretical_layer_profile:
         try:
             s_start = _compute_local_extrema_symmetry_score(
-                float(prof.get("dist_prev_start", SYM_MISSING_DISTANCE)),
-                float(prof.get("dist_next_start", SYM_MISSING_DISTANCE)),
+                float(prof.get("ext_prev_start", prof.get("dist_prev_start", SYM_MISSING_DISTANCE))),
+                float(prof.get("ext_next_start", prof.get("dist_next_start", SYM_MISSING_DISTANCE))),
                 float(window_ot),
             )
 
             s_end = _compute_local_extrema_symmetry_score(
-                float(prof.get("dist_prev_end", SYM_MISSING_DISTANCE)),
-                float(prof.get("dist_next_end", SYM_MISSING_DISTANCE)),
+                float(prof.get("ext_prev_end", prof.get("dist_prev_end", SYM_MISSING_DISTANCE))),
+                float(prof.get("ext_next_end", prof.get("dist_next_end", SYM_MISSING_DISTANCE))),
                 float(window_ot),
             )
 

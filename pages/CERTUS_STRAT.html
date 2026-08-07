@@ -1258,9 +1258,20 @@
                 trouve une stratégie <b>plus simple</b> à exécuter — deux blocs au lieu de quatre.
                 Le pas ne joue pas qu'à l'étage ELITE : il fixe le nombre de candidates que la
                 Phase A évalue par couche, 251 contre 126.
-                <br>👤 La machine sait se positionner au nanomètre : <b>1 nm est retenu</b>.
-                Une réplication à graine indépendante est en cours ; elle ne pourra que
-                confirmer ou nuancer l'ampleur, pas le sens.
+                <br><b>Répliqué sur une seconde graine indépendante (77)</b>, plage et
+                configuration identiques : 1 nm rend <b>0,003553</b> contre <b>0,008400</b> à
+                2 nm, soit &divide;2,36 — <b>même sens, marge plus large</b>. Deux graines, deux
+                fois le même verdict.
+                <br>👤 La machine sait se positionner au nanomètre. <b><code>scan_wl_step</code>
+                est donc fixé à 1 nm</b> dans le fichier de référence, et n'a plus vocation à
+                bouger.
+                <br>⚠️ <b>Effet de bord à connaître.</b> <code>wl_step</code> (grille
+                d'affichage) valait déjà 1 nm : les deux grilles coïncident désormais. Le bug de
+                confusion entre elles — l'<b>union</b> rendue au lieu de la grille de balayage —
+                devient donc <b>invisible</b>, sans pour autant avoir disparu.
+                <code>_resolve_monitoring_wavelength_grid</code> ne doit pas être retiré au
+                motif que « les deux grilles sont pareilles maintenant » : le jour où un pas
+                d'affichage différent reviendra, le défaut reviendra avec lui, en silence.
                 <br><br><b>« Prometteuses » recouvrait trois choses distinctes</b> qu'on
                 confondait en un seul coût : le <b>rendement</b> se <i>prédit</i>, la
                 <b>diversité</b> se <i>construit</i>, la <b>précision</b> ne se prédit pas —

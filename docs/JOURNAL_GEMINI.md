@@ -160,29 +160,52 @@ comparée. Ils viennent de `scripts\probe_anchor_noise_pipeline.py full`, sur le
 ```
 Configuration : poem_anchor_noise = 1, tp_hysteresis_factor = 1.66,
                 phase_a_level_margin_factor = 1.66, dp_yield_weight = 0,
-                scan_wl_step = 2.0
+                scan_wl_step = 1.0        <-- valeur RETENUE, voir ci-dessous
 
-  RESULT                      0,005283255753736497
-  RMSE global   med / p95     0,235 / 0,481   points de transmission
-  bande passante p95          0,570
-  front p95                   1,025
-  bande bloquee p95           0,0006
-  decalage du front p95       0,00 nm
-  plantage                    0,000     305 strategies rendues, 0 repechee
-  RUN_S                       ~1211 s
-```
-
-Et avec `scan_wl_step = 1.0`, tout le reste identique :
-
-```
   RESULT                      0,002898268777962851
-  RMSE global   med / p95     0,215 / 0,465
+  RMSE global   med / p95     0,215 / 0,465   points de transmission
   bande passante p95          0,418
   front p95                   1,498
   plantage                    0,000     345 strategies rendues
   RUN_S                       ~1322 s
-  gagnante                    2 blocs (544 et 531 nm) au lieu de 4
+  gagnante                    2 blocs (544 et 531 nm)
 ```
+
+### Pourquoi `scan_wl_step` vaut 1.0 — et pourquoi tu ne dois pas y toucher
+
+C'est le **pas de la grille de longueurs d'onde de contrôle** : l'écart entre deux λ
+candidates que l'algorithme a le droit de proposer. La machine de dépôt du physicien sait
+se positionner au nanomètre, donc 1 nm est physiquement réalisable.
+
+La question « 1 nm ou 2 nm ? » a été tranchée par **deux simulations complètes
+indépendantes**, plage identique des deux côtés, seul le pas changeant :
+
+| graine | pas 1 nm | pas 2 nm | écart |
+|---|---|---|---|
+| principale | **0,002898** | 0,005283 | 1 nm meilleur, ÷1,82 |
+| 77 | **0,003553** | 0,008400 | 1 nm meilleur, ÷2,36 |
+
+Deux graines, même sens. En prime, à 1 nm la stratégie gagnante n'a plus que **2 blocs au
+lieu de 4** — donc moins de changements de λ à exécuter sur la machine.
+
+**Ce paramètre est désormais fixe. Ne le modifie pas**, et ne le modifie surtout pas « pour
+aller plus vite » : le run à 1 nm ne coûte que 9 % de temps en plus.
+
+### ⚠️ Un piège créé par cette valeur, et il faut le connaître
+
+Le fichier d'exemple a maintenant `wl_step = 1.0` (grille d'**affichage**) **et**
+`scan_wl_step = 1.0` (grille de **balayage**). Les deux grilles coïncident donc.
+
+Un bug ancien venait précisément de la confusion entre ces deux grilles : une fonction
+rendait leur **union** au lieu de la grille de balayage seule, ce qui faisait proposer des
+λ hors grille de contrôle. Il a été corrigé par `_resolve_monitoring_wavelength_grid`.
+
+**Tant que les deux pas sont égaux, ce bug est invisible** — l'union de deux grilles
+identiques est la même grille. Cela ne veut pas dire que le correctif est devenu inutile.
+
+👉 **Ne supprime jamais `_resolve_monitoring_wavelength_grid` au motif que « les deux
+grilles sont pareilles maintenant ».** Le jour où quelqu'un remettra un pas d'affichage
+différent, le bug reviendra en silence.
 
 **Suite de tests au départ** : `<A MESURER — voir ci-dessous>`
 **Lint au départ** : `All checks passed!`

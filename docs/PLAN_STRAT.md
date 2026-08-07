@@ -439,6 +439,43 @@ présenté comme une validation physique.
    `premium` (budgets ÷4), `scan_wl_step` 5 au lieu de 2 nm, et
    `wavelength_change_penalty` 1,0 au lieu de 1,2.
 
+   Valeurs attendues aujourd'hui, à verrouiller par ce test :
+
+   | Clé | Valeur | Pourquoi |
+   |---|---|---|
+   | `scan_wl_step` | `"1.0"` | tranché par deux simulations complètes — voir §5bis |
+   | `wl_step` | `"1.0"` | grille d'affichage |
+   | `trigger_tolerance` | `"0.05"` | au-delà, le bruit injecté est ×10 |
+   | `execution_mode` | `"premium"` | `fast` divise les budgets par 4 |
+   | `wavelength_change_penalty` | `"1.2"` | |
+
+---
+
+## 5bis. La grille de balayage — **question tranchée, ne la rouvre pas**
+
+`scan_wl_step` est le pas entre deux longueurs d'onde de contrôle candidates. La machine du
+physicien sait se positionner au nanomètre, donc 1 nm est réalisable.
+
+Deux simulations complètes indépendantes, **plage identique des deux côtés**, seul le pas
+changeant :
+
+| graine | pas 1 nm | pas 2 nm | verdict |
+|---|---|---|---|
+| principale | **0,002898** | 0,005283 | 1 nm meilleur, ÷1,82 |
+| 77 | **0,003553** | 0,008400 | 1 nm meilleur, ÷2,36 |
+
+Deux graines, même sens, marge plus large à la seconde. Le pas de **1 nm** est retenu et
+inscrit dans le fichier de référence. Il coûte **+9 % de temps** et rend une stratégie
+gagnante à **2 blocs au lieu de 4** — donc moins de changements de λ à exécuter.
+
+> ⚠️ **La prédiction inverse avait été avancée** — qu'une grille plus fine gaspillerait le
+> budget en candidates redondantes. La mesure l'a réfutée. C'est un rappel de la règle du
+> §7 : **on ne prédit pas un résultat de simulation, on le mesure.**
+
+> ⚠️ **Effet de bord.** `wl_step` valant déjà 1 nm, les deux grilles coïncident maintenant.
+> Le bug de confusion entre elles devient **invisible** sans avoir disparu. **Ne supprime
+> pas `_resolve_monitoring_wavelength_grid`** au motif que les grilles sont identiques.
+
 ---
 
 ## 7. Les règles gravées — elles gouvernent tout ce qui précède

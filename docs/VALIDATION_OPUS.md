@@ -38,10 +38,12 @@ Doit commencer par `C:\dev\gemini`. Plusieurs copies du dépôt coexistent sur l
 ## Étape 2 — Reconstituer la vérité git, indépendamment du journal
 
 ```bat
-git log --oneline --stat <hash_de_depart>..HEAD
+git log --oneline --stat depart-gemini..HEAD
 ```
 
-Le `<hash_de_depart>` est le premier hash inscrit dans `docs/JOURNAL_GEMINI.md`.
+`depart-gemini` est une **étiquette git** posée sur l'état du dépôt avant toute intervention.
+Si elle a disparu, c'est en soi un signal : reconstitue le point de départ par la date, et
+considère que l'historique a été manipulé.
 
 **Compare cette liste avec les entrées du journal.**
 
@@ -69,7 +71,7 @@ Reviens au commit de départ dans un worktree séparé, et relance la mesure de 
 **Ne fais pas ça dans le dossier de travail** — tu perdrais l'état courant.
 
 ```bat
-git worktree add C:\dev\gemini-baseline <hash_de_depart>
+git worktree add C:\dev\gemini-baseline depart-gemini
 ```
 
 Puis, dans ce worktree, la mesure du juge de paix. Si le chiffre obtenu ne correspond pas à
@@ -167,7 +169,7 @@ Compare au nombre inscrit dans le journal. Un nombre de tests qui a **baissé** 
 justification veut dire que des tests ont été supprimés ou désactivés.
 
 ```bat
-git log -p <hash_de_depart>..HEAD -- tests/ | findstr /C:"@pytest.mark.skip" /C:"-def test_"
+git log -p depart-gemini..HEAD -- tests/ | findstr /C:"@pytest.mark.skip" /C:"-def test_"
 ```
 
 ---

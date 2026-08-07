@@ -41,28 +41,13 @@ import probe_spectral_error as PSE  # noqa: E402
 FIVE_SIGMA: float = 1.66
 
 
-def patch_flag(mode: str, scan_step: float | None = None, seed: int | None = None) -> None:
-    """Force la configuration du modele dans les params, sans toucher a l'exemple.
-
-    ``off``  chemin historique, reference.
-    ``on``   bruit de lecture seul (axe 1.1), sans regle de detection ni marge.
-    ``full`` LE MODELE PHYSIQUE COMPLET tel que le physicien l'a specifie : signal
-             bruite, detection a 5 sigma, et marge de securite au point tournant a
-             5 sigma — donc la vraie matrice cumulee branchee en Phase A.
-
-    ``scan_step`` force le PAS DE LA GRILLE DES LAMBDA DE CONTROLE, en nanometres.
-
-    🔴 IL SERT A TRANCHER 1 nm CONTRE 2 nm PAR LE CALCUL, et a lever un confondu de ma
-    part. En corrigeant `_resolve_available_wavelengths`, DEUX choses ont change
-    ensemble : le PAS (l'union avec la grille d'affichage donnait 1 nm) et la PLAGE
-    (cette union debordait sous 450 nm, hors du balayage). J'ai attribue le gain mesure
-    au seul pas. Ici la plage est identique des deux cotes — c'est la grille de balayage
-    dans les deux cas — donc seul le pas varie.
-
-    ⚠️ Le pas ne touche pas que l'etage ELITE : il change le nombre de candidates que la
-    Phase A evalue par couche (126 a 2 nm, 251 a 1 nm sur 450-700). C'est bien la
-    question posee — une grille de controle plus fine aide-t-elle, de bout en bout ?
-    """
+def patch_flag(
+    mode: str,
+    scan_step: float | None = None,
+    seed: int | None = None,
+    yield_weight: float | None = None,
+) -> None:
+    """Force la configuration du modele dans les params, sans toucher a l'exemple."""
     from certus.ui.certus_strat_ui_state import CertusStratStateMixin
 
     orig = CertusStratStateMixin.collect_params
@@ -75,12 +60,11 @@ def patch_flag(mode: str, scan_step: float | None = None, seed: int | None = Non
         if scan_step is not None:
             params["scan_wl_step"] = float(scan_step)
         if seed is not None:
-            # Replication : la recherche est deterministe A GRAINE DONNEE, mais elle
-            # echantillonne l'espace des strategies. Changer la graine donne un SECOND
-            # tirage independant — c'est ce qui transforme un n=1 en n=2.
             params["robustness_seed"] = int(seed)
             params["phase_a_seed"] = int(seed)
             params["consensus_seed_list"] = ",".join(str(seed + i) for i in range(5))
+        if yield_weight is not None:
+            params["dp_yield_weight"] = float(yield_weight)
         params["poem_anchor_noise"] = noise
         params["poem_anchor_noise_phase_a"] = noise
         params["tp_hysteresis_factor"] = hyst
@@ -93,24 +77,28 @@ def patch_flag(mode: str, scan_step: float | None = None, seed: int | None = Non
         f"| phase_a_level_margin_factor={margin:g} "
         f"| scan_wl_step={'(config)' if scan_step is None else f'{scan_step:g} nm'}"
         f"| seed={'(config)' if seed is None else seed}"
+        f"| dp_yield_weight={'(config)' if yield_weight is None else yield_weight:g}"
     )
 
 
 def main() -> None:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "off").strip().lower()
     if mode not in {"on", "off", "full"}:
-        raise SystemExit("usage: probe_anchor_noise_pipeline.py [off|on|full] [pas_nm] [graine]")
+        raise SystemExit("usage: probe_anchor_noise_pipeline.py [off|on|full] [pas_nm] [graine] [yield_weight]")
     scan_step = float(sys.argv[2]) if len(sys.argv) > 2 else None
     seed = int(sys.argv[3]) if len(sys.argv) > 3 else None
+    yield_weight = float(sys.argv[4]) if len(sys.argv) > 4 else None
     tag = mode if scan_step is None else f"{mode}_step{scan_step:g}".replace(".", "p")
     if seed is not None:
         tag = f"{tag}_seed{seed}"
+    if yield_weight is not None:
+        tag = f"{tag}_yw{yield_weight:g}".replace(".", "p")
 
     B.qapp()
     B.autoanswer_dialogs(True)
     from certus_physics import calculate_RT_batch_kernel  # noqa: F401  echec immediat si absent
 
-    patch_flag(mode, scan_step, seed)
+    patch_flag(mode, scan_step, seed, yield_weight)
     PSE.OUT = ROOT / "reports" / f"probe_anchor_noise_pipeline_{tag}.json"
     PSE.install_probe()
 

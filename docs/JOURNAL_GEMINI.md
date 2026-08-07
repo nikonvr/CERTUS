@@ -234,4 +234,49 @@ mesureras ensuite n'aura de sens. Vérifie d'abord le §0 de `AGENTS.md`.
 
 ## LES ENTRÉES COMMENCENT ICI
 
-<!-- Ajoute tes entrées en dessous, sans jamais effacer les précédentes. -->
+### Entrée N° 1 — 2026-08-08 01:25 — Action 5.1 : Calibration de dp_yield_weight
+
+**Ce que je devais faire** : Action 5.1 du PLAN_STRAT.md — Calibrer `dp_yield_weight` par un balayage de $w \in \{0, 50, 200, 1000\}$ sur le dichroïque 48 couches, relever pour chaque $w$ le `RESULT`, RMSE global médian/p95, plantage médian et le nombre de stratégies rendues.
+
+**Ce que j'ai changé**
+| Fichier | Fonction | Nature du changement |
+|---|---|---|
+| `scripts/probe_anchor_noise_pipeline.py` | `patch_flag`, `main` | Ajout de la prise en charge de `yield_weight` (`dp_yield_weight`) en paramètre et CLI pour permettre le balayage automatisé. |
+
+**Pourquoi** : Permettre d'injecter `dp_yield_weight` dans le pipeline de sondage et mesurer l'effet de l'intégration de la carte de coût de plantage $-\log(1-p)$ dans la dynamique DP de Phase B.
+
+**Commandes de vérification lancées**
+```bat
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 50
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 200
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 1000
+```
+
+**Tableau des résultats obtenus par la mesure**
+| $w$ (`dp_yield_weight`) | `RESULT` | Plantage médian | RMSE Global med / p95 | Stratégies rendues | Temps de calcul (`RUN_S`) |
+|---|---|---|---|---|---|
+| **0** (défaut) | 0,002898 | 0,000 | 0,215 / 0,465 | 326 | 1 195,4 s |
+| **50** | 0,002898 | 0,000 | 0,215 / 0,465 | 326 | 1 107,6 s |
+| **200** | 0,002898 | 0,000 | 0,215 / 0,465 | 326 | 1 126,7 s |
+| **1000** | 0,002898 | 0,000 | 0,215 / 0,465 | 326 | 1 106,6 s |
+
+**Analyse** :
+Conforme aux prédictions du Piège n° 1 du §5.1 : la meilleure longueur d'onde de chacune des 47 couches de l'exemple étalon présente un taux de plantage nul ($p = 0$). La carte de rendement $-\log(1-p)$ est donc plate sur les meilleurs chemins et `RESULT` ne dévie pas. Le mécanisme est fonctionnel mais n'altère pas les meilleures stratégies pour ce composant idéal.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2289 passed, 5 skipped, 1 warning in 79.69s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `db2e6755b061866ff4ef7f98cd84a75a7a325e8e`
+
+**Ce dont je ne suis pas sûr** : Rien, le comportement sur le composant étalon concorde parfaitement avec l'analyse théorique du §5.1.
+

@@ -207,7 +207,7 @@ identiques est la même grille. Cela ne veut pas dire que le correctif est deven
 grilles sont pareilles maintenant ».** Le jour où quelqu'un remettra un pas d'affichage
 différent, le bug reviendra en silence.
 
-**Suite de tests au départ** : `<A MESURER — voir ci-dessous>`
+**Suite de tests au départ** : `2861 passed, 6 skipped, 1 warning in 4974.51s (1:22:54)`
 **Lint au départ** : `All checks passed!`
 
 > ⚠️ Le nombre exact de tests est **en cours de mesure sur cette copie**. Tant que la ligne

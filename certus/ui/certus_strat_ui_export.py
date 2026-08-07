@@ -1,6 +1,23 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
 
+# Import EXPLICITE, et il n'est pas facultatif.
+#
+# `_manifest_source_paths` (plus bas) appelle `_resolve_strat_indices_db_path`. Le nom
+# existe bien dans `certus_strat_common`, mais il commence par un underscore : la regle
+# Python veut que `import *` l'ignore, sauf `__all__` explicite — et ce module n'en a pas.
+# L'etoile ne l'apporte donc PAS, et l'appel levait `NameError` a l'execution.
+#
+# Le defaut etait invisible par trois canaux a la fois :
+#   - le `except` de `_manifest_source_paths` liste RuntimeError, AttributeError,
+#     TypeError, ValueError, OSError — mais PAS NameError ;
+#   - ruff ne peut pas signaler F821 dans un fichier a import etoile, meme en
+#     `--isolated` : il ignore ce que l'etoile apporte ;
+#   - l'appel n'a lieu qu'a l'EXPORT, donc apres tout le calcul.
+# Resultat : le pipeline STRAT calculait tout, puis mourait a la derniere etape sans
+# emettre `finished` — l'utilisateur ne recevait aucun resultat.
+from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
+
 class CertusStratExportMixin:
     def _extract_stack_multipliers(self, config: dict[str, Any]) -> list[float]:
         """Return normalized stack multipliers from multiple legacy JSON shapes."""

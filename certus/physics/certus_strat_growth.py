@@ -9,14 +9,219 @@ NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
+
+# ── SENTINELLES DE DEPOT NON TERMINABLE, DECOMPOSEES PAR CAUSE ────────────────
+#
+# 🔴 LES TROIS CAUSES RENDAIENT LA MEME VALEUR, ET C'ETAIT UN MUR DE DIAGNOSTIC.
+#
+# `simulate_growth_kernel` majorait l'epaisseur de 1e6 dans trois situations sans
+# rapport entre elles. Tant qu'elles sont confondues, on ne peut pas savoir POURQUOI
+# un depot ne se termine pas — et 📏 c'est exactement ce qui a bloque le diagnostic
+# du plancher de plantage independant de sigma : l'hysteresis de detection le divise
+# par deux et ne touche pas le plancher, mais on ne peut pas dire si ce plancher est
+# un probleme de COMPTAGE ou d'ATTEIGNABILITE.
+#
+# Les valeurs sont des multiples de 1e6 et l'epaisseur nominale reste ajoutee, donc :
+#
+#   - tout consommateur qui teste `val > 1e5` compte exactement les memes plantages
+#     qu'avant, au bit pres. Le taux de plantage global ne change pas.
+#   - la cause se relit par `int(val // 1e6)`, sans connaitre l'epaisseur nominale
+#     (elle vaut moins de 1e4 nm sur tout empilement physique).
+#
+# Les 👤 « trois questions du juge de paix » deviennent ainsi trois nombres :
+# CRASH_LEVEL_UNREACHABLE repond a « atteint-on le niveau ? », CRASH_TP_MISCOUNT a
+# « compte-t-on le bon nombre de turning points ? ».
+CRASH_SENTINEL_MIN: float = 100000.0
+CRASH_SENTINEL_UNIT: float = 1000000.0
+#: Le niveau d'arret vise n'est pas encadre par le signal avant le prochain extremum.
+CRASH_LEVEL_UNREACHABLE: int = 1
+#: Le nombre de points tournants comptes sur le reel differe de celui attendu.
+CRASH_TP_MISCOUNT: int = 2
+#: T(d) non monotone et mode REJECT demande : la candidate est refusee.
+CRASH_NON_MONOTONIC: int = 3
 from .certus_strat_math import (
     check_extrema_proximity,
     calculate_extrema_distances,
     fit_parabola_vertex_3points,
+    _seeded_noise_sample,
     _solve_quadratic_target,
     _calc_T_from_matrix,
     _calc_T_added_layer,
 )
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def detect_turning_points(
+    Ts: np.ndarray,
+    n_tot: int,
+    idx_stop: int,
+    start_is_tp: bool,
+    hysteresis: float,
+) -> tuple[int, int, int]:
+    """Compte les points tournants d'un signal de monitoring et rend les deux derniers.
+
+    Renvoie ``(n_tp, tp_a, tp_b)`` : le nombre d'extrema situes a ou avant ``idx_stop``,
+    puis les indices des deux derniers retenus (``-1`` si absents). Meme convention de
+    selection que le code qu'elle remplace : au-dela de ``idx_stop`` un extremum n'est
+    retenu que si aucun ne l'a encore ete.
+
+    🔴 UNE SEULE FONCTION POUR LE SIGNAL REEL ET POUR LE NOMINAL, ET C'EST ESSENTIEL.
+    Le comptage divergent entre les deux est l'un des deux modes de plantage. Detecter
+    avec deux boucles ecrites separement, c'est risquer une divergence produite par
+    l'ALGORITHME et non par la physique — la boucle etait deja dupliquee mot pour mot.
+
+    ``hysteresis`` — LA REGLE DE DETECTION (axe 1.2), en unites de T.
+
+        0.0  Regle historique : un extremum est declare des que la difference entre
+             deux echantillons consecutifs change de signe, au-dela d'un garde
+             NUMERIQUE de 1e-12. Ce n'est pas une regle physique, et 📏 cela produit
+             un taux de plantage qui NE DEPEND PAS DU BRUIT : 1,47 % par couche a
+             sigma = 5e-8 contre 1,30 % au sigma reel de l'instrument. La ou le signal
+             de monitoring n'a aucune dynamique — la bande bloquee du dichroique, ou
+             T_front vaut 1e-5 a 1e-7 — le comptage bruite diverge du comptage propre
+             quelle que soit la finesse du bruit.
+
+        > 0  Detecteur a HYSTERESIS, celui d'un controleur reel : on suit l'extremum
+             courant, et on ne le DECLARE que lorsque le signal s'en est ecarte de plus
+             de ``hysteresis``. Une bosse plus petite que ce seuil ne produit donc
+             aucun point tournant.
+
+             L'indice rendu est celui de l'extremum LUI-MEME, pas celui du
+             franchissement du seuil : la machine retient la valeur extreme qu'elle a
+             lue, pas l'instant ou elle a compris qu'elle l'avait depassee.
+
+             🔴 CE SEUIL SE DERIVE DU BRUIT, IL N'EST PAS UN CRITERE D'AMPLITUDE.
+             👤 Le physicien, 2026-08-06 : *« j'ai l'impression que le 4 % est une regle
+             empirique au flair, et que la on n'en a pas besoin vu l'algo. »* Il a
+             raison, et il faut le dire clairement : les 4 % d'amplitude de depart de
+             Zideluns p. 112 sont une heuristique de PRE-SELECTION de longueur d'onde —
+             une facon d'intuiter a l'avance ce que le Monte-Carlo mesure directement.
+             Ce n'est PAS ce seuil-ci, et ce seuil-ci n'a pas a lui emprunter sa valeur.
+
+             La grandeur dont il depend est le bruit de lecture, et elle est MESUREE :
+             👤 sur l'OMS 5100 le signal fluctue de 45,5 a 45,55 % de T, soit une
+             amplitude crete a crete de `trigger_tolerance` = 0,05 point. Le tirage est
+             borne a +/- cette amplitude (loi N(0, A/3) tronquee a +/- A), donc l'ecart
+             apparent maximal que le bruit SEUL peut produire entre deux lectures vaut
+             2A. D'ou la seule valeur qui se derive au lieu de se regler :
+
+                 hysteresis >= 2 x trigger_tolerance / 100
+                 -> le bruit seul ne peut PLUS fabriquer un renversement, jamais.
+
+             En dessous, il en fabrique avec une probabilite que la mesure donne. C'est
+             donc un parametre a balayer et a trancher par la mesure, pas a poser.
+
+    ⚠️ Le seuil s'applique aussi au signal NOMINAL, et il le faut. Il represente ce que
+    la strategie ATTEND de voir compter ; l'evaluer avec une regle de detection
+    differente de celle de la machine fabriquerait une divergence a chaque couche.
+    """
+    tp_a = -1
+    tp_b = -1
+    n_tp = 0
+    if start_is_tp:
+        n_tp += 1
+        tp_b = 0
+
+    if hysteresis <= 0.0:
+        for k in range(1, n_tot - 1):
+            dl = Ts[k] - Ts[k - 1]
+            dr = Ts[k + 1] - Ts[k]
+            if (dl > 1e-12 and dr < -1e-12) or (dl < -1e-12 and dr > 1e-12):
+                if k <= idx_stop:
+                    n_tp += 1
+                if k <= idx_stop or tp_b < 0:
+                    tp_a = tp_b
+                    tp_b = k
+        return (n_tp, tp_a, tp_b)
+
+    # Detecteur a hysteresis. On suit SIMULTANEMENT le maximum et le minimum
+    # courants ; `dirn` vaut 0 tant que le sens n'est pas etabli, et c'est le
+    # premier franchissement du seuil qui le fixe.
+    maxv = Ts[0]
+    minv = Ts[0]
+    maxi = 0
+    mini = 0
+    dirn = 0
+    for k in range(1, n_tot):
+        v = Ts[k]
+        if v > maxv:
+            maxv = v
+            maxi = k
+        if v < minv:
+            minv = v
+            mini = k
+        emit = -1
+        if dirn >= 0 and maxv - v > hysteresis:
+            emit = maxi
+            dirn = -1
+            minv = v
+            mini = k
+        elif dirn <= 0 and v - minv > hysteresis:
+            emit = mini
+            dirn = 1
+            maxv = v
+            maxi = k
+        # L'indice 0 a deja ete declare par `start_is_tp` : ne pas le compter deux
+        # fois. Sans cette garde, le substrat nu — un extremum de bord bien reel —
+        # serait emis une seconde fois par le detecteur qui part de lui.
+        if emit < 0 or (start_is_tp and emit == 0):
+            continue
+        if emit <= idx_stop:
+            n_tp += 1
+        if emit <= idx_stop or tp_b < 0:
+            tp_a = tp_b
+            tp_b = emit
+    return (n_tp, tp_a, tp_b)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresis: float) -> int:
+    """Indice du premier point tournant situe apres ``i_start``, ou ``n_tot - 1`` si aucun.
+
+    Sert a borner la fenetre du test d'atteignabilite du niveau : au-dela du prochain
+    extremum, le signal repart et le niveau vise ne sera jamais atteint.
+
+    **Meme regle de detection que ``detect_turning_points``**, et il le faut : sans cela
+    un micro-extremum fabrique par le bruit juste apres l'arret tronquerait la fenetre
+    et provoquerait un plantage que la machine ne subirait pas — exactement l'artefact
+    que l'hysteresis existe pour supprimer.
+    """
+    if hysteresis <= 0.0:
+        for k in range(i_start + 1, n_tot - 1):
+            dl = Ts[k] - Ts[k - 1]
+            dr = Ts[k + 1] - Ts[k]
+            if (dl > 1e-12 and dr < -1e-12) or (dl < -1e-12 and dr > 1e-12):
+                return k
+        return n_tot - 1
+
+    if i_start + 1 >= n_tot:
+        return n_tot - 1
+    maxv = Ts[i_start]
+    minv = Ts[i_start]
+    maxi = i_start
+    mini = i_start
+    dirn = 0
+    for k in range(i_start + 1, n_tot):
+        v = Ts[k]
+        if v > maxv:
+            maxv = v
+            maxi = k
+        if v < minv:
+            minv = v
+            mini = k
+        if dirn >= 0 and maxv - v > hysteresis:
+            if maxi > i_start:
+                return maxi
+            dirn = -1
+            minv = v
+            mini = k
+        elif dirn <= 0 and v - minv > hysteresis:
+            if mini > i_start:
+                return mini
+            dirn = 1
+            maxv = v
+            maxi = k
+    return n_tot - 1
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
@@ -33,6 +238,10 @@ def simulate_growth_kernel(
     non_monotonic_factor: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     block_start_layer: int = -1,
+    signal_noise_scale: float = 0.0,
+    signal_noise_seed: int = 0,
+    signal_noise_run: int = 0,
+    tp_hysteresis: float = 0.0,
 ) -> tuple[float, float]:
     """
 
@@ -57,6 +266,30 @@ def simulate_growth_kernel(
             0 (ATTENUATE): Divide error by non_monotonic_factor (legacy)
 
             1 (REJECT): Return large penalty to reject candidate
+
+        signal_noise_scale: AXE 1.1 — echelle du bruit de LECTURE applique au
+            signal de monitoring REEL ``Ts_r``, en unites de T (0..1), AVANT la
+            detection des points tournants, la lecture des ancres POEM et le test
+            d'atteignabilite du niveau. 0.0 = desactive, et le chemin de calcul est
+            alors mot pour mot celui d'avant ce parametre. Voir le bloc
+            « BRUIT DE LECTURE » plus bas.
+
+        signal_noise_seed: graine du flux de bruit de lecture. Doit etre une
+            fonction de la seule configuration de tirage (graine, niveau de bruit)
+            et JAMAIS de la strategie evaluee : c'est ce qui preserve les nombres
+            aleatoires communs.
+
+        signal_noise_run: indice du tirage Monte-Carlo. Meme exigence.
+
+        tp_hysteresis: AXE 1.2 — LA REGLE DE DETECTION DE POINT TOURNANT, en unites de
+            T. 0.0 = regle historique (changement de signe au-dela d'un garde numerique
+            de 1e-12), qui n'est pas une regle physique. > 0 = detecteur a hysteresis.
+            Voir ``detect_turning_points``, qui contient la derivation du seuil a partir
+            du bruit mesure — et pourquoi ce n'est PAS le critere des 4 % de Zideluns.
+
+            🔴 SANS CE PARAMETRE, `signal_noise_scale` N'EST PAS MESURABLE : le taux de
+            plantage qu'il produit ne depend pas de sigma (1,47 % par couche a
+            sigma = 5e-8 contre 1,30 % au sigma reel), donc il ne mesure pas le bruit.
 
     """
     if wl < 0.1:
@@ -223,11 +456,78 @@ def simulate_growth_kernel(
     #
     # block_start_layer = indice de la premiere couche du bloc. Defaut -1 =
     # couche seule, ce qui preserve le comportement des appelants non modifies.
+    # ---- BRUIT DE LECTURE SUR LE SIGNAL DE MONITORING (axe 1.1) --------------
+    #
+    # `noise_val_precalc` n'a longtemps bruite qu'UN SEUL point de toute la
+    # chaine : la comparaison d'arret (`target_T_noisy`, plus bas). Or `Ts_r`, le
+    # signal « reel », sert a trois choses de plus, et aucune n'etait bruitee :
+    #
+    #   - la DETECTION des points tournants           -> « voit-on les TP ? »
+    #   - la lecture des ANCRES POEM (T_prev, T_last) -> « POEM est-il gratuit ? »
+    #   - le test d'ATTEIGNABILITE du niveau          -> « atteint-on le niveau ? »
+    #
+    # Les trois questions du juge de paix recevaient donc la reponse « toujours, et
+    # exactement », qui n'a aucun contenu : les extrema etaient localises sur une
+    # courbe TMM parfaite. En particulier POEM reporte sa fraction figee sur les
+    # extrema REELLEMENT OBSERVES — T_prev_real et T_last_real sont censes etre des
+    # MESURES. On lui donnait le benefice du recalage sans lui en faire payer le
+    # cout : le niveau vise valant T_prev + p.(T_last - T_prev), deux ancres
+    # portant chacune une erreur d'ecart-type sigma donnent
+    #
+    #     Var[cible] = sigma^2 . [ (1-p)^2 + p^2 ]   + sigma^2 sur la lecture d'arret
+    #
+    # soit un bruit effectif de sigma.sqrt(1 + (1-p)^2 + p^2) : x1,22 a p = 0,5, et
+    # jusqu'a x1,41 quand le trigger tombe sur une ancre. POEM echange un BIAIS
+    # (l'erreur non compensee) contre une VARIANCE (deux mesures de plus), et le
+    # modele ne comptait que le benefice — il favorisait donc structurellement les
+    # strategies qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes
+    # heritees du bloc, puisqu'il les supposait parfaites.
+    #
+    # 🔴 NOMBRES ALEATOIRES COMMUNS — la contrainte a ne pas perdre.
+    #
+    # Le tirage est une FONCTION PURE de (graine, couche balayee, tirage, indice de
+    # point). Aucune entree ne depend de la strategie : ni la longueur d'onde, ni le
+    # decoupage en blocs, ni `block_start_layer`. Deux strategies comparees sur le
+    # meme (graine, tirage) voient donc EXACTEMENT le meme bruit de lecture, et leur
+    # difference de score reste imputable a la strategie seule.
+    #
+    # C'est pourquoi le tirage n'est pas materialise en tableau : un tableau indexe
+    # a plat sur le balayage se DESALIGNERAIT d'une strategie a l'autre, puisque la
+    # longueur de l'historique `n_hist` depend du decoupage en blocs. Le generateur
+    # `_seeded_noise_sample` — deja en production pour la nucleation, meme loi
+    # N(0, 1/3) tronquee a +/-1 que le tirage Sobol de la Phase B — est appele avec
+    # des indices ALIGNES SUR LA PHYSIQUE :
+    #
+    #   historique de la couche j, point k    ->  (group=j,       elem=k)
+    #   balayage de la couche courante, k     ->  (group=i_layer, elem=NPTS_PREV+k)
+    #
+    # Le premier indexage est invariant en `i_layer` : toutes les couches d'un meme
+    # bloc relisent le passe de la couche j AVEC LE MEME BRUIT. C'est l'invariant
+    # physique — la machine a enregistre une mesure, elle ne la remesure pas.
+    #
+    # ⚠ CE QUI RESTE NON FIDELE, et qu'il faut avoir en tete pour lire les taux de
+    # plantage produits. Le nombre d'extrema PARASITES qu'un bruit de lecture
+    # fabrique depend de la DENSITE d'echantillonnage du balayage, qui est ici un
+    # choix numerique (NPTS = 64 sur 3x l'epaisseur, NPTS_PREV = 16 sur 1x) et non
+    # la cadence de la machine. L'historique est donc echantillonne quatre fois plus
+    # grossierement que la couche courante, et un meme point physique n'a pas le
+    # meme bruit selon qu'il est lu comme « couche courante » ou comme « historique ».
+    # Modeliser la cadence et le temps d'integration est l'axe 1.2, pas celui-ci.
+    #
+    # NE SONT PAS BRUITES, et c'est voulu :
+    #   - `Ts_n` : le signal NOMINAL est la strategie, calculee hors ligne avant le
+    #     depot. Il n'y a personne pour la mesurer.
+    #   - `T_mono` : grandeur de conception (dynamique, monotonie), pas une lecture.
+    #   - les trois points `T_points` de l'inversion parabolique : ils ne sont pas
+    #     une mesure mais la resolution de T_reel(d) = target_T_noisy. Le bruit de
+    #     la lecture d'arret est deja porte, et seulement porte, par
+    #     `noise_val_precalc`.
     NPTS = 64
     NPTS_PREV = 16
     MAX_LOOKBACK = 4
     D_SCAN = 3.0
     SWING_MIN = 0.04
+    apply_signal_noise = signal_noise_scale > 0.0
     poem_ok = False
     T_prev_real = 0.0
     T_last_real = 0.0
@@ -277,6 +577,12 @@ def simulate_growth_kernel(
                 z1 = z1 + (1j * n_j * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j * s3 * R01 + c3 * R11)
                 if abs(z1) > 1e-09:
                     Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
+                if apply_signal_noise:
+                    # group = j : le passe de la couche j porte le MEME bruit pour
+                    # toutes les couches du bloc qui le relisent.
+                    Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
+                        signal_noise_seed, j, signal_noise_run, k - 1, True
+                    )
                 p4 = TWO_PI_VAL / wl * n_j * (f * d_nj)
                 c4, s4 = (np.cos(p4), np.sin(p4))
                 o4 = s4 / n_j if abs(n_j) > 1e-09 else 0.0
@@ -317,6 +623,39 @@ def simulate_growth_kernel(
             dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
             if abs(dr) > 1e-09:
                 Ts_r[idx] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
+            if apply_signal_noise:
+                # elem decale de NPTS_PREV : plage disjointe de celle de l'historique.
+                g_noise = i_layer
+                e_noise = NPTS_PREV + k
+                # 🔴 LE POINT DUPLIQUE. `d_k = 0` de la couche courante EST le
+                # dernier point de l'historique du bloc : dans les deux cas c'est
+                # T de l'empilement arrete a la fin de la couche i_layer - 1. UNE
+                # SEULE MESURE, donc UN SEUL tirage.
+                #
+                # 📏 Y tirer deux bruits independants coutait tres cher, et de
+                # facon trompeuse. Le signal PROPRE y a un palier de longueur
+                # nulle : `dl = 0`, donc dans la bande morte a 1e-12, donc aucun
+                # extremum detecte. Deux tirages independants rendaient cette
+                # difference non nulle et de signe aleatoire, ce qui fabriquait un
+                # extremum parasite a PILE OU FACE — donc avec une probabilite
+                # INDEPENDANTE DE SIGMA. Mesure sur le dichroique 48 couches,
+                # historique nominal et bruit d'arret nul :
+                #
+                #     profondeur d'historique  0      1      2      4
+                #     plantage                0,63 % 27,4 % 28,1 % 28,1 %
+                #     et a profondeur 4 :  sigma/10 -> 28,5 %,  2 sigma -> 28,1 %
+                #
+                # Les deux signatures designent le meme defaut : le saut apparait
+                # des qu'il existe UN historique (donc une jonction) et ne croit
+                # plus avec la profondeur (il n'y a qu'une jonction, quelle que
+                # soit la profondeur) ; et il ne depend pas de sigma parce qu'un
+                # signe aleatoire ne depend pas de l'amplitude.
+                if k == 0 and n_hist > 0:
+                    g_noise = i_layer - 1
+                    e_noise = NPTS_PREV - 1
+                Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
+                    signal_noise_seed, g_noise, signal_noise_run, e_noise, True
+                )
             q00 = cpk * Q00 + e01 * Q10
             q01 = cpk * Q01 + e01 * Q11
             q10 = e10 * Q00 + cpk * Q10
@@ -375,42 +714,18 @@ def simulate_growth_kernel(
         # haut, d = 0 de sa premiere couche n'est PAS un extremum en general :
         # le sous-empilement deja depose n'a aucune raison d'y etre stationnaire.
         start_is_tp = i_layer == 0 and j0 == 0
-        tp_a = -1
-        tp_b = -1
-        n_tp_real = 0
-        if start_is_tp:
-            n_tp_real += 1
-            tp_b = 0
-        for k in range(1, n_tot - 1):
-            dl = Ts_r[k] - Ts_r[k - 1]
-            dr2 = Ts_r[k + 1] - Ts_r[k]
-            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
-                if k <= idx_nom_stop:
-                    n_tp_real += 1
-                if k <= idx_nom_stop or tp_b < 0:
-                    tp_a = tp_b
-                    tp_b = k
-        # Points tournants attendus par la strategie, sur le nominal.
-        # Meme traitement sur le nominal, imperativement : les deux comptages
-        # servent aussi a detecter la DIVERGENCE du nombre d'extrema entre reel et
-        # nominal, qui est l'un des deux modes de plantage. Compter le bord d'un
-        # cote et pas de l'autre fabriquerait une divergence fictive a chaque
-        # premiere couche.
-        tp_a_n = -1
-        tp_b_n = -1
-        n_tp_nom = 0
-        if start_is_tp:
-            n_tp_nom += 1
-            tp_b_n = 0
-        for k in range(1, n_tot - 1):
-            dl = Ts_n[k] - Ts_n[k - 1]
-            dr2 = Ts_n[k + 1] - Ts_n[k]
-            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
-                if k <= idx_nom_stop:
-                    n_tp_nom += 1
-                if k <= idx_nom_stop or tp_b_n < 0:
-                    tp_a_n = tp_b_n
-                    tp_b_n = k
+        # Le signal REEL : ce que la machine compte.
+        n_tp_real, tp_a, tp_b = detect_turning_points(
+            Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+        )
+        # Le signal NOMINAL : ce que la strategie attend d'elle. MEME regle de
+        # detection, imperativement — les deux comptages servent aussi a detecter la
+        # DIVERGENCE du nombre d'extrema, qui est l'un des deux modes de plantage, et
+        # deux regles differentes en fabriqueraient une a chaque couche. Compter le
+        # bord d'un cote et pas de l'autre aurait le meme effet.
+        n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
+            Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
+        )
         if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
             # fraction : ancrages NOMINAUX  |  report : ancrages REELS mesures
             T_prev_nom = Ts_n[tp_a_n]
@@ -472,14 +787,9 @@ def simulate_growth_kernel(
     if nominal_th > 0.0001:
         i_lay0 = n_hist
         i_stop = idx_nom_stop
-        # borne haute : prochain extremum reel apres l'arret, sinon fin du balayage
-        i_end = n_tot - 1
-        for k in range(i_stop + 1, n_tot - 1):
-            dl = Ts_r[k] - Ts_r[k - 1]
-            dr2 = Ts_r[k + 1] - Ts_r[k]
-            if (dl > 1e-12 and dr2 < -1e-12) or (dl < -1e-12 and dr2 > 1e-12):
-                i_end = k
-                break
+        # borne haute : prochain extremum reel apres l'arret, sinon fin du balayage.
+        # Meme regle de detection que le comptage, cf. next_turning_point_after.
+        i_end = next_turning_point_after(Ts_r, n_tot, i_stop, tp_hysteresis)
         t_lo = Ts_r[i_lay0]
         t_hi = Ts_r[i_lay0]
         for k in range(i_lay0, i_end + 1):
@@ -503,13 +813,19 @@ def simulate_growth_kernel(
         # pour la meme raison.
         if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
             # niveau jamais atteint : depot non terminable
-            return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
+            return (
+                nominal_th + CRASH_LEVEL_UNREACHABLE * CRASH_SENTINEL_UNIT,
+                np.max(T_mono) - np.min(T_mono),
+            )
         # Comptage d'extrema divergent entre nominal et reel : la machine
         # n'ancre pas POEM sur les memes points tournants que la strategie.
         # Celui-ci, en revanche, RESTE conditionne a poem_ok : sans POEM il n'y a
         # pas d'ancrage sur des points tournants, donc rien qui puisse diverger.
         if poem_ok and n_tp_real != n_tp_nom:
-            return (nominal_th + 1000000.0, np.max(T_mono) - np.min(T_mono))
+            return (
+                nominal_th + CRASH_TP_MISCOUNT * CRASH_SENTINEL_UNIT,
+                np.max(T_mono) - np.min(T_mono),
+            )
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
     for k in range(3):
@@ -534,7 +850,7 @@ def simulate_growth_kernel(
         dyn_encounter = np.max(T_mono) - np.min(T_mono)
     if is_non_monotonic:
         if non_monotonic_mode == NON_MONOTONIC_MODE_REJECT:
-            return (nominal_th + 1000000.0, dyn_encounter)
+            return (nominal_th + CRASH_NON_MONOTONIC * CRASH_SENTINEL_UNIT, dyn_encounter)
         # non_monotonic_factor N'EST PLUS APPLIQUE.
         #
         # Il divisait l'erreur par une constante (defaut 2.0) des qu'un extremum
@@ -793,6 +1109,9 @@ def update_run_states_kernel(
     factor_val: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     block_start_layer: int = -1,
+    signal_noise_scale: float = 0.0,
+    signal_noise_seed: int = 0,
+    tp_hysteresis: float = 0.0,
 ):
     """Parallel update of simulation states for next layer.
 
@@ -800,6 +1119,12 @@ def update_run_states_kernel(
     etats propages ici deviennent l'historique sur lequel la couche suivante sera
     jugee : les evaluer sans l'historique du bloc alors que les candidates l'ont
     ete avec produirait une Phase A incoherente avec elle-meme.
+
+    ``signal_noise_scale`` / ``signal_noise_seed`` : bruit de lecture du signal de
+    monitoring (axe 1.1, cf. ``simulate_growth_kernel``). Ils doivent valoir CEUX
+    DE LA VALIDATION DES CANDIDATES, pour la meme raison que ``block_start_layer``.
+    L'indice de tirage passe au noyau est ``r``, le meme que celui qui a servi a
+    juger les candidates.
     """
     num_runs = prev_stacks.shape[0]
     updates = np.empty(num_runs, dtype=np.float64)
@@ -817,6 +1142,10 @@ def update_run_states_kernel(
             factor_val,
             non_monotonic_mode,
             block_start_layer,
+            signal_noise_scale,
+            signal_noise_seed,
+            r,
+            tp_hysteresis,
         )
     return updates
 

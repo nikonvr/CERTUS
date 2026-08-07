@@ -3,7 +3,7 @@
 Écrit le 2026-08-02, pour l'agent (ou l'humain) qui prend la suite, éventuellement
 sur une autre machine. **Tout chiffre de ce document a été mesuré**, jamais estimé.
 
-À lire après `CLAUDE.md`. Ce document **corrige** `docs/PLAN_OPTIMISATION.md` sur
+À lire après `CLAUDE.md`. Ce document corrigeait un plan d'optimisation antérieur sur
 plusieurs points : voir §5.
 
 ---
@@ -12,7 +12,7 @@ plusieurs points : voir §5.
 >
 > Ce document reste utile, mais **plusieurs de ses conclusions ont été démenties
 > par la mesure** depuis. Lis d'abord
-> [`docs/REPRISE_SESSION_2026-08-03.md`](REPRISE_SESSION_2026-08-03.md).
+> les journaux de session (supprimés le 2026-08-06, cf. `git log`).
 >
 > Ce qui a changé sous les pieds du plan : le dépôt a quitté Google Drive pour un
 > disque local, la machine de travail a **4 cœurs et non 16**, et numba est passé
@@ -118,7 +118,7 @@ pytest simultanées ne se bloquent pas du tout :
 La cause invoquée par la version précédente de ce paragraphe (« le verrou de
 fichier du cache numba, `configure_numba_env` ») ne peut pas être la bonne :
 `configure_numba_env` **ne pose jamais** `NUMBA_CACHE_DIR`, cf.
-`docs/REPRISE_SESSION_2026-08-03.md` §10.1. L'observation du 2026-08-02 était
+un journal de session supprimé (§10.1). L'observation du 2026-08-02 était
 probablement faite à cache **froid**, où deux processus tentent d'*écrire* les
 mêmes `.nbi` ; à chaud ils ne font que les *lire*. Hypothèse non vérifiée.
 
@@ -171,7 +171,7 @@ CERTUS faux ou bloqué — lis-les avant d'y toucher.
 **N'utilise pas `tests/headless/` comme banc.** `test_design.py` remplace
 `run_optim` par une fonction qui renvoie `0.001` sans calculer, et `test_strat.py`
 remplace `_execute_full_pipeline` par un mock. Les 9,3 s de STRAT annoncées dans
-`PLAN_OPTIMISATION.md §1` sont du chargement d'interface.
+l'ancien plan d'optimisation (§1) sont du chargement d'interface.
 
 ### Trois règles apprises à la dure
 
@@ -393,7 +393,7 @@ dérive de `cpu_count()`. Six sites recensés au §10.4 du document de reprise. 
 15 W, cette sur-souscription se paie en throttling thermique, qui bruite toutes
 les comparaisons A/B.
 
-### 4.5 METAL — étape 2 de `PLAN_OPTIMISATION.md §2.4`
+### 4.5 METAL — le cache d'indices, et pourquoi le gain ÉTAIT l'erreur
 
 Toujours ouverte, et c'est le **seul** endroit où le §2 de ce plan s'applique.
 Basculer `use_cache=True` site par site (`gradient_metal.py` ×2,
@@ -472,7 +472,10 @@ Le banc sait le faire : `--force-cache --trace-nk --instrument`.
 
 ---
 
-## 5. Corrections à `docs/PLAN_OPTIMISATION.md`
+## 5. Trois affirmations réfutées par la mesure
+
+*Elles venaient d'un plan d'optimisation antérieur, supprimé le 2026-08-06. Elles sont conservées
+ici parce que ce sont des CONCLUSIONS, et qu'elles évitent de refaire le chemin.*
 
 Ce plan reste utile pour METAL, mais trois de ses affirmations sont démenties par
 la mesure. Ne perds pas de temps à les refaire.

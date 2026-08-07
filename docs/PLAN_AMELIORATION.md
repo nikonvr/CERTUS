@@ -95,17 +95,31 @@ l'estimation de robustesse. Utiliser un hachage combinant les deux indices.
 *Vérifier* : générer les tirages de deux configurations voisines, mesurer la corrélation
 croisée des bruits — elle doit être nulle.
 
-**A2. `TLUObjective` — `SplineBasisCache` avec des nœuds variables** —
-`certus/core/certus_index_objectives.py:1127`
-Le cache est indexé sur une base supposée fixe alors que `Phase23Pass2SplineObjective`
-fait varier les positions de nœuds : soit le cache manque systématiquement, soit il rend
-une base périmée. *Vérifier lequel des deux avant de corriger* — les conséquences sont
-opposées (lenteur vs résultat faux). S'il rend une base périmée, ce constat change de
-catégorie et passe en priorité absolue.
+**A2. `SplineBasisCache` avec des nœuds variables** — ✅ **CLOS le 2026-08-06, par la mesure.**
 
-**A3. Clés `lru_cache` par `tuple()`** — `certus/physics/certus_optical_models.py:390`
-148 µs par appel juste pour construire la clé. Utiliser `.tobytes()`, comme le fait déjà
-`_cached_cubic_interp_matrix` (`spline_objective.py:53`).
+📏 **Ni « le cache manque systématiquement » ni « il rend une base périmée ».** Les positions de
+nœuds **sont** dans la clé de `SplineBasisCache.get` — donc aucune base périmée n'est rendue par
+omission. Mais cette clé est **arrondie à 1e-6 µm**, ce que le constat n'avait pas prévu, et c'est
+la troisième situation :
+
+- `compute_metal_bilayer_gradient_analytic` consulte le cache **directement**
+  (`gradient_metal.py:319`), donc ni `use_cache=False` ni `--force-cache` ne le gouvernent ;
+- mais cette base ne sert qu'au gradient par rapport aux **valeurs** de nœuds. Tout ce qui dépend
+  de leurs **positions** passe par les deux chemins non mémoïsés (lignes 270 et 342) ;
+- 📏 vérifié : un déplacement de nœud de **1e-9 µm** — mille fois sous l'arrondi — fait bouger le
+  gradient de 2,1e-9. L'optimiseur n'est donc **pas** aveugle.
+
+Il subsiste une péremption d'ordre `(dB/dλ) × 1e-6` sur les seules composantes de valeur :
+**bornée et négligeable.** A2 ne passe donc **pas** en priorité absolue.
+
+⚠️ **Ce que la mesure a corrigé chez moi** : j'avais d'abord écrit un test exigeant *zéro*
+consultation du cache par le gradient. Il échouait — et il avait tort, pas le code. Le garde-fou
+n'est pas un compte d'appels, c'est la **réponse du gradient** à un déplacement sous l'arrondi.
+Verrouillé par `tests/oracle/test_spline_basis_cache_key.py` (4 tests).
+
+**A3. Clés `lru_cache` par `tuple()`** — ✅ **FAIT.** La clé est construite par `.tobytes()`, et
+le commentaire sur place documente la mesure : 35,9 µs par appel sur une grille de 601 points, soit
+85 % du coût du chemin chaud, passés à fabriquer la clé.
 
 **A4. Base spline reconstruite nœud par nœud** — `certus/physics/gradient_metal.py:291`
 `num_knots` constructions de `CubicSpline` au lieu d'une seule sur toute la base.

@@ -12,6 +12,12 @@ K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 from .certus_strat_math import check_extrema_proximity_batch, _calc_T_from_matrix, _calc_T_added_layer
 from .certus_strat_growth import simulate_growth_kernel
 
+# Nombre de points de bruit de lecture consommes par (tirage, couche) dans
+# `simulate_growth_kernel` : NPTS_PREV pour l'historique relu + NPTS pour le
+# balayage de la couche courante. N'est pas utilise pour dimensionner un tableau —
+# le bruit est engendre a la demande — mais documente l'empreinte du flux.
+MONITOR_NOISE_SLOTS_PER_LAYER = 16 + 64
+
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
 def validate_wavelengths_batch(
@@ -28,6 +34,9 @@ def validate_wavelengths_batch(
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
     block_start_arr: np.ndarray = None,
     gain_probe_nm: float = 1.0,
+    signal_noise_scale: float = 0.0,
+    signal_noise_seed: int = 0,
+    tp_hysteresis: float = 0.0,
 ):
     """Evalue chaque longueur d'onde candidate pour UNE couche (Phase A).
 
@@ -66,6 +75,16 @@ def validate_wavelengths_batch(
     Phase B, elle, la modelise — mesure sur l'exemple reel, le gain change d'un
     facteur allant jusqu'a 2,5 selon que l'historique est vu ou non.
     None = comportement historique (chaque couche isolee).
+
+    signal_noise_scale / signal_noise_seed : bruit de LECTURE du signal de
+    monitoring (axe 1.1, cf. `simulate_growth_kernel`). 0.0 = desactive, et le
+    chemin de calcul redevient mot pour mot celui d'avant ce parametre.
+
+    ⚠ LE GAIN DE COMPENSATION RESTE MESURE A BRUIT DE LECTURE NUL, comme il l'est
+    deja a bruit d'arret nul. C'est une derivee — la reponse de la couche a une
+    erreur amont connue — et non une simulation de depot : y injecter du bruit ne
+    ferait qu'ajouter de la variance a une quantite deterministe, mesuree par
+    DEUX evaluations seulement (aucun Monte-Carlo pour la moyenner).
     """
     n_cands = len(candidate_wls)
     n_runs = runs_history.shape[0]
@@ -94,6 +113,10 @@ def validate_wavelengths_batch(
                 non_monotonic_factor,
                 non_monotonic_mode,
                 blk,
+                signal_noise_scale,
+                signal_noise_seed,
+                r_idx,
+                tp_hysteresis,
             )
             if val > 100000.0:
                 # depot non terminable : sentinelle nominal_th + 1e6
@@ -128,11 +151,13 @@ def validate_wavelengths_batch(
                 p_thick_nominal, i_layer, prev_nom, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
+                0.0, 0, 0, tp_hysteresis,
             )
             v_prt, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
+                0.0, 0, 0, tp_hysteresis,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
@@ -157,6 +182,9 @@ def simulate_stack_robustness_batch(
     probe_offset: float,
     non_monotonic_factor: float,
     non_monotonic_mode: int = NON_MONOTONIC_MODE_ATTENUATE,
+    signal_noise_scale: np.ndarray = None,
+    signal_noise_seed: int = 0,
+    tp_hysteresis: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
@@ -164,6 +192,15 @@ def simulate_stack_robustness_batch(
 
     Returns: (simulated_thicknesses, average_dynamics_per_layer)
 
+    signal_noise_scale : echelle du bruit de LECTURE du signal de monitoring, PAR
+    COUCHE, en unites de T (axe 1.1, cf. `simulate_growth_kernel`). Un tableau et
+    non un scalaire parce que le mode « tolerance en nm » convertit la tolerance en
+    unites de T par dT/dd, qui depend de la couche. None = desactive, et le chemin
+    de calcul redevient mot pour mot celui d'avant ce parametre.
+
+    signal_noise_seed : graine du flux. Fonction de la seule configuration de
+    tirage, JAMAIS de la strategie — c'est ce qui preserve les nombres aleatoires
+    communs entre strategies comparees.
     """
     n_runs = noise_matrix.shape[0]
     n_layers = len(p_thick_nominal)
@@ -185,6 +222,9 @@ def simulate_stack_robustness_batch(
             wl = layer_wavelengths[i_layer]
             n_H, n_L, n_Sub = (n_H_vals[i_layer], n_L_vals[i_layer], n_Sub_vals[i_layer])
             noise_val = noise_matrix[r, i_layer]
+            sig_scale = 0.0
+            if signal_noise_scale is not None:
+                sig_scale = signal_noise_scale[i_layer]
             val, dyn = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
@@ -198,6 +238,10 @@ def simulate_stack_robustness_batch(
                 non_monotonic_factor,
                 non_monotonic_mode,
                 block_start[i_layer],
+                sig_scale,
+                signal_noise_seed,
+                r,
+                tp_hysteresis,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val
@@ -220,8 +264,26 @@ def compute_batch_rmse(
     nSub_arr: np.ndarray,
     T_target: np.ndarray,
     n_layers_flattened: np.ndarray,
+    weights: np.ndarray = None,
 ) -> np.ndarray:
     """Computes RMSE for a batch of simulated thicknesses against a target T spectrum.
+
+    ``weights`` — PONDERATION SPECTRALE, axe 3. ``None`` = uniforme, et le chemin de
+    calcul est alors mot pour mot celui d'avant ce parametre.
+
+    🔴 POURQUOI UNE PONDERATION EST INDISPENSABLE SUR UN DICHROIQUE.
+    👤 Le physicien : « le plus important est la cible spectrale respectee ». Or un RMSE
+    uniforme sur le juge de paix fait peser la bande BLOQUEE — 146 points sur 301, avec
+    une exigence de 0,1 % de transmission — exactement autant que la bande passante, ou
+    un ecart d'un point entier est sans consequence. L'exigence y est 500 fois plus dure
+    et elle compte pareil. Un RMSE global sur un dichroique ne dit donc rien, et c'est
+    pour cela que toute mesure de ce module est decomposee par bande.
+
+    Les poids attendus sont ceux que DESIGN utilise deja
+    (``prepare_targets_vectorized`` : poids utilisateur de la zone x quadrature
+    spectrale en d ln lambda). Un point hors de toute zone recoit un poids NUL — il
+    n'entre alors pas dans le denominateur, ce qui est le comportement voulu : une
+    longueur d'onde dont l'utilisateur n'a rien dit ne doit ni aider ni penaliser.
 
     Args:
 
@@ -247,6 +309,7 @@ def compute_batch_rmse(
     for r in prange(n_runs):
         thicknesses = sim_thick_batch[r]
         mse_sum = 0.0
+        w_sum = 0.0
         for i_wl in range(n_wls):
             Rf, Tf, Rb = compute_TMM_single_point_k0_exact(
                 k0_arr[i_wl], thicknesses, n_layers_flattened[i_wl], nSub_arr[i_wl]
@@ -260,8 +323,20 @@ def compute_batch_rmse(
                 denom = 1e-12
             T_total = Tf * T_sub_air / denom
             diff = T_total - T_target[i_wl]
-            mse_sum += diff * diff
-        rmse_arr[r] = np.sqrt(mse_sum / n_wls)
+            if weights is None:
+                mse_sum += diff * diff
+            else:
+                w = weights[i_wl]
+                mse_sum += w * diff * diff
+                w_sum += w
+        if weights is None:
+            rmse_arr[r] = np.sqrt(mse_sum / n_wls)
+        elif w_sum > 1e-300:
+            rmse_arr[r] = np.sqrt(mse_sum / w_sum)
+        else:
+            # Aucune zone ne couvre la grille : rendre 0 ferait passer n'importe quelle
+            # strategie pour parfaite. On rend l'infini, qui elimine et se voit.
+            rmse_arr[r] = np.inf
     return rmse_arr
 
 

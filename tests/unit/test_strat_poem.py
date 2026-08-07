@@ -14,6 +14,17 @@ C'est ce qui explique — et rend CORRECT — le resultat de
 ⚠ SEUIL PHYSIQUE. En dessous de 0,05 nm il n'y a plus d'epaisseur : c'est moins
 d'un atome. Toute assertion d'egalite d'epaisseur se juge a cette aune, pas a la
 precision machine.
+
+🔴 PERIMETRE — SEUL LE DICHROIQUE 48 COUCHES EST UN EXEMPLE VALABLE.
+👤 Le physicien, 2026-08-06. L'empilement utilise ici est un JOUET : huit couches quart
+d'onde a 1500 nm, choisi parce qu'il est petit, controle et rapide. Il sert a verifier
+des MECANISMES — identite au bit pres, le bruit atteint-il les ancres, la sentinelle
+porte-t-elle sa cause — et **AUCUNE CONCLUSION PHYSIQUE NE PEUT EN ETRE TIREE**.
+
+Tout chiffre marque 📏 dans ce fichier provient de `example/example_strat/
+JSON-strat-example.json` via `scripts/probe_anchor_noise.py`, jamais du jouet. Ne jamais
+mesurer un taux de plantage, un rendement ou une erreur spectrale sur cet empilement-ci
+pour en conclure quoi que ce soit : le juge de paix, c'est le 48 couches.
 """
 
 import numpy as np

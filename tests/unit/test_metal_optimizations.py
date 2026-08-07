@@ -200,19 +200,56 @@ def test_edge_case_no_internal_knots() -> None:
 
 @pytest.mark.unit
 def test_spline_basis_cache_eviction_and_lock() -> None:
-    # Clear and verify cache sizes/eviction limits
+    """Le cache doit rester borne a `_MAX_ENTRIES`, et evincer le PLUS ANCIEN UTILISE.
+
+    ⚠️ CE TEST NE POUVAIT PLUS REUSSIR, et ce depuis le commit `a9983c4`. Il inserait
+    510 cles puis exigeait `len(cache) < 500` — or ce commit a remplace le vidage total
+    par une eviction LRU bornee a `_MAX_ENTRIES = 512`. Avec 510 cles distinctes sous un
+    plafond de 512, aucune eviction n'a lieu et le cache en contient exactement 510 :
+    l'assertion etait arithmetiquement impossible.
+
+    Il testait donc un comportement qui n'existe plus — « le cache se vide tout seul » —
+    au lieu du contrat reel : « le cache est BORNE et evince le moins recemment utilise ».
+    On teste desormais le contrat, et contre la constante plutot que contre un nombre
+    magique, pour qu'un changement de plafond ne le recasse pas en silence.
+    """
+    cap = SplineBasisCache._MAX_ENTRIES
+
     SplineBasisCache.clear()
     assert len(SplineBasisCache._cache) == 0
-    
-    # Generate 510 unique cache keys to trigger eviction limit (>500)
+
     l_array = np.linspace(400, 800, 10)
-    for i in range(510):
-        # vary the knots slightly
-        knot_l = np.array([400.0, 500.0 + i * 1e-4, 800.0])
-        SplineBasisCache.get(knot_l, l_array)
-        
-    # The cache should have evicted/cleared itself to avoid memory leaks
-    assert len(SplineBasisCache._cache) < 500
+
+    def knots(i: int) -> np.ndarray:
+        # 1e-2 : bien au-dessus de l'arrondi de la cle (1e-6), donc des cles VRAIMENT
+        # distinctes. Voir tests/oracle/test_spline_basis_cache_key.py.
+        return np.array([400.0, 500.0 + i * 1e-2, 800.0])
+
+    # Sous le plafond : rien n'est evince.
+    for i in range(cap):
+        SplineBasisCache.get(knots(i), l_array)
+    assert len(SplineBasisCache._cache) == cap
+
+    # On re-touche la plus ancienne pour la rendre RECENTE : le LRU doit alors
+    # sacrifier la suivante, pas elle. C'est ce qui distingue un LRU d'un FIFO.
+    SplineBasisCache.get(knots(0), l_array)
+
+    # Au-dela du plafond : l'eviction se declenche, et la taille reste bornee.
+    for i in range(cap, cap + 20):
+        SplineBasisCache.get(knots(i), l_array)
+    assert len(SplineBasisCache._cache) <= cap
+
+    def _cached(i: int) -> bool:
+        key = (
+            np.round(knots(i), 6).tobytes(),
+            np.round(l_array.astype(np.float64), 4).tobytes(),
+            True,
+        )
+        return key in SplineBasisCache._cache
+
+    assert _cached(cap + 19), "la derniere entree inseree a ete evincee"
+    assert _cached(0), "l'entree re-utilisee a ete evincee : ce n'est pas un LRU"
+    assert not _cached(1), "l'entree la moins recemment utilisee n'a PAS ete evincee"
 
 
 # ---------------------------------------------------------------------------

@@ -8,8 +8,40 @@ Contains analytic gradient computation kernels for TMM optimization.
 import numpy as np
 from numba import njit, prange
 import math
+from collections.abc import Callable
+from typing import TYPE_CHECKING
+
 from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
+
+# ── TROIS SYMBOLES PERDUS A L'EXTRACTION, ET LE TROISIEME EST UN VRAI BUG ────────
+#
+# Ce module a ete extrait de `certus_opt_gradients.py` sans que ses imports suivent.
+# 📏 `ruff --select F821` (masque par l'`extend-ignore` du pyproject) : `Target`,
+# `Callable` et `cost_numba_fast` etaient tous les trois indefinis.
+#
+#   `Target` et `Callable` n'apparaissent que dans des ANNOTATIONS. Sur Python 3.14,
+#   PEP 649 les evalue paresseusement, donc le module s'importait sans broncher — mais
+#   `typing.get_type_hints()` sur ces fonctions echouait, et un retour a une evaluation
+#   immediate aurait casse l'import.
+#
+#   🔴 `cost_numba_fast`, lui, est dans le CORPS de `make_cost_function` (ligne ~1181).
+#   Toute fonction de cout construite par cet appel levait donc `NameError` a la
+#   PREMIERE evaluation — et `make_cost_function` est une API publique, exportee dans
+#   le `__all__` de `_certus_physics_impl` et re-exportee par `certus_opt_kernels`.
+#
+# `gradient_utils` n'importe que numpy/numba et `certus.core.certus_core` : pas de cycle.
+from certus.physics.gradient_utils import cost_numba_fast
+
+# ⚠️ `Target` sous TYPE_CHECKING, et ce n'est pas de la coquetterie : importer
+# `certus_physics.structures` executerait d'abord le `__init__.py` du PAQUET
+# `certus_physics`, qui importe `_certus_physics_impl`, qui importe
+# `certus_opt_kernels`, qui importe CE module — cycle, et ImportError a froid.
+# J'ai verifie les imports du module `structures` sans verifier ceux de son paquet ;
+# c'est la meme erreur que de lire un critere sur la mauvaise source.
+# `Target` n'apparait que dans une annotation, donc un import de typage suffit.
+if TYPE_CHECKING:
+    from certus_physics.structures import Target
 from certus.physics.certus_optical_models import (
     get_nk_from_spline,
     get_nk_cauchy_simple,

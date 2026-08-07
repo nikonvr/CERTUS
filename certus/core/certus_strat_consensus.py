@@ -23,6 +23,7 @@ from certus.core.certus_strat_ranking import (
     _apply_strategy_ranking,
     _apply_family_diversity_if_enabled,
     _resolve_available_wavelengths,
+    _resolve_monitoring_wavelength_grid,
     _max_strategy_id,
     _existing_block_signatures,
     _resolve_elite_nominal_and_target_threshold,
@@ -518,7 +519,15 @@ def _apply_elite_refinement_if_enabled(
 
     raw_factors = _parse_noise_factors(ctx.params.get("robustness_noise_factors", [0.5, 1.0, 2.0]))
     nominal_noise_level = _resolve_nominal_noise_level(ctx.noise_levels, raw_factors)
-    available_wls = _resolve_available_wavelengths(ctx.clues_at_wl, ctx.wl_arr)
+    # Grille de CONTROLE (pas `scan_wl_step`), et non l'union avec la grille
+    # d'affichage a 1 nm : ELITE mutait les lambda de 1 nm, hors grille, d'ou les
+    # `551, 552, 553, 554` en tete de classement. Voir
+    # `_resolve_monitoring_wavelength_grid`.
+    available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
+    ctx.logger.info(
+        f"[ELITE] grille de controle : {len(available_wls)} lambda au pas de "
+        f"{float(ctx.params.get('scan_wl_step', 0.0)):g} nm"
+    )
     total_elite_added = 0
     
     executor_cls = concurrent.futures.ThreadPoolExecutor

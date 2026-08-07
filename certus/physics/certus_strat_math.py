@@ -101,6 +101,156 @@ def check_extrema_proximity(
     return True
 
 
+#: Geometrie du balayage, identique a celle de `simulate_growth_kernel` : 64 points
+#: sur 3x l'epaisseur nominale. L'arret nominal tombe donc a l'indice 21.
+_MARGIN_NPTS: int = 64
+_MARGIN_D_SCAN: float = 3.0
+#: Valeur rendue quand aucun extremum n'est trouve du cote considere : la contrainte
+#: est alors inactive de ce cote, et 999 ne doit PAS se lire comme une marge enorme
+#: obtenue par calcul.
+MARGIN_NONE: float = 999.0
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def calculate_level_margins_to_extrema(
+    wl: float,
+    n_current: complex,
+    n_Sub: complex,
+    thickness_nominal: float,
+    M_before: np.ndarray,
+) -> tuple[float, float]:
+    """Distance EN TRANSMISSION entre le niveau d'arret et les points tournants voisins.
+
+    Renvoie ``(marge_avant, marge_apres)`` en unites de T (0..1) : l'ecart absolu entre
+    le niveau d'arret nominal et la valeur du dernier extremum AVANT l'arret, puis du
+    premier extremum APRES. ``MARGIN_NONE`` si aucun extremum de ce cote.
+
+    🔴 EN TRANSMISSION, ET C'EST TOUT L'INTERET.
+
+    Le critere en place, `check_extrema_proximity`, travaille en espace des EPAISSEURS :
+    une demi-largeur en nanometres autour de l'extremum, derivee de
+    `extrema_exclusion_ratio`. Or pres d'un point tournant `T` varie QUADRATIQUEMENT
+    avec `d` : `T ~ T_ext - c.(d - d0)^2`. Une marge fixe en epaisseur correspond donc a
+    une fraction d'amplitude minuscule et non controlee, et la grandeur physique — le
+    rapport signal sur bruit sur le niveau — n'est jamais celle qui est appliquee.
+
+    👤 Le physicien, 2026-08-06, sur deux questions distinctes et avec la meme reponse :
+    *« dans ce cas, il y a reellement une marge trop faible. On decide que le depot est
+    perdu. Il faut quand meme prendre une marge de securite ! »* et *« la theorie et la
+    pratique doivent avoir pile le bon nombre d'extremum. Et si on est trop pres, il y a
+    risque que cela ne soit pas le cas. Donc marge de securite encore ! »*
+
+    Une seule marge, exprimee en T, garantit les trois choses a la fois :
+
+      1. LE NIVEAU EST ATTEIGNABLE. Si la marge depasse l'amplitude du bruit, aucune
+         realisation ne peut placer le sommet bruite sous la cible. C'est le mode de
+         defaillance dominant : 📏 100 % du plancher de plantage independant de sigma.
+      2. LE COMPTAGE REEL EGALE LE COMPTAGE NOMINAL. Un arret loin d'un extremum ne
+         peut pas en faire apparaitre ni disparaitre un.
+      3. L'ERREUR D'EPAISSEUR RESTE BORNEE. Avec `T ~ T_ext - c.(d-d0)^2`, l'erreur
+         vaut `dd = sigma / (2.sqrt(c.dT))` : la marge `dT` la BORNE, alors qu'elle
+         DIVERGE quand la marge tend vers zero.
+
+    📌 Elle fait aussi retomber du calcul le seuil d'amplitude minimale que 👤 le
+    physicien avait estime a 4 % *« au pif, pour etre certain qu'on va y arriver »* : une
+    longueur d'onde n'est utilisable que si son swing depasse deux marges, une de chaque
+    cote. A 0,05 point de bruit et une marge de 2x, cela donne 0,2 point — les 4 %
+    etaient vingt fois plus conservateurs.
+
+    ⚠️ SYMETRIQUE, contrairement au critere en epaisseur qui interdisait une zone trois
+    fois plus large AVANT un extremum qu'APRES. Cette asymetrie etait un PROXY de ce
+    calcul-ci : en espace des epaisseurs, « avant » et « apres » ne sont pas
+    equivalents parce que la pente n'y est pas la meme. En transmission, les deux cotes
+    sont a la meme distance de l'extremum par construction, et les deux sont dangereux
+    pour le comptage. Seul le cote « avant » l'est aussi pour l'atteignabilite — la
+    contrainte symetrique le couvre donc a fortiori.
+    """
+    if wl < 0.1 or thickness_nominal <= 0.0001:
+        return (MARGIN_NONE, MARGIN_NONE)
+    m00, m01 = (M_before[0, 0], M_before[0, 1])
+    m10, m11 = (M_before[1, 0], M_before[1, 1])
+
+    d_max = _MARGIN_D_SCAN * thickness_nominal
+    step = d_max / (_MARGIN_NPTS - 1)
+    Ts = np.zeros(_MARGIN_NPTS, dtype=np.float64)
+    for k in range(_MARGIN_NPTS):
+        Ts[k] = _calc_T_added_layer(wl, n_current, k * step, n_Sub, m00, m01, m10, m11)
+
+    i_stop = int(round((_MARGIN_NPTS - 1) / _MARGIN_D_SCAN))
+    T_stop = Ts[i_stop]
+
+    # Vers l'arriere : on remonte tant que le signal progresse dans le meme sens, et on
+    # s'arrete au premier renversement. La valeur retenue est celle de l'extremum.
+    m_prev = MARGIN_NONE
+    if i_stop >= 2:
+        sign0 = 0.0
+        d0 = Ts[i_stop] - Ts[i_stop - 1]
+        if d0 > 1e-15:
+            sign0 = 1.0
+        elif d0 < -1e-15:
+            sign0 = -1.0
+        for k in range(i_stop - 1, 0, -1):
+            dk = Ts[k] - Ts[k - 1]
+            s = 0.0
+            if dk > 1e-15:
+                s = 1.0
+            elif dk < -1e-15:
+                s = -1.0
+            if s != 0.0 and sign0 != 0.0 and s != sign0:
+                m_prev = abs(T_stop - Ts[k])
+                break
+            if sign0 == 0.0:
+                sign0 = s
+
+    # Vers l'avant : meme logique. C'est le cote qui gouverne l'atteignabilite — le
+    # signal peut tourner AVANT d'avoir atteint le niveau vise.
+    m_next = MARGIN_NONE
+    sign1 = 0.0
+    d1 = Ts[i_stop + 1] - Ts[i_stop] if i_stop + 1 < _MARGIN_NPTS else 0.0
+    if d1 > 1e-15:
+        sign1 = 1.0
+    elif d1 < -1e-15:
+        sign1 = -1.0
+    for k in range(i_stop + 1, _MARGIN_NPTS - 1):
+        dk = Ts[k + 1] - Ts[k]
+        s = 0.0
+        if dk > 1e-15:
+            s = 1.0
+        elif dk < -1e-15:
+            s = -1.0
+        if s != 0.0 and sign1 != 0.0 and s != sign1:
+            m_next = abs(T_stop - Ts[k])
+            break
+        if sign1 == 0.0:
+            sign1 = s
+
+    return (m_prev, m_next)
+
+
+@njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
+def check_level_margin_batch(
+    wls: np.ndarray,
+    n_currents: np.ndarray,
+    n_Subs: np.ndarray,
+    thickness_nominal: float,
+    M_befores: np.ndarray,
+    margin_T: float,
+) -> np.ndarray:
+    """Predicat d'admissibilite par candidate : la marge suffit-elle des DEUX cotes ?
+
+    ``margin_T`` est en unites de T. Un cote sans extremum (``MARGIN_NONE``) est
+    considere comme non contraignant.
+    """
+    n = len(wls)
+    out = np.empty(n, dtype=np.bool_)
+    for i in prange(n):
+        mp, mn = calculate_level_margins_to_extrema(
+            wls[i], n_currents[i], n_Subs[i], thickness_nominal, M_befores[i]
+        )
+        out[i] = (mp >= margin_T) and (mn >= margin_T)
+    return out
+
+
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def calculate_extrema_distances(
     wl: float, n_current: complex, n_Sub: complex, thickness_nominal: float, M_before: np.ndarray

@@ -123,6 +123,14 @@ __all__ = [
     # Non-monotonic handling modes
     "NON_MONOTONIC_MODE_ATTENUATE",
     "NON_MONOTONIC_MODE_REJECT",
+    # Depots non terminables, decomposes par cause
+    "CRASH_SENTINEL_MIN",
+    "CRASH_SENTINEL_UNIT",
+    "CRASH_LEVEL_UNREACHABLE",
+    "CRASH_TP_MISCOUNT",
+    "CRASH_NON_MONOTONIC",
+    "detect_turning_points",
+    "next_turning_point_after",
     # Backside Validation
     "validate_backside_real_clues",
     "K_MAX_LAYER_BACKSIDE",
@@ -908,11 +916,18 @@ def get_refractive_clues_vectorized(material_id: Any, wavelengths: np.ndarray, d
 # =========================================================================================
 
 from certus.physics.certus_strat_kernels import (
+    CRASH_LEVEL_UNREACHABLE,
+    CRASH_NON_MONOTONIC,
+    CRASH_SENTINEL_MIN,
+    CRASH_SENTINEL_UNIT,
+    CRASH_TP_MISCOUNT,
     K_MAX_LAYER_BACKSIDE,
     K_MAX_SUBSTRATE_BACKSIDE,
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,
     calculate_detailed_growth,
+    detect_turning_points,
+    next_turning_point_after,
     check_extrema_proximity,
     compute_T_front_at_layer,
     compute_T_front_profile,
@@ -1571,7 +1586,13 @@ from certus.physics.certus_optimizers import compute_critical_distance, fast_clu
 from certus.physics.certus_opt_needle import needle_scan_cached
 from certus.physics.certus_strat_batch import precompute_matrix_cache_kernel, calculate_RT_batch_kernel
 from certus.physics.certus_strat_growth import prepare_dynamics_data_kernel, update_run_states_kernel
-from certus.physics.certus_strat_math import calculate_extrema_distances, check_extrema_proximity_batch
+from certus.physics.certus_strat_math import (
+    calculate_extrema_distances,
+    check_extrema_proximity_batch,
+    calculate_level_margins_to_extrema,
+    check_level_margin_batch,
+    MARGIN_NONE,
+)
 from certus.physics.certus_strat_nucleation import rank_nucleation_candidates_kernel, find_nucleation_adaptive_kernel
 from certus.physics.certus_tmm_substrate import (
     calculate_bare_substrate_R,
@@ -1605,6 +1626,9 @@ __all__.extend(
         "update_run_states_kernel",
         "calculate_extrema_distances",
         "check_extrema_proximity_batch",
+    "calculate_level_margins_to_extrema",
+    "check_level_margin_batch",
+    "MARGIN_NONE",
         "rank_nucleation_candidates_kernel",
         "find_nucleation_adaptive_kernel",
         "calculate_bare_substrate_R",

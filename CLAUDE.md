@@ -2,36 +2,56 @@
 
 Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 
-> **Isolation des tests (2026-08-02)** — une fuite d'état `sys.modules` faisait échouer en
-> sélection large des tests qui passent isolément. Cause racine corrigée ; il reste un
-> audit à faire. Voir [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
+## 🔴 PAR OÙ COMMENCER — état au 2026-08-06
 
-> **Environnement et performance (2026-08-04)** — le dépôt a quitté Google Drive pour un disque
-> local, les dépendances sont remontées (numba 0.65.1 → 0.66.0) et la machine de travail a
-> 4 cœurs, non 16. **Les chiffres de `REPRISE_PERF.md` ne sont plus reproductibles en l'état**,
-> et son §0 comme son §4.3 sont démentis par la mesure.
->
-> 🔴 **L'outillage de mesure était cassé sur trois points** : `ab_compare.sh` n'alternait qu'un
-> fichier, `RESULT` valait `None` sur INDEX **et** STRAT (donc aucun garde-fou de correction sur
-> les deux plus gros chantiers du §4), et le parallélisme était dimensionné sur les cœurs
-> logiques. Corrigés — mais 4 modules n'ont pas été contrôlés.
->
-> Lire **[`docs/REPRISE_SESSION_2026-08-03.md`](docs/REPRISE_SESSION_2026-08-03.md) §0
-> « PAR OÙ COMMENCER »** avant toute chose, puis `REPRISE_PERF.md`.
->
-> 🔬 **Modele de monitoring de STRAT refondu (2026-08-04)** : cible figee sur le nominal,
-> POEM, historique du bloc, detection des depots non terminables. Les scores de robustesse
-> **ne sont plus comparables** aux anciens. Voir
-> [`docs/REPRISE_STRAT_MONITORING.md`](docs/REPRISE_STRAT_MONITORING.md).
->
-> 🔴 **STRAT ne rendait AUCUNE strategie sur l'exemple reel (2026-08-05)** — il en minait
-> 240 et les eliminait toutes les 240 au filtre de robustesse. `CRASH_RATE_TOLERANCE = 0.05`
-> est un seuil **par strategie** applique a une grandeur qui **se compose sur 48 couches** :
-> il faut 0,107 % par couche, la meilleure longueur d'onde de l'exemple en donne 0,8 %.
-> Correctifs poses et verifies ; **trois questions de modele restent ouvertes.**
-> ⚠️ Les taux de plantage du §2 de `REPRISE_STRAT_MONITORING.md` sont sous-comptes d'un
-> facteur ~30 : ils ont ete etablis avant le degating de la detection.
-> Lire [`docs/REPRISE_STRAT_BLOCAGE.md`](docs/REPRISE_STRAT_BLOCAGE.md).
+Trois documents, et rien d'autre. **Les journaux de session ont été supprimés le 2026-08-06** :
+ils se contredisaient entre eux et pointaient vers des états du code qui n'existent plus.
+Récupérables par `git log` si besoin.
+
+| Document | Ce qu'il contient |
+|---|---|
+| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — ce qu'il reste à faire, et rien d'autre.** Le point de référence mesuré, les trois décisions qui bloquent, les actions dans l'ordre de conditionnement, les règles gravées, et ce qu'il ne faut pas refaire. |
+| [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) | La doc technique destinée à la communauté : algorithmes, équations, et la **méthode** (§2.1quinquies). |
+
+### Vérifier l'environnement — une minute, et ce n'est pas optionnel
+
+```bat
+cd /d C:\dev\gemini
+.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+dir .git\hooks\post-commit*
+```
+
+Le chemin affiché doit être sous `C:\dev\gemini` — sinon tu mesures un autre snapshot (§5.5).
+**Plusieurs copies de ce dépôt coexistent sur la machine** : c'est la copie `C:\dev\gemini`
+qui fait foi ici, et aucune autre.
+
+Le hook `post-commit` a été **désactivé dans cette copie** (renommé `post-commit.DESACTIVE`).
+Committer ici ne publie donc rien. Dans les autres copies il est **ACTIF** et pousse chaque
+commit vers le dépôt **public** `nikonvr/CERTUS` — `--no-verify` ne le neutralise pas.
+**Ne le réactive pas.**
+
+### 🟢 La règle de méthode, et elle a été payée trois fois
+
+> **Une grandeur de bruit qui ne varie pas avec le bruit est un artefact. Sans exception.**
+
+📏 En une journée, le même taux de plantage par couche a valu 28 %, puis 1,3 %, puis 1,47 % à
+σ → 0. **Deux fois sur trois ce n'était pas de la physique**, et c'est le balayage de σ — quelques
+secondes — qui l'a montré chaque fois. Corollaire : **vérifie sur quelle SOURCE un critère se
+prononce.** Les trois défauts les plus coûteux étaient de cette forme — le signal propre au lieu du
+signal bruité, la grille d'affichage (1 nm) au lieu de la grille de balayage (2 nm), et une matrice
+de zéros au lieu de l'empilement réel. Détail dans `pages/CERTUS_STRAT.html` §2.1quinquies.
+
+### Ce qui reste ouvert, en une ligne chacun
+
+- **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des tests
+  qui passent isolément. Cause racine corrigée, audit restant :
+  [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
+- **Performance** — 📏 mesuré le 2026-08-04 : **il n'y a PAS de ×2 disponible** dans les pistes
+  documentées. Le seul gain réel acquis est −10 % sur STRAT. Le fossé machine va de ×1 à ×3,2
+  selon les modules, pas ×7-10. Référence : [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md), dont
+  les temps absolus datent d'avant le déménagement hors Google Drive.
+- **Amélioration générale** — [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) : dette de
+  lint, tests absents de la CI, six chantiers ordonnés.
 
 ---
 
@@ -262,21 +282,20 @@ Politique **zéro régression** :
 
 ---
 
-## 6bis. 📋 Plans de reprise
+## 6bis. 📋 Les quatre documents vivants
 
-**`docs/REPRISE_PERF.md`** — 🔴 **à lire en premier pour toute question de performance.**
-Mis à jour le 2026-08-02 : référence mesurée de chaque module sur les vrais exemples,
-ce qui est déjà optimisé (5 commits), ce qui reste, les profils bruts, et les pièges de
-mesure. Il **corrige trois affirmations fausses** de `docs/PLAN_OPTIMISATION.md` — ne
-retravaille pas ce dernier sans avoir lu la §5 du premier.
+Il n'y en a que quatre. Tout le reste — journaux de session, audits datés, plans supersédés —
+a été **supprimé le 2026-08-06** : des documents qui se contredisent coûtent plus qu'ils
+n'apportent. `git log` les retrouve si nécessaire.
 
-**`docs/PLAN_AMELIORATION.md`** — plan d'amélioration complet et ordonné, écrit pour un
-agent qui prend la suite. Six chantiers dont chacun rend le suivant sûr, avec pour chacun
-la méthode de vérification et le niveau de risque.
+| Document | Portée |
+|---|---|
+| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — le travail a venir.** Fusion de l'ancien bilan et de l'ancien plan le 2026-08-06 : tout ce qui etait fait a ete retire. Point de reference mesure, decisions bloquantes, actions ordonnees, regles gravees. |
+| [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md) | **Performance.** Référence mesurée par module et pièges de mesure. ⚠️ Ses **temps absolus** datent d'avant le déménagement hors Google Drive et la remontée de numba — les *rapports* restent utiles, les secondes non. Verdict acquis : **pas de ×2 disponible**. |
+| [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) | **Projet.** Dette de lint, tests absents de la CI, six chantiers ordonnés. |
 
-**`docs/PLAN_OPTIMISATION.md`** — profil du chemin spline. Reste valable **pour METAL
-uniquement** : mesuré, INDEX / INDEX_SPLINE / RE / FIELD ne touchent jamais
-`SplineBasisCache`.
+Et la doc technique destinée à la communauté : [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html),
+qui explique les algorithmes, les équations, et la **méthode** (§2.1quinquies).
 
 ### Banc de mesure
 

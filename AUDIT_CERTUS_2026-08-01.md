@@ -1,7 +1,13 @@
 # Audit complet — CERTUS Optical Suite
 
 **Date** : 1er août 2026
-**Périmètre** : `D:\drivefl\couches minces 2026\CERTUS\0108`
+> ⚠️ **DOCUMENT HISTORIQUE — les chemins qu'il cite n'existent plus.**
+> Il a été écrit le 2026-08-01, alors que le dépôt vivait sur un disque synchronisé cloud.
+> Le dépôt sur lequel tu travailles est `C:\dev\gemini`, et **lui seul**. Ne lance aucune
+> commande copiée d'ici sans remplacer le chemin. Ce fichier sert à comprendre l'histoire
+> du projet, pas à agir.
+
+**Périmètre** (à l'époque) : `D:\drivefl\couches minces 2026\CERTUS\0108`
 **Branche analysée** : `refactor-corridors-mixins` (HEAD = `a0646df`)
 **Version déclarée** : `certus-optical-suite 26.05.0`
 **Axes demandés** : architecture & dette technique · santé du code · correction physique/numérique

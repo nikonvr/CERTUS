@@ -21,6 +21,7 @@ from certus_physics import (
     prepare_dynamics_data_kernel,
     compute_dynamics_kernel,
     check_extrema_proximity_batch,
+    check_level_margin_batch,
     validate_wavelengths_batch,
     update_run_states_kernel,
     calculate_detailed_growth,
@@ -118,6 +119,17 @@ class _PhysicsBridge:
         )
 
     @staticmethod
+    def check_level_margin(
+        wls: np.ndarray,
+        n_curr: np.ndarray,
+        n_sub: np.ndarray,
+        thickness: float,
+        M_befores: np.ndarray,
+        margin_T: float,
+    ) -> np.ndarray:
+        return check_level_margin_batch(wls, n_curr, n_sub, thickness, M_befores, margin_T)
+
+    @staticmethod
     def validate_wavelengths(
         wls: np.ndarray,
         nH: np.ndarray,
@@ -132,10 +144,13 @@ class _PhysicsBridge:
         mode: str,
         block_start_arr: np.ndarray | None = None,
         gain_probe_nm: float = 1.0,
+        signal_noise_scale: float = 0.0,
+        signal_noise_seed: int = 0,
+        tp_hysteresis: float = 0.0,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
-            block_start_arr, gain_probe_nm,
+            block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
         )
 
     @staticmethod
@@ -152,10 +167,13 @@ class _PhysicsBridge:
         error_factor: float,
         mode: str,
         block_start_layer: int = -1,
+        signal_noise_scale: float = 0.0,
+        signal_noise_seed: int = 0,
+        tp_hysteresis: float = 0.0,
     ) -> np.ndarray:
         return update_run_states_kernel(
             nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
-            block_start_layer,
+            block_start_layer, signal_noise_scale, signal_noise_seed, tp_hysteresis,
         )
 
     @staticmethod
@@ -900,6 +918,77 @@ def _select_candidates_phase_a(
             dtype=np.bool_,
         )
 
+    # ── 🔴 LA MARGE DE SECURITE AU POINT TOURNANT ─────────────────────────────
+    #
+    # 👤 Le physicien, 2026-08-06, deux fois et pour deux raisons distinctes :
+    #   « dans ce cas, il y a reellement une marge trop faible. On decide que le
+    #     depot est perdu. Il faut quand meme prendre une marge de securite ! »
+    #   « la theorie et la pratique doivent avoir pile le bon nombre d'extremum. Et
+    #     si on est trop pres, il y a risque que cela ne soit pas le cas. Donc marge
+    #     de securite encore ! »
+    #
+    # Les deux se ramenent a UN critere : le niveau d'arret doit etre separe des
+    # points tournants voisins d'une marge exprimee EN TRANSMISSION, multiple de
+    # l'amplitude de bruit. Voir `calculate_level_margins_to_extrema`.
+    #
+    # 🔴 ET LE PLACEHOLDER DE ZEROS ETAIT UN MUR. `M_befores` valait
+    # `np.zeros((n, 2, 2))` — un placeholder assume en commentaire (« conservative:
+    # no extrema filtering ») mais dont la consequence n'avait jamais ete mesuree :
+    # 📏 avec une matrice nulle, tous les `denom` du noyau tombent sous 1e-9, donc
+    # tous les T echantillonnes valent 0, donc toutes les pentes valent 0, donc
+    # AUCUN test de point tournant ne se declenche. La regle interdisait 0 candidate
+    # sur 51, sur les 48 couches. Elle n'etait pas silencieuse, elle etait INERTE.
+    #
+    # La vraie matrice etait pourtant disponible : `nominal_matrix_cache`, de forme
+    # (num_layers, n_wls, 2, 2), est un argument de `_select_candidates_phase_a`.
+    #
+    # Gating volontairement binaire : `phase_a_level_margin_factor = 0` (defaut)
+    # laisse le chemin d'avant, mot pour mot. Au-dessus de zero, on branche la vraie
+    # matrice ET on passe au critere en transmission. On ne veut SURTOUT pas de l'etat
+    # intermediaire — la vraie matrice avec le critere en epaisseur — qui ferait mordre
+    # un seuil dont l'echelle physique n'est pas controlee (cf. BILAN §3.3).
+    margin_factor = float(params.get("phase_a_level_margin_factor", 0.0) or 0.0)
+    if margin_factor > 0.0:
+        try:
+            noise_amp = float(params["reality_sim_params"]["trigger_tolerance"]) / 100.0
+        except KeyError, TypeError:
+            noise_amp = float(params.get("trigger_tolerance", 0.05)) / 100.0
+        margin_T = margin_factor * noise_amp
+
+        M_befores = np.empty((n_check, 2, 2), dtype=np.complex128)
+        eye = np.eye(2, dtype=np.complex128)
+        for idx, d in enumerate(check_list):
+            if i_layer == 0:
+                M_befores[idx] = eye
+                continue
+            w = float(d["wl"])
+            k = int(np.searchsorted(all_wls, w))
+            if k >= len(all_wls):
+                k = len(all_wls) - 1
+            elif k > 0 and abs(w - all_wls[k]) > abs(w - all_wls[k - 1]):
+                k -= 1
+            M_befores[idx] = nominal_matrix_cache[i_layer - 1, k, :, :]
+
+        keep = _PhysicsBridge.check_level_margin(
+            wls_arr,
+            n_curr_arr,
+            n_sub_arr,
+            float(p_thick_nominal[i_layer]),
+            M_befores,
+            margin_T,
+        )
+        n_rejected = int(len(check_list) - int(np.count_nonzero(keep)))
+        if n_rejected and logger:
+            logger.info(
+                f"   [MARGE] Layer {i_layer + 1}: {n_rejected}/{len(check_list)} candidate(s) "
+                f"interdite(s), niveau d'arret a moins de {margin_T * 100:.4f} point de T "
+                f"d'un point tournant ({margin_factor:g} x le bruit)."
+            )
+        for idx, d in enumerate(check_list):
+            if keep[idx]:
+                valid_candidates_data.append(d)
+        return valid_candidates_data, full_dyn_map
+
     # M_befores: zeros placeholder when not precomputed (conservative: no extrema filtering)
     M_befores = np.zeros((n_check, 2, 2), dtype=np.complex128)
 
@@ -1007,6 +1096,62 @@ def _validate_candidates_phase_a(
         )
 
     gain_probe_nm = float(params.get("phase_a_gain_probe_nm", 1.0))
+
+    # ── 🔴 LA REGLE D'ADMISSIBILITE D'UNE LONGUEUR D'ONDE DE CONTROLE ──────────
+    #
+    # 👤 Le physicien, 2026-08-06, et c'est a graver dans le marbre :
+    #
+    #   « Une longueur d'onde de controle de la couche i (i > 1) est INTERDITE si,
+    #     lorsque le signal est bruite, il y a un risque de mal comptabiliser le
+    #     nombre de turning points, ou de ne pas s'arreter au niveau de transmission
+    #     voulu. Cela cree une erreur d'arret de couche. »
+    #   « Tout cela est valable en phase A comme en phase B. »
+    #
+    # C'est exactement ce que mesure `results_fast[idx, 2]`, le taux de depots non
+    # terminables : le noyau rend sa sentinelle dans ces deux cas precis, et dans
+    # ces deux cas seulement. Le filtre existait deja quelques lignes plus bas ;
+    # ce qui manquait, c'est que le signal sur lequel il se prononce soit BRUITE.
+    # Sans bruit, la question « risque-t-on de mal compter ? » n'etait pas posee :
+    # les extrema etaient localises sur une courbe TMM parfaite et la reponse
+    # valait « jamais », par construction.
+    #
+    # C'est donc LE MEME drapeau qu'en Phase B, et non un drapeau separe : la regle
+    # est un seul enonce physique sur ce qu'est une longueur d'onde utilisable.
+    # `poem_anchor_noise_phase_a` ne subsiste que comme surcharge d'ATTRIBUTION,
+    # pour pouvoir isoler l'effet d'un etage dans un A/B ; son defaut suit le maitre.
+    #
+    # ⚠️ CE QUE CELA VA FAIRE, et il ne faut pas s'en emouvoir : eliminer beaucoup.
+    # Le seuil par couche vaut `1 - (1 - 0,05)^(1/N)`, soit 0,107 % pour N = 48, et
+    # il garde sa provenance (👤 « 5 % de depot perdu, c'est parfait ») — c'est le
+    # SIGNAL juge qui change, pas la tolerance. Une couche dont plus aucune longueur
+    # d'onde ne passe est un POINT DUR, et le repli de la fin de cette fonction le
+    # dit franchement au lieu de rendre une liste vide.
+    #
+    # ⚠️ RESOLUTION, point ouvert a instruire. Avec `num_runs` tirages, le plus
+    # petit taux non nul mesurable vaut 1/num_runs. A 150 tirages cela fait 0,67 %,
+    # soit six fois la tolerance : UN SEUL run plante suffit donc a interdire une
+    # longueur d'onde. C'est conservateur dans le sens de la regle — au moindre
+    # risque, on interdit — mais cela interdit aussi des longueurs d'onde dont le
+    # taux vrai est sous le seuil. Le nombre de tirages de la Phase A gouverne donc
+    # directement la severite du filtre, et ce couplage n'est pas voulu.
+    signal_noise_scale = 0.0
+    signal_noise_seed = 0
+    _anchor_noise_master = bool(params.get("poem_anchor_noise", False))
+    if bool(params.get("poem_anchor_noise_phase_a", _anchor_noise_master)):
+        phase_a_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)) or 42)
+        signal_noise_scale = noise_val_pct
+        # La couche entre dans la graine : la Phase A est gloutonne, chaque couche
+        # est un tirage independant, et son bruit d'arret suit deja la meme regle
+        # (`fallback_rng = default_rng(base_seed + i_layer)`). Aucune dependance a
+        # la candidate ni au bloc : les nombres aleatoires restent communs a toutes
+        # les longueurs d'onde comparees sur cette couche.
+        signal_noise_seed = (phase_a_seed * 2_246_822_519 + (int(i_layer) + 1) * 40_503) % (2**53)
+
+    # AXE 1.2 — la regle de detection, exprimee en multiple de l'amplitude de bruit.
+    # Elle s'applique meme quand le signal n'est pas bruite : une machine a toujours
+    # une regle de lecture. Defaut 0.0 = regle historique.
+    tp_hysteresis = float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct
+
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
         n_H_arr,
@@ -1021,6 +1166,9 @@ def _validate_candidates_phase_a(
         nm_mode,
         block_start_arr,
         gain_probe_nm,
+        signal_noise_scale,
+        signal_noise_seed,
+        tp_hysteresis,
     )
 
     results_thickness = []
@@ -1069,11 +1217,18 @@ def _validate_candidates_phase_a(
         err_prev_nm = 0.0
 
     eliminated = []
+    # Recensement par couche des deux motifs d'interdiction. Un compteur agrege ne
+    # dirait pas si le filtre trie (regime intermediaire) ou s'il est vacuous /
+    # total : c'est la distribution couche par couche qui repond.
+    n_forbidden_crash = 0
+    n_forbidden_gain = 0
+    crash_rates_all: list[float] = []
     for idx, wl in enumerate(candidate_wls):
         rmse = float(results_fast[idx, 0])
         std = float(results_fast[idx, 1])
         crash_rate = float(results_fast[idx, 2])
         gain = float(results_fast[idx, 3])
+        crash_rates_all.append(crash_rate)
         entry: dict[str, Any] = {
             "wl": float(wl),
             "cost": rmse,
@@ -1091,27 +1246,60 @@ def _validate_candidates_phase_a(
                 entry[k] = src[k]
         # gain < 0 : non mesurable (le depot ne se termine pas meme a bruit nul)
         if crash_rate >= crash_tol or gain < 0.0:
+            if crash_rate >= crash_tol:
+                n_forbidden_crash += 1
+            else:
+                n_forbidden_gain += 1
             eliminated.append(entry)
             continue
         results_thickness.append(entry)
 
-    logger = params.get("logger")
+    # Meme idiome que les autres fonctions de ce module (cf. lignes 489, 546, 615,
+    # 810) : sans repli, un params sans logger rendait cette elimination muette.
+    logger = params.get("logger", logging.getLogger("ThinFilm"))
+
+    # La regle d'admissibilite d'une lambda de controle s'appliquait sans laisser
+    # aucune trace : impossible de verifier qu'elle avait joue, ni de savoir
+    # QUELLES lambda etaient interdites sur QUELLES couches. On l'emet toujours,
+    # meme quand rien n'est interdit — un silence ne doit pas se lire comme un
+    # filtre inerte, ni l'inverse.
+    crash_min = min(crash_rates_all) if crash_rates_all else float("nan")
+    admissibility_stats = {
+        "layer": int(i_layer + 1),
+        "offered": int(len(candidate_wls)),
+        "forbidden_crash": int(n_forbidden_crash),
+        "forbidden_gain_negative": int(n_forbidden_gain),
+        "survivors": int(len(results_thickness)),
+        "crash_rate_min_observed": crash_min,
+        "crash_tolerance": float(crash_tol),
+    }
+    # Meme precaution qu'en amont : `params` peut etre un `StratParamsDTO`, qui n'a pas
+    # `setdefault`. Voir le commentaire de _run_phase_a_hybrid_loop.
+    _stats = params.get("phase_a_admissibility_stats")
+    if _stats is None:
+        _stats = []
+        params["phase_a_admissibility_stats"] = _stats
+    _stats.append(admissibility_stats)
+    logger.info(
+        f"   [ADMISSIBILITE] Layer {i_layer + 1}: {len(candidate_wls)} offerte(s) "
+        f"-> interdites plantage>={crash_tol:.3%}: {n_forbidden_crash} "
+        f"| interdites gain<0: {n_forbidden_gain} "
+        f"| survivantes: {len(results_thickness)} "
+        f"| taux de plantage min observe: {crash_min:.3%}"
+    )
+
     if not results_thickness and eliminated:
         # Aucune longueur d'onde n'est sure sur cette couche. On ne peut pas
         # rendre une liste vide — la Phase A s'arreterait la — mais on ne doit
         # surtout pas faire silence : on garde le moins mauvais et on le dit.
         best_crash = min(e["crash_rate"] for e in eliminated)
         results_thickness = [e for e in eliminated if e["crash_rate"] <= best_crash + 1e-12]
-        if logger:
-            logger.warning(
-                f"   [CRASH] Layer {i_layer + 1}: AUCUNE longueur d'onde sous le seuil de "
-                f"{crash_tol:.0%} de depots non terminables. Repli sur le taux minimal "
-                f"observe ({best_crash:.1%}) — la couche est un point dur."
-            )
-    elif eliminated and logger:
-        logger.info(
-            f"   [CRASH] Layer {i_layer + 1}: {len(eliminated)}/{len(candidate_wls)} candidate(s) "
-            f"eliminee(s), depot non terminable au-dela de {crash_tol:.0%}."
+        admissibility_stats["fallback_on_min_crash"] = True
+        admissibility_stats["survivors"] = int(len(results_thickness))
+        logger.warning(
+            f"   [CRASH] Layer {i_layer + 1}: AUCUNE longueur d'onde sous le seuil de "
+            f"{crash_tol:.3%} de depots non terminables. Repli sur le taux minimal "
+            f"observe ({best_crash:.3%}) — la couche est un point dur."
         )
 
     results_thickness.sort(key=lambda x: x["cost"])
@@ -1139,6 +1327,9 @@ def _validate_candidates_phase_a(
             factor_val,
             nm_mode,
             best_block_start,
+            signal_noise_scale,
+            signal_noise_seed,
+            tp_hysteresis,
         ).tolist()
     else:
         p_thick_sim_updates = []

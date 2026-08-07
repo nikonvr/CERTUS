@@ -175,8 +175,12 @@ def main():
                     stats["with_wildcards"] += 1
                     process_file(filepath, dry_run)
                 stats["total"] += 1
-            except:
-                pass
+            except Exception as exc:  # noqa: BLE001 - outil de maintenance, on continue
+                # Un `except:` nu avalait AUSSI KeyboardInterrupt et SystemExit : l'outil
+                # devenait impossible a interrompre. Et le `pass` muet cachait quels
+                # fichiers avaient echoue, sur un script dont le role est justement de
+                # reecrire des imports en masse.
+                stats.setdefault("failed", []).append((str(filepath), repr(exc)))
 
         print(f"\n{'=' * 80}")
         print(f"[STATS] STATISTIQUES")

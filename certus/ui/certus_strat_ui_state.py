@@ -2,6 +2,49 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 
+#: Valeurs textuelles reconnues comme VRAI dans un fichier de configuration.
+_CONFIG_TRUE = frozenset({"1", "true", "yes", "on", "oui", "vrai"})
+
+
+def _config_flag(config: object, key: str, default: bool = False) -> bool:
+    """Lit un drapeau booleen dans la configuration chargee, sans widget associe.
+
+    Les valeurs d'un JSON de STRAT sont tantot des booleens, tantot des chaines
+    ("1", "0", "true"). `_get_float_safe` ne convient pas : il interroge les
+    widgets, et un drapeau sans widget y prendrait toujours son defaut — donc un
+    reglage present dans le fichier serait ignore EN SILENCE. C'est le mode de
+    defaillance qui a coute deux sessions sur `trigger_tolerance`.
+    """
+    if not isinstance(config, dict):
+        return default
+    raw = config.get(key, None)
+    if raw is None:
+        return default
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, (int, float)):
+        return float(raw) > 0.5
+    return str(raw).strip().lower() in _CONFIG_TRUE
+
+
+def _config_float(config: object, key: str, default: float = 0.0) -> float:
+    """Lit un reel dans la configuration chargee, sans widget associe.
+
+    Meme motif que `_config_flag` : ces reglages n'ont pas de champ dans l'interface et
+    se posent dans le JSON. `_get_float_safe` interroge les widgets et rendrait donc
+    toujours le defaut — un reglage present dans le fichier serait ignore EN SILENCE.
+    """
+    if not isinstance(config, dict):
+        return default
+    raw = config.get(key, None)
+    if raw is None or raw == "":
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
 class CertusStratStateMixin:
     def _load_defaults(self) -> None:
         """Load default values for CERTUS-STRAT"""
@@ -992,6 +1035,90 @@ class CertusStratStateMixin:
             "show_plots": True,
             "export_excel": True,
             "extrema_exclusion_ratio": self._get_float_safe("extrema_exclusion_ratio", 60.0),
+            # ── AXE 1.1 : bruit de LECTURE du signal de monitoring ─────────────
+            #
+            # PAR DEFAUT INACTIF, et pas par prudence de facade : c'est un
+            # changement de modele de premier ordre. Il fera MONTER les taux de
+            # plantage (un extremum plat sera parfois manque ou dedouble) et
+            # BAISSER le benefice apparent de POEM (ses ancres cesseront d'etre des
+            # valeurs exactes pour devenir des mesures). C'est la mesure des deux
+            # cotes qui doit trancher, pas l'intuition.
+            #
+            # Aucun widget : ces drapeaux se lisent dans le fichier de
+            # configuration, comme `consensus_seed_list`. Un booleen JSON, "1"/"0"
+            # ou "true"/"false" sont acceptes.
+            #
+            # `poem_anchor_noise` gouverne LES DEUX PHASES, parce que la regle qu'il
+            # met en application est un seul enonce physique — 👤 « une longueur
+            # d'onde de controle de la couche i (i > 1) est interdite si, lorsque le
+            # signal est bruite, il y a un risque de mal comptabiliser le nombre de
+            # turning points ou de ne pas s'arreter au niveau voulu ; tout cela est
+            # valable en phase A comme en phase B ». Voir le commentaire de
+            # `_validate_candidates_phase_a`.
+            #
+            # `poem_anchor_noise_phase_a` n'existe QUE pour l'attribution : il permet
+            # d'isoler l'effet d'un etage dans un A/B. Son defaut suit le maitre, et
+            # il ne doit pas servir a laisser durablement la Phase A non bruitee.
+            "poem_anchor_noise": _config_flag(
+                getattr(self, "_loaded_config", {}), "poem_anchor_noise"
+            ),
+            "poem_anchor_noise_phase_a": _config_flag(
+                getattr(self, "_loaded_config", {}),
+                "poem_anchor_noise_phase_a",
+                _config_flag(getattr(self, "_loaded_config", {}), "poem_anchor_noise"),
+            ),
+            # ── AXE 1.2 : la regle de detection de point tournant ──────────────
+            #
+            # Hysteresis du detecteur, en MULTIPLE de l'amplitude de bruit
+            # `trigger_tolerance`. 0 = regle historique (changement de signe au-dela
+            # d'un garde numerique de 1e-12), qui n'est pas une regle physique.
+            #
+            # 👤 « Le 4 %, pour moi, c'etait au pif, pour etre certain qu'on va y
+            # arriver » (2026-08-06). Ce seuil-ci n'est PAS les 4 % d'amplitude de
+            # depart : les 4 % pre-selectionnent une longueur d'onde, ceci decrit
+            # comment la machine LIT. Sa grandeur de reference est le bruit, qui est
+            # mesure : le tirage etant borne a +/- A, l'ecart apparent maximal que le
+            # bruit seul peut produire vaut 2A, donc a partir du facteur 2 le bruit ne
+            # peut plus fabriquer un point tournant.
+            #
+            # La valeur n'est pas posee ici : elle se balaie et se tranche par la
+            # mesure. Defaut 0 = chemin inchange.
+            "tp_hysteresis_factor": _config_float(
+                getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"
+            ),
+            # ── Marge de securite au point tournant, en multiple du bruit ──────
+            #
+            # > 0 : le niveau d'arret doit etre separe des points tournants voisins
+            # d'au moins `facteur x trigger_tolerance/100`, EN TRANSMISSION. Active du
+            # meme coup la vraie matrice cumulee en Phase A — le placeholder de zeros
+            # rendait la regle des points tournants inerte. 0 = chemin d'avant.
+            "phase_a_level_margin_factor": _config_float(
+                getattr(self, "_loaded_config", {}), "phase_a_level_margin_factor"
+            ),
+            # ── Poids du RENDEMENT dans l'objectif de la DP (axe 4.1) ──────────
+            #
+            # cout = cout_nm + w x (-log(1 - p)), ou p est le taux de depots non
+            # terminables mesure par la Phase A pour cette (couche, lambda). 0 = le
+            # plantage n'entre pas dans l'objectif, comportement d'avant.
+            "dp_yield_weight": _config_float(
+                getattr(self, "_loaded_config", {}), "dp_yield_weight"
+            ),
+            # ── AXE 3 : la cible spectrale, acheminee depuis la configuration ───
+            #
+            # 👤 « Le plus important est la cible spectrale respectee. » STRAT classait
+            # sur l'ecart au spectre NOMINAL et n'avait jamais recu la cible.
+            #
+            # Meme format que DESIGN — une liste de zones
+            # {on, lmin, lmax, tmin, tmax, w} — pour que les deux modules parlent de la
+            # meme chose et que la fonctionnelle soit celle que DESIGN minimise deja.
+            #
+            # Absente = repli documente sur le nominal non pondere, donc comportement
+            # inchange. C'est la PRESENCE de zones qui active l'axe 3.
+            "targets": (
+                getattr(self, "_loaded_config", {}).get("targets")
+                if isinstance(getattr(self, "_loaded_config", None), dict)
+                else None
+            ),
             "logger": self.logger,
             "materials_db": self.materials_db,
             "force_first_layer_same_wl": True,

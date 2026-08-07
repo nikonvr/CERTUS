@@ -16,7 +16,7 @@ Options
     --time-cost     cout par evaluation de cost_numba_fast (DESIGN)
     --instrument    statistiques de SplineBasisCache
     --trace-nk      compte les appels a get_nk_from_spline
-    --force-cache   force use_cache=True (anticipe PLAN_OPTIMISATION §2.4)
+    --force-cache   force use_cache=True sur le cache d'indices (cf. REPRISE_PERF §4.5)
     --watchdog N    dump des piles de tous les threads toutes les N secondes
     --out CHEMIN    duplique la sortie dans un fichier
 
@@ -104,6 +104,52 @@ def autoanswer_dialogs(yes: bool = True) -> None:
     QMessageBox.warning = staticmethod(lambda *a, **k: QMessageBox.StandardButton.Ok)
     QMessageBox.critical = staticmethod(lambda *a, **k: QMessageBox.StandardButton.Ok)
     emit("dialogues: reponse automatique OUI")
+
+
+def attach_console_logging(app) -> None:
+    """Rend visible en headless ce que l'application journalise vers son interface.
+
+    🔴 SANS CELA, TOUTE LA PHASE A EST INVISIBLE — et ce n'est pas un bug, c'est une
+    propriete structurelle qu'il faut connaitre avant de conclure d'un silence.
+
+    Il existe DEUX familles de loggers dans STRAT, et elles ne sortent pas au meme
+    endroit :
+
+      - `logging.getLogger(f"W{n_blocs}")` (certus_strat_workers.py:488) porte un
+        StreamHandler vers la console. C'est lui qui produit les lignes `[ROBUSTNESS]`
+        et `[ELITE]` qu'on voit dans les captures du banc.
+      - `self.logger`, construit par `setup_gui_logger`, ne porte QU'UN QueueHandler
+        vers le panneau « Show Details » — le commentaire de `certus_core.py:902` le
+        revendique : *« No console output »*. Or `collect_params` place CE logger dans
+        `params["logger"]`, et `certus_strat_pipeline.py:47` le reprend pour toute la
+        Phase A.
+
+    En headless personne ne vide cette file : `[MIN-T]`, `[SURVIVAL]`, `[CRASH]`,
+    `[ADMISSIBILITE]`, `[MARGE]` n'apparaissent NULLE PART. 📏 Verifie le 2026-08-06 sur
+    un run complet : les seuls prefixes presents dans la capture etaient `[ROBUSTNESS]`
+    et `[ELITE]`. Il a fallu passer par le JSON d'observabilite pour prouver qu'un filtre
+    de Phase A avait bien mordu.
+
+    ⚠️ Un silence ne prouvait donc rien, ni dans un sens ni dans l'autre — exactement le
+    piege qui fait prendre un filtre INERTE pour un filtre qui n'a rien a interdire.
+
+    On branche ici un StreamHandler sur le logger de l'application, vers le flux
+    d'origine (piege 2). Aucun code de production n'est touche.
+    """
+    import logging
+
+    lg = getattr(app, "logger", None)
+    if lg is None:
+        emit("WARN: l'application n'expose pas de logger — Phase A restera muette")
+        return
+    if any(getattr(h, "_certus_bench_console", False) for h in lg.handlers):
+        return
+    h = logging.StreamHandler(_REAL_STDOUT)
+    h.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S"))
+    h._certus_bench_console = True
+    lg.addHandler(h)
+    lg.setLevel(logging.INFO)
+    emit(f"journal de l'application redirige vers la console (logger '{lg.name}')")
 
 
 def wait_for(worker, timeout_ms: int = 1_800_000):
@@ -660,6 +706,7 @@ def run_strat():
     patch_nk()
     t0 = time.perf_counter()
     app = CertusStratApp()
+    attach_console_logging(app)  # sans cela toute la Phase A est muette, cf. la docstring
     app._post_load_config = lambda *a: None
     app.load_configuration(str(EX / "example_strat/JSON-strat-example.json"))
     setup = time.perf_counter() - t0
@@ -702,7 +749,7 @@ def dump_strat_ranking(strategies: list, top: int = 10) -> None:
     `RESULT` seul ne suffit pas a interpreter un A/B sur STRAT : deux versions
     peuvent rendre le meme meilleur score en ayant reordonne tout le reste, ou en
     ayant explore un nombre de strategies different. Le classement est la vraie
-    grandeur a comparer — c'est ce que demande REPRISE_STRAT_MONITORING.md §3.2.
+    grandeur a comparer — c'est la grandeur qu'un A/B sur STRAT doit comparer.
 
     ⚠️ `crash_eliminated` marque les strategies repechees par le repli de
     `_filter_finite_robustness_scores` : leur `robustness_score` n'est PLUS un

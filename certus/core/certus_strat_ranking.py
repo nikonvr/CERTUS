@@ -12,6 +12,7 @@ Contains:
 
 import logging
 import concurrent.futures
+import math
 import numpy as np
 from typing import Any
 
@@ -71,6 +72,104 @@ def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -
         "symmetry_bonus": float(sol.get("symmetry_bonus", 0.0)),
         "same_wl_kept": int(sol.get("same_wl_kept", 0)),
     }
+
+
+#: Plafond sur `p` avant le logarithme. `-log(1 - 1)` vaut l'infini, ce qui EXCLURAIT la
+#: candidate au lieu de la classer derniere — et si toutes les candidates d'une couche
+#: valaient 1, la DP n'aurait plus aucun chemin. On plafonne donc a 1 - 1e-9, soit un
+#: cout de ~20,7 nats : enorme, mais fini, donc l'ordre entre mauvaises options survit.
+_YIELD_P_MAX: float = 1.0 - 1e-9
+
+
+def build_yield_cost_map(
+    raw_results: dict[int, list[dict[str, Any]]],
+) -> dict[int, dict[float, float]]:
+    """Carte `[couche][lambda] -> -log(1 - p)`, le LOGARITHME DU RENDEMENT.
+
+    🔴 AXE 4.1 — LA DONNEE EXISTAIT DEJA, ET ELLE ETAIT JETEE A LA DERNIERE LIGNE.
+
+    La Phase A calcule `results_fast[idx, 2]`, le taux de depots non terminables **par
+    couche et par longueur d'onde**, et le range dans chaque entree. Puis
+    `certus_strat_workers_pipeline.py` construit la carte donnee a la DP en ne gardant
+    que `x["cost"]` : le taux de plantage ne servait qu'a un SEUIL BINAIRE d'elimination.
+    Une lambda a 0,001 % et une a 0,106 % etaient traitees a l'identique, alors qu'elles
+    different d'un facteur cent sur la seule grandeur qui **se compose** sur la hauteur
+    de l'empilement.
+
+    **Pourquoi le logarithme.** Un depot se termine si CHAQUE couche se termine :
+    `rendement = prod(1 - p_i)`. Son logarithme est donc ADDITIF — exactement la forme
+    qu'une DP de Bellman optimise exactement, sans approximation. Ce n'est pas un proxy :
+    `-log(1 - p)` est une composante **directe** de `P(conforme)`, la ou le cout actuel
+    en nanometres affiche une correlation de ρ = −0,04 avec le resultat.
+
+    ⚠️ CETTE DONNEE VIENT DE DEVENIR INFORMATIVE, ET PAS AVANT. Tant que la detection se
+    faisait sur une courbe TMM parfaite, le taux de plantage valait zero presque partout
+    et cette carte aurait ete plate. C'est le bruit de lecture (axe 1.1) et la regle de
+    detection (axe 1.2) qui lui donnent un contenu — l'axe 4.1 n'etait pas realisable
+    avant eux.
+
+    ⚠️ RESERVE A INSTRUIRE, PAS A SUPPOSER : l'independance entre couches est
+    approximative — celles d'un meme bloc partagent l'historique de points tournants. A
+    mesurer. Mais meme imparfaite, elle sera incomparablement mieux correlee qu'un proxy
+    decorrele.
+
+    ⚠️ RESOLUTION. `p` est estime sur `num_runs` tirages, donc le plus petit taux non nul
+    vaut `1/num_runs`. En dessous, cette carte vaut ZERO et n'apporte rien : elle ne
+    discrimine que la ou le plantage est mesurable. C'est pour cela qu'elle s'AJOUTE au
+    cout en nanometres plutot que de le remplacer — voir `dp_yield_weight`.
+    """
+    out: dict[int, dict[float, float]] = {}
+    for layer_idx, items in (raw_results or {}).items():
+        layer_map: dict[float, float] = {}
+        for entry in items or []:
+            try:
+                p = float(entry.get("crash_rate", 0.0) or 0.0)
+            except (TypeError, ValueError):
+                continue
+            if p < 0.0:
+                p = 0.0
+            elif p > _YIELD_P_MAX:
+                p = _YIELD_P_MAX
+            layer_map[float(entry["wl"])] = -math.log1p(-p)
+        if layer_map:
+            out[int(layer_idx)] = layer_map
+    return out
+
+
+def combine_cost_and_yield(
+    cost_map: dict[int, dict[float, float]],
+    yield_map: dict[int, dict[float, float]],
+    yield_weight: float,
+) -> dict[int, dict[float, float]]:
+    """`cout_nm + w x (-log(1 - p))`, l'objectif de la DP quand `w > 0`.
+
+    `yield_weight = 0` (defaut) rend la carte d'entree TELLE QUELLE — donc le
+    comportement d'avant, au bit pres.
+
+    🔴 POURQUOI UNE SOMME ET NON UN REMPLACEMENT. Le plan proposait de remplacer le cout
+    en nanometres par le seul rendement. Deux mesures s'y opposent :
+
+      1. 📏 Sur le juge de paix, la MEILLEURE lambda de chacune des 47 couches a un taux
+         de plantage NUL. Un objectif purement rendement vaudrait donc zero sur presque
+         tous les chemins et la DP deviendrait DEGENEREE — elle ne classerait plus rien.
+      2. Le plan lui-meme le signale : « une DP qui n'optimise que le rendement peut
+         proposer des strategies sures mais spectralement mediocres ».
+
+    En somme, le rendement REORDONNE la ou il est mesurable et laisse le cout en
+    nanometres departager ailleurs. C'est strictement plus d'information, jamais moins.
+
+    ⚠️ `w` est en nanometres par nat, et il ne se devine pas. Repere pour le calibrer :
+    a la tolerance par couche de 0,107 %, `-log(1-p)` vaut 1,07e-3 nat ; pour que ce
+    plantage pese autant que 0,2 nm d'erreur — l'ordre de grandeur du cout median mesure
+    — il faut `w` de l'ordre de 200. **A balayer, pas a poser.**
+    """
+    if yield_weight <= 0.0 or not yield_map:
+        return cost_map
+    out: dict[int, dict[float, float]] = {}
+    for layer_idx, layer_dict in cost_map.items():
+        y = yield_map.get(layer_idx, {})
+        out[layer_idx] = {wl: c + yield_weight * y.get(wl, 0.0) for wl, c in layer_dict.items()}
+    return out
 
 
 def _find_k_best_groupings_dp_sequential(
@@ -448,6 +547,66 @@ def _resolve_available_wavelengths(
     if not available_wls:
         return [float(w) for w in wl_arr.tolist()]
     return available_wls
+
+
+def _resolve_monitoring_wavelength_grid(
+    params: dict[str, Any],
+    clues_at_wl: Any,
+    wl_arr: np.ndarray,
+) -> list[float]:
+    """Longueurs d'onde de CONTROLE admissibles : la grille de balayage, pas celle d'affichage.
+
+    🔴 UNE LONGUEUR D'ONDE DE CONTROLE SE CHOISIT AU PAS DE ``scan_wl_step``.
+    👤 Le physicien, 2026-08-06 : « les longueurs doivent pouvoir etre choisies par
+    pas de 2 nm » — en longueur d'onde, pas en epaisseur.
+
+    `_resolve_available_wavelengths` rend les CLES de `clues_at_wl`. Or ce
+    dictionnaire est construit sur l'UNION de deux grilles sans rapport
+    (`_prepare_precompute_wavelength_grid`, certus_strat_config.py:287) :
+
+        grille de BALAYAGE   scan_wl_min..scan_wl_max au pas scan_wl_step  (2 nm)
+        grille d'AFFICHAGE   wl_range[0]..wl_range[1] au pas wl_step       (1 nm)
+
+    L'union est donc a 1 nm sur tout le recouvrement, et l'etage ELITE, qui mute
+    « vers la longueur d'onde voisine », mutait de 1 nm — hors grille de controle.
+    📏 C'est l'origine mesuree du top 5 `551, 552, 553, 554` observe sur le juge de
+    paix : quatre declinaisons d'une seule strategie, separees par une quantite qui
+    n'a pas de sens physique, sur lesquelles partaient quatre cinquiemes du budget
+    Monte-Carlo final.
+
+    Repli sur `_resolve_available_wavelengths` si les bornes de balayage manquent :
+    mieux vaut la grille trop fine que pas de candidate du tout.
+    """
+    try:
+        lo = float(params["scan_wl_min"])
+        hi = float(params["scan_wl_max"])
+        step = float(params["scan_wl_step"])
+    except KeyError, TypeError, ValueError:
+        return _resolve_available_wavelengths(clues_at_wl, wl_arr)
+    if not (step > 0.0 and hi > lo):
+        return _resolve_available_wavelengths(clues_at_wl, wl_arr)
+
+    from certus_physics import arange_inclusive
+
+    grid = [float(w) for w in arange_inclusive(lo, hi, step).tolist()]
+
+    # Ne garder que ce dont on possede vraiment les indices : `clues_at_wl` peut
+    # avoir ete construit sur un pas elargi par la limite de cache
+    # (certus_strat_config.py:272). Un appariement a 1e-6 pres est inutile ici — la
+    # grille de balayage EST un sous-ensemble exact de `all_wls`.
+    keys = None
+    if hasattr(clues_at_wl, "keys"):
+        keys = set()
+        for k in clues_at_wl.keys():
+            try:
+                keys.add(round(float(k), 6))
+            except (TypeError, ValueError):
+                continue
+    if keys:
+        kept = [w for w in grid if round(w, 6) in keys]
+        if kept:
+            return kept
+    return grid
 
 
 def _max_strategy_id(strategies_results: list[dict[str, Any]]) -> int:

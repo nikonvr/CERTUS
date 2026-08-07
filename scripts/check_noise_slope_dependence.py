@@ -6,8 +6,12 @@ Pour chaque longueur d'onde on compare :
   Phase B : bruit = dT_dd * z * s_nm  -> Delta_d attendu ~ s_nm  (constant ?)
 """
 import sys
+from pathlib import Path
 
-sys.path.insert(0, r"C:\dev\CERTUS\0108")
+# Racine du depot deduite de l'emplacement de CE fichier (scripts/..).
+# Ne JAMAIS coder un chemin absolu ici : plusieurs copies du depot coexistent
+# sur la machine, et un chemin en dur ferait mesurer l'autre copie (CLAUDE.md §5.5).
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
 import certus_physics

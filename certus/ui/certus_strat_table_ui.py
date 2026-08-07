@@ -2,6 +2,10 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent
+# Seuil de tolerance au plantage, 👤 « 5 % de depot perdu, c'est parfait ». Importe
+# plutot que recopie : une colonne qui coloriserait sur un autre seuil que celui qui
+# ELIMINE mentirait a l'operateur.
+from certus.core.certus_strat_robustness import CRASH_RATE_TOLERANCE
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
     strategy_selected = pyqtSignal(int, object)
@@ -280,13 +284,46 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         # 8: Unique Lambda
         self.table.setItem(row, 8, NumericTableWidgetItem(str(result["num_unique_wavelengths"])))
 
-        # 9: Robust Score
+        # 9: RENDEMENT — la grandeur de tete, AVANT le score
+        #
+        # 👤 « Si 95 % des depots fonctionnent, c'est gagne. » Le taux de plantage etait
+        # calcule, servait de couperet, puis DISPARAISSAIT : le seul critere qui parle a
+        # un fabricant n'apparaissait nulle part dans cette table. Il est desormais la
+        # premiere colonne chiffree, avant le RMSE — parce que c'est dans cet ordre que
+        # se prend la decision.
+        crash_rate = float(result.get("crash_rate", 0.0) or 0.0)
+        yield_pct = 100.0 * (1.0 - crash_rate)
+        yield_item = NumericTableWidgetItem(f"{yield_pct:.1f}")
+        causes = result.get("crash_causes") or {}
+        yield_item.setToolTip(
+            "Depots qui se terminent, sur 100.\n"
+            f"Taux de non-terminaison : {crash_rate:.2%}\n"
+            "\nLes trois modes de defaillance, separement :\n"
+            f"  niveau jamais atteint     : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
+            f"  comptage des TP divergent : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
+            f"  T(d) non monotone         : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"
+            "\nUn run perdu et un filtre hors spec sont le meme echec, mais pas le meme\n"
+            "cout : l'un coute du temps machine, l'autre de la matiere et se decouvre tard."
+        )
+        # 👤 « 5 % de depot perdu, c'est parfait » : le seuil de tolerance est a 95 %.
+        if crash_rate >= CRASH_RATE_TOLERANCE:
+            yield_item.setBackground(QColor(CertusTheme.DANGER_BG))
+            yield_item.setForeground(QColor(CertusTheme.DANGER_TEXT))
+        elif crash_rate > 0.0:
+            yield_item.setBackground(QColor(CertusTheme.WARNING_BG))
+            yield_item.setForeground(QColor(CertusTheme.WARNING_TEXT))
+        else:
+            yield_item.setBackground(QColor(CertusTheme.SUCCESS_BG))
+            yield_item.setForeground(QColor(CertusTheme.SUCCESS_TEXT))
+        self.table.setItem(row, 9, yield_item)
+
+        # 10: Robust Score
         score_item = NumericTableWidgetItem(f"{result['robustness_score']:.6f}")
         if row == 0:
             score_item.setBackground(QColor(CertusTheme.SUCCESS_BG))
-        self.table.setItem(row, 9, score_item)
+        self.table.setItem(row, 10, score_item)
 
-        # 10: Symmetry Score [0..100]
+        # 11: Symmetry Score [0..100]
         sym_score = strat.get("symmetry_score_pct", result.get("symmetry_score_pct", None))
         if sym_score is None:
             sym_score = _compute_strategy_symmetry_score_percent(
@@ -310,7 +347,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         else:
             sym_item.setBackground(QColor(CertusTheme.DANGER_BG))
             sym_item.setForeground(QColor(CertusTheme.DANGER_TEXT))
-        self.table.setItem(row, 10, sym_item)
+        self.table.setItem(row, 11, sym_item)
 
         # 11: Comp. Factor
         comp_factor_str = "-"
@@ -341,7 +378,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 comp_item.setFont(CertusTheme.get_font(weight=QFont.Weight.Bold))
             elif val < 0.8:
                 comp_item.setForeground(QColor(CertusTheme.DANGER))
-        self.table.setItem(row, 11, comp_item)
+        self.table.setItem(row, 12, comp_item)
 
         # 12: Median extrema count per layer (theoretical)
         ext_counts = []
@@ -357,11 +394,11 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             ext_item = NumericTableWidgetItem("N/A")
         ext_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
         ext_item.setToolTip("Number of extrema computed on the theoretical noiseless curve")
-        self.table.setItem(row, 12, ext_item)
+        self.table.setItem(row, 13, ext_item)
 
-        # 13, 14, 15: SEEL Columns
+        # 14, 15, 16: SEEL Columns  (decalees de 1 par l'ajout de « Yield % »)
         for col_idx, noise_idx in enumerate([0, 1, 2]):
-            target_col = 13 + col_idx
+            target_col = 14 + col_idx
             if noise_idx < len(noise_results):
                 rmse_val = noise_results[noise_idx].get("rmse_p95", noise_results[noise_idx]["rmse_mean"])
                 seel_val = _rmse_to_seel(rmse_val)
@@ -389,7 +426,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 self.table.setItem(row, target_col, QTableWidgetItem("N/A"))
 
         # Blocks
-        start_col_blocks = 16
+        start_col_blocks = 17  # 14 colonnes de base + 3 SEEL
         blocks = strat.get("blocks", [])
         for b_idx in range(max_blocks):
             col_idx = start_col_blocks + b_idx
@@ -549,6 +586,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 "Blocks",
                 "Changes",
                 "Unique lambda",
+                "Yield %",
                 "Robust Score",
                 "Sym Score",
                 "Comp. Factor",
@@ -570,6 +608,13 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             # --- HEADER TOOLTIPS ---
 
             _header_tips = {
+                "Yield %": (
+                    "Depots qui se terminent, sur 100 — LA grandeur de tete.\n"
+                    "Un depot qui ne se termine pas est un run perdu en salle, pas un\n"
+                    "compromis de qualite. Rouge au-dela de 5 % de perte : la strategie\n"
+                    "est ELIMINEE du classement, quelle que soit sa performance spectrale.\n"
+                    "Survolez une cellule pour le detail des trois modes de defaillance."
+                ),
                 "Rank": "Global robustness ranking (1 = best). Sorted by Robust Score.",
                 "ID": "Internal strategy identifier assigned during the Dynamic Programming search.",
                 "Origin": "Algorithm that generated this strategy: DP (Dynamic Programming), "

@@ -198,6 +198,20 @@ def _run_phase_a_hybrid_loop(
     }
     run_states = [{"p_thick_sim": [], "M_cache_sim": {}} for _ in range(num_runs)]
 
+    # Le logger est un argument nomme de cette fonction, mais il n'etait pas dans
+    # params : _validate_candidates_phase_a le lisait donc a vide et l'elimination
+    # de la Phase A etait entierement muette. setdefault pour ne pas ecraser le
+    # logger que certus_strat_workers y place deja sur d'autres chemins d'entree.
+    # ⚠️ PAS `setdefault` : `params` n'est pas toujours un dict. Sur le chemin
+    # `phase_a_only=True` (certus_strat_workers.py, _execute_nucleation_and_cost_mapping)
+    # c'est un `StratParamsDTO`, qui herite de `Mapping` et non de `MutableMapping` :
+    # il expose `get` et `__setitem__` mais PAS `setdefault`. Un `setdefault` y levait
+    # `AttributeError` et tuait le pipeline entier en 13 s, avec RESULT=None.
+    if params.get("logger") is None:
+        params["logger"] = logger
+    # Recensement par couche remis a zero : params peut etre reutilise d'un run a l'autre.
+    params["phase_a_admissibility_stats"] = []
+
     try:
         noise_tol = float(params.get("reality_sim_params", {}).get("trigger_tolerance", 0.1)) / 100.0
     except KeyError:
@@ -329,6 +343,17 @@ def _run_phase_a_hybrid_loop(
                 "best_crash_rate": best_entry.get("crash_rate"),
                 "prev_error_nm": float(params.get("phase_a_prev_error_nm", 0.0)),
                 "block_start": int(block_start_running),
+                # Recensement de la regle d'admissibilite pour cette couche :
+                # offertes, interdites sur plantage, interdites sur gain<0,
+                # survivantes, taux de plantage minimal observe.
+                "admissibility": next(
+                    (
+                        s
+                        for s in reversed(params.get("phase_a_admissibility_stats", []))
+                        if s.get("layer") == i_layer + 1
+                    ),
+                    None,
+                ),
             }
         )
 

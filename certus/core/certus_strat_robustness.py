@@ -25,6 +25,11 @@ import pandas as pd
 from typing import Any
 
 from certus_physics import (
+    CRASH_LEVEL_UNREACHABLE,
+    CRASH_NON_MONOTONIC,
+    CRASH_SENTINEL_MIN,
+    CRASH_SENTINEL_UNIT,
+    CRASH_TP_MISCOUNT,
     NON_MONOTONIC_MODE_ATTENUATE,
     arange_inclusive,
     calculate_RT_batch_kernel,
@@ -519,6 +524,28 @@ def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_l
     return raw_noise
 
 
+def _signal_noise_stream_seed(base_seed: int, noise_idx: int) -> int:
+    """Graine du flux de bruit de LECTURE du signal de monitoring (axe 1.1).
+
+    🔴 ELLE NE DEPEND QUE DE LA CONFIGURATION DE TIRAGE, JAMAIS DE LA STRATEGIE.
+    C'est la condition des nombres aleatoires communs : deux strategies evaluees
+    au meme (graine, niveau de bruit) voient exactement le meme bruit de lecture,
+    et l'ecart de leurs scores reste imputable a la strategie seule. Le meme acquis
+    que `_get_cached_sobol_noise` protege pour le bruit d'arret — `_strat_idx` y est
+    deliberement inutilise.
+
+    Melange multiplicatif et non additif, pour la raison exposee dans
+    `_get_cached_sobol_noise` : le consensus engendre ses graines par
+    `base_seed + i * stride` avec un stride valant 1 par defaut, donc une somme
+    ferait collisionner (graine 42, niveau 1) et (graine 43, niveau 0).
+
+    La constante finale eloigne ce flux de celui de la nucleation, qui appelle le
+    meme `_seeded_noise_sample` avec `seed_base` non decale.
+    """
+    mixed = int(base_seed) * 2_246_822_519 + int(noise_idx) * 668_265_263 + 0x5F35_6495
+    return mixed % (2**53)
+
+
 def _test_strategy_robustness_task(
     strategy,
     _strat_idx,
@@ -584,6 +611,13 @@ def _test_strategy_robustness_task(
 
     results_per_noise = []
     crash_rate_max = 0.0  # pire taux de depots non terminables sur les niveaux de bruit
+    # Decomposition du plantage par CAUSE, pire cas sur les niveaux de bruit. Ce sont
+    # les trois sorties que le juge de paix reclame ; elles etaient confondues en une.
+    crash_rates_by_cause = {
+        "p_level_unreachable": 0.0,
+        "p_tp_miscount": 0.0,
+        "p_non_monotonic": 0.0,
+    }
     unique_wls = len(set(b["wavelength"] for b in blocks))
     complexity = unique_wls / len(blocks) if blocks else 0
 
@@ -595,6 +629,67 @@ def _test_strategy_robustness_task(
         p_thick_nom_arr.reshape(1, -1),
     )
     T_nom_aligned = T_clean_batch[0].astype(np.float64)
+
+    # ── AXE 3 : CLASSER CONTRE LA CIBLE, PAS CONTRE LE NOMINAL ─────────────────
+    #
+    # 👤 « Le plus important est la cible spectrale respectee. » Or STRAT classait sur
+    # l'ecart au spectre du NOMINAL, non pondere, et n'avait jamais recu la cible —
+    # zero occurrence de `targets` dans tout le module. Il repondait donc a « quelle
+    # strategie reproduit le mieux le spectre des epaisseurs concues ? », et non a
+    # « laquelle respecte le mieux la cible ? ».
+    #
+    # ⚠️ DISTINCTION A PRESERVER, et elle est physique : le point VISE pendant le depot
+    # reste le nominal fige — c'est le mecanisme meme de l'auto-compensation, cf. le
+    # commentaire de `simulate_growth_kernel`. Seule la FIGURE DE MERITE QUI CLASSE
+    # passe a la cible ponderee. Ce bloc ne touche donc rien du noyau de croissance.
+    #
+    # La fonctionnelle est celle que DESIGN minimise deja (`prepare_targets_vectorized` :
+    # interpolation lineaire de tmin a tmax sur la zone, poids = poids utilisateur x
+    # quadrature spectrale en d ln lambda). Les deux modules deviennent ainsi coherents
+    # au lieu d'optimiser deux choses differentes.
+    #
+    # REPLI DOCUMENTE : sans cible fournie, on garde le nominal non pondere — donc le
+    # comportement d'avant, au bit pres. C'est la presence de `targets` qui active
+    # l'axe 3, pas un drapeau de plus.
+    T_rank_target = T_nom_aligned
+    rank_weights = None
+    _raw_targets = params.get("targets")
+    if _raw_targets:
+        try:
+            from certus_physics import prepare_targets_vectorized
+            from certus_physics.structures import Target
+
+            _tgts = [
+                t
+                if isinstance(t, Target)
+                else Target(
+                    lmin=float(t["lmin"]),
+                    lmax=float(t["lmax"]),
+                    tmin=float(t["tmin"]),
+                    tmax=float(t["tmax"]),
+                    w=float(t.get("w", 1.0)),
+                    on=bool(t.get("on", True)),
+                )
+                for t in _raw_targets
+            ]
+            _vals, _w = prepare_targets_vectorized(wl_arr.astype(np.float64), _tgts)
+            if float(np.sum(_w)) > 0.0:
+                T_rank_target = np.asarray(_vals, dtype=np.float64)
+                rank_weights = np.asarray(_w, dtype=np.float64)
+            else:
+                logger.warning(
+                    "[CIBLE] %d zone(s) fournie(s) mais aucune ne recouvre la grille "
+                    "%.0f-%.0f nm : repli sur le spectre nominal.",
+                    len(_tgts),
+                    float(wl_arr[0]),
+                    float(wl_arr[-1]),
+                )
+        except NUMERICAL_FAULT_EXCEPTIONS as exc:
+            logger.error(
+                "[CIBLE] zones inexploitables (%r) : repli sur le spectre nominal. "
+                "Le classement ne mesure alors PAS la conformite a la cible.",
+                exc,
+            )
 
     layer_wavelengths = np.zeros(num_layers, dtype=np.float64)
     n_H_vals = np.zeros(num_layers, dtype=np.complex128)
@@ -654,6 +749,30 @@ def _test_strategy_robustness_task(
         )
 
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
+
+    # ── AXE 1.1 : bruiter le SIGNAL de monitoring, pas seulement l'arret ───────
+    #
+    # Drapeau PAR DEFAUT INACTIF. C'est un changement de modele de premier ordre :
+    # il fera monter les taux de plantage et baisser le benefice apparent de POEM,
+    # et c'est la mesure qui doit trancher, pas l'intuition. Voir le bloc
+    # « BRUIT DE LECTURE » de certus/physics/certus_strat_growth.py.
+    signal_noise_on = bool(params.get("poem_anchor_noise", False))
+
+    # ── AXE 1.2 : la regle de detection de point tournant ─────────────────────
+    #
+    # Exprime en MULTIPLE de l'amplitude de bruit, parce que c'est de la qu'elle se
+    # derive : le tirage etant borne a +/- A, l'ecart apparent maximal que le bruit
+    # SEUL peut produire entre deux lectures vaut 2A. A partir de 2, le bruit ne peut
+    # donc plus fabriquer un point tournant.
+    #
+    # 👤 Ce seuil N'EST PAS le critere des 4 % d'amplitude de depart : « le 4 %,
+    # pour moi, c'etait au pif, pour etre certain qu'on va y arriver » (2026-08-06).
+    # Les 4 % sont une pre-selection de longueur d'onde ; ceci est la regle de LECTURE
+    # de la machine, et sa grandeur de reference est le bruit, qui est mesure.
+    #
+    # Defaut 0.0 = regle historique, donc chemin inchange. La valeur n'est pas posee
+    # ici : elle se balaie et se tranche par la mesure.
+    tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
         raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, num_layers)
 
@@ -661,6 +780,39 @@ def _test_strategy_robustness_task(
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector
         else:
             noise_matrix = raw_noise * (noise_val / 100.0) * penalty_vector
+
+        # Meme sigma que la lecture d'arret, et par le meme chemin de conversion.
+        #
+        # ⚠ SANS `penalty_vector`, deliberement. Ce vecteur majore le bruit d'ARRET
+        # de la premiere couche de chaque bloc pour representer la perte
+        # d'historique au changement de lambda — c'est un pansement, et l'axe 1.1
+        # est precisement ce qui doit rendre cet effet STRUCTUREL. L'appliquer une
+        # seconde fois au bruit de lecture compterait deux fois le meme effet.
+        # `signal_noise_scale` est donc le sigma NU de l'instrument.
+        signal_noise_scale = None
+        signal_noise_seed = 0
+        if signal_noise_on:
+            if is_absolute:
+                # `dT_dd` est signe ; seule son amplitude fait une echelle de bruit,
+                # et une echelle negative desactiverait le bruit dans le noyau.
+                signal_noise_scale = np.abs(np.asarray(dT_dd, dtype=np.float64)) * noise_val
+            else:
+                signal_noise_scale = np.full(num_layers, noise_val / 100.0, dtype=np.float64)
+            signal_noise_seed = _signal_noise_stream_seed(base_seed, noise_idx)
+
+        # L'hysteresis suit le NIVEAU DE BRUIT courant, comme le bruit lui-meme : c'est
+        # une regle de lecture relative a ce que l'instrument fluctue. En mode
+        # « tolerance nm » elle depend de la couche via dT/dd, donc on retient la
+        # mediane — le noyau prend un scalaire, et l'affiner n'a pas de sens tant que
+        # la valeur du facteur n'est pas tranchee.
+        tp_hysteresis = 0.0
+        if tp_hysteresis_factor > 0.0:
+            if is_absolute:
+                tp_hysteresis = tp_hysteresis_factor * float(
+                    np.median(np.abs(np.asarray(dT_dd, dtype=np.float64)))
+                ) * noise_val
+            else:
+                tp_hysteresis = tp_hysteresis_factor * noise_val / 100.0
 
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
@@ -673,6 +825,9 @@ def _test_strategy_robustness_task(
             offset_val,
             factor_val,
             nm_mode,
+            signal_noise_scale,
+            signal_noise_seed,
+            tp_hysteresis,
         )
 
         for i_layer in range(num_layers):
@@ -691,16 +846,39 @@ def _test_strategy_robustness_task(
                             f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
                         )
 
-        # DEPOTS NON TERMINABLES. simulate_growth_kernel renvoie une epaisseur
-        # majoree de 1e6 quand le niveau d'arret n'est jamais atteint, ou quand le
-        # comptage d'extrema diverge entre nominal et reel : dans les deux cas la
-        # machine ne peut pas terminer la couche.
+        # DEPOTS NON TERMINABLES, ET DESORMAIS DECOMPOSES PAR CAUSE.
+        #
+        # `simulate_growth_kernel` majore l'epaisseur d'un multiple de 1e6 selon la
+        # cause : niveau jamais atteint, comptage d'extrema divergent, ou T(d) non
+        # monotone en mode REJECT. Dans les trois cas la machine ne peut pas terminer
+        # la couche, donc le test `> 1e5` et le taux global sont INCHANGES.
         #
         # Ces evenements sont DISCRETS et rmse_p95 ne peut pas les voir sous 5 % :
         # un taux de plantage de 2 % passerait totalement inapercu alors qu'il rend
         # la strategie inutilisable en production. D'ou un comptage explicite.
-        n_crash_run = int(np.count_nonzero(np.any(sim_thick_batch > 1e5, axis=1)))
+        #
+        # 🔴 ET LA DECOMPOSITION N'EST PAS UN AGREMENT D'AFFICHAGE. Les 👤 trois
+        # questions du juge de paix — « voit-on les turning points ? risque-t-on de
+        # mal les compter ? risque-t-on de ne jamais atteindre le niveau ? » — ne sont
+        # des mesures que si l'on compte separement. Un taux agrege de 1,3 % ne dit
+        # pas quel mecanisme corriger, et 📏 c'est precisement ce qui a bloque le
+        # diagnostic du plancher independant de sigma.
+        crashed_cells = sim_thick_batch > CRASH_SENTINEL_MIN
+        crash_cause = np.where(crashed_cells, np.floor(sim_thick_batch / CRASH_SENTINEL_UNIT), 0.0)
+        n_crash_run = int(np.count_nonzero(np.any(crashed_cells, axis=1)))
         crash_rate_max = max(crash_rate_max, n_crash_run / max(1, num_runs))
+
+        # Par cause, au niveau du RUN : un run est impute a une cause des qu'au moins
+        # une de ses couches l'a subie. Les taux par cause peuvent donc se recouvrir,
+        # et leur somme depasser le taux global — c'est voulu, un run peut echouer de
+        # deux facons sur deux couches differentes.
+        for cause_id, cause_key in (
+            (CRASH_LEVEL_UNREACHABLE, "p_level_unreachable"),
+            (CRASH_TP_MISCOUNT, "p_tp_miscount"),
+            (CRASH_NON_MONOTONIC, "p_non_monotonic"),
+        ):
+            rate = float(np.count_nonzero(np.any(crash_cause == cause_id, axis=1))) / max(1, num_runs)
+            crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
 
         run_thicknesses = sim_thick_batch.tolist()
         run_rmses = compute_batch_rmse(
@@ -709,8 +887,9 @@ def _test_strategy_robustness_task(
             np.empty(0, dtype=np.complex128),
             np.empty(0, dtype=np.complex128),
             nSub_arr.astype(np.complex128),
-            T_nom_aligned,
+            T_rank_target,
             n_layers_matrix,
+            rank_weights,
         )
         rmse_p95 = float(np.percentile(run_rmses, 95))
         rmse_p99 = float(np.percentile(run_rmses, 99))
@@ -827,12 +1006,25 @@ def _test_strategy_robustness_task(
             float(params.get("sym_extrema_window", SYM_DEFAULT_EXTREMA_WINDOW_OT)),
         )
 
+    if crash_rate_max > 0.0:
+        logger.info(
+            f"   [CRASH-CAUSE] strat {strategy.get('strategy_id', '?')} : total "
+            f"{crash_rate_max:.1%} | niveau inatteignable "
+            f"{crash_rates_by_cause['p_level_unreachable']:.1%} | comptage divergent "
+            f"{crash_rates_by_cause['p_tp_miscount']:.1%} | non monotone "
+            f"{crash_rates_by_cause['p_non_monotonic']:.1%}"
+        )
+
     return {
         "strategy_id": strategy["strategy_id"],
         "strategy": strategy,
         "results_per_noise": results_per_noise,
         "robustness_score": final_score,
         "crash_rate": crash_rate_max,
+        # Les trois modes de defaillance, separement. 👤 « Si 95 % des depots
+        # fonctionnent, c'est gagne » — mais savoir POURQUOI les 5 % echouent est ce
+        # qui permet de corriger la strategie plutot que de la rejeter.
+        "crash_causes": dict(crash_rates_by_cause),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
         "complexity_score": complexity,

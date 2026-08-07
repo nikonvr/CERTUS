@@ -34,7 +34,7 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 # CE NOMBRE NE DOIT JAMAIS AUGMENTER. Si un changement légitime exige d'ignorer une
 # règle supplémentaire, c'est une décision à prendre explicitement, pas un effet de
 # bord — et il faut alors solder une autre règle en échange.
-MAX_IGNORED_RULES = 69
+MAX_IGNORED_RULES = 68
 
 
 def _ignored_rules() -> list[str]:

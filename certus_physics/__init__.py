@@ -114,9 +114,20 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     # Non-monotonic handling modes
     NON_MONOTONIC_MODE_ATTENUATE,
     NON_MONOTONIC_MODE_REJECT,
+    # Depots non terminables, decomposes par cause (les trois questions du juge de paix)
+    CRASH_SENTINEL_MIN,
+    CRASH_SENTINEL_UNIT,
+    CRASH_LEVEL_UNREACHABLE,
+    CRASH_TP_MISCOUNT,
+    CRASH_NON_MONOTONIC,
+    detect_turning_points,
+    next_turning_point_after,
     # STRAT Kernels (Advanced)
     prepare_dynamics_data_kernel,
     check_extrema_proximity_batch,
+    calculate_level_margins_to_extrema,
+    check_level_margin_batch,
+    MARGIN_NONE,
     calculate_extrema_distances,
     precompute_matrix_cache_kernel,
     find_nucleation_adaptive_kernel,

@@ -15,6 +15,7 @@ from Reflectance (Front), Transmission, and Back-Reflectance measurements.
 The metal index is modeld as wavelength-dependent splines.
 """
 
+import json  # utilise par le chargement de configuration (~ligne 2529) — l'import manquait
 import logging
 import os
 import sys

@@ -73,6 +73,37 @@
         <!--  0. GLOBAL PIPELINE OVERVIEW                                      -->
         <!-- ================================================================ -->
         <h2>0. Algorithmic Overview</h2>
+
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:0 0 20px;background:#fef2f2;">
+            <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;font-size:1.06em;">
+                🔴 PÉRIMÈTRE — un seul composant fait foi
+            </p>
+            <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
+                « Attention, seul le 48 couches est un exemple valable ! »
+                <br><span style="font-style:normal;">— le physicien, 2026-08-06</span>
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>Toute grandeur mesurée 📏 dans cette page provient du dichroïque 48 couches</b>,
+                <code>example/example_strat/JSON-strat-example.json</code>. Les empilements jouets qui apparaissent
+                dans la suite de tests — huit couches quart d'onde — servent à vérifier des <b>mécanismes</b>
+                (identité au bit près, propagation du bruit, décodage d'une sentinelle) et <b>aucune conclusion
+                physique n'en est tirée</b>. Les chiffres marqués 📖 viennent de la littérature et sont
+                identifiés comme tels ; ils ne sont pas des mesures faites ici.
+            </p>
+            <p style="margin:0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
+                🔴 <b>ET CE QUE CETTE PAGE NE PROUVE PAS, il faut le dire aussi clairement.</b>
+                <b>STRAT n'est aujourd'hui validé que contre lui-même.</b> Le dichroïque 48 couches est un
+                <b>banc de cohérence</b> — il établit que le code est stable, reproductible, et que ses grandeurs
+                dépendent de ce dont elles doivent dépendre. <b>Il n'établit pas que le modèle dit vrai.</b>
+                <br>Un témoin publié avait été envisagé — une séparatrice 8 couches déposée quatre fois, dont le
+                classement des stratégies est connu — mais il a été <b>écarté</b> : c'est un composant étranger, et
+                la règle de périmètre ci-dessus prime. <b>La validation externe n'a donc plus aucun candidat de
+                substitution</b> : elle passe entièrement par des <b>dépôts réels du 48 couches</b>. Deux
+                stratégies déposées avec leurs spectres mesurés suffiraient, le test décisif étant <b>ordinal</b> —
+                STRAT doit les classer dans le bon ordre.
+            </p>
+        </div>
+
         <p>
             The CERTUS-STRAT algorithm is a three-step pipeline that transforms a nominal thin-film design into a
             robust optical monitoring strategy.
@@ -101,7 +132,7 @@
             PA["<b>For each layer i = 0…N−1:</b>"]:::decision --> PA1
             PA1["A.1 Dynamics Ranking<br><code>calculate_dynamics_ULTIMATE</code><br>Compute ΔT(λ) for all candidates<br>Sort by |ΔT| descending"]:::process --> PA2
             PA2["A.2 Safety Filters<br><code>check_extrema_proximity_batch</code><br>Reject: |ΔT| &lt; dyn_threshold,<br>T_min &lt; 10% floor,<br>near T maxima/minima,<br>insufficient spectral resolution"]:::decision --> PA3
-            PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code> → 4 columns<br>P95(|Δd|) · std · crash rate · compensation gain<br>Cost = P95 + gain × upstream error<br>Eliminate: crash ≥ 1−(1−5%)^(1/N) or gain &lt; 0"]:::process --> PA4
+            PA3["A.3 Monte Carlo Validation<br><code>validate_wavelengths_batch</code> → 4 columns<br>P95(|Δd|) · std · crash rate · compensation gain<br>Cost = P95 + gain × upstream error<br>FORBID λ: crash ≥ 1−(1−5%)^(1/N) or gain &lt; 0<br>crash = miscounted turning points OR level never reached<br>on the NOISY signal when poem_anchor_noise is set"]:::process --> PA4
             PA4["A.4 Select Best λ for layer i<br>Save to strategy + SYM scoring"]:::highlight --> PA5
             PA5["A.5 Error Propagation<br><code>update_run_states_kernel</code><br>Update run_states with<br>simulated thicknesses<br>→ perturbed M_before for layer i+1"]:::process
             PA5 --> PA_NEXT{"More layers?"}:::decision
@@ -505,6 +536,267 @@
             </ul>
         </div>
 
+        <h3>2.1bis Bruit de LECTURE du signal de monitoring — <code>poem_anchor_noise</code></h3>
+        <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
+            <p style="margin:0 0 10px;">
+                Le &sigma; du §2.1 ne bruitait qu'<b>un seul point de toute la chaîne</b> : la comparaison
+                d'arrêt. <code>Ts_r</code>, le signal « réel », sert pourtant aussi à la <b>détection des points
+                tournants</b>, à la lecture des <b>ancres POEM</b> et au <b>test d'atteignabilité</b> du niveau.
+                <code>poem_anchor_noise</code> lui applique le même &sigma; <i>avant</i> ces trois usages.
+                <b>Par défaut inactif</b>, et le chemin désactivé est identique au bit près.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>Nombres aléatoires communs.</b> Le tirage est une <b>fonction pure</b> de
+                (graine, couche balayée, tirage, indice de point), servie par <code>_seeded_noise_sample</code> —
+                même loi $\mathcal{N}(0,1/9)$ tronquée à $\pm 1$ que le tirage Sobol. <b>Aucune entrée ne dépend
+                de la stratégie</b> : ni &lambda;, ni le découpage en blocs, ni <code>block_start_layer</code>. Il
+                n'est donc pas matérialisé en tableau : un tableau indexé à plat sur le balayage se
+                <i>désalignerait</i> d'une stratégie à l'autre, la longueur de l'historique <code>n_hist</code>
+                dépendant du découpage. Les indices sont alignés sur la physique — l'historique de la couche $j$
+                porte le <b>même</b> bruit pour toutes les couches du bloc qui le relisent : la machine a
+                enregistré une mesure, elle ne la remesure pas.
+            </p>
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+                🔴 <b>LE PIÈGE, ET IL COÛTE UN FACTEUR 23.</b> <code>d = 0</code> de la couche courante <b>EST</b>
+                le dernier point de l'historique du bloc : une seule mesure, deux fois présente dans le balayage.
+                Y tirer deux bruits indépendants transforme un palier de longueur nulle — donc dans la bande morte
+                à $10^{-12}$, donc sans extremum détecté — en <b>bascule de signe à pile ou face</b>, qui fabrique
+                un extremum parasite avec une probabilité <i>indépendante de &sigma;</i>.
+                📏 Mesuré sur le dichroïque 48 couches, historique nominal et bruit d'arrêt nul :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">profondeur d'historique</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">0</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">1</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">2</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">4</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">deux tirages (faux)</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,63 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">27,4 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">28,1 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">28,1 %</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>un seul tirage (correct)</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0,63 %</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0,86 %</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>1,17 %</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>1,23 %</b></td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                <b>Deux signatures désignaient le même défaut</b>, et aucune n'était de la physique : le saut
+                apparaissait dès qu'il existait <i>un</i> historique et ne croissait plus avec la profondeur
+                (il n'y a qu'une jonction, quelle que soit la profondeur) ; et il ne dépendait pas de &sigma;
+                — 28,5 % à $\sigma/10$ comme 28,1 % à $2\sigma$. Après correction, &sigma; redevient monotone :
+                0,93 % → 1,23 % → 2,12 % pour $\sigma/10$, &sigma;, $2\sigma$.
+            </p>
+            <p style="margin:0;">
+                ⚠️ <b>CE QUI RESTE NON FIDÈLE, et qu'il faut savoir avant de lire un taux de plantage.</b>
+                Il subsiste un <b>plancher indépendant de &sigma;</b> : 1,67 % des cellules (couche, &lambda;)
+                plantent encore à $\sigma = 5\cdot10^{-8}$, un millionième de point de transmission. 📏 Il est
+                <b>six fois plus fort dans la bande bloquée</b> (2,66 % contre 0,44 %, et 37 &lambda; sur 48 de
+                la bande passante sont parfaitement propres). C'est la signature de la <b>règle de détection
+                manquante</b> : le test d'extremum se déclenche sur tout changement de signe au-delà d'un garde
+                numérique de $10^{-12}$, sans amplitude minimale. Or 📖 Zideluns p. 112 exige <b>4 %
+                d'amplitude de départ</b> sur l'OMS 5100, et note qu'on peut abaisser ce seuil <i>en augmentant
+                le temps de traitement du signal</i> — la machine <b>filtre</b>. Là où le signal de monitoring
+                n'a aucune dynamique, ce modèle interdit donc la &lambda; pour une raison numérique, alors qu'elle
+                doit l'être pour une raison d'amplitude. <b>C'est l'axe 1.2, et il conditionne l'interprétation
+                de l'axe 1.1.</b> Le nombre de plantages dépend aussi de la <b>densité d'échantillonnage</b>
+                (64 points sur 3&times; la couche courante, 16 par couche d'historique), qui est un choix
+                numérique et non la cadence de la machine.
+            </p>
+        </div>
+
+        <h3>2.1ter La règle de détection d'un point tournant — <code>tp_hysteresis_factor</code></h3>
+        <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
+            <p style="margin:0 0 10px;">
+                Bruiter le signal ne suffit pas : il faut aussi dire <b>comment la machine le lit</b>. Le modèle
+                déclarait un point tournant dès que la différence entre deux échantillons change de signe, au-delà
+                d'un garde <b>numérique</b> de 10⁻¹². Ce n'est pas une règle physique — et cela se voit :
+            </p>
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+                🔴 <b>UN TAUX DE PLANTAGE QUI NE DÉPEND PAS DU BRUIT NE MESURE PAS LE BRUIT.</b>
+                📏 1,47 % par couche à &sigma; = 5·10⁻⁸ contre 1,30 % au &sigma; réel de l'instrument. Un
+                simulateur dont le taux d'échec ne bouge pas quand on divise le bruit par 10 000 ne simule rien.
+                <b>C'est ce test — la dépendance en &sigma; — qui départage une mesure d'un artefact</b>, et il
+                devrait être appliqué à toute grandeur stochastique de ce module.
+            </p>
+            <p style="margin:0 0 10px;">
+                <code>detect_turning_points</code> remplace les <b>deux boucles dupliquées</b> qui détectaient les
+                extrema, l'une sur le signal réel et l'autre sur le nominal. <b>Une seule fonction pour les deux,
+                et c'est essentiel</b> : la divergence des deux comptages est l'un des modes de plantage, et deux
+                règles écrites séparément en fabriqueraient une produite par l'algorithme, pas par la physique.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;"><code>tp_hysteresis</code></th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Comportement</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0</b> (défaut)</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Règle historique : changement de signe au-delà de 10⁻¹².</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;"><b>&gt; 0</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Détecteur à <b>hystérésis</b> : on suit l'extremum courant et on ne le <b>déclare</b> que lorsque le signal s'en est écarté de plus du seuil. L'indice rendu est celui de l'extremum <i>lui-même</i>, pas du franchissement : la machine retient la valeur extrême lue, pas l'instant où elle a compris.</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                🔴 <b>LE SEUIL SE DÉRIVE DU BRUIT — IL N'EMPRUNTE RIEN AUX 4 %.</b>
+                👤 <i>« Le 4 %, pour moi, c'était au pif, pour être certain qu'on va y arriver. Alors que là, nous
+                on travaille sur de vrais signaux simulés grâce au bruit introduit. »</i> (2026-08-06). Les 4 %
+                d'amplitude de départ sont une <b>pré-sélection</b> de longueur d'onde ; ceci décrit comment la
+                machine <b>lit</b>. La grandeur de référence est le bruit, et elle est <b>mesurée</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                <code>trigger_tolerance</code> = 0,05 point est une amplitude <b>crête à crête</b> $A$ : le tirage
+                suit $\mathcal{N}(0, A/3)$ tronqué à $\pm A$, donc $\sigma = 0{,}332\,A$ = <b>0,0166 point</b>.
+                Deux lectures bornées à $\pm A$ ne peuvent différer que de $2A$ au plus, d'où une borne
+                <i>dérivée</i> : au-delà de $2A$, <b>le bruit seul ne peut plus jamais fabriquer un point
+                tournant.</b>
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;"></th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">points de T</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">en &sigma;</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">facteur de $A$</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">👤 <b>5 &sigma;</b>, la réponse du physicien</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>0,083</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">5,0</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>1,66</b></td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">📏 <b>2 A</b>, la borne dérivée</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,100</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">6,0</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">2,00</td></tr>
+            </table>
+            <p style="margin:0;">
+                <b>L'intuition du praticien et la dérivation se rejoignent à 20 % près.</b> C'est le meilleur
+                accord obtenu entre un chiffre donné au flair et un chiffre calculé — et cela vaut d'être noté
+                après l'épisode des 4 %, qui étaient eux vingt fois trop conservateurs.
+                <br>📏 <b>Effet mesuré, et il est partiel</b> : l'hystérésis divise le taux de plantage par
+                <b>2</b> au &sigma; réel (1,31 % → 0,69 %), pas par les 11 qu'il faudrait pour tenir les 0,107 %
+                par couche. Elle ne gouverne qu'un des deux modes de défaillance — voir §2.1quater.
+            </p>
+        </div>
+
+        <h3>2.1quater Les deux modes de défaillance, et pourquoi il faut les compter séparément</h3>
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
+            <p style="margin:0 0 10px;">
+                <code>simulate_growth_kernel</code> rendait <b>la même valeur</b> — <code>nominal_th + 1e6</code> —
+                pour trois situations sans rapport. <b>C'était un mur de diagnostic</b> : l'hystérésis divisait le
+                taux de plantage par deux sans toucher au plancher indépendant de &sigma;, et il était impossible
+                de dire si ce plancher venait du <b>comptage</b> des points tournants ou de l'<b>atteignabilité</b>
+                du niveau.
+            </p>
+            <p style="margin:0 0 10px;">
+                Les sentinelles valent désormais <code>1e6</code>, <code>2e6</code>, <code>3e6</code> :
+                <b>tout consommateur qui teste <code>&gt; 1e5</code> compte exactement les mêmes plantages qu'avant</b>
+                — le taux global est inchangé au bit près — et la cause se relit par <code>val // 1e6</code> sans
+                connaître l'épaisseur nominale.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">hystérésis</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">&sigma;</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">total</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">niveau inatteignable</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">comptage divergent</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">0</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">10⁻⁴·A</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">1,494 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#fecaca;"><b>1,494 %</b></td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#dcfce7;"><b>0,000 %</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">0</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">A</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">1,312 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0,871 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0,441 %</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">2</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">10⁻⁴·A</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">1,292 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#fecaca;"><b>1,292 %</b></td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#dcfce7;"><b>0,000 %</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">2</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">A</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0,686 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0,386 %</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0,300 %</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                🔴 <b>Le plancher indépendant de &sigma; est à 100 % du côté « niveau jamais atteint », et à
+                0,000 % du côté du comptage.</b> L'hystérésis gouverne la détection : elle ne pouvait rien y faire,
+                et elle divise bien par deux le seul terme qu'elle gouverne.
+                <br>📏 <b>Localisation</b> : 135 cellules (couche, &lambda;) sur 5922 plantent à &sigma; = 5·10⁻⁸ ;
+                <b>aucune</b> ne plante à bruit exactement nul ; et elles plantent <b>3 à 4 fois sur 8</b> — un
+                tirage à pile ou face, signature d'une comparaison qui tombe pile sur une frontière.
+            </p>
+            <p style="margin:0;">
+                ✅ <b>Retombée d'observabilité</b> : <code>_test_strategy_robustness_task</code> rend
+                <code>crash_causes</code> = {<code>p_level_unreachable</code>, <code>p_tp_miscount</code>,
+                <code>p_non_monotonic</code>}. Les 👤 trois questions du juge de paix — <i>voit-on les turning
+                points ? risque-t-on de mal les compter ? risque-t-on de ne jamais atteindre le niveau ?</i> —
+                deviennent <b>trois nombres</b> au lieu d'un scalaire agrégé.
+            </p>
+        </div>
+
+        <h3>2.1quinquies 🟢 La méthode — comment distinguer une mesure d'un artefact</h3>
+        <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
+            <p style="margin:0 0 12px;">
+                Cette section est la plus transférable du document. En une journée, la <b>même grandeur</b> — le taux
+                de dépôts non terminables par couche — a pris trois valeurs successives :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#dcfce7;">
+                    <th style="border:1px solid #86efac;padding:5px 10px;">valeur</th>
+                    <th style="border:1px solid #86efac;padding:5px 10px;text-align:left;">ce qu'elle était réellement</th></tr>
+                <tr><td style="border:1px solid #86efac;padding:5px 10px;"><b>28 %</b></td>
+                    <td style="border:1px solid #86efac;padding:5px 10px;">un <b>point de mesure dupliqué</b> auquel je tirais deux bruits indépendants — artefact</td></tr>
+                <tr><td style="border:1px solid #86efac;padding:5px 10px;"><b>1,3 %</b></td>
+                    <td style="border:1px solid #86efac;padding:5px 10px;">correct, mais dominé par un mode que je croyais être un autre</td></tr>
+                <tr><td style="border:1px solid #86efac;padding:5px 10px;"><b>1,47 % à &sigma; → 0</b></td>
+                    <td style="border:1px solid #86efac;padding:5px 10px;">un niveau posé <b>sur</b> un point tournant — physique réelle, mais qui se corrige au choix de &lambda;, pas dans le verdict</td></tr>
+            </table>
+            <p style="margin:0 0 12px;">
+                <b>Deux fois sur trois, ce n'était pas de la physique.</b> Et à chaque fois, le même test l'a
+                révélé :
+            </p>
+            <p style="margin:0 0 12px;background:#fff;border:2px solid #15803d;border-radius:6px;padding:10px 14px;font-size:1.03em;">
+                🟢 <b>UNE GRANDEUR DE BRUIT QUI NE VARIE PAS AVEC LE BRUIT EST UN ARTEFACT. SANS EXCEPTION.</b>
+                <br>La question à poser d'abord n'est pas <i>« quel est le chiffre ? »</i> mais <i>« ce chiffre
+                dépend-il de ce dont il devrait dépendre ? »</i> Balayer &sigma; sur quatre ordres de grandeur coûte
+                quelques secondes et invalide un résultat faux avant qu'il n'entre dans une conclusion.
+            </p>
+            <p style="margin:0 0 12px;">
+                Trois corollaires, chacun payé au moins une fois dans ce projet :
+            </p>
+            <ul style="margin:0 0 12px;">
+                <li><b>Vérifier sur quelle SOURCE un critère se prononce.</b> Les deux défauts les plus coûteux
+                    étaient de cette forme : le signal <i>propre</i> au lieu du signal bruité, et la grille
+                    d'<i>affichage</i> au lieu de la grille de balayage. Un troisième s'y ajoute : une matrice de
+                    <i>zéros</i> au lieu de l'empilement réel, qui rendait un filtre entier inerte.
+                    <br>⚠️ <b>Corriger le second a fait gagner un facteur 5,7 sur le score — mais je ne sais pas
+                    encore de QUOI ce gain provient</b>, et il faut le dire. Deux choses ont changé en même temps :
+                    le <b>pas</b> (l'union donnait 1 nm) et la <b>plage</b> (cette union débordait sous 450 nm, hors
+                    du balayage, vers des &lambda; que la Phase A n'a jamais validées). Attribuer le gain au seul
+                    pas était une conclusion non fondée. <b>Une mesure isolant le pas, plage identique des deux
+                    côtés, est en cours.</b> C'est le même défaut de méthode que ceux listés ici, commis en les
+                    documentant.</li>
+                <li><b>Ne jamais confondre deux causes sous une même sentinelle.</b> Trois modes de défaillance
+                    rendaient la même valeur ; le diagnostic était impossible jusqu'à ce qu'on les sépare — et il a
+                    alors tenu en <b>une</b> mesure.</li>
+                <li><b>Une signature qui ne varie pas avec la profondeur, l'amplitude ou la graine désigne
+                    l'algorithme, pas le phénomène.</b> Le plantage à 28 % apparaissait dès qu'il existait <i>un</i>
+                    historique et ne croissait plus avec sa profondeur : il n'y avait qu'une jonction, quelle que
+                    soit la profondeur.</li>
+            </ul>
+            <p style="margin:0;">
+                📌 <b>Et le fichier de référence est un mode de défaillance à part entière.</b>
+                <code>example/example_strat/JSON-strat-example.json</code> s'est écarté du défaut du code
+                <b>quatre</b> fois, toujours dans le sens permissif : <code>trigger_tolerance</code> 0,5 au lieu de
+                0,05 (bruit ×10) · <code>execution_mode</code> <code>fast</code> au lieu de <code>premium</code>
+                (budgets ÷4) · <code>scan_wl_step</code> 5 au lieu de 2 nm · et
+                <code>wavelength_change_penalty</code> <b>1,0 au lieu de 1,2</b>, qui neutralise le seul coût
+                explicite d'un changement de longueur d'onde. <b>Le fichier sur lequel tout le monde diagnostique
+                était celui qui dégradait le plus le résultat.</b>
+            </p>
+        </div>
+
         <h3>2.2 Non-Monotonic Error Model</h3>
         <p>
             Beyond pure trigger noise, the simulation optionally adds a systematic offset via
@@ -574,6 +866,17 @@
         <p><code>calculate_dynamics_ULTIMATE</code> computes the peak-to-peak $\Delta T(\lambda_k) = T_{max} - T_{min}$
             for every candidate $\lambda_k$ in the scan range. Candidates are sorted by $\Delta T$ descending.
             The function also returns $T_{init}$, $T_{final}$, and $T_{min}$ per candidate for downstream filters.</p>
+        <div class="note">
+            🔴 <b>LA GRILLE DES &lambda; DE CONTRÔLE EST CELLE DU BALAYAGE — pas de 2 nm.</b>
+            👤 <i>« Les longueurs doivent pouvoir être choisies par pas de 2 nm »</i> (2026-08-06), en longueur
+            d'onde et non en épaisseur. Elle vaut
+            <code>arange_inclusive(scan_wl_min, scan_wl_max, scan_wl_step)</code>, soit 126 &lambda; sur
+            450–700 nm au pas de 2 nm pour le juge de paix. <b>Elle ne doit pas être confondue avec la grille
+            d'affichage</b> <code>wl_range</code> / <code>wl_step</code> (400–700 nm au pas de 1 nm) : leur union
+            est ce que contient <code>clues_at_wl</code>, et c'est cette union qui a fait muter ELITE de 1 nm.
+            Toute étape qui choisit une &lambda; de contrôle — A.1, A.3, la DP, ELITE — doit lire la grille de
+            balayage via <code>_resolve_monitoring_wavelength_grid</code>.
+        </div>
 
         <h3>3.2 Step A.2 — Safety Filters</h3>
         <ul>
@@ -584,7 +887,8 @@
             <li><strong>Extrema exclusion:</strong> <code>check_extrema_proximity_batch</code> rejects wavelengths
                 near T(λ) maxima/minima. The asymmetric start check is activated when the monitoring wavelength
                 changes vs. the previous layer (<code>prev_layer_wl</code> awareness), giving a wider start margin
-                during monochromator repositioning.</li>
+                during monochromator repositioning.
+                <br>🔴 <b>MAIS IL NE REJETAIT RIEN DU TOUT — voir l'encadré ci-dessous.</b></li>
             <li><strong>Spectral resolution:</strong> Resolution curvature check: the nominal stack must resolve
                 $\Delta\lambda \geq 1$ nm at the candidate — computed from the T(λ) curvature
                 (tolerance tied to <code>trigger_tolerance</code>).</li>
@@ -597,6 +901,101 @@
             Survival log is emitted per layer:
             <code>[SURVIVAL L{i}] Dyn-OK / Tfloor-OK / Safe-Extrema / Resolution-OK</code> counts for
             full pipeline traceability.
+        </div>
+
+        <h3>3.2bis 🔴 La marge de sécurité au point tournant — et pourquoi le filtre était inerte</h3>
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:20px 0;background:#fef2f2;">
+            <p style="margin:0 0 12px;font-weight:700;color:#7f1d1d;font-size:1.08em;">
+                Le filtre d'exclusion des extrema n'interdisait RIEN : 0 candidate sur 51, sur les 48 couches
+            </p>
+            <p style="margin:0 0 12px;">
+                <code>_select_candidates_phase_a</code> appelait <code>check_extrema_proximity_batch</code> avec
+                <code>M_befores = np.zeros((n, 2, 2))</code> — un placeholder assumé en commentaire
+                (<i>« conservative: no extrema filtering »</i>) mais dont la conséquence n'avait jamais été mesurée.
+                📏 Avec une matrice nulle, tous les dénominateurs du noyau tombent sous 10⁻⁹, donc tous les $T$
+                échantillonnés valent 0, donc toutes les pentes valent 0, donc <b>aucun test de point tournant ne
+                peut se déclencher</b>.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;text-align:left;"><code>M_before</code> passé au noyau</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">couche 0</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">couche &gt; 0</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>zéros — ce que faisait la production</b></td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#fecaca;">0 interdite / 51</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#fecaca;"><b>0 interdite / 51</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">identité — contrôle, pour montrer que le noyau est vivant</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">45 / 51</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">51 / 51</td></tr>
+            </table>
+            <p style="margin:0 0 12px;">
+                ⚠️ <b>Le contrôle à l'identité ne donne PAS le taux de rejet physique</b> — l'identité n'est le
+                <code>M_before</code> correct que de la <i>première</i> couche ; au-delà c'est la matrice cumulée.
+                Il prouve que le noyau réagit, rien de plus. La vraie matrice était pourtant à portée de main :
+                <code>nominal_matrix_cache</code>, de forme <code>(num_layers, n_wls, 2, 2)</code>, est un argument
+                de la fonction.
+            </p>
+
+            <p style="margin:0 0 12px;font-weight:700;color:#7f1d1d;font-size:1.08em;">
+                Ce que le physicien a tranché — deux questions, une seule réponse
+            </p>
+            <p style="margin:0 0 12px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
+                « Dans ce cas, il y a réellement une marge trop faible. On décide que le dépôt est perdu.
+                <b>Il faut quand même prendre une marge de sécurité !</b> »
+                <br>« Le problème est que la théorie et la pratique doivent avoir <b>pile le bon nombre
+                d'extremum</b>. Et si on est trop près, il y a risque que cela ne soit pas le cas. <b>Donc marge de
+                sécurité encore !</b> »
+                <br><span style="font-style:normal;">— le physicien, 2026-08-06</span>
+            </p>
+            <p style="margin:0 0 12px;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
+                <b>Le niveau d'arrêt doit être séparé des points tournants voisins d'une marge exprimée en
+                TRANSMISSION, multiple de l'amplitude de bruit.</b>
+                <br><code>calculate_level_margins_to_extrema</code> · paramètre
+                <code>phase_a_level_margin_factor</code>, défaut 0 = inactif.
+            </p>
+            <p style="margin:0 0 12px;">
+                🔴 <b>EN TRANSMISSION, ET C'EST TOUT L'INTÉRÊT.</b> Le critère en place travaille en espace des
+                <b>épaisseurs</b> : une demi-largeur en nanomètres dérivée de <code>extrema_exclusion_ratio</code>.
+                Or près d'un point tournant $T \approx T_{ext} - c\,(d-d_0)^2$ : une marge fixe en épaisseur
+                correspond à une <b>fraction d'amplitude minuscule et non contrôlée</b>, et la grandeur physique —
+                le rapport signal sur bruit sur le niveau — n'est jamais celle qui est appliquée.
+            </p>
+            <p style="margin:0 0 12px;">Une seule marge en $T$ garantit <b>trois</b> choses à la fois :</p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">Elle garantit</th>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">Mécanisme</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>le niveau est atteignable</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">si la marge dépasse l'amplitude du bruit, aucune réalisation ne peut placer le sommet bruité sous la cible. 📏 C'est le mode dominant : 100 % du plancher indépendant de &sigma; (§2.1quater).</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>pile le bon nombre d'extremum</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">un arrêt loin d'un extremum ne peut pas en faire apparaître ni disparaître un. C'est la raison donnée par le physicien.</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>l'erreur d'épaisseur reste bornée</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">$\delta d = \sigma / (2\sqrt{c\,\Delta T})$ : la marge $\Delta T$ la <b>borne</b>, alors qu'elle <b>diverge</b> quand $\Delta T \to 0$.</td></tr>
+            </table>
+            <p style="margin:0 0 12px;">
+                📌 <b>Et elle fait retomber les 4 % du calcul.</b> Une &lambda; n'est utilisable que si son swing
+                dépasse <b>deux</b> marges, une de chaque côté. Avec $A$ = 0,05 point et une marge de $2A$, cela
+                donne un swing minimal de <b>0,2 point de T</b>. 👤 Les 4 % devinés étaient donc <b>vingt fois plus
+                conservateurs</b> — d'où <i>« au pif, pour être certain qu'on va y arriver »</i> : c'était une marge
+                sur une marge. <b>Le seuil d'amplitude minimale n'est pas à postuler, il se déduit.</b>
+            </p>
+            <p style="margin:0 0 12px;">
+                ⚠️ <b>Symétrique</b>, contrairement au critère en épaisseur qui interdisait une zone trois fois
+                plus large <i>avant</i> un extremum qu'<i>après</i>. Cette asymétrie était un <b>proxy de ce
+                calcul-ci</b> : en espace des épaisseurs, « avant » et « après » ne sont pas équivalents parce que
+                la pente n'y est pas la même. En transmission, les deux côtés sont à la même distance de l'extremum
+                par construction, et les deux sont dangereux pour le comptage. Seul le côté « avant » l'est aussi
+                pour l'atteignabilité — la contrainte symétrique le couvre donc a fortiori.
+            </p>
+            <p style="margin:0;">
+                ⚠️ <b>Gating volontairement binaire.</b> À 0 (défaut), le chemin d'avant est conservé mot pour mot.
+                Au-dessus, on branche la vraie matrice <b>et</b> on passe au critère en transmission. On ne veut
+                surtout pas de l'état intermédiaire — vraie matrice <b>avec</b> le critère en épaisseur — qui ferait
+                mordre un seuil dont l'échelle physique n'est pas contrôlée.
+                <br>⚠️ <b>La magnitude reste à trancher par la mesure</b>, et elle arbitre <b>rendement contre
+                précision</b> : trop petite, des runs se perdent ; trop grande, on n'autorise plus que des arrêts à
+                mi-pente et on écarte des &lambda; utilisables. La poser au flair serait refaire l'erreur des 4 %.
+            </p>
         </div>
 
         <h3>3.3 Step A.3 — Monte Carlo Validation</h3>
@@ -625,6 +1024,35 @@
             <em>actually propagated</em> — measured, not postulated. $w$ is <code>phase_a_compensation_weight</code>, default $1$.
             <br><br>
             Below <strong>0.05 nm</strong> — less than one atom — $\varepsilon_{\text{prev}}$ is floored to zero and the second term vanishes.
+        </div>
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:18px 0;background:#fef2f2;">
+            <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;">
+                🔴 LA RÈGLE D'ADMISSIBILITÉ D'UNE LONGUEUR D'ONDE DE CONTRÔLE — à graver dans le marbre
+            </p>
+            <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
+                « Une longueur d'onde de contrôle de la couche $i$ ($i&gt;1$) est <b>interdite</b> si, lorsque le
+                signal est bruité, il y a un risque de mal comptabiliser le nombre de turning points ou de ne pas
+                s'arrêter au niveau de transmission voulu. Cela crée une erreur d'arrêt de couche. »
+                <br>« Tout cela est valable <b>en phase A comme en phase B</b>. »
+                <br><span style="font-style:normal;">— le physicien, 2026-08-06</span>
+            </p>
+            <p style="margin:0 0 10px;">
+                C'est exactement ce que compte <code>results_fast[idx, 2]</code>, le taux de dépôts non
+                terminables : le noyau rend sa sentinelle dans ces deux cas précis, et dans ces deux cas
+                seulement. Le filtre existait déjà ; <b>ce qui manquait, c'est que le signal sur lequel il se
+                prononce soit bruité.</b> Sans bruit, la question « risque-t-on de mal compter ? » n'était pas
+                posée — les extrema étaient localisés sur une courbe TMM parfaite et la réponse valait
+                « jamais », par construction. Le drapeau <code>poem_anchor_noise</code> (§2.1bis) gouverne donc
+                <b>les deux phases</b>, parce que la règle est un seul énoncé physique sur ce qu'est une longueur
+                d'onde utilisable.
+            </p>
+            <p style="margin:0;">
+                ⚠️ <b>Point ouvert — la résolution couple la sévérité au budget.</b> Avec $N_{runs}$ tirages, le
+                plus petit taux non nul mesurable vaut $1/N_{runs}$, soit 0,67 % à 150 tirages — six fois la
+                tolérance. <b>Un seul run planté suffit donc à interdire une longueur d'onde.</b> C'est
+                conservateur dans le sens de la règle, mais cela interdit aussi des &lambda; dont le taux vrai est
+                sous le seuil, et ce couplage n'est pas voulu.
+            </p>
         </div>
         <div class="note">
             <p><strong>The crash rate is NOT part of the cost.</strong></p>
@@ -760,10 +1188,29 @@
                 scinder — en <b>réévaluant chaque perturbation au Monte-Carlo sur
                 $P(\text{conforme})$</b>. Pas de proxy, pas de séparabilité, pas de problème de
                 corrélation.
-                <br><code>ELITE</code> s'en approche et échoue deux fois : il perturbe à
+                <br><code>ELITE</code> s'en approche et échouait deux fois : il perturbait à
                 <b>&plusmn;1 nm</b>, soit <b>sous le pas de grille</b> donc sans signification
-                physique, et il juge sur le mauvais critère. Il produit les
+                physique, et il juge sur le mauvais critère. Il produisait les
                 <code>551, 552, 553, 554</code> observés en tête de classement.
+                <br>✅ <b>Le premier des deux est corrigé (2026-08-06).</b> 👤 <i>« Les longueurs
+                doivent pouvoir être choisies par pas de 2 nm »</i> — en longueur d'onde, pas en
+                épaisseur. La cause était précise : <code>_resolve_available_wavelengths</code>
+                rendait les <b>clés de <code>clues_at_wl</code></b>, qui est l'<b>union</b> de deux
+                grilles sans rapport (<code>_prepare_precompute_wavelength_grid</code>) — la grille
+                de <b>balayage</b> au pas <code>scan_wl_step</code> = 2 nm, et la grille
+                d'<b>affichage</b> au pas <code>wl_step</code> = 1 nm. L'union est à 1 nm sur tout
+                le recouvrement, et « muter vers la &lambda; voisine » mutait donc de 1 nm, hors
+                grille de contrôle. <code>_resolve_monitoring_wavelength_grid</code> rend
+                désormais la seule grille de balayage : <b>126 &lambda; au pas de 2 nm</b> sur
+                450–700 nm. Le second échec — juger sur le mauvais critère — reste ouvert.
+                <br>⚠️ <b>ATTRIBUTION EN COURS DE MESURE.</b> Ce correctif a changé DEUX choses à
+                la fois : le <b>pas</b> et la <b>plage</b>. Le gain mesuré de 5,7 sur le score ne
+                peut donc pas être imputé au pas seul. 👤 <i>« Seul le calcul complet de simulation
+                peut trancher »</i> — un run à pas 1 nm contre un run à pas 2 nm, <b>plage
+                identique des deux côtés</b>, est en cours. Ce n'est pas qu'une affaire d'ELITE :
+                le pas change le nombre de candidates que la Phase A évalue par couche, 126 contre
+                251. La question posée est donc bien <b>une grille de contrôle plus fine
+                aide-t-elle, de bout en bout ?</b>
                 <br><br><b>« Prometteuses » recouvrait trois choses distinctes</b> qu'on
                 confondait en un seul coût : le <b>rendement</b> se <i>prédit</i>, la
                 <b>diversité</b> se <i>construit</i>, la <b>précision</b> ne se prédit pas —
@@ -801,19 +1248,26 @@
             </p>
             <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
                 <tr style="background:#fee2e2;">
-                    <th style="border:1px solid #fca5a5;padding:5px 10px;">Ligne</th>
-                    <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">Usage de <code>Ts_r</code></th>
-                    <th style="border:1px solid #fca5a5;padding:5px 10px;">Bruit</th></tr>
-                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">385-386</td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection des points tournants</b></td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
-                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">418-419</td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>ancres POEM</b> <code>T_prev_real</code>, <code>T_last_real</code></td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
-                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;">478-479</td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection de plantage</b></td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td></tr>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;">Usage de <code>Ts_r</code></th>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;">avant</th>
+                    <th style="border:1px solid #fca5a5;padding:5px 10px;">avec <code>poem_anchor_noise</code></th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection des points tournants</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;background:#dcfce7;">✅ &sigma;</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>ancres POEM</b> <code>T_prev_real</code>, <code>T_last_real</code></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;background:#dcfce7;">✅ &sigma;</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>détection de plantage</b></td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">❌ aucun</td>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;background:#dcfce7;">✅ &sigma;</td></tr>
             </table>
+            <p style="margin:0 0 10px;background:#ecfeff;border:2px solid #0e7490;border-radius:6px;padding:8px 12px;">
+                ✅ <b>Ce diagnostic est celui d'AVANT le correctif.</b> Le bruit de lecture est posé depuis le
+                2026-08-06, derrière <code>poem_anchor_noise</code>, par défaut inactif —
+                <b>voir le §2.1bis</b>, qui donne le mécanisme, les nombres aléatoires communs, le piège du point
+                dupliqué et ce qui reste non fidèle. Ce qui suit reste vrai <i>drapeau fermé</i>, et c'est
+                pourquoi le drapeau existe.
+            </p>
             <p style="margin:0 0 10px;">
                 Et il n'y a qu'<b>un seul tirage de bruit par couche et par run</b>, appliqué à
                 la seule comparaison d'arrêt. La machine, elle, lit un flux continu de mesures
@@ -840,11 +1294,12 @@
                 que le bénéfice.</b> Corollaire : il favorise structurellement les stratégies
                 qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes héritées du
                 bloc, puisqu'il leur accorde une précision parfaite.
-                <br><br><b>Correctif</b> : bruiter <code>Ts_r</code> <i>avant</i> la détection,
-                avec le même &sigma;. Les trois questions deviennent alors des <b>mesures</b>.
-                Posé derrière un drapeau par défaut inactif — ce changement fera monter les taux
-                de plantage et baisser le bénéfice apparent de POEM, et c'est la mesure qui doit
-                trancher.
+                <br><br>✅ <b>Correctif POSÉ le 2026-08-06</b> : <code>Ts_r</code> porte le même
+                &sigma; <i>avant</i> la détection, derrière <code>poem_anchor_noise</code>, par
+                défaut inactif. Les trois questions sont devenues des <b>mesures</b> — voir le
+                <b>§2.1bis</b> pour le mécanisme, les nombres aléatoires communs, et ce qui reste
+                non fidèle (un plancher de plantage indépendant de &sigma;, qui est la signature
+                de la règle de détection manquante).
             </p>
         </div>
 
@@ -1148,6 +1603,75 @@
             <p>The <strong>layer importance map</strong> is built from Phase A: layers with higher P75 dynamics receive a larger continuity reward.</p>
         </div>
 
+                <h3>4.3bis 🔴 Le RENDEMENT dans l'objectif de la DP — <code>dp_yield_weight</code></h3>
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:20px 0;background:#fef2f2;">
+            <p style="margin:0 0 12px;">
+                La Phase A mesure le taux de dépôts non terminables <b>par couche et par longueur d'onde</b> et le
+                range dans chaque entrée. Puis <code>certus_strat_workers_pipeline.py</code> construisait la carte
+                donnée à la DP ainsi :
+            </p>
+            <div class="algo-step" style="margin:0 0 12px;">
+                <code>cost_map = {l: {x["wl"]: x["cost"] for x in items} …}</code>
+            </div>
+            <p style="margin:0 0 12px;">
+                🔴 <b>Le taux de plantage était jeté à cette ligne.</b> Il ne servait qu'à un <b>seuil binaire</b>
+                d'élimination : une &lambda; à 0,001 % et une à 0,106 % étaient traitées à l'identique, alors
+                qu'elles diffèrent d'un facteur cent sur la seule grandeur qui <b>se compose</b> sur la hauteur de
+                l'empilement.
+            </p>
+            <p style="margin:0 0 12px;">
+                <b>Pourquoi le logarithme.</b> Un dépôt se termine si <i>chaque</i> couche se termine :
+                $\text{rendement} = \prod_i (1-p_i)$, dont le logarithme est <b>additif</b> — exactement la forme
+                qu'une DP de Bellman optimise <i>exactement</i>, sans approximation. Ce n'est pas un proxy :
+                $-\log(1-p)$ est une composante <b>directe</b> de $P(\text{conforme})$, là où le coût en nanomètres
+                affiche $\rho = -0{,}04$ avec le résultat.
+            </p>
+            <div class="eq-box">
+                $$ \text{coût}(\text{couche}, \lambda) \;=\; \underbrace{c_{\text{nm}}}_{\text{erreur locale}}
+                \;+\; w \cdot \underbrace{\bigl(-\log(1-p)\bigr)}_{\text{log du rendement}} $$
+            </div>
+            <p style="margin:0 0 12px;">
+                <b>Le défaut, montré sur quatre &lambda; d'une même couche</b> — la moins chère en nanomètres est
+                aussi celle dont le dépôt ne se termine <i>jamais</i> :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">$w$</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;text-align:left;">classement, du moins cher au plus cher</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>0</b> (aujourd'hui)</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#fecaca;"><b>456</b> (p = 100 %), 454, 452, 450</td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">1</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">452, 450, 454, <b>456</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">200</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;background:#dcfce7;">450, 452, 454, 456</td></tr>
+            </table>
+            <p style="margin:0 0 12px;">
+                <b>À poids nul — l'objectif d'aujourd'hui — la DP classe première la &lambda; dont le dépôt ne se
+                termine jamais</b>, parce qu'elle est la moins chère en nanomètres. Elle dépense donc son budget à
+                construire des chemins qui passent par une couche impossible, avant qu'un couperet binaire ne les
+                supprime.
+            </p>
+            <p style="margin:0 0 12px;">
+                🔴 <b>UNE SOMME, PAS UN REMPLACEMENT — et deux mesures l'imposent.</b> Le plan proposait de
+                remplacer le coût en nanomètres par le seul rendement. Mais 📏 sur le juge de paix, la
+                <b>meilleure &lambda; de chacune des 47 couches a un taux de plantage NUL</b> : un objectif purement
+                rendement vaudrait zéro sur presque tous les chemins et la DP deviendrait <b>dégénérée</b>. Le
+                rendement <b>réordonne là où il est mesurable</b> et laisse le coût en nm départager ailleurs —
+                strictement plus d'information, jamais moins.
+            </p>
+            <p style="margin:0;">
+                ⚠️ <b>CETTE DONNÉE VIENT DE DEVENIR INFORMATIVE, ET PAS AVANT.</b> Tant que la détection se faisait
+                sur une courbe TMM parfaite, le taux de plantage valait zéro presque partout et cette carte aurait
+                été plate. <b>L'axe 4.1 n'était pas réalisable avant le bruit de lecture (§2.1bis) et la règle de
+                détection (§2.1ter).</b>
+                <br>⚠️ <b>Résolution</b> : $p$ est estimé sur $N_{runs}$ tirages, donc le plus petit taux non nul
+                vaut $1/N_{runs}$. En dessous, la carte vaut zéro et n'apporte rien.
+                <br>⚠️ <b>Le poids ne se devine pas</b> : à la tolérance de 0,107 % par couche, $-\log(1-p)$ vaut
+                $1{,}07\cdot10^{-3}$ nat ; pour peser autant que 0,2 nm — l'ordre de grandeur du coût médian mesuré
+                — il faut $w \approx 200$. <b>À balayer, pas à poser.</b> Défaut 0.
+            </p>
+        </div>
+
                 <h3>4.4 Full Monte Carlo Robustness Screening</h3>
                 <p>
                     <code>run_final_simulation_block</code> evaluates each candidate strategy under realistic
@@ -1166,9 +1690,59 @@
                     4. Filter non-finite robustness scores before final ranking.
                 </div>
 
+                <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
+                    <p style="margin:0 0 12px;font-weight:700;color:#166534;font-size:1.06em;">
+                        ✅ 2026-08-06 — la cible spectrale pondérée est ACHEMINÉE (mais dormante)
+                    </p>
+                    <p style="margin:0 0 12px;">
+                        <code>compute_batch_rmse</code> accepte désormais un vecteur de <b>poids</b>, et la
+                        Phase B construit sa cible à partir des zones <code>{on, lmin, lmax, tmin, tmax, w}</code>
+                        via <code>prepare_targets_vectorized</code> — <b>la fonctionnelle que DESIGN minimise
+                        déjà</b>. Les deux modules parlent enfin de la même chose.
+                    </p>
+                    <p style="margin:0 0 12px;">
+                        <b>Pas de drapeau supplémentaire</b> : c'est la <i>présence</i> de zones qui active
+                        l'axe&nbsp;3, et leur absence qui conserve le comportement d'avant, au bit près. Vérifié :
+                        poids omis, poids <code>None</code> et poids <b>uniformes</b> donnent tous trois exactement
+                        le même chiffre qu'avant, écart maximal <b>0,0</b>.
+                    </p>
+                    <p style="margin:0 0 12px;background:#fff;border:2px solid #15803d;border-radius:6px;padding:10px 14px;">
+                        🔴 <b>ET LE CONSTAT EST PLUS FORT QUE « MAL PONDÉRÉ ».</b> 📏 Les deux bandes du juge de
+                        paix font <b>exactement la même largeur — 141 points chacune sur 301</b>. Un RMSE uniforme
+                        est donc <i>littéralement incapable</i> de distinguer une stratégie qui rate la bande
+                        bloquée d'une stratégie qui rate la bande passante : les deux scores sont égaux <b>à la
+                        précision machine</b>. Ce n'est pas un manque de sensibilité, c'est une
+                        <b>indifférence exacte</b> — alors que l'exigence diffère d'un facteur ~500.
+                    </p>
+                    <p style="margin:0 0 12px;">
+                        📌 <b>Conséquence de premier ordre</b> : avec des zones correctes, la <b>transition
+                        540–560 nm reçoit un poids nul</b> — personne ne pilote la forme d'un front. Or le score
+                        actuel est essentiellement une mesure de <b>décalage du front</b> (front p95 à 9,2 points
+                        quand la bande passante vaut 1,7). <b>On cesse alors de juger les stratégies sur une
+                        grandeur que l'utilisateur n'a jamais demandée.</b>
+                    </p>
+                    <p style="margin:0 0 12px;">
+                        ⚠️ <b>Si aucune zone ne recouvre la grille, le score vaut $+\infty$, jamais 0.</b> Rendre 0
+                        ferait passer n'importe quelle stratégie pour parfaite — un score nul est le meilleur
+                        possible. C'est le mode de défaillance silencieux typique d'une configuration mal saisie.
+                    </p>
+                    <p style="margin:0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
+                        🔴 <b>DÉLIBÉRÉMENT INUTILISÉ — décision du physicien, 2026-08-06 :</b>
+                        <i>« La cible spectrale restera non pondérée jusqu'à nouvel ordre. »</i>
+                        <br>Le fichier du juge ne porte donc aucune clé <code>targets</code>, et le classement
+                        continue de porter sur l'écart au spectre <b>nominal, non pondéré</b> — chemin de calcul
+                        identique au bit près à celui d'avant. <b>C'est un choix assumé, pas un oubli</b>, et il
+                        faut le lire avec la conséquence énoncée plus haut : sur ce composant, le critère est
+                        <i>exactement indifférent</i> entre rater la bande bloquée et rater la bande passante, et
+                        le score reste dominé par le décalage du front.
+                        <br>Le jour où cela change, il suffit d'ajouter les zones : aucun code à écrire, aucun
+                        drapeau à lever.
+                    </p>
+                </div>
+
                 <div style="border:2px solid #dc2626;border-radius:8px;padding:14px 18px;margin:18px 0;background:#fef2f2;">
                     <p style="margin:0 0 10px;font-weight:700;color:#991b1b;">
-                        🔴 Le RMSE est mesuré contre le NOMINAL, pas contre la cible
+                        🔴 Le diagnostic d'origine — le RMSE mesuré contre le NOMINAL, pas contre la cible
                     </p>
                     <p style="margin:0 0 10px;">
                         L'étape&nbsp;1.d compare à <code>T_nom</code>, la transmission des
@@ -1393,6 +1967,41 @@
                     <code>reports/STRAT_observability_{timestamp}.json</code> after every run unless
                     <code>export_observability_json=False</code>. Contents: per-layer candidate counts, best wavelength,
                     best P95 cost, Monte Carlo run count, and scan wavelength count.
+                </div>
+
+                <h3>7.2bis Ce que l'opérateur voit — le rendement en tête de table</h3>
+                <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
+                    <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #15803d;padding-left:12px;">
+                        « Si 95 % des dépôts fonctionnent, c'est gagné. »
+                        <br><span style="font-style:normal;">— le physicien</span>
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        🔴 Le taux de plantage était calculé, servait de couperet, puis <b>disparaissait</b> : le
+                        seul critère qui parle à un fabricant n'apparaissait <b>nulle part</b> dans la table de
+                        comparaison des stratégies, qui montrait résolution, nombre de blocs, changements,
+                        &lambda; uniques, score et symétrie.
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        Une colonne <b><code>Yield&nbsp;%</code></b> a été insérée <b>avant</b> le score — dans
+                        l'ordre où se prend la décision, pas dans l'ordre où le code calcule. Elle vaut
+                        $100\,(1-p)$, se colorie sur le <b>seuil qui élimine réellement</b>
+                        (<code>CRASH_RATE_TOLERANCE</code>, importé plutôt que recopié : une colonne qui
+                        colorierait sur un autre seuil mentirait à l'opérateur), et son infobulle détaille les
+                        <b>trois modes de défaillance séparément</b> — niveau jamais atteint, comptage des points
+                        tournants divergent, $T(d)$ non monotone.
+                    </p>
+                    <p style="margin:0;">
+                        ⚠️ <b>En headless, la Phase A est muette par construction</b>, et il faut le savoir avant
+                        de conclure d'un silence. Deux familles de loggers coexistent :
+                        <code>logging.getLogger("W{n}")</code> écrit sur la console — d'où les lignes
+                        <code>[ROBUSTNESS]</code> et <code>[ELITE]</code> visibles dans les captures — tandis que le
+                        logger de l'application, construit par <code>setup_gui_logger</code>, ne porte
+                        <b>qu'un <code>QueueHandler</code> vers le panneau « Show Details »</b>. Or c'est CE logger
+                        que la Phase A utilise. 📏 Vérifié sur un run complet : seuls
+                        <code>[ROBUSTNESS]</code> et <code>[ELITE]</code> apparaissaient ; il a fallu passer par le
+                        JSON d'observabilité pour prouver qu'un filtre de Phase A avait bien mordu. Le banc de
+                        mesure branche désormais un handler console sur ce logger.
+                    </p>
                 </div>
 
                 <h3>7.3 Sensitivity Matrix (Legacy)</h3>

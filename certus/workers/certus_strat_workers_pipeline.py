@@ -2,6 +2,7 @@
 from typing import TYPE_CHECKING, Any
 from certus.core.certus_core import NUMERICAL_FAULT_EXCEPTIONS
 from certus.core.certus_strat_core import APP_CONTEXT
+from certus.core.certus_strat_ranking import build_yield_cost_map, combine_cost_and_yield
 from certus.utils.certus_strat_context import StratContext
 from certus.workers.certus_strat_workers_dto import WorkerThreadResult
 from certus.core.certus_metrology import ValidationStatus
@@ -99,9 +100,40 @@ class FullPipelineStrategy:
 
             worker.params["logger"].info(f"🔄 PHASE 3: Dynamic Programming Strategy Optimization ({len(blocks_range)} steps) - HYBRID ENGINE...")
 
+            # ── AXE 4.1 : LE RENDEMENT ENTRE DANS L'OBJECTIF DE LA DP ──────────
+            #
+            # 🔴 C'EST ICI QUE LA DONNEE ETAIT JETEE. Chaque entree de
+            # `raw_results_sq` porte `crash_rate` — le taux de depots non terminables
+            # par (couche, lambda), mesure par la Phase A. Cette ligne n'en retenait
+            # que `x["cost"]` : le plantage ne servait qu'a un seuil binaire, et une
+            # lambda a 0,001 % etait traitee comme une lambda a 0,106 %, alors qu'elles
+            # different d'un facteur cent sur la seule grandeur qui SE COMPOSE sur la
+            # hauteur de l'empilement.
+            #
+            # Le rendement d'un empilement vaut `prod(1 - p_i)`, dont le logarithme est
+            # ADDITIF : c'est exactement ce qu'une DP de Bellman optimise exactement.
+            #
+            # `dp_yield_weight = 0` (defaut) laisse la carte inchangee, donc le
+            # comportement d'avant au bit pres. La valeur ne se devine pas : elle se
+            # balaie. Voir `build_yield_cost_map` et `combine_cost_and_yield`.
             cost_map_sq_clean = {
                 l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
             }
+            _dp_yield_w = float(worker.params.get("dp_yield_weight", 0.0) or 0.0)
+            if _dp_yield_w > 0.0:
+                _yield_map = build_yield_cost_map(pre_calc_data["raw_results_sq"])
+                _n_informative = sum(
+                    1 for lm in _yield_map.values() for v in lm.values() if v > 0.0
+                )
+                _n_cells = sum(len(lm) for lm in _yield_map.values())
+                worker.params["logger"].info(
+                    f"   [RENDEMENT] DP sur cout + {_dp_yield_w:g} x (-log(1-p)) : "
+                    f"{_n_informative}/{_n_cells} cellules (couche, lambda) portent un "
+                    f"plantage mesurable. Les autres laissent le cout en nm departager."
+                )
+                cost_map_sq_clean = combine_cost_and_yield(
+                    cost_map_sq_clean, _yield_map, _dp_yield_w
+                )
 
             materials_db = worker.params.get("materials_db") or APP_CONTEXT.get("materials_db")
 

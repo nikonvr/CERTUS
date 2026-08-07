@@ -416,9 +416,16 @@ class _CorridorExportMixin:
             return
 
         start_dir = get_certus_last_dir()
-        # Fallback helper path check
+        # ⚠️ L'import local de `Path` a ete RETIRE, et ce n'etait pas cosmetique.
+        #
+        # `Path` est deja importe au niveau module (ligne 11). Un `from pathlib import
+        # Path` dans le corps de cette fonction en faisait une variable LOCALE sur toute
+        # sa portee — y compris a la ligne ci-dessous, qui s'execute AVANT l'affectation.
+        # Consequence : `UnboundLocalError` des que `get_certus_last_dir()` rend un
+        # chemin non vide, c'est-a-dire des la deuxieme utilisation de l'application.
+        # L'export CSV des indices etait donc casse en pratique. Signale par F821/F823,
+        # que l'`extend-ignore` du pyproject masquait.
         if not start_dir or not Path(start_dir).is_dir():
-            from pathlib import Path
             start_dir = str(Path(__file__).parent.absolute())
 
         suggested = str(Path(start_dir) / "certus_index_spline_nk.csv")

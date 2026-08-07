@@ -1229,14 +1229,38 @@
                 grille de contrôle. <code>_resolve_monitoring_wavelength_grid</code> rend
                 désormais la seule grille de balayage : <b>126 &lambda; au pas de 2 nm</b> sur
                 450–700 nm. Le second échec — juger sur le mauvais critère — reste ouvert.
-                <br>⚠️ <b>ATTRIBUTION EN COURS DE MESURE.</b> Ce correctif a changé DEUX choses à
-                la fois : le <b>pas</b> et la <b>plage</b>. Le gain mesuré de 5,7 sur le score ne
-                peut donc pas être imputé au pas seul. 👤 <i>« Seul le calcul complet de simulation
-                peut trancher »</i> — un run à pas 1 nm contre un run à pas 2 nm, <b>plage
-                identique des deux côtés</b>, est en cours. Ce n'est pas qu'une affaire d'ELITE :
-                le pas change le nombre de candidates que la Phase A évalue par couche, 126 contre
-                251. La question posée est donc bien <b>une grille de contrôle plus fine
-                aide-t-elle, de bout en bout ?</b>
+                <br>⚠️ <b>ATTRIBUTION RÉFUTÉE PAR LA MESURE — et c'est mon erreur.</b> Ce correctif
+                avait changé DEUX choses à la fois : le <b>pas</b> et la <b>plage</b>. J'avais
+                imputé le gain de 5,7 au passage à 2 nm, en avançant qu'une grille plus fine
+                gaspillerait le budget en candidates redondantes. 👤 <i>« Seul le calcul complet de
+                simulation peut trancher »</i>. Le run isolant — pas 1 nm contre pas 2 nm,
+                <b>plage identique des deux côtés</b>, tout le reste inchangé — a été fait :
+                <table style="border-collapse:collapse;margin:10px 0;font-size:0.95em;">
+                    <tr><th style="border:1px solid #ccc;padding:4px 10px;">pas de balayage</th>
+                        <th style="border:1px solid #ccc;padding:4px 10px;">RESULT</th>
+                        <th style="border:1px solid #ccc;padding:4px 10px;">bande passante p95</th>
+                        <th style="border:1px solid #ccc;padding:4px 10px;">durée</th>
+                        <th style="border:1px solid #ccc;padding:4px 10px;">stratégie gagnante</th></tr>
+                    <tr><td style="border:1px solid #ccc;padding:4px 10px;">2 nm — 126 &lambda;</td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;">0,005283</td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;">0,570</td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;">1211 s</td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;">4 blocs</td></tr>
+                    <tr><td style="border:1px solid #ccc;padding:4px 10px;"><b>1 nm — 251 &lambda;</b></td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;"><b>0,002898</b></td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;"><b>0,418</b></td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;">1322 s</td>
+                        <td style="border:1px solid #ccc;padding:4px 10px;"><b>2 blocs</b> (544 et 531 nm)</td></tr>
+                </table>
+                <b>1 nm gagne</b> : score ÷1,82, bande passante &minus;27 %, pour +9 % de temps.
+                Le gain de 5,7 ne venait donc pas du pas mais de la <b>restriction de plage</b>.
+                Et la prédiction du gaspillage était fausse dans l'autre sens : la grille fine
+                trouve une stratégie <b>plus simple</b> à exécuter — deux blocs au lieu de quatre.
+                Le pas ne joue pas qu'à l'étage ELITE : il fixe le nombre de candidates que la
+                Phase A évalue par couche, 251 contre 126.
+                <br>👤 La machine sait se positionner au nanomètre : <b>1 nm est retenu</b>.
+                Une réplication à graine indépendante est en cours ; elle ne pourra que
+                confirmer ou nuancer l'ampleur, pas le sens.
                 <br><br><b>« Prometteuses » recouvrait trois choses distinctes</b> qu'on
                 confondait en un seul coût : le <b>rendement</b> se <i>prédit</i>, la
                 <b>diversité</b> se <i>construit</i>, la <b>précision</b> ne se prédit pas —

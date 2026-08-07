@@ -107,6 +107,44 @@ Sortie : `<coller>` — doit être exactement `All checks passed!`
 
 ---
 
+## COMMIT DE DÉPART — le point zéro
+
+```
+47821e221a2a19104fc847649a3c9d0a624e8222
+```
+
+**Ne perds jamais ce hash.** C'est lui qui permettra de voir, plus tard, exactement ce que
+tu as changé :
+
+```bat
+git log --oneline --stat 47821e221a2a19104fc847649a3c9d0a624e8222..HEAD
+```
+
+Tout ce qui apparaît dans cette liste et n'a pas d'entrée correspondante dans ce journal
+sera traité comme **une modification non déclarée**, donc suspecte.
+
+### ⚠️ Un message d'erreur git que tu vas voir, et qui n'est PAS de ta faute
+
+À certains commits, git affichera :
+
+```
+fatal: bad tree object f26d9e1a8fe29a9705111e6b7b80262871ff3d4b
+error: failed to perform geometric repack
+```
+
+**Ton commit a quand même réussi.** Vérifie-le avec `git log -1`.
+
+Cause : un vieux commit orphelin (`01047a1b`, du 2 juillet) a un arbre manquant dans la base
+d'objets. Il n'est rattaché à **aucune branche**, il n'a donc aucun effet sur le code — il
+fait seulement échouer le compactage automatique. Ce compactage a été désactivé dans cette
+copie (`git config gc.auto 0`), tu ne devrais donc plus le voir.
+
+**N'essaie pas de réparer la base d'objets git.** Ce n'est pas ton travail, et les commandes
+de réparation git peuvent détruire de l'historique. Si le message revient, note-le dans le
+journal et continue.
+
+---
+
 ## ÉTAT DE DÉPART — mesuré le 2026-08-06, avant toute intervention de Gemini
 
 Ces chiffres sont le **point de comparaison**. Toute mesure que tu feras doit leur être

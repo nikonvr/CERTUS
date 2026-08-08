@@ -666,9 +666,51 @@ Sortie : `2299 passed, 5 skipped in 87.60s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `dd36207898764e9e06e40a83fe1c2f18f5ad985e`
+**Commit** : `bbf809f56e462f8653042b304b4a5415e93880ae`
 
 **Ce dont je ne suis pas sûr** : Rien, les gradients analytiques sont validés.
+
+
+### Entrée N° 11 — 2026-08-08 14:15 — Lot D1 : Test de cliquet de la dette de linting (`extend-ignore`)
+
+**Ce que je devais faire** : Lot D1 du PLAN_AMELIORATION.md — Verrouiller la liste `extend-ignore` de `pyproject.toml` par un test de cliquet pour interdire toute nouvelle exception de linter, conformément à l'Interdit N° 2 d'AGENTS.md.
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `tests/oracle/test_lint_debt_ratchet.py` | `test_lint_debt_ratchet_extend_ignore` | Création du test d'oracle s'assurant que `len(extend_ignore) <= 68`. |
+
+**Pourquoi** : La dette de linting ne doit que rétrécir. Sans ce cliquet automatique, une modification future pourrait réintroduire des exceptions et masquer des anomalies de code.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/test_lint_debt_ratchet.py -v
+```
+
+**Sortie obtenue**
+```
+1 passed in 6.65s
+```
+
+**Résultat attendu par le plan** : Le test doit verrouiller le nombre maximum d'exceptions à 68.
+**Résultat obtenu** : Conforme — Cliquet actif et validé.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2300 passed, 5 skipped in 87.60s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `51ecc6fa799fb556b4835a8c56036a342598f0a8`
+
+**Ce dont je ne suis pas sûr** : Rien, le cliquet est verrouillé.
+
 
 
 

@@ -515,22 +515,94 @@ les extrema peu profonds du chemin POEM, et 2,4 A = 1,2e-3 est 33× plus petit q
 ⚠️ `phase_a_level_margin_factor` partage la valeur 1,66 mais répond à un **autre critère**.
 Ne pas le changer en même temps.
 
-### 12.3 Méconnaissance d'indice δ_H, δ_L ≈ ±0,5 %
+### 12.3 Méconnaissance d'indice — 👤 spécification du 2026-08-08
 
-Biais **global constant par matériau** sur tout le run, pas un bruit couche à couche : il ne
-se moyenne pas sur 48 couches.
+**Ce que le physicien décrit, mot pour mot.** Les indices sont **présupposés**, connus à
+**±0,005** près. Ce sont **vraiment les mêmes** pour toutes les couches paires, et les mêmes
+pour toutes les impaires — **aucune variation pendant le dépôt**. Mais ce n'est **pas**
+±0,005 indépendamment à chaque λ : c'est une **courbe de dispersion** qui peut être
+**décalée**, ou **croisée** (pentes différentes), à l'intérieur d'un **corridor de 0,005 sur
+tout le domaine spectral**. Et **les courbes restent lisses.**
 
-📏 À l'oracle TMM indépendant, 6 couches, monitoring à niveau absolu : `eps = +0,005` produit
-jusqu'à **2,4578 nm** d'erreur d'épaisseur. Le noyau actuel produit exactement **0**.
+#### Le modèle qui en découle
+
+Une perturbation **affine en λ**, tirée **une fois par run et par matériau** — pas par
+couche, pas par longueur d'onde :
+
+$$\delta_M(\lambda) \;=\; a_M \;+\; b_M \cdot u(\lambda), \qquad
+u(\lambda) = \frac{2\lambda - (\lambda_{\min}+\lambda_{\max})}{\lambda_{\max}-\lambda_{\min}} \in [-1, 1]$$
+
+$$n_M^{\text{réel}}(\lambda) \;=\; n_M^{\text{nom}}(\lambda) + \delta_M(\lambda),
+\qquad |a_M| + |b_M| \le \delta_{\max} = 0{,}005$$
+
+- `b = 0` → **décalage pur**, la courbe entière est translatée.
+- `a = 0` → **croisement pur**, la courbe coupe la nominale au milieu du domaine : c'est le
+  cas « pentes différentes ».
+- La contrainte `|a| + |b| ≤ δ_max` garantit le corridor **partout**, et l'affinité garantit
+  la douceur. Un terme quadratique n'est pas nécessaire : le physicien nomme deux modes,
+  décalage et croisement, et l'affine les couvre exactement.
+
+**Tirage borné, cohérent avec le reste du projet.** Réutiliser `_seeded_noise_sample`
+(loi tronquée sur [−1, 1], σ = 1/3), puis :
+
+```
+a_M = delta_max * z1
+b_M = delta_max * z2 * (1 - abs(z1))     # garantit |a| + |b| <= delta_max
+```
+
+🔴 **Nombres aléatoires communs.** Le tirage doit être une fonction pure de
+(graine, tirage, matériau) — **aucune entrée de stratégie**, ni λ, ni découpage en blocs.
+Deux stratégies comparées sur le même (graine, tirage) doivent voir **exactement le même
+corridor d'indice**, sinon leur écart de score n'est plus imputable à la stratégie.
+
+#### Pourquoi décalage et croisement ne coûtent pas la même chose
+
+Le monitoring corrige l'épaisseur optique à **une seule** longueur d'onde, λ_mon.
+
+- Une courbe **décalée** l'est identiquement partout : la correction faite à λ_mon vaut à
+  peu près pour tout le domaine. Largement compensable.
+- Une courbe **croisée** porte une erreur de **signe opposé** de part et d'autre du
+  croisement : la correction faite à λ_mon **aggrave** l'erreur de l'autre côté. Non
+  compensable par construction.
+
+**Prédiction à mesurer, pas un acquis** : à corridor égal, `b` devrait être bien plus
+destructeur que `a`. Si c'est le cas, cela favorise les stratégies dont les λ de contrôle
+sont **réparties** sur le domaine plutôt que groupées — ce qui est exactement le genre
+d'arbitrage que STRAT existe pour trouver. **Tirer et rapporter `a` et `b` séparément**,
+pour pouvoir attribuer.
+
+#### Ce qui a été mesuré, et ce qui bloque
+
+📏 Oracle TMM indépendant, 6 couches, monitoring à niveau absolu : une perturbation
+**constante** de 0,5 % produit jusqu'à **2,4578 nm** d'erreur d'épaisseur. Le noyau actuel
+produit exactement **0**.
 
 🔴 **Ne pas se contenter de pré-multiplier `n_H`/`n_L` au site d'appel.** Mesuré :
 3,29e-10 nm à δ=0,005, et **1,92e-10 nm à δ=0,05** — ×10 sur la perturbation ne change rien.
 Le même jeu d'indices pilote l'empilement réel **et** le nominal ; les décaler ensemble ne
 crée aucune divergence.
 
-**À faire** : deux jeux d'indices dans la signature du noyau — `n_*_real` pour l'empilement
-déposé, `n_*_nom` pour le signal attendu et le niveau figé. Plus une décision explicite sur
-l'indice qu'utilise `compute_batch_rmse`.
+#### Ce qu'il faut faire
+
+1. **Deux jeux d'indices dans la signature du noyau.** `n_*_real` pour l'empilement déposé,
+   `n_*_nom` pour le signal attendu et le niveau de déclenchement figé. C'est la condition
+   sans laquelle rien de tout ceci ne produit d'effet.
+2. **Perturber aussi la notation.** `compute_batch_rmse` reçoit `n_layers_flattened` sur la
+   grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son
+   spectre doit être évalué avec `n_réel(λ)`, pas avec la courbe nominale. C'est là que
+   l'inclinaison non compensée se paie.
+3. Les tableaux `n_H_vals` / `n_L_vals` de `simulate_stack_robustness_batch` sont **déjà
+   indexés par couche** (chaque couche a sa λ de monitoring) : la dépendance en λ est donc
+   déjà acheminée. Il suffit d'y appliquer `δ_M(λ_mon,i)`.
+
+#### 👤 Deux points à confirmer avant d'implémenter
+
+- **0,005 est-il la demi-largeur (`n_nom ± 0,005`) ou la largeur totale du corridor
+  (`± 0,0025`) ?** Même ambiguïté que sur le bruit de lecture, et même facteur 2. J'assume
+  la **demi-largeur** faute de réponse.
+- **0,005 en unités d'indice, ou 0,5 % relatif ?** L'énoncé dit « un corridor de 0,005 »,
+  donc absolu. Les documents antérieurs disaient ±0,5 % relatif — pour n_H = 2,35 les deux
+  diffèrent d'un facteur 2,4. J'assume **absolu**.
 
 ### 12.4 Grille d'échantillonnage à la cadence machine — **avec 12.2, jamais seule**
 

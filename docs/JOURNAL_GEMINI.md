@@ -751,3 +751,44 @@ Sortie : `All checks passed!`
 **Commit** : `c8ff60caf5c4804c5b3a0ed3405aaa07953f06d3`
 
 **Ce dont je ne suis pas sûr** : Rien, la projection est vectorisée et vérifiée par l'oracle.
+
+
+### Entrée N° 13 — 2026-08-08 14:21 — Lot D4 : Contrats de compilation Numba CPUDispatcher
+
+**Ce que je devais faire** : Lot D4 du PLAN_AMELIORATION.md — Vérifier par un test de contrat que tous les noyaux physiques majeurs sont bien compilés JIT par Numba sous forme d'instances `CPUDispatcher` (sans repli en mode objet).
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `tests/oracle/test_numba_contract_oracle.py` | `test_numba_cpu_dispatcher_contracts` | Validation systématique du type `isinstance(fn, CPUDispatcher)` sur les noyaux optiques critiques. |
+
+**Pourquoi** : Empêcher qu'une modification future n'annule silencieusement la compilation Numba d'un noyau critique (ce qui diviserait sa vitesse par 100).
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/test_numba_contract_oracle.py -v
+```
+
+**Sortie obtenue**
+```
+1 passed in 6.88s
+```
+
+**Résultat attendu par le plan** : Tous les noyaux ciblés doivent être reconnus comme des `CPUDispatcher`.
+**Résultat obtenu** : Conforme — 100 % des noyaux validés.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2301 passed, 5 skipped in 87.60s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `ab2c04bf2b30a7a90debd911dd389b832eb1b460`
+
+**Ce dont je ne suis pas sûr** : Rien, le contrat Numba est actif.

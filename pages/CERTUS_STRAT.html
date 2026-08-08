@@ -524,6 +524,221 @@
         <!-- ================================================================ -->
         <h2>2. Optical Monitoring Simulation</h2>
 
+        <h3>2.0 La machine réelle — spécifications mesurées et modèle figé</h3>
+        <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
+            <p style="margin:0 0 10px;">
+                Tout le §2 simule une machine précise : un <b>Bühler Leybold Optics OMS 5100</b>. Longtemps le
+                modèle a reposé sur des constantes numériques choisies pour leur commodité — 64 points de
+                balayage, 16 par couche d'historique — dont la page admettait qu'elles n'étaient <i>pas</i> la
+                cadence de la machine. 👤 Les spécifications ci-dessous ont été obtenues du physicien le
+                <b>2026-08-08</b> et remplacent ces choix.
+            </p>
+
+            <h4 style="margin:14px 0 6px;">Ce qui est donné</h4>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Grandeur</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Valeur</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Rotation du plateau</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>240 tr/min</b> — période 250 ms</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Géométrie</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">plateau &asymp; 1 m de diamètre, témoin de 20 mm <b>au bord</b></td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Positions vues par tour</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>3</b> : témoin, noir, vide</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Vitesse de dépôt</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">&asymp; 0,5 nm/s</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Bruit de lecture</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">le signal oscille de 45,50 à 45,55 % T &mdash; <b>largeur totale 0,10 point</b>, soit &plusmn;0,05</td></tr>
+            </table>
+
+            <h4 style="margin:14px 0 6px;">Ce qui s'en déduit</h4>
+            <p style="margin:0 0 10px;">
+                Le témoin est au bord d'un plateau d'un mètre tournant à 4 tours par seconde :
+            </p>
+            <div class="eq-box">
+                $$ v_{\text{tangentielle}} = 2\pi R f = 2\pi \cdot 0{,}5 \cdot 4 = 12{,}6\ \text{m/s}
+                \qquad t_{\text{transit}} = \frac{20\ \text{mm}}{12{,}6\ \text{m/s}} = 1{,}6\ \text{ms} $$
+                $$ \gamma = \frac{v^2}{R} = 316\ \text{m/s}^2 \approx \mathbf{32\,g}
+                \qquad \text{rapport cyclique} = \frac{1{,}6\ \text{ms}}{250\ \text{ms}} = 0{,}64\ \% $$
+            </div>
+            <p style="margin:0 0 10px;">
+                Une lecture témoin par tour, donc <b>4 Hz</b>. À 0,5 nm/s cela donne la grandeur qui gouverne
+                tout le reste :
+            </p>
+            <div class="eq-box">
+                $$ \Delta d_{\text{échantillon}} \;=\; \frac{v_{\text{dépôt}}}{f_{\text{échantillonnage}}}
+                \;=\; \frac{0{,}5\ \text{nm/s}}{4\ \text{Hz}} \;=\; \mathbf{0{,}125\ nm} $$
+            </div>
+
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+                🔴 <b>LA ROTATION MOYENNE LE DÉPÔT MAIS ÉCHANTILLONNE LA MESURE.</b> C'est la même mécanique et
+                l'effet statistique est opposé. Le substrat passe des dizaines de fois au-dessus de la source
+                pendant une couche — c'est la raison d'être de la rotation, l'uniformité. Mais le faisceau ne
+                voit le témoin que 1,6 ms par tour : <b>chaque point rapporté EST un passage</b>, et rien ne se
+                moyenne. L'instrument jette 99,4 % de la lumière disponible.
+            </p>
+
+            <p style="margin:0 0 10px;">
+                <b>Écart au modèle antérieur, et il est massif.</b> Le balayage numérique prenait 64 points sur
+                $3\times$ l'épaisseur nominale, soit 4,76 nm entre deux points pour une couche de 100 nm, et 16
+                points par couche d'historique. La machine en prend un tous les 0,125 nm :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;"></th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">Machine</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">Modèle antérieur</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">Facteur</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Pas spatial</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,125 nm</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">4,76 nm</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>38&times;</b></td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Points / couche de 100 nm</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">800</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">21</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"></td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">Historique, par couche relue</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">800</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">16</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>50&times;</b></td></tr>
+            </table>
+
+            <h4 style="margin:14px 0 6px;">🔒 Le modèle figé de la chaîne de lecture</h4>
+            <p style="margin:0 0 10px;">
+                L'OMS 5100 est <b>breveté</b> et son traitement du signal restera opaque. Continuer à
+                interroger ses entrailles ne produirait que des paramètres libres, et un modèle à paramètres
+                libres ne prouve rien. 👤 <b>Décision du 2026-08-08 : poser une hypothèse raisonnable, l'écrire,
+                et s'y tenir.</b> Ce qui suit est un <b>postulat de modélisation</b>, pas une spécification
+                constructeur.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">#</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Postulat</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">Statut</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">1</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Une lecture témoin par tour, 4 Hz &rArr; un échantillon tous les 0,125 nm</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">👤 déduit</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">2</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Bruit <b>additif</b>, borné à &plusmn;0,05 point ($A = 5\cdot10^{-4}$), $\sigma = A/3$, tirages indépendants entre lectures</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">👤 confirmé</td></tr>
+                <tr style="background:#fff;"><td style="border:1px solid #67e8f9;padding:4px 10px;">3</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">La chaîne de détection <b>moyenne sur 2 s</b>, soit une moyenne glissante de <b>$k = 8$ lectures</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">🔒 figé</td></tr>
+                <tr style="background:#fff;"><td style="border:1px solid #67e8f9;padding:4px 10px;">4</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Seuil de détection = <b>3&sigma; du signal lissé</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">🔒 figé</td></tr>
+                <tr style="background:#fff;"><td style="border:1px solid #67e8f9;padding:4px 10px;">5</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>Aucun retard</b> : le logiciel anticipe la valeur de trigger, et l'extremum enregistré est l'extremum lui-même</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">🔒 figé</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">6</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Marge de sélection des &lambda; : 5&sigma; du bruit <b>brut</b> aujourd'hui, 10&sigma; à évaluer</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">👤 fourchette</td></tr>
+                <tr style="background:#fff;"><td style="border:1px solid #67e8f9;padding:4px 10px;">7</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">Quantification de l'arrêt : $U(0\,;\,0{,}125\ \text{nm})$, strictement positive</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">🔒 découle de 1</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                <b>Hors du modèle, et cela le reste</b> : &sigma; dépendant de $T$ ou de &lambda;, grenaille,
+                bruit multiplicatif ; bruit <i>corrélé</i> d'un tour à l'autre (voilage, faux-rond, gigue de
+                déclenchement — pourtant plausibles à 32 g et 12,6 m/s) ; tout filtre autre que la moyenne
+                glissante.
+            </p>
+            <p style="margin:0;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+                <b>Ce qui rouvrirait légitimement le postulat</b> : un dépôt réel du dichroïque dont le taux de
+                plantage mesuré s'écarterait nettement du taux prédit. <b>Rien d'autre — et surtout pas un
+                raisonnement.</b> Ce projet a déjà payé trois fois pour avoir cru un raisonnement sur le bruit
+                (§2.1quinquies).
+            </p>
+        </div>
+
+        <h3>2.0bis Le lissage change le SENS du seuil de détection</h3>
+        <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
+            <p style="margin:0 0 10px;">
+                Le §2.1ter dérive le seuil d'hystérésis d'une borne d'amplitude sur les lectures <b>brutes</b> :
+                le tirage étant borné à $\pm A$, l'écart maximal que le bruit seul peut afficher vaut $2A$, donc
+                un seuil $\ge 2A$ interdit toute fausse inversion. Ce raisonnement est correct — <b>mais il
+                s'applique à une machine qui lirait brut, et l'OMS ne lit pas brut.</b>
+            </p>
+            <p style="margin:0 0 10px;">
+                📖 Cette page le pressentait déjà : Zideluns p. 112 note qu'on peut abaisser le seuil
+                d'amplitude <i>« en augmentant le temps de traitement du signal »</i>, ce que le §2.1bis
+                commentait par « la machine <b>filtre</b> ». 👤 Confirmé en 2026 : la moyenne porte sur
+                <b>environ 2 secondes</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                Le lissage agit sur deux fronts, et <b>le second domine</b> :
+            </p>
+            <ul style="margin:0 0 10px;">
+                <li><b>Amplitude</b> — moyenner $k$ lectures divise l'écart-type par $\sqrt{k}$. À $k = 8$, le
+                    tremblement passe de 0,10 à 0,035 point.</li>
+                <li><b>Corrélation</b> — deux moyennes glissantes voisines partagent 7 lectures sur 8 et ne
+                    peuvent donc pas s'écarter brutalement. Fabriquer une fausse inversion exigerait un
+                    basculement <b>cohérent</b> du bruit sur toute la fenêtre, bien plus rare qu'une lecture
+                    haute suivie d'une lecture basse.</li>
+            </ul>
+            <p style="margin:0 0 10px;">
+                <b>Conséquence contre-intuitive : le seuil DESCEND.</b> En gardant
+                <code>tp_hysteresis_factor</code> exprimé en multiples de l'amplitude <i>brute</i> $A$, le
+                critère « 3&sigma; du signal lissé » s'écrit :
+            </p>
+            <div class="eq-box">
+                $$ \texttt{tp\_hysteresis\_factor} \;=\; \frac{3\,\sigma_{\text{lissé}}}{A}
+                \;=\; \frac{3}{3\sqrt{k}} \;=\; \frac{1}{\sqrt{k}}
+                \qquad k = 8 \;\Longrightarrow\; \mathbf{0{,}354} $$
+            </div>
+            <p style="margin:0 0 10px;">
+                Contre 1,66 auparavant : <b>4,7&times; plus bas</b>, sur un signal 2,8&times; plus calme. C'est
+                meilleur sur les <i>deux</i> faces du problème — moins de faux points tournants <b>et</b>
+                meilleure détection des vrais extrema peu marqués, qui est la face que personne n'avait
+                mesurée.
+            </p>
+
+            <p style="margin:0 0 10px;">
+                📏 <b>Ce que coûte la lecture brute</b>, mesuré sur signal propre <b>plat</b> — le pire cas —
+                avec le bruit réel, 20 000 tirages, sans aucun TMM. Fraction des couches où le bruit
+                <b>fabrique</b> un point tournant :
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#cffafe;">
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;text-align:left;">Seuil</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">$N=80$ (modèle antérieur)</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">$N=320$</th>
+                    <th style="border:1px solid #67e8f9;padding:4px 10px;">$N=800$ (cadence machine)</th></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">$1{,}66\,A$ (= 5&sigma;, valeur employée)</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>32,945 %</b></td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">92,995 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>99,935 %</b></td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">$2{,}00\,A$ (borne du §2.1ter)</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,480 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">7,660 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">30,525 %</td></tr>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">$2{,}40\,A$</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,000 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,000 %</td>
+                    <td style="border:1px solid #67e8f9;padding:4px 10px;">0,000 %</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                <b>Contrôle de la méthode (§2.1quinquies)</b> : à $N=800$ et seuil $1{,}66\,A$, diviser le bruit
+                par deux fait tomber la fuite à <b>0,000 %</b>. Elle dépend donc bien du bruit — ce n'est pas un
+                artefact.
+            </p>
+            <p style="margin:0 0 10px;">
+                ⚠️ <b>Le résidu à $2{,}00\,A$ n'est pas de la physique.</b> C'est l'atome de probabilité à
+                l'écrêtage $\pm 1$ du tirage : quand deux échantillons y tombent, $\max - v$ vaut $2A$ à
+                l'arrondi près et la comparaison stricte devient un pile ou face en virgule flottante. Le
+                mécanisme prédit 0,5 % à $N=80$ ; la mesure donne 0,48 %. La borne « $\ge 2A$ » est donc juste
+                en arithmétique exacte et <b>marginale en flottant</b>.
+            </p>
+            <p style="margin:0;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+                🔴 <b>LA GRILLE ET LE LISSAGE SONT INDISSOCIABLES.</b> La fenêtre se compte en lectures machine :
+                elle n'a aucun sens tant que le balayage n'est pas à 0,125 nm. Mais raffiner la grille
+                <i>seule</i> fait passer la fabrication de 33 % à 99,9 %. Les deux se compensent exactement comme
+                dans la réalité. <b>Mesurer un taux de plantage entre les deux étapes ne produirait qu'un chiffre
+                faux</b>, et l'on chercherait un bug de physique qui n'existe pas.
+            </p>
+        </div>
+
         <h3>2.1 Noise Model — Gaussian (Production Mode)</h3>
         <p>
             <code>generate_noise_array</code> generates gaussian noise for all Monte Carlo simulations. This is the
@@ -633,6 +848,14 @@
         </div>
 
         <h3>2.1ter La règle de détection d'un point tournant — <code>tp_hysteresis_factor</code></h3>
+        <p style="margin:0 0 10px;border-left:5px solid #b45309;background:#fffbeb;padding:10px 14px;">
+            ⚠️ <b>Section partiellement supersédée par le §2.0bis.</b> La dérivation ci-dessous — seuil
+            $\ge 2A$ pour qu'un bruit borné à $\pm A$ ne puisse jamais fabriquer d'inversion — reste
+            <b>exacte</b>, mais elle suppose que la machine compare des lectures <b>brutes</b>. 👤 Elle ne le
+            fait pas : elle moyenne sur environ 2 s. Le seuil s'applique donc au signal <b>lissé</b>, et vaut
+            $1/\sqrt{k} = 0{,}354$ pour $k = 8$ — soit <b>4,7&times; plus bas</b> que la valeur discutée ici.
+            Lire le §2.0bis avant d'appliquer quoi que ce soit de cette section.
+        </p>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
                 Bruiter le signal ne suffit pas : il faut aussi dire <b>comment la machine le lit</b>. Le modèle
@@ -819,6 +1042,135 @@
                 <code>wavelength_change_penalty</code> <b>1,0 au lieu de 1,2</b>, qui neutralise le seul coût
                 explicite d'un changement de longueur d'onde. <b>Le fichier sur lequel tout le monde diagnostique
                 était celui qui dégradait le plus le résultat.</b>
+            </p>
+        </div>
+
+        <h3>2.1sexies L'invariance affine de POEM — le théorème, et pourquoi le code le niait</h3>
+        <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
+            <p style="margin:0 0 10px;">
+                L'argument qui justifie POEM tient en une ligne. Si l'instrument subit une <b>dérive
+                d'étalonnage photométrique</b> — un gain $a$ et un décalage $b$ inconnus du contrôleur —
+                le signal mesuré vaut $T_{\text{mes}} = a\,T + b$. Les <b>deux ancres</b> subissent la même
+                transformation, donc le niveau reporté par POEM aussi :
+            </p>
+            <div class="eq-box">
+                $$ T_{\text{cible}}^{\text{mes}} \;=\; a T_{\text{prev}} + b \;+\; p\left[(a T_{\text{last}} + b) - (a T_{\text{prev}} + b)\right]
+                \;=\; a\left[T_{\text{prev}} + p\,(T_{\text{last}} - T_{\text{prev}})\right] + b \;=\; a\,T_{\text{cible}} + b $$
+            </div>
+            <p style="margin:0 0 10px;">
+                Le contrôleur s'arrête quand $a\,T(d) + b = a\,T_{\text{cible}} + b$, c'est-à-dire quand
+                $T(d) = T_{\text{cible}}$ : <b>exactement l'épaisseur voulue</b>. La compensation est obtenue
+                par <b>changement de variable</b>, pas par un coefficient réglé à la main. POEM est donc
+                <b>rigoureusement invariant</b> sous cette classe d'erreurs, et le <b>repli absolu ne l'est
+                pas</b> — c'est tout l'intérêt du mécanisme, et c'est la seule chose qu'une simulation doit
+                vérifier.
+            </p>
+
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #7c3aed;border-radius:6px;padding:10px 14px;">
+                🔴 <b>LE CODE ANNULAIT SA PROPRE DISTORSION EN TROIS ENDROITS</b>, et aurait donc fait conclure
+                l'inverse de la vérité. L'inversion parabolique finale ajustait le modèle <b>non distordu</b>
+                puis le résolvait contre une cible <b>distordue</b> — deux membres, deux unités. Le repli absolu
+                pré-distordait sa cible en $a\,T_{\text{nom}} + b$, ce qui rendait au contrôleur l'étalonnage
+                qu'il est <i>par hypothèse</i> censé avoir perdu. Et le test de swing minimal mettait son propre
+                seuil à l'échelle par $a$, annulant le gain exactement.
+            </p>
+            <p style="margin:0 0 10px;">
+                📏 Mesuré sur 6 couches quart d'onde, monitoring à 610 nm, erreur amont de 2 nm, bruit nul.
+                <b>Écart attendu par le théorème : zéro.</b>
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#ede9fe;">
+                    <th style="border:1px solid #c4b5fd;padding:4px 10px;text-align:left;">Distorsion</th>
+                    <th style="border:1px solid #c4b5fd;padding:4px 10px;">Avant correction</th>
+                    <th style="border:1px solid #c4b5fd;padding:4px 10px;">Après correction</th></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:4px 10px;">$a = 0{,}9574$, $b = 0$</td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;"><b>&minus;6,60 nm</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;">0</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:4px 10px;">$a = 1{,}05$, $b = 0$</td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;"><b>+10,02 nm</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;">0</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:4px 10px;">$a = 1$, $b = 0{,}02$</td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;"><b>+6,39 nm</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;">0</td></tr>
+                <tr style="background:#faf5ff;"><td style="border:1px solid #c4b5fd;padding:4px 10px;"><b>Écart maximal sur 5 étalonnages</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;">&mdash;</td>
+                    <td style="border:1px solid #c4b5fd;padding:4px 10px;"><b>$2{,}19\cdot10^{-10}$ nm</b></td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                La branche de <b>repli absolu</b>, elle, devient enfin sensible : sur une couche à faible
+                contraste, une chute de gain de 4,3 % suffit à rendre le niveau visé <b>inatteignable</b>, et le
+                noyau rend la sentinelle <code>CRASH_LEVEL_UNREACHABLE</code>. C'est le contraste que
+                l'expérience doit produire — POEM immunisé, niveau absolu perdu.
+            </p>
+            <p style="margin:0;">
+                ⚠️ <b>Une leçon de méthode plus qu'un correctif.</b> Le défaut était invisible parce que les
+                paramètres valaient $(1{,}0\;;\;0{,}0)$ par défaut, et qu'aucun appelant ne les passait. Un
+                paramètre jamais activé n'est pas un paramètre inactif : c'est du <b>code non vérifié</b> qui
+                attend d'être cru sur parole. Cf. §2.1quinquies.
+            </p>
+        </div>
+
+        <h3>2.1septies L'incertitude d'indice — un corridor de dispersion, pas un scalaire</h3>
+        <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
+            <p style="margin:0 0 10px;">
+                👤 <b>Ce que décrit le physicien (2026-08-08).</b> Les indices sont <b>présupposés</b>, connus à
+                <b>&plusmn;0,005</b> près — en <b>unités d'indice, absolues</b>, et c'est une <b>demi-largeur</b>.
+                Ce sont <i>vraiment</i> les mêmes pour toutes les couches paires, et les mêmes pour toutes les
+                impaires : <b>aucune variation pendant le dépôt</b>. Mais ce n'est <b>pas</b> &plusmn;0,005
+                indépendamment à chaque &lambda; — c'est une <b>courbe de dispersion</b> qui peut être
+                <b>décalée</b>, ou <b>croisée</b> (pentes différentes), à l'intérieur d'un corridor de 0,005 sur
+                tout le domaine spectral. Et <b>les courbes restent lisses</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                Le modèle qui en découle est une perturbation <b>affine en &lambda;</b>, tirée <b>une fois par
+                run et par matériau</b> :
+            </p>
+            <div class="eq-box">
+                $$ \delta_M(\lambda) = a_M + b_M\,u(\lambda), \qquad
+                u(\lambda) = \frac{2\lambda - (\lambda_{\min}+\lambda_{\max})}{\lambda_{\max}-\lambda_{\min}} \in [-1,1] $$
+                $$ n_M^{\text{réel}}(\lambda) = n_M^{\text{nom}}(\lambda) + \delta_M(\lambda),
+                \qquad |a_M| + |b_M| \le \delta_{\max} = 0{,}005 $$
+            </div>
+            <p style="margin:0 0 10px;">
+                $b = 0$ donne le <b>décalage pur</b> ; $a = 0$ donne le <b>croisement pur</b>, la courbe coupant
+                la nominale au milieu du domaine. La contrainte $|a|+|b| \le \delta_{\max}$ garantit le corridor
+                <i>partout</i>, et l'affinité garantit la douceur. Un terme quadratique serait superflu : le
+                physicien nomme deux modes, et l'affine les couvre exactement.
+            </p>
+
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #7c3aed;border-radius:6px;padding:10px 14px;">
+                🔴 <b>DÉCALAGE ET CROISEMENT NE COÛTENT PAS LA MÊME CHOSE, et c'est le cœur du sujet.</b>
+                Le monitoring corrige l'épaisseur optique à <b>une seule</b> longueur d'onde, $\lambda_{\text{mon}}$.
+                Une courbe <b>décalée</b> l'est identiquement partout : la correction faite à
+                $\lambda_{\text{mon}}$ vaut à peu près pour tout le domaine, l'erreur est largement compensable.
+                Une courbe <b>croisée</b> porte une erreur de <b>signe opposé</b> de part et d'autre du
+                croisement : la correction faite à $\lambda_{\text{mon}}$ <b>aggrave</b> l'erreur de l'autre côté.
+                Elle n'est pas compensable par construction.
+                <br><br>
+                <b>Prédiction à mesurer, pas un acquis</b> : à corridor égal, $b$ devrait être bien plus
+                destructeur que $a$. Si c'est confirmé, cela favorise les stratégies dont les &lambda; de
+                contrôle sont <b>réparties</b> sur le domaine plutôt que groupées — exactement le genre
+                d'arbitrage que STRAT existe pour trouver. Tirer et rapporter $a$ et $b$ <b>séparément</b>, pour
+                pouvoir attribuer.
+            </p>
+
+            <p style="margin:0 0 10px;">
+                ⚠️ <b>Le corridor absolu mord plus fort sur le bas indice.</b> 0,005 sur $n_H = 2{,}35$ vaut
+                0,21 % en relatif ; sur $n_L = 1{,}46$ il vaut 0,34 %. Comme l'épaisseur optique est $n\,d$,
+                l'erreur <i>relative</i> d'épaisseur optique est l'erreur <i>relative</i> d'indice : les couches
+                <b>L subissent une perturbation 1,6&times; plus grande que les couches H</b>, à corridor égal.
+                $\delta_{\max}$ est donc une constante absolue unique, surtout pas une fraction de $n$.
+            </p>
+            <p style="margin:0;">
+                📏 <b>Ce que produit le noyau aujourd'hui : exactement zéro.</b> Les indices y sont traités comme
+                déterministes. Et le correctif évident — pré-multiplier $n_H$ et $n_L$ au site d'appel — est
+                <b>inerte</b> : mesuré à $3{,}3\cdot10^{-10}$ nm de réponse pour $\delta = 0{,}005$, et
+                $1{,}9\cdot10^{-10}$ nm pour $\delta = 0{,}05$, soit dix fois plus de perturbation pour aucun
+                effet. La raison est structurelle : <b>le même jeu d'indices pilote l'empilement réel et
+                l'empilement nominal</b>, et les décaler ensemble ne crée aucune divergence. Il faut
+                <b>deux jeux d'indices</b> — l'un pour ce qui est déposé, l'autre pour ce que le contrôleur
+                attend — et perturber aussi l'évaluation spectrale finale, faute de quoi l'inclinaison non
+                compensée ne se paierait jamais.
             </p>
         </div>
 

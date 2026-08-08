@@ -115,9 +115,8 @@ def detect_turning_points(
                     tp_b = k
         return (n_tp, tp_a, tp_b)
 
-    # Detecteur a hysteresis. On suit SIMULTANEMENT le maximum et le minimum
-    # courants ; `dirn` vaut 0 tant que le sens n'est pas etabli, et c'est le
-    # premier franchissement du seuil qui le fixe.
+    # Hysteresis detector. Simultaneously tracks current maximum and minimum;
+    # `dirn` is 0 until direction is established by first threshold crossing.
     maxv = Ts[0]
     minv = Ts[0]
     maxi = 0
@@ -142,9 +141,7 @@ def detect_turning_points(
             dirn = 1
             maxv = v
             maxi = k
-        # L'indice 0 a deja ete declare par `start_is_tp` : ne pas le compter deux
-        # fois. Sans cette garde, le substrat nu — un extremum de bord bien reel —
-        # serait emis une seconde fois par le detecteur qui part de lui.
+        # Index 0 is already declared by `start_is_tp`: do not double count.
         if emit < 0 or (start_is_tp and emit == 0):
             continue
         if emit <= idx_stop:

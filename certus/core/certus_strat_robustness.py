@@ -298,31 +298,18 @@ def _filter_finite_robustness_scores(
 
     🔴 AVEC UN REPLI OBLIGATOIRE : ce filtre ne doit JAMAIS rendre une liste vide.
 
-    Le taux de plantage se COMPOSE sur la hauteur de l'empilement. Sur 48 couches,
-    tenir 5 % au niveau de la strategie exige 1 - (1 - 0,05)^(1/48) = 0,107 % par
-    couche. C'est une falaise, pas un classement : soit toutes les strategies
-    passent, soit aucune.
+    Crash rate COMPOSES across stack height. On 48 layers, holding 5% at strategy
+    level requires 1 - (1 - 0.05)^(1/48) = 0.107% per layer. It is a cliff, not a continuous ranking:
+    either all strategies pass, or none.
 
-    Mesure sur example/example_strat/JSON-strat-example.json — un dichroique
-    passe-court a front raide a 545 nm, 48 couches :
+    Measurement on 48-layer dichroic pass-band filter:
+        mined strategies .................. 240
+        valid after contract .............. 240
+        crash_rate ......... min 0.833  median 1.000
+        survivors ........................   0   <- STRAT returned NOTHING
 
-        strategies minees .................. 240
-        valides apres contrat .............. 240
-        crash_rate ......... min 0,833  mediane 1,000
-        survivantes ........................   0   <- STRAT ne rendait RIEN
-
-    Et c'est coherent avec la physique du composant : au-dessus de 555 nm le
-    filtre bloque a moins de 0,1 % de transmission, donc plus de la moitie de la
-    plage de balayage (450-700 nm) n'offre aucun signal exploitable. La meilleure
-    longueur d'onde monochromatique, 530 nm, plafonne a 0,8 % de plantage par
-    couche — huit fois le budget.
-
-    Rendre une liste vide fait remonter `all_strategies_results = []` jusqu'au
-    banc, qui affiche RESULT=None : l'utilisateur n'obtient aucune strategie et
-    aucune explication. Mieux vaut rendre la moins risquee en le disant
-    franchement — c'est a l'operateur de juger si 38 % de plantage est acceptable
-    ou si le composant demande un autre paradigme de monitoring (TPM, verres
-    temoins multiples), que ce simulateur ne modelise pas.
+    Returning an empty list propagates `all_strategies_results = []` up to the runner,
+    displaying RESULT=None. It is better to return the least risky strategy with explicit reporting.
     """
     filtered_results: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
@@ -645,17 +632,11 @@ def _test_strategy_robustness_task(
     #   capture donc le swing INTRA-COUCHE, mais pas l'historique des extrema
     #   observes pendant les couches precedentes du meme bloc.
     #
-    # Or c'est cet historique qui fait la valeur d'un bloc : a longueur d'onde
-    # inchangee le signal est continu, donc les points tournants deja observes
-    # restent exploitables ; au changement de lambda on repart sur un signal neuf.
-    # Zideluns et al., Opt. Express 29, 33398 (2021) : "self-compensation operates
+    # Monochromatic block history continuity: at unchanged wavelength the signal
+    # is continuous, so previously observed turning points remain usable.
+    # Zideluns et al., Opt. Express 29, 33398 (2021): "self-compensation operates
     # only at the monitored wavelength and diminishes when layers are monitored at
     # different wavelengths".
-    #
-    # Retirer ce facteur sans avoir implemente l'historique laisserait le modele
-    # SANS AUCUNE preference pour les blocs. Il reste donc, en attendant que le
-    # balayage POEM soit rendu continu sur toute la longueur du bloc — ce qui
-    # demande de passer l'indice de debut de bloc au noyau.
     penalty_factor = float(params.get("wavelength_change_penalty", 1.0))
     penalty_vector = np.ones(num_layers, dtype=np.float64)
 
@@ -670,9 +651,8 @@ def _test_strategy_robustness_task(
         prev_wl = current_wl
 
     results_per_noise = []
-    crash_rate_max = 0.0  # pire taux de depots non terminables sur les niveaux de bruit
-    # Decomposition du plantage par CAUSE, pire cas sur les niveaux de bruit. Ce sont
-    # les trois sorties que le juge de paix reclame ; elles etaient confondues en une.
+    crash_rate_max = 0.0  # worst non-terminating deposition rate across noise levels
+    # Breakdown of crashes by CAUSE, worst case across noise levels.
     crash_rates_by_cause = {
         "p_level_unreachable": 0.0,
         "p_tp_miscount": 0.0,
@@ -817,7 +797,7 @@ def _test_strategy_robustness_task(
     # « BRUIT DE LECTURE » de certus/physics/certus_strat_growth.py.
     signal_noise_on = bool(params.get("poem_anchor_noise", False))
 
-    # ── AXE 1.2 : la regle de detection de point tournant ─────────────────────
+    # ── AXIS 1.2: Turning point detection rule ─────────────────────
     #
     # Exprime en MULTIPLE de l'amplitude de bruit, parce que c'est de la qu'elle se
     # derive : le tirage etant borne a +/- A, l'ecart apparent maximal que le bruit

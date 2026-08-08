@@ -12,10 +12,9 @@ K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 from .certus_strat_math import check_extrema_proximity_batch, _calc_T_from_matrix, _calc_T_added_layer
 from .certus_strat_growth import simulate_growth_kernel
 
-# Nombre de points de bruit de lecture consommes par (tirage, couche) dans
-# `simulate_growth_kernel` : NPTS_PREV pour l'historique relu + NPTS pour le
-# balayage de la couche courante. N'est pas utilise pour dimensionner un tableau —
-# le bruit est engendre a la demande — mais documente l'empreinte du flux.
+# Number of reading noise points consumed per (run, layer) in `simulate_growth_kernel`:
+# NPTS_PREV for historical re-scan + NPTS for current layer scan.
+# Not used to size an array (noise is generated on demand), but documents stream footprint.
 MONITOR_NOISE_SLOTS_PER_LAYER = 16 + 64
 
 
@@ -38,53 +37,46 @@ def validate_wavelengths_batch(
     signal_noise_seed: int = 0,
     tp_hysteresis: float = 0.0,
 ):
-    """Evalue chaque longueur d'onde candidate pour UNE couche (Phase A).
+    """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
-    Renvoie un tableau (n_cands, 4) :
+    Returns an array (n_cands, 4):
 
-        [c, 0]  P95(|Delta_d|)   erreur LOCALE, sur les runs qui se TERMINENT
-        [c, 1]  ecart-type       idem
-        [c, 2]  taux de plantage fraction de runs non terminables
-        [c, 3]  gain de compensation, ou -1.0 si non mesurable
+        [c, 0]  P95(|Delta_d|)   LOCAL error, over runs that TERMINATE
+        [c, 1]  standard dev     ditto
+        [c, 2]  crash rate       fraction of non-terminating runs
+        [c, 3]  compensation gain, or -1.0 if not measurable
 
-    🔴 TROIS CRITERES, ET ILS SONT ORTHOGONAUX.
+    THREE CRITERIA, AND THEY ARE ORTHOGONAL.
 
-    P95(|Delta_d|) ne mesure que l'erreur LOCALE de la couche. Une couche peut
-    etre precise localement et AMPLIFIER ce qu'elle recoit : sur 48 couches c'est
-    le gain qui decide si l'erreur reste bornee, pas l'erreur locale.
+    P95(|Delta_d|) only measures the LOCAL error of the layer. A layer can
+    be locally precise yet AMPLIFY error received from upstream: across 48 layers,
+    gain determines whether total error remains bounded, not local error.
 
-    Et un 95e percentile est structurellement AVEUGLE a tout evenement survenant
-    dans moins de 5 % des runs : un depot qui ne se termine pas 2 fois sur 100
-    n'y laissait aucune trace, alors que c'est un run perdu en salle.
+    Furthermore, a 95th percentile is structurally BLIND to any event occurring in
+    less than 5% of runs: a deposition failing 2 times out of 100 left no trace
+    in P95, despite representing a lost run in production.
 
-    Mesure sur example/example_strat, couche 25 :
-        lambda 550 nm -> gain 0,257  |  lambda 475 nm -> gain 4,35
-    soit un facteur 17 entre deux longueurs d'onde que le seul P95 pouvait
-    classer dans l'ordre inverse.
+    Measurement on 48-layer dichroic, layer 25:
+        lambda 550 nm -> gain 0.257  |  lambda 475 nm -> gain 4.35
+    a factor of 17 between two wavelengths that P95 alone would rank in reverse order.
 
-    gain_probe_nm : amplitude de l'erreur amont injectee pour mesurer le gain.
-    1,0 nm par defaut — vingt fois le seuil sous lequel une difference
-    d'epaisseur n'a plus de sens physique (0,05 nm, soit moins d'un atome), et
-    dans le regime lineaire du gain pour l'essentiel des cas mesures (variation
-    inferieure a 10 % entre 0,5 et 2 nm).
+    gain_probe_nm: amplitude of injected upstream error for measuring gain.
+    1.0 nm default — twenty times above the threshold where physical thickness
+    differences lose physical meaning (0.05 nm, less than one atom), and in the
+    linear gain regime for most measured cases.
 
-    block_start_arr : indice de debut du bloc monochromatique POUR CHAQUE
-    candidate. A lambda inchangee le signal est continu et POEM exploite les
-    points tournants deja traverses ; au changement de lambda tout est perdu.
-    Sans ce tableau la Phase A etait AVEUGLE a la valeur des blocs alors que la
-    Phase B, elle, la modelise — mesure sur l'exemple reel, le gain change d'un
-    facteur allant jusqu'a 2,5 selon que l'historique est vu ou non.
-    None = comportement historique (chaque couche isolee).
+    block_start_arr: start index of monochromatic block FOR EACH candidate.
+    At unchanged lambda, signal is continuous and POEM leverages already crossed
+    turning points; changing lambda resets history.
+    Without this array, Phase A was BLIND to block value while Phase B modeled it.
+    None = legacy behavior (each layer isolated).
 
-    signal_noise_scale / signal_noise_seed : bruit de LECTURE du signal de
-    monitoring (axe 1.1, cf. `simulate_growth_kernel`). 0.0 = desactive, et le
-    chemin de calcul redevient mot pour mot celui d'avant ce parametre.
+    signal_noise_scale / signal_noise_seed: READING noise of monitoring signal.
+    0.0 = disabled, giving bit-identical execution to historical code.
 
-    ⚠ LE GAIN DE COMPENSATION RESTE MESURE A BRUIT DE LECTURE NUL, comme il l'est
-    deja a bruit d'arret nul. C'est une derivee — la reponse de la couche a une
-    erreur amont connue — et non une simulation de depot : y injecter du bruit ne
-    ferait qu'ajouter de la variance a une quantite deterministe, mesuree par
-    DEUX evaluations seulement (aucun Monte-Carlo pour la moyenner).
+    COMPENSATION GAIN IS MEASURED AT ZERO READING NOISE.
+    It is a derivative — the response of the layer to a known upstream error —
+    not a run simulation. Injecting noise adds variance to a deterministic quantity.
     """
     n_cands = len(candidate_wls)
     n_runs = runs_history.shape[0]

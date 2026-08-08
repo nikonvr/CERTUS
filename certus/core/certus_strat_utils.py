@@ -57,52 +57,14 @@ SYM_DEFAULT_CONTINUITY_WEIGHT = 0.25
 SYM_DEFAULT_SCORING_MODE = "post"
 
 # -----------------------------------------------------------------------------
-# SEPARATION SPECTRALE MINIMALE ENTRE CANDIDATES D'UN MEME BLOC (Phase B)
+# MINIMUM SPECTRAL SEPARATION BETWEEN CANDIDATES OF THE SAME BLOCK (Phase B)
 # -----------------------------------------------------------------------------
-# La DP ne retient que les `top_k` longueurs d'onde de cout le plus bas par bloc. Le
-# cout etant une fonction LISSE de lambda, affiner la grille de balayage resserre
-# mecaniquement ces candidates autour du meme minimum local.
+# DP only retains the `top_k` lowest-cost candidate wavelengths per block. Because
+# cost is a smooth function of lambda, refining the grid spacing mechanically clusters
+# candidates around the same local minimum.
 #
-# Mesure du 2026-08-05 (scripts/probe_block_wls.py), en portant le pas de balayage de
-# 5 a 2 nm sur la demande du physicien :
-#
-#     pas de balayage         5 nm             2 nm
-#     etendue des 10 lambda   95 nm mediane    36 nm mediane, 18 nm minimum
-#     regions a 20 nm         4 (min 3)        2 (min 1)
-#     rejetes par le cap      8 sur 18         30 sur 40
-#
-# A 2 nm, 14 % des blocs recevaient dix longueurs d'onde formant UNE SEULE region —
-# par exemple [456, 458, ..., 474], dix points de grille CONSECUTIFS — pendant que
-# trente candidats couvrant d'autres regions etaient jetes.
-#
-# ⚠️ NE PAS CONFONDRE DEUX ECHELLES.
-#   - Le PAS DE BALAYAGE (2 nm) est la finesse avec laquelle on cherche le meilleur
-#     point A L'INTERIEUR d'une region. Il doit rester fin : c'est l'experience du
-#     physicien.
-#   - Cette SEPARATION est l'echelle a laquelle deux longueurs d'onde constituent des
-#     choix de monitoring REELLEMENT DIFFERENTS. Elle se lit sur la variation du gain
-#     de compensation (facteur 17 entre 475 et 550 nm) et sur l'espacement des minima
-#     locaux du cout, mesure a 2-5 minima sur une plage utile d'environ 50 nm.
-#
-# ✅ CONFIRME PAR MESURE, meme sonde, meme exemple, pas de balayage 2 nm :
-#
-#     regions a 20 nm       sans separation    avec 10 nm
-#     minimum               1                  3
-#     mediane               2                  4
-#     moyenne               2,41               4,58
-#     etendue minimale      18 nm              54 nm
-#     etendue mediane       36 nm              86 nm
-#
-# Aucun bloc ne recoit plus moins de TROIS regions distinctes, contre une seule au pire
-# auparavant. Et c'est superieur au comportement a 5 nm (4,09 regions en moyenne) TOUT EN
-# gardant la resolution fine a l'interieur de chaque region — la combinaison recherchee.
-#
-# Effet fonctionnel sur le meme run : les strategies repechees par le filet de securite
-# de _filter_finite_robustness_scores passent de 6 sur 194 a ZERO sur 191, et le taux de
-# plantage median est nul. Toutes les strategies du classement final sont viables.
-#
-# 10 nm reste neanmoins un choix RAISONNE et non optimise : aucun balayage de cette
-# valeur n'a ete fait. 5 ou 20 nm n'ont pas ete essayes.
+# Minimum separation ensures candidate wavelengths represent genuinely different monitoring options.
+# 10 nm default separation ensures candidates span distinct spectral regions.
 DP_DEFAULT_MIN_WL_SEPARATION_NM = 10.0
 
 SYM_DEFAULT_TIE_EPS_ABS = 1e-6

@@ -101,13 +101,12 @@ def check_extrema_proximity(
     return True
 
 
-#: Geometrie du balayage, identique a celle de `simulate_growth_kernel` : 64 points
-#: sur 3x l'epaisseur nominale. L'arret nominal tombe donc a l'indice 21.
+#: Scan geometry, identical to `simulate_growth_kernel`: 64 points
+#: over 3x nominal thickness. Nominal stop index falls at index 21.
 _MARGIN_NPTS: int = 64
 _MARGIN_D_SCAN: float = 3.0
-#: Valeur rendue quand aucun extremum n'est trouve du cote considere : la contrainte
-#: est alors inactive de ce cote, et 999 ne doit PAS se lire comme une marge enorme
-#: obtenue par calcul.
+#: Value returned when no extremum is found on the given side: the constraint
+#: is inactive on that side, and 999 must NOT be interpreted as a huge computed margin.
 MARGIN_NONE: float = 999.0
 
 
@@ -119,51 +118,34 @@ def calculate_level_margins_to_extrema(
     thickness_nominal: float,
     M_before: np.ndarray,
 ) -> tuple[float, float]:
-    """Distance EN TRANSMISSION entre le niveau d'arret et les points tournants voisins.
+    """Distance IN TRANSMISSION between stopping level and neighboring turning points.
 
-    Renvoie ``(marge_avant, marge_apres)`` en unites de T (0..1) : l'ecart absolu entre
-    le niveau d'arret nominal et la valeur du dernier extremum AVANT l'arret, puis du
-    premier extremum APRES. ``MARGIN_NONE`` si aucun extremum de ce cote.
+    Returns ``(margin_before, margin_after)`` in units of T (0..1): the absolute gap
+    between the nominal stopping level and the value of the last extremum BEFORE stopping,
+    then the first extremum AFTER stopping. ``MARGIN_NONE`` if no extremum exists on that side.
 
-    🔴 EN TRANSMISSION, ET C'EST TOUT L'INTERET.
+    IN TRANSMISSION, WHICH IS THE CORE VALUE.
 
-    Le critere en place, `check_extrema_proximity`, travaille en espace des EPAISSEURS :
-    une demi-largeur en nanometres autour de l'extremum, derivee de
-    `extrema_exclusion_ratio`. Or pres d'un point tournant `T` varie QUADRATIQUEMENT
-    avec `d` : `T ~ T_ext - c.(d - d0)^2`. Une marge fixe en epaisseur correspond donc a
-    une fraction d'amplitude minuscule et non controlee, et la grandeur physique — le
-    rapport signal sur bruit sur le niveau — n'est jamais celle qui est appliquee.
+    Legacy criterion `check_extrema_proximity` worked in THICKNESS space:
+    a half-width in nanometers around the extremum derived from `extrema_exclusion_ratio`.
+    Near a turning point `T` varies QUADRATICALLY with `d`: `T ~ T_ext - c*(d - d0)^2`.
+    A fixed thickness margin thus corresponds to a minuscule and uncontrolled amplitude fraction,
+    failing to control the physical quantity — the signal-to-noise ratio at the target level.
 
-    👤 Le physicien, 2026-08-06, sur deux questions distinctes et avec la meme reponse :
-    *« dans ce cas, il y a reellement une marge trop faible. On decide que le depot est
-    perdu. Il faut quand meme prendre une marge de securite ! »* et *« la theorie et la
-    pratique doivent avoir pile le bon nombre d'extremum. Et si on est trop pres, il y a
-    risque que cela ne soit pas le cas. Donc marge de securite encore ! »*
+    A single margin expressed in T guarantees three things simultaneously:
 
-    Une seule marge, exprimee en T, garantit les trois choses a la fois :
+      1. TARGET LEVEL IS REACHABLE. If the margin exceeds noise amplitude, no noise
+         realization can drop the peak below the target.
+      2. REAL COUNTING EQUALS NOMINAL COUNTING. A stop far from an extremum cannot
+         create or destroy a turning point.
+      3. THICKNESS ERROR REMAINS BOUNDED. With `T ~ T_ext - c*(d-d0)^2`, the error is
+         `dd = sigma / (2*sqrt(c*dT))`: the margin `dT` BOUNDS it, whereas it DIVERGES
+         when margin approaches zero.
 
-      1. LE NIVEAU EST ATTEIGNABLE. Si la marge depasse l'amplitude du bruit, aucune
-         realisation ne peut placer le sommet bruite sous la cible. C'est le mode de
-         defaillance dominant : 📏 100 % du plancher de plantage independant de sigma.
-      2. LE COMPTAGE REEL EGALE LE COMPTAGE NOMINAL. Un arret loin d'un extremum ne
-         peut pas en faire apparaitre ni disparaitre un.
-      3. L'ERREUR D'EPAISSEUR RESTE BORNEE. Avec `T ~ T_ext - c.(d-d0)^2`, l'erreur
-         vaut `dd = sigma / (2.sqrt(c.dT))` : la marge `dT` la BORNE, alors qu'elle
-         DIVERGE quand la marge tend vers zero.
-
-    📌 Elle fait aussi retomber du calcul le seuil d'amplitude minimale que 👤 le
-    physicien avait estime a 4 % *« au pif, pour etre certain qu'on va y arriver »* : une
-    longueur d'onde n'est utilisable que si son swing depasse deux marges, une de chaque
-    cote. A 0,05 point de bruit et une marge de 2x, cela donne 0,2 point — les 4 %
-    etaient vingt fois plus conservateurs.
-
-    ⚠️ SYMETRIQUE, contrairement au critere en epaisseur qui interdisait une zone trois
-    fois plus large AVANT un extremum qu'APRES. Cette asymetrie etait un PROXY de ce
-    calcul-ci : en espace des epaisseurs, « avant » et « apres » ne sont pas
-    equivalents parce que la pente n'y est pas la meme. En transmission, les deux cotes
-    sont a la meme distance de l'extremum par construction, et les deux sont dangereux
-    pour le comptage. Seul le cote « avant » l'est aussi pour l'atteignabilite — la
-    contrainte symetrique le couvre donc a fortiori.
+    SYMMETRIC, unlike the legacy thickness criterion which prohibited a zone three times
+    wider BEFORE an extremum than AFTER. That asymmetry was a PROXY for this computation:
+    in thickness space, "before" and "after" differ because the slope differs. In transmission,
+    both sides are at the same distance from the extremum by construction.
     """
     if wl < 0.1 or thickness_nominal <= 0.0001:
         return (MARGIN_NONE, MARGIN_NONE)

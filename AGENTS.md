@@ -155,6 +155,10 @@ commande et tu colles sa sortie, soit tu écris « je n'ai pas mesuré ».
 103 fichiers y avaient été accumulés puis supprimés : c'étaient des journaux qui se
 contredisaient. Ton unique journal est `docs/JOURNAL_GEMINI.md`.
 
+## 🚫 11. Ne réintroduis JAMAIS de français dans le code
+
+L'anglais est **strictement obligatoire** dans l'ensemble de la suite CERTUS (`certus/`). Tout commentaire, docstring, message de log ou documentation interne ajouté doit être rédigé **exclusivement en anglais**.
+
 ---
 
 # ÉTAPE 2 — LES SEPT PIÈGES QUI T'ATTENDENT

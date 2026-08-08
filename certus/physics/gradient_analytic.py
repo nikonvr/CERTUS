@@ -14,15 +14,8 @@ from typing import TYPE_CHECKING
 from certus.core.certus_core import WL_DECIMALS, PI, TWO_PI, N_SUPERSTRATE
 import certus.physics.certus_tmm_core as tmm_core
 
-# ── TROIS SYMBOLES PERDUS A L'EXTRACTION, ET LE TROISIEME EST UN VRAI BUG ────────
-#
-# Ce module a ete extrait de `certus_opt_gradients.py` sans que ses imports suivent.
-# 📏 `ruff --select F821` (masque par l'`extend-ignore` du pyproject) : `Target`,
-# `Callable` et `cost_numba_fast` etaient tous les trois indefinis.
-#
-#   `Target` et `Callable` n'apparaissent que dans des ANNOTATIONS. Sur Python 3.14,
-#   PEP 649 les evalue paresseusement, donc le module s'importait sans broncher — mais
-#   `typing.get_type_hints()` sur ces fonctions echouait, et un retour a une evaluation
+# Explicit imports for type annotations and helper functions
+# to prevent F821 undefined symbol errors.
 #   immediate aurait casse l'import.
 #
 #   🔴 `cost_numba_fast`, lui, est dans le CORPS de `make_cost_function` (ligne ~1181).

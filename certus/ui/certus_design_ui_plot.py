@@ -443,7 +443,7 @@ class PlotManager:
 
         rmse_val = current_rmse
 
-        if rmse_val > 10.0:  # Assoupli pour permettre tous les designs raisonnables
+        if rmse_val > 10.0:  # Relaxed to allow all reasonable designs
             return
 
         # Manufacturing rule: we tolerate everything in Pareto (> 0.1nm)
@@ -487,7 +487,7 @@ class PlotManager:
 
         # =====================================================================
 
-        # BARRIERE: Logique des 3 champions - NE PAS MODIFIER L'ORDRE
+        # BARRIER: 3-champion logic - DO NOT CHANGE ORDER
 
         # =====================================================================
 
@@ -505,7 +505,7 @@ class PlotManager:
 
         # =====================================================================
 
-        # Seulement si TOUTES les layers >= 5nm
+        # Only if ALL layers >= 5nm
         if self._update_pareto_fab_champion(rec, current_ep, rmse_val):
             updated = True
 

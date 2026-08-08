@@ -63,14 +63,10 @@ def _dbg_write(msg: str) -> None:
 def _contiguous_selector(idx: np.ndarray):
     """``slice`` equivalent a ``idx`` quand celui-ci est un intervalle contigu.
 
-    Indexer un tableau numpy par un tableau d'entiers COPIE la selection ; par un
-    ``slice``, on obtient une vue. Dans la boucle d'objectif de RE, cette copie
-    portait sur un bloc (n_points x n_couches) reconstruit deux fois par bucket a
-    chaque evaluation.
+    Indexing a numpy array with an integer array COPIES the selection; a slice creates a view.
 
-    Le test est en O(n) mais n'est fait qu'une fois, au montage des buckets. Si
-    les indices ne sont pas contigus, on renvoie ``idx`` tel quel : le
-    comportement est alors strictement inchange.
+    The check is O(n) but only done once during bucket assembly. If indices are not contiguous,
+    returns `idx` unchanged, preserving original behavior.
     """
     n = int(idx.size)
     if n == 0:
@@ -99,7 +95,7 @@ def _re_precompute_union_indices(oblique_config_meta: list[dict[str, Any]]) -> N
         for bucket in buckets:
             pos = bucket.get("local_positions", empty_idx)
             bucket["idx_union"] = empty_idx if pos.size == 0 else np.searchsorted(pos_all, pos).astype(np.int64, copy=False)
-            # Selecteurs calcules ici, une seule fois, et non a chaque evaluation.
+            # Selectors computed here once during assembly.
             bucket["idx_selector"] = _contiguous_selector(bucket["idx_union"])
             bucket["pos_selector"] = _contiguous_selector(np.asarray(pos, dtype=np.int64)) if pos.size else pos
 

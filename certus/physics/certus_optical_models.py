@@ -389,44 +389,22 @@ class SplineBasisCache:
         target_wavelengths: np.ndarray,
         extrapolate: bool = True,
     ) -> np.ndarray:
-        """Matrice de base B (n_targets x n_knots), calculée puis mise en cache.
+        """Basis matrix B (n_targets x n_knots), computed then cached.
 
         Args:
-            knot_wavelengths: positions des nœuds.
-            target_wavelengths: grille d'évaluation.
-            extrapolate: comportement hors du domaine des nœuds. ``True`` prolonge le
-                spline, ``False`` renvoie 0 (les NaN produits par scipy sont ramenés à
-                zéro dans les deux cas). Ce drapeau fait partie de la clé : les deux
-                variantes coexistent sans se marcher dessus.
+            knot_wavelengths: knot positions.
+            target_wavelengths: evaluation grid.
+            extrapolate: behavior outside knot domain.
 
         Returns:
-            La matrice de base. **Objet partagé — ne pas modifier en place.**
+            Basis matrix. Shared object — do not modify in place.
         """
 
-        # Cle construite par .tobytes() et non par tuple().
+        # Key built with .tobytes() rather than tuple().
         #
-        # tuple(np.round(arr, n)) materialise un tuple Python de scalaires numpy puis le
-        # hache element par element. Mesure sur une grille cible de 601 points : 35,9 us
-        # par appel, soit 85 % du cout total du chemin CHAUD (42,5 us) — l'essentiel du
-        # temps etait passe a fabriquer la cle, pas a rendre la matrice.
-        # .tobytes() donne une cle stable en un seul bloc memoire. C'est deja l'idiome
-        # employe par _cached_cubic_interp_matrix (spline_objective.py:53).
-        #
-        # np.asarray(..., float64) est necessaire : deux appelants passant l'un du
-        # float32 et l'autre du float64 produiraient des octets differents pour des
-        # valeurs identiques, donc deux entrees de cache au lieu d'une.
-        # ⚠️ L'ARRONDI EST DELIBERE ET NE DOIT PAS ETRE AFFINE. Mesure du 2026-08-04
-        # sur METAL_SINGLE (bench_examples.py metal_single --force-cache --instrument) :
-        #
-        #   sans cache          RUN_S=154,6 s   RESULT=0,006100345590625494
-        #   cle arrondie (ici)  RUN_S= 75,2 s   RESULT=0,00613372429822523   HITRATE=88,1 %
-        #   cle EXACTE          RUN_S=150,3 s   RESULT=0,006100345473793503  HITRATE=18,8 %
-        #
-        # Autrement dit : le x2 apparent de use_cache=True vient de ce que cet arrondi
-        # ECRASE des geometries reellement distinctes — precisement les perturbations
-        # de gradient de L-BFGS-B. Une cle exacte rend le resultat juste MAIS supprime
-        # tout le gain (x1,03). LE GAIN EST L'ERREUR : il n'y a rien a recuperer ici.
-        # Ne pas relancer cette piste, cf. docs/REPRISE_PERF.md §4.5.
+        # np.asarray(..., float64) is necessary: float32 and float64 callers
+        # would produce different bytes for identical values.
+        # ROUNDING IS INTENTIONAL AND MUST NOT BE REFINED.
         key = (
             np.round(np.asarray(knot_wavelengths, dtype=np.float64), 6).tobytes(),
             np.round(np.asarray(target_wavelengths, dtype=np.float64), 4).tobytes(),

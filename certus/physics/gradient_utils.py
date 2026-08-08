@@ -14,12 +14,9 @@ import certus.physics.certus_tmm_core as tmm_core
 SMALL_EPSILON = 1e-12
 
 
-# fastmath=True implique les drapeaux LLVM `nnan` et `ninf`, qui autorisent le
-# compilateur à considérer qu'aucun NaN ni Inf n'existe — il supprime alors purement et
-# simplement le `np.isfinite(...)` du filtre ci-dessous. Un seul point non fini dans les
-# valeurs calculées suffit alors à renvoyer un coût NaN à l'optimiseur, qui diverge sans
-# message. On garde donc toutes les optimisations SAUF nnan/ninf : coût identique mesuré,
-# mais la garde de finitude survit.
+# fastmath=True implies LLVM flags `nnan` and `ninf`, allowing compiler
+# to assume no NaN or Inf exists, silently removing `np.isfinite(...)`.
+# FASTMATH_SAFE includes all optimizations EXCEPT nnan/ninf so finiteness guards survive.
 FASTMATH_SAFE = {"nsz", "arcp", "contract", "afn", "reassoc"}
 
 

@@ -927,7 +927,46 @@ All checks passed!
 All checks passed!
 ```
 
+**Commit** : `3702008` (poussé sur `refactor-corridors-mixins`)
+
+
+### Entrée N° 18 — 2026-08-08 15:10 — Ajout de la Règle #11 dans `AGENTS.md` et purge systématique du français résiduel dans `certus/`
+
+**Ce que je devais faire** : Inscrire la règle n° 11 de l'anglais à 100 % obligatoire dans `AGENTS.md` et traduire tous les commentaires et docstrings français résiduels dans l'ensemble des modules de `certus/` (`certus/core`, `certus/physics`, `certus/ui`).
+
+**Ce que j'ai changé**
+| Fichier | Nature du changement |
+|---|---|
+| `AGENTS.md` | Ajout formel de la **Règle #11 : Ne réintroduis JAMAIS de français dans le code (100% anglais obligatoire)**. |
+| `certus/core/certus_design_core.py` | Traduction anglaise des commentaires de tampon thread-local. |
+| `certus/core/certus_index_objectives.py` | Traduction anglaise des gardes de domaine et d'objectifs. |
+| `certus/core/certus_re_objectives.py` | Traduction anglaise des sélecteurs de contiguïté. |
+| `certus/core/certus_strat_consensus.py` | Traduction anglaise des étapes de halving et profil théorique. |
+| `certus/core/certus_strat_ranking.py` | Traduction anglaise de la carte de coût log-rendement et du choix des longueurs d'onde. |
+| `certus/core/certus_strat_robustness.py` | Traduction anglaise des pénalités de bloc et composition de plantage. |
+| `certus/core/certus_strat_utils.py` | Traduction anglaise de la séparation spectrale minimale. |
+| `certus/physics/certus_optical_models.py` | Traduction anglaise du cache LRU et de la matrice de base spline. |
+| `certus/physics/certus_optimizers.py` | Traduction anglaise des pools de threads et du parallélisme Numba. |
+| `certus/physics/certus_strat_dp.py` | Traduction anglaise de la sélection diverse de longueurs d'onde. |
+| `certus/physics/certus_strat_growth.py` | Traduction anglaise du détecteur à hystérésis et du comptage nominal/réel. |
+| `certus/physics/certus_strat_math.py` | Traduction anglaise de la marge d'extrema en transmission. |
+| `certus/physics/gradient_analytic.py` | Traduction anglaise des symboles d'import d'annotations. |
+| `certus/physics/gradient_utils.py` | Traduction anglaise des drapeaux de sécurité Fastmath. |
+| `certus/ui/certus_strat_table_ui.py` | Traduction anglaise du rendement et des colonnes UI. |
+| `certus/ui/certus_strat_ui_state.py` | Traduction anglaise de la convention de bruit photométrique. |
+
+**Commandes de vérification lancées**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+
+**Sortie obtenue**
+```
+All checks passed!
+```
+
 **Commit** : à venir.
+
 
 
 

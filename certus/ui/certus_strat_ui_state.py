@@ -2,7 +2,7 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_json_ui import JsonViewerWindow
 
-#: Valeurs textuelles reconnues comme VRAI dans un fichier de configuration.
+#: String values recognized as TRUE in a config file.
 _CONFIG_TRUE = frozenset({"1", "true", "yes", "on", "oui", "vrai"})
 
 
@@ -988,28 +988,11 @@ class CertusStratStateMixin:
             },
             # Defaut None et non 1.0 — MESURE du 2026-08-04.
             #
-            # Ce parametre choisit la convention de bruit de la Phase B
-            # (certus/core/certus_strat_robustness.py:546 et :563) :
-            #   non None -> bruit = dT_dd * z * sigma_nm  (mode "tolerance nm")
-            #   None     -> bruit = z * tolerance / 100   (mode PHOTOMETRIQUE)
+            # This parameter selects Phase B noise convention:
+            #   not None -> noise = dT_dd * z * sigma_nm ("thickness tolerance nm" mode)
+            #   None     -> noise = z * tolerance / 100  (PHOTOMETRIC mode)
             #
-            # Le mode nm est auto-coherent — on demande +/-1 nm par couche, on obtient
-            # +/-1 nm par couche — mais il rend le CHOIX DE LA LONGUEUR D'ONDE SANS
-            # EFFET : le facteur dT_dd injecte est celui-la meme par lequel l'inversion
-            # parabolique divise, et il se simplifie. Mesure sur simulate_growth_kernel,
-            # hors extrema, pour une pente variant d'un facteur 7,6 :
-            #     mode nm          Delta_d = 0,966 a 1,09 nm   (+/-13 %, insensible)
-            #     photometrique    Delta_d = -1,18 a +7,11 nm  (suit dT / |dT/dd|)
-            #
-            # Or la Phase A selectionne justement ses longueurs d'onde sur P95(|Delta_d|)
-            # avec le bruit PHOTOMETRIQUE (certus/utils/certus_strat_service.py:954).
-            # Avec le defaut 1.0, la Phase B jugeait donc les strategies avec une
-            # convention aveugle a ce que la Phase A venait d'optimiser.
-            #
-            # Avec None par defaut, un champ vide selectionne le mode photometrique et
-            # les deux phases parlent enfin de la meme chose. Saisir explicitement une
-            # valeur restaure le mode nm, qui reste utile pour repondre a la question
-            # "et si chaque couche derivait de X nm ?".
+            # Photometric mode aligns Phase B with Phase A wavelength selection.
             "thickness_tolerance_nm": self._get_float_safe("thickness_tolerance_nm", None),
             "mse_tolerance_limit_pct": self._get_float_safe("mse_tolerance_limit_pct", 30.0),
             # Legacy/Fallback if needed (hidden from GUI by default now if we remove it, but user might have it in old logical flow)
@@ -1035,7 +1018,7 @@ class CertusStratStateMixin:
             "show_plots": True,
             "export_excel": True,
             "extrema_exclusion_ratio": self._get_float_safe("extrema_exclusion_ratio", 60.0),
-            # ── AXE 1.1 : bruit de LECTURE du signal de monitoring ─────────────
+            # ── AXIS 1.1: READING noise of monitoring signal ─────────────
             #
             # PAR DEFAUT INACTIF, et pas par prudence de facade : c'est un
             # changement de modele de premier ordre. Il fera MONTER les taux de
@@ -1067,7 +1050,7 @@ class CertusStratStateMixin:
                 "poem_anchor_noise_phase_a",
                 _config_flag(getattr(self, "_loaded_config", {}), "poem_anchor_noise"),
             ),
-            # ── AXE 1.2 : la regle de detection de point tournant ──────────────
+            # ── AXIS 1.2: Turning point detection rule ──────────────
             #
             # Hysteresis du detecteur, en MULTIPLE de l'amplitude de bruit
             # `trigger_tolerance`. 0 = regle historique (changement de signe au-dela
@@ -1086,7 +1069,7 @@ class CertusStratStateMixin:
             "tp_hysteresis_factor": _config_float(
                 getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"
             ),
-            # ── Marge de securite au point tournant, en multiple du bruit ──────
+            # ── Safety margin at turning point, in noise multiples ──────
             #
             # > 0 : le niveau d'arret doit etre separe des points tournants voisins
             # d'au moins `facteur x trigger_tolerance/100`, EN TRANSMISSION. Active du

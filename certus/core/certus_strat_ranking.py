@@ -85,39 +85,17 @@ _YIELD_P_MAX: float = 1.0 - 1e-9
 def build_yield_cost_map(
     raw_results: dict[int, list[dict[str, Any]]],
 ) -> dict[int, dict[float, float]]:
-    """Carte `[couche][lambda] -> -log(1 - p)`, le LOGARITHME DU RENDEMENT.
+    """Map `[layer][lambda] -> -log(1 - p)`, LOGARITHM OF YIELD.
 
-    🔴 AXE 4.1 — LA DONNEE EXISTAIT DEJA, ET ELLE ETAIT JETEE A LA DERNIERE LIGNE.
+    Phase A calculates `results_fast[idx, 2]`, the non-terminating deposition rate
+    per layer and wavelength. Phase B constructs the map given to DP by taking `-log(1 - p)`.
 
-    La Phase A calcule `results_fast[idx, 2]`, le taux de depots non terminables **par
-    couche et par longueur d'onde**, et le range dans chaque entree. Puis
-    `certus_strat_workers_pipeline.py` construit la carte donnee a la DP en ne gardant
-    que `x["cost"]` : le taux de plantage ne servait qu'a un SEUIL BINAIRE d'elimination.
-    Une lambda a 0,001 % et une a 0,106 % etaient traitees a l'identique, alors qu'elles
-    different d'un facteur cent sur la seule grandeur qui **se compose** sur la hauteur
-    de l'empilement.
+    Why logarithm: A deposition terminates if EVERY layer terminates:
+    `yield = prod(1 - p_i)`. Its logarithm is ADDITIVE — exactly the form that Bellman DP
+    optimizes without approximation. `-log(1 - p)` is a direct component of `P(conforming)`.
 
-    **Pourquoi le logarithme.** Un depot se termine si CHAQUE couche se termine :
-    `rendement = prod(1 - p_i)`. Son logarithme est donc ADDITIF — exactement la forme
-    qu'une DP de Bellman optimise exactement, sans approximation. Ce n'est pas un proxy :
-    `-log(1 - p)` est une composante **directe** de `P(conforme)`, la ou le cout actuel
-    en nanometres affiche une correlation de ρ = −0,04 avec le resultat.
-
-    ⚠️ CETTE DONNEE VIENT DE DEVENIR INFORMATIVE, ET PAS AVANT. Tant que la detection se
-    faisait sur une courbe TMM parfaite, le taux de plantage valait zero presque partout
-    et cette carte aurait ete plate. C'est le bruit de lecture (axe 1.1) et la regle de
-    detection (axe 1.2) qui lui donnent un contenu — l'axe 4.1 n'etait pas realisable
-    avant eux.
-
-    ⚠️ RESERVE A INSTRUIRE, PAS A SUPPOSER : l'independance entre couches est
-    approximative — celles d'un meme bloc partagent l'historique de points tournants. A
-    mesurer. Mais meme imparfaite, elle sera incomparablement mieux correlee qu'un proxy
-    decorrele.
-
-    ⚠️ RESOLUTION. `p` est estime sur `num_runs` tirages, donc le plus petit taux non nul
-    vaut `1/num_runs`. En dessous, cette carte vaut ZERO et n'apporte rien : elle ne
-    discrimine que la ou le plantage est mesurable. C'est pour cela qu'elle s'AJOUTE au
-    cout en nanometres plutot que de le remplacer — voir `dp_yield_weight`.
+    `p` is estimated over `num_runs` Monte-Carlo draws. Below `1/num_runs`, this map equals ZERO.
+    That is why it ADDS to the thickness error cost rather than replacing it (see `dp_yield_weight`).
     """
     out: dict[int, dict[float, float]] = {}
     for layer_idx, items in (raw_results or {}).items():

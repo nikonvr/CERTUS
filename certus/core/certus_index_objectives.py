@@ -641,11 +641,10 @@ class IRGlobalObjective:
             self.n_ref_tol,
         )
 
-        # La garde etait CALCULEE puis JETEE : is_valid n'etait relu nulle part dans la
-        # suite de la methode. Des parametres non physiques (n hors [1.2, 4.0], k au-dela
-        # de k_max_guard, discontinuite avec la phase 1, ou NaN issu de fastmath)
-        # recevaient donc un cout fini, et l'optimiseur pouvait converger vers eux.
-        # Meme valeur de rejet que la garde de domaine spectral ci-dessus.
+        # The guard was computed then discarded: is_valid was not read anywhere.
+        # Non-physical parameters (n outside [1.2, 4.0], k beyond k_max_guard)
+        # received a finite cost, allowing optimizer to converge on invalid points.
+        # Same rejection cost as spectral domain guard above.
         if not is_valid:
             return 1e12
 
@@ -1369,7 +1368,7 @@ class TLUObjective:
             [
                 [_eg_lo, 10.0],  # Eg
                 [10.0, 2000.0],  # A
-                [_e0_lo, 10.0],  # E0 > Eg en pratique
+                [_e0_lo, 10.0],  # E0 > Eg in practice
                 [0.1, 10.0],  # C
                 [0.01, 3.0],  # Eu
                 [1.4, 10.0],  # eps_inf

@@ -893,11 +893,11 @@ class PGlobalOptimizer:
 
     @staticmethod
     def _init_pool_thread(n_inner: int) -> None:
-        """Bride le parallelisme numba INTERNE de ce thread du pool.
+        """Restricts INTERNAL numba parallelism for this pool thread.
 
-        ``numba.set_num_threads`` est thread-local (verifie a l'execution) :
-        regler la valeur ici n'affecte que les threads de ce pool, pas le reste
-        du processus.
+        `numba.set_num_threads` is thread-local (verified at runtime):
+        setting the value here only affects threads in this pool, not the rest
+        of the process.
         """
         try:
             import numba

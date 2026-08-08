@@ -284,13 +284,8 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         # 8: Unique Lambda
         self.table.setItem(row, 8, NumericTableWidgetItem(str(result["num_unique_wavelengths"])))
 
-        # 9: RENDEMENT — la grandeur de tete, AVANT le score
-        #
-        # 👤 « Si 95 % des depots fonctionnent, c'est gagne. » Le taux de plantage etait
-        # calcule, servait de couperet, puis DISPARAISSAIT : le seul critere qui parle a
-        # un fabricant n'apparaissait nulle part dans cette table. Il est desormais la
-        # premiere colonne chiffree, avant le RMSE — parce que c'est dans cet ordre que
-        # se prend la decision.
+        # 9: YIELD — primary metric, BEFORE score
+        # Displayed as first numerical column before RMSE for operator decision-making.
         crash_rate = float(result.get("crash_rate", 0.0) or 0.0)
         yield_pct = 100.0 * (1.0 - crash_rate)
         yield_item = NumericTableWidgetItem(f"{yield_pct:.1f}")
@@ -396,7 +391,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         ext_item.setToolTip("Number of extrema computed on the theoretical noiseless curve")
         self.table.setItem(row, 13, ext_item)
 
-        # 14, 15, 16: SEEL Columns  (decalees de 1 par l'ajout de « Yield % »)
+        # 14, 15, 16: SEEL Columns (shifted by 1 due to Yield % column)
         for col_idx, noise_idx in enumerate([0, 1, 2]):
             target_col = 14 + col_idx
             if noise_idx < len(noise_results):

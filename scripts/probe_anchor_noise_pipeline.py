@@ -46,13 +46,31 @@ def patch_flag(
     scan_step: float | None = None,
     seed: int | None = None,
     yield_weight: float | None = None,
+    tp_hyst: float | None = None,
 ) -> None:
-    """Force la configuration du modele dans les params, sans toucher a l'exemple."""
+    """Force la configuration du modele dans les params, sans toucher a l'exemple.
+
+    ``tp_hyst`` — surcharge du SEUL facteur de detection de point tournant, en
+    multiples de l'amplitude de bruit A = trigger_tolerance/100. ``None`` laisse
+    la valeur du mode, donc le comportement d'avant ce parametre.
+
+    📏 Mesure du 2026-08-08 (signal propre PLAT, bruit reel, 20 000 tirages) :
+    a 1,66 A le bruit seul FABRIQUE un point tournant dans 32,9 % des couches a
+    la densite de grille actuelle, et 99,9 % a la cadence reelle de la machine.
+    Le docstring de `detect_turning_points` etablit la borne de suffisance a 2 A ;
+    1,66 A est 17 % en dessous. A 2,4 A la fabrication tombe a 0,000 %.
+
+    ⚠ Ne PAS confondre avec `phase_a_level_margin_factor`, qui partage aujourd'hui
+    la meme valeur 1,66 mais repond a un autre critere (cf. PLAN_STRAT §2.2). Il
+    n'est deliberement pas touche ici : une chose a la fois.
+    """
     from certus.ui.certus_strat_ui_state import CertusStratStateMixin
 
     orig = CertusStratStateMixin.collect_params
     noise = mode in {"on", "full"}
     hyst = FIVE_SIGMA if mode == "full" else 0.0
+    if tp_hyst is not None:
+        hyst = float(tp_hyst)
     margin = FIVE_SIGMA if mode == "full" else 0.0
 
     def patched(self):
@@ -85,21 +103,27 @@ def patch_flag(
 def main() -> None:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "off").strip().lower()
     if mode not in {"on", "off", "full"}:
-        raise SystemExit("usage: probe_anchor_noise_pipeline.py [off|on|full] [pas_nm] [graine] [yield_weight]")
+        raise SystemExit(
+            "usage: probe_anchor_noise_pipeline.py [off|on|full] [pas_nm] [graine] "
+            "[yield_weight] [tp_hysteresis_factor]"
+        )
     scan_step = float(sys.argv[2]) if len(sys.argv) > 2 else None
     seed = int(sys.argv[3]) if len(sys.argv) > 3 else None
     yield_weight = float(sys.argv[4]) if len(sys.argv) > 4 else None
+    tp_hyst = float(sys.argv[5]) if len(sys.argv) > 5 else None
     tag = mode if scan_step is None else f"{mode}_step{scan_step:g}".replace(".", "p")
     if seed is not None:
         tag = f"{tag}_seed{seed}"
     if yield_weight is not None:
         tag = f"{tag}_yw{yield_weight:g}".replace(".", "p")
+    if tp_hyst is not None:
+        tag = f"{tag}_hyst{tp_hyst:g}".replace(".", "p")
 
     B.qapp()
     B.autoanswer_dialogs(True)
     from certus_physics import calculate_RT_batch_kernel  # noqa: F401  echec immediat si absent
 
-    patch_flag(mode, scan_step, seed, yield_weight)
+    patch_flag(mode, scan_step, seed, yield_weight, tp_hyst)
     PSE.OUT = ROOT / "reports" / f"probe_anchor_noise_pipeline_{tag}.json"
     PSE.install_probe()
 

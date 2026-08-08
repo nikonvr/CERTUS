@@ -1081,5 +1081,111 @@ Sortie : `All checks passed!`
    suivante.
 
 
+### Entrée N° 20 — 2026-08-08 — Mesure : `tp_hysteresis_factor = 1,66` est sous la borne, et il est couplé à la densité de grille
+
+**Ce que je devais faire** : rien de planifié. Constat fait en lisant le noyau, puis mesuré
+avant d'en tirer la moindre conclusion.
+
+**Le constat**. Le docstring de `detect_turning_points` établit lui-même sa condition de
+suffisance : le tirage étant borné à ±A, l'écart apparent maximal que le bruit seul peut
+produire vaut 2A, donc
+
+> `hysteresis >= 2 * trigger_tolerance / 100`
+
+Avec `trigger_tolerance = 0,05` point : A = 5e-4, borne = **1,0e-3**. Or
+`certus_strat_robustness.py:854` calcule `tp_hysteresis = tp_hysteresis_factor * noise_val / 100`,
+soit 1,66 × 5e-4 = **8,3e-4**. **Le réglage est 17 % sous la borne que le code énonce.**
+
+👤 Amplitude confirmée par le physicien le 2026-08-08 : le tirage à ±0,05 point, largeur
+totale 0,10 point, est **correct**. Il n'y a pas d'erreur de facteur 2 sur le bruit — j'avais
+soulevé cette hypothèse, elle est écartée.
+
+**Ce que j'ai changé** : rien. Aucune modification de code dans cette entrée.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe scratchpad\check_hysteresis_leak.py
+```
+Signal propre parfaitement PLAT, bruit réel, aucun TMM : uniquement le générateur de bruit
+et le détecteur. 20 000 tirages par case. Fraction des couches où le bruit **fabrique** au
+moins un point tournant.
+
+**Sortie obtenue**
+```
+hysteresis                      N=80 (modele actuel)      N=320 (x4)   N=800 (cadence machine)
+1.66 A  (configure)                          32.945%         92.995%                   99.935%
+2.00 A  (borne du docstring)                  0.480%          7.660%                   30.525%
+2.40 A  (marge 20%)                           0.000%          0.000%                    0.000%
+
+Controle Piege 1 : sigma balaye a N = 800, seuil configure 1.66 A
+  bruit x1.00    ->   99.935%
+  bruit x0.50    ->    0.000%
+  bruit x0.10    ->    0.000%
+  bruit x0.01    ->    0.000%
+```
+
+**Contrôle Piège 1** : la fuite s'effondre dès que le bruit est divisé par deux. Elle dépend
+donc bien du bruit — ce n'est pas un artefact.
+
+**Interprétation, en trois points**
+
+1. **1,66 A est insuffisant.** Un tiers des couches sur signal plat, à la densité de grille
+   actuelle. Comme `Ts_n` n'est pas bruité, tout point tournant fabriqué crée une divergence
+   de comptage réel/nominal, donc un `CRASH_TP_MISCOUNT`.
+
+2. **Le résidu à 2,00 A n'est PAS physique.** Le tirage étant écrêté à ±1, il existe un atome
+   de probabilité aux bornes (P(|z| ≥ 1) ≈ 1,35e-3 par échantillon). Quand deux échantillons
+   y tombent, `maxv - v` vaut 2A à l'arrondi près et le `>` strict devient un pile ou face en
+   virgule flottante. Prédiction de ce mécanisme à N=80 : ≈ 0,5 %. Mesuré : 0,48 %.
+   **La borne « ≥ 2A » est donc juste en arithmétique exacte et marginale en flottant** : il
+   faut strictement plus. 2,4 A rend zéro partout.
+
+3. 🔴 **La grille et le seuil sont couplés.** Passer la grille à la cadence réelle de la
+   machine (240 tr/min, 1 lecture témoin par tour, 0,5 nm/s ⇒ un échantillon tous les
+   **0,125 nm**, soit ~800 par couche de 100 nm contre 80 aujourd'hui) ferait passer la
+   fabrication de 33 % à 99,9 % **à seuil inchangé**. Le taux de plantage exploserait et on
+   l'attribuerait à la physique. **Ces deux réglages doivent bouger ensemble, ou pas du tout.**
+
+**Réserve, et elle est importante** : le signal plat est le **pire cas**. Un signal réel a
+une pente presque partout, qui empêche la fabrication — le taux mesuré sur le juge de paix
+est de 0,000 %. Mais « presque partout » exclut le voisinage des vrais extrema, où
+`dT/dd → 0`, et c'est précisément là qu'on compte les points tournants. Je n'ai **pas**
+mesuré la fuite sur signal réel : ce serait le run complet, et il changerait le classement.
+
+**Ce que je n'ai pas fait** : je n'ai pas touché à `tp_hysteresis_factor`. C'est un scalaire
+du fichier de référence, il vient du « environ 5 sigmas » du physicien, et le modifier
+déplacera le classement des stratégies. 👤 **Question posée, réponse en attente** : le 5 σ
+est-il une exigence physique, ou une façon de dire « bien au-dessus du bruit » ? La borne
+anti-fabrication est le critère plus exigeant des deux.
+
+**Commit** : mesure seule, aucun changement de code.
+
+
+### Entrée N° 21 — 2026-08-08 — Run de référence invalidé par ma propre faute, relancé
+
+**Ce qui s'est passé** : j'ai lancé `probe_anchor_noise_pipeline.py full 1.0 42` en tâche de
+fond pour vérifier la régression `RESULT` des entrées 2 à 4, **puis j'ai exécuté d'autres
+travaux lourds pendant qu'il tournait** — la mesure d'hystérésis de l'entrée 20 (260 000
+appels au détecteur) et deux collectes pytest. Le pipeline sature tous les cœurs en `prange`.
+
+**Sortie obtenue**
+```
+WAIT_EXIT=timeout
+WAIT_TIMEOUT=1800 s — aucune emission recue
+MODE=full_step1_seed42  SETUP_S=0.902  RUN_S=1800.022  RESULT=None
+PROBE_WRITTEN=...  strategies=12
+```
+
+**Verdict** : mesure **nulle et non avenue**. On n'en conclut rien, ni sur la régression, ni
+sur quoi que ce soit d'autre. Relancée au propre, machine libre.
+
+**Ce que ça révèle quand même, et qui n'est pas de moi** : le plafond est en dur à 1800 s
+(`scripts/bench_examples.py:155`, `timeout_ms: int = 1_800_000`), non paramétrable. Or les
+`RUN_S` du journal montent au fil de la session — 1113, 1126, 1195, 1244, puis **1510 s** à
+l'entrée 4 après l'ajout de la recherche locale. **L'entrée 4 tournait déjà à 84 % du
+plafond.** Au-delà, le banc ne rend pas une erreur : il rend `RESULT=None`, ce qui ressemble
+à un résultat. À surveiller avant d'ajouter quoi que ce soit d'autre au pipeline.
+
+
 
 

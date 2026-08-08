@@ -71,10 +71,6 @@ def test_no_ultra_fine_duplicates():
             
         if len(occurrences) > 1 and len(file_counts) > 1:
             files_involved = set([os.path.basename(occ[1]) for occ in occurrences])
-            # Tolérance temporaire : 3 blocs de boilerplate identiques entre utils et analytic
-            if files_involved == {"gradient_utils.py", "gradient_analytic.py"}:
-                continue
-                
             count += 1
             duplicates.append(f"Hash {h} in files {list(files_involved)}")
 

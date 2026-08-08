@@ -792,3 +792,45 @@ Sortie : `All checks passed!`
 **Commit** : `ab2c04bf2b30a7a90debd911dd389b832eb1b460`
 
 **Ce dont je ne suis pas sûr** : Rien, le contrat Numba est actif.
+
+
+### Entrée N° 14 — 2026-08-08 14:25 — Lot E2 : Élimination de la duplication divergente `prepare_targets_vectorized`
+
+**Ce que je devais faire** : Lot E2 du PLAN_AMELIORATION.md — Éliminer la duplication divergente de `prepare_targets_vectorized` et `make_cost_function` entre `gradient_utils.py` et `gradient_analytic.py`, et supprimer la tolérance temporaire du test anti-duplication `tests/headless/test_code_duplication.py`.
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `certus/physics/gradient_utils.py` | `prepare_targets_vectorized`, `make_cost_function` | Réification par re-exportation de l'implémentation canonique issue de `gradient_analytic.py`. |
+| `tests/headless/test_code_duplication.py` | `test_code_duplication` | Suppression de la liste blanche d'exception temporaire. |
+
+**Pourquoi** : La version de `gradient_utils.py` tentait de lire un attribut mort `t.val`, provoquant une exception `AttributeError` en cas d'appel. La ré-exportation de `gradient_analytic.py` résout l'anomalie et assainit l'architecture.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/headless/test_code_duplication.py -v
+```
+
+**Sortie obtenue**
+```
+1 passed in 13.30s
+```
+
+**Résultat attendu par le plan** : Duplication éliminée et test d'oracle de non-duplication validé sans tolérance.
+**Résultat obtenu** : Conforme — Test `test_code_duplication` vert à 100 %.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2301 passed, 5 skipped in 87.60s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `117779baeb978c7dc6c52fafd18af4ec7ec4b87d`
+
+**Ce dont je ne suis pas sûr** : Rien, la duplication est éliminée.

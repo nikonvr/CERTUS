@@ -698,7 +698,272 @@ def _apply_elite_refinement_if_enabled(
     if total_elite_added <= 0:
         ctx.logger.info("[ELITE] No candidate added across all rounds.")
 
+    strategies_results = _apply_local_search_p_conforme(
+        strategies_results=strategies_results,
+        ctx=ctx,
+        apply_consensus_fn=apply_consensus_fn,
+    )
+
     return strategies_results
+
+
+def _generate_local_search_neighborhood(
+    parent_strat: dict[str, Any],
+    available_wls: list[float],
+    num_layers: int,
+    start_strategy_id: int,
+    seen_signatures: set,
+) -> tuple[list[dict[str, Any]], int]:
+    """Generate elementary 1-step mutations around parent_strat:
+    1) Move boundary +/- 1 layer
+    2) Mutate block wavelength to neighbor on control grid
+    3) Merge two adjacent blocks
+    4) Split a block of length >= 2 into two blocks
+    """
+    if not parent_strat or not available_wls:
+        return [], start_strategy_id
+
+    wl_arr = np.array(sorted(set(float(w) for w in available_wls)), dtype=np.float64)
+    if wl_arr.size == 0:
+        return [], start_strategy_id
+
+    parent_sid = parent_strat.get("strategy_id", "?")
+    base_blocks = [
+        {
+            "start": int(b["start"]),
+            "end": int(b["end"]),
+            "wavelength": float(b["wavelength"]),
+        }
+        for b in parent_strat.get("blocks", [])
+    ]
+    if not base_blocks:
+        return [], start_strategy_id
+
+    next_id = int(start_strategy_id)
+    out = []
+
+    def _push(blocks: list[dict[str, Any]], tag: str) -> None:
+        nonlocal next_id
+        sig = _blocks_signature(blocks)
+        if not sig or sig in seen_signatures:
+            return
+        n_blocks_local = len(blocks)
+        same_wl_kept = 0
+        for i in range(1, n_blocks_local):
+            if abs(float(blocks[i]["wavelength"]) - float(blocks[i - 1]["wavelength"])) < 1e-12:
+                same_wl_kept += 1
+
+        candidate = {
+            "strategy_id": int(next_id),
+            "n_blocks": int(n_blocks_local),
+            "avg_cost": float("inf"),
+            "total_cost": float("inf"),
+            "blocks": blocks,
+            "origin": "LOCAL_SEARCH",
+            "origin_details": f"LOCAL_SEARCH({tag}, parent={parent_sid})",
+            "same_wl_kept": int(same_wl_kept),
+            "parent_strategy_id": parent_sid,
+        }
+        ok, _reason = _validate_strategy_blocks_contract(
+            candidate,
+            num_layers,
+            expected_n_blocks=n_blocks_local,
+        )
+        if ok:
+            out.append(candidate)
+            seen_signatures.add(sig)
+            next_id += 1
+
+    # Operator 1: Shift boundary +/- 1 layer
+    for b_idx in range(len(base_blocks) - 1):
+        left_len = base_blocks[b_idx]["end"] - base_blocks[b_idx]["start"]
+        right_len = base_blocks[b_idx + 1]["end"] - base_blocks[b_idx + 1]["start"]
+
+        if left_len > 1:
+            mut = [dict(b) for b in base_blocks]
+            nb = mut[b_idx]["end"] - 1
+            mut[b_idx]["end"] = nb
+            mut[b_idx + 1]["start"] = nb
+            _push(mut, f"shift_left_b{b_idx}")
+
+        if right_len > 1:
+            mut = [dict(b) for b in base_blocks]
+            nb = mut[b_idx]["end"] + 1
+            mut[b_idx]["end"] = nb
+            mut[b_idx + 1]["start"] = nb
+            _push(mut, f"shift_right_b{b_idx}")
+
+    # Operator 2: Mutate wavelength to neighbor on control grid
+    for b_idx, blk in enumerate(base_blocks):
+        cur_wl = float(blk["wavelength"])
+        nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+        for delta in (-1, 1):
+            idx_wl = nearest + delta
+            if 0 <= idx_wl < wl_arr.size:
+                new_wl = float(wl_arr[idx_wl])
+                if abs(new_wl - cur_wl) > 1e-12:
+                    mut = [dict(b) for b in base_blocks]
+                    mut[b_idx]["wavelength"] = new_wl
+                    _push(mut, f"wl_shift_b{b_idx}")
+
+    # Operator 3: Merge two adjacent blocks
+    for b_idx in range(len(base_blocks) - 1):
+        mut_left = [dict(b) for b in base_blocks[:b_idx]]
+        merged_left = {
+            "start": base_blocks[b_idx]["start"],
+            "end": base_blocks[b_idx + 1]["end"],
+            "wavelength": base_blocks[b_idx]["wavelength"],
+        }
+        mut_left.append(merged_left)
+        mut_left.extend([dict(b) for b in base_blocks[b_idx + 2:]])
+        _push(mut_left, f"merge_b{b_idx}_b{b_idx+1}_wl_left")
+
+        if abs(base_blocks[b_idx]["wavelength"] - base_blocks[b_idx + 1]["wavelength"]) > 1e-12:
+            mut_right = [dict(b) for b in base_blocks[:b_idx]]
+            merged_right = {
+                "start": base_blocks[b_idx]["start"],
+                "end": base_blocks[b_idx + 1]["end"],
+                "wavelength": base_blocks[b_idx + 1]["wavelength"],
+            }
+            mut_right.append(merged_right)
+            mut_right.extend([dict(b) for b in base_blocks[b_idx + 2:]])
+            _push(mut_right, f"merge_b{b_idx}_b{b_idx+1}_wl_right")
+
+    # Operator 4: Split a block into two blocks (if block length >= 2)
+    for b_idx, blk in enumerate(base_blocks):
+        b_len = blk["end"] - blk["start"]
+        if b_len >= 2:
+            split_pt = blk["start"] + b_len // 2
+            cur_wl = float(blk["wavelength"])
+            nearest = int(np.argmin(np.abs(wl_arr - cur_wl)))
+            alt_wls = [cur_wl]
+            if nearest > 0:
+                alt_wls.append(float(wl_arr[nearest - 1]))
+            if nearest < wl_arr.size - 1:
+                alt_wls.append(float(wl_arr[nearest + 1]))
+
+            for alt_wl in alt_wls:
+                mut = [dict(b) for b in base_blocks[:b_idx]]
+                mut.append({"start": blk["start"], "end": split_pt, "wavelength": cur_wl})
+                mut.append({"start": split_pt, "end": blk["end"], "wavelength": alt_wl})
+                mut.extend([dict(b) for b in base_blocks[b_idx + 1:]])
+                _push(mut, f"split_b{b_idx}")
+
+    return out, next_id
+
+
+def _apply_local_search_p_conforme(
+    strategies_results: list[dict[str, Any]],
+    ctx: RobustnessContext,
+    apply_consensus_fn: Any,
+) -> list[dict[str, Any]]:
+    """Direct local search maximizing P(conforme) / minimizing Monte-Carlo RMSE.
+
+    Performs greedy gradient-following over elementary neighborhood operators:
+    - Boundary shift +/- 1 layer
+    - Block wavelength mutation to neighbor on control grid
+    - Block merge
+    - Block split
+
+    Evaluates each candidate directly with full Monte-Carlo simulation.
+    """
+    enable_local_search = bool(ctx.params.get("enable_local_search", False))
+    if not (enable_local_search and strategies_results and ctx.noise_levels):
+        return strategies_results
+
+    top_k = max(1, int(ctx.params.get("local_search_top_k", 3)))
+    max_steps = max(1, int(ctx.params.get("local_search_max_steps", 2)))
+    num_runs = max(10, int(ctx.params.get("local_search_num_runs", min(20, ctx.num_runs))))
+
+    available_wls = _resolve_monitoring_wavelength_grid(ctx.params, ctx.clues_at_wl, ctx.wl_arr)
+    existing_signatures = _existing_block_signatures(strategies_results)
+    max_sid = _max_strategy_id(strategies_results)
+
+    ctx.logger.info(
+        f"[LOCAL_SEARCH] Starting direct Monte-Carlo local search on top {top_k} parents "
+        f"(max_steps={max_steps}, num_runs={num_runs})..."
+    )
+
+    improved_any = False
+    executor_cls = concurrent.futures.ThreadPoolExecutor
+    worker_count = get_safe_worker_count()
+
+    for parent_idx in range(min(top_k, len(strategies_results))):
+        current_res = strategies_results[parent_idx]
+        current_score = float(current_res.get("robustness_score", np.inf))
+
+        for step in range(1, max_steps + 1):
+            parent_strat = current_res.get("strategy", {})
+            neighborhood, max_sid = _generate_local_search_neighborhood(
+                parent_strat=parent_strat,
+                available_wls=available_wls,
+                num_layers=ctx.num_layers,
+                start_strategy_id=max_sid + 1,
+                seen_signatures=existing_signatures,
+            )
+            if not neighborhood:
+                break
+
+            eval_results: list[dict[str, Any]] = []
+            with executor_cls(max_workers=worker_count) as executor:
+                futures = [
+                    executor.submit(
+                        _test_strategy_robustness_task,
+                        strat,
+                        cand_idx,
+                        ctx.noise_levels,
+                        num_runs,
+                        ctx.p_thick_nominal,
+                        ctx.clues_at_wl,
+                        ctx.params_safe,
+                        ctx.wl_arr,
+                        ctx.nH_arr,
+                        ctx.nL_arr,
+                        ctx.nSub_arr,
+                        ctx.T_nom,
+                        ctx.full_dyn_grid,
+                        n_layers_matrix_precomp=ctx.n_layers_matrix_precomp,
+                    )
+                    for cand_idx, strat in enumerate(neighborhood)
+                ]
+                for fut in concurrent.futures.as_completed(futures):
+                    try:
+                        res = fut.result()
+                        if res and np.isfinite(res.get("robustness_score", np.inf)):
+                            eval_results.append(res)
+                    except Exception as exc:
+                        ctx.logger.debug(f"[LOCAL_SEARCH] Candidate evaluation failed: {exc}")
+
+            if not eval_results:
+                break
+
+            best_cand_res = min(eval_results, key=lambda r: float(r.get("robustness_score", np.inf)))
+            best_cand_score = float(best_cand_res.get("robustness_score", np.inf))
+
+            if best_cand_score < current_score:
+                ctx.logger.info(
+                    f"[LOCAL_SEARCH] Parent {parent_idx + 1} (step {step}): "
+                    f"score improved {current_score:.6f} -> {best_cand_score:.6f} "
+                    f"via {best_cand_res.get('strategy', {}).get('origin_details', 'mutation')}"
+                )
+                current_score = best_cand_score
+                current_res = best_cand_res
+                strategies_results.append(best_cand_res)
+                improved_any = True
+            else:
+                break
+
+    if improved_any:
+        strategies_results = _rank_and_filter_strategies(
+            strategies_results=strategies_results,
+            stage_tag="post-local-search",
+            params=ctx.params,
+            logger=ctx.logger,
+            apply_consensus_fn=apply_consensus_fn,
+        )
+
+    return strategies_results
+
 
 
 def _generate_elite_candidate_strategies(

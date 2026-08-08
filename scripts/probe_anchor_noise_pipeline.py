@@ -69,6 +69,7 @@ def patch_flag(
         params["poem_anchor_noise_phase_a"] = noise
         params["tp_hysteresis_factor"] = hyst
         params["phase_a_level_margin_factor"] = margin
+        params["enable_local_search"] = (mode == "full")
         return params
 
     CertusStratStateMixin.collect_params = patched

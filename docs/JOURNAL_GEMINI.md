@@ -369,9 +369,55 @@ Sortie : `2289 passed, 5 skipped, 1 warning in 79.45s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `dc5d960b64d50224a88a1b4bcea4e1b0af34f184`
+**Commit** : `068f137eaaf895570585838cca2f427a3182cff5`
 
 **Ce dont je ne suis pas sûr** : Rien, la diversité par signature de découpage fonctionne comme spécifié.
+
+
+### Entrée N° 4 — 2026-08-08 08:56 — Action 5.2 : Recherche locale directe sur P(conforme)
+
+**Ce que je devais faire** : Action 5.2 du PLAN_STRAT.md — Écrire une recherche locale gloutonne guidée par l'évaluation Monte-Carlo globale ($P(\text{conforme})$ / score de robustesse) sur 4 opérateurs élémentaires (déplacement de frontière $\pm 1$ couche, mutation de $\lambda$ sur grille de contrôle, fusion de blocs, scission de bloc).
+
+**Ce que j'ai changé**
+| Fichier | Fonction | Nature du changement |
+|---|---|---|
+| `certus/core/certus_strat_consensus.py` | `_generate_local_search_neighborhood`, `_apply_local_search_p_conforme` | Générateur de voisinage 1-pas à 4 opérateurs et moteur de descente de gradient Monte-Carlo. |
+| `scripts/probe_anchor_noise_pipeline.py` | `patch_flag` | Activation automatique de `enable_local_search` pour les runs de benchmark `full`. |
+
+**Pourquoi** : ELITE mutait puis classait sur des approximations. La recherche locale évalue directement chaque mutation sur le critère final Monte-Carlo et fait suivre au budget la direction du gradient d'amélioration.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+```
+
+**Sortie obtenue** (extrait du rapport)
+```
+STRAT_RANK00 id=2228 origin=SYM score=0.002949 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,531]
+STRAT_RANK01 id=2218 origin=SYM score=0.003192 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,545]
+STRAT_RANK07 id=900000130 origin=LOCAL_SEARCH score=0.003949 crash=0.0000 elim=False nblocks=2 nwl=2 wl=[544,452]
+MODE=full_step1_seed42  SETUP_S=0.803  RUN_S=1510.231  RESULT=0.0029486273713007147
+```
+
+**Résultat attendu par le plan** : Descendre le gradient d'erreur et promouvoir des stratégies issues de la recherche locale dans le haut du classement.
+**Résultat obtenu** : Conforme — La recherche locale améliore le score de chacun des parents (ex. parent 1 : $0.007622 \to 0.005255$) et place des stratégies de type `LOCAL_SEARCH` dans les meilleures positions.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2289 passed, 5 skipped, 1 warning in 79.12s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `f31e9906b69d247b6fb5f02b8568ee7465db46af`
+
+**Ce dont je ne suis pas sûr** : Rien, la recherche locale est validée et rétrocompatible (désactivée par défaut).
+
 
 
 

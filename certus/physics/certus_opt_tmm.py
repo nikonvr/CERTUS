@@ -349,16 +349,16 @@ def calculate_reflection_infinite_substrate_single(
     if not np.isfinite(n_sub.real) or n_sub.real < 1.0:
         return np.nan
 
-    # Delegation a compute_TMM_generic : source unique de verite du projet.
-    # CLAUDE.md §3 : « Toute nouvelle variante TMM doit lui deleguer — ne reimplemente
-    # jamais la formule. » Cette fonction developpait la matrice a la main et utilisait
-    # -i*sin(d)/n et -i*n*sin(d), alors que la convention Macleod du projet est +i
-    # (cf. compute_TMM_generic, I_VAL = +1j). Exacte a k = 0, elle derivait jusqu'a
-    # 82 points de reflectance des que k > 0 — mesure contre tests/oracle/tmm_reference.py.
-    # Chemin VIVANT : il alimente l'ajustement n,k de CERTUS_INDEX et ses gradients par
-    # differences finies (certus/core/certus_index_objectives.py:222-231).
+    # Delegation to compute_TMM_generic: single source of truth for the project.
+    # CLAUDE.md §3: "Every TMM variant must delegate to it — never reimplement the formula."
+    # Previously this function expanded the matrix manually and used
+    # -i*sin(d)/n and -i*n*sin(d), whereas the project Macleod convention is +i
+    # (see compute_TMM_generic, I_VAL = +1j). Exact at k = 0, it drifted up to
+    # 82 reflectance points whenever k > 0 — measured against tests/oracle/tmm_reference.py.
+    # LIVE PATH: feeds n,k fitting in CERTUS_INDEX and its finite difference gradients
+    # (certus/core/certus_index_objectives.py:222-231).
     #
-    # n_film_imag arrive en k POSITIF ; la convention interne est n = n - ik.
+    # n_film_imag comes in as POSITIVE k; internal convention is n = n - ik.
     thicknesses = np.empty(1, dtype=np.float64)
     thicknesses[0] = thickness_nm
 

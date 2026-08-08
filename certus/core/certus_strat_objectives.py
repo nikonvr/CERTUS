@@ -198,18 +198,17 @@ def _run_phase_a_hybrid_loop(
     }
     run_states = [{"p_thick_sim": [], "M_cache_sim": {}} for _ in range(num_runs)]
 
-    # Le logger est un argument nomme de cette fonction, mais il n'etait pas dans
-    # params : _validate_candidates_phase_a le lisait donc a vide et l'elimination
-    # de la Phase A etait entierement muette. setdefault pour ne pas ecraser le
-    # logger que certus_strat_workers y place deja sur d'autres chemins d'entree.
-    # ⚠️ PAS `setdefault` : `params` n'est pas toujours un dict. Sur le chemin
+    # The logger is a keyword argument of this function, but it was missing from
+    # params: _validate_candidates_phase_a read it empty and Phase A elimination
+    # was completely silent. Use explicit check instead of setdefault to avoid overwriting.
+    # ⚠️ DO NOT USE `setdefault`: `params` is not always a dict. On the path
     # `phase_a_only=True` (certus_strat_workers.py, _execute_nucleation_and_cost_mapping)
-    # c'est un `StratParamsDTO`, qui herite de `Mapping` et non de `MutableMapping` :
-    # il expose `get` et `__setitem__` mais PAS `setdefault`. Un `setdefault` y levait
-    # `AttributeError` et tuait le pipeline entier en 13 s, avec RESULT=None.
+    # it is a `StratParamsDTO`, which inherits from `Mapping` and not `MutableMapping`:
+    # it exposes `get` and `__setitem__` but NOT `setdefault`. Calling `setdefault` raised
+    # `AttributeError` and killed the entire pipeline in 13s, with RESULT=None.
     if params.get("logger") is None:
         params["logger"] = logger
-    # Recensement par couche remis a zero : params peut etre reutilise d'un run a l'autre.
+    # Per-layer statistics reset: params may be reused between runs.
     params["phase_a_admissibility_stats"] = []
 
     try:

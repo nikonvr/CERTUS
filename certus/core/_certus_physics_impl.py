@@ -123,7 +123,7 @@ __all__ = [
     # Non-monotonic handling modes
     "NON_MONOTONIC_MODE_ATTENUATE",
     "NON_MONOTONIC_MODE_REJECT",
-    # Depots non terminables, decomposes par cause
+    # Non-terminating depositions, decomposed by cause
     "CRASH_SENTINEL_MIN",
     "CRASH_SENTINEL_UNIT",
     "CRASH_LEVEL_UNREACHABLE",
@@ -853,12 +853,12 @@ def get_refractive_index(material_id: Any, wavelength_nm: float, db_instance=Non
         try:
             return complex(material_id)
         except ValueError, TypeError:
-            # Ne JAMAIS inventer un indice ici. Renvoyer 1.5 en silence produisait un
-            # spectre calculé sur un matériau qui n'est pas celui demandé, sans le
-            # moindre signe. KeyError appartient à NUMERICAL_FAULT_EXCEPTIONS : les
-            # appelants STRAT l'interceptent déjà et disposent d'un repli JOURNALISÉ.
+            # NEVER invent an index here. Returning 1.5 silently produced a
+            # spectrum computed on a material different from requested, without
+            # any indication. KeyError belongs to NUMERICAL_FAULT_EXCEPTIONS:
+            # STRAT callers already catch it and provide a LOGGED fallback.
             raise KeyError(
-                f"Materiau inconnu {material_id!r} "
+                f"Unknown material {material_id!r} "
                 f"(db_instance={'present' if db_instance is not None else 'None'})"
             )
 

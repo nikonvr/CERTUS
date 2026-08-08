@@ -1310,20 +1310,19 @@ class TLUObjective:
             self.R_substrate = calculate_single_interface_R(self.wavelengths, self.n_substrate)
 
         else:
-            # Substrat POLI (mode standard) : la mesure de référence inclut la face
-            # arrière, donc R_total = 2*R_single/(1+R_single) — c'est exactement ce que
-            # calcule calculate_bare_substrate_R, dont le commentaire de tête dit
-            # « DO NOT REVERT TO SINGLE INTERFACE REFLECTION ».
+            # POLISHED substrate (standard mode): the reference measurement includes the back
+            # face, so R_total = 2*R_single/(1+R_single) — this is exactly what
+            # calculate_bare_substrate_R computes, whose header comment states
+            # "DO NOT REVERT TO SINGLE INTERFACE REFLECTION".
             #
-            # Cette branche construisait un TUPLE (fonction, ndarray) là où la branche
-            # dépoli assigne un tableau, et sa charge utile était justement la réflexion
-            # à interface unique proscrite ici. Deux conséquences :
-            #  - type incohérent passé au noyau aux côtés de T_substrate (signature Numba
-            #    non cachable, recompilation à chaque exécution) ;
-            #  - référence de normalisation fausse : appariée à
-            #    T_substrate = calculate_bare_substrate_RT (deux faces), elle perdait
-            #    3,91 % d'énergie à n_sub = 1,52, alors que le bon couple donne
-            #    R + T = 1,00000000.
+            # This branch previously constructed a TUPLE (function, ndarray) where the
+            # frosted branch assigned an array, and its payload was precisely the single-interface
+            # reflection forbidden here. Two consequences:
+            #  - inconsistent type passed to the kernel alongside T_substrate (Numba signature
+            #    uncachable, recompilation on every run);
+            #  - wrong normalization reference: paired with T_substrate = calculate_bare_substrate_RT (both faces),
+            #    it lost 3.91% energy at n_sub = 1.52, whereas the correct pair yields
+            #    R + T = 1.00000000.
             self.R_substrate = calculate_bare_substrate_R(self.wavelengths, self.n_substrate)
 
         # Use unified Log-Lambda weighting for broadband optimization.

@@ -690,18 +690,17 @@ def _test_strategy_robustness_task(
     )
     T_nom_aligned = T_clean_batch[0].astype(np.float64)
 
-    # ── AXE 3 : CLASSER CONTRE LA CIBLE, PAS CONTRE LE NOMINAL ─────────────────
+    # ── AXIS 3: RANK AGAINST TARGET, NOT AGAINST NOMINAL ───────────────────────
     #
-    # 👤 « Le plus important est la cible spectrale respectee. » Or STRAT classait sur
-    # l'ecart au spectre du NOMINAL, non pondere, et n'avait jamais recu la cible —
-    # zero occurrence de `targets` dans tout le module. Il repondait donc a « quelle
-    # strategie reproduit le mieux le spectre des epaisseurs concues ? », et non a
-    # « laquelle respecte le mieux la cible ? ».
+    # "The most important aspect is respecting the spectral target." Previously STRAT ranked on
+    # deviation from the NOMINAL spectrum (unweighted), and never received targets —
+    # zero occurrences of `targets` in the module. It answered "which strategy
+    # best reproduces designed thickness spectrum?", not "which best respects target?".
     #
-    # ⚠️ DISTINCTION A PRESERVER, et elle est physique : le point VISE pendant le depot
-    # reste le nominal fige — c'est le mecanisme meme de l'auto-compensation, cf. le
-    # commentaire de `simulate_growth_kernel`. Seule la FIGURE DE MERITE QUI CLASSE
-    # passe a la cible ponderee. Ce bloc ne touche donc rien du noyau de croissance.
+    # ⚠️ DISTINCTION TO PRESERVE (Physical): The TARGET POINT during growth
+    # remains the frozen nominal — this is the auto-compensation mechanism itself, see
+    # comment in `simulate_growth_kernel`. Only the RANKING FIGURE OF MERIT
+    # switches to weighted target. This block touches nothing in growth kernel.
     #
     # La fonctionnelle est celle que DESIGN minimise deja (`prepare_targets_vectorized` :
     # interpolation lineaire de tmin a tmax sur la zone, poids = poids utilisateur x
@@ -1158,13 +1157,12 @@ def _validate_strategy_min_transmission_floor(
         # We need to map wavelength float to cache index
         wl_idx = np.searchsorted(all_wls, wl)
         if wl_idx < len(all_wls) and abs(all_wls[wl_idx] - wl) < 1e-5:
-            # La matrice cumulée doit être lue à LA MÊME longueur d'onde que celle à
-            # laquelle T est évalué. L'indice de longueur d'onde était codé en dur à 0 :
-            # M_before venait donc toujours de all_wls[0], alors que T_val est calculé à
-            # `wl`. Le post-check T_min comparait un empilement partiel pris à une
-            # longueur d'onde avec une transmission calculée à une autre — d'autant plus
-            # faux que `wl` s'éloigne du premier point de la grille.
-            # Cache de forme (num_layers, n_wls, 2, 2) — cf. certus_strat_config.py:436.
+            # The cumulative matrix must be read at THE SAME wavelength as that at
+            # which T is evaluated. Wavelength index was previously hardcoded to 0:
+            # M_before thus always came from all_wls[0], while T_val is computed at
+            # `wl`. The T_min post-check was comparing a partial stack taken at one
+            # wavelength with a transmission computed at another.
+            # Shape cache (num_layers, n_wls, 2, 2) — see certus_strat_config.py:436.
             M_before = (
                 np.eye(2, dtype=np.complex128)
                 if i == 0

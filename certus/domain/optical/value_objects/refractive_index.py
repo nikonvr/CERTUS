@@ -33,12 +33,12 @@ class RefractiveIndex:
     n: float  # Real part
     k: float  # Imaginary part (extinction coefficient)
 
-    MIN_N: float = 1.0  # Physique: n >= 1 (vacuum = 1.0)
-    MAX_N: float = 10.0  # Très réaliste pour couches minces
-    MAX_K: float = 10.0  # k extrême mais physiquement possible (métaux)
+    MIN_N: float = 1.0  # Physics: n >= 1 (vacuum = 1.0)
+    MAX_N: float = 10.0  # Realistic upper bound for thin films
+    MAX_K: float = 10.0  # High absorption bound for metals
 
     def __post_init__(self):
-        """Validation invariants physiques."""
+        """Physical invariants validation."""
         if not isinstance(self.n, (int, float)) or not isinstance(self.k, (int, float)):
             raise TypeError("n and k must be numeric")
 

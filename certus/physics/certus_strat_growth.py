@@ -10,34 +10,27 @@ NON_MONOTONIC_MODE_REJECT = 1
 K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 
-# ── SENTINELLES DE DEPOT NON TERMINABLE, DECOMPOSEES PAR CAUSE ────────────────
+# ── NON-TERMINATING DEPOSITION SENTINELS, DECOMPOSED BY CAUSE ────────────────
 #
-# 🔴 LES TROIS CAUSES RENDAIENT LA MEME VALEUR, ET C'ETAIT UN MUR DE DIAGNOSTIC.
+# THE THREE CAUSES PREVIOUSLY RETURNED THE SAME VALUE, CREATING A DIAGNOSTIC BLINDSPOT.
 #
-# `simulate_growth_kernel` majorait l'epaisseur de 1e6 dans trois situations sans
-# rapport entre elles. Tant qu'elles sont confondues, on ne peut pas savoir POURQUOI
-# un depot ne se termine pas — et 📏 c'est exactement ce qui a bloque le diagnostic
-# du plancher de plantage independant de sigma : l'hysteresis de detection le divise
-# par deux et ne touche pas le plancher, mais on ne peut pas dire si ce plancher est
-# un probleme de COMPTAGE ou d'ATTEIGNABILITE.
+# `simulate_growth_kernel` inflated thickness by 1e6 in three unrelated situations.
+# As long as they were conflated, it was impossible to know WHY a deposition did not finish.
 #
-# Les valeurs sont des multiples de 1e6 et l'epaisseur nominale reste ajoutee, donc :
+# Values are multiples of 1e6 and nominal thickness remains added, so:
+#   - any consumer checking `val > 1e5` counts exact same crashes as before.
+#   - cause is readable via `int(val // 1e6)` without knowing nominal thickness.
 #
-#   - tout consommateur qui teste `val > 1e5` compte exactement les memes plantages
-#     qu'avant, au bit pres. Le taux de plantage global ne change pas.
-#   - la cause se relit par `int(val // 1e6)`, sans connaitre l'epaisseur nominale
-#     (elle vaut moins de 1e4 nm sur tout empilement physique).
-#
-# Les 👤 « trois questions du juge de paix » deviennent ainsi trois nombres :
-# CRASH_LEVEL_UNREACHABLE repond a « atteint-on le niveau ? », CRASH_TP_MISCOUNT a
-# « compte-t-on le bon nombre de turning points ? ».
+# The three diagnostic causes correspond to:
+# CRASH_LEVEL_UNREACHABLE answers "is target level reachable?",
+# CRASH_TP_MISCOUNT answers "do we count expected turning points?".
 CRASH_SENTINEL_MIN: float = 100000.0
 CRASH_SENTINEL_UNIT: float = 1000000.0
-#: Le niveau d'arret vise n'est pas encadre par le signal avant le prochain extremum.
+#: Target stopping level is not bracketed by signal before next extremum.
 CRASH_LEVEL_UNREACHABLE: int = 1
-#: Le nombre de points tournants comptes sur le reel differe de celui attendu.
+#: Turning point count on real deposition differs from expected.
 CRASH_TP_MISCOUNT: int = 2
-#: T(d) non monotone et mode REJECT demande : la candidate est refusee.
+#: Non-monotonic T(d) and REJECT mode requested: candidate is rejected.
 CRASH_NON_MONOTONIC: int = 3
 from .certus_strat_math import (
     check_extrema_proximity,

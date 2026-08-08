@@ -181,14 +181,14 @@ PERF_MONITOR = PerformanceMonitor()
 # Imported here for full backward compatibility.
 from certus.utils.certus_strat_context import PlotCache, ThreadSafeCounter  # noqa: E402
 
-# APP_CONTEXT est IMPORTE plus haut depuis certus_strat_utils, qui le tient lui-meme de
-# certus.utils.certus_strat_service : c'est le contexte applicatif PARTAGE.
+# APP_CONTEXT is IMPORTED above from certus_strat_utils, which holds it from
+# certus.utils.certus_strat_service: it is the SHARED application context.
 #
-# Il etait ici REAFFECTE a un dictionnaire vide, ce qui rompait le partage. Or
-# certus_strat_consensus, certus_strat_pipeline et certus_strat_robustness importent
-# APP_CONTEXT DEPUIS CE MODULE : ils recevaient donc le dictionnaire vide, et le repli
-# `APP_CONTEXT.get("materials_db")` (certus_strat_robustness.py:191 et :235), commente
-# « Critical for maintaining state if context is empty », renvoyait toujours None.
+# It was previously REASSIGNED here to an empty dictionary, which broke sharing.
+# However certus_strat_consensus, certus_strat_pipeline and certus_strat_robustness import
+# APP_CONTEXT FROM THIS MODULE: they were receiving the empty dictionary, and the fallback
+# `APP_CONTEXT.get("materials_db")` (certus_strat_robustness.py:191 and :235), commented
+# "Critical for maintaining state if context is empty", was always returning None.
 
 CACHE_SIZE_MATERIAL_INDEX = 10000
 

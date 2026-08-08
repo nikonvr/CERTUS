@@ -29,9 +29,9 @@ class Wavelength:
 
     nm: float
 
-    # Limites physiques réalistes pour optique couches minces
-    MIN_NM: float = 100.0  # UV proche
-    MAX_NM: float = 10000.0  # IR moyen
+    # Realistic physical limits for thin-film optics
+    MIN_NM: float = 100.0  # Near UV
+    MAX_NM: float = 10000.0  # Mid IR
 
     def __post_init__(self):
         """Validation invariants."""

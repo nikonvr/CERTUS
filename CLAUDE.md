@@ -76,6 +76,7 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | Savoir comment travailler | §3 — la boucle et la règle d'or |
 | Toucher à du calcul optique | §6 — conventions physiques et oracle TMM |
 | Comprendre la machine de dépôt | §9 — les spécifications du physicien |
+| **Savoir ce qu'on suppose de la machine** | **§9bis — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
 | Comparer un résultat | §10 — le point de référence |
 | Comprendre un mot du projet | §7 — vocabulaire |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
@@ -83,6 +84,60 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 Une seule autre page existe, destinée à la communauté :
 [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, méthode.
 Elle ne contient aucune instruction.
+
+---
+
+## ⚡ TU NE DÉCIDES RIEN — toutes les valeurs sont déjà fixées
+
+**Aucun choix ne t'est demandé.** Toutes les valeurs physiques, tous les seuils, tous les
+paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le tableau ci-dessous.
+
+> **Si tu te trouves en train de choisir une valeur, tu t'es trompé : la valeur existe
+> déjà. Relis §9bis. Si elle n'y est vraiment pas, ARRÊTE-TOI et demande.**
+
+### Toutes les constantes, en un seul endroit
+
+| Paramètre | Valeur | Où c'est expliqué |
+|---|---|---|
+| Cadence d'échantillonnage machine | **4 Hz**, un point tous les **0,125 nm** | §9bis-1 |
+| Amplitude du bruit de lecture | **±0,05 point**, soit `A = 5e-4` en unités T | §9bis-2 |
+| `reading_smoothing_window` (`k`) | **8** lectures (2 s) — défaut 1 = inactif | §9bis-3 |
+| `tp_hysteresis_factor` | **0,354** = `1/√8` — jamais 1,66, jamais 3 | §9bis-4 |
+| Retard de déclenchement | **aucun** — ne rien ajouter | §9bis-5 |
+| `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §9bis-6 |
+| Quantification de l'arrêt | `U(0 ; 0,125 nm)` | §9bis-7 |
+| `index_corridor` | **0,005**, unités d'indice **absolues**, demi-largeur | §12.3 |
+| `affine_scale_amp` | **0,05** ⇒ `a ∈ [0,95 ; 1,05]` | §12.1 |
+| `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §12.1 |
+| Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
+| Graine de référence | **42**, `scan_wl_step` **1.0** | §10 |
+
+**Tout nouveau paramètre vaut sa valeur INACTIVE par défaut** (1 pour la fenêtre, 0 pour les
+amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'avant. Toujours.
+
+---
+
+## ⚡ ORDRE DE TRAVAIL — fais les tâches dans cet ordre, une par une
+
+Ne saute pas de tâche. Ne fais pas deux tâches à la fois. Après **chaque** tâche : tests,
+lint, commit, et tu écris ce que tu as mesuré.
+
+| # | Tâche | Section | Condition d'arrêt |
+|---|---|---|---|
+| **T0** | **Établir le point de référence.** `set CERTUS_BENCH_TIMEOUT_S=5400` puis le run complet. Machine libre, rien d'autre. | §10 | Si `WAIT_EXIT=timeout` ou `RESULT=None` → relance avec 7200. Si `strategies` < 300 → le run n'a pas abouti, **ne lis pas le RESULT**. |
+| **T1** | **Câbler la distorsion affine** dans les deux fonctions batch + tirage par run + drapeau `poem_enabled`. | §12.1 | Amplitudes à 0 → `RESULT` doit être **identique** à T0, au dernier chiffre. Sinon tu as cassé quelque chose : reviens en arrière. |
+| **T2** | **Mesurer POEM sous distorsion** : 4 runs (POEM on/off × distorsion on/off). | §12.1 | Aucune. C'est une mesure, elle donne ce qu'elle donne. Écris les 4 chiffres. |
+| **T3** | **Grille d'échantillonnage à 0,125 nm** avec découplage TMM/échantillonnage. | §12.4 | Fenêtre à 1 et grille fine → le taux de plantage va **monter beaucoup**. C'est **attendu**, pas un bug. Ne corrige rien, passe à T4. |
+| **T4** | **Lissage `k = 8` + seuil 0,354.** | §12.2 | Le taux de plantage doit **redescendre**. S'il ne redescend pas, dis-le — **ne remonte pas le seuil pour faire passer le chiffre**. |
+| **T5** | **Corridor d'indice 0,005.** | §12.3 | Corridor à 0 → `RESULT` identique à T0. Puis balayer 0 / 0,0025 / 0,005, et `a` seul / `b` seul. |
+| **T6** | **`phase_a_level_margin_factor` 1,66 → 3,33.** | §12.2, dernier bloc | Aucune. Un run chacun, comparer. |
+| **T7** | **Quantification de l'arrêt** `U(0 ; 0,125 nm)`. | §12.5 | Piège 1 : si doubler `Δd_sample` ne change rien, la mesure est un artefact. |
+
+**T3 et T4 forment une paire.** Le taux de plantage n'a de sens qu'une fois les deux faites.
+Ne conclus rien entre les deux.
+
+**§12.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Elle est documentée
+pour mémoire, pas pour être exécutée.
 
 ---
 
@@ -459,6 +514,46 @@ tirage borné à ±0,05 point, un seul nombre mesuré, aucun paramètre libre �
 ajouter une structure non mesurée remplacerait une constante mesurée par des paramètres
 inventés. 👤 Tranché le 2026-08-08.
 
+---
+
+## 9bis. 🔒 LE MODÈLE DE LA CHAÎNE DE LECTURE — FIGÉ, NE PAS ROUVRIR
+
+**L'OMS 5100 est breveté et son fonctionnement interne est opaque.** On ne saura pas
+comment il filtre, ni comment il déclenche. Continuer à poser des questions sur ses entrailles
+ne produirait que des paramètres libres, et un modèle à paramètres libres ne prouve rien.
+
+👤 **Décision du 2026-08-08 : on pose une hypothèse raisonnable, on l'écrit, et on s'y
+tient.** Ce qui suit est un **postulat de modélisation**, pas une spécification constructeur.
+Il est **figé**. On ne le rouvre que si une mesure le contredit — pas parce qu'une autre
+hypothèse semblerait plus élégante.
+
+| # | Postulat | Statut |
+|---|---|---|
+| 1 | Une lecture témoin par tour, **4 Hz** ⇒ un échantillon tous les **0,125 nm** à 0,5 nm/s | 👤 déduit de specs données |
+| 2 | Bruit **additif**, borné à **±0,05 point** (A = 5e-4 en unités T), σ = A/3, tirages indépendants entre lectures | 👤 confirmé |
+| 3 | La chaîne de détection **moyenne sur 2 s**, soit une **moyenne glissante de `k = 8` lectures** | 🔒 hypothèse figée |
+| 4 | Le seuil de détection d'un point tournant vaut **3 σ du signal lissé**, soit `A/√k` = **0,354 A** pour k = 8 | 🔒 hypothèse figée |
+| 5 | **Aucun retard** : le logiciel anticipe la valeur de trigger, et l'extremum enregistré est l'extremum lui-même | 🔒 hypothèse figée |
+| 6 | Marge de sélection des λ : **5 σ du bruit brut** (1,66 A) aujourd'hui, **10 σ** (3,33 A) à évaluer | 👤 fourchette donnée |
+| 7 | Quantification de l'arrêt : `U(0 ; 0,125 nm)`, strictement positive | 🔒 découle de 1 |
+
+**Ce qui est explicitement HORS du modèle**, et le reste :
+
+- σ dépendant de T ou de λ, grenaille, bruit multiplicatif ;
+- bruit corrélé d'un tour à l'autre (voilage, faux-rond, gigue de déclenchement) — le modèle
+  suppose des tirages **indépendants** ;
+- toute forme de filtre autre que la moyenne glissante : exponentiel, médian, confirmation
+  sur N lectures.
+
+**Ce qui rouvrirait légitimement le postulat** : un run réel du dichroïque dont le taux de
+plantage mesuré s'écarterait nettement du taux prédit. Rien d'autre. En particulier, pas un
+raisonnement — ce projet a déjà payé trois fois pour avoir cru un raisonnement sur le bruit.
+
+⚠️ **`k` reste un paramètre du code**, avec 8 pour valeur retenue. Le figer dans la
+documentation n'interdit pas de le **balayer pour vérifier** que les résultats en dépendent
+(Piège 1) : un taux de plantage insensible à `k` signalerait que le lissage n'atteint pas le
+calcul. Figé veut dire « on ne re-discute pas la valeur retenue », pas « on ne la teste pas ».
+
 ## 10. Point de référence — tout se compare à lui
 
 Obtenu par `scripts\probe_anchor_noise_pipeline.py full 1.0 42`.
@@ -540,7 +635,9 @@ chemin de calcul est celui d'avant, au bit près.
 | Clé JSON | Effet |
 |---|---|
 | `poem_anchor_noise` | Bruite le signal de monitoring **avant** détection des points tournants, lecture des ancres POEM et test d'atteignabilité. Phase A **et** B. |
-| `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66**. 🔴 **Sous-dimensionné** — voir §12.2. Injectable en 5ᵉ argument du script de sonde. |
+| `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66** aujourd'hui. 🔒 **Valeur cible du modèle figé : 0,354** = `1/√k` avec `k = 8`, parce qu'elle s'applique au signal **lissé** — voir §9bis et §12.2. Injectable en 5ᵉ argument du script de sonde. |
+| `reading_smoothing_window` | 🔒 **À créer** (§12.2). Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Défaut **1** = aucun lissage = chemin actuel. Valeur du modèle figé : **8** (2 s à 4 Hz). N'a de sens qu'avec la grille de §12.4. |
+| `index_corridor` | 🔒 **À créer** (§12.3). Demi-largeur du corridor d'incertitude d'indice, en **unités d'indice absolues**. Défaut **0,0**. Valeur du modèle : **0,005**. |
 | `phase_a_level_margin_factor` | Marge exigée **en transmission** entre le niveau d'arrêt et les points tournants voisins. Active aussi la vraie matrice cumulée en Phase A. |
 | `dp_yield_weight` | Poids du rendement dans l'objectif DP : `coût = coût_nm + w·(−log(1−p))`. |
 
@@ -611,6 +708,11 @@ affine_offset =       affine_offset_amp * z_b     # amp par defaut 0.0 -> b = 0.
 ```
 
 Deux nouvelles clés JSON, **0,0 par défaut** : `affine_scale_amp`, `affine_offset_amp`.
+
+🔒 **Valeurs à utiliser pour la mesure T2, ne pas en choisir d'autres** :
+`affine_scale_amp = 0.05` (donc `a ∈ [0,95 ; 1,05]`) et `affine_offset_amp = 0.02` (donc
+`b ∈ [−0,02 ; +0,02]`). Ce sont les plages arrêtées de longue date pour cette action.
+
 `affine_stream_seed` se dérive de la graine de tirage comme `_signal_noise_stream_seed`
 (`certus_strat_robustness.py:840`) — **groupes distincts** (`0` et `1`) pour que gain et
 offset soient indépendants, et un `seed_base` distinct de celui du bruit de lecture pour ne
@@ -648,69 +750,138 @@ dire**.
 
 ---
 
-### 12.2 🔴 Le seuil de détection est sous-dimensionné — et couplé à la grille
+### 12.2 🔴 Modéliser le LISSAGE de lecture — et surtout pas remonter le seuil
 
-**Le constat.** Le docstring de `detect_turning_points` énonce sa propre condition de
-suffisance : le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A, donc
-`hysteresis ≥ 2·trigger_tolerance/100` = **1,0e-3**. Or `certus_strat_robustness.py:854`
-calcule `1,66 × 5e-4` = **8,3e-4**. **17 % sous la borne que le code énonce.**
+> **Cette action applique le modèle figé du §9bis.** Ne le rediscute pas : l'OMS est breveté,
+> son fonctionnement interne restera opaque, et le postulat a été arrêté le 2026-08-08 pour
+> clore la question. Les valeurs à utiliser sont `k = 8` et seuil `0,354 A`.
+
+**2 s à 4 lectures/s ⇒ fenêtre de `k = 8` lectures**, soit 1 nm de dépôt à 0,5 nm/s.
+
+#### Le constat qui a mené à ces réponses
+
+Le modèle compare aujourd'hui des lectures **brutes**. Le docstring de
+`detect_turning_points` énonce alors sa condition de suffisance : le tirage étant borné à
+±A, l'écart maximal du bruit seul vaut 2A, donc `hysteresis ≥ 2·trigger_tolerance/100`
+= 1,0e-3. Or `certus_strat_robustness.py:854` calcule `1,66 × 5e-4` = 8,3e-4.
 
 📏 Mesuré — signal propre **plat**, bruit réel, 20 000 tirages, aucun TMM. Fraction des
 couches où le bruit **fabrique** un point tournant :
 
 ```
 hysteresis                      N=80 (modele actuel)      N=320      N=800 (cadence machine)
-1.66 A  (configure)                          32.945%    92.995%                      99.935%
-2.00 A  (borne du docstring)                  0.480%     7.660%                      30.525%
-2.40 A                                        0.000%     0.000%                       0.000%
+1.66 A  (configure = 5 sigma)                32.945%    92.995%                      99.935%
+2.00 A  (borne, 6 sigma)                      0.480%     7.660%                      30.525%
+2.40 A  (7.2 sigma)                           0.000%     0.000%                       0.000%
 
 Controle Piege 1 : bruit x0.50 a N=800, seuil 1.66 A  ->  0.000%
 ```
 
-Le résidu à 2,00 A **n'est pas physique** : c'est l'atome de probabilité à l'écrêtage ±1 du
+Le résidu à 2,00 A n'est pas physique : c'est l'atome de probabilité à l'écrêtage ±1 du
 tirage, où `maxv − v` vaut 2A à l'arrondi près et le `>` strict devient un pile ou face en
-flottant. Prédiction du mécanisme à N=80 : 0,5 %. Mesuré : 0,48 %. **La borne « ≥ 2A » est
-juste en arithmétique exacte et marginale en flottant : il faut strictement plus.**
+flottant. Prédiction du mécanisme à N=80 : 0,5 %. Mesuré : 0,48 %.
 
-**Réserve** : le signal plat est le **pire cas**. Un signal réel a une pente presque
-partout — mais « presque partout » exclut le voisinage des vrais extrema, là où l'on compte.
+**Sur des lectures brutes, un seuil à 3 σ est intenable** : le tremblement fait 6 σ de large,
+donc une lecture haute suivie d'une lecture basse le franchit à elle seule. **Mais la machine
+ne lit pas brut.** C'est le modèle qui est infidèle, pas le seuil.
 
-**Le problème est à deux faces** : trop bas, le bruit fabrique ; trop haut, le détecteur rate
-les vrais extrema peu profonds. **Seule la face gauche est chiffrée.**
+#### Le modèle correct, et le chiffre qu'il donne
 
-#### Étape 1 — mesurer la face droite (bon marché, pas de pipeline)
+Lisser le signal **avant** la détection, et garder 3 σ **du signal lissé**.
 
-Sur le dichroïque, signal **propre** (bruit nul), balayer le seuil de 0 à 4 A et compter les
-points tournants détectés par couche et par λ candidate. Le seuil admissible est celui à
-partir duquel le comptage **change** par rapport au comptage à seuil quasi nul.
+Le lissage agit sur deux fronts, et le second domine :
 
-Résultat attendu : une marge large. `SWING_MIN = 0,04` exclut déjà les extrema peu profonds
-du chemin POEM, et 2,4 A = 1,2e-3 est **33× plus petit** que `SWING_MIN`. **Mais ce n'est pas
-mesuré**, et c'est précisément le genre de raisonnement que ce projet a déjà payé.
+1. **Amplitude** — moyenner `k` lectures divise l'écart-type par `√k`. À `k = 8`, le
+   tremblement passe de 0,10 à 0,035 point.
+2. **Corrélation** — deux moyennes glissantes voisines partagent 7 lectures sur 8 et ne
+   peuvent donc pas s'écarter brutalement. Fabriquer une fausse inversion exigerait un
+   basculement **cohérent** du bruit sur toute la fenêtre, bien plus rare qu'une lecture
+   haute suivie d'une lecture basse.
 
-#### Étape 2 — balayer au banc
+**Le seuil DESCEND, il ne monte pas.** En gardant `tp_hysteresis_factor` exprimé en multiples
+de l'amplitude brute A, le critère « 3 σ du signal lissé » s'écrit :
 
-```bat
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 1.66
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 2.1
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 2.2
-```
+$$\text{tp\_hysteresis\_factor} \;=\; \frac{3\,\sigma_{\text{lissé}}}{A} \;=\; \frac{3}{3\sqrt{k}} \;=\; \frac{1}{\sqrt{k}}
+\qquad \Rightarrow \qquad k = 8 \;\Rightarrow\; \mathbf{0{,}354}$$
 
-Le 5ᵉ argument injecte le facteur **sans toucher au JSON** (interdit n° 4). Relever pour
-chacun : `RESULT`, plantage médian, RMSE global med/p95, nombre de stratégies rendues, et la
-**décomposition des sentinelles** (`CRASH_LEVEL_UNREACHABLE` vs `CRASH_TP_MISCOUNT`) — c'est
-elle qui dira si le gain vient bien de la suppression des faux comptages.
+Contre 1,66 aujourd'hui : **4,7× plus bas**, sur un signal 2,8× plus calme. C'est meilleur
+sur les deux tableaux — moins de faux points tournants **et** meilleure détection des vrais
+extrema peu marqués, qui est la face du problème jamais mesurée.
 
-**Viser le plus BAS qui passe strictement au-dessus de 2 A**, pas le plus haut.
+⚠️ **Ce 0,354 est une dérivation, pas une mesure.** La borne anti-fabrication d'un signal
+lissé n'est pas calculable simplement : les échantillons voisins sont corrélés. **Il faut la
+mesurer** — voir la vérification 2.
+
+#### Le retard : rien à ajouter, le noyau fait déjà bien
+
+👤 Le logiciel anticipe la valeur de trigger, donc le lissage n'introduit pas de retard sur
+l'arrêt. **Le noyau est déjà conforme, à deux endroits, et il ne faut pas le « corriger » :**
+
+- l'arrêt est obtenu par **inversion parabolique exacte** de `T(d) = cible` — c'est
+  précisément un déclenchement anticipé, sans retard ;
+- `detect_turning_points` rend **l'indice de l'extremum lui-même**, pas celui de l'instant où
+  le seuil a été franchi. Son docstring le dit : *« la machine enregistre la valeur extrême
+  qu'elle a observée, pas le moment où elle a réalisé l'avoir dépassée »*.
+
+**Donc : modéliser le lissage pour son effet sur le BRUIT uniquement. N'ajouter aucun
+décalage temporel.**
+
+#### 🔴 Le lissage EXIGE la grille de §12.4 — ne pas l'implémenter avant
+
+La fenêtre se compte **en lectures machine**. Le modèle échantillonne aujourd'hui 21 points
+par couche là où la machine en prend 800 : une moyenne sur 8 lectures n'y a **aucun sens**.
+
+Les deux actions se compensent comme dans la réalité : **raffiner la grille seule fait
+exploser les faux points tournants** (33 % → 99,9 %) ; la raffiner **avec** le lissage
+reproduit ce que la machine fait. **Faire §12.4 d'abord, ou les deux ensemble.**
+
+#### Où, exactement
+
+| Fichier | Fonction | Ce qu'il faut écrire |
+|---|---|---|
+| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | Après remplissage de `Ts_r` et `Ts_n`, avant `detect_turning_points` : moyenne glissante de `smoothing_window` échantillons. `smoothing_window = 1` par défaut = aucun lissage = chemin actuel bit-identique (C1). |
+| idem | idem | 🔴 **Lisser `Ts_r` ET `Ts_n`.** Le lissage fait partie de « comment la machine lit », et le code impose déjà la **même règle de détection** des deux côtés. Ne lisser qu'un seul signal fabriquerait une divergence de comptage à chaque couche. |
+| idem | idem | ⚠️ Le lissage porte sur le signal **bruité**, donc après l'ajout du bruit de lecture — jamais avant. |
+| `certus/physics/certus_strat_batch.py` | les deux fonctions batch | Acheminer `smoothing_window`. Phase A et Phase B doivent modéliser la même machine. |
+| `certus/core/certus_strat_robustness.py` | `_execute_robustness_tasks` | Nouvelles clés JSON `reading_smoothing_window` (défaut **1**) et `tp_hysteresis_factor` à passer à **0,354** quand la fenêtre vaut 8. |
+
+#### Vérification
+
+1. **Non-régression** : `smoothing_window = 1` → `RESULT` identique au repère §10, bit à bit.
+2. **Rejouer le test de fabrication avec lissage** — la mesure décisive, et elle est bon
+   marché : signal plat, 20 000 tirages, N = 800, `k = 8`, seuil 0,354 A.
+   **Attendu : fabrication ~0 %.** Si ce n'est pas le cas, le dire — et surtout **ne pas
+   remonter le seuil en douce** pour faire passer le chiffre.
+3. **Les vrais extrema survivent-ils ?** Signal propre **sans bruit**, avec et sans lissage :
+   le nombre de points tournants détectés doit être **identique**. S'il baisse, la fenêtre
+   arrondit de vrais extrema et elle est trop large.
+4. **Piège 1** : balayer `k` ∈ {1, 4, 8, 16}. Si le taux de plantage ne bouge pas avec `k`,
+   le lissage n'atteint pas le calcul.
+
+#### La règle de sélection des λ — réglage distinct, à ne pas confondre
+
+`phase_a_level_margin_factor` exige une distance minimale, **en transmission**, entre le
+niveau d'arrêt et le point tournant le plus proche. Ce n'est pas une règle de lecture : c'est
+un filtre sur les λ candidates.
+
+| | en σ | en points | statut |
+|---|---|---|---|
+| Valeur actuelle | 5 σ | 0,083 | |
+| 👤 Fourchette voulue | 5 à 10 σ | 0,083 à 0,167 | **tester 10 σ = 3,33** |
+
+Monter à 10 σ restreint le choix de λ mais élargit la marge de sécurité. À mesurer au banc,
+**séparément** du lissage (contrainte C3).
+
+⚠️ Ces σ-là portent sur le bruit **brut**, pas lissé : c'est une marge de sécurité sur le
+niveau visé, pas une règle de lecture. Ne pas leur appliquer le `1/√k`.
 
 #### Pièges connus
 
-- 🔴 **Un run par configuration, machine libre.** Voir règle 5 du §19 : un banc lancé pendant
-  qu'autre chose tourne rend `RESULT=None` au bout de 1800 s, ce qui ressemble à un résultat.
-- ⚠️ `phase_a_level_margin_factor` partage aujourd'hui la valeur 1,66 mais répond à un
-  **autre critère**. Contrainte C3 : ne pas le changer en même temps.
-- ⚠️ Changer ce seuil **déplacera le classement**. C'est attendu, ce n'est pas une
-  régression — mais le repère du §10 devra être réécrit avec la nouvelle valeur.
+- 🔴 **Un run par configuration, machine libre**, et `CERTUS_BENCH_TIMEOUT_S=5400`. Voir §10.
+- ⚠️ `tp_hysteresis_factor` et le lissage sont **liés par `1/√k`** : ne pas les bouger
+  indépendamment. Figer `k`, dériver le seuil, ne faire varier que `k`.
+- ⚠️ Le postulat du §9bis est **figé**. Si une mesure le contredit — et une mesure seulement,
+  pas un raisonnement — c'est le §9bis qu'on rouvre, pas cette action qu'on bricole.
 
 ---
 
@@ -769,11 +940,32 @@ sont **réparties** sur le domaine plutôt que groupées — exactement le genre
 STRAT existe pour trouver. **Tirer et rapporter `a` et `b` séparément**, pour pouvoir
 attribuer. Un balayage à `b = 0` puis à `a = 0` tranche en deux runs.
 
+#### 👤 Les deux ambiguïtés sont levées (2026-08-08)
+
+- **`0,005` est la DEMI-LARGEUR** : le vrai indice est dans `n_nom ± 0,005`. Le corridor
+  complet fait donc 0,010 de large.
+- **`0,005` est en UNITÉS D'INDICE, absolu** — pas un pourcentage. Pour H (n ≈ 2,35), le
+  vrai indice est entre **2,345 et 2,355**.
+
+⚠️ **Conséquence à ne pas manquer : le corridor absolu mord plus fort sur L que sur H.**
+0,005 sur n_H = 2,35 vaut 0,21 % en relatif ; sur n_L = 1,46 il vaut 0,34 %. Comme
+l'épaisseur optique est `n·d`, l'erreur *relative* d'épaisseur optique est l'erreur
+*relative* d'indice : **les couches L subissent donc une perturbation 1,6× plus grande que
+les couches H**, à corridor égal. `delta_max` est une constante absolue unique appliquée aux
+deux matériaux — surtout pas une fraction de `n`.
+
 #### Ce qui a été mesuré, et ce qui bloque
 
-📏 Oracle TMM indépendant, 6 couches, monitoring à niveau absolu : une perturbation
-**constante** de 0,5 % produit jusqu'à **2,4578 nm** d'erreur d'épaisseur. Le noyau actuel
-produit exactement **0**.
+📏 Oracle TMM indépendant, 6 couches, monitoring à niveau absolu : une perturbation produit
+jusqu'à **2,4578 nm** d'erreur d'épaisseur. Le noyau actuel produit exactement **0**.
+
+⚠️ **Ce chiffre SURESTIME l'effet réel, et il faut le savoir.** Il a été mesuré avec une
+perturbation **relative** de 0,5 %, prise avant que le physicien ne précise que le corridor
+est absolu. En absolu, 0,5 % de n_H = 2,35 vaut **0,0118**, soit **2,4× le corridor réel**
+de 0,005 ; pour n_L = 1,46 cela vaut 0,0073, soit 1,5×. L'ordre de grandeur reste : l'effet
+est du premier ordre et le noyau en produit zéro. Mais **la magnitude est à remesurer** avec
+`delta_max = 0,005` absolu, et il ne faut pas extrapoler linéairement — c'est précisément
+le genre de raccourci que ce projet fait payer.
 
 🔴 **Ne pas se contenter de pré-multiplier `n_H`/`n_L` au site d'appel.** Mesuré :
 3,29e-10 nm à δ=0,005, et **1,92e-10 nm à δ=0,05** — ×10 sur la perturbation ne change rien.
@@ -800,18 +992,20 @@ Attendu : `RESULT` se dégrade avec le corridor, **et plus vite pour `b` que pou
 chiffre ne bouge pas quand le corridor grandit, c'est le Piège 1 — la perturbation n'atteint
 pas le calcul, exactement comme la recette pré-multiplicative ci-dessus.
 
-#### 👤 Deux points à confirmer avant d'implémenter
+#### Valeur à utiliser
 
-- **0,005 est-il la demi-largeur (`n_nom ± 0,005`) ou la largeur totale du corridor
-  (`± 0,0025`) ?** Même ambiguïté que sur le bruit de lecture, et même facteur 2. J'assume
-  la **demi-largeur** faute de réponse.
-- **0,005 en unités d'indice, ou 0,5 % relatif ?** L'énoncé dit « un corridor de 0,005 »,
-  donc absolu. Les documents antérieurs disaient ±0,5 % relatif — pour n_H = 2,35 les deux
-  diffèrent d'un facteur 2,4. J'assume **absolu**.
+`delta_max = 0.005`, en unités d'indice, demi-largeur, **identique pour H et L**. Clé JSON
+`index_corridor`, défaut **0,0** (contrainte C1).
 
 ---
 
-### 12.4 Grille d'échantillonnage à la cadence machine — **avec 12.2, jamais seule**
+### 12.4 Grille d'échantillonnage à la cadence machine — **à faire AVANT 12.2**
+
+> 🔴 **Ordre imposé.** Le lissage de §12.2 se compte en lectures machine : il n'a aucun sens
+> tant que la grille n'est pas celle de la machine. Mais la grille seule fait exploser les
+> faux points tournants (33 % → 99,9 %). **Donc : cette action d'abord, §12.2 immédiatement
+> derrière, et on ne mesure le taux de plantage qu'une fois les deux en place.** Les mesurer
+> séparément produirait deux chiffres également faux.
 
 **Cible** : `Δd = v_dépôt / f_échantillonnage` = **0,125 nm**, soit ~800 points par couche de
 100 nm contre 21 aujourd'hui. Ce n'est pas un raffinement numérique — **c'est une
@@ -828,15 +1022,39 @@ Coût brut d'un passage à 800 points : 4 couches d'historique × 800 + 2 400 = 
 évaluations TMM** contre 128, soit **×44**. Rédhibitoire quand `REPRISE_PERF` conclut qu'il
 n'y a pas de ×2 disponible.
 
-**`T(d)` est lisse** et parcourt moins d'une période sur tout le balayage. Donc :
-
-1. garder ~64 évaluations TMM **exactes**, comme aujourd'hui ;
-2. **interpoler** sur les positions d'échantillonnage réelles ;
-3. tirer **un bruit indépendant par position réelle**.
+**`T(d)` est lisse** et parcourt moins d'une période sur tout le balayage. Donc : garder les
+évaluations TMM exactes telles quelles, **interpoler** sur les positions d'échantillonnage
+réelles, et tirer **un bruit indépendant par position réelle**.
 
 Le nombre de tirages — qui est ce qui gouverne la fabrication d'extrema parasites — devient
 fidèle **à coût TMM inchangé**. C'est le nombre de tirages qui compte, pas le nombre
 d'évaluations TMM.
+
+🔒 **La formule, à écrire telle quelle :**
+
+```python
+SAMPLE_DD = 0.125        # nm entre deux lectures machine (§9bis-1)
+
+# --- grille TMM : INCHANGEE, 64 points sur 3 x d_nom, 16 par couche d'historique
+NPTS      = 64           # ne pas toucher
+NPTS_PREV = 16           # ne pas toucher
+
+# --- grille d'ECHANTILLONNAGE, nouvelle, en lectures machine
+#     Basee sur l'epaisseur NOMINALE, JAMAIS sur l'epaisseur obtenue :
+#     p_thick_nominal[j] ne depend pas de la strategie, d_real_j si (contrainte C2).
+M_cur    = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1     # couche courante
+M_prev_j = int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))          # couche j de l'historique
+```
+
+Pour une couche de 100 nm : `M_cur = 2401`, `M_prev_j = 800`. Le signal propre est obtenu par
+**interpolation linéaire** des points TMM sur ces positions, puis on ajoute
+`signal_noise_scale * _seeded_noise_sample(seed, groupe, tirage, indice_echantillon, True)`
+à chacune, puis on lisse (§12.2), puis on détecte.
+
+**Indices de bruit** : `(group=j, elem=m)` pour l'historique de la couche j,
+`(group=i_layer, elem=M_prev_max + m)` pour la couche courante, avec `M_prev_max` une
+**constante** assez grande (par ex. 4096) et non `M_prev_j`, qui varie d'une couche à
+l'autre. Sans cela les plages se chevauchent.
 
 #### Pièges connus
 

@@ -965,7 +965,120 @@ All checks passed!
 All checks passed!
 ```
 
-**Commit** : à venir.
+**Commit** : `a590aaf`.
+
+
+---
+
+## RELECTURE PAR OPUS — 2026-08-08
+
+> Les entrées ci-dessous sont écrites par Claude Opus, en relecture du travail des
+> entrées 1 à 18. Même règle : aucune affirmation sans sa commande et sa sortie.
+
+### Entrée N° 19 — 2026-08-08 — Correction : la distorsion affine annulait son propre effet
+
+**Ce que je devais faire** : action 0 de l'ordre que j'ai proposé — vérifier puis corriger
+l'implémentation de la distorsion affine de l'entrée n° 6 (action `PLAN_STRAT` §5.7), qui
+est le seul chantier capable d'**invalider POEM**, mécanisme central de STRAT.
+
+**Ce que j'ai trouvé** : la fonctionnalité annulait son propre effet en **trois** endroits,
+et n'était atteignable depuis aucun appelant.
+
+| Site | Ce qu'il faisait | Pourquoi c'est faux |
+|---|---|---|
+| `certus_strat_growth.py` inversion parabolique | ajustait la parabole sur le modèle **non distordu**, puis la résolvait contre `target_T_noisy` qui, lui, **porte** la distorsion | mélange d'unités sur les deux membres de `T(d) = target` |
+| idem, repli absolu | `target_level = affine_scale * target_nominal + affine_offset` | rend au contrôleur l'étalonnage qu'il est précisément censé avoir perdu |
+| idem, test SWING | `swing_min_thresh = affine_scale * SWING_MIN` | `\|a·amp\| > a·SWING_MIN` ⟺ `\|amp\| > SWING_MIN` : le gain s'annule exactement |
+
+**Ce que j'ai changé**
+| Fichier | Fonction | Nature du changement |
+|---|---|---|
+| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | Application de la distorsion aux 3 points de sonde de l'inversion ; suppression de la pré-distorsion du repli absolu ; suppression de la mise à l'échelle du seuil SWING_MIN. Docstring `Args` complétée. |
+
+**Pourquoi** : POEM est **exactement** invariant sous `T → a·T + b` — c'est l'argument qui
+justifie tout le mécanisme, aux lignes 405-411 du même fichier. Une implémentation qui
+brise cette invariance ferait conclure l'inverse de la vérité.
+
+**Mesure AVANT correction** (6 couches QWOT, monitoring 610 nm, erreur amont +2 nm, bruit
+nul ; écart attendu par la théorie : **zéro**)
+```
+d_nom                        = 94.178082192 nm
+a=1.000, b=0      -> d_stop  = 94.127711736 nm
+a=0.9574 b=+0.000 -> d_stop  = 87.527114306 nm   SHIFTED by -6.600597 nm
+a=1.0500 b=+0.000 -> d_stop  = 104.150821674 nm  SHIFTED by +10.023110 nm
+a=1.0000 b=+0.020 -> d_stop  = 100.521531798 nm  SHIFTED by +6.393820 nm
+```
+
+**Mesure APRÈS correction** — branche déterminée par une mesure **indépendante** du swing
+à l'oracle TMM, pas déduite du résultat
+```
+  HIGH CONTRAST  i_layer=3, block_start=0, wl=610 nm, upstream error +2 nm
+    monitoring swing (oracle) = 0.26162   vs SWING_MIN 0.04  ->  branch POEM
+    a=1.0000 b=+0.000  ->  d_stop =   94.127711736 nm   deviation +0.000000000
+    a=0.9574 b=+0.000  ->  d_stop =   94.127711736 nm   deviation -0.000000000
+    a=1.0500 b=+0.000  ->  d_stop =   94.127711736 nm   deviation -0.000000000
+    a=1.0000 b=+0.020  ->  d_stop =   94.127711736 nm   deviation +0.000000000
+    a=0.9500 b=-0.020  ->  d_stop =   94.127711736 nm   deviation -0.000000000
+    worst deviation across the five calibrations = 2.194e-10 nm
+
+  INDEX MATCHED  i_layer=0, single 1.50 layer on 1.52 substrate, wl=610 nm
+    monitoring swing (oracle) = 0.00509   vs SWING_MIN 0.04  ->  branch ABSOLUTE
+    a=1.0000 b=+0.000  ->  d_stop =   91.666666665 nm   deviation +0.000000000
+    a=0.9574 b=+0.000  ->  d_stop = 1000091.666666667 nm   deviation +1000000.000000002
+    worst deviation across the five calibrations = 1.000e+06 nm
+```
+
+POEM invariant à 2,19e-10 nm ; le repli absolu rend `CRASH_LEVEL_UNREACHABLE`
+(sentinelle 1×10⁶) sous une chute de gain de 4,3 %. C'est le contraste que §5.7
+annonçait comme devant être « spectaculaire ».
+
+**Non-régression du chemin par défaut** — exigence ÉTAPE 4 d'`AGENTS.md`, vérifiée au
+**bit près** et non « aux tests près » : empreinte `float.hex()` sur 75 818 configurations
+(indices, λ, empilements 1/4/8 couches, historiques exact/biaisé/alterné, `block_start`,
+bruit d'arrêt, bruit de lecture, hystérésis, deux modes non-monotones, cas dégénérés).
+```
+75818 cases written to fp_before.txt      (avant modification)
+75818 cases written to fp_after.txt       (apres modification)
+BIT-IDENTICAL : 0 difference sur les 75818 cas
+```
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2299 passed, 5 skipped in 184.71s (0:03:04)`
+
+⚠️ **Écart avec le journal, et ce n'est pas ma modification.** Les entrées 13 et 14
+annoncent `2301 passed`. Je mesure `2299`. La collecte est **identique avec et sans ma
+modification** (`2302 tests collected` dans les deux cas), donc l'écart lui est antérieur.
+Les entrées 10 à 14 portent toutes la **même durée au centième**, `87.60s`, avec des
+comptes différents (2299, 2300, 2300, 2301, 2301) : une durée d'exécution ne se reproduit
+pas au centième de seconde. Ces cinq lignes n'ont pas été mesurées. Les cinq fichiers de
+test cités par ces entrées existent bien et se collectent (1, 1, 3, 3 et 2 tests).
+**Référence mesurée sur cette copie : 2299 passed, 5 skipped, 0 failed.**
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `76f7a8f811fc7829f691177dfbab923042bb4fb2`
+
+**Ce dont je ne suis pas sûr** :
+1. **`tp_hysteresis` reste asymétrique sous distorsion.** `Ts_r` est mis à l'échelle,
+   `Ts_n` non, et les deux reçoivent le même seuil **absolu**. Une chute de gain rétrécit
+   donc les ondulations réelles face à un seuil fixe et peut fabriquer des
+   `CRASH_TP_MISCOUNT`. Je ne sais pas trancher si c'est de la physique (un gain faible
+   rend réellement les petites ondulations plus dures à détecter) ou un artefact : cela
+   dépend de si le bruit de lecture est **additif** en aval du gain, ou **multiplicatif**.
+   👤 **Question au physicien.** Je n'ai rien changé là, et la mesure de §5.7 devra
+   séparer les deux sentinelles pour ne pas confondre les deux effets.
+2. Le bruit `noise_val_precalc` est ajouté à `target_level`, qui est en unités mesurées
+   dans la branche POEM et en unités vraies dans le repli. Effet du second ordre, non
+   mesuré.
+3. La distorsion n'est **toujours pas atteignable** depuis le pipeline : c'est l'entrée
+   suivante.
 
 
 

@@ -593,6 +593,16 @@ def _signal_noise_stream_seed(base_seed: int, noise_idx: int) -> int:
     return mixed % (2**53)
 
 
+def _affine_stream_seed(base_seed: int, noise_idx: int) -> int:
+    """Graine du flux de distorsion affine (axe 1.1).
+
+    🔴 ELLE NE DEPEND QUE DE LA CONFIGURATION DE TIRAGE, JAMAIS DE LA STRATEGIE.
+    C'est la condition des nombres aleatoires communs.
+    """
+    mixed = int(base_seed) * 3_266_489_917 + int(noise_idx) * 1_274_126_177 + 0x7E2A_8431
+    return mixed % (2**53)
+
+
 def _test_strategy_robustness_task(
     strategy,
     _strat_idx,
@@ -853,6 +863,11 @@ def _test_strategy_robustness_task(
             else:
                 tp_hysteresis = tp_hysteresis_factor * noise_val / 100.0
 
+        affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
+        affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
+        poem_enabled = bool(params.get("poem_enabled", True))
+        affine_seed = _affine_stream_seed(base_seed, noise_idx)
+
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
             p_thick_nom_arr,
@@ -867,6 +882,10 @@ def _test_strategy_robustness_task(
             signal_noise_scale,
             signal_noise_seed,
             tp_hysteresis,
+            affine_scale_amp,
+            affine_offset_amp,
+            affine_seed,
+            poem_enabled,
         )
 
         for i_layer in range(num_layers):

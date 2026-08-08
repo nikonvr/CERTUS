@@ -222,6 +222,7 @@ def simulate_growth_kernel(
     tp_hysteresis: float = 0.0,
     affine_scale: float = 1.0,
     affine_offset: float = 0.0,
+    poem_enabled: bool = True,
 ) -> tuple[float, float]:
     """
 
@@ -737,7 +738,7 @@ def simulate_growth_kernel(
             # reading noise is what the instrument reports, hence measured units too.
             # Scaling the threshold by `affine_scale` cancelled the gain exactly and
             # made the test blind to the very distortion it must survive.
-            if abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
+            if poem_enabled and abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
                 poem_ok = True
 
     if poem_ok:

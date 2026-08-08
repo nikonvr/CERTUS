@@ -147,10 +147,15 @@ class _PhysicsBridge:
         signal_noise_scale: float = 0.0,
         signal_noise_seed: int = 0,
         tp_hysteresis: float = 0.0,
+        affine_scale_amp: float = 0.0,
+        affine_offset_amp: float = 0.0,
+        affine_seed: int = 0,
+        poem_enabled: bool = True,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
+            affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled,
         )
 
     @staticmethod
@@ -1136,9 +1141,9 @@ def _validate_candidates_phase_a(
     # directement la severite du filtre, et ce couplage n'est pas voulu.
     signal_noise_scale = 0.0
     signal_noise_seed = 0
+    phase_a_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)) or 42)
     _anchor_noise_master = bool(params.get("poem_anchor_noise", False))
     if bool(params.get("poem_anchor_noise_phase_a", _anchor_noise_master)):
-        phase_a_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)) or 42)
         signal_noise_scale = noise_val_pct
         # La couche entre dans la graine : la Phase A est gloutonne, chaque couche
         # est un tirage independant, et son bruit d'arret suit deja la meme regle
@@ -1151,6 +1156,11 @@ def _validate_candidates_phase_a(
     # Elle s'applique meme quand le signal n'est pas bruite : une machine a toujours
     # une regle de lecture. Defaut 0.0 = regle historique.
     tp_hysteresis = float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct
+
+    affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
+    affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
+    poem_enabled = bool(params.get("poem_enabled", True))
+    affine_seed = (int(phase_a_seed) * 3_266_489_917 + (int(i_layer) + 1) * 40_503 + 0x7E2A_8431) % (2**53)
 
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
@@ -1169,6 +1179,10 @@ def _validate_candidates_phase_a(
         signal_noise_scale,
         signal_noise_seed,
         tp_hysteresis,
+        affine_scale_amp,
+        affine_offset_amp,
+        affine_seed,
+        poem_enabled,
     )
 
     results_thickness = []

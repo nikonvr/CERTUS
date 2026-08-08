@@ -1086,6 +1086,16 @@ class CertusStratStateMixin:
             "dp_yield_weight": _config_float(
                 getattr(self, "_loaded_config", {}), "dp_yield_weight"
             ),
+            # ── Photometric affine distortion (a, b) & POEM enable ──────────────
+            "affine_scale_amp": _config_float(
+                getattr(self, "_loaded_config", {}), "affine_scale_amp"
+            ),
+            "affine_offset_amp": _config_float(
+                getattr(self, "_loaded_config", {}), "affine_offset_amp"
+            ),
+            "poem_enabled": _config_flag(
+                getattr(self, "_loaded_config", {}), "poem_enabled", True
+            ),
             # ── AXE 3 : la cible spectrale, acheminee depuis la configuration ───
             #
             # 👤 « Le plus important est la cible spectrale respectee. » STRAT classait

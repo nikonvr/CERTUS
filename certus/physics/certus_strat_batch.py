@@ -9,7 +9,7 @@ NON_MONOTONIC_MODE_ATTENUATE = 0
 NON_MONOTONIC_MODE_REJECT = 1
 K_MAX_LAYER_BACKSIDE: float = 0.001
 K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
-from .certus_strat_math import check_extrema_proximity_batch, _calc_T_from_matrix, _calc_T_added_layer
+from .certus_strat_math import check_extrema_proximity_batch, _calc_T_from_matrix, _calc_T_added_layer, _seeded_noise_sample
 from .certus_strat_growth import simulate_growth_kernel
 
 # Number of reading noise points consumed per (run, layer) in `simulate_growth_kernel`:
@@ -36,6 +36,10 @@ def validate_wavelengths_batch(
     signal_noise_scale: float = 0.0,
     signal_noise_seed: int = 0,
     tp_hysteresis: float = 0.0,
+    affine_scale_amp: float = 0.0,
+    affine_offset_amp: float = 0.0,
+    affine_seed: int = 0,
+    poem_enabled: bool = True,
 ):
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -92,6 +96,14 @@ def validate_wavelengths_batch(
         n_crash = 0
         for r_idx in range(n_runs):
             prev_th = runs_history[r_idx, :i_layer]
+            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+                z_a = _seeded_noise_sample(affine_seed, 0, r_idx, 0, True)
+                z_b = _seeded_noise_sample(affine_seed, 1, r_idx, 0, True)
+                aff_s = 1.0 + affine_scale_amp * z_a
+                aff_o = affine_offset_amp * z_b
+            else:
+                aff_s = 1.0
+                aff_o = 0.0
             val, _ = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
@@ -109,6 +121,9 @@ def validate_wavelengths_batch(
                 signal_noise_seed,
                 r_idx,
                 tp_hysteresis,
+                aff_s,
+                aff_o,
+                poem_enabled,
             )
             if val > 100000.0:
                 # depot non terminable : sentinelle nominal_th + 1e6
@@ -139,17 +154,27 @@ def validate_wavelengths_batch(
             prev_nom = p_thick_nominal[:i_layer].copy()
             prev_prt = prev_nom.copy()
             prev_prt[i_layer - 1] += gain_probe_nm
+            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+                z_a = _seeded_noise_sample(affine_seed, 0, 0, 0, True)
+                z_b = _seeded_noise_sample(affine_seed, 1, 0, 0, True)
+                aff_s_0 = 1.0 + affine_scale_amp * z_a
+                aff_o_0 = affine_offset_amp * z_b
+            else:
+                aff_s_0 = 1.0
+                aff_o_0 = 0.0
             v_ref, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_nom, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
+                aff_s_0, aff_o_0, poem_enabled,
             )
             v_prt, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
+                aff_s_0, aff_o_0, poem_enabled,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
@@ -177,6 +202,10 @@ def simulate_stack_robustness_batch(
     signal_noise_scale: np.ndarray = None,
     signal_noise_seed: int = 0,
     tp_hysteresis: float = 0.0,
+    affine_scale_amp: float = 0.0,
+    affine_offset_amp: float = 0.0,
+    affine_seed: int = 0,
+    poem_enabled: bool = True,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
@@ -210,6 +239,14 @@ def simulate_stack_robustness_batch(
         else:
             block_start[i] = block_start[i - 1]
     for r in prange(n_runs):
+        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+            z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)
+            z_b = _seeded_noise_sample(affine_seed, 1, r, 0, True)
+            aff_s = 1.0 + affine_scale_amp * z_a
+            aff_o = affine_offset_amp * z_b
+        else:
+            aff_s = 1.0
+            aff_o = 0.0
         for i_layer in range(n_layers):
             wl = layer_wavelengths[i_layer]
             n_H, n_L, n_Sub = (n_H_vals[i_layer], n_L_vals[i_layer], n_Sub_vals[i_layer])
@@ -234,6 +271,9 @@ def simulate_stack_robustness_batch(
                 signal_noise_seed,
                 r,
                 tp_hysteresis,
+                aff_s,
+                aff_o,
+                poem_enabled,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

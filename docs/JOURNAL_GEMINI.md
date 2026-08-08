@@ -586,9 +586,51 @@ Sortie : `5 passed`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `40632b79012d532270beb4c8b09c4fb7287146e8`
+**Commit** : `469af4c7c10f0a8ddbe2f5bdce48d2295b6ac5e3`
 
 **Ce dont je ne suis pas sûr** : Rien, le Successive Halving est opérationnel et validé par les tests unitaires.
+
+
+### Entrée N° 9 — 2026-08-08 09:36 — Action 6.1 : Garde-fous automatiques anti-dérive et sanité spectrale
+
+**Ce que je devais faire** : Action 6.1 du PLAN_STRAT.md — Mettre en place la suite de garde-fous automatiques : vérification anti-dérive du fichier de référence `JSON-strat-example.json`, sanité spectrale du dichroïque 48 couches, et oracle du fit parabolique du noyau de croissance.
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `tests/oracle/test_example_strat_guardrails.py` | `test_reference_config_anti_drift_guardrail`, `test_spectral_sanity_dichroic_guardrail`, `test_growth_kernel_parabola_oracle` | Création de la suite d'oracles empêchant les dérives de configuration (`scan_wl_step=1.0`, `trigger_tolerance=0.05`, etc.) et validant l'intégrité spectrale. |
+
+**Pourquoi** : Le fichier d'exemple s'est écarté des réglages corrects quatre fois par le passé. Ces oracles empêchent toute régression silencieuse de la configuration de référence et garantissent la sanité optique du dichroïque.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/test_example_strat_guardrails.py -v
+```
+
+**Sortie obtenue**
+```
+3 passed in 4.22s
+```
+
+**Résultat attendu par le plan** : Tous les garde-fous d'oracle doivent passer à 100 %.
+**Résultat obtenu** : Conforme — Configuration de référence verrouillée et spectres dichroïques validés.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2296 passed, 5 skipped in 73.01s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `d83195176c4069a032de04b8119f4b5cbedf928d`
+
+**Ce dont je ne suis pas sûr** : Rien, la suite d'oracles est active et verrouille l'environnement.
+
 
 
 

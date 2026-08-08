@@ -40,6 +40,7 @@ def validate_wavelengths_batch(
     affine_offset_amp: float = 0.0,
     affine_seed: int = 0,
     poem_enabled: bool = True,
+    smoothing_window: int = 1,
 ):
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -124,6 +125,7 @@ def validate_wavelengths_batch(
                 aff_s,
                 aff_o,
                 poem_enabled,
+                smoothing_window,
             )
             if val > 100000.0:
                 # depot non terminable : sentinelle nominal_th + 1e6
@@ -168,6 +170,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, poem_enabled,
+                smoothing_window,
             )
             v_prt, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
@@ -175,6 +178,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, poem_enabled,
+                smoothing_window,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
@@ -206,6 +210,7 @@ def simulate_stack_robustness_batch(
     affine_offset_amp: float = 0.0,
     affine_seed: int = 0,
     poem_enabled: bool = True,
+    smoothing_window: int = 1,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
@@ -274,6 +279,7 @@ def simulate_stack_robustness_batch(
                 aff_s,
                 aff_o,
                 poem_enabled,
+                smoothing_window,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

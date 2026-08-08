@@ -1096,6 +1096,10 @@ class CertusStratStateMixin:
             "poem_enabled": _config_flag(
                 getattr(self, "_loaded_config", {}), "poem_enabled", True
             ),
+            # ── Machine reading smoothing window k (T4) ───────────────────────
+            "reading_smoothing_window": int(
+                _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1
+            ),
             # ── AXE 3 : la cible spectrale, acheminee depuis la configuration ───
             #
             # 👤 « Le plus important est la cible spectrale respectee. » STRAT classait

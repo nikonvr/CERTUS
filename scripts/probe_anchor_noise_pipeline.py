@@ -89,6 +89,10 @@ def patch_flag(
         params["tp_hysteresis_factor"] = hyst
         params["phase_a_level_margin_factor"] = margin
         params["enable_local_search"] = (mode == "full")
+        params["affine_scale_amp"] = float(os.environ.get("CERTUS_AFFINE_SCALE_AMP", "0.0"))
+        params["affine_offset_amp"] = float(os.environ.get("CERTUS_AFFINE_OFFSET_AMP", "0.0"))
+        params["poem_enabled"] = os.environ.get("CERTUS_POEM_ENABLED", "1") not in {"0", "false", "False"}
+        params["reading_smoothing_window"] = int(os.environ.get("CERTUS_SMOOTHING_WINDOW", "1"))
         return params
 
     CertusStratStateMixin.collect_params = patched

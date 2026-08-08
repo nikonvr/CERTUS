@@ -223,6 +223,7 @@ def simulate_growth_kernel(
     affine_scale: float = 1.0,
     affine_offset: float = 0.0,
     poem_enabled: bool = True,
+    smoothing_window: int = 1,
 ) -> tuple[float, float]:
     """
 
@@ -660,22 +661,108 @@ def simulate_growth_kernel(
                 Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
             idx += 1
 
-        if affine_scale != 1.0 or affine_offset != 0.0:
-            for k_aff in range(n_tot):
-                Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
-        # DEUX detections distinctes, et c'est essentiel.
-        #
-        # La FRACTION POEM est pre-calculee hors ligne sur le signal NOMINAL :
-        # c'est la strategie, elle est figee avant le depot.
-        #
-        # Les ANCRES, elles, sont les points tournants que la machine COMPTE sur
-        # le signal REEL. Si les erreurs amont deplacent ou font disparaitre un
-        # extremum, la machine n'en compte pas le meme nombre et ancre POEM sur
-        # les mauvais : c'est un mode de defaillance DISCRET, invisible a un
-        # critere de RMSE, et il ne peut apparaitre que si l'on detecte sur le
-        # reel. Detecter sur le nominal reviendrait a doter la machine d'une
-        # connaissance qu'elle n'a pas.
-        idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
+        if smoothing_window > 1:
+            # ── AXE 1.1 / T3-T4: Decoupled machine sampling grid (0.125 nm) + Moving Average lissage
+            SAMPLE_DD = 0.125
+            M_hist = 0
+            for j in range(j0, i_layer):
+                M_hist += int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))
+            M_cur = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1
+            M_tot = M_hist + M_cur
+
+            Ts_r_samp = np.empty(M_tot, dtype=np.float64)
+            Ts_n_samp = np.empty(M_tot, dtype=np.float64)
+
+            idx_src = 0
+            idx_dst = 0
+            for j in range(j0, i_layer):
+                d_rj = prev_thicknesses_sim[j]
+                d_nj = p_thick_nominal[j]
+                M_pj = int(np.ceil(d_nj / SAMPLE_DD))
+                tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
+                tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
+                for m in range(M_pj):
+                    d_m = m * SAMPLE_DD
+                    f_r = d_m / d_rj if d_rj > 1e-9 else 0.0
+                    f_n = d_m / d_nj if d_nj > 1e-9 else 0.0
+
+                    kr_flt = f_r * NPTS_PREV
+                    kr_low = min(max(0, int(kr_flt)), NPTS_PREV - 1)
+                    kr_frac = kr_flt - kr_low
+                    kr_hi = min(kr_low + 1, NPTS_PREV - 1)
+                    vr = (1.0 - kr_frac) * tmm_sub_r[kr_low] + kr_frac * tmm_sub_r[kr_hi]
+
+                    kn_flt = f_n * NPTS_PREV
+                    kn_low = min(max(0, int(kn_flt)), NPTS_PREV - 1)
+                    kn_frac = kn_flt - kn_low
+                    kn_hi = min(kn_low + 1, NPTS_PREV - 1)
+                    vn = (1.0 - kn_frac) * tmm_sub_n[kn_low] + kn_frac * tmm_sub_n[kn_hi]
+
+                    Ts_r_samp[idx_dst] = vr
+                    Ts_n_samp[idx_dst] = vn
+
+                    if apply_signal_noise:
+                        Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
+                            signal_noise_seed, j, signal_noise_run, m, True
+                        )
+                    idx_dst += 1
+                idx_src += NPTS_PREV
+
+            tmm_cur_r = Ts_r[n_hist : n_hist + NPTS]
+            tmm_cur_n = Ts_n[n_hist : n_hist + NPTS]
+            d_max_cur = D_SCAN * nominal_th
+            for m in range(M_cur):
+                d_m = m * SAMPLE_DD
+                fc_flt = (d_m / d_max_cur) * (NPTS - 1) if d_max_cur > 1e-9 else 0.0
+                kc_low = min(max(0, int(fc_flt)), NPTS - 2)
+                kc_frac = fc_flt - kc_low
+                kc_hi = kc_low + 1
+
+                vr = (1.0 - kc_frac) * tmm_cur_r[kc_low] + kc_frac * tmm_cur_r[kc_hi]
+                vn = (1.0 - kc_frac) * tmm_cur_n[kc_low] + kc_frac * tmm_cur_n[kc_hi]
+
+                Ts_r_samp[idx_dst] = vr
+                Ts_n_samp[idx_dst] = vn
+
+                if apply_signal_noise:
+                    g_noise = i_layer
+                    e_noise = 4096 + m
+                    if m == 0 and M_hist > 0:
+                        g_noise = i_layer - 1
+                        prev_M = int(np.ceil(p_thick_nominal[i_layer - 1] / SAMPLE_DD))
+                        e_noise = prev_M - 1
+                    Ts_r_samp[idx_dst] += signal_noise_scale * _seeded_noise_sample(
+                        signal_noise_seed, g_noise, signal_noise_run, e_noise, True
+                    )
+                idx_dst += 1
+
+            n_tot = M_tot
+            Ts_r = Ts_r_samp
+            Ts_n = Ts_n_samp
+            idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
+        else:
+            if affine_scale != 1.0 or affine_offset != 0.0:
+                for k_aff in range(n_tot):
+                    Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
+            idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
+
+        if smoothing_window > 1:
+            if affine_scale != 1.0 or affine_offset != 0.0:
+                for k_aff in range(n_tot):
+                    Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
+            k_win = smoothing_window
+            Ts_r_raw = Ts_r.copy()
+            Ts_n_raw = Ts_n.copy()
+            for idx_w in range(n_tot):
+                st_w = max(0, idx_w - k_win + 1)
+                w_len = idx_w - st_w + 1
+                s_r = 0.0
+                s_n = 0.0
+                for wi in range(st_w, idx_w + 1):
+                    s_r += Ts_r_raw[wi]
+                    s_n += Ts_n_raw[wi]
+                Ts_r[idx_w] = s_r / w_len
+                Ts_n[idx_w] = s_n / w_len
         # ---- LE SUBSTRAT NU EST UN POINT TOURNANT, ET IL ETAIT IGNORE ----------
         #
         # Physicien, 2026-08-05 : « pour la couche 1 on demarre la couche sur un

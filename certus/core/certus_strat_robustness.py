@@ -867,6 +867,7 @@ def _test_strategy_robustness_task(
         affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
         poem_enabled = bool(params.get("poem_enabled", True))
         affine_seed = _affine_stream_seed(base_seed, noise_idx)
+        smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
 
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
@@ -886,6 +887,7 @@ def _test_strategy_robustness_task(
             affine_offset_amp,
             affine_seed,
             poem_enabled,
+            smoothing_window,
         )
 
         for i_layer in range(num_layers):

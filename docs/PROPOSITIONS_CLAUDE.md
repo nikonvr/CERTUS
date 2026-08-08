@@ -8,7 +8,7 @@ Document rédigé à l'attention de Claude et de l'équipe scientifique.
 
 La simulation du dépôt dans `certus_strat_growth.py` (`simulate_growth_kernel`) est **extrêmement performante et fidèle dans ses principes fondamentaux** (auto-compensation de Macleod, calcul POEM, bruit photométrique et bruit de volet).
 
-Toutefois, une analyse physique et numérique approfondie révèle **4 écarts précis entre le contrôleur physique en laboratoire et le noyau de simulation** :
+Toutefois, une relecture critique et approfondie de la physique du procédé révèle **4 écarts précis entre le contrôleur physique en laboratoire et le noyau de simulation** :
 
 ---
 
@@ -17,60 +17,58 @@ Toutefois, une analyse physique et numérique approfondie révèle **4 écarts p
 * **Physique Machine (Constat de laboratoire)** :
   La méconnaissance d'indice sur les machines réelles est d'environ **$0,5\%$** ($\sigma_{\text{calib}} = 0,005$). 
   **Point clé de corrélation** : Cet écart d'indice n'est **PAS un bruit aléatoire indépendant couche par couche**, mais une **imprécision d'étalonnage globale constante pour chaque matériau** tout au long du run :
-  - Toutes les couches de matériau H (couches 1, 3, 5, 7...) partagent le même décalage d'indice $\delta_H$.
-  - Toutes les couches de matériau L (couches 2, 4, 6, 8...) partagent le même décalage d'indice $\delta_L$.
+  - Toutes les couches de matériau H partagent le même décalage d'indice $\delta_H$.
+  - Toutes les couches de matériau L partagent le même décalage d'indice $\delta_L$.
 * **Kernel STRAT** :
-  Dans la version actuelle, les indices $n_H(\lambda)$ et $n_L(\lambda)$ sont traités comme 100 % déterministes et égaux aux valeurs théoriques nominales de la base de données.
+  Dans la version actuelle, les indices sont traités comme 100 % déterministes.
 * **Impact physique** :
-  Comme le décalage est **cohérent** sur les 48 couches (et non distribué aléatoirement), l'erreur d'indice de $0,5\%$ ne s'annule pas par moyenne statistique. Elle provoque un décalage spectral global ($\approx 2,5\text{ nm}$ à $500\text{ nm}$) que le suivi optique POEM / point tournant tente d'auto-compenser en ajustant dynamiquement les épaisseurs géométriques $d_k$ de chaque couche pendant le dépôt.
+  L'erreur étant cohérente sur tout le run, elle provoque un décalage spectral global que le suivi optique (point tournant/POEM) auto-compense dynamiquement. Ne pas le simuler, c'est surestimer la robustesse nominale.
 * **Solution préconisée pour Claude** :
-  Modéliser l'incertitude d'étalonnage matériau au niveau du run (et non de la couche) dans `_prepare_robustness_inputs` :
+  Modéliser l'incertitude d'étalonnage matériau au niveau du run (tiré une seule fois par exécution de Phase B) :
   $$n_H^{\text{run}}(\lambda) = n_H^{\text{nom}}(\lambda) \cdot (1 + \delta_H), \quad \delta_H \sim \mathcal{N}(0, 0,005^2)$$
   $$n_L^{\text{run}}(\lambda) = n_L^{\text{nom}}(\lambda) \cdot (1 + \delta_L), \quad \delta_L \sim \mathcal{N}(0, 0,005^2)$$
-  $\delta_H$ et $\delta_L$ sont tirés **une seule fois par run Monte-Carlo** et appliqués à toutes les couches H et L respectivement.
 
 ---
 
-### Écart 2 — Sous-échantillonnage spatial sur les longs blocs monochromatiques
+### Écart 2 — Sous-échantillonnage spatial (Critique de la densité de grille)
 
-* **Physique Machine** : Le spectrophotomètre échantillonne le signal à temps fixe ($\Delta t = 100\text{ ms}$), soit un pas spatial constant $\Delta d = v \cdot \Delta t \approx 0,1\text{ nm}$ quelle que soit la longueur du bloc ou le nombre de couches.
-* **Kernel STRAT** : `simulate_growth_kernel` évalue la grille de recherche d'extrema sur une taille fixe de **64 points répartis sur l'ensemble du bloc monochromatique** (ligne 436).
-* **Le problème** :
-  $$\Delta d_{\text{grille}} = \frac{\sum_{k \in \text{bloc}} d_k}{64}$$
-  - Sur 1 couche de $40\text{ nm}$ : $\Delta d = 0,625\text{ nm}$ (très bon).
-  - Sur un bloc de 10 couches ($600\text{ nm}$) : $\Delta d = 9,375\text{ nm}$ !
-  Avec un pas de $9,375\text{ nm}$, deux points tournants proches (ex. séparés de $15\text{ nm}$) sont mal résolus. L'ajustement parabolique à 3 points (`fit_parabola_vertex_3points`) subit une distorsion et peut décaler le point tournant détecté de $1\text{ à } 2\text{ nm}$.
-* **Solution préconisée pour Claude** :
-  Rendre le nombre de points de grille adaptatif au nombre de couches du bloc :
-  $$\text{GRID\_SIZE} = \max(64, 32 \times N_{\text{couches\_dans\_bloc}})$$
-  Ceci garantit un pas spatial $\Delta d < 1,0\text{ nm}$ en toutes circonstances sans dégradation mesurable des performances.
+* **Le problème actuel** :
+  La grille de recherche d'extrema utilise une taille fixe de **64 points répartis sur l'ensemble du bloc monochromatique**.
+  La proposition initiale de lier la grille au *nombre de couches* (`32 * N_couches`) était **naïve et fausse**. Si une seule couche d'espacement (ex. cavité Fabry-Perot) fait $500\text{ nm}$, on aurait 64 points pour $500\text{ nm}$, soit un pas de $7,8\text{ nm}$. Deux extrema proches seraient toujours sous-échantillonnés.
+* **Solution corrigée et robuste pour Claude** :
+  Le pas spatial maximal de la grille doit être garanti par l'**épaisseur physique totale du bloc** ($D_{\text{bloc}}$) et non par le nombre de couches.
+  Pour garantir une résolution spatiale $\Delta d \le 1,0\text{ nm}$ :
+  $$\text{GRID\_SIZE} = \max(64, \lceil D_{\text{bloc}} / 1,0 \rceil)$$
+  Ainsi, un bloc de $600\text{ nm}$ aura $600$ points, garantissant une détection des extrema et un ajustement parabolique parfaits sans impacter drastiquement la performance globale (l'évaluation TMM vectorisée de 600 points reste sub-milliseconde).
 
 ---
 
 ### Écart 3 — Échelle du signal pour les seuils absolus ($T_{\text{front}}$ vs $T_{\text{mesuré}}$)
 
-* **Physique Machine** : Le spectrophotomètre mesure la transmission totale à travers le substrat, incluant la réflexion de la face arrière :
-  $$T_{\text{mesuré}} = \frac{T_{\text{front}} \cdot T_{\text{sub}}}{1 - R_{\text{prime}} \cdot R_{\text{back}}} \approx 0,92 \cdot T_{\text{front}}$$
-* **Kernel STRAT** : `simulate_growth_kernel` calcule $T_{\text{front}}$ uniquement (sans face arrière) pour des raisons de vitesse heuristique.
-* **Le problème** :
-  Pour POEM ($p_{\text{poem}}$), l'invariance affine $a T + b$ garantit que $T_{\text{front}}$ donne l'arrêt exact au nanomètre près. En revanche, les **seuils photométriques absolus** comme `SWING_MIN = 0.04` (amplitude minimale de $4\%$) ou `tp_hysteresis` s'appliquent sur un signal $T_{\text{front}}$ surévalué d'environ $+4\%$ par rapport à ce que lit le contrôleur physique.
+* **Le problème actuel** :
+  Le noyau calcule $T_{\text{front}}$ (sans face arrière du substrat) pour des raisons de vitesse. Bien que cela n'affecte pas le suivi relatif (POEM), les **seuils absolus** (comme le filtre `SWING_MIN = 0.04` ou `tp_hysteresis`) sont évalués sur $T_{\text{front}}$, qui est physiquement $\approx 8\%$ plus grand que ce que le spectromètre mesure réellement (une amplitude de $4,2\%$ sur $T_{\text{front}}$ donnerait $3,8\%$ en machine et serait rejetée).
 * **Solution préconisée pour Claude** :
-  Appliquer le facteur d'échelle de transmission du substrat nu $T_{\text{sub\_bare}} = \frac{4 n_{\text{sub}}}{(n_{\text{sub}} + 1)^2}$ au signal heuristique avant l'évaluation de `SWING_MIN` et de `tp_hysteresis`.
+  Multiplier le signal heuristique $T_{\text{front}}$ par le facteur de transmission du substrat nu :
+  $$T_{\text{sub\_bare}} = \frac{4 n_{\text{sub}}}{(n_{\text{sub}} + 1)^2}$$
+  avant de le comparer aux seuils absolus `SWING_MIN` et `tp_hysteresis`.
 
 ---
 
-### Écart 4 — Quantification d'échantillonnage temporel ($\pm \Delta d_{\text{sample}} / 2$)
+### Écart 4 — Bruit de quantification temporelle (Causalité du déclenchement)
 
-* **Physique Machine** : La décision de fermeture du volet (*shutter*) par le contrôleur physique se fait lors de la réception d'une mesure discrète. Si la condition d'arrêt est franchie entre deux mesures (ex. à $t = 10,04\text{ s}$ alors que les mesures ont lieu à $10,00\text{ s}$ et $10,10\text{ s}$), le volet ne peut être déclenché qu'au point discret suivant, introduisant une incertitude de quantification d'au plus $\pm \frac{\Delta d}{2} \approx \pm 0,05\text{ nm}$.
-* **Kernel STRAT** : STRAT calcule la racine continue exacte $d_{\text{stop\_exact}}$ par interpolation quadratique sans discrétisation.
-* **Solution préconisée pour Claude** :
-  Pour reproduire la quantification d'échantillonnage temporel de la machine réelle, ajouter un bruit uniforme de discrétisation $\delta d \sim U\left(-\frac{\Delta d_{\text{sample}}}{2}, +\frac{\Delta d_{\text{sample}}}{2}\right)$ avec $\Delta d_{\text{sample}} = 0,10\text{ nm}$ lors des tirages stochastiques de Phase B.
+* **Le problème actuel** :
+  Il avait été proposé d'ajouter un bruit uniforme centré $\pm 0,05\text{ nm}$ pour modéliser l'échantillonnage de la machine (ex. mesure tous les $100\text{ ms}$). Or, **physiquement, un seuil numérique est causal** : si la cible est franchie à $t = 10,04\text{ s}$, la machine ne la détectera qu'à la mesure suivante à $t = 10,10\text{ s}$.
+  Le volet ne se ferme donc **jamais en avance** par rapport au franchissement continu, il est toujours en retard (overshoot).
+* **Solution corrigée pour Claude** :
+  Le bruit de discrétisation n'est pas $U(-0.05, 0.05)$, mais **strictement positif** :
+  $$\delta d_{\text{quantification}} \sim U(0, \Delta d_{\text{sample}})$$
+  où $\Delta d_{\text{sample}}$ est l'épaisseur déposée entre deux mesures du spectrophotomètre ($\approx 0,10\text{ nm}$). Ce retard systématique s'ajoute au retard mécanique pur du volet.
 
 ---
 
-## Plan d'action synthétique pour la suite
+## Plan d'action synthétique pour Claude
 
-1. **Modélisation de l'incertitude d'étalonnage matériau ($\delta_H, \delta_L \approx \pm 0,5\%$)** : Tirer $\delta_H, \delta_L \sim \mathcal{N}(0, 0,005^2)$ constants par run Monte-Carlo pour l'ensemble des couches H et L (Écart 1).
-2. **Ajustement de la grille spatiale** : Rendre `GRID_SIZE` proportionnel à la longueur du bloc dans `simulate_growth_kernel` ($\Delta d < 1,0\text{ nm}$) (Écart 2).
-3. **Étalonnage des seuils absolus** : Appliquer le facteur de transmission substrat $T_{\text{sub\_bare}}$ sur les tests d'amplitude `SWING_MIN` et `tp_hysteresis` (Écart 3).
-4. **Bruit de discrétisation** : Injecter l'incertitude de quantification temporelle $\pm 0,05\text{ nm}$ dans les tirages Monte-Carlo (Écart 4).
+1. **Incertitude matériau** : Tirer $\delta_H, \delta_L \sim \mathcal{N}(0, 0,005^2)$ par run.
+2. **Grille spatiale** : $\text{GRID\_SIZE} = \max(64, \lceil D_{\text{bloc}} \rceil)$.
+3. **Étalonnage absolu** : Évaluer `SWING_MIN` sur $T_{\text{front}} \times T_{\text{sub\_bare}}$.
+4. **Sur-épaisseur de quantification** : Injecter une erreur causale positive $U(0, 0.10\text{ nm})$.

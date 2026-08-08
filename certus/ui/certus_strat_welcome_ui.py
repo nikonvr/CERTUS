@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from certus.ui.certus_theme import CertusTheme
-from certus.utils.certus_strat_context import APP_CONTEXT
+from certus.utils.certus_strat_service import APP_CONTEXT
 
 class WelcomeGuideWidget(QWidget):
     def __init__(self, parent=None) -> None:

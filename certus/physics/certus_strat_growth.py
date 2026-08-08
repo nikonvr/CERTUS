@@ -271,6 +271,20 @@ def simulate_growth_kernel(
             plantage qu'il produit ne depend pas de sigma (1,47 % par couche a
             sigma = 5e-8 contre 1,30 % au sigma reel), donc il ne mesure pas le bruit.
 
+        affine_scale, affine_offset: PHOTOMETRIC CALIBRATION DRIFT of the instrument,
+            T_measured = affine_scale * T_true + affine_offset. Applied to the REAL
+            monitoring signal ``Ts_r`` and to the three probe points of the parabolic
+            inversion — and to nothing else. ``Ts_n`` is the offline design: no
+            instrument reads it, so no instrument can distort it. (1.0, 0.0) = disabled,
+            and the computation path is then word for word the one from before these
+            parameters.
+
+            POEM is EXACTLY invariant under this transform; the absolute fallback is
+            not. That contrast IS the measurement these parameters exist to make. Any
+            code cancelling the distortion on one side of a comparison destroys it —
+            three such cancellations were removed on 2026-08-08, see the comment at the
+            inversion below.
+
     """
     if wl < 0.1:
         return (float(p_thick_nominal[i_layer]), 0.0)
@@ -718,8 +732,12 @@ def simulate_growth_kernel(
             T_last_real = Ts_r[tp_b]
             amp_nom = T_last_nom - T_prev_nom
             amp_real = T_last_real - T_prev_real
-            swing_min_thresh = affine_scale * SWING_MIN
-            if abs(amp_nom) > SWING_MIN and abs(amp_real) > swing_min_thresh:
+            # SWING_MIN is a floor in MEASURED units. POEM is ill-conditioned when the
+            # amplitude between the two anchors is small compared to reading noise, and
+            # reading noise is what the instrument reports, hence measured units too.
+            # Scaling the threshold by `affine_scale` cancelled the gain exactly and
+            # made the test blind to the very distortion it must survive.
+            if abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
                 poem_ok = True
 
     if poem_ok:
@@ -728,7 +746,16 @@ def simulate_growth_kernel(
         # reportee sur les extrema reellement observes
         target_level = T_prev_real + p_poem * (T_last_real - T_prev_real)
     else:
-        target_level = affine_scale * target_nominal + affine_offset
+        # ABSOLUTE FALLBACK — the controller does NOT know (affine_scale, affine_offset).
+        #
+        # It was handed a level computed offline from the nominal design, in TRUE T
+        # units, and it compares that number against what its instrument reports, in
+        # MEASURED units. Pre-distorting the level to `a * target + b` gave the
+        # controller back the calibration it is precisely assumed to have lost, which
+        # made absolute monitoring immune to gain and offset drift. That immunity is
+        # what POEM provides and absolute monitoring does not — cancelling it here
+        # erased the only contrast these parameters exist to measure.
+        target_level = target_nominal
 
     target_T_noisy = target_level + noise_val_precalc
 
@@ -827,6 +854,30 @@ def simulate_growth_kernel(
         denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
         if abs(denom) > 1e-09:
             T_points[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
+    # ---- THE INVERSION MUST BE IN MEASURED UNITS ----------------------------
+    #
+    # `target_T_noisy` is a level read on the instrument, so it carries the affine
+    # distortion. The forward model inverted against it must carry it too, or the
+    # two sides of `T(d) = target` are expressed in different units.
+    #
+    # 🔴 THIS WAS THE DEFECT THAT MADE THE AFFINE PARAMETERS UNUSABLE. POEM is exactly
+    # invariant under T -> a.T + b: both anchors absorb the distortion, so the reported
+    # level equals a.target_true + b, and solving a.T(d) + b = a.target_true + b returns
+    # the intended thickness. Inverting the UNDISTORTED parabola solved
+    # T(d) = a.target_true + b instead, which is a different equation.
+    #
+    # 📏 Measured on 6 QWOT layers monitored at 610 nm, d_nom = 94.178 nm, upstream
+    # error 2 nm, no noise. Expected shift under an affine map: ZERO.
+    #
+    #     a = 1.0000  b = 0.000  ->  d_stop =  94.128 nm
+    #     a = 0.9574  b = 0.000  ->  d_stop =  87.527 nm     -6.60 nm
+    #     a = 1.0000  b = 0.020  ->  d_stop = 100.522 nm     +6.39 nm
+    #
+    # An affine map commutes with the parabola fit and with the root solve, so applying
+    # it to the three probe points restores the invariance exactly.
+    if affine_scale != 1.0 or affine_offset != 0.0:
+        for k in range(3):
+            T_points[k] = affine_scale * T_points[k] + affine_offset
     a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
     calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
     error_raw = calc_thick - nominal_th

@@ -469,7 +469,134 @@ def mine_strategies_for_block_count(
             f3 = miner_executor.submit(run_mining, cost_map_sym, "SYM", 200, True)
             strategies_collected.extend(f3.result())
 
+    structured_seeds = _generate_structured_seed_strategies(
+        n_blocks=n_blocks,
+        num_layers=num_layers,
+        raw_results_thickness=raw_results_thickness,
+        strategy_id_base=strategy_id_base,
+    )
+    strategies_collected.extend(structured_seeds)
+
     return strategies_collected
+
+
+def _generate_structured_seed_strategies(
+    n_blocks: int,
+    num_layers: int,
+    raw_results_thickness: dict[int, list[dict[str, float]]],
+    strategy_id_base: int = 9000,
+) -> list[dict[str, Any]]:
+    """Generate structured reference seed strategies (Action 5.4):
+    - Mono-wavelength strategy (all blocks at maximum transmission lambda)
+    - 1-block-per-layer strategy (when n_blocks == num_layers)
+    - Regular partitions (equal-sized contiguous block partitions)
+    """
+    if n_blocks <= 0 or num_layers <= 0 or not raw_results_thickness:
+        return []
+
+    best_wl_global = 550.0
+    min_c = float("inf")
+    for _layer_idx, cands in raw_results_thickness.items():
+        for c in cands:
+            cost = float(c.get("cost", float("inf")))
+            if cost < min_c:
+                min_c = cost
+                best_wl_global = float(c.get("wl", 550.0))
+
+    def _best_wl_for_block(start: int, end: int) -> float:
+        best_wl = best_wl_global
+        best_score = float("inf")
+        first_layer_cands = raw_results_thickness.get(start, [])
+        for cand in first_layer_cands:
+            wl = float(cand.get("wl", 550.0))
+            tot_cost = sum(
+                next((c["cost"] for c in raw_results_thickness.get(lyr, []) if abs(c["wl"] - wl) < 1e-6), 1.0)
+                for lyr in range(start, end)
+            )
+            if tot_cost < best_score:
+                best_score = tot_cost
+                best_wl = wl
+        return best_wl
+
+    seeds = []
+    sid_counter = strategy_id_base + 800
+
+    # 1. Mono-lambda strategy for n_blocks
+    if n_blocks == 1 or n_blocks in {2, 3, 4, 6, 8, 12}:
+        block_size = num_layers / float(n_blocks)
+        mono_blocks = []
+        for b_idx in range(n_blocks):
+            b_start = int(round(b_idx * block_size))
+            b_end = int(round((b_idx + 1) * block_size)) if b_idx < n_blocks - 1 else num_layers
+            if b_end > b_start:
+                mono_blocks.append({"start": b_start, "end": b_end, "wavelength": best_wl_global})
+        if mono_blocks:
+            strat = {
+                "strategy_id": sid_counter,
+                "n_blocks": len(mono_blocks),
+                "avg_cost": 0.0,
+                "total_cost": 0.0,
+                "blocks": mono_blocks,
+                "origin": "STRUCTURED_MONO_WL",
+                "origin_details": f"STRUCTURED_MONO_WL(wl={best_wl_global:g}nm, n_blocks={len(mono_blocks)})",
+                "same_wl_kept": len(mono_blocks) - 1,
+            }
+            ok, _ = _validate_strategy_blocks_contract(strat, num_layers, expected_n_blocks=len(mono_blocks))
+            if ok:
+                seeds.append(strat)
+                sid_counter += 1
+
+    # 2. Regular equal partition strategy with per-block best Phase A wavelength
+    block_size = num_layers / float(n_blocks)
+    reg_blocks = []
+    for b_idx in range(n_blocks):
+        b_start = int(round(b_idx * block_size))
+        b_end = int(round((b_idx + 1) * block_size)) if b_idx < n_blocks - 1 else num_layers
+        if b_end > b_start:
+            wl = _best_wl_for_block(b_start, b_end)
+            reg_blocks.append({"start": b_start, "end": b_end, "wavelength": wl})
+    if reg_blocks:
+        same_wl_kept = sum(
+            1 for i in range(1, len(reg_blocks))
+            if abs(reg_blocks[i]["wavelength"] - reg_blocks[i - 1]["wavelength"]) < 1e-6
+        )
+        strat = {
+            "strategy_id": sid_counter,
+            "n_blocks": len(reg_blocks),
+            "avg_cost": 0.0,
+            "total_cost": 0.0,
+            "blocks": reg_blocks,
+            "origin": "STRUCTURED_REGULAR_PARTITION",
+            "origin_details": f"STRUCTURED_REGULAR_PARTITION(n_blocks={len(reg_blocks)})",
+            "same_wl_kept": same_wl_kept,
+        }
+        ok, _ = _validate_strategy_blocks_contract(strat, num_layers, expected_n_blocks=len(reg_blocks))
+        if ok:
+            seeds.append(strat)
+            sid_counter += 1
+
+    # 3. 1-block-per-layer strategy (when n_blocks == num_layers)
+    if n_blocks == num_layers:
+        single_blocks = []
+        for lyr in range(num_layers):
+            cands = raw_results_thickness.get(lyr, [])
+            wl = float(cands[0]["wl"]) if cands else best_wl_global
+            single_blocks.append({"start": lyr, "end": lyr + 1, "wavelength": wl})
+        strat = {
+            "strategy_id": sid_counter,
+            "n_blocks": num_layers,
+            "avg_cost": 0.0,
+            "total_cost": 0.0,
+            "blocks": single_blocks,
+            "origin": "STRUCTURED_1_PER_LAYER",
+            "origin_details": f"STRUCTURED_1_PER_LAYER({num_layers} blocks)",
+            "same_wl_kept": 0,
+        }
+        ok, _ = _validate_strategy_blocks_contract(strat, num_layers, expected_n_blocks=num_layers)
+        if ok:
+            seeds.append(strat)
+
+    return seeds
 
 
 def _apply_strategy_ranking(

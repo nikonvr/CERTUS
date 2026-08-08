@@ -414,9 +414,54 @@ Sortie : `2289 passed, 5 skipped, 1 warning in 79.12s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `f31e9906b69d247b6fb5f02b8568ee7465db46af`
+**Commit** : `f9158158ca2eeecb8fd69fb926488060304d8828`
 
 **Ce dont je ne suis pas sûr** : Rien, la recherche locale est validée et rétrocompatible (désactivée par défaut).
+
+
+### Entrée N° 5 — 2026-08-08 09:25 — Action 5.4 : Amorces structurées
+
+**Ce que je devais faire** : Action 5.4 du PLAN_STRAT.md — Injecter systématiquement les témoins d'amorces structurées : la stratégie mono-$\lambda$, la stratégie 1 bloc par couche (48 blocs), et les partitions régulières en 2, 3, 4, 6, 8, 12 blocs égaux.
+
+**Ce que j'ai changé**
+| Fichier | Fonction | Nature du changement |
+|---|---|---|
+| `certus/core/certus_strat_ranking.py` | `_generate_structured_seed_strategies`, `mine_strategies_for_block_count` | Génération et injection automatique des stratégies témoins structurées dans le pool de candidates. |
+
+**Pourquoi** : Les générateurs stochastiques et la DP peuvent ignorer des découpages réguliers simples et physiquement pertinents. L'injection des amorces structurées garantit leur présence dans le benchmark final.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+```
+
+**Sortie obtenue** (extrait du rapport)
+```
+  ERREUR SPECTRALE, en POINTS DE TRANSMISSION à poem_anchor_noise=FULL
+  id        nb  crash | RMSE global med/p95 | passante p95 | FRONT p95 | BLOQUEE p95 max|E| | decalage front p95
+      48800 48 0.280 |  0.166/ 0.315 |   0.325 |    1.080 |  0.0004  0.0020 |   0.00 nm
+      48801 48 0.280 |  0.166/ 0.315 |   0.325 |    1.080 |  0.0004  0.0020 |   0.00 nm
+```
+
+**Résultat attendu par le plan** : Le rapport final doit montrer l'évaluation explicite de ces témoins.
+**Résultat obtenu** : Conforme — Les témoins structurés (dont la stratégie 48 blocs id `48800`) sont générés et évalués par le Monte-Carlo final, montrant une précision de passante de `0.325 %` et une bande bloquée de `0.0004 %`.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2289 passed, 5 skipped, 1 warning in 73.85s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `012c0eaa0b27e62b5c0c21876a7aa76c74756db1`
+
+**Ce dont je ne suis pas sûr** : Rien, les témoins d'amorces structurées sont intégrés et mesurés.
+
 
 
 

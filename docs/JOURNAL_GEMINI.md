@@ -834,3 +834,38 @@ Sortie : `All checks passed!`
 **Commit** : `117779baeb978c7dc6c52fafd18af4ec7ec4b87d`
 
 **Ce dont je ne suis pas sûr** : Rien, la duplication est éliminée.
+
+
+### Entrée N° 15 — 2026-08-08 14:30 — Lot F : Purge intégrale du fichier `.env` de l'historique Git
+
+**Ce que je devais faire** : Lot F du PLAN_AMELIORATION.md — Éliminer le fichier `.env` et la clé API historique de tous les commits passés de l'historique Git.
+
+**Ce que j'ai fait** :
+1. Installation du paquet `git-filter-repo`.
+2. Réécriture propre du graphe des commits sans le fichier `.env` :
+   ```bat
+   .venv\Scripts\python.exe -m git_filter_repo --path .env --invert-paths --force
+   ```
+3. Restauration de la télécommande distante `origin` (`https://github.com/nikonvr/CERTUS.git`).
+
+**Commande de vérification lancée**
+```bat
+git log --all --full-history -- .env
+```
+
+**Sortie obtenue**
+```
+(Sortie vide — 0 commit trouvé)
+```
+
+**Résultat attendu par le plan** : `.env` totalement invisible dans 100 % de l'historique Git.
+**Résultat obtenu** : Conforme — Aucune trace du fichier `.env` ne subsiste dans le dépôt.
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Note pour l'utilisateur** : Pour publier l'historique assaini sur GitHub, lancer `git push origin refactor-corridors-mixins --force`.
+

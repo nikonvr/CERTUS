@@ -12,16 +12,22 @@ Toutefois, une analyse physique et numérique approfondie révèle **4 écarts p
 
 ---
 
-### Écart 1 — Absence de bruit d'indice de réfringence ($\sigma_n$ / Fluctuations de stœchiométrie)
+### Écart 1 — Méconnaissance d'indice a priori ($\delta_H, \delta_L \approx \pm 0,5\%$ constant par run)
 
-* **Physique Machine** : Lors du dépôt sous vide réel (évaporation E-beam, pulvérisation IAD), la densité de tassement (*packing density*) et la stœchiométrie des matériaux (ex. $\text{TiO}_x$, $\text{SiO}_x$) varient légèrement d'un run ou d'une couche à l'autre, entraînant une fluctuation de l'indice réel $n(\lambda)$ de $\Delta n / n \approx \pm 1\%\text{ à }\pm 3\%$ ($\Delta n \approx \pm 0,01 - 0,03$).
-* **Kernel STRAT** : Dans la version actuelle, les tirages stochastiques Monte-Carlo de Phase B injectent du bruit photométrique ($\sigma_T$) et du bruit de volet ($\sigma_d$), **mais considèrent les indices $n_H(\lambda)$ et $n_L(\lambda)$ comme 100 % déterministes** (issus des courbes de la base de données).
+* **Physique Machine (Constat de laboratoire)** :
+  La méconnaissance d'indice sur les machines réelles est d'environ **$0,5\%$** ($\sigma_{\text{calib}} = 0,005$). 
+  **Point clé de corrélation** : Cet écart d'indice n'est **PAS un bruit aléatoire indépendant couche par couche**, mais une **imprécision d'étalonnage globale constante pour chaque matériau** tout au long du run :
+  - Toutes les couches de matériau H (couches 1, 3, 5, 7...) partagent le même décalage d'indice $\delta_H$.
+  - Toutes les couches de matériau L (couches 2, 4, 6, 8...) partagent le même décalage d'indice $\delta_L$.
+* **Kernel STRAT** :
+  Dans la version actuelle, les indices $n_H(\lambda)$ et $n_L(\lambda)$ sont traités comme 100 % déterministes et égaux aux valeurs théoriques nominales de la base de données.
 * **Impact physique** :
-  - *Sur les points tournants ($\lambda/4$)* : Le suivi par point tournant auto-compense partiellement l'erreur d'indice (si $n$ est plus faible, la couche s'arrête physiquement plus épaisse $d \cdot n = \lambda/4$, préservant l'épaisseur optique).
-  - *Sur POEM et hors-$\lambda/4$* : La variation d'indice modifie l'amplitude photométrique du swing, ce qui décale la cible POEM et peut induire une erreur d'arrêt si le bruit d'indice n'est pas modélisé.
+  Comme le décalage est **cohérent** sur les 48 couches (et non distribué aléatoirement), l'erreur d'indice de $0,5\%$ ne s'annule pas par moyenne statistique. Elle provoque un décalage spectral global ($\approx 2,5\text{ nm}$ à $500\text{ nm}$) que le suivi optique POEM / point tournant tente d'auto-compenser en ajustant dynamiquement les épaisseurs géométriques $d_k$ de chaque couche pendant le dépôt.
 * **Solution préconisée pour Claude** :
-  Ajouter un paramètre facultatif de bruit d'indice relatif `index_noise_scale` ($\sigma_n \approx 0,01$) dans `_prepare_robustness_inputs` et `simulate_growth_kernel` :
-  $$n_{\text{sim}}(\lambda) = n_{\text{nom}}(\lambda) \cdot (1 + \delta n), \quad \delta n \sim \mathcal{N}(0, \sigma_n^2)$$
+  Modéliser l'incertitude d'étalonnage matériau au niveau du run (et non de la couche) dans `_prepare_robustness_inputs` :
+  $$n_H^{\text{run}}(\lambda) = n_H^{\text{nom}}(\lambda) \cdot (1 + \delta_H), \quad \delta_H \sim \mathcal{N}(0, 0,005^2)$$
+  $$n_L^{\text{run}}(\lambda) = n_L^{\text{nom}}(\lambda) \cdot (1 + \delta_L), \quad \delta_L \sim \mathcal{N}(0, 0,005^2)$$
+  $\delta_H$ et $\delta_L$ sont tirés **une seule fois par run Monte-Carlo** et appliqués à toutes les couches H et L respectivement.
 
 ---
 
@@ -37,7 +43,7 @@ Toutefois, une analyse physique et numérique approfondie révèle **4 écarts p
 * **Solution préconisée pour Claude** :
   Rendre le nombre de points de grille adaptatif au nombre de couches du bloc :
   $$\text{GRID\_SIZE} = \max(64, 32 \times N_{\text{couches\_dans\_bloc}})$$
-  Ceci garantit un pas spatial $\Delta d < 1,0\text{ nm}$ en toutes circumstances sans dégradation mesurable des performances.
+  Ceci garantit un pas spatial $\Delta d < 1,0\text{ nm}$ en toutes circonstances sans dégradation mesurable des performances.
 
 ---
 
@@ -64,7 +70,7 @@ Toutefois, une analyse physique et numérique approfondie révèle **4 écarts p
 
 ## Plan d'action synthétique pour la suite
 
-1. **Modélisation du bruit d'indice ($\sigma_n$)** : Injecter la fluctuation d'indice relatives $\Delta n / n \sim \mathcal{N}(0, \sigma_n^2)$ dans les tirages Monte-Carlo (Écart 1).
+1. **Modélisation de l'incertitude d'étalonnage matériau ($\delta_H, \delta_L \approx \pm 0,5\%$)** : Tirer $\delta_H, \delta_L \sim \mathcal{N}(0, 0,005^2)$ constants par run Monte-Carlo pour l'ensemble des couches H et L (Écart 1).
 2. **Ajustement de la grille spatiale** : Rendre `GRID_SIZE` proportionnel à la longueur du bloc dans `simulate_growth_kernel` ($\Delta d < 1,0\text{ nm}$) (Écart 2).
 3. **Étalonnage des seuils absolus** : Appliquer le facteur de transmission substrat $T_{\text{sub\_bare}}$ sur les tests d'amplitude `SWING_MIN` et `tp_hysteresis` (Écart 3).
 4. **Bruit de discrétisation** : Injecter l'incertitude de quantification temporelle $\pm 0,05\text{ nm}$ dans les tirages Monte-Carlo (Écart 4).

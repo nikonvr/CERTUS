@@ -2,16 +2,36 @@
 
 Contexte projet pour Claude Code. Lis ce fichier avant toute modification.
 
-## 🔴 PAR OÙ COMMENCER — état au 2026-08-06
+## 🔴 PAR OÙ COMMENCER — état au 2026-08-08
 
-Trois documents, et rien d'autre. **Les journaux de session ont été supprimés le 2026-08-06** :
-ils se contredisaient entre eux et pointaient vers des états du code qui n'existent plus.
-Récupérables par `git log` si besoin.
+Quatre documents, et rien d'autre. **Les journaux de session sont supprimés dès qu'ils
+cessent d'aider à décider** — 58 en août 2026, puis 21 entrées le 2026-08-08. Ils se
+contredisaient et pointaient vers du code qui n'existe plus. `git log` les retrouve.
 
 | Document | Ce qu'il contient |
 |---|---|
-| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — ce qu'il reste à faire, et rien d'autre.** Le point de référence mesuré, les trois décisions qui bloquent, les actions dans l'ordre de conditionnement, les règles gravées, et ce qu'il ne faut pas refaire. |
-| [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) | La doc technique destinée à la communauté : algorithmes, équations, et la **méthode** (§2.1quinquies). |
+| [`AGENTS.md`](AGENTS.md) | **À lire en premier.** Vérification d'environnement, onze interdits absolus, sept pièges documentés, boucle de travail. |
+| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — ce qu'il reste à faire, et rien d'autre.** Point de référence mesuré, décisions bloquantes, six actions ordonnées, règles gravées, et ce qu'il ne faut pas refaire. |
+| [`docs/PROPOSITIONS_CLAUDE.md`](docs/PROPOSITIONS_CLAUDE.md) | **Fidélité physique du simulateur.** Les spécifications mesurées de la machine de dépôt, les quatre écarts au réel, et le verdict chiffré sur chacun. |
+| [`docs/JOURNAL_GEMINI.md`](docs/JOURNAL_GEMINI.md) | **État vérifié** — ce qui tient, ce qui ne tient pas — et les règles de tenue du journal, avec le modèle d'entrée. |
+
+Et la doc technique destinée à la communauté :
+[`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, et la
+**méthode** (§2.1quinquies).
+
+### 👤 Ce que le physicien a tranché le 2026-08-08
+
+Ces nombres gouvernent le modèle de monitoring. Détail dans `docs/PROPOSITIONS_CLAUDE.md` §1.
+
+- Plateau **240 tr/min**, ~1 m de diamètre, témoin de 20 mm au bord ⇒ **transit 1,6 ms**.
+- **Trois positions par tour** : témoin, noir, vide ⇒ `T = (S−D)/(V−D)`, auto-référencé à 4 Hz.
+- Dépôt ~0,5 nm/s ⇒ **un échantillon tous les 0,125 nm**. Le modèle en prend un tous les
+  4,76 nm : **38× trop grossier**.
+- Bruit de lecture ±0,05 point, largeur totale 0,10 — **le tirage du modèle est correct**.
+- Le « 5 σ » du seuil de détection signifiait *« bien au-dessus du bruit »*, **pas** une
+  exigence physique. Le seuil est donc à recalibrer sur la borne anti-fabrication.
+- 🔴 **Ne pas modéliser σ(T), la grenaille ni le bruit multiplicatif.** Un modèle simple et
+  mesuré vaut mieux qu'un modèle riche et inventé.
 
 ### Vérifier l'environnement — une minute, et ce n'est pas optionnel
 
@@ -282,15 +302,18 @@ Politique **zéro régression** :
 
 ---
 
-## 6bis. 📋 Les quatre documents vivants
+## 6bis. 📋 Les documents vivants
 
-Il n'y en a que quatre. Tout le reste — journaux de session, audits datés, plans supersédés —
-a été **supprimé le 2026-08-06** : des documents qui se contredisent coûtent plus qu'ils
+Tout le reste — journaux de session, audits datés, plans supersédés — est **supprimé dès
+qu'il cesse d'aider à décider** : des documents qui se contredisent coûtent plus qu'ils
 n'apportent. `git log` les retrouve si nécessaire.
 
 | Document | Portée |
 |---|---|
-| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — le travail a venir.** Fusion de l'ancien bilan et de l'ancien plan le 2026-08-06 : tout ce qui etait fait a ete retire. Point de reference mesure, decisions bloquantes, actions ordonnees, regles gravees. |
+| [`AGENTS.md`](AGENTS.md) | **Le cadre de travail.** Vérification d'environnement, interdits, pièges, boucle. |
+| [`docs/PLAN_STRAT.md`](docs/PLAN_STRAT.md) | **STRAT — le travail à venir.** Point de référence mesuré, décisions bloquantes, six actions ordonnées, règles gravées. Tout ce qui est fait en est retiré. |
+| [`docs/PROPOSITIONS_CLAUDE.md`](docs/PROPOSITIONS_CLAUDE.md) | **Fidélité physique.** Spécifications mesurées de la machine, quatre écarts au réel, verdict chiffré sur chacun. |
+| [`docs/JOURNAL_GEMINI.md`](docs/JOURNAL_GEMINI.md) | **État vérifié et règles de tenue** du journal, avec le modèle d'entrée. |
 | [`docs/REPRISE_PERF.md`](docs/REPRISE_PERF.md) | **Performance.** Référence mesurée par module et pièges de mesure. ⚠️ Ses **temps absolus** datent d'avant le déménagement hors Google Drive et la remontée de numba — les *rapports* restent utiles, les secondes non. Verdict acquis : **pas de ×2 disponible**. |
 | [`docs/PLAN_AMELIORATION.md`](docs/PLAN_AMELIORATION.md) | **Projet.** Dette de lint, tests absents de la CI, six chantiers ordonnés. |
 

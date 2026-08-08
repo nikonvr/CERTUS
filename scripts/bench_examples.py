@@ -152,7 +152,20 @@ def attach_console_logging(app) -> None:
     emit(f"journal de l'application redirige vers la console (logger '{lg.name}')")
 
 
-def wait_for(worker, timeout_ms: int = 1_800_000):
+#: Plafond d'attente du banc, en millisecondes. 1800 s par defaut.
+#:
+#: 🔴 CE PLAFOND A DEJA RENDU DEUX MESURES NULLES. Au-dela, le banc n'echoue pas
+#: bruyamment : il emet RESULT=None, ce qui RESSEMBLE a un resultat. Le run STRAT
+#: complet sur le dichroique 48 couches tourne entre 1100 et 1800 s selon la
+#: machine et sa charge — la marge est mince, et elle a ete franchie.
+#:
+#: Surchargeable sans toucher au code :  set CERTUS_BENCH_TIMEOUT_S=3600
+DEFAULT_TIMEOUT_MS: int = int(float(os.environ.get("CERTUS_BENCH_TIMEOUT_S", "1800")) * 1000.0)
+
+
+def wait_for(worker, timeout_ms: int = None):
+    if timeout_ms is None:
+        timeout_ms = DEFAULT_TIMEOUT_MS
     """Attend la fin d'un worker Qt et renvoie son resultat."""
     from PyQt6.QtCore import QEventLoop, QTimer
 

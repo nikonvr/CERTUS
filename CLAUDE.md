@@ -1,17 +1,90 @@
 # CERTUS — document unique
 
-> **C'est le seul document du projet.** `PLAN_STRAT.md`, `PROPOSITIONS_CLAUDE.md` et
-> `JOURNAL_GEMINI.md` ont été fusionnés ici le 2026-08-08 et supprimés. Avant eux, 58
-> rapports de session avaient déjà été supprimés en août 2026. La raison est toujours la
-> même : **des documents qui se contredisent coûtent plus qu'ils n'apportent.** `git log`
-> retrouve tout.
->
-> Le code calcule de la **physique réelle** servant à fabriquer de vrais filtres optiques.
-> Une erreur silencieuse ici ne plante pas : elle produit un **résultat faux qui a l'air
-> juste**, et quelqu'un fabrique une pièce avec.
->
-> Une seule autre page subsiste, destinée à la communauté :
-> [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, méthode.
+**C'est le seul document du projet.** Tout est ici. Il n'y a rien d'autre à lire.
+
+Le code calcule de la **physique réelle** servant à fabriquer de vrais filtres optiques. Une
+erreur silencieuse ne plante pas : elle produit un **résultat faux qui a l'air juste**, et
+quelqu'un fabrique une pièce avec.
+
+---
+
+## ⚡ DÉMARRAGE — fais ces 4 choses, dans cet ordre, avant tout le reste
+
+**1. Vérifie que tu es dans le bon dossier.**
+
+```bat
+cd /d C:\dev\gemini
+.venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
+```
+
+Le chemin affiché **doit** commencer par `C:\dev\gemini`.
+Si ce n'est pas le cas → **ARRÊTE-TOI. Signale-le. Ne modifie rien.**
+
+**2. Vérifie que committer ne publie rien.**
+
+```bat
+dir .git\hooks\post-commit*
+```
+
+Doit afficher `post-commit.DESACTIVE`.
+Si c'est `post-commit` tout court → **NE COMMITTE PAS.** Il pousse vers un dépôt **public**.
+
+**3. Vérifie que tout est vert avant de toucher à quoi que ce soit.**
+
+```bat
+.venv\Scripts\python.exe -m ruff check .
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+
+Attendu : `All checks passed!` puis `2299 passed, 5 skipped`.
+Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
+Ce n'est pas à toi de le réparer.
+
+**4. Lis §12 et choisis UNE action. Une seule.**
+
+---
+
+## ⚡ LES 7 ERREURS QUI ANNULENT TON TRAVAIL
+
+Chacune a déjà coûté au moins une session complète sur ce projet.
+
+| # | L'erreur | La conséquence |
+|---|---|---|
+| 1 | Modifier un dossier et mesurer l'autre | Aucun message d'erreur. Tous tes résultats sont faux. |
+| 2 | Écrire une conclusion avant d'avoir la mesure | Détectée à la relecture, ton travail est annulé. |
+| 3 | Changer deux choses à la fois | Le résultat bouge, personne ne sait laquelle en est cause. |
+| 4 | Croire un chiffre de bruit qui ne varie pas avec le bruit | C'est un artefact. Divise le bruit par 100 et remesure. |
+| 5 | Lancer une mesure pendant qu'autre chose tourne | Le banc rend `RESULT=None`, ce qui ressemble à un résultat. |
+| 6 | Vérifier une non-régression « aux tests près » | Les tests ne prouvent pas l'identité numérique. Il faut le bit. |
+| 7 | Modifier `example/example_strat/JSON-strat-example.json` | Toutes les mesures suivantes deviennent nulles. |
+
+**Si tu ne dois retenir qu'une phrase :**
+
+> **Soit tu colles la sortie de la commande, soit tu écris « je n'ai pas mesuré ».**
+> Il n'y a pas de troisième option. Pas de « cela devrait améliorer », pas de « le taux est
+> probablement de ».
+
+---
+
+## ⚡ CARTE DU DOCUMENT — où aller selon ce que tu fais
+
+| Tu veux… | Va en |
+|---|---|
+| **Commencer une action** | **§12** — les 6 actions, avec fichier, fonction, code, commande et résultat attendu |
+| Savoir ce qui est interdit | §1 — les onze interdits |
+| Savoir dans quoi tu vas tomber | §2 — les sept pièges |
+| Savoir comment travailler | §3 — la boucle et la règle d'or |
+| Toucher à du calcul optique | §6 — conventions physiques et oracle TMM |
+| Comprendre la machine de dépôt | §9 — les spécifications du physicien |
+| Comparer un résultat | §10 — le point de référence |
+| Comprendre un mot du projet | §7 — vocabulaire |
+| Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
+
+Une seule autre page existe, destinée à la communauté :
+[`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, méthode.
+Elle ne contient aucune instruction.
+
+---
 
 ---
 
@@ -410,10 +483,42 @@ dessous sont au niveau **nominal**. Ne jamais comparer l'un à l'autre.
 ⚠️ **Repère du pas de 1 nm.** Une version antérieure citait `RESULT = 0,005283` / 305
 stratégies : c'était le run à **2 nm**, périmé (voir §13).
 
-⚠️ **Le banc plafonne à 1800 s en dur** (`scripts/bench_examples.py:155`,
-`timeout_ms: int = 1_800_000`), non paramétrable. Au-delà il ne signale pas d'erreur : il
-rend **`RESULT=None`**, ce qui ressemble à un résultat. Les `RUN_S` sont montés de 1113 à
-**1510 s** au fil des ajouts au pipeline — déjà 84 % du plafond.
+### 🔴 Ce repère n'a PAS été reproduit le 2026-08-08 — lis ceci avant de mesurer
+
+Deux tentatives, **deux `RESULT=None`** :
+
+```
+WAIT_EXIT=timeout
+WAIT_TIMEOUT=1800 s — aucune emission recue
+MODE=full_step1_seed42  SETUP_S=1.243  RUN_S=1800.051  RESULT=None
+PROBE_WRITTEN=...  strategies=12          <- au lieu de 345
+```
+
+La première fois, d'autres travaux tournaient en parallèle : mesure nulle, ma faute. **La
+seconde fois la machine était libre, et le plafond a quand même été atteint.**
+
+**Ce que cela veut dire, et ce que cela ne veut pas dire.** Cela ne dit pas que le code est
+cassé : le run progressait normalement, il n'a simplement pas fini. Cela dit que **le chiffre
+0,002898 n'est pas vérifié sur cette machine dans son état actuel**, et qu'aucune conclusion
+comparative ne peut être tirée tant qu'un run n'a pas abouti.
+
+**Ce qu'il faut faire avant toute mesure au banc :**
+
+```bat
+set CERTUS_BENCH_TIMEOUT_S=5400
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+```
+
+Le plafond était en dur ; il est désormais surchargeable par cette variable d'environnement,
+défaut inchangé à 1800 s. **Mets 5400 et laisse finir.**
+
+⚠️ **Le piège, et il a fonctionné deux fois** : au-delà du plafond le banc ne signale pas
+d'erreur bruyamment. Il émet `RESULT=None` et un tableau de 12 stratégies au lieu de 345 —
+**cela ressemble à un résultat**. Vérifie toujours `WAIT_EXIT` et le nombre de stratégies
+avant de lire un `RESULT`.
+
+⚠️ **Une mesure, une machine.** Ne lance rien d'autre pendant un run : ni tests, ni lint, ni
+recherche récursive. Le pipeline sature tous les cœurs en `prange`.
 
 **Suite de tests, mesurée sur cette copie le 2026-08-08** :
 
@@ -441,14 +546,40 @@ chemin de calcul est celui d'avant, au bit près.
 
 ## 12. Le travail à venir, dans l'ordre
 
-**Chaque action : paramètre inactif par défaut, chemin inactif bit-identique** (§3).
+> **Chaque action donne : le fichier et la fonction exacts, ce qu'il faut écrire, la commande
+> de vérification avec son résultat attendu, et les pièges connus.** Si une instruction te
+> paraît ambiguë, c'est un défaut de ce document — ne comble pas par une hypothèse,
+> arrête-toi et demande.
+
+### Les trois contraintes qui s'appliquent à TOUTES les actions
+
+**C1 — Inactif par défaut, bit-identique.** Tout nouveau paramètre vaut sa valeur neutre par
+défaut, et le chemin neutre doit rendre **exactement** les mêmes bits qu'avant. Vérifié par
+empreinte `float.hex()` sur une large batterie de configurations, avant/après — pas « aux
+tests près ». Voir §3.
+
+**C2 — Nombres aléatoires communs.** Tout tirage aléatoire est une **fonction pure de
+(graine, tirage, et un index physique)**. Jamais de la stratégie : ni la longueur d'onde, ni
+le découpage en blocs, ni `block_start_layer`, ni une épaisseur *obtenue*. Deux stratégies
+comparées sur le même (graine, tirage) doivent voir **exactement le même aléa**, sinon leur
+écart de score n'est plus imputable à la stratégie. Le générateur à utiliser est
+`_seeded_noise_sample(seed_base, group_idx, run_idx, elem_idx, gaussian)`
+(`certus/physics/certus_strat_math.py:384`) — loi tronquée sur [−1, 1], σ = 1/3.
+
+**C3 — Une seule chose à la fois.** Si deux choses changent et que le résultat bouge,
+l'attribution est perdue — pour toi et pour tous ceux qui suivront.
+
+---
 
 ### 12.1 🔴 Rendre la distorsion affine atteignable, puis éprouver POEM
 
-**Où on en est.** Le noyau est corrigé (`76f7a8f`). Il annulait son propre effet en trois
-endroits, ce qui aurait fait conclure l'inverse de la vérité :
+**Pourquoi en premier** : seule action pouvant **invalider POEM**, le mécanisme central de
+STRAT. Tout le reste le suppose valide.
 
-| Site | Défaut |
+**Où on en est.** Le noyau est corrigé (`76f7a8f`) : il annulait son propre effet en trois
+endroits, ce qui aurait fait conclure l'inverse de la vérité.
+
+| Site | Défaut corrigé |
 |---|---|
 | Inversion parabolique | modèle **non distordu** résolu contre une cible **distordue** — unités mélangées |
 | Repli absolu | `a·target_nominal + b` rendait au contrôleur l'étalonnage qu'il est censé avoir perdu |
@@ -458,23 +589,69 @@ endroits, ce qui aurait fait conclure l'inverse de la vérité :
 📏 Après : invariance POEM à **2,19e-10 nm**, et le repli absolu devient sensible — il rend
 `CRASH_LEVEL_UNREACHABLE` sous une chute de gain de 4,3 % sur une couche à faible contraste.
 
-**Ce qui manque.** Les paramètres ne sont dans la signature d'**aucun** appelant — ni
-`validate_wavelengths_batch`, ni `simulate_stack_robustness_batch`. Le tirage n'existe pas.
+**Ce qui manque** : `affine_scale` et `affine_offset` ne sont dans la signature d'**aucun**
+appelant. Le tirage n'existe pas.
 
-**À faire.** Tirer `(a, b)` **une fois par run**, jamais par couche, en nombres aléatoires
-communs : fonction pure de (graine, tirage), **sans aucune entrée de stratégie**.
+#### Où, exactement
 
-**Critère de réussite** : mesurer plantage et erreur spectrale **avec et sans POEM** sous
-distorsion. Si POEM tient sa promesse, l'écart doit être spectaculaire. Sinon, l'argument
-central du mécanisme tombe et **il faut le dire**.
+| Fichier | Fonction | Ce qu'il faut écrire |
+|---|---|---|
+| `certus/physics/certus_strat_batch.py` | `simulate_stack_robustness_batch` | Ajouter `affine_scale: float = 1.0, affine_offset: float = 0.0` en fin de signature, les passer au noyau. |
+| idem | `validate_wavelengths_batch` | Idem. Phase A doit voir la même distorsion que Phase B, sinon les deux étages ne modélisent pas la même machine. |
+| `certus/core/certus_strat_robustness.py` | `_execute_robustness_tasks` (~ligne 814-857, à côté du calcul de `tp_hysteresis`) | Tirer `(a, b)` **une fois par tirage** et les passer au batch. |
 
-**Pourquoi en premier** : seule action pouvant **invalider POEM**. Tout le reste le suppose
-valide.
+#### Le tirage
+
+```python
+# UNE FOIS PAR RUN, jamais par couche. Contrainte C2 : aucune entree de strategie.
+z_a = _seeded_noise_sample(affine_stream_seed, 0, run_idx, 0, True)   # in [-1, 1]
+z_b = _seeded_noise_sample(affine_stream_seed, 1, run_idx, 0, True)
+affine_scale  = 1.0 + affine_scale_amp  * z_a     # amp par defaut 0.0 -> a = 1.0
+affine_offset =       affine_offset_amp * z_b     # amp par defaut 0.0 -> b = 0.0
+```
+
+Deux nouvelles clés JSON, **0,0 par défaut** : `affine_scale_amp`, `affine_offset_amp`.
+`affine_stream_seed` se dérive de la graine de tirage comme `_signal_noise_stream_seed`
+(`certus_strat_robustness.py:840`) — **groupes distincts** (`0` et `1`) pour que gain et
+offset soient indépendants, et un `seed_base` distinct de celui du bruit de lecture pour ne
+pas corréler les deux phénomènes.
+
+#### Vérification
+
+```bat
+:: 1. non-regression : amplitudes a 0, le RESULT doit etre IDENTIQUE au repere §10
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+::    attendu : RESULT = 0,002898  (au dernier chiffre)
+
+:: 2. le critere de reussite : avec et sans POEM, sous distorsion
+::    (necessite d'exposer un drapeau de desactivation de POEM, cf. piege ci-dessous)
+```
+
+**Critère de réussite** : mesurer **plantage** et **erreur spectrale** dans les quatre cas
+— POEM actif / inactif × distorsion active / inactive. Si POEM tient sa promesse, l'écart
+doit être **spectaculaire**. Sinon, l'argument central du mécanisme tombe et **il faut le
+dire**.
+
+#### Pièges connus
+
+- 🔴 **Il n'existe pas aujourd'hui de drapeau « désactiver POEM ».** `poem_ok` est décidé
+  dans le noyau par `SWING_MIN` et le comptage d'ancres. Le critère de réussite exige de
+  pouvoir forcer le repli absolu. Ajouter un paramètre `poem_enabled: bool = True` au noyau
+  — inactif par défaut au sens de C1, puisque `True` est le comportement actuel.
+- ⚠️ `tp_hysteresis` reste **asymétrique** sous distorsion : `Ts_r` est mis à l'échelle,
+  `Ts_n` ne l'est pas, et les deux reçoivent le même seuil **absolu**. Une chute de gain
+  rétrécit donc les ondulations réelles face à un seuil fixe et peut fabriquer des
+  `CRASH_TP_MISCOUNT`. **Séparer les deux sentinelles dans le rapport** (`int(val // 1e6)`
+  donne la cause) pour ne pas confondre cet effet avec le vrai.
+- ⚠️ Le bruit `noise_val_precalc` est ajouté à `target_level`, qui est en unités mesurées
+  dans la branche POEM et en unités vraies dans le repli. Effet du second ordre, non mesuré.
+
+---
 
 ### 12.2 🔴 Le seuil de détection est sous-dimensionné — et couplé à la grille
 
-Le docstring de `detect_turning_points` énonce sa propre condition de suffisance : le tirage
-étant borné à ±A, l'écart maximal du bruit seul vaut 2A, donc
+**Le constat.** Le docstring de `detect_turning_points` énonce sa propre condition de
+suffisance : le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A, donc
 `hysteresis ≥ 2·trigger_tolerance/100` = **1,0e-3**. Or `certus_strat_robustness.py:854`
 calcule `1,66 × 5e-4` = **8,3e-4**. **17 % sous la borne que le code énonce.**
 
@@ -499,21 +676,43 @@ juste en arithmétique exacte et marginale en flottant : il faut strictement plu
 partout — mais « presque partout » exclut le voisinage des vrais extrema, là où l'on compte.
 
 **Le problème est à deux faces** : trop bas, le bruit fabrique ; trop haut, le détecteur rate
-les vrais extrema peu profonds. Seule la face gauche est chiffrée.
+les vrais extrema peu profonds. **Seule la face gauche est chiffrée.**
 
-**À faire, dans cet ordre :**
+#### Étape 1 — mesurer la face droite (bon marché, pas de pipeline)
 
-1. Mesurer la face droite — à partir de quel facteur les *vrais* points tournants
-   disparaissent. Bon marché, pas de pipeline.
-2. Balayer `tp_hysteresis_factor` ∈ {1,66 ; 2,1 ; 2,2} au banc, **sans toucher au JSON** :
-   `probe_anchor_noise_pipeline.py full 1.0 42 0 2.1`
+Sur le dichroïque, signal **propre** (bruit nul), balayer le seuil de 0 à 4 A et compter les
+points tournants détectés par couche et par λ candidate. Le seuil admissible est celui à
+partir duquel le comptage **change** par rapport au comptage à seuil quasi nul.
 
-**Viser le plus BAS qui passe strictement au-dessus de 2A.** `SWING_MIN = 0,04` exclut déjà
-les extrema peu profonds du chemin POEM, et 2,4 A = 1,2e-3 est 33× plus petit que
-`SWING_MIN` — la marge semble large, mais elle n'est pas mesurée.
+Résultat attendu : une marge large. `SWING_MIN = 0,04` exclut déjà les extrema peu profonds
+du chemin POEM, et 2,4 A = 1,2e-3 est **33× plus petit** que `SWING_MIN`. **Mais ce n'est pas
+mesuré**, et c'est précisément le genre de raisonnement que ce projet a déjà payé.
 
-⚠️ `phase_a_level_margin_factor` partage la valeur 1,66 mais répond à un **autre critère**.
-Ne pas le changer en même temps.
+#### Étape 2 — balayer au banc
+
+```bat
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 1.66
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 2.1
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42 0 2.2
+```
+
+Le 5ᵉ argument injecte le facteur **sans toucher au JSON** (interdit n° 4). Relever pour
+chacun : `RESULT`, plantage médian, RMSE global med/p95, nombre de stratégies rendues, et la
+**décomposition des sentinelles** (`CRASH_LEVEL_UNREACHABLE` vs `CRASH_TP_MISCOUNT`) — c'est
+elle qui dira si le gain vient bien de la suppression des faux comptages.
+
+**Viser le plus BAS qui passe strictement au-dessus de 2 A**, pas le plus haut.
+
+#### Pièges connus
+
+- 🔴 **Un run par configuration, machine libre.** Voir règle 5 du §19 : un banc lancé pendant
+  qu'autre chose tourne rend `RESULT=None` au bout de 1800 s, ce qui ressemble à un résultat.
+- ⚠️ `phase_a_level_margin_factor` partage aujourd'hui la valeur 1,66 mais répond à un
+  **autre critère**. Contrainte C3 : ne pas le changer en même temps.
+- ⚠️ Changer ce seuil **déplacera le classement**. C'est attendu, ce n'est pas une
+  régression — mais le repère du §10 devra être réécrit avec la nouvelle valeur.
+
+---
 
 ### 12.3 Méconnaissance d'indice — 👤 spécification du 2026-08-08
 
@@ -542,18 +741,17 @@ $$n_M^{\text{réel}}(\lambda) \;=\; n_M^{\text{nom}}(\lambda) + \delta_M(\lambda
   la douceur. Un terme quadratique n'est pas nécessaire : le physicien nomme deux modes,
   décalage et croisement, et l'affine les couvre exactement.
 
-**Tirage borné, cohérent avec le reste du projet.** Réutiliser `_seeded_noise_sample`
-(loi tronquée sur [−1, 1], σ = 1/3), puis :
+**Tirage borné, cohérent avec le reste du projet** (contrainte C2) :
 
-```
+```python
+z1 = _seeded_noise_sample(index_stream_seed, mat_idx, run_idx, 0, True)   # in [-1, 1]
+z2 = _seeded_noise_sample(index_stream_seed, mat_idx, run_idx, 1, True)
 a_M = delta_max * z1
-b_M = delta_max * z2 * (1 - abs(z1))     # garantit |a| + |b| <= delta_max
+b_M = delta_max * z2 * (1.0 - abs(z1))     # garantit |a| + |b| <= delta_max
 ```
 
-🔴 **Nombres aléatoires communs.** Le tirage doit être une fonction pure de
-(graine, tirage, matériau) — **aucune entrée de stratégie**, ni λ, ni découpage en blocs.
-Deux stratégies comparées sur le même (graine, tirage) doivent voir **exactement le même
-corridor d'indice**, sinon leur écart de score n'est plus imputable à la stratégie.
+`mat_idx` vaut 0 pour H, 1 pour L — **deux tirages indépendants**, les deux matériaux n'ont
+aucune raison de dériver ensemble. Nouvelle clé JSON `index_corridor` (défaut **0,0**).
 
 #### Pourquoi décalage et croisement ne coûtent pas la même chose
 
@@ -567,9 +765,9 @@ Le monitoring corrige l'épaisseur optique à **une seule** longueur d'onde, λ_
 
 **Prédiction à mesurer, pas un acquis** : à corridor égal, `b` devrait être bien plus
 destructeur que `a`. Si c'est le cas, cela favorise les stratégies dont les λ de contrôle
-sont **réparties** sur le domaine plutôt que groupées — ce qui est exactement le genre
-d'arbitrage que STRAT existe pour trouver. **Tirer et rapporter `a` et `b` séparément**,
-pour pouvoir attribuer.
+sont **réparties** sur le domaine plutôt que groupées — exactement le genre d'arbitrage que
+STRAT existe pour trouver. **Tirer et rapporter `a` et `b` séparément**, pour pouvoir
+attribuer. Un balayage à `b = 0` puis à `a = 0` tranche en deux runs.
 
 #### Ce qui a été mesuré, et ce qui bloque
 
@@ -582,18 +780,25 @@ produit exactement **0**.
 Le même jeu d'indices pilote l'empilement réel **et** le nominal ; les décaler ensemble ne
 crée aucune divergence.
 
-#### Ce qu'il faut faire
+#### Où, exactement
 
-1. **Deux jeux d'indices dans la signature du noyau.** `n_*_real` pour l'empilement déposé,
-   `n_*_nom` pour le signal attendu et le niveau de déclenchement figé. C'est la condition
-   sans laquelle rien de tout ceci ne produit d'effet.
-2. **Perturber aussi la notation.** `compute_batch_rmse` reçoit `n_layers_flattened` sur la
-   grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son
-   spectre doit être évalué avec `n_réel(λ)`, pas avec la courbe nominale. C'est là que
-   l'inclinaison non compensée se paie.
-3. Les tableaux `n_H_vals` / `n_L_vals` de `simulate_stack_robustness_batch` sont **déjà
-   indexés par couche** (chaque couche a sa λ de monitoring) : la dépendance en λ est donc
-   déjà acheminée. Il suffit d'y appliquer `δ_M(λ_mon,i)`.
+| Fichier | Fonction | Ce qu'il faut écrire |
+|---|---|---|
+| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | **Dédoubler les indices** : `n_H_real, n_L_real` pour `M_before` et `Ts_r` ; `n_H_nom, n_L_nom` pour `M_nom`, `Ts_n` et `target_nominal`. C'est **la** condition sans laquelle rien de tout ceci ne produit d'effet. |
+| idem | idem | L'inversion parabolique finale (`T_points`) décrit le signal **réel** : elle prend `n_*_real`. |
+| `certus/physics/certus_strat_batch.py` | `simulate_stack_robustness_batch` | Accepter `n_H_real_vals` / `n_L_real_vals` en plus des tableaux nominaux. Ils sont **déjà indexés par couche** (chaque couche a sa λ de monitoring) : la dépendance en λ est donc déjà acheminée, il suffit d'y appliquer `δ_M(λ_mon,i)`. |
+| idem | `compute_batch_rmse` | **Perturber aussi la notation.** `n_layers_flattened` est sur la grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son spectre doit être évalué avec `n_réel(λ)`. **C'est là que l'inclinaison non compensée se paie** — l'omettre annulerait tout l'intérêt de l'action. |
+
+#### Vérification
+
+```bat
+:: 1. non-regression : index_corridor = 0, RESULT identique au repere §10
+:: 2. balayage : corridor 0 / 0,0025 / 0,005, puis a seul (b=0) et b seul (a=0)
+```
+
+Attendu : `RESULT` se dégrade avec le corridor, **et plus vite pour `b` que pour `a`**. Si le
+chiffre ne bouge pas quand le corridor grandit, c'est le Piège 1 — la perturbation n'atteint
+pas le calcul, exactement comme la recette pré-multiplicative ci-dessus.
 
 #### 👤 Deux points à confirmer avant d'implémenter
 
@@ -604,38 +809,78 @@ crée aucune divergence.
   donc absolu. Les documents antérieurs disaient ±0,5 % relatif — pour n_H = 2,35 les deux
   diffèrent d'un facteur 2,4. J'assume **absolu**.
 
+---
+
 ### 12.4 Grille d'échantillonnage à la cadence machine — **avec 12.2, jamais seule**
 
-Cible : `Δd = v_dépôt / f_échantillonnage` = 0,125 nm, soit ~800 points par couche de 100 nm
-contre 21 aujourd'hui.
+**Cible** : `Δd = v_dépôt / f_échantillonnage` = **0,125 nm**, soit ~800 points par couche de
+100 nm contre 21 aujourd'hui. Ce n'est pas un raffinement numérique — **c'est une
+caractéristique physique de la machine** (§9).
 
-🔴 **Deux pièges :**
+#### Où, exactement
 
-1. `NPTS_PREV = ceil(d_real_j)` **casserait les nombres aléatoires communs** — `d_real_j`
-   est l'épaisseur *obtenue*, donc dépendante de la stratégie. Indexer sur
-   `p_thick_nominal[j]`, qui ne l'est pas.
-2. Coût brut ×44 en évaluations TMM — rédhibitoire quand `REPRISE_PERF` conclut qu'il n'y a
-   pas de ×2 disponible.
+`certus/physics/certus_strat_growth.py`, `simulate_growth_kernel`, constantes en tête du bloc
+de balayage : `NPTS = 64`, `NPTS_PREV = 16`, `D_SCAN = 3.0`.
 
-**La parade** : découpler la grille physique de la grille d'échantillonnage. `T(d)` est lisse
-et parcourt moins d'une période sur tout le balayage — garder ~64 évaluations TMM exactes,
-interpoler sur les positions réelles, tirer **un bruit indépendant par position**. Le nombre
-de tirages, qui gouverne les extrema parasites, devient fidèle à coût TMM inchangé.
+#### La parade au coût — découpler les deux grilles
+
+Coût brut d'un passage à 800 points : 4 couches d'historique × 800 + 2 400 = **5 600
+évaluations TMM** contre 128, soit **×44**. Rédhibitoire quand `REPRISE_PERF` conclut qu'il
+n'y a pas de ×2 disponible.
+
+**`T(d)` est lisse** et parcourt moins d'une période sur tout le balayage. Donc :
+
+1. garder ~64 évaluations TMM **exactes**, comme aujourd'hui ;
+2. **interpoler** sur les positions d'échantillonnage réelles ;
+3. tirer **un bruit indépendant par position réelle**.
+
+Le nombre de tirages — qui est ce qui gouverne la fabrication d'extrema parasites — devient
+fidèle **à coût TMM inchangé**. C'est le nombre de tirages qui compte, pas le nombre
+d'évaluations TMM.
+
+#### Pièges connus
+
+- 🔴 **`NPTS_PREV = ceil(d_real_j)` casserait C2.** `d_real_j` est l'épaisseur **obtenue**,
+  donc dépendante de la stratégie : le nombre de tirages de bruit par couche deviendrait
+  fonction de la stratégie évaluée. **Indexer sur `p_thick_nominal[j]`**, qui ne l'est pas.
+- 🔴 **Ne jamais raffiner sans 12.2.** À seuil inchangé, la fabrication passe de 33 % à
+  99,9 %. Le taux de plantage exploserait et on l'attribuerait à la physique.
+- ⚠️ `idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))` vaut aujourd'hui exactement
+  `n_hist + 21` parce que 63/3 est entier. Avec un `NPTS` variable, l'arrondi introduit un
+  décalage sous-pas. Vérifier que l'indice d'arrêt tombe toujours sur `d_nom`.
+- ⚠️ Le **point dupliqué** à la jonction historique / couche courante (`k == 0`, traité aux
+  lignes ~633-638) doit rester un tirage unique. Avec un `NPTS_PREV` variable, l'indice de
+  repli devient `NPTS_PREV(i_layer − 1) − 1`, pas la constante 16.
+
+---
 
 ### 12.5 Quantification temporelle du déclenchement — `U(0, 0,125 nm)`
 
 Le volet ne peut pas se déclencher avant le franchissement : la loi est **strictement
 positive**, jamais centrée. Pas de double comptage avec `noise_val_precalc`, qui est un bruit
-**photométrique** (en T) là où celui-ci est **spatial** (en d).
+**photométrique** (en T) là où celui-ci est **spatial** (en d) — deux effets physiquement
+indépendants.
 
 **Quasi gratuit une fois 12.4 fait** : si la grille de balayage est celle de la machine, on
-s'arrête au premier point au-delà du seuil au lieu d'interpoler.
+s'arrête au **premier point de grille au-delà du seuil** au lieu d'interpoler, et la
+quantification apparaît d'elle-même, sans paramètre supplémentaire.
+
+**Vérification** : Piège 1. Si le taux de plantage ne bouge pas quand on double
+`Δd_sample`, la mesure est un artefact.
+
+---
 
 ### 12.6 Facteur de face arrière sur les seuils absolus — **en dernier, ou jamais**
 
 `T_back = 4n/(n+1)² ≈ 0,957` pour BK7, soit 4,4 %. Le chemin de **notation** applique déjà la
-face arrière complète avec réflexions multiples (`certus_strat_batch.py:310-316`) : l'écart ne
-concerne que le monitoring, et vaut 0,002 en absolu sur `SWING_MIN`.
+face arrière complète avec réflexions multiples (`certus_strat_batch.py:310-316`) : l'écart
+ne concerne que le signal de monitoring, et vaut **0,002 en absolu** sur `SWING_MIN`.
+
+⚠️ Ne **pas** l'implémenter via `affine_scale` : ce paramètre modélise une dérive
+d'étalonnage inconnue du contrôleur, alors que la face arrière est un facteur **connu et
+constant**. Les confondre rendrait les deux mesures ininterprétables.
+
+---
 
 ## 13. Décisions ouvertes et tranchées
 

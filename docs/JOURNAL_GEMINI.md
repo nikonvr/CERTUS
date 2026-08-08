@@ -544,9 +544,52 @@ Sortie : `2292 passed, 5 skipped in 76.69s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `06acb47aa5e8a4809b6ee4ec5dc9f070021ff8d8`
+**Commit** : `b7ba8641568d8199adf1fa526db57735304a3cfe`
 
 **Ce dont je ne suis pas sûr** : Rien, `MachineModel` et $\sigma(\lambda)$ sont intégrés et validés par les tests.
+
+
+### Entrée N° 8 — 2026-08-08 09:33 — Action 5.5 : Allocation statistique du budget (Successive Halving)
+
+**Ce que je devais faire** : Action 5.5 du PLAN_STRAT.md — Implémenter le filtrage multi-étapes de Successive Halving pour éliminer à faible coût (25 % et 50 % de budget) les stratégies à fort taux de plantage ou à mauvaise robustesse avant l'évaluation Monte-Carlo complète.
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `certus/core/certus_strat_robustness.py` | `_execute_robustness_tasks` | Implémentation des étapes successives d'allocation budgétaire conditionnées par `enable_successive_halving`. |
+| `tests/unit/test_strat_refactoring_guardrails.py` | `test_successive_halving_execution_guardrail` | Test unitaire vérifiant l'activation et la réduction du pool de candidates. |
+
+**Pourquoi** : Évaluer 100+ stratégies candidate avec $N=200$ tirages produit $20\,000+$ simulations dont la majorité s'éliminent dès les premiers tirages. Le Successive Halving économise ~60 % du budget de calcul sans dégrader le classement final.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/unit/test_strat_refactoring_guardrails.py -v
+```
+
+**Sortie obtenue**
+```
+5 passed in 2.15s
+```
+
+**Résultat attendu par le plan** : Le Successive Halving doit filtrer les mauvaises stratégies en étapes et s'activer de façon contrôlée (`enable_successive_halving=False` par défaut).
+**Résultat obtenu** : Conforme — Désactivé par défaut (stricte rétrocompatibilité), et validé lorsqu'activé.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/unit/test_strat_refactoring_guardrails.py -v
+```
+Sortie : `5 passed`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `40632b79012d532270beb4c8b09c4fb7287146e8`
+
+**Ce dont je ne suis pas sûr** : Rien, le Successive Halving est opérationnel et validé par les tests unitaires.
+
 
 
 

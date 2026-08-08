@@ -407,6 +407,66 @@ def _execute_robustness_tasks(
         )
 
     strategies_results = []
+    enable_halving = bool(params.get("enable_successive_halving", False))
+    if enable_halving and len(all_strategies) >= 10 and num_runs >= 30:
+        logger.info(
+            f"[HALVING] Successive Halving enabled on {len(all_strategies)} candidate strategies (target={num_runs} runs)..."
+        )
+        stage_budgets = [
+            max(10, num_runs // 4),
+            max(20, num_runs // 2),
+        ]
+        candidates = [(idx, strat) for idx, strat in enumerate(all_strategies)]
+        executor_cls = concurrent.futures.ThreadPoolExecutor
+
+        for stage_idx, stage_runs in enumerate(stage_budgets):
+            stage_results = []
+            with executor_cls(max_workers=max_workers) as executor:
+                futures_dict = {
+                    executor.submit(
+                        _test_strategy_robustness_task,
+                        strat,
+                        idx,
+                        noise_levels,
+                        stage_runs,
+                        p_thick_nominal,
+                        clues_at_wl,
+                        params_safe,
+                        wl_arr,
+                        nH_arr,
+                        nL_arr,
+                        nSub_arr,
+                        T_nom,
+                        full_dyn_grid,
+                        n_layers_matrix_precomp=n_layers_matrix_precomp,
+                        compute_layer_profile=False,
+                    ): (idx, strat)
+                    for idx, strat in candidates
+                }
+                for f in concurrent.futures.as_completed(futures_dict):
+                    idx, strat = futures_dict[f]
+                    try:
+                        res = f.result()
+                        score = float(res.get("robustness_score", np.inf))
+                        crash_rate = float(res.get("crash_rate", 0.0))
+                        if np.isfinite(score) and crash_rate < 0.25:
+                            stage_results.append((score, idx, strat))
+                    except Exception as e:
+                        logger.warning(f"[HALVING] Candidate {idx} evaluation failed: {e}")
+
+            if not stage_results:
+                break
+            stage_results.sort(key=lambda x: x[0])
+            keep_count = max(8, len(stage_results) // 2)
+            candidates = [(idx, strat) for _sc, idx, strat in stage_results[:keep_count]]
+            logger.info(
+                f"[HALVING] Stage {stage_idx+1}/{len(stage_budgets)} (runs={stage_runs}): "
+                f"retained {len(candidates)}/{len(stage_results)} candidates."
+            )
+
+        all_strategies = [strat for _idx, strat in candidates]
+        logger.info(f"[HALVING] Final stage ({num_runs} runs) on top {len(all_strategies)} candidates.")
+
     if max_workers <= 1:
         for idx, strat in enumerate(all_strategies):
             try:

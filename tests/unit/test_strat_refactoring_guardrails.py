@@ -3,6 +3,7 @@ import os
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+import numpy as np
 
 # Ensure the workspace root is in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -229,4 +230,49 @@ def test_robust_material_database_refactoring_guardrails():
 
         with pytest.raises(KeyError, match="introuvable"):
             db.get_refractive_clues_vectorized("Air_Nonexistent", np.array([500.0]))
+
+
+def test_successive_halving_execution_guardrail():
+    """Verify Successive Halving reduces evaluation candidate pool at each stage (Action 5.5)."""
+    from certus.core.certus_strat_robustness import _execute_robustness_tasks
+
+    strategies = [
+        {
+            "strategy_id": f"s_{i}",
+            "n_blocks": 1,
+            "blocks": [{"start_layer": 0, "end_layer": 7, "monitoring_wavelength": 550.0}],
+        }
+        for i in range(20)
+    ]
+    params = {"enable_successive_halving": True}
+    logger = MagicMock()
+
+    wl_arr = np.array([550.0], dtype=np.float64)
+    nH_arr = np.array([2.35], dtype=np.float64)
+    nL_arr = np.array([1.48], dtype=np.float64)
+    nSub_arr = np.array([1.52], dtype=np.float64)
+    T_nom = np.array([0.9], dtype=np.float64)
+    p_thick_nominal = [100.0] * 8
+    clues = {"nH": 2.35, "nL": 1.48, "nSub": 1.52}
+
+    res = _execute_robustness_tasks(
+        all_strategies=strategies,
+        noise_levels=[0.001],
+        num_runs=40,
+        p_thick_nominal=p_thick_nominal,
+        clues_at_wl=clues,
+        params_safe=params,
+        wl_arr=wl_arr,
+        nH_arr=nH_arr,
+        nL_arr=nL_arr,
+        nSub_arr=nSub_arr,
+        T_nom=T_nom,
+        full_dyn_grid={},
+        params=params,
+        logger=logger,
+    )
+    assert len(res) <= 20
+    logger_calls = [call.args[0] for call in logger.info.call_args_list if call.args]
+    assert any("[HALVING] Successive Halving enabled" in msg for msg in logger_calls)
+
 

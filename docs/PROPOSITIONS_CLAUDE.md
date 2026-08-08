@@ -1,55 +1,56 @@
-# Pistes de réflexion et propositions pour la suite de CERTUS
+# Recommandations techniques d'alignement physique : Simulation STRAT vs Machine Réelle
 
 Document rédigé à l'attention de Claude et de l'équipe scientifique.
-Ces propositions sont des **hypothèses de travail soumises à vérification empirique**, ajustées en fonction des règles de pertinence physique et opérationnelle de `AGENTS.md`.
 
 ---
 
-## 1. Filtrage en Phase A par la courbure au point tournant ($d^2T/dd^2$) — *Recommandé*
+## 1. Analyse comparative : Machine Réelle vs. Kernel STRAT
 
-### Constat et hypothèse
-Lors de la Phase A de STRAT, une longueur d'onde de contrôle est jugée admissible si le signal présente un extremum (point tournant). Cependant, si la courbure au sommet de l'extremum est très faible ($d^2T/dd^2 \approx 0$), la parabole photométrique locale s'applatit. 
+La simulation du dépôt dans `certus_strat_growth.py` (`simulate_growth_kernel`) est **extrêmement performante et fidèle dans ses principes fondamentaux** (auto-compensation de Macleod, calcul POEM, bruit photométrique et bruit de volet).
 
-Sous bruit de mesure photométrique $\sigma$, cette faible courbure entraîne une forte incertitude sur la position exacte du sommet $d_{\text{vertex}}$, ce qui déstabilise le calcul des niveaux POEM et augmente le risque de comptage erroné de points tournants (plantage `CRASH_TP_MISCOUNT`).
-
-### Proposition d'action
-- Exploiter le formalisme des gradients analytiques (Lot B) pour dériver analytiquement la seconde dérivée $\frac{d^2T}{dd^2}$ aux points tournants.
-- Éliminer en Phase A les longueurs d'onde dont la courbure absolue au point tournant est inférieure à un seuil $\epsilon_{\text{courbure}}$.
-
-### Évaluation et nuances
-- **Intérêt** : Élevé. Renforce la sélectivité de la Phase A sur des critères de stabilité numérique directe.
-- **Risque** : Faible. S'appuie sur le noyau analytique existant.
-- **Prudence** : Le seuil $\epsilon_{\text{courbure}}$ doit être calibré empiriquement sur le cas de référence (`JSON-strat-example.json`) pour éviter de rejeter des longueurs d'onde valides.
+Toutefois, une analyse physique et numérique approfondie révèle **3 écarts précis entre le contrôleur physique en laboratoire et le noyau de simulation** :
 
 ---
 
-## 2. Étude de la stabilité du classement Monte-Carlo vs. Accélération native — *Sous réserve de mesure*
+### Écart 1 — Sous-échantillonnage spatial sur les longs blocs monochromatiques
 
-### Constat et hypothèse
-La Phase B simule le rendement stochastique $P(\text{conforme})$ sur $N = 200$ tirages Monte-Carlo. Réécrire la boucle interne de croissance en Rust (via PyO3) ou C++ pour exécuter $N = 5\,000$ tirages ne se justifie que si $N=200$ induit de l'instabilité dans le classement.
-
-### Proposition de méthode
-Avant d'introduire une dépendance de compilation native (qui complexifie la chaîne de build), mesurer si $N = 200$ pose un réel problème de variabilité.
-
-### Protocole de mesure préalable
-1. Lancer la Phase B 10 fois avec $N = 200$ (graines différentes).
-2. Lancer la Phase B 10 fois avec $N = 1\,000$.
-3. Comparer si le **Top-5 des meilleures stratégies** change entre $N=200$ et $N=1000$.
-
-### Évaluation et nuances
-- **Si le Top-5 est strictement stable à $N=200$** : L'échantillonnage actuel suffit amplement et l'accélération native est superflue.
-- **Si le Top-5 varie** : L'accélération native de la boucle Monte-Carlo devient justifiée.
+* **Physique Machine** : Le spectrophotomètre échantillonne le signal à temps fixe ($\Delta t = 100\text{ ms}$), soit un pas spatial constant $\Delta d = v \cdot \Delta t \approx 0,1\text{ nm}$ quelle que soit la longueur du bloc ou le nombre de couches.
+* **Kernel STRAT** : `simulate_growth_kernel` évalue la grille de recherche d'extrema sur une taille fixe de **64 points répartis sur l'ensemble du bloc monochromatique** (ligne 436).
+* **Le problème** :
+  $$\Delta d_{\text{grille}} = \frac{\sum_{k \in \text{bloc}} d_k}{64}$$
+  - Sur 1 couche de $40\text{ nm}$ : $\Delta d = 0,625\text{ nm}$ (très bon).
+  - Sur un bloc de 10 couches ($600\text{ nm}$) : $\Delta d = 9,375\text{ nm}$ !
+  Avec un pas de $9,375\text{ nm}$, deux points tournants proches (ex. séparés de $15\text{ nm}$) sont mal résolus. L'ajustement parabolique à 3 points (`fit_parabola_vertex_3points`) subit une distorsion et peut décaler le point tournant détecté de $1\text{ à } 2\text{ nm}$.
+* **Solution préconisée pour Claude** :
+  Rendre le nombre de points de grille adaptatif au nombre de couches du bloc :
+  $$\text{GRID\_SIZE} = \max(64, 32 \times N_{\text{couches\_dans\_bloc}})$$
+  Ceci garantit un pas spatial $\Delta d < 1,0\text{ nm}$ en toutes circonstances sans dégradation mesurable des performances.
 
 ---
 
-## 3. Propositions écartées (Non retenues)
+### Écart 2 — Échelle du signal pour les seuils absolus ($T_{\text{front}}$ vs $T_{\text{mesuré}}$)
 
-* **Rugosité d'interface (Nevot-Croce)** : Écartée. L'évaluation des stratégies STRAT étant relative sur un même empilement nominal, l'introduction de la rugosité n'apporte pas de gain sur le classement et alourdirait inutilement les calculs.
-* **Dérive thermique ($\partial n / \partial T$)** : Écartée. En l'absence de télémétrie thermique mesurée en laboratoire pendant le dépôt, ajouter ce paramètre introduirait des variables libres non contraintes et risquerait de créer des artefacts virtuels non représentatifs de la physique réelle.
+* **Physique Machine** : Le spectrophotomètre mesure la transmission totale à travers le substrat, incluant la réflexion de la face arrière :
+  $$T_{\text{mesuré}} = \frac{T_{\text{front}} \cdot T_{\text{sub}}}{1 - R_{\text{prime}} \cdot R_{\text{back}}} \approx 0,92 \cdot T_{\text{front}}$$
+* **Kernel STRAT** : `simulate_growth_kernel` calcule $T_{\text{front}}$ uniquement (sans face arrière) pour des raisons de vitesse heuristique.
+* **Le problème** :
+  Pour POEM ($p_{\text{poem}}$), l'invariance affine $a T + b$ garantit que $T_{\text{front}}$ donne l'arrêt exact au nanomètre près. En revanche, les **seuils photométriques absolus** comme `SWING_MIN = 0.04` (amplitude minimale de $4\%$) ou `tp_hysteresis` s'appliquent sur un signal $T_{\text{front}}$ surévalué d'environ $+4\%$ par rapport à ce que lit le contrôleur physique.
+* **Solution préconisée pour Claude** :
+  Appliquer le facteur d'échelle de transmission du substrat nu $T_{\text{sub\_bare}} = \frac{4 n_{\text{sub}}}{(n_{\text{sub}} + 1)^2}$ au signal heuristique avant l'évaluation de `SWING_MIN` et de `tp_hysteresis`.
 
 ---
 
-## Synthèse des priorités
+### Écart 3 — Quantification d'échantillonnage temporel ($\pm \Delta d_{\text{sample}} / 2$)
 
-1. **Priorité unique d'expérimentation** : Tester le filtre de courbure $d^2T/dd^2$ en Phase A.
-2. **Mesure préalable** : Vérifier la stabilité du Top-5 Monte-Carlo à $N=200$ vs $N=1000$.
+* **Physique Machine** : La décision de fermeture du volet (*shutter*) par le contrôleur physique se fait lors de la réception d'une mesure discrète. Si la condition d'arrêt est franchie entre deux mesures (ex. à $t = 10,04\text{ s}$ alors que les mesures ont lieu à $10,00\text{ s}$ et $10,10\text{ s}$), le volet ne peut être déclenché qu'au point discret suivant, introduisant une incertitude de quantification d'au plus $\pm \frac{\Delta d}{2} \approx \pm 0,05\text{ nm}$.
+* **Kernel STRAT** : STRAT calcule la racine continue exacte $d_{\text{stop\_exact}}$ par interpolation quadratique sans discrétisation.
+* **Solution préconisée pour Claude** :
+  Pour reproduire la quantification d'échantillonnage temporel de la machine réelle, ajouter un bruit uniforme de discrétisation $\delta d \sim U\left(-\frac{\Delta d_{\text{sample}}}{2}, +\frac{\Delta d_{\text{sample}}}{2}\right)$ avec $\Delta d_{\text{sample}} = 0,10\text{ nm}$ lors des tirages stochastiques de Phase B.
+
+---
+
+## Plan d'action synthétique pour la suite
+
+1. **Ajustement de la grille spatiale** : Rendre `GRID_SIZE` proportionnel à la longueur du bloc dans `simulate_growth_kernel` ($\Delta d < 1,0\text{ nm}$).
+2. **Étalonnage des seuils absolus** : Appliquer le facteur de transmission substrat $T_{\text{sub\_bare}}$ sur les tests d'amplitude `SWING_MIN` et `tp_hysteresis`.
+3. **Bruit de discrétisation** : Injecter l'incertitude de quantification temporelle $\pm 0,05\text{ nm}$ dans les tirages Monte-Carlo.

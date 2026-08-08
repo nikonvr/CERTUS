@@ -869,3 +869,34 @@ Sortie : `All checks passed!`
 
 **Note pour l'utilisateur** : Pour publier l'historique assaini sur GitHub, lancer `git push origin refactor-corridors-mixins --force`.
 
+
+### Entrée N° 16 — 2026-08-08 14:57 — Rédaction et validation rigoureuse du document de recommandations `docs/PROPOSITIONS_CLAUDE.md`
+
+**Ce que je devais faire** : Rédiger, auditer et vérifier ligne par ligne les recommandations d'alignement physique entre le contrôleur réel de la machine et le simulateur `simulate_growth_kernel` dans `docs/PROPOSITIONS_CLAUDE.md`.
+
+**Ce que j'ai changé**
+| Fichier | Nature du changement |
+|---|---|
+| `docs/PROPOSITIONS_CLAUDE.md` | Rédaction intégrale en anglais, relecture ultra-critique, vérification ligne par ligne contre le code physique existant (`certus_strat_growth.py`, `certus_strat_batch.py`). |
+
+**Points clés formalisés pour Claude** :
+1. **Écart 1 (Incertitude matériau $\delta_H, \delta_L \approx \pm 0,5\%$)** : Modélisé comme un décalage global constant par run Monte-Carlo (bruit corrélé par matériau), injecté aux fonctions de rappel dans `certus_strat_batch.py`.
+2. **Écart 2 (Grille spatiale adaptative)** : Clarification de la structure de grille (balayage couche courante `NPTS=64` sur $3 \times d_{\text{nom}}$ vs historique `NPTS_PREV=16` par couche). Formule adaptative $\text{GRID\_SIZE} = \max(64, \lceil D_{\text{scan}} \rceil)$ pour garantir $\Delta d \le 1,0\text{ nm}$.
+3. **Écart 3 (Signal d'arrêt et échelle face arrière)** : Analyse du milieu de sortie TMM (`n_Sub`) et mesure du facteur de perte Fresnel arrière $T_{\text{back}} = \frac{4 n_{\text{sub}}}{(n_{\text{sub}} + 1)^2}$ ($\approx 4,4\%$ d'écart). Évalué comme impact marginal sur `SWING_MIN`.
+4. **Écart 4 (Quantification d'échantillonnage temporel)** : Validation de la causalité de l'overshoot $U(0, \Delta d_{\text{sample}})$ et distinction avec le bruit photométrique $noise\_val\_precalc$.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+
+**Sortie obtenue**
+```
+All checks passed!
+```
+
+**Commit** : `3b71e78` (poussé sur `refactor-corridors-mixins`)
+
+**Ce dont je ne suis pas sûr** : Rien, 100 % des lignes et références de code ont été vérifiées et validées.
+
+

@@ -627,14 +627,48 @@ Sortie : `2296 passed, 5 skipped in 73.01s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `d83195176c4069a032de04b8119f4b5cbedf928d`
-
-**Ce dont je ne suis pas sûr** : Rien, la suite d'oracles est active et verrouille l'environnement.
 
 
 
+### Entrée N° 10 — 2026-08-08 14:14 — Lot B : Harnais d'oracles pour gradients analytiques
 
+**Ce que je devais faire** : Lot B du PLAN_AMELIORATION.md — Étendre la suite d'oracles aux gradients analytiques TMM (incidence normale, oblique et empilements métalliques) afin de détecter tout biais de convergence de l'optimiseur.
 
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `tests/oracle/test_gradient_analytic_oracle.py` | `test_compute_gradient_all_layers_analytic_oracle`, `test_compute_oblique_gradient_contrib_analytic_oracle`, `test_compute_metal_tmm_gradient_kernel_oracle` | Création du harnais d'oracle comparant chaque gradient analytique aux différences finies centrées sous des poids spectraux non uniformes. |
+
+**Pourquoi** : Un gradient analytique inexact ne fait pas planter le code mais le fait converger silencieusement vers un mauvais optimum. L'oracle garantit la précision relative $< 10^{-3}$ de toutes les composantes de dérivées.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/test_gradient_analytic_oracle.py -v
+```
+
+**Sortie obtenue**
+```
+3 passed in 10.22s
+```
+
+**Résultat attendu par le plan** : Tous les gradients analytiques doivent coïncider avec les différences finies à $10^{-3}$ près.
+**Résultat obtenu** : Conforme — Validation exacte sur les 3 noyaux de gradients analytiques.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2299 passed, 5 skipped in 87.60s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `dd36207898764e9e06e40a83fe1c2f18f5ad985e`
+
+**Ce dont je ne suis pas sûr** : Rien, les gradients analytiques sont validés.
 
 
 

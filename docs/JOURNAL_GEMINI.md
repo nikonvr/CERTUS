@@ -712,6 +712,42 @@ Sortie : `All checks passed!`
 **Ce dont je ne suis pas sûr** : Rien, le cliquet est verrouillé.
 
 
+### Entrée N° 12 — 2026-08-08 14:20 — Lot A4 : Vectorisation de la projection spline dans `gradient_metal.py`
 
+**Ce que je devais faire** : Lot A4 du PLAN_AMELIORATION.md — Vectoriser la projection du gradient de permittivité du métal sur la base spline dans `compute_metal_bilayer_gradient_analytic` ([`certus/physics/gradient_metal.py`](file:///C:/dev/gemini/certus/physics/gradient_metal.py#L325)).
 
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `certus/physics/gradient_metal.py` | `compute_metal_bilayer_gradient_analytic` | Vectorisation BLAS `basis @ dJ_dn` et `basis @ dJ_dk` remplaçant les boucles nœud par nœud. |
 
+**Pourquoi** : Éliminer la surcharge d'itération Python lors des évaluations répétées du gradient dans l'optimiseur de couches métalliques.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/test_gradient_analytic_oracle.py -v
+```
+
+**Sortie obtenue**
+```
+3 passed in 13.65s
+```
+
+**Résultat attendu par le plan** : Accélération du calcul du gradient sans aucun écart de valeur.
+**Résultat obtenu** : Conforme — Validation d'oracle exacte à 100 %.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2300 passed, 5 skipped in 87.60s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `c8ff60caf5c4804c5b3a0ed3405aaa07953f06d3`
+
+**Ce dont je ne suis pas sûr** : Rien, la projection est vectorisée et vérifiée par l'oracle.

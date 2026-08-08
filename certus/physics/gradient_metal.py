@@ -322,11 +322,8 @@ def compute_metal_bilayer_gradient_analytic(
 
     basis_k = basis
 
-    for i in range(spline_knot_count):
-        grad[offset + i] = np.dot(dJ_dn, basis_n[i, :])
-
-    for i in range(spline_knot_count):
-        grad[offset + spline_knot_count + i] = np.dot(dJ_dk, basis_k[i, :])
+    grad[offset : offset + spline_knot_count] = basis @ dJ_dn
+    grad[offset + spline_knot_count : offset + 2 * spline_knot_count] = basis @ dJ_dk
 
     h_val = 1e-5
 

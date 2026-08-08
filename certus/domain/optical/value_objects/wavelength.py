@@ -1,8 +1,8 @@
 """
 Wavelength Value Object
 
-Représente une longueur d'onde avec invariants physiques.
-Immutable par design (frozen dataclass).
+Represents a wavelength with physical invariants.
+Immutable by design (frozen dataclass).
 """
 
 from __future__ import annotations
@@ -13,14 +13,14 @@ import numpy as np
 @dataclass(frozen=True)
 class Wavelength:
     """
-    Longueur d'onde en nanomètres.
+    Wavelength in nanometers.
 
     Invariants:
-    - 100nm ≤ λ ≤ 10000nm (UV proche → IR moyen)
-    - Valeur finie (pas NaN, pas Inf)
+    - 100nm <= λ <= 10000nm (Near UV -> Mid IR)
+    - Finite value (not NaN, not Inf)
 
     Examples:
-        >>> wl = Wavelength(550.0)  # Vert
+        >>> wl = Wavelength(550.0)  # Green
         >>> wl.to_meters()
         5.5e-07
         >>> wl.to_micrometers()
@@ -34,7 +34,7 @@ class Wavelength:
     MAX_NM: float = 10000.0  # Mid IR
 
     def __post_init__(self):
-        """Validation invariants."""
+        """Invariant validation."""
         if not isinstance(self.nm, (int, float)):
             raise TypeError(f"Wavelength must be numeric, got {type(self.nm)}")
 
@@ -89,11 +89,11 @@ class Wavelength:
 @dataclass(frozen=True)
 class WavelengthRange:
     """
-    Range de longueurs d'onde [min, max].
+    Wavelength range [min, max].
 
     Invariants:
     - min < max
-    - Tous deux valides selon Wavelength invariants
+    - Both valid according to Wavelength invariants
     """
 
     min_wl: Wavelength

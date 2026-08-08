@@ -1,7 +1,7 @@
 """
 Refractive Index Value Object
 
-Représente l'indice de réfraction complexe n + ik.
+Represents the complex refractive index n + ik.
 """
 
 from __future__ import annotations
@@ -12,18 +12,18 @@ import numpy as np
 @dataclass(frozen=True)
 class RefractiveIndex:
     """
-    Indice de réfraction complexe: n + ik
+    Complex refractive index: n + ik
 
-    n: partie réelle (vitesse phase)
-    k: partie imaginaire (absorption)
+    n: real part (phase velocity)
+    k: imaginary part (extinction coefficient/absorption)
 
     Invariants:
-    - n >= 1.0 (physique, n=1 pour vide)
-    - k >= 0.0 (absorption toujours positive)
-    - Valeurs finies
+    - n >= 1.0 (physics, n=1 for vacuum)
+    - k >= 0.0 (absorption always non-negative)
+    - Finite values
 
     Examples:
-        >>> ri = RefractiveIndex(n=1.5, k=0.0)  # Verre sans absorption
+        >>> ri = RefractiveIndex(n=1.5, k=0.0)  # Glass without absorption
         >>> ri.to_complex()
         (1.5+0j)
         >>> ri.is_absorbing()
@@ -58,14 +58,13 @@ class RefractiveIndex:
             raise ValueError(f"Extinction coefficient k={self.k} > {self.MAX_K} extreme")
 
     def to_complex(self) -> complex:
-        """Indice complexe dans la convention du projet : ``n̂ = n − ik`` (k >= 0).
+        """Complex index in project convention: ``n̂ = n − ik`` (k >= 0).
 
-        Cette classe renvoyait auparavant ``n + ik``, à rebours de la convention
-        Macleod utilisée partout ailleurs dans CERTUS. Le résultat de
-        ``reflectance_normal_incidence`` est identique dans les deux conventions
-        (``|r|²`` est invariant par conjugaison), donc le défaut était LATENT — mais
-        toute valeur issue d'ici et transmise au TMM produisait un milieu à GAIN,
-        silencieusement « rattrapé » par la garde de ``compute_TMM_generic``.
+        This class previously returned ``n + ik``, reversing the Macleod convention
+        used everywhere else in CERTUS. The result of ``reflectance_normal_incidence``
+        is identical in both conventions (``|r|²`` is invariant under conjugation),
+        so the flaw was LATENT — but any value originating here and passed to TMM
+        produced a GAIN medium, silently caught by `compute_TMM_generic`.
 
         Returns:
             ``complex(n, -k)``.
@@ -137,10 +136,10 @@ class RefractiveIndex:
 @dataclass(frozen=True)
 class RefractiveIndexDispersion:
     """
-    Dispersion de l'indice: n(λ), k(λ).
+    Index dispersion: n(λ), k(λ).
 
-    Permet de représenter la dépendance en longueur d'onde.
-    Pour l'instant, stub pour évolution future.
+    Represents wavelength dependence.
+    Currently a stub for future evolution.
     """
 
     wavelengths_nm: tuple[float, ...]

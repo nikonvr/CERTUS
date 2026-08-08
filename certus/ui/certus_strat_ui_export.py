@@ -1,21 +1,20 @@
 from __future__ import annotations
 from certus.ui.certus_strat_common import *
 
-# Import EXPLICITE, et il n'est pas facultatif.
+# EXPLICIT import, and it is not optional.
 #
-# `_manifest_source_paths` (plus bas) appelle `_resolve_strat_indices_db_path`. Le nom
-# existe bien dans `certus_strat_common`, mais il commence par un underscore : la regle
-# Python veut que `import *` l'ignore, sauf `__all__` explicite — et ce module n'en a pas.
-# L'etoile ne l'apporte donc PAS, et l'appel levait `NameError` a l'execution.
+# `_manifest_source_paths` (below) calls `_resolve_strat_indices_db_path`. The name
+# exists in `certus_strat_common`, but starts with an underscore: Python rules dictate
+# that `import *` ignores leading underscores unless `__all__` is defined — which this module lacks.
+# Star import does NOT bring it in, causing a `NameError` at runtime.
 #
-# Le defaut etait invisible par trois canaux a la fois :
-#   - le `except` de `_manifest_source_paths` liste RuntimeError, AttributeError,
-#     TypeError, ValueError, OSError — mais PAS NameError ;
-#   - ruff ne peut pas signaler F821 dans un fichier a import etoile, meme en
-#     `--isolated` : il ignore ce que l'etoile apporte ;
-#   - l'appel n'a lieu qu'a l'EXPORT, donc apres tout le calcul.
-# Resultat : le pipeline STRAT calculait tout, puis mourait a la derniere etape sans
-# emettre `finished` — l'utilisateur ne recevait aucun resultat.
+# The bug was hidden through three separate channels:
+#   - the `except` in `_manifest_source_paths` lists RuntimeError, AttributeError,
+#     TypeError, ValueError, OSError — but NOT NameError;
+#   - ruff cannot flag F821 in a star-import file, even in `--isolated` mode;
+#   - the call only occurs during EXPORT, after the full calculation completes.
+# Result: the STRAT pipeline calculated everything, then died at the final step without
+# emitting `finished` — returning zero results to the user.
 from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
 
 class CertusStratExportMixin:

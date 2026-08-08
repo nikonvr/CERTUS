@@ -1,8 +1,8 @@
 """
 CERTUS Domain - OpticalStack Aggregate Root
 
-Aggregate root pour un stack de couches optiques.
-Gère les invariants métier et émet des domain events.
+Aggregate root for an optical layer stack.
+Manages domain invariants and emits domain events.
 """
 
 from __future__ import annotations
@@ -17,14 +17,14 @@ from certus.domain.optical.value_objects import Wavelength
 @dataclass
 class OpticalStack:
     """
-    Stack de couches optiques (Aggregate Root).
+    Multilayer optical stack (Aggregate Root).
 
     Invariants:
-    - Au moins 1 couche (substrate)
-    - Toutes les épaisseurs > 0
-    - Ordre des couches préservé
+    - At least 1 layer (substrate)
+    - All thicknesses > 0
+    - Layer order preserved
 
-    Events émis:
+    Events emitted:
     - LayerAdded
     - LayerRemoved
     - StackValidated
@@ -35,21 +35,21 @@ class OpticalStack:
     _events: List[dict] = field(default_factory=list, repr=False)
 
     def __post_init__(self):
-        """Validation initiale."""
+        """Initial validation."""
         if not isinstance(self.layers, list):
             raise TypeError("layers must be a list")
 
     def add_layer(self, layer: Layer, position: Optional[int] = None) -> None:
         """
-        Ajoute une couche au stack.
+        Add a layer to the stack.
 
         Args:
-            layer: Couche à ajouter
-            position: Position dans le stack (None = fin)
+            layer: Layer to add
+            position: Position in stack (None = end)
 
         Raises:
-            TypeError: Si layer n'est pas un Layer
-            ValueError: Si position invalide
+            TypeError: If layer is not a Layer
+            ValueError: If position is invalid
         """
         if not isinstance(layer, Layer):
             raise TypeError(f"Expected Layer, got {type(layer)}")
@@ -74,17 +74,17 @@ class OpticalStack:
 
     def remove_layer(self, position: int) -> Layer:
         """
-        Retire une couche du stack.
+        Remove a layer from the stack.
 
         Args:
-            position: Index de la couche à retirer
+            position: Index of the layer to remove
 
         Returns:
-            Layer retirée
+            Removed Layer
 
         Raises:
-            ValueError: Si position invalide
-            ValueError: Si tentative de retirer la dernière couche
+            ValueError: If position is invalid
+            ValueError: If attempting to remove the last layer
         """
         if not (0 <= position < len(self.layers)):
             raise ValueError(f"Invalid position {position} for stack of {len(self.layers)} layers")
@@ -108,65 +108,65 @@ class OpticalStack:
 
     def get_layer(self, position: int) -> Layer:
         """
-        Récupère une couche par position.
+        Retrieve a layer by position.
 
         Args:
-            position: Index de la couche
+            position: Index of the layer
 
         Returns:
-            Layer à cette position
+            Layer at this position
 
         Raises:
-            IndexError: Si position hors limites
+            IndexError: If position is out of bounds
         """
         return self.layers[position]
 
     def layer_count(self) -> int:
-        """Nombre de couches dans le stack."""
+        """Number of layers in the stack."""
         return len(self.layers)
 
     def total_thickness(self) -> float:
         """
-        Épaisseur totale physique du stack (nm).
+        Total physical thickness of the stack (nm).
 
         Returns:
-            Somme des épaisseurs de toutes les couches
+            Sum of thicknesses of all layers
         """
         return sum(layer.thickness.nm for layer in self.layers)
 
     def total_optical_thickness(self, wavelength: Wavelength) -> float:
         """
-        Épaisseur optique totale à une longueur d'onde (nm).
+        Total optical thickness at a wavelength (nm).
 
         Args:
-            wavelength: Longueur d'onde de référence
+            wavelength: Reference wavelength
 
         Returns:
-            Somme des épaisseurs optiques n×d
+            Sum of optical thicknesses n*d
         """
         return sum(layer.optical_thickness_at(wavelength) for layer in self.layers)
 
     def has_absorbing_layers(self, threshold: float = 1e-6) -> bool:
         """
-        Vérifie si le stack contient des couches absorbantes.
+        Check if the stack contains absorbing layers.
 
         Args:
-            threshold: Seuil de détection k
+            threshold: Detection threshold for k
 
         Returns:
-            True si au moins une couche a k > threshold
+            True if at least one layer has k > threshold
         """
         return any(layer.is_absorbing(threshold) for layer in self.layers)
 
     def validate(self) -> bool:
         """
-        Valide les invariants du stack.
+        Validate stack invariants.
 
         Returns:
-            True si tous les invariants sont respectés
+            True if all invariants are satisfied
 
         Raises:
-            ValueError: Si un invariant est violé
+            ValueError: If an invariant is violated
         """
         if len(self.layers) == 0:
             raise ValueError("Stack must have at least 1 layer")
@@ -189,24 +189,25 @@ class OpticalStack:
 
     def get_events(self) -> List[dict]:
         """
-        Récupère les domain events émis.
+        Retrieve emitted domain events.
 
         Returns:
-            Liste des events (copie)
+            List of events (copy)
         """
         return self._events.copy()
 
     def clear_events(self) -> None:
-        """Efface les domain events après publication."""
+        """Clear domain events after publication."""
         self._events.clear()
 
     def __len__(self) -> int:
-        """Nombre de couches (support len())."""
+        """Number of layers (len() support)."""
         return len(self.layers)
 
     def __getitem__(self, position: int) -> Layer:
-        """Accès par index (support stack[i])."""
+        """Access by index (stack[i] support)."""
         return self.layers[position]
+
 
     def __str__(self) -> str:
         return f"OpticalStack({len(self.layers)} layers, {self.total_thickness():.1f}nm total)"

@@ -1,8 +1,8 @@
 """
 Optical Bounded Context
 
-Responsabilité: Calculs physiques optiques, TMM, spectres
-Core domain de CERTUS.
+Responsibility: Optical physics calculations, TMM, spectra
+Core domain of CERTUS.
 """
 
 __all__ = [

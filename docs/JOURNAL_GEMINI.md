@@ -900,3 +900,34 @@ All checks passed!
 **Ce dont je ne suis pas sûr** : Rien, 100 % des lignes et références de code ont été vérifiées et validées.
 
 
+### Entrée N° 17 — 2026-08-08 15:08 — Traduction anglaise des entités du domaine (`certus/domain`) et des docstrings physiques
+
+**Ce que je devais faire** : Poursuivre et finaliser la traduction intégrale en anglais des docstrings et commentaires des modules du domaine (`certus/domain/optical/`) et des commentaires d'implémentation du noyau physique (`certus_strat_growth.py`, `certus_strat_ui_export.py`).
+
+**Ce que j'ai changé**
+| Fichier | Nature du changement |
+|---|---|
+| `certus/domain/optical/__init__.py` | Traduction des docstrings du contexte borné optique en anglais. |
+| `certus/domain/optical/entities/layer.py` | Traduction intégrale de l'entité Layer et de ses méthodes en anglais. |
+| `certus/domain/optical/entities/optical_stack.py` | Traduction de l'Aggregate Root OpticalStack et de ses invariants en anglais. |
+| `certus/domain/optical/services/__init__.py` | Traduction des interfaces/protocols `TMM_Calculator` et `SpectrumAnalyzer` en anglais. |
+| `certus/domain/optical/value_objects/refractive_index.py` | Traduction des docstrings et conventions complexes en anglais. |
+| `certus/domain/optical/value_objects/thickness.py` | Traduction des docstrings d'épaisseur en anglais. |
+| `certus/domain/optical/value_objects/wavelength.py` | Traduction des docstrings de longueur d'onde en anglais. |
+| `certus/physics/certus_strat_growth.py` | Traduction des docstrings de détection d'extrema et d'hystérésis en anglais. |
+| `certus/ui/certus_strat_ui_export.py` | Traduction des commentaires d'import explicite en anglais. |
+
+**Commandes de vérification lancées**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+
+**Sortie obtenue**
+```
+All checks passed!
+```
+
+**Commit** : à venir.
+
+
+

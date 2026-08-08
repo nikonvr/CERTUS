@@ -53,60 +53,48 @@ def detect_turning_points(
 ) -> tuple[int, int, int]:
     """Compte les points tournants d'un signal de monitoring et rend les deux derniers.
 
-    Renvoie ``(n_tp, tp_a, tp_b)`` : le nombre d'extrema situes a ou avant ``idx_stop``,
-    puis les indices des deux derniers retenus (``-1`` si absents). Meme convention de
-    selection que le code qu'elle remplace : au-dela de ``idx_stop`` un extremum n'est
-    retenu que si aucun ne l'a encore ete.
+    Returns ``(n_tp, tp_a, tp_b)``: the number of extrema located at or before ``idx_stop``,
+    then the indices of the last two retained (``-1`` if absent). Same selection convention
+    as legacy code: beyond ``idx_stop`` an extremum is only retained if none has been retained yet.
 
-    🔴 UNE SEULE FONCTION POUR LE SIGNAL REEL ET POUR LE NOMINAL, ET C'EST ESSENTIEL.
-    Le comptage divergent entre les deux est l'un des deux modes de plantage. Detecter
-    avec deux boucles ecrites separement, c'est risquer une divergence produite par
-    l'ALGORITHME et non par la physique — la boucle etait deja dupliquee mot pour mot.
+    SINGLE FUNCTION FOR BOTH REAL AND NOMINAL SIGNALS - THIS IS ESSENTIAL.
+    Divergent counting between real and nominal signals is one of the primary crash modes.
+    Detecting extrema with two separately written loops risks algorithmic divergence rather than
+    physical divergence.
 
-    ``hysteresis`` — LA REGLE DE DETECTION (axe 1.2), en unites de T.
+    ``hysteresis`` — DETECTION RULE, in units of T:
 
-        0.0  Regle historique : un extremum est declare des que la difference entre
-             deux echantillons consecutifs change de signe, au-dela d'un garde
-             NUMERIQUE de 1e-12. Ce n'est pas une regle physique, et 📏 cela produit
-             un taux de plantage qui NE DEPEND PAS DU BRUIT : 1,47 % par couche a
-             sigma = 5e-8 contre 1,30 % au sigma reel de l'instrument. La ou le signal
-             de monitoring n'a aucune dynamique — la bande bloquee du dichroique, ou
-             T_front vaut 1e-5 a 1e-7 — le comptage bruite diverge du comptage propre
-             quelle que soit la finesse du bruit.
+        0.0  Legacy rule: an extremum is declared as soon as the difference between
+             two consecutive samples changes sign beyond a NUMERICAL guard of 1e-12.
+             This is not a physical rule, and produces a crash rate that DOES NOT DEPEND ON NOISE:
+             1.47% per layer at sigma = 5e-8 vs 1.30% at real instrument noise. Where the monitoring
+             signal lacks dynamic range (e.g. rejection band where T_front is 1e-5 to 1e-7),
+             noisy counting diverges from clean counting regardless of noise magnitude.
 
-        > 0  Detecteur a HYSTERESIS, celui d'un controleur reel : on suit l'extremum
-             courant, et on ne le DECLARE que lorsque le signal s'en est ecarte de plus
-             de ``hysteresis``. Une bosse plus petite que ce seuil ne produit donc
-             aucun point tournant.
+        > 0  HYSTERESIS detector (modeling real hardware controllers): tracks the current extremum,
+             and only DECLARES it when the signal has deviated from it by more than ``hysteresis``.
+             A ripple smaller than this threshold produces no turning point.
 
-             L'indice rendu est celui de l'extremum LUI-MEME, pas celui du
-             franchissement du seuil : la machine retient la valeur extreme qu'elle a
-             lue, pas l'instant ou elle a compris qu'elle l'avait depassee.
+             The returned index is that of the extremum ITSELF, not the threshold crossing time:
+             the physical machine records the extreme value it observed, not the time it realized
+             it had passed it.
 
-             🔴 CE SEUIL SE DERIVE DU BRUIT, IL N'EST PAS UN CRITERE D'AMPLITUDE.
-             👤 Le physicien, 2026-08-06 : *« j'ai l'impression que le 4 % est une regle
-             empirique au flair, et que la on n'en a pas besoin vu l'algo. »* Il a
-             raison, et il faut le dire clairement : les 4 % d'amplitude de depart de
-             Zideluns p. 112 sont une heuristique de PRE-SELECTION de longueur d'onde —
-             une facon d'intuiter a l'avance ce que le Monte-Carlo mesure directement.
-             Ce n'est PAS ce seuil-ci, et ce seuil-ci n'a pas a lui emprunter sa valeur.
+             THIS THRESHOLD DERIVES FROM NOISE, NOT AN AMPLITUDE CRITERION.
+             The 4% starting amplitude rule from Zideluns p. 112 is a wavelength PRE-SELECTION
+             heuristic — a way to guess in advance what Monte-Carlo measures directly.
+             This detection threshold should not borrow its value from that heuristic.
 
-             La grandeur dont il depend est le bruit de lecture, et elle est MESUREE :
-             👤 sur l'OMS 5100 le signal fluctue de 45,5 a 45,55 % de T, soit une
-             amplitude crete a crete de `trigger_tolerance` = 0,05 point. Le tirage est
-             borne a +/- cette amplitude (loi N(0, A/3) tronquee a +/- A), donc l'ecart
-             apparent maximal que le bruit SEUL peut produire entre deux lectures vaut
-             2A. D'ou la seule valeur qui se derive au lieu de se regler :
+             The governing quantity is reading noise, which is MEASURED:
+             On the OMS 5100, the signal fluctuates from 45.5 to 45.55% T (peak-to-peak amplitude
+             `trigger_tolerance` = 0.05 points). The draw is bounded to +/- this amplitude
+             (truncated N(0, A/3) law), so the maximum apparent deviation from noise alone is 2A:
 
                  hysteresis >= 2 x trigger_tolerance / 100
-                 -> le bruit seul ne peut PLUS fabriquer un renversement, jamais.
+                 -> noise alone can NEVER fabricate a false turning point reversal.
 
-             En dessous, il en fabrique avec une probabilite que la mesure donne. C'est
-             donc un parametre a balayer et a trancher par la mesure, pas a poser.
-
-    ⚠️ Le seuil s'applique aussi au signal NOMINAL, et il le faut. Il represente ce que
-    la strategie ATTEND de voir compter ; l'evaluer avec une regle de detection
-    differente de celle de la machine fabriquerait une divergence a chaque couche.
+    The threshold applies to the NOMINAL signal as well. It represents what the strategy
+    EXPECTS to count; evaluating it with a different rule than the physical machine
+    would induce artificial per-layer counting divergence.
     """
     tp_a = -1
     tp_b = -1

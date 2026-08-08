@@ -1,8 +1,8 @@
 """
 CERTUS Domain - TMM Calculator Domain Service (Protocol)
 
-Domain service pour calculs TMM.
-L'implémentation sera dans infrastructure layer.
+Domain service for TMM calculations.
+The implementation will be in the infrastructure layer.
 """
 
 from typing import Protocol
@@ -14,7 +14,7 @@ class Spectrum(Protocol):
     """
     Spectrum result (protocol - duck typing).
 
-    L'implémentation réelle sera dans infrastructure.
+    The actual implementation will be in infrastructure.
     """
 
     wavelengths: tuple[float, ...]
@@ -25,10 +25,10 @@ class Spectrum(Protocol):
 
 class TMM_Calculator(Protocol):
     """
-    Domain service protocol pour calculs TMM.
+    Domain service protocol for TMM calculations.
 
-    Interface définie dans le domain, implémentation dans infrastructure.
-    Permet de découpler le domain de l'implémentation physics.
+    Interface defined in domain, implementation in infrastructure.
+    Decouples domain from physics implementation.
 
     Examples:
         >>> calculator = LegacyTMM_Adapter()  # Infrastructure
@@ -77,9 +77,9 @@ class TMM_Calculator(Protocol):
 
 class SpectrumAnalyzer(Protocol):
     """
-    Domain service protocol pour analyse de spectres.
+    Domain service protocol for spectrum analysis.
 
-    Analyse les spectres calculés (métriques, features extraction).
+    Analyzes calculated spectra (metrics, feature extraction).
     """
 
     def calculate_rmse(

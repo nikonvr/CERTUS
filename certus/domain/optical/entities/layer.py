@@ -1,7 +1,7 @@
 """
 CERTUS Domain - Layer Entity
 
-Entity représentant une couche optique dans un stack.
+Entity representing an optical layer within a stack.
 """
 
 from __future__ import annotations
@@ -18,14 +18,14 @@ from certus.domain.optical.value_objects import (
 @dataclass
 class Layer:
     """
-    Couche optique dans un stack multicouche.
+    Optical layer in a multilayer stack.
 
-    Entity (pas value object): a une identité (position dans le stack).
+    Entity (not value object): has an identity (position in stack).
 
     Invariants:
-    - material_id non vide
+    - non-empty material_id
     - thickness > 0
-    - refractive_index valide (n≥1, k≥0)
+    - valid refractive_index (n>=1, k>=0)
 
     Examples:
         >>> layer = Layer("TiO2", Thickness(50.0), RefractiveIndex(2.3, 0.0))
@@ -39,7 +39,7 @@ class Layer:
     metadata: Optional[dict] = None
 
     def __post_init__(self):
-        """Validation invariants."""
+        """Invariant validation."""
         if not self.material_id or not isinstance(self.material_id, str):
             raise ValueError("material_id must be non-empty string")
 
@@ -51,26 +51,26 @@ class Layer:
 
     def optical_thickness_at(self, wavelength: Wavelength) -> float:
         """
-        Épaisseur optique n×d à une longueur d'onde.
+        Optical thickness n*d at a wavelength.
 
         Args:
-            wavelength: Longueur d'onde
+            wavelength: Wavelength
 
         Returns:
-            Épaisseur optique en nm
+            Optical thickness in nm
         """
         return self.thickness.optical_thickness(self.refractive_index.n)
 
     def is_quarter_wave_at(self, wavelength: Wavelength, tolerance: float = 0.05) -> bool:
         """
-        Vérifie si la couche est λ/4 à cette longueur d'onde.
+        Check if the layer is quarter-wave (lambda/4) at this wavelength.
 
         Args:
-            wavelength: Longueur d'onde de référence
-            tolerance: Tolérance relative (0.05 = 5%)
+            wavelength: Reference wavelength
+            tolerance: Relative tolerance (0.05 = 5%)
 
         Returns:
-            True si QWOT ≈ 1.0 (à tolérance près)
+            True if QWOT ≈ 1.0 (within tolerance)
         """
         qwot = self.thickness.qwot_at_wavelength(wavelength.nm, self.refractive_index.n)
         return abs(qwot - 1.0) < tolerance

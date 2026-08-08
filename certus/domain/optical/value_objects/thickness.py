@@ -1,7 +1,7 @@
 """
 Thickness Value Object
 
-Représente une épaisseur de couche mince.
+Represents a thin-film layer thickness.
 """
 
 from __future__ import annotations
@@ -12,11 +12,11 @@ import numpy as np
 @dataclass(frozen=True)
 class Thickness:
     """
-    Épaisseur de couche en nanomètres.
+    Layer thickness in nanometers.
 
     Invariants:
-    - 0 < thickness ≤ 100000nm (10µm max réaliste)
-    - Valeur finie
+    - 0 < thickness <= 100000nm (10µm realistic max)
+    - Finite value
 
     Examples:
         >>> t = Thickness(100.0)  # 100nm
@@ -26,11 +26,11 @@ class Thickness:
 
     nm: float
 
-    MIN_NM: float = 0.0  # Strictement positif
+    MIN_NM: float = 0.0  # Strictly positive
     MAX_NM: float = 100000.0  # 10µm max
 
     def __post_init__(self):
-        """Validation invariants."""
+        """Invariant validation."""
         if not isinstance(self.nm, (int, float)):
             raise TypeError(f"Thickness must be numeric, got {type(self.nm)}")
 

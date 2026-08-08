@@ -37,7 +37,8 @@ import probe_spectral_error as PSE  # noqa: E402
 #: 5 sigma du bruit de lecture, exprime en multiple de l'amplitude crete a crete A.
 #: 👤 « c'est bien un seuil d'amplitude, qui doit etre a environ 5 sigmas du bruit »
 #: (2026-08-06). Le tirage suit N(0, A/3) tronque a +/-A, donc sigma = 0,332 A et
-#: 5 sigma = 1,66 A. Voir docs/PLAN_STRAT.md §2.2.
+#: 5 sigma = 1,66 A. Voir CLAUDE.md §11 et §12.2 — valeur SOUS-DIMENSIONNEE, la borne
+#: anti-fabrication est 2 A. Surchargeable par le 5e argument de la ligne de commande.
 FIVE_SIGMA: float = 1.66
 
 
@@ -61,7 +62,7 @@ def patch_flag(
     1,66 A est 17 % en dessous. A 2,4 A la fabrication tombe a 0,000 %.
 
     ⚠ Ne PAS confondre avec `phase_a_level_margin_factor`, qui partage aujourd'hui
-    la meme valeur 1,66 mais repond a un autre critere (cf. PLAN_STRAT §2.2). Il
+    la meme valeur 1,66 mais repond a un autre critere (cf. CLAUDE.md §12.2). Il
     n'est deliberement pas touche ici : une chose a la fois.
     """
     from certus.ui.certus_strat_ui_state import CertusStratStateMixin

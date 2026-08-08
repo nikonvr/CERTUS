@@ -20,7 +20,7 @@ Ce fichier verrouille quatre choses, et chacune a deja ete cassee une fois ici :
      plantage de 28 % au lieu de 1,2 %, et INDEPENDANT de sigma, ce qui est la
      signature meme d'un artefact.
 
-Reference : docs/PLAN_STRAT.md, regles gravees §6.
+Reference : CLAUDE.md, regles gravees §14.
 
 🔴 PERIMETRE — SEUL LE DICHROIQUE 48 COUCHES EST UN EXEMPLE VALABLE.
 👤 Le physicien, 2026-08-06. L'empilement utilise ici est un JOUET : huit couches quart

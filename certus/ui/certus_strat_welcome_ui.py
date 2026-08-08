@@ -1,5 +1,18 @@
-from __future__ import annotations
-from certus.ui.certus_strat_common import *
+from typing import Any
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import (
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
+from certus.ui.certus_theme import CertusTheme
+from certus.utils.certus_strat_context import APP_CONTEXT
 
 class WelcomeGuideWidget(QWidget):
     def __init__(self, parent=None) -> None:

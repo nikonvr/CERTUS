@@ -22,6 +22,7 @@ from certus.core.certus_strat_config import APP_CONTEXT, RobustnessContext
 from certus.core.certus_strat_ranking import (
     _apply_strategy_ranking,
     _apply_family_diversity_if_enabled,
+    _apply_block_diversity_if_enabled,
     _resolve_available_wavelengths,
     _resolve_monitoring_wavelength_grid,
     _max_strategy_id,
@@ -486,11 +487,16 @@ def _rank_and_filter_strategies(
     logger: logging.Logger,
     apply_consensus_fn: Any,
 ) -> list[dict[str, Any]]:
-    """Applies consensus, basic ranking, and family diversity in standard order."""
+    """Applies consensus, basic ranking, family diversity, and block diversity in standard order."""
     apply_consensus_fn(strategies_results, stage_tag)
     origin_priority_map = _parse_origin_priority_map(params.get("origin_priority_map", None))
     strategies_results = _apply_strategy_ranking(strategies_results, params, origin_priority_map)
     strategies_results = _apply_family_diversity_if_enabled(
+        strategies_results=strategies_results,
+        params=params,
+        logger=logger,
+    )
+    strategies_results = _apply_block_diversity_if_enabled(
         strategies_results=strategies_results,
         params=params,
         logger=logger,

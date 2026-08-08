@@ -539,6 +539,60 @@ def _apply_family_diversity(
     return diversified_head + tail
 
 
+def _partition_signature(blocks: list[dict[str, Any]]) -> tuple:
+    """Return tuple of (start, end) block boundaries for partition diversity."""
+    sig = []
+    for blk in blocks:
+        try:
+            start = int(blk.get("start", 0))
+            end = int(blk.get("end", 0))
+            sig.append((start, end))
+        except (TypeError, ValueError):
+            continue
+    return tuple(sig)
+
+
+def _apply_block_diversity(
+    ordered_results: list[dict[str, Any]],
+    top_k: int = 10,
+    max_per_partition: int = 1,
+) -> list[dict[str, Any]]:
+    """Enforces explicit block partitioning diversity in the top-K strategies.
+
+    Prevents the top K results from being filled with near-duplicate block boundary
+    partitionings by limiting the number of candidates sharing the exact same
+    (start, end) boundary sequence.
+    """
+    if top_k <= 0 or max_per_partition <= 0 or not ordered_results:
+        return ordered_results
+    k = min(int(top_k), len(ordered_results))
+    selected: list[tuple[int, dict[str, Any]]] = []
+    deferred: list[tuple[int, dict[str, Any]]] = []
+    used_indices = set()
+    counts: dict[tuple, int] = {}
+    for idx, item in enumerate(ordered_results):
+        strat = item.get("strategy", {})
+        blocks = strat.get("blocks", [])
+        part_sig = _partition_signature(blocks)
+        if not part_sig:
+            part_sig = _blocks_signature(blocks)
+        used = counts.get(part_sig, 0)
+        if len(selected) < k and used < max_per_partition:
+            selected.append((idx, item))
+            used_indices.add(idx)
+            counts[part_sig] = used + 1
+        else:
+            deferred.append((idx, item))
+    for idx, item in deferred:
+        if len(selected) >= k:
+            break
+        selected.append((idx, item))
+        used_indices.add(idx)
+    diversified_head = [item for _idx, item in selected]
+    tail = [item for idx, item in enumerate(ordered_results) if idx not in used_indices]
+    return diversified_head + tail
+
+
 def _blocks_signature(blocks: list[dict[str, Any]]) -> tuple:
     sig = []
     for blk in blocks:

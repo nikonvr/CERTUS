@@ -38,6 +38,7 @@ from certus.utils.certus_strat_context import (
     _augment_solution_cost_with_sym,
     _origin_family,
     _apply_family_diversity,
+    _apply_block_diversity,
     _blocks_signature,
     _extract_rmse_p95_for_noise,
 )
@@ -702,6 +703,35 @@ def _apply_family_diversity_if_enabled(
     return strategies_results
 
 
+def _resolve_block_diversity_cfg(params: dict[str, Any]) -> tuple[bool, int, int]:
+    """Resolve block-diversity feature flags and limits."""
+    enable_block_diversity = bool(params.get("enable_block_diversity", True))
+    diversity_top_k = int(params.get("block_diversity_top_k", 10))
+    diversity_max_per_partition = int(params.get("diversity_max_per_partition", 1))
+    return enable_block_diversity, diversity_top_k, diversity_max_per_partition
+
+
+def _apply_block_diversity_if_enabled(
+    strategies_results: list[dict[str, Any]],
+    params: dict[str, Any],
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Applies block partitioning diversity ranking if enabled in params."""
+    (
+        enable_block_diversity,
+        diversity_top_k,
+        diversity_max_per_partition,
+    ) = _resolve_block_diversity_cfg(params)
+
+    if enable_block_diversity and len(strategies_results) > 1:
+        strategies_results = _apply_block_diversity(
+            strategies_results,
+            top_k=diversity_top_k,
+            max_per_partition=diversity_max_per_partition,
+        )
+    return strategies_results
+
+
 def _filter_valid_robustness_strategies(
     strategies_in: list[dict[str, Any]],
     num_layers: int,
@@ -724,5 +754,6 @@ def _filter_valid_robustness_strategies(
 def _select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[str, Any] | None:
     """Return the best finite-ranked strategy result (compatibility delegate)."""
     return select_best_strat_result(strategies_results)
+
 
 

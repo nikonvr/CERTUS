@@ -715,6 +715,19 @@ rapporté et expliqué.
 
 ## 18. Autres chantiers ouverts
 
+### 🔴 La clé API Anthropic — action utilisateur, probablement encore à faire
+
+Le fichier `.env` a été **versionné et poussé** sur le dépôt **public** `nikonvr/CERTUS` le
+2026-07-03 (commit `35348c0`), et y est resté environ **quatre semaines**. L'historique a
+depuis été réécrit (`git log --all --full-history -- .env` → 0 commit, vérifié le
+2026-08-08), mais **la purge ne suffit jamais** : le blob reste atteignable par l'API GitHub,
+par les forks et par les caches, et les scrapers de secrets indexent les dépôts publics en
+quelques minutes.
+
+👤 **La clé doit être considérée comme compromise et révoquée sur console.anthropic.com**, si
+ce n'est pas déjà fait. Vérifier aussi la facturation et les journaux d'appels sur la période
+du 3 juillet au 1er août. Ce n'est pas une action d'agent.
+
 - **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
   tests qui passent isolément. Cause racine corrigée, audit restant :
   [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
@@ -759,3 +772,77 @@ dont 3 réels dans `certus/physics/gradient_analytic.py`. **F401 (5 473)** · **
 6. **Vérifie la non-régression au BIT, pas « aux tests près »** — voir §3.
 7. **Ce document ne grossit pas indéfiniment.** Ce qui est fait en sort. Ce qui se contredit
    en sort. `git log` garde tout.
+
+## 20. Protocole de re-vérification — comment auditer le travail d'un autre agent
+
+**Un rapport est une déclaration, pas une preuve.** Ce protocole consiste à essayer de
+**casser** chaque déclaration, pas à la confirmer. Il a été appliqué le 2026-08-08 et a
+trouvé quatre affirmations fausses (§17) — il fonctionne.
+
+### Le repère git
+
+L'état du dépôt avant l'intervention de la session précédente porte l'étiquette
+**`depart-gemini`** (`f816767`, 2026-08-07). Elle est vivante — vérifiée le 2026-08-08, 36
+commits depuis.
+
+```bat
+git log --oneline --stat depart-gemini..HEAD
+```
+
+**Ne la supprime pas et ne la déplace pas.** Si `git log depart-gemini..HEAD` répond
+`unknown revision`, arrête-toi et signale-le : sans ce repère, personne ne peut plus séparer
+le travail d'une session de ce qui existait avant.
+
+Pour remesurer l'état de départ sans perdre l'état courant :
+
+```bat
+git worktree add C:\dev\gemini-baseline depart-gemini
+:: ... mesures ...
+git worktree remove C:\dev\gemini-baseline
+```
+
+### Les trois questions, dans cet ordre
+
+1. **Le diff correspond-il à ce qui est déclaré ?** (git ne ment pas)
+2. **La mesure citée se reproduit-elle ?** (relancer la commande)
+3. **La conclusion suit-elle de la mesure ?** ← **c'est là que ça casse le plus souvent**
+
+Une déclaration qui échoue à l'une des trois est **annulée**, pas retouchée. Reviens en
+arrière, puis refais : un correctif posé sur une base non vérifiée hérite de son incertitude.
+
+| Ce que tu trouves | Ce que ça veut dire |
+|---|---|
+| Un commit non déclaré | Suspect par défaut : lis son diff en entier avant toute autre chose. |
+| Une déclaration sans commit | Le travail n'a pas été committé, ou n'a pas eu lieu. |
+| Un commit qui touche plus de fichiers que déclaré | Le périmètre a débordé. Regarde ce qui a été emporté. |
+| Un commit sur `pyproject.toml` | Vérifie **immédiatement** que `extend-ignore` n'a fait que rétrécir. |
+| Un commit sur `JSON-strat-example.json` | **Toutes les mesures postérieures sont nulles** jusqu'à preuve du contraire. |
+
+### Les cinq contrôles qui attrapent l'essentiel
+
+1. **Tout nouveau paramètre est-il vraiment inerte par défaut ?** Égalité **exacte**, pas
+   `allclose` — voir la règle d'or §3. ⚠️ Une réponse légitime existe pour un écart de
+   l'ordre de 1e-16 à la **première** compilation : numba spécialise différemment
+   `Omitted(None)` et `none`. **Au-delà de 1e-12, ce n'est pas ça.**
+2. **Les tests ajoutés échouent-ils sur le code d'avant ?** Copie-les dans le worktree
+   baseline et lance-les. Ils **doivent** échouer. C'est le contrôle le plus rentable de la
+   liste.
+3. **Les grandeurs de bruit varient-elles avec le bruit ?** Divise σ par 100 : le chiffre
+   doit s'effondrer.
+4. **Chaque règle rejette-t-elle effectivement quelque chose ?** **Compte les rejets, ne lis
+   pas le code.** Un filtre inerte ne produit aucune erreur — il produit un résultat
+   plausible. C'est ainsi qu'une règle de proximité recevant une matrice de zéros n'a rien
+   interdit sur 51 candidates × 48 couches, en silence.
+5. **Les conclusions dépassent-elles les mesures ?** Attrape en particulier : une conclusion
+   physique tirée d'un empilement à 8 couches · une **attribution causale quand deux choses
+   ont changé en même temps** · un résultat **meilleur que prévu** présenté comme un succès.
+
+### Être juste dans le jugement
+
+- **Un travail non fait mais déclaré comme non fait n'est pas une faute.** C'est ce qu'on
+  demande. Une ligne « je n'ai pas réussi, voici l'erreur » vaut mieux qu'un contournement
+  silencieux.
+- **Un arrêt sur ambiguïté n'est pas une faute.** Le document ambigu est en tort.
+- Une seule chose est réellement disqualifiante : **une affirmation chiffrée qui ne se
+  reproduit pas.** Si tu en trouves une, cesse de faire confiance au reste et revérifie tout
+  depuis git.

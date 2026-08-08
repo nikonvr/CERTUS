@@ -126,7 +126,7 @@ def detect_turning_points(
         for k in range(1, n_tot - 1):
             dl = Ts[k] - Ts[k - 1]
             dr = Ts[k + 1] - Ts[k]
-            if (dl > 1e-12 and dr < -1e-12) or (dl < -1e-12 and dr > 1e-12):
+            if (dl > 1e-15 and dr < -1e-15) or (dl < -1e-15 and dr > 1e-15):
                 if k <= idx_stop:
                     n_tp += 1
                 if k <= idx_stop or tp_b < 0:
@@ -242,6 +242,8 @@ def simulate_growth_kernel(
     signal_noise_seed: int = 0,
     signal_noise_run: int = 0,
     tp_hysteresis: float = 0.0,
+    affine_scale: float = 1.0,
+    affine_offset: float = 0.0,
 ) -> tuple[float, float]:
     """
 
@@ -664,6 +666,10 @@ def simulate_growth_kernel(
             if abs(dn) > 1e-09:
                 Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
             idx += 1
+
+        if affine_scale != 1.0 or affine_offset != 0.0:
+            for k_aff in range(n_tot):
+                Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
         # DEUX detections distinctes, et c'est essentiel.
         #
         # La FRACTION POEM est pre-calculee hors ligne sur le signal NOMINAL :
@@ -734,7 +740,8 @@ def simulate_growth_kernel(
             T_last_real = Ts_r[tp_b]
             amp_nom = T_last_nom - T_prev_nom
             amp_real = T_last_real - T_prev_real
-            if abs(amp_nom) > SWING_MIN and abs(amp_real) > SWING_MIN:
+            swing_min_thresh = affine_scale * SWING_MIN
+            if abs(amp_nom) > SWING_MIN and abs(amp_real) > swing_min_thresh:
                 poem_ok = True
 
     if poem_ok:
@@ -743,7 +750,7 @@ def simulate_growth_kernel(
         # reportee sur les extrema reellement observes
         target_level = T_prev_real + p_poem * (T_last_real - T_prev_real)
     else:
-        target_level = target_nominal
+        target_level = affine_scale * target_nominal + affine_offset
 
     target_T_noisy = target_level + noise_val_precalc
 

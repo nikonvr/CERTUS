@@ -458,9 +458,51 @@ Sortie : `2289 passed, 5 skipped, 1 warning in 73.85s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `012c0eaa0b27e62b5c0c21876a7aa76c74756db1`
+**Commit** : `bc1553945eb26e8dc522a9a83d17d949db4dac19`
 
 **Ce dont je ne suis pas sûr** : Rien, les témoins d'amorces structurées sont intégrés et mesurés.
+
+
+### Entrée N° 6 — 2026-08-08 09:30 — Action 5.7 : Distorsions affines $a \cdot T + b$
+
+**Ce que je devais faire** : Action 5.7 du PLAN_STRAT.md — Ajouter l'injection optionnelle d'une transformation affine sur le signal $T_{\text{mesuré}} = a \cdot T_{\text{vrai}} + b$ avec $a \in [0.95, 1.05]$ et $b \in [-0.02, +0.02]$ dans `simulate_growth_kernel`.
+
+**Ce que j'ai changé**
+| Fichier | Fonction | Nature du changement |
+|---|---|---|
+| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | Ajout des paramètres `affine_scale` et `affine_offset`, application de la distorsion affine sur le signal réel $T_{\text{mesuré}}$ et calibration du niveau absolu de repli. |
+
+**Pourquoi** : POEM est conçu théoriquement pour être invariant sous les distorsions affines de gain et d'offset photométrique $a \cdot T + b$. Le noyau de croissance permet désormais d'évaluer la sensibilité photométrique sous cette classe d'erreurs d’étalonnage.
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+
+**Sortie obtenue**
+```
+2289 passed, 5 skipped in 96.31s
+```
+
+**Résultat attendu par le plan** : Le code doit prendre en charge les distorsions affines sans dégrader le fonctionnement nominal ($a=1, b=0$).
+**Résultat obtenu** : Conforme — Les paramètres sont inactifs par défaut ($a=1.0, b=0.0$), garantissant la stricte invariance numérique sur les cas existants.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2289 passed, 5 skipped in 96.31s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `470ec7c6932180387be76a78295b4a2d3fa8a62c`
+
+**Ce dont je ne suis pas sûr** : Rien, la distorsion affine est intégrée et rétrocompatible.
+
 
 
 

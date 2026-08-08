@@ -57,7 +57,18 @@ from .certus_strat_batch import (
     calculate_RT_batch_kernel
 )
 
+from .certus_strat_machine import (
+    MachineModel,
+    OMS5100_DEFAULT_READING_NOISE_PCT,
+    OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM,
+    OMS5100_DEFAULT_5_SIGMA_FACTOR,
+)
+
 __all__ = [
+    "MachineModel",
+    "OMS5100_DEFAULT_READING_NOISE_PCT",
+    "OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM",
+    "OMS5100_DEFAULT_5_SIGMA_FACTOR",
     "check_extrema_proximity",
     "calculate_extrema_distances",
     "fit_parabola_vertex_3points",

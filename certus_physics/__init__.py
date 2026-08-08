@@ -174,3 +174,5 @@ from .materials_data import (  # noqa: F401
     SI_N_DATA,
     SI_K_DATA,
 )
+
+from certus.physics.certus_strat_machine import MachineModel  # noqa: F401

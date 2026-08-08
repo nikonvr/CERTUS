@@ -499,9 +499,55 @@ Sortie : `2289 passed, 5 skipped in 96.31s`
 ```
 Sortie : `All checks passed!`
 
-**Commit** : `470ec7c6932180387be76a78295b4a2d3fa8a62c`
+**Commit** : `bebdda7e6b0c2a4b0ff80aed1943075a2c7a5c9d`
 
 **Ce dont je ne suis pas sûr** : Rien, la distorsion affine est intégrée et rétrocompatible.
+
+
+### Entrée N° 7 — 2026-08-08 09:32 — Actions 5.8 & 5.9 : Abstraction `MachineModel` et bruit $\sigma(\lambda)$
+
+**Ce que je devais faire** : Actions 5.8 & 5.9 du PLAN_STRAT.md — Créer la classe `MachineModel` centralisant les spécifications matérielles datées de l'OMS 5100 ($\sigma=0,05\%$, pas monochromateur $\Delta \lambda=0,5$ nm, tolérance de trigger, hystérèse) et permettre à $\sigma$ d'être une fonction de la longueur d'onde $\sigma(\lambda)$.
+
+**Ce que j'ai changé**
+| Fichier | Fonction / Classe | Nature du changement |
+|---|---|---|
+| `certus/physics/certus_strat_machine.py` | `MachineModel` | Création de la classe centralisée de modélisation machine, avec support des fonctions de bruit spectrales $\sigma(\lambda)$. |
+| `certus/physics/certus_strat_kernels.py` | Module | Re-export de `MachineModel`. |
+| `certus/core/_certus_physics_impl.py` | Module | Re-export de `MachineModel`. |
+| `certus_physics/__init__.py` | Façade publique | Re-export de `MachineModel`. |
+| `tests/unit/test_strat_machine_model.py` | Suite de tests | Création des tests unitaires validant l'OMS 5100 par défaut et le bruit spectral $\sigma(\lambda)$. |
+
+**Pourquoi** : Centraliser les constantes de la machine de dépôt évite la dispersion des valeurs matérielles et permet de modéliser fidèlement la baisse de sensibilité optique en bord de spectre ($\sigma(\lambda)$).
+
+**Commande de vérification lancée**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+
+**Sortie obtenue**
+```
+2292 passed, 5 skipped in 76.69s
+```
+
+**Résultat attendu par le plan** : Tous les tests doivent passer et `MachineModel` doit être instanciable sans modifier les comportements existants.
+**Résultat obtenu** : Conforme — `MachineModel` restitue $\sigma=0.0005$ par défaut, ce qui maintient une stricte rétrocompatibilité numérique.
+
+**Tests**
+```bat
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+Sortie : `2292 passed, 5 skipped in 76.69s`
+
+**Lint**
+```bat
+.venv\Scripts\python.exe -m ruff check .
+```
+Sortie : `All checks passed!`
+
+**Commit** : `06acb47aa5e8a4809b6ee4ec5dc9f070021ff8d8`
+
+**Ce dont je ne suis pas sûr** : Rien, `MachineModel` et $\sigma(\lambda)$ sont intégrés et validés par les tests.
+
 
 
 

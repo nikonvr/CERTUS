@@ -941,6 +941,7 @@ from certus.physics.certus_strat_kernels import (
 )
 
 from certus.physics.certus_strat_kernels import (
+    MachineModel,
     _compute_valid_blocks_kernel,
     _dp_kernel,
     _solve_quadratic_target,

@@ -38,11 +38,11 @@ def calculate_RT_single_layer_single(
 
     phi_r = k * n_film_real * thickness_nm
 
-    # Convention Macleod n̂ = n − ik : la partie imaginaire du déphasage est NÉGATIVE.
-    # compute_complex_phase_components renvoie cos/sin(φr + i·φi) — soit le conjugué de
-    # ce que sa docstring annonce. Les appelants obliques compensent en passant phi.imag
-    # déjà signé ; ici n_film_imag arrive positif, d'où le signe explicite.
-    # Validé contre tests/oracle/tmm_reference.py (cf. tests/oracle/test_tmm_oracle.py).
+    # Macleod convention n̂ = n - ik: the imaginary part of the phase shift is NEGATIVE.
+    # compute_complex_phase_components returns cos/sin(φr + i·φi) — i.e. the conjugate of
+    # what its docstring states. Oblique callers compensate by passing signed phi.imag;
+    # here n_film_imag arrives positive, hence the explicit minus sign.
+    # Validated against tests/oracle/tmm_reference.py (cf. tests/oracle/test_tmm_oracle.py).
     phi_i = -k * n_film_imag * thickness_nm
 
     cos_phi_real, cos_phi_imag, sin_phi_real, sin_phi_imag = compute_complex_phase_components(phi_r, phi_i)

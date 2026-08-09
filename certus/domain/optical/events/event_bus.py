@@ -1,7 +1,7 @@
 """
 CERTUS Domain - Event Bus (Simple Implementation)
 
-Event bus pour domain events (event sourcing pattern).
+Event bus for domain events (event sourcing pattern).
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import time
 @dataclass(frozen=True)
 class DomainEvent:
     """
-    Domain event immutable.
+    Immutable domain event.
 
     Examples:
         >>> event = DomainEvent(
@@ -39,9 +39,9 @@ class DomainEvent:
 
 class EventBus:
     """
-    Event bus simple pour domain events.
+    Simple event bus for domain events.
 
-    Permet publish/subscribe pattern pour découpler le domain.
+    Enables publish/subscribe pattern to decouple the domain.
 
     Examples:
         >>> bus = EventBus()
@@ -59,8 +59,8 @@ class EventBus:
         Subscribe handler to event type.
 
         Args:
-            event_type: Type d'event (ex: "LayerAdded")
-            handler: Callback appelé lors de l'event
+            event_type: Event type (e.g. "LayerAdded")
+            handler: Callback function called when the event fires
         """
         if event_type not in self._handlers:
             self._handlers[event_type] = []
@@ -71,7 +71,7 @@ class EventBus:
         Publish event to all subscribers.
 
         Args:
-            event: Domain event à publier
+            event: Domain event to publish
         """
         # Store event (event sourcing)
         self._store.append(event)
@@ -90,10 +90,10 @@ class EventBus:
         Replay all events for aggregate (event sourcing).
 
         Args:
-            aggregate_id: ID de l'aggregate
+            aggregate_id: Aggregate ID
 
         Returns:
-            Liste des events pour cet aggregate
+            List of events for this aggregate
         """
         return [e for e in self._store if e.aggregate_id == aggregate_id]
 
@@ -102,7 +102,7 @@ class EventBus:
         Get all events in order.
 
         Returns:
-            Liste complète des events
+            Complete list of events
         """
         return self._store.copy()
 

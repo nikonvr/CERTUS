@@ -292,7 +292,7 @@ class _PlotMixin:
         m_rev = np.asarray(kind_vis == 1, dtype=bool)
         m_main = ~m_rev
 
-        # Scatter brut : TOUS les points sans liaison visuelle (conformément au paradigme scatter)
+        # Raw scatter: ALL points without visual connection (per scatter paradigm)
         self.plot_corridor_rmse_d.plot(
             d_vis[m_main],
             r_vis[m_main],

@@ -120,15 +120,15 @@ class CoreManager:
         if new_mode == self.ui.oblique_mode:
             return
 
-        # On lit les cibles DANS LA TABLE, et AVANT de basculer le drapeau.
+        # Read targets FROM THE TABLE, BEFORE toggling the flag.
         #
-        # Les deux lecteurs (_get_tgts / _get_oblique_tgts) renvoient [] si oblique_mode
-        # ne correspond pas à leur mode : les appeler après la bascule ne rendrait rien.
-        # L'ancienne version lisait self.ui.target_widgets, une liste initialisée à [] et
-        # JAMAIS remplie ailleurs que par le sens inverse de ce même basculement. La
-        # conversion ne trouvait donc jamais rien, puis _load_targets_to_table() faisait
-        # setRowCount(0) : toutes les cibles spectrales saisies par l'utilisateur
-        # disparaissaient au simple fait de cocher « Oblique ».
+        # Both readers (_get_tgts / _get_oblique_tgts) return [] if oblique_mode
+        # does not match their mode: calling them after the toggle would return nothing.
+        # The legacy version read self.ui.target_widgets, a list initialized to [] and
+        # NEVER populated except in the reverse direction of this same toggle.
+        # The conversion therefore never found anything, then _load_targets_to_table() called
+        # setRowCount(0): all spectral targets entered by the user
+        # disappeared simply by checking "Oblique".
         targets_from_table = self.ui._get_oblique_tgts() if self.ui.oblique_mode else self.ui._get_tgts()
 
         self.ui.oblique_mode = new_mode

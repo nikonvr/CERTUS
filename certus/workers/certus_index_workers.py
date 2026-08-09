@@ -920,7 +920,7 @@ class OptimizationWorker(QObject):
             if getattr(obj, "_prior_transparent_low_k", False):
                 _setup_n_lo = max(_setup_n_lo, float(TLU_PRIOR_TRANSPARENT_N_MIN_SOFT))
             self.logger.info(
-                "TLU setup Phase1 | Eg_min(bounds)=%.4f eV | k_soft_ceiling=%.5g | prior_lame_claire(T)=%s | budget_logs_k_pen=%d | hÎ½_max=%.4f eV | n_lo_soft=%.3f",
+                "TLU setup Phase1 | Eg_min(bounds)=%.4f eV | k_soft_ceiling=%.5g | prior_transparent_substrate(T)=%s | budget_logs_k_pen=%d | hnu_max=%.4f eV | n_lo_soft=%.3f",
                 float(obj.param_bounds[0, 0]),
                 float(getattr(obj, "_k_soft_ceiling", float("nan"))),
                 getattr(obj, "_prior_transparent_low_k", False),

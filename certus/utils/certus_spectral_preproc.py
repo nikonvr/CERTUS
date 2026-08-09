@@ -248,12 +248,12 @@ def smooth_spectrum_auto(x_lambda: np.ndarray, y: np.ndarray, level: str = "moye
         bounds_error=False,
         assume_sorted=True,
     )
-    # On ré-évalue sur l'abscisse D'ORIGINE, pas sur le `x` renvoyé par _prepare_xy :
-    # celui-ci a été trié par ordre croissant et dédupliqué. Évaluer dessus renvoyait un
-    # vecteur aligné sur l'ordre TRIÉ, que les appelants réaffectaient positionnellement
-    # sur l'ordre du fichier — un spectre mesuré en lambda décroissant (sortie standard de
-    # beaucoup de spectrophotomètres) ressortait donc EN MIROIR, sans aucune erreur.
-    # La déduplication changeait en outre la longueur du vecteur (ValueError chez l'appelant).
+    # Re-evaluate on the ORIGINAL abscissa, not on `x` returned by _prepare_xy:
+    # the latter was sorted in ascending order and deduplicated. Evaluating on it returned a
+    # vector aligned with the SORTED order, which callers positionally reassigned
+    # to the file's order — a spectrum measured in decreasing wavelength (standard output
+    # of many spectrophotometers) was therefore returned MIRRORED, without any error.
+    # Deduplication also changed the vector length (triggering ValueError in callers).
     x_original = np.asarray(x_lambda, dtype=float).ravel()
     y_smoothed = f_back(1.0 / x_original)
 
@@ -452,7 +452,7 @@ def dynamic_savgol_blend(x: np.ndarray, y: np.ndarray, base_window: int, poly: i
                 bounds_error=False,
                 assume_sorted=True,
             )
-            # Idem : `x` est l'abscisse d'origine, `x_prep` est triée/dédupliquée.
+            # Same: `x` is original abscissa, `x_prep` is sorted/deduplicated.
             return _safe_clip_percent(f_back(1.0 / x))
     except Exception:
         pass

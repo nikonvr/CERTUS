@@ -842,7 +842,7 @@ def canonical_spline_sigma_knots(
 
     if ratio_req is not None and min_relative_lambda_spacing_ratio(out, lo, hi) < ratio_req - 1e-12:
         logger.info(
-            "INDEX_SPLINE: extension IR (2 nœuds lambda) omise - violerait min(Deltalambda)/lambdā >= %.5g.",
+            "INDEX_SPLINE: IR extension (2 lambda nodes) omitted - would violate min(Deltalambda)/lambda_bar >= %.5g.",
             ratio_req,
         )
 

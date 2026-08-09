@@ -780,18 +780,18 @@ def _detect_data_type_from_array(data: np.ndarray, threshold: float = 0.80) -> s
 
 
 def _match_root(name: str, roots: tuple[str, ...]) -> bool:
-    """Vrai si ``name`` commence par l'une des racines, sur une frontière non alphabétique.
+    """True if ``name`` starts with one of the roots on a non-alphabetic boundary.
 
-    La frontière évite les faux positifs : « theta » ne doit pas matcher « t », ni
-    « total » matcher « t », alors que « R_exp », « Rtot(%) » et « Reflectance » doivent
-    bien matcher « r » ou « reflectance ».
+    The boundary prevents false positives: "theta" should not match "t", nor
+    "total" match "t", whereas "R_exp", "Rtot(%)", and "Reflectance" must
+    match "r" or "reflectance".
 
     Args:
-        name: en-tête de colonne, déjà en minuscules et sans espaces de bord.
-        roots: racines à tester, de la plus longue à la plus courte.
+        name: Column header, already lowercased and stripped of leading/trailing spaces.
+        roots: Roots to test, ordered from longest to shortest.
 
     Returns:
-        True si une racine correspond.
+        True if a root matches.
     """
     for root in roots:
         if name == root:
@@ -811,14 +811,14 @@ def _detect_type_from_column_name(col_name: str) -> str:
 
     name_lower = str(col_name).lower().strip()
 
-    # Racines triées de la plus longue à la plus courte : "transmittance" doit être
-    # essayé avant "t", sinon "t" gagnerait par préfixe sur n'importe quel mot en t.
+    # Roots ordered from longest to shortest: "transmittance" must be
+    # tested before "t", otherwise "t" would win by prefix on any word starting with t.
     #
-    # L'ancienne version n'acceptait que l'égalité exacte ou le préfixe "motif " /
-    # "motif(". Les en-têtes les plus courants — « Transmittance », « Reflectance »,
-    # « R_exp », « Rtot » — ne matchaient donc RIEN et retombaient sur l'heuristique
-    # statistique, dont la première règle (moyenne > 0,5 -> "T") classe tout miroir
-    # haute réflectivité en TRANSMISSION.
+    # The legacy version only accepted exact equality or the prefix "pattern " /
+    # "pattern(". Common headers — "Transmittance", "Reflectance",
+    # "R_exp", "Rtot" — matched NOTHING and fell back to statistical heuristic,
+    # whose first rule (mean > 0.5 -> "T") misclassified any high-reflectivity
+    # mirror as TRANSMISSION.
 
     t_roots = ("transmittance", "transmission", "trans", "t_nu", "tnu", "t(%)", "%t", "t%", "t")
     r_roots = ("reflectance", "reflection", "refl", "r_nu", "rnu", "r(%)", "%r", "r%", "r")

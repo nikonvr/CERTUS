@@ -292,13 +292,13 @@ class RobustMaterialDatabase:
 
             return complex(n, 0.0)
 
-        # Ne pas retomber sur l'air : un matériau introuvable renvoyait n = 1.0, ce qui
-        # court-circuite silencieusement la couche dans tout le calcul (une couche
-        # d'indice 1 dans l'air est optiquement absente). KeyError est dans
-        # NUMERICAL_FAULT_EXCEPTIONS, donc _resolve_clues_at_wavelength bascule sur son
-        # repli DÉJÀ journalisé au lieu de propager de l'air.
+        # Do not fall back to air: an unfound material returned n = 1.0, which
+        # silently short-circuits the layer in all calculations (a layer of
+        # index 1 in air is optically absent). KeyError is in
+        # NUMERICAL_FAULT_EXCEPTIONS, so _resolve_clues_at_wavelength falls back to its
+        # ALREADY logged fallback instead of propagating air.
 
-        raise KeyError(f"Materiau {mat_id!r} introuvable dans la base d'indices")
+        raise KeyError(f"Material {mat_id!r} not found in index database")
 
     def get_refractive_clues_vectorized(self, mat_id, wls, db_instance=None):
 
@@ -329,10 +329,10 @@ class RobustMaterialDatabase:
 
             return n_vals.astype(np.complex128)
 
-        # Même raison que dans get_refractive_index : renvoyer de l'air pour un matériau
-        # introuvable rend la couche optiquement invisible, sans trace.
+        # Same reason as in get_refractive_index: returning air for an unfound
+        # material makes the layer optically invisible without a trace.
 
-        raise KeyError(f"Materiau {mat_id!r} introuvable dans la base d'indices")
+        raise KeyError(f"Material {mat_id!r} not found in index database")
 
     def clear_cache(self):
 

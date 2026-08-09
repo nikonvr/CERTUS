@@ -269,11 +269,11 @@ class PlotManager:
             return
             
         dialog = QDialog(self.ui.front_tabs)
-        dialog.setWindowTitle(f"Catalogue Pareto - {N} couches")
+        dialog.setWindowTitle(f"Pareto Catalog - {N} layers")
         dialog.resize(600, 400)
         
         layout = QVBoxLayout(dialog)
-        layout.addWidget(QLabel(f"Variantes disponibles pour N={N} (triées par RMSE):"))
+        layout.addWidget(QLabel(f"Available variants for N={N} (sorted by RMSE):"))
         
         list_widget = QListWidget()
         for idx, entry in enumerate(rec["catalog"]):
@@ -299,7 +299,7 @@ class PlotManager:
             if selected >= 0 and selected < len(rec["catalog"]):
                 entry = rec["catalog"][selected]
                 self._restore_pareto_champion(entry["table"], entry["ep"])
-                self.ui.log(f"Catalogue: Configuration {selected+1} chargée pour N={N} (RMSE={entry['rmse']:.6f})", "SUCCESS")
+                self.ui.log(f"Catalog: Configuration {selected+1} loaded for N={N} (RMSE={entry['rmse']:.6f})", "SUCCESS")
                 self.ui.front_tabs.setCurrentIndex(0)
                 self.ui._schedule_eval(True)
                 dialog.accept()

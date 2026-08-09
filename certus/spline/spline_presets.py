@@ -135,7 +135,7 @@ SIO2_PRESET_KNOTS: dict[str, np.ndarray | float] = {
 
 
 def _clip_n_L_physical(n: np.ndarray, L: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """Borne n et L = ln k après interpolation / extrapolation en σ (robustesse plage spectrale)."""
+    """Clips n and L = ln k after interpolation / extrapolation in sigma (spectral range robustness)."""
     n_c = np.clip(as_float64_1d(n), N_MIN_LIMIT, N_MAX_LIMIT)
     L_lo = np.log(1e-30)
     L_hi = np.log(max(K_MAX_LIMIT, 1e-30))
@@ -290,7 +290,7 @@ def _project_tabulated_nk_lam_preset_to_sigma_knots(
 
 
 def _ta2o5_tabulation_extended() -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Ta₂O₅ : points aux bords UV/IR (extrapolation linéaire en λ) pour limiter l’extrapolation plate en σ."""
+    """Ta₂O₅: boundary points in UV/IR (linear extrapolation in λ) to limit flat extrapolation in sigma."""
     lam = np.array([300.0, 400.0, 1500.0, 4500.0], dtype=np.float64)
     n = np.array([2.577294348, 2.286667022, 2.107230774, 2.016490462], dtype=np.float64)
     k = np.array([5.320702e-3, 2.15945e-5, 7.17773e-5, 2.18446e-4], dtype=np.float64)

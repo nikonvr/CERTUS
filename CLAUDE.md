@@ -1176,13 +1176,14 @@ personne n'a demandé. **C'est un choix assumé, pas un oubli.**
 couperets. ⚠️ Ne pas confondre avec `tp_hysteresis_factor`, qui ne présélectionne pas : il
 décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 
-### Le mode "Rate" (Quartz / Chrono) sur les couches ultraminces (< 15 nm)
+### Le mode "Rate" (Quartz / Chrono) sur les couches à faible dynamique du signal
 
-> *« Pour certaines couches assez fines, la machine passe en mode "Rate" (comptage de tours / chrono) sans contrôle photométrique POEM. Dans ce mode, **il n'y a aucune compensation d'erreur** et la précision sur l'épaisseur déposée vaut $\sigma_{\text{rate}} = 2\,\%$ de l'épaisseur nominale. »* — (2026-08-09)
+> *« Pour les couches où la dynamique du signal est trop pauvre (faible amplitude optique $\text{swing} < \text{SWING\_MIN}$, et non un critère absolu d'épaisseur), la machine passe en mode "Rate" (comptage de tours / chrono) sans contrôle photométrique POEM. Dans ce mode, **il n'y a aucune compensation d'erreur** et la précision sur l'épaisseur déposée vaut $\sigma_{\text{rate}} = 2\,\%$ de l'épaisseur nominale. »* — (2026-08-09)
 
-1. **Pas d'auto-compensation en mode Rate** : Les erreurs accumulées aux couches précédentes ne sont ni mesurées ni corrigées pendant une couche en mode Rate ; elles sont transmises en boucle ouverte à la couche suivante.
-2. **Modèle de bruit d'épaisseur** : L'épaisseur déposée obéit à $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$.
-3. **Transition avec POEM** : POEM se réactive dès la première couche suivante présentant une amplitude optique suffisante ($\text{swing} > \text{SWING\_MIN}$).
+1. **Critère de basculement non trivial** : Le basculement dépend de la pauvreté de la dynamique du signal optique effectif ($\text{swing} < \text{SWING\_MIN}$), et non d'un seuil fixe absolu en nanomètres (une couche de 30 nm à très faible contraste d'indice peut présenter une dynamique tout aussi pauvre qu'une couche ultrafine).
+2. **Pas d'auto-compensation en mode Rate** : Les erreurs accumulées aux couches précédentes ne sont ni mesurées ni corrigées pendant une couche en mode Rate ; elles sont transmises en boucle ouverte à la couche suivante.
+3. **Modèle de bruit d'épaisseur** : L'épaisseur déposée obéit à $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$.
+4. **Transition avec POEM** : POEM se réactive dès la première couche présentant une amplitude optique suffisante ($\text{swing} \ge \text{SWING\_MIN}$).
 
 ## 15. 🔴 La validation externe — elle n'a plus qu'un seul chemin
 

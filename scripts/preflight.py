@@ -29,6 +29,11 @@ EXPECTED_ROOT = Path(r"C:\dev\gemini")
 # repository being wrong. Put the root first.
 sys.path.insert(0, str(ROOT))
 
+#: The one interpreter version this project targets. A different patch level is not
+#: fatal, but it invalidates the numba caches and can move the last digits of a
+#: RESULT -- which would otherwise be blamed on whatever was edited last.
+REFERENCE_PYTHON = "3.14.7"
+
 #: Files whose modification invalidates every subsequent measurement.
 #: CLAUDE.md forbid 4: the example file drifted four times, always permissively.
 SACRED_FILES = (
@@ -90,10 +95,16 @@ check(
 # 3. Python version. PEP 758 `except A, B:` is used in 14 modules and is a
 #    syntax error before 3.14.
 print("\n3. INTERPRETER")
+version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+check("python >= 3.14 (PEP 758 syntax)", sys.version_info >= (3, 14), version)
 check(
-    "python >= 3.14",
-    sys.version_info >= (3, 14),
-    f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+    f"python is the reference {REFERENCE_PYTHON}",
+    version == REFERENCE_PYTHON,
+    version if version == REFERENCE_PYTHON
+    else f"{version} -- reference measurements were taken under {REFERENCE_PYTHON}; "
+         "numba caches are invalidated and the last digits of a RESULT may move. "
+         "Record this version next to any number you report.",
+    fatal=False,
 )
 check(
     "running the venv interpreter",

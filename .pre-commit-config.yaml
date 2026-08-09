@@ -10,7 +10,7 @@
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         exclude: '^(pages/.*\.html|.*\.md)$'
@@ -23,7 +23,7 @@ repos:
         args: ["--maxkb=1024"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.12
+    rev: v0.16.2
     hooks:
       - id: ruff
         name: ruff check (autofix)
@@ -32,7 +32,7 @@ repos:
         name: ruff format (autoformat)
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v2.3.0
     hooks:
       - id: mypy
         name: mypy (strict typing)

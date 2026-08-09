@@ -1,10 +1,42 @@
-# CERTUS — document unique
+# CERTUS — document de référence
 
-**C'est le seul document du projet.** Tout est ici. Il n'y a rien d'autre à lire.
+**C'est le document de référence du projet.** Tout le savoir est ici, et il n'y a rien
+d'autre à lire pour comprendre.
 
 Le code calcule de la **physique réelle** servant à fabriquer de vrais filtres optiques. Une
 erreur silencieuse ne plante pas : elle produit un **résultat faux qui a l'air juste**, et
 quelqu'un fabrique une pièce avec.
+
+## 🔒 La règle des deux documents — lis-la avant de créer quoi que ce soit
+
+Il existe **exactement deux** fichiers d'instructions, et ils n'ont pas le même rôle :
+
+| Fichier | Rôle | Public |
+|---|---|---|
+| **`CLAUDE.md`** (celui-ci) | **Le savoir.** Physique, mesures, décisions, pièges, nuances. La seule source de vérité. | Toi, et tout agent capable de raisonner |
+| **`GEMINI_TODO.md`** | **Un ordre de mission.** Uniquement des commandes à lancer et des sorties à coller. **Aucun fait, aucune explication, aucune nuance.** | Un exécutant à faible capacité |
+
+**Les trois règles qui empêchent ce dépôt de retomber dans ses quatre-vingts documents
+contradictoires :**
+
+1. **`GEMINI_TODO.md` ne contient AUCUN fait.** Il ne fait que dériver de celui-ci des
+   commandes. S'il énonce un chiffre, c'est comme valeur attendue d'une sortie, jamais comme
+   connaissance.
+2. **En cas de désaccord, `CLAUDE.md` gagne, toujours.** `GEMINI_TODO.md` se régénère depuis
+   ce document, il ne se corrige pas.
+3. **On ne crée pas un troisième document.** Ni rapport de session, ni note, ni journal.
+   Un exécutant écrit dans `reports/RAPPORT_GEMINI.md`, et c'est une **sortie**, pas une
+   instruction.
+
+⚠️ **Pourquoi ce découpage existe.** Un exécutant faible n'échoue pas sur la compréhension,
+il échoue sur l'**inférence** : il comble ce qui n'est pas écrit littéralement. Or ce
+document est fait de nuance — « ce chiffre surestime », « c'est une dérivation, pas une
+mesure », « sauf si ». Cette nuance est ce qui lui donne sa valeur ici, et c'est exactement
+ce qui fait dériver un modèle faible. **Alourdir CLAUDE.md de garde-fous le dégraderait pour
+tout le monde sans protéger personne.** Les garde-fous vont dans l'ordre de mission ; ici, on
+garde la vérité.
+
+`AGENTS.md` et `GEMINI.md` sont de simples renvois vers ce fichier. Ils ne contiennent rien.
 
 ---
 
@@ -139,6 +171,17 @@ La correspondance avec les anciens numéros est donnée en colonne.
 Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `2299 passed,
 5 skipped` · `ruff check .` → `All checks passed!` · commit · et tu écris ce que tu as mesuré,
 sortie collée. **Une action, un commit.**
+
+### 🟢 Ce qui est déjà outillé — ne le réécris pas
+
+| Outil | Ce qu'il fait | Remplace |
+|---|---|---|
+| `scripts\preflight.py` | Les 7 vérifications d'environnement en une commande, verdict `PREFLIGHT=GO` / `STOP` | §0 en entier |
+| `scripts\probe_tp_fabrication.py` | **A1 et A2, faites.** Fabrication d'extrema et survie des vrais, avec le vrai détecteur et le vrai générateur de bruit | A1, A2 |
+| `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]` et dans le nom du fichier (`f4ada2d`) | le trou de traçabilité de §17-7 |
+
+**A1 et A2 sont DONE (`e3a4c72`).** A1 a **réfuté** le seuil dérivé — voir §9bis. **A13 doit
+donc utiliser le seuil mesuré `1,00`, et non `0,354`.**
 
 ---
 
@@ -376,12 +419,15 @@ l'asymétrie de `tp_hysteresis` sous distorsion peut fabriquer le premier.
 **Ne conclus rien entre les deux.** Le taux de plantage n'a de sens qu'une fois les deux en
 place.
 
+🔴 **Le seuil à utiliser est `1,00`, pas `0,354`.** A1 a mesuré que 0,354 laisse **100 %** de
+fabrication à `k = 8`, `N = 800` — voir §9bis. `1,00` est la borne **mesurée**, pas dérivée.
+
 | # | Run | Attendu |
 |---|---|---|
 | 1 | `sampling_dd = 0,125`, `k = 1`, seuil 1,66 | le plantage **monte beaucoup**. **C'est attendu, pas un bug** |
-| 2 | `sampling_dd = 0,125`, `k = 8`, seuil 0,354 | il doit **redescendre** |
+| 2 | `sampling_dd = 0,125`, `k = 8`, seuil **1,00** | il doit **redescendre** |
 | 3 | Si (2) ne redescend pas | **dis-le. Ne remonte pas le seuil** |
-| 4 | Balayer `k ∈ {1, 4, 8, 16}`, seuil `1/√k` | **Piège 1** : si le plantage ne bouge pas avec `k`, le lissage n'atteint pas le calcul |
+| 4 | Balayer `k ∈ {1, 4, 8, 16}` | ⚠️ **le seuil ne suit PAS `1/√k`** — cette loi est réfutée. **Remesure la borne avec `probe_tp_fabrication.py` pour chaque `k`**, puis utilise la valeur mesurée. **Piège 1** : si le plantage ne bouge pas avec `k`, le lissage n'atteint pas le calcul |
 
 #### A14 — Balayage du corridor d'indice · *ex-T5*
 
@@ -678,7 +724,12 @@ Suite scientifique de **couches minces optiques** : détermination d'indice, des
 d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciPy/Numba**.
 
 - `certus-optical-suite 26.05.0` — licence propriétaire
-- **Python ≥ 3.14.5 obligatoire** (PEP 758 : `except A, B:` sans parenthèses, 14 modules)
+- **Python 3.14.7** — 👤 la seule version retenue à partir du 2026-08-09. Le minimum
+  syntaxique reste 3.14 (PEP 758 : `except A, B:` sans parenthèses, 14 modules).
+  ⚠️ **Après un changement de version, les caches numba sont invalidés** : le premier appel
+  est lent (Piège 7) **et les derniers chiffres d'un `RESULT` peuvent bouger**. Les repères
+  de §10 ont été mesurés sous **3.14.6**. Toute mesure rapportée doit porter sa version
+  d'interpréteur, sinon un écart de version sera attribué au code.
 - Cible principale Windows, build gelé PyInstaller
 - 183 600 lignes de source · 56 400 de tests · ~2 300 tests collectés
 

@@ -114,6 +114,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
 | Graine de référence | **42**, `scan_wl_step` **1.0** | §10 |
 | `sigma_rate` (mode Rate) | 🔑 **aucune valeur à poser** — grandeur DÉRIVÉE du simulateur | §14, dérivation |
+| Résolution du monochromateur | **2 nm** nominal · choix dans {5 ; 2 ; 1 ; 0,5} · facteurs de bruit **÷1,5 · ×1 · ×2 · ×5** | §12.7 |
 
 **Tout nouveau paramètre vaut sa valeur INACTIVE par défaut** (1 pour la fenêtre, 0 pour les
 amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'avant. Toujours.
@@ -525,7 +526,8 @@ Ces nombres gouvernent le modèle de monitoring.
 | Positions par tour | **3** : témoin, noir, vide | `T = (S − D)/(V − D)`, auto-référencé à 4 Hz |
 | Vitesse de dépôt | ~0,5 nm/s | |
 | **Cadence** | **4 Hz**, une lecture témoin par tour | **un échantillon tous les 0,125 nm** |
-| Bruit de lecture | ±0,05 point, largeur totale **0,10** | 👤 le tirage du modèle est **correct** |
+| Bruit de lecture | ±0,05 point, largeur totale **0,10** | 👤 le tirage du modèle est **correct**, **à la résolution nominale de 2 nm** |
+| **Résolution du monochromateur** | **2 nm** par défaut ; l'utilisateur peut choisir 5 / 1 / 0,5 nm | **figée pour tout le dépôt**. Change le bruit **et** déforme le signal — voir §12.7 |
 | Le « 5 σ » du seuil | 👤 *« bien au-dessus du bruit »* | **pas une exigence physique** |
 
 **La rotation moyenne le dépôt** — c'est sa raison d'être — **mais elle échantillonne la
@@ -1141,6 +1143,170 @@ quantification apparaît d'elle-même, sans paramètre supplémentaire.
 
 **Vérification** : Piège 1. Si le taux de plantage ne bouge pas quand on double
 `Δd_sample`, la mesure est un artefact.
+
+---
+
+### 12.7 🔴 Résolution du monochromateur — 👤 spécification du 2026-08-09
+
+> 👤 *« Le système de monitoring a une résolution donnée, en général 2 nm, correspondant au
+> bruit nominal. Mais l'utilisateur peut choisir 5 nm (bruit divisé environ par 1,5) ou 1 nm
+> (bruit × 2) ou 0,5 nm (bruit × 5). La résolution reste figée pendant tout le dépôt. Une
+> résolution inadaptée peut fausser les signaux. Mais une résolution excellente augmente le
+> bruit ! »*
+
+**C'est le premier réglage du projet qui a un OPTIMUM**, et non un sens de progrès. Tous les
+autres paramètres s'améliorent quand on les pousse dans une direction ; celui-ci se dégrade
+des deux côtés. C'est ce qui le rend intéressant, et c'est aussi ce qui interdit de le régler
+au jugé.
+
+#### Les deux effets, opposés, sur la MÊME grandeur
+
+| | Fente large (5 nm) | Fente étroite (0,5 nm) |
+|---|---|---|
+| **Bruit** | ÷1,5 — plus de flux, meilleur rapport signal/bruit | **×5** — le bruit domine |
+| **Fidélité** | le signal est la **moyenne spectrale** de `T(λ)` sur la bande : les structures fines sont **aplaties** | fidèle, tout le swing est là |
+| Effet sur le swing | **réduit** ⇒ ancres POEM moins marquées, trigger moins précis (§14-5) | intact |
+| Effet sur les faux points tournants | rares | **fabriqués** — cf. la mesure du §12.2 |
+
+Les deux agissent sur la **même** quantité, le rapport
+`swing_effectif(B) / bruit(B)`, qui gouverne à la fois la détection des points tournants et
+la précision de l'arrêt. **C'est ce rapport qu'il faut mesurer, pas les deux effets
+séparément.**
+
+#### 🔒 Le facteur de bruit est une TABLE, pas une loi — ne l'interpole pas
+
+| Résolution | 5 nm | **2 nm** | 1 nm | 0,5 nm |
+|---|---|---|---|---|
+| Facteur sur `A` | **÷1,5** | **×1** (nominal) | **×2** | **×5** |
+
+Ces quatre valeurs sont 👤 données, et il n'existe que **quatre réglages**. Donc : **quatre
+entrées de table, zéro paramètre libre.** C'est exactement ce que §9 exige.
+
+⚠️ **Ne cherche pas la loi de puissance.** Elle ne tient pas : entre 5 et 2 nm le
+comportement est proche du photonique en `1/√B` (√(2/5) = 0,63, soit ÷1,58 contre ÷1,5
+donné), mais en dessous il se dégrade **plus vite** que `1/B` (×5 à 0,5 nm là où `1/B`
+donnerait ×4). Ajuster une loi sur quatre points remplacerait quatre nombres donnés par un
+modèle inventé — précisément l'erreur que §9 interdit. Et surtout, une loi permettrait de
+proposer des résolutions **qui n'existent pas sur la machine**.
+
+#### Ce qui existe déjà dans le code, et ce qui manque
+
+🟢 **La moitié « trop grossier » est déjà écrite** :
+`_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:249-289`) estime, pour
+chaque couche, la largeur de bande à partir de laquelle l'erreur de convolution atteindrait la
+tolérance, via la **courbure spectrale** de `T(λ)` mesurée en seconde différence sur 1 nm :
+
+```python
+curvature = abs((T_vals[0] + T_vals[2]) / 2.0 - T_vals[1])
+res_limit = test_bw * np.sqrt(T_tolerance / curvature)
+```
+
+C'est un développement au second ordre correct, et la fonction rend déjà **la couche la
+pire** — c'est-à-dire la contrainte qui lie.
+
+🔴 **Ce qui manque, dans l'ordre d'importance :**
+
+1. **Le facteur de bruit n'existe nulle part.** Aucun lien entre résolution et
+   `signal_noise_scale`. C'est la partie **triviale à écrire** et celle qui a l'effet le plus
+   direct : une multiplication.
+2. **`min_resolution` est un rapport, pas un critère.** Elle est calculée puis rangée dans
+   `res["min_resolution"]` et affichée. Elle ne sélectionne rien. ⚠️ §20-contrôle 4 : *« compte
+   les rejets, ne lis pas le code »* — vérifie d'abord si cette valeur écarterait quoi que ce
+   soit avant de la câbler.
+3. **La déformation n'est pas appliquée au signal simulé**, seulement estimée. La modéliser
+   vraiment demande d'évaluer `T` sur **plusieurs λ** autour de λ_mon et de pondérer par la
+   fonction de fente — donc ×3 à ×5 sur le coût TMM du chemin de monitoring.
+4. `MachineModel.monochromator_resolution_nm` vaut **0,5**, alimenté par une constante nommée
+   `OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM` et documentée « Monochromator step / precision ».
+   **`step` et `résolution` ne sont pas la même grandeur** — l'un est le pas de réglage de
+   λ_mon, l'autre la largeur de bande. Le nominal que le physicien donne est **2 nm**. C'est
+   le même genre de confusion d'unité que le piège ×100 de `trigger_tolerance` (§17-9). Voir
+   la question Q3.
+
+#### 🟢 Comment mesurer AVANT de construire
+
+**Ne pas écrire la convolution en premier.** Mesurer d'abord si elle compte, avec une sonde
+qui ne coûte rien — même esprit que la sonde « signal plat, 20 000 tirages » de §12.2 :
+
+> Sur le juge de paix nominal, couche par couche, calculer `T(λ)` autour de chaque λ_mon
+> candidate, convoluer par une fente de 5 nm, et regarder de **combien le swing baisse**.
+
+- Si la baisse est de l'ordre du pour cent → la déformation est du second ordre, **seul le
+  facteur de bruit compte**, et l'action se réduit au point 1. Une multiplication.
+- Si elle est de 20 % → elle est du premier ordre et il faut la convolution complète.
+
+**Cette sonde tranche entre une action d'une heure et une action de plusieurs jours.** Elle
+passe avant.
+
+#### 🔑 La résolution FAIT PARTIE de la stratégie — 👤 2026-08-09
+
+> 👤 *« Il faudra donc implanter la détermination de la résolution optimale pour une stratégie
+> donnée… cette résolution fait partie intégrante de "la stratégie" à trouver. »*
+
+Une stratégie n'est donc plus *(découpage en blocs, λ par bloc)* mais
+**\*(découpage en blocs, λ par bloc, RÉSOLUTION)\***, avec une seule résolution pour tout le
+dépôt.
+
+**Où cette variable a sa place — et où elle ne l'a pas :**
+
+| Étage | Verdict |
+|---|---|
+| **Phase A** | ❌ Impossible. La Phase A juge **une couche à la fois**, or le coût de la résolution est un compromis **sur tout le run** : la couche qui lie (`worst_layer`) n'est connue qu'une fois la stratégie entière formée. |
+| **DP** | ❌ Inutile. La DP optimise une **somme de coûts par couche** ; la résolution est un choix **global unique** qui ne se décompose pas additivement. La mettre dans l'état de la DP multiplierait cet état par 4 sans rien apporter. |
+| **Phase B** | ✅ **C'est là.** Chaque stratégie candidate est évaluée aux 4 résolutions. Coût : **×4** sur le criblage Monte-Carlo. Cher, mais honnête — et c'est le seul étage qui mesure la grandeur qui décide. |
+
+🔴 **Contrainte C2, et elle est impérative ici** : le facteur de résolution doit multiplier
+**l'échantillon**, jamais entrer dans la graine.
+
+```python
+noise = RESOLUTION_NOISE_FACTOR[B] * _seeded_noise_sample(seed, groupe, tirage, elem, True)
+```
+
+Sans cela les 4 résolutions voient 4 aléas différents, et l'écart entre elles n'est plus
+imputable à la résolution. C'est **exactement** la faute que C2 existe pour empêcher, et elle
+serait ici invisible : les quatre chiffres auraient l'air parfaitement plausibles.
+
+**Comment ne pas payer le ×4 en entier.** `_calculate_strategy_spectral_resolution` rend déjà
+`min_resolution`, la fente la plus large qu'une stratégie tolère. Les résolutions plus larges
+sont *prédites* déformantes. Cela donne un ordre d'évaluation — commencer par les plus
+prometteuses — et, **si et seulement si** on a d'abord compté ce qu'elle écarte réellement
+(§20-contrôle 4), un pré-filtre. ⚠️ Tant que ce comptage n'est pas fait, c'est un
+**diagnostic, pas un couperet** — même règle qu'en §14 pour les heuristiques de la
+littérature.
+
+**Et voici l'effet le plus intéressant, celui qu'on n'attendait pas :** la résolution
+n'ajoute pas seulement un choix à 4 branches, elle **change quelles λ sont bonnes**. Une λ
+posée dans une région spectralement lisse tolère la fente de 5 nm et **empoche le ÷1,5 de
+bruit gratuitement** ; une λ posée près du front impose 1 nm et **paie le ×2**. La valeur
+d'une λ dépend donc désormais de la douceur spectrale de son voisinage, et pas seulement de sa
+dynamique. C'est un arbitrage neuf, il n'est écrit nulle part dans le code, et c'est
+typiquement ce que STRAT existe pour trouver.
+
+⚠️ **Le compromis n'est pas le même à toutes les couches, et c'est le nœud.** La finesse
+spectrale de l'empilement **croît avec le nombre de couches** : une résolution confortable à
+la couche 3 peut être trop grossière à la couche 40. Comme elle est **figée**, l'optimum est
+un compromis sur tout le run — et c'est exactement ce que `worst_layer`, déjà rendu par la
+fonction ci-dessus, désigne.
+
+**Deux conséquences de tenue de dossier, à ne pas oublier** : la stratégie gagnante doit
+**rapporter sa résolution** (sinon elle n'est pas exécutable en salle), et la sonde doit
+l'écrire dans son JSON — même leçon que `f4ada2d`.
+
+#### La mesure au banc, une fois le point 1 câblé
+
+Quatre runs, un par résolution, à configuration égale par ailleurs, et on compare **taux de
+plantage** et **erreur spectrale**. C'est la mesure qui dit si le ×4 de Phase B est justifié :
+si les quatre chiffres se tiennent à moins que la dispersion Monte-Carlo, la résolution ne
+mérite pas d'entrer dans la recherche et on la fige à 2 nm.
+
+#### Les questions à poser
+
+| # | Question | Pourquoi elle change le code |
+|---|---|---|
+| Q1 | La « résolution » est-elle la **largeur de bande** (FWHM de la fonction de fente) ? Et la fente est-elle **triangulaire** (fentes égales), gaussienne, ou rectangulaire ? | La forme fixe le noyau de convolution. Le second ordre du code actuel suppose implicitement un noyau symétrique. |
+| Q2 | Les facteurs ÷1,5 / ×2 / ×5 sont-ils **mesurés sur la machine** ou estimés ? | S'ils sont mesurés, ils entrent tels quels et le modèle reste à zéro paramètre libre. |
+| Q3 | `MachineModel` porte 0,5 nm sous le nom `MONOCHROMATOR_STEP`. Est-ce le **pas de réglage** de λ_mon, distinct de la largeur de bande ? | Si oui les deux existent, et le pas contraint les λ atteignables — donc la grille de balayage de §13, aujourd'hui à 1 nm. |
+| Q4 | Les quatre valeurs {5 ; 2 ; 1 ; 0,5} sont-elles **les seules** disponibles ? | Décide s'il s'agit d'une table close ou d'un continuum. |
 
 ---
 

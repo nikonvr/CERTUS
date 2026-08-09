@@ -1245,6 +1245,113 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
+        <h3>2.1novies Monochromator resolution — the first setting with an OPTIMUM</h3>
+        <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
+            <p style="margin:0 0 10px;">
+                👤 <b>What the physicist describes (2026-08-09).</b> The monitoring system has a given
+                resolution, <b>typically 2 nm</b>, which is the one the nominal noise figure corresponds to.
+                The operator may instead select <b>5 nm</b> (noise divided by about 1.5), <b>1 nm</b>
+                (noise &times;2) or <b>0.5 nm</b> (noise &times;5). The resolution is <b>fixed for the whole
+                deposition</b>. An unsuitable resolution can <b>distort the signals</b> — but an excellent
+                resolution <b>increases the noise</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                Every other setting in this document improves monotonically in one direction. This one
+                <b>degrades on both sides</b>, which is what makes it worth searching over and what
+                forbids setting it by judgement.
+            </p>
+            <table>
+                <thead><tr><th>Resolution</th><th>5 nm</th><th>2 nm (nominal)</th><th>1 nm</th><th>0.5 nm</th></tr></thead>
+                <tbody>
+                    <tr><td><b>Noise factor on $A$</b></td><td>&divide;1.5</td><td>&times;1</td><td>&times;2</td><td><b>&times;5</b></td></tr>
+                    <tr><td><b>Spectral fidelity</b></td><td>features flattened</td><td>reference</td><td>faithful</td><td>faithful</td></tr>
+                    <tr><td><b>Dominant failure</b></td><td>swing reduced, anchors weak</td><td>—</td><td colspan="2">turning points fabricated by noise</td></tr>
+                </tbody>
+            </table>
+            <p style="margin:10px 0 0;">
+                Both effects act on the <b>same</b> quantity — the detection signal-to-noise ratio
+                $\text{swing}_{\text{eff}}(B)\,/\,\text{noise}(B)$, which governs both turning-point
+                detection and stop precision. That ratio is what must be measured, not the two effects
+                separately.
+            </p>
+            <p style="margin:10px 0 0;">
+                🔒 <b>The noise factor is a TABLE, not a law.</b> There are four settings and four given
+                numbers, so there are four table entries and <b>no free parameter</b>. Fitting a power law
+                would not even hold: between 5 and 2 nm the behaviour is close to photon-limited
+                $1/\sqrt{B}$ ($\sqrt{2/5} = 0.63$ against the quoted &divide;1.5), but below nominal it
+                degrades <i>faster</i> than $1/B$ (&times;5 at 0.5 nm where $1/B$ would give &times;4).
+                A fitted law would also allow the search to propose resolutions <b>the machine does not
+                have</b>.
+            </p>
+            <p style="margin:10px 0 0;">
+                🟢 <b>Half of this already exists.</b>
+                <code>_calculate_strategy_spectral_resolution</code> estimates, layer by layer, the
+                bandwidth at which the convolution error would reach the trigger tolerance, from the
+                <b>spectral curvature</b> of $T(\lambda)$ taken as a second difference over 1 nm:
+                $B_{\lim} = \Delta_{\text{test}}\sqrt{\varepsilon_T / \text{curv}}$. It even returns the
+                <b>worst layer</b>, which is the binding constraint. But it is a <b>post-hoc report</b>: it
+                distorts no signal, selects nothing, and knows only the "too coarse" side. The "too fine
+                costs noise" side does not exist anywhere in the kernel.
+            </p>
+        </div>
+
+        <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
+            <p style="margin:0 0 10px;">
+                🔑 <b>The resolution is part of the STRATEGY, not a setting applied to it</b> (👤 2026-08-09).
+                A strategy is therefore no longer <i>(block partition, &lambda; per block)</i> but
+                <b>(block partition, &lambda; per block, resolution)</b>, with a single resolution for the
+                whole run.
+            </p>
+            <p style="margin:0 0 10px;">
+                It cannot live in <b>Phase A</b>, which judges one layer at a time, because the cost of a
+                resolution is a whole-run compromise: the binding layer is unknown until the strategy
+                exists. It does not belong in the <b>DP</b> either, which optimises a sum of per-layer
+                costs, whereas the resolution is a single global choice that does not decompose additively.
+                It belongs in <b>Phase B</b>, where each candidate strategy is screened at the four
+                resolutions — a &times;4 on the Monte-Carlo cost, which is the honest price of measuring
+                the quantity that decides.
+            </p>
+            <p style="margin:0 0 10px;">
+                🔴 <b>Common random numbers, and this is where they are easiest to lose.</b> The resolution
+                factor must multiply the <b>sample</b>, never enter the seed:
+            </p>
+            <div class="eq-box">
+                <code>noise = RESOLUTION_NOISE_FACTOR[B] * _seeded_noise_sample(seed, group, run, elem, True)</code>
+            </div>
+            <p style="margin:10px 0 0;">
+                Otherwise the four resolutions see four different noise realisations, and the gap between
+                them is no longer attributable to the resolution. The four numbers would still look
+                perfectly plausible — which is exactly why the rule exists.
+            </p>
+            <p style="margin:10px 0 0;">
+                <b>And here is the effect that was not expected.</b> The resolution does not merely add a
+                four-way branch: it <b>changes which wavelengths are good</b>. A &lambda; sitting in a
+                spectrally smooth region tolerates the 5 nm slit and collects its &divide;1.5 noise bonus
+                for free; a &lambda; near the edge forces 1 nm and pays &times;2. The worth of a
+                wavelength now depends on the spectral smoothness of its neighbourhood, not only on its
+                dynamics. That arbitration appears nowhere in the code today, and it is precisely the kind
+                of thing STRAT exists to find.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ <b>The compromise is not the same at every layer, and that is the knot.</b> The spectral
+                sharpness of the stack <i>grows</i> with the layer count: a resolution that is comfortable
+                at layer 3 may be too coarse at layer 40. Since it is frozen for the run, the optimum is a
+                compromise over the whole deposition.
+            </p>
+            <p style="margin:10px 0 0;">
+                🟢 <b>Measure before building.</b> Do not write the convolution first. On the nominal
+                48-layer benchmark, layer by layer, compute $T(\lambda)$ around each candidate
+                &lambda;<sub>mon</sub>, convolve with a 5 nm slit, and look at <b>how much the swing
+                drops</b>. A drop of order one percent means the distortion is second order and the whole
+                action reduces to one multiplication on the noise. A drop of twenty percent means the full
+                convolution is needed. That single cheap probe separates a one-hour action from a
+                multi-day one.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ <b>Not implemented.</b> No resolution-dependent noise exists in the kernel today.
+            </p>
+        </div>
+
         <h3>2.2 Non-Monotonic Error Model</h3>
         <p>
             Beyond pure trigger noise, the simulation optionally adds a systematic offset via

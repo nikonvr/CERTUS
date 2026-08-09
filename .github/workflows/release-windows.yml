@@ -88,9 +88,9 @@ jobs:
         run: |
           python -m compileall certus_services.py certus_metrology.py CERTUS_STRAT.py CERTUS_DESIGN.py CERTUS_RE.py
 
-      - name: Unit contracts (seed + services)
+      - name: Full test suite (oracle + unit including release guardrails)
         run: |
-          python -m pytest tests/unit/test_seed_contract_global.py tests/unit/test_certus_services.py tests/unit/test_release_guardrails.py -q
+          python -m pytest tests/oracle/ tests/unit/ tests/unit/test_seed_contract_global.py tests/unit/test_certus_services.py tests/unit/test_release_guardrails.py -q --no-cov
 
       - name: Release consistency checks
         run: |

@@ -93,6 +93,9 @@ def patch_flag(
         params["affine_offset_amp"] = float(os.environ.get("CERTUS_AFFINE_OFFSET_AMP", "0.0"))
         params["poem_enabled"] = os.environ.get("CERTUS_POEM_ENABLED", "1") not in {"0", "false", "False"}
         params["reading_smoothing_window"] = int(os.environ.get("CERTUS_SMOOTHING_WINDOW", "1"))
+        params["index_corridor"] = float(os.environ.get("CERTUS_INDEX_CORRIDOR", "0.0"))
+        if "CERTUS_PHASE_A_MARGIN" in os.environ:
+            params["phase_a_level_margin_factor"] = float(os.environ["CERTUS_PHASE_A_MARGIN"])
         return params
 
     CertusStratStateMixin.collect_params = patched

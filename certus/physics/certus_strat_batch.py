@@ -41,6 +41,8 @@ def validate_wavelengths_batch(
     affine_seed: int = 0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
 ):
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -66,11 +68,11 @@ def validate_wavelengths_batch(
     a factor of 17 between two wavelengths that P95 alone would rank in reverse order.
 
     gain_probe_nm: amplitude of injected upstream error for measuring gain.
-    1.0 nm default — twenty times above the threshold where physical thickness
+    1.0 nm default -- twenty times above the threshold where physical thickness
     differences lose physical meaning (0.05 nm, less than one atom), and in the
     linear gain regime for most measured cases.
 
-    block_start_arr: start index of monochromatic block FOR EACH candidate.
+    block_start_arr: start index of monitoring block FOR EACH candidate.
     At unchanged lambda, signal is continuous and POEM leverages already crossed
     turning points; changing lambda resets history.
     Without this array, Phase A was BLIND to block value while Phase B modeled it.
@@ -80,7 +82,7 @@ def validate_wavelengths_batch(
     0.0 = disabled, giving bit-identical execution to historical code.
 
     COMPENSATION GAIN IS MEASURED AT ZERO READING NOISE.
-    It is a derivative — the response of the layer to a known upstream error —
+    It is a derivative -- the response of the layer to a known upstream error --
     not a run simulation. Injecting noise adds variance to a deterministic quantity.
     """
     n_cands = len(candidate_wls)
@@ -88,6 +90,10 @@ def validate_wavelengths_batch(
     results = np.zeros((n_cands, 4))
     error_buffer = np.empty((n_cands, n_runs), dtype=np.float64)
     d_nom = p_thick_nominal[i_layer]
+    wl_min = np.min(candidate_wls)
+    wl_max = np.max(candidate_wls)
+    if abs(wl_max - wl_min) < 1e-6:
+        wl_max = wl_min + 100.0
     for c_idx in prange(n_cands):
         wl = candidate_wls[c_idx]
         blk = -1
@@ -105,6 +111,25 @@ def validate_wavelengths_batch(
             else:
                 aff_s = 1.0
                 aff_o = 0.0
+
+            if index_corridor > 0.0:
+                z1_h = _seeded_noise_sample(index_seed, 0, r_idx, 0, True)
+                z2_h = _seeded_noise_sample(index_seed, 0, r_idx, 1, True)
+                a_h = index_corridor * z1_h
+                b_h = index_corridor * z2_h * (1.0 - abs(z1_h))
+
+                z1_l = _seeded_noise_sample(index_seed, 1, r_idx, 0, True)
+                z2_l = _seeded_noise_sample(index_seed, 1, r_idx, 1, True)
+                a_l = index_corridor * z1_l
+                b_l = index_corridor * z2_l * (1.0 - abs(z1_l))
+
+                u_wl = (2.0 * wl - (wl_min + wl_max)) / (wl_max - wl_min)
+                nH_real = n_H_arr[c_idx] + (a_h + b_h * u_wl)
+                nL_real = n_L_arr[c_idx] + (a_l + b_l * u_wl)
+            else:
+                nH_real = n_H_arr[c_idx]
+                nL_real = n_L_arr[c_idx]
+
             val, _ = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
@@ -126,6 +151,8 @@ def validate_wavelengths_batch(
                 aff_o,
                 poem_enabled,
                 smoothing_window,
+                nH_real,
+                nL_real,
             )
             if val > 100000.0:
                 # depot non terminable : sentinelle nominal_th + 1e6
@@ -133,7 +160,7 @@ def validate_wavelengths_batch(
             else:
                 # L'erreur locale se mesure sur les runs qui se TERMINENT. Y
                 # laisser la sentinelle melangerait deux grandeurs sans rapport
-                # — des nanometres et un compteur d'echecs — et un seul run
+                # -- des nanometres et un compteur d'echecs -- et un seul run
                 # plante suffirait a saturer le P95 de la couche.
                 error_buffer[c_idx, n_ok] = np.abs(val - d_nom)
                 n_ok += 1
@@ -211,6 +238,8 @@ def simulate_stack_robustness_batch(
     affine_seed: int = 0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
@@ -225,7 +254,7 @@ def simulate_stack_robustness_batch(
     de calcul redevient mot pour mot celui d'avant ce parametre.
 
     signal_noise_seed : graine du flux. Fonction de la seule configuration de
-    tirage, JAMAIS de la strategie — c'est ce qui preserve les nombres aleatoires
+    tirage, JAMAIS de la strategie -- c'est ce qui preserve les nombres aleatoires
     communs entre strategies comparees.
     """
     n_runs = noise_matrix.shape[0]
@@ -243,6 +272,10 @@ def simulate_stack_robustness_batch(
             block_start[i] = i
         else:
             block_start[i] = block_start[i - 1]
+    wl_min = np.min(layer_wavelengths)
+    wl_max = np.max(layer_wavelengths)
+    if abs(wl_max - wl_min) < 1e-6:
+        wl_max = wl_min + 100.0
     for r in prange(n_runs):
         if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)
@@ -252,9 +285,31 @@ def simulate_stack_robustness_batch(
         else:
             aff_s = 1.0
             aff_o = 0.0
+
+        if index_corridor > 0.0:
+            z1_h = _seeded_noise_sample(index_seed, 0, r, 0, True)
+            z2_h = _seeded_noise_sample(index_seed, 0, r, 1, True)
+            a_h = index_corridor * z1_h
+            b_h = index_corridor * z2_h * (1.0 - abs(z1_h))
+
+            z1_l = _seeded_noise_sample(index_seed, 1, r, 0, True)
+            z2_l = _seeded_noise_sample(index_seed, 1, r, 1, True)
+            a_l = index_corridor * z1_l
+            b_l = index_corridor * z2_l * (1.0 - abs(z1_l))
+        else:
+            a_h, b_h, a_l, b_l = 0.0, 0.0, 0.0, 0.0
+
         for i_layer in range(n_layers):
             wl = layer_wavelengths[i_layer]
             n_H, n_L, n_Sub = (n_H_vals[i_layer], n_L_vals[i_layer], n_Sub_vals[i_layer])
+            if index_corridor > 0.0:
+                u_wl = (2.0 * wl - (wl_min + wl_max)) / (wl_max - wl_min)
+                nH_real = n_H + (a_h + b_h * u_wl)
+                nL_real = n_L + (a_l + b_l * u_wl)
+            else:
+                nH_real = n_H
+                nL_real = n_L
+
             noise_val = noise_matrix[r, i_layer]
             sig_scale = 0.0
             if signal_noise_scale is not None:
@@ -280,6 +335,8 @@ def simulate_stack_robustness_batch(
                 aff_o,
                 poem_enabled,
                 smoothing_window,
+                nH_real,
+                nL_real,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val
@@ -306,20 +363,20 @@ def compute_batch_rmse(
 ) -> np.ndarray:
     """Computes RMSE for a batch of simulated thicknesses against a target T spectrum.
 
-    ``weights`` — PONDERATION SPECTRALE, axe 3. ``None`` = uniforme, et le chemin de
+    ``weights`` -- PONDERATION SPECTRALE, axe 3. ``None`` = uniforme, et le chemin de
     calcul est alors mot pour mot celui d'avant ce parametre.
 
     🔴 POURQUOI UNE PONDERATION EST INDISPENSABLE SUR UN DICHROIQUE.
     👤 Le physicien : « le plus important est la cible spectrale respectee ». Or un RMSE
-    uniforme sur le juge de paix fait peser la bande BLOQUEE — 146 points sur 301, avec
-    une exigence de 0,1 % de transmission — exactement autant que la bande passante, ou
+    uniforme sur le juge de paix fait peser la bande BLOQUEE -- 146 points sur 301, avec
+    une exigence de 0,1 % de transmission -- exactement autant que la bande passante, ou
     un ecart d'un point entier est sans consequence. L'exigence y est 500 fois plus dure
     et elle compte pareil. Un RMSE global sur un dichroique ne dit donc rien, et c'est
     pour cela que toute mesure de ce module est decomposee par bande.
 
     Les poids attendus sont ceux que DESIGN utilise deja
     (``prepare_targets_vectorized`` : poids utilisateur de la zone x quadrature
-    spectrale en d ln lambda). Un point hors de toute zone recoit un poids NUL — il
+    spectrale en d ln lambda). Un point hors de toute zone recoit un poids NUL -- il
     n'entre alors pas dans le denominateur, ce qui est le comportement voulu : une
     longueur d'onde dont l'utilisateur n'a rien dit ne doit ni aider ni penaliser.
 

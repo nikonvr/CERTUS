@@ -152,11 +152,14 @@ class _PhysicsBridge:
         affine_seed: int = 0,
         poem_enabled: bool = True,
         smoothing_window: int = 1,
+        index_corridor: float = 0.0,
+        index_seed: int = 0,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
+            index_corridor, index_seed,
         )
 
     @staticmethod
@@ -1163,6 +1166,8 @@ def _validate_candidates_phase_a(
     poem_enabled = bool(params.get("poem_enabled", True))
     affine_seed = (int(phase_a_seed) * 3_266_489_917 + (int(i_layer) + 1) * 40_503 + 0x7E2A_8431) % (2**53)
     smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
+    index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
+    index_seed = (int(phase_a_seed) * 2_654_435_761 + (int(i_layer) + 1) * 850_507 + 0x3F1B_79C5) % (2**53)
 
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
@@ -1186,6 +1191,8 @@ def _validate_candidates_phase_a(
         affine_seed,
         poem_enabled,
         smoothing_window,
+        index_corridor,
+        index_seed,
     )
 
     results_thickness = []

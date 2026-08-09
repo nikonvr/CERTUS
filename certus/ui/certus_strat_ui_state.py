@@ -1100,6 +1100,10 @@ class CertusStratStateMixin:
             "reading_smoothing_window": int(
                 _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1
             ),
+            # ── Index corridor uncertainty delta_max (T5) ──────────────────────
+            "index_corridor": _config_float(
+                getattr(self, "_loaded_config", {}), "index_corridor"
+            ),
             # ── AXE 3 : la cible spectrale, acheminee depuis la configuration ───
             #
             # 👤 « Le plus important est la cible spectrale respectee. » STRAT classait

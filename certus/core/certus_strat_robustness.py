@@ -603,6 +603,12 @@ def _affine_stream_seed(base_seed: int, noise_idx: int) -> int:
     return mixed % (2**53)
 
 
+def _index_stream_seed(base_seed: int, noise_idx: int) -> int:
+    """Graine du flux d'incertitude d'indice (T5)."""
+    mixed = int(base_seed) * 2_654_435_761 + int(noise_idx) * 850_507 + 0x3F1B_79C5
+    return mixed % (2**53)
+
+
 def _test_strategy_robustness_task(
     strategy,
     _strat_idx,
@@ -868,6 +874,8 @@ def _test_strategy_robustness_task(
         poem_enabled = bool(params.get("poem_enabled", True))
         affine_seed = _affine_stream_seed(base_seed, noise_idx)
         smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
+        index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
+        index_seed = _index_stream_seed(base_seed, noise_idx)
 
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
@@ -888,6 +896,8 @@ def _test_strategy_robustness_task(
             affine_seed,
             poem_enabled,
             smoothing_window,
+            index_corridor,
+            index_seed,
         )
 
         for i_layer in range(num_layers):

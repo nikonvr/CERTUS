@@ -62,7 +62,7 @@ def detect_turning_points(
     Detecting extrema with two separately written loops risks algorithmic divergence rather than
     physical divergence.
 
-    ``hysteresis`` — DETECTION RULE, in units of T:
+    ``hysteresis`` -- DETECTION RULE, in units of T:
 
         0.0  Legacy rule: an extremum is declared as soon as the difference between
              two consecutive samples changes sign beyond a NUMERICAL guard of 1e-12.
@@ -81,7 +81,7 @@ def detect_turning_points(
 
              THIS THRESHOLD DERIVES FROM NOISE, NOT AN AMPLITUDE CRITERION.
              The 4% starting amplitude rule from Zideluns p. 112 is a wavelength PRE-SELECTION
-             heuristic — a way to guess in advance what Monte-Carlo measures directly.
+             heuristic -- a way to guess in advance what Monte-Carlo measures directly.
              This detection threshold should not borrow its value from that heuristic.
 
              The governing quantity is reading noise, which is MEASURED:
@@ -161,7 +161,7 @@ def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresi
 
     **Meme regle de detection que ``detect_turning_points``**, et il le faut : sans cela
     un micro-extremum fabrique par le bruit juste apres l'arret tronquerait la fenetre
-    et provoquerait un plantage que la machine ne subirait pas — exactement l'artefact
+    et provoquerait un plantage que la machine ne subirait pas -- exactement l'artefact
     que l'hysteresis existe pour supprimer.
     """
     if hysteresis <= 0.0:
@@ -224,6 +224,8 @@ def simulate_growth_kernel(
     affine_offset: float = 0.0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
+    n_H_real: float = -1.0,
+    n_L_real: float = -1.0,
 ) -> tuple[float, float]:
     """
 
@@ -249,7 +251,7 @@ def simulate_growth_kernel(
 
             1 (REJECT): Return large penalty to reject candidate
 
-        signal_noise_scale: AXE 1.1 — echelle du bruit de LECTURE applique au
+        signal_noise_scale: AXE 1.1 -- echelle du bruit de LECTURE applique au
             signal de monitoring REEL ``Ts_r``, en unites de T (0..1), AVANT la
             detection des points tournants, la lecture des ancres POEM et le test
             d'atteignabilite du niveau. 0.0 = desactive, et le chemin de calcul est
@@ -263,11 +265,11 @@ def simulate_growth_kernel(
 
         signal_noise_run: indice du tirage Monte-Carlo. Meme exigence.
 
-        tp_hysteresis: AXE 1.2 — LA REGLE DE DETECTION DE POINT TOURNANT, en unites de
+        tp_hysteresis: AXE 1.2 -- LA REGLE DE DETECTION DE POINT TOURNANT, en unites de
             T. 0.0 = regle historique (changement de signe au-dela d'un garde numerique
             de 1e-12), qui n'est pas une regle physique. > 0 = detecteur a hysteresis.
             Voir ``detect_turning_points``, qui contient la derivation du seuil a partir
-            du bruit mesure — et pourquoi ce n'est PAS le critere des 4 % de Zideluns.
+            du bruit mesure -- et pourquoi ce n'est PAS le critere des 4 % de Zideluns.
 
             🔴 SANS CE PARAMETRE, `signal_noise_scale` N'EST PAS MESURABLE : le taux de
             plantage qu'il produit ne depend pas de sigma (1,47 % par couche a
@@ -276,14 +278,14 @@ def simulate_growth_kernel(
         affine_scale, affine_offset: PHOTOMETRIC CALIBRATION DRIFT of the instrument,
             T_measured = affine_scale * T_true + affine_offset. Applied to the REAL
             monitoring signal ``Ts_r`` and to the three probe points of the parabolic
-            inversion — and to nothing else. ``Ts_n`` is the offline design: no
+            inversion -- and to nothing else. ``Ts_n`` is the offline design: no
             instrument reads it, so no instrument can distort it. (1.0, 0.0) = disabled,
             and the computation path is then word for word the one from before these
             parameters.
 
             POEM is EXACTLY invariant under this transform; the absolute fallback is
             not. That contrast IS the measurement these parameters exist to make. Any
-            code cancelling the distortion on one side of a comparison destroys it —
+            code cancelling the distortion on one side of a comparison destroys it --
             three such cancellations were removed on 2026-08-08, see the comment at the
             inversion below.
 
@@ -291,12 +293,15 @@ def simulate_growth_kernel(
     if wl < 0.1:
         return (float(p_thick_nominal[i_layer]), 0.0)
     TWO_PI_VAL = TWO_PI
+    n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
+    n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
+
     M_before_00 = 1.0 + 0j
     M_before_01 = 0.0 + 0j
     M_before_10 = 0.0 + 0j
     M_before_11 = 1.0 + 0j
     for j in range(i_layer):
-        n_prev = n_H if j % 2 == 0 else n_L
+        n_prev = n_H_r if j % 2 == 0 else n_L_r
         th_prev = prev_thicknesses_sim[j]
         phi = TWO_PI_VAL / wl * n_prev * th_prev
         cp, sp = (np.cos(phi), np.sin(phi))
@@ -408,7 +413,7 @@ def simulate_growth_kernel(
         target_nominal = T_mono[4]
 
     # ------------------------------------------------------------------------
-    # POEM — Percent of Optical Extrema Monitoring
+    # POEM -- Percent of Optical Extrema Monitoring
     #
     #   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
     #   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
@@ -419,8 +424,8 @@ def simulate_growth_kernel(
     # l'execution on la reporte sur les extrema REELLEMENT observes.
     #
     # Consequence, et c'est tout l'interet : si le signal reel subit une
-    # distorsion affine T_reel = a*T_nom + b — derive de gain ou d'offset
-    # photometrique, erreur d'indice, erreur d'epaisseur amont — alors
+    # distorsion affine T_reel = a*T_nom + b -- derive de gain ou d'offset
+    # photometrique, erreur d'indice, erreur d'epaisseur amont -- alors
     # T_prev et T_last subissent la meme, et le niveau reporte vaut
     # a*T_trigger_nom + b. On s'arrete donc exactement a l'epaisseur voulue.
     # La compensation est obtenue par CHANGEMENT DE VARIABLE, pas par un
@@ -465,7 +470,7 @@ def simulate_growth_kernel(
     # Les trois questions du juge de paix recevaient donc la reponse « toujours, et
     # exactement », qui n'a aucun contenu : les extrema etaient localises sur une
     # courbe TMM parfaite. En particulier POEM reporte sa fraction figee sur les
-    # extrema REELLEMENT OBSERVES — T_prev_real et T_last_real sont censes etre des
+    # extrema REELLEMENT OBSERVES -- T_prev_real et T_last_real sont censes etre des
     # MESURES. On lui donnait le benefice du recalage sans lui en faire payer le
     # cout : le niveau vise valant T_prev + p.(T_last - T_prev), deux ancres
     # portant chacune une erreur d'ecart-type sigma donnent
@@ -475,11 +480,11 @@ def simulate_growth_kernel(
     # soit un bruit effectif de sigma.sqrt(1 + (1-p)^2 + p^2) : x1,22 a p = 0,5, et
     # jusqu'a x1,41 quand le trigger tombe sur une ancre. POEM echange un BIAIS
     # (l'erreur non compensee) contre une VARIANCE (deux mesures de plus), et le
-    # modele ne comptait que le benefice — il favorisait donc structurellement les
+    # modele ne comptait que le benefice -- il favorisait donc structurellement les
     # strategies qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes
     # heritees du bloc, puisqu'il les supposait parfaites.
     #
-    # 🔴 NOMBRES ALEATOIRES COMMUNS — la contrainte a ne pas perdre.
+    # 🔴 NOMBRES ALEATOIRES COMMUNS -- la contrainte a ne pas perdre.
     #
     # Le tirage est une FONCTION PURE de (graine, couche balayee, tirage, indice de
     # point). Aucune entree ne depend de la strategie : ni la longueur d'onde, ni le
@@ -490,8 +495,8 @@ def simulate_growth_kernel(
     # C'est pourquoi le tirage n'est pas materialise en tableau : un tableau indexe
     # a plat sur le balayage se DESALIGNERAIT d'une strategie a l'autre, puisque la
     # longueur de l'historique `n_hist` depend du decoupage en blocs. Le generateur
-    # `_seeded_noise_sample` — deja en production pour la nucleation, meme loi
-    # N(0, 1/3) tronquee a +/-1 que le tirage Sobol de la Phase B — est appele avec
+    # `_seeded_noise_sample` -- deja en production pour la nucleation, meme loi
+    # N(0, 1/3) tronquee a +/-1 que le tirage Sobol de la Phase B -- est appele avec
     # des indices ALIGNES SUR LA PHYSIQUE :
     #
     #   historique de la couche j, point k    ->  (group=j,       elem=k)
@@ -499,7 +504,7 @@ def simulate_growth_kernel(
     #
     # Le premier indexage est invariant en `i_layer` : toutes les couches d'un meme
     # bloc relisent le passe de la couche j AVEC LE MEME BRUIT. C'est l'invariant
-    # physique — la machine a enregistre une mesure, elle ne la remesure pas.
+    # physique -- la machine a enregistre une mesure, elle ne la remesure pas.
     #
     # ⚠ CE QUI RESTE NON FIDELE, et qu'il faut avoir en tete pour lire les taux de
     # plantage produits. Le nombre d'extrema PARASITES qu'un bruit de lecture
@@ -542,35 +547,37 @@ def simulate_growth_kernel(
         R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
         Q00, Q01, Q10, Q11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
         for j in range(j0):
-            n_p = n_H if j % 2 == 0 else n_L
-            ph1 = TWO_PI_VAL / wl * n_p * prev_thicknesses_sim[j]
+            n_p_r = n_H_r if j % 2 == 0 else n_L_r
+            n_p_n = n_H if j % 2 == 0 else n_L
+            ph1 = TWO_PI_VAL / wl * n_p_r * prev_thicknesses_sim[j]
             c1, s1 = (np.cos(ph1), np.sin(ph1))
-            so1 = s1 / n_p if abs(n_p) > 1e-09 else 0.0
+            so1 = s1 / n_p_r if abs(n_p_r) > 1e-09 else 0.0
             a0 = c1 * R00 + 1j * so1 * R10
             a1 = c1 * R01 + 1j * so1 * R11
-            a2 = 1j * n_p * s1 * R00 + c1 * R10
-            a3 = 1j * n_p * s1 * R01 + c1 * R11
+            a2 = 1j * n_p_r * s1 * R00 + c1 * R10
+            a3 = 1j * n_p_r * s1 * R01 + c1 * R11
             R00, R01, R10, R11 = (a0, a1, a2, a3)
-            ph2 = TWO_PI_VAL / wl * n_p * p_thick_nominal[j]
+            ph2 = TWO_PI_VAL / wl * n_p_n * p_thick_nominal[j]
             c2, s2 = (np.cos(ph2), np.sin(ph2))
-            so2 = s2 / n_p if abs(n_p) > 1e-09 else 0.0
+            so2 = s2 / n_p_n if abs(n_p_n) > 1e-09 else 0.0
             b0 = c2 * Q00 + 1j * so2 * Q10
             b1 = c2 * Q01 + 1j * so2 * Q11
-            b2 = 1j * n_p * s2 * Q00 + c2 * Q10
-            b3 = 1j * n_p * s2 * Q01 + c2 * Q11
+            b2 = 1j * n_p_n * s2 * Q00 + c2 * Q10
+            b3 = 1j * n_p_n * s2 * Q01 + c2 * Q11
             Q00, Q01, Q10, Q11 = (b0, b1, b2, b3)
         idx = 0
         for j in range(j0, i_layer):
-            n_j = n_H if j % 2 == 0 else n_L
+            n_j_r = n_H_r if j % 2 == 0 else n_L_r
+            n_j_n = n_H if j % 2 == 0 else n_L
             d_rj = prev_thicknesses_sim[j]
             d_nj = p_thick_nominal[j]
             for k in range(1, NPTS_PREV + 1):
                 f = k / NPTS_PREV
-                p3 = TWO_PI_VAL / wl * n_j * (f * d_rj)
+                p3 = TWO_PI_VAL / wl * n_j_r * (f * d_rj)
                 c3, s3 = (np.cos(p3), np.sin(p3))
-                o3 = s3 / n_j if abs(n_j) > 1e-09 else 0.0
+                o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
                 z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
-                z1 = z1 + (1j * n_j * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j * s3 * R01 + c3 * R11)
+                z1 = z1 + (1j * n_j_r * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j_r * s3 * R01 + c3 * R11)
                 if abs(z1) > 1e-09:
                     Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
                 if apply_signal_noise:
@@ -579,83 +586,66 @@ def simulate_growth_kernel(
                     Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
                         signal_noise_seed, j, signal_noise_run, k - 1, True
                     )
-                p4 = TWO_PI_VAL / wl * n_j * (f * d_nj)
+                p4 = TWO_PI_VAL / wl * n_j_n * (f * d_nj)
                 c4, s4 = (np.cos(p4), np.sin(p4))
-                o4 = s4 / n_j if abs(n_j) > 1e-09 else 0.0
+                o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
                 z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
-                z2 = z2 + (1j * n_j * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j * s4 * Q01 + c4 * Q11)
+                z2 = z2 + (1j * n_j_n * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j_n * s4 * Q01 + c4 * Q11)
                 if abs(z2) > 1e-09:
                     Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
                 idx += 1
-            p3 = TWO_PI_VAL / wl * n_j * d_rj
+            p3 = TWO_PI_VAL / wl * n_j_r * d_rj
             c3, s3 = (np.cos(p3), np.sin(p3))
-            o3 = s3 / n_j if abs(n_j) > 1e-09 else 0.0
+            o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
             g0 = c3 * R00 + 1j * o3 * R10
             g1 = c3 * R01 + 1j * o3 * R11
-            g2 = 1j * n_j * s3 * R00 + c3 * R10
-            g3 = 1j * n_j * s3 * R01 + c3 * R11
+            g2 = 1j * n_j_r * s3 * R00 + c3 * R10
+            g3 = 1j * n_j_r * s3 * R01 + c3 * R11
             R00, R01, R10, R11 = (g0, g1, g2, g3)
-            p4 = TWO_PI_VAL / wl * n_j * d_nj
+            p4 = TWO_PI_VAL / wl * n_j_n * d_nj
             c4, s4 = (np.cos(p4), np.sin(p4))
-            o4 = s4 / n_j if abs(n_j) > 1e-09 else 0.0
+            o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
             h0 = c4 * Q00 + 1j * o4 * Q10
             h1 = c4 * Q01 + 1j * o4 * Q11
-            h2 = 1j * n_j * s4 * Q00 + c4 * Q10
-            h3 = 1j * n_j * s4 * Q01 + c4 * Q11
+            h2 = 1j * n_j_n * s4 * Q00 + c4 * Q10
+            h3 = 1j * n_j_n * s4 * Q01 + c4 * Q11
             Q00, Q01, Q10, Q11 = (h0, h1, h2, h3)
         d_max = D_SCAN * nominal_th
         step_s = d_max / (NPTS - 1)
+        n_cur_r = n_H_r if i_layer % 2 == 0 else n_L_r
+        n_cur_n = n_H if i_layer % 2 == 0 else n_L
         for k in range(NPTS):
             d_k = k * step_s
-            phi_k = TWO_PI_VAL / wl * n_current * d_k
-            cpk, spk = (np.cos(phi_k), np.sin(phi_k))
-            sonk = spk / n_current if abs(n_current) > 1e-09 else 0.0
-            e01 = +1j * sonk
-            e10 = +1j * n_current * spk
-            r00 = cpk * R00 + e01 * R10
-            r01 = cpk * R01 + e01 * R11
-            r10 = e10 * R00 + cpk * R10
-            r11 = e10 * R01 + cpk * R11
+            phi_kr = TWO_PI_VAL / wl * n_cur_r * d_k
+            cpkr, spkr = (np.cos(phi_kr), np.sin(phi_kr))
+            sonkr = spkr / n_cur_r if abs(n_cur_r) > 1e-09 else 0.0
+            e01r = +1j * sonkr
+            e10r = +1j * n_cur_r * spkr
+            r00 = cpkr * R00 + e01r * R10
+            r01 = cpkr * R01 + e01r * R11
+            r10 = e10r * R00 + cpkr * R10
+            r11 = e10r * R01 + cpkr * R11
             dr = r00 + n_Sub * r01 + r10 + n_Sub * r11
             if abs(dr) > 1e-09:
                 Ts_r[idx] = 4.0 * n_Sub.real / (dr.real**2 + dr.imag**2)
             if apply_signal_noise:
-                # elem decale de NPTS_PREV : plage disjointe de celle de l'historique.
                 g_noise = i_layer
                 e_noise = NPTS_PREV + k
-                # 🔴 LE POINT DUPLIQUE. `d_k = 0` de la couche courante EST le
-                # dernier point de l'historique du bloc : dans les deux cas c'est
-                # T de l'empilement arrete a la fin de la couche i_layer - 1. UNE
-                # SEULE MESURE, donc UN SEUL tirage.
-                #
-                # 📏 Y tirer deux bruits independants coutait tres cher, et de
-                # facon trompeuse. Le signal PROPRE y a un palier de longueur
-                # nulle : `dl = 0`, donc dans la bande morte a 1e-12, donc aucun
-                # extremum detecte. Deux tirages independants rendaient cette
-                # difference non nulle et de signe aleatoire, ce qui fabriquait un
-                # extremum parasite a PILE OU FACE — donc avec une probabilite
-                # INDEPENDANTE DE SIGMA. Mesure sur le dichroique 48 couches,
-                # historique nominal et bruit d'arret nul :
-                #
-                #     profondeur d'historique  0      1      2      4
-                #     plantage                0,63 % 27,4 % 28,1 % 28,1 %
-                #     et a profondeur 4 :  sigma/10 -> 28,5 %,  2 sigma -> 28,1 %
-                #
-                # Les deux signatures designent le meme defaut : le saut apparait
-                # des qu'il existe UN historique (donc une jonction) et ne croit
-                # plus avec la profondeur (il n'y a qu'une jonction, quelle que
-                # soit la profondeur) ; et il ne depend pas de sigma parce qu'un
-                # signe aleatoire ne depend pas de l'amplitude.
                 if k == 0 and n_hist > 0:
                     g_noise = i_layer - 1
                     e_noise = NPTS_PREV - 1
                 Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
                     signal_noise_seed, g_noise, signal_noise_run, e_noise, True
                 )
-            q00 = cpk * Q00 + e01 * Q10
-            q01 = cpk * Q01 + e01 * Q11
-            q10 = e10 * Q00 + cpk * Q10
-            q11 = e10 * Q01 + cpk * Q11
+            phi_kn = TWO_PI_VAL / wl * n_cur_n * d_k
+            cpkn, spkn = (np.cos(phi_kn), np.sin(phi_kn))
+            sonkn = spkn / n_cur_n if abs(n_cur_n) > 1e-09 else 0.0
+            e01n = +1j * sonkn
+            e10n = +1j * n_cur_n * spkn
+            q00 = cpkn * Q00 + e01n * Q10
+            q01 = cpkn * Q01 + e01n * Q11
+            q10 = e10n * Q00 + cpkn * Q10
+            q11 = e10n * Q01 + cpkn * Q11
             dn = q00 + n_Sub * q01 + q10 + n_Sub * q11
             if abs(dn) > 1e-09:
                 Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
@@ -681,18 +671,16 @@ def simulate_growth_kernel(
                 M_pj = int(np.ceil(d_nj / SAMPLE_DD))
                 tmm_sub_r = Ts_r[idx_src : idx_src + NPTS_PREV]
                 tmm_sub_n = Ts_n[idx_src : idx_src + NPTS_PREV]
+                inv_drj_npts = (NPTS_PREV / d_rj) * SAMPLE_DD if d_rj > 1e-9 else 0.0
+                inv_dnj_npts = (NPTS_PREV / d_nj) * SAMPLE_DD if d_nj > 1e-9 else 0.0
+                kr_flt = 0.0
+                kn_flt = 0.0
                 for m in range(M_pj):
-                    d_m = m * SAMPLE_DD
-                    f_r = d_m / d_rj if d_rj > 1e-9 else 0.0
-                    f_n = d_m / d_nj if d_nj > 1e-9 else 0.0
-
-                    kr_flt = f_r * NPTS_PREV
                     kr_low = min(max(0, int(kr_flt)), NPTS_PREV - 1)
                     kr_frac = kr_flt - kr_low
                     kr_hi = min(kr_low + 1, NPTS_PREV - 1)
                     vr = (1.0 - kr_frac) * tmm_sub_r[kr_low] + kr_frac * tmm_sub_r[kr_hi]
 
-                    kn_flt = f_n * NPTS_PREV
                     kn_low = min(max(0, int(kn_flt)), NPTS_PREV - 1)
                     kn_frac = kn_flt - kn_low
                     kn_hi = min(kn_low + 1, NPTS_PREV - 1)
@@ -706,14 +694,16 @@ def simulate_growth_kernel(
                             signal_noise_seed, j, signal_noise_run, m, True
                         )
                     idx_dst += 1
+                    kr_flt += inv_drj_npts
+                    kn_flt += inv_dnj_npts
                 idx_src += NPTS_PREV
 
             tmm_cur_r = Ts_r[n_hist : n_hist + NPTS]
             tmm_cur_n = Ts_n[n_hist : n_hist + NPTS]
             d_max_cur = D_SCAN * nominal_th
+            fc_step = ((NPTS - 1) / d_max_cur) * SAMPLE_DD if d_max_cur > 1e-9 else 0.0
+            fc_flt = 0.0
             for m in range(M_cur):
-                d_m = m * SAMPLE_DD
-                fc_flt = (d_m / d_max_cur) * (NPTS - 1) if d_max_cur > 1e-9 else 0.0
                 kc_low = min(max(0, int(fc_flt)), NPTS - 2)
                 kc_frac = fc_flt - kc_low
                 kc_hi = kc_low + 1
@@ -735,6 +725,7 @@ def simulate_growth_kernel(
                         signal_noise_seed, g_noise, signal_noise_run, e_noise, True
                     )
                 idx_dst += 1
+                fc_flt += fc_step
 
             n_tot = M_tot
             Ts_r = Ts_r_samp
@@ -753,16 +744,17 @@ def simulate_growth_kernel(
             k_win = smoothing_window
             Ts_r_raw = Ts_r.copy()
             Ts_n_raw = Ts_n.copy()
+            sum_r = 0.0
+            sum_n = 0.0
             for idx_w in range(n_tot):
-                st_w = max(0, idx_w - k_win + 1)
-                w_len = idx_w - st_w + 1
-                s_r = 0.0
-                s_n = 0.0
-                for wi in range(st_w, idx_w + 1):
-                    s_r += Ts_r_raw[wi]
-                    s_n += Ts_n_raw[wi]
-                Ts_r[idx_w] = s_r / w_len
-                Ts_n[idx_w] = s_n / w_len
+                sum_r += Ts_r_raw[idx_w]
+                sum_n += Ts_n_raw[idx_w]
+                if idx_w >= k_win:
+                    sum_r -= Ts_r_raw[idx_w - k_win]
+                    sum_n -= Ts_n_raw[idx_w - k_win]
+                w_len = idx_w + 1 if idx_w < k_win else k_win
+                Ts_r[idx_w] = sum_r / w_len
+                Ts_n[idx_w] = sum_n / w_len
         # ---- LE SUBSTRAT NU EST UN POINT TOURNANT, ET IL ETAIT IGNORE ----------
         #
         # Physicien, 2026-08-05 : « pour la couche 1 on demarre la couche sur un
@@ -773,7 +765,7 @@ def simulate_growth_kernel(
         # dR/dd proportionnel a sin(2.delta), qui S'ANNULE en d = 0. Verifie
         # numeriquement (n_H = 2,35, substrat 1,52, lambda = 500 nm) : pente en
         # d = 0 de -8,0e-4 par nm contre -7,9e-3 au milieu du quart d'onde, soit
-        # dix fois moins — le residu vient de la difference finie sur un pas de
+        # dix fois moins -- le residu vient de la difference finie sur un pas de
         # 2,5 nm, la derivee vraie est nulle.
         #
         # Or la boucle de detection commence a k = 1 : un extremum de BORD est
@@ -791,7 +783,7 @@ def simulate_growth_kernel(
         # d'ou le repli force_monolayer qui fabrique une arete invalide.
         #
         # 🔴 CETTE ANCRE EST LA PLUS FIABLE DE TOUTES. En d = 0 sur la couche 0,
-        # l'empilement reel et l'empilement nominal sont le MEME objet — le
+        # l'empilement reel et l'empilement nominal sont le MEME objet -- le
         # substrat nu. T_prev_real = T_prev_nom exactement, sans erreur amont
         # possible, et la machine mesure ce niveau avant meme de commencer.
         #
@@ -805,7 +797,7 @@ def simulate_growth_kernel(
             Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
         )
         # Le signal NOMINAL : ce que la strategie attend d'elle. MEME regle de
-        # detection, imperativement — les deux comptages servent aussi a detecter la
+        # detection, imperativement -- les deux comptages servent aussi a detecter la
         # DIVERGENCE du nombre d'extrema, qui est l'un des deux modes de plantage, et
         # deux regles differentes en fabriqueraient une a chaque couche. Compter le
         # bord d'un cote et pas de l'autre aurait le meme effet.
@@ -834,14 +826,14 @@ def simulate_growth_kernel(
         # reportee sur les extrema reellement observes
         target_level = T_prev_real + p_poem * (T_last_real - T_prev_real)
     else:
-        # ABSOLUTE FALLBACK — the controller does NOT know (affine_scale, affine_offset).
+        # ABSOLUTE FALLBACK -- the controller does NOT know (affine_scale, affine_offset).
         #
         # It was handed a level computed offline from the nominal design, in TRUE T
         # units, and it compares that number against what its instrument reports, in
         # MEASURED units. Pre-distorting the level to `a * target + b` gave the
         # controller back the calibration it is precisely assumed to have lost, which
         # made absolute monitoring immune to gain and offset drift. That immunity is
-        # what POEM provides and absolute monitoring does not — cancelling it here
+        # what POEM provides and absolute monitoring does not -- cancelling it here
         # erased the only contrast these parameters exist to measure.
         target_level = target_nominal
 
@@ -853,13 +845,13 @@ def simulate_growth_kernel(
     # AVANT un point tournant, une erreur amont peut faire tourner le signal
     # avant d'avoir atteint la valeur visee. La machine attend un niveau qui ne
     # viendra jamais et le depot part en vrille. Ce n'est pas une perte de
-    # precision, c'est un PLANTAGE — un evenement discret, invisible a un critere
+    # precision, c'est un PLANTAGE -- un evenement discret, invisible a un critere
     # de RMSE tant qu'on ne le detecte pas explicitement.
     #
     # C'est pour cela que s'arreter APRES un point tournant est bien plus sur :
     # l'extremum est deja compte, le signal s'en eloigne de facon monotone, et le
     # niveau est fatalement atteint. C'est aussi la justification de l'asymetrie
-    # de check_extrema_proximity — zone interdite 3x plus large AVANT un point
+    # de check_extrema_proximity -- zone interdite 3x plus large AVANT un point
     # tournant qu'APRES.
     #
     # On modelise ici la defaillance telle qu'elle se produit : si le niveau vise
@@ -871,7 +863,7 @@ def simulate_growth_kernel(
     # Qu'un niveau soit atteignable ou non est une question de PHYSIQUE du signal,
     # pas de la strategie d'ancrage employee pour le calculer. Garder la detection
     # derriere `poem_ok` la desactivait justement dans les cas ou POEM est mal
-    # conditionne — swing sous SWING_MIN, moins de deux points tournants — qui sont
+    # conditionne -- swing sous SWING_MIN, moins de deux points tournants -- qui sont
     # precisement les plus exposes.
     #
     # Mesure sur example/example_strat/JSON-strat-example.json, 48 couches x 51
@@ -908,7 +900,7 @@ def simulate_growth_kernel(
         # niveau n'a plus aucune sensibilite a l'epaisseur, et la moitie des
         # realisations du bruit place la cible au-dela de l'extremum, ou elle ne
         # sera jamais atteinte. C'est exactement pour cela qu'on ne monitore pas
-        # un QWOT a sa lambda_0 par coupure de niveau — et c'est le travail de
+        # un QWOT a sa lambda_0 par coupure de niveau -- et c'est le travail de
         # STRAT que d'aller chercher ailleurs. check_extrema_proximity existe
         # pour la meme raison.
         if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
@@ -979,7 +971,7 @@ def simulate_growth_kernel(
         #
         # Il divisait l'erreur par une constante (defaut 2.0) des qu'un extremum
         # etait traverse. C'etait la forme reduite du gain d'information apporte
-        # par le swing — un pansement, rendu necessaire par le fait que le modele
+        # par le swing -- un pansement, rendu necessaire par le fait que le modele
         # ne pouvait PAS produire ce gain lui-meme : la cible etant recalculee sur
         # l'empilement reel, error_raw ne contenait que du bruit local et il n'y
         # avait rien a corriger.

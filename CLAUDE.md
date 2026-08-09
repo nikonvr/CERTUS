@@ -431,6 +431,14 @@ fabrication à `k = 8`, `N = 800` — voir §9bis. `1,00` est la borne **mesuré
 
 #### A14 — Balayage du corridor d'indice · *ex-T5*
 
+🔴 **Si A14 est lancée AVANT A10, elle mesure une moitié de l'effet, et il faut le savoir en
+lisant le chiffre.** Le corridor atteint aujourd'hui la croissance mais pas la notation
+(§17-10) : la dégradation observée ne viendra donc que des **épaisseurs faussées**, pas de
+l'indice erroné du filtre fini. Le chiffre sera **sous-estimé**, et le mode croisé quasi
+invisible. ⚠️ Ce n'est pas une raison de ne pas la faire : refaire A14 **après** A10 et
+prendre la différence donne exactement la contribution du chemin de notation. Mais ne
+présente jamais un A14 pré-A10 comme « l'effet du corridor ».
+
 | # | Run | Attendu |
 |---|---|---|
 | 1 | corridor 0 | identique à A7 |

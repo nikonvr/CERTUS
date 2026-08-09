@@ -1221,6 +1221,10 @@ physique.
 - **Raffiner la grille d'échantillonnage sans corriger le seuil** — voir §12.2.
 - **Modéliser σ(T), la grenaille ou le bruit multiplicatif** — voir §9.
 
+### ✅ La clé API Anthropic — Révoquée sur console.anthropic.com
+
+Le fichier `.env` qui avait été poussé sur le dépôt public le 2026-07-03 a vu son historique réécrit (`git log --all --full-history -- .env` → 0 commit), et la clé d'API a été **révoquée sur console.anthropic.com** (confirmé par l'utilisateur le 2026-08-09).
+
 ---
 
 # PARTIE IV — ÉTAT VÉRIFIÉ ET AUTRES CHANTIERS

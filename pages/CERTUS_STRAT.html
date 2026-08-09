@@ -1275,13 +1275,35 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 separately.
             </p>
             <p style="margin:10px 0 0;">
-                🔒 <b>The noise factor is a TABLE, not a law.</b> There are four settings and four given
-                numbers, so there are four table entries and <b>no free parameter</b>. Fitting a power law
-                would not even hold: between 5 and 2 nm the behaviour is close to photon-limited
-                $1/\sqrt{B}$ ($\sqrt{2/5} = 0.63$ against the quoted &divide;1.5), but below nominal it
-                degrades <i>faster</i> than $1/B$ (&times;5 at 0.5 nm where $1/B$ would give &times;4).
-                A fitted law would also allow the search to propose resolutions <b>the machine does not
-                have</b>.
+                🔴 <b>These four numbers are ESTIMATES, not measurements</b> (👤 2026-08-09, verbatim:
+                estimated "by feeling"). They therefore have the status of a modelling postulate, like the
+                frozen reading model of §2.0 — never cite them as measured. The consequence is binding: a
+                conclusion drawn from them is a physical result <b>only if it survives their
+                uncertainty</b>. Every resolution measurement must be repeated with the factors displaced
+                over a plausible range (&divide;1.2 instead of &divide;1.5, &times;3 instead of &times;5).
+                If the winning resolution does not change, the conclusion is robust. If it does, the
+                conclusion rests on a guess and that must be said in the same sentence.
+            </p>
+            <p style="margin:10px 0 0;">
+                🔒 <b>It is a TABLE, never a fitted law.</b> Four settings, four entries. A power law would
+                not even hold: between 5 and 2 nm the behaviour is close to photon-limited $1/\sqrt{B}$
+                ($\sqrt{2/5} = 0.63$ against the quoted &divide;1.5), but below nominal it degrades
+                <i>faster</i> than $1/B$ (&times;5 at 0.5 nm where $1/B$ would give &times;4). Fitting a law
+                over four estimates would build an invented model on invented numbers — and it would let
+                the search propose resolutions <b>the machine does not have</b>.
+            </p>
+            <p style="margin:10px 0 0;">
+                🔴 <b>The slit is RECTANGULAR (👤 2026-08-09), and the production criterion is a factor
+                $\sqrt{3}$ too strict.</b> A uniform average over $[\lambda_0 - B/2, \lambda_0 + B/2]$ has
+                second-order error $T''B^2/24$, whereas the second difference the code measures over
+                $\pm\,\text{test\_bw}/2$ is $T''\,\text{test\_bw}^2/8$. The usable bandwidth is therefore
+                $\sqrt{24/8} = \sqrt{3} \approx 1.732$ times wider than the code allows. Verified
+                numerically against direct boxcar integration: ratio 1.7321 on a pure quadratic, 1.7305 on
+                a 20 nm cosine, 1.7252 on a 10 nm cosine — the drift showing the second-order expansion
+                degrading exactly where features get sharp. The one-line fix,
+                <code>res_limit = test_bw*sqrt(3*T_tolerance/curvature)</code>, <b>widens</b> the admissible
+                slits, which makes the &divide;1.5 noise bonus reachable for strategies currently denied it
+                for no reason.
             </p>
             <p style="margin:10px 0 0;">
                 🟢 <b>Half of this already exists.</b>

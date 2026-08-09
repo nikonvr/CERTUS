@@ -121,40 +121,353 @@ amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'ava
 
 ---
 
-## ⚡ ORDRE DE TRAVAIL — fais les tâches dans cet ordre, une par une
+## ⚡ FEUILLE DE ROUTE — 22 actions, dans cet ordre, une par une
 
-Ne saute pas de tâche. Ne fais pas deux tâches à la fois. Après **chaque** tâche : tests,
-lint, commit, et tu écris ce que tu as mesuré.
+**Établie le 2026-08-09**, après l'audit de §17. Elle **remplace** l'ancien tableau T0–T7, qui
+présentait comme à faire du code déjà écrit et comme faites des mesures qui ne l'étaient pas.
+La correspondance avec les anciens numéros est donnée en colonne.
 
-| # | Tâche | Section | Condition d'arrêt |
+### Les trois règles qui fixent cet ordre
+
+1. **Une sonde bon marché qui peut invalider un gros travail passe AVANT ce travail.** Le
+   palier 0 coûte des minutes et décide de plusieurs jours.
+2. **Rien de comparatif avant que le repère soit rétabli.** Tant que A7 n'est pas faite,
+   aucun `RESULT` ne se compare à aucun autre.
+3. **Rien de mesuré avant d'être mesurable isolément** (contrainte C3). C'est pourquoi le
+   palier 2 précède le palier 3.
+
+Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `2299 passed,
+5 skipped` · `ruff check .` → `All checks passed!` · commit · et tu écris ce que tu as mesuré,
+sortie collée. **Une action, un commit.**
+
+---
+
+### PALIER 0 — Quatre sondes qui ne coûtent rien et qui décident du reste
+
+Aucune ne demande le banc, ni le repère, ni une machine libre. **Minutes chacune.** Elles
+peuvent toutes être faites aujourd'hui.
+
+#### A1 — La fabrication d'extrema sous lissage · *décide du sort de §9bis*
+
+C'est **la** mesure qui valide ou détruit le modèle figé. Si elle échoue, ce n'est pas
+l'action qu'on bricole, c'est §9bis qu'on rouvre.
+
+- **Où** : script autonome dans `scripts/`, **aucun TMM**. Modèle : la sonde qui a déjà produit
+  le tableau 32,9 % / 92,9 % / 99,9 % de §12.2.
+- **Quoi** : signal propre **plat**, bruit réel `A = 5e-4`, **20 000 tirages**, `N = 800`
+  échantillons, moyenne glissante **centrée** de `k` lectures, seuil `f·A`. Compter la
+  fraction de couches où le bruit **fabrique** un point tournant.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | **Reproduire d'abord une ligne connue** : `k = 1`, `f = 1,66`, `N = 800` | **99,935 %** |
+| 2 | Si ce n'est pas ça → **la sonde est fausse, arrête-toi.** Ne va pas plus loin | — |
+| 3 | `k = 8`, `f = 0,354`, `N = 800` | **~0 %** |
+| 4 | Piège 1 : bruit ×0,01 à la config 3 | doit s'effondrer à 0 |
+| 5 | Balayer `k ∈ {1, 2, 4, 8, 16}` avec `f = 1/√k` | courbe **monotone** en `k` |
+
+🔴 **Condition d'arrêt** : si l'étape 3 ne rend pas ~0 %, **colle le chiffre et arrête-toi.**
+**Ne remonte pas le seuil.** §12.2 le dit, et c'est le piège que ce projet a payé trois fois.
+
+#### A2 — Les vrais extrema survivent-ils au lissage ? · *l'autre face, jamais mesurée*
+
+Le lissage supprime les faux extrema. Rien ne prouve qu'il préserve les vrais.
+
+- **Où** : même sonde, signal **propre sans bruit**, sur le juge de paix.
+- **Quoi** : compter les points tournants détectés avec et sans lissage.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Signal propre, `k = 1` | `n_tp` de référence |
+| 2 | Signal propre, `k = 8` | **`n_tp` identique** |
+| 3 | Si (2) est inférieur | la fenêtre arrondit de vrais extrema → **elle est trop large, dis-le** |
+| 4 | Balayer `k ∈ {8, 16, 32}` | trouver à partir de quel `k` un vrai extremum tombe |
+
+#### A3 — La chute de swing sous fente de 5 nm · *tranche entre 1 h et plusieurs jours*
+
+- **Où** : script autonome, TMM nominal, juge de paix, **pas de Monte-Carlo**.
+- **Quoi** : pour chaque couche et chaque λ_mon candidate, calculer `T(λ)` autour de λ_mon,
+  moyenner **uniformément** sur `[λ₀ − B/2 ; λ₀ + B/2]` — 👤 la fente est **rectangulaire** —
+  avec `B = 5` nm, et mesurer **de combien le swing baisse**.
+
+| # | Étape | Ce que ça décide |
+|---|---|---|
+| 1 | Chute médiane **≲ 1 %** | la déformation est du **second ordre** ⇒ A17 se réduit à **une multiplication**, A18 suffit. |
+| 2 | Chute **≳ 20 %** | premier ordre ⇒ il faut la **convolution complète** dans le noyau, ×3 à ×5 sur le coût TMM du monitoring |
+| 3 | Refaire à 0,5 / 1 / 2 nm | vérifier que la chute **décroît** avec la fente. Sinon la sonde est fausse |
+| 4 | Rapporter la **couche la pire**, pas la médiane | c'est elle qui lie, cf. `worst_layer` |
+
+#### A4 — Compter ce que les filtres existants rejettent · *§20-contrôle 4*
+
+> **Compte les rejets, ne lis pas le code.** Un filtre inerte ne produit aucune erreur — il
+> produit un résultat plausible. C'est ainsi qu'une règle de proximité recevant une matrice
+> de zéros n'a rien interdit sur 51 candidates × 48 couches, en silence.
+
+| # | Filtre | Où | Attendu |
 |---|---|---|---|
-| **T0** | **Établir le point de référence.** `set CERTUS_BENCH_TIMEOUT_S=5400` puis le run complet. Machine libre, rien d'autre. | §10 | Si `WAIT_EXIT=timeout` ou `RESULT=None` → relance avec 7200. Si `strategies` < 300 → le run n'a pas abouti, **ne lis pas le RESULT**. |
-| **T1** | **Câbler la distorsion affine** dans les deux fonctions batch + tirage par run + drapeau `poem_enabled`. | §12.1 | Amplitudes à 0 → `RESULT` doit être **identique** à T0, au dernier chiffre. Sinon tu as cassé quelque chose : reviens en arrière. |
-| **T2** | **Mesurer POEM sous distorsion** : 4 runs (POEM on/off × distorsion on/off). | §12.1 | Aucune. C'est une mesure, elle donne ce qu'elle donne. Écris les 4 chiffres. |
-| **T3** | **Grille d'échantillonnage à 0,125 nm** avec découplage TMM/échantillonnage. | §12.4 | Fenêtre à 1 et grille fine → le taux de plantage va **monter beaucoup**. C'est **attendu**, pas un bug. Ne corrige rien, passe à T4. |
-| **T4** | **Lissage `k = 8` + seuil 0,354.** | §12.2 | Le taux de plantage doit **redescendre**. S'il ne redescend pas, dis-le — **ne remonte pas le seuil pour faire passer le chiffre**. |
-| **T5** | **Corridor d'indice 0,005.** | §12.3 | Corridor à 0 → `RESULT` identique à T0. Puis balayer 0 / 0,0025 / 0,005, et `a` seul / `b` seul. |
-| **T6** | **`phase_a_level_margin_factor` 1,66 → 3,33.** | §12.2, dernier bloc | Aucune. Un run chacun, comparer. |
-| **T7** | **Quantification de l'arrêt** `U(0 ; 0,125 nm)`. | §12.5 | Piège 1 : si doubler `Δd_sample` ne change rien, la mesure est un artefact. |
+| 1 | `phase_a_level_margin_factor` | log `[MARGIN]`, `certus_strat_service.py:991` | **compter** les candidates rejetées, par couche |
+| 2 | 🔴 **D'abord corriger le facteur √3** — la fente est rectangulaire, la formule est trop stricte de 1,73× (§12.7) | `_calculate_strategy_spectral_resolution:281` | `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)` |
+| 3 | `min_resolution`, **sur la formule corrigée** | idem | **combien de stratégies** seraient écartées à chacune des 4 résolutions |
+| 4 | `tp_hysteresis` | sentinelles `CRASH_TP_MISCOUNT` vs `CRASH_LEVEL_UNREACHABLE` | les **séparer** dans le rapport (`int(val // 1e6)`) |
+| 5 | Un filtre qui rejette **0** | — | **c'est un défaut**, pas un succès. Signale-le |
 
-### ⚠️ État réel de ces tâches au 2026-08-09 — lis §17 avant d'en reprendre une
+⚠️ L'étape 2 est un changement de formule, donc un commit à part, avec son test. Elle
+**élargit** les fentes admissibles : compter les rejets avant la correction donnerait un
+chiffre faux dans le sens sévère.
 
-| | Code écrit | Mesure faite | Verdict |
-|---|---|---|---|
-| **T0** | — | le seul run neutre abouti donne `0,00294862737122675`, **pas** `0,002898` | repère toujours non rétabli |
-| **T1** | ✅ `f7a3d71` | non | câblage réel, aucun test |
-| **T2** | — | **non** | jamais lancé |
-| **T3** | ⚠️ `e0df0e1` | non | **soudée à T4, donc inexécutable seule** |
-| **T4** | ⚠️ `e0df0e1` | 2 runs non traçables | moyenne **causale** ⇒ retard interdit par §9bis-5 |
-| **T5** | ⚠️ `162a0ff` | **non** | **moitié faite** : atteint la croissance, **pas la notation** (§17-10) |
-| **T6** | — | **non** | jamais lancé |
-| **T7** | ❌ | — | **non implémenté**, malgré le message de `162a0ff` |
+---
 
-**T3 et T4 forment une paire.** Le taux de plantage n'a de sens qu'une fois les deux faites.
-Ne conclus rien entre les deux.
+### PALIER 1 — Rendre le banc digne de confiance
 
-**§12.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Elle est documentée
-pour mémoire, pas pour être exécutée.
+#### A5 — Le harnais d'empreinte `float.hex()` · *l'outil qui manque depuis toujours*
+
+La règle d'or de §3 exige une non-régression **au bit**, et **aucun outil ne permet de la
+vérifier**. C'est pour cela que l'écart de §17-1 n'a été vu qu'après coup, dans un artefact.
+
+- **Où** : `tests/oracle/` — c'est un oracle, pas un test unitaire.
+- **Quoi** : balayer une large batterie de configurations de `simulate_growth_kernel`
+  (couches, λ, épaisseurs, graines), capturer `float.hex()` de chaque sortie, écrire une
+  empreinte. Un mode `--compare` qui exige **zéro** différence.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Capturer l'empreinte sur `HEAD` | fichier d'empreinte, ≥ 10 000 configurations |
+| 2 | Relancer sans rien changer | **zéro** différence |
+| 3 | Changer un chiffre du noyau exprès | l'empreinte **doit** bouger — sinon le harnais ne teste rien |
+| 4 | Remettre en état | zéro différence |
+
+⚠️ L'étape 3 est la seule qui prouve que le harnais fonctionne. Ne la saute pas.
+
+#### A6 — Localiser l'écart de 2,5e-11 · *bloque tout le reste*
+
+Entre `59793e2` et l'artefact post-T5, le chemin neutre a bougé de **2,5e-11 relatif**, soit
+25× le seuil que §20 accorde à numba. Tant qu'on ne sait pas d'où ça vient, **on ne sait pas
+si le chemin par défaut est intact**.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | `git worktree add C:\dev\gemini-baseline depart-gemini` | worktree propre |
+| 2 | Empreinte A5 sur `f7a3d71^` (avant T1) | référence |
+| 3 | Empreinte sur `f7a3d71` (T1), puis `e0df0e1` (T3/T4), puis `162a0ff` (T5) | **le premier commit qui bouge est le coupable** |
+| 4 | Si aucun ne bouge | l'écart vient d'ailleurs — de la Phase A, de la DP, ou du tri. Remonte d'un cran |
+| 5 | Une fois localisé | corriger **ou** documenter pourquoi c'est légitime, avec le mécanisme |
+| 6 | `git worktree remove C:\dev\gemini-baseline` | — |
+
+🔴 **Ne passe pas à A7 avant d'avoir une réponse.** Un repère mesuré sur un chemin par défaut
+dont on doute n'est pas un repère.
+
+#### A7 — Rétablir le repère · *ex-T0*
+
+```bat
+set CERTUS_BENCH_TIMEOUT_S=5400
+.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+```
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Machine **libre**. Ni tests, ni lint, ni recherche récursive | — |
+| 2 | Vérifier `WAIT_EXIT` **avant** de lire `RESULT` | pas `timeout` |
+| 3 | Vérifier le nombre de stratégies | si le run n'a pas abouti, **ne lis pas le RESULT** |
+| 4 | Vérifier le bloc `CONFIG=` de la sortie | tous les paramètres à leur valeur neutre |
+| 5 | Comparer au chiffre de `cc90a94` : `0.00294862737122675` | doit être **identique**, sinon le banc n'est pas reproductible |
+| 6 | Réécrire §10 avec ce chiffre, sa commande et sa sortie collée | **et retirer `0,002898`**, qui n'a d'artefact nulle part |
+
+⚠️ Si l'étape 5 échoue, **le banc n'est pas déterministe** — c'est un défaut plus grave que
+tout le reste de cette feuille de route, et il passe devant.
+
+---
+
+### PALIER 2 — Rendre mesurable ce qui est déjà écrit
+
+#### A8 — Dé-souder la grille du lissage · *ex-T3, §17-2*
+
+`SAMPLE_DD = 0.125` n'existe qu'à l'intérieur de `if smoothing_window > 1:`. La configuration
+« grille fine, fenêtre à 1 » — celle que T3 impose d'observer — **n'est pas exprimable**.
+
+- **Où** : `certus/physics/certus_strat_growth.py`, `simulate_growth_kernel`, ligne ~652.
+- **Quoi** : une clé JSON `machine_sampling_dd` (défaut **0,0 = inactif = grille actuelle**),
+  indépendante de `reading_smoothing_window`.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Empreinte A5 avant | référence |
+| 2 | `machine_sampling_dd = 0` et `k = 1` | empreinte **identique au bit** |
+| 3 | `machine_sampling_dd = 0,125`, `k = 1` | **doit devenir exprimable** — c'est le but |
+| 4 | `machine_sampling_dd = 0`, `k = 8` | doit rester exprimable aussi |
+| 5 | Les 4 combinaisons donnent 4 résultats **distincts** | sinon un des deux drapeaux n'atteint pas le calcul |
+
+#### A9 — Moyenne centrée au lieu de causale · *§17-3*
+
+La moyenne actuelle porte sur `[i−k+1 … i]` : elle décale un extremum de `(k−1)/2`
+échantillons, soit **0,44 nm à k = 8**. §9bis-5 pose « aucun retard » en postulat figé.
+
+- **Où** : même fonction, boucle de lissage, ligne ~747.
+- **Quoi** : fenêtre `[i−⌊k/2⌋ … i+⌊k/2⌋]`, bords traités par fenêtre rétrécie symétrique.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Signal propre **sinusoïdal** d'extremum connu, `k = 8` | position de l'extremum détecté **inchangée** à moins d'un échantillon |
+| 2 | Même chose avec la moyenne causale | décalage de **≈ 3,5 échantillons** — c'est ce qu'on corrige |
+| 3 | `k = 1` | empreinte identique au bit |
+| 4 | Rejouer A1 avec la centrée | le chiffre de fabrication ne doit pas se dégrader |
+
+#### A10 — Compléter T5 : perturber la NOTATION · *§17-10*
+
+Le corridor atteint la croissance mais pas le score. Le mode **croisé**, celui que le
+physicien décrit comme non compensable, est donc quasi invisible.
+
+- **Où** : `certus/physics/certus_strat_batch.py`, `compute_batch_rmse` (~ligne 355), et son
+  appelant `certus/core/certus_strat_robustness.py:954`.
+- **Quoi** : passer `(a_H, b_H, a_L, b_L)` **par tirage** + la grille λ, et reconstruire
+  l'indice à la volée — comme le fait déjà `simulate_growth_kernel`. **Pas** une matrice
+  d'indices par tirage : trop de mémoire.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | `index_corridor = 0` | empreinte **identique au bit** |
+| 2 | `index_corridor = 0,005`, `b = 0` (décalage pur) | `RESULT` se dégrade **un peu** |
+| 3 | `index_corridor = 0,005`, `a = 0` (croisement pur) | `RESULT` se dégrade **beaucoup plus** |
+| 4 | Si (3) ≈ (2) | la prédiction du §12.3 est réfutée — **dis-le**, c'est un résultat |
+| 5 | Si ni (2) ni (3) ne bouge | **Piège 1** : la perturbation n'atteint toujours pas le calcul |
+
+#### A11 — Les tests qui manquent · *§17-5*
+
+`f7a3d71`, `e0df0e1`, `162a0ff` n'ont ajouté **aucun** test, et aucun test ne mentionne les
+nouveaux paramètres. Le contrôle 2 de §20 est donc inapplicable.
+
+| # | Test à écrire | Doit échouer sur |
+|---|---|---|
+| 1 | `poem_enabled = False` force bien le repli absolu | `f7a3d71^` |
+| 2 | `affine_scale ≠ 1` déplace l'arrêt du repli, **pas** celui de POEM | `76f7a8f^` |
+| 3 | `reading_smoothing_window = 8` réduit la variance du signal de `√8` | `e0df0e1^` |
+| 4 | `index_corridor > 0` fait diverger réel et nominal | `162a0ff^` |
+| 5 | `index_corridor > 0` change le **score** | **HEAD** — c'est le test qui prouve A10 |
+| 6 | Chaque nouveau paramètre à sa valeur neutre est **bit-identique** | — |
+
+🔴 **Copie chaque test dans le worktree baseline et vérifie qu'il ÉCHOUE.** Un test qui passe
+avant le correctif ne prouve rien. C'est le contrôle le plus rentable de §20.
+
+---
+
+### PALIER 3 — Les mesures qui devaient déjà exister
+
+Toutes au banc, **une machine par run**, `CERTUS_BENCH_TIMEOUT_S=5400`, et le bloc `CONFIG=`
+vérifié avant de lire le moindre chiffre.
+
+#### A12 — POEM sous distorsion, 4 runs · *ex-T2, la seule action qui peut INVALIDER POEM*
+
+`affine_scale_amp = 0.05`, `affine_offset_amp = 0.02`. Ces valeurs sont figées, n'en choisis
+pas d'autres.
+
+| # | Run | Variables |
+|---|---|---|
+| 1 | POEM on, distorsion off | `CERTUS_POEM_ENABLED=1`, amplitudes à 0 |
+| 2 | POEM on, distorsion on | `CERTUS_POEM_ENABLED=1`, `CERTUS_AFFINE_SCALE_AMP=0.05 CERTUS_AFFINE_OFFSET_AMP=0.02` |
+| 3 | POEM off, distorsion off | `CERTUS_POEM_ENABLED=0`, amplitudes à 0 |
+| 4 | POEM off, distorsion on | `CERTUS_POEM_ENABLED=0`, amplitudes non nulles |
+
+**Critère** : l'écart (2)−(1) doit être **beaucoup plus petit** que (4)−(3). C'est toute la
+promesse de POEM. **Si ce n'est pas le cas, l'argument central du mécanisme tombe et il faut
+l'écrire.** Séparer `CRASH_TP_MISCOUNT` et `CRASH_LEVEL_UNREACHABLE` dans le rapport —
+l'asymétrie de `tp_hysteresis` sous distorsion peut fabriquer le premier.
+
+#### A13 — La paire grille + lissage · *ex-T3 et T4*
+
+**Ne conclus rien entre les deux.** Le taux de plantage n'a de sens qu'une fois les deux en
+place.
+
+| # | Run | Attendu |
+|---|---|---|
+| 1 | `sampling_dd = 0,125`, `k = 1`, seuil 1,66 | le plantage **monte beaucoup**. **C'est attendu, pas un bug** |
+| 2 | `sampling_dd = 0,125`, `k = 8`, seuil 0,354 | il doit **redescendre** |
+| 3 | Si (2) ne redescend pas | **dis-le. Ne remonte pas le seuil** |
+| 4 | Balayer `k ∈ {1, 4, 8, 16}`, seuil `1/√k` | **Piège 1** : si le plantage ne bouge pas avec `k`, le lissage n'atteint pas le calcul |
+
+#### A14 — Balayage du corridor d'indice · *ex-T5*
+
+| # | Run | Attendu |
+|---|---|---|
+| 1 | corridor 0 | identique à A7 |
+| 2 | corridor 0,0025 | dégradation |
+| 3 | corridor 0,005 | dégradation plus forte |
+| 4 | corridor 0,005, `b = 0` | décalage pur |
+| 5 | corridor 0,005, `a = 0` | croisement pur — **attendu bien pire que (4)** |
+
+#### A15 — Marge Phase A, 1,66 → 3,33 · *ex-T6*
+
+Un run chacun. **Séparément du lissage** (C3). Rapporter aussi le **nombre de λ écartées** à
+chaque marge — c'est A4-1 qui donne l'instrument.
+
+---
+
+### PALIER 4 — Le neuf
+
+#### A16 — Quantification de l'arrêt · *ex-T7, §12.5*
+
+Quasi gratuit une fois A8 faite : s'arrêter au **premier point de grille au-delà du seuil**
+au lieu d'interpoler, et `U(0 ; 0,125 nm)` apparaît d'elle-même, sans paramètre.
+**Vérification** : Piège 1 — si doubler `Δd_sample` ne change rien, la mesure est un artefact.
+
+#### A17 — Résolution : le facteur de bruit · *§12.7, la partie triviale*
+
+Table de 4 entrées, **jamais une loi**. 🔴 Le facteur multiplie **l'échantillon**, jamais la
+graine — sinon les 4 résolutions voient 4 aléas différents et l'écart n'est plus imputable.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Résolution = 2 nm (nominal) | empreinte **identique au bit** |
+| 2 | Les 4 résolutions, même graine | les tirages **normalisés** doivent être identiques ; seule l'amplitude change |
+| 3 | 4 runs au banc | comparer plantage et erreur spectrale |
+| 4 | 🔴 **Contrôle de sensibilité, obligatoire** : refaire (3) avec ÷1,2 et ×3 au lieu de ÷1,5 et ×5 | **la résolution gagnante doit être la même**. Les facteurs sont 👤 *estimés au feeling*, pas mesurés — une conclusion qui change avec eux n'est pas un résultat |
+| 5 | Si les 4 se tiennent à moins que la dispersion Monte-Carlo | **la résolution ne mérite pas d'entrer dans la recherche** — fige-la à 2 nm et saute A18 |
+
+#### A18 — Résolution : variable de stratégie en Phase B · *§12.7*
+
+Conditionnée par A17-4. Une stratégie devient *(blocs, λ par bloc, résolution)*. **Phase B**,
+pas Phase A, pas la DP — voir §12.7 pour le raisonnement.
+
+#### A19 — Mode Rate · *§14*
+
+`sigma_rate` est **dérivé**, pas posé — voir la dérivation du §14. Reste à obtenir les
+réponses Q1 à Q4 avant d'écrire une ligne.
+
+---
+
+### PALIER 5 — Les questions de fond, celles qui décident de l'architecture
+
+#### A20 — La fuite de l'entonnoir Phase A → Phase B
+
+**La question jamais posée** : la Phase A écarte-t-elle jamais une stratégie que la Phase B
+aurait couronnée ? §8 exige d'elle exactement une chose — *« elle doit bien couvrir »* — et
+personne ne l'a vérifié.
+
+| # | Étape | Attendu |
+|---|---|---|
+| 1 | Relever la gagnante de A7 | référence |
+| 2 | Construire des stratégies à partir de λ **rejetées ou mal classées** par la Phase A | échantillon |
+| 3 | Les passer en Phase B | si l'une bat la gagnante, **l'entonnoir fuit** |
+| 4 | Si aucune ne bat | la question est close, on n'en reparle plus |
+
+#### A21 — La fonction objectif · *le chantier le plus rentable, et il est gelé*
+
+📏 Les deux bandes du juge de paix font **exactement 141 points chacune sur 301**. Un RMSE
+uniforme est donc *littéralement incapable* de distinguer une stratégie qui rate la bande
+bloquée d'une qui rate la passante, alors que l'exigence diffère d'un facteur ~500.
+👤 *« La cible spectrale restera non pondérée jusqu'à nouvel ordre. »*
+
+🔴 **Ne la dégèle pas de toi-même.** Mais sache que tout ce qui précède optimise un score qui
+ne sait pas distinguer un succès d'un échec sur la moitié du spectre.
+
+#### A22 — La validation externe · *§15, le seul chemin restant*
+
+Deux dépôts réels du dichroïque 48 couches, spectres mesurés. Le test est **ordinal** : STRAT
+doit les classer dans le bon ordre. Rien de ce document n'est une validation physique tant que
+cela n'existe pas.
+
+---
+
+**§12.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Documentée pour mémoire,
+pas pour être exécutée.
 
 ---
 
@@ -1173,21 +1486,79 @@ Les deux agissent sur la **même** quantité, le rapport
 la précision de l'arrêt. **C'est ce rapport qu'il faut mesurer, pas les deux effets
 séparément.**
 
-#### 🔒 Le facteur de bruit est une TABLE, pas une loi — ne l'interpole pas
+#### 🔒 Le facteur de bruit est une TABLE ESTIMÉE — statut à ne pas confondre
 
 | Résolution | 5 nm | **2 nm** | 1 nm | 0,5 nm |
 |---|---|---|---|---|
 | Facteur sur `A` | **÷1,5** | **×1** (nominal) | **×2** | **×5** |
 
-Ces quatre valeurs sont 👤 données, et il n'existe que **quatre réglages**. Donc : **quatre
-entrées de table, zéro paramètre libre.** C'est exactement ce que §9 exige.
+🔴 **Ces quatre valeurs ne sont PAS mesurées.** 👤 *« estimés par moi au feeling »*
+(2026-08-09). Elles ont donc le statut d'un **postulat de modélisation**, comme §9bis — pas
+celui d'une spécification constructeur. Ne les cite jamais comme une mesure.
+
+**Ce que cela impose, et ce n'est pas négociable** : une conclusion tirée de ces chiffres
+n'est un résultat physique **que si elle survit à leur incertitude**. Donc toute mesure de
+résolution s'accompagne d'un **contrôle de sensibilité** :
+
+> Refaire la comparaison avec les facteurs déplacés dans une fourchette plausible — par
+> exemple ÷1,2 au lieu de ÷1,5, et ×3 au lieu de ×5. **Si la résolution gagnante ne change
+> pas, la conclusion est robuste et on peut l'écrire. Si elle change, la conclusion dépend
+> d'une estimation au feeling et il faut le dire dans la même phrase.**
+
+C'est le même esprit que le Piège 1 : une conclusion qui repose sur un nombre non mesuré
+n'est pas de la physique tant qu'on n'a pas montré qu'elle n'en dépend pas.
 
 ⚠️ **Ne cherche pas la loi de puissance.** Elle ne tient pas : entre 5 et 2 nm le
 comportement est proche du photonique en `1/√B` (√(2/5) = 0,63, soit ÷1,58 contre ÷1,5
-donné), mais en dessous il se dégrade **plus vite** que `1/B` (×5 à 0,5 nm là où `1/B`
-donnerait ×4). Ajuster une loi sur quatre points remplacerait quatre nombres donnés par un
-modèle inventé — précisément l'erreur que §9 interdit. Et surtout, une loi permettrait de
-proposer des résolutions **qui n'existent pas sur la machine**.
+estimé), mais en dessous il se dégrade **plus vite** que `1/B` (×5 à 0,5 nm là où `1/B`
+donnerait ×4). Ajuster une loi sur quatre estimations produirait un modèle inventé sur des
+nombres inventés. Et surtout, une loi permettrait de proposer des résolutions **qui
+n'existent pas sur la machine**. **Quatre réglages, quatre entrées de table.**
+
+#### 🔴 La fente est RECTANGULAIRE — et la formule en production est trop stricte de √3
+
+👤 *« rectangle »* (2026-08-09). Le signal mesuré est donc la moyenne **uniforme** de `T(λ)`
+sur `[λ₀ − B/2 ; λ₀ + B/2]`, et son erreur au second ordre vaut
+
+$$E_{\text{boxcar}}(B) \;=\; \frac{T''(\lambda_0)\,B^2}{24}$$
+
+Or `_calculate_strategy_spectral_resolution` mesure une **seconde différence** sur
+`± test_bw/2`, qui vaut `T''·test_bw²/8`, et en déduit
+`res_limit = test_bw·√(tol/curvature)`. Ces deux quantités **ne sont pas la même chose** :
+
+$$\frac{B_{\text{vrai}}}{B_{\text{code}}} \;=\; \sqrt{\frac{24}{8}} \;=\; \sqrt{3} \;\approx\; 1{,}732$$
+
+📏 **Vérifié numériquement** (sonde autonome, intégration boxcar contre la formule de
+production, `tol = 5e-4`) :
+
+```
+case                                code B_lim  true B_lim    ratio
+--------------------------------------------------------------------
+pure quadratic  T = 1e-4 lam^2          4.4721      7.7460   1.7321
+gentle cosine   period 200 nm           2.8471      4.9320   1.7323
+sharp cosine    period  20 nm           0.2850      0.4932   1.7305
+sharp cosine    period  10 nm           0.1429      0.2466   1.7252
+--------------------------------------------------------------------
+sqrt(3) = 1.7321
+```
+
+**Le critère actuel est donc conservateur d'un facteur 1,73** : il déclare inutilisable une
+largeur de fente qui passe encore. **Et c'est coûteux dans le bon sens** — corriger le
+critère **élargit** les fentes admissibles, donc **rend accessible le bonus de bruit ÷1,5**
+à des stratégies qui en sont aujourd'hui privées pour rien.
+
+Correction, une ligne :
+
+```python
+res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)   # fente RECTANGULAIRE
+```
+
+⚠️ **La limite de cette correction, et il faut la connaître** : le √3 vient d'un
+développement au **second ordre**. Le tableau ci-dessus le montre en train de se dégrader
+quand la structure devient fine devant `B` — 1,7252 à période 10 nm contre 1,7321 sur la
+quadratique pure, où le développement est exact. Or c'est précisément là que le critère
+compte. **Si `min_resolution` devient un jour un couperet et non un diagnostic, valide-le
+contre une intégration boxcar directe sur l'empilement réel**, pas contre le développement.
 
 #### Ce qui existe déjà dans le code, et ce qui manque
 
@@ -1303,10 +1674,31 @@ mérite pas d'entrer dans la recherche et on la fige à 2 nm.
 
 | # | Question | Pourquoi elle change le code |
 |---|---|---|
-| Q1 | La « résolution » est-elle la **largeur de bande** (FWHM de la fonction de fente) ? Et la fente est-elle **triangulaire** (fentes égales), gaussienne, ou rectangulaire ? | La forme fixe le noyau de convolution. Le second ordre du code actuel suppose implicitement un noyau symétrique. |
-| Q2 | Les facteurs ÷1,5 / ×2 / ×5 sont-ils **mesurés sur la machine** ou estimés ? | S'ils sont mesurés, ils entrent tels quels et le modèle reste à zéro paramètre libre. |
-| Q3 | `MachineModel` porte 0,5 nm sous le nom `MONOCHROMATOR_STEP`. Est-ce le **pas de réglage** de λ_mon, distinct de la largeur de bande ? | Si oui les deux existent, et le pas contraint les λ atteignables — donc la grille de balayage de §13, aujourd'hui à 1 nm. |
-| Q4 | Les quatre valeurs {5 ; 2 ; 1 ; 0,5} sont-elles **les seules** disponibles ? | Décide s'il s'agit d'une table close ou d'un continuum. |
+| # | Question | Réponse |
+|---|---|---|
+| Q1 | Forme de la fonction de fente ? | ✅ 👤 **rectangulaire** (2026-08-09). Convolution = moyenne uniforme sur `B`. D'où la correction √3 ci-dessus. |
+| Q2 | Les facteurs ÷1,5 / ×2 / ×5 sont-ils mesurés ? | ✅ 👤 **non — estimés « au feeling »** (2026-08-09). D'où l'obligation de contrôle de sensibilité. |
+| Q4 | Les quatre valeurs {5 ; 2 ; 1 ; 0,5} sont-elles les seules disponibles ? | ⏳ ouverte |
+
+**Q3, reformulée** — la question portait sur une confusion d'unité dans le code et elle n'était
+pas claire. Deux grandeurs différentes cohabitent :
+
+- la **largeur de fente** `B` : la largeur du domaine spectral sur lequel la machine moyenne.
+  C'est le sujet de toute cette section. Nominal **2 nm**.
+- le **pas de réglage** de λ : la granularité avec laquelle on peut *positionner* le centre de
+  la fente. Peut-on demander 545,0 · 545,3 · 545,7 nm indifféremment, ou seulement des
+  multiples d'un pas — et lequel ?
+
+`MachineModel` porte `monochromator_resolution_nm = 0.5`, alimenté par une constante nommée
+`OMS5100_DEFAULT_MONOCHROMATOR_**STEP**_NM` et documentée « step / precision ». Le nom dit
+*pas*, le champ dit *résolution*, et la valeur (0,5) ne correspond pas au nominal (2 nm).
+**L'une des deux lectures est fausse et il faut savoir laquelle.**
+
+⚠️ **Pourquoi ça compte pratiquement** : STRAT choisit ses λ de contrôle sur une grille à
+**1 nm** (§13, décision tranchée). Si le pas machine vaut 0,5 nm, toute λ de la grille est
+atteignable et il n'y a rien à faire. S'il vaut 2 nm, **la moitié des λ proposées ne sont pas
+réglables sur la machine**, et §16 l'interdit explicitement : *« ne jamais proposer une λ hors
+de la grille de balayage »*. La grille devrait alors s'aligner sur le pas machine.
 
 ---
 

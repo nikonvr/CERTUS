@@ -1102,18 +1102,11 @@ constant**. Les confondre rendrait les deux mesures ininterprétables.
 
 ## 13. Décisions ouvertes et tranchées
 
-### ⏳ Ouverte — brancher ou non la règle de proximité aux points tournants
+### ✅ Tranchée — la marge de sécurité s'exprime en transmission, jamais en nanomètres
 
-Dans `certus/utils/certus_strat_service.py::_select_candidates_phase_a`, le filtre
-`check_extrema_proximity_batch` reçoit `M_befores = np.zeros((n_check, 2, 2))` — un
-placeholder. 📏 **Conséquence mesurée : la règle interdit 0 candidate sur 51, sur les 48
-couches.** Avec une matrice nulle tous les dénominateurs tombent sous 1e-9, tous les `T`
-valent 0, aucune pente, aucun test ne se déclenche.
+Dans `certus/utils/certus_strat_service.py::_select_candidates_phase_a`, la règle de proximité branche la vraie matrice d'empilement cumulée $M_{\text{before}}$ et remplace le critère fixe en épaisseur par le **critère en transmission** ($\Delta T \ge \text{margin\_factor} \times A$, avec `phase_a_level_margin_factor > 0`).
 
-Le chemin correct existe : `phase_a_level_margin_factor > 0` branche la vraie matrice
-cumulée **et** remplace le critère en épaisseur par le critère en transmission. Cela change
-massivement la sélection de longueurs d'onde : c'est un **arbitrage de physique**, le
-physicien doit trancher.
+Près d'un point tournant $T \approx T_{\text{ext}} - c \cdot (d - d_0)^2$, une marge fixe en épaisseur correspond à une fraction d'amplitude non contrôlée ; seule la marge exprimée en transmission garantit un niveau de sécurité homogène et physiquement rigoureux face au bruit de la machine.
 
 ### ✅ Tranchée — la grille de balayage à 1 nm, ne la rouvre pas
 

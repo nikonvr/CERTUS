@@ -145,7 +145,7 @@ class REMathStrategy:
                 _c['best_rmse_combined'] = float(rmse_cur)
             rmse_best_so_far = float(_c.get('best_rmse_combined', rmse_cur))
             _trf_rms_p2 = _re_trf_residual_rms(_c['res'])
-            msg = f"RE [{ctx._p2_trf_log_tag[0]}] TRF it ~{_c['i']}  RMSE_facade(curr)={rmse_cur:.6f} | RMSE_facade(best)={rmse_best_so_far:.6f} (sqrt(sp2+alpha·QWOT2); hors Tikhonov/pen H-L dans r) | TRF_RMS(res)={_trf_rms_p2:.6g}{ap_sfx}{_bar_sfx}  {now - ctx._t_p2:.1f}s"
+            msg = f"RE [{ctx._p2_trf_log_tag[0]}] TRF it ~{_c['i']}  RMSE_facade(curr)={rmse_cur:.6f} | RMSE_facade(best)={rmse_best_so_far:.6f} (sqrt(sp2+alpha·QWOT2); Tikhonov/H-L penalty excluded from r) | TRF_RMS(res)={_trf_rms_p2:.6g}{ap_sfx}{_bar_sfx}  {now - ctx._t_p2:.1f}s"
             logging.info(msg)
             _intra_2b = min(0.92, float(_c['i']) / float(max(ctx._maxiter_p2b, 1)))
             ctx._emit_re_prog(ctx._pct_p2b(ctx.pl, ctx._p2_ki_slot[0], _intra_2b), msg)

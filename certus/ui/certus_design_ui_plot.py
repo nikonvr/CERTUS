@@ -265,7 +265,7 @@ class PlotManager:
         from PyQt6.QtWidgets import QDialog, QVBoxLayout, QListWidget, QPushButton, QDialogButtonBox, QLabel
         rec = self.ui.pareto_history.get(N)
         if not rec or "catalog" not in rec or not rec["catalog"]:
-            self.ui.log("Catalogue vide pour ce nombre de couches.", "WARNING")
+            self.ui.log("Empty catalog for this layer count.", "WARNING")
             return
             
         dialog = QDialog(self.ui.front_tabs)

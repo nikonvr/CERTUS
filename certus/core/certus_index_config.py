@@ -98,7 +98,7 @@ class substrateMode(Enum):
     FROSTED_GLASS = auto()  # Infinite substrate (reflection only)
 
 
-# Compromis rapide Phase 2 IR (HPO 7 fichiers XLSX)  max_feval=200k, max_time=300s, sub 5k/45s/80
+# Fast Phase 2 IR compromise (HPO over 7 XLSX files)  max_feval=200k, max_time=300s, sub 5k/45s/80
 PHASE2_IR_PGLOBAL_OVERRIDES_FAST = {
     "max_feval": 200000,
     "max_time": 300.0,
@@ -186,7 +186,7 @@ class OptimizationConfig:
 
         self.substrate_mode = substrate_mode
 
-        # UI peut inverser min/max : normaliser pour des bounds SciPy valides
+        # The UI may swap min/max: normalise to keep the SciPy bounds valid
 
         self.thickness_min = float(min(thickness_min, thickness_max))
 

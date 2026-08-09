@@ -889,7 +889,7 @@ class SplineReportBuilder:
                 self.logger.warning("event=export_excel status=fallback reason=missing_lam_nm source=experimental_grid")
         lam_src_full = np.asarray(lam_src_raw if lam_src_raw is not None else [], dtype=np.float64).ravel()
         if lam_src_full.size == 0:
-            raise ValueError("lam_nm indisponible pour export Excel.")
+            raise ValueError("lam_nm unavailable for Excel export.")
 
         n_res_full = self._align_to_lam(np.asarray(result.get("n_lam", []), dtype=np.float64).ravel(), "n_lam", lam_src_full)
         k_res_full = self._align_to_lam(np.asarray(result.get("k_lam", []), dtype=np.float64).ravel(), "k_lam", lam_src_full)

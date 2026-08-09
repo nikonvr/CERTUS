@@ -989,9 +989,9 @@ def _select_candidates_phase_a(
         n_rejected = int(len(check_list) - int(np.count_nonzero(keep)))
         if n_rejected and logger:
             logger.info(
-                f"   [MARGE] Layer {i_layer + 1}: {n_rejected}/{len(check_list)} candidate(s) "
-                f"interdite(s), niveau d'arret a moins de {margin_T * 100:.4f} point de T "
-                f"d'un point tournant ({margin_factor:g} x le bruit)."
+                f"   [MARGIN] Layer {i_layer + 1}: {n_rejected}/{len(check_list)} candidate(s) "
+                f"forbidden, stop level within {margin_T * 100:.4f} point of T "
+                f"of a turning point ({margin_factor:g} x the noise)."
             )
         for idx, d in enumerate(check_list):
             if keep[idx]:

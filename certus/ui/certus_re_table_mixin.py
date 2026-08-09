@@ -112,7 +112,7 @@ class CertusRETableMixin:
     """CertusRETableMixin for CERTUS_RE."""
 
     def _stack_info_front_table_cols(self) -> tuple[int, int]:
-        """Table RE 5 colonnes : Mat=1, QWOT=3."""
+        """RE table, 5 columns: Mat=1, QWOT=3."""
 
         return (_RE_FT_COL_MAT, _RE_FT_COL_QW)
 

@@ -367,7 +367,7 @@ class CertusIndexSplineEventsExtrasMixin:
             )
             log_index_spline_d_trace(
                 self.logger,
-                "GUI: polish profond depuis minimum grille RMSE(d)",
+                "GUI: deep polish from the RMSE(d) grid minimum",
                 seed.get("d_nm"),
                 detail=f"deep_maxfun={deep_maxfun}",
             )

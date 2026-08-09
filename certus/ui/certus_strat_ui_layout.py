@@ -864,10 +864,10 @@ class CertusStratLayoutMixin:
 
         self.widgets["execution_mode"] = QComboBox()
 
-        # Le mode `fast` a ete RETIRE (2026-08-05). Il divisait les budgets Monte-Carlo
-        # par 4 : a 6 tirages de screening, un P95 est le maximum de six et le taux de
-        #crash at a resolution of 17% for a threshold of 5%. See justification
-        #complete in collect_params (certus_strat_ui_state.py).
+        # The `fast` mode was REMOVED (2026-08-05). It divided the Monte-Carlo budgets
+        # by 4: at 6 screening draws, a P95 is the maximum of six and the crash rate
+        # has a resolution of 17% for a threshold of 5%. See the full justification
+        # in collect_params (certus_strat_ui_state.py).
         self.widgets["execution_mode"].addItems(["premium"])
 
         self.widgets["execution_mode"].setCurrentText("premium")

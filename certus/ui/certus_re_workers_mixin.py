@@ -383,7 +383,7 @@ class CertusREWorkersMixin:
 
     @safe_ui_action
     def launch_re(self):
-        """Lance REWorker : P1 epaisseurs, P2 splines DeltaRe (+substrate), P3 shakes, P4 faisceau (N paliers ap)."""
+        """Start REWorker: P1 thicknesses, P2 DeltaRe splines (+substrate), P3 shakes, P4 beam (N ap steps)."""
 
         if not self._re_loaded:
             self.log("No RE file loaded.  Use 'Load RE File' first.", "WARNING")

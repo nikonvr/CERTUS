@@ -127,9 +127,9 @@ class FullPipelineStrategy:
                 )
                 _n_cells = sum(len(lm) for lm in _yield_map.values())
                 worker.params["logger"].info(
-                    f"   [RENDEMENT] DP sur cout + {_dp_yield_w:g} x (-log(1-p)) : "
-                    f"{_n_informative}/{_n_cells} cellules (couche, lambda) portent un "
-                    f"plantage mesurable. Les autres laissent le cout en nm departager."
+                    f"   [YIELD] DP on cost + {_dp_yield_w:g} x (-log(1-p)): "
+                    f"{_n_informative}/{_n_cells} (layer, lambda) cells carry a "
+                    f"measurable crash rate. The others let the cost in nm decide."
                 )
                 cost_map_sq_clean = combine_cost_and_yield(
                     cost_map_sq_clean, _yield_map, _dp_yield_w

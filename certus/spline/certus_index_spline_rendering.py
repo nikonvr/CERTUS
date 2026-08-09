@@ -452,9 +452,9 @@ class _PlotMixin:
         )
         curvature_label_spec: tuple[float, float, float] | None = None
 
-        # --- Min-RMSE par d unique pour le fit parabolique (profile likelihood correcte) ---
-        # Pour absorber les doublons flottants (ex. d_opt ins?r? 2? par le walk),
-        # on regroupe ? 1e-6 nm puis on conserve le RMSE minimal par d.
+        # --- Min-RMSE per unique d for the parabolic fit (correct profile likelihood) ---
+        # To absorb floating-point duplicates (e.g. d_opt inserted twice by the walk),
+        # group at 1e-6 nm then keep the minimal RMSE per d.
         _d_rounded = np.round(d_plot, decimals=6)
         _d_parab_list: list[float] = []
         _r_parab_list: list[float] = []

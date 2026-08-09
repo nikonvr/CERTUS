@@ -650,7 +650,7 @@ def simulate_growth_kernel(
             idx += 1
 
         if smoothing_window > 1:
-            # ── AXE 1.1 / T3-T4: Decoupled machine sampling grid (0.125 nm) + Moving Average lissage
+            # ── AXIS 1.1 / T3-T4: decoupled machine sampling grid (0.125 nm) + moving-average smoothing
             SAMPLE_DD = 0.125
             M_hist = 0
             for j in range(j0, i_layer):

@@ -79,7 +79,7 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | **Savoir ce qu'on suppose de la machine** | **§9bis — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
 | Comparer un résultat | §10 — le point de référence |
 | Comprendre un mot du projet | §7 — vocabulaire |
-| **Savoir où en est réellement T1…T7** | **§17bis — audit du 2026-08-09. À lire avant toute action de §12.** |
+| **Savoir où en est réellement T1…T7** | **§17 — audit du 2026-08-09. À lire avant toute action de §12.** |
 | Comprendre le mode Rate | §14, dernier bloc — spécification 👤, non implémentée |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 
@@ -136,7 +136,7 @@ lint, commit, et tu écris ce que tu as mesuré.
 | **T6** | **`phase_a_level_margin_factor` 1,66 → 3,33.** | §12.2, dernier bloc | Aucune. Un run chacun, comparer. |
 | **T7** | **Quantification de l'arrêt** `U(0 ; 0,125 nm)`. | §12.5 | Piège 1 : si doubler `Δd_sample` ne change rien, la mesure est un artefact. |
 
-### ⚠️ État réel de ces tâches au 2026-08-09 — lis §17bis avant d'en reprendre une
+### ⚠️ État réel de ces tâches au 2026-08-09 — lis §17 avant d'en reprendre une
 
 | | Code écrit | Mesure faite | Verdict |
 |---|---|---|---|
@@ -231,18 +231,18 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
     puis supprimés : des journaux contradictoires.
 11. **Jamais réintroduire de français dans `certus/`.** L'anglais est strictement
     obligatoire pour tout commentaire, docstring ou message de log.
-    ✅ Vérifié le 2026-08-09 par balayage `tokenize` des 282 fichiers de `certus/` :
-    commentaires, docstrings et messages de log sont en anglais.
     ⚠️ **Trois catégories restent délibérément en français, et ce n'est pas une
-    violation** : les mots français utilisés comme **données**
-    (`certus_re_helpers.py` — motifs de reconnaissance d'en-têtes français), les
-    **clés JSON persistées** (`seuil1`/`seuil2` dans `certus_field_state_mixin.py`,
-    qu'on ne peut pas renommer sans casser les configurations enregistrées), et les
-    **libellés de widgets vus par l'utilisateur** (info-bulles, boutons). L'interdit
-    porte sur commentaire / docstring / log — pas sur la langue de l'interface.
-    ⚠️ La première annonce de « nettoyage complet » (2026-08-09) ne tenait pas :
-    l'outil qui l'a validée, `find_french.py`, ne balayait que **6 fichiers en dur**
-    sur 282, et une vingtaine de sites authentiques subsistaient.
+    violation — ne les « corrige » pas** : les mots français utilisés comme
+    **données** (`certus_re_helpers.py` — motifs de reconnaissance d'en-têtes
+    français), les **clés JSON persistées** (`seuil1`/`seuil2` dans
+    `certus_field_state_mixin.py`, qu'on ne peut pas renommer sans casser les
+    configurations enregistrées), et les **libellés de widgets vus par
+    l'utilisateur** (info-bulles, boutons, phases de progression). L'interdit porte
+    sur commentaire / docstring / log — **pas sur la langue de l'interface**, qui
+    est une question à poser au propriétaire du projet, pas à trancher seul.
+    ⚠️ Pour vérifier, balaye les **282** fichiers avec `tokenize`, pas une liste
+    codée en dur : c'est ainsi qu'une annonce de « nettoyage complet » a été faite
+    sur la foi de 6 fichiers examinés.
 
 ## 2. Les sept pièges — chacun a déjà été rencontré
 
@@ -612,13 +612,19 @@ stratégies : c'était le run à **2 nm**, périmé (voir §13).
 12 par construction — voir l'encadré rouge ci-dessous. Tant que la provenance de ce 345 n'est
 pas retrouvée, **ne t'en sers pas comme critère.**
 
-🔴 **`RESULT = 0,002898` n'a pas d'artefact dans `reports/`.** Vérifié le 2026-08-09 : le
-seul fichier committé pour cette configuration,
-`reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, porte
-`result = 0.0029486273713007147`, et il a été posé par `59793e2` (2026-08-08 09:24) —
-c'est-à-dire par la série d'actions que §17 signale précisément comme mal rapportée.
-**Le repère auquel tout ce document se compare est donc un chiffre dont on n'a pas la
-trace.** Le rétablir est l'objet de T0.
+🔴 **`RESULT = 0,002898` n'a d'artefact NULLE PART.** Les trois valeurs committées pour cette
+configuration, dans `reports/probe_anchor_noise_pipeline_full_step1_seed42.json` :
+
+```
+59793e2  (2026-08-08, avant T1)   result = 0.00294862737130071
+721b746  (apres T5)               result = 0.00294862737130071
+cc90a94  (courant)                result = 0.00294862737122675
+```
+
+Aucune ne vaut 0,002898 — l'écart est de **+1,7 %**. **Le repère auquel tout ce document se
+compare est donc un chiffre dont on n'a pas la trace**, et l'écart entre les deux dernières
+lignes est le défaut n° 1 de §17. Rétablir ce repère est l'objet de T0, et rien de
+comparatif ne vaut avant.
 
 ### 🔴 Ce repère n'a PAS été reproduit le 2026-08-08 — lis ceci avant de mesurer
 
@@ -678,7 +684,7 @@ chemin de calcul est celui d'avant, au bit près.
 |---|---|
 | `poem_anchor_noise` | Bruite le signal de monitoring **avant** détection des points tournants, lecture des ancres POEM et test d'atteignabilité. Phase A **et** B. |
 | `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66** aujourd'hui. 🔒 **Valeur cible du modèle figé : 0,354** = `1/√k` avec `k = 8`, parce qu'elle s'applique au signal **lissé** — voir §9bis et §12.2. Injectable en 5ᵉ argument du script de sonde. |
-| `reading_smoothing_window` | ⚠️ **Existe depuis `e0df0e1`**, défaut **1**. Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Valeur du modèle figé : **8** (2 s à 4 Hz). 🔴 **Dans l'implantation actuelle ce drapeau commande AUSSI la grille de §12.4** — voir §17bis. |
+| `reading_smoothing_window` | ⚠️ **Existe depuis `e0df0e1`**, défaut **1**. Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Valeur du modèle figé : **8** (2 s à 4 Hz). 🔴 **Dans l'implantation actuelle ce drapeau commande AUSSI la grille de §12.4** — voir §17. |
 | `index_corridor` | ⚠️ **Existe depuis `162a0ff`**, défaut **0,0**. Demi-largeur du corridor d'incertitude d'indice, en **unités d'indice absolues**. Valeur du modèle : **0,005**. Jamais mesuré. |
 | `affine_scale_amp` / `affine_offset_amp` | ⚠️ **Existent depuis `f7a3d71`**, défaut **0,0**. Amplitudes du tirage de dérive photométrique, une fois par run. Valeurs de mesure : **0,05** et **0,02** (§12.1). Jamais mesurées. |
 | `poem_enabled` | ⚠️ **Existe depuis `f7a3d71`**, défaut **vrai**. Force le repli absolu quand il est faux. C'est le drapeau que §12.1 réclamait. Jamais mesuré. |
@@ -687,7 +693,7 @@ chemin de calcul est celui d'avant, au bit près.
 
 ## 12. Le travail à venir, dans l'ordre
 
-> 🔴 **AVERTISSEMENT DU 2026-08-09 — lis §17bis avant de reprendre une action de §12.**
+> 🔴 **AVERTISSEMENT DU 2026-08-09 — lis §17 avant de reprendre une action de §12.**
 > Le code de T1, T3, T4 et T5 **existe déjà**, mais **aucune** des mesures qui devaient le
 > valider n'a été faite, la non-régression bit-à-bit ne tient pas, T3 est soudée à T4, et T7
 > n'est pas écrit. Les descriptions ci-dessous restent exactes sur **ce qu'il faut obtenir** ;
@@ -1277,7 +1283,7 @@ Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
 
 🔴 **Rien de tout cela n'est implémenté.** Aucune ligne de `certus/` ne contient de mode Rate
 aujourd'hui. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
-été obtenues (§17bis) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
+été obtenues (§17) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
 n'a pas encore mesuré les paramètres existants.
 
 **Les quatre questions à poser avant d'écrire la moindre ligne** :
@@ -1325,49 +1331,21 @@ physique.
 - **Raffiner la grille d'échantillonnage sans corriger le seuil** — voir §12.2.
 - **Modéliser σ(T), la grenaille ou le bruit multiplicatif** — voir §9.
 
-### ✅ La clé API Anthropic — Révoquée sur console.anthropic.com
-
-Le fichier `.env` qui avait été poussé sur le dépôt public le 2026-07-03 a vu son historique réécrit (`git log --all --full-history -- .env` → 0 commit), et la clé d'API a été **révoquée sur console.anthropic.com** (confirmé par l'utilisateur le 2026-08-09).
-
 ---
 
-# PARTIE IV — ÉTAT VÉRIFIÉ ET AUTRES CHANTIERS
+# PARTIE IV — DÉFAUTS OUVERTS ET AUTRES CHANTIERS
 
-## 17. Ce qui a été vérifié le 2026-08-08
+## 17. Les défauts ouverts hérités des sessions précédentes
 
-Relecture par Opus du travail de la session précédente. Le motif est constant : **le travail
-technique est souvent réel, la déclaration ne l'est pas.**
+Trouvés en appliquant §20. **Ce qui a été vérifié et qui tient est sorti de ce document** —
+`git log` le garde. Ne restent ici que les défauts **encore ouverts**, c'est-à-dire du
+travail à faire.
 
-### ✅ Tient
-
-Purge de `.env` de tout l'historique Git (`git log --all --full-history -- .env` → 0 commit,
-fichier non suivi, remote restauré) · successive halving (5 tests) · élimination de la
-duplication `prepare_targets_vectorized` · oracles de gradient analytique (3 tests) ·
-cliquet de dette de lint · contrat Numba `CPUDispatcher` · garde-fous du fichier d'exemple
-(3 tests) · calibration `dp_yield_weight`, dont le **résultat nul** a été correctement
-rapporté et expliqué.
-
-### 🔴 Ne tient pas
-
-| Sujet | Trouvé |
-|---|---|
-| Distorsion affine | Déclarée conforme. Annulait son effet en 3 endroits, inatteignable, critère jamais exécuté. **Corrigé** — §12.1. |
-| `RESULT` des actions SYM / diversité / recherche locale | Sorties collées : `RESULT=0.0029486`. Prose : « préservant le meilleur score `0.002898` ». Départ : 0,002898. **+1,7 %**, présenté trois fois comme conforme. |
-| `MachineModel` | Aucun consommateur en production. `trigger_tolerance: float = 0.05` documenté « in T units (0..1) » alors que les 4 consommateurs réels divisent par 100 : **piège ×100**. Manquent vitesse de dépôt et cadence. |
-| Traduction anglaise | Déclarée complète le 2026-08-09. Ne tenait pas : ~20 sites français subsistaient, l'outil de validation ne balayait que 6 fichiers sur 282, et la passe a **cassé un test** en dé-accentuant `Bühler`. **Corrigé** — `0d15709` et la passe suivante. |
-
-## 17bis. Ce qui a été vérifié le 2026-08-09 — audit des actions T1 à T7
-
-Même protocole que §20, appliqué aux six commits de la session précédente. **Le code est
-souvent réel ; les mesures qui devaient le valider n'ont pas été faites.**
-
-### ✅ Tient
-
-`4d2671e` (CI élargie — vérifié dans `release-windows.yml:93`) · le câblage de bout en bout
-des cinq nouvelles clés JSON, `collect_params` les lit toutes
-(`certus_strat_ui_state.py:1090-1105`) · le dédoublement `n_H_real`/`n_L_real` de `162a0ff`,
-dont la sentinelle `< 0` préserve le chemin par défaut par construction · la traduction de
-`certus_strat_growth.py` elle-même, fidèle et sans perte technique.
+🔴 **Portée de la vérification, pour ne pas s'y tromper** : tout ce qui suit vient de la
+lecture des diffs, du code et des artefacts committés, plus `ruff` et la suite de tests.
+**Aucune mesure au banc n'a été relancée** — ni T0, ni aucune non-régression. Les
+constatations chiffrées ci-dessous portent sur des **artefacts existants**, pas sur des runs
+neufs.
 
 ### 🔴 Ne tient pas
 
@@ -1381,16 +1359,14 @@ dont la sentinelle `< 0` préserve le chemin par défaut par construction · la 
 | 6 | **Les mesures qui SONT le critère de réussite n'ont pas été faites.** T2 (4 runs POEM×distorsion), le balayage de corridor de T5, et T6 : aucun artefact, aucun run. |
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
+| 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
-🔴 **Correctif de traçabilité à faire avant toute nouvelle mesure** : `probe_anchor_noise_pipeline.py`
-doit écrire dans son JSON **la configuration complète** qu'il a appliquée — fenêtre de
-lissage, corridor, amplitudes affines, `poem_enabled`, seuil, poids de rendement. Sans cela
-chaque run produit un chiffre dont personne ne pourra dire d'où il vient, et le point 7
-se reproduira.
+**Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
+configuration effective dans `r["config"]` et dans le nom du fichier. Les deux artefacts déjà
+produits, eux, restent inexploitables — **on ne peut pas les rattraper, il faut les
+refaire.**
 
 ## 18. Autres chantiers ouverts
-
-### ✅ La clé API Anthropic — Révoquée (voir §16 ci-dessus)
 
 - **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
   tests qui passent isolément. Cause racine corrigée, audit restant :
@@ -1410,10 +1386,7 @@ ruff check .  (config projet)             ->  All checks passed!    (mesuré 202
 ruff check .  (mêmes règles, sans ignore) ->  12 157 erreurs        (non remesuré)
 ```
 
-⚠️ Une version antérieure annonçait **62 erreurs** avec la configuration du projet. C'est
-faux depuis au moins le 2026-08-09, et cela **contredisait §0**, qui attend
-`All checks passed!`. La dette réelle est celle que masque `extend-ignore`, pas celle que
-`ruff` rapporte.
+**La dette est celle que masque `extend-ignore`, pas celle que `ruff` rapporte.**
 
 Les plus dangereuses masquées : **F822 (202)** — `__all__` référençant des noms inexistants,
 concentrés sur 4 fichiers UI ; tout `import *` sur eux lève `AttributeError`. **F821 (67)**,
@@ -1423,14 +1396,12 @@ dont 3 réels dans `certus/physics/gradient_analytic.py`. **F401 (5 473)** · **
 ### CI
 
 248 fichiers `.py` sous `tests/` (241 `test_*.py`), 2 299 tests collectés.
+`release-windows.yml:93` lance `pytest tests/oracle/ tests/unit/`, `tests.yml` lance
+`tests/oracle/` puis `tests/`. **`lint.yml` n'exécute aucun test** — c'est le chantier qui
+reste.
 
-⚠️ **Corrigé le 2026-08-09.** Une version antérieure disait que la CI n'exécutait que
-**3 fichiers**. C'est faux depuis `4d2671e` : `release-windows.yml:93` lance bien
-`pytest tests/oracle/ tests/unit/`, et `tests.yml` lance `tests/oracle/` puis `tests/`.
-`lint.yml` n'exécute toujours aucun test.
-
-La branche de travail `refactor-corridors-mixins` reste très en avance sur `main` (dernier
-commit `main` : 2026-04-27) : **ces commits n'ont pas été validés par la CI sur `main`.**
+🔴 La branche de travail `refactor-corridors-mixins` est très en avance sur `main` (dernier
+commit `main` : 2026-04-27) : **ces commits n'ont jamais été validés par la CI sur `main`.**
 
 ## 19. Règles de tenue de ce document
 
@@ -1450,8 +1421,14 @@ commit `main` : 2026-04-27) : **ces commits n'ont pas été validés par la CI s
 ## 20. Protocole de re-vérification — comment auditer le travail d'un autre agent
 
 **Un rapport est une déclaration, pas une preuve.** Ce protocole consiste à essayer de
-**casser** chaque déclaration, pas à la confirmer. Il a été appliqué le 2026-08-08 et a
-trouvé quatre affirmations fausses (§17) — il fonctionne.
+**casser** chaque déclaration, pas à la confirmer. Appliqué deux fois, il a trouvé quatre
+affirmations fausses la première fois et neuf la seconde (§17) — il fonctionne.
+
+⚠️ **Il a ses limites, et il faut les dire.** Les deux passes ont vérifié des **diffs, du
+code et des artefacts**. Aucune des deux n'a relancé une mesure au banc. Une déclaration
+chiffrée n'est donc réfutée que lorsqu'un **artefact la contredit** ; celles qui n'ont
+produit aucun artefact ne sont ni confirmées ni réfutées — elles sont **non vérifiées**, ce
+qui est un troisième état qu'il ne faut pas confondre avec « tient ».
 
 ### Le repère git
 

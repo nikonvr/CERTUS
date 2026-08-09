@@ -1,5 +1,13 @@
 # ORDRE DE MISSION — à exécuter tel quel
 
+> ⚠️ **Ce document est pour une session SURVEILLÉE**, où quelqu'un peut vérifier l'encadré de
+> configuration dans les deux secondes qui suivent chaque lancement.
+>
+> **Pour une campagne SANS SURVEILLANCE — la nuit — n'utilise pas ce document.** Lance
+> `.venv\Scripts\python.exe scripts\run_campaign.py` : une seule commande, dix runs, et le
+> script vérifie lui-même que chaque run a reçu la configuration demandée. Il n'y a alors
+> aucune variable d'environnement à taper, donc aucune des pannes que ce document surveille.
+
 ## LIS CES SIX RÈGLES. ELLES PRIMENT SUR TOUT.
 
 **RÈGLE 1 — Tu ne modifies AUCUN fichier de code.**

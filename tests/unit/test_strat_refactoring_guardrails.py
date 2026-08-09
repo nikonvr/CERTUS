@@ -217,14 +217,14 @@ def test_robust_material_database_refactoring_guardrails():
         idx_bk7 = db.get_refractive_index("N-BK7", 500.0)
         assert idx_bk7.real > 1.40 and idx_bk7.real < 1.60
 
-        # Un matériau introuvable doit LEVER, pas retomber sur l'air.
+        # Unfound material must RISE, not fall back into the air.
         #
-        # L'ancienne assertion exigeait `idx_air == 1.0 + 0j`, c'est-à-dire qu'une faute
-        # de frappe dans un nom de matériau produise une couche d'indice 1 — optiquement
-        # invisible dans l'air. Le calcul se poursuivait alors sur un empilement amputé
-        # d'une couche, sans exception ni journal : un résultat faux et silencieux.
-        # KeyError appartient à NUMERICAL_FAULT_EXCEPTIONS, donc les appelants STRAT
-        # basculent sur leur repli déjà journalisé.
+        #The old assertion required `idx_air == 1.0 + 0j`, i.e. a fault
+        #typing in a material name produces a layer of index 1 — optically
+        #invisible in the air. The calculation then continued on an amputated stack
+        #of a layer, without exception or log: a false and silent result.
+        #KeyError belongs to NUMERICAL_FAULT_EXCEPTIONS, so STRAT callers
+        #switch to their already logged fallback.
         with pytest.raises(KeyError, match="not found|introuvable"):
             db.get_refractive_index("Air_Nonexistent", 600.0)
 

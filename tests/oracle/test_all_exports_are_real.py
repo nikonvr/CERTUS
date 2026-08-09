@@ -1,20 +1,20 @@
-"""Tout nom déclaré dans un ``__all__`` doit exister à l'exécution.
+"""Any name declared in an ``__all__`` must exist at runtime.
 
-Un ``__all__`` qui liste des noms inexistants fait lever ``AttributeError`` à tout
-``import *`` sur le module. Le dépôt en comptait **202**, répartis sur quatre fichiers
-d'interface — de quoi rendre ces modules inutilisables par étoile, sans que rien ne le
-signale tant que personne n'essayait.
+A ``__all__`` which lists non-existent names causes ``AttributeError`` to be raised at all
+``import *`` on the module. The repository had **202**, spread over four files
+interface — enough to make these modules unusable per star, without anything
+signaled until no one tried.
 
-Ce test balaie l'ensemble du paquet, et pas seulement les quatre fichiers concernés :
-la régression peut apparaître n'importe où.
+This test scans the entire package, not just the four affected files:
+regression can appear anywhere.
 
-POURQUOI PAS SEULEMENT RUFF
+WHY NOT JUST RUFF
 ---------------------------
-La règle F822 ne suffit pas. Un nom importé sous ``if TYPE_CHECKING:`` est lié dans
-l'analyse statique de ruff, qui le considère donc comme défini — alors qu'il n'existe
-pas à l'exécution. C'est exactement ce qui est arrivé à ``SkeletonLoaderWidget`` dans
-``certus_ui_utils`` : ruff validait, l'import réel échouait. Seule une vérification
-dynamique le révèle.
+Rule F822 is not enough. A name imported under ``if TYPE_CHECKING:`` is linked in
+the static analysis of ruff, which therefore considers it as defined - even though it does not exist
+not at execution. This is exactly what happened to ``SkeletonLoaderWidget`` in
+``certus_ui_utils``: ruff validated, the actual import failed. Only verification
+dynamic reveals it.
 """
 
 from __future__ import annotations
@@ -28,14 +28,14 @@ import certus
 
 
 def _iter_module_names() -> list[str]:
-    """Tous les sous-modules de ``certus``, découverts par le système de fichiers.
+    """All submodules of ``certus``, discovered by the file system.
 
-    ``pkgutil.walk_packages`` ne convient PAS ici : seul ``certus/domain/`` possède un
+    ``pkgutil.walk_packages`` is NOT suitable here: only ``certus/domain/`` has a
     ``__init__.py``, les sept autres sous-paquets fonctionnent en PEP 420 (paquets
     implicites, cf. CLAUDE.md §2). walk_packages n'en trouvait que 6 sur ~280 — le
-    test passait donc en ne couvrant presque rien.
+    test therefore passed by covering almost nothing.
 
-    Les modules qui ne s'importent pas du tout sont hors sujet ici : c'est le rôle de
+    Modules that do not import at all are off topic here: that is the role of
     tests/ui/test_ui_module_imports.py.
     """
     root = Path(certus.__path__[0])
@@ -57,7 +57,7 @@ MODULE_NAMES = _iter_module_names()
 def test_all_ne_declare_que_des_noms_existants(module_name: str) -> None:
     """GARDE-FOU : 202 violations de ce contrat existaient dans les 4 fichiers UI.
 
-    Le symptôme est un ``AttributeError`` au premier ``from module import *``.
+    The symptom is an ``AttributeError`` at the first ``from module import *``.
     """
     try:
         module = importlib.import_module(module_name)

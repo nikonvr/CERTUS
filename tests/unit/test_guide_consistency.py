@@ -79,7 +79,7 @@ def guide_formulas_back(WL, n0, theta0_deg, n_layers, d_layers, n_sub, pol):
 
     # Matrice M_back = M_1 * ... * M_N (L1=Sub side, LN=Air side)
     # L1 applies last on the output vector (Air).
-    # Donc on applique d'abord M_N, puis M_{N-1}...
+    #So we first apply M_N, then M_{N-1}...
     M = np.eye(2, dtype=complex)
     for i in range(len(n_layers) - 1, -1, -1):  # N-1 ... 0
         n, d = n_layers[i], d_layers[i]

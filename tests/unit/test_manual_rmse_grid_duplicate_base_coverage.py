@@ -1,4 +1,4 @@
-"""Regression: grille RMSE(d) — visite « base » rejetée en doublon conserve le bilan de couverture."""
+"""Regression: RMSE(d) grid — “base” visit rejected as a duplicate keeps the coverage report."""
 
 from __future__ import annotations
 

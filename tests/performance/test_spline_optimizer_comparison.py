@@ -1049,7 +1049,7 @@ class SplineOptimizerComparison:
 
 
 
-        # Sort by execution time
+        #Sort by execution time
 
         sorted_results = sorted(results, key=lambda x: x.execution_time)
 

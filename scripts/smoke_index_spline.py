@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Smoke INDEX SPLINE : une commande pour imports + sous-suite pytest ciblée.
+Smoke INDEX SPLINE: a command for imports + targeted pytest subsuite.
 
 Contourne les ``addopts`` de ``pytest.ini`` (coverage / seuil 80 %) qui ne
 mesurent pas les modules ``spline_*.py``.
 
-Usage (depuis la racine du dépôt)::
+Usage (from the repository root)::
 
     python scripts/smoke_index_spline.py
 
-Ou uniquement les tests marqués ``index_spline_smoke``::
+Or only tests marked ``index_spline_smoke``::
 
     python -m pytest -m index_spline_smoke -o addopts="--strict-markers --strict-config -q --tb=short"
 """
@@ -23,7 +23,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-# Ordre : smoke imports d’abord, puis unitaires spline, puis intégration spline / Smart Init / lois.
+# Order: smoke imports first, then spline units, then spline integration / Smart Init / laws.
 _SMOKE_PYTEST_TARGETS = (
     "tests/test_smoke_certus_index_spline.py",
     "tests/unit/test_spline_presets.py",

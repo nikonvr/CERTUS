@@ -2,10 +2,10 @@
 
 ``PGlobalOptimizer`` evalue son lot via ``pool.map(self.objective, X)`` puis
 lance une recherche locale L-BFGS-B par thread : l'objectif ET le gradient sont
-donc appeles simultanement par une dizaine de threads.
+therefore called simultaneously by around ten threads.
 
-Tant que toutes les couches sont variables, chaque appel travaille sur son propre
-tableau et tout va bien. Des qu'une epaisseur est figee — cas courant — le
+As long as all layers are variable, each call works on its own
+table and everything is fine. As soon as a thickness is fixed - common case - the
 chemin passe par un tampon reconstruit a chaque appel :
 
     ep_buffer[:] = app._ep0
@@ -32,11 +32,11 @@ N_ITER = 3000
 
 
 class _FakeApp:
-    """Juste ce que les deux fonctions lisent, rien de plus."""
+    """Just what the two functions read, nothing more."""
 
     def __init__(self) -> None:
         self._ep0 = np.full(N_LAYERS, 7.0, dtype=np.float64)
-        # Une couche sur deux FIGEE : c'est ce qui met all_variable a False.
+        #One layer out of two FIXED: this is what sets all_variable to False.
         self._var_idx = np.arange(0, N_LAYERS, 2)
         self._all_variable = False
         self._ep_buffer = np.array(self._ep0, copy=True)
@@ -58,7 +58,7 @@ _WEIGHTS = np.arange(1, N_LAYERS + 1, dtype=np.float64)
 
 
 def _signature(ep: np.ndarray) -> float:
-    """Rend une valeur qui depend de TOUT le vecteur d'epaisseurs.
+    """Returns a value that depends on the WHOLE thickness vector.
 
     Une somme ponderee : si un autre thread a ecrase ne serait-ce qu'une case du
     tampon, le resultat differe.
@@ -68,18 +68,18 @@ def _signature(ep: np.ndarray) -> float:
 
 @pytest.fixture
 def app(monkeypatch) -> _FakeApp:
-    # On substitue au noyau compile une fonction qui renvoie la signature exacte
+    #We replace the kernel compile with a function that returns the exact signature
     # du tampon recu : le test porte sur le tampon, pas sur la physique.
     monkeypatch.setattr(dc, "cost_numba_fast", lambda ep, *a, **k: _signature(ep))
     return _FakeApp()
 
 
 def test_objectif_concurrent_ne_melange_pas_les_empilements(app: _FakeApp) -> None:
-    """Douze threads, epaisseurs distinctes : aucune evaluation ne doit etre fausse.
+    """Twelve threads, distinct thicknesses: no evaluation should be wrong.
 
-    Sur la version a tampon partage, ce test releve quelques centaines
+    On the shared buffer version, this test finds a few hundred
     d'evaluations fausses sur 36 000 (mesure : 278 sur 48 000). Le taux est
-    faible mais l'effet ne l'est pas : dans un optimiseur global, une valeur
+    weak but the effect is not: in a global optimizer, a value
     fausse cree un minimum fantome ou fait rejeter un bon candidat.
     """
     wrong = []
@@ -109,15 +109,15 @@ def test_objectif_concurrent_ne_melange_pas_les_empilements(app: _FakeApp) -> No
 
 
 def test_le_tampon_est_propre_a_chaque_thread(app: _FakeApp) -> None:
-    """Deux threads ne doivent jamais recevoir le MEME objet tampon.
+    """Two threads should never receive the SAME buffer object.
 
-    Verification directe du mecanisme, sans dependre d'un enchainement
-    malheureux : c'est le partage lui-meme qui est interdit, pas seulement ses
+    Direct verification of the mechanism, without depending on a sequence
+    unfortunate: it is the sharing itself that is prohibited, not just its
     consequences observees.
     """
-    # On garde une REFERENCE sur chaque tampon, et pas seulement son id().
-    # Un thread termine libere son tableau, et CPython reattribue aussitot la
-    # meme adresse au suivant : comparer des id() d'objets morts ferait croire a
+    #We keep a REFERENCE on each buffer, and not just its id().
+    # A thread finishes freeing its array, and CPython immediately reassigns the
+    #same address to the next one: comparing id() of dead objects would make one believe
     # un partage la ou il n'y en a pas.
     seen: list[np.ndarray] = []
     lock = threading.Lock()

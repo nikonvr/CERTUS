@@ -16,23 +16,23 @@ import certus.physics.certus_tmm_core as tmm_core
 
 # Explicit imports for type annotations and helper functions
 # to prevent F821 undefined symbol errors.
-#   immediate aurait casse l'import.
+#   immediate would have broken the import.
 #
-#   🔴 `cost_numba_fast`, lui, est dans le CORPS de `make_cost_function` (ligne ~1181).
-#   Toute fonction de cout construite par cet appel levait donc `NameError` a la
-#   PREMIERE evaluation — et `make_cost_function` est une API publique, exportee dans
-#   le `__all__` de `_certus_physics_impl` et re-exportee par `certus_opt_kernels`.
+#   🔴 `cost_numba_fast`, however, is in the BODY of `make_cost_function` (line ~1181).
+#   Any cost function built by this call therefore raised `NameError` at the
+#   FIRST evaluation — and `make_cost_function` is a public API, exported in
+#   the `__all__` of `_certus_physics_impl` and re-exported by `certus_opt_kernels`.
 #
-# `gradient_utils` n'importe que numpy/numba et `certus.core.certus_core` : pas de cycle.
+# `gradient_utils` only imports numpy/numba and `certus.core.certus_core`: no cycle.
 from certus.physics.gradient_utils import cost_numba_fast
 
-# ⚠️ `Target` sous TYPE_CHECKING, et ce n'est pas de la coquetterie : importer
-# `certus_physics.structures` executerait d'abord le `__init__.py` du PAQUET
-# `certus_physics`, qui importe `_certus_physics_impl`, qui importe
-# `certus_opt_kernels`, qui importe CE module — cycle, et ImportError a froid.
-# J'ai verifie les imports du module `structures` sans verifier ceux de son paquet ;
-# c'est la meme erreur que de lire un critere sur la mauvaise source.
-# `Target` n'apparait que dans une annotation, donc un import de typage suffit.
+# ⚠️ `Target` under TYPE_CHECKING, and this is not just for show: importing
+# `certus_physics.structures` would first execute the `__init__.py` of the PACKAGE
+# `certus_physics`, which imports `_certus_physics_impl`, which imports
+# `certus_opt_kernels`, which imports THIS module — cycle, and ImportError on a cold start.
+# I checked the imports of the `structures` module without checking those of its package;
+# it's the same mistake as reading a criterion from the wrong source.
+# `Target` only appears in an annotation, so a typing import is sufficient.
 if TYPE_CHECKING:
     from certus_physics.structures import Target
 from certus.physics.certus_optical_models import (

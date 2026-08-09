@@ -919,7 +919,7 @@ class ManualSigmaKnotDialog(QDialog):
         self._sync_summary_and_preview()
 
     def selected_lambda_knots(self) -> list[float]:
-        """Returns active lambda knots sorted, with automatic suppression of duplicates."""
+        "Returns active lambda knots sorted, with automatic deletion of duplicates."
         vals = sorted([float(row.spin.value()) for row in self._row_widgets])
         if not vals:
             return []

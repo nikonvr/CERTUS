@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script pour remplacer les wildcard imports par des imports explicites.
+Script to replace wildcard imports with explicit imports.
 
 Usage:
     python scripts/fix_wildcard_imports.py certus/physics/certus_material_db.py
@@ -15,7 +15,7 @@ import re
 
 
 class WildcardImportFixer:
-    """Analyse et corrige les wildcard imports dans un fichier Python."""
+    """Parses and fixes wildcard imports in a Python file."""
 
     def __init__(self, filepath: Path):
         self.filepath = filepath
@@ -23,7 +23,7 @@ class WildcardImportFixer:
         self.tree = ast.parse(self.content, filename=str(filepath))
 
     def find_wildcard_imports(self) -> List[Tuple[int, str]]:
-        """Trouve tous les wildcard imports avec leur ligne."""
+        """Find all wildcard imports with their line."""
         wildcards = []
         for node in ast.walk(self.tree):
             if isinstance(node, ast.ImportFrom):
@@ -33,21 +33,21 @@ class WildcardImportFixer:
         return wildcards
 
     def find_used_names(self) -> Set[str]:
-        """Trouve tous les noms utilisés dans le code."""
+        """Finds all names used in the code."""
         used = set()
 
         for node in ast.walk(self.tree):
             if isinstance(node, ast.Name):
                 used.add(node.id)
             elif isinstance(node, ast.Attribute):
-                # Pour les appels comme QWidget.show(), on veut QWidget
+                # For calls like QWidget.show(), we want QWidget
                 if isinstance(node.value, ast.Name):
                     used.add(node.value.id)
 
         return used
 
     def get_typing_symbols(self) -> Set[str]:
-        """Symboles typing couramment utilisés."""
+        """Commonly used typing symbols."""
         return {
             "Any",
             "Dict",
@@ -74,10 +74,10 @@ class WildcardImportFixer:
         }
 
     def suggest_explicit_imports(self, module: str, used_names: Set[str]) -> str:
-        """Suggère les imports explicites pour un module donné."""
+        """Suggests explicit imports for a given module."""
 
         if module == "typing":
-            # Pour typing, on suggère les symboles communs utilisés
+            # For typing, we suggest the common symbols used
             typing_symbols = self.get_typing_symbols()
             candidates = sorted(typing_symbols & used_names)
             if candidates:
@@ -89,7 +89,7 @@ class WildcardImportFixer:
                     return f"from typing import (\n    {imports}\n)"
 
         elif module.startswith("PyQt6"):
-            # Pour PyQt6, on liste les widgets/classes utilisés
+            # For PyQt6, we list the widgets/classes used
             candidates = sorted(
                 name for name in used_names if name.startswith("Q") or name in {"Qt", "pyqtSignal", "pyqtSlot"}
             )
@@ -100,11 +100,11 @@ class WildcardImportFixer:
                     imports = ",\n    ".join(candidates)
                     return f"from {module} import (\n    {imports}\n)"
 
-        # Pour les autres modules, on suggère une analyse manuelle
+        #For other modules, we suggest a manual analysis
         return f"# TODO: Analyser manuellement les symboles utilisés depuis {module}"
 
     def generate_fixes(self) -> Dict[str, List[str]]:
-        """Génère les corrections suggérées."""
+        """Generates suggested fixes."""
         wildcards = self.find_wildcard_imports()
         if not wildcards:
             return {}
@@ -123,7 +123,7 @@ class WildcardImportFixer:
 
 
 def process_file(filepath: Path, dry_run: bool = True) -> None:
-    """Traite un fichier et affiche les corrections suggérées."""
+    """Processes a file and displays suggested corrections."""
     try:
         fixer = WildcardImportFixer(filepath)
         fixes = fixer.generate_fixes()
@@ -177,8 +177,8 @@ def main():
                 stats["total"] += 1
             except Exception as exc:  # noqa: BLE001 - outil de maintenance, on continue
                 # Un `except:` nu avalait AUSSI KeyboardInterrupt et SystemExit : l'outil
-                # devenait impossible a interrompre. Et le `pass` muet cachait quels
-                # fichiers avaient echoue, sur un script dont le role est justement de
+                #became impossible to interrupt. And the silent `pass` hid what
+                #files had failed, on a script whose role is precisely to
                 # reecrire des imports en masse.
                 stats.setdefault("failed", []).append((str(filepath), repr(exc)))
 

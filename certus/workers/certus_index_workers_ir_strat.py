@@ -209,7 +209,7 @@ class IRGlobalModelStrategy:
             else:
                 worker.logger.info("  > Warm start: Sellmeier fit failed, PGlobal starts cold")
         except NUMERICAL_FAULT_EXCEPTIONS as _e_ws:
-            worker.logger.warning(f"  > Warm start exception: {_e_ws}  PGlobal starts cold")
+            worker.logger.warning(f" > Warm start exception: {_e_ws} PGlobal starts cold")
         pg_bounds = flat_bounds.copy()
         if x0_polished is not None and np.isfinite(y0_polished):
             worker.logger.info(f"  > PGlobal: full bounds | warm seed RMSE = {np.sqrt(y0_polished):.6f}")

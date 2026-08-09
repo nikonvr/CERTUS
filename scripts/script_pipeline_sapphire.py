@@ -2,15 +2,15 @@
 
 Test pipeline CERTUS sur mesure R,T sur substrat sapphire (Excel).
 
-Par défaut : example/NB sur sapphire.xlsx (sinon chemin en argument).
+Default: example/NB on sapphire.xlsx (otherwise path as argument).
 
-  Phase 1 : TLU (comme l’app - deux étages si lambda_max>2500 et lambda_min<2200).
+  Phase 1: TLU (like the app - two stages if lambda_max>2500 and lambda_min<2200).
 
-  --full  : enchaîne la phase 2 « Global IR » (comme l’app après le dialogue).
+  --full: continues phase 2 “Global IR” (like the app after the dialogue).
 
 
 
-Sans --full : arrêt après la phase 1 (rapide, suffit pour valider le fichier).
+Without --full: stop after phase 1 (fast, enough to validate the file).
 
 """
 
@@ -42,7 +42,7 @@ from PyQt6.QtWidgets import QApplication
 
 
 
-# Avant import CERTUS : QApplication + référence forte (sinon QEventLoop sans QCoreApplication)
+#Before CERTUS import: QApplication + strong reference (otherwise QEventLoop without QCoreApplication)
 
 _QT_APP = QApplication.instance() or QApplication([])
 
@@ -86,7 +86,7 @@ _FALLBACK_XLSX = _ROOT / "example" / "RTNBrel-sapphire.xlsx"
 
 def _load_rtnb_excel(path: str) -> pd.DataFrame:
 
-    """lambda, R, T - échelle 0-1 (divise par 100 si les données sont en %)."""
+    """lambda, R, T - scale 0-1 (divided by 100 if data is in %)."""
 
     df = pd.read_excel(path, header=0, engine="openpyxl")
 
@@ -150,7 +150,7 @@ def _run_worker(worker):
 
 
 
-    # Slots exécutés sur le thread du QEventLoop (QueuedConnection obligatoire ici)
+    #Slots executed on the QEventLoop thread (QueuedConnection required here)
 
     worker.finished.connect(_ok, Qt.ConnectionType.QueuedConnection)
 
@@ -236,7 +236,7 @@ def main() -> int:
 
         else:
 
-            logger.error("Fichier introuvable: %s", xlsx)
+            logger.error("File not found: %s", xlsx)
 
             return 2
 
@@ -244,7 +244,7 @@ def main() -> int:
 
     abspath = str(xlsx.resolve(strict=False))
 
-    logger.info("Fichier mesure: %s", abspath)
+    logger.info("Measurement file: %s", abspath)
 
 
 
@@ -282,7 +282,7 @@ def main() -> int:
 
     else:
 
-        logger.info("Un seul étage TLU sur toute la plage sélectionnée.")
+        logger.info("A single TLU stage over the entire selected range.")
 
 
 
@@ -362,7 +362,7 @@ def main() -> int:
 
 
 
-    # Phase 2 : même préparation que CertusIndexApp._on_tlu_constrained_finished (sans dialogue)
+    #Phase 2: same preparation as CertusIndexApp._on_tlu_constrained_finished (without dialog)
 
     tlu_res.config.lambda_max_fit = None
 

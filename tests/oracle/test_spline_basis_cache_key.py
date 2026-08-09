@@ -1,41 +1,41 @@
 """La cle de `SplineBasisCache` ecrase des geometries distinctes — et c'est assume.
 
-🔴 CE QUE CE FICHIER VERROUILLE, ET POURQUOI IL EXISTE.
+🔴 WHAT THIS FILE LOCKS, AND WHY IT EXISTS.
 
 `SplineBasisCache.get` construit sa cle en ARRONDISSANT les positions de noeuds a 1e-6
 et la grille cible a 1e-4. C'est delibere et documente sur place. Consequence mesuree le
 2026-08-04 sur METAL_SINGLE :
 
-    sans cache          RUN_S=154,6 s   RESULT=0,006100345590625494
+    without cache RUN_S=154.6 s RESULT=0.006100345590625494
     cle arrondie        RUN_S= 75,2 s   RESULT=0,00613372429822523   HITRATE=88,1 %
     cle EXACTE          RUN_S=150,3 s   RESULT=0,006100345473793503  HITRATE=18,8 %
 
 Le x2 apparent vient de ce que l'arrondi CONFOND les perturbations de difference finie
-de L-BFGS-B : le gain EST l'erreur. Une cle exacte rend le resultat juste et supprime
+of L-BFGS-B: the gain IS the error. An exact key makes the result fair and removes
 tout le gain.
 
 **Le garde-fou reel n'est pas la cle, et ce n'est pas non plus le `use_cache=False` des
 lignes 270 et 342 comme je l'ai d'abord ecrit.** `compute_metal_bilayer_gradient_analytic`
-consulte le cache **directement** (ligne 319), donc aucun drapeau d'appelant ne le
-gouverne. Mais 📏 la mesure montre que cela ne casse rien : la base memoisee ne sert
-qu'au gradient par rapport aux VALEURS de noeuds, tandis que tout ce qui depend de leurs
+consults the cache **directly** (line 319), so no caller flag does
+governs. But 📏 the measurement shows that this does not break anything: the memorized base is not useful
+than the gradient with respect to the VALUES of nodes, while everything that depends on their
 POSITIONS passe par les deux chemins non memoises. Les positions etant figees a
-l'interieur d'un appel, la base est correcte pour ce qu'elle sert. Il reste une
-peremption d'ordre (dB/dlambda) x 1e-6 sur les seules composantes de valeur.
+inside a call, the basis is correct for what it is used for. There remains one
+order peremption (dB/dlambda) x 1e-6 on the value components only.
 
-Ce fichier verrouille donc trois proprietes :
+This file therefore locks three properties:
 
   1. la collision EXISTE sous l'arrondi — pour qu'on ne la redecouvre pas par un
-     resultat faux ;
-  2. au-dela de l'arrondi, le cache SEPARE bien — donc les positions sont dans la cle ;
+     false result;
+  2. beyond the rounding, the cache SEPARATES well — so the positions are in the key;
   3. le gradient METAL REAGIT a un deplacement de noeud de 1e-9 um, mille fois sous
-     l'arrondi — c'est la propriete qui garantit que l'optimiseur n'est pas aveugle.
+     rounding — this is the property that ensures that the optimizer is not blind.
 
 📏 REPONSE AU CONSTAT A2 de `docs/PLAN_AMELIORATION.md`, qui demandait de trancher entre
 « le cache manque systematiquement » (lenteur) et « il rend une base perimee » (resultat
-faux) : **ni l'un ni l'autre.** Les positions de noeuds sont dans la cle, donc aucune base
-perimee n'est rendue la ou elle compte ; et l'arrondi de cette cle cree une troisieme
-situation, bornee et negligeable, que le constat n'avait pas prevue. **A2 est clos, et il
+false): **neither one nor the other.** The node positions are in the key, so no basis
+expired is not rendered where it counts; and the rounding of this key creates a third
+situation, limited and negligible, which the report had not foreseen. **A2 is closed, and it
 ne passe PAS en priorite absolue.**
 """
 
@@ -45,7 +45,7 @@ import pytest
 from certus.physics.certus_optical_models import SplineBasisCache, get_nk_from_spline
 
 #: En dessous de l'arrondi de la cle (1e-6 sur les noeuds) : deux geometries que le cache
-#: confond. C'est l'ordre de grandeur d'une perturbation de difference finie.
+#: confuses. This is the order of magnitude of a finite difference disturbance.
 SUB_ROUNDING = 1e-8
 
 #: Au-dessus de l'arrondi : deux geometries que le cache doit distinguer.
@@ -64,13 +64,13 @@ TARGETS = np.linspace(0.42, 0.98, 61)
 
 @pytest.fixture(autouse=True)
 def _isolate_cache():
-    """Rend ce fichier HERMETIQUE : `SplineBasisCache._cache` est un etat de CLASSE.
+    """Makes this file HERMETIC: `SplineBasisCache._cache` is a CLASS state.
 
-    Sans cela, les entrees ajoutees ici fuient vers les tests suivants —
+    Without this, entries added here leak to subsequent tests —
     `test_metal_optimizations.py::test_spline_basis_cache_eviction_and_lock` compte les
-    entrees et exige `< 500` sur un cache borne a 512. 📏 Mes quelques entrees l'ont fait
-    passer de ~496 a 510, et ce test echouait alors qu'il n'a rien a voir avec ce
-    fichier. C'est la meme famille de defaut que la fuite `sys.modules` documentee dans
+    entries and requires `< 500` on a terminal cache at 512. 📏 My few entries did it
+    go from ~496 to 510, and this test failed even though it has nothing to do with this
+    file. This is the same fault family as the `sys.modules` leak documented in
     `docs/REPRISE_TESTS_ISOLATION.md` : un test qui passe seul et echoue en selection
     large.
     """
@@ -87,9 +87,9 @@ def test_cache_key_conflates_geometries_below_its_rounding():
     """Deux jeux de noeuds distants de 1e-8 rendent LE MEME objet de base.
 
     Ce n'est pas un defaut a corriger ici — c'est le comportement mesure et assume, et
-    ce test existe pour qu'il soit VISIBLE. S'il echoue un jour, c'est que l'arrondi a
-    ete affine : verifier alors que le gain de METAL n'a pas ete « retrouve » au prix
-    d'un resultat faux, cf. l'en-tete de ce fichier.
+    this test exists so that it is VISIBLE. If it fails one day, it is because the rounding has
+    been refined: then check that the METAL gain has not been “found” at the price
+    of a false result, cf. the header of this file.
     """
     a = SplineBasisCache.get(_knots(0.0), TARGETS)
     b = SplineBasisCache.get(_knots(SUB_ROUNDING), TARGETS)
@@ -103,7 +103,7 @@ def test_cache_key_conflates_geometries_below_its_rounding():
 def test_cache_key_separates_geometries_above_its_rounding():
     """Au-dela de l'arrondi, le cache doit rendre des bases DIFFERENTES.
 
-    C'est ce qui exclut l'hypothese « base perimee » du constat A2 : les positions de
+    This is what excludes the “outdated base” hypothesis from observation A2: the positions of
     noeuds sont bien dans la cle.
     """
     a = SplineBasisCache.get(_knots(0.0), TARGETS)
@@ -118,7 +118,7 @@ def test_uncached_path_resolves_what_the_cache_conflates():
 
     Deux geometries distantes de 1e-8 doivent donner des valeurs de n differentes. Si ce
     test echoue, la sonde de difference finie du gradient METAL voit un gradient NUL la
-    ou il ne l'est pas, et l'optimiseur converge vers un mauvais optimum SANS erreur.
+    or it is not, and the optimizer converges to a bad optimum WITHOUT error.
     """
     p = np.concatenate((np.linspace(1.5, 2.5, 5), np.linspace(0.0, 0.4, 5)))
     n0, _k0 = get_nk_from_spline(p, _knots(0.0), TARGETS, use_cache=False)
@@ -133,25 +133,25 @@ def test_uncached_path_resolves_what_the_cache_conflates():
 def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     """Le gradient METAL doit REAGIR a un deplacement de noeud sous l'arrondi du cache.
 
-    🔴 C'EST LE GARDE-FOU QUI COMPTE, et ce n'est pas celui que je croyais.
+    🔴 IT'S THE GUARD THAT COUNTS, and it's not the one I thought.
 
     `compute_metal_bilayer_gradient_analytic` consulte `SplineBasisCache` une fois par
-    appel (`gradient_metal.py:319`), directement — donc ni `use_cache=False` ni l'option
+    call (`gradient_metal.py:319`), directly — so neither `use_cache=False` nor the option
     `--force-cache` du banc ne le gouvernent. J'ai d'abord ecrit ce test en exigeant
     ZERO consultation du cache. 📏 La mesure m'a contredit, et la contradiction est
     instructive : la base memoisee ne sert qu'au gradient par rapport aux VALEURS de
-    noeuds, tandis que tout ce qui depend de leurs POSITIONS passe par les deux
+    nodes, while everything that depends on their POSITIONS passes through both
     `use_cache=False` des lignes 270 et 342. Les positions etant figees a l'interieur
-    d'un appel, la base est correcte pour ce qu'elle sert.
+    of a call, the basis is correct for what it is used for.
 
-    Il reste une peremption d'ordre (dB/dlambda) x 1e-6, soit ~1e-6 en relatif sur les
-    seules composantes de valeur — negligeable, et bornee.
+    There remains a peremption of order (dB/dlambda) x 1e-6, i.e. ~1e-6 relative to the
+    only components of value — negligible, and limited.
 
     📏 Verifie : un deplacement de 1e-9 um sur un noeud interne — mille fois SOUS
     l'arrondi de la cle — bouge le gradient de 2,1e-9. Ce qu'un test doit verrouiller,
-    c'est donc cette REPONSE, pas un compte d'appels au cache : si elle disparaissait,
+    so it's this RESPONSE, not a count of cache calls: if it disappeared,
     l'optimiseur verrait un gradient nul sur les positions de noeuds et convergerait
-    vers un mauvais optimum SANS lever d'erreur.
+    towards a bad optimum WITHOUT raising an error.
     """
     import certus.physics.gradient_metal as gm
 
@@ -173,8 +173,8 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     )
     assert x.size == 3 * num_knots + 5
     # Signature reelle : (x, num_knots, l_array, r_tgt_array, _min_knot_dist, nSub=None).
-    # ⚠️ Pas de `try/except` ici, et c'est delibere : un repli sur une verification
-    # lexicale du source ferait passer ce test SANS jamais executer l'assertion qui
+    #⚠️ No `try/except` here, and this is deliberate: a fallback on a check
+    #lexical source would pass this test WITHOUT ever executing the assertion which
     # compte. C'est exactement le piege « un test qui ne peut pas echouer n'est pas un
     # test » de docs/PLAN_AMELIORATION.md §0.2. Si l'appel casse, le test doit casser.
     # `nSub_complex_array=None` ne convient pas : le noyau njit en aval l'indexe.
@@ -194,7 +194,7 @@ def test_metal_gradient_sees_knot_moves_below_the_cache_rounding():
     assert g0.shape == x.shape, "le gradient ne couvre pas tout le vecteur de parametres"
     assert np.any(g0 != 0.0), "gradient identiquement nul : l'appel n'a rien calcule"
 
-    # Mille fois sous l'arrondi de la cle (1e-6). La base memoisee est, elle, identique.
+    #A thousand times under the rounding of the key (1e-6). The memorized base is identical.
     mse1, g1 = _grad(1.0e-9)
     assert abs(mse1 - mse0) > 0.0, (
         "le cout ne bouge pas pour un deplacement de noeud de 1e-9 um : le chemin de "

@@ -1,4 +1,4 @@
-"""Intégration légère: grille RMSE(d) avec doublon extra→base et couverture complète."""
+"""Lightweight integration: RMSE(d) grid with extra→base duplicate and full coverage."""
 
 from __future__ import annotations
 
@@ -32,21 +32,21 @@ def _silent_global_opt_from_break(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_manual_grid_reverse_extra_then_base_duplicate_keeps_coverage_complete(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Grille 3000+i*10 nm: reverse depuis une cassure (+) peut atteindre 3000 avant la chaîne gauche.
+    """Grid 3000+i*10 nm: reverse from a breakout (+) can reach 3000 before the left chain.
 
-    Le premier jeu de fits à 3000 nm (reverse, kind=extra) garde un RMSE bas; la visite base
-    ultérieure est rejetée en doublon — le slot doit être compté comme base pour l’audit.
+    The first set of fits at 3000 nm (reverse, kind=extra) keeps a low RMSE; the basic visit
+    later is rejected as a duplicate — the slot should be counted as the basis for the audit.
 
-    Mécanisme: médiane des espacements grille = 10 nm → pas reverse = 5 nm ;
-    depuis 3080 nm, j=16 donne 3000 nm avant la paire ofs=12 sur le dernier bras.
+    Mechanism: median of gate spacings = 10 nm → reverse pitch = 5 nm;
+    from 3080 nm, j=16 gives 3000 nm before the pair ofs=12 on the last arm.
     """
 
-    # NB: ne pas toucher à NUMBA_DISABLE_JIT ici. Les kernels appelés plus bas
-    # sont déjà décorés au moment de l'import du module, donc la variable ne les
-    # « dé-jitte » pas ; elle ne s'applique qu'aux compilations suivantes — y
-    # compris celles que Numba déclenche en interne pour ses propres @overload
-    # (np.empty_like…). Sur un cache Numba froid, clip_to_bounds doit encore être
-    # compilé et l'overload retombe alors sur une fonction Python nue :
+    #NB: do not touch NUMBA_DISABLE_JIT here. The kernels called below
+    #are already decorated when the module is imported, so the variable does not
+    #“de-jitte” not; it only applies to the following compilations — y
+    # including those that Numba triggers internally for its own @overload
+    #(np.empty_like…). On a cold Numba cache, clip_to_bounds should still be
+    #compiled and the overhead then falls on a bare Python function:
     # AttributeError: 'function' object has no attribute 'get_call_template'.
     d_grid = np.array([float(3000 + 10 * j) for j in range(13)], dtype=np.float64)
     n_pts = int(d_grid.size)
@@ -101,8 +101,8 @@ def test_manual_grid_reverse_extra_then_base_duplicate_keeps_coverage_complete(
         dn = float(d_nm)
         if abs(dn - d_target) < 0.2:
             fit_passes_at_target["n"] += 1
-            # 2 appels polish par visite réussie (~fit0 puis fit1) : garder RMSE excellent
-            # pour le premier bloc (reverse extra), médiocre ensuite (visite base rejetée).
+            # 2 polish calls per successful visit (~fit0 then fit1): keep RMSE excellent
+            # for the first block (extra reverse), mediocre afterwards (base visit rejected).
             if fit_passes_at_target["n"] <= 2:
                 return 1e-4
             return 5e-2

@@ -1,7 +1,7 @@
 """
 CERTUS Property-Based Testing with Hypothesis
 
-Tests mathématiques rigoureux sur les propriétés fondamentales.
+Rigorous mathematical tests of fundamental properties.
 """
 
 import pytest
@@ -9,7 +9,7 @@ import numpy as np
 from hypothesis import given, strategies as st, assume, settings
 from hypothesis.extra.numpy import arrays
 
-# Strategies pour wavelengths réalistes
+# Strategies for realistic wavelengths
 wavelength_strategy = st.floats(min_value=200.0, max_value=2500.0, allow_nan=False, allow_infinity=False)
 refractive_index_strategy = st.floats(min_value=1.0, max_value=4.5, allow_nan=False, allow_infinity=False)
 thickness_strategy = st.floats(min_value=1.0, max_value=1000.0, allow_nan=False, allow_infinity=False)
@@ -18,7 +18,7 @@ thickness_strategy = st.floats(min_value=1.0, max_value=1000.0, allow_nan=False,
 @given(wavelength=wavelength_strategy)
 @settings(max_examples=100, deadline=1000)
 def test_bare_substrate_transmission_bounds(wavelength):
-    """Property: Transmission d'un substrat nu doit être entre 0 et 1."""
+    """Property: Transmission of a bare substrate must be between 0 and 1."""
     from certus.core._certus_physics_impl import calculate_bare_substrate_RT
 
     # Substrat verre typique
@@ -61,11 +61,11 @@ def test_single_interface_reflection_symmetry(n1, n2):
 )
 @settings(max_examples=50, deadline=2000)
 def test_absorption_increases_with_k(wavelength, n_real, k):
-    """Property: L'absorption augmente avec le coefficient d'extinction k."""
-    # Ce test vérifie une propriété physique fondamentale
-    # Pour l'instant, c'est un placeholder jusqu'à avoir la fonction TMM complète
+    """Property: The absorption increases with the extinction coefficient k."""
+    #This test verifies a fundamental physical property
+    #For now, it's a placeholder until it has full TMM functionality
 
-    # Mock: absorption ∝ k pour une épaisseur fixe
+    #Mock: absorption ∝ k for a fixed thickness
     thickness = 100.0  # nm
     alpha = 4 * np.pi * k / wavelength  # coefficient d'absorption
     absorption = 1.0 - np.exp(-alpha * thickness)
@@ -87,7 +87,7 @@ def test_complex_phase_trigonometric_identity(phi_r, phi_i):
     # Pour nombre complexe z = a + ib:
     # |cos(z)|² = cos_r² + cos_i²
     # |sin(z)|² = sin_r² + sin_i²
-    # Identité: |cos(z)|² + |sin(z)|² = cosh²(phi_i) + sinh²(phi_i)
+    # Identity: |cos(z)|² + |sin(z)|² = cosh²(phi_i) + sinh²(phi_i)
 
     cos_squared = cos_r**2 + cos_i**2
     sin_squared = sin_r**2 + sin_i**2
@@ -107,7 +107,7 @@ def test_complex_phase_trigonometric_identity(phi_r, phi_i):
 )
 @settings(max_examples=20, deadline=5000)
 def test_spectrum_calculation_vectorized(wavelengths):
-    """Property: Calculs vectorisés = calculs itératifs."""
+    """Property: Vectorized calculations = iterative calculations."""
     from certus.core._certus_physics_impl import calculate_bare_substrate_RT
 
     assume(len(wavelengths) >= 5)
@@ -115,18 +115,18 @@ def test_spectrum_calculation_vectorized(wavelengths):
 
     n_sub = np.full_like(wavelengths, 1.5, dtype=np.complex128)
 
-    # Vectorisé
+    # Vectorized
     T_vec = calculate_bare_substrate_RT(wavelengths, n_sub)
 
-    # Itératif
+    # Iterative
     T_iter = np.array([calculate_bare_substrate_RT(np.array([wl]), np.array([1.5 + 0j]))[0] for wl in wavelengths])
 
     assert np.allclose(T_vec, T_iter, rtol=1e-10), "Calcul vectorisé != itératif"
 
 
-# Tests de régression sur edge cases connus
+# Regression tests on known edge cases
 def test_normal_incidence_glass():
-    """Régression: cas classique verre à incidence normale."""
+    """Regression: classic case glass at normal incidence."""
     from certus.core._certus_physics_impl import calculate_bare_substrate_RT
 
     # Verre BK7, n=1.5168 @ 550nm
@@ -135,7 +135,7 @@ def test_normal_incidence_glass():
 
     T = calculate_bare_substrate_RT(wavelengths, n_sub)
 
-    # Formule analytique: T = (1-R)/(1+R) où R = ((n-1)/(n+1))²
+    # Analytical formula: T = (1-R)/(1+R) where R = ((n-1)/(n+1))²
     n = 1.5168
     R_single = ((n - 1) / (n + 1)) ** 2
     T_expected = (1 - R_single) / (1 + R_single)
@@ -144,5 +144,5 @@ def test_normal_incidence_glass():
 
 
 if __name__ == "__main__":
-    # Run avec pytest ou standalone
+    #Run with pytest or standalone
     pytest.main([__file__, "-v", "--hypothesis-show-statistics"])

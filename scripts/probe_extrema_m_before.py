@@ -1,13 +1,13 @@
-"""Reproduit le tableau du PLAN §A.0 : le volet points tournants est inerte.
+"""Reproduces the table in PLAN §A.0: the rotating points section is inert.
 
 check_extrema_proximity_batch recoit en production un M_before de zeros
 (certus/utils/certus_strat_service.py, « conservative: no extrema filtering »).
-Avec une matrice nulle tous les denom tombent sous 1e-9, donc tous les T
-echantillonnes valent 0, donc toutes les pentes valent 0, donc aucun test de
+With a zero matrix all denom fall under 1e-9, so all T
+samples are worth 0, so all slopes are worth 0, so no test of
 point tournant ne peut declencher.
 
 Le controle a l'identite prouve seulement que le noyau est VIVANT : l'identite
-est le M_before correct de la premiere couche seulement. Ce n'est pas le taux
+is the correct M_before of the first layer only. It's not the rate
 de rejet physique.
 """
 import sys
@@ -15,8 +15,8 @@ from pathlib import Path
 
 import numpy as np
 
-# Racine du depot deduite de l'emplacement de CE fichier (scripts/..).
-# Ne JAMAIS coder un chemin absolu ici : plusieurs copies du depot coexistent
+#Root of the repository deduced from the location of THIS file (scripts/..).
+#NEVER code an absolute path here: several copies of the repository coexist
 # sur la machine, et un chemin en dur ferait mesurer l'autre copie (CLAUDE.md §5.5).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -56,7 +56,7 @@ for label, M in (("zeros — la production", M_zeros), ("identite — controle",
         cells.append(f"{N - int(kept.sum())} interdite(s)/{N}")
     print(f"{label:<28} {cells[0]:>14} {cells[1]:>14}")
 
-# Verdict machine, pour qu'une regression soit visible.
+#Machine verdict, so that a regression is visible.
 kept_zeros = check_extrema_proximity_batch(
     WLS, n_curr, n_prev, n_sub, 100.0, M_zeros, EXCLUSION, True, np.zeros(N, dtype=np.bool_)
 )

@@ -89,7 +89,7 @@ def test_module_imports():
 
 def test_run_all_verifications_script_interface():
     """Test that the run_all_verifications script exposes main and ROOT."""
-    # Le script a été déplacé de tests/ vers scripts/smoke/
+    # The script was moved from tests/ to scripts/smoke/
     smoke_dir = str(Path(__file__).resolve().parents[2] / "scripts" / "smoke")
     if smoke_dir not in sys.path:
         sys.path.insert(0, smoke_dir)

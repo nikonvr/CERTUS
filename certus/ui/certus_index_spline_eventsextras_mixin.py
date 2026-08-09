@@ -2,10 +2,10 @@ from __future__ import annotations
 from certus.ui.certus_index_spline_common import *
 from certus.utils.certus_index_utils import _lam_uniform_grid
 
-# Registre des workers qui n'ont pas repondu a l'arret cooperatif. Il maintient une
-# reference FORTE jusqu'a l'emission de QThread.finished(), ce qui empeche Python de
-# detruire un QThread encore vivant (qFatal Qt, processus tue). Volontairement au
-# niveau module : sur le chemin closeEvent, le widget lui-meme est detruit.
+# Registry of workers that did not respond to cooperative stop. It maintains a
+# STRONG reference until QThread.finished() is emitted, which prevents Python from
+# destroying an still living QThread (Qt qFatal, process killed). Intentionally at the
+# module level: on the closeEvent path, the widget itself is destroyed.
 _ORPHAN_WORKERS: list = []
 
 
@@ -83,22 +83,22 @@ class CertusIndexSplineEventsExtrasMixin:
                 worker.wait(50)
 
             if worker.isRunning():
-                # NE PAS appeler deleteLater() sur un QThread encore en cours : Qt emet
-                # « QThread: Destroyed while thread is still running » puis qFatal, et le
-                # processus est tue net (reproduit : EXIT=127, contre EXIT=0 quand le
-                # thread est termine). L'utilisateur perd sa session sans message.
+                # DO NOT call deleteLater() on a still running QThread: Qt emits
+                # "QThread: Destroyed while thread is still running" then qFatal, and the
+                # process is killed cleanly (reproduced: EXIT=127, versus EXIT=0 when the
+                # thread is finished). The user loses their session without a message.
                 #
-                # On confie plutot la destruction au signal natif QThread.finished :
-                # l'affinite du QThread etant le thread GUI, la connexion est queued, donc
-                # deleteLater() n'est traite qu'une fois isFinished() vrai.
+                # Instead, we entrust destruction to the native QThread.finished signal:
+                # the QThread's affinity being the GUI thread, the connection is queued, so
+                # deleteLater() is only processed once isFinished() is true.
                 #
-                # Le registre est au niveau MODULE et pas sur self : sur le chemin
-                # closeEvent, self est detruit, et une liste portee par self perdrait la
-                # reference forte — Python detruirait alors un QThread vivant et le qFatal
-                # reviendrait a l'extinction.
+                # The registry is at the MODULE level and not on self: on the
+                # closeEvent path, self is destroyed, and a list held by self would lose the
+                # strong reference — Python would then destroy a living QThread and the qFatal
+                # would return upon shutdown.
                 if self.logger:
                     self.logger.warning(
-                        "Worker thread still running after ~4s wait; destruction differee a finished()"
+                        "Worker thread still running after ~4s wait; destruction deferred to finished()"
                     )
 
                 _ORPHAN_WORKERS.append(worker)

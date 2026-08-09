@@ -345,14 +345,14 @@ def _compute_blocks_range_for_params(
     # 🔴 MODE FAST SUPPRIME (2026-08-05) — decision du physicien : « interdit le mode
     # fast, je veux un mode vraiment semblable a la realite et j'ai tout mon temps ».
     #
-    # Une branche `if execution_mode == "fast" and fast_auto_blocks` remplacait ici la
-    # plage contractuelle par une union de FAST_AUTO_BLOCKS_DIVIDER_PRESETS calculee a
-    # `dense=False` — alors que l'appelant demande `dense=True`. C'etait le SECOND effet
-    # de `fast`, moins visible que la division des budgets Monte-Carlo mais tout aussi
-    # nocif : on explorait moins de decoupages.
+    #A branch `if execution_mode == "fast" and fast_auto_blocks` replaced the
+    #contractual range by a union of FAST_AUTO_BLOCKS_DIVIDER_PRESETS calculated at
+    #`dense=False` — while the caller requests `dense=True`. This was the SECOND effect
+    #of `fast`, less visible than the division of Monte-Carlo budgets but just as
+    #harmful: we explored fewer divisions.
     #
-    # `collect_params` ramene deja execution_mode a "premium" et le retire de l'IHM ;
-    # la branche est supprimee ici pour que le chemin programmatique (tests headless,
+    #`collect_params` already sets execution_mode to "premium" and removes it from the GUI;
+    #the branch is deleted here so that the programmatic path (headless tests,
     # appels directs) ne puisse pas la reactiver en posant params a la main.
     div_start = float(params.get("iter_divider_start", 10.0))
     div_end = float(params.get("iter_divider_end", 3.0))

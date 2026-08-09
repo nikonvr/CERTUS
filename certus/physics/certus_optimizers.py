@@ -11,11 +11,11 @@ from threading import RLock
 from concurrent.futures import ProcessPoolExecutor
 from collections import defaultdict
 from certus.core.certus_core import PI
-from certus.core._certus_physics_impl import PGlobalConfig
 from threading import Event
 
 if TYPE_CHECKING:
     from certus_physics.structures import Sample
+    from certus.core._certus_physics_impl import PGlobalConfig
 
 
 # [MONOLITHIC BLOCK] PGLOBAL ALGORITHM
@@ -625,7 +625,10 @@ class PGlobalOptimizer:
 
         self.dim = len(bounds)
 
-        self.config = config or PGlobalConfig()
+        if config is None:
+            from certus.core._certus_physics_impl import PGlobalConfig
+            config = PGlobalConfig()
+        self.config = config
 
         self.clusterer = SingleLinkageClusterer(self.bounds, self.config)
 
@@ -914,19 +917,19 @@ class PGlobalOptimizer:
 
             # Sur-souscription : le pool lance _n_workers threads, et CHACUN
             # appelle un noyau njit(parallel=True) qui ouvrait a son tour
-            # NUMBA_NUM_THREADS threads. Sur 16 coeurs avec ~10 workers, cela
+            #NUMBA_NUM_THREADS threads. On 16 cores with ~10 workers, this
             # faisait ~160 threads pour 16 coeurs, et le temps partait en
-            # contention plutot qu'en calcul.
+            #contention rather than calculation.
             #
             # Mesure sur example/example_design (cout par evaluation de
             # cost_numba_fast, ~850 000 appels par run — le temps total d'un run
-            # DESIGN varie de 43 a 85 s et ne permet rien de conclure) :
+            #DESIGN varies from 43 to 85 s and does not allow anything to be concluded):
             #     NUMBA_NUM_THREADS=16 : 953,30 us/appel
             #     NUMBA_NUM_THREADS= 2 : 884,69 us/appel
             #     NUMBA_NUM_THREADS= 1 : 749,50 us/appel
             #
             # C'est le meme constat qui avait motive le numba.set_num_threads(2)
-            # de _test_strategy_robustness_task, mais applique au pool.
+            #from _test_strategy_robustness_task, but applies to the pool.
             self._pool = ThreadPoolExecutor(
                 max_workers=self._n_workers,
                 initializer=self._init_pool_thread,

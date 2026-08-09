@@ -169,6 +169,6 @@ def test_p5_confirm_destructive_returns_false_on_parent_none(monkeypatch):
         logger = None
         confirm_destructive = CertusBaseApp.confirm_destructive
 
-    # Forcing an exception path (can't instantiate QMessageBox w/o parent)
+    #Forcing an exception path (can't instantiate QMessageBox w/o parent)
     result = _Stub().confirm_destructive("Title", "Message")
     assert result is False

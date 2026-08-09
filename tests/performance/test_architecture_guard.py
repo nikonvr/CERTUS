@@ -175,10 +175,10 @@ def test_numba_nogil_enabled():
     # We check specific kernels that MUST be parallel + nogil.
     target_functions = [
         "needle_scan_cached",
-        # Renomme dans le lot non commite : _calculate_RT_batch_kernel_jit et son
+        #Rename in uncommitted batch: _calculate_RT_batch_kernel_jit and its
         # wrapper calculate_RT_batch_kernel ont fusionne lors du retrait du cache
         # joblib.Memory (certus/physics/certus_strat_batch.py:268). Le garde-fou
-        # nogil doit suivre le nom reel, sinon il ne garde plus rien.
+        #nogil must follow the real name, otherwise it no longer keeps anything.
         "calculate_RT_batch_kernel",
     ]
 

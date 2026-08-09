@@ -15,7 +15,7 @@ sys.modules["pyqtgraph"] = MagicMock()
 sys.modules["certus_ui"] = mock_ui
 sys.modules["certus_reset_framework"] = MagicMock()
 
-# Ajout du repertoire parent au path
+# Adding parent directory to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
@@ -85,7 +85,7 @@ def run_ultimate_validation():
     stop = Event()
     print("Demarrage de l'optimization (Spline 12 nuds)...")
     
-    # Phase Spline (12 nuds par defaut dans worker_spline_optimization si n_seg=11)
+    #Phase Spline (12 nodes by default in worker_spline_optimization if n_seg=11)
     # On utilise le worker direct
     best_spline = worker_spline_optimization(
         cfg, stop_event=stop, progress_cb=lambda p, m: print(f"{float(p) / 100.0:.2f}% - {m}")

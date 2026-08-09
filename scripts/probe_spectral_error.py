@@ -1,20 +1,20 @@
-"""L'erreur spectrale statistique finale, decomposee par bande.
+"""The final statistical spectral error, broken down by band.
 
-Un RMSE global sur un dichroique ne dit rien : il est domine par le front raide, ou un
-deplacement de quelques nanometres produit une variation de T enorme. Ce qui compte pour un
+A global RMSE on a dichroic says nothing: it is dominated by the steep front, or a
+displacement of a few nanometers produces an enormous variation of T. What counts for a
 fabricant est different selon la bande :
 
   400-540 nm  bande passante  ~95 % de T   -> un ecart de 1 point est negligeable
   544-552 nm  front raide                  -> l'ecart mesure un DECALAGE du front
   555-700 nm  bande bloquee   < 0,1 % de T -> un ecart de 0,1 point est DEJA hors spec
 
-On capture donc les epaisseurs reellement simulees (thicknesses_all), on recalcule le spectre
+We therefore capture the thicknesses actually simulated (thicknesses_all), we recalculate the spectrum
 de chaque tirage, et on rend la distribution de l'ecart PAR BANDE — plus le decalage du front,
 qui est la vraie grandeur physique sur un dichroique.
 
     .venv/Scripts/python.exe scripts/probe_spectral_error.py
 
-N'ecrit rien hors reports/. Ne touche a aucun code de production.
+Does not write anything except reports/. Do not touch any production codes.
 """
 
 from __future__ import annotations
@@ -100,7 +100,7 @@ def analyse() -> dict:
     _, T_nom = calculate_RT_batch_kernel(wl, nH, nL, nSub, d0.reshape(1, -1))
     T_nom = np.asarray(T_nom, dtype=np.float64)[0]
 
-    # bandes du dichroique, lues sur le spectre nominal lui-meme
+    #dichroic bands, read on the nominal spectrum itself
     pass_m = (wl >= 400) & (wl <= 540)
     edge_m = (wl > 540) & (wl < 560)
     stop_m = (wl >= 560)

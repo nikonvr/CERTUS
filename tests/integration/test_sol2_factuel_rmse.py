@@ -1,4 +1,4 @@
-"""Cohérence RMSE « Keep » Smart Init vs 1er coût SOL2 ; contraste smooth/PWL (diagnostic saut dialogue/worker)."""
+"""RMSE “Keep” Smart Init consistency vs 1st SOL2 cost; smooth/PWL contrast (dialogue/worker skip diagnosis)."""
 
 
 from __future__ import annotations
@@ -64,7 +64,7 @@ from certus.spline.spline_smart_init import interp_n_L_pwlnk_to_sigmas
 def test_rmse_keep_worker_mesh_matches_sol2_first_cost_ir_extended() -> None:
 
 
-    """K dialogue = 12 (base fichier) -> bridge K=14 si lambda_max > seuil IR : même RMSE que ``obj(x0 clip)``."""
+    """K dialog = 12 (file base) -> bridge K=14 if lambda_max > IR threshold: same RMSE as ``obj(x0 clip)``."""
 
 
     lam = np.linspace(350.0, 5200.0, 160, dtype=np.float64)
@@ -265,7 +265,7 @@ def test_rmse_keep_worker_mesh_matches_sol2_first_cost_ir_extended() -> None:
 def test_decompose_tot_matches_objective_call(nk_mode: str) -> None:
 
 
-    """``decompose_spline_pwl_objective`` total = ``SplinePWLObjective`` (même cfg, x, sk)."""
+    """``decompose_spline_pwl_objective`` total = ``SplinePWLObjective`` (same cfg, x, sk)."""
 
 
     lam = np.linspace(400.0, 2400.0, 80, dtype=np.float64)
@@ -424,7 +424,7 @@ def test_decompose_tot_matches_objective_call(nk_mode: str) -> None:
 def test_smooth_profile_can_raise_rmse_vs_pwl_same_nodes() -> None:
 
 
-    """Avec K>=4, le profil cubique diffère de la PWL : les deux RMSE sur le même x ne sont pas forcément égales."""
+    """With K>=4, the cubic profile differs from the PWL: the two RMSE on the same x are not necessarily equal."""
 
 
     lam = np.linspace(350.0, 5200.0, 160, dtype=np.float64)

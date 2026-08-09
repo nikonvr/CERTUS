@@ -366,8 +366,8 @@ class SplineBasisCache:
 
     _cache: OrderedDict = OrderedDict()
 
-    # Borne du cache. Au-dela, on evince la plus ancienne entree UTILISEE (LRU),
-    # et non la totalite du cache — voir le commentaire dans get().
+    # Cache bound. Beyond this, we evict the oldest USED entry (LRU),
+    #and not the entire cache — see comment in get().
     _MAX_ENTRIES = 512
 
     _lock = None  # Initialized lazily to avoid import-time threading overhead
@@ -411,17 +411,17 @@ class SplineBasisCache:
             bool(extrapolate),
         )
 
-        # Chemin CHAUD, sans verrou : dict.get est atomique sous le GIL.
+        # HOT path, without lock: dict.get is atomic under the GIL.
         #
-        # move_to_end note la recence. C'est un appel C unique, lui aussi atomique
-        # sous le GIL ; on evite ainsi de prendre le verrou sur un succes de cache,
-        # ce qui ferait attendre un lecteur derriere la construction (~1 ms) en cours
-        # dans un autre thread.
+        # move_to_end notes the recency. It is a single C call, also atomic
+        # under the GIL; this avoids taking the lock on a cache hit,
+        # which would make a reader wait behind an ongoing construction (~1 ms)
+        # in another thread.
         cached = cls._cache.get(key)
         if cached is not None:
             try:
                 cls._cache.move_to_end(key)
-            except KeyError:  # evincee entre-temps : sans consequence
+            except KeyError:  # evicted in the meantime: no consequence
                 pass
             return cached
 
@@ -461,17 +461,17 @@ class SplineBasisCache:
 
             cls._cache[key] = B
 
-            # Eviction LRU bornee, et NON un vidage total.
+            # Bounded LRU eviction, and NOT a total flush.
             #
-            # L'ancien garde-fou faisait `if len(_cache) > 500: _cache.clear()`. Le
-            # cout d'un vidage n'est pas la place liberee mais la localite perdue :
-            # les entrees chaudes du moment partaient avec les froides, et un pas de
-            # difference finie qui venait de servir devait etre reconstruit.
-            # Mesure sur l'exemple reel example/example_metal_single, cache force a
-            # use_cache=True : 46 872 appels, 5 489 matrices distinctes, 11 vidages,
-            # 5 557 constructions — soit 68 reconstructions dues au vidage.
-            # popitem(last=False) retire la plus ancienne UTILISEE ; le bornage reste
-            # le meme, la localite temporelle est conservee.
+            # The old safeguard did `if len(_cache) > 500: _cache.clear()`. The
+            # cost of a flush is not the freed space but the lost locality:
+            # the currently hot entries left with the cold ones, and a finite
+            # difference step that was just used had to be reconstructed.
+            # Measurement on the real example example/example_metal_single, cache forced to
+            # use_cache=True : 46,872 calls, 5,489 distinct matrices, 11 flushes,
+            # 5,557 constructions — that is 68 reconstructions due to flushing.
+            # popitem(last=False) removes the oldest USED entry; the bounding remains
+            # the same, the temporal locality is preserved.
             while len(cls._cache) > cls._MAX_ENTRIES:
                 cls._cache.popitem(last=False)
 
@@ -490,7 +490,7 @@ def _compute_nk_from_spline(
     target_lambda_array: np.ndarray,
     use_cache: bool,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Coeur du calcul, sur TABLEAUX. Aucune conversion, aucun hachage."""
+    """Core computation, on ARRAYS. No conversion, no hashing."""
     num_knots = len(knot_wavelengths)
     n_knot_values = p_spline_nk_values[:num_knots]
     k_knot_values = p_spline_nk_values[num_knots:]
@@ -514,11 +514,11 @@ def _compute_nk_from_spline(
 def _get_nk_from_spline_keyed(
     p_key: bytes, knot_key: bytes, target_key: bytes, use_cache: bool
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Variante memorisee. Cle en OCTETS, et non en tuples Python.
+    """Memoized variant. Key in BYTES, and not in Python tuples.
 
-    L'ancienne version prenait trois tuples et les reconvertissait aussitot en
-    tableaux : le trajet complet etait tableau -> tuple -> hachage -> tableau, paye
-    sur des vecteurs de plusieurs centaines de points.
+    The old version took three tuples and immediately reconverted them into
+    arrays: the full path was array -> tuple -> hash -> array, paid
+    on vectors of several hundred points.
     """
     return _compute_nk_from_spline(
         np.frombuffer(p_key, dtype=np.float64),
@@ -543,14 +543,14 @@ def get_nk_from_spline(
     knot_arr = np.ascontiguousarray(knot_wavelengths, dtype=np.float64)
     target_arr = np.ascontiguousarray(target_lambda_array, dtype=np.float64)
 
-    # Les DEUX chemins passent par la memoisation : `use_cache` ne choisit pas s'il
-    # faut memoiser, mais quelle methode d'evaluation employer — matrice de base
-    # pre-calculee, ou construction directe d'un CubicSpline. Ce parametre fait donc
-    # partie de la cle.
+    # BOTH paths go through memoization: `use_cache` does not choose whether to
+    # memoize, but which evaluation method to employ — pre-computed basis matrix,
+    # or direct construction of a CubicSpline. This parameter is therefore
+    # part of the key.
     #
-    # La cle est en OCTETS et non en tuples Python. L'ancienne version faisait
-    # tableau -> tuple -> hachage element par element -> tableau, sur des vecteurs de
-    # plusieurs centaines de points ; .tobytes() hache un seul bloc memoire.
+    # The key is in BYTES and not in Python tuples. The old version did
+    # array -> tuple -> element-by-element hashing -> array, on vectors of
+    # several hundred points; .tobytes() hashes a single memory block.
     return _get_nk_from_spline_keyed(
         p_arr.tobytes(), knot_arr.tobytes(), target_arr.tobytes(), bool(use_cache)
     )

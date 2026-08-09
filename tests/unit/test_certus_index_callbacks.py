@@ -326,7 +326,7 @@ def test_index_tlu_live_payload_normalized_matches_package_convention():
 
 
 def test_index_tlu_live_payload_raw_when_not_normalized():
-    """Sans normalisation, le live doit tracer T et R physiques."""
+    """Without normalization, the live must trace physical T and R."""
     wls = np.linspace(400.0, 800.0, 50, dtype=np.float64)
     n_sub = get_n_substrate_array_by_id(SUBSTRATES["N-BK7"]["id"], wls)
     df = pd.DataFrame(

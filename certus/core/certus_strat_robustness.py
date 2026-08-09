@@ -78,14 +78,14 @@ from certus.core.certus_strat_ranking import (
 )
 
 
-# Taux de depots non terminables au-dela duquel une strategie est ELIMINEE.
+# Non-terminating deposition rate beyond which a strategy is ELIMINATED.
 #
-# Un depot qui ne se termine pas est un run perdu en salle, pas un compromis de
-# qualite : la strategie sort du classement au lieu d'etre penalisee. En dessous
-# du seuil, l'alea est juge acceptable au regard du gain spectral eventuel.
+# A non-terminating deposition is a lost run in the cleanroom, not a quality
+# compromise: the strategy is removed from the ranking instead of being penalized. Below
+# the threshold, the randomness is deemed acceptable given the potential spectral gain.
 #
-# rmse_p95 ne peut PAS remplacer ce controle : etant un 95e percentile, il est
-# structurellement aveugle a tout evenement survenant dans moins de 5 % des runs.
+# rmse_p95 CANNOT replace this check: being a 95th percentile, it is
+# structurally blind to any event occurring in less than 5% of the runs.
 CRASH_RATE_TOLERANCE = 0.05
 
 
@@ -296,7 +296,7 @@ def _filter_finite_robustness_scores(
 ) -> list[dict[str, Any]]:
     """Keep only strategies with finite robustness score.
 
-    🔴 AVEC UN REPLI OBLIGATOIRE : ce filtre ne doit JAMAIS rendre une liste vide.
+    🔴 WITH A MANDATORY FALLBACK: this filter must NEVER return an empty list.
 
     Crash rate COMPOSES across stack height. On 48 layers, holding 5% at strategy
     level requires 1 - (1 - 0.05)^(1/48) = 0.107% per layer. It is a cliff, not a continuous ranking:
@@ -327,20 +327,20 @@ def _filter_finite_robustness_scores(
     if filtered_results or not rejected:
         return filtered_results
 
-    # Aucune survivante : on reclasse les eliminees par risque croissant et on
-    # leur rend un score fini, faute de quoi elles seraient perdues plus loin.
+    # No survivor: we re-rank the eliminated ones by increasing risk and we
+    # return a finite score to them, otherwise they would be lost later.
     def _fallback_key(it: dict[str, Any]) -> tuple[float, float]:
         return (float(it.get("crash_rate", 1.0)), _worst_finite_rmse(it))
 
     rejected.sort(key=_fallback_key)
     best_crash = float(rejected[0].get("crash_rate", 1.0))
     logger.error(
-        f"[ROBUSTNESS] 🔴 AUCUNE des {len(rejected)} strategies ne tient sous "
-        f"{CRASH_RATE_TOLERANCE:.0%} de depots non terminables. Le taux se compose "
-        f"sur la hauteur de l'empilement : le meilleur candidat plante dans "
-        f"{best_crash:.1%} des tirages. On rend malgre tout le classement par risque "
-        f"croissant — mais AUCUNE de ces strategies n'est utilisable en l'etat, et "
-        f"le composant demande vraisemblablement un autre paradigme de monitoring."
+        f"[ROBUSTNESS] 🔴 NONE of the {len(rejected)} strategies holds under "
+        f"{CRASH_RATE_TOLERANCE:.0%} of non-terminating depositions. The rate compounds "
+        f"over the height of the stack: the best candidate crashes in "
+        f"{best_crash:.1%} of the draws. We still return the ranking by increasing "
+        f"risk — but NONE of these strategies is usable as is, and "
+        f"the component likely requires another monitoring paradigm."
     )
     for item in rejected:
         item["robustness_score"] = _worst_finite_rmse(item)
@@ -349,7 +349,7 @@ def _filter_finite_robustness_scores(
 
 
 def _worst_finite_rmse(item: dict[str, Any]) -> float:
-    """Pire RMSE fini sur les niveaux de bruit, pour reclasser une eliminee."""
+    """Worst finite RMSE on the noise levels, to re-rank an eliminated one."""
     worst = 0.0
     for r in item.get("results_per_noise", []) or []:
         val = float(r.get("rmse_p95", r.get("rmse_mean", 0.0)) or 0.0)
@@ -538,32 +538,32 @@ def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_l
         
     import math
     from scipy.stats import qmc, norm
-    # Melange multiplicatif, et NON une somme.
+    # Multiplicative mixing, NOT a sum.
     #
-    # `base_seed + noise_idx` fait collisionner des couples distincts : le consensus
-    # genere ses graines par `base_seed + i * stride` avec un stride valant 1 par defaut
-    # (certus/utils/certus_strat_context.py:598 et :610), donc (graine 42, niveau 1) et
-    # (graine 43, niveau 0) donnaient tous deux local_seed = 43 — le MEME bruit.
-    # Le recouvrement est triangulaire et massif :
-    #     3 graines x 3 niveaux =  9 tirages ->  5 distincts (44 % perdus)
-    #     5 graines x 4 niveaux = 20 tirages ->  8 distincts (60 % perdus)
-    #     8 graines x 5 niveaux = 40 tirages -> 12 distincts (70 % perdus)
-    # Or le consensus est cense moyenner sur des graines INDEPENDANTES : partager le
-    # bruit entre membres gonfle leur accord apparent, donc surestime la robustesse.
+    # `base_seed + noise_idx` makes distinct pairs collide: the consensus
+    # generates its seeds by `base_seed + i * stride` with a stride of 1 by default
+    # (certus/utils/certus_strat_context.py:598 and :610), so (seed 42, level 1) and
+    # (seed 43, level 0) both gave local_seed = 43 — the SAME noise.
+    # The overlap is triangular and massive:
+    #     3 seeds x 3 levels =  9 draws ->  5 distincts (44% lost)
+    #     5 seeds x 4 levels = 20 draws ->  8 distincts (60% lost)
+    #     8 seeds x 5 levels = 40 draws -> 12 distincts (70% lost)
+    # Yet the consensus is supposed to average over INDEPENDENT seeds: sharing the
+    # noise between members inflates their apparent agreement, thus overestimating robustness.
     #
-    # Les deux constantes sont des entiers impairs proches de 2^32/phi et 2^16/phi :
-    # elles dispersent les bits de poids faible, qui sont precisement ceux qui variaient
-    # ici (indices petits et consecutifs).
+    # The two constants are odd integers close to 2^32/phi and 2^16/phi:
+    # they scatter the low-order bits, which are precisely the ones that varied
+    # here (small and consecutive indices).
     #
-    # NOTE : ce correctif change les tirages, donc les resultats de robustesse ne sont
-    # pas numeriquement comparables a ceux d'avant. C'est inevitable — les anciens
-    # etaient statistiquement biaises.
+    # NOTE: this fix changes the draws, so the robustness results are not
+    # numerically comparable to before. It is inevitable — the old ones
+    # were statistically biased.
     local_seed = (base_seed * 2_654_435_761 + noise_idx * 40_503) % (2**31)
     sobol_engine = qmc.Sobol(d=num_layers, seed=local_seed)
     n_pow2 = 2 ** math.ceil(math.log2(num_runs)) if num_runs > 0 else 0
     sobol_samples = sobol_engine.random(n=n_pow2)[:num_runs]
     
-    # Transformation inverse CDF (distrib. uniforme vers normale N(0, 1/3))
+    # Inverse CDF transform (uniform to normal distribution N(0, 1/3))
     raw_noise = norm.ppf(sobol_samples, loc=0.0, scale=1.0 / 3.0)
     raw_noise = np.clip(raw_noise, -1.0, 1.0).astype(np.float64)
     
@@ -572,39 +572,39 @@ def _get_cached_sobol_noise(base_seed: int, noise_idx: int, num_runs: int, num_l
 
 
 def _signal_noise_stream_seed(base_seed: int, noise_idx: int) -> int:
-    """Graine du flux de bruit de LECTURE du signal de monitoring (axe 1.1).
+    """Seed of the READ noise stream of the monitoring signal (axis 1.1).
 
-    🔴 ELLE NE DEPEND QUE DE LA CONFIGURATION DE TIRAGE, JAMAIS DE LA STRATEGIE.
-    C'est la condition des nombres aleatoires communs : deux strategies evaluees
-    au meme (graine, niveau de bruit) voient exactement le meme bruit de lecture,
-    et l'ecart de leurs scores reste imputable a la strategie seule. Le meme acquis
-    que `_get_cached_sobol_noise` protege pour le bruit d'arret — `_strat_idx` y est
-    deliberement inutilise.
+    🔴 IT DEPENDS ONLY ON THE DRAW CONFIGURATION, NEVER ON THE STRATEGY.
+    This is the condition for common random numbers: two strategies evaluated
+    at the same (seed, noise level) see exactly the same read noise,
+    and the difference in their scores remains attributable to the strategy alone. The same achievement
+    as `_get_cached_sobol_noise` protects for the stopping noise — `_strat_idx` is
+    deliberately unused there.
 
-    Melange multiplicatif et non additif, pour la raison exposee dans
-    `_get_cached_sobol_noise` : le consensus engendre ses graines par
-    `base_seed + i * stride` avec un stride valant 1 par defaut, donc une somme
-    ferait collisionner (graine 42, niveau 1) et (graine 43, niveau 0).
+    Multiplicative and non-additive mixing, for the reason explained in
+    `_get_cached_sobol_noise`: the consensus generates its seeds by
+    `base_seed + i * stride` with a stride of 1 by default, so a sum
+    would collide (seed 42, level 1) and (seed 43, level 0).
 
-    La constante finale eloigne ce flux de celui de la nucleation, qui appelle le
-    meme `_seeded_noise_sample` avec `seed_base` non decale.
+    The final constant distances this stream from the nucleation one, which calls the
+    same `_seeded_noise_sample` with an unshifted `seed_base`.
     """
     mixed = int(base_seed) * 2_246_822_519 + int(noise_idx) * 668_265_263 + 0x5F35_6495
     return mixed % (2**53)
 
 
 def _affine_stream_seed(base_seed: int, noise_idx: int) -> int:
-    """Graine du flux de distorsion affine (axe 1.1).
+    """Seed of the affine distortion stream (axis 1.1).
 
-    🔴 ELLE NE DEPEND QUE DE LA CONFIGURATION DE TIRAGE, JAMAIS DE LA STRATEGIE.
-    C'est la condition des nombres aleatoires communs.
+    🔴 IT DEPENDS ONLY ON THE DRAW CONFIGURATION, NEVER ON THE STRATEGY.
+    This is the condition for common random numbers.
     """
     mixed = int(base_seed) * 3_266_489_917 + int(noise_idx) * 1_274_126_177 + 0x7E2A_8431
     return mixed % (2**53)
 
 
 def _index_stream_seed(base_seed: int, noise_idx: int) -> int:
-    """Graine du flux d'incertitude d'indice (T5)."""
+    """Seed of the index uncertainty stream (T5)."""
     mixed = int(base_seed) * 2_654_435_761 + int(noise_idx) * 850_507 + 0x3F1B_79C5
     return mixed % (2**53)
 
@@ -636,17 +636,17 @@ def _test_strategy_robustness_task(
     num_layers = len(p_thick_nominal)
     offset_val = compute_probe_offset_nm_from_ratio(params)
     factor_val = float(params.get("non_monotonic_error_factor", 2.0))
-    # Defaut MAINTENU a 1.2, contrairement a ce que j'avais fait un temps.
+    # Default MAINTAINED at 1.2, contrary to what I had done at one time.
     #
-    # Ce facteur majore le bruit de la PREMIERE couche de chaque bloc pour
-    # representer la perte d'historique au changement de longueur d'onde. J'avais
-    # cru pouvoir le neutraliser en implementant POEM, au motif que le benefice
-    # des blocs deviendrait structurel. C'ETAIT FAUX, et il faut le dire :
+    # This factor increases the noise of the FIRST layer of each block to
+    # represent the loss of history at the wavelength change. I had
+    # thought I could neutralize it by implementing POEM, on the grounds that the benefit
+    # of the blocks would become structural. IT WAS WRONG, and it must be said:
     #
-    #   POEM tel qu'implemente balaie a partir de d = 0 de la couche COURANTE
-    #   (certus_strat_growth.py) et ne voit que son propre segment de signal. Il
-    #   capture donc le swing INTRA-COUCHE, mais pas l'historique des extrema
-    #   observes pendant les couches precedentes du meme bloc.
+    #   POEM as implemented sweeps from d = 0 of the CURRENT layer
+    #   (certus_strat_growth.py) and only sees its own signal segment. It
+    #   thus captures the INTRA-LAYER swing, but not the history of extrema
+    #   observed during the previous layers of the same block.
     #
     # Monochromatic block history continuity: at unchanged wavelength the signal
     # is continuous, so previously observed turning points remain usable.
@@ -695,17 +695,17 @@ def _test_strategy_robustness_task(
     #
     # ⚠️ DISTINCTION TO PRESERVE (Physical): The TARGET POINT during growth
     # remains the frozen nominal — this is the auto-compensation mechanism itself, see
-    # comment in `simulate_growth_kernel`. Only the RANKING FIGURE OF MERIT
+    #comment in `simulate_growth_kernel`. Only the RANKING FIGURE OF MERIT
     # switches to weighted target. This block touches nothing in growth kernel.
     #
-    # La fonctionnelle est celle que DESIGN minimise deja (`prepare_targets_vectorized` :
-    # interpolation lineaire de tmin a tmax sur la zone, poids = poids utilisateur x
-    # quadrature spectrale en d ln lambda). Les deux modules deviennent ainsi coherents
-    # au lieu d'optimiser deux choses differentes.
+    # The functional is the one that DESIGN already minimizes (`prepare_targets_vectorized`:
+    # linear interpolation from tmin to tmax on the zone, weight = user weight x
+    # spectral quadrature in d ln lambda). Both modules thus become coherent
+    # instead of optimizing two different things.
     #
-    # REPLI DOCUMENTE : sans cible fournie, on garde le nominal non pondere — donc le
-    # comportement d'avant, au bit pres. C'est la presence de `targets` qui active
-    # l'axe 3, pas un drapeau de plus.
+    # DOCUMENTED FALLBACK: without a provided target, we keep the unweighted nominal — therefore the
+    # previous behavior, bit for bit. It is the presence of `targets` that activates
+    # axis 3, not an additional flag.
     T_rank_target = T_nom_aligned
     rank_weights = None
     _raw_targets = params.get("targets")
@@ -733,16 +733,16 @@ def _test_strategy_robustness_task(
                 rank_weights = np.asarray(_w, dtype=np.float64)
             else:
                 logger.warning(
-                    "[CIBLE] %d zone(s) fournie(s) mais aucune ne recouvre la grille "
-                    "%.0f-%.0f nm : repli sur le spectre nominal.",
+                    "[TARGET] %d zone(s) provided but none covers the grid "
+                    "%.0f-%.0f nm: fallback to the nominal spectrum.",
                     len(_tgts),
                     float(wl_arr[0]),
                     float(wl_arr[-1]),
                 )
         except NUMERICAL_FAULT_EXCEPTIONS as exc:
             logger.error(
-                "[CIBLE] zones inexploitables (%r) : repli sur le spectre nominal. "
-                "Le classement ne mesure alors PAS la conformite a la cible.",
+                "[TARGET] unusable zones (%r): fallback to the nominal spectrum. "
+                "The ranking then DOES NOT measure compliance with the target.",
                 exc,
             )
 
@@ -776,13 +776,13 @@ def _test_strategy_robustness_task(
             n_L_vals[i] = b_nL
             n_Sub_vals[i] = b_nSub
 
-    # Cache de matrices construit UNE fois et partage.
+    # Matrix cache built ONCE and shared.
     #
-    # Il l'etait deux fois par strategie : une premiere dans
-    # _compute_dT_dd_per_layer, une seconde plus bas pour le profil theorique
-    # des couches — memes entrees, meme resultat. Sur le profil de
-    # example/example_strat, ces deux constructions pesaient 69,5 % et 63,8 %
-    # des echantillons.
+    # It used to be twice per strategy: a first time in
+    # _compute_dT_dd_per_layer, a second time below for the theoretical profile
+    # of the layers — same inputs, same result. On the profile of
+    # example/example_strat, these two constructions weighed 69.5% and 63.8%
+    # of the samples.
     _M_before_cache = build_M_before_cache(
         layer_wavelengths,
         n_H_vals,
@@ -805,28 +805,28 @@ def _test_strategy_robustness_task(
 
     base_seed = int(params.get("robustness_seed", 42)) if params.get("robustness_seed") is not None else 42
 
-    # ── AXE 1.1 : bruiter le SIGNAL de monitoring, pas seulement l'arret ───────
+    # ── AXIS 1.1: noise the monitoring SIGNAL, not only the stopping point ───────
     #
-    # Drapeau PAR DEFAUT INACTIF. C'est un changement de modele de premier ordre :
-    # il fera monter les taux de plantage et baisser le benefice apparent de POEM,
-    # et c'est la mesure qui doit trancher, pas l'intuition. Voir le bloc
-    # « BRUIT DE LECTURE » de certus/physics/certus_strat_growth.py.
+    # Flag INACTIVE BY DEFAULT. It is a first-order model change:
+    # it will increase crash rates and lower the apparent benefit of POEM,
+    # and it is the measurement that must decide, not intuition. See the
+    # "READ NOISE" block in certus/physics/certus_strat_growth.py.
     signal_noise_on = bool(params.get("poem_anchor_noise", False))
 
     # ── AXIS 1.2: Turning point detection rule ─────────────────────
     #
-    # Exprime en MULTIPLE de l'amplitude de bruit, parce que c'est de la qu'elle se
-    # derive : le tirage etant borne a +/- A, l'ecart apparent maximal que le bruit
-    # SEUL peut produire entre deux lectures vaut 2A. A partir de 2, le bruit ne peut
-    # donc plus fabriquer un point tournant.
+    # Expressed as a MULTIPLE of the noise amplitude, because that is where it is
+    # derived from: the draw being bounded at +/- A, the maximum apparent difference that the noise
+    # ALONE can produce between two readings is 2A. From 2 onwards, the noise can
+    # therefore no longer manufacture a turning point.
     #
-    # 👤 Ce seuil N'EST PAS le critere des 4 % d'amplitude de depart : « le 4 %,
-    # pour moi, c'etait au pif, pour etre certain qu'on va y arriver » (2026-08-06).
-    # Les 4 % sont une pre-selection de longueur d'onde ; ceci est la regle de LECTURE
-    # de la machine, et sa grandeur de reference est le bruit, qui est mesure.
+    # 👤 This threshold IS NOT the 4% starting amplitude criterion: "the 4%,
+    # for me, it was a wild guess, to be sure we would make it" (2026-08-06).
+    # The 4% is a wavelength pre-selection; this is the machine's READ rule,
+    # and its reference quantity is the noise, which is measured.
     #
-    # Defaut 0.0 = regle historique, donc chemin inchange. La valeur n'est pas posee
-    # ici : elle se balaie et se tranche par la mesure.
+    # Default 0.0 = historical rule, so unchanged path. The value is not set
+    # here: it is swept and decided by measurement.
     tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
         raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, num_layers)
@@ -836,30 +836,30 @@ def _test_strategy_robustness_task(
         else:
             noise_matrix = raw_noise * (noise_val / 100.0) * penalty_vector
 
-        # Meme sigma que la lecture d'arret, et par le meme chemin de conversion.
+        # Same sigma as the stopping reading, and through the same conversion path.
         #
-        # ⚠ SANS `penalty_vector`, deliberement. Ce vecteur majore le bruit d'ARRET
-        # de la premiere couche de chaque bloc pour representer la perte
-        # d'historique au changement de lambda — c'est un pansement, et l'axe 1.1
-        # est precisement ce qui doit rendre cet effet STRUCTUREL. L'appliquer une
-        # seconde fois au bruit de lecture compterait deux fois le meme effet.
-        # `signal_noise_scale` est donc le sigma NU de l'instrument.
+        # ⚠ WITHOUT `penalty_vector`, deliberately. This vector increases the STOPPING noise
+        # of the first layer of each block to represent the loss of
+        # history at the lambda change — it is a band-aid, and axis 1.1
+        # is precisely what should make this effect STRUCTURAL. Applying it a
+        # second time to the read noise would count the same effect twice.
+        # `signal_noise_scale` is therefore the BARE sigma of the instrument.
         signal_noise_scale = None
         signal_noise_seed = 0
         if signal_noise_on:
             if is_absolute:
-                # `dT_dd` est signe ; seule son amplitude fait une echelle de bruit,
-                # et une echelle negative desactiverait le bruit dans le noyau.
+                # `dT_dd` is signed; only its amplitude makes a noise scale,
+                # and a negative scale would deactivate the noise in the kernel.
                 signal_noise_scale = np.abs(np.asarray(dT_dd, dtype=np.float64)) * noise_val
             else:
                 signal_noise_scale = np.full(num_layers, noise_val / 100.0, dtype=np.float64)
             signal_noise_seed = _signal_noise_stream_seed(base_seed, noise_idx)
 
-        # L'hysteresis suit le NIVEAU DE BRUIT courant, comme le bruit lui-meme : c'est
-        # une regle de lecture relative a ce que l'instrument fluctue. En mode
-        # « tolerance nm » elle depend de la couche via dT/dd, donc on retient la
-        # mediane — le noyau prend un scalaire, et l'affiner n'a pas de sens tant que
-        # la valeur du facteur n'est pas tranchee.
+        # The hysteresis follows the current NOISE LEVEL, just like the noise itself: it is
+        # a read rule relative to what the instrument fluctuates. In
+        # "nm tolerance" mode it depends on the layer via dT/dd, so we keep the
+        # median — the kernel takes a scalar, and refining it makes no sense until
+        # the value of the factor is decided.
         tp_hysteresis = 0.0
         if tp_hysteresis_factor > 0.0:
             if is_absolute:
@@ -916,32 +916,32 @@ def _test_strategy_robustness_task(
                             f"   [DYN-OK] L{i_layer + 1} @ {wl_sel:.0f}nm | A={theory_dyn * 100:.2f}% | B={sim_dyn * 100:.2f}%"
                         )
 
-        # DEPOTS NON TERMINABLES, ET DESORMAIS DECOMPOSES PAR CAUSE.
+        # NON-TERMINATING DEPOSITIONS, AND NOW BROKEN DOWN BY CAUSE.
         #
-        # `simulate_growth_kernel` majore l'epaisseur d'un multiple de 1e6 selon la
-        # cause : niveau jamais atteint, comptage d'extrema divergent, ou T(d) non
-        # monotone en mode REJECT. Dans les trois cas la machine ne peut pas terminer
-        # la couche, donc le test `> 1e5` et le taux global sont INCHANGES.
+        # `simulate_growth_kernel` increases the thickness by a multiple of 1e6 depending on the
+        # cause: level never reached, divergent extrema count, or T(d) non-
+        # monotonic in REJECT mode. In all three cases the machine cannot terminate
+        # the layer, so the test `> 1e5` and the overall rate are UNCHANGED.
         #
-        # Ces evenements sont DISCRETS et rmse_p95 ne peut pas les voir sous 5 % :
-        # un taux de plantage de 2 % passerait totalement inapercu alors qu'il rend
-        # la strategie inutilisable en production. D'ou un comptage explicite.
+        # These events are DISCRETE and rmse_p95 cannot see them below 5%:
+        # a crash rate of 2% would go totally unnoticed while it makes
+        # the strategy unusable in production. Hence an explicit count.
         #
-        # 🔴 ET LA DECOMPOSITION N'EST PAS UN AGREMENT D'AFFICHAGE. Les 👤 trois
-        # questions du juge de paix — « voit-on les turning points ? risque-t-on de
-        # mal les compter ? risque-t-on de ne jamais atteindre le niveau ? » — ne sont
-        # des mesures que si l'on compte separement. Un taux agrege de 1,3 % ne dit
-        # pas quel mecanisme corriger, et 📏 c'est precisement ce qui a bloque le
-        # diagnostic du plancher independant de sigma.
+        # 🔴 AND THE BREAKDOWN IS NOT A DISPLAY AMENITY. The 👤 three
+        # questions of the benchmark — "do we see the turning points? do we risk
+        # miscounting them? do we risk never reaching the level?" — are only
+        # measurements if we count them separately. An aggregate rate of 1.3% does not tell
+        # which mechanism to correct, and 📏 this is precisely what blocked the
+        # diagnosis of the sigma-independent floor.
         crashed_cells = sim_thick_batch > CRASH_SENTINEL_MIN
         crash_cause = np.where(crashed_cells, np.floor(sim_thick_batch / CRASH_SENTINEL_UNIT), 0.0)
         n_crash_run = int(np.count_nonzero(np.any(crashed_cells, axis=1)))
         crash_rate_max = max(crash_rate_max, n_crash_run / max(1, num_runs))
 
-        # Par cause, au niveau du RUN : un run est impute a une cause des qu'au moins
-        # une de ses couches l'a subie. Les taux par cause peuvent donc se recouvrir,
-        # et leur somme depasser le taux global — c'est voulu, un run peut echouer de
-        # deux facons sur deux couches differentes.
+        # By cause, at RUN level: a run is attributed to a cause as soon as at least
+        # one of its layers suffered it. The rates per cause can thus overlap,
+        # and their sum exceed the overall rate — this is intended, a run can fail in
+        # two different ways on two different layers.
         for cause_id, cause_key in (
             (CRASH_LEVEL_UNREACHABLE, "p_level_unreachable"),
             (CRASH_TP_MISCOUNT, "p_tp_miscount"),
@@ -964,34 +964,34 @@ def _test_strategy_robustness_task(
         rmse_p95 = float(np.percentile(run_rmses, 95))
         rmse_p99 = float(np.percentile(run_rmses, 99))
 
-        # ── P95 vs CVaR95 : TRANCHE PAR LA MESURE, le 2026-08-06 ────────────────
+        # ── P95 vs CVaR95: DECIDED BY MEASUREMENT, on 2026-08-06 ────────────────
         #
-        # La CVaR95 (moyenne des 5 % pires) a ete essayee comme fonctionnelle de
-        # classement, sur l'argument qu'un quantile est decide par tres peu de points
-        # (un seul a N=6, un a deux a N=25, environ sept a N=150) alors que la CVaR
-        # moyenne la queue. L'argument est juste sur la PRECISION de l'estimateur, et
-        # faux sur ce qui nous interesse.
+        # CVaR95 (average of the 5% worst) was tried as a ranking
+        # functional, on the argument that a quantile is decided by very few points
+        # (only one at N=6, one or two at N=25, about seven at N=150) while CVaR
+        # averages the tail. The argument is correct on the PRECISION of the estimator, and
+        # wrong on what interests us.
         #
-        # Mesure, scripts/probe_functional_stability.py, 1281 captures, demi-echantillons
-        # du MEME tirage (protocole equitable : chaque fonctionnelle est jugee sur sa
-        # capacite a retrouver SON PROPRE classement) :
+        # Measurement, scripts/probe_functional_stability.py, 1281 captures, half-samples
+        # from the SAME draw (fair protocol: each functional is judged on its
+        # ability to find ITS OWN ranking):
         #
-        #     bruit   N     rho_p95   rho_cvar   gagnant
-        #     0,025    25    +0,782    +0,725     P95
-        #     0,050    25    +0,752    +0,650     P95
-        #     0,100    25    +0,717    +0,650     P95
-        #     0,025   150    +0,919    +0,924     CVaR (+0,005)
-        #     0,050   150    +0,903    +0,863     P95
-        #     0,100   150    +0,928    +0,931     CVaR (+0,003)
+        #     noise   N     rho_p95   rho_cvar   winner
+        #     0.025    25    +0.782    +0.725     P95
+        #     0.050    25    +0.752    +0.650     P95
+        #     0.100    25    +0.717    +0.650     P95
+        #     0.025   150    +0.919    +0.924     CVaR (+0.005)
+        #     0.050   150    +0.903    +0.863     P95
+        #     0.100   150    +0.928    +0.931     CVaR (+0.003)
         #
-        # A N=25 le P95 gagne nettement ; a N=150 c'est l'egalite. Et le paradoxe est
-        # instructif : la CVaR EST un estimateur plus precis d'elle-meme — son
-        # coefficient de variation bootstrap est meilleur dans cinq cas sur six — mais
-        # elle COMPRESSE LES ECARTS ENTRE STRATEGIES, parce que moyenner la queue les
-        # rapproche. Le P95 est plus bruite individuellement et plus DISCRIMINANT
-        # collectivement.
+        # At N=25 P95 wins clearly; at N=150 it is a tie. And the paradox is
+        # instructive: CVaR IS a more precise estimator of itself — its
+        # bootstrap coefficient of variation is better in five out of six cases — but
+        # it COMPRESSES THE GAPS BETWEEN STRATEGIES, because averaging the tail brings
+        # them closer. P95 is noisier individually and more DISCRIMINating
+        # collectively.
         #
-        # Or on veut un CLASSEMENT, pas une valeur. Le P95 est conserve, la CVaR retiree.
+        # We want a RANKING, not a value. P95 is kept, CVaR removed.
         results_per_noise.append(
             {
                 "noise_level": noise_val,
@@ -1007,42 +1007,42 @@ def _test_strategy_robustness_task(
 
     total_mc_sims = num_runs * len(noise_levels)
     _emit_stat("MCS", total_mc_sims)
-    # Fonctionnelle de classement : le P95, tranche par la mesure (voir le bloc de
-    # commentaire dans la boucle ci-dessus). La CVaR95 a ete essayee et RETIREE.
+    #Ranking functional: P95, decided by measurement (see comment block
+    # in the loop above). CVaR95 was tried and REMOVED.
     final_score = max(r.get("rmse_p95", r["rmse_mean"] + r["rmse_std"]) for r in results_per_noise)
 
-    # ELIMINATION SUR RISQUE DE PLANTAGE.
+    # ELIMINATION ON CRASH RISK.
     #
-    # Une strategie dont le depot risque de ne pas se terminer est inutilisable,
-    # quelle que soit sa performance spectrale : ce n'est pas un compromis de
-    # qualite, c'est un run perdu en salle. On la sort donc du classement plutot
-    # que de la penaliser, sauf si l'evenement reste sous le seuil de tolerance.
+    # A strategy whose deposition risks not terminating is unusable,
+    # regardless of its spectral performance: it is not a quality compromise,
+    # it is a lost run in the cleanroom. So we remove it from the ranking rather
+    # than penalize it, unless the event remains below the tolerance threshold.
     #
-    # Seuil a 1 % : en dessous, l'alea est juge acceptable au regard du gain
-    # spectral eventuel. Au-dessus, elimination franche.
+    # Threshold at 1%: below, the randomness is deemed acceptable given the
+    # potential spectral gain. Above, straightforward elimination.
     if crash_rate_max >= CRASH_RATE_TOLERANCE:
         final_score = float("inf")
 
-    # Ce bloc est calcule APRES final_score et results_per_noise, dont il ne
-    # depend pas. Or il est le plus cher de la fonction : il appelle
-    # _compute_theoretical_layer_profile une fois par couche, ou vivent les deux
-    # lignes les plus cheres du profil STRAT (certus_strat_objectives.py:489
-    # compute_T_front_profile a 107,2 %, et :497 calculate_extrema_distances a
-    # 106,7 %, cf. docs/REPRISE_PERF.md §6).
+    # This block is computed AFTER final_score and results_per_noise, on which it
+    # does not depend. Yet it is the most expensive in the function: it calls
+    # _compute_theoretical_layer_profile once per layer, where the two
+    # most expensive lines of the STRAT profile live (certus_strat_objectives.py:489
+    # compute_T_front_profile at 107.2%, and :497 calculate_extrema_distances at
+    # 106.7%, cf. docs/REPRISE_PERF.md §6).
     #
-    # Deux appelants sur trois jettent integralement son resultat :
-    #   - rescoring consensus (certus_strat_robustness.py, _consensus_score_from_result)
-    #     ne lit que robustness_score ;
-    #   - halving ELITE (certus_strat_consensus.py) ne lit que rmse_p95 et
-    #     reempile la strategie D'ENTREE, pas res["strategy"].
-    # Seules la passe principale et l'evaluation ELITE complete l'exploitent,
-    # cette derniere via full_res["strategy"] pour la resolution spectrale.
+    # Two out of three callers completely discard its result:
+    #   - consensus rescoring (certus_strat_robustness.py, _consensus_score_from_result)
+    #     only reads robustness_score;
+    #   - ELITE halving (certus_strat_consensus.py) only reads rmse_p95 and
+    #     re-pushes the INPUT strategy, not res["strategy"].
+    # Only the main pass and the full ELITE evaluation exploit it,
+    # the latter via full_res["strategy"] for the spectral resolution.
     #
-    # Le defaut True preserve le comportement de tout appelant non modifie.
+    # The True default preserves the behavior of any unmodified caller.
     if compute_layer_profile:
         extrema_dist_info = []
         theoretical_layer_profile = []
-        # _M_before_cache : deja construit plus haut, partage avec dT/dd.
+        #_M_before_cache: already built above, shared with dT/dd.
 
         for i_layer in range(num_layers):
             wl_sel = float(layer_wavelengths[i_layer])
@@ -1079,9 +1079,9 @@ def _test_strategy_robustness_task(
     if crash_rate_max > 0.0:
         logger.info(
             f"   [CRASH-CAUSE] strat {strategy.get('strategy_id', '?')} : total "
-            f"{crash_rate_max:.1%} | niveau inatteignable "
-            f"{crash_rates_by_cause['p_level_unreachable']:.1%} | comptage divergent "
-            f"{crash_rates_by_cause['p_tp_miscount']:.1%} | non monotone "
+            f"{crash_rate_max:.1%} | unreachable level "
+            f"{crash_rates_by_cause['p_level_unreachable']:.1%} | divergent count "
+            f"{crash_rates_by_cause['p_tp_miscount']:.1%} | non monotonic "
             f"{crash_rates_by_cause['p_non_monotonic']:.1%}"
         )
 
@@ -1091,9 +1091,9 @@ def _test_strategy_robustness_task(
         "results_per_noise": results_per_noise,
         "robustness_score": final_score,
         "crash_rate": crash_rate_max,
-        # Les trois modes de defaillance, separement. 👤 « Si 95 % des depots
-        # fonctionnent, c'est gagne » — mais savoir POURQUOI les 5 % echouent est ce
-        # qui permet de corriger la strategie plutot que de la rejeter.
+        # The three failure modes, separately. 👤 "If 95% of depositions
+        # work, it's a win" — but knowing WHY the 5% fail is what
+        # allows correcting the strategy rather than rejecting it.
         "crash_causes": dict(crash_rates_by_cause),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
@@ -1396,9 +1396,9 @@ def run_final_simulation_block(
                         T_nom,
                         full_dyn_grid,
                         n_layers_matrix_precomp=n_layers_matrix_precomp,
-                        # _consensus_score_from_result ne lit que robustness_score,
-                        # puis res_consensus est abandonne : le profil theorique
-                        # serait calcule pour rien.
+                        # _consensus_score_from_result only reads robustness_score,
+                        # then res_consensus is abandoned: the theoretical profile
+                        # would be calculated for nothing.
                         compute_layer_profile=False,
                     )
                     _task_futures.append((sid, seed, cache_key, f))

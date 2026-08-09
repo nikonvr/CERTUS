@@ -1,4 +1,4 @@
-"""Tests certus_design_worker_utils (sans Qt)."""
+"""Certus_design_worker_utils tests (without Qt)."""
 
 
 

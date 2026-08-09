@@ -403,7 +403,7 @@ class SplineReportBuilder:
                 pd.DataFrame(corr_full).to_excel(writer, sheet_name="Corridors_nk", index=False)
 
             except NUMERICAL_FAULT_EXCEPTIONS:
-                logger.exception("Export Excel: feuille Corridors_nk")
+                logger.exception("Export Excel: Corridors_nk sheet")
 
         else:
             try:

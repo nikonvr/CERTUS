@@ -1,9 +1,9 @@
 """
-Vérifie le mode parallèle vs séquentiel de PGlobalOptimizerINDEX (CERTUS_INDEX).
+Checks parallel vs sequential mode of PGlobalOptimizerINDEX (CERTUS_INDEX).
 
-- n_workers > 1 : ThreadPoolExecutor créé dans optimize() (échantillonnage + phase parallèle).
-- n_workers == 1 : pas d'exécuteur, boucles séquentielles (branche « frozen-safe »).
-- get_safe_worker_count patché : n_workers par défaut suit le patch (import lié à CERTUS_INDEX).
+- n_workers > 1: ThreadPoolExecutor created in optimize() (sampling + parallel phase).
+- n_workers == 1: no executor, sequential loops (“frozen-safe” branch).
+- get_safe_worker_count patched: n_workers by default follows the patch (import linked to CERTUS_INDEX).
 """
 
 from __future__ import annotations

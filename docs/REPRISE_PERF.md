@@ -1,623 +1,623 @@
-# Reprise — performance CERTUS
+# Recovery — CERTUS performance
 
-Écrit le 2026-08-02, pour l'agent (ou l'humain) qui prend la suite, éventuellement
-sur une autre machine. **Tout chiffre de ce document a été mesuré**, jamais estimé.
+Written on 2026-08-02, for the agent (or human) who takes over, possibly
+on another machine.**All figures in this document have been measured**, never estimated.
 
-À lire après `CLAUDE.md`. Ce document corrigeait un plan d'optimisation antérieur sur
-plusieurs points : voir §5.
+Read after`CLAUDE.md`. This document corrected a previous optimization plan on
+several points: see §5.
 
 ---
 
-> 🔴 **AVERTISSEMENT — révision du 2026-08-04**
+> 🔴**WARNING — revision of 2026-08-04**
 >
-> Ce document reste utile, mais **plusieurs de ses conclusions ont été démenties
-> par la mesure** depuis. Lis d'abord
-> les journaux de session (supprimés le 2026-08-06, cf. `git log`).
+> This document remains useful, but**several of its conclusions have been refuted
+> by the measure**since. Read first
+> session logs (deleted on 2026-08-06, see`git log`).
 >
-> Ce qui a changé sous les pieds du plan : le dépôt a quitté Google Drive pour un
-> disque local, la machine de travail a **4 cœurs et non 16**, et numba est passé
-> de 0.65.1 à **0.66.0**. Aucune comparaison avant/après ne peut enjamber cette
-> rupture.
+> What changed under the plan: the repository left Google Drive for a
+> local disk, the working machine has**4 cores not 16**, and numba is passed
+> from 0.65.1 to**0.66.0**. No before/after comparison can span this
+> breakup.
 >
-> Les corrections sont signalées en ligne, section par section. Les cinq
-> principales :
+> Corrections are reported online, section by section. The five
+> main ones:
 >
-> | Section | Statut |
+> | Section | Status |
 > |---|---|
-> | §0, interdiction du parallélisme | ❌ **démentie** — voir ci-dessous |
-> | §2, ligne INDEX à 6,5 s | ❌ **fausse d'un facteur 2**, la vraie référence est 12,8 s |
-> | §4.3, « le cache numba n'est pas en cause, c'est vérifié » | ❌ **faux** — il n'a jamais été dans `%TEMP%` |
-> | §4.4, la liste réfléchie numba | ⚠️ **mauvaise cible** — le vrai gisement était ailleurs |
-> | §4.5, `use_cache=True` | ✅ **résolu** — le basculement n'est PAS sûr |
+> | §0, prohibition of parallelism | ❌**denied**— see below |
+> | §2, INDEX line at 6.5 s | ❌**false by a factor of 2**, the real reference is 12.8 s |
+> | §4.3, “the numba cache is not in question, it is verified” | ❌**false**— he was never in`%TEMP%`|
+> | §4.4, the numba reflected list | ⚠️**bad target**— the real deposit was elsewhere |
+> | §4.5,`use_cache=True`| ✅**solved**— failover is NOT safe |
 
 ---
 
-## 0. Démarrage rapide — les cinq minutes qui font gagner des heures
+## 0. Quick start — the five minutes that save hours
 
-### Vérifier l'environnement (30 s)
+### Check environment (30 sec)
 
 ```bat
-:: 1. Le venv charge-t-il bien LE code d'ici ? (un .pth a déjà pointé ailleurs)
+:: 1. Does the venv load the code from here? (a .pth has already pointed elsewhere)
 .venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 
-:: 2. Le hook d'auto-push vers le dépôt PUBLIC est-il neutralisé ?
-dir .git\hooks\post-commit*        :: doit afficher post-commit.disabled
+:: 2. Is the auto-push hook to the PUBLIC repository disabled?
+dir .git\hooks\post-commit* :: should show post-commit.disabled
 
-:: 3. L'oracle passe-t-il ? (8 s, 552 tests)
+:: 3. Does the oracle pass? (8 sec, 552 tests)
 .venv\Scripts\python.exe -m pytest tests\oracle\ -q --no-cov
 ```
 
-### Combien de temps coûte quoi
+### How long does it cost?
 
-| Action | Durée |
+| Action | Duration |
 |---|---|
-| `pytest tests/oracle/ -q --no-cov` | **8 s** — à lancer après chaque modif de calcul |
-| Suite complète `pytest tests/ -q --no-cov` | ~6 min |
-| Banc FIELD / INDEX_SPLINE | 1–2 s |
-| Banc INDEX | 7 s |
-| Banc RE | 30 s |
-| Banc METAL_SINGLE / BILAYER | 55–70 s |
-| Banc DESIGN | 45–90 s (très dispersé) |
-| Banc STRAT | 50–65 s |
-| Une campagne A/B de 4 paires sur DESIGN | ~10 min → **tâche de fond** |
+|`pytesttests/oracle/-q--no-cov`|**8s**—tobelaunchedaftereachcalculationmodification|
+| Full suite`pytest tests/ -q --no-cov`| ~6 mins |
+| FIELD bench / INDEX_SPLINE | 1–2 sec |
+| INDEX bench | 7 sec |
+| RE bench | 30 sec |
+| METAL_SINGLE / BILAYER bench | 55–70 sec |
+| DESIGN bench | 45–90 s (very dispersed) |
+| STRAT bench | 50–65 sec |
+| An A/B campaign of 4 pairs on DESIGN | ~10 min →**background task**|
 
-Le timeout de l'outil Bash est plafonné à **10 minutes** : toute campagne de
-mesure doit partir en tâche de fond.
+The Bash tool timeout is capped at**10 minutes**: any campaign
+measurement must run in the background.
 
-### Les deux commandes du quotidien
+### The two everyday commands
 
-Mesurer un module sur son vrai exemple — depuis `cmd` :
+Measure a module on its real example — from`cmd`:
 
 ```bat
 .venv\Scripts\python.exe scripts\bench_examples.py strat --auto-yes --sample
 ```
 
-Prouver un gain en alternant les deux versions — **depuis Git Bash**, avec des
-barres obliques et le `^` entre guillemets :
+Prove a gain by alternating the two versions —**from Git Bash**, with
+slashes and the`^`in quotes:
 
 ```bash
 bash scripts/ab_compare.sh certus/physics/certus_optimizers.py "2572f46^" design 4 --auto-yes --time-cost
 ```
 
-⚠️ Ces deux détails ne sont pas cosmétiques. Sous bash, `scripts\ab_compare.sh`
-devient `scriptsab_compare.sh` — l'antislash est un caractère d'échappement, et la
-commande échoue. Sous `cmd`, c'est le `^` de `2572f46^` qui disparaît, car c'est
-le caractère d'échappement de `cmd` : on ne compare alors plus au bon commit.
+⚠️ These two details are not cosmetic. Under bash,`scripts\ab_compare.sh`
+becomes`scriptsab_compare.sh`— the backslash is an escape character, and the
+command fails. Under`cmd`, it is the`^`of`2572f46^`which disappears, because it is
+the escape character of`cmd`: we then no longer compare to the correct commit.
 
-### Ce qui est déjà rouge — ne pas partir à la chasse
+### What is already red — don't go hunting
 
-**La suite a des fuites d'état entre tests.** Plusieurs fichiers passent
-isolément et échouent dans une sélection large. Vérifié le 2026-08-02 :
+**The suite has state leaks between tests.**Multiple files are passing
+in isolation and fail in a wide selection. Verified on 2026-08-02:
 
-| Test | En sélection large | Isolé | Statut |
+| Test | In wide selection | Isolated | Status |
 |---|---|---|---|
-| `test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods` | ❌ | ✅ | ✅ **corrigé** |
-| `tests/unit/test_certus_ui.py` (4 échecs) | ❌ | ✅ 80 passed | ✅ **corrigé** |
+|`test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods`| ❌ | ✅ | ✅**fixed**|
+|`tests/unit/test_certus_ui.py`(4 failures) | ❌ | ✅ 80 passes | ✅**fixed**|
 
-✅ **Ces deux lignes sont résolues et le correctif est commité** — cause racine
-trouvée le 2026-08-02 : `tests/ui/test_ui_module_imports.py` remplaçait des
-objets-modules dans `sys.modules` sans les restaurer, ce qui faisait atterrir les
-`monkeypatch.setattr("<module>.<nom>", …)` suivants sur une copie orpheline.
-Détails et reste à faire dans **`docs/REPRISE_TESTS_ISOLATION.md`**.
+✅**These two lines are resolved and the fix is ​​committed**— root cause
+found on 2026-08-02:`tests/ui/test_ui_module_imports.py`replaced
+module objects in`sys.modules`without restoring them, which landed the
+`monkeypatch.setattr("<module>.<name>", …)`on an orphaned copy.
+Details and remains to be done in**`docs/REPRISE_TESTS_ISOLATION.md`**.
 
-Avant d'accuser ton changement : relancer le test **seul**. S'il passe, c'est une
-fuite d'état pré-existante, pas toi. (Vérifié aussi en remettant le code d'origine.)
+Before acknowledging your change: rerun the test**alone**. If it passes, it's a
+Pre-existing state leak, not you. (Also verified by returning the original code.)
 
-~~🔴 Ne pas lancer deux sessions pytest en parallèle sur ce dépôt.~~
-❌ **DÉMENTI PAR LA MESURE le 2026-08-04.** À cache numba **chaud**, deux sessions
-pytest simultanées ne se bloquent pas du tout :
+~~🔴 Do not run two pytest sessions in parallel on this repository.~~
+❌**DENIATED BY THE MEASURE on 2026-08-04.**At numba cache**hot**, two sessions
+concurrent pytests don't hang at all:
 
 | | Wall | pytest |
 |---|---|---|
-| 1 passe seule | 17,7 s | 11,32 s |
-| 2 passes simultanées | 21,1 et 20,9 s | 12,12 et 12,11 s |
+| 1 pass alone | 17.7 sec | 11.32 sec |
+| 2 simultaneous passes | 21.1 and 20.9 s | 12.12 and 12.11 s |
 
-552 tests au vert dans les deux cas, **+7 %** seulement sur le temps pytest, et
-22,3 s au total contre ~35,4 s en séquentiel — **37 % de gain**.
+552 tests green in both cases,**+7%**only on pytest time, and
+22.3 s in total versus ~35.4 s sequential —**37% gain**.
 
-La cause invoquée par la version précédente de ce paragraphe (« le verrou de
-fichier du cache numba, `configure_numba_env` ») ne peut pas être la bonne :
-`configure_numba_env` **ne pose jamais** `NUMBA_CACHE_DIR`, cf.
-un journal de session supprimé (§10.1). L'observation du 2026-08-02 était
-probablement faite à cache **froid**, où deux processus tentent d'*écrire* les
-mêmes `.nbi` ; à chaud ils ne font que les *lire*. Hypothèse non vérifiée.
+The cause given by the previous version of this paragraph (“the lock of
+numba cache file,`configure_numba_env`") cannot be the correct one:
+`configure_numba_env`**never sets**`NUMBA_CACHE_DIR`, cf.
+a deleted session log (§10.1). The sighting of 2026-08-02 was
+probably done in**cold**cache, where two processes attempt to *write* the
+same`.nbi`; hot they only *read* them. Unverified hypothesis.
 
-⚠️ **Mais garde la distinction, elle est essentielle :**
+⚠️**But keep the distinction, it is essential:**
 
-- **Paralléliser des VALIDATIONS** — oracle, tests unitaires, lint, pendant qu'un
-  banc tourne : ✅ sûr et rentable.
-- **Paralléliser des MESURES** — deux bancs, ou un banc pendant autre chose :
-  ❌ jamais. Mesuré le 2026-08-03 : INDEX affichait `RUN_S` **81,5 s** pendant
-  qu'une copie vers Drive et des lectures tournaient, contre **12,4 s** machine au
-  repos. Sur 4 cœurs, la charge concurrente n'ajoute pas du bruit, elle invente un
-  résultat.
+- **Parallelize VALIDATIONS**— oracle, unit tests, lint, while a
+  bench turns: ✅ safe and cost-effective.
+- **Parallelize MEASUREMENTS**— two benches, or a bench during something else:
+  ❌ never. Measured on 2026-08-03: INDEX displayed`RUN_S`**81.5 s**for
+  that a copy to Drive and reads were running, compared to**12.4 s**machine at
+  rest. On 4 cores, the concurrent load does not add noise, it invents a
+  result.
 
-L'oracle ci-dessus est une charge légère. Deux bancs lourds (DESIGN tourne à 873 %
-de CPU) se disputeraient bien davantage les 4 cœurs physiques.
+The oracle above is a light charge. Two heavy benches (DESIGN runs at 873%
+of CPU) would compete much more for the 4 physical cores.
 
-### Bruits de fond à ignorer
+### Background noises to ignore
 
-Ces messages apparaissent à chaque fois et n'indiquent aucun problème :
+These messages appear every time and do not indicate any problems:
 
-- Chaque `git commit` affiche `fatal: bad tree object …` et
-  `failed to perform geometric repack`. C'est le commit orphelin `01047a1b`
-  (arbre manquant) décrit dans `CLAUDE.md §5.4`. **Le commit réussit quand même** —
-  vérifier avec `git log --oneline -1`, ne pas recommencer.
-- ~~`warning: ignoring broken ref refs/heads/desktop.ini` : idem, sans effet.~~
-  ✅ **Disparu** : la ref cassée n'a pas survécu au rapatriement du dépôt hors de
-  Google Drive (2026-08-03). Le commit orphelin `01047a1b`, lui, est toujours là.
+- Every`git commit`shows`fatal: bad tree object...`and
+  `failed to perform geometric repack`. This is the orphan commit`01047a1b`
+  (missing tree) described in`CLAUDE.md §5.4`.**The commit still succeeds**—
+  check with`git log --oneline -1`, don't start again.
+- ~~`warning: ignoring broken ref refs/heads/desktop.ini`: same, no effect.~~
+  ✅**Disappeared**: the broken ref did not survive the repatriation of the deposit outside
+  Google Drive (2026-08-03). The orphan commit`01047a1b`is still there.
 
-### Réflexe avant de croire à un gain
+### Reflex before believing in a gain
 
-L'utilisateur a une règle explicite : **ne jamais annoncer un gain sans l'avoir
-mesuré avant/après.** Trois pièges l'ont mise à l'épreuve aujourd'hui :
+The user has an explicit rule:**never announce a gain without having it
+measured before/after.**Three traps put it to the test today:
 
-- mesurer à entrée **figée** (un `lru_cache` qui touche à chaque appel masque tout) ;
-- mesurer **en séquence** alors que la machine dérive de ±25 % ;
-- mesurer un module dont **le résultat varie naturellement** d'un facteur 2.
+- measure at**frozen**input (an`lru_cache`which touches each call hides everything);
+- measure**in sequence**while the machine drifts ±25%;
+- measure a module whose**the result naturally varies**by a factor of 2.
 
 ---
 
-## 1. Comment mesurer — la seule méthode qui tienne
+##1. How to measure — the only method that works
 
 ```bat
 .venv\Scripts\python.exe scripts\bench_examples.py <module> --auto-yes [--sample]
 ```
 
-`scripts/bench_examples.py` pilote les **vrais exemples de `example/`** en
-headless, sans mock. Il documente en tête les quatre pièges qui rendent un banc
-CERTUS faux ou bloqué — lis-les avant d'y toucher.
+`scripts/bench_examples.py`drives the**real examples of`example/`**by
+headless, without mock. He documents in his mind the four traps that make a bench
+CERTUS fake or blocked — read them before you touch them.
 
-**N'utilise pas `tests/headless/` comme banc.** `test_design.py` remplace
-`run_optim` par une fonction qui renvoie `0.001` sans calculer, et `test_strat.py`
-remplace `_execute_full_pipeline` par un mock. Les 9,3 s de STRAT annoncées dans
-l'ancien plan d'optimisation (§1) sont du chargement d'interface.
+**Do not use`tests/headless/`as a bench.**`test_design.py`replaces
+`run_optim`by a function which returns`0.001`without calculating, and`test_strat.py`
+replace`_execute_full_pipeline`with a mock. The 9.3 s of STRAT announced in
+the old optimization plan (§1) are interface loading.
 
-### Trois règles apprises à la dure
+### Three rules learned the hard way
 
-1. **Alterner les deux versions, ne pas les mesurer en séquence.** La machine
-   dérive : sur cette session, le même code est passé de 743 à 990 µs/évaluation
-   en deux heures (thermique, synchronisation Google Drive, autre session). Un
-   A/B en séquence attribue la dérive au changement. Faire
-   `sans / avec / sans / avec…` et compter les paires gagnantes.
-2. **Ne pas conclure d'un run isolé sur DESIGN ni STRAT.** Dispersion naturelle
-   mesurée : DESIGN 43 → 93 s et RMSE 0,0023 → 0,0051 ; STRAT 47 → 64 s. Quand le
-   temps total est trop bruité, mesurer une grandeur stable — pour DESIGN, le
-   **coût par évaluation** de `cost_numba_fast` (`--time-cost`, ~850 000 appels
-   par run) donne un signal exploitable.
-3. **`pytest tests/oracle/ -q --no-cov` après toute modification de calcul.**
-   552 tests, 8 s. Et un test qui ne tombe pas sur le code d'avant correctif ne
-   prouve rien : le vérifier en remettant l'ancienne version.
+1. **Alternate the two versions, do not measure them in sequence.**The machine
+   drift: on this session, the same code went from 743 to 990 µs/evaluation
+   in two hours (thermal, Google Drive sync, other session). A
+   A/B in sequence attributes drift to change. Do
+   `without / with / without / with…`and count the winning pairs.
+2. **Do not conclude from an isolated run on DESIGN or STRAT.**Natural dispersion
+   measured: DESIGN 43 → 93 s and RMSE 0.0023 → 0.0051; STRAT 47 → 64 s. When the
+   total time is too noisy, measure a stable quantity — for DESIGN, the
+   **cost per evaluation**of`cost_numba_fast`(`--time-cost`, ~850,000 calls
+   per run) gives a usable signal.
+3. **`pytesttests/oracle/-q--no-cov`afteranycalculationmodification.**
+   552 tests, 8 sec. And a test that does not fall on the code before the patch does not
+   proves nothing: check it by putting back the old version.
 
 ---
 
-## 2. Référence actuelle, exemples réels
+## 2. Current reference, real examples
 
-Mesuré sur cette machine (16 cœurs), calcul pur hors chargement, après les
-correctifs de la §3.
+Measured on this machine (16 cores), pure calculation excluding loading, after the
+corrections to §3.
 
-| Module | Exemple | Temps | Point chaud dominant |
+| Module | Example | Time | Dominant hotspot |
 |---|---|---|---|
-| STRAT | `JSON-strat-example.json` | 47–64 s | `compute_batch_rmse`, `simulate_stack_robustness_batch` |
-| DESIGN | `JSON-design-example.json` | 43–93 s | `cost_numba_fast` (873 % — pool de ~10 threads) |
-| METAL_BILAYER | `JSON-metal-bilayer-example.json` | 67 s | — |
-| METAL_SINGLE | `JSON-metal-example.json` | 52–68 s | `get_nk_from_spline`, 66 975 appels |
-| RE | `reverse_sample.xlsx` | 29–30 s | `_global_evaluate_oblique_physics` 61 % |
-| INDEX | `H400-RTNBrel-sapphire.xlsx` | ❌ ~~6,5 s~~ → **12,8 s** | `certus_index_objectives.py:1755:__call__` 54 % |
-| INDEX_SPLINE | `TSIO2-1700-1.xlsx` | 1,6 s | `spline_objective.py:517` 25 %, `_fast_nk` 20 % |
-| FIELD | `test_hr_mirror.json` | 0,06 s | rien à gagner |
+| STRAT |`JSON-strat-example.json`| 47–64 sec |`compute_batch_rmse`,`simulate_stack_robustness_batch`|
+| DESIGN |`JSON-design-example.json`| 43–93 sec |`cost_numba_fast`(873% — pool of ~10 threads) |
+| METAL_BILAYER |`JSON-metal-bilayer-example.json`| 67 sec | — |
+| METAL_SINGLE |`JSON-metal-example.json`| 52–68 sec |`get_nk_from_spline`, 66,975 calls |
+| RE |`reverse_sample.xlsx`| 29–30 sec |`_global_evaluate_oblique_physics`61% |
+| INDEX |`H400-RTNBrel-sapphire.xlsx`| ❌ ~~6.5 sec~~ →**12.8 sec**|`certus_index_objectives.py:1755:__call__`54% |
+| INDEX_SPLINE |`TSIO2-1700-1.xlsx`| 1.6s |`spline_objective.py:517`25%,`_fast_nk`20% |
+| FIELD |`test_hr_mirror.json`| 0.06s | nothing to gain |
 
-Les pourcentages dépassent 100 % : DESIGN et STRAT tournent sur un pool de threads.
+Percentages exceed 100%: DESIGN and STRAT run on a thread pool.
 
-> ❌ **La ligne INDEX était fausse d'un facteur 2.** Elle mesurait le run SANS
-> `--auto-yes`, c'est-à-dire avec la réponse « No » par défaut, qui fait sauter la
-> phase IR — exactement ce que le §6 dénonce plus bas (« on mesurait la moitié du
-> pipeline »). Mesuré le 2026-08-04 avec `--auto-yes` sur la machine 4 cœurs :
-> **12,425 s**, contre 12,8 s ici. **La référence correcte est 12,8 s.**
+> ❌**The INDEX line was wrong by a factor of 2.**It measured the run WITHOUT
+> `--auto-yes`, that is to say with the response “No” by default, which skips the
+> phase IR — exactly what §6 denounces below (“we measured half of the
+> pipeline"). Measured on 2026-08-04 with`--auto-yes`on the 4-core machine:
+> **12.425 s**, compared to 12.8 s here.**Correct reference is 12.8 sec.**
 >
-> ⚠️ **INDEX est aussi DISPERSIF**, ce que ce tableau ne dit pas : deux passes
-> consécutives donnent RMSE 0,002568 puis 0,002781 (**8 %**) et `RUN_S` 11,1 puis
-> 8,1 s (**27 %**). La règle 2 du §1 ne vise que DESIGN et STRAT ; **elle vaut
-> aussi pour INDEX**. Personne ne pouvait le savoir : le banc rendait `RESULT=None`
-> sur ce module, faute d'extraction correcte (corrigé, cf. §3 du document de
-> reprise).
+> ⚠️**INDEX is also DISPERSIVE**, which this table does not say: two passes
+> consecutive gives RMSE 0.002568 then 0.002781 (**8%**) and`RUN_S`11.1 then
+> 8.1 sec (**27%**). Rule 2 of §1 only applies to DESIGN and STRAT;**it is worth
+> also for INDEX**. Nobody could know: the bench returned`RESULT=None`
+> on this module, lack of correct extraction (corrected, cf. §3 of the document
+> recovery).
 >
-> **Facteurs mesurés sur la machine 4 cœurs** (`RUN_S`, cache chaud, machine au
-> repos) : FIELD ×2,0 · INDEX **×0,97, la parité** · INDEX_SPLINE **×5,9**.
-> La parité d'INDEX s'explique : le cache `.nbi` de la machine 16 cœurs vivait
-> dans Google Drive, son avantage CPU était mangé par les I/O.
+> **Factors measured on the 4-core machine**(`RUN_S`, hot cache, machine at
+> rest): FIELD ×2.0 · INDEX**×0.97, parity**· INDEX_SPLINE**×5.9**.
+> The parity of INDEX is explained: the`.nbi`cache of the 16-core machine was alive
+> in Google Drive, its CPU advantage was eaten up by I/O.
 
 ---
 
-## 3. Ce qui est fait (commits sur `refactor-corridors-mixins`)
+## 3. What is done (commits to`refactor-corridors-mixins`)
 
-| Commit | Objet | Gain **mesuré** |
+| Commit | Object | Gain**measured**|
 |---|---|---|
-| `a9983c4` | Éviction LRU du cache de base spline | **0 s** aujourd'hui — voir §5 |
-| `33af845` | STRAT : dispatch njit supprimé, cache de matrices factorisé | **−61 %** (137,7 · 126,7 → 56,9 · 47,1 s) |
-| `2572f46` | PGLOBAL : sur-souscription de threads numba | **−29 %** par évaluation, 4 paires alternées sur 4 |
-| `f6f9102` | RE : indexation par `slice` au lieu de copies de blocs | **−11 %** (33,3 → 29,5 s médian) |
-| `bc2042a` | DESIGN : course sur le tampon d'épaisseurs | correction, pas performance |
+|`a9983c4`| Spline base cache LRU eviction |**0 s**today — see §5 |
+|`33af845`| STRAT: njit dispatch removed, factored matrix cache |**−61%**(137.7 · 126.7 → 56.9 · 47.1 s) |
+|`2572f46`| PGLOBAL: oversubscription of numba threads |**−29%**per rating, 4 out of 4 alternating pairs |
+|`f6f9102`| RE: indexing by`slice`instead of block copies |**−11%**(33.3 → 29.5 s median) |
+|`bc2042a`| DESIGN: running on the thickness pad | correction, not performance |
 
-`bc2042a` mérite d'être lu : `app._ep_buffer` était **un seul tableau partagé**
-entre les ~14 threads du pool PGLOBAL. Dès qu'une couche est figée, deux threads
-s'écrasaient mutuellement et le coût était calculé sur un mélange de deux
-empilements. Mesuré : **278 évaluations fausses sur 48 000**, sans aucune erreur
-visible. Garde-fou : `tests/oracle/test_design_objective_thread_safety.py`.
+`bc2042a`is worth reading:`app._ep_buffer`was**a single shared array**
+between the ~14 threads of the PGLOBAL pool. As soon as a layer is frozen, two threads
+crushed each other and the cost was calculated on a mixture of two
+stacks. Measured:**278 false reviews out of 48,000**, without any errors
+visible. Safeguard:`tests/oracle/test_design_objective_thread_safety.py`.
 
 ---
 
-## 4. Ce qui reste à faire
+##4. What remains to be done
 
-### 4.1 Tirage informé par la physique dans PGLOBAL — le plus prometteur
+### 4.1 Physics-informed drawing in PGLOBAL — the most promising
 
-**Choisi par l'utilisateur, non commencé.**
+**Choose by user, not started.**
 
-PGLOBAL échantillonne uniformément `[0, 1,2 × QWOT]^N` avec Sobol brouillé
-(`qmc.Sobol(scramble=True)`, `certus_optimizers.py:646` — le réglage est correct,
-ne le change pas pour rien). Mais pour des couches minces, les bonnes solutions se
-concentrent près des multiples de QWOT ; un remplissage uniforme, aussi bien
-équilibré soit-il, dépense l'essentiel de ses points loin de là.
+PGLOBAL uniformly samples`[0, 1.2 × QWOT]^N`with scrambled Sobol
+(`qmc.Sobol(scramble=True)`,`certus_optimizers.py:646`— the setting is correct,
+don't change it for nothing). But for thin layers, the good solutions are
+concentrated near QWOT multiples; uniform filling, as well
+balanced though it may be, spends most of its points far from there.
 
-Piste : tirer par couche un multiple dans {0 ; 0,5 ; 1} × QWOT (au-delà de 1,2
-QWOT on sort des bornes), plus une gigue, en gardant une fraction de points Sobol
-purs pour l'exploration. Point d'entrée : `PGlobalOptimizer._generate_samples`
+Track: draw a multiple in {0; 0.5; 1} × QWOT (beyond 1.2
+QWOT we go out of bounds), plus a jitter, keeping a fraction of Sobol points
+pure for exploration. Entry point:`PGlobalOptimizer._generate_samples`
 (`certus/physics/certus_optimizers.py:694`).
 
-**Protocole obligatoire** : comparer **à budget d'évaluations fixé**, sur
-plusieurs graines, et regarder le meilleur RMSE atteint — pas le temps.
-Changer d'échantillonneur ne peut **pas** accélérer quoi que ce soit :
-l'échantillonnage pèse 1,5 % du profil. Le gain visé est la qualité d'optimum à
-coût égal. Vu la dispersion de DESIGN (RMSE 0,0023 → 0,0051), il faut au moins
-5 graines par variante.
+**Mandatory protocol**: compare**to fixed evaluation budget**, on
+several seeds, and look at the best RMSE achieved — no time.
+Changing samplers can**not**speed up anything:
+the sampling weighs 1.5% of the profile. The target gain is the optimum quality at
+equal cost. Given the dispersion of DESIGN (RMSE 0.0023 → 0.0051), it is necessary at least
+5 seeds by variant.
 
-### 4.2 INDEX — compilation numba pendant le calcul
+### 4.2 INDEX — numba compilation during calculation
 
-~15 % du run d'INDEX part en JIT **pendant** l'optimisation, malgré
-`warmup_physics()` : `llvmlite/binding/ffi.py:210` 11 %, `numba compiler_lock`
-2,9 %, `numba/core/caching.py:_load_index` 1 %. Trouver quels noyaux ne sont pas
-couverts par le warmup, et les y ajouter.
+~15% of the INDEX run goes to JIT**during**optimization, despite
+`warmup_physics()`:`llvmlite/binding/ffi.py:210`11%,`numba compiler_lock`
+2.9%,`numba/core/caching.py:_load_index`1%. Find which nuclei are not
+covered by the warmup, and add them there.
 
-> ⚠️ **Piste plus rentable qu'avant** : mesuré le 2026-08-03, la compilation à
-> froid de l'oracle est passée de **60,6 s à 104,6 s** (+73 %) entre numba 0.65.1
-> et 0.66.0.
+> ⚠️**More profitable track than before**: measured on 2026-08-03, compilation at
+> cold of the oracle increased from**60.6 s to 104.6 s**(+73%) between numba 0.65.1
+> and 0.66.0.
 >
-> ❌ **Ce ne sont pas des noyaux oubliés, ce sont des SIGNATURES oubliées.** Un
-> balayage AST des **111 fonctions `@njit`** du paquet montre qu'elles portent
-> **toutes** `cache=True`. La vraie cause est
-> `certus/core/certus_index_solvers.py:255`, qui alloue les échantillons en
-> **float32** alors que la phase locale scipy repasse en float64 : numba compile
-> **deux signatures** du chemin chaud, et `warmup_physics` — qui ne passe que des
-> float Python — n'en couvre qu'une. Une **troisième** variante `readonly` existe,
-> produite par l'idiome `np.frombuffer(clé_en_octets)` des caches lru.
+> ❌**These are not forgotten cores, these are forgotten SIGNATURES.**A
+> AST scan of the**111`@njit`**functions in the package shows that they carry
+> **all**`cache=True`. The real cause is
+> `certus/core/certus_index_solvers.py:255`, which allocates samples in
+> **float32**while the scipy local phase returns to float64: numba compiles
+> **two signatures**of the warm path, and`warmup_physics`— which only passes
+> float Python — only covers one. A**third**`readonly`variant exists,
+> produced by the`np.frombuffer(key_in_bytes)`idiom of lru caches.
 >
-> ✅ **Un bloc entier du warmup était mort depuis des années** :
-> `certus/core/_certus_physics_impl.py:1492` faisait
-> `np.interp(CIE_LAMBDA, wls, R_test)` avec `wls` à 50 points et `R_test` à 10 —
-> `ValueError` avalée par le `except` englobant, donc `_xyz_from_spectrum_kernel`
-> et `delta_e_2000` n'ont jamais été compilés par le warmup. Diagnostiqué par
-> **l'absence de leur `.nbi` sur disque**, corrigé, confirmé par leur apparition.
-> Retiens la méthode : **la présence du `.nbi` est un contrôle qui ne coûte aucun
-> calcul.**
+> ✅**An entire block of warmup had been dead for years**:
+> `certus/core/_certus_physics_impl.py:1492`did
+> `np.interp(CIE_LAMBDA, wls, R_test)`with`wls`at 50 points and`R_test`at 10 —
+> `ValueError`swallowed by the enclosing`except`, so`_xyz_from_spectrum_kernel`
+> and`delta_e_2000`were never compiled by warmup. Diagnosed by
+> **the absence of their`.nbi`on disk**, corrected, confirmed by their appearance.
+> Remember the method:**the presence of`.nbi`is a check that costs nothing
+> calculation.**
 >
-> ⚠️ Passer `:255` en float64 change le pas d'échantillonnage, donc la trajectoire
-> de l'optimiseur. À ne tenter **qu'après** avoir exposé une graine dans le banc :
-> INDEX est dispersif à 8 %, un A/B sur deux runs isolés donnerait un verdict au
-> hasard.
+> ⚠️ Passing`:255`in float64 changes the sampling step, therefore the trajectory
+> of the optimizer. To only attempt**after**having exposed a seed in the bank:
+> INDEX is dispersive at 8%, an A/B on two isolated runs would give a verdict to the
+> chance.
 
-### 4.3 Imports tardifs sur disque lent
+### 4.3 Late imports on slow disk
 
-`<frozen importlib._bootstrap_external>:145:_path_stat` pèse 18,6 % du thread
-principal d'INDEX et 23 % d'INDEX_SPLINE. Le dépôt vit dans un dossier **Google
-Drive** (`D:\drivefl\…`) : chaque `stat` peut être coûteux.
+`<frozen importlib._bootstrap_external>:145:_path_stat`weighs 18.6% of the thread
+main of INDEX and 23% of INDEX_SPLINE. The repository lives in a**Google folder
+Drive**(`D:\drivefl\…`): each`stat`can be costly.
 
-~~⚠️ Le cache numba n'est PAS en cause, c'est vérifié : `configure_numba_env` le
-place déjà dans `%TEMP%\CERTUS_Numba_Cache`. Ne repars pas sur cette piste.~~
+~~⚠️ The numba cache is NOT in question, it is verified:`configure_numba_env`on
+already placed in`%TEMP%\CERTUS_Numba_Cache`. Don't go down that path again.~~
 
-❌ **FAUX, et cette interdiction était donc infondée.** Vérifié le 2026-08-04 :
+❌**FALSE, and this ban was therefore unfounded.**Verified on 2026-08-04:
 
-| Contrôle | Résultat |
+| Control | Result |
 |---|---|
-| `%TEMP%\CERTUS_Numba_Cache` | **n'existe pas** |
-| `.nbi` dans les `__pycache__` du dépôt | **78 fichiers** |
+|`%TEMP%\CERTUS_Numba_Cache`|**does not exist**|
+|`.nbi`in the`__pycache__`of the repository |**78 files**|
 
-`configure_numba_env` ne pose `NUMBA_CACHE_DIR` qu'en `certus_core.py:359-361`,
-mais la branche de `:334` **retourne en `:352` avant d'y arriver** — et
-`bench_examples.py:443` importe `certus_physics`, donc numba, **avant** que
-`CERTUS_INDEX` n'appelle `_configure_numba_env()`. La branche est toujours prise.
-Aggravant : dans numba 0.66, le locator de cache est figé **à la décoration**
-(`numba/core/caching.py:414-420`), donc poser la variable trop tard est sans effet.
+`configure_numba_env`only sets`NUMBA_CACHE_DIR`in`certus_core.py:359-361`,
+but the branch from`:334`**returns to`:352`before getting there**— and
+`bench_examples.py:443`imports`certus_physics`, so numba,**before**
+`CERTUS_INDEX`does not call`_configure_numba_env()`. The branch is still taken.
+Worse: in numba 0.66, the cache locator is frozen**at decoration**
+(`numba/core/caching.py:414-420`), so setting the variable too late has no effect.
 
-**Le cache JIT vit à côté des sources** — c'est-à-dire, à l'époque de ce document,
-**dans le dossier Google Drive**. Les 18,6 % et 23 % de `_path_stat` ci-dessus,
-c'était très probablement lui.
+**The JIT cache lives next to the sources**— that is, at the time of this document,
+**in the Google Drive folder**. The 18.6% and 23% of`_path_stat`above,
+it was most likely him.
 
-❌ **Et la mesure elle-même était un artefact.** `scripts/bench_examples.py:687`
-place la fenêtre d'échantillonnage **autour de l'import de l'application** : ces
-pourcentages ne sont pas du temps de calcul, mais du chargement de modules.
-Re-profilé le 2026-08-04 sur disque local, INDEX_SPLINE donne `_path_stat` à
-**9,0 %** (contre 23,0 %) et 42 % dans `_call_with_frames_removed`, c'est-à-dire
-l'import lui-même.
+❌**And the measurement itself was an artifact.**`scripts/bench_examples.py:687`
+places the sampling window**around the application import**: these
+percentages are not calculation time, but module loading.
+Re-profiled on 2026-08-04 on local disk, INDEX_SPLINE gives`_path_stat`to
+**9.0%**(compared to 23.0%) and 42% in`_call_with_frames_removed`, i.e.
+the import itself.
 
-✅ **Ce qui restait de réel a été fait** : 8 imports tardifs supprimés de
-`certus/spline/spline_workers.py`, dont un exécuté à **chaque évaluation
-L-BFGS-B**. Aucun cycle (vérifié), et 6 des 8 noms étaient déjà en tête de module.
-Les 11 imports tardifs de `certus/workers/certus_index_workers.py` sont, eux,
-**NON déplaçables** : cycle d'import prouvé. Ne pas y toucher.
+✅**What was left of reality was done**: 8 late imports removed from
+`certus/spline/spline_workers.py`, one of which is executed on**each evaluation
+L-BFGS-B**. No cycle (verified), and 6 of the 8 names were already at the top of the module.
+The 11 late imports of`certus/workers/certus_index_workers.py`are,
+**NOT movable**: proven import cycle. Do not touch it.
 
-### 4.4 STRAT — ce qui reste après `33af845`
+### 4.4 STRAT — what remains after`33af845`
 
-Le profil à la ligne est désormais dominé par de vrais noyaux compilés :
-`compute_batch_rmse` (146 %), `compute_T_front_profile` (107 %),
-`calculate_extrema_distances` (107 %), `simulate_stack_robustness_batch` (44 %).
+The row profile is now dominated by real compiled kernels:
+`compute_batch_rmse`(146%),`compute_T_front_profile`(107%),
+`calculate_extrema_distances`(107%),`simulate_stack_robustness_batch`(44%).
 
-~~Une piste concrète reste : `calculate_extrema_distances` accumule ses extrema
-dans une liste réfléchie numba, notoirement lente. La remplacer par un tableau
-préalloué.~~
+~~A concrete lead remains:`calculate_extrema_distances`accumulates its extrema
+in a numba thoughtful list, notoriously slow. Replace it with an array
+pre-allocated.~~
 
-⚠️ **MAUVAISE CIBLE.** La lecture du code montre que cette liste ne représente que
-**2 des 6 allocations NRT** de la fonction et ne contient en pratique que **0 à 2
-éléments** — la fenêtre couvre ±16 nm de chemin optique quand les extrema de T(d)
-sont espacés de λ/2, soit ~275 nm à 550 nm. Le coût réel, ce sont les **56 à 88
-évaluations** de `_calc_T_added_layer`, chacune avec `cos`/`sin` sur argument
-complexe. Le plafond de gain de cette piste est donc bas.
+⚠️**BAD TARGET.**Reading the code shows that this list only represents
+**2 of the 6 NRT**allocations of the function and in practice only contains**0 to 2
+elements**— the window covers ±16 nm of optical path when the extrema of T(d)
+are spaced by λ/2, i.e. ~275 nm to 550 nm. The real cost is**56 to 88
+evaluations**of`_calc_T_added_layer`, each with`cos`/`sin`on argument
+complex. The winning ceiling of this track is therefore low.
 
-✅ **Le vrai gisement était ailleurs, et il est traité.** Le bloc de profil
-théorique de `certus/core/certus_strat_robustness.py:624-658` — là où vivent
-précisément les deux lignes les plus chères ci-dessus, `compute_T_front_profile`
-à 107,2 % et `calculate_extrema_distances` à 106,7 % — est calculé **puis jeté**
-par deux appelants sur trois :
+✅**The real deposit was elsewhere, and it is processed.**The profile block
+theoretical from`certus/core/certus_strat_robustness.py:624-658`— where live
+precisely the two most expensive lines above,`compute_T_front_profile`
+at 107.2% and`calculate_extrema_distances`at 106.7% — is calculated**then thrown away**
+by two out of three callers:
 
-- le rescoring consensus ne lit que `robustness_score` ;
-- le halving ELITE ne lit que `rmse_p95` et réempile la stratégie **d'entrée**.
+- consensus rescoring only reads`robustness_score`;
+- the halving ELITE only reads`rmse_p95`and re-stacks the**input**strategy.
 
-Seules la passe principale et l'évaluation ELITE complète l'exploitent, cette
-dernière via `full_res["strategy"]`. Un paramètre `compute_layer_profile: bool =
-True` a été ajouté et les deux sites qui jettent le résultat passent `False`.
-**Gain non mesuré** : le mécanisme est vérifié, le volume ne l'est pas.
+Only the main pass and the complete ELITE evaluation exploit it, this
+last via`full_res["strategy"]`. A parameter`compute_layer_profile: bool =
+True`was added and both sites that throw the result pass`False`.
+**Gain not measured**: the mechanism is verified, the volume is not.
 
-⚠️ **Piste `.tolist()` : ne pas l'attaquer directement.** `_test_strategy_robustness_task`
-stocke bien `rmse_all` et `thicknesses_all` en listes Python, mais passer en numpy
-casserait **quatre** tests de véracité, dont **deux silencieusement** —
-`if thicknesses_all:` sur un ndarray 2D lève `ValueError`, avalée par le `except`
-englobant (`certus/ui/certus_strat_thickness_ui.py:402` et
-`certus/ui/certus_strat_table_ui.py:164`). C'est le mode de défaillance de
-`bc2042a`. Il faut un **commit préalable et séparé** remplaçant les 4 tests par
+⚠️**Track`.tolist()`: do not attack it directly.**`_test_strategy_robustness_task`
+stores`rmse_all`and`thicknesses_all`in Python lists, but pass in numpy
+would break**four**veracity tests, including**two silently**—
+`if thicknesses_all:`on a 2D ndarray raises`ValueError`, swallowed by the`except`
+enclosing (`certus/ui/certus_strat_thickness_ui.py:402`and
+`certus/ui/certus_strat_table_ui.py:164`). This is the failure mode of
+`bc2042a`. You need a**prior and separate commit**replacing the 4 tests with
 `is None or len(...) == 0`.
 
-🔴 **Et un prérequis à toute mesure STRAT** : `certus_strat_robustness.py:314` fait
-`max_workers = cpu_count() // 2` et `:466` fait `numba.set_num_threads(2)`, soit
-**8 threads numba pour 4 cœurs physiques** sur la machine actuelle. Plus
-largement, **aucun endroit du dépôt ne connaît la notion de cœur physique** : tout
-dérive de `cpu_count()`. Six sites recensés au §10.4 du document de reprise. Sur un
-15 W, cette sur-souscription se paie en throttling thermique, qui bruite toutes
-les comparaisons A/B.
+🔴**And a prerequisite for any STRAT measurement**:`certus_strat_robustness.py:314`does
+`max_workers = cpu_count() // 2`and`:466`does`numba.set_num_threads(2)`, i.e.
+**8 numba threads for 4 physical cores**on the current machine. More
+largely,**no place in the repository knows the notion of a physical heart**: all
+derives from`cpu_count()`. Six sites listed in §10.4 of the recovery document. On a
+15 W, this over-subscription is paid for in thermal throttling, which makes all the noise
+A/B comparisons.
 
-### 4.5 METAL — le cache d'indices, et pourquoi le gain ÉTAIT l'erreur
+### 4.5 METAL — the index cache, and why the gain WAS the error
 
-Toujours ouverte, et c'est le **seul** endroit où le §2 de ce plan s'applique.
-Basculer `use_cache=True` site par site (`gradient_metal.py` ×2,
-`CERTUS_METAL_BILAYER.py` ×2, `CERTUS_METAL_SINGLE.py` ×3).
+Always open, and this is the**only**place where §2 of this plan applies.
+Toggle`use_cache=True`site by site (`gradient_metal.py`×2,
+`CERTUS_METAL_BILAYER.py`×2,`CERTUS_METAL_SINGLE.py`×3).
 
-Mesuré en forçant globalement `use_cache=True` sur METAL_SINGLE :
-**55,9 s → 24,7 s**. Mais **attention** : le RMSE final change (0,006100 →
-0,006124–0,006190).
+Measured by globally forcing`use_cache=True`on METAL_SINGLE:
+**55.9s → 24.7s**. But**be careful**: the final RMSE changes (0.006100 →
+0.006124–0.006190).
 
-🔴 **PISTE CLOSE le 2026-08-04, MESURE À L'APPUI. LE GAIN EST L'ERREUR.**
+🔴**TRACK CLOSED on 2026-08-04, SUPPORTED MEASUREMENTS. THE GAIN IS THE MISTAKE.**
 
-Trois runs `metal_single --force-cache --instrument`, machine au repos :
+Three runs`metal_single --force-cache --instrument`, machine at rest:
 
-| | `RUN_S` | `RESULT` | `HITRATE` |
+| |`RUN_S`|`RESULT`|`HITRATE`|
 |---|---|---|---|
-| Sans cache | 154,6 s | `0,006100345590625494` | — |
-| Cache, **clé arrondie** (code actuel) | **75,2 s** | `0,00613372429822523` ❌ | **88,1 %** |
-| Cache, **clé exacte** (essai) | **150,3 s** | `0,006100345473793503` ✅ | **18,8 %** |
+| Without cache | 154.6 sec |`0.006100345590625494`| — |
+| Cache,**rounded key**(current code) |**75.2 sec**|`0.00613372429822523`❌ |**88.1%**|
+| Cache,**exact key**(test) |**150.3 sec**|`0.006100345473793503`✅ |**18.8%**|
 
-Le ×2,06 se reproduit. Mais avec une clé **exacte**, le résultat redevient juste et
-**le gain disparaît entièrement** — ×1,03. Les 88 % de succès étaient à ~70 points
-des géométries réellement distinctes, écrasées par l'arrondi à 1e-6 nm : ce sont
-précisément les perturbations de différence finie de L-BFGS-B. Construction des
-matrices : 19,1 s pour 5 499 distinctes contre 69,3 s pour 10 737.
+The ×2.06 reproduces. But with an**exact**key, the result becomes correct again and
+**the gain disappears entirely**— ×1.03. The 88% success rate was ~70 points
+truly distinct geometries, crushed by rounding at 1e-6 nm: these are
+precisely the finite difference disturbances of L-BFGS-B. Construction of
+matrices: 19.1 s for 5,499 distinct versus 69.3 s for 10,737.
 
-⚠️ **Piège supplémentaire, invisible dans la mesure d'origine** : avec le cache, le
-nombre d'appels à `get_nk_from_spline` passe de **68 503 à 51 149**. L'optimiseur ne
-fait pas le même travail plus vite, **il fait 25 % de travail en moins** parce que sa
-trajectoire diverge. Le « ×2 » n'est donc même pas une accélération pure.
+⚠️**Additional trap, invisible in the original measurement**: with the cache, the
+number of calls to`get_nk_from_spline`increases from**68,503 to 51,149**. The optimizer does not
+does not do the same work faster,**it does 25% less work**because its
+trajectory diverges. The “×2” is therefore not even a pure acceleration.
 
-**Ne pas relancer cette piste.** L'arrondi de `certus_optical_models.py:419` est
-délibéré et documenté sur place.
+**Do not restart this track.**The rounding of`certus_optical_models.py:419`is
+deliberated and documented on site.
 
 ---
 
-Analyse de la cause, conservée pour mémoire :
+Analysis of the cause, kept for memory:
 
-Ce ne sont pas les 1,78e-15 de réassociation flottante. C'est une **perte
-d'information dans la clé de cache**. `SplineBasisCache.get` arrondit les
-positions de nœuds à **6 décimales** pour construire sa clé
-(`certus/physics/certus_optical_models.py:419`). Les longueurs d'onde de METAL
-sont en **nanomètres** (`CERTUS_METAL_SINGLE.py:1256`), donc le quantum de la clé
-vaut **1e-6 nm**, soit **100× le pas de différence finie de L-BFGS-B (1e-8)**.
+These are not the 1.78e-15 of floating reassociation. It's a loss
+information in the cache key**.`SplineBasisCache.get`rounds the
+node positions to**6 decimal places**to construct your key
+(`certus/physics/certus_optical_models.py:419`). The wavelengths of METAL
+are in**nanometers**(`CERTUS_METAL_SINGLE.py:1256`), so the quantum of the key
+is**1e-6 nm**, or**100× the finite difference step of L-BFGS-B (1e-8)**.
 
-> **La perturbation du gradient est exactement annulée par l'arrondi de la clé.**
-> L'optimiseur dérive un objectif devenu localement constant.
+> **Gradient disturbance is exactly canceled by key rounding.**
+> The optimizer derives an objective that has become locally constant.
 
-Trois corollaires :
+Three corollaries:
 
-- `certus_optical_models.py:453` — la matrice stockée n'est pas reconstruite à
-  partir de la clé : l'objectif devient **dépendant de l'historique du cache**,
-  donc non reproductible d'un run à l'autre.
-- `tests/oracle/test_spline_basis_cache.py:46` — le garde-fou censé attraper ce
-  bug **ne peut pas le voir** : il déplace les nœuds de 1e-4, soit 100× le quantum.
-- `scripts/bench_examples.py:307` — **le 55,9 s → 24,7 s ne mesure pas l'action
-  proposée** : `--force-cache` patche globalement, y compris des sites que le plan
-  ne prévoit pas de basculer.
+- `certus_optical_models.py:453`— the stored matrix is ​​not reconstructed at
+  from the key: the objective becomes**dependent on the cache history**,
+  therefore not reproducible from one run to another.
+- `tests/oracle/test_spline_basis_cache.py:46`— the guardrail supposed to catch this
+  bug**can't see it**: it moves the nodes by 1e-4, or 100x the quantum.
+- `scripts/bench_examples.py:307`—**55.9 s → 24.7 s does not measure action
+  proposed**:`--force-cache`patches globally, including sites that the plan
+  does not plan to switch.
 
-Même pathologie, 100 000× plus grossière, dans `certus/utils/certus_re_math.py:396`
-(nœuds arrondis à 0,1 nm, grille à 1 nm).
+Same pathology, 100,000x coarser, in`certus/utils/certus_re_math.py:396`
+(nodes rounded to 0.1 nm, grid to 1 nm).
 
-Les sites où les positions de nœuds sont **figées** sont immunisés ; ceux où elles
-varient ne le sont pas. ⚠️ Constats issus d'une analyse dont les vérificateurs ont
-été interrompus : **à recouper ligne à ligne avant d'agir.**
+Sites where node positions are**frozen**are immune; those where they
+vary are not. ⚠️ Findings resulting from an analysis of which the auditors have
+been interrupted:**to cross-check line by line before acting.**
 
-Le banc sait le faire : `--force-cache --trace-nk --instrument`.
+The bench knows how to do it:`--force-cache --trace-nk --instrument`.
 
-### 4.6 Dette non liée à la performance
+### 4.6 Debt not linked to performance
 
 - ~~`tests/unit/test_certus_re.py::TestREAppSkeletonLoaders::test_re_app_skeletons_methods`
-  échoue dans la sélection `-k "re_ or reverse or objectives"` et passe isolément.~~
-  ✅ **Résolu et commité le 2026-08-02** — cf. `docs/REPRISE_TESTS_ISOLATION.md`.
-- `_is_busy` est lu dans `certus_design_ui.py:339` et **jamais écrit** nulle part.
-- `git gc` échoue toujours sur le commit orphelin `01047a1b` (arbre manquant) —
-  chaque commit affiche `fatal: bad tree object`. Sans effet sur les commits.
+  fails in`-k "re_or reverse or objectives"`selection and passes in isolation.~~
+  ✅**Resolved and committed on 2026-08-02**— cf.`docs/REPRISE_TESTS_ISOLATION.md`.
+- `_is_busy`is read in`certus_design_ui.py:339`and**never written**anywhere.
+- `git gc`always fails on orphan commit`01047a1b`(missing tree) —
+  every commit shows`fatal: bad tree object`. No effect on commits.
 
 ---
 
-## 5. Trois affirmations réfutées par la mesure
+## 5. Three claims refuted by the measure
 
-*Elles venaient d'un plan d'optimisation antérieur, supprimé le 2026-08-06. Elles sont conservées
-ici parce que ce sont des CONCLUSIONS, et qu'elles évitent de refaire le chemin.*
+*They came from a previous optimization plan, deleted on 2026-08-06. They are kept
+here because they are CONCLUSIONS, and they avoid having to redo the path.*
 
-Ce plan reste utile pour METAL, mais trois de ses affirmations sont démenties par
-la mesure. Ne perds pas de temps à les refaire.
+This plan remains useful for METAL, but three of its assertions are denied by
+the measure. Don't waste time redoing them.
 
-1. **§2.5 « le cache se saborde lui-même », « le −53 % est un plancher » — faux.**
-   Le vidage total ne coûtait que **15 reconstructions sur 5 522** : la localité
-   temporelle est si serrée que jeter le cache ne fait presque pas mal. L'éviction
-   LRU (`a9983c4`) rapporte **+0,124 s**, soit 0,4 % d'un run — et **0 s** en
-   production, puisque `SplineBasisCache` n'est appelé que **18 fois** par run de
-   METAL_SINGLE (99,97 % des appelants passent `use_cache=False`).
-2. **§5, ordre de travail : les étapes 1 et 2 ne concernent QUE METAL.** Mesuré :
-   INDEX, INDEX_SPLINE, RE et FIELD font **zéro appel** à `SplineBasisCache` et
-   **zéro appel** à `get_nk_from_spline`. Pour les modules du quotidien, il fallait
-   commencer par l'étape 3 (profiler les autres modules).
-3. **§1, tableau des durées : STRAT et DESIGN y sont sous-évalués**, parce que les
-   tests headless correspondants mockent le calcul. Vrais chiffres au §2 ci-dessus.
+1. **§2.5 “the cache sabotages itself”, “the −53% is a floor” — false.**
+   The total emptying only cost**15 reconstructions out of 5,522**: the locality
+   timing is so tight that throwing away the cache almost doesn't hurt. The eviction
+   LRU (`a9983c4`) reports**+0.124 s**, or 0.4% of a run — and**0 s**in
+   production, since`SplineBasisCache`is only called**18 times**per run of
+   METAL_SINGLE (99.97% of callers pass`use_cache=False`).
+2. **§5, work order: steps 1 and 2 only concern METAL.**Measured:
+   INDEX, INDEX_SPLINE, RE and FIELD make**zero calls**to`SplineBasisCache`and
+   **zero calls**to`get_nk_from_spline`. For everyday modules, it was necessary
+   start with step 3 (profile the other modules).
+3. **§1, table of durations: STRAT and DESIGN are undervalued**, because the
+   Corresponding headless tests mock the calculation. Real figures in §2 above.
 
 ---
 
-## 6. Diagnostics bruts du 2026-08-02
+## 6. Raw diagnostics from 2026-08-02
 
-Conservés pour ne pas avoir à re-profiler. Échantillonnage de piles à 5 ms, tous
-threads, exemples réels, dialogues répondus automatiquement. Les pourcentages
-dépassent 100 % quand plusieurs threads travaillent en parallèle.
+Kept so as not to have to re-profile. Stack sampling at 5 ms, all
+threads, real examples, auto-answered dialogs. The percentages
+exceed 100% when several threads work in parallel.
 
-### STRAT — avant `33af845` (137 s)
-
-```
-691,4 %  _compute_theoretical_layer_profile   <- ~200 dispatches njit par couche
-226,2 %  threading.wait
-104,4 %  _test_strategy_robustness_task
- 36,5 %  calculate_RT_vectorized_real_HL
- 32,7 %  _compute_dT_dd_per_layer
-```
-
-### STRAT — après (lignes les plus chères)
+### STRAT — before`33af845`(137 s)
 
 ```
-146,5 %  certus_strat_robustness.py:596   compute_batch_rmse
-107,2 %  certus_strat_objectives.py:489   compute_T_front_profile
-106,7 %  certus_strat_objectives.py:497   calculate_extrema_distances
- 67,7 %  certus_strat_objectives.py:376   precompute_matrix_cache_kernel
- 44,5 %  certus_strat_robustness.py:567   simulate_stack_robustness_batch
+691.4%_compute_theoretical_layer_profile <- ~200 njit dispatches per layer
+226.2% threading.wait
+104.4%_test_strategy_robustness_task
+36.5% calculate_RT_vectorized_real_HL
+32.7%_compute_dT_dd_per_layer
+```
+
+### STRAT — after (most expensive lines)
+
+```
+146.5% certus_strat_robustness.py:596 compute_batch_rmse
+107.2% certus_strat_objectives.py:489 compute_T_front_profile
+106.7% certus_strat_objectives.py:497 calculate_extrema_distances
+67.7% certus_strat_objectives.py:376 precompute_matrix_cache_kernel
+44.5% certus_strat_robustness.py:567 simulate_stack_robustness_batch
 ```
 
 ### DESIGN
 
 ```
-872,9 %  certus_design_core.py:264        cost_numba_fast
- 85,4 %  gradient_oblique.py:1136
-  1,5 %  certus_optimizers.py:438         <- toute la machinerie PGLOBAL
+872.9% certus_design_core.py:264 cost_numba_fast
+85.4% gradient_oblique.py:1136
+  1.5% certus_optimizers.py:438 <- all PGLOBAL machinery
 ```
 
-**PGLOBAL lui-même ne pèse que 1,5 %.** Il n'y a rien à gratter dans son code :
-les gains restants sont dans la fonction objectif, ou dans le *nombre*
-d'évaluations (donc l'échantillonnage, §4.1).
+**PGLOBAL itself only weighs 1.5%.**There is nothing to scratch in its code:
+the remaining gains are in the objective function, or in the *number*
+evaluations (therefore sampling, §4.1).
 
-### RE — avant `f6f9102` (lignes)
-
-```
-32,1 %  certus_re_objectives.py:599   yR_all[idx], dR_all[idx, :]  <- copies
-17,7 %  certus_re_objectives.py:600   idem pour T
-15,5 %  certus_re_objectives.py:434   grad_raw += np.dot(coeff, dy_vals)
-12,2 %  certus_re_objectives.py:424   np.sum / np.dot sur les poids
-10,8 %  gradient_oblique.py:869
-```
-
-### INDEX (❌ ~~6,5 s, avec `--auto-yes`~~ → **12,8 s avec `--auto-yes`**)
-
-> Ce titre se contredisait avec son propre paragraphe ci-dessous, qui dit que le
-> « No » par défaut fait tomber le run **de 12,8 s à 6,5 s**. Tranché par la mesure
-> du 2026-08-04 : `--auto-yes` donne **12,425 s** sur la machine 4 cœurs. C'est le
-> corps du texte qui avait raison — **6,5 s est la mesure SANS `--auto-yes`**,
-> c'est-à-dire le demi-pipeline. Le tableau du §2 reprenait le mauvais chiffre.
+### RE — before`f6f9102`(lines)
 
 ```
-[WORK] 54,5 %  certus_index_objectives.py:1755:__call__
-[MAIN] 18,6 %  <frozen importlib._bootstrap_external>:145:_path_stat
-[WORK] 11,0 %  llvmlite/binding/ffi.py:210      <- JIT PENDANT le run
-[MAIN]  7,5 %  <frozen importlib._bootstrap_external>:947:get_data
-[WORK]  4,2 %  certus_index_objectives.py:1535:gradient
-[WORK]  2,9 %  numba/core/compiler_lock.py:11
+32.1% certus_re_objectives.py:599 yR_all[idx], dR_all[idx, :] <- copies
+17.7% certus_re_objectives.py:600 same for T
+15.5% certus_re_objectives.py:434 grad_raw += np.dot(coeff, dy_vals)
+12.2% certus_re_objectives.py:424 np.sum / np.dot on weights
+10.8% gradient_oblique.py:869
 ```
 
-Sans `--auto-yes`, le même run affiche 26 % dans `_ask_keep_raw_or_smoothed` et
-28 % dans `_on_tlu_constrained_finished` : ce sont des **QMessageBox modales**, pas
-du calcul. Et le « No » par défaut fait sauter la phase IR : le chargement tombe
-de 5,7 s à 0,6 s et le run de 12,8 s à 6,5 s — on mesurait la moitié du pipeline.
+### INDEX (❌ ~~6.5 s, with`--auto-yes`~~ →**12.8 s with`--auto-yes`**)
 
-### INDEX_SPLINE (1,6 s)
-
-```
-25,2 %  spline_objective.py:517   spline_objective_mse_on_masked_grid
-23,0 %  <frozen importlib._bootstrap_external>:145:_path_stat
-19,7 %  spline_objective.py:973   _fast_nk
- 8,5 %  llvmlite/binding/ffi.py:210
-```
-
-### Cache de base spline — pourquoi le §2 du plan ne s'applique qu'à METAL
-
-METAL_SINGLE, code de production :
+> This headline contradicted itself with its own paragraph below, which says that the
+> “No” by default drops the run**from 12.8 s to 6.5 s**. Sliced ​​by measure
+> from 2026-08-04:`--auto-yes`gives**12.425 s**on the 4-core machine. This is the
+> body of text which was right —**6.5 s is the measurement WITHOUT`--auto-yes`**,
+> i.e. the half-pipeline. The table in §2 showed the wrong figure.
 
 ```
-CACHE_CALLS=18        CACHE_CLEARS=0
-NK_CALLS=66975        NK_DISTINCT_KNOTS=18402   NK_REPEAT=72,5 %
-NK_USE_CACHE_FALSE=66957   (99,97 %)
+[WORK] 54.5% certus_index_objectives.py:1755:__call__
+[MAIN] 18.6% <frozen importlib._bootstrap_external>:145:_path_stat
+[WORK] 11.0% llvmlite/binding/ffi.py:210 <- JIT DURING run
+[MAIN] 7.5% <frozen importlib._bootstrap_external>:947:get_data
+[WORK] 4.2% certus_index_objectives.py:1535:gradient
+[WORK] 2.9% numba/core/compiler_lock.py:11
 ```
 
-Le même run avec `--force-cache` :
+Without`--auto-yes`, the same run shows 26% in`_ask_keep_raw_or_smoothed`and
+28 % in`_on_tlu_constrained_finished`: these are**modal QMessageBoxes**, not
+of the calculation. And the default “No” skips the IR phase: the loading drops
+from 5.7 s to 0.6 s and the run from 12.8 s to 6.5 s — we measured half of the pipeline.
+
+### INDEX_SPLINE (1.6 sec)
 
 ```
-CACHE_CALLS=55611     CACHE_DISTINCT=5457   CACHE_HITS=50104   HITRATE=90,1 %
+25.2% spline_objective.py:517 spline_objective_mse_on_masked_grid
+23.0% <frozen importlib._bootstrap_external>:145:_path_stat
+19.7% spline_objective.py:973_fast_nk
+8.5% llvmlite/binding/ffi.py:210
 ```
 
-Rejeu déterministe de la séquence réelle contre les deux politiques d'éviction :
+### Spline base cache — why §2 of the plan only applies to METAL
+
+METAL_SINGLE, production code:
 
 ```
-vidage total (>500)   4,524 s   5522 constructions
-éviction LRU (512)    4,400 s   5507 constructions
+CACHE_CALLS=18 CACHE_CLEARS=0
+NK_CALLS=66975 NK_DISTINCT_KNOTS=18402 NK_REPEAT=72.5%
+NK_USE_CACHE_FALSE=66957 (99.97%)
 ```
 
-INDEX, INDEX_SPLINE, RE, FIELD : `CACHE_CALLS=0` et `NK_CALLS=0`.
+The same run with`--force-cache`:
 
-### Pièges d'outillage (Windows)
+```
+CACHE_CALLS=55611 CACHE_DISTINCT=5457 CACHE_HITS=50104 HITRATE=90.1%
+```
 
-- Code de sortie **127** = `ERROR_PROC_NOT_FOUND`. Deux causes rencontrées :
-  QApplication ramassée par le GC, et numpy/scipy importés avant Qt.
-- `os._exit()` **ne vide pas** les tampons de `stdout` : un `print` avant lui est
-  perdu quand la sortie est redirigée. Flusher explicitement.
-- Depuis bash (MSYS), passer les chemins de script en **forme Windows**
-  (`C:/…`) à `python.exe` ; la forme `/c/…` échoue avec un code 127 trompeur.
-- Le timeout de l'outil Bash est plafonné à 10 min : lancer les campagnes de
-  mesure en tâche de fond.
+Deterministic replay of the real sequence against the two eviction policies:
+
+```
+total dump (>500) 4.524 sec 5522 builds
+eviction LRU (512) 4,400 s 5507 constructions
+```
+
+INDEX, INDEX_SPLINE, RE, FIELD:`CACHE_CALLS=0`and`NK_CALLS=0`.
+
+### Tooling Pitfalls (Windows)
+
+- Exit code**127**=`ERROR_PROC_NOT_FOUND`. Two causes encountered:
+  QApplication picked up by the GC, and numpy/scipy imported before Qt.
+- `os._exit()`**does not empty**the`stdout`buffers: a`print`before it is
+  lost when the output is redirected. Flush explicitly.
+- From bash (MSYS), pass script paths in**Windows form**
+  (`C:/…`) to`python.exe`; the form`/c/…`fails with a misleading code 127.
+- The timeout of the Bash tool is capped at 10 min: launch the campaigns
+  measurement in the background.
 
 ---
 
-## 7. Rappels d'environnement
+## 7. Environmental reminders
 
-- Venv : `.venv\Scripts\python.exe`. Vérifier ce qui est réellement importé :
+- Venv:`.venv\Scripts\python.exe`. Check what is actually imported:
   `python -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"`.
-- 🔴 `.git/hooks/post-commit` pousse chaque commit vers le dépôt **public**
-  `nikonvr/CERTUS`. Actuellement renommé `post-commit.disabled`. `--no-verify` ne
-  le neutralise pas. **Vérifier son état avant tout commit.**
-- `numba.set_num_threads` est **thread-local** (vérifié à l'exécution) : on peut
-  brider un pool sans toucher au reste du processus.
+- 🔴`.git/hooks/post-commit`pushes each commit to the**public**repository
+  `nikonvr/CERTUS`. Currently renamed to`post-commit.disabled`.`--no-verify`does not
+  not neutralize it.**Check its status before committing.**
+- `numba.set_num_threads`is**thread-local**(checked at runtime): we can
+  restrict a pool without affecting the rest of the process.

@@ -1,9 +1,9 @@
-"""Chaque gradient analytique doit être la dérivée du coût qu'il accompagne.
+"""Each analytical gradient must be the derivative of the cost it accompanies.
 
-Un gradient faux ne lève rien : il déplace l'optimum. Ces tests ferment cette porte
-pour toutes les fonctions du projet qui exportent un couple (coût, gradient).
+A false gradient does not change anything: it moves the optimum. These tests close this door
+for all project functions that export a couple (cost, gradient).
 
-Voir ``gradient_harness.py`` pour la méthode et le choix du pas.
+See ``gradient_harness.py`` for the method and choice of step.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from gradient_harness import check_gradient, non_uniform_weights  # noqa: E402
 
 WAVELENGTHS = np.linspace(450.0, 750.0, 14)
 THICKNESSES = np.array([82.0, 118.0, 64.0, 131.0])
-# Ordre du projet : indice 0 = cote substrat, indice N-1 = cote incident.
+#Project order: index 0 = substrate rating, index N-1 = incident rating.
 STACK_NK = [(2.30, 0.015), (1.46, 0.0), (2.30, 0.015), (1.46, 0.0)]
 SUBSTRATE = 1.52
 
@@ -43,11 +43,11 @@ def _substrate_vector(n_wavelengths: int) -> np.ndarray:
 
 @pytest.mark.parametrize("uniform_weights", [True, False], ids=["poids-1", "poids-varies"])
 def test_gradient_all_layers_matches_finite_differences(uniform_weights: bool) -> None:
-    """Gradient multicouche à incidence normale, avec et sans poids uniformes.
+    """Multi-layer gradient at normal incidence, with and without uniform weights.
 
     Le cas « poids-varies » est le plus important : une normalisation par le nombre
-    de points au lieu de la somme des poids est INVISIBLE quand tous les poids
-    valent 1, les deux dénominateurs ne différant alors que d'un facteur constant.
+    of points instead of the sum of the weights is INVISIBLE when all the weights
+    are equal to 1, the two denominators then differing only by a constant factor.
     """
     from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
 
@@ -90,8 +90,8 @@ def test_oblique_gradient_matches_finite_differences(
     """Gradient en incidence oblique, aux deux polarisations et sur les deux cibles.
 
     Balaye le produit angle x polarisation x nature de cible : c'est la combinatoire
-    où une erreur de signe ou d'admittance inclinée se cache le plus facilement, car
-    elle peut être exacte à 0 degre et fausse au-dela.
+    where a sign or tilted admittance error is most easily hidden, because
+    it can be exact to 0 degrees and false beyond that.
     """
     from certus.physics.gradient_oblique import compute_oblique_gradient_contrib_analytic
 
@@ -103,16 +103,16 @@ def test_oblique_gradient_matches_finite_differences(
     var_idx = np.arange(THICKNESSES.size, dtype=np.int64)
 
     def cost_and_grad(thicknesses: np.ndarray) -> tuple[float, np.ndarray]:
-        # ATTENTION AU CONTRAT. Cette fonction renvoie (err_sum, grad_raw, weight_sum)
+        #BE CAREFUL OF THE CONTRACT. This function returns (err_sum, grad_raw, weight_sum)
         # NON NORMALISES, comme sa docstring l'annonce. err_sum vaut Somme(w.diff^2),
-        # dont la derivee est 2.Somme(w.diff.d(diff)/dp) : le facteur 2 et la division
-        # par la somme des poids sont appliques par L'APPELANT, pas ici.
+        #whose derivative is 2.Sum(w.diff.d(diff)/dp): the factor 2 and the division
+        #by the sum of the weights are applied by THE CALLER, not here.
         # Cf. certus/workers/certus_design_engine.py:195 :
         #     return total_err / total_weight, (2.0 / total_weight) * grad_raw
         #
         # Comparer grad_raw directement a la difference finie de err_sum donnerait un
-        # rapport de 2 exactement — un faux positif spectaculaire. On reproduit donc
-        # ici l'assemblage du moteur, ce qui a l'avantage de tester ce que l'optimiseur
+        #ratio of exactly 2 — a spectacular false positive. We therefore reproduce
+        #here the engine assembly, which has the advantage of testing what the optimizer
         # recoit reellement.
         err_sum, grad_raw, weight_sum = compute_oblique_gradient_contrib_analytic(
             thicknesses,
@@ -146,10 +146,10 @@ def test_oblique_gradient_matches_finite_differences(
 def test_le_harnais_detecte_un_gradient_faux() -> None:
     """GARDE-FOU DU GARDE-FOU.
 
-    Un harnais de vérification qui ne détecte rien est pire qu'absent : il donne une
-    fausse assurance. On lui soumet ici un gradient délibérément faussé d'un facteur
-    1,05 — une erreur de 5 %, du même ordre que celles réellement rencontrées dans
-    ce dépôt — et on exige qu'il le refuse.
+    A verification harness that detects nothing is worse than absent: it gives
+    false assurance. Here we submit to it a deliberately distorted gradient of a factor
+    1.05 — an error of 5%, of the same order as those actually encountered in
+    this deposit — and we demand that he refuse it.
     """
     from gradient_harness import GradientMismatch
     from certus.physics.gradient_oblique import compute_gradient_all_layers_analytic
@@ -184,15 +184,15 @@ def test_le_harnais_detecte_un_gradient_faux() -> None:
 
 
 def test_le_harnais_refuse_un_gradient_nul() -> None:
-    """Un gradient identiquement nul coïnciderait trivialement avec une FD nulle.
+    """An identically zero gradient would trivially coincide with a zero FD.
 
-    Le harnais doit refuser ce cas plutôt que de le déclarer conforme : un test qui
-    passe sur un point dégénéré ne démontre rien.
+    The harness must refuse this case rather than declare it compliant: a test which
+    passing on a degenerate point demonstrates nothing.
     """
     from gradient_harness import GradientMismatch
 
     def cost_and_grad_nul(params: np.ndarray) -> tuple[float, np.ndarray]:
         return 1.0, np.zeros_like(params)
 
-    with pytest.raises(GradientMismatch, match="identiquement nul"):
+    with pytest.raises(GradientMismatch, match="identically zero"):
         check_gradient(cost_and_grad_nul, np.array([1.0, 2.0]), label="gradient nul")

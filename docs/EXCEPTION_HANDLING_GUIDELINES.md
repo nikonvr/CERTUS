@@ -1,74 +1,74 @@
-# CERTUS - Directives pour le traitement des exceptions (Exception Handling Guidelines)
+# CERTUS-ExceptionHandlingGuidelines
 
-Ce document résume les bonnes pratiques à respecter lors de la manipulation des exceptions au sein de l'application CERTUS, afin d'éviter la dette technique, de faciliter le débogage et de fiabiliser le système de reporting d'erreurs.
+This document summarizes the best practices to follow when handling exceptions within the CERTUS application, in order to avoid technical debt, facilitate debugging and make the error reporting system more reliable.
 
 ---
 
-## 1. Bannir les clauses `except:` vides (Bare Excepts)
+## 1. Ban empty`except:`clauses (Bare Excepts)
 
-L'utilisation de `except:` sans type d'exception intercepte absolument toutes les erreurs, y compris les interruptions système importantes comme `SystemExit`, `KeyboardInterrupt` ou les erreurs de mémoire comme `MemoryError`.
+Using`except:`withoutanexceptiontypecatchesabsolutelyallerrors,includingimportantsysteminterruptslike`SystemExit`,`KeyboardInterrupt`ormemoryerrorslike`MemoryError`.
 
-* **À éviter :**
+* **To avoid:**
   ```python
   try:
       traitement()
   except:
       pass
   ```
-* **Recommandé :** Spécifier au minimum `Exception` si l'on souhaite attraper toutes les erreurs applicatives standard :
+* **Recommended:**Specifyatleast`Exception`ifyouwishtocatchallstandardapplicationerrors:
   ```python
   try:
       traitement()
-  except Exception as e:
-      logging.error("Échec de traitement: %s", e)
+  exceptExceptionase:
+logging.error("processing failure: %s", e)
   ```
 
 ---
 
-## 2. Éviter d'étouffer les exceptions (Silent Passes)
+## 2. Avoid Smothering Exceptions (Silent Passes)
 
-Lancer un `pass` silencieux empêche d'identifier la racine d'un bug en phase de production. Toute exception interceptée qui n'est pas réémise doit être documentée et logguée à un niveau approprié (`debug`, `warning` ou `error`).
+Runningasilent`pass`preventsidentifyingtherootofabuginproduction.Anycaughtexceptionthatisnotreissuedmustbedocumentedandloggedatanappropriatelevel(`debug`,`warning`or`error`).
 
-* **À éviter :**
+* **To avoid:**
   ```python
   try:
       charger_config()
   except OSError:
       pass
   ```
-* **Recommandé :**
+* **Recommended :**
   ```python
   try:
       charger_config()
   except OSError as e:
-      logging.warning("Impossible de charger la configuration, utilisation des valeurs par défaut: %s", e)
+      logging.warning("Impossible de charger la configuration, utilisation des values par defaut: %s", e)
   ```
-* **Exception autorisée :** Si le comportement silencieux est requis de manière légitime et nominale, documentez-le explicitement dans le code avec un commentaire `# Explication`.
+* **Exceptionallowed:**Ifsilentbehaviorislegitimatelyandnominallyrequired,documentitexplicitlyinthecodewitha`#Explanation`comment.
 
 ---
 
-## 3. Préférer les exceptions spécifiques aux génériques
+## 3. Prefer specific exceptions to generics
 
-Il faut capturer uniquement les types d'erreurs que le bloc est conçu pour gérer. Par exemple, si l'on attend une erreur de type clé absente dans un dictionnaire, intercepter `KeyError` plutôt que `Exception`.
+Youshouldonlycapturethetypesoferrorsthattheblockisdesignedtohandle.Forexample,ifyouexpectakeymissingerrorinadictionary,catch`KeyError`ratherthan`Exception`.
 
-* **Exemple :**
+* **Example :**
   ```python
   try:
-      valeur = data["cle"]
+      value = data["key"]
   except KeyError:
-      valeur = DEFAULT_VAL
+      value = DEFAULT_VAL
   ```
 
 ---
 
-## 4. Préserver la trace de la pile (Stack Trace)
+## 4. Preserve the stack trace
 
-Lors du traitement d'erreurs critiques, il est crucial de conserver l'historique de l'erreur dans les logs avec le paramètre `exc_info=True` ou en utilisant `logging.exception`.
+Whenhandlingcriticalerrors,itiscrucialtokeeptheerrorhistoryinthelogswiththe`exc_info=True`parameterorbyusing`logging.exception`.
 
-* **Recommandé :**
+* **Recommended :**
   ```python
   try:
       operation_complexe()
-  except Exception:
-      logging.exception("L'opération complexe a échoué")
+  exceptException:
+      logging.exception("L'operation complexe a echoue")
   ```

@@ -1,16 +1,16 @@
 """
 
 
-Chaîne complète INDEX sur NBrel : TLU (lambda<=2200) + phase 2 IR (lambda>2200) -> spectre 350-5200 nm.
+Complete INDEX chain on NBrel: TLU (lambda<=2200) + phase 2 IR (lambda>2200) -> spectrum 350-5200 nm.
 
 
-Affiche la RMSE finale T_rel sur tout le fichier (points mesure).
+Displays the final RMSE T_rel over the entire file (measurement points).
 
 
 
 
 
-Usage (depuis la racine du projet) :
+Usage (from the project root):
 
 
   python tests/script_full_domain_nbrel.py
@@ -165,7 +165,7 @@ def main() -> int:
     if not input_path.is_file():
 
 
-        logger.error("Fichier introuvable: %s", input_path)
+        logger.error("File not found: %s", input_path)
 
 
         return 2

@@ -460,7 +460,7 @@ class StratStrategyService(BaseHeadlessService):
         if materials_db is not None:
             local_params["materials_db"] = materials_db
 
-        # Context-isolated execution path
+        #Context-isolated execution path
         nominal_results, multipliers = calculate_nominal_properties(local_params)
         sensitivity_data = calculate_sensitivity_matrix(local_params, nominal_results)
         seel_data = calculate_seel_analysis(local_params, nominal_results)
@@ -927,35 +927,35 @@ def _select_candidates_phase_a(
             dtype=np.bool_,
         )
 
-    # ── 🔴 LA MARGE DE SECURITE AU POINT TOURNANT ─────────────────────────────
+    # ── 🔴 TURNING POINT SECURITY MARGIN ─────────────────────────────
     #
-    # 👤 Le physicien, 2026-08-06, deux fois et pour deux raisons distinctes :
-    #   « dans ce cas, il y a reellement une marge trop faible. On decide que le
-    #     depot est perdu. Il faut quand meme prendre une marge de securite ! »
-    #   « la theorie et la pratique doivent avoir pile le bon nombre d'extremum. Et
-    #     si on est trop pres, il y a risque que cela ne soit pas le cas. Donc marge
-    #     de securite encore ! »
+    # 👤 The physicist, 2026-08-06, twice and for two distinct reasons:
+    #   "in this case, there is genuinely a margin that is too small. We decide that the
+    #    deposition is lost. A safety margin is still needed!"
+    #   "theory and practice must have exactly the right number of extrema. And
+    #    if we are too close, there is a risk that this will not be the case. So safety
+    #    margin again!"
     #
-    # Les deux se ramenent a UN critere : le niveau d'arret doit etre separe des
-    # points tournants voisins d'une marge exprimee EN TRANSMISSION, multiple de
-    # l'amplitude de bruit. Voir `calculate_level_margins_to_extrema`.
+    # Both boil down to ONE criterion: the stopping level must be separated from
+    # adjacent turning points by a margin expressed IN TRANSMISSION, a multiple of
+    # the noise amplitude. See `calculate_level_margins_to_extrema`.
     #
-    # 🔴 ET LE PLACEHOLDER DE ZEROS ETAIT UN MUR. `M_befores` valait
-    # `np.zeros((n, 2, 2))` — un placeholder assume en commentaire (« conservative:
-    # no extrema filtering ») mais dont la consequence n'avait jamais ete mesuree :
-    # 📏 avec une matrice nulle, tous les `denom` du noyau tombent sous 1e-9, donc
-    # tous les T echantillonnes valent 0, donc toutes les pentes valent 0, donc
-    # AUCUN test de point tournant ne se declenche. La regle interdisait 0 candidate
-    # sur 51, sur les 48 couches. Elle n'etait pas silencieuse, elle etait INERTE.
+    # 🔴 AND THE ZERO PLACEHOLDER WAS A WALL. `M_befores` was
+    # `np.zeros((n, 2, 2))` — an assumed placeholder in comments ("conservative:
+    # no extrema filtering") but whose consequence was never measured:
+    # 📏 with a zero matrix, all `denom` in the kernel drop below 1e-9, so
+    # all sampled T equal 0, so all slopes equal 0, so
+    # NO turning point test triggers. The rule banned 0 candidate
+    # out of 51, over all 48 layers. It wasn't silent, it was INERT.
     #
-    # La vraie matrice etait pourtant disponible : `nominal_matrix_cache`, de forme
-    # (num_layers, n_wls, 2, 2), est un argument de `_select_candidates_phase_a`.
+    # The true matrix was nevertheless available: `nominal_matrix_cache`, of shape
+    # (num_layers, n_wls, 2, 2), is an argument to `_select_candidates_phase_a`.
     #
-    # Gating volontairement binaire : `phase_a_level_margin_factor = 0` (defaut)
-    # laisse le chemin d'avant, mot pour mot. Au-dessus de zero, on branche la vraie
-    # matrice ET on passe au critere en transmission. On ne veut SURTOUT pas de l'etat
-    # intermediaire — la vraie matrice avec le critere en epaisseur — qui ferait mordre
-    # un seuil dont l'echelle physique n'est pas controlee (cf. BILAN §3.3).
+    # Intentionally binary gating: `phase_a_level_margin_factor = 0` (default)
+    # leaves the former path, word for word. Above zero, we hook up the true
+    # matrix AND switch to the transmission criterion. We ABSOLUTELY do not want the
+    # intermediate state — the true matrix with the thickness criterion — which would trigger
+    # a threshold whose physical scale is uncontrolled (cf. SUMMARY §3.3).
     margin_factor = float(params.get("phase_a_level_margin_factor", 0.0) or 0.0)
     if margin_factor > 0.0:
         try:
@@ -1089,11 +1089,11 @@ def _validate_candidates_phase_a(
 
     nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
 
-    # Debut du bloc monochromatique, PAR CANDIDATE. Un candidat qui reprend la
-    # longueur d'onde de la couche precedente PROLONGE le bloc en cours et herite
-    # de son historique de points tournants ; tout autre candidat ouvre un bloc
-    # neuf a cette couche. Sans cela la Phase A ne pouvait pas voir ce qui fait la
-    # valeur d'un bloc, alors que la Phase B le modelise depuis 87bb056.
+    # Start of monochromatic block, PER CANDIDATE. A candidate that takes up the
+    # wavelength of the previous layer EXTENDS the current block and inherits
+    # its turning point history; any other candidate opens a new block
+    # on this layer. Without this, Phase A could not see what makes the
+    # value of a block, whereas Phase B has modeled it since 87bb056.
     prev_layer_wl = float(params.get("prev_layer_wl", -1.0))
     running_block_start = int(params.get("phase_a_block_start", i_layer))
     if i_layer == 0 or prev_layer_wl < 0.0:
@@ -1106,59 +1106,59 @@ def _validate_candidates_phase_a(
 
     gain_probe_nm = float(params.get("phase_a_gain_probe_nm", 1.0))
 
-    # ── 🔴 LA REGLE D'ADMISSIBILITE D'UNE LONGUEUR D'ONDE DE CONTROLE ──────────
+    # ── 🔴 CONTROL WAVELENGTH ADMISSIBILITY RULE ──────────
     #
-    # 👤 Le physicien, 2026-08-06, et c'est a graver dans le marbre :
+    # 👤 The physicist, 2026-08-06, and this is to be carved in stone:
     #
-    #   « Une longueur d'onde de controle de la couche i (i > 1) est INTERDITE si,
-    #     lorsque le signal est bruite, il y a un risque de mal comptabiliser le
-    #     nombre de turning points, ou de ne pas s'arreter au niveau de transmission
-    #     voulu. Cela cree une erreur d'arret de couche. »
-    #   « Tout cela est valable en phase A comme en phase B. »
+    #   "A control wavelength for layer i (i > 1) is FORBIDDEN if,
+    #    when the signal is noisy, there is a risk of miscounting the
+    #    number of turning points, or not stopping at the desired transmission
+    #    level. This creates a layer stop error."
+    #   "All of this applies in phase A as well as in phase B."
     #
-    # C'est exactement ce que mesure `results_fast[idx, 2]`, le taux de depots non
-    # terminables : le noyau rend sa sentinelle dans ces deux cas precis, et dans
-    # ces deux cas seulement. Le filtre existait deja quelques lignes plus bas ;
-    # ce qui manquait, c'est que le signal sur lequel il se prononce soit BRUITE.
-    # Sans bruit, la question « risque-t-on de mal compter ? » n'etait pas posee :
-    # les extrema etaient localises sur une courbe TMM parfaite et la reponse
-    # valait « jamais », par construction.
+    # This is exactly what `results_fast[idx, 2]` measures, the rate of unfinishable
+    # depositions: the kernel returns its sentinel in these two specific cases, and in
+    # these two cases only. The filter already existed a few lines below;
+    # what was missing is that the signal on which it rules is NOISY.
+    # Without noise, the question "is there a risk of miscounting?" was not asked:
+    # the extrema were located on a perfect TMM curve and the answer
+    # was "never", by construction.
     #
-    # C'est donc LE MEME drapeau qu'en Phase B, et non un drapeau separe : la regle
-    # est un seul enonce physique sur ce qu'est une longueur d'onde utilisable.
-    # `poem_anchor_noise_phase_a` ne subsiste que comme surcharge d'ATTRIBUTION,
-    # pour pouvoir isoler l'effet d'un etage dans un A/B ; son defaut suit le maitre.
+    # This is therefore THE SAME flag as in Phase B, not a separate flag: the rule
+    # is a single physical statement about what constitutes a usable wavelength.
+    # `poem_anchor_noise_phase_a` only remains as an ATTRIBUTION override,
+    # to isolate the effect of a stage in an A/B test; its default follows the master.
     #
-    # ⚠️ CE QUE CELA VA FAIRE, et il ne faut pas s'en emouvoir : eliminer beaucoup.
-    # Le seuil par couche vaut `1 - (1 - 0,05)^(1/N)`, soit 0,107 % pour N = 48, et
-    # il garde sa provenance (👤 « 5 % de depot perdu, c'est parfait ») — c'est le
-    # SIGNAL juge qui change, pas la tolerance. Une couche dont plus aucune longueur
-    # d'onde ne passe est un POINT DUR, et le repli de la fin de cette fonction le
-    # dit franchement au lieu de rendre une liste vide.
+    # ⚠️ WHAT THIS WILL DO, and one should not be alarmed: eliminate a lot.
+    # The per-layer threshold is `1 - (1 - 0.05)^(1/N)`, or 0.107% for N = 48, and
+    # it keeps its origin (👤 "5% lost deposition is perfect") — it is the
+    # judged SIGNAL that changes, not the tolerance. A layer where no wavelength
+    # passes anymore is a HARD POINT, and the fallback at the end of this function
+    # says so frankly instead of returning an empty list.
     #
-    # ⚠️ RESOLUTION, point ouvert a instruire. Avec `num_runs` tirages, le plus
-    # petit taux non nul mesurable vaut 1/num_runs. A 150 tirages cela fait 0,67 %,
-    # soit six fois la tolerance : UN SEUL run plante suffit donc a interdire une
-    # longueur d'onde. C'est conservateur dans le sens de la regle — au moindre
-    # risque, on interdit — mais cela interdit aussi des longueurs d'onde dont le
-    # taux vrai est sous le seuil. Le nombre de tirages de la Phase A gouverne donc
-    # directement la severite du filtre, et ce couplage n'est pas voulu.
+    # ⚠️ RESOLUTION, open point to investigate. With `num_runs` draws, the
+    # smallest measurable non-zero rate is 1/num_runs. At 150 draws that is 0.67%,
+    # or six times the tolerance: A SINGLE failed run is therefore enough to forbid a
+    # wavelength. This is conservative in the sense of the rule — at the slightest
+    # risk, we forbid — but it also forbids wavelengths whose true
+    # rate is below the threshold. The number of Phase A draws thus directly
+    # governs the severity of the filter, and this coupling is unintended.
     signal_noise_scale = 0.0
     signal_noise_seed = 0
     phase_a_seed = int(params.get("phase_a_seed", params.get("robustness_seed", 42)) or 42)
     _anchor_noise_master = bool(params.get("poem_anchor_noise", False))
     if bool(params.get("poem_anchor_noise_phase_a", _anchor_noise_master)):
         signal_noise_scale = noise_val_pct
-        # La couche entre dans la graine : la Phase A est gloutonne, chaque couche
-        # est un tirage independant, et son bruit d'arret suit deja la meme regle
-        # (`fallback_rng = default_rng(base_seed + i_layer)`). Aucune dependance a
-        # la candidate ni au bloc : les nombres aleatoires restent communs a toutes
-        # les longueurs d'onde comparees sur cette couche.
+        # The layer enters the seed: Phase A is greedy, each layer
+        # is an independent draw, and its stop noise already follows the same rule
+        # (`fallback_rng = default_rng(base_seed + i_layer)`). No dependency on
+        # the candidate or the block: random numbers remain common to all
+        # wavelengths compared on this layer.
         signal_noise_seed = (phase_a_seed * 2_246_822_519 + (int(i_layer) + 1) * 40_503) % (2**53)
 
-    # AXE 1.2 — la regle de detection, exprimee en multiple de l'amplitude de bruit.
-    # Elle s'applique meme quand le signal n'est pas bruite : une machine a toujours
-    # une regle de lecture. Defaut 0.0 = regle historique.
+    # AXIS 1.2 — the detection rule, expressed as a multiple of the noise amplitude.
+    # It applies even when the signal is not noisy: a machine always has
+    # a reading rule. Default 0.0 = historical rule.
     tp_hysteresis = float(params.get("tp_hysteresis_factor", 0.0) or 0.0) * noise_val_pct
 
     affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
@@ -1202,30 +1202,30 @@ def _validate_candidates_phase_a(
     _EXT_KEYS = ("ext_prev_start", "ext_next_start", "ext_prev_end", "ext_next_end", "dynamics")
     idx_dict = {wavelength_to_index(w): clues_by_wl_idx[wavelength_to_index(w)] for w in candidate_wls}
 
-    # 🔴 LE COUT DE LA PHASE A COMBINE DESORMAIS DEUX GRANDEURS ORTHOGONALES.
+    # 🔴 THE PHASE A COST NOW COMBINES TWO ORTHOGONAL QUANTITIES.
     #
-    #     cout = P95(|Delta_d|)  +  gain x erreur_amont
+    #     cost = P95(|Delta_d|)  +  gain x upstream_error
     #            \____________/     \_________________/
-    #             erreur LOCALE      erreur HERITEE de la couche precedente
+    #             LOCAL error        INHERITED error from previous layer
     #
-    # Les deux termes sont en nanometres et s'ajoutent parce que ce sont deux
-    # contributions a la MEME grandeur : l'erreur d'epaisseur de la couche a la
-    # fin de son depot. Aucune constante d'ajustement n'intervient — l'echelle de
-    # l'erreur amont est mesuree, pas postulee (cf. phase_a_prev_error_nm, un
-    # P95 sur les etats Monte-Carlo reellement propages).
+    # Both terms are in nanometers and are added because they are two
+    # contributions to the SAME quantity: the layer's thickness error at the
+    # end of its deposition. No adjustment constant is involved — the scale of
+    # the upstream error is measured, not postulated (cf. phase_a_prev_error_nm, a
+    # P95 on the actually propagated Monte-Carlo states).
     #
-    # Le troisieme critere, le taux de plantage, n'entre PAS dans le cout : une
-    # strategie dont le depot ne se termine pas n'est pas mediocre, elle est
-    # inutilisable. Elle est ELIMINEE, comme en Phase B.
-    # 🔴 LE SEUIL PAR COUCHE SE DEDUIT DU SEUIL PAR STRATEGIE, IL NE S'Y COPIE PAS.
+    # The third criterion, the crash rate, does NOT enter the cost: a
+    # strategy whose deposition does not finish is not mediocre, it is
+    # unusable. It is ELIMINATED, as in Phase B.
+    # 🔴 THE PER-LAYER THRESHOLD IS DEDUCED FROM THE PER-STRATEGY THRESHOLD, IT IS NOT COPIED FROM IT.
     #
-    # Le taux de plantage se COMPOSE sur la hauteur de l'empilement : une couche
-    # sure a 99,9 % donne, sur 48 couches, (1 - 0,001)^48 = 95,3 %, soit deja
-    # 4,7 % de depots perdus. Reutiliser tel quel le 5 % de la Phase B rendrait ce
-    # filtre inoperant — 5 % par couche autorise 91 % de plantage sur 48 couches.
+    # The crash rate COMPOSES over the height of the stack: a layer
+    # 99.9% safe gives, over 48 layers, (1 - 0.001)^48 = 95.3%, which is already
+    # 4.7% lost depositions. Reusing the 5% of Phase B as is would make this
+    # filter inoperative — 5% per layer allows 91% crashes over 48 layers.
     #
-    #     tolerance_par_couche = 1 - (1 - 0,05)^(1/N)
-    #     N = 48  ->  0,107 %,  soit quarante-sept fois plus strict que 5 %
+    #     tolerance_per_layer = 1 - (1 - 0.05)^(1/N)
+    #     N = 48  ->  0.107%,  i.e., forty-seven times stricter than 5%
     n_layers_total = max(1, len(p_thick_nominal))
     crash_tol = params.get("phase_a_crash_tolerance")
     crash_tol = (
@@ -1235,15 +1235,15 @@ def _validate_candidates_phase_a(
     )
     gain_weight = float(params.get("phase_a_compensation_weight", 1.0))
     err_prev_nm = float(params.get("phase_a_prev_error_nm", 0.0))
-    # Sous 0,05 nm il n'y a pas d'epaisseur — moins d'un atome. Une erreur amont
-    # de cet ordre ne merite pas d'etre propagee.
+    # Below 0.05 nm there is no thickness — less than an atom. An upstream error
+    # of this order does not deserve to be propagated.
     if err_prev_nm < 0.05:
         err_prev_nm = 0.0
 
     eliminated = []
-    # Recensement par couche des deux motifs d'interdiction. Un compteur agrege ne
-    # dirait pas si le filtre trie (regime intermediaire) ou s'il est vacuous /
-    # total : c'est la distribution couche par couche qui repond.
+    # Census per layer of the two prohibition reasons. An aggregate counter would
+    # not say if the filter sorts (intermediate regime) or if it is vacuous /
+    # total: it is the layer-by-layer distribution that answers.
     n_forbidden_crash = 0
     n_forbidden_gain = 0
     crash_rates_all: list[float] = []
@@ -1268,7 +1268,7 @@ def _validate_candidates_phase_a(
         for k in _EXT_KEYS:
             if k in src:
                 entry[k] = src[k]
-        # gain < 0 : non mesurable (le depot ne se termine pas meme a bruit nul)
+        # gain < 0: not measurable (deposition does not finish even with zero noise)
         if crash_rate >= crash_tol or gain < 0.0:
             if crash_rate >= crash_tol:
                 n_forbidden_crash += 1
@@ -1278,15 +1278,15 @@ def _validate_candidates_phase_a(
             continue
         results_thickness.append(entry)
 
-    # Meme idiome que les autres fonctions de ce module (cf. lignes 489, 546, 615,
-    # 810) : sans repli, un params sans logger rendait cette elimination muette.
+    # Same idiom as the other functions in this module (cf. lines 489, 546, 615,
+    # 810): without a fallback, a params without logger made this elimination silent.
     logger = params.get("logger", logging.getLogger("ThinFilm"))
 
-    # La regle d'admissibilite d'une lambda de controle s'appliquait sans laisser
-    # aucune trace : impossible de verifier qu'elle avait joue, ni de savoir
-    # QUELLES lambda etaient interdites sur QUELLES couches. On l'emet toujours,
-    # meme quand rien n'est interdit — un silence ne doit pas se lire comme un
-    # filtre inerte, ni l'inverse.
+    # The admissibility rule of a control lambda applied without leaving
+    # any trace: impossible to verify that it had played, nor to know
+    # WHICH lambdas were forbidden on WHICH layers. We always emit it,
+    # even when nothing is forbidden — a silence should not be read as an
+    # inert filter, nor the reverse.
     crash_min = min(crash_rates_all) if crash_rates_all else float("nan")
     admissibility_stats = {
         "layer": int(i_layer + 1),
@@ -1297,33 +1297,33 @@ def _validate_candidates_phase_a(
         "crash_rate_min_observed": crash_min,
         "crash_tolerance": float(crash_tol),
     }
-    # Meme precaution qu'en amont : `params` peut etre un `StratParamsDTO`, qui n'a pas
-    # `setdefault`. Voir le commentaire de _run_phase_a_hybrid_loop.
+    # Same precaution as upstream: `params` can be a `StratParamsDTO`, which does not have
+    #`setdefault`. See _run_phase_a_hybrid_loop's comment.
     _stats = params.get("phase_a_admissibility_stats")
     if _stats is None:
         _stats = []
         params["phase_a_admissibility_stats"] = _stats
     _stats.append(admissibility_stats)
     logger.info(
-        f"   [ADMISSIBILITE] Layer {i_layer + 1}: {len(candidate_wls)} offerte(s) "
-        f"-> interdites plantage>={crash_tol:.3%}: {n_forbidden_crash} "
-        f"| interdites gain<0: {n_forbidden_gain} "
-        f"| survivantes: {len(results_thickness)} "
-        f"| taux de plantage min observe: {crash_min:.3%}"
+        f"   [ADMISSIBILITY] Layer {i_layer + 1}: {len(candidate_wls)} offered "
+        f"-> forbidden crash>={crash_tol:.3%}: {n_forbidden_crash} "
+        f"| forbidden gain<0: {n_forbidden_gain} "
+        f"| survivors: {len(results_thickness)} "
+        f"| min crash rate observed: {crash_min:.3%}"
     )
 
     if not results_thickness and eliminated:
-        # Aucune longueur d'onde n'est sure sur cette couche. On ne peut pas
-        # rendre une liste vide — la Phase A s'arreterait la — mais on ne doit
-        # surtout pas faire silence : on garde le moins mauvais et on le dit.
+        # No wavelength is safe on this layer. We cannot
+        # return an empty list — Phase A would stop there — but we absolutely
+        # must not be silent: we keep the least bad and say it.
         best_crash = min(e["crash_rate"] for e in eliminated)
         results_thickness = [e for e in eliminated if e["crash_rate"] <= best_crash + 1e-12]
         admissibility_stats["fallback_on_min_crash"] = True
         admissibility_stats["survivors"] = int(len(results_thickness))
         logger.warning(
-            f"   [CRASH] Layer {i_layer + 1}: AUCUNE longueur d'onde sous le seuil de "
-            f"{crash_tol:.3%} de depots non terminables. Repli sur le taux minimal "
-            f"observe ({best_crash:.3%}) — la couche est un point dur."
+            f"   [CRASH] Layer {i_layer + 1}: NO wavelength under the threshold of "
+            f"{crash_tol:.3%} unfinishable depositions. Fallback to the minimum "
+            f"observed rate ({best_crash:.3%}) — the layer is a hard point."
         )
 
     results_thickness.sort(key=lambda x: x["cost"])
@@ -1332,8 +1332,8 @@ def _validate_candidates_phase_a(
     if results_thickness:
         best_wl = float(results_thickness[0]["wl"])
         best_idx_data = idx_dict[wavelength_to_index(best_wl)]
-        # Meme historique de bloc que celui sous lequel cette longueur d'onde a
-        # ete jugee, sinon la Phase A se contredirait d'une etape a l'autre.
+        # Same block history as the one under which this wavelength was
+        # judged, otherwise Phase A would contradict itself from one step to another.
         if i_layer == 0 or prev_layer_wl < 0.0 or abs(best_wl - prev_layer_wl) > 0.1:
             best_block_start = i_layer
         else:

@@ -14,7 +14,7 @@ from certus.physics.certus_strat_batch import calculate_RT_batch_kernel
 )
 def test_tmm_energy_conservation(d_h, d_l, n_h, n_l, n_sub, wl):
     """
-    Vérifie la conservation de l'énergie (R + T == 1) pour un bi-couche
+    Checks the conservation of energy (R + T == 1) for a bi-layer
     transparent (H/L) sur un substrat transparent.
     """
     wls = np.array([wl], dtype=np.float64)
@@ -22,7 +22,7 @@ def test_tmm_energy_conservation(d_h, d_l, n_h, n_l, n_sub, wl):
     nL_arr = np.array([n_l + 0j], dtype=np.complex128)
     nSub_arr = np.array([n_sub + 0j], dtype=np.complex128)
     
-    # 2 couches (H puis L)
+    #2 layers (H then L)
     thicknesses_batch = np.array([[d_h, d_l]], dtype=np.float64)
     
     R_batch, T_batch = calculate_RT_batch_kernel(wls, nH_arr, nL_arr, nSub_arr, thicknesses_batch)
@@ -30,7 +30,7 @@ def test_tmm_energy_conservation(d_h, d_l, n_h, n_l, n_sub, wl):
     R = float(R_batch[0, 0])
     T = float(T_batch[0, 0])
     
-    # Conservation de l'énergie (A = 0 car indices réels)
+    #Conservation of energy (A = 0 because real indices)
     assert np.isclose(R + T, 1.0, atol=1e-12)
     assert -1e-12 <= R <= 1.0 + 1e-12
     assert -1e-12 <= T <= 1.0 + 1e-12
@@ -42,7 +42,7 @@ def test_tmm_energy_conservation(d_h, d_l, n_h, n_l, n_sub, wl):
 )
 def test_tmm_thickness_continuity(d_base, epsilon):
     """
-    Vérifie la continuité : une petite variation d'épaisseur entraîne
+    Check continuity: a small variation in thickness causes
     une petite variation de R et T.
     """
     wls = np.array([500.0], dtype=np.float64)
@@ -61,7 +61,7 @@ def test_tmm_thickness_continuity(d_base, epsilon):
     R_base = R_batch[0, 0]
     R_eps  = R_batch[1, 0]
     
-    # La variation de R doit être bornée par O(epsilon) (lipschitzien)
+    #The variation of R must be bounded by O(epsilon) (Lipschitzian)
     # L'ordre de grandeur de dR/dd est k0 * nH ~ 2*pi / 500 * 2 = 0.025
-    # Donc delta R < 0.1 * epsilon
+    #So delta R < 0.1 * epsilon
     assert abs(R_eps - R_base) < 0.2 * epsilon

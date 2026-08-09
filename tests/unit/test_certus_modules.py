@@ -341,7 +341,7 @@ class TestModulesIntegration:
         try:
             from certus.utils.errors import CertusError, CertusValidationError
 
-            # Test que les exceptions sont disponibles
+            #Test that exceptions are available
             error = CertusError("Test error")
             validation_error = CertusValidationError("Test validation")
 
@@ -368,7 +368,7 @@ class TestModulesIntegration:
 
 @pytest.mark.performance
 class TestModulesPerformance:
-    """Tests de performance for tous les modules."""
+    """Performance tests for all modules."""
 
     @pytest.mark.parametrize(
         "module_name",
@@ -401,7 +401,7 @@ class TestModulesPerformance:
             # Start memory tracking
             tracemalloc.start()
 
-            # Importer tous les modules disponibles
+            #Import all available modules
             for module_name, module in MODULES.items():
                 if module is not None:
                     __import__(module_name)

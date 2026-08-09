@@ -2,9 +2,9 @@
 
 
 
-Ce chemin PGlobal 19D et l'overlay lois analytiques ont été retirés du projet.
+This PGlobal 19D path and the analytical laws overlay have been removed from the project.
 
-Le pipeline recommandé est spline adaptatif + polish maillage sigma (PWL / spline cubique).
+The recommended pipeline is adaptive spline + sigma mesh polish (PWL/cubic spline).
 
 """
 

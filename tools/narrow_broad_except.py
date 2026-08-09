@@ -56,7 +56,7 @@ def find_broad_except_patterns(
 
 
 def infer_exception_type(context_after: str, lines: list[str], line_idx: int) -> str:
-    """Infer what specific exception types should be caught."""
+    "Infer what specific exception types should be caught."
     
     # Look for common patterns
     

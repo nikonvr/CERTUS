@@ -2,9 +2,9 @@ from __future__ import annotations
 from certus.ui.certus_strat_common import *
 from certus.ui.certus_strat_mixins_ui import CertusWindowSpyMixin
 from certus.core.certus_strat_core import _compute_strategy_symmetry_score_percent
-# Seuil de tolerance au plantage, 👤 « 5 % de depot perdu, c'est parfait ». Importe
-# plutot que recopie : une colonne qui coloriserait sur un autre seuil que celui qui
-# ELIMINE mentirait a l'operateur.
+# Crash tolerance threshold, 👤 "5% lost deposition is perfect". Imported
+#rather than copied: a column that colorizes using a threshold other than the one that
+# ELIMINATES would lie to the operator.
 from certus.core.certus_strat_robustness import CRASH_RATE_TOLERANCE
 
 class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
@@ -291,16 +291,16 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         yield_item = NumericTableWidgetItem(f"{yield_pct:.1f}")
         causes = result.get("crash_causes") or {}
         yield_item.setToolTip(
-            "Depots qui se terminent, sur 100.\n"
-            f"Taux de non-terminaison : {crash_rate:.2%}\n"
-            "\nLes trois modes de defaillance, separement :\n"
-            f"  niveau jamais atteint     : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
-            f"  comptage des TP divergent : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
-            f"  T(d) non monotone         : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"
-            "\nUn run perdu et un filtre hors spec sont le meme echec, mais pas le meme\n"
-            "cout : l'un coute du temps machine, l'autre de la matiere et se decouvre tard."
+            "Depositions completing successfully, out of 100.\n"
+            f"Non-completion rate: {crash_rate:.2%}\n"
+            "\nThe three failure modes, separately:\n"
+            f"  level never reached       : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
+            f"  divergent TP count        : {float(causes.get('p_tp_miscount', 0.0)):.2%}\n"
+            f"  non-monotonic T(d)        : {float(causes.get('p_non_monotonic', 0.0)):.2%}\n"
+            "\nA lost run and an out-of-spec filter are the same failure, but not the same\n"
+            "cost: one costs machine time, the other costs material and is discovered late."
         )
-        # 👤 « 5 % de depot perdu, c'est parfait » : le seuil de tolerance est a 95 %.
+        # 👤 "5% lost deposition is perfect": the tolerance threshold is set at 95%.
         if crash_rate >= CRASH_RATE_TOLERANCE:
             yield_item.setBackground(QColor(CertusTheme.DANGER_BG))
             yield_item.setForeground(QColor(CertusTheme.DANGER_TEXT))
@@ -421,7 +421,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 self.table.setItem(row, target_col, QTableWidgetItem("N/A"))
 
         # Blocks
-        start_col_blocks = 17  # 14 colonnes de base + 3 SEEL
+        start_col_blocks = 17  # 14 base columns + 3 SEEL
         blocks = strat.get("blocks", [])
         for b_idx in range(max_blocks):
             col_idx = start_col_blocks + b_idx
@@ -604,11 +604,11 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
 
             _header_tips = {
                 "Yield %": (
-                    "Depots qui se terminent, sur 100 — LA grandeur de tete.\n"
-                    "Un depot qui ne se termine pas est un run perdu en salle, pas un\n"
-                    "compromis de qualite. Rouge au-dela de 5 % de perte : la strategie\n"
-                    "est ELIMINEE du classement, quelle que soit sa performance spectrale.\n"
-                    "Survolez une cellule pour le detail des trois modes de defaillance."
+                    "Depositions completing successfully, out of 100 — THE top metric.\n"
+                    "A deposition that does not complete is a lost run in the cleanroom, not a\n"
+                    "quality compromise. Red beyond 5% loss: the strategy is\n"
+                    "ELIMINATED from the ranking, regardless of its spectral performance.\n"
+                    "Hover over a cell for details on the three failure modes."
                 ),
                 "Rank": "Global robustness ranking (1 = best). Sorted by Robust Score.",
                 "ID": "Internal strategy identifier assigned during the Dynamic Programming search.",

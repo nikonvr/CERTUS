@@ -293,13 +293,13 @@ def _corridor_profile_walk_side(
         # B4 FIX: use all_d_vals/all_rmse_vals (every evaluated point) instead of
         # d_vals/rmse_vals (accepted-only). This prevents the parabola from being
         # biased toward low-RMSE points and incorrectly flagging natural RMSE rises.
-        # La detection DOIT se faire AVANT d'ajouter le point courant a l'historique.
+        # Detection MUST occur BEFORE adding the current point to the history.
         #
-        # Les deux append() precedaient l'appel : le point teste etait donc inclus dans
-        # la parabole censee le PREDIRE. Un point s'ajuste toujours a un ajustement qui
-        # le contient — la detection de pic etait ainsi largement neutralisee, d'autant
-        # plus que l'historique est court (en debut de corridor, la parabole passait
-        # exactement par le point et l'ecart etait nul par construction).
+        # The two append() calls preceded the invocation: the tested point was thus included in
+        # the parabola meant to PREDICT it. A point always fits a fit that
+        # contains it — spike detection was thus largely neutralized, especially
+        # since the history is short (at the beginning of the corridor, the parabola passed
+        # exactly through the point and the deviation was zero by construction).
         parab_tol_abs = float(getattr(pconf, "parabola_spike_tolerance_abs", 2e-5))
         is_spike, rm_pred, _tol_eff, _sigma = _detect_corridor_spike(
             all_d_vals, all_rmse_vals, d_try, rm, float(d0), parab_tol_abs

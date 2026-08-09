@@ -1,7 +1,7 @@
-"""POEM s'engage-t-il vraiment, et sur combien de couches ?
+"""Does POEM really commit, and on how many layers?
 
 POEM (Arsac these 2025 eq. 2.2) remplace la cible absolue par une FRACTION entre deux points
-tournants, reportee sur les extrema reellement observes. C'est le mecanisme qui produit
+turning points, reported on the extrema actually observed. It is the mechanism that produces
 l'auto-compensation. Mais le noyau ne l'active QUE si trois conditions tiennent
 (certus/physics/certus_strat_growth.py) :
 
@@ -10,22 +10,22 @@ l'auto-compensation. Mais le noyau ne l'active QUE si trois conditions tiennent
     |amp_nom| > SWING_MIN           amplitude entre les deux ancres > 0,04 en T
     |amp_real| > SWING_MIN          idem sur le signal reel
 
-Sinon : `target_level = target_nominal`, cible ABSOLUE, AUCUNE compensation.
+Otherwise: `target_level = target_nominal`, ABSOLUTE target, NO compensation.
 
 Sur un dichroique monitore dans sa bande passante a ~95 % de T, rien ne garantit que le
-signal balaie 4 points de transmission pendant une couche. Si POEM ne s'engage que rarement,
+signal sweeps 4 transmission points during one layer. If POEM rarely engages,
 tout le mecanisme de compensation — et les trois quarts du travail de modele de la session du
 4 aout — est dormant.
 
 METHODE. Le noyau est en njit et ne renvoie pas `poem_ok` ; on ne peut pas l'observer de
 l'exterieur. Ce script REPLIQUE la detection a l'identique (memes constantes, meme balayage,
-meme regle idx_nom_stop) sur l'empilement nominal reel de l'exemple, en propageant la meme
-TMM. C'est une replication, donc a lire comme telle : si elle diverge du noyau, c'est elle
+same rule idx_nom_stop) on the real nominal stack of the example, propagating the same
+TMM. It is a replication, therefore to be read as such: if it diverges from the nucleus, it is
 qui a tort.
 
     .venv/Scripts/python.exe scripts/probe_poem_engagement.py
 
-N'ecrit rien hors reports/. Ne touche a aucun code de production.
+Does not write anything except reports/. Do not touch any production codes.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ sys.path.insert(0, str(ROOT))
 
 OUT = ROOT / "reports" / "probe_poem_engagement.json"
 
-# Constantes recopiees de certus_strat_growth.py — si elles y changent, ce script ment.
+#Constants copied from certus_strat_growth.py — if they change there, this script is lying.
 NPTS = 64
 D_SCAN = 3.0
 SWING_MIN = 0.04
@@ -103,7 +103,7 @@ def main() -> None:
                 _, t = calculate_RT_vectorized_real_HL(wl_arr, nH, nL, nS, th)
                 T[k] = float(np.asarray(t)[0])
 
-            # tous les extrema du balayage, avec leur position relative a l'arret
+            #all the extrema of the sweep, with their position relative to the stop
             extrema = []
             for k in range(1, NPTS - 1):
                 dl = T[k] - T[k - 1]
@@ -113,8 +113,8 @@ def main() -> None:
             n_tp = sum(1 for k in extrema if k <= idx_nom_stop)
 
             # --- A. TEL QUE CODE ---------------------------------------------------
-            # Un extremum au-dela de idx_nom_stop n'est pris que si tp_b < 0, et il
-            # laisse alors tp_a = -1 : il ne peut JAMAIS servir d'ancre utilisable.
+            # An extremum beyond idx_nom_stop is only taken if tp_b < 0, and it
+            #then leaves tp_a = -1: it can NEVER serve as a usable anchor.
             tp_a = tp_b = -1
             for k in extrema:
                 if k <= idx_nom_stop or tp_b < 0:
@@ -124,9 +124,9 @@ def main() -> None:
 
             # --- B. PRESCRIPTION ARSAC ---------------------------------------------
             # « If the current layer has less than two turning points, the VIRTUAL NEXT
-            #   turning points are used ». On autorise donc le dernier extremum avant
+            #turning points are used”. We therefore authorize the last extremum before
             #   l'arret et le PREMIER APRES a servir d'ancres — c'est ce que le
-            #   balayage a 3x l'epaisseur nominale est cense fournir.
+            #scanning at 3x the nominal thickness is expected to provide.
             before = [k for k in extrema if k <= idx_nom_stop]
             after = [k for k in extrema if k > idx_nom_stop]
             if len(before) >= 2:

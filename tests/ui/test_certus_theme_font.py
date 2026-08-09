@@ -93,5 +93,5 @@ def test_certus_hub_font_combobox(mock_app, monkeypatch):
     # Verify it saved
     assert "Open Sans" in saved_fonts
     
-    # Verify theme was applied with Open Sans
+    #Verify theme was applied with Open Sans
     assert "Open Sans" in CertusTheme.FONT_FAMILY

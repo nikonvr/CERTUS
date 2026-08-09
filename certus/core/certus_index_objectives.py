@@ -1311,7 +1311,7 @@ class TLUObjective:
         else:
             # POLISHED substrate (standard mode): the reference measurement includes the back
             # face, so R_total = 2*R_single/(1+R_single) — this is exactly what
-            # calculate_bare_substrate_R computes, whose header comment states
+            #calculate_bare_substrate_R computes, whose header comment states
             # "DO NOT REVERT TO SINGLE INTERFACE REFLECTION".
             #
             # This branch previously constructed a TUPLE (function, ndarray) where the
@@ -1416,7 +1416,7 @@ class TLUObjective:
         p = np.asarray(params, dtype=np.float64).ravel()
 
         if p.size < 7:
-            return "diag: params incomplets"
+            return "diag: incomplete params"
 
         d = float(p[0])
 
@@ -1463,7 +1463,7 @@ class TLUObjective:
         p = np.asarray(params, dtype=np.float64).ravel()
 
         if p.size < 7:
-            return "k: params incomplets"
+            return "k: incomplete params"
 
         Eg, A, E0, C, Eu, eps_inf = [float(p[i]) for i in range(1, 7)]
 

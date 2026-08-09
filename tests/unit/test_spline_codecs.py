@@ -1,4 +1,4 @@
-"""Tests unitaires : codecs sigma, reparam. n monotone, plancher k sur nœuds."""
+"""Unit tests: sigma codecs, monotonic n repair, k floor on nodes."""
 from __future__ import annotations
 
 import numpy as np

@@ -22,7 +22,7 @@ def _compute_valid_blocks_kernel(
     max_W: int,
     min_wl_sep: float = 0.0,
 ):
-    """Couts des blocs candidats, avec SEPARATION SPECTRALE MINIMALE.
+    """Candidate block costs, with MINIMUM SPECTRAL SEPARATION.
 
     `min_wl_sep` <= 0 restores legacy behavior: top_k lowest-cost wavelengths.
 
@@ -104,9 +104,10 @@ def _compute_valid_blocks_kernel(
                     for x in range(temp_count):
                         taken[x] = False
                     n_sel = 0
-                    # Passe 1 — le moins cher de chaque region. temp_* est trie par
-                    # cout croissant, donc le tout premier retenu est bien l'optimum
-                    # global du bloc : on ne sacrifie jamais le meilleur a la diversite.
+                    # Pass 1 — the cheapest of each region. temp_* is sorted by
+                    # increasing cost, so the very first one retained is indeed
+                    # the global optimum of the block: we never sacrifice the
+                    # best for diversity.
                     for x in range(temp_count):
                         if n_sel >= take:
                             break
@@ -123,9 +124,9 @@ def _compute_valid_blocks_kernel(
                             block_wls[i, j, n_sel] = temp_wls[x]
                             taken[x] = True
                             n_sel += 1
-                    # Passe 2 — completer avec les moins chers restants, pour ne perdre
-                    # aucune arete quand la plage utile est trop etroite pour fournir
-                    # `take` regions distinctes.
+                    # Pass 2 — complete with the remaining cheapest, to not lose
+                    # any edge when the useful range is too narrow to provide
+                    # `take` distinct regions.
                     for x in range(temp_count):
                         if n_sel >= take:
                             break

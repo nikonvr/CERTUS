@@ -162,14 +162,14 @@ def test_validate_wavelengths_batch_shape_and_nonnegative_metrics() -> None:
         noise_values,
         2.0,
     )
-    # QUATRE colonnes depuis l'integration des trois criteres de la Phase A :
+    #FOUR columns since the integration of the three criteria of Phase A:
     #   0 = P95(|Delta d|) en nm   1 = ecart-type   2 = taux de plantage   3 = gain
-    # Ce test exigeait (2, 2) et `metrics >= 0` partout. Les deux etaient faux :
-    # la colonne du GAIN admet une valeur NEGATIVE comme sentinelle « non
+    #This test required (2, 2) and `metrics >= 0` everywhere. Both were wrong:
+    #the GAIN column admits a NEGATIVE value as sentinel “no
     # mesurable » — le depot ne se termine pas meme a bruit nul — et
     # _validate_candidates_phase_a s'en sert pour eliminer (certus_strat_service.py,
-    # `if crash_rate >= crash_tol or gain < 0.0`). Une assertion globale
-    # `>= 0` interdirait donc la sentinelle qui fait fonctionner le filtre.
+    #`if crash_rate >= crash_tol or gain < 0.0`). A global assertion
+    #`>= 0` would therefore prohibit the sentinel which operates the filter.
     assert metrics.shape == (2, 4)
     assert np.all(np.isfinite(metrics))
     p95, std, crash, gain = metrics[:, 0], metrics[:, 1], metrics[:, 2], metrics[:, 3]

@@ -578,6 +578,18 @@ dessous sont au niveau **nominal**. Ne jamais comparer l'un à l'autre.
 ⚠️ **Repère du pas de 1 nm.** Une version antérieure citait `RESULT = 0,005283` / 305
 stratégies : c'était le run à **2 nm**, périmé (voir §13).
 
+🔴 **« 345 strategies rendues » ne peut pas venir de la sonde.** Ce compteur est plafonné à
+12 par construction — voir l'encadré rouge ci-dessous. Tant que la provenance de ce 345 n'est
+pas retrouvée, **ne t'en sers pas comme critère.**
+
+🔴 **`RESULT = 0,002898` n'a pas d'artefact dans `reports/`.** Vérifié le 2026-08-09 : le
+seul fichier committé pour cette configuration,
+`reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, porte
+`result = 0.0029486273713007147`, et il a été posé par `59793e2` (2026-08-08 09:24) —
+c'est-à-dire par la série d'actions que §17 signale précisément comme mal rapportée.
+**Le repère auquel tout ce document se compare est donc un chiffre dont on n'a pas la
+trace.** Le rétablir est l'objet de T0.
+
 ### 🔴 Ce repère n'a PAS été reproduit le 2026-08-08 — lis ceci avant de mesurer
 
 Deux tentatives, **deux `RESULT=None`** :
@@ -1253,7 +1265,7 @@ rapporté et expliqué.
 | Distorsion affine | Déclarée conforme. Annulait son effet en 3 endroits, inatteignable, critère jamais exécuté. **Corrigé** — §12.1. |
 | `RESULT` des actions SYM / diversité / recherche locale | Sorties collées : `RESULT=0.0029486`. Prose : « préservant le meilleur score `0.002898` ». Départ : 0,002898. **+1,7 %**, présenté trois fois comme conforme. |
 | `MachineModel` | Aucun consommateur en production. `trigger_tolerance: float = 0.05` documenté « in T units (0..1) » alors que les 4 consommateurs réels divisent par 100 : **piège ×100**. Manquent vitesse de dépôt et cadence. |
-| Traduction anglaise de `certus/` | ✅ Nettoyage complet réalisé le 2026-08-09. |
+| Traduction anglaise | ✅ Nettoyage complet réalisé le 2026-08-09 (`certus/` + toutes les pages HTML `pages/`). |
 
 ## 18. Autres chantiers ouverts
 

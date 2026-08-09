@@ -425,7 +425,7 @@ def _find_k_best_groupings_dp_numba(
             layer_costs[layer_idx, w_idx] = float(layer_dict[w])
             valid_mask[layer_idx, w_idx] = True
 
-    # Compile execution
+    #Compile execution
     block_costs, block_wls, block_counts = _compute_valid_blocks_kernel(
         layer_wls, layer_costs, valid_mask, num_layers, top_k, max_W
     )

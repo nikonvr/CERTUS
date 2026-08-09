@@ -18,7 +18,7 @@ Compare against baseline with:
     pytest tests/performance/test_kernel_benchmarks_minimal.py --benchmark-only --benchmark-compare=baseline
 
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
-⚠  DÉPENDANCE OPTIONNELLE : pytest-benchmark (voir test_kernel_benchmarks.py)
+⚠ OPTIONAL DEPENDENCY: pytest-benchmark (see test_kernel_benchmarks.py)
 ──────────────────────────────────────────────────────────────────────────────
 """
 
@@ -27,7 +27,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-# PARE-FEU : skip gracieux si pytest-benchmark n'est pas installé.
+# FIREWALL: graceful skip if pytest-benchmark is not installed.
 pytest.importorskip("pytest_benchmark")
 
 from certus.core._certus_physics_impl import (

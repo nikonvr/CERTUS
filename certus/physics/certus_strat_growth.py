@@ -51,7 +51,7 @@ def detect_turning_points(
     start_is_tp: bool,
     hysteresis: float,
 ) -> tuple[int, int, int]:
-    """Compte les points tournants d'un signal de monitoring et rend les deux derniers.
+    """Counts the turning points of a monitoring signal and returns the last two.
 
     Returns ``(n_tp, tp_a, tp_b)``: the number of extrema located at or before ``idx_stop``,
     then the indices of the last two retained (``-1`` if absent). Same selection convention
@@ -154,15 +154,15 @@ def detect_turning_points(
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresis: float) -> int:
-    """Indice du premier point tournant situe apres ``i_start``, ou ``n_tot - 1`` si aucun.
+    """Index of the first turning point located after ``i_start``, or ``n_tot - 1`` if none.
 
-    Sert a borner la fenetre du test d'atteignabilite du niveau : au-dela du prochain
-    extremum, le signal repart et le niveau vise ne sera jamais atteint.
+    Used to bound the window for the level reachability test: beyond the next
+    extremum, the signal turns around and the target level will never be reached.
 
-    **Meme regle de detection que ``detect_turning_points``**, et il le faut : sans cela
-    un micro-extremum fabrique par le bruit juste apres l'arret tronquerait la fenetre
-    et provoquerait un plantage que la machine ne subirait pas -- exactement l'artefact
-    que l'hysteresis existe pour supprimer.
+    **Same detection rule as ``detect_turning_points``**, and it is required:
+    otherwise a micro-extremum fabricated by noise just after stopping would
+    truncate the window and cause a crash that the machine would not suffer --
+    exactly the artifact that hysteresis exists to suppress.
     """
     if hysteresis <= 0.0:
         for k in range(i_start + 1, n_tot - 1):
@@ -251,29 +251,28 @@ def simulate_growth_kernel(
 
             1 (REJECT): Return large penalty to reject candidate
 
-        signal_noise_scale: AXE 1.1 -- echelle du bruit de LECTURE applique au
-            signal de monitoring REEL ``Ts_r``, en unites de T (0..1), AVANT la
-            detection des points tournants, la lecture des ancres POEM et le test
-            d'atteignabilite du niveau. 0.0 = desactive, et le chemin de calcul est
-            alors mot pour mot celui d'avant ce parametre. Voir le bloc
-            « BRUIT DE LECTURE » plus bas.
+        signal_noise_scale: AXIS 1.1 -- scale of the READING noise applied to the
+            REAL monitoring signal ``Ts_r``, in units of T (0..1), BEFORE detecting
+            turning points, reading POEM anchors, and testing level reachability.
+            0.0 = disabled, and the computation path is then word for word the one
+            from before this parameter. See the "READING NOISE" block below.
 
-        signal_noise_seed: graine du flux de bruit de lecture. Doit etre une
-            fonction de la seule configuration de tirage (graine, niveau de bruit)
-            et JAMAIS de la strategie evaluee : c'est ce qui preserve les nombres
-            aleatoires communs.
+        signal_noise_seed: seed of the reading noise stream. Must be a function
+            of the draw configuration only (seed, noise level) and NEVER of the
+            evaluated strategy: this is what preserves common random numbers.
 
-        signal_noise_run: indice du tirage Monte-Carlo. Meme exigence.
+        signal_noise_run: Monte-Carlo draw index. Same requirement.
 
-        tp_hysteresis: AXE 1.2 -- LA REGLE DE DETECTION DE POINT TOURNANT, en unites de
-            T. 0.0 = regle historique (changement de signe au-dela d'un garde numerique
-            de 1e-12), qui n'est pas une regle physique. > 0 = detecteur a hysteresis.
-            Voir ``detect_turning_points``, qui contient la derivation du seuil a partir
-            du bruit mesure -- et pourquoi ce n'est PAS le critere des 4 % de Zideluns.
+        tp_hysteresis: AXIS 1.2 -- THE TURNING POINT DETECTION RULE, in units of T.
+            0.0 = historical rule (sign change beyond a numerical guard of 1e-12),
+            which is not a physical rule. > 0 = hysteresis detector. See
+            ``detect_turning_points``, which contains the derivation of the
+            threshold from measured noise -- and why it is NOT the 4% criterion
+            from Zideluns.
 
-            🔴 SANS CE PARAMETRE, `signal_noise_scale` N'EST PAS MESURABLE : le taux de
-            plantage qu'il produit ne depend pas de sigma (1,47 % par couche a
-            sigma = 5e-8 contre 1,30 % au sigma reel), donc il ne mesure pas le bruit.
+            🔴 WITHOUT THIS PARAMETER, `signal_noise_scale` IS NOT MEASURABLE:
+            the crash rate it produces does not depend on sigma (1.47% per layer at
+            sigma = 5e-8 versus 1.30% at the real sigma), so it does not measure noise.
 
         affine_scale, affine_offset: PHOTOMETRIC CALIBRATION DRIFT of the instrument,
             T_measured = affine_scale * T_true + affine_offset. Applied to the REAL
@@ -313,18 +312,18 @@ def simulate_growth_kernel(
         t10 = m10 * M_before_00 + cp * M_before_10
         t11 = m10 * M_before_01 + cp * M_before_11
         M_before_00, M_before_01, M_before_10, M_before_11 = (t00, t01, t10, t11)
-    # --- Empilement NOMINAL, accumule en parallele du reel ---------------------
+    # --- NOMINAL stack, accumulated in parallel with the real one ---------------------
     #
-    # Le niveau de declenchement d'une couche est calcule AVANT le depot, sur la
-    # conception nominale, et il ne bouge plus. Le viser sur un empilement devenu
-    # errone est ce qui produit l'erreur de signe oppose : c'est le mecanisme de
-    # compensation (Macleod, Bousquet).
+    # The trigger level of a layer is calculated BEFORE deposition, on the
+    # nominal design, and it no longer moves. Targeting it on a stack that
+    # has become erroneous is what produces the error of opposite sign: this
+    # is the compensation mechanism (Macleod, Bousquet).
     #
-    # Avant ce correctif, la cible etait T_reel(d_nom) : la parabole d'inversion
-    # interpolant exactement ce meme point, la resolution donnait Delta_d =
-    # bruit / P', SANS aucun terme d'erreur accumulee. A bruit nul, l'epaisseur
-    # etait nominale quelles que soient les erreurs precedentes, donc aucune
-    # compensation ne pouvait apparaitre NI etre mesuree.
+    # Before this fix, the target was T_real(d_nom) : the inversion parabola
+    # interpolating exactly this same point, the resolution gave Delta_d =
+    # noise / P', WITHOUT any accumulated error term. At zero noise, the
+    # thickness was nominal whatever the previous errors, so no compensation
+    # could appear OR be measured.
     M_nom_00 = 1.0 + 0j
     M_nom_01 = 0.0 + 0j
     M_nom_10 = 0.0 + 0j
@@ -347,8 +346,8 @@ def simulate_growth_kernel(
     n_current = n_H if i_layer % 2 == 0 else n_L
     is_non_monotonic = False
     T_mono = np.zeros(5, dtype=np.float64)
-    T_mono_nom = np.zeros(5, dtype=np.float64)  # meme balayage, empilement NOMINAL
-    k_ext = -1  # indice du dernier extremum traverse (swing), -1 si aucun
+    T_mono_nom = np.zeros(5, dtype=np.float64)  # same scan, NOMINAL stack
+    k_ext = -1  # index of the last extremum crossed (swing), -1 if none
     if nominal_th > 0.0001:
         for k in range(5):
             th_frac = k / 4.0 * nominal_th
@@ -364,8 +363,8 @@ def simulate_growth_kernel(
             denom = a00 + n_Sub * a01 + a10 + n_Sub * a11
             if abs(denom) > 1e-09:
                 T_mono[k] = 4.0 * n_Sub.real / (denom.real**2 + denom.imag**2)
-            # meme point, mais sur la matrice NOMINALE : c'est la valeur que le
-            # controleur ATTENDAIT de voir passer.
+            # same point, but on the NOMINAL matrix: this is the value the
+            # controller EXPECTED to see pass.
             b00 = cp_c * M_nom_00 + m01_c * M_nom_10
             b01 = cp_c * M_nom_01 + m01_c * M_nom_11
             b10 = m10_c * M_nom_00 + cp_c * M_nom_10
@@ -394,7 +393,7 @@ def simulate_growth_kernel(
                 current_sign = next_sign
         if flips > 0:
             is_non_monotonic = True
-    # Niveau de declenchement FIGE, calcule sur le nominal et non sur le reel.
+    # FROZEN trigger level, calculated on the nominal and not on the real.
     target_nominal = 0.0
     if nominal_th > 0.0001:
         phi_t = TWO_PI_VAL / wl * n_current * nominal_th
@@ -418,110 +417,109 @@ def simulate_growth_kernel(
     #   T_POEM = (T_trigger - T_prev_TP) / (T_last_TP - T_prev_TP)      (Arsac
     #   these 2025, eq. 2.2 ; Zideluns et al., Opt. Express 29, 33398 (2021))
     #
-    # Le point d'arret n'est PAS une valeur de transmission mais une FRACTION de
-    # l'amplitude photometrique entre les deux derniers points tournants. La
-    # fraction est pre-calculee sur le NOMINAL et figee avant le depot ; a
-    # l'execution on la reporte sur les extrema REELLEMENT observes.
+    # The stopping point is NOT a transmission value but a FRACTION of the
+    # photometric amplitude between the last two turning points. The fraction
+    # is pre-calculated on the NOMINAL and frozen before deposition; at runtime
+    # it is reported on the ACTUALLY observed extrema.
     #
-    # Consequence, et c'est tout l'interet : si le signal reel subit une
-    # distorsion affine T_reel = a*T_nom + b -- derive de gain ou d'offset
-    # photometrique, erreur d'indice, erreur d'epaisseur amont -- alors
-    # T_prev et T_last subissent la meme, et le niveau reporte vaut
-    # a*T_trigger_nom + b. On s'arrete donc exactement a l'epaisseur voulue.
-    # La compensation est obtenue par CHANGEMENT DE VARIABLE, pas par un
-    # coefficient de reduction regle a la main.
+    # Consequence, and this is the whole point: if the real signal undergoes an
+    # affine distortion T_real = a*T_nom + b -- gain drift or photometric offset,
+    # index error, upstream thickness error -- then T_prev and T_last undergo
+    # the same, and the reported level is a*T_trigger_nom + b. We thus stop
+    # exactly at the desired thickness. Compensation is obtained by CHANGE OF
+    # VARIABLE, not by a manually tuned reduction coefficient.
     #
     # "If the current layer has less than two turning points, the virtual next
-    #  turning points are used" : on prolonge le balayage au-dela de d_nom.
+    #  turning points are used": we extend the scan beyond d_nom.
     #
-    # Repli : si l'amplitude du swing est trop faible (< SWING_MIN, cf. les 4 %
-    # d'amplitude de depart minimale de Zideluns et al.), POEM est mal
-    # conditionne et on retombe sur la cible absolue figee.
-    # 64 points et non 5 : localiser un point tournant a 5 points ne permet ni
-    # de distinguer un extremum franc d'un epaulement, ni d'en compter plusieurs.
-    # Cout : 64 evaluations de T par couche et par run, contre 8 auparavant.
-    # BALAYAGE CONTINU SUR LA LONGUEUR DU BLOC, et non sur la seule couche
-    # courante. Sans cela POEM ne capture que le swing intra-couche.
+    # Fallback: if the swing amplitude is too weak (< SWING_MIN, cf. the 4%
+    # minimum starting amplitude of Zideluns et al.), POEM is ill-conditioned
+    # and we fall back on the frozen absolute target.
+    # 64 points and not 5: locating a turning point with 5 points neither allows
+    # distinguishing a clear extremum from a shoulder, nor counting several of them.
+    # Cost: 64 T evaluations per layer and per run, versus 8 previously.
+    # CONTINUOUS SCAN OVER THE BLOCK LENGTH, and not only on the current layer.
+    # Without this POEM only captures the intra-layer swing.
     #
-    #   A longueur d'onde INCHANGEE le signal de monitoring est CONTINU d'une
-    #   couche a l'autre : les points tournants deja traverses pendant les couches
-    #   precedentes du bloc restent des mesures valides, exploitables pour recaler
-    #   la couche courante. Au changement de lambda on repart sur un signal neuf
-    #   et tout l'historique est perdu.
+    #   At UNCHANGED wavelength the monitoring signal is CONTINUOUS from one
+    #   layer to the next: the turning points already crossed during the previous
+    #   layers of the block remain valid measurements, exploitable to realign
+    #   the current layer. Upon changing lambda we start on a new signal
+    #   and all history is lost.
     #
-    # C'est ce qui donne leur valeur aux blocs monochromatiques, ce que le P-PM
-    # d'Arsac (chap. 4) exploite, et ce que Zideluns et al. (Opt. Express 29,
-    # 33398, 2021) formulent ainsi : "self-compensation operates only at the
-    # monitored wavelength and diminishes when layers are monitored at different
+    # This is what gives monochromatic blocks their value, what Arsac's P-PM
+    # (chap. 4) exploits, and what Zideluns et al. (Opt. Express 29, 33398,
+    # 2021) formulate as: "self-compensation operates only at the monitored
+    # wavelength and diminishes when layers are monitored at different
     # wavelengths".
     #
-    # block_start_layer = indice de la premiere couche du bloc. Defaut -1 =
-    # couche seule, ce qui preserve le comportement des appelants non modifies.
-    # ---- BRUIT DE LECTURE SUR LE SIGNAL DE MONITORING (axe 1.1) --------------
+    # block_start_layer = index of the first layer of the block. Default -1 =
+    # layer alone, which preserves the behavior of unmodified callers.
+    # ---- READING NOISE ON THE MONITORING SIGNAL (axis 1.1) --------------
     #
-    # `noise_val_precalc` n'a longtemps bruite qu'UN SEUL point de toute la
-    # chaine : la comparaison d'arret (`target_T_noisy`, plus bas). Or `Ts_r`, le
-    # signal « reel », sert a trois choses de plus, et aucune n'etait bruitee :
+    # `noise_val_precalc` for a long time only noised A SINGLE point in the whole
+    # chain: the stopping comparison (`target_T_noisy`, below). However `Ts_r`, the
+    # "real" signal, is used for three more things, and none were noised:
     #
-    #   - la DETECTION des points tournants           -> « voit-on les TP ? »
-    #   - la lecture des ANCRES POEM (T_prev, T_last) -> « POEM est-il gratuit ? »
-    #   - le test d'ATTEIGNABILITE du niveau          -> « atteint-on le niveau ? »
+    #   - the DETECTION of turning points           -> "do we see the TPs?"
+    #   - reading the POEM ANCHORS (T_prev, T_last) -> "is POEM free?"
+    #   - the REACHABILITY test of the level        -> "do we reach the level?"
     #
-    # Les trois questions du juge de paix recevaient donc la reponse « toujours, et
-    # exactement », qui n'a aucun contenu : les extrema etaient localises sur une
-    # courbe TMM parfaite. En particulier POEM reporte sa fraction figee sur les
-    # extrema REELLEMENT OBSERVES -- T_prev_real et T_last_real sont censes etre des
-    # MESURES. On lui donnait le benefice du recalage sans lui en faire payer le
-    # cout : le niveau vise valant T_prev + p.(T_last - T_prev), deux ancres
-    # portant chacune une erreur d'ecart-type sigma donnent
+    # The three questions of the final arbiter thus received the answer "always, and
+    # exactly", which has no content: the extrema were localized on a perfect TMM
+    # curve. In particular POEM reports its frozen fraction on the ACTUALLY OBSERVED
+    # extrema -- T_prev_real and T_last_real are supposed to be MEASUREMENTS.
+    # We gave it the benefit of realignment without making it pay the cost: the
+    # target level being T_prev + p.(T_last - T_prev), two anchors each carrying a
+    # standard deviation error sigma give
     #
-    #     Var[cible] = sigma^2 . [ (1-p)^2 + p^2 ]   + sigma^2 sur la lecture d'arret
+    #     Var[target] = sigma^2 . [ (1-p)^2 + p^2 ]   + sigma^2 on the stopping reading
     #
-    # soit un bruit effectif de sigma.sqrt(1 + (1-p)^2 + p^2) : x1,22 a p = 0,5, et
-    # jusqu'a x1,41 quand le trigger tombe sur une ancre. POEM echange un BIAIS
-    # (l'erreur non compensee) contre une VARIANCE (deux mesures de plus), et le
-    # modele ne comptait que le benefice -- il favorisait donc structurellement les
-    # strategies qui s'appuient sur beaucoup d'ancres, ou sur des ancres anciennes
-    # heritees du bloc, puisqu'il les supposait parfaites.
+    # which is an effective noise of sigma.sqrt(1 + (1-p)^2 + p^2): x1.22 at p = 0.5,
+    # and up to x1.41 when the trigger falls on an anchor. POEM exchanges a BIAS
+    # (uncompensated error) for a VARIANCE (two more measurements), and the model
+    # only counted the benefit -- it therefore structurally favored strategies that
+    # rely on many anchors, or on old anchors inherited from the block, since it
+    # assumed them to be perfect.
     #
-    # 🔴 NOMBRES ALEATOIRES COMMUNS -- la contrainte a ne pas perdre.
+    # 🔴 COMMON RANDOM NUMBERS -- the constraint not to lose.
     #
-    # Le tirage est une FONCTION PURE de (graine, couche balayee, tirage, indice de
-    # point). Aucune entree ne depend de la strategie : ni la longueur d'onde, ni le
-    # decoupage en blocs, ni `block_start_layer`. Deux strategies comparees sur le
-    # meme (graine, tirage) voient donc EXACTEMENT le meme bruit de lecture, et leur
-    # difference de score reste imputable a la strategie seule.
+    # The draw is a PURE FUNCTION of (seed, scanned layer, draw, point index). No
+    # input depends on the strategy: neither the wavelength, nor the block splitting,
+    # nor `block_start_layer`. Two strategies compared on the same (seed, draw)
+    # therefore see EXACTLY the same reading noise, and their score difference
+    # remains attributable to the strategy alone.
     #
-    # C'est pourquoi le tirage n'est pas materialise en tableau : un tableau indexe
-    # a plat sur le balayage se DESALIGNERAIT d'une strategie a l'autre, puisque la
-    # longueur de l'historique `n_hist` depend du decoupage en blocs. Le generateur
-    # `_seeded_noise_sample` -- deja en production pour la nucleation, meme loi
-    # N(0, 1/3) tronquee a +/-1 que le tirage Sobol de la Phase B -- est appele avec
-    # des indices ALIGNES SUR LA PHYSIQUE :
+    # This is why the draw is not materialized as an array: an array indexed flat on
+    # the scan would BECOME MISALIGNED from one strategy to another, since the
+    # history length `n_hist` depends on the block splitting. The
+    # `_seeded_noise_sample` generator -- already in production for nucleation,
+    # same N(0, 1/3) law truncated to +/-1 as the Phase B Sobol draw -- is called
+    # with indices ALIGNED TO PHYSICS:
     #
-    #   historique de la couche j, point k    ->  (group=j,       elem=k)
-    #   balayage de la couche courante, k     ->  (group=i_layer, elem=NPTS_PREV+k)
+    #   history of layer j, point k           ->  (group=j,       elem=k)
+    #   scan of the current layer, k          ->  (group=i_layer, elem=NPTS_PREV+k)
     #
-    # Le premier indexage est invariant en `i_layer` : toutes les couches d'un meme
-    # bloc relisent le passe de la couche j AVEC LE MEME BRUIT. C'est l'invariant
-    # physique -- la machine a enregistre une mesure, elle ne la remesure pas.
+    # The first indexing is invariant in `i_layer`: all layers of a same block reread
+    # the past of layer j WITH THE SAME NOISE. This is the physical invariant --
+    # the machine recorded a measurement, it does not remeasure it.
     #
-    # ⚠ CE QUI RESTE NON FIDELE, et qu'il faut avoir en tete pour lire les taux de
-    # plantage produits. Le nombre d'extrema PARASITES qu'un bruit de lecture
-    # fabrique depend de la DENSITE d'echantillonnage du balayage, qui est ici un
-    # choix numerique (NPTS = 64 sur 3x l'epaisseur, NPTS_PREV = 16 sur 1x) et non
-    # la cadence de la machine. L'historique est donc echantillonne quatre fois plus
-    # grossierement que la couche courante, et un meme point physique n'a pas le
-    # meme bruit selon qu'il est lu comme « couche courante » ou comme « historique ».
-    # Modeliser la cadence et le temps d'integration est l'axe 1.2, pas celui-ci.
+    # ⚠ WHAT REMAINS UNFAITHFUL, and what must be kept in mind to read the produced
+    # crash rates. The number of PARASITE extrema fabricated by a reading noise
+    # depends on the sampling DENSITY of the scan, which is here a numerical choice
+    # (NPTS = 64 over 3x the thickness, NPTS_PREV = 16 over 1x) and not the machine's
+    # cadence. The history is therefore sampled four times more coarsely than the
+    # current layer, and the same physical point does not have the same noise
+    # depending on whether it is read as "current layer" or as "history".
+    # Modeling the cadence and integration time is axis 1.2, not this one.
     #
-    # NE SONT PAS BRUITES, et c'est voulu :
-    #   - `Ts_n` : le signal NOMINAL est la strategie, calculee hors ligne avant le
-    #     depot. Il n'y a personne pour la mesurer.
-    #   - `T_mono` : grandeur de conception (dynamique, monotonie), pas une lecture.
-    #   - les trois points `T_points` de l'inversion parabolique : ils ne sont pas
-    #     une mesure mais la resolution de T_reel(d) = target_T_noisy. Le bruit de
-    #     la lecture d'arret est deja porte, et seulement porte, par
+    # ARE NOT NOISED, and it is intended:
+    #   - `Ts_n`: the NOMINAL signal is the strategy, calculated offline before
+    #     deposition. There is nobody to measure it.
+    #   - `T_mono`: design quantity (dynamic range, monotonicity), not a reading.
+    #   - the three points `T_points` of the parabolic inversion: they are not a
+    #     measurement but the resolution of T_real(d) = target_T_noisy. The noise
+    #     of the stopping reading is already carried, and only carried, by
     #     `noise_val_precalc`.
     NPTS = 64
     NPTS_PREV = 16
@@ -581,8 +579,8 @@ def simulate_growth_kernel(
                 if abs(z1) > 1e-09:
                     Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
                 if apply_signal_noise:
-                    # group = j : le passe de la couche j porte le MEME bruit pour
-                    # toutes les couches du bloc qui le relisent.
+                    # group = j: the past of layer j carries the SAME noise for
+                    # all the layers of the block that read it again.
                     Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
                         signal_noise_seed, j, signal_noise_run, k - 1, True
                     )
@@ -755,57 +753,57 @@ def simulate_growth_kernel(
                 w_len = idx_w + 1 if idx_w < k_win else k_win
                 Ts_r[idx_w] = sum_r / w_len
                 Ts_n[idx_w] = sum_n / w_len
-        # ---- LE SUBSTRAT NU EST UN POINT TOURNANT, ET IL ETAIT IGNORE ----------
+        # ---- THE BARE SUBSTRATE IS A TURNING POINT, AND IT WAS IGNORED ----------
         #
-        # Physicien, 2026-08-05 : « pour la couche 1 on demarre la couche sur un
-        # turning point, mais ca c'est obligatoire ».
+        # Physicist, 2026-08-05: "for layer 1 we start the layer on a turning point,
+        # but that is mandatory".
         #
-        # C'est exact et c'est automatique. Pour une couche unique sur substrat,
-        # R(d) = A + B.cos(2.delta) avec delta = 2.pi.n.d/lambda, donc
-        # dR/dd proportionnel a sin(2.delta), qui S'ANNULE en d = 0. Verifie
-        # numeriquement (n_H = 2,35, substrat 1,52, lambda = 500 nm) : pente en
-        # d = 0 de -8,0e-4 par nm contre -7,9e-3 au milieu du quart d'onde, soit
-        # dix fois moins -- le residu vient de la difference finie sur un pas de
-        # 2,5 nm, la derivee vraie est nulle.
+        # This is correct and automatic. For a single layer on substrate,
+        # R(d) = A + B.cos(2.delta) with delta = 2.pi.n.d/lambda, therefore
+        # dR/dd proportional to sin(2.delta), which VANISHES at d = 0. Numerically
+        # verified (n_H = 2.35, substrate 1.52, lambda = 500 nm): slope at d = 0 of
+        # -8.0e-4 per nm versus -7.9e-3 in the middle of the quarter wave, which is
+        # ten times less -- the residue comes from the finite difference on a 2.5 nm
+        # step, the true derivative is zero.
         #
-        # Or la boucle de detection commence a k = 1 : un extremum de BORD est
-        # structurellement invisible. Consequence mesuree sur l'exemple, dont le
-        # premier multiplicateur vaut 1,556 (donc idx_nom_stop ~ 33) :
+        # However the detection loop starts at k = 1: an EDGE extremum is structurally
+        # invisible. Consequence measured on the example, whose first multiplier
+        # is 1.556 (thus idx_nom_stop ~ 33):
         #
-        #     extrema detectes    [21, 42]        d = 53,2 et 106,4 nm
-        #     k = 21 <= 33        tp_b = 21, tp_a reste -1
-        #     k = 42 >  33        rejete car tp_b >= 0
-        #     => tp_a = -1  =>  poem_ok = FALSE sur la couche 0
+        #     detected extrema    [21, 42]        d = 53.2 and 106.4 nm
+        #     k = 21 <= 33        tp_b = 21, tp_a remains -1
+        #     k = 42 >  33        rejected because tp_b >= 0
+        #     => tp_a = -1  =>  poem_ok = FALSE on layer 0
         #
-        # La couche 0 retombait donc sur la cible absolue, sans compensation. Et
-        # cela expliquait qu'elle n'ait qu'UNE seule longueur d'onde survivante
-        # sur ~51 scannees, d'ou l'absence de lambda commune avec la couche 1,
-        # d'ou le repli force_monolayer qui fabrique une arete invalide.
+        # Layer 0 therefore fell back on the absolute target, without compensation.
+        # And this explained why it had only ONE surviving wavelength out of ~51
+        # scanned, hence the absence of a common lambda with layer 1, hence the
+        # force_monolayer fallback which fabricates an invalid edge.
         #
-        # 🔴 CETTE ANCRE EST LA PLUS FIABLE DE TOUTES. En d = 0 sur la couche 0,
-        # l'empilement reel et l'empilement nominal sont le MEME objet -- le
-        # substrat nu. T_prev_real = T_prev_nom exactement, sans erreur amont
-        # possible, et la machine mesure ce niveau avant meme de commencer.
+        # 🔴 THIS ANCHOR IS THE MOST RELIABLE OF ALL. At d = 0 on layer 0, the real
+        # stack and the nominal stack are the SAME object -- the bare substrate.
+        # T_prev_real = T_prev_nom exactly, with no upstream error possible, and
+        # the machine measures this level even before starting.
         #
-        # Condition volontairement etroite : uniquement la premiere couche de
-        # l'empilement (i_layer == 0, donc j0 == 0). Pour un bloc demarrant plus
-        # haut, d = 0 de sa premiere couche n'est PAS un extremum en general :
-        # le sous-empilement deja depose n'a aucune raison d'y etre stationnaire.
+        # Intentionally narrow condition: only the first layer of the stack (i_layer == 0,
+        # thus j0 == 0). For a block starting higher, d = 0 of its first layer is NOT an
+        # extremum in general: the sub-stack already deposited has no reason to be
+        # stationary there.
         start_is_tp = i_layer == 0 and j0 == 0
-        # Le signal REEL : ce que la machine compte.
+        # The REAL signal: what the machine counts.
         n_tp_real, tp_a, tp_b = detect_turning_points(
             Ts_r, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
         )
-        # Le signal NOMINAL : ce que la strategie attend d'elle. MEME regle de
-        # detection, imperativement -- les deux comptages servent aussi a detecter la
-        # DIVERGENCE du nombre d'extrema, qui est l'un des deux modes de plantage, et
-        # deux regles differentes en fabriqueraient une a chaque couche. Compter le
-        # bord d'un cote et pas de l'autre aurait le meme effet.
+        # The NOMINAL signal: what the strategy expects of it. SAME detection
+        # rule, imperatively -- the two countings also serve to detect the
+        # DIVERGENCE of the number of extrema, which is one of the two crash
+        # modes, and two different rules would fabricate one at each layer.
+        # Counting the edge on one side and not the other would have the same effect.
         n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
             Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
         )
         if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
-            # fraction : ancrages NOMINAUX  |  report : ancrages REELS mesures
+            # fraction: NOMINAL anchors  |  report: MEASURED REAL anchors
             T_prev_nom = Ts_n[tp_a_n]
             T_last_nom = Ts_n[tp_b_n]
             T_prev_real = Ts_r[tp_a]
@@ -821,9 +819,9 @@ def simulate_growth_kernel(
                 poem_ok = True
 
     if poem_ok:
-        # fraction figee, calculee sur le nominal (eq. 2.2)
+        # frozen fraction, calculated on the nominal (eq. 2.2)
         p_poem = (target_nominal - T_prev_nom) / (T_last_nom - T_prev_nom)
-        # reportee sur les extrema reellement observes
+        # reported on the actually observed extrema
         target_level = T_prev_real + p_poem * (T_last_real - T_prev_real)
     else:
         # ABSOLUTE FALLBACK -- the controller does NOT know (affine_scale, affine_offset).
@@ -839,48 +837,49 @@ def simulate_growth_kernel(
 
     target_T_noisy = target_level + noise_val_precalc
 
-    # ---- DEFAILLANCE DURE : le niveau d'arret n'est jamais atteint ----------
+    # ---- HARD FAILURE: the stopping level is never reached ----------
     #
-    # Cas tres defavorable signale en salle : si l'arret theorique tombe JUSTE
-    # AVANT un point tournant, une erreur amont peut faire tourner le signal
-    # avant d'avoir atteint la valeur visee. La machine attend un niveau qui ne
-    # viendra jamais et le depot part en vrille. Ce n'est pas une perte de
-    # precision, c'est un PLANTAGE -- un evenement discret, invisible a un critere
-    # de RMSE tant qu'on ne le detecte pas explicitement.
+    # Very unfavorable case reported in the room: if the theoretical stop falls
+    # JUST BEFORE a turning point, an upstream error can make the signal turn
+    # before having reached the targeted value. The machine waits for a level
+    # that will never come and the deposition goes into a tailspin. It's not a
+    # loss of precision, it's a CRASH -- a discrete event, invisible to an RMSE
+    # criterion as long as it's not explicitly detected.
     #
-    # C'est pour cela que s'arreter APRES un point tournant est bien plus sur :
-    # l'extremum est deja compte, le signal s'en eloigne de facon monotone, et le
-    # niveau est fatalement atteint. C'est aussi la justification de l'asymetrie
-    # de check_extrema_proximity -- zone interdite 3x plus large AVANT un point
-    # tournant qu'APRES.
+    # This is why stopping AFTER a turning point is much safer: the extremum
+    # is already counted, the signal moves away from it monotonically, and the
+    # level is inevitably reached. This is also the justification for the
+    # asymmetry of check_extrema_proximity -- forbidden zone 3x wider BEFORE
+    # a turning point than AFTER.
     #
-    # On modelise ici la defaillance telle qu'elle se produit : si le niveau vise
-    # n'est pas encadre par le signal reel entre le debut de la couche et le
-    # prochain extremum, le run est perdu.
+    # We model the failure here as it happens: if the targeted level is not
+    # bracketed by the real signal between the start of the layer and the next
+    # extremum, the run is lost.
     #
-    # ⚠ CE TEST NE DOIT PAS DEPENDRE DE poem_ok. Il l'a fait, et c'etait un trou.
+    # ⚠ THIS TEST MUST NOT DEPEND ON poem_ok. It did, and it was a hole.
     #
-    # Qu'un niveau soit atteignable ou non est une question de PHYSIQUE du signal,
-    # pas de la strategie d'ancrage employee pour le calculer. Garder la detection
-    # derriere `poem_ok` la desactivait justement dans les cas ou POEM est mal
-    # conditionne -- swing sous SWING_MIN, moins de deux points tournants -- qui sont
-    # precisement les plus exposes.
+    # Whether a level is reachable or not is a question of signal PHYSICS, not
+    # of the anchoring strategy used to calculate it. Keeping the detection
+    # behind `poem_ok` deactivated it precisely in cases where POEM is
+    # ill-conditioned -- swing below SWING_MIN, fewer than two turning points --
+    # which are exactly the most exposed.
     #
-    # Mesure sur example/example_strat/JSON-strat-example.json, 48 couches x 51
-    # longueurs d'onde de balayage, erreur amont de +2 nm, bruit nul :
-    #   plantage detecte                         :  0,21 %
-    #   repli MUTIQUE sur le sommet (disc < 0)   :  6,68 %   <- 30 fois plus
-    # Ces 6,68 % sortaient de _solve_quadratic_target par sa branche
-    # `discriminant < 0` (certus_strat_math.py:207), qui renvoie le sommet de la
-    # parabole sans rien signaler : erreur mediane 5,2 nm, maximum 29 nm, la ou
-    # 0,05 nm vaut deja moins d'un atome. Le taux verifie ne dependait PAS de
-    # probe_offset (6,63 % a 0,5 nm, 6,88 % a 10 nm) : ce n'etait pas un artefact
-    # du fit, mais bien la defaillance physique, non comptee.
+    # Measurement on example/example_strat/JSON-strat-example.json, 48 layers x 51
+    # scan wavelengths, upstream error of +2 nm, zero noise:
+    #   detected crash                           :  0.21 %
+    #   SILENT fallback on vertex (disc < 0)     :  6.68 %   <- 30 times more
+    #
+    # These 6.68% came out of _solve_quadratic_target through its
+    # `discriminant < 0` branch (certus_strat_math.py:207), which returns the
+    # vertex of the parabola without reporting anything: median error 5.2 nm,
+    # maximum 29 nm, where 0.05 nm is already worth less than an atom. The
+    # verified rate did NOT depend on probe_offset (6.63% at 0.5 nm, 6.88% at
+    # 10 nm): it was not a fit artifact, but the physical failure itself, uncounted.
     if nominal_th > 0.0001:
         i_lay0 = n_hist
         i_stop = idx_nom_stop
-        # borne haute : prochain extremum reel apres l'arret, sinon fin du balayage.
-        # Meme regle de detection que le comptage, cf. next_turning_point_after.
+        # upper bound: next real extremum after stop, else end of scan.
+        # Same detection rule as counting, cf. next_turning_point_after.
         i_end = next_turning_point_after(Ts_r, n_tot, i_stop, tp_hysteresis)
         t_lo = Ts_r[i_lay0]
         t_hi = Ts_r[i_lay0]
@@ -889,30 +888,29 @@ def simulate_growth_kernel(
                 t_lo = Ts_r[k]
             if Ts_r[k] > t_hi:
                 t_hi = Ts_r[k]
-        # ✅ AUCUNE TOLERANCE ICI, ET C'EST VOULU.
+        # ✅ NO TOLERANCE HERE, AND THIS IS INTENDED.
         #
-        # J'ai cru un moment qu'il fallait tolerer un depassement de l'ordre du
-        # bruit, au motif qu'un empilement quart d'onde monitore a sa propre
-        # longueur d'onde de centrage plantait a 100 %. C'etait une erreur de ma
-        # part : ce 100 % est le BON resultat.
+        # I thought for a moment that an overshoot of the order of noise should be
+        # tolerated, on the grounds that a quarter-wave stack monitored at its own
+        # centering wavelength crashed at 100%. This was my mistake: this 100% is
+        # the CORRECT result.
         #
-        # A QWOT exact l'arret tombe sur le point tournant, ou dT/dd = 0 : un
-        # niveau n'a plus aucune sensibilite a l'epaisseur, et la moitie des
-        # realisations du bruit place la cible au-dela de l'extremum, ou elle ne
-        # sera jamais atteinte. C'est exactement pour cela qu'on ne monitore pas
-        # un QWOT a sa lambda_0 par coupure de niveau -- et c'est le travail de
-        # STRAT que d'aller chercher ailleurs. check_extrema_proximity existe
-        # pour la meme raison.
+        # At exact QWOT the stop falls on the turning point, where dT/dd = 0: a
+        # level no longer has any thickness sensitivity, and half of the noise
+        # realizations place the target beyond the extremum, where it will never
+        # be reached. This is exactly why a QWOT is not monitored at its lambda_0
+        # by level cut-off -- and it is STRAT's job to go look elsewhere.
+        # check_extrema_proximity exists for the same reason.
         if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
-            # niveau jamais atteint : depot non terminable
+            # level never reached: non-terminable deposition
             return (
                 nominal_th + CRASH_LEVEL_UNREACHABLE * CRASH_SENTINEL_UNIT,
                 np.max(T_mono) - np.min(T_mono),
             )
-        # Comptage d'extrema divergent entre nominal et reel : la machine
-        # n'ancre pas POEM sur les memes points tournants que la strategie.
-        # Celui-ci, en revanche, RESTE conditionne a poem_ok : sans POEM il n'y a
-        # pas d'ancrage sur des points tournants, donc rien qui puisse diverger.
+        # Divergent extrema counting between nominal and real: the machine
+        # does not anchor POEM on the same turning points as the strategy.
+        # This one, however, REMAINS conditioned to poem_ok: without POEM there is
+        # no anchoring on turning points, so nothing that can diverge.
         if poem_ok and n_tp_real != n_tp_nom:
             return (
                 nominal_th + CRASH_TP_MISCOUNT * CRASH_SENTINEL_UNIT,
@@ -967,23 +965,23 @@ def simulate_growth_kernel(
     if is_non_monotonic:
         if non_monotonic_mode == NON_MONOTONIC_MODE_REJECT:
             return (nominal_th + CRASH_NON_MONOTONIC * CRASH_SENTINEL_UNIT, dyn_encounter)
-        # non_monotonic_factor N'EST PLUS APPLIQUE.
+        # non_monotonic_factor IS NO LONGER APPLIED.
         #
-        # Il divisait l'erreur par une constante (defaut 2.0) des qu'un extremum
-        # etait traverse. C'etait la forme reduite du gain d'information apporte
-        # par le swing -- un pansement, rendu necessaire par le fait que le modele
-        # ne pouvait PAS produire ce gain lui-meme : la cible etant recalculee sur
-        # l'empilement reel, error_raw ne contenait que du bruit local et il n'y
-        # avait rien a corriger.
+        # It divided the error by a constant (default 2.0) as soon as an extremum
+        # was crossed. This was the reduced form of the information gain brought
+        # by the swing -- a band-aid, made necessary by the fact that the model
+        # COULD NOT produce this gain itself: the target being recalculated on
+        # the real stack, error_raw only contained local noise and there was
+        # nothing to correct.
         #
-        # Avec la cible figee et POEM, le gain du swing est desormais STRUCTUREL :
-        # il varie avec le contraste reellement observe et avec le nombre
-        # d'extrema, au lieu d'etre le meme pour une couche qui frole un extremum
-        # et une couche qui en traverse trois. Le diviser en plus reviendrait a
-        # compter deux fois le meme effet.
+        # With the frozen target and POEM, the swing gain is now STRUCTURAL:
+        # it varies with the actually observed contrast and with the number
+        # of extrema, instead of being the same for a layer that grazes an
+        # extremum and a layer that crosses three. Dividing it on top of that
+        # would amount to double-counting the same effect.
         #
-        # Le parametre est conserve dans la signature pour ne pas casser les six
-        # sites d'appel ; il ne sert plus qu'au mode REJECT ci-dessus.
+        # The parameter is kept in the signature to avoid breaking the six
+        # call sites; it is now only used for the REJECT mode above.
         return (max(0.0, nominal_th + error_raw), dyn_encounter)
     return (max(0.0, nominal_th + error_raw), dyn_encounter)
 
@@ -1028,16 +1026,16 @@ def compute_T_front_profile(
     M_before_11,
     d_array: np.ndarray,
 ) -> np.ndarray:
-    """T de face avant sur TOUTE une grille d'epaisseurs, en un seul appel.
+    """Front-side T over a WHOLE thickness grid, in a single call.
 
-    Meme calcul que ``compute_T_front_at_layer``, point par point : la boucle est
-    simplement passee du cote compile. L'arithmetique est identique, donc les
-    resultats le sont bit a bit.
+    Same calculation as ``compute_T_front_at_layer``, point by point: the loop is
+    simply passed to the compiled side. The arithmetic is identical, so the
+    results are bit-for-bit identical.
 
-    Motif : ``_compute_theoretical_layer_profile`` echantillonnait la courbe T(d)
-    tous les nanometres depuis Python, soit ~200 franchissements de la frontiere
-    Python->njit par couche, repetes pour chaque strategie et chaque tirage de
-    Monte-Carlo. Le calcul lui-meme est negligeable devant ce cout de dispatch.
+    Motive: ``_compute_theoretical_layer_profile`` sampled the T(d) curve
+    every nanometer from Python, which is ~200 Python->njit boundary crossings
+    per layer, repeated for each strategy and each Monte-Carlo draw. The calculation
+    itself is negligible compared to this dispatch cost.
     """
     n = d_array.shape[0]
     out = np.empty(n, dtype=np.float64)
@@ -1058,13 +1056,12 @@ def compute_dT_dd_kernel(
     M_before_all: np.ndarray,
     h_nm: float,
 ) -> np.ndarray:
-    """dT/dd par difference centree, pour toutes les couches en un appel.
+    """dT/dd by centered difference, for all layers in one call.
 
-    Transposition directe de la boucle finale de ``_compute_dT_dd_per_layer`` :
-    memes operations dans le meme ordre, donc memes resultats bit a bit. Elle
-    faisait deux appels njit par couche depuis Python ; sur un empilement de
-    quarante couches, evalue pour chaque strategie candidate, le cout de dispatch
-    depassait celui du calcul.
+    Direct transposition of the final loop of ``_compute_dT_dd_per_layer``:
+    same operations in the same order, thus same results bit for bit. It made
+    two njit calls per layer from Python; on a forty-layer stack, evaluated for
+    each candidate strategy, the dispatch cost exceeded the calculation cost.
     """
     num_layers = p_thick_arr.shape[0]
     dT_dd = np.zeros(num_layers, dtype=np.float64)
@@ -1231,16 +1228,16 @@ def update_run_states_kernel(
 ):
     """Parallel update of simulation states for next layer.
 
-    ``block_start_layer`` doit valoir CELUI DE LA LONGUEUR D'ONDE RETENUE. Les
-    etats propages ici deviennent l'historique sur lequel la couche suivante sera
-    jugee : les evaluer sans l'historique du bloc alors que les candidates l'ont
-    ete avec produirait une Phase A incoherente avec elle-meme.
+    ``block_start_layer`` must be the one OF THE RETAINED WAVELENGTH. The states
+    propagated here become the history on which the next layer will be judged:
+    evaluating them without the block history while the candidates were evaluated
+    with it would produce a Phase A inconsistent with itself.
 
-    ``signal_noise_scale`` / ``signal_noise_seed`` : bruit de lecture du signal de
-    monitoring (axe 1.1, cf. ``simulate_growth_kernel``). Ils doivent valoir CEUX
-    DE LA VALIDATION DES CANDIDATES, pour la meme raison que ``block_start_layer``.
-    L'indice de tirage passe au noyau est ``r``, le meme que celui qui a servi a
-    juger les candidates.
+    ``signal_noise_scale`` / ``signal_noise_seed`` : reading noise of the monitoring
+    signal (axis 1.1, cf. ``simulate_growth_kernel``). They must be THOSE OF THE
+    CANDIDATE VALIDATION, for the same reason as ``block_start_layer``. The draw
+    index passed to the kernel is ``r``, the same one that was used to judge the
+    candidates.
     """
     num_runs = prev_stacks.shape[0]
     updates = np.empty(num_runs, dtype=np.float64)

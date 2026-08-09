@@ -520,7 +520,7 @@ _SAPPHIRE_N: np.ndarray | None = None
 
 _SAPPHIRE_K: np.ndarray | None = None
 
-# True seulement si le xlsx contient une colonne k explicite (sinon k=0 partout, pas d'absorption reelle).
+# True only if the xlsx contains an explicit k column (otherwise k=0 everywhere, no real absorption).
 
 _SAPPHIRE_FILE_HAS_K_COLUMN: bool = False
 
@@ -642,7 +642,7 @@ def _get_silicon_n_on_grid(wavelengths_nm: np.ndarray) -> np.ndarray | None:
         right=_SILICON_N[-1],
     ).astype(np.float64)
 
-# Compromis rapide Phase 2 IR (HPO 7 fichiers XLSX)  max_feval=200k, max_time=300s, sub 5k/45s/80
+# Fast compromise Phase 2 IR (HPO 7 XLSX files)  max_feval=200k, max_time=300s, sub 5k/45s/80
 
 PHASE2_IR_PGLOBAL_OVERRIDES_FAST = {
     "max_feval": 200000,

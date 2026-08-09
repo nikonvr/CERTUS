@@ -40,17 +40,17 @@ from certus.spline.certus_index_spline_core import (
     DataType,
 )
 def run():
-    print("Démarrage de l'optimisation CORRECTE (Headless)...")
+    print("Starting CORRECT optimization (Headless)...")
     setup_logging(log_file="logs/ultimate_export_corrected.log")
     
     data_path = "example/IR/tosmo/TOTAL.xlsx"
     df = read_data_file_robust(data_path)
     df = normalize_spectrum_dataframe(df)
     
-    # --- AUTO-DETECTION UNITÉS (nm vs µm) ---
+    # --- UNITS AUTO-DETECTION (nm vs µm) ---
     lam_vals = df["lambda"].values
     if np.nanmax(lam_vals) < 100:
-        print(f"[NOTE] Conversion µm -> nm détectée (max={np.nanmax(lam_vals):.2f})")
+        print(f"[NOTE] µm -> nm conversion detected (max={np.nanmax(lam_vals):.2f})")
         df["lambda"] *= 1000.0
     
     lam_nm = df["lambda"].values
@@ -60,27 +60,27 @@ def run():
     n_sub = get_n_substrate_array_by_id(3, lam_nm)
     warmup_physics()
 
-    # Configuration Haute Fidélité
+    # High-Fidelity Configuration
     cfg = SplineOptConfig(
         lam_nm=lam_nm, t_exp=t_raw, n_sub=n_sub,
         data_type=DataType.TRANSMISSION,
-        # Épaisseur estimée pour cet échantillon IR (3000 nm)
+        #Estimated thickness for this IR sample (3000 nm)
         d_lo=2800.0, d_hi=3200.0,
         weight_t=1.0, t_is_ratio=True,
-        # Budget suffisant pour convergence
+        # Sufficient budget for convergence
         pglobal_max_iter=35, polish_maxfun=8000,
     )
 
     stop = Event()
-    print("Spline adaptive mesh (overlay lois analytiques inclus dans worker_spline_optimization)...")
+    print("Spline adaptive mesh (analytical laws overlay included in worker_spline_optimization)...")
     best = run_spline_adaptive_mesh_loop(cfg, knots_start=4, knots_max=10, stop_event=stop)
 
     if best:
         t_sub_theo = calculate_bare_substrate_RT(lam_nm, n_sub)
         t_ratio_exp = t_raw / np.maximum(t_sub_theo, 1e-6)
         
-        # On exporte l'Excel avec les bons labels et les bonnes valeurs
-        # On garde les nm internes mais on peut remettre en µm pour la colonne si besoin
+        #Export Excel with proper labels and values
+        #Keep internal nm but can convert back to µm for column if needed
         df_spec = pd.DataFrame({
             "Wavelength (nm)": lam_nm,
             "n_film": best["n_lam"],
@@ -97,9 +97,9 @@ def run():
             df_spec.to_excel(writer, sheet_name="Spectre", index=False)
             df_sum.to_excel(writer, sheet_name="Résumé", index=False)
         
-        print(f"[OK] Fichier CORRIGÉ total_result.xlsx généré avec RMSE={best['rmse']:.6e}")
+        print(f"[OK] CORRECTED total_result.xlsx file generated with RMSE={best['rmse']:.6e}")
     else:
-        print("[ERR] Échec du pipeline.")
+        print("[ERR] Pipeline failed.")
 
 if __name__ == "__main__":
     run()

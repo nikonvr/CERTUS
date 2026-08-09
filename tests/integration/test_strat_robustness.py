@@ -91,16 +91,16 @@ class TestNoiseDistribution:
 
         🔴 CONFIGURATION CHOISIE POUR ETRE MONITORABLE, et ce n'est pas un detail.
 
-        L'ancienne version prenait 10 couches de 100 nm monitorees a 1500 nm avec
+        The old version took 10 layers of 100 nm monitored at 1500 nm with
         3 points de transmission de bruit, soit six fois le bruit nominal du
-        fichier d'exemple. Dans ce regime la quasi-totalite des runs est declaree
+        example file. In this regime almost all runs are declared
         NON TERMINABLE et le P95 vaut la sentinelle 1e6 : le test ne mesurait plus
         la distribution du bruit, il mesurait un taux de plantage. Il echouait
-        d'ailleurs sur HEAD depuis le commit 932c744.
+        by the way on HEAD since commit 932c744.
 
-        On prend donc un empilement quart d'onde a 1500 nm monitore a 1300 nm —
+        We therefore take a quarter-wave stack at 1500 nm monitored at 1300 nm —
         loin des points tournants, la ou la coupure de niveau a de la sensibilite
-        — et le bruit reel du fichier d'exemple.
+        — and the actual noise of the example file.
         """
         num_layers = 10
         l0 = 1500.0
@@ -144,17 +144,17 @@ class TestNoiseDistribution:
         print(f"Uniforme  : plantage {crash_uniform:.1%}  P95 {p95_uniform:.4f} nm")
         print(f"Gaussienne: plantage {crash_gaussian:.1%}  P95 {p95_gaussian:.4f} nm")
 
-        # 1. La configuration doit etre monitorable, sinon le test ne mesure rien.
+        #1. The configuration must be monitorable, otherwise the test measures nothing.
         assert crash_uniform == 0.0, f"configuration non monitorable : {crash_uniform:.1%} de plantage"
         assert crash_gaussian == 0.0, f"configuration non monitorable : {crash_gaussian:.1%} de plantage"
 
         # 2. Les deux P95 doivent etre physiquement significatifs : au-dessus de
-        #    0,05 nm (moins d'un atome) et tres en dessous de l'epaisseur nominale.
+        #0.05 nm (less than one atom) and well below the nominal thickness.
         for name, p95 in (("uniforme", p95_uniform), ("gaussienne", p95_gaussian)):
             assert 0.05 < p95 < 0.2 * p_thick_nominal.min(), f"P95 {name} invraisemblable : {p95}"
 
         # 3. La gaussienne clippee concentre le bruit autour de zero : son P95 doit
-        #    etre STRICTEMENT inferieur a celui de l'uniforme, qui charge les bords.
+        # be STRICTLY lower than that of the uniform, which loads the edges.
         assert p95_gaussian < p95_uniform, (
             f"la gaussienne devrait donner un P95 plus faible que l'uniforme "
             f"({p95_gaussian:.4f} vs {p95_uniform:.4f})"
@@ -310,19 +310,19 @@ class TestNonMonotonicMode:
 
 
     def test_attenuate_mode(self):
-        """Le mode ATTENUATE ne doit PLUS diviser l'erreur par le facteur.
+        """ATTENUATE mode should NO LONGER divide the error by the factor.
 
         Ce test verifiait autrefois l'inverse. `non_monotonic_factor` divisait
-        l'erreur par une constante des qu'un extremum etait traverse : la forme
+        the error by a constant as soon as an extremum was crossed: the form
         reduite du gain d'information apporte par le swing, rendue necessaire
-        parce que le modele ne pouvait pas produire ce gain lui-meme.
+        because the model could not produce this gain itself.
 
         Avec la cible figee sur le nominal et POEM, ce gain est devenu STRUCTUREL
         — il varie avec le contraste reellement observe et avec le nombre
         d'extrema. Continuer a diviser en plus compterait deux fois le meme effet.
-        Le parametre n'est conserve que pour le mode REJECT.
+        The parameter is only kept for REJECT mode.
 
-        L'ancienne version prenait 2 % de bruit de transmission sur une couche de
+        The old version took 2% transmission noise on a layer of
         200 nm monitoree a 1500 nm : dans ce regime le depot n'est plus
         terminable et le test ne mesurait plus le facteur.
         """
@@ -365,7 +365,7 @@ class TestNonMonotonicMode:
         # For this test, we check that when there is non-monotony, the reject mode
 
 
-        # retourne une grande valeur (nominal + 1e6)
+        #returns a large value (nominal + 1e6)
 
 
         p_thick = np.array([200.0, 200.0], dtype=np.float64)
@@ -515,7 +515,7 @@ class TestNonMonotonicMode:
 class TestValidateWavelengthsBatch:
 
 
-    """Test de validate_wavelengths_batch avec le nouveau mode."""
+    """Testing validate_wavelengths_batch with the new mode."""
 
 
 

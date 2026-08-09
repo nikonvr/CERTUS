@@ -75,10 +75,10 @@ def _convert_solution_to_strategy(sol, num_layers, n_blocks, origin_tag, s_id) -
     }
 
 
-#: Plafond sur `p` avant le logarithme. `-log(1 - 1)` vaut l'infini, ce qui EXCLURAIT la
-#: candidate au lieu de la classer derniere — et si toutes les candidates d'une couche
-#: valaient 1, la DP n'aurait plus aucun chemin. On plafonne donc a 1 - 1e-9, soit un
-#: cout de ~20,7 nats : enorme, mais fini, donc l'ordre entre mauvaises options survit.
+#: Ceiling on `p` before the logarithm. `-log(1 - 1)` is infinity, which would EXCLUDE the
+#: candidate instead of ranking it last — and if all candidates of a layer
+#: were 1, the DP would have no path left. So we cap at 1 - 1e-9, giving a
+#: cost of ~20.7 nats: huge, but finite, so the order among bad options survives.
 _YIELD_P_MAX: float = 1.0 - 1e-9
 
 
@@ -120,27 +120,27 @@ def combine_cost_and_yield(
     yield_map: dict[int, dict[float, float]],
     yield_weight: float,
 ) -> dict[int, dict[float, float]]:
-    """`cout_nm + w x (-log(1 - p))`, l'objectif de la DP quand `w > 0`.
+    """`cost_nm + w x (-log(1 - p))`, the DP objective when `w > 0`.
 
-    `yield_weight = 0` (defaut) rend la carte d'entree TELLE QUELLE — donc le
-    comportement d'avant, au bit pres.
+    `yield_weight = 0` (default) returns the input map AS IS — therefore the
+    previous behavior, bit for bit.
 
-    🔴 POURQUOI UNE SOMME ET NON UN REMPLACEMENT. Le plan proposait de remplacer le cout
-    en nanometres par le seul rendement. Deux mesures s'y opposent :
+    🔴 WHY A SUM AND NOT A REPLACEMENT. The plan proposed to replace the cost
+    in nanometers by the yield alone. Two measurements oppose this:
 
-      1. 📏 Sur le juge de paix, la MEILLEURE lambda de chacune des 47 couches a un taux
-         de plantage NUL. Un objectif purement rendement vaudrait donc zero sur presque
-         tous les chemins et la DP deviendrait DEGENEREE — elle ne classerait plus rien.
-      2. Le plan lui-meme le signale : « une DP qui n'optimise que le rendement peut
-         proposer des strategies sures mais spectralement mediocres ».
+      1. 📏 On the benchmark, the BEST lambda of each of the 47 layers has a
+         NULL crash rate. A pure yield objective would thus be zero on almost
+         all paths and the DP would become DEGENERATE — it would no longer rank anything.
+      2. The plan itself points out: "a DP that optimizes only yield can
+         propose safe but spectrally mediocre strategies".
 
-    En somme, le rendement REORDONNE la ou il est mesurable et laisse le cout en
-    nanometres departager ailleurs. C'est strictement plus d'information, jamais moins.
+    In summary, the yield REORDERS where it is measurable and lets the cost in
+    nanometers decide elsewhere. This is strictly more information, never less.
 
-    ⚠️ `w` est en nanometres par nat, et il ne se devine pas. Repere pour le calibrer :
-    a la tolerance par couche de 0,107 %, `-log(1-p)` vaut 1,07e-3 nat ; pour que ce
-    plantage pese autant que 0,2 nm d'erreur — l'ordre de grandeur du cout median mesure
-    — il faut `w` de l'ordre de 200. **A balayer, pas a poser.**
+    ⚠️ `w` is in nanometers per nat, and it cannot be guessed. Benchmark to calibrate it:
+    at a per-layer tolerance of 0.107%, `-log(1-p)` is 1.07e-3 nat; for this
+    crash to weigh as much as 0.2 nm of error — the order of magnitude of the median measured cost
+    — `w` needs to be around 200. **To be scanned, not to be set.**
     """
     if yield_weight <= 0.0 or not yield_map:
         return cost_map
@@ -660,28 +660,28 @@ def _resolve_monitoring_wavelength_grid(
     clues_at_wl: Any,
     wl_arr: np.ndarray,
 ) -> list[float]:
-    """Longueurs d'onde de CONTROLE admissibles : la grille de balayage, pas celle d'affichage.
+    """Admissible CONTROL wavelengths: the scanning grid, not the display one.
 
-    🔴 UNE LONGUEUR D'ONDE DE CONTROLE SE CHOISIT AU PAS DE ``scan_wl_step``.
-    👤 Le physicien, 2026-08-06 : « les longueurs doivent pouvoir etre choisies par
-    pas de 2 nm » — en longueur d'onde, pas en epaisseur.
+    🔴 A CONTROL WAVELENGTH IS CHOSEN AT THE ``scan_wl_step`` STEP.
+    👤 The physicist, 2026-08-06: "the wavelengths must be able to be chosen in
+    steps of 2 nm" — in wavelength, not in thickness.
 
-    `_resolve_available_wavelengths` rend les CLES de `clues_at_wl`. Or ce
-    dictionnaire est construit sur l'UNION de deux grilles sans rapport
-    (`_prepare_precompute_wavelength_grid`, certus_strat_config.py:287) :
+    `_resolve_available_wavelengths` returns the KEYS of `clues_at_wl`. But this
+    dictionary is built on the UNION of two unrelated grids
+    (`_prepare_precompute_wavelength_grid`, certus_strat_config.py:287):
 
-        grille de BALAYAGE   scan_wl_min..scan_wl_max au pas scan_wl_step  (2 nm)
-        grille d'AFFICHAGE   wl_range[0]..wl_range[1] au pas wl_step       (1 nm)
+        SCANNING grid   scan_wl_min..scan_wl_max at scan_wl_step step  (2 nm)
+        DISPLAY grid    wl_range[0]..wl_range[1] at wl_step step       (1 nm)
 
-    L'union est donc a 1 nm sur tout le recouvrement, et l'etage ELITE, qui mute
-    « vers la longueur d'onde voisine », mutait de 1 nm — hors grille de controle.
-    📏 C'est l'origine mesuree du top 5 `551, 552, 553, 554` observe sur le juge de
-    paix : quatre declinaisons d'une seule strategie, separees par une quantite qui
-    n'a pas de sens physique, sur lesquelles partaient quatre cinquiemes du budget
-    Monte-Carlo final.
+    The union is thus at 1 nm over the whole overlap, and the ELITE stage, which mutates
+    "towards the neighboring wavelength", mutated by 1 nm — outside the control grid.
+    📏 This is the measured origin of the top 5 `551, 552, 553, 554` observed on the benchmark:
+    four variations of a single strategy, separated by a quantity that
+    makes no physical sense, on which four fifths of the final Monte-Carlo
+    budget was spent.
 
-    Repli sur `_resolve_available_wavelengths` si les bornes de balayage manquent :
-    mieux vaut la grille trop fine que pas de candidate du tout.
+    Fallback to `_resolve_available_wavelengths` if the scanning bounds are missing:
+    better to have a grid that is too fine than no candidate at all.
     """
     try:
         lo = float(params["scan_wl_min"])
@@ -696,10 +696,10 @@ def _resolve_monitoring_wavelength_grid(
 
     grid = [float(w) for w in arange_inclusive(lo, hi, step).tolist()]
 
-    # Ne garder que ce dont on possede vraiment les indices : `clues_at_wl` peut
-    # avoir ete construit sur un pas elargi par la limite de cache
-    # (certus_strat_config.py:272). Un appariement a 1e-6 pres est inutile ici — la
-    # grille de balayage EST un sous-ensemble exact de `all_wls`.
+    # Only keep what we really have the indices for: `clues_at_wl` may
+    # have been built on a step widened by the cache limit
+    # (certus_strat_config.py:272). A matching at 1e-6 is useless here — the
+    # scanning grid IS an exact subset of `all_wls`.
     keys = None
     if hasattr(clues_at_wl, "keys"):
         keys = set()

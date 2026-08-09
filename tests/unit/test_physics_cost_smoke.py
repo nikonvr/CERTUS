@@ -1,4 +1,4 @@
-"""Noyaux d'optimisation / coût sur `_certus_physics_impl` (P1-12)."""
+"""Optimization/cost kernels on `_certus_physics_impl` (P1-12)."""
 
 from __future__ import annotations
 

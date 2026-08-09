@@ -52,7 +52,7 @@ from PyQt6.QtWidgets import QApplication
 
 
 
-# Référence obligatoire : sans elle, le wrapper PyQt peut être GC -> plus de QCoreApplication pour QEventLoop
+#Mandatory reference: without it, the PyQt wrapper can be GC -> no more QCoreApplication for QEventLoop
 
 
 _QT_APP: QApplication | None = QApplication.instance() or QApplication([])
@@ -373,7 +373,7 @@ def _run_worker(worker):
 def _T_rel_pred_on_wavelengths(res, wls_tgt: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
-    """T_rel prédit aux longueurs d'onde demandées (interp nk depuis df_results)."""
+    """T_rel predicted at requested wavelengths (interp nk from df_results)."""
 
 
     df = res.df_results
@@ -433,10 +433,10 @@ def diagnose_T_rel(res, df_meas: pd.DataFrame, lambda_max_fit: float | None) -> 
     """
 
 
-    RMSE global + par bandes sur les **points du fichier** (pas la grille interne).
+    Global + banded RMSE on **file points** (not the internal grid).
 
 
-    Aide à voir si la dégradation vient de l’IR (>2200) ou du fit TLU (<=2200).
+    Helps to see if the degradation comes from the IR (>2200) or the TLU fit (<=2200).
 
 
     """
@@ -496,7 +496,7 @@ def diagnose_T_rel(res, df_meas: pd.DataFrame, lambda_max_fit: float | None) -> 
 
 
 
-    # Fenêtre réellement ajustée en phase 1 (TLU) : lambda <= 2200 dans la plage fichier
+    #Window actually adjusted in phase 1 (TLU): lambda <= 2200 in file range
 
 
     tlu_hi = min(2200.0, lam_max)
@@ -610,7 +610,7 @@ def diagnose_T_rel(res, df_meas: pd.DataFrame, lambda_max_fit: float | None) -> 
 
 
 
-    # Comparaison directe H800 vs NBrel sur un tronçon commun
+    # Direct comparison H800 vs NBrel on a common section
 
 
     common_lo, common_hi = max(1000.0, lam_min), min(2200.0, lam_max)
@@ -1066,10 +1066,10 @@ def prescan_nbrel(path: str) -> list[dict]:
     """
 
 
-    Sans optimisation : qualité des données NBrel pour chaque coupe (lambda_min, clip).
+    Without optimization: quality of NBrel data for each cut (lambda_min, clip).
 
 
-    Permet de choisir quels essais lancer avant PGLOBAL.
+    Allows you to choose which tests to launch before PGLOBAL.
 
 
     """
@@ -1597,7 +1597,7 @@ def main() -> int:
     for r in results:
 
 
-        # Windows cp1252 : éviter UnicodeEncodeError sur la console
+        # Windows cp1252: avoid UnicodeEncodeError on console
 
 
         print(json.dumps(r, indent=2, ensure_ascii=True))
@@ -1618,7 +1618,7 @@ def main() -> int:
 
 
 
-    # Seuil indicatif (RMSE global sur les points du fichier)
+    #Indicative threshold (overall RMSE on the points in the file)
 
 
     thr = 0.04
@@ -1669,7 +1669,7 @@ def main() -> int:
 def print_interpretation(results: list, phase2: bool) -> None:
 
 
-    """Compare les deux jeux et indique où chercher la dégradation (TLU vs IR)."""
+    """Compare the two games and indicate where to look for degradation (TLU vs IR)."""
 
 
     by_label = {r.get("label"): r for r in results if "label" in r}

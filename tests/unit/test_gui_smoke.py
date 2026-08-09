@@ -4,19 +4,19 @@ These tests run headless (no display required) and verify structural integrity
 of the GUI modules after refactoring.
 
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
-⚠  NUMBA_DISABLE_JIT : cette variable d'environnement est NÉCESSAIRE ici
+⚠ NUMBA_DISABLE_JIT: this environment variable is NEEDED here
    to test GUI imports without triggering JIT compilation (which can
-   échouer sur Python 3.14 / certaines CI).
+   fail on Python 3.14 / some CI).
 
-   RÈGLES IMPÉRATIVES :
-   1. NE JAMAIS utiliser  os.environ["NUMBA_DISABLE_JIT"] = "1"  au niveau
+   IMPERATIVE RULES:
+   1. NEVER use os.environ["NUMBA_DISABLE_JIT"] = "1" at level
       module — this contaminates ALL subsequent tests in the process,
-      y compris les tests physiques qui DÉPENDENT du JIT.
+      including physical tests that DEPEND on JIT.
    2. Utiliser UNIQUEMENT la fixture _disable_numba_jit() ci-dessous, qui
-      sauvegarde et restaure la variable après exécution du module.
+      saves and restores the variable after execution of the module.
    3. If a new test in this file fails non-deterministically
       with Numba errors: check if another module imported
-      _certus_physics_impl AVANT que la fixture ne soit active.
+      _certus_physics_impl BEFORE the fixture is active.
 ──────────────────────────────────────────────────────────────────────────────
 """
 from __future__ import annotations

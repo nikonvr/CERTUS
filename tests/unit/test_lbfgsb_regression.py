@@ -554,7 +554,7 @@ class LbfgsbRegressionTester:
         )
         print("-" * 80)
 
-        # Execution time
+        #Execution time
         de_time = (
             de_result.execution_time if de_result.execution_time != float("inf") else 0
         )

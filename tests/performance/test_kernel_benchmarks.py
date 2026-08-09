@@ -1,15 +1,15 @@
 """Kernel-level benchmarks for physics hot paths (#38).
 
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
-⚠  DÉPENDANCE OPTIONNELLE : pytest-benchmark
+⚠ OPTIONAL DEPENDENCY: pytest-benchmark
 
    Ces tests utilisent la fixture  benchmark  fournie par  pytest-benchmark.
-   Ce package N'EST PAS dans les dépendances de base de la CI.
+   This package is NOT in the base CI dependencies.
 
    Le  pytest.importorskip  ci-dessous assure un skip gracieux (pas un ERROR)
    quand pytest-benchmark est absent.  NE PAS le supprimer.
 
-   Installation pour exécution locale :
+   Installation for local execution:
        pip install pytest-benchmark
 ──────────────────────────────────────────────────────────────────────────────
 """
@@ -19,7 +19,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-# PARE-FEU : skip gracieux si pytest-benchmark n'est pas installé.
+# FIREWALL: graceful skip if pytest-benchmark is not installed.
 pytest.importorskip("pytest_benchmark")
 
 from certus.core._certus_physics_impl import (

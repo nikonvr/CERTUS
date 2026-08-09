@@ -217,7 +217,7 @@ def test_extension_threshold_strictly_greater_than_4000() -> None:
 def test_min_delta_lambda_spacing_honoured_on_mesh() -> None:
 
 
-    """Avec min Deltalambda/lambdā > 0, le maillage canonique respecte le ratio (et peut réduire K)."""
+    """With min Deltalambda/lambdā > 0, the canonical mesh respects the ratio (and can reduce K)."""
 
 
     lam_lo, lam_hi = 250.0, 4800.0
@@ -250,7 +250,7 @@ def test_min_delta_lambda_spacing_honoured_on_mesh() -> None:
 def test_min_delta_aggressive_reduces_k_below_nominal_12() -> None:
 
 
-    """Seuil très élevé : moins de 12 nœuds sur une bande large."""
+    """Very high threshold: less than 12 nodes over a wide band."""
 
 
     lam_lo, lam_hi = 200.0, 5000.0

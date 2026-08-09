@@ -416,15 +416,15 @@ class _CorridorExportMixin:
             return
 
         start_dir = get_certus_last_dir()
-        # ⚠️ L'import local de `Path` a ete RETIRE, et ce n'etait pas cosmetique.
+        # ⚠️ The local import of `Path` was REMOVED, and it was not cosmetic.
         #
-        # `Path` est deja importe au niveau module (ligne 11). Un `from pathlib import
-        # Path` dans le corps de cette fonction en faisait une variable LOCALE sur toute
-        # sa portee — y compris a la ligne ci-dessous, qui s'execute AVANT l'affectation.
-        # Consequence : `UnboundLocalError` des que `get_certus_last_dir()` rend un
-        # chemin non vide, c'est-a-dire des la deuxieme utilisation de l'application.
-        # L'export CSV des indices etait donc casse en pratique. Signale par F821/F823,
-        # que l'`extend-ignore` du pyproject masquait.
+        # `Path` is already imported at the module level (line 11). A `from pathlib import
+        # Path` in the body of this function made it a LOCAL variable across its entire
+        # scope — including at the line below, which executes BEFORE the assignment.
+        # Consequence: `UnboundLocalError` as soon as `get_certus_last_dir()` returned a
+        # non-empty path, that is to say upon the second use of the application.
+        # The CSV export of the indices was therefore broken in practice. Flagged by F821/F823,
+        # which the `extend-ignore` in pyproject was hiding.
         if not start_dir or not Path(start_dir).is_dir():
             start_dir = str(Path(__file__).parent.absolute())
 
@@ -910,7 +910,7 @@ class _RunMixin:
         _corridor_pts = int(np.asarray(r.get("profile_d_values_nm", []), dtype=np.float64).size)
         _msg = (
             f"[INDEX_SPLINE.GRAPHS] {plot_source} | spectral T/R+n,k (+ corridor/NL tabs when available) "
-            f"| lam_pts={int(lam_s.size)} exp_pts={str(int(lam_exp.size)) if lam_exp is not None and lam_exp.size else '0'} abs={x_lbl} | d_nm={_d_s} rmse={_rm_s} | R_couche={bool(plot_r_model)} K_sigma={int(sigma_knots.size)} | profil_corridoir_d={_corridor_pts}pts"
+            f"| lam_pts={int(lam_s.size)} exp_pts={str(int(lam_exp.size)) if lam_exp is not None and lam_exp.size else '0'} abs={x_lbl} | d_nm={_d_s} rmse={_rm_s} | R_layer={bool(plot_r_model)} K_sigma={int(sigma_knots.size)} | d_corridor_profile={_corridor_pts}pts"
         )
         if plot_source == "live":
             _log_tgt.debug("%s", _msg)

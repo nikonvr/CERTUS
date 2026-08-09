@@ -161,8 +161,8 @@ def calculate_level_margins_to_extrema(
     i_stop = int(round((_MARGIN_NPTS - 1) / _MARGIN_D_SCAN))
     T_stop = Ts[i_stop]
 
-    # Vers l'arriere : on remonte tant que le signal progresse dans le meme sens, et on
-    # s'arrete au premier renversement. La valeur retenue est celle de l'extremum.
+    # Backwards: we go back as long as the signal progresses in the same
+    # direction, and we stop at the first reversal. The retained value is the extremum's.
     m_prev = MARGIN_NONE
     if i_stop >= 2:
         sign0 = 0.0
@@ -184,8 +184,8 @@ def calculate_level_margins_to_extrema(
             if sign0 == 0.0:
                 sign0 = s
 
-    # Vers l'avant : meme logique. C'est le cote qui gouverne l'atteignabilite — le
-    # signal peut tourner AVANT d'avoir atteint le niveau vise.
+    # Forwards: same logic. This is the side that governs reachability — the
+    # signal can turn BEFORE having reached the targeted level.
     m_next = MARGIN_NONE
     sign1 = 0.0
     d1 = Ts[i_stop + 1] - Ts[i_stop] if i_stop + 1 < _MARGIN_NPTS else 0.0
@@ -218,10 +218,10 @@ def check_level_margin_batch(
     M_befores: np.ndarray,
     margin_T: float,
 ) -> np.ndarray:
-    """Predicat d'admissibilite par candidate : la marge suffit-elle des DEUX cotes ?
+    """Admissibility predicate per candidate: is the margin sufficient on BOTH sides?
 
-    ``margin_T`` est en unites de T. Un cote sans extremum (``MARGIN_NONE``) est
-    considere comme non contraignant.
+    ``margin_T`` is in T units. A side without an extremum (``MARGIN_NONE``) is
+    considered non-constraining.
     """
     n = len(wls)
     out = np.empty(n, dtype=np.bool_)

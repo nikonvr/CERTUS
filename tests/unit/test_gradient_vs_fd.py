@@ -71,7 +71,7 @@ def _ref_RT_backside(wl, nr, ni, d, ns):
 
     n0 = 1.0
 
-    # n+ik convention: n_hat = nr + 1j*ni
+    #n+ik convention: n_hat = nr + 1j*ni
 
     n_hat = complex(nr, ni)
 
@@ -713,7 +713,7 @@ def _run_index_gradient_checks(label, wl, nr, ni, d, ns, tol=1e-4):
 
 
 
-    # FD: perturb ni (n+ik convention - same as kernel)
+    #FD: perturb ni (n+ik convention - same as kernel)
 
     R_p, T_p = _ref_RT_backside(wl, nr, ni + h, d, ns)
 

@@ -8,8 +8,8 @@ CHUNK_SIZE = 6
 
 def test_no_ultra_fine_duplicates():
     """
-    Test interne pour vérifier qu'aucune duplication de logique métier / boilerplate
-    dépassant 6 noeuds AST consécutifs ne régresse dans le dossier 'certus'.
+    Internal test to verify no duplication of business logic/boilerplate
+    exceeding 6 consecutive AST nodes does not regress into the 'certus' folder.
     """
     target_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "certus"))
     hashes = defaultdict(list)

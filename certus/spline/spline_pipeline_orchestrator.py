@@ -165,10 +165,10 @@ def _apply_k_floor_to_result(
     # Recompute k_lam and spectra
     lam_out = np.asarray(out.get("lam_nm", cfg.lam_nm), dtype=np.float64).ravel()
     sig_out = 1.0 / np.maximum(lam_out, 1e-30)
-    # Reconstruire k_lam avec L'INTERPOLATION DU MODELE, pas systematiquement en
-    # lineaire par morceaux. np.interp etait code en dur ici, alors que le mode par
-    # defaut est "smooth" des K >= 4 : le k_lam reecrit dans le resultat differait de
-    # celui que l'objectif avait reellement utilise pour l'ajustement.
+    # Reconstruct k_lam with the MODEL'S INTERPOLATION, not systematically in
+    # piecewise linear. np.interp was hardcoded here, whereas the default
+    # mode is "smooth" for K >= 4: the k_lam rewritten in the result differed from
+    # the one the objective had actually used for the fit.
     L_lam_out = _interpolate_along_sigma(
         sig_out, _sk_f, _LL_f, str(getattr(cfg, "nk_profile_interp", "smooth") or "smooth")
     )

@@ -226,7 +226,7 @@ class TestStratRobustnessScoring:
     def test_robustness_score_is_max_p95(self):
 
 
-        """Le robustness_score est le max des rmse_p95 sur les niveaux de bruit."""
+        """The robustness_score is the maximum of rmse_p95 on noise levels."""
 
 
         from CERTUS_STRAT import _test_strategy_robustness_task
@@ -316,17 +316,17 @@ class TestStratRobustnessScoring:
         # Fonctionnelle de classement : le P95, tranche par la mesure le 2026-08-06.
         # La CVaR95 (moyenne des 5 % pires) a ete essayee sur l'argument qu'un quantile
         # est decide par tres peu de points. L'argument est juste sur la PRECISION de
-        # l'estimateur — le CV bootstrap de la CVaR est meilleur dans cinq cas sur six —
-        # et FAUX sur ce qui nous interesse : la CVaR compresse les ecarts entre
-        # strategies, donc son CLASSEMENT se reproduit MOINS bien.
+        #the estimator — the CVaR bootstrap CV is better in five out of six cases —
+        #and FALSE about what interests us: CVaR compresses the gaps between
+        #strategies, so its RANKING reproduces LESS well.
         # scripts/probe_functional_stability.py, 1281 captures, demi-echantillons du
         # meme tirage : rho_p95 = +0,782 / +0,752 / +0,717 a N=25 contre rho_cvar =
         # +0,725 / +0,650 / +0,650 ; egalite a N=150. Le P95 est conserve.
         expected = max(r["rmse_p95"] for r in res["results_per_noise"])
         assert res["robustness_score"] == expected
 
-        # La cle rmse_all doit rester exposee : c'est elle qui permet de rejouer une
-        # autre fonctionnelle hors ligne sans relancer le Monte-Carlo.
+        #The rmse_all key must remain exposed: it is this which allows you to replay a
+        #another functional offline without restarting Monte-Carlo.
         for r in res["results_per_noise"]:
             assert len(r["rmse_all"]) == 8
             assert r["rmse_p95"] <= max(r["rmse_all"]) + 1e-12
@@ -3353,7 +3353,7 @@ class TestStratSymmetryContractAndStability:
 class TestStratResetIntegration:
 
 
-    """Reset / Clear pendant une boucle (worker + _request_stop)."""
+    """Reset / Clear during a loop (worker + _request_stop)."""
 
 
 

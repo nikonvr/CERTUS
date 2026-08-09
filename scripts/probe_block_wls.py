@@ -1,22 +1,22 @@
-"""Sonde : les 10 longueurs d'onde retenues par bloc sont-elles dix fois la meme ?
+"""Probe: are the 10 wavelengths retained per block ten times the same?
 
 `_dp_kernel` ne considere que les 10 meilleures lambda par bloc
 (certus/physics/certus_strat_dp.py:117), et `_compute_valid_blocks_kernel` les choisit par
-COUT CROISSANT, sans aucune contrainte de separation spectrale (:71-85).
+INCREASING COST, without any spectral separation constraints (:71-85).
 
-Si cout(lambda) est une fonction lisse de lambda, ces dix candidats sont dix points voisins
-du MEME minimum local. On ne garderait alors pas dix strategies : on echantillonnerait dix
-fois la meme, avant de depenser dessus le budget Monte-Carlo — la seule etape qui mesure la
+If cout(lambda) is a smooth function of lambda, these ten candidates are ten neighboring points
+of the SAME local minimum. We would then not keep ten strategies: we would sample ten
+the same time, before spending the Monte-Carlo budget on it — the only step that measures the
 reponse spectrale.
 
-Cette sonde intercepte le kernel au premier appel, sans rien changer au calcul, et mesure :
+This probe intercepts the kernel on the first call, without changing anything in the calculation, and measures:
   - l'etendue spectrale des 10 retenues, bloc par bloc ;
-  - combien de « regions » distinctes elles couvrent a differents seuils de separation ;
-  - la courbe cout(lambda) de quelques couches, pour juger de sa regularite.
+  - how many distinct “regions” they cover at different separation thresholds;
+  - the cost curve (lambda) of a few layers, to judge its regularity.
 
     .venv/Scripts/python.exe scripts/probe_block_wls.py
 
-N'ecrit rien dans le depot hors reports/. Ne modifie aucun comportement.
+Do not write anything in the repository except reports/. Does not modify any behavior.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ PROBE: dict = {"captured": False}
 
 
 def _clusters(wls: list[float], sep: float) -> int:
-    """Nombre de groupes separes d'au moins `sep` nm."""
+    """Number of groups separated by at least `sep` nm."""
     if not wls:
         return 0
     s = sorted(wls)
@@ -59,9 +59,9 @@ def install_probe() -> None:
     original = R._compute_valid_blocks_kernel
 
     # Signature agnostique : le kernel a gagne un parametre `min_wl_sep` le 2026-08-05
-    # et une sonde a signature figee a fait echouer tout le pipeline (TypeError avale
-    # par le worker, « No strategies found », 7 s perdues). Une sonde ne doit jamais
-    # dependre de l'arite de ce qu'elle observe.
+    #and a frozen signature probe caused the entire pipeline to fail (TypeError swallowed
+    #by the worker, “No strategies found”, 7 s lost). A probe should never
+    #depend on the arity of what it observes.
     def patched(*a, **kw):
         block_costs, block_wls, block_counts = original(*a, **kw)
         if PROBE["captured"]:
@@ -69,11 +69,11 @@ def install_probe() -> None:
         try:
             return _capture(a, kw, block_costs, block_wls, block_counts)
         except BaseException as exc:  # noqa: BLE001
-            # 🔴 UNE SONDE NE DOIT JAMAIS CASSER CE QU'ELLE OBSERVE. Deux incidents
-            # le 2026-08-05 : signature figee a 6 arguments apres l'ajout de
+            #🔴 A PROBE SHOULD NEVER BREAK WHAT IT OBSERVES. Two incidents
+            # on 2026-08-05: signature frozen at 6 arguments after adding
             # min_wl_sep (TypeError -> « No strategies found », run perdu), puis
             # un NameError sur top_k qui a desarme la sonde pour tout le run
-            # parce que `captured` etait pose AVANT le corps. Desormais : corps
+            #because `captured` was placed BEFORE the body. From now on: body
             # sous garde, et `captured` pose seulement en cas de SUCCES.
             PROBE["error"] = repr(exc)
             B.emit(f"PROBE_CAPTURE_FAILED={exc!r}")
@@ -120,7 +120,7 @@ def install_probe() -> None:
                     }
                 )
 
-        # --- la courbe cout(lambda) de quelques couches ---------------------------
+        #--- the cost curve (lambda) of a few layers ---------------------------
         curves = {}
         for l in (0, 1, 12, 24, 36, num_layers - 1):
             if l < 0 or l >= num_layers:

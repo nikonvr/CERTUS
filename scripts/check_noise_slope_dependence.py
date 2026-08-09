@@ -8,8 +8,8 @@ Pour chaque longueur d'onde on compare :
 import sys
 from pathlib import Path
 
-# Racine du depot deduite de l'emplacement de CE fichier (scripts/..).
-# Ne JAMAIS coder un chemin absolu ici : plusieurs copies du depot coexistent
+#Root of the repository deduced from the location of THIS file (scripts/..).
+#NEVER code an absolute path here: several copies of the repository coexist
 # sur la machine, et un chemin en dur ferait mesurer l'autre copie (CLAUDE.md §5.5).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -51,7 +51,7 @@ print("-" * 66)
 lin_ok = []
 for wl in range(460, 1005, 40):
     p, c = slope_curv(float(wl))
-    # dominance du terme lineaire sur le quadratique a l'echelle de l'erreur
+    #dominance of the linear term over the quadratic on the error scale
     ratio = abs(p) / (abs(c) * 1.0 + 1e-30)
     a = dd(float(wl), dT)
     b = dd(float(wl), p * Z * S_NM)

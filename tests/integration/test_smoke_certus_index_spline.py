@@ -1,4 +1,4 @@
-"""Smoke INDEX SPLINE : imports critiques (chaîne modules + classe GUI)."""
+"""Smoke INDEX SPLINE: critical imports (modules string + GUI class)."""
 from __future__ import annotations
 
 import pytest

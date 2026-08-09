@@ -42,7 +42,7 @@ class TestPlotCacheHash:
         assert len(h) > 0
 
     def test_non_serializable_values_are_filtered(self):
-        """Non-serializable values must not raise an exception."""
+        "Non-serializable values ​​must not raise an exception."
         cache = PlotCache()
         import numpy as np
         data = {"a": 1, "arr": np.zeros(3)}  # arr is not serializable

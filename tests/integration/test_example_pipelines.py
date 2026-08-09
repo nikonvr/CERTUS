@@ -1,26 +1,26 @@
-"""Tests d'intégration exhaustifs — couplage fichiers example/ → pipelines headless.
+"""Exhaustive integration tests — example/file coupling → headless pipelines.
 
-Chaque test charge un fichier du répertoire  example/  et vérifie qu'il produit
-un résultat numérique ou structurel cohérent.  C'est le garde-fou ultime :
-si un exemple livré avec le logiciel ne fonctionne plus, le test échoue.
+Each test loads a file from the example/ directory and verifies that it produces
+a coherent numerical or structural result.  This is the ultimate safeguard:
+if an example delivered with the software no longer works, the test fails.
 
 ── PARE-FEU ──────────────────────────────────────────────────────────────────
 ⚠  GOLDEN VALUES :
 
-   Les seuils numériques (RMSE, épaisseur, etc.) sont calibrés sur les
-   résultats ACTUELS des pipelines. Si un algorithme change et améliore
-   un résultat, le golden doit être MIS À JOUR (pas supprimé).
+   The numerical thresholds (RMSE, thickness, etc.) are calibrated on the
+   CURRENT pipeline results. If an algorithm changes and improves
+   a result, the golden should be UPDATED (not deleted).
 
 ⚠  FICHIERS EXEMPLES :
 
-   Ces tests DÉPENDENT des fichiers dans  example/ .  Si un fichier exemple
-   est renommé ou supprimé, le test correspondant SKIP (pas FAIL).
+   These tests DEPEND on the files in example/ .  If a sample file
+   is renamed or deleted, the corresponding test SKIP (not FAIL).
    NE PAS supprimer les  pytest.skip  sur fichiers manquants.
 
 ⚠  TESTS LENTS :
 
-   Les tests marqués  @pytest.mark.slow  exécutent de vrais pipelines
-   d'optimisation (5-30s chacun). Ils sont exclus du  pytest  par défaut.
+   Tests marked @pytest.mark.slow run real pipelines
+   optimization (5-30s each). They are excluded from pytest by default.
    Lancer avec :  pytest -m slow  ou  pytest --run-slow
 ──────────────────────────────────────────────────────────────────────────────
 """
@@ -83,23 +83,23 @@ def test_design_json_loads_and_has_required_keys(relpath: str) -> None:
 
 @pytest.mark.integration
 def test_design_example_has_targets_and_layers() -> None:
-    """L'exemple principal design doit avoir au moins 1 target et 20+ couches."""
+    """The main sample design must have at least 1 target and 20+ layers."""
     p = _example("example_design/JSON-design-example.json")
     data = json.loads(p.read_text(encoding="utf-8"))
 
     assert "targets" in data
     assert len(data["targets"]) >= 1
-    # PARE-FEU : golden = 26 couches dans l'exemple livré
+    #FIREWALL: golden = 26 layers in the example delivered
     assert len(data["front"]) >= 20, f"Attendu ≥20 couches, trouvé {len(data['front'])}"
 
 
 @pytest.mark.integration
 def test_design_optimized_spectrum_is_physical() -> None:
-    """Le design optimisé doit produire un spectre R,T ∈ [0,1] fini."""
+    """The optimized design must produce a finite R,T ∈ [0,1] spectrum."""
     p = _example("example_design/JSON-design-optimized.json")
     data = json.loads(p.read_text(encoding="utf-8"))
 
-    # Vérifier que les couches ont des épaisseurs physiques (qwot ou d > 0)
+    #Check that the layers have physical thicknesses (qwot or d > 0)
     for i, layer in enumerate(data["front"]):
         d = layer.get("d") or layer.get("thickness") or layer.get("qwot", 0)
         assert float(d) >= 0, f"Couche {i} a une épaisseur négative"
@@ -114,14 +114,14 @@ _STRAT_JSONS = [
     "example_strat/JSON-strat-sand38.json",
     "example_strat/JSON-strat-sand8.json",
 ]
-# Note : JSON-strat-example-verification.json, JSON-strat-fast-benchmark.json
-# et JSON-strat-blocks-sweep.json sont des fichiers de RÉSULTATS (pas des configs).
+# Note: JSON-strat-example-verification.json, JSON-strat-fast-benchmark.json
+#and JSON-strat-blocks-sweep.json are RESULTS files (not configs).
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("relpath", _STRAT_JSONS, ids=[Path(p).stem for p in _STRAT_JSONS])
 def test_strat_json_loads_and_has_wavelength_range(relpath: str) -> None:
-    """Chaque JSON strat doit charger et définir un domaine spectral."""
+    "Each JSON strat must load and define a spectral domain."""
     p = _example(relpath)
     data = json.loads(p.read_text(encoding="utf-8"))
 
@@ -132,20 +132,20 @@ def test_strat_json_loads_and_has_wavelength_range(relpath: str) -> None:
     wl_start = float(data["wl_range_start"])
     wl_end = float(data["wl_range_end"])
     assert 100 < wl_start < wl_end < 20000, (
-        f"Domaine spectral incohérent : [{wl_start}, {wl_end}] nm"
+        f"Incoherent spectral domain: [{wl_start}, {wl_end}] nm"
     )
 
 
 @pytest.mark.integration
 def test_strat_example_has_stack_definition() -> None:
-    """L'exemple principal strat doit définir un empilement H/L."""
+    """The main strat example must define an H/L stack."""
     p = _example("example_strat/JSON-strat-example.json")
     data = json.loads(p.read_text(encoding="utf-8"))
 
     assert "stack_multipliers" in data
     assert "l0" in data
     l0 = float(data["l0"])
-    assert 200 < l0 < 5000, f"Lambda de design irréaliste : {l0} nm"
+    assert 200 < l0 < 5000, f"Unrealistic design lambda: {l0} nm"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -154,13 +154,13 @@ def test_strat_example_has_stack_definition() -> None:
 
 @pytest.mark.integration
 def test_metal_single_json_has_physical_params() -> None:
-    """L'exemple métal doit définir les paramètres physiques du film."""
+    """The metal example must define the physical parameters of the film."""
     p = _example("example_metal_single/JSON-metal-example.json")
     data = json.loads(p.read_text(encoding="utf-8"))
 
     assert "physical_params" in data
     assert "material_params" in data
-    # PARE-FEU : le JSON métal doit référencer un fichier target
+    #FIREWALL: the metal JSON must reference a target file
     assert "target_file" in data or "excel_filename" in data
 
 
@@ -170,7 +170,7 @@ def test_metal_single_json_has_physical_params() -> None:
 
 @pytest.mark.integration
 def test_metal_bilayer_csv_loads_spectral_data() -> None:
-    """Le CSV bilayer doit charger un spectre R(λ) avec ≥100 points."""
+    """The CSV bilayer must load an R(λ) spectrum with ≥100 points."""
     p = _example("example_metal_bilayer/CSV-metal-example.csv")
     from certus.utils.certus_data import read_data_file_robust
 
@@ -180,18 +180,18 @@ def test_metal_bilayer_csv_loads_spectral_data() -> None:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# §5  RE (Reverse Engineering) — Validation du fichier XLSX
+#§5 RE (Reverse Engineering) — Validation of the XLSX file
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.integration
 def test_re_xlsx_loads_spectral_data() -> None:
-    """Le fichier RE doit charger ≥200 points avec des colonnes de réflectance."""
+    """The RE file must load ≥200 points with reflectance columns."""
     p = _example("example_RE/reverse_sample.xlsx")
     from certus.utils.certus_data import read_data_file_robust
 
     df = read_data_file_robust(str(p))
     assert df.shape[0] >= 200, f"Trop peu de points spectraux : {df.shape[0]}"
-    # PARE-FEU : le fichier RE contient au minimum lambda + R
+    #FIREWALL: the RE file contains at least lambda + R
     assert df.shape[1] >= 2
 
 
@@ -201,7 +201,7 @@ def test_re_xlsx_loads_spectral_data() -> None:
 
 @pytest.mark.integration
 def test_index_csv_loads_and_has_transmission() -> None:
-    """Le CSV index doit charger un spectre T(λ) avec ≥400 points."""
+    """The CSV index must load a T(λ) spectrum with ≥400 points."""
     p = _example("example_index/CSV-index-example.csv")
     from certus.utils.certus_data import read_data_file_robust
 
@@ -215,7 +215,7 @@ def test_index_golden_reference_exists() -> None:
     p = _example("example_index/golden_index.json")
     data = json.loads(p.read_text(encoding="utf-8"))
 
-    # PARE-FEU : golden values pour l'exemple CSV-index-example
+    # FIREWALL: golden values ​​for the example CSV-index-example
     # d ≈ 716 nm,  MSE ≈ 7.4e-3
     assert "d" in data and "mse" in data
     d = float(data["d"])
@@ -242,7 +242,7 @@ def test_index_spline_xlsx_loads_transmission() -> None:
     assert "T" in df.columns, f"Colonne 'T' manquante, colonnes : {list(df.columns)}"
     lam = df["lambda"].to_numpy(dtype=np.float64)
     assert lam.size >= 200, f"Trop peu de points : {lam.size}"
-    # PARE-FEU : le spectre TOTAL couvre au moins 300–2000 nm
+    #FIREWALL: TOTAL spectrum covers at least 300–2000 nm
     assert float(np.nanmin(lam)) < 400
     assert float(np.nanmax(lam)) > 1500
 
@@ -252,8 +252,8 @@ def test_index_spline_xlsx_loads_transmission() -> None:
 def test_index_spline_total_optimization_converges() -> None:
     """Pipeline headless INDEX_SPLINE sur TOTAL.xlsx : RMSE doit converger < 0.005.
 
-    PARE-FEU : Ce test exécute un vrai pipeline d'optimisation (~10-20s).
-    Si le RMSE dépasse le seuil, c'est une régression dans les kernels physiques
+    FIREWALL: This test runs a real optimization pipeline (~10-20s).
+    If the RMSE exceeds the threshold, it is a regression in the physical kernels
     ou dans la logique d'optimisation spline.
     """
     from threading import Event
@@ -310,7 +310,7 @@ def test_index_spline_total_optimization_converges() -> None:
 
     pk = pick_best_manual_material_preset(cfg, sk, d_nm_hint=0.5 * (cfg.d_lo + cfg.d_hi), relax_n_mono=True)
     if pk is None:
-        pytest.skip("Aucun preset matériau trouvé pour TOTAL.xlsx")
+        pytest.skip("No material presets found for TOTAL.xlsx")
 
     _bid, _rm0, d_opt, n_p, L_p, _rows = pk
     xi = physical_nodes_to_x_slice_n(n_p, sk, nb)
@@ -325,40 +325,40 @@ def test_index_spline_total_optimization_converges() -> None:
     )
 
     out = worker_spline_optimization(cfg, stop_event=Event(), progress_cb=lambda _p, _m: None)
-    assert isinstance(out, dict), "Pipeline n'a pas retourné de dict"
+    assert isinstance(out, dict), "Pipeline did not return a dict"
 
-    # PARE-FEU : golden RMSE pour TOTAL.xlsx (fenêtre large, pipeline rapide)
-    # Seuil conservateur : 0.06 — le pipeline rapide (spline_local_only, maxfun réduit)
+    # FIREWALL: golden RMSE for TOTAL.xlsx (wide window, fast pipeline)
+    # Conservative threshold: 0.06 — the fast pipeline (spline_local_only, maxfun reduced)
     # ne converge pas aussi finement que le pipeline complet.
-    # Si le RMSE dépasse ce seuil, c'est une régression significative.
+    #If the RMSE exceeds this threshold, it is a significant regression.
     wm = float(out.get("pipeline_best_rmse_watermark", float("nan")))
     assert np.isfinite(wm), f"RMSE watermark non fini : {wm}"
-    assert wm < 0.06, f"RMSE watermark trop élevée : {wm} (seuil : 0.06)"
+    assert wm < 0.06, f"RMSE watermark too high: {wm} (threshold: 0.06)"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# §8  DATABASE — Fichiers de référence substrats
+# §8 DATABASE — Substrate reference files
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.integration
 def test_database_index_files_exist() -> None:
-    """Les fichiers de base de données d'indices doivent être présents."""
+    """The index database files must be present."""
     for name in ["indices.xlsx", "sapphire_index.txt"]:
         p = _EXAMPLE_ROOT / "database_index" / name
-        assert p.is_file(), f"Fichier de base de données manquant : {name}"
-        assert p.stat().st_size > 100, f"Fichier suspect (trop petit) : {name}"
+        assert p.is_file(), f"Missing database file: {name}"
+        assert p.stat().st_size > 100, f"Suspicious file (too small): {name}"
 
 
 @pytest.mark.integration
 def test_sapphire_index_txt_is_parseable() -> None:
-    """sapphire_index.txt doit être un tableau numérique λ, n, k."""
+    """sapphire_index.txt must be a numeric array λ, n, k."""
     p = _example("database_index/sapphire_index.txt")
-    # PARE-FEU : le fichier a un header texte, skip la première ligne
+    #FIREWALL: the file has a text header, skip the first line
     data = np.loadtxt(str(p), comments="#", delimiter=None, skiprows=1)
-    # PARE-FEU : au moins 2 colonnes (λ, n) et 50+ lignes
+    #FIREWALL: at least 2 columns (λ, n) and 50+ rows
     assert data.ndim == 2
     assert data.shape[0] >= 50, f"Trop peu de lignes : {data.shape[0]}"
     assert data.shape[1] >= 2, f"Trop peu de colonnes : {data.shape[1]}"
-    # Vérifier que lambda est croissante
+    # Check that lambda is increasing
     lam_col = data[:, 0]
     assert np.all(np.diff(lam_col) > 0), "Lambda n'est pas strictement croissante"

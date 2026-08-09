@@ -41,7 +41,7 @@ class TestCERTUSHUB:
         mock_bootstrap.return_value = {"script_dir": "/fake/path"}
 
         # Simulate the call in the module
-        # Note: calling the mock directly since we can't easily trigger the top-level code execution
+        #Note: calling the mock directly since we can't easily trigger the top-level code execution
         # inside the test without reloading. But we can verify the mock setup.
         result = mock_bootstrap(__file__, "CERTUS_HUB")
 
@@ -91,7 +91,7 @@ class TestHubFunctionality:
         mock_app_instance = Mock()
         mock_qapp.instance.return_value = mock_app_instance
 
-        # Simuler une partie du code d'initialisation
+        #Simulate part of the initialization code
         env = mock_bootstrap(__file__, "CERTUS_HUB")
         assert isinstance(env, dict)
         assert env["script_dir"] == "/fake/path"

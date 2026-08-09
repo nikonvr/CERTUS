@@ -1,47 +1,46 @@
-"""Harnais de vérification des gradients analytiques.
+"""Analytical gradient verification harness.
 
-RAISON D'ÊTRE
--------------
-Un gradient faux ne lève aucune erreur. Il ne produit pas de NaN, ne déclenche aucune
-assertion : il déplace simplement l'optimum vers lequel l'optimiseur converge. C'est
-la catégorie de défaut la plus coûteuse d'un solveur, et la moins visible.
+RATIONALE
+---------
+An incorrect gradient raises no error. It produces no NaN, triggers no
+assertion: it simply shifts the optimum towards which the optimizer converges. It is
+the most costly category of defect in a solver, and the least visible.
 
-Ce module fournit une vérification unique — dérivée analytique contre différence finie
-centrée — appliquée à toutes les fonctions du projet qui exportent un gradient.
+This module provides a single verification — analytical derivative versus centered
+finite difference — applied to all project functions exporting a gradient.
 
-DEUX PRINCIPES
+TWO PRINCIPLES
 --------------
-1. **Comparer au coût que la fonction retourne ELLE-MÊME**, jamais à un coût reconstruit
-   à côté. C'est ce qui rend le test décisif : il vérifie la cohérence interne du couple
-   (coût, gradient), qui est exactement ce dont l'optimiseur a besoin. Un coût
-   reconstruit introduirait une seconde source d'erreur et rendrait tout écart ambigu.
+1. **Compare to the cost returned by the function ITSELF**, never to a reconstructed cost
+   on the side. This is what makes the test decisive: it verifies the internal consistency
+   of the (cost, gradient) pair, which is exactly what the optimizer needs. A reconstructed
+   cost would introduce a second source of error and make any discrepancy ambiguous.
 
-2. **Utiliser des poids NON UNIFORMES.** Plusieurs erreurs de normalisation — diviser
-   par le nombre de points au lieu de la somme des poids, par exemple — sont invisibles
-   avec des poids tous égaux à 1, où les deux dénominateurs ne diffèrent que d'un
-   facteur constant.
+2. **Use NON-UNIFORM weights.** Several normalization errors — dividing
+   by the number of points instead of the sum of weights, for instance — are invisible
+   with weights all equal to 1, where the two denominators differ only by a constant factor.
 
-CHOIX DU PAS ET DE LA TOLÉRANCE
--------------------------------
-Le pas central h équilibre l'erreur de troncature (O(h²)) et l'erreur d'arrondi
-(O(eps/h)). Pour des épaisseurs en nm de l'ordre de 100, h = 1e-6 nm place l'erreur
-attendue autour de 1e-9 relatif.
+CHOICE OF STEP AND TOLERANCE
+----------------------------
+The central step h balances truncation error (O(h²)) and rounding error
+(O(eps/h)). For layer thicknesses in nm of the order of 100, h = 1e-6 nm places the expected
+error around 1e-9 relative.
 
-L'écart est rapporté à la NORME du gradient, ||g_a - g_n||_inf / ||g_n||_inf, et non
-à chaque composante prise isolément. Le bruit d'une différence finie est absolu — de
-l'ordre de eps.|cout|/h — donc indépendant de la composante mesurée : rapporté à une
-direction cent fois moins sensible que la direction dominante, il produit une erreur
-relative énorme sans que le gradient soit faux pour autant.
+The discrepancy is referenced to the NORM of the gradient, ||g_a - g_n||_inf / ||g_n||_inf,
+and not to each component taken in isolation. The noise of a finite difference is absolute —
+of the order of eps.|cost|/h — thus independent of the measured component: referenced to a
+direction a hundred times less sensitive than the dominant direction, it produces a huge
+relative error without the gradient being incorrect.
 
-Sensibilité effective, mesurée sur compute_gradient_all_layers_analytic :
+Effective sensitivity, measured on compute_gradient_all_layers_analytic:
 
-    erreur globale de 0,001 %          -> DÉTECTÉE
-    erreur globale de 0,0001 %         -> non détectée
-    une seule composante à 0,01 %      -> DÉTECTÉE (y compris la plus petite)
+    global error of 0.001 %          -> DETECTED
+    global error of 0.0001 %         -> not detected
+    a single component at 0.01 %     -> DETECTED (including the smallest one)
 
-Autrement dit, la tolérance écarte le bruit numérique et rien d'autre. Les erreurs
-de structure réellement rencontrées dans ce dépôt — facteur 2 manquant, mauvaise
-normalisation, signe inversé — se manifestent par des écarts de 50 % ou 100 %.
+In other words, the tolerance filters out numerical noise and nothing else. Structural
+errors actually encountered in this repository — missing factor of 2, bad normalization,
+inverted sign — manifest as discrepancies of 50% or 100%.
 """
 
 from __future__ import annotations
@@ -54,7 +53,7 @@ __all__ = ["central_difference", "check_gradient", "GradientMismatch"]
 
 
 class GradientMismatch(AssertionError):
-    """Le gradient analytique ne coïncide pas avec la différence finie."""
+    """Analytical gradient does not match finite difference."""
 
 
 def central_difference(
@@ -62,15 +61,15 @@ def central_difference(
     params: np.ndarray,
     step: float = 1e-6,
 ) -> np.ndarray:
-    """Différence finie centrée du coût, paramètre par paramètre.
+    """Centered finite difference of cost, parameter by parameter.
 
     Args:
-        cost_of: fonction rendant le coût scalaire pour un vecteur de paramètres.
-        params: point d'évaluation.
-        step: pas central.
+        cost_of: function returning scalar cost for a parameter vector.
+        params: evaluation point.
+        step: central step size.
 
     Returns:
-        Le vecteur des dérivées numériques, même longueur que ``params``.
+        Vector of numerical derivatives, same length as ``params``.
     """
     base = np.asarray(params, dtype=np.float64)
     numerical = np.zeros(base.size, dtype=np.float64)
@@ -96,23 +95,23 @@ def check_gradient(
     label: str = "",
     blocks: list[tuple[int, int]] | None = None,
 ) -> np.ndarray:
-    """Vérifie qu'un gradient analytique est la dérivée du coût qu'il accompagne.
+    """Verifies that an analytical gradient is the derivative of the cost it accompanies.
 
     Args:
-        cost_and_grad: fonction rendant ``(cout, gradient)`` pour un vecteur de
-            paramètres. C'est bien SON coût qui sert de référence.
-        params: point d'évaluation.
-        step: pas de la différence finie centrée.
-        rtol: tolérance relative.
-        atol: seuil sous lequel une composante est considérée comme nulle.
-        label: nom affiché en cas d'échec.
+        cost_and_grad: function returning ``(cost, gradient)`` for a parameter
+            vector. IT IS INDEED ITS OWN cost that serves as reference.
+        params: evaluation point.
+        step: step size for centered finite difference.
+        rtol: relative tolerance.
+        atol: threshold below which a component is considered zero.
+        label: name displayed on failure.
 
     Returns:
-        Le gradient analytique vérifié.
+        The verified analytical gradient.
 
     Raises:
-        GradientMismatch: si une composante diverge, ou si le gradient est
-            identiquement nul — auquel cas le test ne prouverait rien.
+        GradientMismatch: if a component diverges, or if the gradient is
+            identically zero — in which case the test proves nothing.
     """
     base = np.asarray(params, dtype=np.float64)
     _, analytic = cost_and_grad(base)
@@ -120,28 +119,27 @@ def check_gradient(
 
     numerical = central_difference(lambda p: cost_and_grad(p)[0], base, step)
 
-    # Un gradient identiquement nul coïnciderait trivialement avec une différence
-    # finie nulle : le test passerait sans rien démontrer. On l'interdit.
+    # An identically zero gradient would trivially coincide with a zero finite
+    #difference: the test would pass without demonstrating anything. We disallow it.
     if np.max(np.abs(analytic)) < atol:
         raise GradientMismatch(
-            f"{label}: gradient analytique identiquement nul — "
-            f"le point d'évaluation est dégénéré, le test ne prouve rien."
+            f"{label}: analytical gradient is identically zero — "
+            f"the evaluation point is degenerate, the test proves nothing."
         )
 
-    # Métrique standard en optimisation : ||g_a - g_n||_inf / ||g_n||_inf, appliquée
-    # PAR BLOC.
+    # Standard metric in optimization: ||g_a - g_n||_inf / ||g_n||_inf, applied
+    # BLOCK BY BLOCK.
     #
-    # Une composante ne se compare pas à elle-même : le bruit d'une différence finie
-    # est ABSOLU (de l'ordre de eps.|cout|/h), donc rapporté à une direction cent fois
-    # moins sensible que la dominante il produit une erreur relative énorme sans que
-    # le gradient soit faux.
+    # A component should not be compared against itself: the noise of a finite difference
+    #is ABSOLUTE (of the order of eps.|cost|/h), so relative to a direction a hundred times
+    #less sensitive than the dominant one it produces a huge relative error without the
+    #gradient being incorrect.
     #
-    # Mais elle ne doit pas non plus se comparer à une famille de paramètres d'une
-    # tout autre échelle. Mesuré sur l'objectif spline : le gradient vaut ~6,7e+02 sur
-    # les nœuds n et ~1e-04 sur les nœuds ln(k) — six ordres de grandeur. Sous une
-    # norme globale, une erreur de 2 % sur le bloc k devient invisible. C'est
-    # exactement ce qui a rendu ce harnais aveugle à un défaut de règle de chaîne
-    # pourtant bien présent.
+    # But it must not be compared to a family of parameters of a completely different scale
+    #either. Measured on the objective spline: the gradient is ~6.7e+02 on n-nodes and
+    # ~1e-04 on ln(k)-nodes — six orders of magnitude. Under a global norm, a 2% error
+    #on the k block becomes invisible. This is exactly what made this harness blind
+    #to a chain rule bug that was actually present.
     spans = blocks if blocks is not None else [(0, analytic.size)]
 
     for start_idx, stop_idx in spans:
@@ -157,12 +155,12 @@ def check_gradient(
         worst = int(np.argmax(relative))
         if relative[worst] > rtol:
             details = [
-                f"{label}: bloc [{start_idx}:{stop_idx}], composante {start_idx + worst}",
-                f"  analytique  = {block_analytic[worst]:.12e}",
-                f"  diff. finie = {block_numerical[worst]:.12e}",
-                f"  ecart relatif = {relative[worst]:.3e} > {rtol:.1e}",
-                f"  bloc analytique : {np.array2string(block_analytic, precision=8)}",
-                f"  bloc diff.finie : {np.array2string(block_numerical, precision=8)}",
+                f"{label}: block [{start_idx}:{stop_idx}], component {start_idx + worst}",
+                f"  analytical  = {block_analytic[worst]:.12e}",
+                f"  finite diff = {block_numerical[worst]:.12e}",
+                f"  relative gap = {relative[worst]:.3e} > {rtol:.1e}",
+                f"  analytical block : {np.array2string(block_analytic, precision=8)}",
+                f"  finite diff block : {np.array2string(block_numerical, precision=8)}",
             ]
             raise GradientMismatch(chr(10).join(details))
 
@@ -170,10 +168,11 @@ def check_gradient(
 
 
 def non_uniform_weights(count: int, lo: float = 0.4, hi: float = 3.0) -> np.ndarray:
-    """Poids délibérément non uniformes.
+    """Deliberately non-uniform weights.
 
-    Avec des poids tous égaux, une normalisation par le nombre de points et une
-    normalisation par la somme des poids ne diffèrent que d'un facteur constant :
-    l'erreur devient invisible. Ces poids-ci la révèlent.
+    With all weights equal, normalization by the number of points and normalization
+    by the sum of weights differ only by a constant factor: the error becomes
+    invisible. These weights reveal it.
     """
     return np.linspace(lo, hi, count, dtype=np.float64)
+

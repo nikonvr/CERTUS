@@ -36,7 +36,7 @@ class TestStratMonteCarloSyntheticAudit:
 
     N_RUNS = 30
 
-    # ~30 × 2 tableaux × 400 × 600 × 8 o ~ 115 Mo de données vivantes à un instant
+    # ~30 × 2 tables × 400 × 600 × 8 o ~ 115 MB of live data at a time
 
     SHAPE = (400, 600)
 

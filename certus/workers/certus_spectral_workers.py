@@ -1,6 +1,6 @@
 # =============================================================================
 
-# Threads Qt partages : CERTUS_DESIGN et CERTUS_RE (warmup, eval spectrale, tableau detache).
+# Shared Qt threads: CERTUS_DESIGN and CERTUS_RE (warmup, spectral eval, detached table).
 
 # =============================================================================
 
@@ -673,7 +673,7 @@ class EvalWorker(QThread):
 
     - ``substrate_mat_key``: ``\"substrate\"`` (Design) or ``\"Substrate\"`` (RE); auto if omitted.
 
-    - ``re_loaded``: if true, apply ``re_apply_re_index_model`` (import paresseux depuis ``certus_re_helpers``).
+    - ``re_loaded``: if true, apply ``re_apply_re_index_model`` (lazy import from ``certus_re_helpers``).
 
     - ``use_back_coat``, ``stack_back``, ``ep_back``: pile arriere (Design uniquement).
 

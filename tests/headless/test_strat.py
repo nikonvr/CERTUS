@@ -53,7 +53,7 @@ def test_strat_headless():
                 strat_app.worker.signals.finished.connect(on_done)
                 strat_app.worker.signals.error.connect(on_error)
                 
-                # MOCK THE HEAVY EXECUTION to prevent hanging the test suite
+                #MOCK THE HEAVY EXECUTION to prevent hanging the test suite
                 def mock_run():
                     strat_app.worker.signals.finished.emit({"strategies": [], "status": "mocked"})
                 strat_app.worker.run = mock_run

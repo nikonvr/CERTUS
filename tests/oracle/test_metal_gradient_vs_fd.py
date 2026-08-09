@@ -1,20 +1,20 @@
-"""Le gradient du bicouche métallique doit être la dérivée de son coût, composante par composante.
+"""The gradient of the metallic bilayer must be the derivative of its cost, component by component.
 
-Ce gradient portait un défaut d'indexation : la boucle sur les positions de nœuds
-écrivait ``grad[offset + 2 * num_knots + i]`` alors que le bloc des nœuds k s'étend
-jusqu'à ``offset + 2 * spline_knot_count``, avec ``spline_knot_count = num_knots + 1``.
-Deux positions trop tôt, donc :
+This gradient carried an indexing defect: the loop on the node positions
+wrote ``grad[offset + 2 * num_knots + i]`` while the block of nodes k extends
+up to ``offset + 2 * spline_knot_count``, with ``spline_knot_count = num_knots + 1``.
+Two positions too early, therefore:
 
-    k[3], k[4]              gradients écrasés par ceux de lambda
+    k[3], k[4] gradients overwritten by those of lambda
     lambda[0]               recevait le gradient de lambda[2]
-    lambda[1], lambda[2]    exactement 0, alors que la dérivée est non nulle
+    lambda[1], lambda[2] exactly 0, while the derivative is non-zero
 
-L'optimiseur partait dans la mauvaise direction sur les deux derniers nœuds k et ne
-déplaçait jamais les dernières positions de nœuds. Aucune erreur n'était levée.
+The optimizer was going in the wrong direction on the last two k nodes and was not
+never moved the last node positions. No error was raised.
 
-Le vecteur d'optimisation mêle des grandeurs d'échelles très différentes — épaisseurs
+The optimization vector mixes quantities of very different scales — thicknesses
 en nm, coefficient de Cauchy de l'ordre du millier, indices d'ordre 1, positions en
-nm. La vérification est donc faite PAR BLOC, chacun contre sa propre norme.
+nm. The verification is therefore carried out PER BLOCK, each against its own standard.
 """
 
 from __future__ import annotations
@@ -36,12 +36,12 @@ from certus.physics.gradient_metal import (  # noqa: E402
 
 WAVELENGTHS = np.linspace(400.0, 900.0, 60)
 TARGET_REFLECTANCE = np.full(WAVELENGTHS.size, 0.35)
-# Substrat type silicium : fortement réfringent et légèrement absorbant.
+# Silicon type substrate: highly refractive and slightly absorbent.
 SUBSTRATE = np.full(WAVELENGTHS.size, complex(4.0, -0.05), dtype=np.complex128)
 
 
 def _pack(num_knots: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
-    """Vecteur d'optimisation et découpage en familles de paramètres.
+    """Optimization vector and division into families of parameters.
 
     Disposition : [eM, eL, n_inf, A] [n x (num_knots+1)] [k x (num_knots+1)]
                   [lambda x (num_knots-1)]
@@ -74,11 +74,11 @@ def _pack(num_knots: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
 def test_gradient_metal_bilayer_coincide_avec_les_differences_finies(
     num_knots: int,
 ) -> None:
-    """GARDE-FOU : toutes les familles de paramètres, pas seulement les premières.
+    """GUARDS: all families of parameters, not just the first ones.
 
-    Le défaut d'indexation ne touchait que la FIN du vecteur — nœuds k terminaux et
-    positions lambda. Un test qui ne vérifierait que les épaisseurs et les indices
-    serait passé sans rien voir.
+    The indexing defect only affected the END of the vector — k terminal nodes and
+    lambda positions. A test that would only check thicknesses and indices
+    would have passed without seeing anything.
     """
     params, blocks = _pack(num_knots)
 
@@ -96,9 +96,9 @@ def test_gradient_metal_bilayer_coincide_avec_les_differences_finies(
         cost_and_grad,
         params,
         step=1e-6,
-        # Les gradients des positions lambda sont eux-memes calcules par differences
-        # finies internes (h = 1e-5) : on compare donc une FD a une FD, ce qui est
-        # legitimement plus bruite qu'une comparaison a une derivee analytique.
+        #The gradients of the lambda positions are themselves calculated by differences
+        #internal finites (h = 1e-5): we therefore compare an FD to an FD, which is
+        #legitimately noisier than a comparison to an analytical derivative.
         rtol=2e-3,
         blocks=blocks,
         label=f"gradient metal bicouche K={num_knots}",
@@ -106,11 +106,11 @@ def test_gradient_metal_bilayer_coincide_avec_les_differences_finies(
 
 
 def test_aucune_composante_du_gradient_n_est_muette() -> None:
-    """Aucune famille de paramètres ne doit recevoir un gradient identiquement nul.
+    """No family of parameters must receive an identically zero gradient.
 
-    C'est le symptôme direct du défaut d'indexation : les dernières positions lambda
-    n'étaient jamais écrites et restaient à zéro. Un paramètre dont le gradient est
-    toujours nul n'est jamais optimisé — silencieusement.
+    This is the direct symptom of the indexing fault: the last lambda positions
+    were never written and remained at zero. A parameter whose gradient is
+    always zero is never optimized — silently.
     """
     num_knots = 4
     params, blocks = _pack(num_knots)

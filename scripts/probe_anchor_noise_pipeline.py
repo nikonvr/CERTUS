@@ -4,18 +4,18 @@
     .venv/Scripts/python.exe scripts/probe_anchor_noise_pipeline.py on     # bruit seul
     .venv/Scripts/python.exe scripts/probe_anchor_noise_pipeline.py full   # modele complet
 
-Reutilise TEL QUEL l'analyse par bande de `probe_spectral_error.py` — meme code, donc
+Reuses AS IS the band analysis of `probe_spectral_error.py` — same code, so
 chiffres comparables par construction au baseline qu'il a produit :
 
     RMSE global med 1,904 / p95 4,041 | passante p95 2,74 | FRONT p95 14,28
     BLOQUEE p95 0,0050 max|E| 0,019 % | decalage du front p95 1,80 nm
 
-⚠️ LE FICHIER D'EXEMPLE N'EST PAS TOUCHE. Le drapeau est injecte en surchargeant
+⚠️ THE EXAMPLE FILE IS NOT AFFECTED. The flag is injected by overloading
 `collect_params` apres coup. Recopier `JSON-strat-example.json` pour y poser le
 drapeau serait exactement le mode de defaillance que ce depot a paye trois fois : le
-fichier de reference qui derive du defaut du code sans que personne ne le voie.
+reference file that derives from the code defect without anyone seeing it.
 
-N'ecrit rien hors reports/. Ne modifie aucun code de production.
+Does not write anything except reports/. Does not modify any production code.
 """
 
 from __future__ import annotations
@@ -35,9 +35,9 @@ import probe_spectral_error as PSE  # noqa: E402
 
 
 #: 5 sigma du bruit de lecture, exprime en multiple de l'amplitude crete a crete A.
-#: 👤 « c'est bien un seuil d'amplitude, qui doit etre a environ 5 sigmas du bruit »
-#: (2026-08-06). Le tirage suit N(0, A/3) tronque a +/-A, donc sigma = 0,332 A et
-#: 5 sigma = 1,66 A. Voir CLAUDE.md §11 et §12.2 — valeur SOUS-DIMENSIONNEE, la borne
+#: 👤 “it is indeed an amplitude threshold, which must be approximately 5 sigmas from the noise”
+#: (2026-08-06). The draw follows N(0, A/3) truncates a +/-A, so sigma = 0.332 A and
+#: 5 sigma = 1.66 A. See CLAUDE.md §11 and §12.2 — UNDERDIMENSIONED value, the terminal
 #: anti-fabrication est 2 A. Surchargeable par le 5e argument de la ligne de commande.
 FIVE_SIGMA: float = 1.66
 
@@ -49,21 +49,21 @@ def patch_flag(
     yield_weight: float | None = None,
     tp_hyst: float | None = None,
 ) -> None:
-    """Force la configuration du modele dans les params, sans toucher a l'exemple.
+    """Forces the configuration of the model in the params, without touching the example.
 
     ``tp_hyst`` — surcharge du SEUL facteur de detection de point tournant, en
     multiples de l'amplitude de bruit A = trigger_tolerance/100. ``None`` laisse
-    la valeur du mode, donc le comportement d'avant ce parametre.
+    the value of the mode, therefore the behavior before this parameter.
 
     📏 Mesure du 2026-08-08 (signal propre PLAT, bruit reel, 20 000 tirages) :
-    a 1,66 A le bruit seul FABRIQUE un point tournant dans 32,9 % des couches a
+    a 1.66 A noise alone MAKES a turning point in 32.9% of layers a
     la densite de grille actuelle, et 99,9 % a la cadence reelle de la machine.
     Le docstring de `detect_turning_points` etablit la borne de suffisance a 2 A ;
     1,66 A est 17 % en dessous. A 2,4 A la fabrication tombe a 0,000 %.
 
     ⚠ Ne PAS confondre avec `phase_a_level_margin_factor`, qui partage aujourd'hui
-    la meme valeur 1,66 mais repond a un autre critere (cf. CLAUDE.md §12.2). Il
-    n'est deliberement pas touche ici : une chose a la fois.
+    the same value 1.66 but meets another criterion (see CLAUDE.md §12.2). He
+    is deliberately not touched here: one thing at a time.
     """
     from certus.ui.certus_strat_ui_state import CertusStratStateMixin
 

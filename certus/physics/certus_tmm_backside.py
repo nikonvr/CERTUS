@@ -147,7 +147,7 @@ def apply_exact_backside_combination(
 
         R_total, T_total
 
-    NOTE: Assumes REAL substrate index (Non-absorbing). Forces np.real(n_sub).
+    NOTE: Assume REAL substrate index (Non-absorbing). Forces np.real(n_sub).
 
     """
 

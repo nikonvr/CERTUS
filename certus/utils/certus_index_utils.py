@@ -210,7 +210,7 @@ def spectral_rmse_weights(lam, weight_space="log"):
 
     log_lam = np.log(np.maximum(lam, 1e-9))
 
-    # Gradient central (schema trapezoidal)
+    # Central gradient (trapezoidal scheme)
 
     w = np.zeros_like(log_lam)
 

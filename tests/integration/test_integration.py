@@ -134,7 +134,7 @@ class TestCoreIntegration:
 
         """Test la gestion des ressources."""
 
-        # Test avec un fichier existant
+        #Test with an existing file
 
         try:
 
@@ -230,7 +230,7 @@ class TestPhysicsIntegration:
 
 
 
-        # Valider des couches
+        #Validate layers
 
         from certus.utils.errors import validate_thickness
 
@@ -267,9 +267,9 @@ class TestModuleInteraction:
         """Test the availability of main modules."""
 
         # Chemins REELS du paquet. Les noms nus ("certus_core", "certus_ui",
-        # "certus_errors") datent de la disposition a plat : ils n'etaient importables
+        #"certus_errors") date from the flat layout: they were not importable
         # que via l'install editable du venv, qui resolvait vers un AUTRE snapshot
-        # (CERTUS/0807, fige au 13 juillet). Ce .pth a ete retire ; le test doit donc
+        #(CERTUS/0807, frozen on July 13). This .pth has been removed; the test must therefore
         # verifier ce que le depot expose reellement.
         modules_to_test = [
             "certus.core.certus_core",
@@ -503,7 +503,7 @@ class TestPerformanceIntegration:
 
     def test_calculationation_performance(self, sample_layers, sample_wavelengths):
 
-        """Test les performances de calculation dans un workflow."""
+        """Test calculation performance in a workflow."""
 
         import time
 
@@ -533,7 +533,7 @@ class TestPerformanceIntegration:
 
     def test_memory_usage(self, sample_layers, sample_wavelengths):
 
-        """Test l'memory usage dans un workflow."""
+        """Test memory usage in a workflow."""
 
         try:
 
@@ -633,7 +633,7 @@ class TestEndToEndIntegration:
 
     def test_error_handling_workflow(self):
 
-        """Test un workflow complet avec gestion d'errors."""
+        """Test a complete workflow with error management."""
 
         # 1. Configuration
 

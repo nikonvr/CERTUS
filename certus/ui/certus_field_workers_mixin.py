@@ -10,7 +10,7 @@ class CertusFieldWorkersMixin:
         action = getattr(self.worker, "request", None) and self.worker.request.action
         synthesis_was_active = getattr(self, "_synthesis_active", False)
 
-        # If standard execution (not synthesis) or worker failed, we reset running and enable buttons
+        #If standard execution (not synthesis) or worker failed, we reset running and enable buttons
         if not getattr(self, "_synthesis_active", False) or not result.success:
             self._is_running = False
             self.btn_calc.setEnabled(True)

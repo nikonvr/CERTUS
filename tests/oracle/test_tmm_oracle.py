@@ -1,12 +1,12 @@
-"""Confrontation des chemins TMM de production à une référence indépendante.
+"""Confrontation of production TMM paths with an independent reference.
 
-C'est le filet de sécurité qui manquait au projet. Tant que ces tests passent, un
-refactoring des modules de physique ne peut pas altérer silencieusement les résultats
-numériques — ce qui s'est produit au moins deux fois dans l'historique récent
+This is the safety net that was missing from the project. As long as these tests pass, a
+refactoring physics modules cannot silently alter results
+digital — which has happened at least twice in recent history
 (bug de signe monocouche, perte de @njit lors de l'extraction des gradients).
 
-Principe directeur : **un test qui ne peut pas échouer quand le bug est présent n'est
-pas un test.** Chaque test ci-dessous a été vérifié comme échouant sur le code d'avant
+Guiding principle: **a test that cannot fail when the bug is present is not
+not a test.** Every test below has been verified as failing on the code before
 correctif (voir les commentaires « GARDE-FOU »).
 """
 
@@ -35,14 +35,14 @@ from certus.physics.certus_tmm_single_layer import (  # noqa: E402
 
 TWO_PI = 2.0 * math.pi
 
-# Tolérance : on exige la précision machine, pas une vague ressemblance.
-# Les chemins de production et l'oracle font les mêmes opérations dans un ordre
-# différent ; 1e-12 laisse la marge de l'arithmétique flottante et rien de plus.
+#Tolerance: we demand machine precision, not a vague resemblance.
+#Production paths and oracle do the same operations in an order
+#different ; 1e-12 leaves the arithmetic margin floating and nothing more.
 ATOL = 1e-12
 
-# ── Corpus figé ──────────────────────────────────────────────────────────────
-# Couvre : diélectrique transparent, faible absorption, forte absorption, métal
-# (n < 1, k élevé), indice bas, indice très haut. Les épaisseurs balaient le
+# ── Frozen corpus ─────────────────────────────── ───────────────────────────────
+# Covers: transparent dielectric, low absorption, high absorption, metal
+#(n < 1, high k), low index, very high index. The thicknesses sweep the
 # sous-quart-d'onde, le quart-d'onde et le multi-onde.
 
 MATERIALS = [
@@ -64,11 +64,11 @@ WAVELENGTHS_NM = [400.0, 550.0, 700.0, 1000.0]
 @pytest.mark.parametrize("n_real, k_val", MATERIALS)
 @pytest.mark.parametrize("thickness_nm", THICKNESSES_NM)
 def test_single_layer_front_matches_oracle(n_real: float, k_val: float, thickness_nm: float) -> None:
-    """``calculate_RT_single_layer_single`` doit reproduire l'oracle à la précision machine.
+    """``calculate_RT_single_layer_single`` must reproduce the oracle to machine precision.
 
-    GARDE-FOU : avec l'ancien signe (``phi_i = +k·n_imag·d`` à
-    certus_tmm_single_layer.py:41) ce test échoue dès que ``k > 0`` — jusqu'à
-    46 points d'écart à k=3, où le clamp saturait la réflectance à R=1.
+    CAUTION: with the old sign (``phi_i = +k·n_imag·d`` to
+    certus_tmm_single_layer.py:41) this test fails as soon as ``k > 0`` — until
+    46 points difference at k=3, where the clamp saturated the reflectance at R=1.
     """
     produced = calculate_RT_single_layer_single(550.0, n_real, k_val, thickness_nm, 1.52)
     expected = r_single_layer_front(550.0, n_real, k_val, thickness_nm, 1.52)
@@ -85,11 +85,11 @@ def test_single_layer_front_matches_oracle(n_real: float, k_val: float, thicknes
 def test_infinite_substrate_matches_oracle(n_real: float, k_val: float, thickness_nm: float) -> None:
     """``calculate_reflection_infinite_substrate_single`` doit reproduire l'oracle.
 
-    GARDE-FOU : cette fonction développait la matrice caractéristique à la main avec
-    ``-i·sin(δ)/n̂`` au lieu du ``+i`` de la convention Macleod du projet. Exacte à
-    k = 0, elle atteignait **82 points** d'écart de réflectance à k > 0. Chemin vivant :
-    ajustement n,k de CERTUS_INDEX et ses gradients par différences finies.
-    Elle délègue désormais à ``compute_TMM_generic``.
+    GUARD: this function developed the characteristic matrix by hand with
+    ``-i·sin(δ)/n̂`` instead of ``+i`` from the project's Macleod convention. Exact to
+    k = 0, it reached **82 points** of reflectance difference at k > 0. Living path:
+    n,k adjustment of CERTUS_INDEX and its gradients by finite differences.
+    It now delegates to ``compute_TMM_generic``.
     """
     from certus.physics.certus_opt_tmm import (
         calculate_reflection_infinite_substrate_single,
@@ -109,7 +109,7 @@ def test_infinite_substrate_matches_oracle(n_real: float, k_val: float, thicknes
 @pytest.mark.parametrize("n_real, k_val", MATERIALS)
 @pytest.mark.parametrize("wavelength_nm", WAVELENGTHS_NM)
 def test_monolayer_generic_matches_oracle(n_real: float, k_val: float, wavelength_nm: float) -> None:
-    """``compute_TMM_generic`` — chemin multicouche de production — sur une couche."""
+    """``compute_TMM_generic`` — production multi-layer path — on one layer."""
     layers = np.array([n_hat(n_real, k_val)], dtype=np.complex128)
     thicknesses = np.array([120.0], dtype=np.float64)
 
@@ -124,8 +124,8 @@ def test_monolayer_generic_matches_oracle(n_real: float, k_val: float, wavelengt
     assert t_prod == pytest.approx(t_ref, abs=ATOL), f"T : {t_prod} vs {t_ref}"
 
 
-# Empilements réels, du plus simple au plus représentatif d'un design.
-# Rappel de l'ordre : indice 0 = adjacent au SUBSTRAT, indice N-1 = adjacent à l'AIR.
+# Real stacks, from the simplest to the most representative of a design.
+#Reminder of the order: index 0 = adjacent to the SUBSTRATE, index N-1 = adjacent to the AIR.
 STACKS = [
     pytest.param([(1.46, 0.0)], [100.0], id="monocouche-SiO2"),
     pytest.param([(2.30, 0.0), (1.46, 0.0)], [59.8, 94.2], id="bicouche-HL"),
@@ -175,9 +175,9 @@ def test_energy_conservation(
 ) -> None:
     """R + T <= 1 sur tout empilement passif.
 
-    C'est une propriété de la PHYSIQUE, pas de l'implémentation. Sa violation est le
-    symptôme direct d'une convention d'indice inversée (n+ik au lieu de n−ik) :
-    l'empilement produit alors un gain non physique. Cf. CLAUDE.md §3.
+    This is a property of PHYSICS, not of implementation. Its violation is
+    direct symptom of a reversed index convention (n+ik instead of n−ik):
+    stacking then produces a non-physical gain. See CLAUDE.md §3.
     """
     complex_layers = [n_hat(n, k) for n, k in layers_nk]
 
@@ -198,10 +198,10 @@ def test_energy_conservation(
 
 
 def test_absentee_half_wave_layer() -> None:
-    """Une couche demi-onde est optiquement absente : R doit égaler celle du substrat nu.
+    """A half-wave layer is optically absent: R must equal that of the bare substrate.
 
-    Identité analytique exacte, indépendante de toute implémentation. Piège classique
-    des erreurs de facteur 2 dans le déphasage (δ = 2π n d / λ et non π n d / λ).
+    Exact analytical identity, independent of any implementation. Classic trap
+    errors of factor 2 in the phase shift (δ = 2π n d / λ and not π n d / λ).
     """
     wavelength_nm = 550.0
     n_layer = 2.30
@@ -220,9 +220,9 @@ def test_absentee_half_wave_layer() -> None:
 
 
 def test_perfect_quarter_wave_antireflection() -> None:
-    """Un quart-d'onde d'indice sqrt(n_sub) annule exactement la réflexion.
+    """A quarter-wave of index sqrt(n_sub) exactly cancels the reflection.
 
-    Deuxième identité analytique : verrouille conjointement le déphasage ET la
+    Second analytical identity: jointly locks the phase shift AND the
     formule d'extraction R/T.
     """
     wavelength_nm = 550.0
@@ -242,7 +242,7 @@ def test_perfect_quarter_wave_antireflection() -> None:
 
 
 def test_bare_interface_matches_fresnel() -> None:
-    """Sans couche, on doit retrouver Fresnel : R = ((1-ns)/(1+ns))²."""
+    """Without layer, we must find Fresnel: R = ((1-ns)/(1+ns))²."""
     for n_sub in (1.46, 1.52, 2.0, 3.5):
         reflectance, _ = compute_TMM_generic(
             TWO_PI / 550.0,
@@ -255,7 +255,7 @@ def test_bare_interface_matches_fresnel() -> None:
         assert reflectance == pytest.approx(expected, abs=1e-12), f"n_sub={n_sub}"
 
 
-# ── Contrats d'implémentation ────────────────────────────────────────────────
+# ── Implementation contracts ──────────────────────── ────────────────────────
 
 
 # ── Incidence oblique ────────────────────────────────────────────────────────
@@ -270,11 +270,11 @@ OBLIQUE_THICKNESSES = [59.8, 94.2, 59.8]
 def test_oblique_matches_oracle(angle_deg: float, s_pol: bool) -> None:
     """Le chemin oblique de production doit reproduire l'oracle, s et p confondues.
 
-    CLAUDE.md §5.1 note que ``certus_tmm_oblique.py`` est correct parce que ses appelants
-    passent ``phi.imag`` déjà signé, ce qui compense le conjugué renvoyé par
+    CLAUDE.md §5.1 notes that ``certus_tmm_oblique.py`` is correct because its callers
+    pass ``phi.imag`` already signed, which offsets the conjugate returned by
     ``compute_complex_phase_components``. C'est une compensation, pas une preuve : ce test
-    la remplace par une vérification indépendante (admittances inclinées de Macleod,
-    éq. 2.36-2.37, angle complexe dans les couches absorbantes).
+    replaces it with an independent verification (inclined Macleod admittances,
+    eq. 2.36-2.37, complex angle in the absorbent layers).
     """
     from certus.physics.certus_tmm_oblique import _oblique_stack_rt_single
 
@@ -302,11 +302,11 @@ def test_oblique_matches_oracle(angle_deg: float, s_pol: bool) -> None:
 
 @pytest.mark.parametrize("s_pol", [True, False], ids=["pol-s", "pol-p"])
 def test_oblique_at_zero_degrees_equals_normal_incidence(s_pol: bool) -> None:
-    """À 0°, les deux polarisations doivent redonner exactement l'incidence normale.
+    """At 0°, the two polarizations must restore exactly the normal incidence.
 
-    Identité analytique : à angle nul, ``cos θ = 1`` et les admittances inclinées
-    dégénèrent toutes deux vers ``n̂``. Verrouille conjointement l'invariant de Snell,
-    les deux formules d'admittance et le déphasage incliné.
+    Analytical identity: at zero angle, ``cos θ = 1`` and inclined admittances
+    both degenerate towards ``n̂``. Jointly locks the Snell invariant,
+    the two admittance formulas and the inclined phase shift.
     """
     layers = [n_hat(n, k) for n, k in OBLIQUE_STACK]
 
@@ -344,13 +344,13 @@ def test_oblique_energy_conservation(angle_deg: float, s_pol: bool) -> None:
 
 
 def test_hot_kernels_are_jit_compiled() -> None:
-    """Les noyaux chauds DOIVENT rester compilés par Numba.
+    """Hot kernels MUST remain compiled by Numba.
 
-    GARDE-FOU : deux de ces noyaux ont perdu leur décorateur ``@njit`` lors de
+    WARNING: two of these kernels lost their decorator ``@njit`` during
     l'extraction de ``certus_opt_gradients.py`` vers les modules ``gradient_*``.
-    Les résultats restaient corrects, donc aucun test ne l'a vu — mais les boucles
-    ``prange`` redevenaient séquentielles (facteur ~100 sur la boucle chaude
-    d'optimisation en incidence oblique). Ce test rend la régression impossible.
+    The results remained OK, so no tests saw it — but the loops
+    ``prange`` became sequential again (factor ~100 on the hot loop
+    optimization in oblique incidence). This test makes regression impossible.
     """
     from numba.core.registry import CPUDispatcher
 

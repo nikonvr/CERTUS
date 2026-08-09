@@ -866,8 +866,8 @@ class CertusStratLayoutMixin:
 
         # Le mode `fast` a ete RETIRE (2026-08-05). Il divisait les budgets Monte-Carlo
         # par 4 : a 6 tirages de screening, un P95 est le maximum de six et le taux de
-        # plantage a une resolution de 17 % pour un seuil a 5 %. Voir la justification
-        # complete dans collect_params (certus_strat_ui_state.py).
+        #crash at a resolution of 17% for a threshold of 5%. See justification
+        #complete in collect_params (certus_strat_ui_state.py).
         self.widgets["execution_mode"].addItems(["premium"])
 
         self.widgets["execution_mode"].setCurrentText("premium")

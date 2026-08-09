@@ -48,7 +48,7 @@ from certus.core.certus_metrology import (
 )
 
 # ─────────────────────────────────────────────────────────────────────
-# 1. certus_metrology.py Exception & ImportError Fallback Tests
+#1. certus_metrology.py Exception & ImportError Fallback Tests
 # ─────────────────────────────────────────────────────────────────────
 
 @pytest.mark.unit
@@ -237,7 +237,7 @@ def test_export_optimization_report_success_with_plots(tmp_path) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 4. Shared Memory Close Exception Paths
+#4. Shared Memory Close Exception Paths
 # ─────────────────────────────────────────────────────────────────────
 
 @pytest.mark.unit

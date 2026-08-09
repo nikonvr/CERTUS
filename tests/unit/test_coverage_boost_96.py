@@ -66,10 +66,10 @@ def test_setup_numba_cache_value_error(monkeypatch):
         "NUMEXPR_NUM_THREADS",
     ]:
         # Effacer INCONDITIONNELLEMENT. L'ancienne version faisait
-        # `setenv(var, os.environ[var])` quand la variable existait — elle PRÉSERVAIT
-        # donc la valeur en place, avant d'asserter plus bas qu'elle vaut None. Le test
-        # ne passait que tant qu'aucun autre test du lot ne positionnait ces variables :
-        # dépendance à l'ordre d'exécution, invisible en lancement isolé.
+        #`setenv(var, os.environ[var])` when the variable existed — it PRESERVED
+        #therefore the value in place, before asserting below that it is worth None. The test
+        #only passed as long as no other test in the batch positioned these variables:
+        #dependence on the execution order, invisible in isolated launch.
         # monkeypatch restaure les valeurs d'origine en fin de test.
         monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")
@@ -94,10 +94,10 @@ def test_setup_numba_cache_frozen(monkeypatch):
         "NUMEXPR_NUM_THREADS",
     ]:
         # Effacer INCONDITIONNELLEMENT. L'ancienne version faisait
-        # `setenv(var, os.environ[var])` quand la variable existait — elle PRÉSERVAIT
-        # donc la valeur en place, avant d'asserter plus bas qu'elle vaut None. Le test
-        # ne passait que tant qu'aucun autre test du lot ne positionnait ces variables :
-        # dépendance à l'ordre d'exécution, invisible en lancement isolé.
+        #`setenv(var, os.environ[var])` when the variable existed — it PRESERVED
+        #therefore the value in place, before asserting below that it is worth None. The test
+        #only passed as long as no other test in the batch positioned these variables:
+        #dependence on the execution order, invisible in isolated launch.
         # monkeypatch restaure les valeurs d'origine en fin de test.
         monkeypatch.delenv(env_var, raising=False)
     monkeypatch.setitem(os.environ, "_CERTUS_NUMBA_CONFIGURED", "0")

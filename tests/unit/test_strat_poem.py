@@ -11,20 +11,20 @@ de niveau (trigger). Le monitoring par point tournant (TPM) n'est pas modelise.
 C'est ce qui explique — et rend CORRECT — le resultat de
 `test_qwot_at_own_l0_is_not_monitorable_by_trigger`.
 
-⚠ SEUIL PHYSIQUE. En dessous de 0,05 nm il n'y a plus d'epaisseur : c'est moins
-d'un atome. Toute assertion d'egalite d'epaisseur se juge a cette aune, pas a la
+⚠ PHYSICAL THRESHOLD. Below 0.05 nm there is no more thickness: it is less
+of an atom. Any assertion of equality of thickness is judged by this yardstick, not by
 precision machine.
 
-🔴 PERIMETRE — SEUL LE DICHROIQUE 48 COUCHES EST UN EXEMPLE VALABLE.
-👤 Le physicien, 2026-08-06. L'empilement utilise ici est un JOUET : huit couches quart
-d'onde a 1500 nm, choisi parce qu'il est petit, controle et rapide. Il sert a verifier
-des MECANISMES — identite au bit pres, le bruit atteint-il les ancres, la sentinelle
-porte-t-elle sa cause — et **AUCUNE CONCLUSION PHYSIQUE NE PEUT EN ETRE TIREE**.
+🔴 PERIMETER — ONLY 48-LAYER DICHROIC IS A VALID EXAMPLE.
+👤 The Physicist, 2026-08-06. The stack used here is a TOY: eight quarter layers
+wave at 1500 nm, chosen because it is small, controlled and fast. It is used to check
+MECHANISMS — identity to the nearest bit, does the noise reach the anchors, the sentinel
+does it bear its cause — and **NO PHYSICAL CONCLUSION CAN BE DRAWN FROM IT**.
 
-Tout chiffre marque 📏 dans ce fichier provient de `example/example_strat/
-JSON-strat-example.json` via `scripts/probe_anchor_noise.py`, jamais du jouet. Ne jamais
-mesurer un taux de plantage, un rendement ou une erreur spectrale sur cet empilement-ci
-pour en conclure quoi que ce soit : le juge de paix, c'est le 48 couches.
+Any digit marked 📏 in this file comes from `example/example_strat/
+JSON-strat-example.json` via `scripts/probe_anchor_noise.py`, never a toy. Never
+measure a crash rate, yield or spectral error on this stack
+to conclude anything: the justice of the peace is the 48 layers.
 """
 
 import numpy as np
@@ -34,9 +34,9 @@ import certus_physics  # noqa: F401  (facade : evite l'import circulaire)
 from certus_physics import simulate_growth_kernel
 
 # --------------------------------------------------------------------------- #
-# Empilement de reference : 8 couches quart d'onde a 1500 nm.
+#Reference stack: 8 quarter-wave layers at 1500 nm.
 # Volontairement le meme materiau que tests/integration/test_strat_robustness.py
-# pour que les deux fichiers parlent du meme objet.
+# so that both files talk about the same object.
 # --------------------------------------------------------------------------- #
 N_H = complex(2.3, 0.0)
 N_L = complex(1.45, 0.0)
@@ -49,7 +49,7 @@ P_THICK = np.array(
 PROBE = 2.0
 NM_ATTENUATE = 0
 
-#: En dessous, une difference d'epaisseur n'a pas de sens physique (< 1 atome).
+#: Below, a difference in thickness has no physical meaning (< 1 atom).
 ATOM_NM = 0.05
 
 #: Sentinelle « depot non terminable » : le noyau renvoie nominal + 1e6.
@@ -93,12 +93,12 @@ def _gain(i_layer, wl, block_start=-1, probe_nm=1.0):
 @pytest.mark.parametrize("i_layer", [3, 5, 7])
 @pytest.mark.parametrize("wl", [1300.0, 1700.0, 1900.0])
 def test_nominal_history_and_zero_noise_gives_nominal_thickness(i_layer, wl):
-    """Sans erreur amont ni bruit, la couche doit ressortir NOMINALE.
+    """Without upstream error or noise, the layer should come out NOMINAL.
 
     C'est la condition de coherence minimale du niveau de declenchement : quand
     l'empilement reel EST l'empilement nominal, la cible calculee sur le nominal
-    est exactement la transmission atteinte a l'epaisseur nominale, et POEM la
-    reporte sur des extrema qui sont les memes des deux cotes.
+    is exactly the transmission achieved at the nominal thickness, and POEM the
+    transferred to extrema which are the same on both sides.
     """
     val = _grow(i_layer, P_THICK[:i_layer], wl)
     assert val < CRASH_SENTINEL, f"depot declare non terminable a {wl:.0f} nm"
@@ -106,7 +106,7 @@ def test_nominal_history_and_zero_noise_gives_nominal_thickness(i_layer, wl):
 
 
 # =========================================================================== #
-# 2. La compensation existe, et elle DISCRIMINE les longueurs d'onde
+#2. Compensation exists, and it DISCRIMINATES wavelengths
 # =========================================================================== #
 
 def test_compensation_gain_discriminates_wavelengths():
@@ -114,7 +114,7 @@ def test_compensation_gain_discriminates_wavelengths():
 
     C'est toute la justification du critere : si le gain etait a peu pres le meme
     partout, il n'apporterait rien au classement de la Phase A. Mesure sur cet
-    empilement, couche 7 : 0,07 a 1400 nm contre 10,9 a 1200 nm.
+    stacking, layer 7: 0.07 at 1400 nm versus 10.9 at 1200 nm.
     """
     gains = {wl: _gain(7, wl) for wl in (1200.0, 1300.0, 1400.0, 1700.0, 2000.0)}
     finite = {w: g for w, g in gains.items() if not np.isnan(g)}
@@ -127,7 +127,7 @@ def test_compensation_gain_discriminates_wavelengths():
 
 
 def test_compensation_gain_below_one_means_upstream_error_is_damped():
-    """gain < 1 doit vouloir dire, litteralement, que l'erreur amont retrecit."""
+    """gain < 1 must mean, literally, that the upstream error shrinks."""
     probe = 1.0
     wl = 1400.0  # amortit fortement sur cet empilement
     g = _gain(7, wl, probe_nm=probe)
@@ -149,12 +149,12 @@ def test_compensation_gain_below_one_means_upstream_error_is_damped():
 
 @pytest.mark.parametrize("wl", [1300.0, 1700.0])
 def test_block_history_changes_the_compensation(wl):
-    """A lambda inchangee, les extrema des couches precedentes sont exploitables.
+    """With lambda unchanged, the extrema of the previous layers can be used.
 
-    Le balayage POEM porte sur toute la longueur du BLOC, pas sur la seule couche
-    courante : passer block_start_layer doit donc changer le point d'arret. Un
+    POEM scanning covers the entire length of the BLOCK, not just the layer
+    current: passing block_start_layer must therefore change the breakpoint. A
     resultat identique signifierait que l'historique n'est pas lu — c'est le
-    defaut que le commit 87bb056 a corrige, et ce test est la pour qu'il ne
+    fault that commit 87bb056 corrected, and this test is there so that it does not
     revienne pas.
     """
     sans = _gain(7, wl, block_start=-1)
@@ -167,7 +167,7 @@ def test_block_history_changes_the_compensation(wl):
 
 
 def test_block_history_is_bounded_by_max_lookback():
-    """Le retour en arriere est borne a 4 couches : au-dela, plus de changement."""
+    """The return is limited to 4 layers: beyond that, no more change."""
     a = _gain(7, 1300.0, block_start=3)
     b = _gain(7, 1300.0, block_start=0)
     assert not np.isnan(a) and not np.isnan(b)
@@ -187,11 +187,11 @@ def test_qwot_at_own_l0_is_not_monitorable_by_trigger(i_layer):
 
     Ce n'est pas un defaut du modele, c'est le bon resultat : a QWOT exact
     l'arret tombe sur le point tournant, ou dT/dd = 0. Un niveau n'y a plus
-    aucune sensibilite a l'epaisseur, et la moitie des realisations du bruit
-    place la cible au-dela de l'extremum, ou elle ne sera jamais atteinte.
+    no sensitivity to thickness, and half the noise achievements
+    places the target beyond the extremum, or it will never be reached.
 
     En salle, ce cas se monitore en TPM — un paradigme que ce simulateur ne
-    modelise pas. Le declarer non terminable EN TRIGGER est donc exact.
+    not model. Declaring it non-terminated IN TRIGGER is therefore correct.
     """
     val = _grow(i_layer, P_THICK[:i_layer], L0, noise=0.002)
     assert val > CRASH_SENTINEL, (
@@ -201,7 +201,7 @@ def test_qwot_at_own_l0_is_not_monitorable_by_trigger(i_layer):
 
 
 def _t_front(prev_thicks, n_cur, d, wl):
-    """T de face avant, calcule ICI et non emprunte au noyau teste.
+    """T on the front panel, calculates HERE and not borrows from the core tested.
 
     Meme convention que ``simulate_growth_kernel`` : milieu incident n = 1,
     substrat semi-infini, pas de face arriere.
@@ -221,29 +221,29 @@ def _t_front(prev_thicks, n_cur, d, wl):
 
 
 def test_unreachable_level_is_flagged_not_silently_snapped_to_the_vertex():
-    """Un niveau inatteignable doit etre SIGNALE, jamais absorbe en silence.
+    """An unattainable level must be REPORTED, never absorbed in silence.
 
     `_solve_quadratic_target` possede une branche `discriminant < 0` qui renvoie
-    le SOMMET de la parabole d'inversion sans rien signaler. C'est exactement la
+    the TOP of the inversion parabola without reporting anything. This is exactly the
     situation « le niveau vise n'est pas atteignable », mais rendue sous la forme
-    d'une epaisseur d'apparence normale.
+    of normal-appearing thickness.
 
-    La detection de non-terminabilite etait gardee par `poem_ok`, donc inactive
+    The non-terminability detection was guarded by `poem_ok`, therefore inactive
     precisement quand POEM est mal conditionne. Mesure sur
-    example/example_strat/JSON-strat-example.json, 48 couches x 51 longueurs
-    d'onde, erreur amont +2 nm :
+    example/example_strat/JSON-strat-example.json, 48 layers x 51 lengths
+    waveform, upstream error +2 nm:
 
-        repli mutique sur le sommet     avant : 6,68 %      apres : 0,04 %
-        non-terminabilite signalee      avant : 0,21 %      apres : 7,26 %
+        silent withdrawal on the summit before: 6.68% after: 0.04%
+        non-terminability reported before: 0.21% after: 7.26%
 
     Le taux ne dependait PAS de probe_offset (6,63 % a 0,5 nm, 6,88 % a 10 nm) :
     ce n'etait pas un artefact du fit parabolique mais la defaillance physique,
     non comptee.
 
-    ⚠ Une erreur de plusieurs dizaines de nanometres n'est PAS en soi le signe
+    ⚠ An error of several tens of nanometers is NOT in itself a sign
     d'un plantage manque : dans les zones de faible dynamique la sensibilite
-    s'effondre et une grande erreur est le resultat correct. C'est le repli
-    MUTIQUE qu'on traque, pas la grande erreur.
+    collapses and a big error is the correct result. It's the fallback
+    MUTIC that we are tracking down, not the big mistake.
     """
     from certus.physics.certus_strat_math import fit_parabola_vertex_3points
 
@@ -278,12 +278,12 @@ def test_unreachable_level_is_flagged_not_silently_snapped_to_the_vertex():
 def test_non_monotonic_factor_no_longer_scales_the_error(wl):
     """Le facteur ne doit plus rien changer en mode ATTENUATE.
 
-    Il divisait l'erreur par une constante des qu'un extremum etait traverse :
+    He divided the error by a constant as soon as an extremum was crossed:
     la forme reduite du gain d'information apporte par le swing. Avec la cible
-    figee et POEM, ce gain est devenu STRUCTUREL — il varie avec le contraste
+    frozen and POEM, this gain has become STRUCTURAL — it varies with the contrast
     reellement observe. Continuer a diviser compterait deux fois le meme effet.
 
-    Ce test verrouille une suppression DELIBEREE : s'il echoue, c'est que le
+    This test locks a DELIBERATE deletion: if it fails, it is because the
     pansement a ete remis.
     """
     prev = P_THICK[:5].copy()

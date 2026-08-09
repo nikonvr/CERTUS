@@ -1,9 +1,9 @@
 """Helpers partages par les tests.
 
-Ce module existe pour que les tests puissent importer des fonctions utilitaires SANS
+This module exists so that tests can import utility functions WITHOUT
 passer par ``from conftest import ...``. Cet import par nom nu n'est pas fiable : le
-depot contient plusieurs ``conftest.py`` (tests/, tests/ui/, ...) et, en l'absence de
-``__init__.py``, le nom de module ``conftest`` designe celui qui a ete importe EN
+depot contains several ``conftest.py`` (tests/, tests/ui/, ...) and, in the absence of
+``__init__.py``, the module name ``conftest`` designates the one which was imported EN
 PREMIER par pytest. Selon les repertoires passes en ligne de commande, c'est
 ``tests/ui/conftest.py`` qui gagnait, d'ou un ImportError a la collecte.
 

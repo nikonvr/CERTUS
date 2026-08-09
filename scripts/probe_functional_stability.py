@@ -1,4 +1,4 @@
-"""P95 contre CVaR95 : laquelle donne le classement le plus reproductible ?
+"""P95 versus CVaR95: which gives the most reproducible classification?
 
 Le classement des strategies repose sur une fonctionnelle de la distribution des RMSE
 Monte-Carlo. `rmse_p95` est un QUANTILE — la fonctionnelle la moins efficace d'un
@@ -11,22 +11,22 @@ echantillon, determinee par la seule queue haute :
 `rmse_cvar95` est la MOYENNE des 5 % pires (expected shortfall). Meme semantique de risque,
 mais elle moyenne la queue au lieu d'en piocher un point.
 
-PROTOCOLE — equitable, et sans une seule simulation supplementaire.
-Les RMSE par tirage sont deja stockes (`results_per_noise[i]["rmse_all"]`). On les capture,
+PROTOCOL — fair, and without a single additional simulation.
+The RMSEs per draw are already stored (`results_per_noise[i]["rmse_all"]`). We capture them,
 puis hors ligne :
 
-  1. DEMI-ECHANTILLONS. On coupe les N tirages en deux moities (les MEMES indices pour
-     toutes les strategies — les nombres aleatoires sont communs, donc la comparaison reste
+  1. HALF SAMPLES. We cut the N draws into two halves (the SAME indices for
+     all strategies — random numbers are common, so the comparison remains
      appariee). On calcule chaque fonctionnelle sur chaque moitie, et on mesure le rho de
-     Spearman entre le classement de la moitie A et celui de la moitie B.
-     La fonctionnelle dont le classement se reproduit le mieux est la plus fiable, a budget
-     RIGOUREUSEMENT identique. Chacune est jugee sur SON propre classement, jamais sur celui
+     Spearman between the classification of the A half and that of the B half.
+     The functional whose classification reproduces the best is the most reliable, at a budget
+     Strictly identical. Each is judged on ITS own ranking, never on that
      de l'autre : le test ne favorise ni l'une ni l'autre par construction.
   2. BOOTSTRAP. Coefficient de variation de chaque estimateur, strategie par strategie.
 
     .venv/Scripts/python.exe scripts/probe_functional_stability.py
 
-N'ecrit rien hors reports/. Ne modifie aucun comportement.
+Does not write anything except reports/. Does not modify any behavior.
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ def _p95(a, axis=-1):
 
 
 def _cvar95(a, axis=-1):
-    """Moyenne des 5 % pires — au moins un point."""
+    """Average of the worst 5% — at least one point."""
     import numpy as np
 
     a = np.sort(a, axis=axis)
@@ -100,7 +100,7 @@ def analyse() -> dict:
     import numpy as np
     from scipy import stats
 
-    # on regroupe par (niveau de bruit, longueur d'echantillon) : il faut une matrice
+    #we group by (noise level, sample length): we need a matrix
     groups: dict = {}
     for c in CAPTURED:
         key = (round(float(c["noise_level"]), 6), len(c["rmse_all"]))
@@ -115,7 +115,7 @@ def analyse() -> dict:
         ids = sorted(by_id)
         M = np.asarray([by_id[i] for i in ids], dtype=np.float64)  # (n_strat, n_runs)
 
-        # --- 1. demi-echantillons, memes indices pour toutes les strategies ---------
+        #--- 1. half samples, same indices for all strategies ---------
         R = 200
         rho_p95, rho_cvar = [], []
         for _ in range(R):

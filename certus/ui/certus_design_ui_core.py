@@ -468,7 +468,7 @@ class CoreManager:
         """Retrieves spectral targets (oblique mode)"""
 
         if not self.ui.oblique_mode:
-            return []  # Sinon mode normal : _get_tgts()
+            return []  # Otherwise normal mode: _get_tgts()
 
         targets = []
 

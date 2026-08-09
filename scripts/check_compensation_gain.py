@@ -1,20 +1,20 @@
 """Gain de compensation par longueur d'onde de monitoring.
 
-Critere de selection DIRECT, et bien plus parlant qu'une erreur locale : on
-injecte une erreur sonde sur la couche precedente, on simule la couche courante
-a bruit NUL, et on regarde de combien elle corrige.
+DIRECT selection criterion, and much more telling than a local error: we
+injects a probe error on the previous layer, we simulate the current layer
+has ZERO noise, and we see how much it corrects.
 
     gain(lambda) = |Delta_d_i| / delta_sonde
 
-    gain < 1  ->  l'erreur amont est AMORTIE      (empilement stable)
-    gain ~ 1  ->  elle est reportee telle quelle
-    gain > 1  ->  elle est AMPLIFIEE              (divergence sur N couches)
+    gain < 1 -> the upstream error is AMORTIZED (stable stacking)
+    gain ~ 1 -> it is reported as is
+    gain > 1 -> it is AMPLIFIED (divergence on N layers)
 
-Sur 48 couches, c'est cette grandeur qui decide si l'erreur reste bornee. Elle est
-orthogonale au P95(|Delta_d|) de la Phase A, qui ne mesure que l'erreur LOCALE :
-une couche peut etre precise localement et amplifier ce qui la precede.
+On 48 layers, it is this magnitude which decides whether the error remains bounded. She is
+orthogonal to P95(|Delta_d|) of Phase A, which only measures the LOCAL error:
+a layer can be specified locally and amplify what precedes it.
 
-Cout : quelques evaluations par candidate, AUCUN Monte-Carlo.
+Cost: a few evaluations per candidate, NO Monte-Carlo.
 
     .venv\\Scripts\\python.exe scripts\\check_compensation_gain.py
 """
@@ -34,7 +34,7 @@ FACTOR = 1.0
 
 
 def compensation_gain(p_thick, i_layer, wl, n_H, n_L, n_Sub, probe_err=2.0):
-    """Renvoie (gain, delta_d) pour une erreur sonde sur la couche i_layer-1."""
+    """Returns (gain, delta_d) for a probe error on layer i_layer-1."""
     if i_layer < 1:
         return float("nan"), float("nan")
     prev_nom = np.asarray(p_thick[:i_layer], dtype=np.float64).copy()

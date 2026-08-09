@@ -393,7 +393,7 @@ class TestResetManagerCoverageBoost:
         bad_console = Mock()
         bad_console.clear = Mock(side_effect=RuntimeError("clear error"))
         
-        # 4. Test memory cleanup exception by mocking gc.collect to fail
+        #4. Test memory cleanup exception by mocking gc.collect to fail
         monkeypatch.setattr("gc.collect", Mock(side_effect=TypeError("gc collect failed")))
         
         m = CertusResetManager(app)

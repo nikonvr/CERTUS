@@ -52,16 +52,16 @@ __all__ = [
     "set_certus_window_icon",
     "open_documentation",
     # Pro UX Design System components
-    # SkeletonLoaderWidget retire de __all__ : il n'est PAS un export de ce module a
-    # l'execution. Il vient de certus_ui_widgets_utils, qui importe lui-meme depuis
-    # certus_ui_utils (ligne 86) — d'ou un cycle, casse ici par un import place sous
-    # `if TYPE_CHECKING`. Le nom ne sert donc que d'annotation de retour, entre
-    # guillemets (install_skeleton_loader, ligne 1219).
-    # Le declarer dans __all__ faisait lever AttributeError a tout `import *` sur ce
-    # module. ruff ne le signale pas : un import TYPE_CHECKING lie bien le nom dans
-    # son analyse statique. Seule une verification a l'execution le revele.
-    # Les consommateurs doivent l'importer de certus_ui_widgets_utils, ce que fait
-    # deja certus_ui.py:274.
+    # SkeletonLoaderWidget removed from __all__: it is NOT an export of this module at
+    # runtime. It comes from certus_ui_widgets_utils, which itself imports from
+    # certus_ui_utils (line 86) — hence a cycle, broken here by an import placed under
+    # `if TYPE_CHECKING`. The name is therefore only used as a return annotation, in
+    # quotes (install_skeleton_loader, line 1219).
+    # Declaring it in __all__ caused an AttributeError for any `import *` on this
+    # module. ruff does not report it: a TYPE_CHECKING import binds the name in
+    # its static analysis. Only a runtime check reveals it.
+    # Consumers must import it from certus_ui_widgets_utils, which is what
+    # certus_ui.py:274 already does.
     "install_skeleton_loader",
     "remove_skeleton_loader",
     "apply_os_window_effects",
@@ -885,7 +885,7 @@ def setup_pyqtgraph_defaults() -> None:
         logging.getLogger("CERTUS").debug("Silenced exception in %s", __name__, exc_info=True)
 
 def setup_gui_exception_handling() -> None:
-    """Install global exception hook for GUI applications."""
+    "Install global exception hook for GUI applications."
 
     import sys
 

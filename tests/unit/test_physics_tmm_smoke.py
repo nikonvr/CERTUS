@@ -1,8 +1,8 @@
 """Direct TMM smoke tests on `_certus_physics_impl` (P1-12).
 
 Aligned with `tests/test_tmm_coherence.py`:
-- TEST 1: single QW — `compute_TMM_generic` vs analytique ; `` (dos incohérent).
-- TEST 2 (HLH) : `compute_TMM_single_point_k0` et `compute_TMM_single_point_k0_exact` (Rf, Tf) vs `compute_TMM_generic`, plusieurs λ.
+- TEST 1: single QW — `compute_TMM_generic` vs analytical; `` (inconsistent back).
+- TEST 2 (HLH): `compute_TMM_single_point_k0` and `compute_TMM_single_point_k0_exact` (Rf, Tf) vs `compute_TMM_generic`, several λ.
 """
 
 from __future__ import annotations

@@ -6,7 +6,7 @@ CERTUS_APPS_MAPPING = {
     "CERTUS_DESIGN": "CertusDesignApp",
     "CERTUS_FIELD": "CertusFieldApp",
     # La classe QMainWindow du Hub s'appelle CertusHub (CERTUS_HUB.py:182).
-    # "CertusHubApp" n'a jamais existe : le test echouait des sa creation.
+    #"CertusHubApp" never existed: the test failed as soon as it was created.
     "CERTUS_HUB": "CertusHub",
     "CERTUS_INDEX": "CertusIndexApp",
     "CERTUS_INDEX_SPLINE": "CertusIndexSplineApp",

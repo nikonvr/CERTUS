@@ -1,4 +1,4 @@
-"""Tests unitaires : certus_core — utilitaires headless étendus."""
+"""Unit tests: certus_core — extended headless utilities."""
 
 from __future__ import annotations
 

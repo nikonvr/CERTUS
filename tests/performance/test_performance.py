@@ -54,7 +54,7 @@ def _as_complex_per_wavelength(n_val, n_pts: int) -> np.ndarray:
 
 
 def run_tmm_wrapper(layers, wavelengths):
-    """Wrapper Helper for simuler l'ancien compute_TMM_generic avec le nouveau noyau bas-niveau."""
+    """Wrapper Helper for simulating the old compute_TMM_generic with the new low-level kernel."""
     if not layers:
         return np.zeros(len(wavelengths))
 
@@ -231,14 +231,14 @@ class TestMemoryPerformance:
     @pytest.mark.skipif(not PHYSICS_AVAILABLE, reason="Physics module non disponible")
     @pytest.mark.skipif(not TRACEMALLOC_AVAILABLE, reason="tracemalloc non disponible")
     def test_memory_usage_multiple_calculationations(self, sample_wavelengths):
-        """Test l'memory usage for plusieurs calculations."""
+        """Test memory usage for multiple calculations."""
         try:
             import tracemalloc
 
             # Start memory tracking
             tracemalloc.start()
 
-            # Effectuer plusieurs calculations
+            #Perform multiple calculations
             layers_configs = [
                 [Layer(mat="SiO2", qwot=100.0 / 100.0)],
                 [
@@ -314,13 +314,13 @@ class TestDataTypePerformance:
         """Test la performance entre float32 et float64."""
         layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
 
-        # Test avec float32
+        #Testing with float32
         wavelengths_f32 = sample_wavelengths.astype(np.float32)
         start_time = time.time()
         spectrum_f32 = run_tmm_wrapper(layers, wavelengths_f32)
         time.time() - start_time
 
-        # Test avec float64
+        #Testing with float64
         wavelengths_f64 = sample_wavelengths.astype(np.float64)
         start_time = time.time()
         spectrum_f64 = run_tmm_wrapper(layers, wavelengths_f64)
@@ -337,13 +337,13 @@ class TestDataTypePerformance:
         """Test la performance entre complex64 et complex128."""
         layers = [Layer(mat="SiO2", qwot=100.0 / 100.0)]
 
-        # Test avec complex64
+        #Testing with complex64
         wavelengths_c64 = sample_wavelengths.astype(np.float32)
         start_time = time.time()
         spectrum_c64 = run_tmm_wrapper(layers, wavelengths_c64)
         time.time() - start_time
 
-        # Test avec complex128
+        #Testing with complex128
         wavelengths_c128 = sample_wavelengths.astype(np.float64)
         start_time = time.time()
         spectrum_c128 = run_tmm_wrapper(layers, wavelengths_c128)
@@ -387,7 +387,7 @@ class TestParallelPerformance:
         def single_calculationation():
             return run_tmm_wrapper(layers, sample_wavelengths)
 
-        # Test avec plusieurs threads
+        #Testing with multiple threads
         n_calculationations = 10
         start_time = time.time()
 

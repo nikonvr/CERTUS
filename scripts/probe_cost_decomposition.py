@@ -1,35 +1,35 @@
-"""Qu'est-ce qui manque au cout de la DP : les sensibilites, ou la covariance ?
+"""What is missing from the cost of PD: sensitivities, or covariance?
 
 Mesure du 2026-08-05 : rho(total_cost, robustness_score) = -0,04. Le cout de la DP ne predit
-pas la reponse spectrale. Reste a savoir POURQUOI, et la reponse decide de tout le chantier.
+not the spectral response. It remains to be seen WHY, and the answer decides the entire project.
 
-Au premier ordre,  delta_T(lambda) = somme_i S_i(lambda) . delta_d_i , donc
+To first order, delta_T(lambda) = sum_i S_i(lambda) . delta_d_i , so
 
     Var[delta_T(lambda)] = somme_i somme_j S_i(lambda) S_j(lambda) Cov[delta_d_i, delta_d_j]
 
-Le cout actuel vaut somme_i P95(|delta_d_i|) : il n'utilise que la DIAGONALE, en valeur
-absolue, sans ponderation spectrale. Deux ingredients manquent. On les rajoute UN PAR UN :
+The current cost is sum_i P95(|delta_d_i|): it only uses the DIAGONAL, in value
+absolute, without spectral weighting. Two ingredients are missing. We add them ONE BY ONE:
 
     cout_0 = somme_i P95(|delta_d_i|)               le cout actuel
-    cout_1 = somme_i ||S_i|| . P95(|delta_d_i|)     + sensibilites, TOUJOURS diagonal
+    cost_1 = sum_i ||S_i|| . P95(|delta_d_i|) + sensitivities, ALWAYS diagonal
     cout_2 = sqrt( moy_lambda Var[delta_T_lin] )    + covariance : le modele lineaire complet
     verite = robustness_score  (Monte-Carlo, TMM complet)
 
 VERDICT ATTENDU :
-  rho(cout_1) eleve  -> il ne manquait que les sensibilites. Un cout SEPARABLE, donc
-                        compatible avec la DP telle qu'elle est, peut marcher.
+  rho(cout_1) high -> only the sensitivities were missing. A SEPARABLE cost, therefore
+                        compatible with the DP as it is, can work.
   rho(cout_1) nul et rho(cout_2) eleve
-                     -> c'est la COVARIANCE qui porte l'information, c'est-a-dire
-                        l'auto-compensation. Aucun cout diagonal ne marchera jamais, et la DP
-                        doit porter un etat d'erreur ou renoncer a classer.
+                     -> it is the COVARIANCE which carries the information, that is to say
+                        self-compensation. No diagonal cost will ever work, and the DP
+                        must carry an error status or give up classifying.
   rho(cout_2) faible -> le modele lineaire lui-meme ne tient pas ; tout raisonnement
                         analytique sur la propagation est a jeter.
 
-On mesure aussi rho(rmse_lin, rmse_vrai) : la validite de la linearisation, prealable a tout.
+We also measure rho(rmse_lin, rmse_true): the validity of the linearization, prior to everything.
 
     .venv/Scripts/python.exe scripts/probe_cost_decomposition.py
 
-N'ecrit rien hors reports/. Ne modifie aucun comportement.
+Does not write anything except reports/. Does not modify any behavior.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ def install_probe() -> None:
     import certus.core.certus_strat_robustness as R
     import certus.workers.certus_strat_workers as W
 
-    # --- 1. capter les tableaux optiques nominaux (une fois) ----------------------
+    #--- 1. capture nominal optical arrays (once) ----------------------
     orig_optics = R._prepare_robustness_nominal_optics
 
     def patched_optics(*a, **kw):
@@ -222,10 +222,10 @@ def main() -> None:
     B.qapp()
     B.autoanswer_dialogs(True)
 
-    # ECHEC IMMEDIAT. Une premiere version importait calculate_RT_vectorized_real_HL
-    # depuis le mauvais module ; l'ImportError n'est tombee qu'APRES le calcul et a
-    # coute une heure. Tout ce dont l'analyse a besoin est verifie AVANT de lancer
-    # quoi que ce soit.
+    #IMMEDIATE FAILURE. A first version imported calculate_RT_vectorized_real_HL
+    #from the wrong module; the ImportError only occurred AFTER the calculation and
+    #costs an hour. Everything the analysis needs is checked BEFORE running
+    #anything.
     from certus_physics import calculate_RT_vectorized_real_HL  # noqa: F401
     from scipy import stats  # noqa: F401
 

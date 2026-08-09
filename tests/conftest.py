@@ -12,12 +12,12 @@ from pathlib import Path
 # Add root directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# La console Windows est en cp1252 : tout print d'un caractère hors Latin-1 lève
-# UnicodeEncodeError et fait ÉCHOUER le test, alors qu'il s'agit d'un simple message
-# de diagnostic. Le cas typique est un test qui plante en écrivant sa ligne de SUCCÈS
-# (« ✅ analytic=..., fd=... »). 48 occurrences de ✅/❌/⚠ dans 12 fichiers de tests.
-# On force UTF-8 sur les flux de test : un print de diagnostic ne doit jamais pouvoir
-# faire échouer une assertion qui, elle, est passée.
+# The Windows console is in cp1252: any print of a character outside Latin-1 raises
+#UnicodeEncodeError and FAILS the test, even though it is just a message
+# diagnostic. The typical case is a test which crashes while writing its SUCCESS line
+#("✅ analytic=..., fd=..."). 48 occurrences of ✅/❌/⚠ in 12 test files.
+#We force UTF-8 on the test flows: a diagnostic print must never be able to
+#to fail an assertion which itself has passed.
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
         try:
@@ -126,7 +126,7 @@ def sample_spectrum(sample_wavelengths):
 
 
 # Deplace vers tests/spectrum_helpers.py : un conftest.py declare des fixtures,
-# il ne doit pas servir de bibliotheque importable par nom nu (plusieurs
+#it must not serve as a library importable by bare name (several
 # conftest.py coexistent, le nom "conftest" est ambigu).
 from spectrum_helpers import compute_spectrum_simple  # noqa: E402,F401
 
@@ -140,7 +140,7 @@ def temp_directory():
 
 @pytest.fixture
 def sample_config_file(temp_directory):
-    """Fichier de configuration de test."""
+    """Test configuration file."""
     config_file = temp_directory / "test_config.json"
     config_file.write_text('{"test_mode": true, "version": "test"}')
     return config_file
@@ -148,7 +148,7 @@ def sample_config_file(temp_directory):
 
 @pytest.fixture
 def sample_data_file(temp_directory):
-    """Fichier de data de test."""
+    """Test data file."""
     data_file = temp_directory / "test_data.csv"
     data_file.write_text("wavelength,R,T\n400,0.5,0.4\n500,0.6,0.3\n600,0.7,0.2\n")
     return data_file
@@ -270,7 +270,7 @@ def setup_test_environment():
     """Configuration automatique de l'environnement de test."""
     import logging
 
-    # Réduire le bruit CERTUS uniquement (ne pas muter le root logger : masque les vrais problèmes de config).
+    # Reduce CERTUS noise only (do not mutate the root logger: hides real config problems).
     _certus = logging.getLogger("CERTUS")
     _prev = _certus.level
     _certus.setLevel(logging.CRITICAL)

@@ -1,28 +1,28 @@
-"""Axe 1.1 — ce que le bruit de LECTURE du signal de monitoring change, avant de
+"""Axis 1.1 — what the PLAY noise of the monitoring signal changes, before
 lancer le pipeline complet.
 
-Le pipeline STRAT sur le juge de paix coute 970 s. Avant de le payer deux fois, on
-mesure au NIVEAU DU NOYAU, sur l'empilement reel du dichroique 48 couches, ce que
-`poem_anchor_noise` fait aux trois modes de defaillance. Sans Qt, sans pipeline :
-quelques secondes.
+The STRAT pipeline on the justice of the peace costs 970 s. Before paying it twice, we
+measurement at the CORE LEVEL, on the real stack of the 48-layer dichroic, what
+`poem_anchor_noise` does all three failure modes. Without Qt, without pipeline:
+a few seconds.
 
     .venv/Scripts/python.exe scripts/probe_anchor_noise.py
 
 Deux experiences.
 
-A. CONTROLEE, couche par couche. Historique NOMINAL (aucune erreur amont) et bruit
-   d'ARRET NUL. Dans ces conditions, sans bruit de lecture, aucun run ne peut
+A. CONTROLLED, layer by layer. NOMINAL history (no upstream error) and noise
+   NULL STOP. Under these conditions, without reading noise, no run can
    planter par comptage divergent : `Ts_r` et `Ts_n` sont le meme signal. Tout
-   plantage observe est donc IMPUTABLE AU SEUL BRUIT DE LECTURE, et on le mesure en
+   observed crash is therefore attributable to READING NOISE ONLY, and we measure it in
    fonction de la PROFONDEUR D'HISTORIQUE du bloc — ce qui repond a la question qui
    decide de la validite du modele : le taux depend-il de la physique, ou de la
    densite d'echantillonnage du balayage ?
 
-B. REALISTE, empilement entier. `simulate_stack_robustness_batch` avec le bruit
+B. REALISTIC, entire stack. `simulate_stack_robustness_batch` with noise
    Sobol de production, sur des strategies monochromatiques, drapeau ferme puis
    ouvert. Donne l'ordre de grandeur du taux de plantage que la Phase B verra.
 
-N'ecrit rien hors reports/. Ne touche a aucun code de production.
+Does not write anything except reports/. Do not touch any production codes.
 """
 
 from __future__ import annotations
@@ -104,10 +104,10 @@ def load_stack() -> dict:
 # A. Le plantage induit par le seul bruit de lecture, par profondeur d'historique
 # --------------------------------------------------------------------------- #
 
-#: Profondeurs d'historique de bloc examinees. 0 = premiere couche d'un bloc (aucun
-#: historique relu), 4 = plafond MAX_LOOKBACK, c'est-a-dire le regime de toute
-#: couche situee a l'interieur d'un bloc de plus de quatre couches — donc le cas
-#: courant sur le juge de paix, dont la meilleure strategie n'a que cinq blocs.
+#: Block history depths examined. 0 = first layer of a block (none
+#: history reread), 4 = MAX_LOOKBACK ceiling, that is to say the regime of all
+#: layer located inside a block of more than four layers — therefore the case
+#: running on the justice of the peace, whose best strategy has only five blocks.
 DEPTHS = (0, 1, 2, 4)
 N_DRAWS = 64
 
@@ -115,22 +115,22 @@ N_DRAWS = 64
 def experiment_a(S: dict) -> dict:
     """La regle d'admissibilite, appliquee a toute la grille de balayage.
 
-    👤 « Une longueur d'onde de controle de la couche i (i > 1) est INTERDITE si,
-    lorsque le signal est bruite, il y a un risque de mal comptabiliser le nombre de
+    👤 “A control wavelength of layer i (i > 1) is PROHIBITED if,
+    when the signal is noisy, there is a risk of incorrectly counting the number of
     turning points ou de ne pas s'arreter au niveau voulu. »
 
-    Conditions choisies pour que la mesure ne porte QUE sur cette question :
-    historique NOMINAL (donc aucune erreur amont pour deplacer un extremum) et bruit
-    d'ARRET nul. Sans bruit de lecture, `Ts_r` et `Ts_n` sont alors le meme signal et
-    le taux de plantage est nul par construction. Tout ce qu'on mesure ici est donc
+    Conditions chosen so that the measure ONLY concerns this question:
+    NOMINAL history (so no upstream error to move an extremum) and noise
+    zero STOP. Without reading noise, `Ts_r` and `Ts_n` are then the same signal and
+    the crash rate is zero by construction. Everything we measure here is therefore
     imputable au seul bruit de lecture.
 
-    Sortie principale : le NOMBRE de longueurs d'onde encore admissibles par couche.
-    C'est le chiffre qui dit si la Phase A trie encore quelque chose.
+    Main output: the NUMBER of wavelengths still admissible per layer.
+    This is the number that says if Phase A is still sorting anything.
 
-    ⚠️ `N_DRAWS` tirages ne resolvent pas le seuil de 0,107 % par couche : le plus
-    petit taux non nul mesurable vaut 1/N_DRAWS. « Admissible » signifie donc ici
-    « ZERO plantage sur N_DRAWS tirages », ce qui est une BORNE SUPERIEURE de
+    ⚠️ `N_DRAWS` prints do not resolve the threshold of 0.107% per layer: the most
+    small measurable non-zero rate is worth 1/N_DRAWS. “Admissible” therefore means here
+    “ZERO crashes on N_DRAWS draws”, which is an UPPER BOUND of
     l'ensemble admissible — la vraie Phase A, avec ses propres tirages, sera au moins
     aussi severe.
     """
@@ -150,7 +150,7 @@ def experiment_a(S: dict) -> dict:
     emit(f"     resolution de la sonde : 1/{N_DRAWS} = {1.0 / N_DRAWS:.2%} -> « admissible » = ZERO plantage")
     emit("")
 
-    # Sans bruit : temoin. Doit rendre 0 partout, sinon la mesure ne veut rien dire.
+    #Without noise: witness. Must return 0 everywhere, otherwise the measurement means nothing.
     off_bad = 0
     for i_layer in range(1, n_layers):
         for j in range(scan.size):
@@ -211,7 +211,7 @@ def experiment_a(S: dict) -> dict:
 
 
 # --------------------------------------------------------------------------- #
-# B. L'empilement entier, avec le bruit Sobol de production
+#B. The entire stack, with production sound Sobol
 # --------------------------------------------------------------------------- #
 
 WLS_B = (453.0, 466.0, 476.0, 488.0, 530.0, 551.0)
@@ -265,15 +265,15 @@ def experiment_b(S: dict) -> dict:
 
 
 def experiment_c(S: dict) -> dict:
-    """Comment le taux depend-il de sigma ? C'est ce qui distingue physique et artefact.
+    """How does the rate depend on sigma? This is what distinguishes physics and artifact.
 
     Si le plantage vient de bascules de signe a UN echantillon au voisinage du sommet,
     son taux suit la probabilite qu'un point du balayage tombe a moins de
-    sigma/pente du sommet — donc a peu pres LINEAIREMENT en sigma. Un mecanisme
+    sigma/vertex slope — so roughly LINEARLY in sigma. A mechanism
     physique de fond (extremum reellement noye dans le bruit) saturerait au contraire.
 
-    Les facteurs 0,5 / 1 / 2 sont ceux que la Phase B applique deja
-    (`robustness_noise_factors`), donc ces trois lignes sont des chiffres de
+    The factors 0.5 / 1 / 2 are those that Phase B already applies
+    (`robustness_noise_factors`), so these three lines are numbers of
     production ; 0,1 est ajoute comme point de levier.
     """
     from certus_physics import simulate_growth_kernel as K

@@ -100,22 +100,22 @@ class FullPipelineStrategy:
 
             worker.params["logger"].info(f"🔄 PHASE 3: Dynamic Programming Strategy Optimization ({len(blocks_range)} steps) - HYBRID ENGINE...")
 
-            # ── AXE 4.1 : LE RENDEMENT ENTRE DANS L'OBJECTIF DE LA DP ──────────
+            # ── AXIS 4.1: THE YIELD ENTERS THE DP OBJECTIVE ──────────
             #
-            # 🔴 C'EST ICI QUE LA DONNEE ETAIT JETEE. Chaque entree de
-            # `raw_results_sq` porte `crash_rate` — le taux de depots non terminables
-            # par (couche, lambda), mesure par la Phase A. Cette ligne n'en retenait
-            # que `x["cost"]` : le plantage ne servait qu'a un seuil binaire, et une
-            # lambda a 0,001 % etait traitee comme une lambda a 0,106 %, alors qu'elles
-            # different d'un facteur cent sur la seule grandeur qui SE COMPOSE sur la
-            # hauteur de l'empilement.
+            # 🔴 THIS IS WHERE THE DATA WAS DISCARDED. Each entry of
+            # `raw_results_sq` carries `crash_rate` — the rate of unfinishable
+            # depositions per (layer, lambda), measured by Phase A. This line only retained
+            # `x["cost"]`: the crash rate was only used for a binary threshold, and a
+            # lambda at 0.001% was treated like a lambda at 0.106%, even though they
+            # differ by a factor of a hundred on the only quantity that COMPOSES over the
+            # height of the stack.
             #
-            # Le rendement d'un empilement vaut `prod(1 - p_i)`, dont le logarithme est
-            # ADDITIF : c'est exactement ce qu'une DP de Bellman optimise exactement.
+            # The yield of a stack is `prod(1 - p_i)`, whose logarithm is
+            # ADDITIVE: this is exactly what a Bellman DP optimizes exactly.
             #
-            # `dp_yield_weight = 0` (defaut) laisse la carte inchangee, donc le
-            # comportement d'avant au bit pres. La valeur ne se devine pas : elle se
-            # balaie. Voir `build_yield_cost_map` et `combine_cost_and_yield`.
+            # `dp_yield_weight = 0` (default) leaves the map unchanged, thus the
+            # behavior from before down to the bit. The value is not guessed: it is
+            # swept. See `build_yield_cost_map` and `combine_cost_and_yield`.
             cost_map_sq_clean = {
                 l: {x["wl"]: x["cost"] for x in items} for l, items in pre_calc_data["raw_results_sq"].items()
             }

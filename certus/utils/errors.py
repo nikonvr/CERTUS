@@ -189,13 +189,13 @@ class CertusDataError(CertusError):
 
 
 class CertusComputationError(CertusError):
-    """Exception for numerical computation errors."""
+    "Exception for numerical computation errors."
 
     pass
 
 
 class CertusConvergenceError(CertusOptimizationError):
-    """Exception for optimization convergence failures."""
+    "Exception for optimization convergence failures."
 
     pass
 
@@ -225,7 +225,7 @@ class ConfigurationCorruptionError(CertusDomainError, CertusConfigError):
 
 
 class CorruptedProjectError(CertusDomainError, CertusConfigError):
-    """Exception for corrupted or invalid project JSON file contents."""
+    "Exception for corrupted or invalid project JSON file contents."
 
     pass
 

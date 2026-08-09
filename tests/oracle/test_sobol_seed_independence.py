@@ -1,9 +1,9 @@
-"""Les tirages de bruit du consensus de robustesse doivent être indépendants.
+"""Noise draws from the robustness consensus must be independent.
 
-Le consensus moyenne les résultats sur plusieurs graines afin d'estimer la robustesse
-d'un empilement. Si deux membres reçoivent le MÊME bruit, leur accord n'a plus de
-valeur statistique : il mesure une identité, pas une convergence. Ce fichier fige
-l'indépendance des tirages.
+Consensus averages results across multiple seeds to estimate robustness
+of a stack. If two members receive the SAME noise, their agreement no longer has any
+statistical value: it measures an identity, not a convergence. This file freezes
+the independence of the draws.
 """
 
 from __future__ import annotations
@@ -14,8 +14,8 @@ import pytest
 from certus.core.certus_strat_robustness import _get_cached_sobol_noise
 
 
-# Reproduit la génération de graines du consensus :
-# certus/utils/certus_strat_context.py:598, stride valant 1 par défaut (:610).
+# Reproduces the generation of consensus seeds:
+# certus/utils/certus_strat_context.py:598, stride value 1 by default (:610).
 def _consensus_seeds(base_seed: int, num_seeds: int, stride: int = 1) -> list[int]:
     return [base_seed + i * stride for i in range(num_seeds)]
 
@@ -29,17 +29,17 @@ def test_pas_de_bruit_partage_entre_membres_du_consensus(
 ) -> None:
     """Chaque couple (graine de consensus, niveau de bruit) doit avoir SON tirage.
 
-    GARDE-FOU : la dérivation était ``local_seed = base_seed + noise_idx``. Combinée
-    à des graines de consensus consécutives (stride = 1 par défaut), elle produisait
+    CAUTION: the derivation was ``local_seed = base_seed + noise_idx``. Combined
+    to consecutive consensus seeds (stride = 1 by default), it produced
     un recouvrement triangulaire massif — (graine 42, niveau 1) et (graine 43,
-    niveau 0) donnaient la même graine, donc le même bruit :
+    level 0) gave the same seed, therefore the same noise:
 
         3 graines x 3 niveaux =  9 tirages ->  5 distincts (44 % perdus)
         5 graines x 4 niveaux = 20 tirages ->  8 distincts (60 % perdus)
         8 graines x 5 niveaux = 40 tirages -> 12 distincts (70 % perdus)
 
-    Partager le bruit entre membres gonfle leur accord apparent, donc SURESTIME la
-    robustesse — l'inverse de ce qu'on demande à cette analyse.
+    Sharing the noise between members inflates their apparent agreement, so OVERESTIMATES the
+    robustness — the opposite of what is asked of this analysis.
     """
     num_runs = 8
     num_layers = 4
@@ -58,7 +58,7 @@ def test_pas_de_bruit_partage_entre_membres_du_consensus(
 
 
 def test_tirages_reproductibles() -> None:
-    """Même entrée, même bruit : l'analyse doit rester reproductible."""
+    """Same input, same noise: the analysis must remain reproducible."""
     first = _get_cached_sobol_noise(42, 3, 8, 4)
     second = _get_cached_sobol_noise(42, 3, 8, 4)
 
@@ -66,7 +66,7 @@ def test_tirages_reproductibles() -> None:
 
 
 def test_bruit_dans_les_bornes_physiques() -> None:
-    """Le bruit est écrêté dans [-1, 1] et centré : contrat de la loi utilisée."""
+    """The noise is clipped in [-1, 1] and centered: contract of the law used."""
     noise = _get_cached_sobol_noise(42, 0, 16, 4)
 
     assert np.all(np.isfinite(noise))

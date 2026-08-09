@@ -278,7 +278,7 @@ class TestDesignFunctionality:
         assert calls == ["stop", "interrupt", "quit", ("wait", 1234)]
 
     def test_layer_management(self):
-        """Test la gestion des couches."""
+        """Test layer management."""
         try:
             from certus_physics import Layer
 

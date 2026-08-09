@@ -491,7 +491,7 @@ class PlotManager:
 
         # =====================================================================
 
-        # Champion 1: best theoretical RMSE (peut avoir layers < 5nm)
+        #Champion 1: best theoretical RMSE (can have layers < 5nm)
         if self._update_pareto_rmse_champion(rec, current_ep, rmse_val, mc_rmse):
             updated = True
 

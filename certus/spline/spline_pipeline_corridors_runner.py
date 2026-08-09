@@ -240,8 +240,8 @@ def _select_corridor_base_result_for_profile(
                     logging.getLogger("CERTUS").info(
                         "PIPELINE [CORRIDORS d] Base best_polished ignored: archived spline-sigma pack "
                         "out of sync with the current result (e.g. manual node insertion). "
-                        "d_nm_seg_spline=%s d_nm_courant=%s | len(n_lam)=%d vs len(seg_pack)=%s → "
-                        "profilage depuis dict nominal.",
+                        "d_nm_seg_spline=%s d_nm_current=%s | len(n_lam)=%d vs len(seg_pack)=%s → "
+                        "profiling from nominal dict.",
                         f"{d_seg:.6f}" if np.isfinite(d_seg) else "n/a",
                         f"{d_cur:.6f}" if np.isfinite(d_cur) else "n/a",
                         n_sz,

@@ -272,7 +272,7 @@ def compute_metal_bilayer_gradient_analytic(
     nL_calc = get_nk_cauchy_simple(l_array, n_infini, A)
 
     if nSub_complex_array is None:
-        # Note: Need get_nk_si available or passed. Assuming passed or available in scope.
+        # Note: Need get_nk_if available or passed. Assuming passed or available in scope.
 
         # Fallback to a default if not found? This should be passed.
 
@@ -302,20 +302,20 @@ def compute_metal_bilayer_gradient_analytic(
 
     dJ_dk = -sens_nM_i
 
-    # Base spline mise en CACHE au lieu d'etre reconstruite a chaque appel du gradient.
+    # Spline basis CACHED instead of being reconstructed at each gradient call.
     #
-    # La boucle precedente construisait spline_knot_count objets CubicSpline distincts,
-    # un par vecteur unite, A CHAQUE EVALUATION. Mesure sur une grille de 601 points :
-    # 1,0 ms a 5 noeuds, 1,6 ms a 8, 3,9 ms a 20 — soit environ 0,9 s sur 500
-    # evaluations et 3,4 s sur 2000, pour un resultat rigoureusement identique d'un
-    # appel a l'autre tant que les positions de noeuds ne bougent pas.
+    # The previous loop constructed spline_knot_count distinct CubicSpline objects,
+    # one per unit vector, AT EACH EVALUATION. Measured on a 601-point grid:
+    # 1.0 ms for 5 knots, 1.6 ms for 8, 3.9 ms for 20 — that is roughly 0.9 s over 500
+    # evaluations and 3.4 s over 2000, for a rigorously identical result from one
+    # call to the next as long as knot positions do not move.
     #
-    # SplineBasisCache fait exactement ce calcul et le memorise. extrapolate=False
-    # reproduit le comportement d'origine (0 hors du domaine des noeuds) ; ce drapeau
-    # fait partie de la cle, les deux variantes coexistent donc sans se melanger.
-    # La matrice rendue est (n_targets x n_knots) : on la transpose pour conserver
-    # l'indexation basis[i, :] utilisee plus bas. La transposition est une vue, pas
-    # une copie — la matrice est partagee, ne pas ecrire dedans.
+    # SplineBasisCache does exactly this calculation and memorizes it. extrapolate=False
+    # reproduces the original behavior (0 outside the domain of knots); this flag
+    # is part of the key, the two variants thus coexist without mixing.
+    # The returned matrix is (n_targets x n_knots): we transpose it to keep
+    # the indexation basis[i, :] used below. The transposition is a view, not
+    # a copy — the matrix is shared, do not write to it.
     basis = SplineBasisCache.get(knot_l, l_array, extrapolate=False).T
 
     basis_n = basis
@@ -344,22 +344,22 @@ def compute_metal_bilayer_gradient_analytic(
 
         dk_dp = (ks_p - k_calc) / h_val
 
-        # Indice : 2 * spline_knot_count, et NON 2 * num_knots.
+        # Index: 2 * spline_knot_count, and NOT 2 * num_knots.
         #
-        # spline_knot_count vaut num_knots + 1, donc l'ancien indice ecrivait DEUX
-        # positions trop tot. Le bloc des noeuds k occupe grad[offset + skc :
-        # offset + 2*skc] ; la boucle lambda ecrasait donc ses deux dernieres cases,
-        # et les deux dernieres positions lambda ne recevaient JAMAIS de gradient.
+        # spline_knot_count equals num_knots + 1, so the old index wrote TWO
+        # positions too early. The block of k knots occupies grad[offset + skc :
+        # offset + 2*skc] ; the lambda loop therefore overwrote its last two slots,
+        # and the last two lambda positions NEVER received a gradient.
         #
-        # Verifie numeriquement contre differences finies (num_knots=4, 3 lambda) :
-        #   k[3], k[4]           -> gradients detruits, remplaces par ceux de lambda
-        #   lambda[0]            -> recevait le gradient de lambda[2]
-        #   lambda[1], lambda[2] -> exactement 0, alors que la FD est non nulle
-        # Le decalage etait de 2 exactement : la FD de lambda[0] valait -8,852689e-06,
-        # soit precisement la valeur logee dans la case de k[3].
+        # Verified numerically against finite differences (num_knots=4, 3 lambda):
+        #   k[3], k[4]           -> gradients destroyed, replaced by those of lambda
+        #   lambda[0]            -> received the gradient of lambda[2]
+        #   lambda[1], lambda[2] -> exactly 0, while the FD is non-zero
+        # The offset was exactly 2: the FD of lambda[0] was -8.852689e-06,
+        # which is exactly the value logged in the slot of k[3].
         #
-        # L'optimiseur metal bicouche partait donc dans une mauvaise direction sur les
-        # deux derniers noeuds k, et ne deplacait jamais les dernieres positions lambda.
+        # The bilayer metal optimizer thus started in a wrong direction on the
+        # last two k knots, and never moved the last lambda positions.
         grad[offset + 2 * spline_knot_count + i] = np.dot(dJ_dn, dn_dp) + np.dot(dJ_dk, dk_dp)
 
     if eM < 1.0:

@@ -260,29 +260,29 @@ def _run_phase_a_hybrid_loop(
         else:
             params["prev_layer_wl"] = -1.0
 
-        # --- ERREUR AMONT REELLEMENT ACCUMULEE, mesuree et non postulee -------
+        # --- UPSTREAM ERROR ACTUALLY ACCUMULATED, measured and not postulated -------
         #
-        # C'est l'echelle sur laquelle le gain de compensation se convertit en
-        # nanometres : gain x erreur_amont = ce que la couche courante herite.
-        # On la prend sur les etats Monte-Carlo effectivement propages, au meme
-        # percentile que le cout local (P95), pour que les deux termes du cout
-        # soient la meme statistique de la meme grandeur.
+        # This is the scale on which the compensation gain converts into
+        # nanometers: gain x upstream_error = what the current layer inherits.
+        # It is taken on the effectively propagated Monte-Carlo states, at the same
+        # percentile as the local cost (P95), so that both terms of the cost
+        # are the same statistic of the same magnitude.
         params["phase_a_prev_error_nm"] = 0.0
         if i_layer > 0:
             prev_sim = np.array(
                 [run["p_thick_sim"][i_layer - 1] for run in run_states], dtype=np.float64
             )
             dev = np.abs(prev_sim - float(p_thick_nominal[i_layer - 1]))
-            dev = dev[dev < 1e5]  # les runs plantes ne sont pas une erreur d'epaisseur
+            dev = dev[dev < 1e5]  # crashed runs are not a thickness error
             if dev.size:
                 params["phase_a_prev_error_nm"] = float(np.percentile(dev, 95))
 
-        # --- DEBUT DU BLOC MONOCHROMATIQUE EN COURS ---------------------------
-        # A lambda inchangee le signal de monitoring est continu : les points
-        # tournants deja traverses restent exploitables. C'est ce qui donne leur
-        # valeur aux blocs, et la Phase A y etait aveugle. block_start_running est
-        # tenu a jour en fin d'iteration : il vaut ici l'indice de la premiere
-        # couche du bloc auquel appartient la couche i_layer - 1.
+        # --- START OF THE CURRENT MONOCHROMATIC BLOCK ---------------------------
+        # At unchanged lambda the monitoring signal is continuous: the
+        # turning points already crossed remain exploitable. This is what gives
+        # value to the blocks, and Phase A was blind to it. block_start_running is
+        # kept up to date at the end of the iteration: here it is the index of the first
+        # layer of the block to which the layer i_layer - 1 belongs.
         params["phase_a_block_start"] = block_start_running
 
         candidates, layer_full_dyn = _select_candidates_phase_a(
@@ -335,16 +335,16 @@ def _run_phase_a_hybrid_loop(
                 "validated_candidates_count": int(len(results_thickness)),
                 "best_wl": best_wl,
                 "best_cost": best_cost,
-                # Les trois grandeurs qui decident maintenant du classement, pour
-                # qu'un ecart de choix soit lisible apres coup sans reinstrumenter.
+                # The three quantities that now decide the ranking, so that
+                # a difference of choice is readable afterwards without re-instrumenting.
                 "best_cost_local": best_entry.get("cost_local"),
                 "best_compensation_gain": best_entry.get("compensation_gain"),
                 "best_crash_rate": best_entry.get("crash_rate"),
                 "prev_error_nm": float(params.get("phase_a_prev_error_nm", 0.0)),
                 "block_start": int(block_start_running),
-                # Recensement de la regle d'admissibilite pour cette couche :
-                # offertes, interdites sur plantage, interdites sur gain<0,
-                # survivantes, taux de plantage minimal observe.
+                # Census of the admissibility rule for this layer:
+                # offered, forbidden on crash, forbidden on gain<0,
+                # survivors, minimum observed crash rate.
                 "admissibility": next(
                     (
                         s
@@ -356,8 +356,8 @@ def _run_phase_a_hybrid_loop(
             }
         )
 
-        # Le bloc courant se prolonge tant que la longueur d'onde retenue ne
-        # change pas ; sinon un bloc neuf s'ouvre a cette couche.
+        # The current block continues as long as the selected wavelength does
+        # not change; otherwise a new block opens at this layer.
         prev_wl_for_block = float(params.get("prev_layer_wl", -1.0))
         if i_layer == 0 or best_wl is None or prev_wl_for_block < 0.0 or abs(best_wl - prev_wl_for_block) > 0.1:
             block_start_running = i_layer
@@ -409,12 +409,12 @@ def build_M_before_cache(
     p_thick_arr: np.ndarray,
     num_layers: int,
 ) -> np.ndarray:
-    """Matrices M_before de chaque couche, un appel de noyau par bloc spectral.
+    """M_before matrices of each layer, one kernel call per spectral block.
 
-    Ce cache ne depend que de l'empilement nominal et du decoupage en blocs de
-    longueur d'onde. Il etait construit DEUX FOIS par strategie evaluee, a
-    l'identique : ici pour dT/dd, et une seconde fois dans
-    ``_test_strategy_robustness_task`` pour le profil theorique des couches.
+    This cache only depends on the nominal stack and the wavelength
+    block splitting. It was built TWICE per evaluated strategy,
+    identically: here for dT/dd, and a second time in
+    ``_test_strategy_robustness_task`` for the theoretical layer profile.
     """
     M_before_all = np.zeros((num_layers, 2, 2), dtype=np.complex128)
     if num_layers == 0:
@@ -466,8 +466,8 @@ def _compute_dT_dd_per_layer(
 
     Used when noise_domain is thickness_nm to convert thickness noise to transmission noise.
 
-    ``M_before_all`` evite de reconstruire le cache de matrices quand l'appelant
-    le possede deja ; laisse a None, le comportement est inchange.
+    ``M_before_all`` avoids rebuilding the matrix cache when the caller
+    already has it; left at None, the behavior is unchanged.
     """
 
     num_layers = len(p_thick_nominal)
@@ -479,8 +479,8 @@ def _compute_dT_dd_per_layer(
             layer_wavelengths, n_H_vals, n_L_vals, p_thick_arr, num_layers
         )
 
-    # Boucle finale deportee dans un seul noyau compile : elle enchainait deux
-    # appels njit par couche depuis Python.
+    # Final loop deported into a single compiled kernel: it chained two
+    # njit calls per layer from Python.
     return compute_dT_dd_kernel(
         np.ascontiguousarray(layer_wavelengths, dtype=np.float64),
         np.ascontiguousarray(n_H_vals, dtype=np.complex128),
@@ -499,12 +499,12 @@ def _extract_local_extrema_points(d_vals: np.ndarray, t_vals: np.ndarray, eps: f
     if len(d_vals) < 3 or len(t_vals) < 3:
         return extrema
 
-    # Comparaisons vectorisees, puis boucle sur les SEULS extrema.
+    # Vectorized comparisons, then loop over the ONLY extrema.
     #
-    # La version precedente parcourait toute la grille en Python — un tour par
-    # nanometre d'epaisseur — et convertissait trois scalaires numpy en float a
-    # chaque tour, alors que les extrema se comptent sur les doigts d'une main.
-    # Les comparaisons strictes et l'ordre de sortie sont conserves.
+    # The previous version looped over the whole grid in Python — one loop per
+    # nanometer of thickness — and converted three numpy scalars to float
+    # each time, whereas extrema can be counted on one hand.
+    # Strict comparisons and output order are preserved.
     prev_v = t_vals[:-2]
     cur_v = t_vals[1:-1]
     next_v = t_vals[2:]
@@ -546,10 +546,10 @@ def _compute_theoretical_layer_profile(
 
     d_grid = np.linspace(0.0, d_nom, n_steps, dtype=np.float64)
 
-    # Un seul appel compile pour toute la grille, au lieu d'un par nanometre.
-    # La boucle est passee du cote njit (compute_T_front_profile) : meme
-    # arithmetique point par point, mais ~200 franchissements de frontiere
-    # Python->njit economises par couche.
+    # A single compiled call for the whole grid, instead of one per nanometer.
+    # The loop is moved to the njit side (compute_T_front_profile): same
+    # point-by-point arithmetic, but ~200 Python->njit boundary crossings
+    # saved per layer.
     t_grid = compute_T_front_profile(wl_nm, n_current, n_sub, M00, M01, M10, M11, d_grid)
 
     t_init = float(t_grid[0])

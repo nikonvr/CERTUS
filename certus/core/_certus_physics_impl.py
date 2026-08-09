@@ -224,7 +224,7 @@ import logging
 #    - T_measured = (T_front * T_back) / (1 - R_prime * R_back)
 
 
-#    - Note: R_prime = reflectance seen from substrate side, NOT R_front!
+# - Note: R_prime = reflectance seen from substrate side, NOT R_front!
 
 
 #    - Kernels: calculate_bare_substrate_RT, calculate_single_interface_R, calculate_RT_single_layer_backside_array
@@ -1503,11 +1503,11 @@ def warmup_physics(silent: bool = True) -> None:
 
             _gamma_correct_scalar(0.5)
 
-            # len(wls), pas 10 : np.interp exige len(xp) == len(fp). Avec 10 il
-            # levait une ValueError avalee par le except ci-dessous, et les deux
-            # noyaux suivants n'ont jamais ete compiles par le warmup. Constate
-            # sur disque : aucun .nbi pour _xyz_from_spectrum_kernel ni pour
-            # delta_e_2000, alors que les trois appels precedents en ont un.
+            #len(wls), not 10: np.interp requires len(xp) == len(fp). With 10 he
+            #raised a ValueError swallowed by the except below, and both
+            #following kernels were never compiled by warmup. Observation
+            #on disk: no .nbi for _xyz_from_spectrum_kernel nor for
+            #delta_e_2000, while the previous three calls have one.
             R_test = np.full(len(wls), 0.5, dtype=np.float64)
 
             R_interp = np.interp(CIE_LAMBDA, wls, R_test)

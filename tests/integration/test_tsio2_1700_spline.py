@@ -1,10 +1,10 @@
-"""Intégration INDEX_SPLINE : TSIO2-1700-1.xlsx, fenêtre 250–5000 nm (masque RMSE).
+"""INDEX_SPLINE integration: TSIO2-1700-1.xlsx, window 250–5000 nm (RMSE mask).
 
-Le fichier peut être fourni par ``spectro_data/TSIO2-1700-1.xlsx`` à la racine du dépôt
+The file can be provided by ``spectro_data/TSIO2-1700-1.xlsx`` at the root of the repository
 ou via la variable d'environnement ``CERTUS_TSIO2_XLSX``.
 
-Référence RMSE : de l'ordre de **1,5–2e-3** sur le jeu filtré (T/T_sub, saphir),
-avec x0 issu du preset matériau SiO₂ + descente locale obligatoire + polish (profil rapide).
+RMSE reference: of the order of **1.5–2e-3** on the filtered game (T/T_sub, sapphire),
+with x0 from the SiO₂ material preset + obligatory local descent + polish (quick profile).
 """
 
 from __future__ import annotations

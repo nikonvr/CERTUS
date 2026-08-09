@@ -46,7 +46,7 @@ def check_1002_removed():
 
 
 def run_smoke_re_reverse_samples():
-    """RE : reverse_sample.xlsx / reverse_sample0.xlsx (voir tests/smoke_re_reverse_samples.py)."""
+    """RE: reverse_sample.xlsx / reverse_sample0.xlsx (see tests/smoke_re_reverse_samples.py)."""
     script = Path(ROOT) / "scripts" / "smoke" / "smoke_re_reverse_samples.py"
     if not script.is_file():
         print("[Smoke RE] Script manquant:", script)

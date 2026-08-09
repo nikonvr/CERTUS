@@ -40,7 +40,7 @@ def zoom_out_factor(owner) -> float:
 
 
 def standard_config_file_filter() -> str:
-    return "Fichier JSON (*.json);;Fichier Excel (*.xlsx)"
+    return "JSON File (*.json);;Excel File (*.xlsx)"
 
 
 def _format_progress_duration(seconds: float) -> str:

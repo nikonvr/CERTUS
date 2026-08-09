@@ -1,17 +1,17 @@
 
 ## Statut
-### Déjà fait
-- Alignement Python 3.14.5+ confirmé dans les documents et workflows visibles.
-- Backlog P0/P1 créé.
-- Audit des modules principaux réalisé.
-- Les priorités socle / services / UI / hub / gros modules sont identifiées.
+### Alreadydone
+- Python3.14.5+alignmentconfirmedinvisibledocumentsandworkflows.
+- BacklogP0/P1created.
+- Auditofmainmodulescarriedout.
+- Theprioritiesofbase/services/UI/hub/largemodulesareidentified.
 
 ### Il reste
-- Vérifier la CI et la release de bout en bout.
+- Verifyend-to-endCIandrelease.
 - Verrouiller `certus_core.py`.
 - Stabiliser les services headless.
-- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
-- Alléger les principaux entrypoints métier.
+- Minify`certus_ui.py`and`CERTUS_HUB.py`.
+- Reducethemainbusinessentrypoints.
 - Renforcer les tests des helpers, invariants et flux # CERTUS API Documentation
 
 ## Overview
@@ -76,10 +76,10 @@ def calculate_RT_vectorized_real(layers: List[Layer], targets: List[Target]) -> 
 
 ### Error Handling
 
-The system uses a hierarchical exception structure:
+Thesystemusesahierarchicalexceptionstructure:
 
 ```python
-class CertusError(Exception):
+classCertusError(Exception):
     """Base exception with message, details, and suggestion."""
 
 class CertusValidationError(CertusError):
@@ -242,17 +242,17 @@ print(__version__)  # "26_05"
 ```
 
 
-## État actuel
+## Currentstatus
 ### Fait
-- Alignement Python 3.14.5+ confirmé dans la documentation visible et les workflows déjà inspectés.
-- Plan P0/P1 créé.
-- Backlog maître créé.
-- Audit des modules principaux réalisé.
+- Python3.14.5+alignmentconfirmedinvisibledocumentationandalreadyinspectedworkflows.
+- PlanP0/P1created.
+- Masterbacklogcreated.
+- Auditofmainmodulescarriedout.
 
 ### Reste
-- Vérifier la CI / release de bout en bout.
+- Verifyend-to-endCI/release.
 - Verrouiller `certus_core.py`.
 - Stabiliser les services headless.
-- Réduire `certus_ui.py` et `CERTUS_HUB.py`.
-- Alléger les gros entrypoints métier.
+- Minify`certus_ui.py`and`CERTUS_HUB.py`.
+- Reducemajorbusinessentrypoints.
 - Renforcer les tests sur les helpers, invariants et flux principaux.

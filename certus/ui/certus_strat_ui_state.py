@@ -7,13 +7,13 @@ _CONFIG_TRUE = frozenset({"1", "true", "yes", "on", "oui", "vrai"})
 
 
 def _config_flag(config: object, key: str, default: bool = False) -> bool:
-    """Lit un drapeau booleen dans la configuration chargee, sans widget associe.
+    """Reads a boolean flag from the loaded configuration, without associated widget.
 
-    Les valeurs d'un JSON de STRAT sont tantot des booleens, tantot des chaines
-    ("1", "0", "true"). `_get_float_safe` ne convient pas : il interroge les
-    widgets, et un drapeau sans widget y prendrait toujours son defaut — donc un
-    reglage present dans le fichier serait ignore EN SILENCE. C'est le mode de
-    defaillance qui a coute deux sessions sur `trigger_tolerance`.
+    The values of a STRAT JSON are sometimes booleans, sometimes strings
+    ("1", "0", "true"). `_get_float_safe` is not suitable: it queries the
+    widgets, and a flag without a widget would always take its default — so a
+    setting present in the file would be SILENTLY ignored. This is the failure
+    mode that cost two sessions on `trigger_tolerance`.
     """
     if not isinstance(config, dict):
         return default
@@ -28,11 +28,11 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
 
 
 def _config_float(config: object, key: str, default: float = 0.0) -> float:
-    """Lit un reel dans la configuration chargee, sans widget associe.
+    """Reads a float from the loaded configuration, without associated widget.
 
-    Meme motif que `_config_flag` : ces reglages n'ont pas de champ dans l'interface et
-    se posent dans le JSON. `_get_float_safe` interroge les widgets et rendrait donc
-    toujours le defaut — un reglage present dans le fichier serait ignore EN SILENCE.
+    Same reason as `_config_flag`: these settings have no field in the interface and
+    are placed in the JSON. `_get_float_safe` queries the widgets and would therefore
+    always return the default — a setting present in the file would be SILENTLY ignored.
     """
     if not isinstance(config, dict):
         return default
@@ -986,7 +986,7 @@ class CertusStratStateMixin:
                 "trigger_tolerance": self._get_float_safe("trigger_tolerance", 0.1),
                 "noise_distribution": NOISE_DISTRIBUTION_GAUSSIAN,
             },
-            # Defaut None et non 1.0 — MESURE du 2026-08-04.
+            # Default None and not 1.0 — MEASURE of 2026-08-04.
             #
             # This parameter selects Phase B noise convention:
             #   not None -> noise = dT_dd * z * sigma_nm ("thickness tolerance nm" mode)
@@ -1020,28 +1020,28 @@ class CertusStratStateMixin:
             "extrema_exclusion_ratio": self._get_float_safe("extrema_exclusion_ratio", 60.0),
             # ── AXIS 1.1: READING noise of monitoring signal ─────────────
             #
-            # PAR DEFAUT INACTIF, et pas par prudence de facade : c'est un
-            # changement de modele de premier ordre. Il fera MONTER les taux de
-            # plantage (un extremum plat sera parfois manque ou dedouble) et
-            # BAISSER le benefice apparent de POEM (ses ancres cesseront d'etre des
-            # valeurs exactes pour devenir des mesures). C'est la mesure des deux
-            # cotes qui doit trancher, pas l'intuition.
+            # BY DEFAULT INACTIVE, and not due to superficial caution: it is a
+            # first-order model change. It will INCREASE the crash
+            # rates (a flat extremum will sometimes be missed or split) and
+            # DECREASE the apparent benefit of POEM (its anchors will cease to be
+            # exact values to become measurements). It is the measurement of both
+            # sides that must decide, not intuition.
             #
-            # Aucun widget : ces drapeaux se lisent dans le fichier de
-            # configuration, comme `consensus_seed_list`. Un booleen JSON, "1"/"0"
-            # ou "true"/"false" sont acceptes.
+            # No widget: these flags are read in the configuration
+            # file, like `consensus_seed_list`. A JSON boolean, "1"/"0"
+            # or "true"/"false" are accepted.
             #
-            # `poem_anchor_noise` gouverne LES DEUX PHASES, parce que la regle qu'il
-            # met en application est un seul enonce physique — 👤 « une longueur
-            # d'onde de controle de la couche i (i > 1) est interdite si, lorsque le
-            # signal est bruite, il y a un risque de mal comptabiliser le nombre de
-            # turning points ou de ne pas s'arreter au niveau voulu ; tout cela est
-            # valable en phase A comme en phase B ». Voir le commentaire de
+            # `poem_anchor_noise` governs BOTH PHASES, because the rule it
+            # enforces is a single physical statement — 👤 "a control
+            # wavelength of layer i (i > 1) is forbidden if, when the
+            # signal is noisy, there is a risk of miscounting the number of
+            # turning points or not stopping at the desired level; all this is
+            #valid in phase A as well as in phase B". See the comment of
             # `_validate_candidates_phase_a`.
             #
-            # `poem_anchor_noise_phase_a` n'existe QUE pour l'attribution : il permet
-            # d'isoler l'effet d'un etage dans un A/B. Son defaut suit le maitre, et
-            # il ne doit pas servir a laisser durablement la Phase A non bruitee.
+            # `poem_anchor_noise_phase_a` ONLY exists for attribution: it allows
+            # isolating the effect of a stage in an A/B. Its default follows the master, and
+            # it must not be used to permanently leave Phase A noiseless.
             "poem_anchor_noise": _config_flag(
                 getattr(self, "_loaded_config", {}), "poem_anchor_noise"
             ),
@@ -1052,37 +1052,37 @@ class CertusStratStateMixin:
             ),
             # ── AXIS 1.2: Turning point detection rule ──────────────
             #
-            # Hysteresis du detecteur, en MULTIPLE de l'amplitude de bruit
-            # `trigger_tolerance`. 0 = regle historique (changement de signe au-dela
-            # d'un garde numerique de 1e-12), qui n'est pas une regle physique.
+            # Detector hysteresis, in MULTIPLE of the noise amplitude
+            # `trigger_tolerance`. 0 = historical rule (sign change beyond
+            # a numerical guard of 1e-12), which is not a physical rule.
             #
-            # 👤 « Le 4 %, pour moi, c'etait au pif, pour etre certain qu'on va y
-            # arriver » (2026-08-06). Ce seuil-ci n'est PAS les 4 % d'amplitude de
-            # depart : les 4 % pre-selectionnent une longueur d'onde, ceci decrit
-            # comment la machine LIT. Sa grandeur de reference est le bruit, qui est
-            # mesure : le tirage etant borne a +/- A, l'ecart apparent maximal que le
-            # bruit seul peut produire vaut 2A, donc a partir du facteur 2 le bruit ne
-            # peut plus fabriquer un point tournant.
+            # 👤 "The 4%, for me, was a wild guess, to be certain that we will
+            # get there" (2026-08-06). This threshold is NOT the 4% starting
+            # amplitude: the 4% pre-selects a wavelength, this describes
+            # how the machine READS. Its reference magnitude is the noise, which is
+            # measured: the draw being bounded to +/- A, the maximum apparent deviation that the
+            # noise alone can produce is 2A, so from factor 2 the noise can
+            # no longer create a turning point.
             #
-            # La valeur n'est pas posee ici : elle se balaie et se tranche par la
-            # mesure. Defaut 0 = chemin inchange.
+            # The value is not set here: it is swept and decided by the
+            # measurement. Default 0 = path unchanged.
             "tp_hysteresis_factor": _config_float(
                 getattr(self, "_loaded_config", {}), "tp_hysteresis_factor"
             ),
             # ── Safety margin at turning point, in noise multiples ──────
             #
-            # > 0 : le niveau d'arret doit etre separe des points tournants voisins
-            # d'au moins `facteur x trigger_tolerance/100`, EN TRANSMISSION. Active du
-            # meme coup la vraie matrice cumulee en Phase A — le placeholder de zeros
-            # rendait la regle des points tournants inerte. 0 = chemin d'avant.
+            # > 0 : the stopping level must be separated from neighboring turning points
+            # by at least `factor x trigger_tolerance/100`, IN TRANSMISSION. Activates at the
+            # same time the true accumulated matrix in Phase A — the zeros placeholder
+            # made the turning points rule inert. 0 = previous path.
             "phase_a_level_margin_factor": _config_float(
                 getattr(self, "_loaded_config", {}), "phase_a_level_margin_factor"
             ),
-            # ── Poids du RENDEMENT dans l'objectif de la DP (axe 4.1) ──────────
+            # ── YIELD weight in DP objective (axis 4.1) ──────────
             #
-            # cout = cout_nm + w x (-log(1 - p)), ou p est le taux de depots non
-            # terminables mesure par la Phase A pour cette (couche, lambda). 0 = le
-            # plantage n'entre pas dans l'objectif, comportement d'avant.
+            # cost = cost_nm + w x (-log(1 - p)), where p is the rate of non-
+            # terminable depositions measured by Phase A for this (layer, lambda). 0 = the
+            # crash does not enter the objective, previous behavior.
             "dp_yield_weight": _config_float(
                 getattr(self, "_loaded_config", {}), "dp_yield_weight"
             ),
@@ -1104,17 +1104,17 @@ class CertusStratStateMixin:
             "index_corridor": _config_float(
                 getattr(self, "_loaded_config", {}), "index_corridor"
             ),
-            # ── AXE 3 : la cible spectrale, acheminee depuis la configuration ───
+            # ── AXIS 3: the spectral target, routed from the configuration ───
             #
-            # 👤 « Le plus important est la cible spectrale respectee. » STRAT classait
-            # sur l'ecart au spectre NOMINAL et n'avait jamais recu la cible.
+            # 👤 "The most important is the respected spectral target." STRAT ranked
+            # on the deviation to the NOMINAL spectrum and had never received the target.
             #
-            # Meme format que DESIGN — une liste de zones
-            # {on, lmin, lmax, tmin, tmax, w} — pour que les deux modules parlent de la
-            # meme chose et que la fonctionnelle soit celle que DESIGN minimise deja.
+            # Same format as DESIGN — a list of zones
+            # {on, lmin, lmax, tmin, tmax, w} — so that both modules talk about the
+            # same thing and the functional is the one DESIGN already minimizes.
             #
-            # Absente = repli documente sur le nominal non pondere, donc comportement
-            # inchange. C'est la PRESENCE de zones qui active l'axe 3.
+            # Absent = documented fallback on the unweighted nominal, so behavior
+            # unchanged. It is the PRESENCE of zones that activates axis 3.
             "targets": (
                 getattr(self, "_loaded_config", {}).get("targets")
                 if isinstance(getattr(self, "_loaded_config", None), dict)
@@ -1159,43 +1159,43 @@ class CertusStratStateMixin:
             "fast_auto_blocks": True,
         }
 
-        # 🔴 LE MODE FAST EST INTERDIT — decision du physicien, 2026-08-05 :
-        # « d'une maniere generale, interdit le mode fast. Je veux un mode vraiment
-        #   semblable a la realite, et j'ai tout mon temps. »
+        # 🔴 THE FAST MODE IS FORBIDDEN — decision of the physicist, 2026-08-05:
+        # "generally speaking, forbid the fast mode. I want a mode truly
+        #   similar to reality, and I have all my time."
         #
-        # Ce que `fast` faisait, et pourquoi c'etait nocif :
+        # What `fast` did, and why it was harmful:
         #
-        #   n_screen_runs        25 -> 6     un P95 sur 6 tirages est le MAXIMUM DE SIX.
-        #                                    L'elimination de 230 strategies sur 240 se
-        #                                    decidait donc sur UNE SEULE realisation
-        #                                    Monte-Carlo par strategie.
+        #   n_screen_runs        25 -> 6     a P95 on 6 draws is the MAXIMUM OF SIX.
+        #                                    The elimination of 230 strategies out of 240 was
+        #                                    thus decided on a SINGLE Monte-Carlo realization
+        #                                    per strategy.
         #   robustness_num_runs 150 -> 40
         #   consensus_num_runs  150 -> 40
         #   consensus_num_seeds   3 -> 2
         #   elite_rounds          2 -> 1
         #   keep_full_mc_top_k   30 -> 15
-        #   + la plage de comptes de blocs retombait sur des presets non denses
+        #   + the block count range fell back on non-dense presets
         #     (_compute_blocks_range_for_params, certus_strat_context.py)
         #
-        # Le taux de plantage est BINOMIAL : son ecart-type a p = 5 % vaut
-        # sqrt(0,05 x 0,95 / N), soit 8,9 % a N = 6 contre 1,8 % a N = 150. On
-        # prononcait donc une elimination IRREVERSIBLE avec un instrument dont la
-        # resolution (17 %) etait trois fois plus grossiere que le seuil mesure (5 %).
+        # The crash rate is BINOMIAL: its standard deviation at p = 5 % is
+        # sqrt(0.05 x 0.95 / N), which is 8.9 % at N = 6 versus 1.8 % at N = 150. We
+        # were therefore pronouncing an IRREVERSIBLE elimination with an instrument whose
+        # resolution (17 %) was three times coarser than the measured threshold (5 %).
         #
-        # On ne se contente pas de le deconseiller : une configuration enregistree qui
-        # porte encore `fast` est RAMENEE a `premium`, bruyamment. Un mode degrade qui
-        # se reactive en silence au chargement d'un vieux fichier est exactement le
-        # piege que cette session a paye trois fois (trigger_tolerance, execution_mode,
-        # scan_wl_step : le fichier d'exemple etait a chaque fois pire que le defaut).
+        # We do not merely advise against it: a saved configuration that
+        # still bears `fast` is BROUGHT BACK to `premium`, loudly. A degraded mode that
+        # silently reactivates upon loading an old file is exactly the
+        #trap this session paid for three times (trigger_tolerance, execution_mode,
+        # scan_wl_step: the example file was each time worse than the default).
         if str(params_out.get("execution_mode", "premium")).strip().lower() != "premium":
             demande = params_out.get("execution_mode")
             params_out["execution_mode"] = "premium"
             try:
                 self.logger.warning(
-                    "[MODE] execution_mode=%r demande mais INTERDIT : ramene a 'premium'. "
-                    "Le mode degrade divisait les budgets Monte-Carlo par 4 et rendait "
-                    "l'elimination sur plantage non significative (resolution 17 %% pour "
-                    "un seuil a 5 %%).",
+                    "[MODE] execution_mode=%r requested but FORBIDDEN: brought back to 'premium'. "
+                    "The degraded mode divided Monte-Carlo budgets by 4 and made "
+                    "elimination on crash non-significant (17 %% resolution for "
+                    "a 5 %% threshold).",
                     demande,
                 )
             except AttributeError:

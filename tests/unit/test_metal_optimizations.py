@@ -202,13 +202,13 @@ def test_edge_case_no_internal_knots() -> None:
 def test_spline_basis_cache_eviction_and_lock() -> None:
     """Le cache doit rester borne a `_MAX_ENTRIES`, et evincer le PLUS ANCIEN UTILISE.
 
-    ⚠️ CE TEST NE POUVAIT PLUS REUSSIR, et ce depuis le commit `a9983c4`. Il inserait
+    ⚠️ THIS TEST COULD NO LONGER SUCCEED, since commit `a9983c4`. He would insert
     510 cles puis exigeait `len(cache) < 500` — or ce commit a remplace le vidage total
     par une eviction LRU bornee a `_MAX_ENTRIES = 512`. Avec 510 cles distinctes sous un
-    plafond de 512, aucune eviction n'a lieu et le cache en contient exactement 510 :
+    ceiling of 512, no eviction takes place and the cache contains exactly 510:
     l'assertion etait arithmetiquement impossible.
 
-    Il testait donc un comportement qui n'existe plus — « le cache se vide tout seul » —
+    He was therefore testing a behavior that no longer exists — “the cache empties itself” —
     au lieu du contrat reel : « le cache est BORNE et evince le moins recemment utilise ».
     On teste desormais le contrat, et contre la constante plutot que contre un nombre
     magique, pour qu'un changement de plafond ne le recasse pas en silence.
@@ -221,17 +221,17 @@ def test_spline_basis_cache_eviction_and_lock() -> None:
     l_array = np.linspace(400, 800, 10)
 
     def knots(i: int) -> np.ndarray:
-        # 1e-2 : bien au-dessus de l'arrondi de la cle (1e-6), donc des cles VRAIMENT
-        # distinctes. Voir tests/oracle/test_spline_basis_cache_key.py.
+        #1e-2: well above the rounding of the key (1e-6), so REALLY keys
+        #distinct. See tests/oracle/test_spline_basis_cache_key.py.
         return np.array([400.0, 500.0 + i * 1e-2, 800.0])
 
-    # Sous le plafond : rien n'est evince.
+    #Under the ceiling: nothing is excluded.
     for i in range(cap):
         SplineBasisCache.get(knots(i), l_array)
     assert len(SplineBasisCache._cache) == cap
 
-    # On re-touche la plus ancienne pour la rendre RECENTE : le LRU doit alors
-    # sacrifier la suivante, pas elle. C'est ce qui distingue un LRU d'un FIFO.
+    #We touch the oldest one again to make it RECENT: the LRU must then
+    #sacrifice the next one, not her. This is what distinguishes an LRU from a FIFO.
     SplineBasisCache.get(knots(0), l_array)
 
     # Au-dela du plafond : l'eviction se declenche, et la taille reste bornee.

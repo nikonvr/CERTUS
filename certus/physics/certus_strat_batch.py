@@ -155,13 +155,13 @@ def validate_wavelengths_batch(
                 nL_real,
             )
             if val > 100000.0:
-                # depot non terminable : sentinelle nominal_th + 1e6
+                # non-terminable deposition: sentinel nominal_th + 1e6
                 n_crash += 1
             else:
-                # L'erreur locale se mesure sur les runs qui se TERMINENT. Y
-                # laisser la sentinelle melangerait deux grandeurs sans rapport
-                # -- des nanometres et un compteur d'echecs -- et un seul run
-                # plante suffirait a saturer le P95 de la couche.
+                # Local error is measured on runs that TERMINATE. Leaving
+                # the sentinel there would mix two unrelated quantities
+                # -- nanometers and a failure counter -- and a single crashed
+                # run would be enough to saturate the layer's P95.
                 error_buffer[c_idx, n_ok] = np.abs(val - d_nom)
                 n_ok += 1
         if n_ok > 0:
@@ -172,12 +172,12 @@ def validate_wavelengths_batch(
             results[c_idx, 1] = 0.0
         results[c_idx, 2] = n_crash / n_runs
 
-        # --- gain de compensation : DEUX evaluations, bruit NUL, aucun Monte-Carlo
+        # --- compensation gain: TWO evaluations, ZERO noise, no Monte-Carlo
         #
-        # On injecte une erreur connue sur la couche precedente et on regarde de
-        # combien la couche courante la corrige :
+        # We inject a known error on the previous layer and observe how
+        # much the current layer corrects it:
         #     gain = |Delta_d_i| / delta_sonde
-        #     < 1 : l'erreur amont est AMORTIE   > 1 : elle est AMPLIFIEE
+        #     < 1 : upstream error is DAMPENED   > 1 : it is AMPLIFIED
         gain = -1.0
         if i_layer >= 1:
             prev_nom = p_thick_nominal[:i_layer].copy()
@@ -209,11 +209,12 @@ def validate_wavelengths_batch(
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)
-                # Sous 0,05 nm il n'y a plus d'epaisseur : c'est moins d'un
-                # atome. On ne fabrique pas un gain a partir de ce residu.
+                # Below 0.05 nm there is no longer a thickness: it is less than an
+                # atom. We don't fabricate a gain from this residue.
+                #
                 gain = 0.0 if delta < 0.05 else delta / gain_probe_nm
         else:
-            # premiere couche : rien en amont, donc rien a compenser
+            # first layer: nothing upstream, so nothing to compensate
             gain = 0.0
         results[c_idx, 3] = gain
     return results
@@ -247,25 +248,25 @@ def simulate_stack_robustness_batch(
 
     Returns: (simulated_thicknesses, average_dynamics_per_layer)
 
-    signal_noise_scale : echelle du bruit de LECTURE du signal de monitoring, PAR
-    COUCHE, en unites de T (axe 1.1, cf. `simulate_growth_kernel`). Un tableau et
-    non un scalaire parce que le mode « tolerance en nm » convertit la tolerance en
-    unites de T par dT/dd, qui depend de la couche. None = desactive, et le chemin
-    de calcul redevient mot pour mot celui d'avant ce parametre.
+    signal_noise_scale : READING noise scale of the monitoring signal, PER
+    LAYER, in T units (axis 1.1, cf. `simulate_growth_kernel`). An array and
+    not a scalar because the "tolerance in nm" mode converts the tolerance to
+    T units via dT/dd, which depends on the layer. None = disabled, and the
+    computation path reverts word for word to the one before this parameter.
 
-    signal_noise_seed : graine du flux. Fonction de la seule configuration de
-    tirage, JAMAIS de la strategie -- c'est ce qui preserve les nombres aleatoires
-    communs entre strategies comparees.
+    signal_noise_seed : stream seed. Function of the draw configuration only,
+    NEVER of the strategy -- this is what preserves common random numbers
+    between compared strategies.
     """
     n_runs = noise_matrix.shape[0]
     n_layers = len(p_thick_nominal)
     results = np.empty((n_runs, n_layers), dtype=np.float64)
     all_dyns = np.empty((n_runs, n_layers), dtype=np.float64)
     current_run_th_buffer = np.empty((n_runs, n_layers), dtype=np.float64)
-    # Debut du bloc monochromatique de chaque couche. A lambda inchangee le signal
-    # de monitoring est CONTINU, donc les points tournants deja observes restent
-    # exploitables par POEM ; au changement de lambda l'historique est perdu.
-    # C'est ce qui donne leur valeur aux blocs.
+    # Start of the monochromatic block for each layer. At unchanged lambda the
+    # monitoring signal is CONTINUOUS, so the already observed turning points
+    # remain exploitable by POEM; upon changing lambda the history is lost.
+    # This is what gives blocks their value.
     block_start = np.zeros(n_layers, dtype=np.int64)
     for i in range(1, n_layers):
         if abs(layer_wavelengths[i] - layer_wavelengths[i - 1]) > 1e-06:
@@ -363,22 +364,22 @@ def compute_batch_rmse(
 ) -> np.ndarray:
     """Computes RMSE for a batch of simulated thicknesses against a target T spectrum.
 
-    ``weights`` -- PONDERATION SPECTRALE, axe 3. ``None`` = uniforme, et le chemin de
-    calcul est alors mot pour mot celui d'avant ce parametre.
+    ``weights`` -- SPECTRAL WEIGHTING, axis 3. ``None`` = uniform, and the computation
+    path then becomes word for word the one before this parameter.
 
-    🔴 POURQUOI UNE PONDERATION EST INDISPENSABLE SUR UN DICHROIQUE.
-    👤 Le physicien : « le plus important est la cible spectrale respectee ». Or un RMSE
-    uniforme sur le juge de paix fait peser la bande BLOQUEE -- 146 points sur 301, avec
-    une exigence de 0,1 % de transmission -- exactement autant que la bande passante, ou
-    un ecart d'un point entier est sans consequence. L'exigence y est 500 fois plus dure
-    et elle compte pareil. Un RMSE global sur un dichroique ne dit donc rien, et c'est
-    pour cela que toute mesure de ce module est decomposee par bande.
+    🔴 WHY WEIGHTING IS INDISPENSABLE ON A DICHROIC.
+    👤 The physicist: "the most important is the respected spectral target". However,
+    a uniform RMSE on the final arbiter makes the BLOCKED band weigh -- 146 points
+    out of 301, with a 0.1% transmission requirement -- exactly as much as the passband,
+    where a deviation of a full point is inconsequential. The requirement there is 500
+    times harder and it counts the same. A global RMSE on a dichroic thus says nothing,
+    and this is why every metric in this module is broken down by band.
 
-    Les poids attendus sont ceux que DESIGN utilise deja
-    (``prepare_targets_vectorized`` : poids utilisateur de la zone x quadrature
-    spectrale en d ln lambda). Un point hors de toute zone recoit un poids NUL -- il
-    n'entre alors pas dans le denominateur, ce qui est le comportement voulu : une
-    longueur d'onde dont l'utilisateur n'a rien dit ne doit ni aider ni penaliser.
+    The expected weights are those that DESIGN already uses
+    (``prepare_targets_vectorized`` : user weight of the zone x spectral
+    quadrature in d ln lambda). A point outside any zone receives a ZERO weight --
+    it then does not enter the denominator, which is the intended behavior: a
+    wavelength about which the user said nothing should neither help nor penalize.
 
     Args:
 
@@ -429,8 +430,8 @@ def compute_batch_rmse(
         elif w_sum > 1e-300:
             rmse_arr[r] = np.sqrt(mse_sum / w_sum)
         else:
-            # Aucune zone ne couvre la grille : rendre 0 ferait passer n'importe quelle
-            # strategie pour parfaite. On rend l'infini, qui elimine et se voit.
+            # No zone covers the grid: returning 0 would make any strategy look
+            # perfect. We return infinity, which eliminates and is visible.
             rmse_arr[r] = np.inf
     return rmse_arr
 

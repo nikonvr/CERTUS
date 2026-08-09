@@ -309,11 +309,11 @@ def enforce_min_k_corridor_half_width(
             else:
                 ref = ref[: lo.size]
 
-    # La desinfection des valeurs non finies etait enfermee dans la branche
-    # `ref.size != lo.size` : dans le cas NORMAL ou les tailles concordent, un k_ref
-    # contenant un NaN ou un inf passait sans filtre et contaminait tout le corridor k
-    # (toute comparaison avec NaN etant fausse, les bornes devenaient incoherentes).
-    # Elle s'applique desormais dans tous les cas.
+    #The sanitization of non-finite values ​​was locked in the branch
+    #`ref.size != lo.size`: in the NORMAL case where the sizes match, a k_ref
+    #containing a NaN or an inf passed without filter and contaminated the entire corridor k
+    #(any comparison with NaN being false, the limits became inconsistent).
+    #It now applies in all cases.
     bad_ref = ~np.isfinite(ref)
 
     if np.any(bad_ref):

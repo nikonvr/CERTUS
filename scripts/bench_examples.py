@@ -1,8 +1,8 @@
 """Banc de mesure CERTUS sur les EXEMPLES REELS de `example/`.
 
-Pilote chaque module en headless, sans mock, et chronometre le calcul reel.
+Control each module headless, without mocking, and time the actual calculation.
 Remplace `tests/headless/` comme banc de mesure : ces tests-la remplacent le
-calcul de DESIGN et de STRAT par un mock et ne mesurent donc rien.
+calculation of DESIGN and STRAT by a mock and therefore do not measure anything.
 
     python scripts/bench_examples.py <module> [options]
 
@@ -11,29 +11,29 @@ Modules : metal_single metal_bilayer index index_spline re field design strat
 Options
     --auto-yes      repond OUI aux boites modales. INDISPENSABLE : la reponse
                     par defaut est "No", ce qui fait SAUTER la phase IR d'INDEX
-                    et divise son temps par deux sans qu'on le voie.
+                    and divides his time in half without anyone seeing him.
     --sample        profil par echantillonnage de piles, tous threads confondus
     --time-cost     cout par evaluation de cost_numba_fast (DESIGN)
     --instrument    statistiques de SplineBasisCache
     --trace-nk      compte les appels a get_nk_from_spline
     --force-cache   force use_cache=True sur le cache d'indices (cf. REPRISE_PERF §4.5)
-    --watchdog N    dump des piles de tous les threads toutes les N secondes
-    --out CHEMIN    duplique la sortie dans un fichier
+    --watchdog N dump stacks of all threads every N seconds
+    --out PATH duplicates the output to a file
 
 Sortie : SETUP_S (chargement), RUN_S (calcul pur), RESULT (grandeur physique,
 pour verifier qu'une optimisation n'a pas change le resultat).
 
---- QUATRE PIEGES, tous rencontres en ecrivant ce fichier ---
+--- FOUR TRAPS, all encountered when writing this file ---
 
-1. La QApplication doit etre gardee dans une variable VIVANTE. Sans reference,
+1. The QApplication must be kept in a LIVE variable. Without reference,
    le GC la ramasse et la creation du premier QWidget abat le processus avec le
-   code de sortie 127 (ERROR_PROC_NOT_FOUND), sans aucune trace Python.
+   exit code 127 (ERROR_PROC_NOT_FOUND), without any Python trace.
 2. Les apps CERTUS detournent sys.stdout vers leurs fichiers de log. Tout print
    d'un banc disparait : on garde une reference sur le flux d'origine.
-3. Ne pas importer numpy/scipy avant la creation de la QApplication : l'ordre de
+3. Do not import numpy/scipy before creating the QApplication: the order of
    chargement des DLL compte sur Windows (meme code 127).
 4. `_is_busy` ne veut rien dire dans DESIGN : lu en certus_design_ui.py:339,
-   jamais ecrit. Attendre qu'il repasse a False bloque pour toujours. Le vrai
+   never written. Waiting for it to change back to False blocks forever. The real
    critere de fin est `app.optim_thread.isRunning()` plus un delai de silence.
 
 Et cProfile ne trace QUE son propre thread : le calcul de DESIGN, INDEX, METAL et
@@ -55,7 +55,7 @@ ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 
-# Pas d'import numpy ici : voir piege 3.
+#No numpy import here: see trap 3.
 
 _REAL_STDOUT = sys.stdout  # voir piege 2
 _LOG = None
@@ -80,7 +80,7 @@ _QAPP = None
 
 
 def qapp():
-    """QApplication unique, gardee dans un global (voir piege 1)."""
+    """QSingle application, kept in a global (see trap 1)."""
     global _QAPP
     from PyQt6.QtWidgets import QApplication
 
@@ -92,7 +92,7 @@ def qapp():
 def autoanswer_dialogs(yes: bool = True) -> None:
     """Repond automatiquement aux boites modales.
 
-    Sans cela, un banc headless mesure surtout des dialogues en attente, et la
+    Without this, a headless bench mainly measures pending dialogues, and the
     reponse par defaut "No" fait sauter des phases entieres de pipeline.
     """
     from PyQt6.QtWidgets import QMessageBox
@@ -109,14 +109,14 @@ def autoanswer_dialogs(yes: bool = True) -> None:
 def attach_console_logging(app) -> None:
     """Rend visible en headless ce que l'application journalise vers son interface.
 
-    🔴 SANS CELA, TOUTE LA PHASE A EST INVISIBLE — et ce n'est pas un bug, c'est une
-    propriete structurelle qu'il faut connaitre avant de conclure d'un silence.
+    🔴 WITHOUT THIS, THE WHOLE PHASE A IS INVISIBLE — and it's not a bug, it's a
+    structural property that must be known before concluding with silence.
 
     Il existe DEUX familles de loggers dans STRAT, et elles ne sortent pas au meme
     endroit :
 
       - `logging.getLogger(f"W{n_blocs}")` (certus_strat_workers.py:488) porte un
-        StreamHandler vers la console. C'est lui qui produit les lignes `[ROBUSTNESS]`
+        StreamHandler to console. It is he who produces the lines `[ROBUSTNESS]`
         et `[ELITE]` qu'on voit dans les captures du banc.
       - `self.logger`, construit par `setup_gui_logger`, ne porte QU'UN QueueHandler
         vers le panneau « Show Details » — le commentaire de `certus_core.py:902` le
@@ -124,17 +124,17 @@ def attach_console_logging(app) -> None:
         `params["logger"]`, et `certus_strat_pipeline.py:47` le reprend pour toute la
         Phase A.
 
-    En headless personne ne vide cette file : `[MIN-T]`, `[SURVIVAL]`, `[CRASH]`,
+    In headless no one empties this queue: `[MIN-T]`, `[SURVIVAL]`, `[CRASH]`,
     `[ADMISSIBILITE]`, `[MARGE]` n'apparaissent NULLE PART. 📏 Verifie le 2026-08-06 sur
     un run complet : les seuls prefixes presents dans la capture etaient `[ROBUSTNESS]`
-    et `[ELITE]`. Il a fallu passer par le JSON d'observabilite pour prouver qu'un filtre
+    and `[ELITE]`. It was necessary to go through the observability JSON to prove that a filter
     de Phase A avait bien mordu.
 
-    ⚠️ Un silence ne prouvait donc rien, ni dans un sens ni dans l'autre — exactement le
-    piege qui fait prendre un filtre INERTE pour un filtre qui n'a rien a interdire.
+    ⚠️ A silence therefore proved nothing, neither in one direction nor the other - exactly the
+    trap which causes an INERT filter to be mistaken for a filter which has nothing to prohibit.
 
     On branche ici un StreamHandler sur le logger de l'application, vers le flux
-    d'origine (piege 2). Aucun code de production n'est touche.
+    of origin (trap 2). No production codes are affected.
     """
     import logging
 
@@ -156,10 +156,10 @@ def attach_console_logging(app) -> None:
 #:
 #: 🔴 CE PLAFOND A DEJA RENDU DEUX MESURES NULLES. Au-dela, le banc n'echoue pas
 #: bruyamment : il emet RESULT=None, ce qui RESSEMBLE a un resultat. Le run STRAT
-#: complet sur le dichroique 48 couches tourne entre 1100 et 1800 s selon la
-#: machine et sa charge — la marge est mince, et elle a ete franchie.
+#: complete on the 48-layer dichroic runs between 1100 and 1800 s depending on the
+#: machine and its load — the margin is thin, and it has been crossed.
 #:
-#: Surchargeable sans toucher au code :  set CERTUS_BENCH_TIMEOUT_S=3600
+#: Overloadable without touching the code: set CERTUS_BENCH_TIMEOUT_S=3600
 DEFAULT_TIMEOUT_MS: int = int(float(os.environ.get("CERTUS_BENCH_TIMEOUT_S", "1800")) * 1000.0)
 
 
@@ -172,10 +172,10 @@ def wait_for(worker, timeout_ms: int = None):
     loop = QEventLoop()
     # `exit` distingue les TROIS sorties de la boucle, que le banc confondait :
     # emission de `finished`, emission de `error`, et expiration du QTimer. Les
-    # trois rendaient None sans un mot, alors que STRAT compte CINQ sites de levee
-    # avant son unique `finished.emit` (certus_strat_workers.py:1370, :1419, :1464,
-    # :1465 et la validation pydantic de :1474). Un RESULT=None ne disait donc pas
-    # lequel. La valeur de retour est inchangee : les huit runners en dependent.
+    #three returned None without a word, while STRAT has FIVE survey sites
+    #before its unique `finished.emit` (certus_strat_workers.py:1370, :1419, :1464,
+    #:1465 and the pydantic validation of :1474). A RESULT=None therefore did not say
+    #which. The return value is unchanged: the eight runners depend on it.
     box: dict = {"result": None, "error": None, "exit": "timeout"}
 
     def on_done(res=None):
@@ -202,9 +202,9 @@ def wait_for(worker, timeout_ms: int = None):
     t.stop()
     emit(f"WAIT_EXIT={box['exit']}")
     if box["exit"] == "timeout":
-        # Le runner DESIGN criait deja son TIMEOUT (voir run_design) ; wait_for,
-        # lui, sortait muet. Un banc qui rend None apres 30 min de silence donne
-        # l'illusion d'une mesure.
+        #The DESIGN runner was already shouting his TIMEOUT (see run_design); wait_for,
+        #he left silent. A bench that returns None after 30 minutes of given silence
+        #the illusion of a measure.
         emit(f"WAIT_TIMEOUT={timeout_ms / 1000.0:.0f} s — aucune emission recue")
     if box["error"] is not None:
         # STRAT emet (type, exc, tb) : le repr du tuple ne montre pas OU c'est
@@ -221,18 +221,18 @@ def wait_for(worker, timeout_ms: int = None):
 
 
 # --------------------------------------------------------------------------- #
-# Echantillonneur de piles, tous threads confondus
+#Stack sampler, all threads combined
 # --------------------------------------------------------------------------- #
 
 SAMPLER: dict = {"self": None, "cum": None, "lines": None, "stop": None, "n": 0}
 
 
 def start_sampler(interval: float = 0.005) -> None:
-    """Echantillonne sys._current_frames() depuis un thread de service.
+    """Samples sys._current_frames() from a service thread.
 
-    Effet de bord utile : le temps passe dans les noyaux @njit, qui n'ont aucune
-    frame Python, est impute a leur APPELANT Python. C'est exactement ce qu'on
-    veut : il revele le cout de dispatch autant que le cout de calcul.
+    Useful side effect: time passes in @njit cores, which have no
+    frame Python, is attributed to their Python CALLER. This is exactly what we
+    wants: it reveals the dispatch cost as much as the calculation cost.
     """
     import collections
     import threading
@@ -294,9 +294,9 @@ def dump_sampler(top: int = 22) -> None:
 
 
 def start_watchdog(period_s: float) -> None:
-    """Dump periodique des piles de TOUS les threads.
+    """Periodic stack dump of ALL threads.
 
-    Repond a une seule question : quand le processus n'avance plus, ou est-il ?
+    Answers only one question: when the process stops moving forward, where is it?
     Un compteur de progression qui stagne ne le dit pas.
     """
     import threading
@@ -407,8 +407,8 @@ def time_cost_kernel() -> None:
     """Chronometre cost_numba_fast, le noyau ou DESIGN passe son temps.
 
     Le temps total d'un run DESIGN va de 43 a 93 s d'un essai a l'autre :
-    l'optimiseur est stochastique et ne suit jamais deux fois la meme
-    trajectoire. Le cout PAR EVALUATION, lui, est comparable — c'est donc lui
+    the optimizer is stochastic and never follows the same pattern twice
+    path. The cost PER EVALUATION is comparable - it is therefore
     qu'il faut mesurer pour opposer deux versions.
     """
     from certus.core import certus_design_core as dc
@@ -539,11 +539,11 @@ def run_index():
     run = time.perf_counter() - t1
 
     # OptimizationResults (certus/core/certus_index_config.py:261) expose final_mse,
-    # PAS rmse_final, et porte __slots__ : ni getattr("rmse_final") ni le repli
-    # isinstance(dict) ne pouvaient aboutir. RESULT valait donc None sur INDEX, ce
+    #NOT rmse_final, and carries __slots__: neither getattr("rmse_final") nor fallback
+    #isinstance(dict) could not succeed. RESULT was therefore equal to None on INDEX, which
     # qui privait le module du seul ancrage de correction du banc.
     # RMSE = sqrt(MSE), cf. calculate_index_rmse (certus/utils/certus_index_utils.py:1109)
-    # et la convention des autres runners (float(r.fun) ** 0.5).
+    #and the convention of other runners (float(r.fun) ** 0.5).
     val = None
     if res is not None:
         mse = getattr(res, "final_mse", None)
@@ -670,8 +670,8 @@ def run_design():
     app.load_config(str(EX / "example_design/JSON-design-example.json"))
     setup = time.perf_counter() - t0
 
-    # Detection de fin : voir piege 4. On suit le thread d'optimisation et les
-    # emissions successives de optimization_finished_signal (une par passe).
+    #End detection: see trap 4. We follow the optimization thread and the
+    #successive emissions of optimization_finished_signal (one per pass).
     passes = {"n": 0, "quiet": 0.0}
     app.optimization_finished_signal.connect(lambda: passes.update(n=passes["n"] + 1))
 
@@ -731,18 +731,18 @@ def run_strat():
 
     # Le pipeline STRAT emet un WorkerThreadResult
     # (certus/workers/certus_strat_workers_dto.py:132), PAS un dict : la cle
-    # portant le RMSE est `rmse`, dans son champ `final_results`. Le banc
-    # cherchait `best_rmse` sur un dict — les deux etaient faux, donc RESULT
-    # valait None sur STRAT et le module n'avait aucun ancrage de correction.
+    #carrying the RMSE is `rmse`, in its `final_results` field. The bench
+    #was looking for `best_rmse` on a dict — both were wrong, so RESULT
+    #was None on STRAT and the module had no correction anchor.
     # La charge utile est le to_legacy_dict() d'un WorkerThreadResult
     # (certus/workers/certus_strat_workers_dto.py:132) : un dict a DEUX cles,
     # `final_results` et `opti_results` (constate par instrumentation).
     #
     # Le RMSE n'y figure PAS directement. La cle "rmse" du module appartient a
     # `metadata`, qui part vers un AUTRE signal, excel_ready, pour l'export Excel
-    # (certus_strat_workers.py, juste avant le for_step_23). Le RMSE se derive de
+    #(certus_strat_workers.py, just before for_step_23). The RMSE is derived from
     # final_results["all_strategies_results"] par extract_best_rmse — exactement
-    # ce que fait le module lui-meme deux lignes plus haut.
+    #what the module itself does two lines above.
     val = None
     final_results = res.get("final_results") if isinstance(res, dict) else None
     if isinstance(final_results, dict):
@@ -768,7 +768,7 @@ def dump_strat_ranking(strategies: list, top: int = 10) -> None:
     `_filter_finite_robustness_scores` : leur `robustness_score` n'est PLUS un
     score de robustesse mais le pire RMSE fini (`_worst_finite_rmse`). Si ce
     compte n'est pas nul, `RESULT` ne mesure pas la meme grandeur qu'un run ou il
-    l'est, et les deux ne sont pas comparables.
+    is, and the two are not comparable.
     """
     if not isinstance(strategies, list) or not strategies:
         emit("STRAT_N_STRATEGIES=0")
@@ -836,7 +836,7 @@ def main() -> None:
 
     emit(f"=== START {args.module} ===")
 
-    # QApplication AVANT tout import de certus : voir pieges 1 et 3.
+    #QApplication BEFORE any certus import: see traps 1 and 3.
     qapp()
 
     if args.auto_yes:
@@ -863,8 +863,8 @@ def main() -> None:
     emit(f"RESULT={val}")
     if val is None:
         # RESULT=None a longtemps passe inapercu sur INDEX puis sur STRAT : le banc
-        # sortait la ligne sans rien signaler, et ces modules ont donc ete
-        # optimisables sans aucun garde-fou de correction. Un module sans ancrage
+        #came out of the line without reporting anything, and these modules were therefore
+        #optimizable without any corrective safeguards. A module without anchoring
         # doit desormais le CRIER, pas le taire.
         emit(
             f"WARN=RESULT est None sur {args.module} : ce module n'a AUCUN ancrage "

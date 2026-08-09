@@ -8,12 +8,12 @@ During development, mathematical optimizations or algorithmic refactoring, small
 To prevent this, we extracted the best RMSE error obtained on a series of robust examples (Golden Masters) stored in the file `baseline_rmse.json`.
 
 ## Absolute Development Rule
-**ANY source code modification (UI, refactoring, Numba JIT, workers, business logic) MUST be validated by a pass of this test suite.**
+**ANYsourcecodemodification(UI,refactoring,NumbaJIT,workers,businesslogic)MUSTbevalidatedbyapassofthistestsuite.**
 
 The tests verify that the code can still run the full pipelines "headless" (without interface) and that the obtained RMSE does not deviate by more than 1% from the absolute reference.
 
-## Comment Lancer ?
-Double-cliquez simplement sur `RUN_CONVERGENCE_TESTS.bat` à la racine du projet, ou exécutez la commande :
+## How to Launch?
+Simplydouble-click`RUN_CONVERGENCE_TESTS.bat`intheprojectroot,orrunthecommand:
 
 ```bash
 python tests/regression/test_convergence.py

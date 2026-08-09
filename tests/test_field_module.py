@@ -18,21 +18,21 @@ from certus.ui.certus_field_services import FieldExportService, FieldPlotData, F
 # TESTS CORE (Numba & Math)
 # ---------------------------------------------------------
 def test_trapz_numba_linear():
-    """Test de l'intégration trapézoïdale Numba sur une fonction linéaire."""
+    """Testing Numba trapezoidal integration on a linear function."""
     y = np.array([1.0, 2.0, 3.0], dtype=np.float64)
     x = np.array([0.0, 1.0, 2.0], dtype=np.float64)
     res = _trapz_numba(y, x)
     assert np.isclose(res, 4.0), f"Expected 4.0, got {res}"
 
 def test_trapz_numba_constant():
-    """Test sur une constante."""
+    """Test on a constant."""
     y = np.array([5.0, 5.0, 5.0, 5.0], dtype=np.float64)
     x = np.array([0.0, 1.0, 2.0, 3.0], dtype=np.float64)
     res = _trapz_numba(y, x)
     assert np.isclose(res, 15.0), f"Expected 15.0, got {res}"
 
 def test_calculate_electric_field_basic():
-    """Test du pipeline de calcul analytique du champ."""
+    """Testing the field analytical calculation pipeline."""
     z_coords, E2_values, ep_c1_cn, integrals, averages = calculate_electric_field(
         n1_r=2.0, n2_r=1.5, nSub_r=1.5,
         l0=1000.0, lambda_calc=1000.0,
@@ -48,7 +48,7 @@ def test_calculate_electric_field_basic():
     assert np.isfinite(np.max(E2_values))
 
 def test_calculate_opt_metrics():
-    """Test du retour structuré des métriques d'optimisation."""
+    """Testing structured feedback of optimization metrics."""
     metrics = calculate_opt_metrics(
         n1_r=2.0, n2_r=1.5, nSub_r=1.5,
         l0=1000.0, emp_factors_list=[1.0, 1.0, 1.0], 
@@ -63,7 +63,7 @@ def test_calculate_opt_metrics():
     assert np.isfinite(metrics['ratio_average']) or np.isinf(metrics['ratio_average'])
 
 def test_top_level_objective_function():
-    """Test de la fonction de coût d'optimisation L-BFGS-B (avec listes)."""
+    """Testing the L-BFGS-B optimization cost function (with lists)."""
     p = [1.0, 1.0]
     cost = top_level_objective_function(
         p, n1_rs=[2.0], n2_rs=[1.5], nSub_rs=[1.5], l0=1000.0,
@@ -75,7 +75,7 @@ def test_top_level_objective_function():
 
 
 def test_top_level_objective_function_invalid_inputs():
-    """Les entrées invalides doivent retourner un coût borne élevé."""
+    """Invalid entries must return a high bound cost."""
     cost = top_level_objective_function(
         [np.nan],
         n1_rs=[2.0],
@@ -93,7 +93,7 @@ def test_top_level_objective_function_invalid_inputs():
 
 
 def test_top_level_objective_function_reflectance_window_penalty():
-    """Les bornes rmin/rmax doivent influencer le coût de façon monotone."""
+    """The rmin/rmax bounds must influence the cost monotonically."""
     base_cost = top_level_objective_function(
         [1.0, 1.0],
         n1_rs=[2.0],
@@ -142,7 +142,7 @@ def test_calculate_opt_metrics_invalid_l0_returns_safe_defaults():
 
 
 def test_field_stack_service_load_stack():
-    """Le helper de chargement doit remplir la table avec une alternance déterministe."""
+    """The loading helper must fill the table with a deterministic alternation."""
     from PyQt6.QtWidgets import QTableWidget
 
     table = QTableWidget()
@@ -155,7 +155,7 @@ def test_field_stack_service_load_stack():
 
 
 def test_field_stack_service_normalize_layer_types():
-    """Le normalisateur doit fournir une alternance sûre et stable."""
+    """The standardizer must provide a safe and stable alternation."""
     assert FieldStackService.normalize_layer_types([0, 1, 0], 3) == [0, 1, 0]
     assert FieldStackService.normalize_layer_types([9], 3) == [0, 1, 0]
     assert FieldStackService.normalize_layer_types(None, 4) == [0, 1, 0, 1]
@@ -181,7 +181,7 @@ def test_field_export_service_build_plot_data_and_frames():
 
 
 def test_field_plot_data_round_trip():
-    """Le DTO de plot doit se convertir proprement depuis une source générique."""
+    """The plot DTO must convert cleanly from a generic source."""
     payload = FieldPlotData.from_any(
         type(
             "Dummy",
@@ -202,7 +202,7 @@ def test_field_plot_data_round_trip():
 # TESTS WORKERS (Async Tasks)
 # ---------------------------------------------------------
 def test_field_worker_calculate():
-    """Test du worker en mode 'calculate' sans UI."""
+    """Worker test in 'calculate' mode without UI."""
     params = FieldParamsDTO(
         n1_rs=[2.1], n2_rs=[1.46], nSub_rs=[1.52], n_supers=[1.0],
         l0=1064.0, lambda_calcs=[1064.0], emp_factors=[1.0, 1.0],
@@ -227,7 +227,7 @@ def test_field_worker_calculate():
 
 
 def test_field_worker_calculate_invalid_parameter_shapes_emits_error():
-    """Le worker doit échouer proprement si les listes de paramètres sont incohérentes."""
+    """The worker should fail cleanly if the parameter lists are inconsistent."""
     params = FieldParamsDTO(
         n1_rs=[2.1],
         n2_rs=[1.46],
@@ -252,7 +252,7 @@ def test_field_worker_calculate_invalid_parameter_shapes_emits_error():
 
 @patch('certus.workers.certus_field_workers.minimize')
 def test_field_worker_optimize(mock_minimize):
-    """Test du worker en mode 'optimize' avec mock de scipy.minimize."""
+    """Testing the worker in 'optimize' mode with scipy.minimize mock."""
     # Simulation du retour de minimize
     mock_res = MagicMock()
     mock_res.x = np.array([1.1, 0.9])
@@ -277,12 +277,12 @@ def test_field_worker_optimize(mock_minimize):
     assert len(result_container) == 1
     res = result_container[0]
     assert res.success is True
-    # On vérifie que le résultat retourne les facteurs optimisés
+    # We check that the result returns the optimized factors
     assert res.opt_emp_factors == [1.1, 0.9]
     assert res.opt_metrics is not None
 
 def test_field_worker_optimize_integration():
-    """Test d'intégration RÉEL (non-mocké) de l'optimisation L-BFGS-B."""
+    """REAL (non-mocked) integration test of the L-BFGS-B optimization."""
     params = FieldParamsDTO(
         n1_rs=[2.1], n2_rs=[1.46], nSub_rs=[1.52], n_supers=[1.0],
         l0=1064.0, lambda_calcs=[1064.0], emp_factors=[1.0], # 1 seule couche pour aller vite
@@ -300,11 +300,11 @@ def test_field_worker_optimize_integration():
     res = result_container[0]
     assert res.opt_emp_factors is not None
     assert len(res.opt_emp_factors) == 1
-    # On vérifie que L-BFGS-B a bien respecté les bornes [0.01, 5.0]
+    #We verify that L-BFGS-B has respected the limits [0.01, 5.0]
     assert 0.01 <= res.opt_emp_factors[0] <= 5.0
 
 def test_field_worker_optimize_global_integration():
-    """Test d'intégration réel pour l'optimisation globale par PGLOBAL."""
+    """Real integration test for global optimization by PGLOBAL."""
     params = FieldParamsDTO(
         n1_rs=[2.1], n2_rs=[1.46], nSub_rs=[1.52], n_supers=[1.0],
         l0=1064.0, lambda_calcs=[1064.0], emp_factors=[1.0],
@@ -372,10 +372,10 @@ def test_certus_field_app_ui_lifecycle():
     app_window.close()
 
 def test_top_level_objective_function_active_field_minimization():
-    """Vérifie le calcul du coût continu dans le mode de minimisation active du champ."""
+    """Checks continuous cost calculation in active field minimization mode."""
     from certus.workers.certus_field_workers import top_level_objective_function
 
-    # Coût standard avec min_field_active=False
+    #Standard cost with min_field_active=False
     cost_standard = top_level_objective_function(
         [1.0, 1.0],
         n1_rs=[2.0],
@@ -392,7 +392,7 @@ def test_top_level_objective_function_active_field_minimization():
     )
     assert cost_standard > 0.0
 
-    # Coût actif avec min_field_active=True
+    #Active cost with min_field_active=True
     cost_active = top_level_objective_function(
         [1.0, 1.0],
         n1_rs=[2.0],

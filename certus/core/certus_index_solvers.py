@@ -13,7 +13,7 @@ script_dir = _env['script_dir']
 from numba import njit, prange, set_num_threads
 
 def _numba_set_threads_clamped(n: int) -> int:
-    """Numba impose set_num_threads dans [1, 31] (sinon ValueError, ex. Python 3.14 / grosse machine)."""
+    """Numba enforces set_num_threads in [1, 31] (otherwise ValueError, e.g. Python 3.14 / large machine)."""
     return max(1, min(31, int(n)))
 import logging
 import numpy as np
@@ -293,9 +293,9 @@ class PGlobalOptimizerINDEX:
             try:
                 from scipy.stats.qmc import Halton
 
-                # seed= comme pour Sobol plus haut : sans lui, random_seed etait
-                # silencieusement ignore sur ce chemin et le run restait
-                # irreproductible meme graine fixee.
+                # seed= as for Sobol above: without it, random_seed was
+                # silently ignored on this path and the run remained
+                # unreproducible even with a fixed seed.
                 sampler = Halton(
                     d=self.dim,
                     scramble=True,
@@ -313,7 +313,7 @@ class PGlobalOptimizerINDEX:
             try:
                 from scipy.stats.qmc import LatinHypercube
 
-                # idem Halton : random_seed n'etait pas transmis.
+                # same as Halton: random_seed was not transmitted.
                 sampler = LatinHypercube(
                     d=self.dim,
                     seed=None if self.random_seed is None else int(self.random_seed),
@@ -333,7 +333,7 @@ class PGlobalOptimizerINDEX:
 
         samples = []
 
-        # Parallel Execution if executor is available
+        #Parallel Execution if executor is available
 
         if self._executor:
             try:
@@ -517,7 +517,7 @@ class PGlobalOptimizerINDEX:
             except NUMERICAL_FAULT_EXCEPTIONS :
                 _numba_restore = _numba_set_threads_clamped(nb_cores)
 
-            # nb_cores // n_workers peut depasser 31 ; restauration utilisait nb_cores brut -> ValueError
+            # nb_cores // n_workers can exceed 31; restoration used raw nb_cores -> ValueError
 
             numba.set_num_threads(_numba_set_threads_clamped(max(1, nb_cores // self.n_workers)))
 

@@ -77,10 +77,10 @@ from certus.spline.certus_index_spline_corridor_contract import (
 
 # --- Fast suite defaults (total runtime target ~15-20s) ---
 # ── PARE-FEU ──────────────────────────────────────────────────────────────────
-# Ces budgets sont volontairement serrés pour la CI.
-# Les tests vérifient la STRUCTURE des résultats (clés, shapes, intervalles),
-# PAS la convergence numérique exacte.
-# Si un test échoue après réduction : augmenter son n= local, PAS ces globaux.
+#These budgets are deliberately tight for the CI.
+# The tests check the STRUCTURE of the results (keys, shapes, intervals),
+# NOT exact numerical convergence.
+#If a test fails after reduction: increase its local n=, NOT these globals.
 # ──────────────────────────────────────────────────────────────────────────────
 
 

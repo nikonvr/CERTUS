@@ -1,6 +1,6 @@
 """
 Test headless CERTUS INDEX SPLINE
-Appelle worker_spline_optimization directement sans thread UI.
+Calls worker_spline_optimization directly without a UI thread.
 """
 import sys
 import os

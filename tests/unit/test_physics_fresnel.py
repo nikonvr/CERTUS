@@ -15,7 +15,7 @@ equivalent low-level entry point is ``calculate_RT_single_layer_single``.
 
    NE PAS conditionner les assertions sur  os.environ["NUMBA_DISABLE_JIT"].
    This variable can be set by other modules (test_gui_smoke)
-   APRÈS que Numba ait déjà compilé les kernels → la valeur est trompeuse.
+   AFTER Numba has already compiled the kernels → the value is misleading.
 ──────────────────────────────────────────────────────────────────────────────
 """
 

@@ -37,7 +37,7 @@ class CertusIndexSplineSpectrumUIMixin:
         self.w_r.valueChanged.connect(self._persist_spectrum_fit_settings)
 
     def _spectrum_open_dialog_start_path(self) -> str:
-        """Dernier file spectrum (pre-selection Qt) sinon last dossier suite, sinon script."""
+        """Last file spectrum (Qt pre-selection) otherwise last folder suite, otherwise script."""
 
         s = QSettings(_QS_SPLINE_ORG, _QS_SPLINE_APP)
 

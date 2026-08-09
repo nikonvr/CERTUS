@@ -1,36 +1,36 @@
-"""Référence TMM indépendante — écrite pour être manifestement juste, pas rapide.
+"""Independent TMM Reference — written to be demonstrably fair, not fast.
 
-RAISON D'ÊTRE
+REASON FOR BEING
 -------------
-Ce module ne partage AUCUN code avec ``certus.physics``. Il est écrit directement
-depuis Macleod, *Thin-Film Optical Filters*, 4e éd., chap. 2, avec des matrices 2x2
-numpy explicites. Il est lent, non compilé, non optimisé, et c'est voulu : il sert
-d'oracle contre lequel les chemins rapides du projet sont validés.
+This module does NOT share ANY code with ``certus.physics``. It is written directly
+from Macleod, *Thin-Film Optical Filters*, 4th ed., chap. 2, with 2x2 matrices
+explicit numpy. It is slow, not compiled, not optimized, and that is intentional: it serves
+of oracle against which the project's fast paths are validated.
 
-Toute divergence entre ce module et ``certus.physics`` est un défaut de l'un des deux.
-En cas de doute, c'est celui-ci qui est relisible ligne à ligne face au livre.
+Any discrepancy between this module and ``certus.physics`` is a fault of one of them.
+In case of doubt, this is the one that can be reread line by line facing the book.
 
 CONVENTIONS
 -----------
 * Convention Macleod ``n̂ = n − ik`` avec ``k >= 0``. Le temps est en ``exp(+iωt)``,
-  ce qui rend la partie imaginaire de l'indice NÉGATIVE pour un milieu absorbant.
-* Admittance à incidence normale : ``η = n̂`` (unités d'admittance du vide).
-* Déphasage d'une couche : ``δ = 2π n̂ d / λ``, avec ``d`` et ``λ`` en nanomètres.
-* Ordre des couches — IDENTIQUE à ``certus.physics.certus_opt_tmm.compute_TMM_generic``
+  which makes the imaginary part of the index NEGATIVE for an absorbent medium.
+* Admittance at normal incidence: ``η = n̂`` (vacuum admittance units).
+* Phase shift of a layer: ``δ = 2π n̂ d / λ``, with ``d`` and ``λ`` in nanometers.
+* Layer order — SAME as ``certus.physics.certus_opt_tmm.compute_TMM_generic``
   pour permettre une comparaison directe :
 
-      indice 0     = couche adjacente au SUBSTRAT (sortie)
-      indice N-1   = couche adjacente au milieu INCIDENT (air)
+      index 0 = layer adjacent to the SUBSTRATE (output)
+      index N-1 = layer adjacent to the INCIDENT medium (air)
 
-  Le produit matriciel de Macleod va du milieu incident (facteur le plus à gauche)
-  vers le substrat (facteur le plus à droite), soit ``M = L[N-1] @ ... @ L[0]``.
+  The Macleod matrix product goes from the incident middle (leftmost factor)
+  towards the substrate (rightmost factor), i.e. ``M = L[N-1] @ ... @ L[0]``.
 
 AUTO-VALIDATION
 ---------------
-La conservation de l'énergie ``R + T <= 1`` sur tout empilement passif est une
-propriété de la physique, pas de l'implémentation. Elle est vérifiée par les tests :
-si le signe de la convention était inversé ici, ``R + T > 1`` apparaîtrait
-immédiatement (c'est exactement le symptôme décrit dans CLAUDE.md §3).
+The conservation of energy ``R + T <= 1`` on any passive stack is a
+property of physics, not of implementation. It is verified by the tests:
+if the convention sign were reversed here, ``R + T > 1`` would appear
+immediately (this is exactly the symptom described in CLAUDE.md §3).
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ def n_hat(n: float, k: float = 0.0) -> complex:
     """Construit un indice complexe dans la convention du projet : ``n̂ = n − ik``.
 
     Args:
-        n: partie réelle de l'indice de réfraction.
+        n: real part of the refractive index.
         k: coefficient d'extinction, positif ou nul.
 
     Returns:
@@ -68,18 +68,18 @@ def n_hat(n: float, k: float = 0.0) -> complex:
 
 
 def characteristic_matrix(n_layer: complex, thickness_nm: float, wavelength_nm: float) -> np.ndarray:
-    """Matrice caractéristique d'une couche unique, à incidence normale.
+    """Characteristic matrix of a single layer, at normal incidence.
 
-    Macleod éq. 2.88 :
+    Macleod eq. 2.88:
 
         M = [[    cos δ     , (i sin δ) / η ],
              [ i η sin δ    ,     cos δ     ]]
 
-    avec ``δ = 2π n̂ d / λ`` et ``η = n̂`` à incidence normale.
+    with ``δ = 2π n̂ d / λ`` and ``η = n̂`` at normal incidence.
 
     Args:
-        n_layer: indice complexe de la couche, convention ``n − ik``.
-        thickness_nm: épaisseur physique en nm.
+        n_layer: complex layer index, ``n − ik`` convention.
+        thickness_nm: physical thickness in nm.
         wavelength_nm: longueur d'onde dans le vide en nm.
 
     Returns:
@@ -105,14 +105,14 @@ def stack_matrix(
     thicknesses_nm: np.ndarray | list[float],
     wavelength_nm: float,
 ) -> np.ndarray:
-    """Produit des matrices caractéristiques de l'empilement.
+    """Produces matrices characteristic of the stacking.
 
-    Ordre : ``indice 0`` = côté substrat, ``indice N-1`` = côté incident.
-    Le produit est donc ``M = L[N-1] @ L[N-2] @ ... @ L[0]``.
+    Order: ``index 0`` = substrate side, ``index N-1`` = incident side.
+    The product is therefore ``M = L[N-1] @ L[N-2] @ ... @ L[0]``.
 
     Args:
         n_layers: indices complexes, du substrat vers l'incident.
-        thicknesses_nm: épaisseurs en nm, même ordre.
+        thicknesses_nm: thicknesses in nm, same order.
         wavelength_nm: longueur d'onde dans le vide en nm.
 
     Returns:
@@ -125,7 +125,7 @@ def stack_matrix(
         raise ValueError(f"n_layers {n_arr.shape} et thicknesses {d_arr.shape} incompatibles")
 
     total = np.eye(2, dtype=np.complex128)
-    # Du côté incident (N-1) vers le côté substrat (0) : multiplication à droite.
+    # From the incident side (N-1) to the substrate side (0): right multiplication.
     for i in range(len(n_arr) - 1, -1, -1):
         total = total @ characteristic_matrix(n_arr[i], d_arr[i], wavelength_nm)
 
@@ -133,21 +133,21 @@ def stack_matrix(
 
 
 def rt_from_assembly(matrix: np.ndarray, n_inc: complex, n_sub: complex) -> tuple[float, float]:
-    """Extrait (R, T) de la matrice d'assemblage. Macleod éq. 2.93 à 2.96.
+    """Extract (R, T) from the assembly matrix. Macleod eq. 2.93 to 2.96.
 
         [B; C] = M @ [1; η_sub]
 
         r = (η_inc·B − C) / (η_inc·B + C)      R = |r|²
 
-        T = 4 · η_inc · Re(η_sub) / |η_inc·B + C|²      (η_inc réel)
+        T = 4 · η_inc · Re(η_sub) / |η_inc·B + C|² (real η_inc)
 
     Args:
         matrix: matrice 2x2 de l'assemblage.
-        n_inc: indice du milieu incident (réel en pratique : air).
+        n_inc: index of the incident environment (real in practice: air).
         n_sub: indice complexe du substrat.
 
     Returns:
-        Couple ``(R, T)``, réflectance et transmittance en puissance.
+        Torque ``(R, T)``, reflectance and power transmittance.
     """
     bc = matrix @ np.array([1.0 + 0.0j, n_sub], dtype=np.complex128)
     b_val, c_val = bc[0], bc[1]
@@ -159,7 +159,7 @@ def rt_from_assembly(matrix: np.ndarray, n_inc: complex, n_sub: complex) -> tupl
     r_amp = (n_inc * b_val - c_val) / y_sys
     reflectance = float(abs(r_amp) ** 2)
 
-    # T = 4·Re(η_inc)·Re(η_sub) / |η_inc·B + C|²  — valable pour un incident réel.
+    # T = 4·Re(η_inc)·Re(η_sub) / |η_inc·B + C|² — valid for a real incident.
     transmittance = float(4.0 * n_inc.real * n_sub.real / (abs(y_sys) ** 2))
 
     return reflectance, transmittance
@@ -174,13 +174,13 @@ def rt_stack(
 ) -> tuple[float, float]:
     """(R, T) d'un empilement complet sur substrat semi-infini.
 
-    Signature alignée sur ``compute_TMM_generic`` (mêmes conventions d'ordre) afin
+    Signature aligned with ``compute_TMM_generic`` (same order conventions) in order to
     que la comparaison soit directe.
 
     Args:
         wavelength_nm: longueur d'onde dans le vide en nm.
-        n_layers: indices complexes, indice 0 = côté substrat.
-        thicknesses_nm: épaisseurs en nm, même ordre.
+        n_layers: complex indices, index 0 = substrate side.
+        thicknesses_nm: thicknesses in nm, same order.
         n_inc: indice du milieu incident.
         n_sub: indice complexe du substrat.
 
@@ -199,21 +199,21 @@ def r_single_layer_front(
     n_sub: float,
     n_inc: float = 1.0,
 ) -> float:
-    """Réflectance de face avant d'une couche unique sur substrat.
+    """Front face reflectance of a single layer on substrate.
 
     Contrepartie de ``certus.physics.certus_tmm_single_layer.calculate_RT_single_layer_single``.
-    Pas de terme de face arrière : substrat semi-infini, réflexion avant seule.
+    No rear face term: semi-infinite substrate, front reflection only.
 
     Args:
         wavelength_nm: longueur d'onde dans le vide en nm.
-        n_film_real: partie réelle de l'indice de la couche.
-        n_film_k: coefficient d'extinction k >= 0 de la couche.
-        thickness_nm: épaisseur physique en nm.
-        n_sub: indice réel du substrat.
+        n_film_real: real part of the layer index.
+        n_film_k: extinction coefficient k >= 0 of the layer.
+        thickness_nm: physical thickness in nm.
+        n_sub: real index of the substrate.
         n_inc: indice du milieu incident.
 
     Returns:
-        Réflectance R dans [0, 1].
+        Reflectance R in [0, 1].
     """
     matrix = characteristic_matrix(n_hat(n_film_real, n_film_k), thickness_nm, wavelength_nm)
     reflectance, _ = rt_from_assembly(matrix, complex(n_inc, 0.0), complex(n_sub, 0.0))
@@ -221,12 +221,12 @@ def r_single_layer_front(
 
 
 # ── Incidence oblique ────────────────────────────────────────────────────────
-# Macleod chap. 2.10. L'invariant de Snell ``n₀ sin θ₀`` se conserve dans tout
-# l'empilement ; l'angle dans une couche absorbante est COMPLEXE, et c'est normal.
-# L'admittance inclinée remplace n̂ dans la matrice caractéristique :
+#Macleod chap. 2.10. The Snell invariant ``n₀ sin θ₀`` is conserved in everything
+#stacking; the angle in an absorbent diaper is COMPLEX, and that's normal.
+#The inclined admittance replaces n̂ in the characteristic matrix:
 #     s (TE) : η = n̂ cos θ
 #     p (TM) : η = n̂ / cos θ
-# et le déphasage devient δ = 2π n̂ d cos θ / λ.
+# and the phase shift becomes δ = 2π n̂ d cos θ / λ.
 
 
 def _cos_theta_in_medium(n_medium: complex, snell_invariant: float) -> complex:
@@ -234,17 +234,17 @@ def _cos_theta_in_medium(n_medium: complex, snell_invariant: float) -> complex:
 
     Args:
         n_medium: indice complexe du milieu.
-        snell_invariant: ``n₀ sin θ₀``, conservé dans tout l'empilement.
+        snell_invariant: ``n₀ sin θ₀``, preserved throughout the stack.
 
     Returns:
-        ``cos θ``, complexe en général (angle complexe dans un milieu absorbant).
+        ``cos θ``, complex in general (complex angle in an absorbing medium).
     """
     sin_theta = snell_invariant / n_medium
     return np.sqrt(1.0 - sin_theta * sin_theta + 0j)
 
 
 def tilted_admittance(n_medium: complex, snell_invariant: float, s_polarisation: bool) -> complex:
-    """Admittance inclinée d'un milieu. Macleod éq. 2.36 et 2.37.
+    """Inclined admittance of a medium. Macleod eq. 2.36 and 2.37.
 
     Args:
         n_medium: indice complexe du milieu.
@@ -267,16 +267,16 @@ def rt_stack_oblique(
     n_inc: complex = 1.0 + 0.0j,
     n_sub: complex = 1.52 + 0.0j,
 ) -> tuple[float, float]:
-    """(R, T) d'un empilement en incidence oblique, pour une polarisation donnée.
+    """(R, T) of a stack in oblique incidence, for a given polarization.
 
-    Ordre des couches identique au reste du module et à ``certus.physics`` :
-    indice 0 = côté substrat, indice N-1 = côté incident.
+    Order of layers identical to the rest of the module and to ``certus.physics``:
+    index 0 = substrate side, index N-1 = incident side.
 
     Args:
         wavelength_nm: longueur d'onde dans le vide en nm.
         n_layers: indices complexes, convention ``n − ik``.
-        thicknesses_nm: épaisseurs en nm.
-        angle_deg: angle d'incidence dans le milieu incident, en degrés.
+        thicknesses_nm: thicknesses in nm.
+        angle_deg: angle of incidence in the incident medium, in degrees.
         s_polarisation: True pour s (TE), False pour p (TM).
         n_inc: indice du milieu incident.
         n_sub: indice du substrat.

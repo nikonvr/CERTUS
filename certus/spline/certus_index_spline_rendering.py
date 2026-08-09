@@ -810,7 +810,7 @@ class _PlotMixin:
         if not _int_ok and rmse_thr is not None and np.isfinite(float(rmse_thr)) and d_plot.size > 1:
             thr = float(rmse_thr)
             # On cherche les points d'intersection (simple scan lin?aire sur l'enveloppe basse)
-            # Note: d_parab_arr est tri? et contient l'enveloppe min-per-d
+            # Note: d_parab_arr is sorted? and contains the min-per-d envelope
             if d_parab_arr.size > 2:
                 try:
                     _m_below = r_parab_arr <= thr

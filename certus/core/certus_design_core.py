@@ -342,8 +342,8 @@ def _design_gradient_func_pglobal_common(app, x) -> Any:
     if app._all_variable:
         ep_full = np.ascontiguousarray(x)
     else:
-        # Thread-local buffer: see _get_ep_buffer. Le gradient tourne lui aussi
-        # dans le pool (une recherche locale L-BFGS-B par thread).
+        #Thread-local buffer: see _get_ep_buffer. The gradient also turns
+        #in the pool (one L-BFGS-B local search per thread).
         ep_full = _get_ep_buffer(app)
         ep_full[:] = app._ep0
         ep_full[app._var_idx] = x

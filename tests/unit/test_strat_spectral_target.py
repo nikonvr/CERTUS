@@ -1,25 +1,25 @@
 """Axe 3 — STRAT doit classer contre la CIBLE, pas contre le spectre nominal.
 
 👤 Le physicien : *« le plus important est la cible spectrale respectee. »* Or STRAT
-classait sur l'ecart au spectre du NOMINAL, non pondere, et 📏 n'avait jamais recu la
-cible — zero occurrence de `targets` dans tout le module. Il repondait donc a « quelle
-strategie reproduit le mieux le spectre des epaisseurs concues ? » et non a « laquelle
-respecte le mieux la cible ? ».
+classified on the deviation from the NOMINAL spectrum, unweighted, and 📏 had never received the
+target — zero occurrences of `targets` throughout the module. He therefore responded to “what
+strategy best reproduces the spectrum of thicknesses designed? » and not “which
+best respects the target? ".
 
-🔴 POURQUOI LA PONDERATION N'EST PAS UN RAFFINEMENT. Sur le juge de paix — un dichroique
+🔴 WHY WEIGHTING IS NOT A REFINEMENT. On the justice of the peace — a dichroic
 passe-court — la bande BLOQUEE pese 146 points sur 301 avec une exigence de 0,1 % de
 transmission, et un RMSE uniforme la fait compter EXACTEMENT AUTANT que la bande
-passante, ou un ecart d'un point entier est sans consequence. L'exigence y est 500 fois
+passing, where a deviation of a whole point is of no consequence. The requirement is there 500 times
 plus dure et elle pese pareil.
 
-⚠️ DISTINCTION A PRESERVER, et elle est physique : le point VISE pendant le depot reste
+⚠️ DISTINCTION TO PRESERVE, and it is physical: the point AIMED during the deposit remains
 le nominal fige — c'est le mecanisme meme de l'auto-compensation. Seule la figure de
-merite QUI CLASSE passe a la cible ponderee. Ces tests ne touchent donc rien du noyau de
+merit WHO CLASSIFIES moves to the weighted target. These tests therefore do not touch anything from the core of
 croissance.
 
-🔴 PERIMETRE — SEUL LE DICHROIQUE 48 COUCHES EST UN EXEMPLE VALABLE.
-👤 Le physicien, 2026-08-06. Les donnees de ce fichier sont SYNTHETIQUES : elles servent
-a verifier une mecanique de calcul, pas a mesurer une grandeur physique. Aucune
+🔴 PERIMETER — ONLY 48-LAYER DICHROIC IS A VALID EXAMPLE.
+👤 The Physicist, 2026-08-06. The data in this file is SYNTHETIC: they are used
+to verify a calculation mechanism, not to measure a physical quantity. None
 conclusion sur le monitoring ne peut en etre tiree. Le juge de paix est
 `example/example_strat/JSON-strat-example.json`.
 """
@@ -37,9 +37,9 @@ N_LAYERS = np.full((WL.size, 4), complex(2.3, 0.0), dtype=np.complex128)
 THICK = np.array([[60.0, 100.0, 60.0, 100.0], [61.0, 100.0, 60.0, 100.0]])
 _EMPTY = np.empty(0, dtype=np.complex128)
 
-#: Les zones du juge de paix, telles que le physicien les enonce : passante a ~96 % de
+#: The zones of the justice of the peace, as the physicist states them: passing at ~96% of
 #: transmission jusqu'a 540 nm, bloquee sous 0,1 % au-dela de 560 nm. La transition
-#: n'est PAS specifiee — et c'est volontaire, personne ne pilote la forme d'un front.
+#: is NOT specified — and this is voluntary, no one controls the shape of a front.
 DICHROIC_ZONES = [
     Target(400.0, 540.0, 0.96, 0.96, 1.0, True),
     Target(560.0, 700.0, 0.0, 0.0, 10.0, True),
@@ -54,7 +54,7 @@ def _rmse(target, weights=None):
 def test_omitting_weights_is_bit_identical_to_passing_none():
     """Le chemin par defaut doit etre le meme, argument omis ou explicitement None.
 
-    Sans cela, un A/B contre le baseline mesurerait la specialisation numba autant que
+    Without this, an A/B against the baseline would measure numba specialization as much as
     le changement de modele.
     """
     flat = np.full(WL.size, 0.5)
@@ -65,7 +65,7 @@ def test_omitting_weights_is_bit_identical_to_passing_none():
 def test_uniform_weights_reproduce_the_unweighted_functional():
     """🔴 Des poids UNIFORMES doivent redonner exactement le RMSE non pondere.
 
-    C'est la condition qui rend la ponderation interpretable : si des poids constants
+    This is the condition which makes the weighting interpretable: if constant weights
     changeaient le resultat, le chiffre pondere ne serait pas comparable au chiffre
     historique, et l'axe 3 melangerait deux effets.
     """
@@ -77,11 +77,11 @@ def test_uniform_weights_reproduce_the_unweighted_functional():
 
 @pytest.mark.unit
 def test_zero_total_weight_returns_infinity_not_zero():
-    """Aucune zone ne recouvrant la grille, le score doit ETRE INFINI.
+    """No area covering the grid, the score must BE INFINITE.
 
-    Rendre 0 ferait passer n'importe quelle strategie pour parfaite — un score de zero
+    Returning 0 would make any strategy look perfect — a score of zero
     est le meilleur possible. C'est le mode de defaillance silencieux typique : une
-    configuration mal saisie transformerait le classement en tirage au sort sans qu'une
+    incorrectly entered configuration would transform the ranking into a draw without a
     seule ligne de journal ne le signale.
     """
     flat = np.full(WL.size, 0.5)
@@ -91,16 +91,16 @@ def test_zero_total_weight_returns_infinity_not_zero():
 
 @pytest.mark.unit
 def test_zones_weight_the_specified_bands_and_only_them():
-    """Les zones doivent ponderer ce qui est specifie, et laisser le reste a zero.
+    """Zones should weight what is specified, and leave the rest at zero.
 
     📏 Sur les zones du dichroique, 282 points sur 301 sont ponderes. Les 19 restants
-    sont exactement la TRANSITION 540-560 nm, que personne n'a specifiee.
+    are exactly the 540-560 nm TRANSITION, which no one specified.
 
     📌 Consequence de premier ordre, et elle n'est pas anodine : aujourd'hui le score de
     STRAT est essentiellement une mesure de DECALAGE DU FRONT (le front p95 vaut 9,2
-    points quand la bande passante vaut 1,7). Avec des zones correctes, le front cesse
-    de compter — on ne juge plus une strategie sur une grandeur que l'utilisateur n'a
-    jamais demandee.
+    points when the bandwidth is 1.7). With correct zones, the front ceases
+    to count — we no longer judge a strategy on a quantity that the user does not have
+    never asked.
     """
     vals, weights = prepare_targets_vectorized(WL, DICHROIC_ZONES)
 
@@ -109,24 +109,24 @@ def test_zones_weight_the_specified_bands_and_only_them():
     assert np.all(weights[edge] == 0.0), "la transition non specifiee est ponderee"
     assert np.all(weights[~edge] > 0.0), "une bande specifiee n'est pas ponderee"
 
-    # La cible interpole lineairement de tmin a tmax sur chaque zone ; ici les deux
-    # bornes sont egales, donc la valeur est constante par bande.
+    #The target linearly interpolates from tmin to tmax on each zone; here both
+    #terminals are equal, so the value is constant per band.
     assert vals[np.argmin(np.abs(WL - 450.0))] == pytest.approx(0.96)
     assert vals[np.argmin(np.abs(WL - 650.0))] == pytest.approx(0.0)
 
 
 @pytest.mark.unit
 def test_uniform_weighting_cannot_tell_the_two_bands_apart_at_all():
-    """🔴 A poids egaux, une erreur en bande BLOQUEE et la meme en bande PASSANTE ont
+    """🔴 At equal weight, an error in BLOCKED band and the same in PASSENGER band have
     RIGOUREUSEMENT le meme cout — et c'est le coeur du probleme.
 
     📏 Sur le juge de paix, les deux bandes font exactement la meme largeur : 141 points
-    chacune sur les 301 de la grille. Un RMSE uniforme est donc litteralement INCAPABLE
+    each on the 301 of the grid. A uniform RMSE is therefore literally INCAPABLE
     de distinguer une strategie qui rate la bande bloquee d'une strategie qui rate la
     bande passante — les deux scores sont egaux a la precision machine.
 
     Or l'exigence n'est pas la meme d'un facteur ~500 : 0,1 % de transmission en bande
-    bloquee contre un point entier tolerable en bande passante. **Ce n'est pas un defaut
+    blocked against an integer tolerable bandwidth point. **This is not a defect
     de sensibilite du critere, c'est une indifference exacte.** Et c'est exactement ce
     que la ponderation par zone repare.
 

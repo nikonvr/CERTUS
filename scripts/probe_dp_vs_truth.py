@@ -1,30 +1,30 @@
-"""LA mesure : le cout de la DP predit-il le vrai critere ?
+"""THE measurement: does the cost of the PD predict the true criterion?
 
 La Phase B elimine la quasi-totalite de l'espace sur `total_cost` — une somme de
-NANOMETRES d'erreur d'epaisseur produite par la programmation dynamique
-(certus/physics/certus_strat_dp.py:61,118). Le vrai critere, lui, n'est calcule qu'au bout :
+NANOMETERS thickness error produced by dynamic programming
+(certus/physics/certus_strat_dp.py:61,118). The real criterion is only calculated at the end:
 `robustness_score`, le pire P95 du RMSE spectral sur les niveaux de bruit
 (certus/core/certus_strat_robustness.py:732).
 
-Personne n'a jamais mesure si le premier predit le second. Or tout ce que la Phase B jette,
+No one ever measures whether the first predicts the second. But everything that Phase B throws away,
 elle le jette sur le premier.
 
-  rho eleve  -> l'elagage est inoffensif, les refontes de la fonction de cout sont du bruit.
-  rho faible -> la DP comme FILTRE est une erreur de conception. Elle doit devenir un
+  high rho -> pruning is harmless, cost function recasts are noise.
+  low rho -> DP as FILTER is a design error. She must become a
                 GENERATEUR de diversite, et le tri revenir au Monte-Carlo.
 
-METHODE. On intercepte `run_final_simulation_block`, qui rend pour CHAQUE strategie minee son
-`robustness_score` — avant toute coupe au top-k. C'est donc la population COMPLETE, sans
+METHOD. We intercept `run_final_simulation_block`, which returns for EACH mined strategy its
+`robustness_score` — before any top-k cut. It is therefore the COMPLETE population, without
 troncature de selection : une correlation calculee sur les seules survivantes serait
 mecaniquement attenuee par restriction d'etendue.
 
 `total_cost` n'est comparable qu'a nombre de blocs egal (la DP tourne par n_blocks) : le rho
-est donc calcule PAR n_blocks, puis agrege. Le rho global sur la population melangee est
+is therefore calculated BY n_blocks, then aggregated. The overall rho on the mixed population is
 donne a titre indicatif seulement.
 
     .venv/Scripts/python.exe scripts/probe_dp_vs_truth.py
 
-N'ecrit rien hors reports/. Ne modifie aucun comportement.
+Does not write anything except reports/. Does not modify any behavior.
 """
 
 from __future__ import annotations
@@ -101,7 +101,7 @@ def analyse() -> dict:
         return np.asarray(xs), np.asarray(ys)
 
     def _topk_overlap(xs, ys, k):
-        """Des k que la DP garderait (cout croissant), combien sont dans le vrai top-k ?"""
+        """Of the k that the PD would keep (increasing cost), how many are in the true top-k?"""
         if len(xs) <= k:
             return None
         dp_keep = set(np.argsort(xs)[:k].tolist())

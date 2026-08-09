@@ -1,10 +1,10 @@
 """
-Audit perf type RE (sans UI Qt) : débit d'évaluations spectrales / TMM.
+RE type performance audit (without UI Qt): throughput of spectral evaluations / TMM.
 
-Le plan demande la part UI vs worker et la fréquence des callbacks : hors processus
-graphique, on mesure ici le goulet worker (évaluations physiques). Pour la part UI
-réelle et les callbacks Qt, utiliser un profilage par échantillonnage (py-spy)
-sur le binaire ou `python -m CERTUS_RE` avec scénario utilisateur.
+The plan asks for the UI vs worker share and the frequency of callbacks: outside of process
+graphic, we measure here the worker bottleneck (physical evaluations). For the UI part
+real and Qt callbacks, use sampling profiling (py-spy)
+on the binary or `python -m CERTUS_RE` with user scenario.
 """
 
 from __future__ import annotations

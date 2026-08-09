@@ -1,12 +1,12 @@
-"""Le gradient analytique de l'objectif spline doit être la dérivée de son coût.
+"""The analytical gradient of the spline objective must be the derivative of its cost.
 
-Ce gradient n'avait aucune vérification indépendante, alors que sa règle de chaîne
-portait un défaut : en mode ``smooth`` — le mode PAR DÉFAUT dès K >= 4 — le facteur
-``exp(L_lam)`` était évalué avec l'interpolation LINÉAIRE PAR MORCEAUX, tandis que le
-modèle direct interpole par matrice cubique. Corrigé, mais rien ne l'empêchait de
+This gradient had no independent verification, while its chain rule
+had a defect: in ``smooth`` mode — the DEFAULT mode from K >= 4 — the factor
+``exp(L_lam)`` was evaluated with PIECELY LINEAR interpolation, while
+direct model interpolates by cubic matrix. Fixed, but nothing stopped it from
 revenir.
 
-Les deux modes sont testés : ``smooth`` est le chemin par défaut, ``pwl`` celui de
+Both modes are tested: ``smooth`` is the default path, ``pwl`` that of
 repli quand K < 4.
 """
 
@@ -28,15 +28,15 @@ from certus.spline.spline_objective import SplinePWLObjective  # noqa: E402
 
 
 def _make_config(n_points: int = 40) -> SplineOptConfig:
-    """Configuration minimale mais réaliste : mesure en transmission sur substrat.
+    """Minimal but realistic configuration: transmission measurement on substrate.
 
-    Les données sont synthétiques et lisses ; peu importe qu'elles correspondent à un
-    empilement réel, ce qui est testé est la cohérence interne du couple (coût,
-    gradient), pas la justesse physique — celle-ci relève de l'oracle TMM.
+    The data is synthetic and smooth; it doesn't matter if they correspond to a
+    real stacking, what is tested is the internal consistency of the couple (cost,
+    gradient), not physical accuracy — this falls under the TMM oracle.
     """
     lam = np.linspace(420.0, 900.0, n_points)
 
-    # Transmission synthétique, douce et strictement dans (0, 1).
+    #Synthetic transmission, smooth and strictly in (0, 1).
     t_exp = 0.80 + 0.06 * np.sin(lam / 90.0)
 
     return SplineOptConfig(
@@ -55,7 +55,7 @@ def _make_config(n_points: int = 40) -> SplineOptConfig:
 
 
 def _sigma_knots(config: SplineOptConfig, count: int) -> np.ndarray:
-    """Nœuds équirépartis en sigma = 1/lambda, ordre croissant."""
+    """Nodes equally distributed in sigma = 1/lambda, ascending order."""
     lam = np.asarray(config.lam_nm, dtype=np.float64)
     sig_lo = 1.0 / lam.max()
     sig_hi = 1.0 / lam.min()
@@ -67,7 +67,7 @@ def _pack(thickness_nm: float, n_values: np.ndarray, k_values: np.ndarray) -> np
     return np.concatenate(([thickness_nm], n_values, np.log(k_values)))
 
 
-# K >= 4 déclenche le mode "smooth" ; K = 3 force le repli "pwl".
+# K >= 4 triggers “smooth” mode; K = 3 forces the "pwl" fallback.
 @pytest.mark.parametrize(
     "knot_count, expected_mode",
     [(3, "pwl"), (4, "smooth"), (6, "smooth")],
@@ -76,11 +76,11 @@ def _pack(thickness_nm: float, n_values: np.ndarray, k_values: np.ndarray) -> np
 def test_gradient_spline_coincide_avec_les_differences_finies(
     knot_count: int, expected_mode: str
 ) -> None:
-    """GARDE-FOU : la règle de chaîne doit suivre l'interpolation du modèle.
+    """GUARD: The chain rule must follow the model interpolation.
 
-    En mode ``smooth``, évaluer le facteur ``exp(L_lam)`` avec les poids linéaires
-    au lieu de la matrice cubique produit un gradient faux — donc un optimiseur qui
-    converge ailleurs, sans la moindre erreur visible.
+    In ``smooth`` mode, evaluate the factor ``exp(L_lam)`` with linear weights
+    instead of the cubic matrix produces a false gradient — hence an optimizer which
+    converges elsewhere, without the slightest visible error.
     """
     config = _make_config()
     knots = _sigma_knots(config, knot_count)
@@ -91,14 +91,14 @@ def test_gradient_spline_coincide_avec_les_differences_finies(
         f"obtenu {objective._interp_mode} — le test ne couvre pas ce qu'il croit"
     )
 
-    # Valeurs de nœuds délibérément NON ALIGNÉES.
+    # Deliberately UNALIGNED node values.
     #
-    # Avec des valeurs en progression linéaire, une spline cubique passant par des
-    # points alignés EST la droite : l'interpolation lissée et la linéaire par
-    # morceaux coïncident exactement, et le test devient aveugle à toute confusion
-    # entre les deux. Vérifié — avec np.linspace, réintroduire le défaut de règle de
-    # chaîne du mode "smooth" ne faisait échouer aucun test.
-    # Un profil courbe, plus proche d'une dispersion réelle, les sépare.
+    #With values ​​in linear progression, a cubic spline passing through
+    # aligned points IS the line: smoothed interpolation and linear by
+    #pieces match exactly, and the test becomes blind to any confusion
+    #between the two. Checked — with np.linspace, reintroduce default rule
+    #"smooth" mode channel did not fail any tests.
+    #A curved profile, closer to a real dispersion, separates them.
     positions = np.linspace(0.0, 1.0, knot_count)
     n_values = 2.10 + 0.25 * np.exp(-3.0 * positions)
     k_values = 0.004 + 0.016 * positions**2
@@ -112,17 +112,17 @@ def test_gradient_spline_coincide_avec_les_differences_finies(
         analytic = objective._compute_analytic_gradient(candidate)
         return float(objective(candidate)), analytic
 
-    # Pas plus large que pour les épaisseurs : les nœuds n et ln(k) sont d'ordre 1,
-    # pas 100, et un pas de 1e-6 y serait dominé par l'arrondi.
-    # Découpage en familles : [epaisseur] [noeuds n] [noeuds ln(k)].
+    #No wider than for the thicknesses: the nodes n and ln(k) are of order 1,
+    # step 100, and a step of 1e-6 would be dominated by the rounding.
+    #Division into families: [thickness] [nodes n] [nodes ln(k)].
     #
-    # Sans ce découpage, le test est AVEUGLE au bloc k. Mesuré sur cette
-    # configuration : le gradient vaut ~6,7e+02 sur les nœuds n et ~1e-04 sur les
-    # nœuds ln(k), six ordres de grandeur d'écart. Rapportée à la norme globale, une
-    # erreur de 2 % sur le bloc k pèse 3e-09 — indétectable. Or c'est précisément le
-    # bloc k que la règle de chaîne du mode "smooth" affecte, via son facteur
-    # exp(L_lam). Vérifié : sans découpage, réintroduire le défaut ne faisait échouer
-    # aucun test.
+    #Without this division, the test is BLIND to block k. Measured on this
+    # configuration: the gradient is ~6.7e+02 on nodes n and ~1e-04 on nodes
+    #nodes ln(k), six orders of magnitude difference. Compared to the overall standard, a
+    #2% error on block k weighs 3e-09 — undetectable. But it is precisely the
+    # block k that the "smooth" mode chain rule affects, via its factor
+    #exp(L_lam). Verified: without cutting, reintroducing the fault did not cause a failure
+    #no testing.
     blocks = [
         (0, 1),
         (1, 1 + knot_count),
@@ -140,10 +140,10 @@ def test_gradient_spline_coincide_avec_les_differences_finies(
 
 
 def test_le_mode_smooth_est_bien_le_defaut() -> None:
-    """Le mode par défaut doit rester "smooth" dès que K le permet.
+    """The default mode should remain "smooth" whenever K allows it.
 
     Si ce contrat changeait, les tests ci-dessus continueraient de passer tout en
-    ne couvrant plus le chemin réellement emprunté en production.
+    no longer covering the path actually taken in production.
     """
     config = _make_config()
     objective = SplinePWLObjective(config, _sigma_knots(config, 5))
@@ -155,9 +155,9 @@ def test_le_mode_smooth_est_bien_le_defaut() -> None:
 def test_mode_et_matrice_restent_coherents() -> None:
     """GARDE-FOU : _interp_mode et _interp_mat doivent s'accorder.
 
-    Ils étaient résolus ensemble puis _interp_mode se faisait réaffecter plus bas
-    avec la chaîne brute de la config. Pour K < 4, cela remettait "smooth" alors que
-    _interp_mat valait None : le gradient prenait la branche smooth et opérait sur
+    They were resolved together then _interp_mode was reassigned lower
+    with the raw string from the config. For K < 4, this restored “smooth” while
+    _interp_mat was None: the gradient took the smooth branch and operated on
     None.
     """
     config = _make_config()

@@ -206,7 +206,7 @@ def test_refractive_index_to_complex_correct(n, k):
     """Propriete : to_complex() doit produire n - ik (convention Macleod du projet).
 
     L'assertion exigeait auparavant n + ik, verrouillant une convention opposee a
-    celle utilisee dans tout le reste de CERTUS (cf. CLAUDE.md §3). Une valeur en
+    that used throughout the rest of CERTUS (see CLAUDE.md §3). A value in
     n + ik injectee dans le TMM produit un milieu a gain, avec R + T > 1.
     """
     ri = RefractiveIndex(n, k)
@@ -283,14 +283,14 @@ def test_refractive_index_rejects_negative_k(k):
 @settings(max_examples=50, deadline=2000)
 def test_quarter_wave_stack_property(thickness_nm, n, wavelength_nm):
     """
-    Property: Une couche λ/4 à λ₀ a QWOT = 1.0.
+    Property: A layer λ/4 at λ₀ has QWOT = 1.0.
 
     QWOT thickness: d = λ₀/(4n)
     """
-    # Calculer épaisseur λ/4
+    #Calculate thickness λ/4
     qwot_thickness_nm = wavelength_nm / (4 * n)
 
-    # Si on demande QWOT = 1, doit donner cette épaisseur
+    #If we ask QWOT = 1, must give this thickness
     t = Thickness(qwot_thickness_nm)
     qwot_calculated = t.qwot_at_wavelength(wavelength_nm, n)
 
@@ -309,7 +309,7 @@ def test_absorption_reduces_transmission(n_real, k, thickness_nm, wavelength_nm)
     Property: Plus k est grand, plus l'absorption est forte.
 
     Transmission through absorbing layer: T ∝ exp(-αd)
-    où α = 4πk/λ
+    where α = 4πk/λ
     """
     ri = RefractiveIndex(n_real, k)
     t = Thickness(thickness_nm)

@@ -1,289 +1,289 @@
-# Plan d'amélioration CERTUS
+# CERTUS improvement plan
 
-Document de reprise, écrit le 2026-08-02. Destiné à un agent qui prend la suite.
-À lire **après** `CLAUDE.md`, qui donne le contexte projet et les conventions.
+Resumption document, written on 2026-08-02. Intended for an agent who takes over.
+Read**after**`CLAUDE.md`, which gives the project context and conventions.
 
-Les chantiers sont ordonnés : **chacun rend le suivant sûr**. Ne les prends pas dans le
-désordre, en particulier ne commence pas par le lot C.
+The construction sites are ordered:**each one makes the next safe**. Don't take them in the
+disorder, in particular does not start with batch C.
 
 ---
 
-## 0. Règles de travail — non négociables
+## 0. Work rules — non-negotiable
 
-### 0.1 L'oracle avant toute chose
+### 0.1 The oracle above all else
 
-`tests/oracle/` contient une référence TMM **indépendante** de `certus.physics`, validée
-sur quatre identités analytiques. Elle a déjà démasqué deux bugs de convention de signe
-valant **46 et 82 points** de réflectance, tous deux exacts à k=0 donc invisibles à la
-suite de tests d'alors.
+`tests/oracle/`contains a TMM reference**independent**of`certus.physics`, validated
+on four analytical identities. She has already unmasked two sign convention bugs
+worth**46 and 82 points**of reflectance, both exact at k=0 therefore invisible to the
+test suite then.
 
 ```bash
-.venv/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov    # 237 tests, ~2 s
+.venv/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov # 237 tests, ~2 s
 ```
 
-Avant de toucher au moindre calcul optique, lance-le. Après aussi.
+Before you touch any optical calculation, run it. Afterwards too.
 
-### 0.2 Un test qui ne peut pas échouer n'est pas un test
+### 0.2 A test that cannot fail is not a test
 
-Quand tu corriges un bug, **vérifie que le test que tu ajoutes échoue sur le code d'avant
-correctif**. Réintroduis le défaut, lance le test, constate l'échec, remets le correctif.
-Sans cette étape tu n'as rien prouvé.
+When you fix a bug,**check that the test you add fails on the code before
+patch**.Reintroducethefault,runthetest,notethefailure,submitthefix.
+Without this step you haven't proven anything.
 
-Cinq assertions de ce dépôt codifiaient un comportement faux (voir CLAUDE.md §7). Méfie-toi
-d'un test qui semble protéger quelque chose d'absurde : il protège peut-être le bug.
+Five assertions in this filing codified false behavior (see CLAUDE.md §7). Beware
+of a test that seems to protect something absurd: perhaps it protects the bug.
 
-### 0.3 Vérifie un constat d'audit avant de l'appliquer
+### 0.3 Verifies an audit finding before applying it
 
-Sur 13 constats d'audit vérifiés par contre-expertise, **3 étaient sans objet** — dont un
-classé « bloquant » et un « élevé » :
+Out of 13 audit findings verified by second opinion,**3 were irrelevant**— including one
+classified “blocking” and one “high”:
 
-| Constat | Pourquoi il était faux |
+| Observation | Why it was wrong |
 |---|---|
-| « le noyau gradient calcule un milieu à gain » | `phi_img = phi_base * ni` avec `ni` négatif donne bien `δ = φ_base·n̂` |
-| « gradient face arrière mal normalisé » | il coïncide avec les différences finies de son propre coût à 3e-8 |
-| « écrêtage `eps1` incohérent avec le gradient » | aucun noyau de gradient n'opère sur `eps1` |
+| “the gradient kernel calculates a gain medium” |`phi_img = phi_base * ni`with negative`ni`gives`δ = φ_base·n̂`|
+| “poorly normalized rear face gradient” | it coincides with the finite differences of its own cost at 3e-8 |
+| “clipping`eps1`inconsistent with gradient” | no gradient kernel operates on`eps1`|
 
-**Reproduis par exécution avant de corriger.** Un constat plausible et bien rédigé n'est
-pas un constat vrai.
+**Reproduce by execution before correcting.**A plausible and well-written observation is not
+not a true observation.
 
-### 0.4 Les marqueurs `LOCKED` ne prouvent rien
+### 0.4 `LOCKED`markers prove nothing
 
-Un bug avéré en portait un, avec une docstring affirmant précisément l'inverse de ce que
-le code faisait. Lis le code.
+A proven bug carried one, with a docstring asserting precisely the opposite of what
+the code did. Read the code.
 
-### 0.5 Trois pièges qui mordent
+### 0.5 Three traps that bite
 
-- **Hook d'auto-push.** `.git/hooks/post-commit` pousse chaque commit vers le dépôt
-  **public**. `--no-verify` ne le neutralise pas. Actuellement renommé `.disabled` —
-  vérifie son état avant tout commit que tu ne veux pas publier.
-- **`reports/`** contient les **résultats scientifiques** de l'utilisateur. C'est
-  gitignoré, donc git ne protestera pas si tu l'effaces, et c'est irrécupérable.
-- **`git gc` échoue** (`fatal: bad tree object f26d9e1a`) à cause d'un commit orphelin
-  packé. Sans conséquence sur les commits, mais le recompactage automatique ne passe pas.
+- **Auto-push hook.**`.git/hooks/post-commit`pushes each commit to the repository
+  **audience**.`--no-verify`does not neutralize it. Currently renamed to`.disabled`—
+  check its status before any commit you don't want to publish.
+- **`reports/`**contains the user's**scientific results**. It is
+  git ignored, so git won't protest if you delete it, and it's unrecoverable.
+- **`git gc`fails**(`fatal: bad tree object f26d9e1a`) because of an orphan commit
+  packed. No impact on commits, but automatic recompaction does not work.
 
 ---
 
-## 1. État de départ
+## 1. Starting state
 
 | | |
 |---|---|
-| Tests | **2373 passent**, 0 échec |
-| Branche | `refactor-corridors-mixins`, 138 commits d'avance sur `main` |
-| Lint visible (config projet) | 2 erreurs |
-| Lint réel (sans `extend-ignore`) | voir lot C |
-| Racine | 15 fichiers |
+| Tests |**2373 pass**, 0 failures |
+| Branch |`refactor-corridors-mixins`, 138 commits ahead of`main`|
+| Lint visible (project config) | 2 errors |
+| Real lint (without`extend-ignore`) | see lot C |
+| Root | 15 files |
 
-Quatorze défauts produisant des **résultats faux silencieux** ont été corrigés (voir
-`git log`). Le motif dominant, à garder en tête pendant les revues : **une valeur calculée
-correctement puis perdue** — une garde jamais relue, un mode résolu puis écrasé, un
-contexte importé puis remplacé par un dict vide, un maillage décodé puis écrasé par le
-suivant.
-
----
-
-## 2. Les chantiers
-
-### Lot A — Les 6 constats d'audit restants
-
-Aucun ne produit de résultat faux : performance et validité statistique.
-Traite-les dans cet ordre.
-
-**A1. Graines Sobol corrélées** — `certus/core/certus_strat_robustness.py:414`
-`local_seed = base_seed + noise_idx` fait collisionner les graines entre tirages de
-consensus : deux configurations différentes peuvent recevoir le même bruit, ce qui biaise
-l'estimation de robustesse. Utiliser un hachage combinant les deux indices.
-*Vérifier* : générer les tirages de deux configurations voisines, mesurer la corrélation
-croisée des bruits — elle doit être nulle.
-
-**A2. `SplineBasisCache` avec des nœuds variables** — ✅ **CLOS le 2026-08-06, par la mesure.**
-
-📏 **Ni « le cache manque systématiquement » ni « il rend une base périmée ».** Les positions de
-nœuds **sont** dans la clé de `SplineBasisCache.get` — donc aucune base périmée n'est rendue par
-omission. Mais cette clé est **arrondie à 1e-6 µm**, ce que le constat n'avait pas prévu, et c'est
-la troisième situation :
-
-- `compute_metal_bilayer_gradient_analytic` consulte le cache **directement**
-  (`gradient_metal.py:319`), donc ni `use_cache=False` ni `--force-cache` ne le gouvernent ;
-- mais cette base ne sert qu'au gradient par rapport aux **valeurs** de nœuds. Tout ce qui dépend
-  de leurs **positions** passe par les deux chemins non mémoïsés (lignes 270 et 342) ;
-- 📏 vérifié : un déplacement de nœud de **1e-9 µm** — mille fois sous l'arrondi — fait bouger le
-  gradient de 2,1e-9. L'optimiseur n'est donc **pas** aveugle.
-
-Il subsiste une péremption d'ordre `(dB/dλ) × 1e-6` sur les seules composantes de valeur :
-**bornée et négligeable.** A2 ne passe donc **pas** en priorité absolue.
-
-⚠️ **Ce que la mesure a corrigé chez moi** : j'avais d'abord écrit un test exigeant *zéro*
-consultation du cache par le gradient. Il échouait — et il avait tort, pas le code. Le garde-fou
-n'est pas un compte d'appels, c'est la **réponse du gradient** à un déplacement sous l'arrondi.
-Verrouillé par `tests/oracle/test_spline_basis_cache_key.py` (4 tests).
-
-**A3. Clés `lru_cache` par `tuple()`** — ✅ **FAIT.** La clé est construite par `.tobytes()`, et
-le commentaire sur place documente la mesure : 35,9 µs par appel sur une grille de 601 points, soit
-85 % du coût du chemin chaud, passés à fabriquer la clé.
-
-**A4. Base spline reconstruite nœud par nœud** — `certus/physics/gradient_metal.py:291`
-`num_knots` constructions de `CubicSpline` au lieu d'une seule sur toute la base.
-
-**A5. Précision mixte f32/c64 sans effet** — `certus/core/certus_core.py:666`
-La politique annonce un gain SIMD que les accumulateurs TMM annulent. Soit la retirer,
-soit la documenter comme inopérante. Mesurer avant de trancher.
-
-**A6. Cycle d'import `physics ↔ core`** — `certus/physics/certus_opt_kernels.py:3`
-Voir lot E, dont c'est un cas particulier.
+Fourteen defects producing**false silent results**have been fixed (see
+`git log`). The dominant reason to keep in mind during reviews:**a calculated value
+correctly then lost**— a guard never read again, a mode resolved then overwritten, a
+context imported then replaced by an empty dict, a mesh decoded then overwritten by the
+following.
 
 ---
 
-### Lot B — Étendre l'oracle aux gradients
+## 2. The construction sites
 
-**Pourquoi maintenant.** L'oracle couvre R et T, incidence normale et oblique. Il ne
-couvre **pas** les gradients analytiques — or un gradient faux ne produit pas d'erreur :
-il fait converger l'optimiseur vers un mauvais optimum, silencieusement. Deux des défauts
-corrigés cette session étaient exactement de cette nature.
+### Lot A — The remaining 6 audit findings
 
-**Quoi faire.** Un harnais systématique gradient-analytique contre différences finies
-centrées, sur un corpus figé, pour chaque fonction exportant un gradient :
+None produces false results: performance and statistical validity.
+Process them in this order.
 
-- `compute_gradient_all_layers_analytic` (déjà vérifié ponctuellement, à figer)
+**A1. Correlated Sobol seeds**—`certus/core/certus_strat_robustness.py:414`
+`local_seed = base_seed + noise_idx`causes seeds to collide between draws of
+consensus: two different configurations can receive the same noise, which biases
+the robustness estimate. Use a hash combining the two indices.
+*Check*: generate the draws of two neighboring configurations, measure the correlation
+crossroads of noise — it must be zero.
+
+**A2.`SplineBasisCache`with variable nodes**— ✅**CLOSED 2026-08-06, by measurement.**
+
+📏**Neither “the cache systematically misses” nor “it makes a database outdated”.**The positions of
+nodes**are**in the key of`SplineBasisCache.get`— so no stale bases are returned by
+omission. But this key is**rounded to 1e-6 µm**, which the observation had not anticipated, and it is
+the third situation:
+
+- `compute_metal_bilayer_gradient_analytic`consults the cache**directly**
+  (`gradient_metal.py:319`), so neither`use_cache=False`nor`--force-cache`governs it;
+- but this base is only used for the gradient with respect to the**values**of nodes. Whatever depends
+  of their**positions**goes through the two non-memorized paths (lines 270 and 342);
+- 📏 verified: a node displacement of**1e-9 µm**— a thousand times under rounding — causes the
+  gradient of 2.1e-9. The optimizer is therefore**not**blind.
+
+There remains an expiration of order`(dB/dλ) × 1e-6`on the value components only:
+**bounded and negligible.**A2 therefore**does not**have absolute priority.
+
+⚠️**What the measurement corrected for me**: I had first written a demanding test *zero*
+consultation of the cache by the gradient. He was failing — and he was wrong, not the code. The guardrail
+is not a call count, it is the**gradient response**to a shift under rounding.
+Locked by`tests/oracle/test_spline_basis_cache_key.py`(4 tests).
+
+**A3.`lru_cache`keys by`tuple()`**— ✅**DONE.**The key is constructed by`.tobytes()`, and
+the on-site commentary documents the measurement: 35.9 µs per call on a 601-point grid, i.e.
+85 % of hot path cost, spent making the key.
+
+**A4. Spline basis reconstructed node by node**—`certus/physics/gradient_metal.py:291`
+`num_knots`constructs`CubicSpline`instead of just one over the entire base.
+
+**A5. Mixed f32/c64 precision with no effect**—`certus/core/certus_core.py:666`
+The policy announces a SIMD gain that the TMM accumulators cancel. Either remove it,
+or document it as inoperative. Measure before slicing.
+
+**A6. Import cycle`physics ↔ core`**—`certus/physics/certus_opt_kernels.py:3`
+See batch E, of which this is a special case.
+
+---
+
+### Lot B — Extending the oracle to gradients
+
+**Why now.**The oracle covers R and T, normal and oblique incidence. He doesn't
+**does not**cover analytical gradients — but a false gradient does not produce an error:
+it makes the optimizer converge to a bad optimum, silently. Two of the flaws
+corrected this session were exactly of this nature.
+
+**What to do.**A systematic gradient-analytic harness against finite differences
+centered, on a fixed corpus, for each function exporting a gradient:
+
+- `compute_gradient_all_layers_analytic`(already spot checked, to be frozen)
 - `compute_oblique_gradient_contrib_analytic`
 - `compute_metal_bilayer_gradient_analytic`
 - `_compute_gradient_analytic_kernel`
-- le gradient spline de `spline_objective.py::_compute_analytic_gradient`
+- the spline gradient of`spline_objective.py::_compute_analytic_gradient`
 
-**Méthode.** Le test doit comparer le gradient au FD **du coût que la fonction retourne
-elle-même**, pas à un coût reconstruit — c'est ce qui rend le test décisif. Avec des poids
-**non uniformes** : plusieurs bugs de normalisation ne se voient qu'ainsi. Tolérance
-relative 1e-6 pour un pas central de 1e-6.
+**Method.**The test must compare the gradient to the FD**of the cost that the function returns
+itself**, not at a reconstructed cost — that's what makes the test litmus. With weights
+**non-uniform**: several normalization bugs are only seen this way. Tolerance
+relative 1e-6 for a central step of 1e-6.
 
-**Risque** : nul, purement additif.
+**Risk**: zero, purely additive.
 
 ---
 
-### Lot C — Éradiquer les `import *`
+### Lot C — Eradicate`import *`
 
-**Ne commence pas par là.** Ce lot n'est sûr qu'une fois le lot B en place.
+**Don't start there.**This batch is only safe once batch B is in place.
 
-**L'ampleur, mesurée le 2026-08-02** :
+**The magnitude, measured on 2026-08-02**:
 
-| Règle | Occurrences | Ce que ça veut dire |
+| Rule | Occurrences | What it means |
 |---|---|---|
-| F401 | **5 261** | imports inutilisés |
-| F405 | **3 156** | symbole venant d'un `import *`, origine intraçable |
-| F822 | **202** | `__all__` listant des noms **inexistants** |
-| F403 | 75 | les `import *` eux-mêmes |
-| F821 | 29 | noms non définis |
+| F401 |**5,261**| unused imports |
+| F405 |**3,156**| symbol coming from an`import *`, untraceable origin |
+| F822 |**202**|`__all__`listing**non-existent**names |
+| F403 | 75 | the`import *`s themselves |
+| F821 | 29 | undefined names |
 
-**Pourquoi c'est la racine du mal.** Tant qu'un symbole peut « venir de nulle part »,
-toute extraction de module est un pari — c'est précisément ainsi que l'extraction de
-`certus_opt_gradients.py` a perdu deux décorateurs `@njit` et permuté une signature
-publique sans que rien ne le signale.
+**Why it is the root of evil.**As long as a symbol can "come from nowhere",
+any module extraction is a gamble — that's precisely how module extraction
+`certus_opt_gradients.py`lost two`@njit`decorators and swapped a signature
+public without anything indicating it.
 
-**Ordre de traitement** :
+**Processing order**:
 
-1. **F822 d'abord** — les 202 `__all__` mensongers, concentrés sur 4 fichiers UI
-   (`certus_ui_widgets_factory.py`, `certus_base_app.py`, `certus_ui_utils.py`,
-   `certus_ui.py`). Ce sont des noms qui n'existent pas : tout `import *` sur ces modules
-   lève `AttributeError`. Correction mécanique et sans risque : retirer les noms morts.
-2. **F403/F405 ensuite**, module par module, jamais en masse. Pour chaque `import *`,
-   lister les symboles réellement utilisés (`ruff --select F405` les donne) et les
-   importer nommément.
-3. **F401 en dernier**, et **jamais avec `--fix` global** : certains imports « inutilisés »
-   sont des ré-exports volontaires ou des effets de bord d'enregistrement.
+1. **F822 first**— the 202 lying`__all__`, concentrated on 4 UI files
+   (`certus_ui_widgets_factory.py`,`certus_base_app.py`,`certus_ui_utils.py`,
+   `certus_ui.py`). These are names that do not exist: any`import *`on these modules
+   raises`AttributeError`. Mechanical and risk-free correction: remove dead names.
+2. **F403/F405 then**, module by module, never in bulk. For each`import *`,
+   list the symbols actually used (`ruff --select F405`gives them) and
+   import by name.
+3. **F401 last**, and**never with`--fix`global**: some “unused” imports
+   are intentional re-exports or recording side effects.
 
-**Après chaque module** : `pytest tests/oracle/ tests/core/ tests/unit/ -q`.
+**After each module**:`pytest tests/oracle/ tests/core/ tests/unit/ -q`.
 
-**Risque** : élevé si fait en masse, faible module par module avec l'oracle en place.
+**Risk**: high if done in bulk, low module by module with the oracle in place.
 
 ---
 
-### Lot D — Le cliquet
+### Lot D — The ratchet
 
-**D1. `extend-ignore` ne peut que rétrécir.** `pyproject.toml` masque 73 règles. Ajouter
-un test qui lit la liste et échoue si elle grandit. Une dette qu'on ne peut plus augmenter
-finit par disparaître.
+**D1.`extend-ignore`can only shrink.**`pyproject.toml`hides 73 rules. Add
+a test that reads the list and fails if it grows. A debt that can no longer be increased
+eventually disappears.
 
-**D2. La CI exécute la vraie suite.** `lint.yml` ne surveille que `main`, qui a 138 commits
-de retard, et n'exécute aucun test. `release-windows.yml` en exécute 3 fichiers sur 226.
-- déclencher aussi sur `refactor-corridors-mixins` ;
-- exécuter `pytest tests/ -q --no-cov` sur `ubuntu-latest` — la recette Linux validée est
-  dans CLAUDE.md §4 (Python 3.14.5, PyQt6 offscreen, numba 0.66) et tourne bien plus vite
-  que `windows-latest` ;
-- ne PAS toucher à `release-windows.yml` : le build gelé et la vérification des hashs du
-  lockfile sont corrects.
+**D2. The CI runs the real suite.**`lint.yml`only monitors`main`, which has 138 commits
+delay, and does not run any tests.`release-windows.yml`executes 3 files out of 226.
+- also trigger on`refactor-corridors-mixins`;
+- run`pytest tests/ -q --no-cov`on`ubuntu-latest`— the validated Linux recipe is
+  in CLAUDE.md §4 (Python 3.14.5, PyQt6 offscreen, numba 0.66) and runs much faster
+  than`windows-latest`;
+- do NOT touch`release-windows.yml`: the frozen build and checking the hashes of the
+  lockfile are correct.
 
-**D3. Les invariants en property-based.** Hypothesis est déjà une dépendance. Quatre
-propriétés couvrent une classe entière de bugs qu'aucun test d'exemple n'attrape :
-`R+T <= 1` sur tout empilement passif, `k >= 0`, réciprocité, accord gradient/FD.
+**D3. Invariants in property-based.**Hypothesis is already a dependency. Four
+properties cover an entire class of bugs that no example test catches:
+`R+T <= 1`on all passive stacking,`k >= 0`, reciprocity, gradient/FD agreement.
 
-**D4. Contrats plutôt qu'exemples.** Le contrat `isinstance(f, CPUDispatcher)` existe déjà
-pour 6 noyaux (`tests/oracle/test_tmm_oracle.py`). L'étendre aux signatures publiques :
-une signature permutée est passée inaperçue parce que tous les tests appelaient par
-mots-clés.
+**D4. Contracts rather than examples.**Contract`isinstance(f, CPUDispatcher)`already exists
+for 6 cores (`tests/oracle/test_tmm_oracle.py`). Extend it to public signatures:
+a permuted signature went unnoticed because all the tests called by
+keywords.
 
 ---
 
 ### Lot E — Architecture
 
-À faire seulement après C : les cycles se cassent beaucoup plus facilement quand les
-imports sont explicites.
+To be done only after C: the cycles break much more easily when the
+imports are self-explanatory.
 
-- **Frontières de couches.** CLAUDE.md recense 12 inversions `utils → ui`, 10
-  `core → workers`, et un cycle `physics ↔ core` (29/22). Les 3 inversions **au niveau
-  module** sont les plus nuisibles : importer un module de calcul charge PyQt6.
-- **DTO de `workers` vers `domain`** : c'est ce qui casse le cycle `core ↔ workers`.
-- **Duplication divergente.** `prepare_targets_vectorized` et `make_cost_function` existent
-  en double dans `gradient_utils.py` et `gradient_analytic.py`, avec des implémentations
-  **différentes** — la copie de `gradient_utils` lit un attribut `.val` que `Target` n'a
-  pas. Le garde-fou anti-duplication a été mis en liste blanche pour laisser passer ça
-  (`tests/headless/test_code_duplication.py:75`, « Tolérance temporaire »). À résoudre,
-  puis retirer la liste blanche.
-- **Migration `certus/metal/` inachevée** : `CERTUS_METAL_SINGLE.py` (2 721 l.) et
-  `CERTUS_METAL_BILAYER.py` (2 850 l.) sont restés à la racine.
-
----
-
-### Lot F — Purge de l'historique `.env`
-
-**Prérequis absolu : révoquer la clé sur console.anthropic.com.** Tant que ce n'est pas
-fait, le reste est cosmétique — la clé est publique depuis le commit `35348c0` du
-3 juillet.
-
-`.env` n'est plus suivi depuis le commit `8bb51b2`, donc il ne repartira pas. Reste la
-réécriture d'historique (`git filter-repo`), qui exige un force-push et invalide tous les
-clones. À faire en une fois, en coordination avec l'utilisateur.
+- **Layer boundaries.**CLAUDE.md lists 12`utils → ui`inversions, 10
+  `core → workers`, and a cycle`physics ↔ core`(29/22). The 3 inversions**at the level
+  module**are the most harmful: import a calculation module loads PyQt6.
+- **DTO from`workers`to`domain`**: this is what breaks the`core ↔ workers`cycle.
+- **Divergent duplication.**`prepare_targets_vectorized`and`make_cost_function`exist
+  duplicate in`gradient_utils.py`and`gradient_analytic.py`, with implementations
+  **different**— copy of`gradient_utils`reads a`.val`attribute that`Target`does not have
+  not. The anti-duplication safeguard has been whitelisted to let this pass
+  (`tests/headless/test_code_duplication.py:75`, “Temporary tolerance”). To resolve,
+  then remove the whitelist.
+- **`certus/metal/`migration incomplete**:`CERTUS_METAL_SINGLE.py`(2721 l.) and
+  `CERTUS_METAL_BILAYER.py`(2,850 l.) remained at the root.
 
 ---
 
-## 3. Ce qu'il ne faut pas faire
+### Lot F — Purge history`.env`
 
-- **Ne pas lancer `ruff --fix` globalement.** Certains imports « inutilisés » sont des
-  ré-exports volontaires.
-- **Ne pas supprimer les trois `certus_*.py` de la racine** — ce sont des façades de
-  ré-export que des tests importent par nom nu.
-- **Ne pas recréer de rapport de session à la racine.** 58 y avaient été accumulés, tous
-  contradictoires entre eux. `git log` est le journal.
-- **Ne pas modifier `calculate_transmission_single`** pour « corriger » son écart avec un
-  TMM nu : elle inclut délibérément la réflexion de face arrière.
-- **Ne pas se fier à `.coverage`** : il date du 13 juillet et pointe vers un autre dossier.
-- **Ne pas appliquer un constat d'audit sans l'avoir reproduit.** Voir §0.3.
+**Absolute prerequisite: revoke the key at console.anthropic.com.**Until it is
+done, the rest is cosmetic — the key is public since commit`35348c0`of
+3 July.
+
+`.env`is no longer tracked since commit`8bb51b2`, so it won't restart. Stay there
+history rewrite (`git filter-repo`), which requires a force-push and invalidates all
+clones. To be done at once, in coordination with the user.
 
 ---
 
-## 4. Vérification, à chaque étape
+##3. What not to do
+
+- **Do not run`ruff --fix`globally.**Some “unused” imports are
+  voluntary re-exports.
+- **Do not remove the three`certus_*.py`from the root**— these are fronts of
+  re-export that tests import by bare name.
+- **Do not recreate a session report at the root.**58 had been accumulated there, all
+  contradictory between them.`git log`is the log.
+- **Do not modify`calculate_transmission_single`**to “correct” its deviation with a
+  Bare TMM: It deliberately includes backside reflection.
+- **Do not trust`.coverage`**: it dates from July 13 and points to another folder.
+- **Do not apply an audit finding without having reproduced it.**See §0.3.
+
+---
+
+##4. Verification, every step of the way
 
 ```bash
-# rapide, avant/après toute modification de calcul optique
+#fast,before/afteranyopticalcalculationmodification
 .venv/Scripts/python.exe -m pytest tests/oracle/ -q --no-cov
 
-# large, avant de committer
-.venv/Scripts/python.exe -m pytest tests/core/ tests/unit/ tests/oracle/ \
+#wide, before committing
+.venv/Scripts/python.exe -m pytest tests/core/tests/unit/tests/oracle/ \
     tests/domain/ tests/property/ -q --no-cov
 
-# complète — compter ~12 min, la lancer en deux moitiés évite les délais d'attente
-.venv/Scripts/python.exe -m pytest tests/integration/ tests/headless/ \
+# complete — count ~12 min, launch it in two halves to avoid waiting times
+.venv/Scripts/python.exe -m pytest tests/integration/tests/headless/ \
     tests/ui/ tests/performance/ tests/regression/ tests/utils/ -q --no-cov
 ```
 
-Vérifier ce que Python importe réellement, en cas de doute :
+Check what Python actually imports, if in doubt:
 
 ```bash
 .venv/Scripts/python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"

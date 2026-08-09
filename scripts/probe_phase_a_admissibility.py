@@ -1,8 +1,8 @@
 """Prouve que la regle d'admissibilite de la Phase A n'est plus muette.
 
 On controle results_fast (rmse, std, crash_rate, gain) pour fabriquer trois
-regimes — filtre inerte, filtre qui trie, filtre total — et on verifie que
-chacun laisse une trace lisible, couche par couche.
+regimes — inert filter, sorting filter, total filter — and we check that
+each leaves a legible trace, layer by layer.
 """
 import logging
 import sys
@@ -10,8 +10,8 @@ from pathlib import Path
 
 import numpy as np
 
-# Racine du depot deduite de l'emplacement de CE fichier (scripts/..).
-# Ne JAMAIS coder un chemin absolu ici : plusieurs copies du depot coexistent
+#Root of the repository deduced from the location of THIS file (scripts/..).
+#NEVER code an absolute path here: several copies of the repository coexist
 # sur la machine, et un chemin en dur ferait mesurer l'autre copie (CLAUDE.md §5.5).
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -64,17 +64,17 @@ def run(label, crash_rates, gains, n_layers=48):
     return st
 
 
-# crash_tol pour 48 couches = 1-(1-0.05)^(1/48) = 0.1068 %
+#crash_tol for 48 layers = 1-(1-0.05)^(1/48) = 0.1068%
 tol = 1.0 - (1.0 - 0.05) ** (1.0 / 48)
 print(f"seuil par couche (48 couches) = {tol:.5%}")
 
 # 1) filtre INERTE : tout le monde passe largement
 run("filtre inerte (tous sous le seuil)", np.full(N_CAND, tol / 10), np.full(N_CAND, 0.5))
 
-# 2) filtre qui TRIE : moitie au-dessus du seuil, 3 avec gain<0
+#2) filter which SORTS: half above the threshold, 3 with gain<0
 cr = np.where(np.arange(N_CAND) < 10, tol / 10, tol * 5)
 gn = np.where(np.arange(N_CAND) < 3, -1.0, 0.5)
 run("filtre qui trie (regime intermediaire)", cr, gn)
 
-# 3) filtre TOTAL : personne ne passe -> repli sur le taux minimal
+#3) TOTAL filter: no one passes -> fallback to the minimum rate
 run("filtre total (repli sur le min)", np.linspace(tol * 2, tol * 9, N_CAND), np.full(N_CAND, 0.5))

@@ -61,7 +61,7 @@ def _dbg_write(msg: str) -> None:
     logger.debug(msg)
 
 def _contiguous_selector(idx: np.ndarray):
-    """``slice`` equivalent a ``idx`` quand celui-ci est un intervalle contigu.
+    """``slice`` equivalent to ``idx`` when it is a contiguous interval.
 
     Indexing a numpy array with an integer array COPIES the selection; a slice creates a view.
 
@@ -537,21 +537,21 @@ def _global_evaluate_oblique_physics(
 
             masks = _re_p4_chromatic_band_masks(wls_all, knots_lam)
 
-            # Tampons LOCAUX, pas les champs partages de REMseContext.
+            # LOCAL buffers, not the shared fields from REMseContext.
             #
-            # Le contexte est cree UNE SEULE FOIS par run (ligne 135) puis capture par
-            # closure ; les 11 threads de derivees finies de la phase 4
+            # The context is created ONLY ONCE per run (line 135) then captured by
+            # closure; the 11 finite difference threads of phase 4
             # (certus/workers/certus_re_workers_math.py:96, joblib.Parallel backend
-            # 'threading', n_jobs = 2*RE_SPLINE_N_KNOTS+1 = 11) reutilisaient donc TOUS
-            # les memes tableaux. Course reproduite : un thread ecrit sa bande, un autre
-            # entre et fait son fill(0.0) qui l'efface, le premier relit un spectre a
-            # moitie nul. Mesure : 5 essais sur 5 avec 10 a 11 colonnes de jacobien
-            # fausses, sans aucune exception ni journal. Consequence : direction de
-            # recherche fausse en phase 4, optimum degrade et non reproductible.
+            # 'threading', n_jobs = 2*RE_SPLINE_N_KNOTS+1 = 11) were therefore ALL reusing
+            # the same arrays. Race reproduced: one thread writes its band, another
+            # enters and does its fill(0.0) which erases it, the first re-reads a half-null
+            # spectrum. Measurement: 5 tries out of 5 with 10 to 11 jacobian columns
+            # wrong, without any exception or log. Consequence: search direction
+            # wrong in phase 4, degraded and unreproducible optimum.
             #
-            # wls_all.size est le bon dimensionnement : bucket['idx_union'] (ligne 79)
-            # indexe la seule union pos_all_union, donc idx < pos_all.size == wls_all.size
-            # — c'est deja l'hypothese de la branche non-phase-4 (ligne 572).
+            # wls_all.size is the right dimensioning: bucket['idx_union'] (line 79)
+            # indexes the only union pos_all_union, so idx < pos_all.size == wls_all.size
+            # - this is already the hypothesis of the non-phase-4 branch (line 572).
             _n_union = int(wls_all.size)
             _n_vars = int(ctx.n_layers_count)
             yR_all = np.zeros(_n_union, dtype=np.float64)
@@ -616,11 +616,11 @@ def _global_evaluate_oblique_physics(
             idx = bucket.get("idx_union", np.array([], dtype=np.int64))
             if idx.size == 0:
                 continue
-            # Selecteurs precalcules : un slice quand la selection est contigue,
-            # donc une VUE au lieu d'une copie du bloc (n_points x n_couches).
-            # C'est ici que passait la moitie du temps de RE sur le profil a la
-            # ligne de example/example_RE (32,1 % + 17,7 %) : la copie etait
-            # refaite deux fois par bucket, a chaque evaluation de l'objectif.
+            # Precomputed selectors: a slice when the selection is contiguous,
+            # so a VIEW instead of a copy of the block (n_points x n_layers).
+            # This is where half of the RE time on the profile was spent on the
+            # line from example/example_RE (32.1% + 17.7%): the copy was
+            # redone twice per bucket, at each objective evaluation.
             sel = bucket.get("idx_selector", idx)
             sel_pos = bucket.get("pos_selector", pos)
             spectral_weights_local = spectral_weights_wls[sel_pos]

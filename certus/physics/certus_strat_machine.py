@@ -4,7 +4,7 @@ CERTUS STRAT MACHINE MODEL
 Part of CERTUS Suite (2026)
 
 Centralized hardware specifications for optical deposition monitoring machines
-(e.g., Buehler Leybold Optics OMS 5100).
+(e.g., Bühler Leybold Optics OMS 5100).
 """
 
 from dataclasses import dataclass
@@ -30,7 +30,7 @@ class MachineModel:
         sigma_wl_func: Optional function(wl_nm -> float) returning wavelength-dependent noise sigma.
     """
 
-    name: str = "Buehler Leybold Optics OMS 5100"
+    name: str = "Bühler Leybold Optics OMS 5100"
     date: str = "2026-08-08"
     reading_noise_floor_pct: float = OMS5100_DEFAULT_READING_NOISE_PCT
     monochromator_resolution_nm: float = OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM

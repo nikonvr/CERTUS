@@ -113,7 +113,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §12.1 |
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
 | Graine de référence | **42**, `scan_wl_step` **1.0** | §10 |
-| `sigma_rate` (mode Rate) | ⚠️ **1 % ou 2 % — à trancher**, fourchette 👤 donnée | §14, question Q1 |
+| `sigma_rate` (mode Rate) | 🔑 **aucune valeur à poser** — grandeur DÉRIVÉE du simulateur | §14, dérivation |
 
 **Tout nouveau paramètre vaut sa valeur INACTIVE par défaut** (1 pour la fenêtre, 0 pour les
 amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'avant. Toujours.
@@ -145,7 +145,7 @@ lint, commit, et tu écris ce que tu as mesuré.
 | **T2** | — | **non** | jamais lancé |
 | **T3** | ⚠️ `e0df0e1` | non | **soudée à T4, donc inexécutable seule** |
 | **T4** | ⚠️ `e0df0e1` | 2 runs non traçables | moyenne **causale** ⇒ retard interdit par §9bis-5 |
-| **T5** | ✅ `162a0ff` | **non** | aucun balayage de corridor |
+| **T5** | ⚠️ `162a0ff` | **non** | **moitié faite** : atteint la croissance, **pas la notation** (§17-10) |
 | **T6** | — | **non** | jamais lancé |
 | **T7** | ❌ | — | **non implémenté**, malgré le message de `162a0ff` |
 
@@ -1035,7 +1035,7 @@ crée aucune divergence.
 | `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | **Dédoubler les indices** : `n_H_real, n_L_real` pour `M_before` et `Ts_r` ; `n_H_nom, n_L_nom` pour `M_nom`, `Ts_n` et `target_nominal`. C'est **la** condition sans laquelle rien de tout ceci ne produit d'effet. |
 | idem | idem | L'inversion parabolique finale (`T_points`) décrit le signal **réel** : elle prend `n_*_real`. |
 | `certus/physics/certus_strat_batch.py` | `simulate_stack_robustness_batch` | Accepter `n_H_real_vals` / `n_L_real_vals` en plus des tableaux nominaux. Ils sont **déjà indexés par couche** (chaque couche a sa λ de monitoring) : la dépendance en λ est donc déjà acheminée, il suffit d'y appliquer `δ_M(λ_mon,i)`. |
-| idem | `compute_batch_rmse` | **Perturber aussi la notation.** `n_layers_flattened` est sur la grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son spectre doit être évalué avec `n_réel(λ)`. **C'est là que l'inclinaison non compensée se paie** — l'omettre annulerait tout l'intérêt de l'action. |
+| idem | `compute_batch_rmse` | 🔴 **PAS FAIT — c'est ce qui reste de T5, et c'est le morceau qui compte.** `n_layers_flattened` est sur la grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son spectre doit être évalué avec `n_réel(λ)`. **C'est là que l'inclinaison non compensée se paie.** Vérifié le 2026-08-09 : la fonction n'a aucun paramètre de corridor et reçoit une matrice bâtie sur les indices nominaux. ⚠️ Le corridor étant tiré **par tirage**, il faut soit une matrice d'indices par tirage, soit passer `(a_H, b_H, a_L, b_L)` et reconstruire l'indice à la volée dans le noyau — comme le fait déjà `simulate_growth_kernel`. La seconde voie est la moins coûteuse. |
 
 #### Vérification
 
@@ -1238,7 +1238,7 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 
 1. **Critère de basculement non trivial** : Le basculement dépend de la pauvreté de la dynamique du signal optique effectif ($\text{swing} < \text{SWING\_MIN}$), et non d'un seuil fixe absolu en nanomètres (une couche de 30 nm à très faible contraste d'indice peut présenter une dynamique tout aussi pauvre qu'une couche ultrafine).
 2. **Pas d'auto-compensation en mode Rate** : Les erreurs accumulées aux couches précédentes ne sont ni mesurées ni corrigées pendant une couche en mode Rate ; elles sont transmises en boucle ouverte à la couche suivante.
-3. **Modèle de bruit d'épaisseur** : L'épaisseur déposée obéit à $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$.
+3. ⚠️ **Modèle de bruit d'épaisseur — PÉRIMÉ, voir la dérivation plus bas.** Il posait $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$, c'est-à-dire un tirage indépendant de $\sigma = 2\,\%$. 👤 Abandonné le 2026-08-09 : l'erreur de rate **se calcule**, elle ne se tire pas.
 4. **Transition avec POEM** : POEM se réactive dès la première couche présentant une amplitude optique suffisante ($\text{swing} \ge \text{SWING\_MIN}$).
 5. **Influence de la dynamique forte sur la précision du Trigger (Piste d'optimisation)** : Le déclenchement d'arrêt (trigger) est d'autant plus précis et insensible au bruit que la dynamique du signal ($\text{swing}$) est forte et la pente raide ($\frac{dT}{dd} \gg 0$). Favoriser les longueurs d'onde offrant une forte dynamique optique est une piste clé pour maximiser la répétabilité du dépôt.
 
@@ -1258,42 +1258,102 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 
 Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
 
-6. **Le rate n'est pas une constante, c'est une ESTIMATION construite en cours de dépôt.**
-   Elle se fait **par matériau** — couches paires d'un côté, impaires de l'autre — en
-   comparant le **nombre de tours observés** aux **épaisseurs théoriques** des couches déjà
-   déposées. Conséquence de modélisation à ne pas manquer : l'erreur d'estimation est
-   **commune à toutes les couches qui s'en servent**, donc **corrélée**, là où le §14-3 actuel
-   pose un tirage indépendant par couche. Les deux ne donnent pas le même taux de plantage.
-   ⚠️ **Point à trancher avec le physicien avant d'implanter** — voir les questions ci-dessous.
+6. 🔑 **Le rate n'est pas une constante, c'est une ESTIMATION construite en cours de dépôt —
+   et cette estimation, LE SIMULATEUR PEUT LA CALCULER.** Elle se fait **par matériau** —
+   couches paires d'un côté, impaires de l'autre — en comparant le **nombre de tours
+   observés** aux **épaisseurs théoriques**. Or ces deux grandeurs sont déjà dans le noyau :
+   `prev_thicknesses_sim[j]` (réelle) et `p_thick_nominal[j]` (nominale), utilisées côte à
+   côte à `certus_strat_growth.py:570-571`. **`sigma_rate` ne doit donc PAS être un paramètre
+   libre. C'est une grandeur DÉRIVÉE.** Voir la dérivation ci-dessous.
 7. **L'unité de contrôle est le TOUR**, pas la seconde : 240 tr/min ⇒ 1 tour = 250 ms ⇒
    **0,125 nm à 0,5 nm/s**. C'est **exactement le pas d'échantillonnage du §9bis-1**, et ce
    n'est pas une coïncidence : les deux viennent de la même rotation. L'épaisseur déposée en
-   mode Rate est donc **quantifiée en nombre entier de tours**.
-8. **Dispersion de rate : ±σ = 1 à 2 %.** 👤 fourchette donnée. §14-3 ci-dessus retient
-   **2 %** ; la borne basse est **1 %**. ⚠️ Une seule valeur doit être figée avant mesure.
-9. **Le Rate est un CHOIX DE STRATÉGIE, pas seulement un repli automatique.** L'idée est de
+   mode Rate est donc **quantifiée en nombre entier de tours**, et cette quantification
+   **tombe toute seule** — aucun paramètre à poser.
+8. **Le Rate est un CHOIX DE STRATÉGIE, pas seulement un repli automatique.** L'idée est de
    l'introduire délibérément, sur les stratégies déjà prometteuses, pour les couches fines ou
    à faible dynamique. Cela ajoute donc un **degré de liberté par couche** à la recherche
    (POEM ou Rate), et non un simple garde-fou déclenché par `swing < SWING_MIN`.
-10. **Le coût du Rate est la PERTE DE L'HISTORIQUE POEM.** Après une couche en Rate, la
-    couche suivante « repart classiquement » : les ancres POEM du bloc ne sont plus
-    exploitables. Le Rate n'est donc pas seulement moins précis sur sa propre couche — il
-    **casse la chaîne de compensation** pour la suite. C'est cet arbitrage — précision perdue
-    sur une couche fine contre chaîne POEM rompue — que la statistique devra trancher.
+   ⚠️ Ce degré de liberté a sa place **dans la DP existante**, pas dans une phase nouvelle :
+   son coût est une propriété **de bloc**, exactement ce que la DP sait déjà arbitrer.
+9. **Le coût du Rate n'est pas du bruit en plus — c'est le GEL de l'erreur existante.** Voir
+   la dérivation : une couche Rate **recopie** l'erreur relative de la dernière couche du même
+   matériau, là où POEM l'aurait corrigée.
+10. 👤 **Ce que « on repart classiquement » veut dire exactement** (précision du 2026-08-09) :
+    *« la machine ne garde pas l'historique du passage des extremums s'ils existent après un
+    rate »*. Pendant une couche Rate la machine **ne surveille pas le signal** : tout extremum
+    qui passe n'est **pas enregistré**. Et les ancres acquises **avant** ne valent plus rien
+    non plus, puisqu'elles sont désormais séparées du signal courant par une portion non
+    surveillée pendant laquelle des extrema ont pu passer sans être vus.
+    **C'est le COMPTAGE qui casse — et POEM est une méthode fondée sur un comptage.**
+
+    🔴 **La conséquence, et c'est la plus importante de toute cette section : le coût d'une
+    couche Rate se paie surtout sur la couche SUIVANTE, pas sur elle-même.** Sans ancres, la
+    couche d'après retombe sur le **niveau absolu** — c'est-à-dire précisément la branche que
+    §12.1 a démontrée **non invariante** par distorsion affine, celle qui rend
+    `CRASH_LEVEL_UNREACHABLE`. Le Rate déplace donc le risque du photométrique vers la branche
+    fragile. Il faut deux nouveaux points tournants observés pour que POEM redevienne
+    utilisable.
+
+    ⚠️ **Le bloc, lui, n'est PAS rompu** : la λ de contrôle ne change pas, c'est seulement
+    l'historique d'ancres qui est vidé. Une couche Rate peut donc vivre **à l'intérieur** d'un
+    bloc. Second effet à ne pas oublier : un extremum manqué pendant le Rate peut aussi faire
+    diverger le comptage total et déclencher un `CRASH_TP_MISCOUNT` plus loin.
+
+### 🔑 `sigma_rate` n'est PAS un paramètre — c'est une grandeur DÉRIVÉE
+
+👤 *« Oublie le 1 à 2 %, c'est ce que j'avais en tête, mais ça tombe à l'eau. »* (2026-08-09)
+
+Le simulateur connaît les deux grandeurs que la machine compare, donc il peut **refaire son
+calcul de rate à sa place**, au lieu de le remplacer par un tirage.
+
+Soit $v$ la vitesse de dépôt vraie et $t_{\text{tour}} = 0{,}25$ s, donc un tour dépose
+$q = v\,t_{\text{tour}} = 0{,}125$ nm.
+
+- Couche $j$ du matériau $M$, déposée **sous POEM** : épaisseur réelle $d^{\text{réel}}_j$, la
+  machine a donc compté $n_j = d^{\text{réel}}_j / q$ tours. **Mais elle croit avoir déposé
+  $d^{\text{nom}}_j$** — c'est la cible qu'elle visait, et rien ne lui dit le contraire.
+- Son estimation de rate vaut donc
+  $$\widehat{v}_M \;=\; \frac{d^{\text{nom}}_j}{n_j\,t_{\text{tour}}} \;=\; v\cdot\frac{d^{\text{nom}}_j}{d^{\text{réel}}_j}$$
+- Couche $i$ **en mode Rate** : la machine commande
+  $n_i = \operatorname{round}\!\bigl(d^{\text{nom}}_i / (\widehat{v}_M\,t_{\text{tour}})\bigr)$
+  tours, et dépose donc $d^{\text{réel}}_i = n_i\,q$, soit
+
+$$\boxed{\;\frac{d^{\text{réel}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{réel}}_j}{d^{\text{nom}}_j}\;}$$
+
+**L'erreur relative n'est pas tirée, elle est RECOPIÉE.** Ce qui en découle :
+
+- **Zéro paramètre libre.** C'est exactement ce que §9 exige : ne pas remplacer une constante
+  mesurée par des paramètres inventés. Ici on ne pose même plus de constante.
+- **La question « biais corrélé ou tirage indépendant ? » n'a plus lieu d'être** : ce n'est
+  ni l'un ni l'autre, c'est une **égalité**.
+- **Tout est déjà dans le noyau** : `prev_thicknesses_sim[j]` et `p_thick_nominal[j]`,
+  utilisées côte à côte à `certus_strat_growth.py:570-571`. Aucune plomberie à ajouter.
+- 🟢 **Et c'est une occasion de validation EXTERNE, la première du projet.** `sigma_rate`
+  devient une **prédiction** du modèle. Si le simulateur en rend une dispersion du même ordre
+  que ce que la machine montre en salle, c'est la première corroboration que STRAT ait jamais
+  eue (§15). S'il en rend 0,1 %, c'est que le modèle de bruit rate quelque chose. **Dans les
+  deux cas on apprend, et cela ne coûte rien.**
+
+⚠️ **La seule hypothèse que cela introduit** : $v$ est **constante pendant un run**. Si la
+source dérive réellement (épuisement, température), un terme de dérive revient — mais alors
+il faudra le **mesurer**, pas le poser. Ne pas le réintroduire par raisonnement (§9).
 
 🔴 **Rien de tout cela n'est implémenté.** Aucune ligne de `certus/` ne contient de mode Rate
 aujourd'hui. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
 été obtenues (§17) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
 n'a pas encore mesuré les paramètres existants.
 
-**Les quatre questions à poser avant d'écrire la moindre ligne** :
+**Ce qui reste à demander avant d'écrire la moindre ligne** :
 
 | # | Question | Pourquoi elle change le code |
 |---|---|---|
-| Q1 | σ = 1 % ou 2 % ? | Une seule valeur doit être figée. Un balayage n'est pas une réponse. |
-| Q2 | L'erreur de rate est-elle un **biais par run et par matériau** (l'estimation est commune) ou un **tirage indépendant par couche** ? | Deux modèles physiquement différents, deux taux de plantage différents. Le texte du physicien décrit une **estimation**, donc plutôt un biais corrélé. |
-| Q3 | « On repart classiquement » = le bloc est **rompu** (nouvelle λ, comptage des points tournants remis à zéro), ou POEM retombe seulement sur le **niveau absolu** pour la couche suivante ? | Le premier interdit certains découpages en blocs, le second non. |
-| Q4 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous contrôle POEM (couche 1, couche 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
+| Q1 | « On repart classiquement » = le bloc est **rompu** (nouvelle λ, comptage des points tournants remis à zéro), ou POEM retombe seulement sur le **niveau absolu** pour la couche suivante ? | Le premier interdit certains découpages en blocs, le second non. |
+| Q2 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous POEM (couches 1 et 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
+| Q3 | Si la couche de référence était **elle-même en Rate**, l'erreur se recopie sans jamais être corrigée. La machine **chaîne-t-elle**, ou exige-t-elle une référence POEM ? | Décide si deux couches Rate consécutives sont permises, et donc si l'erreur peut diverger. |
+| Q4 | L'estimation porte-t-elle sur **la dernière** couche du matériau, ou sur une **moyenne** de toutes les précédentes ? | Une moyenne amortit l'erreur, la dernière la recopie telle quelle. Deux taux de plantage différents. |
+
+## 15. 🔴 La validation externe — elle n'a plus qu'un seul chemin
 
 **Aujourd'hui STRAT n'est validé que contre lui-même.** Tout ce qui précède le rendra plus
 cohérent ; **rien ne prouvera qu'il dit vrai.**
@@ -1359,6 +1419,7 @@ neufs.
 | 6 | **Les mesures qui SONT le critère de réussite n'ont pas été faites.** T2 (4 runs POEM×distorsion), le balayage de corridor de T5, et T6 : aucun artefact, aucun run. |
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
+| 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
 **Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa

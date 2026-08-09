@@ -1168,30 +1168,76 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 ($\text{swing} &lt; \text{SWING\_MIN}$), <b>not</b> an absolute thickness threshold — a 30 nm
                 layer at very low index contrast can be just as poor as an ultra-thin one.
             </p>
-            <div class="eq-box">
-                $$ d_{\text{real}} = d_{\text{nom}}\cdot\bigl(1 + \mathcal{N}(0,\sigma_{\text{rate}})\bigr),
-                \qquad \sigma_{\text{rate}} \in [1\,\%,\; 2\,\%] $$
-            </div>
             <p style="margin:10px 0 0;">
                 🔑 <b>The control unit is the TURN, not the second.</b> At 240 rpm one turn lasts 250 ms,
                 i.e. <b>0.125 nm at 0.5 nm/s</b> — <i>exactly</i> the sampling step of the frozen reading
                 model in §2.0. That is not a coincidence: both come from the same rotation. A rate-mode
-                thickness is therefore <b>quantised in whole turns</b>.
+                thickness is therefore <b>quantised in whole turns</b>, and that quantisation costs no
+                parameter — it falls out on its own.
+            </p>
+        </div>
+
+        <div style="border:3px solid #b45309;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fffbeb;">
+            <p style="margin:0 0 10px;">
+                🔑 <b>$\sigma_{\text{rate}}$ is not a parameter. It is a DERIVED quantity.</b> An earlier
+                version of this section posed
+                $d_{\text{real}} = d_{\text{nom}}(1+\mathcal{N}(0,\sigma))$ with
+                $\sigma \in [1\,\%, 2\,\%]$. That was dropped on 2026-08-09, for a reason that is worth
+                stating in full: <b>the simulator knows both of the quantities the machine compares, so it
+                can redo the machine's rate calculation instead of replacing it with a draw</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                Let $v$ be the true deposition rate and $t_{\text{turn}} = 0.25$ s, so one turn deposits
+                $q = v\,t_{\text{turn}} = 0.125$ nm.
+            </p>
+            <ul style="margin:0 0 10px;">
+                <li>Layer $j$ of material $M$, deposited <b>under POEM</b>: real thickness
+                    $d^{\text{real}}_j$, so the machine counted $n_j = d^{\text{real}}_j / q$ turns.
+                    <b>But it believes it deposited $d^{\text{nom}}_j$</b> — that is the target it was
+                    aiming at, and nothing tells it otherwise.</li>
+                <li>Its rate estimate is therefore
+                    $\widehat{v}_M = d^{\text{nom}}_j / (n_j t_{\text{turn}}) = v\cdot d^{\text{nom}}_j / d^{\text{real}}_j$.</li>
+                <li>Layer $i$ <b>in rate mode</b>: the machine commands
+                    $n_i = \operatorname{round}\bigl(d^{\text{nom}}_i / (\widehat{v}_M t_{\text{turn}})\bigr)$
+                    turns, hence deposits $d^{\text{real}}_i = n_i q$:</li>
+            </ul>
+            <div class="eq-box">
+                $$ \frac{d^{\text{real}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{real}}_j}{d^{\text{nom}}_j} $$
+            </div>
+            <p style="margin:10px 0 0;">
+                <b>The relative error is not drawn — it is COPIED.</b> Which settles several things at once:
+                there is <b>no free parameter</b> left, so nothing invented replaces something measured;
+                the question "correlated bias or per-layer draw?" dissolves, because it is neither, it is an
+                <b>equality</b>; and both quantities are <b>already in the kernel</b>
+                (<code>prev_thicknesses_sim[j]</code> and <code>p_thick_nominal[j]</code>, used side by side),
+                so no plumbing is needed.
             </p>
             <p style="margin:10px 0 0;">
-                🔑 <b>The rate is an estimate built during the run, not a constant.</b> Its error is
-                therefore <b>shared by every layer that uses it</b> — correlated, not independent per
-                layer. The two readings do not predict the same crash rate, and the choice between them
-                is still open.
+                🟢 <b>And it turns $\sigma_{\text{rate}}$ into a PREDICTION</b> — which is the first
+                opportunity this project has ever had for an <i>external</i> check. If the simulator returns
+                a dispersion of the same order as what the machine shows on the shop floor, that is
+                corroboration from outside the model. If it returns 0.1&nbsp;%, the noise model is missing
+                something. Either outcome teaches something, and it costs nothing to look.
             </p>
             <p style="margin:10px 0 0;">
-                🔴 <b>What rate really costs: the POEM history.</b> After a rate layer the next one
-                <b>starts over classically</b> — the block's POEM anchors are no longer usable. Rate is not
-                merely less precise on its own layer: it <b>breaks the compensation chain</b> for what
-                follows. Deliberately introducing rate on thin or low-dynamics layers of an otherwise
-                promising strategy adds <b>one degree of freedom per layer</b> to the search, and the
-                trade-off — precision lost on a thin layer against a broken POEM chain — is exactly the
-                kind of arbitration the statistical study exists to settle.
+                ⚠️ <b>The one assumption this introduces</b> is that $v$ is constant during a run. If the
+                source really drifts (depletion, temperature), a drift term comes back — but it will then
+                have to be <b>measured</b>, not posed.
+            </p>
+        </div>
+
+        <div style="border:3px solid #0d9488;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdfa;">
+            <p style="margin:0;">
+                🔴 <b>What rate really costs: the existing error is FROZEN, and the POEM history is lost.</b>
+                A rate layer <b>reproduces</b> the relative error of the last layer of the same material,
+                where POEM would have corrected it. On top of that, the next layer <b>starts over
+                classically</b> — the block's POEM anchors are no longer usable. Deliberately introducing
+                rate on thin or low-dynamics layers of an otherwise promising strategy adds <b>one degree
+                of freedom per layer</b> to the search, and it belongs <b>inside the existing dynamic
+                programming</b>, not in a phase of its own: its cost is a <i>block</i> property, which is
+                exactly what the DP already arbitrates. The trade-off — error repeated on a thin layer
+                against a broken POEM chain — is the kind of arbitration the statistical study exists to
+                settle.
             </p>
             <p style="margin:10px 0 0;">
                 ⚠️ <b>Not implemented.</b> No rate mode exists in the kernel today. This section records the

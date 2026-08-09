@@ -79,6 +79,8 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | **Savoir ce qu'on suppose de la machine** | **§9bis — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
 | Comparer un résultat | §10 — le point de référence |
 | Comprendre un mot du projet | §7 — vocabulaire |
+| **Savoir où en est réellement T1…T7** | **§17bis — audit du 2026-08-09. À lire avant toute action de §12.** |
+| Comprendre le mode Rate | §14, dernier bloc — spécification 👤, non implémentée |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 
 Une seule autre page existe, destinée à la communauté :
@@ -111,6 +113,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §12.1 |
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
 | Graine de référence | **42**, `scan_wl_step` **1.0** | §10 |
+| `sigma_rate` (mode Rate) | ⚠️ **1 % ou 2 % — à trancher**, fourchette 👤 donnée | §14, question Q1 |
 
 **Tout nouveau paramètre vaut sa valeur INACTIVE par défaut** (1 pour la fenêtre, 0 pour les
 amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'avant. Toujours.
@@ -132,6 +135,19 @@ lint, commit, et tu écris ce que tu as mesuré.
 | **T5** | **Corridor d'indice 0,005.** | §12.3 | Corridor à 0 → `RESULT` identique à T0. Puis balayer 0 / 0,0025 / 0,005, et `a` seul / `b` seul. |
 | **T6** | **`phase_a_level_margin_factor` 1,66 → 3,33.** | §12.2, dernier bloc | Aucune. Un run chacun, comparer. |
 | **T7** | **Quantification de l'arrêt** `U(0 ; 0,125 nm)`. | §12.5 | Piège 1 : si doubler `Δd_sample` ne change rien, la mesure est un artefact. |
+
+### ⚠️ État réel de ces tâches au 2026-08-09 — lis §17bis avant d'en reprendre une
+
+| | Code écrit | Mesure faite | Verdict |
+|---|---|---|---|
+| **T0** | — | le seul run neutre abouti donne `0,00294862737122675`, **pas** `0,002898` | repère toujours non rétabli |
+| **T1** | ✅ `f7a3d71` | non | câblage réel, aucun test |
+| **T2** | — | **non** | jamais lancé |
+| **T3** | ⚠️ `e0df0e1` | non | **soudée à T4, donc inexécutable seule** |
+| **T4** | ⚠️ `e0df0e1` | 2 runs non traçables | moyenne **causale** ⇒ retard interdit par §9bis-5 |
+| **T5** | ✅ `162a0ff` | **non** | aucun balayage de corridor |
+| **T6** | — | **non** | jamais lancé |
+| **T7** | ❌ | — | **non implémenté**, malgré le message de `162a0ff` |
 
 **T3 et T4 forment une paire.** Le taux de plantage n'a de sens qu'une fois les deux faites.
 Ne conclus rien entre les deux.
@@ -189,9 +205,12 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    disponible ailleurs. Corrige à la main, un fichier à la fois.
 2. **Jamais agrandir `extend-ignore`** dans `pyproject.toml`. La liste masque déjà 68 règles
    et ne doit que rétrécir. `tests/oracle/test_lint_debt_ratchet.py` le surveille.
-3. **Jamais supprimer `reports/`.** Résultats scientifiques de l'utilisateur : 171 fichiers,
-   classeurs Excel et rapports de mesures d'indice réelles. C'est gitignoré, donc git ne
-   protestera pas, et c'est **irrécupérable**.
+3. **Jamais supprimer `reports/`.** Résultats scientifiques de l'utilisateur : **226 fichiers**
+   au 2026-08-09, classeurs Excel et rapports de mesures d'indice réelles.
+   ⚠️ **Correction du 2026-08-09 : `reports/` n'est PAS gitignoré.** Seuls quatre
+   sous-motifs le sont (`reports/exports/`, `release_dossier_*.zip`, `Report_*`,
+   `STRAT_observability_*`). Mesuré : **33 fichiers suivis par git sur 226**. Les
+   **193 autres ne sont donc protégés par rien** et sont **irrécupérables**.
 4. **Jamais modifier `example/example_strat/JSON-strat-example.json`.** Il s'est écarté des
    valeurs correctes **quatre fois**, toujours dans le sens permissif, et chaque fois cela a
    coûté une session de diagnostic. Pour essayer autre chose, utilise
@@ -212,8 +231,18 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
     puis supprimés : des journaux contradictoires.
 11. **Jamais réintroduire de français dans `certus/`.** L'anglais est strictement
     obligatoire pour tout commentaire, docstring ou message de log.
-    ✅ Nettoyage complet réalisé le 2026-08-09 : les commentaires et docstrings de
-    `certus/` sont désormais intégralement en anglais technique.
+    ✅ Vérifié le 2026-08-09 par balayage `tokenize` des 282 fichiers de `certus/` :
+    commentaires, docstrings et messages de log sont en anglais.
+    ⚠️ **Trois catégories restent délibérément en français, et ce n'est pas une
+    violation** : les mots français utilisés comme **données**
+    (`certus_re_helpers.py` — motifs de reconnaissance d'en-têtes français), les
+    **clés JSON persistées** (`seuil1`/`seuil2` dans `certus_field_state_mixin.py`,
+    qu'on ne peut pas renommer sans casser les configurations enregistrées), et les
+    **libellés de widgets vus par l'utilisateur** (info-bulles, boutons). L'interdit
+    porte sur commentaire / docstring / log — pas sur la langue de l'interface.
+    ⚠️ La première annonce de « nettoyage complet » (2026-08-09) ne tenait pas :
+    l'outil qui l'a validée, `find_french.py`, ne balayait que **6 fichiers en dur**
+    sur 282, et une vingtaine de sites authentiques subsistaient.
 
 ## 2. Les sept pièges — chacun a déjà été rencontré
 
@@ -355,7 +384,7 @@ d'empilements, stratégie de dépôt. Application **PyQt6** + noyau **NumPy/SciP
 
 ```
 certus/
-├── physics/   25 fich.  11 224 l.  ← TMM, gradients, colorimétrie, optimiseurs
+├── physics/   26 fich.  12 703 l.  ← TMM, gradients, colorimétrie, optimiseurs
 ├── core/      40 fich.  20 615 l.  ← noyau métier, solveurs, config
 ├── domain/    12 fich.   1 006 l.  ← DDD (entities/events/services/value_objects)
 ├── spline/    31 fich.  31 010 l.  ← corridors, splines d'indice
@@ -390,9 +419,10 @@ un `pip install` ne récupérerait aucun sous-module : le projet n'est utilisabl
 
 ### Pièges de fichiers
 
-- 🔴 **`reports/` contient les résultats scientifiques de l'utilisateur** — 87 classeurs
-  Excel et 87 rapports HTML de déterminations d'indice. Gitignoré, donc non protégé, et
-  irrécupérable. Ne le supprime **jamais** dans un « nettoyage ».
+- 🔴 **`reports/` contient les résultats scientifiques de l'utilisateur** — classeurs Excel
+  et rapports HTML de déterminations d'indice. **Non protégé** : seuls 4 sous-motifs sont
+  gitignorés et 33 fichiers sur 226 sont suivis par git — voir interdit 3. Irrécupérable.
+  Ne le supprime **jamais** dans un « nettoyage ».
 - Les 3 fichiers `certus_*.py` restants à la racine (`certus_curve_smoother`,
   `certus_spectral_preproc`, `certus_substrate_index`) sont des **façades légitimes** de
   ré-export. Des tests font `import certus_spectral_preproc`. Ne les supprime pas.
@@ -648,12 +678,20 @@ chemin de calcul est celui d'avant, au bit près.
 |---|---|
 | `poem_anchor_noise` | Bruite le signal de monitoring **avant** détection des points tournants, lecture des ancres POEM et test d'atteignabilité. Phase A **et** B. |
 | `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66** aujourd'hui. 🔒 **Valeur cible du modèle figé : 0,354** = `1/√k` avec `k = 8`, parce qu'elle s'applique au signal **lissé** — voir §9bis et §12.2. Injectable en 5ᵉ argument du script de sonde. |
-| `reading_smoothing_window` | 🔒 **À créer** (§12.2). Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Défaut **1** = aucun lissage = chemin actuel. Valeur du modèle figé : **8** (2 s à 4 Hz). N'a de sens qu'avec la grille de §12.4. |
-| `index_corridor` | 🔒 **À créer** (§12.3). Demi-largeur du corridor d'incertitude d'indice, en **unités d'indice absolues**. Défaut **0,0**. Valeur du modèle : **0,005**. |
+| `reading_smoothing_window` | ⚠️ **Existe depuis `e0df0e1`**, défaut **1**. Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Valeur du modèle figé : **8** (2 s à 4 Hz). 🔴 **Dans l'implantation actuelle ce drapeau commande AUSSI la grille de §12.4** — voir §17bis. |
+| `index_corridor` | ⚠️ **Existe depuis `162a0ff`**, défaut **0,0**. Demi-largeur du corridor d'incertitude d'indice, en **unités d'indice absolues**. Valeur du modèle : **0,005**. Jamais mesuré. |
+| `affine_scale_amp` / `affine_offset_amp` | ⚠️ **Existent depuis `f7a3d71`**, défaut **0,0**. Amplitudes du tirage de dérive photométrique, une fois par run. Valeurs de mesure : **0,05** et **0,02** (§12.1). Jamais mesurées. |
+| `poem_enabled` | ⚠️ **Existe depuis `f7a3d71`**, défaut **vrai**. Force le repli absolu quand il est faux. C'est le drapeau que §12.1 réclamait. Jamais mesuré. |
 | `phase_a_level_margin_factor` | Marge exigée **en transmission** entre le niveau d'arrêt et les points tournants voisins. Active aussi la vraie matrice cumulée en Phase A. |
 | `dp_yield_weight` | Poids du rendement dans l'objectif DP : `coût = coût_nm + w·(−log(1−p))`. |
 
 ## 12. Le travail à venir, dans l'ordre
+
+> 🔴 **AVERTISSEMENT DU 2026-08-09 — lis §17bis avant de reprendre une action de §12.**
+> Le code de T1, T3, T4 et T5 **existe déjà**, mais **aucune** des mesures qui devaient le
+> valider n'a été faite, la non-régression bit-à-bit ne tient pas, T3 est soudée à T4, et T7
+> n'est pas écrit. Les descriptions ci-dessous restent exactes sur **ce qu'il faut obtenir** ;
+> elles ne décrivent plus l'état du dépôt.
 
 > **Chaque action donne : le fichier et la fonction exacts, ce qu'il faut écrire, la commande
 > de vérification avec son résultat attendu, et les pièges connus.** Si une instruction te
@@ -1198,7 +1236,58 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 4. **Transition avec POEM** : POEM se réactive dès la première couche présentant une amplitude optique suffisante ($\text{swing} \ge \text{SWING\_MIN}$).
 5. **Influence de la dynamique forte sur la précision du Trigger (Piste d'optimisation)** : Le déclenchement d'arrêt (trigger) est d'autant plus précis et insensible au bruit que la dynamique du signal ($\text{swing}$) est forte et la pente raide ($\frac{dT}{dd} \gg 0$). Favoriser les longueurs d'onde offrant une forte dynamique optique est une piste clé pour maximiser la répétabilité du dépôt.
 
-## 15. 🔴 La validation externe — elle n'a plus qu'un seul chemin
+#### 👤 Comment la machine obtient son rate — précision du 2026-08-09
+
+> *« L'OMS 5100 propose un mode rate avec un contrôle au temps, en comptant le nombre de
+> rotations du porte-substrat. Dans ce cas, la vitesse de dépôt est estimée sur les couches
+> précédentes (paires ou impaires), en étudiant le nombre de tours observés par rapport aux
+> épaisseurs théoriques. En général il y a une dispersion de rate d'environ ±σ = 1 à 2 %, ce
+> qui permet derrière de calculer le nombre de tours de dépôt si l'utilisateur a utilisé le
+> mode rate. »*
+
+> *« Il pourrait être intéressant d'introduire du rate pour les stratégies les plus
+> prometteuses sur les couches fines ou pour lesquelles la dynamique du signal est faible. Le
+> problème du rate, c'est qu'on perd l'info de l'historique POEM pour la couche suivante, et
+> qu'on repart classiquement. »*
+
+Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
+
+6. **Le rate n'est pas une constante, c'est une ESTIMATION construite en cours de dépôt.**
+   Elle se fait **par matériau** — couches paires d'un côté, impaires de l'autre — en
+   comparant le **nombre de tours observés** aux **épaisseurs théoriques** des couches déjà
+   déposées. Conséquence de modélisation à ne pas manquer : l'erreur d'estimation est
+   **commune à toutes les couches qui s'en servent**, donc **corrélée**, là où le §14-3 actuel
+   pose un tirage indépendant par couche. Les deux ne donnent pas le même taux de plantage.
+   ⚠️ **Point à trancher avec le physicien avant d'implanter** — voir les questions ci-dessous.
+7. **L'unité de contrôle est le TOUR**, pas la seconde : 240 tr/min ⇒ 1 tour = 250 ms ⇒
+   **0,125 nm à 0,5 nm/s**. C'est **exactement le pas d'échantillonnage du §9bis-1**, et ce
+   n'est pas une coïncidence : les deux viennent de la même rotation. L'épaisseur déposée en
+   mode Rate est donc **quantifiée en nombre entier de tours**.
+8. **Dispersion de rate : ±σ = 1 à 2 %.** 👤 fourchette donnée. §14-3 ci-dessus retient
+   **2 %** ; la borne basse est **1 %**. ⚠️ Une seule valeur doit être figée avant mesure.
+9. **Le Rate est un CHOIX DE STRATÉGIE, pas seulement un repli automatique.** L'idée est de
+   l'introduire délibérément, sur les stratégies déjà prometteuses, pour les couches fines ou
+   à faible dynamique. Cela ajoute donc un **degré de liberté par couche** à la recherche
+   (POEM ou Rate), et non un simple garde-fou déclenché par `swing < SWING_MIN`.
+10. **Le coût du Rate est la PERTE DE L'HISTORIQUE POEM.** Après une couche en Rate, la
+    couche suivante « repart classiquement » : les ancres POEM du bloc ne sont plus
+    exploitables. Le Rate n'est donc pas seulement moins précis sur sa propre couche — il
+    **casse la chaîne de compensation** pour la suite. C'est cet arbitrage — précision perdue
+    sur une couche fine contre chaîne POEM rompue — que la statistique devra trancher.
+
+🔴 **Rien de tout cela n'est implémenté.** Aucune ligne de `certus/` ne contient de mode Rate
+aujourd'hui. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
+été obtenues (§17bis) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
+n'a pas encore mesuré les paramètres existants.
+
+**Les quatre questions à poser avant d'écrire la moindre ligne** :
+
+| # | Question | Pourquoi elle change le code |
+|---|---|---|
+| Q1 | σ = 1 % ou 2 % ? | Une seule valeur doit être figée. Un balayage n'est pas une réponse. |
+| Q2 | L'erreur de rate est-elle un **biais par run et par matériau** (l'estimation est commune) ou un **tirage indépendant par couche** ? | Deux modèles physiquement différents, deux taux de plantage différents. Le texte du physicien décrit une **estimation**, donc plutôt un biais corrélé. |
+| Q3 | « On repart classiquement » = le bloc est **rompu** (nouvelle λ, comptage des points tournants remis à zéro), ou POEM retombe seulement sur le **niveau absolu** pour la couche suivante ? | Le premier interdit certains découpages en blocs, le second non. |
+| Q4 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous contrôle POEM (couche 1, couche 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
 
 **Aujourd'hui STRAT n'est validé que contre lui-même.** Tout ce qui précède le rendra plus
 cohérent ; **rien ne prouvera qu'il dit vrai.**
@@ -1265,7 +1354,39 @@ rapporté et expliqué.
 | Distorsion affine | Déclarée conforme. Annulait son effet en 3 endroits, inatteignable, critère jamais exécuté. **Corrigé** — §12.1. |
 | `RESULT` des actions SYM / diversité / recherche locale | Sorties collées : `RESULT=0.0029486`. Prose : « préservant le meilleur score `0.002898` ». Départ : 0,002898. **+1,7 %**, présenté trois fois comme conforme. |
 | `MachineModel` | Aucun consommateur en production. `trigger_tolerance: float = 0.05` documenté « in T units (0..1) » alors que les 4 consommateurs réels divisent par 100 : **piège ×100**. Manquent vitesse de dépôt et cadence. |
-| Traduction anglaise | ✅ Nettoyage complet réalisé le 2026-08-09 (`certus/` + toutes les pages HTML `pages/`). |
+| Traduction anglaise | Déclarée complète le 2026-08-09. Ne tenait pas : ~20 sites français subsistaient, l'outil de validation ne balayait que 6 fichiers sur 282, et la passe a **cassé un test** en dé-accentuant `Bühler`. **Corrigé** — `0d15709` et la passe suivante. |
+
+## 17bis. Ce qui a été vérifié le 2026-08-09 — audit des actions T1 à T7
+
+Même protocole que §20, appliqué aux six commits de la session précédente. **Le code est
+souvent réel ; les mesures qui devaient le valider n'ont pas été faites.**
+
+### ✅ Tient
+
+`4d2671e` (CI élargie — vérifié dans `release-windows.yml:93`) · le câblage de bout en bout
+des cinq nouvelles clés JSON, `collect_params` les lit toutes
+(`certus_strat_ui_state.py:1090-1105`) · le dédoublement `n_H_real`/`n_L_real` de `162a0ff`,
+dont la sentinelle `< 0` préserve le chemin par défaut par construction · la traduction de
+`certus_strat_growth.py` elle-même, fidèle et sans perte technique.
+
+### 🔴 Ne tient pas
+
+| # | Ce qui a été trouvé |
+|---|---|
+| 1 | **La règle d'or n'est pas tenue.** Même commande, paramètres neutres : `59793e2` → `result = 0.00294862737130071`, artefact post-T5 → `0.00294862737122675`. Écart **relatif 2,5e-11**, soit **25× au-dessus** du seuil de 1e-12 que §20 accorde à numba. Aucune empreinte `float.hex()` n'existe. |
+| 2 | **T3 est soudée à T4 et donc inexécutable seule.** `SAMPLE_DD = 0.125` n'existe qu'à l'intérieur de `if smoothing_window > 1:` (`certus_strat_growth.py:652`). La configuration « grille fine, fenêtre à 1 » — celle que la condition d'arrêt de T3 impose d'observer — **n'est pas exprimable**. Et le chemin par défaut garde la grille 38× trop grossière, alors que §12.4 la qualifie de caractéristique physique, pas d'option. |
+| 3 | **Le lissage est une moyenne CAUSALE** (fenêtre `[i−k+1 … i]`), qui décale un extremum de ≈ `(k−1)/2` échantillons, soit **0,44 nm à k = 8**. §12.2 écrit « n'ajouter aucun décalage temporel » et §9bis-5 pose « aucun retard » en postulat figé. Une moyenne **centrée** ne décalerait rien. |
+| 4 | **T7 n'est pas implémenté** malgré le message de `162a0ff`. L'arrêt reste obtenu par inversion parabolique continue ; aucune loi `U(0 ; 0,125 nm)` n'existe. Par ailleurs T5, T6 et T7 dans un seul commit contredit **C3**. |
+| 5 | **Aucun test n'accompagne les trois commits de feature.** `f7a3d71`, `e0df0e1`, `162a0ff` ne touchent aucun fichier de `tests/`, et aucun test ne mentionne les nouveaux paramètres. Le contrôle 2 de §20 est donc inapplicable. |
+| 6 | **Les mesures qui SONT le critère de réussite n'ont pas été faites.** T2 (4 runs POEM×distorsion), le balayage de corridor de T5, et T6 : aucun artefact, aucun run. |
+| 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
+| 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
+
+🔴 **Correctif de traçabilité à faire avant toute nouvelle mesure** : `probe_anchor_noise_pipeline.py`
+doit écrire dans son JSON **la configuration complète** qu'il a appliquée — fenêtre de
+lissage, corridor, amplitudes affines, `poem_enabled`, seuil, poids de rendement. Sans cela
+chaque run produit un chiffre dont personne ne pourra dire d'où il vient, et le point 7
+se reproduira.
 
 ## 18. Autres chantiers ouverts
 
@@ -1285,9 +1406,14 @@ rapporté et expliqué.
 ### Dette de lint
 
 ```
-ruff check .  (config projet)             ->      62 erreurs
-ruff check .  (mêmes règles, sans ignore) ->  12 157 erreurs
+ruff check .  (config projet)             ->  All checks passed!    (mesuré 2026-08-09)
+ruff check .  (mêmes règles, sans ignore) ->  12 157 erreurs        (non remesuré)
 ```
+
+⚠️ Une version antérieure annonçait **62 erreurs** avec la configuration du projet. C'est
+faux depuis au moins le 2026-08-09, et cela **contredisait §0**, qui attend
+`All checks passed!`. La dette réelle est celle que masque `extend-ignore`, pas celle que
+`ruff` rapporte.
 
 Les plus dangereuses masquées : **F822 (202)** — `__all__` référençant des noms inexistants,
 concentrés sur 4 fichiers UI ; tout `import *` sur eux lève `AttributeError`. **F821 (67)**,
@@ -1296,10 +1422,15 @@ dont 3 réels dans `certus/physics/gradient_analytic.py`. **F401 (5 473)** · **
 
 ### CI
 
-226 fichiers de tests, ~2 300 tests — la CI en exécute **3 fichiers**
-(`release-windows.yml:93`). `lint.yml` n'exécute aucun test. La branche de travail
-`refactor-corridors-mixins` est très en avance sur `main` (dernier commit `main` :
-2026-04-27) : **aucun de ces commits n'a été validé par la CI.**
+248 fichiers `.py` sous `tests/` (241 `test_*.py`), 2 299 tests collectés.
+
+⚠️ **Corrigé le 2026-08-09.** Une version antérieure disait que la CI n'exécutait que
+**3 fichiers**. C'est faux depuis `4d2671e` : `release-windows.yml:93` lance bien
+`pytest tests/oracle/ tests/unit/`, et `tests.yml` lance `tests/oracle/` puis `tests/`.
+`lint.yml` n'exécute toujours aucun test.
+
+La branche de travail `refactor-corridors-mixins` reste très en avance sur `main` (dernier
+commit `main` : 2026-04-27) : **ces commits n'ont pas été validés par la CI sur `main`.**
 
 ## 19. Règles de tenue de ce document
 

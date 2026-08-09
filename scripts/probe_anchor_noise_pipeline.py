@@ -68,6 +68,94 @@ TRACED_KEYS: tuple[str, ...] = (
 )
 
 
+#: Environment overrides. One row per variable: the variable, the params key it
+#: drives, how to parse it, the value at which it is INACTIVE, and the prefix it
+#: contributes to the report file name.
+#:
+#: 🔴 This table is the single source for BOTH the configuration and the file name.
+#: They used to be read separately, and that is exactly how two runs of 2026-08-09
+#: were named `full_step1_seed42` while their operator believed POEM was off.
+_OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
+    ("CERTUS_AFFINE_SCALE_AMP", "affine_scale_amp", "float", 0.0, "as"),
+    ("CERTUS_AFFINE_OFFSET_AMP", "affine_offset_amp", "float", 0.0, "ao"),
+    ("CERTUS_SMOOTHING_WINDOW", "reading_smoothing_window", "int", 1, "k"),
+    ("CERTUS_INDEX_CORRIDOR", "index_corridor", "float", 0.0, "corr"),
+    ("CERTUS_PHASE_A_MARGIN", "phase_a_level_margin_factor", "float", None, "marg"),
+    ("CERTUS_POEM_ENABLED", "poem_enabled", "flag", True, "poemoff"),
+)
+
+_TRUE_WORDS = frozenset({"1", "true", "yes", "on"})
+_FALSE_WORDS = frozenset({"0", "false", "no", "off"})
+
+
+def _refuse(name: str, raw: str, expected: str) -> None:
+    raise SystemExit(
+        f"\n{name}={raw!r} is not {expected}.\n"
+        "Refusing to run. A probe that silently falls back to its default measures\n"
+        "something other than what was asked, and says nothing about it.\n"
+    )
+
+
+def _resolve_env_config() -> dict[str, object]:
+    """Read every environment override ONCE, strictly, into one dictionary.
+
+    🔴 Why this is strict. On 2026-08-09 two runs launched with
+    ``CERTUS_POEM_ENABLED=0`` reported ``poem_enabled: true`` and returned results
+    bit-identical to the POEM-on runs. ``set VAR=0`` in cmd.exe stores ``"0 "`` when
+    the line carries a trailing space, and ``"0 " not in {"0", ...}`` is ``True``.
+    The affine amplitudes survived the same stray space because ``float("0.05 ")``
+    strips it -- which is precisely why nothing looked wrong.
+
+    So: every value is stripped, and anything unparseable RAISES rather than falling
+    back. An empty value is treated as "not set", because that is what an operator
+    means by it.
+    """
+    cfg: dict[str, object] = {
+        param: neutral for _env, param, _kind, neutral, _pfx in _OVERRIDES if neutral is not None
+    }
+    for env_name, param, kind, _neutral, _pfx in _OVERRIDES:
+        raw = os.environ.get(env_name)
+        if raw is None or not raw.strip():
+            continue
+        text = raw.strip()
+        if kind == "flag":
+            low = text.lower()
+            if low in _TRUE_WORDS:
+                cfg[param] = True
+            elif low in _FALSE_WORDS:
+                cfg[param] = False
+            else:
+                _refuse(env_name, raw, "a boolean (1/0, true/false, yes/no, on/off)")
+        elif kind == "int":
+            try:
+                cfg[param] = int(text)
+            except ValueError:
+                _refuse(env_name, raw, "an integer")
+        else:
+            try:
+                cfg[param] = float(text)
+            except ValueError:
+                _refuse(env_name, raw, "a number")
+    return cfg
+
+
+def env_tag_suffix(cfg: dict[str, object]) -> str:
+    """File-name suffix, derived from the SAME dictionary that configures the run.
+
+    Only non-neutral values appear, so a neutral run keeps its historical file name
+    and a non-neutral one can never silently overwrite it.
+    """
+    parts: list[str] = []
+    for _env, param, kind, neutral, prefix in _OVERRIDES:
+        if param not in cfg:
+            continue
+        value = cfg[param]
+        if neutral is not None and value == neutral:
+            continue
+        parts.append(prefix if kind == "flag" else f"{prefix}{float(value):g}".replace(".", "p"))
+    return "".join(f"_{p}" for p in parts)
+
+
 def patch_flag(
     mode: str,
     scan_step: float | None = None,
@@ -99,6 +187,7 @@ def patch_flag(
     if tp_hyst is not None:
         hyst = float(tp_hyst)
     margin = FIVE_SIGMA if mode == "full" else 0.0
+    env_cfg = _resolve_env_config()
 
     def patched(self):
         params = orig(self)
@@ -115,13 +204,9 @@ def patch_flag(
         params["tp_hysteresis_factor"] = hyst
         params["phase_a_level_margin_factor"] = margin
         params["enable_local_search"] = (mode == "full")
-        params["affine_scale_amp"] = float(os.environ.get("CERTUS_AFFINE_SCALE_AMP", "0.0"))
-        params["affine_offset_amp"] = float(os.environ.get("CERTUS_AFFINE_OFFSET_AMP", "0.0"))
-        params["poem_enabled"] = os.environ.get("CERTUS_POEM_ENABLED", "1") not in {"0", "false", "False"}
-        params["reading_smoothing_window"] = int(os.environ.get("CERTUS_SMOOTHING_WINDOW", "1"))
-        params["index_corridor"] = float(os.environ.get("CERTUS_INDEX_CORRIDOR", "0.0"))
-        if "CERTUS_PHASE_A_MARGIN" in os.environ:
-            params["phase_a_level_margin_factor"] = float(os.environ["CERTUS_PHASE_A_MARGIN"])
+        # One dictionary, resolved once, drives both the run and the file name.
+        for key, value in env_cfg.items():
+            params[key] = value
         if not APPLIED_CONFIG:
             APPLIED_CONFIG.update({k: params.get(k) for k in TRACED_KEYS})
         return params
@@ -155,28 +240,32 @@ def main() -> None:
     if tp_hyst is not None:
         tag = f"{tag}_hyst{tp_hyst:g}".replace(".", "p")
 
-    # Half of the model comes from the environment, not from the command line. A run whose
-    # smoothing window or index corridor is not in the file name silently OVERWRITES the
-    # neutral report of the same name -- which is how two unattributable crash rates were
-    # produced on 2026-08-09. Only non-neutral values are appended, so existing file names
-    # are unchanged.
-    for env_name, prefix, neutral in (
-        ("CERTUS_SMOOTHING_WINDOW", "k", 1.0),
-        ("CERTUS_INDEX_CORRIDOR", "corr", 0.0),
-        ("CERTUS_AFFINE_SCALE_AMP", "as", 0.0),
-        ("CERTUS_AFFINE_OFFSET_AMP", "ao", 0.0),
-        ("CERTUS_PHASE_A_MARGIN", "marg", None),
-    ):
-        raw = os.environ.get(env_name)
-        if raw is None:
+    # Half of the model comes from the environment, not from the command line. The tag
+    # and the configuration come from the SAME resolved dictionary, so a file name can
+    # never disagree with the run it names.
+    env_cfg = _resolve_env_config()
+    tag += env_tag_suffix(env_cfg)
+
+    # 🔴 ANNOUNCE THE CONFIGURATION BEFORE SPENDING 25 MINUTES ON IT.
+    #
+    # This block used to be printed only at the end. On 2026-08-09 two runs were
+    # launched believing POEM was off; the report said otherwise, and it said so
+    # 25 minutes too late, twice. Whoever launches this can now compare two lines
+    # within two seconds and kill the run if they disagree.
+    B.emit("")
+    B.emit("=" * 70)
+    B.emit("CONFIGURATION EFFECTIVE -- verifie-la MAINTENANT, avant d'attendre 25 min")
+    B.emit("=" * 70)
+    for _env, param, _kind, neutral, _pfx in _OVERRIDES:
+        if param not in env_cfg:
             continue
-        value = float(raw)
-        if neutral is not None and value == neutral:
-            continue
-        tag = f"{tag}_{prefix}{value:g}".replace(".", "p")
-    # Same truthiness rule as `patched` above -- "false" is not a float.
-    if os.environ.get("CERTUS_POEM_ENABLED", "1") in {"0", "false", "False"}:
-        tag = f"{tag}_poemoff"
+        value = env_cfg[param]
+        flag = "  <-- ACTIF" if (neutral is None or value != neutral) else ""
+        B.emit(f"  {param:<30s} = {value!r}{flag}")
+    B.emit(f"  fichier de sortie              = probe_anchor_noise_pipeline_{tag}.json")
+    B.emit("=" * 70)
+    B.emit("")
+    sys.stdout.flush()
 
     B.qapp()
     B.autoanswer_dialogs(True)
@@ -201,6 +290,21 @@ def main() -> None:
     PSE.OUT.write_text(json.dumps(r, indent=1), encoding="utf-8")
     B.emit(f"PROBE_WRITTEN={PSE.OUT}  strategies={r['n']}")
     B.emit(f"CONFIG={json.dumps(r['config'], sort_keys=True)}")
+
+    # One line per run, appended to a compact ledger. A campaign transcript runs to
+    # megabytes and nobody reads it while it is still useful; this is twenty lines,
+    # so an anomaly can be spotted between two runs instead of after all of them.
+    ledger = ROOT / "reports" / "probe_runs.tsv"
+    if not ledger.exists():
+        ledger.write_text(
+            "tag\tsetup_s\trun_s\tresult\tn_strategies\tconfig\n", encoding="utf-8"
+        )
+    with ledger.open("a", encoding="utf-8") as fh:
+        fh.write(
+            f"{tag}\t{setup:.3f}\t{run:.3f}\t{val!r}\t{r['n']}\t"
+            f"{json.dumps(r['config'], sort_keys=True)}\n"
+        )
+    B.emit(f"LEDGER={ledger}")
     B.emit("")
     B.emit(f"  ERREUR SPECTRALE, en POINTS DE TRANSMISSION — poem_anchor_noise={mode.upper()}")
     B.emit("  id        nb  crash | RMSE global med/p95 | passante p95 | FRONT p95 | BLOQUEE p95 max|E| | decalage front p95")

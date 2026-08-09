@@ -21,9 +21,60 @@ annule toute la mission.
 Pendant qu'une commande de mesure tourne, tu ne lances **rien d'autre**. Ni test, ni
 recherche, ni autre terminal. Tu attends qu'elle se termine.
 
-**RÈGLE 6 — En cas de doute, tu t'arrêtes.**
-Tu n'improvises jamais. Tu écris ce que tu as vu, et tu attends des instructions.
-**S'arrêter n'est jamais une faute. Inventer, si.**
+**RÈGLE 6 — En cas de doute, tu le DIS. Tu ne t'arrêtes que dans trois cas.**
+
+Tu n'es pas là pour obéir aveuglément. Si quelque chose te paraît anormal, **écris-le dans le
+rapport, dis pourquoi, et propose ce que tu ferais** — puis continue si l'étape suivante est
+indépendante. Ton jugement est utile ; c'est ta liberté de modifier le code qui ne l'est pas.
+
+**Les trois seuls arrêts durs :**
+1. `PREFLIGHT=STOP` à l'étape 0.
+2. Une étape qui semble te demander de modifier du code.
+3. Deux runs consécutifs qui échouent de la même façon.
+
+Partout ailleurs : **tu signales et tu continues.**
+**Inventer un chiffre reste la seule faute irrattrapable.**
+
+---
+
+## 🔍 CE QUI DOIT T'ALERTER — les signatures d'un problème
+
+Tu n'as pas à deviner. Voici à quoi ressemble une anomalie sur ce banc. Si tu en vois une,
+**écris-la dans le rapport en toutes lettres.**
+
+| Ce que tu observes | Ce que ça veut dire |
+|---|---|
+| **Deux `RESULT` identiques jusqu'au dernier chiffre, pour deux configurations censées DIFFÉRER** | La variable n'est pas arrivée au calcul. Les deux runs ont mesuré la même chose. C'est arrivé le 2026-08-09. |
+| Deux `RESULT` identiques pour deux configurations **censées être les mêmes** | ✅ Normal, c'est même rassurant. |
+| Deux `RESULT` qui diffèrent **au-delà du 10ᵉ chiffre** alors que la configuration est identique | ✅ Normal. Le banc a une gigue d'environ 3e-11, c'est du calcul parallèle. |
+| Deux `RESULT` qui diffèrent **de plus de 1e-9** à configuration identique | ❌ Ce n'est plus la gigue. Signale-le. |
+| `RUN_S` du premier run bien plus long que les suivants | ✅ Normal, c'est la compilation. Ne le compare pas aux autres. |
+| Un `RESULT` qui ne bouge pas quand tu changes une valeur censée l'influencer | ❌ Le paramètre n'atteint pas le calcul. |
+| `strategies=` très petit, ou `RESULT=None` | ❌ Le run n'a pas abouti. Ce n'est pas un résultat. |
+
+---
+
+## ⚡ LE RÉFLEXE QUI ÉCONOMISE 25 MINUTES
+
+Chaque lancement de banc affiche, **dans les deux premières secondes**, un encadré :
+
+```
+======================================================================
+CONFIGURATION EFFECTIVE -- verifie-la MAINTENANT, avant d'attendre 25 min
+======================================================================
+  affine_scale_amp               = 0.05  <-- ACTIF
+  poem_enabled                   = False  <-- ACTIF
+  fichier de sortie              = probe_anchor_noise_pipeline_..._poemoff.json
+======================================================================
+```
+
+**Lis-le avant toute chose.** Chaque étape te dit ce qui doit y figurer.
+
+- Si ça correspond → laisse tourner.
+- **Si ça ne correspond pas → `Ctrl+C` tout de suite.** Tu viens d'économiser 25 minutes.
+  Note ce que tu as vu, vérifie ta commande `set`, et relance.
+
+C'est le contrôle le plus rentable de toute la mission. Ne le saute jamais.
 
 ---
 
@@ -195,6 +246,21 @@ fonctionne.
 
 **Tu vas lancer QUATRE runs.** Pour chacun : tu tapes d'abord les lignes `set`, **puis** la
 ligne de calcul, **dans le même terminal**. Tu attends la fin avant de passer au suivant.
+
+🔴 **CE QUE L'ENCADRÉ DOIT AFFICHER, run par run.** Vérifie dans les 2 secondes. Si ça ne
+correspond pas, `Ctrl+C` immédiatement — c'est que la variable n'est pas passée.
+
+| run | `poem_enabled` | `affine_scale_amp` | `affine_offset_amp` | le nom de fichier doit contenir |
+|---|---|---|---|---|
+| 3.1 | `True` | `0.0` | `0.0` | *(rien de spécial)* |
+| 3.2 | `True` | `0.05` **ACTIF** | `0.02` **ACTIF** | `_as0p05_ao0p02` |
+| 3.3 | **`False` ACTIF** | `0.0` | `0.0` | **`_poemoff`** |
+| 3.4 | **`False` ACTIF** | `0.05` **ACTIF** | `0.02` **ACTIF** | **`_as0p05_ao0p02_poemoff`** |
+
+⚠️ **Les runs 3.3 et 3.4 sont ceux qui comptent.** Une tentative précédente les a lancés avec
+`poem_enabled = True` sans que rien ne le signale, et les deux runs ont été perdus. **Si tu ne
+vois pas `poem_enabled = False  <-- ACTIF` et `_poemoff` dans le nom du fichier, n'attends pas
+la fin : arrête.**
 
 ### Run 3.1 — POEM actif, distorsion absente
 

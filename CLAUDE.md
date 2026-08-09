@@ -262,42 +262,52 @@ chiffre faux dans le sens sévère.
 
 ### PALIER 1 — Rendre le banc digne de confiance
 
-#### A5 — Le harnais d'empreinte `float.hex()` · *l'outil qui manque depuis toujours*
+#### A5 — Le harnais d'empreinte `float.hex()` · *le SEUL instrument de la règle d'or*
 
 La règle d'or de §3 exige une non-régression **au bit**, et **aucun outil ne permet de la
-vérifier**. C'est pour cela que l'écart de §17-1 n'a été vu qu'après coup, dans un artefact.
+vérifier**. Le banc ne peut pas servir : il a ~3e-11 de gigue irréductible (§3, §10).
+**A5 n'est donc pas un confort, c'est le seul moyen de vérifier C1.** Tant qu'il n'existe pas,
+aucune des actions du palier 2 ne peut être validée.
 
 - **Où** : `tests/oracle/` — c'est un oracle, pas un test unitaire.
 - **Quoi** : balayer une large batterie de configurations de `simulate_growth_kernel`
   (couches, λ, épaisseurs, graines), capturer `float.hex()` de chaque sortie, écrire une
   empreinte. Un mode `--compare` qui exige **zéro** différence.
 
+🔴 **Le harnais force `NUMBA_NUM_THREADS=1`**, avant tout import de numba. Sans cela il
+mesure la gigue du banc au lieu du calcul, **et il a l'air de fonctionner tout en ne prouvant
+rien** — le pire des trois états.
+
 | # | Étape | Attendu |
 |---|---|---|
 | 1 | Capturer l'empreinte sur `HEAD` | fichier d'empreinte, ≥ 10 000 configurations |
 | 2 | Relancer sans rien changer | **zéro** différence |
-| 3 | Changer un chiffre du noyau exprès | l'empreinte **doit** bouger — sinon le harnais ne teste rien |
-| 4 | Remettre en état | zéro différence |
+| 3 | Relancer avec `NUMBA_NUM_THREADS=4` | **zéro** différence aussi — sinon le mono-thread n'est pas réellement forcé |
+| 4 | Changer un chiffre du noyau exprès | l'empreinte **doit** bouger |
+| 5 | Remettre en état | zéro différence |
 
-⚠️ L'étape 3 est la seule qui prouve que le harnais fonctionne. Ne la saute pas.
+⚠️ Les étapes 3 et 4 sont les seules qui prouvent que le harnais fonctionne. Ne les saute pas.
 
-#### A6 — Localiser l'écart de 2,5e-11 · *bloque tout le reste*
+#### A6 — Quantifier l'enveloppe de gigue du banc
 
-Entre `59793e2` et l'artefact post-T5, le chemin neutre a bougé de **2,5e-11 relatif**, soit
-25× le seuil que §20 accorde à numba. Tant qu'on ne sait pas d'où ça vient, **on ne sait pas
-si le chemin par défaut est intact**.
+*Remplace l'ancienne action « localiser l'écart de 2,5e-11 », **annulée** : cet écart était la
+gigue elle-même. Bisecter l'aurait fait chercher une cause à du bruit.*
+
+On ne peut plus dire « le chiffre a changé donc quelque chose est cassé » tant qu'on ne sait
+pas de combien il bouge tout seul.
 
 | # | Étape | Attendu |
 |---|---|---|
-| 1 | `git worktree add C:\dev\gemini-baseline depart-gemini` | worktree propre |
-| 2 | Empreinte A5 sur `f7a3d71^` (avant T1) | référence |
-| 3 | Empreinte sur `f7a3d71` (T1), puis `e0df0e1` (T3/T4), puis `162a0ff` (T5) | **le premier commit qui bouge est le coupable** |
-| 4 | Si aucun ne bouge | l'écart vient d'ailleurs — de la Phase A, de la DP, ou du tri. Remonte d'un cran |
-| 5 | Une fois localisé | corriger **ou** documenter pourquoi c'est légitime, avec le mécanisme |
-| 6 | `git worktree remove C:\dev\gemini-baseline` | — |
+| 1 | Rassembler les runs déjà faits à configuration **neutre** | `CONFIG=` identiques, vérifiés un par un |
+| 2 | Calculer l'écart max relatif entre eux | c'est l'enveloppe |
+| 3 | L'écrire dans §10, avec les valeurs brutes | — |
+| 4 | Si un écart dépasse **1e-9** | ce n'est plus de la gigue de sommation. **Arrête-toi et signale.** |
 
-🔴 **Ne passe pas à A7 avant d'avoir une réponse.** Un repère mesuré sur un chemin par défaut
-dont on doute n'est pas un repère.
+📏 **Trois points déjà acquis** (2026-08-09, `CONFIG=` vérifiés identiques) :
+`0.002948627371226749` · `0.002948627371309867` · `0.002948627371309867`.
+Écart max relatif **2,8e-11**. Motif observé : le premier run après une invalidation des
+caches numba sort du lot, les suivants s'accordent. **Trois points ne font pas une
+enveloppe** — il en faut plus avant d'écrire un seuil.
 
 #### A7 — Rétablir le repère · *ex-T0*
 
@@ -312,11 +322,12 @@ set CERTUS_BENCH_TIMEOUT_S=5400
 | 2 | Vérifier `WAIT_EXIT` **avant** de lire `RESULT` | pas `timeout` |
 | 3 | Vérifier le nombre de stratégies | si le run n'a pas abouti, **ne lis pas le RESULT** |
 | 4 | Vérifier le bloc `CONFIG=` de la sortie | tous les paramètres à leur valeur neutre |
-| 5 | Comparer au chiffre de `cc90a94` : `0.00294862737122675` | doit être **identique**, sinon le banc n'est pas reproductible |
-| 6 | Réécrire §10 avec ce chiffre, sa commande et sa sortie collée | **et retirer `0,002898`**, qui n'a d'artefact nulle part |
+| 5 | **Relancer une seconde fois, identique** | 🔴 **jette le premier** : après une recompilation numba il sort systématiquement du lot |
+| 6 | Comparer les deux | l'écart doit tenir dans l'enveloppe de A6, **pas être nul** |
+| 7 | Réécrire §10 avec le second chiffre, sa commande, sa sortie collée **et l'enveloppe** | **et retirer `0,002898`**, qui n'a d'artefact nulle part |
 
-⚠️ Si l'étape 5 échoue, **le banc n'est pas déterministe** — c'est un défaut plus grave que
-tout le reste de cette feuille de route, et il passe devant.
+⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §3. Un écart nul entre
+deux runs serait une coïncidence, pas un critère.
 
 ---
 
@@ -709,6 +720,36 @@ une identité numérique. La méthode qui fait foi : capturer une empreinte `flo
 chemin par défaut sur une large batterie de configurations **avant** la modification, la
 recapturer après, exiger **zéro** différence. La correction affine de §8 a été validée ainsi
 sur **75 818 configurations**.
+
+### 🔴 Le `RESULT` du banc n'est PAS l'instrument de cette règle — ne t'en sers jamais pour ça
+
+**Mesuré le 2026-08-09** : deux runs de configuration **strictement identique** rendent
+`0.002948627371226749` et `0.002948627371309867`, soit **2,8e-11** d'écart relatif.
+
+C'est **normal et irréductible**. `compute_batch_rmse` porte
+`@njit(parallel=True, fastmath=True)` : `prange` somme les résultats partiels dans l'ordre où
+les threads finissent, l'addition flottante n'est pas associative, et `fastmath` autorise en
+plus la réassociation. **Un agrégat parallèle ne peut pas être bit-reproductible.**
+
+👤 **Tranché le 2026-08-09 : on l'admet, on ne corrige pas.** Rendre le banc déterministe
+coûterait du temps de calcul sur chaque run futur pour acheter une propriété qu'on obtient
+gratuitement ailleurs. La gigue est 3×10⁸ fois plus petite que le plus petit effet physique
+qu'on mesure — elle ne fausse aucune comparaison qui compte.
+
+**Donc, sans exception :**
+
+| Pour vérifier… | Instrument | Tolérance |
+|---|---|---|
+| **C1, l'identité bit-à-bit** | **le harnais d'empreinte `float.hex()` (A5), en MONO-THREAD** | **zéro** différence |
+| qu'un run n'a pas dérapé | le `RESULT` du banc | l'enveloppe de gigue, ~1e-10 |
+
+⚠️ **Le harnais doit forcer `NUMBA_NUM_THREADS=1`.** Sans cela il mesurerait la même gigue et
+ne prouverait rien — il aurait l'air de fonctionner tout en ne testant rien, ce qui est le
+pire des trois états.
+
+⚠️ **Corollaire perdu, et il faut le savoir** : `RESULT` n'est plus un indicateur de santé du
+banc. On ne peut plus dire « le chiffre a changé donc le banc est cassé ». Il faut d'abord
+connaître l'enveloppe de gigue, et c'est pourquoi A7 se lance **deux fois**.
 
 ## 4. Quand s'arrêter et demander
 
@@ -1197,6 +1238,24 @@ pas corréler les deux phénomènes.
 — POEM actif / inactif × distorsion active / inactive. Si POEM tient sa promesse, l'écart
 doit être **spectaculaire**. Sinon, l'argument central du mécanisme tombe et **il faut le
 dire**.
+
+#### 📏 Première moitié mesurée le 2026-08-09 — POEM actif
+
+```
+POEM actif, distorsion absente   RESULT = 0.002948627371309867
+POEM actif, distorsion presente  RESULT = 0.0029742829447752268     +0,87 %
+```
+
+`amp_scale = 0.05`, `amp_offset = 0.02`, graine 42, pas 1 nm. `WAIT_EXIT=finished`,
+`CONFIG=` vérifié, et **chaque chiffre reproduit deux fois à l'identique**.
+
+**C'est la première mesure de l'effet de la distorsion photométrique du projet.** Elle est
+propre.
+
+🔴 **Mais elle ne dit RIEN sur POEM**, et il ne faut pas la présenter autrement. Les deux runs
+POEM-inactif n'ont pas eu lieu : le drapeau n'était pas désactivable (§17-11). Sans le
+contraste, `+0,87 %` n'est ni bon ni mauvais — c'est un nombre sans référence. **Le critère de
+réussite reste entièrement à mesurer.**
 
 #### Pièges connus
 
@@ -2062,7 +2121,7 @@ neufs.
 
 | # | Ce qui a été trouvé |
 |---|---|
-| 1 | **La règle d'or n'est pas tenue.** Même commande, paramètres neutres : `59793e2` → `result = 0.00294862737130071`, artefact post-T5 → `0.00294862737122675`. Écart **relatif 2,5e-11**, soit **25× au-dessus** du seuil de 1e-12 que §20 accorde à numba. Aucune empreinte `float.hex()` n'existe. |
+| 1 | ~~La règle d'or n'est pas tenue~~ — 🔴 **CONSTAT RETIRÉ LE 2026-08-09, il était faux.** J'avais relevé un écart de 2,5e-11 entre l'artefact pré-T1 et l'artefact post-T5, à configuration neutre, et j'en avais conclu une violation de C1 « 25× au-dessus du seuil ». **C'était mesurer la mauvaise chose.** Deux runs de configuration **strictement identique** (`CONFIG=` identiques, vérifié) donnent `0.002948627371226749` et `0.002948627371309867` — **2,8e-11**, la même grandeur. Le banc **n'est pas bit-reproductible par construction** : voir l'encadré de §10. Il ne reste de ce constat qu'une chose, et elle tient toujours : **aucune empreinte `float.hex()` n'existe**, donc C1 n'est vérifiée par rien. C'est l'objet de A5. |
 | 2 | **T3 est soudée à T4 et donc inexécutable seule.** `SAMPLE_DD = 0.125` n'existe qu'à l'intérieur de `if smoothing_window > 1:` (`certus_strat_growth.py:652`). La configuration « grille fine, fenêtre à 1 » — celle que la condition d'arrêt de T3 impose d'observer — **n'est pas exprimable**. Et le chemin par défaut garde la grille 38× trop grossière, alors que §12.4 la qualifie de caractéristique physique, pas d'option. |
 | 3 | **Le lissage est une moyenne CAUSALE** (fenêtre `[i−k+1 … i]`), qui décale un extremum de ≈ `(k−1)/2` échantillons, soit **0,44 nm à k = 8**. §12.2 écrit « n'ajouter aucun décalage temporel » et §9bis-5 pose « aucun retard » en postulat figé. Une moyenne **centrée** ne décalerait rien. |
 | 4 | **T7 n'est pas implémenté** malgré le message de `162a0ff`. L'arrêt reste obtenu par inversion parabolique continue ; aucune loi `U(0 ; 0,125 nm)` n'existe. Par ailleurs T5, T6 et T7 dans un seul commit contredit **C3**. |
@@ -2071,6 +2130,7 @@ neufs.
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
 | 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
+| 11 | 🔴 **`poem_enabled` ne peut pas être désactivé par l'environnement.** Mesuré le 2026-08-09 : deux runs lancés avec `CERTUS_POEM_ENABLED=0` ont rendu `CONFIG={"poem_enabled": true}` et des `RESULT` **bit-identiques** aux runs POEM actif. Cause : `probe_anchor_noise_pipeline.py:94` teste `os.environ.get(...) not in {"0", "false", "False"}` — une valeur `"0 "` avec un espace de fin, que `set VAR=0 ` produit sans le montrer, rend **True**. Les amplitudes affines y survivent parce que `float("0.05 ")` avale l'espace ; le test d'appartenance non. **Correctif : `.strip()` sur toutes les variables lues**, et une valeur inattendue doit lever, pas retomber silencieusement sur le défaut. ⚠️ **A12 est inexécutable tant que ce n'est pas corrigé** — et elle rendra des chiffres parfaitement crédibles. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
 **Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
@@ -2184,9 +2244,11 @@ arrière, puis refais : un correctif posé sur une base non vérifiée hérite d
 ### Les cinq contrôles qui attrapent l'essentiel
 
 1. **Tout nouveau paramètre est-il vraiment inerte par défaut ?** Égalité **exacte**, pas
-   `allclose` — voir la règle d'or §3. ⚠️ Une réponse légitime existe pour un écart de
-   l'ordre de 1e-16 à la **première** compilation : numba spécialise différemment
-   `Omitted(None)` et `none`. **Au-delà de 1e-12, ce n'est pas ça.**
+   `allclose` — mais **sur l'empreinte du noyau en mono-thread (A5), jamais sur le `RESULT`
+   du banc**, qui a ~3e-11 de gigue irréductible (§3). 🔴 **Une version antérieure de ce
+   contrôle disait « au-delà de 1e-12, ce n'est pas numba » et faisait comparer des `RESULT`
+   de banc. C'est ainsi que le constat §17-1 a été écrit puis retiré : il accusait le code
+   d'un bruit de sommation parallèle.** Le seul chiffre exploitable ici est celui du harnais.
 2. **Les tests ajoutés échouent-ils sur le code d'avant ?** Copie-les dans le worktree
    baseline et lance-les. Ils **doivent** échouer. C'est le contrôle le plus rentable de la
    liste.

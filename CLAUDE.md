@@ -894,6 +894,40 @@ hypothèse semblerait plus élégante.
 plantage mesuré s'écarterait nettement du taux prédit. Rien d'autre. En particulier, pas un
 raisonnement — ce projet a déjà payé trois fois pour avoir cru un raisonnement sur le bruit.
 
+### 🔴 MESURÉ LE 2026-08-09 — le postulat 4 ne fait pas ce pour quoi il a été dérivé
+
+`scripts\probe_tp_fabrication.py`. Signal propre **plat**, bruit réel `A = 5e-4`, 20 000
+tirages, `N = 800` échantillons (cadence machine), lissage **centré**, vrai
+`detect_turning_points`, vrai `_seeded_noise_sample`.
+
+```
+  k=1, threshold 1.66 A, N=800  ->    99.955 %     (reference: 99.935 %)   <- ligne de controle
+  k=8, threshold 0.354 A, N=800 ->   100.000 %     (12.2 predisait ~0 %)
+  same, noise x0.01             ->     0.000 %     <- Piege 1 : c'est bien du bruit
+
+      factor   in sigma_smoothed   fabrication
+       0.354                3.00      100.000 %
+       0.500                4.24       99.850 %
+       0.707                6.00       20.960 %
+       1.000                8.49        0.005 %
+       1.250               10.61        0.000 %
+       1.660               14.09        0.000 %
+```
+
+**Ce qui est réfuté, exactement** : pas le lissage (postulat 3, `k = 8` — il aide
+réellement : la borne passe de 1,66 sur brut à **1,00** sur lissé). C'est **l'arithmétique du
+postulat 4** qui ne tient pas. « 3 σ du signal lissé » est un critère **par échantillon**,
+alors que `detect_turning_points` l'applique à un **extremum COURANT sur 800 échantillons**
+(`certus_strat_growth.py:127-143` : il émet quand le signal recule de plus que le seuil depuis
+le max courant). Sur ~100 fenêtres indépendantes, l'amplitude max−min du bruit vaut déjà
+≈ 6 σ — ce que la ligne à 0,707 confirme à 20,96 %. Un seuil posé **à** 3 σ est franchi à tous
+les coups.
+
+**La borne mesurée est donc `1,00 A` à `k = 8` et `N = 800`**, soit **8,5 σ du signal lissé**
+et non 3. ⚠️ Elle dépend de `N` autant que de `k` : **c'est une valeur mesurée, pas une loi.**
+Si `k` ou la cadence changent, **remesure** — n'extrapole pas, et surtout n'écris pas de
+formule en `ln N` pour boucher le trou.
+
 ⚠️ **`k` reste un paramètre du code**, avec 8 pour valeur retenue. Le figer dans la
 documentation n'interdit pas de le **balayer pour vérifier** que les résultats en dépendent
 (Piège 1) : un taux de plantage insensible à `k` signalerait que le lissage n'atteint pas le

@@ -1184,6 +1184,7 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 2. **Pas d'auto-compensation en mode Rate** : Les erreurs accumulées aux couches précédentes ne sont ni mesurées ni corrigées pendant une couche en mode Rate ; elles sont transmises en boucle ouverte à la couche suivante.
 3. **Modèle de bruit d'épaisseur** : L'épaisseur déposée obéit à $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$.
 4. **Transition avec POEM** : POEM se réactive dès la première couche présentant une amplitude optique suffisante ($\text{swing} \ge \text{SWING\_MIN}$).
+5. **Influence de la dynamique forte sur la précision du Trigger (Piste d'optimisation)** : Le déclenchement d'arrêt (trigger) est d'autant plus précis et insensible au bruit que la dynamique du signal ($\text{swing}$) est forte et la pente raide ($\frac{dT}{dd} \gg 0$). Favoriser les longueurs d'onde offrant une forte dynamique optique est une piste clé pour maximiser la répétabilité du dépôt.
 
 ## 15. 🔴 La validation externe — elle n'a plus qu'un seul chemin
 

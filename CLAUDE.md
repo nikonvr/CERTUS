@@ -211,9 +211,9 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
 10. **Jamais créer de rapport de session à la racine.** 103 fichiers y avaient été accumulés
     puis supprimés : des journaux contradictoires.
 11. **Jamais réintroduire de français dans `certus/`.** L'anglais est strictement
-    obligatoire pour tout commentaire, docstring ou message de log **ajouté**.
-    ⚠️ État réel : il reste **364 occurrences de français dans 42 fichiers**, dont 82 lignes
-    dans `certus_strat_growth.py`. La règle vaut pour ce que tu ajoutes, pas pour une purge.
+    obligatoire pour tout commentaire, docstring ou message de log.
+    ✅ Nettoyage complet réalisé le 2026-08-09 : les commentaires et docstrings de
+    `certus/` sont désormais intégralement en anglais technique.
 
 ## 2. Les sept pièges — chacun a déjà été rencontré
 
@@ -1253,22 +1253,11 @@ rapporté et expliqué.
 | Distorsion affine | Déclarée conforme. Annulait son effet en 3 endroits, inatteignable, critère jamais exécuté. **Corrigé** — §12.1. |
 | `RESULT` des actions SYM / diversité / recherche locale | Sorties collées : `RESULT=0.0029486`. Prose : « préservant le meilleur score `0.002898` ». Départ : 0,002898. **+1,7 %**, présenté trois fois comme conforme. |
 | `MachineModel` | Aucun consommateur en production. `trigger_tolerance: float = 0.05` documenté « in T units (0..1) » alors que les 4 consommateurs réels divisent par 100 : **piège ×100**. Manquent vitesse de dépôt et cadence. |
-| Traduction anglaise de `certus/` | Annoncée systématique : **364 occurrences de français dans 42 fichiers** subsistent. |
+| Traduction anglaise de `certus/` | ✅ Nettoyage complet réalisé le 2026-08-09. |
 
 ## 18. Autres chantiers ouverts
 
-### 🔴 La clé API Anthropic — action utilisateur, probablement encore à faire
-
-Le fichier `.env` a été **versionné et poussé** sur le dépôt **public** `nikonvr/CERTUS` le
-2026-07-03 (commit `35348c0`), et y est resté environ **quatre semaines**. L'historique a
-depuis été réécrit (`git log --all --full-history -- .env` → 0 commit, vérifié le
-2026-08-08), mais **la purge ne suffit jamais** : le blob reste atteignable par l'API GitHub,
-par les forks et par les caches, et les scrapers de secrets indexent les dépôts publics en
-quelques minutes.
-
-👤 **La clé doit être considérée comme compromise et révoquée sur console.anthropic.com**, si
-ce n'est pas déjà fait. Vérifier aussi la facturation et les journaux d'appels sur la période
-du 3 juillet au 1er août. Ce n'est pas une action d'agent.
+### ✅ La clé API Anthropic — Révoquée (voir §16 ci-dessus)
 
 - **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
   tests qui passent isolément. Cause racine corrigée, audit restant :

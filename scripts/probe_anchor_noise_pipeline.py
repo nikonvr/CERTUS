@@ -41,6 +41,32 @@ import probe_spectral_error as PSE  # noqa: E402
 #: anti-fabrication est 2 A. Surchargeable par le 5e argument de la ligne de commande.
 FIVE_SIGMA: float = 1.66
 
+#: Effective model configuration, captured on the first `collect_params` call and
+#: written verbatim into the report JSON.
+#:
+#: 🔴 Without this, a report is unreadable. Half of the model is driven by environment
+#: variables that appear neither in the command line nor in the file name: on 2026-08-09
+#: two runs were produced whose `reading_smoothing_window` cannot be recovered, which
+#: makes their crash rates -- 0.76 and 0.45 -- impossible to attribute. See CLAUDE.md
+#: 17bis, finding 7.
+APPLIED_CONFIG: dict[str, object] = {}
+
+#: Keys whose value must appear in the report and in the file name. Anything that
+#: changes the physics of the model belongs here.
+TRACED_KEYS: tuple[str, ...] = (
+    "poem_anchor_noise",
+    "tp_hysteresis_factor",
+    "phase_a_level_margin_factor",
+    "dp_yield_weight",
+    "scan_wl_step",
+    "robustness_seed",
+    "reading_smoothing_window",
+    "index_corridor",
+    "affine_scale_amp",
+    "affine_offset_amp",
+    "poem_enabled",
+)
+
 
 def patch_flag(
     mode: str,
@@ -96,6 +122,8 @@ def patch_flag(
         params["index_corridor"] = float(os.environ.get("CERTUS_INDEX_CORRIDOR", "0.0"))
         if "CERTUS_PHASE_A_MARGIN" in os.environ:
             params["phase_a_level_margin_factor"] = float(os.environ["CERTUS_PHASE_A_MARGIN"])
+        if not APPLIED_CONFIG:
+            APPLIED_CONFIG.update({k: params.get(k) for k in TRACED_KEYS})
         return params
 
     CertusStratStateMixin.collect_params = patched
@@ -127,6 +155,29 @@ def main() -> None:
     if tp_hyst is not None:
         tag = f"{tag}_hyst{tp_hyst:g}".replace(".", "p")
 
+    # Half of the model comes from the environment, not from the command line. A run whose
+    # smoothing window or index corridor is not in the file name silently OVERWRITES the
+    # neutral report of the same name -- which is how two unattributable crash rates were
+    # produced on 2026-08-09. Only non-neutral values are appended, so existing file names
+    # are unchanged.
+    for env_name, prefix, neutral in (
+        ("CERTUS_SMOOTHING_WINDOW", "k", 1.0),
+        ("CERTUS_INDEX_CORRIDOR", "corr", 0.0),
+        ("CERTUS_AFFINE_SCALE_AMP", "as", 0.0),
+        ("CERTUS_AFFINE_OFFSET_AMP", "ao", 0.0),
+        ("CERTUS_PHASE_A_MARGIN", "marg", None),
+    ):
+        raw = os.environ.get(env_name)
+        if raw is None:
+            continue
+        value = float(raw)
+        if neutral is not None and value == neutral:
+            continue
+        tag = f"{tag}_{prefix}{value:g}".replace(".", "p")
+    # Same truthiness rule as `patched` above -- "false" is not a float.
+    if os.environ.get("CERTUS_POEM_ENABLED", "1") in {"0", "false", "False"}:
+        tag = f"{tag}_poemoff"
+
     B.qapp()
     B.autoanswer_dialogs(True)
     from certus_physics import calculate_RT_batch_kernel  # noqa: F401  echec immediat si absent
@@ -145,9 +196,11 @@ def main() -> None:
     r = PSE.analyse()
     r["mode"] = mode
     r["result"] = val
+    r["config"] = dict(APPLIED_CONFIG)
     PSE.OUT.parent.mkdir(parents=True, exist_ok=True)
     PSE.OUT.write_text(json.dumps(r, indent=1), encoding="utf-8")
     B.emit(f"PROBE_WRITTEN={PSE.OUT}  strategies={r['n']}")
+    B.emit(f"CONFIG={json.dumps(r['config'], sort_keys=True)}")
     B.emit("")
     B.emit(f"  ERREUR SPECTRALE, en POINTS DE TRANSMISSION — poem_anchor_noise={mode.upper()}")
     B.emit("  id        nb  crash | RMSE global med/p95 | passante p95 | FRONT p95 | BLOQUEE p95 max|E| | decalage front p95")

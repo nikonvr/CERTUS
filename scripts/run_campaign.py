@@ -234,7 +234,49 @@ PLAN_FULL = [
           args=("full", "1.0", "42", "200"), expect={"dp_yield_weight": 200.0}),
 ]
 
-PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY, "posta10": PLAN_POSTA10, "full": PLAN_FULL}
+#: SMOKE plan -- the go/no-go before committing twelve hours.
+#:
+#: Every environment variable `full` uses, exercised once at N = 20 so the whole path
+#: runs in ten minutes instead of thirty. It proves nothing about the physics and is
+#: not meant to: it proves the CODE PATH executes and writes a complete report.
+#:
+#: 🔴 Why this exists. Four of `full`'s variables had never been run end to end since
+#: the corridor and probe changes -- the envelope corridor, the consensus, the survivor
+#: count and the Phase A margin. A single smoke run has already caught a defect that
+#: would have produced twenty-two runs and zero reports. Inspection does not replace
+#: execution.
+#:
+#: N = 20 is the floor: CAPTURED requires at least 10 runs, so anything below writes
+#: no report at all.
+_SMOKE = {"CERTUS_NUM_RUNS": "20", "CERTUS_SCREEN_RUNS": "10"}
+
+PLAN_SMOKE = [
+    entry("S0.base", "the plain path", env=dict(_SMOKE),
+          expect={"robustness_num_runs": 20, "n_screen_runs": 10}),
+    entry("S1.corridor", "corridor on the NEW envelope -- never run end to end",
+          env={**_SMOKE, "CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"index_corridor": 0.005}),
+    entry("S2.poemoff", "POEM off, with corridor",
+          env={**_SMOKE, "CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
+          expect={"index_corridor": 0.005, "poem_enabled": False}),
+    entry("S3.affine", "affine distortion",
+          env={**_SMOKE, "CERTUS_AFFINE_SCALE_AMP": "0.05", "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"affine_scale_amp": 0.05, "affine_offset_amp": 0.02}),
+    entry("S4.knobs", "Phase A margin and survivor count -- never run since the changes",
+          env={**_SMOKE, "CERTUS_PHASE_A_MARGIN": "3.33", "CERTUS_KEEP_SURVIVORS": "30"},
+          expect={"phase_a_level_margin_factor": 3.33, "k_keep_survivors": 30}),
+    entry("S5.consensus", "multi-seed consensus -- switched off since forever, never exercised",
+          env={**_SMOKE, "CERTUS_CONSENSUS": "1"},
+          expect={"enable_consensus_ranking": True}),
+    entry("S6.seed", "another seed, and dp_yield_weight through argument 4",
+          args=("full", "1.0", "77", "200"), env=dict(_SMOKE),
+          expect={"robustness_seed": 77, "dp_yield_weight": 200.0}),
+]
+
+PLANS = {
+    "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
+    "posta10": PLAN_POSTA10, "full": PLAN_FULL,
+}
 
 
 def probe_env(overrides: dict[str, str]) -> dict[str, str]:

@@ -261,7 +261,7 @@ def seel_block(result: float | None, report: dict) -> dict:
     """
     out: dict[str, object] = {"step_nm": SEEL_STEP_NM}
     try:
-        data = PSE.OPTICS.get("seel")
+        data = PSE.SEEL_DATA
         if not data:
             out["status"] = "unavailable: calculate_seel_analysis was not called"
             return out

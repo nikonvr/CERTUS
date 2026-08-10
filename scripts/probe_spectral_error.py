@@ -33,6 +33,10 @@ import bench_examples as B  # noqa: E402
 
 OUT = ROOT / "reports" / "probe_spectral_error.json"
 OPTICS: dict = {}
+
+#: SEEL calibration, captured from the headless path. Kept apart from OPTICS on
+#: purpose -- see the comment on the hook that fills it.
+SEEL_DATA: dict = {}
 CAPTURED: list[dict] = []
 MAX_STRAT = 12
 
@@ -50,6 +54,10 @@ MAX_STRAT = 12
 #: of; CAPTURED keeps the heavy per-run thickness matrices for a bounded few, which is
 #: all the spectral band analysis needs.
 RANKING: list[dict] = []
+
+#: Which call of `run_final_simulation_block` we are in. Screening and deep evaluation
+#: both go through it, at different Monte-Carlo depths.
+STAGE: list[int] = [0]
 
 
 def install_probe() -> None:
@@ -77,6 +85,11 @@ def install_probe() -> None:
     # SEEL is already computed in the headless path, so capture it rather than
     # recompute it: the calibration is not free (900 spectra) and recomputing would
     # also risk drawing a different one.
+    # 🔴 SEEL goes in its OWN dict, never in OPTICS. `patched_opt` above is guarded by
+    # `if not OPTICS`, and the two callbacks fire in an order nothing guarantees: on
+    # 2026-08-10 SEEL landed first, OPTICS stopped being empty, the optics were never
+    # recorded, and `analyse()` died on KeyError 'wl' AFTER the run had completed. A
+    # 22-run campaign would have produced twenty-two failures and no report.
     try:
         import certus.utils.certus_strat_service as S
 
@@ -84,8 +97,8 @@ def install_probe() -> None:
 
         def patched_seel(*a, **kw):
             data = orig_seel(*a, **kw)
-            if isinstance(data, dict) and "seel" not in OPTICS:
-                OPTICS["seel"] = dict(data)
+            if isinstance(data, dict) and not SEEL_DATA:
+                SEEL_DATA.update(data)
                 B.emit(f"SEEL capture : fit_k={data.get('fit_k')} alpha={data.get('fit_alpha')}")
             return data
 
@@ -97,6 +110,7 @@ def install_probe() -> None:
 
     def patched_blk(*a, **kw):
         out = orig_blk(*a, **kw)
+        STAGE[0] += 1
         try:
             items = (out or {}).get("all_strategies_results") if isinstance(out, dict) else None
             for it in items or []:
@@ -104,18 +118,6 @@ def install_probe() -> None:
                     continue
                 st = it.get("strategy") or {}
                 per = it.get("results_per_noise") or []
-
-                # Every strategy, unconditionally. This is what a ranking may be read
-                # from -- and the ONLY thing that may.
-                RANKING.append({
-                    "id": st.get("strategy_id"),
-                    "n_blocks": st.get("n_blocks"),
-                    "score": it.get("robustness_score"),
-                    "crash": it.get("crash_rate"),
-                    "wavelengths": [float(b.get("wavelength", 0.0)) for b in (st.get("blocks") or [])],
-                    "n_runs_ok": max((int(r.get("n_runs_ok", 0)) for r in per), default=0),
-                    "n_runs_total": max((int(r.get("n_runs_total", 0)) for r in per), default=0),
-                })
 
                 # Heavy part: the per-run thickness matrices the band analysis needs.
                 # Bounded, and explicitly a SAMPLE -- never a ranking.
@@ -136,6 +138,49 @@ def install_probe() -> None:
         return out
 
     W.run_final_simulation_block = patched_blk
+
+    # The RANKING is taken where the bench itself takes it: `dump_strat_ranking`
+    # receives `final_results["all_strategies_results"]`, the same list
+    # `extract_best_rmse` reads RESULT from.
+    #
+    # 🔴 Why not hook `run_final_simulation_block` for this. It fires 28 times in one
+    # run -- screening, deep evaluation, consensus -- at different Monte-Carlo depths.
+    # Collecting them all and sorting by score lets a 10-run screening entry outrank a
+    # 150-run one on a quarter of the evidence, and the resulting "winner" is simply
+    # not the pipeline's. Measured 2026-08-10: 1690 rows over 28 stages, and a winner
+    # that disagreed with RESULT.
+    orig_dump = B.dump_strat_ranking
+
+    def patched_dump(strategies, *a, **kw):
+        try:
+            from certus.utils.certus_strat_service import select_best_strat_result
+
+            RANKING.clear()
+            best = select_best_strat_result(strategies) or {}
+            best_id = ((best.get("strategy") or {}).get("strategy_id"))
+            for it in strategies or []:
+                if not isinstance(it, dict):
+                    continue
+                st = it.get("strategy") or {}
+                RANKING.append({
+                    "id": st.get("strategy_id"),
+                    "origin": st.get("origin"),
+                    "n_blocks": len(st.get("blocks") or []),
+                    "score": it.get("robustness_score"),
+                    "crash": it.get("crash_rate"),
+                    # 🔴 A rescued strategy's `robustness_score` is no longer a
+                    # robustness score but the worst finite RMSE. Not the same
+                    # quantity: flagged so it is never averaged with the others.
+                    "crash_eliminated": bool(it.get("crash_eliminated", False)),
+                    "wavelengths": [float(b.get("wavelength", 0.0)) for b in (st.get("blocks") or [])],
+                    "is_winner": st.get("strategy_id") == best_id,
+                })
+            B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
+        except Exception as exc:  # noqa: BLE001
+            B.emit(f"PROBE_RANKING_FAILED={exc!r}")
+        return orig_dump(strategies, *a, **kw)
+
+    B.dump_strat_ranking = patched_dump
     B.emit("sonde installee")
 
 
@@ -159,12 +204,62 @@ def analyse() -> dict:
     def q(a, p):
         return float(np.percentile(a, p))
 
+    def subpackets(rmse_per_run, orig_idx, n_total, n_crash_by_run):
+        """Dispersion of the estimate over ALIGNED sub-packets of the Sobol sequence.
+
+        👤 2026-08-10: "with 500 runs you have plenty of packets of 100 -- and that
+        gives the dispersion of the sub-sets". Exactly right, and it answers a question
+        separate runs cannot: not *does* the answer change with N, but by *how much* it
+        would wobble at that N. One deep run replaces a sweep, and says more.
+
+        🔴 Packets are powers of two ALIGNED on powers of two, and that is not
+        housekeeping. Sobol is not random: an arbitrary contiguous slice has none of
+        the equidistribution of the whole, so it would show an inflated spread and we
+        would conclude far more runs are needed than really are. Sobol is a (t,s)
+        sequence, so a block of 2^m aligned on a 2^m boundary IS a proper net.
+
+        🔴 Packets are cut on the ORIGINAL run index, not on the filtered array.
+        Crashed runs are dropped before this point; slicing the filtered array would
+        shift every packet off its Sobol boundary and silently destroy the alignment
+        the paragraph above depends on.
+        """
+        out = {}
+        size = 2
+        while size * 2 <= n_total:
+            n_pk = n_total // size
+            vals, crashes = [], []
+            for p in range(n_pk):
+                lo, hi = p * size, (p + 1) * size
+                sel = np.flatnonzero((orig_idx >= lo) & (orig_idx < hi))
+                if sel.size < max(2, size // 4):     # packet gutted by crashes
+                    continue
+                vals.append(float(np.percentile(rmse_per_run[sel], 95)))
+                crashes.append(float(n_crash_by_run[lo:hi].sum()) / size)
+            if len(vals) >= 2:
+                arr = np.asarray(vals)
+                out[str(size)] = {
+                    "n_packets": len(vals),
+                    "rmse_p95_min": float(arr.min()),
+                    "rmse_p95_median": float(np.median(arr)),
+                    "rmse_p95_max": float(arr.max()),
+                    # The number that answers "is this N enough?": how wide the
+                    # estimate wobbles, relative to itself.
+                    "spread_relative": float((arr.max() - arr.min()) / np.median(arr))
+                    if np.median(arr) > 0 else None,
+                    "crash_min": min(crashes) if crashes else None,
+                    "crash_max": max(crashes) if crashes else None,
+                }
+            size *= 2
+        return out
+
     rows = []
     for c in CAPTURED:
         D = c["thick"]
         keep = ~np.any(np.abs(D) > 1e4, axis=1)     # ecarte les runs plantes (sentinelle 1e6)
         if keep.sum() < 8:
             continue
+        orig_idx = np.flatnonzero(keep)              # Sobol index of each surviving run
+        crashed = (~keep).astype(np.float64)
         _, T = calculate_RT_batch_kernel(wl, nH, nL, nSub, D[keep])
         T = np.asarray(T, dtype=np.float64)          # (n_runs, n_wl)
         E = T - T_nom[None, :]
@@ -186,18 +281,22 @@ def analyse() -> dict:
             shifts.append(float(wl[i]) - wl_nom)
         shifts = np.asarray(shifts)
 
+        rmse_global = np.sqrt(np.mean(E**2, axis=1))
         rows.append({
             "id": c["id"], "n_blocks": c["n_blocks"], "score": c["score"], "crash": c["crash"],
             "n_runs_ok": int(keep.sum()), "n_runs_total": int(D.shape[0]),
+            "subpackets": subpackets(rmse_global, orig_idx, int(D.shape[0]), crashed),
             "global": band(np.ones_like(wl, dtype=bool)),
             "passante": band(pass_m), "front": band(edge_m), "bloquee": band(stop_m),
             "front_wl_nominal": wl_nom,
             "front_shift_nm": {"median": q(shifts, 50), "p05": q(shifts, 5), "p95": q(shifts, 95),
                                "abs_p95": q(np.abs(shifts), 95)},
         })
-    # The ranking, sorted by the score the pipeline itself used, best first. This is
-    # the only field a ranking question may be asked of -- `strategies` below is a
-    # bounded sample kept in capture order, not a ranking. See RANKING's comment.
+    # The pipeline's own final ranking, captured whole from `dump_strat_ranking`.
+    # `winner` is the one `select_best_strat_result` designated -- the very strategy
+    # whose `robustness_score` becomes RESULT -- and NOT the first row after a sort of
+    # our own. Only `ranking` / `winner` may answer a ranking question; `strategies`
+    # below is a bounded sample kept in capture order.
     ranked = sorted(
         (r for r in RANKING if r.get("score") is not None),
         key=lambda r: float(r["score"]),
@@ -206,8 +305,9 @@ def analyse() -> dict:
         "n": len(rows),
         "strategies": rows,
         "n_ranked": len(ranked),
+        "n_rescued": sum(1 for r in ranked if r.get("crash_eliminated")),
         "ranking": ranked,
-        "winner": ranked[0] if ranked else None,
+        "winner": next((r for r in RANKING if r.get("is_winner")), None),
     }
 
 

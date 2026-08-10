@@ -1630,13 +1630,26 @@ pas le calcul, exactement comme la recette pré-multiplicative ci-dessus.
 `delta_max = 0.005`, en unités d'indice, demi-largeur, **identique pour H et L**. Clé JSON
 `index_corridor`, défaut **0,0** (contrainte C1).
 
-#### 🔴 TRANCHÉ LE 2026-08-10 — `u(λ)` se normalise sur la GRILLE SPECTRALE
+#### 🔴 TRANCHÉ LE 2026-08-10 — `u(λ)` se normalise sur l'ENVELOPPE grille ∪ monitoring
 
 > 👤 *« L'erreur d'indice est donnée sur la grille spectrale du filtre, pas des monitoring. »*
+> — *« C'est sur le max de la grille spectrale / monitoring. »*
+
+**La règle exacte** : le domaine de normalisation est l'**intervalle englobant les deux** —
+
+```python
+lo = min(grille_spectrale.min(), lambdas_monitoring.min())
+hi = max(grille_spectrale.max(), lambdas_monitoring.max())
+```
+
+En pratique la grille spectrale contient les λ de monitoring et l'union se réduit à la grille.
+Mais **prendre l'enveloppe ne peut jamais être faux**, et §13 signale précisément que
+`clues_at_wl` porte l'union des deux grilles **avec un débordement hors plage** : une λ de
+monitoring peut donc sortir de la grille de notation. L'union est la formulation défensive.
 
 **Le code fait aujourd'hui le contraire**, et c'est un défaut, pas un choix :
-`corridor_wl_range()` normalise sur l'intervalle des **λ de monitoring**, qui est bien plus
-étroit que la grille sur laquelle le filtre est jugé.
+`corridor_wl_range()` normalise sur les **seules λ de monitoring**, bien plus étroites que la
+grille sur laquelle le filtre est jugé.
 
 **Conséquence chiffrée.** Avec un monitoring entre 480 et 620 nm et une grille descendant à
 400 nm :
@@ -1664,10 +1677,15 @@ monitoring (moins de mode croisé). L'effet net est à mesurer, pas à prédire.
 
 | Fichier | Fonction | Ce qui change |
 |---|---|---|
-| `certus_strat_batch.py` | `corridor_wl_range` | prend la **grille spectrale** en argument |
-| idem | `simulate_stack_robustness_batch` | l'acheminer jusqu'au tirage, au lieu de `layer_wavelengths` |
+| `certus_strat_batch.py` | `corridor_wl_range` | prend **deux** jeux de λ et rend leur **enveloppe** |
+| idem | `simulate_stack_robustness_batch` | recevoir la grille spectrale, au lieu de déduire de `layer_wavelengths` |
 | idem | `validate_wavelengths_batch` | idem pour la Phase A, au lieu de `candidate_wls` |
-| idem | `compute_batch_rmse` | déjà paramétré, il suffit de lui passer la même |
+| idem | `compute_batch_rmse` | déjà paramétré, il suffit de lui passer la même enveloppe |
+
+🔴 **Un seul appelant doit calculer l'enveloppe, et la passer aux trois.** Si chacune la
+recalcule, elles finiront par diverger — c'est exactement ce que `corridor_wl_range` a été
+créée pour empêcher il y a deux heures, et le défaut qu'on corrige ici en est déjà une
+récidive.
 
 ---
 

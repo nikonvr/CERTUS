@@ -1395,16 +1395,67 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 <thead><tr><th>Resolution</th><th>5 nm</th><th>2 nm (nominal)</th><th>1 nm</th><th>0.5 nm</th></tr></thead>
                 <tbody>
                     <tr><td><b>Noise factor on $A$</b></td><td>&divide;1.5</td><td>&times;1</td><td>&times;2</td><td><b>&times;5</b></td></tr>
-                    <tr><td><b>Spectral fidelity</b></td><td>features flattened</td><td>reference</td><td>faithful</td><td>faithful</td></tr>
-                    <tr><td><b>Dominant failure</b></td><td>swing reduced, anchors weak</td><td>—</td><td colspan="2">turning points fabricated by noise</td></tr>
+                    <tr><td><b>Nature of the penalty</b></td><td colspan="2"><b>systematic BIAS</b>, not absorbed by statistics</td><td colspan="2">random noise, absorbed by statistics</td></tr>
+                    <tr><td><b>Worst where</b></td><td colspan="2">$T(\lambda)$ is most <b>curved</b> — at turning points and the edge</td><td colspan="2">uniform</td></tr>
                 </tbody>
             </table>
+
             <p style="margin:10px 0 0;">
-                Both effects act on the <b>same</b> quantity — the detection signal-to-noise ratio
-                $\text{swing}_{\text{eff}}(B)\,/\,\text{noise}(B)$, which governs both turning-point
-                detection and stop precision. That ratio is what must be measured, not the two effects
-                separately.
+                🔑 <b>THE MECHANISM, stated exactly</b> (👤 2026-08-10): <i>"at no point does the OMS
+                know how to compute spectral responses with a resolution problem — it is always with a
+                perfect resolution. That is why opening the slits too much can be a problem: the
+                expected levels are not the right ones."</i>
             </p>
+            <p style="margin:10px 0 0;">
+                So the machine compares two quantities that are <b>not of the same kind</b>: it
+                <b>expects</b> $T_{\text{theory}}(\lambda_{\text{mon}})$, computed monochromatically at
+                perfect resolution, and it <b>reads</b> $\langle T\rangle_B$, averaged over the slit.
+                The difference is not a loss of dynamics. It is a <b>systematic level bias</b>:
+            </p>
+            <div class="eq-box">
+                $$ \text{bias}(B) \;=\; \langle T\rangle_B - T(\lambda_{\text{mon}})
+                   \;=\; \frac{T''(\lambda_{\text{mon}})\,B^2}{24} $$
+            </div>
+            <p style="margin:10px 0 0;">
+                🔴 <b>A bias is not noise.</b> It does not average out, it is not diluted by the
+                Monte-Carlo, it pushes every draw the same way. The machine cuts systematically early or
+                systematically late <b>and has no way of noticing</b>, since its only reference is its
+                own theory — which is monochromatic. An earlier version of this section proposed
+                optimising a ratio $\text{swing}_{\text{eff}}(B)/\text{noise}(B)$: <b>that was wrong.</b>
+                A bias of $X$ and a noise of $X$ are not commensurable, because the statistics absorb
+                the second and not the first.
+            </p>
+
+            <div style="border:3px solid #7f1d1d;border-radius:8px;padding:12px 16px;margin:14px 0;background:#fff;">
+                <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;">
+                    🔴 Why this is critical, and not a second-order comfort setting
+                </p>
+                <p style="margin:0 0 10px;">
+                    The bias scales with the <b>curvature</b> $T''$. Curvature is <b>maximal at a turning
+                    point</b>, where $T' = 0$ by definition. And a turning point is exactly what POEM
+                    uses as an <b>anchor</b>.
+                </p>
+                <p style="margin:0 0 10px;">
+                    So a wide slit mis-reads the two anchors the whole method rests on — and it
+                    mis-reads them <b>inward</b>, since $T''$ points into the curve on either side of an
+                    extremum. The measured swing $|T_{\text{last}} - T_{\text{prev}}|$ therefore
+                    <b>shrinks</b>, and POEM applies its frozen fraction to an amplitude that is too
+                    small.
+                </p>
+                <p style="margin:0 0 10px;">
+                    <b>And it breaks the invariance theorem.</b> §2.8 proves POEM exactly immune to
+                    $T \to aT + b$ — an affine map, the same everywhere. The slit bias is
+                    $T \to T + T''(\lambda)B^2/24$: it depends on the <b>local curvature</b>, so it
+                    differs at each anchor and at the trigger point. It is precisely the kind of
+                    distortion POEM <b>cannot</b> absorb, unlike the photometric drift it defeats
+                    &times;17.5.
+                </p>
+                <p style="margin:0;">
+                    Finally, near a turning point $dT/dd \to 0$, so a level error converts into a
+                    <b>large thickness error</b> — the very regime §14 warns about. Bias, weakest slope,
+                    and the anchors of the mechanism all coincide at the same place.
+                </p>
+            </div>
             <p style="margin:10px 0 0;">
                 🔴 <b>These four numbers are ESTIMATES, not measurements</b> (👤 2026-08-09, verbatim:
                 estimated "by feeling"). They therefore have the status of a modelling postulate, like the

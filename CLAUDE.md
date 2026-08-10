@@ -240,17 +240,52 @@ Le lissage supprime les faux extrema. Rien ne prouve qu'il préserve les vrais.
 
 #### A3 — La chute de swing sous fente de 5 nm · *tranche entre 1 h et plusieurs jours*
 
+🔴 **Cette sonde a changé d'objet le 2026-08-10.** Elle mesurait « de combien le swing
+baisse ». **Ce n'était pas le bon mécanisme** : l'OMS calcule ses niveaux attendus en
+résolution parfaite, donc l'effet est un **biais de niveau**, pas une perte de dynamique.
+
 - **Où** : script autonome, TMM nominal, juge de paix, **pas de Monte-Carlo**.
-- **Quoi** : pour chaque couche et chaque λ_mon candidate, calculer `T(λ)` autour de λ_mon,
-  moyenner **uniformément** sur `[λ₀ − B/2 ; λ₀ + B/2]` — 👤 la fente est **rectangulaire** —
-  avec `B = 5` nm, et mesurer **de combien le swing baisse**.
+- **Quoi** : pour chaque couche et chaque λ_mon candidate, calculer
+  `biais = ⟨T⟩_B − T(λ_mon)`, la fente étant **rectangulaire** (👤), pour `B ∈ {0,5 ; 1 ; 2 ; 5}` nm.
 
 | # | Étape | Ce que ça décide |
 |---|---|---|
-| 1 | Chute médiane **≲ 1 %** | la déformation est du **second ordre** ⇒ A17 se réduit à **une multiplication**, A18 suffit. |
-| 2 | Chute **≳ 20 %** | premier ordre ⇒ il faut la **convolution complète** dans le noyau, ×3 à ×5 sur le coût TMM du monitoring |
-| 3 | Refaire à 0,5 / 1 / 2 nm | vérifier que la chute **décroît** avec la fente. Sinon la sonde est fausse |
+| 1 | Comparer le biais à `A = 5e-4`, l'amplitude du bruit | c'est la seule échelle qui a un sens : le biais n'est pas absorbé par la statistique, le bruit si |
+| 2 | Biais **≪ A** à 5 nm | la résolution ne coûte rien en fidélité ⇒ **prendre la fente la plus large**, et empocher le ÷1,5 de bruit |
+| 3 | Biais **≫ A** dès 2 nm | le nominal lui-même est déjà biaisé, et **c'est un défaut du modèle actuel**, pas seulement un réglage |
 | 4 | Rapporter la **couche la pire**, pas la médiane | c'est elle qui lie, cf. `worst_layer` |
+| 5 | Vérifier que le biais varie en **`B²`** | c'est la signature du second ordre. S'il varie autrement, le développement ne tient pas à cette largeur |
+
+⚠️ **Le signe compte.** `T'' > 0` près d'un minimum, `< 0` près d'un maximum : le biais pousse
+donc toujours **vers l'intérieur de la courbe**. Près d'un point tournant, il déplace le niveau
+dans une direction **connue** — ce qui le rend, en principe, corrigeable.
+
+#### 🔴 Pourquoi c'est CRITIQUE, et pas un réglage de confort — 👤 confirmé le 2026-08-10
+
+Le biais est proportionnel à la **courbure** `T''`. Or la courbure est **maximale en un point
+tournant**, où `T' = 0` par définition. **Et un point tournant, c'est exactement ce que POEM
+prend pour ancre.**
+
+Trois conséquences qui s'enchaînent :
+
+1. **Une fente large fausse les deux ancres sur lesquelles repose toute la méthode**, et elle
+   les fausse **vers l'intérieur** — `T''` pointe vers le creux de la courbe de part et
+   d'autre d'un extremum. Le swing mesuré `|T_last − T_prev|` **rétrécit**, et POEM applique
+   sa fraction figée à une amplitude trop petite.
+2. 🔴 **Ça casse le théorème d'invariance.** §12.1 démontre POEM exactement immune à
+   `T → a·T + b` — une transformation **affine**, la même partout. Le biais de fente vaut
+   `T → T + T''(λ)·B²/24` : il dépend de la **courbure locale**, donc il **diffère à chaque
+   ancre et au point de déclenchement**. C'est précisément le type de distorsion que POEM
+   **ne peut pas** absorber, contrairement à la dérive photométrique qu'il bat ×17,5.
+3. Enfin, près d'un point tournant `dT/dd → 0` : une erreur de niveau s'y convertit en une
+   **grande erreur d'épaisseur** — le régime dont §14-5 dit qu'il faut le fuir.
+
+**Le biais, la pente la plus faible et les ancres du mécanisme se rencontrent tous au même
+endroit.** C'est pour ça que la résolution n'est pas un réglage de second ordre.
+
+⚠️ **Conséquence pour la mesure** : le contraste POEM actif / inactif ne dira **rien** de ce
+défaut-là. POEM protège de l'affine ; ici il est complice, parce que ses ancres sont le point
+d'application du biais. **Ne pas conclure de A12 que la résolution est couverte.**
 
 #### A4 — Compter ce que les filtres existants rejettent · *§20-contrôle 4*
 
@@ -1699,19 +1734,50 @@ autres paramètres s'améliorent quand on les pousse dans une direction ; celui-
 des deux côtés. C'est ce qui le rend intéressant, et c'est aussi ce qui interdit de le régler
 au jugé.
 
-#### Les deux effets, opposés, sur la MÊME grandeur
+#### 🔑 Le mécanisme exact — 👤 précision du 2026-08-10
+
+> 👤 *« À aucun moment l'OMS ne sait calculer des réponses spectrales avec problème de
+> résolution, c'est toujours avec une résolution parfaite ! C'est pour cela qu'ouvrir trop les
+> fentes peut être problématique : les niveaux attendus ne sont pas les bons. »*
+
+**La machine compare deux grandeurs qui ne sont pas de même nature :**
+
+| | |
+|---|---|
+| ce qu'elle **attend** | `T_théorique(λ_mon)` — **monochromatique, résolution parfaite** |
+| ce qu'elle **lit** | `⟨T(λ)⟩` moyenné sur `[λ_mon − B/2 ; λ_mon + B/2]` |
+
+Ce n'est donc **pas** une perte de dynamique. C'est un **biais systématique de niveau** :
+
+$$\text{biais}(B) \;=\; \langle T\rangle_B - T(\lambda_{\text{mon}}) \;=\; \frac{T''(\lambda_{\text{mon}})\,B^2}{24}$$
+
+🔴 **Et un biais n'est pas du bruit.** Il ne s'annule pas en moyenne, il ne se dilue pas dans
+le Monte-Carlo, il pousse **tous** les tirages du même côté. La machine coupe systématiquement
+trop tôt ou trop tard, **et elle n'a aucun moyen de s'en apercevoir** — sa seule référence est
+sa propre théorie, qui est monochromatique.
+
+⚠️ **Ne compare donc JAMAIS le biais de fente et le bruit de lecture comme deux termes
+équivalents.** Une version antérieure de cette section parlait d'un rapport
+`swing_effectif(B) / bruit(B)` à optimiser : **c'était faux.** Un biais de X points est
+bien plus destructeur qu'un bruit de X points, parce que la statistique absorbe le second et
+pas le premier.
 
 | | Fente large (5 nm) | Fente étroite (0,5 nm) |
 |---|---|---|
-| **Bruit** | ÷1,5 — plus de flux, meilleur rapport signal/bruit | **×5** — le bruit domine |
-| **Fidélité** | le signal est la **moyenne spectrale** de `T(λ)` sur la bande : les structures fines sont **aplaties** | fidèle, tout le swing est là |
-| Effet sur le swing | **réduit** ⇒ ancres POEM moins marquées, trigger moins précis (§14-5) | intact |
-| Effet sur les faux points tournants | rares | **fabriqués** — cf. la mesure du §12.2 |
+| **Bruit** | ÷1,5 | **×5** |
+| Nature de la pénalité | **BIAIS systématique**, non absorbable | bruit aléatoire, absorbé par la statistique |
+| Où c'est pire | là où `T(λ)` est le plus **courbé** — près du front, dans les ondulations | uniforme |
 
-Les deux agissent sur la **même** quantité, le rapport
-`swing_effectif(B) / bruit(B)`, qui gouverne à la fois la détection des points tournants et
-la précision de l'arrêt. **C'est ce rapport qu'il faut mesurer, pas les deux effets
-séparément.**
+🟢 **Conséquence heureuse : `_calculate_strategy_spectral_resolution` calcule exactement la
+bonne grandeur.** Il mesure la courbure spectrale et cherche la largeur à laquelle l'erreur de
+convolution atteint la tolérance — c'est-à-dire **à quelle fente le biais atteint la taille du
+bruit**. C'est la bonne question, et elle était déjà posée. Il lui manque seulement le facteur
+√3 (ci-dessous) et d'être utilisée pour autre chose qu'un rapport.
+
+🟢 **Conséquence pratique : modéliser la résolution est BEAUCOUP moins cher que prévu.**
+Pas besoin de convoluer le signal de croissance sur plusieurs λ. Il suffit d'ajouter au
+**niveau visé** de chaque couche le biais `T''(λ_mon)·B²/24`, et la courbure est déjà
+calculée. **L'action se réduit à un terme additif par couche, plus le facteur de bruit.**
 
 #### 🔒 Le facteur de bruit est une TABLE ESTIMÉE — statut à ne pas confondre
 
@@ -2137,6 +2203,59 @@ n'a pas encore mesuré les paramètres existants.
 | Q2 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous POEM (couches 1 et 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
 | Q3 | Si la couche de référence était **elle-même en Rate**, l'erreur se recopie sans jamais être corrigée. La machine **chaîne-t-elle**, ou exige-t-elle une référence POEM ? | Décide si deux couches Rate consécutives sont permises, et donc si l'erreur peut diverger. |
 | Q4 | L'estimation porte-t-elle sur **la dernière** couche du matériau, ou sur une **moyenne** de toutes les précédentes ? | Une moyenne amortit l'erreur, la dernière la recopie telle quelle. Deux taux de plantage différents. |
+
+### 👤 SEEL — l'erreur équivalente par couche, et sa précision de 0,1 nm
+
+> 👤 *« C'est pour caractériser la performance d'une stratégie donnée. On regarde quel tirage
+> aléatoire donne une erreur spectrale du même niveau, et cela donne une erreur moyenne
+> équivalente par couche. »* — *« SEEL doit être calculé ou donné avec une précision de
+> 0,1 nm, c'est tout. »* (2026-08-10)
+
+**Ce que c'est.** `calculate_seel_analysis` (`certus_strat_service.py:636`) perturbe chaque
+couche du nominal par `N(0, σ)` pour `σ ∈ {0,05 ; 0,1 ; 0,3 ; 0,6 ; 1,2 ; 2,0}` nm, 3 lots de
+50 tirages, et mesure la RMSE spectrale obtenue. On inverse la courbe : **toute RMSE se lit
+alors en nanomètres d'erreur équivalente par couche.** C'est la seule grandeur du projet qu'un
+opérateur de bâti comprenne immédiatement.
+
+🔑 **La quantification à 0,1 nm n'est PAS une règle d'affichage — c'est ce qui fait de SEEL un
+critère de classement distinct.**
+
+L'ajustement actuel (`certus_strat_service.py:710`) vaut `fit_k = Σxy/Σx²` avec
+**`fit_alpha = 1.0` figé en dur** : donc `SEEL = k · RMSE`, une simple constante. Trier sur la
+valeur **continue** de SEEL rendrait donc **exactement** l'ordre de la RMSE — un tri qui ne
+trie rien.
+
+**Quantifiée à 0,1 nm, elle crée des paliers.** Deux stratégies séparées de moins de 0,1 nm
+deviennent **ex æquo**, et il faut un **critère secondaire** pour les départager. Le classement
+change réellement, et il change dans le bon sens : *on ne discrimine pas sur un écart qu'on ne
+sait pas mesurer.* C'est déjà la règle du §16, qui interdit de conclure d'un écart d'épaisseur
+sous 0,05 nm.
+
+👤 **Le critère secondaire est le RENDEMENT** (2026-08-10). La règle de tri complète :
+
+```
+1. SEEL arrondi a 0,1 nm          croissant
+2. rendement = 1 - taux de plantage   decroissant   <- departage les ex aequo
+```
+
+*À performance spectrale indiscernable, on prend la stratégie qui va au bout.* C'est
+exactement §8 : *« si 95 % des dépôts fonctionnent, c'est gagné »*, et *« un dépôt qui plante
+et un filtre hors spec sont le même échec »*.
+
+⚠️ **L'arrondi se fait sur SEEL, pas sur la RMSE.** Arrondir la RMSE n'aurait aucun sens
+physique — c'est un nombre sans unité interprétable. L'arrondi ne devient légitime qu'une fois
+la grandeur exprimée en nanomètres, parce que 0,1 nm est une **limite de mesure**, pas une
+convention d'affichage.
+
+**Ce qu'il reste à faire :**
+
+| # | Action | Note |
+|---|---|---|
+| 1 | **Sortir SEEL de l'interface.** Il n'existe qu'en mémoire (`APP_CONTEXT["seel_data"]`), calculé à l'étape 0, et sert à colorer trois colonnes. **Le banc ne le voit pas** — les 26 runs mesurés sont donc tous en unité abstraite. | Coût : ~1 s de calcul, 900 spectres vectorisés |
+| 2 | L'écrire dans les rapports de sonde à côté de chaque `RESULT`, et dans `analyse_bands.py` | — |
+| 3 | Quantifier à **0,1 nm** partout, affichage compris — le tableau montre aujourd'hui `.3f`, soit 100× la précision utile | 👤 spécifié |
+| 4 | Sélecteur de tri : composite (actuel, dominé par le plantage) ou **SEEL quantifié + départage** | c'est le tri qui change vraiment l'ordre |
+| 5 | **Vérifier que `alpha = 1` est vrai** et non affirmé | les données sont déjà là : 6 σ × 3 lots |
 
 ## 15. 🔴 La validation externe — elle n'a plus qu'un seul chemin
 

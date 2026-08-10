@@ -1251,33 +1251,50 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
                 <tr style="background:#fef3c7;">
                     <th style="border:1px solid #fcd34d;padding:4px 10px;text-align:left;">corridor $\delta_{\max}$</th>
-                    <th style="border:1px solid #fcd34d;padding:4px 10px;">RESULT</th>
-                    <th style="border:1px solid #fcd34d;padding:4px 10px;">&times; baseline</th></tr>
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;">&times; baseline</th>
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;">SEEL</th>
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;">blocks in the winner</th></tr>
                 <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0 (baseline)</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.002948627371</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;">1.00</td></tr>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">1.00</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.3 nm</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>2</b></td></tr>
+                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0.001</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">&times;1.24</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.3 nm</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>3</b></td></tr>
                 <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0.0025</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.009877098893</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>&times;3.35</b></td></tr>
-                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;"><b>0.005</b> — the model value</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.015225307261</td>
-                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>&times;5.16</b></td></tr>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">&times;1.86</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.5 nm</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>4</b></td></tr>
+                <tr style="background:#fffbeb;"><td style="border:1px solid #fcd34d;padding:4px 10px;"><b>0.005</b> — the model value</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>&times;2.46</b></td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>0.6 nm</b></td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>5</b></td></tr>
+                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0.010</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">&times;4.32</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">1.1 nm</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>8</b></td></tr>
             </table>
             <p style="margin:0 0 10px;">
-                For comparison, the photometric distortion of §2.8 costs <b>&times;1.0087</b> once
-                POEM is doing its job. <b>Index uncertainty is, by a wide margin, the largest error
-                source measured on this stack.</b> The effect is <b>sub-linear</b>: doubling the corridor
-                multiplies the result by only 1.54.
+                At the model value the equivalent per-layer error <b>doubles</b>, from 0.3 to 0.6 nm.
+                Log-log exponent <b>0.525</b> — remarkably close to a square root. For comparison, the
+                photometric distortion of §2.8 costs &times;1.0087 once POEM is doing its job.
+            </p>
+            <p style="margin:0 0 10px;background:#dcfce7;border:2px solid #15803d;border-radius:6px;padding:10px 14px;">
+                🟢 <b>And look at the last column: the winner gains blocks as the corridor widens</b> —
+                2, 3, 4, 5, 8, monotonically. §2.9 predicted exactly this: index uncertainty
+                <b>favours strategies whose control wavelengths are SPREAD</b> rather than grouped,
+                because a crossed curve is compensated better when it is watched in several places.
+                <b>What makes the finding solid is that it survives the correction.</b> The old
+                normalisation pushed the same way — it penalised grouped wavelengths by up to a factor
+                21 — so while it was there the physical effect could not be told from the artefact.
+                The artefact is gone and the effect remains.
             </p>
             <p style="margin:0;">
-                🔴 <b>And this is HALF the mechanism.</b> The perturbation reaches the growth path — so
-                the deposited thicknesses are wrong — but <b>not the scoring path</b>: the finished
-                filter is still evaluated as if its indices were exactly nominal. The <i>crossed</i>
-                mode, the one the physicist calls uncompensable, is precisely the one that shows up in
-                the final spectrum rather than in the monitoring. So these figures are an
-                <b>underestimate</b>, and the number above must never be presented as "the effect of the
-                corridor". Re-measuring once the scoring path is perturbed, and taking the difference,
-                is what will isolate that contribution.
+                ⚠️ <b>Earlier figures on this page were wrong and are withdrawn.</b> They read
+                &times;3.35 and &times;5.16 with an exponent of 0.616, measured before the scoring path
+                was perturbed and before $u(\lambda)$ was normalised on the envelope. Both defects
+                inflated the damage, by 1.6 to 2.1&times;. Do not quote them.
             </p>
         </div>
 
@@ -2088,6 +2105,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #ccc;padding:4px 10px;"><b>2 blocks</b> (544 and 531 nm)</td></tr>
                 </table>
                 <b>1 nm wins</b>: score ÷1.82, passband &minus;27%, for +9% time.
+                <br>⚠️ <b>These four scores are historical</b> — code state of 2026-08-08, before the
+                scoring path was perturbed and before the corridor normalisation was fixed. They
+                compare only to each other, never to the current reference of §10. <b>What is
+                established is the ratio, not the value.</b>
                 The 5.7 gain thus came not from the step but from the <b>range restriction</b>.
                 And the waste prediction was wrong in the other direction: the fine grid finds a
                 strategy <b>simpler</b> to execute — two blocks instead of four.
@@ -3022,6 +3043,365 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         (LRU, 20 items max) to prevent re-rendering identical Plotly figures.</li>
                     <li><strong>Async Plot Renderer:</strong> <code>PlotRenderWorker</code> runs Plotly-to-PNG
                         conversion in a dedicated QThread to keep the main event loop responsive.</li>
+                </ul>
+
+                <!-- ================================================================ -->
+                <!--  WHAT MAKES A GOOD STRATEGY — ESTABLISHED vs CONJECTURED          -->
+                <!-- ================================================================ -->
+                <h2>10. What Makes a Good Deposition Strategy</h2>
+
+                <div class="highlight-box">
+                    <strong>How to read this section.</strong> It is written for a future
+                    publication, so every claim carries its <b>register</b>, and the two are never
+                    mixed:
+                    <br>&nbsp;&nbsp;🟢 <b>ESTABLISHED</b> — a number produced by a run that
+                    completed, with the file it came from. It can be re-derived.
+                    <br>&nbsp;&nbsp;🔵 <b>CONJECTURE</b> — a mechanism we believe in, together with
+                    <b>the experiment that would refute it</b>. It is not a result.
+                    <br><br>
+                    Unless stated otherwise, everything below is measured on the <b>same object</b>:
+                    the 48-layer dichroic short-pass (edge at 545 nm, H = 2.35 / L = 1.46 on BK7),
+                    seed 42, sweep grid 450–700 nm at 1 nm, 150 Monte-Carlo draws per strategy,
+                    3 noise levels. <b>No conclusion here is transferable to another stack</b>
+                    (§4.9): a single component cannot separate what is physics from what is this
+                    particular design.
+                </div>
+
+                <h3>10.1 The quantity being maximised</h3>
+                <p>
+                    There is exactly one, and it absorbs both failure modes. A run that never
+                    terminates and a filter that terminates out of specification are <b>the same
+                    event</b>: no usable part. So the objective is
+                    $P(\text{the part conforms})$, a scalar — which is why no Pareto front is
+                    maintained and why the ranking is not multi-criteria. Every trade-off described
+                    below is an <i>observed consequence</i> of that single number, not a weighting
+                    someone chose.
+                </p>
+                <p>
+                    The reported quantity is the <b>worst</b> of the three noise levels — a
+                    deliberate minimax. The per-strategy figures quoted in this section are at the
+                    <b>nominal</b> level, and the two are never compared.
+                </p>
+
+                <h3>10.2 Where the control wavelengths go</h3>
+                <p>
+                    The search is free to place every block anywhere on 251 grid points. What it
+                    actually converges to is far more constrained than that freedom suggests. The
+                    four statements below are counted over the full ranking (228 to 257 strategies
+                    per run, 1350 to 1570 individual block wavelengths).
+                </p>
+
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.95em;width:100%;">
+                    <tr style="background:#dcfce7;">
+                        <th style="border:1px solid #86efac;padding:5px 10px;text-align:left;">🟢 ESTABLISHED</th>
+                        <th style="border:1px solid #86efac;padding:5px 10px;">the number</th></tr>
+                    <tr><td style="border:1px solid #86efac;padding:5px 10px;">
+                        <b>A — The stopband is never used.</b> Not "rarely": essentially never, and
+                        not once in any top&#8209;20.</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;">
+                        $\lambda > 560$ nm: <b>0/50, 0/94, 0/115</b> in the top&#8209;20 at corridor
+                        0 / 0.005 / 0.010; <b>4, 2, 1</b> out of &gt;1300 over the whole ranking.</td></tr>
+                    <tr><td style="border:1px solid #86efac;padding:5px 10px;">
+                        <b>B — The first block sits on the edge, always.</b> Every single one of the
+                        60 best strategies examined starts within 3 nm of the 545 nm front.</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;">
+                        First-block $\lambda \in [542, 545]$ in <b>20/20</b> at each of the three
+                        corridors. Modal value <b>544 nm</b> (11, 14 and 18 times out of 20).</td></tr>
+                    <tr><td style="border:1px solid #86efac;padding:5px 10px;">
+                        <b>C — Phase A is a severe filter, and that is its job.</b> Of 251 candidate
+                        wavelengths, only a small fraction ever reaches Phase B.</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;">
+                        <b>39, 52, 53</b> distinct wavelengths survive into the ranking —
+                        <b>16 % to 21 %</b> of the grid.</td></tr>
+                    <tr style="background:#f0fdf4;"><td style="border:1px solid #86efac;padding:5px 10px;">
+                        <b>D — The preference for the edge is destroyed by index uncertainty.</b>
+                        This is the sharpest result of the campaign, because it is a
+                        <i>placement</i> statement, not a count.</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;">
+                        Fraction of top&#8209;20 wavelengths within &plusmn;7 nm of the edge:
+                        <b>44 % &rarr; 30 % &rarr; 17 %</b> for corridor 0 / 0.005 / 0.010, against a
+                        background of <b>16 %, 19 %, 16 %</b>. The advantage is a factor 2.8, then
+                        1.6, then <b>gone</b>.</td></tr>
+                </table>
+
+                <p>
+                    <b>Why the edge, and why it stops paying.</b> At 545 nm the transmission slope
+                    $\partial T/\partial d$ is maximal, so a given photometric noise buys the
+                    smallest thickness error — the trigger is at its most precise there (§2.11). But
+                    the edge <i>position</i> is itself a function of the indices. Widen the index
+                    corridor and the very feature you are aiming at moves, so aiming at it stops
+                    being informative. <b>Measurement D is the quantitative signature of that
+                    trade.</b> The winners show it directly:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.9em;">
+                    <tr style="background:#eef2ff;">
+                        <th style="border:1px solid #c7d2fe;padding:4px 10px;text-align:left;">corridor</th>
+                        <th style="border:1px solid #c7d2fe;padding:4px 10px;text-align:left;">winning strategy — block wavelengths (nm)</th></tr>
+                    <tr><td style="border:1px solid #c7d2fe;padding:4px 10px;">0</td>
+                        <td style="border:1px solid #c7d2fe;padding:4px 10px;"><code>544, 531</code> &nbsp;— both on the edge</td></tr>
+                    <tr><td style="border:1px solid #c7d2fe;padding:4px 10px;">0.001</td>
+                        <td style="border:1px solid #c7d2fe;padding:4px 10px;"><code>544, 544, 453</code> &nbsp;— one block leaves</td></tr>
+                    <tr><td style="border:1px solid #c7d2fe;padding:4px 10px;">0.0025</td>
+                        <td style="border:1px solid #c7d2fe;padding:4px 10px;"><code>544, 453, 453, 452</code></td></tr>
+                    <tr><td style="border:1px solid #c7d2fe;padding:4px 10px;"><b>0.005</b></td>
+                        <td style="border:1px solid #c7d2fe;padding:4px 10px;"><code>544, 545, 455, 458, 453</code> &nbsp;— two clusters</td></tr>
+                    <tr><td style="border:1px solid #c7d2fe;padding:4px 10px;">0.010</td>
+                        <td style="border:1px solid #c7d2fe;padding:4px 10px;"><code>544, 491, 492, 486, 496, 477, 482, 496</code></td></tr>
+                </table>
+                <p style="margin:0 0 14px;">
+                    One anchor stays welded to 544 nm at every corridor. What changes is
+                    <b>everything else</b>, which migrates 90 nm into the passband and fans out. A
+                    single edge measurement is kept for absolute registration; the rest of the stack
+                    is watched where the answer does not depend on knowing the edge.
+                </p>
+
+                <h3>10.3 How many blocks</h3>
+                <p>
+                    A block is a run of consecutive layers monitored at one wavelength. Few blocks
+                    means few wavelength changes to execute — the operator's preference. The
+                    question is what it costs.
+                </p>
+                <p>
+                    🟢 <b>ESTABLISHED — there is an interior optimum, and both extremes are
+                    catastrophic.</b> Median score by block count, corridor 0, over all 228 ranked
+                    strategies:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.9em;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">blocks</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">1</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;"><b>2</b></th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">3</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">4</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">5</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">6</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">8</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 9px;">48</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 9px;">median score</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0090</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;background:#dcfce7;"><b>.0032</b></td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0048</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0045</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0063</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0085</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;">.0084</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 9px;background:#fee2e2;"><b>.547</b></td></tr>
+                </table>
+                <p style="margin:0 0 12px;">
+                    One wavelength for the whole stack costs <b>&times;2.8</b>. One wavelength per
+                    layer — the naive "maximum information" strategy — costs <b>&times;171</b>.
+                    That second figure deserves emphasis in any write-up: <b>per-layer monitoring is
+                    not a refinement of block monitoring, it is a different and much worse
+                    regime</b>, because each wavelength change discards the accumulated
+                    self-correction that POEM lives on (§2.8).
+                </p>
+                <p>
+                    🟢 <b>ESTABLISHED — the optimum moves right as index uncertainty grows.</b>
+                    Block-count histogram of the top&#8209;20:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.9em;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;text-align:left;">corridor</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;text-align:left;">block counts among the 20 best</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;">winner</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">0</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">2&times;12, 3&times;6, 4&times;2</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>2</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">0.005</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">3&times;2, 4&times;8, 5&times;8, 7&times;1, 9&times;1</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>5</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">0.010</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">4&times;9, 6&times;1, 7&times;7, 8&times;3</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>8</b></td></tr>
+                </table>
+                <p style="margin:0 0 14px;">
+                    The winner's block count is monotone in the corridor — 2, 3, 4, 5, 8 — and so is
+                    the bulk of the top&#8209;20. <b>The finding is solid precisely because it
+                    survived a correction that removed a bias pushing the same way</b>: an earlier
+                    normalisation of $u(\lambda)$ on the monitoring span alone penalised grouped
+                    wavelengths by up to a factor 21, so while it was present the physical effect
+                    could not be distinguished from the artefact. The artefact is gone; the effect
+                    is unchanged.
+                </p>
+
+                <h3>10.4 What is actually limiting</h3>
+                <p>
+                    Two failure channels compete, and it matters which one binds.
+                </p>
+                <div class="note">
+                    🟢 <b>ESTABLISHED — non-termination is not what separates good strategies from
+                    bad ones, at least at corridor 0.</b> Split the 228 ranked strategies into those
+                    that ever failed to terminate (47) and those that never did (181):
+                    <table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">
+                        <tr style="background:#fff;">
+                            <th style="border:1px solid #ccc;padding:4px 10px;"></th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">median $\lambda$</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">on the edge</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">median blocks</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">median score</th></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">ever crashed (47)</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">459 nm</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">17 %</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">5</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">0.00793</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">never crashed (181)</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">459 nm</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">17 %</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">6</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">0.00788</td></tr>
+                    </table>
+                    The two populations are <b>statistically indistinguishable on every global
+                    descriptor we can form</b> — same median wavelength to the nanometre, same edge
+                    fraction to the percent, same spectral score to 0.6 %.
+                    <br><br>
+                    <b>The consequence is a design decision, not a curiosity.</b> If crashing were
+                    predictable from the strategy's summary statistics, a cheap filter would replace
+                    the Monte-Carlo screen. It is not. Non-termination is a <b>local</b> property —
+                    one layer, at one wavelength, under one draw — and averaging it over a strategy
+                    erases it. That is the whole argument for reporting the <b>critical layer</b>
+                    (§2.12) rather than a strategy-level crash rate.
+                </div>
+                <p>
+                    🟢 <b>ESTABLISHED — no strategy that ever crashed reaches the top 20.</b> The
+                    worst crash rate anywhere in the top 50 is 0.02 = 3 draws out of 150, and crash
+                    rates are quantised in units of $1/N$, which is worth remembering when reading
+                    small values. Exactly one strategy was eliminated outright on crash grounds.
+                </p>
+                <div class="highlight-box">
+                    🟢 <b>ESTABLISHED — POEM is what makes the ranking informative at all.</b> This
+                    is the strongest single result in the campaign and it is qualitative, not
+                    quantitative. Repeat the corridor-0.005 run with POEM disabled and absolute-level
+                    monitoring restored:
+                    <ul style="margin:8px 0 8px 18px;">
+                        <li><b>87/87</b> strategies crash, against 54/257 with POEM.</li>
+                        <li>SEEL degrades from <b>0.6 nm to 22.3 nm</b> — a factor 37.</li>
+                        <li>The score <b>collapses onto a plateau</b>: 0.2432 for 3, 4, 5 and 7
+                            blocks, 0.2428 for 2 and 6. The ranking no longer separates.</li>
+                        <li>All 20 best strategies place <b>every</b> block at the same wavelength:
+                            517 or 522 nm, intra-strategy spread <b>exactly 0 nm</b>.</li>
+                    </ul>
+                    Without self-referenced stopping, the search stops exploring: it retreats to one
+                    safe wavelength for everything and the statistics can no longer tell the
+                    candidates apart. <b>POEM does not merely improve the result — it is the
+                    precondition for the optimisation problem being non-degenerate.</b>
+                    <br><br>
+                    ⚠️ The <i>protection factor</i> proper (a ratio of costs) requires a
+                    POEM-off run at corridor 0 on the corrected code, which has not been done. The
+                    figures &times;7.6 and &times;6.85 quoted in earlier revisions predate the
+                    normalisation fix and must not be cited.
+                </div>
+
+                <h3>10.5 The unit the results are reported in</h3>
+                <p>
+                    A spectral RMSE in transmission points is not a quantity anyone has intuition
+                    for. Every result above is therefore also given as <b>SEEL</b> — the
+                    <i>statistical equivalent error per layer</i>: the Gaussian thickness error
+                    $\sigma$ which, applied independently to all 48 layers, reproduces the same
+                    spectral RMSE. It converts a score into nanometres.
+                </p>
+                <p>
+                    🟢 <b>ESTABLISHED — the conversion is linear, and that is measured, not
+                    assumed.</b> Perturbing every layer at six values of $\sigma$ spanning a factor
+                    40, three repeats each:
+                </p>
+                <div class="eq-box">
+                    $$\text{RMSE} \;=\; \frac{\sigma}{k}, \qquad k = 95.4, \qquad
+                    \text{log–log slope} = \mathbf{0.989} \;\; (\sigma \in [0.05,\,2.0]\ \text{nm})$$
+                </div>
+                <p style="margin:0 0 14px;">
+                    The single-parameter fit reproduces every point to within <b>&plusmn;9 %</b>
+                    across the whole range. Linearity over a factor 40 also says something physical:
+                    over the practical range the errors combine <b>without saturation</b> — no
+                    threshold, no runaway. SEEL is quoted quantised to 0.1 nm, which is deliberate:
+                    the third digit of a Monte-Carlo score is not information.
+                    <br>Reference point: the corridor-0 winner scores <b>0.3 nm</b>; at the model
+                    corridor of 0.005 the best achievable becomes <b>0.6 nm</b>. Index uncertainty
+                    alone <b>doubles</b> the effective per-layer error.
+                </p>
+
+                <h3>10.6 Open conjectures, and the experiment that settles each</h3>
+                <p>
+                    These are <b>not results</b>. Each is stated with its refutation condition, so
+                    that a reader can hold us to it.
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;width:100%;">
+                    <tr style="background:#dbeafe;">
+                        <th style="border:1px solid #93c5fd;padding:5px 10px;text-align:left;">🔵 CONJECTURE</th>
+                        <th style="border:1px solid #93c5fd;padding:5px 10px;text-align:left;">the decisive experiment</th></tr>
+                    <tr><td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        <b>1. Spread beats grouping because a crossed dispersion curve is
+                        <i>locally</i> compensable.</b> A shifted curve is corrected identically
+                        everywhere, so one monitoring wavelength suffices; a crossed curve has
+                        opposite-signed error either side of the crossing, so a correction made at
+                        one $\lambda$ actively worsens the other side.</td>
+                        <td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        Two runs at the same corridor, one with $b = 0$ (pure shift), one with
+                        $a = 0$ (pure crossing). If the conjecture holds, the block count grows with
+                        $b$ and stays flat with $a$. <b>Not yet run.</b></td></tr>
+                    <tr><td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        <b>2. The critical layer is identifiable and it is not the thinnest.</b> We
+                        expect it to be the layer with the poorest optical swing at its assigned
+                        $\lambda$, not the one with the smallest physical thickness.</td>
+                        <td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        Record the stopping margin per (draw, layer, cause) instead of collapsing on
+                        the layer axis, then check the identified layer is <b>stable when the noise
+                        level is doubled</b>. A critical layer that moves with the noise level is an
+                        artefact of the estimator, not a property of the design.</td></tr>
+                    <tr><td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        <b>3. Monochromator resolution is part of the strategy, not a machine
+                        setting.</b> A wider slit lowers the noise but biases the expected level,
+                        because the controller computes its targets at perfect resolution. The
+                        optimum should therefore depend on where the blocks are.</td>
+                        <td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        Sweep the four available slits at fixed strategy, then re-optimise the
+                        strategy at each slit. If the winning strategy is slit-independent, the
+                        conjecture is wrong and resolution is a machine setting after all.</td></tr>
+                    <tr><td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        <b>4. Low-swing layers should be deposited in Rate mode, and the optimiser
+                        should choose that per layer.</b> Below a swing threshold there is no usable
+                        photometric signal, and turn-counting with no feedback may beat a trigger
+                        that fires on noise.</td>
+                        <td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        The rate error is <b>not a free parameter</b> — the simulator knows both the
+                        real and nominal thicknesses of every previous layer of the same material,
+                        so it can estimate the rate the way the machine does. Measure it; do not
+                        posit it.</td></tr>
+                    <tr><td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        <b>5. Ranking depth beyond ~25 draws buys robustness, not a different
+                        winner.</b> At 25 draws the winner is already id 2228, the same as at 150.</td>
+                        <td style="border:1px solid #93c5fd;padding:5px 10px;">
+                        Read the dispersion of nested sub-packets inside one deep run rather than
+                        repeating shallow runs. Sobol is nested, so packets of 100 drawn from 500
+                        are refinements of the same sequence, not fresh samples — the sub-packet
+                        spread <i>is</i> the answer.</td></tr>
+                </table>
+
+                <h3>10.7 What we deliberately do not claim</h3>
+                <ul>
+                    <li><b>None of this is externally validated.</b> STRAT is currently checked only
+                        against itself. The dichroic is a <b>coherence bench</b>, not an independent
+                        referee. The only closure is real deposition: two strategies actually
+                        deposited, spectra measured, and STRAT required to rank them in the correct
+                        order — an <b>ordinal</b> test, far weaker than absolute agreement and far
+                        more convincing than self-consistency.</li>
+                    <li><b>No conclusion is transferred to another stack.</b> Every figure here is
+                        the 48-layer dichroic.</li>
+                    <li><b>The spectral target is unweighted, and this is a stated choice.</b> Its
+                        consequence must be reported alongside any result: the two bands of this
+                        design are <b>the same width</b> — 141 points out of 301 each — so a uniform
+                        RMSE is <i>literally unable</i> to prefer a strategy that misses the stopband
+                        over one that misses the passband, though the requirements differ by orders
+                        of magnitude. The score is dominated by edge displacement, which nobody
+                        asked for.</li>
+                    <li><b>The literature heuristics are diagnostics, not filters.</b> The 15–85 %
+                        window, the 4 % minimum starting amplitude, swing-in/swing-out: reported as
+                        explanatory columns, never used to reject a candidate. Working from simulated
+                        noisy signals removes the need for the rules of thumb those signals were
+                        unavailable to justify.</li>
+                    <li><b>An unmeasured mechanism is not modelled.</b> No $\sigma(T)$, no shot
+                        noise, no multiplicative noise, no inter-revolution correlation. The reading
+                        noise model has one measured number and no free parameter; adding structure
+                        nobody measured would trade a measured constant for invented ones.</li>
                 </ul>
 
                 <div class="footer">

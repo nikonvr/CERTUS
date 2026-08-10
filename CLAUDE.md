@@ -186,10 +186,10 @@ sortie collée. **Une action, un commit.**
 | Action | État | Ce que ça a donné |
 |---|---|---|
 | **A1, A2** | ✅ `e3a4c72` | A1 **réfute** le seuil dérivé de §9bis. **A13 doit utiliser `1,00`, pas `0,354`.** A2 passe. |
-| **A7 (ex-T0)** | ✅ **repère rétabli** | `0.002948627371309867`, reproduit **4 fois au bit**. `0,002898` est définitivement écarté. |
+| **A7 (ex-T0)** | ✅ **repère rétabli** | `D0.ref` du 2026-08-10 : **`0.0027329534107462224`**, SEEL **0,3 nm**, gagnante 2 blocs. `0,002898` est définitivement écarté. |
 | **A12** | 🟢 **FAITE — POEM validé ×17,5** | §12.1. Le critère de réussite posé à l'avance est atteint. |
 | **A15** | ✅ faite | La marge 3,33 rend un résultat **bit-identique** à 1,66 : **elle ne rejette rien** (§17-12). |
-| **A14** | ⚠️ **à moitié** | ×3,35 et ×5,16 — mais **avant A10**, donc seule la moitié « croissance » est mesurée. **À refaire après A10** (§17-13). |
+| **A14** | ✅ **FAITE** | Courbe corrigée du 2026-08-10 : ×1,24 / ×1,86 / **×2,46** / ×4,32, exposant **0,525**. Les chiffres d'avant étaient gonflés de 1,6 à 2,1× par la normalisation fautive. |
 | **A6** | ⚠️ requalifiée | Le banc **est** déterministe. Reste à savoir si une **recompilation** décale les bits — voir §3. |
 
 **La suite immédiate est A10** : le corridor est de très loin le plus gros effet mesuré, et
@@ -371,7 +371,7 @@ set CERTUS_BENCH_TIMEOUT_S=5400
 | 4 | Vérifier le bloc `CONFIG=` de la sortie | tous les paramètres à leur valeur neutre |
 | 5 | **Relancer une seconde fois, identique** | 🔴 **jette le premier** : après une recompilation numba il sort systématiquement du lot |
 | 6 | Comparer les deux | l'écart doit tenir dans l'enveloppe de A6, **pas être nul** |
-| 7 | Réécrire §10 avec le second chiffre, sa commande, sa sortie collée **et l'enveloppe** | **et retirer `0,002898`**, qui n'a d'artefact nulle part |
+| 7 | ✅ **fait le 2026-08-10** : §10 porte `D0.ref`, et `0,002898` est écarté | — |
 
 ⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §3. Un écart nul entre
 deux runs serait une coïncidence, pas un critère.
@@ -1245,59 +1245,37 @@ Obtenu par `scripts\probe_anchor_noise_pipeline.py full 1.0 42`.
 ```
 Configuration : poem_anchor_noise = 1, tp_hysteresis_factor = 1.66,
                 phase_a_level_margin_factor = 1.66, dp_yield_weight = 0,
-                scan_wl_step = 1.0
+                scan_wl_step = 1.0, index_corridor = 0, N = 150, screening = 25
 
-  RESULT                      0,002898
-  RMSE global   med / p95     0,215 / 0,465   points de transmission
-  bande passante p95          0,418
-  front p95                   1,498
-  plantage                    0,000     345 strategies rendues
-  RUN_S                       ~1322 s
-  gagnante                    2 blocs (544 et 531 nm)
+  RESULT       0.0027329534107462224
+  SEEL                           0,3 nm     erreur equivalente par couche
+  gagnante            id 2228, 2 blocs
+  plantage                     0,000
+  RUN_S                       ~1071 s
 ```
 
-⚠️ **`RESULT` est le PIRE des trois niveaux de bruit** (0,5× / 1× / 2×) ; les lignes en
-dessous sont au niveau **nominal**. Ne jamais comparer l'un à l'autre.
+**C'est le repère `D0.ref` de la campagne du 2026-08-10**, sur le code corrigé — corridor
+côté notation (A10) et normalisation sur l'enveloppe. `RESULT` **est le `robustness_score`
+de la gagnante**, vérifié au bit sur huit runs (§17-15 est close).
 
-⚠️ **Repère du pas de 1 nm.** Une version antérieure citait `RESULT = 0,005283` / 305
-stratégies : c'était le run à **2 nm**, périmé (voir §13).
+⚠️ **`RESULT` agrège les trois niveaux de bruit** (0,5× / 1× / 2×). Il est donc comparable
+aux **scores** du classement, et **jamais** aux statistiques **par bande**, qui sont au niveau
+nominal seul.
 
-🔴 **« 345 strategies rendues » ne peut pas venir de la sonde.** Ce compteur est plafonné à
-12 par construction — voir l'encadré rouge ci-dessous. Tant que la provenance de ce 345 n'est
-pas retrouvée, **ne t'en sers pas comme critère.**
+⚠️ **Tout repère mesuré avant le 2026-08-10 est périmé** — A10 et l'enveloppe ont changé le
+calcul, et le changement de signature force en plus une recompilation (§3). Ne compare pas au
+travers de cette date.
 
-🔴 **`RESULT = 0,002898` n'a d'artefact NULLE PART.** Les trois valeurs committées pour cette
-configuration, dans `reports/probe_anchor_noise_pipeline_full_step1_seed42.json` :
+#### 🪦 Ce que remplace ce repère — pour mémoire, ne le cite plus
 
-```
-59793e2  (2026-08-08, avant T1)   result = 0.00294862737130071
-721b746  (apres T5)               result = 0.00294862737130071
-cc90a94  (courant)                result = 0.00294862737122675
-```
+Ce document a longtemps cité **`RESULT = 0,002898`** avec « 345 stratégies rendues ».
+**Aucun artefact ne l'a jamais porté** : les valeurs committées pour cette configuration
+valaient `0.00294862737130071` puis `0.00294862737122675`, soit **+1,7 %** d'écart, et le
+compteur de la sonde est plafonné à 12 par construction — 345 n'a jamais pu en sortir.
 
-Aucune ne vaut 0,002898 — l'écart est de **+1,7 %**. **Le repère auquel tout ce document se
-compare est donc un chiffre dont on n'a pas la trace**, et l'écart entre les deux dernières
-lignes est le défaut n° 1 de §17. Rétablir ce repère est l'objet de T0, et rien de
-comparatif ne vaut avant.
-
-### 🔴 Ce repère n'a PAS été reproduit le 2026-08-08 — lis ceci avant de mesurer
-
-Deux tentatives, **deux `RESULT=None`** :
-
-```
-WAIT_EXIT=timeout
-WAIT_TIMEOUT=1800 s — aucune emission recue
-MODE=full_step1_seed42  SETUP_S=1.243  RUN_S=1800.051  RESULT=None
-PROBE_WRITTEN=...  strategies=12          <- au lieu de 345
-```
-
-La première fois, d'autres travaux tournaient en parallèle : mesure nulle, ma faute. **La
-seconde fois la machine était libre, et le plafond a quand même été atteint.**
-
-**Ce que cela veut dire, et ce que cela ne veut pas dire.** Cela ne dit pas que le code est
-cassé : le run progressait normalement, il n'a simplement pas fini. Cela dit que **le chiffre
-0,002898 n'est pas vérifié sur cette machine dans son état actuel**, et qu'aucune conclusion
-comparative ne peut être tirée tant qu'un run n'a pas abouti.
+Le chiffre a servi de référence à des dizaines de comparaisons sans que personne n'ait pu le
+reproduire. **Il est écarté définitivement.** Si tu le vois cité quelque part, c'est une
+survivance.
 
 **Ce qu'il faut faire avant toute mesure au banc :**
 
@@ -1433,7 +1411,8 @@ pas corréler les deux phénomènes.
 ```bat
 :: 1. non-regression : amplitudes a 0, le RESULT doit etre IDENTIQUE au repere §10
 .venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-::    attendu : RESULT = 0,002898  (au dernier chiffre)
+:: attendu : le repere de 10 -- et PAS a travers le 2026-08-10, ou A10 et
+::           l'enveloppe ont change le calcul (voir 3, recompilation)
 
 :: 2. le critere de reussite : avec et sans POEM, sous distorsion
 ::    (necessite d'exposer un drapeau de desactivation de POEM, cf. piege ci-dessous)
@@ -2214,6 +2193,11 @@ indépendantes, plage identique, seul le pas changeant :
 | principale | **0,002898** | 0,005283 | 1 nm meilleur, ÷1,82 |
 | 77 | **0,003553** | 0,008400 | 1 nm meilleur, ÷2,36 |
 
+⚠️ **Ces quatre chiffres sont HISTORIQUES** — état du code de 2026-08-08, avant A10 et avant
+la correction d'enveloppe. Ils ne se comparent qu'entre eux, jamais au repère `D0.ref` de
+§10. **Ce qui est acquis, c'est le rapport, pas la valeur** : le pas de 1 nm gagne sur deux
+graines indépendantes, d'un facteur ~2. Ne les cite pas comme des `RESULT` courants.
+
 Le pas de **1 nm** est retenu. Il coûte +9 % de temps et rend une gagnante à **2 blocs au
 lieu de 4** — moins de changements de λ à exécuter.
 
@@ -2518,8 +2502,9 @@ neufs.
 | 15 | 🔴 **Deux configurations différentes rendent le MÊME `RESULT` au bit, alors que leurs bandes diffèrent.** Seuils 2,0 A et 2,4 A : `RESULT = 0.003192038110407474` pour les deux, mais `passante` vaut 0,003214 contre 0,004444 — **38 % d'écart**. Donc `RESULT` est **aveugle à un changement qui déplace visiblement le résultat**. Avant de continuer à s'en servir comme grandeur de tête, il faut savoir ce qu'il agrège exactement : §10 dit « le pire des trois niveaux de bruit », et personne n'a vérifié cette phrase dans le code. |
 | 16 | 🟢 **La bande bloquée n'est jamais le mode de défaillance.** Sur les 25 runs au disque, elle est **~567× plus propre** que la passante, sans exception. §14 s'inquiète à juste titre qu'un RMSE uniforme ne puisse pas distinguer les deux bandes — mais **le filtre ne rate jamais son blocage, il rate son passage**. ⚠️ Cela ne clôt pas §14 : l'exigence est ~500× plus serrée en bande bloquée, et 567 ≈ 500 signifie que les deux bandes sont **également proches de leur spec**, pas que l'une est acquise. Il faut les tolérances réelles par bande pour trancher, et on ne les a pas. |
 | 12 | 🔴 **La marge de Phase A ne rejette RIEN.** Mesuré le 2026-08-10 : `phase_a_level_margin_factor = 3.33` rend `0.002948627371309867`, **bit-identique** au run à 1,66. `CONFIG=` confirme que 3,33 a bien été appliqué. Doubler la marge de sécurité ne change donc **pas un seul bit** du résultat. C'est le contrôle 4 de §20 : *« un filtre inerte ne produit aucune erreur, il produit un résultat plausible »*. **Compter ses rejets avant de conclure** — soit il n'écarte rien, soit ce qu'il écarte n'atteint jamais la gagnante. Les deux sont des informations, et aucune n'était connue. |
-| 13 | 🟢 **Le corridor d'indice écrase tout, avec la MOITIÉ du mécanisme.** Courbe complète mesurée le 2026-08-10 : `0,001 → ×1,98` · `0,0025 → ×3,35` · `0,005 → ×5,16` · `0,010 → ×8,19`. Ajustement log-log : **exposant 0,616** — ni linéaire, ni racine. **La méconnaissance d'indice est de très loin la plus grosse source d'erreur mesurée.** ⚠️ Et la notation n'est **toujours pas** perturbée (§17-10) : ces chiffres ne viennent que des épaisseurs faussées, donc **l'exposant lui-même changera après A10**. |
-| 17 | 🔑 **POEM protège AUSSI contre l'erreur d'indice — ×7,6 — et ce n'est pas le théorème qui le fait.** Mesuré le 2026-08-10, corridor 0,005 : coût ×5,16 avec POEM, ×39,3 sans. Or POEM n'est invariant que par distorsion **affine**, et une erreur d'indice n'en est pas une. **L'explication est l'autre mécanisme** : POEM recale ses ancres sur les extrema réellement observés, donc il compense les erreurs d'épaisseur **accumulées** — le même effet qui lui vaut déjà ×1,975 sans aucune perturbation. 🔴 **Ce ×7,6 est très probablement SURESTIMÉ** : le mode *croisé*, celui que §12.3 dit non compensable, ne se manifeste que dans le spectre final — lequel est encore évalué aux indices nominaux. **A10 fera probablement BAISSER ce chiffre**, et c'est la raison la plus forte de la faire. |
+| 13 | 🟢 **Le corridor d'indice, courbe CORRIGÉE du 2026-08-10.** Notation perturbée (A10) **et** normalisation sur l'enveloppe : `0,001 → ×1,24` · `0,0025 → ×1,86` · **`0,005 → ×2,46`** · `0,010 → ×4,32`. En SEEL : **0,3 → 0,6 nm à la valeur du modèle**, l'erreur équivalente **double**. Exposant log-log **0,525**, remarquablement proche d'une racine carrée. ⚠️ Les chiffres d'avant (×1,98 / ×3,35 / ×5,16 / ×8,19, exposant 0,616) étaient **gonflés de 1,6 à 2,1×** par la normalisation fautive. **Ne les cite plus.** |
+| 19 | 🟢 **La prédiction du §12.3 est CONFIRMÉE, et cette fois sans l'artefact.** Le nombre de blocs de la gagnante croît de façon monotone avec le corridor : **2 → 3 → 4 → 5 → 8**. §12.3 l'annonçait — *« cela favorise les stratégies dont les λ de contrôle sont réparties plutôt que groupées »*. 🔑 **Ce qui rend ce constat solide, c'est qu'il survit à la correction.** Le bug de normalisation poussait dans le **même sens** (il pénalisait les λ groupées d'un facteur allant jusqu'à 21) : tant qu'il était là, l'effet physique était indémontrable. L'artefact retiré, l'effet demeure. |
+| 17 | 🔑 **POEM protège AUSSI contre l'erreur d'indice, et ce n'est pas le théorème qui le fait.** Sur le corridor corrigé (2026-08-10), à 0,005 : `SEEL 0,6 nm` avec POEM contre **`22,3 nm` et 29,3 % de plantage** sans — un rapport de **×34,8** sur le `RESULT`. Or POEM n'est invariant que par distorsion **affine**, et une erreur d'indice n'en est pas une. **L'explication est l'autre mécanisme** : POEM recale ses ancres sur les extrema réellement observés, donc il compense les erreurs d'épaisseur **accumulées**. ⚠️ Le facteur de protection propre (rapport des coûts) demande un run POEM-off à corridor 0 sur le code corrigé, **qui n'existe pas encore** — les valeurs ×7,6 puis ×6,85 citées plus tôt sont d'avant l'enveloppe. |
 | 11 | 🔴 **`poem_enabled` ne peut pas être désactivé par l'environnement.** Mesuré le 2026-08-09 : deux runs lancés avec `CERTUS_POEM_ENABLED=0` ont rendu `CONFIG={"poem_enabled": true}` et des `RESULT` **bit-identiques** aux runs POEM actif. Cause : `probe_anchor_noise_pipeline.py:94` teste `os.environ.get(...) not in {"0", "false", "False"}` — une valeur `"0 "` avec un espace de fin, que `set VAR=0 ` produit sans le montrer, rend **True**. Les amplitudes affines y survivent parce que `float("0.05 ")` avale l'espace ; le test d'appartenance non. **Correctif : `.strip()` sur toutes les variables lues**, et une valeur inattendue doit lever, pas retomber silencieusement sur le défaut. ⚠️ **A12 est inexécutable tant que ce n'est pas corrigé** — et elle rendra des chiffres parfaitement crédibles. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 

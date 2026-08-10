@@ -178,10 +178,22 @@ sortie collée. **Une action, un commit.**
 |---|---|---|
 | `scripts\preflight.py` | Les 7 vérifications d'environnement en une commande, verdict `PREFLIGHT=GO` / `STOP` | §0 en entier |
 | `scripts\probe_tp_fabrication.py` | **A1 et A2, faites.** Fabrication d'extrema et survie des vrais, avec le vrai détecteur et le vrai générateur de bruit | A1, A2 |
-| `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]` et dans le nom du fichier (`f4ada2d`) | le trou de traçabilité de §17-7 |
+| `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]`, dans le nom du fichier, **et l'annonce dans les 2 s** ; refuse une valeur illisible au lieu de retomber sur le défaut | le trou de traçabilité de §17-7, et §17-11 |
+| `scripts\run_campaign.py` | **Une commande = toute une campagne.** Environnement construit en dictionnaire, aucun shell, chaque run vérifié contre la configuration demandée, reprenable | une nuit de commandes tapées à la main |
 
-**A1 et A2 sont DONE (`e3a4c72`).** A1 a **réfuté** le seuil dérivé — voir §9bis. **A13 doit
-donc utiliser le seuil mesuré `1,00`, et non `0,354`.**
+### ✅ État au 2026-08-10 — ce qui est FAIT, ne le refais pas
+
+| Action | État | Ce que ça a donné |
+|---|---|---|
+| **A1, A2** | ✅ `e3a4c72` | A1 **réfute** le seuil dérivé de §9bis. **A13 doit utiliser `1,00`, pas `0,354`.** A2 passe. |
+| **A7 (ex-T0)** | ✅ **repère rétabli** | `0.002948627371309867`, reproduit **4 fois au bit**. `0,002898` est définitivement écarté. |
+| **A12** | 🟢 **FAITE — POEM validé ×17,5** | §12.1. Le critère de réussite posé à l'avance est atteint. |
+| **A15** | ✅ faite | La marge 3,33 rend un résultat **bit-identique** à 1,66 : **elle ne rejette rien** (§17-12). |
+| **A14** | ⚠️ **à moitié** | ×3,35 et ×5,16 — mais **avant A10**, donc seule la moitié « croissance » est mesurée. **À refaire après A10** (§17-13). |
+| **A6** | ⚠️ requalifiée | Le banc **est** déterministe. Reste à savoir si une **recompilation** décale les bits — voir §3. |
+
+**La suite immédiate est A10** : le corridor est de très loin le plus gros effet mesuré, et
+on n'en voit aujourd'hui que la moitié.
 
 ---
 
@@ -721,35 +733,43 @@ chemin par défaut sur une large batterie de configurations **avant** la modific
 recapturer après, exiger **zéro** différence. La correction affine de §8 a été validée ainsi
 sur **75 818 configurations**.
 
-### 🔴 Le `RESULT` du banc n'est PAS l'instrument de cette règle — ne t'en sers jamais pour ça
+### 🟢 Le banc EST déterministe — mais la RECOMPILATION peut décaler les derniers chiffres
 
-**Mesuré le 2026-08-09** : deux runs de configuration **strictement identique** rendent
-`0.002948627371226749` et `0.002948627371309867`, soit **2,8e-11** d'écart relatif.
+📏 **Mesuré le 2026-08-10**, campagne de 10 runs. Quatre runs de configuration neutre, lancés
+à la suite, rendent **exactement le même bit** :
 
-C'est **normal et irréductible**. `compute_batch_rmse` porte
-`@njit(parallel=True, fastmath=True)` : `prange` somme les résultats partiels dans l'ordre où
-les threads finissent, l'addition flottante n'est pas associative, et `fastmath` autorise en
-plus la réassociation. **Un agrégat parallèle ne peut pas être bit-reproductible.**
+```
+A12.1  0.002948627371309867
+A6.1   0.002948627371309867
+A6.2   0.002948627371309867
+A6.3   0.002948627371309867
+```
 
-👤 **Tranché le 2026-08-09 : on l'admet, on ne corrige pas.** Rendre le banc déterministe
-coûterait du temps de calcul sur chaque run futur pour acheter une propriété qu'on obtient
-gratuitement ailleurs. La gigue est 3×10⁸ fois plus petite que le plus petit effet physique
-qu'on mesure — elle ne fausse aucune comparaison qui compte.
+⚠️ **Une version antérieure de ce paragraphe affirmait le contraire** — que `parallel=True` +
+`fastmath=True` rendaient le banc « non bit-reproductible par construction », avec une gigue
+irréductible de 3e-11. **C'était faux, et fondé sur deux points seulement.** L'ordonnancement
+des threads ne fait rien varier.
 
-**Donc, sans exception :**
+**La seule valeur différente**, `0.002948627371226749` (écart 2,8e-11), est celle du premier
+run lancé **après la montée en Python 3.14.7** — donc le seul avec un cache numba **froid**.
 
-| Pour vérifier… | Instrument | Tolérance |
-|---|---|---|
-| **C1, l'identité bit-à-bit** | **le harnais d'empreinte `float.hex()` (A5), en MONO-THREAD** | **zéro** différence |
-| qu'un run n'a pas dérapé | le `RESULT` du banc | l'enveloppe de gigue, ~1e-10 |
+> **La règle : à état compilé identique, le banc rend le même bit. C'est la RECOMPILATION qui
+> est le facteur de risque, pas l'exécution.**
 
-⚠️ **Le harnais doit forcer `NUMBA_NUM_THREADS=1`.** Sans cela il mesurerait la même gigue et
-ne prouverait rien — il aurait l'air de fonctionner tout en ne testant rien, ce qui est le
-pire des trois états.
+🔴 **Et ça pique pour la règle d'or.** Ajouter un paramètre à un noyau numba **change sa
+signature, donc force une recompilation**. Le « bit-identique » exigé par C1 pourrait donc
+être structurellement inatteignable dans le seul cas où on en a besoin.
 
-⚠️ **Corollaire perdu, et il faut le savoir** : `RESULT` n'est plus un indicateur de santé du
-banc. On ne peut plus dire « le chiffre a changé donc le banc est cassé ». Il faut d'abord
-connaître l'enveloppe de gigue, et c'est pourquoi A7 se lance **deux fois**.
+**Une mesure à 25 minutes tranche, et elle n'a pas été faite** : vider le cache numba, relancer
+à code strictement inchangé.
+
+- Le chiffre bouge → c'est bien la compilation, et C1 doit être reformulée avec une tolérance
+  explicite pour les changements de signature.
+- Le chiffre ne bouge pas → c'était la version de Python, et C1 tient telle quelle.
+
+**Tant que cette mesure n'est pas faite, ne conclus rien** sur un écart de l'ordre de 1e-11
+observé après un changement de signature de noyau. C'est exactement l'erreur qui a produit
+puis fait retirer le constat §17-1.
 
 ## 4. Quand s'arrêter et demander
 
@@ -1239,23 +1259,32 @@ pas corréler les deux phénomènes.
 doit être **spectaculaire**. Sinon, l'argument central du mécanisme tombe et **il faut le
 dire**.
 
-#### 📏 Première moitié mesurée le 2026-08-09 — POEM actif
+#### 🟢 MESURÉ LE 2026-08-10 — POEM tient sa promesse, facteur 17,5
 
-```
-POEM actif, distorsion absente   RESULT = 0.002948627371309867
-POEM actif, distorsion presente  RESULT = 0.0029742829447752268     +0,87 %
-```
+Campagne `scripts\run_campaign.py`, 4 bras, `amp_scale = 0.05`, `amp_offset = 0.02`,
+graine 42, pas 1 nm. Les 4 runs `OK`, `CONFIG=` vérifiée bras par bras, **aucun écart entre
+la configuration demandée et celle appliquée**.
 
-`amp_scale = 0.05`, `amp_offset = 0.02`, graine 42, pas 1 nm. `WAIT_EXIT=finished`,
-`CONFIG=` vérifié, et **chaque chiffre reproduit deux fois à l'identique**.
+| | distorsion absente | distorsion présente | **coût de la distorsion** |
+|---|---|---|---|
+| **POEM actif** | `0.002948627371309867` | `0.0029742829447752268` | **×1,0087** (+0,87 %) |
+| **POEM inactif** | `0.005824599272270286` | `0.10256954814393225` | **×17,61** (+1661 %) |
 
-**C'est la première mesure de l'effet de la distorsion photométrique du projet.** Elle est
-propre.
+$$\textbf{Facteur de protection de POEM} = \frac{17{,}61}{1{,}0087} = \mathbf{17{,}5}$$
 
-🔴 **Mais elle ne dit RIEN sur POEM**, et il ne faut pas la présenter autrement. Les deux runs
-POEM-inactif n'ont pas eu lieu : le drapeau n'était pas désactivable (§17-11). Sans le
-contraste, `+0,87 %` n'est ni bon ni mauvais — c'est un nombre sans référence. **Le critère de
-réussite reste entièrement à mesurer.**
+**Le critère de réussite posé à l'avance était : « l'écart doit être spectaculaire, sinon
+l'argument central du mécanisme tombe ». Il est de trois ordres de grandeur.**
+
+Deux constats supplémentaires que personne n'avait demandés :
+
+- **POEM inactif SANS aucune distorsion coûte déjà ×1,975.** Il ne protège donc pas seulement
+  de la dérive photométrique : il compense aussi les erreurs d'épaisseur accumulées.
+- Le pire cas complet — POEM inactif sous distorsion — vaut **×34,8** le meilleur cas.
+
+🔴 **Ce que cette mesure ne dit PAS.** Elle porte sur `RESULT`, l'agrégat sur les trois
+niveaux de bruit, à une seule graine et sur le seul 48 couches. Elle ne dit rien du **taux de
+plantage** ni de la répartition par bande — il faut relire les JSON des quatre runs pour ça.
+Et §15 reste entier : c'est un banc de cohérence, pas une validation physique.
 
 #### Pièges connus
 
@@ -2130,6 +2159,8 @@ neufs.
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
 | 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
+| 12 | 🔴 **La marge de Phase A ne rejette RIEN.** Mesuré le 2026-08-10 : `phase_a_level_margin_factor = 3.33` rend `0.002948627371309867`, **bit-identique** au run à 1,66. `CONFIG=` confirme que 3,33 a bien été appliqué. Doubler la marge de sécurité ne change donc **pas un seul bit** du résultat. C'est le contrôle 4 de §20 : *« un filtre inerte ne produit aucune erreur, il produit un résultat plausible »*. **Compter ses rejets avant de conclure** — soit il n'écarte rien, soit ce qu'il écarte n'atteint jamais la gagnante. Les deux sont des informations, et aucune n'était connue. |
+| 13 | 🟢 **Le corridor d'indice écrase tout, avec la MOITIÉ du mécanisme.** Mesuré le 2026-08-10 : corridor 0,0025 → **×3,35** ; corridor 0,005 → **×5,16**. Et la notation n'est toujours pas perturbée (§17-10) : ces chiffres ne viennent que des épaisseurs faussées. **La méconnaissance d'indice est de très loin la plus grosse source d'erreur mesurée à ce jour.** À noter, l'effet est **sous-linéaire** : corridor ×2 → résultat ×1,54. |
 | 11 | 🔴 **`poem_enabled` ne peut pas être désactivé par l'environnement.** Mesuré le 2026-08-09 : deux runs lancés avec `CERTUS_POEM_ENABLED=0` ont rendu `CONFIG={"poem_enabled": true}` et des `RESULT` **bit-identiques** aux runs POEM actif. Cause : `probe_anchor_noise_pipeline.py:94` teste `os.environ.get(...) not in {"0", "false", "False"}` — une valeur `"0 "` avec un espace de fin, que `set VAR=0 ` produit sans le montrer, rend **True**. Les amplitudes affines y survivent parce que `float("0.05 ")` avale l'espace ; le test d'appartenance non. **Correctif : `.strip()` sur toutes les variables lues**, et une valeur inattendue doit lever, pas retomber silencieusement sur le défaut. ⚠️ **A12 est inexécutable tant que ce n'est pas corrigé** — et elle rendra des chiffres parfaitement crédibles. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 

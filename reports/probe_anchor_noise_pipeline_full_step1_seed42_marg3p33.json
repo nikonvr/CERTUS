@@ -475,7 +475,7 @@
  "config": {
   "poem_anchor_noise": true,
   "tp_hysteresis_factor": 1.66,
-  "phase_a_level_margin_factor": 1.66,
+  "phase_a_level_margin_factor": 3.33,
   "dp_yield_weight": 0.0,
   "scan_wl_step": 1.0,
   "robustness_seed": 42,

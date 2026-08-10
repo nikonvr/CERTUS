@@ -22,8 +22,13 @@ WHY THIS EXISTS
   campaign in one process would let run N-1 contaminate run N.
 
 RESUMABLE
-  A run whose report JSON already exists is skipped. Kill it, relaunch it, it picks
-  up where it stopped.
+  A run is skipped only if its transcript exists AND that transcript still passes the
+  same configuration checks. Resuming must never be a way to inherit a bad run.
+
+  ⚠️ The neutral runs all write the same probe JSON, since the file name is derived
+  from the configuration and theirs is identical -- each overwrites the previous. That
+  is intended and loses nothing: every run is kept in `reports/probe_runs.tsv` and in
+  its own `reports/campagne_*.log`, which is where the jitter measurement reads from.
 """
 
 from __future__ import annotations
@@ -147,8 +152,47 @@ def check_expectations(applied: dict[str, object] | None, expected: dict[str, ob
     return problems
 
 
+def _display_path(path: Path) -> str:
+    """Repo-relative when it can be, absolute otherwise. Never raises on a report path."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def transcript_path(label: str) -> Path:
+    return REPORTS / f"campagne_{label.replace('.', '_')}.log"
+
+
+def already_done(label: str, expected: dict[str, object]) -> dict | None:
+    """Re-read a previous transcript and accept it only if it PASSES the same checks.
+
+    Resuming must not be a way to inherit a bad run. A transcript that exists but
+    whose configuration did not match, or that carries no RESULT, is not a result:
+    the run is redone.
+    """
+    path = transcript_path(label)
+    if not path.exists():
+        return None
+    out = path.read_text(encoding="utf-8", errors="replace")
+    config, result, written = parse_output(out)
+    problems = check_expectations(config, expected)
+    if not result or result == "None" or problems:
+        return None
+    return {
+        "label": label, "purpose": "", "status": "OK (repris)", "result": result,
+        "written": written, "config": config, "problems": [],
+        "transcript": _display_path(path),
+    }
+
+
 def run_one(label: str, purpose: str, overrides: dict[str, str], expected: dict[str, object]) -> dict:
     print(f"\n{'=' * 72}\n{label} -- {purpose}", flush=True)
+    resumed = already_done(label, expected)
+    if resumed is not None:
+        resumed["purpose"] = purpose
+        print(f"  deja fait, RESULT = {resumed['result']} -- ignore", flush=True)
+        return resumed
     print(f"  overrides: {overrides or '(none, neutral run)'}", flush=True)
     cmd = [sys.executable, str(PROBE), "full", "1.0", "42"]
     try:
@@ -165,7 +209,7 @@ def run_one(label: str, purpose: str, overrides: dict[str, str], expected: dict[
     problems = check_expectations(config, expected)
     status = "OK" if (result and result != "None" and not problems) else "FAILED"
 
-    transcript = REPORTS / f"campagne_{label.replace('.', '_')}.log"
+    transcript = transcript_path(label)
     transcript.write_text(out, encoding="utf-8")
 
     print(f"  RESULT   = {result}", flush=True)

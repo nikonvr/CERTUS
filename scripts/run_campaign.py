@@ -166,7 +166,75 @@ PLAN_POSTA10 = [
           expect={"index_corridor": 0.005, "poem_enabled": False}),
 ]
 
-PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY, "posta10": PLAN_POSTA10}
+#: FULL plan -- answers every question left open on 2026-08-10, ordered by decreasing
+#: value so that an interrupted campaign still measured what mattered most.
+#:
+#: All corridor figures taken before this plan are void: they were normalised over the
+#: monitoring span, which handed a grouped strategy up to 21x the specified corridor.
+#: D1 re-establishes the whole curve on the corrected envelope.
+PLAN_FULL = [
+    # === D0. The reference, on corrected code. Everything else compares to it. ===
+    entry("D0.ref", "reference on the corrected envelope -- the anchor for this campaign",
+          expect={"index_corridor": 0.0, "poem_enabled": True, "robustness_num_runs": 150}),
+
+    # === D1. The corridor, re-measured. The largest effect in the project, and every
+    # earlier figure for it is invalid. ===
+    entry("D1.1", "corridor 0.001, corrected normalisation",
+          env={"CERTUS_INDEX_CORRIDOR": "0.001"}, expect={"index_corridor": 0.001}),
+    entry("D1.2", "corridor 0.0025, corrected", env={"CERTUS_INDEX_CORRIDOR": "0.0025"},
+          expect={"index_corridor": 0.0025}),
+    entry("D1.3", "corridor 0.005 -- THE model value, corrected",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"}, expect={"index_corridor": 0.005}),
+    entry("D1.4", "corridor 0.010, corrected", env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01}),
+    entry("D1.5", "corridor 0.005 POEM OFF -- does the x6.85 protection hold on the corrected corridor?",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
+          expect={"index_corridor": 0.005, "poem_enabled": False}),
+
+    # === D2. HOW MANY RUNS? Sobol is nested and identically seeded whatever N, so
+    # these are refinements of one another, not independent draws. And Phase A does not
+    # move, so strategy ids ARE comparable across this sweep -- which is what makes the
+    # ranking-stability question answerable at all. ===
+    entry("D2.25", "N = 25 -- ranking convergence", env={"CERTUS_NUM_RUNS": "25"},
+          expect={"robustness_num_runs": 25}),
+    entry("D2.50", "N = 50", env={"CERTUS_NUM_RUNS": "50"}, expect={"robustness_num_runs": 50}),
+    entry("D2.100", "N = 100", env={"CERTUS_NUM_RUNS": "100"}, expect={"robustness_num_runs": 100}),
+    entry("D2.300", "N = 300", env={"CERTUS_NUM_RUNS": "300"}, expect={"robustness_num_runs": 300}),
+    entry("D2.600", "N = 600", env={"CERTUS_NUM_RUNS": "600"}, expect={"robustness_num_runs": 600}),
+    entry("D2.1200", "N = 1200 -- certification depth", env={"CERTUS_NUM_RUNS": "1200"},
+          expect={"robustness_num_runs": 1200}),
+
+    # === D3. ELIMINATION. The screening runs at 25 draws and keeps 10: at that depth a
+    # 0 % strategy and a 13 % one are indistinguishable. If the final winner is the same
+    # whether we screen at 10 or at 100, the screening loses nothing. If it changes, it
+    # is discarding on a statistic that cannot see the target. ===
+    entry("D3.10", "screening at 10 draws", env={"CERTUS_SCREEN_RUNS": "10"},
+          expect={"n_screen_runs": 10}),
+    entry("D3.50", "screening at 50 draws", env={"CERTUS_SCREEN_RUNS": "50"},
+          expect={"n_screen_runs": 50}),
+    entry("D3.100", "screening at 100 draws", env={"CERTUS_SCREEN_RUNS": "100"},
+          expect={"n_screen_runs": 100}),
+    entry("D3.keep30", "keep 30 survivors instead of 10 -- does the funnel leak?",
+          env={"CERTUS_KEEP_SURVIVORS": "30"}, expect={"k_keep_survivors": 30}),
+
+    # === D4. SEEDS. Measured on 2026-08-09: the distortion costs +0.9 % at seed 42 and
+    # +98 % at seed 77. A hundredfold, same configuration. The seed changes the whole
+    # realisation, so seed spread is worth more than depth at one seed. ===
+    entry("D4.77", "seed 77", args=("full", "1.0", "77"), expect={"robustness_seed": 77}),
+    entry("D4.101", "seed 101", args=("full", "1.0", "101"), expect={"robustness_seed": 101}),
+    entry("D4.202", "seed 202", args=("full", "1.0", "202"), expect={"robustness_seed": 202}),
+    entry("D4.consensus", "multi-seed consensus ranking, built and switched off since forever",
+          env={"CERTUS_CONSENSUS": "1"}, expect={"enable_consensus_ranking": True}),
+
+    # === D5. The knobs measured inert. Re-checked on corrected code: if they are still
+    # flat, they do not reach the computation and that is a defect, not a calibration. ===
+    entry("D5.marg", "Phase A margin 3.33 -- was bit-identical to 1.66",
+          env={"CERTUS_PHASE_A_MARGIN": "3.33"}, expect={"phase_a_level_margin_factor": 3.33}),
+    entry("D5.yw200", "dp_yield_weight 200 -- was inert across three decades",
+          args=("full", "1.0", "42", "200"), expect={"dp_yield_weight": 200.0}),
+]
+
+PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY, "posta10": PLAN_POSTA10, "full": PLAN_FULL}
 
 
 def probe_env(overrides: dict[str, str]) -> dict[str, str]:
@@ -334,20 +402,52 @@ def main() -> int:
     return 0 if n_ok == len(plan) else 1
 
 
+def _read_report(written: str | None) -> dict:
+    """Re-open the run's JSON to surface the winner and the SEEL reading."""
+    if not written:
+        return {}
+    try:
+        return json.loads(Path(written).read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {}
+
+
 def write_summary(records: list[dict], total: int) -> None:
-    """Rewritten after every run, so the summary is readable while the campaign runs."""
+    """Rewritten after EVERY run, so progress is readable while the campaign runs.
+
+    Deliberately verbose on the two things a partial campaign is read for: what the
+    winner is, and what the run means in nanometres. A RESULT alone says nothing to
+    anyone -- SEEL does.
+    """
+    done = len(records)
+    bar = "#" * done + "." * max(0, total - done)
     lines = [
         "# RESUME DE CAMPAGNE",
         "",
-        "Ecrit par `scripts/run_campaign.py` apres chaque run. Ce fichier est une SORTIE.",
+        "Ecrit par `scripts/run_campaign.py` **apres chaque run**. Ce fichier est une SORTIE.",
         "",
-        f"Runs termines : {len(records)} / {total}",
+        f"**Avancement : {done} / {total}**  `[{bar}]`",
         "",
-        "| run | statut | RESULT | objet |",
-        "|---|---|---|---|",
+        "SEEL = erreur aleatoire equivalente par couche, en nm, quantifiee a 0,1 nm.",
+        "C'est la seule colonne lisible sans conversion. RESULT est le PIRE des trois",
+        "niveaux de bruit ; il ne se compare a aucune valeur par strategie (voir 10).",
+        "",
+        "| run | statut | RESULT | SEEL | gagnante | blocs | plantage | objet |",
+        "|---|---|---|---|---|---|---|---|",
     ]
     for r in records:
-        lines.append(f"| {r['label']} | {r['status']} | `{r['result']}` | {r['purpose']} |")
+        rep = _read_report(r.get("written"))
+        seel = (rep.get("seel") or {}).get("result_seel_nm")
+        win = rep.get("winner") or {}
+        seel_txt = f"**{seel:.1f} nm**" if isinstance(seel, (int, float)) else "—"
+        wid = win.get("id", "—")
+        nb = win.get("n_blocks", "—")
+        crash = win.get("crash")
+        crash_txt = f"{crash:.1%}" if isinstance(crash, (int, float)) else "—"
+        lines.append(
+            f"| {r['label']} | {r['status']} | `{r['result']}` | {seel_txt} | "
+            f"{wid} | {nb} | {crash_txt} | {r['purpose']} |"
+        )
     problems = [(r["label"], p) for r in records for p in r["problems"]]
     if problems:
         lines += ["", "## Ecarts entre demande et configuration appliquee", ""]

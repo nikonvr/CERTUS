@@ -108,6 +108,7 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     trim_worst_only,
     simulate_stack_robustness_batch,
     compute_batch_rmse,
+    corridor_wl_range,
     compute_T_front_at_layer,
     compute_T_front_profile,
     compute_dT_dd_kernel,

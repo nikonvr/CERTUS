@@ -35,6 +35,7 @@ from certus_physics import (
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
     compute_batch_rmse,
+    corridor_wl_range,
     precompute_matrix_cache_kernel,
     simulate_stack_robustness_batch,
 )
@@ -951,6 +952,12 @@ def _test_strategy_robustness_task(
             crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
 
         run_thicknesses = sim_thick_batch.tolist()
+        # The finished filter really carries the perturbed index, so its spectrum must
+        # be evaluated with it. Scoring at the nominal index measures a filter that was
+        # never deposited, and hides the CROSSED mode entirely -- see 12.3 and 17-10.
+        # The normalisation range is taken from the SAME helper the growth batch uses,
+        # so both stages apply one and the same dispersion curve to a given run.
+        corridor_lo, corridor_hi = corridor_wl_range(layer_wavelengths)
         run_rmses = compute_batch_rmse(
             sim_thick_batch,
             wl_arr.astype(np.float64),
@@ -960,6 +967,10 @@ def _test_strategy_robustness_task(
             T_rank_target,
             n_layers_matrix,
             rank_weights,
+            index_corridor,
+            index_seed,
+            corridor_lo,
+            corridor_hi,
         )
         rmse_p95 = float(np.percentile(run_rmses, 95))
         rmse_p99 = float(np.percentile(run_rmses, 99))

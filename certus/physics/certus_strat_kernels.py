@@ -52,6 +52,7 @@ from .certus_strat_batch import (
     validate_wavelengths_batch,
     simulate_stack_robustness_batch,
     compute_batch_rmse,
+    corridor_wl_range,
     precompute_matrix_cache_kernel,
     _calculate_RT_HL_single_point,
     calculate_RT_batch_kernel
@@ -107,6 +108,7 @@ __all__ = [
     "validate_wavelengths_batch",
     "simulate_stack_robustness_batch",
     "compute_batch_rmse",
+    "corridor_wl_range",
     "precompute_matrix_cache_kernel",
     "_calculate_RT_HL_single_point",
     "calculate_RT_batch_kernel"

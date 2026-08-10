@@ -18,6 +18,31 @@ from .certus_strat_growth import simulate_growth_kernel
 MONITOR_NOISE_SLOTS_PER_LAYER = 16 + 64
 
 
+@njit(cache=True, nogil=True)
+def corridor_wl_range(wavelengths: np.ndarray) -> tuple[float, float]:
+    """The lambda normalisation of the index perturbation -- ONE definition.
+
+    delta_M(lambda) = a_M + b_M * u(lambda) with u normalised over [lo, hi]. The
+    growth path and the scoring path MUST use the same [lo, hi], otherwise the same
+    material carries two different dispersion curves in the same run and the two
+    stages stop modelling the same filter. They used to compute it separately; this
+    exists so they cannot drift apart.
+
+    ⚠️ OPEN QUESTION, deliberately not decided here. [lo, hi] is the range of the
+    MONITORING wavelengths, which is narrower than the spectral grid the filter is
+    scored on. Outside it, |u| > 1, so |delta| exceeds delta_max and the corridor
+    guarantee of 12.3 -- "the corridor holds everywhere" -- is violated on the edges
+    of the spectrum. Normalising over the spectral grid instead would fix that, but
+    it changes every corridor figure already measured. Raise it, do not fix it
+    silently.
+    """
+    lo = np.min(wavelengths)
+    hi = np.max(wavelengths)
+    if abs(hi - lo) < 1e-6:
+        hi = lo + 100.0
+    return lo, hi
+
+
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")
 def validate_wavelengths_batch(
     candidate_wls,
@@ -273,10 +298,7 @@ def simulate_stack_robustness_batch(
             block_start[i] = i
         else:
             block_start[i] = block_start[i - 1]
-    wl_min = np.min(layer_wavelengths)
-    wl_max = np.max(layer_wavelengths)
-    if abs(wl_max - wl_min) < 1e-6:
-        wl_max = wl_min + 100.0
+    wl_min, wl_max = corridor_wl_range(layer_wavelengths)
     for r in prange(n_runs):
         if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)
@@ -361,8 +383,35 @@ def compute_batch_rmse(
     T_target: np.ndarray,
     n_layers_flattened: np.ndarray,
     weights: np.ndarray = None,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
+    corridor_wl_min: float = 0.0,
+    corridor_wl_max: float = 0.0,
 ) -> np.ndarray:
     """Computes RMSE for a batch of simulated thicknesses against a target T spectrum.
+
+    ``index_corridor`` -- INDEX UNCERTAINTY ON THE SCORING PATH. 0.0 = disabled, and
+    the computation path is then word for word the one from before this parameter.
+
+    🔴 WHY THE SCORING MUST BE PERTURBED TOO, AND NOT ONLY THE GROWTH.
+    The deposited filter really carries the wrong index. Evaluating its spectrum at
+    the NOMINAL index measures a filter that does not exist. Worse, it hides the one
+    mode the physicist calls uncompensable: a CROSSED dispersion curve carries an
+    error of opposite sign on either side of the monitoring wavelength, so the
+    correction made at that wavelength AGGRAVATES the error elsewhere -- and that
+    shows up in the final spectrum, nowhere else. Perturbing the growth alone
+    measures the compensable half of the problem and calls it the whole.
+
+    🔴 THE DRAW IS REPEATED HERE, NOT PASSED IN, AND THAT IS DELIBERATE.
+    Same seed, same group (0 = H, 1 = L), same run index, same formula as
+    ``simulate_stack_robustness_batch``: the two stages therefore see the SAME index
+    curve for the same run, which is what contraint C2 demands. Threading four arrays
+    through the call chain would have offered a way for them to drift apart.
+
+    ⚠️ ``corridor_wl_min`` / ``corridor_wl_max`` MUST be the values the growth batch
+    used -- the range of the MONITORING wavelengths, not of the spectral grid. Pass
+    them explicitly; a local recomputation here would normalise over the spectral
+    grid and silently apply a different perturbation to the same material.
 
     ``weights`` -- SPECTRAL WEIGHTING, axis 3. ``None`` = uniform, and the computation
     path then becomes word for word the one before this parameter.
@@ -400,15 +449,43 @@ def compute_batch_rmse(
         rmse_arr: (n_runs,)"""
     n_runs = sim_thick_batch.shape[0]
     n_wls = len(wls)
+    n_layers = sim_thick_batch.shape[1]
     rmse_arr = np.empty(n_runs, dtype=np.float64)
     k0_arr = TWO_PI / wls
+    corridor_on = index_corridor > 0.0 and corridor_wl_max > corridor_wl_min
     for r in prange(n_runs):
         thicknesses = sim_thick_batch[r]
+        # Same draw as the growth batch: same seed, same groups, same run index.
+        # 0 = H (even layers), 1 = L (odd layers).
+        a_h = 0.0
+        b_h = 0.0
+        a_l = 0.0
+        b_l = 0.0
+        if corridor_on:
+            z1_h = _seeded_noise_sample(index_seed, 0, r, 0, True)
+            z2_h = _seeded_noise_sample(index_seed, 0, r, 1, True)
+            a_h = index_corridor * z1_h
+            b_h = index_corridor * z2_h * (1.0 - abs(z1_h))
+            z1_l = _seeded_noise_sample(index_seed, 1, r, 0, True)
+            z2_l = _seeded_noise_sample(index_seed, 1, r, 1, True)
+            a_l = index_corridor * z1_l
+            b_l = index_corridor * z2_l * (1.0 - abs(z1_l))
+        n_pert = np.empty(n_layers, dtype=np.complex128)
         mse_sum = 0.0
         w_sum = 0.0
         for i_wl in range(n_wls):
+            n_row = n_layers_flattened[i_wl]
+            if corridor_on:
+                u_wl = (2.0 * wls[i_wl] - (corridor_wl_min + corridor_wl_max)) / (
+                    corridor_wl_max - corridor_wl_min
+                )
+                d_h = a_h + b_h * u_wl
+                d_l = a_l + b_l * u_wl
+                for j in range(n_layers):
+                    n_pert[j] = n_row[j] + (d_h if j % 2 == 0 else d_l)
+                n_row = n_pert
             Rf, Tf, Rb = compute_TMM_single_point_k0_exact(
-                k0_arr[i_wl], thicknesses, n_layers_flattened[i_wl], nSub_arr[i_wl]
+                k0_arr[i_wl], thicknesses, n_row, nSub_arr[i_wl]
             )
             ns_real = nSub_arr[i_wl].real
             r_sub = (ns_real - 1.0) / (ns_real + 1.0)

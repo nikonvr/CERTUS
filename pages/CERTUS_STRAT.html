@@ -1556,7 +1556,112 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.12 Non-Monotonic Error Model</h3>
+        <h3>2.12 The critical layer, and how to measure a risk that reads zero</h3>
+        <div style="border:3px solid #7f1d1d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
+            <p style="margin:0 0 10px;">
+                👤 <b>The question (2026-08-10):</b> <i>"it would be good, for each strategy, to name
+                the most critical layer -- the one most at risk of a crash. And if the statistics read
+                zero crashes, one would have to raise the noise or the index drift by some factor I do
+                not control."</i>
+            </p>
+            <p style="margin:0 0 10px;">
+                This is <b>rare-event estimation</b>. At 150 draws with zero crashes one knows
+                $p < 2\,\%$ and nothing more; resolving $p = 0.1\,\%$ would take some 3000 draws per
+                strategy. And raising the noise -- the natural reflex -- is the trap this project has
+                paid for three times (§2.7): POEM's compensation is not linear, so a rate measured at
+                twice the noise does not reduce to the rate at nominal.
+            </p>
+
+            <p style="margin:14px 0 10px;font-weight:700;color:#166534;">
+                🟢 Tier 0 — the per-layer information already exists, and is discarded
+            </p>
+            <div class="code-box"><pre>crashed_cells = sim_thick_batch &gt; CRASH_SENTINEL_MIN      # (n_runs, n_layers)
+n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collapses the layers</pre></div>
+            <p style="margin:10px 0 0;">
+                The array is per <i>(run, layer)</i>, and <code>np.any</code> along axis 1 reduces it
+                before anyone has looked. <code>crashed_cells.sum(axis=0)</code> is the crash count per
+                layer. A few lines, no extra runs.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ But <b>"where it fails" is not "what is responsible"</b>. The sentinel is written
+                where the deposition stops; a badly deposited layer upstream can sink a layer
+                downstream by propagation -- which is the whole point of the compensation chain.
+                Report both, never conflate them.
+            </p>
+
+            <p style="margin:14px 0 10px;font-weight:700;color:#7f1d1d;">
+                🔑 Tier 1 — the property that changes the textbook answer: the draws are BOUNDED
+            </p>
+            <p style="margin:0 0 10px;">
+                Classical reliability would answer "Hasofer-Lind index, $\beta = \text{margin}/\sigma$,
+                $p \approx \Phi(-\beta)$". <b>That would be wrong here, and wrong in a knowable
+                direction.</b> Almost every perturbation in this model is bounded: the reading noise is
+                drawn inside $\pm A$, the corridor satisfies $|a| + |b| \le \delta_{\max}$, the affine
+                amplitudes are bounded.
+            </p>
+            <div class="eq-box">
+                $$\text{margin} > \text{largest possible perturbation} \;\Longrightarrow\; p = 0
+                \quad\text{exactly, not merely small}$$
+            </div>
+            <p style="margin:10px 0 0;">
+                §2.2 already uses this — <i>"the draw being bounded at $\pm A$, the largest difference
+                noise alone can show is $2A$"</i>. A Gaussian $\beta$ would extrapolate a small
+                probability <b>where the truth is zero</b>, and it would do so <b>always on the
+                pessimistic side</b>. So the first test is not probabilistic at all: it is
+                deterministic.
+            </p>
+
+            <p style="margin:14px 0 10px;font-weight:700;color:#7f1d1d;">
+                Tier 2 — measure the margin, not the event
+            </p>
+            <p style="margin:0 0 10px;">
+                For layers that <i>can</i> fail, stop counting crashes and evaluate a <b>limit-state
+                function</b>: how far was this run from crossing? Continuous, always defined, and
+                informative <b>at zero crashes</b>.
+            </p>
+            <table>
+                <thead><tr><th>Sentinel</th><th>Margin</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td><code>CRASH_LEVEL_UNREACHABLE</code></td><td>$T_{\text{target}} - T_{\text{reachable extremum}}$</td><td>the swing shrinks, the target falls outside</td></tr>
+                    <tr><td><code>CRASH_TP_MISCOUNT</code>, extremum <b>missed</b></td><td>$\text{swing} - \text{hysteresis}$</td><td>ripple too faint to be seen</td></tr>
+                    <tr><td><code>CRASH_TP_MISCOUNT</code>, extremum <b>fabricated</b></td><td>$\text{hysteresis} - \text{noise excursion}$</td><td>the quantity §2.2 measured</td></tr>
+                </tbody>
+            </table>
+            <p style="margin:10px 0 0;">
+                🔴 <b>One margin per layer is too coarse.</b> It must be per layer <b>and per cause</b>:
+                the three share neither units, nor physics, nor remedy. That is corollary 2 of §2.7 --
+                never let two causes hide under one sentinel. <b>The critical layer is the one with the
+                smallest normalised margin</b>, and it is named even when no run has crashed.
+            </p>
+
+            <p style="margin:14px 0 10px;font-weight:700;color:#7f1d1d;">
+                Tier 3 — calibrate the extrapolation where counting still works
+            </p>
+            <p style="margin:0 0 10px;">
+                This is what separates rigour from cleverness, and it costs <b>no extra run</b>: the
+                three noise levels $0.5\times / 1\times / 2\times$ are already computed. At $2\times$
+                crashes appear, so they can be <b>counted</b>; the margin model <b>predicts</b> a rate
+                there; the two are <b>compared</b>. If they agree the model is validated on this stack
+                and may be trusted at $1\times$, where counting returns zero. If they disagree it may
+                not be — and that is a result too.
+            </p>
+            <p style="margin:10px 0 0;background:#fff;border:2px solid #b91c1c;border-radius:6px;padding:10px 14px;">
+                <b>One never extrapolates without first validating the extrapolation in the regime
+                where measurement is possible.</b>
+            </p>
+            <p style="margin:10px 0 0;">
+                And the margin is a <b>better</b> Trap-1 test than the crash rate: it must scale as
+                $1/\sigma$, and being continuous it is far more sensitive than a rate which jumps from
+                0 to $1/N$ — at $N = 150$, blind to anything below 0.7 %.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ <b>Not implemented.</b> Every tier above is paid in code, none in compute — and it
+                answers a question no number of draws would, since a zero rate stays zero however many
+                times it is drawn.
+            </p>
+        </div>
+
+        <h3>2.13 Non-Monotonic Error Model</h3>
         <p>
             Beyond pure trigger noise, the simulation optionally adds a systematic offset via
             <code>compute_probe_offset_nm_from_ratio</code>. The effective measured thickness incorporates:
@@ -1570,7 +1675,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <code>NON_MONOTONIC_MODE_ATTENUATE</code> (default) vs <code>NON_MONOTONIC_MODE_REJECT</code>.
         </div>
 
-        <h3>2.13 Cumulative Error Propagation</h3>
+        <h3>2.14 Cumulative Error Propagation</h3>
         <p>
             The key innovation of CERTUS is that thickness errors are <strong>physically propagated</strong>
             through the TMM. If layer $i$ was deposited with an error $\delta d_i$:
@@ -1592,7 +1697,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             independent realisations in parallel using Numba <code>prange</code>.
         </p>
 
-        <h3>2.14 Reality-Feedback Loop in Phase A</h3>
+        <h3>2.15 Reality-Feedback Loop in Phase A</h3>
         <p>
             Before evaluating layer $i$, the TMM matrix cache is <strong>rebuilt</strong> from the
             <em>average</em> simulated thicknesses of layers $0 \ldots i{-}1$. A

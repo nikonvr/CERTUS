@@ -547,6 +547,138 @@ réponses Q1 à Q4 avant d'écrire une ligne.
 
 ### PALIER 5 — Les questions de fond, celles qui décident de l'architecture
 
+#### A23 — 👤 La couche critique, et comment mesurer un risque qui vaut zéro
+
+> 👤 *« Ce serait bien pour chaque stratégie de mentionner la couche la plus critique, celle
+> où il y a le plus de risque de plantage. Si les stats sont à zéro niveau plantage, il
+> faudrait du coup augmenter les bruits ou dérive d'indice d'un facteur que je ne maîtrise
+> pas. »* (2026-08-10)
+
+**Le problème porte un nom : estimation d'événements rares.** À 150 tirages et zéro plantage,
+on sait `p < 2 %` et rien de plus. Résoudre `p = 0,1 %` demanderait ~3000 tirages par
+stratégie. Et amplifier le bruit — le réflexe naturel — est **le piège que ce projet a payé
+trois fois** (Piège 1), parce que la compensation POEM n'est pas linéaire : le taux mesuré à
+2× ne se ramène pas simplement à 1×.
+
+##### 🟢 Étage 0 — l'information par couche existe DÉJÀ et elle est jetée
+
+```python
+crashed_cells = sim_thick_batch > CRASH_SENTINEL_MIN     # (n_runs, n_layers)
+n_crash_run = np.count_nonzero(np.any(crashed_cells, axis=1))   # <- ecrase les couches
+```
+
+`certus_strat_robustness.py:946-948`. Le tableau est **par (run, couche)**, et `np.any` sur
+l'axe 1 le réduit avant qu'on l'ait regardé. `crashed_cells.sum(axis=0)` donne le nombre de
+plantages **par couche**. Quelques lignes, aucun run supplémentaire.
+
+⚠️ **Mais « où ça plante » n'est pas « qui est responsable ».** La sentinelle est écrite là où
+le dépôt s'arrête. Une couche amont mal déposée peut faire échouer une couche aval par
+propagation — c'est même tout le sujet de la chaîne de compensation. Rapporter les deux, ne
+jamais les confondre.
+
+##### 🔑 Étage 1 — LA propriété qui change la réponse : les tirages sont BORNÉS
+
+La fiabilité classique répondrait « indice de Hasofer-Lind, `β = marge/σ`, `p ≈ Φ(−β)` ».
+**Ce serait faux ici, et faux dans une direction connue.**
+
+Presque toutes les perturbations de ce modèle sont **bornées** : le bruit de lecture est tiré
+dans `±A`, le corridor respecte `|a| + |b| ≤ δ_max`, les amplitudes affines sont bornées.
+
+> **Si la marge dépasse la perturbation maximale possible, la probabilité n'est pas petite :
+> elle est EXACTEMENT nulle.**
+
+§12.2 s'en sert déjà — *« le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A »*.
+Un `β` gaussien extrapolerait une probabilité faible **là où la vérité est zéro**, et il le
+ferait **toujours dans le sens pessimiste**. Le premier test n'est donc pas probabiliste, il
+est **déterministe** :
+
+```
+marge(couche, cause)  >  perturbation maximale possible   ->  p = 0, exactement
+                      <=                                   ->  p > 0, et on passe a l'etage 2
+```
+
+##### Étage 2 — la marge, pas l'événement
+
+Pour les couches qui *peuvent* échouer, on cesse de compter des plantages et on mesure une
+**fonction d'état limite** : à quelle distance était-on du franchissement ? C'est continu,
+toujours défini, et informatif **à zéro plantage**.
+
+| Sentinelle | Marge | Signe |
+|---|---|---|
+| `CRASH_LEVEL_UNREACHABLE` | `T_visé − T_extremum atteignable`, en unités de T | le swing rétrécit ⇒ la cible sort |
+| `CRASH_TP_MISCOUNT`, extremum **manqué** | `swing − hysteresis` | ondulation trop faible |
+| `CRASH_TP_MISCOUNT`, extremum **fabriqué** | `hysteresis − excursion du bruit` | c'est la grandeur que A1 a mesurée |
+
+🔴 **Une seule marge par couche est trop grossière.** Il en faut une **par couche ET par
+cause** : les trois n'ont ni les mêmes unités, ni la même physique, ni le même remède. C'est
+le corollaire 2 du Piège 1 — *ne jamais confondre deux causes sous une même sentinelle*.
+
+**La couche critique est celle de plus petite marge normalisée**, et elle est désignée même
+quand aucun run n'a planté.
+
+##### Étage 3 — calibrer l'extrapolation là où l'on sait compter
+
+C'est le geste qui sépare le sérieux de l'astuce, et **il ne coûte aucun run** : les trois
+niveaux `0,5× / 1× / 2×` existent déjà.
+
+1. À **2×**, les plantages apparaissent : on les **compte**.
+2. Le modèle de marge prédit un `p` à 2× : on **compare**.
+3. S'ils concordent, le modèle est validé **sur cet empilement**, et on peut le croire à 1×
+   où le comptage rend zéro. Sinon, on ne le croit pas — et c'est un résultat aussi.
+
+> **On n'extrapole jamais sans avoir validé l'extrapolation dans le régime où la mesure est
+> possible.**
+
+##### Pourquoi c'est un MEILLEUR test du Piège 1 que le taux de plantage
+
+La marge doit varier en `1/σ`. Si elle n'y varie pas, elle n'est pas gouvernée par le bruit et
+on a trouvé un artefact. C'est un test **continu**, donc bien plus sensible qu'un taux de
+plantage qui saute de 0 à 1/N — lequel, à N=150, ne voit rien en dessous de 0,7 %.
+
+##### 👤 La sortie : couche critique, cause, marge — arrêté le 2026-08-10
+
+La couche critique va dans le tableau de classement, **à côté de SEEL et du rendement**. Les
+trois répondent à trois questions distinctes : *elle est bonne comment* · *elle va au bout* ·
+**qu'est-ce qui va lâcher, et pourquoi**.
+
+```
+couche critique | cause                                | marge
+L37             | ondulation trop faible pour etre vue |  0,6 A   PEUT ECHOUER
+L12             | niveau d'arret hors d'atteinte       |  3,1 A   impossible
+L23             | point tournant fabrique par le bruit |  1,4 A   PEUT ECHOUER
+```
+
+**Trois règles de présentation, et la deuxième n'est pas négociable :**
+
+1. **La marge s'exprime en multiples de `A`.** C'est la seule unité **comparable entre les
+   trois causes** — un niveau est en points de T, une ondulation aussi mais ailleurs, une
+   fabrication est une excursion. Ramenées à `A`, elles se lisent sur la même échelle. C'est
+   aussi la condition de la règle 2.
+2. 🔴 **Au-delà de `2 A`, on écrit « impossible », jamais une probabilité.** Les deux autres
+   règles relèvent de l'ergonomie ; **celle-ci relève de la vérité.** Le tirage étant borné,
+   la marge dépasse la perturbation maximale et l'événement **ne peut pas** se produire.
+   Écrire « 0,1 % » là serait une affirmation fausse — et fausse dans le sens qui fait
+   renoncer à une bonne stratégie.
+3. **Signaler la multiplicité.** Une couche seule à 0,6 A n'est pas le même profil que douze
+   couches sous 1 A : `L37 (+11 autres sous 1 A)`.
+
+⚠️ **La cause se nomme en mots physiques, jamais par sa sentinelle.** `CRASH_TP_MISCOUNT` ne
+dit pas à un opérateur de bâti ce qu'il doit surveiller ; « ondulation trop faible pour être
+vue » le dit.
+
+##### Ce que ça demande
+
+| Étage | Travail | Runs |
+|---|---|---|
+| 0 | ne plus écraser `crashed_cells` sur l'axe des couches | **aucun** |
+| 1 | comparer marge et borne du tirage, par couche et par cause | aucun |
+| 2 | **enregistrer la marge par (run, couche, cause)** dans `simulate_growth_kernel` | aucun — c'est le vrai travail de code |
+| 3 | valider le modèle contre le niveau 2× | aucun |
+
+**Aucun run supplémentaire n'est nécessaire.** Toute cette action se paie en code, pas en
+temps de calcul — et elle répond à une question à laquelle *aucun* nombre de tirages ne
+répondrait, puisqu'un taux nul reste nul quel qu'il soit.
+
 #### A20 — La fuite de l'entonnoir Phase A → Phase B
 
 **La question jamais posée** : la Phase A écarte-t-elle jamais une stratégie que la Phase B
@@ -2381,6 +2513,7 @@ neufs.
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
 | 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
+| 18 | 🔴 **Le chemin CONSENSUS ignore `robustness_num_runs`.** Trouvé au rodage du 2026-08-10 : un run demandant **20 tirages**, `CONFIG` à l'appui, rend `0.002948627371309867` — **exactement**, au dernier bit, la référence historique à **150** tirages. `_unpack_consensus_cfg` porte un `consensus_num_runs` distinct, que l'override n'atteint pas. **Toute mesure faite avec le consensus actif est donc à une profondeur autre que celle demandée, et n'est comparable à rien.** Exposer `consensus_num_runs` avant de s'en servir. |
 | 14 | 🔴 **`dp_yield_weight` est INERTE sur trois décades.** Profil par bande des runs `yw0`, `yw50`, `yw200`, `yw1000` (`analyse_bands.py`) : `passante 0.002977 · front 0.006640 · bloquee 0.000005` — **rigoureusement identiques aux quatre**. §17 rapportait déjà un « résultat nul » à la calibration ; on sait maintenant qu'il est nul **au dernier chiffre et sur toutes les bandes**, pour un poids multiplié par 1000. Un paramètre qui ne fait rien sur trois décades n'est pas mal calibré : **il n'atteint pas le calcul.** À traiter comme le Piège 1. |
 | 15 | 🔴 **Deux configurations différentes rendent le MÊME `RESULT` au bit, alors que leurs bandes diffèrent.** Seuils 2,0 A et 2,4 A : `RESULT = 0.003192038110407474` pour les deux, mais `passante` vaut 0,003214 contre 0,004444 — **38 % d'écart**. Donc `RESULT` est **aveugle à un changement qui déplace visiblement le résultat**. Avant de continuer à s'en servir comme grandeur de tête, il faut savoir ce qu'il agrège exactement : §10 dit « le pire des trois niveaux de bruit », et personne n'a vérifié cette phrase dans le code. |
 | 16 | 🟢 **La bande bloquée n'est jamais le mode de défaillance.** Sur les 25 runs au disque, elle est **~567× plus propre** que la passante, sans exception. §14 s'inquiète à juste titre qu'un RMSE uniforme ne puisse pas distinguer les deux bandes — mais **le filtre ne rate jamais son blocage, il rate son passage**. ⚠️ Cela ne clôt pas §14 : l'exigence est ~500× plus serrée en bande bloquée, et 567 ≈ 500 signifie que les deux bandes sont **également proches de leur spec**, pas que l'une est acquise. Il faut les tolérances réelles par bande pour trancher, et on ne les a pas. |

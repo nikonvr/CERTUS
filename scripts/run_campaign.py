@@ -49,57 +49,99 @@ BENCH_TIMEOUT_S = "5400"
 #: Hard ceiling this script applies to a subprocess, well above the probe's own.
 SUBPROCESS_TIMEOUT_S = 9000
 
-#: The campaign, in order of decreasing value. If the night is cut short, what got
-#: measured is what mattered most.
-#:
-#: Each entry: (label, purpose, env overrides, expected config after resolution).
-#: The expectation is what makes the run self-checking.
-CAMPAIGN: tuple[tuple[str, str, dict[str, str], dict[str, object]], ...] = (
-    (
-        "A12.1", "POEM on, distortion off -- the reference arm of the POEM test",
-        {},
-        {"poem_enabled": True, "affine_scale_amp": 0.0, "affine_offset_amp": 0.0},
-    ),
-    (
-        "A12.2", "POEM on, distortion on",
-        {"CERTUS_AFFINE_SCALE_AMP": "0.05", "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
-        {"poem_enabled": True, "affine_scale_amp": 0.05, "affine_offset_amp": 0.02},
-    ),
-    (
-        "A12.3", "POEM OFF, distortion off",
-        {"CERTUS_POEM_ENABLED": "0"},
-        {"poem_enabled": False, "affine_scale_amp": 0.0, "affine_offset_amp": 0.0},
-    ),
-    (
-        "A12.4", "POEM OFF, distortion on -- the arm that decides",
-        {
-            "CERTUS_POEM_ENABLED": "0",
-            "CERTUS_AFFINE_SCALE_AMP": "0.05",
-            "CERTUS_AFFINE_OFFSET_AMP": "0.02",
-        },
-        {"poem_enabled": False, "affine_scale_amp": 0.05, "affine_offset_amp": 0.02},
-    ),
-    (
-        "A15.1", "Phase A margin 3.33 instead of 1.66",
-        {"CERTUS_PHASE_A_MARGIN": "3.33"},
-        {"phase_a_level_margin_factor": 3.33},
-    ),
-    (
-        "A14.1", "index corridor 0.0025 -- half width",
-        {"CERTUS_INDEX_CORRIDOR": "0.0025"},
-        {"index_corridor": 0.0025},
-    ),
-    (
-        "A14.2", "index corridor 0.005 -- the model value",
-        {"CERTUS_INDEX_CORRIDOR": "0.005"},
-        {"index_corridor": 0.005},
-    ),
-)
+#: Default probe arguments: mode, scan step, seed. A plan entry may override them,
+#: which is how a whole campaign is replayed on a second seed.
+DEFAULT_ARGS = ("full", "1.0", "42")
 
-#: Neutral runs repeated to measure the bench's own jitter (A6). Same configuration
-#: every time; the spread between them IS the measurement. Three points and two
-#: clusters is not an envelope.
-JITTER_REPEATS = 3
+#: Reference RESULT of the neutral configuration, seed 42, measured four times at the
+#: bit on 2026-08-10. Quoted here so a plan can say what it expects to reproduce.
+NEUTRAL_SEED42 = "0.002948627371309867"
+
+
+def entry(label, purpose, *, env=None, expect=None, args=DEFAULT_ARGS, clear_cache=False):
+    """One run. `expect` is what makes it self-checking; `clear_cache` forces a
+    recompilation, which is a measurement in itself -- see the day plan."""
+    return {
+        "label": label, "purpose": purpose, "env": env or {},
+        "expect": expect or {}, "args": tuple(args), "clear_cache": clear_cache,
+    }
+
+
+#: NIGHT plan, run on 2026-08-10. Kept so it can be replayed or resumed.
+#: Result: POEM validated at x17.5, the bench shown deterministic, the Phase A margin
+#: shown inert, and the index corridor shown to dwarf everything else.
+PLAN_NIGHT = [
+    entry("A12.1", "POEM on, distortion off -- reference arm",
+          expect={"poem_enabled": True, "affine_scale_amp": 0.0}),
+    entry("A12.2", "POEM on, distortion on",
+          env={"CERTUS_AFFINE_SCALE_AMP": "0.05", "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": True, "affine_scale_amp": 0.05, "affine_offset_amp": 0.02}),
+    entry("A12.3", "POEM OFF, distortion off",
+          env={"CERTUS_POEM_ENABLED": "0"},
+          expect={"poem_enabled": False, "affine_scale_amp": 0.0}),
+    entry("A12.4", "POEM OFF, distortion on -- the arm that decides",
+          env={"CERTUS_POEM_ENABLED": "0", "CERTUS_AFFINE_SCALE_AMP": "0.05",
+               "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": False, "affine_scale_amp": 0.05}),
+    entry("A15.1", "Phase A margin 3.33 instead of 1.66",
+          env={"CERTUS_PHASE_A_MARGIN": "3.33"},
+          expect={"phase_a_level_margin_factor": 3.33}),
+    entry("A14.1", "index corridor 0.0025", env={"CERTUS_INDEX_CORRIDOR": "0.0025"},
+          expect={"index_corridor": 0.0025}),
+    entry("A14.2", "index corridor 0.005 -- the model value",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"}, expect={"index_corridor": 0.005}),
+    *[entry(f"A6.{i + 1}", "neutral repeat -- bench jitter", expect={"poem_enabled": True})
+      for i in range(3)],
+]
+
+#: DAY plan. Four open questions, not a sweep. Ordered so that the one which needs a
+#: COLD cache runs first -- every later run warms it.
+PLAN_DAY = [
+    # --- Q1. Is C1 even achievable? Only a recompilation can move the bits, so force
+    # one on strictly unchanged code. Identical -> the golden rule holds as written.
+    # Different -> C1 needs an explicit tolerance for signature changes. See 3.
+    entry("B0.recompile", f"cold numba cache, unchanged code -- must it reproduce {NEUTRAL_SEED42} ?",
+          expect={"poem_enabled": True, "index_corridor": 0.0}, clear_cache=True),
+
+    # --- Q2. The headline result rests on ONE seed. 13 used seed 77 as its second
+    # seed for exactly this reason. Replay the whole POEM matrix there.
+    entry("B1.1", "seed 77 -- POEM on, distortion off", args=("full", "1.0", "77"),
+          expect={"poem_enabled": True, "affine_scale_amp": 0.0}),
+    entry("B1.2", "seed 77 -- POEM on, distortion on", args=("full", "1.0", "77"),
+          env={"CERTUS_AFFINE_SCALE_AMP": "0.05", "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": True, "affine_scale_amp": 0.05}),
+    entry("B1.3", "seed 77 -- POEM OFF, distortion off", args=("full", "1.0", "77"),
+          env={"CERTUS_POEM_ENABLED": "0"}, expect={"poem_enabled": False}),
+    entry("B1.4", "seed 77 -- POEM OFF, distortion on", args=("full", "1.0", "77"),
+          env={"CERTUS_POEM_ENABLED": "0", "CERTUS_AFFINE_SCALE_AMP": "0.05",
+               "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": False, "affine_scale_amp": 0.05}),
+
+    # --- Q3. WHERE DOES POEM'S PROTECTION STOP? It is exactly invariant under an
+    # affine distortion of the signal -- which is why it wins x17.5 there. An index
+    # error is NOT such a distortion. The corridor is the largest effect measured;
+    # does POEM protect against it at all? Compare with A14.2, same corridor, POEM on.
+    entry("B2.1", "corridor 0.005 with POEM OFF -- the boundary of POEM's protection",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
+          expect={"index_corridor": 0.005, "poem_enabled": False}),
+
+    # --- Q4. The detection threshold on the CURRENT grid. A1 measured that noise alone
+    # fabricates a turning point in ~33 % of layers at the configured 1.66 A, and 0 %
+    # at 2.4 A. Does the bench see it? Injected as the 5th argument.
+    entry("B3.1", "tp_hysteresis 2.00 A -- the anti-fabrication bound",
+          args=("full", "1.0", "42", "0", "2.0"), expect={"tp_hysteresis_factor": 2.0}),
+    entry("B3.2", "tp_hysteresis 2.40 A -- where fabrication measured 0 %",
+          args=("full", "1.0", "42", "0", "2.4"), expect={"tp_hysteresis_factor": 2.4}),
+
+    # --- Q5. Complete the corridor curve. 0.0025 and 0.005 are known; the effect is
+    # sub-linear and two points do not give a law.
+    entry("B4.1", "index corridor 0.001", env={"CERTUS_INDEX_CORRIDOR": "0.001"},
+          expect={"index_corridor": 0.001}),
+    entry("B4.2", "index corridor 0.010 -- twice the model value",
+          env={"CERTUS_INDEX_CORRIDOR": "0.01"}, expect={"index_corridor": 0.01}),
+]
+
+PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY}
 
 
 def probe_env(overrides: dict[str, str]) -> dict[str, str]:
@@ -186,15 +228,36 @@ def already_done(label: str, expected: dict[str, object]) -> dict | None:
     }
 
 
-def run_one(label: str, purpose: str, overrides: dict[str, str], expected: dict[str, object]) -> dict:
+def clear_numba_cache() -> int:
+    """Delete numba's on-disk cache so the next run must recompile.
+
+    That recompilation IS the measurement: it is the only event shown capable of
+    moving the last digits of a RESULT (see 3). Only .nbi/.nbc are removed -- never
+    .pyc, which would say nothing.
+    """
+    removed = 0
+    for pattern in ("**/__pycache__/*.nbi", "**/__pycache__/*.nbc"):
+        for path in (ROOT / "certus").glob(pattern):
+            path.unlink(missing_ok=True)
+            removed += 1
+    print(f"  numba cache cleared: {removed} file(s) removed", flush=True)
+    return removed
+
+
+def run_one(item: dict) -> dict:
+    label, purpose = item["label"], item["purpose"]
+    overrides, expected, args = item["env"], item["expect"], item["args"]
     print(f"\n{'=' * 72}\n{label} -- {purpose}", flush=True)
     resumed = already_done(label, expected)
     if resumed is not None:
         resumed["purpose"] = purpose
         print(f"  deja fait, RESULT = {resumed['result']} -- ignore", flush=True)
         return resumed
+    print(f"  args:      {' '.join(args)}", flush=True)
     print(f"  overrides: {overrides or '(none, neutral run)'}", flush=True)
-    cmd = [sys.executable, str(PROBE), "full", "1.0", "42"]
+    if item["clear_cache"]:
+        clear_numba_cache()
+    cmd = [sys.executable, str(PROBE), *args]
     try:
         proc = subprocess.run(
             cmd, cwd=ROOT, env=probe_env(overrides), capture_output=True,
@@ -226,21 +289,18 @@ def run_one(label: str, purpose: str, overrides: dict[str, str], expected: dict[
 
 def main() -> int:
     REPORTS.mkdir(parents=True, exist_ok=True)
-    plan = list(CAMPAIGN) + [
-        (
-            f"A6.{i + 1}", "neutral repeat -- measures the bench's own jitter",
-            {}, {"poem_enabled": True, "index_corridor": 0.0, "affine_scale_amp": 0.0},
-        )
-        for i in range(JITTER_REPEATS)
-    ]
+    name = sys.argv[1].strip().lower() if len(sys.argv) > 1 else "day"
+    if name not in PLANS:
+        raise SystemExit(f"usage: run_campaign.py [{'|'.join(PLANS)}]   (default: day)")
+    plan = PLANS[name]
 
-    print(f"CAMPAIGN -- {len(plan)} runs, roughly {len(plan) * 30} minutes", flush=True)
-    print("Order is by decreasing value: if the night is cut short, what got", flush=True)
-    print("measured is what mattered most.", flush=True)
+    print(f"CAMPAIGN '{name}' -- {len(plan)} runs, roughly {len(plan) * 30} minutes", flush=True)
+    print("Order is by decreasing value: if it is cut short, what got measured", flush=True)
+    print("is what mattered most.", flush=True)
 
     records = []
-    for label, purpose, overrides, expected in plan:
-        records.append(run_one(label, purpose, overrides, expected))
+    for item in plan:
+        records.append(run_one(item))
         write_summary(records, len(plan))
     write_summary(records, len(plan))
 

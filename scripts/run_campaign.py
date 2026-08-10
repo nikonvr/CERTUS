@@ -141,7 +141,32 @@ PLAN_DAY = [
           env={"CERTUS_INDEX_CORRIDOR": "0.01"}, expect={"index_corridor": 0.01}),
 ]
 
-PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY}
+#: POST-A10 plan. The corridor now reaches the SCORING path, so the finished filter is
+#: evaluated with the index it really has. Every corridor figure measured before this
+#: covered only the growth half and was, by construction, an UNDERESTIMATE.
+#:
+#: The pair that matters is C1.3 against C1.5: B2 measured POEM protecting x7.6 against
+#: index error, but it measured it on the half of the problem where POEM is good. The
+#: crossed mode -- error of opposite sign either side of lambda_mon, uncompensable by
+#: construction -- only shows in the final spectrum. That protection should now fall.
+#: If it does not, the reasoning in 12.3 is wrong and that is worth knowing.
+PLAN_POSTA10 = [
+    entry("C1.0", "post-A10 baseline, corridor 0 -- re-establishes the reference after recompilation",
+          expect={"index_corridor": 0.0, "poem_enabled": True}),
+    entry("C1.1", "corridor 0.001 -- was x1.98 with growth only",
+          env={"CERTUS_INDEX_CORRIDOR": "0.001"}, expect={"index_corridor": 0.001}),
+    entry("C1.2", "corridor 0.0025 -- was x3.35 with growth only",
+          env={"CERTUS_INDEX_CORRIDOR": "0.0025"}, expect={"index_corridor": 0.0025}),
+    entry("C1.3", "corridor 0.005, the model value -- was x5.16 with growth only",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"}, expect={"index_corridor": 0.005}),
+    entry("C1.4", "corridor 0.010 -- was x8.19 with growth only",
+          env={"CERTUS_INDEX_CORRIDOR": "0.01"}, expect={"index_corridor": 0.01}),
+    entry("C1.5", "corridor 0.005 with POEM OFF -- does the x7.6 protection survive?",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
+          expect={"index_corridor": 0.005, "poem_enabled": False}),
+]
+
+PLANS = {"night": PLAN_NIGHT, "day": PLAN_DAY, "posta10": PLAN_POSTA10}
 
 
 def probe_env(overrides: dict[str, str]) -> dict[str, str]:

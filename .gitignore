@@ -111,3 +111,18 @@ _pytest_nodeids*.txt
 diff_re.txt
 ruff_errors.txt
 translation_cache.json
+
+# --- Residus de sessions, a la racine. Non supprimes : ils appartiennent a
+# l'utilisateur et git ne pourrait pas les restaurer. Ignores pour qu'ils ne
+# soient pas committes par accident, ce qui est le seul risque reel.
+/extract_comments.py
+/extract_pipeline.py
+/extract_ui.py
+/find_french.py
+/replace_comments.py
+/scratch_append*.py
+/all_comments*.txt
+/index_comments.txt
+/strat_pipeline_comments.txt
+/french_lines.txt
+/python-*-amd64.exe

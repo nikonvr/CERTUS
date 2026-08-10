@@ -1007,7 +1007,7 @@ hypothèse semblerait plus élégante.
 | 1 | Une lecture témoin par tour, **4 Hz** ⇒ un échantillon tous les **0,125 nm** à 0,5 nm/s | 👤 déduit de specs données |
 | 2 | Bruit **additif**, borné à **±0,05 point** (A = 5e-4 en unités T), σ = A/3, tirages indépendants entre lectures | 👤 confirmé |
 | 3 | La chaîne de détection **moyenne sur 2 s**, soit une **moyenne glissante de `k = 8` lectures** | 🔒 hypothèse figée |
-| 4 | Le seuil de détection d'un point tournant vaut **3 σ du signal lissé**, soit `A/√k` = **0,354 A** pour k = 8 | 🔒 hypothèse figée |
+| 4 | ~~Le seuil vaut **3 σ du signal lissé**, soit `A/√k` = 0,354 A~~ → 🔴 **RÉFUTÉ le 2026-08-10.** La borne **mesurée** vaut **1,00 A** à `k = 8`, `N = 800`. Voir l'encadré rouge sous ce tableau. | ❌ **arithmétique fausse** |
 | 5 | **Aucun retard** : le logiciel anticipe la valeur de trigger, et l'extremum enregistré est l'extremum lui-même | 🔒 hypothèse figée |
 | 6 | Marge de sélection des λ : **5 σ du bruit brut** (1,66 A) aujourd'hui, **10 σ** (3,33 A) à évaluer | 👤 fourchette donnée |
 | 7 | Quantification de l'arrêt : `U(0 ; 0,125 nm)`, strictement positive | 🔒 découle de 1 |
@@ -1023,6 +1023,14 @@ hypothèse semblerait plus élégante.
 **Ce qui rouvrirait légitimement le postulat** : un run réel du dichroïque dont le taux de
 plantage mesuré s'écarterait nettement du taux prédit. Rien d'autre. En particulier, pas un
 raisonnement — ce projet a déjà payé trois fois pour avoir cru un raisonnement sur le bruit.
+
+🔴 **Et c'est exactement ce qui est arrivé au postulat 4.** Il n'a pas été rouvert par un
+raisonnement : il a été **réfuté par la mesure que §12.2 réclamait explicitement**, et qui
+disait d'avance que 0,354 était *« une dérivation, pas une mesure »*. Le reste du postulat
+tient — le lissage `k = 8` aide réellement, la borne passe de 1,66 A sur brut à 1,00 A sur
+lissé. C'est **la loi en `1/√k`** qui est fausse, parce qu'elle applique un critère *par
+échantillon* à un **extremum courant sur N échantillons**. La valeur 1,00 dépend donc de `N`
+autant que de `k` : **c'est une mesure, pas une loi. Si l'un des deux change, remesure.**
 
 ### 🔴 MESURÉ LE 2026-08-09 — le postulat 4 ne fait pas ce pour quoi il a été dérivé
 

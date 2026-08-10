@@ -27,6 +27,11 @@ NEUTRAL = {
     "poem_enabled": True, "phase_a_level_margin_factor": 1.66, "dp_yield_weight": 0.0,
     "robustness_num_runs": 150, "n_screen_runs": 25, "k_keep_survivors": 10,
     "robustness_seed": 42,
+    # 🔴 Must be listed. `differs()` only compares the keys present here, so a key
+    # left out is a key on which any run silently counts as neutral -- and the
+    # consensus run, which runs at its OWN depth (17-18), would have been mistaken
+    # for the reference every campaign uses as its anchor.
+    "enable_consensus_ranking": False,
 }
 
 
@@ -156,6 +161,33 @@ def main() -> int:
         wid = (r.get("winner") or {}).get("id", "—")
         print(f"  {N:>6d} {r['result']:>20.15f} {seel(r):>9s} {str(wid):>10s} {stable:>32s}")
         prev_top = top
+    print("\n  DISPERSION SUR SOUS-PAQUETS -- combien l'estimation oscille a N donne")
+    print("  Un seul run profond remplace le balayage : les paquets sont emboites dans")
+    print("  la meme suite de Sobol, donc ce sont des raffinements, pas des tirages neufs.")
+    deep = max(runs, key=lambda r: float(r["config"].get("robustness_num_runs", 0)), default=None)
+    if deep:
+        n_req = int(float(deep["config"].get("robustness_num_runs", 0)))
+        print(f"\n  run le plus profond : N={n_req}")
+        # 🔴 Only the entries evaluated at the FINAL depth. CAPTURED also holds
+        # screening entries at n_screen_runs, whose packets are sized from THEIR own
+        # run count -- reading them together compares dispersions at different N.
+        rows = [s for s in (deep.get("strategies") or [])
+                if int(s.get("n_runs_total") or 0) == n_req]
+        print(f"  {len(rows)} strategie(s) a cette profondeur "
+              f"({len(deep.get('strategies') or []) - len(rows)} au screening, ignorees)")
+        for s in rows[:3]:
+            sp = s.get("subpackets") or {}
+            print(f"\n    strategie {s['id']} :")
+            print(f"      {'taille':>7s} {'paquets':>8s} {'p95 median':>12s} {'etendue relative':>17s}")
+            for size in sorted(sp, key=int):
+                d_ = sp[size]
+                spread = d_.get("spread_relative")
+                txt = f"{spread:.1%}" if isinstance(spread, float) else "—"
+                print(f"      {size:>7s} {d_['n_packets']:>8d} {d_['rmse_p95_median']:>12.6f} {txt:>17s}")
+        print("\n    Lire l'etendue relative : si elle est petite devant l'ecart entre")
+        print("    strategies, ce N suffit. Si elle est du meme ordre, le classement")
+        print("    departage du bruit.")
+
     print("\n  Certification : borne haute a 95 % sur le plantage de la gagnante")
     for N in (25, 150, 600, 1200):
         r = ref if N == 150 else pick(runs, "robustness_num_runs", N)

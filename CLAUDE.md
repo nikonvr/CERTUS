@@ -1630,6 +1630,45 @@ pas le calcul, exactement comme la recette pré-multiplicative ci-dessus.
 `delta_max = 0.005`, en unités d'indice, demi-largeur, **identique pour H et L**. Clé JSON
 `index_corridor`, défaut **0,0** (contrainte C1).
 
+#### 🔴 TRANCHÉ LE 2026-08-10 — `u(λ)` se normalise sur la GRILLE SPECTRALE
+
+> 👤 *« L'erreur d'indice est donnée sur la grille spectrale du filtre, pas des monitoring. »*
+
+**Le code fait aujourd'hui le contraire**, et c'est un défaut, pas un choix :
+`corridor_wl_range()` normalise sur l'intervalle des **λ de monitoring**, qui est bien plus
+étroit que la grille sur laquelle le filtre est jugé.
+
+**Conséquence chiffrée.** Avec un monitoring entre 480 et 620 nm et une grille descendant à
+400 nm :
+
+```
+u(400 nm) = (2 x 400 - (480 + 620)) / (620 - 480) = -2,14        au lieu de |u| <= 1
+delta(400 nm) = 0,005 x (-2,14) = -0,0107                        soit 2,1 x le corridor
+```
+
+Le modèle sort donc de la boîte qu'il est censé respecter — **et il en sort précisément là où
+le mode croisé fait ses dégâts**, sur les bords, loin du point de contrôle.
+
+🔴 **Toutes les mesures de corridor antérieures au 2026-08-10 sont donc INVALIDES**, y compris
+la courbe ×1,98 / ×3,13 / ×5,79 et le croisement de régime qu'elle montrait. Elles ont mesuré
+un corridor effectif plus large que 0,005, d'un facteur qui dépend de la stratégie. **Ne les
+cite plus.**
+
+⚠️ **La correction n'est pas neutre, et il faut savoir dans quel sens.** Une droite contrainte
+à rester dans ±0,005 sur un **large** domaine a nécessairement une **pente plus faible** que la
+même droite contrainte sur un domaine étroit. Corriger fait donc deux choses à la fois :
+plafonner l'erreur aux bords (moins de dégâts) **et** réduire l'inclinaison vue par le
+monitoring (moins de mode croisé). L'effet net est à mesurer, pas à prédire.
+
+**Où intervenir** — les trois fonctions doivent recevoir la grille spectrale, pas la déduire :
+
+| Fichier | Fonction | Ce qui change |
+|---|---|---|
+| `certus_strat_batch.py` | `corridor_wl_range` | prend la **grille spectrale** en argument |
+| idem | `simulate_stack_robustness_batch` | l'acheminer jusqu'au tirage, au lieu de `layer_wavelengths` |
+| idem | `validate_wavelengths_batch` | idem pour la Phase A, au lieu de `candidate_wls` |
+| idem | `compute_batch_rmse` | déjà paramétré, il suffit de lui passer la même |
+
 ---
 
 ### 12.4 Grille d'échantillonnage à la cadence machine — **à faire AVANT 12.2**

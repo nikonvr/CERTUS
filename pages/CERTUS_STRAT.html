@@ -3195,6 +3195,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     regime</b>, because each wavelength change discards the accumulated
                     self-correction that POEM lives on (§2.8).
                 </p>
+                <div class="note" style="margin:0 0 14px;">
+                    ⚠️ <b>The benefit of a long block saturates, and by construction.</b> The
+                    simulator replays at most <b>4 previous layers</b> of the block
+                    (<code>MAX_LOOKBACK = 4</code>): beyond that the history is truncated, whatever
+                    the block length. So a 24-layer block is not monitored with 24 layers of
+                    inherited turning points — it is monitored with four. Every block-count figure
+                    above must be read against that ceiling. <b>Whether the real machine also
+                    saturates, and at what depth, is not known</b>: the bound is a modelling choice
+                    made for cost, not a measured property of the OMS. Raising it is a cheap
+                    experiment and it has never been run.
+                </div>
                 <p>
                     🟢 <b>ESTABLISHED — the optimum moves right as index uncertainty grows.</b>
                     Block-count histogram of the top&#8209;20:

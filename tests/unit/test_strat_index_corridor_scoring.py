@@ -39,7 +39,7 @@ def _case():
 def _rmse(corridor: float, seed: int = 12345, *, lo: float | None = None, hi: float | None = None):
     thick, n_flat, n_sub, target = _case()
     if lo is None or hi is None:
-        lo, hi = corridor_wl_range(MONITOR_WLS)
+        lo, hi = corridor_wl_range(WLS, MONITOR_WLS)
     return compute_batch_rmse(
         thick, WLS,
         np.empty(0, dtype=np.complex128), np.empty(0, dtype=np.complex128),
@@ -102,3 +102,34 @@ def test_result_stays_finite_and_physical(corridor: float):
     value = _rmse(corridor)
     assert np.isfinite(value)
     assert value >= 0.0
+
+
+def test_envelope_encloses_both_grids():
+    """The corridor must hold everywhere the index is USED, not only where it is watched.
+
+    Normalising over the monitoring wavelengths alone lets |u| exceed 1 on the rest of
+    the spectrum, so |delta| exceeds delta_max there. Measured on the reference winner,
+    whose two monitoring wavelengths sit 13 nm apart on a 300 nm grid, the overshoot
+    reaches x21 -- and it is worst for strategies that GROUP their wavelengths, which
+    biases the ranking by an artefact pointing the same way as the physics.
+    """
+    grid = np.linspace(400.0, 700.0, 301)
+    grouped = np.array([531.0, 544.0])
+    assert corridor_wl_range(grid, grouped) == (400.0, 700.0)
+
+    # A monitoring wavelength outside the scoring grid must widen the envelope:
+    # 13 records that clues_at_wl overflows the range, so this is not hypothetical.
+    outside = np.array([380.0, 720.0])
+    assert corridor_wl_range(grid, outside) == (380.0, 720.0)
+
+
+def test_grouped_and_spread_strategies_get_the_same_corridor():
+    """Two strategies must receive the same index perturbation, whatever their lambdas.
+
+    This is the defect the envelope fixes: with the monitoring span alone, a grouped
+    strategy was handed an effective corridor up to 21x wider than a spread one.
+    """
+    grid = np.linspace(400.0, 700.0, 301)
+    grouped = corridor_wl_range(grid, np.array([531.0, 544.0]))
+    spread = corridor_wl_range(grid, np.array([450.0, 650.0]))
+    assert grouped == spread

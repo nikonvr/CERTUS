@@ -19,25 +19,35 @@ MONITOR_NOISE_SLOTS_PER_LAYER = 16 + 64
 
 
 @njit(cache=True, nogil=True)
-def corridor_wl_range(wavelengths: np.ndarray) -> tuple[float, float]:
+def corridor_wl_range(spectral_wls: np.ndarray, monitor_wls: np.ndarray) -> tuple[float, float]:
     """The lambda normalisation of the index perturbation -- ONE definition.
 
-    delta_M(lambda) = a_M + b_M * u(lambda) with u normalised over [lo, hi]. The
-    growth path and the scoring path MUST use the same [lo, hi], otherwise the same
-    material carries two different dispersion curves in the same run and the two
-    stages stop modelling the same filter. They used to compute it separately; this
-    exists so they cannot drift apart.
+    delta_M(lambda) = a_M + b_M * u(lambda), with u normalised over [lo, hi] so that
+    |u| <= 1 there. The constraint |a| + |b| <= delta_max then bounds |delta| by
+    delta_max -- but ONLY inside [lo, hi]. Outside it the corridor is exceeded.
 
-    ⚠️ OPEN QUESTION, deliberately not decided here. [lo, hi] is the range of the
-    MONITORING wavelengths, which is narrower than the spectral grid the filter is
-    scored on. Outside it, |u| > 1, so |delta| exceeds delta_max and the corridor
-    guarantee of 12.3 -- "the corridor holds everywhere" -- is violated on the edges
-    of the spectrum. Normalising over the spectral grid instead would fix that, but
-    it changes every corridor figure already measured. Raise it, do not fix it
-    silently.
+    👤 DECIDED 2026-08-10: "the index error is given on the spectral grid of the
+    filter, not of the monitoring" -- and "it is on the max of the spectral grid /
+    monitoring". So [lo, hi] is the interval ENCLOSING BOTH.
+
+    In practice the spectral grid contains the monitoring wavelengths and the union
+    collapses to the grid. The envelope is taken anyway because it can never be
+    wrong, and because 13 records that `clues_at_wl` carries the union of the two
+    grids WITH overflow out of range -- a monitoring wavelength can fall outside the
+    scoring grid.
+
+    ⚠️ Before this, [lo, hi] was the monitoring span alone. On a grid reaching 400 nm
+    with monitoring over 480-620, u(400) = -2.14, so |delta| reached 2.1x the
+    specified corridor -- and it did so at the edges of the spectrum, precisely where
+    the uncompensable crossed mode does its damage. Every corridor figure measured
+    before 2026-08-10 is therefore invalid as an absolute number.
+
+    🔴 ONE caller computes this and passes it to the growth batch, the Phase A batch
+    and the scoring kernel. If each recomputes it they drift apart, which is the
+    defect this function was created to prevent in the first place.
     """
-    lo = np.min(wavelengths)
-    hi = np.max(wavelengths)
+    lo = min(np.min(spectral_wls), np.min(monitor_wls))
+    hi = max(np.max(spectral_wls), np.max(monitor_wls))
     if abs(hi - lo) < 1e-6:
         hi = lo + 100.0
     return lo, hi
@@ -266,10 +276,19 @@ def simulate_stack_robustness_batch(
     smoothing_window: int = 1,
     index_corridor: float = 0.0,
     index_seed: int = 0,
+    corridor_lo: float = 0.0,
+    corridor_hi: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
 
     Simulates growth for the entire stack for multiple MCS runs in parallel.
+
+    ``corridor_lo`` / ``corridor_hi`` -- the interval over which delta_M(lambda) is
+    normalised, supplied by the caller from `corridor_wl_range(spectral, monitoring)`.
+    The scoring kernel receives the SAME pair, so both stages apply one dispersion
+    curve per material per run. Left at (0, 0) the function degrades to normalising
+    over the monitoring wavelengths alone, which is the behaviour from before
+    2026-08-10 and is wrong -- see `corridor_wl_range`.
 
     Returns: (simulated_thicknesses, average_dynamics_per_layer)
 
@@ -298,7 +317,11 @@ def simulate_stack_robustness_batch(
             block_start[i] = i
         else:
             block_start[i] = block_start[i - 1]
-    wl_min, wl_max = corridor_wl_range(layer_wavelengths)
+    # Supplied by the caller, never recomputed here: the growth path and the scoring
+    # path must normalise delta_M(lambda) over one and the same interval.
+    wl_min, wl_max = corridor_lo, corridor_hi
+    if wl_max <= wl_min:                      # not supplied -> degrade to the old behaviour
+        wl_min, wl_max = corridor_wl_range(layer_wavelengths, layer_wavelengths)
     for r in prange(n_runs):
         if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)

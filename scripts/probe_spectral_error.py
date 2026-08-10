@@ -36,6 +36,21 @@ OPTICS: dict = {}
 CAPTURED: list[dict] = []
 MAX_STRAT = 12
 
+#: Lightweight record of EVERY strategy the pipeline scored -- id, blocks, score,
+#: crash rate, runs. A few dozen bytes each, so there is no reason to cap it.
+#:
+#: 🔴 WHY THIS EXISTS. `CAPTURED` keeps the first MAX_STRAT strategies **in iteration
+#: order**, not the best ones. It is an arbitrary PREFIX. Reading a ranking out of it
+#: -- "which strategy wins", "does the winner change with N", "does Phase A discard
+#: what Phase B would crown" -- measures the capture order and nothing else, and it
+#: does so while producing a perfectly readable curve. The winner of 10 is a 2-block
+#: strategy that appears in no report for exactly this reason.
+#:
+#: So: RANKING keeps everything and is the only thing a ranking question may be asked
+#: of; CAPTURED keeps the heavy per-run thickness matrices for a bounded few, which is
+#: all the spectral band analysis needs.
+RANKING: list[dict] = []
+
 
 def install_probe() -> None:
     import numpy as np
@@ -59,6 +74,25 @@ def install_probe() -> None:
 
     R._prepare_robustness_nominal_optics = patched_opt
 
+    # SEEL is already computed in the headless path, so capture it rather than
+    # recompute it: the calibration is not free (900 spectra) and recomputing would
+    # also risk drawing a different one.
+    try:
+        import certus.utils.certus_strat_service as S
+
+        orig_seel = S.calculate_seel_analysis
+
+        def patched_seel(*a, **kw):
+            data = orig_seel(*a, **kw)
+            if isinstance(data, dict) and "seel" not in OPTICS:
+                OPTICS["seel"] = dict(data)
+                B.emit(f"SEEL capture : fit_k={data.get('fit_k')} alpha={data.get('fit_alpha')}")
+            return data
+
+        S.calculate_seel_analysis = patched_seel
+    except Exception as exc:  # noqa: BLE001 -- the readout must never break the run
+        B.emit(f"PROBE_SEEL_HOOK_FAILED={exc!r}")
+
     orig_blk = W.run_final_simulation_block
 
     def patched_blk(*a, **kw):
@@ -66,17 +100,32 @@ def install_probe() -> None:
         try:
             items = (out or {}).get("all_strategies_results") if isinstance(out, dict) else None
             for it in items or []:
-                if len(CAPTURED) >= MAX_STRAT or not isinstance(it, dict):
+                if not isinstance(it, dict):
                     continue
+                st = it.get("strategy") or {}
                 per = it.get("results_per_noise") or []
-                if not per:
+
+                # Every strategy, unconditionally. This is what a ranking may be read
+                # from -- and the ONLY thing that may.
+                RANKING.append({
+                    "id": st.get("strategy_id"),
+                    "n_blocks": st.get("n_blocks"),
+                    "score": it.get("robustness_score"),
+                    "crash": it.get("crash_rate"),
+                    "wavelengths": [float(b.get("wavelength", 0.0)) for b in (st.get("blocks") or [])],
+                    "n_runs_ok": max((int(r.get("n_runs_ok", 0)) for r in per), default=0),
+                    "n_runs_total": max((int(r.get("n_runs_total", 0)) for r in per), default=0),
+                })
+
+                # Heavy part: the per-run thickness matrices the band analysis needs.
+                # Bounded, and explicitly a SAMPLE -- never a ranking.
+                if len(CAPTURED) >= MAX_STRAT or not per:
                     continue
                 lv = sorted(per, key=lambda r: float(r.get("noise_level", 0.0)))
                 r = lv[len(lv) // 2]           # niveau de bruit NOMINAL
                 th = r.get("thicknesses_all")
                 if not th or len(th) < 10:
                     continue
-                st = it.get("strategy") or {}
                 CAPTURED.append({
                     "id": st.get("strategy_id"), "n_blocks": st.get("n_blocks"),
                     "score": it.get("robustness_score"), "crash": it.get("crash_rate"),
@@ -146,7 +195,20 @@ def analyse() -> dict:
             "front_shift_nm": {"median": q(shifts, 50), "p05": q(shifts, 5), "p95": q(shifts, 95),
                                "abs_p95": q(np.abs(shifts), 95)},
         })
-    return {"n": len(rows), "strategies": rows}
+    # The ranking, sorted by the score the pipeline itself used, best first. This is
+    # the only field a ranking question may be asked of -- `strategies` below is a
+    # bounded sample kept in capture order, not a ranking. See RANKING's comment.
+    ranked = sorted(
+        (r for r in RANKING if r.get("score") is not None),
+        key=lambda r: float(r["score"]),
+    )
+    return {
+        "n": len(rows),
+        "strategies": rows,
+        "n_ranked": len(ranked),
+        "ranking": ranked,
+        "winner": ranked[0] if ranked else None,
+    }
 
 
 def main() -> None:

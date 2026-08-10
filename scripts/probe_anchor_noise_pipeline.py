@@ -65,6 +65,10 @@ TRACED_KEYS: tuple[str, ...] = (
     "affine_scale_amp",
     "affine_offset_amp",
     "poem_enabled",
+    "robustness_num_runs",
+    "n_screen_runs",
+    "k_keep_survivors",
+    "enable_consensus_ranking",
 )
 
 
@@ -82,6 +86,12 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_INDEX_CORRIDOR", "index_corridor", "float", 0.0, "corr"),
     ("CERTUS_PHASE_A_MARGIN", "phase_a_level_margin_factor", "float", None, "marg"),
     ("CERTUS_POEM_ENABLED", "poem_enabled", "flag", True, "poemoff"),
+    # --- Monte-Carlo depth. Nothing in the code SIZES these: they are defaults typed
+    # into a UI dictionary. Exposing them is what makes the sizing measurable.
+    ("CERTUS_NUM_RUNS", "robustness_num_runs", "int", 150, "N"),
+    ("CERTUS_SCREEN_RUNS", "n_screen_runs", "int", 25, "scr"),
+    ("CERTUS_KEEP_SURVIVORS", "k_keep_survivors", "int", 10, "keep"),
+    ("CERTUS_CONSENSUS", "enable_consensus_ranking", "flag", False, "consensus"),
 )
 
 _TRUE_WORDS = frozenset({"1", "true", "yes", "on"})
@@ -221,6 +231,58 @@ def patch_flag(
     )
 
 
+#: 👤 "SEEL must be computed or given to a precision of 0.1 nm, that is all."
+SEEL_STEP_NM: float = 0.1
+
+
+def quantise_seel(value: float | None) -> float | None:
+    """Round to the 0.1 nm the physicist specified.
+
+    🔑 This is NOT a display rule. The fit pins alpha = 1, so SEEL = k x RMSE and a
+    sort on the continuous value reproduces the RMSE order exactly -- a sort that
+    sorts nothing. Quantised, it creates TIES, and ties are broken by the yield.
+    That is what makes SEEL a distinct ranking criterion.
+    """
+    if value is None:
+        return None
+    return round(round(float(value) / SEEL_STEP_NM) * SEEL_STEP_NM, 1)
+
+
+def seel_block(result: float | None, report: dict) -> dict:
+    """Read the run in NANOMETRES: the equivalent random per-layer error.
+
+    Calibrates once on the nominal design -- perturb every layer by N(0, sigma) for
+    six sigmas, measure the spectral RMSE, fit sigma = k x RMSE -- then converts.
+    About a second of compute against the twenty-five minutes of the run itself.
+
+    ⚠️ `result` and the per-strategy RMSE are NOT at the same noise level (10: RESULT
+    is the WORST of three, the strategy rows are at NOMINAL). Both are converted, and
+    both are labelled, but they must never be compared with each other.
+    """
+    out: dict[str, object] = {"step_nm": SEEL_STEP_NM}
+    try:
+        data = PSE.OPTICS.get("seel")
+        if not data:
+            out["status"] = "unavailable: calculate_seel_analysis was not called"
+            return out
+        k = float(data.get("fit_k", 0.0))
+        out["fit_k"] = k
+        out["fit_alpha"] = float(data.get("fit_alpha", 1.0))
+        out["sigmas"] = list(data.get("sigmas", []))
+        out["avg_rmse"] = list(data.get("avg_rmse", []))
+        if result is not None and k > 0.0:
+            out["result_seel_nm"] = quantise_seel(k * float(result))
+            out["result_seel_raw_nm"] = k * float(result)
+        ranking = report.get("ranking") or []
+        for row in ranking:
+            score = row.get("score")
+            row["seel_nm"] = quantise_seel(k * float(score)) if (score is not None and k > 0) else None
+        out["status"] = "ok"
+    except Exception as exc:  # noqa: BLE001 -- never let the readout kill a 25-min run
+        out["status"] = f"failed: {exc!r}"
+    return out
+
+
 def main() -> None:
     mode = (sys.argv[1] if len(sys.argv) > 1 else "off").strip().lower()
     if mode not in {"on", "off", "full"}:
@@ -286,6 +348,7 @@ def main() -> None:
     r["mode"] = mode
     r["result"] = val
     r["config"] = dict(APPLIED_CONFIG)
+    r["seel"] = seel_block(val, r)
     PSE.OUT.parent.mkdir(parents=True, exist_ok=True)
     PSE.OUT.write_text(json.dumps(r, indent=1), encoding="utf-8")
     B.emit(f"PROBE_WRITTEN={PSE.OUT}  strategies={r['n']}")

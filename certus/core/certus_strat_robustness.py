@@ -878,6 +878,13 @@ def _test_strategy_robustness_task(
         index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
         index_seed = _index_stream_seed(base_seed, noise_idx)
 
+        # ONE computation of the corridor normalisation interval, passed to both the
+        # growth batch and the scoring kernel. 12.3, decided 2026-08-10: the envelope
+        # of the spectral grid and the monitoring wavelengths.
+        corridor_lo, corridor_hi = corridor_wl_range(
+            wl_arr.astype(np.float64), layer_wavelengths
+        )
+
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
             p_thick_nom_arr,
@@ -899,6 +906,8 @@ def _test_strategy_robustness_task(
             smoothing_window,
             index_corridor,
             index_seed,
+            corridor_lo,
+            corridor_hi,
         )
 
         for i_layer in range(num_layers):
@@ -955,9 +964,8 @@ def _test_strategy_robustness_task(
         # The finished filter really carries the perturbed index, so its spectrum must
         # be evaluated with it. Scoring at the nominal index measures a filter that was
         # never deposited, and hides the CROSSED mode entirely -- see 12.3 and 17-10.
-        # The normalisation range is taken from the SAME helper the growth batch uses,
-        # so both stages apply one and the same dispersion curve to a given run.
-        corridor_lo, corridor_hi = corridor_wl_range(layer_wavelengths)
+        # `corridor_lo/hi` come from the single computation above, the very same pair
+        # the growth batch received.
         run_rmses = compute_batch_rmse(
             sim_thick_batch,
             wl_arr.astype(np.float64),

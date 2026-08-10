@@ -97,6 +97,7 @@
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:0 0 20px;background:#fef2f2;">
             <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;font-size:1.06em;">
                 🔴 SCOPE — a single component is authoritative
+            </p>
             <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #b91c1c;padding-left:12px;">
                 "Beware, only the 48-layer stack is a valid example!"
                 <br><span style="font-style:normal;">— the physicist, 2026-08-06</span>
@@ -510,7 +511,7 @@
         <!-- ================================================================ -->
         <h2>2. Optical Monitoring Simulation</h2>
 
-        <h3>2.0 The real machine — measured specifications and frozen model</h3>
+        <h3>2.1 The real machine — measured specifications and frozen model</h3>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
 all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>. for a long                time, the model relied on numerical constants chosen for convenience — 64 sweep points,
@@ -631,21 +632,21 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 <b>What would legitimately reopen the postulate</b>: an actual deposition of the dichroic whose
                 measured crash rate would deviate significantly from the predicted rate. <b>Nothing else — and
                 especially not a reasoning.</b> This project has already paid three times for believing a reasoning
-                about noise (§2.1quinquies).
+                about noise (§2.7).
             </p>
         </div>
 
-        <h3>2.0bis Smoothing changes the DIRECTION of the detection threshold</h3>
+        <h3>2.2 Smoothing changes the DIRECTION of the detection threshold</h3>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
-                Section 2.1ter derives the hysteresis threshold from an amplitude bound on the <b>raw</b> readings:
+                Section 2.5 derives the hysteresis threshold from an amplitude bound on the <b>raw</b> readings:
                 the draw being bounded at $\pm A$, the maximum difference that noise alone can display is $2A$,
                 so a threshold $\ge 2A$ forbids any false inversion. This reasoning is correct — <b>but it
                 applies to a machine that would read raw, and the OMS does not read raw.</b>
             </p>
             <p style="margin:0 0 10px;">
                 📖 This page already anticipated it: Zideluns p. 112 notes that the amplitude threshold can be lowered
-                <i>"by increasing the signal processing time"</i>, which §2.1bis commented on with "the machine
+                <i>"by increasing the signal processing time"</i>, which §2.4 commented on with "the machine
                 <b>filters</b>". 👤 Confirmed in 2026: the average covers <b>about 2 seconds</b>.
             </p>
             <p style="margin:0 0 10px;">
@@ -674,6 +675,54 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 better on <i>both</i> sides of the problem — fewer false turning points <b>and</b>
                 better detection of faint true extrema, which is the side no one had measured.
             </p>
+        </div>
+
+        <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
+            <p style="margin:0 0 10px;">
+                🔴 <b>MEASURED 2026-08-10 — the derivation above does not do what it was derived to
+                do.</b> The paragraph that precedes this one called $0.354$ a derivation and said in
+                writing that the anti-fabrication bound of a smoothed signal <i>"is not simply
+                calculable, because neighbouring samples are correlated, and must be measured"</i>.
+                It has now been measured, with the real detector and the real noise generator, on a
+                flat clean signal, 20 000 draws, $N = 800$, <b>centred</b> smoothing.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#fee2e2;">
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;text-align:left;">Factor</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">in $\sigma_{\text{smoothed}}$</th>
+                    <th style="border:1px solid #fca5a5;padding:4px 10px;">fabrication at $k=8$, $N=800$</th></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>0.354</b> — the derived value</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">3.00</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>100.000 %</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">0.707</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">6.00</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">20.960 %</td></tr>
+                <tr style="background:#dcfce7;"><td style="border:1px solid #fca5a5;padding:4px 10px;"><b>1.000</b> — the measured bound</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">8.49</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>0.005 %</b></td></tr>
+                <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">1.660</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">14.09</td>
+                    <td style="border:1px solid #fca5a5;padding:4px 10px;">0.000 %</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                <b>Method check</b>: dividing the noise by 100 at the $0.354$ setting drops fabrication
+                to <b>0.000 %</b>. The 100 % really is noise, not an artifact.
+            </p>
+            <p style="margin:0 0 10px;">
+                <b>Where the arithmetic fails.</b> "3&sigma; of the smoothed signal" is a
+                <b>per-sample</b> criterion, but the detector applies it to a <b>RUNNING extremum over
+                800 samples</b>: it emits as soon as the signal retreats past the threshold from the
+                running maximum. Over ~100 effectively independent windows the max&minus;min span of the
+                noise is already about $6\sigma$ — which is exactly what the 0.707 row shows at 20.96 %.
+                A threshold placed <i>at</i> $3\sigma$ is crossed every single time.
+            </p>
+            <p style="margin:0;">
+                🟢 <b>What is NOT refuted: the smoothing itself.</b> It genuinely helps — the bound falls
+                from $1.66\,A$ on raw readings to $1.00\,A$ on smoothed ones. What fails is the
+                $1/\sqrt{k}$ law linking $k$ to the threshold. <b>$1.00$ is a measured value at $k=8$,
+                $N=800$, not a law</b>: it depends on $N$ as much as on $k$. If either changes, measure
+                again — and do not fit a $\ln N$ formula to plug the gap.
+            </p>
 
             <p style="margin:0 0 10px;">
                 📏 <b>What raw reading costs</b>, measured on a clean <b>flat</b> signal — the worst case —
@@ -690,7 +739,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>32.945 %</b></td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">92.995 %</td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;"><b>99.935 %</b></td></tr>
-                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">$2{,}00\,A$ (bound from §2.1ter)</td>
+                <tr><td style="border:1px solid #67e8f9;padding:4px 10px;">$2{,}00\,A$ (bound from §2.5)</td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">0.480 %</td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">7.660 %</td>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">30.525 %</td></tr>
@@ -700,7 +749,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     <td style="border:1px solid #67e8f9;padding:4px 10px;">0.000 %</td></tr>
             </table>
             <p style="margin:0 0 10px;">
-                <b>Method check (§2.1quinquies)</b>: at $N=800$ and threshold $1{,}66\,A$, halving the noise
+                <b>Method check (§2.7)</b>: at $N=800$ and threshold $1{,}66\,A$, halving the noise
                 drops the leakage to <b>0.000%</b>. It thus truly depends on noise — it is not an artifact.
             </p>
             <p style="margin:0 0 10px;">
@@ -719,7 +768,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.1 Noise Model — Gaussian (Production Mode)</h3>
+        <h3>2.3 Noise Model — Gaussian (Production Mode)</h3>
         <p>
             <code>generate_noise_array</code> generates gaussian noise for all Monte Carlo simulations. This is the
             production mode in STRAT.
@@ -756,10 +805,10 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </ul>
         </div>
 
-        <h3>2.1bis READOUT noise of the monitoring signal — <code>poem_anchor_noise</code></h3>
+        <h3>2.4 READOUT noise of the monitoring signal — <code>poem_anchor_noise</code></h3>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
-                The &sigma; of §2.1 added noise to <b>only one point in the entire chain</b>: the cut-off
+                The &sigma; of §2.3 added noise to <b>only one point in the entire chain</b>: the cut-off
                 comparison. <code>Ts_r</code>, the "real" signal, is however also used for <b>turning point
                 detection</b>, for reading the <b>POEM anchors</b> and for the <b>level reachability test</b>.
                 <code>poem_anchor_noise</code> applies the same &sigma; to it <i>before</i> these three uses.
@@ -826,14 +875,14 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.1ter The turning point detection rule — <code>tp_hysteresis_factor</code></h3>
+        <h3>2.5 The turning point detection rule — <code>tp_hysteresis_factor</code></h3>
         <p style="margin:0 0 10px;border-left:5px solid #b45309;background:#fffbeb;padding:10px 14px;">
-            ⚠️ <b>Section partially superseded by §2.0bis.</b> The derivation below — threshold
+            ⚠️ <b>Section partially superseded by §2.2.</b> The derivation below — threshold
             $\ge 2A$ so that noise bounded at $\pm A$ can never fabricate an inversion — remains
             <b>exact</b>, but it assumes the machine compares <b>raw</b> readings. 👤 It does not: it
             averages over about 2 s. The threshold thus applies to the <b>smoothed</b> signal, and equals
             $1/\sqrt{k} = 0{,}354$ for $k = 8$ — i.e. <b>4.7&times; lower</b> than the value discussed here.
-            Read §2.0bis before applying anything from this section.
+            Read §2.2 before applying anything from this section.
         </p>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
@@ -898,11 +947,11 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 after the episode of the 4%, which were twenty times too conservative.
                 <br>📏 <b>Measured effect, and it is partial</b>: hysteresis halves the crash rate at actual &sigma;
                 (1.31% → 0.69%), not by the 11 it would take to meet the 0.107% per layer. It only governs one of
-                the two failure modes — see §2.1quater.
+                the two failure modes — see §2.6.
             </p>
         </div>
 
-        <h3>2.1quater The two failure modes, and why they must be counted separately</h3>
+        <h3>2.6 The two failure modes, and why they must be counted separately</h3>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
             <p style="margin:0 0 10px;">
                 <code>simulate_growth_kernel</code> returned <b>the same value</b> — <code>nominal_th + 1e6</code> —
@@ -962,7 +1011,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.1quinquies 🟢 The method — how to distinguish a measurement from an artifact</h3>
+        <h3>2.7 🟢 The method — how to distinguish a measurement from an artifact</h3>
         <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
             <p style="margin:0 0 12px;">
                 This section is the most transferable of the document. In one day, the <b>same quantity</b> — the rate
@@ -1023,7 +1072,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.1sexies The affine invariance of POEM — the theorem, and why the code denied it</h3>
+        <h3>2.8 The affine invariance of POEM — the theorem, and why the code denied it</h3>
         <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
             <p style="margin:0 0 10px;">
                 The argument that justifies POEM fits on one line. If the instrument undergoes a <b>photometric
@@ -1083,11 +1132,56 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 ⚠️ <b>A method lesson more than a fix.</b> The flaw was invisible because the parameters
                 defaulted to $(1{,}0\;;\;0{,}0)$, and no caller passed them. A parameter never activated is
                 not an inactive parameter: it is <b>unverified code</b> waiting to be taken on faith.
-                Cf. §2.1quinquies.
+                Cf. §2.7.
             </p>
         </div>
 
-        <h3>2.1septies Index uncertainty — a dispersion corridor, not a scalar</h3>
+        <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
+            <p style="margin:0 0 10px;">
+                🟢 <b>MEASURED 2026-08-10 — the theorem holds on the bench, by a factor of 17.5.</b>
+                Everything above is a proof and a repair. This is the experiment they were for: the
+                48-layer dichroic, seed 42, 1 nm grid, four arms, each verified against the
+                configuration it was actually given.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#dcfce7;">
+                    <th style="border:1px solid #86efac;padding:4px 10px;text-align:left;"></th>
+                    <th style="border:1px solid #86efac;padding:4px 10px;">distortion off</th>
+                    <th style="border:1px solid #86efac;padding:4px 10px;">distortion on</th>
+                    <th style="border:1px solid #86efac;padding:4px 10px;">cost of the distortion</th></tr>
+                <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>POEM on</b></td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;">0.002948627371</td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;">0.002974282945</td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;"><b>&times;1.0087</b> (+0.87 %)</td></tr>
+                <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>POEM off</b></td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;">0.005824599272</td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;">0.102569548144</td>
+                    <td style="border:1px solid #86efac;padding:4px 10px;"><b>&times;17.61</b> (+1661 %)</td></tr>
+            </table>
+            <div class="eq-box">
+                $$ \text{protection factor} \;=\; \frac{17.61}{1.0087} \;=\; \mathbf{17.5} $$
+            </div>
+            <p style="margin:10px 0 0;">
+                The success criterion had been written down <i>before</i> the measurement: the gap had to
+                be spectacular, or the central argument of the mechanism fell. It is three orders of
+                magnitude on the cost of the distortion.
+            </p>
+            <p style="margin:10px 0 0;">
+                Two results nobody had asked for. <b>POEM off with no distortion at all already costs
+                &times;1.975</b>: the mechanism does not merely absorb photometric drift, it also
+                compensates <i>accumulated thickness error</i>. And the two POEM-off arms returned
+                <b>9 surviving strategies against 12</b> — more were rejected outright, before scoring.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ <b>What this does NOT establish.</b> One seed, one stack, and an aggregate over the
+                three noise levels — it says nothing yet about the crash rate or the per-band breakdown.
+                And POEM is invariant under an <i>affine</i> distortion of the signal; an index error is
+                not one. <b>Whether the protection extends there is a separate question, and an open
+                one</b> — see §2.9.
+            </p>
+        </div>
+
+        <h3>2.9 Index uncertainty — a dispersion corridor, not a scalar</h3>
         <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
             <p style="margin:0 0 10px;">
                 👤 <b>What the physicist describes (2026-08-08).</b> The indices are <b>presupposed</b>, known to
@@ -1137,20 +1231,57 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 <b>L layers undergo a perturbation 1.6&times; larger than the H layers</b>, for the same corridor.
                 $\delta_{\max}$ is therefore a single absolute constant, especially not a fraction of $n$.
             </p>
-            <p style="margin:0;">
-                📏 <b>What the kernel produces today: exactly zero.</b> Indices are treated there as
-                deterministic. And the obvious fix — pre-multiplying $n_H$ and $n_L$ at the call site — is
-                <b>inert</b>: measured at $3{,}3\cdot10^{-10}$ nm of response for $\delta = 0{,}005$, and
-                $1{,}9\cdot10^{-10}$ nm for $\delta = 0{,}05$, i.e. ten times more perturbation for no
-                effect. The reason is structural: <b>the same set of indices drives the real stack and
-                the nominal stack</b>, and shifting them together creates no divergence. It is necessary to have
-                <b>two sets of indices</b> — one for what is deposited, the other for what the controller
-                expects — and also to perturb the final spectral evaluation, otherwise the uncompensated tilt
-                would never be paid for.
+            <p style="margin:0 0 10px;">
+                📏 <b>The kernel used to produce exactly zero</b>, because indices were deterministic
+                there. The obvious fix — pre-multiplying $n_H$ and $n_L$ at the call site — was
+                <b>inert</b>: $3{,}3\cdot10^{-10}$ nm of response at $\delta = 0{,}005$ and
+                $1{,}9\cdot10^{-10}$ nm at $\delta = 0{,}05$, i.e. ten times the perturbation for no
+                effect. The reason was structural: <b>the same set of indices drove the real stack and
+                the nominal stack</b>, and shifting them together creates no divergence. Two sets are
+                needed — one for what is deposited, one for what the controller expects.
             </p>
         </div>
 
-        <h3>2.1octies Rate mode — control by turn counting, and what it costs</h3>
+        <div style="border:3px solid #b45309;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fffbeb;">
+            <p style="margin:0 0 10px;">
+                🟢 <b>MEASURED 2026-08-10 — and it dwarfs everything else on this page.</b> The two sets
+                of indices now exist in the growth kernel. Same stack, same seed, only the corridor
+                changing:
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.95em;">
+                <tr style="background:#fef3c7;">
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;text-align:left;">corridor $\delta_{\max}$</th>
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;">RESULT</th>
+                    <th style="border:1px solid #fcd34d;padding:4px 10px;">&times; baseline</th></tr>
+                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0 (baseline)</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.002948627371</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">1.00</td></tr>
+                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;">0.0025</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.009877098893</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>&times;3.35</b></td></tr>
+                <tr><td style="border:1px solid #fcd34d;padding:4px 10px;"><b>0.005</b> — the model value</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;">0.015225307261</td>
+                    <td style="border:1px solid #fcd34d;padding:4px 10px;"><b>&times;5.16</b></td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                For comparison, the photometric distortion of §2.8 costs <b>&times;1.0087</b> once
+                POEM is doing its job. <b>Index uncertainty is, by a wide margin, the largest error
+                source measured on this stack.</b> The effect is <b>sub-linear</b>: doubling the corridor
+                multiplies the result by only 1.54.
+            </p>
+            <p style="margin:0;">
+                🔴 <b>And this is HALF the mechanism.</b> The perturbation reaches the growth path — so
+                the deposited thicknesses are wrong — but <b>not the scoring path</b>: the finished
+                filter is still evaluated as if its indices were exactly nominal. The <i>crossed</i>
+                mode, the one the physicist calls uncompensable, is precisely the one that shows up in
+                the final spectrum rather than in the monitoring. So these figures are an
+                <b>underestimate</b>, and the number above must never be presented as "the effect of the
+                corridor". Re-measuring once the scoring path is perturbed, and taking the difference,
+                is what will isolate that contribution.
+            </p>
+        </div>
+
+        <h3>2.10 Rate mode — control by turn counting, and what it costs</h3>
         <div style="border:3px solid #0d9488;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdfa;">
             <p style="margin:0 0 10px;">
                 👤 <b>What the physicist describes (2026-08-09).</b> The OMS 5100 offers a <b>rate mode</b>
@@ -1171,7 +1302,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <p style="margin:10px 0 0;">
                 🔑 <b>The control unit is the TURN, not the second.</b> At 240 rpm one turn lasts 250 ms,
                 i.e. <b>0.125 nm at 0.5 nm/s</b> — <i>exactly</i> the sampling step of the frozen reading
-                model in §2.0. That is not a coincidence: both come from the same rotation. A rate-mode
+                model in §2.1. That is not a coincidence: both come from the same rotation. A rate-mode
                 thickness is therefore <b>quantised in whole turns</b>, and that quantisation costs no
                 parameter — it falls out on its own.
             </p>
@@ -1245,7 +1376,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.1novies Monochromator resolution — the first setting with an OPTIMUM</h3>
+        <h3>2.11 Monochromator resolution — the first setting with an OPTIMUM</h3>
         <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
             <p style="margin:0 0 10px;">
                 👤 <b>What the physicist describes (2026-08-09).</b> The monitoring system has a given
@@ -1277,7 +1408,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <p style="margin:10px 0 0;">
                 🔴 <b>These four numbers are ESTIMATES, not measurements</b> (👤 2026-08-09, verbatim:
                 estimated "by feeling"). They therefore have the status of a modelling postulate, like the
-                frozen reading model of §2.0 — never cite them as measured. The consequence is binding: a
+                frozen reading model of §2.1 — never cite them as measured. The consequence is binding: a
                 conclusion drawn from them is a physical result <b>only if it survives their
                 uncertainty</b>. Every resolution measurement must be repeated with the factors displaced
                 over a plausible range (&divide;1.2 instead of &divide;1.5, &times;3 instead of &times;5).
@@ -1374,7 +1505,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.2 Non-Monotonic Error Model</h3>
+        <h3>2.12 Non-Monotonic Error Model</h3>
         <p>
             Beyond pure trigger noise, the simulation optionally adds a systematic offset via
             <code>compute_probe_offset_nm_from_ratio</code>. The effective measured thickness incorporates:
@@ -1388,7 +1519,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <code>NON_MONOTONIC_MODE_ATTENUATE</code> (default) vs <code>NON_MONOTONIC_MODE_REJECT</code>.
         </div>
 
-        <h3>2.3 Cumulative Error Propagation</h3>
+        <h3>2.13 Cumulative Error Propagation</h3>
         <p>
             The key innovation of CERTUS is that thickness errors are <strong>physically propagated</strong>
             through the TMM. If layer $i$ was deposited with an error $\delta d_i$:
@@ -1410,7 +1541,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             independent realisations in parallel using Numba <code>prange</code>.
         </p>
 
-        <h3>2.4 Reality-Feedback Loop in Phase A</h3>
+        <h3>2.14 Reality-Feedback Loop in Phase A</h3>
         <p>
             Before evaluating layer $i$, the TMM matrix cache is <strong>rebuilt</strong> from the
             <em>average</em> simulated thicknesses of layers $0 \ldots i{-}1$. A
@@ -1447,7 +1578,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             🔴 <b>THE CONTROL &lambda; GRID IS THE SWEEP ONE — currently at a 1 nm step.</b>
             👤 <i>"The lengths must be selectable by 2 nm steps"</i> (2026-08-06), in wavelength
             and not in thickness — then 👤 <i>"the machine can position 1 nm"</i> (2026-08-07), and the
-            full simulation confirmed that 1 nm does better (§3.3). What is <b>carved in stone</b> is that the
+            full simulation confirmed that 1 nm does better (§3.4). What is <b>carved in stone</b> is that the
             candidate &lambda;s fall on a regular grid that the machine can reach; the <b>value</b>
             of the step, however, is measured. It equals
             <code>arange_inclusive(scan_wl_min, scan_wl_max, scan_wl_step)</code>, i.e. <b>251 &lambda; on
@@ -1486,7 +1617,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             full pipeline traceability.
         </div>
 
-        <h3>3.2bis 🔴 The safety margin at the turning point — and why the filter was inert</h3>
+        <h3>3.3 🔴 The safety margin at the turning point — and why the filter was inert</h3>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:20px 0;background:#fef2f2;">
             <p style="margin:0 0 12px;font-weight:700;color:#7f1d1d;font-size:1.08em;">
                 The extrema exclusion filter prohibited NOTHING: 0 candidates out of 51, on all 48 layers
@@ -1548,7 +1679,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">It guarantees</th>
                     <th style="border:1px solid #fca5a5;padding:5px 10px;text-align:left;">Mechanism</th></tr>
                 <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>the level is reachable</b></td>
-                    <td style="border:1px solid #fca5a5;padding:5px 10px;">if the margin exceeds the noise amplitude, no realization can place the noisy peak below the target. 📏 This is the dominant mode: 100% of the floor independent of &sigma; (§2.1quater).</td></tr>
+                    <td style="border:1px solid #fca5a5;padding:5px 10px;">if the margin exceeds the noise amplitude, no realization can place the noisy peak below the target. 📏 This is the dominant mode: 100% of the floor independent of &sigma; (§2.6).</td></tr>
                 <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>exactly the right number of extremum</b></td>
                     <td style="border:1px solid #fca5a5;padding:5px 10px;">a stop far from an extremum cannot make one appear or disappear. This is the reason given by the physicist.</td></tr>
                 <tr><td style="border:1px solid #fca5a5;padding:5px 10px;"><b>the thickness error remains bounded</b></td>
@@ -1580,7 +1711,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>3.3 Step A.3 — Monte Carlo Validation</h3>
+        <h3>3.4 Step A.3 — Monte Carlo Validation</h3>
         <p>For each surviving candidate $\lambda_k$:</p>
         <div class="algo-step">
             <span class="algo-title">Vectorized Monte Carlo (Numba <code>validate_wavelengths_batch</code>):</span>
@@ -1624,7 +1755,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 cases only. The filter already existed; <b>what was missing is that the signal on which it
                 decides be noisy.</b> Without noise, the question "is there a risk of miscounting?" was not
                 asked — extrema were located on a perfect TMM curve and the answer was
-                "never", by construction. The <code>poem_anchor_noise</code> flag (§2.1bis) therefore governs
+                "never", by construction. The <code>poem_anchor_noise</code> flag (§2.4) therefore governs
                 <b>both phases</b>, because the rule is a single physical statement about what constitutes a
                 usable wavelength.
             </p>
@@ -1653,7 +1784,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>3.4 Step A.4 — Error Propagation + Normalization</h3>
+        <h3>3.5 Step A.4 — Error Propagation + Normalization</h3>
         <p>
             The best wavelength is selected for this layer. <code>update_run_states_kernel</code>
             saves the simulated thickness for each of the $N_{runs}$ realisations, so that
@@ -1662,7 +1793,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             and squared to produce <code>raw_results_sq</code> for balanced DP input in Phase B.
         </p>
 
-        <h3>3.5 Layer 1 Attenuation (optional)</h3>
+        <h3>3.6 Layer 1 Attenuation (optional)</h3>
         <p>
             When Smart Nucleation is inactive, the cost of Layer 1 can be attenuated by
             <code>layer1_cost_attenuation_factor</code> (default 1.0, i.e. no attenuation). Values
@@ -1872,7 +2003,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <p style="margin:0 0 10px;background:#ecfeff;border:2px solid #0e7490;border-radius:6px;padding:8px 12px;">
                 ✅ <b>This diagnosis is from BEFORE the fix.</b> Reading noise has been in place since
                 2026-08-06, behind <code>poem_anchor_noise</code>, inactive by default —
-                <b>see §2.1bis</b>, which gives the mechanism, common random numbers, the duplicated
+                <b>see §2.4</b>, which gives the mechanism, common random numbers, the duplicated
                 point trap and what remains unfaithful. What follows remains true <i>flag closed</i>, and that is
                 why the flag exists.
             </p>
@@ -1905,7 +2036,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 <br><br>✅ <b>Fix DEPLOYED on 2026-08-06</b>: <code>Ts_r</code> carries the same
                 &sigma; <i>before</i> detection, behind <code>poem_anchor_noise</code>, inactive by
                 default. The three questions have become <b>measurements</b> — see
-                <b>§2.1bis</b> for the mechanism, common random numbers, and what remains
+                <b>§2.4</b> for the mechanism, common random numbers, and what remains
                 unfaithful (a &sigma;-independent crash floor, which is the signature
                 of the missing detection rule).
             </p>
@@ -2035,7 +2166,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <ul>
                 <li>$V_k(i)$: cumulative minimum cost (corresponding to <code>DP[k][i]</code>) for covering layers $1 \dots i$ with exactly $k$ blocks.</li>
                 <li>$j$: optimal cut point (end of block $k-1$).</li>
-                <li>$\text{Cost}(m, \lambda)$: cost of layer $m$ monitored at $\lambda$, as defined in §3.3 —
+                <li>$\text{Cost}(m, \lambda)$: cost of layer $m$ monitored at $\lambda$, as defined in §3.4 —
                     $Q_{0.95}(\Delta d) + w \cdot g \cdot \varepsilon_{\text{prev}}$, <em>not</em> the P95 alone.
                     Candidates eliminated on crash rate never reach the DP.</li>
                 <li>The inner minimization loop corresponds to $\text{BlockCost}(j, i)$.</li>
@@ -2210,7 +2341,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <p>The <strong>layer importance map</strong> is built from Phase A: layers with higher P75 dynamics receive a larger continuity reward.</p>
         </div>
 
-                <h3>4.3bis 🔴 YIELD in the DP objective — <code>dp_yield_weight</code></h3>
+                <h3>4.4 🔴 YIELD in the DP objective — <code>dp_yield_weight</code></h3>
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:16px 20px;margin:20px 0;background:#fef2f2;">
             <p style="margin:0 0 12px;">
                 Phase A measures the non-terminable deposition rate <b>per layer and per wavelength</b> and
@@ -2268,8 +2399,8 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             <p style="margin:0;">
                 ⚠️ <b>THIS DATA JUST BECAME INFORMATIVE, AND NOT BEFORE.</b> As long as detection was done
                 on a perfect TMM curve, the crash rate was zero almost everywhere and this map would have
-                been flat. <b>Axis 4.1 was not feasible before reading noise (§2.1bis) and the detection
-                rule (§2.1ter).</b>
+                been flat. <b>Axis 4.1 was not feasible before reading noise (§2.4) and the detection
+                rule (§2.5).</b>
                 <br>⚠️ <b>Resolution</b>: $p$ is estimated on $N_{runs}$ draws, so the smallest non-zero
                 rate is $1/N_{runs}$. Below that, the map is zero and adds nothing.
                 <br>⚠️ <b>The weight is not guessed</b>: at the 0.107% tolerance per layer, $-\log(1-p)$ is
@@ -2278,8 +2409,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-                <h3>4.4 Full Monte Carlo Robustness Screening</h3>
-                <p>
+                <h3>4.5 Full Monte Carlo Robustness Screening</h3>
                 <div style="border:3px solid #15803d;border-radius:10px;padding:16px 20px;margin:20px 0;background:#f0fdf4;">
                     <p style="margin:0 0 12px;font-weight:700;color:#166534;font-size:1.06em;">
                         ✅ 2026-08-06 — The weighted spectral target is ROUTED (but dormant)
@@ -2445,7 +2575,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     </p>
                 </div>
 
-                <h3>4.5 Consensus Multi-Seed Ranking (optional)</h3>
+                <h3>4.6 Consensus Multi-Seed Ranking (optional)</h3>
                 <div class="new-badge">
                     When <code>enable_consensus_ranking=True</code>, the top-k strategies
                     (<code>consensus_top_k</code>, default 12) are re-evaluated across multiple seeds
@@ -2460,7 +2590,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     re-evaluations within a session. Consensus is applied both before and after elite expansion.
                 </div>
 
-                <h3>4.6 Post-Check: T_min Floor on Best Strategy</h3>
+                <h3>4.7 Post-Check: T_min Floor on Best Strategy</h3>
                 <p>
                     After ranking, the best strategy undergoes a final validation via
                     <code>_validate_strategy_min_transmission_floor</code>. For every layer, the dynamics are
@@ -2556,7 +2686,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     best P95 cost, Monte Carlo run count, and scan wavelength count.
                 </div>
 
-                <h3>7.2bis What the operator sees — yield at the head of the table</h3>
+                <h3>7.3 What the operator sees — yield at the head of the table</h3>
                 <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
                     <p style="margin:0 0 10px;font-style:italic;border-left:4px solid #15803d;padding-left:12px;">
                         "If 95% of depositions work, we win."
@@ -2591,7 +2721,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     </p>
                 </div>
 
-                <h3>7.3 Sensitivity Matrix (Legacy)</h3>
+                <h3>7.4 Sensitivity Matrix (Legacy)</h3>
                 <p>
                     <code>calculate_sensitivity_matrix</code> sweeps $\sigma$ from 0 to 3 nm and computes the mean
                     $|T_{noisy} - T_{nominal}|$ at each wavelength. This produces a two-dimensional heat map showing
@@ -2600,7 +2730,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                         sensitivity is now evaluated intrinsically during Phase B screening.</em>
                 </p>
 
-                <h3>7.4 SEEL Analysis (Legacy)</h3>
+                <h3>7.5 SEEL Analysis (Legacy)</h3>
                 <p>
                     <code>calculate_seel_analysis</code> runs 3×50 Monte Carlo batches at 6 different $\sigma$
                     levels and computes the RMSE for each. The resulting SEEL curve indicates the equivalent random
@@ -2609,7 +2739,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                         Monte Carlo ranking rather than running as a standalone post-process.</em>
                 </p>
 
-                <h3>7.5 Detailed Growth Visualization</h3>
+                <h3>7.6 Detailed Growth Visualization</h3>
                 <p>
                     <code>calculate_detailed_growth</code> simulates the exact transmittance curve during
                     layer-by-layer deposition, including the dual-matrix backside correction. This produces the

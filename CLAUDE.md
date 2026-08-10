@@ -756,20 +756,30 @@ run lancé **après la montée en Python 3.14.7** — donc le seul avec un cache
 > **La règle : à état compilé identique, le banc rend le même bit. C'est la RECOMPILATION qui
 > est le facteur de risque, pas l'exécution.**
 
-🔴 **Et ça pique pour la règle d'or.** Ajouter un paramètre à un noyau numba **change sa
-signature, donc force une recompilation**. Le « bit-identique » exigé par C1 pourrait donc
-être structurellement inatteignable dans le seul cas où on en a besoin.
+### 🔴 TRANCHÉ LE 2026-08-10 — la recompilation décale les bits, de façon reproductible
 
-**Une mesure à 25 minutes tranche, et elle n'a pas été faite** : vider le cache numba, relancer
-à code strictement inchangé.
+Mesure B0 : cache numba **vidé**, code **strictement inchangé**, configuration neutre.
 
-- Le chiffre bouge → c'est bien la compilation, et C1 doit être reformulée avec une tolérance
-  explicite pour les changements de signature.
-- Le chiffre ne bouge pas → c'était la version de Python, et C1 tient telle quelle.
+```
+cache chaud, 4 runs             0.002948627371309867
+cache FROID, etape 2 (2026-08-09)  0.002948627371226749
+cache FROID, B0    (2026-08-10)    0.002948627371226749   <- identique au precedent
+```
 
-**Tant que cette mesure n'est pas faite, ne conclus rien** sur un écart de l'ordre de 1e-11
-observé après un changement de signature de noyau. C'est exactement l'erreur qui a produit
-puis fait retirer le constat §17-1.
+**Une recompilation décale de 2,819e-11, et deux caches froids indépendants donnent
+exactement le même chiffre.** Ce n'est pas du bruit : c'est un second état, reproductible.
+
+**Les trois conséquences, et elles sont définitives :**
+
+1. 🔴 **Le « bit-identique » de C1 est INATTEIGNABLE via le banc, précisément là où on en a
+   besoin.** Ajouter un paramètre à un noyau numba change sa signature, donc force une
+   recompilation, donc déplace le chiffre. **N'exige jamais l'égalité exacte d'un `RESULT` de
+   part et d'autre d'un ajout de paramètre.**
+2. ✅ **Le constat §17-1 est définitivement innocenté.** L'écart de 2,5e-11 que j'avais pris
+   pour une violation de la règle d'or était T5 changeant la signature du noyau. Retiré par
+   prudence hier, retiré par **preuve** aujourd'hui.
+3. **A5 doit comparer à état compilé constant** — ou porter cette tolérance explicitement.
+   Forcer le mono-thread ne sert à rien : l'ordonnancement n'est pas la cause.
 
 ## 4. Quand s'arrêter et demander
 
@@ -1281,10 +1291,38 @@ Deux constats supplémentaires que personne n'avait demandés :
   de la dérive photométrique : il compense aussi les erreurs d'épaisseur accumulées.
 - Le pire cas complet — POEM inactif sous distorsion — vaut **×34,8** le meilleur cas.
 
-🔴 **Ce que cette mesure ne dit PAS.** Elle porte sur `RESULT`, l'agrégat sur les trois
-niveaux de bruit, à une seule graine et sur le seul 48 couches. Elle ne dit rien du **taux de
-plantage** ni de la répartition par bande — il faut relire les JSON des quatre runs pour ça.
-Et §15 reste entier : c'est un banc de cohérence, pas une validation physique.
+#### 🟢 Confirmé sur une SECONDE graine le 2026-08-10 — avec une nuance à ne pas cacher
+
+| graine | distorsion avec POEM | sans POEM | **protection** |
+|---|---|---|---|
+| **42** | ×1,009 | ×17,61 | **×17,5** |
+| **77** | ×1,983 | ×30,18 | **×15,2** |
+
+**La protection est reproductible : ×15 à ×17,5.** C'est le résultat, et il tient.
+
+🔴 **Mais le dommage RÉSIDUEL dépend fortement de la graine.** À la graine 42 la distorsion ne
+coûtait que **+0,9 %** avec POEM ; à la 77 elle coûte **+98 %**. **La graine 42 était un
+tirage chanceux.** Ne cite jamais « +0,87 % » comme le coût de la distorsion — cite la
+protection, qui est ce qui se reproduit.
+
+🔴 **Ce que ces mesures ne disent PAS.** Elles portent sur `RESULT`, l'agrégat sur les trois
+niveaux de bruit, sur le seul 48 couches. §15 reste entier : banc de cohérence, pas
+validation physique.
+
+#### 🔑 POEM ne réduit pas seulement l'erreur — il change OÙ elle tombe
+
+📏 Profil par bande, `scripts\analyse_bands.py` (2026-08-10, sur les runs déjà au disque,
+zéro temps de banc) :
+
+| run | passante | front | **front/passante** |
+|---|---|---|---|
+| POEM actif, distorsion | 0,002205 | 0,005618 | **2,55** |
+| **POEM coupé, distorsion** | **0,042351** | 0,003780 | **0,09** |
+| POEM coupé, corridor 0,005 | 0,470535 | 0,378305 | 0,80 |
+
+Avec POEM, l'erreur est **concentrée sur le front** — un décalage de bord. Sans POEM, elle
+**inonde la bande passante**, où elle devient de l'ondulation. **Le mode de défaillance
+change de nature, pas seulement d'amplitude.**
 
 #### Pièges connus
 
@@ -2159,8 +2197,12 @@ neufs.
 | 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
 | 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
 | 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
+| 14 | 🔴 **`dp_yield_weight` est INERTE sur trois décades.** Profil par bande des runs `yw0`, `yw50`, `yw200`, `yw1000` (`analyse_bands.py`) : `passante 0.002977 · front 0.006640 · bloquee 0.000005` — **rigoureusement identiques aux quatre**. §17 rapportait déjà un « résultat nul » à la calibration ; on sait maintenant qu'il est nul **au dernier chiffre et sur toutes les bandes**, pour un poids multiplié par 1000. Un paramètre qui ne fait rien sur trois décades n'est pas mal calibré : **il n'atteint pas le calcul.** À traiter comme le Piège 1. |
+| 15 | 🔴 **Deux configurations différentes rendent le MÊME `RESULT` au bit, alors que leurs bandes diffèrent.** Seuils 2,0 A et 2,4 A : `RESULT = 0.003192038110407474` pour les deux, mais `passante` vaut 0,003214 contre 0,004444 — **38 % d'écart**. Donc `RESULT` est **aveugle à un changement qui déplace visiblement le résultat**. Avant de continuer à s'en servir comme grandeur de tête, il faut savoir ce qu'il agrège exactement : §10 dit « le pire des trois niveaux de bruit », et personne n'a vérifié cette phrase dans le code. |
+| 16 | 🟢 **La bande bloquée n'est jamais le mode de défaillance.** Sur les 25 runs au disque, elle est **~567× plus propre** que la passante, sans exception. §14 s'inquiète à juste titre qu'un RMSE uniforme ne puisse pas distinguer les deux bandes — mais **le filtre ne rate jamais son blocage, il rate son passage**. ⚠️ Cela ne clôt pas §14 : l'exigence est ~500× plus serrée en bande bloquée, et 567 ≈ 500 signifie que les deux bandes sont **également proches de leur spec**, pas que l'une est acquise. Il faut les tolérances réelles par bande pour trancher, et on ne les a pas. |
 | 12 | 🔴 **La marge de Phase A ne rejette RIEN.** Mesuré le 2026-08-10 : `phase_a_level_margin_factor = 3.33` rend `0.002948627371309867`, **bit-identique** au run à 1,66. `CONFIG=` confirme que 3,33 a bien été appliqué. Doubler la marge de sécurité ne change donc **pas un seul bit** du résultat. C'est le contrôle 4 de §20 : *« un filtre inerte ne produit aucune erreur, il produit un résultat plausible »*. **Compter ses rejets avant de conclure** — soit il n'écarte rien, soit ce qu'il écarte n'atteint jamais la gagnante. Les deux sont des informations, et aucune n'était connue. |
-| 13 | 🟢 **Le corridor d'indice écrase tout, avec la MOITIÉ du mécanisme.** Mesuré le 2026-08-10 : corridor 0,0025 → **×3,35** ; corridor 0,005 → **×5,16**. Et la notation n'est toujours pas perturbée (§17-10) : ces chiffres ne viennent que des épaisseurs faussées. **La méconnaissance d'indice est de très loin la plus grosse source d'erreur mesurée à ce jour.** À noter, l'effet est **sous-linéaire** : corridor ×2 → résultat ×1,54. |
+| 13 | 🟢 **Le corridor d'indice écrase tout, avec la MOITIÉ du mécanisme.** Courbe complète mesurée le 2026-08-10 : `0,001 → ×1,98` · `0,0025 → ×3,35` · `0,005 → ×5,16` · `0,010 → ×8,19`. Ajustement log-log : **exposant 0,616** — ni linéaire, ni racine. **La méconnaissance d'indice est de très loin la plus grosse source d'erreur mesurée.** ⚠️ Et la notation n'est **toujours pas** perturbée (§17-10) : ces chiffres ne viennent que des épaisseurs faussées, donc **l'exposant lui-même changera après A10**. |
+| 17 | 🔑 **POEM protège AUSSI contre l'erreur d'indice — ×7,6 — et ce n'est pas le théorème qui le fait.** Mesuré le 2026-08-10, corridor 0,005 : coût ×5,16 avec POEM, ×39,3 sans. Or POEM n'est invariant que par distorsion **affine**, et une erreur d'indice n'en est pas une. **L'explication est l'autre mécanisme** : POEM recale ses ancres sur les extrema réellement observés, donc il compense les erreurs d'épaisseur **accumulées** — le même effet qui lui vaut déjà ×1,975 sans aucune perturbation. 🔴 **Ce ×7,6 est très probablement SURESTIMÉ** : le mode *croisé*, celui que §12.3 dit non compensable, ne se manifeste que dans le spectre final — lequel est encore évalué aux indices nominaux. **A10 fera probablement BAISSER ce chiffre**, et c'est la raison la plus forte de la faire. |
 | 11 | 🔴 **`poem_enabled` ne peut pas être désactivé par l'environnement.** Mesuré le 2026-08-09 : deux runs lancés avec `CERTUS_POEM_ENABLED=0` ont rendu `CONFIG={"poem_enabled": true}` et des `RESULT` **bit-identiques** aux runs POEM actif. Cause : `probe_anchor_noise_pipeline.py:94` teste `os.environ.get(...) not in {"0", "false", "False"}` — une valeur `"0 "` avec un espace de fin, que `set VAR=0 ` produit sans le montrer, rend **True**. Les amplitudes affines y survivent parce que `float("0.05 ")` avale l'espace ; le test d'appartenance non. **Correctif : `.strip()` sur toutes les variables lues**, et une valeur inattendue doit lever, pas retomber silencieusement sur le défaut. ⚠️ **A12 est inexécutable tant que ce n'est pas corrigé** — et elle rendra des chiffres parfaitement crédibles. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 

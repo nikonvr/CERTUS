@@ -1,0 +1,19 @@
+{
+ "n": 0,
+ "strategies": [],
+ "mode": "full",
+ "result": 0.2757192112775556,
+ "config": {
+  "poem_anchor_noise": true,
+  "tp_hysteresis_factor": 1.66,
+  "phase_a_level_margin_factor": 1.66,
+  "dp_yield_weight": 0.0,
+  "scan_wl_step": 1.0,
+  "robustness_seed": 77,
+  "reading_smoothing_window": 1,
+  "index_corridor": 0.0,
+  "affine_scale_amp": 0.05,
+  "affine_offset_amp": 0.02,
+  "poem_enabled": false
+ }
+}

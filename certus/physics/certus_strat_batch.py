@@ -184,7 +184,7 @@ def validate_wavelengths_batch(
                 nH_real = n_H_arr[c_idx]
                 nL_real = n_L_arr[c_idx]
 
-            val, _ = simulate_growth_kernel(
+            val, _, _, _, _ = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
                 prev_th,
@@ -265,7 +265,7 @@ def validate_wavelengths_batch(
             else:
                 nH_g = n_H_arr[c_idx]
                 nL_g = n_L_arr[c_idx]
-            v_ref, _ = simulate_growth_kernel(
+            v_ref, _, _, _, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_nom, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
@@ -273,7 +273,7 @@ def validate_wavelengths_batch(
                 aff_s_0, aff_o_0, poem_enabled,
                 smoothing_window, nH_g, nL_g,
             )
-            v_prt, _ = simulate_growth_kernel(
+            v_prt, _, _, _, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
@@ -345,6 +345,12 @@ def simulate_stack_robustness_batch(
     n_layers = len(p_thick_nominal)
     results = np.empty((n_runs, n_layers), dtype=np.float64)
     all_dyns = np.empty((n_runs, n_layers), dtype=np.float64)
+    # A23 stage 2. One margin per (run, layer) and per CAUSE -- never merged: the two
+    # have different physics and different remedies, and merging them is exactly the
+    # confusion Trap 1 corollary 2 warns against. 1e18 = no constraint of that kind.
+    all_m_level = np.full((n_runs, n_layers), 1e18, dtype=np.float64)
+    all_m_missed = np.full((n_runs, n_layers), 1e18, dtype=np.float64)
+    all_m_fab = np.full((n_runs, n_layers), 1e18, dtype=np.float64)
     current_run_th_buffer = np.empty((n_runs, n_layers), dtype=np.float64)
     # Start of the monochromatic block for each layer. At unchanged lambda the
     # monitoring signal is CONTINUOUS, so the already observed turning points
@@ -408,7 +414,7 @@ def simulate_stack_robustness_batch(
             sig_scale = 0.0
             if signal_noise_scale is not None:
                 sig_scale = signal_noise_scale[i_layer]
-            val, dyn = simulate_growth_kernel(
+            val, dyn, m_lvl, m_mis, m_fab = simulate_growth_kernel(
                 p_thick_nominal,
                 i_layer,
                 current_run_th_buffer[r, :i_layer],
@@ -435,13 +441,16 @@ def simulate_stack_robustness_batch(
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val
             all_dyns[r, i_layer] = dyn
+            all_m_level[r, i_layer] = m_lvl
+            all_m_missed[r, i_layer] = m_mis
+            all_m_fab[r, i_layer] = m_fab
     avg_dyns = np.zeros(n_layers, dtype=np.float64)
     for l in range(n_layers):
         sum_dyn = 0.0
         for r in range(n_runs):
             sum_dyn += all_dyns[r, l]
         avg_dyns[l] = sum_dyn / n_runs
-    return (results, avg_dyns)
+    return (results, avg_dyns, all_m_level, all_m_missed, all_m_fab)
 
 
 @njit(parallel=True, cache=True, fastmath=True, nogil=True, error_model="numpy")

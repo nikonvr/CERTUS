@@ -169,6 +169,67 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
     return [base_noise * f for f in noise_factors]
 
 
+#: 👤 The cause is named in PHYSICAL WORDS, never by its sentinel. `CRASH_TP_MISCOUNT`
+#: tells a chamber operator nothing about what to watch; "ripple too faint to be seen"
+#: does. Decided 2026-08-10.
+_CAUSE_WORDS = {
+    "level": "niveau d'arret hors d'atteinte",
+    "missed": "ondulation trop faible pour etre vue",
+    "fabricated": "point tournant fabrique par le bruit",
+}
+
+
+def _critical_layer(margin_profile: dict[str, np.ndarray], noise_amp: float) -> dict[str, Any]:
+    """The layer that will give way first, its cause, and its margin in multiples of A.
+
+    🔑 WHY A MARGIN AND NOT A RATE. On this stack every strategy reads 0 crashes out of
+    150 draws, which says p < 2 % and nothing more. A rate cannot rank what never
+    failed. A margin is continuous, always defined, and it designates the binding layer
+    even when the yield is a perfect 100 %.
+
+    🔴 AND WHY MULTIPLES OF A. The draws of this model are BOUNDED -- reading noise
+    lives in +/-A, the corridor respects |a|+|b| <= delta_max. So a margin larger than
+    the largest possible perturbation does not mean "unlikely", it means the event
+    CANNOT HAPPEN. A23 fixes the reporting rule that follows: beyond 2 A one writes
+    "impossible", never a probability. Writing "0.1 %" there would be false, and false
+    in the direction that makes a good strategy be discarded.
+
+    ⚠️ `inf` means "this cause never constrained this layer", which is not the same as
+    a large margin and is why it is filtered rather than averaged.
+    """
+    if noise_amp <= 0.0:
+        return {}
+    best_key, best_layer, best_margin = "", -1, np.inf
+    for key, arr in margin_profile.items():
+        if arr.size == 0:
+            continue
+        finite = np.isfinite(arr)
+        if not finite.any():
+            continue
+        idx = int(np.argmin(np.where(finite, arr, np.inf)))
+        val = float(arr[idx])
+        if val < best_margin:
+            best_key, best_layer, best_margin = key, idx, val
+    if best_layer < 0:
+        return {}
+    in_a = best_margin / noise_amp
+    # Multiplicity matters as much as the minimum: one layer at 0.6 A is not the same
+    # profile as twelve under 1 A, and an operator reads that difference immediately.
+    n_below_2a = int(sum(
+        int(np.count_nonzero(np.isfinite(arr) & (arr < 2.0 * noise_amp)))
+        for arr in margin_profile.values()
+    ))
+    return {
+        "layer": best_layer,                 # 0-based, as everywhere in the kernel
+        "cause": _CAUSE_WORDS.get(best_key, best_key),
+        "margin_in_A": in_a,
+        # 🔴 The rule that is not negotiable: bounded draws mean p = 0 EXACTLY beyond
+        # the largest possible perturbation, so no probability is quoted there.
+        "verdict": "PEUT ECHOUER" if in_a <= 2.0 else "impossible",
+        "n_layers_below_2A": n_below_2a,
+    }
+
+
 def _phase_a_forced_layers(params: dict[str, Any]) -> dict[str, Any]:
     """How many layers Phase A had NO admissible wavelength for -- 17-37.
 
@@ -744,6 +805,11 @@ def _test_strategy_robustness_task(
         k: np.zeros(n_lay_prof, dtype=int)
         for k in ("total", "level_unreachable", "tp_miscount", "non_monotonic")
     }
+    # A23 stage 2. inf = "never constrained by this cause on this layer", which is NOT
+    # a large margin and must never be averaged into one.
+    margin_profile = {
+        k: np.full(n_lay_prof, np.inf) for k in ("level", "missed", "fabricated")
+    }
     unique_wls = len(set(b["wavelength"] for b in blocks))
     complexity = unique_wls / len(blocks) if blocks else 0
 
@@ -955,7 +1021,10 @@ def _test_strategy_robustness_task(
         )
 
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
-        sim_thick_batch, avg_dyns_batch = simulate_stack_robustness_batch(
+        (
+            sim_thick_batch, avg_dyns_batch,
+            m_level_batch, m_missed_batch, m_fab_batch,
+        ) = simulate_stack_robustness_batch(
             p_thick_nom_arr,
             layer_wavelengths,
             n_H_vals,
@@ -1028,6 +1097,30 @@ def _test_strategy_robustness_task(
         ):
             rate = float(np.count_nonzero(np.any(crash_cause == cause_id, axis=1))) / max(1, num_runs)
             crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
+
+        # A23 stage 2 -- THE MARGIN, per layer and per cause.
+        #
+        # 17-31 measured that the optical swing, the best cheap proxy available,
+        # identifies the failing layer only 28 % of the time. The margin is the
+        # quantity the proxy approximates: how far this layer actually was from
+        # crossing, on the simulated noisy signal rather than assumed from the clean
+        # one. It is CONTINUOUS and defined at zero crashes, which is the whole point --
+        # 0/150 says p < 2 % and nothing more, and every strategy here reads 0.
+        #
+        # ⚠️ Expressed in multiples of A, the reading noise amplitude, because that is
+        # the only unit COMPARABLE ACROSS THE CAUSES (A23): a level is in points of T,
+        # a ripple is too but elsewhere, a fabrication is an excursion. The worst case
+        # over runs is taken, then the minimum over layers -- the binding layer.
+        for _key, _mat in (
+            ("level", m_level_batch), ("missed", m_missed_batch), ("fabricated", m_fab_batch)
+        ):
+            finite = _mat[_mat < 1e17]
+            if finite.size:
+                per_layer_min = np.where(
+                    (_mat < 1e17).any(axis=0), np.where(_mat < 1e17, _mat, np.inf).min(axis=0), np.inf
+                )
+                prev = margin_profile[_key]
+                margin_profile[_key] = np.minimum(prev, per_layer_min)
 
         # A23 stage 0 -- STOP COLLAPSING THE LAYER AXIS.
         #
@@ -1220,6 +1313,14 @@ def _test_strategy_robustness_task(
         # Carried on each result anyway so it can never be separated from the score it
         # qualifies -- that separation is exactly how the collapse went unnoticed.
         "phase_a_forced": _phase_a_forced_layers(params),
+        # A23 stage 2: WHICH layer will give way, WHY, and BY HOW MUCH. Defined even
+        # when nothing crashed, which is the whole reason it exists.
+        # ⚠️ NOMINAL noise level, not the worst of the three. The margin is normalised
+        # by the amplitude A the MACHINE actually has; dividing by the 2x level would
+        # report a strategy as twice as safe as it is.
+        "critical_layer": _critical_layer(
+            margin_profile, float(noise_levels[len(noise_levels) // 2]) / 100.0
+        ),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
         "complexity_score": complexity,

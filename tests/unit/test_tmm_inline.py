@@ -800,7 +800,7 @@ def test_simulate_growth_kernel():
 
 
 
-    calc_thick, dyn = simulate_growth_kernel(
+    calc_thick, dyn, _, _, _ = simulate_growth_kernel(
 
 
         p_thick,

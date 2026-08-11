@@ -120,7 +120,7 @@ class TestNoiseDistribution:
         gaussian_noise = np.clip(rng.normal(0.0, 1.0 / 3.0, (200, num_layers)), -1.0, 1.0) * sigma
 
         def run(noise):
-            sim, _ = simulate_stack_robustness_batch(
+            sim, _, _, _, _ = simulate_stack_robustness_batch(
                 p_thick_nominal,
                 np.full(num_layers, wl_monitor),
                 np.full(num_layers, n_H),
@@ -398,7 +398,7 @@ class TestNonMonotonicMode:
 
 
 
-        result_reject, _ = simulate_growth_kernel(
+        result_reject, _, _, _, _ = simulate_growth_kernel(
 
 
             p_thick,
@@ -440,7 +440,7 @@ class TestNonMonotonicMode:
 
 
 
-        result_attenuate, _ = simulate_growth_kernel(
+        result_attenuate, _, _, _, _ = simulate_growth_kernel(
 
 
             p_thick,

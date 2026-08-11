@@ -414,7 +414,8 @@ def simulate_growth_kernel(
 
     """
     if wl < 0.1:
-        return (float(p_thick_nominal[i_layer]), 0.0)
+        # No monitoring wavelength: nothing is read, so neither margin is constrained.
+        return (float(p_thick_nominal[i_layer]), 0.0, 1e18, 1e18, 1e18)
     TWO_PI_VAL = TWO_PI
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
@@ -652,6 +653,19 @@ def simulate_growth_kernel(
     SWING_MIN = 0.04
     apply_signal_noise = signal_noise_scale > 0.0
     poem_ok = False
+    # A23 stage 2. Both in TRANSMISSION units, normalised to multiples of A upstream --
+    # the kernel is not told what A is and must not guess it. 1e18 = "no constraint of
+    # this kind here", which is NOT the same as "safe" and must never be averaged.
+    margin_level = 1e18      # distance of the stopping level from the reachable band
+    # 🔴 THE TWO COUNTING CAUSES STAY SEPARATE, and A23 says so in as many words:
+    # "one margin per layer is too coarse -- it takes one per layer AND per cause".
+    # Merging them into min(missed, fabricated) was tried and measured: the number
+    # jumped from 0.15 A to 505 A between two noise levels, a factor 3000, purely
+    # because the BINDING CAUSE switched. That reads as a bug and hides the only thing
+    # an operator can act on -- a faint ripple is cured by moving the wavelength, an
+    # invented extremum by raising the threshold. Trap 1, corollary 2.
+    margin_missed = 1e18     # ripple too faint  -> an extremum goes UNCOUNTED
+    margin_fab = 1e18        # noise excursion   -> an extremum is INVENTED
     T_prev_real = 0.0
     T_last_real = 0.0
     T_prev_nom = 0.0
@@ -926,6 +940,12 @@ def simulate_growth_kernel(
         n_tp_nom, tp_a_n, tp_b_n = detect_turning_points(
             Ts_n, n_tot, idx_nom_stop, start_is_tp, tp_hysteresis
         )
+        # A23 stage 2, counting side. Measured on the REAL signal -- the one the
+        # machine reads. The binding margin is the smaller of the two ways the count
+        # can go wrong; they are returned separately by `turning_point_margins` and
+        # combined here only because one number per (run, layer) is what the batch can
+        # carry. The CAUSE is recoverable from the sentinel when it actually crashes.
+        margin_missed, margin_fab = turning_point_margins(Ts_r, n_tot, tp_hysteresis)
         if tp_a >= 0 and tp_b >= 0 and tp_a_n >= 0 and tp_b_n >= 0:
             # fraction: NOMINAL anchors  |  report: MEASURED REAL anchors
             T_prev_nom = Ts_n[tp_a_n]
@@ -1025,11 +1045,21 @@ def simulate_growth_kernel(
         # be reached. This is exactly why a QWOT is not monitored at its lambda_0
         # by level cut-off -- and it is STRAT's job to go look elsewhere.
         # check_extrema_proximity exists for the same reason.
+        # A23 stage 2, level side: how far INSIDE the reachable band the target sits.
+        # Positive = that much room to spare, negative = missed by that much. Signed on
+        # purpose: a crashed layer still carries how badly, which is what lets the 2x
+        # noise level calibrate the model where crashes are countable (A23 stage 3).
+        d_lo = target_T_noisy - t_lo
+        d_hi = t_hi - target_T_noisy
+        margin_level = d_lo if d_lo < d_hi else d_hi
         if target_T_noisy < t_lo - 1e-12 or target_T_noisy > t_hi + 1e-12:
             # level never reached: non-terminable deposition
             return (
                 nominal_th + CRASH_LEVEL_UNREACHABLE * CRASH_SENTINEL_UNIT,
                 np.max(T_mono) - np.min(T_mono),
+                margin_level,
+                margin_missed,
+                margin_fab,
             )
         # Divergent extrema counting between nominal and real: the machine
         # does not anchor POEM on the same turning points as the strategy.
@@ -1039,6 +1069,9 @@ def simulate_growth_kernel(
             return (
                 nominal_th + CRASH_TP_MISCOUNT * CRASH_SENTINEL_UNIT,
                 np.max(T_mono) - np.min(T_mono),
+                margin_level,
+                margin_missed,
+                margin_fab,
             )
     th_points = np.array([max(0.1, nominal_th - probe_offset), nominal_th, nominal_th + probe_offset])
     T_points = np.zeros(3)
@@ -1088,7 +1121,13 @@ def simulate_growth_kernel(
         dyn_encounter = np.max(T_mono) - np.min(T_mono)
     if is_non_monotonic:
         if non_monotonic_mode == NON_MONOTONIC_MODE_REJECT:
-            return (nominal_th + CRASH_NON_MONOTONIC * CRASH_SENTINEL_UNIT, dyn_encounter)
+            return (
+                nominal_th + CRASH_NON_MONOTONIC * CRASH_SENTINEL_UNIT,
+                dyn_encounter,
+                margin_level,
+                margin_missed,
+                margin_fab,
+            )
         # non_monotonic_factor IS NO LONGER APPLIED.
         #
         # It divided the error by a constant (default 2.0) as soon as an extremum
@@ -1106,8 +1145,14 @@ def simulate_growth_kernel(
         #
         # The parameter is kept in the signature to avoid breaking the six
         # call sites; it is now only used for the REJECT mode above.
-        return (max(0.0, nominal_th + error_raw), dyn_encounter)
-    return (max(0.0, nominal_th + error_raw), dyn_encounter)
+        return (
+        max(0.0, nominal_th + error_raw), dyn_encounter,
+        margin_level, margin_missed, margin_fab,
+    )
+    return (
+        max(0.0, nominal_th + error_raw), dyn_encounter,
+        margin_level, margin_missed, margin_fab,
+    )
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
@@ -1417,7 +1462,7 @@ def update_run_states_kernel(
         else:
             nH_real = nH
             nL_real = nL
-        updates[r], _ = simulate_growth_kernel(
+        updates[r], _, _, _, _ = simulate_growth_kernel(
             p_thick_nom_arr,
             i_layer,
             prev_stacks[r],

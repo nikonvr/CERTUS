@@ -57,7 +57,7 @@ CRASH_SENTINEL = 1e5
 
 
 def _grow(i_layer, prev, wl, noise=0.0, block_start=-1):
-    val, _dyn = simulate_growth_kernel(
+    val, _dyn, _, _, _ = simulate_growth_kernel(
         P_THICK,
         i_layer,
         np.asarray(prev, dtype=np.float64),

@@ -47,7 +47,7 @@ def _make_noise(num_runs: int, n_layers: int, scale: float, seed: int = 0) -> np
 def test_b6_output_shape():
     """simulate_stack_robustness_batch returns (n_runs, n_layers)."""
     noise = _make_noise(NUM_RUNS, len(P_THICK_NOMINAL), 0.01)
-    sim_thick, _ = simulate_stack_robustness_batch(
+    sim_thick, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK_NOMINAL, LAYER_WLS, N_H_VALS, N_L_VALS, N_SUB_VALS,
         noise, probe_offset=0.0, non_monotonic_factor=2.0,
     )
@@ -59,7 +59,7 @@ def test_b6_output_shape():
 def test_b6_zero_noise_returns_nominal():
     """With zero noise, simulated thicknesses must equal nominal values."""
     noise = np.zeros((NUM_RUNS, len(P_THICK_NOMINAL)), dtype=np.float64)
-    sim_thick, _ = simulate_stack_robustness_batch(
+    sim_thick, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK_NOMINAL, LAYER_WLS, N_H_VALS, N_L_VALS, N_SUB_VALS,
         noise, probe_offset=0.0, non_monotonic_factor=2.0,
     )
@@ -73,7 +73,7 @@ def test_b6_zero_noise_returns_nominal():
 def test_b6_nonzero_noise_produces_spread():
     """Non-zero noise yields std > 0 for each layer across runs."""
     noise = _make_noise(NUM_RUNS, len(P_THICK_NOMINAL), 0.05, seed=42)
-    sim_thick, _ = simulate_stack_robustness_batch(
+    sim_thick, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK_NOMINAL, LAYER_WLS, N_H_VALS, N_L_VALS, N_SUB_VALS,
         noise, probe_offset=0.0, non_monotonic_factor=2.0,
     )

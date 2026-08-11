@@ -70,7 +70,7 @@ POEM_INACTIVE = [(3, 1300.0), (5, 1300.0), (5, 1700.0), (7, 1700.0)]
 
 
 def _grow(i_layer, prev, wl, *, noise=0.0, block_start=-1, sig=0.0, seed=0, run=0):
-    val, _dyn = simulate_growth_kernel(
+    val, _dyn, _, _, _ = simulate_growth_kernel(
         P_THICK,
         i_layer,
         np.asarray(prev, dtype=np.float64),
@@ -130,7 +130,7 @@ def test_disabled_flag_matches_the_legacy_call_signature():
     """
     for i_layer, wl in POEM_ACTIVE + POEM_INACTIVE:
         prev = _prev_with_error(i_layer)
-        legacy, _ = simulate_growth_kernel(
+        legacy, _, _, _, _ = simulate_growth_kernel(
             P_THICK, i_layer, prev, float(wl), N_H, N_L, N_SUB, PROBE, 1e-4, 1.0, NM_ATTENUATE, -1
         )
         explicit = _grow(i_layer, prev, wl, noise=1e-4, block_start=-1, sig=0.0, seed=0, run=0)
@@ -325,10 +325,10 @@ def test_batch_signal_noise_is_paired_across_strategies():
     wl_b = wl_a.copy()
     wl_b[6:] = 700.0
 
-    sim_a, _ = simulate_stack_robustness_batch(
+    sim_a, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK, wl_a, nH, nL, nS, noise, PROBE, 1.0, NM_ATTENUATE, sig, 4242
     )
-    sim_b, _ = simulate_stack_robustness_batch(
+    sim_b, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK, wl_b, nH, nL, nS, noise, PROBE, 1.0, NM_ATTENUATE, sig, 4242
     )
     assert np.array_equal(sim_a[:, :6], sim_b[:, :6]), (
@@ -365,10 +365,10 @@ def test_batch_none_scale_matches_the_legacy_call():
     nL = np.full(n_layers, N_L, dtype=np.complex128)
     nS = np.full(n_layers, N_SUB, dtype=np.complex128)
 
-    legacy, _ = simulate_stack_robustness_batch(
+    legacy, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK, wl, nH, nL, nS, noise, PROBE, 1.0, NM_ATTENUATE
     )
-    explicit, _ = simulate_stack_robustness_batch(
+    explicit, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK, wl, nH, nL, nS, noise, PROBE, 1.0, NM_ATTENUATE, None, 999
     )
     crashed_l = legacy > CRASH_SENTINEL
@@ -380,7 +380,7 @@ def test_batch_none_scale_matches_the_legacy_call():
 
     # Deux appels de la MEME specialisation, en revanche, doivent etre identiques
     # au bit pres : c'est l'acquis « RESULT reproductible » du banc de mesure.
-    again, _ = simulate_stack_robustness_batch(
+    again, _, _, _, _ = simulate_stack_robustness_batch(
         P_THICK, wl, nH, nL, nS, noise, PROBE, 1.0, NM_ATTENUATE, None, 999
     )
     assert np.array_equal(explicit, again)

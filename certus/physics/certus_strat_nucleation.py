@@ -61,7 +61,7 @@ def rank_nucleation_candidates_kernel(
                 noise_vec[j] = raw_j * noise_pct
             current_stack = np.zeros(min_size, dtype=np.float64)
             for j in range(min_size):
-                th, _ = simulate_growth_kernel(
+                th, _, _, _, _ = simulate_growth_kernel(
                     p_thick_nominal,
                     j,
                     current_stack[:j],
@@ -135,7 +135,7 @@ def find_nucleation_adaptive_kernel(
                     noise_vec[i] = raw_i * noise_pct
                 current_stack = np.zeros(size, dtype=np.float64)
                 for i in range(size):
-                    th, _ = simulate_growth_kernel(
+                    th, _, _, _, _ = simulate_growth_kernel(
                         p_thick_nominal,
                         i,
                         current_stack[:i],

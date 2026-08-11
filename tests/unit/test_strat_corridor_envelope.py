@@ -170,7 +170,7 @@ def test_phase_b_refuses_an_active_corridor_without_an_envelope():
 
 def test_phase_b_neutral_path_is_untouched_by_the_envelope():
     """C1 again, on the growth side."""
-    a, da = _phase_b(0.0, 0.0, 0.0)
-    b, db = _phase_b(0.0, 400.0, 700.0)
+    a, da, *_ = _phase_b(0.0, 0.0, 0.0)
+    b, db, *_ = _phase_b(0.0, 400.0, 700.0)
     assert np.array_equal(a, b, equal_nan=True)
     assert np.array_equal(da, db, equal_nan=True)

@@ -237,6 +237,11 @@ def validate_wavelengths_batch(
             prev_nom = p_thick_nominal[:i_layer].copy()
             prev_prt = prev_nom.copy()
             prev_prt[i_layer - 1] += gain_probe_nm
+            # 17-24: the gain used to see the affine distortion but NOT the index
+            # corridor, which is incoherent -- either the derivative is taken in the
+            # perturbed world or in the nominal one, not half in each. Both are drawn
+            # at run index 0, deliberately: the gain is a DERIVATIVE, not a run, so it
+            # is evaluated in one representative realisation rather than averaged.
             if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
                 z_a = _seeded_noise_sample(affine_seed, 0, 0, 0, True)
                 z_b = _seeded_noise_sample(affine_seed, 1, 0, 0, True)
@@ -245,13 +250,28 @@ def validate_wavelengths_batch(
             else:
                 aff_s_0 = 1.0
                 aff_o_0 = 0.0
+            if index_corridor > 0.0:
+                g1_h = _seeded_noise_sample(index_seed, 0, 0, 0, True)
+                g2_h = _seeded_noise_sample(index_seed, 0, 0, 1, True)
+                g1_l = _seeded_noise_sample(index_seed, 1, 0, 0, True)
+                g2_l = _seeded_noise_sample(index_seed, 1, 0, 1, True)
+                u0 = (2.0 * wl - (wl_min + wl_max)) / (wl_max - wl_min)
+                nH_g = n_H_arr[c_idx] + (
+                    index_corridor * g1_h + index_corridor * g2_h * (1.0 - abs(g1_h)) * u0
+                )
+                nL_g = n_L_arr[c_idx] + (
+                    index_corridor * g1_l + index_corridor * g2_l * (1.0 - abs(g1_l)) * u0
+                )
+            else:
+                nH_g = n_H_arr[c_idx]
+                nL_g = n_L_arr[c_idx]
             v_ref, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_nom, wl,
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, poem_enabled,
-                smoothing_window,
+                smoothing_window, nH_g, nL_g,
             )
             v_prt, _ = simulate_growth_kernel(
                 p_thick_nominal, i_layer, prev_prt, wl,
@@ -259,7 +279,7 @@ def validate_wavelengths_batch(
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
                 aff_s_0, aff_o_0, poem_enabled,
-                smoothing_window,
+                smoothing_window, nH_g, nL_g,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
                 delta = np.abs(v_prt - v_ref)

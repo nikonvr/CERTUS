@@ -169,6 +169,35 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
     return [base_noise * f for f in noise_factors]
 
 
+def _worst_layer_swing(results_per_noise: list[dict[str, Any]]) -> dict[str, Any]:
+    """Poorest optical swing across layers, and where it sits.
+
+    The batch already returns the average dynamic range per layer; it was stored and
+    never read. The MINIMUM over layers is the quantity that binds: 14-5 states that
+    the trigger is precise in proportion to the swing, so the layer with the poorest
+    swing is the one whose stopping level is most exposed to reading noise.
+
+    Read at the NOMINAL noise level only. Mixing noise levels here would compare a
+    strategy against itself under three different machines -- and the swing is a
+    property of the signal, not of the noise.
+    """
+    for entry in results_per_noise:
+        dyns = entry.get("avg_dynamics")
+        if not dyns:
+            continue
+        arr = np.asarray(dyns, dtype=np.float64)
+        if arr.size == 0:
+            continue
+        idx = int(np.argmin(arr))
+        return {
+            "layer": idx,          # 0-based, as everywhere in the kernel
+            "swing": float(arr[idx]),
+            "median_swing": float(np.median(arr)),
+            "n_below_swing_min": int(np.count_nonzero(arr < 0.04)),  # SWING_MIN
+        }
+    return {}
+
+
 def _prepare_robustness_nominal_optics(
     params: dict[str, Any],
     p_thick_nominal: list[float],
@@ -675,6 +704,16 @@ def _test_strategy_robustness_task(
         "p_tp_miscount": 0.0,
         "p_non_monotonic": 0.0,
     }
+    # A23 stage 0: crash count PER LAYER and per cause, worst case across noise levels.
+    # Already computed inside the batch; only the reduction threw it away.
+    # 🔴 NOT `layer_profile`: that name is reassigned at the theoretical-profile loop
+    # below, from a dict of floats. Reusing it clobbered this accumulator silently and
+    # the only symptom was an AttributeError three hundred lines later.
+    n_lay_prof = len(p_thick_nominal)
+    crash_layer_profile = {
+        k: np.zeros(n_lay_prof, dtype=int)
+        for k in ("total", "level_unreachable", "tp_miscount", "non_monotonic")
+    }
     unique_wls = len(set(b["wavelength"] for b in blocks))
     complexity = unique_wls / len(blocks) if blocks else 0
 
@@ -960,6 +999,30 @@ def _test_strategy_robustness_task(
             rate = float(np.count_nonzero(np.any(crash_cause == cause_id, axis=1))) / max(1, num_runs)
             crash_rates_by_cause[cause_key] = max(crash_rates_by_cause[cause_key], rate)
 
+        # A23 stage 0 -- STOP COLLAPSING THE LAYER AXIS.
+        #
+        # `crashed_cells` is (n_runs, n_layers). Every reduction above uses `np.any`
+        # on axis 1, which answers "did this run fail?" and throws away "WHERE did it
+        # fail?" -- information that costs nothing because it is already computed.
+        # Summing on axis 0 instead gives the count per layer, and doing it per cause
+        # keeps the three failure modes apart, which is the whole point: they have
+        # neither the same physics nor the same remedy.
+        #
+        # ⚠️ "where it stops" is NOT "what is responsible". The sentinel is written on
+        # the layer where the deposition halts; a badly deposited layer upstream can
+        # make a downstream one fail by propagation -- which is precisely what the
+        # compensation chain is about. Report both, never conflate them.
+        per_layer = crashed_cells.sum(axis=0).astype(int)
+        if per_layer.sum():
+            crash_layer_profile["total"] = np.maximum(crash_layer_profile["total"], per_layer)
+            for cause_id, cause_key in (
+                (CRASH_LEVEL_UNREACHABLE, "level_unreachable"),
+                (CRASH_TP_MISCOUNT, "tp_miscount"),
+                (CRASH_NON_MONOTONIC, "non_monotonic"),
+            ):
+                counts = (crash_cause == cause_id).sum(axis=0).astype(int)
+                crash_layer_profile[cause_key] = np.maximum(crash_layer_profile[cause_key], counts)
+
         run_thicknesses = sim_thick_batch.tolist()
         # The finished filter really carries the perturbed index, so its spectrum must
         # be evaluated with it. Scoring at the nominal index measures a filter that was
@@ -1114,6 +1177,15 @@ def _test_strategy_robustness_task(
         # work, it's a win" — but knowing WHY the 5% fail is what
         # allows correcting the strategy rather than rejecting it.
         "crash_causes": dict(crash_rates_by_cause),
+        # A23 stage 0. WHERE it fails, per cause, not just how often. Reported even
+        # when everything is zero: a profile of zeros is the normal case on this stack
+        # and it is what makes the margin work necessary -- a rate of 0/150 tells you
+        # p < 2 % and nothing else, whereas a margin is defined and informative there.
+        "crash_by_layer": {k: v.tolist() for k, v in crash_layer_profile.items()},
+        # The poorest optical swing over the layers, at the nominal noise level: the
+        # binding layer, the one 14-5 says governs trigger precision. Already computed
+        # per layer by the batch, and averaged away until now.
+        "worst_layer_swing": _worst_layer_swing(results_per_noise),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
         "complexity_score": complexity,

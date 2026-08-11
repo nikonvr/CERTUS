@@ -60,6 +60,26 @@ RANKING: list[dict] = []
 STAGE: list[int] = [0]
 
 
+def _has_crash(profile: dict | None) -> bool:
+    """True when at least one layer crashed at least once."""
+    return bool(profile) and any(sum(v or []) for v in profile.values())
+
+
+def _nonzero_layers(profile: dict | None) -> dict:
+    """Keep only the layers that actually failed, as {cause: {layer: count}}.
+
+    A dense 48-long list of zeros per cause per strategy is pure weight. Storing the
+    sparse form keeps the report readable AND makes the absence of a key meaningful:
+    a cause that never fired simply is not there.
+    """
+    out: dict[str, dict[str, int]] = {}
+    for cause, counts in (profile or {}).items():
+        hits = {str(i): int(c) for i, c in enumerate(counts or []) if c}
+        if hits:
+            out[cause] = hits
+    return out
+
+
 def install_probe() -> None:
     import numpy as np
 
@@ -174,6 +194,17 @@ def install_probe() -> None:
                     "crash_eliminated": bool(it.get("crash_eliminated", False)),
                     "wavelengths": [float(b.get("wavelength", 0.0)) for b in (st.get("blocks") or [])],
                     "is_winner": st.get("strategy_id") == best_id,
+                    # A23 stage 0. WHERE it fails and WHAT is the poorest signal --
+                    # both were already computed and both were averaged away.
+                    # `crash_by_layer` is kept only when it is non-empty: a profile of
+                    # zeros on 48 layers, times 250 strategies, would triple the report
+                    # for no information. Its ABSENCE means "no crash anywhere", which
+                    # is the normal case here and is exactly why the margin is needed.
+                    **({"crash_by_layer": _nonzero_layers(it.get("crash_by_layer"))}
+                       if _has_crash(it.get("crash_by_layer")) else {}),
+                    "worst_swing": (it.get("worst_layer_swing") or {}).get("swing"),
+                    "worst_swing_layer": (it.get("worst_layer_swing") or {}).get("layer"),
+                    "n_below_swing_min": (it.get("worst_layer_swing") or {}).get("n_below_swing_min"),
                 })
             B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
         except Exception as exc:  # noqa: BLE001

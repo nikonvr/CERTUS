@@ -273,9 +273,81 @@ PLAN_SMOKE = [
           expect={"robustness_seed": 77, "dp_yield_weight": 200.0}),
 ]
 
+#: PLAN E -- the rerun made necessary by the coherence fixes of 2026-08-11.
+#:
+#: 🔴 WHY THIS EXISTS. Four defects were found by AST-sweeping every kernel call
+#: (17-20, 23, 24, 25): Phase A normalised the corridor on a per-layer candidate span,
+#: propagated its history with six model parameters at their neutral defaults, measured
+#: the compensation gain with the distortion but without the corridor, and silently
+#: fell back to a corrected bug when the envelope was omitted. Phase A and Phase B were
+#: not modelling the same machine.
+#:
+#: 🟢 WHAT DOES **NOT** NEED REDOING, and it is most of the last campaign. The faulty
+#: code is entirely behind `if index_corridor > 0` / `if amp != 0`. Every run at
+#: corridor 0 with no distortion -- D2 (depth), D3 (funnel), D4 (seeds), D5 (knobs) --
+#: is untouched. Sixteen runs stand. Only the corridor and distortion arms move.
+#:
+#: E0 MUST BE READ BEFORE ANYTHING ELSE. It is the C1 gate: the neutral path was not
+#: supposed to change, so E0 must reproduce D0.ref = 0.0027329534107462224 to within
+#: the recompilation offset (~3e-11, 3). A larger difference means a fix leaked into
+#: the neutral path and NOTHING below it is interpretable.
+PLAN_E = [
+    entry("E0.ref", "neutral -- C1 GATE: must reproduce D0.ref to ~1e-10, no further",
+          expect={"index_corridor": 0.0, "poem_enabled": True, "affine_scale_amp": 0.0}),
+
+    # --- E1. The corridor curve, on coherent Phase A / Phase B. This is the flagship
+    # result of the previous campaign (x1.24 / x1.86 / x2.46 / x4.32, exponent 0.525)
+    # and every one of those four numbers was measured on the incoherent code.
+    entry("E1.1", "corridor 0.001, coherent stages", env={"CERTUS_INDEX_CORRIDOR": "0.001"},
+          expect={"index_corridor": 0.001}),
+    entry("E1.2", "corridor 0.0025, coherent stages", env={"CERTUS_INDEX_CORRIDOR": "0.0025"},
+          expect={"index_corridor": 0.0025}),
+    entry("E1.3", "corridor 0.005 -- THE model value, coherent stages",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"}, expect={"index_corridor": 0.005}),
+    entry("E1.4", "corridor 0.010, coherent stages", env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01}),
+    entry("E1.5", "corridor 0.005 POEM OFF -- now Phase A also propagates without POEM",
+          env={"CERTUS_INDEX_CORRIDOR": "0.005", "CERTUS_POEM_ENABLED": "0"},
+          expect={"index_corridor": 0.005, "poem_enabled": False}),
+
+    # --- E2. Settles 17-14 in ONE run. dp_yield_weight was called inert on three
+    # decades, but its cost is w.(-log(1-p)) and every strategy had p = 0, so the term
+    # is EXACTLY zero whatever w. Run it where crashes exist: E1.5 showed 29 % there.
+    # Still flat -> the wire is cut. Moves -> there was never anything to repair.
+    entry("E2.yw", "dp_yield_weight 200 AT corridor 0.005 -- where crashes actually exist",
+          args=("full", "1.0", "42", "200"), env={"CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"dp_yield_weight": 200.0, "index_corridor": 0.005}),
+
+    # --- E3. POEM x17.5 redone. The four arms were measured while Phase A propagated
+    # its history WITHOUT the distortion and WITH POEM forced on, in all four arms --
+    # including the two POEM-off ones. The protection factor is the central claim of
+    # the project; it has to be re-established on coherent code.
+    # Arm 1 (POEM on, distortion off) is E0.ref -- not repeated.
+    entry("E3.2", "POEM on, distortion on",
+          env={"CERTUS_AFFINE_SCALE_AMP": "0.05", "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": True, "affine_scale_amp": 0.05, "affine_offset_amp": 0.02}),
+    entry("E3.3", "POEM OFF, distortion off", env={"CERTUS_POEM_ENABLED": "0"},
+          expect={"poem_enabled": False, "affine_scale_amp": 0.0}),
+    entry("E3.4", "POEM OFF, distortion on -- the arm that decides",
+          env={"CERTUS_POEM_ENABLED": "0", "CERTUS_AFFINE_SCALE_AMP": "0.05",
+               "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"poem_enabled": False, "affine_scale_amp": 0.05}),
+
+    # --- E4. Seed robustness of the corridor conclusion. 12.1 measured that the
+    # RESIDUAL damage is strongly seed-dependent (+0.9 % at seed 42, +98 % at 77) while
+    # the PROTECTION reproduces. The corridor conclusion has only ever been seen at
+    # seed 42, so it has no such check at all.
+    entry("E4.77", "corridor 0.005 at seed 77", args=("full", "1.0", "77"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"index_corridor": 0.005, "robustness_seed": 77}),
+    entry("E4.101", "corridor 0.005 at seed 101", args=("full", "1.0", "101"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"index_corridor": 0.005, "robustness_seed": 101}),
+]
+
 PLANS = {
     "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
-    "posta10": PLAN_POSTA10, "full": PLAN_FULL,
+    "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E,
 }
 
 

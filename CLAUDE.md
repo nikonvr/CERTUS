@@ -2423,7 +2423,45 @@ source dérive réellement (épuisement, température), un terme de dérive revi
 il faudra le **mesurer**, pas le poser. Ne pas le réintroduire par raisonnement (§9).
 
 🔴 **Rien de tout cela n'est implémenté.** Aucune ligne de `certus/` ne contient de mode Rate
-aujourd'hui. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
+aujourd'hui — **revérifié le 2026-08-11 par balayage** : zéro occurrence de `sigma_rate` ou
+`rate_mode`.
+
+### 👤 Le premier essai à faire, et pourquoi il s'écrit tout seul — 2026-08-11
+
+> 👤 *« Sur les 10 meilleures stratégies, essayer de mettre une ou plusieurs couches fines
+> en rate. »*
+
+C'est **une passe d'amélioration locale sur un ensemble déjà choisi**, pas un degré de
+liberté ajouté à la recherche. Quelques dizaines de variantes de stratégies connues, sans
+refaire la Phase A. C'est exactement §14-8, et le coût n'a rien de commun avec celui
+d'un Rate/POEM par couche plié dans la DP.
+
+📏 **Trois faits mesurés sur la classe d'équivalence de la référence (10 stratégies) :**
+
+1. 🔑 **Le Rate automatique ne se déclencherait JAMAIS ici.** Les dix ont
+   `n_below_swing_min = 0` : aucune couche sous `SWING_MIN`. Le repli automatique est
+   **inerte** sur cet empilement, donc l'introduction **délibérée** est le seul moyen de
+   tester le Rate. Ce n'est plus une intuition, c'est un comptage.
+2. ⚠️ **Le critère est le SWING, pas l'épaisseur** — §14-1 le dit déjà, et on peut
+   désormais le mesurer : 7 stratégies sur 10 ont leur couche la plus pauvre en **L24**
+   (swing 0,109, soit 2,7 × `SWING_MIN`), les 3 autres en **L47** (0,061, soit 1,5 ×).
+3. 🔑 **L47 est le premier essai évident, et pour une raison structurelle.** §14-10
+   établit que le coût dominant d'une couche Rate se paie **sur la couche SUIVANTE** —
+   ancres vidées, repli sur le niveau absolu, la branche que §12.1 a démontrée non
+   invariante. **L47 est la dernière couche : il n'y a pas de suivante.** Le terme
+   dominant disparaît, il ne reste que le gel de l'erreur sur la couche elle-même. Et
+   c'est aussi la couche au plus faible swing sur 3 des 10.
+
+🔴 **Le piège de comparabilité, à traiter avant d'écrire la première ligne.** Si une
+couche Rate consomme un nombre différent de tirages de bruit que la même couche sous
+POEM, le flux aléatoire se décale et **deux variantes ne sont plus comparables** —
+contrainte C2, et l'écart observé ne serait plus imputable au Rate. Une couche Rate doit
+consommer **les mêmes indices de tirage**, quitte à les gaspiller.
+
+🟢 **Et le dommage est désormais MESURABLE dès le premier run.** §14-10 dit que le Rate
+déplace le risque vers le niveau absolu ; `margin_level` par couche (A23 étage 2, câblé
+le 2026-08-11) lit exactement cet effondrement sur la couche d'après. Avant aujourd'hui
+c'était une hypothèse ; c'est maintenant une grandeur. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
 été obtenues (§17) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
 n'a pas encore mesuré les paramètres existants.
 
@@ -2431,7 +2469,7 @@ n'a pas encore mesuré les paramètres existants.
 
 | # | Question | Pourquoi elle change le code |
 |---|---|---|
-| Q1 | « On repart classiquement » = le bloc est **rompu** (nouvelle λ, comptage des points tournants remis à zéro), ou POEM retombe seulement sur le **niveau absolu** pour la couche suivante ? | Le premier interdit certains découpages en blocs, le second non. |
+| ~~Q1~~ | ✅ **DÉJÀ RÉPONDUE — le tableau était périmé, trouvé le 2026-08-11.** Seize lignes plus haut, 👤 précise : *« Le bloc, lui, n'est PAS rompu : la λ de contrôle ne change pas, c'est seulement l'historique d'ancres qui est vidé. »* C'est donc la **seconde** branche : POEM retombe sur le niveau absolu, et une couche Rate peut vivre **à l'intérieur** d'un bloc. Aucun découpage n'est interdit. | — |
 | Q2 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous POEM (couches 1 et 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
 | Q3 | Si la couche de référence était **elle-même en Rate**, l'erreur se recopie sans jamais être corrigée. La machine **chaîne-t-elle**, ou exige-t-elle une référence POEM ? | Décide si deux couches Rate consécutives sont permises, et donc si l'erreur peut diverger. |
 | Q4 | L'estimation porte-t-elle sur **la dernière** couche du matériau, ou sur une **moyenne** de toutes les précédentes ? | Une moyenne amortit l'erreur, la dernière la recopie telle quelle. Deux taux de plantage différents. |

@@ -78,6 +78,8 @@ def validate_wavelengths_batch(
     smoothing_window: int = 1,
     index_corridor: float = 0.0,
     index_seed: int = 0,
+    corridor_lo: float = 0.0,
+    corridor_hi: float = 0.0,
 ):
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -125,10 +127,27 @@ def validate_wavelengths_batch(
     results = np.zeros((n_cands, 4))
     error_buffer = np.empty((n_cands, n_runs), dtype=np.float64)
     d_nom = p_thick_nominal[i_layer]
-    wl_min = np.min(candidate_wls)
-    wl_max = np.max(candidate_wls)
-    if abs(wl_max - wl_min) < 1e-6:
-        wl_max = wl_min + 100.0
+    # 🔴 THE ENVELOPE IS SUPPLIED, NEVER DEDUCED HERE -- see 17-20.
+    #
+    # This used to read `wl_min = np.min(candidate_wls)`, which is wrong in a way that
+    # produced perfectly plausible numbers. `candidate_wls` is the list FILTERED FOR
+    # THIS LAYER, so the normalisation domain of u(lambda) changed from layer to layer:
+    # the same draw (a, b) then represented a DIFFERENT dispersion curve at each layer,
+    # and two candidates 60 nm apart saw the full corridor swing where the spectral
+    # grid says they should see 20 % of it. Phase A and Phase B were modelling two
+    # different machines, which 12.2 forbids in as many words.
+    #
+    # There is deliberately NO fallback. A caller that activates the corridor without
+    # supplying the envelope is a programming error, and the previous silent
+    # degradation reinstalled exactly the defect corrected on 2026-08-10 -- control 4
+    # of 20: it produced no error, it produced a plausible result.
+    if index_corridor > 0.0 and corridor_hi <= corridor_lo:
+        raise ValueError(
+            "index_corridor is active but corridor_lo/corridor_hi were not supplied; "
+            "the envelope must come from the single caller-side computation"
+        )
+    wl_min = corridor_lo
+    wl_max = corridor_hi
     for c_idx in prange(n_cands):
         wl = candidate_wls[c_idx]
         blk = -1
@@ -319,9 +338,18 @@ def simulate_stack_robustness_batch(
             block_start[i] = block_start[i - 1]
     # Supplied by the caller, never recomputed here: the growth path and the scoring
     # path must normalise delta_M(lambda) over one and the same interval.
+    #
+    # 🔴 NO FALLBACK -- see 17-25. This used to degrade silently to
+    # `corridor_wl_range(layer_wavelengths, layer_wavelengths)`, i.e. back to
+    # normalising on the monitoring span alone, which is the exact defect corrected on
+    # 2026-08-10 and which invalidated every corridor measurement before that date.
+    # A caller that forgets the pair must find out, not receive a plausible number.
+    if index_corridor > 0.0 and corridor_hi <= corridor_lo:
+        raise ValueError(
+            "index_corridor is active but corridor_lo/corridor_hi were not supplied; "
+            "the envelope must come from the single caller-side computation"
+        )
     wl_min, wl_max = corridor_lo, corridor_hi
-    if wl_max <= wl_min:                      # not supplied -> degrade to the old behaviour
-        wl_min, wl_max = corridor_wl_range(layer_wavelengths, layer_wavelengths)
     for r in prange(n_runs):
         if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)

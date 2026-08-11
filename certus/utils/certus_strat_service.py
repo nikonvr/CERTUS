@@ -25,6 +25,7 @@ from certus_physics import (
     validate_wavelengths_batch,
     update_run_states_kernel,
     calculate_detailed_growth,
+    corridor_wl_range,
 )
 from certus.utils.certus_strat_context import StratContext
 from certus.core.certus_core import WL_DECIMALS
@@ -154,12 +155,14 @@ class _PhysicsBridge:
         smoothing_window: int = 1,
         index_corridor: float = 0.0,
         index_seed: int = 0,
+        corridor_lo: float = 0.0,
+        corridor_hi: float = 0.0,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
-            index_corridor, index_seed,
+            index_corridor, index_seed, corridor_lo, corridor_hi,
         )
 
     @staticmethod
@@ -1169,6 +1172,21 @@ def _validate_candidates_phase_a(
     index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
     index_seed = (int(phase_a_seed) * 2_654_435_761 + (int(i_layer) + 1) * 850_507 + 0x3F1B_79C5) % (2**53)
 
+    # Corridor normalisation envelope -- 12.3 and 17-20. It MUST be the same interval
+    # Phase B uses, otherwise the two stages perturb the index differently and their
+    # results are no longer comparable. Phase B takes the envelope of the spectral grid
+    # and the retained monitoring wavelengths; here the monitoring wavelengths are still
+    # being chosen, so the candidate list plays that role. Both reduce to the spectral
+    # grid whenever it contains the scan grid, which is the normal case -- taking the
+    # envelope is simply the formulation that cannot be wrong.
+    corridor_lo, corridor_hi = 0.0, 0.0
+    if index_corridor > 0.0:
+        wl_span = params.get("wl_range") or (0.0, 0.0)
+        corridor_lo, corridor_hi = corridor_wl_range(
+            np.asarray([float(wl_span[0]), float(wl_span[1])], dtype=np.float64),
+            cand_wls_arr,
+        )
+
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
         n_H_arr,
@@ -1193,6 +1211,8 @@ def _validate_candidates_phase_a(
         smoothing_window,
         index_corridor,
         index_seed,
+        corridor_lo,
+        corridor_hi,
     )
 
     results_thickness = []

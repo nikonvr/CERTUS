@@ -24,6 +24,12 @@ K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 # The three diagnostic causes correspond to:
 # CRASH_LEVEL_UNREACHABLE answers "is target level reachable?",
 # CRASH_TP_MISCOUNT answers "do we count expected turning points?".
+#: Thickness deposited in ONE turntable revolution: 0.125 nm at 0.5 nm/s and 4 Hz
+#: (9bis-1). Rate mode counts turns, so a commanded thickness is quantised to a
+#: multiple of this -- which IS the U(0, 0.125 nm) stopping law of 9bis-7,
+#: appearing on its own with no parameter to pose.
+RATE_TURN_NM: float = 0.125
+
 CRASH_SENTINEL_MIN: float = 100000.0
 CRASH_SENTINEL_UNIT: float = 1000000.0
 #: Target stopping level is not bracketed by signal before next extremum.
@@ -350,7 +356,8 @@ def simulate_growth_kernel(
     smoothing_window: int = 1,
     n_H_real: float = -1.0,
     n_L_real: float = -1.0,
-) -> tuple[float, float]:
+    is_rate: bool = False,
+) -> tuple[float, float, float, float, float]:
     """
 
     Fast TMM Simulation for robustness heuristics.
@@ -416,6 +423,68 @@ def simulate_growth_kernel(
     if wl < 0.1:
         # No monitoring wavelength: nothing is read, so neither margin is constrained.
         return (float(p_thick_nominal[i_layer]), 0.0, 1e18, 1e18, 1e18)
+
+    # ---- RATE MODE (14, A24) -------------------------------------------------
+    #
+    # The machine stops watching and counts turntable revolutions instead. It needs a
+    # deposition rate to convert a thickness into a number of turns, and 👤 settled how
+    # it gets one (2026-08-11):
+    #
+    #   Q2  Rate is FORBIDDEN until a layer of this material has been deposited under
+    #       photometric control -- without one there is no measured rate at all.
+    #   Q4  the estimate AVERAGES over every previous layer of the material.
+    #   Q3  it CHAINS: the last deposited layer is a reference, Rate ones included.
+    #
+    # 🔑 sigma_rate IS NOT A PARAMETER. The machine compares turns observed against the
+    # thickness it BELIEVES it deposited -- the nominal one, since nothing told it
+    # otherwise -- and the simulator holds both numbers. So its estimate is reproduced,
+    # not replaced by a draw. There is nothing to tune here.
+    #
+    #   layer k, deposited under POEM: real d_real_k, so n_k = d_real_k / q turns,
+    #   while the machine believes d_nom_k. Its rate estimate is v.d_nom_k/d_real_k.
+    #   Averaged:  v_hat = v . mean_k(d_nom_k / d_real_k) = v . A
+    #   Rate layer i: it commands round(d_nom_i / (A.q)) turns, hence
+    #
+    #       d_real_i = round(d_nom_i / (A.q)) . q
+    #
+    # 📏 Without the rounding this is d_nom_i / A, i.e. the HARMONIC MEAN of the
+    # previous ratios -- so averaging divides the inherited scatter by sqrt(n): 2,0 %
+    # at one reference layer, 0,41 % at twenty-four (measured 2026-08-11). The Rate
+    # gets steadily more accurate deeper into the stack.
+    #
+    # 🟢 And the rounding IS 9bis-7's U(0, 0.125 nm) stopping quantisation, appearing
+    # on its own with no parameter to pose: one turn at 0.5 nm/s and 4 Hz is 0.125 nm.
+    #
+    # ⚠️ C2 is safe BY CONSTRUCTION, and it is worth saying why. A Rate layer reads
+    # nothing, so it consumes no reading noise -- and that shifts nothing, because
+    # `_seeded_noise_sample` is a pure function of (seed, group, run, element), a hash
+    # and not a sequential stream. Skipping draws cannot misalign another layer. This
+    # is exactly the property 12.4 chose the generator for.
+    if is_rate:
+        n_ref = 0
+        acc = 0.0
+        for j in range(i_layer - 2, -1, -2):        # same parity = same material
+            d_real_j = prev_thicknesses_sim[j]
+            d_nom_j = p_thick_nominal[j]
+            if d_real_j > 1e-9 and d_nom_j > 1e-9:
+                acc += d_nom_j / d_real_j
+                n_ref += 1
+        if n_ref > 0:                                # Q2: otherwise fall through to POEM
+            a_est = acc / n_ref
+            d_nom_i = p_thick_nominal[i_layer]
+            if a_est > 1e-9 and d_nom_i > 0.0:
+                turns = np.round(d_nom_i / (a_est * RATE_TURN_NM))
+                if turns < 1.0:
+                    turns = 1.0
+                # dyn = -1.0 flags "NOT MONITORED": this layer has no observed swing at
+                # all, and averaging a 0.0 into the dynamics profile would report it as
+                # a catastrophically flat layer instead of an unwatched one.
+                # Both counting margins are sentinels, and that is not a shortcut: with
+                # no trigger, a Rate layer CANNOT suffer CRASH_LEVEL_UNREACHABLE nor
+                # CRASH_TP_MISCOUNT. It removes those two failure modes on itself --
+                # and hands the cost to the next layer, which loses its anchors (14-10).
+                return (float(turns * RATE_TURN_NM), -1.0, 1e18, 1e18, 1e18)
+
     TWO_PI_VAL = TWO_PI
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real

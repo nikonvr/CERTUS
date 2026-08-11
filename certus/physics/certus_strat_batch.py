@@ -358,7 +358,19 @@ def simulate_stack_robustness_batch(
     # This is what gives blocks their value.
     block_start = np.zeros(n_layers, dtype=np.int64)
     for i in range(1, n_layers):
-        if abs(layer_wavelengths[i] - layer_wavelengths[i - 1]) > 1e-06:
+        # 🔑 A LAYER IN RATE WIPES THE NEXT ONE'S HISTORY, exactly as a wavelength change
+        # does -- 14-10: "the machine does not keep the history of extrema crossed after
+        # a rate". Nothing is watched during a Rate layer, so any extremum that went past
+        # was not recorded; and the anchors acquired BEFORE are worthless too, being now
+        # separated from the current signal by an unwatched stretch.
+        #
+        # 👤 This is exactly what makes a block boundary the cheapest place for a Rate
+        # layer (A24, 2026-08-11): there the next layer already starts with n_hist = 0,
+        # so the cost is ALREADY PAID and two of the three terms of 14-10 vanish.
+        if (
+            abs(layer_wavelengths[i] - layer_wavelengths[i - 1]) > 1e-06
+            or (rate_flags is not None and rate_flags[i - 1])
+        ):
             block_start[i] = i
         else:
             block_start[i] = block_start[i - 1]
@@ -437,6 +449,7 @@ def simulate_stack_robustness_batch(
                 smoothing_window,
                 nH_real,
                 nL_real,
+                rate_flags is not None and rate_flags[i_layer],
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

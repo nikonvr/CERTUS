@@ -112,6 +112,7 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | Comparer un résultat | §10 — le point de référence |
 | Comprendre un mot du projet | §7 — vocabulaire |
 | **Savoir où en est réellement T1…T7** | **§17 — audit du 2026-08-09. À lire avant toute action de §12.** |
+| 🔴 **Savoir ce qui est RÉELLEMENT implanté** | **§18bis — audit du 2026-08-11. La résolution ne l'est pas, la grille non plus, la moyenne est causale.** |
 | Comprendre le mode Rate | §14, dernier bloc — spécification 👤, non implémentée |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 
@@ -2832,6 +2833,74 @@ neufs.
 configuration effective dans `r["config"]` et dans le nom du fichier. Les deux artefacts déjà
 produits, eux, restent inexploitables — **on ne peut pas les rattraper, il faut les
 refaire.**
+
+## 18bis. 🔴 ÉTAT RÉEL DE L'IMPLANTATION — audit du 2026-08-11
+
+👤 *« Je suis persuadé que tout était implanté, même la résolution. »* **Ce n'est pas le
+cas**, et ce tableau existe pour que la question ne se repose jamais. Il est établi en
+lisant le **code**, pas ce document.
+
+⚠️ **Pourquoi la confusion est légitime.** Ce document et
+[`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) décrivent longuement des mécanismes
+— la résolution du monochromateur y a une section entière — **sans jamais dire s'ils
+sont câblés**. Une spécification bien écrite se lit comme une description. C'est le
+défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
+
+| Spécifié en | Quoi | État réel |
+|---|---|---|
+| **§12.7** | **Résolution du monochromateur** | 🔴 **RIEN N'EST IMPLANTÉ.** Détail ci-dessous. |
+| **§12.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §17-2, toujours ouverte. |
+| **A9** | Moyenne glissante **centrée** | 🔴 **NON, elle est CAUSALE.** Vérifié : la fenêtre court sur `[i−k+1 … i]` (`certus_strat_growth.py`, boucle `idx_w`). Décalage de `(k−1)/2` échantillons, soit **0,44 nm à k = 8**, alors que §9bis-5 pose « aucun retard » en postulat. §17-3 reste ouvert. |
+| **§12.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
+| **§14** | **Mode Rate** | 🟠 **NOYAU ÉCRIT LE 2026-08-11, PAS ENCORE UTILISABLE.** Le calcul d'épaisseur, l'effacement d'historique et la remontée `rate_layers` sont câblés. Manquent : le **drapeau utilisateur**, la **génération de variantes** et l'affichage. |
+| **§14, action 1** | SEEL dans le pipeline | 🔴 **NON.** SEEL est calculé à l'**étape 0 de l'interface** (`calculate_seel_analysis`) et n'atteint jamais le classement. Le tri de §14 tourne donc **dans la sonde**, à côté. |
+| **§17-18** | `consensus_num_runs` surchargeable | 🟠 Il **existe** (défaut 150, `certus_strat_ui_state.py:1150`) mais **aucune surcharge ne l'atteint**. Toute mesure avec consensus actif tourne donc à 150 tirages quoi qu'on demande. |
+| **§17-9** | `MachineModel` consommé en production | 🔴 **NON.** Toujours aucun consommateur réel. |
+| **A23** | Couche critique, marge | ✅ **FAIT le 2026-08-11**, étages 0, 2 et 3, validé §17-41. |
+| **A10** | Corridor côté notation | ✅ fait |
+| **§12.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
+
+### 🔴 La résolution, en détail — quatre choses, et aucune n'est faite
+
+| ce que §12.7 demande | état |
+|---|---|
+| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ❌ **n'existe nulle part.** Les seuls « facteurs de bruit » du code sont `robustness_noise_factors = [0.5, 1, 2]` : ce sont les **trois niveaux Monte-Carlo**, aucun rapport. |
+| La **déformation du signal** par la fente | ❌ non appliquée — seulement **estimée** |
+| La **correction √3** (fente rectangulaire) | ❌ `res_limit = test_bw * np.sqrt(T_tolerance / curvature)` — le facteur `3.0` manque. §12.7 a mesuré que la formule est donc **conservatrice de 1,73×** : elle interdit des fentes qui passent encore. |
+| La fente comme **sortie de stratégie** | ❌ une stratégie rend ses λ par bloc, rien d'autre |
+| `min_resolution` comme **critère** | 🟠 elle est calculée et sert de **départage dans le tri** (`certus_strat_ranking.py:665`), mais **elle ne rejette rien** |
+
+### 🔑 Et la conséquence que 👤 souligne, qui est le cœur du problème
+
+> 👤 *« Le calculateur OMS d'arrêt des couches ne tient pas compte de la largeur des
+> fentes et se trompera sur la valeur du niveau à atteindre. »*
+
+C'est exactement le mécanisme de §12.7, et il impose une **asymétrie qu'il ne faudra pas
+inverser** :
+
+```
+ce que la machine ATTEND :  T_theorique(lambda_mon)   monochromatique, resolution PARFAITE
+ce que la machine LIT     :  <T(lambda)> moyenne sur la fente
+biais = <T>_B - T(lambda_mon) = T''(lambda_mon) . B^2 / 24
+```
+
+🔴 **Aujourd'hui le simulateur ne modélise aucune fente, donc il ne porte aucun biais :
+il est OPTIMISTE par rapport à la machine réelle.** Et quand on l'implantera, il faudra
+biaiser le **signal lu** en laissant la **cible au calcul parfait**. Biaiser les deux
+annulerait exactement l'effet — c'est le mode de défaillance que §12.1 a déjà rencontré
+trois fois sur la distorsion affine.
+
+### 👤 Ce qu'une stratégie doit rendre, et ce qu'elle rend
+
+> 👤 *« Trouver une stratégie, c'est trouver les λ de contrôle ou les couches de rate, et
+> donner à l'utilisateur une valeur des fentes. »*
+
+| | rendu aujourd'hui |
+|---|---|
+| λ de contrôle par bloc | ✅ |
+| couches en Rate | 🟠 le champ `rate_layers` existe depuis le 2026-08-11, la génération non |
+| **valeur des fentes** | ❌ **absente** — c'est le manque le plus visible pour l'utilisateur |
+
 
 ## 18. Autres chantiers ouverts
 

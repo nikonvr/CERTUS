@@ -317,7 +317,8 @@ def simulate_stack_robustness_batch(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray]:
+    rate_flags: np.ndarray = None,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
     Simulates growth for the entire stack for multiple MCS runs in parallel.

@@ -1053,6 +1053,17 @@ def _test_strategy_robustness_task(
             wl_arr.astype(np.float64), layer_wavelengths
         )
 
+        # 👤 Rate layers are a property OF THE STRATEGY, chosen deliberately (14-8),
+        # not a fallback the machine trips into. `rate_layers` is a list of 0-based
+        # layer indices; absent or empty = pure POEM = the historical path, bit for bit.
+        rate_layers = strategy.get("rate_layers") or []
+        rate_flags = None
+        if rate_layers:
+            rate_flags = np.zeros(len(p_thick_nominal), dtype=np.bool_)
+            for _idx in rate_layers:
+                if 0 <= int(_idx) < rate_flags.size:
+                    rate_flags[int(_idx)] = True
+
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         (
             sim_thick_batch, avg_dyns_batch,
@@ -1079,6 +1090,7 @@ def _test_strategy_robustness_task(
             index_seed,
             corridor_lo,
             corridor_hi,
+            rate_flags,
         )
 
         for i_layer in range(num_layers):
@@ -1346,6 +1358,10 @@ def _test_strategy_robustness_task(
         # Carried on each result anyway so it can never be separated from the score it
         # qualifies -- that separation is exactly how the collapse went unnoticed.
         "phase_a_forced": _phase_a_forced_layers(params),
+        # 👤 The table must show WHICH layers ran in Rate: a strategy is not executable
+        # in the chamber without it, and two strategies differing only by their Rate
+        # layers would otherwise be indistinguishable in the ranking.
+        "rate_layers": list(rate_layers),
         # A23 stage 2: WHICH layer will give way, WHY, and BY HOW MUCH. Defined even
         # when nothing crashed, which is the whole reason it exists.
         # ⚠️ NOMINAL noise level, not the worst of the three. The margin is normalised

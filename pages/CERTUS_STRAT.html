@@ -1394,6 +1394,23 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
         </div>
 
         <h3>2.11 Monochromator resolution — the first setting with an OPTIMUM</h3>
+                <div class="highlight-box">
+                    🔴 <b>STATUS: NOT IMPLEMENTED. Everything in this section is a
+                    specification, not a description of the running code</b> — verified
+                    2026-08-11. The noise factor (&divide;1.5 / &times;2 / &times;5) exists
+                    nowhere; the slit is never convolved with the signal; the &radic;3
+                    correction below has not been applied; and a strategy does not report a
+                    slit width. <code>min_resolution</code> is computed, but it only breaks
+                    ties in the sort — <b>it rejects nothing</b>.
+                    <br><br>
+                    ⚠️ <b>The consequence, and it matters for reading every other figure on
+                    this page:</b> the simulator carries <b>no slit bias at all</b>, so it is
+                    <b>optimistic</b> relative to the real machine. Crash rates and SEEL values
+                    measured here do not include this error.
+                    <br><br>
+                    This banner exists because the section read as a description and was taken
+                    for one. Sections that specify rather than describe must say so.
+                </div>
         <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
             <p style="margin:0 0 10px;">
                 👤 <b>What the physicist describes (2026-08-09).</b> The monitoring system has a given

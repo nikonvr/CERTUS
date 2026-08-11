@@ -2426,7 +2426,7 @@ il faudra le **mesurer**, pas le poser. Ne pas le réintroduire par raisonnement
 aujourd'hui — **revérifié le 2026-08-11 par balayage** : zéro occurrence de `sigma_rate` ou
 `rate_mode`.
 
-### 👤 Le premier essai à faire, et pourquoi il s'écrit tout seul — 2026-08-11
+### 👤 A24 — LE PLAN RATE, et il ne part pas au hasard — 2026-08-11
 
 > 👤 *« Sur les 10 meilleures stratégies, essayer de mettre une ou plusieurs couches fines
 > en rate. »*
@@ -2451,6 +2451,76 @@ d'un Rate/POEM par couche plié dans la DP.
    invariante. **L47 est la dernière couche : il n'y a pas de suivante.** Le terme
    dominant disparaît, il ne reste que le gel de l'erreur sur la couche elle-même. Et
    c'est aussi la couche au plus faible swing sur 3 des 10.
+
+#### 🔑 La décision s'écrit comme une INÉGALITÉ, pas comme un essai
+
+C'est ce qui sépare ce plan d'un balayage au hasard. Sur une couche donnée :
+
+| | ce que ça coûte |
+|---|---|
+| **POEM** | il **corrige** l'erreur accumulée en amont, mais il paie son propre bruit de lecture **divisé par la pente** `dT/dd`. Sur un signal plat la pente est minuscule : la correction devient elle-même très bruitée. |
+| **Rate** | **aucune correction**, mais **aucun bruit neuf** non plus : l'erreur relative est **recopiée** de la dernière couche POEM du même matériau (§14, dérivation). |
+
+$$\varepsilon_{\text{POEM}}(i) \;\approx\; \frac{\sigma\sqrt{1+(1-p)^2+p^2}}{\left|dT/dd\right|_i}
+\qquad\text{contre}\qquad
+\varepsilon_{\text{Rate}}(i) \;\approx\; \left|\varepsilon_{\text{rel}}(j)\right|\cdot d^{\text{nom}}_i$$
+
+> **Le Rate gagne là où la correction de POEM est plus bruitée que l'erreur qu'elle enlève.**
+
+🟢 **Et les quatre termes existent déjà dans le noyau.** Le facteur
+`sqrt(1+(1-p)^2+p^2)` est écrit en commentaire à `certus_strat_growth.py:601`
+(×1,22 à p = 0,5, jusqu'à ×1,41 quand le déclenchement tombe sur une ancre) ; la pente
+sort de l'inversion parabolique ; `eps_rel(j)` se lit sur `prev_thicknesses_sim[j]`
+contre `p_thick_nominal[j]`, déjà côte à côte ; `d_nom_i` est donné.
+**La liste des couches candidates se CALCULE, elle ne se devine pas.**
+
+#### 🔴 La correction que je dois à L47 — mon premier raisonnement était à moitié faux
+
+J'avais écrit que L47 était l'essai évident, au motif que le coût dominant tombe sur la
+couche suivante et qu'il n'y en a pas. **C'est vrai, et ce n'est que la moitié du bilan.**
+
+La dernière couche est aussi **la dernière occasion de corriger tout ce qui s'est
+accumulé depuis la couche 1**. La mettre en Rate, c'est renoncer à la correction la plus
+précieuse du dépôt entier. Les deux effets tirent **en sens opposé**, et il faut donc
+calculer l'inégalité au lieu de l'affirmer. **Ne cite pas « L47 est le moins cher » sans
+cette réserve.**
+
+#### ⚠️ Le canal PLANTAGE va lui aussi en sens inverse, et il compte autant
+
+| | effet sur le plantage |
+|---|---|
+| couche `i` en Rate | 🟢 **supprime deux modes** : sans déclenchement, ni `CRASH_LEVEL_UNREACHABLE` ni `CRASH_TP_MISCOUNT` ne peuvent s'y produire |
+| couche `i+1` | 🔴 **en ajoute un** : sans ancres, repli sur le niveau absolu — la branche que §12.1 a démontrée non invariante |
+
+**La bonne candidate est donc à deux faces** : une couche dont la marge POEM est
+**mauvaise** — elle est déjà près de lâcher — et dont la **suivante** a une marge
+**large**, capable d'absorber le repli. `margin_level` et `margin_missed` par couche,
+câblés le 2026-08-11, donnent exactement ces deux nombres.
+
+#### 🔴 Statut de la formule : elle GÉNÈRE des candidates, elle ne DÉCIDE rien
+
+Le raisonnement ci-dessus est en **nanomètres d'erreur d'épaisseur**. Or §16 est formel —
+👤 *« en partie B on se branle de l'erreur d'épaisseur, seul l'écart spectral final
+compte »*. La formule a donc exactement le statut des heuristiques de la littérature :
+**un diagnostic pour choisir quoi essayer, jamais un couperet**. Ce qui tranche reste le
+banc.
+
+#### L'expérience minimale, et pourquoi elle vaut mieux qu'un balayage
+
+```
+etage 0   calculer l'inegalite sur 48 couches x 10 strategies    ZERO run
+          -> liste courte (~5 couples strategie/couche), chacun avec sa PREDICTION
+etage 1   mesurer les 2 ou 3 meilleures candidates               2-3 runs
+          -> la prediction EST le test
+etage 2   la formule tient     -> on peut s'en servir dans la recherche
+          elle ne tient pas    -> on comprend pourquoi AVANT de continuer
+etage 3   seulement alors, plier le choix Rate/POEM dans la DP
+```
+
+🔑 **Pourquoi c'est mieux que « essayer et voir ».** Un balayage rendrait 480 nombres
+portant chacun ±6 % de bruit — illisible (§17-26). **Prédire puis mesurer teste la
+compréhension, pas seulement la configuration** : c'est le contrôle 5 de §20, et c'est
+la seule façon d'apprendre quelque chose de transférable à un autre empilement.
 
 🔴 **Le piège de comparabilité, à traiter avant d'écrire la première ligne.** Si une
 couche Rate consomme un nombre différent de tirages de bruit que la même couche sous

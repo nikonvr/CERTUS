@@ -208,7 +208,16 @@ sortie collée. **Une action, un commit.**
 | | |
 |---|---|
 | **§17-37 outillé** | `n_layers_forced` remonte dans le résultat, le JSON de sonde et une **colonne** du résumé de campagne. Vérifié de bout en bout : graine 77, corridor 0,02 → **18 couches forcées sur 48**, 58 % de plantage. Une stratégie subie n'est plus indiscernable d'une stratégie libre. |
-| **A23 étage 2, moitié** | `turning_point_margins` écrite et testée — les deux marges de comptage. **Reste à câbler dans le noyau.** |
+| **A23 étage 2** | ✅ **câblé** — le noyau rend `margin_level`, `margin_missed`, `margin_fab` par (tirage, couche) ; la robustesse en tire `critical_layer` avec sa cause en mots physiques et son verdict. Vérifié sur un vrai batch : marges de niveau **4,87 / 17,94 / 18,35 / 47,00 A** par couche, verdict **« impossible »** à 4,87 A puisque > 2 A. |
+| **Tri de §14** | ✅ **écrit comme fonction pure et testé** — `rank_key_seel_yield_margin`, demi-largeur `max(0,05 nm ; 0,06 × SEEL)`. Appliqué dans la **sonde**, sous `ranking_seel_rule`, **à côté** de l'ordre du pipeline et non à sa place : SEEL vit à l'étape 0 de l'interface, l'en sortir est l'action 1 de §14. Les deux ordres sont donc comparables sur un même run avant qu'on ne bascule. |
+
+> 🔴 **Une correction en cours de route qui vaut d'être retenue.** J'avais fusionné les
+> deux causes de comptage en `min(manque, fabrication)`. Mesure : le nombre saute de
+> **0,15 A à 505 A** entre deux niveaux de bruit — facteur 3000 — uniquement parce que
+> la **cause qui lie bascule**. Physiquement réel, et illisible. §A23 l'écrivait déjà :
+> *une marge par couche ET par cause*, parce qu'une ondulation faible se soigne en
+> déplaçant la λ et un extremum inventé en montant le seuil. J'ai suivi le document
+> plutôt que mon raccourci.
 
 > 🔴 **La leçon de méthode de cette session, et elle vaut pour tout instrument.**
 > `turning_point_margins` a été **fausse quatre fois**, et chaque version rendait des
@@ -225,13 +234,21 @@ sortie collée. **Une action, un commit.**
 
 ### 🔴 La suite immédiate
 
-1. **A23 étage 2 — finir le câblage.** C'est désormais la mieux justifiée
-   de toutes les actions : §17-31 mesure que le swing, le meilleur proxy disponible, ne
-   désigne la couche défaillante que dans **28 %** des cas. Le proxy ne suffit pas ; il faut
-   la grandeur. Et l'étage 0 vient de montrer que la plomberie fonctionne.
-2. **Implanter le tri de §14** — SEEL quantifié à 0,1 nm avec la demi-largeur
-   `max(0,05 nm ; 0,06 × SEEL)`, départage au rendement. §17-26 démontre que le tri continu
-   départage du bruit ; ce n'est plus une option.
+0. 🔑 **LA QUESTION QUI DÉCIDE SI TOUT CECI SERT : la marge sépare-t-elle les dix
+   ex æquo à `SEEL = 0,3 nm` ?** §17-26 les a mesurées à moins de 2 σ les unes des
+   autres, toutes à 0/150 plantages. **Si la marge les sépare, on a un classement
+   là où il n'y en avait pas. Si elle ne les sépare pas, l'étage 2 est un bel objet
+   sans usage, et il faut l'écrire — pas le contourner.** Un run suffit.
+1. **A23 étage 3 — calibrer la marge contre le niveau 2×.** ⚠️ **Zéro run** : les trois
+   niveaux 0,5× / 1× / 2× sont déjà calculés dans chacun. À 2× les plantages sont
+   comptables ; si le modèle de marge les prédit, on peut le croire à 1× où le comptage
+   rend zéro. *On n'extrapole jamais sans avoir validé l'extrapolation là où la mesure
+   est possible.* Sans cette étape, la couche critique est une opinion bien présentée.
+2. **Basculer le classement sur la règle de §14**, une fois le point 0 tranché. La
+   fonction existe et est testée ; ce qui manque est de **sortir SEEL de l'interface**
+   (§14, action 1) pour que le pipeline puisse s'en servir. ⚠️ Ne bascule pas avant
+   d'avoir comparé les deux ordres sur un même run — `ranking_seel_rule` est écrit à
+   côté exactement pour ça.
 3. **Comprendre l'effondrement de `n_ranked` avec le corridor** — 228 → 165 → 78 (§17-30).
    La Phase A élimine massivement quand l'indice est incertain, et personne ne sait sur quel
    critère. C'est le contrôle 4 de §20 : **compter les rejets**.

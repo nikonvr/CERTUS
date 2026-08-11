@@ -448,6 +448,16 @@ def _prepare_robustness_inputs(
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
 
 
+#: At most this many Rate variants per strategy, and the DEEPEST boundaries win.
+#: 👤 asked for the trial "on the 10 best strategies", not on everything: an unbounded
+#: expansion costs a factor 6 on the whole Monte-Carlo for candidates nobody asked about.
+RATE_MAX_VARIANTS_PER_STRATEGY: int = 3
+
+#: Below this many layers per block, a "block boundary" says nothing -- every layer is
+#: one. See the measurement in `_rate_candidate_layers`.
+RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
+
+
 def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[int]:
     """Layers where a Rate is CHEAPEST: the last layer of each block.
 
@@ -464,13 +474,27 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[in
     its own experiment, not a free ride in this one (A24).
     """
     blocks = strategy.get("blocks") or []
+    if not blocks:
+        return []
+    # 🔴 A "block boundary" only carries information when blocks ARE blocks. Measured
+    # 2026-08-11: on a 48-block strategy -- one wavelength per layer -- EVERY layer is a
+    # boundary, and the placement degenerates into the exhaustive sweep this was chosen
+    # to avoid: 47 variants from a single strategy, 1122 over the reference ranking, a
+    # sixfold Monte-Carlo cost. Below this many layers per block the insight is vacuous.
+    if num_layers / len(blocks) < RATE_MIN_LAYERS_PER_BLOCK:
+        return []
     out: list[int] = []
     for blk in blocks:
         end = int(blk.get("end", 0))
         last = end - 1                       # last layer of this block
         if 0 <= last < num_layers - 1:       # excludes the final layer of the stack
             out.append(last)
-    return out
+    # Deepest first: A24 measured that a Rate layer inherits an error falling as
+    # 1/sqrt(n) with the number of reference layers of its material, so it is at its
+    # most accurate late in the stack -- which is also where 17-36 measured that every
+    # crash happens. The cap therefore keeps the boundaries that matter most.
+    out.sort(reverse=True)
+    return out[:RATE_MAX_VARIANTS_PER_STRATEGY]
 
 
 def _expand_with_rate_variants(
@@ -496,9 +520,13 @@ def _expand_with_rate_variants(
     if not bool(params.get("allow_rate", False)):
         return strategies
     variants: list[dict[str, Any]] = []
+    skipped = 0
     next_id = 990_000_000
     for strat in strategies:
-        for layer in _rate_candidate_layers(strat, num_layers):
+        cands = _rate_candidate_layers(strat, num_layers)
+        if not cands:
+            skipped += 1
+        for layer in cands:
             v = dict(strat)
             v["blocks"] = list(strat.get("blocks") or [])
             v["rate_layers"] = [layer]
@@ -506,10 +534,12 @@ def _expand_with_rate_variants(
             v["origin"] = f"RATE_L{layer}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             variants.append(v)
-    if variants:
+    if variants or skipped:
         logger.info(
-            f"[RATE] {len(variants)} variantes generees sur {len(strategies)} strategies "
-            f"-- une couche Rate chacune, aux frontieres de bloc"
+            f"[RATE] {len(variants)} variantes sur {len(strategies)} strategies, "
+            f"{RATE_MAX_VARIANTS_PER_STRATEGY} au plus chacune, frontieres les plus "
+            f"PROFONDES d'abord. {skipped} strategie(s) ecartee(s) : moins de "
+            f"{RATE_MIN_LAYERS_PER_BLOCK:g} couches par bloc, ou une frontiere ne dit rien."
         )
     return strategies + variants
 

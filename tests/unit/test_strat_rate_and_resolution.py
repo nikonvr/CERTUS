@@ -16,6 +16,7 @@ import pytest
 
 from certus.core.certus_strat_robustness import (
     NOMINAL_RESOLUTION_NM,
+    RATE_MAX_VARIANTS_PER_STRATEGY,
     RESOLUTION_NOISE_FACTOR,
     _expand_with_rate_variants,
     _rate_candidate_layers,
@@ -43,9 +44,29 @@ def test_rate_is_off_unless_asked_for():
     assert out is strategies
 
 
-def test_the_candidates_are_the_last_layer_of_each_block():
-    """👤 the layer whose wavelength changes at i+1 -- the next one has no anchors anyway."""
-    assert _rate_candidate_layers(_strat([(0, 24), (24, 40), (40, 48)]), 48) == [23, 39]
+def test_the_candidates_are_the_last_layer_of_each_block_deepest_first():
+    """👤 the layer whose wavelength changes at i+1 -- the next one has no anchors anyway.
+
+    Deepest first, because A24 measured that a Rate layer inherits an error falling as
+    1/sqrt(n) with the number of reference layers of its material: it is at its most
+    accurate late in the stack, which is also where 17-36 measured every crash happens.
+    """
+    assert _rate_candidate_layers(_strat([(0, 24), (24, 40), (40, 48)]), 48) == [39, 23]
+
+
+def test_a_degenerate_strategy_yields_no_candidate():
+    """🔴 On one wavelength per layer, EVERY layer is a boundary and the placement says
+    nothing. Measured 2026-08-11: 47 variants from a single 48-block strategy, 1928 over
+    241 strategies -- a sixfold Monte-Carlo cost for candidates nobody asked about."""
+    assert _rate_candidate_layers(_strat([(i, i + 1) for i in range(48)]), 48) == []
+
+
+def test_the_number_of_variants_per_strategy_is_capped():
+    """👤 asked for the trial on the ten best, not on everything. The cap must bite."""
+    bounds = [(0, 8), (8, 16), (16, 24), (24, 32), (32, 40), (40, 48)]
+    got = _rate_candidate_layers(_strat(bounds), 48)
+    assert len(got) == RATE_MAX_VARIANTS_PER_STRATEGY
+    assert got == [39, 31, 23], "les plus PROFONDES doivent etre gardees"
 
 
 def test_the_final_layer_of_the_stack_is_excluded():
@@ -59,7 +80,7 @@ def test_enabling_rate_adds_one_variant_per_boundary():
     strategies = [_strat([(0, 24), (24, 40), (40, 48)], sid=7)]
     out = _expand_with_rate_variants(strategies, {"allow_rate": True}, 48, _Log())
     assert len(out) == 3                       # the original plus two variants
-    assert [v["rate_layers"] for v in out[1:]] == [[23], [39]]
+    assert [v["rate_layers"] for v in out[1:]] == [[39], [23]]
     assert all("RATE_L" in v["origin"] for v in out[1:])
     assert out[0] is strategies[0], "l'originale ne doit pas etre modifiee"
 

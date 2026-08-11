@@ -21,6 +21,13 @@ import math
 import sys
 from pathlib import Path
 
+# The Windows console is cp1252 and this script prints emoji markers. Without this
+# it dies on the FIRST warning it tries to emit -- i.e. exactly when it has something
+# to say. Errors are replaced rather than raised: a missing glyph must never cost a
+# campaign analysis.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 REPORTS = Path(r"C:\dev\gemini\reports")
 NEUTRAL = {
     "index_corridor": 0.0, "affine_scale_amp": 0.0, "affine_offset_amp": 0.0,

@@ -182,10 +182,21 @@ class _PhysicsBridge:
         signal_noise_scale: float = 0.0,
         signal_noise_seed: int = 0,
         tp_hysteresis: float = 0.0,
+        affine_scale_amp: float = 0.0,
+        affine_offset_amp: float = 0.0,
+        affine_seed: int = 0,
+        poem_enabled: bool = True,
+        smoothing_window: int = 1,
+        index_corridor: float = 0.0,
+        index_seed: int = 0,
+        corridor_lo: float = 0.0,
+        corridor_hi: float = 0.0,
     ) -> np.ndarray:
         return update_run_states_kernel(
             nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
             block_start_layer, signal_noise_scale, signal_noise_seed, tp_hysteresis,
+            affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
+            index_corridor, index_seed, corridor_lo, corridor_hi,
         )
 
     @staticmethod
@@ -1374,6 +1385,19 @@ def _validate_candidates_phase_a(
             signal_noise_scale,
             signal_noise_seed,
             tp_hysteresis,
+            # 17-23: the SAME six model parameters the candidates were judged under.
+            # Omitting them let the propagated history live in a clean world while the
+            # candidates lived in a perturbed one -- Phase A contradicting itself at
+            # every layer, exactly what the kernel docstring forbids.
+            affine_scale_amp,
+            affine_offset_amp,
+            affine_seed,
+            poem_enabled,
+            smoothing_window,
+            index_corridor,
+            index_seed,
+            corridor_lo,
+            corridor_hi,
         ).tolist()
     else:
         p_thick_sim_updates = []

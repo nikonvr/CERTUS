@@ -1225,6 +1225,15 @@ def update_run_states_kernel(
     signal_noise_scale: float = 0.0,
     signal_noise_seed: int = 0,
     tp_hysteresis: float = 0.0,
+    affine_scale_amp: float = 0.0,
+    affine_offset_amp: float = 0.0,
+    affine_seed: int = 0,
+    poem_enabled: bool = True,
+    smoothing_window: int = 1,
+    index_corridor: float = 0.0,
+    index_seed: int = 0,
+    corridor_lo: float = 0.0,
+    corridor_hi: float = 0.0,
 ):
     """Parallel update of simulation states for next layer.
 
@@ -1238,10 +1247,52 @@ def update_run_states_kernel(
     CANDIDATE VALIDATION, for the same reason as ``block_start_layer``. The draw
     index passed to the kernel is ``r``, the same one that was used to judge the
     candidates.
+
+    🔴 AND THE SAME REASON EXTENDS TO SIX MORE PARAMETERS -- defect 17-23.
+
+    This function used to hand the kernel 16 arguments out of 22, so ``affine_scale``,
+    ``affine_offset``, ``poem_enabled``, ``smoothing_window`` and the corridor indices
+    silently took their NEUTRAL defaults. Phase A therefore judged its candidates in a
+    world carrying photometric drift, an index corridor, reading smoothing and possibly
+    no POEM -- and then remembered what happened in a clean one. The history was
+    systematically kinder than the world it was history of, at every layer.
+
+    The principle was already written three paragraphs above; only the list of
+    parameters it applies to was incomplete. **Anything that changes how a layer grows
+    must be passed here identically to how it was passed to the candidate validation.**
+
+    ⚠️ AMPLITUDES ARE TAKEN, NOT DRAWN VALUES -- and that is C2, not a style choice.
+    The distortion and the corridor are drawn ONCE PER RUN. Accepting a ready-made
+    ``affine_scale`` here would have applied one single draw to every run, which is a
+    fresh violation committed while repairing another. The draw is therefore redone
+    inside the loop, from the same seeds and the same run index the candidate
+    validation used, so both see EXACTLY the same randomness.
     """
     num_runs = prev_stacks.shape[0]
     updates = np.empty(num_runs, dtype=np.float64)
+    if index_corridor > 0.0 and corridor_hi <= corridor_lo:
+        raise ValueError(
+            "index_corridor is active but corridor_lo/corridor_hi were not supplied; "
+            "the envelope must come from the single caller-side computation"
+        )
     for r in prange(num_runs):
+        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+            aff_s = 1.0 + affine_scale_amp * _seeded_noise_sample(affine_seed, 0, r, 0, True)
+            aff_o = affine_offset_amp * _seeded_noise_sample(affine_seed, 1, r, 0, True)
+        else:
+            aff_s = 1.0
+            aff_o = 0.0
+        if index_corridor > 0.0:
+            z1_h = _seeded_noise_sample(index_seed, 0, r, 0, True)
+            z2_h = _seeded_noise_sample(index_seed, 0, r, 1, True)
+            z1_l = _seeded_noise_sample(index_seed, 1, r, 0, True)
+            z2_l = _seeded_noise_sample(index_seed, 1, r, 1, True)
+            u_wl = (2.0 * best_wl - (corridor_lo + corridor_hi)) / (corridor_hi - corridor_lo)
+            nH_real = nH + (index_corridor * z1_h + index_corridor * z2_h * (1.0 - abs(z1_h)) * u_wl)
+            nL_real = nL + (index_corridor * z1_l + index_corridor * z2_l * (1.0 - abs(z1_l)) * u_wl)
+        else:
+            nH_real = nH
+            nL_real = nL
         updates[r], _ = simulate_growth_kernel(
             p_thick_nom_arr,
             i_layer,
@@ -1259,6 +1310,12 @@ def update_run_states_kernel(
             signal_noise_seed,
             r,
             tp_hysteresis,
+            aff_s,
+            aff_o,
+            poem_enabled,
+            smoothing_window,
+            nH_real,
+            nL_real,
         )
     return updates
 

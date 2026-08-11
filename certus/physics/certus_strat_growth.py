@@ -871,28 +871,68 @@ def simulate_growth_kernel(
             n_j_n = n_H if j % 2 == 0 else n_L
             d_rj = prev_thicknesses_sim[j]
             d_nj = p_thick_nominal[j]
+            # ---- CLOSED FORM ON THE HISTORY TOO (18ter) -----------------------
+            #
+            # 📏 The ablation of 2026-08-11 named this block: re-scanning the block
+            # history is **38.6 %** of the kernel, the single largest item -- and the
+            # closed form had only been applied to the CURRENT layer's sweep. Each
+            # history layer j is equally "a layer growing on a fixed substack", the
+            # substack being layers 0..j-1, so the same three coefficients apply.
+            #
+            # ⚠️ TWO SETS OF COEFFICIENTS, and they are not interchangeable: the real
+            # signal is swept over the REAL thickness d_rj on the real indices, the
+            # nominal one over d_nj on the nominal indices. Sharing them would silently
+            # merge the two stacks -- the very divergence this kernel exists to measure.
+            fast_j = (
+                abs(n_j_r.imag) < K_MAX_CLOSED_FORM and abs(n_j_n.imag) < K_MAX_CLOSED_FORM
+            )
+            Pjr = 0.0
+            Qjr = 0.0
+            Rjr = 0.0
+            Pjn = 0.0
+            Qjn = 0.0
+            Rjn = 0.0
+            kkjr = 0.0
+            kkjn = 0.0
+            if fast_j:
+                Pjr, Qjr, Rjr = layer_scan_coeffs(R00, R01, R10, R11, n_j_r, n_Sub)
+                Pjn, Qjn, Rjn = layer_scan_coeffs(Q00, Q01, Q10, Q11, n_j_n, n_Sub)
+                kkjr = TWO_PI_VAL / wl * n_j_r.real
+                kkjn = TWO_PI_VAL / wl * n_j_n.real
             for k in range(1, NPTS_PREV + 1):
                 f = k / NPTS_PREV
-                p3 = TWO_PI_VAL / wl * n_j_r * (f * d_rj)
-                c3, s3 = (np.cos(p3), np.sin(p3))
-                o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
-                z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
-                z1 = z1 + (1j * n_j_r * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j_r * s3 * R01 + c3 * R11)
-                if abs(z1) > 1e-09:
-                    Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
+                if fast_j:
+                    tdj = 2.0 * kkjr * (f * d_rj)
+                    denj = Pjr + Qjr * np.cos(tdj) + Rjr * np.sin(tdj)
+                    if denj > 1e-18:
+                        Ts_r[idx] = 4.0 * n_Sub.real / denj
+                else:
+                    p3 = TWO_PI_VAL / wl * n_j_r * (f * d_rj)
+                    c3, s3 = (np.cos(p3), np.sin(p3))
+                    o3 = s3 / n_j_r if abs(n_j_r) > 1e-09 else 0.0
+                    z1 = (c3 * R00 + 1j * o3 * R10) + n_Sub * (c3 * R01 + 1j * o3 * R11)
+                    z1 = z1 + (1j * n_j_r * s3 * R00 + c3 * R10) + n_Sub * (1j * n_j_r * s3 * R01 + c3 * R11)
+                    if abs(z1) > 1e-09:
+                        Ts_r[idx] = 4.0 * n_Sub.real / (z1.real**2 + z1.imag**2)
                 if apply_signal_noise:
                     # group = j: the past of layer j carries the SAME noise for
                     # all the layers of the block that read it again.
                     Ts_r[idx] += signal_noise_scale * _seeded_noise_sample(
                         signal_noise_seed, j, signal_noise_run, k - 1, True
                     )
-                p4 = TWO_PI_VAL / wl * n_j_n * (f * d_nj)
-                c4, s4 = (np.cos(p4), np.sin(p4))
-                o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
-                z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
-                z2 = z2 + (1j * n_j_n * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j_n * s4 * Q01 + c4 * Q11)
-                if abs(z2) > 1e-09:
-                    Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
+                if fast_j:
+                    tdn = 2.0 * kkjn * (f * d_nj)
+                    denn = Pjn + Qjn * np.cos(tdn) + Rjn * np.sin(tdn)
+                    if denn > 1e-18:
+                        Ts_n[idx] = 4.0 * n_Sub.real / denn
+                else:
+                    p4 = TWO_PI_VAL / wl * n_j_n * (f * d_nj)
+                    c4, s4 = (np.cos(p4), np.sin(p4))
+                    o4 = s4 / n_j_n if abs(n_j_n) > 1e-09 else 0.0
+                    z2 = (c4 * Q00 + 1j * o4 * Q10) + n_Sub * (c4 * Q01 + 1j * o4 * Q11)
+                    z2 = z2 + (1j * n_j_n * s4 * Q00 + c4 * Q10) + n_Sub * (1j * n_j_n * s4 * Q01 + c4 * Q11)
+                    if abs(z2) > 1e-09:
+                        Ts_n[idx] = 4.0 * n_Sub.real / (z2.real**2 + z2.imag**2)
                 idx += 1
             p3 = TWO_PI_VAL / wl * n_j_r * d_rj
             c3, s3 = (np.cos(p3), np.sin(p3))

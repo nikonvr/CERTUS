@@ -209,6 +209,9 @@ def install_probe() -> None:
                     # forced onto the least-bad one. Run-level, but carried per row so
                     # a score can never be read without it.
                     "n_forced_layers": (it.get("phase_a_forced") or {}).get("n_forced"),
+                    # A23 stage 2: which layer gives way, why, and by how much. Defined
+                    # even at 0/150 crashes, which is the only regime this stack has.
+                    "critical_layer": it.get("critical_layer") or {},
                 })
             B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
         except Exception as exc:  # noqa: BLE001

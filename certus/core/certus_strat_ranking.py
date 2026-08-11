@@ -577,6 +577,76 @@ def _generate_structured_seed_strategies(
     return seeds
 
 
+#: Measurement limit on an equivalent per-layer error. 👤 "SEEL must be calculated or
+#: given to a precision of 0.1 nm, that is all" (2026-08-10). Half-width, hence 0.05.
+SEEL_RESOLUTION_NM = 0.05
+#: Statistical resolution of a robustness score, RELATIVE. 📏 Measured 17-26 at
+#: N = 150 by sub-packet dispersion; it follows 1/sqrt(N) exactly between N = 32 and
+#: N = 128. 🔴 If the Monte-Carlo depth changes, REMEASURE it -- do not scale it in
+#: your head.
+SCORE_RESOLUTION_REL = 0.06
+
+
+def seel_equivalence_half_width(seel_nm: float, score_resolution_rel: float = SCORE_RESOLUTION_REL) -> float:
+    """Half-width, in nm, below which two SEEL values must be called equal.
+
+    🔴 TWO LIMITS, AND THE COARSER ONE WINS. The 0.1 nm step is a MEASUREMENT limit:
+    an equivalent per-layer error is not knowable finer than that. The statistical
+    resolution is a different limit and it is RELATIVE, so a fixed step drifts against
+    it as SEEL grows. 📏 Measured 2026-08-11:
+
+        SEEL 0.3 nm -> the 0.1 nm bin is +/-19 %   wider than the +/-6 % noise  ✅
+        SEEL 0.6 nm -> +/-7.8 %                    comparable; rank 2 sits at +7.3 %,
+                                                   indistinguishable, yet lands OUTSIDE
+        SEEL 1.1 nm -> +/-4.4 %                    NARROWER than the noise           ❌
+
+    Below the noise the rule separates strategies the measurement cannot separate,
+    which is the very thing quantisation exists to prevent. Taking the larger of the
+    two never distinguishes below either limit.
+    """
+    return max(SEEL_RESOLUTION_NM, score_resolution_rel * max(seel_nm, 0.0))
+
+
+def rank_key_seel_yield_margin(
+    seel_nm: float,
+    crash_rate: float,
+    critical_margin_in_A: float,
+    score_resolution_rel: float = SCORE_RESOLUTION_REL,
+) -> tuple[float, float, float]:
+    """The 👤 ranking rule of 14, as a sort key. Lower is better on every component.
+
+        1. SEEL, quantised to its equivalence class   ascending
+        2. yield = 1 - crash rate                     descending
+        3. margin of the critical layer               descending   <- 2026-08-11
+
+    🔑 WHY QUANTISE AT ALL. `fit_alpha` is 1.0, so SEEL = k . RMSE with k constant:
+    sorting on the CONTINUOUS SEEL reproduces exactly the RMSE order -- a sort that
+    sorts nothing. 📏 And 17-26 measured that at N = 150 the top eight strategies lie
+    within 2 sigma of one another and all read 0.3 nm. The continuous ranking is
+    separating noise; the quantised one says "equal", which is true.
+
+    🔑 WHY YIELD SECOND. 👤 decided 2026-08-10, and it is 8: "if 95 % of depositions
+    work, it's a win", and a crashed run and an out-of-spec filter are the same
+    failure. At indistinguishable spectral performance, take the one that finishes.
+
+    🔑 WHY THE MARGIN THIRD, and why it was impossible before today. On this stack
+    every tied strategy reads 0/150 crashes, so the yield cannot separate them either:
+    0 out of 150 says p < 2 % and nothing more. The margin is continuous and defined
+    at zero crashes -- it is the only one of the three that still discriminates inside
+    the equivalence class.
+
+    ⚠️ A margin beyond 2 A means the event CANNOT happen -- the draws are bounded -- so
+    ordering by it there is meaningless. It is clamped, not because large margins are
+    equal in nature but because nothing distinguishes "impossible" from "impossible".
+    """
+    half = seel_equivalence_half_width(seel_nm, score_resolution_rel)
+    # Bin index rather than the raw value: two SEELs inside one half-width must land
+    # on the SAME key, or the sort silently reverts to the continuous order.
+    binned = round(max(seel_nm, 0.0) / (2.0 * half))
+    margin = min(max(critical_margin_in_A, 0.0), 2.0)
+    return (float(binned), float(crash_rate), -margin)
+
+
 def _apply_strategy_ranking(
     strategies_results: list[dict[str, Any]],
     params: dict[str, Any],

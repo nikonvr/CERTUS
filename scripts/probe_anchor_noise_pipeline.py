@@ -248,6 +248,41 @@ def quantise_seel(value: float | None) -> float | None:
     return round(round(float(value) / SEEL_STEP_NM) * SEEL_STEP_NM, 1)
 
 
+def _rank_by_seel_rule(ranking: list[dict]) -> list[dict]:
+    """Re-order a ranking by the 14 rule and report what it changed.
+
+    Returns the top rows in the new order, each carrying the rank it HAD, so the two
+    orders can be compared at a glance. A rule that never reorders anything would be
+    an inert filter with a nice docstring -- control 4 of 20.
+    """
+    from certus.core.certus_strat_ranking import rank_key_seel_yield_margin
+
+    rows = [r for r in ranking if r.get("seel_nm") is not None]
+    if not rows:
+        return []
+    for i, r in enumerate(ranking):
+        r["rank_score_order"] = i + 1
+    ordered = sorted(
+        rows,
+        key=lambda r: rank_key_seel_yield_margin(
+            float(r.get("seel_nm") or 0.0),
+            float(r.get("crash") or 0.0),
+            float((r.get("critical_layer") or {}).get("margin_in_A", 1e9)),
+        ),
+    )
+    return [
+        {
+            "id": r.get("id"),
+            "rank_score_order": r.get("rank_score_order"),
+            "seel_nm": r.get("seel_nm"),
+            "crash": r.get("crash"),
+            "n_blocks": r.get("n_blocks"),
+            "critical_layer": r.get("critical_layer") or {},
+        }
+        for r in ordered[:15]
+    ]
+
+
 def seel_block(result: float | None, report: dict) -> dict:
     """Read the run in NANOMETRES: the equivalent random per-layer error.
 
@@ -277,6 +312,16 @@ def seel_block(result: float | None, report: dict) -> dict:
         for row in ranking:
             score = row.get("score")
             row["seel_nm"] = quantise_seel(k * float(score)) if (score is not None and k > 0) else None
+        # 👤 The ranking rule of 14, applied HERE because this is where SEEL exists.
+        #
+        # 🔴 NOT a replacement of the pipeline's own order -- that one still decides
+        # RESULT, and changing it is a separate action (14 item 1: SEEL has to move out
+        # of the GUI first). This is a second, EXPLICIT ordering written alongside, so
+        # the two can be compared on the same run before anything is switched.
+        #
+        # 17-26 is why it exists: at N = 150 the top eight lie within 2 sigma and all
+        # read the same SEEL. The continuous order is separating noise.
+        out["ranking_seel_rule"] = _rank_by_seel_rule(ranking)
         out["status"] = "ok"
     except Exception as exc:  # noqa: BLE001 -- never let the readout kill a 25-min run
         out["status"] = f"failed: {exc!r}"

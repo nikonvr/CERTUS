@@ -445,6 +445,26 @@ def _prepare_robustness_inputs(
         logger=logger,
     )
     all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
+    # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
+    # `_calculate_strategy_spectral_resolution` was already called on every strategy --
+    # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
+    # into the very simulation that produced it. Computed here it costs the same call,
+    # simply moved, and ONLY when the bias is asked for.
+    if bool(params.get("slit_bias_enabled", False)):
+        for _st in all_strategies:
+            try:
+                _, _, _curv = _calculate_strategy_spectral_resolution(
+                    _st, p_thick_nominal, params
+                )
+                _st["signed_curvature"] = _curv
+            except Exception:  # noqa: BLE001 -- a missing curvature disables the bias
+                _st["signed_curvature"] = None                # for that strategy alone
+        n_ok = sum(1 for _st in all_strategies if _st.get("signed_curvature") is not None)
+        logger.info(
+            f"[SLIT] biais de fente actif, {n_ok}/{len(all_strategies)} strategies "
+            f"avec courbure -- fente "
+            f"{float(params.get('monochromator_resolution_nm', 2.0) or 2.0):g} nm"
+        )
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
 
 
@@ -558,6 +578,19 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
 
     min_resolution = 999.0
     worst_layer = -1
+    # 🔴 THE PER-LAYER CURVATURE IS KEPT, not collapsed. This function computed it for
+    # all 48 layers and returned only the minimum `res_limit` -- the THIRD time this
+    # exact pattern was found on 2026-08-11, after `crashed_cells` reduced on the layer
+    # axis and `avg_dynamics` averaged away. It is the quantity the slit bias needs:
+    #
+    #     bias(B) = <T>_B - T(lambda_mon) = T''(lambda_mon) . B^2 / 24
+    #
+    # ⚠️ SIGNED, unlike `curvature` above which takes an absolute value for the
+    # resolution limit. The sign is the physics: T'' > 0 near a minimum and < 0 near a
+    # maximum, so the bias always pushes TOWARDS THE INSIDE of the curve. Near a turning
+    # point -- where POEM takes its anchors -- it shrinks the measured swing. Dropping
+    # the sign would make the bias push the wrong way half the time.
+    signed_curvature = np.zeros(len(p_thick_nominal), dtype=np.float64)
     layer_to_wl = {}
 
     for block in blocks:
@@ -574,7 +607,11 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
         T_vals = RT[:, 1]
 
         if len(T_vals) == 3:
-            curvature = abs((T_vals[0] + T_vals[2]) / 2.0 - T_vals[1])
+            second_diff = (T_vals[0] + T_vals[2]) / 2.0 - T_vals[1]
+            # second_diff = T''.test_bw^2/8, so T'' = 8.second_diff/test_bw^2 and the
+            # boxcar bias T''.B^2/24 becomes second_diff . B^2 / (3.test_bw^2).
+            signed_curvature[i_layer] = second_diff
+            curvature = abs(second_diff)
             if curvature > 1e-9:
                 # 🔴 THE FACTOR 3 IS THE SLIT SHAPE, and it was missing -- 12.7.
                 #
@@ -600,7 +637,7 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
                 min_resolution = res_limit
                 worst_layer = i_layer + 1
 
-    return min_resolution, worst_layer
+    return min_resolution, worst_layer, signed_curvature
 
 
 def _filter_finite_robustness_scores(
@@ -788,7 +825,7 @@ def _execute_robustness_tasks(
                     n_layers_matrix_precomp=n_layers_matrix_precomp,
                 )
                 try:
-                    min_res, bad_layer = _calculate_strategy_spectral_resolution(
+                    min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
                         res["strategy"], p_thick_nominal, params
                     )
                 except Exception:
@@ -828,7 +865,7 @@ def _execute_robustness_tasks(
                 try:
                     res = f.result()
                     try:
-                        min_res, bad_layer = _calculate_strategy_spectral_resolution(
+                        min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
                             res["strategy"], p_thick_nominal, params
                         )
                     except Exception:
@@ -1216,6 +1253,28 @@ def _test_strategy_robustness_task(
         # 👤 Rate layers are a property OF THE STRATEGY, chosen deliberately (14-8),
         # not a fallback the machine trips into. `rate_layers` is a list of 0-based
         # layer indices; absent or empty = pure POEM = the historical path, bit for bit.
+        # ---- SLIT BIAS, per layer (12.7) ------------------------------------
+        #
+        # 👤 "the OMS never computes spectral responses with a resolution problem, it is
+        # always at perfect resolution -- that is why opening the slits too much is a
+        # problem: the expected levels are not the right ones."
+        #
+        #   second_diff = T''.test_bw^2/8   (test_bw = 1 nm)
+        #   bias = T''.B^2/24 = second_diff . B^2 / (3.test_bw^2)
+        #
+        # 🔴 OFF BY DEFAULT (`slit_bias_enabled`), and that is a deliberate, uncomfortable
+        # choice. The bias is NOT zero at the nominal 2 nm slit -- the real machine has
+        # carried it all along -- so switching it on moves every crash rate and every
+        # SEEL ever measured. Keeping the default off preserves comparability with the
+        # whole measurement history; it also means THE SIMULATOR IS OPTIMISTIC while it
+        # is off, and that must be said next to any figure produced in this state.
+        slit_bias_per_layer = None
+        if bool(params.get("slit_bias_enabled", False)):
+            slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
+            curv = strategy.get("signed_curvature")
+            if curv is not None and len(curv) == len(p_thick_nominal):
+                slit_bias_per_layer = np.asarray(curv, dtype=np.float64) * (slit_b ** 2) / 3.0
+
         rate_layers = strategy.get("rate_layers") or []
         rate_flags = None
         if rate_layers:
@@ -1251,6 +1310,7 @@ def _test_strategy_robustness_task(
             corridor_lo,
             corridor_hi,
             rate_flags,
+            slit_bias_per_layer,
         )
 
         for i_layer in range(num_layers):

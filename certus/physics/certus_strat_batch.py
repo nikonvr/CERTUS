@@ -318,6 +318,7 @@ def simulate_stack_robustness_batch(
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
     rate_flags: np.ndarray = None,
+    slit_bias_per_layer: np.ndarray = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -451,6 +452,7 @@ def simulate_stack_robustness_batch(
                 nH_real,
                 nL_real,
                 rate_flags is not None and rate_flags[i_layer],
+                0.0 if slit_bias_per_layer is None else slit_bias_per_layer[i_layer],
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

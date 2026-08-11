@@ -357,6 +357,7 @@ def simulate_growth_kernel(
     n_H_real: float = -1.0,
     n_L_real: float = -1.0,
     is_rate: bool = False,
+    slit_bias: float = 0.0,
 ) -> tuple[float, float, float, float, float]:
     """
 
@@ -856,6 +857,34 @@ def simulate_growth_kernel(
                 Ts_n[idx] = 4.0 * n_Sub.real / (dn.real**2 + dn.imag**2)
             idx += 1
 
+        # ---- SLIT BIAS (12.7) --------------------------------------------------
+        #
+        # 👤 *"At no point does the OMS know how to compute spectral responses with a
+        # resolution problem, it is always at perfect resolution! That is why opening
+        # the slits too much can be a problem: the expected levels are not the right
+        # ones."*
+        #
+        # 🔴 THE ASYMMETRY IS THE PHENOMENON. The bias goes on `Ts_r` -- what the
+        # instrument READS through a slit of width B -- and NOWHERE else. `Ts_n` and
+        # `target_nominal` are what the controller COMPUTES offline, monochromatically,
+        # and they must stay untouched. Biasing both would cancel the effect exactly,
+        # the crash rate would barely move, and one would conclude the slit does not
+        # matter. That is the same failure 12.1 found THREE times on the affine
+        # distortion, and it is invisible from the outside.
+        #
+        # It is not noise: a bias does not average out, does not dilute in the
+        # Monte-Carlo, and pushes every draw the same way. The machine cuts
+        # systematically too early or too late and has no way of noticing -- its only
+        # reference is its own monochromatic theory.
+        #
+        # ⚠️ SIGNED. T'' > 0 near a minimum, < 0 near a maximum, so the bias always
+        # pushes TOWARDS THE INSIDE of the curve. Near a turning point -- exactly where
+        # POEM takes its anchors -- it shrinks the measured swing, and POEM then applies
+        # its frozen fraction to an amplitude that is too small.
+        if slit_bias != 0.0:
+            for k_sb in range(n_tot):
+                Ts_r[k_sb] += slit_bias
+
         if smoothing_window > 1:
             # ── AXIS 1.1 / T3-T4: decoupled machine sampling grid (0.125 nm) + moving-average smoothing
             SAMPLE_DD = 0.125
@@ -1182,6 +1211,13 @@ def simulate_growth_kernel(
     if affine_scale != 1.0 or affine_offset != 0.0:
         for k in range(3):
             T_points[k] = affine_scale * T_points[k] + affine_offset
+    # 12.7: these three points are what the instrument READS around the stopping
+    # thickness, so they carry the slit bias like every other reading. The target they
+    # are solved against stays monochromatic -- that asymmetry IS the effect, and
+    # applying the bias to both sides would cancel it exactly.
+    if slit_bias != 0.0:
+        for k in range(3):
+            T_points[k] += slit_bias
     a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
     calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
     error_raw = calc_thick - nominal_th

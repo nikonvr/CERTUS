@@ -666,7 +666,7 @@ def _apply_elite_refinement_if_enabled(
                     full_score = float(full_res.get("robustness_score", np.inf))
                     if not np.isfinite(full_score):
                         continue
-                    min_res, bad_layer = _calculate_strategy_spectral_resolution(
+                    min_res, bad_layer, _curv = _calculate_strategy_spectral_resolution(
                         full_res["strategy"], ctx.p_thick_nominal, ctx.params
                     )
                     full_res["min_resolution"] = min_res

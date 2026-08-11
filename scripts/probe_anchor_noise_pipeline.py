@@ -248,6 +248,58 @@ def quantise_seel(value: float | None) -> float | None:
     return round(round(float(value) / SEEL_STEP_NM) * SEEL_STEP_NM, 1)
 
 
+def _layer_wavelengths(row: dict) -> list[float]:
+    """Per-layer monitoring wavelength, rebuilt from the block boundaries."""
+    out: list[float] = []
+    wls = row.get("wavelengths") or []
+    for (start, end), wl in zip(row.get("block_bounds") or [], wls):
+        out.extend([float(wl)] * max(0, int(end) - int(start)))
+    return out
+
+
+def common_prefix_length(rows: list[dict]) -> int:
+    """How many leading layers every strategy monitors at the SAME wavelength.
+
+    🔴 WHY THIS EXISTS. Measured 2026-08-11: nine of the ten strategies tied at
+    SEEL 0.3 nm returned the very same critical layer and the very same margin --
+    0.83 A at layer 6. Not a bug: all ten open with a 544 nm block, so layer 6 is
+    literally the same physics in all nine, and an identical margin is the correct
+    answer. But a quantity describing what strategies SHARE cannot rank them.
+
+    The tenth had its critical layer at 42, in the second block where the wavelengths
+    diverge -- and a margin four times worse. That one the margin did separate.
+
+    So: keep the global margin for the OPERATOR (it is what will give way in the
+    chamber, shared prefix included) and use the margin beyond this prefix to RANK.
+    """
+    grids = [_layer_wavelengths(r) for r in rows]
+    grids = [g for g in grids if g]
+    if len(grids) < 2:
+        return 0
+    n = min(len(g) for g in grids)
+    k = 0
+    while k < n and all(abs(g[k] - grids[0][k]) < 1e-6 for g in grids):
+        k += 1
+    return k
+
+
+def discriminating_margin(row: dict, prefix: int) -> tuple[float, int, str]:
+    """Smallest margin (in A) strictly beyond the common prefix, with where and why.
+
+    Returns `(1e9, -1, "")` when nothing beyond the prefix is constrained -- which is
+    a real answer, not a failure, and must not be read as a large margin.
+    """
+    best, best_layer, best_cause = 1e9, -1, ""
+    for cause, hits in (row.get("margin_by_layer") or {}).items():
+        for layer_s, margin in hits.items():
+            layer = int(layer_s)
+            if layer < prefix:
+                continue
+            if float(margin) < best:
+                best, best_layer, best_cause = float(margin), layer, cause
+    return best, best_layer, best_cause
+
+
 def _rank_by_seel_rule(ranking: list[dict]) -> list[dict]:
     """Re-order a ranking by the 14 rule and report what it changed.
 
@@ -262,12 +314,23 @@ def _rank_by_seel_rule(ranking: list[dict]) -> list[dict]:
         return []
     for i, r in enumerate(ranking):
         r["rank_score_order"] = i + 1
+    # The equivalence class is what the tie-break has to order. The common prefix is
+    # computed on THAT set, not on all 228: strategies far apart in score share almost
+    # nothing, and a prefix taken over them would be empty and mask nothing.
+    best_seel = rows[0].get("seel_nm")
+    cls = [r for r in rows if r.get("seel_nm") == best_seel]
+    prefix = common_prefix_length(cls)
+    for r in rows:
+        m, lay, cause = discriminating_margin(r, prefix)
+        r["_disc_margin"] = m
+        r["_disc_layer"] = lay
+        r["_disc_cause"] = cause
     ordered = sorted(
         rows,
         key=lambda r: rank_key_seel_yield_margin(
             float(r.get("seel_nm") or 0.0),
             float(r.get("crash") or 0.0),
-            float((r.get("critical_layer") or {}).get("margin_in_A", 1e9)),
+            float(r.get("_disc_margin", 1e9)),
         ),
     )
     return [
@@ -277,7 +340,15 @@ def _rank_by_seel_rule(ranking: list[dict]) -> list[dict]:
             "seel_nm": r.get("seel_nm"),
             "crash": r.get("crash"),
             "n_blocks": r.get("n_blocks"),
+            # For the operator: what gives way, shared prefix included.
             "critical_layer": r.get("critical_layer") or {},
+            # For the ranking: the same, restricted to where strategies differ.
+            "discriminating_margin_A": (
+                None if r.get("_disc_margin", 1e9) >= 1e8 else r.get("_disc_margin")
+            ),
+            "discriminating_layer": r.get("_disc_layer"),
+            "discriminating_cause": r.get("_disc_cause"),
+            "common_prefix_layers": prefix,
         }
         for r in ordered[:15]
     ]

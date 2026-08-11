@@ -212,6 +212,14 @@ def install_probe() -> None:
                     # A23 stage 2: which layer gives way, why, and by how much. Defined
                     # even at 0/150 crashes, which is the only regime this stack has.
                     "critical_layer": it.get("critical_layer") or {},
+                    # Needed to know WHERE two strategies stop being identical -- both
+                    # for the common-prefix mask below and for placing Rate layers at
+                    # block boundaries (A24). Without it neither is expressible.
+                    "block_bounds": [
+                        [int(b.get("start", 0)), int(b.get("end", 0))]
+                        for b in (st.get("blocks") or [])
+                    ],
+                    "margin_by_layer": it.get("margin_by_layer") or {},
                 })
             B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
         except Exception as exc:  # noqa: BLE001

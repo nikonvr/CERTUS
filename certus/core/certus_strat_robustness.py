@@ -179,6 +179,39 @@ _CAUSE_WORDS = {
 }
 
 
+#: Above this many multiples of A a margin carries no ranking information: the draws are
+#: bounded, so the event is impossible and one impossibility does not beat another. Kept
+#: well above the 2 A verdict threshold so the boundary itself stays visible.
+_MARGIN_REPORT_CEILING_A = 5.0
+
+
+def _margin_profile_sparse(
+    margin_profile: dict[str, np.ndarray], noise_amp: float
+) -> dict[str, dict[str, float]]:
+    """Per-layer margins, in multiples of A, keeping only what can ever matter.
+
+    Sparse on purpose. A healthy stack has most layers far from any failure, so a dense
+    48-long list per cause per strategy would be mostly `null` -- weight without
+    information, and 228 strategies of it. Absence of a layer therefore reads as "not
+    constrained here", which is the honest statement.
+
+    ⚠️ Rounded to 3 decimals: the margin inherits the ~6 % Monte-Carlo dispersion of the
+    run (17-26), so further digits are noise dressed as precision.
+    """
+    if noise_amp <= 0.0:
+        return {}
+    out: dict[str, dict[str, float]] = {}
+    for cause, arr in margin_profile.items():
+        hits = {
+            str(i): round(float(v) / noise_amp, 3)
+            for i, v in enumerate(arr)
+            if np.isfinite(v) and v / noise_amp < _MARGIN_REPORT_CEILING_A
+        }
+        if hits:
+            out[cause] = hits
+    return out
+
+
 def _critical_layer(margin_profile: dict[str, np.ndarray], noise_amp: float) -> dict[str, Any]:
     """The layer that will give way first, its cause, and its margin in multiples of A.
 
@@ -1319,6 +1352,16 @@ def _test_strategy_robustness_task(
         # by the amplitude A the MACHINE actually has; dividing by the 2x level would
         # report a strategy as twice as safe as it is.
         "critical_layer": _critical_layer(
+            margin_profile, float(noise_levels[len(noise_levels) // 2]) / 100.0
+        ),
+        # The profile itself, sparsely. 🔴 NEEDED FOR RANKING, and the reduced
+        # `critical_layer` above cannot replace it: measured 2026-08-11, nine of the ten
+        # tied strategies returned the SAME margin (0.83 A, layer 6) because they share
+        # a first block at 544 nm -- layer 6 is literally the same physics in all nine.
+        # The reduction is correct and it describes what they SHARE, so it cannot rank
+        # them. Ranking needs the margin restricted to the layers where they DIFFER,
+        # which only a caller seeing the whole set can work out.
+        "margin_by_layer": _margin_profile_sparse(
             margin_profile, float(noise_levels[len(noise_levels) // 2]) / 100.0
         ),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),

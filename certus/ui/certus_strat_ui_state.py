@@ -1100,6 +1100,29 @@ class CertusStratStateMixin:
             "reading_smoothing_window": int(
                 _config_float(getattr(self, "_loaded_config", {}), "reading_smoothing_window") or 1
             ),
+            # ── 👤 MONOCHROMATOR SLIT, part of the strategy to report ──────────
+            #
+            # "Finding a strategy is finding the control wavelengths or the rate layers,
+            # AND giving the user a slit value." So it is an OUTPUT, not just a machine
+            # setting -- a strategy is not executable in the chamber without it.
+            # 2 nm is the nominal, the one the measured noise amplitude corresponds to,
+            # so the default leaves every existing result bit-identical.
+            "monochromator_resolution_nm": (
+                _config_float(getattr(self, "_loaded_config", {}), "monochromator_resolution_nm")
+                or 2.0
+            ),
+            # ── 👤 RATE MODE: allowed or refused, from the final table ─────────
+            #
+            # "The user must be able, in the final table, to allow or refuse the rate.
+            # Then the best strategies appear." Rate is therefore not a fallback the
+            # machine trips into: switching it on ADDS candidate strategies carrying one
+            # Rate layer each, which then stand or fall on the same statistics.
+            #
+            # 🔴 Default FALSE. With the key absent the candidate list is untouched and
+            # every downstream bit is what it was -- constraint C1.
+            "allow_rate": bool(
+                (_config_float(getattr(self, "_loaded_config", {}), "allow_rate") or 0.0) > 0.5
+            ),
             # ── Index corridor uncertainty delta_max (T5) ──────────────────────
             "index_corridor": _config_float(
                 getattr(self, "_loaded_config", {}), "index_corridor"

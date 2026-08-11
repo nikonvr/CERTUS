@@ -69,6 +69,8 @@ TRACED_KEYS: tuple[str, ...] = (
     "n_screen_runs",
     "k_keep_survivors",
     "enable_consensus_ranking",
+    "allow_rate",
+    "monochromator_resolution_nm",
 )
 
 
@@ -92,6 +94,8 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_SCREEN_RUNS", "n_screen_runs", "int", 25, "scr"),
     ("CERTUS_KEEP_SURVIVORS", "k_keep_survivors", "int", 10, "keep"),
     ("CERTUS_CONSENSUS", "enable_consensus_ranking", "flag", False, "consensus"),
+    ("CERTUS_ALLOW_RATE", "allow_rate", "flag", False, "rate"),
+    ("CERTUS_RESOLUTION_NM", "monochromator_resolution_nm", "float", 2.0, "res"),
 )
 
 _TRUE_WORDS = frozenset({"1", "true", "yes", "on"})

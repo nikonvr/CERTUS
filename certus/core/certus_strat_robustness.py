@@ -155,18 +155,65 @@ def _parse_noise_factors(raw_factors) -> list[float]:
     return [0.5, 1.0, 2.0]
 
 
+#: 👤 Noise factor on A for each available monochromator slit, 2026-08-09.
+#:
+#: 🔴 A TABLE, NEVER A LAW, and the distinction is not pedantry. These four values are
+#: 👤 *"estimated by me at feeling"* -- a modelling postulate like 9bis, not a
+#: constructor specification. Fitting a power law to them would invent a model on
+#: invented numbers, AND it would let the search propose slits the machine does not
+#: have. Four settings, four table entries.
+#:
+#: ⚠️ Any conclusion drawn from these is physics only if it SURVIVES their uncertainty.
+#: 12.7 requires a sensitivity control -- redo the comparison with /1.2 and x3 instead
+#: of /1.5 and x5; if the winning resolution changes, the conclusion rests on a feeling
+#: and that must be said in the same sentence.
+RESOLUTION_NOISE_FACTOR: dict[float, float] = {5.0: 1.0 / 1.5, 2.0: 1.0, 1.0: 2.0, 0.5: 5.0}
+
+#: Nominal slit, the one the measured noise amplitude corresponds to (👤 2026-08-09).
+NOMINAL_RESOLUTION_NM: float = 2.0
+
+
+def _resolution_noise_factor(params: dict[str, Any]) -> float:
+    """Noise multiplier for the configured slit. 1.0 at the nominal 2 nm, hence C1.
+
+    🔴 IT MULTIPLIES THE SAMPLE, NEVER THE SEED -- constraint C2, and the failure it
+    prevents would be invisible. Folding the slit into the seed would make the four
+    resolutions see four DIFFERENT random realisations, so the gap between them would no
+    longer be attributable to the resolution. All four figures would look perfectly
+    plausible. Scaling the amplitude keeps the draws identical and only their size
+    changes.
+    """
+    raw = params.get("monochromator_resolution_nm")
+    if raw is None:
+        return 1.0
+    try:
+        slit = float(raw)
+    except (TypeError, ValueError):
+        return 1.0
+    factor = RESOLUTION_NOISE_FACTOR.get(slit)
+    if factor is None:
+        # An unavailable slit is a configuration error, not something to interpolate:
+        # a law over four estimated points would authorise settings the machine has not.
+        raise ValueError(
+            f"monochromator_resolution_nm={slit} is not one of "
+            f"{sorted(RESOLUTION_NOISE_FACTOR)} -- the four values the machine offers. "
+            "There is no law to interpolate between them (12.7)."
+        )
+    return factor
+
+
 def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
     """Resolve robustness noise-level vector from STRAT params."""
     noise_factors = _parse_noise_factors(params.get("robustness_noise_factors", [0.5, 1.0, 2.0]))
     if params.get("thickness_tolerance_nm") is not None:
         base_tol = float(params.get("thickness_tolerance_nm"))
-        return [base_tol * f for f in noise_factors]
+        return [base_tol * f * _resolution_noise_factor(params) for f in noise_factors]
 
     try:
         base_noise = float(params["reality_sim_params"]["trigger_tolerance"])
     except KeyError, TypeError:
         base_noise = float(params.get("trigger_tolerance", 0.5))
-    return [base_noise * f for f in noise_factors]
+    return [base_noise * f * _resolution_noise_factor(params) for f in noise_factors]
 
 
 #: 👤 The cause is named in PHYSICAL WORDS, never by its sentinel. `CRASH_TP_MISCOUNT`
@@ -397,7 +444,74 @@ def _prepare_robustness_inputs(
         num_layers=num_layers,
         logger=logger,
     )
+    all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
+
+
+def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[int]:
+    """Layers where a Rate is CHEAPEST: the last layer of each block.
+
+    👤 2026-08-11: *"test the rate on layers i whose control wavelength changes at layer
+    i+1, because there will be no POEM on the next layer anyway"*. Verified in the
+    kernel and it is exact -- `block_start[i+1] = i+1` at a wavelength change, so
+    `n_hist = 0` and the next layer starts with no inherited anchors whatever layer i
+    did. 14-10 lists three costs for a Rate layer and a block boundary already pays two
+    of them: the lost anchors, and the turning-point count that restarts anyway.
+
+    ⚠️ The last layer of the stack is deliberately EXCLUDED. It has no successor, so the
+    downstream cost is nil there too -- but it is also the last chance to correct
+    everything accumulated since layer 1, and the two pull opposite ways. It deserves
+    its own experiment, not a free ride in this one (A24).
+    """
+    blocks = strategy.get("blocks") or []
+    out: list[int] = []
+    for blk in blocks:
+        end = int(blk.get("end", 0))
+        last = end - 1                       # last layer of this block
+        if 0 <= last < num_layers - 1:       # excludes the final layer of the stack
+            out.append(last)
+    return out
+
+
+def _expand_with_rate_variants(
+    strategies: list[dict[str, Any]],
+    params: dict[str, Any],
+    num_layers: int,
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """Add Rate variants of each strategy, so the ranking can compare them side by side.
+
+    👤 *"The user must be able, in the final table, to allow or refuse the rate. Then the
+    best strategies appear."* So Rate is not a hidden fallback: it produces ADDITIONAL
+    candidates that stand or fall on the same statistics as everything else.
+
+    🔴 OFF BY DEFAULT (`allow_rate`), and that is C1: with the key absent the list comes
+    back untouched and every downstream bit is what it was.
+
+    ⚠️ ONE Rate layer per variant, deliberately. Two Rate layers interact -- the second
+    inherits an estimate the first already froze -- and 12.3's lesson is that two things
+    changed at once cannot be attributed. Combinations come after single layers are
+    understood, not before.
+    """
+    if not bool(params.get("allow_rate", False)):
+        return strategies
+    variants: list[dict[str, Any]] = []
+    next_id = 990_000_000
+    for strat in strategies:
+        for layer in _rate_candidate_layers(strat, num_layers):
+            v = dict(strat)
+            v["blocks"] = list(strat.get("blocks") or [])
+            v["rate_layers"] = [layer]
+            v["strategy_id"] = next_id
+            v["origin"] = f"RATE_L{layer}(from {strat.get('strategy_id', '?')})"
+            next_id += 1
+            variants.append(v)
+    if variants:
+        logger.info(
+            f"[RATE] {len(variants)} variantes generees sur {len(strategies)} strategies "
+            f"-- une couche Rate chacune, aux frontieres de bloc"
+        )
+    return strategies + variants
 
 
 def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -> tuple:
@@ -432,7 +546,23 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
         if len(T_vals) == 3:
             curvature = abs((T_vals[0] + T_vals[2]) / 2.0 - T_vals[1])
             if curvature > 1e-9:
-                res_limit = test_bw * np.sqrt(T_tolerance / curvature)
+                # 🔴 THE FACTOR 3 IS THE SLIT SHAPE, and it was missing -- 12.7.
+                #
+                # 👤 the slit is RECTANGULAR (2026-08-09), so the measured signal is the
+                # UNIFORM average of T over [lam - B/2 ; lam + B/2] and its second-order
+                # error is T''.B^2/24. But `curvature` above is a SECOND DIFFERENCE over
+                # +/- test_bw/2, which is T''.test_bw^2/8. The two are not the same
+                # quantity, and the ratio of the true limit to the coded one is
+                # sqrt(24/8) = sqrt(3) = 1.732.
+                #
+                # 📏 Verified numerically against a direct boxcar integration: 1.7321 on
+                # a pure quadratic, 1.7323 / 1.7305 / 1.7252 on cosines of period 200 /
+                # 20 / 10 nm -- the small drift being the second-order expansion giving
+                # way when the structure gets fine compared with B.
+                #
+                # 🟢 The correction WIDENS the admissible slits, so it hands back the
+                # /1.5 noise bonus to strategies that were denied it for nothing.
+                res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)
             else:
                 res_limit = 100.0
 
@@ -1362,6 +1492,12 @@ def _test_strategy_robustness_task(
         # in the chamber without it, and two strategies differing only by their Rate
         # layers would otherwise be indistinguishable in the ranking.
         "rate_layers": list(rate_layers),
+        # 👤 A strategy is (blocks, wavelengths, rate layers, SLIT). The first three were
+        # reported and the fourth was not, so what came out was not executable as it
+        # stood. The noise factor that goes with it is 12.7's table, applied to the
+        # sample and never to the seed.
+        "monochromator_resolution_nm": float(params.get("monochromator_resolution_nm", 2.0) or 2.0),
+        "resolution_noise_factor": _resolution_noise_factor(params),
         # A23 stage 2: WHICH layer will give way, WHY, and BY HOW MUCH. Defined even
         # when nothing crashed, which is the whole reason it exists.
         # ⚠️ NOMINAL noise level, not the worst of the three. The margin is normalised

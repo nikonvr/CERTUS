@@ -28,6 +28,10 @@ K_MAX_SUBSTRATE_BACKSIDE: float = 0.00001
 #: (9bis-1). Rate mode counts turns, so a commanded thickness is quantised to a
 #: multiple of this -- which IS the U(0, 0.125 nm) stopping law of 9bis-7,
 #: appearing on its own with no parameter to pose.
+#: 👤 "no layer will be off by more than 10 nm of thickness, or it is scrap"
+#: (2026-08-11). The margin the stopping point can need BEYOND the nominal thickness.
+SCAN_ERROR_MARGIN_NM: float = 15.0
+
 RATE_TURN_NM: float = 0.125
 
 CRASH_SENTINEL_MIN: float = 100000.0
@@ -358,6 +362,8 @@ def simulate_growth_kernel(
     n_L_real: float = -1.0,
     is_rate: bool = False,
     slit_bias: float = 0.0,
+    adaptive_scan: bool = False,
+    machine_sampling_dd: float = 0.0,
 ) -> tuple[float, float, float, float, float]:
     """
 
@@ -747,7 +753,30 @@ def simulate_growth_kernel(
         if i_layer - j0 > MAX_LOOKBACK:
             j0 = i_layer - MAX_LOOKBACK
         n_hist = (i_layer - j0) * NPTS_PREV
-        n_tot = n_hist + NPTS
+        # The scan window, computed HERE because it sizes the arrays below.
+        n_cur_n_w = n_H if i_layer % 2 == 0 else n_L
+        npts_cur = NPTS
+        d_max = D_SCAN * nominal_th
+        if adaptive_scan and nominal_th > 0.0001:
+            # 🔴 THE TWO NEEDS ADD UP, they do not compete -- and taking their maximum
+            # was wrong. Measured 2026-08-11: with `max()` a layer declared
+            # non-terminable by the classic sweep came back terminable, because the
+            # reachability test bounds its window at the NEXT EXTREMUM after the stop
+            # and the shorter sweep no longer contained one. It then fell back on the
+            # end of the array, which is MORE PERMISSIVE -- the sweep was hiding
+            # crashes, the worst possible direction for an error.
+            #
+            #   the stop wanders by up to the error margin (👤 "10 nm, or it is scrap")
+            #   and FROM WHEREVER IT LANDS the next extremum can be half a period away
+            #
+            # so the window is nominal + margin + half period, not their maximum.
+            half_period = wl / (4.0 * n_cur_n_w.real) if n_cur_n_w.real > 1e-9 else nominal_th
+            d_max = nominal_th + SCAN_ERROR_MARGIN_NM + half_period
+            density = NPTS / (D_SCAN * nominal_th)          # points per nm, UNCHANGED
+            npts_cur = int(round(density * d_max))
+            if npts_cur < 8:
+                npts_cur = 8
+        n_tot = n_hist + npts_cur
         Ts_r = np.zeros(n_tot, dtype=np.float64)
         Ts_n = np.zeros(n_tot, dtype=np.float64)
         R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
@@ -816,11 +845,37 @@ def simulate_growth_kernel(
             h2 = 1j * n_j_n * s4 * Q00 + c4 * Q10
             h3 = 1j * n_j_n * s4 * Q01 + c4 * Q11
             Q00, Q01, Q10, Q11 = (h0, h1, h2, h3)
-        d_max = D_SCAN * nominal_th
-        step_s = d_max / (NPTS - 1)
+        # ---- SCAN WINDOW (👤 2026-08-11) ------------------------------------
+        #
+        # 👤 *"scanning from zero to three times, that seems enormous! No layer will be
+        # off by more than 10 nm of thickness, or it is scrap."*
+        #
+        # 📏 Measured on the 48-layer dichroic: `D_SCAN = 3.0` makes **63 %** of the
+        # sweep cover thicknesses no layer will ever reach without being scrap. On the
+        # 253 nm layer it scans to 760 nm.
+        #
+        # 🔑 THE DEFECT IS NOT THAT 3 IS TOO BIG -- IT IS THE SCALING. `D_SCAN` is a
+        # MULTIPLE of the layer thickness, yet the two things that require going beyond
+        # the nominal are both FIXED IN NANOMETRES:
+        #
+        #   * the stopping point, bounded by the largest meaningful error (15 nm here);
+        #   * the reachability test, which needs the NEXT extremum -- half an optical
+        #     period, i.e. lambda/(4n): 57.9 nm on H, 93.2 nm on L at 544 nm, and that
+        #     does not depend on how thick the layer is.
+        #
+        # A multiple is therefore too generous on a thick layer and possibly TOO SHORT
+        # on a thin one -- the same parameter wrong in both directions.
+        #
+        # ⚠️ THE DENSITY IS PRESERVED, and that is what makes this a cost saving rather
+        # than a change of model. The number of points falls WITH the window, so the
+        # sampling stays at the same points per nanometre -- hence the same number of
+        # noise draws per nanometre, the same false-extremum fabrication rate (12.4
+        # measured 33 % at 80 points against 99.9 % at 800), the same physics. Cutting
+        # NPTS at a fixed window would NOT be neutral.
+        step_s = d_max / (npts_cur - 1)
         n_cur_r = n_H_r if i_layer % 2 == 0 else n_L_r
         n_cur_n = n_H if i_layer % 2 == 0 else n_L
-        for k in range(NPTS):
+        for k in range(npts_cur):
             d_k = k * step_s
             phi_kr = TWO_PI_VAL / wl * n_cur_r * d_k
             cpkr, spkr = (np.cos(phi_kr), np.sin(phi_kr))
@@ -885,9 +940,40 @@ def simulate_growth_kernel(
             for k_sb in range(n_tot):
                 Ts_r[k_sb] += slit_bias
 
-        if smoothing_window > 1:
-            # ── AXIS 1.1 / T3-T4: decoupled machine sampling grid (0.125 nm) + moving-average smoothing
-            SAMPLE_DD = 0.125
+        # ---- A8: THE MACHINE SAMPLING GRID, UNWELDED FROM THE SMOOTHING (17-2) ----
+        #
+        # The grid and the smoothing are two different things and they were expressible
+        # only together. `SAMPLE_DD = 0.125` lived INSIDE `if smoothing_window > 1`, so
+        # the configuration 12.4 requires in order to be validated -- FINE GRID, WINDOW
+        # AT 1 -- could not be written at all.
+        #
+        # 🔑 WHY THE GRID MATTERS, and it is not about being "a bit coarse". The plate
+        # turns at 240 rpm, the witness passes the detector 4 times a second, the
+        # deposit advances at 0.5 nm/s: the machine reads every 0.125 nm, so 800 times
+        # on a 100 nm layer where the model simulates 21. A factor 38 -- and EVERY
+        # READING CARRIES ITS OWN NOISE DRAW. 12.4 measured what that governs: noise
+        # alone fabricates a false turning point in 32.9 % of layers at 80 points,
+        # 92.9 % at 320, and 99.9 % at the machine's own 800. The model has been
+        # underestimating that risk by construction, simply by drawing 38 times less.
+        #
+        # The trick is 12.4's: T(d) is smooth and covers less than one period over the
+        # whole sweep, so the expensive TMM evaluations stay coarse and are INTERPOLATED
+        # onto the real reading positions, where the noise is drawn. Faithful draw
+        # count, unchanged TMM cost.
+        #
+        # ⚠️ THE UNWELDING IS ONE-DIRECTIONAL, and that is correct rather than lazy. The
+        # smoothing window is counted IN MACHINE READINGS, so it is meaningless on the
+        # coarse grid: smoothing still implies the fine grid. What was missing is the
+        # other direction -- the fine grid WITHOUT smoothing -- and that is now
+        # expressible via `machine_sampling_dd`.
+        #
+        # 🔴 AND 12.4 WARNS ABOUT EXACTLY THIS CONFIGURATION: the fine grid ALONE takes
+        # fabrication from 33 % to 99.9 %. The crash rate will rise sharply. That is
+        # EXPECTED, it is the whole point of measuring it, and it must not be read as
+        # the physics having degraded.
+        use_fine_grid = machine_sampling_dd > 0.0 or smoothing_window > 1
+        if use_fine_grid:
+            SAMPLE_DD = machine_sampling_dd if machine_sampling_dd > 0.0 else 0.125
             M_hist = 0
             for j in range(j0, i_layer):
                 M_hist += int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))
@@ -965,11 +1051,15 @@ def simulate_growth_kernel(
             Ts_r = Ts_r_samp
             Ts_n = Ts_n_samp
             idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
-        else:
+        else:  # noqa: RET505 -- coarse TMM grid, the historical path
             if affine_scale != 1.0 or affine_offset != 0.0:
                 for k_aff in range(n_tot):
                     Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
-            idx_nom_stop = n_hist + int(round((NPTS - 1) / D_SCAN))
+            # ⚠️ 12.4 flags this rounding: with a FIXED window `(NPTS-1)/D_SCAN` was
+            # exact because 63/3 is an integer. With a window that varies per layer the
+            # nominal sits at the fraction `nominal_th / d_max` of the scan, and the
+            # index has to be derived from that or the stop drifts by a sub-step.
+            idx_nom_stop = n_hist + int(round((npts_cur - 1) * nominal_th / d_max))
 
         if smoothing_window > 1:
             if affine_scale != 1.0 or affine_offset != 0.0:

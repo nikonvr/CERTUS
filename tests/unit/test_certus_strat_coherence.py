@@ -1688,7 +1688,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_test)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr("certus.core.certus_strat_config.get_refractive_clues_vectorized", lambda *_a, **_k: np.ones(3, dtype=np.complex128))
@@ -1863,7 +1863,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_test)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr("certus.core.certus_strat_config.get_refractive_clues_vectorized", lambda *_a, **_k: np.ones(3, dtype=np.complex128))
@@ -2035,7 +2035,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_test)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr("certus.core.certus_strat_config.get_refractive_clues_vectorized", lambda *_a, **_k: np.ones(3, dtype=np.complex128))
@@ -2215,7 +2215,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_test)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr("certus.core.certus_strat_config.get_refractive_clues_vectorized", lambda *_a, **_k: np.ones(3, dtype=np.complex128))
@@ -2396,7 +2396,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_task)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr("certus.core.certus_strat_config.get_refractive_clues_vectorized", lambda *_a, **_k: np.ones(3, dtype=np.complex128))
@@ -2673,7 +2673,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_task)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr(
@@ -2992,7 +2992,7 @@ class TestStratSymmetryContractAndStability:
         monkeypatch.setattr("certus.core.certus_strat_robustness._test_strategy_robustness_task", fake_task)
 
 
-        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1))
+        monkeypatch.setattr("certus.core.certus_strat_robustness._calculate_strategy_spectral_resolution", lambda *_a, **_k: (1.0, 1, np.zeros(0)))
 
 
         monkeypatch.setattr(
@@ -4275,7 +4275,7 @@ class TestStratConsensusAndElite:
         )
         monkeypatch.setattr(
             "certus.core.certus_strat_consensus._calculate_strategy_spectral_resolution",
-            lambda *a, **k: (10.0, None),
+            lambda *a, **k: (10.0, None, __import__("numpy").zeros(0)),
         )
 
         res = _apply_elite_refinement_if_enabled(strategies_results, ctx, lambda *a: None)

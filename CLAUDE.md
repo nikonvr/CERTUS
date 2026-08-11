@@ -112,6 +112,7 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | Comparer un résultat | §10 — le point de référence |
 | Comprendre un mot du projet | §7 — vocabulaire |
 | **Savoir où en est réellement T1…T7** | **§17 — audit du 2026-08-09. À lire avant toute action de §12.** |
+| ⚡ **Gagner du temps d'exécution** | **§18ter — la forme fermée de `T(d)`, ×3,6, exacte à 5e-20. Et la fenêtre adaptative, résultat NÉGATIF.** |
 | 🔴 **Savoir ce qui est RÉELLEMENT implanté** | **§18bis — audit du 2026-08-11. La résolution ne l'est pas, la grille non plus, la moyenne est causale.** |
 | Comprendre le mode Rate | §14, dernier bloc — spécification 👤, non implémentée |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
@@ -2900,6 +2901,139 @@ trois fois sur la distorsion affine.
 | λ de contrôle par bloc | ✅ |
 | couches en Rate | 🟠 le champ `rate_layers` existe depuis le 2026-08-11, la génération non |
 | **valeur des fentes** | ❌ **absente** — c'est le manque le plus visible pour l'utilisateur |
+
+
+## 18ter. ⚡ PERFORMANCE — ce qui a été mesuré le 2026-08-11
+
+👤 *« Vois-tu un moyen de simplifier quelque chose dans STRAT pour gagner en temps
+d'exécution, et que la perte de précision soit négligeable ? »*
+
+📏 **Où passe le temps, mesuré** : part fixe **~730 s** (Phase A + DP), coût marginal
+**~1,5 s par tirage** au stade final, soit **~0,15 s par (stratégie × tirage)**. La
+Phase A représente donc **68 %** d'un run de référence, et elle est dominée par
+`simulate_growth_kernel`. **C'est là qu'il faut chercher, et nulle part ailleurs.**
+
+### 🟢 LA FORME FERMÉE — le gain le plus important, et il vient de 👤
+
+> 👤 *« Est-ce que calculer une dérivée théorique permettrait de gagner du temps ? Je
+> sais que c'est possible avec les calculs matriciels. »*
+
+La question mène plus loin qu'une dérivée. Pour la couche en croissance sur un
+empilement **déjà déposé**, le dénominateur de la transmission s'écrit
+`denom = C·cos δ + i·S·sin δ` avec `C` et `S` **constants**, d'où
+
+$$T(d) \;=\; \frac{4\,n_{\text{sub}}}{P + Q\cos 2\delta + R\sin 2\delta},
+\qquad \delta = \frac{2\pi n d}{\lambda}$$
+
+📏 **Vérifié numériquement : écart 5,4e-20.** Ce n'est pas une approximation, c'est le
+même calcul écrit autrement. `P`, `Q`, `R` se calculent **une fois** depuis la matrice
+de l'empilement.
+
+**Et les dérivées suivent gratuitement** :
+
+$$\frac{d^2 D}{d\delta^2} \;=\; -4\,(D - P)$$
+
+🔑 **La dérivée seconde ne coûte aucune évaluation trigonométrique neuve** — elle se
+déduit de `D` déjà calculée. Vérifié aux différences finies : exact à toutes les
+décimales.
+
+| ce que ça remplace | gain |
+|---|---|
+| 64 produits matriciels 2×2 complexes par couche | **×3,6** mesuré |
+| chercher les points tournants **en balayant** | `tan 2δ = R/Q` — forme fermée |
+| chercher l'arrêt **en balayant puis interpolant** | `√(Q²+R²)·cos(2δ−φ) = cste` — forme fermée |
+| 3 TMM pour l'inversion parabolique | 1 évaluation + les deux dérivées exactes |
+| la courbure du biais de fente (3 TMM par couche) | **analytique** |
+
+#### 🔴 La limite, et la mesure qui la fixe — 👤 a tranché le seuil
+
+La forme suppose `δ` réel, donc **`k = 0`**. 👤 *« Je te propose de limiter le code de
+STRAT à des cas où `k < 1e-4`. »*
+
+⚠️ **Mes deux premières mesures de cette limite étaient FAUSSES**, et il faut le dire :
+j'utilisais des matrices d'empilement **aléatoires**, dont le dénominateur peut frôler
+zéro. `T` explosait, et je mesurais l'erreur sur des valeurs non physiques. J'ai
+successivement annoncé « faux dès `k = 1e-3` » puis « faux dès `k = 1e-6` ». Les deux
+étaient des artefacts de montage.
+
+📏 **Sur un vrai empilement de 24 couches, en ne retenant que les `T` physiques :**
+
+| `k` | écart max sur `T` | en % du bruit de lecture |
+|---|---|---|
+| 0 | 5,4e-20 | 0,0 % |
+| 1e-6 | 4,2e-10 | 0,0 % |
+| **1e-4** | **4,2e-8** | **0,008 %** |
+| 1e-3 | 4,1e-7 | 0,1 % |
+
+L'erreur croît **linéairement en `k`** et reste **quatre décades sous le bruit** même à
+`k = 1e-3`. **Le seuil de 1e-4 est donc bon, et même généreux** — on le garde pour
+laisser une décade de marge, une garde devant protéger des cas qu'on n'a pas testés.
+
+🔴 **Et la garde LÈVE, elle ne se rabat pas en silence** (leçon de §17-25). Quelqu'un qui
+lance STRAT sur un métal doit l'apprendre, pas obtenir un chiffre plausible.
+
+🔴 **À valider contre l'oracle TMM indépendant, pas contre le noyau.** L'interdit 7
+existe parce que deux bugs de signe se sont cachés dans des réimplémentations, valant
+**46 et 82 points** de réflectance — et tous deux étaient **exacts à k = 0**, donc
+invisibles à un test qui ne regarde que des diélectriques. C'est exactement ce cas de
+figure.
+
+### 🔴 LA FENÊTRE DE BALAYAGE — résultat NÉGATIF, consigné comme tel
+
+> 👤 *« Balayer de zéro à trois fois, cela me paraît énorme ! Aucune couche ne va se
+> tromper de plus de 10 nm d'épaisseur, ou alors c'est bon à jeter. »*
+
+📏 **Le constat est juste : 63 % du balayage porte sur des épaisseurs qu'aucune couche
+n'atteindra sans être bonne à jeter.** Sur la couche de 253 nm, il balaie jusqu'à
+**760 nm**.
+
+🔑 **Et le défaut n'est pas que 3 soit trop grand, c'est la MISE À L'ÉCHELLE.** `D_SCAN`
+est un **multiple de l'épaisseur**, alors que les deux besoins d'aller au-delà du
+nominal sont **fixes en nanomètres** : l'erreur maximale (👤 10 nm) et la demi-période
+optique `λ/4n` — **57,9 nm sur H, 93,2 nm sur L**, indépendantes de l'épaisseur de la
+couche. Un multiple est donc trop généreux sur une couche épaisse et potentiellement
+**trop court** sur une couche fine : le même paramètre faux dans les deux sens.
+
+🔴 **MAIS LA FENÊTRE ADAPTATIVE NE MARCHE PAS, ET LE DRAPEAU RESTE ÉTEINT.**
+
+| version | vitesse | verdicts de plantage |
+|---|---|---|
+| `nominal + max(marge, demi-période)` | ×1,9 | **cachait des plantages** |
+| `nominal + marge + demi-période` | ×1,17 | **6,3 % discordants** sur 378 cas, écart max **1,4 nm** |
+
+**Ma promesse « à densité constante, physique inchangée » était fausse.** La densité
+d'échantillonnage est bien préservée — mais le **test d'atteignabilité** borne sa fenêtre
+au **prochain extremum après l'arrêt**, et un balayage plus court n'en contient plus : il
+retombe sur la fin du tableau, ce qui est **plus permissif**. Le balayage cachait des
+plantages, le pire sens possible pour une erreur.
+
+🔑 **Ce que l'échec apprend, et qui vaut le détour** : le balayage sert à **trois** choses,
+pas une — trouver l'arrêt (fenêtre **courte**, échantillonnage **fin**), détecter les
+points tournants et borner l'atteignabilité (fenêtre **longue**, densité **indifférente**).
+Un balayage à **deux zones** les servirait toutes les trois. ⚠️ Mais c'est bloqué par A8 :
+tant que la grille TMM **est** la grille de bruit, un échantillonnage non uniforme donne
+une densité de tirages non uniforme, donc un taux de fabrication non uniforme.
+
+### La simple précision — 👤 y est favorable, et l'ordre compte
+
+> 👤 *« Je suis favorable à ce que les calculs les plus coûteux en temps soient
+> spécifiquement faits en simple précision. »*
+
+**Ce qui la rend défendable** : la grandeur porte un bruit de `A = 5e-4`. L'erreur
+relative du `float32` est ~1e-7, soit **5e-8 en absolu** sur des `T ~ 0,5` — quatre
+décades sous le bruit. Même accumulée sur 48 produits matriciels, on resterait vers 1e-6.
+
+**Ce qu'elle coûte, et il faut le savoir** : la vérification **au bit** devient
+impossible (C1 et §3 reposent sur `float.hex()`), et l'oracle TMM chute de **3,3e-16 à
+~1e-7** — quatre décades de sensibilité en moins, sur l'instrument même qui a démasqué
+les deux bugs de signe.
+
+⚠️ **Recommandation : sur le chemin de MONITORING seulement**, jamais sur la notation ni
+sur l'oracle. Et **après** la forme fermée, jamais en même temps : la forme fermée change
+ce qui est le goulot, et deux changements simultanés rendraient l'attribution impossible
+(contrainte C3). Une fois la forme fermée en place, le calcul n'est plus dominé par des
+produits matriciels mais par de la trigonométrie, et il faudra **remesurer** où va le
+temps avant de choisir quoi passer en simple précision.
 
 
 ## 18. Autres chantiers ouverts

@@ -3675,6 +3675,151 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         nobody measured would trade a measured constant for invented ones.</li>
                 </ul>
 
+                <h2>11. Making It Fast — What the Structure Gives for Free</h2>
+
+                <div class="highlight-box">
+                    <b>Where the time actually goes</b>, measured: a fixed <b>~730 s</b>
+                    (Phase A plus the DP) and <b>~0.15 s per (strategy &times; draw)</b> at
+                    the final stage. Phase A is therefore <b>68 %</b> of a reference run,
+                    and it is dominated by one function — the growth kernel. Every
+                    optimisation below targets that; nothing else is worth touching.
+                </div>
+
+                <h3>11.1 T(d) has a closed form, and it is exact</h3>
+                <p>
+                    For the layer currently growing on an already-deposited stack, the
+                    transmission denominator is <code>C&middot;cos&delta; +
+                    i&middot;S&middot;sin&delta;</code> with <b>C and S constant</b> — they
+                    depend on the stack below, not on the thickness being deposited. Expanding
+                    the modulus turns it into a pure sinusoid:
+                </p>
+                <div class="eq-box">
+                    $$T(d) = \frac{4\,n_{\text{sub}}}{P + Q\cos 2\delta + R\sin 2\delta},
+                    \qquad \delta = \frac{2\pi n d}{\lambda}$$
+                </div>
+                <p>
+                    📏 Verified numerically to <b>5.4&times;10<sup>&minus;20</sup></b>. This is
+                    not an approximation — it is the same computation written differently.
+                    <b>P, Q and R are computed once</b> from the stack matrix, after which any
+                    thickness costs two trigonometric calls and no complex arithmetic at all.
+                </p>
+                <p>
+                    And the derivatives come free. Because the denominator is a pure sinusoid,
+                </p>
+                <div class="eq-box">
+                    $$\frac{d^2 D}{d\delta^2} = -4\,(D - P)$$
+                </div>
+                <p>
+                    🔑 <b>the second derivative needs no new trigonometric evaluation</b> — it
+                    follows from the value already computed. What this replaces:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;width:100%;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;">today</th>
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;">closed form</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">64 complex 2&times;2 matrix products per layer</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>&times;3.6 measured</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">find turning points <i>by scanning</i></td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><code>tan 2&delta; = R/Q</code> — closed form</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">find the stop by scanning then interpolating</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">closed form</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">3 TMM evaluations for the parabolic inversion</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">1 evaluation plus exact derivatives</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">the slit-bias curvature (3 TMM per layer)</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">analytic</td></tr>
+                </table>
+                <div class="note">
+                    🔴 <b>The limit, and how it was nearly got wrong twice.</b> The form assumes
+                    a real &delta;, hence <b>k = 0</b>. Two earlier attempts to locate that limit
+                    used <i>random</i> stack matrices, whose denominator can approach zero — T
+                    then explodes and the error gets measured on unphysical values. Those
+                    attempts reported the form breaking at k = 10<sup>&minus;3</sup>, then at
+                    10<sup>&minus;6</sup>. <b>Both were artefacts of the test rig.</b>
+                    <br><br>
+                    On a real 24-layer stack, keeping only physical transmissions, the error
+                    grows <b>linearly in k</b> and stays four decades below the reading noise:
+                    <b>4.2&times;10<sup>&minus;8</sup> at k = 10<sup>&minus;4</sup></b>, which is
+                    0.008 % of the noise amplitude. Restricting STRAT to k &lt; 10<sup>&minus;4</sup>
+                    is therefore comfortable, with a decade of margin.
+                    <br><br>
+                    ⚠️ The guard must <b>raise</b>, never silently fall back — and the fast path
+                    must be validated against the <b>independent TMM oracle</b>, not against the
+                    kernel. Two sign bugs worth 46 and 82 points of reflectance have already
+                    hidden inside re-implementations, and <b>both were exact at k = 0</b>:
+                    invisible to any test that only looks at dielectrics, which is precisely
+                    this case.
+                </div>
+
+                <h3>11.2 The scan window — a negative result, reported as one</h3>
+                <p>
+                    The sweep runs from zero to <b>three times</b> the nominal thickness.
+                    📏 Measured: <b>63 % of it covers thicknesses no layer will ever reach
+                    without being scrap</b> — on a 253 nm layer it scans out to 760 nm.
+                </p>
+                <p>
+                    🔑 <b>And the defect is not that 3 is too large — it is the scaling.</b> The
+                    window is a <i>multiple of the layer thickness</i>, while both reasons to go
+                    beyond the nominal are <b>fixed in nanometres</b>: the largest meaningful
+                    thickness error, and the half optical period <code>&lambda;/4n</code> —
+                    57.9 nm on H, 93.2 nm on L, independent of how thick the layer is. A multiple
+                    is thus too generous on a thick layer and possibly <b>too short</b> on a thin
+                    one: the same parameter wrong in both directions.
+                </p>
+                <div class="highlight-box">
+                    🔴 <b>The adaptive window nevertheless does not work, and the flag stays
+                    off.</b>
+                    <table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">
+                        <tr style="background:#fff;">
+                            <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">window</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">speed</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">crash verdicts</th></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">nominal + max(margin, half period)</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">&times;1.9</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>hid crashes</b></td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">nominal + margin + half period</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">&times;1.17</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>6.3 % disagree</b>, max 1.4 nm</td></tr>
+                    </table>
+                    The claim that constant sampling density made this physics-neutral was
+                    <b>wrong</b>. The density is preserved, but the <b>reachability test</b> bounds
+                    its window at the next extremum after the stop, and a shorter sweep no longer
+                    contains one — it falls back on the end of the array, which is <b>more
+                    permissive</b>. The shortened sweep was hiding crashes: the worst possible
+                    direction for an error.
+                    <br><br>
+                    🔑 <b>What the failure teaches is worth more than the speed would have been.</b>
+                    The sweep serves <i>three</i> purposes, not one: finding the stop wants a
+                    <b>short</b> window finely sampled; detecting turning points and bounding
+                    reachability want a <b>long</b> window whose density hardly matters. A
+                    two-zone sweep would serve all three — but only once the TMM grid and the
+                    noise grid are separated, because until then a non-uniform sampling means a
+                    non-uniform draw density, and the draw count is what governs how often noise
+                    fabricates a false extremum.
+                </div>
+
+                <h3>11.3 Single precision — defensible, but not first</h3>
+                <p>
+                    The quantity carries a reading noise of <code>A = 5&times;10<sup>&minus;4</sup></code>.
+                    A <code>float32</code> relative error of ~10<sup>&minus;7</sup> is
+                    5&times;10<sup>&minus;8</sup> in absolute terms on transmissions of order
+                    0.5 — <b>four decades below the noise</b>, and still around
+                    10<sup>&minus;6</sup> after accumulating over 48 matrix products.
+                </p>
+                <p>
+                    What it costs is not accuracy but <b>verifiability</b>: bit-level comparison
+                    becomes impossible, and the independent TMM oracle drops from
+                    3.3&times;10<sup>&minus;16</sup> to ~10<sup>&minus;7</sup> — four decades of
+                    sensitivity lost on the very instrument that caught the two sign bugs.
+                    <b>Monitoring path only, never the scoring path and never the oracle.</b>
+                </p>
+                <p style="margin:0;">
+                    ⚠️ And <b>after</b> the closed form, never alongside it. The closed form
+                    changes what the bottleneck is — the work stops being complex matrix products
+                    and becomes trigonometry — so where the time goes must be <b>re-measured</b>
+                    before deciding what to demote. Two changes at once would also make the
+                    attribution impossible.
+                </p>
+
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> and

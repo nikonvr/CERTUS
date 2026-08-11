@@ -3302,7 +3302,75 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     normalisation fix and must not be cited.
                 </div>
 
-                <h3>10.5 The unit the results are reported in</h3>
+                <h3>10.5 Can the candidate pool be pruned? No — and the measurement is worth the space</h3>
+                <p>
+                    A ranking of 228 strategies is expensive, and only a handful matter: at zero
+                    corridor, <b>10 strategies</b> fall in the equivalence class and only <b>9 of 228
+                    are within 1.2&times;</b> of the winner. The rest trail off by up to a factor 170.
+                    The obvious economy is to stop generating what will not win. <b>It does not
+                    survive contact with the data.</b>
+                </p>
+                <p>
+                    At zero corridor the equivalence class is beautifully uniform — all 10 members
+                    have <b>2 blocks</b> and come from <b>two generators</b>, ELITE and SYM. That is
+                    a pruning rule anyone would adopt. Now change the regime:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.9em;width:100%;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;text-align:left;">regime</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;">blocks in the class</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;text-align:left;">generators that produce it</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">corridor 0</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">2</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">ELITE, SYM</td></tr>
+                    <tr style="background:#fef2f2;"><td style="border:1px solid #d1d5db;padding:4px 10px;">corridor 0.001</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">3</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>LOCAL_SEARCH alone</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">corridor 0.0025</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">2 – 5</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">ELITE, LOCAL_SEARCH, SMART_MERGE</td></tr>
+                    <tr style="background:#fef2f2;"><td style="border:1px solid #d1d5db;padding:4px 10px;">corridor 0.005</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">5</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>LOCAL_SEARCH alone</b></td></tr>
+                    <tr style="background:#fef2f2;"><td style="border:1px solid #d1d5db;padding:4px 10px;">corridor 0.010</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">8</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>LOCAL_SEARCH alone</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">seed 77 / 101 / 202</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">2 – 3</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">all four / LS+SMM / ELITE</td></tr>
+                </table>
+                <div class="highlight-box">
+                    🔴 <b>LOCAL_SEARCH produces nothing at all at zero corridor, and produces the
+                    sole winner at three of the four corridor settings.</b> The rule "drop
+                    LOCAL_SEARCH, it never wins" — which the zero-corridor data fully justifies —
+                    would have discarded the winner in <b>four configurations out of eight</b>. The
+                    same holds for "keep only 2-block strategies": correct at zero corridor,
+                    catastrophic at 0.010.
+                    <br><br>
+                    <b>Every generator earns its place in at least one regime, and none earns it in
+                    all of them.</b> A pruning rule inferred from one regime is not a saving, it is
+                    a silent loss — and it would be invisible, because the ranking would still look
+                    perfectly reasonable.
+                </div>
+                <p>
+                    🟢 <b>The lever that does work is depth, not population.</b> Screening at 10
+                    draws instead of 25 returns 133 ranked strategies instead of 228 and finds the
+                    same winner; keeping 30 survivors returns 445 and finds nothing better. So the
+                    right economy is a <b>reallocation</b>:
+                </p>
+                <div class="eq-box" style="text-align:left;">
+                    <b>generate wide</b> (228+) — the only protection against regime dependence<br>
+                    <b>screen shallow</b> (10 draws) — measured lossless<br>
+                    <b>go deep on the finalists only</b> (~10) — where the decision actually is
+                </div>
+                <p style="margin:0;">
+                    Measured cost at the final stage: <b>~0.15 s per (strategy &times; draw)</b>,
+                    with Phase A (~730 s) not needing to be redone. Spending 3000 draws on 10
+                    finalists is about an hour — and it is the only way to measure a yield that
+                    reads 0/150 for every one of them.
+                </p>
+
+                <h3>10.6 The unit the results are reported in</h3>
                 <p>
                     A spectral RMSE in transmission points is not a quantity anyone has intuition
                     for. Every result above is therefore also given as <b>SEEL</b> — the
@@ -3330,7 +3398,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     alone <b>doubles</b> the effective per-layer error.
                 </p>
 
-                <h3>10.6 Open conjectures, and the experiment that settles each</h3>
+                <h3>10.7 Open conjectures, and the experiment that settles each</h3>
                 <p>
                     These are <b>not results</b>. Each is stated with its refutation condition, so
                     that a reader can hold us to it.
@@ -3387,7 +3455,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         spread <i>is</i> the answer.</td></tr>
                 </table>
 
-                <h3>10.7 What we deliberately do not claim</h3>
+                <h3>10.8 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent

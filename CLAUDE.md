@@ -2197,8 +2197,6 @@ mérite pas d'entrer dans la recherche et on la fige à 2 nm.
 | # | Question | Réponse |
 |---|---|---|
 | Q1 | Forme de la fonction de fente ? | ✅ 👤 **rectangulaire** (2026-08-09). Convolution = moyenne uniforme sur `B`. D'où la correction √3 ci-dessus. |
-| Q2 | Les facteurs ÷1,5 / ×2 / ×5 sont-ils mesurés ? | ✅ 👤 **non — estimés « au feeling »** (2026-08-09). D'où l'obligation de contrôle de sensibilité. |
-| Q4 | Les quatre valeurs {5 ; 2 ; 1 ; 0,5} sont-elles les seules disponibles ? | ⏳ ouverte |
 
 **Q3, reformulée** — la question portait sur une confusion d'unité dans le code et elle n'était
 pas claire. Deux grandeurs différentes cohabitent :
@@ -2452,6 +2450,59 @@ d'un Rate/POEM par couche plié dans la DP.
    dominant disparaît, il ne reste que le gel de l'erreur sur la couche elle-même. Et
    c'est aussi la couche au plus faible swing sur 3 des 10.
 
+#### ✅ Q2, Q3, Q4 — RÉPONDUES le 2026-08-11. Le mode Rate n'a plus de paramètre ouvert.
+
+| | 👤 réponse | ce que ça impose |
+|---|---|---|
+| **Q2** — que fait la machine quand aucune couche du matériau n'a encore été déposée sous POEM ? | **Rate interdit tant qu'il n'y a pas de référence mesurée** | Les deux premières couches (le premier H, le premier L) sont **obligatoirement photométriques**. C'est une contrainte dure sur l'espace de recherche — et elle **élague**, donc elle aide. |
+| **Q3** — la machine chaîne-t-elle deux Rate consécutifs ? | **Oui, elle chaîne** : la dernière couche déposée fait référence, Rate compris | Aucun garde-fou côté machine. Voir ci-dessous : ce n'est **pas** dangereux, contrairement à ce que j'avais annoncé. |
+| **Q4** — sur quoi porte l'estimation de vitesse ? | **Une moyenne de toutes les couches précédentes du matériau** | C'est la réponse qui a le plus de conséquences, et elles sont **favorables**. |
+
+#### 🔴 Ma crainte de DIVERGENCE était fausse — corrigée par la mesure
+
+J'avais écrit que Q3 « chaîne » ouvrait un régime instable où l'erreur se recopie sans
+jamais être corrigée et **peut diverger**. **C'est faux, et la simulation le montre en
+trois lignes.**
+
+Une couche Rate **recopie** l'erreur relative — §14 le démontre :
+`d_réel_i / d_nom_i = d_réel_j / d_nom_j`. Elle n'en **ajoute aucune**. Une chaîne de
+couches Rate porte donc toutes **la même** erreur : elle est **gelée, pas amplifiée**.
+📏 Vérifié : 40 couches Rate enchaînées, étendue **0,000 %**.
+
+Et c'était vrai **quelle que soit la réponse à Q4**. Ce n'est pas la moyenne qui sauve la
+situation ; il n'y avait pas de situation à sauver. *Une inquiétude fondée sur un
+raisonnement plutôt que sur un calcul, exactement ce que §9 interdit.*
+
+#### 🔑 Ce que Q4 change VRAIMENT — et c'est le point qui redessine le plan
+
+Moyenner sur toutes les couches passées ne stabilise pas (il n'y avait rien à
+stabiliser) : cela **réduit la taille de l'erreur gelée**.
+
+📏 Dispersion relative héritée par une couche Rate, pour une dispersion de 2 % par couche
+POEM (20 000 tirages) :
+
+| couches du matériau déjà en POEM | 1 | 2 | 4 | 8 | 16 | 24 |
+|---|---|---|---|---|---|---|
+| **dernière seule** | 1,99 % | 2,00 % | 2,01 % | 2,00 % | 2,00 % | 1,99 % |
+| **moyenne de toutes** 👤 | 1,99 % | 1,41 % | 0,99 % | 0,71 % | **0,50 %** | **0,41 %** |
+
+La loi est en `1/√n`, exactement. À la couche 40 il y a ~20 couches de chaque matériau :
+**le Rate y hérite d'une erreur ~4,5 fois plus petite** qu'avec la dernière couche seule.
+
+> **Le Rate devient de plus en plus précis à mesure qu'on s'enfonce dans l'empilement.**
+
+🔑 **Et c'est là que tout converge.** §17-36 a mesuré que sur l'effondrement de la
+graine 77, **rien ne plante avant la couche 35** et tout plante de **35 à 47**. Le swing
+est aussi souvent le plus pauvre en fin d'empilement (L47 sur 3 des 10 finalistes).
+
+**Trois faits indépendants désignent le même endroit** : c'est en fin d'empilement que
+POEM est le plus fragile, que les plantages se concentrent, et que le Rate est le plus
+précis. **Ce n'est plus une liste de candidates à balayer, c'est une région.**
+
+⚠️ Ce qu'il faut quand même mesurer, et ne pas déduire : la contrepartie de §14-10 — la
+couche **suivante** perd ses ancres — ne diminue pas, elle. Le bilan reste une
+soustraction entre deux effets qui grandissent différemment, et c'est le banc qui la fait.
+
 #### 🔑 La décision s'écrit comme une INÉGALITÉ, pas comme un essai
 
 C'est ce qui sépare ce plan d'un balayage au hasard. Sur une couche donnée :
@@ -2535,14 +2586,11 @@ c'était une hypothèse ; c'est maintenant une grandeur. C'est une action à ven
 été obtenues (§17) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
 n'a pas encore mesuré les paramètres existants.
 
-**Ce qui reste à demander avant d'écrire la moindre ligne** :
-
-| # | Question | Pourquoi elle change le code |
-|---|---|---|
-| ~~Q1~~ | ✅ **DÉJÀ RÉPONDUE — le tableau était périmé, trouvé le 2026-08-11.** Seize lignes plus haut, 👤 précise : *« Le bloc, lui, n'est PAS rompu : la λ de contrôle ne change pas, c'est seulement l'historique d'ancres qui est vidé. »* C'est donc la **seconde** branche : POEM retombe sur le niveau absolu, et une couche Rate peut vivre **à l'intérieur** d'un bloc. Aucun découpage n'est interdit. | — |
-| Q2 | Que fait la machine quand **aucune couche du même matériau** n'a encore été déposée sous POEM (couches 1 et 2) ? Rate interdit, ou rate nominal du catalogue ? | Détermine s'il existe un état initial sans estimation. |
-| Q3 | Si la couche de référence était **elle-même en Rate**, l'erreur se recopie sans jamais être corrigée. La machine **chaîne-t-elle**, ou exige-t-elle une référence POEM ? | Décide si deux couches Rate consécutives sont permises, et donc si l'erreur peut diverger. |
-| Q4 | L'estimation porte-t-elle sur **la dernière** couche du matériau, ou sur une **moyenne** de toutes les précédentes ? | Une moyenne amortit l'erreur, la dernière la recopie telle quelle. Deux taux de plantage différents. |
+✅ **PLUS RIEN À DEMANDER — les quatre questions sont répondues le 2026-08-11.**
+Q1 l'était depuis le 2026-08-09 sans que le tableau l'enregistre ; Q2, Q3 et Q4 le
+sont désormais. Les réponses, et surtout **ce qu'elles impliquent**, sont dans A24
+ci-dessus. **Le mode Rate n'a plus aucun paramètre libre : il ne reste qu'à
+l'écrire.**
 
 ### 👤 SEEL — l'erreur équivalente par couche, et sa précision de 0,1 nm
 

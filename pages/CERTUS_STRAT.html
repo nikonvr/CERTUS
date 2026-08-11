@@ -3195,6 +3195,33 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     regime</b>, because each wavelength change discards the accumulated
                     self-correction that POEM lives on (§2.8).
                 </p>
+                <div class="highlight-box">
+                    🔑 <b>AND THE &times;171 REVERSES.</b> Per-layer monitoring is the worst strategy
+                    on this stack — <i>at zero index corridor</i>. Widen the corridor and it climbs,
+                    monotonically, until it wins outright:
+                    <table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">
+                        <tr style="background:#fff;">
+                            <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">configuration</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">rank of the 48-block strategy</th></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">corridor 0, seed 42</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>228 of 228</b> — dead last</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">corridor 0.005, seed 42</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">153 of 165</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">corridor 0.005, seed 77</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>2</b> of 78</td></tr>
+                        <tr style="background:#fffbeb;"><td style="border:1px solid #ccc;padding:4px 10px;">corridor 0.005, seed 101</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>1st — and ranks 1 through 30</b></td></tr>
+                    </table>
+                    The mechanism follows from what POEM is. Its anchors are inherited from
+                    earlier layers of the block, and they were acquired under an index the machine
+                    believes it knows and does not. <b>The larger the index error, the more
+                    actively misleading the inherited history becomes</b> — until re-anchoring at
+                    every single layer is worth more than the self-compensation it costs.
+                    <br><br>
+                    🔴 <b>So the &times;171 above must never be quoted without its corridor.</b> Both
+                    statements are true; they describe two regimes, and the crossover sits inside
+                    the range of index uncertainty a real coating shop lives with.
+                </div>
                 <div class="note" style="margin:0 0 14px;">
                     ⚠️ <b>The benefit of a long block saturates, and by construction.</b> The
                     simulator replays at most <b>4 previous layers</b> of the block
@@ -3271,6 +3298,27 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     one layer, at one wavelength, under one draw — and averaging it over a strategy
                     erases it. That is the whole argument for reporting the <b>critical layer</b>
                     (§2.12) rather than a strategy-level crash rate.
+                </div>
+                <div class="highlight-box">
+                    🟠 <b>MEASURED 2026-08-11 — the poorest-swing layer is a real signal, and not
+                    a sufficient one.</b> The per-layer crash profile and the per-layer optical
+                    swing were both being computed and both being averaged away. Recovering them
+                    costs no extra run, and the first case examined looked decisive: on one
+                    winning strategy the layer with the poorest swing (0.0874, layer 39) was
+                    <i>exactly</i> the single layer where the stopping level became unreachable.
+                    Ten strategies in a row said the same.
+                    <br><br>
+                    <b>The full statistic then corrects the enthusiasm: 157 out of 561, or 28 %.</b>
+                    Against a chance baseline of 1/48 &asymp; 2 %, that is a <b>13&times;
+                    enrichment</b> — a genuine signal. But the poorest-swing layer is the failing
+                    layer only one time in four.
+                    <br><br>
+                    🔑 <b>Which is precisely the argument for measuring the margin instead.</b>
+                    The swing is the best cheap proxy available for "how exposed is this layer",
+                    and it explains a quarter of the failures. The margin — how far the layer
+                    actually was from crossing, measured on the simulated noisy signal rather than
+                    assumed from the clean one — is the quantity itself. A 28 % proxy is the
+                    strongest available reason to go and get it.
                 </div>
                 <p>
                     🟢 <b>ESTABLISHED — no strategy that ever crashed reaches the top 20.</b> The

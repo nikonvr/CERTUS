@@ -345,9 +345,38 @@ PLAN_E = [
           expect={"index_corridor": 0.005, "robustness_seed": 101}),
 ]
 
+#: PLAN F -- the two questions campaign E left open, 2026-08-11.
+PLAN_F = [
+    # --- F1. E2 FAILED, and it failed for an instructive reason. It ran
+    # dp_yield_weight at corridor 0.005 expecting crashes to exist there -- they did in
+    # the PRE-FIX D1.5 (29.3 %). On the corrected code that arm crashes 0.0 %, so the
+    # yield term was w.(-log(1-0)) = 0 again and E2 came back BIT-IDENTICAL to E1.3.
+    # 17-14 is therefore still open. The only arm that still crashes is E3.4, at 59.3 %.
+    entry("F1.yw", "dp_yield_weight 200 where crashes REALLY exist: POEM off + distortion",
+          args=("full", "1.0", "42", "200"),
+          env={"CERTUS_POEM_ENABLED": "0", "CERTUS_AFFINE_SCALE_AMP": "0.05",
+               "CERTUS_AFFINE_OFFSET_AMP": "0.02"},
+          expect={"dp_yield_weight": 200.0, "poem_enabled": False, "affine_scale_amp": 0.05}),
+
+    # --- F2. Per-layer monitoring goes from WORST to BEST as the corridor widens, and
+    # the gradient is clean: rank 228/228 at corridor 0 (seed 42), 153/165 at 0.005
+    # (seed 42), 2/78 (seed 77), then 1st AND ranks 1-30 (seed 101). If the mechanism
+    # is real -- inherited POEM anchors become misleading when the index is wrong, so
+    # re-anchoring every layer wins -- widening the corridor must push it further.
+    # If instead it collapses, the seed-101 result was a fluke and must be said so.
+    entry("F2.101", "corridor 0.010 at seed 101 -- does 48-block monitoring win harder?",
+          args=("full", "1.0", "101"), env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01, "robustness_seed": 101}),
+    entry("F2.77", "corridor 0.010 at seed 77 -- same question, second seed",
+          args=("full", "1.0", "77"), env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01, "robustness_seed": 77}),
+    entry("F2.42", "corridor 0.020 at seed 42 -- push past the model value",
+          env={"CERTUS_INDEX_CORRIDOR": "0.02"}, expect={"index_corridor": 0.02}),
+]
+
 PLANS = {
     "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
-    "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E,
+    "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E, "f": PLAN_F,
 }
 
 

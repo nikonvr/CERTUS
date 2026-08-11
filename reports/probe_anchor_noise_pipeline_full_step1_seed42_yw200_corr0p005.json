@@ -4998,7 +4998,7 @@
   "poem_anchor_noise": true,
   "tp_hysteresis_factor": 1.66,
   "phase_a_level_margin_factor": 1.66,
-  "dp_yield_weight": 0.0,
+  "dp_yield_weight": 200.0,
   "scan_wl_step": 1.0,
   "robustness_seed": 42,
   "reading_smoothing_window": 1,

@@ -203,9 +203,29 @@ sortie collée. **Une action, un commit.**
 | **A23 étage 0** | ✅ le plantage **par couche et par cause** et le swing de la couche la pire remontent dans les rapports. Premier résultat : §17-31. |
 | **Campagne E** | ✅ 12/12 — porte C1 franchie, corridor et POEM confirmés (§17-29, 30, 31, 32). |
 
+### ✅ Fait le 2026-08-11, seconde session
+
+| | |
+|---|---|
+| **§17-37 outillé** | `n_layers_forced` remonte dans le résultat, le JSON de sonde et une **colonne** du résumé de campagne. Vérifié de bout en bout : graine 77, corridor 0,02 → **18 couches forcées sur 48**, 58 % de plantage. Une stratégie subie n'est plus indiscernable d'une stratégie libre. |
+| **A23 étage 2, moitié** | `turning_point_margins` écrite et testée — les deux marges de comptage. **Reste à câbler dans le noyau.** |
+
+> 🔴 **La leçon de méthode de cette session, et elle vaut pour tout instrument.**
+> `turning_point_margins` a été **fausse quatre fois**, et chaque version rendait des
+> nombres parfaitement plausibles en ne mesurant rien : un segment terminal lu comme
+> quasi-fabrication (marge **négative**, donc impossible) · les extrêmes à demi
+> réinitialisés du détecteur réutilisés (**sentinelle sur toute entrée**) · l'ondulation
+> mesurée au moment de l'émission, où elle vaut le seuil **par construction** (marge ~0
+> que l'ondulation fasse 1,2× ou 100× le seuil) · et un garde unique qui tuait le cas de
+> fabrication le plus intéressant.
+> **Aucune des quatre n'a été attrapée par une valeur suspecte. Les quatre l'ont été en
+> BALAYANT la grandeur que la marge est censée suivre.** C'est le Piège 1 appliqué à un
+> **instrument** au lieu d'un résultat — et un instrument faux est pire qu'un résultat
+> faux, parce qu'il contamine tout ce qu'on mesurera ensuite avec.
+
 ### 🔴 La suite immédiate
 
-1. **A23 étage 2 — la MARGE par (tirage, couche, cause).** C'est désormais la mieux justifiée
+1. **A23 étage 2 — finir le câblage.** C'est désormais la mieux justifiée
    de toutes les actions : §17-31 mesure que le swing, le meilleur proxy disponible, ne
    désigne la couche défaillante que dans **28 %** des cas. Le proxy ne suffit pas ; il faut
    la grandeur. Et l'étage 0 vient de montrer que la plomberie fonctionne.

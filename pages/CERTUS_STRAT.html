@@ -3522,7 +3522,58 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     alone <b>doubles</b> the effective per-layer error.
                 </p>
 
-                <h3>10.7 Open conjectures, and the experiment that settles each</h3>
+                <h3>10.7 How many Monte-Carlo draws are actually needed</h3>
+                <p>
+                    The question has a number, and the number changes what the ranking should
+                    do. At the operating depth of 150 draws, a strategy's score wobbles by
+                    <b>&plusmn;5 to 6 %</b> from sampling alone — measured two independent ways,
+                    and the <code>1/&radic;N</code> scaling is exact (12.56 % at N = 32 against
+                    6.28 % at N = 128, a ratio of 2.00 for a fourfold depth).
+                </p>
+                <p>
+                    The gap between the winner and the runner-up is <b>6.5 %</b>. Two independent
+                    scores differ with <code>&sigma;&radic;2 &asymp; 8 %</code>. <b>They are 0.8
+                    &sigma; apart.</b> What it would cost to separate them properly:
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.9em;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;text-align:left;">to resolve</th>
+                        <th style="border:1px solid #d1d5db;padding:4px 10px;">draws per strategy</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">a 6.5 % score gap at 3&sigma;</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;"><b>~2 000</b> (&times;13)</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">a 5 % vs 10 % failure rate</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">~430</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:4px 10px;">0.1 % vs 0.5 %</td>
+                        <td style="border:1px solid #d1d5db;padding:4px 10px;">~2 900</td></tr>
+                </table>
+                <div class="highlight-box">
+                    🔑 <b>So the answer is not to buy score resolution — it is to reallocate.</b>
+                    Thirteen times the compute to conclude "they are equivalent" is money spent
+                    to learn what the equivalence class already says. The measured cost is
+                    <b>~0.15 s per (strategy &times; draw)</b> at the final stage, with Phase A
+                    (~730 s) not repeated. So:
+                    <div class="eq-box" style="text-align:left;margin:10px 0 0;">
+                        <b>generate wide</b> — 228+, the only guard against regime dependence<br>
+                        <b>screen shallow</b> — 10 draws, measured lossless<br>
+                        <b>go deep on ~10 finalists</b> — 3000 draws, about an hour
+                    </div>
+                    Deep on ten is affordable; deep on 228 is not. And on those ten the useful
+                    question is no longer the score — it is the yield, which reads 0/150 for
+                    every one of them.
+                </div>
+                <p style="margin:0 0 14px;">
+                    ⚠️ <b>Two cautions on going deeper.</b> First, never rank on <i>which
+                    strategy crashes first</i>: the draw count to a first event is geometric, so
+                    its standard deviation equals its mean — <b>100 % dispersion</b>, trading a
+                    6 % noise for a 100 % one. Use a common budget and compare confidence
+                    intervals. Second, <b>some strategies will never crash at all</b>: the
+                    perturbations are bounded, so once the margin exceeds the largest possible
+                    perturbation the probability is <i>exactly</i> zero, not small. No number of
+                    draws produces an event. That is why the margin comes first — it says,
+                    without a single draw, which strategies can even fail.
+                </p>
+
+                <h3>10.8 Open conjectures, and the experiment that settles each</h3>
                 <p>
                     These are <b>not results</b>. Each is stated with its refutation condition, so
                     that a reader can hold us to it.
@@ -3579,7 +3630,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         spread <i>is</i> the answer.</td></tr>
                 </table>
 
-                <h3>10.8 What we deliberately do not claim</h3>
+                <h3>10.9 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent

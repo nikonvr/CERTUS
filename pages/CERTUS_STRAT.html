@@ -3718,7 +3718,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;">today</th>
                         <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;">closed form</th></tr>
                     <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">64 complex 2&times;2 matrix products per layer</td>
-                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>&times;3.6 measured</b></td></tr>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>&times;1.20 measured</b> on the compiled kernel</td></tr>
                     <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">find turning points <i>by scanning</i></td>
                         <td style="border:1px solid #d1d5db;padding:5px 10px;"><code>tan 2&delta; = R/Q</code> — closed form</td></tr>
                     <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">find the stop by scanning then interpolating</td>
@@ -3748,6 +3748,35 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     hidden inside re-implementations, and <b>both were exact at k = 0</b>:
                     invisible to any test that only looks at dielectrics, which is precisely
                     this case.
+                </div>
+
+                <div class="highlight-box">
+                    🔴 <b>AND THE SPEED-UP IS &times;1.20, NOT &times;3.6 — a correction owed.</b>
+                    The &times;3.6 was measured in <b>pure Python</b>, where every complex
+                    operation goes through the interpreter. The kernel is <b>numba-compiled</b>:
+                    there the matrix product is already machine code, and swapping eight complex
+                    multiplications for two trigonometric calls changes little — cos and sin are
+                    not free either. Clean A/B at equal physics (k = 10<sup>&minus;5</sup> against
+                    10<sup>&minus;3</sup>): 0.276 s against 0.331 s.
+                    <b>A Python benchmark does not predict a compiled kernel.</b>
+                    <br><br>
+                    🔴 <b>And three follow-on ideas were measured and closed.</b>
+                    <ul style="margin:8px 0 0 18px;">
+                        <li><b>Replacing the parabolic inversion:</b> the parabola is already
+                            exact to <b>2.1&times;10<sup>&minus;10</sup> nm</b> over 200 random
+                            stacks — 240 million times below the 0.05 nm at which a thickness
+                            difference stops meaning anything. It also explains a figure from
+                            §2.8: POEM's invariance measured at 2.19&times;10<sup>&minus;10</sup> nm
+                            was <i>the parabola's</i> limit, not POEM's.</li>
+                        <li><b>Analytic dT/dd:</b> outside the hot loop, and changing it would move
+                            the noise scale — hence every result — for no gain.</li>
+                        <li><b>🔴 Solving the turning points analytically: structurally impossible.</b>
+                            The detector runs on the <i>noisy</i> signal and is a hysteresis
+                            machine, not an extremum finder: it models what the instrument
+                            <i>believes it sees</i>. An analytic extremum of the clean curve would
+                            <b>delete the false-turning-point mechanism entirely</b> — 79 % of the
+                            measured failures.</li>
+                    </ul>
                 </div>
 
                 <h3>11.2 The scan window — a negative result, reported as one</h3>

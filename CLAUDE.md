@@ -2925,9 +2925,18 @@ empilement **déjà déposé**, le dénominateur de la transmission s'écrit
 $$T(d) \;=\; \frac{4\,n_{\text{sub}}}{P + Q\cos 2\delta + R\sin 2\delta},
 \qquad \delta = \frac{2\pi n d}{\lambda}$$
 
-📏 **Vérifié numériquement : écart 5,4e-20.** Ce n'est pas une approximation, c'est le
-même calcul écrit autrement. `P`, `Q`, `R` se calculent **une fois** depuis la matrice
-de l'empilement.
+📏 **Vérifié numériquement : écart 5,4e-20**, et **1,2e-15 contre l'ORACLE TMM
+INDÉPENDANT** sur 40 empilements de 2 à 20 couches — le même ordre que les chemins de
+production. Ce n'est pas une approximation, c'est le même calcul écrit autrement.
+`P`, `Q`, `R` se calculent **une fois** depuis la matrice de l'empilement.
+
+🔴 **CORRECTION DU 2026-08-11 : le gain réel est ×1,20, pas ×3,6.** Le ×3,6 avait été
+mesuré en **Python pur**, où chaque opération complexe passe par l'interpréteur. Le
+noyau est **compilé par numba** : le produit matriciel y est déjà du code machine, et
+remplacer huit multiplications complexes par deux appels trigonométriques ne change
+presque rien. A/B propre à physique égale (`k = 1e-5` contre `k = 1e-3`) :
+`0,276 s` contre `0,331 s`. **Un banc en Python ne prédit pas un noyau compilé** —
+c'est le Piège 7 sous une autre forme.
 
 **Et les dérivées suivent gratuitement** :
 
@@ -3013,6 +3022,81 @@ points tournants et borner l'atteignabilité (fenêtre **longue**, densité **in
 Un balayage à **deux zones** les servirait toutes les trois. ⚠️ Mais c'est bloqué par A8 :
 tant que la grille TMM **est** la grille de bruit, un échantillonnage non uniforme donne
 une densité de tirages non uniforme, donc un taux de fabrication non uniforme.
+
+### 🔴 TROIS MESURES NÉGATIVES — les pistes de dérivée analytique sont FERMÉES
+
+Elles valent autant que les positives : quelqu'un reproposera chacune des trois.
+
+#### 1. L'inversion parabolique est déjà exacte à 2,1e-10 nm
+
+Le meilleur candidat sur le papier : **3 évaluations TMM par (tirage, couche)**, en pleine
+boucle chaude, pour approximer une courbe qu'on connaît désormais exactement.
+
+📏 **Écart maximal de la parabole à la solution exacte, sur 200 empilements aléatoires de
+4 à 30 couches : `2,083e-10 nm`.** Le seuil sous lequel un écart d'épaisseur n'a aucun
+sens physique est **0,05 nm** — moins d'un atome (§16). **La parabole est 240 millions de
+fois sous ce seuil.**
+
+🔑 **Et ça éclaire un chiffre du §12.1.** L'invariance de POEM y était mesurée à
+**2,19e-10 nm** — le même ordre, exactement. **Ce n'était pas la limite de POEM qu'on
+mesurait, c'était celle de la parabole.** Et elle est sans conséquence.
+
+Gain en vitesse : 3 points sur ~130 par couche, soit **~2 %**. Gain en exactitude :
+**nul en pratique**. ❌ Fermé.
+
+#### 2. `dT/dd` analytique — hors de la boucle chaude, et déplacerait tous les chiffres
+
+`compute_dT_dd_kernel` fait une différence centrée, 2 évaluations par couche, dans
+`_compute_dT_dd_per_layer` — appelé **une fois par stratégie, pas par tirage**. Son erreur
+est en `O(h²)`, négligeable devant le bruit qu'elle sert justement à dimensionner
+(`signal_noise_scale = |dT_dd| · noise_val`).
+
+La rendre analytique **changerait `signal_noise_scale`, donc tous les résultats**, pour un
+gain nul des deux côtés. ❌ Fermé.
+
+#### 3. 🔴 Les points tournants NE PEUVENT PAS être résolus analytiquement — et c'est structurel
+
+C'est l'argument le plus important des trois, parce qu'il ne se voit pas.
+
+Le bruit est ajouté à `Ts_r` (`certus_strat_growth.py:886` et `:996`), et
+`detect_turning_points` opère **sur `Ts_r`**, donc sur des données **bruitées**. Ce n'est
+pas un chercheur d'extremum : c'est une **machine à hystérésis** qui émet quand le signal
+recule de plus qu'un seuil. Elle modélise ce que l'instrument **croit voir**, pas ce que
+la courbe **est**.
+
+> `tan 2δ = R/Q` donne l'extremum **mathématique de la courbe propre**.
+> Le détecteur donne ce que **la machine voit dans un signal bruité**.
+> **L'écart entre les deux EST le phénomène** que §12.2 a mis trois mesures à caractériser.
+
+Le remplacer par une résolution analytique **supprimerait purement et simplement la
+fabrication de faux points tournants** — le mécanisme de plantage dominant, **79 %** des
+échecs mesurés en §17-36. ❌ Fermé, définitivement.
+
+#### Ce qu'il faut retenir de l'ensemble
+
+**La forme fermée est une belle découverte qui ne rapporte presque rien**, parce que le
+code qu'elle remplacerait était déjà bon : la parabole est exacte à 2e-10, la différence
+centrée est sous le bruit, et le détecteur est irremplaçable par construction du modèle.
+
+Ce qui reste acquis : **×1,20** sur le noyau, une forme fermée validée à **1,2e-15**
+contre l'oracle indépendant, et la restriction 👤 `k < 1e-4` mesurée et confirmée.
+
+### ⚡ LÀ OÙ LE TEMPS SE GAGNE VRAIMENT — et c'est déjà mesuré
+
+📏 **D3 de la campagne du 2026-08-11** : cribler à **10 tirages au lieu de 25** rend
+`n_ranked = 133` au lieu de 228, **la même gagnante** `[544, 531]`, et un `RESULT`
+**bit-identique**. Ouvrir à 100 tirages ou garder 30 survivantes ne trouve rien de mieux
+non plus (§17-27).
+
+**C'est 60 % de l'étage de criblage, sans toucher une ligne de physique, et avec une
+preuve expérimentale plutôt qu'une estimation.** Plus que tout ce que le noyau peut rendre.
+
+⚠️ **Mais je ne change pas le défaut, et c'est délibéré.** La mesure porte sur **une
+graine, un empilement, une configuration**. §19-4 interdit de conclure d'une mesure sur un
+autre composant, et un défaut vaut pour tous les cas à venir, pas seulement pour celui-là.
+`n_screen_runs = 10` est **recommandé et documenté** ; le poser par défaut demande de
+l'avoir vu tenir sur au moins une seconde graine.
+
 
 ### La simple précision — 👤 y est favorable, et l'ordre compte
 

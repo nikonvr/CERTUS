@@ -2525,6 +2525,63 @@ sort de l'inversion parabolique ; `eps_rel(j)` se lit sur `prev_thicknesses_sim[
 contre `p_thick_nominal[j]`, déjà côte à côte ; `d_nom_i` est donné.
 **La liste des couches candidates se CALCULE, elle ne se devine pas.**
 
+#### 🔑 👤 LE PLACEMENT ÉVIDENT : aux FRONTIÈRES DE BLOC — 2026-08-11
+
+> 👤 *« Il peut être intéressant de tester le rate aux couches i dont la longueur d'onde
+> de contrôle change à la couche i+1, car il n'y aura pas de POEM à la couche suivante de
+> toute façon ! »*
+
+**Vérifié au code, et c'est exact.** `certus_strat_batch.py` pose `block_start[i] = i`
+dès que λ change, et le noyau en tire `j0 = block_start_layer = i`, donc
+`n_hist = (i − i) × NPTS_PREV = **0**`. La première couche d'un nouveau bloc démarre
+**sans aucun historique hérité** — elle n'a pas d'ancres POEM, que la couche d'avant ait
+été en POEM ou en Rate.
+
+**Ce placement annule DEUX des trois coûts de §14-10 :**
+
+| coût d'une couche Rate | à une frontière de bloc |
+|---|---|
+| la couche suivante perd ses ancres → repli sur le niveau absolu | ✅ **déjà payé** — elle n'en avait pas |
+| un extremum manqué peut faire diverger le comptage plus loin | ✅ **déjà payé** — `detect_turning_points` ne voit que `Ts_r` de longueur `n_tot = 0 + NPTS`, le comptage repart de zéro |
+| l'erreur accumulée n'est pas corrigée sur la couche `i` | ❌ **reste** — c'est le coût irréductible |
+
+> **Le terme dominant disparaît. Le bilan à trois termes devient un bilan à un terme.**
+
+C'est nettement supérieur à l'idée L47, qui demandait de mettre en balance « pas de
+couche suivante » contre « dernière occasion de corriger » — deux effets opposés dont
+aucun n'était calculé.
+
+⚠️ **La réserve, et elle est réelle.** La couche `i` est la **dernière de son bloc**,
+donc celle qui a le **plus d'historique derrière elle** (jusqu'à `MAX_LOOKBACK = 4`) :
+c'est là que POEM est le **mieux ancré**, et on renoncerait à sa meilleure correction.
+Mais c'est exactement ce que l'inégalité ci-dessus calcule, avec le terme aval mis à
+zéro. **À vérifier au banc, pas à trancher au raisonnement.**
+
+#### La variante symétrique, à tester aussi : la PREMIÈRE couche du nouveau bloc
+
+Plutôt que la dernière couche du bloc sortant, la **première du bloc entrant** — celle
+qui n'a pas d'ancres :
+
+- **POEM y est à son plus faible.** Sans historique, il doit trouver deux points tournants
+  dans la seule couche courante, faute de quoi il retombe sur le **niveau absolu** — la
+  branche que §12.1 a démontrée non invariante par distorsion affine, et qui pèse **21 %**
+  des plantages mesurés (§17-36).
+- Le Rate y **remplacerait un arrêt fragile par un comptage de tours déterministe**.
+- ⚠️ **Mais le coût aval ne disparaît pas ici** : la couche `i+2` est dans le même bloc et
+  aurait hérité de l'historique de `i+1`. La fragilité se propage d'un cran.
+
+**Les deux placements sont de premier choix et ils s'opposent proprement** :
+
+| | coût aval | ce qu'on sacrifie |
+|---|---|---|
+| **dernière couche du bloc** 👤 | **nul** | la correction POEM la mieux ancrée |
+| première couche du bloc suivant | non nul | rien — POEM y est déjà en repli fragile |
+
+🟢 **Et la liste est courte.** Une stratégie à 2 blocs n'a **qu'une seule** frontière ;
+la gagnante à corridor 0,005 en a quatre. Sur les 10 finalistes, cela fait **une dizaine
+de couples (stratégie, couche)** — pas 480. C'est exactement l'échelle où l'on peut
+prédire puis mesurer.
+
 #### 🔴 La correction que je dois à L47 — mon premier raisonnement était à moitié faux
 
 J'avais écrit que L47 était l'essai évident, au motif que le coût dominant tombe sur la

@@ -374,9 +374,45 @@ PLAN_F = [
           env={"CERTUS_INDEX_CORRIDOR": "0.02"}, expect={"index_corridor": 0.02}),
 ]
 
+#: PLAN G -- how close is the MODEL corridor to the cliff? 2026-08-11.
+#:
+#: F found a wall: seed 77 goes from 0 % crash at corridor 0.005 to 100 % at 0.010,
+#: while seeds 42 and 101 sail through 0.010. The model value is 0.005. So on at least
+#: one seed in three, the margin between "what we design for" and "nothing works at
+#: all" is under a factor two. That is a safety statement about the actual design, and
+#: three seeds are not a distribution.
+#:
+#: Two questions, and neither needs new code:
+#:   G1 -- WHERE exactly does seed 77 break? Bracketing turns "between 0.005 and 0.010"
+#:         into a number, and a number can be compared to the model value.
+#:   G2..G3 -- how OFTEN is the cliff that close? Two fresh seeds at both corridors.
+#:
+#: ⚠️ Collapsed runs are FAST (~500 s vs ~1100 s): a stack that crashes everywhere
+#: short-circuits. Do not read a short run as a failed run -- check the status line.
+PLAN_G = [
+    entry("G1.0075", "seed 77 at corridor 0.0075 -- bracket the cliff from below",
+          args=("full", "1.0", "77"), env={"CERTUS_INDEX_CORRIDOR": "0.0075"},
+          expect={"index_corridor": 0.0075, "robustness_seed": 77}),
+    entry("G1.0060", "seed 77 at corridor 0.0060 -- just above the model value",
+          args=("full", "1.0", "77"), env={"CERTUS_INDEX_CORRIDOR": "0.006"},
+          expect={"index_corridor": 0.006, "robustness_seed": 77}),
+    entry("G2.202a", "seed 202 at the model corridor 0.005", args=("full", "1.0", "202"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"index_corridor": 0.005, "robustness_seed": 202}),
+    entry("G2.202b", "seed 202 at 0.010 -- is the cliff there too?", args=("full", "1.0", "202"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01, "robustness_seed": 202}),
+    entry("G3.303a", "seed 303 at the model corridor 0.005", args=("full", "1.0", "303"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.005"},
+          expect={"index_corridor": 0.005, "robustness_seed": 303}),
+    entry("G3.303b", "seed 303 at 0.010", args=("full", "1.0", "303"),
+          env={"CERTUS_INDEX_CORRIDOR": "0.01"},
+          expect={"index_corridor": 0.01, "robustness_seed": 303}),
+]
+
 PLANS = {
     "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
-    "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E, "f": PLAN_F,
+    "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E, "f": PLAN_F, "g": PLAN_G,
 }
 
 

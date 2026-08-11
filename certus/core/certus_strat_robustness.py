@@ -169,6 +169,36 @@ def _resolve_robustness_noise_levels(params: dict[str, Any]) -> list[float]:
     return [base_noise * f for f in noise_factors]
 
 
+def _phase_a_forced_layers(params: dict[str, Any]) -> dict[str, Any]:
+    """How many layers Phase A had NO admissible wavelength for -- 17-37.
+
+    When no candidate meets the crash tolerance on a layer, Phase A keeps the least
+    bad one and logs a warning. That is the right behaviour -- returning nothing would
+    stop the search -- but it means the wavelength was **not chosen, it was forced**,
+    and until now nothing said so beyond a per-layer log line.
+
+    🔴 WHY THIS MATTERS ENOUGH TO CARRY IN EVERY RESULT. Measured on 2026-08-11, at a
+    corridor of 0.010 on seed 77: 108 candidates offered, 103 forbidden, a median of
+    ONE survivor per layer, and 32 of 48 layers on the fallback -- at a minimum
+    observed crash rate of 0.7 %, seven times the tolerance. Phase B then found that
+    strategy crashes 100 % of the time. And the final result announced a winner with a
+    score and a SEEL, indistinguishable from a healthy run.
+
+    A strategy built on 32 forced layers is not comparable to a freely chosen one. This
+    is a run-level property: every strategy of a given Phase A inherits the same forced
+    layers, so it qualifies the whole candidate pool, not one candidate.
+    """
+    stats = params.get("phase_a_admissibility_stats") or []
+    if not stats:
+        return {}
+    forced = [int(s.get("layer", 0)) for s in stats if s.get("fallback_on_min_crash")]
+    return {
+        "n_forced": len(forced),
+        "n_layers": len(stats),
+        "layers": forced,                       # 1-based, as the admissibility census is
+    }
+
+
 def _worst_layer_swing(results_per_noise: list[dict[str, Any]]) -> dict[str, Any]:
     """Poorest optical swing across layers, and where it sits.
 
@@ -1186,6 +1216,10 @@ def _test_strategy_robustness_task(
         # binding layer, the one 14-5 says governs trigger precision. Already computed
         # per layer by the batch, and averaged away until now.
         "worst_layer_swing": _worst_layer_swing(results_per_noise),
+        # 17-37. Run-level, not per-strategy: every strategy inherits the same Phase A.
+        # Carried on each result anyway so it can never be separated from the score it
+        # qualifies -- that separation is exactly how the collapse went unnoticed.
+        "phase_a_forced": _phase_a_forced_layers(params),
         "symmetry_score_pct": float(strategy.get("symmetry_score_pct", 0.0)),
         "num_unique_wavelengths": unique_wls,
         "complexity_score": complexity,

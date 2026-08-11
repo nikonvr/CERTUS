@@ -205,6 +205,10 @@ def install_probe() -> None:
                     "worst_swing": (it.get("worst_layer_swing") or {}).get("swing"),
                     "worst_swing_layer": (it.get("worst_layer_swing") or {}).get("layer"),
                     "n_below_swing_min": (it.get("worst_layer_swing") or {}).get("n_below_swing_min"),
+                    # 17-37: how many layers had NO admissible wavelength and were
+                    # forced onto the least-bad one. Run-level, but carried per row so
+                    # a score can never be read without it.
+                    "n_forced_layers": (it.get("phase_a_forced") or {}).get("n_forced"),
                 })
             B.emit(f"RANKING capture : {len(RANKING)} strategies, gagnante id={best_id}")
         except Exception as exc:  # noqa: BLE001
@@ -339,7 +343,32 @@ def analyse() -> dict:
         "n_rescued": sum(1 for r in ranked if r.get("crash_eliminated")),
         "ranking": ranked,
         "winner": next((r for r in RANKING if r.get("is_winner")), None),
+        # 17-37. Run-level. Loud on purpose: a run where Phase A had no admissible
+        # wavelength on a third of the layers still returns a winner, a score and a
+        # SEEL that look exactly like a healthy run's. That silence is what let a
+        # 100 %-crash strategy be reported as a result.
+        "phase_a_forced": _forced_summary(),
     }
+
+
+def _forced_summary() -> dict:
+    """Layers on which Phase A had to keep the least-bad wavelength, run-wide."""
+    vals = [r.get("n_forced_layers") for r in RANKING if r.get("n_forced_layers") is not None]
+    if not vals:
+        return {}
+    n = max(vals)
+    if n:
+        # 🔴 sys.stdout DIRECTLY, and ASCII ONLY. Routed through `B.emit` with an emoji
+        # prefix this line was swallowed in silence on a real run -- verified: the JSON
+        # carried n_forced=18 while the transcript showed nothing. A warning that can
+        # vanish is not a warning, and the console here is cp1252 (same lesson as the
+        # analyser, which died outright on its first emoji).
+        sys.stdout.write(
+            f"PHASE_A_FORCED={n} couches sans aucune lambda admissible "
+            f"-- la strategie est SUBIE, pas choisie (voir 17-37)\n"
+        )
+        sys.stdout.flush()
+    return {"n_forced": n}
 
 
 def main() -> None:

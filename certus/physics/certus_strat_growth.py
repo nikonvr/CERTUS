@@ -153,6 +153,130 @@ def detect_turning_points(
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def turning_point_margins(
+    Ts: np.ndarray, n_tot: int, hysteresis: float
+) -> tuple[float, float]:
+    """How close the turning-point COUNT came to being wrong, both ways -- A23 stage 2.
+
+    Returns ``(margin_missed, margin_fabricated)``, both in transmission units:
+
+    * ``margin_missed`` = ``smallest emitted swing - hysteresis``. An extremum is only
+      seen once the signal has retraced by more than the threshold, so a ripple that
+      only just exceeds it is one noise realisation away from going UNCOUNTED.
+    * ``margin_fabricated`` = ``hysteresis - largest excursion that did NOT emit``. The
+      symmetric failure: an excursion that nearly crossed the threshold is one noise
+      realisation away from being counted as an extremum that never existed.
+
+    🔑 WHY A MARGIN AND NOT A RATE. At 150 draws a crash rate of 0/150 says p < 2 % and
+    nothing more, and every strategy on this stack reads 0. A margin is CONTINUOUS and
+    defined even when nothing failed, so it ranks strategies that a rate cannot
+    separate. It is also the better Trap-1 control: it must scale as 1/sigma, and a
+    margin that does not move with the noise is an artefact -- a test far more
+    sensitive than a rate that jumps from 0 to 1/N.
+
+    ⚠️ TWO NUMBERS, NOT ONE, AND THEY DO NOT MERGE. A23 is explicit: the failure modes
+    have neither the same units of physical meaning nor the same remedy. A layer whose
+    ripple is too faint to be seen is cured by moving the wavelength; a layer where
+    noise invents an extremum is cured by raising the threshold. Collapsing them into
+    one figure is the very confusion Trap 1, corollary 2, warns against.
+
+    Returns ``(1e18, 1e18)`` when no extremum is emitted at all -- there is then no
+    counting constraint to be close to, which is not the same as being safe, and the
+    caller must not read the sentinel as a large margin.
+
+    Same detection rule as ``detect_turning_points``, deliberately duplicated rather
+    than folded into it: that function is re-exported and used by the fabrication probe,
+    and changing its return arity would break a measurement instrument for a diagnostic.
+    One extra pass over an array is free next to the TMM evaluations around it.
+    """
+    if hysteresis <= 0.0 or n_tot < 2:
+        return (1e18, 1e18)
+    # The detector's own state -- maxv/minv/dirn -- is reproduced exactly, because the
+    # emission decisions must be the ones the machine makes.
+    maxv = Ts[0]
+    minv = Ts[0]
+    dirn = 0
+    # 🔴 SEPARATE state for the SEGMENT peak-to-peak, and it must be reset on BOTH
+    # sides at every emission. The detector only half-resets (it sets minv = v when it
+    # emits a maximum, leaving maxv stale), which is correct for detection and wrong
+    # for measuring "how big is the current wiggle": reusing it left a stale extreme in
+    # the excursion, which then never fell below the threshold, and the fabrication
+    # margin read its sentinel on EVERY input. A quantity that never varies with what
+    # it measures is Trap 1 -- caught by sweeping the wiggle amplitude, not by a test.
+    maxi = 0
+    mini = 0
+    seg_hi = Ts[0]
+    seg_lo = Ts[0]
+    min_swing = 1e18       # smallest RIPPLE between two consecutive emitted extrema
+    prev_ext = 0.0
+    n_emit = 0
+    for k in range(1, n_tot):
+        v = Ts[k]
+        if v > maxv:
+            maxv = v
+            maxi = k
+        if v < minv:
+            minv = v
+            mini = k
+        if v > seg_hi:
+            seg_hi = v
+        if v < seg_lo:
+            seg_lo = v
+        emit_idx = -1
+        if dirn >= 0 and maxv - v > hysteresis:
+            emit_idx = maxi
+            dirn = -1
+            minv = v
+            mini = k
+        elif dirn <= 0 and v - minv > hysteresis:
+            emit_idx = mini
+            dirn = 1
+            maxv = v
+            maxi = k
+        if emit_idx >= 0:
+            # 🔴 THE RIPPLE IS THE DISTANCE BETWEEN TWO CONSECUTIVE EXTREMA, not the
+            # segment span at the moment of emission. A first version measured the
+            # latter, which is ~= hysteresis BY CONSTRUCTION -- emission happens as
+            # soon as the retracement crosses the threshold -- so the margin read
+            # ~0 whether the ripple was 1.2x or 20x the threshold. Sweeping the
+            # amplitude is what exposed it: a margin that does not follow the
+            # quantity it measures is Trap 1, and it would have shipped looking fine.
+            ext = Ts[emit_idx]
+            if n_emit > 0:
+                swing = ext - prev_ext
+                if swing < 0.0:
+                    swing = -swing
+                if swing < min_swing:
+                    min_swing = swing
+            prev_ext = ext
+            n_emit += 1
+            seg_hi = v
+            seg_lo = v
+    cur_exc = seg_hi - seg_lo
+    # 🔴 THE TWO GUARDS ARE SEPARATE, and merging them hid the most interesting case.
+    # A single `if n_emit == 0: return sentinel, sentinel` killed fabrication exactly
+    # where it matters most: a layer whose signal is too flat to emit anything is
+    # precisely the one where noise is closest to inventing an extremum. The two
+    # quantities have different preconditions -- a ripple needs TWO extrema to be
+    # measured, a near-fabrication needs NONE.
+    m_missed = min_swing if n_emit >= 2 else 1e18
+    if m_missed < 1e17:
+        m_missed = m_missed - hysteresis
+    # ⚠️ THE TRAILING SEGMENT IS NOT A NEAR-FABRICATION, and reading it as one gives
+    # nonsense. After the last emission the signal is usually mid-swing: its excursion
+    # keeps growing and would emit, the array simply ends first. Taking
+    # `hysteresis - cur_exc` there returned -398 A on a clean sine -- a "fabrication
+    # margin" that is negative, i.e. an excursion that crossed the threshold without
+    # emitting, which cannot happen. Caught by a sanity check, not by the tests.
+    #
+    # A trailing excursion only carries fabrication information while it stays BELOW
+    # the threshold. Above it, there is no near-miss to measure and the sentinel says
+    # "no constraint" rather than inventing one.
+    m_fab = (hysteresis - cur_exc) if cur_exc < hysteresis else 1e18
+    return (m_missed, m_fab)
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
 def next_turning_point_after(Ts: np.ndarray, n_tot: int, i_start: int, hysteresis: float) -> int:
     """Index of the first turning point located after ``i_start``, or ``n_tot - 1`` if none.
 

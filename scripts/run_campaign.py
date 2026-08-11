@@ -611,8 +611,12 @@ def write_summary(records: list[dict], total: int) -> None:
         "C'est la seule colonne lisible sans conversion. RESULT est le PIRE des trois",
         "niveaux de bruit ; il ne se compare a aucune valeur par strategie (voir 10).",
         "",
-        "| run | statut | RESULT | SEEL | gagnante | blocs | plantage | objet |",
-        "|---|---|---|---|---|---|---|---|",
+        "🔴 `forcees` = couches ou la Phase A n'avait AUCUNE lambda admissible et a garde",
+        "la moins mauvaise (17-37). Une valeur non nulle veut dire que la strategie est",
+        "SUBIE, pas choisie : son score n'est pas comparable a celui d'un run libre.",
+        "",
+        "| run | statut | RESULT | SEEL | gagnante | blocs | plantage | forcees | objet |",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for r in records:
         rep = _read_report(r.get("written"))
@@ -623,9 +627,11 @@ def write_summary(records: list[dict], total: int) -> None:
         nb = win.get("n_blocks", "—")
         crash = win.get("crash")
         crash_txt = f"{crash:.1%}" if isinstance(crash, (int, float)) else "—"
+        nf = (rep.get("phase_a_forced") or {}).get("n_forced")
+        forced_txt = "—" if nf is None else ("0" if not nf else f"🔴 **{nf}**")
         lines.append(
             f"| {r['label']} | {r['status']} | `{r['result']}` | {seel_txt} | "
-            f"{wid} | {nb} | {crash_txt} | {r['purpose']} |"
+            f"{wid} | {nb} | {crash_txt} | {forced_txt} | {r['purpose']} |"
         )
     problems = [(r["label"], p) for r in records for p in r["problems"]]
     if problems:

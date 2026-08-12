@@ -3771,7 +3771,92 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     half-maximum band</b>, on which the relation is monotone and a bisection converges.
                 </div>
 
-                <h3>10.10 What we deliberately do not claim</h3>
+                <h3>10.10 What the nominal model actually chooses</h3>
+                <p>
+                    Six error sources were settled on 2026-08-12 and turned on together for the
+                    first time: the slit bias at 2 nm, the index corridor at 0.005, the photometric
+                    curvature, Rate as an allowed mode, and the slit itself as a <b>searched</b>
+                    variable. Two stay off with their reasons on record &mdash; the affine drift,
+                    because the machine re-references itself against dark and void every rotation,
+                    and reading smoothing, because the OMS filter chain is not known and adding
+                    unmeasured structure is forbidden.
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;"></th>
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;">48-layer dichroic</th>
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;">35-layer bandpass</th></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">SEEL</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">0.7 nm</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">1.3 nm</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">winner</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">6 blocks, slit 2 nm</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>35 blocks</b>, slit 2 nm</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">5 nm slit, ranked</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>none at all</b></td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">36 of 380, best rank 41</td></tr>
+                </table>
+                <p>
+                    🔑 <b>The wide slit never wins, and for two different reasons.</b> On the dichroic
+                    the bias reaches <b>33 % of the swing</b> on the deep layers and nothing
+                    terminates; on the bandpass 5 nm works and is merely beaten. The setting is
+                    therefore <b>skipped where the curvature forbids it, not deleted</b> &mdash; the
+                    <code>res_limit</code> criterion rejects 31 % of (layer, &lambda;) pairs at 5 nm
+                    against 2 % at 1 nm, so it discriminates exactly there and nowhere else. On a
+                    component with coarser spectral structure the &divide;1.5 noise bonus could be
+                    free, and STRAT must keep the ability to say so.
+                </p>
+
+                <h3>10.11 POEM has no purchase on the bandpass, and that is structural</h3>
+                <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
+                    <p style="margin:0 0 10px;">
+                        The bandpass winner monitors <b>one wavelength per layer</b>, so it inherits no
+                        block history at all. 📏 Measured by the only unambiguous test &mdash; deposit
+                        the layer with a 2 nm upstream error, <code>poem_enabled</code> true then false;
+                        if both return the same thickness to the bit, POEM could not anchor:
+                    </p>
+                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.92em;">
+                        <tr style="background:#fff;">
+                            <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">winner</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">POEM anchors</th></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">bandpass, 35 blocks (no history)</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>8 / 34</b> (24 %)</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">dichroic, 6 blocks (first block = 29 layers)</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>42 / 47</b> (89 %)</td></tr>
+                    </table>
+                    <p style="margin:0 0 10px;">
+                        <b>Why, and why it cannot be fixed on this component.</b> Without history POEM
+                        must find <i>two</i> turning points inside the current layer alone. $T(d)$ is a
+                        sinusoid in $2\delta$, so extrema fall every 90&deg;, and for a quarter-wave at
+                        $\lambda_0$ the phase at the stop is
+                        $\delta = (\pi/2)\,\lambda_0/\lambda_{\text{mon}}$. Every retained wavelength
+                        gives $\lambda_0/\lambda$ between <b>1.11 and 1.40</b> &mdash; between <i>one</i>
+                        and <i>two</i> extrema. <b>POEM sits exactly on its anchoring threshold on every
+                        layer</b>, and which side it lands on is decided by the substack phase. Two
+                        anchors would need $\lambda \le \lambda_0/2 = 316$ nm; the monochromator stops
+                        at 450.
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        🔑 <b>So it is not the search bypassing the central mechanism, it is the
+                        mechanism having no grip here</b> &mdash; and the search finding that out. Which
+                        lands exactly where the physicist started: a bandpass is normally controlled in
+                        <b>turning-point monitoring</b>, stopping <i>on</i> the extremum rather than
+                        bracketing two. The model rediscovered it by an independent route, which is the
+                        only kind of corroboration available while external validation is still open.
+                    </p>
+                    <p style="margin:0;">
+                        ⚠️ <b>Two competing explanations were tested and killed first.</b> That POEM is
+                        broken: refuted &mdash; the detector counts correctly (real extrema at [8, 15],
+                        nominal at [1, 8, 16]; a 2 nm upstream error flips an extremum sitting 5 % into
+                        the layer), and it anchors on 89 % of the dichroic. That the absolute fallback
+                        was flattered by removing the affine drift: refuted &mdash; with the affine
+                        switched back on at 0.05/0.02 the winner is still 35 blocks and RESULT moves
+                        0.5 %, while <code>n_ranked</code> drops from 380 to 334, proving the parameter
+                        does reach the computation.
+                    </p>
+                </div>
+
+                <h3>10.12 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent

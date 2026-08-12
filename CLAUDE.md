@@ -102,19 +102,21 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 
 | Tu veux… | Va en |
 |---|---|
-| **Commencer une action** | **§12** — les 6 actions, avec fichier, fonction, code, commande et résultat attendu |
+| **Commencer une action** | **la FEUILLE DE ROUTE**, en tête de ce document : ce qui est acquis, puis la suite immédiate |
 | Savoir ce qui est interdit | §1 — les onze interdits |
 | Savoir dans quoi tu vas tomber | §2 — les sept pièges |
 | Savoir comment travailler | §3 — la boucle et la règle d'or |
 | Toucher à du calcul optique | §6 — conventions physiques et oracle TMM |
 | Comprendre la machine de dépôt | §9 — les spécifications du physicien |
 | **Savoir ce qu'on suppose de la machine** | **§9bis — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
-| Comparer un résultat | §10 — le point de référence |
+| Comparer un résultat | **§10 — et il n'y a PLUS de repère valide.** Le rétablir est l'action 0 |
 | Comprendre un mot du projet | §7 — vocabulaire |
-| **Savoir où en est réellement T1…T7** | **§17 — audit du 2026-08-09. À lire avant toute action de §12.** |
-| ⚡ **Gagner du temps d'exécution** | **§18ter — la forme fermée de `T(d)`, ×3,6, exacte à 5e-20. Et la fenêtre adaptative, résultat NÉGATIF.** |
-| 🔴 **Savoir ce qui est RÉELLEMENT implanté** | **§18bis — audit du 2026-08-11. La résolution ne l'est pas, la grille non plus, la moyenne est causale.** |
-| Comprendre le mode Rate | §14, dernier bloc — spécification 👤, non implémentée |
+| **Savoir ce qui est encore cassé** | **§17 — défauts ouverts et constats qui gouvernent. À lire avant toute action.** |
+| ⚡ **Gagner du temps d'exécution** | **§18ter — la forme fermée de `T(d)`, ×1,20 mesuré. Trois pistes FERMÉES, et le vrai levier est ailleurs.** |
+| 🔴 **Savoir ce qui est RÉELLEMENT implanté** | **§18bis — établi contre le CODE, jamais contre ce document. La moyenne de lecture reste causale, l'arrêt n'est pas quantifié.** |
+| Comprendre le mode Rate | §14, dernier bloc — noyau écrit, génération de variantes absente |
+| **Les deux composants d'essai** | §7 pour le dichroïque, **§21 pour le passe-bande à trois cavités** |
+| **La grille des λ, 1 nm ou 2 nm** | §22 — enquête et critère de décision |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 
 Une seule autre page existe, destinée à la communauté :
@@ -155,7 +157,7 @@ amplitudes et le corridor). Le chemin inactif doit rendre les mêmes bits qu'ava
 
 ---
 
-## ⚡ FEUILLE DE ROUTE — 22 actions, dans cet ordre, une par une
+## ⚡ FEUILLE DE ROUTE — ce qui est acquis, puis ce qui vient
 
 **Établie le 2026-08-09**, après l'audit de §17. Elle **remplace** l'ancien tableau T0–T7, qui
 présentait comme à faire du code déjà écrit et comme faites des mesures qui ne l'étaient pas.
@@ -183,168 +185,41 @@ sortie collée. **Une action, un commit.**
 | `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]`, dans le nom du fichier, **et l'annonce dans les 2 s** ; refuse une valeur illisible au lieu de retomber sur le défaut | le trou de traçabilité de §17-7, et §17-11 |
 | `scripts\run_campaign.py` | **Une commande = toute une campagne.** Environnement construit en dictionnaire, aucun shell, chaque run vérifié contre la configuration demandée, reprenable | une nuit de commandes tapées à la main |
 
-### ✅ État au 2026-08-10 — ce qui est FAIT, ne le refais pas
+### ✅ CE QUI EST ACQUIS — ne le refais pas, et ne le redemande pas
 
-| Action | État | Ce que ça a donné |
-|---|---|---|
-| **A1, A2** | ✅ `e3a4c72` | A1 **réfute** le seuil dérivé de §9bis. **A13 doit utiliser `1,00`, pas `0,354`.** A2 passe. |
-| **A7 (ex-T0)** | ✅ **repère rétabli** | `D0.ref` du 2026-08-10 : **`0.0027329534107462224`**, SEEL **0,3 nm**, gagnante 2 blocs. `0,002898` est définitivement écarté. |
-| **A12** | 🟢 **FAITE — POEM validé ×17,5** | §12.1. Le critère de réussite posé à l'avance est atteint. |
-| **A15** | ✅ faite | La marge 3,33 rend un résultat **bit-identique** à 1,66 : **elle ne rejette rien** (§17-12). |
-| **A14** | ✅ **FAITE** | Courbe corrigée du 2026-08-10 : ×1,24 / ×1,86 / **×2,46** / ×4,32, exposant **0,525**. Les chiffres d'avant étaient gonflés de 1,6 à 2,1× par la normalisation fautive. |
-| **A6** | ⚠️ requalifiée | Le banc **est** déterministe. Reste à savoir si une **recompilation** décale les bits — voir §3. |
-| **A10** | ✅ **FAITE** | Le corridor atteint la notation. Courbe corrigée en §17-13. |
-| **A20** | 🟢 **FERMÉE pour ce cas** | L'entonnoir **ne fuit pas** — §17-27. |
-| **Campagne `full`** | ✅ **22/22 OK, 2026-08-11** | `reports/CAMPAGNE_RESUME.md`. Le résultat de tête est §17-26. |
+Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `git log`.
 
-### ✅ Fait le 2026-08-11 — ne le refais pas
-
-| | |
+| | Ce qui en reste |
 |---|---|
-| **§17-20, 23, 24, 25** | ✅ corrigés — `2b5d7a6`, `c8ac1fd`, `4cead53`. Tests contre-vérifiés sur worktree baseline. |
-| **A23 étage 0** | ✅ le plantage **par couche et par cause** et le swing de la couche la pire remontent dans les rapports. Premier résultat : §17-31. |
-| **Campagne E** | ✅ 12/12 — porte C1 franchie, corridor et POEM confirmés (§17-29, 30, 31, 32). |
+| **A1, A2** | Le seuil anti-fabrication vaut **1,00 A** à `k = 8`, `N = 800` — mesuré, pas dérivé. `0,354` est réfuté (§9bis). Les vrais extrema survivent au lissage. |
+| **A6** | Le banc **est** déterministe à état compilé constant. C'est la **recompilation** qui décale les bits, de 2,819e-11, reproductiblement (§3). |
+| **A8** | La grille machine est dé-soudée du lissage : `machine_sampling_dd` existe et vaut 0 par défaut. |
+| **A10, A14** | Le corridor atteint la notation. Courbe : `×1,23 · ×2,03 · ×2,41 · ×4,66`, exposant **0,545** (§17-29). |
+| **A12** | POEM protège d'un facteur **×41,2** sous distorsion affine (§17-29). ⚠️ **Cite la protection, jamais le dommage résiduel** : +0,9 % sur une graine, +98 % sur une autre. |
+| **A15** | La marge Phase A change ce qui est **offert**, jamais ce qui est **retenu** (§17-12). |
+| **A17** | Le facteur de bruit par fente est une **table de 4 entrées** ; une fente absente **lève**. |
+| **A20** | L'entonnoir Phase A → Phase B **ne fuit pas**, sur ce cas (§17-27). |
+| **A23** | Étages 0, 2 et 3 faits. La marge prédit le plantage d'un facteur **22**, validée non circulairement (§17-41). |
+| **Tri de §14** | `rank_key_seel_yield_margin` écrit et testé. Tourne **dans la sonde**, à côté de l'ordre du pipeline — SEEL vit à l'étape 0 de l'interface, l'en sortir reste à faire. |
+| **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§18bis). |
 
-### ✅ Fait le 2026-08-11, seconde session
+### 🔴 LA SUITE IMMÉDIATE
 
-| | |
-|---|---|
-| **§17-37 outillé** | `n_layers_forced` remonte dans le résultat, le JSON de sonde et une **colonne** du résumé de campagne. Vérifié de bout en bout : graine 77, corridor 0,02 → **18 couches forcées sur 48**, 58 % de plantage. Une stratégie subie n'est plus indiscernable d'une stratégie libre. |
-| **A23 étage 2** | ✅ **câblé** — le noyau rend `margin_level`, `margin_missed`, `margin_fab` par (tirage, couche) ; la robustesse en tire `critical_layer` avec sa cause en mots physiques et son verdict. Vérifié sur un vrai batch : marges de niveau **4,87 / 17,94 / 18,35 / 47,00 A** par couche, verdict **« impossible »** à 4,87 A puisque > 2 A. |
-| **Tri de §14** | ✅ **écrit comme fonction pure et testé** — `rank_key_seel_yield_margin`, demi-largeur `max(0,05 nm ; 0,06 × SEEL)`. Appliqué dans la **sonde**, sous `ranking_seel_rule`, **à côté** de l'ordre du pipeline et non à sa place : SEEL vit à l'étape 0 de l'interface, l'en sortir est l'action 1 de §14. Les deux ordres sont donc comparables sur un même run avant qu'on ne bascule. |
-
-> 🔴 **Une correction en cours de route qui vaut d'être retenue.** J'avais fusionné les
-> deux causes de comptage en `min(manque, fabrication)`. Mesure : le nombre saute de
-> **0,15 A à 505 A** entre deux niveaux de bruit — facteur 3000 — uniquement parce que
-> la **cause qui lie bascule**. Physiquement réel, et illisible. §A23 l'écrivait déjà :
-> *une marge par couche ET par cause*, parce qu'une ondulation faible se soigne en
-> déplaçant la λ et un extremum inventé en montant le seuil. J'ai suivi le document
-> plutôt que mon raccourci.
-
-> 🔴 **La leçon de méthode de cette session, et elle vaut pour tout instrument.**
-> `turning_point_margins` a été **fausse quatre fois**, et chaque version rendait des
-> nombres parfaitement plausibles en ne mesurant rien : un segment terminal lu comme
-> quasi-fabrication (marge **négative**, donc impossible) · les extrêmes à demi
-> réinitialisés du détecteur réutilisés (**sentinelle sur toute entrée**) · l'ondulation
-> mesurée au moment de l'émission, où elle vaut le seuil **par construction** (marge ~0
-> que l'ondulation fasse 1,2× ou 100× le seuil) · et un garde unique qui tuait le cas de
-> fabrication le plus intéressant.
-> **Aucune des quatre n'a été attrapée par une valeur suspecte. Les quatre l'ont été en
-> BALAYANT la grandeur que la marge est censée suivre.** C'est le Piège 1 appliqué à un
-> **instrument** au lieu d'un résultat — et un instrument faux est pire qu'un résultat
-> faux, parce qu'il contamine tout ce qu'on mesurera ensuite avec.
-
-### 🔴 La suite immédiate
-
-0. 🔑 **LA QUESTION QUI DÉCIDE SI TOUT CECI SERT : la marge sépare-t-elle les dix
-   ex æquo à `SEEL = 0,3 nm` ?** §17-26 les a mesurées à moins de 2 σ les unes des
-   autres, toutes à 0/150 plantages. **Si la marge les sépare, on a un classement
-   là où il n'y en avait pas. Si elle ne les sépare pas, l'étage 2 est un bel objet
-   sans usage, et il faut l'écrire — pas le contourner.** Un run suffit.
-1. ✅ ~~A23 étage 3~~ — **FAIT le 2026-08-11, zéro run** : §17-41. La marge prédit le
-   taux de plantage d'un **facteur 22**, et le test a été rendu **non circulaire** avant
-   d'être cru. Reste non testée : la règle des 2 A, aucune stratégie ne l'atteignant ici.
-2. **Basculer le classement sur la règle de §14**, une fois le point 0 tranché. La
-   fonction existe et est testée ; ce qui manque est de **sortir SEEL de l'interface**
-   (§14, action 1) pour que le pipeline puisse s'en servir. ⚠️ Ne bascule pas avant
-   d'avoir comparé les deux ordres sur un même run — `ranking_seel_rule` est écrit à
-   côté exactement pour ça.
-3. **Comprendre l'effondrement de `n_ranked` avec le corridor** — 228 → 165 → 78 (§17-30).
-   La Phase A élimine massivement quand l'indice est incertain, et personne ne sait sur quel
-   critère. C'est le contrôle 4 de §20 : **compter les rejets**.
-4. **§17-14 reste ouvert** — E2 a échoué faute de régime (§17-32).
-
----
+0. 🔑 **RÉTABLIR LE REPÈRE.** Le biais de fente est actif par défaut depuis le
+   2026-08-11 : **tout chiffre mesuré avant cette date répond à une autre question**,
+   celle d'une machine à fentes infiniment fines. §10 est périmé, et avec lui la courbe
+   de corridor, le ×41,2 de POEM et la falaise. Un run neutre, et on repart.
+1. **Trancher la grille** — §22, campagne de 8 runs, critère posé à l'avance.
+2. **Sortir SEEL de l'interface** (§14, action 1), sans quoi le tri de §14 ne peut pas
+   remplacer celui du pipeline.
+3. **Comprendre l'effondrement de `n_ranked` avec le corridor** — 228 → 165 → 78
+   (§17-30). Contrôle 4 de §20 : **compter les rejets**.
+4. **§17-14 reste ouvert** — `dp_yield_weight` n'atteint pas le calcul (§17-33).
 
 ### PALIER 0 — Quatre sondes qui ne coûtent rien et qui décident du reste
 
 Aucune ne demande le banc, ni le repère, ni une machine libre. **Minutes chacune.** Elles
 peuvent toutes être faites aujourd'hui.
-
-#### A1 — La fabrication d'extrema sous lissage · *décide du sort de §9bis*
-
-C'est **la** mesure qui valide ou détruit le modèle figé. Si elle échoue, ce n'est pas
-l'action qu'on bricole, c'est §9bis qu'on rouvre.
-
-- **Où** : script autonome dans `scripts/`, **aucun TMM**. Modèle : la sonde qui a déjà produit
-  le tableau 32,9 % / 92,9 % / 99,9 % de §12.2.
-- **Quoi** : signal propre **plat**, bruit réel `A = 5e-4`, **20 000 tirages**, `N = 800`
-  échantillons, moyenne glissante **centrée** de `k` lectures, seuil `f·A`. Compter la
-  fraction de couches où le bruit **fabrique** un point tournant.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | **Reproduire d'abord une ligne connue** : `k = 1`, `f = 1,66`, `N = 800` | **99,935 %** |
-| 2 | Si ce n'est pas ça → **la sonde est fausse, arrête-toi.** Ne va pas plus loin | — |
-| 3 | `k = 8`, `f = 0,354`, `N = 800` | **~0 %** |
-| 4 | Piège 1 : bruit ×0,01 à la config 3 | doit s'effondrer à 0 |
-| 5 | Balayer `k ∈ {1, 2, 4, 8, 16}` avec `f = 1/√k` | courbe **monotone** en `k` |
-
-🔴 **Condition d'arrêt** : si l'étape 3 ne rend pas ~0 %, **colle le chiffre et arrête-toi.**
-**Ne remonte pas le seuil.** §12.2 le dit, et c'est le piège que ce projet a payé trois fois.
-
-#### A2 — Les vrais extrema survivent-ils au lissage ? · *l'autre face, jamais mesurée*
-
-Le lissage supprime les faux extrema. Rien ne prouve qu'il préserve les vrais.
-
-- **Où** : même sonde, signal **propre sans bruit**, sur le juge de paix.
-- **Quoi** : compter les points tournants détectés avec et sans lissage.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | Signal propre, `k = 1` | `n_tp` de référence |
-| 2 | Signal propre, `k = 8` | **`n_tp` identique** |
-| 3 | Si (2) est inférieur | la fenêtre arrondit de vrais extrema → **elle est trop large, dis-le** |
-| 4 | Balayer `k ∈ {8, 16, 32}` | trouver à partir de quel `k` un vrai extremum tombe |
-
-#### A3 — La chute de swing sous fente de 5 nm · *tranche entre 1 h et plusieurs jours*
-
-🔴 **Cette sonde a changé d'objet le 2026-08-10.** Elle mesurait « de combien le swing
-baisse ». **Ce n'était pas le bon mécanisme** : l'OMS calcule ses niveaux attendus en
-résolution parfaite, donc l'effet est un **biais de niveau**, pas une perte de dynamique.
-
-- **Où** : script autonome, TMM nominal, juge de paix, **pas de Monte-Carlo**.
-- **Quoi** : pour chaque couche et chaque λ_mon candidate, calculer
-  `biais = ⟨T⟩_B − T(λ_mon)`, la fente étant **rectangulaire** (👤), pour `B ∈ {0,5 ; 1 ; 2 ; 5}` nm.
-
-| # | Étape | Ce que ça décide |
-|---|---|---|
-| 1 | Comparer le biais à `A = 5e-4`, l'amplitude du bruit | c'est la seule échelle qui a un sens : le biais n'est pas absorbé par la statistique, le bruit si |
-| 2 | Biais **≪ A** à 5 nm | la résolution ne coûte rien en fidélité ⇒ **prendre la fente la plus large**, et empocher le ÷1,5 de bruit |
-| 3 | Biais **≫ A** dès 2 nm | le nominal lui-même est déjà biaisé, et **c'est un défaut du modèle actuel**, pas seulement un réglage |
-| 4 | Rapporter la **couche la pire**, pas la médiane | c'est elle qui lie, cf. `worst_layer` |
-| 5 | Vérifier que le biais varie en **`B²`** | c'est la signature du second ordre. S'il varie autrement, le développement ne tient pas à cette largeur |
-
-⚠️ **Le signe compte.** `T'' > 0` près d'un minimum, `< 0` près d'un maximum : le biais pousse
-donc toujours **vers l'intérieur de la courbe**. Près d'un point tournant, il déplace le niveau
-dans une direction **connue** — ce qui le rend, en principe, corrigeable.
-
-#### 🔴 Pourquoi c'est CRITIQUE, et pas un réglage de confort — 👤 confirmé le 2026-08-10
-
-Le biais est proportionnel à la **courbure** `T''`. Or la courbure est **maximale en un point
-tournant**, où `T' = 0` par définition. **Et un point tournant, c'est exactement ce que POEM
-prend pour ancre.**
-
-Trois conséquences qui s'enchaînent :
-
-1. **Une fente large fausse les deux ancres sur lesquelles repose toute la méthode**, et elle
-   les fausse **vers l'intérieur** — `T''` pointe vers le creux de la courbe de part et
-   d'autre d'un extremum. Le swing mesuré `|T_last − T_prev|` **rétrécit**, et POEM applique
-   sa fraction figée à une amplitude trop petite.
-2. 🔴 **Ça casse le théorème d'invariance.** §12.1 démontre POEM exactement immune à
-   `T → a·T + b` — une transformation **affine**, la même partout. Le biais de fente vaut
-   `T → T + T''(λ)·B²/24` : il dépend de la **courbure locale**, donc il **diffère à chaque
-   ancre et au point de déclenchement**. C'est précisément le type de distorsion que POEM
-   **ne peut pas** absorber, contrairement à la dérive photométrique qu'il bat ×17,5.
-3. Enfin, près d'un point tournant `dT/dd → 0` : une erreur de niveau s'y convertit en une
-   **grande erreur d'épaisseur** — le régime dont §14-5 dit qu'il faut le fuir.
-
-**Le biais, la pente la plus faible et les ancres du mécanisme se rencontrent tous au même
-endroit.** C'est pour ça que la résolution n'est pas un réglage de second ordre.
-
-⚠️ **Conséquence pour la mesure** : le contraste POEM actif / inactif ne dira **rien** de ce
-défaut-là. POEM protège de l'affine ; ici il est complice, parce que ses ancres sont le point
-d'application du biais. **Ne pas conclure de A12 que la résolution est couverte.**
 
 #### A4 — Compter ce que les filtres existants rejettent · *§20-contrôle 4*
 
@@ -394,27 +269,6 @@ rien** — le pire des trois états.
 
 ⚠️ Les étapes 3 et 4 sont les seules qui prouvent que le harnais fonctionne. Ne les saute pas.
 
-#### A6 — Quantifier l'enveloppe de gigue du banc
-
-*Remplace l'ancienne action « localiser l'écart de 2,5e-11 », **annulée** : cet écart était la
-gigue elle-même. Bisecter l'aurait fait chercher une cause à du bruit.*
-
-On ne peut plus dire « le chiffre a changé donc quelque chose est cassé » tant qu'on ne sait
-pas de combien il bouge tout seul.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | Rassembler les runs déjà faits à configuration **neutre** | `CONFIG=` identiques, vérifiés un par un |
-| 2 | Calculer l'écart max relatif entre eux | c'est l'enveloppe |
-| 3 | L'écrire dans §10, avec les valeurs brutes | — |
-| 4 | Si un écart dépasse **1e-9** | ce n'est plus de la gigue de sommation. **Arrête-toi et signale.** |
-
-📏 **Trois points déjà acquis** (2026-08-09, `CONFIG=` vérifiés identiques) :
-`0.002948627371226749` · `0.002948627371309867` · `0.002948627371309867`.
-Écart max relatif **2,8e-11**. Motif observé : le premier run après une invalidation des
-caches numba sort du lot, les suivants s'accordent. **Trois points ne font pas une
-enveloppe** — il en faut plus avant d'écrire un seuil.
-
 #### A7 — Rétablir le repère · *ex-T0*
 
 ```bat
@@ -430,7 +284,7 @@ set CERTUS_BENCH_TIMEOUT_S=5400
 | 4 | Vérifier le bloc `CONFIG=` de la sortie | tous les paramètres à leur valeur neutre |
 | 5 | **Relancer une seconde fois, identique** | 🔴 **jette le premier** : après une recompilation numba il sort systématiquement du lot |
 | 6 | Comparer les deux | l'écart doit tenir dans l'enveloppe de A6, **pas être nul** |
-| 7 | ✅ **fait le 2026-08-10** : §10 porte `D0.ref`, et `0,002898` est écarté | — |
+| 7 | 🔴 **À REFAIRE.** Le repère du 2026-08-10 décrit une machine sans fente. §10 n'en porte plus aucun | c'est l'action 0 de la suite immédiate |
 
 ⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §3. Un écart nul entre
 deux runs serait une coïncidence, pas un critère.
@@ -471,25 +325,6 @@ La moyenne actuelle porte sur `[i−k+1 … i]` : elle décale un extremum de `(
 | 3 | `k = 1` | empreinte identique au bit |
 | 4 | Rejouer A1 avec la centrée | le chiffre de fabrication ne doit pas se dégrader |
 
-#### A10 — Compléter T5 : perturber la NOTATION · *§17-10*
-
-Le corridor atteint la croissance mais pas le score. Le mode **croisé**, celui que le
-physicien décrit comme non compensable, est donc quasi invisible.
-
-- **Où** : `certus/physics/certus_strat_batch.py`, `compute_batch_rmse` (~ligne 355), et son
-  appelant `certus/core/certus_strat_robustness.py:954`.
-- **Quoi** : passer `(a_H, b_H, a_L, b_L)` **par tirage** + la grille λ, et reconstruire
-  l'indice à la volée — comme le fait déjà `simulate_growth_kernel`. **Pas** une matrice
-  d'indices par tirage : trop de mémoire.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | `index_corridor = 0` | empreinte **identique au bit** |
-| 2 | `index_corridor = 0,005`, `b = 0` (décalage pur) | `RESULT` se dégrade **un peu** |
-| 3 | `index_corridor = 0,005`, `a = 0` (croisement pur) | `RESULT` se dégrade **beaucoup plus** |
-| 4 | Si (3) ≈ (2) | la prédiction du §12.3 est réfutée — **dis-le**, c'est un résultat |
-| 5 | Si ni (2) ni (3) ne bouge | **Piège 1** : la perturbation n'atteint toujours pas le calcul |
-
 #### A11 — Les tests qui manquent · *§17-5*
 
 `f7a3d71`, `e0df0e1`, `162a0ff` n'ont ajouté **aucun** test, et aucun test ne mentionne les
@@ -514,23 +349,6 @@ avant le correctif ne prouve rien. C'est le contrôle le plus rentable de §20.
 Toutes au banc, **une machine par run**, `CERTUS_BENCH_TIMEOUT_S=5400`, et le bloc `CONFIG=`
 vérifié avant de lire le moindre chiffre.
 
-#### A12 — POEM sous distorsion, 4 runs · *ex-T2, la seule action qui peut INVALIDER POEM*
-
-`affine_scale_amp = 0.05`, `affine_offset_amp = 0.02`. Ces valeurs sont figées, n'en choisis
-pas d'autres.
-
-| # | Run | Variables |
-|---|---|---|
-| 1 | POEM on, distorsion off | `CERTUS_POEM_ENABLED=1`, amplitudes à 0 |
-| 2 | POEM on, distorsion on | `CERTUS_POEM_ENABLED=1`, `CERTUS_AFFINE_SCALE_AMP=0.05 CERTUS_AFFINE_OFFSET_AMP=0.02` |
-| 3 | POEM off, distorsion off | `CERTUS_POEM_ENABLED=0`, amplitudes à 0 |
-| 4 | POEM off, distorsion on | `CERTUS_POEM_ENABLED=0`, amplitudes non nulles |
-
-**Critère** : l'écart (2)−(1) doit être **beaucoup plus petit** que (4)−(3). C'est toute la
-promesse de POEM. **Si ce n'est pas le cas, l'argument central du mécanisme tombe et il faut
-l'écrire.** Séparer `CRASH_TP_MISCOUNT` et `CRASH_LEVEL_UNREACHABLE` dans le rapport —
-l'asymétrie de `tp_hysteresis` sous distorsion peut fabriquer le premier.
-
 #### A13 — La paire grille + lissage · *ex-T3 et T4*
 
 **Ne conclus rien entre les deux.** Le taux de plantage n'a de sens qu'une fois les deux en
@@ -546,29 +364,6 @@ fabrication à `k = 8`, `N = 800` — voir §9bis. `1,00` est la borne **mesuré
 | 3 | Si (2) ne redescend pas | **dis-le. Ne remonte pas le seuil** |
 | 4 | Balayer `k ∈ {1, 4, 8, 16}` | ⚠️ **le seuil ne suit PAS `1/√k`** — cette loi est réfutée. **Remesure la borne avec `probe_tp_fabrication.py` pour chaque `k`**, puis utilise la valeur mesurée. **Piège 1** : si le plantage ne bouge pas avec `k`, le lissage n'atteint pas le calcul |
 
-#### A14 — Balayage du corridor d'indice · *ex-T5*
-
-🔴 **Si A14 est lancée AVANT A10, elle mesure une moitié de l'effet, et il faut le savoir en
-lisant le chiffre.** Le corridor atteint aujourd'hui la croissance mais pas la notation
-(§17-10) : la dégradation observée ne viendra donc que des **épaisseurs faussées**, pas de
-l'indice erroné du filtre fini. Le chiffre sera **sous-estimé**, et le mode croisé quasi
-invisible. ⚠️ Ce n'est pas une raison de ne pas la faire : refaire A14 **après** A10 et
-prendre la différence donne exactement la contribution du chemin de notation. Mais ne
-présente jamais un A14 pré-A10 comme « l'effet du corridor ».
-
-| # | Run | Attendu |
-|---|---|---|
-| 1 | corridor 0 | identique à A7 |
-| 2 | corridor 0,0025 | dégradation |
-| 3 | corridor 0,005 | dégradation plus forte |
-| 4 | corridor 0,005, `b = 0` | décalage pur |
-| 5 | corridor 0,005, `a = 0` | croisement pur — **attendu bien pire que (4)** |
-
-#### A15 — Marge Phase A, 1,66 → 3,33 · *ex-T6*
-
-Un run chacun. **Séparément du lissage** (C3). Rapporter aussi le **nombre de λ écartées** à
-chaque marge — c'est A4-1 qui donne l'instrument.
-
 ---
 
 ### PALIER 4 — Le neuf
@@ -578,19 +373,6 @@ chaque marge — c'est A4-1 qui donne l'instrument.
 Quasi gratuit une fois A8 faite : s'arrêter au **premier point de grille au-delà du seuil**
 au lieu d'interpoler, et `U(0 ; 0,125 nm)` apparaît d'elle-même, sans paramètre.
 **Vérification** : Piège 1 — si doubler `Δd_sample` ne change rien, la mesure est un artefact.
-
-#### A17 — Résolution : le facteur de bruit · *§12.7, la partie triviale*
-
-Table de 4 entrées, **jamais une loi**. 🔴 Le facteur multiplie **l'échantillon**, jamais la
-graine — sinon les 4 résolutions voient 4 aléas différents et l'écart n'est plus imputable.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | Résolution = 2 nm (nominal) | empreinte **identique au bit** |
-| 2 | Les 4 résolutions, même graine | les tirages **normalisés** doivent être identiques ; seule l'amplitude change |
-| 3 | 4 runs au banc | comparer plantage et erreur spectrale |
-| 4 | 🔴 **Contrôle de sensibilité, obligatoire** : refaire (3) avec ÷1,2 et ×3 au lieu de ÷1,5 et ×5 | **la résolution gagnante doit être la même**. Les facteurs sont 👤 *estimés au feeling*, pas mesurés — une conclusion qui change avec eux n'est pas un résultat |
-| 5 | Si les 4 se tiennent à moins que la dispersion Monte-Carlo | **la résolution ne mérite pas d'entrer dans la recherche** — fige-la à 2 nm et saute A18 |
 
 #### A18 — Résolution : variable de stratégie en Phase B · *§12.7*
 
@@ -737,19 +519,6 @@ vue » le dit.
 **Aucun run supplémentaire n'est nécessaire.** Toute cette action se paie en code, pas en
 temps de calcul — et elle répond à une question à laquelle *aucun* nombre de tirages ne
 répondrait, puisqu'un taux nul reste nul quel qu'il soit.
-
-#### A20 — La fuite de l'entonnoir Phase A → Phase B
-
-**La question jamais posée** : la Phase A écarte-t-elle jamais une stratégie que la Phase B
-aurait couronnée ? §8 exige d'elle exactement une chose — *« elle doit bien couvrir »* — et
-personne ne l'a vérifié.
-
-| # | Étape | Attendu |
-|---|---|---|
-| 1 | Relever la gagnante de A7 | référence |
-| 2 | Construire des stratégies à partir de λ **rejetées ou mal classées** par la Phase A | échantillon |
-| 3 | Les passer en Phase B | si l'une bat la gagnante, **l'entonnoir fuit** |
-| 4 | Si aucune ne bat | la question est close, on n'en reparle plus |
 
 #### A21 — La fonction objectif · *le chantier le plus rentable, et il est gelé*
 
@@ -1297,44 +1066,26 @@ documentation n'interdit pas de le **balayer pour vérifier** que les résultats
 (Piège 1) : un taux de plantage insensible à `k` signalerait que le lissage n'atteint pas le
 calcul. Figé veut dire « on ne re-discute pas la valeur retenue », pas « on ne la teste pas ».
 
-## 10. Point de référence — tout se compare à lui
+## 10. Point de référence — il n'y en a plus, et c'est la première chose à refaire
 
-Obtenu par `scripts\probe_anchor_noise_pipeline.py full 1.0 42`.
+🔴 **IL N'Y A PAS DE REPÈRE VALIDE AUJOURD'HUI. C'est la première chose à refaire.**
 
-```
-Configuration : poem_anchor_noise = 1, tp_hysteresis_factor = 1.66,
-                phase_a_level_margin_factor = 1.66, dp_yield_weight = 0,
-                scan_wl_step = 1.0, index_corridor = 0, N = 150, screening = 25
+Le **biais de fente** est actif par défaut depuis le 2026-08-11 (§18bis). Tout `RESULT`
+mesuré avant cette date décrit une machine à fentes **infiniment fines**, qui n'existe pas.
+Ce ne sont pas des chiffres faux : ce sont les **réponses à une autre question**.
 
-  RESULT       0.0027329534107462224
-  SEEL                           0,3 nm     erreur equivalente par couche
-  gagnante            id 2228, 2 blocs
-  plantage                     0,000
-  RUN_S                       ~1071 s
-```
-
-**C'est le repère `D0.ref` de la campagne du 2026-08-10**, sur le code corrigé — corridor
-côté notation (A10) et normalisation sur l'enveloppe. `RESULT` **est le `robustness_score`
-de la gagnante**, vérifié au bit sur huit runs (§17-15 est close).
+**Sont donc périmés, et il ne faut plus les citer** : l'ancien `D0.ref`
+`0.0027329534107462224`, la courbe de corridor, la protection POEM ×41,2, la position de la
+falaise, et toute statistique par bande antérieure.
 
 ⚠️ **`RESULT` agrège les trois niveaux de bruit** (0,5× / 1× / 2×). Il est donc comparable
 aux **scores** du classement, et **jamais** aux statistiques **par bande**, qui sont au niveau
-nominal seul.
+nominal seul. `RESULT` **est** le `robustness_score` de la gagnante.
 
-⚠️ **Tout repère mesuré avant le 2026-08-10 est périmé** — A10 et l'enveloppe ont changé le
-calcul, et le changement de signature force en plus une recompilation (§3). Ne compare pas au
-travers de cette date.
-
-#### 🪦 Ce que remplace ce repère — pour mémoire, ne le cite plus
-
-Ce document a longtemps cité **`RESULT = 0,002898`** avec « 345 stratégies rendues ».
-**Aucun artefact ne l'a jamais porté** : les valeurs committées pour cette configuration
-valaient `0.00294862737130071` puis `0.00294862737122675`, soit **+1,7 %** d'écart, et le
-compteur de la sonde est plafonné à 12 par construction — 345 n'a jamais pu en sortir.
-
-Le chiffre a servi de référence à des dizaines de comparaisons sans que personne n'ait pu le
-reproduire. **Il est écarté définitivement.** Si tu le vois cité quelque part, c'est une
-survivance.
+🔴 **Et un `RESULT` seul ne départage rien.** §17-26 l'a mesuré : à N = 150, la dispersion
+Monte-Carlo vaut σ ≈ 6 % et l'écart entre la 1ʳᵉ et la 2ᵉ vaut 0,8 σ. **Deux runs qui
+diffèrent de moins de ~8 % sont indiscernables.** Ce qui compare deux configurations, c'est
+la **classe d'équivalence SEEL** (§14), pas le score.
 
 **Ce qu'il faut faire avant toute mesure au banc :**
 
@@ -1435,52 +1186,6 @@ endroits, ce qui aurait fait conclure l'inverse de la vérité.
 
 **Ce qui manque** : `affine_scale` et `affine_offset` ne sont dans la signature d'**aucun**
 appelant. Le tirage n'existe pas.
-
-#### Où, exactement
-
-| Fichier | Fonction | Ce qu'il faut écrire |
-|---|---|---|
-| `certus/physics/certus_strat_batch.py` | `simulate_stack_robustness_batch` | Ajouter `affine_scale: float = 1.0, affine_offset: float = 0.0` en fin de signature, les passer au noyau. |
-| idem | `validate_wavelengths_batch` | Idem. Phase A doit voir la même distorsion que Phase B, sinon les deux étages ne modélisent pas la même machine. |
-| `certus/core/certus_strat_robustness.py` | `_execute_robustness_tasks` (~ligne 814-857, à côté du calcul de `tp_hysteresis`) | Tirer `(a, b)` **une fois par tirage** et les passer au batch. |
-
-#### Le tirage
-
-```python
-# UNE FOIS PAR RUN, jamais par couche. Contrainte C2 : aucune entree de strategie.
-z_a = _seeded_noise_sample(affine_stream_seed, 0, run_idx, 0, True)   # in [-1, 1]
-z_b = _seeded_noise_sample(affine_stream_seed, 1, run_idx, 0, True)
-affine_scale  = 1.0 + affine_scale_amp  * z_a     # amp par defaut 0.0 -> a = 1.0
-affine_offset =       affine_offset_amp * z_b     # amp par defaut 0.0 -> b = 0.0
-```
-
-Deux nouvelles clés JSON, **0,0 par défaut** : `affine_scale_amp`, `affine_offset_amp`.
-
-🔒 **Valeurs à utiliser pour la mesure T2, ne pas en choisir d'autres** :
-`affine_scale_amp = 0.05` (donc `a ∈ [0,95 ; 1,05]`) et `affine_offset_amp = 0.02` (donc
-`b ∈ [−0,02 ; +0,02]`). Ce sont les plages arrêtées de longue date pour cette action.
-
-`affine_stream_seed` se dérive de la graine de tirage comme `_signal_noise_stream_seed`
-(`certus_strat_robustness.py:840`) — **groupes distincts** (`0` et `1`) pour que gain et
-offset soient indépendants, et un `seed_base` distinct de celui du bruit de lecture pour ne
-pas corréler les deux phénomènes.
-
-#### Vérification
-
-```bat
-:: 1. non-regression : amplitudes a 0, le RESULT doit etre IDENTIQUE au repere §10
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-:: attendu : le repere de 10 -- et PAS a travers le 2026-08-10, ou A10 et
-::           l'enveloppe ont change le calcul (voir 3, recompilation)
-
-:: 2. le critere de reussite : avec et sans POEM, sous distorsion
-::    (necessite d'exposer un drapeau de desactivation de POEM, cf. piege ci-dessous)
-```
-
-**Critère de réussite** : mesurer **plantage** et **erreur spectrale** dans les quatre cas
-— POEM actif / inactif × distorsion active / inactive. Si POEM tient sa promesse, l'écart
-doit être **spectaculaire**. Sinon, l'argument central du mécanisme tombe et **il faut le
-dire**.
 
 #### 🟢 MESURÉ LE 2026-08-10 — POEM tient sa promesse, facteur 17,5
 
@@ -1638,29 +1343,6 @@ Les deux actions se compensent comme dans la réalité : **raffiner la grille se
 exploser les faux points tournants** (33 % → 99,9 %) ; la raffiner **avec** le lissage
 reproduit ce que la machine fait. **Faire §12.4 d'abord, ou les deux ensemble.**
 
-#### Où, exactement
-
-| Fichier | Fonction | Ce qu'il faut écrire |
-|---|---|---|
-| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | Après remplissage de `Ts_r` et `Ts_n`, avant `detect_turning_points` : moyenne glissante de `smoothing_window` échantillons. `smoothing_window = 1` par défaut = aucun lissage = chemin actuel bit-identique (C1). |
-| idem | idem | 🔴 **Lisser `Ts_r` ET `Ts_n`.** Le lissage fait partie de « comment la machine lit », et le code impose déjà la **même règle de détection** des deux côtés. Ne lisser qu'un seul signal fabriquerait une divergence de comptage à chaque couche. |
-| idem | idem | ⚠️ Le lissage porte sur le signal **bruité**, donc après l'ajout du bruit de lecture — jamais avant. |
-| `certus/physics/certus_strat_batch.py` | les deux fonctions batch | Acheminer `smoothing_window`. Phase A et Phase B doivent modéliser la même machine. |
-| `certus/core/certus_strat_robustness.py` | `_execute_robustness_tasks` | Nouvelles clés JSON `reading_smoothing_window` (défaut **1**) et `tp_hysteresis_factor` à passer à **0,354** quand la fenêtre vaut 8. |
-
-#### Vérification
-
-1. **Non-régression** : `smoothing_window = 1` → `RESULT` identique au repère §10, bit à bit.
-2. **Rejouer le test de fabrication avec lissage** — la mesure décisive, et elle est bon
-   marché : signal plat, 20 000 tirages, N = 800, `k = 8`, seuil 0,354 A.
-   **Attendu : fabrication ~0 %.** Si ce n'est pas le cas, le dire — et surtout **ne pas
-   remonter le seuil en douce** pour faire passer le chiffre.
-3. **Les vrais extrema survivent-ils ?** Signal propre **sans bruit**, avec et sans lissage :
-   le nombre de points tournants détectés doit être **identique**. S'il baisse, la fenêtre
-   arrondit de vrais extrema et elle est trop large.
-4. **Piège 1** : balayer `k` ∈ {1, 4, 8, 16}. Si le taux de plantage ne bouge pas avec `k`,
-   le lissage n'atteint pas le calcul.
-
 #### La règle de sélection des λ — réglage distinct, à ne pas confondre
 
 `phase_a_level_margin_factor` exige une distance minimale, **en transmission**, entre le
@@ -1757,44 +1439,6 @@ l'épaisseur optique est `n·d`, l'erreur *relative* d'épaisseur optique est l'
 les couches H**, à corridor égal. `delta_max` est une constante absolue unique appliquée aux
 deux matériaux — surtout pas une fraction de `n`.
 
-#### Ce qui a été mesuré, et ce qui bloque
-
-📏 Oracle TMM indépendant, 6 couches, monitoring à niveau absolu : une perturbation produit
-jusqu'à **2,4578 nm** d'erreur d'épaisseur. Le noyau actuel produit exactement **0**.
-
-⚠️ **Ce chiffre SURESTIME l'effet réel, et il faut le savoir.** Il a été mesuré avec une
-perturbation **relative** de 0,5 %, prise avant que le physicien ne précise que le corridor
-est absolu. En absolu, 0,5 % de n_H = 2,35 vaut **0,0118**, soit **2,4× le corridor réel**
-de 0,005 ; pour n_L = 1,46 cela vaut 0,0073, soit 1,5×. L'ordre de grandeur reste : l'effet
-est du premier ordre et le noyau en produit zéro. Mais **la magnitude est à remesurer** avec
-`delta_max = 0,005` absolu, et il ne faut pas extrapoler linéairement — c'est précisément
-le genre de raccourci que ce projet fait payer.
-
-🔴 **Ne pas se contenter de pré-multiplier `n_H`/`n_L` au site d'appel.** Mesuré :
-3,29e-10 nm à δ=0,005, et **1,92e-10 nm à δ=0,05** — ×10 sur la perturbation ne change rien.
-Le même jeu d'indices pilote l'empilement réel **et** le nominal ; les décaler ensemble ne
-crée aucune divergence.
-
-#### Où, exactement
-
-| Fichier | Fonction | Ce qu'il faut écrire |
-|---|---|---|
-| `certus/physics/certus_strat_growth.py` | `simulate_growth_kernel` | **Dédoubler les indices** : `n_H_real, n_L_real` pour `M_before` et `Ts_r` ; `n_H_nom, n_L_nom` pour `M_nom`, `Ts_n` et `target_nominal`. C'est **la** condition sans laquelle rien de tout ceci ne produit d'effet. |
-| idem | idem | L'inversion parabolique finale (`T_points`) décrit le signal **réel** : elle prend `n_*_real`. |
-| `certus/physics/certus_strat_batch.py` | `simulate_stack_robustness_batch` | Accepter `n_H_real_vals` / `n_L_real_vals` en plus des tableaux nominaux. Ils sont **déjà indexés par couche** (chaque couche a sa λ de monitoring) : la dépendance en λ est donc déjà acheminée, il suffit d'y appliquer `δ_M(λ_mon,i)`. |
-| idem | `compute_batch_rmse` | 🔴 **PAS FAIT — c'est ce qui reste de T5, et c'est le morceau qui compte.** `n_layers_flattened` est sur la grille spectrale : le filtre physique a **réellement** l'indice perturbé, donc son spectre doit être évalué avec `n_réel(λ)`. **C'est là que l'inclinaison non compensée se paie.** Vérifié le 2026-08-09 : la fonction n'a aucun paramètre de corridor et reçoit une matrice bâtie sur les indices nominaux. ⚠️ Le corridor étant tiré **par tirage**, il faut soit une matrice d'indices par tirage, soit passer `(a_H, b_H, a_L, b_L)` et reconstruire l'indice à la volée dans le noyau — comme le fait déjà `simulate_growth_kernel`. La seconde voie est la moins coûteuse. |
-
-#### Vérification
-
-```bat
-:: 1. non-regression : index_corridor = 0, RESULT identique au repere §10
-:: 2. balayage : corridor 0 / 0,0025 / 0,005, puis a seul (b=0) et b seul (a=0)
-```
-
-Attendu : `RESULT` se dégrade avec le corridor, **et plus vite pour `b` que pour `a`**. Si le
-chiffre ne bouge pas quand le corridor grandit, c'est le Piège 1 — la perturbation n'atteint
-pas le calcul, exactement comme la recette pré-multiplicative ci-dessus.
-
 #### Valeur à utiliser
 
 `delta_max = 0.005`, en unités d'indice, demi-largeur, **identique pour H et L**. Clé JSON
@@ -1870,51 +1514,6 @@ récidive.
 **Cible** : `Δd = v_dépôt / f_échantillonnage` = **0,125 nm**, soit ~800 points par couche de
 100 nm contre 21 aujourd'hui. Ce n'est pas un raffinement numérique — **c'est une
 caractéristique physique de la machine** (§9).
-
-#### Où, exactement
-
-`certus/physics/certus_strat_growth.py`, `simulate_growth_kernel`, constantes en tête du bloc
-de balayage : `NPTS = 64`, `NPTS_PREV = 16`, `D_SCAN = 3.0`.
-
-#### La parade au coût — découpler les deux grilles
-
-Coût brut d'un passage à 800 points : 4 couches d'historique × 800 + 2 400 = **5 600
-évaluations TMM** contre 128, soit **×44**. Rédhibitoire quand `REPRISE_PERF` conclut qu'il
-n'y a pas de ×2 disponible.
-
-**`T(d)` est lisse** et parcourt moins d'une période sur tout le balayage. Donc : garder les
-évaluations TMM exactes telles quelles, **interpoler** sur les positions d'échantillonnage
-réelles, et tirer **un bruit indépendant par position réelle**.
-
-Le nombre de tirages — qui est ce qui gouverne la fabrication d'extrema parasites — devient
-fidèle **à coût TMM inchangé**. C'est le nombre de tirages qui compte, pas le nombre
-d'évaluations TMM.
-
-🔒 **La formule, à écrire telle quelle :**
-
-```python
-SAMPLE_DD = 0.125        # nm entre deux lectures machine (§9bis-1)
-
-# --- grille TMM : INCHANGEE, 64 points sur 3 x d_nom, 16 par couche d'historique
-NPTS      = 64           # ne pas toucher
-NPTS_PREV = 16           # ne pas toucher
-
-# --- grille d'ECHANTILLONNAGE, nouvelle, en lectures machine
-#     Basee sur l'epaisseur NOMINALE, JAMAIS sur l'epaisseur obtenue :
-#     p_thick_nominal[j] ne depend pas de la strategie, d_real_j si (contrainte C2).
-M_cur    = int(np.ceil(D_SCAN * nominal_th / SAMPLE_DD)) + 1     # couche courante
-M_prev_j = int(np.ceil(p_thick_nominal[j] / SAMPLE_DD))          # couche j de l'historique
-```
-
-Pour une couche de 100 nm : `M_cur = 2401`, `M_prev_j = 800`. Le signal propre est obtenu par
-**interpolation linéaire** des points TMM sur ces positions, puis on ajoute
-`signal_noise_scale * _seeded_noise_sample(seed, groupe, tirage, indice_echantillon, True)`
-à chacune, puis on lisse (§12.2), puis on détecte.
-
-**Indices de bruit** : `(group=j, elem=m)` pour l'historique de la couche j,
-`(group=i_layer, elem=M_prev_max + m)` pour la couche courante, avec `M_prev_max` une
-**constante** assez grande (par ex. 4096) et non `M_prev_j`, qui varie d'une couche à
-l'autre. Sans cela les plages se chevauchent.
 
 #### Pièges connus
 
@@ -2080,55 +1679,6 @@ quadratique pure, où le développement est exact. Or c'est précisément là qu
 compte. **Si `min_resolution` devient un jour un couperet et non un diagnostic, valide-le
 contre une intégration boxcar directe sur l'empilement réel**, pas contre le développement.
 
-#### Ce qui existe déjà dans le code, et ce qui manque
-
-🟢 **La moitié « trop grossier » est déjà écrite** :
-`_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:249-289`) estime, pour
-chaque couche, la largeur de bande à partir de laquelle l'erreur de convolution atteindrait la
-tolérance, via la **courbure spectrale** de `T(λ)` mesurée en seconde différence sur 1 nm :
-
-```python
-curvature = abs((T_vals[0] + T_vals[2]) / 2.0 - T_vals[1])
-res_limit = test_bw * np.sqrt(T_tolerance / curvature)
-```
-
-C'est un développement au second ordre correct, et la fonction rend déjà **la couche la
-pire** — c'est-à-dire la contrainte qui lie.
-
-🔴 **Ce qui manque, dans l'ordre d'importance :**
-
-1. **Le facteur de bruit n'existe nulle part.** Aucun lien entre résolution et
-   `signal_noise_scale`. C'est la partie **triviale à écrire** et celle qui a l'effet le plus
-   direct : une multiplication.
-2. **`min_resolution` est un rapport, pas un critère.** Elle est calculée puis rangée dans
-   `res["min_resolution"]` et affichée. Elle ne sélectionne rien. ⚠️ §20-contrôle 4 : *« compte
-   les rejets, ne lis pas le code »* — vérifie d'abord si cette valeur écarterait quoi que ce
-   soit avant de la câbler.
-3. **La déformation n'est pas appliquée au signal simulé**, seulement estimée. La modéliser
-   vraiment demande d'évaluer `T` sur **plusieurs λ** autour de λ_mon et de pondérer par la
-   fonction de fente — donc ×3 à ×5 sur le coût TMM du chemin de monitoring.
-4. `MachineModel.monochromator_resolution_nm` vaut **0,5**, alimenté par une constante nommée
-   `OMS5100_DEFAULT_MONOCHROMATOR_STEP_NM` et documentée « Monochromator step / precision ».
-   **`step` et `résolution` ne sont pas la même grandeur** — l'un est le pas de réglage de
-   λ_mon, l'autre la largeur de bande. Le nominal que le physicien donne est **2 nm**. C'est
-   le même genre de confusion d'unité que le piège ×100 de `trigger_tolerance` (§17-9). Voir
-   la question Q3.
-
-#### 🟢 Comment mesurer AVANT de construire
-
-**Ne pas écrire la convolution en premier.** Mesurer d'abord si elle compte, avec une sonde
-qui ne coûte rien — même esprit que la sonde « signal plat, 20 000 tirages » de §12.2 :
-
-> Sur le juge de paix nominal, couche par couche, calculer `T(λ)` autour de chaque λ_mon
-> candidate, convoluer par une fente de 5 nm, et regarder de **combien le swing baisse**.
-
-- Si la baisse est de l'ordre du pour cent → la déformation est du second ordre, **seul le
-  facteur de bruit compte**, et l'action se réduit au point 1. Une multiplication.
-- Si elle est de 20 % → elle est du premier ordre et il faut la convolution complète.
-
-**Cette sonde tranche entre une action d'une heure et une action de plusieurs jours.** Elle
-passe avant.
-
 #### 🔑 La résolution FAIT PARTIE de la stratégie — 👤 2026-08-09
 
 > 👤 *« Il faudra donc implanter la détermination de la résolution optimale pour une stratégie
@@ -2182,13 +1732,6 @@ fonction ci-dessus, désigne.
 **Deux conséquences de tenue de dossier, à ne pas oublier** : la stratégie gagnante doit
 **rapporter sa résolution** (sinon elle n'est pas exécutable en salle), et la sonde doit
 l'écrire dans son JSON — même leçon que `f4ada2d`.
-
-#### La mesure au banc, une fois le point 1 câblé
-
-Quatre runs, un par résolution, à configuration égale par ailleurs, et on compare **taux de
-plantage** et **erreur spectrale**. C'est la mesure qui dit si le ×4 de Phase B est justifié :
-si les quatre chiffres se tiennent à moins que la dispersion Monte-Carlo, la résolution ne
-mérite pas d'entrer dans la recherche et on la fige à 2 nm.
 
 #### Les questions à poser
 
@@ -2771,7 +2314,7 @@ physique.
 
 # PARTIE IV — DÉFAUTS OUVERTS ET AUTRES CHANTIERS
 
-## 17. Les défauts ouverts hérités des sessions précédentes
+## 17. Défauts ouverts, et constats qui gouvernent
 
 Trouvés en appliquant §20. **Ce qui a été vérifié et qui tient est sorti de ce document** —
 `git log` le garde. Ne restent ici que les défauts **encore ouverts**, c'est-à-dire du
@@ -2787,21 +2330,12 @@ neufs.
 
 | # | Ce qui a été trouvé |
 |---|---|
-| 1 | ~~La règle d'or n'est pas tenue~~ — 🔴 **CONSTAT RETIRÉ LE 2026-08-09, il était faux.** J'avais relevé un écart de 2,5e-11 entre l'artefact pré-T1 et l'artefact post-T5, à configuration neutre, et j'en avais conclu une violation de C1 « 25× au-dessus du seuil ». **C'était mesurer la mauvaise chose.** Deux runs de configuration **strictement identique** (`CONFIG=` identiques, vérifié) donnent `0.002948627371226749` et `0.002948627371309867` — **2,8e-11**, la même grandeur. Le banc **n'est pas bit-reproductible par construction** : voir l'encadré de §10. Il ne reste de ce constat qu'une chose, et elle tient toujours : **aucune empreinte `float.hex()` n'existe**, donc C1 n'est vérifiée par rien. C'est l'objet de A5. |
-| 2 | **T3 est soudée à T4 et donc inexécutable seule.** `SAMPLE_DD = 0.125` n'existe qu'à l'intérieur de `if smoothing_window > 1:` (`certus_strat_growth.py:652`). La configuration « grille fine, fenêtre à 1 » — celle que la condition d'arrêt de T3 impose d'observer — **n'est pas exprimable**. Et le chemin par défaut garde la grille 38× trop grossière, alors que §12.4 la qualifie de caractéristique physique, pas d'option. |
 | 3 | **Le lissage est une moyenne CAUSALE** (fenêtre `[i−k+1 … i]`), qui décale un extremum de ≈ `(k−1)/2` échantillons, soit **0,44 nm à k = 8**. §12.2 écrit « n'ajouter aucun décalage temporel » et §9bis-5 pose « aucun retard » en postulat figé. Une moyenne **centrée** ne décalerait rien. |
 | 4 | **T7 n'est pas implémenté** malgré le message de `162a0ff`. L'arrêt reste obtenu par inversion parabolique continue ; aucune loi `U(0 ; 0,125 nm)` n'existe. Par ailleurs T5, T6 et T7 dans un seul commit contredit **C3**. |
-| 5 | **Aucun test n'accompagne les trois commits de feature.** `f7a3d71`, `e0df0e1`, `162a0ff` ne touchent aucun fichier de `tests/`, et aucun test ne mentionne les nouveaux paramètres. Le contrôle 2 de §20 est donc inapplicable. |
-| 6 | **Les mesures qui SONT le critère de réussite n'ont pas été faites.** T2 (4 runs POEM×distorsion), le balayage de corridor de T5, et T6 : aucun artefact, aucun run. |
-| 7 | **Les deux seuls runs de modèle ne sont pas exploitables.** `..._yw1_hyst0p354.json` (plantage 0,76) et `..._yw1_hyst0p707.json` (plantage 0,45) sont à `dp_yield_weight = 1`, donc **incomparables** au repère §10 qui est à 0. Et **ni l'un ni l'autre n'enregistre `reading_smoothing_window`** : le script lit `CERTUS_SMOOTHING_WINDOW` dans l'environnement (`probe_anchor_noise_pipeline.py:95`) et ne l'écrit nulle part. **On ne sait pas avec quel `k` ces deux chiffres ont été obtenus.** |
-| 8 | **Un artefact de mesure a été emporté dans le commit « traduction »** `cc90a94` : `reports/probe_anchor_noise_pipeline_full_step1_seed42.json`, celui-là même qui porte le chiffre changé du point 1. |
-| 10 | 🔴 **T5 (corridor d'indice) n'atteint QUE la moitié du calcul.** Le tirage est conforme au §12.3 au mot près — un `(a, b)` par matériau et par tirage, `\|a\|+\|b\| ≤ δ_max`, affine en λ, appliqué à la λ de monitoring de chaque couche (`certus_strat_batch.py:115-131` et `290-306`), et il respecte bien « mêmes indices pour toutes les paires, mêmes pour toutes les impaires ». Il atteint le chemin de **croissance** : l'empilement réel est bâti avec `n_*_real` pendant que le nominal reste nominal, donc les épaisseurs sortent fausses. **Mais il n'atteint PAS la notation.** `compute_batch_rmse` n'a **aucun** paramètre de corridor (`certus_strat_batch.py:355-364`), et `n_layers_matrix` est construite par parité à partir des tableaux **nominaux** seuls (`certus_strat_robustness.py:757-764`). Le spectre du filtre fini est donc évalué comme si les indices étaient exactement nominaux. §12.3 l'avait écrit d'avance : *« c'est là que l'inclinaison non compensée se paie — l'omettre annulerait tout l'intérêt de l'action »*. **Le mode CROISÉ, celui que le physicien décrit comme non compensable, est précisément celui qui ne se voit que dans le spectre final — il est donc quasi invisible dans l'état actuel.** ⚠️ Ce n'est pas une correction d'une ligne : le corridor est tiré **par tirage** alors que `compute_batch_rmse` reçoit **une seule** matrice d'indices pour tous les tirages. |
 | 18 | 🔴 **Le chemin CONSENSUS ignore `robustness_num_runs`.** Trouvé au rodage du 2026-08-10 : un run demandant **20 tirages**, `CONFIG` à l'appui, rend `0.002948627371309867` — **exactement**, au dernier bit, la référence historique à **150** tirages. `_unpack_consensus_cfg` porte un `consensus_num_runs` distinct, que l'override n'atteint pas. **Toute mesure faite avec le consensus actif est donc à une profondeur autre que celle demandée, et n'est comparable à rien.** Exposer `consensus_num_runs` avant de s'en servir. |
-| 14 | 🟠 **`dp_yield_weight` est nul, mais peut-être ARITHMÉTIQUEMENT et non par panne de câblage** — *constat corrigé le 2026-08-11.* Il est bien inerte : `yw0`, `yw50`, `yw200`, `yw1000` donnent des profils par bande **rigoureusement identiques**, et D5.yw200 du 2026-08-11 rend en plus un **top-5 identique dans le même ordre**. J'en concluais « il n'atteint pas le calcul ». 🔴 **Cette conclusion n'est pas établie**, et il y a une explication plus simple que je n'avais pas cherchée : le coût vaut `w·(−log(1−p))`, et **toutes** les stratégies du classement ont `p = 0`. Le terme vaut donc `w·0 = 0` quel que soit `w` — un zéro exact, pas un fil coupé. **L'expérience qui tranche existe et coûte un run** : relancer `dp_yield_weight` à un corridor où il y a des plantages — D1.5 en a 29,3 %. S'il reste nul là, c'est un défaut de câblage ; s'il agit, il n'y avait rien à réparer. **Ne pas « corriger » ce paramètre avant d'avoir fait ce run.** |
 | 15 | 🔴 **Deux configurations différentes rendent le MÊME `RESULT` au bit, alors que leurs bandes diffèrent.** Seuils 2,0 A et 2,4 A : `RESULT = 0.003192038110407474` pour les deux, mais `passante` vaut 0,003214 contre 0,004444 — **38 % d'écart**. Donc `RESULT` est **aveugle à un changement qui déplace visiblement le résultat**. Avant de continuer à s'en servir comme grandeur de tête, il faut savoir ce qu'il agrège exactement : §10 dit « le pire des trois niveaux de bruit », et personne n'a vérifié cette phrase dans le code. |
 | 16 | 🟢 **La bande bloquée n'est jamais le mode de défaillance.** Sur les 25 runs au disque, elle est **~567× plus propre** que la passante, sans exception. §14 s'inquiète à juste titre qu'un RMSE uniforme ne puisse pas distinguer les deux bandes — mais **le filtre ne rate jamais son blocage, il rate son passage**. ⚠️ Cela ne clôt pas §14 : l'exigence est ~500× plus serrée en bande bloquée, et 567 ≈ 500 signifie que les deux bandes sont **également proches de leur spec**, pas que l'une est acquise. Il faut les tolérances réelles par bande pour trancher, et on ne les a pas. |
 | 12 | 🟠 **La marge de Phase A agit, mais ne change jamais l'issue** — *constat corrigé le 2026-08-11, l'ancien était trop sévère.* Il disait « elle ne rejette RIEN », sur la seule foi d'un `RESULT` bit-identique. **C'était lire la mauvaise grandeur.** D5.marg de la campagne du 2026-08-11 : à 3,33 le classement porte **257** stratégies contre 228 à 1,66, et son **top-5 est différent**. La marge atteint donc bien le calcul et modifie la population de la Phase A. Mais la gagnante reste la **même stratégie physique** — `[544, 531]`, 2 blocs, origine SYM, sous l'id 2226 au lieu de 2228, l'id n'étant qu'un rang d'énumération — et le score est bit-identique. **Le bon énoncé : elle change ce qui est offert, jamais ce qui est retenu.** |
-| 13 | 🟢 **Le corridor d'indice, courbe CORRIGÉE du 2026-08-10.** Notation perturbée (A10) **et** normalisation sur l'enveloppe : `0,001 → ×1,24` · `0,0025 → ×1,86` · **`0,005 → ×2,46`** · `0,010 → ×4,32`. En SEEL : **0,3 → 0,6 nm à la valeur du modèle**, l'erreur équivalente **double**. Exposant log-log **0,525**, remarquablement proche d'une racine carrée. ⚠️ Les chiffres d'avant (×1,98 / ×3,35 / ×5,16 / ×8,19, exposant 0,616) étaient **gonflés de 1,6 à 2,1×** par la normalisation fautive. **Ne les cite plus.** |
 | 19 | 🟢 **La prédiction du §12.3 est CONFIRMÉE, et cette fois sans l'artefact.** Le nombre de blocs de la gagnante croît de façon monotone avec le corridor : **2 → 3 → 4 → 5 → 8**. §12.3 l'annonçait — *« cela favorise les stratégies dont les λ de contrôle sont réparties plutôt que groupées »*. 🔑 **Ce qui rend ce constat solide, c'est qu'il survit à la correction.** Le bug de normalisation poussait dans le **même sens** (il pénalisait les λ groupées d'un facteur allant jusqu'à 21) : tant qu'il était là, l'effet physique était indémontrable. L'artefact retiré, l'effet demeure. |
 | 17 | 🔑 **POEM protège AUSSI contre l'erreur d'indice, et ce n'est pas le théorème qui le fait.** Sur le corridor corrigé (2026-08-10), à 0,005 : `SEEL 0,6 nm` avec POEM contre **`22,3 nm` et 29,3 % de plantage** sans — un rapport de **×34,8** sur le `RESULT`. Or POEM n'est invariant que par distorsion **affine**, et une erreur d'indice n'en est pas une. **L'explication est l'autre mécanisme** : POEM recale ses ancres sur les extrema réellement observés, donc il compense les erreurs d'épaisseur **accumulées**. ⚠️ Le facteur de protection propre (rapport des coûts) demande un run POEM-off à corridor 0 sur le code corrigé, **qui n'existe pas encore** — les valeurs ×7,6 puis ×6,85 citées plus tôt sont d'avant l'enveloppe. |
 | 26 | 🔑 **LE RÉSULTAT DE LA CAMPAGNE DU 2026-08-11 : à N = 150, le classement départage du BRUIT.** Deux mesures indépendantes le disent, et elles concordent.<br>📏 **(1) Dispersion sur sous-paquets** du run N = 1200, `scripts\analyse_campagne.py`. `spread_relative` est une **étendue** (max−min)/médiane, pas un écart-type : divisée par `E[étendue]/σ` du nombre de paquets, elle donne `σ ≈ 6,28 %` à N = 128 (9 paquets, ÷2,97) et `6,73 %` à N = 256 (4 paquets, ÷2,06). La loi en `1/√N` est **exacte** entre N = 32 et N = 128 : 12,56 / 6,28 = **2,00** pour une profondeur ×4. Donc **σ ≈ 5 à 6 % au point de fonctionnement N = 150**.<br>📏 **(2) Écarts entre stratégies**, classement N = 150, corridor 0 : #1 `0.0027330` · #2 **+6,5 %** · #3 +9,9 % · #4 +11,0 % · #8 +16,6 %.<br>🔴 **L'écart #1→#2 vaut 6,5 %, et la différence de deux scores porte `σ√2 ≈ 8 %` : la gagnante et sa dauphine sont à 0,8 σ. Indiscernables.** Le top 8 entier tient dans ~2 σ.<br>✅ **Corroboré par le balayage D2, obtenu autrement** : le top-5 n'est stable à **aucun** passage de N, et la gagnante alterne 2228 / 2218 / 2228 / 2228 / 2228 / 2218.<br>🔑 **Et les huit lisent `SEEL = 0,3 nm`.** La règle de tri de §14 — SEEL quantifié à 0,1 nm, puis rendement — n'est donc **pas une commodité d'affichage : c'est le classement statistiquement correct**, et cette campagne démontre que le tri continu actuel départage du bruit.<br>💰 **Le coût de l'alternative, chiffré** : séparer 6,5 % à 3 σ demanderait `σ ≈ 1,5 %`, soit `N ≈ 150 × (5,5/1,5)² ≈ 2000` tirages par stratégie — **×13**. La bonne réponse n'est pas de les acheter, c'est de déclarer l'égalité. |
@@ -2813,7 +2347,6 @@ neufs.
 | 38 | 🟠 **Un filtre de plus qui ne rejette RIEN : `forbidden_gain_negative` vaut 0 sur les 8 runs examinés**, à toutes les couches, corridor 0 comme corridor 0,020. Le critère de gain de compensation négatif n'a **jamais** écarté une seule candidate. Comme pour §17-12 et §17-33 : soit il n'atteint pas le calcul, soit ce qu'il écarterait n'existe pas. **Compter avant de conclure** — mais un filtre à zéro rejet sur toute la plage mesurée est un défaut, pas un succès. |
 | 33 | ✅ **§17-14 EST TRANCHÉ : `dp_yield_weight` N'ATTEINT PAS LE CALCUL.** F1 du 2026-08-11 l'a porté à 200 sur le bras qui plante à **59,3 %** (POEM coupé + distorsion). Résultat **bit-identique** à `yw = 0`, `0.3279370792191264`, même gagnante `8800`, **même top-5 dans le même ordre**. Or le terme vaudrait `200 · (−log(1 − 0,593))` = **180**, un coût énorme. Ce n'est donc plus l'explication arithmétique de §17-14 : **le fil est coupé.**<br>⚠️ **La nuance qui reste, et il faut la dire** : le `p` de la DP est l'estimation **par couche de la Phase A**, pas le taux final de la Phase B. Il reste donc deux lectures — le paramètre n'atteint pas la DP, ou la DP voit encore `p = 0` même ici. **Pratiquement, c'est le même verdict : comme bouton, il ne fait rien.** Ce qui les départagerait : instrumenter le `p` que la DP reçoit réellement. |
 | 34 | 🔴 **MA PRÉDICTION DE §17-30 EST RÉFUTÉE — le monitoring couche-par-couche gagne dans une FENÊTRE, pas de façon monotone.** J'avais posé que si le mécanisme était réel, élargir le corridor devait le pousser plus loin. F2 dit le contraire :<br>`graine 101, corr 0,005` → 30 stratégies à 48 blocs, **rangs 1 à 30** · `graine 101, corr 0,010` → **1 seule, rang 55 sur 68**, et la gagnante fait 3 blocs · `graine 77` → rang 2 puis rang 21.<br>🔑 Et le run qui réfute est **sain** (0 % de plantage, SEEL 1,3 nm), donc ce n'est pas un régime dégénéré qui parle. **Le constat §17-30 reste vrai — le gradient de pire à meilleur existe — mais il n'est pas monotone et je l'avais sur-extrapolé.** Il y a une bande d'incertitude d'indice où se réancrer à chaque couche paie, et elle se referme au-delà. |
-| 35 | 🔴 **IL Y A UNE FALAISE, ET SA POSITION DÉPEND DE LA GRAINE D'UN FACTEUR ≥ 2.** Plantage de la gagnante :<br>`graine 42` → 0 % jusqu'à corridor **0,010**, puis **99,3 %** à 0,020 · `graine 77` → 0 % à 0,005, **100 %** à 0,010 · `graine 101` → 0 % à 0,005 **et** à 0,010.<br>Ce n'est pas une dégradation continue, c'est un mur : on passe de `SEEL 1,2 nm` à `SEEL 30–37 nm` et de 0 % à ~100 % de plantage en doublant le corridor.<br>🔑 **La conséquence pratique, et elle est sérieuse** : à la valeur du modèle (0,005) les trois graines vont bien, mais **la marge jusqu'à la catastrophe est inférieure à un facteur 2 sur la graine 77**. Ce n'est pas un confort. ⚠️ À vérifier avant d'en faire une règle : trois graines ne font pas une distribution. |
 | 36 | 🟢 **A23 ÉTAGE 0 REND SON PREMIER VRAI DIAGNOSTIC — impossible à obtenir avant le 2026-08-11.** Sur l'effondrement de la graine 77 à corridor 0,010, le profil par couche montre que **rien ne plante avant la couche 35**, puis tout plante de **35 à 47** — le dernier quart de l'empilement. Sur 1033 plantages par couche : **856 (79 %) sont des `tp_miscount`**, 222 (21 %) des `level_unreachable`.<br>**C'est l'histoire de l'erreur accumulée, lue directement** : l'erreur d'indice se compose le long de l'empilement, et dans le dernier quart l'écart d'épaisseur optique devient assez grand pour que la machine compte le **mauvais nombre d'extrema**. Ce n'est pas le niveau qui devient inatteignable, c'est le **comptage** qui décroche.<br>La gagnante porte en plus `worst_swing = 0,0334` à la couche 31 et **2 couches sous `SWING_MIN`** : la Phase A a retenu une stratégie qui a des couches sans signal exploitable. **Un taux agrégé de « 100 % » ne disait rien de tout cela.** |
 | 29 | 🟢 **CAMPAGNE E, 2026-08-11 — les correctifs de cohérence passent la porte C1, et les deux résultats de tête TIENNENT.** 12/12 runs `OK`, code corrigé (§17-20, 23, 24, 25).<br>✅ **Porte C1** : `E0.ref = 0.0027329534106323534` contre `D0.ref = 0.0027329534107462224`, **écart relatif 4,2e-11** — l'ordre de la recompilation (2,8e-11, §3). Aucun correctif n'a fui dans le chemin neutre, donc la campagne est interprétable.<br>✅ **La courbe du corridor survit** : `×1,23 · ×2,03 · ×2,41 · ×4,66` contre `×1,24 · ×1,86 · ×2,46 · ×4,32` avant. Écarts de −0,7 % à +9 %, c'est-à-dire **dans le bruit statistique** (σ√2 ≈ 8 %, §17-26). Exposant **0,545** contre 0,525. **C'était le résultat phare et il est robuste au correctif.**<br>🔑 **POEM : la protection monte à ×41,2** (contre ×17,5). POEM actif ×1,198 sous distorsion, POEM coupé **×49,41**. Couper POEM sans aucune distorsion coûte déjà ×2,43 (contre ×1,975).<br>⚠️ **Le dommage résiduel avec POEM est de +19,8 % ici, pas +0,9 %.** §12.1 disait déjà que le +0,87 % de la graine 42 était un tirage chanceux. **Cite la protection, jamais le résiduel.** |
 | 30 | 🔑 **LE MONITORING COUCHE-PAR-COUCHE PASSE DE PIRE À MEILLEUR QUAND LE CORRIDOR S'ÉLARGIT.** Gradient mesuré le 2026-08-11, et il est propre :<br>`corridor 0, graine 42` → 48 blocs au rang **228 sur 228** (dernier) · `0,005 graine 42` → rang 153/165 · `0,005 graine 77` → rang **2**/78 · `0,005 graine 101` → **rang 1, et les rangs 1 à 30**.<br>Le mécanisme est cohérent : les ancres POEM héritées du bloc ont été acquises sous un indice que la machine croit connaître et ne connaît pas. Plus l'erreur d'indice est grande, plus l'historique est **trompeur** — jusqu'au point où se réancrer à chaque couche devient gagnant. C'est le bout extrême de la tendance « λ réparties » du §17-19.<br>🔴 **MAIS ÇA NE CONTINUE PAS — voir §17-34, qui réfute l'extrapolation que j'avais faite ici.** L'effet vit dans une **fenêtre** d'incertitude d'indice et se referme au-delà. Le gradient ci-dessus est réel ; « plus le corridor est large, plus ça gagne » est faux.<br>🔴 **Ça ne contredit PAS le ×171 de §10.3 de la page** : celui-ci est mesuré à corridor **0**, où 48 blocs est effectivement catastrophique. Les deux énoncés portent sur deux régimes. **Ne cite jamais l'un sans son corridor.**<br>⚠️ Constat second, à ne pas perdre : `n_ranked` s'effondre avec le corridor — **228 → 165 → 78 → 80**. La Phase A élimine beaucoup plus de candidates quand l'indice est incertain. Non expliqué. |
@@ -2821,13 +2354,8 @@ neufs.
 | 32 | 🔴 **E2 A ÉCHOUÉ, et c'est instructif : `dp_yield_weight` reste indécidable.** Le run devait trancher §17-14 en portant le poids là où il y a des plantages — corridor 0,005, qui plantait à 29,3 % sur le code d'avant. **Sur le code corrigé ce bras plante à 0,0 %**, donc le terme valait encore `w·(−log(1−0)) = 0` et E2 est revenu **bit-identique à E1.3**, même gagnante, même score. §17-14 est toujours ouvert. Le seul bras qui plante encore est E3.4 (POEM coupé + distorsion, **59,3 %**) → c'est là qu'il faut le mesurer, et c'est l'objet de F1. ⚠️ **Leçon de méthode** : une expérience conçue contre un régime que le correctif fait disparaître ne mesure rien. Vérifier que le régime existe **encore** avant de lancer. |
 | 28 | 🔴 **AUCUN critère connu d'avance ne permet d'élaguer les 228 stratégies. Mesuré, et il détruit la règle évidente.** À corridor 0 la classe d'équivalence (`SEEL = 0,3 nm`) compte **10 membres, aux rangs 1 à 10, tous à 2 blocs, tous `ELITE` ou `SYM`** — une règle de tri superbe. **Elle ne survit à aucun changement de régime :**<br>`corr 0` → 2 blocs, ELITE+SYM · `0,001` → **3 blocs, `LOCAL_SEARCH` seul** · `0,0025` → 2 à 5 blocs, trois générateurs · `0,005` → **5 blocs, `LOCAL_SEARCH` seul** · `0,010` → **8 blocs, `LOCAL_SEARCH` seul** · graine 77 → 2-3 blocs, **les quatre générateurs** · 101 → LOCAL_SEARCH+SMART_MERGE · 202 → ELITE.<br>🔴 **`LOCAL_SEARCH` ne produit RIEN à corridor 0 et produit la gagnante, seule, à 0,001, 0,005 et 0,010.** La règle « il ne gagne jamais », que les données à corridor 0 justifiaient parfaitement, aurait **jeté la gagnante dans 4 configurations sur 8**. Idem pour « ne garder que les 2 blocs ».<br>**Chaque générateur mérite sa place dans au moins un régime, aucun dans tous.** C'est §13 en acte : *on ne prédit pas un résultat de simulation.*<br>✅ **Le levier qui marche est la PROFONDEUR, pas la population** (§17-27) : générer large, cribler peu (10 tirages, sans perte), approfondir étroit sur les ~10 finalistes. C'est une **réallocation**, pas une dépense en plus — ce qu'on cesse de payer à des stratégies à 3× la gagnante finance la profondeur là où elle décide. 📏 Coût mesuré : **~0,15 s par (stratégie × tirage)** au stade final, la Phase A (~730 s) n'ayant pas à être refaite. |
 | 27 | 🟢 **L'entonnoir Phase A → Phase B NE FUIT PAS.** D3 du 2026-08-11, et le contrôle 4 de §20 est satisfait : le criblage **atteint** bien le calcul — `n_ranked` vaut **133 / 140 / 219 / 228 / 445** pour un criblage à 10 / 50 / 100 / 25 tirages et `keep30`. Malgré 445 stratégies classées contre 133, la gagnante est **toujours** `[544, 531]`, 2 blocs, SYM, et le score est bit-identique. **Cribler à 10 tirages ne perd rien, et garder 30 survivantes ne trouve rien de mieux.** ⚠️ C'est un résultat sur **une** graine et **un** empilement : il ferme A20 pour ce cas, pas en général. |
-| 23 | 🔴 **La propagation d'état de la Phase A laisse SIX paramètres de modèle à leur valeur neutre.** Trouvé le 2026-08-11 par balayage AST de tous les appels aux noyaux. `certus_strat_growth.py:1245` passe **16 arguments à un noyau qui en compte 22** : `affine_scale` (1.0), `affine_offset` (0.0), `poem_enabled` (**True**), `smoothing_window` (1), `n_H_real` / `n_L_real` (le corridor) restent donc aux défauts. **Conséquence** : en Phase A, l'historique propagé de couche en couche est simulé **sans dérive photométrique, sans corridor d'indice, POEM forcé actif et sans lissage**, pendant que les candidates de la couche suivante sont jugées **avec** les quatre. L'historique de la Phase A est donc systématiquement plus propre que le monde où vivent ses candidates. 🔑 **Et le docstring du noyau énonce exactement le principe violé** (`:1231`) : *« The states propagated here become the history on which the next layer will be judged: evaluating them without the block history while the candidates were evaluated with it would produce a Phase A inconsistent with itself. »* Même argument, quatre paramètres de plus. ⚠️ Touche **toutes** les mesures corridor, **toutes** les mesures affines (le ×17,5 de §12.1) et les bras POEM-off, où la Phase A a propagé **avec** POEM. |
-| 24 | 🟠 **Le gain de compensation de la Phase A est mesuré AVEC la distorsion affine mais SANS le corridor.** `certus_strat_batch.py:229` et `:237` passent `aff_s_0`/`aff_o_0` et laissent `n_H_real`/`n_L_real` au défaut. Les deux appels sont volontairement à bruit nul — c'est une dérivée, pas une simulation, et c'est écrit — mais alors il faut être cohérent : **soit les deux perturbations, soit aucune.** |
-| 25 | 🔴 **Un repli silencieux réinstalle le bug qu'on vient de corriger.** `certus_strat_batch.py:323` : `if wl_max <= wl_min: wl_min, wl_max = corridor_wl_range(layer_wavelengths, layer_wavelengths)`. Un appelant qui oublie la paire `corridor_lo/hi` retombe donc **sans le moindre message** sur la normalisation par les seules λ de monitoring — le défaut du 2026-08-10, celui qui a invalidé toutes les mesures de corridor antérieures. Contrôle 4 de §20 dans sa forme la plus pure : *ça ne produit pas d'erreur, ça produit un résultat plausible.* **Doit lever, pas se rabattre.** |
-| 20 | 🔴 **La Phase A ne reçoit PAS l'enveloppe du corridor, et un docstring affirme le contraire.** Trouvé le 2026-08-10. `corridor_wl_range` (`certus_strat_batch.py:45`) écrit : *« ONE caller computes this and passes it to the growth batch, **the Phase A batch** and the scoring kernel »*. C'est faux. `validate_wavelengths_batch` n'a **aucun** paramètre `corridor_lo`/`corridor_hi` et recalcule aux lignes 128-131 : `wl_min = np.min(candidate_wls)`, `wl_max = np.max(candidate_wls)`. Or `candidate_wls` est la liste **filtrée par couche** (`certus_strat_service.py:1060`), donc le domaine de normalisation **change à chaque couche** et peut être très étroit. La grille spectrale vaut `wl_range 400–700`, le balayage `scan_wl 450–700` : même au mieux, `u(400) = −1,4` sort de ±1. **C'est le bug corrigé côté Phase B, resté entier côté Phase A** — et §12.3 le demandait explicitement. ⚠️ Correction = signature de noyau = recompilation : **ne pas la faire pendant une campagne**. |
 | 21 | ⚠️ **`MAX_LOOKBACK = 4` n'était documenté nulle part ici.** `certus_strat_growth.py:526`. L'historique de bloc rejoué par POEM est écrêté à **4 couches**, quelle que soit la longueur du bloc. C'est délibéré et testé (`tests/unit/test_strat_poem.py:169`), mais il faut le savoir pour lire tout résultat sur le nombre de blocs : **la valeur d'un bloc long est plafonnée par construction.** Un bloc de 24 couches ne rejoue que ses 4 dernières. |
 | 22 | ⚠️ **L'historique est échantillonné 1,33× plus grossièrement que la couche courante**, et le commentaire du noyau annonce 4×. `NPTS_PREV = 16` par couche d'historique contre `NPTS = 64` sur `3 × d_nom`, soit 21,3 points par `d_nom` : le rapport de **densité** vaut 21,33/16 = **1,33**, pas 64/16 = 4 — les deux balayages ne couvrent pas la même longueur (`certus_strat_growth.py:511`). Conséquence réelle : un même point physique ne porte pas la même densité de bruit selon qu'il est lu comme historique ou comme couche courante. La grille cadence-machine corrige cela (ligne 652) mais elle est derrière `if smoothing_window > 1` — la soudure du §17-2. **Toutes les mesures faites à `reading_smoothing_window = 1` ont donc l'échantillonnage asymétrique.** |
-| 11 | 🔴 **`poem_enabled` ne peut pas être désactivé par l'environnement.** Mesuré le 2026-08-09 : deux runs lancés avec `CERTUS_POEM_ENABLED=0` ont rendu `CONFIG={"poem_enabled": true}` et des `RESULT` **bit-identiques** aux runs POEM actif. Cause : `probe_anchor_noise_pipeline.py:94` teste `os.environ.get(...) not in {"0", "false", "False"}` — une valeur `"0 "` avec un espace de fin, que `set VAR=0 ` produit sans le montrer, rend **True**. Les amplitudes affines y survivent parce que `float("0.05 ")` avale l'espace ; le test d'appartenance non. **Correctif : `.strip()` sur toutes les variables lues**, et une valeur inattendue doit lever, pas retomber silencieusement sur le défaut. ⚠️ **A12 est inexécutable tant que ce n'est pas corrigé** — et elle rendra des chiffres parfaitement crédibles. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
 **Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
@@ -2835,7 +2363,22 @@ configuration effective dans `r["config"]` et dans le nom du fichier. Les deux a
 produits, eux, restent inexploitables — **on ne peut pas les rattraper, il faut les
 refaire.**
 
-## 18bis. 🔴 ÉTAT RÉEL DE L'IMPLANTATION — audit du 2026-08-11
+### ✅ Fermés — talons conservés parce que le code et ce document y renvoient
+
+| # | Ce qu'il en reste |
+|---|---|
+| 1 | L'écart de 2,5e-11 n'était pas une violation de C1 : c'est la **recompilation** numba. Le seul instrument de C1 reste une empreinte `float.hex()`, qui n'existe pas (A5). |
+| 2 | La grille machine était **soudée** au lissage. Dé-soudée : `machine_sampling_dd`, défaut 0. |
+| 5 | Trois commits de fonctionnalité n'avaient **aucun** test. Comblé depuis. La règle demeure : **un test doit ÉCHOUER sur le code d'avant**, sinon il ne prouve rien. |
+| 7 | 🔑 **Un run qui ne consigne pas sa configuration n'est comparable à rien.** Deux artefacts ont été perdus ainsi. La sonde écrit désormais sa configuration effective dans le résultat **et** dans le nom du fichier — et le nom porte aussi le **composant** (§21). |
+| 11 | `CERTUS_POEM_ENABLED=0` était ignoré : `"0 "` avec une espace de fin passait le test d'appartenance. **Toute variable lue est `.strip()`, et une valeur inattendue lève.** |
+| 14 | `dp_yield_weight` : tranché en §17-33, il **n'atteint pas le calcul**. |
+| 20 | La Phase A recalculait le domaine de normalisation du corridor par couche. Corrigé : **un seul appelant calcule l'enveloppe et la passe aux trois étages.** |
+| 23 | 🔑 **La propagation d'état de la Phase A laissait six paramètres à leur valeur neutre**, donc l'historique propagé vivait dans un monde plus propre que les candidates jugées dessus. Corrigé, et la **fente** en a été le septième (§18bis). C'est le motif à surveiller : *l'historique doit être simulé dans le monde où les candidates sont jugées.* |
+| 25 | Un repli silencieux réinstallait la normalisation fautive du corridor. **Il lève désormais.** Règle générale : un paramètre manquant est une erreur de programmation, pas un défaut à combler en silence. |
+| 35 | La falaise du corridor : périmé par §17-39, mesuré sur 5 graines au lieu de 3. |
+
+## 18bis. 🔴 ÉTAT RÉEL DE L'IMPLANTATION — établi contre le CODE
 
 👤 *« Je suis persuadé que tout était implanté, même la résolution. »* **Ce n'est pas le
 cas**, et ce tableau existe pour que la question ne se repose jamais. Il est établi en
@@ -3071,7 +2614,7 @@ longtemps qu'un appel : à cache par appel, la mesure du 2026-08-11 donnait **28
 | **valeur des fentes** | 🟠 **rendue, mais imposée et non cherchée.** Le résultat porte `monochromator_resolution_nm`, donc la stratégie est exécutable en salle ; mais c'est la fente qu'on lui a donnée, pas celle qu'elle a choisie. A18 reste à faire. |
 
 
-## 18ter. ⚡ PERFORMANCE — ce qui a été mesuré le 2026-08-11
+## 18ter. ⚡ PERFORMANCE — ce qui a été mesuré, positif comme négatif
 
 👤 *« Vois-tu un moyen de simplifier quelque chose dans STRAT pour gagner en temps
 d'exécution, et que la perte de précision soit négligeable ? »*

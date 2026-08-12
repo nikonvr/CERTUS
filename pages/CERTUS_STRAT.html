@@ -1138,7 +1138,7 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
 
         <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
             <p style="margin:0 0 10px;">
-                🟢 <b>MEASURED 2026-08-10 — the theorem holds on the bench, by a factor of 17.5.</b>
+                🟢 <b>MEASURED — the theorem holds on the bench, by more than an order of magnitude.</b>
                 Everything above is a proof and a repair. This is the experiment they were for: the
                 48-layer dichroic, seed 42, 1 nm grid, four arms, each verified against the
                 configuration it was actually given.
@@ -1165,6 +1165,13 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 The success criterion had been written down <i>before</i> the measurement: the gap had to
                 be spectacular, or the central argument of the mechanism fell. It is three orders of
                 magnitude on the cost of the distortion.
+            </p>
+            <p style="margin:10px 0 0;">
+                ⚠️ <b>The figure above is the first measurement, and it has since moved.</b> On the
+                corrected code the protection reads <b>&times;41.2</b>, and on a second seed it read
+                <b>&times;15.2</b>. <b>What reproduces is the protection — an order of magnitude or
+                more — never the residual damage</b>, which swung from +0.9 % to +98 % depending on
+                the seed. Quote the protection; the residual is a lottery.
             </p>
             <p style="margin:10px 0 0;">
                 Two results nobody had asked for. <b>POEM off with no distortion at all already costs
@@ -1395,21 +1402,29 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
 
         <h3>2.11 Monochromator resolution — the first setting with an OPTIMUM</h3>
                 <div class="highlight-box">
-                    🔴 <b>STATUS: NOT IMPLEMENTED. Everything in this section is a
-                    specification, not a description of the running code</b> — verified
-                    2026-08-11. The noise factor (&divide;1.5 / &times;2 / &times;5) exists
-                    nowhere; the slit is never convolved with the signal; the &radic;3
-                    correction below has not been applied; and a strategy does not report a
-                    slit width. <code>min_resolution</code> is computed, but it only breaks
-                    ties in the sort — <b>it rejects nothing</b>.
+                    🟢 <b>STATUS: IMPLEMENTED since 2026-08-11, and ON BY DEFAULT.</b> The
+                    noise-factor table (&divide;1.5 / &times;1 / &times;2 / &times;5) is wired,
+                    the &radic;3 correction is applied, a strategy reports its slit width, and
+                    the level bias is carried by the simulated signal.
                     <br><br>
-                    ⚠️ <b>The consequence, and it matters for reading every other figure on
-                    this page:</b> the simulator carries <b>no slit bias at all</b>, so it is
-                    <b>optimistic</b> relative to the real machine. Crash rates and SEEL values
-                    measured here do not include this error.
+                    🔑 <b>And the bias is a PROFILE along the layer's growth, not one number
+                    per layer</b> — that distinction is the whole point. A constant added to
+                    every reading is exactly the <code>b</code> of <code>T &rarr; a&middot;T + b</code>,
+                    which POEM is rigorously invariant under: measured, a constant of
+                    10<sup>&minus;2</sup> — twenty times the reading noise — moves the stopping
+                    thickness by 1.8&times;10<sup>&minus;11</sup> nm. A per-layer scalar therefore
+                    modelled the one shape POEM absorbs for free. The bias varies by up to
+                    <b>62 A</b> inside a single layer near the band edge, and it is that
+                    variation POEM cannot absorb.
                     <br><br>
-                    This banner exists because the section read as a description and was taken
-                    for one. Sections that specify rather than describe must say so.
+                    ⚠️ <b>The consequence for every other figure on this page:</b> crash rates
+                    and SEEL values measured <b>before</b> that date describe a machine with
+                    infinitely fine slits. They are not wrong — they answer a different
+                    question. Do not compare across that date.
+                    <br><br>
+                    Still open: the slit as a <b>search variable</b> (the four widths are not
+                    put in competition), and <code>min_resolution</code> as a <b>criterion</b>
+                    — it breaks ties in the sort but <b>rejects nothing</b>.
                 </div>
         <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
             <p style="margin:0 0 10px;">
@@ -1481,8 +1496,8 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                     $T \to aT + b$ — an affine map, the same everywhere. The slit bias is
                     $T \to T + T''(\lambda)B^2/24$: it depends on the <b>local curvature</b>, so it
                     differs at each anchor and at the trigger point. It is precisely the kind of
-                    distortion POEM <b>cannot</b> absorb, unlike the photometric drift it defeats
-                    &times;17.5.
+                    distortion POEM <b>cannot</b> absorb, unlike the photometric drift it defeats by
+                    more than an order of magnitude.
                 </p>
                 <p style="margin:0;">
                     Finally, near a turning point $dT/dd \to 0$, so a level error converts into a

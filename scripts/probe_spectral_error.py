@@ -245,7 +245,18 @@ def analyse() -> dict:
     edge_m = (wl > 540) & (wl < 560)
     stop_m = (wl >= 560)
     B.emit(f"bandes : passante {pass_m.sum()} pts | front {edge_m.sum()} | bloquee {stop_m.sum()}")
-    B.emit(f"T nominal : passante {T_nom[pass_m].mean()*100:.2f} % | bloquee max {T_nom[stop_m].max()*100:.4f} %")
+    # 🔴 THE THREE MASKS ARE PINNED TO THE DICHROIC'S EDGE and say nothing about another
+    # component. Announce it loudly rather than report a truncated decomposition that
+    # reads like a complete one -- the failure this whole document is about.
+    if not (np.any(pass_m) and np.any(edge_m) and np.any(stop_m)):
+        B.emit("ATTENTION : le decoupage 400-540 / 540-560 / 560+ est celui du DICHROIQUE.")
+        B.emit("            Une bande au moins est VIDE ici : les stats par bande seront")
+        B.emit("            nulles et seul 'global' a un sens sur ce composant.")
+    else:
+        B.emit(
+            f"T nominal : passante {T_nom[pass_m].mean()*100:.2f} % | "
+            f"bloquee max {T_nom[stop_m].max()*100:.4f} %"
+        )
 
     def q(a, p):
         return float(np.percentile(a, p))
@@ -311,21 +322,36 @@ def analyse() -> dict:
         E = T - T_nom[None, :]
 
         def band(mask):
+            # 🔴 A BAND CAN BE EMPTY, and until 2026-08-12 that raised. The three masks
+            # above are pinned to the dichroic's edge (400-540 / 540-560 / 560+); on the
+            # three-cavity bandpass, whose spectral target is 600-660 nm, `passante` and
+            # `front` contain ZERO points and the reduction died -- after the physics had
+            # completed and RESULT had been emitted, so the run produced a number and NO
+            # artefact. That is the traceability hole of 17-7, reached by another road.
+            #
+            # `None` and not zero: an absent band is not a band that scored perfectly.
+            if not np.any(mask):
+                return None
             rmse = np.sqrt(np.mean(E[:, mask] ** 2, axis=1))
             return {"rmse_median": q(rmse, 50), "rmse_p95": q(rmse, 95),
                     "max_abs_median": q(np.max(np.abs(E[:, mask]), axis=1), 50),
                     "max_abs_p95": q(np.max(np.abs(E[:, mask]), axis=1), 95)}
 
-        # decalage du front : lambda ou T croise 50 % du saut, par run
-        lo, hi = T_nom[stop_m].mean(), T_nom[pass_m].mean()
-        half = 0.5 * (lo + hi)
-        idx_nom = int(np.argmin(np.abs(T_nom - half) + 1e6 * (~edge_m)))
-        wl_nom = float(wl[idx_nom])
-        shifts = []
-        for k in range(T.shape[0]):
-            i = int(np.argmin(np.abs(T[k] - half) + 1e6 * (~edge_m)))
-            shifts.append(float(wl[i]) - wl_nom)
-        shifts = np.asarray(shifts)
+        # decalage du front : lambda ou T croise 50 % du saut, par run.
+        # ⚠️ N'a de sens que s'il y a UN front, donc que les trois bandes existent. Sur un
+        # passe-bande il y en a deux, de signes opposes, et le decalage median des deux se
+        # compenserait : mieux vaut ne rien rendre que rendre un zero trompeur.
+        wl_nom = None
+        shifts = np.zeros(0, dtype=np.float64)
+        if np.any(stop_m) and np.any(pass_m) and np.any(edge_m):
+            lo, hi = T_nom[stop_m].mean(), T_nom[pass_m].mean()
+            half = 0.5 * (lo + hi)
+            idx_nom = int(np.argmin(np.abs(T_nom - half) + 1e6 * (~edge_m)))
+            wl_nom = float(wl[idx_nom])
+            shifts = np.asarray([
+                float(wl[int(np.argmin(np.abs(T[k] - half) + 1e6 * (~edge_m)))]) - wl_nom
+                for k in range(T.shape[0])
+            ])
 
         rmse_global = np.sqrt(np.mean(E**2, axis=1))
         rows.append({
@@ -335,8 +361,9 @@ def analyse() -> dict:
             "global": band(np.ones_like(wl, dtype=bool)),
             "passante": band(pass_m), "front": band(edge_m), "bloquee": band(stop_m),
             "front_wl_nominal": wl_nom,
-            "front_shift_nm": {"median": q(shifts, 50), "p05": q(shifts, 5), "p95": q(shifts, 95),
-                               "abs_p95": q(np.abs(shifts), 95)},
+            "front_shift_nm": None if shifts.size == 0 else {
+                "median": q(shifts, 50), "p05": q(shifts, 5), "p95": q(shifts, 95),
+                "abs_p95": q(np.abs(shifts), 95)},
         })
     # The pipeline's own final ranking, captured whole from `dump_strat_ranking`.
     # `winner` is the one `select_best_strat_result` designated -- the very strategy

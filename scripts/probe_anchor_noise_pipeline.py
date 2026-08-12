@@ -428,6 +428,17 @@ def main() -> None:
     env_cfg = _resolve_env_config()
     tag += env_tag_suffix(env_cfg)
 
+    # 🔴 THE COMPONENT GOES IN THE FILE NAME, and it is not cosmetic. Since 2026-08-11 a
+    # second test stack exists (the three-cavity bandpass, 21). Without this, a run on it
+    # would OVERWRITE the dichroic's artefact under the same name, and every measurement
+    # ever compared against that file would silently start referring to another optical
+    # component. 17-7 cost this project two unusable artefacts for a milder version of
+    # the same omission.
+    _design = os.environ.get("CERTUS_DESIGN_JSON", "").strip()
+    if _design:
+        _stem = Path(_design).stem.replace("JSON-strat-", "").replace(" ", "")
+        tag += f"_{_stem}"
+
     # 🔴 ANNOUNCE THE CONFIGURATION BEFORE SPENDING 25 MINUTES ON IT.
     #
     # This block used to be printed only at the end. On 2026-08-09 two runs were

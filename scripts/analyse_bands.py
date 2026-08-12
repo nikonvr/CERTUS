@@ -45,12 +45,26 @@ def main() -> int:
         if not strategies:
             continue
         tag = path.stem.replace("probe_anchor_noise_pipeline_", "")
-        per_band = {b: med([s[b]["rmse_median"] for s in strategies if b in s]) for b in BANDS}
+        # 🔴 The three bands are pinned to the DICHROIC's edge (400-540 / 540-560 / 560+).
+        # On the three-cavity bandpass, whose target is 600-660 nm, `passante` and `front`
+        # are empty and the probe now writes `null` there rather than dying. Such a run
+        # has nothing to say in THIS table, so it is skipped and named -- silently
+        # printing zeros would invent a perfect passband where there is no passband.
+        per_band = {
+            b: med([s[b]["rmse_median"] for s in strategies if isinstance(s.get(b), dict)])
+            for b in BANDS
+        }
+        # `med([])` rend nan, pas None -- le garde doit tester la valeur, pas le type.
+        if any(v != v for v in per_band.values()):
+            print(f"  (ignore : {tag} -- decoupage par bande inapplicable a ce composant)")
+            continue
+        shifts = [s["front_shift_nm"]["abs_p95"] for s in strategies
+                  if isinstance(s.get("front_shift_nm"), dict)]
         rows.append({
             "tag": tag,
             "n": len(strategies),
             "crash": med([s["crash"] for s in strategies]),
-            "shift": med([s["front_shift_nm"]["abs_p95"] for s in strategies]),
+            "shift": med(shifts),
             **per_band,
             "config": data.get("config"),
         })

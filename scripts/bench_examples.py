@@ -721,7 +721,20 @@ def run_strat():
     app = CertusStratApp()
     attach_console_logging(app)  # sans cela toute la Phase A est muette, cf. la docstring
     app._post_load_config = lambda *a: None
-    app.load_configuration(str(EX / "example_strat/JSON-strat-example.json"))
+    # 👤 A second test component exists since 2026-08-11 -- the three-cavity bandpass --
+    # and this path was hard-coded, so it could not be reached at all. The judge of paix
+    # stays the DEFAULT: it is the only stack any published measurement refers to, and
+    # 19-4 forbids concluding from one component onto another.
+    #
+    # 🔴 The path must EXIST. A typo silently falling back to the default would produce a
+    # complete, plausible run on the wrong stack -- exactly the failure mode of 20-control
+    # 4, and the reason the probe was made to announce its effective configuration.
+    _design = os.environ.get("CERTUS_DESIGN_JSON", "").strip()
+    _path = Path(_design) if _design else (EX / "example_strat/JSON-strat-example.json")
+    if not _path.is_file():
+        raise FileNotFoundError(f"CERTUS_DESIGN_JSON={_design!r} : fichier introuvable")
+    emit(f"DESIGN_JSON={_path.name}")
+    app.load_configuration(str(_path))
     setup = time.perf_counter() - t0
 
     t1 = time.perf_counter()

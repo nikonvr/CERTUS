@@ -50,7 +50,7 @@
   "wl_step": "1.0",
   "scan_wl_min": "450.0",
   "scan_wl_max": "700.0",
-  "scan_wl_step": "1.0",
+  "scan_wl_step": 1.0,
   "dynamics_threshold": "0.025",
   "min_transmission_floor": "0.10",
   "strict_min_transmission_floor": true,
@@ -103,5 +103,17 @@
   "execution_mode": "premium",
   "show_plots": false,
   "export_excel": false,
-  "force_first_layer_same_wl": true
+  "force_first_layer_same_wl": true,
+  "slit_bias_enabled": 1,
+  "monochromator_resolution_nm": 2.0,
+  "search_resolution": 1,
+  "index_corridor": 0.005,
+  "photometric_curvature_amp": 0.0075,
+  "allow_rate": 1,
+  "affine_scale_amp": 0.0,
+  "affine_offset_amp": 0.0,
+  "reading_smoothing_window": 1,
+  "machine_sampling_dd": 0.0,
+  "tp_hysteresis_factor": 1.66,
+  "phase_a_level_margin_factor": 1.66
 }

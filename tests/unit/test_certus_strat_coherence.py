@@ -2142,6 +2142,14 @@ class TestStratSymmetryContractAndStability:
 
 
             "robustness_seed": 42,
+            # 🔴 Les deux generateurs de variantes sont ETEINTS ici, et cela ISOLE
+            # au lieu d'affaiblir. Depuis le 2026-08-12 le Rate et la recherche de
+            # fente sont actifs par defaut, donc chaque run demultiplie les
+            # strategies. Ce test porte sur UNE chose -- le departage deterministe
+            # par strategy_id -- et laisser entrer des variantes generees lui ferait
+            # asserter autre chose. Elles ont leurs propres tests.
+            "allow_rate": False,
+            "search_resolution": False,
 
 
         }
@@ -3102,6 +3110,14 @@ class TestStratSymmetryContractAndStability:
 
 
             "robustness_seed": 42,
+            # 🔴 Les deux generateurs de variantes sont ETEINTS ici, et cela ISOLE
+            # au lieu d'affaiblir. Depuis le 2026-08-12 le Rate et la recherche de
+            # fente sont actifs par defaut, donc chaque run demultiplie les
+            # strategies. Ce test porte sur UNE chose -- le departage deterministe
+            # par strategy_id -- et laisser entrer des variantes generees lui ferait
+            # asserter autre chose. Elles ont leurs propres tests.
+            "allow_rate": False,
+            "search_resolution": False,
 
 
             "enable_consensus_ranking": True,

@@ -25,6 +25,7 @@ from certus.core.certus_strat_robustness import (
 )
 from certus.physics.certus_strat_growth import (
     D_SCAN_VAL,
+    PHOTOMETRIC_CURVATURE_AMP,
     RATE_TURN_NM,
     SLIT_PROFILE_NODES,
     simulate_growth_kernel,
@@ -43,11 +44,24 @@ def _strat(bounds, sid=1):
                                            for a, b in bounds]}
 
 
-def test_rate_is_off_unless_asked_for():
-    """C1: absent key -> the candidate list comes back untouched, same objects."""
+def test_rate_is_ON_by_default_since_it_is_the_general_case():
+    """👤 2026-08-12: *"add that rate is always allowed, it is the general case"*.
+
+    🔴 This test was the opposite one until that date, and it deliberately BREAKS C1 --
+    same reasoning as the slit bias and the index corridor: a default that hides a mode
+    the machine offers describes an instrument that does not exist. What C1 protects is
+    the ability to reproduce the historical path, and that is the next test.
+    """
     strategies = [_strat([(0, 24), (24, 48)])]
     out = _expand_with_rate_variants(strategies, {}, 48, _Log())
-    assert out is strategies
+    assert len(out) > len(strategies)
+    assert out[0] is strategies[0], "l'originale reste candidate a l'identique"
+
+
+def test_rate_can_still_be_refused_and_then_nothing_moves():
+    """The historical path stays reachable, and it must come back byte for byte."""
+    strategies = [_strat([(0, 24), (24, 48)])]
+    assert _expand_with_rate_variants(strategies, {"allow_rate": False}, 48, _Log()) is strategies
 
 
 def test_the_candidates_are_the_last_layer_of_each_block_deepest_first():
@@ -107,7 +121,7 @@ def _grow(i_layer, history, is_rate):
         QWOT_500, i_layer, history, 540.0,
         2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
         1.0, 0.0, 2.0, 0, 0, 0.0, 0, 0, 0.0,
-        1.0, 0.0, True, 1, -1.0, -1.0, is_rate,
+        1.0, 0.0, 0.0, True, 1, -1.0, -1.0, is_rate,
     )
 
 
@@ -195,7 +209,7 @@ def _grow_slit(profiles):
         QWOT_500, 4, np.array([53.19, 85.62, 53.19, 85.62], dtype=np.float64), 540.0,
         2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
         1.0, 0.0, 2.0, 0, 0, 0.0, 0, 0, 0.0,
-        1.0, 0.0, True, 1, -1.0, -1.0, False, profiles,
+        1.0, 0.0, 0.0, True, 1, -1.0, -1.0, False, profiles,
     )[0]
 
 
@@ -277,3 +291,77 @@ class _Log:
 
     def warning(self, *a, **k):
         pass
+
+
+# --------------------------------------------------------------------------- #
+# 5. Photometric CURVATURE -- 👤 2026-08-12, and it replaces the affine model
+# --------------------------------------------------------------------------- #
+
+def _grow_photo(aff_s=1.0, aff_o=0.0, curv=0.0, block_start=0):
+    return simulate_growth_kernel(
+        QWOT_500, 4, np.array([53.19, 85.62, 53.19, 85.62], dtype=np.float64), 540.0,
+        2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
+        1.0, 0.0, 2.0, 0, block_start, 0.0, 0, 0, 0.0,
+        aff_s, aff_o, curv, True, 1, -1.0, -1.0, False, None,
+    )[0]
+
+
+def test_the_curvature_vanishes_at_both_ends_of_the_scale():
+    """🔑 THE SHAPE IS FORCED BY HOW THE MACHINE MEASURES, not chosen for convenience.
+
+    T = (S - D)/(V - D), re-referenced every rotation at 4 Hz. T = 0 means S = D and
+    T = 1 means S = V, so those two values are the measurement's OWN anchors: any
+    multiplicative drift of the chain leaves them exact. The residual error is therefore
+    pinned at both ends and free in between -- 👤 *"maximal near T = 0.5, certainly not
+    at 1 or 0"*.
+    """
+    def delta(t):
+        return 4.0 * PHOTOMETRIC_CURVATURE_AMP * t * (1.0 - t)
+    assert delta(0.0) == 0.0
+    assert delta(1.0) == 0.0
+    assert delta(0.5) == pytest.approx(PHOTOMETRIC_CURVATURE_AMP)
+    assert delta(0.3) < delta(0.5) and delta(0.7) < delta(0.5)
+
+
+def test_the_amplitude_is_the_one_the_physicist_specified():
+    """👤 "at T = 0.5 the true value can be between 0.495 and 0.505, bounds at 2 sigma".
+
+    The project's draw is bounded on [-1, 1] with sigma = 1/3, so an amplitude A gives
+    sigma = A/3 and 2 sigma = 2A/3. Requiring 2 sigma = 5e-3 fixes A = 7.5e-3.
+    """
+    assert 2.0 * PHOTOMETRIC_CURVATURE_AMP / 3.0 == pytest.approx(0.005)
+
+
+def test_poem_absorbs_the_affine_but_NOT_the_curvature():
+    """🔴 THE WHOLE REASON THE MODEL CHANGED, and it is measurable in one call each.
+
+    12.1 proves POEM rigorously invariant under `T -> a.T + b`. So the affine distortion
+    the code carried until 2026-08-12 was the one shape POEM cancels for free -- and the
+    ×41.2 "protection" was measured against a perturbation that is both absorbed by the
+    mechanism AND largely removed by the machine's own dark/void referencing.
+
+    📏 Measured here: a 5 % gain moves the stop by 9e-12 nm, an offset of 0.02 by 4e-11 nm,
+    while the curvature at the specified amplitude moves it by 1.28 nm -- twenty-five
+    times the 0.05 nm below which 16 forbids concluding anything from a thickness gap.
+
+    Same structural mistake as the slit bias, found the same day: the perturbation had
+    been given the shape the mechanism is immune to.
+    """
+    ref = _grow_photo()
+    assert abs(_grow_photo(aff_s=1.05) - ref) < 1e-9, "l'affine doit etre absorbe"
+    assert abs(_grow_photo(aff_o=0.02) - ref) < 1e-9, "l'affine doit etre absorbe"
+    moved = abs(_grow_photo(curv=PHOTOMETRIC_CURVATURE_AMP) - ref)
+    assert moved > 0.05, f"la courbure ne mord pas ({moved:.2e} nm)"
+
+
+def test_the_curvature_grows_with_its_amplitude():
+    """Trap 1: the quantity must respond to what drives it."""
+    ref = _grow_photo()
+    small = abs(_grow_photo(curv=PHOTOMETRIC_CURVATURE_AMP) - ref)
+    large = abs(_grow_photo(curv=6.667 * PHOTOMETRIC_CURVATURE_AMP) - ref)
+    assert large > small > 0.0
+
+
+def test_a_zero_curvature_is_bit_identical_to_the_historical_path():
+    """C1, for the parameter that replaces the affine one."""
+    assert _grow_photo(curv=0.0).hex() == _grow_photo().hex()

@@ -56,6 +56,7 @@ def _propagate(**kw) -> np.ndarray:
         kw.get("tp_hysteresis", 0.0),
         kw.get("affine_scale_amp", 0.0),
         kw.get("affine_offset_amp", 0.0),
+        kw.get("photo_curvature_amp", 0.0),
         kw.get("affine_seed", 0),
         kw.get("poem_enabled", True),
         kw.get("smoothing_window", 1),
@@ -135,7 +136,7 @@ def test_poem_can_be_switched_off_in_the_propagated_state():
             1.0, np.zeros(N_RUNS, dtype=np.float64), 2.0, 0,
             0,                                  # block_start_layer = 0 -> POEM has anchors
             0.0, 0, 0.0,
-            0.0, 0.0, 0, poem, 1, 0.0, 0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0, poem, 1, 0.0, 0, 0.0, 0.0,
         )
 
     on, off = run(True), run(False)

@@ -81,6 +81,7 @@ def _phase_a(cands: np.ndarray, corridor: float, lo: float, hi: float) -> np.nda
         0.0,
         0.0,
         0.0,
+        0.0,
         0,
         True,
         1,
@@ -149,6 +150,7 @@ def _phase_b(corridor: float, lo: float, hi: float):
         0,
         np.zeros(n_layers, dtype=np.float64),  # signal_noise_scale is PER LAYER
         0,
+        0.0,
         0.0,
         0.0,
         0.0,

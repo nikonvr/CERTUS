@@ -144,7 +144,11 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | Retard de déclenchement | **aucun** — ne rien ajouter | §9bis-5 |
 | `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §9bis-6 |
 | Quantification de l'arrêt | `U(0 ; 0,125 nm)` | §9bis-7 |
-| `index_corridor` | **0,005**, unités d'indice **absolues**, demi-largeur | §12.3 |
+| `index_corridor` | **0,005**, unités d'indice **absolues**, demi-largeur — 👤 **ACTIF PAR DÉFAUT** | §12.3 |
+| `photometric_curvature_amp` | **0,0075** ⇒ à `T = 0,5` la vraie valeur est dans `[0,495 ; 0,505]` à 2 σ. 👤 **ACTIF PAR DÉFAUT** | §12.1bis |
+| `allow_rate` | **vrai** — 👤 *« c'est le cas général »* | §14 |
+| `slit_bias_enabled` | **vrai**, fente nominale **2 nm** — 👤 *« réaliste, pas optimiste »* | §12.7 |
+| `reading_smoothing_window` | **1 = INACTIF**, et il le reste — 👤 *« on ne sait pas trop les algos de smooth appliqués par Bühler »*. §9bis interdit d'ajouter une structure non mesurée | §9bis-3 |
 | `affine_scale_amp` | **0,05** ⇒ `a ∈ [0,95 ; 1,05]` | §12.1 |
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §12.1 |
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
@@ -597,10 +601,19 @@ Aucun n'admet d'exception. Si tu crois devoir en violer un, **arrête-toi et dem
    sous-motifs le sont (`reports/exports/`, `release_dossier_*.zip`, `Report_*`,
    `STRAT_observability_*`). Mesuré : **33 fichiers suivis par git sur 226**. Les
    **193 autres ne sont donc protégés par rien** et sont **irrécupérables**.
-4. **Jamais modifier `example/example_strat/JSON-strat-example.json`.** Il s'est écarté des
-   valeurs correctes **quatre fois**, toujours dans le sens permissif, et chaque fois cela a
-   coûté une session de diagnostic. Pour essayer autre chose, utilise
-   `scripts\probe_anchor_noise_pipeline.py`, qui injecte les paramètres **après coup**.
+4. **Ne modifie `example/example_strat/JSON-strat-example.json` que pour DURCIR.**
+   Il s'est écarté des valeurs correctes **quatre fois**, toujours dans le sens
+   **permissif**, et chaque fois cela a coûté une session de diagnostic. C'est le sens
+   qui est interdit, pas l'écriture.
+   ✅ **Amendé le 2026-08-12 sur instruction 👤** : *« tous les paramètres doivent être
+   dans les JSON, celui du 48 couches et celui du 35 couches — les paramètres
+   d'activation des différentes sources d'erreur, ainsi que le mode rate »*. Les deux
+   fichiers portent donc désormais **explicitement** les onze réglages du modèle, au
+   lieu de dépendre de défauts codés. Un fichier de configuration doit décrire la
+   machine sur laquelle il tourne, sinon le run n'est comparable à rien (§17-7).
+   ⚠️ Pour essayer autre chose, `scripts\probe_anchor_noise_pipeline.py` injecte les
+   paramètres **après coup** — c'est toujours la voie à préférer.
+
 5. **Jamais « corriger » `except A, B:`.** C'est la syntaxe PEP 758, valide depuis
    Python 3.14, utilisée volontairement dans 14 modules. Ajouter des parenthèses change le
    sens du code.
@@ -1258,6 +1271,108 @@ change de nature, pas seulement d'amplitude.**
 
 ---
 
+### 🔴 LA DÉRIVE PHOTOMÉTRIQUE N'EST PAS AFFINE — 👤 2026-08-12
+
+> 👤 *« La dérive photométrique a-t-elle un sens sachant que le vide et le noir sont mesurés
+> à chaque fois ? »* — puis *« à mon avis cette dérive est maximale si T est proche de 0,5,
+> mais sûrement pas de 1 ou de 0. »*
+
+#### Ce que l'auto-référencement retire, et il retire presque tout
+
+`T = (S − D)/(V − D)`, refait **à chaque tour**, quatre fois par seconde (§9). Donc :
+
+- un **gain** commun aux trois positions disparaît exactement :
+  `(gS − gD)/(gV − gD) = (S − D)/(V − D)` ;
+- un **offset d'obscurité** disparaît par la soustraction du noir ;
+- tout ce qui est commun au chemin — lampe, détecteur, électronique — est annulé, et
+  annulé **250 ms plus tard**, bien avant d'avoir dérivé.
+
+Un dépôt dure des heures ; la référence se refait quatre fois par seconde. **Le modèle
+affine — un gain et un offset tirés une fois par run — est donc très largement éliminé par
+la machine elle-même.**
+
+#### 🔑 Et ce qui reste est CLOUÉ AUX DEUX BOUTS
+
+C'est le point, et il est imposé, pas choisi :
+
+| | |
+|---|---|
+| `T = 0` ⟺ `S = D` | numérateur nul ⇒ `T = 0` **quelle que soit** la dérive multiplicative |
+| `T = 1` ⟺ `S = V` | numérateur = dénominateur ⇒ `T = 1`, idem |
+
+**Les deux extrémités de l'échelle sont les deux ancres de la mesure.** L'erreur résiduelle
+y est donc nulle par construction, et libre entre les deux.
+
+🔴 **`a·T + b` est la mauvaise forme** : il vaut `b` en 0 et `a + b` en 1, c'est-à-dire qu'il
+met de l'erreur **exactement là où l'instrument est le plus exact**.
+
+#### La forme retenue
+
+$$\delta T \;=\; 4\,\varepsilon\,T\,(1-T)$$
+
+nulle aux deux bouts, maximale à `T = 0,5` où elle vaut `ε`. Elle a un mécanisme :
+une **non-linéarité du détecteur**, réponse `Φ + κΦ²`, survit au rapport de différences
+précisément comme ce terme du second ordre.
+
+🔒 **Amplitude** : 👤 *« à T = 0,5, la vraie valeur peut être entre 0,495 et 0,505, bornes à
+2 σ »*. Le tirage borné du projet a `σ = A/3`, donc `2σ = 2A/3 = 5e-3` fixe
+**`A = 7,5e-3`** — `PHOTOMETRIC_CURVATURE_AMP`. Tirée **une fois par dépôt**, groupe 2 du
+flux affine, distinct des groupes 0 et 1 : trois imperfections indépendantes ne partagent
+pas un tirage.
+
+#### 🔴 CE QUE ÇA CHANGE, ET C'EST ÉNORME
+
+📏 Mesuré au noyau, arrêt d'une couche de 53,19 nm sous POEM avec ancres :
+
+| perturbation | déplacement de l'arrêt |
+|---|---|
+| **affine**, gain 5 % | **−8,6e-12 nm** |
+| **affine**, offset 0,02 | **−4,2e-11 nm** |
+| **courbure**, ε = 0,0075 | **−1,28 nm** |
+| courbure, ε = 0,05 | −6,11 nm |
+
+**Facteur 3×10¹⁰ entre l'ancienne perturbation et la nouvelle.** 1,28 nm sur 53, soit
+2,4 %, et **vingt-cinq fois** le seuil de 0,05 nm sous lequel §16 interdit de conclure.
+
+La raison est le théorème de §12.1 : **POEM est rigoureusement invariant par transformation
+affine.** La perturbation modélisée jusqu'ici était donc, très exactement, la seule forme
+que le mécanisme absorbe gratuitement. `T(1−T)` n'est pas affine — POEM ne l'absorbe pas.
+
+⚠️ **Le ×41,2 de POEM est donc à requalifier.** Il n'est pas faux : il mesure la protection
+contre une perturbation qui, d'une part, est largement retirée par l'auto-référencement, et
+d'autre part serait de toute façon absorbée. **Ce qui survit de POEM, et qui ne dépend
+d'aucune hypothèse photométrique**, c'est le ×2,43 mesuré *sans aucune distorsion* : la
+compensation des erreurs d'épaisseur accumulées.
+
+#### 🔴 LE MOTIF, ET C'EST LA DEUXIÈME FOIS LE MÊME JOUR
+
+Le matin, le biais de fente était modélisé comme **une constante par couche** — et une
+constante est le `b` de l'affine, donc la forme que POEM absorbe. L'après-midi, la dérive
+photométrique était modélisée comme **affine** — la forme que POEM absorbe.
+
+> **Le défaut n'était pas dans les chiffres. Il était dans le CHOIX DE LA FORME de la
+> perturbation, et à chaque fois on avait choisi celle contre laquelle le mécanisme est
+> immunisé.**
+
+C'est un piège de méthode à part entière, et il ne se voit pas : les deux modèles rendaient
+des nombres parfaitement plausibles. **Quand on teste un mécanisme d'invariance, il faut
+d'abord se demander si la perturbation choisie appartient au groupe qu'il annule.**
+
+#### Ce qui reste ouvert
+
+- **L'amplitude `ε` est une spécification 👤, pas une mesure.** Comme la table des facteurs
+  de bruit de §12.7, toute conclusion qui en dépend doit survivre à son incertitude.
+- **Le voilage des fenêtres** n'est pas couvert. S'il n'affecte que le trajet témoin, il ne
+  s'annule pas et produit un vrai gain lentement variable — auquel cas l'affine retrouverait
+  un sens **en plus** de la courbure. C'est une question de géométrie du bâti.
+- **La non-linéarité du détecteur** est le mécanisme invoqué, pas un mécanisme mesuré.
+
+⚠️ **L'affine reste dans le code, amplitudes à 0.** Ce n'est plus un modèle de la machine :
+c'est **l'instrument qui teste le théorème d'invariance** de §12.1, et il garde cette
+valeur-là.
+
+---
+
 ### 12.2 🔴 Modéliser le LISSAGE de lecture — et surtout pas remonter le seuil
 
 > **Cette action applique le modèle figé du §9bis.** Ne le rediscute pas : l'OMS est breveté,
@@ -1782,6 +1897,31 @@ constant**. Les confondre rendrait les deux mesures ininterprétables.
 Dans `certus/utils/certus_strat_service.py::_select_candidates_phase_a`, la règle de proximité branche la vraie matrice d'empilement cumulée $M_{\text{before}}$ et remplace le critère fixe en épaisseur par le **critère en transmission** ($\Delta T \ge \text{margin\_factor} \times A$, avec `phase_a_level_margin_factor > 0`).
 
 Près d'un point tournant $T \approx T_{\text{ext}} - c \cdot (d - d_0)^2$, une marge fixe en épaisseur correspond à une fraction d'amplitude non contrôlée ; seule la marge exprimée en transmission garantit un niveau de sécurité homogène et physiquement rigoureux face au bruit de la machine.
+
+### 🔒 FIGÉE LE 2026-08-12 — la grille de balayage reste à 1 nm
+
+👤 *« Enfin on va figer la grille à 1 nm. »* Après la campagne de §22, 8 runs sur les
+deux composants et deux graines : **1 seule paire sur 4** satisfait le critère
+d'équivalence. Trois fois sur quatre la grille fine gagne, de 19 à 42 %.
+
+⚠️ **Et la quatrième fois la grossière gagne de moitié — ce n'est pas un argument pour
+elle.** Le run à 1 nm n'avait tout simplement pas généré la famille gagnante (48 blocs).
+C'est un symptôme de recherche non convergée, pas une vertu du pas de 2 nm. **Ne cite
+jamais ce cas comme un point en faveur du 2 nm.**
+
+### ✅ Tranchée — le pas d'échantillonnage du dépôt reste GROSSIER
+
+👤 *« Évidemment qu'on ne fait pas un calcul tous les 4 Hz, c'est la base de ce code qui
+doit être ultra rapide ! »* (2026-08-12)
+
+`machine_sampling_dd` reste à **0**, soit ~21 points par couche là où la machine en lit
+800. **La conséquence, et il faut la connaître** : §12.2 a mesuré que moins de tirages
+signifie moins d'occasions pour le bruit de fabriquer un faux point tournant — 32,9 % à
+80 points contre 99,9 % à 800, à seuil égal. **Le modèle est donc OPTIMISTE sur ce
+mécanisme**, qui pèse 79 % des plantages mesurés (§17-36). C'est un arbitrage assumé
+vitesse / fidélité, pas un oubli.
+
+### 🪦 Historique — la mesure de 2026-08-08 qui avait déjà tranché dans le même sens
 
 ### ✅ Tranchée — la grille de balayage à 1 nm, ne la rouvre pas
 

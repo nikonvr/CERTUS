@@ -27,6 +27,9 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
     return str(raw).strip().lower() in _CONFIG_TRUE
 
 
+from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
+
+
 def _config_float(config: object, key: str, default: float = 0.0) -> float:
     """Reads a float from the loaded configuration, without associated widget.
 
@@ -43,6 +46,25 @@ def _config_float(config: object, key: str, default: float = 0.0) -> float:
         return float(raw)
     except (TypeError, ValueError):
         return default
+
+
+def _config_flag_default(config: object, key: str, default: bool) -> bool:
+    """A boolean whose ABSENCE means the code default, never `False`.
+
+    🔴 `_config_float` returns 0.0 for a missing key, so routing a flag through it would
+    turn silence into "off". Since 2026-08-12 the defaults describe the real machine --
+    slit bias on, Rate on, index corridor on, photometric curvature on -- so reading an
+    absent key as "off" would quietly hand back the optimistic machine that does not
+    exist. That is the failure mode this whole document is about.
+    """
+    if not isinstance(config, dict):
+        return default
+    raw = config.get(key, None)
+    if raw is None or raw == "":
+        return default
+    if isinstance(raw, str):
+        return raw.strip().lower() in {"1", "true", "yes", "on"}
+    return bool(float(raw) > 0.5)
 
 
 class CertusStratStateMixin:
@@ -1126,6 +1148,32 @@ class CertusStratStateMixin:
             # ── Index corridor uncertainty delta_max (T5) ──────────────────────
             "index_corridor": _config_float(
                 getattr(self, "_loaded_config", {}), "index_corridor"
+            ),
+            # ── The four remaining error sources, 👤 2026-08-12 ─────────────────
+            #
+            # 🔴 THESE FOUR WERE ONLY REACHABLE FROM CODE DEFAULTS. Writing them into a
+            # design file did nothing, so a configuration could not describe the machine
+            # it was run on -- which is 17-7 in another form: a run whose settings cannot
+            # be recovered is comparable to nothing.
+            #
+            # ⚠️ `None` means "not stated, take the code default", and that is deliberate:
+            # an absent key must not read as "off". The defaults themselves changed on
+            # 2026-08-12 to describe the real machine (bias on, Rate on, corridor on,
+            # curvature on), so silence now means the realistic setting, not the empty one.
+            "slit_bias_enabled": _config_flag_default(
+                getattr(self, "_loaded_config", {}), "slit_bias_enabled", True
+            ),
+            "search_resolution": _config_flag_default(
+                getattr(self, "_loaded_config", {}), "search_resolution", True
+            ),
+            "photometric_curvature_amp": _config_float(
+                getattr(self, "_loaded_config", {}), "photometric_curvature_amp",
+                PHOTOMETRIC_CURVATURE_AMP,
+            ),
+            # Grille TMM : 0 = grille actuelle. 👤 "on ne fait pas un calcul tous les 4 Hz,
+            # c'est la base de ce code qui doit etre ultra rapide" -- donc 0 reste le defaut.
+            "machine_sampling_dd": _config_float(
+                getattr(self, "_loaded_config", {}), "machine_sampling_dd", 0.0
             ),
             # ── AXIS 3: the spectral target, routed from the configuration ───
             #

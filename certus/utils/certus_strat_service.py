@@ -1182,7 +1182,10 @@ def _validate_candidates_phase_a(
     poem_enabled = bool(params.get("poem_enabled", True))
     affine_seed = (int(phase_a_seed) * 3_266_489_917 + (int(i_layer) + 1) * 40_503 + 0x7E2A_8431) % (2**53)
     smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
-    index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
+    # 👤 le corridor d'indice est actif par defaut (12.3) -- la valeur vit dans
+    # certus_strat_robustness pour qu'il n'y en ait qu'une.
+    from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT
+    index_corridor = float(params.get("index_corridor", INDEX_CORRIDOR_DEFAULT) or 0.0)
     index_seed = (int(phase_a_seed) * 2_654_435_761 + (int(i_layer) + 1) * 850_507 + 0x3F1B_79C5) % (2**53)
 
     # Corridor normalisation envelope -- 12.3 and 17-20. It MUST be the same interval

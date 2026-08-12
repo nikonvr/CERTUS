@@ -34,6 +34,32 @@ SCAN_ERROR_MARGIN_NM: float = 15.0
 
 RATE_TURN_NM: float = 0.125
 
+#: Amplitude of the PHOTOMETRIC CURVATURE, in T units, at its maximum (T = 0.5).
+#:
+#: 👤 2026-08-12: *"the true value at T = 0.5 can be between 0.495 and 0.505, bounds at
+#: 2 sigma"*. So 2 sigma = 5e-3, sigma = 2.5e-3, and the project's bounded draw has
+#: sigma = A/3, hence A = 7.5e-3.
+#:
+#: 🔑 WHY THIS SHAPE AND NOT AN AFFINE ONE, which is what the code carried until today.
+#: The machine measures T = (S - D)/(V - D), re-referenced every rotation at 4 Hz. That
+#: makes T = 0 and T = 1 the TWO ANCHOR POINTS of the measurement: at S = D the numerator
+#: vanishes and at S = V numerator equals denominator, so ANY multiplicative drift of the
+#: chain leaves those two values exact. The residual error is therefore pinned at both
+#: ends and free in between -- 👤 *"maximal near T = 0.5, certainly not at 1 or 0"*.
+#:
+#: `a.T + b` is the wrong shape: it is non-zero precisely where the instrument is pinned.
+#: The simplest form vanishing at both ends is 4.eps.T.(1-T), and it has a mechanism --
+#: a detector response `Phi + kappa.Phi^2` survives the ratio of differences as exactly
+#: this second-order term.
+#:
+#: 🔴 AND IT MATTERS FOR POEM. 12.1 proves POEM rigorously invariant under the AFFINE
+#: map, so the distortion modelled until today was the one shape POEM absorbs for free.
+#: T.(1-T) is not affine: POEM does not absorb it. This is the same structural mistake
+#: found this morning on the slit bias, where a per-layer CONSTANT was likewise the shape
+#: POEM cancels. Choosing the perturbation the mechanism is immune to is the error, and
+#: it was made twice.
+PHOTOMETRIC_CURVATURE_AMP: float = 0.0075
+
 #: Sweep span, as a multiple of the nominal thickness. Declared at module level so the
 #: slit-bias profiles can be sampled on EXACTLY the axis the kernel sweeps: the profile
 #: is indexed by u = d / d_nominal in [0, D_SCAN_VAL], and a mismatch between the two
@@ -479,6 +505,7 @@ def simulate_growth_kernel(
     tp_hysteresis: float = 0.0,
     affine_scale: float = 1.0,
     affine_offset: float = 0.0,
+    photo_curvature: float = 0.0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
     n_H_real: float = -1.0,
@@ -1277,9 +1304,10 @@ def simulate_growth_kernel(
             Ts_n = Ts_n_samp
             idx_nom_stop = M_hist + int(round(nominal_th / SAMPLE_DD))
         else:  # noqa: RET505 -- coarse TMM grid, the historical path
-            if affine_scale != 1.0 or affine_offset != 0.0:
+            if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
                 for k_aff in range(n_tot):
-                    Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
+                    t_aff = affine_scale * Ts_r[k_aff] + affine_offset
+                    Ts_r[k_aff] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
             # ⚠️ 12.4 flags this rounding: with a FIXED window `(NPTS-1)/D_SCAN` was
             # exact because 63/3 is an integer. With a window that varies per layer the
             # nominal sits at the fraction `nominal_th / d_max` of the scan, and the
@@ -1287,9 +1315,10 @@ def simulate_growth_kernel(
             idx_nom_stop = n_hist + int(round((npts_cur - 1) * nominal_th / d_max))
 
         if smoothing_window > 1:
-            if affine_scale != 1.0 or affine_offset != 0.0:
+            if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
                 for k_aff in range(n_tot):
-                    Ts_r[k_aff] = affine_scale * Ts_r[k_aff] + affine_offset
+                    t_aff = affine_scale * Ts_r[k_aff] + affine_offset
+                    Ts_r[k_aff] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
             k_win = smoothing_window
             Ts_r_raw = Ts_r.copy()
             Ts_n_raw = Ts_n.copy()
@@ -1523,9 +1552,10 @@ def simulate_growth_kernel(
     #
     # An affine map commutes with the parabola fit and with the root solve, so applying
     # it to the three probe points restores the invariance exactly.
-    if affine_scale != 1.0 or affine_offset != 0.0:
+    if affine_scale != 1.0 or affine_offset != 0.0 or photo_curvature != 0.0:
         for k in range(3):
-            T_points[k] = affine_scale * T_points[k] + affine_offset
+            t_aff = affine_scale * T_points[k] + affine_offset
+            T_points[k] = t_aff + 4.0 * photo_curvature * t_aff * (1.0 - t_aff)
     # 12.7: these three points are what the instrument READS around the stopping
     # thickness, so they carry the slit bias like every other reading. The target they
     # are solved against stays monochromatic -- that asymmetry IS the effect, and
@@ -1821,6 +1851,7 @@ def update_run_states_kernel(
     tp_hysteresis: float = 0.0,
     affine_scale_amp: float = 0.0,
     affine_offset_amp: float = 0.0,
+    photo_curvature_amp: float = 0.0,
     affine_seed: int = 0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
@@ -1871,12 +1902,14 @@ def update_run_states_kernel(
             "the envelope must come from the single caller-side computation"
         )
     for r in prange(num_runs):
-        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0 or photo_curvature_amp != 0.0:
             aff_s = 1.0 + affine_scale_amp * _seeded_noise_sample(affine_seed, 0, r, 0, True)
             aff_o = affine_offset_amp * _seeded_noise_sample(affine_seed, 1, r, 0, True)
+            photo_curv = photo_curvature_amp * _seeded_noise_sample(affine_seed, 2, r, 0, True)
         else:
             aff_s = 1.0
             aff_o = 0.0
+            photo_curv = 0.0
         if index_corridor > 0.0:
             z1_h = _seeded_noise_sample(index_seed, 0, r, 0, True)
             z2_h = _seeded_noise_sample(index_seed, 0, r, 1, True)
@@ -1907,6 +1940,7 @@ def update_run_states_kernel(
             tp_hysteresis,
             aff_s,
             aff_o,
+            photo_curv,
             poem_enabled,
             smoothing_window,
             nH_real,

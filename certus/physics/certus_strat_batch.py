@@ -73,6 +73,7 @@ def validate_wavelengths_batch(
     tp_hysteresis: float = 0.0,
     affine_scale_amp: float = 0.0,
     affine_offset_amp: float = 0.0,
+    photo_curvature_amp: float = 0.0,
     affine_seed: int = 0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
@@ -173,14 +174,17 @@ def validate_wavelengths_batch(
         n_crash = 0
         for r_idx in range(n_runs):
             prev_th = runs_history[r_idx, :i_layer]
-            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0 or photo_curvature_amp != 0.0:
                 z_a = _seeded_noise_sample(affine_seed, 0, r_idx, 0, True)
                 z_b = _seeded_noise_sample(affine_seed, 1, r_idx, 0, True)
+                z_c = _seeded_noise_sample(affine_seed, 2, r_idx, 0, True)
                 aff_s = 1.0 + affine_scale_amp * z_a
                 aff_o = affine_offset_amp * z_b
+                photo_curv = photo_curvature_amp * z_c
             else:
                 aff_s = 1.0
                 aff_o = 0.0
+                photo_curv = 0.0
 
             if index_corridor > 0.0:
                 z1_h = _seeded_noise_sample(index_seed, 0, r_idx, 0, True)
@@ -219,6 +223,7 @@ def validate_wavelengths_batch(
                 tp_hysteresis,
                 aff_s,
                 aff_o,
+                photo_curv,
                 poem_enabled,
                 smoothing_window,
                 nH_real,
@@ -272,14 +277,17 @@ def validate_wavelengths_batch(
             # perturbed world or in the nominal one, not half in each. Both are drawn
             # at run index 0, deliberately: the gain is a DERIVATIVE, not a run, so it
             # is evaluated in one representative realisation rather than averaged.
-            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+            if affine_scale_amp != 0.0 or affine_offset_amp != 0.0 or photo_curvature_amp != 0.0:
                 z_a = _seeded_noise_sample(affine_seed, 0, 0, 0, True)
                 z_b = _seeded_noise_sample(affine_seed, 1, 0, 0, True)
+                z_c = _seeded_noise_sample(affine_seed, 2, 0, 0, True)
                 aff_s_0 = 1.0 + affine_scale_amp * z_a
                 aff_o_0 = affine_offset_amp * z_b
+                photo_curv_0 = photo_curvature_amp * z_c
             else:
                 aff_s_0 = 1.0
                 aff_o_0 = 0.0
+                photo_curv_0 = 0.0
             if index_corridor > 0.0:
                 g1_h = _seeded_noise_sample(index_seed, 0, 0, 0, True)
                 g2_h = _seeded_noise_sample(index_seed, 0, 0, 1, True)
@@ -300,7 +308,7 @@ def validate_wavelengths_batch(
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
-                aff_s_0, aff_o_0, poem_enabled,
+                aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
                 smoothing_window, nH_g, nL_g,
             )
             v_prt, _, _, _, _ = simulate_growth_kernel(
@@ -308,7 +316,7 @@ def validate_wavelengths_batch(
                 n_H_arr[c_idx], n_L_arr[c_idx], n_Sub_arr[c_idx],
                 probe_offset, 0.0, non_monotonic_factor, non_monotonic_mode, blk,
                 0.0, 0, 0, tp_hysteresis,
-                aff_s_0, aff_o_0, poem_enabled,
+                aff_s_0, aff_o_0, photo_curv_0, poem_enabled,
                 smoothing_window, nH_g, nL_g,
             )
             if v_ref < 100000.0 and v_prt < 100000.0:
@@ -340,6 +348,7 @@ def simulate_stack_robustness_batch(
     tp_hysteresis: float = 0.0,
     affine_scale_amp: float = 0.0,
     affine_offset_amp: float = 0.0,
+    photo_curvature_amp: float = 0.0,
     affine_seed: int = 0,
     poem_enabled: bool = True,
     smoothing_window: int = 1,
@@ -421,14 +430,19 @@ def simulate_stack_robustness_batch(
         )
     wl_min, wl_max = corridor_lo, corridor_hi
     for r in prange(n_runs):
-        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0:
+        if affine_scale_amp != 0.0 or affine_offset_amp != 0.0 or photo_curvature_amp != 0.0:
             z_a = _seeded_noise_sample(affine_seed, 0, r, 0, True)
             z_b = _seeded_noise_sample(affine_seed, 1, r, 0, True)
+            # Group 2, distinct from 0 and 1: gain, offset and detector curvature are
+            # three independent imperfections and must not share a draw.
+            z_c = _seeded_noise_sample(affine_seed, 2, r, 0, True)
             aff_s = 1.0 + affine_scale_amp * z_a
             aff_o = affine_offset_amp * z_b
+            photo_curv = photo_curvature_amp * z_c
         else:
             aff_s = 1.0
             aff_o = 0.0
+            photo_curv = 0.0
 
         if index_corridor > 0.0:
             z1_h = _seeded_noise_sample(index_seed, 0, r, 0, True)
@@ -477,6 +491,7 @@ def simulate_stack_robustness_batch(
                 tp_hysteresis,
                 aff_s,
                 aff_o,
+                photo_curv,
                 poem_enabled,
                 smoothing_window,
                 nH_real,

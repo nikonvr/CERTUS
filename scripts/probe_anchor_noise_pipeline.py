@@ -70,6 +70,13 @@ TRACED_KEYS: tuple[str, ...] = (
     "k_keep_survivors",
     "enable_consensus_ranking",
     "allow_rate",
+    "search_resolution",
+    # 🔴 Ces trois-la gouvernent la PHYSIQUE et ne figuraient pas dans le bloc
+    # CONFIG. Un run qui ne consigne pas sa configuration n'est comparable a rien
+    # -- c'est 17-7, et il a deja coute deux artefacts inexploitables.
+    "slit_bias_enabled",
+    "photometric_curvature_amp",
+    "machine_sampling_dd",
     "monochromator_resolution_nm",
 )
 
@@ -94,7 +101,11 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_SCREEN_RUNS", "n_screen_runs", "int", 25, "scr"),
     ("CERTUS_KEEP_SURVIVORS", "k_keep_survivors", "int", 10, "keep"),
     ("CERTUS_CONSENSUS", "enable_consensus_ranking", "flag", False, "consensus"),
-    ("CERTUS_ALLOW_RATE", "allow_rate", "flag", False, "rate"),
+    # 👤 le Rate est le cas GENERAL : actif par defaut, donc le suffixe marque son ABSENCE.
+    ("CERTUS_ALLOW_RATE", "allow_rate", "flag", True, "norate"),
+    ("CERTUS_SEARCH_RESOLUTION", "search_resolution", "flag", True, "noslitsearch"),
+    ("CERTUS_SLIT_BIAS", "slit_bias_enabled", "flag", True, "noslitbias"),
+    ("CERTUS_PHOTO_CURVATURE", "photometric_curvature_amp", "float", 0.0075, "curv"),
     ("CERTUS_RESOLUTION_NM", "monochromator_resolution_nm", "float", 2.0, "res"),
 )
 

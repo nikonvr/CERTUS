@@ -125,6 +125,7 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     # both sides, or the profile would be sampled on a different axis than it is read on.
     D_SCAN_VAL,
     MAX_LOOKBACK_VAL,
+    PHOTOMETRIC_CURVATURE_AMP,
     SLIT_PROFILE_NODES,
     detect_turning_points,
     next_turning_point_after,

@@ -32,6 +32,7 @@ from certus_physics import (
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
     D_SCAN_VAL,
+    PHOTOMETRIC_CURVATURE_AMP,
     MAX_LOOKBACK_VAL,
     NON_MONOTONIC_MODE_ATTENUATE,
     SLIT_PROFILE_NODES,
@@ -175,6 +176,15 @@ RESOLUTION_NOISE_FACTOR: dict[float, float] = {5.0: 1.0 / 1.5, 2.0: 1.0, 1.0: 2.
 
 #: Nominal slit, the one the measured noise amplitude corresponds to (👤 2026-08-09).
 NOMINAL_RESOLUTION_NM: float = 2.0
+
+# 👤 "et bien evidemment les biais d'indice doivent etre toujours actifs, c'est la base"
+# (2026-08-12). The indices are PRESUPPOSED, known to +/-0.005 in absolute index units --
+# 12.3. A default of 0 describes a machine whose materials are known exactly, which is
+# not a machine. Like the slit bias and Rate, this breaks C1 deliberately: the historical
+# path is `index_corridor: 0`, and every measurement taken before 2026-08-12 was taken
+# there.
+INDEX_CORRIDOR_DEFAULT: float = 0.005
+
 
 
 def _resolution_noise_factor(params: dict[str, Any]) -> float:
@@ -449,6 +459,9 @@ def _prepare_robustness_inputs(
         logger=logger,
     )
     all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
+    # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the two
+    # degrees of freedom are independent and there is no reason to couple them here.
+    all_strategies = _expand_with_resolution_variants(all_strategies, params, logger)
     # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
     # `_calculate_strategy_spectral_resolution` was already called on every strategy --
     # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
@@ -460,8 +473,11 @@ def _prepare_robustness_inputs(
         _t0 = time.perf_counter()
         for _st in all_strategies:
             try:
+                # 🔴 EACH STRATEGY AT ITS OWN SLIT (A18). The bias goes as B^2, so handing
+                # every variant the run-level width would make the four widths differ only
+                # by their NOISE and not by their BIAS -- half the effect, silently.
                 _st["slit_profile"] = _slit_bias_profiles(
-                    _st, p_thick_nominal, params, _slit_b
+                    _st, p_thick_nominal, params, _strategy_resolution(_st, params)
                 )
             except Exception:  # noqa: BLE001 -- a missing profile disables the bias
                 _st["slit_profile"] = None                    # for that strategy alone
@@ -536,15 +552,18 @@ def _expand_with_rate_variants(
     best strategies appear."* So Rate is not a hidden fallback: it produces ADDITIONAL
     candidates that stand or fall on the same statistics as everything else.
 
-    🔴 OFF BY DEFAULT (`allow_rate`), and that is C1: with the key absent the list comes
-    back untouched and every downstream bit is what it was.
+    🔴 ON BY DEFAULT since 2026-08-12 — 👤 *"add that rate is always allowed, it is the
+    general case"*. This BREAKS C1 deliberately, and for the same reason the slit bias
+    does: the machine offers Rate, so a default that hides it describes an instrument that
+    does not exist. The historical path remains reachable with `allow_rate: false`, and
+    any measurement made before this date was taken without Rate variants.
 
     ⚠️ ONE Rate layer per variant, deliberately. Two Rate layers interact -- the second
     inherits an estimate the first already froze -- and 12.3's lesson is that two things
     changed at once cannot be attributed. Combinations come after single layers are
     understood, not before.
     """
-    if not bool(params.get("allow_rate", False)):
+    if not bool(params.get("allow_rate", True)):
         return strategies
     variants: list[dict[str, Any]] = []
     skipped = 0
@@ -557,7 +576,7 @@ def _expand_with_rate_variants(
             v = dict(strat)
             v["blocks"] = list(strat.get("blocks") or [])
             v["rate_layers"] = [layer]
-            v["strategy_id"] = next_id
+            v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
             v["origin"] = f"RATE_L{layer}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             variants.append(v)
@@ -762,6 +781,95 @@ def _slit_bias_profiles(
             row[iu] = float(np.dot(_SLIT_GL_W, T[:3]) / 2.0 - T[3])
         cache[key] = row
         out[i_layer, :] = row
+    return out
+
+
+#: The four widths the machine offers, widest first. 👤 12.7: four settings, four table
+#: entries, never a law -- a law would authorise widths that do not exist on the OMS.
+RESOLUTION_SEARCH_SET: tuple[float, ...] = (5.0, 2.0, 1.0, 0.5)
+
+
+def _strategy_resolution(strategy: dict[str, Any], params: dict[str, Any]) -> float:
+    """Slit width this strategy is evaluated at. Falls back to the run-level setting."""
+    raw = strategy.get("monochromator_resolution_nm")
+    if raw is None:
+        raw = params.get("monochromator_resolution_nm", NOMINAL_RESOLUTION_NM)
+    return float(raw or NOMINAL_RESOLUTION_NM)
+
+
+def _variant_id(parent_id: object, serial: int) -> object:
+    """Identifier of a generated variant, IN THE PARENT'S TYPE.
+
+    🔴 Not cosmetic. The ranking breaks ties by sorting on `strategy_id`, and
+    `sorted()` RAISES on a list mixing `int` and `str`. Handing an int id to the variant
+    of a string-id parent therefore turns a deterministic tie-break into a TypeError --
+    latent for as long as every design happens to use integer ids, and fatal the day one
+    does not. Found 2026-08-12 when Rate and the slit search became active by default and
+    started generating variants on every run.
+    """
+    return f"{parent_id}#{serial}" if isinstance(parent_id, str) else serial
+
+
+def _expand_with_resolution_variants(
+    strategies: list[dict[str, Any]],
+    params: dict[str, Any],
+    logger: logging.Logger,
+) -> list[dict[str, Any]]:
+    """A18 -- put the four slit widths in competition, as part of the strategy.
+
+    🔑 WHY PHASE B AND NOWHERE ELSE. 12.7 settled the placement and the reasoning is
+    worth keeping: **Phase A cannot** decide it, because it judges one layer at a time
+    while the slit is a compromise over the whole run -- the binding layer is not known
+    until the strategy exists. **The DP cannot** either: it minimises a SUM of per-layer
+    costs, and the slit is a single global choice that does not decompose additively;
+    putting it in the DP state would multiply that state by four and buy nothing. Phase B
+    is the only stage that measures the quantity that decides.
+
+    🔑 AND THE INTERESTING EFFECT IS NOT THE FOUR-WAY CHOICE -- it is that the slit
+    changes WHICH WAVELENGTHS ARE GOOD. A lambda sitting in a spectrally smooth region
+    tolerates the 5 nm slit and pockets the /1.5 noise bonus; one near the band edge
+    demands 1 nm and pays the x2. The worth of a wavelength therefore now depends on the
+    smoothness of its neighbourhood, not only on its dynamic range.
+
+    🔴 ON BY DEFAULT since 2026-08-12 — 👤 *"the slit is systematically searched, it is a
+    PREREQUISITE"*. A strategy that does not carry its own slit is not executable in the
+    chamber: the operator would have to pick a width the search never evaluated. Like the
+    slit bias, Rate and the index corridor, this breaks C1 deliberately; the historical
+    path is `search_resolution: false`.
+
+    ⚠️ THE COST IS A HONEST x4 on the Monte-Carlo, and 12.7 says so. `min_resolution`
+    orders the evaluation -- widest first, since a width the curvature already forbids is
+    the least promising -- but it PREFILTERS NOTHING until someone has counted what it
+    would actually reject (20-control 4). A rule that rejects nothing produces no error;
+    it produces a plausible result.
+    """
+    if not bool(params.get("search_resolution", True)):
+        return strategies
+    base = float(params.get("monochromator_resolution_nm", NOMINAL_RESOLUTION_NM)
+                 or NOMINAL_RESOLUTION_NM)
+    out: list[dict[str, Any]] = []
+    next_id = 970_000_000
+    for strat in strategies:
+        # The strategy as given keeps its identity and the run's slit: the comparison is
+        # against itself, so the baseline must stay bit-identical to a no-search run.
+        s0 = dict(strat)
+        s0["monochromator_resolution_nm"] = base
+        out.append(s0)
+        for slit in RESOLUTION_SEARCH_SET:
+            if slit == base:
+                continue
+            v = dict(strat)
+            v["blocks"] = list(strat.get("blocks") or [])
+            v["monochromator_resolution_nm"] = slit
+            v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+            v["origin"] = f"SLIT{slit:g}(from {strat.get('strategy_id', '?')})"
+            next_id += 1
+            out.append(v)
+    logger.info(
+        f"[SLIT] A18 recherche de fente : {len(strategies)} strategies x "
+        f"{len(RESOLUTION_SEARCH_SET)} fentes {list(RESOLUTION_SEARCH_SET)} "
+        f"-> {len(out)} candidates"
+    )
     return out
 
 
@@ -1163,6 +1271,28 @@ def _test_strategy_robustness_task(
     logger = logging.getLogger("certus_strat")
     strategy = dict(strategy)
     blocks = strategy["blocks"]
+    # ---- A18: the slit is a property of the STRATEGY, not of the run -------------
+    #
+    # 👤 "determining the optimal resolution for a given strategy... that resolution is
+    # an integral part of the strategy to be found" (2026-08-09). So a strategy is no
+    # longer (block partition, lambda per block) but (block partition, lambda per block,
+    # SLIT), and the three are decided together.
+    #
+    # 🔴 THE FACTOR SCALES THE NOISE, IT NEVER TOUCHES THE SEED -- constraint C2, and
+    # this is the one place it could have been broken invisibly. The draws come from
+    # `_signal_noise_stream_seed(base_seed, noise_idx)` and `_get_cached_sobol_noise`,
+    # neither of which sees the strategy: two slit variants of one strategy therefore
+    # see the SAME random realisation, only sized differently. Folding the slit into the
+    # seed would give the four widths four different worlds, and the gap between them
+    # would stop being attributable to the slit -- while all four numbers still looked
+    # perfectly plausible.
+    strat_slit = strategy.get("monochromator_resolution_nm")
+    if strat_slit is not None:
+        rescale = _resolution_noise_factor({"monochromator_resolution_nm": strat_slit}) / (
+            _resolution_noise_factor(params) or 1.0
+        )
+        if rescale != 1.0:
+            noise_levels = [lv * rescale for lv in noise_levels]
     p_thick_nom_arr = np.array(p_thick_nominal, dtype=np.float64)
     num_layers = len(p_thick_nominal)
     offset_val = compute_probe_offset_nm_from_ratio(params)
@@ -1416,11 +1546,20 @@ def _test_strategy_robustness_task(
                 tp_hysteresis = tp_hysteresis_factor * noise_val / 100.0
 
         affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
+        # 👤 the affine gain/offset stay OFF by default: the machine re-references
+        # itself against dark and void every rotation, so a common multiplicative
+        # drift cancels exactly. What survives is pinned at T=0 and T=1 and free in
+        # between -- see PHOTOMETRIC_CURVATURE_AMP. The affine pair is kept as the
+        # instrument that TESTS the invariance theorem of 12.1, not as a model of
+        # the machine.
+        photo_curvature_amp = float(
+            params.get("photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP) or 0.0
+        )
         affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
         poem_enabled = bool(params.get("poem_enabled", True))
         affine_seed = _affine_stream_seed(base_seed, noise_idx)
         smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
-        index_corridor = float(params.get("index_corridor", 0.0) or 0.0)
+        index_corridor = float(params.get("index_corridor", INDEX_CORRIDOR_DEFAULT) or 0.0)
         index_seed = _index_stream_seed(base_seed, noise_idx)
 
         # ONE computation of the corridor normalisation interval, passed to both the
@@ -1501,6 +1640,7 @@ def _test_strategy_robustness_task(
             tp_hysteresis,
             affine_scale_amp,
             affine_offset_amp,
+            photo_curvature_amp,
             affine_seed,
             poem_enabled,
             smoothing_window,
@@ -1785,8 +1925,13 @@ def _test_strategy_robustness_task(
         # reported and the fourth was not, so what came out was not executable as it
         # stood. The noise factor that goes with it is 12.7's table, applied to the
         # sample and never to the seed.
-        "monochromator_resolution_nm": float(params.get("monochromator_resolution_nm", 2.0) or 2.0),
-        "resolution_noise_factor": _resolution_noise_factor(params),
+        # 🔴 THE STRATEGY'S OWN SLIT, not the run's. Since A18 they differ: the slit is a
+        # searched variable, so reporting the run-level setting here would hand the
+        # operator a width the winner was never evaluated at.
+        "monochromator_resolution_nm": _strategy_resolution(strategy, params),
+        "resolution_noise_factor": _resolution_noise_factor(
+            {"monochromator_resolution_nm": _strategy_resolution(strategy, params)}
+        ),
         # A23 stage 2: WHICH layer will give way, WHY, and BY HOW MUCH. Defined even
         # when nothing crashed, which is the whole reason it exists.
         # ⚠️ NOMINAL noise level, not the worst of the three. The margin is normalised

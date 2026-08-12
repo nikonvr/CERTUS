@@ -46,6 +46,7 @@ def _run(sigma: float, hysteresis: float = 1.66 * 5e-4):
         hysteresis,
         0.0,
         0.0,
+        0.0,
         0,
         True,
         1,

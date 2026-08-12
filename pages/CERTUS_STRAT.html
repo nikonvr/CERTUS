@@ -1537,14 +1537,18 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 for no reason.
             </p>
             <p style="margin:10px 0 0;">
-                🟢 <b>Half of this already exists.</b>
+                🟢 <b>All of this now exists</b>, since 2026-08-11.
                 <code>_calculate_strategy_spectral_resolution</code> estimates, layer by layer, the
                 bandwidth at which the convolution error would reach the trigger tolerance, from the
-                <b>spectral curvature</b> of $T(\lambda)$ taken as a second difference over 1 nm:
-                $B_{\lim} = \Delta_{\text{test}}\sqrt{\varepsilon_T / \text{curv}}$. It even returns the
-                <b>worst layer</b>, which is the binding constraint. But it is a <b>post-hoc report</b>: it
-                distorts no signal, selects nothing, and knows only the "too coarse" side. The "too fine
-                costs noise" side does not exist anywhere in the kernel.
+                <b>spectral curvature</b> of $T(\lambda)$, and returns the <b>worst layer</b> — the
+                binding constraint. The "too fine costs noise" side is wired too, as a
+                <b>four-entry table</b>; a width the machine does not offer <b>raises</b> rather than
+                being interpolated, because four estimates do not make a law and a law would authorise
+                settings that do not exist on the machine.
+                <br><br>
+                What remains a <b>post-hoc report</b> is <code>min_resolution</code>: it breaks ties in
+                the sort but <b>selects nothing</b>. Before wiring it as a filter, count what it would
+                actually reject — an inert rule produces no error, it produces a plausible result.
             </p>
         </div>
 
@@ -3662,7 +3666,45 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         spread <i>is</i> the answer.</td></tr>
                 </table>
 
-                <h3>10.9 What we deliberately do not claim</h3>
+                <h3>10.9 A second test component — and why it is not a second data point</h3>
+                <p>
+                    Every figure above comes from one stack. Since 2026-08-11 a second one exists: a
+                    <b>three-cavity bandpass</b>, <code>M5&middot;2L&middot;M5&middot;L&middot;M5&middot;2L&middot;M5&middot;L&middot;M5&middot;2L&middot;M5</code>,
+                    35 layers, centred at <b>632.02 nm</b> with a <b>15.7 nm</b> passband, measured over
+                    600&ndash;660 nm. Same materials, same monochromator sweep (450&ndash;700 nm) — because
+                    the sweep range is a property of the <b>instrument</b>, not of the design.
+                </p>
+                <p>
+                    🔑 <b>It asks a different question of the method, which is the point of having it.</b>
+                    Its layers are quarter-waves at $\lambda_0$, so each one stops <b>at a turning point</b>
+                    where $dT/dd \to 0$ — the regime §14 warns against, and the one a bandpass is normally
+                    monitored in (turning-point monitoring). The dichroic, by contrast, lives on
+                    intermediate levels. And its spectral ripple near the control wavelength is
+                    <b>5.0 nm</b> against 7.2 nm for the dichroic, so a 2 nm slit averages over a
+                    <i>larger</i> fraction of a ripple: it is the more exposed of the two.
+                </p>
+                <div class="note">
+                    ⚠️ <b>Two stacks do not make a validation</b>, and the addition changes nothing about
+                    §15. Both are coherence benches; neither has a real deposition behind it. What a second
+                    component buys is <b>falsification of transfer</b>: it shows whether a conclusion drawn
+                    on one <i>survives</i> the other. It never licenses carrying a number across.
+                    <br><br>
+                    🔴 <b>And the geometry of the target is not the same</b>, which must be known before any
+                    two scores are set side by side. The dichroic has 141 points per band out of 301 —
+                    exactly equal. The bandpass has roughly 15 in-band points out of 61. The two put a
+                    <b>different question to the same unweighted objective</b>, so a score gap between
+                    them is not a difficulty gap.
+                </div>
+                <div class="highlight-box">
+                    🔑 <b>A trap worth recording, because anyone would fall into it.</b> A three-cavity
+                    bandpass has a <b>flat, rippled top</b> — here $T > 0.99$ over 10.4 nm. Centring it on
+                    <code>argmax</code> is meaningless: the maximum hops between ripples depending on the
+                    evaluation grid, and the same filter was reported peaking at 637.0 nm on one grid and
+                    627.1 nm on another. <b>The quantity that centres a bandpass is the midpoint of the
+                    half-maximum band</b>, on which the relation is monotone and a bisection converges.
+                </div>
+
+                <h3>10.10 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent
@@ -3671,7 +3713,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         order — an <b>ordinal</b> test, far weaker than absolute agreement and far
                         more convincing than self-consistency.</li>
                     <li><b>No conclusion is transferred to another stack.</b> Every figure here is
-                        the 48-layer dichroic.</li>
+                        the 48-layer dichroic. The three-cavity bandpass of §10.9 exists to <i>test</i>
+                        whether a conclusion survives the change of component — never to carry one
+                        across.</li>
                     <li><b>The spectral target is unweighted, and this is a stated choice.</b> Its
                         consequence must be reported alongside any result: the two bands of this
                         design are <b>the same width</b> — 141 points out of 301 each — so a uniform

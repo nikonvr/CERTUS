@@ -502,14 +502,20 @@ def main() -> None:
     B.emit("")
     B.emit(f"  ERREUR SPECTRALE, en POINTS DE TRANSMISSION — poem_anchor_noise={mode.upper()}")
     B.emit("  id        nb  crash | RMSE global med/p95 | passante p95 | FRONT p95 | BLOQUEE p95 max|E| | decalage front p95")
+    # ⚠️ Les trois bandes sont celles du DICHROIQUE (400-540 / 540-560 / 560+). Sur un
+    # autre composant elles peuvent etre VIDES, et la sonde ecrit alors `null`. Le tableau
+    # doit le dire, pas lever -- il s'affiche APRES que l'artefact soit ecrit, donc un
+    # plantage ici laissait un run reussi avec un code de sortie 1.
+    def _pc(d, k):
+        return f"{d[k] * 100:7.3f}" if isinstance(d, dict) else "      —"
     for s in r["strategies"][:8]:
-        g, pa, fr, st = s["global"], s["passante"], s["front"], s["bloquee"]
+        g, sh = s["global"], s.get("front_shift_nm")
         B.emit(
             f"  {str(s['id'])[:9]:>9} {s['n_blocks']:>2} {s['crash']:.3f} | "
             f"{g['rmse_median'] * 100:6.3f}/{g['rmse_p95'] * 100:6.3f} | "
-            f"{pa['rmse_p95'] * 100:7.3f} | {fr['rmse_p95'] * 100:8.3f} | "
-            f"{st['rmse_p95'] * 100:7.4f} {st['max_abs_p95'] * 100:7.4f} | "
-            f"{s['front_shift_nm']['abs_p95']:6.2f} nm"
+            f"{_pc(s['passante'], 'rmse_p95')} | {_pc(s['front'], 'rmse_p95')} | "
+            f"{_pc(s['bloquee'], 'rmse_p95')} {_pc(s['bloquee'], 'max_abs_p95')} | "
+            + (f"{sh['abs_p95']:6.2f} nm" if isinstance(sh, dict) else "     — ")
         )
     sys.stdout.flush()
     os._exit(0)

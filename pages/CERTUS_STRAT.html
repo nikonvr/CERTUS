@@ -3959,6 +3959,70 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     without a single draw, which strategies can even fail.
                 </p>
 
+                <div style="border:3px solid #0d9488;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdfa;">
+                    <p style="margin:0 0 10px;">
+                        📏 <b>DEPTH AGAINST WALL-CLOCK — eight runs, both components, 2026-08-12.</b>
+                        Timings were remeasured rather than read off the ledger: the existing seconds
+                        span several states of the code, and a run that does not carry its configuration
+                        compares to nothing. Timings are no different from results in that respect.
+                    </p>
+                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.92em;">
+                        <tr style="background:#ccfbf1;">
+                            <th style="border:1px solid #5eead4;padding:4px 10px;">draws</th>
+                            <th style="border:1px solid #5eead4;padding:4px 10px;">48-layer</th>
+                            <th style="border:1px solid #5eead4;padding:4px 10px;">35-layer</th>
+                            <th style="border:1px solid #5eead4;padding:4px 10px;">min. gap resolvable</th></tr>
+                        <tr><td style="border:1px solid #5eead4;padding:4px 10px;">50</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">21.0 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">7.6 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">14.7 %</td></tr>
+                        <tr style="background:#fff;"><td style="border:1px solid #5eead4;padding:4px 10px;"><b>150</b> — current</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;"><b>26.1 min</b></td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;"><b>9.0 min</b></td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;"><b>8.5 %</b></td></tr>
+                        <tr><td style="border:1px solid #5eead4;padding:4px 10px;">300</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">27.5 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">10.5 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">6.0 %</td></tr>
+                        <tr><td style="border:1px solid #5eead4;padding:4px 10px;">500</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">36.6 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">15.1 min</td>
+                            <td style="border:1px solid #5eead4;padding:4px 10px;">4.6 %</td></tr>
+                    </table>
+                    <div class="eq-box" style="text-align:left;margin:0 0 10px;">
+                        48-layer &nbsp;&mdash;&nbsp; <b>fixed 19.8 min</b> + 1.94 s per draw<br>
+                        35-layer &nbsp;&mdash;&nbsp; <b>fixed &nbsp;6.4 min</b> + 0.98 s per draw
+                    </div>
+                    <p style="margin:0 0 10px;">
+                        ⚠️ <b>Read the slope, never the totals.</b> Run-to-run scatter is &plusmn;1.9 min
+                        on the 48-layer, so the measured 150&rarr;300 step (+1.4 min) sits inside it while
+                        the fit says +4.8 min. The <b>fixed</b> part — Phase A, the DP, and the ablation
+                        profile which runs at a constant 64 draws — dominates everything.
+                    </p>
+                    <div class="highlight-box" style="margin:0 0 10px;">
+                        🔑 <b>AND WHAT DEPTH BUYS IS NOT WHAT ONE EXPECTS.</b> Across a <b>tenfold</b>
+                        range of depth:
+                        <br><br>
+                        <b>48-layer</b> — winner's SEEL reads 0.587 &middot; 0.570 &middot; 0.583 &middot;
+                        0.583 nm, i.e. <b>&plusmn;1.5 %</b> &mdash; but the <b>winner's identity changes at
+                        every depth</b>, and between N = 300 and N = 500 the SEEL equivalence class shares
+                        only <b>2 members out of 5</b>. Crash rate: 0.000 throughout.
+                        <br><br>
+                        <b>Depth buys precision on a number that is already precise, and cannot buy what
+                        actually moves.</b> That is not a defect of the measurement &mdash; it <i>is</i>
+                        the result: <b>the leading strategies are genuinely interchangeable</b>. They reach
+                        the same SEEL at the same 100 % yield. There is nothing to separate, which is
+                        exactly why the rule declares equality instead of buying draws.
+                    </div>
+                    <p style="margin:0;">
+                        🔴 <b>One thing this campaign leaves unexplained, and it is not papered over</b>:
+                        the number of ranked strategies swings from <b>229 to 376</b> across the four
+                        depths, although screening runs at a fixed 10 draws and should hand the same
+                        survivors to every one of them. Something upstream depends on $N$ and should not.
+                        Worth settling before drawing further conclusions from these rankings.
+                    </p>
+                </div>
+
                 <h3>10.7bis The control-&lambda; grid — 1 nm or 2 nm, and why it was reopened</h3>
                 <p>
                     The control wavelengths are chosen on the sweep grid, and its step sets how many

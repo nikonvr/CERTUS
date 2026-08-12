@@ -3577,3 +3577,72 @@ le dichroïque, donc une fente de 2 nm y moyenne une fraction plus grande d'ondu
 
 **8 runs** : 2 composants × 2 graines × 2 grilles, biais de fente actif, tout le reste neutre.
 🔴 **Comparer deux `RESULT` bruts départagerait du bruit** — §17-26. C'est la classe qui décide.
+
+---
+
+## 23. 📏 LA PROFONDEUR MONTE-CARLO — campagne du 2026-08-12, et elle répond autre chose
+
+> 👤 *« J'aimerais une courbe ou un tableau entre le nombre de samples (50, 150, 300, 500)
+> et le temps d'exécution pour le 35c puis le 48c. Du coup, après, je choisirai
+> définitivement le nombre d'échantillons. »*
+
+**8 runs, `run_campaign.py n`, tous `OK`, tous sur le même état du code.** Les durées du
+journal `probe_runs.tsv` n'ont **pas** été réutilisées : elles s'étalent sur plusieurs états
+du code, et §17-7 vaut pour les secondes comme pour les résultats.
+
+### Le coût
+
+| N | 48 couches | 35 couches |
+|---|---|---|
+| 50 | 21,0 min | 7,6 min |
+| **150** | **26,1 min** | **9,0 min** |
+| 300 | 27,5 min | 10,5 min |
+| 500 | 36,6 min | 15,1 min |
+
+```
+48 couches : part FIXE 19,8 min  +  1,94 s par tirage
+35 couches : part FIXE  6,4 min  +  0,98 s par tirage
+```
+
+⚠️ **Lis la PENTE, jamais les totaux.** La dispersion run à run vaut ±1,9 min sur le
+dichroïque : le pas 150→300 mesuré (+1,4 min) tient dedans alors que l'ajustement donne
++4,8 min. La part **fixe** — Phase A, DP, et l'ablation qui tourne à 64 tirages
+constants — domine tout.
+
+### 🔑 Et ce que la profondeur achète n'est pas ce qu'on croit
+
+Sur un facteur **dix** de profondeur :
+
+| | SEEL de la gagnante | identité de la gagnante | plantage |
+|---|---|---|---|
+| **48c** | 0,587 · 0,570 · 0,583 · 0,583 nm → **±1,5 %** | **change à chaque profondeur** | 0,000 partout |
+| **35c** | 1,154 · 1,406 · 1,371 · 1,154 nm → ±9,8 % | 37172 · 35838 · 35838 · 37413 | 0,000 partout |
+
+Entre N = 300 et N = 500, la classe d'équivalence SEEL ne partage que **2 membres sur 5**.
+
+> **La profondeur achète de la précision sur un nombre déjà précis, et elle ne peut pas
+> acheter ce qui bouge réellement.**
+
+Ce n'est pas un défaut de la mesure, **c'est le résultat** : les stratégies de tête sont
+réellement **interchangeables** — même SEEL, même rendement de 100 %. Il n'y a rien à
+départager, et c'est précisément pourquoi §14 prescrit de déclarer l'égalité au lieu
+d'acheter des tirages. §17-26 le disait sur les scores ; ceci le dit sur la **réponse**.
+
+### La recommandation
+
+**N = 150 reste le bon réglage.** Monter à 500 coûte +11 min par composant pour resserrer
+l'écart discernable de 8,5 % à 4,6 %, c'est-à-dire pour séparer des stratégies que la règle
+de décision déclare équivalentes de toute façon.
+
+Si ces minutes doivent être dépensées, **elles vont à une seconde graine** : ~25 min contre
+11, donc plus cher, mais elle attaque la variance qui fait réellement changer la gagnante,
+là où la profondeur ne peut rien (§19-3).
+
+### 🔴 Ce que cette campagne laisse OUVERT
+
+**Le nombre de stratégies classées varie de 229 à 376** entre les quatre profondeurs — 343,
+376, 229, 284 sur le dichroïque. Or le criblage tourne à **10 tirages fixes** et devrait
+rendre les mêmes survivantes à toutes. **Quelque chose en amont dépend de `N` et ne devrait
+pas.** À trancher avant de tirer d'autres conclusions de ces classements : tant que ce n'est
+pas expliqué, l'instabilité de la gagnante ci-dessus a **deux** causes possibles — la
+dispersion Monte-Carlo, ou une population de candidates qui n'est pas la même.

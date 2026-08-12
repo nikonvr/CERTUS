@@ -2,28 +2,36 @@
 
 Ecrit par `scripts/run_campaign.py` **apres chaque run**. Ce fichier est une SORTIE.
 
-**Avancement : 6 / 6**  `[######]`
+**Avancement : 8 / 8**  `[########]`
 
 SEEL = erreur aleatoire equivalente par couche, en nm, quantifiee a 0,1 nm.
 C'est la seule colonne lisible sans conversion. RESULT est le PIRE des trois
 niveaux de bruit ; il ne se compare a aucune valeur par strategie (voir 10).
 
-| run | statut | RESULT | SEEL | gagnante | blocs | plantage | objet |
-|---|---|---|---|---|---|---|---|
-| G1.0075 | OK | `0.010759861471280425` | **1.0 nm** | 900000073 | 2 | 0.0% | seed 77 at corridor 0.0075 -- bracket the cliff from below |
-| G1.0060 | OK | `0.007690832306623568` | **0.7 nm** | 900000360 | 3 | 0.0% | seed 77 at corridor 0.0060 -- just above the model value |
-| G2.202a | OK | `0.013727779993298168` | **1.3 nm** | 48836 | 48 | 0.0% | seed 202 at the model corridor 0.005 |
-| G2.202b | OK | `0.09457390925219354` | **9.1 nm** | 900000010 | 2 | 37.3% | seed 202 at 0.010 -- is the cliff there too? |
-| G3.303a | OK | `0.0059789415722207575` | **0.6 nm** | 900000643 | 5 | 0.0% | seed 303 at the model corridor 0.005 |
-| G3.303b | OK | `0.014663982592690448` | **1.4 nm** | 900000162 | 2 | 0.0% | seed 303 at 0.010 |
+🔴 `forcees` = couches ou la Phase A n'avait AUCUNE lambda admissible et a garde
+la moins mauvaise (17-37). Une valeur non nulle veut dire que la strategie est
+SUBIE, pas choisie : son score n'est pas comparable a celui d'un run libre.
+
+| run | statut | RESULT | SEEL | gagnante | blocs | plantage | forcees | objet |
+|---|---|---|---|---|---|---|---|---|
+| N48.50 | OK | `0.0061535326732558345` | **0.6 nm** | 900000248 | 7 | 0.0% | 0 | 48-layer dichroic, 50 draws -- depth against wall-clock |
+| N48.150 | OK | `0.0059725813338143575` | **0.6 nm** | 900000255 | 6 | 0.0% | 0 | 48-layer dichroic, 150 draws -- depth against wall-clock |
+| N48.300 | OK | `0.006110491633768144` | **0.6 nm** | 900000064 | 6 | 0.0% | 0 | 48-layer dichroic, 300 draws -- depth against wall-clock |
+| N48.500 | OK | `0.006110491633768144` | **0.6 nm** | 900000016 | 6 | 0.0% | 0 | 48-layer dichroic, 500 draws -- depth against wall-clock |
+| N35.50 | OK | `0.046350294829477535` | **1.2 nm** | 37172 | 35 | 0.0% | 0 | 35-layer bandpass, 50 draws -- depth against wall-clock |
+| N35.150 | OK | `0.05645656956518977` | **1.4 nm** | 35838 | 35 | 0.0% | 0 | 35-layer bandpass, 150 draws -- depth against wall-clock |
+| N35.300 | OK | `0.05507479034893577` | **1.4 nm** | 35838 | 35 | 0.0% | 0 | 35-layer bandpass, 300 draws -- depth against wall-clock |
+| N35.500 | OK | `0.046350294829477535` | **1.2 nm** | 37413 | 35 | 0.0% | 0 | 35-layer bandpass, 500 draws -- depth against wall-clock |
 
 ## Configurations appliquees
 
-- **G1.0075** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.0075, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 77, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
-- **G1.0060** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.006, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 77, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
-- **G2.202a** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 202, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
-- **G2.202b** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.01, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 202, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
-- **G3.303a** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 303, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
-- **G3.303b** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.01, "k_keep_survivors": 10, "n_screen_runs": 25, "phase_a_level_margin_factor": 1.66, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 303, "scan_wl_step": 1.0, "tp_hysteresis_factor": 1.66}`
+- **N48.50** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 50, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N48.150** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N48.300** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 300, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N48.500** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 500, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N35.50** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 50, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N35.150** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 150, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N35.300** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 300, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
+- **N35.500** — `{"affine_offset_amp": 0.0, "affine_scale_amp": 0.0, "allow_rate": true, "dp_yield_weight": 0.0, "enable_consensus_ranking": false, "index_corridor": 0.005, "k_keep_survivors": 10, "machine_sampling_dd": 0.0, "monochromator_resolution_nm": 2.0, "n_screen_runs": 10, "phase_a_level_margin_factor": 1.66, "photometric_curvature_amp": 0.00375, "poem_anchor_noise": true, "poem_enabled": true, "reading_smoothing_window": 1, "robustness_num_runs": 500, "robustness_seed": 42, "scan_wl_step": 1.0, "search_resolution": true, "slit_bias_enabled": true, "tp_hysteresis_factor": 1.66}`
 
 Transcriptions completes : `reports/campagne_*.log`.

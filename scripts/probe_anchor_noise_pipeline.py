@@ -105,7 +105,7 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_ALLOW_RATE", "allow_rate", "flag", True, "norate"),
     ("CERTUS_SEARCH_RESOLUTION", "search_resolution", "flag", True, "noslitsearch"),
     ("CERTUS_SLIT_BIAS", "slit_bias_enabled", "flag", True, "noslitbias"),
-    ("CERTUS_PHOTO_CURVATURE", "photometric_curvature_amp", "float", 0.0075, "curv"),
+    ("CERTUS_PHOTO_CURVATURE", "photometric_curvature_amp", "float", 0.00375, "curv"),
     ("CERTUS_RESOLUTION_NM", "monochromator_resolution_nm", "float", 2.0, "res"),
 )
 

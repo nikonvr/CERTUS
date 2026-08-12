@@ -324,12 +324,12 @@ def test_the_curvature_vanishes_at_both_ends_of_the_scale():
 
 
 def test_the_amplitude_is_the_one_the_physicist_specified():
-    """👤 "at T = 0.5 the true value can be between 0.495 and 0.505, bounds at 2 sigma".
+    """👤 at T = 0.5 the true value lies between 0.4975 and 0.5025, bounds at 2 sigma.
 
     The project's draw is bounded on [-1, 1] with sigma = 1/3, so an amplitude A gives
-    sigma = A/3 and 2 sigma = 2A/3. Requiring 2 sigma = 5e-3 fixes A = 7.5e-3.
+    sigma = A/3 and 2 sigma = 2A/3. Requiring 2 sigma = 2.5e-3 fixes A = 3.75e-3.
     """
-    assert 2.0 * PHOTOMETRIC_CURVATURE_AMP / 3.0 == pytest.approx(0.005)
+    assert 2.0 * PHOTOMETRIC_CURVATURE_AMP / 3.0 == pytest.approx(0.0025)
 
 
 def test_poem_absorbs_the_affine_but_NOT_the_curvature():

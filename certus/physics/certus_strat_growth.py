@@ -36,9 +36,12 @@ RATE_TURN_NM: float = 0.125
 
 #: Amplitude of the PHOTOMETRIC CURVATURE, in T units, at its maximum (T = 0.5).
 #:
-#: 👤 2026-08-12: *"the true value at T = 0.5 can be between 0.495 and 0.505, bounds at
-#: 2 sigma"*. So 2 sigma = 5e-3, sigma = 2.5e-3, and the project's bounded draw has
-#: sigma = A/3, hence A = 7.5e-3.
+#: 👤 2026-08-12: at T = 0.5 the true value lies between 0.4975 and 0.5025, bounds at
+#: 2 sigma. So 2 sigma = 2.5e-3, sigma = 1.25e-3, and the project's bounded draw has
+#: sigma = A/3, hence A = 3.75e-3.
+#: ⚠️ 👤 revised this down by a factor 2 the same day ("I think I overestimated by a
+#: factor 2 the error in epsilon at T = 0.5"). Every figure quoted against the first
+#: value was re-measured, not halved -- the response is not linear in eps.
 #:
 #: 🔑 WHY THIS SHAPE AND NOT AN AFFINE ONE, which is what the code carried until today.
 #: The machine measures T = (S - D)/(V - D), re-referenced every rotation at 4 Hz. That
@@ -58,7 +61,7 @@ RATE_TURN_NM: float = 0.125
 #: found this morning on the slit bias, where a per-layer CONSTANT was likewise the shape
 #: POEM cancels. Choosing the perturbation the mechanism is immune to is the error, and
 #: it was made twice.
-PHOTOMETRIC_CURVATURE_AMP: float = 0.0075
+PHOTOMETRIC_CURVATURE_AMP: float = 0.00375
 
 #: Sweep span, as a multiple of the nominal thickness. Declared at module level so the
 #: slit-bias profiles can be sampled on EXACTLY the axis the kernel sweeps: the profile

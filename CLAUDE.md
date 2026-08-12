@@ -145,7 +145,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §9bis-6 |
 | Quantification de l'arrêt | `U(0 ; 0,125 nm)` | §9bis-7 |
 | `index_corridor` | **0,005**, unités d'indice **absolues**, demi-largeur — 👤 **ACTIF PAR DÉFAUT** | §12.3 |
-| `photometric_curvature_amp` | **0,0075** ⇒ à `T = 0,5` la vraie valeur est dans `[0,495 ; 0,505]` à 2 σ. 👤 **ACTIF PAR DÉFAUT** | §12.1bis |
+| `photometric_curvature_amp` | **0,00375** ⇒ à `T = 0,5` la vraie valeur est dans `[0,4975 ; 0,5025]` à 2 σ. 👤 **ACTIF PAR DÉFAUT** | §12.1bis |
 | `allow_rate` | **vrai** — 👤 *« c'est le cas général »* | §14 |
 | `slit_bias_enabled` | **vrai**, fente nominale **2 nm** — 👤 *« réaliste, pas optimiste »* | §12.7 |
 | `reading_smoothing_window` | **1 = INACTIF**, et il le reste — 👤 *« on ne sait pas trop les algos de smooth appliqués par Bühler »*. §9bis interdit d'ajouter une structure non mesurée | §9bis-3 |
@@ -1314,9 +1314,13 @@ nulle aux deux bouts, maximale à `T = 0,5` où elle vaut `ε`. Elle a un mécan
 une **non-linéarité du détecteur**, réponse `Φ + κΦ²`, survit au rapport de différences
 précisément comme ce terme du second ordre.
 
-🔒 **Amplitude** : 👤 *« à T = 0,5, la vraie valeur peut être entre 0,495 et 0,505, bornes à
-2 σ »*. Le tirage borné du projet a `σ = A/3`, donc `2σ = 2A/3 = 5e-3` fixe
-**`A = 7,5e-3`** — `PHOTOMETRIC_CURVATURE_AMP`. Tirée **une fois par dépôt**, groupe 2 du
+🔒 **Amplitude** : à `T = 0,5` la vraie valeur est entre **0,4975 et 0,5025**, bornes à
+2 σ. Le tirage borné du projet a `σ = A/3`, donc `2σ = 2A/3 = 2,5e-3` fixe
+**`A = 3,75e-3`** — `PHOTOMETRIC_CURVATURE_AMP`.
+⚠️ 👤 a **révisé cette valeur d'un facteur 2 vers le bas** le jour même : *« je pense que
+j'ai surestimé d'un facteur 2 l'erreur en epsilon à T = 0,5 »*. Tous les chiffres cités
+contre l'ancienne valeur ont été **remesurés**, jamais divisés par deux — la réponse
+n'est pas linéaire en ε. Tirée **une fois par dépôt**, groupe 2 du
 flux affine, distinct des groupes 0 et 1 : trois imperfections indépendantes ne partagent
 pas un tirage.
 
@@ -1328,11 +1332,18 @@ pas un tirage.
 |---|---|
 | **affine**, gain 5 % | **−8,6e-12 nm** |
 | **affine**, offset 0,02 | **−4,2e-11 nm** |
-| **courbure**, ε = 0,0075 | **−1,28 nm** |
+| **courbure**, ε = 0,00375 | **−0,667 nm** |
+| courbure, ε = 0,0075 | −1,28 nm |
 | courbure, ε = 0,05 | −6,11 nm |
 
-**Facteur 3×10¹⁰ entre l'ancienne perturbation et la nouvelle.** 1,28 nm sur 53, soit
-2,4 %, et **vingt-cinq fois** le seuil de 0,05 nm sous lequel §16 interdit de conclure.
+**Facteur 1,6×10¹⁰ entre l'ancienne perturbation et la nouvelle.** 0,667 nm sur 53, soit
+1,3 %, et **treize fois** le seuil de 0,05 nm sous lequel §16 interdit de conclure.
+
+📏 Et sur les 48 couches à 544 nm, l'erreur de **niveau** qu'elle induit vaut **0,15 A en
+médiane**, **1,89 A au pire** (couche 6) ; **4 couches sur 48** dépassent 1 A et **aucune**
+ne dépasse 2 A. Le swing médian valant 0,140, l'effet est donc modeste sur la couche
+typique — mais c'est un **biais**, qui ne s'annule pas sur les tirages, là où `A` est du
+bruit qui s'annule.
 
 La raison est le théorème de §12.1 : **POEM est rigoureusement invariant par transformation
 affine.** La perturbation modélisée jusqu'ici était donc, très exactement, la seule forme

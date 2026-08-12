@@ -121,7 +121,7 @@
   "monochromator_resolution_nm": 2.0,
   "search_resolution": 1,
   "index_corridor": 0.005,
-  "photometric_curvature_amp": 0.0075,
+  "photometric_curvature_amp": 0.00375,
   "allow_rate": 1,
   "affine_scale_amp": 0.0,
   "affine_offset_amp": 0.0,

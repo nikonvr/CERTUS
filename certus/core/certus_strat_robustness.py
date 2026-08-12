@@ -79,6 +79,8 @@ from certus.utils.certus_strat_service import (
 )
 
 from certus.core.certus_strat_ranking import (
+    STRATEGY_ID_RATE_BASE,
+    STRATEGY_ID_SLIT_BASE,
     _filter_valid_robustness_strategies,
     _select_best_strat_result,
 )
@@ -574,7 +576,7 @@ def _expand_with_rate_variants(
         return strategies
     variants: list[dict[str, Any]] = []
     skipped = 0
-    next_id = 990_000_000
+    next_id = STRATEGY_ID_RATE_BASE
     for strat in strategies:
         cands = _rate_candidate_layers(strat, num_layers)
         if not cands:
@@ -869,7 +871,7 @@ def _expand_with_resolution_variants(
     base = float(params.get("monochromator_resolution_nm", NOMINAL_RESOLUTION_NM)
                  or NOMINAL_RESOLUTION_NM)
     out: list[dict[str, Any]] = []
-    next_id = 970_000_000
+    next_id = STRATEGY_ID_SLIT_BASE
     skipped: dict[float, int] = {}
     for strat in strategies:
         # La fente la plus large que la courbure de CETTE strategie tolere. `None` quand

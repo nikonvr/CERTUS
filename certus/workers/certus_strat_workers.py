@@ -74,6 +74,8 @@ from certus.core.certus_strat_core import (
     precompute_clues_and_matrices,
 )
 
+from certus.core.certus_strat_ranking import STRATEGY_ID_DERIVED_BASE
+
 from certus.utils.certus_data import (
     SharedArrayWorker,
     SharedIndicesWorker,
@@ -267,7 +269,7 @@ def derive_strategies_exhaustive(
 
                     _derive_next_id[0] += 1
 
-                    new_id = 900_000_000 + _derive_next_id[0]
+                    new_id = STRATEGY_ID_DERIVED_BASE + _derive_next_id[0]
 
                     parent_origin = str(parent_strat.get("origin", "UNKNOWN")).upper()
 

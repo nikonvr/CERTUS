@@ -930,5 +930,45 @@ def _select_best_strat_result(strategies_results: list[dict[str, Any]]) -> dict[
     """Return the best finite-ranked strategy result (compatibility delegate)."""
     return select_best_strat_result(strategies_results)
 
+# --------------------------------------------------------------------------- #
+# Plages d'identifiants de strategie -- UNE seule declaration
+# --------------------------------------------------------------------------- #
+#
+# 🔴 POURQUOI CECI EXISTE, et ce que ca a deja coute. Le 2026-08-12 la gagnante d'un run
+# portait l'identifiant 990000320. J'ai lu "plage 990 = variante Rate" et je l'ai
+# rapporte comme telle; son `origin` disait LOCAL_SEARCH. Le generateur de consensus
+# part de `max_sid + 1`, donc il GRIMPE dans n'importe quelle plage des qu'une variante
+# existe -- et deux generateurs finissent par se partager les memes numeros.
+#
+# La lecture fausse est ensuite remontee a l'utilisateur, qui a cru voir du Rate gagner
+# la ou il n'y en avait jamais eu. C'est exactement le motif de ce depot: ca ne produit
+# pas d'erreur, ca produit un resultat plausible.
+#
+# 🔑 LA REGLE, ET ELLE EST SIMPLE : **l'identifiant n'est pas une donnee, c'est un
+# numero.** Le generateur se lit dans `origin`, qui fait foi. Les plages ci-dessous ne
+# servent qu'a garantir que deux strategies distinctes ne portent jamais le meme numero.
+
+#: Base des strategies derivees (local search de la Phase B, `certus_strat_workers`).
+STRATEGY_ID_DERIVED_BASE: int = 900_000_000
+#: Base des variantes de FENTE (A18).
+STRATEGY_ID_SLIT_BASE: int = 970_000_000
+#: Base des variantes RATE.
+STRATEGY_ID_RATE_BASE: int = 990_000_000
+#: Plafond au-dela duquel un generateur incremental ne doit jamais monter: il entrerait
+#: dans les plages reservees ci-dessus.
+STRATEGY_ID_INCREMENTAL_CEILING: int = STRATEGY_ID_SLIT_BASE
 
 
+def clamp_incremental_strategy_id(next_id: int) -> int:
+    """Empeche un compteur `max_sid + 1` d'entrer dans une plage reservee.
+
+    Les generateurs incrementaux (consensus, ELITE, recherche locale) partent du plus
+    grand identifiant deja vu, pour ne pas collisionner avec l'existant. Mais une fois
+    que des variantes a 970M ou 990M sont dans la liste, ce `max + 1` les suit et le
+    numero cesse de dire quoi que ce soit.
+
+    On le ramene donc sous le plafond. Le risque residuel -- reutiliser un numero deja
+    pris sous le plafond -- est ecarte par les signatures de strategie, qui sont ce qui
+    dedoublonne reellement (`_existing_block_signatures`).
+    """
+    return next_id if next_id < STRATEGY_ID_INCREMENTAL_CEILING else STRATEGY_ID_DERIVED_BASE

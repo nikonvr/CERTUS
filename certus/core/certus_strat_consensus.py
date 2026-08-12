@@ -20,6 +20,7 @@ from certus.core.certus_strat_config import APP_CONTEXT, RobustnessContext
 
 # Import helpers from context and ranking
 from certus.core.certus_strat_ranking import (
+    clamp_incremental_strategy_id,
     _apply_strategy_ranking,
     _apply_family_diversity_if_enabled,
     _apply_block_diversity_if_enabled,
@@ -556,7 +557,7 @@ def _apply_elite_refinement_if_enabled(
             parent_results=strategies_results[:parent_count],
             available_wls=available_wls,
             num_layers=ctx.num_layers,
-            start_strategy_id=max_sid + 1,
+            start_strategy_id=clamp_incremental_strategy_id(max_sid + 1),
             max_candidates=elite_max_candidates,
             wl_neighbor_span=elite_wl_neighbor_span,
             existing_signatures=existing_signatures,
@@ -898,7 +899,7 @@ def _apply_local_search_p_conforme(
                 parent_strat=parent_strat,
                 available_wls=available_wls,
                 num_layers=ctx.num_layers,
-                start_strategy_id=max_sid + 1,
+                start_strategy_id=clamp_incremental_strategy_id(max_sid + 1),
                 seen_signatures=existing_signatures,
             )
             if not neighborhood:

@@ -23,7 +23,13 @@ from certus.core.certus_strat_robustness import (
     _resolution_noise_factor,
     _resolve_robustness_noise_levels,
 )
-from certus.physics.certus_strat_growth import RATE_TURN_NM, simulate_growth_kernel
+from certus.physics.certus_strat_growth import (
+    D_SCAN_VAL,
+    RATE_TURN_NM,
+    SLIT_PROFILE_NODES,
+    simulate_growth_kernel,
+    slit_bias_at,
+)
 
 QWOT_500 = np.array([53.19, 85.62, 53.19, 85.62, 53.19, 85.62], dtype=np.float64)
 
@@ -177,6 +183,92 @@ def test_the_three_monte_carlo_levels_keep_their_ratios():
     )
     assert lv[1] / lv[0] == pytest.approx(2.0)
     assert lv[2] / lv[1] == pytest.approx(2.0)
+
+
+# --------------------------------------------------------------------------- #
+# 4. The slit bias must VARY along the growth -- 👤 "model the slits more
+#    faithfully, without exploding the time budget" (2026-08-11)
+# --------------------------------------------------------------------------- #
+
+def _grow_slit(profiles):
+    return simulate_growth_kernel(
+        QWOT_500, 4, np.array([53.19, 85.62, 53.19, 85.62], dtype=np.float64), 540.0,
+        2.35 + 0j, 1.46 + 0j, 1.52 + 0j,
+        1.0, 0.0, 2.0, 0, 0, 0.0, 0, 0, 0.0,
+        1.0, 0.0, True, 1, -1.0, -1.0, False, profiles,
+    )[0]
+
+
+def test_no_profile_is_bit_identical_to_a_zero_profile():
+    """C1. `None` and an all-zero profile are two spellings of "no slit effect"."""
+    assert _grow_slit(None).hex() == _grow_slit(
+        np.zeros((6, SLIT_PROFILE_NODES), dtype=np.float64)
+    ).hex()
+
+
+def test_a_constant_bias_is_absorbed_by_poem_however_large():
+    """🔑 THE MEASUREMENT THAT JUSTIFIES THE WHOLE PROFILE.
+
+    A constant added to every reading is exactly the `b` of `T -> a.T + b`, and 12.1
+    proved POEM rigorously invariant under it. So a bias modelled as ONE NUMBER PER
+    LAYER -- which is what the code did until 2026-08-11 -- is transparent to POEM no
+    matter how big it is.
+
+    📏 A constant of 1e-2, TWENTY TIMES the reading-noise amplitude, moves the stopping
+    thickness by 1.8e-11 nm: nine decades below the 0.05 nm under which 16 forbids
+    concluding anything at all.
+
+    🔴 This test cannot fail on the old code -- it cannot even be WRITTEN against it,
+    because a scalar bias has no other shape to be compared with. That is the point:
+    the defect was not a wrong number, it was a missing degree of freedom.
+    """
+    ref = _grow_slit(None)
+    for amp in (1e-4, 1e-3, 1e-2):
+        got = _grow_slit(np.full((6, SLIT_PROFILE_NODES), amp, dtype=np.float64))
+        assert abs(got - ref) < 1e-9, f"constante {amp:g} -> {got - ref:.2e} nm"
+
+
+def test_a_varying_bias_moves_the_stop_in_proportion_to_itself():
+    """Trap 1, the other way round: the quantity MUST vary with what drives it.
+
+    Same amplitudes as above but shaped over the sweep instead of flat. The stopping
+    point now moves, and linearly -- an amplitude 100 times larger displaces 100 times
+    further. A profile that changed nothing would mean the array never reached the
+    kernel; a displacement independent of the amplitude would mean it reached it and
+    something else decided.
+    """
+    ref = _grow_slit(None)
+    u = np.linspace(0.0, 3.0, SLIT_PROFILE_NODES)
+    shifts = []
+    for amp in (1e-5, 1e-4, 1e-3):
+        prof = np.ascontiguousarray(
+            np.tile((amp * np.sin(2.0 * np.pi * u / 3.0))[None, :], (6, 1))
+        )
+        shifts.append(abs(_grow_slit(prof) - ref))
+    assert shifts[0] > 1e-4, "le profil n'atteint pas le calcul"
+    assert shifts[1] / shifts[0] == pytest.approx(10.0, rel=0.05)
+    assert shifts[2] / shifts[1] == pytest.approx(10.0, rel=0.05)
+
+
+def test_the_profile_is_clamped_never_extrapolated():
+    """Beyond the swept window the profile was never measured. Extrapolating a
+    curvature term there would grow without bound in exactly the region the sweep
+    stops short of."""
+    prof = np.zeros((2, SLIT_PROFILE_NODES), dtype=np.float64)
+    prof[0, 0], prof[0, -1] = -7.0, 11.0
+    assert slit_bias_at(prof, 0, -5.0) == -7.0
+    assert slit_bias_at(prof, 0, 1e6) == 11.0
+    assert slit_bias_at(prof, 0, 0.0) == -7.0
+    assert slit_bias_at(prof, 0, D_SCAN_VAL) == 11.0
+
+
+def test_the_profile_axis_matches_the_sweep_the_kernel_actually_runs():
+    """🔴 The profile is sampled on u = d / d_nominal over [0, D_SCAN_VAL] and read back
+    on the same axis. If the two ever diverged, every bias would land at the wrong
+    thickness with no error raised anywhere -- the invisible failure of trap 1."""
+    prof = np.zeros((1, SLIT_PROFILE_NODES), dtype=np.float64)
+    prof[0, (SLIT_PROFILE_NODES - 1) // 2] = 1.0        # spike at mid-sweep
+    assert slit_bias_at(prof, 0, D_SCAN_VAL / 2.0) == pytest.approx(1.0)
 
 
 class _Log:

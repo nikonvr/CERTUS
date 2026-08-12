@@ -20,6 +20,7 @@ Contains:
 
 import logging
 import concurrent.futures
+import time
 import numpy as np
 import pandas as pd
 from typing import Any
@@ -30,7 +31,10 @@ from certus_physics import (
     CRASH_SENTINEL_MIN,
     CRASH_SENTINEL_UNIT,
     CRASH_TP_MISCOUNT,
+    D_SCAN_VAL,
+    MAX_LOOKBACK_VAL,
     NON_MONOTONIC_MODE_ATTENUATE,
+    SLIT_PROFILE_NODES,
     arange_inclusive,
     calculate_RT_batch_kernel,
     calculate_RT_vectorized_real_HL,
@@ -450,20 +454,23 @@ def _prepare_robustness_inputs(
     # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
     # into the very simulation that produced it. Computed here it costs the same call,
     # simply moved, and ONLY when the bias is asked for.
-    if bool(params.get("slit_bias_enabled", False)):
+    if bool(params.get("slit_bias_enabled", True)):
+        _slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
+        _n_before = len(_SLIT_PROFILE_CACHE)
+        _t0 = time.perf_counter()
         for _st in all_strategies:
             try:
-                _, _, _curv = _calculate_strategy_spectral_resolution(
-                    _st, p_thick_nominal, params
+                _st["slit_profile"] = _slit_bias_profiles(
+                    _st, p_thick_nominal, params, _slit_b
                 )
-                _st["signed_curvature"] = _curv
-            except Exception:  # noqa: BLE001 -- a missing curvature disables the bias
-                _st["signed_curvature"] = None                # for that strategy alone
-        n_ok = sum(1 for _st in all_strategies if _st.get("signed_curvature") is not None)
+            except Exception:  # noqa: BLE001 -- a missing profile disables the bias
+                _st["slit_profile"] = None                    # for that strategy alone
+        n_ok = sum(1 for _st in all_strategies if _st.get("slit_profile") is not None)
         logger.info(
             f"[SLIT] biais de fente actif, {n_ok}/{len(all_strategies)} strategies "
-            f"avec courbure -- fente "
-            f"{float(params.get('monochromator_resolution_nm', 2.0) or 2.0):g} nm"
+            f"-- fente {_slit_b:g} nm, profil de {SLIT_PROFILE_NODES} noeuds, "
+            f"{len(_SLIT_PROFILE_CACHE) - _n_before} profils NEUFS en "
+            f"{time.perf_counter() - _t0:.1f} s (cache: {len(_SLIT_PROFILE_CACHE)})"
         )
     return all_strategies, noise_levels or [], p_thick_nominal, num_layers
 
@@ -638,6 +645,179 @@ def _calculate_strategy_spectral_resolution(strategy, p_thick_nominal, params) -
                 worst_layer = i_layer + 1
 
     return min_resolution, worst_layer, signed_curvature
+
+
+#: Gauss-Legendre nodes and weights for the boxcar average over the slit. Three nodes
+#: integrate a degree-5 polynomial exactly, so a profile built on them is exact through
+#: the FOURTH order in B where the second-difference model stopped at the second -- and
+#: the odd orders vanish by symmetry, so 3 nodes buy two orders, not one.
+_SLIT_GL_X, _SLIT_GL_W = np.polynomial.legendre.leggauss(3)
+
+#: Profiles live longer than one call, because `_prepare_robustness_inputs` runs many
+#: times per pipeline -- screening, local search, each block, the final ranking.
+#:
+#: 📏 Measured 2026-08-11 on a reference run: a per-call cache made the precomputation
+#: **28 calls, 64.1 s, 8.8 % of RUN_S = 725.8 s**, when a single call costs 2.3 s. The
+#: same profiles were being rebuilt twenty-eight times. 👤 asked for fidelity "without
+#: exploding the time budget" -- so this is not an optimisation, it is the constraint.
+#:
+#: ⚠️ THE KEY CARRIES THE SUBSTACK, not just the layer index. Two runs on two different
+#: designs share this process; keying on (layer, wavelength) alone would hand the second
+#: one the first one's curvature, which is the silent-wrong-answer failure this project
+#: exists to avoid. Nominal thicknesses are exact float64 read from the design, so they
+#: compare exactly -- this is a lookup, never a tolerance.
+_SLIT_PROFILE_CACHE: dict[tuple, np.ndarray] = {}
+#: Bounded so a long session cannot grow it without limit. 48 layers x ~250 candidate
+#: wavelengths is ~12000 entries of 17 float64 -- about 1.6 MB, so this ceiling is
+#: generous on memory and still bounds the worst case.
+_SLIT_CACHE_MAX: int = 60000
+
+#: One-shot guard so the warning below names the problem without flooding 48 layers of log.
+_SLIT_PHASE_A_WARNED: bool = False
+
+
+def _slit_bias_profiles(
+    strategy: dict[str, Any],
+    p_thick_nominal: list[float],
+    params: dict[str, Any],
+    slit_b: float,
+    cache: dict[tuple, np.ndarray] | None = None,
+    only_layers: range | None = None,
+) -> np.ndarray:
+    """Slit bias of every layer as a FUNCTION of its thickness, shape (n_layers, nodes).
+
+    Replaces the single number per layer that `signed_curvature` fed. Two things change,
+    and only the first is the point:
+
+    🔑 1. THE BIAS NOW VARIES ALONG THE GROWTH. A constant added to the read signal is
+    exactly the ``b`` of ``T -> a.T + b``, which 12.1 proved POEM rigorously invariant
+    to. The old model therefore gave POEM the one shape it absorbs for free. 📏 Measured
+    on the judge of paix at 544 nm with B = 2 nm, the bias moves by up to **62 A** inside
+    a single layer while its mean magnitude is 35 A -- so the part that was modelled was
+    the harmless one and the part that bites was absent.
+
+    2. THE BOXCAR IS INTEGRATED, NOT EXPANDED. `<T>_B - T(lambda)` is evaluated by
+    Gauss-Legendre instead of truncated at `T''.B^2/24`. The expansion was checked
+    against direct integration and sat within 0.90 to 1.19 of the truth -- acceptable,
+    but free to remove, and it degrades exactly where the structure gets fine compared
+    with B, which is where the bias matters most.
+
+    ⚠️ THE PROFILE IS BUILT ON THE NOMINAL STACK, once per (layer, wavelength), OUTSIDE
+    the Monte-Carlo. Per draw the substack below differs by a few nm and the true
+    curvature with it; modelling that would put a spectral integration inside the hot
+    loop, which is the cost 12.7 warned about. The systematic part -- the whole of the
+    effect at first order -- is captured; the draw-to-draw modulation of it is not, and
+    that is a stated approximation, not an oversight.
+
+    The cache is shared across strategies AND across calls, which is what makes this
+    affordable: strategies differ in how they GROUP layers, far less in which wavelengths
+    they use, so the same profiles are requested over and over.
+    """
+    if cache is None:
+        cache = _SLIT_PROFILE_CACHE
+        if len(cache) > _SLIT_CACHE_MAX:
+            cache.clear()
+    nH_id, nL_id, nSub_id = params["nH_id"], params["nL_id"], params["nSub_id"]
+    db_local = (
+        params.get("materials_db_instance")
+        or params.get("materials_db")
+        or APP_CONTEXT.get("materials_db")
+    )
+    layer_to_wl: dict[int, float] = {}
+    for block in strategy["blocks"]:
+        for l in range(block["start"], block["end"]):
+            layer_to_wl[l] = float(block["wavelength"])
+
+    n_layers = len(p_thick_nominal)
+    out = np.zeros((n_layers, SLIT_PROFILE_NODES), dtype=np.float64)
+    # The axis the kernel reads on: u = d / d_nominal over [0, D_SCAN_VAL].
+    us = np.linspace(0.0, D_SCAN_VAL, SLIT_PROFILE_NODES)
+    half = slit_b / 2.0
+
+    # Identity of the optical problem, shared by every layer of this call.
+    mat_key = (nH_id, nL_id, nSub_id, round(slit_b, 6), id(db_local))
+    # Phase A only ever needs the rows the kernel will read -- the current layer and at
+    # most MAX_LOOKBACK_VAL of block history. Computing all 48 for each of ~250 candidate
+    # wavelengths would be a fivefold waste on the one stage where the count is large.
+    for i_layer in (range(n_layers) if only_layers is None else only_layers):
+        wl_mon = layer_to_wl.get(i_layer, float(params.get("l0", 550.0)))
+        # 🔴 The SUBSTACK is part of the key, not just the layer index -- see the note on
+        # `_SLIT_PROFILE_CACHE`. Two designs sharing a process must not share a curvature.
+        key = (mat_key, round(wl_mon, 4), tuple(p_thick_nominal[: i_layer + 1]))
+        hit = cache.get(key)
+        if hit is not None:
+            out[i_layer, :] = hit
+            continue
+        # The three quadrature wavelengths, then the monochromatic centre LAST so the
+        # subtraction below reads off a fixed index.
+        wls = [max(0.1, wl_mon + half * x) for x in _SLIT_GL_X] + [wl_mon]
+        d_nom = float(p_thick_nominal[i_layer])
+        base = list(p_thick_nominal[:i_layer])
+        row = np.zeros(SLIT_PROFILE_NODES, dtype=np.float64)
+        for iu, u in enumerate(us):
+            RT = calculate_RT_normal_real(
+                wls, nH_id, nL_id, nSub_id, base + [u * d_nom], db_instance=db_local
+            )
+            T = RT[:, 1]
+            row[iu] = float(np.dot(_SLIT_GL_W, T[:3]) / 2.0 - T[3])
+        cache[key] = row
+        out[i_layer, :] = row
+    return out
+
+
+def phase_a_slit_profiles(
+    candidate_wls: np.ndarray,
+    p_thick_nominal: list[float],
+    params: dict[str, Any],
+    i_layer: int,
+) -> np.ndarray | None:
+    """Per-CANDIDATE slit profiles for Phase A, shape (n_candidates, n_layers, nodes).
+
+    🔴 WHY PHASE A NEEDS THIS AT ALL. 12.2 requires both stages to model the same
+    machine, and 17-23 already lists six model parameters Phase A leaves at their neutral
+    value. The slit was the seventh, and it is the one that changes WHICH WAVELENGTH gets
+    picked: Phase A ranks candidates by dynamic range, the best dynamic range sits at the
+    band edge, and 📏 at 48 layers the spectral ripple there has a period of 7.2 nm for a
+    2 nm slit -- the machine averages over a quarter of a ripple. Judging blind to that is
+    choosing precisely the wavelengths the real instrument cannot use.
+
+    ⚠️ ONE PROFILE MATRIX PER CANDIDATE, because the bias depends on the monitoring
+    wavelength and that is exactly what this stage varies. Handing every candidate the
+    same matrix would be a filter that cannot discriminate -- 20-control 4, the inert
+    rule that rejects nothing and reports no error.
+
+    Returns None when the bias is off, which the kernel reads as "no slit effect" and
+    which is bit-identical to the historical path.
+    """
+    if not bool(params.get("slit_bias_enabled", True)):
+        return None
+    # ⚠️ NOT a silent fallback -- 17-25. Some callers of Phase A hand it a params dict
+    # without the material ids (narrow unit tests of the plumbing, where the physics is
+    # monkeypatched away). Crashing them would be wrong, but so would dropping the bias
+    # without saying so: "no profile" IS a physics change. Hence one loud warning, once.
+    if any(params.get(k) is None for k in ("nH_id", "nL_id", "nSub_id")):
+        global _SLIT_PHASE_A_WARNED
+        if not _SLIT_PHASE_A_WARNED:
+            _SLIT_PHASE_A_WARNED = True
+            logging.getLogger(__name__).warning(
+                "[SLIT] Phase A sans nH_id/nL_id/nSub_id : le biais de fente n'est PAS "
+                "applique a la selection des lambda. La Phase A juge donc un "
+                "monochromateur parfait pendant que la Phase B simule une fente (12.2)."
+            )
+        return None
+    slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
+    n_layers = len(p_thick_nominal)
+    if i_layer < 0 or i_layer >= n_layers:
+        return None
+    rows = range(max(0, i_layer - MAX_LOOKBACK_VAL), i_layer + 1)
+    out = np.zeros((len(candidate_wls), n_layers, SLIT_PROFILE_NODES), dtype=np.float64)
+    for c_idx, wl in enumerate(candidate_wls):
+        strat = {"blocks": [{"start": rows.start, "end": i_layer + 1,
+                             "wavelength": float(wl)}]}
+        prof = _slit_bias_profiles(strat, p_thick_nominal, params, slit_b,
+                                   only_layers=rows)
+        out[c_idx, rows.start : i_layer + 1, :] = prof[rows.start : i_layer + 1, :]
+    return out
 
 
 def _filter_finite_robustness_scores(
@@ -1262,18 +1442,37 @@ def _test_strategy_robustness_task(
         #   second_diff = T''.test_bw^2/8   (test_bw = 1 nm)
         #   bias = T''.B^2/24 = second_diff . B^2 / (3.test_bw^2)
         #
-        # 🔴 OFF BY DEFAULT (`slit_bias_enabled`), and that is a deliberate, uncomfortable
-        # choice. The bias is NOT zero at the nominal 2 nm slit -- the real machine has
-        # carried it all along -- so switching it on moves every crash rate and every
-        # SEEL ever measured. Keeping the default off preserves comparability with the
-        # whole measurement history; it also means THE SIMULATOR IS OPTIMISTIC while it
-        # is off, and that must be said next to any figure produced in this state.
-        slit_bias_per_layer = None
-        if bool(params.get("slit_bias_enabled", False)):
-            slit_b = float(params.get("monochromator_resolution_nm", 2.0) or 2.0)
-            curv = strategy.get("signed_curvature")
-            if curv is not None and len(curv) == len(p_thick_nominal):
-                slit_bias_per_layer = np.asarray(curv, dtype=np.float64) * (slit_b ** 2) / 3.0
+        # 🔴 ON BY DEFAULT since 2026-08-11. 👤 *"I do not want to be optimistic about
+        # the slits but realistic."* The real machine has carried this bias all along;
+        # a simulator that omits it is not simpler, it is wrong in a known direction.
+        #
+        # 📏 AND THE SIZE IS THE ARGUMENT. On the 48-layer dichroic, by direct boxcar
+        # integration -- not by the expansion -- the bias at the nominal 2 nm slit is
+        #
+        #     450 nm   9.6e-4   192 % of the reading noise
+        #     500 nm   9.4e-4   187 %
+        #     544 nm   1.05e-2  2100 %      <- the edge
+        #     600 nm   1.2e-5   2 %
+        #
+        # 🔑 It is proportional to the CURVATURE, the curvature is maximal at the edge,
+        # and 17-42 measured that ALL TWENTY of the best strategies place their first
+        # block within 3 nm of that edge. The simulator was therefore ignoring an error
+        # TWENTY TIMES the noise it does model, at the exact wavelength every winner
+        # uses.
+        #
+        # ⚠️ The second-order expansion was checked against direct integration over the
+        # slit: ratios 0.90 to 1.19, so it holds -- worst at 5 nm on the edge, where it
+        # overestimates by 19 %.
+        #
+        # 🔴 CONSEQUENCE, and it is not small: EVERY crash rate and EVERY SEEL measured
+        # before this date was produced without this bias. They are not wrong, they are
+        # ANSWERS TO A DIFFERENT QUESTION -- a machine with infinitely fine slits. Do not
+        # compare across this date.
+        slit_profiles = None
+        if bool(params.get("slit_bias_enabled", True)):
+            prof = strategy.get("slit_profile")
+            if prof is not None and len(prof) == len(p_thick_nominal):
+                slit_profiles = np.ascontiguousarray(prof, dtype=np.float64)
 
         rate_layers = strategy.get("rate_layers") or []
         rate_flags = None
@@ -1310,7 +1509,7 @@ def _test_strategy_robustness_task(
             corridor_lo,
             corridor_hi,
             rate_flags,
-            slit_bias_per_layer,
+            slit_profiles,
         )
 
         for i_layer in range(num_layers):

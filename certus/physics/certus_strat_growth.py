@@ -34,6 +34,22 @@ SCAN_ERROR_MARGIN_NM: float = 15.0
 
 RATE_TURN_NM: float = 0.125
 
+#: Sweep span, as a multiple of the nominal thickness. Declared at module level so the
+#: slit-bias profiles can be sampled on EXACTLY the axis the kernel sweeps: the profile
+#: is indexed by u = d / d_nominal in [0, D_SCAN_VAL], and a mismatch between the two
+#: would shift every bias by a fraction of a layer with no error anywhere.
+D_SCAN_VAL: float = 3.0
+
+#: How many layers of block history POEM replays, whatever the block length. Module level
+#: because a caller preparing per-layer data (the slit profiles) must know which rows the
+#: kernel will actually read; duplicating the 4 would let the two drift apart in silence.
+MAX_LOOKBACK_VAL: int = 4
+
+#: Number of nodes of a slit-bias profile over [0, D_SCAN_VAL]. 17 nodes span the ~1.5
+#: optical periods of a sweep, so ~11 per period; the linear interpolation error is then
+#: ~1 % of the profile amplitude, four decades under the reading noise it perturbs.
+SLIT_PROFILE_NODES: int = 17
+
 CRASH_SENTINEL_MIN: float = 100000.0
 CRASH_SENTINEL_UNIT: float = 1000000.0
 #: Target stopping level is not bracketed by signal before next extremum.
@@ -176,6 +192,48 @@ def detect_turning_points(
 #: unphysical values. They reported the form breaking at 1e-3, then at 1e-6. Both were
 #: artefacts of the rig, not of the physics.
 K_MAX_CLOSED_FORM: float = 1e-4
+
+
+@njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
+def slit_bias_at(profiles: np.ndarray, layer: int, u: float) -> float:
+    """Slit bias of ``layer`` at relative thickness ``u = d / d_nominal``.
+
+    🔴 WHY A PROFILE AND NOT A CONSTANT -- and this is the whole point of the upgrade.
+
+    The bias was one number per layer, added identically to every reading of that
+    layer. But a constant added to the read signal is EXACTLY the ``b`` of the affine
+    map ``T -> a.T + b``, and 12.1 proved POEM rigorously invariant under it. So the
+    old model handed POEM precisely the part it absorbs for free, and modelled nothing
+    of the part it cannot.
+
+    📏 Measured on the judge of paix at 544 nm, B = 2 nm, the wavelength every one of
+    the top twenty strategies uses. Bias sampled at d = 0, d_nom/2 and d_nom:
+
+        layer 10    variation 0.07 A     mean |bias|  0.04 A
+        layer 30    variation 1.52 A     mean |bias|  2.96 A
+        layer 44    variation 44.4 A     mean |bias| 30.93 A
+        layer 46    variation 62.2 A     mean |bias| 34.96 A
+
+    The bias VARIES by up to 62 times the reading-noise amplitude inside a single
+    layer. That variation is what shifts POEM's two anchors by different amounts and
+    the trigger level by a third -- the "distortion depending on local curvature" that
+    12.7 names as the one thing POEM cannot absorb.
+
+    ⚠️ ``u`` is clamped, not extrapolated. Beyond the swept window the profile has not
+    been measured, and a linear extrapolation of a curvature term would grow without
+    bound in exactly the region the sweep was cut short to avoid.
+    """
+    nb = profiles.shape[1]
+    if nb < 2:
+        return 0.0
+    x = u / D_SCAN_VAL * (nb - 1)
+    if x <= 0.0:
+        return profiles[layer, 0]
+    if x >= nb - 1:
+        return profiles[layer, nb - 1]
+    i0 = int(x)
+    t = x - i0
+    return profiles[layer, i0] * (1.0 - t) + profiles[layer, i0 + 1] * t
 
 
 @njit(cache=True, fastmath=True, nogil=True, error_model="numpy")
@@ -426,7 +484,7 @@ def simulate_growth_kernel(
     n_H_real: float = -1.0,
     n_L_real: float = -1.0,
     is_rate: bool = False,
-    slit_bias: float = 0.0,
+    slit_profiles: np.ndarray = None,
     adaptive_scan: bool = False,
     machine_sampling_dd: float = 0.0,
 ) -> tuple[float, float, float, float, float]:
@@ -789,8 +847,9 @@ def simulate_growth_kernel(
     #     `noise_val_precalc`.
     NPTS = 64
     NPTS_PREV = 16
-    MAX_LOOKBACK = 4
-    D_SCAN = 3.0
+    MAX_LOOKBACK = MAX_LOOKBACK_VAL
+    # Module constant so the slit-bias profiles are sampled on exactly this axis.
+    D_SCAN = D_SCAN_VAL
     SWING_MIN = 0.04
     apply_signal_noise = signal_noise_scale > 0.0
     poem_ok = False
@@ -1080,9 +1139,31 @@ def simulate_growth_kernel(
         # pushes TOWARDS THE INSIDE of the curve. Near a turning point -- exactly where
         # POEM takes its anchors -- it shrinks the measured swing, and POEM then applies
         # its frozen fraction to an amplitude that is too small.
-        if slit_bias != 0.0:
-            for k_sb in range(n_tot):
-                Ts_r[k_sb] += slit_bias
+        #
+        # 🔑 AND THE BIAS FOLLOWS THE THICKNESS, it is not one number for the layer. The
+        # curvature the machine averages over changes as the layer grows, so the bias at
+        # the first anchor, at the second, and at the trigger are three different
+        # numbers. Measured spread inside one layer: up to 62 A (see `slit_bias_at`).
+        # A single constant is the one shape POEM absorbs exactly, so the previous
+        # version modelled the harmless half of the effect and none of the harmful half.
+        #
+        # ⚠️ EACH HISTORY LAYER CARRIES ITS OWN PROFILE. The replayed block history is
+        # made of readings taken through the same slit but on different substacks, hence
+        # different curvatures. Applying layer i's bias to layer j's replay would forge
+        # the anchors POEM then reads.
+        if slit_profiles is not None and slit_profiles.shape[0] > 0:
+            for j_sb in range(j0, i_layer):
+                d_n_sb = p_thick_nominal[j_sb]
+                inv_n_sb = 1.0 / d_n_sb if d_n_sb > 1e-9 else 0.0
+                base_sb = (j_sb - j0) * NPTS_PREV
+                for k_sb in range(1, NPTS_PREV + 1):
+                    u_sb = (k_sb / NPTS_PREV) * prev_thicknesses_sim[j_sb] * inv_n_sb
+                    Ts_r[base_sb + k_sb - 1] += slit_bias_at(slit_profiles, j_sb, u_sb)
+            inv_cur_sb = (d_max / nominal_th) / (npts_cur - 1) if npts_cur > 1 else 0.0
+            for k_sb in range(npts_cur):
+                Ts_r[n_hist + k_sb] += slit_bias_at(
+                    slit_profiles, i_layer, k_sb * inv_cur_sb
+                )
 
         # ---- A8: THE MACHINE SAMPLING GRID, UNWELDED FROM THE SMOOTHING (17-2) ----
         #
@@ -1449,9 +1530,14 @@ def simulate_growth_kernel(
     # thickness, so they carry the slit bias like every other reading. The target they
     # are solved against stays monochromatic -- that asymmetry IS the effect, and
     # applying the bias to both sides would cancel it exactly.
-    if slit_bias != 0.0:
+    #
+    # 🔑 And EACH of the three carries the bias of ITS OWN thickness. They straddle the
+    # stopping point, so a common constant would cancel out of the parabola's curvature
+    # and shift only its offset; the differing biases tilt the parabola, which is what
+    # actually moves the root. Same reason as on `Ts_r`: it is the variation that bites.
+    if slit_profiles is not None and slit_profiles.shape[0] > 0 and nominal_th > 1e-9:
         for k in range(3):
-            T_points[k] += slit_bias
+            T_points[k] += slit_bias_at(slit_profiles, i_layer, th_points[k] / nominal_th)
     a_quad, b_quad, c_quad = fit_parabola_vertex_3points(th_points, T_points)
     calc_thick = _solve_quadratic_target(a_quad, b_quad, c_quad, target_T_noisy, nominal_th)
     error_raw = calc_thick - nominal_th
@@ -1742,6 +1828,7 @@ def update_run_states_kernel(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
+    slit_profiles: np.ndarray = None,
 ):
     """Parallel update of simulation states for next layer.
 
@@ -1824,6 +1911,13 @@ def update_run_states_kernel(
             smoothing_window,
             nH_real,
             nL_real,
+            False,                # Rate is chosen in Phase B, never during propagation
+            # 🔴 AND THE PROPAGATED STATE CARRIES IT TOO. This kernel's own docstring
+            # states the principle: the states propagated here become the history on
+            # which the NEXT layer is judged, so simulating them without the slit while
+            # the candidates were judged with it would make Phase A inconsistent with
+            # itself. Same argument as 17-23, one parameter further.
+            slit_profiles,
         )
     return updates
 

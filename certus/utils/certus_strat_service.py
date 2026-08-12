@@ -157,12 +157,13 @@ class _PhysicsBridge:
         index_seed: int = 0,
         corridor_lo: float = 0.0,
         corridor_hi: float = 0.0,
+        slit_profiles: np.ndarray | None = None,
     ) -> np.ndarray:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
-            index_corridor, index_seed, corridor_lo, corridor_hi,
+            index_corridor, index_seed, corridor_lo, corridor_hi, None, slit_profiles,
         )
 
     @staticmethod
@@ -191,12 +192,13 @@ class _PhysicsBridge:
         index_seed: int = 0,
         corridor_lo: float = 0.0,
         corridor_hi: float = 0.0,
+        slit_profiles: np.ndarray | None = None,
     ) -> np.ndarray:
         return update_run_states_kernel(
             nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
             block_start_layer, signal_noise_scale, signal_noise_seed, tp_hysteresis,
             affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
-            index_corridor, index_seed, corridor_lo, corridor_hi,
+            index_corridor, index_seed, corridor_lo, corridor_hi, slit_profiles,
         )
 
     @staticmethod
@@ -1198,6 +1200,10 @@ def _validate_candidates_phase_a(
             cand_wls_arr,
         )
 
+    # Local import: `certus.core.certus_strat_robustness` pulls in the physics facade,
+    # and a module-level import here would close a cycle through `certus.utils` (trap 3).
+    from certus.core.certus_strat_robustness import phase_a_slit_profiles
+
     results_fast = _PhysicsBridge.validate_wavelengths(
         cand_wls_arr,
         n_H_arr,
@@ -1224,6 +1230,12 @@ def _validate_candidates_phase_a(
         index_seed,
         corridor_lo,
         corridor_hi,
+        # 🔴 12.2: Phase A must model the SAME MACHINE as Phase B. Judging candidates with
+        # a perfect monochromator while Phase B simulates a 2 nm slit made Phase A pick
+        # the band-edge wavelengths -- best dynamic range, and 📏 a 7.2 nm spectral ripple
+        # at 48 layers, so the slit averages over a quarter of a period. Same defect as
+        # 17-23, one parameter further.
+        phase_a_slit_profiles(cand_wls_arr, list(p_thick_nom_arr), params, i_layer),
     )
 
     results_thickness = []
@@ -1369,6 +1381,9 @@ def _validate_candidates_phase_a(
             best_block_start = i_layer
         else:
             best_block_start = running_block_start
+        _slit_best = phase_a_slit_profiles(
+            np.asarray([best_wl], dtype=np.float64), list(p_thick_nom_arr), params, i_layer
+        )
         p_thick_sim_updates = _PhysicsBridge.update_run_states(
             p_thick_nom_arr,
             i_layer,
@@ -1398,6 +1413,14 @@ def _validate_candidates_phase_a(
             index_seed,
             corridor_lo,
             corridor_hi,
+            # ... and the slit is the seventh. The docstring of `simulate_growth_kernel`
+            # states the principle exactly: the states propagated here become the history
+            # on which the NEXT layer is judged. Propagating them through a perfect
+            # monochromator while the candidates were judged through a 2 nm slit would
+            # make Phase A contradict itself one layer later.
+            # 🟢 Free in practice: `best_wl` was one of the candidates, so its profile is
+            # already in the shared cache from the call above.
+            _slit_best[0] if _slit_best is not None else None,
         ).tolist()
     else:
         p_thick_sim_updates = []

@@ -25,7 +25,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from certus_physics import update_run_states_kernel
+from certus_physics import D_SCAN_VAL, SLIT_PROFILE_NODES, update_run_states_kernel
 
 #: Same fixture discipline as test_strat_corridor_envelope: the upstream layers must
 #: really have been deposited, otherwise every call returns the crash sentinel and the
@@ -63,6 +63,7 @@ def _propagate(**kw) -> np.ndarray:
         kw.get("index_seed", 0),
         kw.get("corridor_lo", 0.0),
         kw.get("corridor_hi", 0.0),
+        kw.get("slit_profiles", None),
     )
 
 
@@ -167,3 +168,82 @@ def test_an_active_corridor_without_an_envelope_raises():
     """17-25 again: silence was the bug, on this path too."""
     with pytest.raises(ValueError, match="corridor_lo/corridor_hi"):
         _propagate(index_corridor=0.005, index_seed=777)
+
+
+# --------------------------------------------------------------------------- #
+# The SEVENTH parameter: the monochromator slit -- 👤 2026-08-11
+# --------------------------------------------------------------------------- #
+
+def _flat_profile(value: float) -> np.ndarray:
+    return np.full((QWOT_500.size, SLIT_PROFILE_NODES), value, dtype=np.float64)
+
+
+def _shaped_profile(amp: float) -> np.ndarray:
+    u = np.linspace(0.0, D_SCAN_VAL, SLIT_PROFILE_NODES)
+    row = amp * np.sin(2.0 * np.pi * u / D_SCAN_VAL)
+    return np.ascontiguousarray(np.tile(row[None, :], (QWOT_500.size, 1)))
+
+
+def test_the_slit_profile_is_inert_when_absent_or_zero():
+    """C1, for the seventh parameter."""
+    ref = _propagate()
+    assert np.array_equal(ref, _propagate(slit_profiles=_flat_profile(0.0)))
+
+
+def test_a_flat_slit_bias_is_absorbed_WHEN_POEM_HAS_ANCHORS():
+    """🔑 THE REASON THE PARAMETER IS A PROFILE AND NOT A NUMBER.
+
+    A constant added to every reading is exactly the `b` of `T -> a.T + b`, and 12.1
+    proved POEM rigorously invariant under it. So a per-layer SCALAR bias -- what the
+    code carried until 2026-08-11 -- was handing POEM the one shape it absorbs for free,
+    and modelling none of the shape it cannot.
+
+    ⚠️ THE ABSORPTION IS CONDITIONAL, and the first version of this test got that wrong.
+    It asserted absorption on the default fixture, which passes `block_start_layer = -1`:
+    no block history, so `n_hist = 0`, so POEM has no inherited anchors and the kernel
+    falls back to the ABSOLUTE level -- the branch 12.1 proved NOT invariant. The
+    assertion failed and it was right to: 📏 a flat bias of 1e-4 moved the stop by
+    0.0388 nm there. The companion test below pins that behaviour rather than hiding it.
+
+    Here the block starts at layer 0, so POEM replays a real history and absorbs.
+    """
+    ref = _propagate(block_start_layer=0)
+    for amp in (1e-4, 1e-3, 1e-2):
+        got = _propagate(block_start_layer=0, slit_profiles=_flat_profile(amp))
+        assert np.allclose(got, ref, atol=1e-9), f"constante {amp:g} : {got - ref}"
+
+
+def test_without_anchors_a_flat_bias_is_NOT_absorbed():
+    """The other half of 12.1, and the reason the slit matters even as a constant.
+
+    With no block history POEM cannot anchor and the kernel stops on the absolute level.
+    That branch reads the biased signal against an unbiased target, so a constant shifts
+    the stop directly and in proportion to itself. 📏 1e-4 -> 0.0388 nm.
+
+    🔴 This is what made the old per-layer scalar bias produce crashes at all while being
+    inert on the POEM path: it bit only through the non-invariant branches -- absolute
+    fallback, reachability, turning-point counting.
+    """
+    ref = _propagate()                      # block_start_layer = -1: no history
+    shifts = [
+        float(np.abs(_propagate(slit_profiles=_flat_profile(a)) - ref).max())
+        for a in (1e-4, 1e-3)
+    ]
+    assert shifts[0] > 1e-3, "le repli absolu devrait subir la constante, pas l'absorber"
+    assert shifts[1] > shifts[0]
+
+
+def test_a_varying_slit_bias_moves_the_propagated_state():
+    """...and the shaped one, which POEM cannot absorb, must reach the calculation.
+
+    Trap 1 in its positive form: the quantity has to respond to what drives it. A
+    displacement of zero would mean the array never reached the kernel; one independent
+    of the amplitude would mean it reached it and something else decided.
+    """
+    ref = _propagate()
+    shifts = [
+        float(np.abs(_propagate(slit_profiles=_shaped_profile(a)) - ref).max())
+        for a in (1e-4, 1e-3)
+    ]
+    assert shifts[0] > 1e-6, "le profil n'atteint pas la propagation d'etat"
+    assert shifts[1] / shifts[0] == pytest.approx(10.0, rel=0.15)

@@ -2849,7 +2849,7 @@ défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
 
 | Spécifié en | Quoi | État réel |
 |---|---|---|
-| **§12.7** | **Résolution du monochromateur** | 🔴 **RIEN N'EST IMPLANTÉ.** Détail ci-dessous. |
+| **§12.7** | **Résolution du monochromateur** | 🟢 **facteur de bruit, √3 et biais de fente FAITS le 2026-08-11.** Reste A18, la fente comme variable de recherche. Détail ci-dessous. |
 | **§12.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §17-2, toujours ouverte. |
 | **A9** | Moyenne glissante **centrée** | 🔴 **NON, elle est CAUSALE.** Vérifié : la fenêtre court sur `[i−k+1 … i]` (`certus_strat_growth.py`, boucle `idx_w`). Décalage de `(k−1)/2` échantillons, soit **0,44 nm à k = 8**, alors que §9bis-5 pose « aucun retard » en postulat. §17-3 reste ouvert. |
 | **§12.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
@@ -2861,15 +2861,21 @@ défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
 | **A10** | Corridor côté notation | ✅ fait |
 | **§12.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
 
-### 🔴 La résolution, en détail — quatre choses, et aucune n'est faite
+### 🟢 La résolution, en détail — état vérifié dans le code le 2026-08-11 au soir
+
+⚠️ **Ce tableau disait « rien n'est implanté » le matin même. Il a été refait ligne par
+ligne contre le code, pas contre ce document** — c'est précisément le défaut de tenue que
+§18bis existe pour corriger, et il s'y reprenait lui-même.
 
 | ce que §12.7 demande | état |
 |---|---|
-| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ❌ **n'existe nulle part.** Les seuls « facteurs de bruit » du code sont `robustness_noise_factors = [0.5, 1, 2]` : ce sont les **trois niveaux Monte-Carlo**, aucun rapport. |
-| La **déformation du signal** par la fente | ❌ non appliquée — seulement **estimée** |
-| La **correction √3** (fente rectangulaire) | ❌ `res_limit = test_bw * np.sqrt(T_tolerance / curvature)` — le facteur `3.0` manque. §12.7 a mesuré que la formule est donc **conservatrice de 1,73×** : elle interdit des fentes qui passent encore. |
-| La fente comme **sortie de stratégie** | ❌ une stratégie rend ses λ par bloc, rien d'autre |
-| `min_resolution` comme **critère** | 🟠 elle est calculée et sert de **départage dans le tri** (`certus_strat_ranking.py:665`), mais **elle ne rejette rien** |
+| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ✅ `RESOLUTION_NOISE_FACTOR`, `certus_strat_robustness.py:173`. Une **table de 4 entrées**, et une fente absente de la table **lève** au lieu d'interpoler — §12.7 interdit la loi de puissance, qui autoriserait des réglages que la machine n'a pas. |
+| La **correction √3** (fente rectangulaire) | ✅ `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)`, ligne 637. |
+| Le **biais de niveau** appliqué au signal lu | ✅ et c'est un **profil variant avec l'épaisseur**, pas une constante — voir l'encadré ci-dessous, c'est le fond du sujet. |
+| La fente **rendue** à l'utilisateur | ✅ `monochromator_resolution_nm` est dans le résultat (ligne 1697) et surchargeable par `CERTUS_RESOLUTION_NM`. |
+| La fente comme **variable de recherche** (A18) | ❌ **non.** Elle est un **réglage** qu'on impose au run, pas une dimension que la Phase B explore. Les 4 résolutions ne sont pas mises en concurrence. |
+| `min_resolution` comme **critère** | 🟠 calculée, sert de **départage dans le tri** (`certus_strat_ranking.py:665`), mais **elle ne rejette rien** — §20-contrôle 4 : compter les rejets avant de la câbler. |
+| La **convolution complète** du signal | ❌ non, et c'est assumé : le biais est un terme additif par couche et par épaisseur, pas une intégration spectrale dans la boucle chaude. |
 
 ### 🔑 Et la conséquence que 👤 souligne, qui est le cœur du problème
 
@@ -2885,11 +2891,173 @@ ce que la machine LIT     :  <T(lambda)> moyenne sur la fente
 biais = <T>_B - T(lambda_mon) = T''(lambda_mon) . B^2 / 24
 ```
 
-🔴 **Aujourd'hui le simulateur ne modélise aucune fente, donc il ne porte aucun biais :
-il est OPTIMISTE par rapport à la machine réelle.** Et quand on l'implantera, il faudra
-biaiser le **signal lu** en laissant la **cible au calcul parfait**. Biaiser les deux
-annulerait exactement l'effet — c'est le mode de défaillance que §12.1 a déjà rencontré
-trois fois sur la distorsion affine.
+🟢 **C'est implanté depuis le 2026-08-11**, et dans le bon sens : le biais va sur le
+**signal lu** (`Ts_r`), la **cible reste au calcul parfait** (`Ts_n`, `target_nominal`).
+Biaiser les deux annulerait exactement l'effet — c'est le mode de défaillance que §12.1 a
+déjà rencontré trois fois sur la distorsion affine.
+
+👤 *« Je ne veux pas être optimiste sur les fentes mais réaliste »* (2026-08-11) : le biais
+est donc **actif par défaut**, à la fente nominale de 2 nm.
+
+### 🔴 LE BIAIS DE FENTE EST UN PROFIL, PAS UNE CONSTANTE — 2026-08-11
+
+> 👤 *« Essaie de modéliser plus fidèlement les fentes, sans pour autant exploser le budget
+> temps. »*
+
+#### Ce qui n'allait pas, et c'est plus grave qu'une imprécision
+
+Le biais valait **un nombre par couche**, ajouté identiquement à toutes ses lectures. Or
+
+> **une constante ajoutée au signal lu est exactement le `b` de `T → a·T + b`, et §12.1 a
+> démontré POEM rigoureusement invariant par cette transformation.**
+
+📏 **Mesuré au noyau, arrêt d'une couche sous POEM :**
+
+```
+  biais constant = 1e-4   ->  deplacement de l'arret  -3,11e-11 nm
+  biais constant = 1e-3   ->                          -1,61e-11 nm
+  biais constant = 1e-2   ->                          -1,80e-11 nm
+```
+
+**Une constante de 1e-2, soit vingt fois l'amplitude du bruit de lecture, déplace l'arrêt de
+1,8e-11 nm** — neuf décades sous les 0,05 nm en dessous desquels §16 interdit de conclure
+quoi que ce soit.
+
+🔑 **L'ancien modèle donnait donc à POEM la seule forme qu'il absorbe gratuitement**, et ne
+modélisait rien de celle qu'il ne peut pas absorber. §12.7 l'avait pourtant écrit d'avance :
+le biais *« dépend de la courbure locale, donc il diffère à chaque ancre et au point de
+déclenchement »*.
+
+⚠️ **Ne pas surinterpréter : l'ancien modèle n'était pas inerte partout.** Il mordait par les
+chemins **non** invariants — comptage des points tournants (`Ts_n` n'est pas biaisé),
+atteignabilité, repli absolu — d'où les plantages qu'il faisait apparaître. Il était inerte
+sur **l'épaisseur d'arrêt sous POEM**, ce qui n'est pas la même chose.
+
+#### De combien le biais varie-t-il vraiment pendant une couche
+
+📏 Juge de paix, λ = 544 nm — **la λ qu'utilisent les vingt meilleures stratégies** — fente
+B = 2 nm, biais échantillonné à `d = 0`, `d_nom/2` et `d_nom` :
+
+| couche | variation dans la couche | \|biais\| moyen |
+|---|---|---|
+| 10 | 0,07 A | 0,04 A |
+| 20 | 0,84 A | 0,93 A |
+| 30 | 1,52 A | 2,96 A |
+| 40 | 21,8 A | 15,96 A |
+| 44 | 44,4 A | 30,93 A |
+| **46** | **62,2 A** | 34,96 A |
+
+**Le biais bouge de 62 fois l'amplitude du bruit à l'intérieur d'une seule couche.** C'est
+cette variation qui décale les deux ancres de POEM de quantités différentes, et le niveau de
+déclenchement d'une troisième.
+
+#### Ce qui remplace la constante
+
+Un **profil de 17 nœuds** sur l'axe `u = d / d_nominal ∈ [0 ; D_SCAN]`, lu par interpolation
+linéaire (`slit_bias_at`). Trois propriétés, chacune un défaut corrigé :
+
+1. **Le biais suit l'épaisseur.** C'est le point.
+2. **Chaque couche d'historique porte SON profil.** L'historique de bloc rejoué est fait de
+   lectures prises à travers la même fente mais sur des sous-empilements différents, donc à
+   des courbures différentes. Appliquer le biais de la couche `i` au rejeu de la couche `j`
+   fabriquait les ancres que POEM lit ensuite.
+3. **Les trois points de l'inversion parabolique portent chacun le biais de SA position.**
+   Une constante commune sort de la courbure de la parabole et n'en décale que l'ordonnée ;
+   ce sont les biais **différents** qui l'inclinent, et c'est l'inclinaison qui déplace la
+   racine.
+
+#### La boxcar est INTÉGRÉE, plus développée
+
+`⟨T⟩_B − T(λ)` est évalué par **Gauss-Legendre à 3 nœuds** au lieu d'être tronqué à
+`T''·B²/24`. Trois nœuds intègrent exactement un polynôme de degré 5, et les ordres impairs
+s'annulent par symétrie : **on gagne deux ordres, pas un.**
+
+📏 Contre une référence Gauss-Legendre à 15 nœuds, erreur en % de la référence :
+
+| filtre | B | couche | GL3 (retenu) | 2ᵉ ordre (ancien) |
+|---|---|---|---|---|
+| dichroïque 48c | 2 nm | 46 | **0,04 %** | 9,38 % |
+| dichroïque 48c | 5 nm | 40 | **0,97 %** | 8,72 % |
+| dichroïque 48c | 5 nm | **46** | **8,86 %** | **330,07 %** |
+| passe-bande 3cav | 2 nm | 33 | **0,02 %** | 1,21 % |
+| passe-bande 3cav | 5 nm | 28 | **0,99 %** | 13,19 % |
+| passe-bande 3cav | 5 nm | 33 | **0,64 %** | 17,27 % |
+
+🔑 **À la fente nominale de 2 nm le développement était acceptable ; à 5 nm il s'effondre.**
+Et 5 nm est exactement la fente qui décide du bonus de bruit ÷1,5 de §12.7. **Le
+développement se trompait le plus là où la décision se prend.**
+
+#### Le coût, et pourquoi il ne fait pas exploser le budget
+
+Le profil est calculé **une fois par (couche, λ), hors de la boucle Monte-Carlo**, et le cache
+est **partagé entre toutes les stratégies** — elles diffèrent par leur découpage en blocs,
+bien moins par les λ qu'elles emploient. Dans la boucle chaude, le surcoût est une
+interpolation linéaire au lieu d'une addition scalaire.
+
+⚠️ **L'approximation qui reste, et elle est assumée** : le profil est bâti sur l'empilement
+**nominal**. À chaque tirage le sous-empilement réel diffère de quelques nm, donc la courbure
+vraie aussi. Modéliser cette modulation-là mettrait une intégration spectrale **dans** la
+boucle chaude — précisément le coût que §12.7 signalait. La part systématique, qui est tout
+l'effet au premier ordre, est capturée ; sa modulation tirage à tirage ne l'est pas.
+
+#### Vérifications
+
+| # | Contrôle | Résultat |
+|---|---|---|
+| 1 | C1 : profil absent ≡ profil nul | **bit-identique** (`float.hex()`) |
+| 2 | Piège 1 : le profil atteint-il le calcul ? | amplitude ×10 ⇒ déplacement ×10, sur trois décades |
+| 3 | Une constante est-elle absorbée ? | oui, à 1,8e-11 nm pour 20 A |
+| 4 | L'axe du profil est-il celui du balayage ? | `D_SCAN_VAL` est **un seul objet**, partagé |
+| 5 | Bords | **bornés, jamais extrapolés** |
+
+🔴 **Le test 3 ne peut pas échouer sur l'ancien code — il ne peut même pas y être écrit**,
+puisqu'un biais scalaire n'a aucune autre forme à quoi être comparé. C'est bien le sujet : le
+défaut n'était pas un mauvais chiffre, c'était **un degré de liberté manquant**.
+
+### 🔴 LA PHASE A VOIT ENFIN LA FENTE — le septième paramètre de §17-23
+
+§17-23 recensait **six** paramètres de modèle que la Phase A laissait à leur valeur neutre.
+La fente était le **septième**, et c'est celui qui change **quelle λ est retenue**.
+
+Le mécanisme, et il n'a rien de subtil : la Phase A classe les candidates à la dynamique du
+signal ; la meilleure dynamique est au **bord de bande** ; et c'est précisément là que
+l'ondulation spectrale est la plus fine — **7,2 nm de période à 48 couches pour une fente de
+2 nm**. Juger en aveugle, c'est choisir exactement les λ que l'instrument réel ne peut pas
+exploiter.
+
+📏 **Vérifié par comptage** (§20-contrôle 4), couche 40, 21 candidates de 500 à 600 nm :
+la **seule** candidate dont le verdict change est **540 nm** — le bord de bande — qui passe
+de **0 % à 100 % de plantage** dès que la Phase A reçoit le profil. Toutes les autres sont
+inchangées. Un filtre qui rejette exactement ce qu'il doit rejeter, et rien d'autre.
+
+**Les deux points d'appel, et il fallait les deux :**
+
+| | où | ce qui manquait |
+|---|---|---|
+| jugement des candidates | `certus_strat_batch.py`, `validate_wavelengths_batch` | l'appel s'arrêtait à `nL_real` |
+| propagation d'état | `certus_strat_growth.py`, `update_run_states_kernel` | 16 arguments à un noyau qui en compte 22 |
+
+Le second n'est pas un détail : le docstring du noyau énonce lui-même la règle violée —
+*« les états propagés ici deviennent l'historique sur lequel la couche suivante sera jugée »*.
+Propager sans la fente pendant que les candidates sont jugées avec elle rendrait la Phase A
+**incohérente avec elle-même**, une couche plus loin.
+
+⚠️ **Le profil est indexé PAR CANDIDATE**, forme `(n_candidates, n_couches, nœuds)`. Le biais
+dépend de la λ de monitoring, et c'est exactement ce que cet étage fait varier : une matrice
+unique par couche donnerait à toutes les candidates la courbure de la sortante — le filtre
+inerte de §20-contrôle 4.
+
+🔑 **Et l'absorption par POEM est CONDITIONNELLE — mon premier test l'a énoncée comme
+générale et il a eu raison d'échouer.** Sans historique de bloc, POEM n'a pas d'ancres et
+retombe sur le **niveau absolu**, la branche que §12.1 a démontrée non invariante :
+📏 une constante de 1e-4 y déplace l'arrêt de **0,0388 nm**. Avec des ancres, la même
+constante ne déplace rien. Les deux faces sont désormais épinglées par un test chacune.
+
+📏 **Coût mesuré** : 5,4 ms par profil, cache partagé entre appels et entre stratégies —
+`(couche, λ, sous-empilement)` comme clé, parce que deux designs partagent le processus.
+Sur la Phase A : 12 048 profils distincts, **65 s**. ⚠️ Le cache **doit** vivre plus
+longtemps qu'un appel : à cache par appel, la mesure du 2026-08-11 donnait **28 appels,
+64,1 s, 8,8 % du run** pour un travail qui en vaut 1,4 s.
 
 ### 👤 Ce qu'une stratégie doit rendre, et ce qu'elle rend
 
@@ -2900,7 +3068,7 @@ trois fois sur la distorsion affine.
 |---|---|
 | λ de contrôle par bloc | ✅ |
 | couches en Rate | 🟠 le champ `rate_layers` existe depuis le 2026-08-11, la génération non |
-| **valeur des fentes** | ❌ **absente** — c'est le manque le plus visible pour l'utilisateur |
+| **valeur des fentes** | 🟠 **rendue, mais imposée et non cherchée.** Le résultat porte `monochromator_resolution_nm`, donc la stratégie est exécutable en salle ; mais c'est la fente qu'on lui a donnée, pas celle qu'elle a choisie. A18 reste à faire. |
 
 
 ## 18ter. ⚡ PERFORMANCE — ce qui a été mesuré le 2026-08-11
@@ -3253,3 +3421,145 @@ arrière, puis refais : un correctif posé sur une base non vérifiée hérite d
 - Une seule chose est réellement disqualifiante : **une affirmation chiffrée qui ne se
   reproduit pas.** Si tu en trouves une, cesse de faire confiance au reste et revérifie tout
   depuis git.
+
+---
+
+## 21. 👤 LE SECOND COMPOSANT D'ESSAI — passe-bande à trois cavités, 2026-08-11
+
+> 👤 *« Tu vas implanter un deuxième filtre test. Ce sera un passe-bande à trois cavités, que
+> l'on contrôle normalement en TPM mais qui là sera avec notre STRAT à nous ! Je propose un
+> M5-2L-M5-L-M5-2L-M5-L-M5-2L-M5 centré à 632 nm et dont l'écart spectral sera mesuré sur
+> 2× la bande passante environ. On garde les mêmes indices. »*
+> — puis *« pour le passe-bande, le SEEL et l'écart spectral doivent être sur 600 – 660 nm »*
+
+**Fichier** : `example/example_strat/JSON-strat-bandpass-3cav.json`
+
+### Ce qu'il est
+
+| | |
+|---|---|
+| Empilement | `M5 · 2L · M5 · L · M5 · 2L · M5 · L · M5 · 2L · M5` = **35 couches** |
+| Alternance | `HLHLH…H`, parfaite — les trois cavités `2L` tombent aux indices **5, 17, 29**, tous impairs, donc **L**, ce qu'exige la convention de parité du noyau |
+| Indices | **inchangés** : H 2,35 · L 1,46 · substrat 1,52 |
+| `l0` | **631,93** |
+| Centre à mi-hauteur | **632,00 nm** · bande **625,1 – 638,9 nm** (**13,7 nm**) |
+| Pic | T = **0,9966** |
+| Épaisseur totale | 3 356 nm |
+| Cible spectrale et SEEL | 👤 **600 – 660 nm**, pas 1 nm — **61 points**, dont **13** dans la bande passante |
+| Balayage de contrôle | **450 – 700 nm**, pas 1 nm |
+
+🔑 **Le domaine de balayage est identique à celui du dichroïque, et ce n'est pas un détail** :
+👤 *« les deux filtres sont monitorables sur le même domaine, non ? »* — oui, parce que
+**c'est une propriété du monochromateur, pas du design**. Une première version portait
+520 – 760 nm, calquée sur le filtre au lieu de la machine. Corrigé.
+
+### 🔴 Le piège qui a fait rater le centrage du premier coup
+
+Un trois-cavités a un sommet **plat et ondulé** : `T > 0,99` sur **10,4 nm**. `argmax` saute
+donc d'une ondulation à l'autre selon le pas de la grille d'évaluation, et le centrage
+calculé dessus est faux **sans qu'aucun contrôle ne le signale** :
+
+```
+  l0 = 632, grille 0,25 nm  ->  argmax a 637,0 nm
+  l0 = 632, grille 0,05 nm  ->  argmax a 627,1 nm      <- 10 nm d'ecart, meme filtre
+```
+
+**La grandeur qui centre un passe-bande est le MILIEU DE LA BANDE À MI-HAUTEUR**, jamais
+`argmax`. Sur ce critère la relation est monotone et la bissection converge :
+`l0 = 631,93 → centre 632,00 nm`.
+
+### Pourquoi ce composant apporte quelque chose que le dichroïque n'apporte pas
+
+👤 *« que l'on contrôle normalement en TPM »* — le passe-bande est le cas d'école du
+**monitoring par points tournants**, là où le dichroïque vit de niveaux intermédiaires. Les
+couches `M5` sont des QWOT à λ₀ : leur signal de monitoring **passe par un extremum à
+l'épaisseur visée**, ce qui est le régime où §14-5 dit que `dT/dd → 0` et où une erreur de
+niveau se convertit en une grande erreur d'épaisseur.
+
+⚠️ **La géométrie de la cible n'est PAS celle du juge de paix, et il faut le savoir avant de
+comparer les deux scores.** §14 a mesuré que le dichroïque a **exactement 141 points par
+bande sur 301**, d'où l'incapacité d'un RMSE uniforme à distinguer les deux bandes. Ici c'est
+**13 points sur 61** dans la bande passante. **Les deux composants ne posent donc pas la même
+question à la fonction objectif**, et un écart de score entre eux ne se lit pas comme un écart
+de difficulté.
+
+### 🔴 Ce que ce second composant ne change PAS
+
+§15 reste **entier**. Deux bancs de cohérence ne font pas une validation physique : aucun des
+deux n'a de dépôt réel en face. Et §19-4 continue de s'appliquer dans les deux sens — **on ne
+conclut pas du passe-bande sur le dichroïque, ni l'inverse.** Ce que le second composant
+permet, c'est de voir si une conclusion **survit** au changement de composant ; c'est un test
+de robustesse de la conclusion, pas une corroboration de la physique.
+
+---
+
+## 22. La grille des λ de contrôle — 1 nm contre 2 nm, enquête du 2026-08-12
+
+> 👤 *« Si jamais on impose une grille de 2 nm, est-ce qu'on va réellement louper de
+> meilleures stratégies ? Si les top meilleures stratégies sont quasi aussi bonnes, on
+> pourra zapper la grille 1 nm au profit du 2 nm et gagner du temps. »*
+
+⚠️ **§13 porte une décision « tranchée, ne la rouvre pas » en faveur du 1 nm.** Elle
+s'appuie sur quatre chiffres de 2026-08-08, que §13 marque lui-même comme **historiques** :
+antérieurs à A10, à la correction d'enveloppe du corridor, et surtout à la modélisation de
+la fente. §9bis pose la règle de réouverture : *« on ne rouvre que si une MESURE la
+contredit, pas un raisonnement »*. C'est bien une mesure qui la rouvre — le biais de fente.
+
+### Ce qui est mesuré
+
+📏 **La grille 2 nm est exactement l'ensemble des λ PAIRES** — `scan_wl_min = 450`, donc
+126 candidates contre 251. Vérifié dans le code (`arange_inclusive`), pas supposé.
+
+📏 **Le test qui compte, sur le run de référence.** La classe d'équivalence SEEL de la
+gagnante (SEEL quantifié à 0,1 nm, demi-largeur `max(0,05 ; 0,06 × SEEL)`) contient
+**9 stratégies, dont 3 entièrement PAIRES**, toutes à plantage 0,000 et SEEL 0,3 nm. Le
+départage secondaire de §14, le rendement, ne les sépare pas non plus. **Une grille 2 nm
+aurait trouvé un ex æquo au sens exact de la règle.**
+
+📏 **Et sous la règle de tri de §14, la première est DÉJÀ paire** : `[544, 506]` sur le run
+de référence, `[544, 462]` sur l'unique run portant le biais de fente. Ce critère n'a pas
+été choisi après coup — il est écrit dans l'artefact par le code, sous `ranking_seel_rule`.
+
+📏 **Contrôle du Piège 1 : POSITIF, et il faut le dire.** Le pas de 1 nm porte une
+information **réelle**. L'écart entre `[544,531]` et `[544,532]` **converge** vers ~10 %
+pour N ≥ 100 — il ne se dissout pas quand on approfondit — et vaut **3 σ à N = 1200**. Le
+couple 452/453 est ordonné **dans le même sens sur trois graines indépendantes**.
+🔑 **Mais cette information est plus fine que la limite de mesure** : 5 couples sur 6
+tombent dans la même classe SEEL, l'écart valant 0,010 à 0,047 nm pour une demi-largeur de
+0,050 nm. On mesure quelque chose de vrai que la règle de décision déclare, à juste titre,
+indistinguable.
+
+### 🔴 La limite qui domine tout le reste — ne pas conclure sans elle
+
+**Le sous-ensemble pair d'un classement à 1 nm n'est PAS un run à 2 nm.** Mesuré dans le
+code : la mutation ELITE porte sur l'**indice** de grille (`idx_wl = nearest + delta`), donc
+un vrai run à 2 nm passerait **100 %** de son budget dans le sous-espace pair, alors que le
+run à 1 nm n'y est passé qu'incidemment — **4,5 %** de ses stratégies classées sont
+toutes-paires. Tout ce qui précède est donc une **borne PESSIMISTE**, jamais une estimation.
+Et elle n'est solide qu'à **2 blocs** : dès 3 blocs le sous-espace pair est sous-échantillonné
+d'un facteur 3, ce qui rend les régimes corridor > 0 **indécidables** par cette voie.
+
+⚠️ **Zéro artefact pour le passe-bande.** Rien ici ne dit quoi que ce soit du second
+composant — et c'est le plus exposé, sa période d'ondulation valant **5,0 nm** contre 7,2 pour
+le dichroïque, donc une fente de 2 nm y moyenne une fraction plus grande d'ondulation.
+
+⚠️ **Un seul artefact sur 64 porte le biais de fente**, à N = 12 contre 150, et il change
+**deux choses à la fois** par rapport à la référence. Contrainte C3 : rien n'y est attribuable.
+
+### Le coût, et ce qui n'est pas mesuré
+
+| | |
+|---|---|
+| Candidates | **251 → 126**, exact |
+| Profils de fente en Phase A | **12 048 → 6 048**, soit **65 s → 32 s** (comptage × 5,4 ms mesuré) |
+| Part de la Phase A dans un run | ~68 % (§18ter) |
+| **Rapport de temps réel de la Phase A** | 🔴 **NON MESURÉ.** Deux passes concurrentes ont rendu ×3,07 puis ×1,41 : machine occupée, chiffre inexploitable. Halver les candidates ne halve pas forcément un noyau `prange`, dont le remplissage se dégrade à faible charge. |
+
+### 🔑 Le critère de décision, posé À L'AVANCE
+
+> **On adopte 2 nm si et seulement si**, sur les **deux** composants et **au moins deux**
+> graines, la gagnante du run à 2 nm tombe dans la **classe d'équivalence SEEL** de la
+> gagnante du run à 1 nm, **et** que son rendement ne soit pas inférieur.
+
+**8 runs** : 2 composants × 2 graines × 2 grilles, biais de fente actif, tout le reste neutre.
+🔴 **Comparer deux `RESULT` bruts départagerait du bruit** — §17-26. C'est la classe qui décide.

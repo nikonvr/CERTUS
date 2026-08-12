@@ -80,6 +80,8 @@ def validate_wavelengths_batch(
     index_seed: int = 0,
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
+    rate_flags: np.ndarray = None,
+    slit_profiles: np.ndarray = None,
 ):
     """Evaluates each candidate monitoring wavelength for ONE layer (Phase A).
 
@@ -148,8 +150,22 @@ def validate_wavelengths_batch(
         )
     wl_min = corridor_lo
     wl_max = corridor_hi
+    # Normalised OUTSIDE the prange: numba's array analysis rejects a ternary whose two
+    # branches differ in dimensionality, so `None` cannot be selected per iteration. The
+    # inert sentinel is a (1, 0, 0) array -- its 2-D slice has shape (0, ...), which is
+    # exactly the "no profile" the kernel already guards on, and it keeps ONE type.
+    slit_on = slit_profiles is not None
+    if slit_on:
+        slit_arr = slit_profiles
+    else:
+        slit_arr = np.zeros((1, 0, 0), dtype=np.float64)
     for c_idx in prange(n_cands):
         wl = candidate_wls[c_idx]
+        # Branch-free on purpose: any conditional assignment here gets unified to
+        # float64 by the parfor type inference and then rejected as an array index.
+        # The inert sentinel has one row, so the modulo pins it to 0; when profiles are
+        # supplied it has n_cands rows and the modulo is the identity.
+        c_slit = c_idx % slit_arr.shape[0]
         blk = -1
         if block_start_arr is not None:
             blk = block_start_arr[c_idx]
@@ -207,6 +223,20 @@ def validate_wavelengths_batch(
                 smoothing_window,
                 nH_real,
                 nL_real,
+                False,                       # Rate is a Phase B choice, never a candidate
+                # 🔴 PHASE A MUST SEE THE SAME MACHINE AS PHASE B -- 12.2, and 17-23 for
+                # the same defect on six other parameters. Judging a candidate with a
+                # perfect monochromator and then simulating it with a 2 nm slit makes
+                # Phase A select exactly the wavelengths the slit destroys: the best
+                # dynamics sit at the band edge, which is where the spectral ripple is
+                # finest (7.2 nm at 48 layers) and where the slit averages over a quarter
+                # of a period. One physical statement, one flag, both stages (14).
+                #
+                # ⚠️ INDEXED BY CANDIDATE. The bias depends on the monitoring wavelength,
+                # and that is precisely what this function varies, so a single per-layer
+                # matrix would give every candidate the incumbent's curvature -- the
+                # inert-filter failure of 20-control 4.
+                slit_arr[c_slit],
             )
             if val > 100000.0:
                 # non-terminable deposition: sentinel nominal_th + 1e6
@@ -318,7 +348,7 @@ def simulate_stack_robustness_batch(
     corridor_lo: float = 0.0,
     corridor_hi: float = 0.0,
     rate_flags: np.ndarray = None,
-    slit_bias_per_layer: np.ndarray = None,
+    slit_profiles: np.ndarray = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -452,7 +482,9 @@ def simulate_stack_robustness_batch(
                 nH_real,
                 nL_real,
                 rate_flags is not None and rate_flags[i_layer],
-                0.0 if slit_bias_per_layer is None else slit_bias_per_layer[i_layer],
+                # The WHOLE matrix, not the row: the kernel replays the block history and
+                # each replayed layer must carry its own bias profile, not this layer's.
+                slit_profiles,
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

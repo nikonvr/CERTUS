@@ -121,6 +121,11 @@ from certus.core._certus_physics_impl import (  # noqa: F401
     CRASH_LEVEL_UNREACHABLE,
     CRASH_TP_MISCOUNT,
     CRASH_NON_MONOTONIC,
+    # Slit-bias profiles: the sweep span and the node count must be the SAME object on
+    # both sides, or the profile would be sampled on a different axis than it is read on.
+    D_SCAN_VAL,
+    MAX_LOOKBACK_VAL,
+    SLIT_PROFILE_NODES,
     detect_turning_points,
     next_turning_point_after,
     # STRAT Kernels (Advanced)
@@ -176,4 +181,4 @@ from .materials_data import (  # noqa: F401
     SI_K_DATA,
 )
 
-from certus.physics.certus_strat_machine import MachineModel  # noqa: F401
+from certus.physics.certus_strat_machine import MachineModel  # noqa: F401

@@ -466,7 +466,9 @@ def _prepare_robustness_inputs(
         all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
         # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the
         # two degrees of freedom are independent, nothing couples them here.
-        all_strategies = _expand_with_resolution_variants(all_strategies, params, logger)
+        all_strategies = _expand_with_resolution_variants(
+            all_strategies, params, logger, p_thick_nominal
+        )
     # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
     # `_calculate_strategy_spectral_resolution` was already called on every strategy --
     # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
@@ -819,6 +821,7 @@ def _expand_with_resolution_variants(
     strategies: list[dict[str, Any]],
     params: dict[str, Any],
     logger: logging.Logger,
+    p_thick_nominal: list[float] | None = None,
 ) -> list[dict[str, Any]]:
     """A18 -- put the four slit widths in competition, as part of the strategy.
 
@@ -842,11 +845,24 @@ def _expand_with_resolution_variants(
     slit bias, Rate and the index corridor, this breaks C1 deliberately; the historical
     path is `search_resolution: false`.
 
-    ⚠️ THE COST IS A HONEST x4 on the Monte-Carlo, and 12.7 says so. `min_resolution`
-    orders the evaluation -- widest first, since a width the curvature already forbids is
-    the least promising -- but it PREFILTERS NOTHING until someone has counted what it
-    would actually reject (20-control 4). A rule that rejects nothing produces no error;
-    it produces a plausible result.
+    🔑 AND `min_resolution` IS NOW A PREFILTER -- but only after it was counted, which
+    is what 20-control 4 demanded. 📏 Measured 2026-08-12 on the judge of paix, the rule
+    `slit <= res_limit` rejects **31 % of (layer, lambda) pairs at 5 nm**, 14 % at 2 nm,
+    2 % at 1 nm and 0.5 % at 0.5 nm. It is therefore precisely good at one thing: spotting
+    when the WIDE slit is inadmissible. Using it as a general couperet would prune 12 %
+    and buy nothing; using it where it discriminates costs the same and closes nothing.
+
+    ⚠️ THE RUN'S OWN SLIT IS NEVER SKIPPED, whatever the curvature says. The criterion is
+    a diagnostic, not a verdict (12.7): a strategy whose binding layer forbids even 2 nm
+    must still be evaluated and reported as such, not made to vanish. Only the GENERATED
+    variants are filtered.
+
+    🔴 AND WHY THE 5 nm SETTING IS KEPT AT ALL. 📏 Two nominal runs, 2026-08-12: on the
+    48-layer dichroic no 5 nm strategy is ranked at all -- the bias reaches 33 % of the
+    swing on the deep layers and nothing terminates. But on the three-cavity bandpass,
+    **36 of 380 ranked strategies use 5 nm, the best at rank 41**: it works there, it is
+    merely beaten. Deleting the setting would take from STRAT the ability to say so on a
+    component with coarser spectral structure, where the /1.5 noise bonus would be free.
     """
     if not bool(params.get("search_resolution", True)):
         return strategies
@@ -854,7 +870,19 @@ def _expand_with_resolution_variants(
                  or NOMINAL_RESOLUTION_NM)
     out: list[dict[str, Any]] = []
     next_id = 970_000_000
+    skipped: dict[float, int] = {}
     for strat in strategies:
+        # La fente la plus large que la courbure de CETTE strategie tolere. `None` quand
+        # on ne peut pas la calculer : on ne filtre alors rien, plutot que de filtrer sur
+        # une valeur inventee.
+        res_lim = None
+        if p_thick_nominal is not None:
+            try:
+                res_lim = float(
+                    _calculate_strategy_spectral_resolution(strat, p_thick_nominal, params)[0]
+                )
+            except Exception:  # noqa: BLE001 -- un critere indisponible ne filtre pas
+                res_lim = None
         # The strategy as given keeps its identity and the run's slit: the comparison is
         # against itself, so the baseline must stay bit-identical to a no-search run.
         s0 = dict(strat)
@@ -863,6 +891,9 @@ def _expand_with_resolution_variants(
         for slit in RESOLUTION_SEARCH_SET:
             if slit == base:
                 continue
+            if res_lim is not None and slit > res_lim:
+                skipped[slit] = skipped.get(slit, 0) + 1
+                continue
             v = dict(strat)
             v["blocks"] = list(strat.get("blocks") or [])
             v["monochromator_resolution_nm"] = slit
@@ -870,10 +901,16 @@ def _expand_with_resolution_variants(
             v["origin"] = f"SLIT{slit:g}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             out.append(v)
+    # 🔴 Ce qui est saute est COMPTE et DIT. Un elagage silencieux se lit comme une
+    # couverture complete, et c'est le mode de defaillance que ce depot paie depuis
+    # le debut : ca ne produit pas d'erreur, ca produit un resultat plausible.
+    sk = "  |  saute par la courbure : " + ", ".join(
+        f"{k:g} nm x{v}" for k, v in sorted(skipped.items(), reverse=True)
+    ) if skipped else ""
     logger.info(
         f"[SLIT] A18 recherche de fente : {len(strategies)} strategies x "
         f"{len(RESOLUTION_SEARCH_SET)} fentes {list(RESOLUTION_SEARCH_SET)} "
-        f"-> {len(out)} candidates"
+        f"-> {len(out)} candidates{sk}"
     )
     return out
 

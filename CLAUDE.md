@@ -3187,6 +3187,112 @@ de robustesse de la conclusion, pas une corroboration de la physique.
 
 ---
 
+### 🔴 POEM NE PEUT PAS S'ANCRER SUR LE PASSE-BANDE — et c'est structurel, 2026-08-12
+
+> 👤 *« Je reste sur le cul pour le 35 couches. Il n'y a jamais de POEM ? »*
+
+La gagnante du passe-bande a **35 blocs** — une λ de contrôle par couche, donc **aucun
+historique hérité**. La question est légitime, et la réponse est : **POEM ne s'ancre que
+sur 8 couches sur 34.** Sur les 26 autres, la machine tourne au **niveau absolu**.
+
+#### Comment ça se mesure sans ambiguïté
+
+Déposer la couche avec une erreur amont de 2 nm, `poem_enabled` vrai puis faux. **Si les
+deux rendent la même épaisseur au bit, POEM n'a pas pu s'ancrer** — il est retombé sur le
+repli. Aucune interprétation nécessaire.
+
+```
+35 couches, gagnante a 35 blocs (aucun historique)  ->  POEM s'ancre  8 / 34   (24 %)
+48 couches, gagnante a  6 blocs (1er bloc = 29 couches) ->            42 / 47   (89 %)
+```
+
+#### Pourquoi — et ce n'est pas réparable sur ce composant
+
+Sans historique, POEM doit trouver **deux points tournants dans la seule couche
+courante**. `T(d)` étant un sinusoïde en `2δ` (§18ter), les extrema tombent tous les 90°,
+et la phase à l'arrêt vaut
+
+$$\delta_{\text{nom}} = \frac{2\pi n\,d_{\text{nom}}}{\lambda_{\text{mon}}}
+= \frac{\pi}{2}\cdot\frac{\lambda_0}{\lambda_{\text{mon}}}
+\qquad\text{pour une QWOT à }\lambda_0$$
+
+📏 Les λ retenues donnent `λ₀/λ` entre **1,11 et 1,40** : entre **un et deux** extrema
+franchis. **POEM est exactement à son seuil sur toutes les couches**, et de quel côté on
+tombe est décidé par l'offset de phase du sous-empilement — d'où les 8 sur 34, sans loi
+simple.
+
+🔴 **Pour disposer de deux ancres il faudrait `λ ≤ λ₀/2 = 316 nm`. Le monochromateur ne
+descend pas sous 450 nm.** C'est donc structurellement impossible, et cela explique
+pourquoi ce type de filtre se contrôle normalement en **TPM** : on s'arrête *sur* le point
+tournant, on ne cherche pas à en encadrer deux.
+
+#### 🔴 Ma prédiction a échoué, et le motif de l'échec vaut d'être gardé
+
+J'avais posé « POEM s'ancre ssi `λ₀/λ ≥ 2` ». Elle tombe juste sur **26 couches sur 34**
+— et **c'est trompeur** : elle prédit « non » partout et a raison 26 fois par simple taux
+de base, en se trompant sur les 8 couches qui portent toute l'information.
+
+> **Un prédicteur constant qui a raison par taux de base n'a aucun pouvoir discriminant.**
+> Lire son score global comme une validation est exactement l'auto-illusion que §20-5
+> attrape. Ce qu'il faut regarder, c'est le taux sur la classe MINORITAIRE.
+
+#### Ce qui a été écarté au passage
+
+⚠️ **POEM n'est pas cassé.** À la couche 5 il rend `CRASH_TP_MISCOUNT`, ce qui avait l'air
+d'un défaut. Vérification, à bruit nul, avec 2 nm d'erreur amont :
+
+```
+extrema geometriques avant l'arret :  reel [8, 15]      -> 2
+                                   nominal [1, 8, 16]   -> 3
+```
+
+Le nominal porte un extremum **à l'indice 1**, à ~5 % de la couche ; le réel ne l'a pas.
+Une erreur amont de 2 nm suffit à faire basculer un extremum qui tombe au tout début du
+balayage. **Le détecteur compte juste ; ce sont les signaux qui diffèrent.** C'est une
+fragilité physique réelle de POEM, pas un bug — et elle est spécifique aux couches dont le
+signal démarre près d'un extremum.
+
+#### ✅ LES TROIS LECTURES SONT TRANCHÉES — 2026-08-12
+
+Trois explications étaient possibles et il fallait les séparer avant de croire quoi que
+ce soit. Les trois tests, du moins cher au plus cher :
+
+| lecture | verdict | ce qui l'a tranchée |
+|---|---|---|
+| **POEM est cassé** | ❌ | le détecteur compte juste — extrema réels `[8,15]` contre nominaux `[1,8,16]` — et POEM s'ancre sur **42/47** couches du dichroïque |
+| **le repli absolu est favorisé par le retrait de l'affine** | ❌ | affine **rallumée** à 0,05/0,02 : **même gagnante à 35 blocs**, `RESULT` +0,5 % — et l'affine atteint bien le calcul, `n_ranked` tombe de 380 à 334 |
+| **c'est structurel** | ✅ | `λ₀/λ ∈ [1,11 ; 1,40]` sur toutes les λ retenues, et la machine ne descend pas sous 450 nm |
+
+🔑 **Donc c'est réel.** Sur un passe-bande à couches QWOT monitoré dans la plage de la
+machine, POEM n'a **pas de prise**, et le contrôle couche par couche au niveau absolu est
+la bonne réponse. Ce n'est pas la recherche qui contourne le mécanisme central : c'est le
+mécanisme qui ne s'applique pas ici, et la recherche qui le trouve.
+
+Et cela retombe sur ce que 👤 disait en posant le composant — *« un passe-bande, on le
+contrôle normalement en TPM »*. On s'arrête **sur** le point tournant au lieu d'en
+encadrer deux. **Le modèle l'a retrouvé seul, par une route indépendante**, ce qui est la
+seule forme de corroboration dont ce projet dispose tant que §15 n'est pas fermée.
+
+#### 🔑 Pourquoi c'est arrivé MAINTENANT
+
+Deux changements du 2026-08-12 poussent dans le même sens :
+
+1. **La distorsion affine est éteinte** (§12.1bis) — or c'était le handicap du repli
+   absolu, la seule branche que §12.1 démontre non invariante. Il a cessé d'être pénalisé.
+2. **Le biais de fente pénalise les ancres héritées** (§18bis) — chaque couche
+   d'historique porte le biais de *sa* courbure, pas de celle de la couche en cours.
+
+**La recherche a exploité les deux.** Ce n'est pas une anomalie : c'est le modèle qui,
+devenu plus fidèle, désigne une autre stratégie de contrôle.
+
+⚠️ **Ce que cela n'établit PAS.** Que le niveau absolu soit *bon* — seulement qu'il est
+meilleur que POEM **dans ce modèle-ci, sur ce composant-ci**. Il n'a aucune
+auto-compensation des erreurs accumulées, et il reste exposé à la courbure photométrique
+qui, elle, n'est pas affine. §15 s'applique en entier : rien de ceci n'est validé contre un
+dépôt réel.
+
+---
+
 ## 22. La grille des λ de contrôle — 1 nm contre 2 nm, enquête du 2026-08-12
 
 > 👤 *« Si jamais on impose une grille de 2 nm, est-ce qu'on va réellement louper de

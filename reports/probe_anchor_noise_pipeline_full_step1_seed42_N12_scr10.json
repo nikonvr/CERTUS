@@ -729,6 +729,8 @@
     473.0
    ],
    "is_winner": true,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -798,6 +800,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -867,6 +871,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04901658276864766,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -934,6 +940,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1001,6 +1009,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1068,6 +1078,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1134,6 +1146,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -1196,6 +1210,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -1259,6 +1275,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1326,6 +1344,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1394,6 +1414,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1461,6 +1483,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1527,6 +1551,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -1590,6 +1616,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -1654,6 +1682,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1720,6 +1750,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -1784,6 +1816,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1851,6 +1885,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -1917,6 +1953,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -1980,6 +2018,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -2044,6 +2084,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2112,6 +2154,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2178,6 +2222,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2241,6 +2287,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2307,6 +2355,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -2370,6 +2420,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2436,6 +2488,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2502,6 +2556,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08494039434212036,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2565,6 +2621,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08494039434212036,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2629,6 +2687,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2696,6 +2756,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2763,6 +2825,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2828,6 +2892,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -2891,6 +2957,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -2958,6 +3026,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -3027,6 +3097,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08549481270191085,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -3095,6 +3167,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04870184036615534,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -3156,6 +3230,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -3224,6 +3300,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08460588180864026,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -3292,6 +3370,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -3359,6 +3439,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08494039434212036,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -3422,6 +3504,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -3489,6 +3573,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -3554,6 +3640,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -3619,6 +3707,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -3684,6 +3774,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08715596385005042,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -3747,6 +3839,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -3812,6 +3906,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08494039434212036,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -3876,6 +3972,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -3943,6 +4041,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06186983342869846,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -4010,6 +4110,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4075,6 +4177,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4139,6 +4243,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4199,6 +4305,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04870184036615534,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4261,6 +4369,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08715596385005042,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -4323,6 +4433,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.049104384638339674,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4385,6 +4497,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.049104384638339674,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4445,6 +4559,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -4502,6 +4618,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0846641068490658,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -4566,6 +4684,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0846641068490658,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -4629,6 +4749,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.049104384638339674,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -4693,6 +4815,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -4756,6 +4880,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -4821,6 +4947,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -4886,6 +5014,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06502245957730457,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -4948,6 +5078,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -5003,6 +5135,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -5059,6 +5193,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0846641068490658,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -5119,6 +5255,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -5183,6 +5321,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -5241,6 +5381,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -5306,6 +5448,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -5369,6 +5515,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -5434,6 +5582,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06500765667671543,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -5499,6 +5649,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06500765667671543,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -5564,6 +5716,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -5629,6 +5783,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06477083687914353,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -5692,6 +5848,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -5751,6 +5909,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -5817,6 +5979,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.049104384638339674,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -5879,6 +6043,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.04898696154829803,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -5939,6 +6105,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -5999,6 +6169,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -6067,6 +6241,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.053782069904976054,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -6132,6 +6308,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06675544440362752,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -6188,6 +6366,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0797069797035175,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6253,6 +6433,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06675544440362752,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -6308,6 +6490,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -6365,6 +6549,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -6427,6 +6615,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6486,6 +6676,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06506938288331865,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -6553,6 +6745,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6616,6 +6810,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6683,6 +6879,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254645558967608,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -6767,6 +6965,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6831,6 +7031,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -6891,6 +7093,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -6952,6 +7158,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -7014,6 +7222,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.05165999262850818,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -7074,6 +7284,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -7134,6 +7346,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06727577316457198,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -7187,6 +7401,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06698479733478307,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -7244,6 +7460,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06675544440362752,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -7300,6 +7518,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -7360,6 +7582,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -7421,6 +7645,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08184742435994231,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -7484,6 +7710,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06449917753845823,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -7549,6 +7777,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06449917753845823,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -7614,6 +7844,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06465371961336797,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -7680,6 +7912,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.049104384638339674,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -7746,6 +7980,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -7807,6 +8043,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -7870,6 +8110,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06449917753845823,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -7935,6 +8177,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -8000,6 +8244,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -8065,6 +8311,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06465371961336797,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8128,6 +8376,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06675544440362752,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -8185,6 +8435,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06465371961336797,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8248,6 +8500,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.10057618134442077,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8305,6 +8559,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -8376,6 +8634,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0646148368047205,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8439,6 +8699,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.10339638920388268,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8497,6 +8759,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -8563,6 +8829,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    45
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 45,
    "n_below_swing_min": 1,
@@ -8627,6 +8897,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -8696,6 +8970,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.10880604260046402,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -8749,6 +9025,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -8808,6 +9086,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0797069797035175,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -8869,6 +9149,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06430038869102477,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -8927,6 +9209,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -8992,6 +9278,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06438359889574344,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9053,6 +9341,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08654038903844737,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -9122,6 +9412,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06430038869102477,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9179,6 +9471,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07598831939030146,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -9242,6 +9536,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07598831939030146,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -9303,6 +9599,8 @@
     475.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06430038869102477,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9359,6 +9657,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06522286254809567,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9418,6 +9718,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06456981792539346,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9483,6 +9785,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08486751514279037,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -9548,6 +9852,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -9618,6 +9926,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07598831939030146,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -9678,6 +9988,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -9738,6 +10052,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -9800,6 +10118,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08097635651950433,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -9864,6 +10184,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06430038869102477,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -9925,6 +10247,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -9989,6 +10315,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0672081004085685,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -10045,6 +10373,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -10110,6 +10442,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.06632645553786423,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -10168,6 +10502,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -10235,6 +10573,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0764868156319228,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10324,6 +10664,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07607597801282555,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10406,6 +10748,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0762676584369403,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10489,6 +10833,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0764868156319228,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10574,6 +10920,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07647592418428945,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10657,6 +11005,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0762676584369403,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -10737,6 +11087,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -10799,6 +11153,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -10860,6 +11218,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -10934,6 +11296,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07626416371715147,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11014,6 +11378,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08359202095186125,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11093,6 +11459,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0764868156319228,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11180,6 +11548,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -11258,6 +11630,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0762676584369403,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11339,6 +11713,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -11409,6 +11787,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07600503112637272,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11493,6 +11873,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08464608892832465,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -11576,6 +11958,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -11640,6 +12026,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08000266286718216,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11710,6 +12098,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08517659106473315,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11797,6 +12187,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08497227184785319,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -11876,6 +12268,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -11943,6 +12339,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -12010,6 +12410,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0849586126805257,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -12094,6 +12496,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -12172,6 +12578,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -12255,6 +12665,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07706536345738477,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -12338,6 +12750,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08517659106473315,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -12421,6 +12835,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.05165999262850818,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -12484,6 +12900,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08459928110845408,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -12564,6 +12982,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -12626,6 +13048,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -12711,6 +13137,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08521042926991534,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -12793,6 +13221,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -12868,6 +13300,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -12939,6 +13375,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13010,6 +13450,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13081,6 +13525,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -13152,6 +13598,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -13223,6 +13671,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -13297,6 +13747,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13380,6 +13834,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -13463,6 +13921,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13538,6 +14000,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -13607,6 +14073,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13687,6 +14157,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07936364579166626,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -13769,6 +14241,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07693641726223613,
    "worst_swing_layer": 27,
    "n_below_swing_min": 0,
@@ -13844,6 +14318,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -13905,6 +14383,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -13969,6 +14451,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.06776977847290086,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -14038,6 +14522,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -14115,6 +14603,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -14194,6 +14686,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07696209553502371,
    "worst_swing_layer": 27,
    "n_below_swing_min": 0,
@@ -14271,6 +14765,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -14338,6 +14836,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -14424,6 +14926,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -14497,6 +15003,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -14569,6 +15079,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -14640,6 +15154,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -14726,6 +15244,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07679462659313155,
    "worst_swing_layer": 27,
    "n_below_swing_min": 0,
@@ -14805,6 +15325,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -14878,6 +15402,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -14948,6 +15476,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -15016,6 +15548,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -15094,6 +15630,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -15177,6 +15717,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -15252,6 +15796,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -15323,6 +15871,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -15393,6 +15943,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -15463,6 +16017,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -15544,6 +16102,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -15621,6 +16183,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -15696,6 +16262,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07764398489062058,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -15779,6 +16347,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -15859,6 +16431,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -15941,6 +16517,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -16020,6 +16598,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -16099,6 +16681,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0860403453988782,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -16175,6 +16759,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -16245,6 +16833,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07595817517339837,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -16327,6 +16917,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -16408,6 +17002,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.07946283383129178,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -16487,6 +17083,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -16551,6 +17151,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -16619,6 +17223,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -16692,6 +17300,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -16770,6 +17382,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -16848,6 +17464,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -16925,6 +17545,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -17004,6 +17626,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08407090041738521,
    "worst_swing_layer": 37,
    "n_below_swing_min": 0,
@@ -17087,6 +17711,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -17160,6 +17788,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -17238,6 +17870,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08054233028005012,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -17312,6 +17946,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0860403453988782,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -17391,6 +18027,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    45
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 45,
    "n_below_swing_min": 1,
@@ -17460,6 +18100,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -17520,6 +18164,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -17596,6 +18244,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -17667,6 +18319,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.050375590054885525,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -17742,6 +18396,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -17820,6 +18478,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -17898,6 +18560,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08458577364648058,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -17974,6 +18638,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -18045,6 +18713,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -18116,6 +18788,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -18230,6 +18906,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08814842248060653,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -18472,6 +19150,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08361306525709833,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -18545,6 +19225,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -18617,6 +19299,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -18693,6 +19379,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -18759,6 +19449,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -18831,6 +19525,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -18907,6 +19605,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -18979,6 +19681,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -19046,6 +19752,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -19165,6 +19875,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08824189871097207,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -19404,6 +20116,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08254841243926576,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -19463,6 +20177,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -19535,6 +20253,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -19609,6 +20331,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -19676,6 +20402,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -19747,6 +20477,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -19861,6 +20595,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08796118115357766,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -20103,6 +20839,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -20174,6 +20914,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -20244,6 +20988,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -20310,6 +21058,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -20378,6 +21130,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.050375590054885525,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -20452,6 +21206,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.050375590054885525,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -20521,6 +21277,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -20594,6 +21354,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -20669,6 +21433,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -20742,6 +21510,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.050375590054885525,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -20819,6 +21589,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -20938,6 +21712,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08804355728901661,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -21178,6 +21954,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -21233,6 +22013,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -21303,6 +22087,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -21366,6 +22154,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -21439,6 +22231,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -21511,6 +22307,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.050375590054885525,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -21625,6 +22423,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08806129980176347,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -21869,6 +22669,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -21945,6 +22749,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -22015,6 +22823,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -22082,6 +22894,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0856280755079647,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -22153,6 +22967,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0856280755079647,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -22223,6 +23039,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0856280755079647,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -22291,6 +23109,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -22365,6 +23185,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -22435,6 +23259,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -22504,6 +23332,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -22580,6 +23412,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.04944372835585218,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -22647,6 +23481,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -22717,6 +23555,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -22795,6 +23637,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0860403453988782,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -22872,6 +23716,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -22945,6 +23793,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -23015,6 +23867,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -23094,6 +23950,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -23171,6 +24031,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -23236,6 +24100,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    45
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 45,
    "n_below_swing_min": 1,
@@ -23298,6 +24166,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -23368,6 +24240,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -23437,6 +24313,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -23516,6 +24396,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0774951058652077,
    "worst_swing_layer": 27,
    "n_below_swing_min": 0,
@@ -23596,6 +24478,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -23675,6 +24561,10 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -23753,6 +24643,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -23818,6 +24712,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.06515131820292343,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -23883,6 +24779,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -23961,6 +24861,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -24027,6 +24931,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.049638999096252426,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -24096,6 +25002,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -24174,6 +25084,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -24242,6 +25156,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -24323,6 +25241,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -24397,6 +25319,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -24472,6 +25398,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.0793220298485855,
    "worst_swing_layer": 45,
    "n_below_swing_min": 0,
@@ -24532,6 +25460,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -24611,6 +25543,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -24696,6 +25632,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -24769,6 +25709,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -24843,6 +25787,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -24911,6 +25859,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -24986,6 +25938,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -25057,6 +26013,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -25129,6 +26089,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -25204,6 +26168,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -25271,6 +26239,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -25345,6 +26317,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -25429,6 +26405,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -25513,6 +26493,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [],
    "worst_swing": 0.08360645399072164,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -25590,6 +26572,8 @@
     545.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.060950825675266176,
    "worst_swing_layer": 47,
    "n_below_swing_min": 0,
@@ -25652,6 +26636,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -25734,6 +26722,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -25790,6 +26782,8 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -25858,6 +26852,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -25943,6 +26941,10 @@
     474.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -26009,6 +27011,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -26088,6 +27094,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -26173,6 +27183,10 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -26260,6 +27274,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -26343,6 +27361,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -26430,6 +27452,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -26498,6 +27522,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -26582,6 +27610,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    46
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 46,
    "n_below_swing_min": 1,
@@ -26650,6 +27682,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -26740,6 +27776,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -26818,6 +27858,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -26911,6 +27955,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -27007,6 +28055,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08584636521338873,
    "worst_swing_layer": 39,
    "n_below_swing_min": 0,
@@ -27100,6 +28150,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08420957888716019,
    "worst_swing_layer": 43,
    "n_below_swing_min": 0,
@@ -27189,6 +28241,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    45
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 45,
    "n_below_swing_min": 1,
@@ -27249,6 +28305,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -27317,6 +28375,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -27409,6 +28471,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -27495,6 +28561,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -27577,6 +28647,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -27658,6 +28732,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -27734,6 +28812,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -27804,6 +28886,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.0841858253920323,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -27887,6 +28971,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -27964,6 +29052,10 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -28025,6 +29117,8 @@
     472.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -28089,6 +29183,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -28161,6 +29259,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -28233,6 +29335,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -28312,6 +29418,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -28391,6 +29501,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -28472,6 +29586,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -28562,6 +29680,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 2.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -28639,6 +29761,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -28711,6 +29837,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -28801,6 +29931,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -28889,6 +30023,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.06980011412747228,
    "worst_swing_layer": 35,
    "n_below_swing_min": 0,
@@ -28980,6 +30116,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -29068,6 +30208,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -29156,6 +30300,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.06980011412747228,
    "worst_swing_layer": 35,
    "n_below_swing_min": 0,
@@ -29246,6 +30392,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -29328,6 +30478,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -29408,6 +30562,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -29480,6 +30636,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.08218604017666475,
    "worst_swing_layer": 24,
    "n_below_swing_min": 0,
@@ -29551,6 +30709,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -29633,6 +30795,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -29720,6 +30886,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -29810,6 +30980,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -29890,6 +31064,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    42
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 42,
    "n_below_swing_min": 1,
@@ -29980,6 +31158,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -30062,6 +31244,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -30139,6 +31325,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -30222,6 +31412,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    38
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 38,
    "n_below_swing_min": 1,
@@ -30304,6 +31498,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [],
    "worst_swing": 0.07799495263730102,
    "worst_swing_layer": 27,
    "n_below_swing_min": 0,
@@ -30387,6 +31583,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -30468,6 +31668,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -30540,6 +31744,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -30612,6 +31820,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -30698,6 +31910,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    41
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 41,
    "n_below_swing_min": 1,
@@ -30788,6 +32004,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [],
    "worst_swing": 0.078953816152158,
    "worst_swing_layer": 31,
    "n_below_swing_min": 0,
@@ -30880,6 +32098,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -30969,6 +32191,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -31056,6 +32282,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 1.0,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -31145,6 +32375,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -31230,6 +32464,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [],
    "worst_swing": 0.08540678318452505,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -31315,6 +32551,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -31400,6 +32640,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -31485,6 +32729,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    43
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 43,
    "n_below_swing_min": 1,
@@ -31569,6 +32817,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    44
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 44,
    "n_below_swing_min": 1,
@@ -31653,6 +32905,8 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [],
    "worst_swing": 0.08540678318452505,
    "worst_swing_layer": 41,
    "n_below_swing_min": 0,
@@ -31738,6 +32992,10 @@
     473.0
    ],
    "is_winner": false,
+   "monochromator_resolution_nm": 0.5,
+   "rate_layers": [
+    40
+   ],
    "worst_swing": -1.0,
    "worst_swing_layer": 40,
    "n_below_swing_min": 1,
@@ -31822,6 +33080,8 @@
    473.0
   ],
   "is_winner": true,
+  "monochromator_resolution_nm": 2.0,
+  "rate_layers": [],
   "worst_swing": 0.06186983342869846,
   "worst_swing_layer": 24,
   "n_below_swing_min": 0,

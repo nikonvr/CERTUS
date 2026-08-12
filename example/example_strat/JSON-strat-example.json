@@ -117,6 +117,8 @@
   "show_plots": true,
   "export_excel": true,
   "force_first_layer_same_wl": true,
+  "poem_anchor_noise": 1,
+  "poem_anchor_noise_phase_a": 1,
   "slit_bias_enabled": 1,
   "monochromator_resolution_nm": 2.0,
   "search_resolution": 1,

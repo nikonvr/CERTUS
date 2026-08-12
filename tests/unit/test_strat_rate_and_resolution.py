@@ -70,6 +70,10 @@ def test_the_candidates_are_the_last_layer_of_each_block_deepest_first():
     Deepest first, because A24 measured that a Rate layer inherits an error falling as
     1/sqrt(n) with the number of reference layers of its material: it is at its most
     accurate late in the stack, which is also where 17-36 measured every crash happens.
+
+    ⚠️ A margin-ordered key replaced this on 2026-08-12 and was reverted the same day --
+    the measurement it rested on was a per-STRATEGY quantity used to order LAYERS. See
+    the comment in `_rate_candidate_layers`; do not re-derive the rule from those numbers.
     """
     assert _rate_candidate_layers(_strat([(0, 24), (24, 40), (40, 48)]), 48) == [39, 23]
 

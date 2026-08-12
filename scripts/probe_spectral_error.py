@@ -212,6 +212,12 @@ def install_probe() -> None:
                     # couche Rate -- l'information existait, uniquement dans la chaine
                     # `origin` ("SLIT1", "RATE_L41"), donc lisible par un humain et par
                     # personne d'autre.
+                    # 👤 2026-08-12 : le classement de l'influence de chaque source de
+                    # defaut, POUR CETTE strategie. Deux composants donnent deux
+                    # diagnostics opposes -- corridor a 69 % sur le dichroique, fente et
+                    # corridor a 16/15 % sur le passe-bande -- donc une note generale ne
+                    # remplace pas un profil par strategie.
+                    **({"ablation": it["ablation"]} if it.get("ablation") else {}),
                     "monochromator_resolution_nm": it.get("monochromator_resolution_nm"),
                     # `it` fait foi -- c'est ce que le noyau a REELLEMENT applique ;
                     # `st` n'est que ce qui lui a ete demande.

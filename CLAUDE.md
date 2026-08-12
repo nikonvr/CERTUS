@@ -2251,6 +2251,112 @@ c'est là que POEM est le **mieux ancré**, et on renoncerait à sa meilleure co
 Mais c'est exactement ce que l'inégalité ci-dessus calcule, avec le terme aval mis à
 zéro. **À vérifier au banc, pas à trancher au raisonnement.**
 
+#### 🔑 CE QUE LE RATE FAIT VRAIMENT — mesuré le 2026-08-12, et ce n'est pas ce qu'on cherchait
+
+> 👤 *« Ça ne te paraît pas bizarre que le Rate ne soit appelé quasiment jamais alors que
+> ça semble hyper robuste ? »*
+
+**Zéro run.** Le pipeline avait déjà classé les variantes Rate à côté de leurs parents ; il
+suffisait de les **apparier**. C'est le seul montage qui vaille ici : la variante et son
+parent partagent la graine, les tirages et la stratégie, donc leur écart est imputable au
+seul Rate (contrainte C2).
+
+| | dichroïque, 40 paires | passe-bande, 89 paires |
+|---|---|---|
+| Rate **meilleur** que son parent | 14 | 21 |
+| Rate **pire** | 13 | 21 |
+| égal | 13 | 47 |
+| écart médian | **−0,3 %** | **−0,0 %** |
+| plantage | **10 baissent**, 3 montent | **6 baissent**, 1 monte |
+| meilleur cas | L42 : SEEL 1,462 → 1,362 | L16 : SEEL **11,5 → 1,7** (−85 %) |
+
+🔑 **L'intuition de 👤 est juste, et l'observation aussi — elles ne se contredisent pas.**
+Le Rate **est** robuste : le plantage baisse trois à six fois plus souvent qu'il ne monte,
+ce qui est exactement attendu puisqu'une couche au chrono ne peut ni mal compter un point
+tournant, ni manquer un niveau. Et il n'est **pas** rare : il est proposé partout, et c'est
+un pile ou face.
+
+> **Le Rate supprime un mode de défaillance. Sur une stratégie qui ne défaille pas,
+> supprimer un mode de défaillance ne rapporte rien.**
+
+Les gagnantes de ces deux repères sont à **plantage 0**. Il n'y a rien à sauver, et le Rate
+leur retire une correction photométrique sans leur rendre de sécurité. **Le Rate n'est pas
+un outil pour améliorer une bonne stratégie, c'est un outil pour en rattraper une
+mauvaise** — le cas à −85 % ramène un SEEL de 11,5 nm à 1,7 nm.
+
+⚠️ **Et un sauvetage à 1,7 nm ne change pas le classement quand la gagnante est à 0,5 nm.**
+C'est pourquoi le Rate est invisible en tête **par construction** sur ces deux composants.
+Il se verra dans le régime fragile, celui de §17-36.
+
+#### 🔴 J'AI CHANGÉ LA CLEF DE TRI, PUIS JE L'AI REMISE — le 2026-08-12, en trois heures
+
+**Garde ce récit : l'hypothèse est séduisante et quelqu'un la reproposera.**
+
+Même appariement, en regardant cette fois **où** le Rate a été posé :
+
+| | dichroïque | passe-bande |
+|---|---|---|
+| Rate **sur la couche critique** du parent | +1,5 % (7 cas) | +4,2 % (1 cas) |
+| Rate **ailleurs** | +0,2 % (33 cas) | +0,0 % (88 cas) |
+| parent à **marge faible** | **+0,7 %**, 8/20 améliorent | **+0,2 %**, 14/44 |
+| parent à **marge large** | **−0,9 %**, 6/20 | **−0,1 %**, 7/45 |
+| couche **profonde** | +0,6 % | −0,0 % |
+| couche **précoce** | +0,5 % | +0,2 % |
+
+🔴 **La profondeur ne trie rien** — +0,6 contre +0,5 d'un côté, l'inverse de l'autre. Or
+c'était la clef du code, justifiée par la loi en `1/√n` d'A24. Cette loi est vraie, mais
+elle gouverne l'**erreur propre du Rate**, et cette erreur n'est pas ce qui atteint le
+score. **C'est le contrôle 4 de §20 sous une autre forme : un critère qui n'ordonne rien
+ne produit pas d'erreur, il produit un ordre plausible.**
+
+🟢 **La marge, elle, trie — et elle CHANGE DE SIGNE.** Marge faible : le Rate aide. Marge
+large : il nuit. Sur deux empilements très différents, dans le même sens, avec deux fois
+plus de cas améliorés côté marge faible. C'est cette concordance qui rend le constat
+crédible, pas l'amplitude, qui reste petite.
+
+**Ce que j'en ai tiré** : trier les frontières par **marge croissante**, au lieu de par
+profondeur. Écrit, testé — trois tests échouant bien sur le code d'avant —, et validé par
+un run complet à N = 300, configuration identique au repère.
+
+#### 🔴 ET LE RUN DE VALIDATION A DIT L'INVERSE
+
+```
+gain median             : -1,13 %   (avant le changement : -0,3 %)
+ameliorent / degradent  :  5 / 9    (avant : 14 / 13)
+marge faible -> gain    : -2,08 %   <- le signe s'est INVERSE
+```
+
+`RESULT = 0.006151532` contre `0.006110492`, soit +0,67 % — indiscernable, comme prévu sur
+une gagnante à plantage nul. **Mais le placement, lui, s'est dégradé.** Revenu en arrière
+le jour même : `_rate_candidate_layers` retrie par profondeur, la plomberie est retirée,
+les quatre tests aussi.
+
+#### 🔑 L'ERREUR, ET C'EST UNE ERREUR DE MÉTHODE, PAS D'ARITHMÉTIQUE
+
+La grandeur mesurée est `critical_layer.margin_in_A` — **une propriété de la stratégie
+ENTIÈRE**, un nombre par candidate. La règle que j'en ai tirée ordonne **les COUCHES à
+l'intérieur** d'une stratégie. Ce sont deux grandeurs différentes, et la mesure n'a jamais
+rien dit de la seconde.
+
+> **La mesure disait : « une couche Rate aide les stratégies dont la couche critique est
+> près de lâcher. » J'ai écrit : « pose la couche Rate là où la marge est faible. » Ce
+> n'est pas la même phrase.**
+
+C'est le contrôle 5 de §20 — *les conclusions dépassent-elles les mesures ?* — et il m'a
+attrapé sur mon propre travail, trois heures après l'avoir écrit. Ce qui rend le cas
+instructif, c'est que **rien n'avait l'air faux** : le signal était réel, reproduit sur deux
+composants, avec un changement de signe propre, et la règle en découlait « évidemment ».
+
+⚠️ **Les deux hypothèses restent ouvertes, et aucune ne s'implante depuis ces chiffres :**
+
+1. **Choisir QUELLES STRATÉGIES étendre** selon la marge de leur couche critique — c'est ce
+   que la mesure dit réellement. Elle demande son propre run.
+2. **Poser le Rate sur la couche critique même hors frontière de bloc** — 7,5× dans le
+   tableau, mais sur **7 cas**, et une couche en milieu de bloc paie le coût aval en entier.
+
+🟢 **Ce qui est acquis et qui ne bouge pas** : la profondeur ne trie rien (+0,6 contre
++0,5), et le Rate est un **sauvetage**, pas une optimisation. Ces deux-là ont survécu.
+
 #### La variante symétrique, à tester aussi : la PREMIÈRE couche du nouveau bloc
 
 Plutôt que la dernière couche du bloc sortant, la **première du bloc entrant** — celle
@@ -3290,6 +3396,114 @@ meilleur que POEM **dans ce modèle-ci, sur ce composant-ci**. Il n'a aucune
 auto-compensation des erreurs accumulées, et il reste exposé à la courbure photométrique
 qui, elle, n'est pas affine. §15 s'applique en entier : rien de ceci n'est validé contre un
 dépôt réel.
+
+---
+
+### 🔑 D'OÙ VIENT L'ERREUR — le profil d'ablation, 2026-08-12
+
+> 👤 *« Plein de défauts ou de biais font qu'on obtient un SEEL assez loin de 0. J'aimerais
+> savoir, dans les deux cas, quel est le défaut le plus problématique. »* — puis *« pour
+> chacune des 20 meilleures stratégies, faire un classement de l'influence de chaque source
+> de défaut. Cela permettra à l'utilisateur de mieux comprendre d'où viennent les
+> problèmes. »*
+
+On éteint chaque source à tour de rôle et on relit le score. La contribution est
+`1 − score_sans / score_avec`.
+
+📏 **Mesuré sur les gagnantes des repères N = 300 :**
+
+| on retire… | dichroïque 48c | passe-bande 35c |
+|---|---|---|
+| **le corridor d'indice** | **69 %** | 15 % |
+| le biais de fente | 0 % | **16 %** |
+| la courbure photométrique | 1 % | 3 % |
+| le bruit de lecture | ~0 % | ~0 % |
+
+🔑 **Le même modèle rend deux diagnostics OPPOSÉS selon le composant.** Sur le dichroïque
+une source écrase tout ; sur le passe-bande fente et corridor se partagent la charge et
+personne ne domine. **C'est pour ça que le profil est par stratégie et non global** : une
+note générale du type « le corridor domine » serait fausse une fois sur deux.
+
+🟢 **Et le bruit de lecture ne pèse rien nulle part**, ce qui est le contrôle du montage :
+c'est du **bruit**, il s'annule sur les tirages, là où les trois autres sont des **biais**
+qui poussent tous les tirages du même côté. **Une ablation où le bruit sortirait dominant
+signalerait une erreur de montage, pas un résultat.**
+
+#### 🔴 Ce que ces nombres NE SONT PAS
+
+**Ils ne s'additionnent pas à 100 %.** Les sources interagissent — le corridor fausse
+l'épaisseur **et** l'indice du filtre fini, la fente déplace l'ancre que POEM utilisera
+ensuite — donc en éteindre deux ne retire pas la somme de leurs deux parts. Ce sont des
+**dérivées**, pas un partage de gâteau.
+
+⚠️ Et pour le corridor la part affichée est plutôt une **sous-estimation** : il agit deux
+fois, alors que la métrique d'épaisseur ne voit que le premier des deux effets.
+
+#### 🔑 LE CORRIDOR SATURE — et c'est ce qui répond vraiment à la question
+
+> 👤 *« Ça m'embête de diminuer les erreurs sur les indices car je sais que cette valeur
+> est plausible. »*
+
+📏 Balayage sur la gagnante du dichroïque :
+
+```
+corridor    erreur d'epaisseur RMS
+0,0000              1,443 nm
+0,0025              4,179 nm     <- presque tout le dommage est deja la
+0,0050              4,654 nm     +11 %
+0,0100              4,594 nm     SATURE
+```
+
+**Quadrupler la perturbation de 0,0025 à 0,010 ne coûte que 10 %.** Donc **abaisser la
+spécification à 0,0025 ne gagnerait que 10 %** : le scrupule de 👤 était fondé, et pour une
+raison plus forte que celle avancée — ce n'est pas seulement que 0,005 est plausible, c'est
+qu'**y toucher ne servirait à rien**.
+
+Sur le passe-bande la réponse est régulière : `+1,6 % · +17 % · +23 %`, **pas de
+saturation**.
+
+> **Deux régimes.** Le dichroïque a un **seuil** : au-delà d'une petite incertitude
+> d'indice la compensation POEM décroche, et ce qui suit ne change plus grand-chose. Le
+> passe-bande se dégrade proportionnellement.
+
+#### 🔴 Ce que je n'ai PAS mesuré, et qu'il ne faut pas croire mesuré
+
+**L'asymétrie H / L.** §12.3 note que 0,005 en absolu vaut 0,21 % sur H et **0,34 % sur L**
+— rapport 1,6. J'ai voulu la mesurer et **je n'ai pas pu** : le corridor perturbe les deux
+matériaux ensemble et aucun paramètre ne les sépare. Le balayage ci-dessus mesure donc
+l'**amplitude**, pas la **répartition**. La question reste ouverte, et elle demanderait un
+tirage par matériau exposé séparément.
+
+#### Ce que ça donne comme conseil, et il est actionnable
+
+Sur le dichroïque, **69 % de l'erreur vient de l'incertitude d'indice**. Autrement dit :
+
+> **Raffiner le monitoring sur ce composant ne rapportera presque rien. C'est la
+> connaissance des indices qui limite** — et une campagne de détermination d'indice
+> attaquerait les 69 %.
+
+⚠️ **Et les 31 % restants ne sont attribués à RIEN — ne laisse personne les nommer.** Une
+version antérieure de cette phrase disait *« là où POEM, la fente et le lissage se
+partagent les 31 % restants »*, ce qui invente un partage deux fois : la fente mesure
+**0 %** sur ce composant, et le lissage de lecture est **éteint** par décision, donc il ne
+peut rien peser du tout. Les quatre ablations totalisent ~70 % ; ce qui reste est de
+l'**interaction entre sources et des mécanismes qu'aucune ablation n'isole**. C'est le même
+avertissement que ci-dessus — ce sont des dérivées, pas des parts — et il vaut aussi pour
+le résidu.
+
+C'est le genre de chose qu'un outil doit dire à son utilisateur, et STRAT ne le disait pas.
+
+#### Comment c'est calculé
+
+`_ablation_profile`, sur les **20 meilleures**, **après** le classement — jamais avant,
+pour qu'un diagnostic ne puisse pas influencer l'ordre. À **64 tirages**, volontairement
+moins que le classement : on mesure une contribution **relative**, pas un score. C'est
+assez pour séparer une source à 60 % d'une source à 2 %, et ce ne serait pas assez pour
+départager deux stratégies — ce qu'on ne fait pas ici.
+
+Le résultat remonte dans le rapport de sonde sous `ablation`, et dans le tableau de
+l'interface sous la colonne **« Dominant defect »**, l'info-bulle portant le classement
+complet et les deux avertissements ci-dessus.
 
 ---
 

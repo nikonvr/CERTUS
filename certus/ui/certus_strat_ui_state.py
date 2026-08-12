@@ -27,6 +27,7 @@ def _config_flag(config: object, key: str, default: bool = False) -> bool:
     return str(raw).strip().lower() in _CONFIG_TRUE
 
 
+from certus.core.certus_strat_robustness import INDEX_CORRIDOR_DEFAULT  # noqa: E402
 from certus_physics import PHOTOMETRIC_CURVATURE_AMP  # noqa: E402
 
 
@@ -165,6 +166,24 @@ class CertusStratStateMixin:
             "extrema_exclusion_ratio": "60.0",
             "nucleation_mc_runs": "40",
             "mining_candidates_limit": "3000",
+            # ── MODELE MACHINE : les six sources d'erreur, 2026-08-12 ──────────
+            #
+            # 🔴 LES DEFAUTS SONT CEUX DE LA MACHINE REELLE, pas des valeurs neutres.
+            # Un champ vide ou a zero decrirait un instrument parfait qui n'existe pas,
+            # et c'est precisement ce que 👤 a demande de corriger: "je ne veux pas etre
+            # optimiste sur les fentes mais realiste", "les biais d'indice doivent
+            # toujours etre actifs, c'est la base", "le rate est le cas general".
+            "slit_bias_enabled": "1",
+            "monochromator_resolution_nm": "2.0",
+            "search_resolution": "1",
+            "index_corridor": "0.005",
+            "photometric_curvature_amp": "0.00375",
+            "allow_rate": "1",
+            # Les deux qui restent INACTIFS, et leur motif est dans CLAUDE.md:
+            # le lissage parce que les algorithmes de l'OMS ne sont pas connus,
+            # la grille machine parce que 👤 "on ne fait pas un calcul tous les 4 Hz".
+            "reading_smoothing_window": "1",
+            "machine_sampling_dd": "0.0",
             "n_screen_runs": "25",
             "k_keep_survivors": "10",
             "top_k_parents": "20",
@@ -512,6 +531,14 @@ class CertusStratStateMixin:
                 "robustness_num_runs",
                 "nucleation_mc_runs",
                 "mining_candidates_limit",
+                "slit_bias_enabled",
+                "monochromator_resolution_nm",
+                "search_resolution",
+                "index_corridor",
+                "photometric_curvature_amp",
+                "allow_rate",
+                "reading_smoothing_window",
+                "machine_sampling_dd",
                 "n_screen_runs",
                 "k_keep_survivors",
                 "top_k_parents",
@@ -1130,7 +1157,8 @@ class CertusStratStateMixin:
             # 2 nm is the nominal, the one the measured noise amplitude corresponds to,
             # so the default leaves every existing result bit-identical.
             "monochromator_resolution_nm": (
-                _config_float(getattr(self, "_loaded_config", {}), "monochromator_resolution_nm")
+                self._get_float_safe("monochromator_resolution_nm", 0.0)
+                or _config_float(getattr(self, "_loaded_config", {}), "monochromator_resolution_nm")
                 or 2.0
             ),
             # ── 👤 RATE MODE: allowed or refused, from the final table ─────────
@@ -1142,13 +1170,21 @@ class CertusStratStateMixin:
             #
             # 🔴 Default FALSE. With the key absent the candidate list is untouched and
             # every downstream bit is what it was -- constraint C1.
-            "allow_rate": bool(
-                (_config_float(getattr(self, "_loaded_config", {}), "allow_rate") or 0.0) > 0.5
-            ),
+            # 🔴 LE WIDGET D'ABORD, comme les autres sources d'erreur. Cette ligne lisait
+            # UNIQUEMENT le fichier de design: le champ de l'interface affichait 1, le run
+            # tournait a False, et le bandeau d'etat disait "ACTIF". Trouve le 2026-08-12
+            # en verifiant que l'affichage correspond a ce que `collect_params` rend --
+            # un bandeau qui ment est pire que pas de bandeau du tout.
+            "allow_rate": bool(self._get_float_safe(
+                "allow_rate",
+                _config_float(getattr(self, "_loaded_config", {}), "allow_rate", 1.0),
+            ) > 0.5),
             # ── Index corridor uncertainty delta_max (T5) ──────────────────────
-            "index_corridor": _config_float(
-                getattr(self, "_loaded_config", {}), "index_corridor"
-            ),
+            "index_corridor": float(self._get_float_safe(
+                "index_corridor",
+                _config_float(getattr(self, "_loaded_config", {}), "index_corridor",
+                              INDEX_CORRIDOR_DEFAULT),
+            )),
             # ── The four remaining error sources, 👤 2026-08-12 ─────────────────
             #
             # 🔴 THESE FOUR WERE ONLY REACHABLE FROM CODE DEFAULTS. Writing them into a
@@ -1160,16 +1196,26 @@ class CertusStratStateMixin:
             # an absent key must not read as "off". The defaults themselves changed on
             # 2026-08-12 to describe the real machine (bias on, Rate on, corridor on,
             # curvature on), so silence now means the realistic setting, not the empty one.
-            "slit_bias_enabled": _config_flag_default(
-                getattr(self, "_loaded_config", {}), "slit_bias_enabled", True
-            ),
-            "search_resolution": _config_flag_default(
-                getattr(self, "_loaded_config", {}), "search_resolution", True
-            ),
-            "photometric_curvature_amp": _config_float(
-                getattr(self, "_loaded_config", {}), "photometric_curvature_amp",
-                PHOTOMETRIC_CURVATURE_AMP,
-            ),
+            # 🔴 LE WIDGET FAIT FOI QUAND IL EXISTE. Sans cela l'utilisateur regle un
+            # champ dans l'interface, le run n'en tient pas compte, et rien ne le dit --
+            # exactement le mode de defaillance que ce depot documente. `_get_float_safe`
+            # rend le defaut quand le widget est absent (chemin sans interface), et le
+            # fichier de design reste la source dans ce cas.
+            "slit_bias_enabled": bool(self._get_float_safe(
+                "slit_bias_enabled",
+                1.0 if _config_flag_default(
+                    getattr(self, "_loaded_config", {}), "slit_bias_enabled", True) else 0.0,
+            ) > 0.5),
+            "search_resolution": bool(self._get_float_safe(
+                "search_resolution",
+                1.0 if _config_flag_default(
+                    getattr(self, "_loaded_config", {}), "search_resolution", True) else 0.0,
+            ) > 0.5),
+            "photometric_curvature_amp": float(self._get_float_safe(
+                "photometric_curvature_amp",
+                _config_float(getattr(self, "_loaded_config", {}),
+                              "photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP),
+            )),
             # Grille TMM : 0 = grille actuelle. 👤 "on ne fait pas un calcul tous les 4 Hz,
             # c'est la base de ce code qui doit etre ultra rapide" -- donc 0 reste le defaut.
             "machine_sampling_dd": _config_float(

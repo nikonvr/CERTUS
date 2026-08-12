@@ -391,9 +391,106 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         ext_item.setToolTip("Number of extrema computed on the theoretical noiseless curve")
         self.table.setItem(row, 13, ext_item)
 
-        # 14, 15, 16: SEEL Columns (shifted by 1 due to Yield % column)
+        # ---- 14, 15, 16 : la fente, les couches Rate, la couche critique ----------
+        #
+        # 👤 2026-08-12 : "trouver une strategie, c'est trouver les lambda de controle ou
+        # les couches de rate, et donner a l'utilisateur une valeur des fentes." Les deux
+        # dernieres manquaient au tableau, donc la gagnante n'etait PAS EXECUTABLE en
+        # salle: l'operateur ne savait ni quelle fente regler, ni quelle couche deposer au
+        # chrono. L'information existait -- uniquement dans la chaine `origin`.
+        slit = result.get("monochromator_resolution_nm")
+        slit_item = NumericTableWidgetItem(f"{float(slit):g}" if slit is not None else "?")
+        slit_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        slit_item.setToolTip(
+            "Monochromator slit this strategy was evaluated at, in nm."
+            "\n\nIt is SEARCHED, not imposed: 5 / 2 / 1 / 0.5 nm compete and the winner"
+            "\ncarries the width it was actually measured with. Set this in the chamber."
+            "\n\nWide slits divide the reading noise but multiply the level BIAS as B^2,"
+            "\nand a bias does not average out over draws the way noise does."
+        )
+        self.table.setItem(row, 14, slit_item)
+
+        rl = result.get("rate_layers") or strat.get("rate_layers") or []
+        rate_item = NumericTableWidgetItem(
+            ", ".join(f"L{int(i) + 1}" for i in rl) if rl else "--"
+        )
+        rate_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        rate_item.setToolTip(
+            "Layers deposited by TURN COUNTING instead of photometry."
+            "\n'--' means the whole stack is monitored photometrically."
+            "\n\nA Rate layer COPIES the relative error of the previous layers of the same"
+            "\nmaterial: it never adds error, and never corrects any either. Its real cost"
+            "\nfalls on the NEXT layer, which inherits no anchors and drops to the"
+            "\nabsolute level."
+        )
+        if rl:
+            rate_item.setBackground(QColor(CertusTheme.WARNING_BG))
+        self.table.setItem(row, 15, rate_item)
+
+        # A23: ce qui va lacher, pourquoi, et de combien. Defini meme a ZERO plantage,
+        # ce qui est le seul regime que ces empilements connaissent -- un taux nul ne
+        # classe rien, une marge classe toujours.
+        cl = result.get("critical_layer") or {}
+        margin = cl.get("margin_in_A") if cl else None
+        if cl:
+            crit_item = NumericTableWidgetItem(
+                f"L{int(cl.get('layer', 0)) + 1} @ {margin:.2f} A"
+                if isinstance(margin, (int, float)) else f"L{cl.get('layer', '?')}"
+            )
+            crit_item.setToolTip(
+                f"Cause   : {cl.get('cause', '?')}"
+                f"\nMargin  : {margin} x the reading noise amplitude A"
+                f"\nVerdict : {cl.get('verdict', '?')}"
+                f"\nLayers under 2 A : {cl.get('n_layers_below_2A', '?')}"
+                "\n\nThe draws of this model are BOUNDED, so a margin above 2 A means the"
+                "\nevent CANNOT happen -- not that it is unlikely. Below that, the layer"
+                "\ncan give way, and the cause tells the operator what to watch."
+            )
+            if isinstance(margin, (int, float)):
+                crit_item.setBackground(QColor(
+                    CertusTheme.DANGER_BG if margin < 1.0
+                    else CertusTheme.WARNING_BG if margin <= 2.0
+                    else CertusTheme.SUCCESS_BG))
+        else:
+            crit_item = NumericTableWidgetItem("--")
+        crit_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.table.setItem(row, 16, crit_item)
+
+        # 17 : la source de defaut qui pese le plus SUR CETTE strategie.
+        #
+        # 👤 2026-08-12 : "cela permettra a l'utilisateur de mieux comprendre d'ou
+        # viennent les problemes." Le profil complet est dans l'info-bulle; la colonne ne
+        # montre que le premier, parce que c'est lui qui decide de l'action a mener.
+        abl = result.get("ablation") or []
+        if abl:
+            top_src = abl[0]
+            abl_item = NumericTableWidgetItem(
+                f"{top_src['source']} {top_src['contribution']:+.0%}"
+            )
+            _lines = ["Contribution de chaque source, mesuree en l'ETEIGNANT :"]
+            _lines += [f"   {a['source']:<24} {a['contribution']:+7.1%}" for a in abl]
+            _lines += [
+                "",
+                "Elles NE S'ADDITIONNENT PAS a 100 % : les sources interagissent, donc",
+                "en eteindre deux ne retire pas la somme de leurs deux parts. Ce sont",
+                "des derivees, pas un partage.",
+                "",
+                "Un nombre NEGATIF veut dire qu'eteindre la source DEGRADE le score :",
+                "elle en masquait une autre. C'est rare, et cela merite un regard.",
+            ]
+            abl_item.setToolTip("\n".join(_lines))
+            if top_src["contribution"] > 0.5:
+                abl_item.setBackground(QColor(CertusTheme.DANGER_BG))
+            elif top_src["contribution"] > 0.25:
+                abl_item.setBackground(QColor(CertusTheme.WARNING_BG))
+        else:
+            abl_item = NumericTableWidgetItem("--")
+        abl_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.table.setItem(row, 17, abl_item)
+
+        # ---- SEEL, decalees de quatre par les colonnes ci-dessus -----------------
         for col_idx, noise_idx in enumerate([0, 1, 2]):
-            target_col = 14 + col_idx
+            target_col = 18 + col_idx
             if noise_idx < len(noise_results):
                 rmse_val = noise_results[noise_idx].get("rmse_p95", noise_results[noise_idx]["rmse_mean"])
                 seel_val = _rmse_to_seel(rmse_val)
@@ -586,6 +683,10 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
                 "Sym Score",
                 "Comp. Factor",
                 "Next",
+                "Slit (nm)",
+                "Rate layers",
+                "Critical layer",
+                "Dominant defect",
             ]
 
             noise_headers = ["SEEL (0.5x)", "SEEL (1.0x)", "SEEL (2.0x)"]

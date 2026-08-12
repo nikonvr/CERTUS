@@ -897,6 +897,88 @@ class CertusStratLayoutMixin:
             if _k in self.widgets:
                 self.widgets[_k].setToolTip(_tip)
 
+        # ── MODELE MACHINE : les sources d'erreur, et leur ETAT visible ────────
+        #
+        # 👤 2026-08-12 : "l'utilisateur doit visualiser tres facilement ce qui est
+        # actif, ce qui ne l'est pas". Avant cette carte, les huit reglages du modele
+        # n'existaient QUE dans le JSON: on lancait un run sans savoir quelle machine il
+        # simulait, et un fichier sans la clef prenait un defaut invisible.
+        #
+        # 🔴 Le bandeau d'etat est le point, pas les champs. Il se relit d'un coup d'oeil
+        # et il est recalcule a chaque frappe: c'est la seule facon de garantir que ce que
+        # l'ecran affiche est ce que le run va faire.
+        machine_group = CertusCard("Machine model — error sources")
+
+        machine_layout = machine_group.body
+
+        self._create_line_edits(
+            machine_layout,
+            [
+                ("slit_bias_enabled", "Slit bias (0/1):"),
+                ("monochromator_resolution_nm", "Slit width (nm):"),
+                ("search_resolution", "Search the slit (0/1):"),
+                ("index_corridor", "Index corridor (+/-):"),
+                ("photometric_curvature_amp", "Photometric curvature:"),
+                ("allow_rate", "Allow Rate mode (0/1):"),
+                ("reading_smoothing_window", "Reading smoothing (k):"),
+                ("machine_sampling_dd", "Machine grid (nm, 0=off):"),
+            ],
+        )
+
+        self.machine_status = QLabel("")
+        self.machine_status.setWordWrap(True)
+        self.machine_status.setStyleSheet(
+            f"QLabel {{ color: {CertusTheme.TEXT_MAIN}; font-family: monospace; "
+            f"padding: 6px; border: 1px solid {CertusTheme.TEXT_SUB}; border-radius: 4px; }}"
+        )
+        machine_layout.addWidget(self.machine_status)
+
+        _tips_machine = {
+            "slit_bias_enabled": (
+                "The machine EXPECTS T computed at perfect resolution but READS the average "
+                "over the slit. The difference is a BIAS, not noise: it does not average out "
+                "over draws. Leave on to be realistic."
+            ),
+            "monochromator_resolution_nm": (
+                "2 nm is nominal, and the reading noise was measured there. 5 nm divides the "
+                "noise by 1.5 but multiplies the bias by 6.25; 0.5 nm multiplies the noise by 5. "
+                "Only 5 / 2 / 1 / 0.5 exist on the machine -- another value raises."
+            ),
+            "search_resolution": (
+                "Put the four slit widths in competition instead of imposing one. A strategy "
+                "then carries its own slit, which is what makes it executable in the chamber."
+            ),
+            "index_corridor": (
+                "Half-width of the index uncertainty, in ABSOLUTE index units, drawn once per "
+                "run and per material. 0.005 is the specified value; 0 means the materials are "
+                "known exactly, which no chamber is."
+            ),
+            "photometric_curvature_amp": (
+                "Detector non-linearity, maximal at T = 0.5 and ZERO at T = 0 and T = 1 -- those "
+                "two are the anchors of the dark/void referencing. 0.00375 puts the true value "
+                "within [0.4975, 0.5025] at 2 sigma."
+            ),
+            "allow_rate": (
+                "Generate variants depositing one layer by turn counting instead of photometry. "
+                "The general case on the machine, so on by default."
+            ),
+            "reading_smoothing_window": (
+                "Running mean over k readings before detection. OFF (k=1) on purpose: the OMS "
+                "filter chain is not known, and an unmeasured hypothesis is worse than none."
+            ),
+            "machine_sampling_dd": (
+                "Sampling step of the deposition sweep, in nm. 0 keeps the fast grid. The real "
+                "machine reads every 0.125 nm, which is 38x finer and far slower -- the model is "
+                "therefore OPTIMISTIC on turning points fabricated by noise."
+            ),
+        }
+        for _k, _tip in _tips_machine.items():
+            if _k in self.widgets:
+                self.widgets[_k].setToolTip(_tip)
+                self.widgets[_k].textChanged.connect(self._refresh_machine_status)
+
+        adv_layout.addWidget(machine_group)
+
         engine_group = CertusCard("Deep Search Engine & Hybridization")
 
         engine_layout = engine_group.body
@@ -1154,6 +1236,60 @@ class CertusStratLayoutMixin:
         )
 
         parent_layout.addWidget(group)
+
+    #: Les huit sources d'erreur, dans l'ordre ou elles se lisent: clef, libelle court,
+    #: et la valeur qui signifie INACTIF. `None` = c'est un reglage, pas un interrupteur.
+    _MACHINE_SOURCES = (
+        ("slit_bias_enabled", "biais de fente", 0.0),
+        ("search_resolution", "recherche de fente", 0.0),
+        ("index_corridor", "corridor d'indice", 0.0),
+        ("photometric_curvature_amp", "courbure photometrique", 0.0),
+        ("allow_rate", "mode Rate", 0.0),
+        ("reading_smoothing_window", "lissage de lecture", 1.0),
+        ("machine_sampling_dd", "grille machine", 0.0),
+    )
+
+    def _refresh_machine_status(self, *_a) -> None:
+        """Bandeau d'etat : ce qui est ACTIF, ce qui ne l'est pas, d'un coup d'oeil.
+
+        👤 2026-08-12 : *"l'utilisateur doit visualiser tres facilement ce qui est actif,
+        ce qui ne l'est pas"*. Recalcule a chaque frappe, donc il ne peut pas mentir --
+        un bandeau rafraichi seulement au chargement afficherait la configuration
+        precedente pendant qu'on en edite une autre.
+
+        ⚠️ Un champ illisible s'affiche `?` et JAMAIS "inactif". Les deux ne veulent pas
+        dire la meme chose, et confondre "je ne sais pas" avec "c'est eteint" est
+        exactement ce que ce projet paie depuis le debut.
+        """
+        if not hasattr(self, "machine_status"):
+            return
+        on, off, bad = [], [], []
+        for key, label, neutral in self._MACHINE_SOURCES:
+            w = self.widgets.get(key)
+            raw = (w.text() if w is not None else "").strip()
+            if not raw:
+                bad.append(label); continue
+            try:
+                val = float(raw)
+            except ValueError:
+                bad.append(label); continue
+            (off if val == neutral else on).append(label)
+        slit = self.widgets.get("monochromator_resolution_nm")
+        slit_txt = (slit.text().strip() if slit is not None else "") or "?"
+        parts = [f"FENTE {slit_txt} nm"]
+        if on:
+            parts.append("ACTIF : " + ", ".join(on))
+        if off:
+            parts.append("inactif : " + ", ".join(off))
+        if bad:
+            parts.append("ILLISIBLE : " + ", ".join(bad))
+        self.machine_status.setText("   |   ".join(parts))
+        colour = CertusTheme.DANGER if bad else (
+            CertusTheme.SUCCESS if len(on) >= 5 else CertusTheme.WARNING)
+        self.machine_status.setStyleSheet(
+            f"QLabel {{ color: {colour}; font-family: monospace; padding: 6px; "
+            f"border: 1px solid {colour}; border-radius: 4px; }}"
+        )
 
     def _create_line_edits(self, layout, items, columns=2) -> None:
 

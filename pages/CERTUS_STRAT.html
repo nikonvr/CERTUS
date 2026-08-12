@@ -511,10 +511,77 @@
         <!-- ================================================================ -->
         <h2>2. Optical Monitoring Simulation</h2>
 
+        <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
+            <p style="margin:0 0 10px;">
+                🔑 <b>WHICH MACHINE IS SIMULATED BY DEFAULT — read from the shipped design files, not
+                from memory.</b> Everything below describes mechanisms; this box says which ones are
+                <b>switched on</b> when a user opens either example and presses go. Both files carry all
+                eleven settings <i>explicitly</i>, because 👤 asked on 2026-08-12 that they do: a
+                configuration file that omits a setting describes an instrument nobody can identify, and
+                a run made with it compares to nothing.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                <tr style="background:#ede9fe;">
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;text-align:left;">Error source / setting</th>
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;">default</th>
+                    <th style="border:1px solid #c4b5fd;padding:5px 10px;text-align:left;">why</th></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">readout noise on anchors &amp; turning points</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>ON</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">&plusmn;0.05 point, the one measured constant</td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">index corridor</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>0.005</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 <i>"that is the base"</i> — and §10.12 measures it as the dominant term</td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">slit bias, at 2 nm nominal</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>ON</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 <i>"realistic, not optimistic about the slits"</i></td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">photometric curvature $4\varepsilon T(1-T)$</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>0.00375</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">the shape the auto-referencing cannot remove — §2.8bis</td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">Rate mode allowed</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>ON</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 <i>"it is the general case"</i></td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">slit width searched (5 / 2 / 1 / 0.5 nm)</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>ON</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 <i>"the slit is searched systematically, it is a prerequisite"</i></td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">affine drift $aT+b$</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>OFF</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">retired as a machine model — kept only as the <b>instrument that tests the invariance theorem</b> of §2.8</td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">reading smoothing</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>OFF</b> ($k=1$)</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 <i>"we do not really know what smoothing Bühler applies"</i> — adding unmeasured structure is forbidden</td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">machine-cadence sweep (0.125 nm)</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>OFF</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">👤 speed — and it makes the model <b>optimistic</b>, see §2.2</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:5px 10px;">control-&lambda; grid</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>1 nm</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">🔒 frozen 2026-08-12 after an 8-run campaign — §10.7bis</td></tr>
+                <tr><td style="border:1px solid #c4b5fd;padding:5px 10px;">POEM</td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;"><b>ON</b></td>
+                    <td style="border:1px solid #c4b5fd;padding:5px 10px;">off only as an experimental arm</td></tr>
+            </table>
+            <p style="margin:0;">
+                🔴 <b>Six of these deliberately BREAK the "inert by default" rule</b> that governs every
+                other parameter in this project, and the reason is the same one every time: <b>the machine
+                really does have slits, the indices really are imperfectly known, and a default that hides
+                that describes an instrument which does not exist.</b> The historical paths all remain
+                reachable, one flag each &mdash; and any measurement quoted from before 2026-08-12 was
+                taken on the kinder machine.
+            </p>
+        </div>
+
         <h3>2.1 The real machine — measured specifications and frozen model</h3>
         <div style="border:3px solid #0e7490;border-radius:10px;padding:14px 18px;margin:16px 0;background:#ecfeff;">
             <p style="margin:0 0 10px;">
-all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>. for a long                time, the model relied on numerical constants chosen for convenience — 64 sweep points,
+                All of &sect;2 simulates one specific machine: a <b>B&uuml;hler Leybold Optics OMS 5100</b>. For a long time the model relied on numerical constants chosen for convenience &mdash; 64 sweep points,
                 16 per history layer — which the page admitted were <i>not</i> the machine's cadence.
                 👤 The specifications below were obtained from the physicist on <b>2026-08-08</b> and replace
                 these choices.
@@ -716,13 +783,26 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 noise is already about $6\sigma$ — which is exactly what the 0.707 row shows at 20.96 %.
                 A threshold placed <i>at</i> $3\sigma$ is crossed every single time.
             </p>
-            <p style="margin:0;">
+            <p style="margin:0 0 10px;">
                 🟢 <b>What is NOT refuted: the smoothing itself.</b> It genuinely helps — the bound falls
                 from $1.66\,A$ on raw readings to $1.00\,A$ on smoothed ones. What fails is the
                 $1/\sqrt{k}$ law linking $k$ to the threshold. <b>$1.00$ is a measured value at $k=8$,
                 $N=800$, not a law</b>: it depends on $N$ as much as on $k$. If either changes, measure
                 again — and do not fit a $\ln N$ formula to plug the gap.
             </p>
+            <div class="note" style="margin:0;">
+                ⚠️ <b>The measurement above used a CENTRED window; the kernel's is CAUSAL. That
+                difference is an open defect, and it is stated here rather than left to be discovered.</b>
+                The implemented window runs over $[i-k+1 \ldots i]$, so it displaces a detected extremum
+                by $(k-1)/2$ samples — <b>0.44 nm at $k = 8$</b> — whereas the frozen reading model of
+                §2.1 posits <b>no delay at all</b>, on the grounds that the machine anticipates its
+                trigger value. A centred window would displace nothing.
+                <br><br>
+                🔑 <b>Why it does not invalidate anything on this page today</b>: the smoothing is
+                <b>off</b> by decision (<code>reading_smoothing_window = 1</code>), so no published figure
+                depends on it. It becomes binding the day anyone turns it on, which is precisely when
+                nobody will remember to check.
+            </div>
 
             <p style="margin:0 0 10px;">
                 📏 <b>What raw reading costs</b>, measured on a clean <b>flat</b> signal — the worst case —
@@ -759,13 +839,30 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 predicts 0.5% at $N=80$; the measurement gives 0.48%. The bound "&ge; 2A" is thus correct
                 in exact arithmetic and <b>marginal in float</b>.
             </p>
-            <p style="margin:0;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
+            <p style="margin:0 0 10px;background:#fff;border:2px solid #0e7490;border-radius:6px;padding:10px 14px;">
                 🔴 <b>THE GRID AND THE SMOOTHING ARE INSEPARABLE.</b> The window is counted in machine readings:
                 it makes no sense as long as the sweep is not at 0.125 nm. But refining the grid
                 <i>alone</i> increases the fabrication rate from 33% to 99.9%. The two compensate each other exactly
                 like in reality. <b>Measuring a crash rate between the two steps would only produce a wrong
                 figure</b>, and we would look for a physics bug that does not exist.
             </p>
+            <div class="highlight-box" style="margin:0;">
+                🔒 <b>AND BOTH WERE THEN DECIDED AGAINST, on 2026-08-12 — this is no longer an action.</b>
+                👤 <i>"obviously we do not run a calculation every 4 Hz, that is the whole basis of this
+                code, which has to be extremely fast"</i>, and on the smoothing, <i>"leave it inactive by
+                default, because we do not really know what smoothing algorithms Bühler applies"</i>. So
+                <code>machine_sampling_dd = 0</code> and <code>reading_smoothing_window = 1</code>: the
+                sweep stays at ~21 points per layer where the machine reads 800, and no filter is
+                modelled. The de-soldering was still done, so both remain <i>expressible</i> — the point
+                was to make the choice available, not to take it.
+                <br><br>
+                🔴 <b>The consequence, and it must be carried with every crash figure on this page.</b>
+                Fewer draws mean fewer chances for the noise to fabricate a false turning point — 32.9 %
+                at 80 points against 99.9 % at 800, at equal threshold. <b>The model is therefore
+                OPTIMISTIC on that mechanism, which accounts for 79 % of the crashes actually
+                measured.</b> It is an accepted speed-versus-fidelity trade, not an oversight, and it is
+                the one place where this page knowingly describes a kinder machine than the real one.
+            </div>
         </div>
 
         <h3>2.3 Noise Model — Gaussian (Production Mode)</h3>
@@ -1072,73 +1169,6 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
         </div>
 
-        <h3>2.8bis The distortion was the wrong SHAPE — 2026-08-12</h3>
-        <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
-            <p style="margin:0 0 10px;">
-                👤 <b>"Does photometric drift mean anything, given that void and dark are measured
-                every time?"</b> — and then <b>"that drift is maximal near T = 0.5, certainly not at
-                1 or 0."</b> Both remarks land, and together they replace the model.
-            </p>
-            <p style="margin:0 0 10px;">
-                The machine reads $T = (S-D)/(V-D)$, <b>re-referenced every rotation at 4 Hz</b>. A gain
-                common to the three positions cancels exactly, $(gS-gD)/(gV-gD) = (S-D)/(V-D)$; a dark
-                offset cancels by subtraction. A deposition lasts hours and the reference is remade four
-                times a second, so <b>a gain and an offset drawn once per run are largely removed by the
-                instrument itself</b>.
-            </p>
-            <p style="margin:0 0 10px;">
-                🔑 <b>And what survives is PINNED AT BOTH ENDS.</b> $T = 0$ means $S = D$, so the
-                numerator vanishes and no multiplicative drift can move it; $T = 1$ means $S = V$, so
-                numerator equals denominator. <b>The two ends of the scale are the measurement's own
-                anchors.</b> The residual error is therefore zero there by construction and free in
-                between — which is exactly what the physicist said, and it is forced rather than
-                plausible.
-            </p>
-            <p style="margin:0 0 10px;">
-                🔴 <b>So $a\,T + b$ is the wrong shape</b>: it is non-zero precisely where the instrument
-                is most exact. The simplest form vanishing at both ends is
-            </p>
-            <div class="eq-box">$$\delta T \;=\; 4\,\varepsilon\,T\,(1-T)$$</div>
-            <p style="margin:0 0 10px;">
-                maximal at $T = 0.5$ where it equals $\varepsilon$, and it has a mechanism: a detector
-                response $\Phi + \kappa\Phi^2$ survives the ratio of differences as exactly this
-                second-order term. 👤 fixed the amplitude by its consequence — at $T = 0.5$ the true
-                value lies in $[0.4975,\,0.5025]$ at 2&sigma; — which gives
-                <b>&epsilon;<sub>max</sub> = 3.75&times;10<sup>&minus;3</sup></b>.
-            </p>
-            <table style="border-collapse:collapse;margin:8px 0;font-size:0.92em;">
-                <tr style="background:#fff;">
-                    <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">perturbation</th>
-                    <th style="border:1px solid #ccc;padding:4px 10px;">stop displaced by</th></tr>
-                <tr><td style="border:1px solid #ccc;padding:4px 10px;">affine, 5 % gain</td>
-                    <td style="border:1px solid #ccc;padding:4px 10px;">&minus;8.6&times;10<sup>&minus;12</sup> nm</td></tr>
-                <tr><td style="border:1px solid #ccc;padding:4px 10px;">affine, 0.02 offset</td>
-                    <td style="border:1px solid #ccc;padding:4px 10px;">&minus;4.2&times;10<sup>&minus;11</sup> nm</td></tr>
-                <tr style="background:#fee2e2;"><td style="border:1px solid #ccc;padding:4px 10px;"><b>curvature, &epsilon; = 0.00375</b></td>
-                    <td style="border:1px solid #ccc;padding:4px 10px;"><b>&minus;0.667 nm</b></td></tr>
-            </table>
-            <p style="margin:0 0 10px;">
-                📏 A factor of 1.6&times;10<sup>10</sup>. The reason is §2.8 below: <b>POEM is rigorously
-                invariant under the affine map</b>, so the distortion modelled until this date was
-                precisely the one shape the mechanism absorbs for free. $T(1-T)$ is not affine.
-            </p>
-            <p style="margin:0 0 10px;">
-                ⚠️ <b>The &times;41.2 protection figure must therefore be requalified.</b> It is not
-                wrong; it measures protection against a perturbation that the machine largely removes
-                and that POEM would absorb anyway. What survives, and depends on no photometric
-                hypothesis, is the <b>&times;2.43</b> measured with <i>no</i> distortion at all: the
-                compensation of accumulated thickness error.
-            </p>
-            <p style="margin:0;">
-                🔴 <b>THE PATTERN, AND IT APPEARED TWICE IN ONE DAY.</b> That morning the slit bias was
-                modelled as <b>one constant per layer</b> — and a constant is the $b$ of the affine map.
-                That afternoon the photometric drift was modelled as <b>affine</b>. Neither was a wrong
-                number; both were the <b>wrong shape</b>, and both times the shape chosen was the one the
-                mechanism is immune to. <b>When testing an invariance, the first question is whether the
-                chosen perturbation belongs to the group the mechanism cancels.</b>
-            </p>
-        </div>
-
         <h3>2.8 The affine invariance of POEM — the theorem, and why the code denied it</h3>
         <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
             <p style="margin:0 0 10px;">
@@ -1242,16 +1272,92 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </p>
             <p style="margin:10px 0 0;">
                 Two results nobody had asked for. <b>POEM off with no distortion at all already costs
-                &times;1.975</b>: the mechanism does not merely absorb photometric drift, it also
-                compensates <i>accumulated thickness error</i>. And the two POEM-off arms returned
-                <b>9 surviving strategies against 12</b> — more were rejected outright, before scoring.
+                &times;1.975</b> — <b>&times;2.43</b> on the corrected code: the mechanism does not
+                merely absorb photometric drift, it also compensates <i>accumulated thickness error</i>.
+                And the two POEM-off arms returned <b>9 surviving strategies against 12</b> — more were
+                rejected outright, before scoring.
             </p>
+            <div class="highlight-box" style="margin:10px 0 0;">
+                🔑 <b>And that second figure is the one that outlived the model.</b> §2.8bis retires the
+                affine drift as a description of the machine, which requalifies every number in the table
+                above: they measure protection against a perturbation the auto-referencing largely removes
+                and the theorem would absorb anyway. <b>The &times;2.43 depends on no photometric
+                hypothesis at all</b> — it is measured with the distortion switched off. It is the part of
+                POEM's value that survives, and it is the smaller of the two.
+            </div>
             <p style="margin:10px 0 0;">
                 ⚠️ <b>What this does NOT establish.</b> One seed, one stack, and an aggregate over the
                 three noise levels — it says nothing yet about the crash rate or the per-band breakdown.
                 And POEM is invariant under an <i>affine</i> distortion of the signal; an index error is
                 not one. <b>Whether the protection extends there is a separate question, and an open
                 one</b> — see §2.9.
+            </p>
+        </div>
+
+        <h3>2.8bis The distortion was the wrong SHAPE — 2026-08-12</h3>
+        <div style="border:3px solid #be123c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fff1f2;">
+            <p style="margin:0 0 10px;">
+                👤 <b>"Does photometric drift mean anything, given that void and dark are measured
+                every time?"</b> — and then <b>"that drift is maximal near T = 0.5, certainly not at
+                1 or 0."</b> Both remarks land, and together they replace the model.
+            </p>
+            <p style="margin:0 0 10px;">
+                The machine reads $T = (S-D)/(V-D)$, <b>re-referenced every rotation at 4 Hz</b>. A gain
+                common to the three positions cancels exactly, $(gS-gD)/(gV-gD) = (S-D)/(V-D)$; a dark
+                offset cancels by subtraction. A deposition lasts hours and the reference is remade four
+                times a second, so <b>a gain and an offset drawn once per run are largely removed by the
+                instrument itself</b>.
+            </p>
+            <p style="margin:0 0 10px;">
+                🔑 <b>And what survives is PINNED AT BOTH ENDS.</b> $T = 0$ means $S = D$, so the
+                numerator vanishes and no multiplicative drift can move it; $T = 1$ means $S = V$, so
+                numerator equals denominator. <b>The two ends of the scale are the measurement's own
+                anchors.</b> The residual error is therefore zero there by construction and free in
+                between — which is exactly what the physicist said, and it is forced rather than
+                plausible.
+            </p>
+            <p style="margin:0 0 10px;">
+                🔴 <b>So $a\,T + b$ is the wrong shape</b>: it is non-zero precisely where the instrument
+                is most exact. The simplest form vanishing at both ends is
+            </p>
+            <div class="eq-box">$$\delta T \;=\; 4\,\varepsilon\,T\,(1-T)$$</div>
+            <p style="margin:0 0 10px;">
+                maximal at $T = 0.5$ where it equals $\varepsilon$, and it has a mechanism: a detector
+                response $\Phi + \kappa\Phi^2$ survives the ratio of differences as exactly this
+                second-order term. 👤 fixed the amplitude by its consequence — at $T = 0.5$ the true
+                value lies in $[0.4975,\,0.5025]$ at 2&sigma; — which gives
+                <b>&epsilon;<sub>max</sub> = 3.75&times;10<sup>&minus;3</sup></b>.
+            </p>
+            <table style="border-collapse:collapse;margin:8px 0;font-size:0.92em;">
+                <tr style="background:#fff;">
+                    <th style="border:1px solid #ccc;padding:4px 10px;text-align:left;">perturbation</th>
+                    <th style="border:1px solid #ccc;padding:4px 10px;">stop displaced by</th></tr>
+                <tr><td style="border:1px solid #ccc;padding:4px 10px;">affine, 5 % gain</td>
+                    <td style="border:1px solid #ccc;padding:4px 10px;">&minus;8.6&times;10<sup>&minus;12</sup> nm</td></tr>
+                <tr><td style="border:1px solid #ccc;padding:4px 10px;">affine, 0.02 offset</td>
+                    <td style="border:1px solid #ccc;padding:4px 10px;">&minus;4.2&times;10<sup>&minus;11</sup> nm</td></tr>
+                <tr style="background:#fee2e2;"><td style="border:1px solid #ccc;padding:4px 10px;"><b>curvature, &epsilon; = 0.00375</b></td>
+                    <td style="border:1px solid #ccc;padding:4px 10px;"><b>&minus;0.667 nm</b></td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                📏 A factor of 1.6&times;10<sup>10</sup>. The reason is §2.8 below: <b>POEM is rigorously
+                invariant under the affine map</b>, so the distortion modelled until this date was
+                precisely the one shape the mechanism absorbs for free. $T(1-T)$ is not affine.
+            </p>
+            <p style="margin:0 0 10px;">
+                ⚠️ <b>The &times;41.2 protection figure must therefore be requalified.</b> It is not
+                wrong; it measures protection against a perturbation that the machine largely removes
+                and that POEM would absorb anyway. What survives, and depends on no photometric
+                hypothesis, is the <b>&times;2.43</b> measured with <i>no</i> distortion at all: the
+                compensation of accumulated thickness error.
+            </p>
+            <p style="margin:0;">
+                🔴 <b>THE PATTERN, AND IT APPEARED TWICE IN ONE DAY.</b> That morning the slit bias was
+                modelled as <b>one constant per layer</b> — and a constant is the $b$ of the affine map.
+                That afternoon the photometric drift was modelled as <b>affine</b>. Neither was a wrong
+                number; both were the <b>wrong shape</b>, and both times the shape chosen was the one the
+                mechanism is immune to. <b>When testing an invariance, the first question is whether the
+                chosen perturbation belongs to the group the mechanism cancels.</b>
             </p>
         </div>
 
@@ -1351,9 +1457,21 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
             </table>
             <p style="margin:0 0 10px;">
                 At the model value the equivalent per-layer error <b>doubles</b>, from 0.3 to 0.6 nm.
-                Log-log exponent <b>0.525</b> — remarkably close to a square root. For comparison, the
-                photometric distortion of §2.8 costs &times;1.0087 once POEM is doing its job.
+                Log-log exponent <b>0.525</b> — remarkably close to a square root.
             </p>
+            <div class="highlight-box" style="margin:0 0 10px;">
+                🟢 <b>REMEASURED on the corrected code (2026-08-11), and the curve holds.</b>
+                &times;1.23 &middot; &times;2.03 &middot; &times;2.41 &middot; &times;4.66 against
+                &times;1.24 &middot; &times;1.86 &middot; &times;2.46 &middot; &times;4.32 above — gaps of
+                &minus;0.7 % to +9 %, i.e. <b>inside the statistical noise</b> ($\sigma\sqrt{2}\approx 8$ %
+                at $N = 150$). Exponent <b>0.545</b> against 0.525. The headline result of this page is
+                robust to the four coherence fixes that landed after it.
+                <br><br>
+                ⚠️ <b>Do not compare it to the photometric figure of §2.8 any more.</b> An earlier version
+                of this paragraph did — "the distortion costs &times;1.0087 once POEM is doing its job" —
+                and §2.8bis has since retired that perturbation as a description of the machine. The two
+                numbers no longer answer the same question.
+            </div>
             <p style="margin:0 0 10px;background:#dcfce7;border:2px solid #15803d;border-radius:6px;padding:10px 14px;">
                 🟢 <b>And look at the last column: the winner gains blocks as the corridor widens</b> —
                 2, 3, 4, 5, 8, monotonically. §2.9 predicted exactly this: index uncertainty
@@ -1461,9 +1579,131 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 against a broken POEM chain — is the kind of arbitration the statistical study exists to
                 settle.
             </p>
-            <p style="margin:10px 0 0;">
-                ⚠️ <b>Not implemented.</b> No rate mode exists in the kernel today. This section records the
-                specification, not the code.
+        </div>
+
+        <div style="border:3px solid #0d9488;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdfa;">
+            <p style="margin:0 0 10px;">
+                🔑 <b>WHAT RATE ACTUALLY DOES — measured 2026-08-12, and it is not what it was
+                introduced for.</b> Asked why rate is almost never selected when it looks so robust,
+                the answer came out of the ranking itself, at no extra cost: every rate variant was
+                paired with the <b>parent strategy it was derived from</b>. Parent and variant share
+                the seed, the draws and the block structure, so the gap between them is attributable
+                to the rate layer alone.
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                <tr style="background:#f3f4f6;">
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;"></th>
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;">dichroic, 40 pairs</th>
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;">bandpass, 89 pairs</th></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">rate <b>better</b> than its parent</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">14</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">21</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">rate <b>worse</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">13</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">21</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">median gap</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">&minus;0.3 %</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">&minus;0.0 %</td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>crash rate</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>10 fall</b>, 3 rise</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>6 fall</b>, 1 rises</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">best single case</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">SEEL 1.462 &rarr; 1.362</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>SEEL 11.5 &rarr; 1.7</b></td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                <b>Rate is robust and it is a coin flip, and those two facts do not conflict.</b> The
+                crash rate falls three to six times more often than it rises &mdash; exactly as
+                expected, since a layer deposited on turn count can neither miscount a turning point
+                nor fail to reach a level. But:
+            </p>
+            <div class="highlight-box" style="margin:0 0 10px;">
+                <b>A rate layer removes a failure mode. On a strategy that is not failing, removing a
+                failure mode buys nothing</b> &mdash; and it costs the POEM correction given up.
+            </div>
+            <p style="margin:0;">
+                The winners of both references crash <b>0 %</b> of the time. There is nothing to
+                rescue. So rate is not a tool for improving a good strategy: it is a tool for
+                <b>rescuing a bad one</b> &mdash; the &minus;85 % case takes a SEEL of 11.5 nm down to
+                1.7 nm. And a rescue that lands at 1.7 nm changes no ranking whose winner sits at
+                0.5 nm, which is why rate stays invisible at the top <i>by construction</i> on these
+                two components. It will show in the fragile regime.
+            </p>
+        </div>
+
+        <div style="border:3px solid #b45309;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fffbeb;">
+            <p style="margin:0 0 10px;">
+                🔴 <b>WHERE to put a rate layer — a rule was derived, implemented, validated, and
+                reverted, all on 2026-08-12.</b> The episode is kept because the hypothesis is
+                attractive and will be proposed again. The same pairing, read by <i>where</i> the rate
+                layer was placed:
+            </p>
+            <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                <tr style="background:#f3f4f6;">
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;"></th>
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;">dichroic</th>
+                    <th style="border:1px solid #d1d5db;padding:5px 10px;">bandpass</th></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">on the parent's <b>critical layer</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+1.5 % (7 cases)</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+4.2 % (1 case)</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">anywhere else</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+0.2 %</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+0.0 %</td></tr>
+                <tr style="background:#dcfce7;">
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">parent margin <b>small</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>+0.7 %</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>+0.2 %</b></td></tr>
+                <tr style="background:#fee2e2;">
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">parent margin <b>large</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>&minus;0.9 %</b></td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>&minus;0.1 %</b></td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">deep layer</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+0.6 %</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">&minus;0.0 %</td></tr>
+                <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">early layer</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+0.5 %</td>
+                    <td style="border:1px solid #d1d5db;padding:5px 10px;">+0.2 %</td></tr>
+            </table>
+            <p style="margin:0 0 10px;">
+                🔴 <b>Depth orders nothing</b> &mdash; and depth was the key the code used, justified by
+                the $1/\sqrt{n}$ law above. That law is real, but it governs the rate layer's <i>own</i>
+                error, and that is not what reaches the score. <b>A criterion that orders nothing raises
+                no error; it produces a plausible order.</b>
+            </p>
+            <p style="margin:0 0 10px;">
+                🟢 <b>The margin orders, and it changes sign.</b> Small margin: rate helps. Large margin:
+                rate hurts. On two very different stacks, in the same direction, with twice as many
+                improved cases on the small-margin side. The rule drawn from it was to place the rate
+                layer at the <b>lowest-margin</b> block boundary rather than the deepest one.
+            </p>
+            <div class="highlight-box" style="margin:0 0 10px;">
+                🔴 <b>AND THE VALIDATION RUN SAID THE OPPOSITE.</b> Full run, $N = 300$, configuration
+                identical to the reference: median gain <b>&minus;1.13 %</b> against &minus;0.3 %, and
+                <b>5 variants improving against 9 degrading</b>, where the old key gave 14 against 13.
+                The overall score moved by +0.67 % &mdash; indistinguishable, as expected on a
+                crash-free winner &mdash; but the placement itself got worse. Reverted the same day.
+            </div>
+            <p style="margin:0 0 10px;">
+                🔑 <b>The mistake was one of method, not of arithmetic.</b> The quantity measured is the
+                margin of a strategy's <b>critical layer</b> &mdash; one number describing the
+                <i>whole candidate</i>. The rule written from it ordered <b>layers within</b> a
+                strategy. Those are different quantities, and the measurement never spoke about the
+                second one.
+            </p>
+            <div class="eq-box" style="text-align:left;margin:0 0 10px;">
+                the data says &nbsp;&mdash;&nbsp; <i>a rate layer helps strategies whose critical layer
+                is close to giving way</i><br>
+                the code said &nbsp;&mdash;&nbsp; <i>put the rate layer where the margin is small</i>
+            </div>
+            <p style="margin:0;">
+                Nothing looked wrong: the signal was real, reproduced on two stacks, with a clean sign
+                change, and the rule seemed to follow "obviously". <b>Two hypotheses remain open, and
+                neither may be implemented from these numbers</b> &mdash; choosing <i>which strategies</i>
+                to expand by their critical margin, which is what the data actually supports; and placing
+                the rate layer on the critical layer even when it is not a block boundary, which is the
+                largest effect in the table but rests on seven cases. What survives unchanged: <b>depth
+                orders nothing</b>, and <b>rate is a rescue, not an optimisation</b>.
             </p>
         </div>
 
@@ -1568,7 +1808,8 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 </p>
                 <p style="margin:0;">
                     Finally, near a turning point $dT/dd \to 0$, so a level error converts into a
-                    <b>large thickness error</b> — the very regime §14 warns about. Bias, weakest slope,
+                    <b>large thickness error</b> — the very regime the physicist's rules warn about
+                    (§2.10). Bias, weakest slope,
                     and the anchors of the mechanism all coincide at the same place.
                 </p>
             </div>
@@ -1672,8 +1913,26 @@ all of R2 simulates a specific machine: a <b>buehler leybold optics oms 5100</b>
                 multi-day one.
             </p>
             <p style="margin:10px 0 0;">
-                ⚠️ <b>Not implemented.</b> No resolution-dependent noise exists in the kernel today.
+                🟢 <b>The probe was run, and it answered the opposite of a clean split.</b> Against a
+                15-node Gauss-Legendre reference, the second-order expansion holds at the nominal
+                2 nm slit (0.04 % error on the worst layer) and <b>collapses at 5 nm</b> (330 % on
+                layer 46 of the dichroic) &mdash; and 5 nm is precisely the width that decides the
+                &divide;1.5 noise bonus. <b>The expansion was worst exactly where the decision is
+                taken.</b> So the bias is integrated, not expanded, but with <b>3</b> Gauss-Legendre
+                nodes rather than a full convolution: three nodes integrate a degree-5 polynomial
+                exactly and the odd orders cancel by symmetry, so two orders are gained rather than
+                one, for the cost of three evaluations per node of the profile.
             </p>
+            <div class="highlight-box" style="margin:10px 0 0;">
+                <b>Implemented since 2026-08-11</b>, and the slit is a <b>searched</b> variable, not an
+                imposed setting: the noise factor table, the $\sqrt{3}$ rectangular-slit correction, the
+                per-layer bias <b>profile</b> (17 nodes on the thickness axis, not one constant per
+                layer), Phase A included, and the winning strategy reports the width it was actually
+                evaluated at. <b>What is still not done</b>: a full spectral convolution inside the
+                Monte-Carlo loop &mdash; the profile is built on the <i>nominal</i> sub-stack, so its
+                systematic part is captured and its draw-to-draw modulation is not &mdash; and
+                <code>min_resolution</code> still ranks without ever rejecting.
+            </div>
         </div>
 
         <h3>2.12 The critical layer, and how to measure a risk that reads zero</h3>
@@ -1775,10 +2034,34 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 0 to $1/N$ — at $N = 150$, blind to anything below 0.7 %.
             </p>
             <p style="margin:10px 0 0;">
-                ⚠️ <b>Not implemented.</b> Every tier above is paid in code, none in compute — and it
-                answers a question no number of draws would, since a zero rate stays zero however many
-                times it is drawn.
+                🟢 <b>Implemented on 2026-08-11 — tiers 0, 2 and 3 — and every tier was paid in code,
+                none in compute</b>, exactly as predicted: the three noise levels were already being
+                computed, so validating the model cost no run at all. It answers a question no number
+                of draws would, since a zero rate stays zero however many times it is drawn.
             </p>
+            <div class="highlight-box" style="margin:10px 0 0;">
+                <b>And tier 3 &mdash; the validation &mdash; was made NON-CIRCULAR before it was
+                believed.</b> Margin and crash come out of the same simulation, and
+                <code>margin_level</code> goes negative <i>exactly</i> when the crash fires: on those
+                strategies the margin <b>reports</b>, it does not predict, and a correlation over the
+                whole set would have been a tautology dressed as a validation. The honest test uses only
+                the <b>strictly positive</b> margins &mdash; layers that never failed, where the margin
+                says only how close one came:
+                <br><br>
+                <code>0 &ndash; 0.3 A</code> &rarr; 21 strategies, <b>14 crash</b>, mean rate 0.984 %
+                &nbsp;&middot;&nbsp; <code>0.6 &ndash; 0.9 A</code> &rarr; 181 strategies,
+                <b>7 crash</b>, mean rate 0.044 %.
+                <br><br>
+                🔑 <b>Below 0.6 A: 17 of 24 crash. Above: 7 of 181. A factor 22 on the rate, predicted
+                from the SIGNAL alone</b>, correlation &minus;0.577. So the margin can be believed at
+                1&times; where counting returns zero &mdash; which was the whole condition.
+                <br><br>
+                ⚠️ Three reservations, and they stay attached to the result: the 0.3&ndash;0.6 A band
+                holds only <b>3</b> strategies and weighs nothing on its own; <b>24 strategies crash
+                despite a positive margin</b>, on a layer other than their critical one, which is
+                expected but bounds the model's precision; and <b>no strategy on this stack reaches
+                2 A</b>, so the rule "beyond 2 A, impossible" remains <b>untested</b> here.
+            </div>
         </div>
 
         <h3>2.13 Non-Monotonic Error Model</h3>
@@ -3166,7 +3449,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     the 48-layer dichroic short-pass (edge at 545 nm, H = 2.35 / L = 1.46 on BK7),
                     seed 42, sweep grid 450–700 nm at 1 nm, 150 Monte-Carlo draws per strategy,
                     3 noise levels. <b>No conclusion here is transferable to another stack</b>
-                    (§4.9): a single component cannot separate what is physics from what is this
+                    (§10.9): a single component cannot separate what is physics from what is this
                     particular design.
                 </div>
 
@@ -3676,6 +3959,48 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     without a single draw, which strategies can even fail.
                 </p>
 
+                <h3>10.7bis The control-&lambda; grid — 1 nm or 2 nm, and why it was reopened</h3>
+                <p>
+                    The control wavelengths are chosen on the sweep grid, and its step sets how many
+                    candidates Phase A must judge: <b>251 against 126</b> over 450&ndash;700 nm, since a
+                    2 nm grid is exactly the set of <b>even</b> wavelengths. Halving the candidates halves
+                    the most expensive stage of the run.
+                </p>
+                <div class="note">
+                    ⚠️ <b>This had been settled in favour of 1 nm, and was deliberately reopened.</b> The
+                    old decision rested on four figures from 2026-08-08, taken before the corridor
+                    envelope fix and before the slit was modelled at all. The rule for reopening a frozen
+                    decision is that <b>only a measurement may do it, never an argument</b> — and the slit
+                    bias is a measurement. It changes which &lambda; are good, so it was entitled to
+                    reopen the question of which &lambda; are reachable.
+                </div>
+                <p>
+                    <b>The criterion was written down before the runs.</b> 2 nm is adopted if and only if,
+                    on <b>both</b> components and at least <b>two</b> seeds, the 2 nm winner falls inside
+                    the <b>SEEL equivalence class</b> of the 1 nm winner and its yield is no worse.
+                    Comparing two raw scores would have separated noise &mdash; §10.7 gives the reason.
+                </p>
+                <div class="highlight-box">
+                    🔒 <b>RESULT: the grid stays at 1 nm, frozen 2026-08-12.</b> Of the four pairs, only
+                    <b>one</b> met the equivalence criterion. Three times out of four the fine grid won,
+                    by <b>19 % to 42 %</b>.
+                    <br><br>
+                    ⚠️ <b>And the fourth case, where the coarse grid won by half, is not an argument for
+                    it.</b> The 1 nm run simply had not generated the winning family (48 blocks). That is
+                    a symptom of a search that had not converged, not a virtue of the 2 nm step
+                    &mdash; and it must never be quoted in favour of 2 nm.
+                </div>
+                <p style="margin:0 0 14px;">
+                    🔑 <b>What the investigation found on the way, and it is the more interesting half.</b>
+                    The 1 nm step does carry <b>real</b> information: the gap between neighbouring
+                    wavelengths <i>converges</i> as depth grows rather than dissolving, reaching
+                    <b>3&sigma;</b> at N = 1200, and neighbouring pairs order the same way on three
+                    independent seeds. <b>But that information is finer than the limit of measurement</b>
+                    &mdash; five pairs in six land in the same SEEL class. So the model resolves something
+                    genuinely there, which the decision rule rightly declares indistinguishable. Keeping
+                    1 nm costs candidates; it does not buy resolving power.
+                </p>
+
                 <h3>10.8 Open conjectures, and the experiment that settles each</h3>
                 <p>
                     These are <b>not results</b>. Each is stated with its refutation condition, so
@@ -3744,7 +4069,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <p>
                     🔑 <b>It asks a different question of the method, which is the point of having it.</b>
                     Its layers are quarter-waves at $\lambda_0$, so each one stops <b>at a turning point</b>
-                    where $dT/dd \to 0$ — the regime §14 warns against, and the one a bandpass is normally
+                    where $dT/dd \to 0$ — the regime §2.10 warns against, and the one a bandpass is normally
                     monitored in (turning-point monitoring). The dichroic, by contrast, lives on
                     intermediate levels. And its spectral ripple near the control wavelength is
                     <b>5.0 nm</b> against 7.2 nm for the dichroic, so a 2 nm slit averages over a
@@ -3752,7 +4077,8 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 </p>
                 <div class="note">
                     ⚠️ <b>Two stacks do not make a validation</b>, and the addition changes nothing about
-                    §15. Both are coherence benches; neither has a real deposition behind it. What a second
+                    <b>external validation</b>. Both are coherence benches; neither has a real deposition
+                    behind it. What a second
                     component buys is <b>falsification of transfer</b>: it shows whether a conclusion drawn
                     on one <i>survives</i> the other. It never licenses carrying a number across.
                     <br><br>
@@ -3856,7 +4182,109 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </p>
                 </div>
 
-                <h3>10.12 What we deliberately do not claim</h3>
+                <h3>10.12 Where the error actually comes from</h3>
+                <p>
+                    A SEEL far from zero is a sum of causes, and knowing which one dominates
+                    changes what to do about it. Each source is switched off in turn and the
+                    score re-read; the contribution is
+                    <code>1 &minus; score_without / score_with</code>.
+                </p>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                    <tr style="background:#f3f4f6;">
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;text-align:left;">switch off&hellip;</th>
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;">48-layer dichroic</th>
+                        <th style="border:1px solid #d1d5db;padding:5px 10px;">35-layer bandpass</th></tr>
+                    <tr style="background:#fee2e2;">
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>index corridor</b></td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>69 %</b></td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">15 %</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">slit bias</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">0 %</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;"><b>16 %</b></td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">photometric curvature</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">1 %</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">3 %</td></tr>
+                    <tr><td style="border:1px solid #d1d5db;padding:5px 10px;">reading noise</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">~0 %</td>
+                        <td style="border:1px solid #d1d5db;padding:5px 10px;">~0 %</td></tr>
+                </table>
+                <p>
+                    🔑 <b>The same model gives two opposite diagnoses depending on the
+                    component.</b> On the dichroic one source crushes everything; on the bandpass
+                    slit and corridor share the load and nothing dominates. That is exactly why the
+                    profile belongs to each strategy rather than to a general note &mdash; a blanket
+                    statement would be wrong half the time.
+                </p>
+                <p>
+                    🟢 <b>And reading noise weighs nothing anywhere</b>, which is the rig&rsquo;s own
+                    control: it is <i>noise</i>, it averages out over draws, where the other three
+                    are <b>biases</b> pushing every draw the same way. An ablation in which noise
+                    came out dominant would signal a broken rig, not a result.
+                </p>
+                <div class="note">
+                    🔴 <b>These numbers do not add to 100 %.</b> The sources interact &mdash; the
+                    corridor distorts both the deposited thickness <i>and</i> the index of the
+                    finished filter, the slit displaces the anchor POEM will use next &mdash; so
+                    switching two off does not remove the sum of their two shares. They are
+                    <b>derivatives</b>, not slices of a cake. And the corridor&rsquo;s share is if
+                    anything an <b>under</b>-estimate, since a thickness metric sees only the first
+                    of its two effects.
+                </div>
+                <div class="highlight-box">
+                    🔑 <b>THE CORRIDOR SATURATES &mdash; and that is what answers the practical
+                    question.</b> Asked whether the dominant source might simply be over-stated, the
+                    sweep says otherwise:
+                    <table style="border-collapse:collapse;margin:8px 0;font-size:0.9em;">
+                        <tr style="background:#fff;">
+                            <th style="border:1px solid #ccc;padding:4px 10px;">corridor</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">dichroic, thickness RMS</th>
+                            <th style="border:1px solid #ccc;padding:4px 10px;">bandpass</th></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">0</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">1.443 nm</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">5.787 nm</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">0.0025</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;"><b>4.179 nm</b></td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">5.879 nm</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">0.005</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">4.654 nm</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">6.784 nm</td></tr>
+                        <tr><td style="border:1px solid #ccc;padding:4px 10px;">0.010</td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">4.594 nm &mdash; <b>saturated</b></td>
+                            <td style="border:1px solid #ccc;padding:4px 10px;">7.133 nm</td></tr>
+                    </table>
+                    On the dichroic, <b>quadrupling the perturbation from 0.0025 to 0.010 costs
+                    10 %</b>: almost all the damage is done by the first quarter. Lowering the
+                    specification to 0.0025 would therefore buy 10 % and nothing more. On the
+                    bandpass the response is regular &mdash; +1.6 %, +17 %, +23 %, no saturation.
+                    <br><br>
+                    <b>Two regimes.</b> The dichroic has a <b>threshold</b>: past a small index
+                    uncertainty, POEM&rsquo;s compensation lets go and what follows changes little.
+                    The bandpass degrades in proportion.
+                </div>
+                <p style="margin:0 0 10px;">
+                    🔴 <b>What was NOT measured, and must not be read as measured:</b> the H / L
+                    asymmetry. An absolute corridor of 0.005 is 0.21 % on H and <b>0.34 % on L</b>
+                    &mdash; a ratio of 1.6 &mdash; but the corridor perturbs both materials together
+                    and no parameter separates them. The sweep above measures <b>amplitude</b>, not
+                    <b>distribution</b>. The question stays open.
+                </p>
+                <p>
+                    <b>The advice this yields is actionable.</b> On the dichroic, 69 % of the error
+                    comes from index uncertainty: refining the monitoring there will buy almost
+                    nothing, while an index-determination campaign attacks the dominant term.
+                </p>
+                <div class="note">
+                    ⚠️ <b>And the remaining 31 % is NOT attributed &mdash; do not let anyone name it.</b>
+                    An earlier version of this paragraph read "POEM, the slit and the smoothing share the
+                    remaining 31 %", which invents a split twice over: the slit measured <b>0 %</b> on
+                    this component, and the reading smoothing is <b>switched off</b> by decision, so it
+                    can contribute nothing at all. The four ablations together account for ~70 %; what is
+                    left is <b>interaction between sources plus mechanisms no ablation isolates</b>, and
+                    that is the honest description of it. Contributions are derivatives, not slices &mdash;
+                    the same warning as above, and it applies to the residue too.
+                </div>
+
+                <h3>10.13 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent

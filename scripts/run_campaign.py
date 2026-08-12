@@ -410,9 +410,46 @@ PLAN_G = [
           expect={"index_corridor": 0.01, "robustness_seed": 303}),
 ]
 
+#: PLAN N -- Monte-Carlo DEPTH against WALL-CLOCK, on both components, 2026-08-12.
+#:
+#: 👤 *"j'aimerais une courbe ou un tableau entre le nombre de samples (50, 150, 300, 500)
+#: et le temps d'execution pour le 35c puis le 48c. Du coup, apres, je choisirai
+#: definitivement le nombre d'echantillons."*
+#:
+#: 🔴 WHY IT IS REMEASURED RATHER THAN READ OFF THE LEDGER. `reports/probe_runs.tsv`
+#: already carries a SETUP_S and a RUN_S for every run ever made, including depths 12,
+#: 50 and 300 on both components. Those seconds span several states of the code -- the
+#: slit bias, the resolution search and the Rate expansion all landed between them --
+#: and 17-7 is exactly this: a run that does not carry its configuration compares to
+#: nothing. Timings are no different from results in that respect.
+#:
+#: 🔑 WHAT THE ANSWER IS FOR. Depth buys RESOLVING POWER, and 17-26 measured what it
+#: costs: the Monte-Carlo dispersion falls as 1/sqrt(N), exactly, between N = 32 and
+#: N = 128. So the second axis of this table is already known and does not need a run --
+#: at N = 150 the dispersion is ~6 %, so N = 600 would be needed to halve it. The table
+#: below supplies the missing half: what those draws cost in seconds.
+#:
+#: ⚠️ A large part of a run is FIXED -- Phase A and the DP do not depend on N at all
+#: (18ter measures the fixed part at ~730 s on the dichroic, about 68 % of a reference
+#: run). Expect a shallow slope, not a proportional one, and read the SLOPE rather than
+#: the totals: only the slope is what an extra draw actually costs.
+PLAN_N = [
+    *[entry(f"N48.{n}", f"48-layer dichroic, {n} draws -- depth against wall-clock",
+            env={"CERTUS_NUM_RUNS": str(n), "CERTUS_SCREEN_RUNS": "10"},
+            expect={"robustness_num_runs": n, "n_screen_runs": 10})
+      for n in (50, 150, 300, 500)],
+    *[entry(f"N35.{n}", f"35-layer bandpass, {n} draws -- depth against wall-clock",
+            env={"CERTUS_NUM_RUNS": str(n), "CERTUS_SCREEN_RUNS": "10",
+                 "CERTUS_DESIGN_JSON": str(
+                     ROOT / "example" / "example_strat" / "JSON-strat-bandpass-3cav.json")},
+            expect={"robustness_num_runs": n, "n_screen_runs": 10})
+      for n in (50, 150, 300, 500)],
+]
+
 PLANS = {
     "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
     "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E, "f": PLAN_F, "g": PLAN_G,
+    "n": PLAN_N,
 }
 
 

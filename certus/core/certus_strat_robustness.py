@@ -545,6 +545,30 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[in
     # 1/sqrt(n) with the number of reference layers of its material, so it is at its
     # most accurate late in the stack -- which is also where 17-36 measured that every
     # crash happens. The cap therefore keeps the boundaries that matter most.
+    #
+    # 🔴 A MARGIN-ORDERED KEY WAS TRIED ON 2026-08-12 AND REVERTED THE SAME DAY. Keep
+    # this record: the hypothesis is attractive and will be proposed again.
+    #
+    # 📏 What was measured. Pairing each Rate variant with the parent it came from, on
+    # the two N=300 references, gain against the parent split by the parent's margin:
+    #
+    #     parent margin SMALL  +0.7 % / +0.2 %      parent margin LARGE  -0.9 % / -0.1 %
+    #     deep layer  +0.6 % / -0.0 %               early layer  +0.5 % / +0.2 %
+    #
+    # Depth carries no signal; the margin does, and it flips sign on both stacks. The
+    # inference drawn from it was to place the Rate layer at the LOWEST-MARGIN block
+    # boundary. 📏 A validation run said the opposite: median gain -1.13 % against
+    # -0.3 %, 5 variants improving against 9 degrading (was 14 against 13).
+    #
+    # 🔑 THE ERROR, AND IT IS A METHOD ERROR, NOT AN ARITHMETIC ONE. The quantity
+    # measured was `critical_layer.margin_in_A` -- a property of the WHOLE STRATEGY,
+    # one number per candidate. The rule written from it ordered LAYERS WITHIN a
+    # strategy. Those are different quantities, and the measurement never spoke about
+    # the second. What the data actually supports is "a Rate layer helps strategies
+    # whose critical layer is close to giving way", which is a rule about WHICH
+    # STRATEGIES to expand, not about WHERE to put the layer. That hypothesis is still
+    # open and needs its own experiment -- do not implement it from these numbers
+    # either.
     out.sort(reverse=True)
     return out[:RATE_MAX_VARIANTS_PER_STRATEGY]
 
@@ -969,6 +993,124 @@ def phase_a_slit_profiles(
         prof = _slit_bias_profiles(strat, p_thick_nominal, params, slit_b,
                                    only_layers=rows)
         out[c_idx, rows.start : i_layer + 1, :] = prof[rows.start : i_layer + 1, :]
+    return out
+
+
+#: Les sources d'erreur qu'on eteint une par une, avec la clef de params a neutraliser
+#: et le nom que l'operateur lira. Le BRUIT DE LECTURE en fait partie deliberement: il
+#: sert de temoin. 📏 Mesure du 2026-08-12, il pese ~0 % sur les deux composants -- et
+#: c'est attendu, c'est du bruit, il s'annule sur les tirages la ou les trois autres
+#: sont des BIAIS qui poussent tous les tirages du meme cote. Une ablation ou le bruit
+#: sortirait dominant signalerait une erreur de montage, pas un resultat.
+ABLATION_SOURCES: tuple[tuple[str, str, object], ...] = (
+    ("slit_bias_enabled", "biais de fente", False),
+    ("index_corridor", "corridor d'indice", 0.0),
+    ("photometric_curvature_amp", "courbure photometrique", 0.0),
+    ("trigger_tolerance_zero", "bruit de lecture", None),
+)
+
+#: Profondeur Monte-Carlo de l'ablation. Volontairement plus faible que celle du
+#: classement: on mesure une CONTRIBUTION RELATIVE, pas un score. 64 tirages donnent
+#: ~12 % de dispersion, ce qui suffit largement a separer une source a 60 % d'une
+#: source a 2 % -- et ne suffirait pas a departager deux strategies, ce qu'on ne fait
+#: pas ici.
+ABLATION_NUM_RUNS: int = 64
+
+#: Nombre de strategies profilees. 👤 2026-08-12: "pour chacune des 20 meilleures
+#: strategies, faire un classement de l'influence de chaque source de defaut".
+ABLATION_TOP_K: int = 20
+
+
+def _ablation_profile(
+    strategy: dict[str, Any],
+    base_score: float,
+    *,
+    params: dict[str, Any],
+    p_thick_nominal: list[float],
+    clues_at_wl: dict,
+    wl_arr,
+    nH_arr,
+    nL_arr,
+    nSub_arr,
+    T_nom,
+    full_dyn_grid: dict,
+    logger,
+) -> list[dict[str, Any]]:
+    """Classement des sources de defaut par leur contribution, POUR CETTE strategie.
+
+    👤 2026-08-12 : *"j'aimerais savoir quel est le defaut le plus problematique... pour
+    chacune des 20 meilleures strategies, cela permettra a l'utilisateur de mieux
+    comprendre d'ou viennent les problemes."*
+
+    On eteint chaque source a tour de role et on relit le score. La contribution est
+    `1 - score_sans / score_avec` : la part du score qui disparait quand la source
+    disparait.
+
+    🔴 CE QUE CE NOMBRE N'EST PAS. Les contributions NE S'ADDITIONNENT PAS a 100 %. Les
+    sources interagissent -- le corridor fausse l'epaisseur ET l'indice du filtre fini,
+    la fente deplace l'ancre que POEM utilisera ensuite -- donc eteindre deux sources ne
+    retire pas la somme de leurs deux parts. Lire ces chiffres comme un partage d'un
+    gateau serait une faute. Ce sont des DERIVEES: "de combien le score baisse si je
+    retire celle-ci", chacune prise seule.
+
+    📏 Ce que ca donne, mesure sur les gagnantes du 2026-08-12: sur le dichroique le
+    corridor d'indice pese **69 %** contre 1 % a la courbure et 0 % a la fente -- une
+    source ecrase tout. Sur le passe-bande, fente **16 %** et corridor **15 %**: personne
+    ne domine, c'est deja un compromis. **Le meme modele donne donc deux diagnostics
+    opposes selon le composant**, ce qui est exactement pourquoi ce profil a sa place
+    dans le rapport plutot que dans une note generale.
+
+    ⚠️ Et pour le corridor, la part affichee est plutot une SOUS-ESTIMATION: il agit deux
+    fois, sur les epaisseurs deposees et sur l'indice reel du filtre fini, alors qu'une
+    partie des metriques ne voit que la premiere.
+    """
+    if not (base_score and base_score > 0.0):
+        return []
+    out: list[dict[str, Any]] = []
+    for key, label, neutral in ABLATION_SOURCES:
+        try:
+            p2 = dict(params)
+            if key == "trigger_tolerance_zero":
+                rs = dict(p2.get("reality_sim_params") or {})
+                rs["trigger_tolerance"] = 0.0
+                p2["reality_sim_params"] = rs
+                p2["thickness_tolerance_nm"] = 0.0
+            else:
+                p2[key] = neutral
+            # Une seule strategie, une profondeur reduite: c'est un diagnostic.
+            res = _execute_robustness_tasks(
+                all_strategies=[strategy],
+                noise_levels=_resolve_robustness_noise_levels(p2),
+                num_runs=ABLATION_NUM_RUNS,
+                p_thick_nominal=p_thick_nominal,
+                clues_at_wl=clues_at_wl,
+                params_safe=p2,
+                wl_arr=wl_arr,
+                nH_arr=nH_arr,
+                nL_arr=nL_arr,
+                nSub_arr=nSub_arr,
+                T_nom=T_nom,
+                full_dyn_grid=full_dyn_grid,
+                params=p2,
+                logger=logger,
+                n_layers_matrix_precomp=None,
+            )
+            if not res:
+                continue
+            s2 = float(res[0].get("robustness_score", float("nan")))
+            if not np.isfinite(s2):
+                continue
+            out.append({
+                "source": label,
+                "score_without": s2,
+                # Positive = retirer la source AMELIORE, donc elle nuit. Negatif = la
+                # retirer degrade, ce qui arrive et doit se voir plutot que d'etre
+                # ecrete a zero: une source peut MASQUER une autre.
+                "contribution": 1.0 - s2 / base_score,
+            })
+        except Exception as exc:  # noqa: BLE001 -- un diagnostic ne casse jamais un run
+            logger.debug(f"[ABLATION] {label} : {exc!r}")
+    out.sort(key=lambda d: -d["contribution"])
     return out
 
 
@@ -2234,6 +2376,37 @@ def run_final_simulation_block(
         logger=logger,
         n_layers_matrix_precomp=n_layers_matrix_precomp,
     )
+
+    # ---- PROFIL D'ABLATION sur les meilleures, 👤 2026-08-12 -------------------
+    #
+    # "pour chacune des 20 meilleures strategies, faire un classement de l'influence de
+    # chaque source de defaut. Cela permettra a l'utilisateur de mieux comprendre d'ou
+    # viennent les problemes."
+    #
+    # 🔴 APRES le classement, jamais avant: c'est un DIAGNOSTIC, il ne doit pas pouvoir
+    # influencer l'ordre. Et seulement sur les meilleures -- profiler 400 strategies
+    # coutrait quatre fois le run pour expliquer des candidates que personne ne deposera.
+    if bool(params.get("ablation_profile", True)) and strategies_results:
+        top = sorted(strategies_results,
+                     key=lambda r: float(r.get("robustness_score", 1e18)))[:ABLATION_TOP_K]
+        t_abl = time.perf_counter()
+        for res in top:
+            res["ablation"] = _ablation_profile(
+                res.get("strategy") or {},
+                float(res.get("robustness_score", 0.0) or 0.0),
+                params=params, p_thick_nominal=p_thick_nominal, clues_at_wl=clues_at_wl,
+                wl_arr=wl_arr, nH_arr=nH_arr, nL_arr=nL_arr, nSub_arr=nSub_arr,
+                T_nom=T_nom, full_dyn_grid=full_dyn_grid, logger=logger,
+            )
+        done = [r for r in top if r.get("ablation")]
+        if done:
+            first = done[0]["ablation"][0]
+            logger.info(
+                f"[ABLATION] {len(done)} strategies profilees en "
+                f"{time.perf_counter() - t_abl:.1f} s -- source dominante de la 1re : "
+                f"{first['source']} ({first['contribution']:+.0%})"
+            )
+
 
     (
         consensus_enabled,

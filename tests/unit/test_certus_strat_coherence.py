@@ -3192,7 +3192,10 @@ class TestStratSymmetryContractAndStability:
 
 
 
-        def fake_run_final_simulation_block(context, _params, num_runs=0, noise_levels=None):
+        # `**_kw` et non une liste figee : ce faux suit une signature de production
+        # qui grandit, et un mock trop etroit fait echouer le test pour une raison
+        # qui n'a rien a voir avec ce qu'il assure.
+        def fake_run_final_simulation_block(context, _params, num_runs=0, noise_levels=None, **_kw):
 
 
             run_calls.append(int(num_runs))

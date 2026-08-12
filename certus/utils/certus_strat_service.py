@@ -150,6 +150,7 @@ class _PhysicsBridge:
         tp_hysteresis: float = 0.0,
         affine_scale_amp: float = 0.0,
         affine_offset_amp: float = 0.0,
+        photo_curvature_amp: float = 0.0,
         affine_seed: int = 0,
         poem_enabled: bool = True,
         smoothing_window: int = 1,
@@ -162,7 +163,7 @@ class _PhysicsBridge:
         return validate_wavelengths_batch(
             wls, nH, nL, nSub, history, nominal_thicknesses, i_layer, offset, noise, error_factor, mode,
             block_start_arr, gain_probe_nm, signal_noise_scale, signal_noise_seed, tp_hysteresis,
-            affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
+            affine_scale_amp, affine_offset_amp, photo_curvature_amp, affine_seed, poem_enabled, smoothing_window,
             index_corridor, index_seed, corridor_lo, corridor_hi, None, slit_profiles,
         )
 
@@ -185,6 +186,7 @@ class _PhysicsBridge:
         tp_hysteresis: float = 0.0,
         affine_scale_amp: float = 0.0,
         affine_offset_amp: float = 0.0,
+        photo_curvature_amp: float = 0.0,
         affine_seed: int = 0,
         poem_enabled: bool = True,
         smoothing_window: int = 1,
@@ -197,7 +199,7 @@ class _PhysicsBridge:
         return update_run_states_kernel(
             nominal_thicknesses, i_layer, history, best_wl, nH, nL, nSub, offset, noise, error_factor, mode,
             block_start_layer, signal_noise_scale, signal_noise_seed, tp_hysteresis,
-            affine_scale_amp, affine_offset_amp, affine_seed, poem_enabled, smoothing_window,
+            affine_scale_amp, affine_offset_amp, photo_curvature_amp, affine_seed, poem_enabled, smoothing_window,
             index_corridor, index_seed, corridor_lo, corridor_hi, slit_profiles,
         )
 
@@ -1179,6 +1181,12 @@ def _validate_candidates_phase_a(
 
     affine_scale_amp = float(params.get("affine_scale_amp", 0.0) or 0.0)
     affine_offset_amp = float(params.get("affine_offset_amp", 0.0) or 0.0)
+    # 12.1bis : la Phase A doit voir la MEME distorsion photometrique que la Phase B.
+    # Le defaut vit dans certus_strat_robustness pour qu'il n'y en ait qu'un seul.
+    from certus.physics.certus_strat_growth import PHOTOMETRIC_CURVATURE_AMP
+    photo_curvature_amp = float(
+        params.get("photometric_curvature_amp", PHOTOMETRIC_CURVATURE_AMP) or 0.0
+    )
     poem_enabled = bool(params.get("poem_enabled", True))
     affine_seed = (int(phase_a_seed) * 3_266_489_917 + (int(i_layer) + 1) * 40_503 + 0x7E2A_8431) % (2**53)
     smoothing_window = int(params.get("reading_smoothing_window", 1) or 1)
@@ -1226,6 +1234,7 @@ def _validate_candidates_phase_a(
         tp_hysteresis,
         affine_scale_amp,
         affine_offset_amp,
+        photo_curvature_amp,
         affine_seed,
         poem_enabled,
         smoothing_window,
@@ -1409,6 +1418,7 @@ def _validate_candidates_phase_a(
             # every layer, exactly what the kernel docstring forbids.
             affine_scale_amp,
             affine_offset_amp,
+            photo_curvature_amp,
             affine_seed,
             poem_enabled,
             smoothing_window,

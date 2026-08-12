@@ -441,6 +441,7 @@ def _prepare_robustness_inputs(
     num_runs: int,
     noise_levels: list[float] | None,
     logger: logging.Logger,
+    expand_variants: bool = True,
 ) -> tuple[list[dict[str, Any]], list[float], list[float], int]:
     """Validates and prepares robustness initial inputs."""
     if not opti_results or "all_strategies" not in opti_results:
@@ -458,10 +459,14 @@ def _prepare_robustness_inputs(
         num_layers=num_layers,
         logger=logger,
     )
-    all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
-    # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the two
-    # degrees of freedom are independent and there is no reason to couple them here.
-    all_strategies = _expand_with_resolution_variants(all_strategies, params, logger)
+    # 🔑 EXPANSION ONLY ON THE PASS THAT DECIDES. On the screening pass this is False,
+    # so 241 candidates stay 241 instead of becoming 3856; the survivors are expanded
+    # afterwards. See `run_final_simulation_block`.
+    if expand_variants:
+        all_strategies = _expand_with_rate_variants(all_strategies, params, num_layers, logger)
+        # A18 AFTER the Rate variants, so a Rate layer is evaluated at each slit too: the
+        # two degrees of freedom are independent, nothing couples them here.
+        all_strategies = _expand_with_resolution_variants(all_strategies, params, logger)
     # 🔴 The curvature must be attached BEFORE the simulation runs, not after.
     # `_calculate_strategy_spectral_resolution` was already called on every strategy --
     # but AFTERWARDS, to fill `min_resolution` in the result. Too late to feed a bias
@@ -2061,8 +2066,30 @@ def run_final_simulation_block(
     params: dict[str, Any],
     num_runs: int = 150,
     noise_levels: list[float] | None = None,
+    expand_variants: bool = True,
 ) -> dict[str, Any]:
-    """Phase B robustness screening: evaluate every candidate strategy under noise."""
+    """Phase B robustness screening: evaluate every candidate strategy under noise.
+
+    ``expand_variants`` -- generate the Rate and slit variants of each strategy.
+
+    🔑 FALSE ON THE SCREENING PASS, and that is the whole point. Rate multiplies the
+    candidate count by up to 4 and the slit search by 4 again: 📏 measured 2026-08-12 on
+    the judge of paix, 241 strategies became **3856**, and all 3856 went through every
+    stage. 👤 asked for the Rate trial *"on the ten best strategies"* -- on the best, not
+    on all of them; the expansion sat before the screening out of implementation
+    convenience, not necessity.
+
+    Screening 241, keeping ~30 and expanding THOSE gives ~721 strategy-evaluations
+    instead of 3856 -- a factor 5.3, with no physics touched. And it is the sounder
+    order: screening a Rate variant of a mediocre strategy spends Monte-Carlo to rank
+    two bad answers against each other.
+
+    ⚠️ THE RESERVATION, and it is real. A strategy that is mediocre under POEM might be
+    good with one Rate layer or a different slit, and the screening would drop it before
+    it could show that. It cannot be excluded without measuring. Keeping 30 survivors
+    rather than 10 costs little and largely closes the question -- 17-27 measured that
+    opening the screening wider finds nothing better on this stack.
+    """
     logger = params["logger"]
 
     # Defer imports of solvers functions to run-time to completely avoid circular dependencies
@@ -2094,6 +2121,7 @@ def run_final_simulation_block(
         num_runs=num_runs,
         noise_levels=noise_levels,
         logger=logger,
+        expand_variants=expand_variants,
     )
 
     if not all_strategies:

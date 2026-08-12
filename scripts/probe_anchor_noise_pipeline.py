@@ -51,6 +51,10 @@ FIVE_SIGMA: float = 1.66
 #: 17bis, finding 7.
 APPLIED_CONFIG: dict[str, object] = {}
 
+#: Reglages que l'environnement a ecrases par rapport au fichier de design.
+#: Vide = la sonde mesure exactement ce que le JSON decrit.
+OVERRIDDEN: list[tuple[str, object, object]] = []
+
 #: Keys whose value must appear in the report and in the file name. Anything that
 #: changes the physics of the model belongs here.
 TRACED_KEYS: tuple[str, ...] = (
@@ -92,7 +96,10 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_AFFINE_SCALE_AMP", "affine_scale_amp", "float", 0.0, "as"),
     ("CERTUS_AFFINE_OFFSET_AMP", "affine_offset_amp", "float", 0.0, "ao"),
     ("CERTUS_SMOOTHING_WINDOW", "reading_smoothing_window", "int", 1, "k"),
-    ("CERTUS_INDEX_CORRIDOR", "index_corridor", "float", 0.0, "corr"),
+    # 🔴 Le NEUTRE suit le defaut du MODELE, pas zero. Depuis le 2026-08-12 le
+    # corridor vaut 0,005 par defaut (👤 "c'est la base"), et laisser 0,0 ici
+    # ferait ecraser en silence ce que le fichier de design fournit.
+    ("CERTUS_INDEX_CORRIDOR", "index_corridor", "float", 0.005, "corr"),
     ("CERTUS_PHASE_A_MARGIN", "phase_a_level_margin_factor", "float", None, "marg"),
     ("CERTUS_POEM_ENABLED", "poem_enabled", "flag", True, "poemoff"),
     # --- Monte-Carlo depth. Nothing in the code SIZES these: they are defaults typed
@@ -230,10 +237,29 @@ def patch_flag(
         params["phase_a_level_margin_factor"] = margin
         params["enable_local_search"] = (mode == "full")
         # One dictionary, resolved once, drives both the run and the file name.
+        #
+        # 🔴 AND EVERY OVERRIDE OF THE DESIGN FILE IS ANNOUNCED. This loop silently
+        # replaced whatever the JSON supplied, so a design carrying `index_corridor:
+        # 0.005` was run at 0.0 with nothing said -- the probe measured a machine the
+        # configuration did not describe. Since 2026-08-12 the design files carry the
+        # eleven model settings explicitly, which makes a silent override far more
+        # damaging than it already was.
         for key, value in env_cfg.items():
+            was = params.get(key, "(absent)")
+            if not OVERRIDDEN and was != "(absent)" and was != value:
+                OVERRIDDEN.append((key, was, value))
             params[key] = value
         if not APPLIED_CONFIG:
             APPLIED_CONFIG.update({k: params.get(k) for k in TRACED_KEYS})
+            # 🔴 Emis ICI, au premier appel : le bloc CONFIG s'imprime AVANT que
+            # `collect_params` ait jamais tourne, donc la liste y serait vide et
+            # l'avertissement inexistant -- un garde qui ne garde rien.
+            if OVERRIDDEN:
+                out = ["", "  !!! L'ENVIRONNEMENT ECRASE LE FICHIER DE DESIGN !!!"]
+                out += [f"      {k:<30s} {w!r} -> {n!r}" for k, w, n in OVERRIDDEN]
+                out += ["      Le run ne mesure donc PAS ce que le JSON decrit.", ""]
+                sys.stdout.write(chr(10).join(out) + chr(10))
+                sys.stdout.flush()
         return params
 
     CertusStratStateMixin.collect_params = patched

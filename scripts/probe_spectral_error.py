@@ -202,6 +202,20 @@ def install_probe() -> None:
                     # is the normal case here and is exactly why the margin is needed.
                     **({"crash_by_layer": _nonzero_layers(it.get("crash_by_layer"))}
                        if _has_crash(it.get("crash_by_layer")) else {}),
+                    # 👤 "Trouver une strategie, c'est trouver les lambda de controle ou
+                    # les couches de rate, et donner a l'utilisateur une valeur des fentes."
+                    #
+                    # 🔴 LES DEUX MANQUAIENT, et sans eux la gagnante n'est PAS EXECUTABLE
+                    # en salle: l'operateur ne sait ni quelle fente regler, ni quelle couche
+                    # deposer au chrono. Mesure du 2026-08-12: sur 420 strategies classees,
+                    # 179 retiennent une fente PLUS ETROITE que le nominal et 59 portent une
+                    # couche Rate -- l'information existait, uniquement dans la chaine
+                    # `origin` ("SLIT1", "RATE_L41"), donc lisible par un humain et par
+                    # personne d'autre.
+                    "monochromator_resolution_nm": it.get("monochromator_resolution_nm"),
+                    # `it` fait foi -- c'est ce que le noyau a REELLEMENT applique ;
+                    # `st` n'est que ce qui lui a ete demande.
+                    "rate_layers": list(it.get("rate_layers") or st.get("rate_layers") or []),
                     "worst_swing": (it.get("worst_layer_swing") or {}).get("swing"),
                     "worst_swing_layer": (it.get("worst_layer_swing") or {}).get("layer"),
                     "n_below_swing_min": (it.get("worst_layer_swing") or {}).get("n_below_swing_min"),

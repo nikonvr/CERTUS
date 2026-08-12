@@ -630,7 +630,9 @@ def _parallel_block_worker(args) -> dict:
 
             logger.info(f"   [Block {n_blk}] Running screening on {len(strategies_dp)} strategies...")
 
-            res_dp = run_final_simulation_block(screen_context_dp, params, num_runs=n_screen)
+            res_dp = run_final_simulation_block(
+                screen_context_dp, params, num_runs=n_screen, expand_variants=False
+            )
 
             if "all_strategies_results" in res_dp:
                 results_list = res_dp["all_strategies_results"]
@@ -662,7 +664,9 @@ def _parallel_block_worker(args) -> dict:
 
                 screen_context_inh["all_strategies"] = valid_inherited
 
-                res_inh = run_final_simulation_block(screen_context_inh, params, num_runs=n_screen)
+                res_inh = run_final_simulation_block(
+                    screen_context_inh, params, num_runs=n_screen, expand_variants=False
+                )
 
                 if "all_strategies_results" in res_inh:
                     survivors_inherited = sorted(

@@ -4106,9 +4106,32 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <b>1. Inherited parents now come from the SCREENING pass</b>, which runs at
                         <code>n_screen</code> and which no depth setting touches — not from the full pass
                         at $N$. The population is therefore depth-independent <i>by construction</i>, and
-                        the guard is an <b>equality</b>, not a statistic: the strategies retained per block
-                        must be identical term by term at $N = 50$ and $N = 500$.
+                        the guard is an <b>equality</b>, not a statistic.
                     </p>
+                    <div class="highlight-box" style="margin:0 0 10px;">
+                        🟢 <b>VALIDATED 2026-08-13, over a TENFOLD range of depth.</b> Screening
+                        survivors per block, and the inheritance counts with them:
+                        <div class="eq-box" style="text-align:left;margin:8px 0;font-family:monospace;">
+                            N=&nbsp;50 &nbsp;[10, 10, 20, 20, 12, 11, 12, 12, <b>12, 9</b>]<br>
+                            N=500 &nbsp;[10, 10, 20, 20, 12, 11, 12, 12, <b>12, 9</b>]
+                        </div>
+                        Before the fix the last two fell to <b>2, 3</b> at that depth. The scoring moved
+                        as it should — 300 ranked against 324, <code>RESULT</code> 0.86 % apart, winner's
+                        SEEL 0.587 against 0.582 nm — and the search did not move at all.
+                        <br><br>
+                        ⚠️ <b>The first eight blocks prove nothing</b>: they were identical even with the
+                        defect. The gap <i>compounds</i> along the inheritance chain and only shows at the
+                        last links, so the last two blocks are the whole test.
+                    </div>
+                    <div class="note" style="margin:0 0 10px;">
+                        ⚠️ <b>What must be equal is the SEARCH, not the scoring — and it is easy to check
+                        the wrong quantity.</b> The <i>screening survivors</i> per block and the
+                        <i>inherited parents</i> must be identical at every depth: they are the search.
+                        The set retained by the <b>full</b> pass must <b>not</b> be, and it would be a
+                        defect if it were &mdash; the crash filter is legitimately sharper at greater
+                        depth. So are the ranking, the scores and <code>RESULT</code>: measuring them is
+                        what $N$ is <i>for</i>.
+                    </div>
                     <p style="margin:0 0 10px;">
                         <b>2. Depth set to $N = 300$</b>, and the criterion is not the one it appears to
                         be. The score is settled at any depth (&plusmn;1.5 % from $N=50$); what depth

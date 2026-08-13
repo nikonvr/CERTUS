@@ -213,7 +213,7 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 
 | | |
 |---|---|
-| 🔴 **Validation du correctif 1, NON TERMINÉE** | Deux runs, N = 50 et N = 500 sur le dichroïque. Les **stratégies retenues par bloc doivent être identiques terme à terme**. Avant correctif : `1:13 2:54 3:76` contre `1:9 2:10 3:0`. **Si elles diffèrent encore, le correctif est incomplet** — §23ter |
+| 🟢 **Correctif 1 VALIDÉ** | Deux runs, N = 50 et N = 500 : survivantes et héritage **identiques terme à terme** sur les 10 blocs, là où les deux derniers tombaient de `12, 9` à `2, 3`. §23ter |
 | 🔴 **Correctif 2, PAS COMMENCÉ** | Le seuil de plantage sur une borne de confiance. Seul, avec son run. C'est la prochaine action de code — §23bis |
 | ⚠️ **`N = 300` est conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel. Après le correctif 2, **remesure** — §23 |
 
@@ -3828,11 +3828,45 @@ survivantes remontent, que le contrat est revérifié, et que **les deux appels 
 tournent toujours à `n_screen`** — cette dernière est un garde-fou contre une récidive par
 une autre porte.
 
-⏳ **La validation empirique est EN COURS et n'est pas encore rapportée** : deux runs, N = 50
-et N = 500, dont les stratégies retenues par bloc doivent être **identiques terme à terme**.
-Avant le correctif elles valaient `1:13 2:54 3:76` contre `1:9 2:10 3:0`. **Si tu reprends
-ce travail, c'est la première chose à vérifier — et si elles ne sont PAS identiques, le
-correctif est incomplet et il faut chercher la seconde fuite.**
+### 🔴 CE QU'IL FAUT COMPARER — et j'avais écrit la mauvaise grandeur
+
+Une première version de cette section demandait de comparer les **stratégies retenues par
+bloc**. **C'est faux, et ça aurait fait conclure à l'échec du correctif.** Ces retenues
+sortent de la passe **complète**, donc elles dépendent de `N` — et c'est **normal** : le
+filtre de plantage y est plus sévère à profondeur croissante. C'est de la **notation**.
+
+| grandeur | doit-elle être N-indépendante ? | où la lire dans le log |
+|---|---|---|
+| **survivantes du criblage**, par bloc | ✅ **OUI** — c'est la recherche | `Full pass on N survivors` |
+| **parents hérités**, par bloc | ✅ **OUI** — c'est la recherche | `Inheritance: X derived from Y` |
+| stratégies **retenues**, par bloc | ❌ non, et ce serait un défaut qu'elles le soient | `Completed. N retained` |
+| classement, scores, `RESULT` | ❌ non — c'est ce que `N` sert à mesurer | — |
+
+📏 **Avant le correctif**, les survivantes divergeaient sur les deux derniers blocs :
+`10 10 20 20 12 11 12 12 12 9` à N = 50 et 150, contre `... 12 12 2 3` à N = 300 et 500.
+
+### 🟢 VALIDÉ LE 2026-08-13 — deux runs, facteur DIX de profondeur, égalité exacte
+
+```
+LA RECHERCHE — identique, et c'est une EGALITE, pas une concordance
+  survivantes  N=50   [10, 10, 20, 20, 12, 11, 12, 12, 12, 9]
+               N=500  [10, 10, 20, 20, 12, 11, 12, 12, 12, 9]
+  heritage     identique sur les 10 blocs, au couple (derivees, parents) pres
+
+LA NOTATION — depend de N, et ce serait un defaut sinon
+  retenues     [5,12,41,31,45,42,78,0,27,19]  contre  [5,5,34,24,94,40,76,0,27,19]
+  classees     300 contre 324          RESULT  +0,86 %
+  SEEL         0,587 nm contre 0,582 nm    -> +/-0,4 %
+```
+
+**Avant le correctif, les deux derniers blocs tombaient de `12, 9` à `2, 3`.** Ils sont
+maintenant identiques. Et `RESCUED` vaut **41 dans les deux runs** — le repêchage aussi est
+devenu N-indépendant, puisqu'il dépend de la population, désormais fixe.
+
+⚠️ **Ne lis pas les huit premiers blocs comme une confirmation** : ils étaient identiques
+même avec le défaut. L'écart se **compose** le long de la chaîne d'héritage et n'apparaît
+qu'aux derniers maillons. **Seuls les blocs 2 et 1 tranchent** — et c'est là que la mesure
+compte.
 
 ### ⚠️ Ce que le correctif 1 a PÉRIMÉ
 

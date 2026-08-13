@@ -3644,8 +3644,15 @@ d'acheter des tirages. §17-26 le disait sur les scores ; ceci le dit sur la **r
 score.** Ma première recommandation était N = 150, sur ce critère-là, et elle était juste
 sur ce critère : le SEEL est stable à ±1,5 % dès N = 50, donc la profondeur n'y sert à rien.
 
-**Ce qui décide, c'est le filtre de plantage** — et il gouverne *quelles stratégies
-existent*, pas leur note :
+**Ce qui décide, c'est le filtre de plantage.**
+
+⚠️ **Nuance ajoutée après validation du correctif 1, et elle affaiblit l'argument — ne la
+saute pas.** Une version antérieure disait que le filtre gouverne *quelles stratégies
+existent*. **Ce n'était vrai qu'avant le correctif 1.** Depuis, la population est fixée par
+le criblage : le filtre de la passe complète ne gouverne plus que **ce qui figure au
+classement final**, c'est-à-dire la liste dans laquelle l'utilisateur choisit. Une bonne
+stratégie rejetée par malchance n'est plus perdue pour la recherche — seulement pour le
+tableau. C'est moins grave, et cela reste un défaut.
 
 | N | bonne à 3 % rejetée **à tort** | mauvaise à 7 % qui **passe** | repêchées au classement |
 |---|---|---|---|

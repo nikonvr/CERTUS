@@ -3638,11 +3638,80 @@ Si ces minutes doivent être dépensées, **elles vont à une seconde graine** :
 11, donc plus cher, mais elle attaque la variance qui fait réellement changer la gagnante,
 là où la profondeur ne peut rien (§19-3).
 
-### 🔴 Ce que cette campagne laisse OUVERT
+### 🔴 POURQUOI LE NOMBRE DE STRATÉGIES CLASSÉES VARIE — élucidé le 2026-08-13
 
-**Le nombre de stratégies classées varie de 229 à 376** entre les quatre profondeurs — 343,
-376, 229, 284 sur le dichroïque. Or le criblage tourne à **10 tirages fixes** et devrait
-rendre les mêmes survivantes à toutes. **Quelque chose en amont dépend de `N` et ne devrait
-pas.** À trancher avant de tirer d'autres conclusions de ces classements : tant que ce n'est
-pas expliqué, l'instabilité de la gagnante ci-dessus a **deux** causes possibles — la
-dispersion Monte-Carlo, ou une population de candidates qui n'est pas la même.
+Il varie de **229 à 376** entre les quatre profondeurs. Le criblage, lui, est **rigoureusement
+identique** : 905 stratégies criblées, même découpage bloc par bloc, aux quatre profondeurs.
+Ce n'est donc pas le criblage. La chaîne est la suivante, et elle a trois maillons.
+
+#### Maillon 1 — la passe COMPLÈTE alimente la recherche du nombre de blocs suivant
+
+`certus_strat_workers.py:1292` : les résultats de la passe complète — celle qui tourne à
+`N` — passent par `derive_strategies_exhaustive(..., top_k_parents=20)`, et deviennent les
+**candidates héritées** du nombre de blocs suivant. **`N` atteint donc la population, par
+héritage.** Ce n'est écrit nulle part et personne ne l'avait vu.
+
+#### Maillon 2 — le filtre de plantage compare un taux ESTIMÉ à un seuil FIXE
+
+`certus_strat_robustness.py:2018` :
+
+```python
+if crash_rate_max >= CRASH_RATE_TOLERANCE:   # 0,05
+    final_score = float("inf")               # -> jetee par _filter_finite_scores
+```
+
+Le taux est estimé sur **`N` tirages**. Sa sensibilité dépend donc de `N` :
+
+| vrai plantage | rejetée à N=50 | N=150 | N=300 | N=500 |
+|---|---|---|---|---|
+| 3 % — **bonne**, sous le seuil | **18,9 %** ❌ | 8,3 % | 3,9 % | 1,0 % |
+| 7 % — mauvaise | **68,9 %** | 83,1 % | 93,5 % | **97,2 %** |
+| 10 % — très mauvaise | **88,8 %** | 98,6 % | 99,9 % | 100 % |
+
+🔴 **À N = 50, près d'un tiers des stratégies qui plantent réellement 7 % du temps passent le
+filtre** — et deviennent parents héritées. Et une bonne sur cinq à 3 % est rejetée à tort.
+
+📏 **La granularité l'explique** : à N = 50 le taux mesuré est quantifié par pas de **2 %**,
+donc **aucune** stratégie ne peut se situer entre 0 et 2 %. Mesuré dans les classements :
+`0 < p < 2 %` compte **0** stratégie à N = 50, contre 88 à 150 et 127 à 500. Il faut
+**3 plantages sur 50** pour franchir un seuil de 5 %.
+
+#### Maillon 3 — l'écart se compose le long de la chaîne des blocs
+
+📏 Stratégies retenues par la passe complète, bloc par bloc :
+
+```
+N= 50 | 1:13  2:54  3:76  4:31  5:30 ...
+N=150 | 1:16  2:50  3:61  4:26  5:59 ...
+N=300 | 1: 9  2:10  3: 0  4:52  5:14 ...   <- ZERO au bloc 3
+N=500 | 1: 9  2:10  3: 0  4:59  5:71 ...
+```
+
+Les deux premiers blocs perdent déjà 5 stratégies, le troisième s'effondre à **zéro**, et
+l'écart se propage jusqu'aux deux derniers blocs où les survivantes tombent de `12, 9` à
+`2, 3`.
+
+#### 🔑 Ce qu'il faut en retenir, et c'est plus important que le décompte
+
+> **Deux runs à profondeurs différentes ne comparent pas deux précisions sur la même
+> recherche. Ils comparent DEUX RECHERCHES DIFFÉRENTES.**
+
+Et le sens est celui-ci : **une profondeur faible propage des stratégies qui plantent
+vraiment.** Ce n'est pas le filtre qui est cassé — c'est qu'à N = 50 il ne peut pas faire
+son travail, et que le système ne le signale pas.
+
+⚠️ **Conséquence sur la conclusion de la campagne** : j'avais laissé deux causes possibles à
+l'instabilité de la gagnante. **Ce sont les deux**, et la seconde est identifiée. La stabilité
+du SEEL à ±1,5 %, elle, n'est pas affectée : elle est mesurée sur la gagnante finale, dont le
+plantage vaut 0,000 partout.
+
+#### 🔴 Et un second constat, trouvé en chemin
+
+**Des stratégies à 100 % de plantage figurent dans les classements**, aux quatre profondeurs.
+C'est le repli obligatoire de `_filter_finite_scores` (ligne 1152) : quand **aucune** stratégie
+d'un bloc ne survit au filtre, il les réinjecte toutes avec un score fini plutôt que de rendre
+une liste vide. Le comportement est délibéré et documenté — mieux vaut la moins risquée que
+`RESULT=None` — mais **rien dans le classement ne distingue une stratégie repêchée d'une
+stratégie qui a réellement passé le filtre**. C'est le motif de §17-37 : le résultat a l'air
+sain. Correctif à faire : remonter un drapeau `fallback_rescued` dans le résultat de
+stratégie, comme `n_layers_forced`.

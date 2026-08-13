@@ -4015,11 +4015,77 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         exactly why the rule declares equality instead of buying draws.
                     </div>
                     <p style="margin:0;">
-                        🔴 <b>One thing this campaign leaves unexplained, and it is not papered over</b>:
-                        the number of ranked strategies swings from <b>229 to 376</b> across the four
-                        depths, although screening runs at a fixed 10 draws and should hand the same
-                        survivors to every one of them. Something upstream depends on $N$ and should not.
-                        Worth settling before drawing further conclusions from these rankings.
+                        🔴 <b>The number of ranked strategies also swings from 229 to 376 across the four
+                        depths</b> &mdash; and it is not the screening, which is identical at all four:
+                        905 strategies, the same block-by-block breakdown. The cause is below.
+                    </p>
+                </div>
+
+                <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:16px 0;background:#fef2f2;">
+                    <p style="margin:0 0 10px;">
+                        🔴 <b>DEPTH REACHES THE SEARCH ITSELF, NOT ONLY ITS PRECISION.</b> Three links,
+                        none of them documented anywhere before 2026-08-13.
+                    </p>
+                    <p style="margin:0 0 6px;">
+                        <b>1. The full pass feeds the next block count.</b> Its results go through
+                        <code>derive_strategies_exhaustive(top_k_parents=20)</code> and become the
+                        <b>inherited candidates</b> of the following block count. The full pass runs at
+                        $N$, so <b>$N$ reaches the population by inheritance</b>.
+                    </p>
+                    <p style="margin:0 0 6px;">
+                        <b>2. The crash filter compares an ESTIMATED rate to a FIXED threshold.</b>
+                        <code>crash_rate_max &ge; 0.05 &rarr; score = &infin; &rarr; dropped</code>, with
+                        the rate estimated on $N$ draws. Its sensitivity is therefore a function of $N$:
+                    </p>
+                    <table style="border-collapse:collapse;margin:0 0 10px;font-size:0.9em;">
+                        <tr style="background:#fee2e2;">
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;text-align:left;">true crash rate</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">rejected at N=50</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">N=150</th>
+                            <th style="border:1px solid #fca5a5;padding:4px 10px;">N=500</th></tr>
+                        <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">3 % — <b>good</b>, under threshold</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>18.9 %</b> wrongly</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">8.3 %</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">1.0 %</td></tr>
+                        <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">7 % — bad</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>68.9 %</b></td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">83.1 %</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;"><b>97.2 %</b></td></tr>
+                        <tr><td style="border:1px solid #fca5a5;padding:4px 10px;">10 % — very bad</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">88.8 %</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">98.6 %</td>
+                            <td style="border:1px solid #fca5a5;padding:4px 10px;">100 %</td></tr>
+                    </table>
+                    <p style="margin:0 0 10px;">
+                        📏 <b>Granularity explains it.</b> At $N = 50$ the measured rate is quantised in
+                        <b>2 % steps</b>, so <b>no strategy can lie between 0 and 2 %</b> — and indeed the
+                        rankings contain <b>zero</b> such strategies at $N=50$, against 88 at 150 and 127
+                        at 500. Three crashes out of fifty are needed to cross a 5 % threshold.
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        <b>3. The gap compounds down the block chain.</b> Strategies retained by the full
+                        pass, per block count:
+                    </p>
+                    <div class="eq-box" style="text-align:left;margin:0 0 10px;font-family:monospace;">
+                        N=&nbsp;50 &nbsp;| 1:13&nbsp; 2:54&nbsp; 3:76&nbsp; 4:31 &hellip;<br>
+                        N=150 &nbsp;| 1:16&nbsp; 2:50&nbsp; 3:61&nbsp; 4:26 &hellip;<br>
+                        N=300 &nbsp;| 1:&nbsp;9&nbsp; 2:10&nbsp; <b>3:&nbsp;0</b>&nbsp; 4:52 &hellip;<br>
+                        N=500 &nbsp;| 1:&nbsp;9&nbsp; 2:10&nbsp; <b>3:&nbsp;0</b>&nbsp; 4:59 &hellip;
+                    </div>
+                    <div class="highlight-box" style="margin:0 0 10px;">
+                        🔑 <b>Two runs at different depths do not compare two precisions on the same
+                        search. They compare two different searches.</b> And the direction matters: a
+                        shallow run <b>propagates strategies that genuinely crash</b>. The filter is not
+                        broken — at $N = 50$ it simply cannot do its job, and nothing says so.
+                    </div>
+                    <p style="margin:0;">
+                        🔴 <b>Found on the way, and worth its own fix</b>: strategies with a <b>100 %</b>
+                        crash rate appear in the rankings at all four depths. That is the mandatory
+                        fallback — when <i>no</i> strategy of a block survives the filter, they are all
+                        re-injected with a finite score rather than returning an empty list. The behaviour
+                        is deliberate and better than <code>RESULT=None</code>, but <b>nothing in the
+                        ranking distinguishes a rescued strategy from one that actually passed</b>. The
+                        result looks healthy either way, which is this project's recurring failure mode.
                     </p>
                 </div>
 

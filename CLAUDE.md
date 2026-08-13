@@ -118,6 +118,10 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | **Les deux composants d'essai** | §7 pour le dichroïque, **§21 pour le passe-bande à trois cavités** |
 | **La grille des λ, 1 nm ou 2 nm** | §22 — enquête et critère de décision |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
+| **Choisir la profondeur Monte-Carlo** | **§23 — N = 300 et n_screen = 25, avec le critère qui n'est PAS celui qu'on croit** |
+| **Savoir ce qui est écrit mais PAS mesuré** | **§23bis — le correctif 2, prêt à lancer, rien mesuré** |
+| **L'invariant recherche / notation** | **§23ter — `N` ne doit décider d'aucune candidate** |
+| 💡 **Ne pas savoir quoi faire ensuite** | **§24 — trois suggestions, et les cinq choses à ne PAS faire** |
 
 Une seule autre page existe, destinée à la communauté :
 [`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, méthode.
@@ -3901,3 +3905,85 @@ mesure a été faite quand le criblage ne choisissait que les survivantes de la 
 complète. **Il choisit désormais aussi les parents**, donc une stratégie tuée par malchance
 au criblage est perdue pour tout le reste de la recherche. **La mesure ne couvre plus le
 rôle. `n_screen` reste à 25** — voir le tableau de §23bis.
+
+---
+
+## 24. 💡 CE QUE JE SUGGÈRE ENSUITE — établi le 2026-08-13, et l'ordre a une raison
+
+**Le constat qui fixe cet ordre :** tout le travail du 2026-08-12 et du 2026-08-13 a rendu
+STRAT plus **cohérent**. Rien ne l'a rendu plus **vrai**. §15 reste entier — le modèle
+n'est validé que contre lui-même, et aucune quantité de correctifs internes ne changera
+cela.
+
+### 1. 🔑 `sigma_rate` comme PRÉDICTION — la première grandeur externellement vérifiable
+
+**C'est la seule suggestion de cette liste qui attaque §15, et elle est devenue possible
+le 2026-08-11 sans que personne le remarque** : le noyau Rate est écrit
+(`certus_strat_growth.py:630`, `acc += d_nom_j / d_real_j` puis `a_est = acc / n_ref`),
+donc le simulateur **refait le calcul de rate de la machine** au lieu de le remplacer par
+un tirage.
+
+`sigma_rate` cesse d'être un paramètre et devient une **sortie du modèle** — §14 le
+démontre. Or 👤 a décrit ce que la machine montre en salle : *« il y a une dispersion de
+rate d'environ ±σ = 1 à 2 % »*.
+
+> **Le modèle prédit un nombre que la machine affiche. C'est la seule confrontation avec
+> l'extérieur dont ce projet dispose aujourd'hui, et elle ne coûte qu'une sonde.**
+
+⚠️ **Et il faut la qualifier honnêtement, sinon elle ne vaut rien.** Le « 1 à 2 % » est un
+**souvenir**, pas une mesure — 👤 a dit *« c'est ce que j'avais en tête »*. Il a donc le
+même statut que la table des facteurs de bruit de §12.7, *« estimés par moi au feeling »*.
+Ce qui en découle :
+
+- si le modèle rend **0,1 %** ou **10 %**, c'est informatif : le modèle rate quelque chose,
+  ou le souvenir est faux, et il faut demander laquelle des deux ;
+- s'il rend **1 à 2 %**, c'est une **corroboration faible** — pas une validation. Ne l'écris
+  jamais comme telle ;
+- **une vraie validation demanderait un relevé de la machine**, et c'est la question à
+  poser à 👤 quand ce chiffre sortira.
+
+**Coût** : instrumenter le noyau pour remonter la dispersion de `d_real_i / d_nom_i` sur les
+couches Rate. Aucun run supplémentaire — les variantes Rate sont déjà classées.
+
+### 2. Un bloc de SANTÉ DE RUN — automatiser le contrôle 4 de §20
+
+**Trois fois en deux jours, une grandeur était calculée et n'atteignait aucun œil :**
+
+| | |
+|---|---|
+| `crash_eliminated` | existait depuis toujours ; 83 repêchées sur 343, et un run où **87 sur 87** l'étaient, sans que rien ne le dise |
+| `n_layers_forced` | §17-37 : 32 couches sur 48 en repli, et le résultat annonçait une gagnante comme un run sain |
+| `forbidden_gain_negative` | §17-38 : **zéro rejet** sur 8 runs, à toutes les couches, corridor 0 comme 0,020 |
+
+§20-contrôle 4 prescrit déjà *« compte les rejets, ne lis pas le code »* — mais personne ne
+le fait à la main, et c'est précisément pour ça que ces trois-là ont dormi.
+
+**Ce qu'il faut** : un bloc émis à la fin de chaque run, qui dit ce qui est suspect —
+combien de repêchées, combien de couches forcées, **et quels filtres n'ont rien rejeté**.
+Un filtre à zéro rejet est un **défaut**, pas un succès.
+
+🔑 **Pourquoi c'est plus rentable qu'il n'y paraît** : ce n'est pas de l'ergonomie, c'est
+le seul garde-fou contre le mode de défaillance qui gouverne ce dépôt — *ça ne produit pas
+d'erreur, ça produit un résultat plausible.*
+
+### 3. A5 — le harnais d'empreinte `float.hex()`
+
+Toujours inexistant, et c'est **le seul instrument de C1** (§3, palier 1). Je m'en suis
+passé le 2026-08-13 pour la porte de plantage en énumérant **exhaustivement** ses 1046 cas
+— possible parce que c'est une fonction pure de deux entiers. **Un changement de noyau n'a
+pas ce luxe**, et la prochaine fois personne n'aura d'instrument.
+
+### 🔴 Ce que je ne suggère PAS, et pourquoi
+
+| | |
+|---|---|
+| **Toucher à la fonction objectif** (A21) | 👤 l'a gelée. C'est le chantier le plus rentable et il n'est pas à moi de le dégeler |
+| **Chasser l'asymétrie H / L** | Non mesurable : le corridor perturbe les deux matériaux ensemble et aucun paramètre ne les sépare |
+| **La convolution spectrale complète** | La part systématique est capturée ; sa modulation tirage à tirage mettrait une intégration dans la boucle chaude |
+| **Monter la profondeur** | §23 : la profondeur achète de la précision sur un nombre déjà précis |
+| **Rouvrir la grille, le lissage ou la cadence** | Tranchés par 👤 le 2026-08-12. Une **mesure** peut les rouvrir, jamais un raisonnement |
+
+### Si je ne devais en garder qu'une
+
+**La première.** Les deux autres rendent le dépôt plus sûr ; seule celle-là peut rendre
+STRAT **vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.

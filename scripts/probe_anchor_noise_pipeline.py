@@ -522,6 +522,29 @@ def main() -> None:
     B.emit(f"PROBE_WRITTEN={PSE.OUT}  strategies={r['n']}")
     B.emit(f"CONFIG={json.dumps(r['config'], sort_keys=True)}")
 
+    # 🔴 HOW MANY OF THESE ARE RESCUED, announced rather than buried in the JSON.
+    #
+    # `_filter_finite_scores` re-injects every strategy of a block when NONE of them
+    # holds under the crash tolerance, giving them the worst finite RMSE instead of a
+    # robustness score. That is deliberate and better than RESULT=None -- but the run
+    # then reports a winner, a score and a SEEL exactly like a healthy one.
+    #
+    # 📏 Measured over the artefacts on disk on 2026-08-13: 83 rescued out of 343 at
+    # N=50, 19 of 229 at N=300 -- and one run where 87 of 87 were rescued, i.e. NOT ONE
+    # strategy passed the filter, which nothing in its output said. The flag existed all
+    # along, in `crash_eliminated`; it simply reached no eye.
+    _ranked = r.get("ranking") or []
+    _resc = [e for e in _ranked if e.get("crash_eliminated")]
+    if _resc:
+        _dead = sum(1 for e in _resc if float(e.get("crash") or 0.0) >= 1.0)
+        _all = "  🔴 ALL OF THEM -- no strategy passed the crash filter" if len(_resc) == len(_ranked) else ""
+        B.emit(
+            f"RESCUED={len(_resc)}/{len(_ranked)}  (dont {_dead} a 100% de plantage)"
+            f"  -- score = pire RMSE finie, PAS un score de robustesse{_all}"
+        )
+    else:
+        B.emit(f"RESCUED=0/{len(_ranked)}")
+
     # One line per run, appended to a compact ledger. A campaign transcript runs to
     # megabytes and nobody reads it while it is still useful; this is twenty lines,
     # so an anomaly can be spotted between two runs instead of after all of them.

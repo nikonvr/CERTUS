@@ -81,7 +81,7 @@
   "wavelength_change_penalty": "1.0",
   "extrema_exclusion_ratio": "60.0",
   "robustness_noise_factors": "[0.5, 1.0, 2.0]",
-  "robustness_num_runs": "150",
+  "robustness_num_runs": "300",
   "nucleation_mc_runs": "150",
   "mining_candidates_limit": "3000",
   "n_screen_runs": "25",

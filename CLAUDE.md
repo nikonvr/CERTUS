@@ -153,6 +153,8 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | `affine_offset_amp` | **0,02** ⇒ `b ∈ [−0,02 ; +0,02]` | §12.1 |
 | Plafond du banc | `CERTUS_BENCH_TIMEOUT_S=5400` | §10 |
 | Graine de référence | **42**, `scan_wl_step` **1.0** | §10 |
+| `robustness_num_runs` | **300** — 👤 posé le 2026-08-13. ⚠️ **Ce n'est PAS un réglage de précision** : la profondeur commande la sensibilité du filtre de plantage, donc **quelles stratégies existent** | §23 |
+| `n_screen_runs` | **25**, et 👤 a délégué le choix le 2026-08-13. 🔴 **NE LE DESCENDS PAS À 10** : `1/10 = 10 % ≥ 5 %`, donc **un seul plantage sur dix tue la stratégie** — et depuis le correctif 1 elle est aussi perdue comme **parent**. §17-27 avait mesuré « 10 ne perd rien » **avant** que le criblage ne choisisse les parents : la mesure ne couvre plus le rôle | §23ter |
 | `sigma_rate` (mode Rate) | 🔑 **aucune valeur à poser** — grandeur DÉRIVÉE du simulateur | §14, dérivation |
 | Résolution du monochromateur | **2 nm** nominal · choix dans {5 ; 2 ; 1 ; 0,5} · facteurs de bruit **÷1,5 · ×1 · ×2 · ×5** | §12.7 |
 
@@ -206,6 +208,14 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 | **A23** | Étages 0, 2 et 3 faits. La marge prédit le plantage d'un facteur **22**, validée non circulairement (§17-41). |
 | **Tri de §14** | `rank_key_seel_yield_margin` écrit et testé. Tourne **dans la sonde**, à côté de l'ordre du pipeline — SEEL vit à l'étape 0 de l'interface, l'en sortir reste à faire. |
 | **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§18bis). |
+
+### ⏳ EN COURS AU 2026-08-13 — lis ceci avant de lancer quoi que ce soit
+
+| | |
+|---|---|
+| 🔴 **Validation du correctif 1, NON TERMINÉE** | Deux runs, N = 50 et N = 500 sur le dichroïque. Les **stratégies retenues par bloc doivent être identiques terme à terme**. Avant correctif : `1:13 2:54 3:76` contre `1:9 2:10 3:0`. **Si elles diffèrent encore, le correctif est incomplet** — §23ter |
+| 🔴 **Correctif 2, PAS COMMENCÉ** | Le seuil de plantage sur une borne de confiance. Seul, avec son run. C'est la prochaine action de code — §23bis |
+| ⚠️ **`N = 300` est conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel. Après le correctif 2, **remesure** — §23 |
 
 ### 🔴 LA SUITE IMMÉDIATE
 
@@ -3628,15 +3638,33 @@ réellement **interchangeables** — même SEEL, même rendement de 100 %. Il n'
 départager, et c'est précisément pourquoi §14 prescrit de déclarer l'égalité au lieu
 d'acheter des tirages. §17-26 le disait sur les scores ; ceci le dit sur la **réponse**.
 
-### La recommandation
+### 🔒 LA RECOMMANDATION — N = 300, posé le 2026-08-13
 
-**N = 150 reste le bon réglage.** Monter à 500 coûte +11 min par composant pour resserrer
-l'écart discernable de 8,5 % à 4,6 %, c'est-à-dire pour séparer des stratégies que la règle
-de décision déclare équivalentes de toute façon.
+🔴 **Et le critère n'est PAS celui qu'on croit. Ne le rejuge pas sur la précision du
+score.** Ma première recommandation était N = 150, sur ce critère-là, et elle était juste
+sur ce critère : le SEEL est stable à ±1,5 % dès N = 50, donc la profondeur n'y sert à rien.
 
-Si ces minutes doivent être dépensées, **elles vont à une seconde graine** : ~25 min contre
-11, donc plus cher, mais elle attaque la variance qui fait réellement changer la gagnante,
-là où la profondeur ne peut rien (§19-3).
+**Ce qui décide, c'est le filtre de plantage** — et il gouverne *quelles stratégies
+existent*, pas leur note :
+
+| N | bonne à 3 % rejetée **à tort** | mauvaise à 7 % qui **passe** | repêchées au classement |
+|---|---|---|---|
+| 50 | **18,9 %** | **31,1 %** | **24 %** (83/343) |
+| 150 | 8,3 % | 16,9 % | — |
+| **300** | **3,9 %** | **6,5 %** | **8 %** (19/229) |
+| 500 | 1,0 % | 2,8 % | 7 % (19/284) |
+
+**Le genou est à 300.** 150 → 300 divise par deux les deux erreurs du filtre et fait tomber
+le repêchage de 24 % à 8 %, pour **+7 min sur les deux composants réunis** (41 contre 33) —
+la part fixe domine tellement que la profondeur est bon marché. 300 → 500 coûte +10 min de
+plus et ne gagne presque rien.
+
+⚠️ **Ce chiffre est conditionné au correctif 2 (§23bis), qui n'est PAS fait.** Une fois le
+seuil porté sur une borne de confiance, une profondeur faible cessera de rejeter à tort et
+deviendra seulement **permissive**. Le choix redeviendra une question de finesse, et 150
+pourrait suffire de nouveau. **Ça se remesurera, ça ne se déduira pas.**
+
+📏 Posé dans les deux JSON le 2026-08-13 : `robustness_num_runs = 300`.
 
 ### 🔴 POURQUOI LE NOMBRE DE STRATÉGIES CLASSÉES VARIE — élucidé le 2026-08-13
 
@@ -3715,3 +3743,102 @@ une liste vide. Le comportement est délibéré et documenté — mieux vaut la 
 stratégie qui a réellement passé le filtre**. C'est le motif de §17-37 : le résultat a l'air
 sain. Correctif à faire : remonter un drapeau `fallback_rescued` dans le résultat de
 stratégie, comme `n_layers_forced`.
+
+---
+
+## 23bis. 🔴 LE CORRECTIF 2 — le seuil de plantage doit porter sur une BORNE DE CONFIANCE
+
+**Ce n'est pas fait. C'est la prochaine action de code, et elle est seule.**
+
+### Le défaut, en une ligne
+
+`certus_strat_robustness.py:2018` compare une **estimation bruitée** à un **seuil dur** :
+
+```python
+if crash_rate_max >= CRASH_RATE_TOLERANCE:   # 0,05
+    final_score = float("inf")               # -> jetee, et perdue comme parent
+```
+
+> **Un filtre dont le verdict change avec la profondeur n'est pas un filtre, c'est un
+> échantillonneur.**
+
+📏 Mesuré le 2026-08-13, probabilité de rejet selon le **vrai** taux de plantage :
+
+| vrai taux | N=50 | N=150 | N=300 | N=500 |
+|---|---|---|---|---|
+| 3 % — **bonne**, sous le seuil | **18,9 %** ❌ | 8,3 % | 3,9 % | 1,0 % |
+| 7 % — mauvaise | 68,9 % | 83,1 % | 93,5 % | 97,2 % |
+
+Et au criblage, où c'est pire parce que la granularité est grossière :
+
+| `n_screen` | plantages requis | rejet à tort à p=1 % | à p=3 % |
+|---|---|---|---|
+| **10** | **1 sur 10** | **9,6 %** | **26,3 %** |
+| **25** (retenu) | 2 sur 25 | 2,6 % | 17,2 % |
+| 50 | 3 sur 50 | 1,4 % | 18,9 % |
+
+⚠️ **Note la colonne p = 3 % : elle ne s'améliore PAS avec la profondeur** — 26, 17, 19,
+18 %. C'est inhérent au seuil dur : à 3 % on est trop près de 5 % pour qu'un comptage
+tranche. **Seul le correctif 2 la traite.**
+
+### Ce qu'il faut écrire
+
+Ne rejeter que si l'on est **confiant** que le vrai taux dépasse la tolérance : borne
+inférieure de Clopper-Pearson à 95 %. Conséquences, et elles sont toutes désirables :
+
+- une bonne stratégie n'est **jamais** rejetée par malchance, à aucune profondeur ;
+- à faible profondeur le filtre rejette peu — c'est **honnête**, on ne sait pas ;
+- il se resserre tout seul quand la profondeur monte, **sans changer de règle**.
+
+🔒 **Le seuil de 5 % ne bouge pas.** C'est le « 95 % des dépôts fonctionnent » de §8, une
+spécification 👤. C'est l'**estimateur** qui est en cause, jamais la valeur.
+
+### Les précautions
+
+- 🔴 **Ça change tous les résultats. Ce n'est PAS un correctif C1**, et il ne faut pas
+  exiger la bit-identité.
+- 🔴 **Un run de validation à lui seul**, contrainte C3 — pas mélangé au correctif 1.
+- ⚠️ **Le repli de `_filter_finite_scores` reste nécessaire** : la borne de confiance rejette
+  moins, donc il se déclenchera moins, mais il ne devient pas inutile.
+- 🔑 **Ce qu'il faut remesurer après** : le tableau de §23. Une borne de confiance rend une
+  profondeur faible **sûre mais permissive** ; N = 300 pourrait redevenir surdimensionné.
+  **Remesure, ne déduis pas.**
+
+---
+
+## 23ter. 🔒 LE CORRECTIF 1 — la recherche ne dépend plus de la profondeur de notation
+
+**Fait le 2026-08-13.** L'invariant :
+
+> **`N` (`robustness_num_runs`) est un réglage de MESURE. Il ne doit décider d'aucune
+> candidate.**
+
+### Ce qui a changé
+
+`certus_strat_workers.py` : les **parents hérités** du nombre de blocs suivant sont dérivés
+des **survivantes du criblage** (`screening_survivors`, à `n_screen` fixe) et non plus des
+résultats de la passe complète (à `N`). Le contrat de blocs est revérifié au passage, parce
+que `strategies_this_step` l'était et que ces survivantes-là ne l'étaient pas.
+
+### 🔑 Le test qui le garde est une ÉGALITÉ
+
+`tests/unit/test_strat_search_is_depth_independent.py`, 4 tests, dont **3 échouent sur le
+code d'avant**. Ils vérifient que les parents ne viennent pas de la passe complète, que les
+survivantes remontent, que le contrat est revérifié, et que **les deux appels de criblage
+tournent toujours à `n_screen`** — cette dernière est un garde-fou contre une récidive par
+une autre porte.
+
+⏳ **La validation empirique est EN COURS et n'est pas encore rapportée** : deux runs, N = 50
+et N = 500, dont les stratégies retenues par bloc doivent être **identiques terme à terme**.
+Avant le correctif elles valaient `1:13 2:54 3:76` contre `1:9 2:10 3:0`. **Si tu reprends
+ce travail, c'est la première chose à vérifier — et si elles ne sont PAS identiques, le
+correctif est incomplet et il faut chercher la seconde fuite.**
+
+### ⚠️ Ce que le correctif 1 a PÉRIMÉ
+
+**§18ter recommandait `n_screen_runs = 10`, sur la foi de §17-27** — « cribler à 10 tirages
+ne perd rien : 133 classées contre 228, même gagnante, `RESULT` bit-identique ». Cette
+mesure a été faite quand le criblage ne choisissait que les survivantes de la passe
+complète. **Il choisit désormais aussi les parents**, donc une stratégie tuée par malchance
+au criblage est perdue pour tout le reste de la recherche. **La mesure ne couvre plus le
+rôle. `n_screen` reste à 25** — voir le tableau de §23bis.

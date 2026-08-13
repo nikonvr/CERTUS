@@ -4078,15 +4078,59 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         shallow run <b>propagates strategies that genuinely crash</b>. The filter is not
                         broken — at $N = 50$ it simply cannot do its job, and nothing says so.
                     </div>
-                    <p style="margin:0;">
-                        🔴 <b>Found on the way, and worth its own fix</b>: strategies with a <b>100 %</b>
-                        crash rate appear in the rankings at all four depths. That is the mandatory
-                        fallback — when <i>no</i> strategy of a block survives the filter, they are all
-                        re-injected with a finite score rather than returning an empty list. The behaviour
-                        is deliberate and better than <code>RESULT=None</code>, but <b>nothing in the
-                        ranking distinguishes a rescued strategy from one that actually passed</b>. The
-                        result looks healthy either way, which is this project's recurring failure mode.
+                    <p style="margin:0 0 10px;">
+                        🔴 <b>Found on the way</b>: strategies with a <b>100 %</b> crash rate appear in the
+                        rankings at all four depths. That is the mandatory fallback — when <i>no</i>
+                        strategy of a block survives the filter, they are all re-injected with a finite
+                        score rather than returning an empty list. Deliberate, and better than
+                        <code>RESULT=None</code> — but nothing distinguished a rescued strategy from one
+                        that actually passed. 📏 Over the artefacts on disk: <b>83 rescued out of 343</b>
+                        at N=50, 19 of 229 at N=300, and one run where <b>87 of 87</b> were rescued, i.e.
+                        not a single strategy passed the filter, and its output said nothing.
+                        <br><br>
+                        🟢 <b>The flag existed all along</b> — <code>crash_eliminated</code> — and simply
+                        reached no eye. It is now announced by the probe and marked <code>⚠</code> in the
+                        results table, with the warning that a rescued score is the worst finite RMSE and
+                        <b>not a robustness score</b>: never compare the two, never average them.
                     </p>
+                </div>
+
+                <div style="border:3px solid #15803d;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f0fdf4;">
+                    <p style="margin:0 0 10px;">
+                        🔒 <b>WHAT WAS DONE ABOUT IT — 2026-08-13.</b> The invariant that was missing:
+                    </p>
+                    <div class="eq-box" style="margin:0 0 10px;">
+                        <b>$N$ is a MEASUREMENT setting. It must decide no candidate.</b>
+                    </div>
+                    <p style="margin:0 0 10px;">
+                        <b>1. Inherited parents now come from the SCREENING pass</b>, which runs at
+                        <code>n_screen</code> and which no depth setting touches — not from the full pass
+                        at $N$. The population is therefore depth-independent <i>by construction</i>, and
+                        the guard is an <b>equality</b>, not a statistic: the strategies retained per block
+                        must be identical term by term at $N = 50$ and $N = 500$.
+                    </p>
+                    <p style="margin:0 0 10px;">
+                        <b>2. Depth set to $N = 300$</b>, and the criterion is not the one it appears to
+                        be. The score is settled at any depth (&plusmn;1.5 % from $N=50$); what depth
+                        actually governs is the crash filter, hence which strategies exist. At $N=150$ the
+                        filter wrongly rejects <b>8.3 %</b> of strategies whose true rate is 3 %, and lets
+                        <b>17 %</b> of those at 7 % through; at $N=300$ both roughly halve, and the rescued
+                        fraction falls from 24 % to 8 %. Cost: <b>+7 min across both components</b>.
+                    </p>
+                    <div class="note" style="margin:0;">
+                        🔴 <b>STILL OPEN, and it is the next piece of code.</b> The gate compares an
+                        <i>estimate</i> to a <i>hard</i> threshold, and one column of the table cannot be
+                        fixed by depth: a strategy whose true rate is 3 % is wrongly rejected 26 %, 17 %,
+                        19 %, 18 % of the time at screening depths 10, 25, 50, 100 — <b>it does not improve
+                        with depth at all</b>, because 3 % is too close to 5 % for counting to settle it.
+                        The fix is to gate on a <b>confidence bound</b>, rejecting only when one is
+                        confident the true rate exceeds tolerance: a good strategy is then never rejected
+                        by bad luck, a shallow run is merely permissive — which is honest — and the filter
+                        tightens on its own as depth grows, with no change of rule. <b>The 5 % threshold
+                        itself does not move</b>: it is the physicist's 95 % yield. It is the estimator
+                        that is wrong, never the value. And once it lands, $N = 300$ must be
+                        <b>remeasured</b>, not re-derived.
+                    </div>
                 </div>
 
                 <h3>10.7bis The control-&lambda; grid — 1 nm or 2 nm, and why it was reopened</h3>

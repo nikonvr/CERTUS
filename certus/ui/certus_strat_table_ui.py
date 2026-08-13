@@ -288,10 +288,26 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
         # Displayed as first numerical column before RMSE for operator decision-making.
         crash_rate = float(result.get("crash_rate", 0.0) or 0.0)
         yield_pct = 100.0 * (1.0 - crash_rate)
-        yield_item = NumericTableWidgetItem(f"{yield_pct:.1f}")
+        # 🔴 A RESCUED STRATEGY IS NOT A RANKED ONE, and until 2026-08-13 nothing said so.
+        #
+        # When NO strategy of a block holds under the crash tolerance, `_filter_finite_scores`
+        # re-injects them all with the worst finite RMSE in place of a robustness score --
+        # deliberately, because returning an empty list would surface as RESULT=None. But the
+        # row then reads exactly like a healthy one. 📏 Measured over the artefacts on disk:
+        # 83 rescued out of 343 at 150 draws, and one run where 87 of 87 were rescued -- not
+        # one strategy passed the filter, and nothing in the output said it.
+        rescued = bool(result.get("crash_eliminated", False))
+        yield_item = NumericTableWidgetItem(
+            f"⚠ {yield_pct:.1f}" if rescued else f"{yield_pct:.1f}"
+        )
         causes = result.get("crash_causes") or {}
         yield_item.setToolTip(
-            "Depositions completing successfully, out of 100.\n"
+            ("🔴 RESCUED STRATEGY — it did NOT pass the crash filter.\n"
+             "No strategy of its block did, so all were re-injected rather than\n"
+             "returning nothing. Its 'score' is the worst finite RMSE, which is NOT\n"
+             "a robustness score: never compare it with a ranked strategy's, and\n"
+             "never average the two.\n\n" if rescued else "")
+            + "Depositions completing successfully, out of 100.\n"
             f"Non-completion rate: {crash_rate:.2%}\n"
             "\nThe three failure modes, separately:\n"
             f"  level never reached       : {float(causes.get('p_level_unreachable', 0.0)):.2%}\n"
@@ -301,7 +317,7 @@ class StrategiesTableWindow(CertusWindowSpyMixin, QMainWindow):
             "cost: one costs machine time, the other costs material and is discovered late."
         )
         # 👤 "5% lost deposition is perfect": the tolerance threshold is set at 95%.
-        if crash_rate >= CRASH_RATE_TOLERANCE:
+        if rescued or crash_rate >= CRASH_RATE_TOLERANCE:
             yield_item.setBackground(QColor(CertusTheme.DANGER_BG))
             yield_item.setForeground(QColor(CertusTheme.DANGER_TEXT))
         elif crash_rate > 0.0:

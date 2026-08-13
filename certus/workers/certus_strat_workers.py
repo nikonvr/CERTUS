@@ -744,6 +744,29 @@ def _parallel_block_worker(args) -> dict:
         return {
             "n_blk": n_blk,
             "strategies_results": final_results,
+            # 🔑 THE SCREENING SURVIVORS, carried up so the NEXT block count can derive its
+            # inherited parents from THEM rather than from `final_results`.
+            #
+            # 🔴 WHY. `final_results` comes from the full pass, which runs at `robustness_num_runs`.
+            # Deriving parents from it makes the SEARCH depend on the SCORING DEPTH, and it does
+            # so invisibly. 📏 Measured 2026-08-12 on four depths of the same run: screening is
+            # identical throughout (905 strategies, same per-block split), yet the strategies
+            # retained per block read 1:13 2:54 3:76 at N=50 against 1:9 2:10 3:0 at N=300 --
+            # block 3 collapsing to ZERO -- and the ranked total swings from 229 to 376.
+            #
+            # The mechanism is the crash gate: `crash_rate >= 0.05 -> score = inf -> dropped`
+            # compares a rate ESTIMATED on N draws to a FIXED threshold, so at N=50 nearly a
+            # third of the strategies that truly crash 7 % of the time slip through and become
+            # parents, while one good strategy in five at 3 % is rejected by bad luck.
+            #
+            # Screening runs at `n_screen`, which no depth setting touches, so parents derived
+            # from it make the search depth-independent BY CONSTRUCTION -- and that invariant is
+            # testable as an equality, not as a statistic.
+            #
+            # 🟢 And picking parents on the shallow pass is not a compromise: 17-27 measured that
+            # screening at 10 draws loses nothing -- 133 ranked against 228, SAME winner, RESULT
+            # bit-identical.
+            "screening_survivors": list(unique_survivors),
             "live_preview": None,
             "best_strategy": best_final["strategy"] if best_final else None,
             "best_robustness_score": best_final["robustness_score"] if best_final else None,
@@ -1288,12 +1311,38 @@ def _run_phaseB_parallel_execution(
 
                     logger.info(f"   [Block {n_blk}] Completed. {len(strategies_this_step)} retained{dyn_msg}")
 
-                    if strategies_this_step:
+                    # 🔴 PARENTS COME FROM THE SCREENING PASS, NOT FROM THE FULL ONE.
+                    #
+                    # The full pass runs at `robustness_num_runs`; deriving parents from it made
+                    # the SEARCH a function of the SCORING DEPTH, invisibly. See the long note on
+                    # `screening_survivors` where it is produced. Screening runs at `n_screen`,
+                    # which no depth setting touches, so the population is now depth-independent
+                    # by construction -- an equality, testable as such.
+                    #
+                    # ⚠️ The block contract is re-checked here: `strategies_this_step` was filtered
+                    # for it and these were not, so dropping the check would let a malformed payload
+                    # through where one used to be caught.
+                    parents_raw = result_batch.get("screening_survivors") or []
+                    parents = []
+                    for s_res in parents_raw:
+                        s = s_res.get("strategy", {}) if isinstance(s_res, dict) else {}
+                        ok, reason = _validate_strategy_blocks_contract(
+                            s, num_layers, expected_n_blocks=n_blk
+                        )
+                        if ok:
+                            parents.append(s_res)
+                        else:
+                            logger.warning(f"    [Block {n_blk}] Dropped invalid parent payload: {reason}")
+                    if parents:
                         inherited_strategies = derive_strategies_exhaustive(
-                            strategies_this_step,
+                            parents,
                             cost_map_sq_clean,
                             top_k_parents=int(params.get("top_k_parents", 20)),
                             max_fusions_per_parent=int(params.get("max_fusions_per_parent", 5)),
+                        )
+                        logger.info(
+                            f"   [Block {n_blk}] Inheritance: {len(inherited_strategies)} derived "
+                            f"from {len(parents)} SCREENING survivors (depth-independent)."
                         )
                     else:
                         inherited_strategies = []

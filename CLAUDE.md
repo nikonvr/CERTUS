@@ -223,6 +223,15 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 
 ### 🔴 LA SUITE IMMÉDIATE
 
+**Si tu reprends ce dépôt et que tu ne sais pas par où commencer : §24.** Il porte
+**A25, A26, A27**, écrites pour être exécutées — fichier, fonction, ligne d'ancrage, test
+qui doit échouer sur le code d'avant, et pièges. **A25 d'abord** : c'est la seule action
+du document qui puisse rendre STRAT *vrai* plutôt que simplement *cohérent*.
+
+Ce qui suit reste ouvert et garde sa valeur, mais aucune de ces entrées n'est aussi prête
+à être prise en main.
+
+
 0. 🔑 **RÉTABLIR LE REPÈRE.** Le biais de fente est actif par défaut depuis le
    2026-08-11 : **tout chiffre mesuré avant cette date répond à une autre question**,
    celle d'une machine à fentes infiniment fines. §10 est périmé, et avec lui la courbe
@@ -3908,82 +3917,138 @@ rôle. `n_screen` reste à 25** — voir le tableau de §23bis.
 
 ---
 
-## 24. 💡 CE QUE JE SUGGÈRE ENSUITE — établi le 2026-08-13, et l'ordre a une raison
+## 24. 💡 LES TROIS ACTIONS SUIVANTES — écrites pour être EXÉCUTÉES
 
-**Le constat qui fixe cet ordre :** tout le travail du 2026-08-12 et du 2026-08-13 a rendu
-STRAT plus **cohérent**. Rien ne l'a rendu plus **vrai**. §15 reste entier — le modèle
-n'est validé que contre lui-même, et aucune quantité de correctifs internes ne changera
-cela.
+**Le constat qui fixe l'ordre :** tout le travail des 12 et 13 août a rendu STRAT plus
+**cohérent**. Rien ne l'a rendu plus **vrai**. §15 reste entier, et aucun correctif interne
+n'y changera quoi que ce soit.
 
-### 1. 🔑 `sigma_rate` comme PRÉDICTION — la première grandeur externellement vérifiable
+> **Chaque action donne : le fichier et la fonction exacts, ce qu'il faut écrire, le test
+> qui doit ÉCHOUER sur le code d'avant, et les pièges connus.** Une seule action à la fois,
+> un commit chacune — contrainte C3.
 
-**C'est la seule suggestion de cette liste qui attaque §15, et elle est devenue possible
-le 2026-08-11 sans que personne le remarque** : le noyau Rate est écrit
-(`certus_strat_growth.py:630`, `acc += d_nom_j / d_real_j` puis `a_est = acc / n_ref`),
-donc le simulateur **refait le calcul de rate de la machine** au lieu de le remplacer par
-un tirage.
+⚠️ **Ne les lance pas au banc sans avoir lu §0 et libéré la machine** (§19-5).
 
-`sigma_rate` cesse d'être un paramètre et devient une **sortie du modèle** — §14 le
-démontre. Or 👤 a décrit ce que la machine montre en salle : *« il y a une dispersion de
-rate d'environ ±σ = 1 à 2 % »*.
+---
 
-> **Le modèle prédit un nombre que la machine affiche. C'est la seule confrontation avec
-> l'extérieur dont ce projet dispose aujourd'hui, et elle ne coûte qu'une sonde.**
+### 🔑 A25 — `sigma_rate` comme PRÉDICTION, la première grandeur vérifiable de l'extérieur
 
-⚠️ **Et il faut la qualifier honnêtement, sinon elle ne vaut rien.** Le « 1 à 2 % » est un
-**souvenir**, pas une mesure — 👤 a dit *« c'est ce que j'avais en tête »*. Il a donc le
-même statut que la table des facteurs de bruit de §12.7, *« estimés par moi au feeling »*.
-Ce qui en découle :
+**Pourquoi en premier.** C'est la seule action de ce document qui attaque §15. Elle est
+devenue possible le 2026-08-11, quand le noyau Rate a été écrit, **et personne ne l'a vu**.
 
-- si le modèle rend **0,1 %** ou **10 %**, c'est informatif : le modèle rate quelque chose,
-  ou le souvenir est faux, et il faut demander laquelle des deux ;
-- s'il rend **1 à 2 %**, c'est une **corroboration faible** — pas une validation. Ne l'écris
-  jamais comme telle ;
-- **une vraie validation demanderait un relevé de la machine**, et c'est la question à
-  poser à 👤 quand ce chiffre sortira.
+Le noyau **refait le calcul de rate de la machine** au lieu de le remplacer par un tirage
+(`certus_strat_growth.py:630`, `acc += d_nom_j / d_real_j` puis `a_est = acc / n_ref`).
+Donc `sigma_rate` n'est plus un paramètre : c'est une **sortie**. Et 👤 a décrit ce que la
+machine montre en salle — *« ±σ = 1 à 2 % »*.
 
-**Coût** : instrumenter le noyau pour remonter la dispersion de `d_real_i / d_nom_i` sur les
-couches Rate. Aucun run supplémentaire — les variantes Rate sont déjà classées.
+#### Où, et ce qu'il faut écrire
 
-### 2. Un bloc de SANTÉ DE RUN — automatiser le contrôle 4 de §20
+| | |
+|---|---|
+| **Fichier** | `certus/core/certus_strat_robustness.py` |
+| **Fonction** | `_test_strategy_robustness_task`, dans la boucle sur les niveaux de bruit |
+| **Ancrage** | juste après `crashed_cells = sim_thick_batch > CRASH_SENTINEL_MIN` (~ligne 1946) |
+
+Les deux grandeurs sont déjà là, côte à côte : `sim_thick_batch`, de forme
+`(n_runs, n_layers)`, et `p_thick_nominal`. Pour chaque couche de `rate_layers`, sur les
+runs **non plantés** :
+
+```python
+ratio = sim_thick_batch[ok_runs, i] / p_thick_nominal[i]   # ok_runs = ~any(crashed_cells)
+sigma_rate = float(np.std(ratio))                          # dispersion RELATIVE
+```
+
+Remonter dans le résultat sous `sigma_rate_by_layer` et `sigma_rate_max`. La sonde
+l'affiche à côté de `RESCUED=`.
+
+#### Vérification
+
+| # | Test | Attendu |
+|---|---|---|
+| 1 | Une stratégie **sans** couche Rate | `sigma_rate_max` **absent**, pas 0.0 — l'absence et le zéro ne disent pas la même chose |
+| 2 | Piège 1 : bruit ÷100 | `sigma_rate` doit **s'effondrer**. S'il ne bouge pas, ce n'est pas de la physique |
+| 3 | Exclure les runs plantés | un run planté porte une **sentinelle** à 1e18, pas une épaisseur. L'inclure rendrait un σ absurde et **plausible** |
+| 4 | 40 couches Rate enchaînées | étendue ≈ **0 %** — §14 : le Rate **recopie** l'erreur, il n'en ajoute aucune |
+
+#### 🔴 Comment RAPPORTER le chiffre, et c'est là que ça se joue
+
+Le « 1 à 2 % » de 👤 est un **souvenir**, pas une mesure — *« c'est ce que j'avais en
+tête »*. Même statut que la table de §12.7, *« estimés par moi au feeling »*. Donc :
+
+- **0,1 % ou 10 %** → informatif : le modèle rate quelque chose, **ou** le souvenir est
+  faux. **Demander laquelle des deux**, ne pas trancher seul.
+- **1 à 2 %** → **corroboration FAIBLE**. Ne l'écris **jamais** comme une validation.
+- Dans les deux cas, la question à poser à 👤 : *« as-tu un relevé machine de cette
+  dispersion, plutôt qu'un souvenir ? »* **C'est ça, la vraie validation.**
+
+---
+
+### A26 — Un bloc de SANTÉ DE RUN, pour automatiser le contrôle 4 de §20
 
 **Trois fois en deux jours, une grandeur était calculée et n'atteignait aucun œil :**
 
-| | |
+| grandeur | ce qu'elle disait, sans que personne l'entende |
 |---|---|
-| `crash_eliminated` | existait depuis toujours ; 83 repêchées sur 343, et un run où **87 sur 87** l'étaient, sans que rien ne le dise |
-| `n_layers_forced` | §17-37 : 32 couches sur 48 en repli, et le résultat annonçait une gagnante comme un run sain |
-| `forbidden_gain_negative` | §17-38 : **zéro rejet** sur 8 runs, à toutes les couches, corridor 0 comme 0,020 |
+| `crash_eliminated` | 83 repêchées sur 343 ; **un run où 87 sur 87** l'étaient — aucune stratégie n'avait passé le filtre |
+| `n_layers_forced` | §17-37 : **32 couches sur 48** en repli, et le résultat annonçait une gagnante comme un run sain |
+| `forbidden_gain_negative` | §17-38 : **zéro rejet** sur 8 runs, corridor 0 comme 0,020 |
 
-§20-contrôle 4 prescrit déjà *« compte les rejets, ne lis pas le code »* — mais personne ne
-le fait à la main, et c'est précisément pour ça que ces trois-là ont dormi.
+§20-contrôle 4 prescrit déjà *« compte les rejets, ne lis pas le code »*. Personne ne le
+fait à la main. **C'est exactement pour ça que ces trois-là ont dormi.**
 
-**Ce qu'il faut** : un bloc émis à la fin de chaque run, qui dit ce qui est suspect —
-combien de repêchées, combien de couches forcées, **et quels filtres n'ont rien rejeté**.
-Un filtre à zéro rejet est un **défaut**, pas un succès.
-
-🔑 **Pourquoi c'est plus rentable qu'il n'y paraît** : ce n'est pas de l'ergonomie, c'est
-le seul garde-fou contre le mode de défaillance qui gouverne ce dépôt — *ça ne produit pas
-d'erreur, ça produit un résultat plausible.*
-
-### 3. A5 — le harnais d'empreinte `float.hex()`
-
-Toujours inexistant, et c'est **le seul instrument de C1** (§3, palier 1). Je m'en suis
-passé le 2026-08-13 pour la porte de plantage en énumérant **exhaustivement** ses 1046 cas
-— possible parce que c'est une fonction pure de deux entiers. **Un changement de noyau n'a
-pas ce luxe**, et la prochaine fois personne n'aura d'instrument.
-
-### 🔴 Ce que je ne suggère PAS, et pourquoi
+#### Où, et ce qu'il faut écrire
 
 | | |
 |---|---|
-| **Toucher à la fonction objectif** (A21) | 👤 l'a gelée. C'est le chantier le plus rentable et il n'est pas à moi de le dégeler |
-| **Chasser l'asymétrie H / L** | Non mesurable : le corridor perturbe les deux matériaux ensemble et aucun paramètre ne les sépare |
-| **La convolution spectrale complète** | La part systématique est capturée ; sa modulation tirage à tirage mettrait une intégration dans la boucle chaude |
-| **Monter la profondeur** | §23 : la profondeur achète de la précision sur un nombre déjà précis |
+| **Fichier** | `scripts/probe_anchor_noise_pipeline.py`, à côté du bloc `RESCUED=` déjà écrit |
+| **Sources** | le résultat (`phase_a_forced`, `crash_eliminated`) et le `reports/STRAT_observability_*.json` le plus récent |
+
+Une ligne `HEALTH=` par anomalie, et **`HEALTH=OK` quand il n'y en a aucune** — un bloc
+silencieux ne se distingue pas d'un bloc absent.
+
+```
+HEALTH=RESCUED 41/300          -- score = pire RMSE finie, PAS un score de robustesse
+HEALTH=FORCED 32/48 couches    -- lambda non CHOISIE mais IMPOSEE, cf 17-37
+HEALTH=FILTRE_INERTE forbidden_gain_negative : 0 rejet sur 48 couches
+```
+
+🔴 **Un filtre qui rejette ZÉRO est un DÉFAUT, pas un succès.** Il ne produit aucune erreur,
+il produit un résultat plausible — c'est le mode de défaillance qui gouverne ce dépôt.
+
+#### Vérification
+
+Rejouer le run où **87 sur 87** étaient repêchées : il doit désormais **crier**. Et un run
+sain doit dire `HEALTH=OK`, pas rien.
+
+---
+
+### A27 — A5, le harnais d'empreinte `float.hex()`
+
+Toujours inexistant, et c'est **le seul instrument de C1** (§3). La recette complète est en
+**palier 1 de la feuille de route** — ne la réécris pas ici, suis-la.
+
+🔑 **Pourquoi ça devient urgent** : le 2026-08-13 je m'en suis passé pour la porte de
+plantage en énumérant **exhaustivement ses 1046 cas** — possible parce que c'est une
+fonction pure de deux entiers. **Un changement de noyau n'a pas ce luxe**, et la prochaine
+fois personne n'aura d'instrument.
+
+⚠️ Les étapes 3 et 4 du palier 1 sont les seules qui prouvent que le harnais **fonctionne**.
+Ne les saute pas : un harnais qui a l'air de marcher sans rien prouver est le pire des trois
+états.
+
+---
+
+### 🔴 Ce qu'il ne faut PAS faire, et pourquoi
+
+| | |
+|---|---|
+| **Toucher à la fonction objectif** (A21) | 👤 l'a gelée. C'est le chantier le plus rentable, et ce n'est pas à toi de le dégeler |
+| **Chasser l'asymétrie H / L** | **Non mesurable** : le corridor perturbe les deux matériaux ensemble et aucun paramètre ne les sépare |
+| **La convolution spectrale complète** | La part systématique est capturée ; sa modulation tirage à tirage mettrait une intégration **dans la boucle chaude** |
+| **Monter la profondeur** | §23 : elle achète de la précision sur un nombre déjà précis |
 | **Rouvrir la grille, le lissage ou la cadence** | Tranchés par 👤 le 2026-08-12. Une **mesure** peut les rouvrir, jamais un raisonnement |
 
-### Si je ne devais en garder qu'une
+### L'ordre, et la raison
 
-**La première.** Les deux autres rendent le dépôt plus sûr ; seule celle-là peut rendre
-STRAT **vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.
+**A25 d'abord.** A26 et A27 rendent le dépôt plus sûr ; **seule A25 peut rendre STRAT
+vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.

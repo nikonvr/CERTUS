@@ -446,10 +446,76 @@ PLAN_N = [
       for n in (50, 150, 300, 500)],
 ]
 
+#: PLAN GATE -- correctif 2, the crash gate on a confidence bound. Prepared 2026-08-13,
+#: NOT RUN. Six runs, ~4 h on a free machine.
+#:
+#: 🔴 WHAT IT MUST ESTABLISH, in order. Do not read a later arm before the earlier ones
+#: hold, because each is the control of the next.
+#:
+#:   G0  -- C1. Gate INACTIVE must reproduce the reference exactly. If it does not, the
+#:          correctif leaked into the neutral path and NOTHING else in this plan means
+#:          anything. Expected: RESULT identical to the N=300 reference to ~1e-11.
+#:   G1  -- the gate ARMED at the working point. Expected: MORE strategies ranked, never
+#:          fewer -- the bound is always below the point estimate, so the armed gate can
+#:          only add. A drop in `n_ranked` is a defect, not a result.
+#:   G2  -- Trap 1, and it is the arm that can invalidate the whole thing. The gate is
+#:          meant to make the ranking depth-INSENSITIVE. Run it at 150 and at 500 and
+#:          compare `n_ranked` and `RESCUED`: if they still swing the way they did with
+#:          the point estimate, the bound is not doing its job.
+#:   G3  -- can `n_screen` come back down? At 10 draws the historical gate killed a
+#:          strategy on ONE crash; the bound cannot. Two runs at n_screen=10, gate off
+#:          then on. Expected: the ON arm ranks more, and the winner does not degrade.
+#:
+#: ⚠️ THE COMPARISON THAT DECIDES IS THE SEEL EQUIVALENCE CLASS, never a raw RESULT --
+#: two runs differing by less than ~6 % are indistinguishable at this depth.
+#: 📏 Measured 2026-08-13 on code carrying correctif 1 but NOT correctif 2, at N=300 and
+#: n_screen=10. G0 replays exactly that configuration, so C1 is testable as an EQUALITY.
+GATE_C1_REFERENCE = "0.006151532415266679"
+
+PLAN_GATE = [
+    # --- G0. C1, and it gates everything else. Same configuration as the artefact above,
+    # gate absent. Anything other than that RESULT means the correctif leaked into the
+    # neutral path, and no later arm of this plan means anything.
+    entry("G0.c1", f"gate INACTIVE, N=300 scr=10 -- must reproduce {GATE_C1_REFERENCE}",
+          env={"CERTUS_NUM_RUNS": "300", "CERTUS_SCREEN_RUNS": "10"},
+          expect={"crash_gate_confidence": 0.0, "robustness_num_runs": 300,
+                  "n_screen_runs": 10}),
+    # --- G1. The working point, with its own control. Both arms at n_screen=25, which is
+    # what the design files carry, so the pair is comparable to a real run.
+    entry("G1.off", "working point, gate OFF -- the control of G1.on",
+          env={"CERTUS_NUM_RUNS": "300", "CERTUS_SCREEN_RUNS": "25"},
+          expect={"crash_gate_confidence": 0.0, "robustness_num_runs": 300,
+                  "n_screen_runs": 25}),
+    entry("G1.on", "working point, gate ARMED at 95 %",
+          env={"CERTUS_NUM_RUNS": "300", "CERTUS_SCREEN_RUNS": "25",
+               "CERTUS_CRASH_GATE_CONF": "0.95"},
+          expect={"crash_gate_confidence": 0.95, "robustness_num_runs": 300,
+                  "n_screen_runs": 25}),
+    # --- G2. Trap 1, and the only arm that can invalidate the correctif. The bound is
+    # meant to make the RANKING depth-insensitive; G1.on supplies the N=300 point.
+    entry("G2.150", "armed, 150 draws -- is the ranking now depth-insensitive?",
+          env={"CERTUS_NUM_RUNS": "150", "CERTUS_SCREEN_RUNS": "25",
+               "CERTUS_CRASH_GATE_CONF": "0.95"},
+          expect={"crash_gate_confidence": 0.95, "robustness_num_runs": 150,
+                  "n_screen_runs": 25}),
+    entry("G2.500", "armed, 500 draws -- same question, other end",
+          env={"CERTUS_NUM_RUNS": "500", "CERTUS_SCREEN_RUNS": "25",
+               "CERTUS_CRASH_GATE_CONF": "0.95"},
+          expect={"crash_gate_confidence": 0.95, "robustness_num_runs": 500,
+                  "n_screen_runs": 25}),
+    # --- G3. Can n_screen come back down? Its control is G0.c1: same configuration, gate
+    # off. So this arm costs ONE run rather than two.
+    entry("G3.scr10on", "n_screen=10, gate ARMED -- control is G0.c1",
+          env={"CERTUS_NUM_RUNS": "300", "CERTUS_SCREEN_RUNS": "10",
+               "CERTUS_CRASH_GATE_CONF": "0.95"},
+          expect={"crash_gate_confidence": 0.95, "robustness_num_runs": 300,
+                  "n_screen_runs": 10}),
+]
+
 PLANS = {
     "smoke": PLAN_SMOKE, "night": PLAN_NIGHT, "day": PLAN_DAY,
     "posta10": PLAN_POSTA10, "full": PLAN_FULL, "e": PLAN_E, "f": PLAN_F, "g": PLAN_G,
-    "n": PLAN_N,
+    "n": PLAN_N, "gate": PLAN_GATE,
 }
 
 

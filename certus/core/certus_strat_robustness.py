@@ -1173,6 +1173,77 @@ def _filter_finite_robustness_scores(
     return rejected
 
 
+#: Confidence level of the crash gate, as a JSON key. 🔴 DEFAULT 0.0 = INACTIVE, and the
+#: inactive path is the historical point-estimate comparison, bit for bit -- constraint C1.
+#: A value in (0, 1) switches the gate to a Clopper-Pearson LOWER bound at that level.
+CRASH_GATE_CONFIDENCE_KEY = "crash_gate_confidence"
+
+
+def crash_rate_lower_bound(n_crash: int, n_runs: int, confidence: float) -> float:
+    """One-sided Clopper-Pearson LOWER bound on the crash probability.
+
+    "Given `n_crash` crashes out of `n_runs` draws, the true rate is above this value
+    with probability `confidence`." Exact, not normal-approximate: at these counts the
+    normal approximation is not merely imprecise, it is invalid -- 0 crashes out of 50
+    would give a bound of exactly 0 with a zero standard error.
+
+    Returns 0.0 for `n_crash == 0`, which is correct and is the whole point: no number
+    of crash-free draws ever proves a positive rate.
+    """
+    if n_crash <= 0 or n_runs <= 0:
+        return 0.0
+    if n_crash >= n_runs:
+        return 1.0
+    from scipy.stats import beta
+
+    return float(beta.ppf(1.0 - confidence, n_crash, n_runs - n_crash + 1))
+
+
+def _crash_gate_rejects(
+    n_crash: int, n_runs: int, crash_rate: float, params: dict[str, Any]
+) -> bool:
+    """Does this strategy fail the crash gate?
+
+    🔴 THE DEFECT THIS EXISTS TO FIX. The historical gate compares an ESTIMATED rate to
+    a FIXED threshold: `crash_rate >= 0.05`. Its verdict therefore depends on how many
+    draws produced the estimate, and it does so invisibly.
+
+    📏 Measured 2026-08-13 -- probability that a strategy is REJECTED, by its TRUE rate:
+
+              true rate     N=50     N=150    N=300    N=500
+              3 % (good)   18.9 %    8.3 %    3.9 %    1.0 %     <- rejected WRONGLY
+              7 % (bad)    68.9 %   83.1 %   93.5 %   97.2 %
+
+    At 50 draws nearly a third of the strategies that truly crash 7 % of the time slip
+    through, and one good strategy in five at 3 % is thrown away by bad luck. Worse, at
+    screening depth the granularity bites: with 10 draws, `1/10 = 10 % >= 5 %`, so a
+    SINGLE crash is fatal -- and one column does not improve with depth at all, because
+    3 % is too close to 5 % for counting to settle it.
+
+        A filter whose verdict changes with depth is not a filter, it is a sampler.
+
+    🟢 THE FIX. Reject only when one is CONFIDENT the true rate exceeds the tolerance,
+    i.e. when the lower confidence bound clears it. Three consequences, all wanted:
+
+      - a good strategy is NEVER rejected by bad luck, at any depth;
+      - a shallow run rejects little, which is HONEST -- it does not know;
+      - the gate tightens on its own as depth grows, with no change of rule.
+
+    🔒 THE 5 % TOLERANCE DOES NOT MOVE. It is the physicist's "95 % of depositions
+    complete". It is the ESTIMATOR that was wrong, never the value.
+
+    ⚠️ INACTIVE BY DEFAULT (C1). With `crash_gate_confidence` absent or 0, this is the
+    historical comparison, bit for bit. Set it to 0.95 to arm the bound.
+    """
+    try:
+        conf = float(params.get(CRASH_GATE_CONFIDENCE_KEY, 0.0) or 0.0)
+    except ValueError, TypeError:
+        conf = 0.0
+    if not (0.0 < conf < 1.0):
+        return crash_rate >= CRASH_RATE_TOLERANCE
+    return crash_rate_lower_bound(n_crash, n_runs, conf) >= CRASH_RATE_TOLERANCE
+
+
 def _worst_finite_rmse(item: dict[str, Any]) -> float:
     """Worst finite RMSE on the noise levels, to re-rank an eliminated one."""
     worst = 0.0
@@ -1515,6 +1586,7 @@ def _test_strategy_robustness_task(
 
     results_per_noise = []
     crash_rate_max = 0.0  # worst non-terminating deposition rate across noise levels
+    crash_count_max = 0    # ... and the COUNT behind it, which the rate throws away
     # Breakdown of crashes by CAUSE, worst case across noise levels.
     crash_rates_by_cause = {
         "p_level_unreachable": 0.0,
@@ -1875,6 +1947,10 @@ def _test_strategy_robustness_task(
         crash_cause = np.where(crashed_cells, np.floor(sim_thick_batch / CRASH_SENTINEL_UNIT), 0.0)
         n_crash_run = int(np.count_nonzero(np.any(crashed_cells, axis=1)))
         crash_rate_max = max(crash_rate_max, n_crash_run / max(1, num_runs))
+        # 🔑 KEEP THE COUNT, not only the ratio. A rate of 0.02 says nothing about how
+        # well it is known: 1/50 and 6/300 are the same number and not the same evidence.
+        # The confidence gate below needs the count; the ratio has already discarded it.
+        crash_count_max = max(crash_count_max, n_crash_run)
 
         # By cause, at RUN level: a run is attributed to a cause as soon as at least
         # one of its layers suffered it. The rates per cause can thus overlap,
@@ -2015,7 +2091,9 @@ def _test_strategy_robustness_task(
     #
     # Threshold at 1%: below, the randomness is deemed acceptable given the
     # potential spectral gain. Above, straightforward elimination.
-    if crash_rate_max >= CRASH_RATE_TOLERANCE:
+    #
+    # 🔴 AND THE COMPARISON ITSELF IS THE DEFECT -- see `crash_gate_confidence`.
+    if _crash_gate_rejects(crash_count_max, num_runs, crash_rate_max, params):
         final_score = float("inf")
 
     # This block is computed AFTER final_score and results_per_noise, on which it

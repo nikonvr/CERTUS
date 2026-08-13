@@ -1221,6 +1221,14 @@ class CertusStratStateMixin:
             "machine_sampling_dd": _config_float(
                 getattr(self, "_loaded_config", {}), "machine_sampling_dd", 0.0
             ),
+            # Porte de plantage : 0 = comparaison historique du taux ESTIME au seuil fixe,
+            # bit pour bit. Une valeur dans (0, 1) la remplace par une borne de confiance
+            # de Clopper-Pearson a ce niveau -- voir `_crash_gate_rejects`. Inactive par
+            # defaut, contrainte C1 : le correctif change tous les resultats, donc il doit
+            # etre ARME explicitement et mesure seul.
+            "crash_gate_confidence": _config_float(
+                getattr(self, "_loaded_config", {}), "crash_gate_confidence", 0.0
+            ),
             # ── AXIS 3: the spectral target, routed from the configuration ───
             #
             # 👤 "The most important is the respected spectral target." STRAT ranked

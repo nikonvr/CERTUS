@@ -114,6 +114,9 @@ _OVERRIDES: tuple[tuple[str, str, str, object, str], ...] = (
     ("CERTUS_SLIT_BIAS", "slit_bias_enabled", "flag", True, "noslitbias"),
     ("CERTUS_PHOTO_CURVATURE", "photometric_curvature_amp", "float", 0.00375, "curv"),
     ("CERTUS_RESOLUTION_NM", "monochromator_resolution_nm", "float", 2.0, "res"),
+    # Correctif 2 : 0 = porte historique (taux estime contre seuil fixe), bit pour bit.
+    # 0,95 = borne de confiance de Clopper-Pearson. Le suffixe marque donc sa PRESENCE.
+    ("CERTUS_CRASH_GATE_CONF", "crash_gate_confidence", "float", 0.0, "gate"),
 )
 
 _TRUE_WORDS = frozenset({"1", "true", "yes", "on"})

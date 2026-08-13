@@ -214,7 +214,7 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 | | |
 |---|---|
 | 🟢 **Correctif 1 VALIDÉ** | Deux runs, N = 50 et N = 500 : survivantes et héritage **identiques terme à terme** sur les 10 blocs, là où les deux derniers tombaient de `12, 9` à `2, 3`. §23ter |
-| 🔴 **Correctif 2, PAS COMMENCÉ** | Le seuil de plantage sur une borne de confiance. Seul, avec son run. C'est la prochaine action de code — §23bis |
+| 🟠 **Correctif 2, ÉCRIT mais NON MESURÉ** | Le code, 37 tests, la campagne et l'ordre de mission sont prêts ; **aucun run de banc n'a été fait**, et il est **inactif par défaut**. Une seule commande : `scripts\run_campaign.py gate`, 6 runs, ~3 h 30 — §23bis |
 | ⚠️ **`N = 300` est conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel. Après le correctif 2, **remesure** — §23 |
 
 ### 🔴 LA SUITE IMMÉDIATE
@@ -3753,9 +3753,27 @@ stratégie, comme `n_layers_forced`.
 
 ---
 
-## 23bis. 🔴 LE CORRECTIF 2 — le seuil de plantage doit porter sur une BORNE DE CONFIANCE
+## 23bis. 🟠 LE CORRECTIF 2 — ÉCRIT ET TESTÉ, PAS ENCORE MESURÉ
 
-**Ce n'est pas fait. C'est la prochaine action de code, et elle est seule.**
+🔴 **Distingue les deux, c'est tout l'objet de cette section.** Le code existe, il est
+couvert par 37 tests unitaires, et **aucun run de banc n'a été fait**. Donc :
+
+> **Rien ne dit encore que ce correctif améliore quoi que ce soit.** Il est *inactif par
+> défaut* et il le reste tant que la campagne `gate` n'a pas tourné.
+
+| | |
+|---|---|
+| **Le paramètre** | `crash_gate_confidence`, défaut **0,0 = inactif**. Lisible depuis le JSON, l'interface et `CERTUS_CRASH_GATE_CONF`. Valeur à armer : **0,95** |
+| **Le code** | `_crash_gate_rejects` et `crash_rate_lower_bound`, dans `certus_strat_robustness.py` |
+| **Les tests** | `tests/unit/test_strat_crash_gate_confidence.py`, **37 tests**, dont C1 sur quatre formes de valeur inactive |
+| **La campagne** | `scripts\run_campaign.py gate` — **6 runs, ~3 h 30**, chaque bras avec son témoin |
+| **La lecture** | `scripts\analyse_gate.py` — imprime les quatre questions et **le test qui va avec chacune** |
+| **L'ordre de mission** | `GEMINI_TODO.md`, réécrit pour cette campagne |
+
+🔑 **Une propriété prouvée par test, et elle sert de garde-fou à la lecture** : la porte
+armée est **toujours plus permissive**, jamais moins. La borne inférieure est sous
+l'estimation ponctuelle, donc le correctif ne peut qu'**ajouter** des stratégies au
+classement. **Si un bras en retire, c'est un défaut, pas un résultat.**
 
 ### Le défaut, en une ligne
 

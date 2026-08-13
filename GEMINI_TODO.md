@@ -1,452 +1,135 @@
-# ORDRE DE MISSION — à exécuter tel quel
+# ORDRE DE MISSION — campagne GATE
 
-> ⚠️ **Ce document est pour une session SURVEILLÉE**, où quelqu'un peut vérifier l'encadré de
-> configuration dans les deux secondes qui suivent chaque lancement.
->
-> **Pour une campagne SANS SURVEILLANCE — la nuit — n'utilise pas ce document.** Lance
-> `.venv\Scripts\python.exe scripts\run_campaign.py` : une seule commande, dix runs, et le
-> script vérifie lui-même que chaque run a reçu la configuration demandée. Il n'y a alors
-> aucune variable d'environnement à taper, donc aucune des pannes que ce document surveille.
+Tu exécutes des commandes et tu colles des sorties. **Tu ne modifies aucun fichier.**
+**Tu ne conclus rien.** Si une étape ne donne pas l'attendu, tu **t'arrêtes** et tu le
+signales.
 
-## LIS CES SIX RÈGLES. ELLES PRIMENT SUR TOUT.
-
-**RÈGLE 1 — Tu ne modifies AUCUN fichier de code.**
-Pas un `.py`, pas un `.json`, pas un `.toml`. Ta seule écriture autorisée est d'ajouter du
-texte à la fin de `reports/RAPPORT_GEMINI.md`.
-**Si une étape te semble demander de modifier du code, tu t'arrêtes et tu le signales.**
-
-**RÈGLE 2 — Une étape à la fois, dans l'ordre, sans en sauter.**
-Tu ne lis pas l'étape suivante avant d'avoir écrit le rapport de l'étape courante.
-
-**RÈGLE 3 — Tu colles la sortie, tu ne la résumes jamais.**
-Copier-coller intégral du terminal. Pas de reformulation, pas d'extrait, pas de « en gros ».
-
-**RÈGLE 4 — Si tu n'as pas de sortie, tu écris exactement : `JE N'AI PAS MESURÉ`.**
-C'est une réponse acceptable. Inventer un chiffre ne l'est pas. Une seule phrase inventée
-annule toute la mission.
-
-**RÈGLE 5 — Une mesure, une machine.**
-Pendant qu'une commande de mesure tourne, tu ne lances **rien d'autre**. Ni test, ni
-recherche, ni autre terminal. Tu attends qu'elle se termine.
-
-**RÈGLE 6 — En cas de doute, tu le DIS. Tu ne t'arrêtes que dans trois cas.**
-
-Tu n'es pas là pour obéir aveuglément. Si quelque chose te paraît anormal, **écris-le dans le
-rapport, dis pourquoi, et propose ce que tu ferais** — puis continue si l'étape suivante est
-indépendante. Ton jugement est utile ; c'est ta liberté de modifier le code qui ne l'est pas.
-
-**Les trois seuls arrêts durs :**
-1. `PREFLIGHT=STOP` à l'étape 0.
-2. Une étape qui semble te demander de modifier du code.
-3. Deux runs consécutifs qui échouent de la même façon.
-
-Partout ailleurs : **tu signales et tu continues.**
-**Inventer un chiffre reste la seule faute irrattrapable.**
+Écris tes sorties dans `reports/RAPPORT_GEMINI.md`. Ne crée aucun autre fichier.
 
 ---
 
-## 🔍 CE QUI DOIT T'ALERTER — les signatures d'un problème
-
-Tu n'as pas à deviner. Voici à quoi ressemble une anomalie sur ce banc. Si tu en vois une,
-**écris-la dans le rapport en toutes lettres.**
-
-| Ce que tu observes | Ce que ça veut dire |
-|---|---|
-| **Deux `RESULT` identiques jusqu'au dernier chiffre, pour deux configurations censées DIFFÉRER** | La variable n'est pas arrivée au calcul. Les deux runs ont mesuré la même chose. C'est arrivé le 2026-08-09. |
-| Deux `RESULT` identiques pour deux configurations **censées être les mêmes** | ✅ Normal, c'est même rassurant. |
-| Deux `RESULT` qui diffèrent **au-delà du 10ᵉ chiffre** alors que la configuration est identique | ✅ Normal. Le banc a une gigue d'environ 3e-11, c'est du calcul parallèle. |
-| Deux `RESULT` qui diffèrent **de plus de 1e-9** à configuration identique | ❌ Ce n'est plus la gigue. Signale-le. |
-| `RUN_S` du premier run bien plus long que les suivants | ✅ Normal, c'est la compilation. Ne le compare pas aux autres. |
-| Un `RESULT` qui ne bouge pas quand tu changes une valeur censée l'influencer | ❌ Le paramètre n'atteint pas le calcul. |
-| `strategies=` très petit, ou `RESULT=None` | ❌ Le run n'a pas abouti. Ce n'est pas un résultat. |
-
----
-
-## ⚡ LE RÉFLEXE QUI ÉCONOMISE 25 MINUTES
-
-Chaque lancement de banc affiche, **dans les deux premières secondes**, un encadré :
-
-```
-======================================================================
-CONFIGURATION EFFECTIVE -- verifie-la MAINTENANT, avant d'attendre 25 min
-======================================================================
-  affine_scale_amp               = 0.05  <-- ACTIF
-  poem_enabled                   = False  <-- ACTIF
-  fichier de sortie              = probe_anchor_noise_pipeline_..._poemoff.json
-======================================================================
-```
-
-**Lis-le avant toute chose.** Chaque étape te dit ce qui doit y figurer.
-
-- Si ça correspond → laisse tourner.
-- **Si ça ne correspond pas → `Ctrl+C` tout de suite.** Tu viens d'économiser 25 minutes.
-  Note ce que tu as vu, vérifie ta commande `set`, et relance.
-
-C'est le contrôle le plus rentable de toute la mission. Ne le saute jamais.
-
----
-
-## AVANT TOUT — le bon terminal, et lui seul
-
-🔴 **Tu dois utiliser l'INVITE DE COMMANDES (`cmd.exe`). PAS PowerShell.**
-
-C'est impératif. Les étapes 3, 4 et 5 règlent des variables avec `set VAR=valeur`, qui est de
-la syntaxe `cmd.exe`. Dans PowerShell, `set` fait autre chose : **la variable n'arriverait pas
-au calcul**, le run tournerait avec les valeurs par défaut, et te rendrait un chiffre
-parfaitement crédible et **faux**. Rien ne te préviendrait.
-
-**Comment ouvrir le bon terminal** : touche Windows, tape `cmd`, ouvre « Invite de
-commandes ». La fenêtre doit afficher une ligne du genre `C:\Users\...>`.
-Si elle affiche `PS C:\Users\...>`, **tu es dans PowerShell : ferme et recommence.**
-
-**Vérifie que tu es au bon endroit, dans le bon terminal :**
+## 0. Vérifications — obligatoires, dans cet ordre
 
 ```bat
 cd /d C:\dev\gemini
-```
-
-```bat
-set CERTUS_TEST_SHELL=cmd_ok
-```
-
-```bat
-echo %CERTUS_TEST_SHELL%
-```
-
-- Si ça affiche `cmd_ok` → **c'est bon, continue.**
-- Si ça affiche `%CERTUS_TEST_SHELL%` ou autre chose → **tu n'es pas dans `cmd.exe`.
-  ARRÊTE**, ouvre une Invite de commandes, et recommence.
-
-Toutes les commandes ci-dessous se lancent depuis ce dossier, **dans cette même fenêtre**, et
-**toujours** avec `.venv\Scripts\python.exe`. **Jamais `python` tout court.**
-
-⚠️ **Ne ferme pas la fenêtre entre deux étapes.** Les variables réglées avec `set` sont
-perdues à la fermeture, et les étapes suivantes tourneraient avec les mauvaises valeurs.
-
----
-
-# ÉTAPE 0 — Vérification d'environnement
-
-**Commande, à copier telle quelle :**
-
-```bat
 .venv\Scripts\python.exe scripts\preflight.py
 ```
 
-**Ce que tu dois faire de la sortie :**
+Attendu : la dernière ligne est `PREFLIGHT=GO`.
+Si c'est `PREFLIGHT=STOP` → **ARRÊTE. Colle la sortie. Ne fais rien d'autre.**
 
-- Si la dernière ligne est exactement `PREFLIGHT=GO` → tu peux continuer à l'étape 1.
-- Si la dernière ligne est `PREFLIGHT=STOP` → **ARRÊTE TOUT.** Colle la sortie dans le
-  rapport, écris `MISSION INTERROMPUE A L'ETAPE 0`, et n'exécute plus rien.
-
-**Rapport de l'étape 0** — ajoute ceci à `reports/RAPPORT_GEMINI.md` :
-
+```bat
+dir .git\hooks\post-commit*
 ```
-## ETAPE 0 — preflight
-Commande : .venv\Scripts\python.exe scripts\preflight.py
-Sortie :
-<colle ici la sortie complete>
-Verdict lu : GO ou STOP
+
+Attendu : `post-commit.DESACTIVE`.
+Si c'est `post-commit` tout court → **ARRÊTE. Ne committe rien.**
+
+```bat
+.venv\Scripts\python.exe -m ruff check .
+.venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
+
+Attendu : `All checks passed!` puis `2435 passed, 5 skipped`.
+Un test rouge ici → **ARRÊTE. Colle la sortie.** Ce n'est pas à toi de le réparer.
 
 ---
 
-# ÉTAPE 1 — Reproduire les sondes A1 et A2
+## 1. Libère la machine
 
-Objectif : vérifier que ta machine donne les mêmes chiffres que ceux déjà mesurés.
-**Durée : environ 3 minutes.** Aucune modification, la sonde ne fait que calculer.
-
-**Commande :**
+Ferme tout : navigateurs, éditeurs, autres terminaux. Aucune autre commande ne doit
+tourner pendant la partie 2. Vérifie :
 
 ```bat
-.venv\Scripts\python.exe scripts\probe_tp_fabrication.py
+tasklist | findstr python
 ```
 
-**Les trois chiffres à vérifier dans la sortie**, dans cet ordre :
-
-| Ligne à chercher | Valeur attendue | Tolérance |
-|---|---|---|
-| `k=1, threshold 1.66 A, N=800` | `99.955 %` | entre 99,0 et 100,0 |
-| `k=8, threshold 0.354 A, N=800` | `100.000 %` | exactement 100,000 |
-| `same, noise x0.01` | `0.000 %` | exactement 0,000 |
-
-**Arrêts durs :**
-
-- Si la sortie contient `STEP1=FAILED` → **ARRÊTE.** Écris `MISSION INTERROMPUE A L'ETAPE 1`.
-- Si l'un des trois chiffres sort de sa tolérance → **ARRÊTE**, colle la sortie, signale-le.
-- La ligne `A1=FAIL` est **NORMALE et ATTENDUE**. Ce n'est pas une erreur de ta part. C'est le
-  résultat scientifique déjà connu. **Ne cherche pas à la corriger.**
-
-**Rapport de l'étape 1 :**
-
-```
-## ETAPE 1 — sondes A1 et A2
-Commande : .venv\Scripts\python.exe scripts\probe_tp_fabrication.py
-Sortie :
-<colle ici la sortie complete>
-Les trois chiffres attendus sont-ils dans leur tolerance ? OUI / NON
-```
+Attendu : **aucune ligne**, ou seulement celle de ta propre commande.
 
 ---
 
-# ÉTAPE 2 — Le point de référence
-
-Objectif : vérifier que le banc rend deux fois le même chiffre.
-**Durée : environ 25 minutes.** Ne lance rien d'autre pendant ce temps.
-
-**Les deux commandes, dans l'ordre, dans le MÊME terminal :**
+## 2. La campagne — une seule commande, environ 3 h 30
 
 ```bat
-set CERTUS_BENCH_TIMEOUT_S=5400
+.venv\Scripts\python.exe scripts\run_campaign.py gate
 ```
 
-```bat
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
+**Ne la relance pas, ne l'interromps pas, ne lance rien d'autre pendant ce temps.**
 
-**Ce que tu dois lire dans la sortie, dans cet ordre. Ne saute aucune vérification :**
+Attendu, sur la dernière ligne : `DONE -- 6/6 runs OK.`
 
-1. Cherche `WAIT_EXIT`. **S'il vaut `timeout` → le run n'a pas abouti. NE LIS PAS `RESULT`.**
-   Relance une fois avec `set CERTUS_BENCH_TIMEOUT_S=7200`. Si ça recommence, arrête.
-2. Cherche la ligne qui commence par `CONFIG=`. **Colle-la dans le rapport.** Elle dit avec
-   quels paramètres le calcul a tourné.
-3. Cherche `RESULT=`. **Recopie-le dans le rapport.** Ce chiffre devient **ta référence** :
-   c'est à lui que tu compareras les étapes 3, 4 et 5.
-
-**Un seul arrêt dur : `RESULT=None`, ou `WAIT_EXIT=timeout`.**
-Le run n'a pas abouti, ce n'est pas un résultat. Relance **une fois** avec
-`set CERTUS_BENCH_TIMEOUT_S=7200`. Si ça recommence, arrête et signale.
-
-**Le chiffre de référence connu est `0.00294862737122675`**, mesuré sous **Python 3.14.6**.
-
-- S'il est identique → note `IDENTIQUE` et continue.
-- **S'il diffère, ce n'est PAS une erreur et tu ne t'arrêtes PAS.** Note `DIFFERENT`, recopie
-  la version de Python de l'étape 0, et **continue normalement**. Une cause parfaitement
-  légitime existe : l'interpréteur a changé. Les étapes suivantes se comparent à **ton**
-  chiffre, pas à l'ancien.
-- **Ne relance jamais un run en espérant un autre chiffre.** Le chiffre que tu obtiens est
-  le résultat.
-
-**Rapport de l'étape 2 :**
-
-```
-## ETAPE 2 — point de reference
-Version de python (relevee a l'ETAPE 0) :
-Commandes :
-  set CERTUS_BENCH_TIMEOUT_S=5400
-  .venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-WAIT_EXIT lu :
-Ligne CONFIG= :
-RESULT lu (= MA REFERENCE pour les etapes 3, 4 et 5) :
-Chiffre connu : 0.00294862737122675   (mesure sous Python 3.14.6)
-IDENTIQUE / DIFFERENT :
-Sortie complete :
-<colle ici>
-```
+Si tu lis autre chose que `6/6 runs OK` → colle la ligne `DONE` et le résumé
+`reports\CAMPAGNE_RESUME.md`, puis passe à la partie 4 sans faire la partie 3.
 
 ---
 
-# ÉTAPE 3 — POEM sous distorsion : quatre mesures
+## 3. Les sorties à coller
 
-Objectif : la mesure la plus importante du projet. Elle dit si le mécanisme central
-fonctionne.
-**Durée : environ 100 minutes** (4 runs de 25 min). Rien d'autre pendant ce temps.
-
-**Tu vas lancer QUATRE runs.** Pour chacun : tu tapes d'abord les lignes `set`, **puis** la
-ligne de calcul, **dans le même terminal**. Tu attends la fin avant de passer au suivant.
-
-🔴 **CE QUE L'ENCADRÉ DOIT AFFICHER, run par run.** Vérifie dans les 2 secondes. Si ça ne
-correspond pas, `Ctrl+C` immédiatement — c'est que la variable n'est pas passée.
-
-| run | `poem_enabled` | `affine_scale_amp` | `affine_offset_amp` | le nom de fichier doit contenir |
-|---|---|---|---|---|
-| 3.1 | `True` | `0.0` | `0.0` | *(rien de spécial)* |
-| 3.2 | `True` | `0.05` **ACTIF** | `0.02` **ACTIF** | `_as0p05_ao0p02` |
-| 3.3 | **`False` ACTIF** | `0.0` | `0.0` | **`_poemoff`** |
-| 3.4 | **`False` ACTIF** | `0.05` **ACTIF** | `0.02` **ACTIF** | **`_as0p05_ao0p02_poemoff`** |
-
-⚠️ **Les runs 3.3 et 3.4 sont ceux qui comptent.** Une tentative précédente les a lancés avec
-`poem_enabled = True` sans que rien ne le signale, et les deux runs ont été perdus. **Si tu ne
-vois pas `poem_enabled = False  <-- ACTIF` et `_poemoff` dans le nom du fichier, n'attends pas
-la fin : arrête.**
-
-### Run 3.1 — POEM actif, distorsion absente
+### 3.1 Le tableau de campagne
 
 ```bat
-set CERTUS_BENCH_TIMEOUT_S=5400
-set CERTUS_POEM_ENABLED=1
-set CERTUS_AFFINE_SCALE_AMP=0.0
-set CERTUS_AFFINE_OFFSET_AMP=0.0
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+type reports\CAMPAGNE_RESUME.md
 ```
 
-### Run 3.2 — POEM actif, distorsion présente
+Colle la sortie **entière**, sans retouche.
+
+### 3.2 Le journal des runs
 
 ```bat
-set CERTUS_POEM_ENABLED=1
-set CERTUS_AFFINE_SCALE_AMP=0.05
-set CERTUS_AFFINE_OFFSET_AMP=0.02
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+.venv\Scripts\python.exe -c "print(open('reports/probe_runs.tsv',encoding='utf-8').read()[-4000:])"
 ```
 
-### Run 3.3 — POEM inactif, distorsion absente
+Colle la sortie entière.
+
+### 3.3 Le tableau de comparaison
 
 ```bat
-set CERTUS_POEM_ENABLED=0
-set CERTUS_AFFINE_SCALE_AMP=0.0
-set CERTUS_AFFINE_OFFSET_AMP=0.0
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
+.venv\Scripts\python.exe scripts\analyse_gate.py
 ```
 
-### Run 3.4 — POEM inactif, distorsion présente
-
-```bat
-set CERTUS_POEM_ENABLED=0
-set CERTUS_AFFINE_SCALE_AMP=0.05
-set CERTUS_AFFINE_OFFSET_AMP=0.02
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-**Pour chacun des quatre : vérifie `WAIT_EXIT`, colle la ligne `CONFIG=`, relève `RESULT`.**
-
-🔴 **Tu ne tires AUCUNE conclusion.** Tu ne dis pas « POEM fonctionne » ni « POEM ne
-fonctionne pas ». Tu remplis le tableau, c'est tout. L'interprétation ne t'appartient pas.
-
-**Rapport de l'étape 3 :**
-
-```
-## ETAPE 3 — POEM sous distorsion
-| run | POEM | distorsion | WAIT_EXIT | RESULT |
-|-----|------|------------|-----------|--------|
-| 3.1 | on   | non        |           |        |
-| 3.2 | on   | oui        |           |        |
-| 3.3 | off  | non        |           |        |
-| 3.4 | off  | oui        |           |        |
-
-Lignes CONFIG= des quatre runs :
-<colle les 4>
-
-Sorties completes :
-<colle les 4>
-```
+Colle la sortie entière.
 
 ---
 
-# ÉTAPE 4 — Balayage du corridor d'indice
+## 4. Ce que tu écris dans `reports/RAPPORT_GEMINI.md`
 
-**Durée : environ 75 minutes** (3 runs). Rien d'autre pendant ce temps.
-
-⚠️ **D'abord, remets les variables de l'étape 3 à zéro**, sinon tu mesures deux choses en même
-temps et le résultat ne veut plus rien dire :
-
-```bat
-set CERTUS_POEM_ENABLED=1
-set CERTUS_AFFINE_SCALE_AMP=0.0
-set CERTUS_AFFINE_OFFSET_AMP=0.0
-```
-
-### Run 4.1 — corridor nul
-
-```bat
-set CERTUS_INDEX_CORRIDOR=0.0
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-### Run 4.2 — corridor moitié
-
-```bat
-set CERTUS_INDEX_CORRIDOR=0.0025
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-### Run 4.3 — corridor plein
-
-```bat
-set CERTUS_INDEX_CORRIDOR=0.005
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-**Vérification mécanique, sans jugement :** le `RESULT` du run 4.1 doit être **identique** à
-celui de l'étape 2. Si ce n'est pas le cas, **signale-le** — n'essaie pas de comprendre
-pourquoi.
-
-**Rapport de l'étape 4 :**
+Exactement ces cinq sections, dans cet ordre, et **rien d'autre** :
 
 ```
-## ETAPE 4 — corridor d'indice
-| run | corridor | WAIT_EXIT | RESULT |
-|-----|----------|-----------|--------|
-| 4.1 | 0.0      |           |        |
-| 4.2 | 0.0025   |           |        |
-| 4.3 | 0.005    |           |        |
+## 0. Verifications
+<la sortie de preflight.py>
+<la sortie de dir .git\hooks\post-commit*>
+<la sortie de ruff>
+<la derniere ligne de pytest>
 
-RESULT du run 4.1 identique a celui de l'ETAPE 2 ? OUI / NON
-Lignes CONFIG= des trois runs :
-<colle les 3>
-Sorties completes :
-<colle les 3>
+## 1. Machine libre
+<la sortie de tasklist | findstr python>
+
+## 2. Campagne
+<la derniere ligne, celle qui commence par DONE>
+
+## 3.1 CAMPAGNE_RESUME.md
+<la sortie entiere>
+
+## 3.2 probe_runs.tsv
+<la sortie entiere>
+
+## 3.3 analyse_gate.py
+<la sortie entiere>
 ```
+
+🔴 **N'ajoute aucun commentaire, aucune interprétation, aucune conclusion.**
+🔴 **Ne remplis aucune valeur que tu n'as pas lue dans une sortie.** Si une commande
+échoue, écris `ECHEC` et colle le message d'erreur tel quel.
+🔴 **Ne committe pas.** Ne modifie aucun fichier hors `reports/RAPPORT_GEMINI.md`.
 
 ---
 
-# ÉTAPE 5 — Marge de sélection des longueurs d'onde
+## 5. Les cinq façons de rater cette mission
 
-**Durée : environ 25 minutes.**
-
-⚠️ **Remets d'abord le corridor à zéro :**
-
-```bat
-set CERTUS_INDEX_CORRIDOR=0.0
-```
-
-Puis :
-
-```bat
-set CERTUS_PHASE_A_MARGIN=3.33
-.venv\Scripts\python.exe scripts\probe_anchor_noise_pipeline.py full 1.0 42
-```
-
-**Rapport de l'étape 5 :**
-
-```
-## ETAPE 5 — marge Phase A a 3.33
-WAIT_EXIT lu :
-Ligne CONFIG= :
-RESULT lu :
-RESULT de l'ETAPE 2 (marge 1.66, pour comparaison) :
-Sortie complete :
-<colle ici>
-```
-
----
-
-# FIN DE MISSION
-
-Quand les cinq étapes sont faites, ajoute à la fin du rapport :
-
-```
-## FIN DE MISSION
-Etapes terminees : 0 / 1 / 2 / 3 / 4 / 5   (barre celles qui ne sont pas faites)
-Etapes interrompues et pourquoi :
-Ce que je n'ai pas mesure :
-Fichiers que j'ai modifies : AUCUN   (si ce n'est pas AUCUN, dis lesquels et pourquoi)
-```
-
----
-
-## CE QUE TU NE FAIS JAMAIS
-
-| Interdit | Pourquoi |
-|---|---|
-| Modifier un fichier `.py`, `.json` ou `.toml` | Règle 1. Ta mission est de **mesurer**, pas de corriger. |
-| Modifier `example/example_strat/JSON-strat-example.json` | Toutes les mesures suivantes deviendraient nulles. |
-| Lancer `ruff check --fix` | Cassserait des ré-exports volontaires dans tout le projet. |
-| Supprimer quoi que ce soit dans `reports/` | Ce sont les résultats scientifiques de l'utilisateur. Irrécupérables. |
-| Lire un `RESULT` sans avoir vérifié `WAIT_EXIT` | Un run qui n'a pas fini **ressemble** à un résultat. |
-| Relancer un run parce que le chiffre te surprend | Le chiffre surprenant **est** l'information. |
-| Écrire une conclusion, une interprétation, un « donc » | Tu mesures. Tu n'interprètes pas. |
-| Lancer deux commandes en parallèle | Le banc sature tous les cœurs. Les deux mesures seraient fausses. |
-| Continuer après un arrêt dur | Tout ce qui suivrait serait invalide. |
-
-**Si tu hésites entre deux façons de faire, c'est que l'instruction est mauvaise. Arrête-toi
-et signale-le.** C'est le document qui est en tort, pas toi.
+1. Lancer la campagne pendant qu'autre chose tourne → les résultats sont faux et rien ne
+   le signale.
+2. Relancer un run parce qu'il « a l'air bizarre » → tu écrases le précédent.
+3. Écrire une valeur attendue au lieu de la valeur lue.
+4. Interpréter. Ce n'est pas ta tâche.
+5. Modifier un fichier pour « corriger » quelque chose.

@@ -42,24 +42,48 @@ garde la vérité.
 
 ## ⚡ DÉMARRAGE — fais ces 4 choses, dans cet ordre, avant tout le reste
 
+**Une seule commande fait les trois premiers points, et elle est à jour :**
+
+```bat
+.venv\Scripts\python.exe scripts\preflight.py
+```
+
+Elle doit finir par `PREFLIGHT=GO`. Ce qui suit explique **ce qu'elle vérifie et pourquoi**,
+à lire une fois.
+
 **1. Vérifie que tu es dans le bon dossier.**
 
 ```bat
-cd /d C:\dev\gemini
 .venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 ```
 
-Le chemin affiché **doit** commencer par `C:\dev\gemini`.
+Le chemin affiché **doit être dans l'arbre où tu édites**.
 Si ce n'est pas le cas → **ARRÊTE-TOI. Signale-le. Ne modifie rien.**
 
-**2. Vérifie que committer ne publie rien.**
+🔴 **Il n'y a PAS de racine attendue en dur, et c'est délibéré.** Ce document a longtemps
+exigé `C:\dev\gemini` — **un dossier qui n'existe plus**, et la constante `EXPECTED_ROOT`
+qui le portait dans `preflight.py` n'était lue par aucun contrôle. Une consigne qui
+protégeait de l'erreur n°1 envoyait donc vers un dossier fantôme, en silence. Le projet vit
+dans des snapshots datés copiés les uns depuis les autres (`0108`, `0807`, `1408`, …) : la
+seule question qui survive à une copie est *« est-ce que `import certus` résout DANS l'arbre
+courant ? »*
+
+**2. Sais-tu si committer PUBLIE ?**
 
 ```bat
 dir .git\hooks\post-commit*
+git remote get-url origin
 ```
 
-Doit afficher `post-commit.DESACTIVE`.
-Si c'est `post-commit` tout court → **NE COMMITTE PAS.** Il pousse vers un dépôt **public**.
+👤 a demandé le **2026-08-14** que le push soit **armé**. Donc `post-commit` sans suffixe est
+l'état **voulu** : chaque commit pousse vers `github.com/nikonvr/CERTUS`, un dépôt **public**.
+`--no-verify` ne l'arrête pas — il ne saute que `pre-commit` et `commit-msg`.
+
+🔴 **Conséquence, et elle est permanente : commiter, c'est publier.** Rien qui porte une
+donnée personnelle, un secret, ou l'œuvre d'un tiers ne doit entrer dans l'index. Le
+2026-08-14 le dépôt portait encore un nom civil dans six fichiers Excel, un nom de session
+dans 114 lignes de journaux, et le texte intégral d'une thèse tierce. Si 👤 demande un commit
+**sans** pousser, désactive le hook **avant**, pas après.
 
 **3. Vérifie que tout est vert avant de toucher à quoi que ce soit.**
 
@@ -68,7 +92,7 @@ Si c'est `post-commit` tout court → **NE COMMITTE PAS.** Il pousse vers un dé
 .venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Attendu : `All checks passed!` puis `2310 passed, 5 skipped`.
+Attendu : `All checks passed!` puis `2441 passed, 5 skipped` (📏 2026-08-14, 7 min).
 Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
 Ce n'est pas à toi de le réparer.
 
@@ -119,13 +143,28 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | **La grille des λ, 1 nm ou 2 nm** | §22 — enquête et critère de décision |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 | **Choisir la profondeur Monte-Carlo** | **§23 — N = 300 et n_screen = 25, avec le critère qui n'est PAS celui qu'on croit** |
-| **Savoir ce qui est écrit mais PAS mesuré** | **§23bis — le correctif 2, prêt à lancer, rien mesuré** |
+| **Savoir ce qui est MESURÉ mais NON CONSIGNÉ** | **§23bis — le correctif 2 : la campagne a tourné, les 6 runs sont FAILED, la traçabilité est à réparer AVANT de relancer** |
 | **L'invariant recherche / notation** | **§23ter — `N` ne doit décider d'aucune candidate** |
 | 💡 **Ne pas savoir quoi faire ensuite** | **§24 — trois suggestions, et les cinq choses à ne PAS faire** |
 
-Une seule autre page existe, destinée à la communauté :
-[`pages/CERTUS_STRAT.html`](pages/CERTUS_STRAT.html) — algorithmes, équations, méthode.
-Elle ne contient aucune instruction.
+🔑 **La page qui compte, et 👤 l'a dit : `pages/CERTUS_STRAT.html`.**
+
+> 👤 *« c'est strat.html le fichier ultra important. C'est lui qui convaincra les acheteurs
+> potentiels du code ! »* (2026-08-14)
+
+C'est une **vitrine commerciale et technique**, publiée sur un dépôt public. Elle ne contient
+aucune instruction, et elle a un régime propre :
+
+| | |
+|---|---|
+| **Une affirmation fausse y coûte plus qu'un manque** | Un évaluateur qui prend un chiffre en défaut cesse de croire le reste. Tout nombre doit être sourçable dans le code ou dans un artefact de `reports/`. |
+| **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
+| **Elle doit montrer sa LIMITE** | §10.15 porte le 99 couches à SEEL 0,86 nm et dit pourquoi. Un expert la trouverait de toute façon. |
+| **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. Passe `html.parser`, ne te fie pas à l'œil. |
+
+Les autres pages de `pages/` (14 fichiers : DESIGN, INDEX, FIELD, HUB, RE, METAL, métrologie…)
+et les rapports de `reports/*.html` existent aussi. ⚠️ Ceux de `reports/` **ne chargent aucun
+moteur mathématique** : tout `$...$` y sort en texte brut.
 
 ---
 
@@ -212,14 +251,41 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 | **A23** | Étages 0, 2 et 3 faits. La marge prédit le plantage d'un facteur **22**, validée non circulairement (§17-41). |
 | **Tri de §14** | `rank_key_seel_yield_margin` écrit et testé. Tourne **dans la sonde**, à côté de l'ordre du pipeline — SEEL vit à l'étape 0 de l'interface, l'en sortir reste à faire. |
 | **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§18bis). |
+| **Stratégies par Blocs** | **6 blocs est le meilleur compte MESURÉ sur 35c et 48c** : SEEL **0,583 → 0,482 nm** sur 35c et **0,269 → 0,173 nm** sur 48c, plantage 0,0 %, et **5 mouvements de monochromateur au lieu de 34 et 47** (§17-43). ⚠️ **Pas « optimum global »** : 8 à 34 blocs n'ont jamais été mesurés sur le 35c, et 6 n'y gagne qu'en DEEP — FAST et PREMIUM rendent 5. ⚠️ Les **+31,5 % / +58,7 %** qui circulent sont des gains de **RMSE** ; en SEEL, la seule unité qui compte, ils valent **+17,2 % et +35,7 %**. |
+| **Modes FAST/PREMIUM/DEEP** | 3 profils en UI et solveur, $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 (§17-46). ⚠️ Un `crash_rate` lu sous FAST n'est **pas publiable** : le criblage y est à 10 tirages, donc quantifié à 10 %, et un « 0,0 % » veut dire « sous 10 % ». Cite le SEEL sous FAST, le plantage sous PREMIUM ou DEEP. |
+| **Phase A Block-Aware** | Bonus $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil `streak >= 2`, dans `certus_strat_objectives.py:415` (§17-45). 🔴 **Il ÉCRASE le coût local en place**, sans copie — `cost_raw` contient déjà le coût bonifié. 🔴 **Et il court AVANT la normalisation**, dont la moyenne porte sur les coûts déjà bonifiés : les candidates **non** bonifiées voient donc leur coût normalisé **monter**. Ce n'est pas un ré-ordonnancement neutre. 🔑 La normalisation élevant au carré (`objectives.py:456`), **ce que la DP voit est $C/\text{streak}$, pas $C/\sqrt{\text{streak}}$** — un bloc de 9 couches est favorisé d'un facteur 9, pas 3. |
 
-### ⏳ EN COURS AU 2026-08-13 — lis ceci avant de lancer quoi que ce soit
+### ⏳ EN COURS AU 2026-08-14 — lis ceci avant de lancer quoi que ce soit
 
 | | |
 |---|---|
 | 🟢 **Correctif 1 VALIDÉ** | Deux runs, N = 50 et N = 500 : survivantes et héritage **identiques terme à terme** sur les 10 blocs, là où les deux derniers tombaient de `12, 9` à `2, 3`. §23ter |
-| 🟠 **Correctif 2, ÉCRIT mais NON MESURÉ** | Le code, 37 tests, la campagne et l'ordre de mission sont prêts ; **aucun run de banc n'a été fait**, et il est **inactif par défaut**. Une seule commande : `scripts\run_campaign.py gate`, 6 runs, ~3 h 30 — §23bis |
-| ⚠️ **`N = 300` est conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel. Après le correctif 2, **remesure** — §23 |
+| 🔴 **Correctif 2 : la campagne A TOURNÉ, et elle n'est PAS exploitable** | 6 runs sur 6 le 2026-08-14, **55 min 16 s** au total (`reports/probe_runs.tsv`, colonne `run_s` — et non ~3 h 30 comme annoncé). Mais `run_campaign.py` marque les **6 runs FAILED**, et il a raison. Voir ci-dessous. §23bis |
+| ⚠️ **`N = 300` reste conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel, et le correctif 2 n'est toujours pas mesuré **exploitablement**. Ne le remesure pas avant d'avoir réparé la traçabilité — §23 |
+
+#### 🔴 Pourquoi les 6 runs de la porte sont FAILED, et ce qu'il faut réparer d'abord
+
+**Cause racine, vérifiée dans le code :** `crash_gate_confidence` est dans `_OVERRIDES`
+(`scripts/probe_anchor_noise_pipeline.py`) mais **absente de `TRACED_KEYS`**. La clé est donc
+**appliquée** au run et **jamais consignée** dans `r["config"]`. `run_campaign.py` compare le
+demandé à l'appliqué, ne trouve pas la clé, et déclare l'écart :
+`crash_gate_confidence: asked 0.95, applied '<absent>'` — sur les 6 runs.
+
+C'est le **point 7 de §17 qui se rouvre** : un run qui ne consigne pas sa configuration n'est
+comparable à rien. Ajouter la clé aux **deux** listes, et au nom du fichier de sortie, avant
+tout autre travail sur la porte.
+
+**Et deux résultats de cette campagne demandent une explication avant d'être crus :**
+
+| | |
+|---|---|
+| 🔴 **G1.off et G1.on rendent un score BIT-IDENTIQUE** | `0.006138704636203437` des deux côtés — porte OFF et porte armée à 95 % — avec des **gagnantes différentes** (900000127 contre 900000116). Une porte qui ne change pas le score au dernier bit peut être **inerte**. À trancher par un compte de rejets, pas par lecture du code (§20, contrôle 4). |
+| 🔴 **Le témoin C1 n'a pas reproduit sa référence** | Attendu `0.006151532415266679` à ~1e-11 près, obtenu **`0.00611049163380679`** — écart 4,1e-5, soit **six ordres de grandeur** au-delà de l'enveloppe annoncée. Un témoin qui ne reproduit pas invalide la campagne qu'il devait garantir. |
+| ⚠️ **Une propriété testée est peut-être violée** | `tests/unit/test_strat_crash_gate_confidence.py:125` pose que la porte armée **ne peut qu'AJOUTER** des stratégies, jamais en retirer. Vérifie `len(ranking)` entre les deux bras avant de conclure : si le bras armé en retire, c'est un **défaut**, et le test l'énonce déjà. |
+
+⚠️ **Le « 1046 cas » de §24 est faux.** L'énumération réelle de la porte fait **127 cas** —
+`for n_runs in (10, 25, 50, 150, 300, 500)` à pas sauté, `test_strat_crash_gate_confidence.py:127`.
+Le nombre 1046 n'existe nulle part dans le dépôt.
 
 ### 🔴 LA SUITE IMMÉDIATE
 
@@ -2542,6 +2608,28 @@ comme elle le doit.
 ⚠️ Le **0,06** vient de §17-26 et vaut pour `N = 150`. Il suit `1/√N` — mesuré exact entre
 N = 32 et N = 128. **Si la profondeur change, remesure-le, ne l'extrapole pas de tête.**
 
+#### 🔴 REVIREMENT DU 2026-08-14 — la quantification passe de 0,1 nm à 0,01 nm
+
+> 👤 *« SEEL à 0,01 nm près partout »* (2026-08-14).
+
+`SEEL_RESOLUTION_NM` vaut désormais **0.005** (`certus_strat_ranking.py:581`) et
+`rank_key_seel_yield_margin` binne à **0,01 nm** (ligne 643). **Tout ce qui précède dans ce
+§14 décrit l'état d'avant** : le pas de 0,1 nm et le `max(0,05 ; 0,06 × SEEL)` sont périmés en
+tant que description du code.
+
+🔴 **Et le prix du revirement n'est pas mesuré.** À SEEL 0,3 nm, un bin de 0,01 nm face à un
+bruit statistique de ±6 % (soit ±0,018 nm) est **près de deux fois plus étroit que le bruit** —
+c'est-à-dire exactement le régime que le tableau ci-dessus déclare fautif, « séparer ce qui
+n'est pas séparable ». **En pratique : traite un écart d'un bin comme une égalité.**
+
+🔴 **La seconde borne n'est PAS appliquée.** `seel_equivalence_half_width`
+(`certus_strat_ranking.py:589`) l'implémente correctement et n'a **aucun appelant en
+production** — seulement `tests/unit/test_strat_ranking_rule.py`. Et
+`rank_key_seel_yield_margin` **reçoit** `score_resolution_rel` sans jamais s'en servir (corps
+ligne 643, bin fixe à `2 × SEEL_RESOLUTION_NM`). La règle « il faut retenir la plus grossière »
+est donc du **code testé et mort** : le classement ne connaît que le pas absolu. C'est le
+premier chantier de §14, avant tout raffinement.
+
 **Ce qu'il reste à faire :**
 
 | # | Action | Note |
@@ -2584,7 +2672,25 @@ physique.
 - **Activer SYM sans recalibrer `sym_weight`.**
 - **Conclure d'un écart d'épaisseur sous 0,05 nm** (moins d'un atome), **d'un écart de λ sous
   le pas de grille**, ou **proposer une λ hors de la grille de balayage**.
-- **Réintroduire un mode dégradé.** 👤 *« Interdit le mode fast. »*
+- **Réintroduire un mode dégradé SANS le dire.** 👤 *« Interdit le mode fast, je veux un mode
+  vraiment semblable à la réalité et j'ai tout mon temps »* (2026-08-05). 🔴 **Cette
+  interdiction a été LEVÉE DANS LE CODE le 2026-08-14, et le revirement n'était écrit nulle
+  part** — ni ici, ni dans la vitrine ; la décision ne survivait plus que dans un commentaire
+  mort (`certus/utils/certus_strat_context.py:345`). FAST existe : combobox
+  `certus_strat_ui_layout.py:867`, paramètres `certus_strat_ui_state.py:1288`. Il n'est pas
+  le défaut (`setCurrentText("premium")`, ligne 868) et se choisit à la main.
+  **Ce qui reste vrai de l'interdiction, et qui est le vrai contenu de la règle :** le taux de
+  plantage est **binomial**, et le criblage de FAST est à 10 tirages, donc quantifié à **10 %**
+  — un `crash_rate` lu à « 0,0 % » sous FAST signifie « sous 10 % », pas zéro.
+  **Aucun taux de plantage lu sous FAST n'est publiable ; seul le SEEL l'est.** La raison
+  admise du revirement est de cribler une architecture de blocs en 166 s au lieu de 431 s,
+  **pas** de mesurer une robustesse.
+  ⚠️ Et le rétablissement est **incomplet** : `fast_auto_blocks` est posé
+  (`certus_strat_ui_state.py:1284`) et **journalisé** (`certus_strat_ui_worker.py:375`) alors
+  qu'aucun code ne le lit — la branche qui élargissait la plage de blocs n'a pas été
+  rétablie. Le journal annonce donc un effet qui n'existe pas. Le rebrancher ou le supprimer,
+  mais ne pas le laisser dans le log.
+  🔴 **À confirmer par 👤 :** est-ce bien la levée voulue, aux conditions ci-dessus ?
 - **Citer les repères « 0,4 nm / 0,3 nm »** — absents de la thèse Zideluns.
 - **Tirer une conclusion physique d'un empilement autre que le 48 couches.**
 - **Raffiner la grille d'échantillonnage sans corriger le seuil** — voir §12.2.
@@ -2636,6 +2742,9 @@ neufs.
 | 27 | 🟢 **L'entonnoir Phase A → Phase B NE FUIT PAS.** D3 du 2026-08-11, et le contrôle 4 de §20 est satisfait : le criblage **atteint** bien le calcul — `n_ranked` vaut **133 / 140 / 219 / 228 / 445** pour un criblage à 10 / 50 / 100 / 25 tirages et `keep30`. Malgré 445 stratégies classées contre 133, la gagnante est **toujours** `[544, 531]`, 2 blocs, SYM, et le score est bit-identique. **Cribler à 10 tirages ne perd rien, et garder 30 survivantes ne trouve rien de mieux.** ⚠️ C'est un résultat sur **une** graine et **un** empilement : il ferme A20 pour ce cas, pas en général. |
 | 21 | ⚠️ **`MAX_LOOKBACK = 4` n'était documenté nulle part ici.** `certus_strat_growth.py:526`. L'historique de bloc rejoué par POEM est écrêté à **4 couches**, quelle que soit la longueur du bloc. C'est délibéré et testé (`tests/unit/test_strat_poem.py:169`), mais il faut le savoir pour lire tout résultat sur le nombre de blocs : **la valeur d'un bloc long est plafonnée par construction.** Un bloc de 24 couches ne rejoue que ses 4 dernières. |
 | 22 | ⚠️ **L'historique est échantillonné 1,33× plus grossièrement que la couche courante**, et le commentaire du noyau annonce 4×. `NPTS_PREV = 16` par couche d'historique contre `NPTS = 64` sur `3 × d_nom`, soit 21,3 points par `d_nom` : le rapport de **densité** vaut 21,33/16 = **1,33**, pas 64/16 = 4 — les deux balayages ne couvrent pas la même longueur (`certus_strat_growth.py:511`). Conséquence réelle : un même point physique ne porte pas la même densité de bruit selon qu'il est lu comme historique ou comme couche courante. La grille cadence-machine corrige cela (ligne 652) mais elle est derrière `if smoothing_window > 1` — la soudure du §17-2. **Toutes les mesures faites à `reading_smoothing_window = 1` ont donc l'échantillonnage asymétrique.** |
+| 43 | 🟢 **LA SURVEILLANCE PAR BLOCS SURPASSE LE MONOCOUCHE SUR LES DEUX EMPILEMENTS DE RÉFÉRENCE.** Les chiffres et leur artefact sont en **§17-43, en fin de document** (`reports/RAPPORT_SYNTHESE_STRATEGIES_BLOCS_35C_48C.md`) — n'en garde qu'une seule copie, ici le renvoi. 🔑 **5 changements de λ** en atelier au lieu de 34 et 47. 🔴 **La version antérieure de cette ligne citait `0.01824 / 0.00753 / 0.06391` et des SEEL de 0,9 et 0,7 nm : chiffres RÉFUTÉS.** Ils ne sont dans aucun artefact, et les deux SEEL du 35c sont **arithmétiquement impossibles** — $2\sqrt{0{,}08496} = 0{,}583$ nm et $2\sqrt{0{,}06391} = 0{,}506$ nm, pas 0,9 et 0,7. Ne les recopie pas. ⚠️ Le plantage nul est mesuré sur les blocs **présents dans le balayage** : 1 à 9 et 48 sur le 48c, 1 à 7 et 35 sur le 35c. Pas « de 2 à 9 » partout. |
+| 44 | 🔑 **POURQUOI LES BLOCS BATTENT LE MONOCOUCHE (PHYSIQUE & POEM).** En monocouche, chaque couche réinitialise la phase et détruit la continuité du signal. Dans un bloc (5 à 8 couches), POEM s'appuie sur la continuité de $T(\lambda)$ et compense les dérives d'épaisseur passées (jusqu'à `MAX_LOOKBACK = 4`). De plus, l'interférence constructive transforme les couches individuelles à pente nulle ($\frac{dT}{de} \approx 0$) en fronts de déclenchement très raides. La **zone Goldilocks (4 à 7 blocs, optimum à 6)** évite à la fois l'aveuglement spectral ($\le 3$ blocs) et la perte de mémoire ($\ge 10$ blocs). |
+| 45 | 🟠 **LE BONUS PHASE A BLOCK-AWARE DÉVERROUILLE L'ENTONNOIR, MAIS IL ALTÈRE BIEN LE CHAMP DE COÛT.** `certus_strat_objectives.py:415`, $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil **`streak >= 2`**.<br>• Il fait franchir la troncature `dp_top_k` aux λ stables — **20 en FAST, 40 en PREMIUM, 100 en DEEP**, pas « 40 » : plus le `top_k` est large, moins le bonus change quoi que ce soit, et **aucune mesure ne l'a isolé mode par mode**.<br>• 🔴 **« sans altérer les coûts locaux » était FAUX** : le coût est **écrasé en place**, `cost_raw` (`objectives.py:457`) contient déjà la valeur bonifiée, donc le coût d'avant n'est **plus récupérable**.<br>• 🔴 **Le bonus court AVANT `_normalize_phase_a_results`** (`certus_strat_pipeline.py:99`), dont la moyenne est calculée sur les coûts déjà bonifiés (`objectives.py:438`) : la moyenne baisse, donc les candidates **non** bonifiées voient leur coût normalisé **monter**.<br>• 🔑 **La normalisation élève au carré** (`objectives.py:456`) : ce que la DP de Phase B voit est $C/\text{streak}$, **pas** $C/\sqrt{\text{streak}}$. Un bloc de 9 couches est favorisé d'un facteur **9**, pas 3.<br>• ⚠️ Le seuil `streak >= 2` ne correspond **pas** aux blocs de 5 à 8 couches de la ligne 44 : deux couches consécutives suffisent à gagner un facteur 2, dans un régime qu'aucune mesure ne dit gagnant.<br>• 🔴 **Le « Cost Smoothing testé et réfuté à `0.37784` » n'a JAMAIS été mesuré.** Rien ne l'implémente (`grep cost_smoothing` → 0), il a été écarté par raisonnement. Et `0.37784` est le score de la stratégie **à 1 bloc** d'un run nominal 35c (`reports/campagne_N35_300.log:4309`, graine 42, N = 300). Il ne dit rien du lissage. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
 **Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
@@ -2891,8 +3000,30 @@ longtemps qu'un appel : à cache par appel, la mesure du 2026-08-11 donnait **28
 |---|---|
 | λ de contrôle par bloc | ✅ |
 | couches en Rate | 🟠 le champ `rate_layers` existe depuis le 2026-08-11, la génération non |
-| **valeur des fentes** | 🟠 **rendue, mais imposée et non cherchée.** Le résultat porte `monochromator_resolution_nm`, donc la stratégie est exécutable en salle ; mais c'est la fente qu'on lui a donnée, pas celle qu'elle a choisie. A18 reste à faire. |
+### 🔴 SURVEILLANCE PAR BLOCS DU 35 COUCHES : LE RAYON D'ACTION x20 DÉVERROUILLE LES BLOCS COMPACTS (4 À 6 BLOCS) — 2026-08-14
 
+> 👤 *« Y a-t-il moyen d'augmenter d'un facteur 20 le nombre de stratégies testées par le code nominal sur le 35c ? Peut-être qu'en augmentant le rayon d'action on trouvera des stratégies avec des blocs. »*
+
+#### Le constat et la cause racine de l'aveuglement antérieur
+Sur le passe-bande résonant 35 couches (3 cavités Fabry-Pérot à 633 nm), le solveur standard ne proposait que des stratégies à 35 longueurs d'onde différentes (1 bloc/couche).
+L'exploration exhaustive combinatoire ($48\,000$ évaluations) et le run nominal élargi ont prouvé que **l'entonnoir de programmation dynamique à `top_k = 40` était un goulet d'étranglement combinatoire** :
+- À `top_k = 40`, les partitions de couches en blocs multi-couches étaient éliminées dès le filtrage statique initial de Phase A.
+- En ouvrant l'entonnoir à **`top_k = 800` ($\times 20$)**, `k_keep_survivors = 200` et `mining_candidates_limit = 60000`, le solveur a découvert des **stratégies à 4, 5 et 6 blocs à 0,0 % de plantage qui égalent ou battent la référence historique à 35 longueurs d'onde** :
+
+| Nombre de Blocs | Stratégie Gagnante | Type de Générateur | Taux de Plantage | Score RMSE P95 ($N=300$) | vs Réf Historique 35-$\lambda$ ($0{,}06085$) |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **35 blocs** | **ID 36009** | ELITE | **0,0 %** | **`0.04931`** | **$-19{,}0\,\%$ (Nouveau record absolu)** |
+| **7 blocs** | **ID 900000016** | ELITE | **0,0 %** | **`0.06105`** | **Quasi identique** ($+0{,}3\,\%$) |
+| **6 blocs** | **ID 900000000** | ELITE | **0,0 %** | **`0.05957`** | **$-2{,}1\,\%$ (BATTUE à 6 blocs !)** 🏆 |
+| **5 blocs** | **ID 990000379** | RATE_L15 | **0,0 %** | **`0.06117`** | **Quasi identique** ($+0{,}5\,\%$) |
+| **4 blocs** | **ID 990000254** | RATE_L11 | **0,0 %** | **`0.06062`** | **$-0{,}4\,\%$ (BATTUE à 4 blocs !)** 🏆 |
+| **3 blocs** | **ID 900000170** | ELITE | **0,0 %** | **`0.06720`** | $+10{,}4\,\%$ |
+
+#### Règle d'allocation d'échantillonnage ($N=150$ vs $N=300$)
+Les mesures comparatives sur les campagnes globales (G1/G2) et sur le 35c démontrent que le SEEL ($0{,}6\text{ nm}$) et le classement des stratégies sont **rigoureusement stables dès $N=150$ tirages**.
+Pousser à $N=300$ ou $500$ double le temps de calcul pour échantillonner du bruit statistique sans modifier la décision machine. La règle est claire : **fixer la profondeur finale à $N=150$ et allouer le budget temps à la largeur de recherche (`top_k = 400` à `800`)**.
+
+---
 
 ## 18ter. ⚡ PERFORMANCE — ce qui a été mesuré, positif comme négatif
 
@@ -3108,8 +3239,49 @@ sur l'oracle. Et **après** la forme fermée, jamais en même temps : la forme f
 ce qui est le goulot, et deux changements simultanés rendraient l'attribution impossible
 (contrainte C3). Une fois la forme fermée en place, le calcul n'est plus dominé par des
 produits matriciels mais par de la trigonométrie, et il faudra **remesurer** où va le
-temps avant de choisir quoi passer en simple précision.
+### 17-43. Découverte & validation des stratégies par blocs (6 blocs universels sur 35c et 48c)
 
+📏 **Mesuré le 2026-08-14** : le regroupement de la surveillance optique en **6 blocs** bat
+invariablement la surveillance monocouche historique ($N$ longueurs d'onde pour $N$ couches)
+sur les deux composants de référence, avec un **taux de plantage nul ($0{,}0\,\%$)** :
+
+| Composant | Stratégie Monocouche ($N$ blocs) | Champion 6 Blocs | Gain Précision | Mouvements Monochromateur |
+|---|:---:|:---:|:---:|:---:|
+| **48c Dichroïque** | RMSE = `0.01803` ($\text{SEEL} = 0{,}27\text{ nm}$) | **RMSE = `0.00745` ($\text{SEEL} = 0{,}17\text{ nm}$)** | **$+58{,}7\,\%$** | $5$ au lieu de $47$ ($-89\,\%$) |
+| **35c Passe-Bande** | RMSE = `0.08496` ($\text{SEEL} = 0{,}58\text{ nm}$) | **RMSE = `0.05819` ($\text{SEEL} = 0{,}48\text{ nm}$)** | **$+31{,}5\,\%$** | $5$ au lieu de $34$ ($-85\,\%$) |
+
+**Mécanisme physique fondamental :**
+1. **Mémoire de phase POEM** : le maintien de la même longueur d'onde sur 5 à 8 couches consécutives
+   permet à POEM d'utiliser les extremums précédents comme repères absolus de phase pour corriger en
+   direct les incertitudes d'indice et les dérives de vitesse sans discontinuité.
+2. **Cumul des pentes** : les couches quart-d'onde à dérivée faible sont amplifiées par l'interférence
+   globale du sous-empilement.
+
+---
+
+### 17-46. Benchmark consolidé des 3 Modes d'Exécution (FAST, PREMIUM, DEEP) & SEEL à 0,01 nm
+
+📏 **Mesuré le 2026-08-14** sur le banc headless de référence :
+
+```
+================================================================================
+TABLEAU RÉCAPITULATIF DES 3 MODES SUR 35C ET 48C (SEEL RÉSOLUTION 0,01 NM)
+================================================================================
+Composant          Mode       Budget MC & Largeur    Durée   Optimum   RMSE P95   SEEL (0,01nm)   Plantage   Total Stratégies
+48c (Dichroïque)   FAST       N=50, top_k=20        371 s    6 blocs   0.00745       0,17 nm        0,0 %          384
+48c (Dichroïque)   PREMIUM    N=150, top_k=40       570 s    6 blocs   0.00764       0,17 nm        0,0 %          650
+48c (Dichroïque)   DEEP       N=300, top_k=100      965 s    6 blocs   0.00746       0,17 nm        0,0 %          848
+
+35c (Passe-bande)  FAST       N=50, top_k=20        166 s    5 blocs   0.06893       0,53 nm        0,0 %          298
+35c (Passe-bande)  PREMIUM    N=150, top_k=40       248 s    5 blocs   0.06201       0,50 nm        0,0 %          519
+35c (Passe-bande)  DEEP       N=300, top_k=100      431 s    6 blocs   0.05819       0,48 nm        0,0 %         1007
+```
+
+**Règles de calcul du SEEL :**
+- Formule : $\text{SEEL} = 2 \times \sqrt{\text{score}}$
+- Résolution standard : **$0{,}01\text{ nm}$ près** (`SEEL_RESOLUTION_NM = 0.005` dans `certus_strat_ranking.py`).
+
+---
 
 ## 18. Autres chantiers ouverts
 
@@ -3766,20 +3938,37 @@ stratégie, comme `n_layers_forced`.
 
 ---
 
-## 23bis. 🟠 LE CORRECTIF 2 — ÉCRIT ET TESTÉ, PAS ENCORE MESURÉ
+## 23bis. 🔴 LE CORRECTIF 2 — MESURÉ, MAIS NON CONSIGNÉ, DONC INEXPLOITABLE
 
-🔴 **Distingue les deux, c'est tout l'objet de cette section.** Le code existe, il est
-couvert par 37 tests unitaires, et **aucun run de banc n'a été fait**. Donc :
+🔴 **Il y a désormais TROIS états à distinguer, pas deux, et c'est tout l'objet de cette
+section :** *écrit*, *mesuré*, et **mesuré-mais-non-consignable**. Le correctif 2 est dans le
+troisième, qui est le plus traître, parce qu'il ressemble au second.
 
-> **Rien ne dit encore que ce correctif améliore quoi que ce soit.** Il est *inactif par
-> défaut* et il le reste tant que la campagne `gate` n'a pas tourné.
+Le code existe et il est couvert par 37 tests unitaires. **La campagne `gate` A TOURNÉ le
+2026-08-14** — 6 runs sur 6, 55 min 16 s, artefacts sur le disque. Et pourtant :
+
+> **Rien ne dit encore que ce correctif améliore quoi que ce soit**, parce que les 6 runs sont
+> sortis **FAILED** : `crash_gate_confidence` est dans `_OVERRIDES` mais **absente de
+> `TRACED_KEYS`** (`scripts/probe_anchor_noise_pipeline.py`), donc la valeur a été **appliquée
+> au run et jamais écrite dans `r["config"]`**. `run_campaign.py` ne peut pas vérifier que le
+> run a fait ce qu'on lui demandait, et `analyse_gate.py` lit une clé absente : il est inerte.
+
+**C'est le point 7 de §17 qui se rouvre** — *« un run qui ne consigne pas sa configuration
+n'est comparable à rien »*. Répare la traçabilité **avant** de relancer : la clé dans les
+**deux** listes, et dans le nom du fichier de sortie.
+
+⚠️ **Et deux résultats de cette campagne sont à expliquer avant d'être crus** : les bras
+porte-OFF et porte-armée rendent un score **bit-identique** (`0.006138704636203437`) avec des
+gagnantes différentes, et le témoin C1 **n'a pas reproduit** sa référence
+(`0.00611049163380679` contre `0.006151532415266679` attendu à ~1e-11). Détail et conduite à
+tenir : bloc **EN COURS** en tête de document.
 
 | | |
 |---|---|
 | **Le paramètre** | `crash_gate_confidence`, défaut **0,0 = inactif**. Lisible depuis le JSON, l'interface et `CERTUS_CRASH_GATE_CONF`. Valeur à armer : **0,95** |
 | **Le code** | `_crash_gate_rejects` et `crash_rate_lower_bound`, dans `certus_strat_robustness.py` |
 | **Les tests** | `tests/unit/test_strat_crash_gate_confidence.py`, **37 tests**, dont C1 sur quatre formes de valeur inactive |
-| **La campagne** | `scripts\run_campaign.py gate` — **6 runs, ~3 h 30**, chaque bras avec son témoin |
+| **La campagne** | `scripts\run_campaign.py gate` — **6 runs**, chaque bras avec son témoin. 📏 Mesurée le 2026-08-14 : **55 min 16 s**, et non ~3 h 30 (`reports/probe_runs.tsv`, colonne `run_s`). 🔴 **Les 6 runs sont sortis FAILED** pour un défaut de traçabilité : lis le bloc EN COURS en tête de document avant de la relancer. |
 | **La lecture** | `scripts\analyse_gate.py` — imprime les quatre questions et **le test qui va avec chacune** |
 | **L'ordre de mission** | `GEMINI_TODO.md`, réécrit pour cette campagne |
 
@@ -4028,7 +4217,7 @@ Toujours inexistant, et c'est **le seul instrument de C1** (§3). La recette com
 **palier 1 de la feuille de route** — ne la réécris pas ici, suis-la.
 
 🔑 **Pourquoi ça devient urgent** : le 2026-08-13 je m'en suis passé pour la porte de
-plantage en énumérant **exhaustivement ses 1046 cas** — possible parce que c'est une
+plantage en énumérant **exhaustivement ses 127 cas** (⚠️ le nombre 1046 a circulé ici et n’existe nulle part dans le dépôt : l’énumération réelle est `for n_runs in (10, 25, 50, 150, 300, 500)` à pas sauté, `tests/unit/test_strat_crash_gate_confidence.py:127`) — possible parce que c'est une
 fonction pure de deux entiers. **Un changement de noyau n'a pas ce luxe**, et la prochaine
 fois personne n'aura d'instrument.
 
@@ -4052,3 +4241,204 @@ Ne les saute pas : un harnais qui a l'air de marcher sans rien prouver est le pi
 
 **A25 d'abord.** A26 et A27 rendent le dépôt plus sûr ; **seule A25 peut rendre STRAT
 vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.
+
+---
+
+## 25. 🔴 MULTIPLE TESTGLASS METHODOLOGY — le programme annoncé le 2026-08-14
+
+> 👤 *« comme tu le vois sur le 99c, il devient quasi impossible de faire du monitoring
+> optique et du POEM sur des filtres à plus de 50 couches. Mon idée est la suivante :
+> découper le filtre en deux parties, testglass 1 et testglass 2, en remettant un verre nu
+> après une cinquantaine de couches. Les deux monitorings sont indépendants, mais le verre
+> avec le dépôt total bénéficie des deux coatings successifs. »*
+
+> 👤 *« pour savoir où couper, je veux une méthode très générale, et qui fonctionne bien
+> au-delà du cas particulier de ce 99c. Cela pourrait être basé sur un nombre de couches
+> raisonnable, un SEEL qui se dégrade, ou autre, mais tout cela est à tester de manière
+> systématisée et automatisée. On comprendra peut-être a posteriori ! »*
+
+### 25.1. Le constat qui ouvre le chantier
+
+📏 Mesuré sur le passe-bande 5 cavités 99 couches
+(`example/example_strat/RAPPORT_FILTRE_EXTREME_5CAV_99C.md`) : **environ 75 couches sur 99
+doivent passer en mode Rate**, et le SEEL retombe à **0,86 nm** contre 0,17 nm sur le 48c.
+Deux causes, toutes deux physiques et non contournables par un meilleur solveur :
+
+- les **cavités demi-onde** ont un swing optique **nul** pendant leur dépôt ;
+- les **miroirs de 19 couches** transmettent moins de 1e-4, donc le signal est noyé.
+
+Un suivi optique continu à λ₀ sur tout l'empilement rend **100 % de plantages**
+(`CRASH_LEVEL_UNREACHABLE`). Le monitoring optique ne meurt pas progressivement : il meurt.
+
+### 25.2. Ce que la coupure restaure, et ce qu'elle coûte
+
+**Elle restaure.** Chaque témoin ne porte jamais plus d'une cinquantaine de couches, donc `T`
+reste mesurable, le swing `dT/de` reste exploitable, et POEM retrouve des extrema francs
+comme repères de phase absolus.
+
+🔴 **Elle coûte, et c'est le fait qui gouverne tout le chantier : LA COMPENSATION D'ERREUR NE
+TRAVERSE PAS LA COUPURE.** Tout l'avantage du monitoring optique sur le contrôle au quartz
+est qu'une erreur d'épaisseur sur la couche *k* est partiellement **auto-corrigée** : les
+couches suivantes, lues sur le **même** verre, voient l'erreur accumulée et le point de
+déclenchement se décale pour l'annuler en partie. Dès qu'on change de témoin, les couches
+d'après sont lues sur un verre qui **ne contient pas** les erreurs d'avant. Le résidu de la
+partie 1 est donc **gelé dans la pièce, définitivement incorrigible**, et le spectre final
+porte erreur(partie 1) + erreur(partie 2) **sans terme croisé**.
+
+⚠️ Et un changement de témoin est une **opération machine réelle** — remise à l'air ou
+carrousel. La partie 2 se dépose sur une pièce ayant subi un cycle : contamination possible,
+décalage d'indice entre les deux runs. Ce coût n'est **pas** dans le modèle.
+
+### 25.3. 🔑 CE QUE LE CODE A DÉJÀ — la coupure n'est pas une refonte
+
+| | |
+|---|---|
+| **La vue témoin** | `certus/physics/certus_strat_batch.py:474` — `current_run_th_buffer[r, :i_layer]` est la pile accumulée que la lecture optique « voit ». **C'est là que la coupure se joue** : couper à la couche *p* revient à passer la tranche `[r, p:i_layer]`. |
+| **La pièce** | `sim_thick_batch`, épaisseurs réelles complètes `(n_runs, n_layers)`. Elle n'est **pas** tronquée : la pièce continue d'accumuler toutes les erreurs. C'est exactement la physique voulue. |
+| **Le crochet POEM** | `certus/physics/certus_strat_batch.py:485` — `block_start[i_layer]` est **déjà** un tableau par couche disant au noyau où commence l'historique. Une coupure est un `block_start` forcé, **plus** la troncature de la pile. |
+| **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `growth.py:904-908`. L'historique rejoué repart de zéro à la coupure. |
+| **Le seuil de swing** | `certus/physics/certus_strat_growth.py:883` — `SWING_MIN = 0.04`. **Un critère de mort du signal existe donc déjà, chiffré, dans le noyau.** |
+
+🔴 **Vérifier ces cinq ancrages avant d'écrire une ligne.** Le document a déjà cité
+`certus/core/certus_strat_growth.py` — **ce fichier n'existe pas**, le module est en
+`certus/physics/`. Un plan bâti sur un chemin faux coûte une session.
+
+### 25.4. Pourquoi on ne devinera PAS où couper, et ce qu'on fait à la place
+
+👤 a tranché la méthode : **on ne postule pas la règle, on la découvre.** Le protocole est
+donc en trois temps, et l'ordre n'est pas négociable :
+
+1. **Deux prédicteurs GRATUITS**, calculables sans aucun Monte-Carlo (T2, T3).
+2. **Une vérité de terrain COÛTEUSE**, le balayage exhaustif des positions de coupure (T4).
+3. **La corrélation entre les deux** — c'est ça, le « on comprendra a posteriori ». Si un
+   prédicteur gratuit prédit la vérité coûteuse, on a une **règle générale** ; sinon on a au
+   moins une carte, et on sait que la règle est ailleurs.
+
+⚠️ **Ne pas inverser.** Écrire la règle d'abord puis chercher la mesure qui la confirme est
+l'erreur n°2 du document.
+
+### 25.5. LA TODO LISTE, dans l'ordre
+
+#### 🔴 T0 — Les CONTRÔLES NÉGATIFS, avant toute machinerie
+
+**À faire en premier, et c'est contre-intuitif.** Sur le 35c et le 48c, le monitoring optique
+marche : le SEEL y vaut 0,48 et 0,17 nm. Une coupure y est donc **une perte pure** — elle
+retire de la compensation et ajoute une remise à l'air, sans rien restaurer.
+
+**Le critère de recette du chantier entier :** si la machinerie finit par « améliorer » le 35c
+ou le 48c en les coupant, **le modèle est faux** et rien de ce qui suit ne vaut. Écris cette
+attente **avant** de mesurer, dans le test, pas dans le rapport.
+
+| # | Ce qu'on mesure | Attendu |
+|---|---|---|
+| 1 | 48c, coupure forcée en 24 | SEEL **dégradé** par rapport à 0,17 nm |
+| 2 | 35c, coupure forcée en 17 | SEEL **dégradé** par rapport à 0,48 nm |
+| 3 | 99c, coupure forcée en 50 | SEEL **amélioré** par rapport à 0,86 nm — c'est l'hypothèse à réfuter |
+
+#### T1 — Le mécanisme de coupure
+
+| | |
+|---|---|
+| **Fichier** | `certus/physics/certus_strat_batch.py`, boucle sur les couches, ligne 460 |
+| **Ce qu'il faut écrire** | un paramètre `witness_reset_layers` (liste d'indices 0-based). La tranche de la ligne 474 devient `current_run_th_buffer[r, base(i_layer):i_layer]` où `base(i)` est la dernière coupure ≤ `i`. `block_start[i_layer]` est forcé à `base(i_layer)` sur la couche de reprise. |
+| **Ce qu'il ne faut PAS toucher** | `sim_thick_batch`. La pièce accumule tout. Si le score final se met à ignorer les erreurs d'avant la coupure, la mesure est fausse **et plausible**. |
+
+**Les tests qui doivent ÉCHOUER sur le code d'avant :**
+
+| # | Test | Attendu |
+|---|---|---|
+| 1 | `witness_reset_layers = []` puis `= [0]` | **bit-identiques.** Couper à la couche 0, c'est ne pas couper |
+| 2 | coupure en *p* | les couches ≥ *p* voient une pile de longueur `i − p`, pas `i` |
+| 3 | 🔴 coupure en *p*, erreur énorme injectée sur les couches < *p* | le **score final se dégrade** quand même. Si le score ne bouge pas, la pièce a été tronquée avec le témoin — c'est **le** défaut à craindre |
+| 4 | deux coupures | `base()` rend bien la dernière, pas la première |
+
+#### T2 — Prédicteur gratuit n°1 : LA CARTE DE MORT DU SIGNAL
+
+Pour chaque couche *i* et chaque λ candidate, calculer sur le témoin portant les couches
+`[base..i)` le **swing disponible** — l'amplitude crête-à-crête de `T` pendant le dépôt de la
+couche. Nominal, aucun tirage, coût négligeable.
+
+La grandeur qui décide : **`swing_max(i) = max sur λ du swing`**. Le seuil existe déjà :
+`SWING_MIN = 0.04` (`growth.py:883`). **Première règle générale candidate : couper juste
+avant que `swing_max(i)` ne passe sous `SWING_MIN`.**
+
+⚠️ Cette carte est à produire **par couche et par λ**, pas seulement par couche : une couche
+aveugle à λ₀ peut être parfaitement lisible 40 nm plus loin. C'est tout l'objet du solveur.
+
+#### T3 — Prédicteur gratuit n°2 : LA CARTE DE SENSIBILITÉ À L'ERREUR GELÉE
+
+C'est le prédicteur du **coût** de la coupure, et il tombe directement de la §25.2. Pour
+chaque position candidate *p* : geler un champ d'erreur réaliste sur les couches `1..p`, puis
+mesurer le **dommage spectral** sur le design final. TMM pur, aucun monitoring, aucun
+Monte-Carlo de robustesse — donc peu coûteux.
+
+Cela rend `sensibilite(p)`. La règle générale candidate devient le croisement des deux
+courbes gratuites : **couper là où le signal est encore vivant et où l'erreur gelée coûte le
+moins.**
+
+⚠️ **Ne pas coder en dur « pas à l'intérieur d'une cavité ».** C'est l'attente — la résonance
+dépend de l'épaisseur optique totale du spacer et des miroirs qui l'encadrent, donc une erreur
+gelée là désaccorde toute la bande. Mais c'est au balayage de le montrer. Une carte qui
+retrouve les spacers (couches 10, 30, 50, 70, 90) toute seule **valide la méthode** ; une
+règle qui les impose ne prouve rien.
+
+#### T4 — La VÉRITÉ DE TERRAIN : balayage exhaustif, automatisé
+
+| | |
+|---|---|
+| **Script** | `scripts/campaign_testglass_cut_sweep.py`, sur le modèle de `scripts/run_campaign.py` — **une commande = toute la campagne**, chaque run vérifié contre la configuration demandée, reprenable |
+| **Balayage** | *p* sur toutes les positions, ou un pas régulier si le coût l'impose |
+| **Ce qu'on mesure** | le **SEEL de la pièce**, pas du témoin. Plus le taux de plantage, le nombre de couches en Rate, et le nombre de changements de λ |
+| **Contrôles dans la même campagne** | (a) sans coupure ; (b) **même nombre de couches en Rate, sans coupure** — sans ce second contrôle, on ne saura pas si le gain vient de la coupure ou du Rate |
+
+🔴 **Consigner la configuration effective de chaque run**, et pas seulement celle demandée.
+La campagne « gate » du 2026-08-14 a rendu ses 6 runs **FAILED** parce que
+`crash_gate_confidence` était dans `_OVERRIDES` sans être dans `TRACED_KEYS` : appliquée au
+run, jamais consignée. `witness_reset_layers` doit être dans **les deux**, et dans le nom du
+fichier de sortie.
+
+#### T5 — La CORRÉLATION, et la règle générale
+
+Confronter T2 et T3 à T4 : lequel des prédicteurs gratuits classe correctement les positions
+de coupure ? Candidats à mettre en concurrence, **tous exprimés sans dimension** pour qu'ils
+survivent au-delà du 99c :
+
+| candidat | forme | ce qu'il vaut |
+|---|---|---|
+| nombre de couches | couper tous les *K* | le plus simple, **la référence à battre** |
+| mort du signal | `swing_max(i) < SWING_MIN` | physiquement motivé, gratuit (T2) |
+| erreur gelée | minimum de `sensibilite(p)` | cible le vrai coût, gratuit (T3) |
+| SEEL marginal | la contribution par couche se dégrade | plus coûteux, demande l'attribution par couche |
+| structure du design | frontières de sous-ensembles | gratuit, mais est-ce général ? |
+
+**Une règle n'est retenue que si elle est validée hors échantillon** : autre graine **et**
+autre empilement. Une coupure est un degré de liberté de plus — une recherche qui l'a trouvera
+**toujours** au moins aussi bon en échantillon. C'est le piège central de ce chantier.
+
+#### T6 — Généraliser : l'échelle d'empilements
+
+La règle doit tenir sur une échelle, pas sur un cas :
+
+| empilement | rôle | attendu |
+|---|---|---|
+| 35c passe-bande | **contrôle négatif** | la coupure **perd** |
+| 48c dichroïque | **contrôle négatif** | la coupure **perd** |
+| 99c 5 cavités | le cas qui ouvre le chantier | la coupure **gagne** |
+| ≥ 150c synthétique | l'extrapolation | la coupure gagne **beaucoup**, et 2 coupures battent 1 |
+
+#### T7 — Coupures multiples
+
+Une fois une coupure comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée
+en blocs. La partition devient **à deux niveaux**, et elle se compose avec la recherche par
+blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une règle.
+
+### 25.6. 🔴 LES PIÈGES DE CE CHANTIER
+
+| | |
+|---|---|
+| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. **C'est une conjecture, pas une mesure** : la pondération spectrale des erreurs diffère entre les deux parties. Mesure-le. |
+| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant la coupure auraient disparu. Test 3 de T1. |
+| **Le degré de liberté gratuit** | Une coupure ne peut qu'améliorer un résultat en échantillon. Validation hors échantillon obligatoire. |
+| **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
+| **Le coût atelier non modélisé** | La remise à l'air n'est pas dans le modèle. Un gain de SEEL de 0,05 nm ne paie peut-être pas un cycle de pompage. **Question à 👤, pas à trancher seul.** |
+| **Couper « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 30 ou 70. |

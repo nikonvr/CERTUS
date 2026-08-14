@@ -3068,16 +3068,31 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                             <th style="border:1px solid #86efac;padding:4px 10px;">N draws</th>
                             <th style="border:1px solid #86efac;padding:4px 10px;">points deciding the P95</th>
                             <th style="border:1px solid #86efac;padding:4px 10px;">resolution on <code>crash_rate</code></th></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>6</b> — <code>fast</code> mode</td>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;"><b>10</b> — <code>fast</code> mode</td>
                             <td style="border:1px solid #86efac;padding:4px 10px;"><b>only one (the maximum)</b></td>
-                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>17%</b> for a 5% threshold</td></tr>
-                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">25</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;"><b>10%</b> for a 5% threshold</td></tr>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">25 — <code>premium</code> mode</td>
                             <td style="border:1px solid #86efac;padding:4px 10px;">one to two</td>
                             <td style="border:1px solid #86efac;padding:4px 10px;">4%</td></tr>
+                        <tr><td style="border:1px solid #86efac;padding:4px 10px;">50 — <code>deep</code> mode</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">two to three</td>
+                            <td style="border:1px solid #86efac;padding:4px 10px;">2%</td></tr>
                         <tr><td style="border:1px solid #86efac;padding:4px 10px;">150</td>
                             <td style="border:1px solid #86efac;padding:4px 10px;">about seven</td>
                             <td style="border:1px solid #86efac;padding:4px 10px;">0.7%</td></tr>
                     </table>
+                    <p style="margin:0 0 10px;padding:8px 12px;background:#fef9c3;border-left:4px solid #ca8a04;">
+                        <b>Read this as a limit on what FAST may be quoted for.</b> The resolution
+                        column is the <i>quantisation</i> $1/N$: a crash rate screened over 10 draws
+                        can only ever read 0&nbsp;%, 10&nbsp;%, 20&nbsp;%&nbsp;… so a 5&nbsp;%
+                        threshold falls <i>between two representable values</i>. A
+                        <code>crash_rate = 0.0&nbsp;%</code> obtained under FAST therefore means
+                        &ldquo;below 10&nbsp;%&rdquo;, not &ldquo;zero&rdquo;. <b>Quote FAST for
+                        SEEL and for block architecture; quote crash rate from PREMIUM or DEEP.</b>
+                        The screening budget is <code>n_screen_runs</code> = 10 / 25 / 50
+                        (<code>certus_strat_ui_state.py</code>), distinct from the final
+                        Monte-Carlo depth <code>robustness_num_runs</code> = 50 / 150 / 300.
+                    </p>
                     <p style="margin:0 0 10px;">
                         The <b>CVaR95</b> — average of the worst 5&nbsp;%, <i>expected
                         shortfall</i> — keeps exactly the same risk semantics but
@@ -3430,6 +3445,92 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <li><strong>Async Plot Renderer:</strong> <code>PlotRenderWorker</code> runs Plotly-to-PNG
                         conversion in a dedicated QThread to keep the main event loop responsive.</li>
                 </ul>
+
+                <h3>9.5 Solver Execution Modes (Fast, Premium, Deep)</h3>
+                <p>
+                    The solver exposes three standardized execution profiles via the <code>Execution Mode</code> combo-box in the <em>Advanced</em> parameters tab:
+                </p>
+
+                <table style="border-collapse:collapse;margin:12px 0 18px;font-size:0.92em;width:100%;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Parameter / Budget</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">⚡ Fast Mode</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">💎 Premium (Nominal)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">🔬 Deep Mode</th>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Intended Use</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#0284c7;">Rapid interactive prototyping</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;color:#16a34a;">Standard production baseline</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#9333ea;">Deep search &amp; critical certification</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Final Monte-Carlo Depth (<code>robustness_num_runs</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$N = 50$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$N = 150$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$N = 300$</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Phase B Pre-Screening (<code>n_screen_runs</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$10$ draws</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$25$ draws</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$50$ draws</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Consensus Runs (<code>consensus_num_runs</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$50$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$150$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$300$</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Phase A DP Search Width (<code>dp_top_k</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$20$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$40$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$100$</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Phase A Survivors (<code>k_keep_survivors</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$6$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$10$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$25$</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>ELITE Genetic Rounds (<code>elite_rounds</code>)</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$1$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">$2$</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">$3$</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Measured wall-clock, 35-layer bandpass</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#0284c7;">166 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;color:#16a34a;">248 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#9333ea;">431 s</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><strong>Measured wall-clock, 48-layer dichroic</strong></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#0284c7;">371 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;color:#16a34a;">570 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#9333ea;">965 s</td>
+                    </tr>
+                </table>
+
+                <div class="note" style="border-left:4px solid #0284c7;">
+                    <b>These are measured, not typical.</b> One run each on a 12-core desktop,
+                    2026-08-14 &mdash; command <code>scripts/benchmark_3_modes.py</code>, artefact
+                    <code>reports/benchmark_3_modes_results.json</code>. Wall-clock scales with the
+                    layer count and with the machine, so read the <i>ratios</i> as transferable and
+                    the absolute seconds as indicative: FAST costs about <b>0.4&times;</b> DEEP, and
+                    PREMIUM about <b>0.6&times;</b>.
+                </div>
+
+                <div class="note">
+                    <strong>Statistical Rationale:</strong>
+                    <ul>
+                        <li><b>Fast Mode:</b> Designed for fast turnaround while preserving significant crash detection (at $N=50$, binomial resolution $\sigma_p \approx 3.0\%$). Ideal for exploring layer feasibility.</li>
+                        <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §17-26: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
+                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors) where wide Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) guarantee exhaustive exploration.</li>
+                    </ul>
+                </div>
 
                 <!-- ================================================================ -->
                 <!--  WHAT MAKES A GOOD STRATEGY — ESTABLISHED vs CONJECTURED          -->
@@ -3901,12 +4002,27 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     The single-parameter fit reproduces every point to within <b>&plusmn;9 %</b>
                     across the whole range. Linearity over a factor 40 also says something physical:
                     over the practical range the errors combine <b>without saturation</b> — no
-                    threshold, no runaway. SEEL is quoted quantised to 0.1 nm, which is deliberate:
-                    the third digit of a Monte-Carlo score is not information.
+                    threshold, no runaway.
                     <br>Reference point: the corridor-0 winner scores <b>0.3 nm</b>; at the model
                     corridor of 0.005 the best achievable becomes <b>0.6 nm</b>. Index uncertainty
                     alone <b>doubles</b> the effective per-layer error.
                 </p>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>The quantisation of SEEL changed on 2026-08-14, and the reader must know which
+                    one a figure was produced under.</b> It was <b>0.1&nbsp;nm</b> until then;
+                    <code>SEEL_RESOLUTION_NM</code> is now <b>0.005</b>, i.e. a bin of
+                    <b>0.01&nbsp;nm</b> (<code>certus_strat_ranking.py</code>). Every SEEL quoted
+                    with one decimal on this page predates the change.
+                    <br><br>
+                    ⚠️ <b>And the finer bin is not free.</b> The statistical resolution of a
+                    robustness score is $\approx 6\,\%$ relative at $N = 150$, so at
+                    SEEL&nbsp;$= 0.3$&nbsp;nm the noise is $\approx 0.018$&nbsp;nm &mdash; nearly
+                    <b>twice</b> the 0.01&nbsp;nm bin. Two strategies separated by one bin are
+                    therefore <i>not</i> distinguishable by that alone. The second, statistical bound
+                    that would prevent this (<code>seel_equivalence_half_width</code>) exists and is
+                    unit-tested, but <b>has no caller in production</b>: the ranking key uses the
+                    absolute step only. Treat a one-bin difference as a tie.
+                </div>
 
                 <h3>10.7 How many Monte-Carlo draws are actually needed</h3>
                 <p>
@@ -4510,6 +4626,299 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         noise model has one measured number and no free parameter; adding structure
                         nobody measured would trade a measured constant for invented ones.</li>
                 </ul>
+
+                <h3>10.14 Multi-Layer Block Monitoring Discovery &amp; Phase A Block-Aware Engine (Campaign 2026-08-14)</h3>
+                <div class="highlight-box" style="background:#f0fdf4;border-left:4px solid #16a34a;">
+                    🟢 <b>MEASURED — grouping the monitoring into a few multi-layer blocks beats
+                    one-wavelength-per-layer monitoring on both test components.</b>
+                    On 2026-08-14, following the integration of the <b>Block-Aware bonus</b> in Phase A ($C_{\text{adj}} = C_{\text{local}}/\sqrt{\text{streak}}$ in <code>certus_strat_objectives.py</code>) and the benchmark of the 3 execution modes (<b>FAST</b>, <b>PREMIUM</b>, <b>DEEP</b>),
+                    <b>5 to 6 blocks</b> came out best on both stacks, at a screened crash rate that read <b>0.0 %</b>:
+                    <ul style="margin:8px 0 8px 18px;">
+                        <li><b>48-layer dichroic</b>: one λ per layer (48 blocks) SEEL <b>0.27 nm</b> &rarr; <b>6 blocks SEEL 0.17 nm</b>, a <b>&minus;36 %</b> per-layer error, and <b>5 monochromator moves instead of 47</b> [ID 900000024, RMSE <code>0.01803</code> &rarr; <code>0.00745</code>].</li>
+                        <li><b>35-layer bandpass (3 cavities)</b>: one λ per layer (35 blocks) SEEL <b>0.58 nm</b> &rarr; <b>6 blocks SEEL 0.48 nm</b> under DEEP, a <b>&minus;17 %</b> per-layer error, and <b>5 moves instead of 34</b> [ID 900000040, RMSE <code>0.08496</code> &rarr; <code>0.05819</code>].</li>
+                    </ul>
+                    <div style="margin-top:10px;padding:8px 12px;background:#fff;border-left:3px solid #16a34a;">
+                        <b>Why the percentages here are smaller than the ones you may have seen.</b>
+                        SEEL goes as $\sqrt{\text{RMSE}}$, so a <b>&minus;59 %</b> RMSE improvement on
+                        the dichroic is a <b>&minus;36 %</b> improvement in per-layer error, and
+                        <b>&minus;31 %</b> RMSE on the bandpass is <b>&minus;17 %</b> in SEEL. The
+                        figures above are in <b>SEEL</b>, because that is the quantity a coater can
+                        act on. Any RMSE percentage quoted elsewhere is the same result stated in a
+                        flattering unit.
+                    </div>
+                </div>
+
+                <h4>A. Performance by block count</h4>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>Read the mode before comparing two cells.</b> Common settings: index corridor
+                    0.005, 2 nm slit, POEM dynamic anchoring, seed 42. But the <b>search width and
+                    Monte-Carlo depth are not the same across every row</b> — the 35-layer best
+                    (6 blocks, <code>0.05819</code>) comes from <b>DEEP</b> ($N = 300$,
+                    <code>top_k</code> 100) while PREMIUM ($N = 150$, <code>top_k</code> 40) returns
+                    <b>5 blocks</b> at <code>0.06201</code>. A figure obtained at a wider search is
+                    not comparable to one obtained at a narrower search, and the difference is not
+                    noise. Artefact: <code>reports/benchmark_3_modes_results.json</code>.
+                </div>
+
+                <table style="border-collapse:collapse;margin:0 0 16px;font-size:0.92em;width:100%;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Architecture</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Best Strategy (48-layer)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">RMSE (48c)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL 0.01nm (48c)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Best Strategy (35-layer)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">RMSE (35c)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL 0.01nm (35c)</th>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>Monolayer (N blocks)</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000044</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.01803</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.27 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 35961</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.08496</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.58 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">9 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000029</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.01066</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.21 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">—</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">—</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">—</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">8 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000010</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.01136</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.21 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">—</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">—</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">—</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">7 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000000</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.00783</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.18 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000023</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.06005</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.49 nm</td>
+                    </tr>
+                    <tr style="background:#dcfce7;font-weight:bold;">
+                        <td style="border:1px solid #86efac;padding:5px 10px;">🏆 6 blocks (best measured)</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;"><code>ID 900000024</code></td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;text-align:center;color:#15803d;">0.00745</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;text-align:center;color:#15803d;">0.17 nm</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;"><code>ID 900000040</code></td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;text-align:center;color:#15803d;">0.05819</td>
+                        <td style="border:1px solid #86efac;padding:5px 10px;text-align:center;color:#15803d;">0.48 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">5 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000054</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.00768</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.18 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000000</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.06201</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.50 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">4 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000019</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.00806</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.18 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000013</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.06431</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.51 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">3 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000031</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.00874</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.19 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000039</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.07087</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.53 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">2 blocks</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000016</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.00914</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.19 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 990000002</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.08026</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.57 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">1 block (Single-λ)</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000002</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;color:#b91c1c;">0.25738</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;color:#b91c1c;">1.01 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><code>ID 900000002</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;color:#b91c1c;">0.37429</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;color:#b91c1c;">1.22 nm</td>
+                    </tr>
+                </table>
+
+                <h4>B. Why blocks beat one-λ-per-layer — the mechanism, and the limit of the claim</h4>
+                <div class="note">
+                    <ol style="margin:0;padding-left:20px;">
+                        <li><b>POEM phase memory across the block</b>: when a wavelength is held over several layers, $T(d)$ stays continuous, and POEM uses the previous extrema — <b>up to 4 layers back</b>, <code>MAX_LOOKBACK_VAL = 4</code> — as absolute phase references to absorb accumulated thickness and index error. One λ per layer resets that reference at every layer and forfeits the compensation. ⚠️ The corollary is that <b>the value of a long block is capped by construction</b>: a 24-layer block replays only its last 4.</li>
+                        <li><b>Slope accumulation</b>: a layer whose own derivative is flat ($dT/de \approx 0$) sits on the steep flank of the sub-stack it belongs to, so the trigger edge is sharp where the isolated layer had none.</li>
+                        <li><b>The window, 4 to 7 blocks</b>:
+                            <ul>
+                                <li><i>Too many ($\ge 10$)</i>: the lookback memory is never used, and every extra block is one more grating rotation in the workshop.</li>
+                                <li><i>Too few ($\le 3$)</i>: optical blindness — one λ cannot serve sub-stacks of very different optical thickness, and the signal flattens at the turning points.</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>What is NOT claimed: that 6 is a universal optimum.</b> Six is the best block
+                    count <i>among those measured</i>, on <b>two</b> stacks, at <b>one</b> seed, found
+                    by a heuristic search — not an optimum proved over the partition space. Three
+                    specific reservations, each of which an evaluator would find anyway:
+                    <ul style="margin:8px 0 0 18px;">
+                        <li>On the 35-layer bandpass, block counts <b>8 to 34 were never run</b>; the
+                            sweep covers 1&ndash;7 and 35.</li>
+                        <li>On that same stack, 6 blocks wins only under <b>DEEP</b>. FAST and PREMIUM
+                            both return <b>5 blocks</b>.</li>
+                        <li>The 6-vs-5 gap on the dichroic is <b>smaller than the statistical
+                            resolution</b> of the score itself (§10.6). Within one bin, the ranking is
+                            a coin toss dressed as a decision.</li>
+                    </ul>
+                    And the 99-layer filter of §10.15 shows the window moves with the stack: there the
+                    best partition is <b>4 blocks</b>, not 6.
+                </div>
+
+                <h4>C. The Block-Aware Phase A bonus — what the code actually does</h4>
+                <p>
+                    Candidate cost in Phase A (<code>certus_strat_objectives.py</code>) is divided by
+                    the square root of the number of consecutive layers a wavelength stays valid for
+                    (its <i>streak</i>), for any streak $\ge 2$:
+                    $$\text{Cost} \;\leftarrow\; \frac{\text{Cost}_{\text{local}}}{\sqrt{\text{streak}}}$$
+                    This lifts wavelengths that are stable over several layers past the
+                    <code>dp_top_k</code> truncation into Phase B — that width is <b>20 / 40 / 100</b>
+                    for FAST / PREMIUM / DEEP, so the bonus matters most exactly where the search is
+                    narrowest.
+                </p>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>Three properties of this bonus that the formula above does not show, and that
+                    matter to anyone reading the source.</b>
+                    <ul style="margin:8px 0 0 18px;">
+                        <li><b>What Phase B sees is $\text{Cost}/\text{streak}$, not
+                            $\text{Cost}/\sqrt{\text{streak}}$.</b> Normalisation squares the cost
+                            afterwards, so the two operations compose: a 9-layer block is favoured by
+                            a factor <b>9</b>, not 3.</li>
+                        <li><b>The local cost is overwritten in place</b>, and the pre-bonus value is
+                            not kept anywhere — the <code>cost_raw</code> field written downstream
+                            already holds the boosted number.</li>
+                        <li><b>It is not a neutral re-ordering.</b> The bonus runs <i>before</i>
+                            normalisation, and the mean used to normalise is computed over the already
+                            boosted costs. That mean drops, so candidates that received <i>no</i>
+                            bonus see their normalised cost <b>rise</b>.</li>
+                    </ul>
+                    Also: the streak threshold is <b>2 layers</b>, while the physical argument in B is
+                    made for blocks of 5 to 8. Two consecutive layers are enough to earn a factor 2,
+                    in a regime no measurement has yet shown to win.
+                </div>
+                <div class="note">
+                    <b>On the &ldquo;cost smoothing&rdquo; alternative:</b> it was set aside by
+                    argument — temporal averaging would bury the sharp local turning points the method
+                    depends on — and <b>not by measurement</b>. Nothing in the source implements it. A
+                    score of <code>0.37784</code> has circulated as its refutation; that number is in
+                    fact the <b>1-block, single-wavelength</b> strategy of a nominal 35-layer run
+                    (<code>reports/campagne_N35_300.log</code>, seed 42, $N = 300$). It says nothing
+                    about smoothing.
+                </div>
+
+                <h3>10.15 Where the method runs out — the 99-layer, 5-cavity bandpass</h3>
+                <div class="highlight-box" style="background:#fef2f2;border-left:4px solid #dc2626;">
+                    🔴 <b>Beyond roughly 50 layers, purely optical monitoring stops being available —
+                    and no better solver fixes that.</b> This section exists because an evaluator will
+                    ask where the limit is, and the honest answer is more useful than a brochure.
+                </div>
+                <p>
+                    The component: an ultra-selective bandpass at $\lambda_0 = 633$ nm,
+                    <b>5 coupled Fabry&ndash;Pérot cavities</b>, <b>99 layers</b>,
+                    $\text{Nb}_2\text{O}_5$ / $\text{SiO}_2$, total physical thickness
+                    <b>9.10 µm</b>, FWHM <b>2.55 nm</b>, peak transmission <b>99.2 %</b>, out-of-band
+                    rejection $\text{OD} > 9.7$ at $\pm 8$ nm. Formula
+                    $\text{Sub} / (HL)^4 H \cdot 2L \cdot [(HL)^9 H \cdot 2L]^4 \cdot (HL)^4 H / \text{Air}$.
+                </p>
+                <h4>What breaks, physically</h4>
+                <ul>
+                    <li><b>The half-wave cavity spacers have zero optical swing while they grow.</b>
+                        There is no extremum to stop on — not a faint one, none.</li>
+                    <li><b>The 19-layer coupling mirrors transmit below $10^{-4}$.</b> The signal is
+                        under the photometric noise floor, so a reading carries no information about
+                        thickness.</li>
+                    <li>Consequently, attempting continuous optical monitoring at $\lambda_0$ across
+                        the whole stack yields <b>100 % crashes</b>
+                        (<code>CRASH_LEVEL_UNREACHABLE</code>). Not a degradation — a wall.</li>
+                </ul>
+                <h4>What the solver returns anyway</h4>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Quantity</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">PREMIUM ($N=150$)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">DEEP ($N=300$)</th></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Best partition</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>4 blocks</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>4 blocks</b></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>SEEL</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.86 nm</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.86 nm</b></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">RMSE P95</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><code>0.18705</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><code>0.18310</code></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Strategies evaluated</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">785</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">&gt; 1 800</td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Wall-clock</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">24.4 min</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">30.0 min</td></tr>
+                </table>
+                <p>
+                    Read that against the dichroic&rsquo;s <b>0.17 nm</b>: the same code on a component
+                    five times harder gives <b>five times the per-layer error</b>. The filter stays
+                    manufacturable — pure rate control would sit near <b>1.31 nm</b>, so the hybrid
+                    strategy still buys a factor 1.5 — but this is the regime where the method is
+                    working at its edge, and the honest way to say so is that <b>roughly 75 of the 99
+                    layers run on rate (quartz/chrono)</b>, with targeted optical monitoring on the
+                    ~24 layers that close each cavity, where POEM can still absorb the accumulated
+                    drift.
+                </p>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>Provenance, stated plainly.</b> Figures from the run of 2026-08-14, artefacts
+                    <code>reports/Report_STRAT_JSON-strat-bandpass-5cav-99c_20260814_162835_RMSE_0.18705.{xlsx,html}</code>,
+                    configuration <code>example/example_strat/JSON-strat-bandpass-5cav-99c.json</code>
+                    (and <code>-deep.json</code>). ⚠️ The companion JSON summary of that run,
+                    <code>reports/run_strat_5cav_99c_results.json</code>, is <b>truncated</b>: the
+                    serialiser hit a NumPy array and aborted mid-write. The headline RMSE was already
+                    on disk and is the number quoted here; the per-strategy tail of that file is not
+                    recoverable and the run must be replayed to obtain it. The cause is fixed.
+                </div>
+                <div class="highlight-box" style="background:#eff6ff;border-left:4px solid #2563eb;">
+                    <b>The programme this opens: multiple-testglass monitoring.</b> If a single witness
+                    cannot carry 99 layers, use more than one — swap in a bare witness after ~50
+                    layers. The part stays in the chamber and receives all 99 layers; each monitoring
+                    campaign sees a fresh, readable stack.
+                    <br><br>
+                    🔴 <b>And the cost of that idea is the thing to design around, not the benefit.</b>
+                    Optical monitoring is self-correcting only because later layers are read on the
+                    <i>same</i> witness and see the accumulated error. Swap the witness and the error
+                    of part 1 is <b>frozen into the part, permanently uncorrectable</b>: the final
+                    spectrum carries error(part 1) + error(part 2) with no cross term. So <i>where</i>
+                    to cut is the whole question, it is not &ldquo;at 50&rdquo;, and it will be
+                    answered by systematic sweep rather than by argument. Cutting inside a resonant
+                    cavity is expected to be the worst choice, since the resonance depends on the
+                    total optical thickness of the spacer and its surrounding mirrors.
+                    <b>Not yet implemented, not yet measured</b> — stated here so no one reads the
+                    99-layer result as the end of the road.
+                </div>
 
                 <h2>11. Making It Fast — What the Structure Gives for Free</h2>
 

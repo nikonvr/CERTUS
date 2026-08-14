@@ -3,6 +3,7 @@
 # =============================================================================
 import sys
 import os
+import math
 from pathlib import Path
 import concurrent.futures
 
@@ -365,7 +366,65 @@ def _run_phase_a_hybrid_loop(
         for r_idx in range(num_runs):
             run_states[r_idx]["p_thick_sim"].append(sim_updates[r_idx])
 
+    raw_results_thickness = _apply_block_aware_bonus(raw_results_thickness, num_layers, logger)
+
     return raw_results_thickness, full_dynamics_grid, phase_a_observability, params.get("stop_requested", False)
+
+def _apply_block_aware_bonus(
+    raw_results_thickness: dict[int, list[dict[str, float]]],
+    num_layers: int,
+    logger: logging.Logger
+) -> dict[int, list[dict[str, float]]]:
+    """
+    Detects wavelengths that remain valid over multiple consecutive layers 
+    (a "validity streak") and boosts their score (reduces their cost) so 
+    they survive the Phase B DP `top_k` truncation.
+    """
+    # 1. Build streak map (forward pass)
+    streak_fwd = {}
+    for i in range(num_layers):
+        for c in raw_results_thickness.get(i, []):
+            wl = c["wl"]
+            if i > 0 and (i - 1, wl) in streak_fwd:
+                streak_fwd[(i, wl)] = streak_fwd[(i - 1, wl)] + 1
+            else:
+                streak_fwd[(i, wl)] = 1
+                
+    # 2. Build max streak map (backward pass)
+    max_streak = {}
+    for i in range(num_layers - 1, -1, -1):
+        for c in raw_results_thickness.get(i, []):
+            wl = c["wl"]
+            sl = streak_fwd.get((i, wl), 0)
+            if i < num_layers - 1 and (i + 1, wl) in streak_fwd and streak_fwd[(i + 1, wl)] > 1:
+                max_streak[(i, wl)] = max_streak[(i + 1, wl)]
+            else:
+                max_streak[(i, wl)] = sl
+                
+    # 3. Apply bonus
+    boosted_count = 0
+    for i in range(num_layers):
+        cands = raw_results_thickness.get(i, [])
+        for c in cands:
+            wl = c["wl"]
+            ms = max_streak.get((i, wl), 1)
+            # Require at least 2 layers to form a block
+            if ms >= 2:
+                # Reduce cost proportionally to the square root of the streak length.
+                # This gives a strong advantage to long blocks during DP beam search.
+                c["cost"] = c["cost"] / math.sqrt(ms)
+                c["block_streak_bonus"] = ms
+                boosted_count += 1
+                
+        # Re-sort layer by new cost so that top_k in DP picks them up!
+        if cands:
+            cands.sort(key=lambda x: x["cost"])
+            raw_results_thickness[i] = cands
+
+    if boosted_count > 0:
+        logger.info(f"   [BLOCK-AWARE] Phase A boosted {boosted_count} candidate points forming blocks >= 2 layers.")
+        
+    return raw_results_thickness
 
 def _normalize_phase_a_results(
     raw_results_thickness: dict[int, list[dict[str, float]]],

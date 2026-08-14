@@ -28,7 +28,8 @@ from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-REPORTS = Path(r"C:\dev\gemini\reports")
+ROOT = Path(__file__).resolve().parents[1]
+REPORTS = ROOT / "reports"
 NEUTRAL = {
     "index_corridor": 0.0, "affine_scale_amp": 0.0, "affine_offset_amp": 0.0,
     "poem_enabled": True, "phase_a_level_margin_factor": 1.66, "dp_yield_weight": 0.0,

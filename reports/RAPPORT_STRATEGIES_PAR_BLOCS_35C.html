@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CERTUS STRAT - Rapport de Découverte & Validation des Blocs (35 Couches)</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #24344d;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-rose: #f43f5e;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            margin: 0;
+            padding: 2.5rem 1rem;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.35rem 0.75rem;
+            border-radius: 9999px;
+            background-color: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        .badge-success {
+            background-color: rgba(52, 211, 153, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0 0 0.5rem 0;
+            color: #ffffff;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+            background-color: var(--bg-card);
+            padding: 1rem 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .meta-item {
+            font-size: 0.85rem;
+        }
+
+        .meta-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .meta-val {
+            font-weight: 600;
+            color: var(--text-main);
+            margin-top: 0.2rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .kpi-card {
+            background: linear-gradient(145deg, #1e293b, #172033);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .kpi-number {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--accent-green);
+            margin: 0.5rem 0;
+        }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.925rem;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--accent-blue);
+            text-align: left;
+            padding: 0.875rem 1rem;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #e2e8f0;
+        }
+
+        tr:hover td {
+            background-color: var(--bg-card-hover);
+        }
+
+        .row-highlight td {
+            background-color: rgba(52, 211, 153, 0.08);
+            font-weight: 600;
+        }
+
+        .mono {
+            font-family: var(--font-mono);
+        }
+
+        .tag-beat {
+            background-color: rgba(52, 211, 153, 0.2);
+            color: var(--accent-green);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .tag-ref {
+            background-color: rgba(56, 189, 248, 0.2);
+            color: var(--accent-blue);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent-blue);
+            background-color: rgba(56, 189, 248, 0.08);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+        }
+
+        .callout-success {
+            border-left-color: var(--accent-green);
+            background-color: rgba(52, 211, 153, 0.08);
+        }
+
+        .callout h4 {
+            margin: 0 0 0.5rem 0;
+            color: #ffffff;
+            font-size: 1.05rem;
+        }
+
+        .callout p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.925rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <div class="badge badge-success">Mesure Physique & Algorithmique Validée</div>
+        <h1>Surveillance Optique par Blocs sur le Passe-Bande 35 Couches</h1>
+        <p>Rapport exhaustif d'investigation, validation du mécanisme Block-Aware et benchmark des 3 modes (Fast, Premium, Deep).</p>
+        
+        <div class="meta-grid">
+            <div class="meta-item">
+                <div class="meta-label">Composant de test</div>
+                <div class="meta-val">Passe-Bande 35c (3 cavités, 633 nm)</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Modes d'Exécution</div>
+                <div class="meta-val">FAST, PREMIUM, DEEP</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Moteur Physique</div>
+                <div class="meta-val">POEM Noise + Corridor 0.005 + Fente 2 nm</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Précision SEEL</div>
+                <div class="meta-val">0,01 nm</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-title">Blocs Optimum</div>
+            <div class="kpi-number">5 à 6 Blocs</div>
+            <div class="meta-label">au lieu de 35 longueurs d'onde</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Taux de Plantage</div>
+            <div class="kpi-number">0.0 %</div>
+            <div class="meta-label">sur toutes les gagnantes</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Score Champion (DEEP)</div>
+            <div class="kpi-number">0.05819</div>
+            <div class="meta-label">SEEL 0,48 nm (Gain +31,5 %)</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Mouvements Machine</div>
+            <div class="kpi-number">÷ 7</div>
+            <div class="meta-label">5 changements de λ au lieu de 34</div>
+        </div>
+    </div>
+
+    <section class="card">
+        <h2>1. Résultats Mesurés par Nombre de Blocs</h2>
+        <p>Grâce au bonus <strong>Block-Aware</strong> en Phase A et aux raffinements génétiques ELITE, le solveur a exploré l'intégralité du spectre combinatoire pour chaque partition de couches :</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre de Blocs</th>
+                    <th>ID Stratégie</th>
+                    <th>Générateur</th>
+                    <th>Score RMSE P95</th>
+                    <th>SEEL (0,01 nm)</th>
+                    <th>SEEL Continu</th>
+                    <th>Taux Crash</th>
+                    <th>Gain vs Monocouche</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>35 blocs</strong> (Monocouche)</td>
+                    <td class="mono">ID 35961</td>
+                    <td>ELITE</td>
+                    <td class="mono">0.08496</td>
+                    <td class="mono"><strong>0,58 nm</strong></td>
+                    <td class="mono">0,583 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-ref">Référence</span></td>
+                </tr>
+                <tr>
+                    <td><strong>7 blocs</strong></td>
+                    <td class="mono">ID 900000023</td>
+                    <td>ELITE</td>
+                    <td class="mono">0.06005</td>
+                    <td class="mono"><strong>0,49 nm</strong></td>
+                    <td class="mono">0,490 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-beat">+29,3 %</span></td>
+                </tr>
+                <tr class="row-highlight">
+                    <td><strong>6 blocs (CHAMPION DEEP)</strong> 🏆</td>
+                    <td class="mono">ID 900000040</td>
+                    <td>ELITE</td>
+                    <td class="mono"><strong>0.05819</strong></td>
+                    <td class="mono"><strong>0,48 nm</strong></td>
+                    <td class="mono"><strong>0,482 nm</strong></td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-beat">+31,5 % (Nouveau Record)</span></td>
+                </tr>
+                <tr class="row-highlight">
+                    <td><strong>5 blocs (PREMIUM)</strong></td>
+                    <td class="mono">ID 900000000</td>
+                    <td>ELITE</td>
+                    <td class="mono">0.06201</td>
+                    <td class="mono"><strong>0,50 nm</strong></td>
+                    <td class="mono">0,498 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-beat">+27,0 %</span></td>
+                </tr>
+                <tr>
+                    <td><strong>4 blocs</strong></td>
+                    <td class="mono">ID 900000013</td>
+                    <td>RATE_L11</td>
+                    <td class="mono">0.06431</td>
+                    <td class="mono"><strong>0,51 nm</strong></td>
+                    <td class="mono">0,507 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-beat">+24,3 %</span></td>
+                </tr>
+                <tr>
+                    <td><strong>3 blocs</strong></td>
+                    <td class="mono">ID 900000039</td>
+                    <td>ELITE</td>
+                    <td class="mono">0.07087</td>
+                    <td class="mono"><strong>0,53 nm</strong></td>
+                    <td class="mono">0,532 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td><span class="tag-beat">+16,6 %</span></td>
+                </tr>
+                <tr>
+                    <td><strong>2 blocs</strong></td>
+                    <td class="mono">ID 990000002</td>
+                    <td>ELITE</td>
+                    <td class="mono">0.08026</td>
+                    <td class="mono"><strong>0,57 nm</strong></td>
+                    <td class="mono">0,567 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td>+5,5 %</td>
+                </tr>
+                <tr>
+                    <td><strong>1 bloc</strong> (mono-&lambda;)</td>
+                    <td class="mono">ID 900000002</td>
+                    <td>SMART_MERGE</td>
+                    <td class="mono">0.37429</td>
+                    <td class="mono">1,22 nm</td>
+                    <td class="mono">1,224 nm</td>
+                    <td class="mono">0.0%</td>
+                    <td>Régime dégradé (-340 %)</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h2>2. Enseignements Physiques & Algorithmiques</h2>
+        
+        <div class="callout callout-success">
+            <h4>💡 Faisabilité Physique & Précision</h4>
+            <p>Il n'existe aucune barrière physique interdisant le regroupement par blocs sur le passe-bande 35 couches. Une partition en <strong>5 ou 6 blocs</strong> judicieusement disposés autour des 3 cavités résonantes offre une observabilité optimale du front de transmission et permet à POEM de recaler la phase sans aucune discontinuité.</p>
+        </div>
+
+        <div class="callout">
+            <h4>⚙️ Mécanisme Block-Aware en Phase A</h4>
+            <p>L'intégration du facteur de compacité $C = C_{\text{local}}/\sqrt{\text{streak}}$ permet à la programmation dynamique de valoriser la continuité optique sans altérer les coûts locaux absolus, alimentant la Phase B avec une diversité riche de candidats par blocs.</p>
+        </div>
+
+        <div class="callout">
+            <h4>⏱️ Trois Modes Adaptés aux Usages</h4>
+            <p>Le mode <strong>FAST</strong> ($N=50$) donne une réponse exploratoire en ~2,5 min. Le mode <strong>PREMIUM</strong> ($N=150$) offre le meilleur compromis de production en ~4 min. Le mode <strong>DEEP</strong> ($N=300$, $\text{top\_k}=100$, 3 rounds ELITE) débloque les records ultimes de robustesse en ~7 min.</p>
+        </div>
+    </section>
+
+    <footer>
+        CERTUS STRAT Opto-Mechanical Engine &bull; Document de Référence Mesuré &bull; Dépôt Officiel
+    </footer>
+</div>
+</body>
+</html>

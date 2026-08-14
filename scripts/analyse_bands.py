@@ -29,7 +29,8 @@ import statistics
 import sys
 from pathlib import Path
 
-REPORTS = Path(r"C:\dev\gemini\reports")
+ROOT = Path(__file__).resolve().parents[1]
+REPORTS = ROOT / "reports"
 BANDS = ("passante", "front", "bloquee")
 
 

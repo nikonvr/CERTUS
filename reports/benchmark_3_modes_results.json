@@ -1,0 +1,74 @@
+[
+  {
+    "component": "48c (Dichro\u00efque)",
+    "file": "JSON-strat-example.json",
+    "mode": "FAST",
+    "duration_s": 371.31,
+    "best_blocks": 6,
+    "rmse_p95": 0.00745,
+    "seel_0p1nm": 0.2,
+    "seel_cont_nm": 0.173,
+    "crash_rate_pct": 0.0,
+    "total_strats": 384
+  },
+  {
+    "component": "48c (Dichro\u00efque)",
+    "file": "JSON-strat-example.json",
+    "mode": "PREMIUM",
+    "duration_s": 569.8,
+    "best_blocks": 6,
+    "rmse_p95": 0.00764,
+    "seel_0p1nm": 0.2,
+    "seel_cont_nm": 0.175,
+    "crash_rate_pct": 0.0,
+    "total_strats": 650
+  },
+  {
+    "component": "48c (Dichro\u00efque)",
+    "file": "JSON-strat-example.json",
+    "mode": "DEEP",
+    "duration_s": 965.5,
+    "best_blocks": 6,
+    "rmse_p95": 0.00746,
+    "seel_0p1nm": 0.2,
+    "seel_cont_nm": 0.173,
+    "crash_rate_pct": 0.0,
+    "total_strats": 848
+  },
+  {
+    "component": "35c (Passe-bande)",
+    "file": "JSON-strat-bandpass-3cav.json",
+    "mode": "FAST",
+    "duration_s": 166.43,
+    "best_blocks": 5,
+    "rmse_p95": 0.06893,
+    "seel_0p1nm": 0.5,
+    "seel_cont_nm": 0.525,
+    "crash_rate_pct": 0.0,
+    "total_strats": 298
+  },
+  {
+    "component": "35c (Passe-bande)",
+    "file": "JSON-strat-bandpass-3cav.json",
+    "mode": "PREMIUM",
+    "duration_s": 248.44,
+    "best_blocks": 5,
+    "rmse_p95": 0.06201,
+    "seel_0p1nm": 0.5,
+    "seel_cont_nm": 0.498,
+    "crash_rate_pct": 0.0,
+    "total_strats": 519
+  },
+  {
+    "component": "35c (Passe-bande)",
+    "file": "JSON-strat-bandpass-3cav.json",
+    "mode": "DEEP",
+    "duration_s": 431.09,
+    "best_blocks": 6,
+    "rmse_p95": 0.05819,
+    "seel_0p1nm": 0.5,
+    "seel_cont_nm": 0.482,
+    "crash_rate_pct": 0.0,
+    "total_strats": 1007
+  }
+]

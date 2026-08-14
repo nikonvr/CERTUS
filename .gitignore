@@ -125,6 +125,7 @@ translation_cache.json
 /index_comments.txt
 /strat_pipeline_comments.txt
 /french_lines.txt
+/.strat_diff.txt
 /python-*-amd64.exe
 /Claude Setup*.exe
 

@@ -10,7 +10,8 @@ from certus_physics import simulate_growth_kernel
 from certus.physics.certus_opt_tmm import compute_RT_from_matrix
 from certus.physics.certus_strat_math import _solve_quadratic_target
 
-REF_JSON_PATH = Path(r"C:\dev\gemini\example\example_strat\JSON-strat-example.json")
+ROOT = Path(__file__).resolve().parents[2]
+REF_JSON_PATH = ROOT / "example" / "example_strat" / "JSON-strat-example.json"
 
 
 def test_reference_config_anti_drift_guardrail():

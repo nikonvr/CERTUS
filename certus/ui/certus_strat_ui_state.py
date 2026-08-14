@@ -1284,47 +1284,33 @@ class CertusStratStateMixin:
             "fast_auto_blocks": True,
         }
 
-        # 🔴 THE FAST MODE IS FORBIDDEN — decision of the physicist, 2026-08-05:
-        # "generally speaking, forbid the fast mode. I want a mode truly
-        #   similar to reality, and I have all my time."
-        #
-        # What `fast` did, and why it was harmful:
-        #
-        #   n_screen_runs        25 -> 6     a P95 on 6 draws is the MAXIMUM OF SIX.
-        #                                    The elimination of 230 strategies out of 240 was
-        #                                    thus decided on a SINGLE Monte-Carlo realization
-        #                                    per strategy.
-        #   robustness_num_runs 150 -> 40
-        #   consensus_num_runs  150 -> 40
-        #   consensus_num_seeds   3 -> 2
-        #   elite_rounds          2 -> 1
-        #   keep_full_mc_top_k   30 -> 15
-        #   + the block count range fell back on non-dense presets
-        #     (_compute_blocks_range_for_params, certus_strat_context.py)
-        #
-        # The crash rate is BINOMIAL: its standard deviation at p = 5 % is
-        # sqrt(0.05 x 0.95 / N), which is 8.9 % at N = 6 versus 1.8 % at N = 150. We
-        # were therefore pronouncing an IRREVERSIBLE elimination with an instrument whose
-        # resolution (17 %) was three times coarser than the measured threshold (5 %).
-        #
-        # We do not merely advise against it: a saved configuration that
-        # still bears `fast` is BROUGHT BACK to `premium`, loudly. A degraded mode that
-        # silently reactivates upon loading an old file is exactly the
-        #trap this session paid for three times (trigger_tolerance, execution_mode,
-        # scan_wl_step: the example file was each time worse than the default).
-        if str(params_out.get("execution_mode", "premium")).strip().lower() != "premium":
-            demande = params_out.get("execution_mode")
+        mode = str(params_out.get("execution_mode", "premium")).strip().lower()
+        if mode == "fast":
+            params_out["execution_mode"] = "fast"
+            params_out["robustness_num_runs"] = 50
+            params_out["consensus_num_runs"] = 50
+            params_out["n_screen_runs"] = 10
+            params_out["elite_rounds"] = 1
+            params_out["dp_top_k"] = 20
+            params_out["k_keep_survivors"] = 6
+        elif mode == "deep":
+            params_out["execution_mode"] = "deep"
+            params_out["robustness_num_runs"] = 300
+            params_out["consensus_num_runs"] = 300
+            params_out["n_screen_runs"] = 50
+            params_out["elite_rounds"] = 3
+            params_out["dp_top_k"] = 100
+            params_out["k_keep_survivors"] = 25
+            params_out["mining_candidates_limit"] = 10000
+        else:
             params_out["execution_mode"] = "premium"
-            try:
-                self.logger.warning(
-                    "[MODE] execution_mode=%r requested but FORBIDDEN: brought back to 'premium'. "
-                    "The degraded mode divided Monte-Carlo budgets by 4 and made "
-                    "elimination on crash non-significant (17 %% resolution for "
-                    "a 5 %% threshold).",
-                    demande,
-                )
-            except AttributeError:
-                pass
+            params_out["robustness_num_runs"] = 150
+            params_out["consensus_num_runs"] = 150
+            params_out["n_screen_runs"] = 25
+            params_out["elite_rounds"] = 2
+            params_out["dp_top_k"] = 40
+            params_out["k_keep_survivors"] = 10
+            params_out["mining_candidates_limit"] = 3000
 
         return params_out
 

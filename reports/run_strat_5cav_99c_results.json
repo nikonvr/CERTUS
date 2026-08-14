@@ -1,0 +1,45 @@
+{
+  "component": "5-Cavity 99 Layers Bandpass",
+  "duration_s": 1462.2,
+  "total_strats": 785,
+  "best_strategy": {
+    "id": "N/A",
+    "origin": "RATE_L25(from 900000037)",
+    "n_blocks": 4,
+    "rmse_p95": 0.18705189934328795,
+    "seel_nm": 0.86,
+    "crash_rate_pct": 100.0,
+    "strategy_details": {
+      "strategy_id": 990000016,
+      "n_blocks": 4,
+      "blocks": [
+        {
+          "start": 0,
+          "end": 16,
+          "wavelength": 526.0,
+          "num_layers": 16
+        },
+        {
+          "start": 16,
+          "end": 26,
+          "wavelength": 476.0,
+          "num_layers": 10
+        },
+        {
+          "start": 26,
+          "end": 89,
+          "wavelength": 477.0,
+          "num_layers": 63
+        },
+        {
+          "start": 89,
+          "end": 99,
+          "wavelength": 452.0,
+          "num_layers": 10
+        }
+      ],
+      "origin": "RATE_L25(from 900000037)",
+      "origin_details": "SMART_MERGE_MIXED from SMART_MERGE_MIXED (FROM ID 900000007) (parent ID 900000019)",
+      "avg_rmse_nominal": 0.0,
+      "num_unique_wavelengths": 4,
+      "slit_profile": 

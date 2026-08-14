@@ -591,7 +591,7 @@ def _parallel_block_worker(args) -> dict:
             pre_calc_data["raw_results_thickness"],
             pre_calc_data["raw_results_sq"],
             pre_calc_data["num_layers"],
-            top_k=40,
+            top_k=int(params.get("dp_top_k", 40)),
             force_monolayer=params.get("force_first_layer_same_wl", False),
             nucleation_wl=nucleation_info.get("wl"),
             nucleation_size=nucleation_info.get("size", 0),

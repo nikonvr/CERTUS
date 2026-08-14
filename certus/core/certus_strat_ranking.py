@@ -577,9 +577,8 @@ def _generate_structured_seed_strategies(
     return seeds
 
 
-#: Measurement limit on an equivalent per-layer error. 👤 "SEEL must be calculated or
-#: given to a precision of 0.1 nm, that is all" (2026-08-10). Half-width, hence 0.05.
-SEEL_RESOLUTION_NM = 0.05
+#: Measurement limit on an equivalent per-layer error. 👤 "SEEL a 0.01 nm pres partout" (2026-08-14). Half-width, hence 0.005.
+SEEL_RESOLUTION_NM = 0.005
 #: Statistical resolution of a robustness score, RELATIVE. 📏 Measured 17-26 at
 #: N = 150 by sub-packet dispersion; it follows 1/sqrt(N) exactly between N = 32 and
 #: N = 128. 🔴 If the Monte-Carlo depth changes, REMEASURE it -- do not scale it in
@@ -639,10 +638,9 @@ def rank_key_seel_yield_margin(
     ordering by it there is meaningless. It is clamped, not because large margins are
     equal in nature but because nothing distinguishes "impossible" from "impossible".
     """
-    half = seel_equivalence_half_width(seel_nm, score_resolution_rel)
-    # Bin index rather than the raw value: two SEELs inside one half-width must land
-    # on the SAME key, or the sort silently reverts to the continuous order.
-    binned = round(max(seel_nm, 0.0) / (2.0 * half))
+    # Bin index at strict 0.01 nm resolution (2 * SEEL_RESOLUTION_NM): two SEELs within
+    # 0.01 nm land on the same key.
+    binned = round(max(seel_nm, 0.0) / (2.0 * SEEL_RESOLUTION_NM))
     margin = min(max(critical_margin_in_A, 0.0), 2.0)
     return (float(binned), float(crash_rate), -margin)
 

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CERTUS STRAT - Rapport Composant Extrême : 5 Cavités 99 Couches</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #273549;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 2.5rem 1.5rem;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+    .grid-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+    .card-metric {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .card-metric:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+    .card-metric .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .card-metric .value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+    .card-metric .sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.75rem;
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    p { margin-bottom: 1rem; color: #cbd5e1; }
+    .formula-box {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.95rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #151e2e;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .tag-success {
+      background: var(--success-bg);
+      color: var(--success);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .tag-warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+    .alert-box {
+      border-left: 4px solid var(--warning);
+      background: rgba(245, 158, 11, 0.08);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.25rem 0;
+    }
+    .alert-box strong { color: var(--warning); }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Étude de Faisabilité Extrême</div>
+      <h1>Filtre Passe-Bande 5 Cavités (99 Couches)</h1>
+      <div class="subtitle">Analyse optique TMM, optimisation des stratégies de contrôle CERTUS STRAT et faisabilité en atelier</div>
+    </header>
+
+    <div class="grid-metrics">
+      <div class="card-metric">
+        <div class="label">Couches Totales</div>
+        <div class="value">99</div>
+        <div class="sub">5 cavités Fabry-Pérot</div>
+      </div>
+      <div class="card-metric">
+        <div class="label">Épaisseur Physique</div>
+        <div class="value">9,10 µm</div>
+        <div class="sub">9 103,3 nm (Nb2O5 / SiO2)</div>
+      </div>
+      <div class="card-metric">
+        <div class="label">Bande Passante (FWHM)</div>
+        <div class="value">2,55 nm</div>
+        <div class="sub">Centrée à 632,45 nm</div>
+      </div>
+      <div class="card-metric">
+        <div class="label">SEEL Certifié STRAT</div>
+        <div class="value">0,86 nm</div>
+        <div class="sub">RMSE P95 = 0.1831 (4 blocs)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📐 1. Spécifications & Formule de l'Empilement</h2>
+      <p>Le filtre est constitué de 5 résonateurs à demi-onde ($2L$) séparés par des miroirs de couplage à 19 couches et bornés par deux miroirs de 9 couches :</p>
+      <div class="formula-box">
+        Substrat / (HL)^4 H · 2L · [(HL)^9 H · 2L]^4 · (HL)^4 H / Air
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Composante</th>
+            <th>Nombre de couches</th>
+            <th>Formule optique</th>
+            <th>Épaisseur cumulée</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Miroir d'entrée</strong></td>
+            <td>9 couches</td>
+            <td>(HL)^4 H</td>
+            <td>697,6 nm</td>
+          </tr>
+          <tr>
+            <td><strong>Cavité 1 (Spacer)</strong></td>
+            <td>1 couche</td>
+            <td>2L (Couche #10)</td>
+            <td>213,4 nm</td>
+          </tr>
+          <tr>
+            <td><strong>Miroirs de Couplage (4x)</strong></td>
+            <td>76 couches (4x 19c)</td>
+            <td>4x [(HL)^9 H]</td>
+            <td>7 076,0 nm</td>
+          </tr>
+          <tr>
+            <td><strong>Cavités 2, 3, 4, 5</strong></td>
+            <td>4 couches</td>
+            <td>2L (Couches #30, #50, #70, #90)</td>
+            <td>853,6 nm</td>
+          </tr>
+          <tr>
+            <td><strong>Miroir de sortie</strong></td>
+            <td>9 couches</td>
+            <td>(HL)^4 H</td>
+            <td>697,6 nm</td>
+          </tr>
+          <tr>
+            <td><strong>Total Empilement</strong></td>
+            <td><strong>99 couches</strong></td>
+            <td><strong>5 Cavités Fabry-Pérot</strong></td>
+            <td><strong>9 103,3 nm (9,1 µm)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>🔬 2. Benchmark du Solveur CERTUS STRAT</h2>
+      <p>Comparaison des explorations d'arbres de décision en mode <strong>PREMIUM</strong> ($N=150$) et <strong>DEEP Extrême</strong> ($N=300$) :</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Paramètre / Métrique</th>
+            <th>Mode PREMIUM</th>
+            <th>Mode DEEP Extrême</th>
+            <th>Gain / Interprétation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Stratégies évaluées</strong></td>
+            <td>785 candidates</td>
+            <td>&gt; 1 800 candidates</td>
+            <td>Exploration x2.3 plus profonde</td>
+          </tr>
+          <tr>
+            <td><strong>Meilleur RMSE Nominal</strong></td>
+            <td><code>0.18705</code></td>
+            <td><code>0.18310</code></td>
+            <td>Convergence robuste</td>
+          </tr>
+          <tr>
+            <td><strong>SEEL Quantifié (0.01 nm)</strong></td>
+            <td><strong>0,86 nm</strong></td>
+            <td><strong>0,86 nm</strong></td>
+            <td>Plancher physique atteint</td>
+          </tr>
+          <tr>
+            <td><strong>Découpage Optimal</strong></td>
+            <td><strong>4 blocs</strong></td>
+            <td><strong>4 blocs</strong></td>
+            <td>Structure 4 blocs confirmée</td>
+          </tr>
+          <tr>
+            <td><strong>Fente Monochromateur</strong></td>
+            <td><strong>2,0 nm</strong></td>
+            <td><strong>2,0 nm</strong></td>
+            <td>Optimum compromis Bruit / Biais</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>💡 3. Enseignements Physiques & Règle d'Hybridation Rate</h2>
+      <div class="alert-box">
+        <strong>Constat Machine Critique :</strong> Le suivi 100 % optique sur ce composant produit 100 % de plantages en cours de dépôt. Deux causes physiques majeures l'expliquent :
+      </div>
+      <p>1. <strong>Swing optique nul sur les cavités ($2L$) :</strong> Lorsque le spacer est déposé, la cavité n'est pas encore fermée par le miroir supérieur. Le swing mesuré à $\lambda_0$ est rigoureusement de <strong>0,00 %</strong>. Tenter un arrêt au niveau optique déclenche systématiquement <code>CRASH_LEVEL_UNREACHABLE</code>.</p>
+      <p>2. <strong>Écrasement photométrique des miroirs profonds :</strong> Dès la 5ᵉ couche d'un miroir de 19 couches, $R > 99,8\,\%$ et $T < 10^{-4}$, le signal de transmission s'éteint dans le bruit électronique.</p>
+      <p><strong>La Solution Validée :</strong>
+        <br>• <strong>~75 couches au Rate (Chrono/Quartz) :</strong> Dépôt aveugle ultra-stable sur les cavités et le fond des miroirs.
+        <br>• <strong>~24 couches Optiques sur résonance de fermeture :</strong> Asservissement POEM périodique pour annuler la dérive cumulative du quartz et garantir le calage spectral à <strong>&plusmn; 0,3 nm</strong>.
+      </p>
+    </div>
+
+    <footer>
+      CERTUS STRAT &bull; Rapport d'analyse et de faisabilité &bull; Fichier généré le 2026-08-14
+    </footer>
+  </div>
+</body>
+</html>

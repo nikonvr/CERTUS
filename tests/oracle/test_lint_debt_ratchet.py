@@ -12,7 +12,8 @@ try:
 except ImportError:
     import tomli as tomllib
 
-PYPROJECT_PATH = Path(r"C:\dev\gemini\pyproject.toml")
+ROOT = Path(__file__).resolve().parents[2]
+PYPROJECT_PATH = ROOT / "pyproject.toml"
 MAX_ALLOWED_EXTEND_IGNORE = 68
 
 

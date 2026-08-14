@@ -766,7 +766,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
         self.layout.addWidget(plot)
 
     def _init_strategies_plot(self, data) -> None:
-
+        from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
         self.setWindowTitle("Optimization Landscape & Strategies")
 
         strategies = data.get("strategies", [])
@@ -904,7 +904,7 @@ class UniversalPlotWindow(CertusWindowSpyMixin, QMainWindow):
         self.layout.addWidget(plot)
 
     def _init_heatmap(self, data) -> None:
-
+        from certus.ui.certus_strat_heatmap_ui import InteractiveHeatmapWindow
         win = InteractiveHeatmapWindow(self, data)
 
         self.central_widget = win

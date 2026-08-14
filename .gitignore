@@ -126,3 +126,11 @@ translation_cache.json
 /strat_pipeline_comments.txt
 /french_lines.txt
 /python-*-amd64.exe
+/Claude Setup*.exe
+
+# --- Le depot pousse vers un remote PUBLIC. Rien qui porte une donnee
+# personnelle ou l'oeuvre d'un tiers ne doit pouvoir y entrer par accident.
+# Texte integral d'une these tierce (HAL tel-04072733), 353 000 caracteres,
+# nommant cinq personnes : sorti du suivi le 2026-08-14. Citer la reference
+# publiee, ne pas redistribuer le texte.
+reports/_zideluns_text.json

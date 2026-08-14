@@ -22,7 +22,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_ROOT = Path(r"C:\dev\gemini")
+# 🔴 There is NO hard-coded expected root, deliberately. A constant `C:\dev\gemini`
+# lived here, was never read by any check, and pointed at a directory that no longer
+# exists -- an inert filter, the failure mode this project fears most. Check 1 below
+# asks the only question that matters and that survives a snapshot copy: does
+# `import certus` resolve INSIDE the tree this script was launched from?
 
 # Running `python scripts/preflight.py` puts `scripts/` on sys.path, not the repo
 # root, so `import certus` would fail for a reason that has nothing to do with the
@@ -75,22 +79,32 @@ except Exception as exc:  # noqa: BLE001 -- any import failure is a stop
     check("import certus.physics.certus_opt_tmm", False, f"FAILED: {exc}")
 if tmm_path is not None:
     check(
-        "certus_opt_tmm resolves inside C:\\dev\\gemini",
-        EXPECTED_ROOT in tmm_path.parents,
+        f"certus_opt_tmm resolves inside {ROOT}",
+        ROOT in tmm_path.parents,
         str(tmm_path),
     )
 
-# 2. Committing here must not publish. Under its short name the hook pushes to
-#    the PUBLIC repository, and --no-verify does not stop it.
-print("\n2. POST-COMMIT HOOK")
+# 2. Does committing PUBLISH? Under its short name the hook pushes to the PUBLIC
+#    repository, and --no-verify does not stop it (it skips pre-commit and
+#    commit-msg, never post-commit).
+#
+#    👤 asked for the push to be ARMED on 2026-08-14. So an armed hook is no longer a
+#    failure -- it is the requested state, and this check REPORTS it instead of
+#    refusing to work. What it must never do is stay silent: a commit that publishes
+#    and a commit that does not look identical in the terminal.
+print("\n2. POST-COMMIT HOOK -- does committing PUBLISH?")
 hooks = ROOT / ".git" / "hooks"
 live_hook = hooks / "post-commit"
-disabled = sorted(p.name for p in hooks.glob("post-commit*")) if hooks.is_dir() else []
-check(
-    "post-commit is DISABLED",
-    not live_hook.exists(),
-    f"found: {', '.join(disabled) if disabled else '(none)'}",
-)
+found = sorted(p.name for p in hooks.glob("post-commit*")) if hooks.is_dir() else []
+_, remote = run("git", "remote", "get-url", "origin")
+if live_hook.exists():
+    print(f"  [ ! ] post-commit is ARMED: every commit PUSHES to {remote or '(unknown remote)'}")
+    warnings.append(
+        f"post-commit ARMED -- committing publishes to {remote or 'origin'}. "
+        "Nothing carrying a personal datum, a credential or a third party's work may be committed."
+    )
+else:
+    print(f"  [OK ] post-commit is disabled: committing stays local (found: {', '.join(found) or '(none)'})")
 
 # 3. Python version. PEP 758 `except A, B:` is used in 14 modules and is a
 #    syntax error before 3.14.

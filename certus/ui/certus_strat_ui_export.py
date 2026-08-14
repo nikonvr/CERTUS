@@ -15,6 +15,7 @@ from certus.ui.certus_strat_common import *
 #   - the call only occurs during EXPORT, after the full calculation completes.
 # Result: the STRAT pipeline calculated everything, then died at the final step without
 # emitting `finished` — returning zero results to the user.
+from certus.core.certus_core import __version__
 from certus.ui.certus_strat_common import _resolve_strat_indices_db_path
 
 class CertusStratExportMixin:
@@ -109,18 +110,40 @@ class CertusStratExportMixin:
                 continue
         return None
 
+    @staticmethod
+    def _manifest_relpath(path: str) -> str:
+        """Path RELATIVE to the repository root, for a manifest that is meant to travel.
+
+        🔴 A provenance manifest needs the path and the hash, NOT the drive letter and
+        the operator's session name. The absolute form leaked `C:\\Users\\<name>\\...`
+        and `D:\\<share>\\...` into every `*.manifest.json` handed to a customer. Only
+        `.gitignore` kept those artefacts out of a PUBLIC remote, which is one line of
+        defence for a personal datum -- too few.
+
+        Falls back to the basename when the path lies outside the repository (another
+        drive, a network share): a bare filename identifies the source without
+        describing the machine.
+        """
+        if not path:
+            return ""
+        try:
+            root = Path(__file__).resolve().parents[2]
+            return Path(os.path.relpath(Path(path).resolve(), root)).as_posix()
+        except (ValueError, OSError):
+            return Path(path).name
+
     def _manifest_source_paths(self) -> list[str]:
         paths: list[str] = []
         cfg_path = str(getattr(self, "_last_config_file", "") or "").strip()
         if cfg_path:
-            paths.append(cfg_path)
+            paths.append(self._manifest_relpath(cfg_path))
         try:
             db_path = str(_resolve_strat_indices_db_path() or "").strip()
         except (RuntimeError, AttributeError, TypeError, ValueError, OSError):
             db_path = ""
         if db_path:
-            paths.append(db_path)
-        return list(dict.fromkeys(paths))
+            paths.append(self._manifest_relpath(db_path))
+        return list(dict.fromkeys(p for p in paths if p))
 
     def on_excel_ready(self, excel_data: io.BytesIO, metadata: Dict) -> Any:
         """Handle automatic export (Excel + HTML)"""

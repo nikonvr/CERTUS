@@ -240,10 +240,10 @@ journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
 19:23:52 | INFO | Generating Sensitivity Landscape (0 -> 3nm)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 18: character maps to <undefined>
@@ -263,10 +263,10 @@ Arguments: ()
 19:23:53 | INFO | Running Parallel SEEL Analysis (3x50 runs per sigma)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -279,10 +279,10 @@ Message: '\u2713 Step 1 (Auto + Sensitivity) complete (prerequisite)\n'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode characters in position 18-19: character maps to <undefined>
@@ -299,10 +299,10 @@ Message: '\u25b6\ufe0f START GLOBAL: Full Optimized Workflow (Deep Exploration M
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -326,10 +326,10 @@ Arguments: ()
 19:23:54 | INFO | [STRAT-UI] process_plot_queue(sensitivity_popup) plot_windows=1 queue_size=2
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50e' in position 18: character maps to <undefined>
@@ -353,10 +353,10 @@ Arguments: ()
 19:23:55 | INFO | [STRAT-UI] queued plot window stored type=seel_analysis_plot id=1848191740944 plot_windows=3
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f3c6' in position 21: character maps to <undefined>
@@ -375,10 +375,10 @@ Message: '   \U0001f3c6 Best Adaptive Nucleation: 544.0 nm | Locked Layers: 1 to
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 20: character maps to <undefined>
@@ -513,10 +513,10 @@ Arguments: ()
 --- Phase A: Normalization ---
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c8' in position 18: character maps to <undefined>
@@ -539,10 +539,10 @@ Message: "\U0001f4c8 Observability JSON saved: 'C:\\dev\\gemini\\reports\\STRAT_
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -563,10 +563,10 @@ Message: '\u2713 Phase A complete (Data Ready).'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 18: character maps to <undefined>
@@ -3852,10 +3852,10 @@ Traceback (most recent call last):
 NameError: name 'LiveMonitorWindow' is not defined
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -4052,10 +4052,10 @@ journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
 19:58:49 | INFO | Generating Sensitivity Landscape (0 -> 3nm)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 18: character maps to <undefined>
@@ -4075,10 +4075,10 @@ Arguments: ()
 19:58:49 | INFO | Running Parallel SEEL Analysis (3x50 runs per sigma)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -4091,10 +4091,10 @@ Message: '\u2713 Step 1 (Auto + Sensitivity) complete (prerequisite)\n'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode characters in position 18-19: character maps to <undefined>
@@ -4111,10 +4111,10 @@ Message: '\u25b6\ufe0f START GLOBAL: Full Optimized Workflow (Deep Exploration M
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -4132,10 +4132,10 @@ Arguments: ()
 19:58:50 | INFO |   Cache allocation: 0.9 MB (301 wavelengths)
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50e' in position 18: character maps to <undefined>
@@ -4162,10 +4162,10 @@ Arguments: ()
 19:58:50 | INFO | [SPY-PROCESS-QUEUE] Retrieved plot from queue: fig_type=stack_visual | fig_id=1984109789696
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f3c6' in position 21: character maps to <undefined>
@@ -4184,10 +4184,10 @@ Message: '   \U0001f3c6 Best Adaptive Nucleation: 544.0 nm | Locked Layers: 1 to
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 20: character maps to <undefined>
@@ -4325,10 +4325,10 @@ Arguments: ()
 --- Phase A: Normalization ---
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c8' in position 18: character maps to <undefined>
@@ -4351,10 +4351,10 @@ Message: "\U0001f4c8 Observability JSON saved: 'C:\\dev\\gemini\\reports\\STRAT_
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -4375,10 +4375,10 @@ Message: '\u2713 Phase A complete (Data Ready).'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 18: character maps to <undefined>
@@ -7664,10 +7664,10 @@ Traceback (most recent call last):
 NameError: name 'LiveMonitorWindow' is not defined
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -7847,10 +7847,10 @@ journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
 20:30:22 | INFO | Generating Sensitivity Landscape (0 -> 3nm)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 18: character maps to <undefined>
@@ -7870,10 +7870,10 @@ Arguments: ()
 20:30:22 | INFO | Running Parallel SEEL Analysis (3x50 runs per sigma)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -7886,10 +7886,10 @@ Message: '\u2713 Step 1 (Auto + Sensitivity) complete (prerequisite)\n'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode characters in position 18-19: character maps to <undefined>
@@ -7906,10 +7906,10 @@ Message: '\u25b6\ufe0f START GLOBAL: Full Optimized Workflow (Deep Exploration M
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -7930,10 +7930,10 @@ Arguments: ()
 20:30:23 | INFO | [STRAT-UI] process_plot_queue(clues) plot_windows=0 queue_size=3
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50e' in position 18: character maps to <undefined>
@@ -7959,10 +7959,10 @@ Arguments: ()
 20:30:23 | INFO | [STRAT-UI] process_plot_queue(seel_analysis_plot) plot_windows=2 queue_size=0
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f3c6' in position 21: character maps to <undefined>
@@ -7982,10 +7982,10 @@ Arguments: ()
 20:30:23 | INFO | [STRAT-UI] queued plot window stored type=seel_analysis_plot id=2849609477136 plot_windows=3
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 20: character maps to <undefined>
@@ -8120,10 +8120,10 @@ Arguments: ()
 --- Phase A: Normalization ---
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c8' in position 18: character maps to <undefined>
@@ -8146,10 +8146,10 @@ Message: "\U0001f4c8 Observability JSON saved: 'C:\\dev\\gemini\\reports\\STRAT_
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -8170,10 +8170,10 @@ Message: '\u2713 Phase A complete (Data Ready).'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 18: character maps to <undefined>
@@ -11261,10 +11261,10 @@ Traceback (most recent call last):
 NameError: name 'LiveMonitorWindow' is not defined
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -11444,10 +11444,10 @@ journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
 21:00:26 | INFO | Generating Sensitivity Landscape (0 -> 3nm)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 18: character maps to <undefined>
@@ -11467,10 +11467,10 @@ Arguments: ()
 21:00:27 | INFO | Running Parallel SEEL Analysis (3x50 runs per sigma)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -11483,10 +11483,10 @@ Message: '\u2713 Step 1 (Auto + Sensitivity) complete (prerequisite)\n'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode characters in position 18-19: character maps to <undefined>
@@ -11503,10 +11503,10 @@ Message: '\u25b6\ufe0f START GLOBAL: Full Optimized Workflow (Deep Exploration M
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -11527,10 +11527,10 @@ Arguments: ()
 21:00:27 | INFO | [STRAT-UI] process_plot_queue(clues) plot_windows=0 queue_size=3
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50e' in position 18: character maps to <undefined>
@@ -11557,10 +11557,10 @@ Arguments: ()
 21:00:28 | INFO | [STRAT-UI] queued plot window stored type=seel_analysis_plot id=1510622063472 plot_windows=3
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f3c6' in position 21: character maps to <undefined>
@@ -11579,10 +11579,10 @@ Message: '   \U0001f3c6 Best Adaptive Nucleation: 544.0 nm | Locked Layers: 1 to
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 20: character maps to <undefined>
@@ -11717,10 +11717,10 @@ Arguments: ()
 --- Phase A: Normalization ---
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c8' in position 18: character maps to <undefined>
@@ -11743,10 +11743,10 @@ Message: "\U0001f4c8 Observability JSON saved: 'C:\\dev\\gemini\\reports\\STRAT_
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -11767,10 +11767,10 @@ Message: '\u2713 Phase A complete (Data Ready).'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 18: character maps to <undefined>
@@ -15056,10 +15056,10 @@ Traceback (most recent call last):
 NameError: name 'LiveMonitorWindow' is not defined
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -15238,10 +15238,10 @@ journal de l'application redirige vers la console (logger 'CERTUS-STRAT')
 21:35:14 | INFO | Generating Sensitivity Landscape (0 -> 3nm)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 18: character maps to <undefined>
@@ -15261,10 +15261,10 @@ Arguments: ()
 21:35:15 | INFO | Running Parallel SEEL Analysis (3x50 runs per sigma)...
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -15277,10 +15277,10 @@ Message: '\u2713 Step 1 (Auto + Sensitivity) complete (prerequisite)\n'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode characters in position 18-19: character maps to <undefined>
@@ -15297,10 +15297,10 @@ Message: '\u25b6\ufe0f START GLOBAL: Full Optimized Workflow (Deep Exploration M
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>
@@ -15318,10 +15318,10 @@ Arguments: ()
 21:35:16 | INFO |   Cache allocation: 0.9 MB (301 wavelengths)
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f50e' in position 18: character maps to <undefined>
@@ -15348,10 +15348,10 @@ Arguments: ()
 21:35:16 | INFO | [SPY-PROCESS-QUEUE] Retrieved plot from queue: fig_type=stack_visual | fig_id=2238168490624
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f3c6' in position 21: character maps to <undefined>
@@ -15372,10 +15372,10 @@ Arguments: ()
 21:35:16 | INFO | [STRAT-UI] process_plot_queue(seel_analysis_plot) plot_windows=2 queue_size=0
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 20: character maps to <undefined>
@@ -15511,10 +15511,10 @@ Arguments: ()
 --- Phase A: Normalization ---
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f4c8' in position 18: character maps to <undefined>
@@ -15537,10 +15537,10 @@ Message: "\U0001f4c8 Observability JSON saved: 'C:\\dev\\gemini\\reports\\STRAT_
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 18: character maps to <undefined>
@@ -15561,10 +15561,10 @@ Message: '\u2713 Phase A complete (Data Ready).'
 Arguments: ()
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f504' in position 18: character maps to <undefined>
@@ -18652,10 +18652,10 @@ Traceback (most recent call last):
 NameError: name 'LiveMonitorWindow' is not defined
 --- Logging error ---
 Traceback (most recent call last):
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\logging\__init__.py", line 1154, in emit
     stream.write(msg + self.terminator)
     ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\encodings\cp1252.py", line 19, in encode
     return codecs.charmap_encode(input,self.errors,encoding_table)[0]
            ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in position 18: character maps to <undefined>

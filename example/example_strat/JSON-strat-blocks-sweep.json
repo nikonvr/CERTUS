@@ -1,5 +1,5 @@
 {
-  "config": "C:\\driveFL\\couches minces 2026\\CERTUS\\1403\\example\\JSON-strat-example.json",
+  "config": "example/example_strat/JSON-strat-example.json",
   "sweep": [
     {
       "case": "compact",

@@ -10,14 +10,14 @@ sonde installee sur _compute_valid_blocks_kernel
   File "C:\dev\CERTUS\0108\certus\core\certus_strat_ranking.py", line 366, in mine_strategies_for_block_count
     strategies_collected.extend(f1.result())
                                 ~~~~~~~~~^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 454, in result
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 454, in result
     return self.__get_result()
            ~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 396, in __get_result
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\_base.py", line 396, in __get_result
     raise self._exception
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 86, in run
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 86, in run
     result = ctx.run(self.task)
-  File "C:\Users\Fabien\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 73, in run
+  File "<HOME>\AppData\Local\Programs\Python\Python314\Lib\concurrent\futures\thread.py", line 73, in run
     return fn(*args, **kwargs)
   File "C:\dev\CERTUS\0108\certus\core\certus_strat_ranking.py", line 327, in run_mining
     solutions = _find_k_best_groupings_dp_sequential(

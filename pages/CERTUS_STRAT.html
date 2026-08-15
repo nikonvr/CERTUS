@@ -59,7 +59,7 @@
         <header>
             <h1>CERTUS-STRAT</h1>
             <p style="font-size: 1.2em; color: #555;">Advanced Optical Monitoring &amp; Error Compensation Logic</p>
-            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision Pro 2026.04.17 — Complete
+            <p style="font-size: 1.0em; color: #777; font-weight: 300;">Scientific Revision 2026-08-14 — Complete
                 Algorithm Documentation</p>
         </header>
 
@@ -3527,7 +3527,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <strong>Statistical Rationale:</strong>
                     <ul>
                         <li><b>Fast Mode:</b> Designed for fast turnaround while preserving significant crash detection (at $N=50$, binomial resolution $\sigma_p \approx 3.0\%$). Ideal for exploring layer feasibility.</li>
-                        <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §17-26: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
+                        <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §10.7: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
                         <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors) where wide Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) guarantee exhaustive exploration.</li>
                     </ul>
                 </div>
@@ -4665,10 +4665,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Architecture</th>
                         <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Best Strategy (48-layer)</th>
                         <th style="border:1px solid #cbd5e1;padding:6px 10px;">RMSE (48c)</th>
-                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL 0.01nm (48c)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL, nm (48c)</th>
                         <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Best Strategy (35-layer)</th>
                         <th style="border:1px solid #cbd5e1;padding:6px 10px;">RMSE (35c)</th>
-                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL 0.01nm (35c)</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL, nm (35c)</th>
                     </tr>
                     <tr>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>Monolayer (N blocks)</b></td>
@@ -5097,9 +5097,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <div class="footer">
                     <p>Generated from strict source code analysis of <code>CERTUS_STRAT.py</code>,
                         <code>certus_strat_context.py</code>, <code>certus_strat_db.py</code> and
-                        <code>_certus_physics_impl.py</code> — Revision 2026.04.17
+                        <code>_certus_physics_impl.py</code> — Revision 2026-08-14
                     </p>
-                    <p>&copy; CERTUS Scientific Suite v26-04 • Scientific Report</p>
+                    <p>&copy; CERTUS Scientific Suite v26-08 • Scientific Report</p>
                 </div>
         </div>
 

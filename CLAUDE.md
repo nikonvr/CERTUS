@@ -3388,6 +3388,13 @@ Composant          Mode       Budget MC & Largeur    Durée   Optimum   RMSE P95
 
 ## 18. Autres chantiers ouverts
 
+- 📌 **LE PLAN DU 2026-08-16 EST ECRIT ET AUTONOME** :
+  [`docs/PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md). Campagnes longues en mode **premium**,
+  ordonnees par dependance, avec durees mesurees, commandes exactes, et ce que chaque resultat
+  deciderait. 👤 le lancera sous Antigravity. Les cinq pieges du 15 aout y sont en tete, et
+  la phase 1 repare l'instrument avant que quoi que ce soit d'autre ne tourne.
+
+
 - 🔵 **PROPOSÉ PAR 👤 le 2026-08-15 — compter en Phase A les λ qui offrent un point tournant.**
 
   > 👤 : *« en routine, le code pourrait ou même devrait, en Phase A, regarder pour une couche

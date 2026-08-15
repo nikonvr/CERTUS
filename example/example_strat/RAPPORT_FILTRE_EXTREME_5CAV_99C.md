@@ -39,6 +39,26 @@ Ce composant est un filtre passe-bande interférentiel ultra-sélectif centré �
 
 ## 3. Résultats du Solveur CERTUS STRAT
 
+> 🔴 **AVERTISSEMENT AJOUTÉ LE 2026-08-15 — LIS-LE AVANT LE TABLEAU CI-DESSOUS.**
+>
+> Ce rapport a été écrit sans consigner le **taux de plantage**, et c'est ce qui lui manque.
+> Le cas a été rejoué : la meilleure stratégie porte **`crash_rate = 100 %`**. Or au-delà de
+> 5 % de plantage une stratégie reçoit un score **infini** et **sort du classement**
+> (`certus_strat_robustness.py:2125`) ; les **785** candidates sont donc sorties, et ce qui
+> est rapporté vient du **repli sans survivant** (`:1152-1166`), qui rend la moins mauvaise
+> des éliminées avec la **pire RMSE finie**.
+>
+> **Conséquence : les SEEL de ce tableau ne sont PAS des scores de robustesse**, et le mot
+> « certifié » y est faux. Ce sont les chiffres les moins mauvais parmi des stratégies qui
+> **échouent toutes**. Le composant, en l'état, **n'est pas monitorable optiquement** — ce
+> que la section 4 disait déjà en substance, sans en tirer la conséquence sur les chiffres.
+>
+> Ce qui reste valable dans ce rapport : la **description du composant** (section 1), ses
+> **performances optiques théoriques** (section 2), et les **enseignements physiques** de la
+> section 4 — swing nul sur les cavités, miroirs sous 1e-4, nécessité du mode Rate. C'est de
+> là qu'est né le chantier **multiple testglass** (CLAUDE.md §25), dont la première cible est
+> un taux de plantage **sous 5 %**, avant qu'un SEEL vaille d'être cité.
+
 Le solveur STRAT a été exécuté sur ce composant sous perturbations physiques réelles (bruit photométrique $A=5\times 10^{-4}$, couloir d'indice $0{,}5\%$, courbure photométrique $0{,}375\%$, fente $2\text{ nm}$).
 
 ### Comparatif PREMIUM vs DEEP

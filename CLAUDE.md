@@ -159,7 +159,7 @@ aucune instruction, et elle a un régime propre :
 |---|---|
 | **Une affirmation fausse y coûte plus qu'un manque** | Un évaluateur qui prend un chiffre en défaut cesse de croire le reste. Tout nombre doit être sourçable dans le code ou dans un artefact de `reports/`. |
 | **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
-| **Elle doit montrer sa LIMITE** | §10.15 porte le 99 couches à SEEL 0,86 nm et dit pourquoi. Un expert la trouverait de toute façon. |
+| **Elle doit montrer sa LIMITE** | §10.15 porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
 | **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. Passe `html.parser`, ne te fie pas à l'œil. |
 
 Les autres pages de `pages/` (14 fichiers : DESIGN, INDEX, FIELD, HUB, RE, METAL, métrologie…)
@@ -183,7 +183,7 @@ paramètres ont été arrêtés avec le physicien le 2026-08-08 et sont dans le 
 | Cadence d'échantillonnage machine | **4 Hz**, un point tous les **0,125 nm** | §9bis-1 |
 | Amplitude du bruit de lecture | **±0,05 point**, soit `A = 5e-4` en unités T | §9bis-2 |
 | `reading_smoothing_window` (`k`) | **8** lectures (2 s) — défaut 1 = inactif | §9bis-3 |
-| `tp_hysteresis_factor` | **0,354** = `1/√8` — jamais 1,66, jamais 3 | §9bis-4 |
+| `tp_hysteresis_factor` | **1,00** — **mesuré**, pas dérivé, à `k = 8` et `N = 800`. 🔴 **Ni 0,354 ni 1,66.** Le `1/√k` = 0,354 est **réfuté** : il laisse **100 %** de points tournants fabriqués. ⚠️ La valeur dépend de `N` autant que de `k` — si l'un bouge, **remesure** | §9bis-4, A1 |
 | Retard de déclenchement | **aucun** — ne rien ajouter | §9bis-5 |
 | `phase_a_level_margin_factor` | **1,66** actuel, **3,33** à évaluer | §9bis-6 |
 | Quantification de l'arrêt | `U(0 ; 0,125 nm)` | §9bis-7 |
@@ -253,7 +253,7 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 | **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§18bis). |
 | **Stratégies par Blocs** | **6 blocs est le meilleur compte MESURÉ sur 35c et 48c** : SEEL **0,583 → 0,482 nm** sur 35c et **0,269 → 0,173 nm** sur 48c, plantage 0,0 %, et **5 mouvements de monochromateur au lieu de 34 et 47** (§17-43). ⚠️ **Pas « optimum global »** : 8 à 34 blocs n'ont jamais été mesurés sur le 35c, et 6 n'y gagne qu'en DEEP — FAST et PREMIUM rendent 5. ⚠️ Les **+31,5 % / +58,7 %** qui circulent sont des gains de **RMSE** ; en SEEL, la seule unité qui compte, ils valent **+17,2 % et +35,7 %**. |
 | **Modes FAST/PREMIUM/DEEP** | 3 profils en UI et solveur, $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 (§17-46). ⚠️ Un `crash_rate` lu sous FAST n'est **pas publiable** : le criblage y est à 10 tirages, donc quantifié à 10 %, et un « 0,0 % » veut dire « sous 10 % ». Cite le SEEL sous FAST, le plantage sous PREMIUM ou DEEP. |
-| **Phase A Block-Aware** | Bonus $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil `streak >= 2`, dans `certus_strat_objectives.py:415` (§17-45). 🔴 **Il ÉCRASE le coût local en place**, sans copie — `cost_raw` contient déjà le coût bonifié. 🔴 **Et il court AVANT la normalisation**, dont la moyenne porte sur les coûts déjà bonifiés : les candidates **non** bonifiées voient donc leur coût normalisé **monter**. Ce n'est pas un ré-ordonnancement neutre. 🔑 La normalisation élevant au carré (`objectives.py:456`), **ce que la DP voit est $C/\text{streak}$, pas $C/\sqrt{\text{streak}}$** — un bloc de 9 couches est favorisé d'un facteur 9, pas 3. |
+| **Phase A Block-Aware** | Bonus $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil `streak >= 2`, dans `certus_strat_objectives.py:415` (§17-45). 🔴 **Il ÉCRASE le coût local en place**, sans copie — `cost_raw` contient déjà le coût bonifié. 🔴 **Et il court AVANT la normalisation**, dont la moyenne porte sur les coûts déjà bonifiés : les candidates **non** bonifiées voient donc leur coût normalisé **monter**. Ce n'est pas un ré-ordonnancement neutre. 🔑 La normalisation élevant au carré (`certus/core/certus_strat_objectives.py:456`), **ce que la DP voit est $C/\text{streak}$, pas $C/\sqrt{\text{streak}}$** — un bloc de 9 couches est favorisé d'un facteur 9, pas 3. |
 
 ### ⏳ EN COURS AU 2026-08-14 — lis ceci avant de lancer quoi que ce soit
 
@@ -947,7 +947,7 @@ certus/
 
 | Inversion | Nb | Détail |
 |-----------|-----|--------|
-| `utils` → `ui` | 12 | dont 3 au niveau module (`certus_curve_smoother.py:29-30`, `certus_export.py:13`) : importer ces modules charge PyQt6 |
+| `utils` → `ui` | 12 | dont 3 au niveau module (`certus/utils/certus_curve_smoother.py:29-30`, `certus/utils/certus_export.py:13`) : importer ces modules charge PyQt6 |
 | `core` → `workers` | 10 | DTO de workers importés par le noyau |
 | `physics` ↔ `core` | 29/22 | cycle |
 
@@ -1227,7 +1227,7 @@ chemin de calcul est celui d'avant, au bit près.
 | Clé JSON | Effet |
 |---|---|
 | `poem_anchor_noise` | Bruite le signal de monitoring **avant** détection des points tournants, lecture des ancres POEM et test d'atteignabilité. Phase A **et** B. |
-| `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66** aujourd'hui. 🔒 **Valeur cible du modèle figé : 0,354** = `1/√k` avec `k = 8`, parce qu'elle s'applique au signal **lissé** — voir §9bis et §12.2. Injectable en 5ᵉ argument du script de sonde. |
+| `tp_hysteresis_factor` | Seuil de détection d'un point tournant, en multiples de `A = trigger_tolerance/100`. Vaut **1,66** aujourd'hui. 🔴 **Valeur cible : 1,00**, **mesurée** à `k = 8`, `N = 800` (A1). L'ancienne cible **0,354** = `1/√k` est **RÉFUTÉE** : elle applique un critère *par échantillon* à un extremum courant sur `N` échantillons, et laisse **100 %** de points tournants fabriqués — §9bis-4. Injectable en 5ᵉ argument du script de sonde. |
 | `reading_smoothing_window` | ⚠️ **Existe depuis `e0df0e1`**, défaut **1**. Fenêtre de moyenne glissante appliquée au signal de monitoring avant détection, **en lectures machine**. Valeur du modèle figé : **8** (2 s à 4 Hz). 🔴 **Dans l'implantation actuelle ce drapeau commande AUSSI la grille de §12.4** — voir §17. |
 | `index_corridor` | ⚠️ **Existe depuis `162a0ff`**, défaut **0,0**. Demi-largeur du corridor d'incertitude d'indice, en **unités d'indice absolues**. Valeur du modèle : **0,005**. Jamais mesuré. |
 | `affine_scale_amp` / `affine_offset_amp` | ⚠️ **Existent depuis `f7a3d71`**, défaut **0,0**. Amplitudes du tirage de dérive photométrique, une fois par run. Valeurs de mesure : **0,05** et **0,02** (§12.1). Jamais mesurées. |
@@ -2730,7 +2730,7 @@ neufs.
 | 22 | ⚠️ **L'historique est échantillonné 1,33× plus grossièrement que la couche courante**, et le commentaire du noyau annonce 4×. `NPTS_PREV = 16` par couche d'historique contre `NPTS = 64` sur `3 × d_nom`, soit 21,3 points par `d_nom` : le rapport de **densité** vaut 21,33/16 = **1,33**, pas 64/16 = 4 — les deux balayages ne couvrent pas la même longueur (`certus_strat_growth.py:511`). Conséquence réelle : un même point physique ne porte pas la même densité de bruit selon qu'il est lu comme historique ou comme couche courante. La grille cadence-machine corrige cela (ligne 652) mais elle est derrière `if smoothing_window > 1` — la soudure du §17-2. **Toutes les mesures faites à `reading_smoothing_window = 1` ont donc l'échantillonnage asymétrique.** |
 | 43 | 🟢 **LA SURVEILLANCE PAR BLOCS SURPASSE LE MONOCOUCHE SUR LES DEUX EMPILEMENTS DE RÉFÉRENCE.** Les chiffres et leur artefact sont en **§17-43, en fin de document** (`reports/RAPPORT_SYNTHESE_STRATEGIES_BLOCS_35C_48C.md`) — n'en garde qu'une seule copie, ici le renvoi. 🔑 **5 changements de λ** en atelier au lieu de 34 et 47. 🔴 **La version antérieure de cette ligne citait `0.01824 / 0.00753 / 0.06391` et des SEEL de 0,9 et 0,7 nm : chiffres RÉFUTÉS.** Ils ne sont dans aucun artefact, et les deux SEEL du 35c sont **arithmétiquement impossibles** — $2\sqrt{0{,}08496} = 0{,}583$ nm et $2\sqrt{0{,}06391} = 0{,}506$ nm, pas 0,9 et 0,7. Ne les recopie pas. ⚠️ Le plantage nul est mesuré sur les blocs **présents dans le balayage** : 1 à 9 et 48 sur le 48c, 1 à 7 et 35 sur le 35c. Pas « de 2 à 9 » partout. |
 | 44 | 🔑 **POURQUOI LES BLOCS BATTENT LE MONOCOUCHE (PHYSIQUE & POEM).** En monocouche, chaque couche réinitialise la phase et détruit la continuité du signal. Dans un bloc (5 à 8 couches), POEM s'appuie sur la continuité de $T(\lambda)$ et compense les dérives d'épaisseur passées (jusqu'à `MAX_LOOKBACK = 4`). De plus, l'interférence constructive transforme les couches individuelles à pente nulle ($\frac{dT}{de} \approx 0$) en fronts de déclenchement très raides. La **zone Goldilocks (4 à 7 blocs, optimum à 6)** évite à la fois l'aveuglement spectral ($\le 3$ blocs) et la perte de mémoire ($\ge 10$ blocs). |
-| 45 | 🟠 **LE BONUS PHASE A BLOCK-AWARE DÉVERROUILLE L'ENTONNOIR, MAIS IL ALTÈRE BIEN LE CHAMP DE COÛT.** `certus_strat_objectives.py:415`, $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil **`streak >= 2`**.<br>• Il fait franchir la troncature `dp_top_k` aux λ stables — **20 en FAST, 40 en PREMIUM, 100 en DEEP**, pas « 40 » : plus le `top_k` est large, moins le bonus change quoi que ce soit, et **aucune mesure ne l'a isolé mode par mode**.<br>• 🔴 **« sans altérer les coûts locaux » était FAUX** : le coût est **écrasé en place**, `cost_raw` (`objectives.py:457`) contient déjà la valeur bonifiée, donc le coût d'avant n'est **plus récupérable**.<br>• 🔴 **Le bonus court AVANT `_normalize_phase_a_results`** (`certus_strat_pipeline.py:99`), dont la moyenne est calculée sur les coûts déjà bonifiés (`objectives.py:438`) : la moyenne baisse, donc les candidates **non** bonifiées voient leur coût normalisé **monter**.<br>• 🔑 **La normalisation élève au carré** (`objectives.py:456`) : ce que la DP de Phase B voit est $C/\text{streak}$, **pas** $C/\sqrt{\text{streak}}$. Un bloc de 9 couches est favorisé d'un facteur **9**, pas 3.<br>• ⚠️ Le seuil `streak >= 2` ne correspond **pas** aux blocs de 5 à 8 couches de la ligne 44 : deux couches consécutives suffisent à gagner un facteur 2, dans un régime qu'aucune mesure ne dit gagnant.<br>• 🔴 **Le « Cost Smoothing testé et réfuté à `0.37784` » n'a JAMAIS été mesuré.** Rien ne l'implémente (`grep cost_smoothing` → 0), il a été écarté par raisonnement. Et `0.37784` est le score de la stratégie **à 1 bloc** d'un run nominal 35c (`reports/campagne_N35_300.log:4309`, graine 42, N = 300). Il ne dit rien du lissage. |
+| 45 | 🟠 **LE BONUS PHASE A BLOCK-AWARE DÉVERROUILLE L'ENTONNOIR, MAIS IL ALTÈRE BIEN LE CHAMP DE COÛT.** `certus_strat_objectives.py:415`, $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil **`streak >= 2`**.<br>• Il fait franchir la troncature `dp_top_k` aux λ stables — **20 en FAST, 40 en PREMIUM, 100 en DEEP**, pas « 40 » : plus le `top_k` est large, moins le bonus change quoi que ce soit, et **aucune mesure ne l'a isolé mode par mode**.<br>• 🔴 **« sans altérer les coûts locaux » était FAUX** : le coût est **écrasé en place**, `cost_raw` (`certus/core/certus_strat_objectives.py:457`) contient déjà la valeur bonifiée, donc le coût d'avant n'est **plus récupérable**.<br>• 🔴 **Le bonus court AVANT `_normalize_phase_a_results`** (`certus_strat_pipeline.py:99`), dont la moyenne est calculée sur les coûts déjà bonifiés (`certus/core/certus_strat_objectives.py:438`) : la moyenne baisse, donc les candidates **non** bonifiées voient leur coût normalisé **monter**.<br>• 🔑 **La normalisation élève au carré** (`certus/core/certus_strat_objectives.py:456`) : ce que la DP de Phase B voit est $C/\text{streak}$, **pas** $C/\sqrt{\text{streak}}$. Un bloc de 9 couches est favorisé d'un facteur **9**, pas 3.<br>• ⚠️ Le seuil `streak >= 2` ne correspond **pas** aux blocs de 5 à 8 couches de la ligne 44 : deux couches consécutives suffisent à gagner un facteur 2, dans un régime qu'aucune mesure ne dit gagnant.<br>• 🔴 **Le « Cost Smoothing testé et réfuté à `0.37784` » n'a JAMAIS été mesuré.** Rien ne l'implémente (`grep cost_smoothing` → 0), il a été écarté par raisonnement. Et `0.37784` est le score de la stratégie **à 1 bloc** d'un run nominal 35c (`reports/campagne_N35_300.log:4309`, graine 42, N = 300). Il ne dit rien du lissage. |
 | 9 | **`MachineModel` n'a toujours aucun consommateur en production.** Vérifié le 2026-08-09 : 5 occurrences en tout — la classe, deux ré-exports, un import, le test. Et `trigger_tolerance: float = 0.05` reste documenté « in T units (0..1) » alors que les consommateurs réels divisent par 100 : **piège ×100**. Manquent toujours vitesse de dépôt et cadence, qui sont pourtant en §9. |
 
 **Le point 7 est refermé pour l'avenir** (`f4ada2d`) : la sonde écrit désormais sa
@@ -4245,9 +4245,23 @@ vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.
 
 ### 25.1. Le constat qui ouvre le chantier
 
-📏 Mesuré sur le passe-bande 5 cavités 99 couches
-(`example/example_strat/RAPPORT_FILTRE_EXTREME_5CAV_99C.md`) : **environ 75 couches sur 99
-doivent passer en mode Rate**, et le SEEL retombe à **0,86 nm** contre 0,17 nm sur le 48c.
+🔴 **ÉTABLI LE 2026-08-15, ET C'EST PIRE QUE « MOINS BON » : SUR LE 99 COUCHES, RIEN NE
+SURVIT.** La référence sans coupure rend **`crash_rate = 100 %`**, en PREMIUM comme en FAST.
+Or une stratégie dont le plantage dépasse 5 % reçoit un score **infini** et **sort du
+classement** (`certus_strat_robustness.py:2125`). Les 785 candidates en sont donc sorties, et
+ce qui revient vient du **repli sans survivant** (`:1152-1166`) : le solveur reclasse les
+éliminées par risque croissant et rend la moins mauvaise avec la **pire RMSE finie**.
+
+| | |
+|---|---|
+| 🔴 **`SEEL = 0,86 nm` n'est PAS un score de robustesse** | C'est le chiffre le moins mauvais parmi des stratégies qui **échouent toutes**. Ne le cite jamais comme une erreur par couche atteignable. |
+| **Ce qui reste vrai, et c'est le vrai constat** | **Environ 75 couches sur 99 doivent passer en mode Rate** ; le suivi optique continu à λ₀ rend **100 % de plantages** (`CRASH_LEVEL_UNREACHABLE`). |
+| **À comparer avec** | 48c : **0,17 nm à 0,0 % de plantage**. Là, le chiffre veut dire quelque chose. |
+
+⚠️ **C'est le défaut qu'A26 annonce depuis le 2026-08-13** — *« score = pire RMSE finie, PAS
+un score de robustesse »* — tombé sur le composant vitrine sans que personne le voie, parce
+que le rapport d'origine **ne consignait pas le taux de plantage**. Tant qu'A26 n'est pas
+faite : **lis le `crash_rate` avant tout score.**
 Deux causes, toutes deux physiques et non contournables par un meilleur solveur :
 
 - les **cavités demi-onde** ont un swing optique **nul** pendant leur dépôt ;
@@ -4302,7 +4316,7 @@ coupures » : c'est la physique seule qui doit le dire.
 | **La vue témoin** | `certus/physics/certus_strat_batch.py:474` — `current_run_th_buffer[r, :i_layer]` est la pile accumulée que la lecture optique « voit ». **C'est là que la coupure se joue** : couper à la couche *p* revient à passer la tranche `[r, p:i_layer]`. |
 | **La pièce** | `sim_thick_batch`, épaisseurs réelles complètes `(n_runs, n_layers)`. Elle n'est **pas** tronquée : la pièce continue d'accumuler toutes les erreurs. C'est exactement la physique voulue. |
 | **Le crochet POEM** | `certus/physics/certus_strat_batch.py:485` — `block_start[i_layer]` est **déjà** un tableau par couche disant au noyau où commence l'historique. Une coupure est un `block_start` forcé, **plus** la troncature de la pile. |
-| **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `growth.py:904-908`. L'historique rejoué repart de zéro à la coupure. |
+| **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `certus/physics/certus_strat_growth.py:904-908`. L'historique rejoué repart de zéro à la coupure. |
 | **Le seuil de swing** | `certus/physics/certus_strat_growth.py:883` — `SWING_MIN = 0.04`. **Un critère de mort du signal existe donc déjà, chiffré, dans le noyau.** |
 
 🔴 **Vérifier ces cinq ancrages avant d'écrire une ligne.** Le document a déjà cité
@@ -4326,11 +4340,21 @@ La question est **où placer la coupure**, et elle est ouverte.
 > **SEEL global de l'ordre de 0,3 nm sur le 99c**, avec **2 ou 3 témoins**, sur la pièce
 > complète qui les reçoit tous. On tâtonnera d'abord.
 
-Partant de **0,86 nm**, c'est un facteur **2,9 en SEEL**, donc **8,3 en RMSE**
-(`0.18705 → ~0.0225`). Ambitieux, mais pas absurde : à 3 témoins chaque campagne fait ~33
-couches, soit la longueur du 35c qui atteint 0,48 nm et du 48c qui atteint 0,17 nm. **Une
-cible entre les deux est cohérente avec ce que la machine sait déjà faire sur des piles de
-cette taille** — à condition que les campagnes se combinent bien, ce que personne ne sait.
+🔴 **MAIS LA PREMIÈRE CIBLE N'EST PAS LE SEEL.** Le point de départ n'est pas « 0,86 nm » :
+c'est **100 % de plantage**, donc *aucune* stratégie exploitable (§25.1). **Tant que le
+plantage n'est pas passé sous 5 %, aucun SEEL n'est publiable** — celui qui s'affichera sera
+un score de repli, et comparer deux positions de coupure sur des scores de repli revient à
+**comparer deux façons d'échouer**.
+
+| # | Cible | Pourquoi dans cet ordre |
+|---|---|---|
+| **1** | **`crash_rate < 5 %`** sur la pièce | Sans ça le composant n'est pas fabricable **du tout**, et rien d'autre ne se mesure. C'est ce seuil qui dira si le multi-témoins **marche**. |
+| **2** | SEEL de l'ordre de **0,3 nm** | La cible de 👤. Elle ne devient une question qu'une fois la première franchie. |
+
+Repère pour la cible 2 : à 3 témoins chaque campagne fait ~33 couches, soit la longueur du
+35c (0,48 nm) et du 48c (0,17 nm) — **à 0,0 % de plantage tous les deux**. Une cible entre
+les deux est donc cohérente avec ce que la machine sait faire sur des piles de cette taille,
+à condition que les campagnes se combinent bien, ce que personne ne sait.
 
 #### 🔴 LE SEEL GLOBAL N'EST PAS LA MOYENNE DES SEEL PARTIELS — ne fais jamais ce raccourci
 
@@ -4405,7 +4429,7 @@ attente **avant** de mesurer, dans le test, pas dans le rapport.
 |---|---|---|
 | 1 | 48c, coupure forcée en 24 | SEEL **dégradé** par rapport à 0,17 nm |
 | 2 | 35c, coupure forcée en 17 | SEEL **dégradé** par rapport à 0,48 nm |
-| 3 | 99c, coupure forcée en 50 | SEEL **amélioré** par rapport à 0,86 nm — c'est l'hypothèse à réfuter |
+| 3 | 99c, coupure forcée vers le milieu | **plantage sous 5 %** — c'est l'hypothèse à réfuter. **Pas un SEEL** : sans survivant, tout SEEL affiché est un score de repli (§25.1) |
 
 #### ✅ T1 — Le mécanisme de coupure : **FAIT le 2026-08-14**
 
@@ -4454,7 +4478,7 @@ Pour chaque couche *i* et chaque λ candidate, calculer sur le témoin portant l
 couche. Nominal, aucun tirage, coût négligeable.
 
 La grandeur qui décide : **`swing_max(i) = max sur λ du swing`**. Le seuil existe déjà :
-`SWING_MIN = 0.04` (`growth.py:883`). **Première règle générale candidate : couper juste
+`SWING_MIN = 0.04` (`certus/physics/certus_strat_growth.py:883`). **Première règle générale candidate : couper juste
 avant que `swing_max(i)` ne passe sous `SWING_MIN`.**
 
 ⚠️ Cette carte est à produire **par couche et par λ**, pas seulement par couche : une couche

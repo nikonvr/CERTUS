@@ -135,3 +135,18 @@ translation_cache.json
 # nommant cinq personnes : sorti du suivi le 2026-08-14. Citer la reference
 # publiee, ne pas redistribuer le texte.
 reports/_zideluns_text.json
+
+# --- SORTIES, sorties du suivi le 2026-08-15. Elles restent sur le disque et
+# dans l'historique git ; elles ne sont simplement plus publiees.
+#
+# RAPPORT_GEMINI.md : destination d'un executant (cf. la regle des deux
+# documents). Son CHEMIN reste cite par CLAUDE.md et GEMINI_TODO.md et reste
+# valide -- c'est son contenu, 18 737 lignes de traces d'exception et le plus
+# gros fichier suivi du depot, qui n'avait aucune valeur de reference.
+reports/RAPPORT_GEMINI.md
+# CAMPAGNE_{E,F,G} : sorties de run_campaign.py, remplacees par
+# CAMPAGNE_RESUME.md. ⚠️ Trois de leurs valeurs sont citees dans CLAUDE.md :
+# elles restent verifiables sur le disque et dans l'historique.
+reports/CAMPAGNE_E_RESUME.md
+reports/CAMPAGNE_F_RESUME.md
+reports/CAMPAGNE_G_RESUME.md

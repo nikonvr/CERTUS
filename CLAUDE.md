@@ -1237,16 +1237,27 @@ chemin de calcul est celui d'avant, au bit près.
 
 ## 12. Le travail à venir, dans l'ordre
 
-> 🔴 **AVERTISSEMENT DU 2026-08-09 — lis §17 avant de reprendre une action de §12.**
-> Le code de T1, T3, T4 et T5 **existe déjà**, mais **aucune** des mesures qui devaient le
-> valider n'a été faite, la non-régression bit-à-bit ne tient pas, T3 est soudée à T4, et T7
-> n'est pas écrit. Les descriptions ci-dessous restent exactes sur **ce qu'il faut obtenir** ;
-> elles ne décrivent plus l'état du dépôt.
+> 🔴 **LIS CE TABLEAU AVANT LES 700 LIGNES QUI SUIVENT.** Cette section a été écrite comme
+> une liste de travail à faire ; **l'essentiel est fait**, et ce qui suit est surtout la
+> physique et les pièges qui restent, pas un ordre de mission. **Ne redémarre pas une action
+> marquée ACQUISE.**
 
-> **Chaque action donne : le fichier et la fonction exacts, ce qu'il faut écrire, la commande
-> de vérification avec son résultat attendu, et les pièges connus.** Si une instruction te
-> paraît ambiguë, c'est un défaut de ce document — ne comble pas par une hypothèse,
-> arrête-toi et demande.
+| | État au 2026-08-14 | Ce qui reste vraiment |
+|---|---|---|
+| **12.1** distorsion affine, épreuve de POEM | ✅ **ACQUISE et dépassée.** Protection ×15 à ×17,5 mesurée sur deux graines (A12). `poem_enabled` et les amplitudes affines **existent** dans les signatures. | Rien. ⚠️ Mais lis « la dérive n'est pas affine » ci-dessous : elle **requalifie** ce résultat. |
+| **La forme de la dérive photométrique** | ✅ **TRANCHÉE le 2026-08-12** : $\delta T = 4\varepsilon T(1-T)$, pas affine. C'est le bloc le plus important de §12. | L'amplitude $\varepsilon$ reste une **spécification 👤**, pas une mesure. |
+| **12.2** lissage de lecture | 🟠 modèle posé, **et son seuil dérivé est RÉFUTÉ** : `0,354` est faux, la mesure dit **`1,00 A`**. | Le lissage exige la grille de 12.4. `machine_sampling_dd` existe et vaut 0 (A8). |
+| **12.3** méconnaissance d'indice | ✅ **ACQUISE.** ±0,005, corridor tranché le 2026-08-10, normalisation sur l'enveloppe. | Rien. |
+| **12.4** grille à la cadence machine | 🟠 le paramètre existe, dé-soudé du lissage (A8), **et vaut 0 par défaut**. | Trancher 1 nm contre 2 nm — c'est §22, avec son critère posé d'avance. |
+| **12.5** quantification du déclenchement | ✅ **ACQUISE.** `U(0 ; 0,125 nm)`, et elle apparaît toute seule dans l'arrondi du Rate. | Rien. |
+| **12.7** résolution du monochromateur | 🟠 **le biais de fente est actif par défaut depuis le 2026-08-11** et la fente fait partie de la stratégie. | 🔴 **Le facteur √3 n'est pas corrigé** : la fente est rectangulaire, la formule en production est trop stricte de 1,73×. |
+| **12.6** face arrière | ⚪ non fait, et il est écrit « en dernier, ou jamais ». | — |
+
+> **Ce qui suit garde sa valeur pour deux raisons, et deux seulement** : la **physique** y est
+> établie et ne se retrouve nulle part ailleurs, et les **pièges** y sont nommés. Le déroulé
+> des délibérations, lui, est dans `git log`.
+
+> **Les trois contraintes ci-dessous s'appliquent encore à toute action**, faite ou non.
 
 ### Les trois contraintes qui s'appliquent à TOUTES les actions
 
@@ -1268,66 +1279,30 @@ l'attribution est perdue — pour toi et pour tous ceux qui suivront.
 
 ---
 
-### 12.1 🔴 Rendre la distorsion affine atteignable, puis éprouver POEM
+### 12.1 ✅ L'épreuve de POEM — ACQUISE, et ce qu'il faut en retenir
 
-**Pourquoi en premier** : seule action pouvant **invalider POEM**, le mécanisme central de
-STRAT. Tout le reste le suppose valide.
+C'était la seule action pouvant **invalider POEM**, le mécanisme central de STRAT. Elle a été
+faite les 10 et 12 août. Trois choses en restent, et rien d'autre.
 
-**Où on en est.** Le noyau est corrigé (`76f7a8f`) : il annulait son propre effet en trois
-endroits, ce qui aurait fait conclure l'inverse de la vérité.
+**1. La protection est réelle et reproductible : ×15 à ×17,5**, mesurée sur deux graines
+(A12 du tableau des acquis). 🔴 **Cite la protection, jamais le dommage résiduel** : la
+distorsion coûte +0,9 % à la graine 42 et +98 % à la graine 77 — la 42 était un tirage
+chanceux, et « +0,87 % » ne doit pas ressortir.
 
-| Site | Défaut corrigé |
-|---|---|
-| Inversion parabolique | modèle **non distordu** résolu contre une cible **distordue** — unités mélangées |
-| Repli absolu | `a·target_nominal + b` rendait au contrôleur l'étalonnage qu'il est censé avoir perdu |
-| Test SWING | seuil mis à l'échelle par `a`, annulant le gain exactement |
+**2. POEM protège même sans aucune distorsion : ×1,975.** Il ne compense donc pas seulement
+la dérive photométrique, mais aussi **les erreurs d'épaisseur accumulées**. 🔑 C'est la part
+de POEM qui **ne dépend d'aucune hypothèse photométrique**, donc la seule qui survive à la
+requalification du bloc suivant. C'est elle qu'il faut citer par défaut.
 
-📏 Avant : `a = 0,9574` déplaçait l'arrêt de **−6,60 nm** là où la théorie exige zéro.
-📏 Après : invariance POEM à **2,19e-10 nm**, et le repli absolu devient sensible — il rend
-`CRASH_LEVEL_UNREACHABLE` sous une chute de gain de 4,3 % sur une couche à faible contraste.
+**3. 🔑 Un mécanisme d'invariance peut s'auto-annuler, et ça ne se voit pas.** Le noyau
+annulait son propre effet en **trois** endroits à la fois — inversion parabolique résolue en
+unités mélangées, repli absolu qui rendait l'étalonnage perdu, test de swing mis à l'échelle
+par le gain. Chacun rendait des nombres plausibles, et ensemble ils auraient fait conclure
+**l'inverse de la vérité**. Avant de mesurer une invariance, vérifie que le code ne la
+fabrique pas.
 
-**Ce qui manque** : `affine_scale` et `affine_offset` ne sont dans la signature d'**aucun**
-appelant. Le tirage n'existe pas.
-
-#### 🟢 MESURÉ LE 2026-08-10 — POEM tient sa promesse, facteur 17,5
-
-Campagne `scripts\run_campaign.py`, 4 bras, `amp_scale = 0.05`, `amp_offset = 0.02`,
-graine 42, pas 1 nm. Les 4 runs `OK`, `CONFIG=` vérifiée bras par bras, **aucun écart entre
-la configuration demandée et celle appliquée**.
-
-| | distorsion absente | distorsion présente | **coût de la distorsion** |
-|---|---|---|---|
-| **POEM actif** | `0.002948627371309867` | `0.0029742829447752268` | **×1,0087** (+0,87 %) |
-| **POEM inactif** | `0.005824599272270286` | `0.10256954814393225` | **×17,61** (+1661 %) |
-
-$$\textbf{Facteur de protection de POEM} = \frac{17{,}61}{1{,}0087} = \mathbf{17{,}5}$$
-
-**Le critère de réussite posé à l'avance était : « l'écart doit être spectaculaire, sinon
-l'argument central du mécanisme tombe ». Il est de trois ordres de grandeur.**
-
-Deux constats supplémentaires que personne n'avait demandés :
-
-- **POEM inactif SANS aucune distorsion coûte déjà ×1,975.** Il ne protège donc pas seulement
-  de la dérive photométrique : il compense aussi les erreurs d'épaisseur accumulées.
-- Le pire cas complet — POEM inactif sous distorsion — vaut **×34,8** le meilleur cas.
-
-#### 🟢 Confirmé sur une SECONDE graine le 2026-08-10 — avec une nuance à ne pas cacher
-
-| graine | distorsion avec POEM | sans POEM | **protection** |
-|---|---|---|---|
-| **42** | ×1,009 | ×17,61 | **×17,5** |
-| **77** | ×1,983 | ×30,18 | **×15,2** |
-
-**La protection est reproductible : ×15 à ×17,5.** C'est le résultat, et il tient.
-
-🔴 **Mais le dommage RÉSIDUEL dépend fortement de la graine.** À la graine 42 la distorsion ne
-coûtait que **+0,9 %** avec POEM ; à la 77 elle coûte **+98 %**. **La graine 42 était un
-tirage chanceux.** Ne cite jamais « +0,87 % » comme le coût de la distorsion — cite la
-protection, qui est ce qui se reproduit.
-
-🔴 **Ce que ces mesures ne disent PAS.** Elles portent sur `RESULT`, l'agrégat sur les trois
-niveaux de bruit, sur le seul 48 couches. §15 reste entier : banc de cohérence, pas
-validation physique.
+⚠️ Portée : `RESULT`, agrégat sur trois niveaux de bruit, sur le seul 48 couches. §15 reste
+entier — banc de cohérence, pas validation physique.
 
 #### 🔑 POEM ne réduit pas seulement l'erreur — il change OÙ elle tombe
 
@@ -1477,7 +1452,15 @@ valeur-là.
 
 > **Cette action applique le modèle figé du §9bis.** Ne le rediscute pas : l'OMS est breveté,
 > son fonctionnement interne restera opaque, et le postulat a été arrêté le 2026-08-08 pour
-> clore la question. Les valeurs à utiliser sont `k = 8` et seuil `0,354 A`.
+> clore la question. La fenêtre à utiliser est **`k = 8`**.
+>
+> 🔴 **NE PRENDS PAS LE SEUIL DE `0,354 A` ÉCRIT PLUS BAS. IL EST RÉFUTÉ.** C'était une
+> **dérivation** — `3σ/A = 1/√k` — et elle suppose des échantillons indépendants, alors que
+> deux moyennes glissantes voisines partagent 7 lectures sur 8. La borne **mesurée** vaut
+> **`1,00 A`** à `k = 8`, `N = 800` (§9bis, postulat 4, 2026-08-10) : **un facteur 2,8
+> au-dessus de la dérivation**. Le raisonnement qui suit est conservé parce qu'il explique
+> *pourquoi* le seuil descend au lieu de monter — mais **son chiffre est faux**, et c'est le
+> troisième cas de ce document où un raisonnement sur le bruit a été démenti par la mesure.
 
 **2 s à 4 lectures/s ⇒ fenêtre de `k = 8` lectures**, soit 1 nm de dépôt à 0,5 nm/s.
 
@@ -1531,9 +1514,12 @@ Contre 1,66 aujourd'hui : **4,7× plus bas**, sur un signal 2,8× plus calme. C'
 sur les deux tableaux — moins de faux points tournants **et** meilleure détection des vrais
 extrema peu marqués, qui est la face du problème jamais mesurée.
 
-⚠️ **Ce 0,354 est une dérivation, pas une mesure.** La borne anti-fabrication d'un signal
-lissé n'est pas calculable simplement : les échantillons voisins sont corrélés. **Il faut la
-mesurer** — voir la vérification 2.
+🔴 **CE 0,354 A ÉTÉ MESURÉ, ET IL EST FAUX.** La dérivation supposait des échantillons
+indépendants ; les moyennes glissantes voisines partagent 7 lectures sur 8. Mesuré le
+2026-08-10 à `k = 8`, `N = 800` : la borne anti-fabrication vaut **`1,00 A`**, soit
+**2,8 fois** la dérivation. **C'est `1,00` qu'on utilise** (§9bis, postulat 4, et A1/A2 du
+tableau des acquis). Ce qui reste vrai du raisonnement ci-dessus : le seuil **descend** avec
+le lissage au lieu de monter, et pour les deux raisons données. Seul le chiffre était faux.
 
 #### Le retard : rien à ajouter, le noyau fait déjà bien
 

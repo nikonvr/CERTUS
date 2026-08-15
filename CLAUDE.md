@@ -4772,6 +4772,86 @@ la pièce d'environ 1,5 quart d'onde sur 50 couches**, et c'est un biais **syst�
 monitoring ne corrige pas** : il corrige l'erreur du témoin, pas celle de la pièce. Il
 s'ajouterait à l'erreur gelée. 🔴 **Question à 👤 : ce rapport est-il mesuré sur ta machine ?**
 
+### 25.10. 🟢 SYNTHÈSE DU 2026-08-15 — ce que la journée a établi, réfuté, et laissé ouvert
+
+**Lis cette section avant tout le reste de §25.** Elle remplace les conclusions provisoires
+qui la précèdent quand elles divergent.
+
+#### Ce qui est ÉTABLI par la mesure
+
+| # | Fait | Preuve |
+|---|---|---|
+| 1 | **Le 99c n'est pas fabricable en une seule campagne.** Les **487** stratégies plantent à **100 %** — pas la retenue, **la meilleure**. Le « 0,86 nm » qui circulait est un **score de repli**, inatteignable. | distribution complète des taux de plantage |
+| 2 | **Le multi-témoins le rend fabricable.** 3 campagnes à **0 %** de plantage chacune, assemblage à **0,760 nm**. 🔑 **Il ne fait pas gagner en précision — il fait passer d'IMPOSSIBLE à POSSIBLE.** | 386 partitions assemblées |
+| 3 | **Le découpage ne gouverne presque rien.** Étendue **+14,4 %** sur 386 partitions, soit moins de 3 unités de résolution ; **110 partitions à égalité** avec la première. | résolution 5,1 % en SEEL à N=50 |
+| 4 | **Le nombre de témoins ne compte pas.** 2 témoins 0,783 nm, 3 témoins 0,760 nm : **+3,0 %**, sous la résolution. **La vague à 4 témoins est abandonnée par la donnée**, pas par manque de temps. | idem |
+| 5 | **Presque tout sous-empilement est monitorable sur verre nu** : **248 sur 249**. Un seul infaisable, `[22,78)`. | campagne des intervalles |
+| 6 | 🔑 **Ce n'est PAS l'âge du témoin qui gouverne.** Le **dernier** tiers du 99c — là où, en campagne unique, il ne reste qu'**une** λ viable — est le **plus facile** des trois sur verre nu : 156 stratégies déposables sur 163. | A 23/166, B 54/126, C 156/163 |
+| 7 | 🟢 **CONTRÔLE NÉGATIF PASSÉ.** Sur le 48c et le 35c, où le monitoring marche déjà, **11 partitions sur 11 DÉGRADENT** le composant : **+73 à +89 %** sur le 48c, **+10 à +98 %** sur le 35c. **Aucune ne gagne, même par chance.** | 22 sous-empilements |
+
+Le point 7 est le plus important du lot : **si une seule de ces onze avait gagné, tout le
+reste tombait.**
+
+#### Ce qui est RÉFUTÉ
+
+| hypothèse | verdict |
+|---|---|
+| « le témoin vieillit et meurt, donc changer vers 50 couches » | ❌ le dernier tiers est le plus facile (point 6) |
+| « c'est l'épaisseur optique accumulée qui décide » | ❌ elle **brouille** le signal : l'effondrement se voit à 54-56 **couches**, pas à 54-56 QWOT |
+| « c'est le nombre d'espaceurs traversés » | ❌ 1, 2, 3 → 131, 160, 112 stratégies, sans tendance |
+| « c'est la position de fin par rapport à un espaceur » | ❌ 11 % de fragiles dans la tranche, mais **82 intervalles sains** y finissent aussi |
+| « c'est le nombre de couches » | 🟠 **localise sans déterminer** : les fragiles sont tous à 48-60 couches, mais seul **un tiers** des intervalles longs sont fragiles |
+
+⚠️ **Quatre hypothèses testées après coup sur les mêmes données.** Chaque test de plus
+augmente la chance qu'une colle par hasard. **Ne pas continuer à pêcher** — la suite demande
+une grandeur nouvelle, pas une relecture.
+
+#### Ce qui reste OUVERT
+
+**La sensibilité par couche est le meilleur candidat, et il n'est pas validé.**
+`S(j)` = dégât spectral d'une perturbation de 1 nm sur la couche *j*, en **TMM pur**, sans
+Monte-Carlo et **sans rien savoir de la famille du filtre**. Le mécanisme est précis : changer
+en `p` **gèle l'erreur de la couche `p−1`** sans compensation possible.
+
+| composant | contraste de sensibilité | corrélation `S(p−1)` ↔ SEEL |
+|---|---|---|
+| 99c, 5 cavités | **82×** | **+0,69** (r² = 0,48) |
+| 35c, 3 cavités | 24× | +0,20 |
+| 48c, dichroïque | 14× | +0,25 |
+| **75c aléatoire** (graine 2026, aucune structure) | **11×** | **en cours** |
+
+🔑 **Et c'est bien `S(p−1)` qui compte** — la couche **gelée** — pas `S(p)` (r = +0,23) ni une
+moyenne locale (r = +0,45). Le mécanisme prédit exactement ça.
+
+⚠️ **La règle ne se transfère pas en l'état.** Deux lectures restent possibles et le 75c
+aléatoire les départage : soit elle ne mord qu'à **fort contraste**, soit le +0,69 du 99c
+était une **coïncidence** sur 13 points médians et confondus. Si les quatre points s'alignent
+sur une relation monotone contraste ↔ pouvoir prédictif, la première devient une observation.
+
+**Et le facteur limitant n'est pas là.** 0,760 nm contre **0,300** visés : facteur 2,5, avec
+un écart meilleur/pire presque du bruit. Le levier pour la cible de 👤 **n'est pas le
+découpage** — il est dans l'erreur intrinsèque de chaque campagne.
+
+#### 🔴 Les cinq défauts d'INSTRUMENT trouvés dans la journée, et ils étaient tous silencieux
+
+Aucun ne produisait d'erreur. Tous rendaient des nombres plausibles.
+
+| défaut | comment il a été attrapé |
+|---|---|
+| `--mode fast` **jamais appliqué** — `run_workflow` rappelle `collect_params` et jette le dictionnaire modifié | la configuration **appliquée** consignée à côté de la demandée |
+| le plan de changement et la fente figée, **même cause** | deux runs censés différer rendant un score **bit-identique** |
+| ma vérification **relisait le dictionnaire jeté** — circulaire, elle validait tout | rien ne l'a attrapée : je l'ai vue en la relisant |
+| `strats[0].crash_rate` lu comme « le plantage du run » — a produit un « B échoue à 98 % » **faux**, alors que 54 stratégies ne plantaient jamais | la **distribution** au lieu du premier élément |
+| le contrôle d'assemblage écrit comme `T(nom)` contre `T(nom.copy())` — une **tautologie** | relecture avant de l'utiliser |
+
+> 🔴 **Un faux contrôle est pire que pas de contrôle : il donne la confiance sans la
+> vérification.** Et **une vérification qui relit sa propre entrée ne vérifie rien.**
+
+⚠️ **Un défaut de PHYSIQUE, du même genre** : à graine commune — ce qu'il faut pour partager
+la réalisation d'indice — le bruit de lecture des campagnes était **corrélé à 78 %**. Corrigé
+en le traitant comme **un flux continu dont chaque campagne lit sa tranche** : **1 %**. Les
+mesures d'avant ce correctif ne sont pas comparables à celles d'après.
+
 #### T7 — Changements de témoin multiples
 
 Une fois un changement de témoin comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée

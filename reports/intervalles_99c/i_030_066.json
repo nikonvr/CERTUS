@@ -1,0 +1,15 @@
+{
+  "a": 30,
+  "b": 66,
+  "n": 36,
+  "stamp": "2026-08-15T15:58:21",
+  "instrument": "fa4ef2d",
+  "verdict": "DEPOSABLE",
+  "n_strats": 230,
+  "n_deposables": 223,
+  "crash_min": 0.0,
+  "crash_retenue": 100.0,
+  "score": 0.04821733937933871,
+  "run_s": 235.1,
+  "tirages": 50
+}

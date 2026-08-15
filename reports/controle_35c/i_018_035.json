@@ -1,0 +1,12 @@
+{
+  "comp": "35c",
+  "a": 18,
+  "b": 35,
+  "n": 17,
+  "verdict": "DEPOSABLE",
+  "n_strats": 72,
+  "n_deposables": 72,
+  "crash_min": 0.0,
+  "stamp": "2026-08-15T17:36:47",
+  "run_s": 41.1
+}

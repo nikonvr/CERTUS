@@ -1,0 +1,12 @@
+{
+  "comp": "random75",
+  "a": 0,
+  "b": 26,
+  "n": 26,
+  "verdict": "DEPOSABLE",
+  "n_strats": 231,
+  "n_deposables": 223,
+  "crash_min": 0.0,
+  "stamp": "2026-08-15T17:47:56",
+  "run_s": 160.3
+}

@@ -1763,7 +1763,33 @@ def _test_strategy_robustness_task(
     # here: it is swept and decided by measurement.
     tp_hysteresis_factor = float(params.get("tp_hysteresis_factor", 0.0) or 0.0)
     for noise_idx, noise_val in enumerate(noise_levels):
-        raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, num_layers)
+        # 🔴 LE BRUIT DE LECTURE EST UN SEUL PROCESSUS CONTINU SUR TOUT LE DEPOT, et une
+        # campagne n'en lit QUE SA TRANCHE.
+        #
+        # Sans ces deux parametres, mesurer un sous-empilement isolement lui donne un flux
+        # de bruit qui REPART A ZERO. Trois campagnes lancees a la meme graine -- ce qu'il
+        # faut faire pour partager la realisation d'indice -- recoivent alors un bruit de
+        # lecture correle a 76-79 % (mesure le 2026-08-15), la ou deux graines distinctes
+        # donnent -0,09. Or deux couches deposees a vingt minutes d'intervalle ne partagent
+        # pas le bruit de leur photodetecteur.
+        #
+        # 🔑 La graine ne peut pas resoudre ca : elle pilote A LA FOIS le corridor d'indice
+        # -- qui DOIT etre partage, les materiaux sont les memes -- et le bruit de lecture,
+        # qui doit etre INDEPENDANT. Les deux demandent des traitements opposes. On garde
+        # donc la meme graine, et on decale la TRANCHE.
+        #
+        # Defauts : offset 0 et total = num_layers, soit exactement le comportement d'avant
+        # (contrainte C1).
+        noise_total = int(params.get("noise_total_layers", 0) or 0) or num_layers
+        noise_off = int(params.get("noise_layer_offset", 0) or 0)
+        if noise_off < 0 or noise_off + num_layers > noise_total:
+            raise ValueError(
+                f"tranche de bruit hors bornes : offset {noise_off} + {num_layers} couches "
+                f"> {noise_total}. Un sous-empilement doit declarer sa position DANS le depot."
+            )
+        raw_noise = _get_cached_sobol_noise(base_seed, noise_idx, num_runs, noise_total)
+        if noise_total != num_layers:
+            raw_noise = np.ascontiguousarray(raw_noise[:, noise_off:noise_off + num_layers])
 
         if is_absolute:
             noise_matrix = dT_dd * raw_noise * noise_val * penalty_vector

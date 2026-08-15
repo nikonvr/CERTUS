@@ -1,0 +1,163 @@
+"""Assemble toutes les partitions depuis le cache d'intervalles et les classe.
+
+    .venv\\Scripts\\python.exe scripts\\classer_partitions.py
+
+Aucun run. Tout sort du cache produit par `campagne_intervalles.py` : les epaisseurs
+simulees de chaque intervalle sont concatenees tirage par tirage, et la piece de 99 couches
+est notee par `compute_batch_rmse`, le code de production.
+
+🔴 CE QUE CE CLASSEMENT EST, ET CE QU'IL N'EST PAS.
+
+C'est une BORNE SUPERIEURE. Chaque intervalle a jusqu'a 306 strategies deposables et la
+campagne n'a garde QUE LA MEILLEURE -- meilleure au sens de son propre sous-spectre, qui
+n'est pas celui du produit final. Une erreur benigne sur un intervalle isole peut etre
+catastrophique si la couche concernee se trouve etre un espaceur de cavite dans l'empilement
+complet. Le vrai optimum demanderait de garder les k meilleures par intervalle et d'assembler
+les combinaisons.
+
+⚠️ UNE SEULE GRAINE. Le classement ci-dessous est un CRIBLAGE, pas un verdict : le premier
+est necessairement celui dont le bruit a eu le plus de chance. Son SEEL est biaise vers le
+bas par construction. Seule une re-evaluation sur 3 a 5 graines independantes, dont on prend
+la moyenne, donne un score defendable.
+
+🔑 UNITE DE DECISION : la resolution relative d'un score vaut 6 % a N=150 et suit 1/sqrt(N),
+donc 10,4 % a N=50, soit **5,1 % en SEEL**. Deux partitions separees de moins que ca sont A
+EGALITE, pas classees.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sys
+from itertools import combinations
+from pathlib import Path
+
+import numpy as np
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+ROOT = Path(__file__).resolve().parents[1]
+os.chdir(ROOT)
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+CACHE = ROOT / "reports" / "intervalles_99c"
+FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
+N = 99
+LO, HI = 20, 60
+DELTA = 0.051          # resolution en SEEL a N=50
+
+
+def charger() -> dict[tuple[int, int], dict]:
+    out = {}
+    for f in CACHE.glob("i_*.json"):
+        r = json.loads(f.read_text(encoding="utf-8"))
+        th = CACHE / f"th_{r['a']:03d}_{r['b']:03d}.npy"
+        if r["verdict"] == "DEPOSABLE" and th.exists():
+            r["th"] = np.load(th)
+            out[(r["a"], r["b"])] = r
+    return out
+
+
+def partitions() -> list[tuple[tuple[int, int], ...]]:
+    res = []
+    for k in (1, 2, 3):
+        for cuts in combinations(range(2, N, 2), k):
+            b = [0, *cuts, N]
+            ps = tuple((b[i], b[i + 1]) for i in range(len(b) - 1))
+            if all(LO <= y - x <= HI for x, y in ps):
+                res.append(ps)
+    return res
+
+
+def main() -> int:
+    import bench_examples as Bx
+    from certus.core.certus_strat_robustness import _index_stream_seed
+    from certus.physics.certus_opt_tmm import arange_inclusive
+    from certus.physics.certus_strat_batch import compute_batch_rmse
+    from certus.physics.certus_tmm_hl import calculate_RT_vectorized_real_HL
+    from certus.utils.certus_strat_service import (
+        get_refractive_clues_vectorized,
+        get_refractive_index,
+    )
+    from CERTUS_STRAT import CertusStratApp
+
+    Bx.qapp()
+    Bx.autoanswer_dialogs(True)
+    app = CertusStratApp()
+    app.load_configuration(str(ROOT / FULL))
+    prm = app.collect_params()
+    db = prm.get("materials_db_instance") or prm.get("materials_db")
+
+    wl = arange_inclusive(prm["wl_range"][0], prm["wl_range"][1], float(prm["wl_step"]))
+    nH = np.asarray(get_refractive_clues_vectorized(prm["nH_id"], wl, db_instance=db), dtype=np.complex128)
+    nL = np.asarray(get_refractive_clues_vectorized(prm["nL_id"], wl, db_instance=db), dtype=np.complex128)
+    nS = np.asarray(get_refractive_clues_vectorized(prm["nSub_id"], wl, db_instance=db), dtype=np.complex128)
+
+    l0 = float(prm["l0"])
+    mult = [float(e) for e in str(prm["stack_string"]).split(",") if e.strip()]
+    nH0 = get_refractive_index(prm["nH_id"], l0, db_instance=db)
+    nL0 = get_refractive_index(prm["nL_id"], l0, db_instance=db)
+    nom = np.array([(m * l0) / (4.0 * np.real(nH0 if i % 2 == 0 else nL0))
+                    for i, m in enumerate(mult)], dtype=np.float64)
+    _, T_nom = calculate_RT_vectorized_real_HL(wl, nH, nL, nS, nom)
+    parity = np.arange(N) % 2 == 0
+    mat = np.where(parity[np.newaxis, :], nH[:, np.newaxis], nL[:, np.newaxis])
+    vide = np.empty(0, dtype=np.complex128)
+    seed_idx = _index_stream_seed(42, 1)
+    corr = float(prm.get("index_corridor", 0.0) or 0.0)
+
+    cache = charger()
+    print(f"{len(cache)} intervalles deposables en cache.\n")
+
+    res = []
+    manquants = 0
+    for ps in partitions():
+        if not all(p in cache for p in ps):
+            manquants += 1
+            continue
+        th = np.concatenate([cache[p]["th"] for p in ps], axis=1)
+        if th.shape[1] != N:
+            continue
+        rmse = compute_batch_rmse(th, wl.astype(np.float64), vide, vide,
+                                  nS.astype(np.complex128), T_nom, mat, None,
+                                  corr, seed_idx, float(wl[0]), float(wl[-1]))
+        p95 = float(np.percentile(rmse, 95))
+        res.append({
+            "parts": ps, "n_temoins": len(ps),
+            "seel": 2.0 * math.sqrt(p95), "rmse": p95,
+            "faible": min(cache[p]["n_deposables"] for p in ps),
+        })
+
+    if not res:
+        print("aucune partition complete en cache pour l'instant.")
+        return 0
+    res.sort(key=lambda r: r["seel"])
+    best = res[0]["seel"]
+
+    print("=" * 78)
+    print(f"{len(res)} partitions assemblees  ({manquants} incompletes, intervalles pas encore mesures)")
+    print("=" * 78)
+    print(f"\nmeilleur SEEL {best:.3f} nm | cible 0,300 nm | resolution +/-{DELTA:.1%}\n")
+    print("  rang  temoins  partition                       SEEL     ecart   min deposables")
+    for i, r in enumerate(res[:15], 1):
+        ec = (r["seel"] - best) / best
+        tag = "= " if ec <= DELTA else "  "
+        pp = " ".join(f"{a}-{b}" for a, b in r["parts"])
+        print(f"  {i:4d}  {r['n_temoins']:5d}    {pp:<30} {r['seel']:.3f}  {tag}{ec:+6.1%}   {r['faible']:5d}")
+
+    ex = [r for r in res if (r["seel"] - best) / best <= DELTA]
+    print(f"\n{len(ex)} partitions a EGALITE avec la premiere (ecart <= {DELTA:.1%}).")
+    print(f"etendue totale : {best:.3f} -> {res[-1]['seel']:.3f} nm "
+          f"({(res[-1]['seel'] - best) / best:+.1%})")
+    for k in (2, 3):
+        s = [r for r in res if r["n_temoins"] == k]
+        if s:
+            print(f"  meilleur a {k} temoins : {min(r['seel'] for r in s):.3f} nm  ({len(s)} partitions)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

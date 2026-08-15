@@ -63,8 +63,11 @@
                 Algorithm Documentation</p>
         </header>
 
-        <div style="border:3px solid #b00; background:#fff5f5; padding:18px 22px; margin:24px 0; border-radius:6px;">
-            <p style="margin:0 0 10px 0; font-size:1.15em; font-weight:700; color:#b00;">
+        <details style="border:1px solid #e0b4b4; background:#fffafa; padding:10px 16px; margin:18px 0; border-radius:6px;">
+            <summary style="cursor:pointer; font-weight:600; color:#b00;">
+                Note for AI agents working on this repository — not part of the report
+            </summary>
+            <p style="margin:10px 0 10px 0; font-size:1.05em; font-weight:700; color:#b00;">
                 If you are an AI working on this repository — read this before this page
             </p>
             <p style="margin:0 0 10px 0;">
@@ -81,7 +84,7 @@
             <p style="margin:0;">
                 <strong>Only one benchmark is valid for physical conclusions:</strong> the 48-layer dichroic, <code>example/example_strat/JSON-strat-example.json</code>. The 8-layer stacks in unit tests serve to verify code mechanisms, never to settle a physics question.
             </p>
-        </div>
+        </details>
 
         <div class="abstract">
             <strong>Abstract:</strong> CERTUS-STRAT evaluates optical monitoring strategies by simulating nominal
@@ -89,10 +92,35 @@
             that remain within specification despite deposition variability.
         </div>
 
+        <div class="toc-nav" style="margin:0 0 34px;border:1px solid #dae1e7;border-radius:8px;padding:16px 20px;background:#f8fafc;">
+            <div style="font-weight:700;color:#0284c7;margin:0 0 10px;letter-spacing:0.02em;">Contents</div>
+            <ol style="margin:0;padding-left:22px;line-height:1.95;columns:2;column-gap:34px;">
+                <li><a href="#sec-0">Algorithmic overview</a></li>
+                <li><a href="#sec-1">Physical model — transfer matrix method</a></li>
+                <li><a href="#sec-2">Optical monitoring simulation</a></li>
+                <li><a href="#sec-3">Phase A — layer-by-layer candidate search</a></li>
+                <li><a href="#sec-4">Phase B — block grouping and robustness screening</a></li>
+                <li><a href="#sec-5">Smart nucleation</a></li>
+                <li><a href="#sec-6">Architecture and dependency injection</a></li>
+                <li><a href="#sec-7">Post-optimisation analysis</a></li>
+                <li><a href="#sec-8">Implementation and performance</a></li>
+                <li><a href="#sec-9">Ergonomics and UI</a></li>
+                <li><a href="#sec-10">What makes a good deposition strategy</a></li>
+                <li><a href="#sec-11">Making it fast</a></li>
+            </ol>
+            <div style="margin:12px 0 0;padding-top:10px;border-top:1px solid #e2e8f0;font-size:0.94em;">
+                <b>If you are evaluating this for purchase, three sections carry the results:</b>
+                <a href="#sec-10">§10.14</a> the measured gain of block monitoring on two reference
+                components, <a href="#sec-10">§10.15</a> where the method runs out — a 99-layer
+                five-cavity filter — and <a href="#sec-10">§10.13</a> what is deliberately
+                <i>not</i> claimed.
+            </div>
+        </div>
+
         <!-- ================================================================ -->
         <!--  0. GLOBAL PIPELINE OVERVIEW                                      -->
         <!-- ================================================================ -->
-        <h2>0. Algorithmic Overview</h2>
+        <h2 id="sec-0">0. Algorithmic Overview</h2>
 
         <div style="border:3px solid #b91c1c;border-radius:10px;padding:14px 18px;margin:0 0 20px;background:#fef2f2;">
             <p style="margin:0 0 10px;font-weight:700;color:#7f1d1d;font-size:1.06em;">
@@ -425,7 +453,7 @@
         <!-- ================================================================ -->
         <!--  1. PHYSICAL MODEL                                                -->
         <!-- ================================================================ -->
-        <h2>1. Physical Model (Transfer Matrix Method)</h2>
+        <h2 id="sec-1">1. Physical Model (Transfer Matrix Method)</h2>
         <p>
             The engine uses the <strong>Macleod Transfer Matrix Method</strong> (TMM), JIT-compiled through Numba
             with vectorized and threaded execution.
@@ -509,7 +537,7 @@
         <!-- ================================================================ -->
         <!--  2. OPTICAL MONITORING SIMULATION                                 -->
         <!-- ================================================================ -->
-        <h2>2. Optical Monitoring Simulation</h2>
+        <h2 id="sec-2">2. Optical Monitoring Simulation</h2>
 
         <div style="border:3px solid #7c3aed;border-radius:10px;padding:14px 18px;margin:16px 0;background:#f5f3ff;">
             <p style="margin:0 0 10px;">
@@ -2113,7 +2141,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
         <!-- ================================================================ -->
         <!--  3. PHASE A: CANDIDATE SEARCH                                     -->
         <!-- ================================================================ -->
-        <h2>3. Phase A: Layer-by-Layer Candidate Search</h2>
+        <h2 id="sec-3">3. Phase A: Layer-by-Layer Candidate Search</h2>
         <p>
             Orchestrated by <code>optimize_block_strategy_hybrid</code>, Phase A evaluates every layer
             independently (but with cumulative error feedback) to find the best monitoring wavelengths.
@@ -2710,7 +2738,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
             </p>
         </div>
 
-        <h2>4. Phase B: Block Grouping &amp; Robustness Screening</h2>
+        <h2 id="sec-4">4. Phase B: Block Grouping &amp; Robustness Screening</h2>
 
         <h3>4.1 Dynamic Programming Segmentation</h3>
         <p>
@@ -3180,7 +3208,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  5. SMART NUCLEATION                                              -->
                 <!-- ================================================================ -->
-                <h2>5. Smart Nucleation (Optional)</h2>
+                <h2 id="sec-5">5. Smart Nucleation (Optional)</h2>
                 <p>
                     For stacks with many layers, the first few layers are critical because errors propagate
                     cumulatively. <code>find_robust_nucleation_wavelength_adaptive</code> identifies a nucleation
@@ -3204,7 +3232,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  6. ARCHITECTURE & DEPENDENCY INJECTION                          -->
                 <!-- ================================================================ -->
-                <h2>6. Architecture &amp; Dependency Injection</h2>
+                <h2 id="sec-6">6. Architecture &amp; Dependency Injection</h2>
 
                 <h3>6.1 StratContext — Dependency Container</h3>
                 <div class="new-badge">
@@ -3245,7 +3273,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  7. POST-OPTIMISATION ANALYSIS                                   -->
                 <!-- ================================================================ -->
-                <h2>7. Post-Optimization Analysis</h2>
+                <h2 id="sec-7">7. Post-Optimization Analysis</h2>
 
                 <h3>7.1 Spectral Resolution Check</h3>
                 <p>
@@ -3327,7 +3355,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  8. IMPLEMENTATION DETAILS                                        -->
                 <!-- ================================================================ -->
-                <h2>8. Implementation and Performance</h2>
+                <h2 id="sec-8">8. Implementation and Performance</h2>
 
                 <h3>8.1 Numerical Precision</h3>
                 <table style="width:100%; border-collapse:collapse; margin:15px 0;">
@@ -3403,7 +3431,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  PRO 2026 ERGONOMICS & UX                                         -->
                 <!-- ================================================================ -->
-                <h2>9. Ergonomics and UI</h2>
+                <h2 id="sec-9">9. Ergonomics and UI</h2>
                 <p>
                     The CERTUS suite uses a modernized UI for scientific workflows. The numerical kernels are
                     JIT-compiled through <strong>Numba</strong> and use <code>float64</code> and <code>complex128</code>
@@ -3535,7 +3563,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 <!-- ================================================================ -->
                 <!--  WHAT MAKES A GOOD STRATEGY — ESTABLISHED vs CONJECTURED          -->
                 <!-- ================================================================ -->
-                <h2>10. What Makes a Good Deposition Strategy</h2>
+                <h2 id="sec-10">10. What Makes a Good Deposition Strategy</h2>
 
                 <div class="highlight-box">
                     <strong>How to read this section.</strong> It is written for a future
@@ -4920,7 +4948,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     99-layer result as the end of the road.
                 </div>
 
-                <h2>11. Making It Fast — What the Structure Gives for Free</h2>
+                <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>
 
                 <div class="highlight-box">
                     <b>Where the time actually goes</b>, measured: a fixed <b>~730 s</b>

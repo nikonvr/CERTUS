@@ -1,0 +1,2 @@
+stamp	tag	cuts	n_cuts	verdict	seel_nm	rmse_p95	n_blocks	crash_pct	n_strats	run_s	config
+2026-08-15 10:09:29	cut32	32	1	FALLBACK	0.87	0.18759477328462743	3	100.0	487	856.1	{"allow_rate": true, "cuts": [32], "dp_top_k": 20, "mode": "fast", "n_screen_runs": 10, "robustness_num_runs": 50, "search_resolution": false, "seed": 42, "slit_nm": 2.0}

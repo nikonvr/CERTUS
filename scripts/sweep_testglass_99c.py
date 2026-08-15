@@ -181,6 +181,15 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
     app.load_configuration(str(ROOT / config_rel))
     B.attach_console_logging(app)
 
+    # 🔴 THE MODE MUST BE SET ON THE WIDGET, BEFORE collect_params. That method reads the
+    # combo box and expands it into the budget (N, dp_top_k, n_screen_runs, ...), so
+    # writing `params["execution_mode"]` afterwards changes the label and NOTHING else.
+    # This exact bug shipped here on 2026-08-15: `--mode fast` ran a full PREMIUM, and the
+    # only reason it was caught is that the applied config is written down. Hence the
+    # check below covers the budget, not just the mode string.
+    if "execution_mode" in getattr(app, "widgets", {}):
+        app.widgets["execution_mode"].setCurrentText(mode)
+
     params = app.collect_params()
     params["show_plots"] = False
     params["witness_reset_layers"] = list(cuts)
@@ -207,6 +216,15 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
         raise SystemExit(f"cut plan not applied: asked {cuts}, applied {applied['cuts']}")
     if abs(float(applied["slit_nm"] or 0.0) - SLIT_NM) > 1e-9:
         raise SystemExit(f"slit not applied: asked {SLIT_NM}, applied {applied['slit_nm']}")
+    if str(applied["mode"]).lower() != mode.lower():
+        raise SystemExit(f"mode not applied: asked {mode}, applied {applied['mode']}")
+    # And the budget, not just the label: the mode is only real if it moved the numbers.
+    expected_runs = {"fast": 50, "premium": 150, "deep": 300}[mode.lower()]
+    if int(applied["robustness_num_runs"] or 0) != expected_runs:
+        raise SystemExit(
+            f"mode {mode} did not take: robustness_num_runs = "
+            f"{applied['robustness_num_runs']}, expected {expected_runs}"
+        )
 
     sys.stderr.write(f"\n{'=' * 78}\n  {_tag(cuts)}  |  {json.dumps(applied)}\n{'=' * 78}\n")
 
@@ -237,15 +255,39 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
         row["seel_nm"] = score_to_seel_nm(row["rmse_p95"])
         row["n_blocks"] = st.get("n_blocks", len(st.get("blocks", []) or []))
         row["crash_pct"] = round(float(best.get("crash_rate", 0.0)) * 100.0, 2)
+
+        # 🔴 THE CHECK THAT SAVES THE WHOLE SWEEP FROM BEING MEANINGLESS.
+        #
+        # A strategy whose crash rate exceeds the 5 % tolerance is scored `inf` and taken
+        # out of the ranking. When NOTHING survives, the solver falls back: it re-ranks the
+        # eliminated candidates by increasing risk and hands back the least bad with a
+        # finite number -- and that number is the WORST FINITE RMSE, not a robustness score.
+        #
+        # The run still looks perfect. It prints a score, a block count, a SEEL. On the
+        # 99-layer filter on 2026-08-15 that fallback produced "SEEL = 0.86 nm" for a
+        # strategy that fails in 100 % of draws, and it had been quoted as a manufacturing
+        # figure. Comparing two cut positions on fallback scores compares two ways of
+        # failing.
+        if row["crash_pct"] >= 5.0:
+            row["verdict"] = "FALLBACK"
+            sys.stderr.write(
+                f"  🔴 crash_rate = {row['crash_pct']} % >= 5 %: this is the NO-SURVIVOR "
+                f"FALLBACK.\n     SEEL {row['seel_nm']} nm is the worst finite RMSE of a "
+                f"strategy that FAILS, not a robustness score.\n     The question here is "
+                f"not 'how low is the SEEL' but 'does anything survive at all'.\n"
+            )
+        else:
+            row["verdict"] = "OK"
     else:
         # A run that returns nothing is NOT a run that found nothing. Say which.
+        row["verdict"] = "RESULT_NONE"
         sys.stderr.write("  ⚠️ RESULT=None -- no strategy came back. Do not read this as a score.\n")
     return row
 
 
 def append_row(row: dict) -> None:
     OUT_DIR.mkdir(exist_ok=True)
-    cols = ["stamp", "tag", "cuts", "n_cuts", "seel_nm", "rmse_p95",
+    cols = ["stamp", "tag", "cuts", "n_cuts", "verdict", "seel_nm", "rmse_p95",
             "n_blocks", "crash_pct", "n_strats", "run_s", "config"]
     new = not OUT_TSV.exists()
     with open(OUT_TSV, "a", encoding="utf-8", newline="") as f:
@@ -299,10 +341,10 @@ def main() -> None:
             row = {"tag": _tag(cuts), "cuts": ",".join(map(str, cuts)) or "-",
                    "n_cuts": len(cuts), "seel_nm": float("nan"), "rmse_p95": float("nan"),
                    "n_blocks": -1, "crash_pct": float("nan"), "n_strats": 0,
-                   "run_s": 0.0, "config": f"FAILED {exc!r}"}
+                   "verdict": "CRASHED", "run_s": 0.0, "config": f"FAILED {exc!r}"}
         append_row(row)
         sys.stderr.write(
-            f"  -> SEEL={row['seel_nm']} nm | blocks={row['n_blocks']} | "
+            f"  -> [{row.get('verdict')}] SEEL={row['seel_nm']} nm | blocks={row['n_blocks']} | "
             f"crash={row['crash_pct']} % | {row['n_strats']} strats | {row['run_s']} s\n"
         )
 

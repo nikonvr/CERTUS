@@ -4909,15 +4909,37 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">24.4 min</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">30.0 min</td></tr>
                 </table>
+                <div class="highlight-box" style="background:#fef2f2;border-left:4px solid #dc2626;">
+                    🔴 <b>READ THIS BEFORE THE 0.86 nm ABOVE: it is NOT a robustness score, and this
+                    component is NOT currently manufacturable under optical monitoring.</b>
+                    <br><br>
+                    Established 2026-08-15 by re-running the case and reading the crash rate that the
+                    original report omitted: the returned strategy carries
+                    <code>crash_rate = 100 %</code>. A strategy whose crash rate exceeds the 5 %
+                    tolerance is scored <code>inf</code> and removed from the ranking
+                    (<code>certus_strat_robustness.py</code>). All <b>785</b> candidates were removed.
+                    What comes back is a documented <b>last-resort fallback</b>: when no strategy
+                    survives, the solver re-ranks the eliminated ones by increasing risk and returns
+                    the least bad with a finite number attached — and that number is the
+                    <i>worst finite RMSE</i>, not a robustness score.
+                    <br><br>
+                    So <b>0.86 nm is the least-bad figure among strategies that all fail</b>. It must
+                    not be read as an achievable per-layer error, and the earlier wording on this page
+                    — &ldquo;the filter stays manufacturable&rdquo; — was wrong. On the 48-layer
+                    dichroic and the 35-layer bandpass the crash rate is genuinely 0 %, and their
+                    figures stand; this one does not.
+                    <br><br>
+                    🔑 <b>This is the honest case for the multiple-testglass programme below.</b> The
+                    question on a 99-layer five-cavity filter is not &ldquo;how much better than
+                    0.86 nm&rdquo;. It is <b>whether the component can be optically monitored at
+                    all</b> — and the first target is a crash rate under 5 %, before any SEEL is
+                    worth quoting.
+                </div>
                 <p>
-                    Read that against the dichroic&rsquo;s <b>0.17 nm</b>: the same code on a component
-                    five times harder gives <b>five times the per-layer error</b>. The filter stays
-                    manufacturable — pure rate control would sit near <b>1.31 nm</b>, so the hybrid
-                    strategy still buys a factor 1.5 — but this is the regime where the method is
-                    working at its edge, and the honest way to say so is that <b>roughly 75 of the 99
-                    layers run on rate (quartz/chrono)</b>, with targeted optical monitoring on the
-                    ~24 layers that close each cavity, where POEM can still absorb the accumulated
-                    drift.
+                    The mechanism is not in doubt, and it is the useful part of this section:
+                    <b>roughly 75 of the 99 layers have to run on rate (quartz/chrono)</b>, with
+                    targeted optical monitoring on the ~24 layers that close each cavity. Compare with
+                    the dichroic&rsquo;s <b>0.17 nm at 0 % crash</b> to see the size of the gap.
                 </p>
                 <div class="note" style="border-left:4px solid #ca8a04;">
                     <b>Provenance, stated plainly.</b> Figures from the run of 2026-08-14, artefacts

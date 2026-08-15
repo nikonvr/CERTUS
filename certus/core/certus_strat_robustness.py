@@ -1879,6 +1879,34 @@ def _test_strategy_robustness_task(
                 if 0 <= int(_idx) < rate_flags.size:
                     rate_flags[int(_idx)] = True
 
+        # MULTIPLE-TESTGLASS. 0-based indices of the layers at which a BARE witness is
+        # rotated into the beam. The part is untouched -- it stays on the platter and
+        # receives every layer; only the monitoring restarts from bare glass.
+        #
+        # 👤 2026-08-14: the swap is done by an under-vacuum carousel, so it costs no
+        # vent, no pump-down and no contamination. The ONLY price is the one the growth
+        # kernel produces on its own: the error accumulated before the cut becomes
+        # invisible to the monitoring, hence permanently uncorrectable, and it stays
+        # frozen in the part. That is what a cut buys and what it costs.
+        #
+        # ⚠️ Index 0 is meaningless and is dropped: layer 0 already grows on bare glass.
+        # An empty list reproduces the single-witness behaviour exactly.
+        # Two sources, and the order matters. A strategy that carries its own cut plan
+        # wins; otherwise the RUN's plan applies to every strategy it evaluates. The
+        # second form is what a sweep needs: one cut plan per batch, imposed on all
+        # candidates, so two batches differ by the cut and by nothing else.
+        witness_resets = strategy.get("witness_reset_layers")
+        if not witness_resets:
+            witness_resets = params.get("witness_reset_layers") or []
+        witness_reset_flags = None
+        if witness_resets:
+            witness_reset_flags = np.zeros(len(p_thick_nominal), dtype=np.bool_)
+            for _idx in witness_resets:
+                if 0 < int(_idx) < witness_reset_flags.size:
+                    witness_reset_flags[int(_idx)] = True
+            if not witness_reset_flags.any():
+                witness_reset_flags = None
+
         nm_mode = params.get("non_monotonic_mode", NON_MONOTONIC_MODE_ATTENUATE)
         (
             sim_thick_batch, avg_dyns_batch,
@@ -1908,6 +1936,7 @@ def _test_strategy_robustness_task(
             corridor_hi,
             rate_flags,
             slit_profiles,
+            witness_reset_flags,
         )
 
         for i_layer in range(num_layers):

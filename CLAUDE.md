@@ -92,7 +92,7 @@ dans 114 lignes de journaux, et le texte intégral d'une thèse tierce. Si 👤 
 .venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Attendu : `All checks passed!` puis `2441 passed, 5 skipped` (📏 2026-08-14, 7 min).
+Attendu : `All checks passed!` puis `2450 passed, 5 skipped` (📏 2026-08-14, 7 min).
 Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
 Ce n'est pas à toi de le réparer.
 
@@ -4285,9 +4285,29 @@ d'après sont lues sur un verre qui **ne contient pas** les erreurs d'avant. Le 
 partie 1 est donc **gelé dans la pièce, définitivement incorrigible**, et le spectre final
 porte erreur(partie 1) + erreur(partie 2) **sans terme croisé**.
 
-⚠️ Et un changement de témoin est une **opération machine réelle** — remise à l'air ou
-carrousel. La partie 2 se dépose sur une pièce ayant subi un cycle : contamination possible,
-décalage d'indice entre les deux runs. Ce coût n'est **pas** dans le modèle.
+🔑 **Et il faut être précis : ce sont DEUX mémoires distinctes qui tombent, pas une.**
+
+| ce qui est perdu | portée |
+|---|---|
+| **La compensation globale** — le niveau de déclenchement est calculé sur la pile **nominale** et appliqué à la pile **réelle** ; l'écart entre les deux produit l'erreur de signe opposé (Macleod, Bousquet) | **toute la pile sous la coupure**, non bornée |
+| **Le rejeu d'ancres POEM** | borné à **4 couches** (`MAX_LOOKBACK_VAL`) |
+
+C'est la première qui coûte cher, et elle n'est pas plafonnée. Ne dis pas « on ne perd que
+4 couches d'historique » : c'est vrai pour POEM seul, et faux pour la compensation.
+
+#### 👤 Ce que la machine impose, obtenu le 2026-08-14
+
+| | |
+|---|---|
+| **Le changement se fait par carrousel SOUS VIDE** | Plusieurs témoins sont déjà en enceinte. **Ni remise à l'air, ni repompage, ni contamination.** ⚠️ Le nombre de coupures est donc plafonné par le nombre de positions du carrousel. |
+| **La fente garde le même réglage** | 👤 *« les fentes gardent le même setting »*. Une campagne ne peut pas choisir sa propre résolution : `monochromator_resolution_nm` reste **un scalaire pour tout le run**. |
+| **Témoin et pièce reçoivent la même épaisseur** | À peu près identiques. Donc **aucun facteur d'uniformité à modéliser**, et la coupure sépare la **mémoire optique**, rien d'autre. |
+
+🔴 **Conséquence, et elle durcit le problème au lieu de l'adoucir : la coupure est
+OPÉRATIONNELLEMENT GRATUITE.** Pas de coût atelier à mettre en face du gain. L'arbitrage est
+donc **purement informationnel** — on échange de la compensation contre du signal, et rien
+d'autre ne vient trancher. Il n'y a aucun garde-fou économique pour dire « pas plus de deux
+coupures » : c'est la physique seule qui doit le dire.
 
 ### 25.3. 🔑 CE QUE LE CODE A DÉJÀ — la coupure n'est pas une refonte
 
@@ -4303,27 +4323,93 @@ décalage d'indice entre les deux runs. Ce coût n'est **pas** dans le modèle.
 `certus/core/certus_strat_growth.py` — **ce fichier n'existe pas**, le module est en
 `certus/physics/`. Un plan bâti sur un chemin faux coûte une session.
 
-### 25.4. Pourquoi on ne devinera PAS où couper, et ce qu'on fait à la place
+### 25.4. 🔴 QUAND COUPER — le vrai problème, et il n'est PAS résolu
 
-👤 a tranché la méthode : **on ne postule pas la règle, on la découvre.** Le protocole est
-donc en trois temps, et l'ordre n'est pas négociable :
+> 👤 *« on perd la compensation : oui, ça c'est évident, mais quand changer ? ça c'est
+> l'enjeu majeur »* — *« savoir quand changer de testglass est un enjeu majeur et un problème
+> de recherche à part entière et non résolu. Il va falloir explorer plein de pistes pour
+> savoir à partir de quand on en tire bénéfice. Rien ne remplacera les tests simulés sur le
+> 99c et peut-être le 48c. »* (2026-08-14)
 
-1. **Deux prédicteurs GRATUITS**, calculables sans aucun Monte-Carlo (T2, T3).
-2. **Une vérité de terrain COÛTEUSE**, le balayage exhaustif des positions de coupure (T4).
-3. **La corrélation entre les deux** — c'est ça, le « on comprendra a posteriori ». Si un
-   prédicteur gratuit prédit la vérité coûteuse, on a une **règle générale** ; sinon on a au
-   moins une carte, et on sait que la règle est ailleurs.
+**Ne confonds pas les deux.** Que la coupure coûte la compensation est un fait acquis,
+mécaniquement vrai, démontré par les tests de §25.5-T1 — et **ce n'est pas la question**.
+La question est **où placer la coupure**, et elle est ouverte.
+
+#### 🎯 La cible, posée par 👤
+
+> **SEEL global de l'ordre de 0,3 nm sur le 99c**, avec **2 ou 3 témoins**, sur la pièce
+> complète qui les reçoit tous. On tâtonnera d'abord.
+
+Partant de **0,86 nm**, c'est un facteur **2,9 en SEEL**, donc **8,3 en RMSE**
+(`0.18705 → ~0.0225`). Ambitieux, mais pas absurde : à 3 témoins chaque campagne fait ~33
+couches, soit la longueur du 35c qui atteint 0,48 nm et du 48c qui atteint 0,17 nm. **Une
+cible entre les deux est cohérente avec ce que la machine sait déjà faire sur des piles de
+cette taille** — à condition que les campagnes se combinent bien, ce que personne ne sait.
+
+#### 🔴 LE SEEL GLOBAL N'EST PAS LA MOYENNE DES SEEL PARTIELS — ne fais jamais ce raccourci
+
+> 👤 *« attention, SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels (par
+> testglass) seront à 0,3 ! »*
+
+**Ce sont deux grandeurs différentes, mesurées sur deux objets différents.**
+
+| | mesuré sur | ce que ça vaut |
+|---|---|---|
+| **SEEL global** | le **spectre de la pièce complète**, 99 couches, 5 cavités | 🔑 **la seule grandeur qui compte** — c'est le composant qu'on vend |
+| **SEEL partiel** | une campagne prise seule, ~33 couches | un **diagnostic**, rien de plus |
+
+**Pourquoi ils divergent, et fortement.** Un passe-bande à 5 cavités est un amplificateur
+d'erreur : la même erreur physique par couche produit une erreur spectrale bien plus grande
+sur le composant résonant complet que sur un sous-empilement mesuré isolément. Une campagne
+qui « affiche 0,2 nm » toute seule peut donc contribuer beaucoup plus que 0,2 au chiffre
+global. **Viser 0,3 global n'autorise pas à viser 0,3 par campagne** — il faudra
+vraisemblablement bien mieux que ça sur chacune.
+
+⚠️ Et cela **re-condamne** le raccourci déjà interdit en §25.6 : `SEEL = √(SEEL₁² + SEEL₂²)`
+n'est pas seulement non mesuré, il compose des grandeurs qui **ne vivent pas sur le même
+objet**. Ne rapporte que le SEEL de la pièce. Si tu affiches un SEEL partiel, dis en toutes
+lettres qu'il est un diagnostic et **jamais** qu'il compose le global.
+
+#### Pourquoi c'est difficile, et pas seulement long
+
+Il faut l'écrire, sinon quelqu'un va croire qu'un seuil suffit.
+
+| # | La difficulté | Pourquoi elle bloque une règle simple |
+|---|---|---|
+| 1 | **Bénéfice et coût varient en sens inverse le long de la pile** | Couper tôt garde un témoin vif mais gèle l'erreur tôt, et la compensation manque sur tout le reste. Couper tard garde la compensation mais les couches d'avant ont déjà été surveillées sur un témoin mourant. L'optimum est **au milieu de deux courbes qu'on ne sait pas tracer**. |
+| 2 | 🔴 **La grandeur qui décide n'est pas locale** | Ce qui compte est le SEEL **à la fin**, pas la qualité du signal **à la coupure**. Une coupure qui paraît excellente localement peut être désastreuse si elle gèle l'erreur dans une couche à laquelle le spectre final est très sensible. **On ne peut donc pas choisir couche par couche** : le problème n'est pas séparable, et toute règle gloutonne est suspecte. |
+| 3 | **La coupure n'est pas un axe indépendant** | Elle force une frontière de bloc, exactement comme un changement de λ ou une couche en Rate. Elle entre donc en **concurrence combinatoire** avec le partitionnement en blocs (§17-43) et avec le placement des couches Rate. L'optimum de coupure dépend du plan de blocs, et réciproquement. Ce n'est pas un scalaire à régler. |
+| 4 | ⚠️ **Le critère évident est probablement SYSTÉMATIQUEMENT EN RETARD** | `SWING_MIN = 0.04` dit où le monitoring **échoue**, pas où couper **paie**. Quand le swing passe sous le seuil, le mal est déjà fait : la bonne coupure est vraisemblablement **avant** la mort du signal, pas au moment où elle survient. Un seuil rendra donc une réponse trop tardive, et elle aura l'air raisonnable. |
+| 5 | **Le coût opérationnel ne borne rien** | Le carrousel rend la coupure gratuite (§25.2). Aucun garde-fou économique ne dira « pas plus de deux » : seule la physique le dira, et seul le nombre de positions du carrousel plafonne. |
+| 6 | 🔴 **La décision peut être sous le bruit** | La résolution statistique d'un score est de ~6 % relatif à N = 150. Si deux positions de coupure diffèrent de moins que ça, un balayage « trouvera » un optimum qui est du bruit. **Il faut fixer la profondeur avant de regarder les résultats**, et vérifier qu'un écart survit à un changement de graine. |
+
+#### La méthode, et l'ordre n'est pas négociable
+
+👤 a tranché : **on ne postule pas la règle, on la découvre.** Et : *« rien ne remplacera les
+tests simulés »*. Donc, en trois temps :
+
+1. **Deux prédicteurs GRATUITS**, sans aucun Monte-Carlo (T2, T3).
+2. **Une vérité de terrain COÛTEUSE** : le balayage des positions de coupure sur le 99c (T4).
+3. **La corrélation entre les deux** — le « on comprendra a posteriori ». Si un prédicteur
+   gratuit prédit la vérité coûteuse, on tient une **règle générale** ; sinon on a une carte,
+   et on sait que la règle est ailleurs.
 
 ⚠️ **Ne pas inverser.** Écrire la règle d'abord puis chercher la mesure qui la confirme est
-l'erreur n°2 du document.
+l'erreur n°2 du document. Le tâtonnement de 👤 est légitime **à condition d'être consigné
+comme tâtonnement** : chaque essai, sa position de coupure, son SEEL, dans `probe_runs.tsv`.
+Un tâtonnement noté est une carte ; un tâtonnement oublié est du bruit.
 
 ### 25.5. LA TODO LISTE, dans l'ordre
 
 #### 🔴 T0 — Les CONTRÔLES NÉGATIFS, avant toute machinerie
 
 **À faire en premier, et c'est contre-intuitif.** Sur le 35c et le 48c, le monitoring optique
-marche : le SEEL y vaut 0,48 et 0,17 nm. Une coupure y est donc **une perte pure** — elle
-retire de la compensation et ajoute une remise à l'air, sans rien restaurer.
+marche : le SEEL y vaut 0,48 et 0,17 nm. Une coupure y est donc **une perte sèche** — elle
+retire de la compensation sans rien restaurer, puisqu'il n'y avait rien à restaurer.
+
+⚠️ Et le carrousel ne lui oppose **aucun coût** pour la retenir (§25.2) : si le modèle se
+trompe, rien dans la simulation ne l'empêchera de couper à tort. C'est précisément pour ça
+que ces contrôles négatifs sont le garde-fou du chantier.
 
 **Le critère de recette du chantier entier :** si la machinerie finit par « améliorer » le 35c
 ou le 48c en les coupant, **le modèle est faux** et rien de ce qui suit ne vaut. Écris cette
@@ -4335,22 +4421,45 @@ attente **avant** de mesurer, dans le test, pas dans le rapport.
 | 2 | 35c, coupure forcée en 17 | SEEL **dégradé** par rapport à 0,48 nm |
 | 3 | 99c, coupure forcée en 50 | SEEL **amélioré** par rapport à 0,86 nm — c'est l'hypothèse à réfuter |
 
-#### T1 — Le mécanisme de coupure
+#### ✅ T1 — Le mécanisme de coupure : **FAIT le 2026-08-14**
 
-| | |
+**Le champ à poser sur une stratégie : `witness_reset_layers`**, liste d'indices 0-based des
+couches où un témoin **nu** entre dans le faisceau. Liste vide = comportement historique.
+L'indice 0 est ignoré (la couche 0 pousse déjà sur du verre nu).
+
+**Ce qui a été écrit, et c'est plus simple que prévu.** La coupure n'est pas une troncature
+de tranche : c'est **l'index de départ de trois boucles** dans le noyau de croissance.
+
+| où | ce qui change |
 |---|---|
-| **Fichier** | `certus/physics/certus_strat_batch.py`, boucle sur les couches, ligne 460 |
-| **Ce qu'il faut écrire** | un paramètre `witness_reset_layers` (liste d'indices 0-based). La tranche de la ligne 474 devient `current_run_th_buffer[r, base(i_layer):i_layer]` où `base(i)` est la dernière coupure ≤ `i`. `block_start[i_layer]` est forcé à `base(i_layer)` sur la couche de reprise. |
-| **Ce qu'il ne faut PAS toucher** | `sim_thick_batch`. La pièce accumule tout. Si le score final se met à ignorer les erreurs d'avant la coupure, la mesure est fausse **et plausible**. |
+| `certus_strat_growth.py`, `simulate_growth_kernel` | nouveau paramètre `witness_base_layer` (défaut 0). **`M_before`** (pile réelle) et **`M_nom`** (pile nominale) partent de `witness_base_layer` au lieu de 0, ainsi que la pile sous la fenêtre POEM. Garde ajoutée : `j0` ne peut pas descendre sous la base, sinon la boucle tournerait à l'envers et rendrait vide **en silence**. |
+| `certus_strat_batch.py` | `witness_reset_flags` → carte `witness_base[i]`, et **frontière de bloc forcée** à chaque coupure : les ancres que POEM rejouerait ont été observées sur un verre qui n'est plus dans le faisceau. |
+| `certus_strat_robustness.py` | lit `witness_reset_layers` sur la stratégie et construit les drapeaux. |
 
-**Les tests qui doivent ÉCHOUER sur le code d'avant :**
+🔑 **Le coût de la coupure n'est modélisé NULLE PART, et il ne doit pas l'être** — il tombe
+de ces deux boucles. Le niveau de déclenchement est calculé sur la pile **nominale** et
+appliqué à la **réelle** ; c'est cet écart qui produit l'erreur de signe opposé. Faire partir
+les deux boucles au même `witness_base_layer` rend les erreurs d'en dessous invisibles aux
+deux à la fois : elles ne peuvent plus être compensées, et restent gelées dans la pièce.
+🔴 **N'en tronquer qu'une seule serait bien pire que faux** : on comparerait une cible
+nominale à 99 couches contre une pile réelle de 20.
 
-| # | Test | Attendu |
+🔴 **Et la boucle du Rate n'est PAS coupée**, délibérément (`growth.py`, branche `is_rate`) :
+l'estimation de vitesse est une propriété **de la machine** — le quartz, le chrono — pas du
+verre que le faisceau regarde. Changer de témoin ne fait pas oublier sa calibration.
+
+**Les tests, `tests/unit/test_strat_multiple_testglass.py` — 9 passent :**
+
+| # | Test | Résultat |
 |---|---|---|
-| 1 | `witness_reset_layers = []` puis `= [0]` | **bit-identiques.** Couper à la couche 0, c'est ne pas couper |
-| 2 | coupure en *p* | les couches ≥ *p* voient une pile de longueur `i − p`, pas `i` |
-| 3 | 🔴 coupure en *p*, erreur énorme injectée sur les couches < *p* | le **score final se dégrade** quand même. Si le score ne bouge pas, la pièce a été tronquée avec le témoin — c'est **le** défaut à craindre |
-| 4 | deux coupures | `base()` rend bien la dernière, pas la première |
+| 1 | carte de coupures toute vide = paramètre absent | ✅ bit-identiques : l'historique reste comparable |
+| 2 | coupure en *p*, erreur de 40 nm enfouie en *p−4* | ✅ **bit-identique** au cas sans erreur → le témoin ne voit vraiment plus sous la coupure |
+| 3 | 🔴 **le contrôle qui donne son sens au test 2** : même erreur, **sans** coupure | ✅ **différent** → la compensation est bien vivante, donc le test 2 mesure quelque chose |
+| 4 | 🔴 **la pièce garde ce que le témoin a oublié** | ✅ `results` rend les 12 couches, coupure ou non. C'est le test qui attrape le défaut flatteur : tronquer la pièce **améliorerait** le score |
+| 5 | position de coupure honorée, 4 positions | ✅ |
+
+⚠️ **Ce que T1 ne dit PAS** : que couper soit bénéfique. Il rend la coupure *possible et
+correctement modélisée*. Tout le reste de §25 sert à savoir **où**.
 
 #### T2 — Prédicteur gratuit n°1 : LA CARTE DE MORT DU SIGNAL
 
@@ -4436,9 +4545,11 @@ blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une rè
 
 | | |
 |---|---|
-| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. **C'est une conjecture, pas une mesure** : la pondération spectrale des erreurs diffère entre les deux parties. Mesure-le. |
-| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant la coupure auraient disparu. Test 3 de T1. |
-| **Le degré de liberté gratuit** | Une coupure ne peut qu'améliorer un résultat en échantillon. Validation hors échantillon obligatoire. |
+| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§25.4). **Ne rapporte que le SEEL de la pièce.** |
+| **Confondre SEEL global et SEEL partiels** | 👤 : *« SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels seront à 0,3 »*. Le partiel est un **diagnostic**, jamais un terme du global. |
+| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant la coupure auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
+| **Le degré de liberté gratuit** | Une coupure ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
 | **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
-| **Le coût atelier non modélisé** | La remise à l'air n'est pas dans le modèle. Un gain de SEEL de 0,05 nm ne paie peut-être pas un cycle de pompage. **Question à 👤, pas à trancher seul.** |
-| **Couper « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 30 ou 70. |
+| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend la coupure gratuite (§25.2). Rien hors de la physique ne limitera le nombre de coupures — sauf le nombre de positions du carrousel. |
+| **Couper « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
+| 🔴 **Chercher la règle avant d'avoir les essais** | 👤, deux fois : *« ce sont les essais-erreur avec de nombreux batchs qui permettront une compréhension a posteriori »*. Une explication trouvée avant les mesures sera confirmée par elles, quoi qu'elles disent. |

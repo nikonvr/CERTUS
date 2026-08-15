@@ -358,6 +358,7 @@ def simulate_stack_robustness_batch(
     corridor_hi: float = 0.0,
     rate_flags: np.ndarray = None,
     slit_profiles: np.ndarray = None,
+    witness_reset_flags: np.ndarray = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
 
@@ -397,8 +398,32 @@ def simulate_stack_robustness_batch(
     # monitoring signal is CONTINUOUS, so the already observed turning points
     # remain exploitable by POEM; upon changing lambda the history is lost.
     # This is what gives blocks their value.
+    # MULTIPLE-TESTGLASS. `witness_base[i]` = index of the first layer carried by the
+    # witness that layer i is monitored on. All zeros = one witness for the whole run,
+    # which is the historical behaviour and must stay bit-identical to it.
+    #
+    # 🔴 THE PART IS NOT CUT. `results` / `current_run_th_buffer` keep every layer of
+    # every run: the part stays on the platter and receives the whole stack. Only what
+    # the BEAM sees is truncated. 👤 confirmed 2026-08-14 that witness and part receive
+    # the same thickness, so the swap separates the optical MEMORY and nothing else --
+    # no tooling factor to carry here.
+    witness_base = np.zeros(n_layers, dtype=np.int64)
+    if witness_reset_flags is not None:
+        for i in range(1, n_layers):
+            if witness_reset_flags[i]:
+                witness_base[i] = i
+            else:
+                witness_base[i] = witness_base[i - 1]
+
     block_start = np.zeros(n_layers, dtype=np.int64)
     for i in range(1, n_layers):
+        # A fresh witness necessarily opens a new block: the anchors POEM would replay
+        # were observed on a piece of glass that is no longer in the beam. Same reason a
+        # lambda change or a Rate layer wipes the history, and it must be applied FIRST
+        # so the two rules cannot disagree.
+        if witness_reset_flags is not None and witness_reset_flags[i]:
+            block_start[i] = i
+            continue
         # 🔑 A LAYER IN RATE WIPES THE NEXT ONE'S HISTORY, exactly as a wavelength change
         # does -- 14-10: "the machine does not keep the history of extrema crossed after
         # a rate". Nothing is watched during a Rate layer, so any extremum that went past
@@ -500,6 +525,7 @@ def simulate_stack_robustness_batch(
                 # The WHOLE matrix, not the row: the kernel replays the block history and
                 # each replayed layer must carry its own bias profile, not this layer's.
                 slit_profiles,
+                witness_base[i_layer],
             )
             current_run_th_buffer[r, i_layer] = val
             results[r, i_layer] = val

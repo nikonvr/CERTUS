@@ -515,6 +515,7 @@ def simulate_growth_kernel(
     n_L_real: float = -1.0,
     is_rate: bool = False,
     slit_profiles: np.ndarray = None,
+    witness_base_layer: int = 0,
     adaptive_scan: bool = False,
     machine_sampling_dd: float = 0.0,
 ) -> tuple[float, float, float, float, float]:
@@ -620,6 +621,13 @@ def simulate_growth_kernel(
     # `_seeded_noise_sample` is a pure function of (seed, group, run, element), a hash
     # and not a sequential stream. Skipping draws cannot misalign another layer. This
     # is exactly the property 12.4 chose the generator for.
+    # 🔴 THIS LOOP IS NOT CUT AT A TESTGLASS SWAP, AND THAT IS DELIBERATE. Everything
+    # else the kernel reads is truncated at `witness_base_layer`; this one spans the
+    # whole run. The rate estimate is a property of the MACHINE -- the quartz, the
+    # chrono, what the source is actually doing -- not of the glass the beam looks at.
+    # Swapping the witness restores the optical signal; it does not make the machine
+    # forget its own calibration. Cutting here would throw away the sqrt(n) averaging of
+    # 17-... above and hand the Rate layers a worse estimate for no physical reason.
     if is_rate:
         n_ref = 0
         acc = 0.0
@@ -649,11 +657,29 @@ def simulate_growth_kernel(
     n_H_r = n_H if n_H_real.real < 0.0 else n_H_real
     n_L_r = n_L if n_L_real.real < 0.0 else n_L_real
 
+    # 🔑 MULTIPLE-TESTGLASS: BOTH stacks below start at `witness_base_layer`, not at 0.
+    #
+    # A fresh witness carries only the layers deposited SINCE it was swapped in, so the
+    # monitoring signal is that of a shorter stack -- which is the whole point: on a
+    # 99-layer filter the witness goes optically dead long before the part is finished
+    # (half-wave spacers swing by nothing, 19-layer mirrors transmit under 1e-4).
+    #
+    # 🔴 AND THE COST OF THE SWAP FALLS OUT OF THESE TWO LOOPS ON ITS OWN -- it is not
+    # modelled anywhere else, and must not be. The trigger level is computed on the
+    # NOMINAL stack and applied to the REAL one; that mismatch is what produces the
+    # error of opposite sign, i.e. optical monitoring's self-compensation. Start both
+    # loops at the same `witness_base_layer` and the errors of the layers BELOW it are
+    # invisible to both: they can no longer be compensated, and they stay frozen in the
+    # part for good. Truncating only one of the two would be far worse than wrong -- it
+    # would compare a 99-layer nominal target against a 20-layer real stack.
+    #
+    # ⚠️ `witness_base_layer = 0` reproduces the single-witness behaviour exactly. That
+    # is the invariant to test first.
     M_before_00 = 1.0 + 0j
     M_before_01 = 0.0 + 0j
     M_before_10 = 0.0 + 0j
     M_before_11 = 1.0 + 0j
-    for j in range(i_layer):
+    for j in range(witness_base_layer, i_layer):
         n_prev = n_H_r if j % 2 == 0 else n_L_r
         th_prev = prev_thicknesses_sim[j]
         phi = TWO_PI_VAL / wl * n_prev * th_prev
@@ -682,7 +708,7 @@ def simulate_growth_kernel(
     M_nom_01 = 0.0 + 0j
     M_nom_10 = 0.0 + 0j
     M_nom_11 = 1.0 + 0j
-    for j in range(i_layer):
+    for j in range(witness_base_layer, i_layer):
         n_prev = n_H if j % 2 == 0 else n_L
         th_prev_nom = p_thick_nominal[j]
         phi = TWO_PI_VAL / wl * n_prev * th_prev_nom
@@ -906,6 +932,13 @@ def simulate_growth_kernel(
             j0 = i_layer
         if i_layer - j0 > MAX_LOOKBACK:
             j0 = i_layer - MAX_LOOKBACK
+        # A block cannot start below the witness it is read on. The caller already
+        # forces a block boundary at every swap, so this only guards against a caller
+        # that forgot: without it `range(witness_base_layer, j0)` would run BACKWARDS,
+        # i.e. render empty, and the pre-block stack would vanish in silence -- the
+        # plausible-but-wrong failure this project keeps paying for.
+        if j0 < witness_base_layer:
+            j0 = witness_base_layer
         n_hist = (i_layer - j0) * NPTS_PREV
         # The scan window, computed HERE because it sizes the arrays below.
         n_cur_n_w = n_H if i_layer % 2 == 0 else n_L
@@ -935,7 +968,9 @@ def simulate_growth_kernel(
         Ts_n = np.zeros(n_tot, dtype=np.float64)
         R00, R01, R10, R11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
         Q00, Q01, Q10, Q11 = (1.0 + 0j, 0.0 + 0j, 0.0 + 0j, 1.0 + 0j)
-        for j in range(j0):
+        # Same cut as the two matrices above: the stack UNDER the replayed window is the
+        # witness's, not the part's.
+        for j in range(witness_base_layer, j0):
             n_p_r = n_H_r if j % 2 == 0 else n_L_r
             n_p_n = n_H if j % 2 == 0 else n_L
             ph1 = TWO_PI_VAL / wl * n_p_r * prev_thicknesses_sim[j]

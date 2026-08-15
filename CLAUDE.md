@@ -4727,6 +4727,51 @@ compte**, mais les λ sont choisies sur le mauvais objet optique.
 ⚠️ **Donc « 98 % » ne réfute pas la méthode : il teste une demi-implantation.** L'assemblage
 de §25.8 contourne le problème, il ne le corrige pas.
 
+### 25.9. 🔴 CE QUE L'ANALYSE CONTRADICTOIRE A CORRIGÉ — parades adoptées
+
+Une analyse contradictoire indépendante de §25 a été produite le 2026-08-15
+(`reports/proposition.html`). Elle a **lu le code**, pas seulement le plan :
+`certus_strat_batch.py:424` et `MAX_LOOKBACK_VAL = 4` sont cités exactement. Quatre de ses
+attaques portent, et les parades ci-dessous sont **contraignantes**, pas indicatives.
+
+| # | L'attaque, et elle est juste | La parade, obligatoire |
+|---|---|---|
+| **1** | 🔴 **Cinq prédicteurs sur ~10 points de mesure = sélection post-hoc.** §25.5-T5 listait cinq règles candidates à corréler **après** le balayage. *« Le plan trouvera une règle, forcément. »* | **UN SEUL prédicteur, déclaré par écrit AVANT de mesurer.** S'il échoue, on peut en essayer un second — mais en le déclarant **exploratoire**, jamais confirmatoire. Rapporter le meilleur de cinq est du p-hacking déguisé en physique. |
+| **2** | 🔴 **T3 est circulaire.** « Geler un champ d'erreur réaliste » ne dit pas **lequel**. Or le seul champ qui ait un sens physique est celui que produit le Monte-Carlo — donc un prédicteur « gratuit » qui a besoin du Monte-Carlo pour être calibré **n'est pas gratuit**. | **Écrire le champ d'erreur AVANT de l'exécuter**, et assumer qu'un champ i.i.d. mesure un dépôt **sans monitoring**, ce que personne ne fait. Si le champ ne peut pas être justifié : **abandonner T3**, ne pas le maquiller. |
+| **3** | **« Dommage spectral » n'est pas un scalaire.** RMSE, décalage de λ₀, élargissement de bande donnent **trois classements différents** des positions. | **Documenter la norme choisie avant de mesurer.** Une norme choisie après coup choisit son gagnant. |
+| **4** | 🔴 **La marge peut être aussi plate que le plantage.** A23 a validé la marge comme prédicteur sur des empilements à plantage **faible**. À 100 %, les marges seront uniformément catastrophiques. | **Vérifier que la marge a un gradient AVANT de fonder P0 dessus.** Regarder la **pire marge**, pas le décompte des couches insuffisantes — le décompte saturera à 99. |
+| **5** | **Le forçage de frontière de bloc détruit aussi les ancres POEM**, second mécanisme de perte jamais quantifié séparément du premier. | Borné à 4 couches (`MAX_LOOKBACK_VAL`) contre un coût de compensation **non borné** : acceptable en première approximation. ⚠️ Mais si la recherche rend un **plateau**, c'est ce terme-là qui départagera, et il n'est pas instrumenté. |
+| **6** | **Le budget n'est chiffré nulle part.** Le balayage réel coûte 30 à 50 runs, soit 8 à 12 h, sans marge pour les reprises. | **Figer le nombre de runs avant de commencer.** 🟢 L'assemblage de §25.8 le divise par ~10 : trois runs de ~2 min au lieu d'un run de 15 min par position. |
+| **7** | **Le nombre de positions du carrousel n'est écrit nulle part**, alors qu'il plafonne l'espace de recherche. Si le carrousel a 3 positions, tester 4 témoins est **physiquement impossible**. | 🔴 **Question ouverte à 👤.** Ne pas planifier de partition avant la réponse. |
+
+#### Ce que la mesure du 2026-08-15 a rendu caduc dans cette analyse
+
+Elle a lu §25 **avant** l'assemblage. Trois de ses attaques visent des étapes qu'on n'a plus
+besoin de faire :
+
+| son attaque | pourquoi elle tombe |
+|---|---|
+| *« le balayage mesure la coupure COMPOSÉE avec la réponse du solveur »* | Vise T4. L'assemblage (§25.8) résout chaque campagne **indépendamment sur son propre objet optique**, puis compose. Le confondage n'y est pas le même. |
+| *« la désaturation (P0) est un pari sans procédure de repli »* | Par l'assemblage il **n'y a plus rien à désaturer** : chaque campagne est déjà à **0 %** de plantage, avec 23, 54 et 156 stratégies déposables. |
+| *« 8 à 12 h de balayage »* | Facteur 10 en moins par l'assemblage. |
+
+⚠️ **Mais ses attaques 1 à 4 ne visent pas T4 en particulier** — elles visent **toute recherche
+de règle générale**, y compris celle qui reste à faire. Elles s'appliquent intégralement.
+
+#### Deux objections au MODÈLE, pas à la méthode — et elles restent ouvertes
+
+**Le changement de témoin est modélisé comme instantané.** La rotation du carrousel prend du
+temps. Obturateur ouvert, la pièce reçoit de la matière non comptée ; obturateur fermé, la
+source dérive thermiquement. Ni l'un ni l'autre n'est dans le noyau. **Non mesuré, non
+modélisé.**
+
+**« Témoin et pièce reçoivent la même épaisseur » n'est pas quantifié.** 👤 a répondu *« à peu
+près identiques »* (§25.2), et j'en ai déduit qu'aucun facteur d'uniformité n'était à
+modéliser. ⚠️ **Un rapport de 0,97 — courant sur un bâti à rotation planétaire — ferait dériver
+la pièce d'environ 1,5 quart d'onde sur 50 couches**, et c'est un biais **systématique que le
+monitoring ne corrige pas** : il corrige l'erreur du témoin, pas celle de la pièce. Il
+s'ajouterait à l'erreur gelée. 🔴 **Question à 👤 : ce rapport est-il mesuré sur ta machine ?**
+
 #### T7 — Changements de témoin multiples
 
 Une fois un changement de témoin comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée

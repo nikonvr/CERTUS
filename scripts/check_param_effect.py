@@ -4,7 +4,7 @@
     .venv\\Scripts\\python.exe scripts\\check_param_effect.py --only machine_sampling_dd
 
 POURQUOI CETTE METHODE PLUTOT QU'UNE AUTRE. Chercher si un parametre est *lu* demande de
-suivre sa plomberie, et la plomberie a des angles morts : les reglages STRAT sont lus par
+suivre la chaine qui le mene au calcul, et cette chaine a des angles morts : les reglages STRAT sont lus par
 NOM DE WIDGET dans une boucle generique, invisible a une recherche textuelle. Le 2026-08-15
 trois defauts de cette famille ont echappe a tout controle statique :
 
@@ -14,7 +14,7 @@ trois defauts de cette famille ont echappe a tout controle statique :
   * `machine_sampling_dd`, expose dans l'interface et livre dans neuf configurations, que
     AUCUN des 27 sites d'appel ne passe au noyau.
 
-Ce script ne suit aucune plomberie. Il pose la seule question qui compte :
+Ce script ne suit aucune chaine. Il pose la seule question qui compte :
 
     🔑 SI JE CHANGE CE REGLAGE, LE RESULTAT CHANGE-T-IL ?
 

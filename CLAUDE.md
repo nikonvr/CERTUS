@@ -2178,7 +2178,7 @@ $$\boxed{\;\frac{d^{\text{réel}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{rée
 - **La question « biais corrélé ou tirage indépendant ? » n'a plus lieu d'être** : ce n'est
   ni l'un ni l'autre, c'est une **égalité**.
 - **Tout est déjà dans le noyau** : `prev_thicknesses_sim[j]` et `p_thick_nominal[j]`,
-  utilisées côte à côte à `certus_strat_growth.py:570-571`. Aucune plomberie à ajouter.
+  utilisées côte à côte à `certus_strat_growth.py:570-571`. Rien à câbler de plus.
 - 🟢 **Et c'est une occasion de validation EXTERNE, la première du projet.** `sigma_rate`
   devient une **prédiction** du modèle. Si le simulateur en rend une dispersion du même ordre
   que ce que la machine montre en salle, c'est la première corroboration que STRAT ait jamais
@@ -2403,7 +2403,7 @@ marge faible -> gain    : -2,08 %   <- le signe s'est INVERSE
 
 `RESULT = 0.006151532` contre `0.006110492`, soit +0,67 % — indiscernable, comme prévu sur
 une gagnante à plantage nul. **Mais le placement, lui, s'est dégradé.** Revenu en arrière
-le jour même : `_rate_candidate_layers` retrie par profondeur, la plomberie est retirée,
+le jour même : `_rate_candidate_layers` retrie par profondeur, le câblage est retiré,
 les quatre tests aussi.
 
 #### 🔑 L'ERREUR, ET C'EST UNE ERREUR DE MÉTHODE, PAS D'ARITHMÉTIQUE
@@ -4238,7 +4238,7 @@ vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.
 > après une cinquantaine de couches. Les deux monitorings sont indépendants, mais le verre
 > avec le dépôt total bénéficie des deux coatings successifs. »*
 
-> 👤 *« pour savoir où couper, je veux une méthode très générale, et qui fonctionne bien
+> 👤 *« pour savoir quand changer de témoin, je veux une méthode très générale, et qui fonctionne bien
 > au-delà du cas particulier de ce 99c. Cela pourrait être basé sur un nombre de couches
 > raisonnable, un SEEL qui se dégrade, ou autre, mais tout cela est à tester de manière
 > systématisée et automatisée. On comprendra peut-être a posteriori ! »*
@@ -4246,7 +4246,7 @@ vrai** — et elle est à portée depuis deux jours sans que personne l'ait vue.
 ### 25.1. Le constat qui ouvre le chantier
 
 🔴 **ÉTABLI LE 2026-08-15, ET C'EST PIRE QUE « MOINS BON » : SUR LE 99 COUCHES, RIEN NE
-SURVIT.** La référence sans coupure rend **`crash_rate = 100 %`**, en PREMIUM comme en FAST.
+SURVIT.** La référence sans changement de témoin rend **`crash_rate = 100 %`**, en PREMIUM comme en FAST.
 Or une stratégie dont le plantage dépasse 5 % reçoit un score **infini** et **sort du
 classement** (`certus_strat_robustness.py:2125`). Les 785 candidates en sont donc sorties, et
 ce qui revient vient du **repli sans survivant** (`:1152-1166`) : le solveur reclasse les
@@ -4270,14 +4270,14 @@ Deux causes, toutes deux physiques et non contournables par un meilleur solveur 
 Un suivi optique continu à λ₀ sur tout l'empilement rend **100 % de plantages**
 (`CRASH_LEVEL_UNREACHABLE`). Le monitoring optique ne meurt pas progressivement : il meurt.
 
-### 25.2. Ce que la coupure restaure, et ce qu'elle coûte
+### 25.2. Ce que le changement de témoin restaure, et ce qu'il coûte
 
 **Elle restaure.** Chaque témoin ne porte jamais plus d'une cinquantaine de couches, donc `T`
 reste mesurable, le swing `dT/de` reste exploitable, et POEM retrouve des extrema francs
 comme repères de phase absolus.
 
 🔴 **Elle coûte, et c'est le fait qui gouverne tout le chantier : LA COMPENSATION D'ERREUR NE
-TRAVERSE PAS LA COUPURE.** Tout l'avantage du monitoring optique sur le contrôle au quartz
+TRAVERSE PAS LE CHANGEMENT DE TÉMOIN.** Tout l'avantage du monitoring optique sur le contrôle au quartz
 est qu'une erreur d'épaisseur sur la couche *k* est partiellement **auto-corrigée** : les
 couches suivantes, lues sur le **même** verre, voient l'erreur accumulée et le point de
 déclenchement se décale pour l'annuler en partie. Dès qu'on change de témoin, les couches
@@ -4289,7 +4289,7 @@ porte erreur(partie 1) + erreur(partie 2) **sans terme croisé**.
 
 | ce qui est perdu | portée |
 |---|---|
-| **La compensation globale** — le niveau de déclenchement est calculé sur la pile **nominale** et appliqué à la pile **réelle** ; l'écart entre les deux produit l'erreur de signe opposé (Macleod, Bousquet) | **toute la pile sous la coupure**, non bornée |
+| **La compensation globale** — le niveau de déclenchement est calculé sur la pile **nominale** et appliqué à la pile **réelle** ; l'écart entre les deux produit l'erreur de signe opposé (Macleod, Bousquet) | **toute la pile sous le changement de témoin**, non bornée |
 | **Le rejeu d'ancres POEM** | borné à **4 couches** (`MAX_LOOKBACK_VAL`) |
 
 C'est la première qui coûte cher, et elle n'est pas plafonnée. Ne dis pas « on ne perd que
@@ -4299,31 +4299,31 @@ C'est la première qui coûte cher, et elle n'est pas plafonnée. Ne dis pas « 
 
 | | |
 |---|---|
-| **Le changement se fait par carrousel SOUS VIDE** | Plusieurs témoins sont déjà en enceinte. **Ni remise à l'air, ni repompage, ni contamination.** ⚠️ Le nombre de coupures est donc plafonné par le nombre de positions du carrousel. |
+| **Le changement se fait par carrousel SOUS VIDE** | Plusieurs témoins sont déjà en enceinte. **Ni remise à l'air, ni repompage, ni contamination.** ⚠️ Le nombre de changements de témoin est donc plafonné par le nombre de positions du carrousel. |
 | **La fente garde le même réglage** | 👤 *« les fentes gardent le même setting »*. Une campagne ne peut pas choisir sa propre résolution : `monochromator_resolution_nm` reste **un scalaire pour tout le run**. |
-| **Témoin et pièce reçoivent la même épaisseur** | À peu près identiques. Donc **aucun facteur d'uniformité à modéliser**, et la coupure sépare la **mémoire optique**, rien d'autre. |
+| **Témoin et pièce reçoivent la même épaisseur** | À peu près identiques. Donc **aucun facteur d'uniformité à modéliser**, et le changement de témoin sépare la **mémoire optique**, rien d'autre. |
 
-🔴 **Conséquence, et elle durcit le problème au lieu de l'adoucir : la coupure est
+🔴 **Conséquence, et elle durcit le problème au lieu de l'adoucir : le changement de témoin est
 OPÉRATIONNELLEMENT GRATUITE.** Pas de coût atelier à mettre en face du gain. L'arbitrage est
 donc **purement informationnel** — on échange de la compensation contre du signal, et rien
 d'autre ne vient trancher. Il n'y a aucun garde-fou économique pour dire « pas plus de deux
-coupures » : c'est la physique seule qui doit le dire.
+changements » : c'est la physique seule qui doit le dire.
 
-### 25.3. 🔑 CE QUE LE CODE A DÉJÀ — la coupure n'est pas une refonte
+### 25.3. 🔑 CE QUE LE CODE A DÉJÀ — le changement de témoin n'est pas une refonte
 
 | | |
 |---|---|
-| **La vue témoin** | `certus/physics/certus_strat_batch.py:474` — `current_run_th_buffer[r, :i_layer]` est la pile accumulée que la lecture optique « voit ». **C'est là que la coupure se joue** : couper à la couche *p* revient à passer la tranche `[r, p:i_layer]`. |
+| **La vue témoin** | `certus/physics/certus_strat_batch.py:474` — `current_run_th_buffer[r, :i_layer]` est la pile accumulée que la lecture optique « voit ». **C'est là que le changement de témoin se joue** : changer de témoin à la couche *p* revient à passer la tranche `[r, p:i_layer]`. |
 | **La pièce** | `sim_thick_batch`, épaisseurs réelles complètes `(n_runs, n_layers)`. Elle n'est **pas** tronquée : la pièce continue d'accumuler toutes les erreurs. C'est exactement la physique voulue. |
-| **Le crochet POEM** | `certus/physics/certus_strat_batch.py:485` — `block_start[i_layer]` est **déjà** un tableau par couche disant au noyau où commence l'historique. Une coupure est un `block_start` forcé, **plus** la troncature de la pile. |
-| **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `certus/physics/certus_strat_growth.py:904-908`. L'historique rejoué repart de zéro à la coupure. |
+| **Le crochet POEM** | `certus/physics/certus_strat_batch.py:485` — `block_start[i_layer]` est **déjà** un tableau par couche disant au noyau où commence l'historique. Un changement de témoin est un `block_start` forcé, **plus** la troncature de la pile. |
+| **L'écrêtage d'historique** | `certus/physics/certus_strat_growth.py:75` — `MAX_LOOKBACK_VAL = 4`, appliqué en `certus/physics/certus_strat_growth.py:904-908`. L'historique rejoué repart de zéro à le changement de témoin. |
 | **Le seuil de swing** | `certus/physics/certus_strat_growth.py:883` — `SWING_MIN = 0.04`. **Un critère de mort du signal existe donc déjà, chiffré, dans le noyau.** |
 
 🔴 **Vérifier ces cinq ancrages avant d'écrire une ligne.** Le document a déjà cité
 `certus/core/certus_strat_growth.py` — **ce fichier n'existe pas**, le module est en
 `certus/physics/`. Un plan bâti sur un chemin faux coûte une session.
 
-### 25.4. 🔴 QUAND COUPER — le vrai problème, et il n'est PAS résolu
+### 25.4. 🔴 QUAND CHANGER DE VERRE TÉMOIN — le vrai problème, et il n'est PAS résolu
 
 > 👤 *« on perd la compensation : oui, ça c'est évident, mais quand changer ? ça c'est
 > l'enjeu majeur »* — *« savoir quand changer de testglass est un enjeu majeur et un problème
@@ -4331,9 +4331,9 @@ coupures » : c'est la physique seule qui doit le dire.
 > savoir à partir de quand on en tire bénéfice. Rien ne remplacera les tests simulés sur le
 > 99c et peut-être le 48c. »* (2026-08-14)
 
-**Ne confonds pas les deux.** Que la coupure coûte la compensation est un fait acquis,
+**Ne confonds pas les deux.** Que le changement de témoin coûte la compensation est un fait acquis,
 mécaniquement vrai, démontré par les tests de §25.5-T1 — et **ce n'est pas la question**.
-La question est **où placer la coupure**, et elle est ouverte.
+La question est **à quelle couche changer de témoin**, et elle est ouverte.
 
 #### 🎯 La cible, posée par 👤
 
@@ -4343,7 +4343,7 @@ La question est **où placer la coupure**, et elle est ouverte.
 🔴 **MAIS LA PREMIÈRE CIBLE N'EST PAS LE SEEL.** Le point de départ n'est pas « 0,86 nm » :
 c'est **100 % de plantage**, donc *aucune* stratégie exploitable (§25.1). **Tant que le
 plantage n'est pas passé sous 5 %, aucun SEEL n'est publiable** — celui qui s'affichera sera
-un score de repli, et comparer deux positions de coupure sur des scores de repli revient à
+un score de repli, et comparer deux couches de changement sur des scores de repli revient à
 **comparer deux façons d'échouer**.
 
 | # | Cible | Pourquoi dans cet ordre |
@@ -4386,12 +4386,12 @@ Il faut l'écrire, sinon quelqu'un va croire qu'un seuil suffit.
 
 | # | La difficulté | Pourquoi elle bloque une règle simple |
 |---|---|---|
-| 1 | **Bénéfice et coût varient en sens inverse le long de la pile** | Couper tôt garde un témoin vif mais gèle l'erreur tôt, et la compensation manque sur tout le reste. Couper tard garde la compensation mais les couches d'avant ont déjà été surveillées sur un témoin mourant. L'optimum est **au milieu de deux courbes qu'on ne sait pas tracer**. |
-| 2 | 🔴 **La grandeur qui décide n'est pas locale** | Ce qui compte est le SEEL **à la fin**, pas la qualité du signal **à la coupure**. Une coupure qui paraît excellente localement peut être désastreuse si elle gèle l'erreur dans une couche à laquelle le spectre final est très sensible. **On ne peut donc pas choisir couche par couche** : le problème n'est pas séparable, et toute règle gloutonne est suspecte. |
-| 3 | **La coupure n'est pas un axe indépendant** | Elle force une frontière de bloc, exactement comme un changement de λ ou une couche en Rate. Elle entre donc en **concurrence combinatoire** avec le partitionnement en blocs (§17-43) et avec le placement des couches Rate. L'optimum de coupure dépend du plan de blocs, et réciproquement. Ce n'est pas un scalaire à régler. |
-| 4 | ⚠️ **Le critère évident est probablement SYSTÉMATIQUEMENT EN RETARD** | `SWING_MIN = 0.04` dit où le monitoring **échoue**, pas où couper **paie**. Quand le swing passe sous le seuil, le mal est déjà fait : la bonne coupure est vraisemblablement **avant** la mort du signal, pas au moment où elle survient. Un seuil rendra donc une réponse trop tardive, et elle aura l'air raisonnable. |
-| 5 | **Le coût opérationnel ne borne rien** | Le carrousel rend la coupure gratuite (§25.2). Aucun garde-fou économique ne dira « pas plus de deux » : seule la physique le dira, et seul le nombre de positions du carrousel plafonne. |
-| 6 | 🔴 **La décision peut être sous le bruit** | La résolution statistique d'un score est de ~6 % relatif à N = 150. Si deux positions de coupure diffèrent de moins que ça, un balayage « trouvera » un optimum qui est du bruit. **Il faut fixer la profondeur avant de regarder les résultats**, et vérifier qu'un écart survit à un changement de graine. |
+| 1 | **Bénéfice et coût varient en sens inverse le long de la pile** | Changer tôt garde un témoin vif mais gèle l'erreur tôt, et la compensation manque sur tout le reste. Changer tard garde la compensation mais les couches d'avant ont déjà été surveillées sur un témoin mourant. L'optimum est **au milieu de deux courbes qu'on ne sait pas tracer**. |
+| 2 | 🔴 **La grandeur qui décide n'est pas locale** | Ce qui compte est le SEEL **à la fin**, pas la qualité du signal **à le changement de témoin**. Un changement de témoin qui paraît excellente localement peut être désastreuse si elle gèle l'erreur dans une couche à laquelle le spectre final est très sensible. **On ne peut donc pas choisir couche par couche** : le problème n'est pas séparable, et toute règle gloutonne est suspecte. |
+| 3 | **Le changement de témoin n'est pas un axe indépendant** | Elle force une frontière de bloc, exactement comme un changement de λ ou une couche en Rate. Elle entre donc en **concurrence combinatoire** avec le partitionnement en blocs (§17-43) et avec le placement des couches Rate. L'optimum de changement dépend du plan de blocs, et réciproquement. Ce n'est pas un scalaire à régler. |
+| 4 | ⚠️ **Le critère évident est probablement SYSTÉMATIQUEMENT EN RETARD** | `SWING_MIN = 0.04` dit où le monitoring **échoue**, pas quand changer de témoin **paie**. Quand le swing passe sous le seuil, le mal est déjà fait : le bon changement se place vraisemblablement **avant** la mort du signal, pas au moment où elle survient. Un seuil rendra donc une réponse trop tardive, et elle aura l'air raisonnable. |
+| 5 | **Le coût opérationnel ne borne rien** | Le carrousel rend le changement de témoin gratuit (§25.2). Aucun garde-fou économique ne dira « pas plus de deux » : seule la physique le dira, et seul le nombre de positions du carrousel plafonne. |
+| 6 | 🔴 **La décision peut être sous le bruit** | La résolution statistique d'un score est de ~6 % relatif à N = 150. Si deux couches de changement diffèrent de moins que ça, un balayage « trouvera » un optimum qui est du bruit. **Il faut fixer la profondeur avant de regarder les résultats**, et vérifier qu'un écart survit à un changement de graine. |
 
 #### La méthode, et l'ordre n'est pas négociable
 
@@ -4399,14 +4399,14 @@ Il faut l'écrire, sinon quelqu'un va croire qu'un seuil suffit.
 tests simulés »*. Donc, en trois temps :
 
 1. **Deux prédicteurs GRATUITS**, sans aucun Monte-Carlo (T2, T3).
-2. **Une vérité de terrain COÛTEUSE** : le balayage des positions de coupure sur le 99c (T4).
+2. **Une vérité de terrain COÛTEUSE** : le balayage des couches de changement sur le 99c (T4).
 3. **La corrélation entre les deux** — le « on comprendra a posteriori ». Si un prédicteur
    gratuit prédit la vérité coûteuse, on tient une **règle générale** ; sinon on a une carte,
    et on sait que la règle est ailleurs.
 
 ⚠️ **Ne pas inverser.** Écrire la règle d'abord puis chercher la mesure qui la confirme est
 l'erreur n°2 du document. Le tâtonnement de 👤 est légitime **à condition d'être consigné
-comme tâtonnement** : chaque essai, sa position de coupure, son SEEL, dans `probe_runs.tsv`.
+comme tâtonnement** : chaque essai, sa couche de changement, son SEEL, dans `probe_runs.tsv`.
 Un tâtonnement noté est une carte ; un tâtonnement oublié est du bruit.
 
 ### 25.5. LA TODO LISTE, dans l'ordre
@@ -4414,7 +4414,7 @@ Un tâtonnement noté est une carte ; un tâtonnement oublié est du bruit.
 #### 🔴 T0 — Les CONTRÔLES NÉGATIFS, avant toute machinerie
 
 **À faire en premier, et c'est contre-intuitif.** Sur le 35c et le 48c, le monitoring optique
-marche : le SEEL y vaut 0,48 et 0,17 nm. Une coupure y est donc **une perte sèche** — elle
+marche : le SEEL y vaut 0,48 et 0,17 nm. Un changement de témoin y est donc **une perte sèche** — il
 retire de la compensation sans rien restaurer, puisqu'il n'y avait rien à restaurer.
 
 ⚠️ Et le carrousel ne lui oppose **aucun coût** pour la retenir (§25.2) : si le modèle se
@@ -4427,26 +4427,26 @@ attente **avant** de mesurer, dans le test, pas dans le rapport.
 
 | # | Ce qu'on mesure | Attendu |
 |---|---|---|
-| 1 | 48c, coupure forcée en 24 | SEEL **dégradé** par rapport à 0,17 nm |
-| 2 | 35c, coupure forcée en 17 | SEEL **dégradé** par rapport à 0,48 nm |
-| 3 | 99c, coupure forcée vers le milieu | **plantage sous 5 %** — c'est l'hypothèse à réfuter. **Pas un SEEL** : sans survivant, tout SEEL affiché est un score de repli (§25.1) |
+| 1 | 48c, changement forcé en 24 | SEEL **dégradé** par rapport à 0,17 nm |
+| 2 | 35c, changement forcé en 17 | SEEL **dégradé** par rapport à 0,48 nm |
+| 3 | 99c, changement forcé vers le milieu | **plantage sous 5 %** — c'est l'hypothèse à réfuter. **Pas un SEEL** : sans survivant, tout SEEL affiché est un score de repli (§25.1) |
 
-#### ✅ T1 — Le mécanisme de coupure : **FAIT le 2026-08-14**
+#### ✅ T1 — Le mécanisme de changement : **FAIT le 2026-08-14**
 
 **Le champ à poser sur une stratégie : `witness_reset_layers`**, liste d'indices 0-based des
 couches où un témoin **nu** entre dans le faisceau. Liste vide = comportement historique.
 L'indice 0 est ignoré (la couche 0 pousse déjà sur du verre nu).
 
-**Ce qui a été écrit, et c'est plus simple que prévu.** La coupure n'est pas une troncature
+**Ce qui a été écrit, et c'est plus simple que prévu.** Le changement de témoin n'est pas une troncature
 de tranche : c'est **l'index de départ de trois boucles** dans le noyau de croissance.
 
 | où | ce qui change |
 |---|---|
 | `certus_strat_growth.py`, `simulate_growth_kernel` | nouveau paramètre `witness_base_layer` (défaut 0). **`M_before`** (pile réelle) et **`M_nom`** (pile nominale) partent de `witness_base_layer` au lieu de 0, ainsi que la pile sous la fenêtre POEM. Garde ajoutée : `j0` ne peut pas descendre sous la base, sinon la boucle tournerait à l'envers et rendrait vide **en silence**. |
-| `certus_strat_batch.py` | `witness_reset_flags` → carte `witness_base[i]`, et **frontière de bloc forcée** à chaque coupure : les ancres que POEM rejouerait ont été observées sur un verre qui n'est plus dans le faisceau. |
+| `certus_strat_batch.py` | `witness_reset_flags` → carte `witness_base[i]`, et **frontière de bloc forcée** à chaque changement : les ancres que POEM rejouerait ont été observées sur un verre qui n'est plus dans le faisceau. |
 | `certus_strat_robustness.py` | lit `witness_reset_layers` sur la stratégie et construit les drapeaux. |
 
-🔑 **Le coût de la coupure n'est modélisé NULLE PART, et il ne doit pas l'être** — il tombe
+🔑 **Le coût de le changement de témoin n'est modélisé NULLE PART, et il ne doit pas l'être** — il tombe
 de ces deux boucles. Le niveau de déclenchement est calculé sur la pile **nominale** et
 appliqué à la **réelle** ; c'est cet écart qui produit l'erreur de signe opposé. Faire partir
 les deux boucles au même `witness_base_layer` rend les erreurs d'en dessous invisibles aux
@@ -4462,13 +4462,13 @@ verre que le faisceau regarde. Changer de témoin ne fait pas oublier sa calibra
 
 | # | Test | Résultat |
 |---|---|---|
-| 1 | carte de coupures toute vide = paramètre absent | ✅ bit-identiques : l'historique reste comparable |
-| 2 | coupure en *p*, erreur de 40 nm enfouie en *p−4* | ✅ **bit-identique** au cas sans erreur → le témoin ne voit vraiment plus sous la coupure |
-| 3 | 🔴 **le contrôle qui donne son sens au test 2** : même erreur, **sans** coupure | ✅ **différent** → la compensation est bien vivante, donc le test 2 mesure quelque chose |
-| 4 | 🔴 **la pièce garde ce que le témoin a oublié** | ✅ `results` rend les 12 couches, coupure ou non. C'est le test qui attrape le défaut flatteur : tronquer la pièce **améliorerait** le score |
-| 5 | position de coupure honorée, 4 positions | ✅ |
+| 1 | carte de changements de témoin toute vide = paramètre absent | ✅ bit-identiques : l'historique reste comparable |
+| 2 | changement en *p*, erreur de 40 nm enfouie en *p−4* | ✅ **bit-identique** au cas sans erreur → le témoin ne voit vraiment plus sous le changement de témoin |
+| 3 | 🔴 **le contrôle qui donne son sens au test 2** : même erreur, **sans** changement de témoin | ✅ **différent** → la compensation est bien vivante, donc le test 2 mesure quelque chose |
+| 4 | 🔴 **la pièce garde ce que le témoin a oublié** | ✅ `results` rend les 12 couches, changement ou non. C'est le test qui attrape le défaut flatteur : tronquer la pièce **améliorerait** le score |
+| 5 | couche de changement honorée, 4 positions | ✅ |
 
-⚠️ **Ce que T1 ne dit PAS** : que couper soit bénéfique. Il rend la coupure *possible et
+⚠️ **Ce que T1 ne dit PAS** : que couper soit bénéfique. Il rend le changement de témoin *possible et
 correctement modélisée*. Tout le reste de §25 sert à savoir **où**.
 
 #### T2 — Prédicteur gratuit n°1 : LA CARTE DE MORT DU SIGNAL
@@ -4478,7 +4478,7 @@ Pour chaque couche *i* et chaque λ candidate, calculer sur le témoin portant l
 couche. Nominal, aucun tirage, coût négligeable.
 
 La grandeur qui décide : **`swing_max(i) = max sur λ du swing`**. Le seuil existe déjà :
-`SWING_MIN = 0.04` (`certus/physics/certus_strat_growth.py:883`). **Première règle générale candidate : couper juste
+`SWING_MIN = 0.04` (`certus/physics/certus_strat_growth.py:883`). **Première règle générale candidate : changer de témoin juste
 avant que `swing_max(i)` ne passe sous `SWING_MIN`.**
 
 ⚠️ Cette carte est à produire **par couche et par λ**, pas seulement par couche : une couche
@@ -4486,7 +4486,7 @@ aveugle à λ₀ peut être parfaitement lisible 40 nm plus loin. C'est tout l'o
 
 #### T3 — Prédicteur gratuit n°2 : LA CARTE DE SENSIBILITÉ À L'ERREUR GELÉE
 
-C'est le prédicteur du **coût** de la coupure, et il tombe directement de la §25.2. Pour
+C'est le prédicteur du **coût** de le changement de témoin, et il tombe directement de la §25.2. Pour
 chaque position candidate *p* : geler un champ d'erreur réaliste sur les couches `1..p`, puis
 mesurer le **dommage spectral** sur le design final. TMM pur, aucun monitoring, aucun
 Monte-Carlo de robustesse — donc peu coûteux.
@@ -4508,7 +4508,7 @@ règle qui les impose ne prouve rien.
 | **Script** | `scripts/campaign_testglass_cut_sweep.py`, sur le modèle de `scripts/run_campaign.py` — **une commande = toute la campagne**, chaque run vérifié contre la configuration demandée, reprenable |
 | **Balayage** | *p* sur toutes les positions, ou un pas régulier si le coût l'impose |
 | **Ce qu'on mesure** | le **SEEL de la pièce**, pas du témoin. Plus le taux de plantage, le nombre de couches en Rate, et le nombre de changements de λ |
-| **Contrôles dans la même campagne** | (a) sans coupure ; (b) **même nombre de couches en Rate, sans coupure** — sans ce second contrôle, on ne saura pas si le gain vient de la coupure ou du Rate |
+| **Contrôles dans la même campagne** | (a) sans changement de témoin ; (b) **même nombre de couches en Rate, sans changement de témoin** — sans ce second contrôle, on ne saura pas si le gain vient de le changement de témoin ou du Rate |
 
 🔴 **Consigner la configuration effective de chaque run**, et pas seulement celle demandée.
 La campagne « gate » du 2026-08-14 a rendu ses 6 runs **FAILED** parce que
@@ -4519,7 +4519,7 @@ fichier de sortie.
 #### T5 — La CORRÉLATION, et la règle générale
 
 Confronter T2 et T3 à T4 : lequel des prédicteurs gratuits classe correctement les positions
-de coupure ? Candidats à mettre en concurrence, **tous exprimés sans dimension** pour qu'ils
+de changement ? Candidats à mettre en concurrence, **tous exprimés sans dimension** pour qu'ils
 survivent au-delà du 99c :
 
 | candidat | forme | ce qu'il vaut |
@@ -4531,7 +4531,7 @@ survivent au-delà du 99c :
 | structure du design | frontières de sous-ensembles | gratuit, mais est-ce général ? |
 
 **Une règle n'est retenue que si elle est validée hors échantillon** : autre graine **et**
-autre empilement. Une coupure est un degré de liberté de plus — une recherche qui l'a trouvera
+autre empilement. Un changement de témoin est un degré de liberté de plus — une recherche qui l'a trouvera
 **toujours** au moins aussi bon en échantillon. C'est le piège central de ce chantier.
 
 #### T6 — Généraliser : l'échelle d'empilements
@@ -4540,14 +4540,122 @@ La règle doit tenir sur une échelle, pas sur un cas :
 
 | empilement | rôle | attendu |
 |---|---|---|
-| 35c passe-bande | **contrôle négatif** | la coupure **perd** |
-| 48c dichroïque | **contrôle négatif** | la coupure **perd** |
-| 99c 5 cavités | le cas qui ouvre le chantier | la coupure **gagne** |
-| ≥ 150c synthétique | l'extrapolation | la coupure gagne **beaucoup**, et 2 coupures battent 1 |
+| 35c passe-bande | **contrôle négatif** | le changement de témoin **perd** |
+| 48c dichroïque | **contrôle négatif** | le changement de témoin **perd** |
+| 99c 5 cavités | le cas qui ouvre le chantier | le changement de témoin **gagne** |
+| ≥ 150c synthétique | l'extrapolation | le changement de témoin gagne **beaucoup**, et 2 changements battent 1 |
 
-#### T7 — Coupures multiples
+### 25.7. 🔴 LE PLAN D'EXÉCUTION — et le problème qu'il doit résoudre AVANT tout le reste
 
-Une fois une coupure comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée
+> 👤 2026-08-15 : *« je veux un plan robuste, bien pensé, pour effectivement trouver
+> l'endroit du changement de verre témoin et viser un SEEL amélioré sur le 99c avec deux ou
+> trois verres témoins, sans que le raisonnement soit lié à la nature du filtre
+> (passe-bande), mais avec des arguments très généraux. »*
+
+#### 🔴 P0 — L'OBJECTIF EST SATURÉ, ET AUCUNE RECHERCHE NE FONCTIONNE SUR UN OBJECTIF PLAT
+
+C'est le fait qui commande tout le plan, et il faut le regarder en face avant d'écrire une
+ligne de balayage.
+
+| grandeur | valeur sur le 99c | utilisable comme objectif ? |
+|---|---|---|
+| **SEEL** | score de **repli** (§25.1) | ❌ il classe des façons d'échouer |
+| **`crash_rate`** | **1,000**, saturé | ❌ plat : aucune direction de recherche |
+
+**Chercher la meilleure couche de changement en comparant des SEEL de repli reviendrait à
+optimiser du bruit.** Il faut donc d'abord une grandeur qui ait un **gradient**. Deux voies,
+et il faut les deux parce qu'elles se contrôlent mutuellement.
+
+**Voie A — la MARGE, qui existe déjà et n'est pas saturée.** Le noyau rend par couche
+`m_level`, `m_missed`, `m_fab` (`certus/physics/certus_strat_batch.py:393-395`), remontés en
+profil (`certus/core/certus_strat_robustness.py:2243`). **A23 a mesuré que la marge prédit
+le plantage d'un facteur 22, validée non circulairement.** Objectif de substitution pendant
+la saturation : le **nombre de couches à marge insuffisante**, et la **pire marge**. Ces deux
+nombres bougent quand le plantage ne bouge plus.
+
+**Voie B — la CONTINUATION : desaturer, optimiser, puis remonter.** Réduire l'amplitude du
+bruit (ou le corridor d'indice) d'un facteur jusqu'à ce que `crash_rate < 1`, chercher les
+couches de changement dans ce régime, puis **remonter la difficulté par paliers** et vérifier
+que les positions tiennent.
+
+> 🔑 **Et ce test porte plus que la recherche : il dit si la règle est STRUCTURELLE.** Si la
+> couche optimale ne bouge pas quand on change la difficulté, elle est dictée par
+> l'empilement. Si elle se déplace, elle est dictée par le bruit — et il n'y a alors **aucune
+> règle générale à trouver**, ce qui est un résultat en soi.
+
+#### P1 — Les grandeurs qu'une règle GÉNÉRALE a le droit d'utiliser
+
+👤 l'exige : *« sans que le raisonnement soit lié à la nature du filtre »*. La liste est donc
+fermée, et elle se vérifie par un test simple — **une grandeur est admissible si elle se
+calcule sur un empilement dont on ignore la famille.**
+
+| ✅ Admissible | pourquoi |
+|---|---|
+| **Épaisseur optique accumulée depuis le dernier changement**, en unités de λ : $\sum n_j d_j / \lambda$ | **sans dimension**, donc transportable telle quelle d'un 48c à un 200c. C'est le meilleur candidat : il explique un « vers 50 couches » comme une *conséquence*, pas comme une règle |
+| Nombre de couches depuis le dernier changement | la règle naïve, **la référence à battre** |
+| Niveau de transmission du témoin `T(λ)` | dit quand le signal passe sous le plancher photométrique |
+| Swing disponible, `SWING_MIN = 0.04` déjà codé | dit quand il n'y a plus d'extremum exploitable |
+| Nombre de λ candidates viables pour la couche suivante | zéro ⟹ couche forcée |
+| La marge (P0, voie A) | seule grandeur à gradient sous saturation |
+| Dommage spectral d'une erreur gelée sur les couches `1..p` | le **coût** du changement, en TMM pur |
+
+| ❌ Inadmissible | pourquoi |
+|---|---|
+| Position des cavités, des spacers, des miroirs | demande de savoir que c'est un passe-bande |
+| « couper à la ie cavité » | ne survit pas au composant suivant |
+| Toute constante ajustée sur le 99c seul | c'est la réponse d'un filtre, pas une règle |
+
+#### P2 — Les deux cartes GRATUITES, sans un seul tirage Monte-Carlo
+
+| carte | ce qu'elle donne | coût |
+|---|---|---|
+| **A — viabilité** | par couche et par λ, sur le témoin portant `[base..i)` : swing disponible, niveau `T`, nombre de λ viables. Dit **quand le témoin meurt** | minutes |
+| **B — coût de l'erreur gelée** | par position `p` : geler un champ d'erreur réaliste sur `1..p`, mesurer le dommage spectral du design final. TMM pur | minutes |
+
+La couche de changement candidate est au **croisement** : là où le signal est encore vivant
+et où l'erreur gelée coûte le moins. ⚠️ Les deux cartes sont des **prédicteurs**, pas des
+mesures : leur valeur se juge à leur corrélation avec P3, pas à leur élégance.
+
+#### P3 — La recherche, et pourquoi elle n'est pas une force brute
+
+Avec 49 positions admissibles (paires seulement, §25.5), il y a **1 176** couples et
+**18 424** triplets. À ~15 min le run, l'énumération est exclue. L'ordre est donc :
+
+1. **Un changement** — balayage grossier des positions (10 runs), sur le régime désaturé de
+   P0. Compare la position gagnante aux cartes A et B : **c'est là que se joue la
+   compréhension a posteriori.**
+2. **Deux changements** — glouton : on fixe le meilleur premier, on balaie le second.
+   🔴 **Puis on teste la séparabilité** : le meilleur couple est-il bien (meilleur seul,
+   meilleur second) ? Si oui, le problème est quasi séparable et le glouton est justifié. Si
+   non, **c'est un résultat**, et la recherche doit s'élargir.
+3. **Trois changements** — idem, en partant du meilleur couple.
+4. **Perturbation locale** autour de chaque optimum, ±2 et ±4 couches, pour distinguer un
+   optimum **pointu** d'un plateau. Un optimum pointu à la résolution du score est suspect.
+
+#### P4 — Les garde-fous, sans lesquels le plan se trompera lui-même
+
+| # | Le piège | La parade, posée AVANT de mesurer |
+|---|---|---|
+| 1 | **Un changement est un degré de liberté gratuit** : 3 témoins font toujours ≥ 1 en échantillon | Le gagnant doit survivre à **une autre graine**. Écart requis : supérieur à la résolution statistique du score. |
+| 2 | **Confusion avec la structure en blocs** : un changement force une frontière de bloc, donc modifie aussi le partitionnement | Rapporter le **nombre de blocs** à chaque ligne. Comparer à nombre de blocs égal quand c'est possible. |
+| 3 | **Décision sous le bruit** | Fixer `N` **à l'avance**. Un écart inférieur à la résolution est une **égalité**, pas un classement. |
+| 4 | **La règle est ajustée sur le 99c** | La **règle**, pas les positions, doit être appliquée au 48c et au 35c et y prédire **« ne pas changer »**. C'est la falsification, et elle n'est pas optionnelle. |
+| 5 | **On confond desaturé et nominal** | Toute position trouvée en régime réduit doit être **rejouée au nominal**. Sinon elle décrit un autre problème. |
+
+#### P5 — Ce que le plan doit pouvoir conclure, y compris contre lui-même
+
+Un plan qui ne peut pas échouer n'est pas un plan. Les trois issues sont **toutes**
+publiables :
+
+| issue | ce qu'on écrit |
+|---|---|
+| 🟢 `crash < 5 %` atteint à 2 ou 3 témoins | Le SEEL devient mesurable. **Alors seulement** la cible de 0,3 nm devient une question. |
+| 🟠 `crash` baisse sans passer sous 5 % | Le mécanisme agit dans le bon sens mais ne suffit pas. Dire de combien, et ce qu'il faudrait en plus. |
+| 🔴 aucun arrangement ne fait baisser `crash` | **Résultat valable et important** : sur ce composant le changement de témoin n'est pas la réponse, et il faut chercher ailleurs. Ne pas le maquiller en « amélioration du SEEL » de repli. |
+
+#### T7 — Changements de témoin multiples
+
+Une fois un changement de témoin comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée
 en blocs. La partition devient **à deux niveaux**, et elle se compose avec la recherche par
 blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une règle.
 
@@ -4557,9 +4665,9 @@ blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une rè
 |---|---|
 | **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§25.4). **Ne rapporte que le SEEL de la pièce.** |
 | **Confondre SEEL global et SEEL partiels** | 👤 : *« SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels seront à 0,3 »*. Le partiel est un **diagnostic**, jamais un terme du global. |
-| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant la coupure auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
-| **Le degré de liberté gratuit** | Une coupure ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
+| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant le changement de témoin auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
+| **Le degré de liberté gratuit** | Un changement de témoin ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
 | **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
-| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend la coupure gratuite (§25.2). Rien hors de la physique ne limitera le nombre de coupures — sauf le nombre de positions du carrousel. |
-| **Couper « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
+| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend le changement de témoin gratuit (§25.2). Rien hors de la physique ne limitera le nombre de changements de témoin — sauf le nombre de positions du carrousel. |
+| **Changer « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
 | 🔴 **Chercher la règle avant d'avoir les essais** | 👤, deux fois : *« ce sont les essais-erreur avec de nombreux batchs qui permettront une compréhension a posteriori »*. Une explication trouvée avant les mesures sera confirmée par elles, quoi qu'elles disent. |

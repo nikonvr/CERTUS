@@ -242,7 +242,7 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 |---|---|
 | **A1, A2** | Le seuil anti-fabrication vaut **1,00 A** à `k = 8`, `N = 800` — mesuré, pas dérivé. `0,354` est réfuté (§9bis). Les vrais extrema survivent au lissage. |
 | **A6** | Le banc **est** déterministe à état compilé constant. C'est la **recompilation** qui décale les bits, de 2,819e-11, reproductiblement (§3). |
-| **A8** | La grille machine est dé-soudée du lissage : `machine_sampling_dd` existe et vaut 0 par défaut. |
+| **A8** | 🔴 **INACHEVÉE, et l'inverse de ce qui était écrit ici.** `machine_sampling_dd` existe, il est exposé dans l'interface (*« Machine grid (nm, 0=off) »*) et livré dans **9 configurations d'exemple** — mais **AUCUN des 27 sites d'appel du noyau ne le lui passe** (vérifié le 2026-08-15). Le noyau reçoit donc **toujours** son défaut `0.0`. Le réglage est **inatteignable** : ce n'est pas « 0 par défaut », c'est 0 quoi qu'on fasse. La grille fine ne s'active que par `smoothing_window > 1` — **la soudure de §17-2 n'est donc PAS défaite**, elle est seulement masquée par un bouton qui ne fait rien. |
 | **A10, A14** | Le corridor atteint la notation. Courbe : `×1,23 · ×2,03 · ×2,41 · ×4,66`, exposant **0,545** (§17-29). |
 | **A12** | POEM protège d'un facteur **×41,2** sous distorsion affine (§17-29). ⚠️ **Cite la protection, jamais le dommage résiduel** : +0,9 % sur une graine, +98 % sur une autre. |
 | **A15** | La marge Phase A change ce qui est **offert**, jamais ce qui est **retenu** (§17-12). |

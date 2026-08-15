@@ -1,0 +1,4 @@
+stamp	tag	cuts	n_cuts	verdict	seel_nm	rmse_p95	n_blocks	crash_pct	n_strats	run_s	config
+2026-08-15 09:20:45	nocut	-	0	FALLBACK	0.87	0.18776107589831695	3	100.0	498	933.8	{"allow_rate": true, "cuts": [], "dp_top_k": 20, "mode": "fast", "n_screen_runs": 10, "robustness_num_runs": 50, "search_resolution": false, "seed": 42, "slit_nm": 2.0}
+2026-08-15 09:37:25	cut32	32	1	FALLBACK	0.87	0.18776107589831695	3	100.0	498	999.7	{"allow_rate": true, "cuts": [32], "dp_top_k": 20, "mode": "fast", "n_screen_runs": 10, "robustness_num_runs": 50, "search_resolution": false, "seed": 42, "slit_nm": 2.0}
+2026-08-15 09:53:55	cut36	36	1	FALLBACK	0.87	0.18776107589831695	3	100.0	498	988.1	{"allow_rate": true, "cuts": [36], "dp_top_k": 20, "mode": "fast", "n_screen_runs": 10, "robustness_num_runs": 50, "search_resolution": false, "seed": 42, "slit_nm": 2.0}

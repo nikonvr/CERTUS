@@ -190,13 +190,35 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
     if "execution_mode" in getattr(app, "widgets", {}):
         app.widgets["execution_mode"].setCurrentText(mode)
 
+    # 🔴 MUTATING THE DICT RETURNED BY collect_params() DOES NOTHING. `run_workflow` calls
+    # `self.collect_params()` AGAIN, internally, and uses that fresh dict -- the one built
+    # from the widgets. Anything written on the returned copy is thrown away.
+    #
+    # This shipped here on 2026-08-15 and produced two batches, "no cut" and "cut at 32",
+    # with BIT-IDENTICAL scores: no cut had ever been applied, and neither had the frozen
+    # slit. Worse, the check below read the values back from that same discarded dict, so
+    # it was circular and confirmed nothing.
+    #
+    # The fix is to override at the ONE place collection happens, so every internal call
+    # receives the same overrides.
+    overrides = {
+        "show_plots": False,
+        "witness_reset_layers": list(cuts),
+        "monochromator_resolution_nm": SLIT_NM,   # held fixed -- see module docstring
+        "search_resolution": False,
+        "robustness_seed": seed,
+    }
+    seen: dict[str, int] = {"calls": 0}
+    _collect = app.collect_params
+
+    def collect_with_overrides(*a, **kw):
+        p = _collect(*a, **kw)
+        p.update(overrides)
+        seen["calls"] += 1
+        return p
+
+    app.collect_params = collect_with_overrides
     params = app.collect_params()
-    params["show_plots"] = False
-    params["witness_reset_layers"] = list(cuts)
-    # Held fixed, deliberately -- see the module docstring.
-    params["monochromator_resolution_nm"] = SLIT_NM
-    params["search_resolution"] = False
-    params["robustness_seed"] = seed
 
     # 🔴 Consign the configuration that was APPLIED, not the one that was asked for. The
     # gate campaign of 2026-08-14 lost all six of its runs to exactly this: a key applied
@@ -229,9 +251,21 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
     sys.stderr.write(f"\n{'=' * 78}\n  {_tag(cuts)}  |  {json.dumps(applied)}\n{'=' * 78}\n")
 
     t0 = time.perf_counter()
+    calls_before = seen["calls"]
     app.run_workflow(23)
     res = B.wait_for(app.worker) if getattr(app, "worker", None) else None
     elapsed = time.perf_counter() - t0
+
+    # 🔴 THE ONLY NON-CIRCULAR CHECK IN THIS SCRIPT. Reading the overrides back out of the
+    # dict we just wrote them into proves nothing -- that is how the 2026-08-15 batches
+    # passed their own verification while running no cut at all. What has to be true is
+    # that `run_workflow` went THROUGH our injection point. If it collected its parameters
+    # some other way, the run used the widgets and our cut plan never existed.
+    if seen["calls"] <= calls_before:
+        raise SystemExit(
+            "run_workflow never called collect_params: the overrides (cut plan, frozen "
+            "slit) did NOT reach the solver. Do not trust anything this run produced."
+        )
 
     row = {
         "tag": _tag(cuts),

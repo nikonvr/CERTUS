@@ -824,6 +824,37 @@ def calculate_dynamics_ULTIMATE(
                 float(dyn_vals[probe_idx]),
             )
 
+    # ── NOMBRE DE POINTS TOURNANTS, par la forme fermee du noyau ────────────────
+    #
+    # 👤 2026-08-15 : *« le code pourrait ou meme devrait, en Phase A, regarder pour une
+    # couche i le nombre de lambda permettant de passer un turning point »*.
+    #
+    # 🔴 `dynamics` NE MESURE PAS CA. C'est le swing crete-a-crete T_max - T_min : une
+    # couche dont T croit de facon MONOTONE pendant toute sa croissance a un swing
+    # excellent et AUCUN extremum sur lequel s'arreter. 📏 Mesure du 2026-08-15
+    # (`scripts/probe_tp_admissibilite.py`) : 1,3 a 3,9 % des candidates admissibles sont
+    # dans ce cas, dont une a swing 0,467 sur le 99c.
+    #
+    # Le point tournant, c'est l'admittance du systeme qui devient reelle, donc
+    # `tan 2.delta = R/Q` -> delta_TP = (1/2).arctan2(R, Q) + k.(pi/2). Ce N'EST PAS
+    # « la couche atteint 1 QWOT » : voir docs/QWOT_ET_TURNING_POINT.md.
+    #
+    # Cout : O(1) par lambda, sur des grandeurs deja calculees ci-dessus. Aucun parcours
+    # supplementaire de l'empilement.
+    X = M_before_stack[:, 0, 0] + n_sub_array * M_before_stack[:, 0, 1]
+    Y = M_before_stack[:, 1, 0] + n_sub_array * M_before_stack[:, 1, 1]
+    C_ = X + Y
+    S_ = Y / n_layer_array + n_layer_array * X
+    Q_ = 0.5 * ((C_.real**2 + C_.imag**2) - (S_.real**2 + S_.imag**2))
+    R_ = C_.imag * S_.real - C_.real * S_.imag
+    delta_fin = 2.0 * np.pi * np.real(n_layer_array) * float(nominal_thickness) / wls_array
+    phi = 0.5 * np.arctan2(R_, Q_)
+    demi = np.pi / 2.0
+    k0 = np.ceil((0.0 - phi) / demi)
+    k0 = np.where(phi + k0 * demi <= 0.0, k0 + 1.0, k0)
+    k1 = np.floor((delta_fin - phi) / demi)
+    n_tp_arr = np.maximum(0, (k1 - k0 + 1.0)).astype(np.int64)
+
     return [
         {
             "wl": float(wl),
@@ -831,6 +862,7 @@ def calculate_dynamics_ULTIMATE(
             "t_init": float(t_inits[idx]),
             "t_final": float(t_finals[idx]),
             "t_min": float(t_mins[idx]),
+            "n_tp": int(n_tp_arr[idx]),
         }
         for idx, wl in enumerate(wls_array)
     ]
@@ -867,6 +899,39 @@ def _select_candidates_phase_a(
 
     threshold = float(params.get("dynamics_threshold", 0.025))
     pre_candidates_dyn = [d for d in dynamics if d["dynamics"] >= threshold]
+
+    # ── EXIGER UN POINT TOURNANT — proposition de 👤 du 2026-08-15, EN TEST ──────
+    #
+    # 🔴 DESACTIVE PAR DEFAUT, et ce n'est pas de la prudence de facade : sans ca la
+    # contrainte C1 tombe et toute mesure anterieure devient incomparable. Le defaut
+    # `False` laisse le chemin de calcul mot pour mot celui d'avant ce parametre.
+    #
+    # ⚠️ EXCLUSION SECHE, DONC LE CAS EXTREME. Une couche sans point tournant reste
+    # deposable : elle s'arrete sur un NIVEAU ABSOLU, ou en Rate. Ce qu'elle perd, c'est
+    # l'ancre de phase auto-referencee dont POEM a besoin. Un critere de production
+    # devrait donc etre un COUT, pas un couperet -- et un cout NON MONOTONE, puisque
+    # `CRASH_TP_MISCOUNT` sanctionne aussi le trop-plein de points tournants proches.
+    # Le couperet est ici pour repondre a UNE question, celle de 👤 :
+    #
+    #     « voir sur le 35c, 48c avec un seul testglass s'il y a amelioration »
+    #
+    # Si meme l'exclusion totale ne bouge pas le SEEL, un cout doux ne le bougera pas
+    # davantage, et la proposition est reglee sans avoir a deviner sa forme.
+    # 🔑 Accepte un BOOLEEN (True = au moins 1 point tournant) ou un ENTIER (le minimum
+    # exige). L'entier existe pour une raison precise : un reglage DESTRUCTIF -- par exemple
+    # 999 -- doit vider la selection. C'est la seule facon de prouver, sans circularite, que
+    # ce parametre ATTEINT le calcul. Un resultat bit-a-bit identique entre `False` et `999`
+    # signifierait que le parametre est inerte, comme `machine_sampling_dd` l'etait.
+    _req_tp = params.get("require_turning_point", False)
+    _min_tp = int(_req_tp) if not isinstance(_req_tp, bool) else (1 if _req_tp else 0)
+    if _min_tp >= 1:
+        n_avant = len(pre_candidates_dyn)
+        pre_candidates_dyn = [d for d in pre_candidates_dyn if int(d.get("n_tp", 0)) >= _min_tp]
+        logger.info(
+            f"   [TP] Layer {i_layer + 1}: seuil {_min_tp} point(s) tournant(s) -- "
+            f"{n_avant} candidates -> {len(pre_candidates_dyn)} "
+            f"({n_avant - len(pre_candidates_dyn)} retirees)"
+        )
 
     # Exclude low-signal monitoring: reject if T drops below floor anywhere during layer growth.
     min_t_floor = float(params.get("min_transmission_floor", 0.10))

@@ -29,7 +29,11 @@ partie. C'est la compensation de Macleod-Bousquet.
 
 ### Le problème
 
-Au-delà d'une cinquantaine de couches, le témoin devient **optiquement mort** :
+⚠️ **Corrigé le 2026-08-15.** Ce paragraphe disait *« au-delà d'une cinquantaine de couches »*.
+C'est **faux, et mesuré comme tel** : un empilement **aléatoire de 75 couches** se surveille
+d'un bout à l'autre à **0 % de plantage** (SEEL 0,272 nm, 241 stratégies déposables sur 662).
+**La barrière est structurelle, pas une longueur.** Sur *ce* composant-ci, et à cause de *sa*
+structure, le témoin devient **optiquement mort** :
 
 - les espaceurs demi-onde ont un **swing optique nul** pendant leur dépôt — aucun extremum
   sur lequel s'arrêter ;

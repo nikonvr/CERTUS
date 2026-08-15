@@ -1,0 +1,19 @@
+{
+  "facteur": 2.0,
+  "verdict": "AUCUNE_DEPOSABLE",
+  "n_strats": 404,
+  "n_deposables": 0,
+  "crash_min": 100.0,
+  "rmse": null,
+  "seel": null,
+  "geometrie": {
+    "epaisseur_um": 19.98,
+    "plus_fine_nm": 68.8,
+    "plus_epaisse_nm": 529.0,
+    "qwot_min": 1.008,
+    "qwot_max": 4.958,
+    "couches_sous_1_qwot": 0
+  },
+  "stamp": "2026-08-15T19:42:28",
+  "run_s": 1940.1
+}

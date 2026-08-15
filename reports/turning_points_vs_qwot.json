@@ -1,0 +1,32 @@
+{
+  "controle_substrat_nu_R_max": 0.0,
+  "controle_couche2_dephasage_median_rad": 0.10905125826871448,
+  "0.5": {
+    "qwot_min": 0.252,
+    "naif_sous_1_qwot": 59,
+    "muettes_reel": 1,
+    "lambdas_servantes_medianes": 49,
+    "tp_total_median": 50.0
+  },
+  "1.0": {
+    "qwot_min": 0.504,
+    "naif_sous_1_qwot": 11,
+    "muettes_reel": 0,
+    "lambdas_servantes_medianes": 61,
+    "tp_total_median": 93.0
+  },
+  "1.5": {
+    "qwot_min": 0.756,
+    "naif_sous_1_qwot": 3,
+    "muettes_reel": 0,
+    "lambdas_servantes_medianes": 61,
+    "tp_total_median": 149.0
+  },
+  "2.0": {
+    "qwot_min": 1.008,
+    "naif_sous_1_qwot": 0,
+    "muettes_reel": 0,
+    "lambdas_servantes_medianes": 61,
+    "tp_total_median": 193.0
+  }
+}

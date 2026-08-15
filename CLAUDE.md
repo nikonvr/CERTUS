@@ -133,19 +133,20 @@ Chacune a déjà coûté au moins une session complète sur ce projet.
 | Toucher à du calcul optique | §6 — conventions physiques et oracle TMM |
 | Comprendre la machine de dépôt | §9 — les spécifications du physicien |
 | **Savoir ce qu'on suppose de la machine** | **§9bis — le modèle FIGÉ de la chaîne de lecture. Ne pas le rouvrir.** |
-| Comparer un résultat | **§10 — et il n'y a PLUS de repère valide.** Le rétablir est l'action 0 |
+| **Le programme COURANT** | 🔴 **§25 — multiple testglass methodology.** C'est là que se fait le travail depuis le 2026-08-14 |
+| Comparer un résultat | **§10 — quatre repères valides, tous fente 2 nm.** Ce qui les périme y est dit |
 | Comprendre un mot du projet | §7 — vocabulaire |
 | **Savoir ce qui est encore cassé** | **§17 — défauts ouverts et constats qui gouvernent. À lire avant toute action.** |
 | ⚡ **Gagner du temps d'exécution** | **§18ter — la forme fermée de `T(d)`, ×1,20 mesuré. Trois pistes FERMÉES, et le vrai levier est ailleurs.** |
 | 🔴 **Savoir ce qui est RÉELLEMENT implanté** | **§18bis — établi contre le CODE, jamais contre ce document. La moyenne de lecture reste causale, l'arrêt n'est pas quantifié.** |
-| Comprendre le mode Rate | §14, dernier bloc — noyau écrit, génération de variantes absente |
-| **Les deux composants d'essai** | §7 pour le dichroïque, **§21 pour le passe-bande à trois cavités** |
+| Comprendre le mode Rate | **§14, bloc « Le mode Rate (Quartz / Chrono) »** — noyau écrit **et génération de variantes active par défaut** depuis le 2026-08-12. ⚠️ Trois critères distincts s'y mélangent, démêlés dans l'encadré *« le rate est souvent réservé aux couches fines »* |
+| **Les quatre composants d'essai** | §7 pour le dichroïque 48c, **§21 pour le passe-bande 3 cavités 35c**, **§25.1 pour le 99c 5 cavités**, **§25.4 pour le 75c ALÉATOIRE** — ce dernier n'a aucune structure, c'est lui qui teste la généralité d'une règle |
 | **La grille des λ, 1 nm ou 2 nm** | §22 — enquête et critère de décision |
 | Vérifier le travail d'un autre agent | §20 — protocole de re-vérification |
 | **Choisir la profondeur Monte-Carlo** | **§23 — N = 300 et n_screen = 25, avec le critère qui n'est PAS celui qu'on croit** |
 | **Savoir ce qui est MESURÉ mais NON CONSIGNÉ** | **§23bis — le correctif 2 : la campagne a tourné, les 6 runs sont FAILED, la traçabilité est à réparer AVANT de relancer** |
 | **L'invariant recherche / notation** | **§23ter — `N` ne doit décider d'aucune candidate** |
-| 💡 **Ne pas savoir quoi faire ensuite** | **§24 — trois suggestions, et les cinq choses à ne PAS faire** |
+| 💡 **Quand §25 sera fini** | **§24 — A25, A26, A27, prêtes à exécuter et en réserve. Plus les cinq choses à ne PAS faire** |
 
 🔑 **La page qui compte, et 👤 l'a dit : `pages/CERTUS_STRAT.html`.**
 
@@ -160,6 +161,7 @@ aucune instruction, et elle a un régime propre :
 | **Une affirmation fausse y coûte plus qu'un manque** | Un évaluateur qui prend un chiffre en défaut cesse de croire le reste. Tout nombre doit être sourçable dans le code ou dans un artefact de `reports/`. |
 | **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
 | **Elle doit montrer sa LIMITE** | §10.15 porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
+| **Et ce qui lève la limite** | **§10.16 — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, 0,760 nm à 0 % de plantage. Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
 | **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. Passe `html.parser`, ne te fie pas à l'œil. |
 
 Les autres pages de `pages/` (14 fichiers : DESIGN, INDEX, FIELD, HUB, RE, METAL, métrologie…)
@@ -216,8 +218,10 @@ La correspondance avec les anciens numéros est donnée en colonne.
 
 1. **Une sonde bon marché qui peut invalider un gros travail passe AVANT ce travail.** Le
    palier 0 coûte des minutes et décide de plusieurs jours.
-2. **Rien de comparatif avant que le repère soit rétabli.** Tant que A7 n'est pas faite,
-   aucun `RESULT` ne se compare à aucun autre.
+2. **Rien de comparatif ENTRE DATES avant que le repère soit rétabli.** Tant que A7 n'est pas
+   faite, un `RESULT` ne se compare pas à un `RESULT` d'une autre date ou d'un autre réglage
+   du modèle. ⚠️ Cela **n'interdit pas** de comparer des runs **à protocole fixé** dans une
+   même campagne — voir la précision sous A7.
 3. **Rien de mesuré avant d'être mesurable isolément** (contrainte C3). C'est pourquoi le
    palier 2 précède le palier 3.
 
@@ -377,7 +381,22 @@ set CERTUS_BENCH_TIMEOUT_S=5400
 | 4 | Vérifier le bloc `CONFIG=` de la sortie | tous les paramètres à leur valeur neutre |
 | 5 | **Relancer une seconde fois, identique** | 🔴 **jette le premier** : après une recompilation numba il sort systématiquement du lot |
 | 6 | Comparer les deux | l'écart doit tenir dans l'enveloppe de A6, **pas être nul** |
-| 7 | 🔴 **À REFAIRE.** Le repère du 2026-08-10 décrit une machine sans fente. §10 n'en porte plus aucun | c'est l'action 0 de la suite immédiate |
+| 7 | 🔴 **TOUJOURS À REFAIRE au 2026-08-15.** Le repère du 2026-08-10 décrit une machine sans fente | — |
+
+🔑 **Ne confonds pas A7 avec les repères de §10 — ce sont deux objets différents.**
+
+| | A7 | §10 |
+|---|---|---|
+| l'objet | un `RESULT` de `probe_anchor_noise_pipeline.py` | le **SEEL** de composants entiers |
+| son usage | ancrer des mesures **entre dates** et entre configurations du modèle | dire ce que la méthode **atteint** sur un composant |
+| état | 🔴 **absent** | 🟢 **quatre repères valides, fente 2 nm** |
+
+**Ce que l'absence de A7 interdit, et ce qu'elle n'interdit pas.** Elle interdit de comparer un
+`RESULT` d'aujourd'hui à un `RESULT` d'une autre date ou d'un autre réglage du modèle. Elle
+**n'interdit pas** les comparaisons faites **à protocole fixé** — c'est ce que fait toute la
+campagne du 2026-08-15 (fast, fente 2 nm, graine 42, N = 50), où seule la position du
+changement de témoin varie. Ces comparaisons sont valides **entre elles** et ne prétendent à
+rien au-delà.
 
 ⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §3. Un écart nul entre
 deux runs serait une coïncidence, pas un critère.
@@ -1028,7 +1047,8 @@ code d'avant correctif** — sinon il ne prouve rien.
 | **le juge de paix** | Le dichroïque 48 couches, `example/example_strat/JSON-strat-example.json`, passe-court, front à ~545 nm. **Le seul exemple valable.** |
 | **λ de contrôle** | Longueur d'onde à laquelle la machine surveille le dépôt d'une couche. |
 | **bloc** | Groupe de couches consécutives surveillées à la **même** λ. |
-| **point tournant** | Maximum ou minimum du signal de transmission pendant la croissance. |
+| **point tournant** *(turning point)* | 🔴 L'instant où **l'admittance du système entier devient réelle**, donc où `T` passe par un extremum pendant la croissance. Forme fermée : `tan 2δ = R/Q`. **Ce n'est PAS « la couche atteint 1 QWOT »** — voir la ligne suivante, c'est l'erreur la plus coûteuse du projet. |
+| **QWOT** | L'épaisseur optique d'**une couche seule**, en quarts d'onde, `m = 4nd/λ`. 🔴 **QWOT ≠ point tournant.** La *période* entre deux points tournants vaut bien un quart d'onde à λ_mon, mais le *départ* est décalé d'une phase `½·arctan(R/Q)` fixée par **l'empilement du dessous**. Les deux ne coïncident que sur **la couche 1 d'un substrat nu** (où `R = 0` exactement, mesuré) ou sur un empilement **entièrement QWOT à λ_mon**. 📏 Se tromper coûte un **facteur 59** : sur le random75 ×0,5, le comptage naïf annonce 59 couches « sans point d'arrêt », le comptage exact en trouve **1**. 🔒 **Lis [`docs/QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) avant d'écrire sur ce sujet** ; `scripts/check_claude_md.py` (contrôle E) refuse mécaniquement toute phrase qui les assimile. |
 | **POEM** | Méthode d'arrêt visant un pourcentage de l'amplitude entre les deux derniers points tournants, au lieu d'un niveau absolu. |
 | **plantage** | Le dépôt **ne se termine pas** : la machine attend un niveau qui ne vient jamais, ou compte le mauvais nombre de points tournants. Pas une perte de précision — un run perdu. |
 | **rendement** | Pourcentage de dépôts qui se terminent. Objectif du physicien : **95 %**. |
@@ -1168,13 +1188,77 @@ documentation n'interdit pas de le **balayer pour vérifier** que les résultats
 (Piège 1) : un taux de plantage insensible à `k` signalerait que le lissage n'atteint pas le
 calcul. Figé veut dire « on ne re-discute pas la valeur retenue », pas « on ne la teste pas ».
 
-## 10. Point de référence — il n'y en a plus, et c'est la première chose à refaire
+## 10. Points de référence — les quatre repères valides, et ce qui les périme
 
-🔴 **IL N'Y A PAS DE REPÈRE VALIDE AUJOURD'HUI. C'est la première chose à refaire.**
+🟢 **LES REPÈRES EXISTENT DEPUIS LE 2026-08-15.** Voici les quatre, tous mesurés **fente
+2 nm**, donc sous le modèle courant. Ce sont eux qu'on cite, et aucun autre.
 
-Le **biais de fente** est actif par défaut depuis le 2026-08-11 (§18bis). Tout `RESULT`
-mesuré avant cette date décrit une machine à fentes **infiniment fines**, qui n'existe pas.
-Ce ne sont pas des chiffres faux : ce sont les **réponses à une autre question**.
+| composant | couches | SEEL | plantage | condition |
+|---|---|---|---|---|
+| dichroïque `JSON-strat-example` | 48 | **0,173 nm** | 0 % | 6 blocs, une seule campagne |
+| passe-bande 3 cavités `JSON-strat-bandpass-3cav` | 35 | **0,482 nm** | 0 % | 6 blocs, mode DEEP |
+| **aléatoire** `JSON-strat-random75` | 75 | **0,272 nm** | 0 % | une seule campagne, 241/662 déposables |
+| passe-bande 5 cavités `JSON-strat-bandpass-5cav-99c` | 99 | **0,760 nm** | 0 % par campagne | 🔴 **3 verres témoins** — 0-22 / 22-72 / 72-99 |
+| le même, **en une seule campagne** | 99 | *aucun score valide* | **100 %** sur 487 stratégies | non fabricable — §25.8 |
+
+🔑 **Lis la troisième et la quatrième ligne ensemble : 75 couches passent, 99 non.** Ce n'est
+donc **pas la longueur** qui met le monitoring optique en échec, c'est la **structure**. Le
+random75 n'a ni cavité ni miroir ; le 99c a cinq espaceurs à swing nul et des miroirs sous
+10⁻⁴. Voir §25.4.
+
+#### 🟠 CES QUATRE SEEL NE VIVENT PAS SUR LE MÊME DOMAINE SPECTRAL — constaté le 2026-08-15
+
+👤 : *« on reste comme cela, mais c'est à noter dans un coin »*. C'est donc **un état de fait
+assumé, pas un défaut à corriger** — mais il faut le savoir avant de lire le tableau ci-dessus
+comme un classement de difficulté.
+
+| composant | grille de notation | largeur | points |
+|---|---|---|---|
+| 48c dichroïque | 400 – 700 nm | **300 nm** | 301 |
+| 75c aléatoire | 550 – 750 nm | **200 nm** | 201 |
+| 35c passe-bande | 600 – 660 nm | **60 nm** | 61 |
+| 99c passe-bande | 610 – 655 nm | **45 nm** | 91 (pas de 0,5 nm) |
+
+**Les deux passe-bandes sont déjà notés en zone réduite** — leur configuration resserre la
+plage autour de la bande. Les deux autres sont notés large. Donc l'ordre
+`0,173 < 0,272 < 0,482 < 0,760` mélange **deux effets** : la difficulté intrinsèque du
+composant, **et** la largeur de la fenêtre où l'erreur est regardée. Une bande étroite autour
+d'une résonance concentre le score là où le filtre est le plus sensible ; une grille large
+dilue la même erreur dans des zones plates.
+
+🔑 **Ce qui reste parfaitement valide malgré ça** : toute comparaison **à composant fixé** —
+c'est-à-dire tout ce que fait la campagne du 2026-08-15, où seule la position du changement de
+témoin varie sur une grille inchangée. L'avertissement ne porte que sur les comparaisons
+**d'un composant à l'autre**.
+
+**Comment c'est calculé, exactement.** Deux grilles à ne pas confondre :
+
+| paramètre | rôle |
+|---|---|
+| `wl_range_start` → `wl_range_end`, pas `wl_step` | la grille de **notation** : c'est sur elle que RMSE et SEEL sont calculés |
+| `scan_wl_min` → `scan_wl_max` | la grille de **balayage** : les λ de contrôle candidates. Aucun effet sur le score |
+
+La pondération spectrale **existe** (`compute_batch_rmse`, argument `weights`,
+`certus_strat_batch.py:554`) : on déclare des zones via `params["targets"]`, chaque point reçoit
+`poids utilisateur × quadrature en d ln λ`, et **un point hors de toute zone reçoit un poids
+nul** — il ne compte même pas au dénominateur. 🔴 **Mais aucune des quatre configurations ne
+définit `targets`**, donc le code retombe sur son repli documenté `rank_weights = None` :
+**pondération UNIFORME sur toute la grille**. Le mécanisme est écrit et testé, il n'a
+simplement jamais servi sur ces composants.
+
+📌 **Si un jour on veut une zone (par exemple 550-650 nm)** : passer par `targets`, pas par
+`wl_range`. Changer `wl_range` déplacerait aussi la cible nominale et rendrait tout
+incomparable avec les mesures existantes ; `targets` pondère sans changer la grille.
+
+⚠️ **Le 0,86 nm que l'on croise encore dans d'anciens rapports sur le 99c n'est pas une
+performance** : c'est un **score de repli**, rendu quand aucune stratégie ne survit à la
+porte de plantage. Comparer deux configurations sur des scores de repli revient à comparer
+deux façons d'échouer. Voir §25.8.
+
+🔴 **Ce qui PÉRIME un repère.** Le **biais de fente** est actif par défaut depuis le
+2026-08-11 (§18bis). Tout `RESULT` mesuré **avant** cette date décrit une machine à fentes
+**infiniment fines**, qui n'existe pas. Ce ne sont pas des chiffres faux : ce sont les
+**réponses à une autre question**.
 
 **Sont donc périmés, et il ne faut plus les citer** : l'ancien `D0.ref`
 `0.0027329534107462224`, la courbe de corridor, la protection POEM ×41,2, la position de la
@@ -2091,6 +2175,39 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 3. ⚠️ **Modèle de bruit d'épaisseur — PÉRIMÉ, voir la dérivation plus bas.** Il posait $d_{\text{réel}} = d_{\text{nom}} \cdot (1 + N(0, 0{,}02))$, c'est-à-dire un tirage indépendant de $\sigma = 2\,\%$. 👤 Abandonné le 2026-08-09 : l'erreur de rate **se calcule**, elle ne se tire pas.
 4. **Transition avec POEM** : POEM se réactive dès la première couche présentant une amplitude optique suffisante ($\text{swing} \ge \text{SWING\_MIN}$).
 5. **Influence de la dynamique forte sur la précision du Trigger (Piste d'optimisation)** : Le déclenchement d'arrêt (trigger) est d'autant plus précis et insensible au bruit que la dynamique du signal ($\text{swing}$) est forte et la pente raide ($\frac{dT}{dd} \gg 0$). Favoriser les longueurs d'onde offrant une forte dynamique optique est une piste clé pour maximiser la répétabilité du dépôt.
+
+#### 🔵 « le rate est souvent réservé aux couches fines » — l'intuition, et les TROIS critères qu'elle mélange
+
+> 👤 2026-08-15 : *« de même, le rate est souvent réservé aux couches fines »* — dit dans la
+> même conversation que l'intuition sur le changement de témoin (§25.4), et de même valeur :
+> **c'est ce que les expérimentateurs pressentent, ce n'est pas une mesure.**
+
+Cette phrase est **juste en pratique et imprécise en physique**, et l'écart est instructif.
+Il y a **trois critères distincts** dans ce projet, et « couche fine » n'est aucun des trois —
+c'est un **proxy** du premier :
+
+| | critère | où il vit |
+|---|---|---|
+| **1. quand le Rate est NÉCESSAIRE** | `swing < SWING_MIN` — 🔴 **pas** un seuil d'épaisseur. Point 1 ci-dessus le dit explicitement : *une couche de 30 nm à très faible contraste d'indice a une dynamique aussi pauvre qu'une ultrafine.* | implémenté |
+| **2. l'intuition de 👤** | **couche fine.** Corrélée au critère 1 — une couche fine parcourt peu de chemin optique, donc produit peu de swing — mais **elle n'est pas équivalente** : le contraste d'indice et la λ de contrôle entrent aussi. | 🔵 non implémentée, et **elle n'a pas à l'être** : le code applique la grandeur exacte dont « fine » est l'approximation. |
+| **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:513`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
+
+🔑 **Le point à ne pas manquer** : le critère 3 ne cherche **pas** les couches qui ont besoin
+du Rate. Il cherche celles où le Rate **ne coûte rien**. Ce sont deux questions différentes et
+le code ne répond aujourd'hui qu'à la seconde.
+
+⚠️ **Un classement par marge a déjà été tenté et annulé le même jour (2026-08-12)** —
+l'hypothèse est séduisante et sera reproposée. Mesuré sur les deux références N=300, gain de
+la variante Rate contre son parent : marge du parent PETITE **+0,7 % / +0,2 %**, marge GRANDE
+**−0,9 % / −0,1 %** ; couche profonde **+0,6 % / −0,0 %**, couche précoce **+0,5 % / +0,2 %**.
+La profondeur ne porte pas de signal, la marge en porte un **mais il change de signe** d'un
+empilement à l'autre. 🔴 **Avant de proposer « trier les candidats Rate par épaisseur », lis
+ce paragraphe** : c'est exactement la forme d'hypothèse qui a déjà échoué une fois.
+
+**Le test qui manque, s'il est fait un jour** : comparer, à budget de variantes égal, les
+candidats « dernière couche de bloc » aux candidats « swing le plus faible ». C'est la seule
+façon de savoir si le critère 3 laisse passer des couches que le critère 1 réclame. Personne
+ne l'a mesuré.
 
 #### 👤 Comment la machine obtient son rate — précision du 2026-08-09
 
@@ -3271,6 +3388,102 @@ Composant          Mode       Budget MC & Largeur    Durée   Optimum   RMSE P95
 
 ## 18. Autres chantiers ouverts
 
+- 🔵 **PROPOSÉ PAR 👤 le 2026-08-15 — compter en Phase A les λ qui offrent un point tournant.**
+
+  > 👤 : *« en routine, le code pourrait ou même devrait, en Phase A, regarder pour une couche
+  > i le nombre de λ permettant de passer un turning point avec le swing minimal »*.
+
+  🔴 **Ce n'est pas ce que Phase A fait aujourd'hui, et l'écart est réel.** Le filtre actuel
+  (`certus_strat_service.py:868`) retient une λ candidate sur **deux critères d'amplitude** :
+
+  | | |
+  |---|---|
+  | `dynamics ≥ dynamics_threshold` (0,025) | le **swing** crête-à-crête `T_max − T_min` pendant la croissance |
+  | `t_min ≥ min_transmission_floor` (0,10) | le signal ne plonge pas sous le plancher photométrique |
+
+  ⚠️ **Aucun des deux ne teste l'EXISTENCE d'un point tournant.** Une couche dont `T` croît de
+  façon monotone pendant toute sa croissance a un swing parfaitement acceptable et **aucun
+  extremum sur lequel s'arrêter**. Elle passe le filtre et n'offre pourtant pas de point
+  d'arrêt. C'est exactement la distinction de §7 (QWOT ≠ point tournant).
+
+  🟢 **Et la donnée nécessaire est déjà là** — c'est ce qui rend l'action bon marché.
+  `prepare_dynamics_data_kernel` (`certus_strat_growth.py:1760`) calcule déjà `M_before`,
+  `n_layer` et `n_sub` pour **chaque couche × chaque λ candidate**. La forme fermée
+  `layer_scan_coeffs` en tire `Q` et `R` en O(1), et le compte de points tournants s'écrit
+
+      k1 - k0 + 1   avec   delta_TP = ½·arctan2(R, Q) + k·π/2   dans ]0, δ_final]
+
+  C'est **une dizaine de lignes**, sans nouveau parcours de l'empilement. Prototype déjà
+  écrit et validé : `scripts/probe_turning_points.py`.
+
+  **Ce que ça donnerait** : une largeur de monitorabilité par couche — *combien de λ offrent
+  au moins un point tournant ET un swing suffisant*. C'est un diagnostic que rien ne produit
+  aujourd'hui, et un candidat naturel pour décider où changer de verre témoin (§25.4), là où
+  `S(p−1)` a échoué.
+
+  📏 Mesuré sur le random75, médiane des λ offrant un point tournant, par couche :
+  **49/61 à ×0,5**, **61/61 à ×1, ×1,5 et ×2**.
+
+  ##### 🔵 Et la « phase intermédiaire » proposée dans la foulée — elle existe déjà
+
+  > 👤 : *« entre la phase A et la phase B il pourrait y avoir une phase intermédiaire qui
+  > cherche à minimiser les changements de longueur d'onde pour les couches admissibles en
+  > turning point et dynamique »*.
+
+  🟢 **La moitié « minimiser les changements de λ » est déjà faite, et c'est la DP de Phase B.**
+  `_find_k_best_groupings_dp_sequential` (`certus_strat_ranking.py:154`) reçoit
+  `cost_map[couche][λ] → coût` et `_compute_valid_blocks_kernel` cherche les blocs où **une
+  seule λ sert TOUTES les couches du bloc**. C'est exactement l'optimisation décrite, elle est
+  exacte (programmation dynamique, pas une heuristique), et elle rend les `top_k` meilleurs
+  groupements.
+
+  🔴 **Ce qui manque n'est donc pas la phase, c'est le CRITÈRE D'ADMISSIBILITÉ qu'elle
+  consomme.** `cost_map` est bâti sur les candidates de Phase A, filtrées sur le swing et le
+  plancher photométrique — **jamais sur l'existence d'un point tournant**.
+
+  🔑 **Les deux propositions de 👤 se réduisent donc à UN seul changement** : ajouter le
+  comptage de points tournants au filtre de candidature. La DP existante minimisera alors les
+  changements de λ **sur le bon ensemble**, sans qu'on écrive de phase nouvelle.
+
+  ⚠️ **Mais pas en exclusion sèche, et voici pourquoi.** Une couche sans point tournant reste
+  déposable : elle s'arrête sur un **niveau absolu**, ou en **Rate**. Ce qu'elle perd, c'est
+  l'ancre de phase auto-référencée dont POEM a besoin. Le compte de points tournants doit donc
+  entrer comme **coût**, pas comme couperet — sinon on interdit des stratégies qui marchent.
+  🔴 Et il y a un second effet, dans l'autre sens : `CRASH_TP_MISCOUNT` sanctionne une
+  stratégie qui attend *N* points tournants et en voit *N ± 1*. **Trop** de points tournants
+  proches est donc aussi un risque, pas seulement trop peu. Le coût doit être **non
+  monotone**, et c'est une raison de plus pour le mesurer avant de le poser.
+
+- 🟢 **NON URGENT — la Phase A ignore qu'une couche Rate efface l'historique.**
+  *Établi le 2026-08-15, chiffré, et délibérément repoussé.*
+
+  La Phase A **suit** la continuation de bloc (`block_start_running`, passé aux candidates
+  via `phase_a_block_start`, `certus_strat_objectives.py:287`) : elle sait donc qu'une λ
+  inchangée conserve les ancres. **Mais elle ne connaît pas `rate_flags`.** Or une couche
+  Rate efface l'historique **exactement comme un changement de λ** — le noyau l'applique
+  (`certus_strat_batch.py`, frontière de bloc forcée), la Phase A ne le prévoit pas.
+
+  **Conséquence, et elle est bornée à UNE couche** : la λ de la couche `i+1` a été choisie en
+  supposant un historique hérité que la couche `i` en Rate a détruit. Les couches `i+2` et
+  suivantes héritent normalement du nouveau bloc et ne sont pas concernées.
+
+  ⚠️ **Le score, lui, reste honnête** : la simulation paie bien la pénalité de rupture de
+  bloc. Ce n'est pas une erreur de mesure, seulement un choix de λ sous-optimal sur une
+  couche. Et une seule couche Rate par variante, par construction — l'effet ne se cumule pas.
+
+  📏 **L'empirique dit que ça ne bloque rien** : sur le 99c, la gagnante était
+  `RATE_L25(from 900000037)`. Les variantes Rate gagnent **malgré** cette sous-optimalité.
+
+  **Le correctif tient en deux lignes** : passer `rate_flags` à la Phase A et forcer
+  `block_start_running = i_layer` après une couche Rate, même règle que pour un changement de
+  λ. 👤 : *« relancer la Phase A ne changerait pas grand-chose, on est dans la subtilité »* —
+  c'est exact, et c'est pourquoi ce point passe **après** tout chantier qui touche au SEEL.
+
+  🔑 **Rappel de 👤 sur le Rate, à ne pas perdre** : le facteur est calculé sur les couches
+  **de même nature déposées AVANT** la couche `i` (`certus_strat_growth.py:634`, boucle
+  `range(i_layer-2, -1, -2)`). Donc **`rate(i)` et `rate(j)` ont des facteurs différents même
+  sur un matériau identique.** Ce n'est pas une constante par matériau.
+
 - **Isolation des tests** — une fuite `sys.modules` faisait échouer en sélection large des
   tests qui passent isolément. Cause racine corrigée, audit restant :
   [`docs/REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
@@ -4092,11 +4305,19 @@ rôle. `n_screen` reste à 25** — voir le tableau de §23bis.
 
 ---
 
-## 24. 💡 LES TROIS ACTIONS SUIVANTES — écrites pour être EXÉCUTÉES
+## 24. 💡 A25, A26, A27 — trois actions PRÊTES À EXÉCUTER, en attente
 
-**Le constat qui fixe l'ordre :** tout le travail des 12 et 13 août a rendu STRAT plus
-**cohérent**. Rien ne l'a rendu plus **vrai**. §15 reste entier, et aucun correctif interne
-n'y changera quoi que ce soit.
+🔴 **CE N'EST PAS LE PROGRAMME COURANT.** Le programme courant est **§25, la multiple
+testglass methodology**. Cette section était intitulée *« les trois actions suivantes »* et ne
+l'était plus : requalifiée en **réserve** le 2026-08-15. Ces trois actions restent **valides,
+utiles et entièrement spécifiées** — chacune donne son fichier, sa fonction, ce qu'il faut
+écrire et le test qui doit échouer sur le code d'avant. Elles attendent, elles ne sont pas
+périmées.
+
+**Ce qui les motive, et qui n'a pas changé :** tout le travail des 12 et 13 août a rendu STRAT
+plus **cohérent**. Rien ne l'a rendu plus **vrai**. §15 reste entier, et aucun correctif
+interne n'y changera quoi que ce soit. **A25 est la seule action de ce document qui attaque
+§15** — c'est ce qui lui garde sa priorité le jour où on quitte §25.
 
 > **Chaque action donne : le fichier et la fonction exacts, ce qu'il faut écrire, le test
 > qui doit ÉCHOUER sur le code d'avant, et les pièges connus.** Une seule action à la fois,
@@ -4335,6 +4556,134 @@ changements » : c'est la physique seule qui doit le dire.
 mécaniquement vrai, démontré par les tests de §25.5-T1 — et **ce n'est pas la question**.
 La question est **à quelle couche changer de témoin**, et elle est ouverte.
 
+#### 🔵 CE QUE LES EXPÉRIMENTATEURS PRESSENTENT — hypothèse consignée, PAS un résultat
+
+> 👤 2026-08-15 : *« l'intuition veut qu'on change de verre témoin à proximité d'une zone non
+> sensible, après au moins 20 couches et au max 60, et pour une épaisseur optique
+> "raisonnable". Ça c'est ce que les expérimentateurs pressentent. »*
+
+🔴 **C'est une intuition de praticien, à tester — elle n'a pas valeur de mesure.** Elle est
+écrite ici parce qu'elle vient du terrain et qu'elle oriente la recherche, pas parce qu'elle
+est établie. Chacun de ses trois critères a un statut de mesure **différent**, et il faut les
+distinguer :
+
+| critère de l'intuition | statut au 2026-08-15 |
+|---|---|
+| **changer près d'une zone peu sensible** | 🟠 **NON VALIDÉE, et le test conçu pour trancher a échoué à trancher.** Détail ci-dessous. |
+| **au moins 20 couches, au plus 60** | 🟢 **déjà une contrainte dure du code**, posée par 👤 : `LO, HI = 20, 60` dans `campagne_intervalles.py`. Ce n'est pas une hypothèse testée, c'est le domaine dans lequel on cherche. C'est elle qui ramène les partitions à 441. |
+| **épaisseur optique « raisonnable »** | 🔴 **RÉFUTÉE comme prédicteur** sur le 99c. L'épaisseur optique accumulée **ne prédit pas** où le changement doit avoir lieu. Réfutés avec elle : le vieillissement du témoin, le nombre d'espaceurs franchis, la position par rapport au dernier espaceur. |
+
+#### 🔴 LA RÈGLE DE SENSIBILITÉ EST RÉFUTÉE — le test hors échantillon du 2026-08-15
+
+La règle testée était : *« changer de verre témoin juste après une couche de FAIBLE
+sensibilité, jamais après une couche sensible »*, où `S(p-1)` est la sensibilité de la couche
+**gelée** par le changement.
+
+🔴 **AVANT DE LIRE LE TABLEAU — `S` A DEUX DÉFINITIONS ET ELLES NE DONNENT PAS LE MÊME
+CLASSEMENT.** §25.10 mesure `S(j)` par une perturbation de **1 nm ABSOLU**. Une perturbation
+de **1 % RELATIF** pondère par l'épaisseur nominale : ce n'est **pas** la même grandeur. Sur le
+random75 les deux ne corrèlent qu'à **+0,79** entre elles, et donnent des contrastes de
+**11,3×** contre **19,8×**. **Seul le 1 nm absolu se compare aux trois repères existants.**
+Une première version de ce paragraphe a mélangé les deux et concluait à tort ; les chiffres
+ci-dessous sont tous en **1 nm absolu**.
+
+| composant | structure | contraste de `S` | **Pearson r** |
+|---|---|---|---|
+| 99c passe-bande 5 cavités | 5 cavités + miroirs | **82×** | **+0,69** |
+| 35c passe-bande 3 cavités | 3 cavités | 24× | +0,20 |
+| 48c dichroïque | passe-haut | 14× | +0,25 |
+| 🔑 **75c ALÉATOIRE** (graine 2026) | **aucune** | **11,3×** | **−0,19** (Spearman −0,15) |
+
+#### Ce que ce test tranche, et ce qu'il ne tranche PAS
+
+🔴 **Il ne tranche pas.** Et il faut le dire, parce que le random75 avait été construit **pour**
+trancher. Les deux lectures du +0,69 étaient :
+
+- *(a) la règle a besoin d'un fort contraste de sensibilité* ;
+- *(b) le +0,69 tenait à la structure du 99c, pas à la sensibilité*.
+
+Le random75 devait les séparer en offrant **une absence de structure avec un fort contraste**.
+**Il n'a pas le fort contraste** : 11,3×, soit le **plus bas des quatre**, sept fois moins que
+le 99c. Une corrélation faible y est donc **compatible avec (a) autant qu'avec (b)**.
+L'expérience ne discrimine rien.
+
+⚠️ **Et le −0,19 n'est pas un signe inversé, c'est du bruit.** Avec 18 points, il faut
+`|r| ≥ 0,47` pour sortir de zéro au seuil de 5 % ; **11 des 18 positions sont à égalité**.
+Lire une inversion là-dedans serait une surinterprétation.
+
+🔑 **Ce qui reste néanmoins vrai sur les quatre composants** : contraste et corrélation vont
+dans le même sens — 82× → +0,69, puis 24×, 14×, 11,3× → +0,20, +0,25, −0,19. Ce n'est **pas**
+une validation : quatre points, et trois des quatre corrélations sont sous le seuil de
+signification. **`S(p-1)` n'est pas un prédicteur validé.**
+
+📌 **L'expérience qui trancherait, et elle reste à faire** : un empilement **sans structure**
+et à **fort contraste de sensibilité** (~80×). Générer un random dont les multiplicateurs sont
+tirés pour maximiser l'étendue de `S`, et non uniformément comme le random75.
+
+#### 🟢 ET LE RÉSULTAT LE PLUS IMPORTANT DE LA JOURNÉE — la barrière n'est PAS le nombre de couches
+
+Le 75 couches aléatoire a été mesuré **en une seule campagne**, sur verre nu, même protocole
+(fast, fente 2 nm, graine 42) : **241 stratégies déposables sur 662, plantage minimal 0,0 %,
+SEEL 0,272 nm**. Il n'a **aucun** besoin d'un changement de verre témoin.
+
+| | couches | une seule campagne | structure |
+|---|---|---|---|
+| dichroïque 48c | 48 | 🟢 0 % — 0,173 nm | passe-haut |
+| passe-bande 35c | 35 | 🟢 0 % — 0,482 nm | 3 cavités |
+| 🔑 **aléatoire 75c** | **75** | 🟢 **0 % — 0,272 nm** | **aucune** |
+| passe-bande 99c | 99 | 🔴 **100 % sur 487 stratégies** | **5 cavités + miroirs à 10⁻⁴** |
+
+🔴 **75 couches passent, 99 ne passent pas. Ce n'est donc pas la longueur qui tue le
+monitoring, c'est la STRUCTURE** — les espaceurs demi-onde à swing nul et les miroirs de 19
+couches sous le plancher photométrique (§25.1). Le modèle « au-delà d'une cinquantaine de
+couches le témoin devient optiquement mort » est **réfuté** : un empilement aléatoire de 75
+couches se surveille d'un bout à l'autre sans difficulté.
+
+⚠️ **Ce que ça ne dit pas** : que 99 couches aléatoires passeraient. Un seul empilement de 75,
+une seule graine. Ce qui est établi est la **réfutation**, pas la loi inverse.
+
+#### 🔴 ET LE CONTRÔLE NÉGATIF PASSE UNE TROISIÈME FOIS
+
+Puisque le random75 est monitorable en une campagne, changer de témoin doit y **perdre**.
+C'est le cas, et largement :
+
+| composant monitorable | sans changement | avec changement | verdict |
+|---|---|---|---|
+| 48c | 0,173 nm | — | **+73 à +89 %** (11/11 partitions) |
+| 35c | 0,482 nm | — | **+10 à +98 %** (12/12 partitions) |
+| **75c aléatoire** | **0,272 nm** | **0,571 nm** (meilleure des 18) | 🔴 **+110 %** |
+
+**Trois composants sur trois.** Là où le monitoring optique fonctionne, changer de verre
+témoin **dégrade toujours**. C'est mécaniquement attendu — le changement *retire* de la
+compensation sans rien restaurer — et c'est ce qui fait du multi-témoins un **outil de
+faisabilité, jamais d'optimisation**.
+
+⚠️ Le +110 % est mesuré contre une borne supérieure (sélection gloutonne par intervalle,
+§25.9), donc le vrai écart est **au plus** celui-là. Le signe, lui, n'est pas en cause.
+
+🔑 **Et un résultat qui, lui, se REPRODUIT** : *où* changer importe **peu**, sur les deux
+composants et indépendamment de leur structure.
+
+| | 99c (5 cavités) | 75c (aléatoire) |
+|---|---|---|
+| positions/partitions assemblées | 440 | 18 |
+| étendue totale du SEEL | **+14,4 %** | **+15,4 %** |
+| à égalité avec la première (δ = 5,1 %) | 136 | **11 sur 18** |
+
+C'est **la seule régularité qui traverse une structure et une absence de structure**.
+L'optimum est **plat**, ce qui explique à la fois pourquoi l'intuition des expérimentateurs
+est difficile à prendre en défaut, et pourquoi elle est peu discriminante en pratique :
+sur un plateau, presque toute position raisonnable convient.
+
+📏 Reproduction : `scripts/assembler_r75.py`, sortie
+`reports/controle_random75/ASSEMBLAGE_r75.json`, log `reports/assemblage_r75.log`.
+Contrôle d'assemblage (nominales concaténées vs design complet) : écart **0,000e+00**.
+
+**Ce que ça vaut opérationnellement** : l'intuition est un **bon filtre a priori** — elle
+écarte les positions manifestement mauvaises sans calcul — mais elle ne remplace pas
+l'assemblage, qui reste la seule mesure du SEEL de la pièce. 👤 : *« rien ne remplacera les
+tests simulés »*.
+
 #### 🎯 La cible, posée par 👤
 
 > **SEEL global de l'ordre de 0,3 nm sur le 99c**, avec **2 ou 3 témoins**, sur la pièce
@@ -4544,6 +4893,22 @@ La règle doit tenir sur une échelle, pas sur un cas :
 | 48c dichroïque | **contrôle négatif** | le changement de témoin **perd** |
 | 99c 5 cavités | le cas qui ouvre le chantier | le changement de témoin **gagne** |
 | ≥ 150c synthétique | l'extrapolation | le changement de témoin gagne **beaucoup**, et 2 changements battent 1 |
+
+### 25.6. 🔴 LES PIÈGES DE CE CHANTIER
+
+| | |
+|---|---|
+| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§25.4). **Ne rapporte que le SEEL de la pièce.** |
+| **Confondre SEEL global et SEEL partiels** | 👤 : *« SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels seront à 0,3 »*. Le partiel est un **diagnostic**, jamais un terme du global. |
+| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant le changement de témoin auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
+| **Le degré de liberté gratuit** | Un changement de témoin ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
+| **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
+| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend le changement de témoin gratuit (§25.2). Rien hors de la physique ne limitera le nombre de changements de témoin — sauf le nombre de positions du carrousel. |
+| **Changer « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
+| 🔴 **Chercher la règle avant d'avoir les essais** | 👤, deux fois : *« ce sont les essais-erreur avec de nombreux batchs qui permettront une compréhension a posteriori »*. Une explication trouvée avant les mesures sera confirmée par elles, quoi qu'elles disent. |
+
+
+---
 
 ### 25.7. 🔴 LE PLAN D'EXÉCUTION — et le problème qu'il doit résoudre AVANT tout le reste
 
@@ -4787,16 +5152,18 @@ qui la précèdent quand elles divergent.
 | 4 | **Le nombre de témoins ne compte pas.** 2 témoins 0,783 nm, 3 témoins 0,760 nm : **+3,0 %**, sous la résolution. **La vague à 4 témoins est abandonnée par la donnée**, pas par manque de temps. | idem |
 | 5 | **Presque tout sous-empilement est monitorable sur verre nu** : **248 sur 249**. Un seul infaisable, `[22,78)`. | campagne des intervalles |
 | 6 | 🔑 **Ce n'est PAS l'âge du témoin qui gouverne.** Le **dernier** tiers du 99c — là où, en campagne unique, il ne reste qu'**une** λ viable — est le **plus facile** des trois sur verre nu : 156 stratégies déposables sur 163. | A 23/166, B 54/126, C 156/163 |
-| 7 | 🟢 **CONTRÔLE NÉGATIF PASSÉ.** Sur le 48c et le 35c, où le monitoring marche déjà, **11 partitions sur 11 DÉGRADENT** le composant : **+73 à +89 %** sur le 48c, **+10 à +98 %** sur le 35c. **Aucune ne gagne, même par chance.** | 22 sous-empilements |
+| 7 | 🟢 **CONTRÔLE NÉGATIF PASSÉ, sur TROIS composants.** Là où le monitoring marche déjà, **toute** partition dégrade : **+73 à +89 %** sur le 48c (11/11), **+10 à +98 %** sur le 35c (12/12), **+110 %** sur le 75c aléatoire (0,272 → 0,571 nm). **Aucune ne gagne, même par chance.** | 40 sous-empilements |
+| 8 | 🔑 **LA BARRIÈRE N'EST PAS LE NOMBRE DE COUCHES, C'EST LA STRUCTURE.** Un empilement **aléatoire de 75 couches** se surveille d'un bout à l'autre en **une seule campagne** : **241 stratégies déposables sur 662, plantage 0,0 %, SEEL 0,272 nm**. 75 passent, 99 non. Le modèle « au-delà d'une cinquantaine de couches le témoin meurt » est **réfuté**. | `reports/controle_random75/REFERENCE_0_75.json` |
 
-Le point 7 est le plus important du lot : **si une seule de ces onze avait gagné, tout le
-reste tombait.**
+Le point 7 est le plus important du lot : **si une seule de ces partitions avait gagné, tout
+le reste tombait.** Le point 8 est celui qui recadre le chantier : ce qu'on combat n'est pas
+une longueur, ce sont les **espaceurs à swing nul** et les **miroirs sous 10⁻⁴** (§25.1).
 
 #### Ce qui est RÉFUTÉ
 
 | hypothèse | verdict |
 |---|---|
-| « le témoin vieillit et meurt, donc changer vers 50 couches » | ❌ le dernier tiers est le plus facile (point 6) |
+| « le témoin vieillit et meurt, donc changer vers 50 couches » | ❌ **deux fois** : le dernier tiers du 99c est le plus facile (point 6), **et** 75 couches aléatoires se surveillent en une campagne (point 8) |
 | « c'est l'épaisseur optique accumulée qui décide » | ❌ elle **brouille** le signal : l'effondrement se voit à 54-56 **couches**, pas à 54-56 QWOT |
 | « c'est le nombre d'espaceurs traversés » | ❌ 1, 2, 3 → 131, 160, 112 stratégies, sans tendance |
 | « c'est la position de fin par rapport à un espaceur » | ❌ 11 % de fragiles dans la tranche, mais **82 intervalles sains** y finissent aussi |
@@ -4818,7 +5185,14 @@ en `p` **gèle l'erreur de la couche `p−1`** sans compensation possible.
 | 99c, 5 cavités | **82×** | **+0,69** (r² = 0,48) |
 | 35c, 3 cavités | 24× | +0,20 |
 | 48c, dichroïque | 14× | +0,25 |
-| **75c aléatoire** (graine 2026, aucune structure) | **11×** | **en cours** |
+| **75c aléatoire** (graine 2026, aucune structure) | **11,3×** *(mesuré)* | **−0,19** — dans le bruit |
+
+🔴 **RÉSULTAT DU 2026-08-15, ET IL EST NÉGATIF AU SENS UTILE : le test n'a pas tranché.** Le
+random75 avait été construit pour séparer « la règle a besoin d'un fort contraste » de « le
++0,69 tenait à la structure du 99c ». Il ne le peut pas : son contraste est de **11,3×**, le
+**plus bas des quatre**, sept fois moins que le 99c. Une corrélation faible y est compatible
+avec les deux lectures. Avec 18 points il faudrait `|r| ≥ 0,47` pour sortir de zéro à 5 %.
+**Détail, définitions de `S`, et l'expérience qui trancherait : §25.4.**
 
 🔑 **Et c'est bien `S(p−1)` qui compte** — la couche **gelée** — pas `S(p)` (r = +0,23) ni une
 moyenne locale (r = +0,45). Le mécanisme prédit exactement ça.
@@ -4858,15 +5232,141 @@ Une fois un changement de témoin comprise, récurrence : *n* campagnes de monit
 en blocs. La partition devient **à deux niveaux**, et elle se compose avec la recherche par
 blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une règle.
 
-### 25.6. 🔴 LES PIÈGES DE CE CHANTIER
+---
 
-| | |
+### 25.11. 🔴 SOIRÉE DU 2026-08-15 — le mécanisme d'échec, et trois affirmations du projet réfutées
+
+**Lis cette section avant §25.8 et §25.10 : elle les corrige là où elles divergent.**
+
+#### Le mécanisme d'échec, décodé et non plus supposé
+
+Cause des plantages, décodée depuis la sentinelle du noyau (`k × 1e6 + épaisseur nominale`,
+`certus_strat_growth.py:82-89`) sur 282 couches-tirages du 99c :
+
+| cause | part |
 |---|---|
-| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§25.4). **Ne rapporte que le SEEL de la pièce.** |
-| **Confondre SEEL global et SEEL partiels** | 👤 : *« SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels seront à 0,3 »*. Le partiel est un **diagnostic**, jamais un terme du global. |
-| **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant le changement de témoin auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
-| **Le degré de liberté gratuit** | Un changement de témoin ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
-| **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
-| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend le changement de témoin gratuit (§25.2). Rien hors de la physique ne limitera le nombre de changements de témoin — sauf le nombre de positions du carrousel. |
-| **Changer « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
-| 🔴 **Chercher la règle avant d'avoir les essais** | 👤, deux fois : *« ce sont les essais-erreur avec de nombreux batchs qui permettront une compréhension a posteriori »*. Une explication trouvée avant les mesures sera confirmée par elles, quoi qu'elles disent. |
+| **`TP_MISCOUNT`** | **83,0 %** |
+| `LEVEL_UNREACHABLE` | 17,0 % |
+| `NON_MONOTONIC` | 0,0 % |
+
+🔴 **`strat.html` §10.15 affirme que le 99c plante en `CRASH_LEVEL_UNREACHABLE`. C'est faux.**
+
+🔑 **Mais `TP_MISCOUNT` est le SYMPTÔME, pas la cause.** 👤 : *« ma machine de dépôt y arrive
+très bien, même s'il y en a beaucoup ! C'est simplement la marge et les swing qui peuvent à la
+rigueur poser problème. »* Il a raison, et c'est mesuré. Sur la série d'échelle du random75 :
+
+| | sursauts émis | médiane / hystérésis | **sous 1,5× hyst** | **T_min médian** | verdict |
+|---|---|---|---|---|---|
+| ×0,5 | 217 | 29× | 🔴 **20,7 %** | 🔴 **0,029** | 0/375 |
+| ×1 | 417 | 127× | 0,0 % | 0,162 | 🟢 241/662 |
+| ×1,5 | 565 | 233× | 0,2 % | 0,230 | 1/440 |
+| ×2 | **728** | 94× | 0,3 % | 🔴 **0,055** | 0/404 |
+
+**Le ×2 a le PLUS d'extrema et le moins de sursauts marginaux, et il échoue.** Le nombre de
+points tournants n'a aucun rapport avec la fragilité. Les deux causes réelles sont **la marge
+du sursaut face à l'hystérésis** (×0,5) et **le plancher photométrique** (×0,5 et ×2).
+
+📏 `scripts/serie_echelle_r75.py`, `reports/serie_echelle_r75/`.
+
+#### Trois affirmations du projet, réfutées par la mesure
+
+| affirmation | statut au 2026-08-15 |
+|---|---|
+| « les espaceurs demi-onde ont un swing optique nul, aucun extremum » | 🔴 **FAUX** — les 5 espaceurs du 99c offrent **65 à 133 λ utilisables** chacun. **Zéro couche muette sur 99**, médiane 79 λ. Le swing crête-à-crête d'une demi-onde n'est pas nul ; c'est son écart début-fin qui l'est. |
+| « le 99c plante en `LEVEL_UNREACHABLE` » | 🔴 **FAUX** — 17 %, contre 83 % de `TP_MISCOUNT`. |
+| « plus d'extrema ⟹ comptage plus fragile » *(écrit par moi le soir même)* | 🔴 **FAUX** — testé : à 64 points le comptage est **identique** à celui de la densité machine (0,125 nm) pour ×0,5 / ×1 / ×1,5 / ×2. Pas d'aliasing. |
+
+⚠️ **La densité d'échantillonnage reste néanmoins 17 à 127 fois plus grossière que la
+machine** — 0,10 à 0,38 point/nm contre 8,0 (0,125 nm par tour à 4 Hz, §9bis-1). Sans effet
+mesuré sur le comptage, mais c'est un écart au réel non maîtrisé, et le paramètre prévu pour
+le corriger, `machine_sampling_dd`, reste **inatteignable** (A8).
+
+#### 🔴 `n_deposables` N'EST PAS UNE MESURE DE FAISABILITÉ — ne le lis plus comme telle
+
+👤 a repéré l'incohérence : *« pourquoi [0,50) est plus élevé que [0,48) ? »* et
+*« comment [0,68) peut-il être déposable 39 fois alors que [0,66) ne trouve aucun ? »*
+
+**L'argument qui tranche, et il est logique, pas empirique** : la surveillance de la couche
+`i` ne dépend que des couches `0..i`. Donc `[0,50)` contient exactement l'histoire de
+`[0,48)`, et **aucune difficulté physique de [0,48) ne peut disparaître dans [0,50)**. Une
+inversion est donc impossible sans défaut d'instrument.
+
+**Le défaut** : `n_strats` est produit par la DP de Phase B, qui optimise un coût et ignore le
+plantage. Il varie **d'un facteur 2** entre longueurs voisines — 205 à `[0,48)`, 412 à
+`[0,52)`. Le dénominateur bouge autant que le numérateur.
+
+🟢 **Ce qui reste valide : le TAUX, en tendance sur beaucoup de points.** Sur 270 intervalles,
+`r = −0,869` entre la longueur et le taux, et l'effondrement est monotone :
+
+| couches | 20-29 | 30-39 | 40-49 | 50-59 | 60-69 | 70-99 |
+|---|---|---|---|---|---|---|
+| taux moyen | **96,4 %** | 81,8 % | 57,3 % | 29,5 % | 2,7 % | **0,7 %** |
+
+🔴 **Ne lis JAMAIS une cellule isolée, ni un écart entre deux longueurs voisines.**
+
+#### 🔴 « AUCUNE_DEPOSABLE » NE VEUT PAS DIRE « INFAISABLE »
+
+**Prouvé, logiquement puis expérimentalement.** `[0,66)` déclarait 0 déposable en fast alors
+que `[0,68)`, `[0,70)`, `[0,72)` et `[0,74)` en avaient — or tronquer l'une d'elles après la
+couche 65 donne une stratégie valide pour `[0,66)`. Vérification :
+
+| mode | stratégies | déposables | plantage min |
+|---|---|---|---|
+| fast (campagne) | 319 | **0** | 100 % |
+| **premium** | 488 | **1** | **0,0 %** — SEEL 0,658 nm |
+
+⚠️ **Conséquence sur §25.8** : le « 248/249 déposables » et surtout le « seul sous-empilement
+infaisable, `[22,78)` » ne sont **pas** des mesures de faisabilité. `[22,78)` est contredit
+par `[22,99)` qui en a une. **5 intervalles sur 270 portent encore ce verdict** — tous à
+revérifier en premium : `[0,66)` ✅ levé, `[0,76)`, `[0,78)`, `[22,78)`, `[34,99)`.
+
+📏 `scripts/verif_66_vs_68.py`, `reports/verif_66_vs_68/`.
+
+#### 🟢 Le résultat principal a été audité, et il tient
+
+26 intervalles sur 270 contiennent des **tirages plantés** (2 à 4 %), qui se **cumulent** à
+l'assemblage. Sur 440 partitions, **2 ont une P95 contaminée**. 🔑 **La gagnante
+`0-22 / 22-72 / 72-99` est à 0,0 % de tirages plantés : le 0,760 nm n'est pas contaminé.**
+
+⚠️ `classer_partitions.py` **ne vérifie pas** ce point. À ajouter avant tout nouveau classement.
+
+#### 🔴 LE TROU ACTIONNABLE : la marge est calculée, exposée, et ne décide de rien
+
+`turning_point_margins` (`certus_strat_growth.py:318`) rend deux marges par couche et par
+tirage — `margin_missed` (un extremum à un cheveu de ne pas être vu) et `margin_fab` (à un
+cheveu d'être inventé). Elles remontent en `all_m_missed` / `all_m_fab`
+(`certus_strat_batch.py:542`), sont réduites en `margin_profile`
+(`certus_strat_robustness.py:2036`) et exposées en `critical_layer` et `margin_by_layer`. Le
+code porte ce commentaire :
+
+> 🔴 **NEEDED FOR RANKING**
+
+**Et aucun module de classement ne les lit** : zéro référence dans `certus_strat_ranking.py`,
+`certus_strat_solvers.py`, `certus_strat_objectives.py`. La clé `rank_key_seel_yield_margin`
+existe et est testée — elle ne tourne que dans `probe_anchor_noise_pipeline.py`.
+
+🔑 **C'est la grandeur qui porte sur la cause réelle de 83 % des échecs.** Même classe de
+défaut que `machine_sampling_dd` : calculée, documentée comme prédictive d'un facteur 22, et
+sans effet sur aucune décision.
+
+#### Ce qui a été testé et ne change rien
+
+🟠 **Exiger un point tournant en Phase A : aucun effet.** `require_turning_point` implanté
+(comptage O(1) par λ, désactivé par défaut), testé en **exclusion sèche** — le cas extrême :
+
+| | OFF | ON |
+|---|---|---|
+| 48c | 0,1726 nm — 301/330 | **bit à bit identique** |
+| 35c | 0,5251 nm — 248/254 | **bit à bit identique** |
+
+Le paramètre atteint bien le calcul — vérifié par un test destructif (seuil 999 → pipeline
+effondré en 2,4 s), donc ce n'est **pas** un `machine_sampling_dd`. Les candidates sans point
+tournant sont sur des couches de **bord** (0 et 47), que le coût Monte-Carlo écartait déjà.
+**Si l'exclusion sèche ne bouge rien, aucun coût doux ne le fera.** Réglé sur ces deux
+composants ; **non testé** sur le 99c et sur les échelles extrêmes.
+
+🟠 **La « phase intermédiaire entre A et B » proposée par 👤 existe déjà** : c'est la DP de
+`_find_k_best_groupings_dp_sequential`, exacte et non heuristique. Rien à ajouter.
+
+📏 `scripts/test_require_tp.py`, `scripts/probe_tp_admissibilite.py`,
+`scripts/probe_turning_points.py`, `scripts/profil_monitorabilite.py`.

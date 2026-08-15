@@ -1,0 +1,14 @@
+{
+  "a": 0,
+  "b": 76,
+  "n": 76,
+  "stamp": "2026-08-15T19:14:07",
+  "instrument": "1f24413",
+  "verdict": "AUCUNE_DEPOSABLE",
+  "n_strats": 376,
+  "n_deposables": 0,
+  "crash_min": 18.0,
+  "crash_retenue": 100.0,
+  "score": null,
+  "run_s": 1562.0
+}

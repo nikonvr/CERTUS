@@ -55,7 +55,20 @@ sys.path.insert(0, str(ROOT / "scripts"))
 CACHE = ROOT / "reports" / "intervalles_99c"
 FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
 N_LAYERS = 99
-LO, HI = 20, 60          # 👤 : entre 20 et 60 couches par verre temoin
+
+# 🔴 LA BORNE HAUTE A SAUTE LE 2026-08-15, ET C'EST 👤 QUI L'A LEVEE.
+#
+#     👤 : « ma borne 60 couches est empirique, on peut donc la faire sauter »
+#
+# Elle valait 60 et la mesure l'a contredite deux fois : un empilement ALEATOIRE de 75
+# couches se surveille d'un bout a l'autre a 0 % de plantage (SEEL 0,272 nm), et il porte
+# 9,99 um -- PLUS que les 9,10 um du 99c. Ni le nombre de couches ni l'epaisseur accumulee
+# sur le temoin ne justifiaient donc la borne.
+#
+# ⚠️ `HI_DEFAUT` reste a 60 pour que les 251 intervalles deja en cache restent reproductibles
+# a l'identique. La vague etendue se demande explicitement : `--hi 99`.
+LO = 20                  # 👤 : au moins 20 couches par verre temoin -- CETTE borne tient
+HI_DEFAUT = 60
 SEED = 42
 CRASH_TOL = 0.05
 
@@ -65,13 +78,13 @@ def bornes() -> list[int]:
     return [0] + [p for p in range(2, N_LAYERS, 2)] + [N_LAYERS]
 
 
-def intervalles_par_vague(n_temoins: int) -> list[tuple[int, int]]:
+def intervalles_par_vague(n_temoins: int, hi: int = HI_DEFAUT) -> list[tuple[int, int]]:
     """Les intervalles distincts qu'exigent les partitions a `n_temoins`."""
     besoin: set[tuple[int, int]] = set()
     for cuts in combinations([p for p in range(2, N_LAYERS, 2)], n_temoins - 1):
         b = [0, *cuts, N_LAYERS]
         parts = [(b[i], b[i + 1]) for i in range(len(b) - 1)]
-        if all(LO <= y - x <= HI for x, y in parts):
+        if all(LO <= y - x <= hi for x, y in parts):
             besoin |= set(parts)
     return sorted(besoin)
 
@@ -223,6 +236,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--vague", type=int, choices=(2, 3, 4), help="nombre de temoins vise")
     ap.add_argument("--shard", default="0/1", help="i/n pour repartir sur n processus")
+    ap.add_argument("--hi", type=int, default=HI_DEFAUT,
+                    help=f"couches maxi par temoin (defaut {HI_DEFAUT}; borne levee par 👤 "
+                         f"le 2026-08-15, mettre {N_LAYERS} pour la supprimer)")
     ap.add_argument("--etat", action="store_true")
     ap.add_argument("--limite", default=None,
                     help="HH:MM -- n'ENGAGE plus de nouvel intervalle apres cette heure")
@@ -233,11 +249,12 @@ def main() -> int:
         return etat()
 
     i, n = (int(x) for x in args.shard.split("/"))
-    besoin = intervalles_par_vague(args.vague)
+    besoin = intervalles_par_vague(args.vague, args.hi)
     a_faire = [(a, b) for k, (a, b) in enumerate(besoin)
                if k % n == i and not deja_mesure(a, b)]
     sys.stderr.write(
-        f"\nvague {args.vague} temoins | {len(besoin)} intervalles requis | "
+        f"\nvague {args.vague} temoins | bornes {LO}-{args.hi} couches par temoin | "
+        f"{len(besoin)} intervalles requis | "
         f"shard {i}/{n} -> {len(a_faire)} a mesurer (le reste est en cache)\n\n")
 
     for k, (a, b) in enumerate(a_faire, 1):

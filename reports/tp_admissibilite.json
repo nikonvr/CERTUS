@@ -1,0 +1,198 @@
+[
+  {
+    "composant": "48c dichroique",
+    "couches": 48,
+    "lambdas": 251,
+    "seuil_dynamics": 0.025,
+    "seuil_t_min": 0.1,
+    "admissibles": 6440,
+    "admissibles_sans_TP": 130,
+    "pct_du_trou": 2.02,
+    "couches_concernees": 13,
+    "exemples": [
+      {
+        "couche": 47,
+        "lambda": 450.0,
+        "swing": 0.1077,
+        "t_min": 0.8875
+      },
+      {
+        "couche": 47,
+        "lambda": 455.0,
+        "swing": 0.2032,
+        "t_min": 0.7825
+      },
+      {
+        "couche": 47,
+        "lambda": 460.0,
+        "swing": 0.0881,
+        "t_min": 0.9026
+      },
+      {
+        "couche": 47,
+        "lambda": 465.0,
+        "swing": 0.2143,
+        "t_min": 0.7645
+      },
+      {
+        "couche": 47,
+        "lambda": 476.0,
+        "swing": 0.202,
+        "t_min": 0.7772
+      },
+      {
+        "couche": 47,
+        "lambda": 482.0,
+        "swing": 0.077,
+        "t_min": 0.9149
+      }
+    ]
+  },
+  {
+    "composant": "35c 3 cavites",
+    "couches": 35,
+    "lambdas": 251,
+    "seuil_dynamics": 0.025,
+    "seuil_t_min": 0.1,
+    "admissibles": 4863,
+    "admissibles_sans_TP": 87,
+    "pct_du_trou": 1.79,
+    "couches_concernees": 3,
+    "exemples": [
+      {
+        "couche": 0,
+        "lambda": 632.0,
+        "swing": 0.2849,
+        "t_min": 0.6774
+      },
+      {
+        "couche": 0,
+        "lambda": 633.0,
+        "swing": 0.2848,
+        "t_min": 0.6775
+      },
+      {
+        "couche": 0,
+        "lambda": 634.0,
+        "swing": 0.2846,
+        "t_min": 0.6776
+      },
+      {
+        "couche": 0,
+        "lambda": 635.0,
+        "swing": 0.2845,
+        "t_min": 0.6777
+      },
+      {
+        "couche": 0,
+        "lambda": 636.0,
+        "swing": 0.2844,
+        "t_min": 0.6778
+      },
+      {
+        "couche": 0,
+        "lambda": 637.0,
+        "swing": 0.2843,
+        "t_min": 0.678
+      }
+    ]
+  },
+  {
+    "composant": "75c aleatoire",
+    "couches": 75,
+    "lambdas": 301,
+    "seuil_dynamics": 0.025,
+    "seuil_t_min": 0.1,
+    "admissibles": 13561,
+    "admissibles_sans_TP": 525,
+    "pct_du_trou": 3.87,
+    "couches_concernees": 14,
+    "exemples": [
+      {
+        "couche": 23,
+        "lambda": 450.0,
+        "swing": 0.1454,
+        "t_min": 0.85
+      },
+      {
+        "couche": 23,
+        "lambda": 457.0,
+        "swing": 0.1298,
+        "t_min": 0.1429
+      },
+      {
+        "couche": 23,
+        "lambda": 458.0,
+        "swing": 0.1201,
+        "t_min": 0.1275
+      },
+      {
+        "couche": 58,
+        "lambda": 458.0,
+        "swing": 0.5289,
+        "t_min": 0.2318
+      },
+      {
+        "couche": 23,
+        "lambda": 459.0,
+        "swing": 0.1146,
+        "t_min": 0.1208
+      },
+      {
+        "couche": 58,
+        "lambda": 459.0,
+        "swing": 0.5462,
+        "t_min": 0.3334
+      }
+    ]
+  },
+  {
+    "composant": "99c 5 cavites",
+    "couches": 99,
+    "lambdas": 301,
+    "seuil_dynamics": 0.025,
+    "seuil_t_min": 0.1,
+    "admissibles": 9491,
+    "admissibles_sans_TP": 126,
+    "pct_du_trou": 1.33,
+    "couches_concernees": 4,
+    "exemples": [
+      {
+        "couche": 0,
+        "lambda": 634.0,
+        "swing": 0.2847,
+        "t_min": 0.6776
+      },
+      {
+        "couche": 13,
+        "lambda": 634.0,
+        "swing": 0.1655,
+        "t_min": 0.168
+      },
+      {
+        "couche": 14,
+        "lambda": 634.0,
+        "swing": 0.4672,
+        "t_min": 0.1678
+      },
+      {
+        "couche": 0,
+        "lambda": 635.0,
+        "swing": 0.2845,
+        "t_min": 0.6777
+      },
+      {
+        "couche": 13,
+        "lambda": 635.0,
+        "swing": 0.1637,
+        "t_min": 0.1657
+      },
+      {
+        "couche": 14,
+        "lambda": 635.0,
+        "swing": 0.4636,
+        "t_min": 0.1656
+      }
+    ]
+  }
+]

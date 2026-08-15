@@ -159,6 +159,47 @@ def check_dup_numbers(lines: list[str]) -> list[str]:
             for k, v in sorted(occ.items(), key=lambda kv: -len(kv[1])) if len(v) >= 4]
 
 
+#: 🔴 E -- LA CONFUSION QWOT / TURNING POINT. 👤 le 2026-08-15 : *« il ne faut plus faire la
+#: confusion et empecher toute IA moins intelligente de faire la confusion »*.
+#:
+#: Un turning point, c'est l'instant ou l'ADMITTANCE DU SYSTEME devient reelle
+#: (`tan 2.delta = R/Q`). Le QWOT, c'est l'epaisseur d'UNE couche. Les deux ne coincident
+#: que sur la couche 1 d'un substrat nu -- ou R = 0 exactement, verifie -- ou sur un
+#: empilement entierement en QWOT a lambda_mon. Ailleurs, le decalage de phase impose par
+#: l'empilement du dessous les separe.
+#:
+#: 📏 De combien on se trompe : sur le random75 x0.5, le comptage naif annonce 59 couches
+#: « sans point d'arret », le comptage exact en trouve 1. Facteur 59.
+#:
+#: Ces motifs cherchent une phrase qui traite les deux notions comme equivalentes DANS UNE
+#: MEME PHRASE. Ils ne se declenchent pas sur un texte qui les OPPOSE -- c'est le role de
+#: DISCULPANTS, sinon docs/QWOT_ET_TURNING_POINT.md se signalerait lui-meme.
+QWOT_TP_MOTIFS = (
+    re.compile(r"sous\s+1\s*QWOT[^.]{0,60}(aucun|pas d[eu']|sans)\s+(extrem|turning|point d)", re.I),
+    re.compile(r"(aucun|pas d[eu']|sans)\s+(extremum|extrema|turning point|point d'arr[eê]t)[^.]{0,60}sous\s+1\s*QWOT", re.I),
+    re.compile(r"turning\s+point[^.]{0,40}(c'est|=|equivaut|correspond|revient)[^.]{0,20}\bQWOT\b", re.I),
+    re.compile(r"\bQWOT\b[^.]{0,40}(c'est|=|equivaut|correspond|revient)[^.]{0,25}turning\s+point", re.I),
+    re.compile(r"(compte|nombre)\s+de\s+QWOT[^.]{0,50}(nombre|compte)\s+(de\s+)?(turning|extrem)", re.I),
+)
+#: Une phrase qui DISTINGUE les deux notions est correcte : elle ne doit pas etre signalee.
+DISCULPANTS = ("n'est pas", "different", "différent", "ne coincide", "ne coïncide", "pas la meme",
+               "pas la même", "confusion", "faux", "FAUX", "réfut", "refut", "sauf",
+               "uniquement sur la premiere", "uniquement sur la première", "erreur")
+
+
+def check_qwot_vs_tp(lines: list[str]) -> list[str]:
+    """E -- assimile-t-on QWOT et turning point ? Voir docs/QWOT_ET_TURNING_POINT.md."""
+    out = []
+    for i, line in enumerate(lines, 1):
+        if any(d in line for d in DISCULPANTS):
+            continue
+        for pat in QWOT_TP_MOTIFS:
+            if pat.search(line):
+                out.append(f"QWOT != TURNING POINT  l. {i} : {line.strip()[:110]}")
+                break
+    return out
+
+
 def main() -> int:
     lines = load()
     blocks = [
@@ -166,6 +207,7 @@ def main() -> int:
         ("B. RENVOIS DE SECTION FANTOMES", check_section_refs(lines), True),
         ("C. VALEURS DISCORDANTES", check_param_values(lines), True),
         ("D. NOMBRES RECOPIES (a relire, pas forcement faux)", check_dup_numbers(lines), False),
+        ("E. CONFUSION QWOT / TURNING POINT", check_qwot_vs_tp(lines), True),
     ]
     faults = 0
     for title, items, counts in blocks:

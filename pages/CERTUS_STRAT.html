@@ -109,11 +109,12 @@
                 <li><a href="#sec-11">Making it fast</a></li>
             </ol>
             <div style="margin:12px 0 0;padding-top:10px;border-top:1px solid #e2e8f0;font-size:0.94em;">
-                <b>If you are evaluating this for purchase, three sections carry the results:</b>
+                <b>If you are evaluating this for purchase, four sections carry the results:</b>
                 <a href="#sec-10">§10.14</a> the measured gain of block monitoring on two reference
                 components, <a href="#sec-10">§10.15</a> where the method runs out — a 99-layer
-                five-cavity filter — and <a href="#sec-10">§10.13</a> what is deliberately
-                <i>not</i> claimed.
+                five-cavity filter — <a href="#sec-10-16">§10.16</a> how multiple-testglass monitoring
+                makes that same filter manufacturable, and <a href="#sec-10">§10.13</a> what is
+                deliberately <i>not</i> claimed.
             </div>
         </div>
 
@@ -4864,9 +4865,15 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h3>10.15 Where the method runs out — the 99-layer, 5-cavity bandpass</h3>
                 <div class="highlight-box" style="background:#fef2f2;border-left:4px solid #dc2626;">
-                    🔴 <b>Beyond roughly 50 layers, purely optical monitoring stops being available —
-                    and no better solver fixes that.</b> This section exists because an evaluator will
-                    ask where the limit is, and the honest answer is more useful than a brochure.
+                    🔴 <b>On this component, purely optical monitoring stops being available — and no
+                    better solver fixes that.</b> This section exists because an evaluator will ask
+                    where the limit is, and the honest answer is more useful than a brochure.
+                    <br><br>
+                    ⚠️ <b>Corrected 2026-08-15.</b> This box previously read <i>&ldquo;beyond roughly
+                    50 layers&rdquo;</i>. That is <b>wrong, and measured to be wrong</b>: a 75-layer
+                    stack with no resonant structure monitors end-to-end at <b>0 % crashes</b>
+                    (§10.16). The limit is <b>structural, not a layer count</b> — read the mechanism
+                    below, not the length.
                 </div>
                 <p>
                     The component: an ultra-selective bandpass at $\lambda_0 = 633$ nm,
@@ -4962,12 +4969,190 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <i>same</i> witness and see the accumulated error. Swap the witness and the error
                     of part 1 is <b>frozen into the part, permanently uncorrectable</b>: the final
                     spectrum carries error(part 1) + error(part 2) with no cross term. So <i>where</i>
-                    to cut is the whole question, it is not &ldquo;at 50&rdquo;, and it will be
-                    answered by systematic sweep rather than by argument. Cutting inside a resonant
-                    cavity is expected to be the worst choice, since the resonance depends on the
-                    total optical thickness of the spacer and its surrounding mirrors.
-                    <b>Not yet implemented, not yet measured</b> — stated here so no one reads the
-                    99-layer result as the end of the road.
+                    to change witness is the whole question, it is not &ldquo;at 50&rdquo;, and it was
+                    answered by systematic sweep rather than by argument.
+                    <br><br>
+                    🟢 <b>This has since been implemented and measured</b> — 2026-08-15, 250 sub-stacks,
+                    440 assembled partitions. <b>The 99-layer component becomes manufacturable.</b>
+                    See <a href="#sec-10-16">§10.16</a>. Two expectations stated in this box before the
+                    measurement turned out to be <b>wrong</b>, and they are corrected there: cutting
+                    near a cavity is <i>not</i> the dominant effect, and the witness does <i>not</i>
+                    progressively die — the last third of this stack is the <i>easiest</i> to monitor
+                    on bare glass.
+                </div>
+
+                <h3 id="sec-10-16">10.16 Multiple-testglass monitoring — the 99-layer filter becomes manufacturable</h3>
+                <div class="highlight-box" style="background:#ecfdf5;border-left:4px solid #059669;">
+                    🟢 <b>Measured 2026-08-15.</b> Splitting the monitoring across several witnesses
+                    takes the 99-layer bandpass from <b>100 % crashes on all 487 strategies</b> —
+                    not manufacturable at all — to <b>0 % crashes</b> and a <b>SEEL of 0.760 nm</b>.
+                    <br><br>
+                    🔴 <b>Read the claim exactly.</b> This does <i>not</i> buy precision. It buys
+                    <i>possibility</i>. The 0.86 nm of §10.15 was never a performance — it was a
+                    fallback score attached to a component that cannot be made. The honest comparison
+                    is <b>impossible → possible</b>, not 0.86 → 0.76.
+                </div>
+
+                <h4>The method</h4>
+                <p>
+                    A <b>fresh witness</b> enters mid-run through a vacuum carousel — no venting, no
+                    contamination, no re-pumping, so the operational cost is nil. <b>The part never
+                    leaves the platen</b> and receives all 99 layers in one go; each witness only ever
+                    sees its own campaign, deposited on bare glass.
+                </p>
+                <p>
+                    Two constraints bound the search. <b>Between 20 and 60 layers per witness</b>
+                    (operator constraint), and <b>the change position must be even</b>: L is
+                    $\text{SiO}_2$, index-matched to the $\text{SiO}_2$ substrate, so a fresh witness
+                    opening on an L layer produces <b>no signal at all</b> — it would be blind on its
+                    own first layer. Together these give <b>441 admissible partitions</b>
+                    (11 at two witnesses, 210 at three, 220 at four; five is impossible since
+                    $5 \times 20 > 99$).
+                </p>
+                <div class="note" style="border-left:4px solid #0284c7;">
+                    <b>What makes the search tractable.</b> The 441 partitions share only ~251
+                    <i>distinct</i> intervals. So the intervals are measured <b>once each</b>, and any
+                    partition then assembles from cache at <b>zero cost</b>. 250 measured, 440
+                    partitions ranked.
+                </div>
+
+                <h4>How a part is scored from independent campaigns</h4>
+                <ol>
+                    <li><b>No draw is ever redone.</b> The <i>actually simulated</i> thicknesses of each
+                        campaign are concatenated draw by draw. Re-drawing would inject fresh randomness
+                        and destroy the very thing being measured — the errors <i>committed</i>, with no
+                        cross-compensation.</li>
+                    <li><b>Same seed for all campaigns</b>, so they share one realisation of the index
+                        corridor: the materials in the chamber are the same, it is a single deposition.</li>
+                    <li><b>But the readout noise must stay independent.</b> It is modelled as a
+                        <i>continuous process over the 99 layers</i>, each campaign reading <i>its
+                        slice</i>. Without this, three campaigns at the same seed come out <b>78 %
+                        correlated</b> instead of 1 %.</li>
+                    <li><b>Feasibility and spectrum are two different measurements</b>: feasibility is
+                        established campaign by campaign (each under 5 % crash), the spectrum on the
+                        assembly — which carries no crash rate of its own.</li>
+                    <li><b>Mandatory control</b>: concatenating the <i>nominal</i> thicknesses must
+                        reproduce the full design. Measured deviation <b>0.000e+00</b>, on thicknesses
+                        and on spectrum.</li>
+                </ol>
+
+                <h4>Results</h4>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Configuration</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">SEEL</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">Crash rate</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">Manufacturable?</th></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Single campaign, 99 layers</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.86 nm <i>(fallback)</i></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>100 %</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🔴 <b>No</b></td></tr>
+                    <tr style="background:#ecfdf5;"><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>3 witnesses — 0-22 / 22-72 / 72-99</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.760 nm</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0 %</b> on each campaign</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 <b>Yes</b></td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">2 witnesses, best of 11</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.783 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0 %</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 Yes</td></tr>
+                </table>
+
+                <h4>Three results that were not expected</h4>
+                <ul>
+                    <li><b>Where you change witness barely matters.</b> Across 440 assembled partitions
+                        the <i>total</i> spread is <b>+14.4 %</b>, and <b>136 partitions are tied</b>
+                        with the first at the measurement resolution ($\delta = 5.1\,\%$ on SEEL at
+                        $N=50$, from the 6 % relative resolution at $N=150$ scaling as $1/\sqrt{N}$).
+                        The optimum is <b>flat</b>.</li>
+                    <li><b>The number of witnesses barely matters either.</b> Two versus three is
+                        <b>+3.0 %</b> — below $\delta$. These are <b>tied</b>, not ranked.</li>
+                    <li><b>The witness does not age and die.</b> That model is <b>refuted</b>. The
+                        <i>last</i> third of this stack — where the full-stack run has only one viable
+                        wavelength left — is the <b>easiest</b> of the three on bare glass
+                        (<b>156 deposable strategies out of 163</b>). Interval length does not govern
+                        either: $[48,99)$ is 51 layers and yields <b>293</b> deposable strategies, while
+                        $[0,32)$ is 32 layers and yields <b>180</b>.</li>
+                </ul>
+
+                <div class="highlight-box" style="background:#fef2f2;border-left:4px solid #dc2626;">
+                    🔴 <b>Changing witness is a feasibility tool, not an optimisation tool — and the
+                    negative control proves it on three components out of three.</b> Wherever optical
+                    monitoring already works, <b>every</b> admissible partition <b>degrades</b> the
+                    result: <b>+73 to +89 %</b> on the 48-layer dichroic (11/11 partitions),
+                    <b>+10 to +98 %</b> on the 35-layer bandpass (12/12), <b>+110 %</b> on the
+                    75-layer random stack (best of 18). Mechanically expected — a witness change
+                    <i>removes</i> compensation without restoring anything — and exactly why the test
+                    was run. A rule that had improved those components would have been false.
+                </div>
+
+                <h4>What actually sets the limit — and it is not the layer count</h4>
+                <div class="highlight-box" style="background:#ecfdf5;border-left:4px solid #059669;">
+                    🟢 <b>A 75-layer stack monitors end-to-end in a single campaign. A 99-layer
+                    5-cavity bandpass does not survive at all.</b> So the barrier is
+                    <b>structural, not a length</b>.
+                </div>
+                <table style="border-collapse:collapse;margin:0 0 12px;font-size:0.92em;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Component</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">Layers</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;">Single campaign</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Structure</th></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Dichroic</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">48</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 0 % — 0.173 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">edge filter</td></tr>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">Bandpass</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">35</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 0 % — 0.482 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">3 cavities</td></tr>
+                    <tr style="background:#ecfdf5;"><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>Random stack</b> (seed 2026)</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>75</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 <b>0 % — 0.272 nm</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>none</b> — no cavity, no mirror, no periodicity</td></tr>
+                    <tr style="background:#fef2f2;"><td style="border:1px solid #cbd5e1;padding:5px 10px;">Bandpass</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">99</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🔴 <b>100 % crashes</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;">5 cavities, 19-layer mirrors below $10^{-4}$</td></tr>
+                </table>
+                <p>
+                    This <b>refutes</b> the model stated in §10.15 that monitoring simply runs out
+                    past roughly fifty layers. It does not. A 75-layer stack with no resonant
+                    structure is monitored from first layer to last. What defeats monitoring is the
+                    combination the 5-cavity design carries: <b>half-wave spacers with zero optical
+                    swing</b> and <b>mirrors that transmit below the photometric noise floor</b>.
+                    <br><br>
+                    ⚠️ <b>What this does not claim</b>: that 99 random layers would pass. One stack,
+                    one seed. The refutation is established; the converse law is not.
+                </p>
+
+                <h4>What is deliberately not claimed here</h4>
+                <ul>
+                    <li><b>This is an upper bound, not the optimum.</b> Each interval has up to 306
+                        deposable strategies and the campaign keeps only <b>one</b> — the best against
+                        its <i>own</i> sub-spectrum, which is not the spectrum of the final product.
+                        The true optimum would require exploring combinations ($306^3$ for three
+                        campaigns).</li>
+                    <li><b>One seed.</b> The ranking is a <b>screening</b>, not a verdict: the top entry
+                        is necessarily the one whose noise was luckiest, so its SEEL is biased low by
+                        construction. A defensible score needs re-evaluation over 3&ndash;5 independent
+                        seeds.</li>
+                    <li><b>The 0.30 nm target is not reached</b> — a factor of 2.5 remains.</li>
+                    <li><b>Not modelled</b>: carousel rotation time (shutter open, the part receives
+                        uncounted material; shutter closed, the source drifts thermally). The quartz
+                        rate estimate is deliberately <i>not</i> reset at a witness change, since it is
+                        a property of the machine and not of the witness — so an interval measured in
+                        isolation starts with no rate history where a real sequence would inherit one.
+                        That approximation is <b>pessimistic</b>.</li>
+                </ul>
+                <div class="note" style="border-left:4px solid #ca8a04;">
+                    <b>Provenance.</b> Interval campaign <code>scripts/campagne_intervalles.py</code>
+                    (cache <code>reports/intervalles_99c/</code>, 250 intervals), assembly and ranking
+                    <code>scripts/classer_partitions.py</code>, negative control
+                    <code>scripts/controle_negatif.py</code>, assembly method
+                    <code>scripts/assemble_testglass.py</code>. Fast mode, 2 nm slit, seed 42,
+                    $N = 50$ draws. Witness-change mechanics are unit-tested in
+                    <code>tests/unit/test_strat_multiple_testglass.py</code> — including the control
+                    that <i>without</i> a witness change the same error <b>is</b> seen.
                 </div>
 
                 <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>

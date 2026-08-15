@@ -1,0 +1,15 @@
+{
+  "composant": "35c",
+  "require_turning_point": false,
+  "verdict": "DEPOSABLE",
+  "n_strats": 254,
+  "n_deposables": 248,
+  "crash_min": 0.0,
+  "rmse": 0.06893016104520526,
+  "seel": 0.5251,
+  "tp_drops": 0,
+  "stamp": "2026-08-15T19:21:23",
+  "run_s": 583.9,
+  "blocs": 0,
+  "origine": ""
+}

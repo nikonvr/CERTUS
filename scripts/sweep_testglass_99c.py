@@ -44,6 +44,7 @@ import argparse
 import json
 import math
 import os
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -288,7 +289,23 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
         row["rmse_p95"] = best.get("robustness_score")
         row["seel_nm"] = score_to_seel_nm(row["rmse_p95"])
         row["n_blocks"] = st.get("n_blocks", len(st.get("blocks", []) or []))
+
+        # 🔴 DEUX TAUX DE PLANTAGE, ET ILS REPONDENT A DEUX QUESTIONS DIFFERENTES.
+        #
+        #   crash_pct     -- celui de la strategie RETENUE : « ce qu'on deposerait
+        #                    reellement plante-t-il ? »
+        #   crash_min_pct -- le minimum sur TOUTES les strategies : « ce composant
+        #                    est-il fabricable, par une strategie quelconque ? »
+        #
+        # Les confondre est l'erreur qui a produit, le 2026-08-15, un « le
+        # sous-empilement B echoue a 98 % » alors que 54 de ses strategies ne
+        # plantaient jamais. Le verdict porte desormais sur le MINIMUM, parce que
+        # c'est lui qui dit si quelque chose survit ; et l'ecart entre les deux est
+        # signale, parce qu'il est lui-meme un diagnostic.
         row["crash_pct"] = round(float(best.get("crash_rate", 0.0)) * 100.0, 2)
+        rates = [float(s.get("crash_rate", 1.0)) for s in strats]
+        row["crash_min_pct"] = round(min(rates) * 100.0, 2)
+        row["n_survivors"] = sum(1 for r in rates if r < 0.05)
 
         # 🔴 THE CHECK THAT SAVES THE WHOLE SWEEP FROM BEING MEANINGLESS.
         #
@@ -302,16 +319,31 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
         # strategy that fails in 100 % of draws, and it had been quoted as a manufacturing
         # figure. Comparing two cut positions on fallback scores compares two ways of
         # failing.
-        if row["crash_pct"] >= 5.0:
+        if row["crash_min_pct"] >= 5.0:
             row["verdict"] = "FALLBACK"
             sys.stderr.write(
-                f"  🔴 crash_rate = {row['crash_pct']} % >= 5 %: this is the NO-SURVIVOR "
-                f"FALLBACK.\n     SEEL {row['seel_nm']} nm is the worst finite RMSE of a "
-                f"strategy that FAILS, not a robustness score.\n     The question here is "
-                f"not 'how low is the SEEL' but 'does anything survive at all'.\n"
+                f"  🔴 NOTHING SURVIVES: the LOWEST crash rate over {len(strats)} strategies "
+                f"is {row['crash_min_pct']} %.\n     Every score returned is the worst finite "
+                f"RMSE of a strategy that FAILS. The question here is not\n     'how low is "
+                f"the SEEL' but 'does anything survive at all'.\n"
             )
         else:
             row["verdict"] = "OK"
+            sys.stderr.write(
+                f"  🟢 {row['n_survivors']} strategy(ies) under the 5 % tolerance, best "
+                f"{row['crash_min_pct']} %.\n"
+            )
+            # L'ecart entre la retenue et la meilleure est un diagnostic a part entiere :
+            # soit le classement a un defaut, soit la fonction objectif prefere vraiment une
+            # strategie qui plante parce qu'elle score mieux. Les deux se signalent, aucun
+            # ne se tranche ici.
+            if row["crash_pct"] >= 5.0:
+                sys.stderr.write(
+                    f"  ⚠️ ANOMALIE DE CLASSEMENT: la strategie RETENUE plante a "
+                    f"{row['crash_pct']} % alors que {row['n_survivors']} strategie(s) "
+                    f"tiennent sous 5 %.\n     Invariant I1 viole. Ne pas lire le SEEL de "
+                    f"cette ligne comme celui d'une strategie deposable.\n"
+                )
     else:
         # A run that returns nothing is NOT a run that found nothing. Say which.
         row["verdict"] = "RESULT_NONE"
@@ -319,15 +351,27 @@ def run_one(cuts: list[int], mode: str, config_rel: str, seed: int) -> dict:
     return row
 
 
+def _instrument_commit() -> str:
+    try:
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
+                              capture_output=True, text=True, timeout=10).stdout.strip() or "?"
+    except (OSError, subprocess.SubprocessError):
+        return "?"
+
+
 def append_row(row: dict) -> None:
     OUT_DIR.mkdir(exist_ok=True)
-    cols = ["stamp", "tag", "cuts", "n_cuts", "verdict", "seel_nm", "rmse_p95",
-            "n_blocks", "crash_pct", "n_strats", "run_s", "config"]
+    cols = ["stamp", "tag", "cuts", "n_cuts", "verdict", "seel_nm", "rmse_p95", "n_blocks",
+            "crash_min_pct", "n_survivors", "crash_pct", "n_strats", "run_s", "instrument", "config"]
     new = not OUT_TSV.exists()
     with open(OUT_TSV, "a", encoding="utf-8", newline="") as f:
         if new:
             f.write("\t".join(cols) + "\n")
-        row = {"stamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), **row}
+        # 🔑 Le commit qui a produit la ligne. Quand un defaut de l'instrument est
+        # trouve, l'ensemble des mesures invalidees se DEDUIT au lieu d'etre
+        # reconstitue de memoire -- ce qu'il a fallu faire le 2026-08-15.
+        row = {"stamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+               "instrument": _instrument_commit(), **row}
         f.write("\t".join(str(row.get(c, "")) for c in cols) + "\n")
 
 
@@ -374,8 +418,8 @@ def main() -> None:
             sys.stderr.write(f"  ⚠️ batch {_tag(cuts)} FAILED: {exc!r}\n")
             row = {"tag": _tag(cuts), "cuts": ",".join(map(str, cuts)) or "-",
                    "n_cuts": len(cuts), "seel_nm": float("nan"), "rmse_p95": float("nan"),
-                   "n_blocks": -1, "crash_pct": float("nan"), "n_strats": 0,
-                   "verdict": "CRASHED", "run_s": 0.0, "config": f"FAILED {exc!r}"}
+                   "n_blocks": -1, "crash_pct": float("nan"), "crash_min_pct": float("nan"),
+                   "n_survivors": 0, "n_strats": 0, "verdict": "CRASHED", "run_s": 0.0, "config": f"FAILED {exc!r}"}
         append_row(row)
         sys.stderr.write(
             f"  -> [{row.get('verdict')}] SEEL={row['seel_nm']} nm | blocks={row['n_blocks']} | "

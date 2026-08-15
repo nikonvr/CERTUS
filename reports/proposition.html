@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Analyse Contradictoire — Multi-Testglass CERTUS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+        :root {
+            --bg: #fafaf8;
+            --fg: #1a1a1a;
+            --subtle: #6b7280;
+            --rule: #d4d0c8;
+            --red: #b91c1c;
+            --green-dark: #15803d;
+            --blue: #1e40af;
+            --amber: #92400e;
+            --red-bg: #fef2f2;
+            --green-bg: #f0fdf4;
+            --blue-bg: #eff6ff;
+            --amber-bg: #fffbeb;
+            --grey-bg: #f8f8f6;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 15px;
+            line-height: 1.72;
+            color: var(--fg);
+            background: var(--bg);
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 32px 80px;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+            line-height: 1.3;
+            margin-top: 2.4em;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--fg);
+            border-bottom: 2px solid var(--fg);
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+
+        h1 .sub {
+            display: block;
+            font-size: 15px;
+            font-weight: 400;
+            color: var(--subtle);
+            margin-top: 6px;
+            font-family: 'Lora', serif;
+            font-style: italic;
+        }
+
+        h2 {
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--red);
+            border-bottom: 1px solid var(--rule);
+            padding-bottom: 4px;
+        }
+
+        h3 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--fg);
+            margin-top: 1.6em;
+        }
+
+        h4 {
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 1.2em;
+        }
+
+        p { margin: 0.8em 0; }
+        ul, ol { padding-left: 1.6em; margin: 0.6em 0; }
+        li { margin-bottom: 0.3em; }
+        hr { border: none; border-top: 1px solid var(--rule); margin: 2.5em 0; }
+        strong { font-weight: 700; }
+        em { font-style: italic; }
+        code { font-family: 'Consolas', 'Menlo', monospace; font-size: 13px; background: #eee; padding: 1px 4px; border-radius: 3px; }
+        blockquote { border-left: 3px solid var(--rule); margin: 1em 0; padding: 0.4em 1em; color: var(--subtle); font-style: italic; }
+
+        .box {
+            padding: 16px 20px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+
+        .attack {
+            background: var(--red-bg);
+            border-left: 4px solid var(--red);
+        }
+
+        .defense {
+            background: var(--green-bg);
+            border-left: 4px solid var(--green-dark);
+        }
+
+        .verdict {
+            background: var(--grey-bg);
+            border-left: 4px solid var(--fg);
+        }
+
+        .nuance {
+            background: var(--amber-bg);
+            border-left: 4px solid var(--amber);
+        }
+
+        .info {
+            background: var(--blue-bg);
+            border-left: 4px solid var(--blue);
+        }
+
+        .label {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .label-red { color: var(--red); }
+        .label-green { color: var(--green-dark); }
+        .label-blue { color: var(--blue); }
+        .label-amber { color: var(--amber); }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid var(--rule);
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--grey-bg);
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .toc {
+            background: var(--grey-bg);
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin: 24px 0;
+        }
+
+        .toc ul { list-style: none; padding-left: 0; }
+        .toc li { margin-bottom: 4px; }
+        .toc a { text-decoration: none; color: var(--blue); }
+        .toc a:hover { text-decoration: underline; }
+        .toc .label { margin-bottom: 10px; }
+
+        @media print {
+            body { font-size: 11pt; padding: 0; max-width: none; }
+            .box { break-inside: avoid; }
+            h2 { break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    Analyse Contradictoire — Méthodologie Multi-Testglass
+    <span class="sub">Examen critique des tactiques T0–T7 et du plan P0–P5 décrits dans CLAUDE.md §25, du script <code>sweep_testglass_99c.py</code> et de l'implémentation dans le noyau de croissance.</span>
+</h1>
+
+<div class="toc">
+    <div class="label">Sommaire</div>
+    <ul>
+        <li><a href="#s0">0. Objet de cette analyse</a></li>
+        <li><a href="#s1">I. T0 — Les contrôles négatifs</a></li>
+        <li><a href="#s2">II. T1 — Le mécanisme de coupure dans le noyau</a></li>
+        <li><a href="#s3">III. T2 — Le prédicteur « mort du signal »</a></li>
+        <li><a href="#s4">IV. T3 — Le prédicteur « coût de l'erreur gelée »</a></li>
+        <li><a href="#s5">V. T4 — Le balayage exhaustif (sweep)</a></li>
+        <li><a href="#s6">VI. T5 — La corrélation et la règle générale</a></li>
+        <li><a href="#s7">VII. P0 — La désaturation de l'objectif</a></li>
+        <li><a href="#s8">VIII. P3 — La recherche gloutonne multi-coupures</a></li>
+        <li><a href="#s9">IX. Les angles morts du plan dans son ensemble</a></li>
+        <li><a href="#s10">X. Verdict et recommandations</a></li>
+    </ul>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s0">0. Objet de cette analyse</h2>
+
+<p>Cette analyse ne propose aucune tactique alternative. Elle examine les tactiques <em>telles qu'elles sont écrites</em> dans <code>CLAUDE.md</code> §25 et dans le code, en cherchant trois choses :</p>
+
+<ol>
+    <li><strong>Les hypothèses cachées</strong> qui ne sont pas identifiées comme telles et que personne ne testera si elles ne sont pas nommées.</li>
+    <li><strong>Les pièges méthodologiques</strong> que le plan connaît (§25.6) mais auxquels il n'apporte pas toujours de parade opérationnelle.</li>
+    <li><strong>Les contradictions internes</strong> entre ce que le plan dit et ce que le code fait, ou entre deux sections du même plan.</li>
+</ol>
+
+<p>Si la méthodologie survit à cet exercice, elle en ressort plus forte. Si elle ne survit pas, mieux vaut le savoir ici que sur un rapport de campagne.</p>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s1">I. T0 — Les contrôles négatifs</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Forcer une coupure sur le 48c (24) et le 35c (17) et vérifier que le SEEL se dégrade. Si ça s'améliore, le modèle est faux.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°1 — Le contrôle négatif n'est pas assez négatif</div>
+    <p>Le plan teste <strong>une seule</strong> position de coupure par contrôle (la moitié de la pile). C'est le minimum syndical. Mais le piège n°1 de §25.6 (le degré de liberté gratuit) prédit qu'il <em>existe</em>, même sur un empilement court, au moins une position de coupure qui améliore le score <strong>en échantillon, par chance</strong>. Si la coupure à la moitié dégrade, on conclura « le contrôle négatif passe ». Mais personne n'aura vérifié qu'aucune autre position ne l'améliore. Si on avait balayé 20 positions sur le 48c, il est probable qu'au moins une aurait amélioré le score par fluctuation statistique — et <em>c'est cette position-là</em> qui falsifie le contrôle, pas la médiane.</p>
+    <p><strong>En résumé :</strong> Le contrôle négatif tel qu'écrit ne falsifie que le cas le plus grossier. Il ne falsifie pas la <em>méthode de recherche</em>, qui est la vraie menace.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Le plan est explicite : <em>« le gagnant doit survivre à une autre graine »</em> (P4.1). Si on balayait le 48c et qu'une position gagnait, il faudrait la rejouer sur une autre graine. Si elle ne survit pas, c'est du bruit. Le contrôle négatif à une seule position est un <em>premier filtre</em>, pas le verdict final.</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>Renforcer.</strong> Ajouter au preset <code>control</code> du script un balayage grossier (5–6 positions) au lieu d'une seule. Le garde-fou actuel (3 points : pas de coupure, milieu, tiers+deux-tiers) est trop léger pour attraper un faux positif par chance.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s2">II. T1 — Le mécanisme de coupure dans le noyau</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Le changement de témoin est implémenté comme un <code>witness_base_layer</code> qui tronque les deux boucles (nominale et réelle) du noyau de croissance, tout en laissant la pièce intacte. La boucle Rate n'est pas tronquée.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°2 — Le forçage de frontière de bloc est trop brutal</div>
+    <p><code>certus_strat_batch.py:424</code> force une frontière de bloc à chaque changement de témoin. C'est physiquement justifié : les ancres POEM observées sur le vieux verre ne servent plus. Mais cette frontière de bloc <strong>détruit aussi le comptage des extrema</strong> accumulé sur le bloc en cours. Sur un empilement où le solveur avait trouvé un bloc de 12 couches continu comme optimal, insérer une coupure au milieu crée <em>deux</em> blocs de 6 couches, chacun partant de <code>n_hist = 0</code>. Le changement de témoin ne coûte donc pas seulement la compensation Macleod — il coûte aussi <strong>tous les ancres POEM accumulés dans le bloc en cours</strong>, ce qui est un deuxième mécanisme de perte jamais quantifié séparément.</p>
+    <p><strong>Conséquence :</strong> quand T4 mesurera le coût du changement de témoin, il ne pourra pas distinguer « coût de la perte de compensation » de « coût de la perte d'ancres POEM ». Les deux sont mêlés, et les deux varient en sens inverse avec la position de la coupure.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>C'est voulu. Le plan dit explicitement (§25.3) : <em>« un changement de témoin est un <code>block_start</code> forcé, plus la troncature de la pile »</em>. POEM a une fenêtre de 4 couches (<code>MAX_LOOKBACK_VAL = 4</code>). Le coût des ancres perdues est borné à ces 4 couches. Le coût de la compensation, lui, est non borné. Donc le terme dominant est bien la compensation, et les confondre dans la mesure globale est acceptable en première approximation.</p>
+</div>
+
+<div class="box nuance">
+    <div class="label label-amber">Nuance</div>
+    <p>Acceptable <em>en première approximation</em>. Mais si la recherche trouve un plateau (deux positions quasi-équivalentes), c'est exactement ce deuxième terme qui les départagera — et il n'est pas instrumenté. À terme, un mode diagnostic qui rejoue le même run avec et sans le forçage POEM (ancres préservées artificiellement) permettrait de séparer les deux.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s3">III. T2 — Le prédicteur « mort du signal »</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Pour chaque couche <em>i</em> et chaque λ candidate, calculer <code>swing_max(i)</code> sur le témoin portant <code>[base..i)</code>. Changer de témoin juste avant que <code>swing_max(i) &lt; SWING_MIN (0.04)</code>.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°3 — Le prédicteur est systématiquement en retard, et le plan le sait</div>
+    <p>Le plan lui-même identifie ce piège (§25.4, difficulté n°4) : <em>« quand le swing passe sous le seuil, le mal est déjà fait : le bon changement se place vraisemblablement avant la mort du signal »</em>. Mais il ne propose aucune parade. La carte T2 ne dit pas « où couper » ; elle dit « où il est déjà trop tard ». C'est une borne inférieure sur la position du changement, pas un prédicteur.</p>
+</div>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°4 — Le swing nominal ignore le bruit de lecture</div>
+    <p>T2 calcule le swing <strong>sur l'empilement nominal</strong> (aucun tirage). Mais dans le noyau de croissance réel, le swing <em>mesuré</em> est bruité par <code>signal_noise_scale</code>, par la courbure photométrique <code>PHOTOMETRIC_CURVATURE_AMP</code>, par le biais de fente, et par le corridor d'indice. Un swing nominal de 0.05 (juste au-dessus du seuil) peut être noyé dans le bruit réel. Le prédicteur gratuit est donc <strong>optimiste</strong> : il voit le signal mourir plus tard que le noyau réel.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Le plan est clair : T2 est un <em>prédicteur</em>, pas une mesure. Sa valeur se juge « à sa corrélation avec T4 (P3), pas à son élégance » (§25.7, P2). Si T2 est systématiquement en retard, la corrélation avec T4 le montrera : le gagnant du sweep sera toujours <em>avant</em> la mort T2. Ce n'est pas un défaut du plan — c'est un résultat attendu.</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>Conserver</strong>, mais ne jamais l'utiliser seul. T2 est un diagnostic aval, pas une règle de décision. Et sa version « réaliste » (swing bruité, coûtant un Monte-Carlo léger au lieu de zéro) mériterait d'être un T2bis si la corrélation avec T4 est mauvaise.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s4">IV. T3 — Le prédicteur « coût de l'erreur gelée »</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Pour chaque position candidate <em>p</em>, geler un champ d'erreur réaliste sur les couches 1..<em>p</em>, puis mesurer le dommage spectral sur le design final. TMM pur, aucun monitoring.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°5 — « Un champ d'erreur réaliste » n'est pas défini</div>
+    <p>Le plan ne dit pas <em>quel</em> champ d'erreur geler. C'est le cœur du problème. Trois options existent et donnent des résultats radicalement différents :</p>
+    <ul>
+        <li><strong>Erreurs i.i.d.</strong> (chaque couche ±σ indépendamment) : surestimation massive. Le monitoring optique corrèle les erreurs et en annule une partie. Geler des erreurs i.i.d. mesure le coût d'un dépôt <em>sans monitoring</em>, ce que personne ne fait.</li>
+        <li><strong>Erreurs Macleod-corrélées</strong> (le résidu après compensation optique) : c'est la bonne distribution, mais pour la calculer il faut <em>simuler la croissance</em>, ce qui est exactement ce que T3 prétend éviter.</li>
+        <li><strong>Une seule couche perturbée</strong> (sensibilité couche par couche) : ne capture pas les corrélations croisées entre couches voisines, et la somme des sensibilités individuelles n'est pas la sensibilité globale (le système est non-linéaire).</li>
+    </ul>
+    <p>T3 est un prédicteur qui prétend être « gratuit » (pas de Monte-Carlo). Mais le seul champ d'erreur qui a un sens physique est celui que produit le Monte-Carlo. <strong>Un prédicteur gratuit qui a besoin du résultat du Monte-Carlo pour être calibré n'est pas gratuit</strong> — il est circulaire.</p>
+</div>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°6 — La sensibilité spectrale n'est pas un scalaire</div>
+    <p>« Mesurer le dommage spectral » cache un choix non trivial. La norme sur le spectre (RMSE ? max de l'écart en T ? écart de FWHM ? décalage de λ₀ ?) change le classement des positions. Une coupure qui gèle une erreur d'épaisseur proche du spacer décale λ₀ sans élargir la bande, tandis qu'une coupure qui gèle une erreur dans un miroir élargit la bande sans décaler λ₀. Les deux sont « un dommage spectral », mais ils ne se comparent pas par un scalaire unique sans un choix de pondération — choix que le plan ne documente pas.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Le plan dit (§25.4) : <em>« les deux cartes sont des prédicteurs, pas des mesures : leur valeur se juge à leur corrélation avec P3, pas à leur élégance. »</em> Le plan n'a jamais prétendu que T3 serait correct — il a prétendu qu'il serait <em>utile</em>. Si T3 avec des erreurs i.i.d. classe correctement les 5 meilleures positions du sweep (même si les amplitudes sont fausses), c'est un prédicteur utilisable. Et s'il ne le fait pas, c'est un résultat : le coût de l'erreur gelée n'est pas prédictible sans simulation.</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>Le plan est honnête sur la faiblesse de T3, mais il sous-estime le risque d'auto-illusion.</strong> Si le champ d'erreur choisi pour T3 est i.i.d., la carte de sensibilité ressemblera fortement à la structure du design (les spacers seront les points les plus sensibles, les miroirs les moins). Ce résultat sera « joli » et « physiquement intuitif » — et <em>il n'aura rien prouvé</em>, parce que la structure du design est connue d'avance. La corrélation avec T4 sera la seule preuve, et il faut le dire clairement avant de l'exécuter.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s5">V. T4 — Le balayage exhaustif (sweep)</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Balayer les positions de coupure paires sur le 99c, mesurer le SEEL de la pièce et le crash_rate pour chaque position. Le script <code>sweep_testglass_99c.py</code> implémente ceci avec des presets (<code>single</code>, <code>double</code>, <code>triple</code>, <code>wide</code>, <code>control</code>).</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°7 — Le sweep est exécuté avec le solveur STRAT complet, qui est lui-même un optimiseur</div>
+    <p>Chaque point du sweep n'est pas un simple calcul TMM. C'est un appel à <code>run_workflow(23)</code>, qui lance Phase A (DP sur les blocs), Phase B (screening Monte-Carlo), sélection de la meilleure stratégie, etc. À chaque position de coupure, le solveur trouve <em>une stratégie différente</em> (un partitionnement en blocs différent, un placement Rate différent). Le sweep ne mesure donc pas l'effet de la coupure <em>toutes choses égales par ailleurs</em> — il mesure l'effet de la coupure <em>composé avec la réponse du solveur à la coupure</em>.</p>
+    <p><strong>Conséquence :</strong> si le solveur a un biais (par exemple, il sur-partitionne systématiquement les sous-piles courtes), le sweep héritera de ce biais et le projettera sur la variable « position de coupure ». On mesurera la qualité du solveur sur des piles courtes, pas la physique de la coupure.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>C'est inévitable et voulu. Le plan le dit (§25.4, difficulté n°3) : <em>« le changement de témoin n'est pas un axe indépendant — elle force une frontière de bloc et entre en concurrence combinatoire avec le partitionnement en blocs et le placement Rate »</em>. Figer la stratégie et ne varier que la coupure mesurerait le coût de la coupure <em>avec une stratégie mal adaptée</em>, ce qui est plus trompeur que de laisser le solveur s'adapter.</p>
+    <p>Le contrôle opérationnel est de rapporter le nombre de blocs à chaque ligne (P4.2) pour vérifier que les écarts ne viennent pas d'un changement de structure de blocs.</p>
+</div>
+
+<div class="box nuance">
+    <div class="label label-amber">Nuance — Le vrai risque ici est le temps de calcul</div>
+    <p>À ~15 min par run en mode PREMIUM (785 stratégies), le preset <code>single</code> (10 positions) coûte 2h30 et le preset <code>double</code> (6 positions) encore 1h30. Pour le 99c, c'est faisable. Mais P3 parle de « perturbation locale autour de chaque optimum, ±2 et ±4 couches ». Cela multiplie les runs par 5. Et la validation hors échantillon (autre graine) double le tout. Le budget réel est de l'ordre de <strong>30 à 50 runs</strong>, soit 8 à 12 heures en PREMIUM. Aucune marge n'est prévue dans le plan pour les runs qui échouent, les reprises, ou les diagnostics supplémentaires. Le plan est silencieux sur le budget temps.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s6">VI. T5 — La corrélation et la règle générale</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Confronter T2 et T3 à T4 pour dégager une règle. Cinq candidats sont listés (nombre de couches, mort du signal, erreur gelée, SEEL marginal, structure du design).</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°8 — Cinq candidats sur un seul empilement = overfitting garanti</div>
+    <p>Avec 10 points de mesure (preset <code>single</code>) et 5 prédicteurs, le risque de trouver une corrélation fortuite est énorme. C'est le problème classique de la sélection de modèle avec plus de degrés de liberté que de données. Le plan demande une validation « hors échantillon : autre graine et autre empilement » (T5/T6). Mais le seul autre empilement prévu pour <em>valider</em> est le ≥150c synthétique (T6), qui n'existe pas encore. Et les deux contrôles négatifs (35c, 48c) ne sont pas des validations positives — ils disent seulement « ne pas couper ici », pas « couper là plutôt qu'ici ».</p>
+    <p><strong>En résumé :</strong> Le plan trouvera une règle, forcément. Cinq prédicteurs sur 10 points garantissent au moins une corrélation > 0.7 par hasard. La parade « autre empilement » est renvoyée à T6 qui n'est pas planifié.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Le plan le sait. §25.6 piège n°8 : <em>« chercher la règle avant d'avoir les essais »</em>. Et P0 voie B dit : <em>« si la couche optimale ne bouge pas quand on change la difficulté, elle est dictée par l'empilement. Si elle se déplace, elle est dictée par le bruit — et il n'y a alors aucune règle générale à trouver, ce qui est un résultat en soi. »</em> Le plan admet explicitement l'issue négative (P5, issue 🔴).</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>Le plan est intellectuellement honnête mais opérationnellement naïf.</strong> Il faudrait fixer <em>un seul</em> prédicteur candidat <em>avant</em> de lancer T4 (commit-to-a-hypothesis). Si ce prédicteur échoue, on peut en essayer un deuxième, mais en déclarant que c'est exploratoire et non confirmatoire. Tester les cinq après coup et rapporter le meilleur est de la p-hacking déguisée en physique.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s7">VII. P0 — La désaturation de l'objectif</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>Comme <code>crash_rate = 100%</code> sur le 99c (objectif saturé, aucun gradient), deux voies de contournement : (A) utiliser la marge comme objectif de substitution, (B) réduire l'amplitude du bruit pour désaturer, puis remonter.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°9 — La voie B est un changement de problème, pas une désaturation</div>
+    <p>Réduire l'amplitude du bruit par un facteur ne désature pas le même problème — cela pose un problème <em>différent</em>. Le plan le dit (P4.5 : <em>« toute position trouvée en régime réduit doit être rejouée au nominal »</em>), mais il sous-estime le risque. Quand on divise les erreurs d'épaisseur par 3, les couches qui plantaient (swing < 0.04) ne plantent plus, mais les couches qui « tenaient tout juste » deviennent excellentes. L'optimum de coupure change d'adresse, parce que la frontière entre « le monitoring tient » et « le monitoring craque » se déplace vers la profondeur de l'empilement.</p>
+    <p><strong>Pire :</strong> si la position optimale en régime réduit <em>ne survit pas</em> au nominal, le plan n'a aucune marche à suivre. Il dit juste « rejouée au nominal ». Et si ça ne marche pas ? Alors la position était fausse, et les heures de sweep en régime réduit sont perdues. Aucune procédure de repli n'est prévue.</p>
+</div>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°10 — La voie A (les marges) n'a été validée que sur le régime non-saturé</div>
+    <p>Le plan dit : <em>« A23 a mesuré que la marge prédit le plantage d'un facteur 22, validée non circulairement. »</em> Mais cette validation a été faite sur des empilements où le plantage est <em>faible</em> (35c, 48c). À <code>crash_rate = 100%</code>, chaque couche est en crash. La marge sera uniformément catastrophique — l'objectif de substitution (nombre de couches à marge insuffisante) sera proche de 99 pour toutes les positions, et le gradient sera aussi plat que celui du <code>crash_rate</code> original.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Pour la voie A : le plan parle du nombre de couches à marge insuffisante <em>et</em> de la pire marge. Même si 95 couches sur 99 sont en marge insuffisante, la <em>pire</em> marge varie selon la position de coupure. Après un changement de témoin, les couches juste après retrouvent un signal fort, donc une marge normale. Le nombre de couches « sauvées » est un gradient exploitable.</p>
+    <p>Pour la voie B : P0 dit explicitement que le test de survie au nominal est le test qui dit « si la règle est structurelle ». Si la position bouge, c'est un résultat négatif valable.</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>La voie A est solide si on examine la pire marge et non le décompte.</strong> La voie B est un pari. Il serait plus prudent de commencer par la voie A seule, et de ne tenter B que si A ne donne aucun gradient. Le plan ne hiérarchise pas les deux voies.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s8">VIII. P3 — La recherche gloutonne multi-coupures</h2>
+
+<h3>Ce que dit le plan</h3>
+<p>1 coupure → balayage. 2 coupures → glouton : fixer la meilleure première, balayer la seconde. Puis tester la séparabilité.</p>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°11 — Le test de séparabilité est une tautologie dans ce contexte</div>
+    <p>Le plan dit (P3.2) : <em>« le meilleur couple est-il bien (meilleur seul, meilleur second) ? Si oui, le problème est quasi séparable. »</em> Mais le « meilleur seul » est trouvé en optimisant <em>sans la deuxième coupure</em>, c'est-à-dire dans un problème où les erreurs des couches 50–99 ne sont pas compensées par un deuxième témoin. Si on ajoute une deuxième coupure, la dynamique de la partie 1 change (la partie 2 elle-même change la stratégie choisie par STRAT, les blocs, le Rate). La « meilleure première position seule » n'est pas un estimateur non biaisé de la « meilleure première position en présence d'une seconde ». Le test de séparabilité ne teste pas la séparabilité du problème physique — il teste la stabilité du solveur face à un changement de contrainte.</p>
+</div>
+
+<div class="box defense">
+    <div class="label label-green">Défense</div>
+    <p>Le plan dit <em>« si non, c'est un résultat, et la recherche doit s'élargir »</em>. Le glouton n'est pas présenté comme une solution mais comme un premier pas. Et le test de séparabilité, même imparfait, est informatif : si le meilleur couple n'est PAS (meilleur seul, meilleur second), alors le problème est certainement non-séparable.</p>
+</div>
+
+<div class="box verdict">
+    <div class="label">Verdict</div>
+    <p><strong>Le glouton est un raccourci pragmatique, pas un algorithme correct.</strong> C'est acceptable si les ressources de calcul imposent un raccourci. Mais le plan devrait dire explicitement : « le glouton est un heuristique non justifié, utilisé par nécessité budgétaire, et non une conséquence du problème ».</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s9">IX. Les angles morts du plan dans son ensemble</h2>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°12 — Le modèle de la coupure est instantané</div>
+    <p>Le plan modélise le changement de témoin comme un événement <strong>instantané</strong> : à la couche <em>p-1</em> le témoin 1 est dans le faisceau, à la couche <em>p</em> le témoin 2 (nu) l'est. En réalité, la rotation du carrousel prend du temps. Pendant ce temps, l'épaisseur déposée sur la pièce n'est pas nulle si le shutter reste ouvert. Si le shutter est fermé, la source dérive thermiquement. Les deux scénarios produisent un biais sur la première couche du témoin 2 qui n'est modélisé nulle part dans le noyau de croissance.</p>
+    <p>Le plan dit (§25.2) : <em>« ni remise à l'air, ni repompage, ni contamination »</em>. Mais il ne dit pas combien de temps la rotation prend, ni si le shutter est fermé pendant ce temps, ni quel effet cela a sur la couche suivante.</p>
+</div>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°13 — Le nombre de positions du carrousel n'apparaît nulle part</div>
+    <p>Le plan dit (§25.2) : <em>« le nombre de changements de témoin est plafonné par le nombre de positions du carrousel »</em>. Mais le nombre de positions n'est jamais écrit. Le preset <code>triple</code> teste 3 coupures (4 témoins). Si le carrousel n'a que 3 positions de témoin, le preset <code>triple</code> est physiquement impossible. Ce n'est pas un détail — c'est une contrainte qui réduit potentiellement l'espace de recherche à néant.</p>
+</div>
+
+<div class="box attack">
+    <div class="label label-red">Attaque n°14 — L'hypothèse « même épaisseur sur pièce et témoin » n'est pas testée</div>
+    <p>Le plan dit (§25.2) : <em>« témoin et pièce reçoivent la même épaisseur, à peu près identiques »</em>, et en déduit qu'il n'y a <em>« aucun facteur d'uniformité à modéliser »</em>. Mais « à peu près » est une affirmation physique non quantifiée. Si le rapport d'épaisseur témoin/pièce est de 0.97 (3% d'écart, courant sur un bâti avec rotation planétaire), alors sur 50 couches les épaisseurs dérivent de 1.5 couche-quart-d'onde — et c'est un biais systématique que le monitoring ne corrige <em>pas</em> (il corrige l'erreur du témoin, pas celle de la pièce). Ce biais se cumule avec l'erreur gelée. Il n'est ni mesuré ni modélisé.</p>
+</div>
+
+<div class="box info">
+    <div class="label label-blue">Information manquante</div>
+    <p>Les trois attaques ci-dessus ne sont pas des objections à la <em>méthode</em> — elles sont des objections au <em>modèle</em>. Le noyau de croissance simule un monde simplifié (coupure instantanée, uniformité parfaite, carrousel infini). Si ce monde simplifié prédit que le crash_rate tombe sous 5% avec 2 témoins, <strong>il faudra encore vérifier sur la vraie machine</strong> que les simplifications ne mangent pas le gain. Le plan ne mentionne cette étape de validation expérimentale que par allusion.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════ -->
+<h2 id="s10">X. Verdict global et recommandations</h2>
+
+<h3>Ce qui est solide</h3>
+<ul>
+    <li>Le mécanisme de coupure dans le noyau (T1) est propre, testé, et le test 4 (la pièce garde ce que le témoin oublie) attrape le défaut flatteur. C'est de l'excellente ingénierie de test.</li>
+    <li>L'identification du problème (§25.1 : crash = 100%, objectif saturé) est lucide et correctement formulée.</li>
+    <li>Les pièges de §25.6 sont les bons pièges. Le plan connaît ses propres faiblesses, ce qui est rare.</li>
+    <li>Le script de sweep est remarquablement bien armé contre les faux positifs (vérification circulaire, consignation du commit, verdicts FALLBACK/OK).</li>
+</ul>
+
+<h3>Ce qui est fragile</h3>
+
+<table>
+    <tr>
+        <th>#</th>
+        <th>Point fragile</th>
+        <th>Risque</th>
+        <th>Parade proposée</th>
+    </tr>
+    <tr>
+        <td>1</td>
+        <td>Contrôle négatif trop léger (T0)</td>
+        <td>Faux positif non détecté</td>
+        <td>Ajouter 5–6 positions au preset <code>control</code></td>
+    </tr>
+    <tr>
+        <td>2</td>
+        <td>T3 sans champ d'erreur défini</td>
+        <td>Résultat intuitif mais circulaire</td>
+        <td>Documenter le choix du champ <em>avant</em> de l'exécuter</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>5 prédicteurs / 10 points = overfitting</td>
+        <td>Règle illusoire, non falsifiable</td>
+        <td>Commit-to-one-hypothesis avant T4</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>Voie B sans procédure de repli</td>
+        <td>Heures perdues si le nominal ne confirme pas</td>
+        <td>Commencer par voie A ; voie B seulement en second recours</td>
+    </tr>
+    <tr>
+        <td>5</td>
+        <td>Budget temps non planifié</td>
+        <td>Le sweep réel coûte 8–12h et le plan n'en parle pas</td>
+        <td>Figer le budget (nombre de runs) <em>avant</em> de commencer</td>
+    </tr>
+    <tr>
+        <td>6</td>
+        <td>Nombre de positions carrousel inconnu</td>
+        <td>Le preset <code>triple</code> peut être physiquement impossible</td>
+        <td>Obtenir le nombre exact de positions et l'écrire dans le plan</td>
+    </tr>
+    <tr>
+        <td>7</td>
+        <td>Uniformité témoin/pièce non modélisée</td>
+        <td>Biais systématique cumulé, invisible dans le modèle</td>
+        <td>Mesurer le rapport réel et l'intégrer comme paramètre</td>
+    </tr>
+</table>
+
+<h3>Le mot de la fin</h3>
+<p>La méthodologie est <strong>la bonne</strong>. Le balayage empirique avec contrôles négatifs et validation hors échantillon est la seule voie honnête sur un problème non-séparable. Les prédicteurs gratuits (T2, T3) sont correctement positionnés comme des <em>hypothèses à tester</em>, pas comme des solutions. Le plan accepte l'issue négative (P5, 🔴), ce qui est sa plus grande force.</p>
+
+<p>Les faiblesses identifiées ne sont pas des défauts de conception — ce sont des <strong>imprécisions opérationnelles</strong> qui, si elles ne sont pas corrigées avant le premier run, rendront les résultats ambigus plutôt que faux. Ambiguïté qu'on paiera en runs supplémentaires, c'est-à-dire en temps.</p>
+
+<hr>
+<p style="color: var(--subtle); font-size: 13px; text-align: right;">
+    Généré le 2026-08-15 — Analyse contradictoire par Antigravity, sans modification du code ni des tactiques.
+</p>
+
+</body>
+</html>

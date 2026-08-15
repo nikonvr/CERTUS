@@ -4653,6 +4653,80 @@ publiables :
 | 🟠 `crash` baisse sans passer sous 5 % | Le mécanisme agit dans le bon sens mais ne suffit pas. Dire de combien, et ce qu'il faudrait en plus. |
 | 🔴 aucun arrangement ne fait baisser `crash` | **Résultat valable et important** : sur ce composant le changement de témoin n'est pas la réponse, et il faut chercher ailleurs. Ne pas le maquiller en « amélioration du SEEL » de repli. |
 
+### 25.8. 🟢 MESURÉ LE 2026-08-15 — le multi-témoins rend le 99c FABRICABLE, pas plus précis
+
+**C'est le premier résultat positif du chantier, et sa lecture est étroite.** Ne le résume
+jamais par « le SEEL ne change pas » : les deux chiffres ci-dessous ne décrivent pas la même
+chose.
+
+| | RMSE P95 | SEEL | plantage |
+|---|---|---|---|
+| **pièce assemblée**, 3 témoins (0 / 32 / 66) | `0.184946` | **0,860 nm** | **0 %** sur chacune des 3 campagnes |
+| référence monolithique | `0.187761` | 0,87 nm | **100 %** — score de **repli** (§25.1) |
+
+🔑 **Le monolithique n'est pas atteignable.** Aucune des 487 stratégies ne survit, donc son
+0,87 nm ne décrit aucun dépôt réalisable. L'assemblé, lui, sort de **trois campagnes
+déposables** — 23, 54 et 156 stratégies valides au choix, chacune à 0 % de plantage.
+
+> **Le multi-témoins ne fait pas gagner en précision spectrale. Il fait passer d'IMPOSSIBLE
+> à POSSIBLE.**
+
+⚠️ **La cible de 👤 n'est pas atteinte** : 0,86 nm contre 0,3 nm visés, facteur 2,9. Pour
+situer : 48c **0,17 nm**, 35c **0,53 nm** — l'assemblage est moins bon que les deux.
+
+⚠️ **Portée** : une graine, une partition (32/66 choisie en tiers égaux **avant** de savoir
+que la longueur n'est pas le critère), un composant. Rien ne dit que cette partition soit la
+bonne — c'est ce que le pavage doit chercher.
+
+#### 🔑 LA MÉTHODE D'ASSEMBLAGE — validée, et à réutiliser telle quelle
+
+`scripts/assemble_testglass.py`. Elle vaut plus que ce résultat, parce qu'elle mesure la
+**pièce** sans dépendre de la Phase A.
+
+| # | Règle | Pourquoi, et ce qu'elle évite |
+|---|---|---|
+| 1 | **Aucun tirage n'est refait** | On concatène les épaisseurs **réellement simulées** de chaque campagne. Refaire un tirage introduirait un aléa neuf et détruirait ce qu'on mesure : les erreurs *commises*, sans compensation croisée. |
+| 2 | **Même graine pour les trois campagnes** | `index_seed` est une **fonction pure de la graine** (`certus_strat_robustness.py:1502`), donc les trois partagent la réalisation du corridor d'indice — la physique d'**un seul dépôt**, où seul le monitoring repart à zéro. 🔴 Trois graines indépendantes **moyenneraient** une erreur systématique commune aux 99 couches et rendraient un SEEL **trop beau**. |
+| 3 | **On note avec le code de production** | `compute_batch_rmse` reçoit les épaisseurs concaténées : l'assemblage est jugé par la fonction qui juge toutes les stratégies du dépôt. Aucune physique réimplantée, aucune surface de bug nouvelle. ⚠️ Son 7ᵉ argument n'est **pas** un tableau de parité mais la **matrice des indices par couche et par λ**, et `nH`/`nL` s'y passent **vides** (`:2460-2467`). |
+| 4 | **Faisabilité et spectre sont DEUX mesures** | La faisabilité s'établit **campagne par campagne** — chacune sous 5 % de plantage. Le spectre s'établit **sur l'assemblage**, qui ne porte aucun taux de plantage puisqu'aucun monitoring n'y tourne. Les confondre est l'erreur qui a coûté la journée du 2026-08-15. |
+| 5 | **On prend la stratégie DÉPOSABLE, pas `strats[0]`** | Sur le sous-empilement B, la mieux notée plante à **98 %** alors que **54** ne plantent jamais. On retient la mieux notée **parmi celles sous 5 %** — ce qu'un opérateur choisirait. |
+
+🔴 **LE CONTRÔLE QUI VALIDE L'ASSEMBLAGE, et il n'est pas optionnel.** Avant tout chiffre :
+concaténer les épaisseurs **nominales** des trois parties et exiger qu'elles reproduisent
+celles du 99c. Mesuré : **écart 0,000e+00 sur les épaisseurs ET sur le spectre.**
+
+> ⚠️ Ce contrôle a d'abord été écrit comme `T(nom)` contre `T(nom.copy())` — une
+> **tautologie**, qui ne pouvait que passer. **Un faux contrôle est pire que pas de
+> contrôle** : il donne la confiance sans la vérification.
+
+#### Ce que les sous-empilements ont appris, et qui réfute une hypothèse
+
+| | couches | stratégies déposables | plantage retenu |
+|---|---|---|---|
+| A | 0-31 | 23 / 166 | 0 % |
+| B | 32-65 | **54 / 126** | 0 % |
+| C | 66-98 | **156 / 163** | 0 % |
+
+🔑 **Ce n'est pas l'ÂGE du témoin qui gouverne.** C, le **dernier** tiers — celui où le 99c
+complet n'a plus qu'**une** λ viable — est le **plus facile** des trois sur verre nu : 156
+stratégies déposables sur 163. La monitorabilité est une propriété **du sous-empilement**,
+pas du nombre de couches déjà portées.
+
+#### 🔴 POURQUOI LE 99c AVEC CHANGEMENTS DIRECTS RESTE À ~100 % — l'implantation est à moitié faite
+
+`witness_reset_layers` n'existe que dans **trois** fichiers : `certus_strat_robustness.py`,
+`certus_strat_batch.py`, `certus_strat_growth.py`. **`certus_strat_objectives.py`, où la
+Phase A fabrique les λ candidates, n'en sait rien** — `build_M_before_cache` construit ses
+matrices depuis la **couche 0** sans notion de changement.
+
+Les candidates sont donc choisies pour un témoin **mourant**, puis évaluées sur un témoin
+**neuf**. Mesuré : 99c à 32/66 rend min 98 % et **11 blocs** contre 3, tandis que le témoin
+déséquilibré 10/20 rend 100 % et 4 blocs — **le mécanisme agit et la qualité de la partition
+compte**, mais les λ sont choisies sur le mauvais objet optique.
+
+⚠️ **Donc « 98 % » ne réfute pas la méthode : il teste une demi-implantation.** L'assemblage
+de §25.8 contourne le problème, il ne le corrige pas.
+
 #### T7 — Changements de témoin multiples
 
 Une fois un changement de témoin comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée

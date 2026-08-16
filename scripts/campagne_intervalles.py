@@ -52,7 +52,7 @@ os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-CACHE = ROOT / "reports" / "intervalles_99c"
+CACHE_BASE = ROOT / "reports" / "intervalles_99c"
 FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
 N_LAYERS = 99
 
@@ -73,6 +73,10 @@ SEED = 42
 CRASH_TOL = 0.05
 
 
+def get_cache(mode: str = "fast") -> Path:
+    return ROOT / "reports" / ("intervalles_99c" if mode == "fast" else f"intervalles_99c_{mode}")
+
+
 def bornes() -> list[int]:
     """Positions admissibles : PAIRES seulement -- une campagne ouvre sur une couche H."""
     return [0] + [p for p in range(2, N_LAYERS, 2)] + [N_LAYERS]
@@ -89,25 +93,29 @@ def intervalles_par_vague(n_temoins: int, hi: int = HI_DEFAUT) -> list[tuple[int
     return sorted(besoin)
 
 
-def fichier(a: int, b: int) -> Path:
-    return CACHE / f"i_{a:03d}_{b:03d}.json"
+def fichier(a: int, b: int, cache_dir: Path) -> Path:
+    return cache_dir / f"i_{a:03d}_{b:03d}.json"
 
 
-def deja_mesure(a: int, b: int) -> bool:
-    return fichier(a, b).exists()
+def deja_mesure(a: int, b: int, cache_dir: Path) -> bool:
+    return fichier(a, b, cache_dir).exists()
 
 
-def mesurer(a: int, b: int, mode: str = "fast") -> dict:
+def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -> dict:
     """Un intervalle. Rend le dictionnaire consigne, echec compris."""
     import bench_examples as Bx
     from CERTUS_STRAT import CertusStratApp
 
+    if cache_dir is None:
+        cache_dir = get_cache(mode)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
     t0 = time.perf_counter()
-    row: dict = {"a": a, "b": b, "n": b - a, "stamp": datetime.now().isoformat(timespec="seconds"),
+    row: dict = {"a": a, "b": b, "n": b - a, "mode": mode, "stamp": datetime.now().isoformat(timespec="seconds"),
                  "instrument": _commit(), "verdict": "?", "n_strats": 0, "n_deposables": 0,
                  "crash_min": None, "crash_retenue": None, "score": None, "run_s": 0.0}
     try:
-        cfg = _config_intervalle(a, b)
+        cfg = _config_intervalle(a, b, mode=mode, cache_dir=cache_dir)
         Bx.qapp()
         Bx.autoanswer_dialogs(True)
         app = CertusStratApp()
@@ -118,9 +126,8 @@ def mesurer(a: int, b: int, mode: str = "fast") -> dict:
         over = {
             "show_plots": False, "robustness_seed": SEED,
             "monochromator_resolution_nm": 2.0, "search_resolution": False,
-            # 🔑 la tranche de bruit : sans elle, le flux repart a zero et les campagnes
-            # se retrouvent correlees a 78 %.
             "noise_layer_offset": a, "noise_total_layers": N_LAYERS,
+            "execution_mode": mode,
         }
         _c = app.collect_params
         vus = {"n": 0}
@@ -141,7 +148,6 @@ def mesurer(a: int, b: int, mode: str = "fast") -> dict:
             return row
         strats = ((res or {}).get("final_results", {}) or {}).get("all_strategies_results", [])
         if not strats:
-            # 🔴 PAS « aucune strategie » : le banc n'a rien rendu. Erreur n.5.
             row["verdict"] = "ECHEC_RESULT_NONE"
             return row
 
@@ -158,7 +164,7 @@ def mesurer(a: int, b: int, mode: str = "fast") -> dict:
             row["score"] = float(ok[0].get("robustness_score", 0.0))
             th = _epaisseurs(ok[0])
             if th is not None:
-                np.save(CACHE / f"th_{a:03d}_{b:03d}.npy", th)
+                np.save(cache_dir / f"th_{a:03d}_{b:03d}.npy", th)
                 row["tirages"] = int(th.shape[0])
     except Exception as exc:  # noqa: BLE001 -- un intervalle rate ne doit pas perdre la campagne
         row["verdict"] = "EXCEPTION"
@@ -176,15 +182,17 @@ def _epaisseurs(strat: dict) -> np.ndarray | None:
     return np.asarray(th, dtype=np.float64) if th else None
 
 
-def _config_intervalle(a: int, b: int) -> Path:
+def _config_intervalle(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -> Path:
+    if cache_dir is None:
+        cache_dir = get_cache(mode)
     src = json.loads((ROOT / FULL).read_text(encoding="utf-8"))
     d = dict(src)
     d["stack_multipliers"] = src["stack_multipliers"][a:b]
-    d["execution_mode"] = "fast"
+    d["execution_mode"] = mode
     d["search_resolution"] = False
     d["monochromator_resolution_nm"] = 2.0
-    d["_description"] = f"Sous-empilement [{a},{b}) du 99c, sur verre NU."
-    out = CACHE / f"cfg_{a:03d}_{b:03d}.json"
+    d["_description"] = f"Sous-empilement [{a},{b}) du 99c (mode {mode}), sur verre NU."
+    out = cache_dir / f"cfg_{a:03d}_{b:03d}.json"
     out.write_text(json.dumps(d, indent=2, ensure_ascii=False), encoding="utf-8")
     return out
 
@@ -197,11 +205,13 @@ def _commit() -> str:
         return "?"
 
 
-def etat() -> int:
+def etat(cache_dir: Path | None = None) -> int:
     """Ou en est-on, sans rien relancer."""
-    faits = sorted(CACHE.glob("i_*.json"))
+    if cache_dir is None:
+        cache_dir = CACHE_BASE
+    faits = sorted(cache_dir.glob("i_*.json"))
     print("=" * 72)
-    print("CAMPAGNE DES INTERVALLES")
+    print(f"CAMPAGNE DES INTERVALLES ({cache_dir.name})")
     print("=" * 72)
     if not faits:
         print("\nAucun intervalle mesure pour l'instant.")
@@ -236,6 +246,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--vague", type=int, choices=(2, 3, 4), help="nombre de temoins vise")
     ap.add_argument("--shard", default="0/1", help="i/n pour repartir sur n processus")
+    ap.add_argument("--mode", default="fast", choices=("fast", "premium", "deep"), help="mode d'execution")
     ap.add_argument("--hi", type=int, default=HI_DEFAUT,
                     help=f"couches maxi par temoin (defaut {HI_DEFAUT}; borne levee par 👤 "
                          f"le 2026-08-15, mettre {N_LAYERS} pour la supprimer)")
@@ -244,23 +255,24 @@ def main() -> int:
                     help="HH:MM -- n'ENGAGE plus de nouvel intervalle apres cette heure")
     args = ap.parse_args()
 
-    CACHE.mkdir(parents=True, exist_ok=True)
+    cache_dir = get_cache(args.mode)
+    cache_dir.mkdir(parents=True, exist_ok=True)
     if args.etat or not args.vague:
-        return etat()
+        return etat(cache_dir)
 
     i, n = (int(x) for x in args.shard.split("/"))
     besoin = intervalles_par_vague(args.vague, args.hi)
     a_faire = [(a, b) for k, (a, b) in enumerate(besoin)
-               if k % n == i and not deja_mesure(a, b)]
+               if k % n == i and not deja_mesure(a, b, cache_dir)]
     sys.stderr.write(
         f"\nvague {args.vague} temoins | bornes {LO}-{args.hi} couches par temoin | "
-        f"{len(besoin)} intervalles requis | "
-        f"shard {i}/{n} -> {len(a_faire)} a mesurer (le reste est en cache)\n\n")
+        f"{len(besoin)} intervalles requis | mode {args.mode} | "
+        f"shard {i}/{n} -> {len(a_faire)} a mesurer (le reste est en cache {cache_dir.name})\n\n")
 
     for k, (a, b) in enumerate(a_faire, 1):
         sys.stderr.write(f"[{k}/{len(a_faire)}] intervalle [{a},{b}) -- {b - a} couches\n")
-        row = mesurer(a, b)
-        fichier(a, b).write_text(json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+        row = mesurer(a, b, mode=args.mode, cache_dir=cache_dir)
+        fichier(a, b, cache_dir).write_text(json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
         sys.stderr.write(
             f"    {row['verdict']} | {row['n_deposables']}/{row['n_strats']} deposables | "
             f"plantage min {row['crash_min']} % | {row['run_s']} s\n")

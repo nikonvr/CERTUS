@@ -651,6 +651,7 @@ def _apply_strategy_ranking(
     origin_priority_map: dict[str, int],
 ) -> list[dict[str, Any]]:
     """Rank and sort strategies based on robustness, resolution, and origin priority."""
+    use_margin = bool(params.get("use_margin_ranking", False))
 
     def _advanced_key(item: dict[str, Any]) -> tuple:
         strategy = item.get("strategy", {})
@@ -661,8 +662,19 @@ def _apply_strategy_ranking(
         except (TypeError, ValueError):
             n_blocks_val = len(strategy.get("blocks", []))
         min_res = float(item.get("min_resolution", 999.0))
+
+        if use_margin:
+            score_val = float(item.get("robustness_score", np.inf))
+            seel_nm = 2.0 * math.sqrt(score_val) if (math.isfinite(score_val) and score_val > 0) else np.inf
+            crash_rate = float(item.get("crash_rate", 1.0))
+            cl = item.get("critical_layer") or {}
+            margin_val = float(cl.get("margin_in_A", item.get("critical_margin", 0.0)) or 0.0)
+            primary_key = rank_key_seel_yield_margin(seel_nm, crash_rate, margin_val)
+        else:
+            primary_key = (float(item.get("robustness_score", np.inf)),)
+
         return (
-            float(item.get("robustness_score", np.inf)),
+            *primary_key,
             min_res,
             -same_wl_kept,
             n_blocks_val,

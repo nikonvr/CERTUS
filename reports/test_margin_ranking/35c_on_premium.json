@@ -1,0 +1,15 @@
+{
+  "composant": "35c",
+  "use_margin_ranking": true,
+  "execution": "premium",
+  "verdict": "DEPOSABLE",
+  "n_strats": 467,
+  "n_deposables": 461,
+  "crash_min": 0.0,
+  "rmse": 0.05883182977335591,
+  "seel": 0.4851,
+  "margin_in_A": 0.5332595616765572,
+  "stamp": "2026-08-16T07:17:39",
+  "run_s": 1336.9,
+  "best_id": 900000012
+}

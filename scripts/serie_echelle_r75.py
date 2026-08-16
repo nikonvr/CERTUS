@@ -81,17 +81,18 @@ REF_X1 = {"facteur": 1.0, "verdict": "DEPOSABLE", "n_strats": 662, "n_deposables
           "source": "reports/controle_random75/REFERENCE_0_75.json"}
 
 
-def config(facteur: float) -> Path:
+def config(facteur: float, mode: str = "fast") -> Path:
     CACHE.mkdir(parents=True, exist_ok=True)
     d = json.loads(SRC.read_text(encoding="utf-8"))
     d["stack_multipliers"] = [float(m) * facteur for m in d["stack_multipliers"]]
-    d["execution_mode"] = "fast"
+    d["execution_mode"] = mode
     d["search_resolution"] = False
     d["monochromator_resolution_nm"] = 2.0
-    d["_description"] = (f"random75 avec TOUTES les epaisseurs x{facteur}. "
+    d["_description"] = (f"random75 avec TOUTES les epaisseurs x{facteur} (mode {mode}). "
                          f"Serie d'echelle du 2026-08-15 : isole l'epaisseur optique du "
                          f"nombre de couches. 👤 : « histoire de comprendre les choses ».")
-    out = CACHE / f"cfg_x{facteur:g}.json"
+    suffix = f"_{mode}" if mode != "fast" else ""
+    out = CACHE / f"cfg_x{facteur:g}{suffix}.json"
     out.write_text(json.dumps(d, indent=2, ensure_ascii=False), encoding="utf-8")
     return out
 
@@ -110,26 +111,27 @@ def geometrie(facteur: float) -> dict:
             "couches_sous_1_qwot": int(sum(1 for q in qwot if q < 1.0))}
 
 
-def mesurer(facteur: float) -> dict:
+def mesurer(facteur: float, mode: str = "fast") -> dict:
     import bench_examples as Bx
     from CERTUS_STRAT import CertusStratApp
 
     t0 = time.perf_counter()
-    row: dict = {"facteur": facteur, "verdict": "?", "n_strats": 0, "n_deposables": 0,
+    row: dict = {"facteur": facteur, "mode": mode, "verdict": "?", "n_strats": 0, "n_deposables": 0,
                  "crash_min": None, "rmse": None, "seel": None,
                  "geometrie": geometrie(facteur),
                  "stamp": datetime.now().isoformat(timespec="seconds")}
     try:
-        cfg = config(facteur)
+        cfg = config(facteur, mode)
         Bx.qapp()
         Bx.autoanswer_dialogs(True)
         app = CertusStratApp()
         app.load_configuration(str(cfg))
         if "execution_mode" in getattr(app, "widgets", {}):
-            app.widgets["execution_mode"].setCurrentText("fast")
+            app.widgets["execution_mode"].setCurrentText(mode)
 
         over = {"show_plots": False, "robustness_seed": SEED,
-                "monochromator_resolution_nm": 2.0, "search_resolution": False}
+                "monochromator_resolution_nm": 2.0, "search_resolution": False,
+                "execution_mode": mode}
         _c = app.collect_params
         vus = {"n": 0}
 
@@ -177,17 +179,19 @@ def etat() -> int:
     print("\n  facteur  epaisseur  + fine   <1 QWOT   verdict          deposables  plantage   SEEL")
     lignes = [REF_X1 | {"geometrie": geometrie(1.0), "run_s": 1327.3}]
     for f in FACTEURS:
-        p = CACHE / f"x{f:g}.json"
-        if p.exists():
-            lignes.append(json.loads(p.read_text(encoding="utf-8")))
+        for p in (CACHE / f"x{f:g}_premium.json", CACHE / f"x{f:g}.json"):
+            if p.exists():
+                lignes.append(json.loads(p.read_text(encoding="utf-8")))
+                break
     for r in sorted(lignes, key=lambda x: x["facteur"]):
         g = r["geometrie"]
         s = f"{r['seel']:.3f}" if r.get("seel") else "  -  "
         tag = "(ref)" if r["facteur"] == 1.0 else "     "
-        print(f"  x{r['facteur']:<4g}{tag} {g['epaisseur_um']:6.2f} um  {g['plus_fine_nm']:5.1f}   "
+        m_str = f" [{r.get('mode', 'fast')}]" if r.get('mode') and r.get('mode') != 'fast' else ""
+        print(f"  x{r['facteur']:<4g}{tag}{m_str} {g['epaisseur_um']:6.2f} um  {g['plus_fine_nm']:5.1f}   "
               f"{g['couches_sous_1_qwot']:5d}    {r['verdict']:<16s} {r['n_deposables']:5d}/"
               f"{r['n_strats']:<5d} {r['crash_min']:5.1f} %  {s}")
-    manque = [f for f in FACTEURS if not (CACHE / f"x{f:g}.json").exists()]
+    manque = [f for f in FACTEURS if not (CACHE / f"x{f:g}.json").exists() and not (CACHE / f"x{f:g}_premium.json").exists()]
     if manque:
         print(f"\n  en attente : {', '.join('x%g' % f for f in manque)}")
     else:
@@ -198,6 +202,7 @@ def etat() -> int:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--facteur", type=float, help="0.5, 1.5 ou 2.0")
+    ap.add_argument("--mode", default="fast", choices=("fast", "premium", "deep"))
     ap.add_argument("--etat", action="store_true")
     args = ap.parse_args()
 
@@ -206,16 +211,17 @@ def main() -> int:
         return etat()
 
     f = args.facteur
-    dest = CACHE / f"x{f:g}.json"
+    suffix = f"_{args.mode}" if args.mode != "fast" else ""
+    dest = CACHE / f"x{f:g}{suffix}.json"
     if dest.exists():
-        sys.stderr.write(f"x{f:g} deja mesure, rien a faire.\n")
+        sys.stderr.write(f"x{f:g}{suffix} deja mesure, rien a faire.\n")
         return 0
     g = geometrie(f)
-    sys.stderr.write(f"x{f:g} : {g['epaisseur_um']} um, la plus fine {g['plus_fine_nm']} nm, "
+    sys.stderr.write(f"x{f:g} ({args.mode}) : {g['epaisseur_um']} um, la plus fine {g['plus_fine_nm']} nm, "
                      f"{g['couches_sous_1_qwot']} couches sous 1 QWOT\n")
-    row = mesurer(f)
+    row = mesurer(f, mode=args.mode)
     dest.write_text(json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
-    sys.stderr.write(f"x{f:g} : {row['verdict']} | {row['n_deposables']}/{row['n_strats']} "
+    sys.stderr.write(f"x{f:g} ({args.mode}) : {row['verdict']} | {row['n_deposables']}/{row['n_strats']} "
                      f"deposables | plantage min {row['crash_min']} % | SEEL {row.get('seel')}\n")
     return 0
 

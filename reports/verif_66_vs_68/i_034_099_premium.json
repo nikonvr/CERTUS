@@ -1,0 +1,13 @@
+{
+  "a": 34,
+  "b": 99,
+  "n": 65,
+  "mode": "premium",
+  "verdict": "AUCUNE_DEPOSABLE",
+  "n_strats": 487,
+  "n_deposables": 0,
+  "crash_min": 99.33,
+  "seel": null,
+  "stamp": "2026-08-15T20:54:53",
+  "run_s": 1038.5
+}

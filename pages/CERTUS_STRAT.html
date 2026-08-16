@@ -4983,9 +4983,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
 
                 <h3 id="sec-10-16">10.16 Multiple-testglass monitoring — the 99-layer filter becomes manufacturable</h3>
                 <div class="highlight-box" style="background:#ecfdf5;border-left:4px solid #059669;">
-                    🟢 <b>Measured 2026-08-15.</b> Splitting the monitoring across several witnesses
-                    takes the 99-layer bandpass from <b>100 % crashes on all 487 strategies</b> —
-                    not manufacturable at all — to <b>0 % crashes</b> and a <b>SEEL of 0.760 nm</b>.
+                    🟢 <b>Measured 2026-08-15, re-measured at higher depth 2026-08-16.</b> Splitting
+                    the monitoring across several witnesses takes the 99-layer bandpass from
+                    <b>100 % crashes on all 487 strategies</b> — not manufacturable at all — to
+                    <b>0 % crashes</b> and a <b>SEEL of 0.782 nm</b>.
+                    <br><br>
+                    ⚠️ <b>The first campaign reported 0.760 nm, and that figure was biased low.</b>
+                    It came from picking the minimum over 440 partitions with a P95 estimated on
+                    only 50 draws. Re-run at 150 draws, that same partition reads <b>0.858 nm</b> and
+                    a different one wins at <b>0.782 nm</b>. This is the winner's curse, it was
+                    predicted before the measurement, and the corrected figure is the one quoted
+                    throughout this section.
                     <br><br>
                     🔴 <b>Read the claim exactly.</b> This does <i>not</i> buy precision. It buys
                     <i>possibility</i>. The 0.86 nm of §10.15 was never a performance — it was a
@@ -5047,12 +5055,12 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.86 nm <i>(fallback)</i></td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>100 %</b></td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🔴 <b>No</b></td></tr>
-                    <tr style="background:#ecfdf5;"><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>3 witnesses — 0-22 / 22-72 / 72-99</b></td>
-                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.760 nm</b></td>
+                    <tr style="background:#ecfdf5;"><td style="border:1px solid #cbd5e1;padding:5px 10px;"><b>4 witnesses — 0-22 / 22-42 / 42-76 / 76-99</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0.782 nm</b></td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;"><b>0 %</b> on each campaign</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 <b>Yes</b></td></tr>
-                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">2 witnesses, best of 11</td>
-                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.783 nm</td>
+                    <tr><td style="border:1px solid #cbd5e1;padding:5px 10px;">3 witnesses, best of 250</td>
+                        <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0.784 nm</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">0 %</td>
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 Yes</td></tr>
                 </table>
@@ -5064,8 +5072,10 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         with the first at the measurement resolution ($\delta = 5.1\,\%$ on SEEL at
                         $N=50$, from the 6 % relative resolution at $N=150$ scaling as $1/\sqrt{N}$).
                         The optimum is <b>flat</b>.</li>
-                    <li><b>The number of witnesses barely matters either.</b> Two versus three is
-                        <b>+3.0 %</b> — below $\delta$. These are <b>tied</b>, not ranked.</li>
+                    <li><b>The number of witnesses barely matters either.</b> At 150 draws the best
+                        four-witness partition reads 0.782 nm and the best three-witness one
+                        0.784 nm — <b>+0.2 %</b>, far below $\delta = 3.0\,\%$. These are
+                        <b>tied</b>, not ranked.</li>
                     <li><b>The witness does not age and die.</b> That model is <b>refuted</b>. The
                         <i>last</i> third of this stack — where the full-stack run has only one viable
                         wavelength left — is the <b>easiest</b> of the three on bare glass

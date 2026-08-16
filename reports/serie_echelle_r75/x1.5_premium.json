@@ -1,0 +1,20 @@
+{
+  "facteur": 1.5,
+  "mode": "premium",
+  "verdict": "DEPOSABLE",
+  "n_strats": 704,
+  "n_deposables": 1,
+  "crash_min": 0.0,
+  "rmse": 0.09881340865153743,
+  "seel": 0.629,
+  "geometrie": {
+    "epaisseur_um": 14.98,
+    "plus_fine_nm": 51.6,
+    "plus_epaisse_nm": 396.7,
+    "qwot_min": 0.756,
+    "qwot_max": 3.719,
+    "couches_sous_1_qwot": 3
+  },
+  "stamp": "2026-08-15T21:16:32",
+  "run_s": 1054.5
+}

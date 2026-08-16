@@ -27,6 +27,7 @@ EGALITE, pas classees.
 
 from __future__ import annotations
 
+import argparse
 import json
 import math
 import os
@@ -43,36 +44,45 @@ os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-CACHE = ROOT / "reports" / "intervalles_99c"
+CACHE_BASE = ROOT / "reports" / "intervalles_99c"
 FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
 N = 99
-LO, HI = 20, 60
-DELTA = 0.051          # resolution en SEEL a N=50
 
 
-def charger() -> dict[tuple[int, int], dict]:
+def charger(cache_dir: Path) -> dict[tuple[int, int], dict]:
     out = {}
-    for f in CACHE.glob("i_*.json"):
+    for f in cache_dir.glob("i_*.json"):
         r = json.loads(f.read_text(encoding="utf-8"))
-        th = CACHE / f"th_{r['a']:03d}_{r['b']:03d}.npy"
+        th = cache_dir / f"th_{r['a']:03d}_{r['b']:03d}.npy"
         if r["verdict"] == "DEPOSABLE" and th.exists():
             r["th"] = np.load(th)
             out[(r["a"], r["b"])] = r
     return out
 
 
-def partitions() -> list[tuple[tuple[int, int], ...]]:
+def partitions(lo: int = 20, hi: int = 60) -> list[tuple[tuple[int, int], ...]]:
     res = []
     for k in (1, 2, 3):
         for cuts in combinations(range(2, N, 2), k):
             b = [0, *cuts, N]
             ps = tuple((b[i], b[i + 1]) for i in range(len(b) - 1))
-            if all(LO <= y - x <= HI for x, y in ps):
+            if all(lo <= y - x <= hi for x, y in ps):
                 res.append(ps)
     return res
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="Classement des partitions assemblées du 99 couches.")
+    ap.add_argument("--lo", type=int, default=20, help="Nombre minimal de couches par témoin (défaut: 20)")
+    ap.add_argument("--hi", type=int, default=60, help="Nombre maximal de couches par témoin (défaut: 60)")
+    ap.add_argument("--mode", default="fast", choices=("fast", "premium", "deep"), help="Mode du cache à lire")
+    ap.add_argument("--cache-dir", default=None, help="Chemin du dossier de cache")
+    ap.add_argument("--max-crash", type=float, default=0.05, help="Taux maximal de tirages plantés toléré (défaut: 0.05)")
+    args = ap.parse_args()
+
+    cache_dir = Path(args.cache_dir) if args.cache_dir else (ROOT / "reports" / ("intervalles_99c" if args.mode == "fast" else f"intervalles_99c_{args.mode}"))
+    delta = 0.030 if args.mode == "premium" else 0.051
+
     import bench_examples as Bx
     from certus.core.certus_strat_robustness import _index_stream_seed
     from certus.physics.certus_opt_tmm import arange_inclusive
@@ -109,18 +119,31 @@ def main() -> int:
     seed_idx = _index_stream_seed(42, 1)
     corr = float(prm.get("index_corridor", 0.0) or 0.0)
 
-    cache = charger()
-    print(f"{len(cache)} intervalles deposables en cache.\n")
+    cache = charger(cache_dir)
+    print(f"{len(cache)} intervalles deposables en cache ({cache_dir.name}).\n")
 
     res = []
     manquants = 0
-    for ps in partitions():
+    rejetes_crash = 0
+    all_partitions = partitions(lo=args.lo, hi=args.hi)
+
+    for ps in all_partitions:
         if not all(p in cache for p in ps):
             manquants += 1
             continue
         th = np.concatenate([cache[p]["th"] for p in ps], axis=1)
         if th.shape[1] != N:
             continue
+
+        # 🔑 Contrôle des tirages plantés (th > 1e5 nm)
+        is_crashed_run = np.any(th > 1e5, axis=1)
+        cum_crash_rate = float(np.mean(is_crashed_run))
+        n_crashed = int(np.sum(is_crashed_run))
+
+        if cum_crash_rate > args.max_crash:
+            rejetes_crash += 1
+            continue
+
         rmse = compute_batch_rmse(th, wl.astype(np.float64), vide, vide,
                                   nS.astype(np.complex128), T_nom, mat, None,
                                   corr, seed_idx, float(wl[0]), float(wl[-1]))
@@ -129,30 +152,33 @@ def main() -> int:
             "parts": ps, "n_temoins": len(ps),
             "seel": 2.0 * math.sqrt(p95), "rmse": p95,
             "faible": min(cache[p]["n_deposables"] for p in ps),
+            "crash_rate": cum_crash_rate,
+            "n_crashed": n_crashed,
         })
 
     if not res:
-        print("aucune partition complete en cache pour l'instant.")
+        print("aucune partition complete et saine en cache pour l'instant.")
         return 0
     res.sort(key=lambda r: r["seel"])
     best = res[0]["seel"]
 
-    print("=" * 78)
-    print(f"{len(res)} partitions assemblees  ({manquants} incompletes, intervalles pas encore mesures)")
-    print("=" * 78)
-    print(f"\nmeilleur SEEL {best:.3f} nm | cible 0,300 nm | resolution +/-{DELTA:.1%}\n")
-    print("  rang  temoins  partition                       SEEL     ecart   min deposables")
+    print("=" * 86)
+    print(f"{len(res)} partitions assemblees  ({manquants} incompletes, {rejetes_crash} rejetees car plantages > {args.max_crash:.1%})")
+    print(f"Bornes par temoin : [{args.lo}, {args.hi}] couches  (cache: {cache_dir.name})")
+    print("=" * 86)
+    print(f"\nmeilleur SEEL {best:.3f} nm | cible 0,300 nm | resolution +/-{delta:.1%}\n")
+    print("  rang  temoins  partition                       SEEL     ecart   min dep  plantages")
     for i, r in enumerate(res[:15], 1):
         ec = (r["seel"] - best) / best
-        tag = "= " if ec <= DELTA else "  "
+        tag = "= " if ec <= delta else "  "
         pp = " ".join(f"{a}-{b}" for a, b in r["parts"])
-        print(f"  {i:4d}  {r['n_temoins']:5d}    {pp:<30} {r['seel']:.3f}  {tag}{ec:+6.1%}   {r['faible']:5d}")
+        print(f"  {i:4d}  {r['n_temoins']:5d}    {pp:<30} {r['seel']:.3f}  {tag}{ec:+6.1%}   {r['faible']:5d}    {r['crash_rate']*100:4.1f}%")
 
-    ex = [r for r in res if (r["seel"] - best) / best <= DELTA]
-    print(f"\n{len(ex)} partitions a EGALITE avec la premiere (ecart <= {DELTA:.1%}).")
+    ex = [r for r in res if (r["seel"] - best) / best <= delta]
+    print(f"\n{len(ex)} partitions a EGALITE avec la premiere (ecart <= {delta:.1%}).")
     print(f"etendue totale : {best:.3f} -> {res[-1]['seel']:.3f} nm "
           f"({(res[-1]['seel'] - best) / best:+.1%})")
-    for k in (2, 3):
+    for k in (2, 3, 4):
         s = [r for r in res if r["n_temoins"] == k]
         if s:
             print(f"  meilleur a {k} temoins : {min(r['seel'] for r in s):.3f} nm  ({len(s)} partitions)")
@@ -161,3 +187,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+

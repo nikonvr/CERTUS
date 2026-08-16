@@ -200,6 +200,30 @@ def check_qwot_vs_tp(lines: list[str]) -> list[str]:
     return out
 
 
+#: 🔴 F -- BUDGET DE TAILLE. 👤 le 2026-08-16 : *« CLAUDE.md fait 5413 lignes, je pense que
+#: c'est inefficace car les IA ne lisent pas forcement tout et il peut y avoir des
+#: contradictions »*. Il avait raison, et la cause racine n'etait pas la longueur : c'est que
+#: le MEME FAIT etait enonce a plusieurs endroits. Corriger le SEEL du 99c a demande SEPT
+#: modifications a la main, et une avait ete oubliee.
+#:
+#: Le fichier est passe de 5413 a ~1780 lignes par extraction vers docs/. Ce controle existe
+#: pour que ca ne regonfle pas en silence : au-dela du plafond, on ARBITRE, on ne reporte pas.
+#: Un depassement n'est pas une faute morale -- c'est le signal qu'une section merite son
+#: propre dossier dans docs/, avec un renvoi ici.
+MAX_LIGNES = 2000
+
+
+def check_taille(lines: list[str]) -> list[str]:
+    """F -- le fichier tient-il dans son budget ?"""
+    n = len(lines)
+    if n <= MAX_LIGNES:
+        return []
+    return [
+        f"CLAUDE.md fait {n} lignes, plafond {MAX_LIGNES}. Extrais une section vers docs/ "
+        f"et laisse un renvoi -- voir scripts/extraire_section.py."
+    ]
+
+
 def main() -> int:
     lines = load()
     blocks = [
@@ -208,6 +232,7 @@ def main() -> int:
         ("C. VALEURS DISCORDANTES", check_param_values(lines), True),
         ("D. NOMBRES RECOPIES (a relire, pas forcement faux)", check_dup_numbers(lines), False),
         ("E. CONFUSION QWOT / TURNING POINT", check_qwot_vs_tp(lines), True),
+        (f"F. BUDGET DE TAILLE (plafond {MAX_LIGNES} lignes)", check_taille(lines), True),
     ]
     faults = 0
     for title, items, counts in blocks:

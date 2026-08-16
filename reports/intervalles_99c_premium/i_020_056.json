@@ -1,0 +1,16 @@
+{
+  "a": 20,
+  "b": 56,
+  "n": 36,
+  "mode": "premium",
+  "stamp": "2026-08-15T22:25:09",
+  "instrument": "b7b7102",
+  "verdict": "DEPOSABLE",
+  "n_strats": 394,
+  "n_deposables": 387,
+  "crash_min": 0.0,
+  "crash_retenue": 0.0,
+  "score": 0.03610303590306242,
+  "run_s": 534.2,
+  "tirages": 150
+}

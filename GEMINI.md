@@ -9,9 +9,10 @@ laquelle tout ce que tu mesureras sera faux.
 
 Les trois choses à ne pas oublier, si tu ne devais en retenir que trois :
 
-1. **Le dossier de travail est `C:\dev\gemini`, et lui seul.** Plusieurs copies de ce dépôt
-   existent sur la machine. Modifier l'une et mesurer l'autre ne déclenche aucune erreur —
-   seulement des résultats faux.
+1. **Travaille dans le dépôt que tu as ouvert, et lui seul.** Plusieurs copies existent sur
+   la machine. Modifier l'une et mesurer l'autre ne déclenche aucune erreur — seulement des
+   résultats faux. ⚠️ Ce fichier annonçait `C:\dev\gemini` ; ce chemin est **périmé**.
+   `scripts/preflight.py` vérifie que l'environnement est cohérent, lance-le d'abord.
 2. **N'affirme jamais un résultat que tu n'as pas mesuré.** Soit tu colles la sortie de la
    commande, soit tu écris « je n'ai pas mesuré ». Une conclusion écrite avant la mesure
    sera détectée et annulée.

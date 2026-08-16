@@ -7,36 +7,46 @@ Le code calcule de la **physique réelle** servant à fabriquer de vrais filtres
 erreur silencieuse ne plante pas : elle produit un **résultat faux qui a l'air juste**, et
 quelqu'un fabrique une pièce avec.
 
-## 🔒 La règle des deux documents — lis-la avant de créer quoi que ce soit
+## 🔒 La règle des documents — lis-la avant de créer quoi que ce soit
 
-Il existe **exactement deux** fichiers d'instructions, et ils n'ont pas le même rôle :
+**Un seul document d'instructions : celui-ci.** `AGENTS.md` et `GEMINI.md` en sont de simples
+renvois et ne contiennent aucun fait.
 
-| Fichier | Rôle | Public |
-|---|---|---|
-| **`CLAUDE.md`** (celui-ci) | **Le savoir.** Physique, mesures, décisions, pièges, nuances. La seule source de vérité. | Toi, et tout agent capable de raisonner |
-| **`GEMINI_TODO.md`** | **Un ordre de mission.** Uniquement des commandes à lancer et des sorties à coller. **Aucun fait, aucune explication, aucune nuance.** | Un exécutant à faible capacité |
+À côté, **`docs/` porte des dossiers thématiques**, chacun faisant **autorité sur son sujet**.
+`CLAUDE.md` n'en garde qu'un renvoi qui dit *ce qu'il faut retenir sans ouvrir le dossier*.
 
-**Les trois règles qui empêchent ce dépôt de retomber dans ses quatre-vingts documents
-contradictoires :**
+### 🔑 La règle qui compte : UN FAIT, UN SEUL ENDROIT
 
-1. **`GEMINI_TODO.md` ne contient AUCUN fait.** Il ne fait que dériver de celui-ci des
-   commandes. S'il énonce un chiffre, c'est comme valeur attendue d'une sortie, jamais comme
-   connaissance.
-2. **En cas de désaccord, `CLAUDE.md` gagne, toujours.** `GEMINI_TODO.md` se régénère depuis
-   ce document, il ne se corrige pas.
-3. **On ne crée pas un troisième document.** Ni rapport de session, ni note, ni journal.
-   Un exécutant écrit dans `reports/RAPPORT_GEMINI.md`, et c'est une **sortie**, pas une
-   instruction.
+C'est la cause racine des contradictions de ce dépôt, et elle est mesurée : le 2026-08-16,
+corriger le SEEL du 99 couches a demandé **sept modifications à la main**, et une avait été
+oubliée au premier passage. Chaque copie d'un fait est une occasion de le laisser périmer.
 
-⚠️ **Pourquoi ce découpage existe.** Un exécutant faible n'échoue pas sur la compréhension,
-il échoue sur l'**inférence** : il comble ce qui n'est pas écrit littéralement. Or ce
-document est fait de nuance — « ce chiffre surestime », « c'est une dérivation, pas une
-mesure », « sauf si ». Cette nuance est ce qui lui donne sa valeur ici, et c'est exactement
-ce qui fait dériver un modèle faible. **Alourdir CLAUDE.md de garde-fous le dégraderait pour
-tout le monde sans protéger personne.** Les garde-fous vont dans l'ordre de mission ; ici, on
-garde la vérité.
+| ✅ autorisé | 🔴 interdit |
+|---|---|
+| un dossier **thématique** dans `docs/`, qui devient la source unique de son sujet | un document qui **duplique** un fait déjà écrit ailleurs |
+| une **sortie** de campagne dans `reports/` | un **rapport de session** à la racine — 103 y avaient été accumulés |
+| un **renvoi** depuis `CLAUDE.md` | recopier le contenu du dossier dans `CLAUDE.md` |
 
-`AGENTS.md` et `GEMINI.md` sont de simples renvois vers ce fichier. Ils ne contiennent rien.
+⚠️ **Historique utile, pour ne pas refaire le trajet à l'envers.** Ce dépôt a compté
+**quatre-vingts documents contradictoires**, puis la règle est passée à *« exactement deux
+fichiers »* — `CLAUDE.md` plus un ordre de mission `GEMINI_TODO.md` destiné à un exécutant à
+faible capacité. **Les deux extrêmes étaient mauvais** : la prolifération périme, et le
+document unique a atteint **5 413 lignes**, que plus personne ne lisait en entier.
+
+`GEMINI_TODO.md` a été **supprimé le 2026-08-16** : sa campagne était close, et le besoin qui
+l'avait fait naître a disparu — un agent d'aujourd'hui lit `CLAUDE.md` et les dossiers sans
+qu'on ait à lui pré-mâcher des commandes. 📌 Si un exécutant très contraint revient un jour,
+la bonne forme est un **ordre de mission daté dans `docs/`**, comme
+[`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) : que des commandes, des sorties attendues, et
+zéro fait qui ne soit pas déjà écrit ici.
+
+### Le budget, et il est vérifié mécaniquement
+
+`CLAUDE.md` est plafonné à **2 000 lignes**, contrôle F de `scripts/check_claude_md.py`. Un
+dépassement n'est pas une faute : c'est le signal qu'une section mérite son propre dossier.
+L'outil pour le faire proprement est `scripts/extraire_section.py` — il laisse un renvoi à la
+place et **refuse de résumer tout seul**, parce qu'un résumé mécanique dirait ce que la
+section *contient* et non ce qu'un agent doit en *retenir*.
 
 ---
 
@@ -1196,27 +1206,27 @@ physique.
 - **Activer SYM sans recalibrer `sym_weight`.**
 - **Conclure d'un écart d'épaisseur sous 0,05 nm** (moins d'un atome), **d'un écart de λ sous
   le pas de grille**, ou **proposer une λ hors de la grille de balayage**.
-- **Réintroduire un mode dégradé SANS le dire.** 👤 *« Interdit le mode fast, je veux un mode
-  vraiment semblable à la réalité et j'ai tout mon temps »* (2026-08-05). 🔴 **Cette
-  interdiction a été LEVÉE DANS LE CODE le 2026-08-14, et le revirement n'était écrit nulle
-  part** — ni ici, ni dans la vitrine ; la décision ne survivait plus que dans un commentaire
-  mort (`certus/utils/certus_strat_context.py:345`). FAST existe : combobox
-  `certus_strat_ui_layout.py:867`, paramètres `certus_strat_ui_state.py:1288`. Il n'est pas
-  le défaut (`setCurrentText("premium")`, ligne 868) et se choisit à la main.
-  **Ce qui reste vrai de l'interdiction, et qui est le vrai contenu de la règle :** le taux de
-  plantage est **binomial**, et le criblage de FAST est à 10 tirages, donc quantifié à **10 %**
-  — un `crash_rate` lu à « 0,0 % » sous FAST signifie « sous 10 % », pas zéro.
-  **Aucun taux de plantage lu sous FAST n'est publiable ; seul le SEEL l'est.** La raison
-  admise du revirement est de cribler une architecture de blocs en 166 s au lieu de 431 s,
-  **pas** de mesurer une robustesse.
-  ⚠️ Et le rétablissement est **incomplet** : `fast_auto_blocks` est posé
-  (`certus_strat_ui_state.py:1284`) et **journalisé** (`certus_strat_ui_worker.py:375`) alors
-  qu'aucun code ne le lit — la branche qui élargissait la plage de blocs n'a pas été
-  rétablie. Le journal annonce donc un effet qui n'existe pas. Le rebrancher ou le supprimer,
-  mais ne pas le laisser dans le log.
-  🔴 **À confirmer par 👤 :** est-ce bien la levée voulue, aux conditions ci-dessus ?
+- **Réintroduire un mode dégradé SANS le dire.** ⚠️ **L'interdiction du mode FAST est
+  CADUQUE — assouplie le 2026-08-16.** Elle disait *« interdit le mode fast »* (👤, 2026-08-05)
+  et **toutes les campagnes depuis le 14 août tournent en fast**. Une règle violée en
+  permanence ne protège plus rien : elle apprend seulement à ignorer les règles.
+  **Ce qui la remplace, et qui est le vrai contenu :**
+  | ce que FAST peut mesurer | ce qu'il ne peut PAS |
+  |---|---|
+  | le **SEEL**, et le criblage d'architectures de blocs | 🔴 le **taux de plantage** : le criblage est à 10 tirages, donc quantifié à **10 %**. Un « 0,0 % » lu sous FAST signifie « sous 10 % » |
+  | une comparaison **à protocole fixé**, dans une même campagne | 🔴 un **minimum sur beaucoup de candidats** : c'est la malédiction du vainqueur, elle a coûté **+12,9 %** le 15/08 |
+  🔑 **Un SEEL retenu sous FAST se rejoue en PREMIUM avant publication.** C'est la règle qui
+  a de la valeur ; l'interdiction n'en avait plus.
+  ⚠️ Défaut d'implantation qui subsiste : `fast_auto_blocks` est posé et **journalisé**
+  (`certus_strat_ui_worker.py:375`) alors qu'**aucun code ne le lit**. Le journal annonce donc
+  un effet qui n'existe pas. Le rebrancher ou le supprimer, mais ne pas le laisser dans le log.
 - **Citer les repères « 0,4 nm / 0,3 nm »** — absents de la thèse Zideluns.
-- **Tirer une conclusion physique d'un empilement autre que le 48 couches.**
+- ~~**Tirer une conclusion physique d'un empilement autre que le 48 couches.**~~
+  🔴 **SUPPRIMÉE le 2026-08-16.** Le projet a **quatre** composants d'essai et le random75
+  existe précisément pour tirer des conclusions **générales**. La règle était violée par
+  construction. **Ce qui la remplace :** une règle n'est établie que si elle survit sur un
+  empilement **sans structure** — ni cavité, ni miroir, ni périodicité. C'est ce test qui a
+  réfuté « le témoin vieillit et meurt » et qui laisse `S(p−1)` **non validée**.
 - **Raffiner la grille d'échantillonnage sans corriger le seuil** — voir §12.2.
 - **Modéliser σ(T), la grenaille ou le bruit multiplicatif** — voir §9.
 

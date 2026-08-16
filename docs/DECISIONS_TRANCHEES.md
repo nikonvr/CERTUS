@@ -274,7 +274,7 @@ tenir : bloc **EN COURS** en tête de document.
 | **Les tests** | `tests/unit/test_strat_crash_gate_confidence.py`, **37 tests**, dont C1 sur quatre formes de valeur inactive |
 | **La campagne** | `scripts\run_campaign.py gate` — **6 runs**, chaque bras avec son témoin. 📏 Mesurée le 2026-08-14 : **55 min 16 s**, et non ~3 h 30 (`reports/probe_runs.tsv`, colonne `run_s`). 🔴 **Les 6 runs sont sortis FAILED** pour un défaut de traçabilité : lis le bloc EN COURS en tête de document avant de la relancer. |
 | **La lecture** | `scripts\analyse_gate.py` — imprime les quatre questions et **le test qui va avec chacune** |
-| **L'ordre de mission** | `GEMINI_TODO.md`, réécrit pour cette campagne |
+| **L'ordre de mission** | `GEMINI_TODO.md`, réécrit pour cette campagne — ⚠️ **fichier supprimé le 2026-08-16**, campagne close |
 
 🔑 **Une propriété prouvée par test, et elle sert de garde-fou à la lecture** : la porte
 armée est **toujours plus permissive**, jamais moins. La borne inférieure est sous

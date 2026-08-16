@@ -15,10 +15,10 @@
 | | État au 2026-08-14 | Ce qui reste vraiment |
 |---|---|---|
 | **12.1** distorsion affine, épreuve de POEM | ✅ **ACQUISE et dépassée.** Protection ×15 à ×17,5 mesurée sur deux graines (A12). `poem_enabled` et les amplitudes affines **existent** dans les signatures. | Rien. ⚠️ Mais lis « la dérive n'est pas affine » ci-dessous : elle **requalifie** ce résultat. |
-| **La forme de la dérive photométrique** | ✅ **TRANCHÉE le 2026-08-12** : $\delta T = 4\varepsilon T(1-T)$, pas affine. C'est le bloc le plus important de §12. | L'amplitude $\varepsilon$ reste une **spécification 👤**, pas une mesure. |
+| **La forme de la dérive photométrique** | ✅ **TRANCHÉE le 2026-08-12** : $\delta T = 4\varepsilon T(1-T)$, pas affine. C'est le bloc le plus important de §29. | L'amplitude $\varepsilon$ reste une **spécification 👤**, pas une mesure. |
 | **12.2** lissage de lecture | 🟠 modèle posé, **et son seuil dérivé est RÉFUTÉ** : `0,354` est faux, la mesure dit **`1,00 A`**. | Le lissage exige la grille de 12.4. `machine_sampling_dd` existe et vaut 0 (A8). |
 | **12.3** méconnaissance d'indice | ✅ **ACQUISE.** ±0,005, corridor tranché le 2026-08-10, normalisation sur l'enveloppe. | Rien. |
-| **12.4** grille à la cadence machine | 🟠 le paramètre existe, dé-soudé du lissage (A8), **et vaut 0 par défaut**. | Trancher 1 nm contre 2 nm — c'est §22, avec son critère posé d'avance. |
+| **12.4** grille à la cadence machine | 🟠 le paramètre existe, dé-soudé du lissage (A8), **et vaut 0 par défaut**. | Trancher 1 nm contre 2 nm — c'est §33, avec son critère posé d'avance. |
 | **12.5** quantification du déclenchement | ✅ **ACQUISE.** `U(0 ; 0,125 nm)`, et elle apparaît toute seule dans l'arrondi du Rate. | Rien. |
 | **12.7** résolution du monochromateur | 🟠 **le biais de fente est actif par défaut depuis le 2026-08-11** et la fente fait partie de la stratégie. | 🔴 **Le facteur √3 n'est pas corrigé** : la fente est rectangulaire, la formule en production est trop stricte de 1,73×. |
 | **12.6** face arrière | ⚪ non fait, et il est écrit « en dernier, ou jamais ». | — |
@@ -34,7 +34,7 @@
 **C1 — Inactif par défaut, bit-identique.** Tout nouveau paramètre vaut sa valeur neutre par
 défaut, et le chemin neutre doit rendre **exactement** les mêmes bits qu'avant. Vérifié par
 empreinte `float.hex()` sur une large batterie de configurations, avant/après — pas « aux
-tests près ». Voir §3.
+tests près ». Voir §9.
 
 **C2 — Nombres aléatoires communs.** Tout tirage aléatoire est une **fonction pure de
 (graine, tirage, et un index physique)**. Jamais de la stratégie : ni la longueur d'onde, ni
@@ -71,7 +71,7 @@ par le gain. Chacun rendait des nombres plausibles, et ensemble ils auraient fai
 **l'inverse de la vérité**. Avant de mesurer une invariance, vérifie que le code ne la
 fabrique pas.
 
-⚠️ Portée : `RESULT`, agrégat sur trois niveaux de bruit, sur le seul 48 couches. §15 reste
+⚠️ Portée : `RESULT`, agrégat sur trois niveaux de bruit, sur le seul 48 couches. §26 reste
 entier — banc de cohérence, pas validation physique.
 
 #### 🔑 POEM ne réduit pas seulement l'erreur — il change OÙ elle tombe
@@ -113,7 +113,7 @@ change de nature, pas seulement d'amplitude.**
 
 #### Ce que l'auto-référencement retire, et il retire presque tout
 
-`T = (S − D)/(V − D)`, refait **à chaque tour**, quatre fois par seconde (§9). Donc :
+`T = (S − D)/(V − D)`, refait **à chaque tour**, quatre fois par seconde (§17). Donc :
 
 - un **gain** commun aux trois positions disparaît exactement :
   `(gS − gD)/(gV − gD) = (S − D)/(V − D)` ;
@@ -171,7 +171,7 @@ pas un tirage.
 | courbure, ε = 0,05 | −6,11 nm |
 
 **Facteur 1,6×10¹⁰ entre l'ancienne perturbation et la nouvelle.** 0,667 nm sur 53, soit
-1,3 %, et **treize fois** le seuil de 0,05 nm sous lequel §16 interdit de conclure.
+1,3 %, et **treize fois** le seuil de 0,05 nm sous lequel §8 interdit de conclure.
 
 📏 Et sur les 48 couches à 544 nm, l'erreur de **niveau** qu'elle induit vaut **0,15 A en
 médiane**, **1,89 A au pire** (couche 6) ; **4 couches sur 48** dépassent 1 A et **aucune**
@@ -179,7 +179,7 @@ ne dépasse 2 A. Le swing médian valant 0,140, l'effet est donc modeste sur la 
 typique — mais c'est un **biais**, qui ne s'annule pas sur les tirages, là où `A` est du
 bruit qui s'annule.
 
-La raison est le théorème de §12.1 : **POEM est rigoureusement invariant par transformation
+La raison est le théorème de §29.1 : **POEM est rigoureusement invariant par transformation
 affine.** La perturbation modélisée jusqu'ici était donc, très exactement, la seule forme
 que le mécanisme absorbe gratuitement. `T(1−T)` n'est pas affine — POEM ne l'absorbe pas.
 
@@ -206,28 +206,28 @@ d'abord se demander si la perturbation choisie appartient au groupe qu'il annule
 #### Ce qui reste ouvert
 
 - **L'amplitude `ε` est une spécification 👤, pas une mesure.** Comme la table des facteurs
-  de bruit de §12.7, toute conclusion qui en dépend doit survivre à son incertitude.
+  de bruit de §29.7, toute conclusion qui en dépend doit survivre à son incertitude.
 - **Le voilage des fenêtres** n'est pas couvert. S'il n'affecte que le trajet témoin, il ne
   s'annule pas et produit un vrai gain lentement variable — auquel cas l'affine retrouverait
   un sens **en plus** de la courbure. C'est une question de géométrie du bâti.
 - **La non-linéarité du détecteur** est le mécanisme invoqué, pas un mécanisme mesuré.
 
 ⚠️ **L'affine reste dans le code, amplitudes à 0.** Ce n'est plus un modèle de la machine :
-c'est **l'instrument qui teste le théorème d'invariance** de §12.1, et il garde cette
+c'est **l'instrument qui teste le théorème d'invariance** de §29.1, et il garde cette
 valeur-là.
 
 ---
 
 ### 12.2 🔴 Modéliser le LISSAGE de lecture — et surtout pas remonter le seuil
 
-> **Cette action applique le modèle figé du §9bis.** Ne le rediscute pas : l'OMS est breveté,
+> **Cette action applique le modèle figé du §18.** Ne le rediscute pas : l'OMS est breveté,
 > son fonctionnement interne restera opaque, et le postulat a été arrêté le 2026-08-08 pour
 > clore la question. La fenêtre à utiliser est **`k = 8`**.
 >
 > 🔴 **NE PRENDS PAS LE SEUIL DE `0,354 A` ÉCRIT PLUS BAS. IL EST RÉFUTÉ.** C'était une
 > **dérivation** — `3σ/A = 1/√k` — et elle suppose des échantillons indépendants, alors que
 > deux moyennes glissantes voisines partagent 7 lectures sur 8. La borne **mesurée** vaut
-> **`1,00 A`** à `k = 8`, `N = 800` (§9bis, postulat 4, 2026-08-10) : **un facteur 2,8
+> **`1,00 A`** à `k = 8`, `N = 800` (§18, postulat 4, 2026-08-10) : **un facteur 2,8
 > au-dessus de la dérivation**. Le raisonnement qui suit est conservé parce qu'il explique
 > *pourquoi* le seuil descend au lieu de monter — mais **son chiffre est faux**, et c'est le
 > troisième cas de ce document où un raisonnement sur le bruit a été démenti par la mesure.
@@ -287,7 +287,7 @@ extrema peu marqués, qui est la face du problème jamais mesurée.
 🔴 **CE 0,354 A ÉTÉ MESURÉ, ET IL EST FAUX.** La dérivation supposait des échantillons
 indépendants ; les moyennes glissantes voisines partagent 7 lectures sur 8. Mesuré le
 2026-08-10 à `k = 8`, `N = 800` : la borne anti-fabrication vaut **`1,00 A`**, soit
-**2,8 fois** la dérivation. **C'est `1,00` qu'on utilise** (§9bis, postulat 4, et A1/A2 du
+**2,8 fois** la dérivation. **C'est `1,00` qu'on utilise** (§18, postulat 4, et A1/A2 du
 tableau des acquis). Ce qui reste vrai du raisonnement ci-dessus : le seuil **descend** avec
 le lissage au lieu de monter, et pour les deux raisons données. Seul le chiffre était faux.
 
@@ -305,14 +305,14 @@ l'arrêt. **Le noyau est déjà conforme, à deux endroits, et il ne faut pas le
 **Donc : modéliser le lissage pour son effet sur le BRUIT uniquement. N'ajouter aucun
 décalage temporel.**
 
-#### 🔴 Le lissage EXIGE la grille de §12.4 — ne pas l'implémenter avant
+#### 🔴 Le lissage EXIGE la grille de §29.4 — ne pas l'implémenter avant
 
 La fenêtre se compte **en lectures machine**. Le modèle échantillonne aujourd'hui 21 points
 par couche là où la machine en prend 800 : une moyenne sur 8 lectures n'y a **aucun sens**.
 
 Les deux actions se compensent comme dans la réalité : **raffiner la grille seule fait
 exploser les faux points tournants** (33 % → 99,9 %) ; la raffiner **avec** le lissage
-reproduit ce que la machine fait. **Faire §12.4 d'abord, ou les deux ensemble.**
+reproduit ce que la machine fait. **Faire §29.4 d'abord, ou les deux ensemble.**
 
 #### La règle de sélection des λ — réglage distinct, à ne pas confondre
 
@@ -333,11 +333,11 @@ niveau visé, pas une règle de lecture. Ne pas leur appliquer le `1/√k`.
 
 #### Pièges connus
 
-- 🔴 **Un run par configuration, machine libre**, et `CERTUS_BENCH_TIMEOUT_S=5400`. Voir §10.
+- 🔴 **Un run par configuration, machine libre**, et `CERTUS_BENCH_TIMEOUT_S=5400`. Voir §21.
 - ⚠️ `tp_hysteresis_factor` et le lissage sont **liés par `1/√k`** : ne pas les bouger
   indépendamment. Figer `k`, dériver le seuil, ne faire varier que `k`.
-- ⚠️ Le postulat du §9bis est **figé**. Si une mesure le contredit — et une mesure seulement,
-  pas un raisonnement — c'est le §9bis qu'on rouvre, pas cette action qu'on bricole.
+- ⚠️ Le postulat du §18 est **figé**. Si une mesure le contredit — et une mesure seulement,
+  pas un raisonnement — c'est le §18 qu'on rouvre, pas cette action qu'on bricole.
 
 ---
 
@@ -428,7 +428,7 @@ hi = max(grille_spectrale.max(), lambdas_monitoring.max())
 ```
 
 En pratique la grille spectrale contient les λ de monitoring et l'union se réduit à la grille.
-Mais **prendre l'enveloppe ne peut jamais être faux**, et §13 signale précisément que
+Mais **prendre l'enveloppe ne peut jamais être faux**, et §25 signale précisément que
 `clues_at_wl` porte l'union des deux grilles **avec un débordement hors plage** : une λ de
 monitoring peut donc sortir de la grille de notation. L'union est la formulation défensive.
 
@@ -476,15 +476,15 @@ récidive.
 
 ### 12.4 Grille d'échantillonnage à la cadence machine — **à faire AVANT 12.2**
 
-> 🔴 **Ordre imposé.** Le lissage de §12.2 se compte en lectures machine : il n'a aucun sens
+> 🔴 **Ordre imposé.** Le lissage de §29.2 se compte en lectures machine : il n'a aucun sens
 > tant que la grille n'est pas celle de la machine. Mais la grille seule fait exploser les
-> faux points tournants (33 % → 99,9 %). **Donc : cette action d'abord, §12.2 immédiatement
+> faux points tournants (33 % → 99,9 %). **Donc : cette action d'abord, §29.2 immédiatement
 > derrière, et on ne mesure le taux de plantage qu'une fois les deux en place.** Les mesurer
 > séparément produirait deux chiffres également faux.
 
 **Cible** : `Δd = v_dépôt / f_échantillonnage` = **0,125 nm**, soit ~800 points par couche de
 100 nm contre 21 aujourd'hui. Ce n'est pas un raffinement numérique — **c'est une
-caractéristique physique de la machine** (§9).
+caractéristique physique de la machine** (§17).
 
 #### Pièges connus
 
@@ -583,7 +583,7 @@ calculée. **L'action se réduit à un terme additif par couche, plus le facteur
 | Facteur sur `A` | **÷1,5** | **×1** (nominal) | **×2** | **×5** |
 
 🔴 **Ces quatre valeurs ne sont PAS mesurées.** 👤 *« estimés par moi au feeling »*
-(2026-08-09). Elles ont donc le statut d'un **postulat de modélisation**, comme §9bis — pas
+(2026-08-09). Elles ont donc le statut d'un **postulat de modélisation**, comme §18 — pas
 celui d'une spécification constructeur. Ne les cite jamais comme une mesure.
 
 **Ce que cela impose, et ce n'est pas négociable** : une conclusion tirée de ces chiffres
@@ -682,8 +682,8 @@ serait ici invisible : les quatre chiffres auraient l'air parfaitement plausible
 `min_resolution`, la fente la plus large qu'une stratégie tolère. Les résolutions plus larges
 sont *prédites* déformantes. Cela donne un ordre d'évaluation — commencer par les plus
 prometteuses — et, **si et seulement si** on a d'abord compté ce qu'elle écarte réellement
-(§20-contrôle 4), un pré-filtre. ⚠️ Tant que ce comptage n'est pas fait, c'est un
-**diagnostic, pas un couperet** — même règle qu'en §14 pour les heuristiques de la
+(§12-contrôle 4), un pré-filtre. ⚠️ Tant que ce comptage n'est pas fait, c'est un
+**diagnostic, pas un couperet** — même règle qu'en §22 pour les heuristiques de la
 littérature.
 
 **Et voici l'effet le plus intéressant, celui qu'on n'attendait pas :** la résolution
@@ -727,9 +727,9 @@ pas claire. Deux grandeurs différentes cohabitent :
 **L'une des deux lectures est fausse et il faut savoir laquelle.**
 
 ⚠️ **Pourquoi ça compte pratiquement** : STRAT choisit ses λ de contrôle sur une grille à
-**1 nm** (§13, décision tranchée). Si le pas machine vaut 0,5 nm, toute λ de la grille est
+**1 nm** (§25, décision tranchée). Si le pas machine vaut 0,5 nm, toute λ de la grille est
 atteignable et il n'y a rien à faire. S'il vaut 2 nm, **la moitié des λ proposées ne sont pas
-réglables sur la machine**, et §16 l'interdit explicitement : *« ne jamais proposer une λ hors
+réglables sur la machine**, et §8 l'interdit explicitement : *« ne jamais proposer une λ hors
 de la grille de balayage »*. La grille devrait alors s'aligner sur le pas machine.
 
 ---

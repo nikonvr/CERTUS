@@ -19,32 +19,32 @@ défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
 
 | Spécifié en | Quoi | État réel |
 |---|---|---|
-| **§12.7** | **Résolution du monochromateur** | 🟢 **facteur de bruit, √3 et biais de fente FAITS le 2026-08-11.** Reste A18, la fente comme variable de recherche. Détail ci-dessous. |
-| **§12.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §17-2, toujours ouverte. |
-| **A9** | Moyenne glissante **centrée** | 🔴 **NON, elle est CAUSALE.** Vérifié : la fenêtre court sur `[i−k+1 … i]` (`certus_strat_growth.py`, boucle `idx_w`). Décalage de `(k−1)/2` échantillons, soit **0,44 nm à k = 8**, alors que §9bis-5 pose « aucun retard » en postulat. §17-3 reste ouvert. |
-| **§12.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
-| **§14** | **Mode Rate** | 🟠 **NOYAU ÉCRIT LE 2026-08-11, PAS ENCORE UTILISABLE.** Le calcul d'épaisseur, l'effacement d'historique et la remontée `rate_layers` sont câblés. Manquent : le **drapeau utilisateur**, la **génération de variantes** et l'affichage. |
-| **§14, action 1** | SEEL dans le pipeline | 🔴 **NON.** SEEL est calculé à l'**étape 0 de l'interface** (`calculate_seel_analysis`) et n'atteint jamais le classement. Le tri de §14 tourne donc **dans la sonde**, à côté. |
-| **§17-18** | `consensus_num_runs` surchargeable | 🟠 Il **existe** (défaut 150, `certus_strat_ui_state.py:1150`) mais **aucune surcharge ne l'atteint**. Toute mesure avec consensus actif tourne donc à 150 tirages quoi qu'on demande. |
-| **§17-9** | `MachineModel` consommé en production | 🔴 **NON.** Toujours aucun consommateur réel. |
-| **A23** | Couche critique, marge | ✅ **FAIT le 2026-08-11**, étages 0, 2 et 3, validé §17-41. |
+| **§29.7** | **Résolution du monochromateur** | 🟢 **facteur de bruit, √3 et biais de fente FAITS le 2026-08-11.** Reste A18, la fente comme variable de recherche. Détail ci-dessous. |
+| **§29.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §24-2, toujours ouverte. |
+| **A9** | Moyenne glissante **centrée** | 🔴 **NON, elle est CAUSALE.** Vérifié : la fenêtre court sur `[i−k+1 … i]` (`certus_strat_growth.py`, boucle `idx_w`). Décalage de `(k−1)/2` échantillons, soit **0,44 nm à k = 8**, alors que §18-5 pose « aucun retard » en postulat. §24-3 reste ouvert. |
+| **§29.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
+| **§22** | **Mode Rate** | 🟠 **NOYAU ÉCRIT LE 2026-08-11, PAS ENCORE UTILISABLE.** Le calcul d'épaisseur, l'effacement d'historique et la remontée `rate_layers` sont câblés. Manquent : le **drapeau utilisateur**, la **génération de variantes** et l'affichage. |
+| **§22, action 1** | SEEL dans le pipeline | 🔴 **NON.** SEEL est calculé à l'**étape 0 de l'interface** (`calculate_seel_analysis`) et n'atteint jamais le classement. Le tri de §22 tourne donc **dans la sonde**, à côté. |
+| **§24-18** | `consensus_num_runs` surchargeable | 🟠 Il **existe** (défaut 150, `certus_strat_ui_state.py:1150`) mais **aucune surcharge ne l'atteint**. Toute mesure avec consensus actif tourne donc à 150 tirages quoi qu'on demande. |
+| **§24-9** | `MachineModel` consommé en production | 🔴 **NON.** Toujours aucun consommateur réel. |
+| **A23** | Couche critique, marge | ✅ **FAIT le 2026-08-11**, étages 0, 2 et 3, validé §24-41. |
 | **A10** | Corridor côté notation | ✅ fait |
-| **§12.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
+| **§29.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
 
 ### 🟢 La résolution, en détail — état vérifié dans le code le 2026-08-11 au soir
 
 ⚠️ **Ce tableau disait « rien n'est implanté » le matin même. Il a été refait ligne par
 ligne contre le code, pas contre ce document** — c'est précisément le défaut de tenue que
-§18bis existe pour corriger, et il s'y reprenait lui-même.
+§30 existe pour corriger, et il s'y reprenait lui-même.
 
-| ce que §12.7 demande | état |
+| ce que §29.7 demande | état |
 |---|---|
-| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ✅ `RESOLUTION_NOISE_FACTOR`, `certus_strat_robustness.py:173`. Une **table de 4 entrées**, et une fente absente de la table **lève** au lieu d'interpoler — §12.7 interdit la loi de puissance, qui autoriserait des réglages que la machine n'a pas. |
+| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ✅ `RESOLUTION_NOISE_FACTOR`, `certus_strat_robustness.py:173`. Une **table de 4 entrées**, et une fente absente de la table **lève** au lieu d'interpoler — §29.7 interdit la loi de puissance, qui autoriserait des réglages que la machine n'a pas. |
 | La **correction √3** (fente rectangulaire) | ✅ `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)`, ligne 637. |
 | Le **biais de niveau** appliqué au signal lu | ✅ et c'est un **profil variant avec l'épaisseur**, pas une constante — voir l'encadré ci-dessous, c'est le fond du sujet. |
 | La fente **rendue** à l'utilisateur | ✅ `monochromator_resolution_nm` est dans le résultat (ligne 1697) et surchargeable par `CERTUS_RESOLUTION_NM`. |
 | La fente comme **variable de recherche** (A18) | ❌ **non.** Elle est un **réglage** qu'on impose au run, pas une dimension que la Phase B explore. Les 4 résolutions ne sont pas mises en concurrence. |
-| `min_resolution` comme **critère** | 🟠 calculée, sert de **départage dans le tri** (`certus_strat_ranking.py:665`), mais **elle ne rejette rien** — §20-contrôle 4 : compter les rejets avant de la câbler. |
+| `min_resolution` comme **critère** | 🟠 calculée, sert de **départage dans le tri** (`certus_strat_ranking.py:665`), mais **elle ne rejette rien** — §12-contrôle 4 : compter les rejets avant de la câbler. |
 | La **convolution complète** du signal | ❌ non, et c'est assumé : le biais est un terme additif par couche et par épaisseur, pas une intégration spectrale dans la boucle chaude. |
 
 ### 🔑 Et la conséquence que 👤 souligne, qui est le cœur du problème
@@ -52,7 +52,7 @@ ligne contre le code, pas contre ce document** — c'est précisément le défau
 > 👤 *« Le calculateur OMS d'arrêt des couches ne tient pas compte de la largeur des
 > fentes et se trompera sur la valeur du niveau à atteindre. »*
 
-C'est exactement le mécanisme de §12.7, et il impose une **asymétrie qu'il ne faudra pas
+C'est exactement le mécanisme de §29.7, et il impose une **asymétrie qu'il ne faudra pas
 inverser** :
 
 ```
@@ -63,7 +63,7 @@ biais = <T>_B - T(lambda_mon) = T''(lambda_mon) . B^2 / 24
 
 🟢 **C'est implanté depuis le 2026-08-11**, et dans le bon sens : le biais va sur le
 **signal lu** (`Ts_r`), la **cible reste au calcul parfait** (`Ts_n`, `target_nominal`).
-Biaiser les deux annulerait exactement l'effet — c'est le mode de défaillance que §12.1 a
+Biaiser les deux annulerait exactement l'effet — c'est le mode de défaillance que §29.1 a
 déjà rencontré trois fois sur la distorsion affine.
 
 👤 *« Je ne veux pas être optimiste sur les fentes mais réaliste »* (2026-08-11) : le biais
@@ -78,7 +78,7 @@ est donc **actif par défaut**, à la fente nominale de 2 nm.
 
 Le biais valait **un nombre par couche**, ajouté identiquement à toutes ses lectures. Or
 
-> **une constante ajoutée au signal lu est exactement le `b` de `T → a·T + b`, et §12.1 a
+> **une constante ajoutée au signal lu est exactement le `b` de `T → a·T + b`, et §29.1 a
 > démontré POEM rigoureusement invariant par cette transformation.**
 
 📏 **Mesuré au noyau, arrêt d'une couche sous POEM :**
@@ -90,11 +90,11 @@ Le biais valait **un nombre par couche**, ajouté identiquement à toutes ses le
 ```
 
 **Une constante de 1e-2, soit vingt fois l'amplitude du bruit de lecture, déplace l'arrêt de
-1,8e-11 nm** — neuf décades sous les 0,05 nm en dessous desquels §16 interdit de conclure
+1,8e-11 nm** — neuf décades sous les 0,05 nm en dessous desquels §8 interdit de conclure
 quoi que ce soit.
 
 🔑 **L'ancien modèle donnait donc à POEM la seule forme qu'il absorbe gratuitement**, et ne
-modélisait rien de celle qu'il ne peut pas absorber. §12.7 l'avait pourtant écrit d'avance :
+modélisait rien de celle qu'il ne peut pas absorber. §29.7 l'avait pourtant écrit d'avance :
 le biais *« dépend de la courbure locale, donc il diffère à chaque ancre et au point de
 déclenchement »*.
 
@@ -154,7 +154,7 @@ s'annulent par symétrie : **on gagne deux ordres, pas un.**
 | passe-bande 3cav | 5 nm | 33 | **0,64 %** | 17,27 % |
 
 🔑 **À la fente nominale de 2 nm le développement était acceptable ; à 5 nm il s'effondre.**
-Et 5 nm est exactement la fente qui décide du bonus de bruit ÷1,5 de §12.7. **Le
+Et 5 nm est exactement la fente qui décide du bonus de bruit ÷1,5 de §29.7. **Le
 développement se trompait le plus là où la décision se prend.**
 
 #### Le coût, et pourquoi il ne fait pas exploser le budget
@@ -167,7 +167,7 @@ interpolation linéaire au lieu d'une addition scalaire.
 ⚠️ **L'approximation qui reste, et elle est assumée** : le profil est bâti sur l'empilement
 **nominal**. À chaque tirage le sous-empilement réel diffère de quelques nm, donc la courbure
 vraie aussi. Modéliser cette modulation-là mettrait une intégration spectrale **dans** la
-boucle chaude — précisément le coût que §12.7 signalait. La part systématique, qui est tout
+boucle chaude — précisément le coût que §29.7 signalait. La part systématique, qui est tout
 l'effet au premier ordre, est capturée ; sa modulation tirage à tirage ne l'est pas.
 
 #### Vérifications
@@ -184,9 +184,9 @@ l'effet au premier ordre, est capturée ; sa modulation tirage à tirage ne l'es
 puisqu'un biais scalaire n'a aucune autre forme à quoi être comparé. C'est bien le sujet : le
 défaut n'était pas un mauvais chiffre, c'était **un degré de liberté manquant**.
 
-### 🔴 LA PHASE A VOIT ENFIN LA FENTE — le septième paramètre de §17-23
+### 🔴 LA PHASE A VOIT ENFIN LA FENTE — le septième paramètre de §24-23
 
-§17-23 recensait **six** paramètres de modèle que la Phase A laissait à leur valeur neutre.
+§24-23 recensait **six** paramètres de modèle que la Phase A laissait à leur valeur neutre.
 La fente était le **septième**, et c'est celui qui change **quelle λ est retenue**.
 
 Le mécanisme, et il n'a rien de subtil : la Phase A classe les candidates à la dynamique du
@@ -195,7 +195,7 @@ l'ondulation spectrale est la plus fine — **7,2 nm de période à 48 couches p
 2 nm**. Juger en aveugle, c'est choisir exactement les λ que l'instrument réel ne peut pas
 exploiter.
 
-📏 **Vérifié par comptage** (§20-contrôle 4), couche 40, 21 candidates de 500 à 600 nm :
+📏 **Vérifié par comptage** (§12-contrôle 4), couche 40, 21 candidates de 500 à 600 nm :
 la **seule** candidate dont le verdict change est **540 nm** — le bord de bande — qui passe
 de **0 % à 100 % de plantage** dès que la Phase A reçoit le profil. Toutes les autres sont
 inchangées. Un filtre qui rejette exactement ce qu'il doit rejeter, et rien d'autre.
@@ -215,11 +215,11 @@ Propager sans la fente pendant que les candidates sont jugées avec elle rendrai
 ⚠️ **Le profil est indexé PAR CANDIDATE**, forme `(n_candidates, n_couches, nœuds)`. Le biais
 dépend de la λ de monitoring, et c'est exactement ce que cet étage fait varier : une matrice
 unique par couche donnerait à toutes les candidates la courbure de la sortante — le filtre
-inerte de §20-contrôle 4.
+inerte de §12-contrôle 4.
 
 🔑 **Et l'absorption par POEM est CONDITIONNELLE — mon premier test l'a énoncée comme
 générale et il a eu raison d'échouer.** Sans historique de bloc, POEM n'a pas d'ancres et
-retombe sur le **niveau absolu**, la branche que §12.1 a démontrée non invariante :
+retombe sur le **niveau absolu**, la branche que §29.1 a démontrée non invariante :
 📏 une constante de 1e-4 y déplace l'arrêt de **0,0388 nm**. Avec des ancres, la même
 constante ne déplace rien. Les deux faces sont désormais épinglées par un test chacune.
 

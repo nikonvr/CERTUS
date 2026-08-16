@@ -116,7 +116,7 @@ essentiellement aveugle ; il est en réalité servi sur 49 des 61 longueurs d'on
 2. **Pour compter des points d'arrêt, utilise `tan 2δ = R/Q`**, pas l'épaisseur de la couche.
    La sonde `scripts/probe_turning_points.py` le fait déjà.
 3. **Le vrai critère de basculement en mode Rate n'est pas une épaisseur** : c'est
-   `swing < SWING_MIN`. C'est écrit dans CLAUDE.md §14 depuis le 2026-08-09, et une couche de
+   `swing < SWING_MIN`. C'est écrit dans [`MODE_RATE.md`](MODE_RATE.md) depuis le 2026-08-09, et une couche de
    30 nm à faible contraste d'indice peut être aussi pauvre qu'une ultrafine.
 4. **« Le témoin est en QWOT » n'est pas une hypothèse gratuite** : elle est vraie pour un
    miroir quart d'onde, fausse pour un design quelconque. Un raisonnement qui la suppose

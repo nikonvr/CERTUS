@@ -79,7 +79,7 @@
                 <li><code>CLAUDE.md</code> — single project document: work framework, physical conventions, machine specifications, baseline reference, and sequential tasks.</li>
             </ol>
             <p style="margin:0 0 10px 0;">
-                <strong>The working directory is <code>C:\dev\gemini</code> alone.</strong> Multiple copies of this repository exist on the machine. Modifying one and measuring another produces no error message — only false results. The verification command is at the top of <code>AGENTS.md</code>.
+                <strong>Work in the repository you opened, and only that one.</strong> Multiple copies of this repository exist on the machine. Modifying one and measuring another produces no error message — only false results. The verification command is at the top of <code>AGENTS.md</code>.
             </p>
             <p style="margin:0;">
                 <strong>Only one benchmark is valid for physical conclusions:</strong> the 48-layer dichroic, <code>example/example_strat/JSON-strat-example.json</code>. The 8-layer stacks in unit tests serve to verify code mechanisms, never to settle a physics question.
@@ -2464,8 +2464,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                 differ by a factor of a hundred on the only quantity that <b>compounds</b>
                 over the height of the stack.
                 <br><code>raw_results_thickness</code> keeps the complete entries
-                (<code>objectives.py:313</code>), but the map given to the DP only keeps
-                <code>x["cost"]</code> (<code>pipeline.py:103</code>).
+                (<code>certus/core/certus_strat_objectives.py:313</code>), but the map given to
+                the DP only keeps <code>x["cost"]</code>
+                (<code>certus/core/certus_strat_pipeline.py:103</code>).
                 <br><b>Fix:</b> a parallel map <code>crash_map[layer][&lambda;]</code>
                 and the objective $\min \sum_\ell -\log\left(1 - p(\ell,\lambda)\right)$ — the
                 <b>log of the yield, exactly</b>. It is no longer a proxy: it is a direct

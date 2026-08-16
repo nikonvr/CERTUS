@@ -12,10 +12,10 @@
 > meilleures stratégies ? Si les top meilleures stratégies sont quasi aussi bonnes, on
 > pourra zapper la grille 1 nm au profit du 2 nm et gagner du temps. »*
 
-⚠️ **§13 porte une décision « tranchée, ne la rouvre pas » en faveur du 1 nm.** Elle
-s'appuie sur quatre chiffres de 2026-08-08, que §13 marque lui-même comme **historiques** :
+⚠️ **§25 porte une décision « tranchée, ne la rouvre pas » en faveur du 1 nm.** Elle
+s'appuie sur quatre chiffres de 2026-08-08, que §25 marque lui-même comme **historiques** :
 antérieurs à A10, à la correction d'enveloppe du corridor, et surtout à la modélisation de
-la fente. §9bis pose la règle de réouverture : *« on ne rouvre que si une MESURE la
+la fente. §18 pose la règle de réouverture : *« on ne rouvre que si une MESURE la
 contredit, pas un raisonnement »*. C'est bien une mesure qui la rouvre — le biais de fente.
 
 ### Ce qui est mesuré
@@ -26,10 +26,10 @@ contredit, pas un raisonnement »*. C'est bien une mesure qui la rouvre — le b
 📏 **Le test qui compte, sur le run de référence.** La classe d'équivalence SEEL de la
 gagnante (SEEL quantifié à 0,1 nm, demi-largeur `max(0,05 ; 0,06 × SEEL)`) contient
 **9 stratégies, dont 3 entièrement PAIRES**, toutes à plantage 0,000 et SEEL 0,3 nm. Le
-départage secondaire de §14, le rendement, ne les sépare pas non plus. **Une grille 2 nm
+départage secondaire de §22, le rendement, ne les sépare pas non plus. **Une grille 2 nm
 aurait trouvé un ex æquo au sens exact de la règle.**
 
-📏 **Et sous la règle de tri de §14, la première est DÉJÀ paire** : `[544, 506]` sur le run
+📏 **Et sous la règle de tri de §22, la première est DÉJÀ paire** : `[544, 506]` sur le run
 de référence, `[544, 462]` sur l'unique run portant le biais de fente. Ce critère n'a pas
 été choisi après coup — il est écrit dans l'artefact par le code, sous `ranking_seel_rule`.
 
@@ -65,7 +65,7 @@ le dichroïque, donc une fente de 2 nm y moyenne une fraction plus grande d'ondu
 |---|---|
 | Candidates | **251 → 126**, exact |
 | Profils de fente en Phase A | **12 048 → 6 048**, soit **65 s → 32 s** (comptage × 5,4 ms mesuré) |
-| Part de la Phase A dans un run | ~68 % (§18ter) |
+| Part de la Phase A dans un run | ~68 % (§31) |
 | **Rapport de temps réel de la Phase A** | 🔴 **NON MESURÉ.** Deux passes concurrentes ont rendu ×3,07 puis ×1,41 : machine occupée, chiffre inexploitable. Halver les candidates ne halve pas forcément un noyau `prange`, dont le remplissage se dégrade à faible charge. |
 
 ### 🔑 Le critère de décision, posé À L'AVANCE
@@ -75,7 +75,7 @@ le dichroïque, donc une fente de 2 nm y moyenne une fraction plus grande d'ondu
 > gagnante du run à 1 nm, **et** que son rendement ne soit pas inférieur.
 
 **8 runs** : 2 composants × 2 graines × 2 grilles, biais de fente actif, tout le reste neutre.
-🔴 **Comparer deux `RESULT` bruts départagerait du bruit** — §17-26. C'est la classe qui décide.
+🔴 **Comparer deux `RESULT` bruts départagerait du bruit** — §24-26. C'est la classe qui décide.
 
 ---
 
@@ -87,7 +87,7 @@ le dichroïque, donc une fente de 2 nm y moyenne une fraction plus grande d'ondu
 
 **8 runs, `run_campaign.py n`, tous `OK`, tous sur le même état du code.** Les durées du
 journal `probe_runs.tsv` n'ont **pas** été réutilisées : elles s'étalent sur plusieurs états
-du code, et §17-7 vaut pour les secondes comme pour les résultats.
+du code, et §24-7 vaut pour les secondes comme pour les résultats.
 
 ### Le coût
 
@@ -124,8 +124,8 @@ Entre N = 300 et N = 500, la classe d'équivalence SEEL ne partage que **2 membr
 
 Ce n'est pas un défaut de la mesure, **c'est le résultat** : les stratégies de tête sont
 réellement **interchangeables** — même SEEL, même rendement de 100 %. Il n'y a rien à
-départager, et c'est précisément pourquoi §14 prescrit de déclarer l'égalité au lieu
-d'acheter des tirages. §17-26 le disait sur les scores ; ceci le dit sur la **réponse**.
+départager, et c'est précisément pourquoi §22 prescrit de déclarer l'égalité au lieu
+d'acheter des tirages. §24-26 le disait sur les scores ; ceci le dit sur la **réponse**.
 
 ### 🔒 LA RECOMMANDATION — N = 300, posé le 2026-08-13
 
@@ -155,7 +155,7 @@ le repêchage de 24 % à 8 %, pour **+7 min sur les deux composants réunis** (4
 la part fixe domine tellement que la profondeur est bon marché. 300 → 500 coûte +10 min de
 plus et ne gagne presque rien.
 
-⚠️ **Ce chiffre est conditionné au correctif 2 (§23bis), qui n'est PAS fait.** Une fois le
+⚠️ **Ce chiffre est conditionné au correctif 2 (§33), qui n'est PAS fait.** Une fois le
 seuil porté sur une borne de confiance, une profondeur faible cessera de rejeter à tort et
 deviendra seulement **permissive**. Le choix redeviendra une question de finesse, et 150
 pourrait suffire de nouveau. **Ça se remesurera, ça ne se déduira pas.**
@@ -236,7 +236,7 @@ C'est le repli obligatoire de `_filter_finite_scores` (ligne 1152) : quand **auc
 d'un bloc ne survit au filtre, il les réinjecte toutes avec un score fini plutôt que de rendre
 une liste vide. Le comportement est délibéré et documenté — mieux vaut la moins risquée que
 `RESULT=None` — mais **rien dans le classement ne distingue une stratégie repêchée d'une
-stratégie qui a réellement passé le filtre**. C'est le motif de §17-37 : le résultat a l'air
+stratégie qui a réellement passé le filtre**. C'est le motif de §24-37 : le résultat a l'air
 sain. Correctif à faire : remonter un drapeau `fallback_rescued` dans le résultat de
 stratégie, comme `n_layers_forced`.
 
@@ -257,7 +257,7 @@ Le code existe et il est couvert par 37 tests unitaires. **La campagne `gate` A 
 > au run et jamais écrite dans `r["config"]`**. `run_campaign.py` ne peut pas vérifier que le
 > run a fait ce qu'on lui demandait, et `analyse_gate.py` lit une clé absente : il est inerte.
 
-**C'est le point 7 de §17 qui se rouvre** — *« un run qui ne consigne pas sa configuration
+**C'est le point 7 de §24 qui se rouvre** — *« un run qui ne consigne pas sa configuration
 n'est comparable à rien »*. Répare la traçabilité **avant** de relancer : la clé dans les
 **deux** listes, et dans le nom du fichier de sortie.
 
@@ -321,7 +321,7 @@ inférieure de Clopper-Pearson à 95 %. Conséquences, et elles sont toutes dés
 - à faible profondeur le filtre rejette peu — c'est **honnête**, on ne sait pas ;
 - il se resserre tout seul quand la profondeur monte, **sans changer de règle**.
 
-🔒 **Le seuil de 5 % ne bouge pas.** C'est le « 95 % des dépôts fonctionnent » de §8, une
+🔒 **Le seuil de 5 % ne bouge pas.** C'est le « 95 % des dépôts fonctionnent » de §15, une
 spécification 👤. C'est l'**estimateur** qui est en cause, jamais la valeur.
 
 ### Les précautions
@@ -331,7 +331,7 @@ spécification 👤. C'est l'**estimateur** qui est en cause, jamais la valeur.
 - 🔴 **Un run de validation à lui seul**, contrainte C3 — pas mélangé au correctif 1.
 - ⚠️ **Le repli de `_filter_finite_scores` reste nécessaire** : la borne de confiance rejette
   moins, donc il se déclenchera moins, mais il ne devient pas inutile.
-- 🔑 **Ce qu'il faut remesurer après** : le tableau de §23. Une borne de confiance rend une
+- 🔑 **Ce qu'il faut remesurer après** : le tableau de §33. Une borne de confiance rend une
   profondeur faible **sûre mais permissive** ; N = 300 pourrait redevenir surdimensionné.
   **Remesure, ne déduis pas.**
 
@@ -401,9 +401,9 @@ compte.
 
 ### ⚠️ Ce que le correctif 1 a PÉRIMÉ
 
-**§18ter recommandait `n_screen_runs = 10`, sur la foi de §17-27** — « cribler à 10 tirages
+**§31 recommandait `n_screen_runs = 10`, sur la foi de §24-27** — « cribler à 10 tirages
 ne perd rien : 133 classées contre 228, même gagnante, `RESULT` bit-identique ». Cette
 mesure a été faite quand le criblage ne choisissait que les survivantes de la passe
 complète. **Il choisit désormais aussi les parents**, donc une stratégie tuée par malchance
 au criblage est perdue pour tout le reste de la recherche. **La mesure ne couvre plus le
-rôle. `n_screen` reste à 25** — voir le tableau de §23bis.
+rôle. `n_screen` reste à 25** — voir le tableau de §33.

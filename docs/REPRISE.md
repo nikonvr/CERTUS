@@ -5,6 +5,9 @@
 > lire et dans quel ordre**, ce qui est **acquis**, ce qui est **faux dans les vieux
 > documents**, et ce qui tourne en ce moment.
 
+🔴 **Si tu reprends un travail interrompu, lis d'abord [`REPRENDRE_ICI.md`](REPRENDRE_ICI.md)** : commande exacte de reprise et état gelé au
+2026-08-16 08:45.
+
 ---
 
 ## 1. Le projet en cinq lignes
@@ -45,10 +48,10 @@ fixé, les comparaisons sont valides.**
 | ordre | fichier | pourquoi |
 |---|---|---|
 | 1 | **ce fichier** | l'état du jour |
-| 2 | `CLAUDE.md` §25.12 puis §25.11 | les corrections les plus récentes — elles **priment** sur ce qui précède |
-| 3 | `CLAUDE.md` §25.10, §25.8 | la synthèse du chantier ⚠️ **partiellement périmée**, voir §5 ci-dessous |
+| 2 | [`CHANTIER_MULTITEMOINS.md`](CHANTIER_MULTITEMOINS.md) §25.12 puis §25.11 | les corrections les plus récentes — elles **priment** sur ce qui précède |
+| 3 | le même dossier, §25.10 et §25.8 | la synthèse du chantier ⚠️ **partiellement périmée**, voir §5 ci-dessous |
 | 4 | `docs/QWOT_ET_TURNING_POINT.md` | **obligatoire** avant d'écrire sur les points tournants |
-| 5 | `CLAUDE.md` §1, §2, §7 | interdits, pièges, vocabulaire |
+| 5 | `CLAUDE.md` §6, §7, §14 | interdits, pièges, vocabulaire |
 | 6 | `docs/PLAN_2026-08-16.md` | le plan en cours d'exécution |
 | — | `reports/ENONCE_PROBLEME.md` | énoncé autonome, utile pour poser le problème à un tiers |
 
@@ -72,7 +75,7 @@ aller selon la tâche.
 - **La résolution est une unité de décision.** 5,1 % en SEEL à N = 50, ~3,0 % à N = 150. En
   dessous, c'est une **égalité**, jamais un classement.
 - **Un SEEL issu d'un minimum sur beaucoup de candidats évalués à N = 50 n'est pas
-  publiable** — c'est la malédiction du vainqueur, et elle a coûté 12,9 % le 15/08 (§25.12).
+  publiable** — c'est la malédiction du vainqueur, et elle a coûté 12,9 % le 15/08 (`CHANTIER_MULTITEMOINS.md` §25.12).
 
 ---
 

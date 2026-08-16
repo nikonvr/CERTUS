@@ -107,7 +107,7 @@ changements » : c'est la physique seule qui doit le dire.
 > 99c et peut-être le 48c. »* (2026-08-14)
 
 **Ne confonds pas les deux.** Que le changement de témoin coûte la compensation est un fait acquis,
-mécaniquement vrai, démontré par les tests de §25.5-T1 — et **ce n'est pas la question**.
+mécaniquement vrai, démontré par les tests de §23.5-T1 — et **ce n'est pas la question**.
 La question est **à quelle couche changer de témoin**, et elle est ouverte.
 
 #### 🔵 CE QUE LES EXPÉRIMENTATEURS PRESSENTENT — hypothèse consignée, PAS un résultat
@@ -134,7 +134,7 @@ sensibilité, jamais après une couche sensible »*, où `S(p-1)` est la sensibi
 **gelée** par le changement.
 
 🔴 **AVANT DE LIRE LE TABLEAU — `S` A DEUX DÉFINITIONS ET ELLES NE DONNENT PAS LE MÊME
-CLASSEMENT.** §25.10 mesure `S(j)` par une perturbation de **1 nm ABSOLU**. Une perturbation
+CLASSEMENT.** §23.10 mesure `S(j)` par une perturbation de **1 nm ABSOLU**. Une perturbation
 de **1 % RELATIF** pondère par l'épaisseur nominale : ce n'est **pas** la même grandeur. Sur le
 random75 les deux ne corrèlent qu'à **+0,79** entre elles, et donnent des contrastes de
 **11,3×** contre **19,8×**. **Seul le 1 nm absolu se compare aux trois repères existants.**
@@ -189,7 +189,7 @@ SEEL 0,272 nm**. Il n'a **aucun** besoin d'un changement de verre témoin.
 
 🔴 **75 couches passent, 99 ne passent pas. Ce n'est donc pas la longueur qui tue le
 monitoring, c'est la STRUCTURE** — les espaceurs demi-onde à swing nul et les miroirs de 19
-couches sous le plancher photométrique (§25.1). Le modèle « au-delà d'une cinquantaine de
+couches sous le plancher photométrique (§23.1). Le modèle « au-delà d'une cinquantaine de
 couches le témoin devient optiquement mort » est **réfuté** : un empilement aléatoire de 75
 couches se surveille d'un bout à l'autre sans difficulté.
 
@@ -213,7 +213,7 @@ compensation sans rien restaurer — et c'est ce qui fait du multi-témoins un *
 faisabilité, jamais d'optimisation**.
 
 ⚠️ Le +110 % est mesuré contre une borne supérieure (sélection gloutonne par intervalle,
-§25.9), donc le vrai écart est **au plus** celui-là. Le signe, lui, n'est pas en cause.
+§23.9), donc le vrai écart est **au plus** celui-là. Le signe, lui, n'est pas en cause.
 
 🔑 **Et un résultat qui, lui, se REPRODUIT** : *où* changer importe **peu**, sur les deux
 composants et indépendamment de leur structure.
@@ -244,7 +244,7 @@ tests simulés »*.
 > complète qui les reçoit tous. On tâtonnera d'abord.
 
 🔴 **MAIS LA PREMIÈRE CIBLE N'EST PAS LE SEEL.** Le point de départ n'est pas « 0,86 nm » :
-c'est **100 % de plantage**, donc *aucune* stratégie exploitable (§25.1). **Tant que le
+c'est **100 % de plantage**, donc *aucune* stratégie exploitable (§23.1). **Tant que le
 plantage n'est pas passé sous 5 %, aucun SEEL n'est publiable** — celui qui s'affichera sera
 un score de repli, et comparer deux couches de changement sur des scores de repli revient à
 **comparer deux façons d'échouer**.
@@ -278,7 +278,7 @@ qui « affiche 0,2 nm » toute seule peut donc contribuer beaucoup plus que 0,2 
 global. **Viser 0,3 global n'autorise pas à viser 0,3 par campagne** — il faudra
 vraisemblablement bien mieux que ça sur chacune.
 
-⚠️ Et cela **re-condamne** le raccourci déjà interdit en §25.6 : `SEEL = √(SEEL₁² + SEEL₂²)`
+⚠️ Et cela **re-condamne** le raccourci déjà interdit en §23.6 : `SEEL = √(SEEL₁² + SEEL₂²)`
 n'est pas seulement non mesuré, il compose des grandeurs qui **ne vivent pas sur le même
 objet**. Ne rapporte que le SEEL de la pièce. Si tu affiches un SEEL partiel, dis en toutes
 lettres qu'il est un diagnostic et **jamais** qu'il compose le global.
@@ -291,9 +291,9 @@ Il faut l'écrire, sinon quelqu'un va croire qu'un seuil suffit.
 |---|---|---|
 | 1 | **Bénéfice et coût varient en sens inverse le long de la pile** | Changer tôt garde un témoin vif mais gèle l'erreur tôt, et la compensation manque sur tout le reste. Changer tard garde la compensation mais les couches d'avant ont déjà été surveillées sur un témoin mourant. L'optimum est **au milieu de deux courbes qu'on ne sait pas tracer**. |
 | 2 | 🔴 **La grandeur qui décide n'est pas locale** | Ce qui compte est le SEEL **à la fin**, pas la qualité du signal **à le changement de témoin**. Un changement de témoin qui paraît excellente localement peut être désastreuse si elle gèle l'erreur dans une couche à laquelle le spectre final est très sensible. **On ne peut donc pas choisir couche par couche** : le problème n'est pas séparable, et toute règle gloutonne est suspecte. |
-| 3 | **Le changement de témoin n'est pas un axe indépendant** | Elle force une frontière de bloc, exactement comme un changement de λ ou une couche en Rate. Elle entre donc en **concurrence combinatoire** avec le partitionnement en blocs (§17-43) et avec le placement des couches Rate. L'optimum de changement dépend du plan de blocs, et réciproquement. Ce n'est pas un scalaire à régler. |
+| 3 | **Le changement de témoin n'est pas un axe indépendant** | Elle force une frontière de bloc, exactement comme un changement de λ ou une couche en Rate. Elle entre donc en **concurrence combinatoire** avec le partitionnement en blocs (§24-43) et avec le placement des couches Rate. L'optimum de changement dépend du plan de blocs, et réciproquement. Ce n'est pas un scalaire à régler. |
 | 4 | ⚠️ **Le critère évident est probablement SYSTÉMATIQUEMENT EN RETARD** | `SWING_MIN = 0.04` dit où le monitoring **échoue**, pas quand changer de témoin **paie**. Quand le swing passe sous le seuil, le mal est déjà fait : le bon changement se place vraisemblablement **avant** la mort du signal, pas au moment où elle survient. Un seuil rendra donc une réponse trop tardive, et elle aura l'air raisonnable. |
-| 5 | **Le coût opérationnel ne borne rien** | Le carrousel rend le changement de témoin gratuit (§25.2). Aucun garde-fou économique ne dira « pas plus de deux » : seule la physique le dira, et seul le nombre de positions du carrousel plafonne. |
+| 5 | **Le coût opérationnel ne borne rien** | Le carrousel rend le changement de témoin gratuit (§23.2). Aucun garde-fou économique ne dira « pas plus de deux » : seule la physique le dira, et seul le nombre de positions du carrousel plafonne. |
 | 6 | 🔴 **La décision peut être sous le bruit** | La résolution statistique d'un score est de ~6 % relatif à N = 150. Si deux couches de changement diffèrent de moins que ça, un balayage « trouvera » un optimum qui est du bruit. **Il faut fixer la profondeur avant de regarder les résultats**, et vérifier qu'un écart survit à un changement de graine. |
 
 #### La méthode, et l'ordre n'est pas négociable
@@ -320,7 +320,7 @@ Un tâtonnement noté est une carte ; un tâtonnement oublié est du bruit.
 marche : le SEEL y vaut 0,48 et 0,17 nm. Un changement de témoin y est donc **une perte sèche** — il
 retire de la compensation sans rien restaurer, puisqu'il n'y avait rien à restaurer.
 
-⚠️ Et le carrousel ne lui oppose **aucun coût** pour la retenir (§25.2) : si le modèle se
+⚠️ Et le carrousel ne lui oppose **aucun coût** pour la retenir (§23.2) : si le modèle se
 trompe, rien dans la simulation ne l'empêchera de couper à tort. C'est précisément pour ça
 que ces contrôles négatifs sont le garde-fou du chantier.
 
@@ -332,7 +332,7 @@ attente **avant** de mesurer, dans le test, pas dans le rapport.
 |---|---|---|
 | 1 | 48c, changement forcé en 24 | SEEL **dégradé** par rapport à 0,17 nm |
 | 2 | 35c, changement forcé en 17 | SEEL **dégradé** par rapport à 0,48 nm |
-| 3 | 99c, changement forcé vers le milieu | **plantage sous 5 %** — c'est l'hypothèse à réfuter. **Pas un SEEL** : sans survivant, tout SEEL affiché est un score de repli (§25.1) |
+| 3 | 99c, changement forcé vers le milieu | **plantage sous 5 %** — c'est l'hypothèse à réfuter. **Pas un SEEL** : sans survivant, tout SEEL affiché est un score de repli (§23.1) |
 
 #### ✅ T1 — Le mécanisme de changement : **FAIT le 2026-08-14**
 
@@ -372,7 +372,7 @@ verre que le faisceau regarde. Changer de témoin ne fait pas oublier sa calibra
 | 5 | couche de changement honorée, 4 positions | ✅ |
 
 ⚠️ **Ce que T1 ne dit PAS** : que couper soit bénéfique. Il rend le changement de témoin *possible et
-correctement modélisée*. Tout le reste de §25 sert à savoir **où**.
+correctement modélisée*. Tout le reste de §23 sert à savoir **où**.
 
 #### T2 — Prédicteur gratuit n°1 : LA CARTE DE MORT DU SIGNAL
 
@@ -389,7 +389,7 @@ aveugle à λ₀ peut être parfaitement lisible 40 nm plus loin. C'est tout l'o
 
 #### T3 — Prédicteur gratuit n°2 : LA CARTE DE SENSIBILITÉ À L'ERREUR GELÉE
 
-C'est le prédicteur du **coût** de le changement de témoin, et il tombe directement de la §25.2. Pour
+C'est le prédicteur du **coût** de le changement de témoin, et il tombe directement de la §23.2. Pour
 chaque position candidate *p* : geler un champ d'erreur réaliste sur les couches `1..p`, puis
 mesurer le **dommage spectral** sur le design final. TMM pur, aucun monitoring, aucun
 Monte-Carlo de robustesse — donc peu coûteux.
@@ -408,7 +408,7 @@ règle qui les impose ne prouve rien.
 
 | | |
 |---|---|
-| **Script** | `scripts/campaign_testglass_cut_sweep.py`, sur le modèle de `scripts/run_campaign.py` — **une commande = toute la campagne**, chaque run vérifié contre la configuration demandée, reprenable |
+| **Script** | ⚠️ **Ce nom était un projet, il n'a jamais existé.** Ce qui a été construit à la place : `scripts/campagne_intervalles.py` — même exigence, une commande pour toute la campagne, chaque run vérifié, reprenable, plus le partage d'intervalles qui rend la recherche traitable |
 | **Balayage** | *p* sur toutes les positions, ou un pas régulier si le coût l'impose |
 | **Ce qu'on mesure** | le **SEEL de la pièce**, pas du témoin. Plus le taux de plantage, le nombre de couches en Rate, et le nombre de changements de λ |
 | **Contrôles dans la même campagne** | (a) sans changement de témoin ; (b) **même nombre de couches en Rate, sans changement de témoin** — sans ce second contrôle, on ne saura pas si le gain vient de le changement de témoin ou du Rate |
@@ -452,12 +452,12 @@ La règle doit tenir sur une échelle, pas sur un cas :
 
 | | |
 |---|---|
-| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§25.4). **Ne rapporte que le SEEL de la pièce.** |
+| **Dériver le SEEL global** | On sera tenté d'écrire `SEEL = √(SEEL₁² + SEEL₂²)`. Ce n'est pas seulement une conjecture non mesurée : elle compose des grandeurs qui **ne vivent pas sur le même objet** (§23.4). **Ne rapporte que le SEEL de la pièce.** |
 | **Confondre SEEL global et SEEL partiels** | 👤 : *« SEEL global de 0,3 nm ne veut pas dire que les SEEL partiels seront à 0,3 »*. Le partiel est un **diagnostic**, jamais un terme du global. |
 | **Tronquer la pièce avec le témoin** | Le défaut qui rendrait tout le chantier faux **et plausible** : le score s'améliorerait parce que les erreurs d'avant le changement de témoin auraient disparu au lieu d'être gelées. Test 4 de T1, et il est écrit. |
 | **Le degré de liberté gratuit** | Un changement de témoin ne peut qu'améliorer un résultat **en échantillon**. Validation hors échantillon obligatoire : autre graine **et** autre empilement. |
 | **Le plantage à 0,0 %** | Zéro sur 300 tirages n'est pas zéro. C'est « moins de 1 % à 95 % de confiance ». |
-| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend le changement de témoin gratuit (§25.2). Rien hors de la physique ne limitera le nombre de changements de témoin — sauf le nombre de positions du carrousel. |
+| **Croire qu'un coût atelier freinera** | Il n'y en a pas : le carrousel rend le changement de témoin gratuit (§23.2). Rien hors de la physique ne limitera le nombre de changements de témoin — sauf le nombre de positions du carrousel. |
 | **Changer « vers 50 »** | 50 est le souvenir de 👤 sur un cas, pas une mesure. Le balayage doit être libre de rendre 20, 30 ou 70. |
 | 🔴 **Chercher la règle avant d'avoir les essais** | 👤, deux fois : *« ce sont les essais-erreur avec de nombreux batchs qui permettront une compréhension a posteriori »*. Une explication trouvée avant les mesures sera confirmée par elles, quoi qu'elles disent. |
 
@@ -478,7 +478,7 @@ ligne de balayage.
 
 | grandeur | valeur sur le 99c | utilisable comme objectif ? |
 |---|---|---|
-| **SEEL** | score de **repli** (§25.1) | ❌ il classe des façons d'échouer |
+| **SEEL** | score de **repli** (§23.1) | ❌ il classe des façons d'échouer |
 | **`crash_rate`** | **1,000**, saturé | ❌ plat : aucune direction de recherche |
 
 **Chercher la meilleure couche de changement en comparant des SEEL de repli reviendrait à
@@ -537,7 +537,7 @@ mesures : leur valeur se juge à leur corrélation avec P3, pas à leur élégan
 
 #### P3 — La recherche, et pourquoi elle n'est pas une force brute
 
-Avec 49 positions admissibles (paires seulement, §25.5), il y a **1 176** couples et
+Avec 49 positions admissibles (paires seulement, §23.5), il y a **1 176** couples et
 **18 424** triplets. À ~15 min le run, l'énumération est exclue. L'ordre est donc :
 
 1. **Un changement** — balayage grossier des positions (10 runs), sur le régime désaturé de
@@ -580,8 +580,8 @@ chose.
 
 | | RMSE P95 | SEEL | plantage |
 |---|---|---|---|
-| **pièce assemblée**, 3 témoins (0 / 32 / 66) | `0.184946` | **0,860 nm** | **0 %** sur chacune des 3 campagnes |
-| référence monolithique | `0.187761` | 0,87 nm | **100 %** — score de **repli** (§25.1) |
+| **pièce assemblée**, 3 témoins (0 / 32 / 66) | `0.184946` | **0,860 nm** *(périmé — voir §25.12)* | **0 %** sur chacune des 3 campagnes |
+| référence monolithique | `0.187761` | 0,87 nm | **100 %** — score de **repli** (§23.1) |
 
 🔑 **Le monolithique n'est pas atteignable.** Aucune des 487 stratégies ne survit, donc son
 0,87 nm ne décrit aucun dépôt réalisable. L'assemblé, lui, sort de **trois campagnes
@@ -644,33 +644,33 @@ déséquilibré 10/20 rend 100 % et 4 blocs — **le mécanisme agit et la quali
 compte**, mais les λ sont choisies sur le mauvais objet optique.
 
 ⚠️ **Donc « 98 % » ne réfute pas la méthode : il teste une demi-implantation.** L'assemblage
-de §25.8 contourne le problème, il ne le corrige pas.
+de §23.8 contourne le problème, il ne le corrige pas.
 
 ### 25.9. 🔴 CE QUE L'ANALYSE CONTRADICTOIRE A CORRIGÉ — parades adoptées
 
-Une analyse contradictoire indépendante de §25 a été produite le 2026-08-15
+Une analyse contradictoire indépendante de §23 a été produite le 2026-08-15
 (`reports/proposition.html`). Elle a **lu le code**, pas seulement le plan :
 `certus_strat_batch.py:424` et `MAX_LOOKBACK_VAL = 4` sont cités exactement. Quatre de ses
 attaques portent, et les parades ci-dessous sont **contraignantes**, pas indicatives.
 
 | # | L'attaque, et elle est juste | La parade, obligatoire |
 |---|---|---|
-| **1** | 🔴 **Cinq prédicteurs sur ~10 points de mesure = sélection post-hoc.** §25.5-T5 listait cinq règles candidates à corréler **après** le balayage. *« Le plan trouvera une règle, forcément. »* | **UN SEUL prédicteur, déclaré par écrit AVANT de mesurer.** S'il échoue, on peut en essayer un second — mais en le déclarant **exploratoire**, jamais confirmatoire. Rapporter le meilleur de cinq est du p-hacking déguisé en physique. |
+| **1** | 🔴 **Cinq prédicteurs sur ~10 points de mesure = sélection post-hoc.** §23.5-T5 listait cinq règles candidates à corréler **après** le balayage. *« Le plan trouvera une règle, forcément. »* | **UN SEUL prédicteur, déclaré par écrit AVANT de mesurer.** S'il échoue, on peut en essayer un second — mais en le déclarant **exploratoire**, jamais confirmatoire. Rapporter le meilleur de cinq est du p-hacking déguisé en physique. |
 | **2** | 🔴 **T3 est circulaire.** « Geler un champ d'erreur réaliste » ne dit pas **lequel**. Or le seul champ qui ait un sens physique est celui que produit le Monte-Carlo — donc un prédicteur « gratuit » qui a besoin du Monte-Carlo pour être calibré **n'est pas gratuit**. | **Écrire le champ d'erreur AVANT de l'exécuter**, et assumer qu'un champ i.i.d. mesure un dépôt **sans monitoring**, ce que personne ne fait. Si le champ ne peut pas être justifié : **abandonner T3**, ne pas le maquiller. |
 | **3** | **« Dommage spectral » n'est pas un scalaire.** RMSE, décalage de λ₀, élargissement de bande donnent **trois classements différents** des positions. | **Documenter la norme choisie avant de mesurer.** Une norme choisie après coup choisit son gagnant. |
 | **4** | 🔴 **La marge peut être aussi plate que le plantage.** A23 a validé la marge comme prédicteur sur des empilements à plantage **faible**. À 100 %, les marges seront uniformément catastrophiques. | **Vérifier que la marge a un gradient AVANT de fonder P0 dessus.** Regarder la **pire marge**, pas le décompte des couches insuffisantes — le décompte saturera à 99. |
 | **5** | **Le forçage de frontière de bloc détruit aussi les ancres POEM**, second mécanisme de perte jamais quantifié séparément du premier. | Borné à 4 couches (`MAX_LOOKBACK_VAL`) contre un coût de compensation **non borné** : acceptable en première approximation. ⚠️ Mais si la recherche rend un **plateau**, c'est ce terme-là qui départagera, et il n'est pas instrumenté. |
-| **6** | **Le budget n'est chiffré nulle part.** Le balayage réel coûte 30 à 50 runs, soit 8 à 12 h, sans marge pour les reprises. | **Figer le nombre de runs avant de commencer.** 🟢 L'assemblage de §25.8 le divise par ~10 : trois runs de ~2 min au lieu d'un run de 15 min par position. |
+| **6** | **Le budget n'est chiffré nulle part.** Le balayage réel coûte 30 à 50 runs, soit 8 à 12 h, sans marge pour les reprises. | **Figer le nombre de runs avant de commencer.** 🟢 L'assemblage de §23.8 le divise par ~10 : trois runs de ~2 min au lieu d'un run de 15 min par position. |
 | **7** | **Le nombre de positions du carrousel n'est écrit nulle part**, alors qu'il plafonne l'espace de recherche. Si le carrousel a 3 positions, tester 4 témoins est **physiquement impossible**. | 🔴 **Question ouverte à 👤.** Ne pas planifier de partition avant la réponse. |
 
 #### Ce que la mesure du 2026-08-15 a rendu caduc dans cette analyse
 
-Elle a lu §25 **avant** l'assemblage. Trois de ses attaques visent des étapes qu'on n'a plus
+Elle a lu §23 **avant** l'assemblage. Trois de ses attaques visent des étapes qu'on n'a plus
 besoin de faire :
 
 | son attaque | pourquoi elle tombe |
 |---|---|
-| *« le balayage mesure la coupure COMPOSÉE avec la réponse du solveur »* | Vise T4. L'assemblage (§25.8) résout chaque campagne **indépendamment sur son propre objet optique**, puis compose. Le confondage n'y est pas le même. |
+| *« le balayage mesure la coupure COMPOSÉE avec la réponse du solveur »* | Vise T4. L'assemblage (§23.8) résout chaque campagne **indépendamment sur son propre objet optique**, puis compose. Le confondage n'y est pas le même. |
 | *« la désaturation (P0) est un pari sans procédure de repli »* | Par l'assemblage il **n'y a plus rien à désaturer** : chaque campagne est déjà à **0 %** de plantage, avec 23, 54 et 156 stratégies déposables. |
 | *« 8 à 12 h de balayage »* | Facteur 10 en moins par l'assemblage. |
 
@@ -685,7 +685,7 @@ source dérive thermiquement. Ni l'un ni l'autre n'est dans le noyau. **Non mesu
 modélisé.**
 
 **« Témoin et pièce reçoivent la même épaisseur » n'est pas quantifié.** 👤 a répondu *« à peu
-près identiques »* (§25.2), et j'en ai déduit qu'aucun facteur d'uniformité n'était à
+près identiques »* (§23.2), et j'en ai déduit qu'aucun facteur d'uniformité n'était à
 modéliser. ⚠️ **Un rapport de 0,97 — courant sur un bâti à rotation planétaire — ferait dériver
 la pièce d'environ 1,5 quart d'onde sur 50 couches**, et c'est un biais **systématique que le
 monitoring ne corrige pas** : il corrige l'erreur du témoin, pas celle de la pièce. Il
@@ -693,7 +693,7 @@ s'ajouterait à l'erreur gelée. 🔴 **Question à 👤 : ce rapport est-il mes
 
 ### 25.10. 🟢 SYNTHÈSE DU 2026-08-15 — ce que la journée a établi, réfuté, et laissé ouvert
 
-**Lis cette section avant tout le reste de §25.** Elle remplace les conclusions provisoires
+**Lis cette section avant tout le reste de §23.** Elle remplace les conclusions provisoires
 qui la précèdent quand elles divergent.
 
 #### Ce qui est ÉTABLI par la mesure
@@ -701,9 +701,9 @@ qui la précèdent quand elles divergent.
 | # | Fait | Preuve |
 |---|---|---|
 | 1 | **Le 99c n'est pas fabricable en une seule campagne.** Les **487** stratégies plantent à **100 %** — pas la retenue, **la meilleure**. Le « 0,86 nm » qui circulait est un **score de repli**, inatteignable. | distribution complète des taux de plantage |
-| 2 | **Le multi-témoins le rend fabricable.** Campagnes à **0 %** de plantage chacune, assemblage à **0,782 nm** *(0,760 nm annoncé le 15/08, corrigé le 16/08 — §25.12)*. 🔑 **Il ne fait pas gagner en précision — il fait passer d'IMPOSSIBLE à POSSIBLE.** | 386 partitions assemblées |
+| 2 | **Le multi-témoins le rend fabricable.** Campagnes à **0 %** de plantage chacune, assemblage à **0,782 nm** *(0,760 nm annoncé le 15/08, corrigé le 16/08 — §23.12)*. 🔑 **Il ne fait pas gagner en précision — il fait passer d'IMPOSSIBLE à POSSIBLE.** | 386 partitions assemblées |
 | 3 | **Le découpage ne gouverne presque rien.** Étendue **+14,4 %** sur 386 partitions, soit moins de 3 unités de résolution ; **110 partitions à égalité** avec la première. | résolution 5,1 % en SEEL à N=50 |
-| 4 | **Le nombre de témoins ne compte pas.** ⚠️ **Revu le 16/08** : en premium la meilleure est à **4 témoins** (0,782 nm), la meilleure à 3 témoins suit à 0,784 nm — **+0,2 %**, sous la résolution de 3,0 %. Toujours une égalité, mais l'abandon de la vague à 4 témoins n'était **pas** fondé. | §25.12 |
+| 4 | **Le nombre de témoins ne compte pas.** ⚠️ **Revu le 16/08** : en premium la meilleure est à **4 témoins** (0,782 nm), la meilleure à 3 témoins suit à 0,784 nm — **+0,2 %**, sous la résolution de 3,0 %. Toujours une égalité, mais l'abandon de la vague à 4 témoins n'était **pas** fondé. | §23.12 |
 | 5 | **Presque tout sous-empilement est monitorable sur verre nu** : **248 sur 249**. Un seul infaisable, `[22,78)`. | campagne des intervalles |
 | 6 | 🔑 **Ce n'est PAS l'âge du témoin qui gouverne.** Le **dernier** tiers du 99c — là où, en campagne unique, il ne reste qu'**une** λ viable — est le **plus facile** des trois sur verre nu : 156 stratégies déposables sur 163. | A 23/166, B 54/126, C 156/163 |
 | 7 | 🟢 **CONTRÔLE NÉGATIF PASSÉ, sur TROIS composants.** Là où le monitoring marche déjà, **toute** partition dégrade : **+73 à +89 %** sur le 48c (11/11), **+10 à +98 %** sur le 35c (12/12), **+110 %** sur le 75c aléatoire (0,272 → 0,571 nm). **Aucune ne gagne, même par chance.** | 40 sous-empilements |
@@ -711,7 +711,7 @@ qui la précèdent quand elles divergent.
 
 Le point 7 est le plus important du lot : **si une seule de ces partitions avait gagné, tout
 le reste tombait.** Le point 8 est celui qui recadre le chantier : ce qu'on combat n'est pas
-une longueur, ce sont les **espaceurs à swing nul** et les **miroirs sous 10⁻⁴** (§25.1).
+une longueur, ce sont les **espaceurs à swing nul** et les **miroirs sous 10⁻⁴** (§23.1).
 
 #### Ce qui est RÉFUTÉ
 
@@ -746,7 +746,7 @@ random75 avait été construit pour séparer « la règle a besoin d'un fort con
 +0,69 tenait à la structure du 99c ». Il ne le peut pas : son contraste est de **11,3×**, le
 **plus bas des quatre**, sept fois moins que le 99c. Une corrélation faible y est compatible
 avec les deux lectures. Avec 18 points il faudrait `|r| ≥ 0,47` pour sortir de zéro à 5 %.
-**Détail, définitions de `S`, et l'expérience qui trancherait : §25.4.**
+**Détail, définitions de `S`, et l'expérience qui trancherait : §23.4.**
 
 🔑 **Et c'est bien `S(p−1)` qui compte** — la couche **gelée** — pas `S(p)` (r = +0,23) ni une
 moyenne locale (r = +0,45). Le mécanisme prédit exactement ça.
@@ -784,13 +784,13 @@ mesures d'avant ce correctif ne sont pas comparables à celles d'après.
 
 Une fois un changement de témoin comprise, récurrence : *n* campagnes de monitoring, chacune partitionnée
 en blocs. La partition devient **à deux niveaux**, et elle se compose avec la recherche par
-blocs déjà en place (§17-43). Ne pas ouvrir T7 avant que T5 ait rendu une règle.
+blocs déjà en place (§24-43). Ne pas ouvrir T7 avant que T5 ait rendu une règle.
 
 ---
 
 ### 25.11. 🔴 SOIRÉE DU 2026-08-15 — le mécanisme d'échec, et trois affirmations du projet réfutées
 
-**Lis cette section avant §25.8 et §25.10 : elle les corrige là où elles divergent.**
+**Lis cette section avant §23.8 et §23.10 : elle les corrige là où elles divergent.**
 
 #### Le mécanisme d'échec, décodé et non plus supposé
 
@@ -803,7 +803,7 @@ Cause des plantages, décodée depuis la sentinelle du noyau (`k × 1e6 + épais
 | `LEVEL_UNREACHABLE` | 17,0 % |
 | `NON_MONOTONIC` | 0,0 % |
 
-🔴 **`strat.html` §10.15 affirme que le 99c plante en `CRASH_LEVEL_UNREACHABLE`. C'est faux.**
+🔴 **`strat.html` §21.15 affirme que le 99c plante en `CRASH_LEVEL_UNREACHABLE`. C'est faux.**
 
 🔑 **Mais `TP_MISCOUNT` est le SYMPTÔME, pas la cause.** 👤 : *« ma machine de dépôt y arrive
 très bien, même s'il y en a beaucoup ! C'est simplement la marge et les swing qui peuvent à la
@@ -831,7 +831,7 @@ du sursaut face à l'hystérésis** (×0,5) et **le plancher photométrique** (�
 | « plus d'extrema ⟹ comptage plus fragile » *(écrit par moi le soir même)* | 🔴 **FAUX** — testé : à 64 points le comptage est **identique** à celui de la densité machine (0,125 nm) pour ×0,5 / ×1 / ×1,5 / ×2. Pas d'aliasing. |
 
 ⚠️ **La densité d'échantillonnage reste néanmoins 17 à 127 fois plus grossière que la
-machine** — 0,10 à 0,38 point/nm contre 8,0 (0,125 nm par tour à 4 Hz, §9bis-1). Sans effet
+machine** — 0,10 à 0,38 point/nm contre 8,0 (0,125 nm par tour à 4 Hz, §18-1). Sans effet
 mesuré sur le comptage, mais c'est un écart au réel non maîtrisé, et le paramètre prévu pour
 le corriger, `machine_sampling_dd`, reste **inatteignable** (A8).
 
@@ -869,7 +869,7 @@ couche 65 donne une stratégie valide pour `[0,66)`. Vérification :
 | fast (campagne) | 319 | **0** | 100 % |
 | **premium** | 488 | **1** | **0,0 %** — SEEL 0,658 nm |
 
-⚠️ **Conséquence sur §25.8** : le « 248/249 déposables » et surtout le « seul sous-empilement
+⚠️ **Conséquence sur §23.8** : le « 248/249 déposables » et surtout le « seul sous-empilement
 infaisable, `[22,78)` » ne sont **pas** des mesures de faisabilité. `[22,78)` est contredit
 par `[22,99)` qui en a une. **5 intervalles sur 270 portent encore ce verdict** — tous à
 revérifier en premium : `[0,66)` ✅ levé, `[0,76)`, `[0,78)`, `[22,78)`, `[34,99)`.
@@ -880,7 +880,7 @@ revérifier en premium : `[0,66)` ✅ levé, `[0,76)`, `[0,78)`, `[22,78)`, `[34
 
 26 intervalles sur 270 contiennent des **tirages plantés** (2 à 4 %), qui se **cumulent** à
 l'assemblage. Sur 440 partitions, **2 ont une P95 contaminée**. 🔑 **La gagnante
-`0-22 / 22-72 / 72-99` est à 0,0 % de tirages plantés : son 0,760 nm n'était pas contaminé.** ⚠️ Il était en revanche **biaisé vers le bas par l'estimateur** — voir §25.12.
+`0-22 / 22-72 / 72-99` est à 0,0 % de tirages plantés : son 0,760 nm n'était pas contaminé.** ⚠️ Il était en revanche **biaisé vers le bas par l'estimateur** — voir §23.12.
 
 ⚠️ `classer_partitions.py` **ne vérifie pas** ce point. À ajouter avant tout nouveau classement.
 
@@ -932,7 +932,7 @@ composants ; **non testé** sur le 99c et sur les échelles extrêmes.
 #### 🔴 CORRIGÉ LE 2026-08-16 — le 0,760 nm était biaisé vers le bas, et la championne a changé
 
 La campagne premium (N = 150, `dp_top_k` = 40, 250 intervalles, 38,2 h cumulées sur 6 shards)
-rejoue le classement. **La malédiction du vainqueur annoncée en §25.9 s'est matérialisée**, et
+rejoue le classement. **La malédiction du vainqueur annoncée en §23.9 s'est matérialisée**, et
 son ampleur se mesure sur **la même partition** passée dans les deux caches :
 
 | partition | fast (N = 50) | premium (N = 150) |

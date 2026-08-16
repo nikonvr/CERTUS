@@ -14,12 +14,11 @@ Trois choses à connaître avant même d'ouvrir `CLAUDE.md`, parce qu'elles inva
 reste si elles sont fausses :
 
 ```bat
-cd /d C:\dev\gemini
 .venv\Scripts\python.exe -c "import certus.physics.certus_opt_tmm as m; print(m.__file__)"
 dir .git\hooks\post-commit*
 ```
 
-1. Le chemin affiché **doit** commencer par `C:\dev\gemini`. Plusieurs copies de ce dépôt
+1. Le chemin affiché **doit** être dans le dépôt que tu as ouvert. Plusieurs copies de ce dépôt
    coexistent sur la machine ; si tu modifies l'une et mesures l'autre, rien ne te le dira.
 2. Le hook doit s'afficher `post-commit.DESACTIVE`. Sous son nom court il pousse chaque
    commit vers le dépôt **public**, et `--no-verify` ne l'en empêche pas.

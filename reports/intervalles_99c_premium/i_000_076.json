@@ -1,0 +1,15 @@
+{
+  "a": 0,
+  "b": 76,
+  "n": 76,
+  "mode": "premium",
+  "stamp": "2026-08-16T07:17:34",
+  "instrument": "b7b7102",
+  "verdict": "AUCUNE_DEPOSABLE",
+  "n_strats": 575,
+  "n_deposables": 0,
+  "crash_min": 14.67,
+  "crash_retenue": 100.0,
+  "score": null,
+  "run_s": 3661.9
+}

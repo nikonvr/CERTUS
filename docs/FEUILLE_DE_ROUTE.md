@@ -7,7 +7,7 @@
 ---
 
 
-**Établie le 2026-08-09**, après l'audit de §17. Elle **remplace** l'ancien tableau T0–T7, qui
+**Établie le 2026-08-09**, après l'audit de §24. Elle **remplace** l'ancien tableau T0–T7, qui
 présentait comme à faire du code déjà écrit et comme faites des mesures qui ne l'étaient pas.
 La correspondance avec les anciens numéros est donnée en colonne.
 
@@ -22,7 +22,7 @@ La correspondance avec les anciens numéros est donnée en colonne.
 3. **Rien de mesuré avant d'être mesurable isolément** (contrainte C3). C'est pourquoi le
    palier 2 précède le palier 3.
 
-Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `2310 passed,
+Après **chaque** action : `pytest tests/oracle/ tests/unit/ -q --no-cov` → `2450 passed,
 5 skipped` · `ruff check .` → `All checks passed!` · commit · et tu écris ce que tu as mesuré,
 sortie collée. **Une action, un commit.**
 
@@ -30,9 +30,9 @@ sortie collée. **Une action, un commit.**
 
 | Outil | Ce qu'il fait | Remplace |
 |---|---|---|
-| `scripts\preflight.py` | Les 7 vérifications d'environnement en une commande, verdict `PREFLIGHT=GO` / `STOP` | §0 en entier |
+| `scripts\preflight.py` | Les 7 vérifications d'environnement en une commande, verdict `PREFLIGHT=GO` / `STOP` | §4 en entier |
 | `scripts\probe_tp_fabrication.py` | **A1 et A2, faites.** Fabrication d'extrema et survie des vrais, avec le vrai détecteur et le vrai générateur de bruit | A1, A2 |
-| `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]`, dans le nom du fichier, **et l'annonce dans les 2 s** ; refuse une valeur illisible au lieu de retomber sur le défaut | le trou de traçabilité de §17-7, et §17-11 |
+| `probe_anchor_noise_pipeline.py` | Écrit sa configuration effective dans `r["config"]`, dans le nom du fichier, **et l'annonce dans les 2 s** ; refuse une valeur illisible au lieu de retomber sur le défaut | le trou de traçabilité de §24-7, et §24-11 |
 | `scripts\run_campaign.py` | **Une commande = toute une campagne.** Environnement construit en dictionnaire, aucun shell, chaque run vérifié contre la configuration demandée, reprenable | une nuit de commandes tapées à la main |
 
 ### ✅ CE QUI EST ACQUIS — ne le refais pas, et ne le redemande pas
@@ -41,28 +41,28 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 
 | | Ce qui en reste |
 |---|---|
-| **A1, A2** | Le seuil anti-fabrication vaut **1,00 A** à `k = 8`, `N = 800` — mesuré, pas dérivé. `0,354` est réfuté (§9bis). Les vrais extrema survivent au lissage. |
-| **A6** | Le banc **est** déterministe à état compilé constant. C'est la **recompilation** qui décale les bits, de 2,819e-11, reproductiblement (§3). |
-| **A8** | 🔴 **INACHEVÉE, et l'inverse de ce qui était écrit ici.** `machine_sampling_dd` existe, il est exposé dans l'interface (*« Machine grid (nm, 0=off) »*) et livré dans **9 configurations d'exemple** — mais **AUCUN des 27 sites d'appel du noyau ne le lui passe** (vérifié le 2026-08-15). Le noyau reçoit donc **toujours** son défaut `0.0`. Le réglage est **inatteignable** : ce n'est pas « 0 par défaut », c'est 0 quoi qu'on fasse. La grille fine ne s'active que par `smoothing_window > 1` — **la soudure de §17-2 n'est donc PAS défaite**, elle est seulement masquée par un bouton qui ne fait rien. |
-| **A10, A14** | Le corridor atteint la notation. Courbe : `×1,23 · ×2,03 · ×2,41 · ×4,66`, exposant **0,545** (§17-29). |
-| **A12** | POEM protège d'un facteur **×41,2** sous distorsion affine (§17-29). ⚠️ **Cite la protection, jamais le dommage résiduel** : +0,9 % sur une graine, +98 % sur une autre. |
-| **A15** | La marge Phase A change ce qui est **offert**, jamais ce qui est **retenu** (§17-12). |
+| **A1, A2** | Le seuil anti-fabrication vaut **1,00 A** à `k = 8`, `N = 800` — mesuré, pas dérivé. `0,354` est réfuté (§18). Les vrais extrema survivent au lissage. |
+| **A6** | Le banc **est** déterministe à état compilé constant. C'est la **recompilation** qui décale les bits, de 2,819e-11, reproductiblement (§9). |
+| **A8** | 🔴 **INACHEVÉE, et l'inverse de ce qui était écrit ici.** `machine_sampling_dd` existe, il est exposé dans l'interface (*« Machine grid (nm, 0=off) »*) et livré dans **9 configurations d'exemple** — mais **AUCUN des 27 sites d'appel du noyau ne le lui passe** (vérifié le 2026-08-15). Le noyau reçoit donc **toujours** son défaut `0.0`. Le réglage est **inatteignable** : ce n'est pas « 0 par défaut », c'est 0 quoi qu'on fasse. La grille fine ne s'active que par `smoothing_window > 1` — **la soudure de §24-2 n'est donc PAS défaite**, elle est seulement masquée par un bouton qui ne fait rien. |
+| **A10, A14** | Le corridor atteint la notation. Courbe : `×1,23 · ×2,03 · ×2,41 · ×4,66`, exposant **0,545** (§24-29). |
+| **A12** | POEM protège d'un facteur **×41,2** sous distorsion affine (§24-29). ⚠️ **Cite la protection, jamais le dommage résiduel** : +0,9 % sur une graine, +98 % sur une autre. |
+| **A15** | La marge Phase A change ce qui est **offert**, jamais ce qui est **retenu** (§24-12). |
 | **A17** | Le facteur de bruit par fente est une **table de 4 entrées** ; une fente absente **lève**. |
-| **A20** | L'entonnoir Phase A → Phase B **ne fuit pas**, sur ce cas (§17-27). |
-| **A23** | Étages 0, 2 et 3 faits. La marge prédit le plantage d'un facteur **22**, validée non circulairement (§17-41). |
-| **Tri de §14** | `rank_key_seel_yield_margin` écrit et testé. Tourne **dans la sonde**, à côté de l'ordre du pipeline — SEEL vit à l'étape 0 de l'interface, l'en sortir reste à faire. |
-| **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§18bis). |
-| **Stratégies par Blocs** | **6 blocs est le meilleur compte MESURÉ sur 35c et 48c** : SEEL **0,583 → 0,482 nm** sur 35c et **0,269 → 0,173 nm** sur 48c, plantage 0,0 %, et **5 mouvements de monochromateur au lieu de 34 et 47** (§17-43). ⚠️ **Pas « optimum global »** : 8 à 34 blocs n'ont jamais été mesurés sur le 35c, et 6 n'y gagne qu'en DEEP — FAST et PREMIUM rendent 5. ⚠️ Les **+31,5 % / +58,7 %** qui circulent sont des gains de **RMSE** ; en SEEL, la seule unité qui compte, ils valent **+17,2 % et +35,7 %**. |
-| **Modes FAST/PREMIUM/DEEP** | 3 profils en UI et solveur, $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 (§17-46). ⚠️ Un `crash_rate` lu sous FAST n'est **pas publiable** : le criblage y est à 10 tirages, donc quantifié à 10 %, et un « 0,0 % » veut dire « sous 10 % ». Cite le SEEL sous FAST, le plantage sous PREMIUM ou DEEP. |
-| **Phase A Block-Aware** | Bonus $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil `streak >= 2`, dans `certus_strat_objectives.py:415` (§17-45). 🔴 **Il ÉCRASE le coût local en place**, sans copie — `cost_raw` contient déjà le coût bonifié. 🔴 **Et il court AVANT la normalisation**, dont la moyenne porte sur les coûts déjà bonifiés : les candidates **non** bonifiées voient donc leur coût normalisé **monter**. Ce n'est pas un ré-ordonnancement neutre. 🔑 La normalisation élevant au carré (`certus/core/certus_strat_objectives.py:456`), **ce que la DP voit est $C/\text{streak}$, pas $C/\sqrt{\text{streak}}$** — un bloc de 9 couches est favorisé d'un facteur 9, pas 3. |
+| **A20** | L'entonnoir Phase A → Phase B **ne fuit pas**, sur ce cas (§24-27). |
+| **A23** | Étages 0, 2 et 3 faits. La marge prédit le plantage d'un facteur **22**, validée non circulairement (§24-41). |
+| **Tri de §22** | `rank_key_seel_yield_margin` écrit et testé. Tourne **dans la sonde**, à côté de l'ordre du pipeline — SEEL vit à l'étape 0 de l'interface, l'en sortir reste à faire. |
+| **Fente** | Biais = **profil** variant avec l'épaisseur, boxcar intégrée exactement, Phase A comprise (§30). |
+| **Stratégies par Blocs** | **6 blocs est le meilleur compte MESURÉ sur 35c et 48c** : SEEL **0,583 → 0,482 nm** sur 35c et **0,269 → 0,173 nm** sur 48c, plantage 0,0 %, et **5 mouvements de monochromateur au lieu de 34 et 47** (§24-43). ⚠️ **Pas « optimum global »** : 8 à 34 blocs n'ont jamais été mesurés sur le 35c, et 6 n'y gagne qu'en DEEP — FAST et PREMIUM rendent 5. ⚠️ Les **+31,5 % / +58,7 %** qui circulent sont des gains de **RMSE** ; en SEEL, la seule unité qui compte, ils valent **+17,2 % et +35,7 %**. |
+| **Modes FAST/PREMIUM/DEEP** | 3 profils en UI et solveur, $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 (§24-46). ⚠️ Un `crash_rate` lu sous FAST n'est **pas publiable** : le criblage y est à 10 tirages, donc quantifié à 10 %, et un « 0,0 % » veut dire « sous 10 % ». Cite le SEEL sous FAST, le plantage sous PREMIUM ou DEEP. |
+| **Phase A Block-Aware** | Bonus $C \leftarrow C_{\text{local}}/\sqrt{\text{streak}}$, seuil `streak >= 2`, dans `certus_strat_objectives.py:415` (§24-45). 🔴 **Il ÉCRASE le coût local en place**, sans copie — `cost_raw` contient déjà le coût bonifié. 🔴 **Et il court AVANT la normalisation**, dont la moyenne porte sur les coûts déjà bonifiés : les candidates **non** bonifiées voient donc leur coût normalisé **monter**. Ce n'est pas un ré-ordonnancement neutre. 🔑 La normalisation élevant au carré (`certus/core/certus_strat_objectives.py:456`), **ce que la DP voit est $C/\text{streak}$, pas $C/\sqrt{\text{streak}}$** — un bloc de 9 couches est favorisé d'un facteur 9, pas 3. |
 
 ### ⏳ EN COURS AU 2026-08-14 — lis ceci avant de lancer quoi que ce soit
 
 | | |
 |---|---|
-| 🟢 **Correctif 1 VALIDÉ** | Deux runs, N = 50 et N = 500 : survivantes et héritage **identiques terme à terme** sur les 10 blocs, là où les deux derniers tombaient de `12, 9` à `2, 3`. §23ter |
-| 🔴 **Correctif 2 : la campagne A TOURNÉ, et elle n'est PAS exploitable** | 6 runs sur 6 le 2026-08-14, **55 min 16 s** au total (`reports/probe_runs.tsv`, colonne `run_s` — et non ~3 h 30 comme annoncé). Mais `run_campaign.py` marque les **6 runs FAILED**, et il a raison. Voir ci-dessous. §23bis |
-| ⚠️ **`N = 300` reste conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel, et le correctif 2 n'est toujours pas mesuré **exploitablement**. Ne le remesure pas avant d'avoir réparé la traçabilité — §23 |
+| 🟢 **Correctif 1 VALIDÉ** | Deux runs, N = 50 et N = 500 : survivantes et héritage **identiques terme à terme** sur les 10 blocs, là où les deux derniers tombaient de `12, 9` à `2, 3`. §33 |
+| 🔴 **Correctif 2 : la campagne A TOURNÉ, et elle n'est PAS exploitable** | 6 runs sur 6 le 2026-08-14, **55 min 16 s** au total (`reports/probe_runs.tsv`, colonne `run_s` — et non ~3 h 30 comme annoncé). Mais `run_campaign.py` marque les **6 runs FAILED**, et il a raison. Voir ci-dessous. §33 |
+| ⚠️ **`N = 300` reste conditionné au correctif 2** | Le chiffre vient de la sensibilité du filtre actuel, et le correctif 2 n'est toujours pas mesuré **exploitablement**. Ne le remesure pas avant d'avoir réparé la traçabilité — §33 |
 
 #### 🔴 Pourquoi les 6 runs de la porte sont FAILED, et ce qu'il faut réparer d'abord
 
@@ -72,7 +72,7 @@ Seuls les **faits qui gouvernent encore** figurent ici ; le déroulé est dans `
 demandé à l'appliqué, ne trouve pas la clé, et déclare l'écart :
 `crash_gate_confidence: asked 0.95, applied '<absent>'` — sur les 6 runs.
 
-C'est le **point 7 de §17 qui se rouvre** : un run qui ne consigne pas sa configuration n'est
+C'est le **point 7 de §24 qui se rouvre** : un run qui ne consigne pas sa configuration n'est
 comparable à rien. Ajouter la clé aux **deux** listes, et au nom du fichier de sortie, avant
 tout autre travail sur la porte.
 
@@ -80,17 +80,17 @@ tout autre travail sur la porte.
 
 | | |
 |---|---|
-| 🔴 **G1.off et G1.on rendent un score BIT-IDENTIQUE** | `0.006138704636203437` des deux côtés — porte OFF et porte armée à 95 % — avec des **gagnantes différentes** (900000127 contre 900000116). Une porte qui ne change pas le score au dernier bit peut être **inerte**. À trancher par un compte de rejets, pas par lecture du code (§20, contrôle 4). |
+| 🔴 **G1.off et G1.on rendent un score BIT-IDENTIQUE** | `0.006138704636203437` des deux côtés — porte OFF et porte armée à 95 % — avec des **gagnantes différentes** (900000127 contre 900000116). Une porte qui ne change pas le score au dernier bit peut être **inerte**. À trancher par un compte de rejets, pas par lecture du code (§12, contrôle 4). |
 | 🔴 **Le témoin C1 n'a pas reproduit sa référence** | Attendu `0.006151532415266679` à ~1e-11 près, obtenu **`0.00611049163380679`** — écart 4,1e-5, soit **six ordres de grandeur** au-delà de l'enveloppe annoncée. Un témoin qui ne reproduit pas invalide la campagne qu'il devait garantir. |
 | ⚠️ **Une propriété testée est peut-être violée** | `tests/unit/test_strat_crash_gate_confidence.py:125` pose que la porte armée **ne peut qu'AJOUTER** des stratégies, jamais en retirer. Vérifie `len(ranking)` entre les deux bras avant de conclure : si le bras armé en retire, c'est un **défaut**, et le test l'énonce déjà. |
 
-⚠️ **Le « 1046 cas » de §24 est faux.** L'énumération réelle de la porte fait **127 cas** —
+⚠️ **Le « 1046 cas » de §34 est faux.** L'énumération réelle de la porte fait **127 cas** —
 `for n_runs in (10, 25, 50, 150, 300, 500)` à pas sauté, `test_strat_crash_gate_confidence.py:127`.
 Le nombre 1046 n'existe nulle part dans le dépôt.
 
 ### 🔴 LA SUITE IMMÉDIATE
 
-**Si tu reprends ce dépôt et que tu ne sais pas par où commencer : §24.** Il porte
+**Si tu reprends ce dépôt et que tu ne sais pas par où commencer : §34.** Il porte
 **A25, A26, A27**, écrites pour être exécutées — fichier, fonction, ligne d'ancrage, test
 qui doit échouer sur le code d'avant, et pièges. **A25 d'abord** : c'est la seule action
 du document qui puisse rendre STRAT *vrai* plutôt que simplement *cohérent*.
@@ -101,21 +101,21 @@ Ce qui suit reste ouvert et garde sa valeur, mais aucune de ces entrées n'est a
 
 0. 🔑 **RÉTABLIR LE REPÈRE.** Le biais de fente est actif par défaut depuis le
    2026-08-11 : **tout chiffre mesuré avant cette date répond à une autre question**,
-   celle d'une machine à fentes infiniment fines. §10 est périmé, et avec lui la courbe
+   celle d'une machine à fentes infiniment fines. §21 est périmé, et avec lui la courbe
    de corridor, le ×41,2 de POEM et la falaise. Un run neutre, et on repart.
-1. **Trancher la grille** — §22, campagne de 8 runs, critère posé à l'avance.
-2. **Sortir SEEL de l'interface** (§14, action 1), sans quoi le tri de §14 ne peut pas
+1. **Trancher la grille** — §33, campagne de 8 runs, critère posé à l'avance.
+2. **Sortir SEEL de l'interface** (§22, action 1), sans quoi le tri de §22 ne peut pas
    remplacer celui du pipeline.
 3. **Comprendre l'effondrement de `n_ranked` avec le corridor** — 228 → 165 → 78
-   (§17-30). Contrôle 4 de §20 : **compter les rejets**.
-4. **§17-14 reste ouvert** — `dp_yield_weight` n'atteint pas le calcul (§17-33).
+   (§24-30). Contrôle 4 de §12 : **compter les rejets**.
+4. **§24-14 reste ouvert** — `dp_yield_weight` n'atteint pas le calcul (§24-33).
 
 ### PALIER 0 — Quatre sondes qui ne coûtent rien et qui décident du reste
 
 Aucune ne demande le banc, ni le repère, ni une machine libre. **Minutes chacune.** Elles
 peuvent toutes être faites aujourd'hui.
 
-#### A4 — Compter ce que les filtres existants rejettent · *§20-contrôle 4*
+#### A4 — Compter ce que les filtres existants rejettent · *§12-contrôle 4*
 
 > **Compte les rejets, ne lis pas le code.** Un filtre inerte ne produit aucune erreur — il
 > produit un résultat plausible. C'est ainsi qu'une règle de proximité recevant une matrice
@@ -124,7 +124,7 @@ peuvent toutes être faites aujourd'hui.
 | # | Filtre | Où | Attendu |
 |---|---|---|---|
 | 1 | `phase_a_level_margin_factor` | log `[MARGIN]`, `certus_strat_service.py:991` | **compter** les candidates rejetées, par couche |
-| 2 | 🔴 **D'abord corriger le facteur √3** — la fente est rectangulaire, la formule est trop stricte de 1,73× (§12.7) | `_calculate_strategy_spectral_resolution:281` | `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)` |
+| 2 | 🔴 **D'abord corriger le facteur √3** — la fente est rectangulaire, la formule est trop stricte de 1,73× (§29.7) | `_calculate_strategy_spectral_resolution:281` | `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)` |
 | 3 | `min_resolution`, **sur la formule corrigée** | idem | **combien de stratégies** seraient écartées à chacune des 4 résolutions |
 | 4 | `tp_hysteresis` | sentinelles `CRASH_TP_MISCOUNT` vs `CRASH_LEVEL_UNREACHABLE` | les **séparer** dans le rapport (`int(val // 1e6)`) |
 | 5 | Un filtre qui rejette **0** | — | **c'est un défaut**, pas un succès. Signale-le |
@@ -139,8 +139,8 @@ chiffre faux dans le sens sévère.
 
 #### A5 — Le harnais d'empreinte `float.hex()` · *le SEUL instrument de la règle d'or*
 
-La règle d'or de §3 exige une non-régression **au bit**, et **aucun outil ne permet de la
-vérifier**. Le banc ne peut pas servir : il a ~3e-11 de gigue irréductible (§3, §10).
+La règle d'or de §9 exige une non-régression **au bit**, et **aucun outil ne permet de la
+vérifier**. Le banc ne peut pas servir : il a ~3e-11 de gigue irréductible (§9, §21).
 **A5 n'est donc pas un confort, c'est le seul moyen de vérifier C1.** Tant qu'il n'existe pas,
 aucune des actions du palier 2 ne peut être validée.
 
@@ -180,9 +180,9 @@ set CERTUS_BENCH_TIMEOUT_S=5400
 | 6 | Comparer les deux | l'écart doit tenir dans l'enveloppe de A6, **pas être nul** |
 | 7 | 🔴 **TOUJOURS À REFAIRE au 2026-08-15.** Le repère du 2026-08-10 décrit une machine sans fente | — |
 
-🔑 **Ne confonds pas A7 avec les repères de §10 — ce sont deux objets différents.**
+🔑 **Ne confonds pas A7 avec les repères de §21 — ce sont deux objets différents.**
 
-| | A7 | §10 |
+| | A7 | §21 |
 |---|---|---|
 | l'objet | un `RESULT` de `probe_anchor_noise_pipeline.py` | le **SEEL** de composants entiers |
 | son usage | ancrer des mesures **entre dates** et entre configurations du modèle | dire ce que la méthode **atteint** sur un composant |
@@ -195,14 +195,14 @@ campagne du 2026-08-15 (fast, fente 2 nm, graine 42, N = 50), où seule la posit
 changement de témoin varie. Ces comparaisons sont valides **entre elles** et ne prétendent à
 rien au-delà.
 
-⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §3. Un écart nul entre
+⚠️ **Ne cherche pas l'identité au bit** — elle est impossible ici, voir §9. Un écart nul entre
 deux runs serait une coïncidence, pas un critère.
 
 ---
 
 ### PALIER 2 — Rendre mesurable ce qui est déjà écrit
 
-#### A8 — Dé-souder la grille du lissage · *ex-T3, §17-2*
+#### A8 — Dé-souder la grille du lissage · *ex-T3, §24-2*
 
 `SAMPLE_DD = 0.125` n'existe qu'à l'intérieur de `if smoothing_window > 1:`. La configuration
 « grille fine, fenêtre à 1 » — celle que T3 impose d'observer — **n'est pas exprimable**.
@@ -219,10 +219,10 @@ deux runs serait une coïncidence, pas un critère.
 | 4 | `machine_sampling_dd = 0`, `k = 8` | doit rester exprimable aussi |
 | 5 | Les 4 combinaisons donnent 4 résultats **distincts** | sinon un des deux drapeaux n'atteint pas le calcul |
 
-#### A9 — Moyenne centrée au lieu de causale · *§17-3*
+#### A9 — Moyenne centrée au lieu de causale · *§24-3*
 
 La moyenne actuelle porte sur `[i−k+1 … i]` : elle décale un extremum de `(k−1)/2`
-échantillons, soit **0,44 nm à k = 8**. §9bis-5 pose « aucun retard » en postulat figé.
+échantillons, soit **0,44 nm à k = 8**. §18-5 pose « aucun retard » en postulat figé.
 
 - **Où** : même fonction, boucle de lissage, ligne ~747.
 - **Quoi** : fenêtre `[i−⌊k/2⌋ … i+⌊k/2⌋]`, bords traités par fenêtre rétrécie symétrique.
@@ -234,10 +234,10 @@ La moyenne actuelle porte sur `[i−k+1 … i]` : elle décale un extremum de `(
 | 3 | `k = 1` | empreinte identique au bit |
 | 4 | Rejouer A1 avec la centrée | le chiffre de fabrication ne doit pas se dégrader |
 
-#### A11 — Les tests qui manquent · *§17-5*
+#### A11 — Les tests qui manquent · *§24-5*
 
 `f7a3d71`, `e0df0e1`, `162a0ff` n'ont ajouté **aucun** test, et aucun test ne mentionne les
-nouveaux paramètres. Le contrôle 2 de §20 est donc inapplicable.
+nouveaux paramètres. Le contrôle 2 de §12 est donc inapplicable.
 
 | # | Test à écrire | Doit échouer sur |
 |---|---|---|
@@ -249,7 +249,7 @@ nouveaux paramètres. Le contrôle 2 de §20 est donc inapplicable.
 | 6 | Chaque nouveau paramètre à sa valeur neutre est **bit-identique** | — |
 
 🔴 **Copie chaque test dans le worktree baseline et vérifie qu'il ÉCHOUE.** Un test qui passe
-avant le correctif ne prouve rien. C'est le contrôle le plus rentable de §20.
+avant le correctif ne prouve rien. C'est le contrôle le plus rentable de §12.
 
 ---
 
@@ -264,7 +264,7 @@ vérifié avant de lire le moindre chiffre.
 place.
 
 🔴 **Le seuil à utiliser est `1,00`, pas `0,354`.** A1 a mesuré que 0,354 laisse **100 %** de
-fabrication à `k = 8`, `N = 800` — voir §9bis. `1,00` est la borne **mesurée**, pas dérivée.
+fabrication à `k = 8`, `N = 800` — voir §18. `1,00` est la borne **mesurée**, pas dérivée.
 
 | # | Run | Attendu |
 |---|---|---|
@@ -277,20 +277,20 @@ fabrication à `k = 8`, `N = 800` — voir §9bis. `1,00` est la borne **mesuré
 
 ### PALIER 4 — Le neuf
 
-#### A16 — Quantification de l'arrêt · *ex-T7, §12.5*
+#### A16 — Quantification de l'arrêt · *ex-T7, §29.5*
 
 Quasi gratuit une fois A8 faite : s'arrêter au **premier point de grille au-delà du seuil**
 au lieu d'interpoler, et `U(0 ; 0,125 nm)` apparaît d'elle-même, sans paramètre.
 **Vérification** : Piège 1 — si doubler `Δd_sample` ne change rien, la mesure est un artefact.
 
-#### A18 — Résolution : variable de stratégie en Phase B · *§12.7*
+#### A18 — Résolution : variable de stratégie en Phase B · *§29.7*
 
 Conditionnée par A17-4. Une stratégie devient *(blocs, λ par bloc, résolution)*. **Phase B**,
-pas Phase A, pas la DP — voir §12.7 pour le raisonnement.
+pas Phase A, pas la DP — voir §29.7 pour le raisonnement.
 
-#### A19 — Mode Rate · *§14*
+#### A19 — Mode Rate · *§22*
 
-`sigma_rate` est **dérivé**, pas posé — voir la dérivation du §14. Reste à obtenir les
+`sigma_rate` est **dérivé**, pas posé — voir la dérivation du §22. Reste à obtenir les
 réponses Q1 à Q4 avant d'écrire une ligne.
 
 ---
@@ -337,7 +337,7 @@ dans `±A`, le corridor respecte `|a| + |b| ≤ δ_max`, les amplitudes affines 
 > **Si la marge dépasse la perturbation maximale possible, la probabilité n'est pas petite :
 > elle est EXACTEMENT nulle.**
 
-§12.2 s'en sert déjà — *« le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A »*.
+§29.2 s'en sert déjà — *« le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A »*.
 Un `β` gaussien extrapolerait une probabilité faible **là où la vérité est zéro**, et il le
 ferait **toujours dans le sens pessimiste**. Le premier test n'est donc pas probabiliste, il
 est **déterministe** :
@@ -439,7 +439,7 @@ bloquée d'une qui rate la passante, alors que l'exigence diffère d'un facteur 
 🔴 **Ne la dégèle pas de toi-même.** Mais sache que tout ce qui précède optimise un score qui
 ne sait pas distinguer un succès d'un échec sur la moitié du spectre.
 
-#### A22 — La validation externe · *§15, le seul chemin restant*
+#### A22 — La validation externe · *§26, le seul chemin restant*
 
 Deux dépôts réels du dichroïque 48 couches, spectres mesurés. Le test est **ordinal** : STRAT
 doit les classer dans le bon ordre. Rien de ce document n'est une validation physique tant que
@@ -447,7 +447,7 @@ cela n'existe pas.
 
 ---
 
-**§12.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Documentée pour mémoire,
+**§29.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Documentée pour mémoire,
 pas pour être exécutée.
 
 ---

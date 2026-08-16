@@ -1,6 +1,6 @@
 # Le mode Rate — contrôle au quartz et au chronomètre
 
-> Extrait de `CLAUDE.md` §14 le 2026-08-16. Ce dossier **fait autorité**.
+> Extrait de `CLAUDE.md` §22 le 2026-08-16. Ce dossier **fait autorité**.
 > 🔑 **Un fait, un seul endroit** — corrige ici, ne recopie pas ailleurs.
 
 🔴 **Avant de lire : `swing < SWING_MIN` n'est pas un critère d'épaisseur, et un point
@@ -21,7 +21,7 @@ tournant n'est pas un QWOT.** Voir [`QWOT_ET_TURNING_POINT.md`](QWOT_ET_TURNING_
 #### 🔵 « le rate est souvent réservé aux couches fines » — l'intuition, et les TROIS critères qu'elle mélange
 
 > 👤 2026-08-15 : *« de même, le rate est souvent réservé aux couches fines »* — dit dans la
-> même conversation que l'intuition sur le changement de témoin (§25.4), et de même valeur :
+> même conversation que l'intuition sur le changement de témoin (§23.4), et de même valeur :
 > **c'est ce que les expérimentateurs pressentent, ce n'est pas une mesure.**
 
 Cette phrase est **juste en pratique et imprécise en physique**, et l'écart est instructif.
@@ -75,7 +75,7 @@ Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
    côte à `certus_strat_growth.py:570-571`. **`sigma_rate` ne doit donc PAS être un paramètre
    libre. C'est une grandeur DÉRIVÉE.** Voir la dérivation ci-dessous.
 7. **L'unité de contrôle est le TOUR**, pas la seconde : 240 tr/min ⇒ 1 tour = 250 ms ⇒
-   **0,125 nm à 0,5 nm/s**. C'est **exactement le pas d'échantillonnage du §9bis-1**, et ce
+   **0,125 nm à 0,5 nm/s**. C'est **exactement le pas d'échantillonnage du §18-1**, et ce
    n'est pas une coïncidence : les deux viennent de la même rotation. L'épaisseur déposée en
    mode Rate est donc **quantifiée en nombre entier de tours**, et cette quantification
    **tombe toute seule** — aucun paramètre à poser.
@@ -99,7 +99,7 @@ Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
     🔴 **La conséquence, et c'est la plus importante de toute cette section : le coût d'une
     couche Rate se paie surtout sur la couche SUIVANTE, pas sur elle-même.** Sans ancres, la
     couche d'après retombe sur le **niveau absolu** — c'est-à-dire précisément la branche que
-    §12.1 a démontrée **non invariante** par distorsion affine, celle qui rend
+    §29.1 a démontrée **non invariante** par distorsion affine, celle qui rend
     `CRASH_LEVEL_UNREACHABLE`. Le Rate déplace donc le risque du photométrique vers la branche
     fragile. Il faut deux nouveaux points tournants observés pour que POEM redevienne
     utilisable.
@@ -132,7 +132,7 @@ $$\boxed{\;\frac{d^{\text{réel}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{rée
 
 **L'erreur relative n'est pas tirée, elle est RECOPIÉE.** Ce qui en découle :
 
-- **Zéro paramètre libre.** C'est exactement ce que §9 exige : ne pas remplacer une constante
+- **Zéro paramètre libre.** C'est exactement ce que §17 exige : ne pas remplacer une constante
   mesurée par des paramètres inventés. Ici on ne pose même plus de constante.
 - **La question « biais corrélé ou tirage indépendant ? » n'a plus lieu d'être** : ce n'est
   ni l'un ni l'autre, c'est une **égalité**.
@@ -141,12 +141,12 @@ $$\boxed{\;\frac{d^{\text{réel}}_i}{d^{\text{nom}}_i} \;=\; \frac{d^{\text{rée
 - 🟢 **Et c'est une occasion de validation EXTERNE, la première du projet.** `sigma_rate`
   devient une **prédiction** du modèle. Si le simulateur en rend une dispersion du même ordre
   que ce que la machine montre en salle, c'est la première corroboration que STRAT ait jamais
-  eue (§15). S'il en rend 0,1 %, c'est que le modèle de bruit rate quelque chose. **Dans les
+  eue (§26). S'il en rend 0,1 %, c'est que le modèle de bruit rate quelque chose. **Dans les
   deux cas on apprend, et cela ne coûte rien.**
 
 ⚠️ **La seule hypothèse que cela introduit** : $v$ est **constante pendant un run**. Si la
 source dérive réellement (épuisement, température), un terme de dérive revient — mais alors
-il faudra le **mesurer**, pas le poser. Ne pas le réintroduire par raisonnement (§9).
+il faudra le **mesurer**, pas le poser. Ne pas le réintroduire par raisonnement (§17).
 
 🔴 **Rien de tout cela n'est implémenté.** Aucune ligne de `certus/` ne contient de mode Rate
 aujourd'hui — **revérifié le 2026-08-11 par balayage** : zéro occurrence de `sigma_rate` ou
@@ -159,7 +159,7 @@ aujourd'hui — **revérifié le 2026-08-11 par balayage** : zéro occurrence de
 
 C'est **une passe d'amélioration locale sur un ensemble déjà choisi**, pas un degré de
 liberté ajouté à la recherche. Quelques dizaines de variantes de stratégies connues, sans
-refaire la Phase A. C'est exactement §14-8, et le coût n'a rien de commun avec celui
+refaire la Phase A. C'est exactement §22-8, et le coût n'a rien de commun avec celui
 d'un Rate/POEM par couche plié dans la DP.
 
 📏 **Trois faits mesurés sur la classe d'équivalence de la référence (10 stratégies) :**
@@ -168,12 +168,12 @@ d'un Rate/POEM par couche plié dans la DP.
    `n_below_swing_min = 0` : aucune couche sous `SWING_MIN`. Le repli automatique est
    **inerte** sur cet empilement, donc l'introduction **délibérée** est le seul moyen de
    tester le Rate. Ce n'est plus une intuition, c'est un comptage.
-2. ⚠️ **Le critère est le SWING, pas l'épaisseur** — §14-1 le dit déjà, et on peut
+2. ⚠️ **Le critère est le SWING, pas l'épaisseur** — §22-1 le dit déjà, et on peut
    désormais le mesurer : 7 stratégies sur 10 ont leur couche la plus pauvre en **L24**
    (swing 0,109, soit 2,7 × `SWING_MIN`), les 3 autres en **L47** (0,061, soit 1,5 ×).
-3. 🔑 **L47 est le premier essai évident, et pour une raison structurelle.** §14-10
+3. 🔑 **L47 est le premier essai évident, et pour une raison structurelle.** §22-10
    établit que le coût dominant d'une couche Rate se paie **sur la couche SUIVANTE** —
-   ancres vidées, repli sur le niveau absolu, la branche que §12.1 a démontrée non
+   ancres vidées, repli sur le niveau absolu, la branche que §29.1 a démontrée non
    invariante. **L47 est la dernière couche : il n'y a pas de suivante.** Le terme
    dominant disparaît, il ne reste que le gel de l'erreur sur la couche elle-même. Et
    c'est aussi la couche au plus faible swing sur 3 des 10.
@@ -192,14 +192,14 @@ J'avais écrit que Q3 « chaîne » ouvrait un régime instable où l'erreur se 
 jamais être corrigée et **peut diverger**. **C'est faux, et la simulation le montre en
 trois lignes.**
 
-Une couche Rate **recopie** l'erreur relative — §14 le démontre :
+Une couche Rate **recopie** l'erreur relative — §22 le démontre :
 `d_réel_i / d_nom_i = d_réel_j / d_nom_j`. Elle n'en **ajoute aucune**. Une chaîne de
 couches Rate porte donc toutes **la même** erreur : elle est **gelée, pas amplifiée**.
 📏 Vérifié : 40 couches Rate enchaînées, étendue **0,000 %**.
 
 Et c'était vrai **quelle que soit la réponse à Q4**. Ce n'est pas la moyenne qui sauve la
 situation ; il n'y avait pas de situation à sauver. *Une inquiétude fondée sur un
-raisonnement plutôt que sur un calcul, exactement ce que §9 interdit.*
+raisonnement plutôt que sur un calcul, exactement ce que §17 interdit.*
 
 #### 🔑 Ce que Q4 change VRAIMENT — et c'est le point qui redessine le plan
 
@@ -219,7 +219,7 @@ La loi est en `1/√n`, exactement. À la couche 40 il y a ~20 couches de chaque
 
 > **Le Rate devient de plus en plus précis à mesure qu'on s'enfonce dans l'empilement.**
 
-🔑 **Et c'est là que tout converge.** §17-36 a mesuré que sur l'effondrement de la
+🔑 **Et c'est là que tout converge.** §24-36 a mesuré que sur l'effondrement de la
 graine 77, **rien ne plante avant la couche 35** et tout plante de **35 à 47**. Le swing
 est aussi souvent le plus pauvre en fin d'empilement (L47 sur 3 des 10 finalistes).
 
@@ -227,7 +227,7 @@ est aussi souvent le plus pauvre en fin d'empilement (L47 sur 3 des 10 finaliste
 POEM est le plus fragile, que les plantages se concentrent, et que le Rate est le plus
 précis. **Ce n'est plus une liste de candidates à balayer, c'est une région.**
 
-⚠️ Ce qu'il faut quand même mesurer, et ne pas déduire : la contrepartie de §14-10 — la
+⚠️ Ce qu'il faut quand même mesurer, et ne pas déduire : la contrepartie de §22-10 — la
 couche **suivante** perd ses ancres — ne diminue pas, elle. Le bilan reste une
 soustraction entre deux effets qui grandissent différemment, et c'est le banc qui la fait.
 
@@ -238,7 +238,7 @@ C'est ce qui sépare ce plan d'un balayage au hasard. Sur une couche donnée :
 | | ce que ça coûte |
 |---|---|
 | **POEM** | il **corrige** l'erreur accumulée en amont, mais il paie son propre bruit de lecture **divisé par la pente** `dT/dd`. Sur un signal plat la pente est minuscule : la correction devient elle-même très bruitée. |
-| **Rate** | **aucune correction**, mais **aucun bruit neuf** non plus : l'erreur relative est **recopiée** de la dernière couche POEM du même matériau (§14, dérivation). |
+| **Rate** | **aucune correction**, mais **aucun bruit neuf** non plus : l'erreur relative est **recopiée** de la dernière couche POEM du même matériau (§22, dérivation). |
 
 $$\varepsilon_{\text{POEM}}(i) \;\approx\; \frac{\sigma\sqrt{1+(1-p)^2+p^2}}{\left|dT/dd\right|_i}
 \qquad\text{contre}\qquad
@@ -265,7 +265,7 @@ dès que λ change, et le noyau en tire `j0 = block_start_layer = i`, donc
 **sans aucun historique hérité** — elle n'a pas d'ancres POEM, que la couche d'avant ait
 été en POEM ou en Rate.
 
-**Ce placement annule DEUX des trois coûts de §14-10 :**
+**Ce placement annule DEUX des trois coûts de §22-10 :**
 
 | coût d'une couche Rate | à une frontière de bloc |
 |---|---|
@@ -320,7 +320,7 @@ mauvaise** — le cas à −85 % ramène un SEEL de 11,5 nm à 1,7 nm.
 
 ⚠️ **Et un sauvetage à 1,7 nm ne change pas le classement quand la gagnante est à 0,5 nm.**
 C'est pourquoi le Rate est invisible en tête **par construction** sur ces deux composants.
-Il se verra dans le régime fragile, celui de §17-36.
+Il se verra dans le régime fragile, celui de §24-36.
 
 #### 🔴 J'AI CHANGÉ LA CLEF DE TRI, PUIS JE L'AI REMISE — le 2026-08-12, en trois heures
 
@@ -340,7 +340,7 @@ Même appariement, en regardant cette fois **où** le Rate a été posé :
 🔴 **La profondeur ne trie rien** — +0,6 contre +0,5 d'un côté, l'inverse de l'autre. Or
 c'était la clef du code, justifiée par la loi en `1/√n` d'A24. Cette loi est vraie, mais
 elle gouverne l'**erreur propre du Rate**, et cette erreur n'est pas ce qui atteint le
-score. **C'est le contrôle 4 de §20 sous une autre forme : un critère qui n'ordonne rien
+score. **C'est le contrôle 4 de §12 sous une autre forme : un critère qui n'ordonne rien
 ne produit pas d'erreur, il produit un ordre plausible.**
 
 🟢 **La marge, elle, trie — et elle CHANGE DE SIGNE.** Marge faible : le Rate aide. Marge
@@ -376,7 +376,7 @@ rien dit de la seconde.
 > près de lâcher. » J'ai écrit : « pose la couche Rate là où la marge est faible. » Ce
 > n'est pas la même phrase.**
 
-C'est le contrôle 5 de §20 — *les conclusions dépassent-elles les mesures ?* — et il m'a
+C'est le contrôle 5 de §12 — *les conclusions dépassent-elles les mesures ?* — et il m'a
 attrapé sur mon propre travail, trois heures après l'avoir écrit. Ce qui rend le cas
 instructif, c'est que **rien n'avait l'air faux** : le signal était réel, reproduit sur deux
 composants, avec un changement de signe propre, et la règle en découlait « évidemment ».
@@ -398,8 +398,8 @@ qui n'a pas d'ancres :
 
 - **POEM y est à son plus faible.** Sans historique, il doit trouver deux points tournants
   dans la seule couche courante, faute de quoi il retombe sur le **niveau absolu** — la
-  branche que §12.1 a démontrée non invariante par distorsion affine, et qui pèse **21 %**
-  des plantages mesurés (§17-36).
+  branche que §29.1 a démontrée non invariante par distorsion affine, et qui pèse **21 %**
+  des plantages mesurés (§24-36).
 - Le Rate y **remplacerait un arrêt fragile par un comptage de tours déterministe**.
 - ⚠️ **Mais le coût aval ne disparaît pas ici** : la couche `i+2` est dans le même bloc et
   aurait hérité de l'historique de `i+1`. La fragilité se propage d'un cran.
@@ -432,7 +432,7 @@ cette réserve.**
 | | effet sur le plantage |
 |---|---|
 | couche `i` en Rate | 🟢 **supprime deux modes** : sans déclenchement, ni `CRASH_LEVEL_UNREACHABLE` ni `CRASH_TP_MISCOUNT` ne peuvent s'y produire |
-| couche `i+1` | 🔴 **en ajoute un** : sans ancres, repli sur le niveau absolu — la branche que §12.1 a démontrée non invariante |
+| couche `i+1` | 🔴 **en ajoute un** : sans ancres, repli sur le niveau absolu — la branche que §29.1 a démontrée non invariante |
 
 **La bonne candidate est donc à deux faces** : une couche dont la marge POEM est
 **mauvaise** — elle est déjà près de lâcher — et dont la **suivante** a une marge
@@ -441,7 +441,7 @@ câblés le 2026-08-11, donnent exactement ces deux nombres.
 
 #### 🔴 Statut de la formule : elle GÉNÈRE des candidates, elle ne DÉCIDE rien
 
-Le raisonnement ci-dessus est en **nanomètres d'erreur d'épaisseur**. Or §16 est formel —
+Le raisonnement ci-dessus est en **nanomètres d'erreur d'épaisseur**. Or §8 est formel —
 👤 *« en partie B on se branle de l'erreur d'épaisseur, seul l'écart spectral final
 compte »*. La formule a donc exactement le statut des heuristiques de la littérature :
 **un diagnostic pour choisir quoi essayer, jamais un couperet**. Ce qui tranche reste le
@@ -460,8 +460,8 @@ etage 3   seulement alors, plier le choix Rate/POEM dans la DP
 ```
 
 🔑 **Pourquoi c'est mieux que « essayer et voir ».** Un balayage rendrait 480 nombres
-portant chacun ±6 % de bruit — illisible (§17-26). **Prédire puis mesurer teste la
-compréhension, pas seulement la configuration** : c'est le contrôle 5 de §20, et c'est
+portant chacun ±6 % de bruit — illisible (§24-26). **Prédire puis mesurer teste la
+compréhension, pas seulement la configuration** : c'est le contrôle 5 de §12, et c'est
 la seule façon d'apprendre quelque chose de transférable à un autre empilement.
 
 🔴 **Le piège de comparabilité, à traiter avant d'écrire la première ligne.** Si une
@@ -470,11 +470,11 @@ POEM, le flux aléatoire se décale et **deux variantes ne sont plus comparables
 contrainte C2, et l'écart observé ne serait plus imputable au Rate. Une couche Rate doit
 consommer **les mêmes indices de tirage**, quitte à les gaspiller.
 
-🟢 **Et le dommage est désormais MESURABLE dès le premier run.** §14-10 dit que le Rate
+🟢 **Et le dommage est désormais MESURABLE dès le premier run.** §22-10 dit que le Rate
 déplace le risque vers le niveau absolu ; `margin_level` par couche (A23 étage 2, câblé
 le 2026-08-11) lit exactement cet effondrement sur la couche d'après. Avant aujourd'hui
 c'était une hypothèse ; c'est maintenant une grandeur. C'est une action à venir, à faire **après** que les mesures T2 / T5 / T6 aient
-été obtenues (§17) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
+été obtenues (§24) — l'introduire avant ajouterait un degré de liberté à un modèle dont on
 n'a pas encore mesuré les paramètres existants.
 
 ✅ **PLUS RIEN À DEMANDER — les quatre questions sont répondues le 2026-08-11.**

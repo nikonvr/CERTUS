@@ -80,7 +80,7 @@ L'erreur croît **linéairement en `k`** et reste **quatre décades sous le brui
 `k = 1e-3`. **Le seuil de 1e-4 est donc bon, et même généreux** — on le garde pour
 laisser une décade de marge, une garde devant protéger des cas qu'on n'a pas testés.
 
-🔴 **Et la garde LÈVE, elle ne se rabat pas en silence** (leçon de §17-25). Quelqu'un qui
+🔴 **Et la garde LÈVE, elle ne se rabat pas en silence** (leçon de §24-25). Quelqu'un qui
 lance STRAT sur un métal doit l'apprendre, pas obtenir un chiffre plausible.
 
 🔴 **À valider contre l'oracle TMM indépendant, pas contre le noyau.** L'interdit 7
@@ -136,10 +136,10 @@ boucle chaude, pour approximer une courbe qu'on connaît désormais exactement.
 
 📏 **Écart maximal de la parabole à la solution exacte, sur 200 empilements aléatoires de
 4 à 30 couches : `2,083e-10 nm`.** Le seuil sous lequel un écart d'épaisseur n'a aucun
-sens physique est **0,05 nm** — moins d'un atome (§16). **La parabole est 240 millions de
+sens physique est **0,05 nm** — moins d'un atome (§8). **La parabole est 240 millions de
 fois sous ce seuil.**
 
-🔑 **Et ça éclaire un chiffre du §12.1.** L'invariance de POEM y était mesurée à
+🔑 **Et ça éclaire un chiffre du §29.1.** L'invariance de POEM y était mesurée à
 **2,19e-10 nm** — le même ordre, exactement. **Ce n'était pas la limite de POEM qu'on
 mesurait, c'était celle de la parabole.** Et elle est sans conséquence.
 
@@ -168,11 +168,11 @@ la courbe **est**.
 
 > `tan 2δ = R/Q` donne l'extremum **mathématique de la courbe propre**.
 > Le détecteur donne ce que **la machine voit dans un signal bruité**.
-> **L'écart entre les deux EST le phénomène** que §12.2 a mis trois mesures à caractériser.
+> **L'écart entre les deux EST le phénomène** que §29.2 a mis trois mesures à caractériser.
 
 Le remplacer par une résolution analytique **supprimerait purement et simplement la
 fabrication de faux points tournants** — le mécanisme de plantage dominant, **79 %** des
-échecs mesurés en §17-36. ❌ Fermé, définitivement.
+échecs mesurés en §24-36. ❌ Fermé, définitivement.
 
 #### Ce qu'il faut retenir de l'ensemble
 
@@ -188,13 +188,13 @@ contre l'oracle indépendant, et la restriction 👤 `k < 1e-4` mesurée et conf
 📏 **D3 de la campagne du 2026-08-11** : cribler à **10 tirages au lieu de 25** rend
 `n_ranked = 133` au lieu de 228, **la même gagnante** `[544, 531]`, et un `RESULT`
 **bit-identique**. Ouvrir à 100 tirages ou garder 30 survivantes ne trouve rien de mieux
-non plus (§17-27).
+non plus (§24-27).
 
 **C'est 60 % de l'étage de criblage, sans toucher une ligne de physique, et avec une
 preuve expérimentale plutôt qu'une estimation.** Plus que tout ce que le noyau peut rendre.
 
 ⚠️ **Mais je ne change pas le défaut, et c'est délibéré.** La mesure porte sur **une
-graine, un empilement, une configuration**. §19-4 interdit de conclure d'une mesure sur un
+graine, un empilement, une configuration**. §11-4 interdit de conclure d'une mesure sur un
 autre composant, et un défaut vaut pour tous les cas à venir, pas seulement pour celui-là.
 `n_screen_runs = 10` est **recommandé et documenté** ; le poser par défaut demande de
 l'avoir vu tenir sur au moins une seconde graine.
@@ -210,7 +210,7 @@ relative du `float32` est ~1e-7, soit **5e-8 en absolu** sur des `T ~ 0,5` — q
 décades sous le bruit. Même accumulée sur 48 produits matriciels, on resterait vers 1e-6.
 
 **Ce qu'elle coûte, et il faut le savoir** : la vérification **au bit** devient
-impossible (C1 et §3 reposent sur `float.hex()`), et l'oracle TMM chute de **3,3e-16 à
+impossible (C1 et §9 reposent sur `float.hex()`), et l'oracle TMM chute de **3,3e-16 à
 ~1e-7** — quatre décades de sensibilité en moins, sur l'instrument même qui a démasqué
 les deux bugs de signe.
 

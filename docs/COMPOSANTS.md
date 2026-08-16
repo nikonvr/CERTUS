@@ -54,11 +54,11 @@ calculé dessus est faux **sans qu'aucun contrôle ne le signale** :
 👤 *« que l'on contrôle normalement en TPM »* — le passe-bande est le cas d'école du
 **monitoring par points tournants**, là où le dichroïque vit de niveaux intermédiaires. Les
 couches `M5` sont des QWOT à λ₀ : leur signal de monitoring **passe par un extremum à
-l'épaisseur visée**, ce qui est le régime où §14-5 dit que `dT/dd → 0` et où une erreur de
+l'épaisseur visée**, ce qui est le régime où §22-5 dit que `dT/dd → 0` et où une erreur de
 niveau se convertit en une grande erreur d'épaisseur.
 
 ⚠️ **La géométrie de la cible n'est PAS celle du juge de paix, et il faut le savoir avant de
-comparer les deux scores.** §14 a mesuré que le dichroïque a **exactement 141 points par
+comparer les deux scores.** §22 a mesuré que le dichroïque a **exactement 141 points par
 bande sur 301**, d'où l'incapacité d'un RMSE uniforme à distinguer les deux bandes. Ici c'est
 **13 points sur 61** dans la bande passante. **Les deux composants ne posent donc pas la même
 question à la fonction objectif**, et un écart de score entre eux ne se lit pas comme un écart
@@ -66,8 +66,8 @@ de difficulté.
 
 ### 🔴 Ce que ce second composant ne change PAS
 
-§15 reste **entier**. Deux bancs de cohérence ne font pas une validation physique : aucun des
-deux n'a de dépôt réel en face. Et §19-4 continue de s'appliquer dans les deux sens — **on ne
+§26 reste **entier**. Deux bancs de cohérence ne font pas une validation physique : aucun des
+deux n'a de dépôt réel en face. Et §11-4 continue de s'appliquer dans les deux sens — **on ne
 conclut pas du passe-bande sur le dichroïque, ni l'inverse.** Ce que le second composant
 permet, c'est de voir si une conclusion **survit** au changement de composant ; c'est un test
 de robustesse de la conclusion, pas une corroboration de la physique.
@@ -96,7 +96,7 @@ repli. Aucune interprétation nécessaire.
 #### Pourquoi — et ce n'est pas réparable sur ce composant
 
 Sans historique, POEM doit trouver **deux points tournants dans la seule couche
-courante**. `T(d)` étant un sinusoïde en `2δ` (§18ter), les extrema tombent tous les 90°,
+courante**. `T(d)` étant un sinusoïde en `2δ` (§31), les extrema tombent tous les 90°,
 et la phase à l'arrêt vaut
 
 $$\delta_{\text{nom}} = \frac{2\pi n\,d_{\text{nom}}}{\lambda_{\text{mon}}}
@@ -120,7 +120,7 @@ J'avais posé « POEM s'ancre ssi `λ₀/λ ≥ 2` ». Elle tombe juste sur **26
 de base, en se trompant sur les 8 couches qui portent toute l'information.
 
 > **Un prédicteur constant qui a raison par taux de base n'a aucun pouvoir discriminant.**
-> Lire son score global comme une validation est exactement l'auto-illusion que §20-5
+> Lire son score global comme une validation est exactement l'auto-illusion que §12-5
 > attrape. Ce qu'il faut regarder, c'est le taux sur la classe MINORITAIRE.
 
 #### Ce qui a été écarté au passage
@@ -158,15 +158,15 @@ mécanisme qui ne s'applique pas ici, et la recherche qui le trouve.
 Et cela retombe sur ce que 👤 disait en posant le composant — *« un passe-bande, on le
 contrôle normalement en TPM »*. On s'arrête **sur** le point tournant au lieu d'en
 encadrer deux. **Le modèle l'a retrouvé seul, par une route indépendante**, ce qui est la
-seule forme de corroboration dont ce projet dispose tant que §15 n'est pas fermée.
+seule forme de corroboration dont ce projet dispose tant que §26 n'est pas fermée.
 
 #### 🔑 Pourquoi c'est arrivé MAINTENANT
 
 Deux changements du 2026-08-12 poussent dans le même sens :
 
-1. **La distorsion affine est éteinte** (§12.1bis) — or c'était le handicap du repli
-   absolu, la seule branche que §12.1 démontre non invariante. Il a cessé d'être pénalisé.
-2. **Le biais de fente pénalise les ancres héritées** (§18bis) — chaque couche
+1. **La distorsion affine est éteinte** (§29.1bis) — or c'était le handicap du repli
+   absolu, la seule branche que §29.1 démontre non invariante. Il a cessé d'être pénalisé.
+2. **Le biais de fente pénalise les ancres héritées** (§30) — chaque couche
    d'historique porte le biais de *sa* courbure, pas de celle de la couche en cours.
 
 **La recherche a exploité les deux.** Ce n'est pas une anomalie : c'est le modèle qui,
@@ -175,7 +175,7 @@ devenu plus fidèle, désigne une autre stratégie de contrôle.
 ⚠️ **Ce que cela n'établit PAS.** Que le niveau absolu soit *bon* — seulement qu'il est
 meilleur que POEM **dans ce modèle-ci, sur ce composant-ci**. Il n'a aucune
 auto-compensation des erreurs accumulées, et il reste exposé à la courbure photométrique
-qui, elle, n'est pas affine. §15 s'applique en entier : rien de ceci n'est validé contre un
+qui, elle, n'est pas affine. §26 s'applique en entier : rien de ceci n'est validé contre un
 dépôt réel.
 
 ---
@@ -249,7 +249,7 @@ saturation**.
 
 #### 🔴 Ce que je n'ai PAS mesuré, et qu'il ne faut pas croire mesuré
 
-**L'asymétrie H / L.** §12.3 note que 0,005 en absolu vaut 0,21 % sur H et **0,34 % sur L**
+**L'asymétrie H / L.** §29.3 note que 0,005 en absolu vaut 0,21 % sur H et **0,34 % sur L**
 — rapport 1,6. J'ai voulu la mesurer et **je n'ai pas pu** : le corridor perturbe les deux
 matériaux ensemble et aucun paramètre ne les sépare. Le balayage ci-dessus mesure donc
 l'**amplitude**, pas la **répartition**. La question reste ouverte, et elle demanderait un

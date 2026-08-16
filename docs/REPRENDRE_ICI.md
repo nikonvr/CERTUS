@@ -162,7 +162,7 @@ fenêtre de ±3 lignes)*.
 
 | | |
 |---|---|
-| **la mémoire de compte** | `<.claude>/projects/<projet>/memory/`, 9 fichiers, 17 Ko. **Par compte et par machine.** Elle porte des pièges absents du dépôt |
+| ~~la mémoire de compte~~ | ✅ **RÉSOLU le 2026-08-16** : son contenu durable est versé dans [`MEMOIRE_PROJET.md`](MEMOIRE_PROJET.md), qui est **dans le dépôt**. Plus rien d'essentiel n'y dépend de la machine |
 | **le `.venv`** | à reconstruire. 📌 Piège documenté : un venv de snapshot peut charger le code d'**un autre** snapshot — vérifier avant toute mesure |
 | **le hook d'auto-push** | `.claude/` n'est pas versionné. Sur cette machine **tout commit publie** vers `nikonvr/CERTUS` ; ailleurs, ce ne sera pas le cas |
 

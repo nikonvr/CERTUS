@@ -15,6 +15,7 @@ quelqu'un fabrique une pièce avec.
 |---|---|
 | **[`docs/REPRENDRE_ICI.md`](docs/REPRENDRE_ICI.md)** | 🔴 **où on s'est arrêté et la commande exacte pour repartir.** Gelé le 2026-08-16 à 08:45 |
 | [`docs/REPRISE.md`](docs/REPRISE.md) | les six chiffres, les cinq pièges, et **ce qui est faux dans les vieux documents** |
+| [`docs/MEMOIRE_PROJET.md`](docs/MEMOIRE_PROJET.md) | 🔴 **le savoir opérationnel qui ne suivait PAS le dépôt** : le hook qui publie, le venv qui charge un autre snapshot, les pièges du banc |
 
 Tout le reste de ce fichier est du référentiel : lis-le **par la carte du §3**, pas
 linéairement.

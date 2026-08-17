@@ -88,6 +88,19 @@ OLD VERSION/
 reports/Report_*
 reports/STRAT_observability_*
 
+# 🔴 EXCEPTIONS -- ces sorties-la ne sont PAS du transitoire : ce sont des MESURES REELLES
+# au spectrophotometre, et l'interdit 3 rappelle qu'elles sont irrecuperables. Mesure du
+# 2026-08-17 sur les 49,2 Mo que les deux regles ci-dessus excluaient :
+#   Report_STRAT*             2010 fichiers  22,8 Mo  <- sorties de campagne, regenerees
+#   STRAT_observability_*      918 fichiers  22,2 Mo  <- diagnostic par run, regenere
+#   Report_INDEX*               26 fichiers   2,4 Mo  <- determinations d'indice REELLES
+#   Report_METAL* / _SINGLE*    48 fichiers   1,8 Mo  <- mesures metaux REELLES
+# 45 des 49 Mo sont donc bien du transitoire : les deux regles restent. Seuls les 4,2 Mo
+# de mesures reelles remontent dans le depot.
+!reports/Report_INDEX*
+!reports/Report_METAL*
+!reports/Report_SINGLE*
+
 # ─────────────── Rust engine (build artefacts) ───────────────
 certus_engine_rs/target/
 certus_engine_rs/uv.lock

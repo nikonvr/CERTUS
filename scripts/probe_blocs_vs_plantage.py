@@ -175,7 +175,7 @@ def _commit() -> str:
 
 
 def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
-            resolution_nm: float = 2.0, elargi: bool = False) -> dict:
+            resolution_nm: float = 2.0, elargi: bool = False, seed: int = SEED) -> dict:
     """Un run complet, et `cherche_fente` est le parametre qui manquait.
 
     🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
@@ -207,7 +207,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         app.widgets["execution_mode"].setCurrentText(mode)
 
     over = {
-        "show_plots": False, "robustness_seed": SEED,
+        # 🔑 La graine est exposee depuis le 2026-08-17 : §24-46 a mesure qu'un verdict
+        # marginal BASCULE avec elle (0/452 -> 70/521 sur le meme intervalle). Une cellule
+        # marginale jugee sur une seule graine n'etablit rien.
+        "show_plots": False, "robustness_seed": int(seed),
         # 🔑 LA RESOLUTION DE BASE DU RUN. Le code n'ecarte JAMAIS la fente propre du run
         # ("THE RUN'S OWN SLIT IS NEVER SKIPPED"), donc la fixer ici est le seul moyen de
         # faire evaluer TOUTES les strategies a cette largeur. Les variantes, elles, sont
@@ -427,14 +430,15 @@ def main() -> int:
     min_tp = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     elargi = bool(int(sys.argv[6])) if len(sys.argv) > 6 else False
+    graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
-    print(f"composant {nom} | mode {mode} | graine {SEED} | require_turning_point={min_tp} "
+    print(f"composant {nom} | mode {mode} | graine {graine} | require_turning_point={min_tp} "
           f"| fente {res_nm:g} nm | elargi {int(elargi)} | machine {_machine()}")
-    r = mesurer(nom, mode, fente, min_tp, res_nm, elargi)
-    r.update({"composant": nom, "mode": mode, "seed": SEED, "instrument": _commit(),
+    r = mesurer(nom, mode, fente, min_tp, res_nm, elargi, graine)
+    r.update({"composant": nom, "mode": mode, "seed": graine, "instrument": _commit(),
               "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
 
     if r["verdict"] != "OK":
@@ -455,7 +459,7 @@ def main() -> int:
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
                 + ("_large" if elargi else ""))
-    out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"
+    out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
     return 0

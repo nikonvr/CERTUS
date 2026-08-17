@@ -196,6 +196,69 @@ couches se surveille d'un bout à l'autre sans difficulté.
 ⚠️ **Ce que ça ne dit pas** : que 99 couches aléatoires passeraient. Un seul empilement de 75,
 une seule graine. Ce qui est établi est la **réfutation**, pas la loi inverse.
 
+⚠️ **Et l'explication donnée juste au-dessus — « les espaceurs à swing nul et les miroirs sous
+le plancher » — est RÉFUTÉE.** §23.1 le dit déjà pour le swing ; le profil de monitorabilité
+le confirme par une seconde voie : **aucune couche n'est aveugle, sur aucun des quatre
+composants.**
+
+#### 🔴 CONSIGNÉ LE 2026-08-17 — la cohérence en λ classe les composants À L'ENVERS
+
+Le nombre était calculé et committé depuis le 2026-08-16 (`af5a7ca`,
+`reports/profil_monitorabilite.json`, reproduit **bit-identique** le 17/08). **Sa lecture
+n'avait jamais été écrite**, et elle ferme une route entière du chantier.
+
+`scripts/profil_monitorabilite.py` — TMM pure sur l'empilement nominal, **aucun solveur,
+aucun Monte-Carlo, 49 s pour les quatre composants** :
+
+```
+couches SANS aucune lambda utilisable :  0/99   0/75   0/48   0/35
+```
+
+Le critère **par couche** n'est donc jamais le bloqueur. Reste l'**intersection** — les λ
+servant tout le préfixe `[0,b)`, c'est-à-dire ce qu'un **bloc unique** exigerait :
+
+| b | **99c** | **75c** | 48c | 35c |
+|---|---|---|---|---|
+| 10 | 96 | 97 | 150 | 124 |
+| 20 | 55 | 61 | 96 | 55 |
+| 30 | 55 | **26** | 89 | 30 |
+| 40 | 46 | **16** | 85 | — |
+| 50 | 46 | **3** | — | — |
+| **60** | 33 | **0** 🔴 | — | — |
+| complet | **26** | **0** | 64 | 28 |
+
+🔴 **Le 75c tombe à zéro dès la couche 60 ; le 99c garde 26 λ sur ses 99 couches.** Or c'est
+le **75c qui passe** en une campagne (0,272 nm, 0 %) et le **99c qui plante à 100 %**. Le
+composant qui satisfait *mieux* la condition nécessaire est celui qui échoue.
+
+🔑 **Donc la cohérence en λ n'est PAS ce qui rend un design monitorable à un témoin.**
+L'explication physique tient : le 99c est **périodique** à `l0 = 633 nm`, donc la même λ
+continue de servir — forte cohérence, peu de λ par couche (63 à 75 dans la queue). Le
+random75 n'a aucune périodicité : beaucoup de λ par couche (85 à 95), mais l'ensemble
+**dérive**, donc l'intersection s'effondre.
+
+> **La périodicité achète la cohérence en λ. Elle n'achète pas la monitorabilité.**
+
+✅ **Et deux voies indépendantes convergent le même jour.** L'intervalle `[38,99)` a la Phase A
+la **plus saine** des trois testées — 0 couche en repli, estimation de plantage 0,0000 partout
+— et sa Phase B plante à 42 % (`CLAUDE.md` §24-48). Ici, la condition nécessaire est
+satisfaite partout et *mieux* par celui qui échoue.
+
+🔴 **Ce qui tue le monitorage à un témoin n'est donc pas le signal par couche : c'est
+l'ACCUMULATION le long de la campagne** — l'ancrage et la compensation entre blocs.
+
+📌 **Conséquence directe pour le chantier « prédire sans tout calculer »** (75c, proposé par 👤
+le 2026-08-17) : un prédicteur bâti sur des grandeurs **statiques par couche** est condamné,
+parce qu'elles sont **toutes satisfaites** et qu'elles classent à l'envers. Il faut une
+grandeur d'**accumulation**. C'est plus dur, et c'est là qu'est le signal. Économie réalisée :
+ce constat coûte 49 s et évite de générer 20 empilements aléatoires pour découvrir la même
+chose.
+
+⚠️ Réserve du script, écrite par son auteur : *« qu'une couche soit surveillable ne dit pas
+qu'une STRATÉGIE existe — un bloc exige une λ valable pour toutes ses couches à la fois, et la
+compensation dépend de l'histoire. C'est une condition NÉCESSAIRE, pas suffisante. »* Elle
+borne la faisabilité par le haut, proprement.
+
 #### 🔴 ET LE CONTRÔLE NÉGATIF PASSE UNE TROISIÈME FOIS
 
 Puisque le random75 est monitorable en une campagne, changer de témoin doit y **perdre**.

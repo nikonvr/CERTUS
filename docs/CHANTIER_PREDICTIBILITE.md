@@ -83,30 +83,58 @@ design.**
 
 ## 2. Ce que la série établit sur le mécanisme
 
-Ni la longueur ni la structure ne gouvernent — les deux sont constantes. **C'est l'épaisseur
-optique par couche**, autrement dit **combien de points tournants chaque couche traverse**. Et le
-mécanisme a **deux bords**, exactement ce que §27 annonçait sans l'avoir mesuré — *« trop de
-points tournants proches est aussi un risque, pas seulement trop peu ; le coût doit être non
-monotone »* :
+Ni le nombre de couches ni la structure ne gouvernent — les deux sont constants dans la série.
+Reste l'**épaisseur optique**, et il faut distinguer **deux grandeurs distinctes** que les
+premières rédactions de ce dossier confondaient :
 
-| bord | mécanisme | signature |
-|---|---|---|
-| **trop mince** (×0,5) | la couche ne complète pas un quart d'onde → **pas d'extremum**, donc pas d'ancre pour POEM | 59 couches sous 1 QWOT, **1 couche muette** |
-| **trop épais** (×2) | plusieurs extrema par couche → le **comptage décroche** | 0 couche sous 1 QWOT, jusqu'à 4,96 QWOT |
+| grandeur | ce qu'elle gouverne | ×0,5 | ×1 | ×1,5 | ×2 |
+|---|---|---|---|---|---|
+| **Σ QWOT** — épaisseur optique **totale** | l'**espacement des franges**, donc la **résolution spectrale** exigée du monochromateur | 57,4 | 114,9 | 172,3 | **229,8** |
+| **QWOT par couche** | le nombre de **points tournants** traversés pendant la croissance, donc la disponibilité d'une **ancre de phase** pour POEM | **0,25 – 1,24** | 0,50 – 2,48 | 0,76 – 3,72 | 1,01 – 4,96 |
 
-Les deux échecs portent des `crash_min` **différents** — 48 % contre 100 % — donc probablement
-deux causes distinctes. `margin_by_layer` est ventilé par cause (`margin_missed` = extremum
-**manqué** ; `margin_fabricated` = extremum **inventé**), donc c'est **mesurable**. Non encore
-mesuré au 2026-08-17.
+### 🔴 Et l'explication « ×0,5 échoue faute d'ancre » est FAUSSE — comptage naïf
+
+⚠️ **C'est l'erreur que §14 désigne comme la plus coûteuse du projet, et les premières versions de
+ce dossier la commettaient** : *« QWOT ≠ point tournant […] se tromper coûte un facteur 59 : sur
+le random75 ×0,5, le comptage naïf annonce 59 couches "sans point d'arrêt", le comptage exact en
+trouve 1 »*.
+
+📏 **Et la mesure du 2026-08-17 le confirme, sur ce même empilement :**
+
+```
+r75x0.5   couches sans aucune lambda admissible : 1 / 75
+```
+
+**Une seule couche sur 75**, pas 59. Le départ d'un point tournant est décalé d'une phase
+`½·arctan(R/Q)` fixée par l'empilement du dessous : une couche sous 1 QWOT **peut parfaitement**
+traverser un extremum. Les 59 couches sous 1 QWOT ne disent donc **rien** sur la disponibilité
+d'une ancre.
+
+🔴 **Conséquence : le taux de 48 % de ×0,5 n'est PAS expliqué.** Il ne vient pas d'une absence
+d'ancre. Et cela rejoint une correction de 👤 le même jour : *« si les couches sont trop fines, il
+y a effectivement un risque de ne pas détecter de point tournant, mais cela n'invalide pas de
+pouvoir faire du monitoring — simplement il n'y a pas de correction type POEM »*. Une couche sans
+ancre s'arrête sur un **niveau absolu** ou au **Rate** ; ce qu'elle perd est la compensation
+d'erreur, pas la faisabilité.
+
+📌 **Ce qui trancherait**, et ce n'est pas encore mesuré : la ventilation de `margin_by_layer` de
+×0,5 **par cause**. `margin_missed` désigne un extremum non émis parce que le swing est sous
+l'hystérésis ; `margin_fabricated`, un extremum émis par le bruit seul. Si ×0,5 est dominé par
+`margin_missed`, l'explication par l'ancre revient — mais alors sur le **swing**, pas sur le QWOT.
 
 ---
 
-## 3. 🔴 Une seule grandeur du signal nominal prédit quelque chose
+## 3. 🔴 Aucune grandeur du signal nominal ne prédit l'échec
 
 📏 **Test loyal du 2026-08-17**, `scripts/probe_marge_atteignable.py` sur les quatre échelles.
 TMM pure, aucun solveur, aucun Monte-Carlo.
 
-| composant | muettes | blocs min | marge mini | marge méd | **issue mesurée** |
+**Définition exacte de la colonne 1** — une couche est comptée quand **aucune** λ de la grille ne
+satisfait les trois critères simultanément : `swing ≥ dynamics_threshold`, `T_min ≥
+min_transmission_floor`, et **au moins un point tournant** dans l'intervalle de croissance. C'est
+le comptage **exact**, pas le comptage naïf par QWOT.
+
+| composant | couches sans λ admissible | blocs minimum | marge nominale mini | méd | **issue mesurée** |
 |---|---|---|---|---|---|
 | ×0,5 | **1** | 4 | 109,0 A | 570 A | 🔴 échoue |
 | ×1 | 0 | 2 | **78,9 A** | 600 A | 🟢 passe |
@@ -115,13 +143,14 @@ TMM pure, aucun solveur, aucun Monte-Carlo.
 
 | grandeur | verdict |
 |---|---|
-| **couches muettes** | ✅ **prédit le bord MINCE**, et est structurellement aveugle à l'épais — cohérent : trop mince = pas d'extremum, trop épais = comptage qui décroche, pas muteté |
-| **blocs minimum** | ❌ 4/2/1/1, monotone avec l'épaisseur ; ×1,5 et ×2 tiennent tous deux en **1 bloc** alors que l'un passe et l'autre échoue |
-| **marge nominale mini** | ❌ va **à l'envers** : celui qui **passe** a la marge la plus **basse** (78,9 A) |
+| **couches sans λ admissible** | 🟠 **seule à porter un signal** — 1 pour ×0,5, 0 partout ailleurs. ⚠️ Mais **1 couche sur 75 n'explique pas un taux de 48 %** : c'est une corrélation sur un seul point, pas un mécanisme établi |
+| **blocs minimum** | ❌ 4/2/1/1, monotone avec Σ QWOT ; ×1,5 et ×2 tiennent tous deux en **1 bloc** alors que l'un réussit et l'autre échoue |
+| **marge nominale mini** | ❌ **anticorrélée** : celui qui réussit porte la marge la plus **basse** (78,9 A) |
 | **marge nominale médiane** | ❌ plate, ~600 A pour les quatre |
 
-🔑 **Le seul détecteur qui fonctionne est la muteté, et seulement d'un côté.** Le bord épais
-n'est vu par **aucune** grandeur du signal nominal.
+🔑 **Aucune grandeur du signal nominal ne prédit l'échec par résolution spectrale insuffisante**
+(×2). Et la seule qui distingue ×0,5 ne le fait que par **un** point, ce qui ne constitue pas une
+prédiction.
 
 ---
 
@@ -222,7 +251,7 @@ l'instrumentation, pas une physique nouvelle.
 
 ---
 
-## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la fente n'était pas cherchée
+## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la résolution spectrale n'était pas cherchée
 
 > 👤 **2026-08-17** : *« je me pose aussi la question de la résolution spectrale. Un filtre trop
 > épais a des pics en transmission et peut-être que le filtre serait monitorable en résolution
@@ -254,10 +283,12 @@ comme non exécutable en salle.
 WAVELENGTHS ARE GOOD »*. Une λ en zone lisse tolère 5 nm et encaisse le bonus de bruit **÷1,5** ;
 une λ de bord de bande exige 1 nm et paie le **×2**. **C'est un arbitrage, pas un gain gratuit.**
 
-⚠️ **Et aucune des sondes statiques n'applique la fente** — `profil_monitorabilite.py` et
-`probe_marge_atteignable.py` tournent à résolution **infinie** (grep `slit|resolution` : zéro).
-Elles **surestiment** donc le swing, et le plus fortement là où ça compte : les empilements
-épais. C'est précisément pourquoi le bord épais leur est invisible.
+⚠️ **Et aucune des sondes statiques n'applique la convolution par la bande passante du
+monochromateur** — `profil_monitorabilite.py` et `probe_marge_atteignable.py` calculent le signal
+à résolution spectrale **infinie** (grep `slit|resolution` : zéro occurrence). Elles
+**surestiment** donc le swing, d'autant plus que l'espacement des franges est serré, c'est-à-dire
+d'autant plus que Σ QWOT est grand. **C'est précisément pourquoi l'échec par résolution spectrale
+insuffisante leur est invisible.**
 
 **C'est le lead le mieux étayé du chantier au 2026-08-17.** `--fente` est exposée dans
 `probe_blocs_vs_plantage.py` (3ᵉ argument, défaut 0 pour préserver la comparabilité), et la sortie
@@ -281,7 +312,40 @@ passant dans la même famille. ⚠️ Avec un **contrôle en premium sans fente*
 | 4 | **raffiner l'échelle** : ×0,75, ×1,25, ×1,75 | ~1,5 h | localise les **deux** frontières |
 | 5 | **deuxième graine sur ×0,5 et ×1,5** | ~1 h | les deux points marginaux ne tiennent pas sur une graine |
 
-## 7. Les règles de ce chantier
+## 7. 🔒 Vocabulaire — nommer la cause, jamais la métaphore
+
+> 👤 **2026-08-17** : *« les termes ne sont pas les bons : murs, bords épais, surveillance ne sont
+> pas du jargon scientifique optique / physique / couches minces optiques et on a du mal à
+> communiquer. »* Puis : *« impose-toi d'utiliser du vocabulaire précis et adapté
+> scientifiquement. »*
+
+Les premières rédactions de ce dossier employaient des métaphores inventées. Elles sont
+remplacées par les termes du §14 de `CLAUDE.md` et du code.
+
+| à ne plus écrire | terme correct | source |
+|---|---|---|
+| « mur », « mur candidat » | **couche critique** *(champ `critical_layer`)*, ou **couche limitante** | code |
+| « bord épais » / « bord mince » | nommer la **cause** : **résolution spectrale insuffisante** · **absence de point tournant exploitable** | — |
+| « signature spectrale » | **structure spectrale**, ou **espacement des franges** | — |
+| « fente » employé pour la grandeur optique | **résolution spectrale du monochromateur** *(`monochromator_resolution_nm`)*. *Fente* désigne la pièce mécanique | code |
+| « le comptage décroche » | **`CRASH_TP_MISCOUNT`** | code |
+| « niveau hors d'atteinte » | **`CRASH_LEVEL_UNREACHABLE`** — niveau d'arrêt inatteignable | code |
+| « extremum inventé » / « manqué » | **`margin_fabricated`** *(extremum émis par le bruit seul)* · **`margin_missed`** *(swing sous l'hystérésis, extremum non émis)* | code |
+
+⚠️ **À l'inverse, trois termes que j'avais pris pour des approximations sont l'idiome du projet et
+ne doivent PAS être « corrigés »** : **surveiller / surveillance** (§14 : *« la λ à laquelle la
+machine surveille le dépôt »*), **couche muette** (§21 et les tables de réfutation depuis le
+15/08), et **pic** (`COMPOSANTS.md` : *« Pic \| T = 0,9966 »*, le pic de transmission de la bande
+passante).
+
+🔴 **Et la précision qui compte le plus n'est pas lexicale, elle est physique : QWOT ≠ point
+tournant.** §14 en fait l'erreur la plus coûteuse du projet, et §2 de ce dossier documente le fait
+que je l'ai commise. `scripts/check_claude_md.py` la refuse mécaniquement — **mais son contrôle E
+ne scanne que `CLAUDE.md`**, donc ce dossier y a échappé. C'est un trou du vérificateur, à combler.
+
+---
+
+## 8. Les règles de ce chantier
 
 1. 🔴 **Le 99c n'est pas une référence.** Tout QWOT ⇒ adverse à POEM. Ses conclusions ne se
    généralisent pas, et sa réponse plate à 100 % ne discrimine rien.

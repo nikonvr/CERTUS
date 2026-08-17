@@ -110,6 +110,40 @@ donnée personnelle, un secret, ou l'œuvre d'un tiers ne doit entrer dans l'ind
 dans 114 lignes de journaux, et le texte intégral d'une thèse tierce. Si 👤 demande un commit
 **sans** pousser, désactive le hook **avant**, pas après.
 
+🔴 **ET CE N'EST PAS RÉGLÉ — le nettoyage du 2026-08-14 n'a nettoyé que l'ARBRE DE TRAVAIL.**
+📏 Mesuré le 2026-08-17 :
+
+```
+41626b8  2026-08-07  ajoute  reports/_zideluns_text.json   377 498 octets
+f4c05c6  2026-08-14  "fix(prive): le depot public ne porte plus de donnee personnelle"
+
+encore lisibles a f4c05c6^ :
+  377 498 o  reports/_zideluns_text.json   (206 blocs de prose indexes par page)
+  155 648 o  .vs/slnx.sqlite
+    8 192 o  .vs/1705/v17/.wsuo
+      508 o  .vs/1705/v17/DocumentLayout.json
+       73 o  .vs/VSWorkspaceState.json
+
+41626b8 ancetre de HEAD : True      sur origin/refactor-corridors-mixins : True
+```
+
+`f4c05c6` a **supprimé** ces cinq fichiers et **modifié les six `.xls` en place** — tailles
+identiques avant/après, donc le contenu a été corrigé sur place. Or **une suppression comme
+une modification laissent la version antérieure dans l'historique.** Le texte de la thèse se
+récupère du dépôt public en une commande, et les `.xls` d'avant correctif aussi.
+`.gitignore:137` porte une règle dédiée à ce fichier : elle empêche une *future* addition,
+elle ne touche pas au passé.
+
+⚠️ **Ne prends donc pas ce commit pour un règlement.** Purger demande `git filter-repo` puis
+un **force-push** : tous les SHA à partir du 2026-08-07 changent, donc **tous les hash cités
+dans ce document et dans `docs/` deviennent faux**, ainsi que l'objet du tag `depart-gemini`.
+GitHub conserve en plus les blobs devenus inatteignables jusqu'à ce qu'on lui demande de les
+collecter. C'est une décision de 👤, pas une correction de routine.
+
+📌 Sur la gravité, honnêtement : une thèse est en général publiquement accessible — l'enjeu
+est la **rediffusion**, et il dépend de sa licence. Mais au regard de la règle écrite juste
+au-dessus, la violation est **toujours active**.
+
 **3. Vérifie que tout est vert avant de toucher à quoi que ce soit.**
 
 ```bat
@@ -117,9 +151,38 @@ dans 114 lignes de journaux, et le texte intégral d'une thèse tierce. Si 👤 
 .venv\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
 ```
 
-Attendu : `All checks passed!` puis `2450 passed, 5 skipped` (📏 2026-08-14, 7 min).
+Attendu : `All checks passed!` puis `2450 passed, 5 skipped`.
 Si un test est rouge **avant** que tu n'aies rien touché → **ARRÊTE-TOI et signale.**
 Ce n'est pas à toi de le réparer.
+
+🔴 **UNE EXCEPTION, ET ELLE VA TE TOMBER DESSUS SI TU VIENS DE MONTER UN VENV.** Sur un
+cache numba **froid**, la première passe rend **3 échecs** — et ils sont faux.
+
+```
+1re passe, venv neuf, cache FROID  ->  3 failed, 2447 passed  in 850,20 s
+2e passe, cache CHAUD              ->  2450 passed, 5 skipped in 346,76 s
+```
+
+📏 Mesuré le 2026-08-17. Les trois sont `tests/unit/test_phase2_gradient.py::test_phase2_gradient_analytic_vs_fd`
+et les deux `TestIRGlobalModelStrategy` de `tests/unit/workers/test_index_workers_ir_strat.py`.
+**Ils passent isolément.** Cause dans **numba lui-même** — donc dans le venv, pas dans ce
+dépôt : `ir_utils.py` (paquet `numba.core`) fait, ligne 1702, un `import numba.core.inline_closurecall`
+**à l'intérieur** de `get_ir_of_code`. Un import de chemin pointé dans une fonction crée une
+**locale** `numba`, résolue depuis `sys.modules` **à l'appel** — et non l'objet capturé par
+l'`import numba` du haut du module. Ce chemin n'est
+emprunté que pendant une **compilation réelle** : à cache chaud, la fonction est chargée et
+le défaut ne peut pas se manifester. `tests/conftest.py:259` protège `os.environ` par une
+fixture `autouse` — *« to prevent Numba env pollution »* — mais **rien ne protège
+`sys.modules`**. C'est l'audit resté ouvert au §2.2 de
+[`REPRISE_TESTS_ISOLATION.md`](docs/REPRISE_TESTS_ISOLATION.md).
+
+**Donc : relance une seconde fois avant de signaler quoi que ce soit.** Le test fautif n'a
+pas été identifié — `test_pure_imports.py` est écarté (il ne supprime que les modules dont le
+nom contient `certus_core`).
+
+⚠️ **Les durées ci-dessus appartiennent à une machine, pas au projet** : i5-8250U, 4 cœurs /
+8 threads, 7,9 Go. La ligne précédente annonçait « 7 min » sans dire sur quoi. Ne compare
+jamais une durée sans sa machine — c'est ce qui a failli coûter une campagne le 2026-08-17.
 
 **4. Lis §29 et choisis UNE action. Une seule.**
 
@@ -776,9 +839,11 @@ réflectance, tous deux exacts à k=0 donc invisibles aux tests existants.
 | `calculate_reflection_infinite_substrate_single` | 4,4e-16 |
 | `_oblique_stack_rt_single` (5 angles × s/p × 3 k) | 7,8e-16 |
 
-**Règle : avant de toucher au moindre calcul optique, lance `pytest tests/oracle/`** (237
-tests, 2 s). Et quand tu corriges un bug, **vérifie que le test que tu ajoutes échoue sur le
-code d'avant correctif** — sinon il ne prouve rien.
+**Règle : avant de toucher au moindre calcul optique, lance `pytest tests/oracle/`.**
+📏 **563 passed en 89,72 s** (2026-08-17, i5-8250U, cache chaud). ⚠️ Cette ligne annonçait
+*« 237 tests, 2 s »* — **faux, et d'un facteur 2,4 sur le compte** : la suite oracle a plus
+que doublé depuis. Et quand tu corriges un bug, **vérifie que le test que tu ajoutes échoue
+sur le code d'avant correctif** — sinon il ne prouve rien.
 
 ---
 
@@ -1072,7 +1137,15 @@ ruff check .                                  ->  All checks passed!
 
 ⚠️ Des documents supprimés annonçaient 2300 et 2301, avec la **même durée au centième**
 (`87.60s`) dans cinq entrées différentes. Ces lignes n'avaient pas été mesurées.
-**La référence est 2310** (mesurée le 2026-08-11 ; 2299 avant les tests du corridor).
+
+🔴 **Et la phrase qui suivait était fausse : elle disait « la référence est 2310 », six
+lignes après un bloc annonçant 2450 pour la même commande.** Deux chiffres contradictoires
+dans la même section. 📏 Remesuré **deux fois** le 2026-08-17, à cache numba chaud puis
+froid : **la référence est bien `2450 passed, 5 skipped`.** Le 2310 est retiré.
+
+⚠️ **Le `101.24s` du bloc ci-dessus n'est pas reproductible ici** — la même commande rend
+**346,76 s** sur i5-8250U à cache chaud. Je ne sais pas si l'écart vient de la machine ou du
+chiffre, donc je ne le corrige pas : **je note qu'une durée sans machine ne vaut rien.**
 
 ---
 
@@ -1565,7 +1638,10 @@ dont 3 réels dans `certus/physics/gradient_analytic.py`. **F401 (5 473)** · **
 
 ### CI
 
-248 fichiers `.py` sous `tests/` (241 `test_*.py`), 2 299 tests collectés.
+248 fichiers `.py` sous `tests/` (241 `test_*.py`). ⚠️ **Le « 2 299 tests collectés » qui
+figurait ici est faux par inclusion** : `tests/oracle/` + `tests/unit/` en rend à eux seuls
+**2 455** (2450 + 5 skipped, mesuré le 2026-08-17), et `tests/` est un sur-ensemble. Le
+compte réel de la suite complète n'est pas mesuré — elle coûte ~1 h 45.
 `release-windows.yml:93` lance `pytest tests/oracle/ tests/unit/`, `tests.yml` lance
 `tests/oracle/` puis `tests/`. **`lint.yml` n'exécute aucun test** — c'est le chantier qui
 reste.

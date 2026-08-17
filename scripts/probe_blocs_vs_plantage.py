@@ -174,7 +174,7 @@ def _commit() -> str:
         return "?"
 
 
-def mesurer(nom: str, mode: str, cherche_fente: bool = False) -> dict:
+def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0) -> dict:
     """Un run complet, et `cherche_fente` est le parametre qui manquait.
 
     🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
@@ -209,6 +209,12 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False) -> dict:
         "show_plots": False, "robustness_seed": SEED,
         "monochromator_resolution_nm": 2.0, "search_resolution": bool(cherche_fente),
         "noise_layer_offset": 0, "noise_total_layers": n_layers,
+        # 🔒 EXIGENCE D'UN POINT TOURNANT -- inactif a 0, donc chemin d'avant mot pour mot.
+        # Accepte un ENTIER : le minimum de points tournants exige par couche. Un reglage
+        # destructif (999) doit vider la selection -- c'est la seule facon de prouver SANS
+        # CIRCULARITE que le parametre atteint le calcul, comme machine_sampling_dd ne le
+        # faisait pas. La ligne de log [TP] compte les rejets par couche.
+        "require_turning_point": int(min_tp),
         "execution_mode": mode,
     }
     _c = app.collect_params
@@ -382,12 +388,14 @@ def main() -> int:
     nom = sys.argv[1] if len(sys.argv) > 1 else "99c"
     mode = sys.argv[2] if len(sys.argv) > 2 else "premium"
     fente = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
+    min_tp = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
-    print(f"composant {nom} | mode {mode} | graine {SEED} | machine {_machine()}")
-    r = mesurer(nom, mode, fente)
+    print(f"composant {nom} | mode {mode} | graine {SEED} | require_turning_point={min_tp} "
+          f"| machine {_machine()}")
+    r = mesurer(nom, mode, fente, min_tp)
     r.update({"composant": nom, "mode": mode, "seed": SEED, "instrument": _commit(),
               "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
 
@@ -406,7 +414,7 @@ def main() -> int:
     print("=" * 74)
     contraintes_communes(r["strategies"])
 
-    suffixe = "_fente" if fente else ""
+    suffixe = ("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

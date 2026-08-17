@@ -1,5 +1,66 @@
 # REPRENDRE ICI — état gelé au 2026-08-16, 08:45
 
+## 🔴 2026-08-17 — LIS CECI AVANT LE RESTE DU FICHIER : deux choses y sont périmées
+
+### 1. Un verdict d'intervalle n'est PAS déterminé par une graine
+
+Mesuré ce jour, même intervalle, même machine, seul `robustness_seed` change :
+
+```
+[38,99)  61c  graine 42  ->  AUCUNE_DEPOSABLE    0/452  crash_min 42,0 %  RMSE 0.18817
+[38,99)  61c  graine 77  ->  DEPOSABLE          70/521  crash_min  0,0 %  RMSE 0.18777
+```
+
+Contrôle §12-1 passé : à graine 42, deux commits différents (`7564c78`, `817bc76`) rendent
+**les mêmes nombres**, RMSE comprise. Le basculement vient de la graine, pas du code.
+
+🔑 Ce n'est pas une gigue de quelques pour cent, c'est **catégoriel** — « impossible » contre
+« 13 % viable ». Et l'effet se compose : la graine change le bruit, donc les choix de Phase A,
+donc **la population de stratégies elle-même** (452 contre 521). Même classe de problème que
+l'invariant de [`DECISIONS_TRANCHEES.md`](DECISIONS_TRANCHEES.md) — *la réalisation ne doit pas
+décider quelles candidates existent* — appliquée à la graine au lieu de la profondeur.
+
+⚠️ Le consensus **était actif** (`enable_consensus_ranking = 1`, 3 graines) et ne l'a pas
+empêché : il porte sur le classement des `consensus_top_k`, alors que `n_deposables` et
+`crash_min` se calculent sur **toutes** les stratégies.
+
+**Portée, et il faut la dire sans l'exagérer.** Les 263 entrées du cache premium sont toutes à
+`robustness_seed = 42`. Le **0,782 nm à 4 témoins** et les « 31 partitions à égalité » du §3.1
+sont assemblés depuis elles. **Cela ne rend pas le 0,782 nm faux — cela veut dire qu'une seule
+graine ne l'établit pas.** C'est vérifiable pour quelques heures : rejouer la partition gagnante
+à deux ou trois graines. `--graine` est désormais exposée (`4906252`), et une graine autre que 42
+écrit **à côté** (suffixe `_sNNN`) sans jamais toucher le cache de référence.
+
+📌 **À faire avant de croire un classement de partitions** : ce contrôle-là, pas les 7
+intervalles manquants.
+
+### 2. Les durées de ce fichier et du cache appartiennent à une AUTRE machine
+
+Le §2 annonce « 8,9 h cumulées, ~55 min d'horloge sur 10 shards ». Ces durées viennent de la
+machine précédente. Mesuré sur celle d'aujourd'hui — **i5-8250U, 4 cœurs / 8 threads, 7,9 Go**,
+1 shard seul, mode premium :
+
+| intervalle | couches | durée | verdict |
+|---|---|---|---|
+| `[38,99)` | 61 | 1256 s | AUCUNE_DEPOSABLE (graine 42) |
+| `[36,99)` | 63 | 1302 s | DEPOSABLE 6/446 |
+| `[20,99)` | 79 | **2116 s** | DEPOSABLE 80/654 |
+
+Le plafond `CERTUS_BENCH_TIMEOUT_S=5400` n'était donc pas en danger pour un shard **solo**. Le
+débit à 10 shards concurrents sur 4 cœurs, lui, **n'a pas été mesuré** — la campagne a été
+arrêtée avant, sans rien écrire.
+
+🔴 `run_s` ne portait aucune trace de la machine. Corrigé (`7564c78`) : chaque entrée consigne
+désormais `machine` à côté de `instrument`. **Les 263 entrées antérieures n'en ont pas** — leurs
+durées ne sont comparables ni entre elles ni aux nouvelles.
+
+⚠️ **Et une affirmation que j'ai écrite ce matin puis réfutée moi-même** : *« au-delà de
+60 couches le monitoring optique cesse de fonctionner »*. Faux — `[20,99)`, **79 couches**, le
+plus long des dix, rend 80 déposables à 0 % de plantage. Conclu sur un point, réfuté par le
+suivant. Le tableau du §3.2 ci-dessous doit être lu avec ça en tête.
+
+---
+
 > **Lis ce fichier en premier, puis [`REPRISE.md`](REPRISE.md).**
 > Celui-ci dit **exactement où on s'est arrêté et comment repartir**. L'autre dit ce que le
 > projet sait. Les deux sont dans le dépôt, donc ils suivent un `git clone` : **aucune

@@ -174,7 +174,8 @@ def _commit() -> str:
         return "?"
 
 
-def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0) -> dict:
+def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
+            resolution_nm: float = 2.0) -> dict:
     """Un run complet, et `cherche_fente` est le parametre qui manquait.
 
     🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
@@ -207,7 +208,21 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0) -
 
     over = {
         "show_plots": False, "robustness_seed": SEED,
-        "monochromator_resolution_nm": 2.0, "search_resolution": bool(cherche_fente),
+        # 🔑 LA RESOLUTION DE BASE DU RUN. Le code n'ecarte JAMAIS la fente propre du run
+        # ("THE RUN'S OWN SLIT IS NEVER SKIPPED"), donc la fixer ici est le seul moyen de
+        # faire evaluer TOUTES les strategies a cette largeur. Les variantes, elles, sont
+        # filtrees par la courbure -- c'est ainsi que 1 nm n'avait JAMAIS ete essaye sur x2.
+        #
+        # 📏 Le biais de fente va en B^2 (bias = T'' . B^2/24), le bruit suit
+        # RESOLUTION_NOISE_FACTOR : passer de 2 a 1 nm divise le biais par 4 et multiplie le
+        # bruit par 2. Sur un empilement a fort swing dont l'echec est LEVEL_UNREACHABLE,
+        # l'arbitrage penche donc vers la fente fine -- l'inverse de x0,5.
+        #
+        # 🔒 Et la comparaison est propre par construction : le facteur de bruit multiplie
+        # l'ECHANTILLON, jamais la graine (contrainte C2, certus_strat_robustness.py:192).
+        # Deux resolutions voient donc les MEMES tirages, a l'amplitude pres.
+        "monochromator_resolution_nm": float(resolution_nm),
+        "search_resolution": bool(cherche_fente),
         "noise_layer_offset": 0, "noise_total_layers": n_layers,
         # 🔒 EXIGENCE D'UN POINT TOURNANT -- inactif a 0, donc chemin d'avant mot pour mot.
         # Accepte un ENTIER : le minimum de points tournants exige par couche. Un reglage
@@ -389,13 +404,14 @@ def main() -> int:
     mode = sys.argv[2] if len(sys.argv) > 2 else "premium"
     fente = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
     min_tp = int(sys.argv[4]) if len(sys.argv) > 4 else 0
+    res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
     print(f"composant {nom} | mode {mode} | graine {SEED} | require_turning_point={min_tp} "
-          f"| machine {_machine()}")
-    r = mesurer(nom, mode, fente, min_tp)
+          f"| fente {res_nm:g} nm | machine {_machine()}")
+    r = mesurer(nom, mode, fente, min_tp, res_nm)
     r.update({"composant": nom, "mode": mode, "seed": SEED, "instrument": _commit(),
               "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
 
@@ -414,7 +430,8 @@ def main() -> int:
     print("=" * 74)
     contraintes_communes(r["strategies"])
 
-    suffixe = ("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
+    suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
+                + ("" if res_nm == 2.0 else f"_res{res_nm:g}"))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

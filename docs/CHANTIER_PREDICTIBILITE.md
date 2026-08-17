@@ -18,13 +18,13 @@ Ce dossier fait **autorité** sur ce sujet. `CLAUDE.md` n'en garde qu'un renvoi.
 **Il a raison, et c'est mécaniquement démontrable.** Les `stack_multipliers` du 99c valent
 **exactement 1 et 2** à `l0 = 633 nm`. Or §14 pose que QWOT et point tournant **coïncident** sur
 un empilement entièrement QWOT à λ_mon. Chaque couche finit donc **pile sur un extremum**, et
-POEM — qui vise *un pourcentage de l'amplitude entre les deux derniers extrema* — se retrouve au
-bord dégénéré de sa plage.
+POEM — qui vise *un pourcentage de l'amplitude entre les deux derniers extrema* — voit sa plage
+utile se réduire à un point.
 
-🔴 **Le 99c est adverse à POEM par construction. Ce n'est pas un cas difficile, c'est un cas
-dégénéré.** Signature qui aurait dû alerter plus tôt : `plantage min = 100 %` **plat** sur
-**751 stratégies** et **20 nombres de blocs distincts**. Une réponse plate porte zéro
-information — et c'est ce qui a produit trois fausses conclusions le 2026-08-17 (§4).
+🔴 **Le 99c est donc une configuration singulière pour POEM, pas simplement un cas difficile.**
+Signature qui aurait dû alerter plus tôt : `plantage min = 100 %` **plat** sur **751 stratégies**
+et **20 nombres de blocs distincts**. Une réponse plate porte zéro information — et c'est ce qui a
+produit trois fausses conclusions le 2026-08-17 (§4).
 
 ### La série d'échelle du random75 — la seule expérience CONTRÔLÉE du projet
 
@@ -89,7 +89,7 @@ premières rédactions de ce dossier confondaient :
 
 | grandeur | ce qu'elle gouverne | ×0,5 | ×1 | ×1,5 | ×2 |
 |---|---|---|---|---|---|
-| **Σ QWOT** — épaisseur optique **totale** | l'**espacement des franges**, donc la **résolution spectrale** exigée du monochromateur | 57,4 | 114,9 | 172,3 | **229,8** |
+| **Σ QWOT** — épaisseur optique **totale** | l'**espacement des oscillations spectrales**, donc la **résolution spectrale** exigée du monochromateur | 57,4 | 114,9 | 172,3 | **229,8** |
 | **QWOT par couche** | le nombre de **points tournants** traversés pendant la croissance, donc la disponibilité d'une **ancre de phase** pour POEM | **0,25 – 1,24** | 0,50 – 2,48 | 0,76 – 3,72 | 1,01 – 4,96 |
 
 ### 🔴 Et l'explication « ×0,5 échoue faute d'ancre » est FAUSSE — comptage naïf
@@ -126,7 +126,7 @@ l'hystérésis ; `margin_fabricated`, un extremum émis par le bruit seul. Si ×
 
 ## 3. 🔴 Aucune grandeur du signal nominal ne prédit l'échec
 
-📏 **Test loyal du 2026-08-17**, `scripts/probe_marge_atteignable.py` sur les quatre échelles.
+📏 **Test loyal du 2026-08-17**, `scripts/probe_distance_extremum.py` sur les quatre échelles.
 TMM pure, aucun solveur, aucun Monte-Carlo.
 
 **Définition exacte de la colonne 1** — une couche est comptée quand **aucune** λ de la grille ne
@@ -134,7 +134,12 @@ satisfait les trois critères simultanément : `swing ≥ dynamics_threshold`, `
 min_transmission_floor`, et **au moins un point tournant** dans l'intervalle de croissance. C'est
 le comptage **exact**, pas le comptage naïf par QWOT.
 
-| composant | couches sans λ admissible | blocs minimum | marge nominale mini | méd | **issue mesurée** |
+⚠️ **La troisième colonne n'est PAS une marge.** Elle mesure, sur l'empilement **nominal** et sans
+bruit, la **distance à l'extremum** — l'écart en transmission entre la fin de la couche et son
+dernier extremum, exprimé en multiples de `A`. C'est une grandeur **différente** de la marge de
+niveau de §24-41, qui est mesurée sur la trajectoire **bruitée et accumulée**. Voir §7.
+
+| composant | couches sans λ admissible | blocs minimum | distance à l'extremum, min | méd | **issue mesurée** |
 |---|---|---|---|---|---|
 | ×0,5 | **1** | 4 | 109,0 A | 570 A | 🔴 échoue |
 | ×1 | 0 | 2 | **78,9 A** | 600 A | 🟢 passe |
@@ -145,8 +150,8 @@ le comptage **exact**, pas le comptage naïf par QWOT.
 |---|---|
 | **couches sans λ admissible** | 🟠 **seule à porter un signal** — 1 pour ×0,5, 0 partout ailleurs. ⚠️ Mais **1 couche sur 75 n'explique pas un taux de 48 %** : c'est une corrélation sur un seul point, pas un mécanisme établi |
 | **blocs minimum** | ❌ 4/2/1/1, monotone avec Σ QWOT ; ×1,5 et ×2 tiennent tous deux en **1 bloc** alors que l'un réussit et l'autre échoue |
-| **marge nominale mini** | ❌ **anticorrélée** : celui qui réussit porte la marge la plus **basse** (78,9 A) |
-| **marge nominale médiane** | ❌ plate, ~600 A pour les quatre |
+| **distance à l'extremum, minimum** | ❌ **anticorrélée** : celui qui réussit porte la distance la plus **courte** (78,9 A) |
+| **distance à l'extremum, médiane** | ❌ plate, ~600 A pour les quatre |
 
 🔑 **Aucune grandeur du signal nominal ne prédit l'échec par résolution spectrale insuffisante**
 (×2). Et la seule qui distingue ×0,5 ne le fait que par **un** point, ce qui ne constitue pas une
@@ -237,7 +242,7 @@ coup.
 
 ### 4.4 ❌ La condition nécessaire, version nominale — et une erreur de ma part
 
-📏 `scripts/probe_marge_atteignable.py`. **0 couche bloquante** sur le 99c comme sur le 75c.
+📏 `scripts/probe_distance_extremum.py`. **0 couche bloquante** sur le 99c comme sur le 75c.
 
 🔴 **Et le seuil invoqué était le mauvais.** §24-41 mesure la marge **pendant un dépôt simulé**,
 avec bruit **et** erreur accumulée : valeurs de −1702 A à ~0,9 A, seuil discriminant **0,6 A**.
@@ -284,9 +289,9 @@ WAVELENGTHS ARE GOOD »*. Une λ en zone lisse tolère 5 nm et encaisse le bonus
 une λ de bord de bande exige 1 nm et paie le **×2**. **C'est un arbitrage, pas un gain gratuit.**
 
 ⚠️ **Et aucune des sondes statiques n'applique la convolution par la bande passante du
-monochromateur** — `profil_monitorabilite.py` et `probe_marge_atteignable.py` calculent le signal
+monochromateur** — `profil_monitorabilite.py` et `probe_distance_extremum.py` calculent le signal
 à résolution spectrale **infinie** (grep `slit|resolution` : zéro occurrence). Elles
-**surestiment** donc le swing, d'autant plus que l'espacement des franges est serré, c'est-à-dire
+**surestiment** donc le swing, d'autant plus que l'espacement des oscillations spectrales est serré, c'est-à-dire
 d'autant plus que Σ QWOT est grand. **C'est précisément pourquoi l'échec par résolution spectrale
 insuffisante leur est invisible.**
 
@@ -295,7 +300,7 @@ insuffisante leur est invisible.**
 ventile par largeur avec la fente que choisissent les déposables.
 
 📌 **À tester sur ×2, pas sur le 99c** : épais (structures spectrales les plus fines), **non
-dégénéré** (multiplicateurs jamais entiers), il échoue à 100 %, et ×1,5 lui sert de frère
+cas limite** (multiplicateurs jamais entiers), il échoue à 100 %, et ×1,5 lui sert de frère
 passant dans la même famille. ⚠️ Avec un **contrôle en premium sans fente** : le `0/404` connu de
 ×2 a été mesuré en **fast**, donc sans contrôle on attribuerait au slit ce qui vient du mode
 (contrainte C3).
@@ -324,9 +329,9 @@ remplacées par les termes du §14 de `CLAUDE.md` et du code.
 
 | à ne plus écrire | terme correct | source |
 |---|---|---|
-| « mur », « mur candidat » | **couche critique** *(champ `critical_layer`)*, ou **couche limitante** | code |
+| « mur », « mur candidat » | 🔒 **pas de nom court — une description**, décidé par 👤 : *« une couche dont la marge reste sous le seuil pour toutes les stratégies évaluées »*. ⚠️ **Ne PAS dire « couche critique »** : le code réserve `critical_layer` à autre chose — la couche qui cède en premier **pour une stratégie donnée** | code + 👤 |
 | « bord épais » / « bord mince » | nommer la **cause** : **résolution spectrale insuffisante** · **absence de point tournant exploitable** | — |
-| « signature spectrale » | **structure spectrale**, ou **espacement des franges** | — |
+| « signature spectrale » | **structure spectrale**, ou **espacement des oscillations spectrales** | — |
 | « fente » employé pour la grandeur optique | **résolution spectrale du monochromateur** *(`monochromator_resolution_nm`)*. *Fente* désigne la pièce mécanique | code |
 | « le comptage décroche » | **`CRASH_TP_MISCOUNT`** | code |
 | « niveau hors d'atteinte » | **`CRASH_LEVEL_UNREACHABLE`** — niveau d'arrêt inatteignable | code |

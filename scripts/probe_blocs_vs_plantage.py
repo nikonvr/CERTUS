@@ -35,6 +35,23 @@ La couverture minimale du 99c, un seul bloc de 99 couches, serait donc le pire c
     HYPOTHESE : a composant fixe, le taux de plantage decroit quand le nombre de blocs
     augmente, jusqu'a la zone 4-7, puis remonte.
 
+🔴 CETTE HYPOTHESE EST REFUTEE -- mesure du 2026-08-17, 99c complet, 751 strategies :
+
+    n_blocs      1     4     6    19    99
+    plantage  100 % 100 % 100 % 100 % 100 %      zone 4-7 : 184 offertes, 0 deposable
+
+La zone favorable A ete exploree, un quart de l'offre, et ne donne rien. Et la strategie a
+99 blocs -- qui se reancre a CHAQUE couche, donc compensation maximale possible -- plante
+aussi a 100 %. Ni les blocs trop longs ni les blocs trop nombreux n'expliquent quoi que ce
+soit : l'echec est INDEPENDANT de la structure en blocs.
+
+Ce n'est pas non plus un defaut d'offre de la recherche : elle a propose de 1 a 19 blocs plus
+une a 99. Le motif du defaut 24-37 ne s'applique pas ici.
+
+⚠️ Le 99c est toutefois une CONFIGURATION SINGULIERE pour POEM (tout QWOT), et sa reponse
+100 % PLATE ne discrimine rien. La sonde garde donc son interet sur la serie d'echelle, ou
+l'issue varie.
+
 ## 🔑 CE QUE LA SONDE SERT A DECIDER -- l'esprit de STRAT, pas de la taxonomie
 
 👤 2026-08-17 : *« attention de rester compatible avec l'esprit de strat.py : trouver la
@@ -115,14 +132,21 @@ COMPOSANTS = {
     # mecaniques ne se generaliserait PAS a d'autres materiaux.
     #
     # Echec -> succes -> limite -> echec a nombre de couches et structure CONSTANTS. Donc ni
-    # la longueur ni la structure ne gouvernent : c'est l'epaisseur optique par couche,
-    # autrement dit COMBIEN DE POINTS TOURNANTS chaque couche traverse. Mecanisme a deux
-    # bords, exactement ce que §27 annoncait sans l'avoir mesure :
-    #   trop mince -> la couche ne complete pas un quart d'onde -> PAS d'extremum, pas d'ancre
-    #   trop epais -> plusieurs extrema par couche -> le comptage decroche
-    # Les deux echecs portent des crash_min DIFFERENTS (48 % contre 100 %), donc probablement
-    # deux causes differentes. `margin_by_layer` est ventile par cause : c'est ce qui
-    # confirmera -- ou refutera -- le mecanisme a deux bords.
+    # le nombre de couches ni la structure ne gouvernent. Reste l'epaisseur optique, et il faut
+    # distinguer DEUX grandeurs :
+    #   Somme QWOT (total)  -> l'espacement des oscillations spectrales, donc la RESOLUTION
+    #                          SPECTRALE exigee du monochromateur
+    #   QWOT par couche     -> le nombre de points tournants traverses pendant la croissance
+    #
+    # 🔴 ET NE PAS DEDUIRE "sous 1 QWOT donc pas de point tournant" -- c'est le comptage NAIF
+    # que §14 designe comme l'erreur la plus couteuse du projet, et je l'ai commise le
+    # 2026-08-17. Le depart d'un point tournant est decale d'une phase 1/2 arctan(R/Q) fixee par
+    # l'empilement du dessous : une couche sous 1 QWOT peut parfaitement traverser un extremum.
+    # Mesure sur x0,5 : UNE couche sur 75 sans lambda admissible, pas 59. Le taux de 48 % de
+    # x0,5 n'est donc PAS explique par une absence d'ancre.
+    #
+    # Les deux echecs portent des crash_min differents (48 % contre 100 %), mais leur cause
+    # DOMINANTE est la meme -- CRASH_LEVEL_UNREACHABLE des deux cotes (mesure 2026-08-17).
     #
     # ⚠️ x1,5 rend 1 deposable sur 704. C'est le regime marginal ou §24-46 a mesure que la
     # GRAINE retourne le verdict (0/452 -> 70/521). Deux graines au moins sur les points
@@ -272,13 +296,19 @@ def par_fente(lignes: list[dict]) -> None:
         print("\n  aucune strategie deposable, quelle que soit la fente.")
 
 
-def mur(lignes: list[dict]) -> None:
-    """Existe-t-il une couche qu'AUCUNE strategie ne parvient a rendre sereine ?
+def contraintes_communes(lignes: list[dict]) -> None:
+    """Existe-t-il une couche dont la marge reste basse pour TOUTES les strategies evaluees ?
 
-    Une couche absente du profil sparse d'une strategie a une marge >= 5 A : cette strategie
-    la rend sereine, donc la couche n'est pas un mur. Un mur est une couche CONTRAINTE PAR
-    TOUTES les strategies, dont la MEILLEURE marge sur l'ensemble reste basse. C'est la forme
-    d'une condition necessaire violee : toute strategie doit deposer cette couche.
+    Une couche absente du profil sparse d'une strategie y a une marge >= 5 A : cette strategie
+    la laisse hors contrainte, et la couche ne peut donc pas etre commune a toutes. Ce qu'on
+    cherche est une couche CONTRAINTE PAR TOUTES les strategies, dont la plus grande marge sur
+    l'ensemble reste basse. C'est la forme d'une condition necessaire violee : toute strategie
+    doit deposer cette couche, donc aucune ne la contourne.
+
+    🔒 VOCABULAIRE (👤, 2026-08-17). Cette notion n'a PAS de nom court : `critical_layer` est
+    deja pris par le code pour autre chose -- la couche qui cede en premier POUR UNE strategie
+    donnee. On ecrit donc la description en toutes lettres, « une couche dont la marge reste
+    sous le seuil pour toutes les strategies evaluees », plutot que d'inventer un terme.
     """
     n = len(lignes)
     par_cause: dict[str, dict[int, list[float]]] = {}
@@ -297,7 +327,7 @@ def mur(lignes: list[dict]) -> None:
         print(f"\n  cause « {cause} » : {len(d)} couches contraintes au moins une fois, "
               f"{len(partout)} contraintes par les {n} strategies")
         if not partout:
-            print("    🟢 aucune couche contrainte partout : pas de mur pour cette cause.")
+            print("    🟢 aucune couche contrainte par toutes les strategies, pour cette cause.")
             continue
         classe = sorted(partout.items(), key=lambda kv: max(kv[1]))
         print(f"    {'couche':>7} {'MEILLEURE marge':>16} {'pire':>8} {'mediane':>9}")
@@ -306,7 +336,7 @@ def mur(lignes: list[dict]) -> None:
             print(f"    {i:>7} {max(vs):>15.3f}A {min(vs):>7.3f}A "
                   f"{vs_tri[len(vs_tri) // 2]:>8.3f}A")
         pire = classe[0]
-        print(f"    🔴 MUR CANDIDAT : couche {pire[0]} -- meilleure marge {max(pire[1]):.3f} A "
+        print(f"    🔴 CONTRAINTE COMMUNE AUX {n} STRATEGIES : couche {pire[0]}, plus grande "
               f"sur les {n} strategies.")
         print("       Aucune strategie ne la rend sereine, et toutes doivent la deposer.")
 
@@ -372,9 +402,9 @@ def main() -> int:
     print("=" * 74)
     par_fente(r["strategies"])
     print("\n" + "=" * 74)
-    print("Y A-T-IL UNE COUCHE QU'AUCUNE STRATEGIE NE REND SEREINE ?")
+    print("UNE COUCHE RESTE-T-ELLE CONTRAINTE POUR TOUTES LES STRATEGIES ?")
     print("=" * 74)
-    mur(r["strategies"])
+    contraintes_communes(r["strategies"])
 
     suffixe = "_fente" if fente else ""
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"

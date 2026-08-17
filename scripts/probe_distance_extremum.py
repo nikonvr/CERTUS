@@ -1,6 +1,6 @@
-"""LA MEILLEURE MARGE ATTEIGNABLE, COUCHE PAR COUCHE -- la seule route vers une impossibilite.
+"""LA PLUS GRANDE DISTANCE A L'EXTREMUM, COUCHE PAR COUCHE -- la seule route vers une impossibilite.
 
-    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_marge_atteignable.py [composant ...]
+    C:\\envs\\certus\\Scripts\\python.exe scripts\\probe_distance_extremum.py [composant ...]
 
 👤 2026-08-17 : *« s'acharner pour moi veut dire etre certain a 100 % qu'aucune strategie multi
 lambda avec un seul verre temoin ne peut fonctionner »*.
@@ -23,7 +23,8 @@ compris la stategie a 99 blocs qui se reancre a CHAQUE couche. Ni les blocs trop
 compensation) ni les blocs trop nombreux (ancres perdues) n'expliquent quoi que ce soit :
 l'echec est independant de la structure en blocs.
 
-Un mur que TOUTE structure rencontre designe une couche que personne ne peut eviter.
+Une contrainte que TOUTE structure rencontre designe une couche qu'aucune strategie ne peut
+rendre viable -- et toute strategie doit la deposer.
 
 ## Ce que cette sonde mesure
 
@@ -31,7 +32,7 @@ Pour chaque couche i et chaque lambda candidate, en forme fermee sur l'empilemen
 
     T(u) = 4 n_S / (P + Q cos 2u + R sin 2u)        u = 2 pi n_i d / lambda
     extrema   u = ½ arctan2(R, Q) + k pi/2          dans ]0, u_final]
-    MARGE     |T(u_final) - T(dernier extremum)| / A
+    DISTANCE  |T(u_final) - T(dernier extremum)| / A
 
 A = trigger_tolerance / 100, soit 5e-4 en unites de T -- le bruit de lecture mesure (§18-2).
 
@@ -51,28 +52,34 @@ repere de lecture, pas comme critere valide.
 
 CE QUE LE PREMIER RUN A DONNE, et pourquoi la sonde reste utile :
 
-    99c   0/99 couche sous le seuil   marge mini 242 A   mediane 601 A   plantage reel 100 %
-    75c   0/75 couche sous le seuil   marge mini  79 A   mediane 600 A   plantage reel   0 %
+    99c   0/99 couche sous le seuil   distance mini 242 A   mediane 601 A   plantage reel 100 %
+    75c   0/75 couche sous le seuil   distance mini  79 A   mediane 600 A   plantage reel   0 %
 
 La couche la plus exposee du 75c est TROIS FOIS plus exposee que celle du 99c, et c'est le 99c
-qui echoue. Troisieme inversion de la journee, apres la monitorabilite par couche et la
-couverture en blocs. Bilan cumule :
+qui echoue. Bilan cumule sur les grandeurs du signal nominal :
 
-    grandeur du signal nominal        99c        75c      verdict
-    couches sans lambda utilisable      0          0      ex aequo
-    blocs minimum pour couvrir          1 (26 l)   2      99c "plus facile"
-    marge nominale minimale           242 A       79 A    99c "plus facile"
-    PLANTAGE REEL                     100 %        0 %
+    grandeur du signal nominal            99c        75c      verdict
+    couches sans lambda admissible          0          0      ex aequo
+    blocs minimum pour couvrir              1 (26 l)   2      99c "plus facile"
+    distance a l'extremum, minimum        242 A       79 A    99c "plus facile"
+    PLANTAGE REEL                         100 %        0 %
 
-🔑 AUCUNE grandeur du signal nominal ne distingue les deux. Le discriminateur n'est pas dans le
-signal nominal -- il est entierement dans l'ACCUMULATION. Consequence pour le chantier
-"predire sans tout calculer" : un predicteur ne peut pas etre de la TMM pure et bon marche, il
-lui faut au minimum une propagation d'erreur simulee.
+⚠️ Ce bilan a ete lu comme "aucune grandeur du signal nominal ne distingue les deux", et cette
+lecture est trop forte : le 99c est une CONFIGURATION SINGULIERE pour POEM -- tous ses
+multiplicateurs sont entiers, donc fin de couche et point tournant coincident a lambda_mon, et sa
+reponse est un 100 % PLAT qui ne discrimine rien. Comparer une grandeur contre lui n'est pas un
+test loyal. Le test loyal est la serie d'echelle du random75, et il a ete fait le meme jour :
+sur la serie, cette distance n'ordonne pas davantage. Voir docs/CHANTIER_PREDICTIBILITE.md §3.
 
-Si une couche avait sa MEILLEURE marge nominale tres basse, aucune strategie ne pourrait
+Si une couche avait sa plus grande distance a l'extremum tres basse, aucune strategie ne pourrait
 l'eviter -- ni les 26 a lambda unique, ni les 5 x 10^57. Aucune ne l'a. La condition necessaire
 ne conclut donc pas, et cette route vers l'impossibilite est fermee TELLE QUELLE : il faudrait
 la rejouer sur la trajectoire accumulee, pas sur le nominal.
+
+🔒 NOM DE LA SONDE. Elle s'appelait `probe_marge_atteignable.py` jusqu'au 2026-08-17. Renommee
+sur decision de 👤 : "marge" est reserve a l'ecart au NIVEAU D'ARRET. Ce que cette sonde calcule
+est une DISTANCE A L'EXTREMUM sur l'empilement nominal -- une autre grandeur, de trois ordres de
+grandeur differents. L'ancien nom entretenait la confusion.
 
 ## Le garde-fou, parce qu'une recurrence TMM refaite est un risque
 
@@ -120,16 +127,16 @@ DEMI = np.pi / 2.0
 # trigger POEM. Je prefere ne pas en tirer de conclusions, alors que le 75c est interessant
 # avec ses 4 variantes ». Il a raison, et ca corrige ma propre synthese du meme jour.
 #
-# Le 99c est ADVERSE A POEM PAR CONSTRUCTION : multiplicateurs exactement 1 et 2 a l0 = 633,
+# Le 99c est une CONFIGURATION SINGULIERE pour POEM : multiplicateurs exactement 1 et 2 a 633,
 # donc §14 s'applique a la lettre -- QWOT et point tournant COINCIDENT sur un empilement
 # entierement QWOT a lambda_mon. Chaque couche finit pile sur un extremum, et POEM, qui vise
-# un pourcentage de l'amplitude ENTRE les deux derniers extrema, se retrouve au bord degenere
+# un pourcentage de l'amplitude ENTRE les deux derniers extrema, voit sa plage utile se reduire
 # de sa plage. Signature qui aurait du m'alerter : plantage = 100 % PLAT sur 751 strategies et
 # 20 nombres de blocs. Une reponse plate porte zero information.
 #
 # 🔴 DONC MES "TROIS INVERSIONS" NE PROUVENT PAS CE QUE J'AI DIT. Elles comparaient un cas
-# degenere a un cas normal -- ce n'est pas un test loyal des grandeurs, c'est un test contre
-# une reference pathologique. Les grandeurs sont peut-etre bonnes ; ma reference etait mauvaise.
+# singuliere a un cas normal -- ce n'est pas un test loyal des grandeurs, c'est un test contre
+# une reference inadaptee. ⚠️ Le test loyal, fait le meme jour sur la serie, montre que DEUX
 #
 # Le test loyal est la serie : 75 couches, structure et materiaux identiques, seule l'epaisseur
 # optique varie, multiplicateurs JAMAIS entiers donc POEM en regime normal, et une issue qui
@@ -190,8 +197,8 @@ def _charger_pm():
     return pm
 
 
-def marges(cfg: str) -> dict:
-    """Marge (couche, lambda) en unites de A, plus la rederivation de adm_tp pour controle."""
+def distances(cfg: str) -> dict:
+    """Distance a l'extremum (couche, lambda) en unites de A, plus la rederivation de adm_tp pour controle."""
     from certus.physics.certus_opt_tmm import arange_inclusive
     from certus.utils.certus_strat_service import (
         get_refractive_clues_vectorized,
@@ -219,7 +226,7 @@ def marges(cfg: str) -> dict:
     nL0 = float(np.real(get_refractive_index(prm["nL_id"], l0, db_instance=db)))
     d = np.array([(m * l0) / (4.0 * (nH0 if i % 2 == 0 else nL0)) for i, m in enumerate(mult)])
 
-    marge = np.full((N, len(lams)), np.nan)      # en unites de A
+    dist = np.full((N, len(lams)), np.nan)       # en unites de A
     swing = np.zeros((N, len(lams)))
     adm_tp = np.zeros((N, len(lams)), dtype=bool)
 
@@ -253,13 +260,13 @@ def marges(cfg: str) -> dict:
                 if k1 - k0 + 1 >= 1:
                     adm_tp[i, j] = True
                     u_last = phi + k1 * DEMI          # dernier extremum avant la fin
-                    marge[i, j] = abs(_T(dfin) - _T(u_last)) / A
+                    dist[i, j] = abs(_T(dfin) - _T(u_last)) / A
 
             ph = 2.0 * np.pi * n_i * d[i] / lam
             c_, s_ = np.cos(ph), np.sin(ph)
             M = M @ np.array([[c_, 1j * s_ / n_i], [1j * n_i * s_, c_]], dtype=np.complex128)
 
-    return {"N": N, "lams": np.asarray(lams), "A": A, "marge": marge,
+    return {"N": N, "lams": np.asarray(lams), "A": A, "distance": dist,
             "swing": swing, "adm_tp": adm_tp}
 
 
@@ -278,13 +285,13 @@ def main() -> int:
 
     for nom in noms:
         cfg = connus[nom]
-        r = marges(cfg)
+        r = distances(cfg)
         ref = pm.profil(cfg)                          # 🔴 GARDE-FOU
         assert np.array_equal(r["adm_tp"], ref["adm_tp"]), (
             f"{nom}: adm_tp rederive DIFFERE de profil_monitorabilite -- "
-            "recurrence fautive, ne pas lire les marges")
+            "recurrence fautive, ne pas lire les distances")
 
-        m = r["marge"]
+        m = r["distance"]
         best = np.nanmax(np.where(r["adm_tp"], m, np.nan), axis=1)
         arg = np.nanargmax(np.where(r["adm_tp"], m, -np.inf), axis=1)
         n_lam_ok = (np.where(r["adm_tp"], m, 0.0) >= SEUIL_PREUVE).sum(axis=1)
@@ -294,12 +301,12 @@ def main() -> int:
               f"seuil de preuve {SEUIL_PREUVE} A (§24-41)")
         print("=" * 78)
         sous = [int(i) for i in range(r["N"]) if not (best[i] >= SEUIL_PREUVE)]
-        print(f"  couches dont la MEILLEURE marge est sous {SEUIL_PREUVE} A : "
+        print(f"  couches dont la plus grande DISTANCE est sous {SEUIL_PREUVE} A : "
               f"{len(sous)} / {r['N']}")
         if sous:
             print("  🔴 CES COUCHES SONT INEVITABLES -- aucune strategie ne peut les contourner :")
             for i in sous[:20]:
-                print(f"     couche {i:>3} : meilleure marge {best[i]:>8.3f} A  "
+                print(f"     couche {i:>3} : distance max {best[i]:>8.3f} A  "
                       f"(a {r['lams'][arg[i]]:.0f} nm)  swing max {r['swing'][i].max():.4f}  "
                       f"lambda >= seuil : {n_lam_ok[i]}")
             print("\n  🔑 IMPOSSIBILITE ETABLIE sur le signal seul, sans aucune graine.")
@@ -308,9 +315,9 @@ def main() -> int:
             ordre = np.argsort(best)
             print("  les 10 couches les plus exposees :")
             for i in ordre[:10]:
-                print(f"     couche {int(i):>3} : meilleure marge {best[i]:>8.3f} A  "
+                print(f"     couche {int(i):>3} : distance max {best[i]:>8.3f} A  "
                       f"(a {r['lams'][arg[i]]:.0f} nm)  lambda >= seuil : {n_lam_ok[i]}")
-        print(f"\n  marge la plus faible du profil : {np.nanmin(best):.3f} A  "
+        print(f"\n  plus courte distance du profil : {np.nanmin(best):.3f} A  "
               f"| mediane : {np.nanmedian(best):.3f} A")
 
         bl = blocs_minimaux(r["adm_tp"])
@@ -327,7 +334,7 @@ def main() -> int:
             "couches_muettes": muettes,
             "blocs_minimum": len(bl),
             "blocs": [[int(a), int(b), int(n)] for a, b, n in bl],
-            "meilleure_marge_par_couche": [float(x) for x in best],
+            "plus_grande_distance_par_couche": [float(x) for x in best],
             "lambda_du_max": [float(r["lams"][k]) for k in arg],
             "n_lambda_au_dessus_du_seuil": [int(x) for x in n_lam_ok],
             "couches_bloquantes": sous,
@@ -338,7 +345,7 @@ def main() -> int:
     print("LES GRANDEURS DU SIGNAL NOMINAL ORDONNENT-ELLES LA SERIE ?")
     print("=" * 78)
     print(f"  {'composant':<10} {'couches':>8} {'muettes':>8} {'blocs min':>10} "
-          f"{'marge mini':>12} {'marge med':>11}")
+          f"{'dist. mini':>12} {'dist. med':>11}")
     print("  " + "-" * 62)
     for nom, N, mu, nb, mn, md in resume:
         print(f"  {nom:<10} {N:>8} {mu:>8} {nb:>10} {mn:>11.1f}A {md:>10.1f}A")
@@ -350,7 +357,7 @@ def main() -> int:
     print("\n  Si une colonne place x0.5 et x2 aux extremes et 75c/x1.5 au milieu, elle")
     print("  ordonne la serie. Sinon elle ne predit rien, et le 99c n'y etait pour rien.")
 
-    out = ROOT / "reports" / "marge_atteignable.json"
+    out = ROOT / "reports" / "distance_extremum.json"
     out.write_text(json.dumps(sortie, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
     return 0

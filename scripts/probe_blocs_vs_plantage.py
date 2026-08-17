@@ -142,7 +142,26 @@ def _commit() -> str:
         return "?"
 
 
-def mesurer(nom: str, mode: str) -> dict:
+def mesurer(nom: str, mode: str, cherche_fente: bool = False) -> dict:
+    """Un run complet, et `cherche_fente` est le parametre qui manquait.
+
+    🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
+    `search_resolution: False` et pinne 2 nm, et mes sondes en avaient herite. Or 👤 a pose le
+    2026-08-12 que « la fente est systematiquement cherchee, c'est un PREREQUIS », et
+    certus_strat_robustness.py:868 designe explicitement `search_resolution: false` comme
+    « the historical path ». Le 99c porte d'ailleurs `search_resolution = 1` dans sa config.
+
+    Donc toute la campagne des intervalles ET mes 751 strategies ont tourne dans le regime que
+    👤 avait ecarte : une machine ou l'operateur n'a pas le droit de toucher a la fente.
+
+    📏 Mesure du 2026-08-12 citee dans le meme docstring : la regle `slit <= res_limit` rejette
+    **14 % des paires (couche, lambda) a 2 nm contre 2 % a 1 nm** -- facteur 7. Et l'effet
+    interessant n'est pas le choix a quatre valeurs, c'est que « la fente change QUELLES
+    LONGUEURS D'ONDE SONT BONNES ».
+
+    ⚠️ Le defaut reste `False` pour que les runs anterieurs restent comparables : changer le
+    defaut casserait la comparaison avec les 751 strategies deja consignees.
+    """
     import bench_examples as Bx
     from CERTUS_STRAT import CertusStratApp
 
@@ -156,7 +175,7 @@ def mesurer(nom: str, mode: str) -> dict:
 
     over = {
         "show_plots": False, "robustness_seed": SEED,
-        "monochromator_resolution_nm": 2.0, "search_resolution": False,
+        "monochromator_resolution_nm": 2.0, "search_resolution": bool(cherche_fente),
         "noise_layer_offset": 0, "noise_total_layers": n_layers,
         "execution_mode": mode,
     }
@@ -278,12 +297,13 @@ def synthese(lignes: list[dict]) -> None:
 def main() -> int:
     nom = sys.argv[1] if len(sys.argv) > 1 else "99c"
     mode = sys.argv[2] if len(sys.argv) > 2 else "premium"
+    fente = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
     print(f"composant {nom} | mode {mode} | graine {SEED} | machine {_machine()}")
-    r = mesurer(nom, mode)
+    r = mesurer(nom, mode, fente)
     r.update({"composant": nom, "mode": mode, "seed": SEED, "instrument": _commit(),
               "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
 
@@ -298,7 +318,8 @@ def main() -> int:
     print("=" * 74)
     mur(r["strategies"])
 
-    out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}.json"
+    suffixe = "_fente" if fente else ""
+    out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")
     return 0

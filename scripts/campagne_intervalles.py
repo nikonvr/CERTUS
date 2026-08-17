@@ -94,15 +94,25 @@ def intervalles_par_vague(n_temoins: int, hi: int = HI_DEFAUT) -> list[tuple[int
     return sorted(besoin)
 
 
-def fichier(a: int, b: int, cache_dir: Path) -> Path:
-    return cache_dir / f"i_{a:03d}_{b:03d}.json"
+def _suffixe_graine(seed: int) -> str:
+    """Vide a la graine de reference, pour que les 263 entrees deja en cache gardent leur chemin.
+
+    Sans ca, exposer `--graine` renommerait toute la campagne et l'invaliderait d'un coup.
+    Une graine autre que SEED ecrit a cote, elle n'ecrase jamais la mesure de reference.
+    """
+    return "" if seed == SEED else f"_s{seed:03d}"
 
 
-def deja_mesure(a: int, b: int, cache_dir: Path) -> bool:
-    return fichier(a, b, cache_dir).exists()
+def fichier(a: int, b: int, cache_dir: Path, seed: int = SEED) -> Path:
+    return cache_dir / f"i_{a:03d}_{b:03d}{_suffixe_graine(seed)}.json"
 
 
-def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -> dict:
+def deja_mesure(a: int, b: int, cache_dir: Path, seed: int = SEED) -> bool:
+    return fichier(a, b, cache_dir, seed).exists()
+
+
+def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None,
+            seed: int = SEED) -> dict:
     """Un intervalle. Rend le dictionnaire consigne, echec compris."""
     import bench_examples as Bx
     from CERTUS_STRAT import CertusStratApp
@@ -113,7 +123,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -
 
     t0 = time.perf_counter()
     row: dict = {"a": a, "b": b, "n": b - a, "mode": mode, "stamp": datetime.now().isoformat(timespec="seconds"),
-                 "instrument": _commit(), "machine": _machine(),
+                 "instrument": _commit(), "machine": _machine(), "seed": seed,
                  "verdict": "?", "n_strats": 0, "n_deposables": 0,
                  "crash_min": None, "crash_retenue": None, "score": None, "run_s": 0.0}
     try:
@@ -126,7 +136,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -
             app.widgets["execution_mode"].setCurrentText(mode)
 
         over = {
-            "show_plots": False, "robustness_seed": SEED,
+            "show_plots": False, "robustness_seed": seed,
             "monochromator_resolution_nm": 2.0, "search_resolution": False,
             "noise_layer_offset": a, "noise_total_layers": N_LAYERS,
             "execution_mode": mode,
@@ -166,7 +176,7 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -
             row["score"] = float(ok[0].get("robustness_score", 0.0))
             th = _epaisseurs(ok[0])
             if th is not None:
-                np.save(cache_dir / f"th_{a:03d}_{b:03d}.npy", th)
+                np.save(cache_dir / f"th_{a:03d}_{b:03d}{_suffixe_graine(seed)}.npy", th)
                 row["tirages"] = int(th.shape[0])
     except Exception as exc:  # noqa: BLE001 -- un intervalle rate ne doit pas perdre la campagne
         row["verdict"] = "EXCEPTION"
@@ -223,18 +233,25 @@ def _machine() -> str:
     return f"{cpu} | {os.cpu_count()} threads"
 
 
-def etat(cache_dir: Path | None = None) -> int:
-    """Ou en est-on, sans rien relancer."""
+def etat(cache_dir: Path | None = None, seed: int = SEED) -> int:
+    """Ou en est-on, sans rien relancer.
+
+    Filtre sur la graine. Sans ce filtre le glob `i_*.json` melangerait les mesures de
+    deux graines dans un seul rapport -- et un rapport melange ressemble a un resultat.
+    Les entrees d'avant l'exposition de `--graine` n'ont pas de champ `seed` : elles
+    valent SEED par construction, puisque la valeur etait codee en dur.
+    """
     if cache_dir is None:
         cache_dir = CACHE_BASE
     faits = sorted(cache_dir.glob("i_*.json"))
     print("=" * 72)
-    print(f"CAMPAGNE DES INTERVALLES ({cache_dir.name})")
+    print(f"CAMPAGNE DES INTERVALLES ({cache_dir.name}) -- graine {seed}")
     print("=" * 72)
-    if not faits:
+    rows = [r for r in (json.loads(f.read_text(encoding="utf-8")) for f in faits)
+            if r.get("seed", SEED) == seed]
+    if not rows:
         print("\nAucun intervalle mesure pour l'instant.")
         return 0
-    rows = [json.loads(f.read_text(encoding="utf-8")) for f in faits]
     par_v = {}
     for r in rows:
         par_v.setdefault(r["verdict"], []).append(r)
@@ -271,26 +288,32 @@ def main() -> int:
     ap.add_argument("--etat", action="store_true")
     ap.add_argument("--limite", default=None,
                     help="HH:MM -- n'ENGAGE plus de nouvel intervalle apres cette heure")
+    ap.add_argument("--graine", type=int, default=SEED,
+                    help=f"graine de robustesse (defaut {SEED}). Une autre valeur ecrit a COTE "
+                         f"(suffixe _sNNN) et n'ecrase jamais le cache de reference. Sert au "
+                         f"controle du piege 1 : ce qui ne varie pas avec la graine designe "
+                         f"l'algorithme, pas le phenomene")
     args = ap.parse_args()
 
     cache_dir = get_cache(args.mode)
     cache_dir.mkdir(parents=True, exist_ok=True)
     if args.etat or not args.vague:
-        return etat(cache_dir)
+        return etat(cache_dir, args.graine)
 
     i, n = (int(x) for x in args.shard.split("/"))
     besoin = intervalles_par_vague(args.vague, args.hi)
     a_faire = [(a, b) for k, (a, b) in enumerate(besoin)
-               if k % n == i and not deja_mesure(a, b, cache_dir)]
+               if k % n == i and not deja_mesure(a, b, cache_dir, args.graine)]
     sys.stderr.write(
         f"\nvague {args.vague} temoins | bornes {LO}-{args.hi} couches par temoin | "
-        f"{len(besoin)} intervalles requis | mode {args.mode} | "
+        f"{len(besoin)} intervalles requis | mode {args.mode} | graine {args.graine} | "
         f"shard {i}/{n} -> {len(a_faire)} a mesurer (le reste est en cache {cache_dir.name})\n\n")
 
     for k, (a, b) in enumerate(a_faire, 1):
         sys.stderr.write(f"[{k}/{len(a_faire)}] intervalle [{a},{b}) -- {b - a} couches\n")
-        row = mesurer(a, b, mode=args.mode, cache_dir=cache_dir)
-        fichier(a, b, cache_dir).write_text(json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
+        row = mesurer(a, b, mode=args.mode, cache_dir=cache_dir, seed=args.graine)
+        fichier(a, b, cache_dir, args.graine).write_text(
+            json.dumps(row, indent=2, ensure_ascii=False), encoding="utf-8")
         sys.stderr.write(
             f"    {row['verdict']} | {row['n_deposables']}/{row['n_strats']} deposables | "
             f"plantage min {row['crash_min']} % | {row['run_s']} s\n")

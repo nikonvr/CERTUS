@@ -1,0 +1,18 @@
+{
+  "a": 0,
+  "b": 22,
+  "n": 22,
+  "mode": "premium",
+  "stamp": "2026-08-17T13:25:38",
+  "instrument": "5d14f4f",
+  "machine": "Intel64 Family 6 Model 142 Stepping 10, GenuineIntel | 8 threads",
+  "seed": 101,
+  "verdict": "DEPOSABLE",
+  "n_strats": 217,
+  "n_deposables": 217,
+  "crash_min": 0.0,
+  "crash_retenue": 0.0,
+  "score": 0.07584720896044579,
+  "run_s": 254.0,
+  "tirages": 150
+}

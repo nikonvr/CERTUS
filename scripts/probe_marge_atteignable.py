@@ -114,6 +114,67 @@ N_PAS = 400
 SEUIL_PREUVE = 0.6          # en unites de A -- §24-41, valide facteur 22
 DEMI = np.pi / 2.0
 
+# 🔑 LA SERIE D'ECHELLE, ajoutee le 2026-08-17 -- et c'est elle le vrai juge.
+#
+# 👤 : « le 99c me gene car il est rare de deposer un empilement tout 1/4 d'onde, surtout en
+# trigger POEM. Je prefere ne pas en tirer de conclusions, alors que le 75c est interessant
+# avec ses 4 variantes ». Il a raison, et ca corrige ma propre synthese du meme jour.
+#
+# Le 99c est ADVERSE A POEM PAR CONSTRUCTION : multiplicateurs exactement 1 et 2 a l0 = 633,
+# donc §14 s'applique a la lettre -- QWOT et point tournant COINCIDENT sur un empilement
+# entierement QWOT a lambda_mon. Chaque couche finit pile sur un extremum, et POEM, qui vise
+# un pourcentage de l'amplitude ENTRE les deux derniers extrema, se retrouve au bord degenere
+# de sa plage. Signature qui aurait du m'alerter : plantage = 100 % PLAT sur 751 strategies et
+# 20 nombres de blocs. Une reponse plate porte zero information.
+#
+# 🔴 DONC MES "TROIS INVERSIONS" NE PROUVENT PAS CE QUE J'AI DIT. Elles comparaient un cas
+# degenere a un cas normal -- ce n'est pas un test loyal des grandeurs, c'est un test contre
+# une reference pathologique. Les grandeurs sont peut-etre bonnes ; ma reference etait mauvaise.
+#
+# Le test loyal est la serie : 75 couches, structure et materiaux identiques, seule l'epaisseur
+# optique varie, multiplicateurs JAMAIS entiers donc POEM en regime normal, et une issue qui
+# varie continument :
+#
+#   x0,5   0,252 - 1,240 QWOT   59 couches sous 1   ECHOUE   0/375    crash_min  48 %
+#   x1     0,504 - 2,479 QWOT      -                passe  241/662    crash_min   0 %   SEEL 0,272
+#   x1,5   0,756 - 3,719 QWOT    3 couches sous 1   limite   1/704    crash_min   0 %   SEEL 0,63
+#   x2     1,008 - 4,958 QWOT    0 couche sous 1    ECHOUE   0/404    crash_min 100 %
+#
+# LA QUESTION QUE CETTE SONDE POSE : les grandeurs du signal nominal ordonnent-elles cette
+# serie ? Si oui, elles marchent et seul le 99c egarait. Si non, elles sont a jeter.
+COMPOSANTS_ECHELLE = {
+    "r75x0.5": "reports/serie_echelle_r75/cfg_x0.5.json",
+    "r75x1.5": "reports/serie_echelle_r75/cfg_x1.5.json",
+    "r75x2": "reports/serie_echelle_r75/cfg_x2.json",
+}
+
+
+def blocs_minimaux(adm: np.ndarray) -> list[tuple[int, int, int]]:
+    """Couverture MINIMALE en blocs contigus a lambda commune. Glouton = optimal ici.
+
+    Rend [(debut, fin_exclue, nb_lambda_communes)]. Une couche sans aucune lambda forme un
+    bloc d'une couche a 0 lambda -- signalee, pas masquee.
+    """
+    N = adm.shape[0]
+    blocs: list[tuple[int, int, int]] = []
+    i = 0
+    while i < N:
+        inter = adm[i].copy()
+        if not inter.any():
+            blocs.append((i, i + 1, 0))
+            i += 1
+            continue
+        j = i + 1
+        while j < N:
+            nouv = inter & adm[j]
+            if not nouv.any():
+                break
+            inter = nouv
+            j += 1
+        blocs.append((i, j, int(inter.sum())))
+        i = j
+    return blocs
+
 
 def _charger_pm():
     spec = importlib.util.spec_from_file_location(
@@ -202,11 +263,15 @@ def main() -> int:
     Bx.qapp()
     Bx.autoanswer_dialogs(True)
     pm = _charger_pm()
-    noms = sys.argv[1:] or ["99c", "75c"]
+    # `pm.COMPOSANTS` n'est PAS modifie : profil_monitorabilite.py produit un artefact
+    # committe et bit-identique, et y ajouter des composants le changerait.
+    connus = {**pm.COMPOSANTS, **COMPOSANTS_ECHELLE}
+    noms = sys.argv[1:] or ["r75x0.5", "75c", "r75x1.5", "r75x2"]
     sortie = {}
+    resume: list[tuple[str, int, int, int, float, float]] = []
 
     for nom in noms:
-        cfg = pm.COMPOSANTS[nom]
+        cfg = connus[nom]
         r = marges(cfg)
         ref = pm.profil(cfg)                          # 🔴 GARDE-FOU
         assert np.array_equal(r["adm_tp"], ref["adm_tp"]), (
@@ -242,13 +307,42 @@ def main() -> int:
         print(f"\n  marge la plus faible du profil : {np.nanmin(best):.3f} A  "
               f"| mediane : {np.nanmedian(best):.3f} A")
 
+        bl = blocs_minimaux(r["adm_tp"])
+        muettes = int((r["adm_tp"].sum(axis=1) == 0).sum())
+        print(f"  couches MUETTES (aucune lambda) : {muettes} / {r['N']}")
+        print(f"  blocs MINIMUM pour couvrir      : {len(bl)}  "
+              f"(lambda communes : min {min(n for _, _, n in bl)}, "
+              f"med {int(np.median([n for _, _, n in bl]))})")
+        resume.append((nom, int(r["N"]), muettes, len(bl),
+                       float(np.nanmin(best)), float(np.nanmedian(best))))
+
         sortie[nom] = {
             "N": int(r["N"]), "A": r["A"], "seuil": SEUIL_PREUVE,
+            "couches_muettes": muettes,
+            "blocs_minimum": len(bl),
+            "blocs": [[int(a), int(b), int(n)] for a, b, n in bl],
             "meilleure_marge_par_couche": [float(x) for x in best],
             "lambda_du_max": [float(r["lams"][k]) for k in arg],
             "n_lambda_au_dessus_du_seuil": [int(x) for x in n_lam_ok],
             "couches_bloquantes": sous,
         }
+
+    # 🔑 LE TABLEAU QUI DECIDE : les grandeurs ordonnent-elles la serie d'echelle ?
+    print("\n" + "=" * 78)
+    print("LES GRANDEURS DU SIGNAL NOMINAL ORDONNENT-ELLES LA SERIE ?")
+    print("=" * 78)
+    print(f"  {'composant':<10} {'couches':>8} {'muettes':>8} {'blocs min':>10} "
+          f"{'marge mini':>12} {'marge med':>11}")
+    print("  " + "-" * 62)
+    for nom, N, mu, nb, mn, md in resume:
+        print(f"  {nom:<10} {N:>8} {mu:>8} {nb:>10} {mn:>11.1f}A {md:>10.1f}A")
+    print("\n  rappel de l'issue MESUREE (une seule graine, cf. §24-46) :")
+    print("    r75x0.5  ECHOUE   0/375   crash_min  48 %")
+    print("    75c      passe  241/662   crash_min   0 %   SEEL 0,272")
+    print("    r75x1.5  limite   1/704   crash_min   0 %   SEEL 0,63")
+    print("    r75x2    ECHOUE   0/404   crash_min 100 %")
+    print("\n  Si une colonne place x0.5 et x2 aux extremes et 75c/x1.5 au milieu, elle")
+    print("  ordonne la serie. Sinon elle ne predit rien, et le 99c n'y etait pour rien.")
 
     out = ROOT / "reports" / "marge_atteignable.json"
     out.write_text(json.dumps(sortie, indent=2, ensure_ascii=False), encoding="utf-8")

@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import subprocess
 import sys
 import time
@@ -112,7 +113,8 @@ def mesurer(a: int, b: int, mode: str = "fast", cache_dir: Path | None = None) -
 
     t0 = time.perf_counter()
     row: dict = {"a": a, "b": b, "n": b - a, "mode": mode, "stamp": datetime.now().isoformat(timespec="seconds"),
-                 "instrument": _commit(), "verdict": "?", "n_strats": 0, "n_deposables": 0,
+                 "instrument": _commit(), "machine": _machine(),
+                 "verdict": "?", "n_strats": 0, "n_deposables": 0,
                  "crash_min": None, "crash_retenue": None, "score": None, "run_s": 0.0}
     try:
         cfg = _config_intervalle(a, b, mode=mode, cache_dir=cache_dir)
@@ -203,6 +205,22 @@ def _commit() -> str:
                               capture_output=True, text=True, timeout=10).stdout.strip() or "?"
     except (OSError, subprocess.SubprocessError):
         return "?"
+
+
+def _machine() -> str:
+    """Empreinte de la machine qui a mesure.
+
+    `instrument` consigne le CODE, pour qu'un run soit attribuable. Rien ne consignait
+    la MACHINE, et `run_s` n'est comparable qu'a machine egale : le 2026-08-17 les durees
+    du cache, mesurees ailleurs, ont servi a dimensionner un ETA et le plafond
+    CERTUS_BENCH_TIMEOUT_S sur un PC bien plus modeste. Meme motif que le defaut 24-7 --
+    un run qui ne consigne pas ses conditions n'est comparable a rien.
+
+    Ce que ce champ NE dit PAS : SEEL, taux de plantage et nombre de deposables sont
+    deterministes a graine et code fixes, donc portables. Seul `run_s` depend de la machine.
+    """
+    cpu = " ".join((platform.processor() or platform.machine() or "?").split())
+    return f"{cpu} | {os.cpu_count()} threads"
 
 
 def etat(cache_dir: Path | None = None) -> int:

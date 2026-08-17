@@ -312,6 +312,62 @@ variantes de résolution.
 
 ---
 
+## 4bis. 🟢 LA MARGE ACCUMULÉE — la première grandeur qui ORDONNE la série
+
+📏 **Mesuré le 2026-08-17 au soir**, action n° 3 du §6. Protocole identique sur les trois
+points : `fast`, fente 2 nm, graine 42, `search_resolution` inactif.
+
+La grandeur n'est pas la marge d'une stratégie : c'est le **nombre de couches dont la marge
+reste sous le seuil pour TOUTES les stratégies évaluées**, cause par cause. C'est la forme d'une
+condition nécessaire violée — toute stratégie doit déposer cette couche, donc aucune ne la
+contourne.
+
+| variante | Σ QWOT | stratégies | `fabricated` | `level` | `missed` | **total** | plantage min |
+|---|---|---|---|---|---|---|---|
+| ×1 (`75c`) | 114,9 | 662 | 0 | 0 | 0 | **0** | 0 % |
+| ×1,5 | 172,3 | 440 | 5 | 0 | 0 | **5** | 0 % |
+| ×2 | 229,8 | 404 | 15 | 4 | 6 | **25** | 100 % |
+
+🔑 **C'est la première grandeur du chantier qui croît avec Σ QWOT** — 0, 5, 25. Les cinq routes
+du §4 rendaient toutes soit un ordre plat, soit un ordre à l'envers.
+
+🔴 **Mais elle ne sépare PAS « passe » de « échoue » à zéro.** ×1,5 en porte **5** et passe à 0 %
+de plantage. Il n'existe donc pas de seuil « une couche contrainte partout ⇒ impossible », et
+c'est exactement l'inverse de ce que la route cherchait : une **condition nécessaire**. Ce qu'on
+tient est un **indicateur monotone**, pas une impossibilité démontrée.
+
+⚠️ **Le facteur de confusion, et il faut le dire avant qu'on me le dise.** « Contrainte par les
+N stratégies » est **mécaniquement plus facile quand N est petit** : il suffit qu'une seule
+stratégie relâche la couche pour qu'elle sorte du compte. Or N vaut 662, 440 et 404.
+
+| comparaison | écart de N | écart du compte | verdict |
+|---|---|---|---|
+| ×1,5 → ×2 | 440 → 404, **−8 %** | 5 → 25, **×5** | 🟢 l'effet ne vient pas de N |
+| ×1 → ×1,5 | 662 → 440, **−34 %** | 0 → 5 | 🟠 partiellement confondu |
+
+Le pas qui compte — celui qui traverse la frontière de fabricabilité — est donc **propre**. Le
+premier pas ne l'est pas, et il ne faut pas s'appuyer dessus.
+
+🔴 **Et ×0,5 MANQUE dans ce tableau.** Le seul run disponible sur ce composant est celui à
+recherche de fente (796 stratégies) : son échantillon est **biaisé** — seules les stratégies dont
+les λ toléraient la largeur ont été retenues — et son N n'est comparable à aucun des trois. **Ne
+pas le mettre dans la colonne.** La cellule propre est produite par le lot du 2026-08-17 au soir,
+et elle y est placée **avant** sa variation à 5 nm pour cette raison précise.
+
+🔑 **Ce que ça coûte, et c'est ce qui empêche d'appeler ça un prédicteur.** `margin_by_layer`
+sort de la simulation Monte-Carlo : l'obtenir demande de faire tourner la campagne complète.
+👤 demandait *« prédire sans tout calculer »* — cette grandeur exige précisément de tout
+calculer. **C'est un mécanisme, pas un prédicteur.** Sa valeur est de dire *où* regarder pour en
+construire un : la cause dominante est `fabricated` (point tournant fabriqué par le bruit) sur
+les deux variantes qui en portent, et non `level` comme la cause de plantage majoritaire le
+laissait croire.
+
+📌 **La suite qu'elle appelle** : chercher une version **statique** de la même quantité — la
+distance nominale à l'extremum pondérée par l'erreur d'épaisseur accumulée attendue — qui se
+calculerait sans tirage. `probe_distance_extremum.py` en calcule déjà le premier facteur.
+
+---
+
 ## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la résolution spectrale n'était pas cherchée
 
 > 👤 **2026-08-17** : *« je me pose aussi la question de la résolution spectrale. Un filtre trop

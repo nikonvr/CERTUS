@@ -24,15 +24,14 @@ décider quelles candidates existent* — appliquée à la graine au lieu de la 
 empêché : il porte sur le classement des `consensus_top_k`, alors que `n_deposables` et
 `crash_min` se calculent sur **toutes** les stratégies.
 
-**Portée, et il faut la dire sans l'exagérer.** Les 263 entrées du cache premium sont toutes à
-`robustness_seed = 42`. Le **0,782 nm à 4 témoins** et les « 31 partitions à égalité » du §3.1
-sont assemblés depuis elles. **Cela ne rend pas le 0,782 nm faux — cela veut dire qu'une seule
-graine ne l'établit pas.** C'est vérifiable pour quelques heures : rejouer la partition gagnante
-à deux ou trois graines. `--graine` est désormais exposée (`4906252`), et une graine autre que 42
-écrit **à côté** (suffixe `_sNNN`) sans jamais toucher le cache de référence.
+🔴 **Le contrôle a été fait le même jour, et il déplace le chiffre publié : `0,782 → 0,81 nm`.**
+La même partition gagnante rejouée à trois graines rend **0,782 / 0,816 / 0,839 nm**, soit une
+étendue de **+7,3 %** pour un seuil d'équivalence de 3,0 %. La fabricabilité, elle, ne bouge
+pas : les quatre intervalles restent déposables aux trois graines.
 
-📌 **À faire avant de croire un classement de partitions** : ce contrôle-là, pas les 7
-intervalles manquants.
+📌 **Le dossier qui fait autorité est [`CHANTIER_MULTITEMOINS.md`](CHANTIER_MULTITEMOINS.md),
+§ « CORRIGÉ LE 2026-08-17 »** — chiffres, mécanisme, et ce qui reste valide y sont écrits une
+seule fois. Ne les recopie pas ici.
 
 ### 2. Les durées de ce fichier et du cache appartiennent à une AUTRE machine
 

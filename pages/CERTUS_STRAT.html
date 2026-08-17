@@ -4987,14 +4987,29 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     🟢 <b>Measured 2026-08-15, re-measured at higher depth 2026-08-16.</b> Splitting
                     the monitoring across several witnesses takes the 99-layer bandpass from
                     <b>100 % crashes on all 487 strategies</b> — not manufacturable at all — to
-                    <b>0 % crashes</b> and a <b>SEEL of 0.782 nm</b>.
+                    <b>0 % crashes</b> and a <b>SEEL of 0.81 nm</b>.
                     <br><br>
                     ⚠️ <b>The first campaign reported 0.760 nm, and that figure was biased low.</b>
                     It came from picking the minimum over 440 partitions with a P95 estimated on
                     only 50 draws. Re-run at 150 draws, that same partition reads <b>0.858 nm</b> and
                     a different one wins at <b>0.782 nm</b>. This is the winner's curse, it was
-                    predicted before the measurement, and the corrected figure is the one quoted
-                    throughout this section.
+                    predicted before the measurement.
+                    <br><br>
+                    🔴 <b>And 0.782 nm was itself the most favourable of three seeds — corrected
+                    2026-08-17.</b> The whole interval cache had been measured at a single
+                    robustness seed. Replaying the <i>same</i> winning partition
+                    <code>0-22 / 22-42 / 42-76 / 76-99</code> at three seeds, same code, same
+                    machine, gives <b>0.782 / 0.816 / 0.839 nm</b> — a spread of <b>+7.3 %</b>
+                    against the <b>3.0 %</b> equivalence threshold this mode sets itself. The
+                    defensible figure is therefore <b>0.81 nm</b> (mean of three, sample standard
+                    deviation 0.029 nm), and 0.782 nm is the low end of a range, not a value.
+                    With n = 3 the standard deviation is itself uncertain; five seeds would pin it.
+                    <br><br>
+                    🟢 <b>What this does not touch: manufacturability.</b> All four intervals are
+                    depositable at all three seeds, with crash rates of 0.0 % / 0.0 % / 1.3 % —
+                    every one under the 5 % tolerance. The claim <i>impossible → possible</i>
+                    stands exactly as written. It is the announced <i>precision</i> that was
+                    optimistic, by about 4 %.
                     <br><br>
                     🔴 <b>Read the claim exactly.</b> This does <i>not</i> buy precision. It buys
                     <i>possibility</i>. The 0.86 nm of §10.15 was never a performance — it was a
@@ -5066,8 +5081,21 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:5px 10px;text-align:center;">🟢 Yes</td></tr>
                 </table>
 
-                <h4>Three results that were not expected</h4>
+                <h4>Four results that were not expected</h4>
                 <ul>
+                    <li><b>A single seed does not establish the number — measured 2026-08-17.</b>
+                        Every comparison on this page below is made <i>at fixed seed</i> and stays
+                        valid as such. The <i>absolute</i> figure is another matter: replaying the
+                        winning partition at three robustness seeds gives
+                        <b>0.782 / 0.816 / 0.839 nm</b>, a spread of <b>+7.3 %</b> where the
+                        equivalence threshold is <b>3.0 %</b>. The four intervals stay depositable at
+                        all three seeds (crash 0.0 / 0.0 / 1.3 %), so <i>manufacturability</i> is
+                        seed-independent — the <i>precision</i> is not. Quote <b>0.81 nm</b>, not
+                        0.782 nm.
+                        <br>The mechanism is worth stating: the seed changes the noise, therefore the
+                        Phase-A wavelength choices, therefore <i>which strategies exist at all</i> —
+                        the candidate population moved from 165 to 292 on one interval. It is not the
+                        same strategies scored differently.</li>
                     <li><b>Where you change witness barely matters.</b> Across 440 assembled partitions
                         the <i>total</i> spread is <b>+14.4 %</b>, and <b>136 partitions are tied</b>
                         with the first at the measurement resolution ($\delta = 5.1\,\%$ on SEEL at

@@ -958,3 +958,55 @@ meilleur — mais l'attribution reste **non mesurée**.
 rejouer à N = 150 sur le candidat retenu.
 
 📏 `reports/intervalles_99c_premium/`, `scripts/classer_partitions.py --mode premium`.
+
+---
+
+#### 🔴 CORRIGÉ LE 2026-08-17 — le 0,782 nm était le plus favorable de TROIS graines
+
+**Le correctif du 16/08 avait traité la malédiction du vainqueur sur le choix de la
+PARTITION. Il restait le même biais sur le choix de la GRAINE, et personne ne le
+surveillait** : les 263 entrées du cache premium étaient toutes à `robustness_seed = 42`.
+
+La **même** partition `0-22 / 22-42 / 42-76 / 76-99`, rejouée à trois graines, même code,
+même machine :
+
+| graine | SEEL | écart | plantage |
+|---|---|---|---|
+| **42** | **0,782 nm** | référence | 0,0 % |
+| **101** | **0,816 nm** | **+4,3 %** | 0,0 % |
+| **77** | **0,839 nm** | **+7,3 %** | 1,3 % |
+
+**Étendue +7,3 %, pour un seuil d'équivalence δ = 3,0 %.** Les trois ne sont donc pas
+équivalentes : l'écart vaut **2,4 fois** le seuil que le mode premium se donne. Et 0,782 nm
+est le **minimum** des trois.
+
+🔑 **Le chiffre à citer est `0,81 nm`** — moyenne des trois, écart-type d'échantillon
+**0,029 nm** (~3,5 %). ⚠️ Avec n = 3 l'écart-type est lui-même incertain ; **cinq graines**
+le poseraient. Le 0,782 nm est le bas d'une fourchette, pas une valeur.
+
+🟢 **Ce que ça ne touche PAS : la fabricabilité.** Les quatre intervalles sont déposables aux
+**trois** graines, plantages 0,0 % / 0,0 % / 1,3 %, tous sous la tolérance de 5 %. L'énoncé
+*impossible → possible* tient exactement tel qu'il est écrit. C'est la **précision** annoncée
+qui était optimiste, d'environ 4 %.
+
+🔑 **Le mécanisme, et il est plus profond qu'un bruit de notation.** La graine change le
+bruit → donc les λ retenues par la Phase A → donc **quelles stratégies existent**. Sur
+`[0,22)` la population passe de **165 à 292 candidates**. Ce ne sont pas les mêmes stratégies
+notées autrement. Même classe que l'invariant de
+[`DECISIONS_TRANCHEES.md`](DECISIONS_TRANCHEES.md) — *la réalisation ne doit pas décider
+quelles candidates existent* — mais sur l'axe de la graine au lieu de la profondeur.
+
+**Ce qui reste parfaitement valide dans tout ce dossier** : chaque comparaison **à graine
+fixée**, c'est-à-dire tout ce qui précède — où changer de témoin, combien de témoins, les
+contrôles négatifs. L'avertissement porte sur la **valeur absolue**, pas sur les
+comparaisons.
+
+⚠️ **Et la graine ne fait pas basculer n'importe quoi.** Mesuré le même jour : elle retourne
+un intervalle **marginal** — `[38,99)`, 61 couches, `0/452` déposables et `crash_min` 42 % à
+la graine 42, `70/521` et 0 % à la graine 77 — et elle ne retourne **pas** un intervalle
+confortable. Les quatre de la gagnante sont confortables. Voir `CLAUDE.md` §24-46.
+
+📏 `scripts/campagne_intervalles.py --graine`, `scripts/classer_partitions.py --graine`
+(exposées le 2026-08-17 ; une graine ≠ 42 écrit **à côté**, suffixe `_sNNN`, sans jamais
+toucher le cache de référence). Contrôle de non-régression : à graine 42 le classement rend
+`0.782`, le même top-3 et la même étendue `+11,6 %` qu'avant l'exposition.

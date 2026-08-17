@@ -49,11 +49,30 @@ FULL = "example/example_strat/JSON-strat-bandpass-5cav-99c.json"
 N = 99
 
 
-def charger(cache_dir: Path) -> dict[tuple[int, int], dict]:
+SEED = 42
+
+
+def _suffixe_graine(seed: int) -> str:
+    """Vide a la graine de reference -- meme convention que campagne_intervalles.py."""
+    return "" if seed == SEED else f"_s{seed:03d}"
+
+
+def charger(cache_dir: Path, seed: int = SEED) -> dict[tuple[int, int], dict]:
+    """Les intervalles deposables d'UNE graine.
+
+    🔴 Le filtre sur la graine n'est pas cosmetique. Le glob `i_*.json` ramene aussi les
+    mesures des autres graines, et assembler une partition depuis des tranches tirees sur
+    des bruits differents rend un SEEL qui ressemble a un resultat sans en etre un.
+    Les entrees d'avant l'exposition de `--graine` n'ont pas de champ `seed` : elles
+    valent SEED par construction, puisque la valeur etait codee en dur.
+    """
     out = {}
+    suf = _suffixe_graine(seed)
     for f in cache_dir.glob("i_*.json"):
         r = json.loads(f.read_text(encoding="utf-8"))
-        th = cache_dir / f"th_{r['a']:03d}_{r['b']:03d}.npy"
+        if r.get("seed", SEED) != seed:
+            continue
+        th = cache_dir / f"th_{r['a']:03d}_{r['b']:03d}{suf}.npy"
         if r["verdict"] == "DEPOSABLE" and th.exists():
             r["th"] = np.load(th)
             out[(r["a"], r["b"])] = r
@@ -78,6 +97,10 @@ def main() -> int:
     ap.add_argument("--mode", default="fast", choices=("fast", "premium", "deep"), help="Mode du cache à lire")
     ap.add_argument("--cache-dir", default=None, help="Chemin du dossier de cache")
     ap.add_argument("--max-crash", type=float, default=0.05, help="Taux maximal de tirages plantés toléré (défaut: 0.05)")
+    ap.add_argument("--graine", type=int, default=SEED,
+                    help=f"graine de robustesse a classer (défaut: {SEED}). Le cache peut porter "
+                         f"plusieurs graines cote a cote ; on n'assemble JAMAIS des tranches "
+                         f"venant de graines differentes")
     args = ap.parse_args()
 
     cache_dir = Path(args.cache_dir) if args.cache_dir else (ROOT / "reports" / ("intervalles_99c" if args.mode == "fast" else f"intervalles_99c_{args.mode}"))
@@ -116,11 +139,15 @@ def main() -> int:
     parity = np.arange(N) % 2 == 0
     mat = np.where(parity[np.newaxis, :], nH[:, np.newaxis], nL[:, np.newaxis])
     vide = np.empty(0, dtype=np.complex128)
-    seed_idx = _index_stream_seed(42, 1)
+    # 🔴 La graine de la realisation d'indice DOIT etre celle qui a servi a mesurer les
+    # tranches. C'est la contrainte C2 : croissance et notation voient la meme realisation,
+    # sinon on note un filtre qui n'a jamais existe. Elle valait 42 en dur, ce qui etait
+    # juste tant qu'une seule graine existait dans le cache.
+    seed_idx = _index_stream_seed(args.graine, 1)
     corr = float(prm.get("index_corridor", 0.0) or 0.0)
 
-    cache = charger(cache_dir)
-    print(f"{len(cache)} intervalles deposables en cache ({cache_dir.name}).\n")
+    cache = charger(cache_dir, args.graine)
+    print(f"{len(cache)} intervalles deposables en cache ({cache_dir.name}), graine {args.graine}.\n")
 
     res = []
     manquants = 0

@@ -95,6 +95,33 @@ COMPOSANTS = {
     "75c": ("example/example_strat/JSON-strat-random75.json", 75),
     "48c": ("example/example_strat/JSON-strat-example.json", 48),
     "35c": ("example/example_strat/JSON-strat-bandpass-3cav.json", 35),
+    # 🔑 LA SERIE D'ECHELLE DU RANDOM75 -- la seule EXPERIENCE CONTROLEE du projet.
+    # 75 couches, structure, materiaux, substrat et grille IDENTIQUES : seule l'epaisseur
+    # optique varie. Elle est donc le seul endroit ou l'issue varie CONTINUMENT avec une
+    # variable controlee, et c'est ce qui en fait le jeu de calibration d'un predicteur.
+    #
+    #   facteur  epaisseur  QWOT         < 1 QWOT  verdict   deposables  crash_min  SEEL
+    #   x0,5      4,99 um   0,25 - 1,24    59      ECHOUE       0/375      48 %      -
+    #   x1        9,99 um   ~0,50 - 2,48    -      passe      241/662       0 %    0,272
+    #   x1,5     14,98 um   0,76 - 3,72     3      limite       1/704       0 %    0,63
+    #   x2       19,98 um   1,01 - 4,96     0      ECHOUE       0/404     100 %      -
+    #
+    # Echec -> succes -> limite -> echec a nombre de couches et structure CONSTANTS. Donc ni
+    # la longueur ni la structure ne gouvernent : c'est l'epaisseur optique par couche,
+    # autrement dit COMBIEN DE POINTS TOURNANTS chaque couche traverse. Mecanisme a deux
+    # bords, exactement ce que §27 annoncait sans l'avoir mesure :
+    #   trop mince -> la couche ne complete pas un quart d'onde -> PAS d'extremum, pas d'ancre
+    #   trop epais -> plusieurs extrema par couche -> le comptage decroche
+    # Les deux echecs portent des crash_min DIFFERENTS (48 % contre 100 %), donc probablement
+    # deux causes differentes. `margin_by_layer` est ventile par cause : c'est ce qui
+    # confirmera -- ou refutera -- le mecanisme a deux bords.
+    #
+    # ⚠️ x1,5 rend 1 deposable sur 704. C'est le regime marginal ou §24-46 a mesure que la
+    # GRAINE retourne le verdict (0/452 -> 70/521). Deux graines au moins sur les points
+    # marginaux avant toute conclusion.
+    "r75x0.5": ("reports/serie_echelle_r75/cfg_x0.5.json", 75),
+    "r75x1.5": ("reports/serie_echelle_r75/cfg_x1.5.json", 75),
+    "r75x2": ("reports/serie_echelle_r75/cfg_x2.json", 75),
 }
 SEED = 42
 CRASH_TOL = 0.05
@@ -163,8 +190,61 @@ def mesurer(nom: str, mode: str) -> dict:
             "crash_rate": float(s.get("crash_rate", 1.0)),
             "score": float(s.get("robustness_score", 0.0) or 0.0),
             "lambdas": [b.get("wl") if isinstance(b, dict) else None for b in blocs][:24],
+            # 🔑 La marge sur la trajectoire ACCUMULEE, en unites de A -- la seule grandeur
+            # du projet validee comme predicteur de plantage depuis le signal (§24-41).
+            # Sparse : une couche absente a une marge >= 5 A, donc sereine.
+            "margin_by_layer": s.get("margin_by_layer") or {},
+            "critical_layer": s.get("critical_layer") or {},
         })
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes}
+
+
+def mur(lignes: list[dict]) -> None:
+    """Existe-t-il une couche qu'AUCUNE strategie ne parvient a rendre sereine ?
+
+    Une couche absente du profil sparse d'une strategie a une marge >= 5 A : cette strategie
+    la rend sereine, donc la couche n'est pas un mur. Un mur est une couche CONTRAINTE PAR
+    TOUTES les strategies, dont la MEILLEURE marge sur l'ensemble reste basse. C'est la forme
+    d'une condition necessaire violee : toute strategie doit deposer cette couche.
+    """
+    n = len(lignes)
+    par_cause: dict[str, dict[int, list[float]]] = {}
+    for r in lignes:
+        for cause, hits in (r["margin_by_layer"] or {}).items():
+            d = par_cause.setdefault(cause, {})
+            for k, v in hits.items():
+                d.setdefault(int(k), []).append(float(v))
+
+    if not par_cause:
+        print("\n  ⚠️ aucun profil de marge remonte -- rien a conclure (champ absent ?)")
+        return
+
+    for cause, d in sorted(par_cause.items()):
+        partout = {i: v for i, v in d.items() if len(v) == n}
+        print(f"\n  cause « {cause} » : {len(d)} couches contraintes au moins une fois, "
+              f"{len(partout)} contraintes par les {n} strategies")
+        if not partout:
+            print("    🟢 aucune couche contrainte partout : pas de mur pour cette cause.")
+            continue
+        classe = sorted(partout.items(), key=lambda kv: max(kv[1]))
+        print(f"    {'couche':>7} {'MEILLEURE marge':>16} {'pire':>8} {'mediane':>9}")
+        for i, vs in classe[:12]:
+            vs_tri = sorted(vs)
+            print(f"    {i:>7} {max(vs):>15.3f}A {min(vs):>7.3f}A "
+                  f"{vs_tri[len(vs_tri) // 2]:>8.3f}A")
+        pire = classe[0]
+        print(f"    🔴 MUR CANDIDAT : couche {pire[0]} -- meilleure marge {max(pire[1]):.3f} A "
+              f"sur les {n} strategies.")
+        print("       Aucune strategie ne la rend sereine, et toutes doivent la deposer.")
+
+    crit: dict[str, int] = {}
+    for r in lignes:
+        cl = r["critical_layer"] or {}
+        k = f"couche {cl.get('layer')} / {cl.get('cause')}"
+        crit[k] = crit.get(k, 0) + 1
+    print(f"\n  couche CRITIQUE la plus fréquente sur {n} strategies :")
+    for k, c in sorted(crit.items(), key=lambda kv: -kv[1])[:8]:
+        print(f"    {c:>5} fois ({100 * c / n:>5.1f} %)  {k}")
 
 
 def synthese(lignes: list[dict]) -> None:
@@ -213,6 +293,10 @@ def main() -> int:
 
     print(f"\n{r['n_strats']} strategies evaluees.")
     synthese(r["strategies"])
+    print("\n" + "=" * 74)
+    print("Y A-T-IL UNE COUCHE QU'AUCUNE STRATEGIE NE REND SEREINE ?")
+    print("=" * 74)
+    mur(r["strategies"])
 
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")

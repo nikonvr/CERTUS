@@ -175,7 +175,7 @@ def _commit() -> str:
 
 
 def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
-            resolution_nm: float = 2.0) -> dict:
+            resolution_nm: float = 2.0, elargi: bool = False) -> dict:
     """Un run complet, et `cherche_fente` est le parametre qui manquait.
 
     🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
@@ -232,6 +232,27 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         "require_turning_point": int(min_tp),
         "execution_mode": mode,
     }
+    if elargi:
+        # 🔑 PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais
+        # la profondeur d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent
+        # intacts : ce sont des profondeurs de notation, et les changer rendrait les taux de
+        # plantage incomparables avec la grille. §19 interdit en outre de descendre
+        # n_screen_runs.
+        over.update({
+            "execution_mode": "deep",          # dp_top_k 20 -> 100
+            "mining_candidates_limit": 12000,  # x4
+            "phase_a_keep_limit": 200,         # x4
+            "top_k_parents": 80,               # x4
+            "max_fusions_per_parent": 15,      # x3
+            "k_keep_survivors": 40,            # x4
+            "screening_keep_top_k": 20,        # x4
+            # 🔴 SANS CETTE LIGNE L'ELARGISSEMENT SERAIT TRONQUE EN SILENCE. Le defaut vaut
+            # 300 s : une phase qui deborde est coupee, et le run rend un resultat plausible
+            # sur une exploration amputee. C'est le mode de defaillance que ce depot paie
+            # depuis le debut.
+            "strategy_phase_timeout": 3600,
+        })
+
     _c = app.collect_params
     vus = {"n": 0}
 
@@ -405,13 +426,14 @@ def main() -> int:
     fente = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
     min_tp = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
+    elargi = bool(int(sys.argv[6])) if len(sys.argv) > 6 else False
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
     print(f"composant {nom} | mode {mode} | graine {SEED} | require_turning_point={min_tp} "
-          f"| fente {res_nm:g} nm | machine {_machine()}")
-    r = mesurer(nom, mode, fente, min_tp, res_nm)
+          f"| fente {res_nm:g} nm | elargi {int(elargi)} | machine {_machine()}")
+    r = mesurer(nom, mode, fente, min_tp, res_nm, elargi)
     r.update({"composant": nom, "mode": mode, "seed": SEED, "instrument": _commit(),
               "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
 
@@ -431,7 +453,8 @@ def main() -> int:
     contraintes_communes(r["strategies"])
 
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
-                + ("" if res_nm == 2.0 else f"_res{res_nm:g}"))
+                + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
+                + ("_large" if elargi else ""))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{SEED:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

@@ -214,8 +214,54 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False) -> dict:
             # Sparse : une couche absente a une marge >= 5 A, donc sereine.
             "margin_by_layer": s.get("margin_by_layer") or {},
             "critical_layer": s.get("critical_layer") or {},
+            # 🔑 LA FENTE QUE CETTE STRATEGIE A CHOISIE, et son prix en bruit. Sans ce champ on
+            # saurait SI la recherche de fente aide, jamais A QUELLE LARGEUR -- soit la moitie
+            # de la reponse a la question de 👤. Le bonus/malus est documente : /1,5 a 5 nm,
+            # x1 a 2 nm, x2 a 1 nm, x5 a 0,5 nm. Une strategie qui descend a 1 nm PAIE le x2 ;
+            # si elle gagne quand meme, c'est que la finesse spectrale valait le bruit.
+            "resolution_nm": s.get("monochromator_resolution_nm"),
+            "resolution_noise_factor": s.get("resolution_noise_factor"),
         })
     return {"verdict": "OK", "n_strats": len(lignes), "strategies": lignes}
+
+
+def par_fente(lignes: list[dict]) -> None:
+    """La fente change-t-elle l'issue, et a quelle largeur ?
+
+    👤 2026-08-17 : « un filtre trop epais a des pics en transmission et peut-etre que le filtre
+    serait monitorable en resolution 1 nm et pas 2 nm ». Cette ventilation est la reponse
+    directe. Le prix est documente : /1,5 a 5 nm, x1 a 2 nm, x2 a 1 nm, x5 a 0,5 nm -- descendre
+    en largeur ACHETE de la finesse spectrale et PAIE du bruit.
+    """
+    par: dict[float, list[dict]] = defaultdict(list)
+    for r in lignes:
+        par[float(r.get("resolution_nm") or 0.0)].append(r)
+    if len(par) <= 1:
+        seule = next(iter(par), 0.0)
+        print(f"\n  une seule fente presente : {seule} nm -- la recherche de fente est INACTIVE.")
+        return
+    print(f"\n  {'fente nm':>9} {'x bruit':>8} {'OFFERTES':>9} {'plantage moy':>13} "
+          f"{'plantage min':>13} {'deposables':>11} {'meilleur score':>15}")
+    print("  " + "-" * 82)
+    for f in sorted(par):
+        g = par[f]
+        tx = [r["crash_rate"] for r in g]
+        dep = [r for r in g if r["crash_rate"] < CRASH_TOL]
+        sc = [r["score"] for r in dep] or [float("nan")]
+        fac = g[0].get("resolution_noise_factor")
+        print(f"  {f:>9.2f} {(fac if fac is not None else float('nan')):>8.2f} {len(g):>9} "
+              f"{100 * sum(tx) / len(tx):>12.2f}% {100 * min(tx):>12.2f}% {len(dep):>11} "
+              f"{min(sc):>15.5f}")
+    gagnantes = [r for r in lignes if r["crash_rate"] < CRASH_TOL]
+    if gagnantes:
+        f_gag: dict[float, int] = defaultdict(int)
+        for r in gagnantes:
+            f_gag[float(r.get("resolution_nm") or 0.0)] += 1
+        print(f"\n  🔑 les {len(gagnantes)} strategies DEPOSABLES choisissent :")
+        for f, c in sorted(f_gag.items()):
+            print(f"       {c:>5} a {f} nm")
+    else:
+        print("\n  aucune strategie deposable, quelle que soit la fente.")
 
 
 def mur(lignes: list[dict]) -> None:
@@ -313,6 +359,10 @@ def main() -> int:
 
     print(f"\n{r['n_strats']} strategies evaluees.")
     synthese(r["strategies"])
+    print("\n" + "=" * 74)
+    print("LA FENTE CHANGE-T-ELLE L'ISSUE, ET A QUELLE LARGEUR ?")
+    print("=" * 74)
+    par_fente(r["strategies"])
     print("\n" + "=" * 74)
     print("Y A-T-IL UNE COUCHE QU'AUCUNE STRATEGIE NE REND SEREINE ?")
     print("=" * 74)

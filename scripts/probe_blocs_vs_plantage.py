@@ -158,6 +158,34 @@ COMPOSANTS = {
 SEED = 42
 CRASH_TOL = 0.05
 
+#: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
+#: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
+#: profondeurs de NOTATION, et les changer rendrait les taux de plantage incomparables avec les
+#: cellules standard. §19 interdit en outre de descendre `n_screen_runs`.
+#:
+#: 📏 Les valeurs de depart sont celles de `JSON-strat-random75.json`, verifiees le 2026-08-17 :
+#: 3000 / 50 / 20 / 5 / 10 / 5 / 300. Les sept noms sont lus par `certus_strat_workers.py` --
+#: controle fait avant de lancer, parce que ce depot a trois precedents de parametre pose,
+#: journalise, et lu par personne (`fast_auto_blocks`, `machine_sampling_dd`, `dp_yield_weight`).
+ELARGISSEMENT = {
+    "execution_mode": "deep",          # dp_top_k 20 -> 100
+    "mining_candidates_limit": 12000,  # x4
+    "phase_a_keep_limit": 200,         # x4
+    "top_k_parents": 80,               # x4
+    "max_fusions_per_parent": 15,      # x3
+    "k_keep_survivors": 40,            # x4
+    "screening_keep_top_k": 20,        # x4
+    # 🔴 SANS CETTE LIGNE L'ELARGISSEMENT SERAIT TRONQUE EN SILENCE. Le defaut vaut 300 s : une
+    # phase qui deborde est coupee, et le run rend un resultat plausible sur une exploration
+    # amputee. C'est le mode de defaillance que ce depot paie depuis le debut.
+    #
+    # 🔑 ET LA VALEUR EST CALEE SOUS LE PLAFOND DU BANC, DELIBEREMENT. Le pilote donne a la
+    # phase 2 jusqu'a 6 h d'horloge ; un bornage interne a 3600 s ferait de LUI la contrainte
+    # active, et il tronque EN SILENCE la ou le plafond du banc, lui, rend un
+    # `ECHEC_RESULT_NONE` visible. On veut que ce soit le garde-fou BRUYANT qui morde.
+    "strategy_phase_timeout": 10800,
+}
+
 
 def _machine() -> str:
     import platform
@@ -236,25 +264,7 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         "execution_mode": mode,
     }
     if elargi:
-        # 🔑 PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais
-        # la profondeur d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent
-        # intacts : ce sont des profondeurs de notation, et les changer rendrait les taux de
-        # plantage incomparables avec la grille. §19 interdit en outre de descendre
-        # n_screen_runs.
-        over.update({
-            "execution_mode": "deep",          # dp_top_k 20 -> 100
-            "mining_candidates_limit": 12000,  # x4
-            "phase_a_keep_limit": 200,         # x4
-            "top_k_parents": 80,               # x4
-            "max_fusions_per_parent": 15,      # x3
-            "k_keep_survivors": 40,            # x4
-            "screening_keep_top_k": 20,        # x4
-            # 🔴 SANS CETTE LIGNE L'ELARGISSEMENT SERAIT TRONQUE EN SILENCE. Le defaut vaut
-            # 300 s : une phase qui deborde est coupee, et le run rend un resultat plausible
-            # sur une exploration amputee. C'est le mode de defaillance que ce depot paie
-            # depuis le debut.
-            "strategy_phase_timeout": 3600,
-        })
+        over.update(ELARGISSEMENT)
 
     _c = app.collect_params
     vus = {"n": 0}
@@ -438,8 +448,19 @@ def main() -> int:
     print(f"composant {nom} | mode {mode} | graine {graine} | require_turning_point={min_tp} "
           f"| fente {res_nm:g} nm | elargi {int(elargi)} | machine {_machine()}")
     r = mesurer(nom, mode, fente, min_tp, res_nm, elargi, graine)
+    # 🔴 LA CONFIGURATION EFFECTIVE EST CONSIGNEE DANS L'ARTEFACT, PAS SEULEMENT DANS LE NOM.
+    # §24-7 : « un run qui ne consigne pas sa configuration n'est comparable a rien » -- deux
+    # artefacts ont deja ete perdus ainsi dans ce depot. Le nom de fichier portait la fente,
+    # mais par ABSENCE de suffixe a 2 nm : un artefact nominal ne disait donc rien de la
+    # machine sur laquelle il avait tourne. Et le profil ELARGI, qui change sept parametres
+    # d'exploration, n'etait trace nulle part ailleurs que par un « _large » dans le nom.
     r.update({"composant": nom, "mode": mode, "seed": graine, "instrument": _commit(),
-              "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds")})
+              "machine": _machine(), "stamp": datetime.now().isoformat(timespec="seconds"),
+              "config": {"monochromator_resolution_nm": res_nm,
+                         "search_resolution": bool(fente),
+                         "require_turning_point": int(min_tp),
+                         "exploration_elargie": bool(elargi),
+                         "elargissement": dict(ELARGISSEMENT) if elargi else None}})
 
     if r["verdict"] != "OK":
         print(f"\n🔴 {r['verdict']} -- rien a analyser.")

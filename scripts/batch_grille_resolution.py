@@ -95,11 +95,17 @@ SEED = 42
 #: 🔴 LA PHASE 2 EST EN POSITION 10, PAS EN DERNIER, et c'est delibere : placee apres les
 #: cellules de consolidation elle ne tournerait jamais a 10 h, alors qu'elle repond a une
 #: demande explicite de 👤.
+#:
+#: 🔑 ET UNE VARIATION NE PRECEDE JAMAIS SA REFERENCE. Un « 5 nm sur x0,5 » lu sans le 2 nm de
+#: la meme sonde ne se compare qu'a un echantillon BIAISE par la recherche de fente : le lot
+#: coupe juste apres rendrait un chiffre ininterpretable. La colonne 2 nm des trois autres
+#: variantes est produite par le run du 2026-08-17 au soir (75c, x1,5, x2 en fast) ; x0,5 est
+#: le seul trou, et c'est pourquoi il est comble AVANT qu'on le fasse varier.
 CELLULES = [
     ("r75x2", "fast", 1.0, False, 42, 45, "LA question -- 1 nm n'a jamais ete evalue sur x2"),
     ("r75x2", "fast", 0.5, False, 42, 45, "second point de la courbe sur le cas dur"),
+    ("r75x0.5", "fast", 2.0, False, 42, 45, "REFERENCE PROPRE du mince -- avant sa variation"),
     ("r75x0.5", "fast", 5.0, False, 42, 45, "le bonus de bruit /1,5 sur le cas mince"),
-    ("r75x0.5", "fast", 2.0, False, 42, 45, "reference propre du mince, meme sonde"),
     ("r75x1.5", "fast", 1.0, False, 42, 45, "le point limite -- 1 deposable sur 704 a 2 nm"),
     ("75c", "fast", 1.0, False, 42, 45, "le composant qui PASSE -- 1 nm le degrade-t-il ?"),
     ("75c", "fast", 5.0, False, 42, 45, "et une fente large l'ameliore-t-elle ?"),

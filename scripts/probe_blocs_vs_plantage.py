@@ -100,11 +100,19 @@ COMPOSANTS = {
     # optique varie. Elle est donc le seul endroit ou l'issue varie CONTINUMENT avec une
     # variable controlee, et c'est ce qui en fait le jeu de calibration d'un predicteur.
     #
-    #   facteur  epaisseur  QWOT         < 1 QWOT  verdict   deposables  crash_min  SEEL
-    #   x0,5      4,99 um   0,25 - 1,24    59      ECHOUE       0/375      48 %      -
-    #   x1        9,99 um   ~0,50 - 2,48    -      passe      241/662       0 %    0,272
-    #   x1,5     14,98 um   0,76 - 3,72     3      limite       1/704       0 %    0,63
-    #   x2       19,98 um   1,01 - 4,96     0      ECHOUE       0/404     100 %      -
+    # 🔴 FIN / EPAIS SE DEFINIT EN EPAISSEUR OPTIQUE, JAMAIS MECANIQUE (👤, 2026-08-17). La
+    # finesse spectrale est gouvernee par la phase accumulee, donc par n*d et non par d. La
+    # mesure propre est la SOMME DES QWOT : sans unite, sans indice, sans l0.
+    #
+    #   facteur  Somme QWOT  ep.OPTIQUE  QWOT/couche  <1QWOT  verdict  deposables  crash  SEEL
+    #   x0,5           57,4     9,09 um  0,25 - 1,24     59   ECHOUE      0/375    48 %     -
+    #   x1            114,9    18,18 um  0,50 - 2,48      -   passe     241/662     0 %  0,272
+    #   x1,5          172,3    27,27 um  0,76 - 3,72      3   limite      1/704     0 %  0,63
+    #   x2            229,8    36,36 um  1,01 - 4,96      0   ECHOUE      0/404   100 %     -
+    #
+    # Sur CETTE serie optique et mecanique sont proportionnelles (rapport 1,82, l'indice moyen
+    # effectif), donc l'ordre est inchange -- mais une conclusion libellee en micrometres
+    # mecaniques ne se generaliserait PAS a d'autres materiaux.
     #
     # Echec -> succes -> limite -> echec a nombre de couches et structure CONSTANTS. Donc ni
     # la longueur ni la structure ne gouvernent : c'est l'epaisseur optique par couche,

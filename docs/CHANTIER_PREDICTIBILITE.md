@@ -32,12 +32,35 @@ information — et c'est ce qui a produit trois fausses conclusions le 2026-08-1
 matériaux, substrat et grille spectrale identiques aux quatre échelles. Seule l'épaisseur
 optique varie.**
 
-| facteur | épaisseur | QWOT | couches < 1 QWOT | verdict | déposables | `crash_min` | SEEL |
-|---|---|---|---|---|---|---|---|
-| **×0,5** | 4,99 µm | 0,252 – 1,240 | **59** | 🔴 échoue | 0/375 | **48 %** | — |
-| **×1** | 9,99 µm | 0,504 – 2,479 | — | 🟢 **passe** | 241/662 | 0 % | **0,272 nm** |
-| **×1,5** | 14,98 µm | 0,756 – 3,719 | 3 | 🟠 limite | **1/704** | 0 % | **0,63 nm** |
-| **×2** | 19,98 µm | 1,008 – 4,958 | **0** | 🔴 échoue | 0/404 | **100 %** | — |
+| facteur | **Σ QWOT** | **ép. OPTIQUE** | QWOT par couche | couches < 1 QWOT | verdict | déposables | `crash_min` | SEEL |
+|---|---|---|---|---|---|---|---|---|
+| **×0,5** | **57,4** | 9,09 µm | 0,252 – 1,240 | **59** | 🔴 échoue | 0/375 | **48 %** | — |
+| **×1** | **114,9** | 18,18 µm | 0,504 – 2,479 | — | 🟢 **passe** | 241/662 | 0 % | **0,272 nm** |
+| **×1,5** | **172,3** | 27,27 µm | 0,756 – 3,719 | 3 | 🟠 limite | **1/704** | 0 % | **0,63 nm** |
+| **×2** | **229,8** | 36,36 µm | 1,008 – 4,958 | **0** | 🔴 échoue | 0/404 | **100 %** | — |
+
+### 🔴 « Fin » et « épais » se définissent en épaisseur OPTIQUE, jamais mécanique
+
+> 👤 **2026-08-17** : *« selon les lois de la physique, fin/épais se définit en épaisseur optique
+> totale, mais pas en épaisseur mécanique totale. À noter !!! »*
+
+La finesse de la structure spectrale est gouvernée par la **phase accumulée**, donc par `n·d` et
+non par `d`. Deux empilements de **même épaisseur mécanique** en matériaux d'indices différents
+n'ont **pas** la même finesse spectrale, donc pas la même monitorabilité.
+
+```
+epaisseur OPTIQUE   = somme(m_i) * l0/4        -- ne depend PAS des indices
+epaisseur MECANIQUE = somme(m_i * l0/(4 n_i))  -- depend du materiau
+```
+
+📏 Sur cette série le rapport vaut **1,82** — l'indice moyen effectif. Les deux grandeurs y sont
+**proportionnelles** (mêmes matériaux, mise à l'échelle uniforme), donc **l'ordre du tableau est
+inchangé**. Mais une conclusion libellée en micromètres mécaniques **ne se généraliserait pas** à
+d'autres matériaux.
+
+🔑 **La mesure la plus propre est la somme des QWOT** : sans unité, sans indice, sans λ₀. C'est
+elle qu'il faut citer — **57,4 / 114,9 / 172,3 / 229,8 quarts d'onde**, et le basculement se
+situe donc entre **172 et 230 quarts d'onde** du côté épais, entre **57 et 115** du côté mince.
 
 🔑 **Échec → succès → limite → échec, à nombre de couches et structure constants.** C'est le
 seul endroit du projet où l'issue varie **continûment** avec une variable contrôlée, et c'est ce

@@ -135,10 +135,16 @@ DEMI = np.pi / 2.0
 # optique varie, multiplicateurs JAMAIS entiers donc POEM en regime normal, et une issue qui
 # varie continument :
 #
-#   x0,5   0,252 - 1,240 QWOT   59 couches sous 1   ECHOUE   0/375    crash_min  48 %
-#   x1     0,504 - 2,479 QWOT      -                passe  241/662    crash_min   0 %   SEEL 0,272
-#   x1,5   0,756 - 3,719 QWOT    3 couches sous 1   limite   1/704    crash_min   0 %   SEEL 0,63
-#   x2     1,008 - 4,958 QWOT    0 couche sous 1    ECHOUE   0/404    crash_min 100 %
+#   facteur  Somme QWOT   QWOT/couche    < 1 QWOT   verdict   deposables   crash_min
+#   x0,5           57,4   0,252-1,240         59    ECHOUE       0/375        48 %
+#   x1            114,9   0,504-2,479          -    passe      241/662         0 %   SEEL 0,272
+#   x1,5          172,3   0,756-3,719          3    limite       1/704         0 %   SEEL 0,63
+#   x2            229,8   1,008-4,958          0    ECHOUE       0/404       100 %
+#
+# 🔴 FIN / EPAIS SE DEFINIT EN EPAISSEUR OPTIQUE, JAMAIS MECANIQUE (👤, 2026-08-17) : la finesse
+# spectrale est gouvernee par la phase accumulee, donc n*d et non d. La somme des QWOT est la
+# mesure propre -- sans unite, sans indice, sans l0. Le basculement se situe entre 172 et 230
+# quarts d'onde du cote epais, entre 57 et 115 du cote mince.
 #
 # LA QUESTION QUE CETTE SONDE POSE : les grandeurs du signal nominal ordonnent-elles cette
 # serie ? Si oui, elles marchent et seul le 99c egarait. Si non, elles sont a jeter.

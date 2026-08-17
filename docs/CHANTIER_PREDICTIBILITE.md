@@ -1,0 +1,274 @@
+# PRÉDIRE SI UN DESIGN PASSE AVEC UN SEUL VERRE TÉMOIN
+
+> 👤 **2026-08-17** : *« le chantier suivant devrait se concentrer sur les 75c. Il faut arriver à
+> comprendre pourquoi certains sont monitorables avec un seul verre témoin, et pas d'autres. Le
+> but ultime serait d'arriver à prédire sans tout calculer si un design peut passer avec un seul
+> verre ou pas. »*
+
+Ce dossier fait **autorité** sur ce sujet. `CLAUDE.md` n'en garde qu'un renvoi.
+
+---
+
+## 1. 🔒 L'instrument, et pourquoi le 99c n'en est pas un
+
+> 👤 : *« le 99c me gêne car il est rare de déposer un empilement tout 1/4 d'onde, surtout en
+> trigger POEM. Je préfère ne pas en tirer de conclusions, alors que le 75c est intéressant avec
+> ses 4 variantes. »*
+
+**Il a raison, et c'est mécaniquement démontrable.** Les `stack_multipliers` du 99c valent
+**exactement 1 et 2** à `l0 = 633 nm`. Or §14 pose que QWOT et point tournant **coïncident** sur
+un empilement entièrement QWOT à λ_mon. Chaque couche finit donc **pile sur un extremum**, et
+POEM — qui vise *un pourcentage de l'amplitude entre les deux derniers extrema* — se retrouve au
+bord dégénéré de sa plage.
+
+🔴 **Le 99c est adverse à POEM par construction. Ce n'est pas un cas difficile, c'est un cas
+dégénéré.** Signature qui aurait dû alerter plus tôt : `plantage min = 100 %` **plat** sur
+**751 stratégies** et **20 nombres de blocs distincts**. Une réponse plate porte zéro
+information — et c'est ce qui a produit trois fausses conclusions le 2026-08-17 (§4).
+
+### La série d'échelle du random75 — la seule expérience CONTRÔLÉE du projet
+
+📏 `scripts/serie_echelle_r75.py`, `reports/serie_echelle_r75/`. **75 couches, structure,
+matériaux, substrat et grille spectrale identiques aux quatre échelles. Seule l'épaisseur
+optique varie.**
+
+| facteur | épaisseur | QWOT | couches < 1 QWOT | verdict | déposables | `crash_min` | SEEL |
+|---|---|---|---|---|---|---|---|
+| **×0,5** | 4,99 µm | 0,252 – 1,240 | **59** | 🔴 échoue | 0/375 | **48 %** | — |
+| **×1** | 9,99 µm | 0,504 – 2,479 | — | 🟢 **passe** | 241/662 | 0 % | **0,272 nm** |
+| **×1,5** | 14,98 µm | 0,756 – 3,719 | 3 | 🟠 limite | **1/704** | 0 % | **0,63 nm** |
+| **×2** | 19,98 µm | 1,008 – 4,958 | **0** | 🔴 échoue | 0/404 | **100 %** | — |
+
+🔑 **Échec → succès → limite → échec, à nombre de couches et structure constants.** C'est le
+seul endroit du projet où l'issue varie **continûment** avec une variable contrôlée, et c'est ce
+qui en fait le **jeu de calibration** dont un prédicteur a besoin.
+
+⚠️ **Les multiplicateurs ne sont jamais entiers, à aucune échelle** — POEM opère donc en régime
+normal, contrairement au 99c.
+
+⚠️ **×1,5 rend 1 déposable sur 704.** C'est le régime marginal où §24-46 a mesuré que la
+**graine retourne le verdict**. `×1,5 « passe »` et `×0,5 « échoue »` sont **tous deux suspects
+sur une seule graine**. Deux graines minimum sur les points marginaux avant toute conclusion.
+🟢 Un bon signe quand même : ×1,5 joué en **fast** et en **premium** rend le même `1 déposable,
+SEEL 0,63` — il est au moins stable en mode.
+
+⚠️ La série va de 5 à 20 µm d'épaisseur physique. À 20 µm un vrai bâti aurait des problèmes de
+contrainte et de durée que le modèle ignore. **C'est un instrument, pas une proposition de
+design.**
+
+---
+
+## 2. Ce que la série établit sur le mécanisme
+
+Ni la longueur ni la structure ne gouvernent — les deux sont constantes. **C'est l'épaisseur
+optique par couche**, autrement dit **combien de points tournants chaque couche traverse**. Et le
+mécanisme a **deux bords**, exactement ce que §27 annonçait sans l'avoir mesuré — *« trop de
+points tournants proches est aussi un risque, pas seulement trop peu ; le coût doit être non
+monotone »* :
+
+| bord | mécanisme | signature |
+|---|---|---|
+| **trop mince** (×0,5) | la couche ne complète pas un quart d'onde → **pas d'extremum**, donc pas d'ancre pour POEM | 59 couches sous 1 QWOT, **1 couche muette** |
+| **trop épais** (×2) | plusieurs extrema par couche → le **comptage décroche** | 0 couche sous 1 QWOT, jusqu'à 4,96 QWOT |
+
+Les deux échecs portent des `crash_min` **différents** — 48 % contre 100 % — donc probablement
+deux causes distinctes. `margin_by_layer` est ventilé par cause (`margin_missed` = extremum
+**manqué** ; `margin_fabricated` = extremum **inventé**), donc c'est **mesurable**. Non encore
+mesuré au 2026-08-17.
+
+---
+
+## 3. 🔴 Une seule grandeur du signal nominal prédit quelque chose
+
+📏 **Test loyal du 2026-08-17**, `scripts/probe_marge_atteignable.py` sur les quatre échelles.
+TMM pure, aucun solveur, aucun Monte-Carlo.
+
+| composant | muettes | blocs min | marge mini | marge méd | **issue mesurée** |
+|---|---|---|---|---|---|
+| ×0,5 | **1** | 4 | 109,0 A | 570 A | 🔴 échoue |
+| ×1 | 0 | 2 | **78,9 A** | 600 A | 🟢 passe |
+| ×1,5 | 0 | 1 | 480,5 A | 625 A | 🟠 limite |
+| ×2 | 0 | 1 | 443,7 A | 598 A | 🔴 échoue |
+
+| grandeur | verdict |
+|---|---|
+| **couches muettes** | ✅ **prédit le bord MINCE**, et est structurellement aveugle à l'épais — cohérent : trop mince = pas d'extremum, trop épais = comptage qui décroche, pas muteté |
+| **blocs minimum** | ❌ 4/2/1/1, monotone avec l'épaisseur ; ×1,5 et ×2 tiennent tous deux en **1 bloc** alors que l'un passe et l'autre échoue |
+| **marge nominale mini** | ❌ va **à l'envers** : celui qui **passe** a la marge la plus **basse** (78,9 A) |
+| **marge nominale médiane** | ❌ plate, ~600 A pour les quatre |
+
+🔑 **Le seul détecteur qui fonctionne est la muteté, et seulement d'un côté.** Le bord épais
+n'est vu par **aucune** grandeur du signal nominal.
+
+---
+
+## 4. Les routes fermées, et ce qu'elles ont coûté
+
+Chacune est fermée par une **mesure**, pas par un raisonnement. Elles sont ici pour ne pas être
+refaites.
+
+### 4.1 ❌ La cohérence en λ — elle classe les composants À L'ENVERS
+
+📏 `scripts/profil_monitorabilite.py`, 49 s pour les quatre composants. Le nombre était calculé
+et committé depuis le 2026-08-16 (`af5a7ca`), reproduit **bit-identique** le 17/08 ; **sa lecture
+n'avait jamais été écrite**.
+
+```
+couches SANS aucune lambda utilisable :  0/99   0/75   0/48   0/35
+```
+
+λ servant **tout** le préfixe `[0,b)` — ce qu'un **bloc unique** exigerait :
+
+| b | 99c | 75c | 48c | 35c |
+|---|---|---|---|---|
+| 30 | 55 | **26** | 89 | 30 |
+| 60 | 33 | **0** 🔴 | — | — |
+| complet | **26** | **0** | 64 | 28 |
+
+Le 75c tombe à zéro dès la couche 60 ; le 99c garde 26 λ sur ses 99 couches — et c'est le
+**75c** qui passe. **La périodicité achète la cohérence en λ ; elle n'achète pas la
+monitorabilité.**
+
+⚠️ **Et le `0` du 75c ne veut PAS dire « non monitorable ».** Il veut dire *« aucune λ unique ne
+couvre 60 couches d'affilée »*. Changer de λ n'est **pas** changer de verre : sur un même témoin
+la machine change de λ autant de fois qu'il faut, le 48c gagne à **2 blocs** et la zone favorable
+est **4 à 7** (§24-44).
+
+### 4.2 ❌ Le nombre de blocs — réfuté sur 751 stratégies
+
+📏 `scripts/probe_blocs_vs_plantage.py` sur le 99c complet, premium, graine 42.
+
+```
+ n_blocs  OFFERTES  plantage moy  plantage min  deposables
+       1        10       100.00%       100.00%           0
+       4        48       100.00%       100.00%           0
+       6        48       100.00%       100.00%           0
+      19         4       100.00%       100.00%           0
+      99         1       100.00%       100.00%           0
+zone favorable 4-7 blocs : 184 offertes sur 751 (24,5 %) -- 0 deposable
+```
+
+L'hypothèse était : *un bloc long détruit la compensation (`MAX_LOOKBACK = 4`, §24-21), un bloc
+court perd ses ancres, donc l'optimum est dans la zone 4-7 (§24-44)*. **Réfutée** :
+
+- la zone favorable **a été explorée** — 184 stratégies, un quart de l'offre — et ne donne rien ;
+- 🔑 la stratégie à **99 blocs**, qui se réancre à **chaque couche** — compensation maximale
+  possible — plante aussi à **100 %**. Ni les blocs trop longs ni les blocs trop nombreux
+  n'expliquent quoi que ce soit ;
+- ce n'est **pas** un défaut d'offre de la recherche : elle a proposé de 1 à 19 blocs plus une à
+  99. Le motif de §24-37 ne s'applique pas.
+
+⚠️ **751 stratégies évaluées** là où le dépôt documente « 487 ». Le chiffre est à réviser.
+
+### 4.3 ❌ L'énumération exhaustive — morte d'un facteur 10⁵⁰
+
+📏 `scripts/probe_denombre_couvertures.py`. 99c, base `adm_tp`, k ≤ 20 blocs :
+
+```
+couvertures  1,13 x 10^20        STRATEGIES  5,02 x 10^57
+```
+
+| k blocs | couvertures | stratégies | criblage à 25 tirages |
+|---|---|---|---|
+| **1** | 1 | **26** | **1 min** |
+| **2** | 98 | **162 358** | **54,1 h** — ou ~22 h à 10 tirages |
+| 3 | 4 753 | 549 millions | **7 622 jours** |
+| 6 | 67 910 864 | 3,5 × 10¹⁸ | 4,9 × 10¹³ jours |
+
+🔑 **La tractabilité s'arrête entre 2 et 3 blocs.** k=2 coûte deux jours, k=3 vingt siècles. Une
+preuve d'impossibilité **par énumération** n'est donc possible que pour k ≤ 2, ce qui ne conclut
+rien au-delà.
+
+**Et une recherche ne donne jamais une non-existence** — elle donne *« je n'ai pas trouvé »*.
+Seule une **condition nécessaire violée partout** peut conclure, et elle couvre les 10⁵⁷ d'un
+coup.
+
+### 4.4 ❌ La condition nécessaire, version nominale — et une erreur de ma part
+
+📏 `scripts/probe_marge_atteignable.py`. **0 couche bloquante** sur le 99c comme sur le 75c.
+
+🔴 **Et le seuil invoqué était le mauvais.** §24-41 mesure la marge **pendant un dépôt simulé**,
+avec bruit **et** erreur accumulée : valeurs de −1702 A à ~0,9 A, seuil discriminant **0,6 A**.
+La sonde mesure la distance en transmission entre la fin de la couche et son dernier extremum sur
+l'empilement **nominal** : **242 à 600 A**. Trois ordres de grandeur. **Le seuil ne se transporte
+pas**, et la sonde ne teste donc pas le critère annoncé.
+
+📌 La bonne version reste **ouverte** : rejouer la mesure sur la **trajectoire accumulée**.
+`turning_point_margins` la calcule déjà et elle remonte jusqu'à `margin_by_layer` — c'est de
+l'instrumentation, pas une physique nouvelle.
+
+---
+
+## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la fente n'était pas cherchée
+
+> 👤 **2026-08-17** : *« je me pose aussi la question de la résolution spectrale. Un filtre trop
+> épais a des pics en transmission et peut-être que le filtre serait monitorable en résolution
+> 1 nm et pas 2 nm. Valable pour les empilements épais. »*
+
+L'intuition est juste, **et le mécanisme existait déjà — il était neutralisé.**
+
+`certus/core/certus_strat_robustness.py:868` :
+
+> 🔴 *« ON BY DEFAULT since 2026-08-12 — 👤 "the slit is systematically searched, it is a
+> **PREREQUISITE**". A strategy that does not carry its own slit is not executable in the chamber:
+> the operator would have to pick a width the search never evaluated. […] **the historical path is
+> `search_resolution: false`** »*
+
+| | |
+|---|---|
+| `JSON-strat-bandpass-5cav-99c.json` | `search_resolution = 1` — **la config le demande** |
+| `mesurer()` de `campagne_intervalles.py` | `search_resolution = False`, **2 nm épinglé** |
+
+🔴 **Toute la campagne des intervalles — et les 751 stratégies — ont tourné sur une machine où
+l'opérateur n'a pas le droit de toucher à la fente**, c'est-à-dire le régime que 👤 avait écarté
+comme non exécutable en salle.
+
+📏 Mesure du 2026-08-12 citée dans le même docstring : la règle `slit <= res_limit` rejette
+**31 % des paires (couche, λ) à 5 nm, 14 % à 2 nm, 2 % à 1 nm, 0,5 % à 0,5 nm**. Passer de 2 à
+1 nm **divise le rejet par 7**.
+
+🔑 **Et l'effet intéressant n'est pas le choix à quatre valeurs** : *« the slit changes WHICH
+WAVELENGTHS ARE GOOD »*. Une λ en zone lisse tolère 5 nm et encaisse le bonus de bruit **÷1,5** ;
+une λ de bord de bande exige 1 nm et paie le **×2**. **C'est un arbitrage, pas un gain gratuit.**
+
+⚠️ **Et aucune des sondes statiques n'applique la fente** — `profil_monitorabilite.py` et
+`probe_marge_atteignable.py` tournent à résolution **infinie** (grep `slit|resolution` : zéro).
+Elles **surestiment** donc le swing, et le plus fortement là où ça compte : les empilements
+épais. C'est précisément pourquoi le bord épais leur est invisible.
+
+**C'est le lead le mieux étayé du chantier au 2026-08-17.** `--fente` est exposée dans
+`probe_blocs_vs_plantage.py` (3ᵉ argument, défaut 0 pour préserver la comparabilité), et la sortie
+ventile par largeur avec la fente que choisissent les déposables.
+
+📌 **À tester sur ×2, pas sur le 99c** : épais (structures spectrales les plus fines), **non
+dégénéré** (multiplicateurs jamais entiers), il échoue à 100 %, et ×1,5 lui sert de frère
+passant dans la même famille. ⚠️ Avec un **contrôle en premium sans fente** : le `0/404` connu de
+×2 a été mesuré en **fast**, donc sans contrôle on attribuerait au slit ce qui vient du mode
+(contrainte C3).
+
+---
+
+## 6. Ce qu'il reste à faire, par rendement
+
+| # | action | coût | ce que ça donne |
+|---|---|---|---|
+| 1 | **`search_resolution` sur ×2**, avec contrôle sans fente | ~2 h | la thèse de 👤, testée là où elle a un sens |
+| 2 | **`margin_by_layer` par cause sur ×0,5 et ×2** | ~1 h | le mécanisme à deux bords **mesuré**, pas supposé |
+| 3 | **la marge sur trajectoire ACCUMULÉE** | instrumentation | la seule route restante vers une impossibilité |
+| 4 | **raffiner l'échelle** : ×0,75, ×1,25, ×1,75 | ~1,5 h | localise les **deux** frontières |
+| 5 | **deuxième graine sur ×0,5 et ×1,5** | ~1 h | les deux points marginaux ne tiennent pas sur une graine |
+
+## 7. Les règles de ce chantier
+
+1. 🔴 **Le 99c n'est pas une référence.** Tout QWOT ⇒ adverse à POEM. Ses conclusions ne se
+   généralisent pas, et sa réponse plate à 100 % ne discrimine rien.
+2. **Toute grandeur candidate se valide sur la SÉRIE**, pas sur un composant. §22 rappelle qu'un
+   signal de marge **changeait de signe** d'un empilement à l'autre.
+3. **Jamais un couperet.** Un effet du nombre de blocs, du compte de points tournants ou de la
+   fente entre comme **coût**. §24-28 : la règle « celui-là ne gagne jamais » aurait jeté la
+   gagnante dans 4 configurations sur 8.
+4. **Ne pas viser un binaire.** Sur les cas marginaux la vérité est stochastique — un prédicteur
+   binaire y prédirait un tirage. La cible est une **règle de décision avec un taux de faux
+   négatifs affiché**, et l'asymétrie compte : dire « un verre suffit » à tort coûte un run, dire
+   « prends-en deux » à tort ne coûte qu'un peu de soin.
+5. **Deux graines minimum sur tout point marginal**, et trois avant de publier une valeur absolue.

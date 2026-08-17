@@ -1,6 +1,26 @@
-# REPRENDRE ICI — état gelé au 2026-08-16, 08:45
+# REPRENDRE ICI — état au 2026-08-17
 
-## 🔴 2026-08-17 — LIS CECI AVANT LE RESTE DU FICHIER : deux choses y sont périmées
+> ⚠️ **Les §1 à §5 décrivent le gel du 2026-08-16.** Ce qui suit immédiatement les corrige et
+> les complète. Lis ce bloc d'abord.
+
+## 🚀 OÙ ON EN EST LE 2026-08-17 AU SOIR
+
+| | |
+|---|---|
+| **le dépôt a déménagé** | `C:\certus`, hors Google Drive. Venv `C:\envs\certus`. **Toutes les commandes de ce fichier changent** — voir §6 |
+| **le chiffre du 99c est passé de `0,782` à `0,81 nm`** | il était le plus favorable de trois graines. Détail dans [`CHANTIER_MULTITEMOINS.md`](CHANTIER_MULTITEMOINS.md), § *« CORRIGÉ LE 2026-08-17 »* |
+| 🔵 **un chantier neuf, défini par 👤** | *prédire si un design passe avec un seul verre témoin*. Dossier : **[`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md)** |
+| 🔴 **un défaut qui fausse la campagne des intervalles** | `search_resolution` était forcé à `False` alors que 👤 l'a posé comme **prérequis**. Voir le §5 du dossier ci-dessus |
+| **ce qui tournait à la coupure** | `probe_blocs_vs_plantage.py` sur `r75x2` en premium, contrôle sans fente puis test avec — la thèse de 👤 sur la résolution spectrale |
+
+🔑 **La campagne des 10 intervalles restants n'a PAS été reprise, et ce n'est plus la priorité.**
+Le contrôle de graine (§ ci-dessous) a montré qu'un verdict d'intervalle bascule avec la graine :
+mesurer 7 intervalles de plus à graine unique n'établirait rien. Le contrôle qui compte est
+ailleurs — dans le nouveau dossier.
+
+---
+
+## 🔴 2026-08-17 — CE QUI EST PÉRIMÉ DANS LES §1 À §5 CI-DESSOUS
 
 ### 1. Un verdict d'intervalle n'est PAS déterminé par une graine
 
@@ -203,28 +223,76 @@ liste complète est au §5 de [`REPRISE.md`](REPRISE.md).
 
 ## 6. Vérifier que l'environnement est sain — avant toute mesure
 
+🔴 **Les chemins ont changé le 2026-08-17.** Le dépôt de travail est sorti de Google Drive, et
+l'interpréteur n'est plus dans l'arbre. Substitue partout dans ce fichier :
+
+| avant | maintenant |
+|---|---|
+| dépôt dans `…/Google Drive/…/CERTUS/1408` | **`C:\certus`** |
+| `.venv/Scripts/python.exe` | **`C:\envs\certus\Scripts\python.exe`** |
+
 ```bash
-.venv/Scripts/python.exe scripts/preflight.py          # verdict GO / STOP
-.venv/Scripts/python.exe scripts/check_claude_md.py    # coherence de CLAUDE.md
-.venv/Scripts/python.exe scripts/check_docs.py         # tous les md et html
-.venv/Scripts/python.exe -m ruff check .
-.venv/Scripts/python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+C:\envs\certus\Scripts\python.exe scripts\preflight.py
 ```
 
-**Références au 2026-08-16** : `2450 passed, 5 skipped` · `ruff` propre ·
-`check_claude_md` 5 défauts *(tous des faux positifs de regex sur des années et des numéros
-de ligne)* · `check_docs` 5 défauts *(cellules de tableau dont l'avertissement est hors de la
-fenêtre de ±3 lignes)*.
+```bash
+C:\envs\certus\Scripts\python.exe scripts\check_claude_md.py
+```
+
+```bash
+C:\envs\certus\Scripts\python.exe scripts\check_docs.py
+```
+
+```bash
+C:\envs\certus\Scripts\python.exe -m ruff check .
+```
+
+```bash
+C:\envs\certus\Scripts\python.exe -m pytest tests/oracle/ tests/unit/ -q --no-cov
+```
+
+**Références, remesurées le 2026-08-17 sur i5-8250U** : `PREFLIGHT=GO` · `2450 passed,
+5 skipped` en **346,76 s** · `ruff` propre · `check_claude_md` **5** défauts · `check_docs`
+**5** défauts *(les mêmes faux positifs qu'au 16/08 — regex sur des années, et cellules de
+tableau dont l'avertissement est hors de la fenêtre de ±3 lignes)*.
+
+🔴 **UN VENV NEUF MONTRE 3 ÉCHECS À LA PREMIÈRE PASSE, ET ILS SONT FAUX.** Cache numba froid :
+`3 failed, 2447 passed` en 850 s. Deuxième passe, cache chaud : `2450 passed`. **Relance avant
+de signaler quoi que ce soit** — détail du mécanisme en §2 de `CLAUDE.md`.
+
+⚠️ Le `[BAD] running the venv interpreter` du préflight est un simple test de chaîne
+(`"\.venv\" in sys.executable`, `preflight.py:125`), non fatal. Il vérifie le *nom* du chemin,
+pas la validité de l'interpréteur.
 
 ---
 
-## 7. 🔴 Ce qui ne suit PAS le dépôt — à emporter à la main
+## 7. Ce qui ne suit PAS le dépôt — presque plus rien
 
 | | |
 |---|---|
-| ~~la mémoire de compte~~ | ✅ **RÉSOLU le 2026-08-16** : son contenu durable est versé dans [`MEMOIRE_PROJET.md`](MEMOIRE_PROJET.md), qui est **dans le dépôt**. Plus rien d'essentiel n'y dépend de la machine |
-| **le `.venv`** | à reconstruire. 📌 Piège documenté : un venv de snapshot peut charger le code d'**un autre** snapshot — vérifier avant toute mesure |
-| **le hook d'auto-push** | `.claude/` n'est pas versionné. Sur cette machine **tout commit publie** vers `nikonvr/CERTUS` ; ailleurs, ce ne sera pas le cas |
+| ~~la mémoire de compte~~ | ✅ **RÉSOLU le 2026-08-16** : versée dans [`MEMOIRE_PROJET.md`](MEMOIRE_PROJET.md), donc dans le dépôt |
+| ~~le piège du venv de snapshot~~ | ✅ **RÉSOLU le 2026-08-17** : il n'y a plus de snapshots datés à confondre. Un seul dépôt de travail, `C:\certus`, un seul venv, `C:\envs\certus`, et `preflight.py` contrôle que `import certus` résout bien dedans |
+| **le venv** | à reconstruire sur chaque machine — 2 min : `uv venv --python 3.14.7 C:\envs\certus` puis `uv pip install --python C:\envs\certus\Scripts\python.exe -r requirements.lock` |
+| **le hook d'auto-push** | vit dans `.git/hooks/`, **qu'un clone ne copie jamais**. Sur une machine neuve, commiter ne publiera pas : il faut `git push` à la main, ou recopier le hook |
+| **l'identité git** | pas clonée non plus. `git config user.name CERTUS` et `user.email nikonvr@users.noreply.github.com` |
 
-**Tout le reste est dans git**, y compris les 260 intervalles premium, les 270 fast, les
-contrôles négatifs et la série d'échelle.
+### 🔑 Passer d'un PC à l'autre — git est le transport, Drive est l'archive
+
+```bash
+git clone https://github.com/nikonvr/CERTUS.git --branch refactor-corridors-mixins C:\certus
+```
+
+Puis `git pull` en arrivant, `git push` en partant. **Le cache de campagne entier est suivi par
+git** — 272 intervalles premium, 267 tirages `.npy`, 270 fast, 74 rapports de mesures réelles :
+un clone ramène tout, **zéro recalcul**.
+
+⚠️ **Ne remets pas le dépôt dans un dossier synchronisé.** Mesuré le 2026-08-17 : Drive avait
+fait reculer `.git/refs/heads/refactor-corridors-mixins` de **8 jours** (137 commits invisibles,
+`git status` annonçant 2 414 changements fantômes), laissé **208 fichiers absents** de l'arbre —
+dont tous les `.py` de `certus/domain/optical/` et 7 fichiers de tests — et écrit **13
+`desktop.ini` DANS `.git`**, dont 2 que git lisait comme des branches. **Aucune de ces pannes ne
+produit d'erreur** : un arbre à moitié synchronisé *ressemble* à un dépôt complet.
+
+📌 Repère posé avant le déménagement : le tag **`snapshot-1408`** marque l'état exact du dossier
+Drive. Les ~520 Mo non suivis (dont 314 Mo de journaux de campagne) y restent, et c'est leur
+place.

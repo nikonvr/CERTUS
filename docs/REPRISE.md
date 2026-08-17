@@ -30,9 +30,15 @@ Le chantier en cours est la **multiple testglass methodology** : introduire un v
 | dichroïque `JSON-strat-example` | 48 | **0,173 nm** | 6 blocs, une campagne, 0 % de plantage |
 | passe-bande 3 cavités `JSON-strat-bandpass-3cav` | 35 | **0,482 nm** | 6 blocs, DEEP, 0 % |
 | aléatoire `JSON-strat-random75` | 75 | **0,272 nm** | une campagne, 0 %, 241/662 déposables |
-| passe-bande 5 cavités `-5cav-99c` | 99 | **0,782 nm** | 🔴 **4 verres témoins** `0-22/22-42/42-76/76-99` |
-| le même, **une seule campagne** | 99 | *aucun score valide* | **100 % de plantage** sur 487 stratégies |
-| **cible posée par 👤** | | **0,300 nm** | facteur **2,6** restant sur le 99c |
+| passe-bande 5 cavités `-5cav-99c` | 99 | **0,81 nm** | 🔴 **4 verres témoins** `0-22/22-42/42-76/76-99` · ⚠️ le `0,782 nm` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839), corrigé le 17/08 |
+| le même, **une seule campagne** | 99 | *aucun score valide* | **100 % de plantage** — sur **751** stratégies remesurées le 17/08, de 1 à 99 blocs |
+| **cible posée par 👤** | | **0,300 nm** | facteur **2,7** restant sur le 99c |
+
+⚠️ **Et le 99c n'est PAS une référence valable pour généraliser** — 👤, 2026-08-17 : *« il est
+rare de déposer un empilement tout 1/4 d'onde, surtout en trigger POEM »*. Ses multiplicateurs
+valent exactement 1 et 2, donc chaque couche finit **pile sur un extremum** : il est adverse à
+POEM par construction. 📌 Ce qui le remplace comme instrument est la **série d'échelle du
+random75** — voir [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md).
 
 **SEEL** = `2 × √(RMSE_P95)`, erreur d'épaisseur équivalente par couche, en nm. **C'est la
 seule métrique à rapporter.** Jamais le RMSE brut.

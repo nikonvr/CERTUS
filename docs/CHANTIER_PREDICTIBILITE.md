@@ -254,6 +254,62 @@ pas**, et la sonde ne teste donc pas le critère annoncé.
 `turning_point_margins` la calcule déjà et elle remonte jusqu'à `margin_by_layer` — c'est de
 l'instrumentation, pas une physique nouvelle.
 
+### 4.5 ❌ La résolution spectrale exigée par le design — n'ordonne pas la série
+
+📏 `scripts/probe_resolution_exigee.py`, 2026-08-17. **Critère de réussite écrit dans le
+docstring avant le run** : `res_lim` doit être confortable à ×1, se dégrader à ×1,5, et passer
+sous **0,5 nm** — la résolution la plus fine que la machine offre (§19) — à ×2.
+
+`_calculate_strategy_spectral_resolution` (`certus_strat_robustness.py:626`) calcule déjà, pour
+une stratégie, la résolution la plus large que la courbure tolère :
+
+```
+second_diff = (T(lam - B/2) + T(lam + B/2))/2 - T(lam)      B = 1 nm
+res_limit   = B * sqrt(3 * trigger_tolerance/100 / |second_diff|)
+```
+
+Rendue **indépendante de toute stratégie** : pour chaque couche, la plus grande `res_limit` sur
+les λ **admissibles** — le meilleur cas atteignable — puis le minimum sur les couches.
+
+| composant | res_lim exigée | couche | fentes machine utilisables | issue mesurée |
+|---|---|---|---|---|
+| ×0,5 | **2,610 nm** | 72 | 2 · 1 · 0,5 | 🔴 échoue (48 %) |
+| ×1 | **1,583 nm** | 58 | 1 · 0,5 | 🟢 passe |
+| ×1,5 | **0,767 nm** | 70 | 0,5 | 🟠 limite |
+| ×2 | **1,033 nm** | 68 | 1 · 0,5 | 🔴 échoue (100 %) |
+| 99c | 1,163 nm | 94 | 1 · 0,5 | 🔴 échoue |
+| 48c | 4,487 nm | 40 | 2 · 1 · 0,5 | 🟢 passe |
+| 35c | 4,200 nm | 31 | 2 · 1 · 0,5 | 🟢 passe |
+
+🔴 **Elle se dégrade jusqu'à ×1,5 puis REMONTE à ×2, et ne descend jamais sous 0,5 nm.** Le
+composant qui échoue à 100 % exige **moins** de finesse que celui qui passe de justesse. Non
+monotone : la route se ferme.
+
+⚠️ **Corrélation à ne pas surinterpréter** : sur les composants réels, les deux qui passent (48c
+à 4,487 nm, 35c à 4,200 nm) ont bien les valeurs les plus confortables. Mais **c'est la série
+contrôlée qui fait foi**, et elle réfute.
+
+#### 🔑 Et le run révèle un écart mesuré — le seul apport positif de cette route
+
+Le journal `[SLIT]` annonce sur ×2 que **toutes** les résolutions autres que 2 nm sont écartées
+par la courbure, pour 100 % des stratégies. Or le design en tolère **1,033 nm**. Les deux sont
+vrais :
+
+| | |
+|---|---|
+| ce calcul | prend pour chaque couche la **meilleure λ admissible** — le meilleur cas |
+| les stratégies réelles | utilisent les λ que la Phase A a choisies **pour leur coût**, pas pour leur courbure |
+
+> **Le design de ×2 permettrait 1 nm si les λ étaient choisies pour la courbure. Celles que la
+> recherche retient ont une courbure bien pire.**
+
+C'est un écart entre ce que l'empilement **autorise** et ce que la recherche **va chercher**, et
+il suggère que `res_lim` aurait sa place comme **coût en Phase A** — orienter le choix des λ vers
+les zones de faible courbure — au lieu de servir seulement de préfiltre a posteriori sur les
+variantes de résolution.
+
+⚠️ **Piste de recherche, pas de prédiction.** Elle ne rend pas le prédicteur.
+
 ---
 
 ## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la résolution spectrale n'était pas cherchée

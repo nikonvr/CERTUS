@@ -323,6 +323,8 @@ CHIFFRES_PUBLIES = [
     ("r75x1.75_fast_s042_res0.5", 468, 0, 50.0, None),
     ("r75x2_fast_s101_res1", 420, 0, 36.0, None),
     ("75c_premium_s042_res5", 1415, 639, 0.0, 0.335),
+    # --- 2026-08-18 14:15, le test decisif du cote mince ---
+    ("r75x0.5_deep_s042_res1_large", 2000, 0, 39.666666666666664, None),
 ]
 
 

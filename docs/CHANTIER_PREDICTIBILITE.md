@@ -790,6 +790,51 @@ stratégies et rend **0 déposable**, `crash_min` 100 %. Le design compte donc e
 nombre de stratégies offertes exige de faire tourner la Phase A **et** la Phase B. On a déplacé
 la question, on ne l'a pas résolue.
 
+### 🔴🔴 PREMIER TEST RENDU LE 2026-08-18 — LA THÈSE EST RÉFUTÉE DU CÔTÉ MINCE
+
+📏 `×0,5` à 1 nm, recherche standard contre élargie, 199 min. **Critère écrit avant le run** :
+*thèse confirmée si l'élargissement rend des déposables ; réfutée s'il reste à zéro.*
+
+| configuration | offertes | **déposables** | `crash_min` |
+|---|---|---|---|
+| standard (`fast`) | 375 | **0** | 28,00 % |
+| **élargie** (`deep` + profil) | **2 000** | **0** | 39,67 % |
+
+**L'offre est multipliée par 5,3 et il ne sort toujours aucune stratégie déposable.** Le verdict
+est catégoriel — 0 contre 0 — pas une différence de degré.
+
+⚠️ **Ne pas lire l'écart de `crash_min` comme une aggravation** : 28 % vient d'un run `fast`
+(N = 50, minimum sur 375 stratégies) et 39,67 % d'un run `deep` (N = 300, soit 119/300, minimum
+sur 2 000). Deux profondeurs de notation différentes, et la malédiction du vainqueur joue plus
+fort sur le petit échantillon. **Ce qui se compare proprement, c'est le compte de déposables**, et
+il vaut zéro des deux côtés.
+
+### 🔑 IL Y A DEUX BARRIÈRES, ET UNE SEULE ÉTAIT UN ARTEFACT
+
+C'est la conclusion que ce test impose, et elle corrige la mienne de ce matin :
+
+| | côté ÉPAIS (`×2`, Σ QWOT 229,8) | côté MINCE (`×0,5`, Σ QWOT 57,4) |
+|---|---|---|
+| recherche standard | 0 déposable, 100 % | 0 déposable, 28 % |
+| recherche **élargie** | 🟢 **254 déposables**, 1,0 % | 🔴 **0 déposable** |
+| verdict | la barrière était **la RECHERCHE** | la barrière est **RÉELLE** |
+
+🔴 **Ma formule de ce matin — *« le chantier mesurait la recherche, pas la physique »* — est donc
+à moitié fausse.** Elle vaut pour le côté épais, où l'intervention l'a démontrée. Elle ne vaut
+**pas** pour le côté mince, où la même intervention échoue.
+
+**Ce qui survit de §4quinquies** : l'offre est **nécessaire, pas suffisante**. La corrélation
+ρ = +0,975 reste vraie sur les cinq points, mais elle n'est pas causale partout — l'intervention
+la valide sur `×2` et la **réfute** sur `×0,5`. Une corrélation forte sur cinq points ne
+départage pas ces deux régimes, et c'est exactement pourquoi il fallait intervenir plutôt
+qu'observer.
+
+📌 **Ce qui borne le mince, et c'est déjà partiellement mesuré** : sa cause d'échec dominante est
+`CRASH_LEVEL_UNREACHABLE` — le niveau d'arrêt n'est jamais atteint. Des couches fines donnent un
+swing faible, donc un niveau visé que le signal bruité ne franchit pas. Aucune quantité de
+stratégies supplémentaires ne fabrique du signal là où il n'y en a pas. **C'est une limite
+photométrique, pas combinatoire.**
+
 ### 🟢 Les deux tests falsifiables lancés le 2026-08-18, critères écrits d'avance
 
 | cellule | thèse CONFIRMÉE si | thèse RÉFUTÉE si |

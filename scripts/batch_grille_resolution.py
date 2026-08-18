@@ -70,9 +70,11 @@ publication -- regle du §8. Ce n'est pas dans ce lot.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -205,7 +207,22 @@ CELLULES_ELARGI = [
     ("r75x2", "deep", 1.0, False, 42, 120, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
     ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
     ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
-    ("r75x2", "deep", 1.0, 2, 42, 240, "dp_top_k 100 -> 200 : le faisceau aide-t-il ENCORE ?"),
+    # 🔴 RETIREE LE 2026-08-18 PAR SON PROPRE CRITERE. La cellule « dp_top_k 100 -> 200 » a ete
+    # ecrite parce que je croyais le faisceau de la DP « le levier le plus en amont sur l'offre ».
+    # 📏 `probe_destructif_dp_top_k.py` sur le 35c, critere ecrit AVANT (effondrement >= 5x) :
+    #
+    #     dp_top_k =   1  -> la DP recoit [1]   sur 24 appels -> 250 strategies
+    #     dp_top_k = 100  -> la DP recoit [100] sur 24 appels -> 304 strategies   facteur 1,22x
+    #
+    # Le cablage est PROUVE -- la DP recoit bien la valeur -- mais multiplier le faisceau par 100
+    # ne bouge l'offre que de 22 %. Elle est produite par les generateurs de VARIANTES (RATE, SYM,
+    # ELITE, fusions), pas par la largeur de la DP. 240 min pour ca : non.
+    #
+    # 🔑 CE QUI PREND SA PLACE, et qui vaut bien plus : le 99c en recherche ELARGIE. Ses 751
+    # strategies a 100 % de plantage viennent TOUTES de la recherche standard, a 2 nm -- exactement
+    # la configuration ou x2 paraissait impossible et ne l'etait pas. Le verdict « non monitorable
+    # a un temoin » n'a donc jamais ete teste autrement que dans le regime qui s'est revele faux.
+    ("99c", "deep", 1.0, True, 42, 300, "LE 99c EN ELARGI -- son verdict n'a jamais ete reteste"),
     ("r75x2", "deep", 1.0, True, 77, 160, "2e graine sur la percee du 2026-08-18"),
     ("r75x0.5", "deep", 2.0, True, 42, 160, "controle : le mince a la fente nominale"),
 ]
@@ -248,6 +265,9 @@ def main() -> int:
                     help="joue CELLULES_SUITE au lieu de la grille -- enchainement du 2026-08-18")
     ap.add_argument("--elargi", action="store_true",
                     help="joue CELLULES_ELARGI -- la campagne decisive du 2026-08-18")
+    ap.add_argument("--parallele", type=int, default=1,
+                    help="cellules menees de front (defaut 1). Voir le bloc PARALLELISME du "
+                         "docstring avant de monter au-dessus de 2.")
     args = ap.parse_args()
     cellules = (CELLULES_ELARGI if args.elargi
                 else CELLULES_SUITE if args.suite else CELLULES)
@@ -256,7 +276,7 @@ def main() -> int:
 
     budget_s = args.heures * 3600.0
     t0 = time.perf_counter()
-    faits, sautes, refuses = 0, 0, 0
+    faits = sautes = refuses = 0
 
     print("=" * 92)
     quoi = " (ELARGI)" if args.elargi else " (SUITE)" if args.suite else ""
@@ -264,31 +284,43 @@ def main() -> int:
           f"graine {SEED} | {len(cellules)} cellules")
     print("=" * 92, flush=True)
 
-    for nom, mode, res, elargi, graine, mn, pourquoi in cellules:
+    verrou = threading.Lock()
+
+    def _joue(cellule) -> str:
+        nom, mode, res, elargi, graine, mn, pourquoi = cellule
         f = _sortie(nom, mode, res, elargi, graine)
         if f.exists():
-            print(f"  [SAUTE] {nom} {mode} {res:g} nm g{graine} -- deja mesure ({f.name})", flush=True)
-            sautes += 1
-            continue
+            with verrou:
+                print(f"  [SAUTE] {nom} {mode} {res:g} nm g{graine} -- deja mesure ({f.name})",
+                      flush=True)
+            return "saute"
 
         ecoule = time.perf_counter() - t0
         restant = budget_s - ecoule
-        if restant < mn * 60:
-            print(f"  [REFUSE] {nom} {mode} {res:g} nm g{graine} -- il reste {restant / 60:.0f} min pour "
-                  f"~{mn} min. Non engagee plutot que tronquee.", flush=True)
-            refuses += 1
-            continue
+        # 🔑 LE SEUIL EST MAJORE PAR LE PARALLELISME. A N cellules de front chacune avance moins
+        # vite, donc engager sur l'estimation mono-cellule tronquerait les dernieres. Le facteur
+        # 0,45 par cellule supplementaire suppose un partage imparfait -- il sera remesure des
+        # que la premiere paire aura tourne, et il est volontairement PESSIMISTE.
+        besoin = mn * 60.0 * (1.0 + 0.45 * (args.parallele - 1))
+        if restant < besoin:
+            with verrou:
+                print(f"  [REFUSE] {nom} {mode} {res:g} nm g{graine} -- il reste "
+                      f"{restant / 60:.0f} min pour ~{besoin / 60:.0f} min. Non engagee "
+                      "plutot que tronquee.", flush=True)
+            return "refuse"
 
         # 🔴 Le plafond du banc est cale sur le temps restant, jamais au-dela. Une cellule qui
         # deborderait rendrait ECHEC_RESULT_NONE -- visible -- au lieu d'entamer les suivantes.
         plafond = int(min(21600, max(600, restant * 0.9)))
-        env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S=str(plafond))
+        env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S=str(plafond), PYTHONUTF8="1")
 
-        print(f"\n{'=' * 92}")
-        print(f"  {nom} | {mode} | {res:g} nm | graine {graine} | {'ELARGI' if elargi else 'standard'} | "
-              f"plafond {plafond} s | ecoule {ecoule / 3600:.1f} h")
-        print(f"  pourquoi : {pourquoi}")
-        print("=" * 92, flush=True)
+        with verrou:
+            print("\n" + "=" * 92)
+            print(f"  {nom} | {mode} | {res:g} nm | graine {graine} | "
+                  f"{'ELARGI' if elargi else 'standard'} | plafond {plafond} s | "
+                  f"ecoule {ecoule / 3600:.1f} h")
+            print(f"  pourquoi : {pourquoi}")
+            print("=" * 92, flush=True)
 
         t1 = time.perf_counter()
         r = subprocess.run(
@@ -302,16 +334,33 @@ def main() -> int:
             encoding="utf-8", errors="replace",
         )
         dt = time.perf_counter() - t1
-        for ligne in (r.stdout or "").splitlines():
-            if any(k in ligne for k in ("strategies evaluees", "fente nm", "deposables",
-                                        "CONTRAINTE COMMUNE", "aucune couche contrainte",
-                                        "consigne", "ECHEC_", "une seule fente", "%")):
-                print(f"    {ligne}", flush=True)
-        etat_txt = "OK" if f.exists() else "🔴 AUCUN FICHIER PRODUIT"
-        print(f"    -> {etat_txt} en {dt / 60:.0f} min (code {r.returncode})", flush=True)
-        if not f.exists() and r.stderr:
-            print("    stderr :", (r.stderr or "").strip().splitlines()[-3:], flush=True)
-        faits += 1
+        with verrou:
+            # 🔑 En parallele les sorties s'entrelacent : on rappelle DE QUI on parle.
+            print(f"\n  --- {nom} | {mode} | {res:g} nm | g{graine} ---", flush=True)
+            for ligne in (r.stdout or "").splitlines():
+                if any(k in ligne for k in ("strategies evaluees", "fente nm", "deposables",
+                                            "CONTRAINTE COMMUNE", "aucune couche contrainte",
+                                            "consigne", "ECHEC_", "une seule fente", "%")):
+                    print(f"    {ligne}", flush=True)
+            etat_txt = "OK" if f.exists() else "🔴 AUCUN FICHIER PRODUIT"
+            print(f"    -> {etat_txt} en {dt / 60:.0f} min (code {r.returncode})", flush=True)
+            if not f.exists() and r.stderr:
+                print("    stderr :", (r.stderr or "").strip().splitlines()[-3:], flush=True)
+        return "fait"
+
+    if args.parallele > 1:
+        print(f"  🔀 {args.parallele} cellules de front. 📏 Mesure du 2026-08-18 : une cellule "
+              f"SEULE ne consomme que ~4,3 coeurs sur {os.cpu_count()}, parce que "
+              "certus_strat_robustness.py:1276 pose max_workers = cpu_count()//2 -- le nombre de "
+              "coeurs PHYSIQUES. Les fils d'hyperthreading dorment ; on les remplit sans toucher "
+              "une ligne de certus/.\n", flush=True)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallele) as ex:
+            issues = list(ex.map(_joue, cellules))
+    else:
+        issues = [_joue(c) for c in cellules]
+    faits = issues.count("fait")
+    sautes = issues.count("saute")
+    refuses = issues.count("refuse")
 
     ecoule = (time.perf_counter() - t0) / 3600.0
     print(f"\n{'=' * 92}")

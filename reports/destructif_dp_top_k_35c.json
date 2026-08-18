@@ -1,0 +1,27 @@
+{
+  "composant": "35c",
+  "verdict": "EFFET_TROP_FAIBLE",
+  "runs": {
+    "1": {
+      "dp_top_k_demande": 1,
+      "dp_top_k_vu_par_la_DP": [
+        1
+      ],
+      "appels_DP": 24,
+      "n_strats": 250,
+      "n_blocs_distincts": 8,
+      "secondes": 621.2
+    },
+    "100": {
+      "dp_top_k_demande": 100,
+      "dp_top_k_vu_par_la_DP": [
+        100
+      ],
+      "appels_DP": 24,
+      "n_strats": 304,
+      "n_blocs_distincts": 8,
+      "secondes": 1054.0
+    }
+  },
+  "stamp": "2026-08-18T08:54:38"
+}

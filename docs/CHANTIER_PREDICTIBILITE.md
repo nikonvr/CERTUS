@@ -641,6 +641,39 @@ si le goulot était la rétention — mais **personne ne l'a vérifié**.
 rien du tout. « Si l'utilisateur a tout son temps » appellerait un réglage à la **frontière du
 rendement décroissant**, et cette frontière n'est pas localisée.
 
+### 🔴 RÉFUTÉ LE 2026-08-18 — `dp_top_k` n'est PAS le levier, et c'est mon propre critère qui l'a tué
+
+J'avais écrit ci-dessus que `dp_top_k` était *« le levier le plus en amont »* et monté une cellule
+de 240 min pour le porter de 100 à 200. 📏 `scripts/probe_destructif_dp_top_k.py`, 35c, critère
+d'effondrement **≥ 5× écrit avant le run** :
+
+```
+dp_top_k =   1   la DP recoit [1]   sur 24 appels  ->  250 strategies
+dp_top_k = 100   la DP recoit [100] sur 24 appels  ->  304 strategies     facteur 1,22x
+```
+
+✅ **Le câblage est prouvé** — la DP reçoit bien la valeur imposée, 24 appels sur 24, ce que
+l'espion posé sur `_find_k_best_groupings_dp_sequential` vérifie directement. Ce n'est donc pas un
+paramètre mort.
+
+🔴 **Mais multiplier le faisceau par cent ne bouge l'offre que de 22 %.** La DP ne rend qu'un
+groupement par nombre de blocs à `top_k = 1`, soit 24 — et **250 stratégies sortent quand même**.
+
+> **L'offre est produite par les générateurs de VARIANTES — RATE, SYM, ELITE, fusions — pas par la
+> largeur du faisceau de la programmation dynamique.**
+
+**Trois conséquences, et elles ne sont pas petites :**
+
+| | |
+|---|---|
+| la cellule `dp_top_k = 200` est **retirée** | 240 min pour un levier à 1,22× : non. Le 99c en recherche élargie prend sa place |
+| §4quinquies **tient toujours** | l'offre reste ce qui ordonne (ρ = +0,975). Ce qui change est **ce qui fabrique l'offre** : les variantes, pas la DP |
+| et le 429 → 2 945 de `×2` s'explique **ailleurs** | `fast` → `extreme` change aussi `phase_a_keep_limit` ×4, `top_k_parents` ×4, `max_fusions_per_parent` ×3, `screening_keep_top_k` ×4 — tous des multiplicateurs de **variantes**. Le contrôle `deep` seul, en tête de campagne, tranchera |
+
+⚠️ **Portée : un composant, le 35c.** 35 couches, 8 nombres de blocs. Sur `×2` (75 couches,
+16 nombres de blocs) le rapport pourrait différer. Mais un facteur 1,22× là où j'attendais ≥ 5×
+suffit à ne pas dépenser 240 min sur cette hypothèse.
+
 ### 🔒 Pourquoi je ne change PAS ses valeurs pour autant
 
 Parce que ce sont **exactement** celles qui ont produit les 254 déposables. Les élargir sur un

@@ -327,6 +327,9 @@ CHIFFRES_PUBLIES = [
     ("r75x0.5_deep_s042_res1_large", 2000, 0, 39.666666666666664, None),
     # --- 14:21, le controle : deep SEUL suffit, extreme n'apporte rien ---
     ("r75x2_deep_s042_res1", 1986, 277, 1.0, 0.625),
+    # --- 2026-08-18 18:59 et 19:12, 99c et x1,5 en elargi ---
+    ("99c_deep_s042_res1_large", 2674, 0, 96.33333333333333, None),
+    ("r75x1.5_deep_s042_large", 2801, 1, 0.3333333333333333, 0.633),
 ]
 
 

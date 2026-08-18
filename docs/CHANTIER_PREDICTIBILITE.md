@@ -811,6 +811,23 @@ réel et ses quatre paramètres de largeur.
 
 ---
 
+## 4sexies. 🟠 LE 99c EN RECHERCHE ÉLARGIE — bouge, mais ne franchit pas
+
+📏 Mesuré le 2026-08-18, 320 min. **Lecture SUR le 99c légitime, lecture À PARTIR DU 99c
+interdite** — §4ter-bis, 99/99 multiplicateurs entiers, configuration singulière pour POEM.
+
+| | offertes | déposables | `crash_min` |
+|---|---|---|---|
+| référence (`premium`, 2 nm) | 751 | 0 | 100,00 % |
+| élargi (`deep`, 1 nm, ×5) | 2 674 | **0** | **96,33 %** |
+
+**Toujours aucun déposable.** Ni percée catégorielle (×2 : 100 → 1 %), ni statu quo absolu
+(×0,5 : 28 → 40 %, mais déjà loin de 100). Le 99c se déplace un peu et reste très loin de la
+tolérance de 5 %. ⚠️ Trois paramètres changent à la fois (mode, fente, élargissement) — aucune
+attribution possible, ce qui était assumé d'avance.
+
+---
+
 ## 4quinquies. 🔴🔴 LE RÉSULTAT CENTRAL — le chantier mesurait la RECHERCHE, pas la physique
 
 📏 **Établi le 2026-08-18.** Cinq points de la série d'échelle, **protocole identique** : `fast`,
@@ -912,12 +929,30 @@ swing faible, donc un niveau visé que le signal bruité ne franchit pas. Aucune
 stratégies supplémentaires ne fabrique du signal là où il n'y en a pas. **C'est une limite
 photométrique, pas combinatoire.**
 
-### 🟢 Les deux tests falsifiables lancés le 2026-08-18, critères écrits d'avance
+### 🔴 LES DEUX TESTS FALSIFIABLES DU 2026-08-18 — RENDUS, ET LA RÉFUTATION L'EMPORTE
 
-| cellule | thèse CONFIRMÉE si | thèse RÉFUTÉE si |
-|---|---|---|
-| **×0,5 à 1 nm, élargi** — il échoue vraiment (28 %, 0/375) | l'élargissement rend des déposables | il reste à **0** ⇒ la barrière existe bel et bien du côté mince, et elle est physique |
-| **×1,5 à 2 nm, élargi** — 1 déposable sur 440 quand ×1,75 en rend 282 | il passe à des centaines | il reste marginal ⇒ ×1,5 a une singularité propre |
+| cellule | critère écrit d'avance | résultat mesuré | verdict |
+|---|---|---|---|
+| ×0,5 à 1 nm, élargi | confirmée si déposables | 375 → 2 000 offertes, **0 → 0** déposable | 🔴 RÉFUTÉE (§4quinquies) |
+| ×1,5 à 2 nm, élargi | confirmée si des centaines | 440 → 2 801 offertes, **1 → 1** déposable, même SEEL | 🔴 RÉFUTÉE |
+
+📏 **×1,5, mesuré à 19:12.** L'offre est multipliée par 6,4 et le compte de déposables reste
+**exactement 1**, SEEL identique à 0,633 nm. Ce n'est donc pas non plus un cas de « la recherche
+était le goulot ». **×1,5 a une singularité propre**, distincte des deux régimes déjà identifiés
+— ni la percée catégorielle de `×2`, ni le statu quo absolu de `×0,5`.
+
+🔑 **Trois régimes, pas deux :**
+
+| régime | exemple | offre standard → élargie | déposables |
+|---|---|---|---|
+| **la recherche était le goulot** | ×2 | 404 → 1 986 (`deep` seul) | 0 → **277** |
+| **barrière physique réelle** | ×0,5 | 375 → 2 000 | 0 → 0 |
+| **singularité propre, non résolue par l'offre** | ×1,5 | 440 → 2 801 | 1 → 1, identique |
+
+Le troisième régime est le plus intéressant du chantier : il montre qu'élargir l'offre peut être
+**sans effet** même quand une solution existe déjà (le 1 déposable ne disparaît pas), ce qui
+exclut à la fois « pas de recherche » et « pas de solution ». Reste à caractériser ce qui rend
+`×1,5` insensible à l'élargissement — ce n'est pas dans ce chantier.
 
 🔑 **Si les deux confirment, la conclusion du chantier change de nature** : il n'y a pas de
 « barrière d'épaisseur optique » à prédire, il y a une **recherche à dimensionner**. Et la bonne

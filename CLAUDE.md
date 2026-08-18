@@ -480,8 +480,11 @@ mesure. **Et donne la machine entière au run que tu mesures** — voir Règle 5
   `top_k_parents` 80, `strategy_phase_timeout` 10 800 s) et **laisse la profondeur d'évaluation
   identique à `deep`** — un taux de plantage produit en `extreme` reste donc comparable à un run
   `deep`. Coût ≈ **5× deep**, mesuré 157 min sur 75 couches.
-  🔑 **Ce qu'il a débloqué** : sur le random75 ×2, `deep` rend **0** stratégie déposable et
-  `extreme` en rend **254** (§21). Fichier prêt à lancer, rien d'autre à régler :
+  🔑 **Ce qu'il a débloqué** : sur le random75 ×2, la recherche **standard** rend **0** stratégie
+  déposable et `extreme` en rend **254** (§21). 🔴 **Attention à ce que « standard » désigne : le
+  run à 0 est en `fast`. `deep` SEUL n'a jamais été mesuré sur ce point, donc on ne sait pas
+  encore si `extreme` était nécessaire ou si `deep` aurait suffi.** Le contrôle est en file.
+  Fichier prêt à lancer, rien d'autre à régler :
   `example/example_strat/JSON-strat-random75-x2-extreme.json`.
   🔒 Les trois modes existants sont **inchangés au bit** — contrôlé paramètre par paramètre, et
   le défaut reste `premium`.

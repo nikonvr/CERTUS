@@ -3560,7 +3560,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <ul>
                         <li><b>Fast Mode:</b> Designed for fast turnaround while preserving significant crash detection (at $N=50$, binomial resolution $\sigma_p \approx 3.0\%$). Ideal for exploring layer feasibility.</li>
                         <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §10.7: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
-                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors), where a wider Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) buy a substantially broader exploration. <b>It does not guarantee an exhaustive one</b> &mdash; §10.17 gives a measured case where Deep returns no manufacturable strategy at all and Extreme returns 254 on the same design.</li>
+                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors), where a wider Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) buy a substantially broader exploration. <b>It does not guarantee an exhaustive one</b> &mdash; §10.17 gives a measured case where the standard search returns no manufacturable strategy at all and Extreme returns 254 on the same design.</li>
                     </ul>
                 </div>
 

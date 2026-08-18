@@ -496,7 +496,7 @@ d'exploration élargi (`ELARGISSEMENT`, `probe_blocs_vs_plantage.py`), graine 42
 | | stratégies | déposables | plantage min | meilleur SEEL |
 |---|---|---|---|---|
 | exploration **standard** (`fast`) | 429 | **0** | 38 % | — *(repli)* |
-| exploration **élargie** (`deep` ×4) | **2 945** | **254** | **1,00 %** | **0,629 nm** |
+| exploration **élargie** (`deep` + profil élargi) | **2 945** | **254** | **1,00 %** | **0,629 nm** |
 
 🔑 **×2 était déclaré impossible depuis trois jours — 100 % de plantage sur 404 stratégies à la
 fente nominale.** Il rend aujourd'hui **254 stratégies déposables**, dont la meilleure plante
@@ -585,6 +585,56 @@ rien d'autre à régler. Le fichier dit lui-même ce qu'il coûte (≈ 2 h 40) e
 ⚠️ **Et il dit aussi ce qu'il ne faut PAS en déduire** : la fente fine n'est pas un réglage
 universel. Elle achète de la finesse spectrale et paie du bruit (×2 en passant de 2 à 1 nm) ; sur
 un empilement qui fonctionne déjà, elle **dégrade** le résultat (§4ter).
+
+### 🔴 `extreme` EST-IL OPTIMAL ? NON — et il n'est même pas prouvé NÉCESSAIRE
+
+> 👤 **2026-08-18** : *« penses-tu qu'il soit optimal si l'utilisateur a tout son temps ? »*
+
+**Trois choses manquent, et la première est un contrôle que j'aurais dû faire avant d'écrire quoi
+que ce soit.**
+
+**1. 🔴 `deep` SEUL n'a jamais été mesuré sur ce point.** Le run à 0 déposable est en **`fast`**.
+J'ai pourtant écrit *« deep rend 0 et extreme en rend 254 »* dans quatre fichiers, dont la page
+commerciale. **C'était une affirmation non mesurée**, corrigée le 2026-08-18. Tant que le contrôle
+n'a pas tourné, on ne sait pas si `extreme` était **nécessaire** — `deep` seul aurait peut-être
+suffi, et un mode nommé qui ne sert à rien est pire qu'un mode absent. Le contrôle est en tête de
+la campagne élargie.
+
+**2. Les multiplicateurs annoncés sont relatifs à la config de BASE, pas à `deep`.** Lu par rapport
+à `deep` — le mode auquel un utilisateur pressé le comparerait — le profil est bien moins large
+qu'il n'y paraît, et il laisse intacts les deux leviers les plus en amont :
+
+| levier | deep | extreme | ×  |
+|---|---|---|---|
+| `dp_top_k` — la largeur du faisceau de la DP en Phase A | 100 | 100 | **×1 — pas élargi** |
+| `elite_rounds` | 3 | 3 | **×1 — pas élargi** |
+| `mining_candidates_limit` | 10 000 | 12 000 | ×1,2 |
+| `k_keep_survivors` | 25 | 40 | ×1,6 |
+| `max_fusions_per_parent` | 5 | 15 | ×3 |
+| `phase_a_keep_limit` | 50 | 200 | ×4 |
+| `top_k_parents` | 20 | 80 | ×4 |
+| `screening_keep_top_k` | 5 | 20 | ×4 |
+
+🔑 **`extreme` élargit ce qui est RETENU sans élargir ce qui est ENGENDRÉ.** On garde quatre fois
+plus d'une offre dont la source, elle, n'a pas bougé. C'est peut-être exactement le bon réglage —
+si le goulot était la rétention — mais **personne ne l'a vérifié**.
+
+**3. Aucun test de saturation.** On ne sait pas si doubler encore rendrait plus de déposables ou
+rien du tout. « Si l'utilisateur a tout son temps » appellerait un réglage à la **frontière du
+rendement décroissant**, et cette frontière n'est pas localisée.
+
+### 🔒 Pourquoi je ne change PAS ses valeurs pour autant
+
+Parce que ce sont **exactement** celles qui ont produit les 254 déposables. Les élargir sur un
+raisonnement ferait de `extreme` une configuration que **personne n'a jamais lancée**, et le
+fichier d'exemple cesserait de reproduire sa propre mesure — §24-7.
+
+> **`extreme` est un point de fonctionnement MESURÉ, pas un optimum. C'est ce qu'il faut en dire,
+> et c'est ce que la documentation en dit désormais.**
+
+📌 **Ce qui le rendrait optimal, dans l'ordre** : (1) le contrôle `deep` seul — nécessité ; (2) un
+balayage levier par levier sur les sept — attribution ; (3) un doublement pour trouver la
+saturation — dimensionnement. Trois campagnes, aucune conceptuellement difficile.
 
 📌 **Défaut corrigé au passage** : le journal annonçait `[MODE] PREMIUM active` pour **tout** mode
 autre que `fast` — un run `deep` était donc journalisé comme premium. Il nomme désormais le mode

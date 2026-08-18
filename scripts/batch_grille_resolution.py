@@ -191,7 +191,18 @@ CELLULES_SUITE = [
 #:                        THESE REFUTEE   s'il reste marginal.
 #:
 #: ⚠️ Une cellule elargie coute ~2 h 40 (mesure : 157 min sur x2). C'est le prix de la reponse.
+# 🔴🔴 LE CONTROLE QUI MANQUAIT, ET IL PASSE EN TETE. Le 2026-08-18 j'ai ecrit dans QUATRE
+# fichiers -- dont la page commerciale -- que « deep rend 0 deposable et extreme en rend 254 ».
+# C'EST NON MESURE : le run a 0 est en FAST. `deep` seul a 1 nm sur x2 n'existe pas.
+#
+# Tant qu'il n'existe pas, on ne sait pas si le mode `extreme` etait NECESSAIRE ou si `deep`
+# aurait suffi -- et un mode nomme qui ne sert a rien est pire qu'un mode absent. C'est la
+# question de 👤 : « penses-tu qu'il soit optimal ? ». On ne peut pas y repondre sans ce point.
+#
+#   deep seul rend 0 deposable   -> extreme est necessaire, et l'affirmation devient mesuree
+#   deep seul rend des centaines -> extreme est INUTILE ici, et le JSON doit dire `deep`
 CELLULES_ELARGI = [
+    ("r75x2", "deep", 1.0, False, 42, 90, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
     ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
     ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
     ("r75x2", "deep", 1.0, True, 77, 160, "2e graine sur la percee du 2026-08-18"),

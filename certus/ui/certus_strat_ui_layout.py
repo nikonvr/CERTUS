@@ -874,8 +874,8 @@ class CertusStratLayoutMixin:
             "• deep : haute résolution (~45-60 s, N=300 MC, top_k=100)\n"
             "• extreme : recherche élargie ×5, même profondeur que deep.\n"
             "  À réserver aux empilements qu'aucun autre mode ne rend\n"
-            "  fabricable : sur le random75 ×2, deep ne trouve AUCUNE\n"
-            "  stratégie déposable et extreme en trouve 254.\n"
+            "  fabricable : sur le random75 ×2, la recherche standard ne\n"
+            "  trouve AUCUNE stratégie déposable et extreme en trouve 254.\n"
             "  Coûte environ 5× deep — à lancer si vous avez le temps."
         )
 

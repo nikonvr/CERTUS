@@ -228,6 +228,60 @@ CELLULES_ELARGI = [
 ]
 
 
+#: LA MATRICE `extreme` x MULTIFENTES SUR TOUS LES COMPOSANTS
+#:
+#: 👤 2026-08-18 : *« je veux absolument tester extreme multifentes sur tous les problemes :
+#: 35c 48c 75cmulticonfig, 99c -- et savoir si le SEEL est ameliore ou pas »*.
+#:
+#: 🔴 POURQUOI DEUX MODES ET PAS SEULEMENT `extreme`. La question posee est « le SEEL est-il
+#: AMELIORE », donc COMPARATIVE. Un SEEL d'extreme seul ne se compare a rien, et le comparer aux
+#: cellules `fast` deja mesurees serait exactement l'erreur du 2026-08-18 au matin : j'ai compare
+#: fast a extreme et attribue a l'elargissement ce qui revenait au mode `deep`. Contrainte C3.
+#: Chaque cellule `extreme` a donc sa JUMELLE `deep` a fente identique -- c'est ce qui fait passer
+#: 32 cellules a 64, et c'est ce qui rend la reponse valide.
+#:
+#: 🔑 L'ORDRE. Pour chaque composant on joue d'abord sa fente de REFERENCE -- celle ou il donne
+#: son meilleur resultat connu -- dans les deux modes. C'est la question directe, et elle est
+#: repondue composant par composant meme si le lot est coupe tot. Les trois autres fentes suivent.
+#:
+#: 📏 Cout estime a partir de la seule mesure disponible : 75 couches en `deep` = ~180 min solo
+#: (239 min mesurees a deux cellules de front, / 1,33). On extrapole en 2,4 min par couche, et
+#: `extreme` a ~1,2x le cout de `deep`. ⚠️ CES DEUX FACTEURS SONT DES EXTRAPOLATIONS : la seule
+#: calibration reelle porte sur 75 couches, et mes estimations se sont deja trompees d'un facteur
+#: 2 sur ce lot. Le budget tronquera, c'est son role.
+_MATRICE_COMPOSANTS = [
+    # (nom, couches, fente de REFERENCE -- ou il donne son meilleur resultat connu)
+    ("35c", 35, 2.0),        # jamais mesure ailleurs qu'a la fente nominale
+    ("48c", 48, 2.0),        # le juge de paix, idem
+    ("75c", 75, 2.0),        # SEEL 0,272 -- le meilleur du depot
+    ("r75x1.75", 75, 2.0),   # 282 deposables, SEEL 0,528
+    ("r75x1.5", 75, 2.0),    # 1 seul deposable : le point le plus marginal
+    ("r75x2", 75, 1.0),      # la percee : deep 277 deposables, SEEL 0,625
+    ("r75x0.5", 75, 1.0),    # 28 % de plantage, aucun deposable a ce jour
+    ("99c", 99, 1.0),        # 🔴 tout QWOT : conclusions SUR lui, jamais A PARTIR de lui
+]
+_MATRICE_FENTES = (5.0, 2.0, 1.0, 0.5)
+
+
+def _matrice() -> list[tuple]:
+    """Les 64 cellules, fente de reference d'abord, puis les autres."""
+    out = []
+    for passe in ("reference", "autres"):
+        for nom, n, ref in _MATRICE_COMPOSANTS:
+            fentes = [ref] if passe == "reference" else [f for f in _MATRICE_FENTES if f != ref]
+            for res in fentes:
+                for elargi in (False, True):          # deep puis extreme, la paire
+                    mn = round(2.4 * n * (1.2 if elargi else 1.0))
+                    quoi = "extreme" if elargi else "deep   "
+                    out.append((nom, "deep", res, elargi, 42, mn,
+                                f"{quoi} @ {res:g} nm"
+                                + ("  [FENTE DE REFERENCE]" if passe == "reference" else "")))
+    return out
+
+
+CELLULES_MATRICE = _matrice()
+
+
 def _sortie(nom: str, mode: str, res: float, elargi: bool, graine: int) -> Path:
     suf = (("" if res == 2.0 else f"_res{res:g}")
            + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}"))
@@ -265,11 +319,15 @@ def main() -> int:
                     help="joue CELLULES_SUITE au lieu de la grille -- enchainement du 2026-08-18")
     ap.add_argument("--elargi", action="store_true",
                     help="joue CELLULES_ELARGI -- la campagne decisive du 2026-08-18")
+    ap.add_argument("--matrice", action="store_true",
+                    help="joue CELLULES_MATRICE -- extreme x multifentes x tous les composants, "
+                         "avec la jumelle `deep` de chaque cellule (👤, 2026-08-18)")
     ap.add_argument("--parallele", type=int, default=1,
                     help="cellules menees de front (defaut 1). Voir le bloc PARALLELISME du "
                          "docstring avant de monter au-dessus de 2.")
     args = ap.parse_args()
-    cellules = (CELLULES_ELARGI if args.elargi
+    cellules = (CELLULES_MATRICE if args.matrice
+                else CELLULES_ELARGI if args.elargi
                 else CELLULES_SUITE if args.suite else CELLULES)
     if args.etat:
         return etat(cellules)
@@ -279,7 +337,8 @@ def main() -> int:
     faits = sautes = refuses = 0
 
     print("=" * 92)
-    quoi = " (ELARGI)" if args.elargi else " (SUITE)" if args.suite else ""
+    quoi = (" (MATRICE)" if args.matrice else " (ELARGI)" if args.elargi
+            else " (SUITE)" if args.suite else "")
     print(f"LOT{quoi} : budget {args.heures:g} h | "
           f"graine {SEED} | {len(cellules)} cellules")
     print("=" * 92, flush=True)

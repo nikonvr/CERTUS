@@ -18,6 +18,7 @@ Contains:
 - _validate_strategy_min_transmission_floor
 """
 
+import itertools
 import logging
 import concurrent.futures
 import time
@@ -510,7 +511,8 @@ RATE_MAX_VARIANTS_PER_STRATEGY: int = 3
 RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
 
 
-def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[int]:
+def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int,
+                           cap: int | None = None) -> list[int]:
     """Layers where a Rate is CHEAPEST: the last layer of each block.
 
     👤 2026-08-11: *"test the rate on layers i whose control wavelength changes at layer
@@ -570,7 +572,10 @@ def _rate_candidate_layers(strategy: dict[str, Any], num_layers: int) -> list[in
     # open and needs its own experiment -- do not implement it from these numbers
     # either.
     out.sort(reverse=True)
-    return out[:RATE_MAX_VARIANTS_PER_STRATEGY]
+    # `cap=None` keeps the historical truncation, word for word. An explicit cap is only
+    # passed by the multi-layer path below, which needs the FULL candidate list before it
+    # can build combinations from it.
+    return out[:RATE_MAX_VARIANTS_PER_STRATEGY if cap is None else cap]
 
 
 def _expand_with_rate_variants(
@@ -591,26 +596,60 @@ def _expand_with_rate_variants(
     does not exist. The historical path remains reachable with `allow_rate: false`, and
     any measurement made before this date was taken without Rate variants.
 
-    ⚠️ ONE Rate layer per variant, deliberately. Two Rate layers interact -- the second
-    inherits an estimate the first already froze -- and 12.3's lesson is that two things
-    changed at once cannot be attributed. Combinations come after single layers are
+    ⚠️ ONE Rate layer per variant BY DEFAULT, deliberately. Two Rate layers interact -- the
+    second inherits an estimate the first already froze -- and 12.3's lesson is that two
+    things changed at once cannot be attributed. Combinations come after single layers are
     understood, not before.
+
+    🔑 SINCE 2026-08-18 THAT DEFAULT IS LIFTABLE, and the reason is that the objection above
+    is about ATTRIBUTION, not about physics. 👤: *"je reste persuade que le rate est
+    sous-employe"*, and the question asked is one of EXISTENCE -- is a much lower SEEL hiding
+    behind a strategy with several Rate layers? Attribution is not required to answer it.
+
+        rate_max_layers_per_variant     default 1  -- historical path, bit for bit
+        rate_max_variants_per_strategy  default 3  -- RATE_MAX_VARIANTS_PER_STRATEGY
+
+    At `rate_max_layers_per_variant = 1` this function walks exactly the same singletons, in
+    the same order, with the same ids and the same `origin` strings as before.
+
+    🔴 AND THE FULL COMBINATION IS ALWAYS APPENDED when the multi-layer path is active, cap or
+    no cap. It is the cheapest probe of "what if we rate every boundary we may", and it costs
+    one variant per strategy.
     """
     if not bool(params.get("allow_rate", True)):
         return strategies
+    max_layers = max(1, int(params.get("rate_max_layers_per_variant", 1) or 1))
+    cap = max(1, int(params.get("rate_max_variants_per_strategy",
+                                RATE_MAX_VARIANTS_PER_STRATEGY)
+                     or RATE_MAX_VARIANTS_PER_STRATEGY))
     variants: list[dict[str, Any]] = []
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE
     for strat in strategies:
-        cands = _rate_candidate_layers(strat, num_layers)
+        # The historical path caps the CANDIDATES at 3; the multi-layer path needs them all
+        # before it can combine them, and caps the resulting VARIANTS instead.
+        cands = _rate_candidate_layers(strat, num_layers,
+                                       cap=None if max_layers == 1 else 64)
         if not cands:
             skipped += 1
-        for layer in cands:
+            continue
+        if max_layers == 1:
+            combos: list[tuple[int, ...]] = [(x,) for x in cands[:cap]]
+        else:
+            combos = []
+            for taille in range(1, min(max_layers, len(cands)) + 1):
+                combos.extend(itertools.combinations(cands, taille))
+            combos = combos[:cap]
+            entier = tuple(cands)
+            if len(cands) > 1 and entier not in combos:
+                combos.append(entier)
+        for combo in combos:
             v = dict(strat)
             v["blocks"] = list(strat.get("blocks") or [])
-            v["rate_layers"] = [layer]
+            v["rate_layers"] = list(combo)
             v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
-            v["origin"] = f"RATE_L{layer}(from {strat.get('strategy_id', '?')})"
+            etiquette = "_".join(str(x) for x in combo)
+            v["origin"] = f"RATE_L{etiquette}(from {strat.get('strategy_id', '?')})"
             next_id += 1
             variants.append(v)
     if variants or skipped:

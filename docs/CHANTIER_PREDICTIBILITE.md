@@ -368,6 +368,83 @@ calculerait sans tirage. `probe_distance_extremum.py` en calcule déjà le premi
 
 ---
 
+## 4ter. 🟢 LA GRILLE RÉSOLUTION × ÉPAISSEUR OPTIQUE — l'hypothèse de 👤 est CONFIRMÉE
+
+📏 **Lot du 2026-08-17 au soir**, 12 cellules, protocole identique : `fast`, graine 42,
+`search_resolution` inactif, seule la fente du run varie. La comparaison est exacte par
+construction : le facteur de bruit multiplie l'**échantillon**, jamais la graine (contrainte C2,
+`certus_strat_robustness.py:192`), donc deux résolutions voient les **mêmes tirages**.
+
+> 👤 **2026-08-17** : *« un filtre trop épais a des pics en transmission et peut-être que le
+> filtre serait monitorable en résolution 1 nm et pas 2 nm. Valable pour les empilements
+> épais. »*
+
+### Plantage minimum
+
+| variante | Σ QWOT | 5 nm | 2 nm | 1 nm | 0,5 nm |
+|---|---|---|---|---|---|
+| ×0,5 | 57,4 | 70 % | **48 %** | *(à mesurer)* | *(à mesurer)* |
+| ×1 | 114,9 | **0 %** | **0 %** | 4 % | 44 % |
+| ×1,5 | 172,3 | — | **0 %** | 30 % | 76 % |
+| ×2 | 229,8 | — | 100 % | **38 %** | 80 % |
+
+🔑 **Le signe s'inverse une seule fois, et au bon endroit.** Passer de 2 nm à 1 nm dégrade ×0,5,
+×1 et ×1,5, et **améliore ×2** — de 100 % à 38 %. La pénalité de la fente fine décroît à mesure
+que Σ QWOT monte et bascule en gain **entre 172 et 230**.
+
+Le mécanisme était prédit et il est quantifié : le biais de fente va en `B²` (÷4 de 2 à 1 nm), le
+bruit suit `RESOLUTION_NOISE_FACTOR` (×2). L'arbitrage penche vers le fin quand l'espacement des
+oscillations spectrales devient serré, c'est-à-dire quand Σ QWOT est grand.
+
+🔴 **Mais ×2 n'est PAS devenu fabricable.** 38 % reste très loin de la tolérance de 5 %, et la
+cellule ne rend **aucune stratégie déposable**. Le mur est devenu une pente ; il n'est pas
+franchi.
+
+### SEEL — et il n'existe que là où il y a des déposables
+
+🔴 **Ailleurs, le score est un score de REPLI et ne se convertit PAS en SEEL.** C'est ce qui a
+produit le faux « 0,86 nm » du 99c (§21). Sur douze cellules, **quatre** portent un SEEL.
+
+| variante | fente | SEEL | déposables | plantage min |
+|---|---|---|---|---|
+| ×1 | 5 nm | 0,310 nm | 289 | 0 % |
+| ×1 | **2 nm** | **0,272 nm** | 241 | 0 % |
+| ×1 | 1 nm | 0,371 nm | 12 | 4 % |
+| ×1,5 | 2 nm | 0,633 nm | 1 | 0 % |
+
+✅ **La dérivation `SEEL = 2·√(score)` est validée** : ×1 à 2 nm rend **0,272 nm**, exactement le
+repère publié au §21. Les autres valeurs sont donc lisibles sur la même échelle.
+
+### 🔴 La fente large achète du RENDEMENT et paie de la PRÉCISION
+
+C'est le résultat le moins intuitif de la grille, et il corrige une lecture hâtive faite le soir
+même — *« 289 déposables contre 241, donc 5 nm gagne »*.
+
+| fente sur ×1 | SEEL | déposables |
+|---|---|---|
+| 5 nm | 0,310 nm | **289** |
+| 2 nm | **0,272 nm** | 241 |
+
+**Les deux colonnes classent à l'envers l'une de l'autre.** La règle de tri du §22 étant *SEEL
+d'abord, rendement en départage*, c'est **2 nm qui gagne** — la fente nominale de la machine.
+Élargir déforme le signal (biais en `B²`), donc l'arrêt est moins juste ; en échange le bruit
+baisse de ÷1,5 et il plante moins. **Un arbitrage, pas un gain gratuit.**
+
+⚠️ **Ne pas lire les scores de repli comme une tendance.** Sur ×2, le repli vaut 0,217 à 2 nm et
+0,269 à 1 nm — *plus mauvais* là où le plantage s'effondre de 100 % à 38 %. Comparer deux scores
+de repli revient à comparer deux façons d'échouer.
+
+### Ce qui reste avant d'en tirer quoi que ce soit de publiable
+
+| | |
+|---|---|
+| 🔴 **graine unique** | 42. §24-46 : un verdict marginal bascule avec la graine. Une seconde graine sur ×2 à 1 nm est dans le lot |
+| 🔴 **mode FAST** | §8 : toute cellule rendant des déposables se rejoue en **premium** avant publication |
+| 🟠 **×0,5 incomplet** | ses cellules 1 nm et 0,5 nm sont en consolidation ; seuls 5 et 2 nm sont propres |
+| 🟠 **quantification** | les taux sont des multiples de 2 % — un « 38 % » est lu à ±2 % |
+
+---
+
 ## 5. 🔴 LE DÉFAUT QUI FAUSSE TOUTE LA CAMPAGNE — la résolution spectrale n'était pas cherchée
 
 > 👤 **2026-08-17** : *« je me pose aussi la question de la résolution spectrale. Un filtre trop

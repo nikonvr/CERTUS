@@ -383,22 +383,51 @@ construction : le facteur de bruit multiplie l'**échantillon**, jamais la grain
 
 | variante | Σ QWOT | 5 nm | 2 nm | 1 nm | 0,5 nm |
 |---|---|---|---|---|---|
-| ×0,5 | 57,4 | 70 % | **48 %** | *(à mesurer)* | *(à mesurer)* |
+| ×0,5 | 57,4 | 70 % | 48 % | **28 %** | 82 % |
 | ×1 | 114,9 | **0 %** | **0 %** | 4 % | 44 % |
 | ×1,5 | 172,3 | — | **0 %** | 30 % | 76 % |
 | ×2 | 229,8 | — | 100 % | **38 %** | 80 % |
 
-🔑 **Le signe s'inverse une seule fois, et au bon endroit.** Passer de 2 nm à 1 nm dégrade ×0,5,
-×1 et ×1,5, et **améliore ×2** — de 100 % à 38 %. La pénalité de la fente fine décroît à mesure
-que Σ QWOT monte et bascule en gain **entre 172 et 230**.
+🔴 **CORRECTION DU 2026-08-18 — la première rédaction de cette section était FAUSSE sur ×0,5.**
+Elle affirmait *« passer à 1 nm dégrade ×0,5, ×1 et ×1,5 et améliore ×2 : le signe s'inverse une
+seule fois »*, et en tirait une loi monotone en Σ QWOT. Le chiffre de ×0,5 à 1 nm venait alors
+d'un **échantillon biaisé** (run à recherche de fente : seules les stratégies dont les λ
+toléraient la largeur étaient retenues) et valait **84 %**. La cellule propre, mesurée cette
+nuit, vaut **28 %** — c'est-à-dire que **1 nm AMÉLIORE ×0,5 aussi**. La loi monotone n'existe pas.
 
-Le mécanisme était prédit et il est quantifié : le biais de fente va en `B²` (÷4 de 2 à 1 nm), le
-bruit suit `RESOLUTION_NOISE_FACTOR` (×2). L'arbitrage penche vers le fin quand l'espacement des
-oscillations spectrales devient serré, c'est-à-dire quand Σ QWOT est grand.
+⚠️ C'est exactement le piège que ce dossier documente ailleurs : *un échantillon biaisé ne vaut
+pas une cellule propre*. Je l'avais écrit, puis j'ai cité le chiffre biaisé dans le texte tout en
+marquant la case « à mesurer » dans le tableau. **Ne jamais laisser un chiffre biaisé porter une
+affirmation.**
 
-🔴 **Mais ×2 n'est PAS devenu fabricable.** 38 % reste très loin de la tolérance de 5 %, et la
-cellule ne rend **aucune stratégie déposable**. Le mur est devenu une pente ; il n'est pas
-franchi.
+### 🔑 La lecture juste : la fente fine est un REMÈDE, pas une amélioration
+
+Comparaison 1 nm contre 2 nm, une fois la ligne mince propre :
+
+| variante | 2 nm | 1 nm | |
+|---|---|---|---|
+| ×0,5 | 48 % | **28 %** | 🟢 1 nm aide |
+| ×1 | **0 %** | 4 % | 🔴 1 nm nuit |
+| ×1,5 | **0 %** | 30 % | 🔴 1 nm nuit |
+| ×2 | 100 % | **38 %** | 🟢 1 nm aide |
+
+**Les deux cas où 1 nm aide sont exactement les deux qui ÉCHOUENT à 2 nm.** Et les deux où il
+nuit sont exactement ceux qui sont déjà à **0 %** — où aucune amélioration n'est possible, la
+comparaison butant sur un plancher. Ce n'est donc pas une préférence spectrale, c'est un **effet
+de plafond**.
+
+> **La règle défendable : affiner la fente est un remède quand le monitoring échoue, et un coût
+> net quand il fonctionne.** Là où ça marche déjà, on ne paie que le ×2 de bruit.
+
+🔴 **La loi en Σ QWOT est donc RETIRÉE.** Le mécanisme biais/bruit reste vrai — le biais va en
+`B²` (÷4 de 2 à 1 nm), le bruit suit `RESOLUTION_NOISE_FACTOR` (×2) — mais il ne se laisse pas
+lire comme une fonction monotone de l'épaisseur optique. Ce que la grille établit est plus
+modeste et plus sûr : **quand une configuration échoue à la fente nominale, la fente fine est le
+premier levier à essayer**, et il a fonctionné aux deux bouts de la série.
+
+🟠 **À exploration standard, ×2 n'est pas fabricable pour autant** : 38 % reste très loin de la
+tolérance de 5 %, et la cellule ne rend aucune stratégie déposable. 🔴 **Mais ce n'était pas la
+fin de l'histoire — voir §4quater, où l'élargissement de la recherche le rend fabricable.**
 
 ### SEEL — et il n'existe que là où il y a des déposables
 
@@ -442,6 +471,70 @@ de repli revient à comparer deux façons d'échouer.
 | 🔴 **mode FAST** | §8 : toute cellule rendant des déposables se rejoue en **premium** avant publication |
 | 🟠 **×0,5 incomplet** | ses cellules 1 nm et 0,5 nm sont en consolidation ; seuls 5 et 2 nm sont propres |
 | 🟠 **quantification** | les taux sont des multiples de 2 % — un « 38 % » est lu à ±2 % |
+
+---
+
+## 4quater. 🟢🟢 ×2 EST FABRICABLE À UN SEUL TÉMOIN — c'était la RECHERCHE, pas la physique
+
+📏 **Mesuré le 2026-08-18, phase 2 du lot de nuit.** ×2, fente **1 nm**, mode `deep`, profil
+d'exploration élargi (`ELARGISSEMENT`, `probe_blocs_vs_plantage.py`), graine 42, 157 min.
+
+| | stratégies | déposables | plantage min | meilleur SEEL |
+|---|---|---|---|---|
+| exploration **standard** (`fast`) | 429 | **0** | 38 % | — *(repli)* |
+| exploration **élargie** (`deep` ×4) | **2 945** | **254** | **1,00 %** | **0,629 nm** |
+
+🔑 **×2 était déclaré impossible depuis trois jours — 100 % de plantage sur 404 stratégies à la
+fente nominale.** Il rend aujourd'hui **254 stratégies déposables**, dont la meilleure plante
+**2 fois sur 150** et porte un SEEL de **0,629 nm**. C'est le premier SEEL valide jamais mesuré
+sur ce composant.
+
+**Il a fallu DEUX choses ensemble**, et ni l'une ni l'autre ne suffit :
+
+| | |
+|---|---|
+| la **fente fine** (1 nm) | seule, elle fait tomber le plantage de 100 % à 38 % — sans aucun déposable |
+| l'**exploration élargie** | seule, elle n'a pas été testée à 2 nm ; à 1 nm elle apporte les 254 |
+
+### 🔴 Ce que cette mesure N'ÉTABLIT PAS — trois réserves, et elles comptent
+
+**1. L'attribution est un LOT, pas un facteur.** La phase 2 change `execution_mode` (`fast` →
+`deep`, soit `dp_top_k` 20 → 100) **et** six limites de candidates (×3 à ×4). Contrainte C3 : deux
+changements simultanés ne s'attribuent pas. Ce qui est établi est *« élargir la recherche »* comme
+bloc, pas lequel de ses sept leviers porte l'effet.
+
+**2. La profondeur d'évaluation a changé aussi — 50 → 150 tirages.** 📏 Lisible dans les données :
+les cellules `fast` rendent des taux multiples de 2 % (1/50), la phase 2 rend `2/150 = 1,33 %`.
+✅ **Mais ce biais joue CONTRE le résultat, donc il ne l'explique pas** : à 50 tirages, une
+stratégie dont le taux vrai vaut 1,3 % affiche **zéro** plantage une fois sur deux, et serait donc
+comptée déposable **plus facilement**. Si `fast` n'en a trouvé aucune, ce n'est pas faute de
+tirages — c'est que **ces stratégies n'ont jamais été proposées**.
+
+**3. Une seule graine (42).** §24-46 : un verdict marginal bascule avec la graine. 254 déposables
+sur 2 945 n'est pas marginal, mais le chiffre exact ne tient pas sur une graine.
+
+### 🔑 C'est le défaut §24-37, dans l'autre sens
+
+> §24-37 : *« la stratégie n'est plus choisie, elle est forcée — et le résultat final n'en porte
+> aucune trace. »*
+
+Ici le motif est le même et le coût est plus grand : le système annonçait **100 % de plantage**,
+c'est-à-dire *« ce composant n'est pas monitorable à un témoin »*, alors que la vraie phrase
+était *« ma recherche n'a pas proposé ce qui marche »*. Rien dans la sortie ne permettait de les
+distinguer.
+
+📏 **Signature à retenir** : les 254 déposables se répartissent sur **6, 7, 9, 10 et 11 blocs** —
+**aucune en dessous de 6, aucune au-dessus de 11**. La recherche standard, elle, plafonnait bien
+plus bas. C'est cohérent avec la zone favorable de §24-44 (4-7 blocs), étendue vers le haut.
+
+### Ce que ça change pour le chantier
+
+| | |
+|---|---|
+| 🔴 **le tableau de la série est périmé** | *« ×2 échoue »* était vrai à exploration standard uniquement. La série ne mesure donc pas la **faisabilité**, elle mesure **ce que la recherche courante trouve** |
+| 🔴 **et ×0,5 doit être rejoué pareil** | il est à 28 % à 1 nm avec la recherche standard. **Si l'élargissement le sauve aussi, la « barrière » de la série s'effondre entièrement** — c'est la mesure la plus importante à faire ensuite |
+| 🟠 **le 99c mérite le même traitement** | ses 751 stratégies à 100 % ont toutes été produites par la recherche standard, à 2 nm |
+| ✅ **§8 s'applique** | 254 déposables sous un mode non nominal ⇒ rejeu **premium** avant publication |
 
 ---
 

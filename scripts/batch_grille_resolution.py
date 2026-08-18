@@ -206,6 +206,7 @@ CELLULES_SUITE = [
 CELLULES_ELARGI = [
     ("r75x2", "deep", 1.0, False, 42, 120, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
     ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
+    ("99c", "deep", 1.0, True, 42, 300, "LE 99c EN ELARGI -- son verdict n'a jamais ete reteste"),
     ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
     # 🔴 RETIREE LE 2026-08-18 PAR SON PROPRE CRITERE. La cellule « dp_top_k 100 -> 200 » a ete
     # ecrite parce que je croyais le faisceau de la DP « le levier le plus en amont sur l'offre ».
@@ -222,7 +223,6 @@ CELLULES_ELARGI = [
     # strategies a 100 % de plantage viennent TOUTES de la recherche standard, a 2 nm -- exactement
     # la configuration ou x2 paraissait impossible et ne l'etait pas. Le verdict « non monitorable
     # a un temoin » n'a donc jamais ete teste autrement que dans le regime qui s'est revele faux.
-    ("99c", "deep", 1.0, True, 42, 300, "LE 99c EN ELARGI -- son verdict n'a jamais ete reteste"),
     ("r75x2", "deep", 1.0, True, 77, 160, "2e graine sur la percee du 2026-08-18"),
     ("r75x0.5", "deep", 2.0, True, 42, 160, "controle : le mince a la fente nominale"),
 ]
@@ -311,7 +311,19 @@ def main() -> int:
 
         # 🔴 Le plafond du banc est cale sur le temps restant, jamais au-dela. Une cellule qui
         # deborderait rendrait ECHEC_RESULT_NONE -- visible -- au lieu d'entamer les suivantes.
-        plafond = int(min(21600, max(600, restant * 0.9)))
+        #
+        # 🔑 LE PLAFOND EN DUR SUIT DESORMAIS L'ESTIMATION DE LA CELLULE (👤, 2026-08-18 :
+        # *« j'aimerai bien que le 99c passe dans tous les cas, donc avec un time out
+        # genereux »*). Il valait 21 600 s -- 6 h -- pour toutes les cellules indifferemment.
+        # Or le 99c en elargi est estime a 300 min, et si la contention le porte au-dela de 6 h
+        # il serait TUE par ce plafond apres des heures de calcul, pour rendre un
+        # ECHEC_RESULT_NONE. On donne donc QUATRE fois l'estimation, avec 6 h de plancher : une
+        # cellule a 300 min obtient 20 h de marge au lieu de 6.
+        #
+        # ⚠️ Ce n'est pas un blanc-seing : `restant * 0.9` reste la contrainte reellement
+        # active, et elle est bornee par le budget. Le plafond en dur n'est la que pour eviter
+        # qu'une cellule partie de travers ne mange tout le reste.
+        plafond = int(min(max(21600, mn * 60 * 4), max(600, restant * 0.9)))
         env = dict(os.environ, CERTUS_BENCH_TIMEOUT_S=str(plafond), PYTHONUTF8="1")
 
         with verrou:

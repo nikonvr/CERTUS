@@ -210,6 +210,12 @@ def main() -> int:
         r = subprocess.run(
             [PY, SONDE, nom, mode, "0", "0", str(res), "1" if elargi else "0", str(graine)],
             env=env, cwd=str(ROOT), capture_output=True, text=True,
+            # 🔴 SANS CECI LE FIL DE LECTURE MEURT. subprocess decode la sortie de l'enfant
+            # avec l'encodage de la LOCALE -- cp1252 sur cette machine -- et les sondes ecrivent
+            # des emoji. Le fil leve UnicodeDecodeError, `r.stdout` revient vide, et le journal
+            # perd le resume de la cellule. Les ARTEFACTS, eux, sont ecrits par l'enfant et
+            # restent intacts : le defaut coute de la lisibilite, jamais une mesure.
+            encoding="utf-8", errors="replace",
         )
         dt = time.perf_counter() - t1
         for ligne in (r.stdout or "").splitlines():

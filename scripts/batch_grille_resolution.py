@@ -166,6 +166,39 @@ CELLULES_SUITE = [
 # l'affirmation, c'est donc elle qu'il faut confirmer, et aucune autre.
 
 
+#: LA CAMPAGNE ELARGIE -- 👤 « ok go », 2026-08-18, apres la mesure de x1,75.
+#:
+#: 🔑 CE QU'ELLE TESTE, ET C'EST LA QUESTION DU CHANTIER. Sur les 5 points de la serie mesures
+#: au meme protocole (fast, 2 nm, graine 42), la correlation de rang avec le nombre de
+#: strategies deposables vaut :
+#:
+#:     Somme QWOT -- la propriete du DESIGN         rho = +0,103    (rien)
+#:     OFFERTES   -- ce que la RECHERCHE propose    rho = +0,975    (presque parfait)
+#:
+#: Et la phase 2 a donne la fleche causale sur x2 : meme design, meme graine, recherche elargie,
+#: 0 -> 254 deposables. D'ou la these : la « barriere » de la serie d'echelle mesurait la
+#: RECHERCHE, pas la physique.
+#:
+#: 🔴 LES DEUX PREMIERES CELLULES SONT DES TESTS FALSIFIABLES, et le critere est ecrit AVANT :
+#:
+#:   x0,5 a 1 nm elargi   il echoue vraiment (28 % de plantage, 0 deposable sur 375).
+#:                        THESE CONFIRMEE si l'elargissement rend des deposables.
+#:                        THESE REFUTEE   s'il reste a 0 -- alors x0,5 echoue pour une raison
+#:                        physique, et la barriere existe du cote mince.
+#:
+#:   x1,5 a 2 nm elargi   il rend 1 deposable sur 440 alors que x1,75, PLUS EPAIS, en rend 282.
+#:                        THESE CONFIRMEE si l'elargissement le porte a des centaines.
+#:                        THESE REFUTEE   s'il reste marginal.
+#:
+#: ⚠️ Une cellule elargie coute ~2 h 40 (mesure : 157 min sur x2). C'est le prix de la reponse.
+CELLULES_ELARGI = [
+    ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
+    ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
+    ("r75x2", "deep", 1.0, True, 77, 160, "2e graine sur la percee du 2026-08-18"),
+    ("r75x0.5", "deep", 2.0, True, 42, 160, "controle : le mince a la fente nominale"),
+]
+
+
 def _sortie(nom: str, mode: str, res: float, elargi: bool, graine: int) -> Path:
     suf = ("" if res == 2.0 else f"_res{res:g}") + ("_large" if elargi else "")
     return ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suf}.json"
@@ -200,8 +233,11 @@ def main() -> int:
     ap.add_argument("--etat", action="store_true")
     ap.add_argument("--suite", action="store_true",
                     help="joue CELLULES_SUITE au lieu de la grille -- enchainement du 2026-08-18")
+    ap.add_argument("--elargi", action="store_true",
+                    help="joue CELLULES_ELARGI -- la campagne decisive du 2026-08-18")
     args = ap.parse_args()
-    cellules = CELLULES_SUITE if args.suite else CELLULES
+    cellules = (CELLULES_ELARGI if args.elargi
+                else CELLULES_SUITE if args.suite else CELLULES)
     if args.etat:
         return etat(cellules)
 
@@ -210,7 +246,8 @@ def main() -> int:
     faits, sautes, refuses = 0, 0, 0
 
     print("=" * 92)
-    print(f"LOT{' (SUITE)' if args.suite else ''} : budget {args.heures:g} h | "
+    quoi = " (ELARGI)" if args.elargi else " (SUITE)" if args.suite else ""
+    print(f"LOT{quoi} : budget {args.heures:g} h | "
           f"graine {SEED} | {len(cellules)} cellules")
     print("=" * 92, flush=True)
 

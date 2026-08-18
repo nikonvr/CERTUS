@@ -333,6 +333,9 @@ CHIFFRES_PUBLIES = [
     # --- 2026-08-18 22:50, fin de la campagne elargie ---
     ("r75x2_deep_s077_res1_large", 2575, 0, 38.0, None),
     ("r75x0.5_deep_s042_large", 1997, 0, 68.66666666666667, None),
+    # --- 2026-08-19 00:xx, MATRICE : premiere paire jumelle deep/extreme ---
+    ("35c_deep_s042", 1023, 1017, 0.0, 0.482),
+    ("35c_deep_s042_large", 1355, 1349, 0.0, 0.479),
 ]
 
 

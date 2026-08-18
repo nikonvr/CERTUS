@@ -811,6 +811,47 @@ réel et ses quatre paramètres de largeur.
 
 ---
 
+## 4quater-bis. 🔴🔴 LE 254 DÉPOSABLES DE ×2 NE TIENT PAS SUR LA GRAINE 77
+
+📏 Mesuré le 2026-08-18 à 22:50, dernière cellule de la campagne. Même design, même
+configuration élargie, seule la graine change.
+
+| graine | offertes | déposables | `crash_min` |
+|---|---|---|---|
+| 42 | 2 945 | **254** | 1,00 % |
+| **77** | 2 575 | **0** | **38,00 %** |
+
+🔴 **Ce n'est pas une valeur limite — 38 % est un plancher net**, très loin de la tolérance de
+5 %. Vérifié : la configuration est identique (fente 1 nm, `deep` + profil élargi), l'exploration
+a bien tourné (2 575 stratégies, tous les générateurs actifs — SYM, ELITE, SMART_MERGE, une
+trentaine de couches Rate distinctes). Ce n'est donc pas un défaut de run.
+
+> **La percée du ×2 ne tient QUE sur la graine 42.** §24-46 avait déjà établi qu'un verdict
+> d'intervalle bascule avec la graine sur le 99c ; c'est ici la même mécanique sur un résultat
+> qu'on croyait acquis.
+
+🔑 **Ce qui reste vrai malgré ça** : la flèche causale de §4quater — même design, même graine 42,
+recherche élargie, 0 → 254 — **tient toujours**. Ce que la graine 77 retire, c'est la
+**généralité** du chiffre 254, pas le mécanisme « élargir la recherche peut débloquer un design ».
+
+🔴 **Conséquence directe pour §4quinquies** : la corrélation ρ = +0,975 a été mesurée à graine 42
+sur les cinq points de la série. Elle n'a **jamais été recalculée à une autre graine**, et ce
+résultat dit qu'elle pourrait ne pas survivre au changement. C'est la vérification qui manque
+avant de publier quoi que ce soit sur ce chantier.
+
+### 🟠 Et ×0,5 à la fente NOMINALE (2 nm), élargi — le contrôle qu'on n'avait pas
+
+| | offertes | déposables | `crash_min` |
+|---|---|---|---|
+| standard (`fast`, 2 nm) | 375 | 0 | 48,00 % |
+| élargi (`deep`, 2 nm) | 1 997 | **0** | **68,67 %** |
+
+Troisième mesure sur ×0,5, et elle va dans le même sens que les deux autres : la barrière
+mince ne cède **à aucune fente, à aucune profondeur de recherche testée**. Contrairement au
+×2 à graine 77, celui-ci n'a rien d'ambigu — c'est la troisième confirmation cohérente.
+
+---
+
 ## 4sexies. 🟠 LE 99c EN RECHERCHE ÉLARGIE — bouge, mais ne franchit pas
 
 📏 Mesuré le 2026-08-18, 320 min. **Lecture SUR le 99c légitime, lecture À PARTIR DU 99c

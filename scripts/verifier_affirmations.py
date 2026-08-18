@@ -330,6 +330,9 @@ CHIFFRES_PUBLIES = [
     # --- 2026-08-18 18:59 et 19:12, 99c et x1,5 en elargi ---
     ("99c_deep_s042_res1_large", 2674, 0, 96.33333333333333, None),
     ("r75x1.5_deep_s042_large", 2801, 1, 0.3333333333333333, 0.633),
+    # --- 2026-08-18 22:50, fin de la campagne elargie ---
+    ("r75x2_deep_s077_res1_large", 2575, 0, 38.0, None),
+    ("r75x0.5_deep_s042_large", 1997, 0, 68.66666666666667, None),
 ]
 
 

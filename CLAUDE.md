@@ -216,6 +216,7 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 |---|---|
 | **[`REPRISE.md`](docs/REPRISE.md)** | 🚀 en arrivant, toujours |
 | [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | 🔴 **le programme courant** — multi-témoins, 12 sous-sections |
+| [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) | 🔑 **employer pleinement le Rate**, et mélanger POEM / niveau absolu / Rate. 📏 Le Rate fait **64 % de l'offre** et **0,15 %** des déposables : il n'est pas sous-offert, il est **mal placé** |
 | **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** |
 | [`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) | le plan de campagnes en cours d'exécution |
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |

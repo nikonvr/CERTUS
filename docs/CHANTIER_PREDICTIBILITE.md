@@ -636,6 +636,44 @@ rien d'autre à régler. Le fichier dit lui-même ce qu'il coûte (≈ 2 h 40) e
 universel. Elle achète de la finesse spectrale et paie du bruit (×2 en passant de 2 à 1 nm) ; sur
 un empilement qui fonctionne déjà, elle **dégrade** le résultat (§4ter).
 
+### 🔴🔴 CONTRÔLE RENDU LE 2026-08-18 — `extreme` N'ÉTAIT PAS NÉCESSAIRE. `deep` SUFFIT.
+
+📏 Le contrôle que réclamait la section suivante a tourné, 239 min. Même design, même graine,
+même fente ; seule l'ampleur de la recherche change.
+
+| configuration | offertes | déposables | `crash_min` | meilleur SEEL |
+|---|---|---|---|---|
+| `fast` | 429 | **0** | 38,00 % | — |
+| **`deep` seul** | 1 986 | **277** | 1,00 % | **0,625 nm** |
+| `deep` + profil élargi (`extreme`) | 2 945 | 254 | 1,00 % | 0,629 nm |
+
+🔴 **`deep` seul rend PLUS de déposables qu'`extreme`, et un SEEL légèrement meilleur.** Les deux
+écarts — 9 % sur le compte, 0,004 nm sur le SEEL — sont **dans le bruit statistique** (§24-26,
+σ ≈ 6 % à N = 150). C'est exactement le verdict recherché : **l'élargissement n'apporte rien de
+mesurable, et il coûte plus cher.**
+
+🔑 **Ce qui a réellement débloqué le ×2 est donc le passage `fast` → `deep`** — un mode qui
+existait déjà, et dont les leviers sont `dp_top_k` 20 → 100, `n_screen_runs` 10 → 50,
+`elite_rounds` 1 → 3, `k_keep_survivors` 6 → 25, `mining_candidates_limit` 3 000 → 10 000, et la
+profondeur de notation 50 → 300.
+
+⚠️ **La faute de méthode, nommée** : j'ai comparé `fast` à `extreme` et attribué à
+l'élargissement ce qui revenait au mode standard. **Deux changements, une conclusion** — c'est la
+contrainte C3, et je l'ai violée en construisant l'expérience, pas en la lisant.
+
+**Ce que ça change, et ce que ça ne change pas :**
+
+| | |
+|---|---|
+| 🔴 le **livrable** | passe en `deep` et change de nom : `JSON-strat-random75-x2-fabricable.json`. Il reproduit les **277** déposables, pas les 254 |
+| 🟠 le **mode `extreme`** | conservé, mais **sans justification mesurée**. Un composant, une graine : ce n'est pas assez pour le supprimer, c'est bien assez pour ne rien lui attribuer |
+| 🟢 le **résultat physique** | **intact**. ×2 EST fabricable à un seul témoin, avec un meilleur SEEL qu'annoncé (0,625 contre 0,629) |
+| 🟢 les **deux barrières** | intactes aussi : le côté épais cède à une recherche plus profonde, le côté mince non — et `×0,5` a été testé jusqu'à 2 000 stratégies |
+
+📌 **Et ça soulève une question neuve** : si `deep` suffisait, **le 99c mérite d'être rejugé en
+`deep`**, pas seulement en élargi. Ses 751 stratégies à 100 % viennent d'un run `premium`. La
+cellule qui tourne est en élargi ; un `deep` seul serait le contrôle symétrique.
+
 ### 🔴 `extreme` EST-IL OPTIMAL ? NON — et il n'est même pas prouvé NÉCESSAIRE
 
 > 👤 **2026-08-18** : *« penses-tu qu'il soit optimal si l'utilisateur a tout son temps ? »*

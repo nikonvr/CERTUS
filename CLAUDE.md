@@ -480,12 +480,16 @@ mesure. **Et donne la machine entière au run que tu mesures** — voir Règle 5
   `top_k_parents` 80) et **laisse la profondeur d'évaluation
   identique à `deep`** — un taux de plantage produit en `extreme` reste donc comparable à un run
   `deep`. Coût ≈ **5× deep**, mesuré 157 min sur 75 couches.
-  🔑 **Ce qu'il a débloqué** : sur le random75 ×2, la recherche **standard** rend **0** stratégie
-  déposable et `extreme` en rend **254** (§21). 🔴 **Attention à ce que « standard » désigne : le
-  run à 0 est en `fast`. `deep` SEUL n'a jamais été mesuré sur ce point, donc on ne sait pas
-  encore si `extreme` était nécessaire ou si `deep` aurait suffi.** Le contrôle est en file.
-  Fichier prêt à lancer, rien d'autre à régler :
-  `example/example_strat/JSON-strat-random75-x2-extreme.json`.
+  🔴 **ET IL N'A AUCUNE JUSTIFICATION MESURÉE — contrôle rendu le 2026-08-18.** Sur le
+  random75 ×2 à 1 nm : `fast` → **0** déposable · **`deep` seul → 277**, SEEL 0,625 ·
+  `extreme` → 254, SEEL 0,629. **`deep` suffit, et fait marginalement mieux.** Les deux écarts
+  sont dans le bruit statistique, ce qui est justement le verdict : l'élargissement n'apporte
+  **rien de mesurable** et coûte plus cher. Ce qui a débloqué le ×2 est le passage de `fast` à
+  `deep`, un mode qui existait déjà.
+  🔑 **Le fichier prêt à lancer utilise donc `deep`** :
+  `example/example_strat/JSON-strat-random75-x2-fabricable.json`.
+  ⚠️ Le mode `extreme` est conservé — il n'a été mis en défaut que sur **un** composant et **une**
+  graine — mais **ne lui attribue rien** tant qu'un gain n'est pas mesuré quelque part.
   🔒 Les trois modes existants sont **inchangés au bit** — contrôlé paramètre par paramètre, et
   le défaut reste `premium`.
   ⚠️ Défaut d'implantation qui subsiste : `fast_auto_blocks` est posé et **journalisé**

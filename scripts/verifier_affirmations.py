@@ -325,6 +325,8 @@ CHIFFRES_PUBLIES = [
     ("75c_premium_s042_res5", 1415, 639, 0.0, 0.335),
     # --- 2026-08-18 14:15, le test decisif du cote mince ---
     ("r75x0.5_deep_s042_res1_large", 2000, 0, 39.666666666666664, None),
+    # --- 14:21, le controle : deep SEUL suffit, extreme n'apporte rien ---
+    ("r75x2_deep_s042_res1", 1986, 277, 1.0, 0.625),
 ]
 
 

@@ -141,7 +141,7 @@
   "consensus_std_weight": "0.35",
   "consensus_score_mode": "mean_std",
   "consensus_seed_list": "41,42,43,44,45",
-  "execution_mode": "extreme",
+  "execution_mode": "deep",
   "show_plots": true,
   "export_excel": true,
   "force_first_layer_same_wl": true,
@@ -162,33 +162,45 @@
   "_pourquoi_ce_fichier": [
     "75 couches, epaisseurs doublees (somme des QWOT = 229,8). Aux reglages usuels ce filtre",
     "est un mur : la recherche rend 404 strategies et AUCUNE n'est deposable -- 100 % de",
-    "plantage, quel que soit le nombre de blocs. On en concluait qu'il n'etait pas monitorable",
-    "avec un seul verre temoin.",
+    "plantage, quel que soit le nombre de blocs.",
     "",
-    "C'etait FAUX, et il a fallu deux reglages ensemble pour le voir (mesure du 2026-08-18) :",
+    "Il a fallu DEUX reglages ensemble, et aucun des deux ne suffit seul :",
     "",
-    "  1. la FENTE a 1 nm au lieu de 2 nm -- le plantage minimum tombe de 100 % a 38 %,",
-    "     toujours sans aucune strategie deposable. Necessaire, pas suffisant.",
-    "  2. le mode EXTREME -- la recherche est elargie environ 5 fois. Elle rend alors 2945",
-    "     strategies dont 254 DEPOSABLES, la meilleure plantant 4 fois sur 300 (SEEL 0,629 nm).",
+    "  1. la FENTE a 1 nm au lieu de 2 nm. Seule, elle fait tomber le plantage minimum de",
+    "     100 % a 38 % -- et ne rend toujours AUCUNE strategie deposable.",
+    "  2. le mode DEEP au lieu de fast. Avec la fente fine, il rend 1986 strategies dont",
+    "     277 DEPOSABLES, la meilleure plantant 3 fois sur 300, SEEL 0,625 nm.",
     "",
-    "Le mur etait la RECHERCHE, pas la physique du filtre."
+    "Le mur etait la profondeur de la recherche, pas la physique du filtre."
   ],
   "_ce_qu_il_faut_savoir_avant_de_lancer": [
-    "DUREE : environ 2 h 40 sur une machine a 8 fils. C'est le prix du mode extreme, et c'est",
-    "  pourquoi il n'est pas le mode par defaut. Laissez la machine tranquille pendant ce temps.",
+    "DUREE : environ 3 h sur une machine a 8 fils. Laissez-la tranquille pendant ce temps.",
     "",
-    "CE QUI EST MESURE, ET CE QUI NE L'EST PAS : les 254 strategies deposables ont ete obtenues",
+    "CE QUI EST MESURE, ET CE QUI NE L'EST PAS : les 277 strategies deposables ont ete obtenues",
     "  avec la graine 42. Un autre tirage donnera un nombre different -- l'ordre de grandeur",
     "  tient, le chiffre exact non.",
     "",
     "LA FENTE FINE N'EST PAS UN REGLAGE UNIVERSEL. Elle achete de la finesse spectrale et paie",
-    "  du bruit (x2 en passant de 2 a 1 nm). Sur un empilement qui fonctionne deja, elle DEGRADE",
-    "  le resultat. Ne la reprenez pas ailleurs sans la remesurer."
+    "  du bruit (x2 en passant de 2 a 1 nm). Sur un empilement qui fonctionne deja a 2 nm, elle",
+    "  DEGRADE le resultat -- mesure sur quatre variantes. Ne la reprenez pas ailleurs sans la",
+    "  remesurer."
   ],
   "robustness_seed": 42,
   "poem_enabled": true,
   "noise_layer_offset": 0,
   "noise_total_layers": 75,
-  "_reproduit": "reports/blocs_vs_plantage_r75x2_deep_s042_res1_large.json -- 2945 strategies, 254 deposables, meilleure a 4 plantages sur 300, SEEL 0,629 nm"
+  "_reproduit": "reports/blocs_vs_plantage_r75x2_deep_s042_res1.json -- 1986 strategies, 277 deposables, meilleure a 3 plantages sur 300, SEEL 0,625 nm",
+  "_pourquoi_deep_et_pas_extreme": [
+    "🔴 CORRIGE LE 2026-08-18. Ce fichier a d'abord ete ecrit en mode `extreme`, sur la foi",
+    "d'une comparaison FAST contre EXTREME qui melangeait deux changements. Le controle",
+    "manquant a ete mesure le jour meme :",
+    "",
+    "    fast     429 offertes     0 deposable    plantage min 38,00 %",
+    "    deep    1986 offertes   277 deposables   plantage min  1,00 %   SEEL 0,625",
+    "    extreme 2945 offertes   254 deposables   plantage min  1,00 %   SEEL 0,629",
+    "",
+    "deep SEUL suffit, et fait meme marginalement mieux -- les deux ecarts sont dans le bruit",
+    "statistique, ce qui est justement le verdict : l'elargissement n'apporte rien de mesurable",
+    "et coute plus cher. Ce fichier utilise donc `deep`, un mode standard."
+  ]
 }

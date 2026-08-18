@@ -414,16 +414,37 @@ pas une cellule propre*. Je l'avais écrit, puis j'ai cité le chiffre biaisé d
 marquant la case « à mesurer » dans le tableau. **Ne jamais laisser un chiffre biaisé porter une
 affirmation.**
 
+### 🟢 LE 38 % DE ×2 À 1 nm TIENT SUR TROIS GRAINES
+
+📏 Mesuré le 2026-08-18. §24-46 impose de ne rien conclure d'une graine unique — voici les trois :
+
+| graine | offertes | déposables | `crash_min` |
+|---|---|---|---|
+| 42 | 429 | 0 | **38 %** |
+| 77 | 436 | 0 | **30 %** |
+| 101 | 420 | 0 | **36 %** |
+
+**Moyenne 34,7 %, étendue 8 points, et zéro déposable aux trois.** L'amélioration apportée par la
+fente fine — de 100 % à ~35 % — est donc un effet **robuste à la réalisation du bruit**, pas un
+tirage chanceux. Et l'absence de déposable l'est tout autant : à exploration standard, ×2 ne
+devient pas fabricable en affinant la fente.
+
 ### 🔑 La lecture juste : la fente fine est un REMÈDE, pas une amélioration
 
 Comparaison 1 nm contre 2 nm, une fois la ligne mince propre :
 
-| variante | 2 nm | 1 nm | |
-|---|---|---|---|
-| ×0,5 | 48 % | **28 %** | 🟢 1 nm aide |
-| ×1 | **0 %** | 4 % | 🔴 1 nm nuit |
-| ×1,5 | **0 %** | 30 % | 🔴 1 nm nuit |
-| ×2 | 100 % | **38 %** | 🟢 1 nm aide |
+| variante | Σ QWOT | 2 nm | 1 nm | |
+|---|---|---|---|---|
+| ×0,5 | 57,4 | 48 % | **28 %** | 🟢 1 nm aide |
+| ×1 | 114,9 | **0 %** | 4 % | 🔴 1 nm nuit |
+| ×1,5 | 172,3 | **0 %** | 30 % | 🔴 1 nm nuit |
+| ×1,75 | 201,1 | **0 %** | 6 % | 🔴 1 nm nuit |
+| ×2 | 229,8 | 100 % | **38 %** | 🟢 1 nm aide |
+
+📏 **La ligne ×1,75 a été complétée le 2026-08-18** : `2 nm → 0 %` · `1 nm → 6 %` ·
+`0,5 nm → 50 %`. Cinquième point, même conclusion — et il tombe entre ×1,5 et ×2, c'est-à-dire
+exactement là où une loi monotone en Σ QWOT aurait dû se manifester. **Elle ne s'y manifeste
+pas.**
 
 **Les deux cas où 1 nm aide sont exactement les deux qui ÉCHOUENT à 2 nm.** Et les deux où il
 nuit sont exactement ceux qui sont déjà à **0 %** — où aucune amélioration n'est possible, la
@@ -470,6 +491,17 @@ même — *« 289 déposables contre 241, donc 5 nm gagne »*.
 
 **Les deux colonnes classent à l'envers l'une de l'autre.** La règle de tri du §22 étant *SEEL
 d'abord, rendement en départage*, c'est **2 nm qui gagne** — la fente nominale de la machine.
+
+🔴 **MAIS CETTE CONCLUSION N'EST PAS ENCORE CONFIRMÉE EN PREMIUM, et le trou est de ma faute.**
+📏 Le rejeu §8 du 2026-08-18 a porté sur `5 nm` seulement : **1 415 offertes, 639 déposables,
+SEEL 0,335 nm** — contre 0,310 en `fast`. Le résultat *qualitatif* tient donc (beaucoup de
+déposables, 0 % de plantage), et le SEEL se dégrade en premium comme attendu, la profondeur de
+notation passant de 50 à 150 tirages et corrigeant la malédiction du vainqueur.
+
+⚠️ **Or je n'ai pas de `2 nm` en premium.** Comparer `0,335` (premium, 5 nm) à `0,272` (fast,
+2 nm) mélange deux profondeurs de notation, et ne prouve rien. **L'arbitrage rendement/précision
+est donc établi en `fast` et NON VÉRIFIÉ en `premium`.** Le contrôle manquant est une cellule :
+`75c` à 2 nm en premium.
 Élargir déforme le signal (biais en `B²`), donc l'arrêt est moins juste ; en échange le bruit
 baisse de ÷1,5 et il plante moins. **Un arbitrage, pas un gain gratuit.**
 

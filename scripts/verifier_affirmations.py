@@ -318,6 +318,11 @@ CHIFFRES_PUBLIES = [
     ("r75x2_fast_s077_res1", 436, 0, 30.0, None),
     ("r75x2_premium_s042", 651, 0, 100.0, None),
     ("r75x2_deep_s042_res1_large", 2945, 254, 1.0, 0.629),
+    # --- ajoutes le 2026-08-18 a 10:25, EN MEME TEMPS que dans les documents (§7bis) ---
+    ("r75x1.75_fast_s042_res1", 468, 0, 6.0, None),
+    ("r75x1.75_fast_s042_res0.5", 468, 0, 50.0, None),
+    ("r75x2_fast_s101_res1", 420, 0, 36.0, None),
+    ("75c_premium_s042_res5", 1415, 639, 0.0, 0.335),
 ]
 
 

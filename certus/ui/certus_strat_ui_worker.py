@@ -382,7 +382,17 @@ class CertusStratWorkerMixin:
             )
 
         else:
-            self.logger.info("[MODE] PREMIUM active")
+            # The log used to say "PREMIUM" for every non-fast mode, so a deep run was
+            # journalled as premium. A run's log must name the mode it actually ran in.
+            self.logger.info(
+                "[MODE] %s active | robustness_num_runs=%s | n_screen_runs=%s | dp_top_k=%s "
+                "| mining_candidates_limit=%s",
+                exec_mode.upper(),
+                params.get("robustness_num_runs"),
+                params.get("n_screen_runs"),
+                params.get("dp_top_k"),
+                params.get("mining_candidates_limit"),
+            )
 
         self.logger.info("=" * 80)
         self.logger.info("STARTING WORKFLOW: %s (%s)", task.name, task.value)

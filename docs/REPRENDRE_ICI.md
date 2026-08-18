@@ -1,7 +1,38 @@
-# REPRENDRE ICI — état au 2026-08-17
+# REPRENDRE ICI — état au 2026-08-18
 
 > ⚠️ **Les §1 à §5 décrivent le gel du 2026-08-16.** Ce qui suit immédiatement les corrige et
 > les complète. Lis ce bloc d'abord.
+
+## 🚀🚀 OÙ ON EN EST LE 2026-08-18 — le résultat qui change la lecture de tout le reste
+
+> 🔴 **Un `crash_min = 100 %` ne veut PAS dire « ce composant n'est pas monitorable ». Il veut
+> dire « ma recherche n'a pas proposé ce qui marche », et rien dans la sortie ne distingue les
+> deux.**
+
+📏 **La preuve, par intervention.** Le random75 ×2 rendait **0 stratégie déposable sur 404** et
+**100 % de plantage**, à plat, sur tous les nombres de blocs — il était déclaré impossible depuis
+trois jours. Même design, même graine, avec la fente à **1 nm** et une recherche **élargie ×5** :
+**2 945 stratégies dont 254 déposables**, la meilleure plantant **4 fois sur 300**, **SEEL
+0,629 nm**. C'est le premier SEEL valide jamais mesuré sur ce composant.
+
+📏 **Et la corrélation le confirme.** Sur les cinq points de la série d'échelle mesurés au même
+protocole, le rang du nombre de stratégies déposables corrèle à **+0,103** avec l'épaisseur
+optique — la propriété du design — et à **+0,975** avec le **nombre de stratégies offertes** par
+la recherche. 📌 [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md) §4quater et
+§4quinquies.
+
+| ce qui en découle | |
+|---|---|
+| 🟢 **un mode `extreme`** | quatrième mode à côté de `fast` / `premium` / `deep`. Élargit ce qui est **généré**, laisse la profondeur d'**évaluation** identique à `deep`. Coût ≈ 5× deep |
+| 🟢 **un fichier prêt à lancer** | `example/example_strat/JSON-strat-random75-x2-extreme.json` — on charge, on lance, rien d'autre à régler. ≈ 2 h 40 |
+| 🔴 **la série d'échelle est requalifiée** | son tableau *« échoue / passe / limite / échoue »* mesurait la recherche. `×1,75`, **plus épais** que `×1,5`, rend **282** déposables contre **1** |
+| 🔴 **la fente fine est un REMÈDE** | 1 nm aide `×0,5` (48 → 28 %) et `×2` (100 → 38 %) — les deux qui **échouent** à 2 nm — et **nuit** aux deux qui réussissent déjà. Effet de plafond, pas préférence spectrale |
+
+**Ce qui tourne au moment où j'écris** : la campagne **élargie**, deux tests falsifiables dont les
+critères sont écrits d'avance — `×0,5` et `×1,5` en recherche élargie. S'ils confirment, il n'y a
+pas de « barrière d'épaisseur optique » à prédire : il y a une **recherche à dimensionner**.
+
+---
 
 ## 🚀 OÙ ON EN EST LE 2026-08-17 AU SOIR
 

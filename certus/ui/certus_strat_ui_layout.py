@@ -864,14 +864,19 @@ class CertusStratLayoutMixin:
 
         self.widgets["execution_mode"] = QComboBox()
 
-        self.widgets["execution_mode"].addItems(["fast", "premium", "deep"])
+        self.widgets["execution_mode"].addItems(["fast", "premium", "deep", "extreme"])
         self.widgets["execution_mode"].setCurrentText("premium")
 
         self.widgets["execution_mode"].setToolTip(
             "Mode d'exécution du solveur :\n"
             "• fast : criblage rapide (~3-5 s, N=50 MC, top_k=20)\n"
             "• premium : nominal standard (~12-18 s, N=150 MC, top_k=40)\n"
-            "• deep : haute résolution (~45-60 s, N=300 MC, top_k=100)"
+            "• deep : haute résolution (~45-60 s, N=300 MC, top_k=100)\n"
+            "• extreme : recherche élargie ×5, même profondeur que deep.\n"
+            "  À réserver aux empilements qu'aucun autre mode ne rend\n"
+            "  fabricable : sur le random75 ×2, deep ne trouve AUCUNE\n"
+            "  stratégie déposable et extreme en trouve 254.\n"
+            "  Coûte environ 5× deep — à lancer si vous avez le temps."
         )
 
         mode_layout.addWidget(self.widgets["execution_mode"])

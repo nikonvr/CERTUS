@@ -109,12 +109,14 @@
                 <li><a href="#sec-11">Making it fast</a></li>
             </ol>
             <div style="margin:12px 0 0;padding-top:10px;border-top:1px solid #e2e8f0;font-size:0.94em;">
-                <b>If you are evaluating this for purchase, four sections carry the results:</b>
-                <a href="#sec-10">§10.14</a> the measured gain of block monitoring on two reference
-                components, <a href="#sec-10">§10.15</a> where the method runs out — a 99-layer
+                <b>If you are evaluating this for purchase, five sections carry the results:</b>
+                <a href="#sec-10-14">§10.14</a> the measured gain of block monitoring on two reference
+                components, <a href="#sec-10-15">§10.15</a> where the method runs out — a 99-layer
                 five-cavity filter — <a href="#sec-10-16">§10.16</a> how multiple-testglass monitoring
-                makes that same filter manufacturable, and <a href="#sec-10">§10.13</a> what is
-                deliberately <i>not</i> claimed.
+                makes that same filter manufacturable, <a href="#sec-10-17">§10.17</a> a stack that
+                looked impossible and was not, where the limit turned out to be the search rather than
+                the physics, and <a href="#sec-10-13">§10.13</a> what is deliberately <i>not</i>
+                claimed.
             </div>
         </div>
 
@@ -3476,9 +3478,9 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         conversion in a dedicated QThread to keep the main event loop responsive.</li>
                 </ul>
 
-                <h3>9.5 Solver Execution Modes (Fast, Premium, Deep)</h3>
+                <h3>9.5 Solver Execution Modes (Fast, Premium, Deep, Extreme)</h3>
                 <p>
-                    The solver exposes three standardized execution profiles via the <code>Execution Mode</code> combo-box in the <em>Advanced</em> parameters tab:
+                    The solver exposes four standardized execution profiles via the <code>Execution Mode</code> combo-box in the <em>Advanced</em> parameters tab. The first three are tabulated below; <b>Extreme</b> is described separately after the table, because it differs from them in kind rather than in degree &mdash; it widens the <i>search</i> while leaving the <i>evaluation</i> depth identical to Deep.
                 </p>
 
                 <table style="border-collapse:collapse;margin:12px 0 18px;font-size:0.92em;width:100%;">
@@ -3558,9 +3560,87 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <ul>
                         <li><b>Fast Mode:</b> Designed for fast turnaround while preserving significant crash detection (at $N=50$, binomial resolution $\sigma_p \approx 3.0\%$). Ideal for exploring layer feasibility.</li>
                         <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §10.7: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
-                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors) where wide Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) guarantee exhaustive exploration.</li>
+                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors), where a wider Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) buy a substantially broader exploration. <b>It does not guarantee an exhaustive one</b> &mdash; §10.17 gives a measured case where Deep returns no manufacturable strategy at all and Extreme returns 254 on the same design.</li>
                     </ul>
                 </div>
+
+                <h4 style="margin-top:22px;">Extreme mode &mdash; for the design that no other mode makes manufacturable</h4>
+
+                <p>
+                    Extreme raises what the search <b>generates and retains</b>, and deliberately leaves the
+                    <b>evaluation</b> depth identical to Deep ($N=300$ draws, $50$ screening draws). That choice is
+                    what makes its numbers usable: a crash rate produced under Extreme is directly comparable to a
+                    Deep run, because only the candidate supply changed. Widening the scoring depth instead would
+                    have made the results incomparable with everything measured before.
+                </p>
+
+                <table style="border-collapse:collapse;margin:12px 0 18px;font-size:0.92em;width:100%;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Search-width parameter</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Fast</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Premium</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Deep</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;background:#fef3c7;">🚀 Extreme</th>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>mining_candidates_limit</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">3 000</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">3 000</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">10 000</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">12 000</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>phase_a_keep_limit</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">50</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">50</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">50</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">200</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>top_k_parents</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">20</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">20</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">20</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">80</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>k_keep_survivors</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">6</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">10</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">25</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">40</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><code>strategy_phase_timeout</code></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">10 800 s</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>Evaluation depth</b> (<code>robustness_num_runs</code>)</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">50</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">150</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">300 &mdash; unchanged</td>
+                    </tr>
+                </table>
+
+                <div class="highlight-box">
+                    <strong>The timeout is not a detail &mdash; it is what makes the mode work at all.</strong>
+                    The default <code>strategy_phase_timeout</code> is 300 s. A phase that overruns is cut, and the
+                    run then reports a perfectly plausible result computed on an <i>amputated</i> exploration.
+                    Widening the search without raising that ceiling produces a mode that costs five times more and
+                    finds nothing extra. Raising it is what converts the extra candidates into extra strategies.
+                </div>
+
+                <p>
+                    <b>Cost:</b> about $5\times$ Deep &mdash; measured at 157 min on a 75-layer stack, 8 threads,
+                    2026-08-18. This is why it is not the default, and why the tooltip says to reach for it when you
+                    have the time. A ready-to-run configuration ships with the project:
+                    <code>example/example_strat/JSON-strat-random75-x2-extreme.json</code> &mdash; load it, press
+                    run, nothing else to set.
+                </p>
 
                 <!-- ================================================================ -->
                 <!--  WHAT MAKES A GOOD STRATEGY — ESTABLISHED vs CONJECTURED          -->
@@ -4627,7 +4707,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     the same warning as above, and it applies to the residue too.
                 </div>
 
-                <h3>10.13 What we deliberately do not claim</h3>
+                <h3 id="sec-10-13">10.13 What we deliberately do not claim</h3>
                 <ul>
                     <li><b>None of this is externally validated.</b> STRAT is currently checked only
                         against itself. The dichroic is a <b>coherence bench</b>, not an independent
@@ -4657,7 +4737,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         nobody measured would trade a measured constant for invented ones.</li>
                 </ul>
 
-                <h3>10.14 Multi-Layer Block Monitoring Discovery &amp; Phase A Block-Aware Engine (Campaign 2026-08-14)</h3>
+                <h3 id="sec-10-14">10.14 Multi-Layer Block Monitoring Discovery &amp; Phase A Block-Aware Engine (Campaign 2026-08-14)</h3>
                 <div class="highlight-box" style="background:#f0fdf4;border-left:4px solid #16a34a;">
                     🟢 <b>MEASURED — grouping the monitoring into a few multi-layer blocks beats
                     one-wavelength-per-layer monitoring on both test components.</b>
@@ -4864,7 +4944,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     about smoothing.
                 </div>
 
-                <h3>10.15 Where the method runs out — the 99-layer, 5-cavity bandpass</h3>
+                <h3 id="sec-10-15">10.15 Where the method runs out — the 99-layer, 5-cavity bandpass</h3>
                 <div class="highlight-box" style="background:#fef2f2;border-left:4px solid #dc2626;">
                     🔴 <b>On this component, purely optical monitoring stops being available — and no
                     better solver fixes that.</b> This section exists because an evaluator will ask
@@ -5193,6 +5273,105 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     $N = 50$ draws. Witness-change mechanics are unit-tested in
                     <code>tests/unit/test_strat_multiple_testglass.py</code> — including the control
                     that <i>without</i> a witness change the same error <b>is</b> seen.
+                </div>
+
+                <h3 id="sec-10-17">10.17 A stack that looked impossible, and was not &mdash; the search was the wall</h3>
+
+                <div class="highlight-box">
+                    <strong>The finding, stated plainly.</strong> A <code>crash_min</code> of 100&nbsp;% does not
+                    mean <i>&laquo;&nbsp;this component cannot be monitored with a single testglass&nbsp;&raquo;</i>.
+                    It can equally mean <i>&laquo;&nbsp;the search never proposed what would have worked&nbsp;&raquo;</i>,
+                    and <b>nothing in the output distinguishes the two</b>. We spent three days on the wrong side of
+                    that distinction, and it is reported here because a reader deserves to know the failure mode
+                    exists.
+                </div>
+
+                <p>
+                    The test object is the <b>&times;2 scale variant of the 75-layer random stack</b>: same layer
+                    count, same materials, same structure, all optical thicknesses doubled ($\sum \text{QWOT} = 229.8$).
+                    At nominal settings it is a wall &mdash; 404 strategies returned, <b>not one manufacturable</b>,
+                    100&nbsp;% crash, flat across every block count from 1 to 19. Two changes together move it:
+                </p>
+
+                <table style="border-collapse:collapse;margin:12px 0 18px;font-size:0.92em;width:100%;">
+                    <tr style="background:#f1f5f9;">
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left;">Configuration</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Strategies returned</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Manufacturable</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Min crash rate</th>
+                        <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Best SEEL</th>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;">2 nm slit, standard search</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">404</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#dc2626;font-weight:bold;">0</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#dc2626;">100.0&nbsp;%</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">&mdash;</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>1 nm slit</b>, standard search</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">429</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#dc2626;font-weight:bold;">0</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#ea580c;">38.0&nbsp;%</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">&mdash;</td>
+                    </tr>
+                    <tr style="background:#f0fdf4;">
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>1 nm slit + Extreme search</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">2&nbsp;945</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#16a34a;font-weight:bold;">254</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#16a34a;font-weight:bold;">1.0&nbsp;%</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">0.629 nm</td>
+                    </tr>
+                </table>
+
+                <p>
+                    <b>Neither change alone is enough.</b> The finer slit divides the slit-induced bias by four (it
+                    goes as $B^2$) at the cost of doubling the read noise, and on its own takes the crash rate from
+                    100&nbsp;% to 38&nbsp;% without producing a single manufacturable strategy. The widened search on
+                    top of it produces 254, the best crashing <b>4 times out of 300</b>.
+                </p>
+
+                <div class="note">
+                    <strong>Why the depth change does not explain it.</strong> The Extreme run evaluates each
+                    strategy over $N = 300$ draws against $N = 50$ in the standard screening run, so one might
+                    suspect the comparison. It cuts the other way: at 50 draws a strategy whose true crash rate is
+                    1.3&nbsp;% shows <i>zero</i> crashes roughly half the time, and would therefore be counted
+                    manufacturable <b>more</b> easily. Going to 300 draws can only reveal crashes, never hide them.
+                    The standard run found none because <b>those strategies were never generated</b>.
+                </div>
+
+                <h4>What this does <i>not</i> claim</h4>
+                <ul>
+                    <li><b>It is not a factor attribution.</b> Extreme changes seven search-width settings at once.
+                    What is established is <i>&laquo;&nbsp;widening the search&nbsp;&raquo;</i> as a block, not which
+                    of its levers carries the effect.</li>
+                    <li><b>Supply is not sufficient.</b> Measured counter-example: the same stack in Premium at 2 nm
+                    returns 651 strategies and still <b>0</b> manufacturable. The design matters; it took the finer
+                    slit <i>and</i> the wider search.</li>
+                    <li><b>One seed.</b> All figures above are at <code>robustness_seed = 42</code>. The order of
+                    magnitude is the claim; the exact count is not.</li>
+                    <li><b>Not yet replayed in Premium</b>, which our own publication rule requires before a SEEL is
+                    quoted as final.</li>
+                </ul>
+
+                <div class="highlight-box">
+                    <strong>And the honest generalisation, which is smaller than it looks.</strong> Across the five
+                    scale variants measured under one identical protocol, the rank correlation between the number of
+                    manufacturable strategies and the <b>total optical thickness</b> &mdash; a property of the design
+                    &mdash; is $\rho = +0.10$. Against the <b>number of strategies the search returned</b> it is
+                    $\rho = +0.975$. Five points support an ordinal statement, not a law. But combined with the
+                    intervention above, where design and seed were held fixed and only the search width moved, the
+                    direction is not in doubt: <b>on this family, how much you search predicts the outcome and how
+                    thick the stack is does not.</b>
+                </div>
+
+                <div class="note">
+                    <b>Source.</b> Artefact <code>reports/blocs_vs_plantage_r75x2_deep_s042_res1_large.json</code>,
+                    probe <code>scripts/probe_blocs_vs_plantage.py</code>, driver
+                    <code>scripts/batch_grille_resolution.py</code>. Ready-to-run configuration
+                    <code>example/example_strat/JSON-strat-random75-x2-extreme.json</code>. Seed 42, 2026-08-18,
+                    8 threads, 157 min. SEEL $= 2\sqrt{\text{RMSE}_{P95}}$, the same definition used throughout
+                    this page.
                 </div>
 
                 <h2 id="sec-11">11. Making It Fast — What the Structure Gives for Free</h2>

@@ -1302,6 +1302,39 @@ class CertusStratStateMixin:
             params_out["dp_top_k"] = 100
             params_out["k_keep_survivors"] = 25
             params_out["mining_candidates_limit"] = 10000
+        elif mode == "extreme":
+            # EXTREME -- for the user who has all the time. Measured 2026-08-18.
+            #
+            # WHY THIS MODE EXISTS. On the x2 scale variant of random75, the standard search
+            # returned 404 strategies and NOT ONE was depositable: 100 % crash, flat, on every
+            # block count. The component looked physically impossible to monitor with a single
+            # testglass. Widening the SEARCH -- same design, same seed, same slit -- returned
+            # 2945 strategies of which 254 are depositable, the best crashing 4 times out of
+            # 300 (SEEL 0.629 nm). The wall was the search, not the physics.
+            #
+            # WHAT IT CHANGES, AND WHAT IT DELIBERATELY DOES NOT. It widens what is GENERATED
+            # and RETAINED. It leaves the EVALUATION depth identical to deep (300 draws), so a
+            # crash rate produced here is directly comparable to a deep run. Widening scoring
+            # depth instead would make the numbers incomparable with everything already
+            # measured.
+            #
+            # COST: roughly 5x a deep run. Measured 157 min on 75 layers, 8 threads.
+            params_out["execution_mode"] = "extreme"
+            params_out["robustness_num_runs"] = 300
+            params_out["consensus_num_runs"] = 300
+            params_out["n_screen_runs"] = 50
+            params_out["elite_rounds"] = 3
+            params_out["dp_top_k"] = 100
+            params_out["k_keep_survivors"] = 40
+            params_out["mining_candidates_limit"] = 12000
+            params_out["phase_a_keep_limit"] = 200
+            params_out["top_k_parents"] = 80
+            params_out["max_fusions_per_parent"] = 15
+            params_out["screening_keep_top_k"] = 20
+            # Without this the widening is TRUNCATED IN SILENCE: the default is 300 s, and an
+            # over-running phase is cut, the run then reporting a plausible result on an
+            # amputated exploration.
+            params_out["strategy_phase_timeout"] = 10800
         else:
             params_out["execution_mode"] = "premium"
             params_out["robustness_num_runs"] = 150

@@ -33,6 +33,22 @@ Le chantier en cours est la **multiple testglass methodology** : introduire un v
 | passe-bande 5 cavités `-5cav-99c` | 99 | **0,81 nm** | 🔴 **4 verres témoins** `0-22/22-42/42-76/76-99` · ⚠️ le `0,782 nm` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839), corrigé le 17/08 |
 | le même, **une seule campagne** | 99 | *aucun score valide* | **100 % de plantage** — sur **751** stratégies remesurées le 17/08, de 1 à 99 blocs |
 | **cible posée par 👤** | | **0,300 nm** | facteur **2,7** restant sur le 99c |
+| 🟢 **random75 ×2**, mode `extreme` | 75 | **0,629 nm** | 🔴 **NOUVEAU 18/08** — le même empilement rendait **0 déposable et 100 % de plantage** en recherche standard. Fente 1 nm + mode `extreme` : **254 déposables sur 2 945** |
+
+🔴🔴 **LE RÉSULTAT DU 2026-08-18, ET IL CHANGE LA LECTURE DE TOUT LE RESTE.** Un
+`crash_min = 100 %` ne veut **pas** dire *« ce composant n'est pas monitorable »*. Il veut dire
+*« ma recherche n'a pas proposé ce qui marche »*, et **rien dans la sortie ne distingue les
+deux**. 📏 Sur les cinq points de la série d'échelle mesurés au même protocole, la corrélation de
+rang avec le nombre de stratégies déposables vaut **+0,103 pour l'épaisseur optique** — la
+propriété du design — et **+0,975 pour le nombre de stratégies OFFERTES** par la recherche. Et
+l'intervention le confirme : même design, même graine, même fente, recherche élargie, ×2 passe de
+**0/404** à **254/2 945**. 📌 [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md)
+§4quinquies.
+
+🟢 **Ce qui en découle, et c'est un livrable utilisable tout de suite** : un quatrième mode
+d'exécution **`extreme`** (à côté de `fast` / `premium` / `deep`) et un fichier prêt à lancer,
+`example/example_strat/JSON-strat-random75-x2-extreme.json`. On le charge, on lance, il n'y a rien
+d'autre à régler. Compter **≈ 2 h 40**.
 
 ⚠️ **Et le 99c n'est PAS une référence valable pour généraliser** — 👤, 2026-08-17 : *« il est
 rare de déposer un empilement tout 1/4 d'onde, surtout en trigger POEM »*. Ses multiplicateurs
@@ -146,7 +162,7 @@ ce commentaire dans le code :
 
 ---
 
-## 8. ÉTAT AU 2026-08-16 07:45 — ce qui tourne
+## 8. ÉTAT AU 2026-08-18 — ce qui tourne
 
 | batch | état |
 |---|---|

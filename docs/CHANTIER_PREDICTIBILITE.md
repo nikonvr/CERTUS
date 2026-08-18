@@ -32,12 +32,26 @@ produit trois fausses conclusions le 2026-08-17 (§4).
 matériaux, substrat et grille spectrale identiques aux quatre échelles. Seule l'épaisseur
 optique varie.**
 
-| facteur | **Σ QWOT** | **ép. OPTIQUE** | QWOT par couche | couches < 1 QWOT | verdict | déposables | `crash_min` | SEEL |
+🔴🔴 **CE TABLEAU NE MESURE PAS LA FAISABILITÉ — IL MESURE CE QUE LA RECHERCHE COURANTE TROUVE.**
+Établi le 2026-08-18, et c'est le résultat central du chantier. Les verdicts « échoue » ci-dessous
+sont conditionnés à la **recherche standard** ; deux d'entre eux tombent quand on l'élargit.
+**Lire §4quater et §4quinquies avant d'en tirer quoi que ce soit.**
+
+| facteur | **Σ QWOT** | **ép. OPTIQUE** | QWOT par couche | couches < 1 QWOT | verdict *(recherche standard)* | déposables | `crash_min` | SEEL |
 |---|---|---|---|---|---|---|---|---|
 | **×0,5** | **57,4** | 9,09 µm | 0,252 – 1,240 | **59** | 🔴 échoue | 0/375 | **48 %** | — |
 | **×1** | **114,9** | 18,18 µm | 0,504 – 2,479 | — | 🟢 **passe** | 241/662 | 0 % | **0,272 nm** |
-| **×1,5** | **172,3** | 27,27 µm | 0,756 – 3,719 | 3 | 🟠 limite | **1/704** | 0 % | **0,63 nm** |
-| **×2** | **229,8** | 36,36 µm | 1,008 – 4,958 | **0** | 🔴 échoue | 0/404 | **100 %** | — |
+| **×1,5** | **172,3** | 27,27 µm | 0,756 – 3,719 | 3 | 🟠 limite | **1/440** | 0 % | **0,633 nm** |
+| **×1,75** | **201,1** | 31,82 µm | 0,882 – 4,338 | 2 | 🟢 **passe** | **282/746** | 0 % | **0,528 nm** |
+| **×2** | **229,8** | 36,36 µm | 1,008 – 4,958 | **0** | 🔴 échoue *(standard)* · 🟢 **passe élargi** | 0/404 · **254/2945** | 100 % · **1,0 %** | — · **0,629 nm** |
+
+🔴 **La ligne ×1,75, mesurée le 2026-08-18, DÉTRUIT la lecture monotone.** Elle est **plus
+épaisse** que ×1,5 et rend **282 déposables contre 1**, avec un **meilleur** SEEL (0,528 contre
+0,633 nm). L'ordre « plus c'est épais, plus c'est dur » n'existe pas.
+
+⚠️ **Le `1/704` qui figurait ici est remplacé par `1/440`** : 704 venait d'un run à protocole
+différent. Les cinq lignes ci-dessus sont désormais **toutes** en `fast`, fente 2 nm, graine 42 —
+c'est ce qui les rend comparables.
 
 ### 🔴 « Fin » et « épais » se définissent en épaisseur OPTIQUE, jamais mécanique
 
@@ -503,12 +517,15 @@ sur ce composant.
 changements simultanés ne s'attribuent pas. Ce qui est établi est *« élargir la recherche »* comme
 bloc, pas lequel de ses sept leviers porte l'effet.
 
-**2. La profondeur d'évaluation a changé aussi — 50 → 150 tirages.** 📏 Lisible dans les données :
-les cellules `fast` rendent des taux multiples de 2 % (1/50), la phase 2 rend `2/150 = 1,33 %`.
+**2. La profondeur d'évaluation a changé aussi — 50 → 300 tirages.** `execution_mode = deep`
+pose `robustness_num_runs = 300` (`certus_strat_ui_state.py:1296`). 📏 Vérifiable dans les
+données : les cellules `fast` rendent des taux multiples de 2 % (1/50), la gagnante de la phase 2
+plante **4 fois sur 300** et le `crash_min` du run vaut **3/300 = 1,00 %**.
 ✅ **Mais ce biais joue CONTRE le résultat, donc il ne l'explique pas** : à 50 tirages, une
 stratégie dont le taux vrai vaut 1,3 % affiche **zéro** plantage une fois sur deux, et serait donc
-comptée déposable **plus facilement**. Si `fast` n'en a trouvé aucune, ce n'est pas faute de
-tirages — c'est que **ces stratégies n'ont jamais été proposées**.
+comptée déposable **plus facilement**. Passer à 300 tirages ne peut que **révéler** des plantages,
+jamais en cacher. Si `fast` n'a trouvé aucune déposable, ce n'est pas faute de tirages — c'est que
+**ces stratégies n'ont jamais été proposées**.
 
 **3. Une seule graine (42).** §24-46 : un verdict marginal bascule avec la graine. 254 déposables
 sur 2 945 n'est pas marginal, mais le chiffre exact ne tient pas sur une graine.
@@ -527,6 +544,52 @@ distinguer.
 **aucune en dessous de 6, aucune au-dessus de 11**. La recherche standard, elle, plafonnait bien
 plus bas. C'est cohérent avec la zone favorable de §24-44 (4-7 blocs), étendue vers le haut.
 
+### 🟢 LE LIVRABLE — un mode `extreme` et un fichier prêt à lancer
+
+> 👤 **2026-08-18** : *« crée un JSON spécifique pour que le code trouve de lui-même, pour un
+> utilisateur inexpérimenté, le 75×2 fabricable »*, puis *« j'aime bien l'idée du mode spécifique
+> si l'utilisateur a tout son temps »*.
+
+**Un quatrième mode d'exécution, `extreme`**, à côté de `fast` / `premium` / `deep`
+(`certus/ui/certus_strat_ui_state.py`). Il élargit ce qui est **généré et retenu**, et laisse la
+profondeur d'**évaluation** identique à `deep` — un taux de plantage produit en `extreme` reste
+donc directement comparable à un run `deep`.
+
+| paramètre | fast | premium | deep | **extreme** |
+|---|---|---|---|---|
+| `robustness_num_runs` | 50 | 150 | 300 | **300** |
+| `n_screen_runs` | 10 | 25 | 50 | **50** |
+| `dp_top_k` | 20 | 40 | 100 | **100** |
+| `k_keep_survivors` | 6 | 10 | 25 | **40** |
+| `mining_candidates_limit` | 3 000 | 3 000 | 10 000 | **12 000** |
+| `phase_a_keep_limit` | 50 | 50 | 50 | **200** |
+| `top_k_parents` | 20 | 20 | 20 | **80** |
+| `max_fusions_per_parent` | 5 | 5 | 5 | **15** |
+| `screening_keep_top_k` | 5 | 5 | 5 | **20** |
+| `strategy_phase_timeout` | 300 | 300 | 300 | **10 800** |
+
+🔒 **Règle d'or vérifiée** : les trois modes existants rendent **exactement** les mêmes valeurs
+qu'avant — contrôlé paramètre par paramètre. Une branche `elif` ajoutée ne touche aucun chemin
+existant, et le défaut reste `premium`.
+
+🔴 **`strategy_phase_timeout` est le paramètre sans lequel le mode ne servirait à rien.** Le défaut
+vaut 300 s : une phase qui déborde est coupée, et le run rend un résultat plausible sur une
+exploration **amputée**. Élargir la recherche sans relever ce plafond produirait un `extreme` qui
+coûte cinq fois plus cher et ne trouve rien de plus.
+
+**Et le fichier prêt à lancer** : `example/example_strat/JSON-strat-random75-x2-extreme.json`.
+Il porte l'empilement ×2, la fente à 1 nm, le mode `extreme` et la graine 42 — c'est-à-dire
+**exactement** la configuration qui a produit les 254 déposables. On le charge, on lance, il n'y a
+rien d'autre à régler. Le fichier dit lui-même ce qu'il coûte (≈ 2 h 40) et ce qu'il ne promet pas.
+
+⚠️ **Et il dit aussi ce qu'il ne faut PAS en déduire** : la fente fine n'est pas un réglage
+universel. Elle achète de la finesse spectrale et paie du bruit (×2 en passant de 2 à 1 nm) ; sur
+un empilement qui fonctionne déjà, elle **dégrade** le résultat (§4ter).
+
+📌 **Défaut corrigé au passage** : le journal annonçait `[MODE] PREMIUM active` pour **tout** mode
+autre que `fast` — un run `deep` était donc journalisé comme premium. Il nomme désormais le mode
+réel et ses quatre paramètres de largeur.
+
 ### Ce que ça change pour le chantier
 
 | | |
@@ -535,6 +598,76 @@ plus bas. C'est cohérent avec la zone favorable de §24-44 (4-7 blocs), étendu
 | 🔴 **et ×0,5 doit être rejoué pareil** | il est à 28 % à 1 nm avec la recherche standard. **Si l'élargissement le sauve aussi, la « barrière » de la série s'effondre entièrement** — c'est la mesure la plus importante à faire ensuite |
 | 🟠 **le 99c mérite le même traitement** | ses 751 stratégies à 100 % ont toutes été produites par la recherche standard, à 2 nm |
 | ✅ **§8 s'applique** | 254 déposables sous un mode non nominal ⇒ rejeu **premium** avant publication |
+
+---
+
+## 4quinquies. 🔴🔴 LE RÉSULTAT CENTRAL — le chantier mesurait la RECHERCHE, pas la physique
+
+📏 **Établi le 2026-08-18.** Cinq points de la série d'échelle, **protocole identique** : `fast`,
+fente 2 nm, graine 42, recherche standard. La seule chose qui varie est l'épaisseur optique.
+
+| Σ QWOT | variante | **offertes** | **déposables** | `crash_min` |
+|---|---|---|---|---|
+| 57,4 | ×0,5 | 375 | 0 | 48 % |
+| 114,9 | ×1 | 662 | 241 | 0 % |
+| 172,3 | ×1,5 | 440 | 1 | 0 % |
+| 201,1 | ×1,75 | 746 | 282 | 0 % |
+| 229,8 | ×2 | 404 | 0 | 100 % |
+
+**Corrélation de rang avec le nombre de stratégies déposables :**
+
+```
+Somme QWOT -- la propriete du DESIGN         rho = +0,103     rien
+OFFERTES   -- ce que la RECHERCHE propose    rho = +0,975     presque parfait
+```
+
+> **L'épaisseur optique n'ordonne rien. Le nombre de stratégies que la recherche a proposées
+> ordonne presque parfaitement.**
+
+### 🔑 Et la flèche causale est établie, sur un composant
+
+La corrélation seule ne prouverait rien — `offertes` est une **sortie** de la recherche, pas une
+entrée, et un design facile produit peut-être naturellement plus de candidates. **La phase 2
+tranche le sens** : *même design, même graine, même fente*, seule la largeur de la recherche
+change, et ×2 passe de **0 déposable sur 404** à **254 sur 2 945** (§4quater).
+
+C'est une intervention, pas une observation. **Sur ce composant au moins, l'offre est bien une
+cause et non un symptôme.**
+
+### 🔴 Ce que ça fait aux quatre sections précédentes
+
+| | |
+|---|---|
+| **§1** | le tableau fondateur *« échoue / passe / limite / échoue »* ne décrit pas la faisabilité. `×1,5` « marginal » avec 1 déposable est un artefact : `×1,75`, **plus épais**, en rend 282 |
+| **§3** | *« aucune grandeur du signal nominal ne prédit l'échec »* — normal. Il n'y avait rien à prédire dans le signal, la variable dominante n'était pas dans le design |
+| **§4.1 à §4.5** | les cinq routes fermées cherchaient toutes un prédicteur **du design**. Elles ne pouvaient pas aboutir : elles corrélaient une propriété physique à une grandeur gouvernée par l'exploration |
+| **§4bis** | la marge accumulée ordonnait 0 / 5 / 25 — mais elle se lit sur les stratégies **que la recherche a produites**. Même contamination |
+
+### ⚠️ Ce qui n'est PAS établi, et il faut le dire
+
+**1. L'offre ne suffit pas.** 📏 Contre-exemple mesuré : `×2` en **premium** offre **651**
+stratégies et rend **0 déposable**, `crash_min` 100 %. Le design compte donc encore — il a fallu
+**la fente fine ET l'élargissement** pour débloquer ×2.
+
+**2. Cinq points.** `rho = +0,975` sur cinq points supporte une affirmation ordinale, pas une loi.
+
+**3. Une seule graine, un seul empilement de base.** Toute la série descend du même random75.
+
+**4. Ce n'est pas un prédicteur.** 👤 demandait *« prédire sans tout calculer »*. Connaître le
+nombre de stratégies offertes exige de faire tourner la Phase A **et** la Phase B. On a déplacé
+la question, on ne l'a pas résolue.
+
+### 🟢 Les deux tests falsifiables lancés le 2026-08-18, critères écrits d'avance
+
+| cellule | thèse CONFIRMÉE si | thèse RÉFUTÉE si |
+|---|---|---|
+| **×0,5 à 1 nm, élargi** — il échoue vraiment (28 %, 0/375) | l'élargissement rend des déposables | il reste à **0** ⇒ la barrière existe bel et bien du côté mince, et elle est physique |
+| **×1,5 à 2 nm, élargi** — 1 déposable sur 440 quand ×1,75 en rend 282 | il passe à des centaines | il reste marginal ⇒ ×1,5 a une singularité propre |
+
+🔑 **Si les deux confirment, la conclusion du chantier change de nature** : il n'y a pas de
+« barrière d'épaisseur optique » à prédire, il y a une **recherche à dimensionner**. Et la bonne
+question devient *« combien d'exploration ce design exige-t-il ? »*, ce qui est une question
+d'ingénierie, pas de physique.
 
 ---
 
@@ -591,13 +724,25 @@ passant dans la même famille. ⚠️ Avec un **contrôle en premium sans fente*
 
 ## 6. Ce qu'il reste à faire, par rendement
 
-| # | action | coût | ce que ça donne |
+### ✅ Fait dans la nuit du 2026-08-17 au 18 — 17 cellules
+
+| | action | résultat |
+|---|---|---|
+| ✅ | la résolution spectrale, grille complète 4 fentes × 4 échelles | §4ter — **la fente fine est un remède, pas une amélioration** |
+| ✅ | la marge accumulée par cause | §4bis — ordonne, mais exige la simulation |
+| ✅ | raffiner l'échelle : **×1,75** | §4quinquies — **détruit la lecture monotone** |
+| ✅ | deuxième graine sur ×2 à 1 nm | 38 % (g42) contre 30 % (g77) — le résultat tient |
+| ✅ | élargir la recherche sur ×2 | §4quater — **254 déposables, SEEL 0,629 nm** |
+
+### 🔴 Ce qui reste, et l'ordre a changé
+
+| # | action | coût | ce que ça décide |
 |---|---|---|---|
-| 1 | **`search_resolution` sur ×2**, avec contrôle sans fente | ~2 h | la thèse de 👤, testée là où elle a un sens |
-| 2 | **`margin_by_layer` par cause sur ×0,5 et ×2** | ~1 h | le mécanisme à deux bords **mesuré**, pas supposé |
-| 3 | **la marge sur trajectoire ACCUMULÉE** | instrumentation | la seule route restante vers une impossibilité |
-| 4 | **raffiner l'échelle** : ×0,75, ×1,25, ×1,75 | ~1,5 h | localise les **deux** frontières |
-| 5 | **deuxième graine sur ×0,5 et ×1,5** | ~1 h | les deux points marginaux ne tiennent pas sur une graine |
+| **1** | **×0,5 et ×1,5 en recherche ÉLARGIE** | ~5 h | 🔴 **LES DEUX TESTS FALSIFIABLES DE §4quinquies.** Ils décident si la « barrière » existe |
+| 2 | **le 99c en recherche élargie**, à 1 nm | ~3 h | ses 751 stratégies à 100 % viennent toutes de la recherche standard, à 2 nm. Le verdict *« non monitorable »* n'a jamais été testé autrement |
+| 3 | **rejeu premium** des cellules à déposables | ~2 h | §8 — rien de publiable avant |
+| 4 | **de quoi dépend l'OFFRE ?** | à spécifier | si le nombre de stratégies offertes se prédit depuis le design, on tient enfin le prédicteur bon marché — par un chemin que personne n'avait envisagé |
+| 5 | seconde graine sur ×1,75 et ×0,5 | ~1,5 h | les deux nouveaux points ne tiennent que sur la graine 42 |
 
 ## 7. 🔒 Vocabulaire — nommer la cause, jamais la métaphore
 

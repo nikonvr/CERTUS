@@ -240,7 +240,7 @@ aucune instruction, et elle a un régime propre :
 | **Une affirmation fausse y coûte plus qu'un manque** | Un évaluateur qui prend un chiffre en défaut cesse de croire le reste. Tout nombre doit être sourçable dans le code ou dans un artefact de `reports/`. |
 | **La nuance juste convainc, le superlatif non** | « le meilleur partitionnement **mesuré** sur deux empilements » se défend ; « l'optimum universel » se réfute en une question. |
 | **Elle doit montrer sa LIMITE** | §21.15 porte le 99 couches, dont **aucune stratégie ne survit** — plantage 100 %, et le 0,86 nm qui traîne est un **score de repli**. Un expert le trouverait de toute façon. |
-| **Et ce qui lève la limite** | **§21.16 — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, **0,782 nm** à 0 % de plantage (0,760 nm au 15/08, corrigé le 16/08). Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
+| **Et ce qui lève la limite** | **§21.16 — multiple testglass**, ajoutée le 2026-08-15 : le même 99 couches devient fabricable, **0,81 nm** à 0 % de plantage. ⚠️ Le `0,782` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839) — corrigé le 17/08. Elle dit aussi les trois attentes que la mesure a **démenties**, et ce qui n'est **pas** revendiqué (borne supérieure, une seule graine). |
 | **Vérifie la STRUCTURE après toute édition** | Le 2026-08-14 un `</ul>` supprimé faisait rendre 400 lignes à l'intérieur d'une liste, et avait emporté une puce entière. Passe `html.parser`, ne te fie pas à l'œil. |
 
 Les autres pages de `pages/` (14 fichiers : DESIGN, INDEX, FIELD, HUB, RE, METAL, métrologie…)
@@ -473,6 +473,18 @@ mesure. **Et donne la machine entière au run que tu mesures** — voir Règle 5
   | une comparaison **à protocole fixé**, dans une même campagne | 🔴 un **minimum sur beaucoup de candidats** : c'est la malédiction du vainqueur, elle a coûté **+12,9 %** le 15/08 |
   🔑 **Un SEEL retenu sous FAST se rejoue en PREMIUM avant publication.** C'est la règle qui
   a de la valeur ; l'interdiction n'en avait plus.
+
+  🟢 **ET IL Y A UN QUATRIÈME MODE DEPUIS LE 2026-08-18 : `extreme`.** 👤 : *« j'aime bien l'idée
+  du mode spécifique si l'utilisateur a tout son temps »*. Il élargit ce qui est **généré et
+  retenu** (`dp_top_k` 100, `mining_candidates_limit` 12 000, `phase_a_keep_limit` 200,
+  `top_k_parents` 80, `strategy_phase_timeout` 10 800 s) et **laisse la profondeur d'évaluation
+  identique à `deep`** — un taux de plantage produit en `extreme` reste donc comparable à un run
+  `deep`. Coût ≈ **5× deep**, mesuré 157 min sur 75 couches.
+  🔑 **Ce qu'il a débloqué** : sur le random75 ×2, `deep` rend **0** stratégie déposable et
+  `extreme` en rend **254** (§21). Fichier prêt à lancer, rien d'autre à régler :
+  `example/example_strat/JSON-strat-random75-x2-extreme.json`.
+  🔒 Les trois modes existants sont **inchangés au bit** — contrôlé paramètre par paramètre, et
+  le défaut reste `premium`.
   ⚠️ Défaut d'implantation qui subsiste : `fast_auto_blocks` est posé et **journalisé**
   (`certus_strat_ui_worker.py:375`) alors qu'**aucun code ne le lit**. Le journal annonce donc
   un effet qui n'existe pas. Le rebrancher ou le supprimer, mais ne pas le laisser dans le log.
@@ -1030,7 +1042,7 @@ chemin de calcul est celui d'avant, au bit près.
 | dichroïque `JSON-strat-example` | 48 | **0,173 nm** | 0 % | 6 blocs, une seule campagne |
 | passe-bande 3 cavités `JSON-strat-bandpass-3cav` | 35 | **0,482 nm** | 0 % | 6 blocs, mode DEEP |
 | **aléatoire** `JSON-strat-random75` | 75 | **0,272 nm** | 0 % | une seule campagne, 241/662 déposables |
-| passe-bande 5 cavités `JSON-strat-bandpass-5cav-99c` | 99 | **0,782 nm** | 0 % par campagne | 🔴 **4 verres témoins** — 0-22 / 22-42 / 42-76 / 76-99 · ⚠️ le 0,760 nm du 15/08 est **périmé**, voir §23.12 |
+| passe-bande 5 cavités `JSON-strat-bandpass-5cav-99c` | 99 | **0,81 nm** | 0 % par campagne | 🔴 **4 verres témoins** — 0-22 / 22-42 / 42-76 / 76-99 · ⚠️ moyenne de **trois graines** (0,782 / 0,816 / 0,839) ; ne cite jamais le 0,782 seul |
 | le même, **en une seule campagne** | 99 | *aucun score valide* | **100 %** sur 487 stratégies | non fabricable — §23.8 |
 
 🔑 **Lis la troisième et la quatrième ligne ensemble : 75 couches passent, 99 non.** Ce n'est
@@ -1043,6 +1055,38 @@ réfuté.** Mesuré le 2026-08-15 : les cinq espaceurs offrent **65 à 133 λ ut
 et **aucune des 99 couches n'est muette**. Le swing crête-à-crête d'une demi-onde n'est pas
 nul ; c'est son écart début-fin qui l'est, et ce n'est pas la même grandeur. Ce qui met le
 99c en échec est la **marge** du sursaut face à l'hystérésis, pas l'absence de signal.
+
+#### 🔴🔴 LA SÉRIE D'ÉCHELLE DU RANDOM75 MESURAIT LA RECHERCHE, PAS LA PHYSIQUE — 2026-08-18
+
+📌 **Le dossier fait autorité : [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)
+§4quater et §4quinquies.** Ce qu'il faut retenir sans l'ouvrir :
+
+| Σ QWOT | variante | offertes | déposables | `crash_min` | SEEL |
+|---|---|---|---|---|---|
+| 57,4 | ×0,5 | 375 | 0 | 48 % | — |
+| 114,9 | ×1 | 662 | 241 | 0 % | 0,272 nm |
+| 172,3 | ×1,5 | 440 | 1 | 0 % | 0,633 nm |
+| 201,1 | **×1,75** | 746 | **282** | 0 % | **0,528 nm** |
+| 229,8 | ×2 | 404 | 0 | **100 %** | — |
+| 229,8 | ×2 **en mode `extreme`, fente 1 nm** | **2 945** | **254** | **1,0 %** | **0,629 nm** |
+
+🔑 **Deux faits, et ils changent la lecture de tout ce chantier :**
+
+1. **`×1,75` est PLUS ÉPAIS que `×1,5` et rend 282 déposables contre 1.** Il n'y a pas de loi
+   « plus c'est épais, plus c'est dur ».
+2. 📏 Sur les cinq points au **même protocole**, la corrélation de rang avec le nombre de
+   déposables vaut **+0,103 pour Σ QWOT** — la propriété du design — et **+0,975 pour le nombre
+   de stratégies OFFERTES** par la recherche. Et la flèche causale est établie : **même design,
+   même graine, même fente**, seule la largeur de recherche change, et ×2 passe de **0/404** à
+   **254/2 945**.
+
+🔴 **Donc un `crash_min = 100 %` ne dit PAS « ce composant n'est pas monitorable ».** Il dit
+« ma recherche n'a pas proposé ce qui marche », et rien dans la sortie ne distingue les deux.
+C'est le défaut §24-37 dans l'autre sens, et il a fait croire trois jours durant que ×2 était
+impossible.
+
+⚠️ **L'offre ne suffit pas pour autant** : ×2 en `premium` offre 651 stratégies et rend **0**
+déposable. Il a fallu **la fente fine ET l'élargissement**.
 
 #### 🟠 CES QUATRE SEEL NE VIVENT PAS SUR LE MÊME DOMAINE SPECTRAL — constaté le 2026-08-15
 
@@ -1059,7 +1103,7 @@ comme un classement de difficulté.
 
 **Les deux passe-bandes sont déjà notés en zone réduite** — leur configuration resserre la
 plage autour de la bande. Les deux autres sont notés large. Donc l'ordre
-`0,173 < 0,272 < 0,482 < 0,782` mélange **deux effets** : la difficulté intrinsèque du
+`0,173 < 0,272 < 0,482 < 0,81` mélange **deux effets** : la difficulté intrinsèque du
 composant, **et** la largeur de la fenêtre où l'erreur est regardée. Une bande étroite autour
 d'une résonance concentre le score là où le filtre est le plus sensible ; une grille large
 dilue la même erreur dans des zones plates.
@@ -1345,10 +1389,10 @@ incorrigible**.
 
 | ce qui est acquis | |
 |---|---|
-| **le multi-témoins rend le 99c fabricable** | **0,782 nm** à 4 témoins `0-22/22-42/42-76/76-99`, 0 % de plantage par campagne — contre 100 % en une seule |
+| **le multi-témoins rend le 99c fabricable** | **0,81 nm** à 4 témoins `0-22/22-42/42-76/76-99`, 0 % de plantage par campagne — contre 100 % en une seule |
 | il ne rend **pas** plus précis | la comparaison honnête est *impossible → possible* |
 | c'est un outil de **faisabilité**, jamais d'optimisation | contrôle négatif passé **3 fois sur 3** : +73/+89 % (48c), +10/+98 % (35c), +110 % (75c) |
-| **où** changer, et **combien** de témoins, importent peu | étendue +11,6 % sur 436 partitions, **31 à égalité** ; 4 témoins 0,782 nm contre 3 témoins 0,784 nm |
+| **où** changer, et **combien** de témoins, importent peu | étendue +11,6 % sur 436 partitions, **31 à égalité** ; 4 témoins 0,782 nm contre 3 témoins 0,784 nm, **à graine 42** — une comparaison à graine fixée reste valide, c'est la VALEUR ABSOLUE qui ne l'est pas |
 | la barrière est **structurelle ET la longueur compte** | 75 couches aléatoires passent à 0 % ; le taux s'effondre pourtant avec la longueur, `r = −0,869` |
 | le mécanisme d'échec est **la marge**, pas le comptage | 83 % `TP_MISCOUNT`, mais la cause est le sursaut trop proche de l'hystérésis et le plancher photométrique |
 

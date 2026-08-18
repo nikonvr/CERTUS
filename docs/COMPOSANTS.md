@@ -285,3 +285,33 @@ départager deux stratégies — ce qu'on ne fait pas ici.
 Le résultat remonte dans le rapport de sonde sous `ablation`, et dans le tableau de
 l'interface sous la colonne **« Dominant defect »**, l'info-bulle portant le classement
 complet et les deux avertissements ci-dessus.
+
+---
+
+## 🔑 LA SÉRIE D'ÉCHELLE DU RANDOM75 — cinq variantes, et c'est l'INSTRUMENT du projet
+
+📌 **Le dossier fait autorité : [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md).**
+Ici, seulement de quoi savoir que ces fichiers existent et à quoi ils servent.
+
+Le même empilement aléatoire de 75 couches, à cinq échelles d'épaisseur. **Nombre de couches,
+structure, matériaux, substrat et grille spectrale identiques ; seule l'épaisseur optique varie.**
+C'est le seul dispositif du dépôt qui sépare l'**épaisseur optique** du **nombre de couches**.
+
+| fichier | Σ QWOT | généré par |
+|---|---|---|
+| `example/example_strat/JSON-strat-random75.json` | 114,9 | la référence, ×1 |
+| `reports/serie_echelle_r75/cfg_x0.5.json` | 57,4 | `scripts/serie_echelle_r75.py --facteur 0.5` |
+| `reports/serie_echelle_r75/cfg_x1.5.json` | 172,3 | `… --facteur 1.5` |
+| `reports/serie_echelle_r75/cfg_x1.75.json` | 201,1 | `… --facteur 1.75` — ajouté le 2026-08-18 |
+| `reports/serie_echelle_r75/cfg_x2.json` | 229,8 | `… --facteur 2` |
+| 🟢 `example/example_strat/JSON-strat-random75-x2-extreme.json` | 229,8 | **le ×2 rendu fabricable** — fente 1 nm + mode `extreme` |
+
+🔴 **Ne lis PAS cette série comme une échelle de difficulté.** Mesuré le 2026-08-18 : `×1,75` est
+**plus épais** que `×1,5` et rend **282 stratégies déposables contre 1**. Ce que la série
+ordonnait n'était pas la physique du design mais **ce que la recherche avait proposé** —
+corrélation de rang **+0,975** avec le nombre de stratégies offertes, contre **+0,103** avec
+l'épaisseur optique.
+
+⚠️ **Et ce sont cinq filtres DIFFÉRENTS, pas cinq versions d'un même filtre** : le spectre nominal
+change avec l'échelle, donc chaque SEEL est mesuré contre **sa propre** cible. Ce qui se compare
+d'un facteur à l'autre est la **faisabilité**, pas le SEEL.

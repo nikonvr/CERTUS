@@ -3615,7 +3615,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">300 s</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;background:#fffbeb;">10 800 s</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;background:#fffbeb;">10 800 s &mdash; <i>inert, see below</i></td>
                     </tr>
                     <tr style="background:#f8fafc;">
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>Evaluation depth</b> (<code>robustness_num_runs</code>)</td>
@@ -3626,12 +3626,17 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     </tr>
                 </table>
 
-                <div class="highlight-box">
-                    <strong>The timeout is not a detail &mdash; it is what makes the mode work at all.</strong>
-                    The default <code>strategy_phase_timeout</code> is 300 s. A phase that overruns is cut, and the
-                    run then reports a perfectly plausible result computed on an <i>amputated</i> exploration.
-                    Widening the search without raising that ceiling produces a mode that costs five times more and
-                    finds nothing extra. Raising it is what converts the extra candidates into extra strategies.
+                <div class="note">
+                    <strong>One of these six is currently inert, and we would rather say so.</strong>
+                    <code>strategy_phase_timeout</code> is collected, shown in a widget and written to the saved
+                    configuration &mdash; but no line under <code>certus/core</code> or <code>certus/workers</code>
+                    reads it. Extreme therefore has <b>six</b> active levers, not seven, and nothing measured here
+                    should be attributed to that key. It is left in place so a run's recorded configuration states
+                    the intent, and so a future rewiring finds the right value already set. The two limits that do
+                    bound the search are hard-coded rather than configurable: the beam-search call passes a 30 s
+                    ceiling that the callee never reads, and the worker pool stops <i>logging</i> segment exceptions
+                    after 600 s &mdash; results are still collected, but a late error is silent. Both are recorded
+                    as open defects.
                 </div>
 
                 <p>

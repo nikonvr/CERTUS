@@ -1331,9 +1331,11 @@ class CertusStratStateMixin:
             params_out["top_k_parents"] = 80
             params_out["max_fusions_per_parent"] = 15
             params_out["screening_keep_top_k"] = 20
-            # Without this the widening is TRUNCATED IN SILENCE: the default is 300 s, and an
-            # over-running phase is cut, the run then reporting a plausible result on an
-            # amputated exploration.
+            # NOTE, measured 2026-08-18: this key is currently INERT. No line under certus/core
+            # or certus/workers reads it -- it is collected, shown in a widget, and saved to JSON,
+            # but nothing bounds a phase with it. It is set here so that the run's recorded
+            # configuration states the intent, and so that a future rewiring finds the right
+            # value already in place. Attribute nothing to it.
             params_out["strategy_phase_timeout"] = 10800
         else:
             params_out["execution_mode"] = "premium"

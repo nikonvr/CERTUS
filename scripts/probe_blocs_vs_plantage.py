@@ -179,14 +179,23 @@ ELARGISSEMENT = {
     "max_fusions_per_parent": 15,      # x3
     "k_keep_survivors": 40,            # x4
     "screening_keep_top_k": 20,        # x4
-    # 🔴 SANS CETTE LIGNE L'ELARGISSEMENT SERAIT TRONQUE EN SILENCE. Le defaut vaut 300 s : une
-    # phase qui deborde est coupee, et le run rend un resultat plausible sur une exploration
-    # amputee. C'est le mode de defaillance que ce depot paie depuis le debut.
+    # 🔴🔴 CE PARAMETRE EST INERTE -- MESURE LE 2026-08-18, ET J'AVAIS ECRIT LE CONTRAIRE ICI.
+    # Le commentaire precedent affirmait que sans lui « l'elargissement serait tronque en
+    # silence ». C'est FAUX : `grep -rn strategy_phase_timeout certus/core certus/workers` rend
+    # ZERO. Il est pose par collect_params, affiche dans un widget, enregistre dans les JSON, et
+    # AUCUNE ligne de calcul ne le lit. Quatrieme cas du motif §24, apres fast_auto_blocks,
+    # machine_sampling_dd et dp_yield_weight.
     #
-    # 🔑 ET LA VALEUR EST CALEE SOUS LE PLAFOND DU BANC, DELIBEREMENT. Le pilote donne a la
-    # phase 2 jusqu'a 6 h d'horloge ; un bornage interne a 3600 s ferait de LUI la contrainte
-    # active, et il tronque EN SILENCE la ou le plafond du banc, lui, rend un
-    # `ECHEC_RESULT_NONE` visible. On veut que ce soit le garde-fou BRUYANT qui morde.
+    # 🔑 On le laisse quand meme, pour deux raisons : il est ecrit dans le bloc `config` de
+    # l'artefact, donc il documente l'INTENTION du run ; et le jour ou il sera rebranche, les
+    # runs elargis auront la bonne valeur. Mais il ne faut RIEN lui attribuer.
+    #
+    # ⚠️ Les vrais bornages sont ailleurs et CODES EN DUR : `timeout=30.0` passe a la DP
+    # (certus_strat_ranking.py:410 -- lui aussi inerte, la fonction ne lit jamais son argument),
+    # et `concurrent.futures.wait(futures, timeout=600)` (certus_strat_workers.py:1402), qui
+    # n'ampute pas les resultats -- `shutdown(wait=True)` attend -- mais qui CESSE DE JOURNALISER
+    # les exceptions au-dela de 600 s. Sur une cellule de 157 min, une erreur tardive est donc
+    # muette.
     "strategy_phase_timeout": 10800,
 }
 

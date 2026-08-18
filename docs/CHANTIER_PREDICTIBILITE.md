@@ -566,16 +566,34 @@ donc directement comparable à un run `deep`.
 | `top_k_parents` | 20 | 20 | 20 | **80** |
 | `max_fusions_per_parent` | 5 | 5 | 5 | **15** |
 | `screening_keep_top_k` | 5 | 5 | 5 | **20** |
-| `strategy_phase_timeout` | 300 | 300 | 300 | **10 800** |
+| `strategy_phase_timeout` | 300 | 300 | 300 | 10 800 — 🔴 **inerte, voir plus bas** |
 
 🔒 **Règle d'or vérifiée** : les trois modes existants rendent **exactement** les mêmes valeurs
 qu'avant — contrôlé paramètre par paramètre. Une branche `elif` ajoutée ne touche aucun chemin
 existant, et le défaut reste `premium`.
 
-🔴 **`strategy_phase_timeout` est le paramètre sans lequel le mode ne servirait à rien.** Le défaut
-vaut 300 s : une phase qui déborde est coupée, et le run rend un résultat plausible sur une
-exploration **amputée**. Élargir la recherche sans relever ce plafond produirait un `extreme` qui
-coûte cinq fois plus cher et ne trouve rien de plus.
+🔴🔴 **CORRECTION DU 2026-08-18 — `strategy_phase_timeout` EST INERTE, et j'avais écrit ici
+l'exact contraire.** Cette ligne affirmait qu'il était *« le paramètre sans lequel le mode ne
+servirait à rien »*. 📏 Vérifié :
+
+```
+grep -rn strategy_phase_timeout certus/core certus/workers  ->  0
+```
+
+Il est collecté par `collect_params`, affiché dans un widget *« Max Time per Iteration (sec) »*,
+enregistré dans les JSON — et **aucune ligne de calcul ne le lit**. C'est le **quatrième** cas du
+motif §24, après `fast_auto_blocks`, `machine_sampling_dd` et `dp_yield_weight`.
+
+⚠️ **Conséquence sur l'attribution** : `extreme` ne compte donc que **six** leviers actifs, pas
+sept. Et le contrôle `deep` seul en file n'est **pas** confondu par un plafond différent — ce que
+je craignais en montant l'audit — puisque le plafond n'agit nulle part.
+
+**Les vrais bornages sont ailleurs, et ils sont codés en dur :**
+
+| | |
+|---|---|
+| `timeout=30.0` passé à la DP (`certus_strat_ranking.py:410`) | 🟢 **inerte aussi** — la fonction déclare `timeout` et `start_time` dans sa signature et ne les lit jamais dans son corps. Donc **aucun risque de troncature sur la cellule `dp_top_k = 200`** |
+| `concurrent.futures.wait(futures, timeout=600)` (`certus_strat_workers.py:1402`) | 🟠 n'ampute **pas** les résultats — `shutdown(wait=True)` attend la fin — mais **cesse de journaliser les exceptions** au-delà de 600 s. Sur une cellule de 157 min, une erreur tardive est **muette** |
 
 **Et le fichier prêt à lancer** : `example/example_strat/JSON-strat-random75-x2-extreme.json`.
 Il porte l'empilement ×2, la fente à 1 nm, le mode `extreme` et la graine 42 — c'est-à-dire
@@ -824,6 +842,57 @@ passante).
 tournant.** §14 en fait l'erreur la plus coûteuse du projet, et §2 de ce dossier documente le fait
 que je l'ai commise. `scripts/check_claude_md.py` la refuse mécaniquement — **mais son contrôle E
 ne scanne que `CLAUDE.md`**, donc ce dossier y a échappé. C'est un trou du vérificateur, à combler.
+
+---
+
+## 7bis. 🔒 LA RÈGLE DE MÉTHODE AJOUTÉE LE 2026-08-18 — un chiffre publié doit être RE-DÉRIVABLE
+
+> 👤 : *« il faut être plus rigoureux, tu dois converger vers des interprétations et des
+> conclusions solides. Essaie de changer de méthodologie. »*
+
+**La critique était fondée, et le défaut n'était pas l'inattention — c'était l'ordre des
+opérations.** En une matinée, quatre affirmations ont été écrites puis retirées :
+
+| affirmation | ce qui l'a tuée |
+|---|---|
+| *« `deep` rend 0 déposable »* | **non mesuré** — le run à 0 est en `fast` |
+| *« la fente fine dégrade ×0,5 »* | la cellule propre dit **28 %** contre 48 %, elle l'améliore |
+| *« 50 → 150 tirages »* | `deep` pose **N = 300** |
+| *« `strategy_phase_timeout` évite la troncature »* | le paramètre est **inerte** — §24-50 |
+
+Chaque fois j'affirmais depuis une **lecture**, puis je vérifiais après coup. Trois des quatre
+avaient atteint la page commerciale.
+
+### Ce qui remplace la relecture : `scripts/verifier_affirmations.py`
+
+Un harnais qui rend `PASS` / `FAIL` / `NON_VERIFIABLE` sur chaque affirmation, et **qui porte son
+propre contrôle négatif** : il affirme délibérément une chose fausse (*« `robustness_num_runs`
+n'est lu nulle part »*) et **doit** échouer dessus. Un harnais dont tout passe ne prouve rien —
+c'est le contrôle 4 du §12, appliqué à moi-même.
+
+**Ce qu'il vérifie, et comment :**
+
+| | méthode |
+|---|---|
+| un paramètre est-il **lu** ? | **AST**, pas `grep` — un `grep` se fait avoir sur une clé concaténée ou une itération sur une liste de clés |
+| un argument de fonction est-il **utilisé** ? | AST du **corps**, indépendamment de la signature |
+| la **règle d'or** tient-elle ? | `collect_params` réellement appelé sur les trois modes, 6 valeurs comparées |
+| les **noms de fichiers** ne collisionnent-ils pas ? | appel réel de `_sortie`, et l'artefact du niveau 1 doit être **retrouvé** |
+| la **formule SEEL** | reproduite sur **deux** repères publiés indépendants |
+| les **18 cellules publiées** | offertes, déposables, `crash_min` et SEEL **re-dérivés de l'artefact** |
+| un **SEEL de repli** est-il publié ? | rejeté explicitement — c'est ce qui a produit le faux « 0,86 nm » du 99c |
+
+📏 **État au 2026-08-18** : `9 vérifiées · 0 non vérifiables · 0 en échec`, contrôle négatif
+compris.
+
+> 🔒 **La règle : un chiffre qui n'est pas re-dérivable par ce script n'a rien à faire dans un
+> document.** Et quand une campagne produit de nouveaux artefacts, on ajoute ses chiffres à
+> `CHIFFRES_PUBLIES` **en même temps** qu'on les écrit — pas après.
+
+⚠️ **Ce que le harnais ne fait PAS** : il ne relance aucune mesure. Il vérifie des propriétés du
+**code** et la cohérence des **artefacts** avec les documents. Une affirmation chiffrée qui n'a
+produit aucun artefact ressort `NON_VERIFIABLE` — un troisième état qu'il ne faut pas confondre
+avec `PASS`.
 
 ---
 

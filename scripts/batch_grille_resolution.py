@@ -202,7 +202,7 @@ CELLULES_SUITE = [
 #   deep seul rend 0 deposable   -> extreme est necessaire, et l'affirmation devient mesuree
 #   deep seul rend des centaines -> extreme est INUTILE ici, et le JSON doit dire `deep`
 CELLULES_ELARGI = [
-    ("r75x2", "deep", 1.0, False, 42, 90, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
+    ("r75x2", "deep", 1.0, False, 42, 120, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
     ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
     ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
     ("r75x2", "deep", 1.0, 2, 42, 240, "dp_top_k 100 -> 200 : le faisceau aide-t-il ENCORE ?"),

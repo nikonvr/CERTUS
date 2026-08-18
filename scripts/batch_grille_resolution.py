@@ -205,13 +205,15 @@ CELLULES_ELARGI = [
     ("r75x2", "deep", 1.0, False, 42, 90, "LE CONTROLE -- extreme etait-il seulement NECESSAIRE ?"),
     ("r75x0.5", "deep", 1.0, True, 42, 160, "LA DECISIVE -- l'elargissement sauve-t-il le mince ?"),
     ("r75x1.5", "deep", 2.0, True, 42, 160, "PREDICTION FALSIFIABLE -- 1 deposable doit exploser"),
+    ("r75x2", "deep", 1.0, 2, 42, 240, "dp_top_k 100 -> 200 : le faisceau aide-t-il ENCORE ?"),
     ("r75x2", "deep", 1.0, True, 77, 160, "2e graine sur la percee du 2026-08-18"),
     ("r75x0.5", "deep", 2.0, True, 42, 160, "controle : le mince a la fente nominale"),
 ]
 
 
 def _sortie(nom: str, mode: str, res: float, elargi: bool, graine: int) -> Path:
-    suf = ("" if res == 2.0 else f"_res{res:g}") + ("_large" if elargi else "")
+    suf = (("" if res == 2.0 else f"_res{res:g}")
+           + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}"))
     return ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suf}.json"
 
 
@@ -290,7 +292,7 @@ def main() -> int:
 
         t1 = time.perf_counter()
         r = subprocess.run(
-            [PY, SONDE, nom, mode, "0", "0", str(res), "1" if elargi else "0", str(graine)],
+            [PY, SONDE, nom, mode, "0", "0", str(res), str(int(elargi)), str(graine)],
             env=env, cwd=str(ROOT), capture_output=True, text=True,
             # 🔴 SANS CECI LE FIL DE LECTURE MEURT. subprocess decode la sortie de l'enfant
             # avec l'encodage de la LOCALE -- cp1252 sur cette machine -- et les sondes ecrivent

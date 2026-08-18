@@ -269,6 +269,23 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
     }
     if elargi:
         over.update(ELARGISSEMENT)
+    if int(elargi) >= 2:
+        # 🔑 NIVEAU 2 -- le balayage de dp_top_k, 👤 2026-08-18 : « penses-tu qu'augmenter le
+        # dp_top_k peut encore plus aider ? ». C'est le levier le plus EN AMONT : la DP k-best
+        # est appelee PAR nombre de blocs et rend `top_k` groupements chacune, donc dp_top_k
+        # multiplie directement ce qui entre en Phase B.
+        #
+        # 🔴 ET ON NE PEUT PAS REPONDRE SANS LE MESURER. La seule paire disponible -- fast k=20
+        # contre premium k=40 sur x2 -- rend x1,61 d'offre pour x2 de k, donc SOUS-lineaire ; mais
+        # elle est confondue, fast -> premium change six parametres. Le niveau 2 ne change QUE
+        # dp_top_k par rapport au niveau 1, et se compare donc directement aux 254 deposables.
+        #
+        # ⚠️ Effet de bord connu, §24-45 : le bonus block-aware de Phase A agit en faisant
+        # franchir la troncature dp_top_k aux lambda stables. Plus top_k est large, MOINS ce bonus
+        # change quoi que ce soit. Elargir le faisceau desactive donc progressivement un mecanisme
+        # -- ce qui n'est ni bon ni mauvais a priori, et n'a jamais ete mesure.
+        over["dp_top_k"] = 200
+
 
     _c = app.collect_params
     vus = {"n": 0}
@@ -443,7 +460,7 @@ def main() -> int:
     fente = bool(int(sys.argv[3])) if len(sys.argv) > 3 else False
     min_tp = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
-    elargi = bool(int(sys.argv[6])) if len(sys.argv) > 6 else False
+    elargi = int(sys.argv[6]) if len(sys.argv) > 6 else 0   # 0 / 1 / 2
     graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
@@ -464,7 +481,10 @@ def main() -> int:
                          "search_resolution": bool(fente),
                          "require_turning_point": int(min_tp),
                          "exploration_elargie": bool(elargi),
-                         "elargissement": dict(ELARGISSEMENT) if elargi else None}})
+                         "exploration_niveau": int(elargi),
+                         "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
+                                           if int(elargi) >= 2 else
+                                           dict(ELARGISSEMENT) if elargi else None)}})
 
     if r["verdict"] != "OK":
         print(f"\n🔴 {r['verdict']} -- rien a analyser.")
@@ -483,7 +503,7 @@ def main() -> int:
 
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
-                + ("_large" if elargi else ""))
+                + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}"))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

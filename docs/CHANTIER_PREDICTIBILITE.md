@@ -520,6 +520,45 @@ de repli revient à comparer deux façons d'échouer.
 
 ---
 
+## 4ter-bis. 🔒 COMMENT LIRE LE RÉSULTAT DU 99c, QUEL QU'IL SOIT
+
+> 👤 **2026-08-18** : *« attention aux conclusions sur le 99c. C'est un empilement très
+> particulier, tout 1/4 d'onde. »*
+
+📏 **Vérifié le jour même, et l'écart est net :**
+
+| composant | couches | multiplicateurs **entiers** | valeurs |
+|---|---|---|---|
+| **99c** | 99 | **99 / 99** | exactement `1,0` et `2,0` |
+| 75c ×1 | 75 | 0 / 75 | 0,504 … 2,479 |
+| ×2 | 75 | 1 / 75 | 1,008 … 4,958 |
+| 48c | 48 | 0 / 48 | 0,728 … |
+
+Le 99c n'est pas *surtout* quart d'onde : il l'est **entièrement**, et il est **le seul du dépôt
+dans ce cas**. §14 pose que QWOT et point tournant coïncident sur un empilement entièrement QWOT
+à λ_mon ; chaque couche finit donc **pile sur un extremum**, et POEM — qui vise un pourcentage de
+l'amplitude *entre les deux derniers extrema* — voit sa plage utile réduite à un point.
+
+### 🔴 La distinction à faire, et je ne l'avais pas faite
+
+| | |
+|---|---|
+| conclusions **SUR** le 99c | ✅ **légitimes.** Le chantier multi-témoins (§23) porte sur lui : si le 99c devient monitorable à un témoin, c'est **son propre** verdict qui tombe, et la singularité n'y change rien |
+| conclusions **À PARTIR DU** 99c | 🔴 **interdites.** Rien de ce qu'il fera ne s'étend aux autres empilements — ni sur la valeur du mode `extreme`, ni sur le rôle de la fente, ni sur la thèse « la barrière est la recherche » |
+
+⚠️ **Erreur commise le 2026-08-18** : j'avais proposé la cellule 99c en cours comme *« exactement
+le test »* de l'intérêt du mode `extreme`. C'était une généralisation **à partir** du 99c, donc
+invalide. **Le test valide pour `extreme` est `×2` à 2 nm** — 1 multiplicateur entier sur 75, donc
+POEM y opère normalement, et il rend 0 déposable à 100 % de plantage en `fast` comme en `premium`.
+Deux cellules : `deep` à 2 nm, puis `extreme` à 2 nm.
+
+📌 **Et une troisième chose que le résultat du 99c ne dira pas** : il change **trois** paramètres à
+la fois par rapport à sa référence — mode `premium` → `deep`, fente 2 → 1 nm, et l'élargissement.
+Aucune attribution ne sera possible. C'est assumé, parce que la question posée est binaire — *le
+99c peut-il, oui ou non ?* — mais il ne faut pas lui en demander davantage.
+
+---
+
 ## 4quater. 🟢🟢 ×2 EST FABRICABLE À UN SEUL TÉMOIN — c'était la RECHERCHE, pas la physique
 
 📏 **Mesuré le 2026-08-18, phase 2 du lot de nuit.** ×2, fente **1 nm**, mode `deep`, profil

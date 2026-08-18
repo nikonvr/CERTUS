@@ -153,6 +153,10 @@ COMPOSANTS = {
     # marginaux avant toute conclusion.
     "r75x0.5": ("reports/serie_echelle_r75/cfg_x0.5.json", 75),
     "r75x1.5": ("reports/serie_echelle_r75/cfg_x1.5.json", 75),
+    # 🔑 AJOUTE LE 2026-08-18 pour LOCALISER la bascule. La grille du 17 au soir a mesure
+    # que 1 nm degrade x1,5 (30 % contre 0 %) et AMELIORE x2 (38 % contre 100 %) : le signe
+    # s'inverse donc entre 172,3 et 229,8 quarts d'onde. x1,75 vaut 201,1 -- le milieu.
+    "r75x1.75": ("reports/serie_echelle_r75/cfg_x1.75.json", 75),
     "r75x2": ("reports/serie_echelle_r75/cfg_x2.json", 75),
 }
 SEED = 42

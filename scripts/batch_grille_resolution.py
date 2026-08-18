@@ -136,18 +136,48 @@ CELLULES = [
 # le resultat changerait le plus de choses.
 
 
+#: LA SUITE -- enchainee automatiquement si le lot principal finit AVANT 08:00 (👤, 2026-08-18 :
+#: *« si cela se termine avant 8h, enchaine automatiquement sur d'autres actions pour ne pas
+#: perdre de temps »*).
+#:
+#: 🔑 ELLE EST AUTO-REPARANTE. Les cellules que le lot principal aurait refusees faute de temps
+#: y figurent aussi : le garde-fou « fichier deja la » les saute si elles ont tourne, et les
+#: rattrape sinon. On n'a donc pas a savoir ou le lot principal s'est arrete.
+#:
+#: 🔴 LA CELLULE DE TETE EST x1,75, ET C'EST LE POINT LE PLUS INFORMATIF DU CHANTIER. La grille
+#: du 17 au soir a montre que passer a 1 nm DEGRADE x1,5 (30 % contre 0 %) et AMELIORE x2 (38 %
+#: contre 100 %) : le signe s'inverse donc entre 172,3 et 229,8 quarts d'onde. x1,75 vaut 201,1.
+#: Un seul point, et l'intervalle de bascule est divise par deux.
+CELLULES_SUITE = [
+    ("r75x1.75", "fast", 2.0, False, 42, 40, "REFERENCE du nouveau point -- avant sa variation"),
+    ("r75x1.75", "fast", 1.0, False, 42, 40, "LA BASCULE -- 1 nm gagne-t-il deja a 201 QWOT ?"),
+    ("r75x2", "fast", 1.0, False, 77, 40, "2e graine -- sautee si le lot principal l'a faite"),
+    ("r75x0.5", "fast", 1.0, False, 42, 40, "rattrapage : colonne mince, idem"),
+    ("r75x0.5", "fast", 0.5, False, 42, 40, "rattrapage : colonne mince, idem"),
+    ("r75x2", "fast", 1.0, False, 101, 40, "3e graine sur le resultat de tete (§24-46)"),
+    ("75c", "premium", 5.0, False, 42, 60, "§8 -- la fente large rejouee en PREMIUM"),
+    ("r75x1.75", "fast", 0.5, False, 42, 40, "complete la ligne x1,75"),
+]
+
+# 🔴 POURQUOI LE PREMIUM SUR 75c A 5 nm, ET PAS AILLEURS. §8 : « un SEEL retenu sous FAST se
+# rejoue en PREMIUM avant publication ». La grille a produit un resultat publiable -- la fente
+# large donne PLUS de deposables (289 contre 241) et un PLUS MAUVAIS SEEL (0,310 contre 0,272),
+# donc les deux colonnes classent a l'envers l'une de l'autre. C'est cette cellule-la qui porte
+# l'affirmation, c'est donc elle qu'il faut confirmer, et aucune autre.
+
+
 def _sortie(nom: str, mode: str, res: float, elargi: bool, graine: int) -> Path:
     suf = ("" if res == 2.0 else f"_res{res:g}") + ("_large" if elargi else "")
     return ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suf}.json"
 
 
-def etat() -> int:
+def etat(cellules=None) -> int:
     print("=" * 92)
     print("GRILLE RESOLUTION x EPAISSEUR OPTIQUE -- etat")
     print("=" * 92)
     reste = 0
     cumul = 0
-    for nom, mode, res, elargi, graine, mn, pourquoi in CELLULES:
+    for nom, mode, res, elargi, graine, mn, pourquoi in (cellules or CELLULES):
         f = _sortie(nom, mode, res, elargi, graine)
         cumul += mn
         if f.exists():
@@ -168,19 +198,23 @@ def main() -> int:
                     help="budget d'horloge. Aucune cellule n'est ENGAGEE s'il ne reste pas sa "
                          "duree estimee -- mieux vaut une cellule non lancee qu'une tronquee")
     ap.add_argument("--etat", action="store_true")
+    ap.add_argument("--suite", action="store_true",
+                    help="joue CELLULES_SUITE au lieu de la grille -- enchainement du 2026-08-18")
     args = ap.parse_args()
+    cellules = CELLULES_SUITE if args.suite else CELLULES
     if args.etat:
-        return etat()
+        return etat(cellules)
 
     budget_s = args.heures * 3600.0
     t0 = time.perf_counter()
     faits, sautes, refuses = 0, 0, 0
 
     print("=" * 92)
-    print(f"LOT : budget {args.heures:g} h | graine {SEED} | {len(CELLULES)} cellules")
+    print(f"LOT{' (SUITE)' if args.suite else ''} : budget {args.heures:g} h | "
+          f"graine {SEED} | {len(cellules)} cellules")
     print("=" * 92, flush=True)
 
-    for nom, mode, res, elargi, graine, mn, pourquoi in CELLULES:
+    for nom, mode, res, elargi, graine, mn, pourquoi in cellules:
         f = _sortie(nom, mode, res, elargi, graine)
         if f.exists():
             print(f"  [SAUTE] {nom} {mode} {res:g} nm g{graine} -- deja mesure ({f.name})", flush=True)

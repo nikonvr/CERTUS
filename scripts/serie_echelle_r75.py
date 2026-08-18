@@ -107,7 +107,12 @@ def geometrie(facteur: float) -> dict:
     return {"epaisseur_um": round(sum(th) / 1000.0, 2),
             "plus_fine_nm": round(min(th), 1), "plus_epaisse_nm": round(max(th), 1),
             "qwot_min": round(min(qwot), 3), "qwot_max": round(max(qwot), 3),
-            # 🔑 une couche sous 1 QWOT ne traverse aucun extremum : aucun point d'arret.
+            # 🔴 COMPTAGE NAIF, CONSERVE COMME DIAGNOSTIC ET NON COMME VERDICT. Ce champ
+            # compte les couches sous 1 QWOT, PAS les couches sans point tournant -- la
+            # docstring de ce fichier refute l'assimilation des deux, mesure a l'appui
+            # (59 contre 1 sur x0,5, facteur 59). Le depart d'un point tournant est decale
+            # d'une phase 1/2 arctan(R/Q) fixee par l'empilement du dessous. Voir
+            # docs/QWOT_ET_TURNING_POINT.md avant d'en tirer quoi que ce soit.
             "couches_sous_1_qwot": int(sum(1 for q in qwot if q < 1.0))}
 
 

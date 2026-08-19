@@ -217,6 +217,7 @@ ailleurs — c'est la règle qui empêche les contradictions de revenir.
 | **[`REPRISE.md`](docs/REPRISE.md)** | 🚀 en arrivant, toujours |
 | [`CHANTIER_MULTITEMOINS.md`](docs/CHANTIER_MULTITEMOINS.md) | 🔴 **le programme courant** — multi-témoins, 12 sous-sections |
 | [`CHANTIER_RATE.md`](docs/CHANTIER_RATE.md) | 🔑 **employer pleinement le Rate**, et mélanger POEM / niveau absolu / Rate. 📏 Le Rate fait **64 % de l'offre** et **0,15 %** des déposables : il n'est pas sous-offert, il est **mal placé** |
+| [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md) §4quater-bis | 🔴 **`extreme` n'améliore le SEEL sur AUCUNE des 5 configurations testées**, matrice arrêtée le 2026-08-19 sur décision de 👤 |
 | **[`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md)** | 🔵 **ouvert par 👤 le 2026-08-17** — *prédire sans tout calculer si un design passe avec un seul verre témoin*. 🔑 À retenir sans l'ouvrir : **le 99c n'est PAS une référence valable** (tout QWOT ⇒ adverse à POEM par construction, réponse plate à 100 % qui ne discrimine rien) · **la série d'échelle du random75 ×0,5/×1/×1,5/×2 est la seule expérience CONTRÔLÉE du projet** · **quatre routes y sont déjà fermées par la mesure** · 🔴 **`search_resolution` était neutralisé dans toute la campagne des intervalles alors que 👤 l'a posé comme prérequis** |
 | [`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) | le plan de campagnes en cours d'exécution |
 | [`QWOT_ET_TURNING_POINT.md`](docs/QWOT_ET_TURNING_POINT.md) | 🔴 **obligatoire** avant d'écrire sur les points tournants |
@@ -489,8 +490,11 @@ mesure. **Et donne la machine entière au run que tu mesures** — voir Règle 5
   `deep`, un mode qui existait déjà.
   🔑 **Le fichier prêt à lancer utilise donc `deep`** :
   `example/example_strat/JSON-strat-random75-x2-fabricable.json`.
-  ⚠️ Le mode `extreme` est conservé — il n'a été mis en défaut que sur **un** composant et **une**
-  graine — mais **ne lui attribue rien** tant qu'un gain n'est pas mesuré quelque part.
+  🔴 **MATRICE `extreme` ARRÊTÉE LE 2026-08-19, sur décision de 👤 après un point d'étape :**
+  cinq configurations testées (×2, 35c, 48c, ×0,5, 99c), **zéro amélioration mesurable sur
+  aucune** — y compris les deux configurations barrières (`deep` trouve 0 déposable) où le mode
+  aurait été le plus utile. Le mode reste dans le dépôt, **sans qu'on lui attribue rien**.
+  📌 [`CHANTIER_PREDICTIBILITE.md`](docs/CHANTIER_PREDICTIBILITE.md) §4quater-bis.
   🔒 Les trois modes existants sont **inchangés au bit** — contrôlé paramètre par paramètre, et
   le défaut reste `premium`.
   ⚠️ Défaut d'implantation qui subsiste : `fast_auto_blocks` est posé et **journalisé**

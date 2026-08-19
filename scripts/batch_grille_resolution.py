@@ -262,6 +262,19 @@ _MATRICE_COMPOSANTS = [
 ]
 _MATRICE_FENTES = (5.0, 2.0, 1.0, 0.5)
 
+#: 🔴🔴 MATRICE ARRETEE LE 2026-08-19 APRES LA PASSE DE REFERENCE PARTIELLE.
+#: 👤 : « penses-tu qu'on en tire quelque chose d'interessant de continuer ? » puis
+#: « on coupe maintenant et tu consignes tout proprement ».
+#:
+#: 5 configurations mesurees (x2, 35c, 48c, x0,5, 99c) : ZERO amelioration de SEEL sur AUCUNE,
+#: y compris les deux configurations BARRIERE (deep trouve 0 deposable) ou extreme aurait ete le
+#: plus utile. Les cellules restantes de la passe de reference (75c, x1,75, x1,5) portaient sur
+#: des composants ou `deep` trouve DEJA des centaines de deposables -- les moins susceptibles
+#: d'apporter de l'information. Detail : docs/CHANTIER_PREDICTIBILITE.md §4quater-bis.
+#:
+#: `--matrice` reste fonctionnel et reprenable si la question est rouverte, mais elle ne doit
+#: PAS etre relancee sans une raison neuve : la question posee a recu sa reponse.
+
 
 def _matrice() -> list[tuple]:
     """Les 64 cellules, fente de reference d'abord, puis les autres."""

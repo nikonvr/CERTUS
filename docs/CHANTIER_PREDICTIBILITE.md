@@ -713,6 +713,66 @@ contrainte C3, et je l'ai violée en construisant l'expérience, pas en la lisan
 `deep`**, pas seulement en élargi. Ses 751 stratégies à 100 % viennent d'un run `premium`. La
 cellule qui tourne est en élargi ; un `deep` seul serait le contrôle symétrique.
 
+### 🔴🔴 LA MATRICE EST ARRÊTÉE LE 2026-08-19 — cinq points sur cinq, écart nul, décision prise
+
+> 👤 **2026-08-19** : *« penses-tu qu'on en tire quelque chose d'intéressant de continuer ? »*
+> puis *« on coupe maintenant et tu consignes tout proprement »*.
+
+**Verdict porté avant l'arrêt, avec les données disponibles à ce moment :**
+
+| composant | régime | référence | comparaison | écart SEEL |
+|---|---|---|---|---|
+| ×2 *(2026-08-17)* | `deep` trouve déjà | 0,625 (`deep`) | 0,629 (`extreme`) | **+0,6 %** (`deep` gagne) |
+| 35c | `deep` trouve déjà | 0,482 | 0,479 | **-0,7 %** |
+| 48c | `deep` trouve déjà | 0,173 | 0,170 | **-1,8 %** |
+| ×0,5 *(barrière)* | `deep` trouve 0 | 0 déposable | 0 déposable | — rien débloqué |
+| 99c *(barrière)* | `deep` trouve 0 | 0 déposable | 0 déposable, 96,3 % | — rien débloqué |
+
+**Cinq configurations, zéro amélioration mesurable — et ce ne sont pas cinq points au hasard.**
+Ce sont les deux cas les plus favorables (`deep` trouve déjà des centaines de déposables) **et**
+les deux cas les plus difficiles (`deep` n'en trouve aucun). Si `extreme` devait débloquer
+quelque chose, c'est précisément dans les seconds qu'on l'aurait vu.
+
+### 🔑 Pourquoi la suite de la passe de référence était devenue peu informative
+
+Les trois cellules restantes de la passe de référence (`75c`, `×1,75`, `×1,5`) portent sur des
+composants où `deep` trouve **déjà** des centaines à des milliers de déposables — `75c` en `deep`
+seul en trouvait 852 sur 2 547. Il n'y a quasiment aucune marge où `extreme` pourrait faire mieux,
+donc ce sont les tests **les moins susceptibles d'apporter de l'information nouvelle** de toute la
+matrice — précisément ceux qui restaient.
+
+Et les 48 cellules multifentes non lancées (163,6 h de calcul restant) auraient répété la même
+question, sous des variantes de fente, sur une hypothèse déjà éteinte cinq fois sur cinq.
+
+### 🔴 CONCLUSION DU CHANTIER `extreme` — arrêtée, pas prouvée à l'infini
+
+> **`extreme` n'améliore mesurablement le SEEL sur AUCUNE des cinq configurations testées, y
+> compris les deux configurations barrières où il aurait été le plus utile. Il n'a jamais dégradé
+> non plus. Le mode reste dans le dépôt, sans qu'on lui attribue quoi que ce soit — la conclusion
+> tenue depuis le contrôle du 2026-08-18 tient toujours.**
+
+⚠️ **Ce que l'arrêt NE permet PAS de dire.** Cinq configurations sur les 64 possibles, toutes à
+la fente de référence de leur composant. **Rien n'a été mesuré sur les fentes non nominales** —
+il reste possible, quoique jugé peu probable, qu'`extreme` apporte quelque chose à une fente
+inhabituelle sur un composant donné. Ce n'est pas réfuté, c'est **non exploré**, et le dossier ne
+le confond pas avec une réfutation.
+
+### Ce qui reste utilisable de la matrice
+
+| | |
+|---|---|
+| 🟢 **35c, SEEL 0,482** *(`deep`)* | premier SEEL mesuré sur ce composant en dehors du repère historique — cohérent avec `deep` ≥ `fast` |
+| 🟢 **48c, SEEL 0,173/0,170** | confirme le repère `0,173 nm` du §21, et donne le point `extreme` jumeau |
+| 🟢 **75c, SEEL 0,260 en `deep`** | **meilleur** que le repère historique `0,272 nm` en `fast` — troisième cas où `deep` seul bat le mode qui a produit le repère publié. Le second volet (`extreme`) n'a pas fini avant l'arrêt |
+| 🔴 **×1,75 en `deep`, ×1,5 en `deep`/`extreme`** | non mesurés — arrêtés avant d'écrire |
+
+📌 **Ce que ça suggère pour une prochaine campagne, si elle a lieu** : republier les repères du
+§21 en `deep` plutôt qu'en `fast` semble systématiquement gagnant (×2, 75c) — c'est un chantier
+séparé, à coût bien plus faible que celui d'`extreme`, et il n'a pas besoin de la matrice pour
+avancer.
+
+---
+
 ### 🔴 `extreme` EST-IL OPTIMAL ? NON — et il n'est même pas prouvé NÉCESSAIRE
 
 > 👤 **2026-08-18** : *« penses-tu qu'il soit optimal si l'utilisateur a tout son temps ? »*

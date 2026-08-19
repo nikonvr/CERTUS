@@ -1,7 +1,30 @@
-# REPRENDRE ICI — état au 2026-08-18
+# REPRENDRE ICI — état au 2026-08-19 matin
 
 > ⚠️ **Les §1 à §5 décrivent le gel du 2026-08-16.** Ce qui suit immédiatement les corrige et
 > les complète. Lis ce bloc d'abord.
+
+## 🛑 ARRÊT DU 2026-08-19 MATIN — sur décision de 👤, rien ne tourne
+
+Toute la nuit du 17 au 19 a fait tourner des campagnes de mesure sur le chantier prédictibilité
+(§ suivante) et sur la matrice `extreme` (§ ci-dessous). **Les deux sont désormais arrêtées, à la
+demande explicite de 👤**, machine libre, dépôt propre, rien en vol.
+
+| chantier | verdict à l'arrêt |
+|---|---|
+| **prédictibilité à un témoin** | trois régimes distincts établis (×2 débloqué par une recherche plus profonde, ×0,5 barrière réelle, ×1,5 singularité insensible à l'offre). 🔴 Le 254 déposables de ×2 **ne tient pas** à la graine 77 — voir §4quater-bis du dossier |
+| **mode `extreme`** | 🔴 **arrêté après 5 configurations, zéro amélioration mesurable sur aucune.** `docs/CHANTIER_PREDICTIBILITE.md` §4quater-bis en donne le détail et dit explicitement ce qui n'a **pas** été testé (48 cellules multifentes, jamais lancées) |
+
+**Rien à relancer ce matin sans une raison neuve.** Les deux questions posées ont reçu leur
+réponse, ou ont été arrêtées en connaissance de cause sur un rendement jugé trop faible.
+
+🟢 **Une raison neuve existe déjà, posée par 👤 le 2026-08-19 : reprendre sur les idées du
+Rate.** [`docs/CHANTIER_RATE.md`](CHANTIER_RATE.md) est écrit et attend — quatre contradictions
+relevées, un plan en quatre actions ordonnées par valeur, et le chiffre qui en est le point de
+départ : le Rate fait **64 % de l'offre** et **0,15 %** des déposables, facteur 175 contre
+l'optique. **Action 1 du plan** : placer le Rate par `swing` (besoin) plutôt que par frontière de
+bloc (coût), testée sur `75c à 1 nm` — la seule cellule sur 27 où le Rate gagne déjà.
+
+---
 
 ## 🚀🚀 OÙ ON EN EST LE 2026-08-18 — le résultat qui change la lecture de tout le reste
 

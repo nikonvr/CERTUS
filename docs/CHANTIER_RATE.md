@@ -281,11 +281,25 @@ l'autre : ici il faisait jeter deux séparations réelles.
 | **les coupures d'un même run PARTAGENT leurs graines de consensus** | c'est un tirage commun : une partie du bruit s'annule dans la comparaison. Le σ√2 ci-dessus est donc **conservateur** — s'il se trompe, c'est en déclarant trop peu de séparations, jamais trop |
 | **mesuré en `fast`, N = 50** | à N = 150 le bruit doit tomber d'un facteur √3. Le `premium` de §11 va dans ce sens : il ne sépare toujours pas 52 de 55 |
 
-🟢 **Et ce qui ne bouge d'AUCUN triplet à l'autre** : le plantage vaut `4,00 %` dans les trois,
-et la gagnante est la stratégie à **75 blocs** dans les trois. Le rescorage de consensus déplace
-le **score** ; il ne touche ni le **verdict de fabricabilité**, ni le **choix de la stratégie**.
-C'est ce qui rend le résultat du chantier — *la queue Rate rend `r75x2` fabricable* — insensible
-à toute cette discussion.
+🟢 **Et ce qui ne bouge d'AUCUN triplet à l'autre** — vérifié stratégie par stratégie, pas au
+seul vu du nombre de blocs :
+
+```
+41,42,43   RATE_TAIL52(from 75800)   SEEL 0.6885   crash 4,00 %   75 blocs
+51,52,53   RATE_TAIL52(from 75800)   SEEL 0.6679   crash 4,00 %   75 blocs
+61,62,63   RATE_TAIL52(from 75800)   SEEL 0.6774   crash 4,00 %   75 blocs
+```
+
+🔑 **C'est LA MÊME stratégie dans les trois, et cela rend la mesure plus propre qu'annoncé** :
+ce n'est pas la dispersion d'un vainqueur qui change d'un run à l'autre — mélange de bruit de
+score et de bruit de **sélection** — c'est le bruit de l'estimateur de score sur un **objet
+fixe**. L'isolation est totale, ce qui est exactement ce qu'on voulait mesurer.
+
+✅ **Et c'est une confirmation indépendante de §24-47** : le plantage est identique au centième
+dans les trois. Le code disait *« consensus rescoring … only reads `robustness_score` »* — la
+mesure le montre. Le rescorage déplace le **score** ; il ne touche ni le **verdict de
+fabricabilité**, ni le **choix de la stratégie**. C'est ce qui rend le résultat du chantier —
+*la queue Rate rend `r75x2` fabricable* — insensible à toute cette discussion.
 
 📌 Les valeurs `0,814 / 0,767 / 0,814 / 0,757 / 0,749` pour les coupures 28 à 41, citées dans la
 version précédente, viennent d'un **artefact que j'ai écrasé** en changeant `TAIL_CUTS` sans
@@ -950,3 +964,49 @@ la seconde graine ne soit tombée.
 🔒 **La règle qui en découle, et elle est plus forte que « lancer deux graines »** : sur un
 composant marginal, **n'écris pas la conclusion tant que la seconde graine n'a pas rendu**.
 Pas « écris-la puis vérifie » — la première rédaction contamine la lecture de la seconde.
+
+---
+
+## 15. 🔵 LA COURBE `SEEL(n)` — la prédiction, posée AVANT que la cellule 6 ne rende
+
+🔴 **Écrit le 2026-08-20 à 02:00, pendant que la cellule 4 tourne.** La sonde `SEEL(n)` part
+vers 03:30. Le critère de lecture est donc fixé avant les données — c'est la discipline qui
+vient de payer sur la dispersion (§7), et dont l'absence a coûté trois renversements le 19.
+
+### Ce que la sonde mesure exactement
+
+`optical_prefix_sweep` : les `n` premières couches sont **surveillées optiquement**, les
+`75 − n` suivantes sont déposées à **épaisseur parfaite**. `SEEL(n)` est donc l'erreur
+spectrale imputable **aux `n` premières couches seules**. C'est la proposition de 👤 du
+2026-08-19, et elle porte son propre avertissement :
+
+> 👤 : *« attention, la courbe SEEL = fonction (n) n'est pas forcément monotone, il faut la
+> tracer entièrement pour décider quand le rate est nécessaire »*
+
+### 🔵 La prédiction, et elle est falsifiable par une seule mesure
+
+> **La montée la plus raide de `SEEL(n)` doit tomber vers `n ≈ 58–60`.**
+
+**Pourquoi ce chiffre, et pourquoi il n'est pas choisi après coup** : le balayage de queue —
+une sonde **entièrement différente**, qui mesure le **plantage** et non le SEEL — situe la
+falaise entre la coupure 61 et la coupure 58 (§9). Les couches **58, 59, 60** sont exactement
+celles que la coupure 58 neutralise et que la 61 laisse optiques. Si les deux sondes désignent
+les mêmes couches, c'est **une validation croisée** : deux instruments indépendants tombent sur
+la même physique, et `SEEL(n)` devient un **substitut bon marché** au balayage de queue, qui
+coûte 45 min par composant.
+
+### 🔴 Ce qui la réfuterait, dit d'avance
+
+| observation | ce qu'il faudrait en conclure |
+|---|---|
+| une **rampe lisse et monotone**, sans structure | la sonde ne localise rien. Elle mesure l'accumulation, pas la fragilité, et elle **ne peut pas** répondre à « où mettre la coupure » |
+| une montée raide **loin de 58-60** — par exemple vers 32 ou 39 | les deux sondes se contredisent. 🔴 **Interdiction d'utiliser l'une ou l'autre** avant d'avoir compris laquelle mesure quoi. Les couches 32 et 39 sont les couches **critiques** relevées par le balayage de queue, ce qui rendrait ce cas très embarrassant et très instructif |
+| des **creux** nets, `SEEL(n+1) < SEEL(n)` | ✅ **attendu, et ce n'est pas un défaut** : POEM se ré-ancre sur les extrema réellement observés et corrige la dérive accumulée. Ajouter une couche dans le même bloc lui offre une occasion de plus de rattraper. C'est précisément la non-monotonie annoncée par 👤 |
+| des **trous** dans la courbe | `n` sans aucune stratégie déposable ne rend **pas** un zéro : il ne rend **rien**. Un trou est une absence de mesure, jamais un bon score |
+
+### ⚠️ Les deux réserves, et elles bornent d'avance ce qu'on pourra en dire
+
+| | |
+|---|---|
+| **la suite n'est pas emboîtée** | à chaque `n`, la Phase A et la Phase B ré-optimisent sur un problème différent. `SEEL(n+1)` n'est pas `SEEL(n)` plus une couche : c'est une autre stratégie. Une partie de la non-monotonie sera donc du **bruit de sélection**, pas de la physique |
+| **`r75x2` est assis sur la frontière** (§12) | la courbe sera tracée sur **une seule graine**, sur le composant où tout bascule avec la graine. 🔒 Donc, par la règle du §14 : **aucune conclusion n'est écrite tant qu'une seconde graine n'a pas rendu la même forme.** Le premier tracé sert à savoir si la sonde produit quelque chose, pas à trancher |

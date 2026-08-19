@@ -447,3 +447,52 @@ def test_the_curvature_grows_with_its_amplitude():
 def test_a_zero_curvature_is_bit_identical_to_the_historical_path():
     """C1, for the parameter that replaces the affine one."""
     assert _grow_photo(curv=0.0).hex() == _grow_photo().hex()
+
+
+def test_le_balayage_de_prefixe_optique_laisse_la_queue_PARFAITE():
+    """🔑 👤 2026-08-19 : « n couches optiques plus le reste avec des epaisseurs PARFAITES ».
+
+    C'est une DECOMPOSITION, pas une recherche : chaque n est une mesure unique, jamais un
+    maximum sur des candidates -- donc aucune malediction du vainqueur.
+
+    Ce que ce test verrouille, et c'est tout ce qui compte :
+
+      1. les blocs sont TRONQUES a n, donc les couches >= n n'ont AUCUNE lambda. Le noyau
+         part alors sur `if wl < 0.1` et rend l'epaisseur exactement nominale, marges a 1e18
+         -- elles sont parfaites ET elles ne peuvent pas planter ;
+      2. `rate_layers` reste VIDE. Une couche parfaite n'est pas une couche Rate : la Rate
+         herite du facteur A, la parfaite n'herite de rien. Confondre les deux ferait mesurer
+         le cout du Rate au lieu de l'ISOLER ;
+      3. seules les strategies a surveillance couche par couche sont balayees -- la courbe
+         est conditionnelle au plan de surveillance, et c'est le seul qui survive sur r75x2 ;
+      4. inactif par defaut (regle d'or).
+    """
+    par_couche = _strat([(i, i + 1) for i in range(48)], sid=11)
+    par_couche["n_blocks"] = 48
+
+    # 4. inactif par defaut : rien ne doit apparaitre
+    sans = _expand_with_rate_variants([par_couche], {"allow_rate": True}, 48, _Log())
+    assert not [v for v in sans if "OPT_PREFIX" in str(v.get("origin"))]
+
+    avec = _expand_with_rate_variants(
+        [par_couche], {"allow_rate": True, "optical_prefix_sweep": [20, 30, 48]}, 48, _Log())
+    pref = {int(str(v["origin"])[10:].split("(")[0]): v
+            for v in avec if str(v.get("origin", "")).startswith("OPT_PREFIX")}
+    assert sorted(pref) == [20, 30, 48], f"obtenu {sorted(pref)}"
+
+    for n_opt, v in pref.items():
+        couvertes = {i for b in v["blocks"] for i in range(b["start"], b["end"])}
+        # 1. la queue n'est couverte par aucun bloc -> wl = 0 -> epaisseur nominale exacte
+        assert couvertes == set(range(n_opt)), (
+            f"n={n_opt} : couches couvertes {sorted(couvertes)[:5]}... "
+            f"au lieu de 0..{n_opt - 1}")
+        assert max(b["end"] for b in v["blocks"]) == n_opt
+        # 2. aucune couche Rate : parfait n'est pas Rate
+        assert v["rate_layers"] == [], "une couche parfaite n'est PAS une couche Rate"
+
+    # 3. une strategie a blocs larges n'est pas balayee
+    a_blocs = _strat([(0, 24), (24, 48)], sid=12)
+    a_blocs["n_blocks"] = 2
+    hors = _expand_with_rate_variants(
+        [a_blocs], {"allow_rate": True, "optical_prefix_sweep": [20]}, 48, _Log())
+    assert not [v for v in hors if "OPT_PREFIX" in str(v.get("origin"))]

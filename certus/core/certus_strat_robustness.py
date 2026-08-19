@@ -933,6 +933,39 @@ def _expand_with_rate_variants(
     layer_sets = params.get("rate_layer_sets") or []
     keep_optical = int(params.get("rate_tail_keep_optical", 0) or 0)
 
+    # 🔑 BALAYAGE DE PREFIXE OPTIQUE -- 👤 2026-08-19 :
+    #
+    #   « 20 couches optiques plus le reste avec des epaisseurs PARFAITES, on calcule SEEL20 ;
+    #     puis 21 ; ... jusqu'a SEEL75. On regarde la courbe SEEL = f(n) et on en deduit a
+    #     partir de quand l'optique pose probleme. »
+    #   « attention, la courbe n'est pas forcement monotone, il faut la tracer ENTIEREMENT
+    #     pour decider quand le rate est necessaire. »
+    #
+    # 🔑 CE QUI REND CETTE MESURE DIFFERENTE DE TOUT LE RESTE : c'est une DECOMPOSITION, pas
+    # une recherche. Chaque `n` est UNE mesure, jamais un maximum sur des candidates -- donc
+    # aucune malediction du vainqueur, celle qui a coute +12,9 % le 15/08 et qui se COMPOSE
+    # dans un glouton.
+    #
+    # 🟢 ET AUCUN CODE NOUVEAU N'EST NECESSAIRE COTE NOYAU. `_build_layer_wavelengths_from_
+    # strategy` initialise `layer_wavelengths` a ZERO et ne remplit que les couches couvertes
+    # par un bloc ; le noyau part alors sur `if wl < 0.1` (certus_strat_growth.py) et rend
+    # l'epaisseur EXACTEMENT nominale, marges a 1e18 donc plantage impossible. Tronquer les
+    # blocs a `n` suffit : les couches >= n sont parfaites, par un chemin deja ecrit et teste.
+    #
+    # ⚠️ « PARFAIT » N'EST PAS « RATE », et il ne faut pas confondre les deux. Une couche Rate
+    # herite du facteur A ; une couche parfaite n'herite de rien. SEEL(n) est donc une BORNE
+    # INFERIEURE, pas la prediction de la vraie strategie. C'est precisement l'interet : la
+    # difference entre les deux ISOLE le cout propre de la queue Rate.
+    #
+    # 🔑 Les deux courbes se repartissent le travail, et c'est structurel :
+    #     crash(n)  est MONOTONE par construction -- ajouter une couche optique ne peut
+    #               qu'ajouter une occasion de planter. La falaise y est donc non ambigue.
+    #     SEEL(n)   n'est PAS monotone, parce que POEM se re-ancre et CORRIGE l'amont
+    #               (protection x34,8 mesuree, §24-17). Une couche optique de plus peut faire
+    #               BAISSER l'erreur. Ce sont les REMONTEES locales qui designent les couches
+    #               ou la surveillance optique nuit.
+    prefix_sweep = sorted({int(x) for x in (params.get("optical_prefix_sweep") or [])})
+
     variants: list[dict[str, Any]] = []
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE
@@ -954,6 +987,43 @@ def _expand_with_rate_variants(
         logger.info(
             f"[RATE-SET] {len(variants)} variantes chirurgicales sur {len(strategies)} "
             f"strategies, {len(layer_sets)} jeux de couches."
+        )
+    if prefix_sweep:
+        # ⚠️ ON NE BALAIE PAS TOUTES LES PARENTES. La courbe est CONDITIONNELLE au plan de
+        # surveillance, donc n'a de sens que sur un plan donne -- et le seul defendable sur
+        # r75x2 est le monitoring COUCHE PAR COUCHE : mesure du 2026-08-19, les 224 strategies
+        # a blocs plantent TOUTES a 100 %, et l'unique rescapee est celle a 75 blocs. Balayer
+        # 74 valeurs de n sur 110 parentes rendrait en outre 8 000 strategies pour rien.
+        meres = [s for s in strategies if int(s.get("n_blocks", 0) or 0) >= num_layers]
+        if not meres:
+            logger.warning(
+                "[PREFIX] aucune strategie a surveillance couche par couche : le balayage "
+                "de prefixe optique est SANS OBJET sur cette population, il est ignore."
+            )
+        for strat in meres:
+            for n_opt in prefix_sweep:
+                # `n_opt` couches optiques, le reste a epaisseur PARFAITE.
+                if not (RATE_MIN_LAYER <= n_opt <= num_layers):
+                    continue
+                tronques = []
+                for blk in strat.get("blocks") or []:
+                    d, f = int(blk.get("start", 0)), int(blk.get("end", 0))
+                    if d >= n_opt:
+                        continue
+                    tronques.append({**blk, "start": d, "end": min(f, n_opt)})
+                v = dict(strat)
+                v["blocks"] = tronques
+                v["n_blocks"] = len(tronques)
+                # 🔴 Aucune couche Rate : les couches >= n_opt sont PARFAITES, pas en Rate.
+                # Confondre les deux ferait mesurer le cout du Rate au lieu de l'isoler.
+                v["rate_layers"] = []
+                v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+                v["origin"] = f"OPT_PREFIX{n_opt}(from {strat.get('strategy_id', '?')})"
+                next_id += 1
+                variants.append(v)
+        logger.info(
+            f"[PREFIX] {len(variants)} prefixes optiques injectes sur {len(meres)} "
+            f"strategie(s) couche-par-couche, n de {min(prefix_sweep)} a {max(prefix_sweep)}."
         )
     if tail_cuts:
         for strat in strategies:

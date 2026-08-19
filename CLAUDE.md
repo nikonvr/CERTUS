@@ -1124,7 +1124,8 @@ deux lissages rendent le même bruit lissé — même variance `σ/√k`, seule 
 décalage de `(k−1)/2` que §24-3 dénonce ne mord que pour **localiser** un extremum sur un signal
 **non plat**, ce que cette mesure ne fait pas. **Mais toute mesure de seuil sur un signal non
 plat devra, elle, être refaite en causal.**
-Si `k` ou la cadence changent, **remesure** — n'extrapole pas, et surtout n'écris pas de
+
+**Si `k` ou la cadence changent, remesure** — n'extrapole pas, et surtout n'écris pas de
 formule en `ln N` pour boucher le trou.
 
 ⚠️ **`k` reste un paramètre du code**, avec 8 pour valeur retenue. Le figer dans la
@@ -1226,7 +1227,8 @@ nul ; c'est son écart début-fin qui l'est, et ce n'est pas la même grandeur. 
 | 172,3 | ×1,5 | 440 | 1 | 0 % | 0,633 nm |
 | 201,1 | **×1,75** | 746 | **282** | 0 % | **0,528 nm** |
 | 229,8 | ×2 | 404 | 0 | **100 %** | — |
-| 229,8 | ×2 **en mode `extreme`, fente 1 nm** | **2 945** | **254** | **1,0 %** | **0,629 nm** |
+| 229,8 | ×2 **en `deep`, fente 1 nm** | 1 986 | **277** | **1,0 %** | **0,625 nm** |
+| 229,8 | le même **en `extreme`** | 2 945 | 254 | 1,0 % | 0,629 nm ⚠️ *ce tableau ne portait QUE cette ligne, et créditait donc `extreme` d'un déblocage que **`deep` seul fait mieux, à un cinquième du coût*** |
 
 🔑 **Deux faits, et ils changent la lecture de tout ce chantier :**
 
@@ -1238,13 +1240,24 @@ nul ; c'est son écart début-fin qui l'est, et ce n'est pas la même grandeur. 
    même graine, même fente**, seule la largeur de recherche change, et ×2 passe de **0/404** à
    **254/2 945**.
 
-🔴 **Donc un `crash_min = 100 %` ne dit PAS « ce composant n'est pas monitorable ».** Il dit
-« ma recherche n'a pas proposé ce qui marche », et rien dans la sortie ne distingue les deux.
-C'est le défaut §24-37 dans l'autre sens, et il a fait croire trois jours durant que ×2 était
-impossible.
+🔴 **Donc un `crash_min = 100 %` ne dit PAS, à lui seul, « ce composant n'est pas
+monitorable ».** Il peut dire « ma recherche n'a pas proposé ce qui marche », et **rien dans la
+sortie ne distingue les deux**. C'est le défaut §24-37 dans l'autre sens, et il a fait croire
+trois jours durant que ×2 était impossible.
 
-⚠️ **L'offre ne suffit pas pour autant** : ×2 en `premium` offre 651 stratégies et rend **0**
-déposable. Il a fallu **la fente fine ET l'élargissement**.
+🔑 **MAIS LA RÉCIPROQUE EST FAUSSE AUSSI, et elle a été mesurée le 2026-08-19 au soir.** Un
+`100 %` qui **résiste à la profondeur** dit, lui, quelque chose de réel : sur `r75x2` à 2 nm,
+`fast` (404), `premium` (651) et `deep` (**1 617** stratégies) rendent **tous les trois 0
+déposable et 100 %**. **À cette fente, ce n'est plus la recherche qui manque.** La bonne règle
+est donc : *un `100 %` en `fast` ne conclut rien ; un `100 %` qui tient jusqu'à `deep` est un
+constat sur le composant et sa fente.*
+
+⚠️ **L'offre ne suffit pas pour autant, et la mesure du 2026-08-19 au soir le tranche.**
+Cette ligne disait *« il a fallu la fente fine ET l'élargissement »* : **c'est l'élargissement
+qui est de trop**. 📏 À **2 nm**, la recherche a été poussée jusqu'à `deep` — **1 617
+stratégies, 0 déposable, 100 % de plantage** — donc quadrupler l'offre (404 → 1 617) ne change
+**rien**. Et à **1 nm**, `deep` **seul** rend 277 déposables. **Il a donc fallu la FENTE FINE
+et la PROFONDEUR**, pas l'élargissement.
 
 #### 🟠 CES QUATRE SEEL NE VIVENT PAS SUR LE MÊME DOMAINE SPECTRAL — constaté le 2026-08-15
 

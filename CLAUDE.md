@@ -1303,9 +1303,8 @@ simplement jamais servi sur ces composants.
 `wl_range`. Changer `wl_range` déplacerait aussi la cible nominale et rendrait tout
 incomparable avec les mesures existantes ; `targets` pondère sans changer la grille.
 
-⚠️ **Le 0,86 nm que l'on croise encore dans d'anciens rapports sur le 99c n'est pas une
-performance** : c'est un **score de repli**, rendu quand aucune stratégie ne survit à la
-porte de plantage. Comparer deux configurations sur des scores de repli revient à comparer
+⚠️ **Le 0,86 nm des anciens rapports sur le 99c est un score de repli, pas une performance**
+— il est rendu quand aucune stratégie ne survit à la porte de plantage. Comparer deux configurations sur des scores de repli revient à comparer
 deux façons d'échouer. Voir §23.8.
 
 🔴 **Ce qui PÉRIME un repère.** Le **biais de fente** est actif par défaut depuis le

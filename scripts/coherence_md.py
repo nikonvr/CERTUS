@@ -58,6 +58,9 @@ CONTEXTES_DE_CORRECTION = (
     "ligne historique", "bloc historique conserve",
     "n'est plus", "ne correspondait", "avant correctif", "CADUQUE", "SUPPRIMÉE",
     "obsolète", "obsolete", "~~", "etait faux", "était faux", "c'est faux", "est FAUX",
+    # « le faux X » designe X comme faux -- specifique, contrairement a « faux » nu
+    # qui attrapait toute phrase contenant le mot.
+    "le faux", "la fausse", "les faux",
     # 🔑 Ajoutes le 2026-08-19 : une ligne qui se DECLARE non comparable, ou qui parle d'un
     # score de REPLI, n'affirme pas une performance. Les deux marqueurs sont poses a la main
     # par l'auteur, ce qui est le bon niveau : l'outil ne devine pas, il obeit a une marque.
@@ -66,6 +69,13 @@ CONTEXTES_DE_CORRECTION = (
     # prescrit evidemment pas. Sans ce marqueur, le controle E signalait le recit
     # de sa propre trouvaille.
     "n'existe pas", "n'existe **pas**", "inexecutable", "inexecutables",
+    # 🔑 Une ligne qui QUALIFIE un chiffre ne l'affirme pas : elle dit d'ou il vient
+    # ou pourquoi il ne vaut pas seul. Ces marqueurs sont poses a la main par
+    # l'auteur, ce qui est le bon niveau -- l'outil obeit a une marque, il ne devine
+    # pas. Sans eux, les cinq lignes qui AVERTISSENT contre le 0,782 du 99c
+    # ressortaient comme une contradiction avec le 0,81 qu'elles etablissent.
+    "trois graines", "ne cite jamais", "graine 42 seule", "en descend",
+    "le plus favorable", "moyenne de trois",
 )
 
 #: (nom lisible, motif de CONTEXTE, motif de VALEUR, valeur de reference ou None)

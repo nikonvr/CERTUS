@@ -307,7 +307,7 @@ une à **swing 0,467**.
 | **les sections ont été renumérotées** | quatre parties, le chantier courant en tête. Les 468 renvois `§N` ont été propagés mécaniquement |
 | **`GEMINI_TODO.md` a été supprimé** | ordre de mission d'une campagne close |
 | **trois règles violées en permanence ont été assouplies** | l'interdiction du mode fast, « conclusions seulement sur le 48 couches », « pas de troisième document » |
-| **le chiffre du 99c est passé de 0,760 à 0,782 nm** ⚠️ *puis à **0,81** le 17/08 — cette ligne est historique* | le premier était biaisé vers le bas — malédiction du vainqueur, +12,9 % sur la même partition rejouée |
+| **le chiffre du 99c est passé de 0,760 à 0,782 nm** ⚠️ *ligne historique : le chiffre est passé à **0,81** le 17/08, moyenne de trois graines* | le premier était biaisé vers le bas — malédiction du vainqueur, +12,9 % sur la même partition rejouée |
 
 🔴 **Deux affirmations réfutées peuvent encore traîner dans de vieux textes** : *« les
 espaceurs demi-onde ont un swing nul »* et *« le 99c plante en `LEVEL_UNREACHABLE` »*. La

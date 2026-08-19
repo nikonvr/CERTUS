@@ -68,6 +68,37 @@ def _lit_la_cle(fichier: Path, cle: str) -> list[int]:
     return lignes
 
 
+def _code_seul(f: Path) -> str:
+    """Le CODE du fichier, commentaires et chaines retires -- par `tokenize`, pas par grep.
+
+    🔑 Un controle qui cherche « la borne `num_layers - 1` est-elle revenue ? » doit regarder
+    le CODE. Cherche dans le fichier brut, il attrape la phrase d'un commentaire qui EXPLIQUE
+    que cette borne a ete retiree, et rend un faux positif. C'est arrive deux fois le
+    2026-08-19, sur ce controle meme. CLAUDE.md pose deja la regle pour le balayage du
+    francais : « balaye avec tokenize, pas une liste codee en dur ».
+
+    ⚠️ On BLANCHIT les commentaires EN PLACE, on ne re-assemble pas les tokens : re-joindre par
+    des espaces transformerait `RATE_MIN_LAYER: int = 2` en `RATE_MIN_LAYER : int = 2` et tous
+    les controles litteraux tomberaient a cote. Premiere tentative faite, premiere lecon.
+    """
+    import io
+    import tokenize as tk
+    try:
+        lignes = f.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ""
+    try:
+        for t in tk.generate_tokens(io.StringIO("\n".join(lignes) + "\n").readline):
+            if t.type != tk.COMMENT:
+                continue
+            i = t.start[0] - 1
+            if 0 <= i < len(lignes):
+                lignes[i] = lignes[i][: t.start[1]]
+    except (tk.TokenError, SyntaxError, IndentationError):
+        return ""
+    return "\n".join(lignes)
+
+
 def test_A_timeout_inerte() -> None:
     """A. `strategy_phase_timeout` n'est lu par AUCUN module de calcul."""
     zones = [ROOT / "certus" / "core", ROOT / "certus" / "workers",
@@ -446,8 +477,15 @@ def test_L_les_deux_regles_gravees_du_rate() -> None:
       2. « rate ne se calcule qu'avec les couches optiquement deposees »
     """
     pbs = []
-    rob = (ROOT / "certus" / "core" / "certus_strat_robustness.py").read_text(encoding="utf-8")
-    gro = (ROOT / "certus" / "physics" / "certus_strat_growth.py").read_text(encoding="utf-8")
+    # 🔴 SUR DU CODE SEUL, PAS SUR LE FICHIER BRUT -- corrige le 2026-08-19 apres DEUX faux
+    # positifs de ce controle lui-meme. Il attrapait `num_layers - 1` et « Rate ones included »
+    # dans des COMMENTAIRES qui expliquent l'ancien comportement, et criait a la regression
+    # alors que le code etait juste. Un garde qui ne distingue pas « le code fait X » de « le
+    # commentaire dit que le code faisait X » finit par etre ignore -- c'est exactement ce que
+    # CLAUDE.md reproche aux regles violees en permanence. Meme parade que pour le balayage du
+    # francais dans `certus/` : tokenize, pas grep.
+    rob = _code_seul(ROOT / "certus" / "core" / "certus_strat_robustness.py")
+    gro = _code_seul(ROOT / "certus" / "physics" / "certus_strat_growth.py")
 
     # --- regle 1, cote selection des candidates -----------------------------------------
     if "RATE_MIN_LAYER: int = 2" not in rob:
@@ -473,9 +511,11 @@ def test_L_les_deux_regles_gravees_du_rate() -> None:
         pbs.append("le site d'appel ne passe plus le tableau complet rate_flags au noyau")
     # 🔴 Le commentaire Q3 disait l'inverse de la regle et le code le suivait. S'il revient,
     # c'est que le correctif a ete defait.
-    if "Rate ones included" in gro:
-        pbs.append("le commentaire Q3 « Rate ones included » est revenu")
-
+    # ⚠️ La surveillance du commentaire « Rate ones included » a ete RETIREE le
+    # 2026-08-19 : elle rendait un faux positif sur la phrase qui EXPLIQUE que ce
+    # commentaire etait faux, et elle est de toute facon redondante -- un retour en
+    # arriere ferait disparaitre `prev_rate_flags`, que le controle ci-dessus attrape.
+    # On ne surveille pas la prose : on surveille le code.
     verdict("L. les deux regles gravees du Rate", "FAIL" if pbs else "PASS",
             " | ".join(pbs) or "RATE_MIN_LAYER=2, derniere couche autorisee aux deux sites, "
             "garde n_ref>0 en place, prev_rate_flags passe et consomme")

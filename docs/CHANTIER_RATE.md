@@ -634,3 +634,60 @@ composants, notamment ceux où le Rate gagne déjà (§7 : `75c` à 1 nm).
 **Les cinq coupures déposables sont toutes indiscernables à 2 σ** (écart max 1,25 σ). Comme
 avant le correctif, **ce run ne désigne aucun optimum** — et `scripts/lire_batch_rate.py` le
 dit de lui-même, ce qui était tout l'objet de l'écrire.
+
+---
+
+## 10. 🔴 CELLULE 2 — LA GRAINE N'ATTEINT PAS LE SCORE, ET J'ALLAIS LE LIRE À L'ENVERS
+
+`reports/blocs_vs_plantage_r75x2_fast_s077_tail46-64.json`, 36,5 min, graine **77**.
+
+| coupure | 46 | 49 | 52 | 55 | 58 | 61 | 64 |
+|---|---|---|---|---|---|---|---|
+| `crash_min` **s042** | 4,00 % | 4,00 % | 4,00 % | 4,00 % | 4,00 % | 100 % | 100 % |
+| `crash_min` **s077** | **2,00 %** | **2,00 %** | **2,00 %** | 4,00 % | 4,00 % | 100 % | 100 % |
+| couche critique | c39 / **c32** | idem | idem | idem | idem | — | — |
+| SEEL, **les deux** | 0,752 | 0,717 | 0,689 | 0,702 | 0,735 | — | — |
+
+### ⚠️ Le piège, et il a failli fonctionner
+
+**Les SEEL sont identiques sur les deux graines.** Lu vite, cela dit *« le résultat est robuste
+au tirage »*. **C'est faux, et c'est exactement l'erreur n° 4 du §5** — *croire un chiffre qui
+ne varie pas avec ce qui devrait le faire varier*.
+
+📏 Les scores bruts diffèrent au **11ᵉ chiffre** :
+
+```
+coupure 52 :  0.11852439021077397  (s042)   contre   0.11852439020756476  (s077)
+              ecart 3,2e-11 -- l'ordre de la gigue de recompilation du §9, c'est-a-dire RIEN
+```
+
+### 🔑 La cause, trouvée dans le code — c'est §24-47, vérifié sur un second composant
+
+| | |
+|---|---|
+| `consensus_seed_list = 41,42,43,44,45`, `consensus_num_seeds = 3` | le consensus tourne sur **[41, 42, 43]** |
+| `_resolve_consensus_seeds` (`certus_strat_consensus.py:132`) | la liste explicite gagne ; **`base_seed` n'est consulté que si elle est vide**. Le consensus n'a donc **jamais vu 77** |
+| le rescoring ne lit que `robustness_score` (`certus_strat_robustness.py:2572`) | il réécrit le **score** des `consensus_top_k = 60` premières, **jamais `crash_rate`** |
+| 📏 les déposables sont aux **rangs 0 à 4** | elles sont donc bel et bien rescorées |
+
+**D'où le motif exact qu'on observe : le score est gelé par le consensus, le plantage suit
+`robustness_seed`.**
+
+### 🔴 Ce que cela coûte à ma propre méthode — deux corrections
+
+**1. La cellule 2 ne remplit PAS §24-46 sur l'axe du SEEL.** Elle le remplit sur l'axe du
+plantage, et c'est là que vit le verdict. ✅ **Et de ce côté le résultat est bon** : le verdict
+est **stable** — cinq coupures déposables (46 à 58), zéro à 61 et 64, falaise au même endroit,
+sur les deux graines. Le taux bouge (4 % ↔ 2 %) et la couche critique aussi (39 ↔ 32), donc la
+graine **atteint** bien le calcul : c'est un contrôle qui passe, pas un paramètre inerte.
+
+**2. Le σ de `lire_batch_rate.py` était bâti sur la mauvaise profondeur.** Il prenait le `N` du
+**mode** (50 en `fast`) alors que le score des 60 premières vient du **consensus**, à
+`consensus_num_runs` tirages sur trois graines. 🔴 **Un σ trop grand rend un verdict
+PERMISSIF** : il déclare « indiscernable » ce qui ne l'est peut-être pas. L'instrument le dit
+désormais, et pose la limite juste : **il sert à refuser une distinction, jamais à affirmer une
+égalité.**
+
+🔑 **Et la vraie dispersion reste inconnue.** Ce qui la sonderait est un changement de
+**triplet de graines de consensus**, pas de `robustness_seed`. Personne ne l'a jamais fait.
+C'est la mesure qui manque pour pouvoir écrire quoi que ce soit sur l'optimum de la coupure.

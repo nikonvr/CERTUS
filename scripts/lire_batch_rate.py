@@ -102,8 +102,23 @@ def lire(p: str) -> None:
     lignes.sort(key=lambda t: t[1])
     c0, s0, b0 = lignes[0]
     print(f"\n  meilleure coupure : {c0}  (SEEL {s0:.3f})")
-    print(f"  sigma sur une DIFFERENCE de deux SEEL, mode {mode} : {100 * sd:.1f} % "
-          f"-- ⚠️ EXTRAPOLE de §24-26, jamais mesure sur ce composant")
+    # 🔴 MESURE DU 2026-08-19 : LE SCORE DES MEILLEURES N'A PAS LA PROFONDEUR DU MODE.
+    # `enable_consensus_ranking` reecrit `robustness_score` des `consensus_top_k` (60)
+    # premieres, sur `consensus_seed_list` -- et `_resolve_consensus_seeds` ne consulte
+    # `base_seed` QUE si la liste est vide (certus_strat_consensus.py:132). Sur r75x2 la
+    # liste vaut 41,42,43,44,45 tronquee a 3 : le consensus tourne donc sur [41,42,43]
+    # dans le run a graine 42 COMME dans celui a graine 77, et le score y est identique
+    # a 2e-11 pres -- l'ordre de la gigue de recompilation, c'est-a-dire RIEN.
+    # 📏 Et les deposables sont aux rangs 0 a 4 : elles sont donc bien rescore'ees.
+    print(f"  ⚠️ le sigma ci-dessous vaut {100 * sd:.1f} % et il est bati sur le N du MODE "
+          f"({N_PAR_MODE.get(mode, '?')}).")
+    print("     🔴 C'EST LA MAUVAISE PROFONDEUR si le consensus est actif : il reecrit le score")
+    print("     des 60 premieres sur ses PROPRES graines, a consensus_num_runs tirages. Le")
+    print("     sigma est alors TROP GRAND, donc ce verdict est PERMISSIF -- il declare")
+    print("     « indiscernable » ce qui ne l'est peut-etre pas. Il ne faut donc PAS s'en")
+    print("     servir pour affirmer une egalite, seulement pour refuser une distinction.")
+    print("     🔑 La vraie dispersion -- d'un TRIPLET de graines de consensus a l'autre --")
+    print("     n'a jamais ete mesuree. Changer robustness_seed ne la sonde PAS.")
     print(f"\n  {'coupure':>8}{'SEEL':>9}{'ecart':>9}{'en sigma':>10}   verdict")
     ex_aequo = [c0]
     for c, s, _ in lignes[1:]:

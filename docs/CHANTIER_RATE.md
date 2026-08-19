@@ -265,7 +265,72 @@ changer le nom de fichier. **Elles ne sont plus vérifiables et ne doivent plus 
 | 🔴 **`fast`, une graine, N non consigné** | §8 impose un rejeu `premium`, §24-46 une seconde graine. Et le bloc `config` de la sonde **n'enregistrait pas la profondeur** — corrigé le 2026-08-19, mais les artefacts existants ne la portent pas : le « 2/50 » est déduit du nom de mode |
 | 🟠 **SEEL 0,689 reste élevé** | à comparer aux 0,625 que `deep` obtient sur le même composant à 1 nm. L'hybride rend fabricable une configuration qui ne l'était pas, il ne bat pas la meilleure connue |
 | 🔴 **la règle d'exception n'est pas testée** | forme pure, sans couches optiques dans la queue. Trois tentatives ont échoué |
-| 🔵 **la prédiction à falsifier** | le run *chirurgical* vise 32/35/39 — les couches critiques **de la population**. Si le mécanisme ci-dessus est le bon, il doit rendre **0 déposable** : ces couches ne sont pas celles qui bloquent la seule stratégie viable. C'est le test qui départage, et il tourne |
+### 🟢🟢 L'EXPÉRIENCE APPARIÉE — la prédiction était posée d'avance, et elle tient
+
+📏 Mesuré le 2026-08-19, `reports/blocs_vs_plantage_r75x2_fast_s042_chirurgical.json`, 1 195
+stratégies. **La prédiction avait été écrite dans ce dossier avant que le run ne finisse** : le
+Rate *chirurgical* sur 32/35/39 devait rendre **0 déposable**.
+
+🔒 **Le contrôle de confusion passe d'abord** : les deux runs partagent **exactement les mêmes
+127 parentes**, `75800` comprise, et le chirurgical en a bien produit **8 enfants**. Ce n'est
+donc pas une population différente qui répond — seule **la place du Rate** change.
+
+| couches mises en Rate | nb | `crash` | SEEL | couche critique |
+|---|---|---|---|---|
+| `[32]` — milieu | 1 | 100,00 % | — | 59 |
+| `[32, 35]` — milieu | 2 | 100,00 % | — | 55 |
+| `[32, 35, 39]` — milieu | 3 | 100,00 % | — | 74 |
+| `[31, 32, 33]` — milieu | 3 | 100,00 % | — | 74 |
+| `[34, 35, 36]` — milieu | 3 | 100,00 % | — | 65 |
+| `31..36` — milieu | 6 | 100,00 % | — | 47 |
+| `30..40` — milieu | 11 | 100,00 % | — | 51 |
+| **`58..74` — QUEUE** | 17 | **4,00 %** | 0,735 | 39 |
+| **`55..74` — QUEUE** | 20 | **4,00 %** | 0,701 | 39 |
+| **`52..74` — QUEUE** | 23 | **4,00 %** | **0,689** | 39 |
+| **`49..74` — QUEUE** | 26 | **4,00 %** | 0,717 | 39 |
+| **`46..74` — QUEUE** | 29 | **4,00 %** | 0,752 | 39 |
+
+🔴 **Onze couches en Rate au milieu — couvrant 32, 35 ET 39 — ne sauvent rien.** Là où
+**dix-sept couches en queue** suffisent. Ce n'est donc ni le nombre, ni l'identité des couches
+« qui plantent le plus » : **c'est la position terminale.**
+
+#### 🔑 LE MÉCANISME, ÉTABLI — et il tient en une phrase
+
+> **Une couche Rate supprime son propre plantage, mais lègue son erreur en boucle ouverte à
+> tout ce qui la suit. Placée au milieu, elle déplace donc la défaillance vers l'aval ; placée
+> en queue terminale, elle n'a plus d'aval à endommager.**
+
+📏 **La colonne « couche critique » le montre directement** : Rate en `[32]` → échec en **59** ·
+Rate en `31..36` → échec en **47** · Rate en `30..40` → échec en **51** · Rate en `[32,35,39]`
+→ échec en **74**. **La défaillance recule systématiquement en aval du jeu Rate.** C'est
+exactement le coût déjà écrit dans le code (`certus_strat_growth.py:653`, *« hands the cost to
+the next layer, which loses its anchors »*) et la loi de profondeur du §1.
+
+✅ **Et cela réconcilie tous les chiffres du dossier** :
+
+| observation | ce que le mécanisme en dit |
+|---|---|
+| la falaise 61 → 58 | la parente `75800` a une zone réellement fatale en **58-60** ; toute coupure qui la laisse optique plante |
+| le plateau plat à 4,00 % de 58 à 46 | une fois 58-74 neutralisées, il ne reste que la couche **39**, qu'aucune coupure n'atteint. Allonger la queue ne peut donc rien gagner |
+| les couches 47 à 57 ne plantent jamais sous queue | elles sont saines pour cette parente ; ce sont les Rate **du milieu** qui les rendaient fautives |
+| le SEEL se dégrade quand la queue s'allonge | plus de couches en boucle ouverte = plus d'erreur d'épaisseur, sans contrepartie puisque le plantage ne bouge plus |
+
+#### 🔵 Ce que ça implique pour la proposition de 👤
+
+> 👤 : *« les couches i+1 à 75 en Rate **sauf les couches avec au moins 2 points tournants** qui
+> restent en optique »*.
+
+⚠️ **La règle d'exception devient suspecte à la lumière de ce mécanisme** : rouvrir une couche
+optique **au milieu de la queue** réintroduit un point de plantage, et tout ce qui la suit
+redevient exposé. Le gain espéré — se ré-ancrer pour corriger la dérive — doit **dépasser** ce
+coût, et rien ne dit qu'il le fait. 📌 C'est mesurable en une cellule (`rate_tail_keep_optical`,
+trois tentatives échouées à ce jour) et c'est **le prochain essai à réussir**.
+
+🔑 **Et le vrai résultat à retenir dépasse le Rate** : sur `r75x2`, **les 224 stratégies à blocs
+plantent toutes à 100 %**. La seule qui passe est le **monitoring couche par couche**, et
+seulement avec sa queue. *Ce qui sauve le ×2, c'est per-layer + queue Rate — jamais l'un sans
+l'autre.* Cela rejoint §24-40 de `CLAUDE.md`, où le monitoring par couche gagne dès que
+l'information optique devient peu fiable.
 
 ---
 

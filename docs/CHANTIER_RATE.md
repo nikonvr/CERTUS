@@ -780,3 +780,64 @@ partout. **Bâtir une méthode dessus, c'est bâtir sur du sable.**
 | **3** | valider le Rate sur **`75c` à 1 nm** | §7 : la seule cellule où le Rate gagne, et elle est stable. Bien meilleur banc d'essai que `r75x2` |
 
 🔴 **Et surtout PAS le 99c** — 👤 : *« c'est un empilement très particulier, tout quart d'onde »*.
+
+---
+
+## 13. 🟢🟢 LA CASE MANQUANTE EST TOMBÉE — et elle RÉFUTE mon attaque, pas la queue Rate
+
+`reports/blocs_vs_plantage_r75x2_deep_s042.json`, **117,4 min**, `N = 300` consigné,
+**1 617 stratégies**.
+
+### La question, et la réponse est nette
+
+L'attaque 3 du §12 disait : *« à 1 nm, passer de `fast` à `deep` a fait 0 → 277 déposables ;
+ce n'était donc pas la fente qui sauvait mais la PROFONDEUR DE RECHERCHE. Rien ne dit que
+`deep` à 2 nm ne ferait pas la même chose — auquel cas la queue Rate ne sert à rien. »*
+
+📏 **Elle ne fait pas la même chose. Du tout.**
+
+| configuration, fente **2 nm** | stratégies | déposables | `crash_min` |
+|---|---|---|---|
+| `fast` (N = 50) | 404 | **0** | 100,00 % |
+| `premium` (N = 150) | 651 | **0** | 100,00 % |
+| **`deep` (N = 300)** | **1 617** | **0** | **100,00 %** |
+| `fast` **+ queue Rate** | 1 215 | **5** | **4,00 %** |
+
+🔴 **Quadrupler la recherche — 404 → 1 617 stratégies — ne change RIEN.** Zéro déposable, 100 %
+de plantage, sur les trois profondeurs. **Ce n'est donc pas la profondeur qui manquait à 2 nm**,
+et le déblocage observé à 1 nm venait de la **fente**, la profondeur ne faisant qu'exploiter ce
+que la fente rendait possible.
+
+🔑 **La queue Rate est donc, à ce jour, le SEUL moyen connu de rendre ce design fabricable à la
+fente nominale.** Ce n'est pas une voie de garage : c'est la seule route.
+
+### 🔴 Et l'attaque 1 se retourne aussi — sur l'axe qui compte le plus
+
+Je reprochais à l'hybride d'être *« dominée sur tous les axes »* par le pur optique à 1 nm.
+📏 Voici les deux, **aux deux graines** :
+
+| | graine 42 | graine 77 | verdict |
+|---|---|---|---|
+| **1 nm, pur optique**, `deep` élargi | 254 déposables, SEEL 0,629 | 🔴 **0 déposable**, plantage 38 % | **1 graine sur 2** |
+| **2 nm, + queue Rate**, `fast` | 5 déposables, 4,00 % | 5 déposables, **2,00 %** | 🟢 **2 graines sur 2** |
+
+**L'hybride est la seule des deux qui survive au changement de graine.** Et le SEEL de sa
+meilleure est **identique aux deux graines** (0,689) — pour la raison démontée au §10, mais le
+verdict de fabricabilité, lui, est bien reproduit.
+
+### Ce que ça change, et ce que ça ne change pas
+
+| | |
+|---|---|
+| 🟢 **la queue Rate n'est PAS une voie de garage** | c'est le seul moyen connu à 2 nm, et le seul qui tienne sur deux graines |
+| 🔴 **elle reste chère en atelier** | **74 changements de λ** plus 23 couches en boucle ouverte, contre 5 changements pour la solution à 1 nm. Ce reproche-là **tient toujours** |
+| 🟠 **et son SEEL reste moins bon** | 0,672 en `premium` contre 0,625 à 1 nm — mais on compare une solution qui **existe aux deux graines** à une qui n'existe qu'à une |
+| 🔵 **la vraie question devient donc opératoire** | *préfère-t-on une fente de 1 nm (×2 de bruit de lecture, 5 changements de λ, mais un verdict qui bascule avec le tirage) ou la fente nominale avec une queue Rate (robuste, mais 74 changements) ?* C'est une question pour 👤, pas pour la mesure |
+
+⚠️ **Ce qui manque encore** : `deep` à 2 nm sur une **seconde graine** — c'est la cellule 2 du
+batch, en cours. Si elle rend aussi 0 déposable, le « 100 % à 2 nm en pur optique » sera établi
+sur deux graines et le résultat sera solide des deux côtés.
+
+🔑 **Note de méthode** : ce contrôle a été conçu pour **tuer** la queue Rate, et il l'a
+confirmée. C'est exactement ce qu'on demande à un contrôle — et c'est la raison pour laquelle
+il fallait le lancer avant d'écrire quoi que ce soit d'autre.

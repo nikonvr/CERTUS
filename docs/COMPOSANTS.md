@@ -304,7 +304,25 @@ C'est le seul dispositif du dépôt qui sépare l'**épaisseur optique** du **no
 | `reports/serie_echelle_r75/cfg_x1.5.json` | 172,3 | `… --facteur 1.5` |
 | `reports/serie_echelle_r75/cfg_x1.75.json` | 201,1 | `… --facteur 1.75` — ajouté le 2026-08-18 |
 | `reports/serie_echelle_r75/cfg_x2.json` | 229,8 | `… --facteur 2` |
-| 🟢 `example/example_strat/JSON-strat-random75-x2-extreme.json` | 229,8 | **le ×2 rendu fabricable** — fente 1 nm + mode `extreme` |
+| 🟢 `example/example_strat/JSON-strat-random75-x2-fabricable.json` | 229,8 | **le ×2 rendu fabricable** — fente 1 nm, mode `deep`. ⚠️ Le nom portait `-extreme` et le fichier a été **renommé** : le mode `extreme` n'apportait rien de mesurable |
+
+### 🔴 LE ×2 EST ASSIS SUR LA FRONTIÈRE DE FABRICABILITÉ — mesuré le 2026-08-19
+
+**Tout verdict le concernant bascule avec la graine**, dans les deux sens :
+
+| configuration | graine 42 | graine 77 |
+|---|---|---|
+| `deep`, 1 nm, élargi, **pur optique** | **254 déposables**, plantage 1,0 % | **0 déposable**, plantage 38,0 % |
+| `fast`, 2 nm, + queue Rate | 1 déposable, plantage 4,00 % | 1 déposable, plantage 2,00 % |
+
+🔑 **Et ce n'est pas la fente qui décide, c'est la PROFONDEUR DE RECHERCHE.** À 1 nm, passer de
+`fast` à `deep` fait **0 → 277 déposables**. Une conclusion tirée d'un run `fast` sur ce
+composant ne dit donc rien de sa fabricabilité — seulement de ce que la recherche a proposé.
+
+⚠️ **Conséquence de méthode, et elle vaut au-delà du ×2** : c'est le composant **le moins
+adapté** pour établir une règle générale, précisément parce qu'il est marginal. Une méthode
+qui « marche » sur lui peut n'être qu'un tirage. Le banc d'essai stable pour le Rate est
+`75c à 1 nm` — voir [`CHANTIER_RATE.md`](CHANTIER_RATE.md) §7 et §12.
 
 🔴 **Ne lis PAS cette série comme une échelle de difficulté.** Mesuré le 2026-08-18 : `×1,75` est
 **plus épais** que `×1,5` et rend **282 stratégies déposables contre 1**. Ce que la série

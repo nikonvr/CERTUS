@@ -1,9 +1,49 @@
-# REPRENDRE ICI — état au 2026-08-19 matin
+# REPRENDRE ICI — état au 2026-08-19, **soir**
 
-> ⚠️ **Les §1 à §5 décrivent le gel du 2026-08-16.** Ce qui suit immédiatement les corrige et
-> les complète. Lis ce bloc d'abord.
+> ⚠️ **Tout ce qui suit le premier bloc est ANTÉRIEUR.** Les §1 à §5 décrivent le gel du
+> 2026-08-16, et le bloc « ARRÊT DU MATIN » décrit une journée qui a repris depuis. **Lis
+> le bloc ci-dessous d'abord ; il corrige les deux.**
 
-## 🛑 ARRÊT DU 2026-08-19 MATIN — sur décision de 👤, rien ne tourne
+## 🔴 OÙ ON EN EST LE 2026-08-19 AU SOIR
+
+**Un batch TOURNE** — `scripts/batch_voie_de_garage.py`, lancé à 17:47, trois cellules,
+fin estimée vers **00:47**. ⚠️ Estimation extrapolée du `premium`, jamais mesurée : `deep`
+à 2 nm n'avait jamais tourné sur ce composant.
+
+| # | cellule | ce qu'elle tranche |
+|---|---|---|
+| 1 | `r75x2 deep @ 2 nm`, graine 42 | **la case manquante de l'analyse contradictoire** |
+| 2 | idem, graine 77 | une graine ne fait pas un verdict (§24-46) |
+| 3 | la **courbe SEEL(n)**, `n` = 2 → 75 | la sonde de 👤 : `n` couches optiques, le reste à épaisseur **parfaite** |
+
+### Les cinq acquis de la journée, et deux sont des CORRECTIONS de mes propres écrits
+
+| | |
+|---|---|
+| 🔑 **le mécanisme du Rate est la POSITION TERMINALE** | expérience **appariée** : 11 couches Rate au milieu ne sauvent rien, 17 en queue suffisent. Une couche Rate lègue son erreur en boucle ouverte à **tout ce qui la suit** ; la dernière n'a rien en aval |
+| 🔴 **le mécanisme que j'avais publié était FAUX** | *« la queue franchit la zone où la dérive tue l'optique »* — la couche critique des déposables est 39, **avant** la coupure. Réfuté par les artefacts eux-mêmes |
+| 🔒 **deux règles gravées par 👤** | Rate **interdit** sur les couches 0 et 1 (le facteur n'a aucune référence : `n_ref = 0`), **autorisé partout ailleurs, dernière comprise** — elle ne l'avait jamais été, **0 placement sur 24 581**. Et le rate ne se calcule **que sur les couches optiquement déposées** |
+| 📏 **le taux réel de l'hybride est ~3 %** | sous la cible de 5 %. Le `4,00 %` de `fast` n'était que la granularité **2/50** |
+| 🔴 **l'analyse contradictoire du soir** | l'hybride est **dominée sur tous les axes** par le pur optique à 1 nm — 277 déposables contre 1, **6 blocs contre 75**. Mais cette solution bascule à **0** sur la graine 77, et `deep` à 2 nm n'avait **jamais** été lancé. C'est ce que le batch tranche |
+
+🔑 **Le diagnostic qui gouverne la suite** : `r75x2` est assis **exactement sur la frontière
+de fabricabilité**, où tout verdict bascule avec la graine. **Bâtir une méthode dessus, c'est
+bâtir sur du sable.** Si la cellule 1 rend des déposables en pur optique, la queue Rate sur
+ce composant est une **voie de garage** et il faudra l'écrire.
+
+📌 **Tout le détail est dans [`CHANTIER_RATE.md`](CHANTIER_RATE.md) §9 à §12**, avec les
+artefacts et les commandes. **Deux lecteurs sont prêts avant les données** — c'est délibéré :
+`scripts/lire_batch_rate.py` (rend chaque écart **en σ** et refuse de désigner un optimum que
+le bruit ne permet pas) et `scripts/lire_courbe_prefixe.py` (refuse d'afficher un SEEL là où
+ça plante — un score de repli n'est pas une performance).
+
+⚠️ **Ce qu'il ne faut PAS refaire** : le chiffre *« le Rate fait 64 % de l'offre et 0,15 % des
+déposables, facteur 175 »* cité plus bas dans ce fichier est **retiré** — paradoxe de Simpson,
+l'analyse stratifiée rend **0,99×**. Voir `CHANTIER_RATE.md` §1.
+
+---
+
+## 🛑 ARRÊT DU 2026-08-19 MATIN — journée depuis REPRISE, bloc conservé pour l'historique
 
 Toute la nuit du 17 au 19 a fait tourner des campagnes de mesure sur le chantier prédictibilité
 (§ suivante) et sur la matrice `extreme` (§ ci-dessous). **Les deux sont désormais arrêtées, à la
@@ -47,7 +87,7 @@ la recherche. 📌 [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md) §
 | ce qui en découle | |
 |---|---|
 | 🟢 **un mode `extreme`** | quatrième mode à côté de `fast` / `premium` / `deep`. Élargit ce qui est **généré**, laisse la profondeur d'**évaluation** identique à `deep`. Coût ≈ 5× deep |
-| 🟢 **un fichier prêt à lancer** | `example/example_strat/JSON-strat-random75-x2-extreme.json` — on charge, on lance, rien d'autre à régler. ≈ 2 h 40 |
+| 🟢 **un fichier prêt à lancer** | `example/example_strat/JSON-strat-random75-x2-fabricable.json` — on charge, on lance, rien d'autre à régler. ≈ 2 h 40 |
 | 🔴 **la série d'échelle est requalifiée** | son tableau *« échoue / passe / limite / échoue »* mesurait la recherche. `×1,75`, **plus épais** que `×1,5`, rend **282** déposables contre **1** |
 | 🔴 **la fente fine est un REMÈDE** | 1 nm aide `×0,5` (48 → 28 %) et `×2` (100 → 38 %) — les deux qui **échouent** à 2 nm — et **nuit** aux deux qui réussissent déjà. Effet de plafond, pas préférence spectrale |
 

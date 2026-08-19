@@ -3560,7 +3560,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <ul>
                         <li><b>Fast Mode:</b> Designed for fast turnaround while preserving significant crash detection (at $N=50$, binomial resolution $\sigma_p \approx 3.0\%$). Ideal for exploring layer feasibility.</li>
                         <li><b>Premium Mode (Default):</b> The optimal sweet spot identified in §10.7: at $N=150$, relative score uncertainty is $\sigma \approx 5-6\%$, matching the intrinsic gap between top strategies without wasting compute cycles on noise oversampling.</li>
-                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors), where a wider Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) buy a substantially broader exploration. <b>It does not guarantee an exhaustive one</b> &mdash; §10.17 gives a measured case where the standard search returns no manufacturable strategy at all and Extreme returns 254 on the same design.</li>
+                        <li><b>Deep Mode:</b> Recommended when handling highly sensitive optical components (e.g. multi-cavity narrow bandpass filters, chirped high-power mirrors), where a wider Phase A combinatorial width (<code>top_k = 100</code>) and deeper Monte-Carlo sampling ($N=300$) buy a substantially broader exploration. <b>It does not guarantee an exhaustive one</b> &mdash; §10.17 gives a measured case where the standard screening search returns no manufacturable strategy at all and Deep returns 277 on the same design. <b>Corrected 2026-08-19:</b> this sentence credited <i>Extreme</i> with that unlock; the Deep row was missing from the table, and with it in place Deep alone does it, better and at a fifth of the cost.</li>
                     </ul>
                 </div>
 
@@ -3643,7 +3643,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <b>Cost:</b> about $5\times$ Deep &mdash; measured at 157 min on a 75-layer stack, 8 threads,
                     2026-08-18. This is why it is not the default, and why the tooltip says to reach for it when you
                     have the time. A ready-to-run configuration ships with the project:
-                    <code>example/example_strat/JSON-strat-random75-x2-extreme.json</code> &mdash; load it, press
+                    <code>example/example_strat/JSON-strat-random75-x2-fabricable.json</code> &mdash; load it, press
                     run, nothing else to set.
                 </p>
 
@@ -5321,20 +5321,56 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">&mdash;</td>
                     </tr>
                     <tr style="background:#f0fdf4;">
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>1 nm slit + Extreme search</b></td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">2&nbsp;945</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#16a34a;font-weight:bold;">254</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;"><b>1 nm slit + Deep search</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">1&nbsp;986</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#16a34a;font-weight:bold;">277</td>
                         <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#16a34a;font-weight:bold;">1.0&nbsp;%</td>
-                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">0.629 nm</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-weight:bold;">0.625 nm</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;">1 nm slit + Extreme search</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">2&nbsp;945</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">254</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">1.0&nbsp;%</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">0.629 nm</td>
+                    </tr>
+                    <tr style="background:#fef2f2;">
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;">1 nm slit + Deep search, <b>seed 77</b></td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">2&nbsp;575</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#dc2626;font-weight:bold;">0</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;color:#dc2626;">38.0&nbsp;%</td>
+                        <td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">&mdash;</td>
                     </tr>
                 </table>
 
                 <p>
-                    <b>Neither change alone is enough.</b> The finer slit divides the slit-induced bias by four (it
-                    goes as $B^2$) at the cost of doubling the read noise, and on its own takes the crash rate from
-                    100&nbsp;% to 38&nbsp;% without producing a single manufacturable strategy. The widened search on
-                    top of it produces 254, the best crashing <b>4 times out of 300</b>.
+                    <b>What actually unlocks it is search depth, not the slit and not Extreme.</b> The finer slit
+                    divides the slit-induced bias by four (it goes as $B^2$) at the cost of doubling the read noise,
+                    and on its own takes the crash rate from 100&nbsp;% to 38&nbsp;% without producing a single
+                    manufacturable strategy. Going from the standard screening depth to <b>Deep</b> on top of it
+                    produces <b>277</b>, the best crashing 3 times out of 300.
                 </p>
+
+                <div class="note" style="background:#fef2f2;border-color:#fca5a5;">
+                    <strong>Two corrections made on 2026-08-19, and they matter more than the result.</strong>
+                    <p style="margin:8px 0 0;">
+                        <b>1. Extreme was credited for something Deep already did.</b> This table previously jumped
+                        from the standard search straight to Extreme, and the surrounding text read <i>"the standard
+                        search returns no manufacturable strategy and Extreme returns 254"</i>. The Deep row was
+                        missing. With it in place the attribution reverses: <b>Deep alone returns 277 at SEEL
+                        0.625</b>, and Extreme &mdash; at roughly five times the cost &mdash; returns <b>fewer</b>
+                        manufacturable strategies at a <b>slightly worse</b> SEEL. Extreme is not what makes this
+                        design manufacturable.
+                    </p>
+                    <p style="margin:8px 0 0;">
+                        <b>2. The result does not survive a change of random seed.</b> Same configuration, same
+                        design, seed 42 &rarr; 254 manufacturable; seed 77 &rarr; <b>zero</b>, minimum crash rate
+                        38&nbsp;%. This design sits <i>on</i> the manufacturability boundary, where the verdict is
+                        decided by the draw. The honest statement is therefore not <i>"the &times;2 is
+                        manufacturable"</i> but <i>"the &times;2 is manufacturable on one seed out of the two
+                        tested, and a single seed does not establish it"</i>.
+                    </p>
+                </div>
 
                 <div class="note">
                     <strong>Why the depth change does not explain it.</strong> The Extreme run evaluates each
@@ -5374,7 +5410,7 @@ n_crash_run   = np.count_nonzero(np.any(crashed_cells, axis=1))   # &lt;- collap
                     <b>Source.</b> Artefact <code>reports/blocs_vs_plantage_r75x2_deep_s042_res1_large.json</code>,
                     probe <code>scripts/probe_blocs_vs_plantage.py</code>, driver
                     <code>scripts/batch_grille_resolution.py</code>. Ready-to-run configuration
-                    <code>example/example_strat/JSON-strat-random75-x2-extreme.json</code>. Seed 42, 2026-08-18,
+                    <code>example/example_strat/JSON-strat-random75-x2-fabricable.json</code>. Seed 42, 2026-08-18,
                     8 threads, 157 min. SEEL $= 2\sqrt{\text{RMSE}_{P95}}$, the same definition used throughout
                     this page.
                 </div>

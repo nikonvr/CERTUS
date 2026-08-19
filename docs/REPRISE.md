@@ -33,7 +33,7 @@ Le chantier en cours est la **multiple testglass methodology** : introduire un v
 | passe-bande 5 cavités `-5cav-99c` | 99 | **0,81 nm** | 🔴 **4 verres témoins** `0-22/22-42/42-76/76-99` · ⚠️ le `0,782 nm` était le plus **favorable de trois graines** (0,782 / 0,816 / 0,839), corrigé le 17/08 |
 | le même, **une seule campagne** | 99 | *aucun score valide* | **100 % de plantage** — sur **751** stratégies remesurées le 17/08, de 1 à 99 blocs |
 | **cible posée par 👤** | | **0,300 nm** | facteur **2,7** restant sur le 99c |
-| 🟢 **random75 ×2**, mode `extreme` | 75 | **0,629 nm** | 🔴 **NOUVEAU 18/08** — le même empilement rendait **0 déposable et 100 % de plantage** en recherche standard. Fente 1 nm + mode `extreme` : **254 déposables sur 2 945** |
+| 🟠 **random75 ×2**, `deep` à 1 nm | 75 | **0,625 nm** | le même empilement rend **0 déposable et 100 % de plantage** en recherche standard. `deep` + fente 1 nm : **277 déposables sur 1 986**. 🔴 **MAIS il s'effondre à 0 déposable sur la graine 77** — mesuré le 19/08, voir l'avertissement ci-dessous |
 
 🔴🔴 **LE RÉSULTAT DU 2026-08-18, ET IL CHANGE LA LECTURE DE TOUT LE RESTE.** Un
 `crash_min = 100 %` ne veut **pas** dire *« ce composant n'est pas monitorable »*. Il veut dire
@@ -45,10 +45,21 @@ l'intervention le confirme : même design, même graine, même fente, recherche 
 **0/404** à **254/2 945**. 📌 [`CHANTIER_PREDICTIBILITE.md`](CHANTIER_PREDICTIBILITE.md)
 §4quinquies.
 
-🟢 **Ce qui en découle, et c'est un livrable utilisable tout de suite** : un quatrième mode
-d'exécution **`extreme`** (à côté de `fast` / `premium` / `deep`) et un fichier prêt à lancer,
-`example/example_strat/JSON-strat-random75-x2-extreme.json`. On le charge, on lance, il n'y a rien
-d'autre à régler. Compter **≈ 2 h 40**.
+🟠 **Ce qui en découle** : un fichier prêt à lancer,
+`example/example_strat/JSON-strat-random75-x2-fabricable.json`, en mode **`deep`** et fente 1 nm.
+On le charge, on lance, il n'y a rien d'autre à régler. Compter **≈ 2 h 40**.
+
+⚠️ **Deux corrections à ce paragraphe, faites le 2026-08-19.** Il annonçait un quatrième mode
+d'exécution `extreme` et un fichier `…-x2-extreme.json`. **Le mode `extreme` n'apportait rien de
+mesurable** — `deep` seul rend **277 déposables et 0,625 nm** contre 254 et 0,629 — et le fichier
+a été **renommé** en `-fabricable` : le chemin cité était mort.
+
+🔴 **ET LE RÉSULTAT LUI-MÊME N'EST PAS ÉTABLI.** 📏 Mesuré le 2026-08-19, **même configuration,
+seule la graine change** : graine 42 → **254 déposables**, graine 77 → **0 déposable**, plantage
+minimal 38 %. C'est §24-46 — basculement **catégoriel** — et il frappe ici le résultat phare du
+18 août. **Le ×2 est assis exactement sur la frontière de fabricabilité**, et c'est le composant
+le **moins** adapté pour établir une règle générale. 📌
+[`COMPOSANTS.md`](COMPOSANTS.md) et [`CHANTIER_RATE.md`](CHANTIER_RATE.md) §12.
 
 ⚠️ **Et le 99c n'est PAS une référence valable pour généraliser** — 👤, 2026-08-17 : *« il est
 rare de déposer un empilement tout 1/4 d'onde, surtout en trigger POEM »*. Ses multiplicateurs

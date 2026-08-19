@@ -666,7 +666,7 @@ je craignais en montant l'audit — puisque le plafond n'agit nulle part.
 | `timeout=30.0` passé à la DP (`certus_strat_ranking.py:410`) | 🟢 **inerte aussi** — la fonction déclare `timeout` et `start_time` dans sa signature et ne les lit jamais dans son corps. Donc **aucun risque de troncature sur la cellule `dp_top_k = 200`** |
 | `concurrent.futures.wait(futures, timeout=600)` (`certus_strat_workers.py:1402`) | 🟠 n'ampute **pas** les résultats — `shutdown(wait=True)` attend la fin — mais **cesse de journaliser les exceptions** au-delà de 600 s. Sur une cellule de 157 min, une erreur tardive est **muette** |
 
-**Et le fichier prêt à lancer** : `example/example_strat/JSON-strat-random75-x2-extreme.json`.
+**Et le fichier prêt à lancer** : `example/example_strat/JSON-strat-random75-x2-fabricable.json`.
 Il porte l'empilement ×2, la fente à 1 nm, le mode `extreme` et la graine 42 — c'est-à-dire
 **exactement** la configuration qui a produit les 254 déposables. On le charge, on lance, il n'y a
 rien d'autre à régler. Le fichier dit lui-même ce qu'il coûte (≈ 2 h 40) et ce qu'il ne promet pas.

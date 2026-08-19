@@ -165,7 +165,10 @@ CRASH_TOL = 0.05
 #: Coupures du balayage de queue (8e argument = 2). Bornees par la mesure du 2026-08-19 :
 #: sur les 10 runs du x2 la couche critique dominante est la 32 a 2 nm et la 35 ailleurs, et
 #: 59 a 74 % des couches critiques sont AVANT la couche 40 -- d'ou un balayage des la 28.
-TAIL_CUTS = [28, 31, 34, 37, 41, 46, 52]
+#: 📏 Mesure du 2026-08-19 : le SEEL s'AMELIORE quand la coupure recule (0,814 a
+#: i=28, 0,689 a i=52). L'optimum est donc au-dela de 52 -- ce balayage cherche ou
+#: il se retourne.
+TAIL_CUTS = [55, 58, 61, 64, 67, 70]
 
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
@@ -286,7 +289,8 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # 2026-08-19 : n'agit que sur le 75c (5 couches sur 75), inerte sur 35c,
         # 48c et 99c ou aucune couche n'est sous le seuil.
         "rate_by_swing": par_swing == 1,
-        "rate_tail_sweep": TAIL_CUTS if par_swing == 2 else [],
+        "rate_tail_sweep": TAIL_CUTS if par_swing >= 2 else [],
+        "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
         "execution_mode": mode,
     }
     if elargi:
@@ -529,7 +533,7 @@ def main() -> int:
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
                 + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}")
-                + ("" if not par_swing else "_swing" if par_swing == 1 else "_tail"))
+                + ("" if not par_swing else "_swing" if par_swing == 1 else "_tail" if par_swing == 2 else "_tailk"))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

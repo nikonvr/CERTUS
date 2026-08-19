@@ -531,6 +531,15 @@ RATE_MIN_LAYERS_PER_BLOCK: float = 3.0
 RATE_SWING_MIN_DEFAULT: float = 0.025
 
 
+def _wl_de_la_couche(strategy: dict[str, Any], layer: int) -> float | None:
+    """La lambda que la strategie surveille pour cette couche, ou None hors de tout bloc."""
+    for blk in strategy.get("blocks") or []:
+        if int(blk.get("start", 0)) <= layer < int(blk.get("end", 0)):
+            wl = blk.get("wavelength")
+            return float(wl) if wl is not None else None
+    return None
+
+
 def _rate_swing_candidates(strategy: dict[str, Any], num_layers: int,
                            swing_ctx: "_RateSwingContext") -> list[int]:
     """Layers where a Rate is NEEDED: the growth-time swing is below `dynamics_threshold`.
@@ -684,9 +693,15 @@ class _RateSwingContext:
         if cached is not None:
             return cached
         self.n_calls += 1
+        # 🔑 UN DICTIONNAIRE D'UNE SEULE ENTREE SUFFIT, et c'est ce qui contourne proprement
+        # le piege qui a tue un run le 2026-08-19. `calculate_dynamics_ULTIMATE` ne consulte que
+        # les lambda presentes dans son `wls_array` -- ici une seule. On lui passe donc un vrai
+        # dict bati par acces indexe, ce que l'objet de memoire partagee du pipeline supporte
+        # tout autant qu'un dict natif. Plus besoin d'exiger `.items()` sur la source.
         dyn = calculate_dynamics_ULTIMATE(
             np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
-            self.clues_at_wl, self.nominal_matrix_cache, self.all_wls,
+            {float(wl): self.clues_at_wl[float(wl)]},
+            self.nominal_matrix_cache, self.all_wls,
         )
         val = float(dyn[0]["dynamics"]) if dyn else float("inf")
         self._cache[key] = val
@@ -774,7 +789,7 @@ def _expand_with_rate_variants(
         # retombe BRUYAMMENT sur les frontieres de bloc sinon -- un critere inerte doit se
         # signaler, jamais rendre un resultat plausible.
         _pret = (p_thick_nominal is not None and nominal_matrix_cache is not None
-                 and all_wls is not None and hasattr(clues_at_wl, "items")
+                 and all_wls is not None and clues_at_wl is not None
                  and hasattr(all_wls, "astype"))
         if _pret:
             threshold = float(params.get("dynamics_threshold", RATE_SWING_MIN_DEFAULT))
@@ -807,6 +822,7 @@ def _expand_with_rate_variants(
     # DERIVE ACCUMULEE, pas le signal propre de la couche. Franchir la zone en boucle ouverte
     # evite d'y chercher un niveau devenu inatteignable -- c'est le mecanisme teste ici.
     tail_cuts = params.get("rate_tail_sweep") or []
+    keep_optical = int(params.get("rate_tail_keep_optical", 0) or 0)
 
     variants: list[dict[str, Any]] = []
     skipped = 0
@@ -820,9 +836,25 @@ def _expand_with_rate_variants(
                     continue
                 v = dict(strat)
                 v["blocks"] = list(strat.get("blocks") or [])
-                v["rate_layers"] = list(range(c, num_layers))
+                queue = list(range(c, num_layers))
+                # 🔑 LA REGLE D'EXCEPTION DE 👤 : « sauf les couches [a bon signal] qui restent
+                # en optique ». Elle exige un critere DISCRIMINANT -- 📏 le « >= 2 points
+                # tournants » propose au depart est satisfait par 32 couches de queue sur 35,
+                # il n'aurait rien selectionne. On garde donc les `keep` couches de PLUS FORT
+                # swing, ce qui selectionne par construction.
+                if keep_optical and swing_ctx is not None:
+                    note = []
+                    for lay in queue:
+                        wl = _wl_de_la_couche(strat, lay)
+                        note.append((swing_ctx.swing_at(lay, wl) if wl else -1.0, lay))
+                    note.sort(reverse=True)
+                    gardees = {lay for _, lay in note[:keep_optical]}
+                    queue = [lay for lay in queue if lay not in gardees]
+                v["rate_layers"] = queue
                 v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
-                v["origin"] = f"RATE_TAIL{c}(from {strat.get('strategy_id', '?')})"
+                v["origin"] = (f"RATE_TAIL{c}"
+                               + (f"K{keep_optical}" if keep_optical else "")
+                               + f"(from {strat.get('strategy_id', '?')})")
                 next_id += 1
                 variants.append(v)
         logger.info(

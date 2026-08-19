@@ -762,15 +762,30 @@ def _expand_with_rate_variants(
     # arrays Phase A already computed, threaded in by `_prepare_robustness_inputs`.
     swing_ctx: _RateSwingContext | None = None
     if bool(params.get("rate_by_swing", False)):
-        if p_thick_nominal is not None and nominal_matrix_cache is not None \
-                and all_wls is not None and clues_at_wl is not None:
+        # 🔴 `clues_at_wl` N'EST PAS TOUJOURS UN DICTIONNAIRE, et un run complet est mort de
+        # cette hypothese le 2026-08-19. Dans le pipeline il arrive sous la forme d'un objet de
+        # memoire partagee (`SharedIndicesWorker`) : `calculate_dynamics_ULTIMATE` lui applique
+        # `.items()`, leve un `AttributeError` noye dans 3900 lignes de journal, et le run se
+        # termine sur un « No strategies found » qui n'en dit pas la cause.
+        #
+        # 🔑 Le meme fichier montrait pourtant la parade six cents lignes plus haut :
+        # `_prepare_robustness_nominal_optics` enveloppe la meme valeur dans `_IdxWrapper` au
+        # lieu de la traiter comme un dict. On exige donc ici une VRAIE correspondance, et on
+        # retombe BRUYAMMENT sur les frontieres de bloc sinon -- un critere inerte doit se
+        # signaler, jamais rendre un resultat plausible.
+        _pret = (p_thick_nominal is not None and nominal_matrix_cache is not None
+                 and all_wls is not None and hasattr(clues_at_wl, "items")
+                 and hasattr(all_wls, "astype"))
+        if _pret:
             threshold = float(params.get("dynamics_threshold", RATE_SWING_MIN_DEFAULT))
             swing_ctx = _RateSwingContext(p_thick_nominal, clues_at_wl,
                                           nominal_matrix_cache, all_wls, threshold)
         else:
             logger.warning(
-                "[RATE] rate_by_swing=true mais les tableaux nominaux (matrice/lambda/"
-                "indices) sont absents -- retombe sur les frontieres de bloc seules."
+                "[RATE] rate_by_swing=true INACTIF : tableaux nominaux absents, ou "
+                "`clues_at_wl` (%s) / `all_wls` (%s) ne sont pas du type attendu. Retombe "
+                "sur les frontieres de bloc seules.",
+                type(clues_at_wl).__name__, type(all_wls).__name__,
             )
 
     # 🔑 BALAYAGE DE QUEUE -- 👤 2026-08-19 : « avant les couches i, un filtre le plus parfait

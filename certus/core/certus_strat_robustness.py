@@ -698,11 +698,24 @@ class _RateSwingContext:
         # les lambda presentes dans son `wls_array` -- ici une seule. On lui passe donc un vrai
         # dict bati par acces indexe, ce que l'objet de memoire partagee du pipeline supporte
         # tout autant qu'un dict natif. Plus besoin d'exiger `.items()` sur la source.
-        dyn = calculate_dynamics_ULTIMATE(
-            np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
-            {float(wl): self.clues_at_wl[float(wl)]},
-            self.nominal_matrix_cache, self.all_wls,
-        )
+        # 🔴 ET ON MUSELLE LE DIAGNOSTIC DE `calculate_dynamics_ULTIMATE` PENDANT L'APPEL.
+        # Il avertit quand `nanstd(dyn_vals)` est nul, ce qui detecte une couche reellement
+        # plate quand on lui passe TOUTE la grille de lambda. Ici on ne lui en passe qu'UNE :
+        # l'ecart-type d'une seule valeur vaut 0 par construction, donc l'avertissement se
+        # declenche a CHAQUE appel et n'apprend rien. 📏 Mesure du 2026-08-19 : deux lignes
+        # WARNING par appel, soit des dizaines de milliers sur un run reel -- journal
+        # inexploitable et cout d'ecriture non nul. On restaure le niveau ensuite.
+        _log_tf = logging.getLogger("ThinFilm")
+        _niveau = _log_tf.level
+        _log_tf.setLevel(logging.ERROR)
+        try:
+            dyn = calculate_dynamics_ULTIMATE(
+                np.array([wl], dtype=np.float64), layer, float(self.p_thick_nominal[layer]),
+                {float(wl): self.clues_at_wl[float(wl)]},
+                self.nominal_matrix_cache, self.all_wls,
+            )
+        finally:
+            _log_tf.setLevel(_niveau)
         val = float(dyn[0]["dynamics"]) if dyn else float("inf")
         self._cache[key] = val
         return val

@@ -168,7 +168,9 @@ CRASH_TOL = 0.05
 #: 📏 Mesure du 2026-08-19 : le SEEL s'AMELIORE quand la coupure recule (0,814 a
 #: i=28, 0,689 a i=52). L'optimum est donc au-dela de 52 -- ce balayage cherche ou
 #: il se retourne.
-TAIL_CUTS = [55, 58, 61, 64, 67, 70]
+#: 📏 Optimum encadre le 2026-08-19 : SEEL 0,689 a i=52, 0,701 a 55, 0,735 a 58, et ECHEC
+#: complet des 61. On resserre autour du point de retournement.
+TAIL_CUTS = [46, 49, 52, 55]
 
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
@@ -288,7 +290,10 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # sous `dynamics_threshold`, EN PLUS des frontieres de bloc. 📏 Mesure du
         # 2026-08-19 : n'agit que sur le 75c (5 couches sur 75), inerte sur 35c,
         # 48c et 99c ou aucune couche n'est sous le seuil.
-        "rate_by_swing": par_swing == 1,
+        # 🔴 par_swing == 3 exige AUSSI le contexte de swing : sans lui `swing_ctx` vaut None
+        # et la regle d'exception est sautee EN SILENCE. C'est ce qui a fait qu'un run de
+        # 56 min a rendu un doublon exact du run sans exception, le 2026-08-19.
+        "rate_by_swing": par_swing in (1, 3),
         "rate_tail_sweep": TAIL_CUTS if par_swing >= 2 else [],
         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
         "execution_mode": mode,
@@ -509,8 +514,11 @@ def main() -> int:
                          "require_turning_point": int(min_tp),
                          "exploration_elargie": bool(elargi),
                          "exploration_niveau": int(elargi),
-                         "rate_by_swing": par_swing == 1,
-                         "rate_tail_sweep": TAIL_CUTS if par_swing == 2 else [],
+                         # 🔴 CE BLOC MENTAIT : il enregistrait `[]` pour par_swing == 3
+                         # alors que le run tournait bien avec les coupures (§24-7).
+                         "rate_by_swing": par_swing in (1, 3),
+                         "rate_tail_sweep": TAIL_CUTS if par_swing >= 2 else [],
+                         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
                          "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
                                            if int(elargi) >= 2 else
                                            dict(ELARGISSEMENT) if elargi else None)}})
@@ -533,7 +541,11 @@ def main() -> int:
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
                 + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}")
-                + ("" if not par_swing else "_swing" if par_swing == 1 else "_tail" if par_swing == 2 else "_tailk"))
+                # 🔴 LES COUPURES ENTRENT DANS LE NOM. Sans elles, changer TAIL_CUTS ecrase
+                # l'artefact precedent : les coupures 28-52 ont ete perdues ainsi.
+                + ("" if not par_swing else "_swing" if par_swing == 1
+                   else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
+                        + ("k" if par_swing == 3 else "")))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

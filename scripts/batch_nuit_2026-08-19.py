@@ -77,6 +77,15 @@ CELLULES = [
     ("5_regle_exception",      ["r75x2", "fast", "0", "0", "2", "0", "42", "3"], "46,52,58", "", 45),
 ]
 
+#: 🔴 LA COURBE SEEL(n) EST RELANCEE EN 6e CELLULE. Sa premiere execution a rendu une courbe
+#: VIDE en 100 minutes : `_optical_prefix_variants` selectionnait sur `n_blocks`, une cle
+#: SOUVENT ABSENTE du dictionnaire de strategie. Corrige (repli sur `len(blocks)`), et le test
+#: qui la couvre ECHOUE desormais sur le code d'avant -- ce que sa premiere version ne faisait
+#: pas, parce qu'elle posait la cle a la main.
+#: ⚠️ Relancee en `premium` et non `deep` : 100 min pour rien la premiere fois, on verifie
+#: d'abord qu'elle rend une courbe avant d'y remettre le prix fort.
+SONDE_COURBE = (["r75x2", "premium", "42"], 75)
+
 
 def main() -> int:
     t0 = time.time()
@@ -114,6 +123,30 @@ def main() -> int:
                       "code": code, "minutes": round(dt, 1),
                       "verdict": "OK" if code == 0 else "ECHEC"})
         jrn.write_text(json.dumps(bilan, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    # --- 6e cellule : la courbe SEEL(n), sonde differente ---
+    argv, mn = SONDE_COURBE
+    env = dict(os.environ)
+    env.update({"PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8",
+                "CERTUS_BENCH_TIMEOUT_S": str(mn * 60 * 4)})
+    env.pop("CERTUS_CONSENSUS_SEEDS", None)
+    print(f"\n{'─' * 96}\n▶ cellule 6_courbe_SEEL_n — ~{mn} min — "
+          f"debut {datetime.now():%H:%M:%S}\n{'─' * 96}", flush=True)
+    t = time.time()
+    try:
+        r = subprocess.run([PY, str(ROOT / "scripts" / "probe_prefixe_optique.py"), *argv],
+                           cwd=str(ROOT), env=env, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=mn * 60 * 6)
+        code, sortie = r.returncode, (r.stdout or "") + (r.stderr or "")
+    except subprocess.TimeoutExpired:
+        code, sortie = -9, "TIMEOUT du pilote"
+    dt = (time.time() - t) / 60.0
+    print("\n".join(sortie.splitlines()[-20:]), flush=True)
+    print(f"◀ cellule 6_courbe_SEEL_n : code={code} en {dt:.1f} min", flush=True)
+    bilan.append({"cellule": "6_courbe_SEEL_n", "argv": argv, "coupures": "-", "consensus": "",
+                  "code": code, "minutes": round(dt, 1),
+                  "verdict": "OK" if code == 0 else "ECHEC"})
+    jrn.write_text(json.dumps(bilan, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print("\n" + "=" * 96)
     print(f"BILAN — {sum(1 for b in bilan if b['verdict'] == 'OK')}/{len(bilan)} OK "

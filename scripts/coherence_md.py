@@ -165,8 +165,171 @@ def _controle_negatif() -> tuple[bool, str]:
         faux.unlink(missing_ok=True)
 
 
+# --------------------------------------------------------------------------- #
+#  EXTENSION DU 2026-08-19 -- 👤 : « lance l'extension »
+#
+#  🔑 LE PRINCIPE : ne PAS enumerer les faits a la main. Une liste ecrite a la main se
+#  perime exactement comme les chiffres qu'elle surveille -- c'est ce qui est arrive a
+#  « 2 450 tests » quatre fois de suite. Les deux balayages ci-dessous DECOUVRENT ce qu'il
+#  y a a verifier, donc ils grandissent tout seuls quand un document cite un symbole de
+#  plus.
+# --------------------------------------------------------------------------- #
+
+def _symboles_du_code() -> dict[str, set]:
+    """Toute affectation `NOM = <litteral numerique>` dans `certus/`, module OU locale.
+
+    ⚠️ Les locales comptent, et il le faut : `NPTS = 64` et `NPTS_PREV = 16` sont des
+    variables de fonction dans le noyau, et ce sont pourtant deux des chiffres les plus
+    cites du projet (§24-22). Se limiter aux constantes de module en manquerait la moitie.
+
+    Un nom affecte a DEUX valeurs differentes est rendu tel quel : le comparateur le
+    signalera comme ambigu plutot que de choisir, parce que choisir serait deviner.
+    """
+    out: dict[str, set] = {}
+    for p in (ROOT / "certus").rglob("*.py"):
+        try:
+            arbre = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+        except SyntaxError:
+            continue
+        for n in ast.walk(arbre):
+            cible = val = None
+            if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name):
+                cible, val = n.target.id, n.value
+            elif isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+                cible, val = n.targets[0].id, n.value
+            if (cible and len(cible) > 3 and cible.upper() == cible
+                    and isinstance(val, ast.Constant)
+                    and isinstance(val.value, (int, float)) and not isinstance(val.value, bool)):
+                out.setdefault(cible, set()).add(float(val.value))
+    return out
+
+
+def _profondeurs_par_mode() -> dict[str, dict[str, float]]:
+    """La table `mode -> profondeurs`, lue dans les branches `if mode == ...` de l'interface.
+
+    🔑 C'est la seule source de verite pour « fast = 50 tirages » etc., et ce document l'a
+    ecrit faux au moins une fois (« 50 -> 150 tirages », retire le 2026-08-18).
+    """
+    p = ROOT / "certus" / "ui" / "certus_strat_ui_state.py"
+    if not p.exists():
+        return {}
+    try:
+        arbre = ast.parse(p.read_text(encoding="utf-8", errors="replace"))
+    except SyntaxError:
+        return {}
+    out: dict[str, dict[str, float]] = {}
+
+    def _lit(corps, cible: dict[str, float]) -> None:
+        for st in corps:
+            if (isinstance(st, ast.Assign) and len(st.targets) == 1
+                    and isinstance(st.targets[0], ast.Subscript)
+                    and isinstance(st.targets[0].slice, ast.Constant)
+                    and isinstance(st.value, ast.Constant)
+                    and isinstance(st.value.value, (int, float))):
+                cible[str(st.targets[0].slice.value)] = float(st.value.value)
+
+    for n in ast.walk(arbre):
+        if not isinstance(n, ast.If) or not isinstance(n.test, ast.Compare):
+            continue
+        g = n.test.comparators[0] if n.test.comparators else None
+        if not (isinstance(g, ast.Constant) and g.value in ("fast", "premium", "deep", "extreme")):
+            continue
+        # ⚠️ `premium` n'a PAS de branche a lui : c'est le `else` de la chaine, donc le mode
+        # PAR DEFAUT. Le rater ferait croire que le triplet 50/150/300 n'est verifiable qu'aux
+        # deux bouts -- alors que la valeur du milieu est dans le code, juste ailleurs.
+        if g.value == "fast" and n.orelse:
+            queue = n.orelse
+            while len(queue) == 1 and isinstance(queue[0], ast.If):
+                queue = queue[0].orelse
+            if queue:
+                _lit(queue, out.setdefault("premium", {}))
+        d = out.setdefault(g.value, {})
+        for st in n.body:
+            if (isinstance(st, ast.Assign) and len(st.targets) == 1
+                    and isinstance(st.targets[0], ast.Subscript)
+                    and isinstance(st.targets[0].slice, ast.Constant)
+                    and isinstance(st.value, ast.Constant)
+                    and isinstance(st.value.value, (int, float))):
+                d[str(st.targets[0].slice.value)] = float(st.value.value)
+    return out
+
+
+def _sweep_symboles(fichiers, sym) -> tuple[int, int]:
+    """Les documents qui ecrivent `NOM = N` disent-ils la valeur du code ?
+
+    Motifs reconnus : `NOM = 4`, **NOM** vaut 4, `NOM` a 4, NOM : 4.
+    """
+    n_ok = n_ko = n_nc = 0
+    noms = "|".join(re.escape(k) for k in sorted(sym, key=len, reverse=True))
+    rx = re.compile(r"`?\*{0,2}(" + noms + r")\*{0,2}`?\s*(?:=|vaut|:)\s*\*{0,2}"
+                    r"(-?\d+(?:[.,]\d+)?)", re.I)
+    for f in fichiers:
+        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(l):
+                continue
+            for m in rx.finditer(l):
+                nom, brut = m.group(1), m.group(2).replace(",", ".")
+                # 🔴 TROIS CONSTRUCTIONS QUE L'OUTIL NE SAIT PAS LIRE, et qui produisaient
+                # SIX faux positifs a la premiere execution (2026-08-19) :
+                #   « NPTS_PREV = **0** »   -> le 0 est le RESULTAT d'une multiplication
+                #   « dp_top_k 20 → 100 »   -> une TRANSITION entre deux modes
+                #   « dp_top_k = 20 / 40 / 100 » -> une LISTE par mode
+                #   « phase_a_keep_limit ×4 »    -> un MULTIPLICATEUR
+                # On les compte a part : ce ne sont NI des conformites NI des erreurs, et les
+                # noyer dans l'un ou l'autre mentirait sur la couverture.
+                autour = l[max(0, m.start() - 12): m.end() + 14]
+                if re.search(r"→|->|×|\bx\s*\d|\d\s*/\s*\d|\(\s*i\s*[−-]", autour):
+                    n_nc += 1
+                    continue
+                try:
+                    x = float(brut)
+                except ValueError:
+                    continue
+                ref = sym.get(nom)
+                if not ref:
+                    continue
+                if len(ref) > 1:
+                    print(f"  🟠 {nom:<30} {f.name}:{i} dit {brut} -- le code en porte "
+                          f"PLUSIEURS : {sorted(ref)} (ambigu, a trancher a la main)")
+                    continue
+                r = next(iter(ref))
+                if abs(x - r) < 1e-9 or (r and abs(x - r) / abs(r) < 0.005):
+                    n_ok += 1
+                else:
+                    n_ko += 1
+                    print(f"  🔴 {nom:<30} {f.name}:{i} dit {brut}, le CODE dit {r}")
+    return n_ok, n_ko, n_nc
+
+
+def _sweep_modes(fichiers, modes) -> tuple[int, int, int]:
+    """« fast = 50 tirages », « deep = 300 » : les documents suivent-ils le code ?"""
+    n_ok = n_ko = n_nc = 0
+    for mode, d in sorted(modes.items()):
+        for cle, ref in sorted(d.items()):
+            rx = re.compile(re.escape(mode) + r".{0,80}?" + re.escape(cle)
+                            + r".{0,20}?\*{0,2}(\d+)", re.I)
+            for f in fichiers:
+                for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                    if _est_correction(l):
+                        continue
+                    for m in rx.finditer(l):
+                        autour = l[max(0, m.start() - 12): m.end() + 14]
+                        if re.search(r"→|->|×|x\s*\d|\d\s*/\s*\d", autour):
+                            n_nc += 1
+                            continue
+                        x = float(m.group(1))
+                        if abs(x - ref) < 1e-9:
+                            n_ok += 1
+                        else:
+                            n_ko += 1
+                            print(f"  🔴 {mode}/{cle:<24} {f.name}:{i} dit {m.group(1)}, "
+                                  f"le CODE dit {ref:g}")
+    return n_ok, n_ko, n_nc
+
+
 def main() -> int:
     fichiers = _md()
+    tout_le_md = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in fichiers)
     n_pb = 0
     print("=" * 96)
     print(f"COHERENCE DES {len(fichiers)} FICHIERS .md")
@@ -224,8 +387,70 @@ def main() -> int:
         else:
             print(f"  ·  {lib:<32} aucune citation trouvee")
 
+    print("\n=== C. TOUT SYMBOLE DU CODE CITE `NOM = N` DANS UN .md ===")
+    sym = _symboles_du_code()
+    cites = {k for k in sym if re.search(r"\b" + re.escape(k) + r"\b", tout_le_md)}
+    ok_s, ko_s, nc_s = _sweep_symboles(fichiers, {k: sym[k] for k in cites})
+    n_pb += ko_s
+    print(f"  {len(sym)} symboles numeriques dans certus/, {len(cites)} cites dans les .md.")
+    print(f"  {'🟢' if ko_s == 0 else '🔴'} {ok_s} conforme(s) au code · {ko_s} en desaccord · "
+          f"{nc_s} NON CONCLUANTE(S) (transition, liste, multiplicateur ou formule)")
+
+    print("\n=== D. LES PROFONDEURS PAR MODE, lues dans l'interface ===")
+    modes = _profondeurs_par_mode()
+    # 🔑 LES DOCUMENTS N'ECRIVENT JAMAIS « deep = 300 » : ils ecrivent le TRIPLET
+    # « N = 50 / 150 / 300 » et « dp_top_k = 20 / 40 / 100 ». Sans lire les triplets, ce
+    # balayage rendait « 0 conforme, 0 en desaccord, 6 non concluantes » -- decoratif.
+    ok_t = ko_t = 0
+    rx3 = re.compile(r"(\d{1,4})\s*/\s*(\d{1,4})\s*/\s*(\d{1,4})")
+    ordre = ("fast", "premium", "deep")
+    for f in fichiers:
+        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(l):
+                continue
+            # 🔴 APPARIEMENT PAR PROXIMITE, et il le faut. Une seule ligne porte souvent DEUX
+            # triplets — « $N = 50 / 150 / 300$ et `dp_top_k` = 20 / 40 / 100 » — et un
+            # appariement naif les CROISE, produisant deux faux desaccords sur une ligne
+            # parfaitement juste. Mesure du 2026-08-19 : 4 faux positifs sur 6.
+            trios = [(m.start(), [float(x) for x in m.groups()]) for m in rx3.finditer(l)]
+            if not trios:
+                continue
+            for cle in ("robustness_num_runs", "dp_top_k", "n_screen_runs", "consensus_num_runs",
+                        "k_keep_survivors", "elite_rounds"):
+                pos = l.find(cle)
+                if pos < 0 and cle == "robustness_num_runs":
+                    m_n = re.search(r"\bN\s*=", l)
+                    pos = m_n.start() if m_n else -1
+                if pos < 0:
+                    continue
+                # ⚠️ ET LA DISTANCE EST BORNEE. Sans borne, §24-26 de CLAUDE.md — qui dit
+                # « a N = 150 » puis, deux cents caracteres plus loin, la suite d'IDENTIFIANTS
+                # de strategies « 2228 / 2218 / 2228 » — appariait les deux et criait au
+                # desaccord. Un triplet qui ne suit pas immediatement la cle ne la decrit pas.
+                apres = [t for t in trios if pos <= t[0] <= pos + 40]
+                if not apres:
+                    continue
+                trio = min(apres, key=lambda t: t[0] - pos)[1]
+                att = [modes.get(md_, {}).get(cle) for md_ in ordre]
+                if any(a is None for a in att):
+                    continue
+                if trio == att:
+                    ok_t += 1
+                else:
+                    ko_t += 1
+                    print(f"  🔴 {cle:<22} {f.name}:{i} dit {trio}, le CODE dit {att}")
+    n_pb += ko_t
+    print(f"  {'🟢' if ko_t == 0 else '🔴'} triplets fast/premium/deep : {ok_t} conforme(s), "
+          f"{ko_t} en desaccord")
+    ok_m, ko_m, nc_m = _sweep_modes(fichiers, modes)
+    n_pb += ko_m
+    for m, d in sorted(modes.items()):
+        print(f"  {m:<9} " + " · ".join(f"{k}={v:g}" for k, v in sorted(d.items())))
+    print(f"  {'🟢' if ko_m == 0 else '🔴'} {ok_m} conforme(s) · {ko_m} en desaccord · "
+          f"{nc_m} non concluante(s)")
+
     ok, det = _controle_negatif()
-    print("\n=== C. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
+    print("\n=== E. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
     if ok:
         print(f"  🟢 contradiction plantee DETECTEE ({det}) -- l'outil mord")
     else:

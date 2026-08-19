@@ -70,9 +70,27 @@ même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliqu�
 | **il porte un CONTRÔLE NÉGATIF** | il plante une contradiction volontaire et exige de la détecter. 🔑 *Un harnais dont tout passe toujours ne prouve rien* — et ce contrôle a immédiatement révélé que l'outil n'examinait que **2 lignes sur 9** pour le 48c |
 | **il ne comprend pas le français** | une ligne qui **raconte** une correction est écartée par marqueur (« périmé », « non comparable », « score de repli »). Un signalement est **une phrase à lire**, pas une erreur |
 
-📏 Au 2026-08-19 : **0 point à instruire**, contrôle négatif vert. Il a trouvé ce jour-là le
-`facteur 2,5` de `PLAN_2026-08-16.md` — dérivé du `0,760 nm` rétracté — quand `REPRISE.md`
-disait **2,7** pour la même grandeur.
+📏 Au 2026-08-19 : **0 point à instruire** sur **cinq balayages**, contrôle négatif vert.
+
+| balayage | ce qu'il couvre |
+|---|---|
+| **A** — constantes du code | 6 constantes lues par AST, zéro document ne les contredit |
+| **B** — grandeurs physiques | 10 faits (SEEL des 4 composants, cadence, bruit, fente, cible, rendement) : **valeur unique** partout |
+| **C** — 🔑 **automatique** | **297 symboles numériques** découverts dans `certus/`, **18 cités** dans les `.md`. Tout `NOM = N` écrit dans un document est comparé au code. **Ce balayage grandit tout seul** quand un document cite un symbole de plus |
+| **D** — profondeurs par mode | la table `fast/premium/deep` lue dans l'interface, et les **triplets** `50 / 150 / 300` que les documents écrivent |
+| **E** — contrôle négatif | plante une contradiction et exige de la détecter |
+
+🔑 **Ce qu'il a trouvé le jour de son écriture** : le `facteur 2,5` de `PLAN_2026-08-16.md` —
+dérivé du `0,760 nm` **rétracté** — quand `REPRISE.md` disait **2,7** pour la même grandeur.
+Et **trois défauts de l'outil lui-même**, tous révélés par le contrôle négatif ou par
+l'instruction des signalements : comptage de motifs au lieu de composants, appariement croisé
+de deux triplets sur une même ligne, et distance d'appariement non bornée.
+
+⚠️ **Et la couverture, dite honnêtement** : les `.md` portent **~1 200 chiffres affirmés**.
+Cet outil en vérifie une petite part — **celle qui porte une décision**. Il ne dit **rien** des
+affirmations sans chiffre, et c'est là qu'était l'erreur de mécanisme du Rate du 2026-08-19 :
+une phrase, aucun nombre, fausse. **« 0 point à instruire » ne veut pas dire « tout est
+cohérent ».**
 
 ### Le budget, et il est vérifié mécaniquement
 

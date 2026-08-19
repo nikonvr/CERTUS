@@ -159,6 +159,50 @@ mesure**. A24 le dit, elle n'a jamais eu lieu.
 
 ---
 
+## 3bis. 🟢🟢 L'HYBRIDE OPTIQUE-PUIS-RATE REND LE ×2 FABRICABLE — mesuré le 2026-08-19
+
+> 👤 : *« avant les couches i, un filtre le plus parfait possible en tout optique, puis les
+> couches i+1 à 75 en rate. Est-ce naïf ? »*
+
+**Non.** 📏 `r75x2` à 2 nm, `fast`, graine 42, 36 min :
+
+| | offertes | **déposables** | `crash_min` |
+|---|---|---|---|
+| base, sans queue | 404 | **0** | **100,00 %** |
+| **avec balayage de queue** | 1 194 | **7** | **4,00 %** |
+
+🔒 **L'attribution est propre** : parmi les 1 194, le meilleur plantage **hors variantes de
+queue** reste **100,00 %**. Les 7 déposables sont toutes des queues Rate. Aucune ambiguïté.
+
+### La coupure a un optimum, et il est TARDIF
+
+| coupure `i` | 28 | 31 | 34 | 37 | 41 | 46 | **52** |
+|---|---|---|---|---|---|---|---|
+| SEEL | 0,814 | 0,767 | 0,814 | 0,757 | 0,749 | 0,752 | **0,689** |
+
+**Sept filtres distincts, sept scores distincts** — vérifié, ce ne sont pas des doublons. Le SEEL
+s'améliore quand la coupure recule : passer tard en boucle ouverte vaut mieux que passer tôt.
+
+🔑 **Cohérent avec la loi de profondeur du §1** : le coût d'une couche Rate croît avec ce qui
+reste en aval. Couper à 52 laisse 23 couches en boucle ouverte, couper à 28 en laisse 47 — et
+l'écart de SEEL entre les deux vaut **+18 %**.
+
+⚠️ **Mais toutes les coupures rendent `crash_min = 4,00 %`**, soit exactement **2/50 tirages** en
+`fast` : la granularité minimale au-dessus de zéro. Le taux de plantage ne discrimine pas les
+coupures — **seul le SEEL le fait**. Une mesure en `premium` (N = 150) est nécessaire avant de
+citer le 4 %.
+
+### Ce que ça ne dit pas
+
+| | |
+|---|---|
+| 🔴 **une seule parente** | les 7 déposables descendent toutes de la stratégie `75800`, à **75 blocs** — le monitoring couche par couche. Une seule famille supporte la queue Rate |
+| 🔴 **`fast`, une graine** | §8 impose un rejeu `premium` avant publication, et §24-46 une seconde graine |
+| 🟠 **SEEL 0,689 reste élevé** | à comparer aux 0,625 que `deep` obtient sur le même composant à 1 nm. L'hybride rend fabricable une configuration qui ne l'était pas, il ne bat pas la meilleure connue |
+| 🔴 **la règle d'exception n'est pas testée** | forme pure, sans couches optiques dans la queue. C'est le prochain essai |
+
+---
+
 ## 4. 🔴 LE BLOCAGE STRUCTUREL POUR MÉLANGER LES TROIS
 
 👤 veut mélanger **POEM, niveau absolu et Rate**. Ce n'est pas possible aujourd'hui, et la raison

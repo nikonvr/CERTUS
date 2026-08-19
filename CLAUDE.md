@@ -55,6 +55,25 @@ la bonne forme est un **ordre de mission daté dans `docs/`**, comme
 [`PLAN_2026-08-16.md`](docs/PLAN_2026-08-16.md) : que des commandes, des sorties attendues, et
 zéro fait qui ne soit pas déjà écrit ici.
 
+### 🟢 La cohérence entre dossiers est vérifiée MÉCANIQUEMENT depuis le 2026-08-19
+
+```bat
+.venv\Scripts\python.exe scripts\coherence_md.py
+```
+
+`check_claude_md.py` vérifie **un** fichier ; celui-ci vérifie que **le même fait porte la
+même valeur dans les 25 `.md`** — c'est-à-dire la règle ci-dessus, appliquée par une machine.
+
+| | |
+|---|---|
+| **la référence vient du CODE** quand elle existe | six constantes du Rate et de la photométrie sont lues par AST dans les sources : un document qui s'en écarte a tort **même si tous les autres le répètent** |
+| **il porte un CONTRÔLE NÉGATIF** | il plante une contradiction volontaire et exige de la détecter. 🔑 *Un harnais dont tout passe toujours ne prouve rien* — et ce contrôle a immédiatement révélé que l'outil n'examinait que **2 lignes sur 9** pour le 48c |
+| **il ne comprend pas le français** | une ligne qui **raconte** une correction est écartée par marqueur (« périmé », « non comparable », « score de repli »). Un signalement est **une phrase à lire**, pas une erreur |
+
+📏 Au 2026-08-19 : **0 point à instruire**, contrôle négatif vert. Il a trouvé ce jour-là le
+`facteur 2,5` de `PLAN_2026-08-16.md` — dérivé du `0,760 nm` rétracté — quand `REPRISE.md`
+disait **2,7** pour la même grandeur.
+
 ### Le budget, et il est vérifié mécaniquement
 
 ⚠️ **AVANT DE COURIR APRÈS LES SIGNALEMENTS DU CONTRÔLEUR, lis ceci.** `check_claude_md.py`

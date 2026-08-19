@@ -114,8 +114,25 @@ Sur un facteur **dix** de profondeur :
 
 | | SEEL de la gagnante | identité de la gagnante | plantage |
 |---|---|---|---|
-| **48c** | 0,587 · 0,570 · 0,583 · 0,583 nm → **±1,5 %** | **change à chaque profondeur** | 0,000 partout |
+| **48c** ⚠️ *valeurs NON comparables au repère 0,173 nm — voir l'encadré sous la table* | 0,587 · 0,570 · 0,583 · 0,583 nm → **±1,5 %** | **change à chaque profondeur** | 0,000 partout |
 | **35c** | 1,154 · 1,406 · 1,371 · 1,154 nm → ±9,8 % | 37172 · 35838 · 35838 · 37413 | 0,000 partout |
+
+🔴 **NE COMPARE PAS CES SEEL AUX REPÈRES DE `CLAUDE.md` §21 — ils ne mesurent pas la même
+chose.** Signalé le 2026-08-19 par `scripts/coherence_md.py`, qui a vu 0,587 pour le 48c là où
+le repère vaut **0,173**, et 1,154 pour le 35c là où il vaut **0,482** : des facteurs 3,4 et 2,4.
+
+**Ce n'est pas une erreur, c'est C1** — *un changement de modèle change les chiffres, toute
+mesure antérieure devient incomparable*. Cette campagne date du **2026-08-12** ; les repères
+du §21 ont été mesurés le **15/08**, après notamment le revirement de la règle de classement
+du 14/08 (quantification du SEEL de 0,1 nm à 0,01 nm) et le bonus block-aware. Et ces
+gagnantes-ci ne sont pas des stratégies **à 6 blocs**, qui sont ce que les repères rapportent.
+
+🔑 **Ce que cette campagne établit reste entièrement valide, parce qu'il est RELATIF** : la
+dispersion (±1,5 % sur le 48c, ±9,8 % sur le 35c) et le fait que **l'identité de la gagnante
+change à chaque profondeur**. Ce sont des rapports mesurés à protocole fixé dans une même
+campagne — exactement ce que la règle 2 du §28 de `CLAUDE.md` autorise. **Seules les valeurs
+absolues sont hors comparaison.**
+
 
 Entre N = 300 et N = 500, la classe d'équivalence SEEL ne partage que **2 membres sur 5**.
 

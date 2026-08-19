@@ -321,6 +321,22 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
         "execution_mode": mode,
     }
+    # 🔴 LE TRIPLET DE GRAINES DU CONSENSUS -- ajoute le 2026-08-19, et c'est le VERROU de
+    # toute affirmation sur le classement.
+    #
+    # Mesure du jour : `robustness_seed` NE TOUCHE PAS le score. `_resolve_consensus_seeds`
+    # (`certus_strat_consensus.py:111`) fait gagner la liste explicite, et `base_seed` n'est
+    # consulte qu'en son absence. Les 4 composants portent `consensus_seed_list =
+    # 41,42,43,44,45` tronquee a `consensus_num_seeds = 3`, donc TOUS les runs -- graine 42
+    # comme graine 77 -- rescorent sur `[41,42,43]`. 📏 Verifie : les scores de deux graines
+    # different de 3,2e-11, l'ordre de la gigue de recompilation.
+    #
+    # 🔑 CONSEQUENCE : la dispersion du SEEL n'a JAMAIS ete mesuree, et sans elle aucun
+    # classement de coupures n'est defendable. Ce reglage est la seule facon de la sonder.
+    #     set CERTUS_CONSENSUS_SEEDS=51,52,53
+    _cs = os.environ.get("CERTUS_CONSENSUS_SEEDS", "").strip()
+    if _cs:
+        over["consensus_seed_list"] = _cs
     if elargi:
         over.update(ELARGISSEMENT)
     if int(elargi) >= 2:
@@ -555,6 +571,11 @@ def main() -> int:
                          "rate_tail_sweep": TAIL_CUTS if par_swing in (2, 3) else [],
                          "rate_layer_sets": RATE_SETS if par_swing == 4 else [],
                          "rate_tail_keep_optical": 4 if par_swing == 3 else 0,
+                         # 🔴 §24-7 : sans lui, deux runs a triplets differents seraient
+                         # indiscernables dans les artefacts -- exactement la mesure
+                         # qu'on cherche a faire.
+                         "consensus_seed_list": os.environ.get("CERTUS_CONSENSUS_SEEDS", "")
+                                                or "(defaut du JSON)",
                          "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
                                            if int(elargi) >= 2 else
                                            dict(ELARGISSEMENT) if elargi else None)}})
@@ -582,7 +603,13 @@ def main() -> int:
                 + ("" if not par_swing else "_swing" if par_swing == 1
                    else "_chirurgical" if par_swing == 4
                    else f"_tail{min(TAIL_CUTS)}-{max(TAIL_CUTS)}"
-                        + ("k" if par_swing == 3 else "")))
+                        + ("k" if par_swing == 3 else ""))
+                # 🔴 LE TRIPLET DE CONSENSUS ENTRE DANS LE NOM, pour la meme raison que les
+                # coupures : trois runs qui ne different QUE par lui s'ecraseraient l'un
+                # l'autre, et la mesure de dispersion -- qui est justement leur objet --
+                # serait perdue sans le moindre message.
+                + ("" if not os.environ.get("CERTUS_CONSENSUS_SEEDS", "").strip()
+                   else "_cons" + os.environ["CERTUS_CONSENSUS_SEEDS"].strip().replace(",", "-")))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

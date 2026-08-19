@@ -162,6 +162,11 @@ COMPOSANTS = {
 SEED = 42
 CRASH_TOL = 0.05
 
+#: Coupures du balayage de queue (8e argument = 2). Bornees par la mesure du 2026-08-19 :
+#: sur les 10 runs du x2 la couche critique dominante est la 32 a 2 nm et la 35 ailleurs, et
+#: 59 a 74 % des couches critiques sont AVANT la couche 40 -- d'ou un balayage des la 28.
+TAIL_CUTS = [28, 31, 34, 37, 41, 46, 52]
+
 #: PROFIL D'EXPLORATION ELARGIE -- il elargit ce qui est GENERE et RETENU, jamais la profondeur
 #: d'EVALUATION. `robustness_num_runs` et `n_screen_runs` restent intacts : ce sont des
 #: profondeurs de NOTATION, et les changer rendrait les taux de plantage incomparables avec les
@@ -216,7 +221,8 @@ def _commit() -> str:
 
 
 def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
-            resolution_nm: float = 2.0, elargi: bool = False, seed: int = SEED) -> dict:
+            resolution_nm: float = 2.0, elargi: bool = False, seed: int = SEED,
+            par_swing: int = 0) -> dict:
     """Un run complet, et `cherche_fente` est le parametre qui manquait.
 
     🔴 DEFAUT TROUVE LE 2026-08-17. `mesurer()` de campagne_intervalles.py force
@@ -274,6 +280,13 @@ def mesurer(nom: str, mode: str, cherche_fente: bool = False, min_tp: int = 0,
         # CIRCULARITE que le parametre atteint le calcul, comme machine_sampling_dd ne le
         # faisait pas. La ligne de log [TP] compte les rejets par couche.
         "require_turning_point": int(min_tp),
+        # 🔑 RATE PAR BESOIN -- inactif par defaut, docs/CHANTIER_RATE.md.
+        # Ajoute aux candidates Rate les couches dont le swing de croissance est
+        # sous `dynamics_threshold`, EN PLUS des frontieres de bloc. 📏 Mesure du
+        # 2026-08-19 : n'agit que sur le 75c (5 couches sur 75), inerte sur 35c,
+        # 48c et 99c ou aucune couche n'est sous le seuil.
+        "rate_by_swing": par_swing == 1,
+        "rate_tail_sweep": TAIL_CUTS if par_swing == 2 else [],
         "execution_mode": mode,
     }
     if elargi:
@@ -471,13 +484,14 @@ def main() -> int:
     res_nm = float(sys.argv[5]) if len(sys.argv) > 5 else 2.0
     elargi = int(sys.argv[6]) if len(sys.argv) > 6 else 0   # 0 / 1 / 2
     graine = int(sys.argv[7]) if len(sys.argv) > 7 else SEED
+    par_swing = int(sys.argv[8]) if len(sys.argv) > 8 else 0   # 0 / 1=swing / 2=queue
     if nom not in COMPOSANTS:
         print(f"composant inconnu : {nom}. Choix : {', '.join(COMPOSANTS)}")
         return 2
 
     print(f"composant {nom} | mode {mode} | graine {graine} | require_turning_point={min_tp} "
           f"| fente {res_nm:g} nm | elargi {int(elargi)} | machine {_machine()}")
-    r = mesurer(nom, mode, fente, min_tp, res_nm, elargi, graine)
+    r = mesurer(nom, mode, fente, min_tp, res_nm, elargi, graine, par_swing)
     # 🔴 LA CONFIGURATION EFFECTIVE EST CONSIGNEE DANS L'ARTEFACT, PAS SEULEMENT DANS LE NOM.
     # §24-7 : « un run qui ne consigne pas sa configuration n'est comparable a rien » -- deux
     # artefacts ont deja ete perdus ainsi dans ce depot. Le nom de fichier portait la fente,
@@ -491,6 +505,8 @@ def main() -> int:
                          "require_turning_point": int(min_tp),
                          "exploration_elargie": bool(elargi),
                          "exploration_niveau": int(elargi),
+                         "rate_by_swing": par_swing == 1,
+                         "rate_tail_sweep": TAIL_CUTS if par_swing == 2 else [],
                          "elargissement": ({**ELARGISSEMENT, "dp_top_k": 200}
                                            if int(elargi) >= 2 else
                                            dict(ELARGISSEMENT) if elargi else None)}})
@@ -512,7 +528,8 @@ def main() -> int:
 
     suffixe = (("_fente" if fente else "") + (f"_tp{min_tp}" if min_tp else "")
                 + ("" if res_nm == 2.0 else f"_res{res_nm:g}")
-                + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}"))
+                + ("" if not elargi else "_large" if int(elargi) == 1 else f"_large{int(elargi)}")
+                + ("" if not par_swing else "_swing" if par_swing == 1 else "_tail"))
     out = ROOT / "reports" / f"blocs_vs_plantage_{nom}_{mode}_s{graine:03d}{suffixe}.json"
     out.write_text(json.dumps(r, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\nconsigne dans {out.relative_to(ROOT)}")

@@ -773,10 +773,47 @@ def _expand_with_rate_variants(
                 "indices) sont absents -- retombe sur les frontieres de bloc seules."
             )
 
+    # 🔑 BALAYAGE DE QUEUE -- 👤 2026-08-19 : « avant les couches i, un filtre le plus parfait
+    # possible en tout optique, puis les couches i+1 a N en rate ». INACTIF par defaut (liste
+    # vide), donc la regle d'or tient.
+    #
+    # 🔴 CETTE FORME EST HORS D'ATTEINTE DU GENERATEUR. Le dossier ecarte d'ordinaire les
+    # mecanismes de forcage -- « inutile, un run genere deja des centaines de strategies » --
+    # mais la recherche place 1 a 3 couches Rate aux FRONTIERES DE BLOC, jamais 40 en queue.
+    # Seule l'injection peut tester la forme, et c'est le seul cas mesure ou elle se justifie.
+    #
+    # 📏 CE QUI FIXE LA PLAGE DE COUPURE, mesure le 2026-08-19 sur les 10 runs du x2 : la
+    # couche critique dominante est la 32 a 2 nm et la 35 partout ailleurs, et 59 a 74 % des
+    # couches critiques sont AVANT la couche 40. Une queue demarrant a 40 laisserait donc le
+    # plantage dominant dans la partie optique -- d'ou un balayage a partir de 28.
+    #
+    # 📏 ET LA CAUSE EST UNIVOQUE : 100 % des plantages des couches 32/35/39 sont
+    # « niveau d'arret hors d'atteinte », zero « comptage de points tournants ». C'est la
+    # DERIVE ACCUMULEE, pas le signal propre de la couche. Franchir la zone en boucle ouverte
+    # evite d'y chercher un niveau devenu inatteignable -- c'est le mecanisme teste ici.
+    tail_cuts = params.get("rate_tail_sweep") or []
+
     variants: list[dict[str, Any]] = []
     skipped = 0
     next_id = STRATEGY_ID_RATE_BASE
     _t0 = time.perf_counter()
+    if tail_cuts:
+        for strat in strategies:
+            for cut in tail_cuts:
+                c = int(cut)
+                if not (0 < c < num_layers):
+                    continue
+                v = dict(strat)
+                v["blocks"] = list(strat.get("blocks") or [])
+                v["rate_layers"] = list(range(c, num_layers))
+                v["strategy_id"] = _variant_id(strat.get("strategy_id"), next_id)
+                v["origin"] = f"RATE_TAIL{c}(from {strat.get('strategy_id', '?')})"
+                next_id += 1
+                variants.append(v)
+        logger.info(
+            f"[RATE-TAIL] {len(variants)} variantes de queue injectees sur "
+            f"{len(strategies)} strategies, coupures {sorted(int(c) for c in tail_cuts)}."
+        )
     for strat in strategies:
         # The historical path caps the CANDIDATES at 3; the multi-layer path needs them all
         # before it can combine them, and caps the resulting VARIANTS instead.

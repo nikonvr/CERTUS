@@ -144,6 +144,23 @@ def _du_code(fichier: str, nom: str):
     return None
 
 
+def _fonction_englobante(f: Path, ligne: int) -> str | None:
+    """Le nom de la fonction (ou classe) qui CONTIENT cette ligne, ou None."""
+    try:
+        arbre = ast.parse(f.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, SyntaxError):
+        return None
+    meilleur = None
+    for n in ast.walk(arbre):
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            fin = getattr(n, "end_lineno", None) or n.lineno
+            if n.lineno <= ligne <= fin:
+                # la plus INTERNE gagne : une methode plutot que sa classe
+                if meilleur is None or n.lineno > meilleur[0]:
+                    meilleur = (n.lineno, n.name)
+    return meilleur[1] if meilleur else None
+
+
 def _controle_negatif() -> tuple[bool, str]:
     """Plante une contradiction VOLONTAIRE et verifie que l'outil la voit.
 
@@ -487,8 +504,61 @@ def main() -> int:
     if not vus_i:
         print("  ·  aucun interpreteur cite")
 
+    # 🔴 UN NUMERO DE LIGNE DANS LES BORNES PEUT POINTER SUR N'IMPORTE QUOI. Le controle A de
+    # check_claude_md.py verifie que `fichier.py:N` existe et que N <= nombre de lignes. Il ne
+    # verifie PAS que la ligne N contienne ce qu'on lui prete. 📏 Trouve le 2026-08-19 : le
+    # renvoi `certus_strat_robustness.py:513`, cense designer `_rate_candidate_layers`,
+    # pointait sur un `return` d'une autre fonction -- mes propres editions du jour l'avaient
+    # decale de 83 lignes. Ici on verifie que le SYMBOLE cite sur la meme ligne du .md se
+    # trouve bien a proximite (+/- 3 lignes) du numero annonce.
+    print("\n=== F. UN `fichier.py:N` CITE A COTE D'UN SYMBOLE POINTE-T-IL DESSUS ? ===")
+    rx_ref = re.compile(r"`([\w./\\-]+\.py):(\d{1,5})`")
+    rx_sym = re.compile(r"`(_?[A-Za-z][\w]{4,})`")
+    idx: dict[str, list[Path]] = {}
+    for q in (ROOT / "certus").rglob("*.py"):
+        idx.setdefault(q.name, []).append(q)
+    n_ok = n_ko = n_sans = 0
+    for f in fichiers:
+        for i, l in enumerate(f.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+            if _est_correction(l):
+                continue
+            for m in rx_ref.finditer(l):
+                cands = idx.get(Path(m.group(1).replace("\\", "/")).name, [])
+                if not cands:
+                    continue
+                ln = int(m.group(2))
+                # 🔴 LES SYMBOLES DOIVENT ETRE IMMEDIATEMENT AVANT LE RENVOI. Sans borne, une
+                # ligne portant DEUX renvois -- « `_resolve_consensus_seeds`
+                # (`consensus.py:111`) ... (`robustness.py:2162`) » -- fait apparier le second
+                # avec le symbole du premier, et crie au faux. 3 des 13 signalements de la
+                # premiere execution etaient de cette forme (2026-08-19).
+                avant = l[max(0, m.start() - 90): m.start()]
+                syms = [x.group(1) for x in rx_sym.finditer(avant)][-2:]
+                syms = [x for x in syms if not x.endswith(".py")]
+                if not syms:
+                    n_sans += 1
+                    continue
+                src = cands[0].read_text(encoding="utf-8", errors="replace").splitlines()
+                zone = "\n".join(src[max(0, ln - 4): ln + 3])
+                # 🔑 UN RENVOI PEUT VISER L'INTERIEUR D'UNE FONCTION, et c'est legitime : on
+                # cite souvent la LIGNE qui porte le comportement, pas le `def`. On accepte
+                # donc aussi quand la ligne N tombe DANS la fonction nommee. Sans cette
+                # tolerance, l'outil ferait « corriger » des renvois parfaitement justes --
+                # 3 des 12 signalements de la premiere execution etaient de cette forme.
+                englobante = _fonction_englobante(cands[0], ln)
+                if any(sy in zone for sy in syms) or (englobante and englobante in syms):
+                    n_ok += 1
+                else:
+                    vrai = [k + 1 for k, li in enumerate(src) if any(f"def {sy}" in li or f"{sy}:" in li or f"{sy} =" in li for sy in syms)]
+                    n_ko += 1
+                    print(f"  🔴 {f.name}:{i} — `{m.group(1)}:{ln}` ne porte pas {syms}"
+                          + (f" (trouve ligne {vrai[0]})" if vrai else " (symbole introuvable)"))
+    n_pb += n_ko
+    print(f"  {'🟢' if n_ko == 0 else '🔴'} {n_ok} renvoi(s) confirme(s) · {n_ko} qui pointent "
+          f"ailleurs · {n_sans} sans symbole cite a cote (non verifiables)")
+
     ok, det = _controle_negatif()
-    print("\n=== F. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
+    print("\n=== G. CONTROLE NEGATIF -- l'outil sait-il seulement DETECTER ? ===")
     if ok:
         print(f"  🟢 contradiction plantee DETECTEE ({det}) -- l'outil mord")
     else:

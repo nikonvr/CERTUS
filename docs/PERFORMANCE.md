@@ -139,7 +139,7 @@ boucle chaude, pour approximer une courbe qu'on connaît désormais exactement.
 sens physique est **0,05 nm** — moins d'un atome (§8). **La parabole est 240 millions de
 fois sous ce seuil.**
 
-🔑 **Et ça éclaire un chiffre du §29.1.** L'invariance de POEM y était mesurée à
+🔑 **Et ça éclaire un chiffre du [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1.** L'invariance de POEM y était mesurée à
 **2,19e-10 nm** — le même ordre, exactement. **Ce n'était pas la limite de POEM qu'on
 mesurait, c'était celle de la parabole.** Et elle est sans conséquence.
 
@@ -168,7 +168,7 @@ la courbe **est**.
 
 > `tan 2δ = R/Q` donne l'extremum **mathématique de la courbe propre**.
 > Le détecteur donne ce que **la machine voit dans un signal bruité**.
-> **L'écart entre les deux EST le phénomène** que §29.2 a mis trois mesures à caractériser.
+> **L'écart entre les deux EST le phénomène** que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.2 a mis trois mesures à caractériser.
 
 Le remplacer par une résolution analytique **supprimerait purement et simplement la
 fabrication de faux points tournants** — le mécanisme de plantage dominant, **79 %** des

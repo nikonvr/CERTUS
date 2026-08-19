@@ -179,7 +179,7 @@ ne dépasse 2 A. Le swing médian valant 0,140, l'effet est donc modeste sur la 
 typique — mais c'est un **biais**, qui ne s'annule pas sur les tirages, là où `A` est du
 bruit qui s'annule.
 
-La raison est le théorème de §29.1 : **POEM est rigoureusement invariant par transformation
+La raison est le théorème de §12.1 : **POEM est rigoureusement invariant par transformation
 affine.** La perturbation modélisée jusqu'ici était donc, très exactement, la seule forme
 que le mécanisme absorbe gratuitement. `T(1−T)` n'est pas affine — POEM ne l'absorbe pas.
 
@@ -206,14 +206,14 @@ d'abord se demander si la perturbation choisie appartient au groupe qu'il annule
 #### Ce qui reste ouvert
 
 - **L'amplitude `ε` est une spécification 👤, pas une mesure.** Comme la table des facteurs
-  de bruit de §29.7, toute conclusion qui en dépend doit survivre à son incertitude.
+  de bruit de §12.7, toute conclusion qui en dépend doit survivre à son incertitude.
 - **Le voilage des fenêtres** n'est pas couvert. S'il n'affecte que le trajet témoin, il ne
   s'annule pas et produit un vrai gain lentement variable — auquel cas l'affine retrouverait
   un sens **en plus** de la courbure. C'est une question de géométrie du bâti.
 - **La non-linéarité du détecteur** est le mécanisme invoqué, pas un mécanisme mesuré.
 
 ⚠️ **L'affine reste dans le code, amplitudes à 0.** Ce n'est plus un modèle de la machine :
-c'est **l'instrument qui teste le théorème d'invariance** de §29.1, et il garde cette
+c'est **l'instrument qui teste le théorème d'invariance** de §12.1, et il garde cette
 valeur-là.
 
 ---
@@ -305,14 +305,14 @@ l'arrêt. **Le noyau est déjà conforme, à deux endroits, et il ne faut pas le
 **Donc : modéliser le lissage pour son effet sur le BRUIT uniquement. N'ajouter aucun
 décalage temporel.**
 
-#### 🔴 Le lissage EXIGE la grille de §29.4 — ne pas l'implémenter avant
+#### 🔴 Le lissage EXIGE la grille de §12.4 — ne pas l'implémenter avant
 
 La fenêtre se compte **en lectures machine**. Le modèle échantillonne aujourd'hui 21 points
 par couche là où la machine en prend 800 : une moyenne sur 8 lectures n'y a **aucun sens**.
 
 Les deux actions se compensent comme dans la réalité : **raffiner la grille seule fait
 exploser les faux points tournants** (33 % → 99,9 %) ; la raffiner **avec** le lissage
-reproduit ce que la machine fait. **Faire §29.4 d'abord, ou les deux ensemble.**
+reproduit ce que la machine fait. **Faire §12.4 d'abord, ou les deux ensemble.**
 
 #### La règle de sélection des λ — réglage distinct, à ne pas confondre
 
@@ -476,9 +476,9 @@ récidive.
 
 ### 12.4 Grille d'échantillonnage à la cadence machine — **à faire AVANT 12.2**
 
-> 🔴 **Ordre imposé.** Le lissage de §29.2 se compte en lectures machine : il n'a aucun sens
+> 🔴 **Ordre imposé.** Le lissage de §12.2 se compte en lectures machine : il n'a aucun sens
 > tant que la grille n'est pas celle de la machine. Mais la grille seule fait exploser les
-> faux points tournants (33 % → 99,9 %). **Donc : cette action d'abord, §29.2 immédiatement
+> faux points tournants (33 % → 99,9 %). **Donc : cette action d'abord, §12.2 immédiatement
 > derrière, et on ne mesure le taux de plantage qu'une fois les deux en place.** Les mesurer
 > séparément produirait deux chiffres également faux.
 

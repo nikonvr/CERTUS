@@ -123,8 +123,8 @@ peuvent toutes être faites aujourd'hui.
 
 | # | Filtre | Où | Attendu |
 |---|---|---|---|
-| 1 | `phase_a_level_margin_factor` | log `[MARGIN]`, `certus_strat_service.py:991` | **compter** les candidates rejetées, par couche |
-| 2 | 🔴 **D'abord corriger le facteur √3** — la fente est rectangulaire, la formule est trop stricte de 1,73× (§29.7) | `_calculate_strategy_spectral_resolution:281` | `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)` |
+| 1 | `phase_a_level_margin_factor` | log `[MARGIN]`, `certus_strat_service.py:1037` | **compter** les candidates rejetées, par couche |
+| 2 | 🔴 **D'abord corriger le facteur √3** — la fente est rectangulaire, la formule est trop stricte de 1,73× ([`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7) | `_calculate_strategy_spectral_resolution:281` | `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)` |
 | 3 | `min_resolution`, **sur la formule corrigée** | idem | **combien de stratégies** seraient écartées à chacune des 4 résolutions |
 | 4 | `tp_hysteresis` | sentinelles `CRASH_TP_MISCOUNT` vs `CRASH_LEVEL_UNREACHABLE` | les **séparer** dans le rapport (`int(val // 1e6)`) |
 | 5 | Un filtre qui rejette **0** | — | **c'est un défaut**, pas un succès. Signale-le |
@@ -277,16 +277,16 @@ fabrication à `k = 8`, `N = 800` — voir §18. `1,00` est la borne **mesurée*
 
 ### PALIER 4 — Le neuf
 
-#### A16 — Quantification de l'arrêt · *ex-T7, §29.5*
+#### A16 — Quantification de l'arrêt · *ex-T7, [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.5*
 
 Quasi gratuit une fois A8 faite : s'arrêter au **premier point de grille au-delà du seuil**
 au lieu d'interpoler, et `U(0 ; 0,125 nm)` apparaît d'elle-même, sans paramètre.
 **Vérification** : Piège 1 — si doubler `Δd_sample` ne change rien, la mesure est un artefact.
 
-#### A18 — Résolution : variable de stratégie en Phase B · *§29.7*
+#### A18 — Résolution : variable de stratégie en Phase B · *[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7*
 
 Conditionnée par A17-4. Une stratégie devient *(blocs, λ par bloc, résolution)*. **Phase B**,
-pas Phase A, pas la DP — voir §29.7 pour le raisonnement.
+pas Phase A, pas la DP — voir [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7 pour le raisonnement.
 
 #### A19 — Mode Rate · *§22*
 
@@ -337,7 +337,7 @@ dans `±A`, le corridor respecte `|a| + |b| ≤ δ_max`, les amplitudes affines 
 > **Si la marge dépasse la perturbation maximale possible, la probabilité n'est pas petite :
 > elle est EXACTEMENT nulle.**
 
-§29.2 s'en sert déjà — *« le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A »*.
+[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.2 s'en sert déjà — *« le tirage étant borné à ±A, l'écart maximal du bruit seul vaut 2A »*.
 Un `β` gaussien extrapolerait une probabilité faible **là où la vérité est zéro**, et il le
 ferait **toujours dans le sens pessimiste**. Le premier test n'est donc pas probabiliste, il
 est **déterministe** :
@@ -447,7 +447,7 @@ cela n'existe pas.
 
 ---
 
-**§29.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Documentée pour mémoire,
+**[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.6 (face arrière) : ne la fais pas.** Elle vaut 0,002 en absolu. Documentée pour mémoire,
 pas pour être exécutée.
 
 ---

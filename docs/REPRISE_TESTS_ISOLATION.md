@@ -162,7 +162,7 @@ an object has been replaced. Weigh: execution time cost vs benefit.
 ### 2.4 [P4] Intermittent native crash — watch only
 
 Duringafullsuiterun:`Windowsfatalexception:accessviolation`ina
-thread`_bg_warmup`(`certus/core/_certus_physics_impl.py:1444`), to
+thread`_bg_warmup`(`certus/core/certus_core.py:1122`), to
 `tests/unit/test_certus_metal_single_smoke.py`.**Not reproduced**in the next run (the rest
 then went to the end). Likely race between the Numba warmup in the background and Qt.
 Only treat if it comes back.

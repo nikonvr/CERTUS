@@ -164,8 +164,8 @@ seule forme de corroboration dont ce projet dispose tant que §26 n'est pas ferm
 
 Deux changements du 2026-08-12 poussent dans le même sens :
 
-1. **La distorsion affine est éteinte** (§29.1bis) — or c'était le handicap du repli
-   absolu, la seule branche que §29.1 démontre non invariante. Il a cessé d'être pénalisé.
+1. **La distorsion affine est éteinte** ([`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1bis) — or c'était le handicap du repli
+   absolu, la seule branche que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 démontre non invariante. Il a cessé d'être pénalisé.
 2. **Le biais de fente pénalise les ancres héritées** (§30) — chaque couche
    d'historique porte le biais de *sa* courbure, pas de celle de la couche en cours.
 
@@ -249,7 +249,7 @@ saturation**.
 
 #### 🔴 Ce que je n'ai PAS mesuré, et qu'il ne faut pas croire mesuré
 
-**L'asymétrie H / L.** §29.3 note que 0,005 en absolu vaut 0,21 % sur H et **0,34 % sur L**
+**L'asymétrie H / L.** [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.3 note que 0,005 en absolu vaut 0,21 % sur H et **0,34 % sur L**
 — rapport 1,6. J'ai voulu la mesurer et **je n'ai pas pu** : le corridor perturbe les deux
 matériaux ensemble et aucun paramètre ne les sépare. Le balayage ci-dessus mesure donc
 l'**amplitude**, pas la **répartition**. La question reste ouverte, et elle demanderait un

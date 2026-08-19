@@ -1365,9 +1365,11 @@ périme dès qu'on ajoute un test**, donc dès qu'on travaille. 📏 Le 2026-08-
 **2 453** puis **2 456** dans la même journée. **Le chiffre est retiré au profit du seul
 critère qui survive : `0 failed`.** Voir §2.
 
-⚠️ **Le `101.24s` du bloc ci-dessus n'est pas reproductible ici** — la même commande rend
-**346,76 s** sur i5-8250U à cache chaud. Je ne sais pas si l'écart vient de la machine ou du
-chiffre, donc je ne le corrige pas : **je note qu'une durée sans machine ne vaut rien.**
+⚠️ **Une durée sans sa machine ne vaut rien.** Le bloc ci-dessus portait un `101.24s` qui
+n'est reproductible **sur aucune machine connue du projet** : la même commande rend **216,69 s**
+sur i5-8250U à cache chaud (mesuré le 2026-08-19) et **784 s** à cache froid. La durée a été
+retirée du bloc plutôt que corrigée — c'est le critère `0 failed` qui compte, et une durée
+n'a de sens qu'accompagnée du processeur, du cache et de la charge.
 
 ---
 
@@ -1420,7 +1422,7 @@ décrit comment la machine **lit**, et se **dérive** du bruit mesuré.
 
 ### Le mode « Rate » (Quartz / Chrono)
 
-📌 **Le chantier VIVANT est [`docs/CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)** — 782 lignes, et
+📌 **Le chantier VIVANT est [`docs/CHANTIER_RATE.md`](docs/CHANTIER_RATE.md)**, et
 c'est lui qui fait autorité depuis le 2026-08-19. Les quatre acquis du jour, sans ouvrir le
 dossier :
 
@@ -1439,9 +1441,9 @@ paramètre, et le plan A24 en entier.
 
 | | |
 |---|---|
-| **quand le Rate est nécessaire** | `swing < SWING_MIN`. 🔴 **PAS** un seuil d'épaisseur : une couche de 30 nm à faible contraste d'indice a une dynamique aussi pauvre qu'une ultrafine |
+| **quand le Rate est nécessaire** | un **swing trop faible**. 🔴 **PAS** un seuil d'épaisseur : une couche de 30 nm à faible contraste d'indice a une dynamique aussi pauvre qu'une ultrafine. ⚠️ **Et « SWING_MIN » n'existe PAS comme symbole — il y a DEUX seuils différents, et ce document n'en nommait qu'un** : `RATE_SWING_MIN_DEFAULT = 0,025` (`certus_strat_robustness.py:531`), qui est le seuil d'**admission d'une λ en Phase A**, et **0,04** codé en dur (`:385`, commenté `# SWING_MIN`), sous lequel POEM **abandonne** et retombe sur le niveau absolu. **Une couche entre les deux est admise puis perd POEM en silence.** Trouvé le 2026-08-19 |
 | **l'intuition de 👤** | *« le rate est souvent réservé aux couches fines »* — c'est un **proxy** du critère ci-dessus, corrélé mais pas équivalent |
-| **où le solveur ESSAIE le Rate** | la **dernière couche de chaque bloc** (`certus_strat_robustness.py:513`). Critère de **coût**, pas de nécessité : à une frontière de bloc les ancres sont perdues de toute façon |
+| **où le solveur ESSAIE le Rate** | la **dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:596` au 2026-08-19). ⚠️ *Le renvoi disait `:513` — mes éditions du jour l'avaient décalé de 83 lignes. **Cite la FONCTION, le numéro n'est qu'un raccourci.*** Critère de **coût**, pas de nécessité : à une frontière de bloc les ancres sont perdues de toute façon |
 | **il n'y a pas d'auto-compensation en mode Rate** | les erreurs passent en boucle ouverte à la couche suivante |
 | **le facteur est par couche** | calculé sur les couches **de même nature déposées AVANT** la couche `i`. Donc **`rate(i)` ≠ `rate(j)` même sur un matériau identique** |
 | **actif par défaut** depuis le 2026-08-12 | 👤 : *« le rate est toujours permis, c'est le cas général »*. Une variante Rate est une candidate de plus, jugée sur les mêmes statistiques |

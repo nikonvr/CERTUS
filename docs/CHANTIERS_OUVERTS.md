@@ -40,7 +40,7 @@ déplacé tel quel.
   d'arrêt. C'est exactement la distinction de §14 (QWOT ≠ point tournant).
 
   🟢 **Et la donnée nécessaire est déjà là** — c'est ce qui rend l'action bon marché.
-  `prepare_dynamics_data_kernel` (`certus_strat_growth.py:1760`) calcule déjà `M_before`,
+  `prepare_dynamics_data_kernel` (`certus_strat_growth.py:1793`) calcule déjà `M_before`,
   `n_layer` et `n_sub` pour **chaque couche × chaque λ candidate**. La forme fermée
   `layer_scan_coeffs` en tire `Q` et `R` en O(1), et le compte de points tournants s'écrit
 

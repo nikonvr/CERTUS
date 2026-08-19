@@ -19,20 +19,20 @@ défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
 
 | Spécifié en | Quoi | État réel |
 |---|---|---|
-| **§29.7** | **Résolution du monochromateur** | 🟢 **facteur de bruit, √3 et biais de fente FAITS le 2026-08-11.** Reste A18, la fente comme variable de recherche. Détail ci-dessous. |
-| **§29.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §24-2, toujours ouverte. |
+| **[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7** | **Résolution du monochromateur** | 🟢 **facteur de bruit, √3 et biais de fente FAITS le 2026-08-11.** Reste A18, la fente comme variable de recherche. Détail ci-dessous. |
+| **[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.4 / A8** | Grille d'échantillonnage machine à 0,125 nm, découplée | 🔴 **NON.** `machine_sampling_dd` n'existe pas. `SAMPLE_DD` vit **à l'intérieur** de `if smoothing_window > 1` — la soudure de §24-2, toujours ouverte. |
 | **A9** | Moyenne glissante **centrée** | 🔴 **NON, elle est CAUSALE.** Vérifié : la fenêtre court sur `[i−k+1 … i]` (`certus_strat_growth.py`, boucle `idx_w`). Décalage de `(k−1)/2` échantillons, soit **0,44 nm à k = 8**, alors que §18-5 pose « aucun retard » en postulat. §24-3 reste ouvert. |
-| **§29.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
+| **[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.5 / A16** | Quantification de l'arrêt en `U(0 ; 0,125 nm)` | 🔴 **NON.** L'arrêt reste une **inversion parabolique continue**. La constante existe depuis aujourd'hui (`RATE_TURN_NM`) mais pour le Rate seulement. |
 | **§22** | **Mode Rate** | 🟢 **UTILISABLE ET UTILISÉ** — la ligne disait *« pas encore utilisable, manquent le drapeau utilisateur, la génération de variantes et l'affichage »*, et c'est **périmé**. 📏 Mesuré le 2026-08-19 : **24 581 placements Rate** dans 41 artefacts, sur les quatre composants, et `allow_rate` est **vrai par défaut** depuis le 2026-08-12. |
 | **§22, bornes** | Où le Rate a le droit d'exister | 🟢 **CORRIGÉ LE 2026-08-19, les deux bornes étaient à l'envers.** 👤 : *« interdit sur les 2 premières couches, mais absolument pas la dernière »*. Avant : les couches 0 et 1 **dégradaient en silence** vers POEM (`n_ref = 0`, étiquette `RATE_L1` mensongère, arrivé **2 fois**), et la **dernière était exclue** — 📏 **0 placement sur 24 581**, alors que l'avant-dernière est la position **la plus choisie** (2 530). Désormais `RATE_MIN_LAYER = 2` et la dernière est candidate. |
 | **§22, références** | Le facteur de rate | 🟢 **CORRIGÉ LE 2026-08-19.** Il se calculait sur **toutes** les couches de même parité, **couches Rate comprises** — le commentaire `Q3` du noyau l'assumait. Or une couche Rate sort à `d_nom/A` par construction, donc son ratio **vaut `A`** : elle gonflait `n_ref` sans apporter la moindre information, et toute précision annoncée en `1/√n` était surestimée. `prev_rate_flags` les exclut. ⚠️ **Effet numérique nul et c'est démontrable** — `A' = (n_opt·A + n_rate·A)/(n_opt+n_rate) = A` — écart mesuré **0,03 %**, l'ordre de l'arrondi. **Il corrige une affirmation, pas un chiffre.** |
 | **§22, décomposition** | `optical_prefix_sweep` | 🟢 **AJOUTÉ LE 2026-08-19**, inactif par défaut. `n` couches optiques, le reste à épaisseur **parfaite**, pour tracer SEEL(n) et crash(n). Aucun code noyau : les couches hors bloc gardent `wl = 0` et le noyau rend l'épaisseur nominale exacte, marges `1e18`. ⚠️ Il est **hoisté au-dessus du garde `allow_rate`** — placé dessous, il rendait zéro variante **en silence**. |
 | **§22, action 1** | SEEL dans le pipeline | 🔴 **NON.** SEEL est calculé à l'**étape 0 de l'interface** (`calculate_seel_analysis`) et n'atteint jamais le classement. Le tri de §22 tourne donc **dans la sonde**, à côté. |
-| **§24-18** | `consensus_num_runs` surchargeable | 🟠 Il **existe** (défaut 150, `certus_strat_ui_state.py:1150`) mais **aucune surcharge ne l'atteint**. Toute mesure avec consensus actif tourne donc à 150 tirages quoi qu'on demande. |
+| **§24-18** | `consensus_num_runs` surchargeable | 🟠 Il **existe** (défaut 150, `certus_strat_ui_state.py:1275`) mais **aucune surcharge ne l'atteint**. Toute mesure avec consensus actif tourne donc à 150 tirages quoi qu'on demande. |
 | **§24-9** | `MachineModel` consommé en production | 🔴 **NON.** Toujours aucun consommateur réel. |
 | **A23** | Couche critique, marge | ✅ **FAIT le 2026-08-11**, étages 0, 2 et 3, validé §24-41. |
 | **A10** | Corridor côté notation | ✅ fait |
-| **§29.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
+| **[`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1** | Distorsion affine, drapeau POEM | ✅ fait, mesuré ×41,2 |
 
 ### 🟢 La résolution, en détail — état vérifié dans le code le 2026-08-11 au soir
 
@@ -40,9 +40,9 @@ défaut de tenue le plus coûteux de ce dépôt, et ce tableau est le correctif.
 ligne contre le code, pas contre ce document** — c'est précisément le défaut de tenue que
 §30 existe pour corriger, et il s'y reprenait lui-même.
 
-| ce que §29.7 demande | état |
+| ce que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7 demande | état |
 |---|---|
-| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ✅ `RESOLUTION_NOISE_FACTOR`, `certus_strat_robustness.py:173`. Une **table de 4 entrées**, et une fente absente de la table **lève** au lieu d'interpoler — §29.7 interdit la loi de puissance, qui autoriserait des réglages que la machine n'a pas. |
+| Le **facteur de bruit** ÷1,5 / ×1 / ×2 / ×5 selon la fente | ✅ `RESOLUTION_NOISE_FACTOR`, `certus_strat_robustness.py:179`. Une **table de 4 entrées**, et une fente absente de la table **lève** au lieu d'interpoler — [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7 interdit la loi de puissance, qui autoriserait des réglages que la machine n'a pas. |
 | La **correction √3** (fente rectangulaire) | ✅ `res_limit = test_bw * np.sqrt(3.0 * T_tolerance / curvature)`, ligne 637. |
 | Le **biais de niveau** appliqué au signal lu | ✅ et c'est un **profil variant avec l'épaisseur**, pas une constante — voir l'encadré ci-dessous, c'est le fond du sujet. |
 | La fente **rendue** à l'utilisateur | ✅ `monochromator_resolution_nm` est dans le résultat (ligne 1697) et surchargeable par `CERTUS_RESOLUTION_NM`. |
@@ -55,7 +55,7 @@ ligne contre le code, pas contre ce document** — c'est précisément le défau
 > 👤 *« Le calculateur OMS d'arrêt des couches ne tient pas compte de la largeur des
 > fentes et se trompera sur la valeur du niveau à atteindre. »*
 
-C'est exactement le mécanisme de §29.7, et il impose une **asymétrie qu'il ne faudra pas
+C'est exactement le mécanisme de [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7, et il impose une **asymétrie qu'il ne faudra pas
 inverser** :
 
 ```
@@ -66,7 +66,7 @@ biais = <T>_B - T(lambda_mon) = T''(lambda_mon) . B^2 / 24
 
 🟢 **C'est implanté depuis le 2026-08-11**, et dans le bon sens : le biais va sur le
 **signal lu** (`Ts_r`), la **cible reste au calcul parfait** (`Ts_n`, `target_nominal`).
-Biaiser les deux annulerait exactement l'effet — c'est le mode de défaillance que §29.1 a
+Biaiser les deux annulerait exactement l'effet — c'est le mode de défaillance que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a
 déjà rencontré trois fois sur la distorsion affine.
 
 👤 *« Je ne veux pas être optimiste sur les fentes mais réaliste »* (2026-08-11) : le biais
@@ -81,7 +81,7 @@ est donc **actif par défaut**, à la fente nominale de 2 nm.
 
 Le biais valait **un nombre par couche**, ajouté identiquement à toutes ses lectures. Or
 
-> **une constante ajoutée au signal lu est exactement le `b` de `T → a·T + b`, et §29.1 a
+> **une constante ajoutée au signal lu est exactement le `b` de `T → a·T + b`, et [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a
 > démontré POEM rigoureusement invariant par cette transformation.**
 
 📏 **Mesuré au noyau, arrêt d'une couche sous POEM :**
@@ -97,7 +97,7 @@ Le biais valait **un nombre par couche**, ajouté identiquement à toutes ses le
 quoi que ce soit.
 
 🔑 **L'ancien modèle donnait donc à POEM la seule forme qu'il absorbe gratuitement**, et ne
-modélisait rien de celle qu'il ne peut pas absorber. §29.7 l'avait pourtant écrit d'avance :
+modélisait rien de celle qu'il ne peut pas absorber. [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7 l'avait pourtant écrit d'avance :
 le biais *« dépend de la courbure locale, donc il diffère à chaque ancre et au point de
 déclenchement »*.
 
@@ -157,7 +157,7 @@ s'annulent par symétrie : **on gagne deux ordres, pas un.**
 | passe-bande 3cav | 5 nm | 33 | **0,64 %** | 17,27 % |
 
 🔑 **À la fente nominale de 2 nm le développement était acceptable ; à 5 nm il s'effondre.**
-Et 5 nm est exactement la fente qui décide du bonus de bruit ÷1,5 de §29.7. **Le
+Et 5 nm est exactement la fente qui décide du bonus de bruit ÷1,5 de [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7. **Le
 développement se trompait le plus là où la décision se prend.**
 
 #### Le coût, et pourquoi il ne fait pas exploser le budget
@@ -170,7 +170,7 @@ interpolation linéaire au lieu d'une addition scalaire.
 ⚠️ **L'approximation qui reste, et elle est assumée** : le profil est bâti sur l'empilement
 **nominal**. À chaque tirage le sous-empilement réel diffère de quelques nm, donc la courbure
 vraie aussi. Modéliser cette modulation-là mettrait une intégration spectrale **dans** la
-boucle chaude — précisément le coût que §29.7 signalait. La part systématique, qui est tout
+boucle chaude — précisément le coût que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7 signalait. La part systématique, qui est tout
 l'effet au premier ordre, est capturée ; sa modulation tirage à tirage ne l'est pas.
 
 #### Vérifications
@@ -222,7 +222,7 @@ inerte de §12-contrôle 4.
 
 🔑 **Et l'absorption par POEM est CONDITIONNELLE — mon premier test l'a énoncée comme
 générale et il a eu raison d'échouer.** Sans historique de bloc, POEM n'a pas d'ancres et
-retombe sur le **niveau absolu**, la branche que §29.1 a démontrée non invariante :
+retombe sur le **niveau absolu**, la branche que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a démontrée non invariante :
 📏 une constante de 1e-4 y déplace l'arrêt de **0,0388 nm**. Avec des ancres, la même
 constante ne déplace rien. Les deux faces sont désormais épinglées par un test chacune.
 

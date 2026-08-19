@@ -20,7 +20,7 @@ qui n'a pas à être relu à chaque session.
 > équivalente par couche. »* — *« SEEL doit être calculé ou donné avec une précision de
 > 0,1 nm, c'est tout. »* (2026-08-10)
 
-**Ce que c'est.** `calculate_seel_analysis` (`certus_strat_service.py:636`) perturbe chaque
+**Ce que c'est.** `calculate_seel_analysis` (`certus_strat_service.py:654`) perturbe chaque
 couche du nominal par `N(0, σ)` pour `σ ∈ {0,05 ; 0,1 ; 0,3 ; 0,6 ; 1,2 ; 2,0}` nm, 3 lots de
 50 tirages, et mesure la RMSE spectrale obtenue. On inverse la courbe : **toute RMSE se lit
 alors en nanomètres d'erreur équivalente par couche.** C'est la seule grandeur du projet qu'un

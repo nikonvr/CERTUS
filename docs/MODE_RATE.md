@@ -32,7 +32,7 @@ c'est un **proxy** du premier :
 |---|---|---|
 | **1. quand le Rate est NÉCESSAIRE** | `swing < SWING_MIN` — 🔴 **pas** un seuil d'épaisseur. Point 1 ci-dessus le dit explicitement : *une couche de 30 nm à très faible contraste d'indice a une dynamique aussi pauvre qu'une ultrafine.* | implémenté |
 | **2. l'intuition de 👤** | **couche fine.** Corrélée au critère 1 — une couche fine parcourt peu de chemin optique, donc produit peu de swing — mais **elle n'est pas équivalente** : le contraste d'indice et la λ de contrôle entrent aussi. | 🔵 non implémentée, et **elle n'a pas à l'être** : le code applique la grandeur exacte dont « fine » est l'approximation. |
-| **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:513`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
+| **3. où le solveur ESSAIE le Rate** | **la dernière couche de chaque bloc** (`_rate_candidate_layers`, `certus_strat_robustness.py:596`). Critère de **coût**, pas de nécessité : à une frontière de bloc, `block_start[i+1] = i+1`, donc les ancres sont perdues de toute façon — le Rate y est gratuit. | implémenté |
 
 🔑 **Le point à ne pas manquer** : le critère 3 ne cherche **pas** les couches qui ont besoin
 du Rate. Il cherche celles où le Rate **ne coûte rien**. Ce sont deux questions différentes et
@@ -99,7 +99,7 @@ Ce que cela ajoute aux cinq points ci-dessus, et qui change le modèle :
     🔴 **La conséquence, et c'est la plus importante de toute cette section : le coût d'une
     couche Rate se paie surtout sur la couche SUIVANTE, pas sur elle-même.** Sans ancres, la
     couche d'après retombe sur le **niveau absolu** — c'est-à-dire précisément la branche que
-    §29.1 a démontrée **non invariante** par distorsion affine, celle qui rend
+    [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a démontrée **non invariante** par distorsion affine, celle qui rend
     `CRASH_LEVEL_UNREACHABLE`. Le Rate déplace donc le risque du photométrique vers la branche
     fragile. Il faut deux nouveaux points tournants observés pour que POEM redevienne
     utilisable.
@@ -173,7 +173,7 @@ d'un Rate/POEM par couche plié dans la DP.
    (swing 0,109, soit 2,7 × `SWING_MIN`), les 3 autres en **L47** (0,061, soit 1,5 ×).
 3. 🔑 **L47 est le premier essai évident, et pour une raison structurelle.** §22-10
    établit que le coût dominant d'une couche Rate se paie **sur la couche SUIVANTE** —
-   ancres vidées, repli sur le niveau absolu, la branche que §29.1 a démontrée non
+   ancres vidées, repli sur le niveau absolu, la branche que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a démontrée non
    invariante. **L47 est la dernière couche : il n'y a pas de suivante.** Le terme
    dominant disparaît, il ne reste que le gel de l'erreur sur la couche elle-même. Et
    c'est aussi la couche au plus faible swing sur 3 des 10.
@@ -398,7 +398,7 @@ qui n'a pas d'ancres :
 
 - **POEM y est à son plus faible.** Sans historique, il doit trouver deux points tournants
   dans la seule couche courante, faute de quoi il retombe sur le **niveau absolu** — la
-  branche que §29.1 a démontrée non invariante par distorsion affine, et qui pèse **21 %**
+  branche que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a démontrée non invariante par distorsion affine, et qui pèse **21 %**
   des plantages mesurés (§24-36).
 - Le Rate y **remplacerait un arrêt fragile par un comptage de tours déterministe**.
 - ⚠️ **Mais le coût aval ne disparaît pas ici** : la couche `i+2` est dans le même bloc et
@@ -432,7 +432,7 @@ cette réserve.**
 | | effet sur le plantage |
 |---|---|
 | couche `i` en Rate | 🟢 **supprime deux modes** : sans déclenchement, ni `CRASH_LEVEL_UNREACHABLE` ni `CRASH_TP_MISCOUNT` ne peuvent s'y produire |
-| couche `i+1` | 🔴 **en ajoute un** : sans ancres, repli sur le niveau absolu — la branche que §29.1 a démontrée non invariante |
+| couche `i+1` | 🔴 **en ajoute un** : sans ancres, repli sur le niveau absolu — la branche que [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.1 a démontrée non invariante |
 
 **La bonne candidate est donc à deux faces** : une couche dont la marge POEM est
 **mauvaise** — elle est déjà près de lâcher — et dont la **suivante** a une marge

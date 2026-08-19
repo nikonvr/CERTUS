@@ -69,7 +69,7 @@ l'affiche à côté de `RESCUED=`.
 #### 🔴 Comment RAPPORTER le chiffre, et c'est là que ça se joue
 
 Le « 1 à 2 % » de 👤 est un **souvenir**, pas une mesure — *« c'est ce que j'avais en
-tête »*. Même statut que la table de §29.7, *« estimés par moi au feeling »*. Donc :
+tête »*. Même statut que la table de [`TRAVAUX_A_VENIR.md`](TRAVAUX_A_VENIR.md) §12.7, *« estimés par moi au feeling »*. Donc :
 
 - **0,1 % ou 10 %** → informatif : le modèle rate quelque chose, **ou** le souvenir est
   faux. **Demander laquelle des deux**, ne pas trancher seul.

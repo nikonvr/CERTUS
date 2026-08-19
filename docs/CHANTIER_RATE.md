@@ -691,3 +691,92 @@ désormais, et pose la limite juste : **il sert à refuser une distinction, jama
 🔑 **Et la vraie dispersion reste inconnue.** Ce qui la sonderait est un changement de
 **triplet de graines de consensus**, pas de `robustness_seed`. Personne ne l'a jamais fait.
 C'est la mesure qui manque pour pouvoir écrire quoi que ce soit sur l'optimum de la coupure.
+
+---
+
+## 11. 📏 CELLULE 3 — le 4,00 % était bien 2/50, et le vrai taux est ~3 %
+
+`reports/blocs_vs_plantage_r75x2_premium_s042_tail52-58.json`, 60,4 min, **`N = 150` consigné**.
+
+| coupure | `fast` N=50 | **`premium` N=150** | plantages | incertitude de Poisson |
+|---|---|---|---|---|
+| 52 | 4,00 % | **2,67 %** | 4/150 | ±1,33 pt |
+| 55 | 4,00 % | 3,33 % | 5/150 | ±1,49 pt |
+| 58 | 4,00 % | 3,33 % | 5/150 | ±1,49 pt |
+
+✅ **La cellule répond à ce qu'on lui demandait** : le `4,00 %` était la granularité `2/50`. Le
+taux réel vaut **~3 %**, donc **sous la cible de 5 % de 👤**. ⚠️ Mais 4 plantages contre 5 sur
+150, c'est **un** plantage d'écart : les trois coupures restent indiscernables **aussi** sur le
+plantage. Le SEEL descend de 2,5 % (0,689 → 0,672) et la couche critique passe de 39 à **45**.
+
+🔑 **Et cela referme une question laissée ouverte au §10** : le score **bouge** avec le mode,
+donc sa profondeur suit `consensus_num_runs`, que le mode fixe (50 en `fast`, 150 en
+`premium`). Mon σ par mode était donc trop grand d'un facteur ~√3, **pas faux en nature** : le
+verdict « indiscernable » reste **permissif**, c'est-à-dire conservateur dans le bon sens.
+
+---
+
+## 12. 🔴 ANALYSE CONTRADICTOIRE — 👤 : *« pour être sûr qu'on ne va pas dans une voie de garage »*
+
+§12 appliqué à ma propre direction, en cherchant à la **casser**. Quatre attaques portent.
+
+### Attaque 1 — l'hybride est dominée sur TOUS les axes par une solution déjà mesurée
+
+| | déposables | SEEL | plantage | **blocs** |
+|---|---|---|---|---|
+| **1 nm, pur optique**, `deep`, graine 42 | **277** | **0,625** | **1,0 %** | **6** |
+| 2 nm + queue Rate, `premium` | 1 | 0,672 | ~3 % | **75** |
+
+**5 changements de λ en atelier contre 74, plus 23 couches en boucle ouverte.** 🔴 **Je n'avais
+jamais chiffré le coût d'atelier de l'hybride**, alors que §24-43 en fait explicitement un
+critère.
+
+### Attaque 2 — mais cette solution-là n'est pas établie non plus
+
+```
+deep 1 nm elargi, graine 42 :  254 deposables, crash_min  1,0 %
+deep 1 nm elargi, graine 77 :    0 deposable,  crash_min 38,0 %
+```
+
+**Même configuration, seule la graine change : 254 → 0.** C'est §24-46 — basculement
+**catégoriel** — mesuré cette fois sur `r75x2`.
+
+### 🔴 Attaque 3 — LA CASE DÉCISIVE N'A JAMAIS ÉTÉ LANCÉE
+
+**`r75x2` en `deep` à 2 nm n'existe pas.** Toute la queue Rate repose sur du `fast` (N=50) et
+du `premium` (N=150) à 2 nm, qui rendent 0 déposable en pur optique.
+
+📏 Or à 1 nm, passer de `fast` à `deep` a fait **0 → 277 déposables** : ce n'était donc **pas
+la fente** qui sauvait, c'était **la profondeur de recherche**. Rien ne dit que `deep` à 2 nm
+ne ferait pas la même chose — **auquel cas la queue Rate ne sert à rien sur ce composant.**
+
+### 🟠 Attaque 4 — un défaut dans ma propre décomposition du §8
+
+J'ai écrit que `SEEL_réel(n) − SEEL_parfait(n)` **isole** le coût de la queue Rate. **C'est
+faux en toute rigueur** : le facteur `A` s'estime sur les couches optiques du préfixe, donc un
+préfixe dégradé donne un `A` dégradé. Les deux coûts sont **couplés, pas additifs**, et le
+« leur somme a un minimum » était **heuristique** — présenté trop fermement.
+
+### ✅ Ce qui survit aux quatre attaques
+
+| | |
+|---|---|
+| **`crash(n)` monotone par construction** | vérifié causalement : la croissance est causale, donc les couches `0..n−1` se comportent identiquement que la couche `n` soit optique ou parfaite |
+| **la sonde SEEL(n)** | bon marché et diagnostique ; sa valeur ne dépend pas de l'issue de l'attaque 3 |
+| **le mécanisme du §9** | apparié, contrôlé, et il tient : c'est la **position terminale**, pas la couverture |
+
+### 🔑 LE VRAI DIAGNOSTIC — ce n'est pas la méthode, c'est le COMPOSANT
+
+`r75x2` est assis **exactement sur la frontière de fabricabilité**, où tout verdict bascule
+avec la graine : 254 → 0 en pur optique, 4 % ↔ 2 % en hybride, et une seule stratégie survit
+partout. **Bâtir une méthode dessus, c'est bâtir sur du sable.**
+
+### L'ordre des travaux qui en découle
+
+| # | action | ce qu'elle décide |
+|---|---|---|
+| **1** | **`r75x2 deep @ 2 nm`, deux graines** | si le pur optique passe, **la queue Rate sur ce composant est une voie de garage**, et il faut l'écrire noir sur blanc |
+| **2** | la sonde SEEL(n) | bon marché, diagnostique, indépendante de 1 |
+| **3** | valider le Rate sur **`75c` à 1 nm** | §7 : la seule cellule où le Rate gagne, et elle est stable. Bien meilleur banc d'essai que `r75x2` |
+
+🔴 **Et surtout PAS le 99c** — 👤 : *« c'est un empilement très particulier, tout quart d'onde »*.
